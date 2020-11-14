@@ -1,0 +1,15 @@
+site_name: QuICT中文文档
+nav:
+   - 主页: index.md
+   - 用户手册: user.md
+   - 开发者手册: develop.md
+   - 量子算法手册: algorithm.md
+   - 量子电路合成手册: synthesis.md
+   - 量子电路化简手册: optimization.md
+   - 量子电路映射手册: mapping.md
+   - 网页端维护: server.md
+   - 效率与相关项目: power.md
+   - 规划: plan.md
+   - 算法库计划: library.md
+   - 关于: about.md
+theme: readthedocs
