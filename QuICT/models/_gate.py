@@ -182,7 +182,7 @@ class BasicGate(object):
             3) Circuit
         :raise other类型错误
         """
-        if self.is_single():
+        if self.is_single() or self.is_measure() or self.is_barrier() or self.is_reset():
             self.or_deal_single(other)
         else:
             self.or_deal_other(other)
@@ -305,8 +305,6 @@ class BasicGate(object):
         对qureg添加门
         :param qureg: Qureg
         """
-        if self.targets + self.controls != len(qureg):
-            raise GateDigitException(self.controls, self.targets, len(qureg))
         name = str(self.__class__.__name__)
         gate = globals()[name]()
         gate.pargs = copy.deepcopy(self.pargs)
