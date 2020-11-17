@@ -217,7 +217,7 @@ class Qureg(list):
             return super().__getitem__(item)
         elif isinstance(item, slice):
             qureg_list = super().__getitem__(item)
-            qureg = []
+            qureg = Qureg()
             for qubit in qureg_list:
                 qureg.append(qubit)
             return qureg

@@ -328,10 +328,7 @@ class Circuit(object):
             return self.qubits[item]
         elif isinstance(item, slice):
             qureg_list = self.qubits[item]
-            qureg = []
-            for qubit in qureg_list:
-                qureg.append(qubit)
-            return qureg
+            return qureg_list
 
     def set_flush_gates(self, gates):
         self.gates = gates.copy()
