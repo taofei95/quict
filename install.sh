@@ -9,7 +9,7 @@ if [[ $a =~ $b ]];then
 else
     sudo cp *.so /usr/lib
     sudo cp *.so.2 /usr/lib
-fix
+fi
 cd ../../../QuICT/backends
 g++ -std=c++11 dll.cpp -fPIC -shared -o quick_operator_cdll.so -I . -ltbb
 cd ../synthesis/initial_state_preparation
