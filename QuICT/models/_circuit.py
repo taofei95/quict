@@ -324,7 +324,14 @@ class Circuit(object):
         raise TypeException("int或list或tuple", other)
 
     def __getitem__(self, item):
-        return self.qubits[item]
+        if isinstance(item, int):
+            return self.qubits[item]
+        elif isinstance(item, slice):
+            qureg_list = self.qubits[item]
+            qureg = []
+            for qubit in qureg_list:
+                qureg.append(qubit)
+            return qureg
 
     def set_flush_gates(self, gates):
         self.gates = gates.copy()

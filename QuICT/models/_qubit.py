@@ -212,6 +212,16 @@ class Qureg(list):
                 value += 1
         return value
 
+    def __getitem__(self, item):
+        if isinstance(item, int):
+            return super().__getitem__(item)
+        elif isinstance(item, slice):
+            qureg_list = super().__getitem__(item)
+            qureg = []
+            for qubit in qureg_list:
+                qureg.append(qubit)
+            return qureg
+
     def force_assign_random(self):
         if len(self) == 0:
             return
