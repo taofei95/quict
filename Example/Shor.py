@@ -39,7 +39,7 @@ def run_shor(N, t = None):
 
         for i in range(k):
             if phi_bits[i]:
-                Rz(-pi / (1 << (k - i))) | L_bit
+                Rz(-pi / (1 << (k - i))) | ancilla
         H | ancilla
 
         Measure | ancilla
