@@ -2,3 +2,5 @@
 /build/
 /QuICT.egg-info/
 */__pycache__/
+/tbb-2020.1/
+*.so
