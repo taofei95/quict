@@ -24,8 +24,7 @@ tangle_id = 0
 class Qubit(object):
     """ Implement a quantum bit
 
-    Qubit is the basic unit of quantum circuit, it will appear with
-    some certain circuit.
+    Qubit is the basic unit of quantum circuit, it will appear with some certain circuit.
 
     Attributes:
         id(int): the unique identity code of a qubit, which is generated globally.
@@ -282,6 +281,9 @@ class Qureg(list):
 
     def __getitem__(self, item):
         """ to fit the slice operator, overloaded this function.
+
+        get a smaller qureg/qubit from this qureg
+
         Args:
             item(int/slice): slice passed in.
         Return:
