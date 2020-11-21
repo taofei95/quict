@@ -60,7 +60,8 @@ from ._gate import (
 
     ExtensionGateType,
 
-    GateBuilder
+    GateBuilder,
+    ExtensionGateBuilder
 )
 
 from .uniformly_controlled import MultifoldControlledRotation

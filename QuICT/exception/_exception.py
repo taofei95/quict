@@ -5,58 +5,84 @@
 # @File    : _exception.py
 
 class TypeException(Exception):
+    """ Exception that the type of parameter is error.
+
+    """
     def __init__(self, type, now):
         """
-        :param now: 错误索引list或者tuple
+        Args:
+            type: the type should passed in
+            now: the type actually passed in
         """
-        string = str("类型错误,应传入{},实际传入了{}".format(type, now))
+        string = str(f"type error,{type} should be passed in, {now} is passed in actually")
         Exception.__init__(self, string)
 
 class ConstException(Exception):
+    """ Exception that change the variable which shouldn't be
+
+    """
     def __init__(self, other):
         """
-        :param other: 修改了不应修改的常量
+        Args:
+            other: the variable
         """
-        Exception.__init__(self, "算法运行过程不应对{}进行修改".format(other))
+        Exception.__init__(self, f"the running process shouldn't change the {other}")
 
 class FrameworkException(Exception):
+    """ Exception that framework may have error
+
+    """
     def __init__(self, other):
         """
-        :param other: 错误信息
+        Args:
+            other: error information
         """
-        Exception.__init__(self, "框架错误:{}".format(other))
+        Exception.__init__(self, f"framework error:{other}")
 
 class CircuitStructException(Exception):
+    """ Exception that circuit struct may have error
+
+    """
     def __init__(self, other):
         """
-        :param other: 错误信息
+        Args:
+            other: error information
         """
-        Exception.__init__(self, "非法电路:{}".format(other))
+        Exception.__init__(self, f"circuit struct error:{other}")
 
 class QasmInputException(Exception):
+    """ Exception that Qasm Input may have error
+
+    """
     def __init__(self, other, line, file):
         """
-        :param other: 错误信息
+        Args:
+            other: error type
+            line: error line
+            file: error file
         """
-        Exception.__init__(self, "Qasm输入错误:{} \n 错误行数:{} \n 错误文件:{}".format(other, line, file))
+        Exception.__init__(self, "Qasm error:{} \n in line:{} \n error file:{}".format(other, line, file))
 
-"""
-索引范围错误
-"""
 class IndexLimitException(Exception):
+    """ Exception that out of index
+
+    """
     def __init__(self, wire, try_index):
         """
-        :param wire: 索引位数
-        :param try_index: 尝试使用的索引
+        Args:
+            wire: the index range
+            try_index: index passed in
         """
-        Exception.__init__(self, "索引范围为0～{},但尝试索引了{}".format(wire, try_index))
+        Exception.__init__(self, f"out of index: the index range is [0, {wire}),but try to get{try_index}")
 
-"""
-索引重复错误
-"""
 class IndexDuplicateException(Exception):
+    """ Exception that duplicate indexes
+
+    """
     def __init__(self, other):
         """
-        :param other: 错误索引list或者tuple
+        Args:
+            other: the indexes passed in
+        :param other:
         """
-        Exception.__init__(self, "索引出现重复:{}".format(other))
+        Exception.__init__(self, f"duplicate indexes: {other}")

@@ -2195,12 +2195,12 @@ class GateBuilderModel(object):
             circuit(Circuit): the circuit which the gate acted on.
         """
 
-        qubits = []
+        qubits = Qureg()
         for control in gate.cargs:
             qubits.append(circuit[control])
         for target in gate.targs:
             qubits.append(circuit[target])
-        circuit.__add_qureg_gate__(gate, qubits)
+        circuit.add_gate(gate, qubits)
 
     @staticmethod
     def reflect_gates(gates : list):
@@ -2231,12 +2231,12 @@ class GateBuilderModel(object):
         l_g = len(gates)
         for index in range(l_g - 1, -1, -1):
             gate = gates[index].inverse()
-            qubits = []
+            qubits = Qureg()
             for control in gate.cargs:
                 qubits.append(circuit[control])
             for target in gate.targs:
                 qubits.append(circuit[target])
-            circuit.__add_qureg_gate__(gate, qubits)
+            circuit.add_gate(gate, qubits)
 
 GateBuilder = GateBuilderModel()
 
@@ -2505,7 +2505,7 @@ class gateModel(object):
             TypeException: the type of params is wrong
 
         Returns:
-            BasicGate: the gate after filled by parameters
+            gateModel: the gate after filled by parameters
         """
         if self.permit_element(params):
             self.pargs = [params]
@@ -2937,6 +2937,118 @@ class CCX_DecomposeModel(gateModel):
         return gates
 
 CCX_Decompose = CCX_DecomposeModel()
+
+class ExtensionGateBuilderModel(object):
+    """ A model that help users get gate without circuit
+
+    The model is designed to help users get some gates independent of the circuit
+    Because there is no clear API to setting a gate's control bit indexes and
+    target bit indexes without circuit or qureg.
+
+    Users should set the gateType of the ExtensionGateBuilder, than set necessary parameters
+    (Targs, Cargs, Pargs). After that, user can get a gate from ExtensionGateBuilder.
+
+    """
+
+    def __init__(self):
+        self.gateType = GateType.Error
+        self.pargs = []
+        self.targs = []
+        self.cargs = []
+
+    def setGateType(self, type):
+        self.gateType = type
+
+    def setPargs(self, pargs):
+        """ pass the parameters of the gate
+
+        if the gate don't need the parameters, needn't to call this function.
+
+        Args:
+            pargs(list/int/float/complex): the parameters filled in the gate
+        """
+
+        if isinstance(pargs, list):
+            self.pargs = pargs
+        else:
+            self.pargs = [pargs]
+
+    def setTargs(self, targs):
+        """ pass the target bits' indexes of the gate
+
+        The targets should be passed.
+
+        Args:
+            targs(list/int/float/complex): the target bits' indexes the gate act on.
+        """
+        if isinstance(targs, list):
+            self.targs = targs
+        else:
+            self.targs = [targs]
+
+    def getTargsNumber(self):
+        """ get the number of targs of the gate
+
+        once the gateType is set, the function is valid.
+
+        Return:
+            int: the number of targs
+        """
+
+        gate = self._inner_generate_gate()
+        return gate.targets
+
+    def getParamsNumber(self):
+        """ get the number of pargs of the gate
+
+        once the gateType is set, the function is valid.
+
+        Return:
+            int: the number of pargs
+        """
+        gate = self._inner_generate_gate()
+        return gate.params
+
+    def getGate(self):
+        """ get the gate
+
+        once the parameters are set, the function is valid.
+
+        Return:
+            gateModel: the gate with parameters set in the builder
+        """
+        return self._inner_generate_gate()
+
+    def _inner_generate_gate(self):
+        """ private tool function
+
+        get an initial gate by the gateType set for builder
+
+        Return:
+            BasicGate: the initial gate
+        """
+        if self.gateType == ExtensionGateType.QFT:
+            return QFT.build_gate(self.targs)
+        elif self.gateType == ExtensionGateType.IQFT:
+            return IQFT.build_gate(self.targs)
+        elif self.gateType == ExtensionGateType.RZZ:
+            return RZZ(self.pargs).build_gate(self.targs)
+        elif self.gateType == ExtensionGateType.CU1:
+            return CU1(self.pargs).build_gate(self.targs)
+        elif self.gateType == ExtensionGateType.CU3:
+            return CU3(self.pargs).build_gate(self.targs)
+        elif self.gateType == ExtensionGateType.Fredkin:
+            return Fredkin.build_gate(self.targs)
+        elif self.gateType == ExtensionGateType.CCX:
+            return CCX_Decompose.build_gate(self.targs)
+        elif self.gateType == ExtensionGateType.CRz:
+            return CRz_Decompose(self.pargs).build_gate(self.targs)
+        elif self.gateType == ExtensionGateType.CCRz:
+            return CCRz(self.pargs).build_gate(self.targs)
+
+        raise Exception("the gate type of the builder is wrong")
+
+ExtensionGateBuilder = ExtensionGateBuilderModel()
 
 class GateDigitException(Exception):
     def __init__(self, controls, targets, indeed):

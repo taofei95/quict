@@ -413,6 +413,18 @@ class Circuit(object):
         self.gates = gates.copy()
         self.__queue_gates = gates.copy()
 
+    def add_gate(self, gate, qureg):
+        """ add a gate to the circuit
+
+        Args:
+            gate(BasicGate): the gate to be added to the circuit
+            qureg(Qureg/Qubit): the Qureg/Qubit gate added to
+        """
+        if gate.controls + gate.targets == 1:
+            self._add_qubit_gate(gate, qureg if isinstance(qureg, Qubit) else qureg[0])
+        else:
+            self._add_qureg_gate(gate, qureg)
+
     def _add_qubit_gate(self, gate, qubit):
         """ add a gate into some qubit
 
@@ -429,7 +441,7 @@ class Circuit(object):
 
         Args:
             gate(BasicGate)
-            qureg(Qureg)
+            qureg(Qureg/list<Qubit>)
         """
         self.gates.append(gate)
         self.__queue_gates.append(gate)
