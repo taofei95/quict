@@ -1,29 +1,25 @@
 #!/usr/bin/env python
 # -*- coding:utf8 -*-
 # @TIME    : 2020/11/6 3:55 下午
-# @Author  : Han Yu
+# @Author  : Wu Yu sen
 # @File    : controlled_single_rotation.py
 
 from QuICT.models import *
-from QuICT.exception import TypeException
-TOLERANCE = 1e-12
 
+TOLERANCE = 1e-12
 
 def _apply_ucr_n(angles, ucontrol_qubits, target_qubit, gate_class, rightmost_cnot):
     """
        Decomposition for an uniformly controlled single qubit rotation gate.
-
        Follows decomposition in arXiv:quant-ph/04504100v1
-
        For a rotation operator Ra it uses 2**len(ucontrol_qubits) CX and also
        2**len(ucontrol_qubits) single qubit rotations.
-
        Args:
            angles: rotation angles with the length of 2**len(ucontrol_qubits)
            ucontrol_qubits: control qubits
            target_qubit: target qubit
            gate_class: Rx, Ry or Rz
-       """
+    """
 
     if len(ucontrol_qubits) == 0:
         if gate_class == GateType.Rx:
@@ -118,9 +114,11 @@ class MultifoldControlledRotationModel(gateModel):
 
     def __call__(self, angle, gateclass = GateType.Rx):
         """
-        :param angle: 角度列表
-        :param gateclass: 门类型
-        :return:
+        Args:
+            angle(list): the list of angle
+            gateclass(gateType): the type of gate(Rx, Ry or Rz)
+        Returns:
+            MultifoldControlledRotationModel: the gate filled by parameters
         """
         self.pargs = [angle, gateclass]
         return self
@@ -167,6 +165,3 @@ class MultifoldControlledRotationModel(gateModel):
         return circuit
 
 MultifoldControlledRotation = MultifoldControlledRotationModel()
-
-
-

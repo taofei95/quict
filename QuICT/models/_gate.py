@@ -4,16 +4,22 @@
 # @Author  : Han Yu
 # @File    : _gate.py
 
-from ._qubit import Qubit, Qureg
-from ._circuit import Circuit
-from QuICT.exception import TypeException
 from enum import Enum
-# from math import sqrt, cos, sin, pi, log2, gcd, ceil
-import numpy as np
 import copy
 
+import numpy as np
+
+from QuICT.exception import TypeException
+from ._qubit import Qubit, Qureg
+from ._circuit import Circuit
+
 class GateType(Enum):
+    """ indicate the type of a basic gate
+
+    Every Gate have a attribute named type, which indicate its type
+    """
     Error = -1
+
     H = 0
     S = 1
     S_dagger = 2
@@ -30,13 +36,11 @@ class GateType(Enum):
     Rz = 13
     T = 14
     T_dagger = 15
-
     CZ = 16
     CX = 17
     CY = 18
     CH = 19
     CRz = 20
-
     CCX = 21
 
     Measure = 22
@@ -51,11 +55,33 @@ class GateType(Enum):
     ShorInital = 29
 
 class BasicGate(object):
-    """
-    类的属性
+    """ the abstract SuperClass of all basic quantum gates
+
+    All basic quantum gates described in the framework have
+    some common attributes and some common functions
+    which defined in this class
+
+    Attributes:
+        controls(list<int>): the number of the control bits of the gate
+        cargs(list<int>): the list of the index of control bits in the circuit
+        carg(int, read only): the first object of cargs
+
+        targets(list<int>): the number of the target bits of the gate
+        targs(list<int>): the list of the index of target bits in the circuit
+        targ(int, read only): the first object of targs
+
+        params(list): the number of the parameter of the gate
+        pargs(list): the list of the parameter
+        prag(read only): the first object of pargs
+
+        qasm_name(str, read only): gate's name in the OpenQASM 2.0
+        type(GateType, read only): gate's type described by GateType
+
+        matrix(np.array): the unitary matrix of the quantum gates act on targets
+        computer_matrix(np.array): the unitary matrix of the quantum gates act on controls and targets
     """
 
-    # 门对应的矩阵
+    # Attribute
     @property
     def matrix(self) -> list:
         return self.__matrix
@@ -67,7 +93,6 @@ class BasicGate(object):
     def compute_matrix(self):
         return self.matrix
 
-    # 门对应控制位数
     @property
     def controls(self) -> int:
         return self.__controls
@@ -76,13 +101,8 @@ class BasicGate(object):
     def controls(self, controls: int):
         self.__controls = controls
 
-    # 门对应控制位索引
     @property
     def cargs(self):
-        """
-        :return:
-            返回一个list，表示控制位
-        """
         return self.__cargs
 
     @cargs.setter
@@ -92,7 +112,6 @@ class BasicGate(object):
         else:
             self.__cargs = [cargs]
 
-    # 门对应作用位数
     @property
     def targets(self) -> int:
         return self.__targets
@@ -101,13 +120,8 @@ class BasicGate(object):
     def targets(self, targets: int):
         self.__targets = targets
 
-    # 门对应作用位索引
     @property
     def targs(self):
-        """
-        :return:
-            返回一个list，代表作用位的list
-        """
         return self.__targs
 
     @targs.setter
@@ -117,7 +131,6 @@ class BasicGate(object):
         else:
             self.__targs = [targs]
 
-    # 辅助数组位个数
     @property
     def params(self) -> int:
         return self.__params
@@ -126,13 +139,8 @@ class BasicGate(object):
     def params(self, params: int):
         self.__params = params
 
-    # 辅助数组数组
     @property
     def pargs(self):
-        """
-        :return:
-            返回一个list，代表辅助数组
-        """
         return self.__pargs
 
     @pargs.setter
@@ -162,6 +170,11 @@ class BasicGate(object):
     def qasm_name(self, qasm_name):
         self.__qasm_name = qasm_name
 
+    @staticmethod
+    def type():
+        return GateType.Error
+
+    # life cycle
     def __init__(self):
         self.__matrix = []
         self.__cargs = []
@@ -172,35 +185,192 @@ class BasicGate(object):
         self.__params = 0
         self.__qasm_name = 'error'
 
-    def __or__(self, other):
+    # gate behavior
+    def __or__(self, targets):
+        """deal the operator '|'
+
+        Use the syntax "gate | circuit" or "gate | qureg" or "gate | qubit"
+        to add the gate into the circuit
+        When a one qubit gate act on a qureg or a circuit, it means Adding
+        the gate on all the qubit of the qureg or circuit
+        Some Examples are like this:
+
+        X       | circuit
+        CX      | circuit([0, 1])
+        Measure | qureg
+
+        Note that the order of qubits is that control bits first
+        and target bits followed.
+
+        Args:
+            targets: the targets the gate acts on, it can have following form,
+                1) Circuit
+                2) qureg
+                3) tuple<qubit, qureg>
+                4) list<qubit, qureg>
+        Raise:
+            TypeException: the type of other is wrong
         """
-        处理｜运算符
-        单qubit门作用到电路或者qureg上，视为对所有qubit各自作用该门
-        :param other: 作用的对象
-            1）tuple<qubit, qureg>
-            2) qureg/list<qubit, qureg>
-            3) Circuit
-        :raise other类型错误
-        """
+
         if self.is_single() or self.is_measure() or self.is_barrier() or self.is_reset():
-            self.or_deal_single(other)
+            # the gate is one qubit gate
+            if isinstance(targets, tuple):
+                for qubit in targets:
+                    if not isinstance(qubit, Qubit):
+                        raise TypeException("qubit或tuple<qubit, qureg>或qureg或list<qubit, qureg>或circuit", targets)
+                    self._deal_qubit(qubit)
+            elif isinstance(targets, Qubit):
+                self._deal_qubit(targets)
+            elif isinstance(targets, Qureg):
+                for qubit in targets:
+                    self._deal_qubit(qubit)
+            elif isinstance(targets, Circuit):
+                for qubit in targets.qubits:
+                    self._deal_qubit(qubit)
+            else:
+                raise TypeException("qubit或tuple<qubit>或qureg或circuit", targets)
         else:
-            self.or_deal_other(other)
+            # the gate is not one qubit gate
+            if isinstance(targets, tuple):
+                targets = list(targets)
+            if isinstance(targets, list):
+                qureg = Qureg()
+                for item in targets:
+                    if isinstance(item, Qubit):
+                        qureg.append(item)
+                    elif isinstance(item, Qureg):
+                        qureg.extend(item)
+                    else:
+                        raise TypeException("qubit或tuple<qubit, qureg>或qureg或list<qubit, qureg>或circuit", targets)
+            elif isinstance(targets, Qureg):
+                qureg = targets
+            elif isinstance(targets, Circuit):
+                qureg = Qureg(targets.qubits)
+            else:
+                raise TypeException("qubit或tuple<qubit>或qureg或circuit", targets)
+            self._deal_qureg(qureg)
 
-    @staticmethod
-    def type():
-        """
-        :return: 返回H
-        """
-        return GateType.Error
+    def __call__(self, params):
+        """ give parameters for the gate
 
+        give parameters by "()".
+        Some Examples are like this:
+
+        Rz(np.pi / 2)           | qubit
+        U3(np.pi / 2, 0, 0)     | qubit
+
+        Args:
+            params: give parameters for the gate, it can have following form,
+                1) int/float/complex
+                2) list<int/float/complex>
+                3) tuple<int/float/complex>
+        Raise:
+            TypeException: the type of params is wrong
+
+        Returns:
+            BasicGate: the gate after filled by parameters
+        """
+        if self.permit_element(params):
+            self.pargs = [params]
+        elif isinstance(params, list):
+            self.pargs = []
+            for element in params:
+                if not self.permit_element(element):
+                    raise TypeException("int或float或complex", element)
+                self.pargs.append(element)
+        elif isinstance(params, tuple):
+            self.pargs = []
+            for element in params:
+                if not self.permit_element(element):
+                    raise TypeException("int或float或complex", element)
+                self.pargs.append(element)
+        else:
+            raise TypeException("int/float/complex或list<int/float/complex>或tuple<int/float/complex>", params)
+        return self
+
+    # get information of gate
+    def print_info(self):
+        """ print the information of the gate
+
+        print the gate's information, including controls, targets and parameters
+
+        """
+        infomation = self.__str__()
+        if self.controls != 0:
+            infomation = infomation + f" 控制位:{self.cargs} "
+        if self.targets != 0:
+            infomation = infomation + f" 作用位:{self.targs} "
+        if self.params != 0:
+            infomation = infomation + f" 参数:{self.pargs} "
+        print(infomation)
+
+    def qasm(self):
+        """ generator OpenQASM string for the gate
+
+        Return:
+            string: the OpenQASM 2.0 describe of the gate
+        """
+        if self.qasm_name == 'error':
+            return 'error'
+        string = self.qasm_name
+        if self.params > 0:
+            string += '('
+            for i in range(len(self.pargs)):
+                if i != 0:
+                    string += ', '
+                string += str(self.pargs[i])
+            string += ')'
+        string += ' '
+        first_in = True
+        for p in self.cargs:
+            if not first_in:
+                string += ', '
+            else:
+                first_in = False
+            string += f'q[{p}]'
+        for p in self.targs:
+            if not first_in:
+                string += ', '
+            else:
+                first_in = False
+            string += f'q[{p}]'
+        string += ';\n'
+        return string
+
+    def inverse(self):
+        """ the inverse of the gate
+
+        Return:
+            BasicGate: the inverse of the gate
+        """
+        raise Exception("未定义的逆")
+
+    # gate information
     def is_single(self) -> bool:
+        """ judge whether gate is a one qubit gate(excluding special gate like measure, reset, custom and so on)
+
+        Returns:
+            bool: True if it is a one qubit gate
+        """
         return 0 <= self.type().value  <= 15
 
     def is_control_single(self) -> bool:
+        """ judge whether gate has one control bit and one target bit
+
+        Returns:
+            bool: True if it is has one control bit and one target bit
+        """
         return (self.type().value >= 16) and (self.type().value <= 20)
 
     def is_diagonal(self) -> bool:
+        """ judge whether gate's matrix is diagonal
+
+        Raise:
+            gate must be basic one qubit gate or two qubit gate
+
+        Returns:
+            bool: True if gate's matrix is diagonal
+        """
         if not self.is_single() and not self.is_control_single() and not self.is_swap():
             raise Exception("只考虑单比特门和基础双比特门")
         if self.is_single():
@@ -219,77 +389,100 @@ class BasicGate(object):
             return False
 
     def is_ccx(self) -> bool:
+        """ judge whether gate is toffoli gate
+
+        Returns:
+            bool: True if gate is toffoli gate
+        """
         return self.type() == GateType.CCX
 
     def is_measure(self) -> bool:
+        """ judge whether gate is measure gate
+
+        Returns:
+            bool: True if gate is measure gate
+        """
         return self.type() == GateType.Measure
 
     def is_reset(self) -> bool:
+        """ judge whether gate is reset gate
+
+        Returns:
+            bool: True if gate is reset gate
+        """
         return self.type() == GateType.Reset
 
     def is_swap(self) -> bool:
+        """ judge whether gate is swap gate
+
+        Returns:
+            bool: True if gate is swap gate
+        """
         return self.type() == GateType.Swap
 
     def is_perm(self) -> bool:
+        """ judge whether gate is permutation gate
+
+        Returns:
+            bool: True if gate is permutation gate
+        """
         return self.type() == GateType.Perm
 
     def is_custom(self) -> bool:
+        """ judge whether gate is custom gate
+
+            Returns:
+                bool: True if gate is custom gate
+        """
         return self.type() == GateType.Custom
 
     def is_shorInit(self) -> bool:
+        """ judge whether gate is ShorInit gate
+
+        Returns:
+            bool: True if gate is ShorInit gate
+        """
         return self.type() == GateType.ShorInital
 
     def is_controlMulPer(self) -> bool:
+        """ judge whether gate is ControlPermMulDetail gate
+
+        Returns:
+            bool: True if gate is ControlPermMulDetail gate
+        """
         return self.type() == GateType.ControlPermMulDetail
 
     def is_barrier(self) -> bool:
+        """ judge whether gate is Barrier gate
+
+        Returns:
+            bool: True if gate is Barrier gate
+        """
         return self.type() == GateType.Barrier
 
     @staticmethod
     def permit_element(element):
-        """
-        参数只能为int/float/complex
-        :param element: 待判断的元素
-        :return: 是否允许作为参数
-        :raise 不允许的参数
+        """ judge whether the type of a parameter is int/float/complex
+
+        for a quantum gate, the parameter should be int/float/complex
+
+        Args:
+            element: the element to be judged
+
+        Returns:
+            bool: True if the type of element is int/float/complex
         """
         if isinstance(element, int) or isinstance(element, float) or isinstance(element, complex):
             return True
         else:
             return False
 
-    def __call__(self, other):
-        """
-        使用()添加参数
-        :param other: 添加的参数
-            1) int/float/complex
-            2) list<int/float/complex>
-            3) tuple<int/float/complex>
-        :raise 类型错误
-        :return 修改参数后的self
-        """
-        if self.permit_element(other):
-            self.pargs = [other]
-        elif isinstance(other, list):
-            self.pargs = []
-            for element in other:
-                if not self.permit_element(element):
-                    raise TypeException("int或float或complex", element)
-                self.pargs.append(element)
-        elif isinstance(other, tuple):
-            self.pargs = []
-            for element in other:
-                if not self.permit_element(element):
-                    raise TypeException("int或float或complex", element)
-                self.pargs.append(element)
-        else:
-            raise TypeException("int/float/complex或list<int/float/complex>或tuple<int/float/complex>", other)
-        return self
+    # private tool function
+    def _deal_qubit(self, qubit):
+        """ add gate to one qubit
 
-    def deal_qubit(self, qubit):
-        """
-        对单个qubit添加门
-        :param qubit: Qubit
+        Args:
+            qubit: qubit the gate act on
 
         """
         name = str(self.__class__.__name__)
@@ -300,10 +493,12 @@ class BasicGate(object):
         gate.params = self.params
         qubit.circuit.__add_qubit_gate__(gate, qubit)
 
-    def deal_qureg(self, qureg):
-        """
-        对qureg添加门
-        :param qureg: Qureg
+    def _deal_qureg(self, qureg):
+        """ add gate to one qureg
+
+        Args:
+            qureg: qureg the gate act on
+
         """
         name = str(self.__class__.__name__)
         gate = globals()[name]()
@@ -315,102 +510,11 @@ class BasicGate(object):
             gate.matrix = self.matrix
         qureg.circuit.__add_qureg_gate__(gate, qureg)
 
-    def or_deal_single(self, other):
-        """
-        处理一个singleGate
-        :param other: 作用的对象
-            1）qubit/tuple<qubit>
-            2) qureg
-            3) Circuit
-        :raise other类型错误
-        """
-        if isinstance(other, tuple):
-            for qubit in other:
-                if not isinstance(qubit, Qubit):
-                    raise TypeException("qubit或tuple<qubit, qureg>或qureg或list<qubit, qureg>或circuit", other)
-                self.deal_qubit(qubit)
-        elif isinstance(other, Qubit):
-            self.deal_qubit(other)
-        elif isinstance(other, Qureg):
-            for qubit in other:
-                self.deal_qubit(qubit)
-        elif isinstance(other, Circuit):
-            for qubit in other.qubits:
-                self.deal_qubit(qubit)
-        else:
-            raise TypeException("qubit或tuple<qubit>或qureg或circuit", other)
-
-    def or_deal_other(self, other):
-        """
-        处理作用于多个位或带有参数的门
-        :param other: 作用的对象
-            1）tuple<qubit, qureg>
-            2) qureg/list<qubit, qureg>
-            3) Circuit
-        """
-        if isinstance(other, tuple):
-            other = list(other)
-        if isinstance(other, list):
-            qureg = Qureg()
-            for item in other:
-                if isinstance(item, Qubit):
-                    qureg.append(item)
-                elif isinstance(item, Qureg):
-                    qureg.extend(item)
-                else:
-                    raise TypeException("qubit或tuple<qubit, qureg>或qureg或list<qubit, qureg>或circuit", other)
-        elif isinstance(other, Qureg):
-            qureg = other
-        elif isinstance(other, Circuit):
-            qureg = Qureg(other.qubits)
-        else:
-            raise TypeException("qubit或tuple<qubit>或qureg或circuit", other)
-        self.deal_qureg(qureg)
-
-    def print_info(self):
-        infomation = self.__str__()
-        if self.controls != 0:
-            infomation = infomation + " 控制位:{} ".format(self.cargs)
-        if self.targets != 0:
-            infomation = infomation + " 作用位:{} ".format(self.targs)
-        if self.params != 0:
-            infomation = infomation + " 参数:{} ".format(self.pargs)
-        print(infomation)
-
-    def qasm(self):
-        if self.qasm_name == 'error':
-            return 'error'
-        string = self.qasm_name
-        if self.params > 0:
-            string += '('
-            for i in range(len(self.pargs)):
-                if i != 0:
-                    string += ', '
-                string += str(self.pargs[i])
-            string += ')'
-        string += ' '
-        first_in = True
-        for p in self.cargs:
-            if not first_in:
-                string += ', '
-            else:
-                first_in = False
-            string += 'q[{}]'.format(p)
-        for p in self.targs:
-            if not first_in:
-                string += ', '
-            else:
-                first_in = False
-            string += 'q[{}]'.format(p)
-        string += ';\n'
-        return string
-
-    def inverse(self):
-        raise Exception("未定义的逆")
 
 class HGate(BasicGate):
-    """
-    H门
+    """ Hadamard gate
+
+
     """
 
     def __init__(self):
@@ -445,8 +549,9 @@ class HGate(BasicGate):
 H = HGate()
 
 class SGate(BasicGate):
-    """
-    S门
+    """ Phase gate
+
+
     """
 
     def __init__(self):
@@ -464,13 +569,10 @@ class SGate(BasicGate):
         ], dtype = np.complex)
 
     def __str__(self):
-        return "S门"
+        return "Phase gate"
 
     @staticmethod
     def type():
-        """
-        :return: 返回S
-        """
         return GateType.S
 
     def inverse(self):
@@ -482,8 +584,9 @@ S = SGate()
 
 
 class SDaggerGate(BasicGate):
-    """
-    S门的共轭转置门
+    """ The conjugate transpose of Phase gate
+
+
     """
 
     def __init__(self):
@@ -501,13 +604,10 @@ class SDaggerGate(BasicGate):
         ], dtype = np.complex)
 
     def __str__(self):
-        return "S门的共轭转置门"
+        return "The conjugate transpose of Phase gate"
 
     @staticmethod
     def type():
-        """
-        :return: 返回S的共轭转置门
-        """
         return GateType.S_dagger
 
     def inverse(self):
@@ -519,8 +619,8 @@ S_dagger = SDaggerGate()
 
 
 class XGate(BasicGate):
-    """
-    X门
+    """ Pauli-X gate
+
     """
 
     def __init__(self):
@@ -538,13 +638,10 @@ class XGate(BasicGate):
         ], dtype = np.complex)
 
     def __str__(self):
-        return "X门"
+        return "Pauli-X gate"
 
     @staticmethod
     def type():
-        """
-        :return: 返回X
-        """
         return GateType.X
 
     def inverse(self):
@@ -556,8 +653,8 @@ X = XGate()
 
 
 class YGate(BasicGate):
-    """
-    Y门
+    """ Pauli-Y gate
+
     """
 
     def __init__(self):
@@ -575,13 +672,10 @@ class YGate(BasicGate):
         ], dtype = np.complex)
 
     def __str__(self):
-        return "Y门"
+        return "Pauli-Y gate"
 
     @staticmethod
     def type():
-        """
-        :return: 返回Y
-        """
         return GateType.Y
 
     def inverse(self):
@@ -593,8 +687,8 @@ Y = YGate()
 
 
 class ZGate(BasicGate):
-    """
-    Z门
+    """ Pauli-Z gate
+
     """
 
     def __init__(self):
@@ -612,13 +706,10 @@ class ZGate(BasicGate):
         ], dtype = np.complex)
 
     def __str__(self):
-        return "Z门"
+        return "Pauli-Z gate"
 
     @staticmethod
     def type():
-        """
-        :return: 返回Z
-        """
         return GateType.Z
 
     def inverse(self):
@@ -630,8 +721,8 @@ Z = ZGate()
 
 
 class IDGate(BasicGate):
-    """
-    ID门
+    """ Identity gate
+
     """
 
     def __init__(self):
@@ -649,13 +740,10 @@ class IDGate(BasicGate):
         ], dtype = np.complex)
 
     def __str__(self):
-        return "ID门"
+        return "Identity gate"
 
     @staticmethod
     def type():
-        """
-        :return: 返回ID
-        """
         return GateType.ID
 
     def inverse(self):
@@ -667,8 +755,8 @@ class IDGate(BasicGate):
 ID = IDGate()
 
 class U1Gate(BasicGate):
-    """
-    U1门
+    """ Diagonal single-qubit gate
+
     """
 
     def __init__(self):
@@ -687,13 +775,10 @@ class U1Gate(BasicGate):
         ], dtype = np.complex)
 
     def __str__(self):
-        return "U1门"
+        return "U1 gate"
 
     @staticmethod
     def type():
-        """
-        :return: 返回U1
-        """
         return GateType.U1
 
     def inverse(self):
@@ -705,8 +790,8 @@ class U1Gate(BasicGate):
 U1 = U1Gate()
 
 class U2Gate(BasicGate):
-    """
-    U2门
+    """ One-pulse single-qubit gate
+
     """
 
     def __init__(self):
@@ -728,13 +813,10 @@ class U2Gate(BasicGate):
         ], dtype = np.complex)
 
     def __str__(self):
-        return "U2门"
+        return "U2 gate"
 
     @staticmethod
     def type():
-        """
-        :return: 返回U2
-        """
         return GateType.U2
 
     def inverse(self):
@@ -746,8 +828,8 @@ class U2Gate(BasicGate):
 U2 = U2Gate()
 
 class U3Gate(BasicGate):
-    """
-    U3门
+    """ Two-pulse single-qubit gate
+
     """
 
     def __init__(self):
@@ -768,13 +850,10 @@ class U3Gate(BasicGate):
         ], dtype = np.complex)
 
     def __str__(self):
-        return "U3门"
+        return "U3 gate"
 
     @staticmethod
     def type():
-        """
-        :return: 返回U3
-        """
         return GateType.U3
 
     def inverse(self):
@@ -786,8 +865,8 @@ class U3Gate(BasicGate):
 U3 = U3Gate()
 
 class RxGate(BasicGate):
-    """
-    Rx门
+    """ Rotation around the x-axis gate
+
     """
 
     def __init__(self):
@@ -808,13 +887,10 @@ class RxGate(BasicGate):
         ], dtype = np.complex)
 
     def __str__(self):
-        return "Rx门"
+        return "Rx gate"
 
     @staticmethod
     def type():
-        """
-        :return: 返回Rx
-        """
         return GateType.Rx
 
     def inverse(self):
@@ -826,8 +902,8 @@ class RxGate(BasicGate):
 Rx = RxGate()
 
 class RyGate(BasicGate):
-    """
-    Ry门
+    """ Rotation around the y-axis gate
+
     """
 
     def __init__(self):
@@ -848,13 +924,10 @@ class RyGate(BasicGate):
         ], dtype = np.complex)
 
     def __str__(self):
-        return "Ry门"
+        return "Ry gate"
 
     @staticmethod
     def type():
-        """
-        :return: 返回Ry
-        """
         return GateType.Ry
 
     def inverse(self):
@@ -866,8 +939,8 @@ class RyGate(BasicGate):
 Ry = RyGate()
 
 class RzGate(BasicGate):
-    """
-    Rz门
+    """ Rotation around the z-axis gate
+
     """
 
     def __init__(self):
@@ -888,13 +961,10 @@ class RzGate(BasicGate):
         ], dtype = np.complex)
 
     def __str__(self):
-        return "Rz门"
+        return "Rz gate"
 
     @staticmethod
     def type():
-        """
-        :return: 返回Rz
-        """
         return GateType.Rz
 
     def inverse(self):
@@ -906,8 +976,8 @@ class RzGate(BasicGate):
 Rz = RzGate()
 
 class TGate(BasicGate):
-    """
-    T门
+    """ T gate
+
     """
 
     def __init__(self):
@@ -925,13 +995,10 @@ class TGate(BasicGate):
         ], dtype = np.complex)
 
     def __str__(self):
-        return "T门"
+        return "T gate"
 
     @staticmethod
     def type():
-        """
-        :return: 返回T
-        """
         return GateType.T
 
     def inverse(self):
@@ -942,8 +1009,8 @@ class TGate(BasicGate):
 T = TGate()
 
 class TDaggerGate(BasicGate):
-    """
-    T门的共轭转置
+    """ The conjugate transpose of T gate
+
     """
 
     def __init__(self):
@@ -961,13 +1028,10 @@ class TDaggerGate(BasicGate):
         ], dtype = np.complex)
 
     def __str__(self):
-        return "T门的共轭转置"
+        return "The conjugate transpose of T gate"
 
     @staticmethod
     def type():
-        """
-        :return: 返回T_dagger
-        """
         return GateType.T_dagger
 
     def inverse(self):
@@ -978,8 +1042,8 @@ class TDaggerGate(BasicGate):
 T_dagger = TDaggerGate()
 
 class CZGate(BasicGate):
-    """
-    CZ门
+    """ controlled-Z gate
+
     """
 
     def __init__(self):
@@ -1005,13 +1069,10 @@ class CZGate(BasicGate):
         ], dtype = np.complex)
 
     def __str__(self):
-        return "CZ门"
+        return "controlled-Z gate"
 
     @staticmethod
     def type():
-        """
-        :return: 返回CZ
-        """
         return GateType.CZ
 
     def inverse(self):
@@ -1023,8 +1084,9 @@ class CZGate(BasicGate):
 CZ = CZGate()
 
 class CXGate(BasicGate):
-    """
-    CX门
+    """ "controlled-X gate"
+
+
     """
 
     def __init__(self):
@@ -1050,13 +1112,10 @@ class CXGate(BasicGate):
         ], dtype = np.complex)
 
     def __str__(self):
-        return "CX门"
+        return "controlled-X gate"
 
     @staticmethod
     def type():
-        """
-        :return: 返回CX
-        """
         return GateType.CX
 
     def inverse(self):
@@ -1068,8 +1127,8 @@ class CXGate(BasicGate):
 CX = CXGate()
 
 class CYGate(BasicGate):
-    """
-    CY门
+    """ controlled-Y gate
+
     """
 
     def __init__(self):
@@ -1095,13 +1154,10 @@ class CYGate(BasicGate):
         ], dtype = np.complex)
 
     def __str__(self):
-        return "CY门"
+        return "controlled-Y gate"
 
     @staticmethod
     def type():
-        """
-        :return: 返回CY
-        """
         return GateType.CY
 
     def inverse(self):
@@ -1113,8 +1169,9 @@ class CYGate(BasicGate):
 CY = CYGate()
 
 class CHGate(BasicGate):
-    """
-    CH门
+    """ controlled-Hadamard gate
+
+
     """
 
     def __init__(self):
@@ -1140,13 +1197,10 @@ class CHGate(BasicGate):
         ], dtype = np.complex)
 
     def __str__(self):
-        return "CH门"
+        return "controlled-Hadamard gate"
 
     @staticmethod
     def type():
-        """
-        :return: 返回CH
-        """
         return GateType.CH
 
     def inverse(self):
@@ -1158,8 +1212,8 @@ class CHGate(BasicGate):
 CH = CHGate()
 
 class CRzGate(BasicGate):
-    """
-    CRz门
+    """ controlled-Rz gate
+
     """
 
     def __init__(self):
@@ -1187,13 +1241,10 @@ class CRzGate(BasicGate):
         ], dtype = np.complex)
 
     def __str__(self):
-        return "CRz门"
+        return "controlled-Rz gate"
 
     @staticmethod
     def type():
-        """
-        :return: 返回CRz
-        """
         return GateType.CRz
 
     def inverse(self):
@@ -1206,8 +1257,11 @@ class CRzGate(BasicGate):
 CRz = CRzGate()
 
 class CCXGate(BasicGate):
-    """
-    CCX门
+    """ Toffoli gate
+
+    When using this gate, it will be showed as a whole gate
+    instend of being split into smaller gate
+
     """
 
     def __init__(self):
@@ -1237,13 +1291,10 @@ class CCXGate(BasicGate):
         ], dtype = np.complex)
 
     def __str__(self):
-        return "CCX门"
+        return "Toffoli gate"
 
     @staticmethod
     def type():
-        """
-        :return: 返回CCX
-        """
         return GateType.CCX
 
     def inverse(self):
@@ -1255,8 +1306,12 @@ class CCXGate(BasicGate):
 CCX = CCXGate()
 
 class MeasureGate(BasicGate):
-    """
-    Measure门
+    """ z-axis Measure gate
+
+    Measure one qubit along z-axis.
+    After acting on the qubit(circuit flush), the qubit get the value 0 or 1
+    and the amplitude changed by the result.
+
     """
 
     def __init__(self):
@@ -1268,22 +1323,22 @@ class MeasureGate(BasicGate):
 
     @property
     def matrix(self) -> np.ndarray:
-        raise Exception("试图获取Measure门对应矩阵")
+        raise Exception("try to get the matrix of measure gate")
 
     def __str__(self):
-        return "Measure门"
+        return "Measure gate"
 
     @staticmethod
     def type():
-        """
-        :return: 返回Measure
-        """
         return GateType.Measure
 Measure = MeasureGate()
 
 class ResetGate(BasicGate):
-    """
-    Reset门
+    """ Reset gate
+
+    Reset the qubit into 0 state,
+    which change the amplitude
+
     """
 
     def __init__(self):
@@ -1295,23 +1350,23 @@ class ResetGate(BasicGate):
 
     @property
     def matrix(self) -> np.ndarray:
-        raise Exception("试图获取Reset门对应矩阵")
+        raise Exception("try to get the matrix of reset gate")
 
     def __str__(self):
-        return "Reset门"
+        return "Reset gate"
 
     @staticmethod
     def type():
-        """
-        :return: 返回Reset
-        """
         return GateType.Reset
 
 Reset = ResetGate()
 
 class BarrierGate(BasicGate):
-    """
-    Barrier门
+    """ Barrier gate
+
+    In IBMQ, barrier gate forbid the optimization cross the gate,
+    It is invalid in out circuit now.
+
     """
 
     def __init__(self):
@@ -1323,23 +1378,23 @@ class BarrierGate(BasicGate):
 
     @property
     def matrix(self) -> np.ndarray:
-        raise Exception("试图获取Barrier门对应矩阵")
+        raise Exception("try to get the matrix of barrier gate")
 
     def __str__(self):
-        return "Barrier门"
+        return "Barrier gate"
 
     @staticmethod
     def type():
-        """
-        :return: 返回Barrier
-        """
         return GateType.Barrier
 
 Barrier = BarrierGate()
 
 class SwapGate(BasicGate):
-    """
-    Swap门
+    """ Swap gate
+
+    In the computation, it will not change the amplitude.
+    Instead, it change the index of a Tangle.
+
     """
 
     def __init__(self):
@@ -1359,13 +1414,10 @@ class SwapGate(BasicGate):
         ], dtype = np.complex)
 
     def __str__(self):
-        return "Swap门"
+        return "Swap gate"
 
     @staticmethod
     def type():
-        """
-        :return: 返回Swap
-        """
         return GateType.Swap
 
     def inverse(self):
@@ -1376,55 +1428,52 @@ class SwapGate(BasicGate):
 Swap = SwapGate()
 
 class PermGate(BasicGate):
+    """ Permutation gate
+
+    A special gate defined in our circuit,
+    It can change an n-qubit qureg's amplitude by permutaion,
+    the parameter is a 2^n list describes the permutation.
+
     """
-    Perm门
-    """
 
-    @property
-    def extra_control_index(self):
-        return self.__extra_control_index
-
-    @extra_control_index.setter
-    def extra_control_index(self, extra_control_index):
-        self.__extra_control_index = extra_control_index
-
+    # life cycle
     def __init__(self):
         super().__init__()
         self.controls = 0
         self.targets = 0
         self.params = 0
-        self.extra_control_index = None
 
-    def __call__(self, other):
-        """
-        :param other: 置换list或置换tuple
-        :raise 类型错误
-        :return 修改参数后的self
+    def __call__(self, permutation):
+        """ pass permutation to the gate
+
+        the length of permutaion must be 2^n,
+        by which we can calculate the number of targets
+
+        Args:
+            permutation(list/tuple): the permutation parameters
+
+        Returns:
+            PermGate: the gate after filled by parameters
         """
         self.pargs = []
-        if not isinstance(other, list) or not isinstance(other, tuple):
-            TypeException("list或tuple", other)
-        if isinstance(other, tuple):
-            other = list(other)
-        length = len(other)
+        if not isinstance(permutation, list) or not isinstance(permutation, tuple):
+            TypeException("list or tuple", permutation)
+        if isinstance(permutation, tuple):
+            permutation = list(permutation)
+        length = len(permutation)
         if length == 0:
-            raise Exception("传入的list或tuple不应为空")
+            raise Exception("list or tuple shouldn't be empty")
         n = int(round(np.log2(length)))
         if (1 << n) != length:
-            raise Exception("传入的list或tuple的长度应该为2的幂次")
+            raise Exception("the length of list or tuple should be the power of 2")
         self.params = length
         self.targets = n
-        for idx in other:
+        for idx in permutation:
             if not isinstance(idx, int) or idx < 0 or idx >= self.params:
-                raise Exception("传入的应该为一个用整数表示的置换数组")
+                raise Exception("the element in the list/tuple should be integer")
             if idx in self.pargs:
-                raise Exception("传入的应该为一个用整数表示的置换数组(不应重复)")
+                raise Exception("the list/tuple should be a permutation for [0, 2^n) without repeat")
             self.pargs.append(idx)
-        self.extra_control_index = None
-        return self
-
-    def add_controls_bit(self, index):
-        self.extra_control_index = index
         return self
 
     @property
@@ -1439,13 +1488,10 @@ class PermGate(BasicGate):
         return matrix
 
     def __str__(self):
-        return "Perm门"
+        return "Permutation gate"
 
     @staticmethod
     def type():
-        """
-        :return: 返回Perm
-        """
         return GateType.Perm
 
     def inverse(self):
@@ -1464,8 +1510,10 @@ class PermGate(BasicGate):
 Perm = PermGate()
 
 class ControlPermMulDetailGate(BasicGate):
-    """
-    Perm门
+    """ controlled-Permutation gate
+
+    This gate is used to implement oracle in the order-finding algorithm
+
     """
 
     def __init__(self):
@@ -1474,22 +1522,28 @@ class ControlPermMulDetailGate(BasicGate):
         self.targets = 0
         self.params = 0
 
-    def __call__(self, other):
+    def __call__(self, params):
+        """ pass parameters to the gate
+
+        give parameters (a, N) to the gate
+
+        Args:
+            params(list/tuple): the oracle's parameters a and N
+
+        Returns:
+            ControlPermMulDetailGate: the gate after filled by parameters
         """
-        :param other: 置换list或置换tuple
-        :raise 类型错误
-        :return 修改参数后的self
-        """
+
         self.pargs = []
-        if not isinstance(other, list) or not isinstance(other, tuple):
-            TypeException("list或tuple", other)
-        if isinstance(other, tuple):
-            other = list(other)
-        length = len(other)
+        if not isinstance(params, list) or not isinstance(params, tuple):
+            TypeException("list or tuple", params)
+        if isinstance(params, tuple):
+            params = list(params)
+        length = len(params)
         if length != 2:
-            raise Exception("传入的list或tuple应包含两个值")
-        a = other[0]
-        N = other[1]
+            raise Exception("the list or tuple passed in should contain two values")
+        a = params[0]
+        N = params[1]
         n = int(np.ceil(np.log2(N)))
         self.params = 2
         self.targets = n
@@ -1514,19 +1568,19 @@ class ControlPermMulDetailGate(BasicGate):
         return matrix
 
     def __str__(self):
-        return "Perm门"
+        return "controlled-Permutation gate"
 
     @staticmethod
     def type():
-        """
-        :return: 返回Perm
-        """
         return GateType.ControlPermMulDetail
 ControlPermMulDetail = ControlPermMulDetailGate()
 
 class PermShiftGate(PermGate):
-    """
-    对一个qureg进行加法或减法操作，本质上是一种PermGate
+    """ act an increase or subtract operate with modulus.
+
+    This Class is the subClass of PermGate.
+    In fact, we calculate the permutation by the parameters.
+
     """
 
     def __init__(self):
@@ -1536,35 +1590,48 @@ class PermShiftGate(PermGate):
         self.params = 0
 
     def __call__(self, shift, N = None):
-        """
-        :param shift: shift的值
-               N:     模数
-        :raise: 类型错误
-        :return 修改参数后的self
+        """ pass parameters to the gate
+
+        give parameters (shift, N) to the gate
+
+        Args:
+            shift(int): the number (can be negative) the qureg increase
+            N(int): the modulus
+
+        Returns:
+            PermShiftGate: the gate after filled by parameters
         """
         if not isinstance(shift, int):
             raise TypeException("int", shift)
         if N is None:
-            raise Exception("PermShift需要两个参数")
+            raise Exception("PermShift need two parameters")
         if not isinstance(N, int):
             raise TypeException("int", N)
 
         if N <= 0:
-            raise Exception("传入的模数应为正整数")
+            raise Exception("the modulus should be integer")
         n = int(round(np.log2(N)))
-        if (1 << n) != N:
-            raise Exception("传入的N应该为2的幂次")
         self.params = N
         self.targets = n
-        for idx in range(N):
-            self.pargs.append(((idx + shift) % N + N) % N)
+        for idx in range(1 << self.targets):
+            idxx = idx // 2
+            controlxx = idx % 2
+            if controlxx == 0:
+                self.pargs.append(idx)
+            else:
+                if idxx < N:
+                    self.pargs.append(idx)
+                else:
+                    self.pargs.append(((((idxx + shift) % N + N) % N) << 1) + controlxx)
         return self
 
 PermShift = PermShiftGate()
 
 class ControlPermShiftGate(PermGate):
-    """
-    对一个qureg进行加法或减法操作，本质上是一种PermGate
+    """ Controlled-PermShiftGate
+
+    PermShiftGate with a control bit
+
     """
 
     def __init__(self):
@@ -1574,21 +1641,26 @@ class ControlPermShiftGate(PermGate):
         self.params = 0
 
     def __call__(self, shift, N = None):
-        """
-        :param shift: shift的值
-               N:     模数
-        :raise: 类型错误
-        :return 修改参数后的self
+        """ pass parameters to the gate
+
+        give parameters (shift, N) to the gate
+
+        Args:
+            shift(int): the number (can be negative) the qureg increase
+            N(int): the modulus
+
+        Returns:
+            PermShiftGate: the gate after filled by parameters
         """
         if not isinstance(shift, int):
             raise TypeException("int", shift)
         if N is None:
-            raise Exception("PermShift需要三个参数")
+            raise Exception("ControlPermShift need two parameters")
         if not isinstance(N, int):
             raise TypeException("int", N)
 
         if N <= 0:
-            raise Exception("传入的模数应为正整数")
+            raise Exception("the modulus should be integer")
         n = int(np.ceil(np.log2(N)))
         self.params = N
         self.targets = n + 1
@@ -1608,8 +1680,11 @@ class ControlPermShiftGate(PermGate):
 ControlPermShift = ControlPermShiftGate()
 
 class PermMulGate(PermGate):
-    """
-    对一个qureg进行乘法操作，本质上是一种PermGate
+    """ act an multiply operate with modulus.
+
+    This Class is the subClass of PermGate.
+    In fact, we calculate the permutation by the parameters.
+
     """
 
     def __init__(self):
@@ -1619,25 +1694,30 @@ class PermMulGate(PermGate):
         self.params = 0
 
     def __call__(self, shift, N = None):
-        """
-        :param shift: shift的值
-               N:     模数
-        :raise: 类型错误
-        :return 修改参数后的self
+        """ pass parameters to the gate
+
+        give parameters (shift, N) to the gate
+
+        Args:
+            shift(int): the number (can be negative) the qureg increase
+            N(int): the modulus
+
+        Returns:
+            PermMulGate: the gate after filled by parameters
         """
         if not isinstance(shift, int):
             raise TypeException("int", shift)
         if N is None:
-            raise Exception("PermMul需要两个参数")
+            raise Exception("PermMul need two parameters")
         if not isinstance(N, int):
             raise TypeException("int", N)
         if N <= 0:
-            raise Exception("传入的模数应为正整数")
+            raise Exception("the modulus should be integer")
         if shift <= 0:
-            raise Exception("传入的乘数应为正整数")
+            raise Exception("the shift should be integer")
 
         if np.gcd(shift, N) != 1:
-            raise Exception("乘数和模数应当互质,但{}和{}不互质".format(shift, N))
+            raise Exception(f"shift and N should be co-prime, but {shift} and {N} are not.")
 
         shift = shift % N
 
@@ -1655,8 +1735,9 @@ class PermMulGate(PermGate):
 PermMul = PermMulGate()
 
 class ControlPermMulGate(PermGate):
-    """
-    对一个qureg进行乘法操作，本质上是一种PermGate
+    """ a controlled-PermMulGate
+
+
     """
 
     def __init__(self):
@@ -1666,25 +1747,30 @@ class ControlPermMulGate(PermGate):
         self.params = 0
 
     def __call__(self, shift, N = None):
-        """
-        :param shift: shift的值
-               N:     模数
-        :raise: 类型错误
-        :return 修改参数后的self
+        """ pass parameters to the gate
+
+        give parameters (shift, N) to the gate
+
+        Args:
+            shift(int): the number (can be negative) the qureg increase
+            N(int): the modulus
+
+        Returns:
+            ControlPermMulGate: the gate after filled by parameters
         """
         if not isinstance(shift, int):
             raise TypeException("int", shift)
         if N is None:
-            raise Exception("PermMul需要两个参数")
+            raise Exception("PermMul need two parameters")
         if not isinstance(N, int):
             raise TypeException("int", N)
         if N <= 0:
-            raise Exception("传入的模数应为正整数")
+            raise Exception("the modulus should be integer")
         if shift <= 0:
-            raise Exception("传入的乘数应为正整数")
+            raise Exception("the shift should be integer")
 
         if np.gcd(shift, N) != 1:
-            raise Exception("乘数和模数应当互质,但{}和{}不互质".format(shift, N))
+            raise Exception(f"shift and N should be co-prime, but {shift} and {N} are not.")
 
         shift = shift % N
 
@@ -1707,8 +1793,11 @@ class ControlPermMulGate(PermGate):
 ControlPermMul = ControlPermMulGate()
 
 class PermFxGate(PermGate):
-    """
-    对一个qureg进行f : {0,1}^n -> {0, 1} 的oracle操作，本质上是一种PermGate
+    """ act an Fx oracle on a qureg
+
+    This Class is the subClass of PermGate.
+    In fact, we calculate the permutation by the parameters.
+
     """
 
     def __init__(self):
@@ -1718,20 +1807,26 @@ class PermFxGate(PermGate):
         self.params = 0
 
     def __call__(self, f):
-        """
-        :param f:     list
-        :raise: 类型错误
-        :return 修改参数后的self
+        """ pass Fx to the gate
+
+        Fx should be a 2^n list that represent a boolean function
+        {0, 1}^n -> {0, 1}
+
+        Args:
+            f(list):contain 2^n values which are 0 or 1
+
+        Returns:
+            PermFxGate: the gate after filled by parameters
         """
         if not isinstance(f, list):
             raise TypeException("list", f)
         n = int(round(np.log2(len(f))))
         if len(f) != 1 << n:
-            raise Exception("f的定义域不是{0, 1}^n")
+            raise Exception("the length of f should be the power of 2")
         N = 1 << n
         for i in range(N):
             if f[i] != 0 and f[i] != 1:
-                raise Exception("f的值域不是{0, 1}")
+                raise Exception("the range of f should be {0, 1}")
 
         self.params = 1 << (n + 1)
         self.targets = n + 1
@@ -1755,20 +1850,17 @@ class PermFxGate(PermGate):
                     np.append(matrix, 0)
         return matrix
 
-    def __str__(self):
-        return "Perm门"
-
     @staticmethod
     def type():
-        """
-        :return: 返回Perm
-        """
         return GateType.Perm
 PermFx = PermFxGate()
 
 class CustomGate(BasicGate):
-    """
-    Custom门
+    """ Custom gate
+
+    act an unitary matrix on the qureg,
+    the parameters is the matrix
+
     """
 
     def __init__(self):
@@ -1777,37 +1869,39 @@ class CustomGate(BasicGate):
         self.targets = 0
         self.params = 0
 
-    def __call__(self, other):
+    def __call__(self, matrix):
+        """ pass the unitary matrix
+
+        Args:
+            matrix(list/tuple): contain 2^n * 2^n elements, which
+            form an unitary matrix.
+
+
+        Returns:
+            CustomGate: the gate after filled by parameters
         """
-        :param other: 置换list或置换tuple
-        :raise TypeException
-        :return 修改参数后的self
-        """
-        if not isinstance(other, list) and not isinstance(other, tuple):
-            raise TypeException("list或tuple", other)
-        if isinstance(other, tuple):
-            other = list(other)
-        length = len(other)
+        if not isinstance(matrix, list) and not isinstance(matrix, tuple):
+            raise TypeException("list or tuple", matrix)
+        if isinstance(matrix, tuple):
+            matrix = list(matrix)
+        length = len(matrix)
         if length == 0:
-            raise Exception("传入的list或tuple不应为空")
+            raise Exception("the list or tuple passed in shouldn't be empty")
         n2 = int(round(np.sqrt(length)))
         if n2 * n2 != length:
-            raise Exception("传入的list或tuple的长度应该为2的幂次的平方")
+            raise Exception("the length of list or tuple should be the square of power(2, n)")
         n = int(round(np.log2(n2)))
         if (1 << n) != n2:
-            raise Exception("传入的list或tuple的长度应该为2的幂次的平方")
+            raise Exception("the length of list or tuple should be the square of power(2, n)")
         self.targets = n
-        self.matrix = np.array([other], dtype = np.complex)
+        self.matrix = np.array([matrix], dtype = np.complex)
         return self
 
     def __str__(self):
-        return "Custom门"
+        return "Custom gate"
 
     @staticmethod
     def type():
-        """
-        :return: 返回Custom
-        """
         return GateType.Custom
 
     def inverse(self):
@@ -1822,9 +1916,12 @@ class CustomGate(BasicGate):
 
 Custom = CustomGate()
 
-class ShorInitalGate(BasicGate):
-    """
-    Shor IQFT前的初态
+class ShorInitialGate(BasicGate):
+    """ a oracle gate to preparation the initial state before IQFT in Shor algorithm
+
+    backends will preparation the initial state by classical operator
+    with a fixed measure result of second register.
+
     """
 
     def __init__(self):
@@ -1834,18 +1931,23 @@ class ShorInitalGate(BasicGate):
         self.params = 0
 
     def __call__(self, other):
-        """
-        :param other: 置换list或置换tuple
-        :raise TypeException
-        :return 修改参数后的self
+        """ pass the parameters
+
+        Args:
+            other(list/tuple): contain the parameters x, N and u which indicate
+            the base number, exponential and the measure result of the second register.
+
+        Returns:
+            ShorInitialGate: the gate after filled by parameters
+
         """
         if not isinstance(other, list) and not isinstance(other, tuple):
-            raise TypeException("list或tuple", other)
+            raise TypeException("list or tuple", other)
         if isinstance(other, tuple):
             other = list(other)
         length = len(other)
         if length != 3:
-            raise Exception("传入的list或tuple不应包含3个值")
+            raise Exception("list or tuple passed in should contain three values")
         x = other[0]
         N = other[1]
         u = other[2]
@@ -1856,58 +1958,87 @@ class ShorInitalGate(BasicGate):
 
     @staticmethod
     def type():
-        """
-        :return: 返回Perm
-        """
         return GateType.ShorInital
 
-ShorInital = ShorInitalGate()
+ShorInitial = ShorInitialGate()
 
 class GateBuilderModel(object):
+    """ A model that help users get gate without circuit
+
+    The model is designed to help users get some gates independent of the circuit
+    Because there is no clear API to setting a gate's control bit indexes and
+    target bit indexes without circuit or qureg.
+
+    Users should set the gateType of the GateBuilder, than set necessary parameters
+    (Targs, Cargs, Pargs). After that, user can get a gate from GateBuilder.
+
+    """
+
+    def __init__(self):
+        self.gateType = GateType.Error
+        self.pargs = []
+        self.cargs = []
+        self.targs = []
 
     def setGateType(self, type):
+        """ pass the gateType for the builder
+
+        Args:
+            type(GateType): the type passed in
+        """
+
         self.gateType = type
 
-    def setPargs(self, pargs):
-        """
-        :param pargs:
-            1) list<int>
-            2) int
-        :raise TypeException
-        """
-        if isinstance(pargs, list):
-            self.pargs = pargs
-        else:
-            self.pargs = [pargs]
-
     def setTargs(self, targs):
+        """ pass the target bits' indexes of the gate
+
+        The targets should be passed.
+
+        Args:
+            targs(list/int/float/complex): the target bits' indexes the gate act on.
         """
-        :param targs:
-            1) list<int>
-            2) int
-        """
+
         if isinstance(targs, list):
             self.targs = targs
         else:
             self.targs = [targs]
 
     def setCargs(self, cargs):
-        """
-        :param cargs:
-            1) list<int>
-            2) int
+        """ pass the control bits' indexes of the gate
+
+        if the gate don't need the control bits, needn't to call this function.
+
+        Args:
+            cargs(list/int/float/complex): the control bits' indexes the gate act on.
         """
         if isinstance(cargs, list):
             self.cargs = cargs
         else:
             self.cargs = [cargs]
 
+    def setPargs(self, pargs):
+        """ pass the parameters of the gate
+
+        if the gate don't need the parameters, needn't to call this function.
+
+        Args:
+            pargs(list/int/float/complex): the parameters filled in the gate
+        """
+
+        if isinstance(pargs, list):
+            self.pargs = pargs
+        else:
+            self.pargs = [pargs]
+
     def setArgs(self, args):
+        """ pass the bits' indexed of the gate by one time
+
+        The control bits' indexed first, and followed the targets bits' indexed.
+
+        Args:
+            args(list/int/float/complex): the act bits' indexes of the gate
         """
-        :param args:
-            1) list<int>
-            2) int
-        """
+
         if isinstance(args, list):
             if self.getCargsNumber() > 0:
                 self.setCargs(args[0:self.getCargsNumber()])
@@ -1917,28 +2048,59 @@ class GateBuilderModel(object):
             self.setTargs([args])
 
     def getCargsNumber(self):
-        gate = self.__inner_generate_gate__()
+        """ get the number of cargs of the gate
+
+        once the gateType is set, the function is valid.
+
+        Return:
+            int: the number of cargs
+        """
+        gate = self._inner_generate_gate()
         return gate.controls
 
     def getTargsNumber(self):
-        gate = self.__inner_generate_gate__()
+        """ get the number of targs of the gate
+
+        once the gateType is set, the function is valid.
+
+        Return:
+            int: the number of targs
+        """
+
+        gate = self._inner_generate_gate()
         return gate.targets
 
     def getParamsNumber(self):
-        gate = self.__inner_generate_gate__()
+        """ get the number of pargs of the gate
+
+        once the gateType is set, the function is valid.
+
+        Return:
+            int: the number of pargs
+        """
+
+        gate = self._inner_generate_gate()
         return gate.params
 
     def getGate(self):
-        """
-        :raise
-            1) 门类型未设置
-            2) 参数设置错误
-        :return: gate
-        """
-        gate = self.__inner_generate_gate__()
-        return self.__inner_complete_gate__(gate)
+        """ get the gate
 
-    def __inner_generate_gate__(self):
+        once the parameters are set, the function is valid.
+
+        Return:
+            BasicGate: the gate with parameters set in the builder
+        """
+        gate = self._inner_generate_gate()
+        return self._inner_complete_gate(gate)
+
+    def _inner_generate_gate(self):
+        """ private tool function
+
+        get an initial gate by the gateType set for builder
+
+        Return:
+            BasicGate: the initial gate
+        """
         if self.gateType == GateType.H:
             return HGate()
         elif self.gateType == GateType.S:
@@ -1991,12 +2153,15 @@ class GateBuilderModel(object):
             return CustomGate()
         elif self.gateType == GateType.Reset:
             return ResetGate()
-        raise Exception("未设置门类型或不支持的门类型")
+        raise Exception("the gate type of the builder is wrong")
 
-    def __inner_complete_gate__(self, gate : BasicGate):
-        """
-        :raise 参数设置错误
-        :return: gate
+    def _inner_complete_gate(self, gate : BasicGate):
+        """ private tool function
+
+        filled the initial gate by the parameters set for builder
+
+        Return:
+            BasicGate: the gate with parameters set in the builder
         """
         if self.gateType == GateType.Perm:
             gate = gate(self.pargs)
@@ -2006,44 +2171,48 @@ class GateBuilderModel(object):
             if len(self.targs) == gate.targets:
                 gate.targs = copy.deepcopy(self.targs)
             else:
-                raise Exception("作用位数量错误")
+                raise Exception("the number of targs is wrong")
 
         if gate.controls != 0:
             if len(self.cargs) == gate.controls:
                 gate.cargs = copy.deepcopy(self.cargs)
             else:
-                raise Exception("控制位数量错误")
+                raise Exception("the number of cargs is wrong")
         if gate.params != 0 and self.gateType != GateType.Perm:
             if len(self.pargs) == gate.params:
                gate.pargs = copy.deepcopy(self.pargs)
             else:
-                raise Exception("参数位数量错误")
+                raise Exception("the number of pargs is wrong")
 
         return gate
 
-    '''
     @staticmethod
-    def refine_gate(circuit : Circuit, index = None):
-        if index is None:
-            index = [i for i in range(len(circuit.qubits))]
-        gates = []
-        builder = GateBuilderModel()
-        for gate in circuit.gates:
-            builder.setGateType(gate.type)
-            builder.setCargs(gate.cargs)
-            builder.setTargs(gate.targs)
-            builder.setPargs(gate.pargs)
-            gates.append(builder.getGate())
-        return gates
+    def apply_gates(gate: BasicGate, circuit: Circuit):
+        """ act a gate on some circuit.
 
-    def __init__(self):
-        self.gateType = GateType.Error
-        self.pargs = []
-        self.targs = []
-        self.cargs = []
-    '''
+        Args:
+            gate(BasicGate): the gate which is to be act on the circuit.
+            circuit(Circuit): the circuit which the gate acted on.
+        """
+
+        qubits = []
+        for control in gate.cargs:
+            qubits.append(circuit[control])
+        for target in gate.targs:
+            qubits.append(circuit[target])
+        circuit.__add_qureg_gate__(gate, qubits)
+
     @staticmethod
     def reflect_gates(gates : list):
+        """ build the inverse of a series of gates.
+
+        Args:
+            gates(list<BasicGate>): the gate list whose inverse is need to be gotten.
+
+        Return:
+            list<BasicGate>: the inverse of the gate list.
+        """
+
         reflect = []
         l_g = len(gates)
         for index in range(l_g - 1, -1, -1):
@@ -2051,7 +2220,14 @@ class GateBuilderModel(object):
         return reflect
 
     @staticmethod
-    def reflect_apply_gates(gates: list, circuit):
+    def reflect_apply_gates(gates: list, circuit: Circuit):
+        """ act the inverse of a series of gates on some circuit.
+
+        Args:
+            gates(list<BasicGate>): the gate list whose inverse is need to be gotten.
+            circuit(Circuit): the circuit which the inverse acted on.
+        """
+
         l_g = len(gates)
         for index in range(l_g - 1, -1, -1):
             gate = gates[index].inverse()
@@ -2065,6 +2241,11 @@ class GateBuilderModel(object):
 GateBuilder = GateBuilderModel()
 
 class ExtensionGateType(Enum):
+    """ indicate the type of a complex gate
+
+    Every Gate have a attribute named type, which indicate its type.
+    """
+
     QFT = 0
     IQFT = 1
     RZZ = 2
@@ -2076,6 +2257,36 @@ class ExtensionGateType(Enum):
     CCRz = 8
 
 class gateModel(object):
+    """ the abstract SuperClass of all complex quantum gates
+
+    These quantum gates are generally too complex to act on reality quantum
+    hardware directyly. The class is devoted to give some reasonable synthetize
+    of the gates so that user can use these gates as basic gates but get a
+    series one-qubit and two-qubit gates in final.
+
+    All complex quantum gates described in the framework have
+    some common attributes and some common functions
+    which defined in this class.
+
+    Note that all subClass must overloaded the function "build_gate", the overloaded
+    of the function "__or__" and "__call__" is optional.
+
+    Attributes:
+        controls(list<int>): the number of the control bits of the gate
+        cargs(list<int>): the list of the index of control bits in the circuit
+        carg(int, read only): the first object of cargs
+
+        targets(list<int>): the number of the target bits of the gate
+        targs(list<int>): the list of the index of target bits in the circuit
+        targ(int, read only): the first object of targs
+
+        params(list): the number of the parameter of the gate
+        pargs(list): the list of the parameter
+        prag(read only): the first object of pargs
+
+        type(GateType, read only): gate's type described by ExtensionGateType
+    """
+
     # 门对应控制位数
     @property
     def controls(self) -> int:
@@ -2173,14 +2384,22 @@ class gateModel(object):
 
     @staticmethod
     def qureg_trans(other):
-        """
-        将输入转化为标准Qureg
-        :param other 转换的对象
-                1）tuple<qubit, qureg>
-                2) qureg/list<qubit, qureg>
-                3) Circuit
-        :return Qureg
-        :raise TypeException
+        """ tool function that change tuple/list/Circuit to a Qureg
+
+        For convince, the user can input tuple/list/Circuit/Qureg, but developer
+        need only deal with Qureg
+
+        Args:
+            other: the item is to be transformed, it can have followed form:
+                1) Circuit
+                2) Qureg
+                3) tuple<qubit, qureg>
+                4) list<qubit, qureg>
+        Returns:
+            Qureg: the qureg transformed into.
+
+        Raises:
+            TypeException: the input form is wrong.
         """
         if isinstance(other, tuple):
             other = list(other)
@@ -2192,22 +2411,26 @@ class gateModel(object):
                 elif isinstance(item, Qureg):
                     qureg.extend(item)
                 else:
-                    raise TypeException("qubit或tuple<qubit, qureg>或qureg或list<qubit, qureg>或circuit", other)
+                    raise TypeException("qubit or tuple<qubit, qureg> or qureg或list<qubit, qureg> or circuit", other)
         elif isinstance(other, Qureg):
             qureg = other
         elif isinstance(other, Circuit):
             qureg = Qureg(other.qubits)
         else:
-            raise TypeException("qubit或tuple<qubit>或qureg或circuit", other)
+            raise TypeException("qubit or tuple<qubit> or qureg or circuit", other)
         return qureg
 
     @staticmethod
     def permit_element(element):
-        """
-        参数只能为int/float/complex
-        :param element: 待判断的元素
-        :return: 是否允许作为参数
-        :raise 不允许的参数
+        """ judge whether the type of a parameter is int/float/complex
+
+        for a quantum gate, the parameter should be int/float/complex
+
+        Args:
+            element: the element to be judged
+
+        Returns:
+            bool: True if the type of element is int/float/complex
         """
         if isinstance(element, int) or isinstance(element, float) or isinstance(element, complex):
             return True
@@ -2215,13 +2438,30 @@ class gateModel(object):
             return False
 
     def __or__(self, other):
+        """deal the operator '|'
+
+        Use the syntax "gate | circuit" or "gate | qureg" or "gate | qubit"
+        to add the gate into the circuit
+        When a one qubit gate act on a qureg or a circuit, it means Adding
+        the gate on all the qubit of the qureg or circuit
+        Some Examples are like this:
+
+        QFT       | circuit
+        IQFT      | circuit([i for i in range(n - 2)])
+
+        Note that the order of qubits is that control bits first
+        and target bits followed.
+
+        Args:
+            targets: the targets the gate acts on, it can have following form,
+                1) Circuit
+                2) qureg
+                3) tuple<qubit, qureg>
+                4) list<qubit, qureg>
+        Raise:
+            TypeException: the type of other is wrong
         """
-        处理作用于多个位或带有参数的门
-        :param other: 作用的对象
-            1）tuple<qubit, qureg>
-            2) qureg/list<qubit, qureg>
-            3) Circuit
-        """
+
         if isinstance(other, tuple):
             other = list(other)
         if isinstance(other, list):
@@ -2251,48 +2491,66 @@ class gateModel(object):
                 qubits.append(qureg[target])
             qureg.circuit.__add_qureg_gate__(gate, qubits)
 
-    def __call__(self, other):
+    def __call__(self, params):
+        """ give parameters for the gate
+
+        give parameters by "()".
+
+        Args:
+            params: give parameters for the gate, it can have following form,
+                1) int/float/complex
+                2) list<int/float/complex>
+                3) tuple<int/float/complex>
+        Raise:
+            TypeException: the type of params is wrong
+
+        Returns:
+            BasicGate: the gate after filled by parameters
         """
-        使用()添加参数
-        :param other: 添加的参数
-            1) int/float/complex
-            2) list<int/float/complex>
-            3) tuple<int/float/complex>
-        :raise 类型错误
-        :return 修改参数后的self
-        """
-        if self.permit_element(other):
-            self.pargs = [other]
-        elif isinstance(other, list):
+        if self.permit_element(params):
+            self.pargs = [params]
+        elif isinstance(params, list):
             self.pargs = []
-            for element in other:
+            for element in params:
                 if not self.permit_element(element):
-                    raise TypeException("int或float或complex", element)
+                    raise TypeException("int or float or complex", element)
                 self.pargs.append(element)
-        elif isinstance(other, tuple):
+        elif isinstance(params, tuple):
             self.pargs = []
-            for element in other:
+            for element in params:
                 if not self.permit_element(element):
-                    raise TypeException("int或float或complex", element)
+                    raise TypeException("int or float or complex", element)
                 self.pargs.append(element)
         else:
-            raise TypeException("int/float/complex或list<int/float/complex>或tuple<int/float/complex>", other)
+            raise TypeException("int/float/complex or list<int/float/complex> or tuple<int/float/complex>", params)
         return self
 
-    def build_gate(self, other):
-        GateBuilder.setGateType(GateType.ID)
-        GateBuilder.setTargs(other)
+    def build_gate(self, qureg):
+        """ the overloaded the build_gate can return two kind of values:
+            1)list<BasicGate>: in this way, developer use gateBuilder to generator a series of gates
+            2)Circuit: in this way, developer can generator a circuit whose bits number is same as the
+                qureg the gate, and apply gates on in. for Example:
+                    qureg = self.qureg_trans(qureg)
+                    circuit = len(qureg)
+                    X | circuit
+                    return X
+        Args:
+            qureg: the gate
+        Returns:
+            Circuit/list<BasicGate>: synthetize result
+        """
+        qureg = self.qureg_trans(qureg)
+        GateBuilder.setGateType(GateType.X)
+        GateBuilder.setTargs(len(qureg) - 1)
         return [GateBuilder.getGate()]
 
 class QFTModel(gateModel):
+    """ QFT oracle
+
+    """
     def __or__(self, other):
-        """
-        给上QFT对应的门
-        :param other 转换的对象
-                1）tuple<qubit, qureg>
-                2) qureg/list<qubit, qureg>
-                3) Circuit
-        :raise TypeException
+        """ It can be removed after code refactoring
+
         """
         qureg = self.qureg_trans(other)
         for i in range(len(other)):
@@ -2318,14 +2576,12 @@ class QFTModel(gateModel):
 QFT = QFTModel()
 
 class IQFTModel(gateModel):
+    """ IQFT gate
+
+    """
     def __or__(self, other):
-        """
-        给上QFT对应的门
-        :param other 转换的对象
-                1）tuple<qubit, qureg>
-                2) qureg/list<qubit, qureg>
-                3) Circuit
-        :raise TypeException
+        """ It can be removed after code refactoring
+
         """
         qureg = self.qureg_trans(other)
         for i in range(len(other) - 1, -1, -1):
@@ -2350,14 +2606,13 @@ class IQFTModel(gateModel):
 IQFT = IQFTModel()
 
 class RZZModel(gateModel):
+    """ RZZ gate
+
+    """
+
     def __or__(self, other):
-        """
-        给上RZZ对应的门
-        :param other 转换的对象
-                1）tuple<qubit, qureg>
-                2) qureg/list<qubit, qureg>
-                3) Circuit
-        :raise TypeException
+        """ It can be removed after code refactoring
+
         """
         qureg = self.qureg_trans(other)
         CX | (qureg[0], qureg[1])
@@ -2387,14 +2642,12 @@ class RZZModel(gateModel):
 RZZ = RZZModel()
 
 class CU1Gate(gateModel):
+    """ Controlled-U1 gate
+
+    """
     def __or__(self, other):
-        """
-        给上CU1对应的门
-        :param other 转换的对象
-                1）tuple<qubit, qureg>
-                2) qureg/list<qubit, qureg>
-                3) Circuit
-        :raise TypeException
+        """ It can be removed after code refactoring
+
         """
         qureg = self.qureg_trans(other)
         U1(self.parg / 2) | qureg[0]
@@ -2436,14 +2689,12 @@ class CU1Gate(gateModel):
 CU1 = CU1Gate()
 
 class CRz_DecomposeModel(gateModel):
+    """ Controlled-Rz gate
+
+    """
     def __or__(self, other):
-        """
-        给上CRz对应的门
-        :param other 转换的对象
-                1）tuple<qubit, qureg>
-                2) qureg/list<qubit, qureg>
-                3) Circuit
-        :raise TypeException
+        """ It can be removed after code refactoring
+
         """
         qureg = self.qureg_trans(other)
         Rz(self.parg / 2) | qureg[0]
@@ -2485,14 +2736,12 @@ class CRz_DecomposeModel(gateModel):
 CRz_Decompose = CRz_DecomposeModel()
 
 class CU3Gate(gateModel):
+    """ controlled-U3 gate
+
+    """
     def __or__(self, other):
-        """
-        给上CU3对应的门
-        :param other 转换的对象
-                1）tuple<qubit, qureg>
-                2) qureg/list<qubit, qureg>
-                3) Circuit
-        :raise TypeException
+        """ It can be removed after code refactoring
+
         """
         qureg = self.qureg_trans(other)
         U1((self.pargs[1] + self.pargs[2]) / 2) | qureg[0]
@@ -2539,14 +2788,12 @@ class CU3Gate(gateModel):
 CU3 = CU3Gate()
 
 class CCRzModel(gateModel):
+    """ controlled-Rz gate with two control bits
+
+    """
     def __or__(self, other):
-        """
-        给上CCRz对应的门
-        :param other 转换的对象
-                1）tuple<qubit, qureg>
-                2) qureg/list<qubit, qureg>
-                3) Circuit
-        :raise TypeException
+        """ It can be removed after code refactoring
+
         """
         qureg = self.qureg_trans(other)
         CRz_Decompose(self.parg / 2)  | (qureg[1], qureg[2])
@@ -2556,35 +2803,21 @@ class CCRzModel(gateModel):
         CRz_Decompose(self.parg / 2)  | (qureg[0], qureg[2])
 
     def build_gate(self, other):
-        gates = CRz_Decompose(self.parg / 2).build_gate(other)
+        qureg = Circuit(3)
+        CRz_Decompose(self.parg / 2) | (qureg[1], qureg[2])
+        CX | (qureg[0], qureg[1])
+        CRz_Decompose(-self.parg / 2) | (qureg[1], qureg[2])
+        CX | (qureg[0], qureg[1])
+        CRz_Decompose(self.parg / 2) | (qureg[0], qureg[2])
 
-        GateBuilder.setGateType(GateType.CX)
-        GateBuilder.setCargs(other[0])
-        GateBuilder.setTargs(other[1])
-        gates.append(GateBuilder.getGate())
-
-        gates = CRz_Decompose(-self.parg / 2).build_gate(other)
-
-        GateBuilder.setGateType(GateType.CX)
-        GateBuilder.setCargs(other[0])
-        GateBuilder.setTargs(other[1])
-        gates.append(GateBuilder.getGate())
-
-        gates = CRz_Decompose(self.parg / 2).build_gate(other)
-
-        return gates
+        return qureg
 
 CCRz = CCRzModel()
 
 class FredkinModel(gateModel):
     def __or__(self, other):
-        """
-        给上Fredkin对应的门
-        :param other 转换的对象
-                1）tuple<qubit, qureg>
-                2) qureg/list<qubit, qureg>
-                3) Circuit
-        :raise TypeException
+        """ It can be removed after code refactoring
+
         """
         qureg = self.qureg_trans(other)
         CX            | (qureg[2], qureg[1])
@@ -2612,13 +2845,8 @@ Fredkin = FredkinModel()
 
 class CCX_DecomposeModel(gateModel):
     def __or__(self, other):
-        """
-        给上Fredkin对应的门
-        :param other 转换的对象
-                1）tuple<qubit, qureg>
-                2) qureg/list<qubit, qureg>
-                3) Circuit
-        :raise TypeException
+        """ It can be removed after code refactoring
+
         """
         qureg = self.qureg_trans(other)
         H           | qureg[2]
@@ -2710,87 +2938,15 @@ class CCX_DecomposeModel(gateModel):
 
 CCX_Decompose = CCX_DecomposeModel()
 
-class ExtensionGateBuilderModel(object):
-
-    def setGateType(self, type):
-        self.gateType = type
-
-    def setPargs(self, pargs):
-        """
-        :param pargs:
-            1) list<int>
-            2) int
-        :raise TypeException
-        """
-        if isinstance(pargs, list):
-            self.pargs = pargs
-        else:
-            self.pargs = [pargs]
-
-    def setTargs(self, targs):
-        """
-        :param targs:
-            1) list<int>
-            2) int
-        """
-        if isinstance(targs, list):
-            self.targs = targs
-        else:
-            self.targs = [targs]
-
-    def getTargsNumber(self):
-        gate = self.__inner_generate_gate__()
-        return gate.targets
-
-    def getParamsNumber(self):
-        gate = self.__inner_generate_gate__()
-        return gate.params
-
-    def getGate(self):
-        """
-        :raise
-            1) 门类型未设置
-            2) 参数设置错误
-        :return: gate
-        """
-        return self.__inner_generate_gate__()
-
-    def __inner_generate_gate__(self):
-        if self.gateType == ExtensionGateType.QFT:
-            return QFT.build_gate(self.targs)
-        elif self.gateType == ExtensionGateType.IQFT:
-            return IQFT.build_gate(self.targs)
-        elif self.gateType == ExtensionGateType.RZZ:
-            return RZZ(self.pargs).build_gate(self.targs)
-        elif self.gateType == ExtensionGateType.CU1:
-            return CU1(self.pargs).build_gate(self.targs)
-        elif self.gateType == ExtensionGateType.CU3:
-            return CU3(self.pargs).build_gate(self.targs)
-        elif self.gateType == ExtensionGateType.Fredkin:
-            return Fredkin.build_gate(self.targs)
-        elif self.gateType == ExtensionGateType.CCX:
-            return CCX_Decompose.build_gate(self.targs)
-        elif self.gateType == ExtensionGateType.CRz:
-            return CRz_Decompose(self.pargs).build_gate(self.targs)
-        elif self.gateType == ExtensionGateType.CCRz:
-            return CCRz(self.pargs).build_gate(self.targs)
-
-        raise Exception("未设置门类型或不支持的门类型")
-
-    def __init__(self):
-        self.gateType = GateType.Error
-        self.pargs = []
-        self.targs = []
-        self.cargs = []
-
-ExtensionGateBuilder = ExtensionGateBuilderModel()
-
 class GateDigitException(Exception):
     def __init__(self, controls, targets, indeed):
         """
-        :param controls: 控制位数量
-        :param targets: 作用位数量
-        :param indeed: 实际传入
+        Args:
+            controls(int): the number of controls
+            targets(int) : the number of targets
+            indeed(int)  : indeed the number of indexed passed in
         """
-        Exception.__init__(self, "类型错误,应传入{}个控制位,{}个作用位,/"
-                                 "共{}位,实际传入了{}个数".format(controls, targets, controls + targets, indeed))
+        Exception.__init__(self, f"the number of control bits indexes is {controls} ,\
+                                 the number of target bits indexed is {targets}, \
+                                 so {controls + targets} parameters should be passed in, \
+                                 infact {indeed} parameters are passed in.")

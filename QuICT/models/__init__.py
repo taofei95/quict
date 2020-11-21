@@ -40,7 +40,7 @@ from ._gate import (
     PermFx,
     Custom,
     ControlPermMulDetail,
-    ShorInital,
+    ShorInitial,
 
     BasicGate,
 
@@ -60,9 +60,9 @@ from ._gate import (
 
     ExtensionGateType,
 
-    GateBuilder,
-    ExtensionGateBuilder,
+    GateBuilder
 )
 
 from .uniformly_controlled import MultifoldControlledRotation
+
 

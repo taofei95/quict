@@ -4,24 +4,45 @@
 # @Author  : Han Yu
 # @File    : _qubit.py
 
-from QuICT.exception import TypeException, FrameworkException, IndexLimitException, IndexDuplicateException
-from QuICT.backends import systemCdll
-import numpy as np
-import random
 from ctypes import *
 from math import sqrt
-import sys
+import random
 import weakref
 
+import numpy as np
+
+from QuICT.exception import FrameworkException, \
+    IndexDuplicateException, IndexLimitException, TypeException
+from QuICT.backends import systemCdll
+
+# global qubit id count
 qubit_id = 0
+
+# global tangle id count
 tangle_id = 0
 
 class Qubit(object):
-    """
-    类的属性
+    """ Implement a quantum bit
+
+    Qubit is the basic unit of quantum circuit, it will appear with
+    some certain circuit.
+
+    Attributes:
+        id(int): the unique identity code of a qubit, which is generated globally.
+        tangle(Tangle):
+            a special qureg in which all qubits may entangle with each other.
+            class Tangle will be defined and introduced below.
+        circuit(Circuit): the circuit this qubit belonged to.
+        measured(int):
+            the measure result of the qubit.
+            After apply measure gate on the qubit, the measured will be 0 or 1,
+            otherwise raise an exception
+        prob(float):
+            the probability of measure result to be 1, which range in [0, 1].
+            After apply measure gate on the qubit, this attribute can be read,
+            otherwise raise an exception
     """
 
-    # qubit的id
     @property
     def id(self):
         return self.__id
@@ -61,12 +82,12 @@ class Qubit(object):
 
     # 概率
     @property
-    def prop(self) -> int:
-        return self.__prop
+    def prob(self) -> float:
+        return self.__prob
 
-    @prop.setter
-    def prop(self, prop):
-        self.__prop = prop
+    @prob.setter
+    def prob(self, prob):
+        self.__prob = prob
 
     """
     基础方法改写
@@ -78,50 +99,73 @@ class Qubit(object):
         self.circuit = circuit
         self.__tangle = None
         self.__measured = -1
-        self.__prop = 0.0
+        self.__prob = 0.0
 
     def __str__(self):
+        """ string describe of the qubit
+
+        Returns:
+            str: a simple describe
         """
-        :return: 所属电路与自身id
-        """
-        return str("电路 " + self.circuit + " 中的" + self.id)
+        return f"电路 {self.circuit} 中的{self.id}"
 
     def __int__(self):
-        """
-        输出测量值
-        :return: 测量值
-        :raise 没有在该位上添加过测量门
+        """ int value of the qubit(measure result)
+
+        Returns:
+            int: measure result
+
+        Raises:
+            The qubit has not be measured.
         """
         if self.measured == -1:
-            raise Exception("该位'{}'没有被测量过".format(self.id))
+            raise Exception(f"The qubit {self.id} has not be measured")
         return self.measured
 
     def __bool__(self):
-        """
-        测量后值的布尔意义
-        :return: 布尔值
-        :raise 没有在该位上添加过测量门
+        """ int value of the qubit(measure result)
+
+        Returns:
+            bool: measure result
+
+        Raises:
+            The qubit has not be measured.
         """
         if self.measured == -1:
-            raise Exception("该位'{}'没有被测量过".format(self.id))
+            raise Exception(f"The qubit {self.id} has not be measured")
         if self.measured == 0:
             return False
         else:
             return True
 
     def has_tangle(self):
+        """ whether the qubit is belonged to a tangle.
+
+        Returns:
+            bool: True if qubit is belonged to a tangle
+        """
         if self.__tangle is None:
             return False
         else:
             return True
 
     def tangle_clear(self):
+        """ delete the tangle of the qubit
+
+        """
         if self.__tangle is not None:
             del self.__tangle
         self.__tangle = None
 
 class Qureg(list):
-    # 所属电路
+    """ Implement a quantum register
+
+    Qureg is a list of Qubit, which is a subClass of list.
+
+    Attributes:
+        circuit(Circuit): the circuit this qureg belonged to.
+    """
+
     @property
     def circuit(self):
         if len(self) == 0:
@@ -135,59 +179,67 @@ class Qureg(list):
         for qubit in self:
             qubit.circuit = circuit
 
-    def __init__(self, other = None):
-        """
-        初始化
-        :param other:
-            1) Qubit/tuple<Qubit>
-            2) Qureg
-            3) Circuit
+    def __init__(self, qubits = None):
+        """ initial a qureg with qubit(s)
+
+        Args:
+            qubits: the qubits which make up the qureg, it can have below form,
+                1) Circuit
+                2) Qureg
+                3) Qubit
+                4) tuple<Qubit>
         """
         from ._circuit import Circuit
         super().__init__()
-        if other is None:
+        if qubits is None:
             return
-        if isinstance(other, Qubit):
-            self.append(other)
-        elif isinstance(other, tuple):
-            for qubit in other:
+        if isinstance(qubits, Qubit):
+            self.append(qubits)
+        elif isinstance(qubits, tuple):
+            for qubit in qubits:
                 if not isinstance(qubit, Qubit):
-                    raise TypeException("Qubit/tuple<Qubit>或Qureg或Circuit", other)
+                    raise TypeException("Qubit/tuple<Qubit> or Qureg or Circuit", qubits)
                 self.append(qubit)
-        elif isinstance(other, Qureg):
-            for qubit in other:
+        elif isinstance(qubits, Qureg):
+            for qubit in qubits:
                 self.append(qubit)
-        elif isinstance(other, Circuit):
-            for qubit in other.qubits:
+        elif isinstance(qubits, Circuit):
+            for qubit in qubits.qubits:
                 self.append(qubit)
         else:
-            raise TypeException("Qubit/tuple<Qubit>或Qureg或Circuit", other)
+            raise TypeException("Qubit/tuple<Qubit> or Qureg or Circuit", qubits)
 
-    def __call__(self, other: object):
+    def __call__(self, indexes: object):
+        """ get a smaller qureg from this qureg
+
+        Args:
+            indexes: the indexes passed in, it can have follow form:
+                1) int
+                2) list<int>
+                3) tuple<int>
+        Returns:
+            Qureg: the qureg correspond to the indexes
+        Exceptions:
+            IndexDuplicateException: the range of indexes is error.
+            TypeException: the type of indexes is error.
         """
-        :param other:
-        1) int
-        2) list
-        3) tuple
-        :return: Qureg
-        :exception: 传入类型错误或索引范围错误
-        """
 
-        # 处理int
-        if isinstance(other, int):
-            if other < 0 or other >= len(self):
-                raise IndexLimitException(len(self), other)
-            return Qureg(self[other])
+        # int
+        if isinstance(indexes, int):
+            if indexes < 0 or indexes >= len(self):
+                raise IndexLimitException(len(self), indexes)
+            return Qureg(self[indexes])
 
-        # 处理tuple
-        if isinstance(other, tuple):
-            other = list(other)
-        # 处理list
-        if isinstance(other, list):
-            if len(other) != len(set(other)):
-                raise IndexDuplicateException(other)
+        # tuple
+        if isinstance(indexes, tuple):
+            indexes = list(indexes)
+
+        # list
+        if isinstance(indexes, list):
+            if len(indexes) != len(set(indexes)):
+                raise IndexDuplicateException(indexes)
             qureg = Qureg()
-            for element in other:
+            for element in indexes:
                 if not isinstance(element, int):
                     raise TypeException("int", element)
                 if element < 0 or element >= len(self):
@@ -195,16 +247,23 @@ class Qureg(list):
                 qureg.append(self[element])
             return qureg
 
-        raise TypeException("int或list或tuple", other)
-
-    def __str__(self):
-        return str(self.__int__())
+        raise TypeException("int or list or tuple", indexes)
 
     def __int__(self):
+        """ the value of the register
+
+        Return the value of the register if all qubits have been measured.
+        Note that the compute mode is BigEndian.
+
+        Returns:
+            int: the value of the register
+
+        Raises:
+            Exception: some qubit has not be measured
+        """
         for qubit in self:
             if qubit.measured == -1:
-                string = "该位:"+str(qubit.id)+"没有被测量过"
-                raise Exception(string)
+                raise Exception(f"The qubit {qubit.id} has not be measured")
         value = 0
         for i in range(len(self)):
             value <<= 1
@@ -212,7 +271,22 @@ class Qureg(list):
                 value += 1
         return value
 
+    def __str__(self):
+        """ a simple describe
+
+        Returns:
+            str: the value of the qureg
+
+        """
+        return str(self.__int__())
+
     def __getitem__(self, item):
+        """ to fit the slice operator, overloaded this function.
+        Args:
+            item(int/slice): slice passed in.
+        Return:
+            Qubit/Qureg: the result or slice
+        """
         if isinstance(item, int):
             return super().__getitem__(item)
         elif isinstance(item, slice):
@@ -223,11 +297,16 @@ class Qureg(list):
             return qureg
 
     def force_assign_random(self):
+        """ assign random values for qureg which has initial values
+
+        after calling this function, all qubits will be in a Tangle.
+
+        """
         if len(self) == 0:
             return
         for qubit in self:
             if qubit.has_tangle():
-                raise Exception("某qubit已有初值")
+                raise Exception(f"qubit {qubit.id} has initial value")
         tangle = Tangle(self[0])
         for i in range(1, len(self)):
             tangle.qureg.append(self[i])
@@ -236,11 +315,16 @@ class Qureg(list):
             qubit.tangle = tangle
 
     def force_assign_zeros(self):
+        """ assign zero for qureg has initial values
+
+        after calling this function, all qubits will be in a Tangle.
+
+        """
         if len(self) == 0:
             return
         for qubit in self:
             if qubit.has_tangle():
-                raise Exception("某qubit已有初值")
+                raise Exception(f"qubit {qubit.id} has initial value")
         tangle = Tangle(self[0])
         for i in range(1, len(self)):
             tangle.qureg.append(self[i])
@@ -248,28 +332,41 @@ class Qureg(list):
         for qubit in self:
             qubit.tangle = tangle
 
-    def force_copy(self, other, copy_list):
+    def force_copy(self, copy_item, indexes):
+        """ copy values from other Tangle for this qureg which has initial values
+
+        after calling this function, all qubits will be in a Tangle.
+
+        Args:
+            copy_item(Tangle): the Tangle need to be copied.
+            indexes(list<int>): the indexes of goal qubits
+
+        """
         if len(self) == 0:
             return
         for qubit in self:
             if qubit.has_tangle():
-                raise Exception("某qubit已有初值")
-        tangle = Tangle(self[copy_list[0]])
-        self[copy_list[0]].tangle = tangle
-        for i in range(1, len(copy_list)):
-            tangle.qureg.append(self[copy_list[i]])
-            self[copy_list[i]].tangle = tangle
-        tangle.force_copy(other)
+                raise Exception(f"qubit {qubit.id} has initial value")
+        tangle = Tangle(self[indexes[0]])
+        self[indexes[0]].tangle = tangle
+        for i in range(1, len(indexes)):
+            tangle.qureg.append(self[indexes[i]])
+            self[indexes[i]].tangle = tangle
+        tangle.force_copy(copy_item)
 
 class Tangle(object):
-    """
-    计算纠缠块
-    """
-    """
-    类的属性
+    """ Implement a tangle
+
+    a basic computation unit of the amplitude simulation, in which
+    all qubits are seemed entangle with each other.
+
+    Attributes:
+        id(int): the unique identity code of a tangle, which is generated globally.
+        qureg(Qureg): the qubit register of the tangle
+        values(np.array): the inner amplitude of this tangle
+
     """
 
-    # tangle的id
     @property
     def id(self):
         return self.__id
@@ -278,7 +375,6 @@ class Tangle(object):
     def id(self, id):
         self.__id = id
 
-    # tangle包含的qureg
     @property
     def qureg(self) -> Qureg:
         return self.__qureg
@@ -287,7 +383,6 @@ class Tangle(object):
     def qureg(self, qureg):
         self.__qureg = qureg
 
-    # tangle包含的值
     @property
     def values(self) -> np.array:
         return self.__values
@@ -296,7 +391,14 @@ class Tangle(object):
     def values(self, values):
         self.__values = values
 
+    # life cycle
     def __init__(self, qubit):
+        """ initial a tangle with one qubit
+
+        Args:
+            qubit: the qubit form the tangle.
+
+        """
         self.__qureg = Qureg(qubit)
         if qubit.measured == -1 or qubit.measured == 0:
             self.__values = np.array([1, 0], dtype=np.complex)
@@ -306,25 +408,46 @@ class Tangle(object):
         self.__id = tangle_id
         tangle_id = tangle_id + 1
 
+    def __del__(self):
+        """ release the memory
+
+        """
+        self.values = None
+        self.qureg = None
+
     def print_infomation(self):
+        """ print the infomation of the tangle
+
+        """
         print(self.values, self.id, len(self.qureg))
 
     def index_for_qubit(self, qubit) -> int:
-        """
-        :param qubit: 需要查询的qubit
-        :return: 索引值
-        :raise 传入的参数不是qubit，或者不在该tangle中
+        """ find the index of qubit in this tangle's qureg
+
+        Args:
+            qubit(Qubit): the qubit need to be indexed.
+
+        Returns:
+            int: the index of the qubit.
+
+        Raises:
+            Exception: the qubit is not in the tangle
         """
         if not isinstance(qubit, Qubit):
             raise TypeException("Qubit", qubit)
         for i in range(len(self.qureg)):
             if self.qureg[i].id == qubit.id:
                 return i
-        raise Exception("传入的qubit不在该Tangle中")
+        raise Exception("the qubit is not in the tangle")
 
     def merge(self, other):
-        """
-        :param other: 需要合并的Tangle
+        """ merge another tangle into this tangle
+
+        Args:
+            other: the tangle need to be merged.
+
+        Exceptions:
+            FrameworkException: the index is out of range
         """
         if self.id == other.id:
             return
@@ -358,12 +481,16 @@ class Tangle(object):
         del other
         self.values = values
 
-    def deal_single_gate(self, other, has_fidelity = False, fidelity = 1.0):
-        """
-        :param other: 需要作用的门
-               has_fidelity: 有保真度调节
-               fidelity: 保真度
-        :raise 索引错误, 电路错误
+    def deal_single_gate(self, gate, has_fidelity = False, fidelity = 1.0):
+        """ apply an one-qubit gate on this tangle
+
+        Args:
+            gate(BasicGate): the gate to be applied.
+            has_fidelity(bool): whether gate is completely accurate.
+            fidelity(float): the fidelity of the gate
+
+        Exceptions:
+            FrameworkException: the index is out of range
         """
         dll = systemCdll.quick_operator_cdll
         single_operator_func = dll.single_operator_func
@@ -375,15 +502,15 @@ class Tangle(object):
         ]
 
         index = 0
-        qubit = self.qureg.circuit.qubits[other.targ]
+        qubit = self.qureg.circuit.qubits[gate.targ]
         for test in self.qureg:
             if test.id == qubit.id:
                 break
             index = index + 1
         if index == len(self.qureg):
-            raise FrameworkException("索引不在对应纠缠块中")
+            raise FrameworkException("the index is out of range")
 
-        matrix = other.matrix
+        matrix = gate.matrix
         if has_fidelity:
             theta = np.arccos(fidelity / np.sqrt(2)) - np.pi / 4
             theta *= (random.random() - 0.5) * 2
@@ -411,10 +538,17 @@ class Tangle(object):
             matrix
         )
 
-    def deal_measure_gate(self, other):
-        """
-        :param other: 需要作用的测量门
-        :raise 索引错误
+    def deal_measure_gate(self, gate):
+        """ apply a measure gate on this tangle
+
+        Note that after flush the measure gate, the qubit will be removed
+        from the tangle.
+
+        Args:
+            gate(MeasureGate): the gate to be applied.
+
+        Exceptions:
+            FrameworkException: the index is out of range
         """
         dll = systemCdll.quick_operator_cdll
         measure_operator_func = dll.measure_operator_func
@@ -428,13 +562,13 @@ class Tangle(object):
         measure_operator_func.restype = c_bool
 
         index = 0
-        qubit = self.qureg.circuit.qubits[other.targ]
+        qubit = self.qureg.circuit.qubits[gate.targ]
         for test in self.qureg:
             if test.id == qubit.id:
                 break
             index = index + 1
         if index == len(self.qureg):
-            raise FrameworkException("索引不在对应纠缠块中")
+            raise FrameworkException("the index is out of range")
         generation = random.random()
         # print(generation)
 
@@ -452,10 +586,17 @@ class Tangle(object):
         qubit.measured = result
         qubit.prop = prop.value
 
-    def deal_reset_gate(self, other):
-        """
-        :param other: 需要作用的测量门
-        :raise 索引错误
+    def deal_reset_gate(self, gate):
+        """ apply a reset gate on this tangle
+
+        Note that after flush the reset gate, the qubit will be removed
+        from the tangle.
+
+        Args:
+            gate(ResetGate): the gate to be applied.
+
+        Exceptions:
+            FrameworkException: the index is out of range
         """
         dll = systemCdll.quick_operator_cdll
         reset_operator_func = dll.reset_operator_func
@@ -466,13 +607,13 @@ class Tangle(object):
         ]
 
         index = 0
-        qubit = self.qureg.circuit.qubits[other.targ]
+        qubit = self.qureg.circuit.qubits[gate.targ]
         for test in self.qureg:
             if test.id == qubit.id:
                 break
             index = index + 1
         if index == len(self.qureg):
-            raise FrameworkException("索引不在对应纠缠块中")
+            raise FrameworkException("the index is out of range")
         reset_operator_func(
             len(self.qureg),
             index,
@@ -482,10 +623,14 @@ class Tangle(object):
         self.values = self.values[:(1 << len(self.qureg))]
         qubit.tangle = None
 
-    def deal_control_single_gate(self, other):
-        """
-        :param other: 需要作用的门
-        :raise 索引错误
+    def deal_control_single_gate(self, gate):
+        """ apply a controlled one qubit gate on this tangle
+
+        Args:
+            gate(BasicGate): the gate to be applied.
+
+        Exceptions:
+            FrameworkException: the index is out of range
         """
         dll = systemCdll.quick_operator_cdll
         control_single_operator_func = dll.control_single_operator_func
@@ -497,22 +642,22 @@ class Tangle(object):
             np.ctypeslib.ndpointer(dtype=np.complex, ndim=1, flags="C_CONTIGUOUS"),
         ]
         cindex = 0
-        qubit = self.qureg.circuit.qubits[other.carg]
+        qubit = self.qureg.circuit.qubits[gate.carg]
         for test in self.qureg:
             if test.id == qubit.id:
                 break
             cindex = cindex + 1
         if cindex == len(self.qureg):
-            raise FrameworkException("索引不在对应纠缠块中")
+            raise FrameworkException("the index is out of range")
 
         tindex = 0
-        qubit = self.qureg.circuit.qubits[other.targ]
+        qubit = self.qureg.circuit.qubits[gate.targ]
         for test in self.qureg:
             if test.id == qubit.id:
                 break
             tindex = tindex + 1
         if tindex == len(self.qureg):
-            raise FrameworkException("索引不在对应纠缠块中")
+            raise FrameworkException("the index is out of range")
         # print("before:", np.round(self.values, decimals = 2))
         # print(cindex, tindex)
         control_single_operator_func(
@@ -520,14 +665,18 @@ class Tangle(object):
             cindex,
             tindex,
             self.values,
-            other.matrix
+            gate.matrix
         )
         # print("after:", np.round(self.values, decimals=2))
 
-    def deal_ccx_gate(self, other):
-        """
-        :param other: 需要作用的CCX门
-        :raise 索引错误
+    def deal_ccx_gate(self, gate):
+        """ apply a toffoli gate on this tangle
+
+        Args:
+            gate(BasicGate): the gate to be applied.
+
+        Exceptions:
+            FrameworkException: the index is out of range
         """
         dll = systemCdll.quick_operator_cdll
         ccx_single_operator_func = dll.ccx_single_operator_func
@@ -539,31 +688,31 @@ class Tangle(object):
             np.ctypeslib.ndpointer(dtype=np.complex, ndim=1, flags="C_CONTIGUOUS"),
         ]
         cindex1 = 0
-        qubit = self.qureg.circuit.qubits[other.cargs[0]]
+        qubit = self.qureg.circuit.qubits[gate.cargs[0]]
         for test in self.qureg:
             if test.id == qubit.id:
                 break
             cindex1 = cindex1 + 1
         if cindex1 == len(self.qureg):
-            raise FrameworkException("索引不在对应纠缠块中")
+            raise FrameworkException("the index is out of range")
 
         cindex2 = 0
-        qubit = self.qureg.circuit.qubits[other.cargs[1]]
+        qubit = self.qureg.circuit.qubits[gate.cargs[1]]
         for test in self.qureg:
             if test.id == qubit.id:
                 break
             cindex2 = cindex2 + 1
         if cindex2 == len(self.qureg):
-            raise FrameworkException("索引不在对应纠缠块中")
+            raise FrameworkException("the index is out of range")
 
         tindex = 0
-        qubit = self.qureg.circuit.qubits[other.targ]
+        qubit = self.qureg.circuit.qubits[gate.targ]
         for test in self.qureg:
             if test.id == qubit.id:
                 break
             tindex = tindex + 1
         if tindex == len(self.qureg):
-            raise FrameworkException("索引不在对应纠缠块中")
+            raise FrameworkException("the index is out of range")
         ccx_single_operator_func(
             len(self.qureg),
             cindex1,
@@ -572,35 +721,45 @@ class Tangle(object):
             self.values
         )
 
-    def deal_swap_gate(self, other):
-        """
-        :param other: 需要处理的swap门
+    def deal_swap_gate(self, gate):
+        """ apply a swap gate on this tangle
+
+        Args:
+            gate(SwapGate): the gate to be applied.
+
+        Exceptions:
+            FrameworkException: the index is out of range
         """
         cindex = 0
-        qubit = self.qureg.circuit.qubits[other.targs[0]]
+        qubit = self.qureg.circuit.qubits[gate.targs[0]]
         for test in self.qureg:
             if test.id == qubit.id:
                 break
             cindex = cindex + 1
         if cindex == len(self.qureg):
-            raise FrameworkException("索引不在对应纠缠块中")
+            raise FrameworkException("the index is out of range")
 
         tindex = 0
-        qubit = self.qureg.circuit.qubits[other.targs[1]]
+        qubit = self.qureg.circuit.qubits[gate.targs[1]]
         for test in self.qureg:
             if test.id == qubit.id:
                 break
             tindex = tindex + 1
         if tindex == len(self.qureg):
-            raise FrameworkException("索引不在对应纠缠块中")
+            raise FrameworkException("the index is out of range")
 
         t = self.qureg[cindex]
         self.qureg[cindex] = self.qureg[tindex]
         self.qureg[tindex] = t
 
-    def deal_custom_gate(self, other):
-        """
-        :param other: 作用的任意酉矩阵
+    def deal_custom_gate(self, gate):
+        """ apply a custom gate on this tangle
+
+        Args:
+            gate(CustomGate): the gate to be applied.
+
+        Exceptions:
+            FrameworkException: the index is out of range
         """
 
         dll = systemCdll.quick_operator_cdll
@@ -614,7 +773,7 @@ class Tangle(object):
         ]
 
         index = np.array([])
-        for idx in other.targs:
+        for idx in gate.targs:
             qubit = self.qureg.circuit.qubits[idx]
             temp_idx = 0
             for test in self.qureg:
@@ -622,20 +781,25 @@ class Tangle(object):
                     break
                 temp_idx = temp_idx + 1
             if temp_idx == len(self.qureg):
-                raise FrameworkException("索引不在对应纠缠块中")
+                raise FrameworkException("the index is out of range")
             np.append(index, temp_idx)
 
         custom_operator_gate(
             len(self.qureg),
             self.values,
             index,
-            other.targets,
-            other.matrix
+            gate.targets,
+            gate.matrix
         )
 
-    def deal_perm_gate(self, other):
-        """
-        :param other: 待处理的置换门
+    def deal_perm_gate(self, gate):
+        """ apply a Perm gate on this tangle
+
+        Args:
+            gate(PermGate): the gate to be applied.
+
+        Exceptions:
+            FrameworkException: the index is out of range
         """
         dll = systemCdll.quick_operator_cdll
         perm_operator_gate = dll.perm_operator_gate
@@ -648,7 +812,7 @@ class Tangle(object):
         ]
 
         index = np.array([], dtype=np.int)
-        targs = other.targs
+        targs = gate.targs
         if not isinstance(targs, list):
             targs = [targs]
         for idx in targs:
@@ -659,19 +823,24 @@ class Tangle(object):
                     break
                 temp_idx = temp_idx + 1
             if temp_idx == len(self.qureg):
-                raise FrameworkException("索引不在对应纠缠块中")
+                raise FrameworkException("the index is out of range")
             index = np.append(index, temp_idx)
         perm_operator_gate(
             len(self.qureg),
             self.values,
             index,
-            other.targets,
-            np.array(other.pargs, dtype=np.int)
+            gate.targets,
+            np.array(gate.pargs, dtype=np.int)
         )
 
-    def deal_controlMulPerm_gate(self, other):
-        """
-        :param other: 待处理的置换门
+    def deal_controlMulPerm_gate(self, gate):
+        """ apply a controlMulPerm gate on this tangle
+
+        Args:
+            gate(controlMulPerm): the gate to be applied.
+
+        Exceptions:
+            FrameworkException: the index is out of range
         """
         dll = systemCdll.quick_operator_cdll
         perm_operator_gate = dll.control_mul_perm_operator_gate
@@ -686,7 +855,7 @@ class Tangle(object):
         ]
 
         index = np.array([], dtype=np.int)
-        targs = other.targs
+        targs = gate.targs
         if not isinstance(targs, list):
             targs = [targs]
         for idx in targs:
@@ -697,9 +866,9 @@ class Tangle(object):
                     break
                 temp_idx = temp_idx + 1
             if temp_idx == len(self.qureg):
-                raise FrameworkException("索引不在对应纠缠块中")
+                raise FrameworkException("the index is out of range")
             index = np.append(index, temp_idx)
-        control = other.cargs[0]
+        control = gate.cargs[0]
         qubit = self.qureg.circuit.qubits[control]
         temp_idx = 0
         for test in self.qureg:
@@ -707,21 +876,26 @@ class Tangle(object):
                 break
             temp_idx = temp_idx + 1
         if temp_idx == len(self.qureg):
-            raise FrameworkException("索引不在对应纠缠块中")
+            raise FrameworkException("the index is out of range")
         control = temp_idx
         perm_operator_gate(
             len(self.qureg),
             self.values,
             index,
             control,
-            other.targets,
-            other.pargs[0],
-            other.pargs[1]
+            gate.targets,
+            gate.pargs[0],
+            gate.pargs[1]
         )
 
-    def deal_shorInitial_gate(self, other):
-        """
-        :param other: 待处理的置换门
+    def deal_shorInitial_gate(self, gate):
+        """ apply a shorInitial gate on this tangle
+
+        Args:
+            gate(shorInitialGate): the gate to be applied.
+
+        Exceptions:
+            FrameworkException: the index is out of range
         """
         dll = systemCdll.quick_operator_cdll
         perm_operator_gate = dll.shor_classical_initial_gate
@@ -736,7 +910,7 @@ class Tangle(object):
         ]
 
         index = np.array([], dtype=np.int)
-        targs = other.targs
+        targs = gate.targs
         if not isinstance(targs, list):
             targs = [targs]
         for idx in targs:
@@ -747,26 +921,25 @@ class Tangle(object):
                     break
                 temp_idx = temp_idx + 1
             if temp_idx == len(self.qureg):
-                raise FrameworkException("索引不在对应纠缠块中")
+                raise FrameworkException("the index is out of range")
             index = np.append(index, temp_idx)
         perm_operator_gate(
             len(self.qureg),
             self.values,
             index,
-            other.targets,
-            other.pargs[0],
-            other.pargs[1],
-            other.pargs[2]
+            gate.targets,
+            gate.pargs[0],
+            gate.pargs[1],
+            gate.pargs[2]
         )
 
     def force_assign_random(self):
+        """ assign random values to the tangle
+
+        """
         self.values = np.zeros(1 << len(self.qureg), dtype=np.complex)
         sqrnorm = 0
         for i in range(1 << len(self.qureg)):
-            # if i == 0:
-            #    self.values[i] = 1
-            # else:
-            #    self.values[i] = 0
             real = random.random()
             imag = random.random()
             self.values[i] = real + imag * 1j
@@ -777,22 +950,41 @@ class Tangle(object):
             self.values[i] /= sqrnorm
 
     def force_assign_zeros(self):
+        """ assign zero to the tangle
+
+        """
         self.values = np.zeros(1 << len(self.qureg), dtype=np.complex)
         self.values[0] = 1 + 0j
 
     def force_copy(self, other):
+        """ copy other tangle's values
+
+        Args:
+            other(Tangle): the item to be copied.
+
+        """
         self.values = other.values.copy()
 
-    def partial_prop(self, other):
-        back = [0.0] * (1 << len(other))
+    def partial_prob(self, indexes):
+        """ calculate the probabilities of the measure result of partial qureg in tangle
+
+        Note that this function is a cheat function, which do not change the state of the qureg.
+
+        Args:
+            indexes(list<int>): the indexes of the partial qureg.
+
+        Returns:
+            list<float>: the probabilities of the measure result, the memory mode is LittleEndian.
+
+        """
+        back = [0.0] * (1 << len(indexes))
         save_list = []
-        for id in other:
+        for id in indexes:
             for index in range(len(self.qureg)):
                 if self.qureg[index].id == id:
                     save_list.append(index)
         lv = len(self.values)
         lq = len(self.qureg)
-        lo = len(other)
         for i in range(lv):
             pos = 0
             for j in range(len(save_list)):
@@ -801,7 +993,3 @@ class Tangle(object):
             norm = abs(self.values[i])
             back[pos] += norm * norm
         return back
-
-    def __del__(self):
-        self.values = None
-        self.qureg = None
