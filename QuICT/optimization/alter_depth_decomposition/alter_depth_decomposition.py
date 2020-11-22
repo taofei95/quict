@@ -188,22 +188,22 @@ def gate2perm(gate: BasicGate, n_size):
             res.mp[temp1], res.mp[temp2] = res.mp[temp2], res.mp[temp1]
     elif gate.type() == GateType.CX:
         for i in range(1 << (n_size - 2)):
-            temp1 = bincaat(i, n_size - 1 - gate.cargs, n_size - 1 - gate.targs, 1, 0)
-            temp2 = bincaat(i, n_size - 1 - gate.cargs, n_size - 1 - gate.targs, 1, 1)
+            temp1 = bincaat(i, n_size - 1 - gate.carg, n_size - 1 - gate.targ, 1, 0)
+            temp2 = bincaat(i, n_size - 1 - gate.carg, n_size - 1 - gate.targ, 1, 1)
             res.mp[temp1], res.mp[temp2] = res.mp[temp2], res.mp[temp1]
     elif gate.type() == GateType.X:
         for i in range(1 << (n_size - 1)):
-            temp1 = bincat(i, n_size - 1 - gate.targs, 0)
-            temp2 = bincat(i, n_size - 1 - gate.targs, 1)
+            temp1 = bincat(i, n_size - 1 - gate.targ, 0)
+            temp2 = bincat(i, n_size - 1 - gate.targ, 1)
             res.mp[temp1], res.mp[temp2] = res.mp[temp2], res.mp[temp1]
     elif gate.type() == GateType.ID:
         pass
     elif gate.type() == GateType.CCX:
         for i in range(1 << (n_size - 2)):
             if bincaat(i, n_size - 1 - gate.cargs[0], n_size - 1 - gate.cargs[1], 0, 0) & (
-                    1 << (n_size - 1 - gate.targs)) != 0:
+                    1 << (n_size - 1 - gate.targ)) != 0:
                 temp1 = bincaat(i, n_size - 1 - gate.cargs[0], n_size - 1 - gate.cargs[1], 1, 1) ^ (
-                            1 << (n_size - 1 - gate.targs))
+                            1 << (n_size - 1 - gate.targ))
                 temp2 = bincaat(i, n_size - 1 - gate.cargs[0], n_size - 1 - gate.cargs[1], 1, 1)
                 res.mp[temp1], res.mp[temp2] = res.mp[temp2], res.mp[temp1]
     else:

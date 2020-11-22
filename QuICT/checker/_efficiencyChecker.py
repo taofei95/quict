@@ -4,17 +4,34 @@
 # @Author  : Han Yu
 # @File    : _efficiencyChecker.py
 
-from QuICT.models import *
-from QuICT.algorithm import Amplitude
-import random
 from math import *
+import random
 import time
+
 import numpy as np
 
+from QuICT.models import *
+
 class StandardEfficiencyCheckerModel(object):
+    """ this model is to check the efficiency of amplitude calculating
+
+    Attributes:
+        min_qubits(int): the min number of qubits when testing
+        max_qubits(int): the max number of qubits when testing
+        size(int): the size of circuit for testing
+        typeList(list<BasicGate>): the gate which participates in testing
+
+    """
 
     @staticmethod
     def getRandomList(l, n):
+        """ get l number from 0, 1, ..., n - 1 randomly.
+        Args:
+            l(int)
+            n(int)
+        Returns:
+            list<int>: the list of l random numbers
+        """
         _rand = [i for i in range(n)]
         for i in range(n - 1, 0, -1):
             do_get = random.randint(0, i)
@@ -85,6 +102,9 @@ class StandardEfficiencyCheckerModel(object):
         ]
 
     def run(self):
+        """ run the test
+
+        """
         max_round = 20
         for qubit in range(self.min_qubits, self.max_qubits + 1):
             min_t = -1
@@ -147,7 +167,7 @@ class StandardEfficiencyCheckerModel(object):
 
                 max_tt = max(max_tt, time_amplitude)
 
-            print('{}({}) {}({}) {}({})'.format(np.round(ava_t, decimals=2), np.round(ava, decimals=2), np.round(min_tt, decimals=2), np.round(min_t, decimals=2), np.round(max_tt, decimals=2), np.round(max_t, decimals=2)))
+            print(f'{np.round(ava_t, decimals=2)}({np.round(ava, decimals=2)}) {np.round(min_tt, decimals=2)}({np.round(min_t, decimals=2)}) {np.round(max_tt, decimals=2)}({np.round(max_t, decimals=2)})')
 
 StandardEfficiencyChecker = StandardEfficiencyCheckerModel()
 

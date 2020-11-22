@@ -7,8 +7,6 @@
 from copy import copy
 from warnings import warn
 
-
-
 class DefaultStyle:
     """IBM Design Style colors
     """

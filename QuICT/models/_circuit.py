@@ -343,6 +343,7 @@ class Circuit(object):
         """
         for qubit in self.qubits:
             qubit.tangle_clear()
+        self.const_lock = False
         self.gates = None
         self.__queue_gates = None
         self.qubits = None

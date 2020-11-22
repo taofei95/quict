@@ -4,13 +4,14 @@
 # @Author  : Han Yu
 # @File    : CheckerTest.py
 
-from QuICT.algorithm import ALTER_DEPTH_DECOMPOSITION, Amplitude, SyntheticalUnitary
+from QuICT.algorithm import Amplitude, SyntheticalUnitary
+from QuICT.optimization import alter_depth_decomposition
 from QuICT.checker import ETChecker
 from QuICT.models import *
 
 
-ETChecker.setAlgorithm(ALTER_DEPTH_DECOMPOSITION)
-ETChecker.setDepthNumber(10, 10)
+ETChecker.setAlgorithm(alter_depth_decomposition)
+ETChecker.setSize(10, 10)
 ETChecker.setQubitNumber(6, 8)
 ETChecker.setRoundNumber(100)
 ETChecker.setTypeList([GateType.X, GateType.CX, GateType.CCX, GateType.ID, GateType.Swap, GateType.Perm])
