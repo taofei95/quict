@@ -25,7 +25,7 @@ tangle_id = 0
 class Qubit(object):
     """ Implement a quantum bit
 
-    Qubit is the basic unit of quantum circuit, it will appear with some certain circuit.
+    Qubit is the basic unit of quantum circuits, it will appear with some certain circuit.
 
     Attributes:
         id(int): the unique identity code of a qubit, which is generated globally.

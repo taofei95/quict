@@ -8,6 +8,7 @@
 
 - _qubit.py
   - implement the quantum bit and quantum register
+  - implement the tangle, which is the basic calculation unit  for the amplitude
 - _circuit.py
   - implement the quantum circuit
 - _gate.py
