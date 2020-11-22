@@ -433,7 +433,7 @@ def solve():
 
 class topological_cnot_rz(Optimization):
     @staticmethod
-    def __run__(circuit: Circuit, *pargs):
+    def _run(circuit: Circuit, *pargs):
         """
         cnot_rz电路化简
         :param circuit: 需变化电路

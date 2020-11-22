@@ -4,18 +4,26 @@
 # @Author  : Han Yu
 # @File    : _optimization.py
 
-from QuICT.models import Circuit, GateBuilder
+from QuICT.models import Circuit
 
 class Optimization(object):
+    """ The superClass of Optimization algorithm
+
+
+
+    """
     @classmethod
     def run(cls, circuit : Circuit, *pargs, inplace=False):
-        """
-        :param circuit: 需变化电路
-        :param inplace: 为真时,返回一个新的电路;为假时,修改原电路的门参数
-        :return: inplace为真时,无返回值;为假时,返回新的电路,电路初值为0
+        """ run the algorithm
+        circuit(Circuit): the circuit to be optimize
+        inplace(bool):
+            if true, change the origin circuit.
+            otherwise, return a new circuit with origin circuit constant.
+            default to be false
+        *pargs: other parameters
         """
         circuit.const_lock = True
-        gates = cls.__run__(circuit, *pargs)
+        gates = cls._run(circuit, *pargs)
         if isinstance(gates, Circuit):
             gates = gates.gates
         circuit.const_lock = False
@@ -27,10 +35,10 @@ class Optimization(object):
             return new_circuit
 
     @staticmethod
-    def __run__(circuit : Circuit, *pargs):
+    def _run(circuit : Circuit, *pargs):
         """
-        需要其余算法改写
-        :param circuit: 需变化电路
-        :return: 返回新电路门的数组
+        circuit(Circuit): the circuit to be optimize
+        *pargs: other parameters
         """
+        print(*pargs)
         return circuit.gates

@@ -224,14 +224,14 @@ class cnot_ancillae(Optimization):
         global s
         s = size
         circuit.const_lock = True
-        gates = cls.__run__(circuit)
+        gates = cls._run(circuit)
         circuit.const_lock = False
         new_circuit = Circuit(len(circuit.qubits) * (2 + 3 * size))
         new_circuit.set_flush_gates(gates)
         return new_circuit
 
     @staticmethod
-    def __run__(circuit : Circuit, *pargs):
+    def _run(circuit : Circuit, *pargs):
         matrix = read(circuit)
         solve(matrix)
         gates = []

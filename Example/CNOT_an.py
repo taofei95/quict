@@ -4,7 +4,8 @@
 # @Author  : Han Yu
 # @File    : CNOT_an.py
 
-from QuICT.algorithm import CNOT_ANCILLAE, Amplitude
+from QuICT.algorithm import Amplitude
+from QuICT.optimization import cnot_ancillae
 from QuICT.models import *
 
 for n in range(4, 5):
@@ -12,6 +13,6 @@ for n in range(4, 5):
     for _ in range(50):
         for i in range(n - 1):
             CX | circuit([i, i + 1])
-    result_circuit = CNOT_ANCILLAE.run(circuit, size = 1)
+    result_circuit = cnot_ancillae.run(circuit, size = 1)
     result_circuit.print_infomation()
     result_circuit.draw_photo()
