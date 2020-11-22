@@ -48,6 +48,6 @@ def run_deutsch_jozsa(f, n, oracle):
         print('Function is balanced. y={}'.format(y))
 
 if __name__ == '__main__':
-    test_number = 25
+    test_number = 5
     test = [0, 1] * 2 ** (test_number - 1)
     run_deutsch_jozsa(test, test_number, deutsch_jozsa_main_oracle)

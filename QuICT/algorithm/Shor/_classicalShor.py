@@ -288,7 +288,6 @@ def Shor(N, fidelity = None):
         gcd = np.gcd(a, N)
         if gcd > 1:
             continue
-            #return gcd, 0, 0.0
         print("round =", rd)
         rd += 1
 
@@ -299,7 +298,7 @@ def Shor(N, fidelity = None):
         s = random.randint(0, N - 1)
         u = fast_power(a, s, N)
         circuit = Circuit(2 * L)
-        ShorInital([a, N, u]) | circuit
+        ShorInitial([a, N, u]) | circuit
         if fidelity is not None:
             circuit.fidelity = fidelity
 

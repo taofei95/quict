@@ -5,21 +5,20 @@
 # @File    : _systemcdll.py.py
 
 import ctypes
-import os
 import platform
+import os
+
 import numpy as np
-"""
-静态库
-"""
+
 class SystemCdll(object):
-    """
-    类的属性
+    """ calculation module that coded by C++ with Inter tbb parallel library
+
+    Attributes:
+        quick_operator_cdll(_DLLT): the lazy-load library
+
     """
     @property
     def quick_operator_cdll(self):
-        """
-        :return: 懒加载门库
-        """
         if self.__quick_operator_cdll is None:
             sys = platform.system()
             path = os.path.dirname(os.path.abspath(__file__)) + os.path.sep + "quick_operator_cdll.so"

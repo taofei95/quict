@@ -4,17 +4,44 @@
 # @Author  : Han Yu
 # @File    : _synthesis.py
 
-from QuICT.models import GateBuilder, Qubit, Qureg, Circuit, GateType
+import numpy as np
+
 from QuICT.exception import TypeException
+from QuICT.models import Circuit, GateBuilder, Qubit, Qureg
 
 class Synthesis(object):
-    # 辅助数组数组
+    """ synthesis some oracle into BasicGate
+
+    In general, these BasicGates are one-qubit gates and two-qubit gates.
+
+    in _gate.py, we define a class named gateModel, which is similar with this class.
+    The difference of them is that gateModel describes simple and widely accepted to a certain extent.
+    And this class describes harder synthesis method, some of which may have a lot room to improve.
+
+    When users use the synthesis method, it should be similar with class gateModel. So the attributes and
+    API is similar with class gateModel.
+
+    Note that all subClass must overloaded the function "build_gate".
+    If the algorithm have any parameters to be input, "__call__" should be overloaded.
+    The overloaded of the function "__or__" and "__xor__" is optional.
+
+    Attributes:
+        targets(int): the number of the target bits of the gate
+                      Note it will be assigned after calling the function "__or__"
+        targs(list<int>): the list of the index of target bits in the circuit
+        targ(int, read only): the first object of targs
+
+        pargs(list): the list of the parameter
+        prag(read only): the first object of pargs
+
+    """
+
+    def __init__(self):
+        self.__pargs = []
+        self.__targets = 0
+
     @property
     def pargs(self):
-        """
-        :return:
-            返回一个list，代表辅助数组
-        """
         return self.__pargs
 
     @pargs.setter
@@ -28,36 +55,32 @@ class Synthesis(object):
     def parg(self):
         return self.pargs[0]
 
-    def __init__(self):
-        self.__pargs = []
-
-    # 作用位数量
     @property
     def targets(self):
-        """
-        :return:
-            返回一个作用位数量
-        """
         return self.__targets
 
     @targets.setter
     def targets(self, targets):
         self.__targets = targets
 
-    def __init__(self):
-        self.__pargs = []
-        self.__targets = 0
-
     @staticmethod
     def qureg_trans(other):
-        """
-        将输入转化为标准Qureg
-        :param other 转换的对象
-                1）tuple<qubit, qureg>
-                2) qureg/list<qubit, qureg>
-                3) Circuit
-        :return Qureg
-        :raise TypeException
+        """ tool function that change tuple/list/Circuit to a Qureg
+
+        For convince, the user can input tuple/list/Circuit/Qureg, but developer
+        need only deal with Qureg
+
+        Args:
+            other: the item is to be transformed, it can have followed form:
+                1) Circuit
+                2) Qureg
+                3) tuple<qubit, qureg>
+                4) list<qubit, qureg>
+        Returns:
+            Qureg: the qureg transformed into.
+
+        Raises:
+            TypeException: the input form is wrong.
         """
         if isinstance(other, tuple):
             other = list(other)
@@ -69,36 +92,60 @@ class Synthesis(object):
                 elif isinstance(item, Qureg):
                     qureg.extend(item)
                 else:
-                    raise TypeException("qubit或tuple<qubit, qureg>或qureg或list<qubit, qureg>或circuit", other)
+                    raise TypeException("qubit or tuple<qubit, qureg> or qureg or list<qubit, qureg> or circuit", other)
         elif isinstance(other, Qureg):
             qureg = other
         elif isinstance(other, Circuit):
             qureg = Qureg(other.qubits)
         else:
-            raise TypeException("qubit或tuple<qubit>或qureg或circuit", other)
+            raise TypeException("qubit or tuple<qubit> or qureg or circuit", other)
         return qureg
 
     @staticmethod
     def permit_element(element):
-        """
-        参数只能为int/float/complex
-        :param element: 待判断的元素
-        :return: 是否允许作为参数
-        :raise 不允许的参数
+        """ judge whether the type of a parameter is int/float/complex
+
+        for a quantum gate, the parameter should be int/float/complex
+
+        Args:
+            element: the element to be judged
+
+        Returns:
+            bool: True if the type of element is int/float/complex
         """
         if isinstance(element, int) or isinstance(element, float) or isinstance(element, complex):
             return True
         else:
+            tp = type(element)
+            if tp == np.int64 or tp == np.float or tp == np.complex128:
+                return True
             return False
 
     def __or__(self, other):
+        """deal the operator '|'
+
+        Use the syntax "oracle | circuit" or "oracle | qureg" or "oracle | qubit"
+        to add the oracle into the circuit
+        When a one qubit gate act on a qureg or a circuit, it means Adding
+        the gate on all the qubit of the qureg or circuit
+
+        targets/targs/targ will be assigned when calling this function
+
+        Some Examples are like this:
+
+        MCT_one_aux                 | circuit
+        MCT_Linear_Simulation       | circuit([i for i in range(n - 2)])
+
+        Args:
+            targets: the targets the gate acts on, it can have following form,
+                1) Circuit
+                2) qureg
+                3) tuple<qubit, qureg>
+                4) list<qubit, qureg>
+        Raise:
+            TypeException: the type of other is wrong
         """
-        处理作用于多个位或带有参数的门
-        :param other: 作用的对象
-            1）tuple<qubit, qureg>
-            2) qureg/list<qubit, qureg>
-            3) Circuit
-        """
+
         if isinstance(other, tuple):
             other = list(other)
         if isinstance(other, list):
@@ -109,13 +156,13 @@ class Synthesis(object):
                 elif isinstance(item, Qureg):
                     qureg.extend(item)
                 else:
-                    raise TypeException("qubit或tuple<qubit, qureg>或qureg或list<qubit, qureg>或circuit", other)
+                    raise TypeException("qubit or tuple<qubit, qureg> or qureg or list<qubit, qureg> or circuit", other)
         elif isinstance(other, Qureg):
             qureg = other
         elif isinstance(other, Circuit):
             qureg = Qureg(other.qubits)
         else:
-            raise TypeException("qubit或tuple<qubit>或qureg或circuit", other)
+            raise TypeException("qubit or tuple<qubit> or qureg or circuit", other)
 
         self.targets = len(qureg)
 
@@ -128,15 +175,31 @@ class Synthesis(object):
                 qubits.append(qureg[control])
             for target in gate.targs:
                 qubits.append(qureg[target])
-            qureg.circuit.__add_qureg_gate__(gate, qubits)
+            qureg.circuit.add_gate(gate, qubits)
 
     def __xor__(self, other):
-        """
-        处理作用于多个位或带有参数的门
-        :param other: 作用的对象
-            1）tuple<qubit, qureg>
-            2) qureg/list<qubit, qureg>
-            3) Circuit
+        """deal the operator '^'
+
+        Use the syntax "oracle ^ circuit" or "oracle ^ qureg" or "oracle ^ qubit"
+        to add the inverse of the oracle into the circuit
+        When a one qubit gate act on a qureg or a circuit, it means Adding
+        the gate on all the qubit of the qureg or circuit
+        Some Examples are like this:
+
+        MCT_one_aux                 | circuit
+        MCT_Linear_Simulation       | circuit([i for i in range(n - 2)])
+
+        Note that the order of qubits is that control bits first
+        and target bits followed.
+
+        Args:
+            targets: the targets the gate acts on, it can have following form,
+                1) Circuit
+                2) qureg
+                3) tuple<qubit, qureg>
+                4) list<qubit, qureg>
+        Raise:
+            TypeException: the type of other is wrong
         """
         if isinstance(other, tuple):
             other = list(other)
@@ -148,13 +211,13 @@ class Synthesis(object):
                 elif isinstance(item, Qureg):
                     qureg.extend(item)
                 else:
-                    raise TypeException("qubit或tuple<qubit, qureg>或qureg或list<qubit, qureg>或circuit", other)
+                    raise TypeException("qubit or tuple<qubit, qureg> or qureg or list<qubit, qureg> or circuit", other)
         elif isinstance(other, Qureg):
             qureg = other
         elif isinstance(other, Circuit):
             qureg = Qureg(other.qubits)
         else:
-            raise TypeException("qubit或tuple<qubit>或qureg或circuit", other)
+            raise TypeException("qubit or tuple<qubit> or qureg or circuit", other)
 
         gates = self.build_gate()
         if isinstance(gates, Circuit):
@@ -166,10 +229,11 @@ class Synthesis(object):
                 qubits.append(qureg[control])
             for target in gate.targs:
                 qubits.append(qureg[target])
-            qureg.circuit.__add_qureg_gate__(gate, qubits)
+            qureg.circuit.add_gate(gate, qubits)
 
     def __call__(self, *pargs):
-        raise Exception("请重写__call__方法")
+        raise Exception('"__call__" function must be overloaded')
 
     def build_gate(self):
-        raise Exception("请重写build_gate方法")
+        raise Exception('"build_gate" function must be overloaded')
+

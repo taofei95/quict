@@ -8,6 +8,15 @@ from .._synthesis import Synthesis
 from QuICT.models import *
 
 def solve(n, m):
+    """
+
+    Args:
+        n(int): the number of qubits in the qureg
+        m(int): the number of bits of the toffoli
+
+    Returns:
+        the circuit which describe the decomposition result
+    """
     circuit = Circuit(n)
     if m == 1:
         CX  | circuit([0, n - 1])
@@ -28,23 +37,36 @@ def solve(n, m):
     return circuit
 
 class MCT_Linear_Simulation_model(Synthesis):
-    """
-    Linear Simulation
-    https://arxiv.org/abs/quant-ph/9503016
-    Lemma 7.2
+    """ a linear simulation for toffoli gate
+
+    https://arxiv.org/abs/quant-ph/9503016 Lemma 7.2
+
+    implement m-bit toffoli gate in a qureg with n qubit with linear complexity.
+
+    If n ≥ 5 and m ∈ {3, . . . , ⌈n/2⌉} then (m+1)-Toffoli gate can be simulated
+    by a network consisting of 4(m − 2) toffoli gates
     """
 
     def __call__(self, m):
+        """
+        Args:
+            the bits of the toffoli gate
+        Returns:
+            MCT_Linear_Simulation_model: model filled by the parameter m.
+        """
         self.pargs = [m]
         return self
 
     def build_gate(self):
+        """ overloaded the function "build_gate"
+
+        """
         n = self.targets
         m = self.pargs[0]
         if m > (n // 2) + (1 if n % 2 == 1 else 0):
-            raise Exception("控制位不能超过ceil(n/2)")
+            raise Exception("control bit cannot above ceil(n/2)")
         if m < 1:
-            raise Exception("至少要有一个控制位")
+            raise Exception("there must be at least one control bit")
         return solve(self.targets, m)
 
 MCT_Linear_Simulation = MCT_Linear_Simulation_model()

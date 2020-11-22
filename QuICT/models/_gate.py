@@ -62,11 +62,11 @@ class BasicGate(object):
     which defined in this class
 
     Attributes:
-        controls(list<int>): the number of the control bits of the gate
+        controls(int): the number of the control bits of the gate
         cargs(list<int>): the list of the index of control bits in the circuit
         carg(int, read only): the first object of cargs
 
-        targets(list<int>): the number of the target bits of the gate
+        targets(int): the number of the target bits of the gate
         targs(list<int>): the list of the index of target bits in the circuit
         targ(int, read only): the first object of targs
 
@@ -491,7 +491,7 @@ class BasicGate(object):
         gate.targets = self.targets
         gate.controls = self.controls
         gate.params = self.params
-        qubit.circuit.__add_qubit_gate__(gate, qubit)
+        qubit.circuit.add_gate(gate, qubit)
 
     def _deal_qureg(self, qureg):
         """ add gate to one qureg
@@ -508,8 +508,7 @@ class BasicGate(object):
         gate.params = self.params
         if isinstance(gate, CustomGate):
             gate.matrix = self.matrix
-        qureg.circuit.__add_qureg_gate__(gate, qureg)
-
+        qureg.circuit.add_gate(gate, qureg)
 
 class HGate(BasicGate):
     """ Hadamard gate
@@ -2272,11 +2271,11 @@ class gateModel(object):
     of the function "__or__" and "__call__" is optional.
 
     Attributes:
-        controls(list<int>): the number of the control bits of the gate
+        controls(int): the number of the control bits of the gate
         cargs(list<int>): the list of the index of control bits in the circuit
         carg(int, read only): the first object of cargs
 
-        targets(list<int>): the number of the target bits of the gate
+        targets(int): the number of the target bits of the gate
         targs(list<int>): the list of the index of target bits in the circuit
         targ(int, read only): the first object of targs
 
@@ -2435,6 +2434,9 @@ class gateModel(object):
         if isinstance(element, int) or isinstance(element, float) or isinstance(element, complex):
             return True
         else:
+            tp = type(element)
+            if tp == np.int64 or tp == np.float or tp == np.complex128:
+                return True
             return False
 
     def __or__(self, other):
@@ -2489,7 +2491,7 @@ class gateModel(object):
                 qubits.append(qureg[control])
             for target in gate.targs:
                 qubits.append(qureg[target])
-            qureg.circuit.__add_qureg_gate__(gate, qubits)
+            qureg.circuit.add_gate(gate, qubits)
 
     def __call__(self, params):
         """ give parameters for the gate

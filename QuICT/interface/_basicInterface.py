@@ -7,8 +7,19 @@
 from QuICT.models import *
 
 class BasicInterface(object):
+    """ the basic interface of general processor
 
-    # 对应电路
+    these interface is devoted to make out circuit more general,
+    for example, mutual conversion with qiskit code or OpenQASM 2.0 code.
+
+    the function "load_circuit" and "load_file" should be overloaded
+
+    Attributes:
+        circuit(Circuit): the circuit in our framework
+        text_content: another form content
+
+    """
+
     @property
     def circuit(self):
         return self.__circuit
@@ -17,7 +28,6 @@ class BasicInterface(object):
     def circuit(self, circuit):
         self.__circuit = circuit
 
-    # 对应文本内容
     @property
     def text_content(self):
         return self.__text_content
@@ -32,9 +42,11 @@ class BasicInterface(object):
 
     @staticmethod
     def load_circuit(circuit : Circuit):
-        """
-        :param circuit: 待加载的电路
-        :return: BasicInterface的一个实例
+        """ load the circuit from our framework
+
+        Args:
+            circuit(Circuit): the circuit to be loaded
+
         """
         instance = BasicInterface()
         instance.circuit = circuit
@@ -42,11 +54,12 @@ class BasicInterface(object):
 
     @staticmethod
     def load_file(filename : str):
-        """
-        :param filename: 文件名称
-        :return: BasicInterface的一个实例
-        """
+        """ load the content from our file
 
+        Args:
+            filename(str): filename
+
+        """
         instance = BasicInterface()
         with open(filename) as file:
             instance.text_content = file.read()

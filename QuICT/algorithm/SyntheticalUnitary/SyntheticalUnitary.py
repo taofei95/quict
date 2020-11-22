@@ -4,17 +4,22 @@
 # @Author  : Han Yu
 # @File    : SyntheticalUnitary.py
 
-from .._algorithm import Algorithm
-from QuICT.models import *
 import numpy as np
 
+from .._algorithm import Algorithm
+from QuICT.models import *
+
 class SyntheticalUnitary(Algorithm):
+    """ get the unitary matrix of the circuit
+
+
+    """
     @classmethod
     def run(cls, circuit: Circuit, showSU = True):
         """
-        :param showSU: 展示SU
-        :param circuit:  待处理电路
-        :return: 返回参数
+        Args:
+            circuit(Circuit)
+            showSU(bool): whether return an SU unitary
         """
         circuit.const_lock = True
         params = cls.__run__(circuit)
@@ -24,9 +29,9 @@ class SyntheticalUnitary(Algorithm):
     @staticmethod
     def __run__(circuit: Circuit, showSU = True):
         """
-        需要其余算法改写
-        :param circuit: 待处理电路
-        :return: 返回list
+        Args:
+            circuit(Circuit)
+            showSU(bool): whether return an SU unitary
         """
         matrix = np.eye(1 << len(circuit.qubits))
         for gate in circuit.gates:

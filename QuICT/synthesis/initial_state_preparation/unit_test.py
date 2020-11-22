@@ -7,9 +7,10 @@
 from QuICT.models import *
 from QuICT.algorithm import *
 from QuICT.synthesis import initial_state_preparation
+import numpy as np
 import pytest
 
-def test_1():
+def w_test_1():
     for i in range(8):
         print(i)
         circuit = Circuit(i)
@@ -22,7 +23,7 @@ def test_1():
                 assert 0
     assert 1
 
-def test_2():
+def w_test_2():
     for i in range(8):
         print(i)
         circuit = Circuit(i)
@@ -33,6 +34,18 @@ def test_2():
         if abs(amplitude[0] - 1) > 1e-10:
             assert 0
     assert 1
+
+def test_3():
+    circuit = Circuit(2)
+    qreg = circuit([0, 1])
+    p = np.array([0, 0, 0, 1])
+    print(p)
+    initial_state_preparation(list(p)) | qreg
+    circuit.print_infomation()
+    amp = Amplitude.run(circuit)
+    print(amp)
+    assert 0
+
 
 if __name__ == "__main__":
     pytest.main(["./unit_test.py"])

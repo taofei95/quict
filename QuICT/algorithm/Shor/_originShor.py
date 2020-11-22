@@ -18,27 +18,6 @@ total_FFT_gate_number = 0
 total_oracle_gate_number = 0
 IQFT_gate = 0
 
-def unit_test(circuit, L, string = "默认", wz = 0):
-    print("测试开始--", string, wz)
-    circuit.flush()
-    tangle = circuit(wz)[0].tangle
-    count = 0
-    test = 0
-    lv = len(tangle.values)
-    lq = int(round(np.log2(lv)))
-    for k in range(lv):
-        if abs(tangle.values[k]) > 0.000001:
-            l = []
-            for ll in range(lq):
-                if (1 << ll) & k:
-                    l.append(circuit.index_for_qubit(tangle.qureg[lq - 1 - ll]))
-            l.reverse()
-            print(l, np.round(tangle.values[k], decimals=4))
-            test += abs(tangle.values[k]) * abs(tangle.values[k])
-            count += 1
-    print("共：", count, test)
-    print("测试结束--", string)
-
 def EX_GCD(a, b, arr):
     if b == 0:
         arr[0] = 1
@@ -233,14 +212,12 @@ def cUa(cqubit, a, a_r, N,  Nth, L, circuit):
     cmult_reverse(cqubit, a_r, N,  Nth, L, circuit)
 
 def classical_cUa(a, N, L, circuit):
-    # unit_test(circuit, L)
     plist = [0]
     for i in range(1, L + 1):
         plist.append(i)
     ControlPermMul(a, N) | circuit(plist)
-    # unit_test(circuit, L)
 
-def Shor(N, fidelity = None, classical_oracle = False):
+def Shor(N, fidelity = None):
     global FFT_gate, oracle_gate, total_FFT_gate_number, total_oracle_gate_number, IQFT_gate
     """
     :param fidelity: 保真度
@@ -285,7 +262,6 @@ def Shor(N, fidelity = None, classical_oracle = False):
         gcd = np.gcd(a, N)
         if gcd > 1:
             continue
-            #return gcd, 0, 0.0
         print("round =", rd)
         rd += 1
 
@@ -361,10 +337,7 @@ def Shor(N, fidelity = None, classical_oracle = False):
         time_end = time.time_ns()
         run_time += time_end - time_start
 
-        # unit_test(circuit, L)
-
-
-        prop = circuit.partial_prop([i for i in range(2 * L)])
+        prop = circuit.partial_prob([i for i in range(2 * L)])
 
         for i in range(0, 2 * L):
             Measure | circuit(i)
@@ -401,8 +374,8 @@ def Shor(N, fidelity = None, classical_oracle = False):
 
 class originShor_factoring(Algorithm):
     @staticmethod
-    def __run__(n, fidelity = None, classical_oracle = False):
-        return Shor(n, fidelity, classical_oracle)
+    def __run__(n, fidelity = None):
+        return Shor(n, fidelity)
 
 if __name__ == "__main__":
     time_start = time.time_ns()

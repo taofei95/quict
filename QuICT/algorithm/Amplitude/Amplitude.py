@@ -11,24 +11,32 @@ import numpy as np
 from ctypes import c_int
 
 class Amplitude(Algorithm):
+    """ get the amplitude of some circuit with some ancillary qubits which are ignored
+
+    """
+
     @classmethod
     def run(cls, circuit : Circuit, ancilla = None):
+        """
+        Args:
+            circuit(Circuit)
+            ancilla(list<int>): the indexes of ancillary qubits
+        """
         if ancilla is None:
             ancilla = []
         for qubit_index in ancilla:
             Measure | circuit(qubit_index)
         for qubit_index in ancilla:
             if circuit(qubit_index) == 1:
-                raise Exception("辅助位不为0")
-        return cls.__run__(circuit, ancilla)
+                raise Exception("the ancillary is not 0")
+        return cls._run(circuit, ancilla)
 
     @staticmethod
-    def __run__(circuit: Circuit, ancilla = None):
+    def _run(circuit: Circuit, ancilla = None):
         """
-        需要其余算法改写
-        :param circuit: 待处理电路
-        :param ancilla: 无需计算的list
-        :return: 返回list
+        Args:
+            circuit(Circuit)
+            ancilla(list<int>): the indexes of ancillary qubits
         """
         circuit.flush()
         dll = systemCdll.quick_operator_cdll
@@ -58,13 +66,6 @@ class Amplitude(Algorithm):
             q_index += 1
             if qubit.tangle not in tangle_list:
                 tangle_list.append(qubit.tangle)
-                '''
-                tangle_values = np.append(tangle_values, qubit.tangle.values)
-                tangle_length = np.append(tangle_length, len(qubit.tangle.qureg))
-                for q in qubit.tangle.qureg:
-                    qubit_map[tangle_iter + qubit.tangle.index_for_qubit(q)] = qubit.circuit.index_for_qubit(q)
-                tangle_iter = tangle_iter + len(qubit.tangle.qureg)
-                '''
         for tangle in tangle_list:
             tangle_values = np.append(tangle_values, tangle.values)
             tangle_length = np.append(tangle_length, len(tangle.qureg))

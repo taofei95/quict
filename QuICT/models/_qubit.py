@@ -4,6 +4,7 @@
 # @Author  : Han Yu
 # @File    : _qubit.py
 
+from collections.abc import Iterable
 from ctypes import *
 from math import sqrt
 import random

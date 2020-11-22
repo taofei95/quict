@@ -4,9 +4,10 @@
 # @Author  : Han Yu
 # @File    : unit_test.py
 
+import pytest
+
 from QuICT.algorithm import Amplitude
 from QuICT.models import *
-import pytest
 
 def test_1():
     for i in range(1, 10):

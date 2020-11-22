@@ -114,7 +114,15 @@ class initial_state_preparation_oracle(Synthesis):
         for i in range(n):
             add = (1 << i)
             alpha = back[now:now + add]
-            gates.extend(uniformlyRy(0, i + 1, alpha))
+            flag = True
+            for angle in alpha:
+               test = np.floor(angle / np.pi)
+               if abs(test * np.pi - angle) > 1e-13:
+                   flag = False
+                   break
+            print(i, alpha)
+            if not flag:
+                gates.extend(uniformlyRy(0, i + 1, alpha))
             now += add
         return gates
 
