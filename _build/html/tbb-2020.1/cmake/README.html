@@ -1,0 +1,646 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en-us">
+  <head>
+    <meta charset="utf-8" />
+    <title>Introduction &#8212; QuICT v0.5 documentation</title>
+    <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/jquery.js"></script>
+    <script src="../../_static/underscore.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    <script src="../../_static/language_data.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="contents topic" id="contents">
+<p class="topic-title">Contents</p>
+<ul class="simple">
+<li><p><a class="reference internal" href="#introduction" id="id4">Introduction</a></p>
+<ul>
+<li><p><a class="reference internal" href="#about-tbb" id="id5">About TBB</a></p></li>
+<li><p><a class="reference internal" href="#references" id="id6">References</a></p></li>
+<li><p><a class="reference internal" href="#engineering-team-contacts" id="id7">Engineering team contacts</a></p></li>
+</ul>
+</li>
+<li><p><a class="reference internal" href="#release-notes" id="id8">Release Notes</a></p></li>
+<li><p><a class="reference internal" href="#use-cases-of-tbb-integration-into-cmake-aware-projects" id="id9">Use cases of TBB integration into CMake-aware projects</a></p>
+<ul>
+<li><p><a class="reference internal" href="#binary-package-integration" id="id10">Binary package integration</a></p></li>
+<li><p><a class="reference internal" href="#source-package-integration" id="id11">Source package integration</a></p></li>
+</ul>
+</li>
+<li><p><a class="reference internal" href="#tutorials-tbb-integration-using-cmake" id="id12">Tutorials: TBB integration using CMake</a></p>
+<ul>
+<li><p><a class="reference internal" href="#binary-tbb-integration-to-the-sub-string-finder-sample-windows-os" id="id13">Binary TBB integration to the sub_string_finder sample (Windows* OS)</a></p></li>
+<li><p><a class="reference internal" href="#source-code-integration-of-tbb-to-the-sub-string-finder-sample-linux-os" id="id14">Source code integration of TBB to the sub_string_finder sample (Linux* OS)</a></p></li>
+</ul>
+</li>
+<li><p><a class="reference internal" href="#technical-documentation-for-cmake-modules" id="id15">Technical documentation for CMake modules</a></p>
+<ul>
+<li><p><a class="reference internal" href="#tbbconfig" id="id16">TBBConfig</a></p></li>
+<li><p><a class="reference internal" href="#tbbinstallconfig" id="id17">TBBInstallConfig</a></p>
+<ul>
+<li><p><a class="reference internal" href="#use-cases" id="id18">Use cases</a></p></li>
+</ul>
+</li>
+<li><p><a class="reference internal" href="#tbbget" id="id19">TBBGet</a></p></li>
+<li><p><a class="reference internal" href="#tbbmakeconfig" id="id20">TBBMakeConfig</a></p></li>
+<li><p><a class="reference internal" href="#tbbbuild" id="id21">TBBBuild</a></p></li>
+</ul>
+</li>
+</ul>
+</div>
+<div class="section" id="introduction">
+<h1><a class="toc-backref" href="#id4">Introduction</a><a class="headerlink" href="#introduction" title="Permalink to this headline">¶</a></h1>
+<p>Many developers use CMake to manage their development projects, so the Threading Building Blocks (TBB)
+team created the set of CMake modules to simplify integration of the TBB library into a CMake project.
+The modules are available starting from TBB 2017 U7 in <a class="reference external" href="https://github.com/01org/tbb/tree/tbb_2017/cmake">&lt;tbb_root&gt;/cmake</a>.</p>
+<div class="section" id="about-tbb">
+<h2><a class="toc-backref" href="#id5">About TBB</a><a class="headerlink" href="#about-tbb" title="Permalink to this headline">¶</a></h2>
+<p>TBB is a library that supports scalable parallel programming using standard ISO C++ code. It does not require special languages or compilers. It is designed to promote scalable data parallel programming. Additionally, it fully supports nested parallelism, so you can build larger parallel components from smaller parallel components. To use the library, you specify tasks, not threads, and let the library map tasks onto threads in an efficient manner.</p>
+<p>Many of the library interfaces employ generic programming, in which interfaces are defined by requirements on types and not specific types. The C++ Standard Template Library (STL) is an example of generic programming. Generic programming enables TBB to be flexible yet efficient. The generic interfaces enable you to customize components to your specific needs.</p>
+<p>The net result is that TBB enables you to specify parallelism far more conveniently than using raw threads, and at the same time can improve performance.</p>
+</div>
+<div class="section" id="references">
+<h2><a class="toc-backref" href="#id6">References</a><a class="headerlink" href="#references" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><p><a class="reference external" href="https://www.threadingbuildingblocks.org/">Official TBB open source site</a></p></li>
+<li><p><a class="reference external" href="https://github.com/01org/tbb">Official GitHub repository</a></p></li>
+</ul>
+</div>
+<div class="section" id="engineering-team-contacts">
+<h2><a class="toc-backref" href="#id7">Engineering team contacts</a><a class="headerlink" href="#engineering-team-contacts" title="Permalink to this headline">¶</a></h2>
+<p>The TBB team is very interested in convenient integration of the TBB library into customer projects. These CMake modules were created to provide such a possibility for CMake projects using a simple but powerful interface. We hope you will try these modules and we are looking forward to receiving your feedback!</p>
+<p>E-mail us: <a class="reference external" href="mailto:inteltbbdevelopers&#37;&#52;&#48;intel&#46;com">inteltbbdevelopers<span>&#64;</span>intel<span>&#46;</span>com</a>.</p>
+<p>Visit our <a class="reference external" href="https://software.intel.com/en-us/forums/intel-threading-building-blocks/">forum</a>.</p>
+</div>
+</div>
+<div class="section" id="release-notes">
+<h1><a class="toc-backref" href="#id8">Release Notes</a><a class="headerlink" href="#release-notes" title="Permalink to this headline">¶</a></h1>
+<ul class="simple">
+<li><p>Minimum supported CMake version: <code class="docutils literal notranslate"><span class="pre">3.0.0</span></code>.</p></li>
+<li><p>TBB versioning via <a class="reference external" href="https://cmake.org/cmake/help/latest/command/find_package.html">find_package</a> has the following format: <code class="docutils literal notranslate"><span class="pre">find_package(TBB</span> <span class="pre">&lt;major&gt;.&lt;minor&gt;</span> <span class="pre">...)</span></code>.</p></li>
+</ul>
+</div>
+<div class="section" id="use-cases-of-tbb-integration-into-cmake-aware-projects">
+<h1><a class="toc-backref" href="#id9">Use cases of TBB integration into CMake-aware projects</a><a class="headerlink" href="#use-cases-of-tbb-integration-into-cmake-aware-projects" title="Permalink to this headline">¶</a></h1>
+<dl class="simple">
+<dt>There are two types of TBB packages:</dt><dd><ul class="simple">
+<li><p>Binary packages with pre-built binaries for Windows* OS, Linux* OS and macOS*. They are available on the releases page of the Github repository: <a class="reference external" href="https://github.com/01org/tbb/releases">https://github.com/01org/tbb/releases</a>. The main purpose of the binary package integration is the ability to build TBB header files and binaries into your CMake-aware project.</p></li>
+<li><p>A source package is also available to download from the release page via the “Source code” link. In addition, it can be cloned from the repository by <code class="docutils literal notranslate"><span class="pre">git</span> <span class="pre">clone</span> <span class="pre">https://github.com/01org/tbb.git</span></code>. The main purpose of the source package integration is to allow you to do a custom build of the TBB library from the source files and then build that into your CMake-aware project.</p></li>
+</ul>
+</dd>
+</dl>
+<p>There are four types of CMake modules that can be used to integrate TBB: <cite>TBBConfig</cite>, <cite>TBBGet</cite>, <cite>TBBMakeConfig</cite> and <cite>TBBBuild</cite>. See <a class="reference internal" href="#technical-documentation-for-cmake-modules">Technical documentation for CMake modules</a> section for additional details.</p>
+<div class="section" id="binary-package-integration">
+<h2><a class="toc-backref" href="#id10">Binary package integration</a><a class="headerlink" href="#binary-package-integration" title="Permalink to this headline">¶</a></h2>
+<p>The following use case is valid for packages starting from TBB 2017 U7:</p>
+<ul class="simple">
+<li><p>Download package manually and make integration.</p></li>
+</ul>
+<blockquote>
+<div><p>Pre-condition: Location of TBBConfig.cmake is available via <code class="docutils literal notranslate"><span class="pre">TBB_DIR</span></code> or <code class="docutils literal notranslate"><span class="pre">CMAKE_PREFIX_PATH</span></code> contains path to TBB root.</p>
+<dl>
+<dt>CMake code for integration:</dt><dd><div class="highlight-cmake notranslate"><div class="highlight"><pre><span></span><span class="nb">find_package</span><span class="p">(</span><span class="s">TBB</span> <span class="s">&lt;options&gt;</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd>
+</dl>
+</div></blockquote>
+<p>The following use case is valid for all TBB 2017 packages.</p>
+<ul class="simple">
+<li><p>Download package using <a class="reference internal" href="#tbbget">TBBGet</a> and make integration.</p></li>
+</ul>
+<blockquote>
+<div><p>Pre-condition: TBB CMake modules are available via &lt;path-to-tbb-cmake-modules&gt;.</p>
+<dl>
+<dt>CMake code for integration:</dt><dd><div class="highlight-cmake notranslate"><div class="highlight"><pre><span></span><span class="nb">include</span><span class="p">(</span><span class="s">&lt;path-to-tbb-cmake-modules&gt;/TBBGet.cmake</span><span class="p">)</span>
+<span class="nb">tbb_get</span><span class="p">(</span><span class="s">TBB_ROOT</span> <span class="s">tbb_root</span> <span class="s">CONFIG_DIR</span> <span class="s">TBB_DIR</span><span class="p">)</span>
+<span class="nb">find_package</span><span class="p">(</span><span class="s">TBB</span> <span class="s">&lt;options&gt;</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd>
+</dl>
+</div></blockquote>
+</div>
+<div class="section" id="source-package-integration">
+<h2><a class="toc-backref" href="#id11">Source package integration</a><a class="headerlink" href="#source-package-integration" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><p>Build TBB from existing source files using <a class="reference internal" href="#tbbbuild">TBBBuild</a> and make integration.</p></li>
+</ul>
+<blockquote>
+<div><p>Pre-condition: TBB source code is available via &lt;tbb_root&gt; and TBB CMake modules are available via &lt;path-to-tbb-cmake-modules&gt;.</p>
+<dl>
+<dt>CMake code for integration:</dt><dd><div class="highlight-cmake notranslate"><div class="highlight"><pre><span></span><span class="nb">include</span><span class="p">(</span><span class="s">&lt;path-to-tbb-cmake-modules&gt;/TBBBuild.cmake</span><span class="p">)</span>
+<span class="nb">tbb_build</span><span class="p">(</span><span class="s">TBB_ROOT</span> <span class="s">&lt;tbb_root&gt;</span> <span class="s">CONFIG_DIR</span> <span class="s">TBB_DIR</span><span class="p">)</span>
+<span class="nb">find_package</span><span class="p">(</span><span class="s">TBB</span> <span class="s">&lt;options&gt;</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd>
+</dl>
+</div></blockquote>
+<ul class="simple">
+<li><p>Download TBB source files using <a class="reference internal" href="#tbbget">TBBGet</a>, build it using <a class="reference internal" href="#tbbbuild">TBBBuild</a> and make integration.</p></li>
+</ul>
+<blockquote>
+<div><p>Pre-condition: TBB CMake modules are available via &lt;path-to-tbb-cmake-modules&gt;.</p>
+<dl>
+<dt>CMake code for integration:</dt><dd><div class="highlight-cmake notranslate"><div class="highlight"><pre><span></span><span class="nb">include</span><span class="p">(</span><span class="s">&lt;path-to-tbb-cmake-modules&gt;/TBBGet.cmake</span><span class="p">)</span>
+<span class="nb">include</span><span class="p">(</span><span class="s">&lt;path-to-tbb-cmake-modules&gt;/TBBBuild.cmake</span><span class="p">)</span>
+<span class="nb">tbb_get</span><span class="p">(</span><span class="s">TBB_ROOT</span> <span class="s">tbb_root</span> <span class="s">SOURCE_CODE</span><span class="p">)</span>
+<span class="nb">tbb_build</span><span class="p">(</span><span class="s">TBB_ROOT</span> <span class="o">${</span><span class="nv">tbb_root</span><span class="o">}</span> <span class="s">CONFIG_DIR</span> <span class="s">TBB_DIR</span><span class="p">)</span>
+<span class="nb">find_package</span><span class="p">(</span><span class="s">TBB</span> <span class="s">&lt;options&gt;</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd>
+</dl>
+</div></blockquote>
+</div>
+</div>
+<div class="section" id="tutorials-tbb-integration-using-cmake">
+<h1><a class="toc-backref" href="#id12">Tutorials: TBB integration using CMake</a><a class="headerlink" href="#tutorials-tbb-integration-using-cmake" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="binary-tbb-integration-to-the-sub-string-finder-sample-windows-os">
+<h2><a class="toc-backref" href="#id13">Binary TBB integration to the sub_string_finder sample (Windows* OS)</a><a class="headerlink" href="#binary-tbb-integration-to-the-sub-string-finder-sample-windows-os" title="Permalink to this headline">¶</a></h2>
+<p>In this example, we will integrate binary TBB package into the sub_string_finder sample on Windows* OS (Microsoft* Visual Studio).
+This example is also applicable for other platforms with slight changes.
+Place holders &lt;version&gt; and &lt;date&gt; should be replaced with the actual values for the TBB package being used. The example is written for <cite>CMake 3.7.1</cite>.</p>
+<dl class="simple">
+<dt>Precondition:</dt><dd><ul class="simple">
+<li><p><cite>Microsoft* Visual Studio 11</cite> or higher.</p></li>
+<li><p><cite>CMake 3.0.0</cite> or higher.</p></li>
+</ul>
+</dd>
+</dl>
+<ol class="arabic">
+<li><p>Download the latest binary package for Windows from <a class="reference external" href="https://github.com/01org/tbb/releases/latest">this page</a> and unpack it to the directory <code class="docutils literal notranslate"><span class="pre">C:\demo_tbb_cmake</span></code>.</p></li>
+<li><dl>
+<dt>In the directory <code class="docutils literal notranslate"><span class="pre">C:\demo_tbb_cmake\tbb&lt;version&gt;_&lt;date&gt;oss\examples\GettingStarted\sub_string_finder</span></code> create <code class="docutils literal notranslate"><span class="pre">CMakeLists.txt</span></code> file with the following content:</dt><dd><div class="highlight-cmake notranslate"><div class="highlight"><pre><span></span><span class="nb">cmake_minimum_required</span><span class="p">(</span><span class="s">VERSION</span> <span class="s">3.0.0</span> <span class="s">FATAL_ERROR</span><span class="p">)</span>
+
+<span class="nb">project</span><span class="p">(</span><span class="s">sub_string_finder</span> <span class="s">CXX</span><span class="p">)</span>
+<span class="nb">add_executable</span><span class="p">(</span><span class="s">sub_string_finder</span> <span class="s">sub_string_finder.cpp</span><span class="p">)</span>
+
+<span class="c"># find_package will search for available TBBConfig using variables CMAKE_PREFIX_PATH and TBB_DIR.</span>
+<span class="nb">find_package</span><span class="p">(</span><span class="s">TBB</span> <span class="s">REQUIRED</span> <span class="s">tbb</span><span class="p">)</span>
+
+<span class="c"># Link TBB imported targets to the executable;</span>
+<span class="c"># &quot;TBB::tbb&quot; can be used instead of &quot;${TBB_IMPORTED_TARGETS}&quot;.</span>
+<span class="nb">target_link_libraries</span><span class="p">(</span><span class="s">sub_string_finder</span> <span class="o">${</span><span class="nv">TBB_IMPORTED_TARGETS</span><span class="o">}</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd>
+</dl>
+</li>
+<li><dl>
+<dt>Run CMake GUI and:</dt><dd><ul class="simple">
+<li><p>Fill the following fields (you can use the buttons <code class="docutils literal notranslate"><span class="pre">Browse</span> <span class="pre">Source...</span></code> and <code class="docutils literal notranslate"><span class="pre">Browse</span> <span class="pre">Build...</span></code> accordingly)</p></li>
+</ul>
+<blockquote>
+<div><ul class="simple">
+<li><p>Where is the source code: <code class="docutils literal notranslate"><span class="pre">C:/demo_tbb_cmake/tbb&lt;version&gt;_&lt;date&gt;oss/examples/GettingStarted/sub_string_finder</span></code></p></li>
+<li><p>Where to build the binaries: <code class="docutils literal notranslate"><span class="pre">C:/demo_tbb_cmake/tbb&lt;version&gt;_&lt;date&gt;oss/examples/GettingStarted/sub_string_finder/build</span></code></p></li>
+</ul>
+</div></blockquote>
+<ul class="simple">
+<li><p>Add new cache entry using button <code class="docutils literal notranslate"><span class="pre">Add</span> <span class="pre">Entry</span></code> to let CMake know where to search for TBBConfig:</p></li>
+</ul>
+<blockquote>
+<div><ul class="simple">
+<li><p>Name: <code class="docutils literal notranslate"><span class="pre">CMAKE_PREFIX_PATH</span></code></p></li>
+<li><p>Type: <code class="docutils literal notranslate"><span class="pre">PATH</span></code></p></li>
+<li><p>Value: <code class="docutils literal notranslate"><span class="pre">C:/demo_tbb_cmake/tbb&lt;version&gt;_&lt;date&gt;oss</span></code></p></li>
+</ul>
+</div></blockquote>
+<ul class="simple">
+<li><p>Push the button <code class="docutils literal notranslate"><span class="pre">Generate</span></code> and choose a proper generator for your Microsoft* Visual Studio version.</p></li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><p>Now you can open the generated solution <code class="docutils literal notranslate"><span class="pre">C:/demo_tbb_cmake/tbb&lt;version&gt;_&lt;date&gt;oss/examples/GettingStarted/sub_string_finder/build/sub_string_finder.sln</span></code> in your Microsoft* Visual Studio and build it.</p></li>
+</ol>
+</div>
+<div class="section" id="source-code-integration-of-tbb-to-the-sub-string-finder-sample-linux-os">
+<h2><a class="toc-backref" href="#id14">Source code integration of TBB to the sub_string_finder sample (Linux* OS)</a><a class="headerlink" href="#source-code-integration-of-tbb-to-the-sub-string-finder-sample-linux-os" title="Permalink to this headline">¶</a></h2>
+<p>In this example, we will build TBB from source code with enabled Community Preview Features and link the sub_string_finder sample with the built library.
+This example is also applicable for other platforms with slight changes.</p>
+<dl class="simple">
+<dt>Precondition:</dt><dd><ul class="simple">
+<li><p><cite>CMake 3.0.0</cite> or higher.</p></li>
+<li><p><cite>Git</cite> (to clone the TBB repository from GitHub)</p></li>
+</ul>
+</dd>
+</dl>
+<ol class="arabic">
+<li><dl class="simple">
+<dt>Create the directory <code class="docutils literal notranslate"><span class="pre">~/demo_tbb_cmake</span></code>, go to the created directory and clone the TBB repository there:</dt><dd><p><code class="docutils literal notranslate"><span class="pre">mkdir</span> <span class="pre">~/demo_tbb_cmake</span> <span class="pre">;</span> <span class="pre">cd</span> <span class="pre">~/demo_tbb_cmake</span> <span class="pre">;</span> <span class="pre">git</span> <span class="pre">clone</span> <span class="pre">https://github.com/01org/tbb.git</span></code></p>
+</dd>
+</dl>
+</li>
+<li><dl>
+<dt>In the directory <code class="docutils literal notranslate"><span class="pre">~/demo_tbb_cmake/tbb/examples/GettingStarted/sub_string_finder</span></code> create <code class="docutils literal notranslate"><span class="pre">CMakeLists.txt</span></code> file with following content:</dt><dd><div class="highlight-cmake notranslate"><div class="highlight"><pre><span></span><span class="nb">cmake_minimum_required</span><span class="p">(</span><span class="s">VERSION</span> <span class="s">3.0.0</span> <span class="s">FATAL_ERROR</span><span class="p">)</span>
+
+<span class="nb">project</span><span class="p">(</span><span class="s">sub_string_finder</span> <span class="s">CXX</span><span class="p">)</span>
+<span class="nb">add_executable</span><span class="p">(</span><span class="s">sub_string_finder</span> <span class="s">sub_string_finder.cpp</span><span class="p">)</span>
+
+<span class="nb">include</span><span class="p">(</span><span class="o">${</span><span class="nv">TBB_ROOT</span><span class="o">}</span><span class="s">/cmake/TBBBuild.cmake</span><span class="p">)</span>
+
+<span class="c"># Build TBB with enabled Community Preview Features (CPF).</span>
+<span class="nb">tbb_build</span><span class="p">(</span><span class="s">TBB_ROOT</span> <span class="o">${</span><span class="nv">TBB_ROOT</span><span class="o">}</span> <span class="s">CONFIG_DIR</span> <span class="s">TBB_DIR</span> <span class="s">MAKE_ARGS</span> <span class="s">tbb_cpf=1</span><span class="p">)</span>
+
+<span class="nb">find_package</span><span class="p">(</span><span class="s">TBB</span> <span class="s">REQUIRED</span> <span class="s">tbb_preview</span><span class="p">)</span>
+
+<span class="c"># Link TBB imported targets to the executable;</span>
+<span class="c"># &quot;TBB::tbb_preview&quot; can be used instead of &quot;${TBB_IMPORTED_TARGETS}&quot;.</span>
+<span class="nb">target_link_libraries</span><span class="p">(</span><span class="s">sub_string_finder</span> <span class="o">${</span><span class="nv">TBB_IMPORTED_TARGETS</span><span class="o">}</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>Create a build directory for the sub_string_finder sample to perform build out of source, go to the created directory</dt><dd><p><code class="docutils literal notranslate"><span class="pre">mkdir</span> <span class="pre">~/demo_tbb_cmake/tbb/examples/GettingStarted/sub_string_finder/build</span> <span class="pre">;</span> <span class="pre">cd</span> <span class="pre">~/demo_tbb_cmake/tbb/examples/GettingStarted/sub_string_finder/build</span></code></p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>Run CMake to prepare Makefile for the sub_string_finder sample and provide TBB location (root) where to perform build:</dt><dd><p><code class="docutils literal notranslate"><span class="pre">cmake</span> <span class="pre">-DTBB_ROOT=${HOME}/demo_tbb_cmake/tbb</span> <span class="pre">..</span></code></p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>Make an executable and run it:</dt><dd><p><code class="docutils literal notranslate"><span class="pre">make</span> <span class="pre">;</span> <span class="pre">./sub_string_finder</span></code></p>
+</dd>
+</dl>
+</li>
+</ol>
+</div>
+</div>
+<div class="section" id="technical-documentation-for-cmake-modules">
+<h1><a class="toc-backref" href="#id15">Technical documentation for CMake modules</a><a class="headerlink" href="#technical-documentation-for-cmake-modules" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="tbbconfig">
+<h2><a class="toc-backref" href="#id16">TBBConfig</a><a class="headerlink" href="#tbbconfig" title="Permalink to this headline">¶</a></h2>
+<p>Configuration module for TBB library.</p>
+<dl class="simple">
+<dt>How to use this module in your CMake project:</dt><dd><ol class="arabic simple">
+<li><p>Add location of TBB (root) to <a class="reference external" href="https://cmake.org/cmake/help/latest/variable/CMAKE_PREFIX_PATH.html">CMAKE_PREFIX_PATH</a>
+or specify location of TBBConfig.cmake in <code class="docutils literal notranslate"><span class="pre">TBB_DIR</span></code>.</p></li>
+<li><p>Use <a class="reference external" href="https://cmake.org/cmake/help/latest/command/find_package.html">find_package</a> to configure TBB.</p></li>
+<li><p>Use provided variables and/or imported targets (described below) to work with TBB.</p></li>
+</ol>
+</dd>
+</dl>
+<p>TBB components can be passed to <a class="reference external" href="https://cmake.org/cmake/help/latest/command/find_package.html">find_package</a>
+after keyword <code class="docutils literal notranslate"><span class="pre">COMPONENTS</span></code> or <code class="docutils literal notranslate"><span class="pre">REQUIRED</span></code>.
+Use basic names of components (<code class="docutils literal notranslate"><span class="pre">tbb</span></code>, <code class="docutils literal notranslate"><span class="pre">tbbmalloc</span></code>, <code class="docutils literal notranslate"><span class="pre">tbb_preview</span></code>, etc.).</p>
+<p>If components are not specified then default are used: <code class="docutils literal notranslate"><span class="pre">tbb</span></code>, <code class="docutils literal notranslate"><span class="pre">tbbmalloc</span></code> and <code class="docutils literal notranslate"><span class="pre">tbbmalloc_proxy</span></code>.</p>
+<p>If <code class="docutils literal notranslate"><span class="pre">tbbmalloc_proxy</span></code> is requested, <code class="docutils literal notranslate"><span class="pre">tbbmalloc</span></code> component will also be added and set as dependency for <code class="docutils literal notranslate"><span class="pre">tbbmalloc_proxy</span></code>.</p>
+<p>TBBConfig creates <a class="reference external" href="https://cmake.org/cmake/help/latest/manual/cmake-buildsystem.7.html#imported-targets">imported targets</a> as
+shared libraries using the following format: <code class="docutils literal notranslate"><span class="pre">TBB::&lt;component&gt;</span></code> (for example, <code class="docutils literal notranslate"><span class="pre">TBB::tbb</span></code>, <code class="docutils literal notranslate"><span class="pre">TBB::tbbmalloc</span></code>).</p>
+<p>Set <code class="docutils literal notranslate"><span class="pre">TBB_FIND_RELEASE_ONLY</span></code> to <code class="docutils literal notranslate"><span class="pre">TRUE</span></code> before <code class="docutils literal notranslate"><span class="pre">find_package</span></code> call in order to search only for release TBB version. This variable helps to avoid simultaneous linkage of release and debug TBB versions when CMake configuration is <cite>Debug</cite> but a third-party component depends on release TBB version.
+Variables set during TBB configuration:</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 30%" />
+<col style="width: 70%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Variable</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">TBB_FOUND</span></code></p></td>
+<td><p>TBB library is found</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">TBB_&lt;component&gt;_FOUND</span></code></p></td>
+<td><p>specific TBB component is found</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">TBB_IMPORTED_TARGETS</span></code></p></td>
+<td><p>all created TBB imported targets</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">TBB_VERSION</span></code></p></td>
+<td><p>TBB version (format: <code class="docutils literal notranslate"><span class="pre">&lt;major&gt;.&lt;minor&gt;</span></code>)</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">TBB_INTERFACE_VERSION</span></code></p></td>
+<td><p>TBB interface version (can be empty, see below for details)</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="tbbinstallconfig">
+<h2><a class="toc-backref" href="#id17">TBBInstallConfig</a><a class="headerlink" href="#tbbinstallconfig" title="Permalink to this headline">¶</a></h2>
+<p>Module for generation and installation of TBB CMake configuration files (TBBConfig.cmake and TBBConfigVersion.cmake files) on Linux, macOS and Windows.</p>
+<p>Provides the following functions:</p>
+<blockquote>
+<div><div class="highlight-cmake notranslate"><div class="highlight"><pre><span></span>tbb_install_config(INSTALL_DIR &lt;install_dir&gt; SYSTEM_NAME Linux|Darwin|Windows
+                   [TBB_VERSION &lt;major&gt;.&lt;minor&gt;|TBB_VERSION_FILE &lt;version_file&gt;]
+                   [LIB_REL_PATH &lt;lib_rel_path&gt; INC_REL_PATH &lt;inc_rel_path&gt;]
+                   [LIB_PATH &lt;lib_path&gt; INC_PATH &lt;inc_path&gt;])``
+</pre></div>
+</div>
+</div></blockquote>
+<p><strong>Note: the module overwrites existing TBBConfig.cmake and TBBConfigVersion.cmake files in &lt;install_dir&gt;.</strong></p>
+<p><code class="docutils literal notranslate"><span class="pre">tbb_config_installer.cmake</span></code> allows to run <code class="docutils literal notranslate"><span class="pre">TBBInstallConfig.cmake</span></code> from command line.
+It accepts the same parameters as <code class="docutils literal notranslate"><span class="pre">tbb_install_config</span></code> function, run <code class="docutils literal notranslate"><span class="pre">cmake</span> <span class="pre">-P</span> <span class="pre">tbb_config_installer.cmake</span></code> to get help.</p>
+<div class="section" id="use-cases">
+<h3><a class="toc-backref" href="#id18">Use cases</a><a class="headerlink" href="#use-cases" title="Permalink to this headline">¶</a></h3>
+<p><strong>Prepare TBB CMake configuration files for custom TBB package.</strong></p>
+<p>The use case is applicable for package maintainers who create own TBB packages and want to create TBBConfig.cmake and TBBConfigVersion.cmake for these packages.</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 34%" />
+<col style="width: 66%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Parameter</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">INSTALL_DIR</span> <span class="pre">&lt;directory&gt;</span></code></p></td>
+<td><p>Directory to install CMake configuration files</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">SYSTEM_NAME</span> <span class="pre">Linux|Darwin|Windows</span></code></p></td>
+<td><p>OS name to generate config files for</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">TBB_VERSION_FILE</span> <span class="pre">&lt;version_file&gt;</span></code></p></td>
+<td><p>Path to <code class="docutils literal notranslate"><span class="pre">tbb_stddef.h</span></code> to parse version from and
+write it to TBBConfigVersion.cmake</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">TBB_VERSION</span> <span class="pre">&lt;major&gt;.&lt;minor&gt;</span></code></p></td>
+<td><p>Directly specified TBB version; alternative to <code class="docutils literal notranslate"><span class="pre">TBB_VERSION_FILE</span></code> parameter;
+<code class="docutils literal notranslate"><span class="pre">TBB_INTERFACE_VERSION</span></code> is set to empty value in this case</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">LIB_REL_PATH</span> <span class="pre">&lt;lib_rel_path&gt;</span></code></p></td>
+<td><p>Relative path to TBB binaries (.lib files on Windows), default: <code class="docutils literal notranslate"><span class="pre">../../../lib</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">BIN_REL_PATH</span> <span class="pre">&lt;bin_rel_path&gt;</span></code></p></td>
+<td><p>Relative path to TBB DLLs, default: <code class="docutils literal notranslate"><span class="pre">../../../bin</span></code> (applicable for Windows only)</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">INC_REL_PATH</span> <span class="pre">&lt;inc_rel_path&gt;</span></code></p></td>
+<td><p>Relative path to TBB headers, default: <code class="docutils literal notranslate"><span class="pre">../../../include</span></code></p></td>
+</tr>
+</tbody>
+</table>
+<p><em>Example</em></p>
+<blockquote>
+<div><p>Assume your package is installed to the following structure:</p>
+<ul class="simple">
+<li><p>Binaries go to <code class="docutils literal notranslate"><span class="pre">&lt;prefix&gt;/lib</span></code></p></li>
+<li><p>Headers go to <code class="docutils literal notranslate"><span class="pre">&lt;prefix&gt;/include</span></code></p></li>
+<li><p>CMake configuration files go to <code class="docutils literal notranslate"><span class="pre">&lt;prefix&gt;/lib/cmake/&lt;package&gt;</span></code></p></li>
+</ul>
+<p>The package is packed from <code class="docutils literal notranslate"><span class="pre">/my/package/content</span></code> directory.</p>
+<p><code class="docutils literal notranslate"><span class="pre">cmake</span> <span class="pre">-DINSTALL_DIR=/my/package/content/lib/cmake/TBB</span> <span class="pre">-DSYSTEM_NAME=Linux</span> <span class="pre">-DTBB_VERSION_FILE=/my/package/content/include/tbb/tbb_stddef.h</span> <span class="pre">-P</span> <span class="pre">tbb_config_installer.cmake</span></code> (default relative paths will be used)</p>
+</div></blockquote>
+<p><strong>Install TBB CMake configuration files for installed TBB.</strong></p>
+<p>The use case is applicable for users who have installed TBB, but do not have (or have incorrect) CMake configuration files for this TBB.</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 39%" />
+<col style="width: 61%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Parameter</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">INSTALL_DIR</span> <span class="pre">&lt;directory&gt;</span></code></p></td>
+<td><p>Directory to install CMake configuration files</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">SYSTEM_NAME</span> <span class="pre">Linux|Darwin|Windows</span></code></p></td>
+<td><p>OS name to generate config files for</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">LIB_PATH</span> <span class="pre">&lt;lib_path&gt;</span></code></p></td>
+<td><p>Path to installed TBB binaries (.lib files on Windows)</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">BIN_PATH</span> <span class="pre">&lt;bin_path&gt;</span></code></p></td>
+<td><p>Path to installed TBB DLLs (applicable for Windows only)</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">INC_PATH</span> <span class="pre">&lt;inc_path&gt;</span></code></p></td>
+<td><p>Path to installed TBB headers</p></td>
+</tr>
+</tbody>
+</table>
+<p><code class="docutils literal notranslate"><span class="pre">LIB_PATH</span></code> and <code class="docutils literal notranslate"><span class="pre">INC_PATH</span></code> will be converted to relative paths based on <code class="docutils literal notranslate"><span class="pre">INSTALL_DIR</span></code>.
+By default TBB version will be parsed from <code class="docutils literal notranslate"><span class="pre">&lt;inc_path&gt;/tbb/tbb_stddef.h</span></code>,
+but it can be overridden by optional parameters <code class="docutils literal notranslate"><span class="pre">TBB_VERSION_FILE</span></code> or <code class="docutils literal notranslate"><span class="pre">TBB_VERSION</span></code>.</p>
+<p><em>Example</em></p>
+<blockquote>
+<div><p>TBB is installed to <code class="docutils literal notranslate"><span class="pre">/usr</span></code> directory.
+In order to create TBBConfig.cmake and TBBConfigVersion.cmake in <code class="docutils literal notranslate"><span class="pre">/usr/lib/cmake/TBB</span></code> run</p>
+<p><code class="docutils literal notranslate"><span class="pre">cmake</span> <span class="pre">-DINSTALL_DIR=/usr/lib/cmake/TBB</span> <span class="pre">-DSYSTEM_NAME=Linux</span> <span class="pre">-DLIB_PATH=/usr/lib</span> <span class="pre">-DINC_PATH=/usr/include</span> <span class="pre">-P</span> <span class="pre">tbb_config_installer.cmake</span></code>.</p>
+</div></blockquote>
+</div>
+</div>
+<div class="section" id="tbbget">
+<h2><a class="toc-backref" href="#id19">TBBGet</a><a class="headerlink" href="#tbbget" title="Permalink to this headline">¶</a></h2>
+<p>Module for getting TBB library from <a class="reference external" href="https://github.com/01org/tbb">GitHub</a>.</p>
+<dl>
+<dt>Provides the following functions:</dt><dd><dl>
+<dt><code class="docutils literal notranslate"><span class="pre">tbb_get(TBB_ROOT</span> <span class="pre">&lt;variable&gt;</span> <span class="pre">[RELEASE_TAG</span> <span class="pre">&lt;release_tag&gt;|LATEST]</span> <span class="pre">[SAVE_TO</span> <span class="pre">&lt;path&gt;]</span> <span class="pre">[SYSTEM_NAME</span> <span class="pre">Linux|Windows|Darwin]</span> <span class="pre">[CONFIG_DIR</span> <span class="pre">&lt;variable&gt;</span> <span class="pre">|</span> <span class="pre">SOURCE_CODE])</span></code></dt><dd><p>downloads TBB from GitHub and creates TBBConfig for the downloaded binary package if there is no TBBConfig.</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 23%" />
+<col style="width: 77%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Parameter</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">TBB_ROOT</span> <span class="pre">&lt;variable&gt;</span></code></p></td>
+<td><p>a variable to save TBB root in, <code class="docutils literal notranslate"><span class="pre">&lt;variable&gt;-NOTFOUND</span></code> will be provided in case <code class="docutils literal notranslate"><span class="pre">tbb_get</span></code> is unsuccessful</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">RELEASE_TAG</span> <span class="pre">&lt;release_tag&gt;|LATEST</span></code></p></td>
+<td><p>TBB release tag to be downloaded (for example, <code class="docutils literal notranslate"><span class="pre">2017_U6</span></code>), <code class="docutils literal notranslate"><span class="pre">LATEST</span></code> is used by default</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">SAVE_TO</span> <span class="pre">&lt;path&gt;</span></code></p></td>
+<td><p>path to location at which to unpack downloaded TBB, <code class="docutils literal notranslate"><span class="pre">${CMAKE_CURRENT_BINARY_DIR}/tbb_downloaded</span></code> is used by default</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">SYSTEM_NAME</span> <span class="pre">Linux|Windows|Darwin</span></code></p></td>
+<td><p>operating system name to download a binary package for,
+value of <a class="reference external" href="https://cmake.org/cmake/help/latest/variable/CMAKE_SYSTEM_NAME.html">CMAKE_SYSTEM_NAME</a> is used by default</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">CONFIG_DIR</span> <span class="pre">&lt;variable&gt;</span></code></p></td>
+<td><p>a variable to save location of TBBConfig.cmake and TBBConfigVersion.cmake. Ignored if <code class="docutils literal notranslate"><span class="pre">SOURCE_CODE</span></code> specified</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">SOURCE_CODE</span></code></p></td>
+<td><p>flag to get TBB source code (instead of binary package)</p></td>
+</tr>
+</tbody>
+</table>
+</dd>
+</dl>
+</dd>
+</dl>
+</div>
+<div class="section" id="tbbmakeconfig">
+<h2><a class="toc-backref" href="#id20">TBBMakeConfig</a><a class="headerlink" href="#tbbmakeconfig" title="Permalink to this headline">¶</a></h2>
+<p>Module for making TBBConfig in <a class="reference external" href="https://github.com/01org/tbb/releases">official TBB binary packages published on GitHub</a>.</p>
+<p>This module is to be used for packages that do not have TBBConfig.</p>
+<dl>
+<dt>Provides the following functions:</dt><dd><dl>
+<dt><code class="docutils literal notranslate"><span class="pre">tbb_make_config(TBB_ROOT</span> <span class="pre">&lt;path&gt;</span> <span class="pre">CONFIG_DIR</span> <span class="pre">&lt;variable&gt;</span> <span class="pre">[SYSTEM_NAME</span> <span class="pre">Linux|Windows|Darwin])</span></code></dt><dd><p>creates CMake configuration files (TBBConfig.cmake and TBBConfigVersion.cmake) for TBB binary package.</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 23%" />
+<col style="width: 77%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Parameter</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">TBB_ROOT</span> <span class="pre">&lt;variable&gt;</span></code></p></td>
+<td><p>path to TBB root</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">CONFIG_DIR</span> <span class="pre">&lt;variable&gt;</span></code></p></td>
+<td><p>a variable to store location of the created configuration files</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">SYSTEM_NAME</span> <span class="pre">Linux|Windows|Darwin</span></code></p></td>
+<td><p>operating system name of the binary TBB package,
+value of <a class="reference external" href="https://cmake.org/cmake/help/latest/variable/CMAKE_SYSTEM_NAME.html">CMAKE_SYSTEM_NAME</a> is used by default</p></td>
+</tr>
+</tbody>
+</table>
+</dd>
+</dl>
+</dd>
+</dl>
+</div>
+<div class="section" id="tbbbuild">
+<h2><a class="toc-backref" href="#id21">TBBBuild</a><a class="headerlink" href="#tbbbuild" title="Permalink to this headline">¶</a></h2>
+<p>Module for building TBB library from the source code.</p>
+<dl>
+<dt>Provides the following functions:</dt><dd><dl>
+<dt><code class="docutils literal notranslate"><span class="pre">tbb_build(TBB_ROOT</span> <span class="pre">&lt;tbb_root&gt;</span> <span class="pre">CONFIG_DIR</span> <span class="pre">&lt;variable&gt;</span> <span class="pre">[MAKE_ARGS</span> <span class="pre">&lt;custom_make_arguments&gt;])</span></code></dt><dd><p>builds TBB from source code using the <code class="docutils literal notranslate"><span class="pre">Makefile</span></code>, creates and provides the location of the CMake configuration files (TBBConfig.cmake and TBBConfigVersion.cmake) .</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 32%" />
+<col style="width: 68%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Parameter</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">TBB_ROOT</span> <span class="pre">&lt;variable&gt;</span></code></p></td>
+<td><p>path to TBB root</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">CONFIG_DIR</span> <span class="pre">&lt;variable&gt;</span></code></p></td>
+<td><p>a variable to store location of the created configuration files,
+<code class="docutils literal notranslate"><span class="pre">&lt;variable&gt;-NOTFOUND</span></code> will be provided in case <code class="docutils literal notranslate"><span class="pre">tbb_build</span></code> is unsuccessful</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">MAKE_ARGS</span> <span class="pre">&lt;custom_make_arguments&gt;</span></code></p></td>
+<td><p>custom arguments to be passed to <code class="docutils literal notranslate"><span class="pre">make</span></code> tool.</p>
+<p>The following arguments are always passed with automatically detected values to
+<code class="docutils literal notranslate"><span class="pre">make</span></code> tool if they are not redefined in <code class="docutils literal notranslate"><span class="pre">&lt;custom_make_arguments&gt;</span></code>:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">compiler=&lt;compiler&gt;</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">tbb_build_dir=&lt;tbb_build_dir&gt;</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">tbb_build_prefix=&lt;tbb_build_prefix&gt;</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">-j&lt;n&gt;</span></code></p></li>
+</ul>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+</dd>
+</dl>
+</dd>
+</dl>
+<hr class="docutils" />
+<p>Intel and the Intel logo are trademarks of Intel Corporation or its subsidiaries in the U.S. and/or other countries.</p>
+<p><code class="docutils literal notranslate"><span class="pre">*</span></code> Other names and brands may be claimed as the property of others.</p>
+</div>
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../index.html">QuICT</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2020, hanyu.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.4.4</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="../../_sources/tbb-2020.1/cmake/README.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

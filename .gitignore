@@ -4,3 +4,7 @@
 */__pycache__/
 /tbb-2020.1/
 *.so
+/_build/
+/_static/
+/_templates/
+
