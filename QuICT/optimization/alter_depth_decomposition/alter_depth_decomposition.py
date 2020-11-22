@@ -1217,7 +1217,7 @@ def solve(circuit):
 
 class alter_depth_decomposition(Optimization):
     @staticmethod
-    def __run__(circuit: Circuit, *pargs):
+    def _run(circuit: Circuit, *pargs):
         """
         任意经典电路化简
         :param circuit: 需变化电路
