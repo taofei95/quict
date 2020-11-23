@@ -150,4 +150,5 @@ def test_get_item():
     assert 1
 
 if __name__ == "__main__":
-    pytest.main(["./_unit_test.py"])
+    # pytest.main(["./_unit_test.py", "./circuit_unit_test.py", "./gate_unit_test.py", "./qubit_unit_test.py"])
+    pytest.main(["qubit_unit_test.py"])

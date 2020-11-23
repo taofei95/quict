@@ -64,7 +64,7 @@ DLLEXPORT bool measure_operator_func(
     int index, 
     complex<double> *values,
     double generation,
-    double *prop
+    double *prob
     ){
     index = qureg_length - 1 - index;
     long long v_l = 1 << qureg_length;
@@ -88,7 +88,7 @@ DLLEXPORT bool measure_operator_func(
     },[](double x, double y)->double{return x+y;});
 
     bool _1 = generation > _0;
-    *prop = _0;
+    *prob = 1 - _0;
 
     if (_1){
         generation = sqrt(1 - _0);
