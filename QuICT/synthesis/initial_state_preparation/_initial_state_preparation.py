@@ -99,7 +99,6 @@ class initial_state_preparation_oracle(Synthesis):
         if abs(norm - 1) > 1e-10:
             for i in range(NN):
                 self.pargs[i] /= norm
-        print(self.pargs)
 
         dll = self.initial_state_preparation_cdll
         state_theta_computation = dll.state_theta_computation
