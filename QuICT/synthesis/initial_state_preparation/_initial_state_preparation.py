@@ -90,6 +90,16 @@ class initial_state_preparation_oracle(Synthesis):
         N = len(self.pargs)
         n = int(np.ceil(np.log2(N)))
         NN = 1 << n
+        if NN > N:
+            self.pargs.extend([0] * (NN - N))
+
+        norm = 0
+        for value in self.pargs:
+            norm += value
+        if abs(norm - 1) > 1e-10:
+            for i in range(NN):
+                self.pargs[i] /= norm
+        print(self.pargs)
 
         dll = self.initial_state_preparation_cdll
         state_theta_computation = dll.state_theta_computation
@@ -114,7 +124,14 @@ class initial_state_preparation_oracle(Synthesis):
         for i in range(n):
             add = (1 << i)
             alpha = back[now:now + add]
-            gates.extend(uniformlyRy(0, i + 1, alpha))
+            flag = False
+            for angle in alpha:
+                count = int(angle / np.pi)
+                if abs(count * np.pi - angle) > 1e-10:
+                    flag = True
+                    break
+            if flag:
+                gates.extend(uniformlyRy(0, i + 1, alpha))
             now += add
         return gates
 

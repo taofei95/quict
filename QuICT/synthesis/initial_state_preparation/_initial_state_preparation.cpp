@@ -47,7 +47,7 @@ DLLEXPORT int state_theta_computation(
                 if (_0 < eps && _1 < eps){
                     back[now + j] = 0;
                 }else{
-                    back[now + j] = 2 * asinl(sqrtl(_0 / (_0 + _1)));
+                    back[now + j] = 2 * acosl(sqrtl(_0 / (_0 + _1)));
                 }
             }
         });
