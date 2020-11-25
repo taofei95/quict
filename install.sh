@@ -1,3 +1,4 @@
+#!/bin/bash
 cd ./tbb-2020.1
 sudo rm release_path.sh
 make
@@ -15,4 +16,17 @@ g++ -std=c++11 dll.cpp -fPIC -shared -o quick_operator_cdll.so -I . -ltbb
 cd ../synthesis/initial_state_preparation
 g++ -std=c++11 _initial_state_preparation.cpp -fPIC -shared -o initial_state_preparation_cdll.so -I ../../backends -ltbb
 cd ../../../
+
+cd ./QuICT/mapping/lib
+sudo python setup.py build_ext --inplace 
+if [ -e ~/.bash_profile ]
+then
+    echo 
+else
+    touch ~/.bash_profile
+fi
+echo "export PYTHONPATH=$(pwd)/build/lib.linux-x86_64-3.7/" >> ~/.bash_profile
+export PYTHONPATH=$(pwd)/build/lib.linux-x86_64-3.7/
+cd ../../../
+
 sudo python3 setup.py install
