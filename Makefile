@@ -1,4 +1,4 @@
-.PHONY: tbb quict install clean default
+.PHONY: tbb quict install clean default install_tbb install_quict
 
 TBBLIB :=
 TBBDST :=
@@ -34,20 +34,24 @@ clean:
 	$(RM) QuICT/backends/quick_operator_cdll.so
 	$(RM) QuICT/synthesis/initial_state_preparation/initial_state_preparation_cdll.so
 
-quict:
+quict: install_tbb
 	cd ./QuICT/backends && \
 	$(CXX) -std=c++11 dll.cpp -fPIC -shared -o quick_operator_cdll.so -I . -ltbb && \
 	cd ../synthesis/initial_state_preparation && \
 	$(CXX) -std=c++11 _initial_state_preparation.cpp -fPIC -shared -o initial_state_preparation_cdll.so -I ../../backends -ltbb
 	$(PYTHON) setup.py build
 
-# sudo
 # Do NOT add tbb here as a dependency, otherwise releasr_path.sh would be wrong
-install: quict
+install_tbb:
 	cd tbb-2020.1 && \
 	. ./release_path.sh && \
 	cp -t $(TBBDST) $(TBBLIB)
+
+install_quict: quict
 	$(PYTHON) setup.py install
+
+# sudo
+install:  install_quict install_tbb
 
 # sudo
 uninstall:
