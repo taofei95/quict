@@ -7,20 +7,25 @@
 from QuICT.models import Circuit
 
 class Optimization(object):
-    """ The superClass of Optimization algorithm
+    """ SuperClass of all optimization algorithm
 
+    In general, optimization algorithm means the algorithm which optimizes the input circuit
+    to a better circuit, which is better is some aspect such as depth, size, T-count and so on
 
+    Note that all subClass must overloaded the function "_run".
+    The overloaded of the function "__run__" is optional.
 
     """
+
     @classmethod
-    def run(cls, circuit : Circuit, *pargs, inplace=False):
-        """ run the algorithm
-        circuit(Circuit): the circuit to be optimize
-        inplace(bool):
-            if true, change the origin circuit.
-            otherwise, return a new circuit with origin circuit constant.
-            default to be false
-        *pargs: other parameters
+    def run(cls, circuit : Circuit, *pargs, inplace = False):
+        """ optimize the circuit
+
+        Args:
+            circuit(Circuit): the circuit to be optimize
+            *pargs:           the parameters to be filled
+            inplace(bool):    change the old circuit if it is true, otherwise create a new circuit
+
         """
         circuit.const_lock = True
         gates = cls._run(circuit, *pargs)
@@ -36,9 +41,11 @@ class Optimization(object):
 
     @staticmethod
     def _run(circuit : Circuit, *pargs):
-        """
-        circuit(Circuit): the circuit to be optimize
-        *pargs: other parameters
+        """ private function to solve the problem
+        Args:
+            circuit(Circuit): the circuit to be optimize
+            *pargs:           the parameters to be filled
+
         """
         print(*pargs)
         return circuit.gates

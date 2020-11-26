@@ -575,19 +575,20 @@ class Tangle(object):
         generation = random.random()
         # print(generation)
 
-        prop = c_double()
+        prob = c_double()
         result = measure_operator_func(
             len(self.qureg),
             index,
             self.values,
             generation,
-            pointer(prop)
+            pointer(prob)
         )
         self.qureg.remove(qubit)
         self.values = self.values[:(1 << len(self.qureg))]
         qubit.tangle = None
         qubit.measured = result
-        qubit.prop = prop.value
+        qubit.prob = prob.value
+        # print(qubit.prob, prob.value, result)
 
     def deal_reset_gate(self, gate):
         """ apply a reset gate on this tangle

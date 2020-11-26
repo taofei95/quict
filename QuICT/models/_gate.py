@@ -1612,6 +1612,7 @@ class PermShiftGate(PermGate):
         n = int(round(np.log2(N)))
         self.params = N
         self.targets = n
+        self.pargs = []
         for idx in range(1 << self.targets):
             idxx = idx // 2
             controlxx = idx % 2
@@ -1725,6 +1726,7 @@ class PermMulGate(PermGate):
             n = n + 1
         self.params = N
         self.targets = n
+        self.pargs = []
         for idx in range(N):
             self.pargs.append(idx * shift % N)
         for idx in range(N, 1 << n):
@@ -1829,6 +1831,7 @@ class PermFxGate(PermGate):
 
         self.params = 1 << (n + 1)
         self.targets = n + 1
+        self.pargs = []
 
         N_2 = N << 1
         for idx in range(N_2):
