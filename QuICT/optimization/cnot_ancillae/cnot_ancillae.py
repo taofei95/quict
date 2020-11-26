@@ -86,27 +86,27 @@ def ConstructPj(c, x, z, sqrtn, d2logn):
         t.append(total)
         if tj > 0:
             tj -= 1
-            CNOT.append(x[j], c[first])
+            add_CNOT(x[j], c[first])
             now = first
             first += 1
             number_a = 1
             while tj > 0:
                 for i in range(number_a):
-                    CNOT.append(x[now + i], c[first])
+                    add_CNOT(x[now + i], c[first])
                     first += 1
                     tj -= 1
                     if tj == 0:
                         break
-                    CNOT.append(x[now + i], c[first])
+                    add_CNOT(x[now + i], c[first])
                     first += 1
                     tj -= 1
                     if tj == 0:
                         break
     end = len(CNOT)
     for j in range(d2logn):
-        for i in range(sqrtn):
+        for i in range(1, sqrtn):
             if i & (1 << j):
-                CNOT.append(t[j], z[i])
+                add_CNOT(c[t[j]], z[i])
                 t[j] -= 1
     Inverse(start, end)
 
@@ -115,7 +115,7 @@ def GenerateYBase(Y_part, c, length, x):
     """ Apply Lemma 6 to copy part of Y_part in ancillary register
 
     We generator Y_part[:, :log^2n]
-    to c[y_index * 3 * n : y_index * 3 * n + n] with the help of c[y_index * 3 * n + n : y_index * 3 * n + 3 * n]
+    to c[:n] with the help of c[n :  3 * n]
     time complex: \tilde{O}(n)
     depth : O(logn)
 
@@ -123,7 +123,7 @@ def GenerateYBase(Y_part, c, length, x):
         Y_part(np.matrix): Y_part
         c(list<int>): indexes of ancillary register,
         length: the value of log^2n
-        x(list<int>): indexes of first register, length is log^2n
+            x(list<int>): indexes of first register, length is log^2n
 
     """
     global n, s, CNOT
@@ -152,8 +152,10 @@ def GenerateYBase(Y_part, c, length, x):
 
         r_sqrtn = int(pow(2, cols))
         ConstructPj(c[floor(n / 2) + j * sqrtn * d2logn:], x[j * d2logn:],
-                    ancillary[j * sqrtn:], r_sqrtn, cols)
+                    ancillary[j * (sqrtn - 1):], r_sqrtn, cols)
     Step1_end = len(CNOT)
+
+    print(CNOT)
 
     pointer = n
     for k in range(ceil(length / d2logn)):
@@ -169,11 +171,11 @@ def GenerateYBase(Y_part, c, length, x):
         r_sqrtn = int(pow(2, cols))
 
         sl        = [0] * r_sqrtn
-        sl_origin = [] * r_sqrtn
+        sl_origin = [[]] * r_sqrtn
         for u in range(n):
             l = 0
             for i in range(cols):
-                if Y[u, i] == 1:
+                if Y_part[u, i] == 1:
                     l += 1 << i
             sl[l] += 1
         for i in range(1, r_sqrtn):
@@ -184,13 +186,13 @@ def GenerateYBase(Y_part, c, length, x):
                 sl_origin[i].append((4 * d2logn, now))
                 while total > 0:
                     for _ in range(number_a):
-                        CNOT.append(x[now], c[pointer])
+                        add_CNOT(x[now], c[pointer])
                         sl_origin[i].append((4 * d2logn, pointer))
                         pointer += 1
                         total -= 1
                         if total == 0:
                             break
-                        CNOT.append(x[now], c[pointer])
+                        add_CNOT(x[now], c[pointer])
                         sl_origin[i].append((4 * d2logn, pointer))
                         pointer += 1
                         total -= 1
@@ -207,7 +209,7 @@ def GenerateYBase(Y_part, c, length, x):
         for u in range(n):
             l = 0
             for i in range(cols):
-                if Y[u, i] == 1:
+                if Y_part[u, i] == 1:
                     l += 1 << i
             if l == 0:
                 continue
@@ -216,7 +218,7 @@ def GenerateYBase(Y_part, c, length, x):
                 sl_origin[l] = sl_origin[l][1:]
             assert len(sl_origin[l]) > 0
             sl_origin[l][0] = (sl_origin[l][0][0] - 1, sl_origin[l][0][1])
-            CNOT.append(ancillary[sl_origin[l][0][1]], ystart[u])
+            add_CNOT(ancillary[sl_origin[l][0][1]], ystart[u])
 
         #   Step 4.1 restore of Step2
         Inverse(Step2_start, Step2_end)
@@ -401,6 +403,7 @@ class cnot_ancillae(Optimization):
             circuit(Circuit): circuit to be optimize
             *pargs: empty
         """
+
         matrix = read(circuit)
         solve(matrix)
         gates = []
