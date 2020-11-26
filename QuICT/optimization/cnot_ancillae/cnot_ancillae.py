@@ -4,160 +4,292 @@
 # @Author  : Han Yu
 # @File    : cnot_ancillae.py
 
-from .._optimization import Optimization
-from QuICT.models import *
-from QuICT.exception import CircuitStructException
-import numpy as np
 from math import log2, ceil, floor, sqrt
+
+import numpy as np
+
+from .._optimization import Optimization
+from QuICT.exception import CircuitStructException
+from QuICT.models import *
 
 s = 0
 n = 0
 CNOT = []
 
-def check_matrix(M, invM):
-    global n, s
-    matrix = np.identity((2 + 3 * s) * n, dtype=bool)
-    for cnot in CNOT:
-        matrix[cnot[1]] = np.bitwise_xor(matrix[cnot[1]], matrix[cnot[0]])
-    matrix = matrix[:2 * n, :2 * n]
-    print(np.all(matrix[n:, :n] == M))
-    MM = matrix[n:, :n]
-    # print("MM", MM[0][0])
-    '''
-    for i in range(n):
-        for j in range(n):
-            if j <= i:
-                if not MM[i][j]:
-                    print(i, j, MM[i][j])
-                    # raise Exception("error{}-{}".format(i, j))
-            elif MM[i][j]:
-                print(i, j,  MM[i][j])
-                # raise Exception("error{}-{}".format(i, j))
-    '''
-    print(np.all(matrix[:n, n:] == invM))
+def add_CNOT(a, b):
+    """ add a cont gate with control bit a and target bit b into list CNOT
 
-#   添加CNOT(a, b)
-def addCNOT(a, b):
+    Args:
+        a(int): control bit index
+        b(int): target bit index
+    """
+
     global CNOT
     CNOT.append((a, b))
-    # print(a, b)
 
 #   对一段区间[start, end)进行反向操作
 def Inverse(start, end):
-    # if not hasattr(Inverse, 'time'):
-    #    Inverse.time = 0
-    # Inverse.time += 1
-    # print("INVERSE", Inverse.time, start, end, end - start)
+    """ apply the inverse of gate list in CNOT[start:end] on the circuit
+
+    Args:
+        start(int): the start index of interval
+        end(int): the end index of interval
+    """
+
     for i in range(end - 1, start - 1, -1):
-        addCNOT(CNOT[i][0], CNOT[i][1])
+        add_CNOT(CNOT[i][0], CNOT[i][1])
 
 #   Lemma 5中的copy过程，将x copy给c[:length]
 def Copy(x, copy_list):
+    """ copy process in Lemma 5
+
+    :param x:
+    :param copy_list:
+    :return:
+    """
     own = [x]
     x_l = 1
     copy_l = len(copy_list)
     run_l = 0
     while copy_l > run_l:
         for i in range(min(x_l, copy_l - run_l)):
-            addCNOT(own[i], copy_list[run_l])
+            add_CNOT(own[i], copy_list[run_l])
             own.append(copy_list[run_l])
             run_l += 1
 
-#   Lemma 6
-def GenerateYBase(M, c, y_index, index, length, z):
+def ConstructPj(c, x, z, sqrtn, d2logn):
+    """ Apply Lemma 5 to make |x, z, 0> -> |x, (Pj)z, 0>
+
+    Pj is the sqrt(n) * logn/2 matrix go through F_2^{logn / 2}
+
+    Args:
+        c(list<int>): the indexes of ancillae, length is sqrt(n) * log2n / 2
+        x(list<int>): the indexes of first register, length is log2n / 2
+        z(list<int>): the indexes of second register, length is log2n / 2
+        sqrtn(int)  : the value of sqrt(n)
+        d2logn(int) : the value of logn / 2
+    """
+
+    global CNOT
+
+    t = []
+    total = 0
+    first = 0
+
+    start = len(CNOT)
+    for j in range(d2logn):
+        tj = 0
+        for i in range(1, sqrtn):
+            if i & (1 << j):
+                tj += 1
+        total += tj
+        t.append(total)
+        if tj > 0:
+            tj -= 1
+            CNOT.append(x[j], c[first])
+            now = first
+            first += 1
+            number_a = 1
+            while tj > 0:
+                for i in range(number_a):
+                    CNOT.append(x[now + i], c[first])
+                    first += 1
+                    tj -= 1
+                    if tj == 0:
+                        break
+                    CNOT.append(x[now + i], c[first])
+                    first += 1
+                    tj -= 1
+                    if tj == 0:
+                        break
+    end = len(CNOT)
+    for j in range(d2logn):
+        for i in range(sqrtn):
+            if i & (1 << j):
+                CNOT.append(t[j], z[i])
+                t[j] -= 1
+    Inverse(start, end)
+
+
+def GenerateYBase(Y_part, c, length, x):
+    """ Apply Lemma 6 to copy part of Y_part in ancillary register
+
+    We generator Y_part[:, :log^2n]
+    to c[y_index * 3 * n : y_index * 3 * n + n] with the help of c[y_index * 3 * n + n : y_index * 3 * n + 3 * n]
+    time complex: \tilde{O}(n)
+    depth : O(logn)
+
+    Args:
+        Y_part(np.matrix): Y_part
+        c(list<int>): indexes of ancillary register,
+        length: the value of log^2n
+        x(list<int>): indexes of first register, length is log^2n
+
+    """
     global n, s, CNOT
-    ancillary = c[y_index * 3 * n + n:y_index * 3 * n + 3 * n]  # 可使用的辅助位的起点，长度为2n
-    # print("ancillary start", ancillary[0], c[0])
-    ystart = c[y_index * 3 * n:y_index * 3 * n + n]
-    p = ancillary
-    subL = floor((sqrt(length)) / 2)
-    _2logn = floor(sqrt(length)) * 2
-    copy_ps = ancillary[n:]
-    for j in range(ceil(min(length, n - (index * s * length + y_index * length)) / subL)):
-        # 构造Lemma 6中的Y_j
-        M_start = index * s * length + y_index * length + j * subL  # 对应Y的位置
-        sub_length = min(min(length, n - (index * s * length + y_index * length)) - j * subL, subL)
+
+    # ancillary qubits in Lemma 6
+    ancillary = c[n: 3 * n]
+
+    # goal qubits in Lemma 6
+    ystart = c[:n]
+
+    # d2logn = floor(logn / 2)
+    d2logn = int(floor(round(sqrt(length)) / 2))
+
+    # sqrtn = sqrt(n)
+    sqrtn = int(pow(2, d2logn))
+
+    # real length
+    length = min(length, np.shape(Y_part)[1])
+
+    Step1_start = len(CNOT)
+    for j in range(ceil(length / d2logn)):
         # Step 1 Construct Pj's (Lemma 5)
-        pstart = p[j * round(pow(2, subL) - 1):min((j + 1) * round(pow(2, subL) - 1), len(p))]   # 构建pj的行位置
-        xstart = z[y_index * length + j * subL:]   # 对应I的行位置
-        init_col = len(CNOT)
-        for i in range(0, sub_length):
-            copy_list = []
-            for p_row in range(1, round(pow(2, sub_length))):
-                if p_row & (1 << i) != 0:
-                    copy_list.append(pstart[p_row - 1])
-            # print(copy_list)
-            Copy(xstart[i], copy_list)
+        cols = min(d2logn, length - j * d2logn)
+
+        assert cols == d2logn
+
+        r_sqrtn = int(pow(2, cols))
+        ConstructPj(c[floor(n / 2) + j * sqrtn * d2logn:], x[j * d2logn:],
+                    ancillary[j * sqrtn:], r_sqrtn, cols)
+    Step1_end = len(CNOT)
+
+    pointer = n
+    for k in range(ceil(length / d2logn)):
+        # do Step 2 and Step 3 one by one
 
         #  Step 2 Copy rows in Pj's
-        tstart = ancillary[(j * (2 ** subL - 1)):]
-        base = []
-        for i in range(2 ** sub_length - 1):
-            base.append([tstart[i]])
-        temp = [0] * (2 ** sub_length - 1)
-        for i in range(n):
-            m_list = M[i][M_start:M_start + sub_length]
-            yl = 0
-            for k in range(sub_length):
-                if m_list[k]:
-                    yl += 1 << k
-            # 优化，全0行无需复制
-            if yl != 0:
-                temp[yl - 1] += 1
+        Step2_start = len(CNOT)
 
-        for i in range(2 ** sub_length - 1):
-            temp[i] = ceil(temp[i] / _2logn)
-            if temp[i] > 1:
-                # print(j, i, temp[i] - 1, len(copy_ps))
-                Copy(pstart[i], [copy_ps[i] for i in range(temp[i] - 1)])
-                base[i].extend([copy_ps[j] for j in range(temp[i] - 1)])
-                copy_ps = copy_ps[temp[i] - 1:]
-        end_cnot = len(CNOT)
-        for i in range(2 ** sub_length - 1):
-            base[i] = base[i] * _2logn
-        #  Step 3 Construct Y
-        for i in range(n):
-            m_list = M[i][M_start:]
-            yl = 0
-            for k in range(sub_length):
-                if m_list[k]:
-                    yl += 1 << k
-            if yl == 0:
+        cols = min(d2logn, length - k * d2logn)
+
+        assert cols == d2logn
+
+        r_sqrtn = int(pow(2, cols))
+
+        sl        = [0] * r_sqrtn
+        sl_origin = [] * r_sqrtn
+        for u in range(n):
+            l = 0
+            for i in range(cols):
+                if Y[u, i] == 1:
+                    l += 1 << i
+            sl[l] += 1
+        for i in range(1, r_sqrtn):
+            if sl[i] > 1:
+                total = sl[i] - 1
+                number_a = 1
+                now = k * d2logn + i
+                sl_origin[i].append((4 * d2logn, now))
+                while total > 0:
+                    for _ in range(number_a):
+                        CNOT.append(x[now], c[pointer])
+                        sl_origin[i].append((4 * d2logn, pointer))
+                        pointer += 1
+                        total -= 1
+                        if total == 0:
+                            break
+                        CNOT.append(x[now], c[pointer])
+                        sl_origin[i].append((4 * d2logn, pointer))
+                        pointer += 1
+                        total -= 1
+                        if total == 0:
+                            break
+                        if now == k * d2logn + i:
+                            now = pointer
+                        else:
+                            now += 1
+
+        Step2_end = len(CNOT)
+
+        #   Step 3
+        for u in range(n):
+            l = 0
+            for i in range(cols):
+                if Y[u, i] == 1:
+                    l += 1 << i
+            if l == 0:
                 continue
-            yl -= 1
-            if len(base[yl]) == 0:
-                raise Exception("错误0!")
-            addCNOT(base[yl][0], ystart[i])
-            base[yl] = base[yl][1:]
-        #  Step4 Restore
-        Inverse(init_col, end_cnot)
+            assert len(sl_origin[l]) > 0
+            if sl_origin[l][0][0] == 0:
+                sl_origin[l] = sl_origin[l][1:]
+            assert len(sl_origin[l]) > 0
+            sl_origin[l][0] = (sl_origin[l][0][0] - 1, sl_origin[l][0][1])
+            CNOT.append(ancillary[sl_origin[l][0][1]], ystart[u])
 
+        #   Step 4.1 restore of Step2
+        Inverse(Step2_start, Step2_end)
 
-#   Corollary 3
-def GenerateYPart(M, x, c, index, length, z):
+    # Step 4.2 restore of Step1
+    Inverse(Step1_start, Step1_end)
+
+def GenerateYPart(Y_part, x, c, index, length, z):
+    """ apply Corollary 3 to make |x, z, 0> -> |x, (T_part)z, 0>
+
+    time complex: \tilde{O}(sn)
+    depth : O(logn)
+
+    Args:
+        Y_part(np.matrix): n * n, matrix in F_2. We only use the part
+                           Y_part[: , :slog^2n]
+        x(list<int>): the indexes of first register, we only use x[:slog^2n]
+        c(list<int>): the indexes of ancillary register, length is 3 * s * n
+        index(int): the index of the Y part
+        length(int): the reality value for log^2n
+        z(list<int>): the indexes of second register, length is n
+    """
     global s, n
-    # => R_a
+    # operate R_a in Corollary 3
     init_len = len(CNOT)
     for i in range(s):
         if index * length * s + i * length < n:
-            GenerateYBase(M, c, i, index, length, x)
+            GenerateYBase(Y_part[:, i * length:], c[i * 3 * n:], length, x[i * length:])
     end_len = len(CNOT)
-    # => Add
+
+    # operate Add in Corollary 3
     for i in range(s):
         for j in range(n):
-            addCNOT(c[i * 3 * n + j], z[j])
-    # => R_a^-1
+            add_CNOT(c[i * 3 * n + j], z[j])
+
+    # operate R_a^{-1} in Corollary 3
     Inverse(init_len, end_len)
 
-#   Lemma 4
 def MainProcedure(M, x, c, z):
+    """ apply Lemma4 to make |x, z, 0> -> |x, z xor Mx, 0>
+
+    time complex: \tilde{O}(n^2)
+    depth : O(n/slogn)
+
+    Args:
+        M(np.matrix): a matrix in F_2
+        x(list<int>): the indexes of first register, length is n
+        c(list<int>): the indexes of ancillary register, length is n
+        z(list<int>): the indexes of second register, length is 3 * s * n
+    """
     global n, s
     global CNOT
-    t = round(floor(log2(n)) * floor(log2(n)))
+
+    # divide the part into size slog^2n and apply Lemma 5
+    # we ensure the log2n be even and 2 (sqrt(n) - 1) log2n <= n
+    log2n = floor(log2(n))
+    while log2n % 2 == 1 or 2 * (round(pow(2, log2n / 2)) - 1) * log2n > n:
+        log2n -= 1
+    t = round(log2n * log2n)
     for i in range(ceil(n / (s * t))):
-        GenerateYPart(M, x[i * t * s:], c, i, t, z)
+        GenerateYPart(M[:, i * s * t:], x[i * t * s:], c, i, t, z)
 
 def InverseMatrixF2(a):
+    """ get the inverse matrix of a in F_2
+
+    Args:
+        a(np.matrix): the matrix in F_2
+
+    Returns:
+        np.matrix: the inverse of a in F_2
+
+    """
+
     global n
     b = np.zeros(2 * n * n, dtype=bool).reshape(n, 2 * n)
     for i in range(n):
@@ -184,29 +316,51 @@ def InverseMatrixF2(a):
             b[i][j] = b[i][j + n]
     return b[:, :n]
 
-# Theorem 7
 def solve(matrix):
+    """ apply Theorem 7 to build new circuit
+
+    Args:
+        matrix(np.array): the matrix represents the CNOT circuit
+    """
+
     global CNOT, s
     CNOT = []
-    x = [j for j in range(n)]
-    z = [j + n for j in range(n)]
-    c = [j + 2 * n for j in range(3 * s * n)]
+
+    # x, z and c mean three part in the circuit in the theorem 7
+    x: list = [j for j in range(n)]
+    z: list = [j + n for j in range(n)]
+    c: list = [j + 2 * n for j in range(3 * s * n)]
     InvMatrix = InverseMatrixF2(matrix)
+
+    # do C_1 operate
     MainProcedure(matrix, x, c, z)
+
+    # do C_2 operate
     MainProcedure(InvMatrix, z, c, x)
-    # check_matrix(matrix, InvMatrix)
 
 def read(circuit : Circuit):
+    """ transform the CNOT circuit into a matrix with 0 and 1
+
+    apply xor operator in an identity matrix, the cnot list can be represented by a matrix with 0 and 1
+
+    Args:
+        circuit(Circuit): CNOT circuit
+
+    Returns:
+        np.matrix: the matrix transformed by the circuit
+    """
     global n
     n = circuit.circuit_length()
     if n < pow(log2(n), 2):
-        raise CircuitStructException("电路规模n应满足n大于等于(log n)^2")
+        raise CircuitStructException("the qubit number of circuit n \
+                should satisfied that n greater than or equal (log n)^2")
     if s > n / pow(log2(n), 2):
-        raise CircuitStructException("参数s应满足s小于等于n / (log n)^2")
+        raise CircuitStructException("the parameter s \
+                should satisfied that s less than or equal (log n)^2")
     matrix = np.identity(n, dtype=bool)
     for gate in circuit.gates:
         if gate.type() != GateType.CX:
-            raise CircuitStructException("电路应当只包含CONT门")
+            raise CircuitStructException(f"the input circuit should be a CNOT circuit, but it contains {str(gate)}")
         cindex = gate.cargs
         tindex = gate.targs
         matrix[tindex] = np.bitwise_xor(matrix[cindex], matrix[tindex])
@@ -215,23 +369,39 @@ def read(circuit : Circuit):
 class cnot_ancillae(Optimization):
     @classmethod
     def run(cls, circuit : Circuit, size = 1, inplace = False):
+        """ Optimization the circuit by (3s+1)n ancillary qubits
+
+        Optimal Space-Depth Trade-Off of CNOT Circuits in Quantum Logic Synthesis
+        Theorem 7
+        parallelize any n-qubit CNOT circuit into O(n/slogn) depth with (3s+1) ancillae,
+        where 1 <= s <= O(n/log^2n). time complex is \tilde{O}(n^w), which is time for get inverse of a matrix.
+        https://arxiv.org/pdf/1907.05087.pdf
+
+        Args:
+            circuit(Circuit): circuit to be optimize
+            size(int):        the 's' in the Theorem
+            inplace(bool):    change the old circuit if it is true, otherwise create a new circuit
+                              Note that the old circuit should have (3s + 2)n qubits with
+                              first n qubits as cnot circuit, followed (3s + 1)n unused qubits
         """
-        :param circuit: 需变化电路
-        :param size: s取值
-        :param inplace: 为真时,返回一个新的电路;为假时,修改原电路的门参数
-        :return: inplace为真时,无返回值;为假时,返回新的电路,电路初值为0
-        """
+
         global s
         s = size
         circuit.const_lock = True
-        gates = cls.__run__(circuit)
+        gates = cls._run(circuit)
         circuit.const_lock = False
         new_circuit = Circuit(len(circuit.qubits) * (2 + 3 * size))
         new_circuit.set_flush_gates(gates)
         return new_circuit
 
     @staticmethod
-    def __run__(circuit : Circuit, *pargs):
+    def _run(circuit : Circuit, *pargs):
+        """
+        Args:
+            circuit(Circuit): circuit to be optimize
+            *pargs: empty
+        """
+
         matrix = read(circuit)
         solve(matrix)
         gates = []

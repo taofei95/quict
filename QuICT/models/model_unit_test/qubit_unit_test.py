@@ -25,3 +25,16 @@ def test_Qubit_Attributes_prob():
     if abs(circuit[1].prob - 0.5) > 1e-10:
         print(circuit[1].prob)
         assert 0
+
+def test_Qureg_Function_slice():
+    circuit = Circuit(10)
+    qureg = circuit.qubits
+    slices = qureg[2:7]
+    i = qureg[0].id + 2
+    for qubit in slices:
+        if qubit.id != i:
+            print(qubit.id, i)
+            assert 0
+        i = i + 1
+
+

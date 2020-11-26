@@ -4,18 +4,30 @@
 # @Author  : Han Yu
 # @File    : _optimization.py
 
-from QuICT.models import Circuit, GateBuilder
+from QuICT.models import Circuit
 
 class Optimization(object):
+    """ SuperClass of all optimization algorithm
+
+    In general, optimization algorithm means the algorithm which optimizes the input circuit
+    to a better circuit, which is better is some aspect such as depth, size, T-count and so on
+
+    Note that all subClass must overloaded the function "_run".
+    The overloaded of the function "__run__" is optional.
+
+    """
+
     @classmethod
-    def run(cls, circuit : Circuit, *pargs, inplace=False):
-        """
-        :param circuit: 需变化电路
-        :param inplace: 为真时,返回一个新的电路;为假时,修改原电路的门参数
-        :return: inplace为真时,无返回值;为假时,返回新的电路,电路初值为0
+    def run(cls, circuit : Circuit, *pargs, inplace = False):
+        """ optimize the circuit
+
+        circuit(Circuit): the circuit to be optimize
+        *pargs:           the parameters to be filled
+        inplace(bool):    change the old circuit if it is true, otherwise create a new circuit
+
         """
         circuit.const_lock = True
-        gates = cls.__run__(circuit, *pargs)
+        gates = cls._run(circuit, *pargs)
         if isinstance(gates, Circuit):
             gates = gates.gates
         circuit.const_lock = False
@@ -27,10 +39,11 @@ class Optimization(object):
             return new_circuit
 
     @staticmethod
-    def __run__(circuit : Circuit, *pargs):
-        """
-        需要其余算法改写
-        :param circuit: 需变化电路
-        :return: 返回新电路门的数组
+    def _run(circuit : Circuit, *pargs):
+        """ private function to solve the problem
+
+        circuit(Circuit): the circuit to be optimize
+        *pargs:           the parameters to be filled
+
         """
         return circuit.gates
