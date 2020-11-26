@@ -16,3 +16,5 @@ cd ../synthesis/initial_state_preparation
 g++ -std=c++11 _initial_state_preparation.cpp -fPIC -shared -o initial_state_preparation_cdll.so -I ../../backends -ltbb
 cd ../../../
 sudo python3 setup.py install
+
+# If makefile works properly, this file should be deprecated.
