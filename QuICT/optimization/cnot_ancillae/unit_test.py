@@ -35,11 +35,13 @@ def generate_matrix_with_ancillary(circuit, n):
     matrix = np.identity(circuit_length, dtype=bool)
     for gate in circuit.gates:
         matrix[gate.targ, :] = matrix[gate.targ, :] ^ matrix[gate.carg, :]
-    for i in range(circuit_length):
-        for j in range(circuit_length):
-            assert not(n < i != j and n < j and matrix[i, j])
-
-    return matrix[:n, :n]
+    for i in range(n):
+        for j in range(n):
+            assert not matrix[i, j]
+    for i in range(2 * n, 3 * n):
+        for j in range(n):
+            assert not matrix[i, j]
+    return matrix[n:2 * n, :n]
 
 def check_equiv(circuit1, circuit2):
     """ check whether two circuit is equiv
@@ -51,23 +53,24 @@ def check_equiv(circuit1, circuit2):
         bool: True if equiv
     """
     n = circuit1.circuit_length()
-    if circuit2.circuit_length() != n:
-        return False
     matrix1 = generate_matrix(circuit1, n)
     matrix2 = generate_matrix_with_ancillary(circuit2, n)
+    # circuit2.print_infomation()
 
-    # print(matrix1, matrix2)
+    print(matrix1)
+
+    print(np.any(matrix1 ^ matrix2))
 
     return not np.any(matrix1 ^ matrix2)
 
 def test_1():
-    for n in range(4, 5):
-        circuit = Circuit(n)
-        for _ in range(50):
+    for n in range(4, 100):
+        for s in range(1, int(np.floor(n / np.log2(n) / np.log2(n)))):
+            circuit = Circuit(n)
             for i in range(n - 1):
                 CX | circuit([i, i + 1])
-        new_circuit = cnot_ancillae.run(circuit)
-        assert check_equiv(circuit, new_circuit)
+            new_circuit = cnot_ancillae.run(circuit, size = s)
+            assert check_equiv(circuit, new_circuit)
 
 def test_2():
     assert 1

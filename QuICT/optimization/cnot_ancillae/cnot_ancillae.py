@@ -23,7 +23,7 @@ def add_CNOT(a, b):
         a(int): control bit index
         b(int): target bit index
     """
-
+    assert a != b
     global CNOT
     CNOT.append((a, b))
 
@@ -83,7 +83,7 @@ def ConstructPj(c, x, z, sqrtn, d2logn):
             if i & (1 << j):
                 tj += 1
         total += tj
-        t.append(total)
+        t.append(total - 1)
         if tj > 0:
             tj -= 1
             add_CNOT(x[j], c[first])
@@ -92,12 +92,13 @@ def ConstructPj(c, x, z, sqrtn, d2logn):
             number_a = 1
             while tj > 0:
                 for i in range(number_a):
-                    add_CNOT(x[now + i], c[first])
+                    print(now + i, first, len(c))
+                    add_CNOT(c[now + i], c[first])
                     first += 1
                     tj -= 1
                     if tj == 0:
                         break
-                    add_CNOT(x[now + i], c[first])
+                    add_CNOT(c[now + i], c[first])
                     first += 1
                     tj -= 1
                     if tj == 0:
@@ -106,7 +107,7 @@ def ConstructPj(c, x, z, sqrtn, d2logn):
     for j in range(d2logn):
         for i in range(1, sqrtn):
             if i & (1 << j):
-                add_CNOT(c[t[j]], z[i])
+                add_CNOT(c[t[j]], z[i - 1])
                 t[j] -= 1
     Inverse(start, end)
 
@@ -123,7 +124,7 @@ def GenerateYBase(Y_part, c, length, x):
         Y_part(np.matrix): Y_part
         c(list<int>): indexes of ancillary register,
         length: the value of log^2n
-            x(list<int>): indexes of first register, length is log^2n
+        x(list<int>): indexes of first register, length is log^2n
 
     """
     global n, s, CNOT
@@ -148,14 +149,13 @@ def GenerateYBase(Y_part, c, length, x):
         # Step 1 Construct Pj's (Lemma 5)
         cols = min(d2logn, length - j * d2logn)
 
-        assert cols == d2logn
+        # assert cols == d2logn
 
         r_sqrtn = int(pow(2, cols))
-        ConstructPj(c[floor(n / 2) + j * sqrtn * d2logn:], x[j * d2logn:],
+
+        ConstructPj(ancillary[sqrtn + sqrtn * d2logn * j // 2:], x[j * d2logn:],
                     ancillary[j * (sqrtn - 1):], r_sqrtn, cols)
     Step1_end = len(CNOT)
-
-    print(CNOT)
 
     pointer = n
     for k in range(ceil(length / d2logn)):
@@ -166,40 +166,42 @@ def GenerateYBase(Y_part, c, length, x):
 
         cols = min(d2logn, length - k * d2logn)
 
-        assert cols == d2logn
+        # assert cols == d2logn
 
         r_sqrtn = int(pow(2, cols))
 
-        sl        = [0] * r_sqrtn
-        sl_origin = [[]] * r_sqrtn
+        sl        = [0] * (r_sqrtn - 1)
+        sl_origin = [[] * 0 for i in range(r_sqrtn - 1)]
         for u in range(n):
             l = 0
             for i in range(cols):
-                if Y_part[u, i] == 1:
+                if Y_part[u, d2logn * k + i]:
                     l += 1 << i
-            sl[l] += 1
+            if l == 0:
+                continue
+            sl[l - 1] += 1
         for i in range(1, r_sqrtn):
-            if sl[i] > 1:
-                total = sl[i] - 1
+            if sl[i - 1] > 0:
+                total = ceil(sl[i - 1] / (4 * d2logn)) - 1
                 number_a = 1
-                now = k * d2logn + i
-                sl_origin[i].append((4 * d2logn, now))
+                now = k * (sqrtn - 1) + i - 1
+                sl_origin[i - 1].append((4 * d2logn, now))
                 while total > 0:
                     for _ in range(number_a):
-                        add_CNOT(x[now], c[pointer])
-                        sl_origin[i].append((4 * d2logn, pointer))
+                        add_CNOT(ancillary[now], ancillary[pointer])
+                        sl_origin[i - 1].append((4 * d2logn, pointer))
                         pointer += 1
                         total -= 1
                         if total == 0:
                             break
-                        add_CNOT(x[now], c[pointer])
-                        sl_origin[i].append((4 * d2logn, pointer))
+                        add_CNOT(ancillary[now], ancillary[pointer])
+                        sl_origin[i - 1].append((4 * d2logn, pointer))
                         pointer += 1
                         total -= 1
                         if total == 0:
                             break
-                        if now == k * d2logn + i:
-                            now = pointer
+                        if now == k * (sqrtn - 1) + i - 1:
+                            now = pointer - 2
                         else:
                             now += 1
 
@@ -209,16 +211,19 @@ def GenerateYBase(Y_part, c, length, x):
         for u in range(n):
             l = 0
             for i in range(cols):
-                if Y_part[u, i] == 1:
+                if Y_part[u,  d2logn * k + i]:
                     l += 1 << i
             if l == 0:
                 continue
+            l -= 1
+            # print(u, l, sl_origin[l])
             assert len(sl_origin[l]) > 0
             if sl_origin[l][0][0] == 0:
                 sl_origin[l] = sl_origin[l][1:]
             assert len(sl_origin[l]) > 0
             sl_origin[l][0] = (sl_origin[l][0][0] - 1, sl_origin[l][0][1])
             add_CNOT(ancillary[sl_origin[l][0][1]], ystart[u])
+
 
         #   Step 4.1 restore of Step2
         Inverse(Step2_start, Step2_end)
@@ -280,7 +285,6 @@ def MainProcedure(M, x, c, z):
     t = round(log2n * log2n)
     for i in range(ceil(n / (s * t))):
         GenerateYPart(M[:, i * s * t:], x[i * t * s:], c, i, t, z)
-
 def InverseMatrixF2(a):
     """ get the inverse matrix of a in F_2
 
@@ -353,12 +357,9 @@ def read(circuit : Circuit):
     """
     global n
     n = circuit.circuit_length()
-    if n < pow(log2(n), 2):
+    if n < 4:
         raise CircuitStructException("the qubit number of circuit n \
-                should satisfied that n greater than or equal (log n)^2")
-    if s > n / pow(log2(n), 2):
-        raise CircuitStructException("the parameter s \
-                should satisfied that s less than or equal (log n)^2")
+                should greater than or equal 4")
     matrix = np.identity(n, dtype=bool)
     for gate in circuit.gates:
         if gate.type() != GateType.CX:
@@ -392,7 +393,7 @@ class cnot_ancillae(Optimization):
         circuit.const_lock = True
         gates = cls._run(circuit)
         circuit.const_lock = False
-        new_circuit = Circuit(len(circuit.qubits) * (2 + 3 * size))
+        new_circuit = Circuit(circuit.circuit_length() * (2 + 3 * size))
         new_circuit.set_flush_gates(gates)
         return new_circuit
 
