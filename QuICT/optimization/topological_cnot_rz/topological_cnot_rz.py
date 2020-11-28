@@ -434,10 +434,8 @@ def solve():
 class topological_cnot_rz(Optimization):
     @staticmethod
     def _run(circuit: Circuit, *pargs):
-        """
-        cnot_rz电路化简
-        :param circuit: 需变化电路
-        :return: 返回新电路门的数组
+        """ CNOT_RZ
+
         """
         global topo, topo_backward_map
         read(circuit)

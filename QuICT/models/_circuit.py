@@ -4,10 +4,13 @@
 # @Author  : Han Yu
 # @File    : _circuit.py
 
+import random
+import copy
+
+import numpy as np
+
 from ._qubit import Qubit, Qureg
 from QuICT.exception import TypeException, ConstException, IndexLimitException, IndexDuplicateException
-import numpy as np
-import random
 
 # global circuit id count
 circuit_id = 0
@@ -414,17 +417,31 @@ class Circuit(object):
         self.gates = gates.copy()
         self.__queue_gates = gates.copy()
 
-    def add_gate(self, gate, qureg):
+    def add_gate(self, gate, qureg = None):
         """ add a gate to the circuit
 
         Args:
             gate(BasicGate): the gate to be added to the circuit
-            qureg(Qureg/Qubit): the Qureg/Qubit gate added to
+            qureg(Qureg/Qubit/None): the Qureg/Qubit gate added to.
+                                    if Qureg is None, use the targs and cargs in gate
         """
+        if qureg is None:
+            qureg_list = [] if gate.controls == 0 else copy.deepcopy(gate.cargs)
+            qureg_list.extend(gate.targs)
+            qureg = self(qureg_list)
         if gate.controls + gate.targets == 1:
             self._add_qubit_gate(gate, qureg if isinstance(qureg, Qubit) else qureg[0])
         else:
             self._add_qureg_gate(gate, qureg)
+
+    def add_gates(self, gates):
+        """ add gates to the circuit
+
+        Args:
+            gates(list<BasicGate>): the gate to be added to the circuit
+        """
+        for gate in gates:
+            self.add_gate(gates)
 
     def _add_qubit_gate(self, gate, qubit):
         """ add a gate into some qubit

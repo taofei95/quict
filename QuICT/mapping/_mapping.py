@@ -8,14 +8,16 @@ from QuICT.models import Circuit
 
 class Mapping(object):
     @classmethod
-    def run(cls, circuit: Circuit, inplace=False):
+    def run(cls, circuit: Circuit, *pargs, inplace=False):
         """
-        :param circuit: 需变化电路
-        :param inplace: 为真时,返回一个新的电路;为假时,修改原电路的门参数
-        :return: inplace为真时,无返回值;为假时,返回新的电路,电路初值为0
+        Args:
+            circuit(Circuit): the circuit waited to be mapped
+            *pargs: other parameters
+            inplace(bool): return a new circuit if it is true,
+                otherwise change the origin circuit
         """
         circuit.const_lock = True
-        gates = cls.__run__(circuit)
+        gates = cls._run(circuit, *pargs)
         circuit.const_lock = False
         if inplace:
             circuit.set_flush_gates(gates)
@@ -25,10 +27,7 @@ class Mapping(object):
             return new_circuit
 
     @staticmethod
-    def __run__(*pargs):
-        """
-        需要其余算法改写
-        :param *pargs 参数列表
-        :return: 返回新电路
+    def _run(*pargs):
+        """ should be overload
         """
         return pargs[0]

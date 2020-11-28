@@ -4,15 +4,17 @@
 # @Author  : Han Yu
 # @File    : VBE.py
 
-from .._synthesis import Synthesis
 from numpy import log2, floor, gcd
-from QuICT.models import Circuit, H, X, CX, CCX, Measure, PermFx, Swap
-from QuICT.algorithm import SyntheticalUnitary, Amplitude
 
+from .._synthesis import Synthesis
+from QuICT.models import Circuit, CX, CCX, Swap, X
 
 def Inverse(a, N):
-    """
-    Inversion of a in (mod N)
+    """ Inversion of a in (mod N)
+    Args:
+        a(int): the parameter a
+        N(int): the parameter N
+
     """
     for i in range(N):
         if i * a % N == 1:
@@ -21,86 +23,131 @@ def Inverse(a, N):
 
 
 def Set(qreg, N):
+    """ Set the qreg as N, using X gates on specific qubits
+
+    Args:
+        qreg(Qureg): the qureg to be set
+        N(int): the parameter N
+
     """
-    Set the qreg as N, using X gates on specific qubits
-    """
-    str = bin(N)[2:]
-    n = len(qreg);
-    m = len(str)
+
+    string = bin(N)[2:]
+    n = len(qreg)
+    m = len(string)
     if m > n:
         print('When set qureg as N=%d, N exceeds the length of qureg n=%d, thus is truncated' % (N, n))
 
     for i in range(min(n, m)):
-        if str[m - 1 - i] == '1':
+        if string[m - 1 - i] == '1':
             X | qreg[n - 1 - i]
 
 
 def ControlSet(control, qreg, N):
+    """ Set the qreg as N, using CX gates on specific qubits
+
+    Args:
+        control(Qubit): qubit of control bits
+        qreg(Qureg): the qureg to be set
+        N(int): the parameter N
+
     """
-    Set the qreg as N, using CX gates on specific qubits
-    """
-    str = bin(N)[2:]
-    n = len(qreg);
-    m = len(str)
+    string = bin(N)[2:]
+    n = len(qreg)
+    m = len(string)
     if m > n:
-        print('When cset qureg as N=%d, N exceeds the length of qureg n=%d, thus is truncated' % (N, n))
+        print(f'When cset qureg as N={N}, N exceeds the length of qureg n={n}, thus is truncated')
 
     for i in range(min(n, m)):
-        if str[m - 1 - i] == '1':
+        if string[m - 1 - i] == '1':
             CX | (control, qreg[n - 1 - i])
 
 
 def CControlSet(control1, control2, qreg, N):
+    """ Set the qreg as N, using CCX gates on specific qubits
+
+    Args:
+        control1(Qubit): 1st qubit of control bits
+        control2(Qubit): 2nd qubit of control bits
+        qreg(Qureg): the qureg to be set
+        N(int): the parameter N
+
     """
-    Set the qreg as N, using CCX gates on specific qubits
-    """
-    str = bin(N)[2:]
-    n = len(qreg);
-    m = len(str)
+    string = bin(N)[2:]
+    n = len(qreg)
+    m = len(string)
     if m > n:
-        print('When ccset qureg as N=%d, N exceeds the length of qureg n=%d, thus is truncated' % (N, n))
+        print(f'When ccset qureg as N={N}, N exceeds the length of qureg n={n}, thus is truncated')
 
     for i in range(min(n, m)):
-        if str[m - 1 - i] == '1':
+        if string[m - 1 - i] == '1':
             CCX | (control1, control2, qreg[n - 1 - i])
 
-
-# (c_in,a,b,c_out=0) -> (c_in,a,b,c_out')
-# 计算单bit加法的进位,c_out'存储进位结果
 def Carry(c_in, a, b, c_out):
-    """
-    Carry for one bit plus
+    """ Carry for one bit plus
+
+    (c_in,a,b,c_out=0) -> (c_in,a,b,c_out')
+
+    Args:
+        c_in(Qubit): c_in
+        a(Qubit): a
+        b(Qubit): b
+        c_out(Qubit): c_out
+
     """
     CCX | (a, b, c_out)
     CX | (a, b)
     CCX | (c_in, b, c_out)
 
-
-# Carry电路的逆
 def ReverseCarry(c_in, a, b, c_out):
+    """ the inverse of Carry
+
+    Args:
+        c_in(Qubit): c_in
+        a(Qubit): a
+        b(Qubit): b
+        c_out(Qubit): c_out
+    """
     CCX | (c_in, b, c_out)
     CX | (a, b)
     CCX | (a, b, c_out)
 
-
-# (c_in,a,b) -> (c_in,a,b'=a+b+c_in)
-# 计算单bit的求和运算
 def Sum(c_in, a, b):
+    """ Sum circuit
+
+    (c_in,a,b) -> (c_in,a,b'=a+b+c_in)
+
+    Args:
+        c_in(Qubit): c_in
+        a(Qubit): a
+        b(Qubit): b
+    """
     CX | (a, b)
     CX | (c_in, b)
 
-
-# Sum电路的逆
 def ReverseSum(c_in, a, b):
+    """ Reverse of Sum
+
+    Args:
+        c_in(Qubit): c_in
+        a(Qubit): a
+        b(Qubit): b
+    """
     CX | (c_in, b)
     CX | (a, b)
 
-
-# (a,b,c=0,overflow=0) -> (a,b'=a+b,c,overflow')
-# 计算a+b的电路，b存储计算结果
-# c是辅助bit，占n位，用来存储进位信息
-# overflow：辅助比特，占1位，用来存储溢出信息
 def PlainAdder(a, b, c, overflow):
+    """ store a + b in b
+
+    (a,b,c=0,overflow=0) -> (a,b'=a+b,c,overflow')
+
+
+    Args:
+        a(Qureg): the qureg stores a, length is n
+        b(Qureg): the qureg stores b, length is n
+        c(Qureg): the ancillary qubits, length is n
+        overflow(Qureg): the ancillary qubits, length is 1
+
+    """
     n = len(a)
 
     for i in range(n - 1):
@@ -114,9 +161,15 @@ def PlainAdder(a, b, c, overflow):
         ReverseCarry(c[1 + i], a[1 + i], b[1 + i], c[i])
         Sum(c[1 + i], a[1 + i], b[1 + i])
 
-
-# PlainAdder电路的逆
 def ReversePlainAdder(a, b, c, overflow):
+    """ the inverse of plainAdder
+    Args:
+        a(Qureg): the qureg stores a, length is n
+        b(Qureg): the qureg stores b, length is n
+        c(Qureg): the ancillary qubits, length is n
+        overflow(Qureg): the ancillary qubits, length is 1
+
+    """
     n = len(a)
 
     for i in range(n - 1):
@@ -130,14 +183,22 @@ def ReversePlainAdder(a, b, c, overflow):
     for i in range(n - 1):
         ReverseCarry(c[1 + i], a[1 + i], b[1 + i], c[i])
 
-
-# (a,b,c=0,overflow=0,qubit_N=0,t=0) -> (a,b'=(a+b)mod N,c,overflow',qubit_N=0,t=0)
-# 计算(a+b)mod N的电路，b存储计算结果
-# c：辅助bit，占n位，继承自PlainAdder
-# overflow：辅助bit，占1位，继承自PlainAdder
-# qubit_N：辅助比特，占n位，在计算过程中被置为N的值，
-# t：辅助比特，占1位，临时备份overflow，以作uncomputation
 def AdderMod(N, a, b, c, overflow, qubit_N, t):
+    """ store (a+b) mod N in b
+
+    (a,b,c=0,overflow=0,qubit_N=0,t=0) ->
+     (a,b'=(a+b)mod N,c,overflow',qubit_N=0,t=0)
+
+    Args:
+        N(int): the parameter N
+        a(Qureg): the qureg stores a, length is n
+        b(Qureg): the qureg stores b, length is n
+        c(Qureg): the ancillary qubits, length is n
+        overflow(Qureg): the ancillary qubits, length is 1
+        qubit_N(Qureg): the ancillary qubits, length is n
+        t(Qureg): the ancillary qubits, length is 1
+
+    """
     n = len(qubit_N)
 
     Set(qubit_N, N)
@@ -160,6 +221,11 @@ def AdderMod(N, a, b, c, overflow, qubit_N, t):
 
 
 def ReverseAdderMod(N, a, b, c, overflow, qubit_N, t):
+    """ Reverse of AdderMod
+    
+    
+
+    """
     n = len(qubit_N)
 
     Set(qubit_N, N)
@@ -180,16 +246,26 @@ def ReverseAdderMod(N, a, b, c, overflow, qubit_N, t):
     ReversePlainAdder(a, b, c, overflow)
     Set(qubit_N, N)
 
-# (control,x,qubit_a=0,b=0,c=0,overflow=0,qubit_N=0,t=0) -> (control,x,qubit_a=0,b'=(a**control)*x mod N,c,overflow',qubit_N,t)
-# 受控求模乘法电路，计算(a**control)*x mod N，b存储计算结果
-# control：控制位
-# qubit_a：辅助bit，占n位，继承自AdderMod；计算时被受控地相继置为a、2a、4a、...、(2**n)a，并输入AdderMod的第一个加数位置
-# b：占n位，继承自AdderMod；被输入AdderMod的第二个加数位置
-# c：辅助bit，占n位，继承自AdderMod
-# overflow：辅助bit，占1位，继承自AdderMod
-# qubit_N：辅助比特，占n位，在计算过程中被置为N的值，继承自AdderMod
-# t：辅助比特，占1位，继承自AdderMod
 def ControlMulMod(a, N, control, x, qubit_a, b, c, overflow, qubit_N, t):
+    """ store x*(a^control) mod N in b
+
+    (control,x,qubit_a=0,b=0,c=0,overflow=0,qubit_N=0,t=0) ->
+     (control,x,qubit_a=0,b'=(a**control)*x mod N,c,overflow',qubit_N,t)
+
+
+    Args:
+        a(int): the parameter a
+        N(int): the parameter N
+        control(Qureg): the control qureg to store the result, length is 1
+        x(Qureg): the qureg stores x, length is m
+        qubit_a(Qureg): the ancillary qubits, length is n
+        b(Qureg): length is n
+        c(Qureg): the ancillary qubits, length is n
+        overflow(Qureg): the ancillary qubits, length is 1
+        qubit_N(Qureg): the ancillary qubits, length is n
+        t(Qureg): the ancillary qubits, length is 1
+    """
+
     n = len(qubit_N)
 
     for i in range(n):
@@ -205,6 +281,20 @@ def ControlMulMod(a, N, control, x, qubit_a, b, c, overflow, qubit_N, t):
 
 
 def ReverseControlMulMod(a, N, control, x, qubit_a, b, c, overflow, qubit_N, t):
+    """ Reverse of ControlMulMod
+
+    Args:
+        a(int): the parameter a
+        N(int): the parameter N
+        control(Qureg): the control qureg to store the result, length is 1
+        x(Qureg): the qureg stores x, length is m
+        qubit_a(Qureg): the ancillary qubits, length is n
+        b(Qureg): length is n
+        c(Qureg): the ancillary qubits, length is n
+        overflow(Qureg): the ancillary qubits, length is 1
+        qubit_N(Qureg): the ancillary qubits, length is n
+        t(Qureg): the ancillary qubits, length is 1
+    """
     n = len(qubit_N)
 
     a_list = []
@@ -222,21 +312,24 @@ def ReverseControlMulMod(a, N, control, x, qubit_a, b, c, overflow, qubit_N, t):
         ReverseAdderMod(N, qubit_a, b, c, overflow, qubit_N, t)
         CControlSet(control, x[i], qubit_a, a_list[n - 1 - i])
 
-# (x,result=1,qubit_a=0,b=0,c=0,overflow=0,qubit_N=0,t=0)->(x,result'=(a**x)mod N,qubit_a=0,b=0,c=0,overflow',qubit_N=0,t=0)
-# 计算(a**x)mod N，result存储计算结果
-# x，占m位
-# result，占n位，继承自ControlMulMod
-# qubit_a：辅助bit，占n位，继承自ControlMulMod
-# b：辅助bit，占n位，继承自ControlMulMod
-# c：辅助bit，占n位，继承自ControlMulMod
-# overflow：辅助bit，占1位，继承自ControlMulMod
-# qubit_N：辅助bit，占n位，继承自ControlMulMod
-# t：辅助bit，占1位，继承自ControlMulMod
 def ExpMod(a, N, x, result, qubit_a, b, c, overflow, qubit_N, t):
+    """ store a^x mod N in result
+
+    Args:
+        a(int): the parameter a
+        N(int): the parameter N
+        x(Qureg): the qureg stores x, length is m
+        result(Qureg): the qureg to store the result
+        qubit_a(Qureg): the ancillary qubits, length is n
+        b(Qureg): the ancillary qubits, length is n
+        c(Qureg): the ancillary qubits, length is n
+        overflow(Qureg): the ancillary qubits, length is 1
+        qubit_N(Qureg): the ancillary qubits, length is n
+        t(Qureg): the ancillary qubits, length is 1
+    """
     m = len(x)
     n = len(qubit_N)
     a_inv = Inverse(a, N)
-    # print("a_inv=",a_inv)
 
     for i in range(m):
         ControlMulMod(a, N, x[m - 1 - i], result, qubit_a, b, c, overflow, qubit_N, t)
@@ -248,19 +341,39 @@ def ExpMod(a, N, x, result, qubit_a, b, c, overflow, qubit_N, t):
 
 
 class VBEModel(Synthesis):
+    """ a circuit calculate (a^x) mod N, x is gotten from some qubits
+
+    Quantum Networks for Elementary Arithmetic Operations
+    http://arxiv.org/abs/quant-ph/9511018v1
+
+    """
     def __call__(self, m, a, N):
+        """ give parameters to the VBE
+        Args:
+            m(int): number of qubits of x
+            a(int): a
+            N(int): N
+        Returns:
+            VBEModel: the model filled by parameters.
+        """
+
         self.pargs = [m, a, N]
         return self
 
     def build_gate(self):
+        """ overload the function build_gate
+
+        Returns:
+            Circuit: the VBE circuit
+        """
         m = self.pargs[0]
         a = self.pargs[1]
         N = self.pargs[2]
 
         if N <= 2:
-            raise Exception("模数N应大于2")
+            raise Exception("modulus should be great than 2")
         if gcd(a, N) != 1:
-            raise Exception("a与N应当互质")
+            raise Exception("a and N should be co-prime")
         n = int(floor(log2(N))) + 1
 
         circuit = Circuit(m + 5 * n + 2)

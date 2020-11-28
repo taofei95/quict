@@ -4,17 +4,28 @@
 # @Author  : Han Yu
 # @File    : _initial_state_preparation.py
 
-from .._synthesis import Synthesis
-from QuICT.models import *
-from QuICT.exception import TypeException
-import numpy as np
-import os
 import ctypes
 from ctypes import c_int
 
+import numpy as np
+import os
+
+from .._synthesis import Synthesis
+from QuICT.exception import TypeException
+from QuICT.models import *
+
+# the allowed eps
 EPS = 1e-13
 
 def uniformlyRy(low, high, y):
+    """ synthesis uniformRy gate, bits range [low, high)
+    Args:
+        low(int): the left range low
+        high(int): the right range high
+        y(list<int>): the list of angle y
+    Returns:
+        the synthesis result
+    """
     if low + 1 == high:
         GateBuilder.setGateType(GateType.Ry)
         GateBuilder.setTargs(low)
@@ -39,14 +50,16 @@ def uniformlyRy(low, high, y):
     return gates
 
 class initial_state_preparation_oracle(Synthesis):
-    """
-    类的属性
+    """ initial state preparation
+
     """
 
     @property
     def initial_state_preparation_cdll(self):
         """
-        :return: 懒加载alpha计算库
+
+        Returns:
+            _DLLT: the C++ library
         """
         if self.__initial_state_preparation_cdll is None:
             # sys = platform.system()
@@ -55,38 +68,52 @@ class initial_state_preparation_oracle(Synthesis):
         return self.__initial_state_preparation_cdll
 
     def __init__(self):
+        """ initial function
+
+        """
         super().__init__()
         self.__initial_state_preparation_cdll = None
 
     def __call__(self, other):
+        """ add parameters with "()"
+
+        Args:
+            other: the parameters to add in, it can have follow forms:
+                1) int/float/complex
+                2) list<int/float/complex>
+                3) tuple<int/float/complex>
+        Raises:
+            TypeException: the parameters filled in are wrong
+        Returns:
+            the initial_state_preparation_oracle filled by parameters.
         """
-        使用()添加参数
-        :param other: 添加的参数
-            1) int/float/complex
-            2) list<int/float/complex>
-            3) tuple<int/float/complex>
-        :raise 类型错误
-        :return 修改参数后的self
-        """
+
         if self.permit_element(other):
             self.pargs = [other]
         elif isinstance(other, list):
             self.pargs = []
             for element in other:
                 if not self.permit_element(element):
-                    raise TypeException("int或float或complex", element)
+                    raise TypeException("int or float or complex", element)
                 self.pargs.append(element)
         elif isinstance(other, tuple):
             self.pargs = []
             for element in other:
                 if not self.permit_element(element):
-                    raise TypeException("int或float或complex", element)
+                    raise TypeException("int or float or complex", element)
                 self.pargs.append(element)
         else:
-            raise TypeException("int/float/complex或list<int/float/complex>或tuple<int/float/complex>", other)
+            raise TypeException("int/float/complex or list<int/float/complex> or tuple<int/float/complex>", other)
         return self
 
     def build_gate(self):
+        """ overload the function
+
+        Returns:
+            list<BasicGate>: the result
+
+        """
+
         N = len(self.pargs)
         n = int(np.ceil(np.log2(N)))
         NN = 1 << n
@@ -108,7 +135,7 @@ class initial_state_preparation_oracle(Synthesis):
         )
 
         if safe == -1:
-            raise Exception("输入的向量不是单位向量")
+            raise Exception("the sum of input vector is 0")
         gates = []
         now = 0
         for i in range(n):
@@ -120,7 +147,6 @@ class initial_state_preparation_oracle(Synthesis):
                if abs(test * np.pi - angle) > 1e-13:
                    flag = False
                    break
-            print(i, alpha)
             if not flag:
                 gates.extend(uniformlyRy(0, i + 1, alpha))
             now += add
