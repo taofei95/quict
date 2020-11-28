@@ -13,7 +13,7 @@ class Optimization(object):
     to a better circuit, which is better is some aspect such as depth, size, T-count and so on
 
     Note that all subClass must overloaded the function "_run".
-    The overloaded of the function "__run__" is optional.
+    The overloaded of the function "run" is optional.
 
     """
 

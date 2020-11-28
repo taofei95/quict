@@ -7,11 +7,17 @@
 from QuICT.models import Circuit
 
 class Mapping(object):
+    """ Mapping the logical qubits into reality device
+
+    Note that all subClass must overloaded the function "_run".
+    The overloaded of the function "run" is optional.
+
+    """
     @classmethod
     def run(cls, circuit: Circuit, *pargs, inplace=False):
         """
         Args:
-            circuit(Circuit): the circuit waited to be mapped
+            circuit(Circuit): the circuit waited to be mapped, contained topology
             *pargs: other parameters
             inplace(bool): return a new circuit if it is true,
                 otherwise change the origin circuit
@@ -28,6 +34,7 @@ class Mapping(object):
 
     @staticmethod
     def _run(*pargs):
-        """ should be overload
+        """ should be overloaded by subClass
+
         """
         return pargs[0]

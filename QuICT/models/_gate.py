@@ -52,7 +52,7 @@ class GateType(Enum):
     Perm = 26
     Custom = 27
     ControlPermMulDetail = 28
-    ShorInital = 29
+    ShorInitial = 29
 
 class BasicGate(object):
     """ the abstract SuperClass of all basic quantum gates
@@ -442,7 +442,7 @@ class BasicGate(object):
         Returns:
             bool: True if gate is ShorInit gate
         """
-        return self.type() == GateType.ShorInital
+        return self.type() == GateType.ShorInitial
 
     def is_controlMulPer(self) -> bool:
         """ judge whether gate is ControlPermMulDetail gate
@@ -1960,7 +1960,7 @@ class ShorInitialGate(BasicGate):
 
     @staticmethod
     def type():
-        return GateType.ShorInital
+        return GateType.ShorInitial
 
 ShorInitial = ShorInitialGate()
 
