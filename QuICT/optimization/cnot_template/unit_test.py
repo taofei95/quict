@@ -4,9 +4,10 @@
 # @Author  : Han Yu
 # @File    : unit_test.py
 
-import numpy as np
 import pytest
 import random
+
+import numpy as np
 
 from QuICT.models import *
 from QuICT.optimization import cnot_force_bfs

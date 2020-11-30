@@ -573,7 +573,6 @@ class Tangle(object):
         if index == len(self.qureg):
             raise FrameworkException("the index is out of range")
         generation = random.random()
-        # print(generation)
 
         prob = c_double()
         result = measure_operator_func(
@@ -588,7 +587,6 @@ class Tangle(object):
         qubit.tangle = None
         qubit.measured = result
         qubit.prob = prob.value
-        # print(qubit.prob, prob.value, result)
 
     def deal_reset_gate(self, gate):
         """ apply a reset gate on this tangle
@@ -662,8 +660,6 @@ class Tangle(object):
             tindex = tindex + 1
         if tindex == len(self.qureg):
             raise FrameworkException("the index is out of range")
-        # print("before:", np.round(self.values, decimals = 2))
-        # print(cindex, tindex)
         control_single_operator_func(
             len(self.qureg),
             cindex,
@@ -671,7 +667,6 @@ class Tangle(object):
             self.values,
             gate.matrix
         )
-        # print("after:", np.round(self.values, decimals=2))
 
     def deal_ccx_gate(self, gate):
         """ apply a toffoli gate on this tangle

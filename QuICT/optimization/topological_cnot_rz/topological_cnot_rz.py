@@ -4,10 +4,12 @@
 # @Author  : Han Yu
 # @File    : topological_cnot_rz.py
 
-from QuICT.models import *
-from .._optimization import Optimization
 from queue import Queue
+
 import numpy as np
+
+from .._optimization import Optimization
+from QuICT.models import *
 
 delete_vis = []
 topo = []

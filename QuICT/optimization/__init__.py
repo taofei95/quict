@@ -7,4 +7,5 @@
 from .alter_depth_decomposition import alter_depth_decomposition
 from .cnot_ancillae import cnot_ancillae
 from .cnot_template import cnot_force_bfs
+from .topological_cnot import topological_cnot
 from .topological_cnot_rz import topological_cnot_rz

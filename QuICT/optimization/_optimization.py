@@ -39,6 +39,18 @@ class Optimization(object):
             new_circuit.set_flush_gates(gates)
             return new_circuit
 
+    @classmethod
+    def run_parameter(cls, *pargs):
+        """ optimize the circuit with parameters
+
+        do not use circuit
+
+        Args:
+            *pargs:           the parameters to be filled
+
+        """
+        raise Exception("this algorithm do not define the function 'run_parameter'")
+
     @staticmethod
     def _run(circuit : Circuit, *pargs):
         """ private function to solve the problem
