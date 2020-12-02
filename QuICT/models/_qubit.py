@@ -149,7 +149,7 @@ class Qureg(list):
             return
         if isinstance(other, Qubit):
             self.append(other)
-        elif isinstance(other, tuple):
+        elif isinstance(other, tuple) or isinstance(other, list):
             for qubit in other:
                 if not isinstance(qubit, Qubit):
                     raise TypeException("Qubit/tuple<Qubit>或Qureg或Circuit", other)
@@ -221,6 +221,12 @@ class Qureg(list):
             for qubit in qureg_list:
                 qureg.append(qubit)
             return qureg
+
+    def __add__(self, other):
+        if not isinstance(other, Qureg):
+            raise Exception("type error!")
+        qureg_list = super().__add__(other)
+        return Qureg(qureg_list)
 
     def force_assign_random(self):
         if len(self) == 0:
