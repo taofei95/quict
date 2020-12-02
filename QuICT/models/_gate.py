@@ -2182,7 +2182,7 @@ class GateBuilderModel(object):
                 raise Exception("the number of cargs is wrong")
         if gate.params != 0 and self.gateType != GateType.Perm:
             if len(self.pargs) == gate.params:
-               gate.pargs = copy.deepcopy(self.pargs)
+                gate.pargs = copy.deepcopy(self.pargs)
             else:
                 raise Exception("the number of pargs is wrong")
 

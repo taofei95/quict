@@ -46,7 +46,7 @@ def generate_matrix(gates, n):
     while i < lg:
         gate = gates[i]
         if gate.type() == GateType.H:
-            gate = circuit.gates[i + 2]
+            gate = gates[i + 2]
             i += 4
             matrix[gate.carg, :] = matrix[gate.carg, :] ^ matrix[gate.targ, :]
         else:
@@ -81,10 +81,10 @@ def check_equiv(circuit1, circuit2):
     return not np.any(matrix1 ^ matrix2)
 
 def test_1():
-    for _ in range(20):
-        for i in range(2, 100):
+    for _ in range(1):
+        for i in range(2, 10):
             circuit = Circuit(i)
-            for _ in range(i * 10):
+            for _ in range(i * 100):
                 CX | circuit(_getRandomList(2))
             topo = _getAllRandomList(i)
             for j in range(len(topo) - 1):
@@ -96,7 +96,7 @@ def test_1():
                 assert 0
 
             circuit = Circuit(i)
-            for _ in range(i * 10):
+            for _ in range(i * 100):
                 CX | circuit(_getRandomList(2))
             topo = _getAllRandomList(i)
             topology = []

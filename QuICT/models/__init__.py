@@ -65,5 +65,6 @@ from ._gate import (
 )
 
 from .uniformly_controlled import MultifoldControlledRotation
+from .uniformly_controlled import SingleCGate
 
 

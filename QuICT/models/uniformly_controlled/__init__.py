@@ -5,3 +5,6 @@
 # @File    : __init__.py.py
 
 from .controlled_single_rotation import MultifoldControlledRotation
+from ._controlled_single_gate import SingleCGate
+from .controlled_single_unitary import MultifoldControlledUnitary
+

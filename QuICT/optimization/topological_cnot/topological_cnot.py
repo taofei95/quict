@@ -428,7 +428,7 @@ class topological_cnot(Optimization):
             else:
                 topo = [[False] * N] * N
                 for topology in circuit.topology:
-                    topo[topology[0]][topology[1]] = topo[topology[1]][topology[0]] = True
+                    topo[topology[0]][topology[1]] = True
         else:
             N = len(cnot_struct)
             if topology is None or len(topology) == 0:
@@ -436,7 +436,7 @@ class topological_cnot(Optimization):
             else:
                 topo = [[False] * N] * N
                 for topos in topology:
-                    topo[topos[0]][topos[1]] = topo[topos[1]][topos[0]] = True
+                    topo[topos[0]][topos[1]] = True
 
         output = []
         for item in ans:
