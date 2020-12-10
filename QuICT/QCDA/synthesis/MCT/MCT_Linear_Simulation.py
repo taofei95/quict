@@ -5,7 +5,7 @@
 # @File    : MCT_Linear_Simulation.py
 
 from .._synthesis import Synthesis
-from QuICT.models import *
+from QuICT.core import *
 
 def solve(n, m):
     """

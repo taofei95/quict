@@ -4,7 +4,7 @@
 # @Author  : Han Yu
 # @File    : _optimization.py
 
-from QuICT.models import Circuit
+from QuICT.core import Circuit
 
 class Optimization(object):
     """ SuperClass of all optimization algorithm

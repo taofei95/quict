@@ -4,4 +4,4 @@
 # @Author  : Han Yu
 # @File    : __init__.py.py
 
-from QuICT.core.exception import *
+from ._exception import *

@@ -10,7 +10,7 @@ import numpy as np
 
 from .._optimization import Optimization
 from QuICT.core.exception import CircuitStructException
-from QuICT.models import *
+from QuICT.core import *
 
 s = 0
 n = 0

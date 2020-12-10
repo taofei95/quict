@@ -441,7 +441,7 @@ class Circuit(object):
             gates(list<BasicGate>): the gate to be added to the circuit
         """
         for gate in gates:
-            self.add_gate(gates)
+            self.add_gate(gate)
 
     def _add_qubit_gate(self, gate, qubit):
         """ add a gate into some qubit

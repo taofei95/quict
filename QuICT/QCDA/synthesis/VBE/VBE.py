@@ -7,7 +7,7 @@
 from numpy import log2, floor, gcd
 
 from .._synthesis import Synthesis
-from QuICT.models import Circuit, CX, CCX, Swap, X
+from QuICT.core import Circuit, CX, CCX, Swap, X
 
 def Inverse(a, N):
     """ Inversion of a in (mod N)

@@ -4,7 +4,7 @@
 # @Author  : Han Yu
 # @File    : _mapping.py
 
-from QuICT.models import Circuit
+from QuICT.core import Circuit
 
 class Mapping(object):
     """ Mapping the logical qubits into reality device

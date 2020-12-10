@@ -8,7 +8,7 @@ import pytest
 
 from .._qubit import Qubit, Qureg, Tangle
 from QuICT.algorithm import Amplitude
-from QuICT.models import Circuit, X, H, Measure
+from QuICT.core import Circuit, X, H, Measure
 
 def test_Qubit_Attributes_prob():
     circuit = Circuit(3)

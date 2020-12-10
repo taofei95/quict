@@ -10,7 +10,7 @@ import random
 import numpy as np
 
 from .._algorithm import Algorithm
-from QuICT.models import *
+from QuICT.core import *
 
 def EX_GCD(a, b, arr):
     if b == 0:

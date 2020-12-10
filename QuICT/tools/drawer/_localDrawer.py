@@ -4,7 +4,7 @@
 # @Author  : Han Yu
 # @File    : _localDrawer.py
 
-from QuICT.models import *
+from QuICT.core import *
 import math
 import collections
 import numpy as np

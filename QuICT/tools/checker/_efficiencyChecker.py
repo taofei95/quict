@@ -10,7 +10,7 @@ import time
 
 import numpy as np
 
-from QuICT.models import *
+from QuICT.core import *
 
 class StandardEfficiencyCheckerModel(object):
     """ this model is to check the efficiency of amplitude calculating

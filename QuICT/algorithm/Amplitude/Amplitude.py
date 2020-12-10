@@ -5,7 +5,7 @@
 # @File    : Amplitude.py
 
 from .._algorithm import Algorithm
-from QuICT.models import *
+from QuICT import *
 from QuICT.backends import systemCdll
 import numpy as np
 from ctypes import c_int

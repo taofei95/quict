@@ -12,7 +12,7 @@ import os
 
 from .._synthesis import Synthesis
 from QuICT.core.exception import TypeException
-from QuICT.models import *
+from QuICT.core import *
 
 # the allowed eps
 EPS = 1e-13

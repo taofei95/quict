@@ -5,7 +5,7 @@
 # @File    : unit_test.py
 
 import pytest
-from QuICT.models import *
+from QuICT.core import *
 from QuICT.QCDA.synthesis import MCT_one_aux, MCT_Linear_Simulation
 from QuICT.algorithm import SyntheticalUnitary
 

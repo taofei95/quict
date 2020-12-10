@@ -5,7 +5,7 @@
 # @File    : _unit_test.py
 
 from numpy import log2, floor, gcd
-from QuICT.models import *
+from QuICT.core import *
 from QuICT.QCDA.synthesis import VBE
 import pytest
 

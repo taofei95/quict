@@ -5,7 +5,7 @@
 # @File    : _unit_test.py
 
 import pytest
-from QuICT.models import *
+from QuICT import *
 from QuICT.algorithm import SyntheticalUnitary
 import random
 import numpy as np

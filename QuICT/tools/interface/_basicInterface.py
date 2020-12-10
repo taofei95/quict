@@ -4,7 +4,7 @@
 # @Author  : Han Yu
 # @File    : _basicInterface.py
 
-from QuICT.models import *
+from QuICT.core import *
 
 class BasicInterface(object):
     """ the basic interface of general processor

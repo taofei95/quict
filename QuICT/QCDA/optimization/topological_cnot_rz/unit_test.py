@@ -10,7 +10,7 @@ import random
 import numpy as np
 
 from QuICT.algorithm import SyntheticalUnitary
-from QuICT.models import *
+from QuICT.core import *
 from QuICT.QCDA.optimization import topological_cnot_rz
 
 def _getRandomList(n):

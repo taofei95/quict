@@ -9,7 +9,7 @@ import random
 
 import numpy as np
 
-from QuICT.models import *
+from QuICT.core import *
 from QuICT.QCDA.optimization import cnot_force_bfs
 
 

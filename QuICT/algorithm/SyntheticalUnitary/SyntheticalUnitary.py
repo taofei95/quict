@@ -7,7 +7,7 @@
 import numpy as np
 
 from .._algorithm import Algorithm
-from QuICT.models import *
+from QuICT.core import *
 
 class SyntheticalUnitary(Algorithm):
     """ get the unitary matrix of the circuit

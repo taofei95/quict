@@ -7,7 +7,7 @@
 import numpy as np
 
 from .._optimization import Optimization
-from QuICT.models import *
+from QuICT.core import *
 
 class path(object):
     """ record the path of bfs

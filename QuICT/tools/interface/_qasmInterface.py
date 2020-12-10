@@ -5,7 +5,7 @@
 # @File    : _qasmInterface.py
 
 from ._basicInterface import BasicInterface
-from QuICT.models import *
+from QuICT.core import *
 from QuICT.lib import Qasm
 from QuICT.core.exception import QasmInputException
 from collections import OrderedDict

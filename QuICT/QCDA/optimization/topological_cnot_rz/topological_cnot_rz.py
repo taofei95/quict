@@ -6,7 +6,7 @@
 
 from .._optimization import Optimization
 from QuICT.QCDA.optimization import topological_cnot
-from QuICT.models import *
+from QuICT.core import *
 
 # topological matrix
 TOPO = [[]]

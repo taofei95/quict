@@ -8,7 +8,7 @@ import numpy as np
 import pytest
 import random
 
-from QuICT.models import *
+from QuICT.core import *
 from QuICT.QCDA.optimization import cnot_ancillae
 
 def _getRandomList(n):

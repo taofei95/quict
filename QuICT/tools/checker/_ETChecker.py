@@ -10,7 +10,7 @@ import random
 import numpy as np
 
 from QuICT.algorithm import SyntheticalUnitary, Amplitude
-from QuICT.models import *
+from QuICT.core import *
 
 class ETCheckerModel(object):
     """ checker whether the input and output(circuit) of a algorithm is equivalence

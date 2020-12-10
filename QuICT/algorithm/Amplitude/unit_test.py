@@ -7,7 +7,7 @@
 import pytest
 
 from QuICT.algorithm import Amplitude
-from QuICT.models import *
+from QuICT.core import *
 
 def test_1():
     for i in range(1, 10):

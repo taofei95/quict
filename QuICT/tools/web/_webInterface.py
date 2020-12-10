@@ -6,7 +6,7 @@
 
 import numpy as np
 from QuICT.QCDA.optimization import *
-from QuICT.models import *
+from QuICT.core import *
 
 class WebInterface(object):
     """ The model servers for Web Interface for QuICT

@@ -8,7 +8,7 @@ import numpy as np
 from queue import Queue
 
 from .._optimization import Optimization
-from QuICT.models import *
+from QuICT.core import *
 
 # topological matrix
 TOPO = [[]]

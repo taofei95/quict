@@ -4,7 +4,7 @@
 # @Author  : Han Yu
 # @File    : _unit_test.py
 
-from QuICT.models import *
+from QuICT.core import *
 from QuICT.algorithm import *
 from QuICT.QCDA.synthesis import initial_state_preparation
 import numpy as np

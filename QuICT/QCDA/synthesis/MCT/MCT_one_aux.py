@@ -6,7 +6,7 @@
 
 from .._synthesis import Synthesis
 from ..MCT.MCT_Linear_Simulation import MCT_Linear_Simulation
-from QuICT.models import *
+from QuICT.core import *
 
 
 def merge_qubit(qubit_a, qubit_b):
