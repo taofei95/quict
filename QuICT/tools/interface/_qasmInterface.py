@@ -13,23 +13,23 @@ from configparser import ConfigParser
 import os
 
 class qasm_qreg(object):
-    """
-    qasm的语法树中的目标位
+    """ the target bit in the qasm grammer tree
+
     """
     def __init__(self, index_list, name):
         self.index = index_list
         self.name = name
 
 class qasm_creg(object):
-    """
-    qasm的语法树中的控制位
+    """ the control bit in the qasm grammer tree
+
     """
     def __init__(self, index_list, name):
         self.index = index_list
         self.name = name
 
 class OPENQASMInterface(BasicInterface):
-    # qasm语言对应QuICT中的标准门
+    # qasm mapping to QuICT
     standard_extension = {"u1": GateType.U1,
                           "u2": GateType.U2,
                           "u3": GateType.U3,
@@ -54,7 +54,6 @@ class OPENQASMInterface(BasicInterface):
                           "ch": GateType.CH,
                           "crz": GateType.CRz}
 
-    # qasm语言对应QuICT中的组合门
     extern_extension = {
                           "rzz" : ExtensionGateType.RZZ,
                           "cu1" : ExtensionGateType.CU1,
@@ -62,23 +61,16 @@ class OPENQASMInterface(BasicInterface):
                           "cswap" : ExtensionGateType.Fredkin
     }
 
-    # IBMQ账号的token信息
     token = None
 
-    # QuICT路径
     DEFAULT_QUICT_PATH = os.path.join(os.path.expanduser("~"),
                                       '.QuICT')
 
-    # 账号信息文件
     DEFAULT_QUICT_FILE = os.path.join(os.path.expanduser("~"),
                                          '.QuICT', 'accounts.ini')
 
     @staticmethod
     def load_circuit(circuit : Circuit):
-        """
-        :param circuit: 待加载的电路
-        :return: OPENQASMInterface的一个实例，包含了解析出的qasm文本（如果电路合法）
-        """
         instance = OPENQASMInterface()
         instance.circuit = circuit
         instance.analyse_code_from_circuit()
@@ -86,10 +78,6 @@ class OPENQASMInterface(BasicInterface):
 
     @staticmethod
     def load_file(filename : str):
-        """
-        :param filename: 待读取的文本名称
-        :return: OPENQASMInterface的一个实例，包含了解析出的电路（如果文本合法）
-        """
         instance = OPENQASMInterface()
         instance.ast = Qasm(filename).parse()
         instance.analyse_circuit_from_ast(instance.ast)
@@ -115,9 +103,6 @@ class OPENQASMInterface(BasicInterface):
         self.version = None
 
     def analyse_circuit_from_ast(self, node):
-        """
-        从代码分析出电路
-        """
         self.valid_circuit = True
         self.analyse_node(node)
         if self.valid_circuit:
@@ -125,9 +110,6 @@ class OPENQASMInterface(BasicInterface):
             self.circuit.set_exec_gates(self.circuit_gates)
 
     def analyse_code_from_circuit(self):
-        """
-        从电路生成代码
-        """
         self.valid_qasm = True
         self.qasm = self.circuit.qasm()
         if self.qasm == "error":
@@ -135,10 +117,6 @@ class OPENQASMInterface(BasicInterface):
             self.valid_qasm = False
 
     def output_qasm(self, filename = None):
-        """
-        输出qasm文本到文件
-        :param filename: 输出的文件名
-        """
         if not self.valid_qasm or self.qasm is None:
             if self.circuit is None:
                 return
@@ -154,16 +132,10 @@ class OPENQASMInterface(BasicInterface):
                 file.write(self.qasm)
 
     def enable_path(self):
-        """
-        检查QuICT本地信息路径是否存在，若不存在则生成
-        """
         if not os.path.exists(self.DEFAULT_QUICT_PATH):
             os.mkdir(self.DEFAULT_QUICT_PATH)
 
     def load_token(self):
-        """
-        尝试从本地加载IBMQ账号的token信息
-        """
         self.enable_path()
         config_parser = ConfigParser()
         config_parser.read(self.DEFAULT_QUICT_FILE)
@@ -173,9 +145,6 @@ class OPENQASMInterface(BasicInterface):
                 self.token = dic['token']
 
     def save_token(self, token):
-        """
-        尝试将IBMQ账号的token信息保存到本地
-        """
         self.token = token
         self.enable_path()
         config_parser = ConfigParser()
@@ -186,14 +155,6 @@ class OPENQASMInterface(BasicInterface):
             config_parser.write(f)
 
     def output_qiskit(self, filename, generator_qasm = False, shots = 1024):
-        """
-        输出一段可以使用qiskit模块运行的代码(如果qasm文本或者电路合法，且可在IBMQ上运行)
-        :param filename:            文件名（不包含后缀）
-        :param generator_qasm:      是否将qasm文本单独输出
-                                    若为真，会产生.qasm文件
-                                    若为假，qasm字符串会直接生成在文件中
-        :param shots:               取样次数，默认为1024
-        """
         if not self.valid_qasm or self.qasm is None:
             if self.circuit is None:
                 return
@@ -274,7 +235,7 @@ print(result.get_counts(circ))
             self.analyse_custom(node)
 
         elif node.type == "universal_unitary":
-            QasmInputException("universal_unitary被IBMQ弃用", node.line, node.file)
+            QasmInputException("universal_unitary is deprecated", node.line, node.file)
 
         elif node.type == "cnot":
             self.analyse_cnot(node)
@@ -301,7 +262,7 @@ print(result.get_counts(circ))
             self.analyse_opaque(node)
 
         else:
-            QasmInputException("QASM语法错误", node.line, node.file)
+            QasmInputException("QASM grammer error", node.line, node.file)
 
     def analyse_gate(self, node):
         self.gates[node.name] = {}
@@ -345,16 +306,13 @@ print(result.get_counts(circ))
                 self.arg_stack.pop()
                 self.bit_stack.pop()
         else:
-            raise QasmInputException("未定义的门:", node.line, node.file)
+            raise QasmInputException("undefined gate:", node.line, node.file)
 
-    """
-    以下为语法分析过程，参考了qiskit代码
-    """
     def analyse_cnot(self, node):
         id0 = self.get_analyse_id(node.children[0])
         id1 = self.get_analyse_id(node.children[1])
         if not (len(id0) == len(id1) or len(id0) == 1 or len(id1) == 1):
-            raise QasmInputException("位数不匹配:", node.line, node.file)
+            raise QasmInputException("the number of bits unmatched:", node.line, node.file)
 
         maxidx = max([len(id0), len(id1)])
         GateBuilder.setGateType(GateType.CX)
@@ -376,7 +334,7 @@ print(result.get_counts(circ))
         id0 = self.get_analyse_id(node.children[0])
         id1 = self.get_analyse_id(node.children[1])
         if len(id0) != len(id1):
-            raise QasmInputException("寄存器位数不匹配:", node.line, node.file)
+            raise QasmInputException("the number of bits of registers unmatched:", node.line, node.file)
 
         GateBuilder.setGateType(GateType.Measure)
         for idx, _ in zip(id0, id1):
@@ -391,7 +349,7 @@ print(result.get_counts(circ))
             self.circuit_gates.append(GateBuilder.getGate())
 
     def analyse_if(self, node):
-        print("电路不支持if操作:{}" ,node.type)
+        print("if op is not supported:{}" ,node.type)
         self.valid_circuit = False
 
     def analyse_opaque(self, node):

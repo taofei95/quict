@@ -217,7 +217,7 @@ class ETCheckerModel(object):
         originGates = circuit.gates
         resultGates = result_circuit.gates
         for _ in range(64):
-            circuit.reset_initial_values()
+            circuit.assign_initial_random()
             result_circuit.force_copy(circuit)
             circuit.set_exec_gates(originGates)
             result_circuit.set_exec_gates(resultGates)
