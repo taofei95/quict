@@ -9,8 +9,14 @@ import random
 
 import numpy as np
 
+<<<<<<< HEAD:QuICT/QCDA/optimization/topological_cnot/unit_test.py
 from QuICT.core import *
 from QuICT.QCDA.optimization import topological_cnot
+=======
+from QuICT.models import *
+from QuICT.models._gate import GATE_ID
+from QuICT.optimization import topological_cnot
+>>>>>>> 1711899f6c378455fbb819c18c4d1201275674ed:QuICT/optimization/topological_cnot/unit_test.py
 
 def _getRandomList(n):
     """ get first 2 number from 0, 1, ..., n - 1 randomly.
@@ -45,8 +51,13 @@ def generate_matrix(gates, n):
     lg = len(gates)
     while i < lg:
         gate = gates[i]
+<<<<<<< HEAD:QuICT/QCDA/optimization/topological_cnot/unit_test.py
         if gate.type() == GateType.H:
             gate = gates[i + 2]
+=======
+        if gate.type() == GATE_ID["H"]:
+            gate = circuit.gates[i + 2]
+>>>>>>> 1711899f6c378455fbb819c18c4d1201275674ed:QuICT/optimization/topological_cnot/unit_test.py
             i += 4
             matrix[gate.carg, :] = matrix[gate.carg, :] ^ matrix[gate.targ, :]
         else:

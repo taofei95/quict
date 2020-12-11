@@ -8,6 +8,7 @@ class TypeException(Exception):
     """ Exception that the type of parameter is error.
 
     """
+
     def __init__(self, type, now):
         """
         Args:
@@ -17,10 +18,12 @@ class TypeException(Exception):
         string = str(f"type error,{type} should be passed in, {now} is passed in actually")
         Exception.__init__(self, string)
 
+
 class ConstException(Exception):
     """ Exception that change the variable which shouldn't be
 
     """
+
     def __init__(self, other):
         """
         Args:
@@ -28,10 +31,12 @@ class ConstException(Exception):
         """
         Exception.__init__(self, f"the running process shouldn't change the {other}")
 
+
 class FrameworkException(Exception):
     """ Exception that framework may have error
 
     """
+
     def __init__(self, other):
         """
         Args:
@@ -39,10 +44,12 @@ class FrameworkException(Exception):
         """
         Exception.__init__(self, f"framework error:{other}")
 
+
 class CircuitStructException(Exception):
     """ Exception that circuit struct may have error
 
     """
+
     def __init__(self, other):
         """
         Args:
@@ -50,10 +57,12 @@ class CircuitStructException(Exception):
         """
         Exception.__init__(self, f"circuit struct error:{other}")
 
+
 class QasmInputException(Exception):
     """ Exception that Qasm Input may have error
 
     """
+
     def __init__(self, other, line, file):
         """
         Args:
@@ -63,10 +72,12 @@ class QasmInputException(Exception):
         """
         Exception.__init__(self, "Qasm error:{} \n in line:{} \n error file:{}".format(other, line, file))
 
+
 class IndexLimitException(Exception):
     """ Exception that out of index
 
     """
+
     def __init__(self, wire, try_index):
         """
         Args:
@@ -75,10 +86,12 @@ class IndexLimitException(Exception):
         """
         Exception.__init__(self, f"out of index: the index range is [0, {wire}),but try to get{try_index}")
 
+
 class IndexDuplicateException(Exception):
     """ Exception that duplicate indexes
 
     """
+
     def __init__(self, other):
         """
         Args:
@@ -87,6 +100,7 @@ class IndexDuplicateException(Exception):
         """
         Exception.__init__(self, f"duplicate indexes: {other}")
 
+<<<<<<< HEAD:QuICT/core/exception/_exception.py
 class GateDigitException(Exception):
     def __init__(self, controls, targets, indeed):
         """
@@ -99,3 +113,22 @@ class GateDigitException(Exception):
                                  the number of target bits indexed is {targets}, \
                                  so {controls + targets} parameters should be passed in, \
                                  infact {indeed} parameters are passed in.")
+=======
+
+class NotImplementedGateException(Exception):
+    """Exception when you try to query ID for a non-existing gate
+
+    """
+
+    def __init__(self, other):
+        Exception.__init__(self, f"No registered gate named {other}")
+
+
+class GateAliasRedefinition(Exception):
+    """Exception throws if you redefine gate alias
+
+    """
+
+    def __init__(self, other):
+        Exception.__init__(self, f"Redefinition of {other}")
+>>>>>>> 1711899f6c378455fbb819c18c4d1201275674ed:QuICT/exception/_exception.py

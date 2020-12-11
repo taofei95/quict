@@ -27,12 +27,12 @@ def uniformlyRy(low, high, y):
         the synthesis result
     """
     if low + 1 == high:
-        GateBuilder.setGateType(GateType.Ry)
+        GateBuilder.setGateType(GATE_ID["Ry"])
         GateBuilder.setTargs(low)
         GateBuilder.setPargs(y[0])
         return [GateBuilder.getGate()]
     length = len(y) // 2
-    GateBuilder.setGateType(GateType.CX)
+    GateBuilder.setGateType(GATE_ID["CX"])
     GateBuilder.setTargs(high - 1)
     GateBuilder.setCargs(low)
     gateA = GateBuilder.getGate()

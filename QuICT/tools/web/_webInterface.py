@@ -5,8 +5,15 @@
 # @File    : _webInterface.py
 
 import numpy as np
+<<<<<<< HEAD:QuICT/tools/web/_webInterface.py
 from QuICT.QCDA.optimization import *
 from QuICT.core import *
+=======
+
+from QuICT.models._gate import GATE_ID
+from QuICT.optimization import *
+from QuICT.models import *
+>>>>>>> 1711899f6c378455fbb819c18c4d1201275674ed:QuICT/web/_webInterface.py
 
 class WebInterface(object):
     """ The model servers for Web Interface for QuICT
@@ -34,49 +41,49 @@ class WebInterface(object):
             name = sgate["name"]
             bits = sgate["bits"]
             if name == "H":
-                GateBuilder.setGateType(GateType.H)
+                GateBuilder.setGateType(GATE_ID["H"])
             elif name == "S":
-                GateBuilder.setGateType(GateType.S)
+                GateBuilder.setGateType(GATE_ID["S"])
             elif name == "S_dagger":
-                GateBuilder.setGateType(GateType.S_dagger)
+                GateBuilder.setGateType(GATE_ID["S_dagger"])
             elif name == "X":
-                GateBuilder.setGateType(GateType.X)
+                GateBuilder.setGateType(GATE_ID["X"])
             elif name == "Y":
-                GateBuilder.setGateType(GateType.Y)
+                GateBuilder.setGateType(GATE_ID["Y"])
             elif name == "Z":
-                GateBuilder.setGateType(GateType.Z)
+                GateBuilder.setGateType(GATE_ID["Z"])
             elif name == "ID":
-                GateBuilder.setGateType(GateType.ID)
+                GateBuilder.setGateType(GATE_ID["ID"])
             elif name == "U1":
-                GateBuilder.setGateType(GateType.U1)
+                GateBuilder.setGateType(GATE_ID["U1"])
             elif name == "U2":
-                GateBuilder.setGateType(GateType.U2)
+                GateBuilder.setGateType(GATE_ID["U2"])
             elif name == "U3":
-                GateBuilder.setGateType(GateType.U3)
+                GateBuilder.setGateType(GATE_ID["U3"])
             elif name == "Rx":
-                GateBuilder.setGateType(GateType.Rx)
+                GateBuilder.setGateType(GATE_ID["Rx"])
             elif name == "Ry":
-                GateBuilder.setGateType(GateType.Ry)
+                GateBuilder.setGateType(GATE_ID["Ry"])
             elif name == "Rz":
-                GateBuilder.setGateType(GateType.Rz)
+                GateBuilder.setGateType(GATE_ID["Rz"])
             elif name == "T":
-                GateBuilder.setGateType(GateType.T)
+                GateBuilder.setGateType(GATE_ID["T"])
             elif name == "T_dagger":
-                GateBuilder.setGateType(GateType.T_dagger)
+                GateBuilder.setGateType(GATE_ID["T_dagger"])
             elif name == "CZ":
-                GateBuilder.setGateType(GateType.CZ)
+                GateBuilder.setGateType(GATE_ID["CZ"])
             elif name == "CX":
-                GateBuilder.setGateType(GateType.CX)
+                GateBuilder.setGateType(GATE_ID["CX"])
             elif name == "CH":
-                GateBuilder.setGateType(GateType.CH)
+                GateBuilder.setGateType(GATE_ID["CH"])
             elif name == "CRz":
-                GateBuilder.setGateType(GateType.CRz)
+                GateBuilder.setGateType(GATE_ID["CRz"])
             elif name == "CCX":
-                GateBuilder.setGateType(GateType.CCX)
+                GateBuilder.setGateType(GATE_ID["CCX"])
             elif name == "Measure":
-                GateBuilder.setGateType(GateType.Measure)
+                GateBuilder.setGateType(GATE_ID["Measure"])
             elif name == "Swap":
-                GateBuilder.setGateType(GateType.Swap)
+                GateBuilder.setGateType(GATE_ID["Swap"])
             cargs = GateBuilder.getCargsNumber()
             pargs = GateBuilder.getParamsNumber()
             if cargs > 0:

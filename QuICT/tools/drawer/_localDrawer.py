@@ -12,6 +12,7 @@ from matplotlib import patches
 from matplotlib import pyplot as plt
 
 from ._IBMQStyle import DefaultStyle
+from ..models._gate import GATE_ID
 
 LINE_WIDTH = 1.5
 FOLD = 25
@@ -28,6 +29,7 @@ PORDER_REGLINE = 2
 PORDER_GRAY = 3
 PORDER_TEXT = 6
 PORDER_SUBP = 4
+
 
 def pi_check(p, eps=1e-6, ndigits=3):
     p = float(p)
@@ -81,13 +83,14 @@ def pi_check(p, eps=1e-6, ndigits=3):
     str_out = '%.{}g'.format(ndigits) % p
     return str_out
 
+
 class circuit_layer(object):
     def __init__(self, qubit):
         self.pic = set()
         self.occupy = set()
         self.gates = []
 
-    def addGate(self, gate : BasicGate) -> bool:
+    def addGate(self, gate: BasicGate) -> bool:
         Q_set = set(gate.cargs) | set(gate.targs)
         for element in range(min(Q_set), max(Q_set) + 1):
             if element in self.pic:
@@ -98,12 +101,13 @@ class circuit_layer(object):
         self.gates.append(gate)
         return True
 
-    def checkGate(self, gate : BasicGate) -> bool:
+    def checkGate(self, gate: BasicGate) -> bool:
         Q_set = set(gate.cargs) | set(gate.targs)
         for element in range(min(Q_set), max(Q_set) + 1):
             if element in self.pic:
                 return False
         return True
+
 
 class Anchor(object):
     def __init__(self, pos):
@@ -133,6 +137,7 @@ class Anchor(object):
         y = self.pos - (position // FOLD) * (cir_len + 1)
         self.anchor = position
         return x + offset_x, y
+
 
 class PhotoDrawerModel(object):
 
@@ -164,7 +169,7 @@ class PhotoDrawerModel(object):
             strings.append(pi_check(p))
         return ', '.join(strings)
 
-    def draw_gate(self, point, text = None,  p_string = None, fc = None):
+    def draw_gate(self, point, text=None, p_string=None, fc=None):
         xpos, ypos = point
 
         c_len = False
@@ -247,8 +252,8 @@ class PhotoDrawerModel(object):
         if start_layer == end_layer:
             box = patches.Rectangle(
                 xy=(start_pos - 0.75 * WID, - (start_layer + 1) * (cir_len + 1) + 1.5),
-                width= end_pos - start_pos - 1 + 1.5 * WID, height = cir_len,
-                fc='#FF0000', ec='#FF0000', linewidth=1.5, zorder=PORDER_GATE, fill = False, linestyle='dashed')
+                width=end_pos - start_pos - 1 + 1.5 * WID, height=cir_len,
+                fc='#FF0000', ec='#FF0000', linewidth=1.5, zorder=PORDER_GATE, fill=False, linestyle='dashed')
             self.ax.add_patch(box)
         else:
             self.ax.plot([start_pos - 0.75 * WID, start_pos - 0.75 * WID],
@@ -288,7 +293,7 @@ class PhotoDrawerModel(object):
                          zorder=PORDER_GATE)
             self.ax.plot([-0.75 * WID, end_pos - 1 + 0.75 * WID],
                          [- (end_layer + 1) * (cir_len + 1) + 1.5 + cir_len,
-                           - (end_layer + 1) * (cir_len + 1) + 1.5 + cir_len],
+                          - (end_layer + 1) * (cir_len + 1) + 1.5 + cir_len],
                          color='#FF0000',
                          linewidth=1.5,
                          linestyle='dashed',
@@ -343,7 +348,7 @@ class PhotoDrawerModel(object):
                          zorder=zorder)
 
     def draw_custom_gate(self, xy, cxy=None, fc=None, wide=True, text=None,
-                                subtext=None):
+                         subtext=None):
         xpos = min([x[0] for x in xy])
         ypos = min([y[1] for y in xy])
         ypos_max = max([y[1] for y in xy])
@@ -487,7 +492,7 @@ class PhotoDrawerModel(object):
                      [ypos, ypos - cir_len + 1],
                      color=self.style.lc, zorder=PORDER_LINE)
 
-    def draw_regs_sub(self, n_fold, offset_x = None, now = None, name_dict = None):
+    def draw_regs_sub(self, n_fold, offset_x=None, now=None, name_dict=None):
         for qreg in name_dict.values():
             if n_fold == 0:
                 label = qreg['text']
@@ -495,19 +500,19 @@ class PhotoDrawerModel(object):
                 label = qreg['text']
             y = qreg['y'] - n_fold * (cir_len + 1)
             self.ax.text(offset_x, y, label, ha='right', va='center',
-                         fontsize=1.25*self.style.fs,
+                         fontsize=1.25 * self.style.fs,
                          color=self.style.tc,
                          clip_on=True,
                          zorder=PORDER_TEXT)
             self.draw_line([offset_x + 0.5, y], [now['max_x'], y], zorder=PORDER_REGLINE)
 
-    def run(self, circuit, filename = None, show_depth = True):
+    def run(self, circuit, filename=None, show_depth=True):
         global cir_len
         cir_len = circuit.circuit_length()
         name_dict = collections.OrderedDict()
         now = {
-            'max_x' : 0,
-            'max_y' : 0,
+            'max_x': 0,
+            'max_y': 0,
         }
         anchors = {}
 
@@ -517,9 +522,9 @@ class PhotoDrawerModel(object):
             name = '$q_{}$'.format(i)
             max_name = max(max_name, len(name))
             name_dict[i] = {
-                'y' : -i,
-                'text' : name,
-                'index' : i
+                'y': -i,
+                'text': name,
+                'index': i
             }
             anchors[i] = Anchor(-i)
         offset_x = 0.18 * (max_name - 7) - 0.5
@@ -531,7 +536,7 @@ class PhotoDrawerModel(object):
             layer_width = 1
 
             for gate in layer.gates:
-                if gate.type() == GateType.Perm or gate.type() == GateType.Custom:
+                if gate.type() == GATE_ID["Perm"] or gate.type() == GATE_ID["Custom"]:
                     continue
                 elif gate.params > 1:
                     param = self.get_parameter_str(gate.pargs)
@@ -568,14 +573,14 @@ class PhotoDrawerModel(object):
                 if gate.params > 0:
                     param = self.get_parameter_str(gate.pargs)
 
-                if gate.type() == GateType.Perm or gate.type() == GateType.Custom:
+                if gate.type() == GATE_ID["Perm"] or gate.type() == GATE_ID["Custom"]:
                     name = str(gate)
                     for coor in coord:
                         self.draw_gate(coor, name, '')
                     self.draw_line(bottom, top, lc=self.style.dispcol[name])
-                elif gate.type() == GateType.Measure:
+                elif gate.type() == GATE_ID["Measure"]:
                     self.draw_measure(coord[0])
-                elif gate.type() == GateType.Barrier:
+                elif gate.type() == GATE_ID["Barrier"]:
                     self.draw_gate(coord[0], gate.qasm_name)
                 elif len(coord) == 1:
                     name = gate.qasm_name
@@ -585,7 +590,7 @@ class PhotoDrawerModel(object):
                     else:
                         self.draw_gate(coord[0], name, '')
                 elif len(coord) == 2:
-                    if gate.type() == GateType.CX:
+                    if gate.type() == GATE_ID["CX"]:
                         if self.style.dispcol['cx'] != '#ffffff':
                             add_width = self.style.colored_add_width
                         else:
@@ -594,8 +599,8 @@ class PhotoDrawerModel(object):
 
                         self.draw_tgt_qubit(coord[1], fc=self.style.dispcol['cx'], ec=self.style.dispcol['cx'],
                                             ac=self.style.dispcol['target'], add_width=add_width)
-                        self.draw_line(coord[0], coord[1], lc = self.style.dispcol['cx'])
-                    elif gate.type() == GateType.Swap:
+                        self.draw_line(coord[0], coord[1], lc=self.style.dispcol['cx'])
+                    elif gate.type() == GATE_ID["Swap"]:
                         self.draw_swap(coord[0])
                         self.draw_swap(coord[1])
                         self.draw_line(bottom, top, lc=self.style.dispcol['swap'])
@@ -618,7 +623,7 @@ class PhotoDrawerModel(object):
                         # add qubit-qubit wiring
                         self.draw_line(bottom, top, lc=color)
                 elif len(coord) == 3:
-                    if gate.type() == GateType.CCX:
+                    if gate.type() == GATE_ID["CCX"]:
                         self.draw_ctrl_qubit(coord[0], fc=self.style.dispcol['multi'],
                                              ec=self.style.dispcol['multi'])
                         self.draw_ctrl_qubit(coord[1], fc=self.style.dispcol['multi'],
@@ -695,5 +700,4 @@ class PhotoDrawerModel(object):
             self.style.figwidth = fig_w * 4.3 * self.style.fs / 72 / WID
         self.figure.set_size_inches(self.style.figwidth, self.style.figwidth * fig_h / fig_w)
         self.figure.savefig(filename, dpi=self.style.dpi,
-                                bbox_inches='tight')
-
+                            bbox_inches='tight')
