@@ -7,7 +7,7 @@
 import numpy as np
 
 from .._algorithm import Algorithm
-from QuICT.core import *
+from QuICT.core import Circuit
 
 class SyntheticalUnitary(Algorithm):
     """ get the unitary matrix of the circuit
@@ -22,7 +22,7 @@ class SyntheticalUnitary(Algorithm):
             showSU(bool): whether return an SU unitary
         """
         circuit.const_lock = True
-        params = cls.__run__(circuit)
+        params = cls.__run__(circuit, showSU)
         circuit.const_lock = False
         return params
 
@@ -35,7 +35,7 @@ class SyntheticalUnitary(Algorithm):
         """
         matrix = np.eye(1 << len(circuit.qubits))
         for gate in circuit.gates:
-            if gate.is_measure():
+            if gate.qasm_name == "measure":
                 continue
             matrix = np.matmul(circuit.matrix_product_to_circuit(gate), matrix)
         if showSU:

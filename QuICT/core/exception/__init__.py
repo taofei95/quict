@@ -2,6 +2,6 @@
 # -*- coding:utf8 -*-
 # @TIME    : 2020/2/11 1:46 下午
 # @Author  : Han Yu
-# @File    : __init__.py.py
+# @File    : __init__.py
 
 from ._exception import *

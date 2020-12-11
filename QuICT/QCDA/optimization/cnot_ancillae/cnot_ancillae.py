@@ -394,7 +394,7 @@ class cnot_ancillae(Optimization):
         gates = cls._run(circuit)
         circuit.const_lock = False
         new_circuit = Circuit(circuit.circuit_length() * (2 + 3 * size))
-        new_circuit.set_flush_gates(gates)
+        new_circuit.set_exec_gates(gates)
         return new_circuit
 
     @staticmethod

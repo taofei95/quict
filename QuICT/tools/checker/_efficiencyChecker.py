@@ -137,9 +137,9 @@ class StandardEfficiencyCheckerModel(object):
                     gates.append(gate)
 
                 circuit = Circuit(qubit)
-                circuit.set_flush_gates(gates)
+                circuit.set_exec_gates(gates)
                 time_start = time.time()
-                circuit.flush()
+                circuit.exec()
                 time_end = time.time()
                 time_amplitude = np.round(time_end - time_start, decimals=3)
                 del circuit
@@ -152,10 +152,11 @@ class StandardEfficiencyCheckerModel(object):
                 max_t = max(max_t, time_amplitude)
 
                 circuit = Circuit(qubit)
-                circuit.reset_initial_zeros()
-                circuit.set_flush_gates(gates)
+                # circuit.reset_initial_zeros()
+                circuit.assign_initial_zeros()
+                circuit.set_exec_gates(gates)
                 time_start = time.time()
-                circuit.flush()
+                circuit.exec()
                 time_end = time.time()
                 time_amplitude = np.round(time_end - time_start, decimals=3)
                 del circuit

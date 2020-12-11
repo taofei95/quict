@@ -38,7 +38,7 @@ class Amplitude(Algorithm):
             circuit(Circuit)
             ancilla(list<int>): the indexes of ancillary qubits
         """
-        circuit.flush()
+        circuit.exec()
         dll = systemCdll.quick_operator_cdll
         amplitude_cheat_operator = dll.amplitude_cheat_operator
         amplitude_cheat_operator.argtypes = [
@@ -64,8 +64,8 @@ class Amplitude(Algorithm):
                 q_index += 1
                 continue
             q_index += 1
-            if qubit.tangle not in tangle_list:
-                tangle_list.append(qubit.tangle)
+            if qubit.qState not in tangle_list:
+                tangle_list.append(qubit.qState)
         for tangle in tangle_list:
             tangle_values = np.append(tangle_values, tangle.values)
             tangle_length = np.append(tangle_length, len(tangle.qureg))

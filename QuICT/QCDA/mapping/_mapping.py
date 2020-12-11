@@ -26,10 +26,10 @@ class Mapping(object):
         gates = cls._run(circuit, *pargs)
         circuit.const_lock = False
         if inplace:
-            circuit.set_flush_gates(gates)
+            circuit.set_exec_gates(gates)
         else:
             new_circuit = Circuit(len(circuit.qubits))
-            new_circuit.set_flush_gates(gates)
+            new_circuit.set_exec_gates(gates)
             return new_circuit
 
     @staticmethod

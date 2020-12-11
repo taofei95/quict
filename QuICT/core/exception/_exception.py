@@ -86,3 +86,16 @@ class IndexDuplicateException(Exception):
         :param other:
         """
         Exception.__init__(self, f"duplicate indexes: {other}")
+
+class GateDigitException(Exception):
+    def __init__(self, controls, targets, indeed):
+        """
+        Args:
+            controls(int): the number of controls
+            targets(int) : the number of targets
+            indeed(int)  : indeed the number of indexed passed in
+        """
+        Exception.__init__(self, f"the number of control bits indexes is {controls} ,\
+                                 the number of target bits indexed is {targets}, \
+                                 so {controls + targets} parameters should be passed in, \
+                                 infact {indeed} parameters are passed in.")

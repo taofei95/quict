@@ -256,14 +256,14 @@ def Shor(N, fidelity = None):
             cUa(i, aa, aa_r, N, Nth, L, circuit)
 
         IQFT | circuit([i for i in range(2 * L - 1, -1, -1)])
-        circuit.complete_flush()
+        circuit.exec_release()
 
         prob = circuit.partial_prob([i for i in range(2 * L)])
 
         for i in range(0, 2 * L):
             Measure | circuit(i)
 
-        circuit.complete_flush()
+        circuit.exec_release()
 
         for i in range(0, 2 * L):
             measure = int(circuit(i))

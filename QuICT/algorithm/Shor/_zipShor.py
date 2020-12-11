@@ -245,7 +245,7 @@ def Shor(N, fidelity = None):
 
             Measure | circuit(0)
 
-            circuit.complete_flush()
+            circuit.exec_release()
 
             measure = int(circuit(0))
             if measure == 1:

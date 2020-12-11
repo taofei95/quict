@@ -89,7 +89,7 @@ class WebInterface(object):
                    params.append(p * np.pi)
                 GateBuilder.setPargs(params)
             gates.append(GateBuilder.getGate())
-        circuit.set_flush_gates(gates)
+        circuit.set_exec_gates(gates)
         return circuit
 
     @staticmethod

@@ -219,8 +219,8 @@ class ETCheckerModel(object):
         for _ in range(64):
             circuit.reset_initial_values()
             result_circuit.force_copy(circuit)
-            circuit.set_flush_gates(originGates)
-            result_circuit.set_flush_gates(resultGates)
+            circuit.set_exec_gates(originGates)
+            result_circuit.set_exec_gates(resultGates)
             origin = Amplitude.run(circuit)
             result = Amplitude.run(result_circuit)
             if not self.cmp_array(origin, result):

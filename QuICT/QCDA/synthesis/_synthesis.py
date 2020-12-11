@@ -175,7 +175,7 @@ class Synthesis(object):
                 qubits.append(qureg[control])
             for target in gate.targs:
                 qubits.append(qureg[target])
-            qureg.circuit.add_gate(gate, qubits)
+            qureg.circuit.append(gate, qubits)
 
     def __xor__(self, other):
         """deal the operator '^'
@@ -229,7 +229,7 @@ class Synthesis(object):
                 qubits.append(qureg[control])
             for target in gate.targs:
                 qubits.append(qureg[target])
-            qureg.circuit.add_gate(gate, qubits)
+            qureg.circuit.append(gate, qubits)
 
     def __call__(self, *pargs):
         raise Exception('"__call__" function must be overloaded')

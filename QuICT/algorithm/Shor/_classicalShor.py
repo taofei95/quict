@@ -86,7 +86,7 @@ def Shor(N, fidelity = None):
 
         IQFT | circuit([i for i in range(2 * L - 1, -1, -1)])
 
-        circuit.complete_flush()
+        circuit.exec_release()
 
         probs = Amplitude.run(circuit)
         prob = [i for i in range(len(probs))]
@@ -102,7 +102,7 @@ def Shor(N, fidelity = None):
 
         M = 0
 
-        circuit.complete_flush()
+        circuit.exec_release()
 
         for i in range(0, 2 * L):
             measure = int(circuit(i))

@@ -13,8 +13,8 @@ packages = find_packages()
 file_data = [
     ("QuICT/backends", ["QuICT/backends/quick_operator_cdll.so"]),
     ("QuICT/lib/qasm/libs", ["QuICT/lib/qasm/libs/qelib1.inc"]),
-    ("QuICT/synthesis/initial_state_preparation",
-     ["QuICT/synthesis/initial_state_preparation/initial_state_preparation_cdll.so"],
+    ("QuICT/QCDA/synthesis/initial_state_preparation",
+     ["QuICT/QCDA/synthesis/initial_state_preparation/initial_state_preparation_cdll.so"],
      ),
 ]
 

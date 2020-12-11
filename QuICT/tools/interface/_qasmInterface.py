@@ -122,7 +122,7 @@ class OPENQASMInterface(BasicInterface):
         self.analyse_node(node)
         if self.valid_circuit:
             self.circuit = Circuit(self.qbits)
-            self.circuit.set_flush_gates(self.circuit_gates)
+            self.circuit.set_exec_gates(self.circuit_gates)
 
     def analyse_code_from_circuit(self):
         """
