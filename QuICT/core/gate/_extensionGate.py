@@ -4,6 +4,8 @@
 # @Author  : Han Yu
 # @File    : _extensionGate.py
 
+from enum import Enum
+
 from ._gate import *
 from ._gateBuilder import GateBuilder
 
@@ -22,6 +24,7 @@ class ExtensionGateType(Enum):
     CCX = 6
     CRz = 7
     CCRz = 8
+
 
 class gateModel(object):
     """ the abstract SuperClass of all complex quantum gates
@@ -54,6 +57,7 @@ class gateModel(object):
         type(GateType, read only): gate's type described by ExtensionGateType
     """
 
+    # 门对应控制位数
     @property
     def controls(self) -> int:
         return self.__controls
@@ -62,8 +66,13 @@ class gateModel(object):
     def controls(self, controls: int):
         self.__controls = controls
 
+    # 门对应控制位索引
     @property
     def cargs(self):
+        """
+        :return:
+            返回一个list，表示控制位
+        """
         return self.__cargs
 
     @cargs.setter
@@ -73,6 +82,7 @@ class gateModel(object):
         else:
             self.__cargs = [cargs]
 
+    # 门对应作用位数
     @property
     def targets(self) -> int:
         return self.__targets
@@ -81,8 +91,13 @@ class gateModel(object):
     def targets(self, targets: int):
         self.__targets = targets
 
+    # 门对应作用位索引
     @property
     def targs(self):
+        """
+        :return:
+            返回一个list，代表作用位的list
+        """
         return self.__targs
 
     @targs.setter
@@ -92,6 +107,7 @@ class gateModel(object):
         else:
             self.__targs = [targs]
 
+    # 辅助数组位个数
     @property
     def params(self) -> int:
         return self.__params
@@ -100,8 +116,13 @@ class gateModel(object):
     def params(self, params: int):
         self.__params = params
 
+    # 辅助数组数组
     @property
     def pargs(self):
+        """
+        :return:
+            返回一个list，代表辅助数组
+        """
         return self.__pargs
 
     @pargs.setter
@@ -241,7 +262,7 @@ class gateModel(object):
                 qubits.append(qureg[control])
             for target in gate.targs:
                 qubits.append(qureg[target])
-            qureg.circuit.append(gate, qubits)
+            qureg.circuit.add_gate(gate, qubits)
 
     def __call__(self, params):
         """ give parameters for the gate
@@ -292,14 +313,16 @@ class gateModel(object):
             Circuit/list<BasicGate>: synthetize result
         """
         qureg = self.qureg_trans(qureg)
-        GateBuilder.setGateType(GateType.X)
+        GateBuilder.setGateType(GATE_ID["X"])
         GateBuilder.setTargs(len(qureg) - 1)
         return [GateBuilder.getGate()]
+
 
 class QFTModel(gateModel):
     """ QFT oracle
 
     """
+
     def __or__(self, other):
         """ It can be removed after code refactoring
 
@@ -313,11 +336,11 @@ class QFTModel(gateModel):
     def build_gate(self, other):
         gates = []
         for i in range(len(other)):
-            GateBuilder.setGateType(GateType.H)
+            GateBuilder.setGateType(GATE_ID["H"])
             GateBuilder.setTargs(other[i])
             gates.append(GateBuilder.getGate())
 
-            GateBuilder.setGateType(GateType.CRz)
+            GateBuilder.setGateType(GATE_ID["CRz"])
             for j in range(i + 1, len(other)):
                 GateBuilder.setPargs(2 * np.pi / (1 << j - i + 1))
                 GateBuilder.setCargs(other[j])
@@ -325,12 +348,15 @@ class QFTModel(gateModel):
                 gates.append(GateBuilder.getGate())
         return gates
 
+
 QFT = QFTModel()
+
 
 class IQFTModel(gateModel):
     """ IQFT gate
 
     """
+
     def __or__(self, other):
         """ It can be removed after code refactoring
 
@@ -344,18 +370,20 @@ class IQFTModel(gateModel):
     def build_gate(self, other):
         gates = []
         for i in range(len(other) - 1, -1, -1):
-            GateBuilder.setGateType(GateType.CRz)
+            GateBuilder.setGateType(GATE_ID["CRz"])
             for j in range(len(other) - 1, i, -1):
                 GateBuilder.setPargs(-2 * np.pi / (1 << j - i + 1))
                 GateBuilder.setCargs(other[j])
                 GateBuilder.setTargs(other[i])
                 gates.append(GateBuilder.getGate())
-            GateBuilder.setGateType(GateType.H)
+            GateBuilder.setGateType(GATE_ID["H"])
             GateBuilder.setTargs(other[i])
             gates.append(GateBuilder.getGate())
         return gates
 
+
 IQFT = IQFTModel()
+
 
 class RZZModel(gateModel):
     """ RZZ gate
@@ -374,29 +402,32 @@ class RZZModel(gateModel):
     def build_gate(self, other):
         gates = []
 
-        GateBuilder.setGateType(GateType.CX)
+        GateBuilder.setGateType(GATE_ID["CX"])
         GateBuilder.setCargs(other[0])
         GateBuilder.setTargs(other[1])
         gates.append(GateBuilder.getGate())
 
-        GateBuilder.setGateType(GateType.U1)
+        GateBuilder.setGateType(GATE_ID["U1"])
         GateBuilder.setPargs(self.parg)
         GateBuilder.setTargs(other[1])
         gates.append(GateBuilder.getGate())
 
-        GateBuilder.setGateType(GateType.CX)
+        GateBuilder.setGateType(GATE_ID["CX"])
         GateBuilder.setCargs(other[0])
         GateBuilder.setTargs(other[1])
         gates.append(GateBuilder.getGate())
 
         return gates
 
+
 RZZ = RZZModel()
+
 
 class CU1Gate(gateModel):
     """ Controlled-U1 gate
 
     """
+
     def __or__(self, other):
         """ It can be removed after code refactoring
 
@@ -411,39 +442,42 @@ class CU1Gate(gateModel):
     def build_gate(self, other):
         gates = []
 
-        GateBuilder.setGateType(GateType.U1)
+        GateBuilder.setGateType(GATE_ID["U1"])
         GateBuilder.setPargs(self.parg / 2)
         GateBuilder.setTargs(other[0])
         gates.append(GateBuilder.getGate())
 
-        GateBuilder.setGateType(GateType.CX)
+        GateBuilder.setGateType(GATE_ID["CX"])
         GateBuilder.setCargs(other[0])
         GateBuilder.setTargs(other[1])
         gates.append(GateBuilder.getGate())
 
-        GateBuilder.setGateType(GateType.U1)
+        GateBuilder.setGateType(GATE_ID["U1"])
         GateBuilder.setPargs(-self.parg / 2)
         GateBuilder.setTargs(other[1])
         gates.append(GateBuilder.getGate())
 
-        GateBuilder.setGateType(GateType.CX)
+        GateBuilder.setGateType(GATE_ID["CX"])
         GateBuilder.setCargs(other[0])
         GateBuilder.setTargs(other[1])
         gates.append(GateBuilder.getGate())
 
-        GateBuilder.setGateType(GateType.U1)
+        GateBuilder.setGateType(GATE_ID["U1"])
         GateBuilder.setPargs(self.parg / 2)
         GateBuilder.setTargs(other[1])
         gates.append(GateBuilder.getGate())
 
         return gates
 
+
 CU1 = CU1Gate()
+
 
 class CRz_DecomposeModel(gateModel):
     """ Controlled-Rz gate
 
     """
+
     def __or__(self, other):
         """ It can be removed after code refactoring
 
@@ -458,39 +492,42 @@ class CRz_DecomposeModel(gateModel):
     def build_gate(self, other):
         gates = []
 
-        GateBuilder.setGateType(GateType.Rz)
+        GateBuilder.setGateType(GATE_ID["Rz"])
         GateBuilder.setPargs(self.parg / 2)
         GateBuilder.setTargs(other[0])
         gates.append(GateBuilder.getGate())
 
-        GateBuilder.setGateType(GateType.CX)
+        GateBuilder.setGateType(GATE_ID["CX"])
         GateBuilder.setCargs(other[0])
         GateBuilder.setTargs(other[1])
         gates.append(GateBuilder.getGate())
 
-        GateBuilder.setGateType(GateType.Rz)
+        GateBuilder.setGateType(GATE_ID["Rz"])
         GateBuilder.setPargs(-self.parg / 2)
         GateBuilder.setTargs(other[1])
         gates.append(GateBuilder.getGate())
 
-        GateBuilder.setGateType(GateType.CX)
+        GateBuilder.setGateType(GATE_ID["CX"])
         GateBuilder.setCargs(other[0])
         GateBuilder.setTargs(other[1])
         gates.append(GateBuilder.getGate())
 
-        GateBuilder.setGateType(GateType.Rz)
+        GateBuilder.setGateType(GATE_ID["Rz"])
         GateBuilder.setPargs(self.parg / 2)
         GateBuilder.setTargs(other[1])
         gates.append(GateBuilder.getGate())
 
         return gates
 
+
 CRz_Decompose = CRz_DecomposeModel()
+
 
 class CU3Gate(gateModel):
     """ controlled-U3 gate
 
     """
+
     def __or__(self, other):
         """ It can be removed after code refactoring
 
@@ -506,7 +543,7 @@ class CU3Gate(gateModel):
     def build_gate(self, other):
         gates = []
 
-        GateBuilder.setGateType(GateType.U1)
+        GateBuilder.setGateType(GATE_ID["U1"])
         GateBuilder.setPargs((self.pargs[1] + self.pargs[2]) / 2)
         GateBuilder.setTargs(other[0])
         gates.append(GateBuilder.getGate())
@@ -515,44 +552,47 @@ class CU3Gate(gateModel):
         GateBuilder.setTargs(other[1])
         gates.append(GateBuilder.getGate())
 
-        GateBuilder.setGateType(GateType.CX)
+        GateBuilder.setGateType(GATE_ID["CX"])
         GateBuilder.setCargs(other[0])
         GateBuilder.setTargs(other[1])
         gates.append(GateBuilder.getGate())
 
-        GateBuilder.setGateType(GateType.U3)
+        GateBuilder.setGateType(GATE_ID["U3"])
         GateBuilder.setPargs([-self.pargs[0] / 2, 0, -(self.pargs[0] + self.pargs[1]) / 2])
         GateBuilder.setTargs(other[1])
         gates.append(GateBuilder.getGate())
 
-        GateBuilder.setGateType(GateType.CX)
+        GateBuilder.setGateType(GATE_ID["CX"])
         GateBuilder.setCargs(other[0])
         GateBuilder.setTargs(other[1])
         gates.append(GateBuilder.getGate())
 
-        GateBuilder.setGateType(GateType.U3)
+        GateBuilder.setGateType(GATE_ID["U3"])
         GateBuilder.setPargs([self.pargs[0] / 2, self.pargs[1], 0])
         GateBuilder.setTargs(other[1])
         gates.append(GateBuilder.getGate())
 
         return gates
 
+
 CU3 = CU3Gate()
+
 
 class CCRzModel(gateModel):
     """ controlled-Rz gate with two control bits
 
     """
+
     def __or__(self, other):
         """ It can be removed after code refactoring
 
         """
         qureg = self.qureg_trans(other)
-        CRz_Decompose(self.parg / 2)  | (qureg[1], qureg[2])
-        CX                            | (qureg[0], qureg[1])
+        CRz_Decompose(self.parg / 2) | (qureg[1], qureg[2])
+        CX | (qureg[0], qureg[1])
         CRz_Decompose(-self.parg / 2) | (qureg[1], qureg[2])
-        CX                            | (qureg[0], qureg[1])
-        CRz_Decompose(self.parg / 2)  | (qureg[0], qureg[2])
+        CX | (qureg[0], qureg[1])
+        CRz_Decompose(self.parg / 2) | (qureg[0], qureg[2])
 
     def build_gate(self, other):
         qureg = Circuit(3)
@@ -564,7 +604,9 @@ class CCRzModel(gateModel):
 
         return qureg
 
+
 CCRz = CCRzModel()
+
 
 class FredkinModel(gateModel):
     def __or__(self, other):
@@ -572,28 +614,30 @@ class FredkinModel(gateModel):
 
         """
         qureg = self.qureg_trans(other)
-        CX            | (qureg[2], qureg[1])
+        CX | (qureg[2], qureg[1])
         CCX_Decompose | (qureg[0], qureg[1], qureg[2])
-        CX            | (qureg[2], qureg[1])
+        CX | (qureg[2], qureg[1])
 
     def build_gate(self, other):
         gates = []
 
-        GateBuilder.setGateType(GateType.CX)
+        GateBuilder.setGateType(GATE_ID["CX"])
         GateBuilder.setCargs(other[2])
         GateBuilder.setTargs(other[1])
         gates.append(GateBuilder.getGate())
 
         gates.extend(CCX_Decompose.build_gate(other))
 
-        GateBuilder.setGateType(GateType.CX)
+        GateBuilder.setGateType(GATE_ID["CX"])
         GateBuilder.setCargs(other[2])
         GateBuilder.setTargs(other[1])
         gates.append(GateBuilder.getGate())
 
         return gates
 
+
 Fredkin = FredkinModel()
+
 
 class CCX_DecomposeModel(gateModel):
     def __or__(self, other):
@@ -601,94 +645,96 @@ class CCX_DecomposeModel(gateModel):
 
         """
         qureg = self.qureg_trans(other)
-        H           | qureg[2]
-        CX          | (qureg[1], qureg[2])
-        T_dagger    | qureg[2]
-        CX          | (qureg[0], qureg[2])
-        T           | qureg[2]
-        CX          | (qureg[1], qureg[2])
-        T_dagger    | qureg[2]
-        CX          | (qureg[0], qureg[2])
-        T           | qureg[1]
-        T           | qureg[2]
-        H           | qureg[2]
-        CX          | (qureg[0], qureg[1])
-        T           | qureg[0]
-        T_dagger    | qureg[1]
-        CX          | (qureg[0], qureg[1])
+        H | qureg[2]
+        CX | (qureg[1], qureg[2])
+        T_dagger | qureg[2]
+        CX | (qureg[0], qureg[2])
+        T | qureg[2]
+        CX | (qureg[1], qureg[2])
+        T_dagger | qureg[2]
+        CX | (qureg[0], qureg[2])
+        T | qureg[1]
+        T | qureg[2]
+        H | qureg[2]
+        CX | (qureg[0], qureg[1])
+        T | qureg[0]
+        T_dagger | qureg[1]
+        CX | (qureg[0], qureg[1])
 
     def build_gate(self, other):
         gates = []
 
-        GateBuilder.setGateType(GateType.H)
+        GateBuilder.setGateType(GATE_ID["H"])
         GateBuilder.setTargs(other[2])
         gates.append(GateBuilder.getGate())
 
-        GateBuilder.setGateType(GateType.CX)
+        GateBuilder.setGateType(GATE_ID["CX"])
         GateBuilder.setCargs(other[1])
         GateBuilder.setTargs(other[2])
         gates.append(GateBuilder.getGate())
 
-        GateBuilder.setGateType(GateType.T_dagger)
+        GateBuilder.setGateType(GATE_ID["T_dagger"])
         GateBuilder.setTargs(other[2])
         gates.append(GateBuilder.getGate())
 
-        GateBuilder.setGateType(GateType.CX)
+        GateBuilder.setGateType(GATE_ID["CX"])
         GateBuilder.setCargs(other[0])
         GateBuilder.setTargs(other[2])
         gates.append(GateBuilder.getGate())
 
-        GateBuilder.setGateType(GateType.T)
+        GateBuilder.setGateType(GATE_ID["T"])
         GateBuilder.setTargs(other[2])
         gates.append(GateBuilder.getGate())
 
-        GateBuilder.setGateType(GateType.CX)
+        GateBuilder.setGateType(GATE_ID["CX"])
         GateBuilder.setCargs(other[1])
         GateBuilder.setTargs(other[2])
         gates.append(GateBuilder.getGate())
 
-        GateBuilder.setGateType(GateType.T_dagger)
+        GateBuilder.setGateType(GATE_ID["T_dagger"])
         GateBuilder.setTargs(other[2])
         gates.append(GateBuilder.getGate())
 
-        GateBuilder.setGateType(GateType.CX)
+        GateBuilder.setGateType(GATE_ID["CX"])
         GateBuilder.setCargs(other[0])
         GateBuilder.setTargs(other[2])
         gates.append(GateBuilder.getGate())
 
-        GateBuilder.setGateType(GateType.T)
+        GateBuilder.setGateType(GATE_ID["T"])
         GateBuilder.setTargs(other[1])
         gates.append(GateBuilder.getGate())
 
-        GateBuilder.setGateType(GateType.T)
+        GateBuilder.setGateType(GATE_ID["T"])
         GateBuilder.setTargs(other[2])
         gates.append(GateBuilder.getGate())
 
-        GateBuilder.setGateType(GateType.H)
+        GateBuilder.setGateType(GATE_ID["H"])
         GateBuilder.setTargs(other[2])
         gates.append(GateBuilder.getGate())
 
-        GateBuilder.setGateType(GateType.CX)
+        GateBuilder.setGateType(GATE_ID["CX"])
         GateBuilder.setCargs(other[0])
         GateBuilder.setTargs(other[1])
         gates.append(GateBuilder.getGate())
 
-        GateBuilder.setGateType(GateType.T)
+        GateBuilder.setGateType(GATE_ID["T"])
         GateBuilder.setTargs(other[0])
         gates.append(GateBuilder.getGate())
 
-        GateBuilder.setGateType(GateType.T_dagger)
+        GateBuilder.setGateType(GATE_ID["T_dagger"])
         GateBuilder.setTargs(other[1])
         gates.append(GateBuilder.getGate())
 
-        GateBuilder.setGateType(GateType.CX)
+        GateBuilder.setGateType(GATE_ID["CX"])
         GateBuilder.setCargs(other[0])
         GateBuilder.setTargs(other[1])
         gates.append(GateBuilder.getGate())
 
         return gates
 
+
 CCX_Decompose = CCX_DecomposeModel()
+
 
 class ExtensionGateBuilderModel(object):
     """ A model that help users get gate without circuit
@@ -703,7 +749,7 @@ class ExtensionGateBuilderModel(object):
     """
 
     def __init__(self):
-        self.gateType = GateType.Error
+        self.gateType = GATE_ID["Error"]
         self.pargs = []
         self.targs = []
         self.cargs = []
@@ -799,5 +845,6 @@ class ExtensionGateBuilderModel(object):
             return CCRz(self.pargs).build_gate(self.targs)
 
         raise Exception("the gate type of the builder is wrong")
+
 
 ExtensionGateBuilder = ExtensionGateBuilderModel()

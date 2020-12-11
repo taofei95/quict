@@ -100,7 +100,6 @@ class IndexDuplicateException(Exception):
         """
         Exception.__init__(self, f"duplicate indexes: {other}")
 
-<<<<<<< HEAD:QuICT/core/exception/_exception.py
 class GateDigitException(Exception):
     def __init__(self, controls, targets, indeed):
         """
@@ -113,7 +112,6 @@ class GateDigitException(Exception):
                                  the number of target bits indexed is {targets}, \
                                  so {controls + targets} parameters should be passed in, \
                                  infact {indeed} parameters are passed in.")
-=======
 
 class NotImplementedGateException(Exception):
     """Exception when you try to query ID for a non-existing gate
@@ -131,4 +129,3 @@ class GateAliasRedefinition(Exception):
 
     def __init__(self, other):
         Exception.__init__(self, f"Redefinition of {other}")
->>>>>>> 1711899f6c378455fbb819c18c4d1201275674ed:QuICT/exception/_exception.py

@@ -19,7 +19,7 @@ class GateBuilderModel(object):
     """
 
     def __init__(self):
-        self.gateType = GateType.Error
+        self.gateType = GATE_ID["Error"]
         self.pargs = []
         self.cargs = []
         self.targs = []
@@ -28,7 +28,7 @@ class GateBuilderModel(object):
         """ pass the gateType for the builder
 
         Args:
-            type(GateType): the type passed in
+            type(int): the type passed in
         """
 
         self.gateType = type
@@ -145,61 +145,61 @@ class GateBuilderModel(object):
         Return:
             BasicGate: the initial gate
         """
-        if self.gateType == GateType.H:
+        if self.gateType == GATE_ID["H"]:
             return HGate()
-        elif self.gateType == GateType.S:
+        elif self.gateType == GATE_ID["S"]:
             return SGate()
-        elif self.gateType == GateType.S_dagger:
+        elif self.gateType == GATE_ID["S_dagger"]:
             return SDaggerGate()
-        elif self.gateType == GateType.X:
+        elif self.gateType == GATE_ID["X"]:
             return XGate()
-        elif self.gateType == GateType.Y:
+        elif self.gateType == GATE_ID["Y"]:
             return YGate()
-        elif self.gateType == GateType.Z:
+        elif self.gateType == GATE_ID["Z"]:
             return ZGate()
-        elif self.gateType == GateType.ID:
+        elif self.gateType == GATE_ID["ID"]:
             return IDGate()
-        elif self.gateType == GateType.U1:
+        elif self.gateType == GATE_ID["U1"]:
             return U1Gate()
-        elif self.gateType == GateType.U2:
+        elif self.gateType == GATE_ID["U2"]:
             return U2Gate()
-        elif self.gateType == GateType.U3:
+        elif self.gateType == GATE_ID["U3"]:
             return U3Gate()
-        elif self.gateType == GateType.Rx:
+        elif self.gateType == GATE_ID["Rx"]:
             return RxGate()
-        elif self.gateType == GateType.Ry:
+        elif self.gateType == GATE_ID["Ry"]:
             return RyGate()
-        elif self.gateType == GateType.Rz:
+        elif self.gateType == GATE_ID["Rz"]:
             return RzGate()
-        elif self.gateType == GateType.T:
+        elif self.gateType == GATE_ID["T"]:
             return TGate()
-        elif self.gateType == GateType.T_dagger:
+        elif self.gateType == GATE_ID["T_dagger"]:
             return TDaggerGate()
-        elif self.gateType == GateType.CZ:
+        elif self.gateType == GATE_ID["CZ"]:
             return CZGate()
-        elif self.gateType == GateType.CX:
+        elif self.gateType == GATE_ID["CX"]:
             return CXGate()
-        elif self.gateType == GateType.CY:
+        elif self.gateType == GATE_ID["CY"]:
             return CYGate()
-        elif self.gateType == GateType.CH:
+        elif self.gateType == GATE_ID["CH"]:
             return CHGate()
-        elif self.gateType == GateType.CRz:
+        elif self.gateType == GATE_ID["CRz"]:
             return CRzGate()
-        elif self.gateType == GateType.CCX:
+        elif self.gateType == GATE_ID["CCX"]:
             return CCXGate()
-        elif self.gateType == GateType.Measure:
+        elif self.gateType == GATE_ID["Measure"]:
             return MeasureGate()
-        elif self.gateType == GateType.Swap:
+        elif self.gateType == GATE_ID["Swap"]:
             return SwapGate()
-        elif self.gateType == GateType.Perm:
+        elif self.gateType == GATE_ID["Perm"]:
             return PermGate()
-        elif self.gateType == GateType.Custom:
+        elif self.gateType == GATE_ID["Custom"]:
             return CustomGate()
-        elif self.gateType == GateType.Reset:
+        elif self.gateType == GATE_ID["Reset"]:
             return ResetGate()
         raise Exception("the gate type of the builder is wrong")
 
-    def _inner_complete_gate(self, gate : BasicGate):
+    def _inner_complete_gate(self, gate: BasicGate):
         """ private tool function
 
         filled the initial gate by the parameters set for builder
@@ -207,9 +207,9 @@ class GateBuilderModel(object):
         Return:
             BasicGate: the gate with parameters set in the builder
         """
-        if self.gateType == GateType.Perm:
+        if self.gateType == GATE_ID["Perm"]:
             gate = gate(self.pargs)
-        elif self.gateType == GateType.Custom:
+        elif self.gateType == GATE_ID["Custom"]:
             gate = gate(self.pargs)
         if gate.targets != 0:
             if len(self.targs) == gate.targets:
@@ -222,7 +222,7 @@ class GateBuilderModel(object):
                 gate.cargs = copy.deepcopy(self.cargs)
             else:
                 raise Exception("the number of cargs is wrong")
-        if gate.params != 0 and self.gateType != GateType.Perm:
+        if gate.params != 0 and self.type != GATE_ID['Perm']:
             if len(self.pargs) == gate.params:
                 gate.pargs = copy.deepcopy(self.pargs)
             else:
@@ -244,10 +244,10 @@ class GateBuilderModel(object):
             qubits.append(circuit[control])
         for target in gate.targs:
             qubits.append(circuit[target])
-        circuit.append(gate, qubits)
+        circuit.add_gate(gate, qubits)
 
     @staticmethod
-    def reflect_gates(gates : list):
+    def reflect_gates(gates: list):
         """ build the inverse of a series of gates.
 
         Args:
@@ -281,5 +281,6 @@ class GateBuilderModel(object):
             for target in gate.targs:
                 qubits.append(circuit[target])
             circuit.append(gate, qubits)
+
 
 GateBuilder = GateBuilderModel()

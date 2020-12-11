@@ -10,13 +10,7 @@ import time
 
 import numpy as np
 
-<<<<<<< HEAD:QuICT/tools/checker/_efficiencyChecker.py
 from QuICT.core import *
-=======
-from QuICT.models import *
-from QuICT.models._gate import GATE_ID
-
->>>>>>> 1711899f6c378455fbb819c18c4d1201275674ed:QuICT/checker/_efficiencyChecker.py
 
 class StandardEfficiencyCheckerModel(object):
     """ this model is to check the efficiency of amplitude calculating
@@ -84,28 +78,6 @@ class StandardEfficiencyCheckerModel(object):
         self.__min_qubits = 10
         self.__max_qubits = 30
         self.__size = 1000
-        # self.__typeList = [
-        #     GateType.H,
-        #     GateType.S,
-        #     GateType.S_dagger,
-        #     GateType.X,
-        #     GateType.Y,
-        #     GateType.Z,
-        #     GateType.ID,
-        #     GateType.U1,
-        #     GateType.U2,
-        #     GateType.Rx,
-        #     GateType.Ry,
-        #     GateType.Rz,
-        #     GateType.T,
-        #     GateType.T_dagger,
-        #     GateType.CZ,
-        #     GateType.CX,
-        #     GateType.CH,
-        #     GateType.CRz,
-        #     GateType.CCX,
-        #     GateType.Swap
-        # ]
         self.__typeList = [
             GATE_ID['H'],
             GATE_ID['S'],

@@ -49,9 +49,9 @@ def inner_partial_prob(circuit, indexes):
     return qState.partial_prob(ids)
 
 def inner_random_append(circuit, rand_size=10, typeList=None):
-    from QuICT.core import GateBuilder, GateType
+    from QuICT.core import GateBuilder, GATE_ID
     if typeList is None:
-        typeList = [GateType.CX, GateType.ID, GateType.Rz, GateType.CY, GateType.CRz, GateType.CH]
+        typeList = [GATE_ID["CX"], GATE_ID["ID"], GATE_ID["Rz"], GATE_ID["CY"], GATE_ID["CRz"], GATE_ID["CH"]]
     qubit = len(circuit.qubits)
     for _ in range(rand_size):
         rand_type = random.randrange(0, len(typeList))

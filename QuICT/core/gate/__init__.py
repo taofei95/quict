@@ -42,7 +42,7 @@ from ._gate import (
 
     BasicGate,
 
-    GateType
+    GATE_ID
 )
 
 from ._gateBuilder import (

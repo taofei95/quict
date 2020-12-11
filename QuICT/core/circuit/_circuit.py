@@ -4,20 +4,11 @@
 # @Author  : Han Yu
 # @File    : _circuit.py
 
-import random
 import copy
 
-import numpy as np
-
-<<<<<<< HEAD:QuICT/core/circuit/_circuit.py
 from QuICT.core.qubit import Qubit, Qureg
 from QuICT.core.exception import TypeException, ConstException, IndexLimitException, IndexDuplicateException
 from ._circuit_computing import *
-=======
-from ._gate import GATE_ID
-from ._qubit import Qubit, Qureg
-from QuICT.exception import TypeException, ConstException, IndexLimitException, IndexDuplicateException
->>>>>>> 1711899f6c378455fbb819c18c4d1201275674ed:QuICT/models/_circuit.py
 
 # global circuit id count
 circuit_id = 0
@@ -122,63 +113,9 @@ class Circuit(object):
         else:
             raise ConstException(self)
 
-<<<<<<< HEAD:QuICT/core/circuit/_circuit.py
     # life cycle
     def __init__(self, wires):
         """ generator a circuit
-=======
-    @staticmethod
-    def _getRandomList(l, n):
-        """ get l number from 0, 1, ..., n - 1 randomly.
-        Args:
-            l(int)
-            n(int)
-        Returns:
-            list<int>: the list of l random numbers
-        """
-        _rand = [i for i in range(n)]
-        for i in range(n - 1, 0, -1):
-            do_get = random.randint(0, i)
-            _rand[do_get], _rand[i] = _rand[i], _rand[do_get]
-        return _rand[:l]
-
-    def random(self, rand_size = 10, typeList = None):
-        """ add some random gate to the circuit
-        Args:
-            rand_size(int): the number of the gate added to the circuit
-            typeList(list<GateType>): the type of gate, default contains CX、ID、Rz、CY、CRz、CH
-        """
-
-        from ._gate import GateBuilder, GateType
-        if typeList is None:
-            typeList = [GATE_ID["CX"], GATE_ID["ID"], GATE_ID["Rz"], GATE_ID["CY"], GATE_ID["CRz"], GATE_ID["CH"]]
-        qubit = len(self.qubits)
-        for _ in range(rand_size):
-            rand_type = random.randrange(0, len(typeList))
-            GateBuilder.setGateType(typeList[rand_type])
-
-            targs = GateBuilder.getTargsNumber()
-            cargs = GateBuilder.getCargsNumber()
-            pargs = GateBuilder.getParamsNumber()
-
-            tclist = self._getRandomList(targs + cargs, qubit)
-            if targs != 0:
-                GateBuilder.setTargs(tclist[:targs])
-            if cargs != 0:
-                GateBuilder.setCargs(tclist[targs:])
-            if pargs != 0:
-                params = []
-                for _ in range(pargs):
-                    params.append(random.uniform(0, 2 * np.pi))
-                GateBuilder.setPargs(params)
-            gate = GateBuilder.getGate()
-            self.gates.append(gate)
-
-    def index_for_qubit(self, qubit, ancilla = None) -> int:
-        """ find the index of qubit in this circuit
-
-        the index ignored the ancilla qubit
->>>>>>> 1711899f6c378455fbb819c18c4d1201275674ed:QuICT/models/_circuit.py
 
         Args:
             wires(int): the number of qubits in the circuit
