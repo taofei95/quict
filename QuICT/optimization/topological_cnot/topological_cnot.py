@@ -11,6 +11,8 @@ from .._optimization import Optimization
 from QuICT.models import *
 
 # topological matrix
+from ...models._gate import GATE_ID
+
 TOPO = [[]]
 
 # number of qubits
@@ -271,7 +273,7 @@ def read(circuit, cnot_struct, topology):
 
         for i in range(len(circuit.gates)):
             gate = circuit.gates[i]
-            if gate.type() == GateType.CX:
+            if gate.type() == GATE_ID["CX"]:
                 READ_CNOT[topo_forward_map[gate.targ]] ^= \
                         READ_CNOT[topo_forward_map[gate.carg]]
 
@@ -417,7 +419,7 @@ class topological_cnot(Optimization):
             topology(list<tuple<int, int>>): topology of circuit
         """
         global TOPO, N
-        GateBuilder.setGateType(GateType.CX)
+        GateBuilder.setGateType(GATE_ID["CX"])
         steiner_tree, topo_backward_map = read(circuit, cnot_struct, topology)
         ans = solve(steiner_tree)
 
@@ -443,13 +445,13 @@ class topological_cnot(Optimization):
             c = topo_backward_map[item.carg]
             t = topo_backward_map[item.targ]
             if topo[c][t]:
-                GateBuilder.setGateType(GateType.CX)
+                GateBuilder.setGateType(GATE_ID["CX"])
                 GateBuilder.setCargs(c)
                 GateBuilder.setTargs(t)
                 gate = GateBuilder.getGate()
                 output.append(gate)
             else:
-                GateBuilder.setGateType(GateType.H)
+                GateBuilder.setGateType(GATE_ID["H"])
                 GateBuilder.setTargs(c)
                 gate = GateBuilder.getGate()
                 output.append(gate)
@@ -457,13 +459,13 @@ class topological_cnot(Optimization):
                 gate = GateBuilder.getGate()
                 output.append(gate)
 
-                GateBuilder.setGateType(GateType.CX)
+                GateBuilder.setGateType(GATE_ID["CX"])
                 GateBuilder.setCargs(t)
                 GateBuilder.setTargs(c)
                 gate = GateBuilder.getGate()
                 output.append(gate)
 
-                GateBuilder.setGateType(GateType.H)
+                GateBuilder.setGateType(GATE_ID["H"])
                 GateBuilder.setTargs(c)
                 gate = GateBuilder.getGate()
                 output.append(gate)

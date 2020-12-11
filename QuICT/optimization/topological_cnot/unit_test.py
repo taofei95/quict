@@ -10,6 +10,7 @@ import random
 import numpy as np
 
 from QuICT.models import *
+from QuICT.models._gate import GATE_ID
 from QuICT.optimization import topological_cnot
 
 def _getRandomList(n):
@@ -45,7 +46,7 @@ def generate_matrix(gates, n):
     lg = len(gates)
     while i < lg:
         gate = gates[i]
-        if gate.type() == GateType.H:
+        if gate.type() == GATE_ID["H"]:
             gate = circuit.gates[i + 2]
             i += 4
             matrix[gate.carg, :] = matrix[gate.carg, :] ^ matrix[gate.targ, :]

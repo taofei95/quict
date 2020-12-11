@@ -12,6 +12,9 @@ from collections import OrderedDict
 from configparser import ConfigParser
 import os
 
+from ..models._gate import GATE_ID
+
+
 class qasm_qreg(object):
     """
     qasm的语法树中的目标位
@@ -30,29 +33,29 @@ class qasm_creg(object):
 
 class OPENQASMInterface(BasicInterface):
     # qasm语言对应QuICT中的标准门
-    standard_extension = {"u1": GateType.U1,
-                          "u2": GateType.U2,
-                          "u3": GateType.U3,
-                          "U": GateType.U3,
-                          "x": GateType.X,
-                          "y": GateType.Y,
-                          "z": GateType.Z,
-                          "t": GateType.T,
-                          "tdg": GateType.T_dagger,
-                          "s": GateType.S,
-                          "sdg": GateType.S_dagger,
-                          "swap": GateType.Swap,
-                          "rx": GateType.Rx,
-                          "ry": GateType.Ry,
-                          "rz": GateType.Rz,
-                          "id": GateType.ID,
-                          "h": GateType.H,
-                          "cx": GateType.CX,
-                          "ccx" : GateType.CCX,
-                          "cy": GateType.CY,
-                          "cz": GateType.CZ,
-                          "ch": GateType.CH,
-                          "crz": GateType.CRz}
+    standard_extension = {"u1": GATE_ID["U1"],
+                          "u2": GATE_ID["U2"],
+                          "u3": GATE_ID["U3"],
+                          "U": GATE_ID["U3"],
+                          "x": GATE_ID["X"],
+                          "y": GATE_ID["Y"],
+                          "z": GATE_ID["Z"],
+                          "t": GATE_ID["T"],
+                          "tdg": GATE_ID["T_dagger"],
+                          "s": GATE_ID["S"],
+                          "sdg": GATE_ID["S_dagger"],
+                          "swap": GATE_ID["Swap"],
+                          "rx": GATE_ID["Rx"],
+                          "ry": GATE_ID["Ry"],
+                          "rz": GATE_ID["Rz"],
+                          "id": GATE_ID["ID"],
+                          "h": GATE_ID["H"],
+                          "cx": GATE_ID["CX"],
+                          "ccx" : GATE_ID["CCX"],
+                          "cy": GATE_ID["CY"],
+                          "cz": GATE_ID["CZ"],
+                          "ch": GATE_ID["CH"],
+                          "crz": GATE_ID["CRz"]}
 
     # qasm语言对应QuICT中的组合门
     extern_extension = {
@@ -357,7 +360,7 @@ print(result.get_counts(circ))
             raise QasmInputException("位数不匹配:", node.line, node.file)
 
         maxidx = max([len(id0), len(id1)])
-        GateBuilder.setGateType(GateType.CX)
+        GateBuilder.setGateType(GATE_ID["CX"])
         for idx in range(maxidx):
             if len(id0) > 1 and len(id1) > 1:
                 GateBuilder.setCargs(id0[idx])
@@ -378,14 +381,14 @@ print(result.get_counts(circ))
         if len(id0) != len(id1):
             raise QasmInputException("寄存器位数不匹配:", node.line, node.file)
 
-        GateBuilder.setGateType(GateType.Measure)
+        GateBuilder.setGateType(GATE_ID["Measure"])
         for idx, _ in zip(id0, id1):
             GateBuilder.setTargs(idx)
             self.circuit_gates.append(GateBuilder.getGate())
 
     def analyse_reset(self, node):
         id0 = self.get_analyse_id(node.children[0])
-        GateBuilder.setGateType(GateType.Reset)
+        GateBuilder.setGateType(GATE_ID["Reset"])
         for i, _ in enumerate(id0):
             GateBuilder.setTargs(id0[i])
             self.circuit_gates.append(GateBuilder.getGate())

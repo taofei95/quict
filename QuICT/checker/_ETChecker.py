@@ -11,6 +11,7 @@ import numpy as np
 
 from QuICT.algorithm import SyntheticalUnitary, Amplitude
 from QuICT.models import *
+from QuICT.models._gate import GATE_ID
 
 class ETCheckerModel(object):
     """ checker whether the input and output(circuit) of a algorithm is equivalence
@@ -129,7 +130,7 @@ class ETCheckerModel(object):
             rand_type = random.randrange(0, len(self.typeList))
             GateBuilder.setGateType(self.typeList[rand_type])
 
-            if self.typeList[rand_type] == GateType.Perm:
+            if self.typeList[rand_type] == GATE_ID["Perm"]:
                 # rand = random.randint(1, rand_qubit)
                 rand = rand_qubit
                 perm_list = [i for i in range(1 << rand)]
@@ -139,7 +140,7 @@ class ETCheckerModel(object):
                 GateBuilder.setPargs(perm_list)
                 gate = GateBuilder.getGate()
                 circuit.gates.append(gate)
-            elif self.typeList[rand_type] == GateType.Custom:
+            elif self.typeList[rand_type] == GATE_ID["Custom"]:
                 pass
             else:
                 targs = GateBuilder.getTargsNumber()
@@ -186,7 +187,7 @@ class ETCheckerModel(object):
             rand_type = random.randrange(0, len(self.typeList))
             GateBuilder.setGateType(self.typeList[rand_type])
 
-            if self.typeList[rand_type] == GateType.Perm:
+            if self.typeList[rand_type] == GATE_ID["Perm"]:
                 rand = random.randint(1, rand_qubit)
                 perm_list = [i for i in range(1 << rand)]
                 random.shuffle(perm_list)
@@ -195,7 +196,7 @@ class ETCheckerModel(object):
                 GateBuilder.setPargs(perm_list)
                 gate = GateBuilder.getGate()
                 circuit.gates.append(gate)
-            elif self.typeList[rand_type] == GateType.Custom:
+            elif self.typeList[rand_type] == GATE_ID["Custom"]:
                 pass
             else:
                 targs = GateBuilder.getTargsNumber()

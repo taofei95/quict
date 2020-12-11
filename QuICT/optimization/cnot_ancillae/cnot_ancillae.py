@@ -11,6 +11,7 @@ import numpy as np
 from .._optimization import Optimization
 from QuICT.exception import CircuitStructException
 from QuICT.models import *
+from ...models._gate import GATE_ID
 
 s = 0
 n = 0
@@ -362,7 +363,7 @@ def read(circuit : Circuit):
                 should greater than or equal 4")
     matrix = np.identity(n, dtype=bool)
     for gate in circuit.gates:
-        if gate.type() != GateType.CX:
+        if gate.type() != GATE_ID["CX"]:
             raise CircuitStructException(f"the input circuit should be a CNOT circuit, but it contains {str(gate)}")
         cindex = gate.cargs
         tindex = gate.targs
@@ -408,7 +409,7 @@ class cnot_ancillae(Optimization):
         matrix = read(circuit)
         solve(matrix)
         gates = []
-        GateBuilder.setGateType(GateType.CX)
+        GateBuilder.setGateType(GATE_ID["CX"])
         for cnot in CNOT:
             GateBuilder.setCargs(cnot[0])
             GateBuilder.setTargs(cnot[1])

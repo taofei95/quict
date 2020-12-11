@@ -7,6 +7,7 @@
 import numpy as np
 from .._synthesis import Synthesis
 from QuICT.models import *
+from ...models._gate import GATE_ID
 
 eps0 = 0.14
 l0 = 16
@@ -30,12 +31,12 @@ def choose_matrix():
     matrixs = []
     gates = []
 
-    GateBuilder.setGateType(GateType.H)
+    GateBuilder.setGateType(GATE_ID["H"])
     GateBuilder.setTargs(0)
     gates.append(GateBuilder.getGate())
     matrixs.append(np.asmatrix(H.matrix.reshape(2, 2)))
 
-    GateBuilder.setGateType(GateType.U1)
+    GateBuilder.setGateType(GATE_ID["U1"])
     GateBuilder.setTargs(0)
     GateBuilder.setPargs(np.pi / 8)
     gates.append(GateBuilder.getGate())

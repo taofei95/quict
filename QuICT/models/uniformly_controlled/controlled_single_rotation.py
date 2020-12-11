@@ -5,6 +5,7 @@
 # @File    : controlled_single_rotation.py
 
 from QuICT.models import *
+from QuICT.models._gate import GATE_ID
 
 TOLERANCE = 1e-12
 
@@ -22,9 +23,9 @@ def _apply_ucr_n(angles, ucontrol_qubits, target_qubit, gate_class, rightmost_cn
     """
 
     if len(ucontrol_qubits) == 0:
-        if gate_class == GateType.Rx:
+        if gate_class == GATE_ID["Rx"]:
             gate = Rx(angles[0])
-        elif gate_class == GateType.Ry:
+        elif gate_class == GATE_ID["Ry"]:
             gate = Ry(angles[0])
         else:
             gate = Rz(angles[0])
@@ -67,9 +68,9 @@ def _apply_ucr_n(angles, ucontrol_qubits, target_qubit, gate_class, rightmost_cn
 
 def get_gates(angles, ucontrol_qubits, target_qubit, gate_class, rightmost_cnot):
     if len(ucontrol_qubits) == 0:
-        if gate_class == GateType.Rx:
+        if gate_class == GATE_ID["Rx"]:
             gate = Rx(angles[0])
-        elif gate_class == GateType.Ry:
+        elif gate_class == GATE_ID["Ry"]:
             gate = Ry(angles[0])
         else:
             gate = Rz(angles[0])
@@ -112,7 +113,7 @@ def get_gates(angles, ucontrol_qubits, target_qubit, gate_class, rightmost_cnot)
 
 class MultifoldControlledRotationModel(gateModel):
 
-    def __call__(self, angle, gateclass = GateType.Rx):
+    def __call__(self, angle, gateclass = GATE_ID["Rx"]):
         """
         Args:
             angle(list): the list of angle

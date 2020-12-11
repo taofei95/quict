@@ -10,6 +10,8 @@ from QuICT.models import *
 import copy
 import numpy as np
 
+from ...models._gate import GATE_ID
+
 size_n = 0
 cal = 0
 color = []
@@ -160,7 +162,7 @@ def initPerm(n) -> inner_perm:
 
 def gate2perm(gate: BasicGate, n_size):
     res = inner_perm(n_size)
-    if gate.type() == GateType.Perm:
+    if gate.type() == GATE_ID["Perm"]:
         mask = 0
         for i in range(gate.targets):
             mask += 1 << (n_size - 1 - gate.targs[i])
@@ -181,29 +183,29 @@ def gate2perm(gate: BasicGate, n_size):
                             to += 1 << k
                         l += 1
                 res.mp[_from] = to
-    elif gate.type() == GateType.Swap:
+    elif gate.type() == GATE_ID["Swap"]:
         for i in range(1 << (n_size - 2)):
             temp1 = bincaat(i, n_size - 1 - gate.targs[0], n_size - 1 - gate.targs[1], 0, 1)
             temp2 = bincaat(i, n_size - 1 - gate.targs[0], n_size - 1 - gate.targs[1], 1, 0)
             res.mp[temp1], res.mp[temp2] = res.mp[temp2], res.mp[temp1]
-    elif gate.type() == GateType.CX:
+    elif gate.type() == GATE_ID["CX"]:
         for i in range(1 << (n_size - 2)):
             temp1 = bincaat(i, n_size - 1 - gate.carg, n_size - 1 - gate.targ, 1, 0)
             temp2 = bincaat(i, n_size - 1 - gate.carg, n_size - 1 - gate.targ, 1, 1)
             res.mp[temp1], res.mp[temp2] = res.mp[temp2], res.mp[temp1]
-    elif gate.type() == GateType.X:
+    elif gate.type() == GATE_ID["X"]:
         for i in range(1 << (n_size - 1)):
             temp1 = bincat(i, n_size - 1 - gate.targ, 0)
             temp2 = bincat(i, n_size - 1 - gate.targ, 1)
             res.mp[temp1], res.mp[temp2] = res.mp[temp2], res.mp[temp1]
-    elif gate.type() == GateType.ID:
+    elif gate.type() == GATE_ID["ID"]:
         pass
-    elif gate.type() == GateType.CCX:
+    elif gate.type() == GATE_ID["CCX"]:
         for i in range(1 << (n_size - 2)):
             if bincaat(i, n_size - 1 - gate.cargs[0], n_size - 1 - gate.cargs[1], 0, 0) & (
                     1 << (n_size - 1 - gate.targ)) != 0:
                 temp1 = bincaat(i, n_size - 1 - gate.cargs[0], n_size - 1 - gate.cargs[1], 1, 1) ^ (
-                            1 << (n_size - 1 - gate.targ))
+                        1 << (n_size - 1 - gate.targ))
                 temp2 = bincaat(i, n_size - 1 - gate.cargs[0], n_size - 1 - gate.cargs[1], 1, 1)
                 res.mp[temp1], res.mp[temp2] = res.mp[temp2], res.mp[temp1]
     else:
@@ -213,7 +215,7 @@ def gate2perm(gate: BasicGate, n_size):
 
 
 def perm2gate(perm, mask, nn, datas):
-    GateBuilder.setGateType(GateType.Perm)
+    GateBuilder.setGateType(GATE_ID["Perm"])
     targs = []
     for i in range(nn):
         if (1 << i) & mask != 0:

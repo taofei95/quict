@@ -9,6 +9,7 @@ import copy
 
 import numpy as np
 
+from ._gate import GATE_ID
 from ._qubit import Qubit, Qureg
 from QuICT.exception import TypeException, ConstException, IndexLimitException, IndexDuplicateException
 
@@ -141,7 +142,7 @@ class Circuit(object):
 
         from ._gate import GateBuilder, GateType
         if typeList is None:
-            typeList = [GateType.CX, GateType.ID, GateType.Rz, GateType.CY, GateType.CRz, GateType.CH]
+            typeList = [GATE_ID["CX"], GATE_ID["ID"], GATE_ID["Rz"], GATE_ID["CY"], GATE_ID["CRz"], GATE_ID["CH"]]
         qubit = len(self.qubits)
         for _ in range(rand_size):
             rand_type = random.randrange(0, len(typeList))

@@ -8,6 +8,8 @@ import numpy as np
 
 from .._optimization import Optimization
 from QuICT.models import *
+from ...models._gate import GATE_ID
+
 
 class path(object):
     """ record the path of bfs
@@ -63,7 +65,7 @@ def solve(input: Circuit):
     now = 0
     goal = 0
     for gate in input.gates:
-        if gate.type() != GateType.CX:
+        if gate.type() != GATE_ID["CX"]:
             raise Exception("the circuit should only contain CX gate")
         input_matrix[gate.targ, :] = input_matrix[gate.targ, :] ^ input_matrix[gate.carg, :]
     for i in range(n):

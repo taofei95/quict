@@ -3,7 +3,7 @@
 # @TIME    : 2020/4/13 7:01 下午
 # @Author  : Han Yu
 # @File    : _cartan_decomposition.py
-
+from QuICT.models._gate import GATE_ID
 from .._synthesis import Synthesis
 from QuICT.algorithm import SyntheticalUnitary
 from QuICT.models import *
@@ -140,12 +140,12 @@ def independent(v, v_list):
 
 def uniformlyRz(low, high, y):
     if low + 1 == high:
-        GateBuilder.setGateType(GateType.Rz)
+        GateBuilder.setGateType(GATE_ID["Rz"])
         GateBuilder.setTargs(low)
         GateBuilder.setPargs(y[0] / 2)
         return [GateBuilder.getGate()]
     length = len(y) // 2
-    GateBuilder.setGateType(GateType.CX)
+    GateBuilder.setGateType(GATE_ID["CX"])
     GateBuilder.setCargs(low)
     GateBuilder.setTargs(high - 1)
     gateA = GateBuilder.getGate()
@@ -164,12 +164,12 @@ def uniformlyRz(low, high, y):
 
 def uniformlyRx(low, high, y):
     if low + 1 == high:
-        GateBuilder.setGateType(GateType.Rx)
+        GateBuilder.setGateType(GATE_ID["Rx"])
         GateBuilder.setTargs(low)
         GateBuilder.setPargs(y[0])
         return [GateBuilder.getGate()]
     length = len(y) // 2
-    GateBuilder.setGateType(GateType.CX)
+    GateBuilder.setGateType(GATE_ID["CX"])
     GateBuilder.setCargs(high - 1)
     GateBuilder.setTargs(low)
     gateA = GateBuilder.getGate()
@@ -243,7 +243,7 @@ def SU2_to_U3(P, qubit):
     else:
         thc = np.angle(P_copy[0, 1] / -np.sin(tha / 2))
         thb = np.angle(P_copy[1, 0] / np.sin(tha / 2))
-    GateBuilder.setGateType(GateType.U3)
+    GateBuilder.setGateType(GATE_ID["U3"])
     GateBuilder.setPargs([tha, thb, thc])
     GateBuilder.setTargs(qubit)
     gate = GateBuilder.getGate()
@@ -428,42 +428,42 @@ def NKS_2qubit(low, high, U : np.matrix):
 
     inner_gates = []
 
-    GateBuilder.setGateType(GateType.Rz)
+    GateBuilder.setGateType(GATE_ID["Rz"])
     GateBuilder.setTargs(high - 1)
     GateBuilder.setPargs(-np.pi / 2)
     inner_gates.append(GateBuilder.getGate())
 
-    GateBuilder.setGateType(GateType.CX)
+    GateBuilder.setGateType(GATE_ID["CX"])
     GateBuilder.setCargs(high - 1)
     GateBuilder.setTargs(low)
     inner_gates.append(GateBuilder.getGate())
 
-    GateBuilder.setGateType(GateType.Rz)
+    GateBuilder.setGateType(GATE_ID["Rz"])
     GateBuilder.setTargs(low)
     GateBuilder.setPargs(-2 * thz + np.pi / 2)
     inner_gates.append(GateBuilder.getGate())
 
-    GateBuilder.setGateType(GateType.Ry)
+    GateBuilder.setGateType(GATE_ID["Ry"])
     GateBuilder.setTargs(high - 1)
     GateBuilder.setPargs(-np.pi / 2 + 2 * thx)
     inner_gates.append(GateBuilder.getGate())
 
-    GateBuilder.setGateType(GateType.CX)
+    GateBuilder.setGateType(GATE_ID["CX"])
     GateBuilder.setCargs(low)
     GateBuilder.setTargs(high - 1)
     inner_gates.append(GateBuilder.getGate())
 
-    GateBuilder.setGateType(GateType.Ry)
+    GateBuilder.setGateType(GATE_ID["Ry"])
     GateBuilder.setTargs(high - 1)
     GateBuilder.setPargs(-2 * thy + np.pi / 2)
     inner_gates.append(GateBuilder.getGate())
 
-    GateBuilder.setGateType(GateType.CX)
+    GateBuilder.setGateType(GATE_ID["CX"])
     GateBuilder.setCargs(high - 1)
     GateBuilder.setTargs(low)
     inner_gates.append(GateBuilder.getGate())
 
-    GateBuilder.setGateType(GateType.Rz)
+    GateBuilder.setGateType(GATE_ID["Rz"])
     GateBuilder.setTargs(low)
     GateBuilder.setPargs(np.pi / 2)
     inner_gates.append(GateBuilder.getGate())

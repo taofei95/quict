@@ -9,9 +9,11 @@ import random
 import numpy as np
 from QuICT.models import *
 from QuICT.algorithm import SyntheticalUnitary
+from QuICT.models._gate import GATE_ID
+
 
 def test_multifold():
-    types = [GateType.Ry, GateType.Rz, GateType.Rx]
+    types = [GATE_ID["Ry"], GATE_ID["Rz"], GATE_ID["Rx"]]
     max_test = 5
     every_round = 20
     for i in range(1, max_test):
@@ -23,9 +25,9 @@ def test_multifold():
                     pargs.append(np.pi / 2)
                 MultifoldControlledRotation(pargs, type) | circuit
                 unitary = SyntheticalUnitary.run(circuit, showSU = False)
-                if type == GateType.Rx:
+                if type == GATE_ID["Rx"]:
                     gate = Rx
-                elif type == GateType.Ry:
+                elif type == GATE_ID["Ry"]:
                     gate = Ry
                 else:
                     gate = Rz

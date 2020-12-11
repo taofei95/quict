@@ -8,13 +8,14 @@ from QuICT.algorithm import Amplitude, SyntheticalUnitary
 from QuICT.optimization import alter_depth_decomposition
 from QuICT.checker import ETChecker
 from QuICT.models import *
+from QuICT.models._gate import GATE_ID
 
 
 ETChecker.setAlgorithm(alter_depth_decomposition)
 ETChecker.setSize(10, 10)
 ETChecker.setQubitNumber(6, 8)
 ETChecker.setRoundNumber(100)
-ETChecker.setTypeList([GateType.X, GateType.CX, GateType.CCX, GateType.ID, GateType.Swap, GateType.Perm])
+ETChecker.setTypeList([GATE_ID['X'], GATE_ID['CX'], GATE_ID['CCX'], GATE_ID['ID'], GATE_ID['Swap'],GATE_ID['Perm']])
 # ETChecker.setTypeList([GateType.Perm])
 ETChecker.run()
 
