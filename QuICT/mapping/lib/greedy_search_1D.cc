@@ -268,19 +268,22 @@ std::vector<int> mapping::enumerate(std::vector<int>& initMapping, mapping::Cons
 
 
 // 用启发式算法找满足约束的permutation
+
+
+
 std::vector<int> mapping::searchMapping(std::vector<int>& initMapping, mapping::ConstraintVector& constraints){
     int n = initMapping.size();
     std::vector<int>  res(n,0);
     std::vector<int> disF(n, 0);
     for(int i = 0; i < n; i++){
-        disF[initMapping[i]] = i;
-    }
-    //每个约束内部的排序，应该正排还是倒排
+      //每个约束内部的排序，应该正排还是倒排
     for(auto& p: constraints){
          if(mapping::countInversions(disF,p, L)>mapping::countInversions(disF,p, G)){
             std::reverse(p.begin(),p.end());
          }
+    }   disF[initMapping[i]] = i;
     }
+   
     std::vector<std::pair<int, float> > scores(constraints.size());
     for(int i = 0;i < constraints.size();i++){
         scores[i].first = i;
@@ -392,15 +395,17 @@ mapping::ConstraintVector mapping::findConstraint(mapping::Circuit& gates, int& 
                 if(index[p.ctrl] == index[p.tar]){
                     std::vector<int> temp =  constraints[index[p.tar]];
                     int mark = 0;
-                for(int i = 0;i<temp.size()-1;i++){
-                    if((temp[i] == p.ctrl && temp[i+1] == p.tar) ||(temp[i] == p.tar && temp[i+1] == p.ctrl)){
-                        mark = 1;
+                    for(int i = 0;i<temp.size()-1;i++){
+                        if((temp[i] == p.ctrl && temp[i+1] == p.tar) ||(temp[i] == p.tar && temp[i+1] == p.ctrl)){
+                            mark = 1;
+                            break;
+                        }
+                    }
+                    if(mark == 0){
                         break;
                     }
-                }
-                if(mark == 0){
+                }else{
                     break;
-                }
                 }
             }
          }
@@ -434,7 +439,7 @@ mapping::Circuit mapping::logicToPhysics(mapping::Circuit& gates, std::vector<in
 }
 
 
-mapping::Circuit mapping::greedySearch(mapping::Circuit& gates, std::vector<int>& mapping, int n){
+mapping::Circuit mapping::greedySearch(mapping::Circuit& gates, std::vector<int>& mapping, int n, const std::string& initMethod, const std::string& searchMethod){
     int curPos = 0, prePos = -1, l = gates.size();
     std::vector<int> initMapping(n,0);
     for(int i=0; i<n; i++){
@@ -448,16 +453,38 @@ mapping::Circuit mapping::greedySearch(mapping::Circuit& gates, std::vector<int>
         //cout<<"permutation"<<endl;
         if(!init){
             std::vector<std::vector<int>> constraints = mapping::findConstraint(gates, curPos, n);
-            std::vector<int> curMapping = mapping::searchMapping(initMapping, constraints);
-            //std::vector<int> curMapping = mapping::enumerate(initMapping, constraints);
+            std::vector<int> curMapping;
+            if(searchMethod.compare("heuristic") == 0){
+                curMapping = mapping::searchMapping(initMapping, constraints);
+            }else if(searchMethod.compare("enumerate") == 0){
+                curMapping = mapping::enumerate(initMapping, constraints);
+            }else{
+                throw std::runtime_error("there is no matched method");
+            }
+
             mapping::Circuit swaps = mapping::mappingTrans(initMapping, curMapping);
             mapping::Circuit transGates = mapping::logicToPhysics(gates, curMapping, prePos, curPos);
             res.insert(res.end(), swaps.begin(), swaps.end());
             res.insert(res.end(), transGates.begin(), transGates.end());
         }else{
             //cout<<"init"<<endl;
-            std::vector<int> curMapping = mapping::findInitMapping(gates, n);
-            
+            std::vector<int> curMapping;
+            if (initMethod.compare("minLA") == 0){
+                curMapping = mapping::findInitMapping(gates, n);
+            }
+            else if (initMethod.compare("naive") == 0){
+                curMapping.resize(n, 0);
+                for (int i = 0; i < n; i++){
+                    curMapping[i] = i;
+                }
+                int pos = 0;
+                mapping::ConstraintVector constraints = mapping::findConstraint(gates, pos, n);
+                curMapping = mapping::searchMapping(curMapping, constraints);
+            }
+            else{
+                throw std::runtime_error("there is no matched method");
+            }
+
             initMapping = curMapping;
             //res.insert(res.end(), transGates.begin(), transGates.end());
             //mapping::ConstraintVector constraints = mapping::findConstraint(gates, curPos, n);
@@ -507,14 +534,14 @@ int mapping::countInversions(std::vector<int>& curMapping, std::vector<int>& tar
     return res;
 }
 
-//按集合中门的数量简历索引表
+//按集合中门的数量建立索引表
 bool mapping::cmp(const std::vector<int>& a, const std::vector<int>& b){
-    return a[0] > b[0];
+    return a[3] > b[3];
 }
 
 std::vector<std::vector<int>> mapping::constructIndex(mapping::ConstraintMatrix& constraints, int n){
     int num = 0;
-    for (auto& p : constraints){
+    for (auto &p : constraints){
         num += p.size();
     }
     std::vector<std::vector<int>> res(num);
@@ -542,9 +569,11 @@ void mapping::fillMapping(mapping::ConstraintVector& constraint, std::vector<int
 std::vector<std::vector<int>>  mapping::constructInterMapping(mapping::ConstraintMatrix& constraints, int n){
     int l = constraints.size();
     std::vector<std::vector<int>> res(l,std::vector<int>(n,0));
+
     for(int i = 0; i < l; i++){
         mapping::fillMapping(constraints[i], res[i], n);
     }
+
     return res;
 }
 //global sifting
@@ -556,25 +585,102 @@ void  mapping::swapConstraint(mapping::ConstraintVector& constraint, int i, int 
     constraint[i].swap(constraint[j]);
 }
 
-int  mapping::sifting(mapping::ConstraintMatrix& constraints,std::vector<std::vector<int>>& list, std::vector<std::vector<int>>& mappingList, int ind, int n){
+
+struct compareConstraint{
+    std::vector<int> disF;
+    int mode;
+    compareConstraint()
+    {
+        mode = 0;
+        disF = std::vector<int>(0);
+    }
+    compareConstraint(std::vector<int>& mapping, int n, int mode){
+        this->mode = mode;
+        if (mapping.size() != n)
+        {
+            throw std::length_error("the size of mapping vector does not match the parameter n");
+        }
+        this->disF = std::vector<int>(n, 0);
+        for (int i = 0; i < n;i++){
+            this->disF[mapping[i]] = i;
+        }
+    }
+    bool operator()(mapping::Constraint& a, mapping::Constraint& b){
+        //int n = a.size(), m = b.size();
+        if(mode == 0){
+            return mapping::median(disF,a) < mapping::median(disF,b);
+        }
+        else if (mode == 1){
+            return mapping::byCenter(disF,a) < mapping::byCenter(disF,b);
+        }
+        else{
+            return true;
+        }
+    }
+};
+
+
+void mapping::innerConstraintDirection(mapping::ConstraintVector& constraint, std::vector<int>& initMapping ,int n){
+    std::vector<int> disF(n, 0);
+    for(int i = 0; i < n; i++){
+        disF[initMapping[i]] = i;
+    }
+    //每个约束内部的排序，应该正排还是倒排
+    for(auto& p: constraint){
+         if(mapping::countInversions(disF,p, L)>mapping::countInversions(disF,p, G)){
+            std::reverse(p.begin(),p.end());
+         }
+    }
+}
+
+std::vector<std::vector<int>>  mapping::initializeInterMapping(mapping::ConstraintMatrix &constraints, std::vector<int> &initMapping, int n){
+    int l = constraints.size();
+    if(l==0){
+        throw std::length_error("The constraint list couldn't be empty");
+    } 
+
+    std::vector<std::vector<int>> mappingList(l,std::vector<int>(n,0));
+
+    std::sort(constraints[0].begin(), constraints[0].end(),compareConstraint(initMapping, n, 1));
+    mapping::innerConstraintDirection(constraints[0], initMapping, n);
+    mapping::fillMapping(constraints[0], mappingList[0], n);
+
+    for (int i = 1; i < constraints.size(); i++){
+        mapping::innerConstraintDirection(constraints[i], mappingList[i-1], n);
+        std::sort(constraints[i].begin(), constraints[i].end(), compareConstraint(mappingList[i-1], n, 1));
+        mapping::fillMapping(constraints[i], mappingList[i], n);
+    }
+
+    return mappingList;
+}
+
+//sifting 
+int  mapping::sifting(mapping::ConstraintMatrix& constraints,std::vector<std::vector<int>>& list,  std::vector<std::vector<int>>& indexDict,std::vector<std::vector<int>>& mappingList, int ind, int n){
     int l = constraints.size();          
     std::vector<int> cur = list[ind];
     int interPos = cur[0], innerPos = cur[1], csLength = cur[2], width = cur[3];
-    int maxInversions = 0, tarPos = -1;
-    int tempPos = innerPos;
+    int minInversions = 0, tarPos = innerPos;
+    int curPos = innerPos;
     //std::vector<int> curMapping(n,0);
     //mapping::fillMapping(constraints[interPos], curMapping, n);
     if(interPos == 0){
-        maxInversions = mapping::countInversions(mappingList[interPos],mappingList[interPos+1]);
+        minInversions = mapping::countInversions(mappingList[interPos],mappingList[interPos+1]);
     }else if(interPos == l-1){
-        maxInversions = mapping::countInversions(mappingList[interPos-1],mappingList[interPos]);
+        minInversions = mapping::countInversions(mappingList[interPos-1],mappingList[interPos]);
     }else{
-        maxInversions = mapping::countInversions(mappingList[interPos],mappingList[interPos+1])+ mapping::countInversions(mappingList[interPos-1],mappingList[interPos]);
+        minInversions = mapping::countInversions(mappingList[interPos],mappingList[interPos+1])+ mapping::countInversions(mappingList[interPos-1],mappingList[interPos]);
     }
-
+    
     for(int i = 0; i < width; i++){
-        int nextPos = (tempPos + 1) % width;
-        swapConstraint(constraints[interPos],tempPos, nextPos);
+        int nextPos = (curPos + 1) % width;
+        if(nextPos == 0){
+            Constraint temp = constraints[interPos][curPos];
+            constraints[interPos].erase(constraints[interPos].end());
+            constraints[interPos].insert(constraints[interPos].begin(), temp);
+        }
+        else{
+            swapConstraint(constraints[interPos],curPos, nextPos);
+        }
         mapping::fillMapping(constraints[interPos],mappingList[interPos], n);
         int curInversions=0;
         if(interPos == 0){
@@ -584,17 +690,39 @@ int  mapping::sifting(mapping::ConstraintMatrix& constraints,std::vector<std::ve
         }else{
             curInversions = mapping::countInversions(mappingList[interPos],mappingList[interPos+1])+ mapping::countInversions(mappingList[interPos-1],mappingList[interPos]);
         }
-        if(maxInversions < curInversions){
+        if(minInversions > curInversions){
             tarPos = nextPos;
-            maxInversions = curInversions;
+            minInversions = curInversions;
         }
-        tempPos = nextPos;
+        curPos = nextPos;
     }
 
     if(tarPos == innerPos){
         return 1;
     }else{
-        swapConstraint(constraints[interPos], innerPos, tarPos);
+        if(tarPos < innerPos){
+            int curPos = innerPos;
+            while (curPos > tarPos){
+                swapConstraint(constraints[interPos], curPos, curPos-1);
+                int curInd = indexDict[interPos][curPos], nextInd = indexDict[interPos][curPos - 1];
+                list[curInd][1] = curPos - 1;
+                list[nextInd][1] = curPos;
+                indexDict[interPos][curPos] = nextInd;
+                indexDict[interPos][curPos - 1] = curInd;
+                curPos -= 1;
+            }
+        }else{
+            int curPos = innerPos;
+            while (curPos < tarPos){
+                swapConstraint(constraints[interPos], curPos, curPos+1);
+                int curInd = indexDict[interPos][curPos], nextInd = indexDict[interPos][curPos + 1];
+                list[curInd][1] = curPos + 1;
+                list[nextInd][1] = curPos;
+                indexDict[interPos][curPos] = nextInd;
+                indexDict[interPos][curPos + 1] = curInd;
+                curPos += 1;
+            }
+        }
         mapping::fillMapping(constraints[interPos],mappingList[interPos], n);
         return 0;
     }
@@ -623,26 +751,50 @@ mapping::Circuit mapping::globalSifting(mapping::Circuit& circuit, std::vector<i
         mapping = initMapping;
         return circuit;
     }
-
+    
     std::vector<std::vector<int>> list = std::move(mapping::constructIndex(constraints, n));
-    std::vector<std::vector<int>> interMapping = std::move(mapping::constructInterMapping(constraints,n));
-
-    int failCount = 0, maxFail = 5;
+    
+    std::vector<std::vector<int>> indexDict(constraints.size());
+    for (int i = 0; i < constraints.size();i++){
+        indexDict[i] = std::move(std::vector<int>(constraints[i].size(), -1));
+    }
+    for (int i = 0; i < list.size();i++){
+        std::vector<int> p = list[i];
+        indexDict[p[0]][p[1]] = i;
+    }
+    //std::vector<int> initMapping = mapping::findInitMapping(circuit, n);
+    std::vector<int> initMapping(n, 0);
+    for (int i = 0; i < n;i++){
+        initMapping[i] = i;
+    }
+    std::vector<std::vector<int>> interMapping = std::move(mapping::initializeInterMapping(constraints, initMapping, n));
+    //std::vector<std::vector<int>> interMapping = std::move(mapping::constructInterMapping(constraints,n));
+    // sort(list.begin(), list.end(), mapping::cmp);
+    #define GS
+    #ifdef GS
+    int failCount = 0, maxFail = 2;
     while(failCount < maxFail){
         for(int i = 0;i < list.size(); i++){
-            if(sifting(constraints, list , interMapping, i, n)){
-                failCount += 1;
-                break;
-            }
+            sifting(constraints, list, indexDict ,interMapping, i, n);
+
+            // if(sifting(constraints, list , interMapping, i, n)){
+            //     failCount += 1;
+            //     break;
+            // }
         }
-        for(int j = list.size()-1; j >= 0; j--){
-            if(sifting(constraints, list , interMapping, j, n)){
-                failCount += 1;
-                break;
-            }
+
+        for (int j = list.size() - 2; j >= 0; j--)
+        {
+            sifting(constraints, list , indexDict, interMapping, j, n);
+            // if(sifting(constraints, list , interMapping, j, n)){
+            //     failCount += 1;
+            //     break;
+            // }
         }
+        failCount += 1;
     }
-    std::vector<int> initMapping = interMapping[0];
+    #endif
+    initMapping = interMapping[0];
     mapping = initMapping;
     mapping::Circuit res;
     int startPos = 0, endPos = 0;
@@ -654,6 +806,7 @@ mapping::Circuit mapping::globalSifting(mapping::Circuit& circuit, std::vector<i
         res.insert(res.end(), swaps.begin(), swaps.end());
         res.insert(res.end(), transGates.begin(), transGates.end());
     }
+
     return res;
 }
 

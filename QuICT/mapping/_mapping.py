@@ -6,11 +6,11 @@
 
 from QuICT.models import Circuit
 
-from qubit_mapping  import qubitMapping as qm
+from qubit_mapping  import QubitMapping as qm
 from QuICT.models import * 
 from QuICT.exception import *
 from typing import List, Dict,Tuple
-class  Mapping(object)s:
+class  Mapping(object):
     @classmethod
     def run(cls, circuit: Circuit, num: int, init_layout : List[int], is_lnn: bool = True,
             method:str = "greedy_search", inplace:bool = False) -> Circuit:
@@ -42,8 +42,8 @@ class  Mapping(object)s:
             raise Exception("There are not enough phyical qubits to excute the circuit")
 
         if is_lnn is True:
-            gates = cls.__mapping_1D(circuit = circuit, num=num, init_layout = init_layout ,method = method)
-            #init_layout[:] = layout
+            gates, layout = cls._mapping_1D(circuit = circuit, num=num, init_layout = init_layout ,method = method)
+            init_layout[:] = layout
             # for i in init_layout:
             #     print(i)
         else:
@@ -59,7 +59,7 @@ class  Mapping(object)s:
             return new_circuit
     
     @staticmethod
-    def _mapping_1D(circuit : Circuit, method : str, num : int) -> Tuple[List[BasicGate], List[int]]:
+    def _mapping_1D(circuit : Circuit, method : str, init_layout: List[int], num : int) -> Tuple[List[BasicGate], List[int]]:
         """
         Args:
             circuit: the input circuit that needs to be mapped into a 1D physical architecture 
@@ -88,20 +88,19 @@ class  Mapping(object)s:
                 temp['tar'] = g.targ
                 temp['type'] = 1
             else:
-                raise TypeException("two-qubit gate or single qubit gate", "the gate acting on more than two qubits")
-            
+                raise TypeException("two-qubit gate or single qubit gate", "the gate acting on more than two qubits")        
             temp['name'] = g.type().value
             #print(g.type().value)
             circuit_ori.append(temp)
        # for w in circuit_ori:
        #     print(w)
         #print("qm1")
-        print(num)
+        #print(num)
         trans = qm(circuit = circuit_ori, num =num, method = method )
         #print("qm")
 
         circuit_trans, init_layout = trans.get_circuit()
-        
+
         gates = []
         index = 0
 
@@ -143,8 +142,7 @@ class  Mapping(object)s:
             # print(g.type().value )
             gates.append(GateBuilder.getGate())
 
-        return gates, init_layout
-
+        return gates, init_layout  
 
         def _mapping_2D(circuit : Circuit, init_layout: List[int], method : str, num : int, ) -> Circuit:
             """

@@ -3,7 +3,6 @@
 
 #define SIFT
 
-//#define __QASM__
 #include<iostream>
 #include<limits.h>
 #include<vector>
@@ -11,6 +10,7 @@
 #include<algorithm>
 #include<stdlib.h>
 #include<ctime>
+#include<exception>
 #include "utility.hh"
 
 
@@ -85,7 +85,7 @@ void mergeConstraint(std::vector<int>& constraint1, std::vector<int>& constraint
 
 ConstraintVector findConstraint(Circuit& gates, int& pos, int n);
 Circuit logicToPhysics(Circuit& gates, std::vector<int>& mapping, int start, int end);
-Circuit greedySearch(Circuit& gates, std::vector<int>& mapping, int n);
+Circuit greedySearch(Circuit& gates, std::vector<int>& mapping, int n, const std::string& initMethod, const std::string& searchMethod);
 
 
 #ifdef SIFT
@@ -102,8 +102,13 @@ std::vector<std::vector<int>>  constructInterMapping(ConstraintMatrix& constrain
 void  swapConstraint(ConstraintVector& constraint, int i, int j);
 
 int countInversions(std::vector<int>& curMapping, std::vector<int>& tarMapping);
- 
-int sifting(ConstraintMatrix& constraints, std::vector<std::vector<int>>& list, std::vector<std::vector<int>>& mappingList, int ind, int n);
+
+std::vector<std::vector<int>> initializeInterMapping(ConstraintMatrix &constraints, std::vector<int> &initMapping,int n);
+
+void innerConstraintDirection(ConstraintVector &constraint, std::vector<int> &initMapping, int n);
+
+int sifting(ConstraintMatrix& constraints, std::vector<std::vector<int>>& list, 
+            std::vector<std::vector<int>>& indexDict,std::vector<std::vector<int>>& mappingList, int ind, int n);
 
 Circuit globalSifting(Circuit& circuit, std::vector<int>& mapping ,int n);
 

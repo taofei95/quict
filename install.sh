@@ -25,6 +25,7 @@ then
 else
     touch ~/.bash_profile
 fi
+
 echo "export PYTHONPATH=$(pwd)/build/lib.linux-x86_64-3.7/" >> ~/.bash_profile
 export PYTHONPATH=$(pwd)/build/lib.linux-x86_64-3.7/
 cd ../../../

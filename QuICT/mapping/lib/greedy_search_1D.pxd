@@ -54,5 +54,5 @@ cdef extern from "greedy_search_1D.hh" namespace "mapping":
 
     # vector[gate] logicToPhysics(vector[gate]& gates, vector[int]& mapping, int start, int end)
 
-    Circuit greedySearch(Circuit& circuit, vector[int]& mapping, int n) except +
+    Circuit greedySearch(Circuit& circuit, vector[int]& mapping, int n, const string& init_method, const string& search_method) except +
     Circuit globalSifting(Circuit& circuit, vector[int]& mapping, int n) except +

@@ -1,18 +1,19 @@
 import os
 import sys
-
-sys.path.append("..")
+file_path = os.path.realpath(__file__)
+dir_path, file_name = os.path.split(file_path)
+sys.path.append(f"{dir_path}/..")
+print(f"{dir_path}")
 from _mapping import Mapping
 from QuICT.interface import *
 
 if __name__ == "__main__":
-    file_path = os.path.realpath(__file__)
-    dir_path, file_name = os.path.split(file_path)
+
     QASM_file = f"{dir_path}/qasm/qft/qft_n6.qasm"
     qc = OPENQASMInterface.load_file(QASM_file)
     circuit =qc.circuit
     num = qc.qbits
-    print(num)
+    #print(num)
     init_layout = [i for i in range(num)]
 
     circuit_trans = Mapping.run(circuit = circuit,num =  num, method = "global_sifting", init_layout = init_layout)

@@ -2,11 +2,12 @@
 #cython: language_level=3
 
 from libcpp.vector cimport vector
+from libcpp.string cimport basestring
 from utility cimport  gate
 
 from greedy_search_1D cimport Circuit, greedySearch, globalSifting
 
-cdef class qubitMapping:
+cdef class QubitMapping:
     cdef Circuit c_circuit 
     cdef vector[int] initMapping 
     cdef int n
@@ -29,8 +30,11 @@ cdef class qubitMapping:
         # for elm in self.initMapping:
         #     print("%d"%(elm))
         # print(self.n)
+        cdef char* init_method ="naive"
+        cdef char* search_method="heuristic"
+
         if method == "greedy_search":
-            self.c_circuit = greedySearch(t_circuit, self.initMapping, self.n)
+            self.c_circuit = greedySearch(t_circuit, self.initMapping, self.n, init_method, search_method)
         elif method == "global_sifting":
             self.c_circuit = globalSifting(t_circuit, self.initMapping, self.n)
     

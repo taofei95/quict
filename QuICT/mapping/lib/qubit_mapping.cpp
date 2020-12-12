@@ -652,9 +652,9 @@ static CYTHON_INLINE float __PYX_NAN() {
 #include "stdexcept"
 #include "typeinfo"
 #include <vector>
-#include "utility.cc"
 #include <string.h>
 #include <string>
+#include "utility.cc"
 #include "utility.hh"
 #include "greedy_search_1D.cc"
 #include <utility>
@@ -883,16 +883,16 @@ static const char *__pyx_f[] = {
 };
 
 /*--- Type declarations ---*/
-struct __pyx_obj_13qubit_mapping_qubitMapping;
+struct __pyx_obj_13qubit_mapping_QubitMapping;
 
-/* "qubit_mapping.pyx":9
+/* "qubit_mapping.pyx":10
  * from greedy_search_1D cimport Circuit, greedySearch, globalSifting
  * 
- * cdef class qubitMapping:             # <<<<<<<<<<<<<<
+ * cdef class QubitMapping:             # <<<<<<<<<<<<<<
  *     cdef Circuit c_circuit
  *     cdef vector[int] initMapping
  */
-struct __pyx_obj_13qubit_mapping_qubitMapping {
+struct __pyx_obj_13qubit_mapping_QubitMapping {
   PyObject_HEAD
   mapping::Circuit c_circuit;
   std::vector<int>  initMapping;
@@ -1280,11 +1280,11 @@ static int __Pyx_InitStrings(__Pyx_StringTabEntry *t);
 
 /* Module declarations from 'libcpp.vector' */
 
-/* Module declarations from 'libcpp' */
-
 /* Module declarations from 'libc.string' */
 
 /* Module declarations from 'libcpp.string' */
+
+/* Module declarations from 'libcpp' */
 
 /* Module declarations from 'utility' */
 
@@ -1295,7 +1295,7 @@ static int __Pyx_InitStrings(__Pyx_StringTabEntry *t);
 /* Module declarations from 'greedy_search_1D' */
 
 /* Module declarations from 'qubit_mapping' */
-static PyTypeObject *__pyx_ptype_13qubit_mapping_qubitMapping = 0;
+static PyTypeObject *__pyx_ptype_13qubit_mapping_QubitMapping = 0;
 #define __Pyx_MODULE_NAME "qubit_mapping"
 extern int __pyx_module_is_main_qubit_mapping;
 int __pyx_module_is_main_qubit_mapping = 0;
@@ -1327,7 +1327,7 @@ static const char __pyx_k_getstate[] = "__getstate__";
 static const char __pyx_k_setstate[] = "__setstate__";
 static const char __pyx_k_TypeError[] = "TypeError";
 static const char __pyx_k_reduce_ex[] = "__reduce_ex__";
-static const char __pyx_k_qubitMapping[] = "qubitMapping";
+static const char __pyx_k_QubitMapping[] = "QubitMapping";
 static const char __pyx_k_greedy_search[] = "greedy_search";
 static const char __pyx_k_reduce_cython[] = "__reduce_cython__";
 static const char __pyx_k_global_sifting[] = "global_sifting";
@@ -1335,6 +1335,7 @@ static const char __pyx_k_setstate_cython[] = "__setstate_cython__";
 static const char __pyx_k_cline_in_traceback[] = "cline_in_traceback";
 static const char __pyx_k_no_default___reduce___due_to_non[] = "no default __reduce__ due to non-trivial __cinit__";
 static PyObject *__pyx_kp_u_;
+static PyObject *__pyx_n_s_QubitMapping;
 static PyObject *__pyx_n_s_TypeError;
 static PyObject *__pyx_kp_u__2;
 static PyObject *__pyx_kp_u__4;
@@ -1354,7 +1355,6 @@ static PyObject *__pyx_n_s_name_2;
 static PyObject *__pyx_kp_s_no_default___reduce___due_to_non;
 static PyObject *__pyx_n_s_num;
 static PyObject *__pyx_n_s_print;
-static PyObject *__pyx_n_s_qubitMapping;
 static PyObject *__pyx_n_s_range;
 static PyObject *__pyx_n_s_reduce;
 static PyObject *__pyx_n_s_reduce_cython;
@@ -1364,18 +1364,18 @@ static PyObject *__pyx_n_s_setstate_cython;
 static PyObject *__pyx_n_u_tar;
 static PyObject *__pyx_n_s_test;
 static PyObject *__pyx_n_u_type;
-static int __pyx_pf_13qubit_mapping_12qubitMapping___cinit__(struct __pyx_obj_13qubit_mapping_qubitMapping *__pyx_v_self, PyObject *__pyx_v_circuit, PyObject *__pyx_v_num, PyObject *__pyx_v_method); /* proto */
-static PyObject *__pyx_pf_13qubit_mapping_12qubitMapping_2get_circuit(struct __pyx_obj_13qubit_mapping_qubitMapping *__pyx_v_self); /* proto */
-static PyObject *__pyx_pf_13qubit_mapping_12qubitMapping_4print_circuit(struct __pyx_obj_13qubit_mapping_qubitMapping *__pyx_v_self); /* proto */
-static PyObject *__pyx_pf_13qubit_mapping_12qubitMapping_6__reduce_cython__(CYTHON_UNUSED struct __pyx_obj_13qubit_mapping_qubitMapping *__pyx_v_self); /* proto */
-static PyObject *__pyx_pf_13qubit_mapping_12qubitMapping_8__setstate_cython__(CYTHON_UNUSED struct __pyx_obj_13qubit_mapping_qubitMapping *__pyx_v_self, CYTHON_UNUSED PyObject *__pyx_v___pyx_state); /* proto */
-static PyObject *__pyx_tp_new_13qubit_mapping_qubitMapping(PyTypeObject *t, PyObject *a, PyObject *k); /*proto*/
+static int __pyx_pf_13qubit_mapping_12QubitMapping___cinit__(struct __pyx_obj_13qubit_mapping_QubitMapping *__pyx_v_self, PyObject *__pyx_v_circuit, PyObject *__pyx_v_num, PyObject *__pyx_v_method); /* proto */
+static PyObject *__pyx_pf_13qubit_mapping_12QubitMapping_2get_circuit(struct __pyx_obj_13qubit_mapping_QubitMapping *__pyx_v_self); /* proto */
+static PyObject *__pyx_pf_13qubit_mapping_12QubitMapping_4print_circuit(struct __pyx_obj_13qubit_mapping_QubitMapping *__pyx_v_self); /* proto */
+static PyObject *__pyx_pf_13qubit_mapping_12QubitMapping_6__reduce_cython__(CYTHON_UNUSED struct __pyx_obj_13qubit_mapping_QubitMapping *__pyx_v_self); /* proto */
+static PyObject *__pyx_pf_13qubit_mapping_12QubitMapping_8__setstate_cython__(CYTHON_UNUSED struct __pyx_obj_13qubit_mapping_QubitMapping *__pyx_v_self, CYTHON_UNUSED PyObject *__pyx_v___pyx_state); /* proto */
+static PyObject *__pyx_tp_new_13qubit_mapping_QubitMapping(PyTypeObject *t, PyObject *a, PyObject *k); /*proto*/
 static PyObject *__pyx_tuple__3;
 static PyObject *__pyx_tuple__5;
 static PyObject *__pyx_tuple__6;
 /* Late includes */
 
-/* "qubit_mapping.pyx":13
+/* "qubit_mapping.pyx":14
  *     cdef vector[int] initMapping
  *     cdef int n
  *     def __cinit__(self, circuit,  num,  method = "greedy_search"):             # <<<<<<<<<<<<<<
@@ -1384,8 +1384,8 @@ static PyObject *__pyx_tuple__6;
  */
 
 /* Python wrapper */
-static int __pyx_pw_13qubit_mapping_12qubitMapping_1__cinit__(PyObject *__pyx_v_self, PyObject *__pyx_args, PyObject *__pyx_kwds); /*proto*/
-static int __pyx_pw_13qubit_mapping_12qubitMapping_1__cinit__(PyObject *__pyx_v_self, PyObject *__pyx_args, PyObject *__pyx_kwds) {
+static int __pyx_pw_13qubit_mapping_12QubitMapping_1__cinit__(PyObject *__pyx_v_self, PyObject *__pyx_args, PyObject *__pyx_kwds); /*proto*/
+static int __pyx_pw_13qubit_mapping_12QubitMapping_1__cinit__(PyObject *__pyx_v_self, PyObject *__pyx_args, PyObject *__pyx_kwds) {
   PyObject *__pyx_v_circuit = 0;
   PyObject *__pyx_v_num = 0;
   PyObject *__pyx_v_method = 0;
@@ -1421,7 +1421,7 @@ static int __pyx_pw_13qubit_mapping_12qubitMapping_1__cinit__(PyObject *__pyx_v_
         case  1:
         if (likely((values[1] = __Pyx_PyDict_GetItemStr(__pyx_kwds, __pyx_n_s_num)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("__cinit__", 0, 2, 3, 1); __PYX_ERR(0, 13, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("__cinit__", 0, 2, 3, 1); __PYX_ERR(0, 14, __pyx_L3_error)
         }
         CYTHON_FALLTHROUGH;
         case  2:
@@ -1431,7 +1431,7 @@ static int __pyx_pw_13qubit_mapping_12qubitMapping_1__cinit__(PyObject *__pyx_v_
         }
       }
       if (unlikely(kw_args > 0)) {
-        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "__cinit__") < 0)) __PYX_ERR(0, 13, __pyx_L3_error)
+        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "__cinit__") < 0)) __PYX_ERR(0, 14, __pyx_L3_error)
       }
     } else {
       switch (PyTuple_GET_SIZE(__pyx_args)) {
@@ -1449,24 +1449,26 @@ static int __pyx_pw_13qubit_mapping_12qubitMapping_1__cinit__(PyObject *__pyx_v_
   }
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("__cinit__", 0, 2, 3, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 13, __pyx_L3_error)
+  __Pyx_RaiseArgtupleInvalid("__cinit__", 0, 2, 3, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 14, __pyx_L3_error)
   __pyx_L3_error:;
-  __Pyx_AddTraceback("qubit_mapping.qubitMapping.__cinit__", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __Pyx_AddTraceback("qubit_mapping.QubitMapping.__cinit__", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __Pyx_RefNannyFinishContext();
   return -1;
   __pyx_L4_argument_unpacking_done:;
-  __pyx_r = __pyx_pf_13qubit_mapping_12qubitMapping___cinit__(((struct __pyx_obj_13qubit_mapping_qubitMapping *)__pyx_v_self), __pyx_v_circuit, __pyx_v_num, __pyx_v_method);
+  __pyx_r = __pyx_pf_13qubit_mapping_12QubitMapping___cinit__(((struct __pyx_obj_13qubit_mapping_QubitMapping *)__pyx_v_self), __pyx_v_circuit, __pyx_v_num, __pyx_v_method);
 
   /* function exit code */
   __Pyx_RefNannyFinishContext();
   return __pyx_r;
 }
 
-static int __pyx_pf_13qubit_mapping_12qubitMapping___cinit__(struct __pyx_obj_13qubit_mapping_qubitMapping *__pyx_v_self, PyObject *__pyx_v_circuit, PyObject *__pyx_v_num, PyObject *__pyx_v_method) {
+static int __pyx_pf_13qubit_mapping_12QubitMapping___cinit__(struct __pyx_obj_13qubit_mapping_QubitMapping *__pyx_v_self, PyObject *__pyx_v_circuit, PyObject *__pyx_v_num, PyObject *__pyx_v_method) {
   PyObject *__pyx_v_i = NULL;
   mapping::Circuit __pyx_v_t_circuit;
   utility::gate __pyx_v_temp;
   PyObject *__pyx_v_g = NULL;
+  char *__pyx_v_init_method;
+  char *__pyx_v_search_method;
   int __pyx_r;
   __Pyx_RefNannyDeclarations
   int __pyx_t_1;
@@ -1488,48 +1490,48 @@ static int __pyx_pf_13qubit_mapping_12qubitMapping___cinit__(struct __pyx_obj_13
   int __pyx_clineno = 0;
   __Pyx_RefNannySetupContext("__cinit__", 0);
 
-  /* "qubit_mapping.pyx":14
+  /* "qubit_mapping.pyx":15
  *     cdef int n
  *     def __cinit__(self, circuit,  num,  method = "greedy_search"):
  *         self.n = num             # <<<<<<<<<<<<<<
  *         self.initMapping = vector[int](num,0)
  *         for i in range(num):
  */
-  __pyx_t_1 = __Pyx_PyInt_As_int(__pyx_v_num); if (unlikely((__pyx_t_1 == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 14, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyInt_As_int(__pyx_v_num); if (unlikely((__pyx_t_1 == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 15, __pyx_L1_error)
   __pyx_v_self->n = __pyx_t_1;
 
-  /* "qubit_mapping.pyx":15
+  /* "qubit_mapping.pyx":16
  *     def __cinit__(self, circuit,  num,  method = "greedy_search"):
  *         self.n = num
  *         self.initMapping = vector[int](num,0)             # <<<<<<<<<<<<<<
  *         for i in range(num):
  *             self.initMapping[i] = i
  */
-  __pyx_t_2 = __Pyx_PyInt_As_size_t(__pyx_v_num); if (unlikely((__pyx_t_2 == (size_t)-1) && PyErr_Occurred())) __PYX_ERR(0, 15, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyInt_As_size_t(__pyx_v_num); if (unlikely((__pyx_t_2 == (size_t)-1) && PyErr_Occurred())) __PYX_ERR(0, 16, __pyx_L1_error)
   try {
     __pyx_t_3 = std::vector<int> (__pyx_t_2, 0);
   } catch(...) {
     __Pyx_CppExn2PyErr();
-    __PYX_ERR(0, 15, __pyx_L1_error)
+    __PYX_ERR(0, 16, __pyx_L1_error)
   }
   __pyx_v_self->initMapping = __pyx_t_3;
 
-  /* "qubit_mapping.pyx":16
+  /* "qubit_mapping.pyx":17
  *         self.n = num
  *         self.initMapping = vector[int](num,0)
  *         for i in range(num):             # <<<<<<<<<<<<<<
  *             self.initMapping[i] = i
  * 
  */
-  __pyx_t_4 = __Pyx_PyObject_CallOneArg(__pyx_builtin_range, __pyx_v_num); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 16, __pyx_L1_error)
+  __pyx_t_4 = __Pyx_PyObject_CallOneArg(__pyx_builtin_range, __pyx_v_num); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 17, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
   if (likely(PyList_CheckExact(__pyx_t_4)) || PyTuple_CheckExact(__pyx_t_4)) {
     __pyx_t_5 = __pyx_t_4; __Pyx_INCREF(__pyx_t_5); __pyx_t_6 = 0;
     __pyx_t_7 = NULL;
   } else {
-    __pyx_t_6 = -1; __pyx_t_5 = PyObject_GetIter(__pyx_t_4); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 16, __pyx_L1_error)
+    __pyx_t_6 = -1; __pyx_t_5 = PyObject_GetIter(__pyx_t_4); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 17, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_5);
-    __pyx_t_7 = Py_TYPE(__pyx_t_5)->tp_iternext; if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 16, __pyx_L1_error)
+    __pyx_t_7 = Py_TYPE(__pyx_t_5)->tp_iternext; if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 17, __pyx_L1_error)
   }
   __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
   for (;;) {
@@ -1537,17 +1539,17 @@ static int __pyx_pf_13qubit_mapping_12qubitMapping___cinit__(struct __pyx_obj_13
       if (likely(PyList_CheckExact(__pyx_t_5))) {
         if (__pyx_t_6 >= PyList_GET_SIZE(__pyx_t_5)) break;
         #if CYTHON_ASSUME_SAFE_MACROS && !CYTHON_AVOID_BORROWED_REFS
-        __pyx_t_4 = PyList_GET_ITEM(__pyx_t_5, __pyx_t_6); __Pyx_INCREF(__pyx_t_4); __pyx_t_6++; if (unlikely(0 < 0)) __PYX_ERR(0, 16, __pyx_L1_error)
+        __pyx_t_4 = PyList_GET_ITEM(__pyx_t_5, __pyx_t_6); __Pyx_INCREF(__pyx_t_4); __pyx_t_6++; if (unlikely(0 < 0)) __PYX_ERR(0, 17, __pyx_L1_error)
         #else
-        __pyx_t_4 = PySequence_ITEM(__pyx_t_5, __pyx_t_6); __pyx_t_6++; if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 16, __pyx_L1_error)
+        __pyx_t_4 = PySequence_ITEM(__pyx_t_5, __pyx_t_6); __pyx_t_6++; if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 17, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_4);
         #endif
       } else {
         if (__pyx_t_6 >= PyTuple_GET_SIZE(__pyx_t_5)) break;
         #if CYTHON_ASSUME_SAFE_MACROS && !CYTHON_AVOID_BORROWED_REFS
-        __pyx_t_4 = PyTuple_GET_ITEM(__pyx_t_5, __pyx_t_6); __Pyx_INCREF(__pyx_t_4); __pyx_t_6++; if (unlikely(0 < 0)) __PYX_ERR(0, 16, __pyx_L1_error)
+        __pyx_t_4 = PyTuple_GET_ITEM(__pyx_t_5, __pyx_t_6); __Pyx_INCREF(__pyx_t_4); __pyx_t_6++; if (unlikely(0 < 0)) __PYX_ERR(0, 17, __pyx_L1_error)
         #else
-        __pyx_t_4 = PySequence_ITEM(__pyx_t_5, __pyx_t_6); __pyx_t_6++; if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 16, __pyx_L1_error)
+        __pyx_t_4 = PySequence_ITEM(__pyx_t_5, __pyx_t_6); __pyx_t_6++; if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 17, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_4);
         #endif
       }
@@ -1557,7 +1559,7 @@ static int __pyx_pf_13qubit_mapping_12qubitMapping___cinit__(struct __pyx_obj_13
         PyObject* exc_type = PyErr_Occurred();
         if (exc_type) {
           if (likely(__Pyx_PyErr_GivenExceptionMatches(exc_type, PyExc_StopIteration))) PyErr_Clear();
-          else __PYX_ERR(0, 16, __pyx_L1_error)
+          else __PYX_ERR(0, 17, __pyx_L1_error)
         }
         break;
       }
@@ -1566,18 +1568,18 @@ static int __pyx_pf_13qubit_mapping_12qubitMapping___cinit__(struct __pyx_obj_13
     __Pyx_XDECREF_SET(__pyx_v_i, __pyx_t_4);
     __pyx_t_4 = 0;
 
-    /* "qubit_mapping.pyx":17
+    /* "qubit_mapping.pyx":18
  *         self.initMapping = vector[int](num,0)
  *         for i in range(num):
  *             self.initMapping[i] = i             # <<<<<<<<<<<<<<
  * 
  *         cdef Circuit t_circuit
  */
-    __pyx_t_1 = __Pyx_PyInt_As_int(__pyx_v_i); if (unlikely((__pyx_t_1 == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 17, __pyx_L1_error)
-    __pyx_t_8 = __Pyx_PyInt_As_size_t(__pyx_v_i); if (unlikely((__pyx_t_8 == (size_t)-1) && PyErr_Occurred())) __PYX_ERR(0, 17, __pyx_L1_error)
+    __pyx_t_1 = __Pyx_PyInt_As_int(__pyx_v_i); if (unlikely((__pyx_t_1 == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 18, __pyx_L1_error)
+    __pyx_t_8 = __Pyx_PyInt_As_size_t(__pyx_v_i); if (unlikely((__pyx_t_8 == (size_t)-1) && PyErr_Occurred())) __PYX_ERR(0, 18, __pyx_L1_error)
     (__pyx_v_self->initMapping[__pyx_t_8]) = __pyx_t_1;
 
-    /* "qubit_mapping.pyx":16
+    /* "qubit_mapping.pyx":17
  *         self.n = num
  *         self.initMapping = vector[int](num,0)
  *         for i in range(num):             # <<<<<<<<<<<<<<
@@ -1587,7 +1589,7 @@ static int __pyx_pf_13qubit_mapping_12qubitMapping___cinit__(struct __pyx_obj_13
   }
   __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
 
-  /* "qubit_mapping.pyx":21
+  /* "qubit_mapping.pyx":22
  *         cdef Circuit t_circuit
  *         cdef gate temp
  *         for g  in  circuit:             # <<<<<<<<<<<<<<
@@ -1598,26 +1600,26 @@ static int __pyx_pf_13qubit_mapping_12qubitMapping___cinit__(struct __pyx_obj_13
     __pyx_t_5 = __pyx_v_circuit; __Pyx_INCREF(__pyx_t_5); __pyx_t_6 = 0;
     __pyx_t_7 = NULL;
   } else {
-    __pyx_t_6 = -1; __pyx_t_5 = PyObject_GetIter(__pyx_v_circuit); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 21, __pyx_L1_error)
+    __pyx_t_6 = -1; __pyx_t_5 = PyObject_GetIter(__pyx_v_circuit); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 22, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_5);
-    __pyx_t_7 = Py_TYPE(__pyx_t_5)->tp_iternext; if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 21, __pyx_L1_error)
+    __pyx_t_7 = Py_TYPE(__pyx_t_5)->tp_iternext; if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 22, __pyx_L1_error)
   }
   for (;;) {
     if (likely(!__pyx_t_7)) {
       if (likely(PyList_CheckExact(__pyx_t_5))) {
         if (__pyx_t_6 >= PyList_GET_SIZE(__pyx_t_5)) break;
         #if CYTHON_ASSUME_SAFE_MACROS && !CYTHON_AVOID_BORROWED_REFS
-        __pyx_t_4 = PyList_GET_ITEM(__pyx_t_5, __pyx_t_6); __Pyx_INCREF(__pyx_t_4); __pyx_t_6++; if (unlikely(0 < 0)) __PYX_ERR(0, 21, __pyx_L1_error)
+        __pyx_t_4 = PyList_GET_ITEM(__pyx_t_5, __pyx_t_6); __Pyx_INCREF(__pyx_t_4); __pyx_t_6++; if (unlikely(0 < 0)) __PYX_ERR(0, 22, __pyx_L1_error)
         #else
-        __pyx_t_4 = PySequence_ITEM(__pyx_t_5, __pyx_t_6); __pyx_t_6++; if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 21, __pyx_L1_error)
+        __pyx_t_4 = PySequence_ITEM(__pyx_t_5, __pyx_t_6); __pyx_t_6++; if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 22, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_4);
         #endif
       } else {
         if (__pyx_t_6 >= PyTuple_GET_SIZE(__pyx_t_5)) break;
         #if CYTHON_ASSUME_SAFE_MACROS && !CYTHON_AVOID_BORROWED_REFS
-        __pyx_t_4 = PyTuple_GET_ITEM(__pyx_t_5, __pyx_t_6); __Pyx_INCREF(__pyx_t_4); __pyx_t_6++; if (unlikely(0 < 0)) __PYX_ERR(0, 21, __pyx_L1_error)
+        __pyx_t_4 = PyTuple_GET_ITEM(__pyx_t_5, __pyx_t_6); __Pyx_INCREF(__pyx_t_4); __pyx_t_6++; if (unlikely(0 < 0)) __PYX_ERR(0, 22, __pyx_L1_error)
         #else
-        __pyx_t_4 = PySequence_ITEM(__pyx_t_5, __pyx_t_6); __pyx_t_6++; if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 21, __pyx_L1_error)
+        __pyx_t_4 = PySequence_ITEM(__pyx_t_5, __pyx_t_6); __pyx_t_6++; if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 22, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_4);
         #endif
       }
@@ -1627,7 +1629,7 @@ static int __pyx_pf_13qubit_mapping_12qubitMapping___cinit__(struct __pyx_obj_13
         PyObject* exc_type = PyErr_Occurred();
         if (exc_type) {
           if (likely(__Pyx_PyErr_GivenExceptionMatches(exc_type, PyExc_StopIteration))) PyErr_Clear();
-          else __PYX_ERR(0, 21, __pyx_L1_error)
+          else __PYX_ERR(0, 22, __pyx_L1_error)
         }
         break;
       }
@@ -1636,38 +1638,38 @@ static int __pyx_pf_13qubit_mapping_12qubitMapping___cinit__(struct __pyx_obj_13
     __Pyx_XDECREF_SET(__pyx_v_g, __pyx_t_4);
     __pyx_t_4 = 0;
 
-    /* "qubit_mapping.pyx":22
+    /* "qubit_mapping.pyx":23
  *         cdef gate temp
  *         for g  in  circuit:
  *             temp = gate(g['ctrl'], g['tar'], g['type'],g['name'])             # <<<<<<<<<<<<<<
  *             #print("%d %d "%(g['ctrl'], g['tar']))
  *             t_circuit.push_back(temp)
  */
-    __pyx_t_4 = __Pyx_PyObject_Dict_GetItem(__pyx_v_g, __pyx_n_u_ctrl); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 22, __pyx_L1_error)
+    __pyx_t_4 = __Pyx_PyObject_Dict_GetItem(__pyx_v_g, __pyx_n_u_ctrl); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 23, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_4);
-    __pyx_t_1 = __Pyx_PyInt_As_int(__pyx_t_4); if (unlikely((__pyx_t_1 == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 22, __pyx_L1_error)
+    __pyx_t_1 = __Pyx_PyInt_As_int(__pyx_t_4); if (unlikely((__pyx_t_1 == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 23, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-    __pyx_t_4 = __Pyx_PyObject_Dict_GetItem(__pyx_v_g, __pyx_n_u_tar); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 22, __pyx_L1_error)
+    __pyx_t_4 = __Pyx_PyObject_Dict_GetItem(__pyx_v_g, __pyx_n_u_tar); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 23, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_4);
-    __pyx_t_9 = __Pyx_PyInt_As_int(__pyx_t_4); if (unlikely((__pyx_t_9 == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 22, __pyx_L1_error)
+    __pyx_t_9 = __Pyx_PyInt_As_int(__pyx_t_4); if (unlikely((__pyx_t_9 == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 23, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-    __pyx_t_4 = __Pyx_PyObject_Dict_GetItem(__pyx_v_g, __pyx_n_u_type); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 22, __pyx_L1_error)
+    __pyx_t_4 = __Pyx_PyObject_Dict_GetItem(__pyx_v_g, __pyx_n_u_type); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 23, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_4);
-    __pyx_t_10 = __Pyx_PyInt_As_int(__pyx_t_4); if (unlikely((__pyx_t_10 == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 22, __pyx_L1_error)
+    __pyx_t_10 = __Pyx_PyInt_As_int(__pyx_t_4); if (unlikely((__pyx_t_10 == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 23, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-    __pyx_t_4 = __Pyx_PyObject_Dict_GetItem(__pyx_v_g, __pyx_n_u_name); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 22, __pyx_L1_error)
+    __pyx_t_4 = __Pyx_PyObject_Dict_GetItem(__pyx_v_g, __pyx_n_u_name); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 23, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_4);
-    __pyx_t_11 = __Pyx_PyInt_As_int(__pyx_t_4); if (unlikely((__pyx_t_11 == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 22, __pyx_L1_error)
+    __pyx_t_11 = __Pyx_PyInt_As_int(__pyx_t_4); if (unlikely((__pyx_t_11 == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 23, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
     try {
       __pyx_t_12 = utility::gate(__pyx_t_1, __pyx_t_9, __pyx_t_10, __pyx_t_11);
     } catch(...) {
       __Pyx_CppExn2PyErr();
-      __PYX_ERR(0, 22, __pyx_L1_error)
+      __PYX_ERR(0, 23, __pyx_L1_error)
     }
     __pyx_v_temp = __pyx_t_12;
 
-    /* "qubit_mapping.pyx":24
+    /* "qubit_mapping.pyx":25
  *             temp = gate(g['ctrl'], g['tar'], g['type'],g['name'])
  *             #print("%d %d "%(g['ctrl'], g['tar']))
  *             t_circuit.push_back(temp)             # <<<<<<<<<<<<<<
@@ -1678,10 +1680,10 @@ static int __pyx_pf_13qubit_mapping_12qubitMapping___cinit__(struct __pyx_obj_13
       __pyx_v_t_circuit.push_back(__pyx_v_temp);
     } catch(...) {
       __Pyx_CppExn2PyErr();
-      __PYX_ERR(0, 24, __pyx_L1_error)
+      __PYX_ERR(0, 25, __pyx_L1_error)
     }
 
-    /* "qubit_mapping.pyx":21
+    /* "qubit_mapping.pyx":22
  *         cdef Circuit t_circuit
  *         cdef gate temp
  *         for g  in  circuit:             # <<<<<<<<<<<<<<
@@ -1691,53 +1693,71 @@ static int __pyx_pf_13qubit_mapping_12qubitMapping___cinit__(struct __pyx_obj_13
   }
   __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
 
-  /* "qubit_mapping.pyx":32
+  /* "qubit_mapping.pyx":33
  *         #     print("%d"%(elm))
  *         # print(self.n)
+ *         cdef char* init_method ="naive"             # <<<<<<<<<<<<<<
+ *         cdef char* search_method="heuristic"
+ * 
+ */
+  __pyx_v_init_method = ((char *)"naive");
+
+  /* "qubit_mapping.pyx":34
+ *         # print(self.n)
+ *         cdef char* init_method ="naive"
+ *         cdef char* search_method="heuristic"             # <<<<<<<<<<<<<<
+ * 
+ *         if method == "greedy_search":
+ */
+  __pyx_v_search_method = ((char *)"heuristic");
+
+  /* "qubit_mapping.pyx":36
+ *         cdef char* search_method="heuristic"
+ * 
  *         if method == "greedy_search":             # <<<<<<<<<<<<<<
- *             self.c_circuit = greedySearch(t_circuit, self.initMapping, self.n)
+ *             self.c_circuit = greedySearch(t_circuit, self.initMapping, self.n, init_method, search_method)
  *         elif method == "global_sifting":
  */
-  __pyx_t_13 = (__Pyx_PyUnicode_Equals(__pyx_v_method, __pyx_n_u_greedy_search, Py_EQ)); if (unlikely(__pyx_t_13 < 0)) __PYX_ERR(0, 32, __pyx_L1_error)
+  __pyx_t_13 = (__Pyx_PyUnicode_Equals(__pyx_v_method, __pyx_n_u_greedy_search, Py_EQ)); if (unlikely(__pyx_t_13 < 0)) __PYX_ERR(0, 36, __pyx_L1_error)
   if (__pyx_t_13) {
 
-    /* "qubit_mapping.pyx":33
- *         # print(self.n)
+    /* "qubit_mapping.pyx":37
+ * 
  *         if method == "greedy_search":
- *             self.c_circuit = greedySearch(t_circuit, self.initMapping, self.n)             # <<<<<<<<<<<<<<
+ *             self.c_circuit = greedySearch(t_circuit, self.initMapping, self.n, init_method, search_method)             # <<<<<<<<<<<<<<
  *         elif method == "global_sifting":
  *             self.c_circuit = globalSifting(t_circuit, self.initMapping, self.n)
  */
     try {
-      __pyx_t_14 = mapping::greedySearch(__pyx_v_t_circuit, __pyx_v_self->initMapping, __pyx_v_self->n);
+      __pyx_t_14 = mapping::greedySearch(__pyx_v_t_circuit, __pyx_v_self->initMapping, __pyx_v_self->n, __pyx_v_init_method, __pyx_v_search_method);
     } catch(...) {
       __Pyx_CppExn2PyErr();
-      __PYX_ERR(0, 33, __pyx_L1_error)
+      __PYX_ERR(0, 37, __pyx_L1_error)
     }
     __pyx_v_self->c_circuit = __pyx_t_14;
 
-    /* "qubit_mapping.pyx":32
- *         #     print("%d"%(elm))
- *         # print(self.n)
+    /* "qubit_mapping.pyx":36
+ *         cdef char* search_method="heuristic"
+ * 
  *         if method == "greedy_search":             # <<<<<<<<<<<<<<
- *             self.c_circuit = greedySearch(t_circuit, self.initMapping, self.n)
+ *             self.c_circuit = greedySearch(t_circuit, self.initMapping, self.n, init_method, search_method)
  *         elif method == "global_sifting":
  */
     goto __pyx_L7;
   }
 
-  /* "qubit_mapping.pyx":34
+  /* "qubit_mapping.pyx":38
  *         if method == "greedy_search":
- *             self.c_circuit = greedySearch(t_circuit, self.initMapping, self.n)
+ *             self.c_circuit = greedySearch(t_circuit, self.initMapping, self.n, init_method, search_method)
  *         elif method == "global_sifting":             # <<<<<<<<<<<<<<
  *             self.c_circuit = globalSifting(t_circuit, self.initMapping, self.n)
  * 
  */
-  __pyx_t_13 = (__Pyx_PyUnicode_Equals(__pyx_v_method, __pyx_n_u_global_sifting, Py_EQ)); if (unlikely(__pyx_t_13 < 0)) __PYX_ERR(0, 34, __pyx_L1_error)
+  __pyx_t_13 = (__Pyx_PyUnicode_Equals(__pyx_v_method, __pyx_n_u_global_sifting, Py_EQ)); if (unlikely(__pyx_t_13 < 0)) __PYX_ERR(0, 38, __pyx_L1_error)
   if (__pyx_t_13) {
 
-    /* "qubit_mapping.pyx":35
- *             self.c_circuit = greedySearch(t_circuit, self.initMapping, self.n)
+    /* "qubit_mapping.pyx":39
+ *             self.c_circuit = greedySearch(t_circuit, self.initMapping, self.n, init_method, search_method)
  *         elif method == "global_sifting":
  *             self.c_circuit = globalSifting(t_circuit, self.initMapping, self.n)             # <<<<<<<<<<<<<<
  * 
@@ -1747,13 +1767,13 @@ static int __pyx_pf_13qubit_mapping_12qubitMapping___cinit__(struct __pyx_obj_13
       __pyx_t_14 = mapping::globalSifting(__pyx_v_t_circuit, __pyx_v_self->initMapping, __pyx_v_self->n);
     } catch(...) {
       __Pyx_CppExn2PyErr();
-      __PYX_ERR(0, 35, __pyx_L1_error)
+      __PYX_ERR(0, 39, __pyx_L1_error)
     }
     __pyx_v_self->c_circuit = __pyx_t_14;
 
-    /* "qubit_mapping.pyx":34
+    /* "qubit_mapping.pyx":38
  *         if method == "greedy_search":
- *             self.c_circuit = greedySearch(t_circuit, self.initMapping, self.n)
+ *             self.c_circuit = greedySearch(t_circuit, self.initMapping, self.n, init_method, search_method)
  *         elif method == "global_sifting":             # <<<<<<<<<<<<<<
  *             self.c_circuit = globalSifting(t_circuit, self.initMapping, self.n)
  * 
@@ -1761,7 +1781,7 @@ static int __pyx_pf_13qubit_mapping_12qubitMapping___cinit__(struct __pyx_obj_13
   }
   __pyx_L7:;
 
-  /* "qubit_mapping.pyx":13
+  /* "qubit_mapping.pyx":14
  *     cdef vector[int] initMapping
  *     cdef int n
  *     def __cinit__(self, circuit,  num,  method = "greedy_search"):             # <<<<<<<<<<<<<<
@@ -1775,7 +1795,7 @@ static int __pyx_pf_13qubit_mapping_12qubitMapping___cinit__(struct __pyx_obj_13
   __pyx_L1_error:;
   __Pyx_XDECREF(__pyx_t_4);
   __Pyx_XDECREF(__pyx_t_5);
-  __Pyx_AddTraceback("qubit_mapping.qubitMapping.__cinit__", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __Pyx_AddTraceback("qubit_mapping.QubitMapping.__cinit__", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __pyx_r = -1;
   __pyx_L0:;
   __Pyx_XDECREF(__pyx_v_i);
@@ -1784,7 +1804,7 @@ static int __pyx_pf_13qubit_mapping_12qubitMapping___cinit__(struct __pyx_obj_13
   return __pyx_r;
 }
 
-/* "qubit_mapping.pyx":38
+/* "qubit_mapping.pyx":42
  * 
  * 
  *     def get_circuit(self):             # <<<<<<<<<<<<<<
@@ -1793,19 +1813,19 @@ static int __pyx_pf_13qubit_mapping_12qubitMapping___cinit__(struct __pyx_obj_13
  */
 
 /* Python wrapper */
-static PyObject *__pyx_pw_13qubit_mapping_12qubitMapping_3get_circuit(PyObject *__pyx_v_self, CYTHON_UNUSED PyObject *unused); /*proto*/
-static PyObject *__pyx_pw_13qubit_mapping_12qubitMapping_3get_circuit(PyObject *__pyx_v_self, CYTHON_UNUSED PyObject *unused) {
+static PyObject *__pyx_pw_13qubit_mapping_12QubitMapping_3get_circuit(PyObject *__pyx_v_self, CYTHON_UNUSED PyObject *unused); /*proto*/
+static PyObject *__pyx_pw_13qubit_mapping_12QubitMapping_3get_circuit(PyObject *__pyx_v_self, CYTHON_UNUSED PyObject *unused) {
   PyObject *__pyx_r = 0;
   __Pyx_RefNannyDeclarations
   __Pyx_RefNannySetupContext("get_circuit (wrapper)", 0);
-  __pyx_r = __pyx_pf_13qubit_mapping_12qubitMapping_2get_circuit(((struct __pyx_obj_13qubit_mapping_qubitMapping *)__pyx_v_self));
+  __pyx_r = __pyx_pf_13qubit_mapping_12QubitMapping_2get_circuit(((struct __pyx_obj_13qubit_mapping_QubitMapping *)__pyx_v_self));
 
   /* function exit code */
   __Pyx_RefNannyFinishContext();
   return __pyx_r;
 }
 
-static PyObject *__pyx_pf_13qubit_mapping_12qubitMapping_2get_circuit(struct __pyx_obj_13qubit_mapping_qubitMapping *__pyx_v_self) {
+static PyObject *__pyx_pf_13qubit_mapping_12QubitMapping_2get_circuit(struct __pyx_obj_13qubit_mapping_QubitMapping *__pyx_v_self) {
   PyObject *__pyx_v_init = NULL;
   PyObject *__pyx_v_circuit = NULL;
   CYTHON_UNUSED int __pyx_v_num;
@@ -1827,31 +1847,31 @@ static PyObject *__pyx_pf_13qubit_mapping_12qubitMapping_2get_circuit(struct __p
   int __pyx_clineno = 0;
   __Pyx_RefNannySetupContext("get_circuit", 0);
 
-  /* "qubit_mapping.pyx":39
+  /* "qubit_mapping.pyx":43
  * 
  *     def get_circuit(self):
  *         init = []             # <<<<<<<<<<<<<<
  *         circuit = []
  *         num = self.n
  */
-  __pyx_t_1 = PyList_New(0); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 39, __pyx_L1_error)
+  __pyx_t_1 = PyList_New(0); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 43, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __pyx_v_init = ((PyObject*)__pyx_t_1);
   __pyx_t_1 = 0;
 
-  /* "qubit_mapping.pyx":40
+  /* "qubit_mapping.pyx":44
  *     def get_circuit(self):
  *         init = []
  *         circuit = []             # <<<<<<<<<<<<<<
  *         num = self.n
  *         cdef gate g
  */
-  __pyx_t_1 = PyList_New(0); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 40, __pyx_L1_error)
+  __pyx_t_1 = PyList_New(0); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 44, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __pyx_v_circuit = ((PyObject*)__pyx_t_1);
   __pyx_t_1 = 0;
 
-  /* "qubit_mapping.pyx":41
+  /* "qubit_mapping.pyx":45
  *         init = []
  *         circuit = []
  *         num = self.n             # <<<<<<<<<<<<<<
@@ -1861,7 +1881,7 @@ static PyObject *__pyx_pf_13qubit_mapping_12qubitMapping_2get_circuit(struct __p
   __pyx_t_2 = __pyx_v_self->n;
   __pyx_v_num = __pyx_t_2;
 
-  /* "qubit_mapping.pyx":44
+  /* "qubit_mapping.pyx":48
  *         cdef gate g
  *         cdef int i
  *         for i in self.initMapping:             # <<<<<<<<<<<<<<
@@ -1876,19 +1896,19 @@ static PyObject *__pyx_pf_13qubit_mapping_12qubitMapping_2get_circuit(struct __p
     ++__pyx_t_3;
     __pyx_v_i = __pyx_t_2;
 
-    /* "qubit_mapping.pyx":45
+    /* "qubit_mapping.pyx":49
  *         cdef int i
  *         for i in self.initMapping:
  *             init.append(i)             # <<<<<<<<<<<<<<
  * 
  *         for g in self.c_circuit:
  */
-    __pyx_t_1 = __Pyx_PyInt_From_int(__pyx_v_i); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 45, __pyx_L1_error)
+    __pyx_t_1 = __Pyx_PyInt_From_int(__pyx_v_i); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 49, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
-    __pyx_t_5 = __Pyx_PyList_Append(__pyx_v_init, __pyx_t_1); if (unlikely(__pyx_t_5 == ((int)-1))) __PYX_ERR(0, 45, __pyx_L1_error)
+    __pyx_t_5 = __Pyx_PyList_Append(__pyx_v_init, __pyx_t_1); if (unlikely(__pyx_t_5 == ((int)-1))) __PYX_ERR(0, 49, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
-    /* "qubit_mapping.pyx":44
+    /* "qubit_mapping.pyx":48
  *         cdef gate g
  *         cdef int i
  *         for i in self.initMapping:             # <<<<<<<<<<<<<<
@@ -1897,7 +1917,7 @@ static PyObject *__pyx_pf_13qubit_mapping_12qubitMapping_2get_circuit(struct __p
  */
   }
 
-  /* "qubit_mapping.pyx":47
+  /* "qubit_mapping.pyx":51
  *             init.append(i)
  * 
  *         for g in self.c_circuit:             # <<<<<<<<<<<<<<
@@ -1912,76 +1932,76 @@ static PyObject *__pyx_pf_13qubit_mapping_12qubitMapping_2get_circuit(struct __p
     ++__pyx_t_6;
     __pyx_v_g = __pyx_t_8;
 
-    /* "qubit_mapping.pyx":48
+    /* "qubit_mapping.pyx":52
  * 
  *         for g in self.c_circuit:
  *             temp = {}             # <<<<<<<<<<<<<<
  *             temp['ctrl'] = g.ctrl
  *             temp['tar'] = g.tar
  */
-    __pyx_t_1 = __Pyx_PyDict_NewPresized(0); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 48, __pyx_L1_error)
+    __pyx_t_1 = __Pyx_PyDict_NewPresized(0); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 52, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
     __Pyx_XDECREF_SET(__pyx_v_temp, ((PyObject*)__pyx_t_1));
     __pyx_t_1 = 0;
 
-    /* "qubit_mapping.pyx":49
+    /* "qubit_mapping.pyx":53
  *         for g in self.c_circuit:
  *             temp = {}
  *             temp['ctrl'] = g.ctrl             # <<<<<<<<<<<<<<
  *             temp['tar'] = g.tar
  *             temp['type'] = g.type
  */
-    __pyx_t_1 = __Pyx_PyInt_From_int(__pyx_v_g.ctrl); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 49, __pyx_L1_error)
+    __pyx_t_1 = __Pyx_PyInt_From_int(__pyx_v_g.ctrl); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 53, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
-    if (unlikely(PyDict_SetItem(__pyx_v_temp, __pyx_n_u_ctrl, __pyx_t_1) < 0)) __PYX_ERR(0, 49, __pyx_L1_error)
+    if (unlikely(PyDict_SetItem(__pyx_v_temp, __pyx_n_u_ctrl, __pyx_t_1) < 0)) __PYX_ERR(0, 53, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
-    /* "qubit_mapping.pyx":50
+    /* "qubit_mapping.pyx":54
  *             temp = {}
  *             temp['ctrl'] = g.ctrl
  *             temp['tar'] = g.tar             # <<<<<<<<<<<<<<
  *             temp['type'] = g.type
  *             temp['name'] = g.gateName
  */
-    __pyx_t_1 = __Pyx_PyInt_From_int(__pyx_v_g.tar); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 50, __pyx_L1_error)
+    __pyx_t_1 = __Pyx_PyInt_From_int(__pyx_v_g.tar); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 54, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
-    if (unlikely(PyDict_SetItem(__pyx_v_temp, __pyx_n_u_tar, __pyx_t_1) < 0)) __PYX_ERR(0, 50, __pyx_L1_error)
+    if (unlikely(PyDict_SetItem(__pyx_v_temp, __pyx_n_u_tar, __pyx_t_1) < 0)) __PYX_ERR(0, 54, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
-    /* "qubit_mapping.pyx":51
+    /* "qubit_mapping.pyx":55
  *             temp['ctrl'] = g.ctrl
  *             temp['tar'] = g.tar
  *             temp['type'] = g.type             # <<<<<<<<<<<<<<
  *             temp['name'] = g.gateName
  *             circuit.append(temp)
  */
-    __pyx_t_1 = __Pyx_PyInt_From_int(__pyx_v_g.type); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 51, __pyx_L1_error)
+    __pyx_t_1 = __Pyx_PyInt_From_int(__pyx_v_g.type); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 55, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
-    if (unlikely(PyDict_SetItem(__pyx_v_temp, __pyx_n_u_type, __pyx_t_1) < 0)) __PYX_ERR(0, 51, __pyx_L1_error)
+    if (unlikely(PyDict_SetItem(__pyx_v_temp, __pyx_n_u_type, __pyx_t_1) < 0)) __PYX_ERR(0, 55, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
-    /* "qubit_mapping.pyx":52
+    /* "qubit_mapping.pyx":56
  *             temp['tar'] = g.tar
  *             temp['type'] = g.type
  *             temp['name'] = g.gateName             # <<<<<<<<<<<<<<
  *             circuit.append(temp)
  * 
  */
-    __pyx_t_1 = __Pyx_PyInt_From_int(__pyx_v_g.gateName); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 52, __pyx_L1_error)
+    __pyx_t_1 = __Pyx_PyInt_From_int(__pyx_v_g.gateName); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 56, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
-    if (unlikely(PyDict_SetItem(__pyx_v_temp, __pyx_n_u_name, __pyx_t_1) < 0)) __PYX_ERR(0, 52, __pyx_L1_error)
+    if (unlikely(PyDict_SetItem(__pyx_v_temp, __pyx_n_u_name, __pyx_t_1) < 0)) __PYX_ERR(0, 56, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
-    /* "qubit_mapping.pyx":53
+    /* "qubit_mapping.pyx":57
  *             temp['type'] = g.type
  *             temp['name'] = g.gateName
  *             circuit.append(temp)             # <<<<<<<<<<<<<<
  * 
  *         return (circuit, init)
  */
-    __pyx_t_5 = __Pyx_PyList_Append(__pyx_v_circuit, __pyx_v_temp); if (unlikely(__pyx_t_5 == ((int)-1))) __PYX_ERR(0, 53, __pyx_L1_error)
+    __pyx_t_5 = __Pyx_PyList_Append(__pyx_v_circuit, __pyx_v_temp); if (unlikely(__pyx_t_5 == ((int)-1))) __PYX_ERR(0, 57, __pyx_L1_error)
 
-    /* "qubit_mapping.pyx":47
+    /* "qubit_mapping.pyx":51
  *             init.append(i)
  * 
  *         for g in self.c_circuit:             # <<<<<<<<<<<<<<
@@ -1990,7 +2010,7 @@ static PyObject *__pyx_pf_13qubit_mapping_12qubitMapping_2get_circuit(struct __p
  */
   }
 
-  /* "qubit_mapping.pyx":55
+  /* "qubit_mapping.pyx":59
  *             circuit.append(temp)
  * 
  *         return (circuit, init)             # <<<<<<<<<<<<<<
@@ -1998,7 +2018,7 @@ static PyObject *__pyx_pf_13qubit_mapping_12qubitMapping_2get_circuit(struct __p
  *     def print_circuit(self):
  */
   __Pyx_XDECREF(__pyx_r);
-  __pyx_t_1 = PyTuple_New(2); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 55, __pyx_L1_error)
+  __pyx_t_1 = PyTuple_New(2); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 59, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __Pyx_INCREF(__pyx_v_circuit);
   __Pyx_GIVEREF(__pyx_v_circuit);
@@ -2010,7 +2030,7 @@ static PyObject *__pyx_pf_13qubit_mapping_12qubitMapping_2get_circuit(struct __p
   __pyx_t_1 = 0;
   goto __pyx_L0;
 
-  /* "qubit_mapping.pyx":38
+  /* "qubit_mapping.pyx":42
  * 
  * 
  *     def get_circuit(self):             # <<<<<<<<<<<<<<
@@ -2021,7 +2041,7 @@ static PyObject *__pyx_pf_13qubit_mapping_12qubitMapping_2get_circuit(struct __p
   /* function exit code */
   __pyx_L1_error:;
   __Pyx_XDECREF(__pyx_t_1);
-  __Pyx_AddTraceback("qubit_mapping.qubitMapping.get_circuit", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __Pyx_AddTraceback("qubit_mapping.QubitMapping.get_circuit", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __pyx_r = NULL;
   __pyx_L0:;
   __Pyx_XDECREF(__pyx_v_init);
@@ -2032,7 +2052,7 @@ static PyObject *__pyx_pf_13qubit_mapping_12qubitMapping_2get_circuit(struct __p
   return __pyx_r;
 }
 
-/* "qubit_mapping.pyx":57
+/* "qubit_mapping.pyx":61
  *         return (circuit, init)
  * 
  *     def print_circuit(self):             # <<<<<<<<<<<<<<
@@ -2041,19 +2061,19 @@ static PyObject *__pyx_pf_13qubit_mapping_12qubitMapping_2get_circuit(struct __p
  */
 
 /* Python wrapper */
-static PyObject *__pyx_pw_13qubit_mapping_12qubitMapping_5print_circuit(PyObject *__pyx_v_self, CYTHON_UNUSED PyObject *unused); /*proto*/
-static PyObject *__pyx_pw_13qubit_mapping_12qubitMapping_5print_circuit(PyObject *__pyx_v_self, CYTHON_UNUSED PyObject *unused) {
+static PyObject *__pyx_pw_13qubit_mapping_12QubitMapping_5print_circuit(PyObject *__pyx_v_self, CYTHON_UNUSED PyObject *unused); /*proto*/
+static PyObject *__pyx_pw_13qubit_mapping_12QubitMapping_5print_circuit(PyObject *__pyx_v_self, CYTHON_UNUSED PyObject *unused) {
   PyObject *__pyx_r = 0;
   __Pyx_RefNannyDeclarations
   __Pyx_RefNannySetupContext("print_circuit (wrapper)", 0);
-  __pyx_r = __pyx_pf_13qubit_mapping_12qubitMapping_4print_circuit(((struct __pyx_obj_13qubit_mapping_qubitMapping *)__pyx_v_self));
+  __pyx_r = __pyx_pf_13qubit_mapping_12QubitMapping_4print_circuit(((struct __pyx_obj_13qubit_mapping_QubitMapping *)__pyx_v_self));
 
   /* function exit code */
   __Pyx_RefNannyFinishContext();
   return __pyx_r;
 }
 
-static PyObject *__pyx_pf_13qubit_mapping_12qubitMapping_4print_circuit(struct __pyx_obj_13qubit_mapping_qubitMapping *__pyx_v_self) {
+static PyObject *__pyx_pf_13qubit_mapping_12QubitMapping_4print_circuit(struct __pyx_obj_13qubit_mapping_QubitMapping *__pyx_v_self) {
   utility::gate __pyx_v_g;
   int __pyx_v_i;
   PyObject *__pyx_r = NULL;
@@ -2074,7 +2094,7 @@ static PyObject *__pyx_pf_13qubit_mapping_12qubitMapping_4print_circuit(struct _
   int __pyx_clineno = 0;
   __Pyx_RefNannySetupContext("print_circuit", 0);
 
-  /* "qubit_mapping.pyx":60
+  /* "qubit_mapping.pyx":64
  *         cdef gate g
  *         cdef int i
  *         for i in self.initMapping:             # <<<<<<<<<<<<<<
@@ -2089,33 +2109,33 @@ static PyObject *__pyx_pf_13qubit_mapping_12qubitMapping_4print_circuit(struct _
     ++__pyx_t_1;
     __pyx_v_i = __pyx_t_3;
 
-    /* "qubit_mapping.pyx":61
+    /* "qubit_mapping.pyx":65
  *         cdef int i
  *         for i in self.initMapping:
  *             print("%d " %(i),end = "")             # <<<<<<<<<<<<<<
  *         print(" ")
  * 
  */
-    __pyx_t_4 = __Pyx_PyInt_From_int(__pyx_v_i); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 61, __pyx_L1_error)
+    __pyx_t_4 = __Pyx_PyInt_From_int(__pyx_v_i); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 65, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_4);
-    __pyx_t_5 = PyUnicode_Format(__pyx_kp_u_d, __pyx_t_4); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 61, __pyx_L1_error)
+    __pyx_t_5 = PyUnicode_Format(__pyx_kp_u_d, __pyx_t_4); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 65, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_5);
     __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-    __pyx_t_4 = PyTuple_New(1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 61, __pyx_L1_error)
+    __pyx_t_4 = PyTuple_New(1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 65, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_4);
     __Pyx_GIVEREF(__pyx_t_5);
     PyTuple_SET_ITEM(__pyx_t_4, 0, __pyx_t_5);
     __pyx_t_5 = 0;
-    __pyx_t_5 = __Pyx_PyDict_NewPresized(1); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 61, __pyx_L1_error)
+    __pyx_t_5 = __Pyx_PyDict_NewPresized(1); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 65, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_5);
-    if (PyDict_SetItem(__pyx_t_5, __pyx_n_s_end, __pyx_kp_u_) < 0) __PYX_ERR(0, 61, __pyx_L1_error)
-    __pyx_t_6 = __Pyx_PyObject_Call(__pyx_builtin_print, __pyx_t_4, __pyx_t_5); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 61, __pyx_L1_error)
+    if (PyDict_SetItem(__pyx_t_5, __pyx_n_s_end, __pyx_kp_u_) < 0) __PYX_ERR(0, 65, __pyx_L1_error)
+    __pyx_t_6 = __Pyx_PyObject_Call(__pyx_builtin_print, __pyx_t_4, __pyx_t_5); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 65, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_6);
     __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
     __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
     __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
 
-    /* "qubit_mapping.pyx":60
+    /* "qubit_mapping.pyx":64
  *         cdef gate g
  *         cdef int i
  *         for i in self.initMapping:             # <<<<<<<<<<<<<<
@@ -2124,18 +2144,18 @@ static PyObject *__pyx_pf_13qubit_mapping_12qubitMapping_4print_circuit(struct _
  */
   }
 
-  /* "qubit_mapping.pyx":62
+  /* "qubit_mapping.pyx":66
  *         for i in self.initMapping:
  *             print("%d " %(i),end = "")
  *         print(" ")             # <<<<<<<<<<<<<<
  * 
  *         for g in self.c_circuit:
  */
-  __pyx_t_6 = __Pyx_PyObject_Call(__pyx_builtin_print, __pyx_tuple__3, NULL); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 62, __pyx_L1_error)
+  __pyx_t_6 = __Pyx_PyObject_Call(__pyx_builtin_print, __pyx_tuple__3, NULL); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 66, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_6);
   __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
 
-  /* "qubit_mapping.pyx":64
+  /* "qubit_mapping.pyx":68
  *         print(" ")
  * 
  *         for g in self.c_circuit:             # <<<<<<<<<<<<<<
@@ -2150,18 +2170,18 @@ static PyObject *__pyx_pf_13qubit_mapping_12qubitMapping_4print_circuit(struct _
     ++__pyx_t_7;
     __pyx_v_g = __pyx_t_9;
 
-    /* "qubit_mapping.pyx":65
+    /* "qubit_mapping.pyx":69
  * 
  *         for g in self.c_circuit:
  *             print("%d   %d " %(g.ctrl, g.tar))             # <<<<<<<<<<<<<<
  * 
  * 
  */
-    __pyx_t_6 = PyTuple_New(4); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 65, __pyx_L1_error)
+    __pyx_t_6 = PyTuple_New(4); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 69, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_6);
     __pyx_t_10 = 0;
     __pyx_t_11 = 127;
-    __pyx_t_5 = __Pyx_PyUnicode_From_int(__pyx_v_g.ctrl, 0, ' ', 'd'); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 65, __pyx_L1_error)
+    __pyx_t_5 = __Pyx_PyUnicode_From_int(__pyx_v_g.ctrl, 0, ' ', 'd'); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 69, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_5);
     __pyx_t_10 += __Pyx_PyUnicode_GET_LENGTH(__pyx_t_5);
     __Pyx_GIVEREF(__pyx_t_5);
@@ -2171,7 +2191,7 @@ static PyObject *__pyx_pf_13qubit_mapping_12qubitMapping_4print_circuit(struct _
     __pyx_t_10 += 3;
     __Pyx_GIVEREF(__pyx_kp_u__4);
     PyTuple_SET_ITEM(__pyx_t_6, 1, __pyx_kp_u__4);
-    __pyx_t_5 = __Pyx_PyUnicode_From_int(__pyx_v_g.tar, 0, ' ', 'd'); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 65, __pyx_L1_error)
+    __pyx_t_5 = __Pyx_PyUnicode_From_int(__pyx_v_g.tar, 0, ' ', 'd'); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 69, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_5);
     __pyx_t_10 += __Pyx_PyUnicode_GET_LENGTH(__pyx_t_5);
     __Pyx_GIVEREF(__pyx_t_5);
@@ -2181,15 +2201,15 @@ static PyObject *__pyx_pf_13qubit_mapping_12qubitMapping_4print_circuit(struct _
     __pyx_t_10 += 1;
     __Pyx_GIVEREF(__pyx_kp_u__2);
     PyTuple_SET_ITEM(__pyx_t_6, 3, __pyx_kp_u__2);
-    __pyx_t_5 = __Pyx_PyUnicode_Join(__pyx_t_6, 4, __pyx_t_10, __pyx_t_11); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 65, __pyx_L1_error)
+    __pyx_t_5 = __Pyx_PyUnicode_Join(__pyx_t_6, 4, __pyx_t_10, __pyx_t_11); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 69, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_5);
     __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
-    __pyx_t_6 = __Pyx_PyObject_CallOneArg(__pyx_builtin_print, __pyx_t_5); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 65, __pyx_L1_error)
+    __pyx_t_6 = __Pyx_PyObject_CallOneArg(__pyx_builtin_print, __pyx_t_5); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 69, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_6);
     __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
     __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
 
-    /* "qubit_mapping.pyx":64
+    /* "qubit_mapping.pyx":68
  *         print(" ")
  * 
  *         for g in self.c_circuit:             # <<<<<<<<<<<<<<
@@ -2198,7 +2218,7 @@ static PyObject *__pyx_pf_13qubit_mapping_12qubitMapping_4print_circuit(struct _
  */
   }
 
-  /* "qubit_mapping.pyx":57
+  /* "qubit_mapping.pyx":61
  *         return (circuit, init)
  * 
  *     def print_circuit(self):             # <<<<<<<<<<<<<<
@@ -2213,7 +2233,7 @@ static PyObject *__pyx_pf_13qubit_mapping_12qubitMapping_4print_circuit(struct _
   __Pyx_XDECREF(__pyx_t_4);
   __Pyx_XDECREF(__pyx_t_5);
   __Pyx_XDECREF(__pyx_t_6);
-  __Pyx_AddTraceback("qubit_mapping.qubitMapping.print_circuit", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __Pyx_AddTraceback("qubit_mapping.QubitMapping.print_circuit", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __pyx_r = NULL;
   __pyx_L0:;
   __Pyx_XGIVEREF(__pyx_r);
@@ -2228,19 +2248,19 @@ static PyObject *__pyx_pf_13qubit_mapping_12qubitMapping_4print_circuit(struct _
  */
 
 /* Python wrapper */
-static PyObject *__pyx_pw_13qubit_mapping_12qubitMapping_7__reduce_cython__(PyObject *__pyx_v_self, CYTHON_UNUSED PyObject *unused); /*proto*/
-static PyObject *__pyx_pw_13qubit_mapping_12qubitMapping_7__reduce_cython__(PyObject *__pyx_v_self, CYTHON_UNUSED PyObject *unused) {
+static PyObject *__pyx_pw_13qubit_mapping_12QubitMapping_7__reduce_cython__(PyObject *__pyx_v_self, CYTHON_UNUSED PyObject *unused); /*proto*/
+static PyObject *__pyx_pw_13qubit_mapping_12QubitMapping_7__reduce_cython__(PyObject *__pyx_v_self, CYTHON_UNUSED PyObject *unused) {
   PyObject *__pyx_r = 0;
   __Pyx_RefNannyDeclarations
   __Pyx_RefNannySetupContext("__reduce_cython__ (wrapper)", 0);
-  __pyx_r = __pyx_pf_13qubit_mapping_12qubitMapping_6__reduce_cython__(((struct __pyx_obj_13qubit_mapping_qubitMapping *)__pyx_v_self));
+  __pyx_r = __pyx_pf_13qubit_mapping_12QubitMapping_6__reduce_cython__(((struct __pyx_obj_13qubit_mapping_QubitMapping *)__pyx_v_self));
 
   /* function exit code */
   __Pyx_RefNannyFinishContext();
   return __pyx_r;
 }
 
-static PyObject *__pyx_pf_13qubit_mapping_12qubitMapping_6__reduce_cython__(CYTHON_UNUSED struct __pyx_obj_13qubit_mapping_qubitMapping *__pyx_v_self) {
+static PyObject *__pyx_pf_13qubit_mapping_12QubitMapping_6__reduce_cython__(CYTHON_UNUSED struct __pyx_obj_13qubit_mapping_QubitMapping *__pyx_v_self) {
   PyObject *__pyx_r = NULL;
   __Pyx_RefNannyDeclarations
   PyObject *__pyx_t_1 = NULL;
@@ -2270,7 +2290,7 @@ static PyObject *__pyx_pf_13qubit_mapping_12qubitMapping_6__reduce_cython__(CYTH
   /* function exit code */
   __pyx_L1_error:;
   __Pyx_XDECREF(__pyx_t_1);
-  __Pyx_AddTraceback("qubit_mapping.qubitMapping.__reduce_cython__", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __Pyx_AddTraceback("qubit_mapping.QubitMapping.__reduce_cython__", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __pyx_r = NULL;
   __Pyx_XGIVEREF(__pyx_r);
   __Pyx_RefNannyFinishContext();
@@ -2285,19 +2305,19 @@ static PyObject *__pyx_pf_13qubit_mapping_12qubitMapping_6__reduce_cython__(CYTH
  */
 
 /* Python wrapper */
-static PyObject *__pyx_pw_13qubit_mapping_12qubitMapping_9__setstate_cython__(PyObject *__pyx_v_self, PyObject *__pyx_v___pyx_state); /*proto*/
-static PyObject *__pyx_pw_13qubit_mapping_12qubitMapping_9__setstate_cython__(PyObject *__pyx_v_self, PyObject *__pyx_v___pyx_state) {
+static PyObject *__pyx_pw_13qubit_mapping_12QubitMapping_9__setstate_cython__(PyObject *__pyx_v_self, PyObject *__pyx_v___pyx_state); /*proto*/
+static PyObject *__pyx_pw_13qubit_mapping_12QubitMapping_9__setstate_cython__(PyObject *__pyx_v_self, PyObject *__pyx_v___pyx_state) {
   PyObject *__pyx_r = 0;
   __Pyx_RefNannyDeclarations
   __Pyx_RefNannySetupContext("__setstate_cython__ (wrapper)", 0);
-  __pyx_r = __pyx_pf_13qubit_mapping_12qubitMapping_8__setstate_cython__(((struct __pyx_obj_13qubit_mapping_qubitMapping *)__pyx_v_self), ((PyObject *)__pyx_v___pyx_state));
+  __pyx_r = __pyx_pf_13qubit_mapping_12QubitMapping_8__setstate_cython__(((struct __pyx_obj_13qubit_mapping_QubitMapping *)__pyx_v_self), ((PyObject *)__pyx_v___pyx_state));
 
   /* function exit code */
   __Pyx_RefNannyFinishContext();
   return __pyx_r;
 }
 
-static PyObject *__pyx_pf_13qubit_mapping_12qubitMapping_8__setstate_cython__(CYTHON_UNUSED struct __pyx_obj_13qubit_mapping_qubitMapping *__pyx_v_self, CYTHON_UNUSED PyObject *__pyx_v___pyx_state) {
+static PyObject *__pyx_pf_13qubit_mapping_12QubitMapping_8__setstate_cython__(CYTHON_UNUSED struct __pyx_obj_13qubit_mapping_QubitMapping *__pyx_v_self, CYTHON_UNUSED PyObject *__pyx_v___pyx_state) {
   PyObject *__pyx_r = NULL;
   __Pyx_RefNannyDeclarations
   PyObject *__pyx_t_1 = NULL;
@@ -2327,15 +2347,15 @@ static PyObject *__pyx_pf_13qubit_mapping_12qubitMapping_8__setstate_cython__(CY
   /* function exit code */
   __pyx_L1_error:;
   __Pyx_XDECREF(__pyx_t_1);
-  __Pyx_AddTraceback("qubit_mapping.qubitMapping.__setstate_cython__", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __Pyx_AddTraceback("qubit_mapping.QubitMapping.__setstate_cython__", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __pyx_r = NULL;
   __Pyx_XGIVEREF(__pyx_r);
   __Pyx_RefNannyFinishContext();
   return __pyx_r;
 }
 
-static PyObject *__pyx_tp_new_13qubit_mapping_qubitMapping(PyTypeObject *t, PyObject *a, PyObject *k) {
-  struct __pyx_obj_13qubit_mapping_qubitMapping *p;
+static PyObject *__pyx_tp_new_13qubit_mapping_QubitMapping(PyTypeObject *t, PyObject *a, PyObject *k) {
+  struct __pyx_obj_13qubit_mapping_QubitMapping *p;
   PyObject *o;
   if (likely((t->tp_flags & Py_TPFLAGS_IS_ABSTRACT) == 0)) {
     o = (*t->tp_alloc)(t, 0);
@@ -2343,18 +2363,18 @@ static PyObject *__pyx_tp_new_13qubit_mapping_qubitMapping(PyTypeObject *t, PyOb
     o = (PyObject *) PyBaseObject_Type.tp_new(t, __pyx_empty_tuple, 0);
   }
   if (unlikely(!o)) return 0;
-  p = ((struct __pyx_obj_13qubit_mapping_qubitMapping *)o);
+  p = ((struct __pyx_obj_13qubit_mapping_QubitMapping *)o);
   new((void*)&(p->c_circuit)) mapping::Circuit();
   new((void*)&(p->initMapping)) std::vector<int> ();
-  if (unlikely(__pyx_pw_13qubit_mapping_12qubitMapping_1__cinit__(o, a, k) < 0)) goto bad;
+  if (unlikely(__pyx_pw_13qubit_mapping_12QubitMapping_1__cinit__(o, a, k) < 0)) goto bad;
   return o;
   bad:
   Py_DECREF(o); o = 0;
   return NULL;
 }
 
-static void __pyx_tp_dealloc_13qubit_mapping_qubitMapping(PyObject *o) {
-  struct __pyx_obj_13qubit_mapping_qubitMapping *p = (struct __pyx_obj_13qubit_mapping_qubitMapping *)o;
+static void __pyx_tp_dealloc_13qubit_mapping_QubitMapping(PyObject *o) {
+  struct __pyx_obj_13qubit_mapping_QubitMapping *p = (struct __pyx_obj_13qubit_mapping_QubitMapping *)o;
   #if CYTHON_USE_TP_FINALIZE
   if (unlikely(PyType_HasFeature(Py_TYPE(o), Py_TPFLAGS_HAVE_FINALIZE) && Py_TYPE(o)->tp_finalize) && (!PyType_IS_GC(Py_TYPE(o)) || !_PyGC_FINALIZED(o))) {
     if (PyObject_CallFinalizerFromDealloc(o)) return;
@@ -2365,20 +2385,20 @@ static void __pyx_tp_dealloc_13qubit_mapping_qubitMapping(PyObject *o) {
   (*Py_TYPE(o)->tp_free)(o);
 }
 
-static PyMethodDef __pyx_methods_13qubit_mapping_qubitMapping[] = {
-  {"get_circuit", (PyCFunction)__pyx_pw_13qubit_mapping_12qubitMapping_3get_circuit, METH_NOARGS, 0},
-  {"print_circuit", (PyCFunction)__pyx_pw_13qubit_mapping_12qubitMapping_5print_circuit, METH_NOARGS, 0},
-  {"__reduce_cython__", (PyCFunction)__pyx_pw_13qubit_mapping_12qubitMapping_7__reduce_cython__, METH_NOARGS, 0},
-  {"__setstate_cython__", (PyCFunction)__pyx_pw_13qubit_mapping_12qubitMapping_9__setstate_cython__, METH_O, 0},
+static PyMethodDef __pyx_methods_13qubit_mapping_QubitMapping[] = {
+  {"get_circuit", (PyCFunction)__pyx_pw_13qubit_mapping_12QubitMapping_3get_circuit, METH_NOARGS, 0},
+  {"print_circuit", (PyCFunction)__pyx_pw_13qubit_mapping_12QubitMapping_5print_circuit, METH_NOARGS, 0},
+  {"__reduce_cython__", (PyCFunction)__pyx_pw_13qubit_mapping_12QubitMapping_7__reduce_cython__, METH_NOARGS, 0},
+  {"__setstate_cython__", (PyCFunction)__pyx_pw_13qubit_mapping_12QubitMapping_9__setstate_cython__, METH_O, 0},
   {0, 0, 0, 0}
 };
 
-static PyTypeObject __pyx_type_13qubit_mapping_qubitMapping = {
+static PyTypeObject __pyx_type_13qubit_mapping_QubitMapping = {
   PyVarObject_HEAD_INIT(0, 0)
-  "qubit_mapping.qubitMapping", /*tp_name*/
-  sizeof(struct __pyx_obj_13qubit_mapping_qubitMapping), /*tp_basicsize*/
+  "qubit_mapping.QubitMapping", /*tp_name*/
+  sizeof(struct __pyx_obj_13qubit_mapping_QubitMapping), /*tp_basicsize*/
   0, /*tp_itemsize*/
-  __pyx_tp_dealloc_13qubit_mapping_qubitMapping, /*tp_dealloc*/
+  __pyx_tp_dealloc_13qubit_mapping_QubitMapping, /*tp_dealloc*/
   #if PY_VERSION_HEX < 0x030800b4
   0, /*tp_print*/
   #endif
@@ -2411,7 +2431,7 @@ static PyTypeObject __pyx_type_13qubit_mapping_qubitMapping = {
   0, /*tp_weaklistoffset*/
   0, /*tp_iter*/
   0, /*tp_iternext*/
-  __pyx_methods_13qubit_mapping_qubitMapping, /*tp_methods*/
+  __pyx_methods_13qubit_mapping_QubitMapping, /*tp_methods*/
   0, /*tp_members*/
   0, /*tp_getset*/
   0, /*tp_base*/
@@ -2421,7 +2441,7 @@ static PyTypeObject __pyx_type_13qubit_mapping_qubitMapping = {
   0, /*tp_dictoffset*/
   0, /*tp_init*/
   0, /*tp_alloc*/
-  __pyx_tp_new_13qubit_mapping_qubitMapping, /*tp_new*/
+  __pyx_tp_new_13qubit_mapping_QubitMapping, /*tp_new*/
   0, /*tp_free*/
   0, /*tp_is_gc*/
   0, /*tp_bases*/
@@ -2489,6 +2509,7 @@ static struct PyModuleDef __pyx_moduledef = {
 
 static __Pyx_StringTabEntry __pyx_string_tab[] = {
   {&__pyx_kp_u_, __pyx_k_, sizeof(__pyx_k_), 0, 1, 0, 0},
+  {&__pyx_n_s_QubitMapping, __pyx_k_QubitMapping, sizeof(__pyx_k_QubitMapping), 0, 0, 1, 1},
   {&__pyx_n_s_TypeError, __pyx_k_TypeError, sizeof(__pyx_k_TypeError), 0, 0, 1, 1},
   {&__pyx_kp_u__2, __pyx_k__2, sizeof(__pyx_k__2), 0, 1, 0, 0},
   {&__pyx_kp_u__4, __pyx_k__4, sizeof(__pyx_k__4), 0, 1, 0, 0},
@@ -2508,7 +2529,6 @@ static __Pyx_StringTabEntry __pyx_string_tab[] = {
   {&__pyx_kp_s_no_default___reduce___due_to_non, __pyx_k_no_default___reduce___due_to_non, sizeof(__pyx_k_no_default___reduce___due_to_non), 0, 0, 1, 0},
   {&__pyx_n_s_num, __pyx_k_num, sizeof(__pyx_k_num), 0, 0, 1, 1},
   {&__pyx_n_s_print, __pyx_k_print, sizeof(__pyx_k_print), 0, 0, 1, 1},
-  {&__pyx_n_s_qubitMapping, __pyx_k_qubitMapping, sizeof(__pyx_k_qubitMapping), 0, 0, 1, 1},
   {&__pyx_n_s_range, __pyx_k_range, sizeof(__pyx_k_range), 0, 0, 1, 1},
   {&__pyx_n_s_reduce, __pyx_k_reduce, sizeof(__pyx_k_reduce), 0, 0, 1, 1},
   {&__pyx_n_s_reduce_cython, __pyx_k_reduce_cython, sizeof(__pyx_k_reduce_cython), 0, 0, 1, 1},
@@ -2521,8 +2541,8 @@ static __Pyx_StringTabEntry __pyx_string_tab[] = {
   {0, 0, 0, 0, 0, 0, 0}
 };
 static CYTHON_SMALL_CODE int __Pyx_InitCachedBuiltins(void) {
-  __pyx_builtin_range = __Pyx_GetBuiltinName(__pyx_n_s_range); if (!__pyx_builtin_range) __PYX_ERR(0, 16, __pyx_L1_error)
-  __pyx_builtin_print = __Pyx_GetBuiltinName(__pyx_n_s_print); if (!__pyx_builtin_print) __PYX_ERR(0, 61, __pyx_L1_error)
+  __pyx_builtin_range = __Pyx_GetBuiltinName(__pyx_n_s_range); if (!__pyx_builtin_range) __PYX_ERR(0, 17, __pyx_L1_error)
+  __pyx_builtin_print = __Pyx_GetBuiltinName(__pyx_n_s_print); if (!__pyx_builtin_print) __PYX_ERR(0, 65, __pyx_L1_error)
   __pyx_builtin_TypeError = __Pyx_GetBuiltinName(__pyx_n_s_TypeError); if (!__pyx_builtin_TypeError) __PYX_ERR(1, 2, __pyx_L1_error)
   return 0;
   __pyx_L1_error:;
@@ -2533,14 +2553,14 @@ static CYTHON_SMALL_CODE int __Pyx_InitCachedConstants(void) {
   __Pyx_RefNannyDeclarations
   __Pyx_RefNannySetupContext("__Pyx_InitCachedConstants", 0);
 
-  /* "qubit_mapping.pyx":62
+  /* "qubit_mapping.pyx":66
  *         for i in self.initMapping:
  *             print("%d " %(i),end = "")
  *         print(" ")             # <<<<<<<<<<<<<<
  * 
  *         for g in self.c_circuit:
  */
-  __pyx_tuple__3 = PyTuple_Pack(1, __pyx_kp_u__2); if (unlikely(!__pyx_tuple__3)) __PYX_ERR(0, 62, __pyx_L1_error)
+  __pyx_tuple__3 = PyTuple_Pack(1, __pyx_kp_u__2); if (unlikely(!__pyx_tuple__3)) __PYX_ERR(0, 66, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_tuple__3);
   __Pyx_GIVEREF(__pyx_tuple__3);
 
@@ -2615,16 +2635,16 @@ static int __Pyx_modinit_type_init_code(void) {
   int __pyx_clineno = 0;
   __Pyx_RefNannySetupContext("__Pyx_modinit_type_init_code", 0);
   /*--- Type init code ---*/
-  if (PyType_Ready(&__pyx_type_13qubit_mapping_qubitMapping) < 0) __PYX_ERR(0, 9, __pyx_L1_error)
+  if (PyType_Ready(&__pyx_type_13qubit_mapping_QubitMapping) < 0) __PYX_ERR(0, 10, __pyx_L1_error)
   #if PY_VERSION_HEX < 0x030800B1
-  __pyx_type_13qubit_mapping_qubitMapping.tp_print = 0;
+  __pyx_type_13qubit_mapping_QubitMapping.tp_print = 0;
   #endif
-  if ((CYTHON_USE_TYPE_SLOTS && CYTHON_USE_PYTYPE_LOOKUP) && likely(!__pyx_type_13qubit_mapping_qubitMapping.tp_dictoffset && __pyx_type_13qubit_mapping_qubitMapping.tp_getattro == PyObject_GenericGetAttr)) {
-    __pyx_type_13qubit_mapping_qubitMapping.tp_getattro = __Pyx_PyObject_GenericGetAttr;
+  if ((CYTHON_USE_TYPE_SLOTS && CYTHON_USE_PYTYPE_LOOKUP) && likely(!__pyx_type_13qubit_mapping_QubitMapping.tp_dictoffset && __pyx_type_13qubit_mapping_QubitMapping.tp_getattro == PyObject_GenericGetAttr)) {
+    __pyx_type_13qubit_mapping_QubitMapping.tp_getattro = __Pyx_PyObject_GenericGetAttr;
   }
-  if (PyObject_SetAttr(__pyx_m, __pyx_n_s_qubitMapping, (PyObject *)&__pyx_type_13qubit_mapping_qubitMapping) < 0) __PYX_ERR(0, 9, __pyx_L1_error)
-  if (__Pyx_setup_reduce((PyObject*)&__pyx_type_13qubit_mapping_qubitMapping) < 0) __PYX_ERR(0, 9, __pyx_L1_error)
-  __pyx_ptype_13qubit_mapping_qubitMapping = &__pyx_type_13qubit_mapping_qubitMapping;
+  if (PyObject_SetAttr(__pyx_m, __pyx_n_s_QubitMapping, (PyObject *)&__pyx_type_13qubit_mapping_QubitMapping) < 0) __PYX_ERR(0, 10, __pyx_L1_error)
+  if (__Pyx_setup_reduce((PyObject*)&__pyx_type_13qubit_mapping_QubitMapping) < 0) __PYX_ERR(0, 10, __pyx_L1_error)
+  __pyx_ptype_13qubit_mapping_QubitMapping = &__pyx_type_13qubit_mapping_QubitMapping;
   __Pyx_RefNannyFinishContext();
   return 0;
   __pyx_L1_error:;
