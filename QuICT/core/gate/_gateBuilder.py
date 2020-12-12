@@ -222,7 +222,7 @@ class GateBuilderModel(object):
                 gate.cargs = copy.deepcopy(self.cargs)
             else:
                 raise Exception("the number of cargs is wrong")
-        if gate.params != 0 and self.type != GATE_ID['Perm']:
+        if gate.params != 0 and self.gateType != GATE_ID['Perm']:
             if len(self.pargs) == gate.params:
                 gate.pargs = copy.deepcopy(self.pargs)
             else:
@@ -244,7 +244,7 @@ class GateBuilderModel(object):
             qubits.append(circuit[control])
         for target in gate.targs:
             qubits.append(circuit[target])
-        circuit.add_gate(gate, qubits)
+        circuit.append(gate, qubits)
 
     @staticmethod
     def reflect_gates(gates: list):
@@ -281,6 +281,5 @@ class GateBuilderModel(object):
             for target in gate.targs:
                 qubits.append(circuit[target])
             circuit.append(gate, qubits)
-
 
 GateBuilder = GateBuilderModel()

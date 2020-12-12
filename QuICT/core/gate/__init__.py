@@ -60,7 +60,7 @@ from ._extensionGate import (
     CRz_Decompose,
     CCX_Decompose,
     CCRz,
+    Fredkin,
 
-    ExtensionGateType,
-    ExtensionGateBuilder
+    EXTENSION_GATE_ID,
 )

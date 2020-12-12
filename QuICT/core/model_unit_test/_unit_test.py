@@ -15,7 +15,6 @@ import copy
 single_gate = [X, H, S, S_dagger, X, Y, Z, ID, U1, U2, U3, Rx, Ry, Rz, T, T_dagger]
 other_gate = [CZ, CX, CY, CH, CRz, CCX]
 
-
 def getRandomList(l, n):
     _rand = [i for i in range(n)]
     for i in range(n - 1, 0, -1):

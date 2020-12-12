@@ -9,28 +9,49 @@ from enum import Enum
 from ._gate import *
 from ._gateBuilder import GateBuilder
 
-class ExtensionGateType(Enum):
-    """ indicate the type of a complex gate
+def _add_alias(alias, standard_name):
+    if alias is not None:
+        global EXTENSION_GATE_ID
+        if isinstance(alias, str):
+            EXTENSION_GATE_ID[alias] = EXTENSION_GATE_ID[standard_name]
+        else:
+            for nm in alias:
+                if nm in EXTENSION_GATE_ID:
+                    continue
+                EXTENSION_GATE_ID[nm] = EXTENSION_GATE_ID[standard_name]
 
-    Every Gate have a attribute named type, which indicate its type.
-    """
+EXTENSION_GATE_REGISTER = {-1: "Error"}
+""" Get standard gate name by gate id.
+"""
 
-    QFT = 0
-    IQFT = 1
-    RZZ = 2
-    CU1 = 3
-    CU3 = 4
-    Fredkin = 5
-    CCX = 6
-    CRz = 7
-    CCRz = 8
+EXTENSION_GATE_ID = {"Error": -1}
+""" Get gate id by gate name. You may use any one of the aliases of this gate.
+"""
 
+EXTENSION_GATE_ID_CNT = 0
+""" Gate number counter.
+"""
+
+def extension_gate_implementation(cls):
+    global EXTENSION_GATE_REGISTER
+    global EXTENSION_GATE_ID
+    global EXTENSION_GATE_ID_CNT
+
+    EXTENSION_GATE_REGISTER[EXTENSION_GATE_ID_CNT] = cls.__name__
+    EXTENSION_GATE_ID[cls.__name__] = EXTENSION_GATE_ID_CNT
+    EXTENSION_GATE_ID_CNT += 1
+
+    @functools.wraps(cls)
+    def gate_variation(*args, **kwargs):
+        return cls(*args, **kwargs)
+
+    return gate_variation
 
 class gateModel(object):
     """ the abstract SuperClass of all complex quantum gates
 
     These quantum gates are generally too complex to act on reality quantum
-    hardware directyly. The class is devoted to give some reasonable synthetize
+    hardware directly. The class is devoted to give some reasonable synthetize
     of the gates so that user can use these gates as basic gates but get a
     series one-qubit and two-qubit gates in final.
 
@@ -57,7 +78,6 @@ class gateModel(object):
         type(GateType, read only): gate's type described by ExtensionGateType
     """
 
-    # 门对应控制位数
     @property
     def controls(self) -> int:
         return self.__controls
@@ -66,13 +86,8 @@ class gateModel(object):
     def controls(self, controls: int):
         self.__controls = controls
 
-    # 门对应控制位索引
     @property
     def cargs(self):
-        """
-        :return:
-            返回一个list，表示控制位
-        """
         return self.__cargs
 
     @cargs.setter
@@ -82,7 +97,6 @@ class gateModel(object):
         else:
             self.__cargs = [cargs]
 
-    # 门对应作用位数
     @property
     def targets(self) -> int:
         return self.__targets
@@ -91,13 +105,8 @@ class gateModel(object):
     def targets(self, targets: int):
         self.__targets = targets
 
-    # 门对应作用位索引
     @property
     def targs(self):
-        """
-        :return:
-            返回一个list，代表作用位的list
-        """
         return self.__targs
 
     @targs.setter
@@ -107,7 +116,6 @@ class gateModel(object):
         else:
             self.__targs = [targs]
 
-    # 辅助数组位个数
     @property
     def params(self) -> int:
         return self.__params
@@ -116,13 +124,8 @@ class gateModel(object):
     def params(self, params: int):
         self.__params = params
 
-    # 辅助数组数组
     @property
     def pargs(self):
-        """
-        :return:
-            返回一个list，代表辅助数组
-        """
         return self.__pargs
 
     @pargs.setter
@@ -144,13 +147,17 @@ class gateModel(object):
     def targ(self):
         return self.targs[0]
 
-    def __init__(self):
+    def __init_subclass__(cls, **kwargs):
+        return extension_gate_implementation(cls)
+
+    def __init__(self, alias=None):
         self.__cargs = []
         self.__targs = []
         self.__pargs = []
         self.__controls = 0
         self.__targets = 0
         self.__params = 0
+        _add_alias(alias=alias, standard_name=self.__class__.__name__)
 
     @staticmethod
     def qureg_trans(other):
@@ -210,7 +217,7 @@ class gateModel(object):
                 return True
             return False
 
-    def __or__(self, other):
+    def __or__(self, targets):
         """deal the operator '|'
 
         Use the syntax "gate | circuit" or "gate | qureg" or "gate | qubit"
@@ -235,34 +242,23 @@ class gateModel(object):
             TypeException: the type of other is wrong
         """
 
-        if isinstance(other, tuple):
-            other = list(other)
-        if isinstance(other, list):
-            qureg = Qureg()
-            for item in other:
-                if isinstance(item, Qubit):
-                    qureg.append(item)
-                elif isinstance(item, Qureg):
-                    qureg.extend(item)
-                else:
-                    raise TypeException("qubit或tuple<qubit, qureg>或qureg或list<qubit, qureg>或circuit", other)
-        elif isinstance(other, Qureg):
-            qureg = other
-        elif isinstance(other, Circuit):
-            qureg = Qureg(other.qubits)
-        else:
-            raise TypeException("qubit或tuple<qubit>或qureg或circuit", other)
-
-        gates = self.build_gate(len(qureg))
-        if isinstance(gates, Circuit):
-            gates = gates.gates
-        for gate in gates:
-            qubits = []
-            for control in gate.cargs:
-                qubits.append(qureg[control])
-            for target in gate.targs:
-                qubits.append(qureg[target])
-            qureg.circuit.add_gate(gate, qubits)
+        try:
+            qureg = Qureg(targets)
+            circuit = qureg.circuit
+            indexes = [i for i in range(len(qureg))]
+            gates = self.build_gate(indexes)
+            if isinstance(gates, Circuit):
+                gates = gates.gates
+            for gate in gates:
+                qubits = []
+                for control in gate.cargs:
+                    qubits.append(qureg[control])
+                for target in gate.targs:
+                    print(target)
+                    qubits.append(qureg[target])
+                circuit.append(gate, qubits)
+        except Exception:
+            raise TypeException("qubit or tuple<qubit, qureg> or qureg or list<qubit, qureg> or circuit", targets)
 
     def __call__(self, params):
         """ give parameters for the gate
@@ -323,16 +319,6 @@ class QFTModel(gateModel):
 
     """
 
-    def __or__(self, other):
-        """ It can be removed after code refactoring
-
-        """
-        qureg = self.qureg_trans(other)
-        for i in range(len(other)):
-            H | qureg[i]
-            for j in range(i + 1, len(other)):
-                CRz(2 * np.pi / (1 << j - i + 1)) | (qureg[j], qureg[i])
-
     def build_gate(self, other):
         gates = []
         for i in range(len(other)):
@@ -349,23 +335,13 @@ class QFTModel(gateModel):
         return gates
 
 
-QFT = QFTModel()
+QFT = QFTModel(['QFT', 'qft'])
 
 
 class IQFTModel(gateModel):
     """ IQFT gate
 
     """
-
-    def __or__(self, other):
-        """ It can be removed after code refactoring
-
-        """
-        qureg = self.qureg_trans(other)
-        for i in range(len(other) - 1, -1, -1):
-            for j in range(len(other) - 1, i, -1):
-                CRz(-2 * np.pi / (1 << j - i + 1)) | (qureg[j], qureg[i])
-            H | qureg[i]
 
     def build_gate(self, other):
         gates = []
@@ -382,22 +358,13 @@ class IQFTModel(gateModel):
         return gates
 
 
-IQFT = IQFTModel()
+IQFT = IQFTModel(['IQFT', 'iqft'])
 
 
 class RZZModel(gateModel):
     """ RZZ gate
 
     """
-
-    def __or__(self, other):
-        """ It can be removed after code refactoring
-
-        """
-        qureg = self.qureg_trans(other)
-        CX | (qureg[0], qureg[1])
-        U1(self.parg) | qureg[1]
-        CX | (qureg[0], qureg[1])
 
     def build_gate(self, other):
         gates = []
@@ -420,7 +387,7 @@ class RZZModel(gateModel):
         return gates
 
 
-RZZ = RZZModel()
+RZZ = RZZModel(['RZZ', 'Rzz', 'rzz'])
 
 
 class CU1Gate(gateModel):
@@ -428,17 +395,6 @@ class CU1Gate(gateModel):
 
     """
 
-    def __or__(self, other):
-        """ It can be removed after code refactoring
-
-        """
-        qureg = self.qureg_trans(other)
-        U1(self.parg / 2) | qureg[0]
-        CX | (qureg[0], qureg[1])
-        U1(-self.parg / 2) | qureg[1]
-        CX | (qureg[0], qureg[1])
-        U1(self.parg / 2) | qureg[1]
-
     def build_gate(self, other):
         gates = []
 
@@ -470,7 +426,7 @@ class CU1Gate(gateModel):
         return gates
 
 
-CU1 = CU1Gate()
+CU1 = CU1Gate(["CU1", "cu1"])
 
 
 class CRz_DecomposeModel(gateModel):
@@ -478,17 +434,6 @@ class CRz_DecomposeModel(gateModel):
 
     """
 
-    def __or__(self, other):
-        """ It can be removed after code refactoring
-
-        """
-        qureg = self.qureg_trans(other)
-        Rz(self.parg / 2) | qureg[0]
-        CX | (qureg[0], qureg[1])
-        Rz(-self.parg / 2) | qureg[1]
-        CX | (qureg[0], qureg[1])
-        Rz(self.parg / 2) | qureg[1]
-
     def build_gate(self, other):
         gates = []
 
@@ -520,7 +465,7 @@ class CRz_DecomposeModel(gateModel):
         return gates
 
 
-CRz_Decompose = CRz_DecomposeModel()
+CRz_Decompose = CRz_DecomposeModel(["CRz", "crz"])
 
 
 class CU3Gate(gateModel):
@@ -528,27 +473,15 @@ class CU3Gate(gateModel):
 
     """
 
-    def __or__(self, other):
-        """ It can be removed after code refactoring
-
-        """
-        qureg = self.qureg_trans(other)
-        U1((self.pargs[1] + self.pargs[2]) / 2) | qureg[0]
-        U1(self.pargs[2] - self.pargs[1]) | (qureg[1])
-        CX | (qureg[0], qureg[1])
-        U3([-self.pargs[0] / 2, 0, -(self.pargs[0] + self.pargs[1]) / 2]) | qureg[1]
-        CX | (qureg[0], qureg[1])
-        U3([self.pargs[0] / 2, self.pargs[1], 0]) | qureg[1]
-
     def build_gate(self, other):
         gates = []
 
         GateBuilder.setGateType(GATE_ID["U1"])
-        GateBuilder.setPargs((self.pargs[1] + self.pargs[2]) / 2)
+        GateBuilder.setPargs((self.pargs[2] + self.pargs[1]) / 2)
         GateBuilder.setTargs(other[0])
         gates.append(GateBuilder.getGate())
 
-        GateBuilder.setPargs(self.pargs[2] + self.pargs[1])
+        GateBuilder.setPargs((self.pargs[2] - self.pargs[1]) / 2)
         GateBuilder.setTargs(other[1])
         gates.append(GateBuilder.getGate())
 
@@ -558,7 +491,7 @@ class CU3Gate(gateModel):
         gates.append(GateBuilder.getGate())
 
         GateBuilder.setGateType(GATE_ID["U3"])
-        GateBuilder.setPargs([-self.pargs[0] / 2, 0, -(self.pargs[0] + self.pargs[1]) / 2])
+        GateBuilder.setPargs([-self.pargs[0] / 2, 0, -(self.pargs[1] + self.pargs[2]) / 2])
         GateBuilder.setTargs(other[1])
         gates.append(GateBuilder.getGate())
 
@@ -583,17 +516,6 @@ class CCRzModel(gateModel):
 
     """
 
-    def __or__(self, other):
-        """ It can be removed after code refactoring
-
-        """
-        qureg = self.qureg_trans(other)
-        CRz_Decompose(self.parg / 2) | (qureg[1], qureg[2])
-        CX | (qureg[0], qureg[1])
-        CRz_Decompose(-self.parg / 2) | (qureg[1], qureg[2])
-        CX | (qureg[0], qureg[1])
-        CRz_Decompose(self.parg / 2) | (qureg[0], qureg[2])
-
     def build_gate(self, other):
         qureg = Circuit(3)
         CRz_Decompose(self.parg / 2) | (qureg[1], qureg[2])
@@ -605,18 +527,10 @@ class CCRzModel(gateModel):
         return qureg
 
 
-CCRz = CCRzModel()
+CCRz = CCRzModel(["CCRz"])
 
 
 class FredkinModel(gateModel):
-    def __or__(self, other):
-        """ It can be removed after code refactoring
-
-        """
-        qureg = self.qureg_trans(other)
-        CX | (qureg[2], qureg[1])
-        CCX_Decompose | (qureg[0], qureg[1], qureg[2])
-        CX | (qureg[2], qureg[1])
 
     def build_gate(self, other):
         gates = []
@@ -636,30 +550,10 @@ class FredkinModel(gateModel):
         return gates
 
 
-Fredkin = FredkinModel()
+Fredkin = FredkinModel(["Fredkin", "cswap"])
 
 
 class CCX_DecomposeModel(gateModel):
-    def __or__(self, other):
-        """ It can be removed after code refactoring
-
-        """
-        qureg = self.qureg_trans(other)
-        H | qureg[2]
-        CX | (qureg[1], qureg[2])
-        T_dagger | qureg[2]
-        CX | (qureg[0], qureg[2])
-        T | qureg[2]
-        CX | (qureg[1], qureg[2])
-        T_dagger | qureg[2]
-        CX | (qureg[0], qureg[2])
-        T | qureg[1]
-        T | qureg[2]
-        H | qureg[2]
-        CX | (qureg[0], qureg[1])
-        T | qureg[0]
-        T_dagger | qureg[1]
-        CX | (qureg[0], qureg[1])
 
     def build_gate(self, other):
         gates = []
@@ -733,118 +627,4 @@ class CCX_DecomposeModel(gateModel):
         return gates
 
 
-CCX_Decompose = CCX_DecomposeModel()
-
-
-class ExtensionGateBuilderModel(object):
-    """ A model that help users get gate without circuit
-
-    The model is designed to help users get some gates independent of the circuit
-    Because there is no clear API to setting a gate's control bit indexes and
-    target bit indexes without circuit or qureg.
-
-    Users should set the gateType of the ExtensionGateBuilder, than set necessary parameters
-    (Targs, Cargs, Pargs). After that, user can get a gate from ExtensionGateBuilder.
-
-    """
-
-    def __init__(self):
-        self.gateType = GATE_ID["Error"]
-        self.pargs = []
-        self.targs = []
-        self.cargs = []
-
-    def setGateType(self, type):
-        self.gateType = type
-
-    def setPargs(self, pargs):
-        """ pass the parameters of the gate
-
-        if the gate don't need the parameters, needn't to call this function.
-
-        Args:
-            pargs(list/int/float/complex): the parameters filled in the gate
-        """
-
-        if isinstance(pargs, list):
-            self.pargs = pargs
-        else:
-            self.pargs = [pargs]
-
-    def setTargs(self, targs):
-        """ pass the target bits' indexes of the gate
-
-        The targets should be passed.
-
-        Args:
-            targs(list/int/float/complex): the target bits' indexes the gate act on.
-        """
-        if isinstance(targs, list):
-            self.targs = targs
-        else:
-            self.targs = [targs]
-
-    def getTargsNumber(self):
-        """ get the number of targs of the gate
-
-        once the gateType is set, the function is valid.
-
-        Return:
-            int: the number of targs
-        """
-
-        gate = self._inner_generate_gate()
-        return gate.targets
-
-    def getParamsNumber(self):
-        """ get the number of pargs of the gate
-
-        once the gateType is set, the function is valid.
-
-        Return:
-            int: the number of pargs
-        """
-        gate = self._inner_generate_gate()
-        return gate.params
-
-    def getGate(self):
-        """ get the gate
-
-        once the parameters are set, the function is valid.
-
-        Return:
-            gateModel: the gate with parameters set in the builder
-        """
-        return self._inner_generate_gate()
-
-    def _inner_generate_gate(self):
-        """ private tool function
-
-        get an initial gate by the gateType set for builder
-
-        Return:
-            BasicGate: the initial gate
-        """
-        if self.gateType == ExtensionGateType.QFT:
-            return QFT.build_gate(self.targs)
-        elif self.gateType == ExtensionGateType.IQFT:
-            return IQFT.build_gate(self.targs)
-        elif self.gateType == ExtensionGateType.RZZ:
-            return RZZ(self.pargs).build_gate(self.targs)
-        elif self.gateType == ExtensionGateType.CU1:
-            return CU1(self.pargs).build_gate(self.targs)
-        elif self.gateType == ExtensionGateType.CU3:
-            return CU3(self.pargs).build_gate(self.targs)
-        elif self.gateType == ExtensionGateType.Fredkin:
-            return Fredkin.build_gate(self.targs)
-        elif self.gateType == ExtensionGateType.CCX:
-            return CCX_Decompose.build_gate(self.targs)
-        elif self.gateType == ExtensionGateType.CRz:
-            return CRz_Decompose(self.pargs).build_gate(self.targs)
-        elif self.gateType == ExtensionGateType.CCRz:
-            return CCRz(self.pargs).build_gate(self.targs)
-
-        raise Exception("the gate type of the builder is wrong")
-
-
-ExtensionGateBuilder = ExtensionGateBuilderModel()
+CCX_Decompose = CCX_DecomposeModel(["CCX", "Toffoli", "toffoli"])

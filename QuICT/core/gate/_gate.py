@@ -9,7 +9,7 @@ import functools
 
 import numpy as np
 
-from QuICT.core.exception import TypeException, NotImplementedGateException, GateAliasRedefinition
+from QuICT.core.exception import TypeException, NotImplementedGateException
 from QuICT.core.qubit import Qubit, Qureg
 from QuICT.core.circuit import Circuit
 from ._exec_operator import *
@@ -535,8 +535,6 @@ class SDaggerGate(BasicGate):
 
 S_dagger = SDaggerGate(["S_dagger"])
 
-
-
 class XGate(BasicGate):
     """ Pauli-X gate
 
@@ -569,8 +567,6 @@ class XGate(BasicGate):
         exec_single(self, circuit)
 
 X = XGate(["X"])
-
-
 
 class YGate(BasicGate):
     """ Pauli-Y gate
@@ -605,8 +601,6 @@ class YGate(BasicGate):
 
 Y = YGate(["Y"])
 
-
-
 class ZGate(BasicGate):
     """ Pauli-Z gate
 
@@ -640,8 +634,6 @@ class ZGate(BasicGate):
 
 Z = ZGate(alias=["Z"])
 
-
-
 class IDGate(BasicGate):
     """ Identity gate
 
@@ -674,8 +666,6 @@ class IDGate(BasicGate):
         exec_single(self, circuit)
 
 ID = IDGate(["ID"])
-
-
 
 class U1Gate(BasicGate):
     """ Diagonal single-qubit gate
@@ -711,8 +701,6 @@ class U1Gate(BasicGate):
         exec_single(self, circuit)
 
 U1 = U1Gate(["U1"])
-
-
 
 class U2Gate(BasicGate):
     """ One-pulse single-qubit gate
@@ -752,8 +740,6 @@ class U2Gate(BasicGate):
 
 U2 = U2Gate(["U2"])
 
-
-
 class U3Gate(BasicGate):
     """ Two-pulse single-qubit gate
 
@@ -790,8 +776,6 @@ class U3Gate(BasicGate):
         exec_single(self, circuit)
 
 U3 = U3Gate(["U3"])
-
-
 
 class RxGate(BasicGate):
     """ Rotation around the x-axis gate
@@ -830,8 +814,6 @@ class RxGate(BasicGate):
 
 Rx = RxGate(["Rx"])
 
-
-
 class RyGate(BasicGate):
     """ Rotation around the y-axis gate
 
@@ -868,8 +850,6 @@ class RyGate(BasicGate):
         exec_single(self, circuit)
 
 Ry = RyGate(["Ry"])
-
-
 
 class RzGate(BasicGate):
     """ Rotation around the z-axis gate
@@ -908,8 +888,6 @@ class RzGate(BasicGate):
 
 Rz = RzGate(["Rz"])
 
-
-
 class TGate(BasicGate):
     """ T gate
 
@@ -943,8 +921,6 @@ class TGate(BasicGate):
 
 T = TGate(["T"])
 
-
-
 class TDaggerGate(BasicGate):
     """ The conjugate transpose of T gate
 
@@ -977,8 +953,6 @@ class TDaggerGate(BasicGate):
         exec_single(self, circuit)
 
 T_dagger = TDaggerGate(["T_dagger"])
-
-
 
 class CZGate(BasicGate):
     """ controlled-Z gate
@@ -1021,8 +995,6 @@ class CZGate(BasicGate):
         exec_controlSingle(self, circuit)
 
 CZ = CZGate(["CZ", "Cz"])
-
-
 
 class CXGate(BasicGate):
     """ "controlled-X gate"
@@ -1067,8 +1039,6 @@ class CXGate(BasicGate):
 
 CX = CXGate(["CX", "Cx"])
 
-
-
 class CYGate(BasicGate):
     """ controlled-Y gate
 
@@ -1110,8 +1080,6 @@ class CYGate(BasicGate):
         exec_controlSingle(self, circuit)
 
 CY = CYGate(["CY", "Cy"])
-
-
 
 class CHGate(BasicGate):
     """ controlled-Hadamard gate
@@ -1206,8 +1174,6 @@ class CRzGate(BasicGate):
 
 CRz = CRzGate(["CRZ", "CRz", "Crz"])
 
-
-
 class CCXGate(BasicGate):
     """ Toffoli gate
 
@@ -1256,8 +1222,6 @@ class CCXGate(BasicGate):
         exec_toffoli(self, circuit)
 
 CCX = CCXGate(["CCX", "CCx", "Ccx"])
-
-
 
 class MeasureGate(BasicGate):
     """ z-axis Measure gate
@@ -1863,8 +1827,6 @@ class PermFxGate(PermGate):
 
 PermFx = PermFxGate(["PermFx"])
 
-
-
 class CustomGate(BasicGate):
     """ Custom gate
 
@@ -1925,8 +1887,6 @@ class CustomGate(BasicGate):
         exec_custom(self, circuit)
 
 Custom = CustomGate(["Custom"])
-
-
 
 class ShorInitialGate(BasicGate):
     """ a oracle gate to preparation the initial state before IQFT in Shor algorithm
