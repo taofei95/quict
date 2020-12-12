@@ -41,7 +41,7 @@ int mapping::countInversions(std::vector<int>& disF, std::vector<int>& constrain
     return res;
 }
 
-int mapping::countSubConstraintInversion(std::vector<std::vector<int>>& constraint, std::vector<int>& disF, int s, int t){
+int mapping::countSubConstraintInversion(mapping::ConstraintVector& constraint, std::vector<int>& disF, int s, int t){
     int res = 0;
     for(int i = 0; i<constraint[s].size(); i++){
         for(int j = 0; j<constraint[t].size(); j++){
@@ -54,7 +54,7 @@ int mapping::countSubConstraintInversion(std::vector<std::vector<int>>& constrai
     return res;
 }
 
-int mapping::countConstraintInversion(std::vector<std::vector<int>>& constraint, std::vector<int>& initMapping, std::vector<int>& permutation){
+int mapping::countConstraintInversion(mapping::ConstraintVector& constraint, std::vector<int>& initMapping, std::vector<int>& permutation){
     int n = initMapping.size();
     int res = 0;
     std::vector<int> disF(n, 0);
@@ -87,7 +87,7 @@ float mapping::median(std::vector<int>& disF, std::vector<int>&  constraint){
 
 //找最优初始mapping
 
-std::vector<utility::edge> mapping::constructGraph(std::vector<utility::gate>& circuit, int n){
+std::vector<utility::edge> mapping::constructGraph(mapping::Circuit& circuit, int n){
     std::vector<std::vector<int>> graph(n, std::vector<int>(n, 0));
     for(auto &p : circuit){
         if(p.type == 2){
@@ -163,9 +163,13 @@ std::vector<int> mapping::minLA(std::vector<utility::edge>& graph, int n){
 }
 
 
-std::vector<int> mapping::findInitMapping(std::vector<utility::gate>& circuit, int n){
+std::vector<int> mapping::findInitMapping(mapping::Circuit& circuit, int n){
     std::vector<utility::edge> graph = mapping::constructGraph(circuit, n);
-    return minLA(graph, n);
+    std::vector<int> initMapping = minLA(graph, n);
+    int pos = 0;
+    mapping::ConstraintVector constraints = mapping::findConstraint(circuit, pos, n);
+    initMapping = mapping::searchMapping(initMapping, constraints);
+    return initMapping; 
 }
 
 //枚举所有的permutation找最优解
@@ -186,7 +190,7 @@ int mapping::findLargestMove(std::vector<int>& permutation, std::vector<int>& di
     return index;
 }
 
-std::vector<int> mapping::enumerate(std::vector<int>& initMapping, std::vector<std::vector<int>>& constraint){
+std::vector<int> mapping::enumerate(std::vector<int>& initMapping, mapping::ConstraintVector& constraint){
     int n = initMapping.size(), l = constraint.size();
     std::vector<int> direction(l, 0);
     std::vector<int> permutation(l, 0);
@@ -264,7 +268,7 @@ std::vector<int> mapping::enumerate(std::vector<int>& initMapping, std::vector<s
 
 
 // 用启发式算法找满足约束的permutation
-std::vector<int> mapping::searchMapping(std::vector<int>& initMapping, std::vector<std::vector<int>>& constraints){
+std::vector<int> mapping::searchMapping(std::vector<int>& initMapping, mapping::ConstraintVector& constraints){
     int n = initMapping.size();
     std::vector<int>  res(n,0);
     std::vector<int> disF(n, 0);
@@ -297,9 +301,9 @@ std::vector<int> mapping::searchMapping(std::vector<int>& initMapping, std::vect
 
 
 // 输出两个permutation之间准换所需的最小swap门序列
-std::vector<utility::gate> mapping::mappingTrans(std::vector<int>& initMapping, std::vector<int>& tarMapping){
+mapping::Circuit mapping::mappingTrans(std::vector<int>& initMapping, std::vector<int>& tarMapping){
       int n = initMapping.size();
-      std::vector<utility::gate> res;
+      mapping::Circuit res;
       std::vector<int> disF(n, 0);
       for(int i = 0; i < n; i++){
            disF[tarMapping[i]] = i;
@@ -344,11 +348,11 @@ void mapping::mergeConstraint(std::vector<int>& constraint1, std::vector<int>& c
 
 // 找到gates中从pos开始最大可映射的门集合，以约束的形式返回
 
-std::vector<std::vector<int>> mapping::findConstraint(std::vector<utility::gate>& gates, int& pos, int n){
+mapping::ConstraintVector mapping::findConstraint(mapping::Circuit& gates, int& pos, int n){
      std::unordered_map<int, std::vector<int>> constraints;
      std::vector<int> index(n,0);
      std::vector<int> degree(n,0);
-     std::vector<std::vector<int>> res;
+     mapping::ConstraintVector res;
      int keys = 0;
      for(; pos < gates.size(); pos++){
          utility::gate p = gates[pos];
@@ -415,10 +419,10 @@ std::vector<std::vector<int>> mapping::findConstraint(std::vector<utility::gate>
     return res;
 }
 
-std::vector<utility::gate> mapping::logicToPhysics(std::vector<utility::gate>& gates, std::vector<int>& mapping, int start, int end){
+mapping::Circuit mapping::logicToPhysics(mapping::Circuit& gates, std::vector<int>& mapping, int start, int end){
      int n = mapping.size();
      std::vector<int> invMapping(n);
-     std::vector<utility::gate> res;
+     mapping::Circuit res;
      for(int i =0; i < n; i++){
          invMapping[mapping[i]] = i;  
      }
@@ -430,13 +434,13 @@ std::vector<utility::gate> mapping::logicToPhysics(std::vector<utility::gate>& g
 }
 
 
-std::vector<utility::gate> mapping::greedySearch(std::vector<utility::gate>& gates, std::vector<int>& mapping, int n){
+mapping::Circuit mapping::greedySearch(mapping::Circuit& gates, std::vector<int>& mapping, int n){
     int curPos = 0, prePos = -1, l = gates.size();
     std::vector<int> initMapping(n,0);
     for(int i=0; i<n; i++){
         initMapping[i] = i;
     }
-    std::vector<utility::gate> res;
+    mapping::Circuit res;
     int init = 1;
     
     while(curPos <l){
@@ -446,8 +450,8 @@ std::vector<utility::gate> mapping::greedySearch(std::vector<utility::gate>& gat
             std::vector<std::vector<int>> constraints = mapping::findConstraint(gates, curPos, n);
             std::vector<int> curMapping = mapping::searchMapping(initMapping, constraints);
             //std::vector<int> curMapping = mapping::enumerate(initMapping, constraints);
-            std::vector<utility::gate> swaps = mapping::mappingTrans(initMapping, curMapping);
-            std::vector<utility::gate> transGates = mapping::logicToPhysics(gates, curMapping, prePos, curPos);
+            mapping::Circuit swaps = mapping::mappingTrans(initMapping, curMapping);
+            mapping::Circuit transGates = mapping::logicToPhysics(gates, curMapping, prePos, curPos);
             res.insert(res.end(), swaps.begin(), swaps.end());
             res.insert(res.end(), transGates.begin(), transGates.end());
         }else{
@@ -456,11 +460,11 @@ std::vector<utility::gate> mapping::greedySearch(std::vector<utility::gate>& gat
             
             initMapping = curMapping;
             //res.insert(res.end(), transGates.begin(), transGates.end());
-            std::vector<std::vector<int>> constraints = mapping::findConstraint(gates, curPos, n);
-            initMapping = mapping::searchMapping(initMapping, constraints);  
+            //mapping::ConstraintVector constraints = mapping::findConstraint(gates, curPos, n);
+            //initMapping = mapping::searchMapping(initMapping, constraints);  
             mapping = initMapping;
-            std::vector<utility::gate> transGates = mapping::logicToPhysics(gates, initMapping, prePos, curPos);
-            res.insert(res.end(), transGates.begin(), transGates.end());
+            //mapping::Circuit transGates = mapping::logicToPhysics(gates, initMapping, prePos, curPos);
+            //res.insert(res.end(), transGates.begin(), transGates.end());
             init = 0;
         }
     }
@@ -469,27 +473,46 @@ std::vector<utility::gate> mapping::greedySearch(std::vector<utility::gate>& gat
 
 
 
+
 #ifdef SIFT
 
 // 利用sifting技术找好的permutation
 
 //将电路划分为conflict-free的集合
-std::vector<std::vector<std::vector<int>>> mapping::partitionGateSets(std::vector<utility::gate>& circuit, int n){
+mapping::ConstraintMatrix mapping::partitionGateSets(mapping::Circuit& circuit, std::vector<int>& partitionPoint ,int n){
     int curPos = 0, l = circuit.size();
-    std::vector<std::vector<std::vector<int>>> res;
+    mapping::ConstraintMatrix res;
     while(curPos <l){
         res.emplace_back(std::move(mapping::findConstraint(circuit, curPos, n)));
+        partitionPoint.push_back(curPos);
     }
     return res;
 }
 
+//计算两个permutation之间的逆序对
+int mapping::countInversions(std::vector<int>& curMapping, std::vector<int>& tarMapping){
+    int n = curMapping.size();
+    std::vector<int> disF(n, 0);
+    for(int i = 0; i < n; i++){
+        disF[curMapping[i]] = i;
+    }
+    int res = 0;
+    for(int i = 0; i< n; i++){
+        for(int j = i+1; j<n; j++){
+            if(disF[tarMapping[j]] < disF[tarMapping[i]]){
+                res += 1;
+            }
+        }
+    }
+    return res;
+}
 
 //按集合中门的数量简历索引表
-bool cmp(const std::vector<int>& a, const std::vector<int>& b){
+bool mapping::cmp(const std::vector<int>& a, const std::vector<int>& b){
     return a[0] > b[0];
 }
 
-std::vector<std::vector<int>> mapping::constructIndex(std::vector<std::vector<std::vector<int>>>& constraints, int n){
+std::vector<std::vector<int>> mapping::constructIndex(mapping::ConstraintMatrix& constraints, int n){
     int num = 0;
     for (auto& p : constraints){
         num += p.size();
@@ -506,7 +529,7 @@ std::vector<std::vector<int>> mapping::constructIndex(std::vector<std::vector<st
     return res;
 }
 
-void mapping::fillMapping(std::vector<std::vector<int>>& constraint, std::vector<int>& mapping, int n){
+void mapping::fillMapping(mapping::ConstraintVector& constraint, std::vector<int>& mapping, int n){
     int w = constraint.size();
     int ind = 0;
     for(int i =0; i<w; i++){
@@ -516,11 +539,11 @@ void mapping::fillMapping(std::vector<std::vector<int>>& constraint, std::vector
     }
 }
 
-std::vector<std::vector<int>>  constructInterMapping(std::vector<std::vector<std::vector<int>>>& constraints, int n){
+std::vector<std::vector<int>>  mapping::constructInterMapping(mapping::ConstraintMatrix& constraints, int n){
     int l = constraints.size();
     std::vector<std::vector<int>> res(l,std::vector<int>(n,0));
     for(int i = 0; i < l; i++){
-        mapping::constructIndex(constraints[i], res[i], n);
+        mapping::fillMapping(constraints[i], res[i], n);
     }
     return res;
 }
@@ -528,26 +551,110 @@ std::vector<std::vector<int>>  constructInterMapping(std::vector<std::vector<std
 
 //swap two constraint 
 
-void  swapConstraint(std::vector<std::vector<int>>& constraint, int i, int j){
+void  mapping::swapConstraint(mapping::ConstraintVector& constraint, int i, int j){
     int n = constraint.size();
     constraint[i].swap(constraint[j]);
 }
 
-std::vector<utility::gate> globalSifting(std::vector<utility::gate>& circuit, std::vector<int>& mapping ,int n){
-    std::vector<std::vector<std::vector<int>>> constraints = std::move(mapping::findInitMapping(circuit, n));
-    std::vector<std::vector<int>> list = std::move(mapping::constructIndex(constraints, n));
-    std::vector<std::vector<int>> interMapping = std::move(constructInterMapping(constraints,n));
-    int failCount = 0, maxFail = 5, fail = 0, ind = 0;
-    while(failCount < maxFail){
-        if(fail == 0){
-            int cs = 0;            
-            std::vector<int> cur = list[ind];
-            
+int  mapping::sifting(mapping::ConstraintMatrix& constraints,std::vector<std::vector<int>>& list, std::vector<std::vector<int>>& mappingList, int ind, int n){
+    int l = constraints.size();          
+    std::vector<int> cur = list[ind];
+    int interPos = cur[0], innerPos = cur[1], csLength = cur[2], width = cur[3];
+    int maxInversions = 0, tarPos = -1;
+    int tempPos = innerPos;
+    //std::vector<int> curMapping(n,0);
+    //mapping::fillMapping(constraints[interPos], curMapping, n);
+    if(interPos == 0){
+        maxInversions = mapping::countInversions(mappingList[interPos],mappingList[interPos+1]);
+    }else if(interPos == l-1){
+        maxInversions = mapping::countInversions(mappingList[interPos-1],mappingList[interPos]);
+    }else{
+        maxInversions = mapping::countInversions(mappingList[interPos],mappingList[interPos+1])+ mapping::countInversions(mappingList[interPos-1],mappingList[interPos]);
+    }
+
+    for(int i = 0; i < width; i++){
+        int nextPos = (tempPos + 1) % width;
+        swapConstraint(constraints[interPos],tempPos, nextPos);
+        mapping::fillMapping(constraints[interPos],mappingList[interPos], n);
+        int curInversions=0;
+        if(interPos == 0){
+            curInversions = mapping::countInversions(mappingList[interPos],mappingList[interPos+1]);
+        }else if(interPos == l-1){
+            curInversions = mapping::countInversions(mappingList[interPos-1],mappingList[interPos]);
+        }else{
+            curInversions = mapping::countInversions(mappingList[interPos],mappingList[interPos+1])+ mapping::countInversions(mappingList[interPos-1],mappingList[interPos]);
         }
-        else{
-            
+        if(maxInversions < curInversions){
+            tarPos = nextPos;
+            maxInversions = curInversions;
+        }
+        tempPos = nextPos;
+    }
+
+    if(tarPos == innerPos){
+        return 1;
+    }else{
+        swapConstraint(constraints[interPos], innerPos, tarPos);
+        mapping::fillMapping(constraints[interPos],mappingList[interPos], n);
+        return 0;
+    }
+}
+
+mapping::Circuit mapping::globalSifting(mapping::Circuit& circuit, std::vector<int>& mapping ,int n){
+    std::vector<int> partitionPoint;
+    mapping::ConstraintMatrix constraints = std::move(mapping::partitionGateSets(circuit,partitionPoint,n));
+    
+    int l = constraints.size(); 
+    if(l == 1){
+        std::vector<int> initMapping(n,0);  
+        int ind = 0;
+        for(auto& p : constraints[0]){
+            for(auto& m : p){
+                try{
+                    if(ind >= n){
+                        throw -1;
+                    }
+                    initMapping[ind++] = m;
+                }catch(int e){
+                    std::cout<<"数组溢出"<<std::endl;
+                }
+            }
+        }
+        mapping = initMapping;
+        return circuit;
+    }
+
+    std::vector<std::vector<int>> list = std::move(mapping::constructIndex(constraints, n));
+    std::vector<std::vector<int>> interMapping = std::move(mapping::constructInterMapping(constraints,n));
+
+    int failCount = 0, maxFail = 5;
+    while(failCount < maxFail){
+        for(int i = 0;i < list.size(); i++){
+            if(sifting(constraints, list , interMapping, i, n)){
+                failCount += 1;
+                break;
+            }
+        }
+        for(int j = list.size()-1; j >= 0; j--){
+            if(sifting(constraints, list , interMapping, j, n)){
+                failCount += 1;
+                break;
+            }
         }
     }
+    std::vector<int> initMapping = interMapping[0];
+    mapping = initMapping;
+    mapping::Circuit res;
+    int startPos = 0, endPos = 0;
+    for(int i = 0; i< partitionPoint.size();i++){
+        startPos = endPos;
+        endPos = partitionPoint[i];
+        mapping::Circuit swaps = mapping::mappingTrans(initMapping, interMapping[i]);
+        mapping::Circuit transGates = mapping::logicToPhysics(circuit, interMapping[i], startPos, endPos);
+        res.insert(res.end(), swaps.begin(), swaps.end());
+        res.insert(res.end(), transGates.begin(), transGates.end());
+    }
+    return res;
 }
 
 #endif

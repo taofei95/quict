@@ -1,6 +1,8 @@
 import os
+import sys
 
-from  QuICT.mapping import *
+sys.path.append("..")
+from _mapping import Mapping
 from QuICT.interface import *
 
 if __name__ == "__main__":
@@ -10,9 +12,10 @@ if __name__ == "__main__":
     qc = OPENQASMInterface.load_file(QASM_file)
     circuit =qc.circuit
     num = qc.qbits
+    print(num)
     init_layout = [i for i in range(num)]
 
-    circuit_trans = Mapping.run(circuit = circuit,num =  num, init_layout = init_layout)
+    circuit_trans = Mapping.run(circuit = circuit,num =  num, method = "global_sifting", init_layout = init_layout)
 
 
     print(circuit.circuit_size())

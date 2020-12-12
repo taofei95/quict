@@ -8,6 +8,7 @@ from libcpp.pair cimport pair
 from utility cimport edge, gate
 
 cdef extern from "greedy_search_1D.hh" namespace "mapping":
+    ctypedef vector[gate] Circuit
     # ctypedef bool (*compare)(const int &, const int &)
 
     # cdef cppclass s_cmp:
@@ -53,4 +54,5 @@ cdef extern from "greedy_search_1D.hh" namespace "mapping":
 
     # vector[gate] logicToPhysics(vector[gate]& gates, vector[int]& mapping, int start, int end)
 
-    vector[gate] greedySearch(vector[gate]& gates, vector[int]& mapping, int n)
+    Circuit greedySearch(Circuit& circuit, vector[int]& mapping, int n) except +
+    Circuit globalSifting(Circuit& circuit, vector[int]& mapping, int n) except +

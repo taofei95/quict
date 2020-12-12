@@ -1,7 +1,10 @@
 #ifndef  GREEDY_SEARCH_1D
 #define  GREEDY_SEARCH_1D
 
+#define SIFT
+
 //#define __QASM__
+#include<iostream>
 #include<limits.h>
 #include<vector>
 #include<unordered_map>
@@ -9,6 +12,8 @@
 #include<stdlib.h>
 #include<ctime>
 #include "utility.hh"
+
+
 
 #ifdef  __REVLIB__
     #include "revLib.hh"
@@ -21,7 +26,14 @@
 
 namespace mapping{
 
+
 typedef bool (*compare)(const int &, const int &);
+
+typedef  std::vector<std::vector<std::vector<int>>>  ConstraintMatrix;
+typedef  std::vector<std::vector<int>>  ConstraintVector;
+typedef  std::vector<int>  Constraint;
+
+typedef std::vector<utility::gate> Circuit;
 
 class s_cmp{
 public:
@@ -43,26 +55,26 @@ float byCenter(std::vector<int>& disF, std::vector<int>& constraint);
 //中位数作为得分
 float median(std::vector<int>& disF, std::vector<int>&  constraint);
 
-int countSubConstraintInversion(std::vector<std::vector<int>> &constraint, std::vector<int> &disF, int s, int t);
+int countSubConstraintInversion(ConstraintVector &constraint, std::vector<int> &disF, int s, int t);
 
-int countConstraintInversion(std::vector<std::vector<int>> &constraint, std::vector<int> &initMapping, std::vector<int> &permutation);
+int countConstraintInversion(ConstraintVector &constraint, std::vector<int> &initMapping, std::vector<int> &permutation);
 
-std::vector<utility::edge> constructGraph(std::vector<utility::gate> &circuit, int n);
+std::vector<utility::edge> constructGraph(Circuit &circuit, int n);
 int calLA(std::vector<utility::edge> &graph, std::vector<int> &permuatation);
 std::vector<int> minLA(std::vector<utility::edge> &graph, int n);
-std::vector<int> findInitMapping(std::vector<utility::gate> &circuit, int n);
+std::vector<int> findInitMapping(Circuit &circuit, int n);
 
 int findLargestMove(std::vector<int> &permutation, std::vector<int> &direction);
 
-std::vector<int> enumerate(std::vector<int> &initMapping, std::vector<std::vector<int>> &constraint);
+std::vector<int> enumerate(std::vector<int> &initMapping, ConstraintVector &constraint);
 
 
 // 用启发式算法找满足约束的permutation
-std::vector<int> searchMapping(std::vector<int>& initMapping, std::vector<std::vector<int>>& constraints);
+std::vector<int> searchMapping(std::vector<int>& initMapping, std::vector<std::vector<int>>& constraint);
 
 
 // 输出两个permutation之间准换所需的最小swap门序列
-std::vector<utility::gate> mappingTrans(std::vector<int>& initMapping, std::vector<int>& tarMapping);
+Circuit mappingTrans(std::vector<int>& initMapping, std::vector<int>& tarMapping);
 
 //在约束中插入一个门
 void insertConstraint(std::vector<int>& constraint, int connect, int hang);
@@ -71,10 +83,32 @@ void mergeConstraint(std::vector<int>& constraint1, std::vector<int>& constraint
 
 // 找到utility::gates中从pos开始最大可映射的门集合，以约束的形式返回
 
-std::vector<std::vector<int>> findConstraint(std::vector<utility::gate>& gates, int& pos, int n);
-std::vector<utility::gate> logicToPhysics(std::vector<utility::gate>& gates, std::vector<int>& mapping, int start, int end);
-std::vector<utility::gate> greedySearch(std::vector<utility::gate>& gates, std::vector<int>& mapping, int n);
+ConstraintVector findConstraint(Circuit& gates, int& pos, int n);
+Circuit logicToPhysics(Circuit& gates, std::vector<int>& mapping, int start, int end);
+Circuit greedySearch(Circuit& gates, std::vector<int>& mapping, int n);
 
 
+#ifdef SIFT
+ConstraintMatrix partitionGateSets(Circuit& circuit, std::vector<int>& partitionPoint, int n);
+
+bool cmp(const std::vector<int>& a, const std::vector<int>& b);
+
+ConstraintVector constructIndex(ConstraintMatrix& constraints, int n);
+
+void fillMapping(ConstraintVector& constraint, std::vector<int>& mapping, int n);
+
+std::vector<std::vector<int>>  constructInterMapping(ConstraintMatrix& constraints, int n);
+
+void  swapConstraint(ConstraintVector& constraint, int i, int j);
+
+int countInversions(std::vector<int>& curMapping, std::vector<int>& tarMapping);
+ 
+int sifting(ConstraintMatrix& constraints, std::vector<std::vector<int>>& list, std::vector<std::vector<int>>& mappingList, int ind, int n);
+
+Circuit globalSifting(Circuit& circuit, std::vector<int>& mapping ,int n);
+
+
+#endif
 }
+
 #endif

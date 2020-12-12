@@ -4,19 +4,19 @@
 from libcpp.vector cimport vector
 from utility cimport  gate
 
-from greedy_search_1D cimport greedySearch
+from greedy_search_1D cimport Circuit, greedySearch, globalSifting
 
 cdef class qubitMapping:
-    cdef vector[gate] c_circuit 
+    cdef Circuit c_circuit 
     cdef vector[int] initMapping 
     cdef int n
-    def __cinit__(self, circuit, int num):
+    def __cinit__(self, circuit,  num,  method = "greedy_search"):
         self.n = num 
         self.initMapping = vector[int](num,0)
         for i in range(num):
             self.initMapping[i] = i
          
-        cdef vector[gate] t_circuit
+        cdef Circuit t_circuit
         cdef gate temp
         for g  in  circuit:
             temp = gate(g['ctrl'], g['tar'], g['type'],g['name'])
@@ -28,8 +28,11 @@ cdef class qubitMapping:
         # cdef int elm 
         # for elm in self.initMapping:
         #     print("%d"%(elm))
-        # print(self.n)   
-        self.c_circuit = greedySearch(t_circuit, self.initMapping, self.n)
+        # print(self.n)
+        if method == "greedy_search":
+            self.c_circuit = greedySearch(t_circuit, self.initMapping, self.n)
+        elif method == "global_sifting":
+            self.c_circuit = globalSifting(t_circuit, self.initMapping, self.n)
     
 
     def get_circuit(self):

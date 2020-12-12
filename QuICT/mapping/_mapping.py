@@ -9,10 +9,11 @@ from QuICT.models import Circuit
 from qubit_mapping  import qubitMapping as qm
 from QuICT.models import * 
 from QuICT.exception import *
- 
-class  Mapping(object):
+from typing import List, Dict,Tuple
+class  Mapping(object)s:
     @classmethod
-    def run(cls, circuit: Circuit, num: int, init_layout : list, is_lnn = True, inplace = False):
+    def run(cls, circuit: Circuit, num: int, init_layout : List[int], is_lnn: bool = True,
+            method:str = "greedy_search", inplace:bool = False) -> Circuit:
         """
         Args:
             circuit: The input circuit that needs to be mapped into a 1D physical architecture 
@@ -28,6 +29,7 @@ class  Mapping(object):
                   3         1
 
             is_lnn: A Boolean varaible to indicate whether the physical device is a 1D chain or linear-neareast-neighbour architecture 
+            method: The algorithm used to transform the logical quantum circuit to hardware-compliant circuit.
             inplace: 
         Return:  
             the hardware-compliant circuit after mapping 
@@ -40,8 +42,8 @@ class  Mapping(object):
             raise Exception("There are not enough phyical qubits to excute the circuit")
 
         if is_lnn is True:
-            gates, layout = cls.__mapping_1D(circuit, num)
-            init_layout[:] = layout
+            gates = cls.__mapping_1D(circuit = circuit, num=num, init_layout = init_layout ,method = method)
+            #init_layout[:] = layout
             # for i in init_layout:
             #     print(i)
         else:
@@ -57,10 +59,11 @@ class  Mapping(object):
             return new_circuit
     
     @staticmethod
-    def __mapping_1D(circuit : Circuit, num : int):
+    def _mapping_1D(circuit : Circuit, method : str, num : int) -> Tuple[List[BasicGate], List[int]]:
         """
         Args:
             circuit: the input circuit that needs to be mapped into a 1D physical architecture 
+            method: The algorithm used to transform the logical quantum circuit to hardware-compliant circuit.
             num: the number of physical qubits
         Return:
             gates:  the hardware-compliant circuit after mapping 
@@ -93,9 +96,9 @@ class  Mapping(object):
        # for w in circuit_ori:
        #     print(w)
         #print("qm1")
-        trans = qm(circuit_ori, num)
+        print(num)
+        trans = qm(circuit = circuit_ori, num =num, method = method )
         #print("qm")
-
 
         circuit_trans, init_layout = trans.get_circuit()
         
@@ -141,6 +144,16 @@ class  Mapping(object):
             gates.append(GateBuilder.getGate())
 
         return gates, init_layout
+
+
+        def _mapping_2D(circuit : Circuit, init_layout: List[int], method : str, num : int, ) -> Circuit:
+            """
+
+
+            """
+            
+
+            return circuit
     
 
 
