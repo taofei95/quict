@@ -77,10 +77,10 @@ def read(circuit):
 
     for i in range(len(circuit.gates)):
         gate = circuit.gates[i]
-        if gate.type() == GateType.CX:
+        if gate.type() == GATE_ID["CX"]:
             READ_CNOT[topo_forward_map[gate.targ]] ^= \
                     READ_CNOT[topo_forward_map[gate.carg]]
-        elif gate.type() == GateType.Rz:
+        elif gate.type() == GATE_ID["Rz"]:
             index = cnot_index.setdefault(READ_CNOT[topo_forward_map[gate.targ]], 0)
             if index != 0:
                 th[index - 1] += gate.parg
@@ -122,7 +122,7 @@ def solve(input, th, waitDeal, undirected_topology):
         gsxy = []
         needDeal = []
         if len(waitDeal) > 0:
-            GateBuilder.setGateType(GateType.Rz)
+            GateBuilder.setGateType(GATE_ID["Rz"])
             for it in waitDeal:
                 val = input[it]
                 for i in range(N - 1, -1, -1):
@@ -215,7 +215,7 @@ def solve(input, th, waitDeal, undirected_topology):
         length = len(gates)
         for j in range(length - 1, -1, -1):
             ans.append(gates[j])
-            if gates[j].type() == GateType.CX:
+            if gates[j].type() == GATE_ID["CX"]:
                 stateChange[gates[j].targ] ^= stateChange[gates[j].carg]
 
     return ans
@@ -256,13 +256,13 @@ class topological_cnot_rz(Optimization):
         output = []
         total = 0
         for item in ans:
-            if item.type() == GateType.Rz or topo[topo_backward_map[item.carg]][topo_backward_map[item.targ]]:
+            if item.type() == GATE_ID["Rz"] or topo[topo_backward_map[item.carg]][topo_backward_map[item.targ]]:
                 total += 1
             else:
                 total += 5
         for item in ans:
-            if item.type() == GateType.CX:
-                GateBuilder.setGateType(GateType.CX)
+            if item.type() == GATE_ID["CX"]:
+                GateBuilder.setGateType(GATE_ID["CX"])
                 c = topo_backward_map[item.carg]
                 t = topo_backward_map[item.targ]
                 if topo[c][t]:
@@ -271,7 +271,7 @@ class topological_cnot_rz(Optimization):
                     gate = GateBuilder.getGate()
                     output.append(gate)
                 else:
-                    GateBuilder.setGateType(GateType.H)
+                    GateBuilder.setGateType(GATE_ID["H"])
                     GateBuilder.setTargs(c)
                     gate = GateBuilder.getGate()
                     output.append(gate)
@@ -279,13 +279,13 @@ class topological_cnot_rz(Optimization):
                     gate = GateBuilder.getGate()
                     output.append(gate)
 
-                    GateBuilder.setGateType(GateType.CX)
+                    GateBuilder.setGateType(GATE_ID["CX"])
                     GateBuilder.setCargs(t)
                     GateBuilder.setTargs(c)
                     gate = GateBuilder.getGate()
                     output.append(gate)
 
-                    GateBuilder.setGateType(GateType.H)
+                    GateBuilder.setGateType(GATE_ID["H"])
                     GateBuilder.setTargs(c)
                     gate = GateBuilder.getGate()
                     output.append(gate)
@@ -293,7 +293,7 @@ class topological_cnot_rz(Optimization):
                     gate = GateBuilder.getGate()
                     output.append(gate)
             else:
-                GateBuilder.setGateType(GateType.Rz)
+                GateBuilder.setGateType(GATE_ID["Rz"])
                 GateBuilder.setPargs(item.pargs)
                 GateBuilder.setTargs(topo_backward_map[item.targ])
                 gate = GateBuilder.getGate()
