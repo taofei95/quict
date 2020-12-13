@@ -106,7 +106,7 @@ def solve(input, th, waitDeal, undirected_topology):
         list<CXGates>: the result of the algorithm
     """
 
-    global  N, READ_CNOT
+    global N, READ_CNOT
 
     ans = []
     flag = False

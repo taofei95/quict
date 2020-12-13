@@ -42,6 +42,8 @@ def gate_implementation(cls):
     global GATE_ID
     global GATE_ID_CNT
 
+    print(cls.__name__)
+
     GATE_REGISTER[GATE_ID_CNT] = cls.__name__
     GATE_ID[cls.__name__] = GATE_ID_CNT
     GATE_ID_CNT += 1
@@ -170,7 +172,7 @@ class BasicGate(object):
 
     @classmethod
     def type(cls):
-        if cls.__name__ in GATE_REGISTER:
+        if cls.__name__ in GATE_ID:
             return GATE_ID[cls.__name__]
         else:
             raise NotImplementedGateException(cls.__name__)
