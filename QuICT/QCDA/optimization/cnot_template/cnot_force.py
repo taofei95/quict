@@ -104,7 +104,7 @@ def solve(input: Circuit):
             print(l)
 
 
-class cnot_force_bfs(Optimization):
+class CnotForceBfs(Optimization):
     """ use bfs to optimize the cnot circuit
 
     """

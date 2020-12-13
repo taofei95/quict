@@ -4,4 +4,4 @@
 # @Author  : Han Yu
 # @File    : __init__.py
 
-from ._qubit import Qubit, Qureg
+from .qubit import Qubit, Qureg

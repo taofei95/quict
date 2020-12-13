@@ -5,7 +5,7 @@
 # @File    : topological_cnot_rz.py
 
 from .._optimization import Optimization
-from QuICT.QCDA.optimization import topological_cnot
+from QuICT.qcda.optimization import TopologicalCnot
 from QuICT.core import *
 
 # topological matrix
@@ -207,7 +207,7 @@ def solve(input, th, waitDeal, undirected_topology):
         for gate in gates:
             gate.print_info()
 
-        gsxy_gate = topological_cnot.run_parameter(cnot_struct=gsxy, topology=undirected_topology)
+        gsxy_gate = TopologicalCnot.run_parameter(cnot_struct=gsxy, topology=undirected_topology)
         gsxy_gate.reverse()
 
         gates.extend(gsxy_gate)
@@ -220,7 +220,7 @@ def solve(input, th, waitDeal, undirected_topology):
 
     return ans
 
-class topological_cnot_rz(Optimization):
+class TopologicalCnotRz(Optimization):
     """ optimize the cnot_Rz circuit on topological device
 
     use topological_cnot to optimize a cnot circuit on topological device

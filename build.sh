@@ -54,7 +54,7 @@ $CXX \
 
 cd ../QCDA/synthesis/initial_state_preparation && \
 $CXX \
-  -o initial_state_preparation_cdll.so _initial_state_preparation.cpp \
+  -o initial_state_preparation_cdll.so initial_state_preparation.cpp \
   -std=c++11  -fPIC -shared  -I"../../../../oneTBB/include" -ltbb -L"../../../../$tbb_build_dir"  || exit 1
 
 

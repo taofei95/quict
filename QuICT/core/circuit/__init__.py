@@ -4,4 +4,4 @@
 # @Author  : Han Yu
 # @File    : __init__.py
 
-from ._circuit import Circuit
+from .circuit import Circuit

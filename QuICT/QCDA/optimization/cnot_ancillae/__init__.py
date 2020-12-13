@@ -4,4 +4,4 @@
 # @Author  : Han Yu
 # @File    : __init__.py
 
-from .cnot_ancillae import cnot_ancillae
+from .cnot_ancillae import CnotAncillae

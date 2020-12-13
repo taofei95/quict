@@ -6,7 +6,7 @@
 
 from QuICT.core import *
 from QuICT.algorithm import *
-from QuICT.QCDA.synthesis import initial_state_preparation
+from QuICT.qcda.synthesis import InitialStatePreparation
 import numpy as np
 import pytest
 
@@ -15,7 +15,7 @@ def test_1():
         print(i)
         circuit = Circuit(i)
         values = [1.0 / (1 << i) for _ in range(1 << i)]
-        initial_state_preparation(values) | circuit([j for j in range(i)])
+        InitialStatePreparation(values) | circuit([j for j in range(i)])
         amplitude = Amplitude.run(circuit)
         for k in range(1 << i):
             if abs(abs(amplitude[k]) * abs(amplitude[k]) - (1.0 / (1 << i))) > 1e-6:
@@ -28,8 +28,8 @@ def test_2():
         print(i)
         circuit = Circuit(i)
         values = [1.0 / (1 << i) for _ in range(1 << i)]
-        initial_state_preparation(values) | circuit([j for j in range(i)])
-        initial_state_preparation(values) ^ circuit([j for j in range(i)])
+        InitialStatePreparation(values) | circuit([j for j in range(i)])
+        InitialStatePreparation(values) ^ circuit([j for j in range(i)])
         amplitude = Amplitude.run(circuit)
         if abs(amplitude[0] - 1) > 1e-10:
             assert 0

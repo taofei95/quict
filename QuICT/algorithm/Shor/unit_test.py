@@ -6,19 +6,19 @@
 
 import pytest
 
-from QuICT.algorithm import classical_shor_factor
-from QuICT.algorithm import classical_zip_shor_factor
-from QuICT.algorithm import shor_factor
-from QuICT.algorithm import zip_shor_factor
+from QuICT.algorithm import ClassicalShorFactor
+from QuICT.algorithm import ClassicalZipShorFactor
+from QuICT.algorithm import ShorFactor
+from QuICT.algorithm import ZipShorFactor
 
 def test_1():
-    a, _, _, _, _ = shor_factor.run(15)
+    a, _, _, _, _ = ShorFactor.run(15)
     assert 15 % a == 0
 
 def test_2():
     test_list = [15, 57]
     for number in test_list:
-        a, _, _, _, _ = zip_shor_factor.run(number)
+        a, _, _, _, _ = ZipShorFactor.run(number)
         assert number % a == 0
 
 def test_3():
@@ -30,7 +30,7 @@ def test_3():
         45, 51, 55, 57, 95, 85
     ]
     for number in number_list:
-        a, _, _, _, _ = classical_shor_factor.run(number)
+        a, _, _, _, _ = ClassicalShorFactor.run(number)
         assert number % a == 0
 
 def test_4():
@@ -42,7 +42,7 @@ def test_4():
         45, 51, 55, 57, 95, 85
     ]
     for number in number_list:
-        a, _, _, _, _ = classical_zip_shor_factor.run(number)
+        a, _, _, _, _ = ClassicalZipShorFactor.run(number)
         assert number % a == 0
 
 if __name__ == '__main__':

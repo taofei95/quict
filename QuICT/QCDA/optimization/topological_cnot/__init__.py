@@ -4,4 +4,4 @@
 # @Author  : Han Yu
 # @File    : __init__.py
 
-from .topological_cnot import topological_cnot
+from .topological_cnot import TopologicalCnot

@@ -4,4 +4,4 @@
 # @Author  : Han Yu
 # @File    : __init__.py.py
 
-from .Amplitude import Amplitude
+from .amplitude import Amplitude

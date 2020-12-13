@@ -388,7 +388,7 @@ def solve(ST_tree):
     GATES.reverse()
     return GATES
 
-class topological_cnot(Optimization):
+class TopologicalCnot(Optimization):
     """ optimize the cnot circuit on topological device
     https://arxiv.org/pdf/1910.14478.pdf
 

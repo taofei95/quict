@@ -9,7 +9,7 @@ import pytest
 import random
 
 from QuICT.core import *
-from QuICT.QCDA.optimization import cnot_ancillae
+from QuICT.qcda.optimization import CnotAncillae
 
 def _getRandomList(n):
     """ get first 2 number from 0, 1, ..., n - 1 randomly.
@@ -69,7 +69,7 @@ def test_1():
             circuit = Circuit(n)
             for i in range(n - 1):
                 CX | circuit([i, i + 1])
-            new_circuit = cnot_ancillae.run(circuit, size = s)
+            new_circuit = CnotAncillae.run(circuit, size = s)
             assert check_equiv(circuit, new_circuit)
 
 def test_2():

@@ -4,4 +4,4 @@
 # @Author  : Han Yu
 # @File    : __init__.py.py
 
-from ._initial_state_preparation import initial_state_preparation
+from .initial_state_preparation import InitialStatePreparation

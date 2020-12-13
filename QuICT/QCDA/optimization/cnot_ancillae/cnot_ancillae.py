@@ -369,7 +369,7 @@ def read(circuit : Circuit):
         matrix[tindex] = np.bitwise_xor(matrix[cindex], matrix[tindex])
     return matrix
 
-class cnot_ancillae(Optimization):
+class CnotAncillae(Optimization):
     @classmethod
     def run(cls, circuit : Circuit, size = 1, inplace = False):
         """ Optimization the circuit by (3s+1)n ancillary qubits

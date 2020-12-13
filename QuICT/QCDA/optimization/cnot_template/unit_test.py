@@ -10,7 +10,7 @@ import random
 import numpy as np
 
 from QuICT.core import *
-from QuICT.QCDA.optimization import cnot_force_bfs
+from QuICT.qcda.optimization import CnotForceBfs
 
 
 def _getRandomList(n):
@@ -58,7 +58,7 @@ def test_1():
         for _ in range(10000):
             cx = _getRandomList(i)
             CX | circuit(cx)
-        new_circuit = cnot_force_bfs.run(circuit)
+        new_circuit = CnotForceBfs.run(circuit)
         if not check_equiv(circuit, new_circuit):
             assert 0
 

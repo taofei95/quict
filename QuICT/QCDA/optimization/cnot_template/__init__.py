@@ -4,4 +4,4 @@
 # @Author  : Han Yu
 # @File    : __init__.py
 
-from .cnot_force import cnot_force_bfs
+from .cnot_force import CnotForceBfs

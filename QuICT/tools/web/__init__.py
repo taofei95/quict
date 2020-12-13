@@ -4,4 +4,4 @@
 # @Author  : Han Yu
 # @File    : __init__.py.py
 
-from ._webInterface import WebInterface
+from .web_interface import WebInterface

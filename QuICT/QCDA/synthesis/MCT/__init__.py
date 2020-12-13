@@ -4,5 +4,5 @@
 # @Author  : Han Yu
 # @File    : __init__.py.py
 
-from .MCT_one_aux import MCT_one_aux
-from .MCT_Linear_Simulation import MCT_Linear_Simulation
+from .mct_one_aux import MCTOneAux
+from .mct_linear_simulation import MCTLinearSimulation

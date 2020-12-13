@@ -4,4 +4,4 @@
 # @Author  : Han Yu
 # @File    : __init__.py
 
-from .topological_cnot_rz import topological_cnot_rz
+from .topological_cnot_rz import TopologicalCnotRz

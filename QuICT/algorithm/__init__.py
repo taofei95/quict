@@ -4,6 +4,6 @@
 # @Author  : Han Yu
 # @File    : __init__.py.py
 
-from .Amplitude import *
-from .Shor import *
-from .SyntheticalUnitary import *
+from .amplitude import *
+from .shor import *
+from .synthetical_unitary import *

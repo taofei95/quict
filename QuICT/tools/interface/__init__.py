@@ -4,4 +4,4 @@
 # @Author  : Han Yu
 # @File    : __init__.py.py
 
-from ._qasmInterface import OPENQASMInterface
+from .qasm_interface import OPENQASMInterface

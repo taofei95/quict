@@ -4,6 +4,6 @@
 # @Author  : Han Yu
 # @File    : __init__.py
 
-from .initial_state_preparation import initial_state_preparation
-from .VBE import *
-from .MCT import *
+from .initial_state_preparation import *
+from .vbe import *
+from .mct import *

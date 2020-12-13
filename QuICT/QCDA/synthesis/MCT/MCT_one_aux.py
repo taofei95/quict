@@ -5,9 +5,8 @@
 # @File    : MCT_one_aux.py
 
 from .._synthesis import Synthesis
-from ..MCT.MCT_Linear_Simulation import MCT_Linear_Simulation
 from QuICT.core import *
-
+from .mct_linear_simulation import MCTLinearSimulation
 
 def merge_qubit(qubit_a, qubit_b):
     """ merge two qureg into one in order
@@ -53,20 +52,20 @@ def solve(n):
         k1 = n // 2
     k2 = n // 2 - 1
 
-    MCT_Linear_Simulation(k1) | qubit_list
+    MCTLinearSimulation(k1) | qubit_list
     H        | qubit_list[-2]
     S        | qubit_list[-1]
-    MCT_Linear_Simulation(k2 + 1) | merge_qubit(merge_qubit(qubit_list[k1:k1 + k2 + 1], qubit_list[:k1]), qubit_list[-1])
+    MCTLinearSimulation(k2 + 1) | merge_qubit(merge_qubit(qubit_list[k1:k1 + k2 + 1], qubit_list[:k1]), qubit_list[-1])
     S_dagger | qubit_list[-1]
-    MCT_Linear_Simulation(k1) | qubit_list
+    MCTLinearSimulation(k1) | qubit_list
     S        | qubit_list[-1]
-    MCT_Linear_Simulation(k2 + 1) | merge_qubit(merge_qubit(qubit_list[k1:k1 + k2 + 1], qubit_list[:k1]), qubit_list[-1])
+    MCTLinearSimulation(k2 + 1) | merge_qubit(merge_qubit(qubit_list[k1:k1 + k2 + 1], qubit_list[:k1]), qubit_list[-1])
     H        | qubit_list[-2]
     S_dagger | qubit_list[-1]
 
     return qubit_list
 
-class MCT_one_aux_model(Synthesis):
+class MCTOneAuxModel(Synthesis):
     """ Decomposition of n-qubit Toffoli gates with one ancillary qubit and linear circuit complexity
 
     He Y, Luo M X, Zhang E, et al.
@@ -81,4 +80,4 @@ class MCT_one_aux_model(Synthesis):
         n = self.targets - 1
         return solve(n)
 
-MCT_one_aux = MCT_one_aux_model()
+MCTOneAux = MCTOneAuxModel()

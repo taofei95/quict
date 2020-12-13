@@ -36,7 +36,7 @@ def solve(n, m):
             CCX | circuit([i - 1, n - 1 - (m - i + 1), n - 1 - (m - i)])
     return circuit
 
-class MCT_Linear_Simulation_model(Synthesis):
+class MCTLinearSimulationModel(Synthesis):
     """ a linear simulation for toffoli gate
 
     https://arxiv.org/abs/quant-ph/9503016 Lemma 7.2
@@ -69,4 +69,4 @@ class MCT_Linear_Simulation_model(Synthesis):
             raise Exception("there must be at least one control bit")
         return solve(self.targets, m)
 
-MCT_Linear_Simulation = MCT_Linear_Simulation_model()
+MCTLinearSimulation = MCTLinearSimulationModel()

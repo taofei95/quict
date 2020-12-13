@@ -4,7 +4,7 @@
 # @Author  : Han Yu
 # @File    : __init__.py
 
-from ._classicalShor import classical_shor_factor
-from ._classicalZipShor import classical_zip_shor_factor
-from ._originShor import shor_factor
-from ._zipShor import zip_shor_factor
+from .classical_shor import ClassicalShorFactor
+from .classical_zip_shor import ClassicalZipShorFactor
+from .origin_shor import ShorFactor
+from .zip_shor import ZipShorFactor

@@ -4,7 +4,7 @@
 # @Author  : Han Yu
 # @File    : __init__.py
 
-from ._gate import (
+from .gate import (
     H,
     S,
     S_dagger,
@@ -45,11 +45,11 @@ from ._gate import (
     GATE_ID
 )
 
-from ._gateBuilder import (
+from .gate_builder import (
     GateBuilder
 )
 
-from ._extensionGate import (
+from .extension_gate import (
     gateModel,
 
     QFT,

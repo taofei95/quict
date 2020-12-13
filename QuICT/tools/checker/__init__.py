@@ -4,5 +4,5 @@
 # @Author  : Han Yu
 # @File    : __init__.py.py
 
-from ._ETChecker import ETChecker
-from ._efficiencyChecker import StandardEfficiencyChecker
+from .efficiency_checker import StandardEfficiencyChecker
+from .equal_transform_checker import ETChecker

@@ -4,4 +4,4 @@
 # @Author  : Han Yu
 # @File    : __init__.py.py
 
-from QuICT.backends._systemcdll import systemCdll
+from QuICT.backends.systemcdll import systemCdll
