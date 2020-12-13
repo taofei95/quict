@@ -145,7 +145,3 @@ class TableBasedMCTS(MCTSBase):
     def __init__(self):
         pass
 
-
-class RLBasedMCTS(MCTSBase):
-    def  __init__(self):
-       self.experience_pool = []
