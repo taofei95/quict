@@ -10,9 +10,6 @@ from queue import Queue
 from .._optimization import Optimization
 from QuICT.core import *
 
-# topological matrix
-from ...models._gate import GATE_ID
-
 TOPO = [[]]
 
 # number of qubits

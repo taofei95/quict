@@ -5,15 +5,9 @@
 # @File    : _webInterface.py
 
 import numpy as np
-<<<<<<< HEAD:QuICT/tools/web/_webInterface.py
+
 from QuICT.QCDA.optimization import *
 from QuICT.core import *
-=======
-
-from QuICT.models._gate import GATE_ID
-from QuICT.optimization import *
-from QuICT.models import *
->>>>>>> 1711899f6c378455fbb819c18c4d1201275674ed:QuICT/web/_webInterface.py
 
 class WebInterface(object):
     """ The model servers for Web Interface for QuICT

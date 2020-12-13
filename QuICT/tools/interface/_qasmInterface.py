@@ -12,9 +12,6 @@ from collections import OrderedDict
 from configparser import ConfigParser
 import os
 
-from ..models._gate import GATE_ID
-
-
 class qasm_qreg(object):
     """ the target bit in the qasm grammer tree
 
@@ -32,33 +29,7 @@ class qasm_creg(object):
         self.name = name
 
 class OPENQASMInterface(BasicInterface):
-<<<<<<< HEAD:QuICT/tools/interface/_qasmInterface.py
     # qasm mapping to QuICT
-    standard_extension = {"u1": GateType.U1,
-                          "u2": GateType.U2,
-                          "u3": GateType.U3,
-                          "U": GateType.U3,
-                          "x": GateType.X,
-                          "y": GateType.Y,
-                          "z": GateType.Z,
-                          "t": GateType.T,
-                          "tdg": GateType.T_dagger,
-                          "s": GateType.S,
-                          "sdg": GateType.S_dagger,
-                          "swap": GateType.Swap,
-                          "rx": GateType.Rx,
-                          "ry": GateType.Ry,
-                          "rz": GateType.Rz,
-                          "id": GateType.ID,
-                          "h": GateType.H,
-                          "cx": GateType.CX,
-                          "ccx" : GateType.CCX,
-                          "cy": GateType.CY,
-                          "cz": GateType.CZ,
-                          "ch": GateType.CH,
-                          "crz": GateType.CRz}
-=======
-    # qasm语言对应QuICT中的标准门
     standard_extension = {"u1": GATE_ID["U1"],
                           "u2": GATE_ID["U2"],
                           "u3": GATE_ID["U3"],
@@ -82,13 +53,12 @@ class OPENQASMInterface(BasicInterface):
                           "cz": GATE_ID["CZ"],
                           "ch": GATE_ID["CH"],
                           "crz": GATE_ID["CRz"]}
->>>>>>> 1711899f6c378455fbb819c18c4d1201275674ed:QuICT/interface/_qasmInterface.py
 
     extern_extension = {
-                          "rzz" : ExtensionGateType.RZZ,
-                          "cu1" : ExtensionGateType.CU1,
-                          "cu3" : ExtensionGateType.CU3,
-                          "cswap" : ExtensionGateType.Fredkin
+                          "rzz" : EXTENSION_GATE_ID["RZZ"],
+                          "cu1" : EXTENSION_GATE_ID["CU1"],
+                          "cu3" : EXTENSION_GATE_ID["CU3"],
+                          "cswap" : EXTENSION_GATE_ID["Fredkin"]
     }
 
     token = None
@@ -395,12 +365,15 @@ print(result.get_counts(circ))
             GateBuilder.setArgs(targs)
             self.circuit_gates.append(GateBuilder.getGate())
         elif name in self.extern_extension:
+            """
             pargs = [self.arg_stack[-1][s].sym(self.arg_stack[:-1]) for s in gargs]
             targs = [self.bit_stack[-1][s] for s in gbits]
             ExtensionGateBuilder.setGateType(self.extern_extension[name])
             ExtensionGateBuilder.setPargs(pargs)
             ExtensionGateBuilder.setTargs(targs)
             self.circuit_gates.extend(ExtensionGateBuilder.getGate())
+            """
+            raise Exception("unsupported gate")
         else:
             body = self.gates[name]['body']
             for child in body.children:

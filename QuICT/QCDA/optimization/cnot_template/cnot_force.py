@@ -7,13 +7,7 @@
 import numpy as np
 
 from .._optimization import Optimization
-<<<<<<< HEAD:QuICT/QCDA/optimization/cnot_template/cnot_force.py
 from QuICT.core import *
-=======
-from QuICT.models import *
-from ...models._gate import GATE_ID
-
->>>>>>> 1711899f6c378455fbb819c18c4d1201275674ed:QuICT/optimization/cnot_template/cnot_force.py
 
 class path(object):
     """ record the path of bfs
