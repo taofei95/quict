@@ -5,16 +5,25 @@ from typing import List, Tuple, Dict
 from QuICT.models import *
 
 import numpy as np
-
+import networkx as nx
 class Dag:
+    instances_count = 0
     def __init__(self, circuit : Circuit):
-        pass
-
+        if circuit is not None:
+            self.dag = _transform_from_circuit(circuit = circuit)
+        else 
+            self.dag = nx.DiGraph()
+    
     def get_front_layer(self):
         pass
 
+    def read_from_qasm(self, file_name :str):
+        pass
+    def _tranform_from_circuit(self, circuit : Circuit):
+        pass
 
-class MonteCarloTreeNode:
+
+class MCTSNode:
     def __init__(self, circuit: Dag, layout: List[int], parent=None):
         """
         Parameters
@@ -35,20 +44,23 @@ class MonteCarloTreeNode:
 
         self.v = 0
         self.q = 0
-        
+    
     @property
     def q(self):
         """
         score of the current node
         """
         pass
+
+
     @property
     def v(self):
         """
         value of the current node. v = argmax(q)
         """
         pass
-    
+
+
     @property
     def circuit(self):
         """
@@ -58,12 +70,12 @@ class MonteCarloTreeNode:
 
 
 
-
     def _add_child_node(self, swap: BasicGate):
         """
         add a child node by applying the swap gate
         """
         pass
+    
 
     def is_leaf_node(self):
         """
@@ -99,49 +111,63 @@ class MonteCarloTreeNode:
 
 
 class MCTSBase:
-    def __init__(self, **params):
+    @abstractmethod
+    def __init__(self, coupling_graph:List[Tuple] = None,**params):
         """
         initialize the Monte Carlo tree search with the given parameters 
         """
-        
-    def search(self, root_node:MonteCarloTreeNode):
+        self.coupling_graph = coupling_graph
+        self.shortest_path_coupling_graph,  self.shortest_path_coupling_graph =  _cal_shortest_path(self.coupling_graph)
+
+
+    @abstractmethod
+    def search(self, root_node : MCTSNode):
         """
         """
         pass
 
-    def expand(self):
+    @abstractmethod
+    def _expand(self):
         """
         open all child nodes of the  current node by applying the swap gates in candidate swap list
         """
         pass
 
-    def rollout(self, method: str):
+    @abstractmethod
+    def _rollout(self, method: str):
         """
         complete a heuristic search from the current node
         """
         pass
-
-    def backpropagate(self, reward: float):
+    
+    @abstractmethod
+    def _backpropagate(self, reward: float):
         """
         use the result of the rollout to update the score in the nodes on the path from the current node to the root 
         """
         pass
 
-    
-    def select(self):
+    @abstractmethod
+    def _select(self):
         """
         select the child node with highest score
         """
         pass
-
-    def eval(self, method: str):
+    @abstractmethod
+    def _eval(self):
         """
         evaluate the vlaue of the current node by DNN method
         """
         pass
 
-
-class TableBasedMCTS(MCTSBase):
-    def __init__(self):
+    def _cal_shortest_path(self.coupling_graph):
+        """
+        """
         pass
+
+    def _read_coupling_graph(self, file_name: str):
+        """
+        """
+        pass
+
 
