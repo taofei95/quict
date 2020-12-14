@@ -5,10 +5,7 @@
 # @File    : _systemcdll.py.py
 
 import ctypes
-import platform
 import os
-
-import numpy as np
 
 class SystemCdll(object):
     """ calculation module that coded by C++ with Inter tbb parallel library
@@ -20,7 +17,6 @@ class SystemCdll(object):
     @property
     def quick_operator_cdll(self):
         if self.__quick_operator_cdll is None:
-            sys = platform.system()
             path = os.path.dirname(os.path.abspath(__file__)) + os.path.sep + "quick_operator_cdll.so"
             self.__quick_operator_cdll = ctypes.cdll.LoadLibrary(path)
         return self.__quick_operator_cdll

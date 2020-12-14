@@ -4,8 +4,6 @@
 # @Author  : Han Yu
 # @File    : _extensionGate.py
 
-from enum import Enum
-
 from .gate import *
 from .gate_builder import GateBuilder
 

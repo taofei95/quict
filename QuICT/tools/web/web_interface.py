@@ -6,7 +6,7 @@
 
 import numpy as np
 
-from QuICT.QCDA.optimization import *
+from QuICT.qcda.optimization import *
 from QuICT.core import *
 
 class WebInterface(object):
@@ -133,7 +133,7 @@ class WebInterface(object):
         """
         circuit = WebInterface.load_object(ast)
         if method == "CNOT_Rz":
-            circuit = topological_cnot_rz.run(circuit)
+            circuit = TopologicalCnotRz.run(circuit)
         else:
             raise Exception("it is not supported now")
         return WebInterface.output_object(circuit)

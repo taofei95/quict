@@ -9,7 +9,6 @@ from math import log2, ceil, floor, sqrt
 import numpy as np
 
 from .._optimization import Optimization
-from QuICT.core.exception import CircuitStructException
 from QuICT.core import *
 
 s = 0
@@ -171,7 +170,7 @@ def GenerateYBase(Y_part, c, length, x):
         r_sqrtn = int(pow(2, cols))
 
         sl        = [0] * (r_sqrtn - 1)
-        sl_origin = [[] * 0 for i in range(r_sqrtn - 1)]
+        sl_origin = [[] * 0 for _ in range(r_sqrtn - 1)]
         for u in range(n):
             l = 0
             for i in range(cols):

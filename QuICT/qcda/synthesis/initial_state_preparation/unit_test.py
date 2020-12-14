@@ -7,7 +7,6 @@
 from QuICT.core import *
 from QuICT.algorithm import *
 from QuICT.qcda.synthesis import InitialStatePreparation
-import numpy as np
 import pytest
 
 def test_1():

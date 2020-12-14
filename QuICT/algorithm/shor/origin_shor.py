@@ -226,7 +226,7 @@ def Shor(N, fidelity = None):
         if circuit is None:
             circuit = Circuit(4 * L + 2)
         else:
-            circuit.reset_all()
+            circuit.clear()
         # circuit.reset_initial_zeros()
 
         if fidelity is not None:
