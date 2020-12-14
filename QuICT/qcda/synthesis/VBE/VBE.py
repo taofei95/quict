@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding:utf8 -*-
-# @TIME    : 2020/11/5 10:55 上午
+# @TIME    : 2020/11/5 10:55
 # @Author  : Han Yu
 # @File    : VBE.py
 

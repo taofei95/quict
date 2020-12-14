@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding:utf8 -*-
-# @TIME    : 2020/12/11 12:13 上午
+# @TIME    : 2020/12/11 12:13
 # @Author  : Han Yu
 # @File    : _exec_operator.py
 

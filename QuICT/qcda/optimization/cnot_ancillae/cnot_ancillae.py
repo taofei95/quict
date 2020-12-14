@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding:utf8 -*-
-# @TIME    : 2020/11/5 8:55 上午
+# @TIME    : 2020/11/5 8:55
 # @Author  : Han Yu
 # @File    : cnot_ancillae.py
 
@@ -27,7 +27,7 @@ def add_CNOT(a, b):
     global CNOT
     CNOT.append((a, b))
 
-#   对一段区间[start, end)进行反向操作
+#   inverse [start, end)
 def Inverse(start, end):
     """ apply the inverse of gate list in CNOT[start:end] on the circuit
 
@@ -39,7 +39,7 @@ def Inverse(start, end):
     for i in range(end - 1, start - 1, -1):
         add_CNOT(CNOT[i][0], CNOT[i][1])
 
-#   Lemma 5中的copy过程，将x copy给c[:length]
+#   Lemma 5 x copy to c[:length]
 def Copy(x, copy_list):
     """ copy process in Lemma 5
 

@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 # -*- coding:utf8 -*-
-# @TIME    : 2020/3/22 10:31 上午
+# @TIME    : 2020/3/22 10:31
 # @Author  : Han Yu
 # @File    : _qasmInterface.py
 
-from ._basicInterface import BasicInterface
+from .basic_interface import BasicInterface
 from QuICT.core import *
 from QuICT.lib import Qasm
 from QuICT.core.exception import QasmInputException

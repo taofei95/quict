@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding:utf8 -*-
-# @TIME    : 2020/5/19 10:58 上午
+# @TIME    : 2020/5/19 10:58
 # @Author  : Han Yu
 # @File    : Shor.py
 

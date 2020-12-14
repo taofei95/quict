@@ -54,8 +54,8 @@ class DefaultStyle:
             'rz': 'R_z',
             'reset': '\\left|0\\right\\rangle',
             'barrier' : 'barrier',
-            'Perm门' : 'perm',
-            'Custom门' : 'custom'
+            'Permutation gate' : 'perm',
+            'Custom gate' : 'custom'
         }
         self.dispcol = {
             'u0': basis_color,
@@ -81,8 +81,8 @@ class DefaultStyle:
             'swap': other_color,
             'multi': other_color,
             'meas': non_gate_color,
-            'Perm门' : other_color,
-            'Custom门' : other_color
+            'Permutation gate' : other_color,
+            'Custom gate' : other_color
         }
         self.latexmode = False
         self.fold = None  # To be removed after 0.10 is released

@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding:utf8 -*-
-# @TIME    : 2020/11/12 11:37 上午
+# @TIME    : 2020/11/12 11:37
 # @Author  : Han Yu
 # @File    : MCT_one_aux.py
 

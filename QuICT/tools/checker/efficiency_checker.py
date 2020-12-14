@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding:utf8 -*-
-# @TIME    : 2020/3/14 8:38 上午
+# @TIME    : 2020/3/14 8:38
 # @Author  : Han Yu
 # @File    : _efficiencyChecker.py
 

@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding:utf8 -*-
-# @TIME    : 2020/12/11 10:55 上午
+# @TIME    : 2020/12/11 10:55
 # @Author  : Han Yu
 # @File    : _extensionGate.py
 
@@ -188,7 +188,7 @@ class gateModel(object):
                 elif isinstance(item, Qureg):
                     qureg.extend(item)
                 else:
-                    raise TypeException("qubit or tuple<qubit, qureg> or qureg或list<qubit, qureg> or circuit", other)
+                    raise TypeException("qubit or tuple<qubit, qureg> or qureg or list<qubit, qureg> or circuit", other)
         elif isinstance(other, Qureg):
             qureg = other
         elif isinstance(other, Circuit):

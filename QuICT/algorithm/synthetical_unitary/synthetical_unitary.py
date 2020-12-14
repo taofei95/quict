@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding:utf8 -*-
-# @TIME    : 2020/11/5 8:39 上午
+# @TIME    : 2020/11/5 8:39
 # @Author  : Han Yu
 # @File    : SyntheticalUnitary.py
 
