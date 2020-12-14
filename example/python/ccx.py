@@ -25,5 +25,5 @@ T           | circuit(0)
 T           | circuit(2)
 H           | circuit(2)
 
-unitary = SyntheticalUnitary.run(circuit)
+unitary = SyntheticalUnitary.run(circuit, showSU=False)
 print(unitary)

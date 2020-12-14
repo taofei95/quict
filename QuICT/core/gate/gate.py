@@ -230,9 +230,11 @@ class BasicGate(object):
             circuit = qureg.circuit
             if self.is_single():
                 for qubit in qureg:
-                    self._deal_qubit(qubit, circuit)
+                    gate = self.copy()
+                    circuit.append(gate, qubit)
             else:
-                self._deal_qureg(qureg, circuit)
+                gate = self.copy()
+                circuit.append(gate, qureg)
         except Exception:
             raise TypeException("qubit or tuple<qubit, qureg> or qureg or list<qubit, qureg> or circuit", targets)
 
@@ -375,10 +377,24 @@ class BasicGate(object):
         should be overloaded by subClass
 
         Args:
-            the circuit this gate act on
+            circuit(Circuit): the circuit this gate act on
 
         """
         raise Exception("cannot execute: undefined gate")
+
+    def copy(self):
+        """ return a copy of this gate
+
+        Returns:
+            gate(BasicGate): a copy of this gate
+        """
+        name = str(self.__class__.__name__)
+        gate = globals()[name]()
+        gate.pargs = copy.deepcopy(self.pargs)
+        gate.targets = self.targets
+        gate.controls = self.controls
+        gate.params = self.params
+        return gate
 
     @staticmethod
     def permit_element(element):
@@ -399,41 +415,6 @@ class BasicGate(object):
             if tp == np.int64 or tp == np.float or tp == np.complex128:
                 return True
             return False
-
-    # private tool function
-    def _deal_qubit(self, qubit, circuit):
-        """ add gate to one qubit
-
-        Args:
-            qubit(Qubit): qubit the gate act on
-            circuit(Circuit): circuit the gate act on
-        """
-        name = str(self.__class__.__name__)
-        gate = globals()[name]()
-        gate.pargs = copy.deepcopy(self.pargs)
-        gate.targets = self.targets
-        gate.controls = self.controls
-        gate.params = self.params
-        if isinstance(gate, UnitaryGate):
-            gate.matrix = self.matrix
-        circuit.append(gate, qubit)
-
-    def _deal_qureg(self, qureg, circuit):
-        """ add gate to one qureg
-
-        Args:
-            qureg: qureg the gate act on
-            circuit(Circuit): circuit the gate act on
-        """
-        name = str(self.__class__.__name__)
-        gate = globals()[name]()
-        gate.pargs = copy.deepcopy(self.pargs)
-        gate.targets = self.targets
-        gate.controls = self.controls
-        gate.params = self.params
-        if isinstance(gate, UnitaryGate):
-            gate.matrix = self.matrix
-        circuit.append(gate, qureg)
 
 class HGate(BasicGate):
     """ Hadamard gate
@@ -1849,7 +1830,7 @@ class UnitaryGate(BasicGate):
 
 
         Returns:
-            CustomGate: the gate after filled by parameters
+            UnitaryGateGate: the gate after filled by parameters
         """
         if not isinstance(matrix, list) and not isinstance(matrix, tuple):
             raise TypeException("list or tuple", matrix)
@@ -1868,18 +1849,23 @@ class UnitaryGate(BasicGate):
         self.matrix = np.array([matrix], dtype=np.complex)
         return self
 
+    def copy(self):
+        gate = super().copy()
+        gate.matrix = self.matrix
+        return gate
+
     def __str__(self):
         return "Custom gate"
 
     def inverse(self):
-        _custom = UnitaryGate()
-        _custom.targs = copy.deepcopy(self.targs)
-        _custom.matrix = np.array(np.mat(self._matrix).reshape(1 << self.targets, 1 << self.targets).H.reshape(1, -1),
-                                  dtype=np.complex)
-        _custom.targets = self.targets
-        _custom.params = self.params
-        _custom.controls = self.controls
-        return _custom
+        _unitary = UnitaryGate()
+        _unitary.targs = copy.deepcopy(self.targs)
+        _unitary.matrix = np.array(np.mat(self._matrix).reshape(1 << self.targets, 1 << self.targets).
+                                   H.reshape(1, -1), dtype=np.complex)
+        _unitary.targets = self.targets
+        _unitary.params = self.params
+        _unitary.controls = self.controls
+        return _unitary
 
     def exec(self, circuit):
         exec_custom(self, circuit)
