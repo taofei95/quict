@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding:utf8 -*-
-# @TIME    : 2020/8/22 2:39 下午
+# @TIME    : 2020/8/22 2:39
 # @Author  : Han Yu
 # @File    : _synthesis.py
 

@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding:utf8 -*-
-# @TIME    : 2020/12/10 11:39 下午
+# @TIME    : 2020/12/10 11:39
 # @Author  : Han Yu
 # @File    : _QState_computing.py
 

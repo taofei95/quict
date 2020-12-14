@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding:utf8 -*-
-# @TIME    : 2020/2/10 8:44 下午
+# @TIME    : 2020/2/10 8:44
 # @Author  : Han Yu
 # @File    : _qubit.py
 

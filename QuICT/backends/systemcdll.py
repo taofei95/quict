@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding:utf8 -*-
-# @TIME    : 2020/2/15 10:43 下午
+# @TIME    : 2020/2/15 10:43
 # @Author  : Han Yu
 # @File    : _systemcdll.py.py
 

@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding:utf8 -*-
-# @TIME    : 2020/11/23 4:31 下午
+# @TIME    : 2020/11/23 4:31
 # @Author  : Han Yu
 # @File    : qubit_unit_test.py
 

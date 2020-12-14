@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding:utf8 -*-
-# @TIME    : 2020/2/24 9:56 下午
+# @TIME    : 2020/2/24 9:56
 # @Author  : Han Yu
 # @File    : _ETChecker.py
 

@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding:utf8 -*-
-# @TIME    : 2020/11/22 7:14 下午
+# @TIME    : 2020/11/22 7:14
 # @Author  : Han Yu
 # @File    : __init__.py
 

@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding:utf8 -*-
-# @TIME    : 2020/11/27 1:42 下午
+# @TIME    : 2020/11/27 1:42
 # @Author  : Han Yu
 # @File    : topological_cnot.py
 

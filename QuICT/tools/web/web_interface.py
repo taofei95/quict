@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding:utf8 -*-
-# @TIME    : 2020/6/8 9:09 下午
+# @TIME    : 2020/6/8 9:09
 # @Author  : Han Yu
 # @File    : _webInterface.py
 

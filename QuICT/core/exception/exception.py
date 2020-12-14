@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding:utf8 -*-
-# @TIME    : 2020/2/11 1:47 下午
+# @TIME    : 2020/2/11 1:47
 # @Author  : Han Yu
 # @File    : _exception.py
 

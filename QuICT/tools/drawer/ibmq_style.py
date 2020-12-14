@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding:utf8 -*-
-# @TIME    : 2020/3/30 11:13 下午
+# @TIME    : 2020/3/30 11:13
 # @Author  : Han Yu
 # @File    : _IBMQStyle.py
 

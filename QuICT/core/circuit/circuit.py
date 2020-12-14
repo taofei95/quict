@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding:utf8 -*-
-# @TIME    : 2020/2/10 9:41 下午
+# @TIME    : 2020/2/10 9:41
 # @Author  : Han Yu
 # @File    : _circuit.py
 

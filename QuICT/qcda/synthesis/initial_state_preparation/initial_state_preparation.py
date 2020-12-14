@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding:utf8 -*-
-# @TIME    : 2020/10/26 2:51 下午
+# @TIME    : 2020/10/26 2:51
 # @Author  : Han Yu
 # @File    : _initial_state_preparation.py
 

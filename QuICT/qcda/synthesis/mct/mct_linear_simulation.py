@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding:utf8 -*-
-# @TIME    : 2020/11/12 6:33 下午
+# @TIME    : 2020/11/12 6:33
 # @Author  : Han Yu
 # @File    : MCT_Linear_Simulation.py
 

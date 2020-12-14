@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding:utf8 -*-
-# @TIME    : 2020/11/7 9:54 下午
+# @TIME    : 2020/11/7 9:54
 # @Author  : Han Yu
 # @File    : _unit_test.py
 

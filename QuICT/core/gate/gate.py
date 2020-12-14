@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding:utf8 -*-
-# @TIME    : 2020/2/10 9:04 下午
+# @TIME    : 2020/2/10 9:04
 # @Author  : Han Yu
 # @File    : _gate.py
 
