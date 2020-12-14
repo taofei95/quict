@@ -69,7 +69,7 @@ def exec_custom(gate, circuit):
     for i in range(1, gate.targets):
         new_qState = circuit.qubits[targs[i]].qState
         qState.merge(new_qState)
-    qState.deal_custom_gate(gate)
+    qState.deal_unitary_gate(gate)
 
 def exec_shorInit(gate, circuit):
     targs = gate.targs

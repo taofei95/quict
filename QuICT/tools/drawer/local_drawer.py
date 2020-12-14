@@ -535,7 +535,7 @@ class PhotoDrawerModel(object):
             layer_width = 1
 
             for gate in layer.gates:
-                if gate.type() == GATE_ID["Perm"] or gate.type() == GATE_ID["Custom"]:
+                if gate.type() == GATE_ID["Perm"] or gate.type() == GATE_ID["Unitary"]:
                     continue
                 elif gate.params > 1:
                     param = self.get_parameter_str(gate.pargs)
@@ -572,7 +572,7 @@ class PhotoDrawerModel(object):
                 if gate.params > 0:
                     param = self.get_parameter_str(gate.pargs)
 
-                if gate.type() == GATE_ID["Perm"] or gate.type() == GATE_ID["Custom"]:
+                if gate.type() == GATE_ID["Perm"] or gate.type() == GATE_ID["Unitary"]:
                     name = str(gate)
                     for coor in coord:
                         self.draw_gate(coor, name, '')

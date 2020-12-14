@@ -139,7 +139,7 @@ class ETCheckerModel(object):
                 GateBuilder.setPargs(perm_list)
                 gate = GateBuilder.getGate()
                 circuit.gates.append(gate)
-            elif self.typeList[rand_type] == GATE_ID["Custom"]:
+            elif self.typeList[rand_type] == GATE_ID["Unitary"]:
                 pass
             else:
                 targs = GateBuilder.getTargsNumber()
@@ -195,7 +195,7 @@ class ETCheckerModel(object):
                 GateBuilder.setPargs(perm_list)
                 gate = GateBuilder.getGate()
                 circuit.gates.append(gate)
-            elif self.typeList[rand_type] == GATE_ID["Custom"]:
+            elif self.typeList[rand_type] == GATE_ID["Unitary"]:
                 pass
             else:
                 targs = GateBuilder.getTargsNumber()

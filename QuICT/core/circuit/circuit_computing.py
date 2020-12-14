@@ -90,7 +90,7 @@ def inner_matrix_product_to_circuit(circuit, gate) -> np.ndarray:
     xor = (1 << q_len) - 1
     if not isinstance(targs, list):
         raise Exception("unknown error")
-    matrix = gate.compute_matrix().reshape(1 << len(targs), 1 << len(targs))
+    matrix = gate.compute_matrix.reshape(1 << len(targs), 1 << len(targs))
     datas = np.zeros(n, dtype=int)
     for i in range(n):
         nowi = 0

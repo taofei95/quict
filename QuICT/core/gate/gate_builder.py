@@ -193,7 +193,7 @@ class GateBuilderModel(object):
             return SwapGate()
         elif self.gateType == GATE_ID["Perm"]:
             return PermGate()
-        elif self.gateType == GATE_ID["Custom"]:
+        elif self.gateType == GATE_ID["Unitary"]:
             return CustomGate()
         elif self.gateType == GATE_ID["Reset"]:
             return ResetGate()
@@ -209,7 +209,7 @@ class GateBuilderModel(object):
         """
         if self.gateType == GATE_ID["Perm"]:
             gate = gate(self.pargs)
-        elif self.gateType == GATE_ID["Custom"]:
+        elif self.gateType == GATE_ID["Unitary"]:
             gate = gate(self.pargs)
         if gate.targets != 0:
             if len(self.targs) == gate.targets:

@@ -36,7 +36,7 @@ from .gate import (
     PermMul,
     ControlPermMul,
     PermFx,
-    Custom,
+    Unitary,
     ControlPermMulDetail,
     ShorInitial,
 

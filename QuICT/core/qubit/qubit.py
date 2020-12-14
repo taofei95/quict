@@ -524,17 +524,17 @@ class QState(object):
         """
         QState_deal_swap_gate(self, gate)
 
-    def deal_custom_gate(self, gate):
+    def deal_unitary_gate(self, gate):
         """ apply a custom gate on this qState
 
         Args:
-            gate(CustomGate): the gate to be applied.
+            gate(UnitaryGate): the gate to be applied.
 
         Exceptions:
             FrameworkException: the index is out of range
         """
 
-        QState_deal_custom_gate(self, gate)
+        QState_deal_unitary_gate(self, gate)
 
     def deal_perm_gate(self, gate):
         """ apply a Perm gate on this qState

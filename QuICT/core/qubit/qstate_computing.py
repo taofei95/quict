@@ -260,7 +260,7 @@ def QState_deal_swap_gate(qState, gate):
     qState.qureg[cindex] = qState.qureg[tindex]
     qState.qureg[tindex] = t
 
-def QState_deal_custom_gate(qState, gate):
+def QState_deal_unitary_gate(qState, gate):
     dll = systemCdll.quick_operator_cdll
     custom_operator_gate = dll.custom_operator_gate
     custom_operator_gate.argtypes = [
