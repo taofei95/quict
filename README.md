@@ -2,63 +2,37 @@
 
 ### to review the framework, you can check
 
-#### models
+#### cores
 
 ​	the main part of the framework, contains:
 
-- _qubit.py
+- qubit.py
   - implement the quantum bit and quantum register
   - implement the tangle, which is the basic calculation unit  for the amplitude
-- _circuit.py
+- circuit.py
   - implement the quantum circuit
-- _gate.py
+- gate.py
   - implement some basic quantum gate 
 
-#### backends
+# How to use
 
-- _systemcdll.py
-  - use ctype link the library "quick_operator_cdll.so" which coded by C++, It is used to calculate the amplitude of the circuit
+## Clone
 
-#### algorithm
+You should clone this repo with this command:
 
-​	library for quantum algorithm like shor
+```
+git clone --recurse-submodules <repo_url>
+```
 
-- _algorithm.py
-  - implement the basic class Algorithm, which is the superClass of all the quantum algorithm
+If you have already clone this repo, you need to execute:
 
-There is some examples which is been refactored:
+```
+git submodule update --init
+```
 
-- Amplitude/Amplitude.py
-- SyntheticalUnitary/SyntheticalUnitary.py
+## Build & Install
 
-#### synthesis
-
-​	library for oracle decompose into some basic gate
-
-- _synthesis.py
-  - implement the basic class Synthesis, which is the superClass of all the synthesis algorithm
-
-There is some examples which is been refactored:
-
-- MCT/MCT_one_aux.py
-- MCT/MCT_Linear_Simulation.py
-
-#### optimization
-
-​	library for oracle decompose into some basic gate
-
-- _optimization.py
-  - implement the basic class Optimization, which is the superClass of all the optimization algorithm
-
-There is some examples which  **isn's been refactored**:
-
-- cnot_ancillae/cnot_ancillae.py
-- alter_depth_decomposition/alter_depth_decomposition.py
-
-#### mapping
-
-​	library for mapping
-
-- _mapping.py
-  - implement the basic class Mapping, which is the superClass of all the mapping algorithm
-
+```
+./build.sh && \
+sudo ./install.sh
+```
