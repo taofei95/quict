@@ -101,7 +101,7 @@ $CXX \
  -shared  -I$tbb_include_dir -ltbb -L$tbb_build_dir && 
  cd ..  || exit 1
 
-cd ./QCDA/synthesis/initial_state_preparation && \
+cd ./qcda/synthesis/initial_state_preparation && \
 $CXX \
   -o initial_state_preparation_cdll.so initial_state_preparation.cpp \
   -std=c++11  -fPIC -shared  -I$tbb_include_dir -ltbb -L$tbb_build_dir  || exit 1

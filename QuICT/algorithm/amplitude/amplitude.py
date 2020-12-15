@@ -6,6 +6,7 @@
 
 from .._algorithm import Algorithm
 from QuICT import *
+from QuICT.core import *
 from QuICT.backends import systemCdll
 import numpy as np
 from ctypes import c_int
