@@ -252,7 +252,6 @@ class gateModel(object):
                 for control in gate.cargs:
                     qubits.append(qureg[control])
                 for target in gate.targs:
-                    print(target)
                     qubits.append(qureg[target])
                 circuit.append(gate, qubits)
         except Exception:

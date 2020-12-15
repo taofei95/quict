@@ -42,8 +42,6 @@ def gate_implementation(cls):
     global GATE_ID
     global GATE_ID_CNT
 
-    print(cls.__name__)
-
     GATE_REGISTER[GATE_ID_CNT] = cls.__name__
     GATE_ID[cls.__name__] = GATE_ID_CNT
     GATE_ID_CNT += 1
