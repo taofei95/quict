@@ -129,6 +129,50 @@ class Qubit(object):
         else:
             return True
 
+    def __getitem__(self, item):
+        """ to fit the the operator qubit[0], return itself
+
+        Args:
+            item(int): must be 0
+        Return:
+            Qubit: itself
+        """
+        if isinstance(item, int) and item == 0:
+            return self
+        raise Exception("the item passes to Qubit should be 0.")
+
+    def __call__(self, indexes: object):
+        """ get a smaller qureg from this qureg
+
+        Args:
+            indexes: the indexes passed in, it can have follow form:
+                1) int
+                2) [0]
+                3) (0)
+        Returns:
+            Qureg: the qureg correspond to self
+        Exceptions:
+            IndexDuplicateException: the range of indexes is error.
+            TypeException: the type of indexes is error.
+        """
+
+        # int
+        if isinstance(indexes, int):
+            if indexes == 0:
+                return Qureg(self)
+
+        # tuple
+        if isinstance(indexes, tuple):
+            if len(indexes) == 1 and indexes[0] == 0:
+                return Qureg(self)
+
+        # list
+        if isinstance(indexes, list):
+            if len(indexes) == 1 and indexes[0] == 0:
+                return Qureg(self)
+
+        raise Exception("the item passes to Qubit should be 0.")
+
     def has_qState(self):
         """ whether the qubit is belonged to a qState.
 

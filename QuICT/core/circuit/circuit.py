@@ -324,10 +324,7 @@ class Circuit(object):
             qureg_list = [] if gate.controls == 0 else copy.deepcopy(gate.cargs)
             qureg_list.extend(gate.targs)
             qureg = self(qureg_list)
-        if gate.controls + gate.targets == 1:
-            self._add_qubit_gate(gate, qureg if isinstance(qureg, Qubit) else qureg[0])
-        else:
-            self._add_qureg_gate(gate, qureg)
+        self._add_gate(gate, qureg)
 
     def extend(self, gates):
         """ add gates to the circuit
@@ -338,18 +335,7 @@ class Circuit(object):
         for gate in gates:
             self.append(gate)
 
-    def _add_qubit_gate(self, gate, qubit):
-        """ add a gate into some qubit
-
-        Args:
-            gate(BasicGate)
-            qubit(Qubit)
-        """
-        self.gates.append(gate)
-        self.__queue_gates.append(gate)
-        gate.targs = [self.__idmap[qubit.id]]
-
-    def _add_qureg_gate(self, gate, qureg):
+    def _add_gate(self, gate, qureg):
         """ add a gate into some qureg
 
         Args:
