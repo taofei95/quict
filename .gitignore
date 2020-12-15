@@ -1,5 +1,6 @@
 /dist/
 /build/
+venv/
 /QuICT.egg-info/
 */__pycache__/
 /tbb-2020.1/
