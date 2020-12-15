@@ -6,7 +6,7 @@
 
 from QuICT.tools.checker import StandardEfficiencyChecker
 
-StandardEfficiencyChecker.min_qubits = 20
-StandardEfficiencyChecker.max_qubits = 30
-StandardEfficiencyChecker.size = 100
+StandardEfficiencyChecker.min_qubits = 10
+StandardEfficiencyChecker.max_qubits = 20
+StandardEfficiencyChecker.size = 1000
 StandardEfficiencyChecker.run()
