@@ -1868,7 +1868,7 @@ class UnitaryGate(BasicGate):
         return _unitary
 
     def exec(self, circuit):
-        exec_custom(self, circuit)
+        exec_unitary(self, circuit)
 
 Unitary = UnitaryGate(["Unitary"])
 

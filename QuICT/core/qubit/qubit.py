@@ -5,9 +5,12 @@
 # @File    : _qubit.py
 
 from math import sqrt
+import random
 import weakref
 
-from .qstate_computing import *
+import numpy as np
+
+from ..exception import *
 
 # global qubit id count
 qubit_id = 0
@@ -482,136 +485,6 @@ class QState(object):
             if self.qureg[i].id == qubit.id:
                 return i
         raise Exception("the qubit is not in the qState")
-
-    def merge(self, other):
-        """ merge another qState into this qState
-
-        Args:
-            other: the qState need to be merged.
-
-        Exceptions:
-            FrameworkException: the index is out of range
-        """
-        QState_merge(self, other)
-
-    def deal_single_gate(self, gate, has_fidelity = False, fidelity = 1.0):
-        """ apply an one-qubit gate on this qState
-
-        Args:
-            gate(BasicGate): the gate to be applied.
-            has_fidelity(bool): whether gate is completely accurate.
-            fidelity(float): the fidelity of the gate
-
-        Exceptions:
-            FrameworkException: the index is out of range
-        """
-        QState_deal_single_gate(self, gate, has_fidelity, fidelity)
-
-    def deal_measure_gate(self, gate):
-        """ apply a measure gate on this qState
-
-        Note that after flush the measure gate, the qubit will be removed
-        from the qState.
-
-        Args:
-            gate(MeasureGate): the gate to be applied.
-
-        Exceptions:
-            FrameworkException: the index is out of range
-        """
-        QState_deal_measure_gate(self, gate)
-
-    def deal_reset_gate(self, gate):
-        """ apply a reset gate on this qState
-
-        Note that after flush the reset gate, the qubit will be removed
-        from the qState.
-
-        Args:
-            gate(ResetGate): the gate to be applied.
-
-        Exceptions:
-            FrameworkException: the index is out of range
-        """
-        QState_deal_reset_gate(self, gate)
-
-    def deal_control_single_gate(self, gate):
-        """ apply a controlled one qubit gate on this qState
-
-        Args:
-            gate(BasicGate): the gate to be applied.
-
-        Exceptions:
-            FrameworkException: the index is out of range
-        """
-        QState_deal_control_single_gate(self, gate)
-
-    def deal_ccx_gate(self, gate):
-        """ apply a toffoli gate on this qState
-
-        Args:
-            gate(BasicGate): the gate to be applied.
-
-        Exceptions:
-            FrameworkException: the index is out of range
-        """
-        QState_deal_ccx_gate(self, gate)
-
-    def deal_swap_gate(self, gate):
-        """ apply a swap gate on this qState
-
-        Args:
-            gate(SwapGate): the gate to be applied.
-
-        Exceptions:
-            FrameworkException: the index is out of range
-        """
-        QState_deal_swap_gate(self, gate)
-
-    def deal_unitary_gate(self, gate):
-        """ apply a custom gate on this qState
-
-        Args:
-            gate(UnitaryGate): the gate to be applied.
-
-        Exceptions:
-            FrameworkException: the index is out of range
-        """
-
-        QState_deal_unitary_gate(self, gate)
-
-    def deal_perm_gate(self, gate):
-        """ apply a Perm gate on this qState
-
-        Args:
-            gate(PermGate): the gate to be applied.
-
-        Exceptions:
-            FrameworkException: the index is out of range
-        """
-        QState_deal_perm_gate(self, gate)
-
-    def deal_controlMulPerm_gate(self, gate):
-        """ apply a controlMulPerm gate on this qState
-
-        Args:
-            gate(controlMulPerm): the gate to be applied.
-
-        Exceptions:
-            FrameworkException: the index is out of range
-        """
-        QState_deal_controlMulPerm_gate(self, gate)
-
-    def deal_shorInitial_gate(self, gate):
-        """ apply a shorInitial gate on this qState
-
-        Args:
-            gate(shorInitialGate): the gate to be applied.
-
-        Exceptions:
-            FrameworkException: the index is out of range
-        """
-        QState_deal_shorInitial_gate(self, gate)
 
     # cheat methods
     def force_assign_random(self):
