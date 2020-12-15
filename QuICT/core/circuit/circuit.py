@@ -412,7 +412,6 @@ class Circuit(object):
 
         """
         for gate in self.__queue_gates:
-            gate.print_info()
             gate.exec(self)
         self.__queue_gates = []
 
