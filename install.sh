@@ -21,10 +21,10 @@ done
 echo "Installing TBB"
 
 if [[ $OS =~ "Darwin" ]];then
-    sudo cp $tbb_build_dir/libtbb.dylib /usr/local/lib
+  cp $tbb_build_dir/libtbb.dylib /usr/local/lib
 elif [[ $OS =~ "Linux" ]]; then
-    sudo cp $tbb_build_dir/*.so /usr/lib
-    sudo cp $tbb_build_dir/*.so.2 /usr/lib
+  cp $tbb_build_dir/*.so /usr/lib
+  cp $tbb_build_dir/*.so.2 /usr/lib
 fi
 
 cd $prj_build_dir && \
