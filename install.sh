@@ -1,8 +1,16 @@
 #!/bin/bash
 
+prj_root=$(pwd)
+
+prj_build_dir="$prj_root/build"
+
+OS=$(uname -a)
+
+PYTHON3=$(which python3)
+
 tbb_build_dir=""
 
-for dir in ./oneTBB/build/*; do
+for dir in ./build/oneTBB/build/*; do
   if [[ -d $dir ]] && [[ $dir == *"_release" ]]; then
     tbb_build_dir=$dir
   fi
@@ -12,13 +20,12 @@ done
 
 echo "Installing TBB"
 
-a=`uname  -a`
-b="Darwin"
-if [[ $a =~ $b ]];then
+if [[ $OS =~ "Darwin" ]];then
     sudo cp $tbb_build_dir/libtbb.dylib /usr/local/lib
-else
+elif [[ $OS =~ "Linux" ]]; then
     sudo cp $tbb_build_dir/*.so /usr/lib
     sudo cp $tbb_build_dir/*.so.2 /usr/lib
 fi
 
-sudo python3 setup.py install
+cd $prj_build_dir && \
+  $PYTHON3 ../setup.py install
