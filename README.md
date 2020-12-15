@@ -16,20 +16,6 @@
 
 # How to use
 
-## Clone
-
-You should clone this repo with this command:
-
-```
-git clone --recurse-submodules <repo_url>
-```
-
-If you have already clone this repo, you need to execute:
-
-```
-git submodule update --init
-```
-
 ## Build & Install
 
 ```
