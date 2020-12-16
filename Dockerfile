@@ -1,4 +1,4 @@
-FROM ubuntu:18.04
+FROM alpine
 
 WORKDIR /home/quict/
 
@@ -6,14 +6,14 @@ ENV LANG C.UTF-8
 
 COPY . .
 
-RUN sed -i s@/archive.ubuntu.com/@/mirrors.tuna.tsinghua.edu.cn/@g /etc/apt/sources.list && \
-    sed -i s@/security.ubuntu.com/@/mirrors.tuna.tsinghua.edu.cn/@g /etc/apt/sources.list && \
-    apt update && \
-    apt install git build-essential linux-headers-generic \
-    python3.7 python3-pip python3-wheel python3-setuptools python3-numpy python3-scipy -y && \
-    chmod +x build.sh install.sh && \
-    ./build.sh && ./install.sh && \
-    apt remove git build-essential linux-headers-generic python3-wheel python3-setuptools -y && \
-    apt autoremove -y && \
-    apt clean && \
-    rm -rf build/ doc/
+RUN echo "https://dl-cdn.alpinelinux.org/alpine/edge/testing" >> /etc/apk/repositories && \
+    sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g' /etc/apk/repositories && \
+    apk update && \
+    apk add --no-cache bash linux-headers libtbb libtbb-dev gcc g++ make python3 py3-numpy py3-scipy py3-setuptools && \
+    ./build.sh && \
+    ./install.sh && \
+    apk del gcc g++ make py3-setuptools libtbb-dev linux-headers && \
+    rm -rf build build.sh install.sh .git .gitignore dependency.sh README.md doc QuICT setup.py Dockerfile
+
+
+CMD ["bash"]

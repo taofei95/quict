@@ -17,10 +17,19 @@
 # How to use
 ## Install Dependency
 
-You need oneTBB to build and/or run QuICT. To install it on Ubuntu:
+You can try `sudo ./dependency.sh` to install dependencies automatically(only Ubuntu and Fedora are supported currently).
+If you prefer install python packages using `pip`, just skip setuptools, numpy and scipy in following commands.
+
+To install dependencies on Ubuntu:
 
 ```
-sudo apt install build-essential libtbb2 libtbb-dev
+sudo apt install build-essential libtbb2 libtbb-dev python3 python3-setuptools python3-numpy python3-scipy
+```
+
+To install dependencies on Fedora:
+
+```
+sudo dnf install make gcc gcc-c++ kernel-devel linux-headers tbb tbb-devel python3 python3-setuptools python3-numpy python3-scipy
 ```
 
 > Our helper scripts use `which` and `uname` command.
