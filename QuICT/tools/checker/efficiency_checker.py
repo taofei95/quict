@@ -168,7 +168,9 @@ class StandardEfficiencyCheckerModel(object):
 
                 max_tt = max(max_tt, time_amplitude)
 
-            print(f'{np.round(ava_t, decimals=2)}({np.round(ava, decimals=2)}) {np.round(min_tt, decimals=2)}({np.round(min_t, decimals=2)}) {np.round(max_tt, decimals=2)}({np.round(max_t, decimals=2)})')
+            print(f'{np.round(ava_t, decimals=2)}({np.round(ava, decimals=2)})'
+                  f'{np.round(min_tt, decimals=2)}({np.round(min_t, decimals=2)}) '
+                  f'{np.round(max_tt, decimals=2)}({np.round(max_t, decimals=2)})')
 
 StandardEfficiencyChecker = StandardEfficiencyCheckerModel()
 

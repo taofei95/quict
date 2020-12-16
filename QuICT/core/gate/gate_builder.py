@@ -194,7 +194,7 @@ class GateBuilderModel(object):
         elif self.gateType == GATE_ID["Perm"]:
             return PermGate()
         elif self.gateType == GATE_ID["Unitary"]:
-            return CustomGate()
+            return UnitaryGate()
         elif self.gateType == GATE_ID["Reset"]:
             return ResetGate()
         raise Exception("the gate type of the builder is wrong")

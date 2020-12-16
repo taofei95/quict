@@ -84,7 +84,7 @@ def pi_check(p, eps=1e-6, ndigits=3):
 
 
 class circuit_layer(object):
-    def __init__(self, qubit):
+    def __init__(self):
         self.pic = set()
         self.occupy = set()
         self.gates = []
@@ -151,12 +151,12 @@ class PhotoDrawerModel(object):
 
     @staticmethod
     def resolution_layers(circuit):
-        layers = [circuit_layer(cir_len)]
+        layers = [circuit_layer()]
         for gate in circuit.gates:
             for i in range(len(layers) - 1, -2, -1):
                 if i == -1 or not layers[i].checkGate(gate):
                     if i + 1 >= len(layers):
-                        layers.append(circuit_layer(cir_len))
+                        layers.append(circuit_layer())
                     layers[i + 1].addGate(gate)
                     break
         return layers

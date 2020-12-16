@@ -4,9 +4,12 @@
 # @Author  : Han Yu
 # @File    : _circuit_computing.py
 
+from ctypes import c_int
 import random
 
 import numpy as np
+
+from QuICT.backends.systemcdll import systemCdll
 
 def _getRandomList(l, n):
     """ get l number from 0, 1, ..., n - 1 randomly.
@@ -29,6 +32,7 @@ def inner_partial_prob(circuit, indexes):
     this function is a cheat function, which do not change the state of the qureg.
 
     Args:
+        circuit(Circuit): the circuit to be dealt
         indexes(list<int>): the indexes of the partial qureg.
 
     Returns:
@@ -36,17 +40,48 @@ def inner_partial_prob(circuit, indexes):
 
     """
     circuit.exec()
-    if not isinstance(indexes, list):
-        qState = circuit.qubits[indexes].qState
-    else:
-        qState = circuit.qubits[indexes[0]].qState
-    for i in range(1, len(indexes)):
-        new_qState = circuit.qubits[indexes[i]].qState
-        qState.merge(new_qState)
-    ids = []
+    dll = systemCdll.quick_operator_cdll
+    partial_prob_operator = dll.partial_prob_cheat_operator
+    partial_prob_operator.argtypes = [
+        np.ctypeslib.ndpointer(dtype=np.complex, ndim=1, flags="C_CONTIGUOUS"),
+        np.ctypeslib.ndpointer(dtype=np.int, ndim=1, flags="C_CONTIGUOUS"),
+        c_int,
+        c_int,
+        np.ctypeslib.ndpointer(dtype=np.int, ndim=1, flags="C_CONTIGUOUS"),
+    ]
+
+    length = 1 << len(indexes)
+
+    partial_prob_operator.restype = np.ctypeslib.ndpointer(dtype=np.complex, shape=(length,))
+
+    tangle_list = []
+    tangle_values = np.array([], dtype=np.complex)
+    tangle_length = np.array([], dtype=np.int)
+    qubit_map = np.array([i for i in range(len(indexes))], dtype=np.int)
+
+    tangle_iter = 0
     for index in indexes:
-        ids.append(circuit.qubits[index].id)
-    return qState.partial_prob(ids)
+        qubit = circuit[index]
+        if qubit.qState not in tangle_list:
+            tangle_list.append(qubit.qState)
+    for tangle in tangle_list:
+        tangle_values = np.append(tangle_values, tangle.values)
+        tangle_length = np.append(tangle_length, len(tangle.qureg))
+        for i in range(len(indexes)):
+            index = indexes[i]
+            qubit = circuit[index]
+            if qubit.qState == tangle:
+                qubit_map[i] = tangle_iter + tangle.index_for_qubit(qubit)
+        tangle_iter = tangle_iter + len(tangle.qureg)
+    ndpointer = partial_prob_operator(
+        tangle_values,
+        tangle_length,
+        len(tangle_list),
+        len(indexes),
+        qubit_map
+    )
+    values = np.ctypeslib.as_array(ndpointer, shape=(length,))
+    return values.tolist()
 
 def inner_random_append(circuit, rand_size=10, typeList=None):
     from QuICT.core import GateBuilder, GATE_ID

@@ -550,8 +550,8 @@ def QState_deal_unitary_gate(qState, gate):
     """
 
     dll = systemCdll.quick_operator_cdll
-    custom_operator_gate = dll.custom_operator_gate
-    custom_operator_gate.argtypes = [
+    unitary_operator_gate = dll.unitary_operator_gate
+    unitary_operator_gate.argtypes = [
         c_int,
         np.ctypeslib.ndpointer(dtype=np.complex, ndim=1, flags="C_CONTIGUOUS"),
         POINTER(c_int),
@@ -571,7 +571,7 @@ def QState_deal_unitary_gate(qState, gate):
             raise FrameworkException("the index is out of range")
         np.append(index, temp_idx)
 
-    custom_operator_gate(
+    unitary_operator_gate(
         len(qState.qureg),
         qState.values,
         index,

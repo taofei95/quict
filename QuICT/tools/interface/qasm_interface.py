@@ -349,7 +349,7 @@ print(result.get_counts(circ))
             self.circuit_gates.append(GateBuilder.getGate())
 
     def analyse_if(self, node):
-        print("if op is not supported:{}" ,node.type)
+        print("if op is not supported:{}", node.type)
         self.valid_circuit = False
 
     def analyse_opaque(self, node):

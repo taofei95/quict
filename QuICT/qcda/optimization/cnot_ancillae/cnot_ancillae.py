@@ -223,8 +223,7 @@ def GenerateYBase(Y_part, c, length, x):
             sl_origin[l][0] = (sl_origin[l][0][0] - 1, sl_origin[l][0][1])
             add_CNOT(ancillary[sl_origin[l][0][1]], ystart[u])
 
-
-        #   Step 4.1 restore of Step2
+        # Step 4.1 restore of Step2
         Inverse(Step2_start, Step2_end)
 
     # Step 4.2 restore of Step1

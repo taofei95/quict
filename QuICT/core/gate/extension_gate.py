@@ -623,5 +623,4 @@ class CCX_DecomposeModel(gateModel):
 
         return gates
 
-
 CCX_Decompose = CCX_DecomposeModel(["CCX", "Toffoli", "toffoli"])
