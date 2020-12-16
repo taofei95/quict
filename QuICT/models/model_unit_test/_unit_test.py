@@ -133,5 +133,14 @@ def test_circuit():
                 assert 0
     assert 1
 
+def test_qureg():
+    circuit = Circuit(5)
+    qureg1 = circuit([2])
+    qureg2 = circuit([3])
+    qureg3 = qureg1 + qureg2
+    for qubit in qureg3:
+        print(qubit.id)
+    Measure | qureg3
+
 if __name__ == "__main__":
     pytest.main(["./_unit_test.py"])
