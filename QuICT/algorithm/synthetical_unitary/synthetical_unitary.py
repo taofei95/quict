@@ -43,5 +43,5 @@ class SyntheticalUnitary(Algorithm):
             n = np.shape(matrix)[0]
             det = np.power(det, 1 / n)
             matrix[:] /= det
-        matrix = np.round(matrix, decimals=6)
+        matrix = matrix
         return np.asmatrix(matrix)

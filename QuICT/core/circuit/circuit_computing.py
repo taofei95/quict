@@ -52,7 +52,7 @@ def inner_partial_prob(circuit, indexes):
 
     length = 1 << len(indexes)
 
-    partial_prob_operator.restype = np.ctypeslib.ndpointer(dtype=np.complex, shape=(length,))
+    partial_prob_operator.restype = np.ctypeslib.ndpointer(dtype=np.float, shape=(length,))
 
     tangle_list = []
     tangle_values = np.array([], dtype=np.complex)
@@ -73,6 +73,7 @@ def inner_partial_prob(circuit, indexes):
             if qubit.qState == tangle:
                 qubit_map[i] = tangle_iter + tangle.index_for_qubit(qubit)
         tangle_iter = tangle_iter + len(tangle.qureg)
+
     ndpointer = partial_prob_operator(
         tangle_values,
         tangle_length,

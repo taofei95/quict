@@ -451,7 +451,7 @@ DLLEXPORT complex<double> * amplitude_cheat_operator(
     return back;
 }
 
-DLLEXPORT complex<double> * partial_prob_cheat_operator(
+DLLEXPORT double* partial_prob_cheat_operator(
     complex<double> *values,
     long long *values_length,
     int tangle_number,
@@ -465,7 +465,7 @@ DLLEXPORT complex<double> * partial_prob_cheat_operator(
         now += (1 << values_length[i]);
     }
     long long v_l = 1 << qubit_number;
-    complex<double> *back = (complex<double>*)malloc(sizeof(complex<double>) * v_l);
+    double *back = (double*)malloc(sizeof(double) * v_l);
     parallel_for(blocked_range<size_t>(0, v_l), [
         qubit_number,
         values_length,
@@ -484,34 +484,43 @@ DLLEXPORT complex<double> * partial_prob_cheat_operator(
                 int index_count = 0;
                 long long fix_position = 0;
                 for (int j = 0;j < qubit_number;++j){
-                    long long index = qubit_map[j] - tangle_iter;
+                    int index = qubit_map[j] - tangle_iter;
                     if (index >= 0 && index < tangle_length){
-                        if ((1 << (qubit_number - index - 1)) & k){
-                            fix_position += 1 << (qubit_number - index - 1);
+                        if ((1 << (qubit_number - j - 1)) & k){
+                            fix_position += 1 << (tangle_length - index - 1);
                         }
-                        indexlist[index_count++] = index;
+                        indexlist[index_count++] = tangle_length - index - 1;
                     }
                 }
-                sort(indexlist, indexlist + index_count);
 
-                back[k] *= parallel_reduce(blocked_range<size_t>(0, 1 << tangle_length), 0.f, [
+                if (index_count != 0){
+                    sort(indexlist, indexlist + index_count);
+                }
+
+                back[k] *= parallel_reduce(blocked_range<size_t>(0, 1 << (tangle_length - index_count)), 0.f, [
                     segment,
                     i,
                     fix_position,
                     indexlist,
-                    index_count
+                    index_count,
+                    k
                 ](blocked_range<size_t>& blk, double init = 0)->double{
                     for (size_t j=blk.begin(); j<blk.end(); j++) {
-                        long long other = j & ((1 << indexlist[0]) - 1);
-                        long long gw = j >> indexlist[0] << (indexlist[0] + 1);
-                        for (int i = 1;i < index_count;++i){
-                            if (gw == 0)
-                                break;
-                            other += gw & ((1 << indexlist[i]) - (1 << indexlist[i - 1]));
-                            gw = gw >> indexlist[i] << (indexlist[i] + 1);
+                        long long other;
+                        if (index_count != 0){
+                            other = j & ((1 << indexlist[0]) - 1);
+                            long long gw = j >> indexlist[0] << (indexlist[0] + 1);
+                            for (int i = 1;i < index_count;++i){
+                                if (gw == 0)
+                                    break;
+                                other += gw & ((1 << indexlist[i]) - (1 << indexlist[i - 1]));
+                                gw = gw >> indexlist[i] << (indexlist[i] + 1);
+                            }
+                            other += gw;
+                            other += fix_position;
+                        }else{
+                            other = j;
                         }
-                        other += gw;
-                        other += fix_position;
 
                         double _real = real(segment[i][other]);
                         double _imag = imag(segment[i][other]);
@@ -519,6 +528,7 @@ DLLEXPORT complex<double> * partial_prob_cheat_operator(
                     }
                     return init;
                 },[](double x, double y)->double{return x + y;});
+
 
                 free(indexlist);
 

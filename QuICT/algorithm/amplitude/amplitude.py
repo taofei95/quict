@@ -80,5 +80,4 @@ class Amplitude(Algorithm):
             qubit_map
         )
         values = np.ctypeslib.as_array(ndpointer, shape=(length,))
-        values = np.round(values, decimals=6)
         return values.tolist()

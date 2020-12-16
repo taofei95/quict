@@ -23,8 +23,5 @@ def test_1():
                 assert 0
         assert 1
 
-def test_2():
-    assert 1
-
 if __name__ == '__main__':
     pytest.main(["./unit_test.py"])
