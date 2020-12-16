@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding:utf8 -*-
-# @TIME    : 2019/12/13 2:20 下午
+# @TIME    : 2019/12/13 2:20
 # @Author  : Han Yu
 # @File    : __version__.py
 
@@ -12,7 +12,8 @@ global __email__
 global __url__
 __title__ = "QuICT"
 __version__ = "1.0.0"
-__description__ = "搭载了电路化简、模拟算法的量子工具包"
+__description__ = "quantum algorithm library"
 __author__ = "ICT_thoery"
 __email__ = "hanyu16@mails.ucas.ac.cn"
 __url__ = "http://theory.ict.ac.cn/"
+
