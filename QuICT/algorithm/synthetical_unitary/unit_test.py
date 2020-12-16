@@ -37,7 +37,7 @@ def test_single():
         gen_g | qureg
         unitary = SyntheticalUnitary.run(circuit, showSU = False)
         ans = np.asmatrix(gen_g.matrix)
-        ans = np.round(ans.reshape(2, 2), 6)
+        ans = ans.reshape(2, 2)
         if (abs(abs(unitary - ans)) > 1e-10).any():
             print(unitary, gen_g.matrix, gen_g.inverse().matrix, gen_g)
             assert 0

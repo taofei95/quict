@@ -93,7 +93,7 @@ def test_perm():
                 assert 0
     assert 1
 
-def test_custom():
+def test_unitary():
     max_test = 5
     every_round = 20
     for i in range(1, max_test + 1):
@@ -131,16 +131,6 @@ def test_circuit():
                 assert 0
     assert 1
 
-<<<<<<< HEAD:QuICT/models/model_unit_test/_unit_test.py
-def test_qureg():
-    circuit = Circuit(5)
-    qureg1 = circuit([2])
-    qureg2 = circuit([3])
-    qureg3 = qureg1 + qureg2
-    for qubit in qureg3:
-        print(qubit.id)
-    Measure | qureg3
-=======
 def test_get_item():
     circuit = Circuit(5)
     qureg3 = circuit[2:5]
@@ -156,7 +146,6 @@ def test_get_item():
     for qubit in qureg4:
         print(qubit.id)
     assert 1
->>>>>>> refactoring:QuICT/core/model_unit_test/unit_test.py
 
 if __name__ == "__main__":
     # pytest.main(["./_unit_test.py", "./circuit_unit_test.py", "./gate_unit_test.py", "./qubit_unit_test.py"])

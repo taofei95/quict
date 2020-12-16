@@ -21,14 +21,6 @@ def fun(x):
     return -np.dot(p_global,np.sin((2*T_global+1)*np.arcsin(np.sqrt(x)))**2)
 
 def run_search_with_prior_knowledge(f, n, p, T, oracle):
-    '''
-    自定义oracle,对一个函数f使用具有先验知识的搜索算法
-    :param f:       待判定的函数
-    :param n:       输入长度
-    :param p:       先验概率分布
-    :param T:       指定查询次数
-    :param oracle:  oracle函数
-    '''
     global p_global 
     p_global= p[:]
     global T_global

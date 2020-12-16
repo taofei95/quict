@@ -1,12 +1,5 @@
 /dist/
 /build/
-<<<<<<< HEAD
-/QuICT.egg-info/
-*/__pycache__/
-/tbb-2020.1/
-*.so
-
-=======
 venv/
 /QuICT.egg-info/
 __pycache__/
@@ -21,4 +14,3 @@ index.rst
 conf.py
 */.idea
 */*.jpg
->>>>>>> refactoring

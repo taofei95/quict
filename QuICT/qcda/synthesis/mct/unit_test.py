@@ -82,22 +82,22 @@ def test_MCT():
                         break
                 if flag:
                     if ((k & 1) != (j & 1)) or ((k & 2) == (j & 2)):
-                        if abs(abs(unitary[j, k])) > 1e-30:
+                        if abs(abs(unitary[j, k])) > 1e-10:
                             print(i, j, k, unitary[j, k])
                             assert 0
                     else:
-                        if abs(abs(unitary[j, k] - 1)) > 1e-30:
+                        if abs(abs(unitary[j, k] - 1)) > 1e-10:
                             print(i, j, k, unitary[j, k])
                             assert 0
                 else:
                     if j == k:
-                        if abs(abs(unitary[j, k] - 1)) > 1e-30:
+                        if abs(abs(unitary[j, k] - 1)) > 1e-10:
                             print(i, j, k, unitary[j, k])
                             print(range(2, i), 1 << 2, j & (1 << 2), k & (1 << 2))
                             print(unitary)
                             assert 0
                     else:
-                        if abs(abs(unitary[j, k])) > 1e-30:
+                        if abs(abs(unitary[j, k])) > 1e-10:
                             print(i, j, k, unitary[j, k])
                             assert 0
 

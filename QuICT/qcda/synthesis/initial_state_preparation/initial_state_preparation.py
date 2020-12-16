@@ -149,15 +149,6 @@ class InitialStatePreparationOracle(Synthesis):
         for i in range(n):
             add = (1 << i)
             alpha = back[now:now + add]
-<<<<<<< HEAD:QuICT/synthesis/initial_state_preparation/_initial_state_preparation.py
-            flag = False
-            for angle in alpha:
-                count = int(angle / np.pi)
-                if abs(count * np.pi - angle) > 1e-10:
-                    flag = True
-                    break
-            if flag:
-=======
             flag = True
             for angle in alpha:
                test = np.floor(angle / np.pi)
@@ -165,7 +156,6 @@ class InitialStatePreparationOracle(Synthesis):
                    flag = False
                    break
             if not flag:
->>>>>>> refactoring:QuICT/qcda/synthesis/initial_state_preparation/initial_state_preparation.py
                 gates.extend(uniformlyRy(0, i + 1, alpha))
             now += add
         return gates
