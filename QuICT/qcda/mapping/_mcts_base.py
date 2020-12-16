@@ -3,9 +3,10 @@ from abc import ABC, abstractmethod
 from typing import List, Tuple, Dict
 from copy import copy, deepcopy
 from queue import deque
-from QuICT.models import *
-from QuICT.models._gate import *
-from QuICT.exception import *
+from QuICT.core.circuit import *
+from QuICT.core.gate import *
+from QuICT.core.gate.gate import *
+from QuICT.core.exception import *
 
 import numpy as np
 import networkx as nx
@@ -363,7 +364,7 @@ class MCTSNode:
         candidate_swap_list = []
         for swap_index_set in candidate_swap_set:
             swap_index_list = list(swap_index_set)
-            GateBuilder.setGateType(GateType.Swap)
+            GateBuilder.setGateType(GATE_ID['Swap'])
             GateBuilder.setCargs(swap_index_list[0])
             GateBuilder.setTargs(swap_index_list[1])
             candidate_swap_list.append(GateBuilder.getGate())
