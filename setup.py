@@ -4,24 +4,39 @@
 # @Author  : Han Yu
 # @File    : setup.py.py
 
+from os import path, getcwd
 from setuptools import setup
 from setuptools import find_packages
 
-packages = find_packages()
 
-# 静态文件
+py_file_path = path.dirname(path.abspath(__file__))
+
+cwd = getcwd()
+
+prj_root_relative = "." if cwd == py_file_path else ".."
+
+print(f"Project root: {prj_root_relative}")
+
+packages = find_packages(where = prj_root_relative)
+
+print(f"Found packages: {packages}")
+
+# static file
 file_data = [
-    ("QuICT/backends", ["QuICT/backends/quick_operator_cdll.so"]),
-    ("QuICT/lib/qasm/libs", ["QuICT/lib/qasm/libs/qelib1.inc"]),
-    ("QuICT/synthesis/initial_state_preparation", ["QuICT/synthesis/initial_state_preparation/initial_state_preparation_cdll.so"]),
+    ("QuICT/backends", [f"{prj_root_relative}/QuICT/backends/quick_operator_cdll.so"]),
+    ("QuICT/lib/qasm/libs", [f"{prj_root_relative}/QuICT/lib/qasm/libs/qelib1.inc"]),
+    ("QuICT/qcda/synthesis/initial_state_preparation",
+     [f"{prj_root_relative}/QuICT/qcda/synthesis/initial_state_preparation/initial_state_preparation_cdll.so"],
+     ),
 ]
 
-# 第三方库依赖
+# 3rd party library
 requires = ['scipy']
 
-# version信息
+# version information
 about = {}
-with open('./QuICT/__version__.py', 'r') as f:
+
+with open(f"{prj_root_relative}/QuICT/__version__.py", 'r') as f:
     exec(f.read(), about)
 
 setup(
@@ -31,10 +46,11 @@ setup(
     author=about["__author__"],
     author_email=about["__email__"],
     url=about["__url__"],
-    packages=find_packages(),
+    packages=packages,
     data_files=file_data,
     include_package_data=True,
     python_requires=">=3.0",
     install_requires=requires,
     zip_safe=False,
+    package_dir = {"QuICT": f"{prj_root_relative}/QuICT/"}
 )

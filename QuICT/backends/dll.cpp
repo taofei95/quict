@@ -64,7 +64,7 @@ DLLEXPORT bool measure_operator_func(
     int index, 
     complex<double> *values,
     double generation,
-    double *prop
+    double *prob
     ){
     index = qureg_length - 1 - index;
     long long v_l = 1 << qureg_length;
@@ -88,7 +88,7 @@ DLLEXPORT bool measure_operator_func(
     },[](double x, double y)->double{return x+y;});
 
     bool _1 = generation > _0;
-    *prop = _0;
+    *prob = 1 - _0;
 
     if (_1){
         generation = sqrt(1 - _0);
@@ -281,7 +281,7 @@ DLLEXPORT void ccx_single_operator_func(
     });
 }
 
-DLLEXPORT void custom_operator_gate(int qureg_length, complex<double> *values, long long  *index, int index_count, complex<double> *matrix){
+DLLEXPORT void unitary_operator_gate(int qureg_length, complex<double> *values, long long  *index, int index_count, complex<double> *matrix){
     int *indexlist = (int*)malloc(index_count * sizeof(int));
     for (int i = 0;i < index_count;++i)
         indexlist[i] = index[i];
@@ -445,6 +445,95 @@ DLLEXPORT complex<double> * amplitude_cheat_operator(
                 now += values_length[i];
             }
             back[k] = ans;
+        }
+    });
+    free(segment);
+    return back;
+}
+
+DLLEXPORT double* partial_prob_cheat_operator(
+    complex<double> *values,
+    long long *values_length,
+    int tangle_number,
+    int qubit_number,
+    long long *qubit_map
+    ){
+    complex<double> **segment = (complex<double> **)malloc(sizeof(complex<double> *) * tangle_number);
+    complex<double> *now = values;
+    for(int i = 0;i < tangle_number;++i){
+        segment[i] = now;
+        now += (1 << values_length[i]);
+    }
+    long long v_l = 1 << qubit_number;
+    double *back = (double*)malloc(sizeof(double) * v_l);
+    parallel_for(blocked_range<size_t>(0, v_l), [
+        qubit_number,
+        values_length,
+        tangle_number,
+        segment,
+        qubit_map,
+        back
+    ](blocked_range<size_t>& blk){
+        for(size_t k=blk.begin();k<blk.end();k++){
+            back[k] = 1;
+            int tangle_iter = 0;
+            for(int i = 0;i < tangle_number;++i){
+                int tangle_length = values_length[i];
+
+                int *indexlist = (int*)malloc(tangle_length * sizeof(int));
+                int index_count = 0;
+                long long fix_position = 0;
+                for (int j = 0;j < qubit_number;++j){
+                    int index = qubit_map[j] - tangle_iter;
+                    if (index >= 0 && index < tangle_length){
+                        if ((1 << (qubit_number - j - 1)) & k){
+                            fix_position += 1 << (tangle_length - index - 1);
+                        }
+                        indexlist[index_count++] = tangle_length - index - 1;
+                    }
+                }
+
+                if (index_count != 0){
+                    sort(indexlist, indexlist + index_count);
+                }
+
+                back[k] *= parallel_reduce(blocked_range<size_t>(0, 1 << (tangle_length - index_count)), 0.f, [
+                    segment,
+                    i,
+                    fix_position,
+                    indexlist,
+                    index_count,
+                    k
+                ](blocked_range<size_t>& blk, double init = 0)->double{
+                    for (size_t j=blk.begin(); j<blk.end(); j++) {
+                        long long other;
+                        if (index_count != 0){
+                            other = j & ((1 << indexlist[0]) - 1);
+                            long long gw = j >> indexlist[0] << (indexlist[0] + 1);
+                            for (int i = 1;i < index_count;++i){
+                                if (gw == 0)
+                                    break;
+                                other += gw & ((1 << indexlist[i]) - (1 << indexlist[i - 1]));
+                                gw = gw >> indexlist[i] << (indexlist[i] + 1);
+                            }
+                            other += gw;
+                            other += fix_position;
+                        }else{
+                            other = j;
+                        }
+
+                        double _real = real(segment[i][other]);
+                        double _imag = imag(segment[i][other]);
+                        init += _real * _real + _imag * _imag;
+                    }
+                    return init;
+                },[](double x, double y)->double{return x + y;});
+
+
+                free(indexlist);
+
+                tangle_iter += tangle_length;
+            }
         }
     });
     free(segment);
