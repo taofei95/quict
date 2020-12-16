@@ -2,7 +2,7 @@
 from abc import ABC, abstractmethod
 from typing import List, Tuple, Dict
 from copy import copy, deepcopy
-
+from queue import deque
 from QuICT.models import *
 from QuICT.models._gate import *
 from QuICT.exception import *
@@ -21,15 +21,32 @@ class MappingLayoutException(Exception):
 class DAG:
     def __init__(self, circuit: Circuit = None):
         if circuit is not None:
-            self.dag = self._transform_from_circuit(circuit = circuit)
+            self._dag = self._transform_from_circuit(circuit = circuit)
         else:
-            self.dag = nx.DiGraph()
-    
-    def get_front_layer(self):
-        pass
+            self._dag = nx.DiGraph()
+        self._front_layer = None
+    @property
+    def dag(self) -> nx.DiGraph:
+        """
+        """
+        return self._dag
+    @property
+    def front_layer(self)-> List[int]:
+        """
+        """
+        if self._front_layer is not None:
+            return self._front_layer
+        else:
+            front_layer = []
+            for v in list(self._dag.nodes()):
+                if self._dag.in_degree[v] == 0:
+                    front_layer.append(v)
+            self._front_layer = front_layer
+            return self._front_layer
+
   
     def get_successor_nodes(self, vertex: int):
-        pass
+        return self._dag.successors(vertex)
 
     def get_node_attributes(self, vertex: int):
         pass
@@ -47,7 +64,13 @@ class CouplingGraph:
         else:
             self._coupling_graph = nx.Graph()
         self._shortest_path = self._cal_shortest_path()
-        
+        self._size = self._coupling_graph.size()
+
+    @property
+    def size(self):
+        """
+        """
+        return self._size  
     @property
     def coupling_graph(self):
         """
@@ -69,6 +92,12 @@ class CouplingGraph:
             return True
         else:
             return False
+    @property
+    def get_adjacent_vertex(self, vertex: int) ->List[int]:
+        """
+
+        """
+        pass 
 
     def _transform_from_list(self,  coupling_graph : List[Tuple]) -> nx.Graph:
         """
@@ -86,7 +115,7 @@ class CouplingGraph:
 
 class MCTSNode:
 
-    def __init__(self, circuit: DAG = None, front_layer: List[int] = None, layout: List[int] = None, 
+    def __init__(self, circuit: DAG = None, coupling_graph: CouplingGraph = None ,front_layer: List[int] = None, layout: List[int] = None, 
                  parent: MCTSNode =None):
         """
         Parameters
@@ -96,14 +125,14 @@ class MCTSNode:
         """
         #self._physical_circuit: Circuit  
         self._circuit = circuit
-        self._front_layer = front_layer
         self._layout = layout
+        self._coupling_graph = coupling_graph
         # self._coupling_graph = coupling_graph
         self._parent = parent
         #self.epsilon = epsilon
         self._children: List[Tuple[MCTSNode, SwapGate]] = [] 
         #self._front_layer = []
-        if circuit is not None and layout is not None:
+        if circuit is not None and layout is not None and coupling_graph is not None:
             self._excution_list = []
             self._front_layer = []
             self._excution_list, self._front_layer = self._get_excution_list()
@@ -120,7 +149,12 @@ class MCTSNode:
         self._reward = 0
         self._v = 0
         self._q = 0
-    
+    @property
+    def coupling_graph(self):
+        """
+        """
+        return self._coupling_graph
+
     @property
     def circuit(self):
         """
@@ -235,7 +269,7 @@ class MCTSNode:
     def upper_confidence_bound(self):
         return self.q + self.v + self.c* np.sqrt(np.log2(self.parent.visit_count)/ self.visit_count)
     
-    def add_child_node(self, swap: SwapGate, coupling_graph: CouplingGraph):
+    def add_child_node(self, swap: SwapGate):
         """
         add a child node by applying the swap gate
         """
@@ -244,7 +278,7 @@ class MCTSNode:
             l_target = swap.targ
             p_control = self.layout[l_control]
             p_target  = self.layout[l_target]
-            if coupling_graph.is_adjacent(p_control, p_target):
+            if self.coupling_graph.is_adjacent(p_control, p_target):
                 layout = self.layout
                 layout[l_control] = p_target
                 layout[l_target] = p_control
@@ -256,7 +290,7 @@ class MCTSNode:
             raise TypeException("swap gate","other gate")
         
     
-    def neareast_neighbour_count(self, coupling_graph: CouplingGraph)-> int:
+    def neareast_neighbour_count(self)-> int:
         """
         """
         if self._NNC is None:
@@ -319,12 +353,57 @@ class MCTSNode:
         """
         all the swap gates associated with the front layer of the current node
         """
-        pass 
+        qubits_set = self._get_invloved_qubits()
+        candidate_swap_set = set()
+        n = self.coupling_graph.size()
+        for qubit in qubits_set:
+            for adj in self.coupling_graph.get_adjacent_vertex():
+                candidate_swap_set.add(frozenset(qubit,adj))
+                
+        candidate_swap_list = []
+        for swap_index_set in candidate_swap_set:
+            swap_index_list = list(swap_index_set)
+            GateBuilder.setGateType(GateType.Swap)
+            GateBuilder.setCargs(swap_index_list[0])
+            GateBuilder.setTargs(swap_index_list[1])
+            candidate_swap_list.append(GateBuilder.getGate())
+        
+        return candidate_swap_list
+
+    def _get_invloved_qubits(self):
+        """
+        """
+        qubit_set = set()
+        qubit_list = []
+        for gate in self._front_layer:
+            pass
+
+        return qubit_list
     
-    def _get_excution_list(self, coupling_graph: CouplingGraph)-> List[BasicGate]:
+    def _get_excution_list(self)-> List[BasicGate]:
         """
         the gates that can be excuted immediately  with the qubit layout
         """
+        
+        excution_list = []
+        fl_queue = deque(iterable=self._front_layer)
+        
+        while True:
+            add_list = []
+            delete_list = []
+            while len(fl_queue)  != 0:
+                gate = fl_queue[0]
+                control = self._circuit[gate]['gate'].carg
+                target = self._circuit[gate]['gate'].targ
+                if self.coupling_graph.is_adjacent(control, target):
+                    excution_list.append(self._circuit[gate])
+                    fl_queue.pop()
+                    for suc in self._circuit.get_successor_nodes(gate):
+                        pass
+                                  
+            if len(excution_list) == 0:
+                break
+        return excution_list
         
 
     def update_node(self):
@@ -343,12 +422,16 @@ class MCTSBase:
         """
         initialize the Monte Carlo tree search with the given parameters 
         """
-        self.coupling_graph = coupling_graph
-        self.shortest_path_coupling_graph,  self.shortest_path_coupling_graph =  _cal_shortest_path(self.coupling_graph)
+        self._coupling_graph = coupling_graph
 
+    @property
+    def coupling_graph(self):
+        """
+        """
+        return self._coupling_graph
 
     @abstractmethod
-    def search(self, cur_node : MCTSNode):
+    def search(self, circuit : Circuit):
         """
         """
         pass

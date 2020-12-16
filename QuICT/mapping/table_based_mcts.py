@@ -8,6 +8,7 @@ class TableBasedMCTS(MCTSBase):
         self.mode = mode
         self.mode_sim = mode_sim
         self.selection_times = selection_times 
+        self.call_back_threshold = 100
     
     @property
     def physical_circuit(self):
@@ -26,7 +27,7 @@ class TableBasedMCTS(MCTSBase):
     def search(self, circuit: Circuit, layout: List[int]):
         self._logical_circuit = DAG(circuit = circuit) 
         self._physical_circuit =Circuit(circuit.wires)
-        self._root_node = MCTSNode(circuiy = self._logical_circuit ,front_layer = self._logical_circuit.get_front_layer(),
+        self._root_node = MCTSNode(circuit = self._logical_circuit , coupling_graph = self._coupling_graph, front_layer = self._logical_circuit.front_layer,
                                   layout = layout)
         
         self._add_excutable_gates(self.root_node)
@@ -91,6 +92,12 @@ class TableBasedMCTS(MCTSBase):
         decide which child node to move into 
         """
         return node.decide_best_child() 
+
+    def _call_back(self, node: MCTSNode):
+        """
+
+        """
+        pass
 
     def _add_excutable_gates(self, node: MCTSNode):
         excution_list = self._root_node.excution_list()
