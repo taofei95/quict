@@ -1,0 +1,7 @@
+QuICT.lib.qasm.node.universalunitary module
+===========================================
+
+.. automodule:: QuICT.lib.qasm.node.universalunitary
+   :members:
+   :undoc-members:
+   :show-inheritance:

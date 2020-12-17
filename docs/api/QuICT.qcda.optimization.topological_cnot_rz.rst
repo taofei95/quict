@@ -1,0 +1,16 @@
+QuICT.qcda.optimization.topological\_cnot\_rz package
+=====================================================
+
+.. automodule:: QuICT.qcda.optimization.topological_cnot_rz
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Submodules
+----------
+
+.. toctree::
+   :maxdepth: 4
+
+   QuICT.qcda.optimization.topological_cnot_rz.topological_cnot_rz
+   QuICT.qcda.optimization.topological_cnot_rz.unit_test
