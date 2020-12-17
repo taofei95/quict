@@ -19,6 +19,13 @@ def getRandomList(l, n):
         _rand[do_get], _rand[i] = _rand[i], _rand[do_get]
     return _rand[:l]
 
+def test_build_circuit():
+    """ test the circuit build method
+
+    """
+    circuit = Circuit(5)
+
+
 def test_pratial_prob_whole():
     for n in range(1, 10):
         circuit = Circuit(n)
@@ -60,6 +67,5 @@ def test_pratial_prob_part():
             assert 0
 
 if __name__ == "__main__":
-    # pytest.main(["./_unit_test.py", "./circuit_unit_test.py", "./gate_unit_test.py", "./qubit_unit_test.py"])
     pytest.main(["./circuit_unit_test.py"])
 
