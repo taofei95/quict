@@ -1,0 +1,16 @@
+QuICT.qcda.optimization.topological\_cnot package
+=================================================
+
+.. automodule:: QuICT.qcda.optimization.topological_cnot
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+Submodules
+----------
+
+.. toctree::
+
+   QuICT.qcda.optimization.topological_cnot.topological_cnot
+   QuICT.qcda.optimization.topological_cnot.unit_test
+

@@ -1,0 +1,1277 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>QuICT.core.gate.gate module &#8212; QuICT  documentation</title>
+    <link rel="stylesheet" href="../_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="../_static/language_data.js"></script>
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="QuICT.core.gate.gate_builder module" href="QuICT.core.gate.gate_builder.html" />
+    <link rel="prev" title="QuICT.core.gate.extension_gate module" href="QuICT.core.gate.extension_gate.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="QuICT.core.gate.gate_builder.html" title="QuICT.core.gate.gate_builder module"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="QuICT.core.gate.extension_gate.html" title="QuICT.core.gate.extension_gate module"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">QuICT  documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="QuICT.html" >API</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="QuICT.core.html" >QuICT.core package</a> &#187;</li>
+          <li class="nav-item nav-item-3"><a href="QuICT.core.gate.html" accesskey="U">QuICT.core.gate package</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="module-QuICT.core.gate.gate">
+<span id="quict-core-gate-gate-module"></span><h1>QuICT.core.gate.gate module<a class="headerlink" href="#module-QuICT.core.gate.gate" title="Permalink to this headline">¶</a></h1>
+<dl class="class">
+<dt id="QuICT.core.gate.gate.BarrierGate">
+<em class="property">class </em><code class="descclassname">QuICT.core.gate.gate.</code><code class="descname">BarrierGate</code><span class="sig-paren">(</span><em>alias=None</em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.gate.gate.BarrierGate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#QuICT.core.gate.gate.BasicGate" title="QuICT.core.gate.gate.BasicGate"><code class="xref py py-class docutils literal notranslate"><span class="pre">QuICT.core.gate.gate.BasicGate</span></code></a></p>
+<p>Barrier gate</p>
+<p>In IBMQ, barrier gate forbid the optimization cross the gate,
+It is invalid in out circuit now.</p>
+<dl class="method">
+<dt id="QuICT.core.gate.gate.BarrierGate.exec">
+<code class="descname">exec</code><span class="sig-paren">(</span><em>circuit</em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.gate.gate.BarrierGate.exec" title="Permalink to this definition">¶</a></dt>
+<dd><p>execute on the circuit</p>
+<p>should be overloaded by subClass</p>
+<dl class="docutils">
+<dt>Args:</dt>
+<dd>circuit(Circuit): the circuit this gate act on</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="QuICT.core.gate.gate.BarrierGate.matrix">
+<code class="descname">matrix</code><a class="headerlink" href="#QuICT.core.gate.gate.BarrierGate.matrix" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="QuICT.core.gate.gate.BasicGate">
+<em class="property">class </em><code class="descclassname">QuICT.core.gate.gate.</code><code class="descname">BasicGate</code><span class="sig-paren">(</span><em>alias=None</em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.gate.gate.BasicGate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>the abstract SuperClass of all basic quantum gates</p>
+<p>All basic quantum gates described in the framework have
+some common attributes and some common functions
+which defined in this class</p>
+<dl class="docutils">
+<dt>Attributes:</dt>
+<dd><p class="first">controls(int): the number of the control bits of the gate
+cargs(list&lt;int&gt;): the list of the index of control bits in the circuit
+carg(int, read only): the first object of cargs</p>
+<p>targets(int): the number of the target bits of the gate
+targs(list&lt;int&gt;): the list of the index of target bits in the circuit
+targ(int, read only): the first object of targs</p>
+<p>params(list): the number of the parameter of the gate
+pargs(list): the list of the parameter
+prag(read only): the first object of pargs</p>
+<p>qasm_name(str, read only): gate’s name in the OpenQASM 2.0
+type(GateType, read only): gate’s type described by GateType</p>
+<p class="last">matrix(np.array): the unitary matrix of the quantum gates act on targets
+computer_matrix(np.array): the unitary matrix of the quantum gates act on controls and targets</p>
+</dd>
+</dl>
+<dl class="attribute">
+<dt id="QuICT.core.gate.gate.BasicGate.carg">
+<code class="descname">carg</code><a class="headerlink" href="#QuICT.core.gate.gate.BasicGate.carg" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="QuICT.core.gate.gate.BasicGate.cargs">
+<code class="descname">cargs</code><a class="headerlink" href="#QuICT.core.gate.gate.BasicGate.cargs" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="QuICT.core.gate.gate.BasicGate.compute_matrix">
+<code class="descname">compute_matrix</code><a class="headerlink" href="#QuICT.core.gate.gate.BasicGate.compute_matrix" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="QuICT.core.gate.gate.BasicGate.controls">
+<code class="descname">controls</code><a class="headerlink" href="#QuICT.core.gate.gate.BasicGate.controls" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="QuICT.core.gate.gate.BasicGate.copy">
+<code class="descname">copy</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.gate.gate.BasicGate.copy" title="Permalink to this definition">¶</a></dt>
+<dd><p>return a copy of this gate</p>
+<dl class="docutils">
+<dt>Returns:</dt>
+<dd>gate(BasicGate): a copy of this gate</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="QuICT.core.gate.gate.BasicGate.exec">
+<code class="descname">exec</code><span class="sig-paren">(</span><em>circuit</em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.gate.gate.BasicGate.exec" title="Permalink to this definition">¶</a></dt>
+<dd><p>execute on the circuit</p>
+<p>should be overloaded by subClass</p>
+<dl class="docutils">
+<dt>Args:</dt>
+<dd>circuit(Circuit): the circuit this gate act on</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="QuICT.core.gate.gate.BasicGate.inverse">
+<code class="descname">inverse</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.gate.gate.BasicGate.inverse" title="Permalink to this definition">¶</a></dt>
+<dd><p>the inverse of the gate</p>
+<dl class="docutils">
+<dt>Return:</dt>
+<dd>BasicGate: the inverse of the gate</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="QuICT.core.gate.gate.BasicGate.is_control_single">
+<code class="descname">is_control_single</code><span class="sig-paren">(</span><span class="sig-paren">)</span> &#x2192; bool<a class="headerlink" href="#QuICT.core.gate.gate.BasicGate.is_control_single" title="Permalink to this definition">¶</a></dt>
+<dd><p>judge whether gate has one control bit and one target bit</p>
+<dl class="docutils">
+<dt>Returns:</dt>
+<dd>bool: True if it is has one control bit and one target bit</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="QuICT.core.gate.gate.BasicGate.is_diagonal">
+<code class="descname">is_diagonal</code><span class="sig-paren">(</span><span class="sig-paren">)</span> &#x2192; bool<a class="headerlink" href="#QuICT.core.gate.gate.BasicGate.is_diagonal" title="Permalink to this definition">¶</a></dt>
+<dd><p>judge whether gate’s matrix is diagonal</p>
+<dl class="docutils">
+<dt>Raise:</dt>
+<dd>gate must be basic one qubit gate or two qubit gate</dd>
+<dt>Returns:</dt>
+<dd>bool: True if gate’s matrix is diagonal</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="QuICT.core.gate.gate.BasicGate.is_single">
+<code class="descname">is_single</code><span class="sig-paren">(</span><span class="sig-paren">)</span> &#x2192; bool<a class="headerlink" href="#QuICT.core.gate.gate.BasicGate.is_single" title="Permalink to this definition">¶</a></dt>
+<dd><p>judge whether gate is a one qubit gate(excluding special gate like measure, reset, custom and so on)</p>
+<dl class="docutils">
+<dt>Returns:</dt>
+<dd>bool: True if it is a one qubit gate</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="QuICT.core.gate.gate.BasicGate.matrix">
+<code class="descname">matrix</code><a class="headerlink" href="#QuICT.core.gate.gate.BasicGate.matrix" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="QuICT.core.gate.gate.BasicGate.params">
+<code class="descname">params</code><a class="headerlink" href="#QuICT.core.gate.gate.BasicGate.params" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="QuICT.core.gate.gate.BasicGate.parg">
+<code class="descname">parg</code><a class="headerlink" href="#QuICT.core.gate.gate.BasicGate.parg" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="QuICT.core.gate.gate.BasicGate.pargs">
+<code class="descname">pargs</code><a class="headerlink" href="#QuICT.core.gate.gate.BasicGate.pargs" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="staticmethod">
+<dt id="QuICT.core.gate.gate.BasicGate.permit_element">
+<em class="property">static </em><code class="descname">permit_element</code><span class="sig-paren">(</span><em>element</em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.gate.gate.BasicGate.permit_element" title="Permalink to this definition">¶</a></dt>
+<dd><p>judge whether the type of a parameter is int/float/complex</p>
+<p>for a quantum gate, the parameter should be int/float/complex</p>
+<dl class="docutils">
+<dt>Args:</dt>
+<dd>element: the element to be judged</dd>
+<dt>Returns:</dt>
+<dd>bool: True if the type of element is int/float/complex</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="QuICT.core.gate.gate.BasicGate.print_info">
+<code class="descname">print_info</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.gate.gate.BasicGate.print_info" title="Permalink to this definition">¶</a></dt>
+<dd><p>print the information of the gate</p>
+<p>print the gate’s information, including controls, targets and parameters</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="QuICT.core.gate.gate.BasicGate.qasm">
+<code class="descname">qasm</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.gate.gate.BasicGate.qasm" title="Permalink to this definition">¶</a></dt>
+<dd><p>generator OpenQASM string for the gate</p>
+<dl class="docutils">
+<dt>Return:</dt>
+<dd>string: the OpenQASM 2.0 describe of the gate</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="QuICT.core.gate.gate.BasicGate.qasm_name">
+<code class="descname">qasm_name</code><a class="headerlink" href="#QuICT.core.gate.gate.BasicGate.qasm_name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="QuICT.core.gate.gate.BasicGate.targ">
+<code class="descname">targ</code><a class="headerlink" href="#QuICT.core.gate.gate.BasicGate.targ" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="QuICT.core.gate.gate.BasicGate.targets">
+<code class="descname">targets</code><a class="headerlink" href="#QuICT.core.gate.gate.BasicGate.targets" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="QuICT.core.gate.gate.BasicGate.targs">
+<code class="descname">targs</code><a class="headerlink" href="#QuICT.core.gate.gate.BasicGate.targs" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="classmethod">
+<dt id="QuICT.core.gate.gate.BasicGate.type">
+<em class="property">classmethod </em><code class="descname">type</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.gate.gate.BasicGate.type" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="QuICT.core.gate.gate.CCXGate">
+<em class="property">class </em><code class="descclassname">QuICT.core.gate.gate.</code><code class="descname">CCXGate</code><span class="sig-paren">(</span><em>alias=None</em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.gate.gate.CCXGate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#QuICT.core.gate.gate.BasicGate" title="QuICT.core.gate.gate.BasicGate"><code class="xref py py-class docutils literal notranslate"><span class="pre">QuICT.core.gate.gate.BasicGate</span></code></a></p>
+<p>Toffoli gate</p>
+<p>When using this gate, it will be showed as a whole gate
+instend of being split into smaller gate</p>
+<dl class="attribute">
+<dt id="QuICT.core.gate.gate.CCXGate.compute_matrix">
+<code class="descname">compute_matrix</code><a class="headerlink" href="#QuICT.core.gate.gate.CCXGate.compute_matrix" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="QuICT.core.gate.gate.CCXGate.exec">
+<code class="descname">exec</code><span class="sig-paren">(</span><em>circuit</em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.gate.gate.CCXGate.exec" title="Permalink to this definition">¶</a></dt>
+<dd><p>execute on the circuit</p>
+<p>should be overloaded by subClass</p>
+<dl class="docutils">
+<dt>Args:</dt>
+<dd>circuit(Circuit): the circuit this gate act on</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="QuICT.core.gate.gate.CCXGate.inverse">
+<code class="descname">inverse</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.gate.gate.CCXGate.inverse" title="Permalink to this definition">¶</a></dt>
+<dd><p>the inverse of the gate</p>
+<dl class="docutils">
+<dt>Return:</dt>
+<dd>BasicGate: the inverse of the gate</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="QuICT.core.gate.gate.CHGate">
+<em class="property">class </em><code class="descclassname">QuICT.core.gate.gate.</code><code class="descname">CHGate</code><span class="sig-paren">(</span><em>alias=None</em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.gate.gate.CHGate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#QuICT.core.gate.gate.BasicGate" title="QuICT.core.gate.gate.BasicGate"><code class="xref py py-class docutils literal notranslate"><span class="pre">QuICT.core.gate.gate.BasicGate</span></code></a></p>
+<p>controlled-Hadamard gate</p>
+<dl class="attribute">
+<dt id="QuICT.core.gate.gate.CHGate.compute_matrix">
+<code class="descname">compute_matrix</code><a class="headerlink" href="#QuICT.core.gate.gate.CHGate.compute_matrix" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="QuICT.core.gate.gate.CHGate.exec">
+<code class="descname">exec</code><span class="sig-paren">(</span><em>circuit</em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.gate.gate.CHGate.exec" title="Permalink to this definition">¶</a></dt>
+<dd><p>execute on the circuit</p>
+<p>should be overloaded by subClass</p>
+<dl class="docutils">
+<dt>Args:</dt>
+<dd>circuit(Circuit): the circuit this gate act on</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="QuICT.core.gate.gate.CHGate.inverse">
+<code class="descname">inverse</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.gate.gate.CHGate.inverse" title="Permalink to this definition">¶</a></dt>
+<dd><p>the inverse of the gate</p>
+<dl class="docutils">
+<dt>Return:</dt>
+<dd>BasicGate: the inverse of the gate</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="QuICT.core.gate.gate.CRzGate">
+<em class="property">class </em><code class="descclassname">QuICT.core.gate.gate.</code><code class="descname">CRzGate</code><span class="sig-paren">(</span><em>alias=None</em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.gate.gate.CRzGate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#QuICT.core.gate.gate.BasicGate" title="QuICT.core.gate.gate.BasicGate"><code class="xref py py-class docutils literal notranslate"><span class="pre">QuICT.core.gate.gate.BasicGate</span></code></a></p>
+<p>controlled-Rz gate</p>
+<dl class="attribute">
+<dt id="QuICT.core.gate.gate.CRzGate.compute_matrix">
+<code class="descname">compute_matrix</code><a class="headerlink" href="#QuICT.core.gate.gate.CRzGate.compute_matrix" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="QuICT.core.gate.gate.CRzGate.exec">
+<code class="descname">exec</code><span class="sig-paren">(</span><em>circuit</em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.gate.gate.CRzGate.exec" title="Permalink to this definition">¶</a></dt>
+<dd><p>execute on the circuit</p>
+<p>should be overloaded by subClass</p>
+<dl class="docutils">
+<dt>Args:</dt>
+<dd>circuit(Circuit): the circuit this gate act on</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="QuICT.core.gate.gate.CRzGate.inverse">
+<code class="descname">inverse</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.gate.gate.CRzGate.inverse" title="Permalink to this definition">¶</a></dt>
+<dd><p>the inverse of the gate</p>
+<dl class="docutils">
+<dt>Return:</dt>
+<dd>BasicGate: the inverse of the gate</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="QuICT.core.gate.gate.CRzGate.matrix">
+<code class="descname">matrix</code><a class="headerlink" href="#QuICT.core.gate.gate.CRzGate.matrix" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="QuICT.core.gate.gate.CXGate">
+<em class="property">class </em><code class="descclassname">QuICT.core.gate.gate.</code><code class="descname">CXGate</code><span class="sig-paren">(</span><em>alias=None</em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.gate.gate.CXGate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#QuICT.core.gate.gate.BasicGate" title="QuICT.core.gate.gate.BasicGate"><code class="xref py py-class docutils literal notranslate"><span class="pre">QuICT.core.gate.gate.BasicGate</span></code></a></p>
+<p>“controlled-X gate”</p>
+<dl class="attribute">
+<dt id="QuICT.core.gate.gate.CXGate.compute_matrix">
+<code class="descname">compute_matrix</code><a class="headerlink" href="#QuICT.core.gate.gate.CXGate.compute_matrix" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="QuICT.core.gate.gate.CXGate.exec">
+<code class="descname">exec</code><span class="sig-paren">(</span><em>circuit</em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.gate.gate.CXGate.exec" title="Permalink to this definition">¶</a></dt>
+<dd><p>execute on the circuit</p>
+<p>should be overloaded by subClass</p>
+<dl class="docutils">
+<dt>Args:</dt>
+<dd>circuit(Circuit): the circuit this gate act on</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="QuICT.core.gate.gate.CXGate.inverse">
+<code class="descname">inverse</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.gate.gate.CXGate.inverse" title="Permalink to this definition">¶</a></dt>
+<dd><p>the inverse of the gate</p>
+<dl class="docutils">
+<dt>Return:</dt>
+<dd>BasicGate: the inverse of the gate</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="QuICT.core.gate.gate.CYGate">
+<em class="property">class </em><code class="descclassname">QuICT.core.gate.gate.</code><code class="descname">CYGate</code><span class="sig-paren">(</span><em>alias=None</em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.gate.gate.CYGate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#QuICT.core.gate.gate.BasicGate" title="QuICT.core.gate.gate.BasicGate"><code class="xref py py-class docutils literal notranslate"><span class="pre">QuICT.core.gate.gate.BasicGate</span></code></a></p>
+<p>controlled-Y gate</p>
+<dl class="attribute">
+<dt id="QuICT.core.gate.gate.CYGate.compute_matrix">
+<code class="descname">compute_matrix</code><a class="headerlink" href="#QuICT.core.gate.gate.CYGate.compute_matrix" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="QuICT.core.gate.gate.CYGate.exec">
+<code class="descname">exec</code><span class="sig-paren">(</span><em>circuit</em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.gate.gate.CYGate.exec" title="Permalink to this definition">¶</a></dt>
+<dd><p>execute on the circuit</p>
+<p>should be overloaded by subClass</p>
+<dl class="docutils">
+<dt>Args:</dt>
+<dd>circuit(Circuit): the circuit this gate act on</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="QuICT.core.gate.gate.CYGate.inverse">
+<code class="descname">inverse</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.gate.gate.CYGate.inverse" title="Permalink to this definition">¶</a></dt>
+<dd><p>the inverse of the gate</p>
+<dl class="docutils">
+<dt>Return:</dt>
+<dd>BasicGate: the inverse of the gate</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="QuICT.core.gate.gate.CZGate">
+<em class="property">class </em><code class="descclassname">QuICT.core.gate.gate.</code><code class="descname">CZGate</code><span class="sig-paren">(</span><em>alias=None</em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.gate.gate.CZGate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#QuICT.core.gate.gate.BasicGate" title="QuICT.core.gate.gate.BasicGate"><code class="xref py py-class docutils literal notranslate"><span class="pre">QuICT.core.gate.gate.BasicGate</span></code></a></p>
+<p>controlled-Z gate</p>
+<dl class="attribute">
+<dt id="QuICT.core.gate.gate.CZGate.compute_matrix">
+<code class="descname">compute_matrix</code><a class="headerlink" href="#QuICT.core.gate.gate.CZGate.compute_matrix" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="QuICT.core.gate.gate.CZGate.exec">
+<code class="descname">exec</code><span class="sig-paren">(</span><em>circuit</em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.gate.gate.CZGate.exec" title="Permalink to this definition">¶</a></dt>
+<dd><p>execute on the circuit</p>
+<p>should be overloaded by subClass</p>
+<dl class="docutils">
+<dt>Args:</dt>
+<dd>circuit(Circuit): the circuit this gate act on</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="QuICT.core.gate.gate.CZGate.inverse">
+<code class="descname">inverse</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.gate.gate.CZGate.inverse" title="Permalink to this definition">¶</a></dt>
+<dd><p>the inverse of the gate</p>
+<dl class="docutils">
+<dt>Return:</dt>
+<dd>BasicGate: the inverse of the gate</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="QuICT.core.gate.gate.ControlPermMulDetailGate">
+<em class="property">class </em><code class="descclassname">QuICT.core.gate.gate.</code><code class="descname">ControlPermMulDetailGate</code><span class="sig-paren">(</span><em>alias=None</em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.gate.gate.ControlPermMulDetailGate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#QuICT.core.gate.gate.BasicGate" title="QuICT.core.gate.gate.BasicGate"><code class="xref py py-class docutils literal notranslate"><span class="pre">QuICT.core.gate.gate.BasicGate</span></code></a></p>
+<p>controlled-Permutation gate</p>
+<p>This gate is used to implement oracle in the order-finding algorithm</p>
+<dl class="method">
+<dt id="QuICT.core.gate.gate.ControlPermMulDetailGate.exec">
+<code class="descname">exec</code><span class="sig-paren">(</span><em>circuit</em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.gate.gate.ControlPermMulDetailGate.exec" title="Permalink to this definition">¶</a></dt>
+<dd><p>execute on the circuit</p>
+<p>should be overloaded by subClass</p>
+<dl class="docutils">
+<dt>Args:</dt>
+<dd>circuit(Circuit): the circuit this gate act on</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="QuICT.core.gate.gate.ControlPermMulDetailGate.inverse">
+<code class="descname">inverse</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.gate.gate.ControlPermMulDetailGate.inverse" title="Permalink to this definition">¶</a></dt>
+<dd><p>the inverse of the gate</p>
+<dl class="docutils">
+<dt>Return:</dt>
+<dd>BasicGate: the inverse of the gate</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="QuICT.core.gate.gate.ControlPermMulDetailGate.matrix">
+<code class="descname">matrix</code><a class="headerlink" href="#QuICT.core.gate.gate.ControlPermMulDetailGate.matrix" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="QuICT.core.gate.gate.ControlPermMulGate">
+<em class="property">class </em><code class="descclassname">QuICT.core.gate.gate.</code><code class="descname">ControlPermMulGate</code><span class="sig-paren">(</span><em>alias=None</em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.gate.gate.ControlPermMulGate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#QuICT.core.gate.gate.PermGate" title="QuICT.core.gate.gate.PermGate"><code class="xref py py-class docutils literal notranslate"><span class="pre">QuICT.core.gate.gate.PermGate</span></code></a></p>
+<p>a controlled-PermMulGate</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="QuICT.core.gate.gate.ControlPermShiftGate">
+<em class="property">class </em><code class="descclassname">QuICT.core.gate.gate.</code><code class="descname">ControlPermShiftGate</code><span class="sig-paren">(</span><em>alias=None</em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.gate.gate.ControlPermShiftGate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#QuICT.core.gate.gate.PermGate" title="QuICT.core.gate.gate.PermGate"><code class="xref py py-class docutils literal notranslate"><span class="pre">QuICT.core.gate.gate.PermGate</span></code></a></p>
+<p>Controlled-PermShiftGate</p>
+<p>PermShiftGate with a control bit</p>
+</dd></dl>
+
+<dl class="data">
+<dt id="QuICT.core.gate.gate.GATE_ID">
+<code class="descclassname">QuICT.core.gate.gate.</code><code class="descname">GATE_ID</code><em class="property"> = {'Barrier': 23, 'BarrierGate': 23, 'CCX': 20, 'CCXGate': 20, 'CCx': 20, 'CH': 18, 'CHGate': 18, 'CRZ': 19, 'CRz': 19, 'CRzGate': 19, 'CX': 16, 'CXGate': 16, 'CY': 17, 'CYGate': 17, 'CZ': 15, 'CZGate': 15, 'Ccx': 20, 'Ch': 18, 'ControlPermMul': 30, 'ControlPermMulDetail': 26, 'ControlPermMulDetailGate': 26, 'ControlPermMulGate': 30, 'ControlPermShift': 28, 'ControlPermShiftGate': 28, 'Crz': 19, 'Cx': 16, 'Cy': 17, 'Cz': 15, 'Error': -1, 'H': 0, 'HGate': 0, 'ID': 6, 'IDGate': 6, 'Measure': 21, 'MeasureGate': 21, 'Perm': 25, 'PermFx': 31, 'PermFxGate': 31, 'PermGate': 25, 'PermMul': 29, 'PermMulGate': 29, 'PermShift': 27, 'PermShiftGate': 27, 'Reset': 22, 'ResetGate': 22, 'Rx': 10, 'RxGate': 10, 'Ry': 11, 'RyGate': 11, 'Rz': 12, 'RzGate': 12, 'S': 1, 'SDaggerGate': 2, 'SGate': 1, 'S_dagger': 2, 'ShorInitial': 33, 'ShorInitialGate': 33, 'Swap': 24, 'SwapGate': 24, 'T': 13, 'TDaggerGate': 14, 'TGate': 13, 'T_dagger': 14, 'U1': 7, 'U1Gate': 7, 'U2': 8, 'U2Gate': 8, 'U3': 9, 'U3Gate': 9, 'Unitary': 32, 'UnitaryGate': 32, 'X': 3, 'XGate': 3, 'Y': 4, 'YGate': 4, 'Z': 5, 'ZGate': 5}</em><a class="headerlink" href="#QuICT.core.gate.gate.GATE_ID" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get gate id by gate name. You may use any one of the aliases of this gate.</p>
+</dd></dl>
+
+<dl class="data">
+<dt id="QuICT.core.gate.gate.GATE_ID_CNT">
+<code class="descclassname">QuICT.core.gate.gate.</code><code class="descname">GATE_ID_CNT</code><em class="property"> = 34</em><a class="headerlink" href="#QuICT.core.gate.gate.GATE_ID_CNT" title="Permalink to this definition">¶</a></dt>
+<dd><p>Gate number counter.</p>
+</dd></dl>
+
+<dl class="data">
+<dt id="QuICT.core.gate.gate.GATE_REGISTER">
+<code class="descclassname">QuICT.core.gate.gate.</code><code class="descname">GATE_REGISTER</code><em class="property"> = {-1: 'Error', 0: 'HGate', 1: 'SGate', 2: 'SDaggerGate', 3: 'XGate', 4: 'YGate', 5: 'ZGate', 6: 'IDGate', 7: 'U1Gate', 8: 'U2Gate', 9: 'U3Gate', 10: 'RxGate', 11: 'RyGate', 12: 'RzGate', 13: 'TGate', 14: 'TDaggerGate', 15: 'CZGate', 16: 'CXGate', 17: 'CYGate', 18: 'CHGate', 19: 'CRzGate', 20: 'CCXGate', 21: 'MeasureGate', 22: 'ResetGate', 23: 'BarrierGate', 24: 'SwapGate', 25: 'PermGate', 26: 'ControlPermMulDetailGate', 27: 'PermShiftGate', 28: 'ControlPermShiftGate', 29: 'PermMulGate', 30: 'ControlPermMulGate', 31: 'PermFxGate', 32: 'UnitaryGate', 33: 'ShorInitialGate'}</em><a class="headerlink" href="#QuICT.core.gate.gate.GATE_REGISTER" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get standard gate name by gate id.</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="QuICT.core.gate.gate.HGate">
+<em class="property">class </em><code class="descclassname">QuICT.core.gate.gate.</code><code class="descname">HGate</code><span class="sig-paren">(</span><em>alias=None</em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.gate.gate.HGate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#QuICT.core.gate.gate.BasicGate" title="QuICT.core.gate.gate.BasicGate"><code class="xref py py-class docutils literal notranslate"><span class="pre">QuICT.core.gate.gate.BasicGate</span></code></a></p>
+<p>Hadamard gate</p>
+<dl class="method">
+<dt id="QuICT.core.gate.gate.HGate.exec">
+<code class="descname">exec</code><span class="sig-paren">(</span><em>circuit</em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.gate.gate.HGate.exec" title="Permalink to this definition">¶</a></dt>
+<dd><p>execute on the circuit</p>
+<p>should be overloaded by subClass</p>
+<dl class="docutils">
+<dt>Args:</dt>
+<dd>circuit(Circuit): the circuit this gate act on</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="QuICT.core.gate.gate.HGate.inverse">
+<code class="descname">inverse</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.gate.gate.HGate.inverse" title="Permalink to this definition">¶</a></dt>
+<dd><p>the inverse of the gate</p>
+<dl class="docutils">
+<dt>Return:</dt>
+<dd>BasicGate: the inverse of the gate</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="QuICT.core.gate.gate.IDGate">
+<em class="property">class </em><code class="descclassname">QuICT.core.gate.gate.</code><code class="descname">IDGate</code><span class="sig-paren">(</span><em>alias=None</em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.gate.gate.IDGate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#QuICT.core.gate.gate.BasicGate" title="QuICT.core.gate.gate.BasicGate"><code class="xref py py-class docutils literal notranslate"><span class="pre">QuICT.core.gate.gate.BasicGate</span></code></a></p>
+<p>Identity gate</p>
+<dl class="method">
+<dt id="QuICT.core.gate.gate.IDGate.exec">
+<code class="descname">exec</code><span class="sig-paren">(</span><em>circuit</em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.gate.gate.IDGate.exec" title="Permalink to this definition">¶</a></dt>
+<dd><p>execute on the circuit</p>
+<p>should be overloaded by subClass</p>
+<dl class="docutils">
+<dt>Args:</dt>
+<dd>circuit(Circuit): the circuit this gate act on</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="QuICT.core.gate.gate.IDGate.inverse">
+<code class="descname">inverse</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.gate.gate.IDGate.inverse" title="Permalink to this definition">¶</a></dt>
+<dd><p>the inverse of the gate</p>
+<dl class="docutils">
+<dt>Return:</dt>
+<dd>BasicGate: the inverse of the gate</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="QuICT.core.gate.gate.MeasureGate">
+<em class="property">class </em><code class="descclassname">QuICT.core.gate.gate.</code><code class="descname">MeasureGate</code><span class="sig-paren">(</span><em>alias=None</em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.gate.gate.MeasureGate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#QuICT.core.gate.gate.BasicGate" title="QuICT.core.gate.gate.BasicGate"><code class="xref py py-class docutils literal notranslate"><span class="pre">QuICT.core.gate.gate.BasicGate</span></code></a></p>
+<p>z-axis Measure gate</p>
+<p>Measure one qubit along z-axis.
+After acting on the qubit(circuit flush), the qubit get the value 0 or 1
+and the amplitude changed by the result.</p>
+<dl class="method">
+<dt id="QuICT.core.gate.gate.MeasureGate.exec">
+<code class="descname">exec</code><span class="sig-paren">(</span><em>circuit</em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.gate.gate.MeasureGate.exec" title="Permalink to this definition">¶</a></dt>
+<dd><p>execute on the circuit</p>
+<p>should be overloaded by subClass</p>
+<dl class="docutils">
+<dt>Args:</dt>
+<dd>circuit(Circuit): the circuit this gate act on</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="QuICT.core.gate.gate.MeasureGate.matrix">
+<code class="descname">matrix</code><a class="headerlink" href="#QuICT.core.gate.gate.MeasureGate.matrix" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="QuICT.core.gate.gate.PermFxGate">
+<em class="property">class </em><code class="descclassname">QuICT.core.gate.gate.</code><code class="descname">PermFxGate</code><span class="sig-paren">(</span><em>alias=None</em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.gate.gate.PermFxGate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#QuICT.core.gate.gate.PermGate" title="QuICT.core.gate.gate.PermGate"><code class="xref py py-class docutils literal notranslate"><span class="pre">QuICT.core.gate.gate.PermGate</span></code></a></p>
+<p>act an Fx oracle on a qureg</p>
+<p>This Class is the subClass of PermGate.
+In fact, we calculate the permutation by the parameters.</p>
+<dl class="attribute">
+<dt id="QuICT.core.gate.gate.PermFxGate.matrix">
+<code class="descname">matrix</code><a class="headerlink" href="#QuICT.core.gate.gate.PermFxGate.matrix" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="QuICT.core.gate.gate.PermGate">
+<em class="property">class </em><code class="descclassname">QuICT.core.gate.gate.</code><code class="descname">PermGate</code><span class="sig-paren">(</span><em>alias=None</em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.gate.gate.PermGate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#QuICT.core.gate.gate.BasicGate" title="QuICT.core.gate.gate.BasicGate"><code class="xref py py-class docutils literal notranslate"><span class="pre">QuICT.core.gate.gate.BasicGate</span></code></a></p>
+<p>Permutation gate</p>
+<p>A special gate defined in our circuit,
+It can change an n-qubit qureg’s amplitude by permutaion,
+the parameter is a 2^n list describes the permutation.</p>
+<dl class="attribute">
+<dt id="QuICT.core.gate.gate.PermGate.compute_matrix">
+<code class="descname">compute_matrix</code><a class="headerlink" href="#QuICT.core.gate.gate.PermGate.compute_matrix" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="QuICT.core.gate.gate.PermGate.exec">
+<code class="descname">exec</code><span class="sig-paren">(</span><em>circuit</em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.gate.gate.PermGate.exec" title="Permalink to this definition">¶</a></dt>
+<dd><p>execute on the circuit</p>
+<p>should be overloaded by subClass</p>
+<dl class="docutils">
+<dt>Args:</dt>
+<dd>circuit(Circuit): the circuit this gate act on</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="QuICT.core.gate.gate.PermGate.inverse">
+<code class="descname">inverse</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.gate.gate.PermGate.inverse" title="Permalink to this definition">¶</a></dt>
+<dd><p>the inverse of the gate</p>
+<dl class="docutils">
+<dt>Return:</dt>
+<dd>BasicGate: the inverse of the gate</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="QuICT.core.gate.gate.PermGate.matrix">
+<code class="descname">matrix</code><a class="headerlink" href="#QuICT.core.gate.gate.PermGate.matrix" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="QuICT.core.gate.gate.PermMulGate">
+<em class="property">class </em><code class="descclassname">QuICT.core.gate.gate.</code><code class="descname">PermMulGate</code><span class="sig-paren">(</span><em>alias=None</em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.gate.gate.PermMulGate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#QuICT.core.gate.gate.PermGate" title="QuICT.core.gate.gate.PermGate"><code class="xref py py-class docutils literal notranslate"><span class="pre">QuICT.core.gate.gate.PermGate</span></code></a></p>
+<p>act an multiply operate with modulus.</p>
+<p>This Class is the subClass of PermGate.
+In fact, we calculate the permutation by the parameters.</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="QuICT.core.gate.gate.PermShiftGate">
+<em class="property">class </em><code class="descclassname">QuICT.core.gate.gate.</code><code class="descname">PermShiftGate</code><span class="sig-paren">(</span><em>alias=None</em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.gate.gate.PermShiftGate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#QuICT.core.gate.gate.PermGate" title="QuICT.core.gate.gate.PermGate"><code class="xref py py-class docutils literal notranslate"><span class="pre">QuICT.core.gate.gate.PermGate</span></code></a></p>
+<p>act an increase or subtract operate with modulus.</p>
+<p>This Class is the subClass of PermGate.
+In fact, we calculate the permutation by the parameters.</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="QuICT.core.gate.gate.ResetGate">
+<em class="property">class </em><code class="descclassname">QuICT.core.gate.gate.</code><code class="descname">ResetGate</code><span class="sig-paren">(</span><em>alias=None</em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.gate.gate.ResetGate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#QuICT.core.gate.gate.BasicGate" title="QuICT.core.gate.gate.BasicGate"><code class="xref py py-class docutils literal notranslate"><span class="pre">QuICT.core.gate.gate.BasicGate</span></code></a></p>
+<p>Reset gate</p>
+<p>Reset the qubit into 0 state,
+which change the amplitude</p>
+<dl class="method">
+<dt id="QuICT.core.gate.gate.ResetGate.exec">
+<code class="descname">exec</code><span class="sig-paren">(</span><em>circuit</em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.gate.gate.ResetGate.exec" title="Permalink to this definition">¶</a></dt>
+<dd><p>execute on the circuit</p>
+<p>should be overloaded by subClass</p>
+<dl class="docutils">
+<dt>Args:</dt>
+<dd>circuit(Circuit): the circuit this gate act on</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="QuICT.core.gate.gate.ResetGate.matrix">
+<code class="descname">matrix</code><a class="headerlink" href="#QuICT.core.gate.gate.ResetGate.matrix" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="QuICT.core.gate.gate.RxGate">
+<em class="property">class </em><code class="descclassname">QuICT.core.gate.gate.</code><code class="descname">RxGate</code><span class="sig-paren">(</span><em>alias=None</em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.gate.gate.RxGate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#QuICT.core.gate.gate.BasicGate" title="QuICT.core.gate.gate.BasicGate"><code class="xref py py-class docutils literal notranslate"><span class="pre">QuICT.core.gate.gate.BasicGate</span></code></a></p>
+<p>Rotation around the x-axis gate</p>
+<dl class="method">
+<dt id="QuICT.core.gate.gate.RxGate.exec">
+<code class="descname">exec</code><span class="sig-paren">(</span><em>circuit</em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.gate.gate.RxGate.exec" title="Permalink to this definition">¶</a></dt>
+<dd><p>execute on the circuit</p>
+<p>should be overloaded by subClass</p>
+<dl class="docutils">
+<dt>Args:</dt>
+<dd>circuit(Circuit): the circuit this gate act on</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="QuICT.core.gate.gate.RxGate.inverse">
+<code class="descname">inverse</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.gate.gate.RxGate.inverse" title="Permalink to this definition">¶</a></dt>
+<dd><p>the inverse of the gate</p>
+<dl class="docutils">
+<dt>Return:</dt>
+<dd>BasicGate: the inverse of the gate</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="QuICT.core.gate.gate.RxGate.matrix">
+<code class="descname">matrix</code><a class="headerlink" href="#QuICT.core.gate.gate.RxGate.matrix" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="QuICT.core.gate.gate.RyGate">
+<em class="property">class </em><code class="descclassname">QuICT.core.gate.gate.</code><code class="descname">RyGate</code><span class="sig-paren">(</span><em>alias=None</em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.gate.gate.RyGate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#QuICT.core.gate.gate.BasicGate" title="QuICT.core.gate.gate.BasicGate"><code class="xref py py-class docutils literal notranslate"><span class="pre">QuICT.core.gate.gate.BasicGate</span></code></a></p>
+<p>Rotation around the y-axis gate</p>
+<dl class="method">
+<dt id="QuICT.core.gate.gate.RyGate.exec">
+<code class="descname">exec</code><span class="sig-paren">(</span><em>circuit</em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.gate.gate.RyGate.exec" title="Permalink to this definition">¶</a></dt>
+<dd><p>execute on the circuit</p>
+<p>should be overloaded by subClass</p>
+<dl class="docutils">
+<dt>Args:</dt>
+<dd>circuit(Circuit): the circuit this gate act on</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="QuICT.core.gate.gate.RyGate.inverse">
+<code class="descname">inverse</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.gate.gate.RyGate.inverse" title="Permalink to this definition">¶</a></dt>
+<dd><p>the inverse of the gate</p>
+<dl class="docutils">
+<dt>Return:</dt>
+<dd>BasicGate: the inverse of the gate</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="QuICT.core.gate.gate.RyGate.matrix">
+<code class="descname">matrix</code><a class="headerlink" href="#QuICT.core.gate.gate.RyGate.matrix" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="QuICT.core.gate.gate.RzGate">
+<em class="property">class </em><code class="descclassname">QuICT.core.gate.gate.</code><code class="descname">RzGate</code><span class="sig-paren">(</span><em>alias=None</em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.gate.gate.RzGate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#QuICT.core.gate.gate.BasicGate" title="QuICT.core.gate.gate.BasicGate"><code class="xref py py-class docutils literal notranslate"><span class="pre">QuICT.core.gate.gate.BasicGate</span></code></a></p>
+<p>Rotation around the z-axis gate</p>
+<dl class="method">
+<dt id="QuICT.core.gate.gate.RzGate.exec">
+<code class="descname">exec</code><span class="sig-paren">(</span><em>circuit</em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.gate.gate.RzGate.exec" title="Permalink to this definition">¶</a></dt>
+<dd><p>execute on the circuit</p>
+<p>should be overloaded by subClass</p>
+<dl class="docutils">
+<dt>Args:</dt>
+<dd>circuit(Circuit): the circuit this gate act on</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="QuICT.core.gate.gate.RzGate.inverse">
+<code class="descname">inverse</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.gate.gate.RzGate.inverse" title="Permalink to this definition">¶</a></dt>
+<dd><p>the inverse of the gate</p>
+<dl class="docutils">
+<dt>Return:</dt>
+<dd>BasicGate: the inverse of the gate</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="QuICT.core.gate.gate.RzGate.matrix">
+<code class="descname">matrix</code><a class="headerlink" href="#QuICT.core.gate.gate.RzGate.matrix" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="QuICT.core.gate.gate.SDaggerGate">
+<em class="property">class </em><code class="descclassname">QuICT.core.gate.gate.</code><code class="descname">SDaggerGate</code><span class="sig-paren">(</span><em>alias=None</em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.gate.gate.SDaggerGate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#QuICT.core.gate.gate.BasicGate" title="QuICT.core.gate.gate.BasicGate"><code class="xref py py-class docutils literal notranslate"><span class="pre">QuICT.core.gate.gate.BasicGate</span></code></a></p>
+<p>The conjugate transpose of Phase gate</p>
+<dl class="method">
+<dt id="QuICT.core.gate.gate.SDaggerGate.exec">
+<code class="descname">exec</code><span class="sig-paren">(</span><em>circuit</em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.gate.gate.SDaggerGate.exec" title="Permalink to this definition">¶</a></dt>
+<dd><p>execute on the circuit</p>
+<p>should be overloaded by subClass</p>
+<dl class="docutils">
+<dt>Args:</dt>
+<dd>circuit(Circuit): the circuit this gate act on</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="QuICT.core.gate.gate.SDaggerGate.inverse">
+<code class="descname">inverse</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.gate.gate.SDaggerGate.inverse" title="Permalink to this definition">¶</a></dt>
+<dd><p>the inverse of the gate</p>
+<dl class="docutils">
+<dt>Return:</dt>
+<dd>BasicGate: the inverse of the gate</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="QuICT.core.gate.gate.SGate">
+<em class="property">class </em><code class="descclassname">QuICT.core.gate.gate.</code><code class="descname">SGate</code><span class="sig-paren">(</span><em>alias=None</em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.gate.gate.SGate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#QuICT.core.gate.gate.BasicGate" title="QuICT.core.gate.gate.BasicGate"><code class="xref py py-class docutils literal notranslate"><span class="pre">QuICT.core.gate.gate.BasicGate</span></code></a></p>
+<p>Phase gate</p>
+<dl class="method">
+<dt id="QuICT.core.gate.gate.SGate.exec">
+<code class="descname">exec</code><span class="sig-paren">(</span><em>circuit</em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.gate.gate.SGate.exec" title="Permalink to this definition">¶</a></dt>
+<dd><p>execute on the circuit</p>
+<p>should be overloaded by subClass</p>
+<dl class="docutils">
+<dt>Args:</dt>
+<dd>circuit(Circuit): the circuit this gate act on</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="QuICT.core.gate.gate.SGate.inverse">
+<code class="descname">inverse</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.gate.gate.SGate.inverse" title="Permalink to this definition">¶</a></dt>
+<dd><p>the inverse of the gate</p>
+<dl class="docutils">
+<dt>Return:</dt>
+<dd>BasicGate: the inverse of the gate</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="QuICT.core.gate.gate.ShorInitialGate">
+<em class="property">class </em><code class="descclassname">QuICT.core.gate.gate.</code><code class="descname">ShorInitialGate</code><span class="sig-paren">(</span><em>alias=None</em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.gate.gate.ShorInitialGate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#QuICT.core.gate.gate.BasicGate" title="QuICT.core.gate.gate.BasicGate"><code class="xref py py-class docutils literal notranslate"><span class="pre">QuICT.core.gate.gate.BasicGate</span></code></a></p>
+<p>a oracle gate to preparation the initial state before IQFT in Shor algorithm</p>
+<p>backends will preparation the initial state by classical operator
+with a fixed measure result of second register.</p>
+<dl class="method">
+<dt id="QuICT.core.gate.gate.ShorInitialGate.exec">
+<code class="descname">exec</code><span class="sig-paren">(</span><em>circuit</em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.gate.gate.ShorInitialGate.exec" title="Permalink to this definition">¶</a></dt>
+<dd><p>execute on the circuit</p>
+<p>should be overloaded by subClass</p>
+<dl class="docutils">
+<dt>Args:</dt>
+<dd>circuit(Circuit): the circuit this gate act on</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="QuICT.core.gate.gate.SwapGate">
+<em class="property">class </em><code class="descclassname">QuICT.core.gate.gate.</code><code class="descname">SwapGate</code><span class="sig-paren">(</span><em>alias=None</em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.gate.gate.SwapGate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#QuICT.core.gate.gate.BasicGate" title="QuICT.core.gate.gate.BasicGate"><code class="xref py py-class docutils literal notranslate"><span class="pre">QuICT.core.gate.gate.BasicGate</span></code></a></p>
+<p>Swap gate</p>
+<p>In the computation, it will not change the amplitude.
+Instead, it change the index of a Tangle.</p>
+<dl class="method">
+<dt id="QuICT.core.gate.gate.SwapGate.exec">
+<code class="descname">exec</code><span class="sig-paren">(</span><em>circuit</em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.gate.gate.SwapGate.exec" title="Permalink to this definition">¶</a></dt>
+<dd><p>execute on the circuit</p>
+<p>should be overloaded by subClass</p>
+<dl class="docutils">
+<dt>Args:</dt>
+<dd>circuit(Circuit): the circuit this gate act on</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="QuICT.core.gate.gate.SwapGate.inverse">
+<code class="descname">inverse</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.gate.gate.SwapGate.inverse" title="Permalink to this definition">¶</a></dt>
+<dd><p>the inverse of the gate</p>
+<dl class="docutils">
+<dt>Return:</dt>
+<dd>BasicGate: the inverse of the gate</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="QuICT.core.gate.gate.TDaggerGate">
+<em class="property">class </em><code class="descclassname">QuICT.core.gate.gate.</code><code class="descname">TDaggerGate</code><span class="sig-paren">(</span><em>alias=None</em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.gate.gate.TDaggerGate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#QuICT.core.gate.gate.BasicGate" title="QuICT.core.gate.gate.BasicGate"><code class="xref py py-class docutils literal notranslate"><span class="pre">QuICT.core.gate.gate.BasicGate</span></code></a></p>
+<p>The conjugate transpose of T gate</p>
+<dl class="method">
+<dt id="QuICT.core.gate.gate.TDaggerGate.exec">
+<code class="descname">exec</code><span class="sig-paren">(</span><em>circuit</em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.gate.gate.TDaggerGate.exec" title="Permalink to this definition">¶</a></dt>
+<dd><p>execute on the circuit</p>
+<p>should be overloaded by subClass</p>
+<dl class="docutils">
+<dt>Args:</dt>
+<dd>circuit(Circuit): the circuit this gate act on</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="QuICT.core.gate.gate.TDaggerGate.inverse">
+<code class="descname">inverse</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.gate.gate.TDaggerGate.inverse" title="Permalink to this definition">¶</a></dt>
+<dd><p>the inverse of the gate</p>
+<dl class="docutils">
+<dt>Return:</dt>
+<dd>BasicGate: the inverse of the gate</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="QuICT.core.gate.gate.TGate">
+<em class="property">class </em><code class="descclassname">QuICT.core.gate.gate.</code><code class="descname">TGate</code><span class="sig-paren">(</span><em>alias=None</em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.gate.gate.TGate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#QuICT.core.gate.gate.BasicGate" title="QuICT.core.gate.gate.BasicGate"><code class="xref py py-class docutils literal notranslate"><span class="pre">QuICT.core.gate.gate.BasicGate</span></code></a></p>
+<p>T gate</p>
+<dl class="method">
+<dt id="QuICT.core.gate.gate.TGate.exec">
+<code class="descname">exec</code><span class="sig-paren">(</span><em>circuit</em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.gate.gate.TGate.exec" title="Permalink to this definition">¶</a></dt>
+<dd><p>execute on the circuit</p>
+<p>should be overloaded by subClass</p>
+<dl class="docutils">
+<dt>Args:</dt>
+<dd>circuit(Circuit): the circuit this gate act on</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="QuICT.core.gate.gate.TGate.inverse">
+<code class="descname">inverse</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.gate.gate.TGate.inverse" title="Permalink to this definition">¶</a></dt>
+<dd><p>the inverse of the gate</p>
+<dl class="docutils">
+<dt>Return:</dt>
+<dd>BasicGate: the inverse of the gate</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="QuICT.core.gate.gate.U1Gate">
+<em class="property">class </em><code class="descclassname">QuICT.core.gate.gate.</code><code class="descname">U1Gate</code><span class="sig-paren">(</span><em>alias=None</em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.gate.gate.U1Gate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#QuICT.core.gate.gate.BasicGate" title="QuICT.core.gate.gate.BasicGate"><code class="xref py py-class docutils literal notranslate"><span class="pre">QuICT.core.gate.gate.BasicGate</span></code></a></p>
+<p>Diagonal single-qubit gate</p>
+<dl class="method">
+<dt id="QuICT.core.gate.gate.U1Gate.exec">
+<code class="descname">exec</code><span class="sig-paren">(</span><em>circuit</em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.gate.gate.U1Gate.exec" title="Permalink to this definition">¶</a></dt>
+<dd><p>execute on the circuit</p>
+<p>should be overloaded by subClass</p>
+<dl class="docutils">
+<dt>Args:</dt>
+<dd>circuit(Circuit): the circuit this gate act on</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="QuICT.core.gate.gate.U1Gate.inverse">
+<code class="descname">inverse</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.gate.gate.U1Gate.inverse" title="Permalink to this definition">¶</a></dt>
+<dd><p>the inverse of the gate</p>
+<dl class="docutils">
+<dt>Return:</dt>
+<dd>BasicGate: the inverse of the gate</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="QuICT.core.gate.gate.U1Gate.matrix">
+<code class="descname">matrix</code><a class="headerlink" href="#QuICT.core.gate.gate.U1Gate.matrix" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="QuICT.core.gate.gate.U2Gate">
+<em class="property">class </em><code class="descclassname">QuICT.core.gate.gate.</code><code class="descname">U2Gate</code><span class="sig-paren">(</span><em>alias=None</em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.gate.gate.U2Gate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#QuICT.core.gate.gate.BasicGate" title="QuICT.core.gate.gate.BasicGate"><code class="xref py py-class docutils literal notranslate"><span class="pre">QuICT.core.gate.gate.BasicGate</span></code></a></p>
+<p>One-pulse single-qubit gate</p>
+<dl class="method">
+<dt id="QuICT.core.gate.gate.U2Gate.exec">
+<code class="descname">exec</code><span class="sig-paren">(</span><em>circuit</em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.gate.gate.U2Gate.exec" title="Permalink to this definition">¶</a></dt>
+<dd><p>execute on the circuit</p>
+<p>should be overloaded by subClass</p>
+<dl class="docutils">
+<dt>Args:</dt>
+<dd>circuit(Circuit): the circuit this gate act on</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="QuICT.core.gate.gate.U2Gate.inverse">
+<code class="descname">inverse</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.gate.gate.U2Gate.inverse" title="Permalink to this definition">¶</a></dt>
+<dd><p>the inverse of the gate</p>
+<dl class="docutils">
+<dt>Return:</dt>
+<dd>BasicGate: the inverse of the gate</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="QuICT.core.gate.gate.U2Gate.matrix">
+<code class="descname">matrix</code><a class="headerlink" href="#QuICT.core.gate.gate.U2Gate.matrix" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="QuICT.core.gate.gate.U3Gate">
+<em class="property">class </em><code class="descclassname">QuICT.core.gate.gate.</code><code class="descname">U3Gate</code><span class="sig-paren">(</span><em>alias=None</em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.gate.gate.U3Gate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#QuICT.core.gate.gate.BasicGate" title="QuICT.core.gate.gate.BasicGate"><code class="xref py py-class docutils literal notranslate"><span class="pre">QuICT.core.gate.gate.BasicGate</span></code></a></p>
+<p>Two-pulse single-qubit gate</p>
+<dl class="method">
+<dt id="QuICT.core.gate.gate.U3Gate.exec">
+<code class="descname">exec</code><span class="sig-paren">(</span><em>circuit</em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.gate.gate.U3Gate.exec" title="Permalink to this definition">¶</a></dt>
+<dd><p>execute on the circuit</p>
+<p>should be overloaded by subClass</p>
+<dl class="docutils">
+<dt>Args:</dt>
+<dd>circuit(Circuit): the circuit this gate act on</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="QuICT.core.gate.gate.U3Gate.inverse">
+<code class="descname">inverse</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.gate.gate.U3Gate.inverse" title="Permalink to this definition">¶</a></dt>
+<dd><p>the inverse of the gate</p>
+<dl class="docutils">
+<dt>Return:</dt>
+<dd>BasicGate: the inverse of the gate</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="QuICT.core.gate.gate.U3Gate.matrix">
+<code class="descname">matrix</code><a class="headerlink" href="#QuICT.core.gate.gate.U3Gate.matrix" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="QuICT.core.gate.gate.UnitaryGate">
+<em class="property">class </em><code class="descclassname">QuICT.core.gate.gate.</code><code class="descname">UnitaryGate</code><span class="sig-paren">(</span><em>alias=None</em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.gate.gate.UnitaryGate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#QuICT.core.gate.gate.BasicGate" title="QuICT.core.gate.gate.BasicGate"><code class="xref py py-class docutils literal notranslate"><span class="pre">QuICT.core.gate.gate.BasicGate</span></code></a></p>
+<p>Custom gate</p>
+<p>act an unitary matrix on the qureg,
+the parameters is the matrix</p>
+<dl class="method">
+<dt id="QuICT.core.gate.gate.UnitaryGate.copy">
+<code class="descname">copy</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.gate.gate.UnitaryGate.copy" title="Permalink to this definition">¶</a></dt>
+<dd><p>return a copy of this gate</p>
+<dl class="docutils">
+<dt>Returns:</dt>
+<dd>gate(BasicGate): a copy of this gate</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="QuICT.core.gate.gate.UnitaryGate.exec">
+<code class="descname">exec</code><span class="sig-paren">(</span><em>circuit</em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.gate.gate.UnitaryGate.exec" title="Permalink to this definition">¶</a></dt>
+<dd><p>execute on the circuit</p>
+<p>should be overloaded by subClass</p>
+<dl class="docutils">
+<dt>Args:</dt>
+<dd>circuit(Circuit): the circuit this gate act on</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="QuICT.core.gate.gate.UnitaryGate.inverse">
+<code class="descname">inverse</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.gate.gate.UnitaryGate.inverse" title="Permalink to this definition">¶</a></dt>
+<dd><p>the inverse of the gate</p>
+<dl class="docutils">
+<dt>Return:</dt>
+<dd>BasicGate: the inverse of the gate</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="QuICT.core.gate.gate.UnitaryGate.matrix">
+<code class="descname">matrix</code><a class="headerlink" href="#QuICT.core.gate.gate.UnitaryGate.matrix" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="QuICT.core.gate.gate.XGate">
+<em class="property">class </em><code class="descclassname">QuICT.core.gate.gate.</code><code class="descname">XGate</code><span class="sig-paren">(</span><em>alias=None</em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.gate.gate.XGate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#QuICT.core.gate.gate.BasicGate" title="QuICT.core.gate.gate.BasicGate"><code class="xref py py-class docutils literal notranslate"><span class="pre">QuICT.core.gate.gate.BasicGate</span></code></a></p>
+<p>Pauli-X gate</p>
+<dl class="method">
+<dt id="QuICT.core.gate.gate.XGate.exec">
+<code class="descname">exec</code><span class="sig-paren">(</span><em>circuit</em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.gate.gate.XGate.exec" title="Permalink to this definition">¶</a></dt>
+<dd><p>execute on the circuit</p>
+<p>should be overloaded by subClass</p>
+<dl class="docutils">
+<dt>Args:</dt>
+<dd>circuit(Circuit): the circuit this gate act on</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="QuICT.core.gate.gate.XGate.inverse">
+<code class="descname">inverse</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.gate.gate.XGate.inverse" title="Permalink to this definition">¶</a></dt>
+<dd><p>the inverse of the gate</p>
+<dl class="docutils">
+<dt>Return:</dt>
+<dd>BasicGate: the inverse of the gate</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="QuICT.core.gate.gate.YGate">
+<em class="property">class </em><code class="descclassname">QuICT.core.gate.gate.</code><code class="descname">YGate</code><span class="sig-paren">(</span><em>alias=None</em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.gate.gate.YGate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#QuICT.core.gate.gate.BasicGate" title="QuICT.core.gate.gate.BasicGate"><code class="xref py py-class docutils literal notranslate"><span class="pre">QuICT.core.gate.gate.BasicGate</span></code></a></p>
+<p>Pauli-Y gate</p>
+<dl class="method">
+<dt id="QuICT.core.gate.gate.YGate.exec">
+<code class="descname">exec</code><span class="sig-paren">(</span><em>circuit</em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.gate.gate.YGate.exec" title="Permalink to this definition">¶</a></dt>
+<dd><p>execute on the circuit</p>
+<p>should be overloaded by subClass</p>
+<dl class="docutils">
+<dt>Args:</dt>
+<dd>circuit(Circuit): the circuit this gate act on</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="QuICT.core.gate.gate.YGate.inverse">
+<code class="descname">inverse</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.gate.gate.YGate.inverse" title="Permalink to this definition">¶</a></dt>
+<dd><p>the inverse of the gate</p>
+<dl class="docutils">
+<dt>Return:</dt>
+<dd>BasicGate: the inverse of the gate</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="QuICT.core.gate.gate.YGate.matrix">
+<code class="descname">matrix</code><a class="headerlink" href="#QuICT.core.gate.gate.YGate.matrix" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="QuICT.core.gate.gate.ZGate">
+<em class="property">class </em><code class="descclassname">QuICT.core.gate.gate.</code><code class="descname">ZGate</code><span class="sig-paren">(</span><em>alias=None</em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.gate.gate.ZGate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#QuICT.core.gate.gate.BasicGate" title="QuICT.core.gate.gate.BasicGate"><code class="xref py py-class docutils literal notranslate"><span class="pre">QuICT.core.gate.gate.BasicGate</span></code></a></p>
+<p>Pauli-Z gate</p>
+<dl class="method">
+<dt id="QuICT.core.gate.gate.ZGate.exec">
+<code class="descname">exec</code><span class="sig-paren">(</span><em>circuit</em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.gate.gate.ZGate.exec" title="Permalink to this definition">¶</a></dt>
+<dd><p>execute on the circuit</p>
+<p>should be overloaded by subClass</p>
+<dl class="docutils">
+<dt>Args:</dt>
+<dd>circuit(Circuit): the circuit this gate act on</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="QuICT.core.gate.gate.ZGate.inverse">
+<code class="descname">inverse</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.gate.gate.ZGate.inverse" title="Permalink to this definition">¶</a></dt>
+<dd><p>the inverse of the gate</p>
+<dl class="docutils">
+<dt>Return:</dt>
+<dd>BasicGate: the inverse of the gate</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="function">
+<dt id="QuICT.core.gate.gate.gate_implementation">
+<code class="descclassname">QuICT.core.gate.gate.</code><code class="descname">gate_implementation</code><span class="sig-paren">(</span><em>cls</em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.gate.gate.gate_implementation" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="QuICT.core.gate.extension_gate.html"
+                        title="previous chapter">QuICT.core.gate.extension_gate module</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="QuICT.core.gate.gate_builder.html"
+                        title="next chapter">QuICT.core.gate.gate_builder module</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/api/QuICT.core.gate.gate.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="QuICT.core.gate.gate_builder.html" title="QuICT.core.gate.gate_builder module"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="QuICT.core.gate.extension_gate.html" title="QuICT.core.gate.extension_gate module"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">QuICT  documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="QuICT.html" >API</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="QuICT.core.html" >QuICT.core package</a> &#187;</li>
+          <li class="nav-item nav-item-3"><a href="QuICT.core.gate.html" >QuICT.core.gate package</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright .
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.5.
+    </div>
+  </body>
+</html>

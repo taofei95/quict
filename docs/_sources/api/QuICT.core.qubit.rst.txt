@@ -1,0 +1,15 @@
+QuICT.core.qubit package
+========================
+
+.. automodule:: QuICT.core.qubit
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+Submodules
+----------
+
+.. toctree::
+
+   QuICT.core.qubit.qubit
+

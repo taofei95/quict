@@ -61,6 +61,5 @@ def test_pratial_prob_part():
 
 if __name__ == "__main__":
     # pytest.main(["./_unit_test.py", "./circuit_unit_test.py", "./gate_unit_test.py", "./qubit_unit_test.py"])
-    # pytest.main(["./circuit_unit_test.py"])
-    test_pratial_prob()
+    pytest.main(["./circuit_unit_test.py"])
 

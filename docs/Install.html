@@ -1,0 +1,144 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Install &#8212; QuICT  documentation</title>
+    <link rel="stylesheet" href="_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/language_data.js"></script>
+    
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">QuICT  documentation</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="install">
+<h1>Install<a class="headerlink" href="#install" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="in-case-that-you-have-a-favor-over-docker">
+<h2>In case that you have a favor over Docker<a class="headerlink" href="#in-case-that-you-have-a-favor-over-docker" title="Permalink to this headline">¶</a></h2>
+<p>Though releasing images on Docker Hub is in our agenda, currently
+docker users might need to build docker image from sources.
+With the docker file we provide in the repository, one can easily
+build a docker image with only a little performance loss.</p>
+<div class="highlight-guess notranslate"><div class="highlight"><pre><span></span>docker built -t quict .
+</pre></div>
+</div>
+</div>
+<div class="section" id="install-dependency">
+<h2>Install Dependency<a class="headerlink" href="#install-dependency" title="Permalink to this headline">¶</a></h2>
+<p>You can try <code class="docutils literal notranslate"><span class="pre">sudo</span> <span class="pre">./dependency.sh</span></code> to install dependencies
+automatically(only Ubuntu and Fedora are supported currently).
+If you prefer install python packages using <code class="docutils literal notranslate"><span class="pre">pip</span></code>, just skip
+setuptools, numpy and scipy in following commands.</p>
+<p>To install dependencies on Ubuntu:</p>
+<div class="highlight-guess notranslate"><div class="highlight"><pre><span></span>sudo apt install build-essential libtbb2 libtbb-dev
+  python3 python3-setuptools python3-numpy python3-scipy
+</pre></div>
+</div>
+<blockquote>
+<div>Or just install <code class="docutils literal notranslate"><span class="pre">sudo</span> <span class="pre">apt</span> <span class="pre">install</span> <span class="pre">build-essential</span> <span class="pre">libtbb2</span> <span class="pre">libtbb-dev</span></code>
+if you handle python parts in another way.</div></blockquote>
+<p>To install dependencies on Fedora:</p>
+<div class="highlight-guess notranslate"><div class="highlight"><pre><span></span>sudo dnf install make gcc gcc-c++ kernel-devel linux-headers tbb tbb-devel \
+  python3 python3-setuptools python3-numpy python3-scipy
+</pre></div>
+</div>
+<blockquote>
+<div><p>Or just <code class="docutils literal notranslate"><span class="pre">sudo</span> <span class="pre">dnf</span> <span class="pre">install</span> <span class="pre">make</span> <span class="pre">gcc</span> <span class="pre">gcc-c++</span> <span class="pre">kernel-devel</span> <span class="pre">linux-headers</span> <span class="pre">tbb</span> <span class="pre">tbb-devel</span></code>
+if you handle python parts in another way.</p>
+<p>Our helper scripts would use <code class="docutils literal notranslate"><span class="pre">which</span></code>, <code class="docutils literal notranslate"><span class="pre">uname</span></code>, <code class="docutils literal notranslate"><span class="pre">grep</span></code> and <code class="docutils literal notranslate"><span class="pre">sed</span></code>. Install them if they are not equipped.</p>
+</div></blockquote>
+</div>
+<div class="section" id="build-install-quict">
+<h2>Build &amp; Install QuICT<a class="headerlink" href="#build-install-quict" title="Permalink to this headline">¶</a></h2>
+<p>Following commands would build QuICT and install it system-wide.
+If you are going to install it into some python virtual environment, do it without any <code class="docutils literal notranslate"><span class="pre">sudo</span></code>.</p>
+<div class="highlight-guess notranslate"><div class="highlight"><pre><span></span>./build.sh
+sudo ./install.sh
+</pre></div>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Install</a><ul>
+<li><a class="reference internal" href="#in-case-that-you-have-a-favor-over-docker">In case that you have a favor over Docker</a></li>
+<li><a class="reference internal" href="#install-dependency">Install Dependency</a></li>
+<li><a class="reference internal" href="#build-install-quict">Build &amp; Install QuICT</a></li>
+</ul>
+</li>
+</ul>
+
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/install.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">QuICT  documentation</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright .
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.5.
+    </div>
+  </body>
+</html>

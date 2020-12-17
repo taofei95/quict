@@ -1,0 +1,554 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>QuICT.core.gate.extension_gate module &#8212; QuICT  documentation</title>
+    <link rel="stylesheet" href="../_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="../_static/language_data.js"></script>
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="QuICT.core.gate.gate module" href="QuICT.core.gate.gate.html" />
+    <link rel="prev" title="QuICT.core.gate.exec_operator module" href="QuICT.core.gate.exec_operator.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="QuICT.core.gate.gate.html" title="QuICT.core.gate.gate module"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="QuICT.core.gate.exec_operator.html" title="QuICT.core.gate.exec_operator module"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">QuICT  documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="QuICT.html" >API</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="QuICT.core.html" >QuICT.core package</a> &#187;</li>
+          <li class="nav-item nav-item-3"><a href="QuICT.core.gate.html" accesskey="U">QuICT.core.gate package</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="module-QuICT.core.gate.extension_gate">
+<span id="quict-core-gate-extension-gate-module"></span><h1>QuICT.core.gate.extension_gate module<a class="headerlink" href="#module-QuICT.core.gate.extension_gate" title="Permalink to this headline">¶</a></h1>
+<dl class="class">
+<dt id="QuICT.core.gate.extension_gate.CCRzModel">
+<em class="property">class </em><code class="descclassname">QuICT.core.gate.extension_gate.</code><code class="descname">CCRzModel</code><span class="sig-paren">(</span><em>alias=None</em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.gate.extension_gate.CCRzModel" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#QuICT.core.gate.extension_gate.gateModel" title="QuICT.core.gate.extension_gate.gateModel"><code class="xref py py-class docutils literal notranslate"><span class="pre">QuICT.core.gate.extension_gate.gateModel</span></code></a></p>
+<p>controlled-Rz gate with two control bits</p>
+<dl class="method">
+<dt id="QuICT.core.gate.extension_gate.CCRzModel.build_gate">
+<code class="descname">build_gate</code><span class="sig-paren">(</span><em>other</em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.gate.extension_gate.CCRzModel.build_gate" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="docutils">
+<dt>the overloaded the build_gate can return two kind of values:</dt>
+<dd><p class="first">1)list&lt;BasicGate&gt;: in this way, developer use gateBuilder to generator a series of gates
+2)Circuit: in this way, developer can generator a circuit whose bits number is same as the</p>
+<blockquote class="last">
+<div><dl class="docutils">
+<dt>qureg the gate, and apply gates on in. for Example:</dt>
+<dd>qureg = self.qureg_trans(qureg)
+circuit = len(qureg)
+X | circuit
+return X</dd>
+</dl>
+</div></blockquote>
+</dd>
+<dt>Args:</dt>
+<dd>qureg: the gate</dd>
+<dt>Returns:</dt>
+<dd>Circuit/list&lt;BasicGate&gt;: synthetize result</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="QuICT.core.gate.extension_gate.CCX_DecomposeModel">
+<em class="property">class </em><code class="descclassname">QuICT.core.gate.extension_gate.</code><code class="descname">CCX_DecomposeModel</code><span class="sig-paren">(</span><em>alias=None</em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.gate.extension_gate.CCX_DecomposeModel" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#QuICT.core.gate.extension_gate.gateModel" title="QuICT.core.gate.extension_gate.gateModel"><code class="xref py py-class docutils literal notranslate"><span class="pre">QuICT.core.gate.extension_gate.gateModel</span></code></a></p>
+<dl class="method">
+<dt id="QuICT.core.gate.extension_gate.CCX_DecomposeModel.build_gate">
+<code class="descname">build_gate</code><span class="sig-paren">(</span><em>other</em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.gate.extension_gate.CCX_DecomposeModel.build_gate" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="docutils">
+<dt>the overloaded the build_gate can return two kind of values:</dt>
+<dd><p class="first">1)list&lt;BasicGate&gt;: in this way, developer use gateBuilder to generator a series of gates
+2)Circuit: in this way, developer can generator a circuit whose bits number is same as the</p>
+<blockquote class="last">
+<div><dl class="docutils">
+<dt>qureg the gate, and apply gates on in. for Example:</dt>
+<dd>qureg = self.qureg_trans(qureg)
+circuit = len(qureg)
+X | circuit
+return X</dd>
+</dl>
+</div></blockquote>
+</dd>
+<dt>Args:</dt>
+<dd>qureg: the gate</dd>
+<dt>Returns:</dt>
+<dd>Circuit/list&lt;BasicGate&gt;: synthetize result</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="QuICT.core.gate.extension_gate.CRz_DecomposeModel">
+<em class="property">class </em><code class="descclassname">QuICT.core.gate.extension_gate.</code><code class="descname">CRz_DecomposeModel</code><span class="sig-paren">(</span><em>alias=None</em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.gate.extension_gate.CRz_DecomposeModel" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#QuICT.core.gate.extension_gate.gateModel" title="QuICT.core.gate.extension_gate.gateModel"><code class="xref py py-class docutils literal notranslate"><span class="pre">QuICT.core.gate.extension_gate.gateModel</span></code></a></p>
+<p>Controlled-Rz gate</p>
+<dl class="method">
+<dt id="QuICT.core.gate.extension_gate.CRz_DecomposeModel.build_gate">
+<code class="descname">build_gate</code><span class="sig-paren">(</span><em>other</em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.gate.extension_gate.CRz_DecomposeModel.build_gate" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="docutils">
+<dt>the overloaded the build_gate can return two kind of values:</dt>
+<dd><p class="first">1)list&lt;BasicGate&gt;: in this way, developer use gateBuilder to generator a series of gates
+2)Circuit: in this way, developer can generator a circuit whose bits number is same as the</p>
+<blockquote class="last">
+<div><dl class="docutils">
+<dt>qureg the gate, and apply gates on in. for Example:</dt>
+<dd>qureg = self.qureg_trans(qureg)
+circuit = len(qureg)
+X | circuit
+return X</dd>
+</dl>
+</div></blockquote>
+</dd>
+<dt>Args:</dt>
+<dd>qureg: the gate</dd>
+<dt>Returns:</dt>
+<dd>Circuit/list&lt;BasicGate&gt;: synthetize result</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="QuICT.core.gate.extension_gate.CU1Gate">
+<em class="property">class </em><code class="descclassname">QuICT.core.gate.extension_gate.</code><code class="descname">CU1Gate</code><span class="sig-paren">(</span><em>alias=None</em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.gate.extension_gate.CU1Gate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#QuICT.core.gate.extension_gate.gateModel" title="QuICT.core.gate.extension_gate.gateModel"><code class="xref py py-class docutils literal notranslate"><span class="pre">QuICT.core.gate.extension_gate.gateModel</span></code></a></p>
+<p>Controlled-U1 gate</p>
+<dl class="method">
+<dt id="QuICT.core.gate.extension_gate.CU1Gate.build_gate">
+<code class="descname">build_gate</code><span class="sig-paren">(</span><em>other</em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.gate.extension_gate.CU1Gate.build_gate" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="docutils">
+<dt>the overloaded the build_gate can return two kind of values:</dt>
+<dd><p class="first">1)list&lt;BasicGate&gt;: in this way, developer use gateBuilder to generator a series of gates
+2)Circuit: in this way, developer can generator a circuit whose bits number is same as the</p>
+<blockquote class="last">
+<div><dl class="docutils">
+<dt>qureg the gate, and apply gates on in. for Example:</dt>
+<dd>qureg = self.qureg_trans(qureg)
+circuit = len(qureg)
+X | circuit
+return X</dd>
+</dl>
+</div></blockquote>
+</dd>
+<dt>Args:</dt>
+<dd>qureg: the gate</dd>
+<dt>Returns:</dt>
+<dd>Circuit/list&lt;BasicGate&gt;: synthetize result</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="QuICT.core.gate.extension_gate.CU3Gate">
+<em class="property">class </em><code class="descclassname">QuICT.core.gate.extension_gate.</code><code class="descname">CU3Gate</code><span class="sig-paren">(</span><em>alias=None</em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.gate.extension_gate.CU3Gate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#QuICT.core.gate.extension_gate.gateModel" title="QuICT.core.gate.extension_gate.gateModel"><code class="xref py py-class docutils literal notranslate"><span class="pre">QuICT.core.gate.extension_gate.gateModel</span></code></a></p>
+<p>controlled-U3 gate</p>
+<dl class="method">
+<dt id="QuICT.core.gate.extension_gate.CU3Gate.build_gate">
+<code class="descname">build_gate</code><span class="sig-paren">(</span><em>other</em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.gate.extension_gate.CU3Gate.build_gate" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="docutils">
+<dt>the overloaded the build_gate can return two kind of values:</dt>
+<dd><p class="first">1)list&lt;BasicGate&gt;: in this way, developer use gateBuilder to generator a series of gates
+2)Circuit: in this way, developer can generator a circuit whose bits number is same as the</p>
+<blockquote class="last">
+<div><dl class="docutils">
+<dt>qureg the gate, and apply gates on in. for Example:</dt>
+<dd>qureg = self.qureg_trans(qureg)
+circuit = len(qureg)
+X | circuit
+return X</dd>
+</dl>
+</div></blockquote>
+</dd>
+<dt>Args:</dt>
+<dd>qureg: the gate</dd>
+<dt>Returns:</dt>
+<dd>Circuit/list&lt;BasicGate&gt;: synthetize result</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="data">
+<dt id="QuICT.core.gate.extension_gate.EXTENSION_GATE_ID">
+<code class="descclassname">QuICT.core.gate.extension_gate.</code><code class="descname">EXTENSION_GATE_ID</code><em class="property"> = {'CCRz': 6, 'CCRzModel': 6, 'CCX': 8, 'CCX_DecomposeModel': 8, 'CRz': 4, 'CRz_DecomposeModel': 4, 'CU1': 3, 'CU1Gate': 3, 'CU3Gate': 5, 'Error': -1, 'Fredkin': 7, 'FredkinModel': 7, 'IQFT': 1, 'IQFTModel': 1, 'QFT': 0, 'QFTModel': 0, 'RZZ': 2, 'RZZModel': 2, 'Rzz': 2, 'Toffoli': 8, 'crz': 4, 'cswap': 7, 'cu1': 3, 'iqft': 1, 'qft': 0, 'rzz': 2, 'toffoli': 8}</em><a class="headerlink" href="#QuICT.core.gate.extension_gate.EXTENSION_GATE_ID" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get gate id by gate name. You may use any one of the aliases of this gate.</p>
+</dd></dl>
+
+<dl class="data">
+<dt id="QuICT.core.gate.extension_gate.EXTENSION_GATE_ID_CNT">
+<code class="descclassname">QuICT.core.gate.extension_gate.</code><code class="descname">EXTENSION_GATE_ID_CNT</code><em class="property"> = 9</em><a class="headerlink" href="#QuICT.core.gate.extension_gate.EXTENSION_GATE_ID_CNT" title="Permalink to this definition">¶</a></dt>
+<dd><p>Gate number counter.</p>
+</dd></dl>
+
+<dl class="data">
+<dt id="QuICT.core.gate.extension_gate.EXTENSION_GATE_REGISTER">
+<code class="descclassname">QuICT.core.gate.extension_gate.</code><code class="descname">EXTENSION_GATE_REGISTER</code><em class="property"> = {-1: 'Error', 0: 'QFTModel', 1: 'IQFTModel', 2: 'RZZModel', 3: 'CU1Gate', 4: 'CRz_DecomposeModel', 5: 'CU3Gate', 6: 'CCRzModel', 7: 'FredkinModel', 8: 'CCX_DecomposeModel'}</em><a class="headerlink" href="#QuICT.core.gate.extension_gate.EXTENSION_GATE_REGISTER" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get standard gate name by gate id.</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="QuICT.core.gate.extension_gate.FredkinModel">
+<em class="property">class </em><code class="descclassname">QuICT.core.gate.extension_gate.</code><code class="descname">FredkinModel</code><span class="sig-paren">(</span><em>alias=None</em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.gate.extension_gate.FredkinModel" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#QuICT.core.gate.extension_gate.gateModel" title="QuICT.core.gate.extension_gate.gateModel"><code class="xref py py-class docutils literal notranslate"><span class="pre">QuICT.core.gate.extension_gate.gateModel</span></code></a></p>
+<dl class="method">
+<dt id="QuICT.core.gate.extension_gate.FredkinModel.build_gate">
+<code class="descname">build_gate</code><span class="sig-paren">(</span><em>other</em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.gate.extension_gate.FredkinModel.build_gate" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="docutils">
+<dt>the overloaded the build_gate can return two kind of values:</dt>
+<dd><p class="first">1)list&lt;BasicGate&gt;: in this way, developer use gateBuilder to generator a series of gates
+2)Circuit: in this way, developer can generator a circuit whose bits number is same as the</p>
+<blockquote class="last">
+<div><dl class="docutils">
+<dt>qureg the gate, and apply gates on in. for Example:</dt>
+<dd>qureg = self.qureg_trans(qureg)
+circuit = len(qureg)
+X | circuit
+return X</dd>
+</dl>
+</div></blockquote>
+</dd>
+<dt>Args:</dt>
+<dd>qureg: the gate</dd>
+<dt>Returns:</dt>
+<dd>Circuit/list&lt;BasicGate&gt;: synthetize result</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="QuICT.core.gate.extension_gate.IQFTModel">
+<em class="property">class </em><code class="descclassname">QuICT.core.gate.extension_gate.</code><code class="descname">IQFTModel</code><span class="sig-paren">(</span><em>alias=None</em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.gate.extension_gate.IQFTModel" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#QuICT.core.gate.extension_gate.gateModel" title="QuICT.core.gate.extension_gate.gateModel"><code class="xref py py-class docutils literal notranslate"><span class="pre">QuICT.core.gate.extension_gate.gateModel</span></code></a></p>
+<p>IQFT gate</p>
+<dl class="method">
+<dt id="QuICT.core.gate.extension_gate.IQFTModel.build_gate">
+<code class="descname">build_gate</code><span class="sig-paren">(</span><em>other</em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.gate.extension_gate.IQFTModel.build_gate" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="docutils">
+<dt>the overloaded the build_gate can return two kind of values:</dt>
+<dd><p class="first">1)list&lt;BasicGate&gt;: in this way, developer use gateBuilder to generator a series of gates
+2)Circuit: in this way, developer can generator a circuit whose bits number is same as the</p>
+<blockquote class="last">
+<div><dl class="docutils">
+<dt>qureg the gate, and apply gates on in. for Example:</dt>
+<dd>qureg = self.qureg_trans(qureg)
+circuit = len(qureg)
+X | circuit
+return X</dd>
+</dl>
+</div></blockquote>
+</dd>
+<dt>Args:</dt>
+<dd>qureg: the gate</dd>
+<dt>Returns:</dt>
+<dd>Circuit/list&lt;BasicGate&gt;: synthetize result</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="QuICT.core.gate.extension_gate.QFTModel">
+<em class="property">class </em><code class="descclassname">QuICT.core.gate.extension_gate.</code><code class="descname">QFTModel</code><span class="sig-paren">(</span><em>alias=None</em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.gate.extension_gate.QFTModel" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#QuICT.core.gate.extension_gate.gateModel" title="QuICT.core.gate.extension_gate.gateModel"><code class="xref py py-class docutils literal notranslate"><span class="pre">QuICT.core.gate.extension_gate.gateModel</span></code></a></p>
+<p>QFT oracle</p>
+<dl class="method">
+<dt id="QuICT.core.gate.extension_gate.QFTModel.build_gate">
+<code class="descname">build_gate</code><span class="sig-paren">(</span><em>other</em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.gate.extension_gate.QFTModel.build_gate" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="docutils">
+<dt>the overloaded the build_gate can return two kind of values:</dt>
+<dd><p class="first">1)list&lt;BasicGate&gt;: in this way, developer use gateBuilder to generator a series of gates
+2)Circuit: in this way, developer can generator a circuit whose bits number is same as the</p>
+<blockquote class="last">
+<div><dl class="docutils">
+<dt>qureg the gate, and apply gates on in. for Example:</dt>
+<dd>qureg = self.qureg_trans(qureg)
+circuit = len(qureg)
+X | circuit
+return X</dd>
+</dl>
+</div></blockquote>
+</dd>
+<dt>Args:</dt>
+<dd>qureg: the gate</dd>
+<dt>Returns:</dt>
+<dd>Circuit/list&lt;BasicGate&gt;: synthetize result</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="QuICT.core.gate.extension_gate.RZZModel">
+<em class="property">class </em><code class="descclassname">QuICT.core.gate.extension_gate.</code><code class="descname">RZZModel</code><span class="sig-paren">(</span><em>alias=None</em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.gate.extension_gate.RZZModel" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#QuICT.core.gate.extension_gate.gateModel" title="QuICT.core.gate.extension_gate.gateModel"><code class="xref py py-class docutils literal notranslate"><span class="pre">QuICT.core.gate.extension_gate.gateModel</span></code></a></p>
+<p>RZZ gate</p>
+<dl class="method">
+<dt id="QuICT.core.gate.extension_gate.RZZModel.build_gate">
+<code class="descname">build_gate</code><span class="sig-paren">(</span><em>other</em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.gate.extension_gate.RZZModel.build_gate" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="docutils">
+<dt>the overloaded the build_gate can return two kind of values:</dt>
+<dd><p class="first">1)list&lt;BasicGate&gt;: in this way, developer use gateBuilder to generator a series of gates
+2)Circuit: in this way, developer can generator a circuit whose bits number is same as the</p>
+<blockquote class="last">
+<div><dl class="docutils">
+<dt>qureg the gate, and apply gates on in. for Example:</dt>
+<dd>qureg = self.qureg_trans(qureg)
+circuit = len(qureg)
+X | circuit
+return X</dd>
+</dl>
+</div></blockquote>
+</dd>
+<dt>Args:</dt>
+<dd>qureg: the gate</dd>
+<dt>Returns:</dt>
+<dd>Circuit/list&lt;BasicGate&gt;: synthetize result</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="function">
+<dt id="QuICT.core.gate.extension_gate.extension_gate_implementation">
+<code class="descclassname">QuICT.core.gate.extension_gate.</code><code class="descname">extension_gate_implementation</code><span class="sig-paren">(</span><em>cls</em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.gate.extension_gate.extension_gate_implementation" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="class">
+<dt id="QuICT.core.gate.extension_gate.gateModel">
+<em class="property">class </em><code class="descclassname">QuICT.core.gate.extension_gate.</code><code class="descname">gateModel</code><span class="sig-paren">(</span><em>alias=None</em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.gate.extension_gate.gateModel" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>the abstract SuperClass of all complex quantum gates</p>
+<p>These quantum gates are generally too complex to act on reality quantum
+hardware directly. The class is devoted to give some reasonable synthetize
+of the gates so that user can use these gates as basic gates but get a
+series one-qubit and two-qubit gates in final.</p>
+<p>All complex quantum gates described in the framework have
+some common attributes and some common functions
+which defined in this class.</p>
+<p>Note that all subClass must overloaded the function “build_gate”, the overloaded
+of the function “__or__” and “__call__” is optional.</p>
+<dl class="docutils">
+<dt>Attributes:</dt>
+<dd><p class="first">controls(int): the number of the control bits of the gate
+cargs(list&lt;int&gt;): the list of the index of control bits in the circuit
+carg(int, read only): the first object of cargs</p>
+<p>targets(int): the number of the target bits of the gate
+targs(list&lt;int&gt;): the list of the index of target bits in the circuit
+targ(int, read only): the first object of targs</p>
+<p>params(list): the number of the parameter of the gate
+pargs(list): the list of the parameter
+prag(read only): the first object of pargs</p>
+<p class="last">type(GateType, read only): gate’s type described by ExtensionGateType</p>
+</dd>
+</dl>
+<dl class="method">
+<dt id="QuICT.core.gate.extension_gate.gateModel.build_gate">
+<code class="descname">build_gate</code><span class="sig-paren">(</span><em>qureg</em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.gate.extension_gate.gateModel.build_gate" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="docutils">
+<dt>the overloaded the build_gate can return two kind of values:</dt>
+<dd><p class="first">1)list&lt;BasicGate&gt;: in this way, developer use gateBuilder to generator a series of gates
+2)Circuit: in this way, developer can generator a circuit whose bits number is same as the</p>
+<blockquote class="last">
+<div><dl class="docutils">
+<dt>qureg the gate, and apply gates on in. for Example:</dt>
+<dd>qureg = self.qureg_trans(qureg)
+circuit = len(qureg)
+X | circuit
+return X</dd>
+</dl>
+</div></blockquote>
+</dd>
+<dt>Args:</dt>
+<dd>qureg: the gate</dd>
+<dt>Returns:</dt>
+<dd>Circuit/list&lt;BasicGate&gt;: synthetize result</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="QuICT.core.gate.extension_gate.gateModel.carg">
+<code class="descname">carg</code><a class="headerlink" href="#QuICT.core.gate.extension_gate.gateModel.carg" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="QuICT.core.gate.extension_gate.gateModel.cargs">
+<code class="descname">cargs</code><a class="headerlink" href="#QuICT.core.gate.extension_gate.gateModel.cargs" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="QuICT.core.gate.extension_gate.gateModel.controls">
+<code class="descname">controls</code><a class="headerlink" href="#QuICT.core.gate.extension_gate.gateModel.controls" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="QuICT.core.gate.extension_gate.gateModel.params">
+<code class="descname">params</code><a class="headerlink" href="#QuICT.core.gate.extension_gate.gateModel.params" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="QuICT.core.gate.extension_gate.gateModel.parg">
+<code class="descname">parg</code><a class="headerlink" href="#QuICT.core.gate.extension_gate.gateModel.parg" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="QuICT.core.gate.extension_gate.gateModel.pargs">
+<code class="descname">pargs</code><a class="headerlink" href="#QuICT.core.gate.extension_gate.gateModel.pargs" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="staticmethod">
+<dt id="QuICT.core.gate.extension_gate.gateModel.permit_element">
+<em class="property">static </em><code class="descname">permit_element</code><span class="sig-paren">(</span><em>element</em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.gate.extension_gate.gateModel.permit_element" title="Permalink to this definition">¶</a></dt>
+<dd><p>judge whether the type of a parameter is int/float/complex</p>
+<p>for a quantum gate, the parameter should be int/float/complex</p>
+<dl class="docutils">
+<dt>Args:</dt>
+<dd>element: the element to be judged</dd>
+<dt>Returns:</dt>
+<dd>bool: True if the type of element is int/float/complex</dd>
+</dl>
+</dd></dl>
+
+<dl class="staticmethod">
+<dt id="QuICT.core.gate.extension_gate.gateModel.qureg_trans">
+<em class="property">static </em><code class="descname">qureg_trans</code><span class="sig-paren">(</span><em>other</em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.gate.extension_gate.gateModel.qureg_trans" title="Permalink to this definition">¶</a></dt>
+<dd><p>tool function that change tuple/list/Circuit to a Qureg</p>
+<p>For convince, the user can input tuple/list/Circuit/Qureg, but developer
+need only deal with Qureg</p>
+<dl class="docutils">
+<dt>Args:</dt>
+<dd><dl class="first last docutils">
+<dt>other: the item is to be transformed, it can have followed form:</dt>
+<dd><ol class="first last arabic simple">
+<li>Circuit</li>
+<li>Qureg</li>
+<li>tuple&lt;qubit, qureg&gt;</li>
+<li>list&lt;qubit, qureg&gt;</li>
+</ol>
+</dd>
+</dl>
+</dd>
+<dt>Returns:</dt>
+<dd>Qureg: the qureg transformed into.</dd>
+<dt>Raises:</dt>
+<dd>TypeException: the input form is wrong.</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="QuICT.core.gate.extension_gate.gateModel.targ">
+<code class="descname">targ</code><a class="headerlink" href="#QuICT.core.gate.extension_gate.gateModel.targ" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="QuICT.core.gate.extension_gate.gateModel.targets">
+<code class="descname">targets</code><a class="headerlink" href="#QuICT.core.gate.extension_gate.gateModel.targets" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="QuICT.core.gate.extension_gate.gateModel.targs">
+<code class="descname">targs</code><a class="headerlink" href="#QuICT.core.gate.extension_gate.gateModel.targs" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="QuICT.core.gate.exec_operator.html"
+                        title="previous chapter">QuICT.core.gate.exec_operator module</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="QuICT.core.gate.gate.html"
+                        title="next chapter">QuICT.core.gate.gate module</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/api/QuICT.core.gate.extension_gate.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="QuICT.core.gate.gate.html" title="QuICT.core.gate.gate module"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="QuICT.core.gate.exec_operator.html" title="QuICT.core.gate.exec_operator module"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">QuICT  documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="QuICT.html" >API</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="QuICT.core.html" >QuICT.core package</a> &#187;</li>
+          <li class="nav-item nav-item-3"><a href="QuICT.core.gate.html" >QuICT.core.gate package</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright .
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.5.
+    </div>
+  </body>
+</html>

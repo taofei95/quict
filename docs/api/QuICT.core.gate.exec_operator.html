@@ -1,0 +1,405 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>QuICT.core.gate.exec_operator module &#8212; QuICT  documentation</title>
+    <link rel="stylesheet" href="../_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="../_static/language_data.js"></script>
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="QuICT.core.gate.extension_gate module" href="QuICT.core.gate.extension_gate.html" />
+    <link rel="prev" title="QuICT.core.gate package" href="QuICT.core.gate.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="QuICT.core.gate.extension_gate.html" title="QuICT.core.gate.extension_gate module"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="QuICT.core.gate.html" title="QuICT.core.gate package"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">QuICT  documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="QuICT.html" >API</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="QuICT.core.html" >QuICT.core package</a> &#187;</li>
+          <li class="nav-item nav-item-3"><a href="QuICT.core.gate.html" accesskey="U">QuICT.core.gate package</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="module-QuICT.core.gate.exec_operator">
+<span id="quict-core-gate-exec-operator-module"></span><h1>QuICT.core.gate.exec_operator module<a class="headerlink" href="#module-QuICT.core.gate.exec_operator" title="Permalink to this headline">¶</a></h1>
+<p>This file is to define the execute operator
+to be inherited by more than one gate.</p>
+<dl class="function">
+<dt id="QuICT.core.gate.exec_operator.QState_deal_ccx_gate">
+<code class="descclassname">QuICT.core.gate.exec_operator.</code><code class="descname">QState_deal_ccx_gate</code><span class="sig-paren">(</span><em>qState</em>, <em>gate</em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.gate.exec_operator.QState_deal_ccx_gate" title="Permalink to this definition">¶</a></dt>
+<dd><p>apply a toffoli gate on this qState</p>
+<dl class="docutils">
+<dt>Args:</dt>
+<dd>qState(QState): the QState to be dealt
+gate(BasicGate): the gate to be applied.</dd>
+<dt>Exceptions:</dt>
+<dd>FrameworkException: the index is out of range</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="QuICT.core.gate.exec_operator.QState_deal_controlMulPerm_gate">
+<code class="descclassname">QuICT.core.gate.exec_operator.</code><code class="descname">QState_deal_controlMulPerm_gate</code><span class="sig-paren">(</span><em>qState</em>, <em>gate</em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.gate.exec_operator.QState_deal_controlMulPerm_gate" title="Permalink to this definition">¶</a></dt>
+<dd><p>apply a controlMulPerm gate on this qState</p>
+<dl class="docutils">
+<dt>Args:</dt>
+<dd>qState(QState): the QState to be dealt
+gate(controlMulPerm): the gate to be applied.</dd>
+<dt>Exceptions:</dt>
+<dd>FrameworkException: the index is out of range</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="QuICT.core.gate.exec_operator.QState_deal_control_single_gate">
+<code class="descclassname">QuICT.core.gate.exec_operator.</code><code class="descname">QState_deal_control_single_gate</code><span class="sig-paren">(</span><em>qState</em>, <em>gate</em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.gate.exec_operator.QState_deal_control_single_gate" title="Permalink to this definition">¶</a></dt>
+<dd><p>apply a controlled one-qubit gate on this qState</p>
+<dl class="docutils">
+<dt>Args:</dt>
+<dd>qState(QState): the QState to be dealt
+gate(BasicGate): the gate to be applied.</dd>
+<dt>Exceptions:</dt>
+<dd>FrameworkException: the index is out of range</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="QuICT.core.gate.exec_operator.QState_deal_measure_gate">
+<code class="descclassname">QuICT.core.gate.exec_operator.</code><code class="descname">QState_deal_measure_gate</code><span class="sig-paren">(</span><em>qState</em>, <em>gate</em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.gate.exec_operator.QState_deal_measure_gate" title="Permalink to this definition">¶</a></dt>
+<dd><p>apply a measure gate on this qState</p>
+<p>Note that after flush the measure gate, the qubit will be removed
+from the qState.</p>
+<dl class="docutils">
+<dt>Args:</dt>
+<dd>qState(QState): the QState to be dealt
+gate(MeasureGate): the gate to be applied.</dd>
+<dt>Exceptions:</dt>
+<dd>FrameworkException: the index is out of range</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="QuICT.core.gate.exec_operator.QState_deal_perm_gate">
+<code class="descclassname">QuICT.core.gate.exec_operator.</code><code class="descname">QState_deal_perm_gate</code><span class="sig-paren">(</span><em>qState</em>, <em>gate</em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.gate.exec_operator.QState_deal_perm_gate" title="Permalink to this definition">¶</a></dt>
+<dd><p>apply a Perm gate on this qState</p>
+<dl class="docutils">
+<dt>Args:</dt>
+<dd>qState(QState): the QState to be dealt
+gate(PermGate): the gate to be applied.</dd>
+<dt>Exceptions:</dt>
+<dd>FrameworkException: the index is out of range</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="QuICT.core.gate.exec_operator.QState_deal_reset_gate">
+<code class="descclassname">QuICT.core.gate.exec_operator.</code><code class="descname">QState_deal_reset_gate</code><span class="sig-paren">(</span><em>qState</em>, <em>gate</em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.gate.exec_operator.QState_deal_reset_gate" title="Permalink to this definition">¶</a></dt>
+<dd><p>apply a reset gate on this qState</p>
+<p>Note that after flush the reset gate, the qubit will be removed
+from the qState.</p>
+<dl class="docutils">
+<dt>Args:</dt>
+<dd>qState(QState): the QState to be dealt
+gate(ResetGate): the gate to be applied.</dd>
+<dt>Exceptions:</dt>
+<dd>FrameworkException: the index is out of range</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="QuICT.core.gate.exec_operator.QState_deal_shorInitial_gate">
+<code class="descclassname">QuICT.core.gate.exec_operator.</code><code class="descname">QState_deal_shorInitial_gate</code><span class="sig-paren">(</span><em>qState</em>, <em>gate</em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.gate.exec_operator.QState_deal_shorInitial_gate" title="Permalink to this definition">¶</a></dt>
+<dd><p>apply a shorInitial gate on this qState</p>
+<dl class="docutils">
+<dt>Args:</dt>
+<dd>qState(QState): the QState to be dealt
+gate(shorInitialGate): the gate to be applied.</dd>
+<dt>Exceptions:</dt>
+<dd>FrameworkException: the index is out of range</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="QuICT.core.gate.exec_operator.QState_deal_single_gate">
+<code class="descclassname">QuICT.core.gate.exec_operator.</code><code class="descname">QState_deal_single_gate</code><span class="sig-paren">(</span><em>qState</em>, <em>gate</em>, <em>fidelity</em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.gate.exec_operator.QState_deal_single_gate" title="Permalink to this definition">¶</a></dt>
+<dd><p>apply an one-qubit gate on this qState</p>
+<dl class="docutils">
+<dt>Args:</dt>
+<dd>qState(QState): the QState to be dealt
+gate(BasicGate): the gate to be applied.
+fidelity(float): the fidelity of the gate</dd>
+<dt>Exceptions:</dt>
+<dd>FrameworkException: the index is out of range</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="QuICT.core.gate.exec_operator.QState_deal_swap_gate">
+<code class="descclassname">QuICT.core.gate.exec_operator.</code><code class="descname">QState_deal_swap_gate</code><span class="sig-paren">(</span><em>qState</em>, <em>gate</em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.gate.exec_operator.QState_deal_swap_gate" title="Permalink to this definition">¶</a></dt>
+<dd><p>apply a swap gate on this qState</p>
+<dl class="docutils">
+<dt>Args:</dt>
+<dd>qState(QState): the QState to be dealt
+gate(SwapGate): the gate to be applied.</dd>
+<dt>Exceptions:</dt>
+<dd>FrameworkException: the index is out of range</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="QuICT.core.gate.exec_operator.QState_deal_unitary_gate">
+<code class="descclassname">QuICT.core.gate.exec_operator.</code><code class="descname">QState_deal_unitary_gate</code><span class="sig-paren">(</span><em>qState</em>, <em>gate</em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.gate.exec_operator.QState_deal_unitary_gate" title="Permalink to this definition">¶</a></dt>
+<dd><p>apply a custom gate on this qState</p>
+<dl class="docutils">
+<dt>Args:</dt>
+<dd>qState(QState): the QState to be dealt
+gate(UnitaryGate): the gate to be applied.</dd>
+<dt>Exceptions:</dt>
+<dd>FrameworkException: the index is out of range</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="QuICT.core.gate.exec_operator.QState_merge">
+<code class="descclassname">QuICT.core.gate.exec_operator.</code><code class="descname">QState_merge</code><span class="sig-paren">(</span><em>qState</em>, <em>other</em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.gate.exec_operator.QState_merge" title="Permalink to this definition">¶</a></dt>
+<dd><p>merge another qState into this qState</p>
+<dl class="docutils">
+<dt>Args:</dt>
+<dd>qState(QState): the QState to be dealt
+other(QState): the qState need to be merged.</dd>
+<dt>Exceptions:</dt>
+<dd>FrameworkException: the index is out of range</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="QuICT.core.gate.exec_operator.exec_barrier">
+<code class="descclassname">QuICT.core.gate.exec_operator.</code><code class="descname">exec_barrier</code><span class="sig-paren">(</span><em>gate</em>, <em>circuit</em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.gate.exec_operator.exec_barrier" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="QuICT.core.gate.exec_operator.exec_controlMulPerm">
+<code class="descclassname">QuICT.core.gate.exec_operator.</code><code class="descname">exec_controlMulPerm</code><span class="sig-paren">(</span><em>gate</em>, <em>circuit</em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.gate.exec_operator.exec_controlMulPerm" title="Permalink to this definition">¶</a></dt>
+<dd><p>apply a controlMulPerm gate on this qState</p>
+<dl class="docutils">
+<dt>Args:</dt>
+<dd>gate(controlMulPerm): the gate to be applied.
+circuit(Circuit): the circuit to be dealt.</dd>
+<dt>Exceptions:</dt>
+<dd>FrameworkException: the index is out of range</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="QuICT.core.gate.exec_operator.exec_controlSingle">
+<code class="descclassname">QuICT.core.gate.exec_operator.</code><code class="descname">exec_controlSingle</code><span class="sig-paren">(</span><em>gate</em>, <em>circuit</em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.gate.exec_operator.exec_controlSingle" title="Permalink to this definition">¶</a></dt>
+<dd><p>apply a controlled one-qubit gate on this qState</p>
+<dl class="docutils">
+<dt>Args:</dt>
+<dd>gate(BasicGate): the gate to be applied.
+circuit(Circuit): the circuit to be dealt</dd>
+<dt>Exceptions:</dt>
+<dd>FrameworkException: the index is out of range</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="QuICT.core.gate.exec_operator.exec_measure">
+<code class="descclassname">QuICT.core.gate.exec_operator.</code><code class="descname">exec_measure</code><span class="sig-paren">(</span><em>gate</em>, <em>circuit</em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.gate.exec_operator.exec_measure" title="Permalink to this definition">¶</a></dt>
+<dd><p>apply a measure gate on this qState</p>
+<p>Note that after flush the measure gate, the qubit will be removed
+from the qState.</p>
+<dl class="docutils">
+<dt>Args:</dt>
+<dd>gate(MeasureGate): the gate to be applied.
+circuit(Circuit): the circuit to be dealt</dd>
+<dt>Exceptions:</dt>
+<dd>FrameworkException: the index is out of range</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="QuICT.core.gate.exec_operator.exec_perm">
+<code class="descclassname">QuICT.core.gate.exec_operator.</code><code class="descname">exec_perm</code><span class="sig-paren">(</span><em>gate</em>, <em>circuit</em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.gate.exec_operator.exec_perm" title="Permalink to this definition">¶</a></dt>
+<dd><p>apply a Perm gate on this qState</p>
+<dl class="docutils">
+<dt>Args:</dt>
+<dd>gate(PermGate): the gate to be applied.
+circuit(Circuit): the circuit to be dealt.</dd>
+<dt>Exceptions:</dt>
+<dd>FrameworkException: the index is out of range</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="QuICT.core.gate.exec_operator.exec_reset">
+<code class="descclassname">QuICT.core.gate.exec_operator.</code><code class="descname">exec_reset</code><span class="sig-paren">(</span><em>gate</em>, <em>circuit</em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.gate.exec_operator.exec_reset" title="Permalink to this definition">¶</a></dt>
+<dd><p>apply a reset gate on this qState</p>
+<p>Note that after flush the reset gate, the qubit will be removed
+from the qState.</p>
+<dl class="docutils">
+<dt>Args:</dt>
+<dd>gate(ResetGate): the gate to be applied.
+circuit(Circuit): the circuit to be dealt</dd>
+<dt>Exceptions:</dt>
+<dd>FrameworkException: the index is out of range</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="QuICT.core.gate.exec_operator.exec_shorInit">
+<code class="descclassname">QuICT.core.gate.exec_operator.</code><code class="descname">exec_shorInit</code><span class="sig-paren">(</span><em>gate</em>, <em>circuit</em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.gate.exec_operator.exec_shorInit" title="Permalink to this definition">¶</a></dt>
+<dd><p>apply a shorInitial gate on this qState</p>
+<dl class="docutils">
+<dt>Args:</dt>
+<dd>gate(shorInitialGate): the gate to be applied.
+circuit(Circuit): the circuit to be dealt.</dd>
+<dt>Exceptions:</dt>
+<dd>FrameworkException: the index is out of range</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="QuICT.core.gate.exec_operator.exec_single">
+<code class="descclassname">QuICT.core.gate.exec_operator.</code><code class="descname">exec_single</code><span class="sig-paren">(</span><em>gate</em>, <em>circuit</em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.gate.exec_operator.exec_single" title="Permalink to this definition">¶</a></dt>
+<dd><p>apply an one-qubit gate on this circuit</p>
+<dl class="docutils">
+<dt>Args:</dt>
+<dd>gate(BasicGate): the gate to be applied.
+circuit(Circuit): the circuit to be dealt</dd>
+<dt>Exceptions:</dt>
+<dd>FrameworkException: the index is out of range</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="QuICT.core.gate.exec_operator.exec_swap">
+<code class="descclassname">QuICT.core.gate.exec_operator.</code><code class="descname">exec_swap</code><span class="sig-paren">(</span><em>gate</em>, <em>circuit</em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.gate.exec_operator.exec_swap" title="Permalink to this definition">¶</a></dt>
+<dd><p>apply a swap gate on this qState</p>
+<dl class="docutils">
+<dt>Args:</dt>
+<dd>gate(SwapGate): the gate to be applied.
+circuit(Circuit): the circuit to be dealt</dd>
+<dt>Exceptions:</dt>
+<dd>FrameworkException: the index is out of range</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="QuICT.core.gate.exec_operator.exec_toffoli">
+<code class="descclassname">QuICT.core.gate.exec_operator.</code><code class="descname">exec_toffoli</code><span class="sig-paren">(</span><em>gate</em>, <em>circuit</em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.gate.exec_operator.exec_toffoli" title="Permalink to this definition">¶</a></dt>
+<dd><p>apply a toffoli gate on this qState</p>
+<dl class="docutils">
+<dt>Args:</dt>
+<dd>gate(CCXGate): the gate to be applied.
+circuit(Circuit): the circuit to be dealt</dd>
+<dt>Exceptions:</dt>
+<dd>FrameworkException: the index is out of range</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="QuICT.core.gate.exec_operator.exec_unitary">
+<code class="descclassname">QuICT.core.gate.exec_operator.</code><code class="descname">exec_unitary</code><span class="sig-paren">(</span><em>gate</em>, <em>circuit</em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.gate.exec_operator.exec_unitary" title="Permalink to this definition">¶</a></dt>
+<dd><p>apply a custom gate on this qState</p>
+<dl class="docutils">
+<dt>Args:</dt>
+<dd>gate(UnitaryGate): the gate to be applied.
+circuit(Circuit): the circuit to be dealt.</dd>
+<dt>Exceptions:</dt>
+<dd>FrameworkException: the index is out of range</dd>
+</dl>
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="QuICT.core.gate.html"
+                        title="previous chapter">QuICT.core.gate package</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="QuICT.core.gate.extension_gate.html"
+                        title="next chapter">QuICT.core.gate.extension_gate module</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/api/QuICT.core.gate.exec_operator.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="QuICT.core.gate.extension_gate.html" title="QuICT.core.gate.extension_gate module"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="QuICT.core.gate.html" title="QuICT.core.gate package"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">QuICT  documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="QuICT.html" >API</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="QuICT.core.html" >QuICT.core package</a> &#187;</li>
+          <li class="nav-item nav-item-3"><a href="QuICT.core.gate.html" >QuICT.core.gate package</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright .
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.5.
+    </div>
+  </body>
+</html>

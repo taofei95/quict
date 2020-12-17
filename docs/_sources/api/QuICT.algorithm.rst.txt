@@ -1,0 +1,17 @@
+QuICT.algorithm package
+=======================
+
+.. automodule:: QuICT.algorithm
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+Subpackages
+-----------
+
+.. toctree::
+
+    QuICT.algorithm.amplitude
+    QuICT.algorithm.shor
+    QuICT.algorithm.synthetical_unitary
+

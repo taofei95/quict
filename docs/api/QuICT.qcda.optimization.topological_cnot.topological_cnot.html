@@ -1,0 +1,246 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>QuICT.qcda.optimization.topological_cnot.topological_cnot module &#8212; QuICT  documentation</title>
+    <link rel="stylesheet" href="../_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="../_static/language_data.js"></script>
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="QuICT.qcda.optimization.topological_cnot_rz package" href="QuICT.qcda.optimization.topological_cnot_rz.html" />
+    <link rel="prev" title="QuICT.qcda.optimization.topological_cnot package" href="QuICT.qcda.optimization.topological_cnot.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="QuICT.qcda.optimization.topological_cnot_rz.html" title="QuICT.qcda.optimization.topological_cnot_rz package"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="QuICT.qcda.optimization.topological_cnot.html" title="QuICT.qcda.optimization.topological_cnot package"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">QuICT  documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="QuICT.html" >API</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="QuICT.qcda.html" >QuICT.qcda package</a> &#187;</li>
+          <li class="nav-item nav-item-3"><a href="QuICT.qcda.optimization.html" >QuICT.qcda.optimization package</a> &#187;</li>
+          <li class="nav-item nav-item-4"><a href="QuICT.qcda.optimization.topological_cnot.html" accesskey="U">QuICT.qcda.optimization.topological_cnot package</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="module-QuICT.qcda.optimization.topological_cnot.topological_cnot">
+<span id="quict-qcda-optimization-topological-cnot-topological-cnot-module"></span><h1>QuICT.qcda.optimization.topological_cnot.topological_cnot module<a class="headerlink" href="#module-QuICT.qcda.optimization.topological_cnot.topological_cnot" title="Permalink to this headline">¶</a></h1>
+<dl class="class">
+<dt id="QuICT.qcda.optimization.topological_cnot.topological_cnot.Steiner_Tree">
+<em class="property">class </em><code class="descclassname">QuICT.qcda.optimization.topological_cnot.topological_cnot.</code><code class="descname">Steiner_Tree</code><span class="sig-paren">(</span><em>n</em>, <em>topo</em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.qcda.optimization.topological_cnot.topological_cnot.Steiner_Tree" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>the Steiner_Tree struct</p>
+<p>we use exponent time to construct the exact steiner tree
+# fix it with a 2-approximation polynomial algorithm</p>
+<dl class="docutils">
+<dt>Attributes:</dt>
+<dd><p class="first">N(int): the number of vertexes in the graph.
+matrix(n * n boolean matrix): topological relationship for n vertexes,</p>
+<blockquote>
+<div>it is undirected.</div></blockquote>
+<dl class="docutils">
+<dt>dp(n * 2^n np.array): dp array to struct the tree.</dt>
+<dd>dp[i][j] means the root is i, state is j’s subtree.
+when subtree contain vertex k, j &amp; (1 &lt;&lt; k) != 0</dd>
+</dl>
+<p class="last">ST(list&lt;int&gt;): the indexes of vertexes in tree.
+father(list&lt;int&gt;): the father of vertexes in the tree.
+sons(list&lt;int&gt;): the son of vertexes in the tree.
+pre(np.array&lt;int&gt;): the state which update this state in dp.
+root(int): the root of the tree.</p>
+</dd>
+</dl>
+<dl class="method">
+<dt id="QuICT.qcda.optimization.topological_cnot.topological_cnot.Steiner_Tree.build_ST">
+<code class="descname">build_ST</code><span class="sig-paren">(</span><em>ST_input: list</em>, <em>lower_bound</em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.qcda.optimization.topological_cnot.topological_cnot.Steiner_Tree.build_ST" title="Permalink to this definition">¶</a></dt>
+<dd><p>build Steiner_Tree with ST_input in it</p>
+<p>ST_input[-1] must be the root of the tree.</p>
+<dl class="docutils">
+<dt>Args:</dt>
+<dd><dl class="first docutils">
+<dt>ST_input(list&lt;int&gt;): the indexes of vertexes which should be contained in the tree.</dt>
+<dd>ST_input[-1] should be the root.</dd>
+</dl>
+<p class="last">lower_bound(int): the minimum index of vertexes which can be used</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="QuICT.qcda.optimization.topological_cnot.topological_cnot.Steiner_Tree.build_STtree">
+<code class="descname">build_STtree</code><span class="sig-paren">(</span><em>root</em>, <em>state</em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.qcda.optimization.topological_cnot.topological_cnot.Steiner_Tree.build_STtree" title="Permalink to this definition">¶</a></dt>
+<dd><p>build the tree with the dp and pre array</p>
+<dl class="docutils">
+<dt>Args:</dt>
+<dd>root(int): the i in dp[i][j]
+state(int): the j in dp[i][j]</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="QuICT.qcda.optimization.topological_cnot.topological_cnot.Steiner_Tree.elimination_above">
+<code class="descname">elimination_above</code><span class="sig-paren">(</span><em>gauss_elimination: list</em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.qcda.optimization.topological_cnot.topological_cnot.Steiner_Tree.elimination_above" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="QuICT.qcda.optimization.topological_cnot.topological_cnot.Steiner_Tree.elimination_below">
+<code class="descname">elimination_below</code><span class="sig-paren">(</span><em>gauss_elimination: list</em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.qcda.optimization.topological_cnot.topological_cnot.Steiner_Tree.elimination_below" title="Permalink to this definition">¶</a></dt>
+<dd><p>elimination with some rows below ith row and ith column.</p>
+<dl class="docutils">
+<dt>Args:</dt>
+<dd>gauss_elimination(list&lt;int&gt;): the equations should be changed in the process.</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="QuICT.qcda.optimization.topological_cnot.topological_cnot.TopologicalCnot">
+<em class="property">class </em><code class="descclassname">QuICT.qcda.optimization.topological_cnot.topological_cnot.</code><code class="descname">TopologicalCnot</code><a class="headerlink" href="#QuICT.qcda.optimization.topological_cnot.topological_cnot.TopologicalCnot" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">QuICT.qcda.optimization._optimization.Optimization</span></code></p>
+<p>optimize the cnot circuit on topological device
+<a class="reference external" href="https://arxiv.org/pdf/1910.14478.pdf">https://arxiv.org/pdf/1910.14478.pdf</a></p>
+<p>use steiner tree to optimize a cnot circuit on topological device</p>
+<dl class="classmethod">
+<dt id="QuICT.qcda.optimization.topological_cnot.topological_cnot.TopologicalCnot.run_parameter">
+<em class="property">classmethod </em><code class="descname">run_parameter</code><span class="sig-paren">(</span><em>cnot_struct</em>, <em>topology</em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.qcda.optimization.topological_cnot.topological_cnot.TopologicalCnot.run_parameter" title="Permalink to this definition">¶</a></dt>
+<dd><p>optimize the circuit</p>
+<dl class="docutils">
+<dt>Args:</dt>
+<dd>cnot_struct(list&lt;int&gt;): the struct of cnot circuit
+topology(list&lt;tuple&lt;int, int&gt;&gt;): topology of circuit</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="function">
+<dt id="QuICT.qcda.optimization.topological_cnot.topological_cnot.delete_dfs">
+<code class="descclassname">QuICT.qcda.optimization.topological_cnot.topological_cnot.</code><code class="descname">delete_dfs</code><span class="sig-paren">(</span><em>now</em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.qcda.optimization.topological_cnot.topological_cnot.delete_dfs" title="Permalink to this definition">¶</a></dt>
+<dd><p>search for a initial mapping to get better(maybe) topology</p>
+<p>in this order, vertex i is not cut in [i, n)</p>
+<dl class="docutils">
+<dt>Args:</dt>
+<dd>now(int): the index of vertex now</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="QuICT.qcda.optimization.topological_cnot.topological_cnot.read">
+<code class="descclassname">QuICT.qcda.optimization.topological_cnot.topological_cnot.</code><code class="descname">read</code><span class="sig-paren">(</span><em>circuit</em>, <em>cnot_struct</em>, <em>topology</em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.qcda.optimization.topological_cnot.topological_cnot.read" title="Permalink to this definition">¶</a></dt>
+<dd><p>get describe from the circuit or cnot_struct
+Args:</p>
+<blockquote>
+<div>circuit(Circuit): the input circuit, contained the information of topology and (maybe) cnot
+cnot_struct(list&lt;int&gt;): the information of cnot. if None, the information is contained in the circuit
+topology(list&lt;tuple&lt;int, int&gt;&gt;): topology of circuit, None or empty means fully connected</div></blockquote>
+<dl class="docutils">
+<dt>Returns:</dt>
+<dd>Steiner_Tree: the whole graph of the st
+list&lt;int&gt;: the inverse of the initial mapping</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="QuICT.qcda.optimization.topological_cnot.topological_cnot.solve">
+<code class="descclassname">QuICT.qcda.optimization.topological_cnot.topological_cnot.</code><code class="descname">solve</code><span class="sig-paren">(</span><em>ST_tree</em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.qcda.optimization.topological_cnot.topological_cnot.solve" title="Permalink to this definition">¶</a></dt>
+<dd><p>main part of the algorithm</p>
+<dl class="docutils">
+<dt>Args:</dt>
+<dd>ST_tree(Steiner_Tree): the whole graph</dd>
+<dt>Returns:</dt>
+<dd>list&lt;CXGates&gt;: the result of the algorithm</dd>
+</dl>
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="QuICT.qcda.optimization.topological_cnot.html"
+                        title="previous chapter">QuICT.qcda.optimization.topological_cnot package</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="QuICT.qcda.optimization.topological_cnot_rz.html"
+                        title="next chapter">QuICT.qcda.optimization.topological_cnot_rz package</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/api/QuICT.qcda.optimization.topological_cnot.topological_cnot.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="QuICT.qcda.optimization.topological_cnot_rz.html" title="QuICT.qcda.optimization.topological_cnot_rz package"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="QuICT.qcda.optimization.topological_cnot.html" title="QuICT.qcda.optimization.topological_cnot package"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">QuICT  documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="QuICT.html" >API</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="QuICT.qcda.html" >QuICT.qcda package</a> &#187;</li>
+          <li class="nav-item nav-item-3"><a href="QuICT.qcda.optimization.html" >QuICT.qcda.optimization package</a> &#187;</li>
+          <li class="nav-item nav-item-4"><a href="QuICT.qcda.optimization.topological_cnot.html" >QuICT.qcda.optimization.topological_cnot package</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright .
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.5.
+    </div>
+  </body>
+</html>
