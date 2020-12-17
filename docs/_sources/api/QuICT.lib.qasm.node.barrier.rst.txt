@@ -1,7 +1,0 @@
-QuICT.lib.qasm.node.barrier module
-==================================
-
-.. automodule:: QuICT.lib.qasm.node.barrier
-    :members:
-    :undoc-members:
-    :show-inheritance:

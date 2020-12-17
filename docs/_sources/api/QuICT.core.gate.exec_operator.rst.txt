@@ -1,7 +1,0 @@
-QuICT.core.gate.exec\_operator module
-=====================================
-
-.. automodule:: QuICT.core.gate.exec_operator
-    :members:
-    :undoc-members:
-    :show-inheritance:
