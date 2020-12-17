@@ -106,6 +106,13 @@ def test_add_gate():
     Measure       | circuit
     circuit.exec()
 
+def test_gate_name():
+    """ test the gate name
+
+    """
+    assert CX.type() == GATE_ID["CX"]
+    assert CX.type() == GATE_ID["cx"]
+
 def test_single():
     for gate in single_gate:
         circuit = Circuit(1)

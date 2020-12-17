@@ -373,7 +373,14 @@ print(result.get_counts(circ))
             ExtensionGateBuilder.setTargs(targs)
             self.circuit_gates.extend(ExtensionGateBuilder.getGate())
             """
-            raise Exception("unsupported gate")
+            pargs = [self.arg_stack[-1][s].sym(self.arg_stack[:-1]) for s in gargs]
+            targs = [self.bit_stack[-1][s] for s in gbits]
+            gate_class = EXTENSION_GATE_REGISTER[self.extern_extension[name]]
+            gate = gate_class().copy()
+            gate.pargs = pargs
+            gate.targs = targs
+            self.circuit_gates.extend(gate.build_gate())
+            # raise Exception("unsupported gate")
         else:
             body = self.gates[name]['body']
             for child in body.children:

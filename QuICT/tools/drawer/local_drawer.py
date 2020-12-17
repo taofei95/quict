@@ -518,7 +518,7 @@ class PhotoDrawerModel(object):
         max_name = 0
 
         for i in range(cir_len):
-            name = '$q_{}$'.format(i)
+            name = f'$q_{{{i}}}$'
             max_name = max(max_name, len(name))
             name_dict[i] = {
                 'y': -i,

@@ -42,7 +42,8 @@ from .gate import (
 
     BasicGate,
 
-    GATE_ID
+    GATE_ID,
+    GATE_REGISTER
 )
 
 from .gate_builder import (
@@ -63,4 +64,5 @@ from .extension_gate import (
     Fredkin,
 
     EXTENSION_GATE_ID,
+    EXTENSION_GATE_REGISTER
 )

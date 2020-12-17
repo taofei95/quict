@@ -35,7 +35,7 @@ def extension_gate_implementation(cls):
     global EXTENSION_GATE_ID
     global EXTENSION_GATE_ID_CNT
 
-    EXTENSION_GATE_REGISTER[EXTENSION_GATE_ID_CNT] = cls.__name__
+    EXTENSION_GATE_REGISTER[EXTENSION_GATE_ID_CNT] = cls
     EXTENSION_GATE_ID[cls.__name__] = EXTENSION_GATE_ID_CNT
     EXTENSION_GATE_ID_CNT += 1
 
@@ -291,7 +291,21 @@ class gateModel(object):
             raise TypeException("int/float/complex or list<int/float/complex> or tuple<int/float/complex>", params)
         return self
 
-    def build_gate(self, qureg):
+    def copy(self):
+        """ copy the gate
+
+        """
+        name = str(self.__class__.__name__)
+        gate = globals()[name]()
+        gate.pargs = copy.deepcopy(self.pargs)
+        gate.targs = copy.deepcopy(self.targs)
+        gate.cargs = copy.deepcopy(self.cargs)
+        gate.targets = self.targets
+        gate.controls = self.controls
+        gate.params = self.params
+        return gate
+
+    def build_gate(self, qureg = None):
         """ the overloaded the build_gate can return two kind of values:
             1)list<BasicGate>: in this way, developer use gateBuilder to generator a series of gates
             2)Circuit: in this way, developer can generator a circuit whose bits number is same as the
@@ -316,7 +330,7 @@ class QFTModel(gateModel):
 
     """
 
-    def build_gate(self, other):
+    def build_gate(self, other = None):
         gates = []
         for i in range(len(other)):
             GateBuilder.setGateType(GATE_ID["H"])
@@ -340,7 +354,7 @@ class IQFTModel(gateModel):
 
     """
 
-    def build_gate(self, other):
+    def build_gate(self, other = None):
         gates = []
         for i in range(len(other) - 1, -1, -1):
             GateBuilder.setGateType(GATE_ID["CRz"])
@@ -363,7 +377,7 @@ class RZZModel(gateModel):
 
     """
 
-    def build_gate(self, other):
+    def build_gate(self, other = None):
         gates = []
 
         GateBuilder.setGateType(GATE_ID["CX"])
@@ -392,7 +406,9 @@ class CU1Gate(gateModel):
 
     """
 
-    def build_gate(self, other):
+    def build_gate(self, other = None):
+        if other is None:
+            other = self.targs
         gates = []
 
         GateBuilder.setGateType(GATE_ID["U1"])
@@ -431,7 +447,9 @@ class CRz_DecomposeModel(gateModel):
 
     """
 
-    def build_gate(self, other):
+    def build_gate(self, other = None):
+        if other is None:
+            other = self.targs
         gates = []
 
         GateBuilder.setGateType(GATE_ID["Rz"])
@@ -470,7 +488,9 @@ class CU3Gate(gateModel):
 
     """
 
-    def build_gate(self, other):
+    def build_gate(self, other = None):
+        if other is None:
+            other = self.targs
         gates = []
 
         GateBuilder.setGateType(GATE_ID["U1"])
@@ -505,7 +525,7 @@ class CU3Gate(gateModel):
         return gates
 
 
-CU3 = CU3Gate()
+CU3 = CU3Gate(["CU3"])
 
 
 class CCRzModel(gateModel):
@@ -513,7 +533,9 @@ class CCRzModel(gateModel):
 
     """
 
-    def build_gate(self, other):
+    def build_gate(self, other = None):
+        if other is None:
+            other = self.targs
         qureg = Circuit(3)
         CRz_Decompose(self.parg / 2) | (qureg[1], qureg[2])
         CX | (qureg[0], qureg[1])
@@ -529,7 +551,9 @@ CCRz = CCRzModel(["CCRz"])
 
 class FredkinModel(gateModel):
 
-    def build_gate(self, other):
+    def build_gate(self, other = None):
+        if other is None:
+            other = self.targs
         gates = []
 
         GateBuilder.setGateType(GATE_ID["CX"])
@@ -552,7 +576,9 @@ Fredkin = FredkinModel(["Fredkin", "cswap"])
 
 class CCX_DecomposeModel(gateModel):
 
-    def build_gate(self, other):
+    def build_gate(self, other = None):
+        if other is None:
+            other = self.targs
         gates = []
 
         GateBuilder.setGateType(GATE_ID["H"])
