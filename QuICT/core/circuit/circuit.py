@@ -421,6 +421,7 @@ class Circuit(object):
         """
         for qubit in self.qubits:
             qubit.qState_clear()
+        self.__queue_gates = copy.deepcopy(self.gates)
 
     def clear(self):
         """ clear the circuit

@@ -19,13 +19,6 @@ def getRandomList(l, n):
         _rand[do_get], _rand[i] = _rand[i], _rand[do_get]
     return _rand[:l]
 
-def test_build_circuit():
-    """ test the circuit build method
-
-    """
-    circuit = Circuit(5)
-
-
 def test_pratial_prob_whole():
     for n in range(1, 10):
         circuit = Circuit(n)
@@ -47,11 +40,12 @@ def test_pratial_prob_whole():
                 assert 0
 
 def test_pratial_prob_part():
-    circuit = Circuit(10)
-    circuit[0:2].assign_initial_random()
-    circuit[2:3].assign_initial_random()
-    circuit[3:7].assign_initial_random()
-    circuit[7:10].assign_initial_random()
+    n = 10
+    circuit = Circuit(n)
+    circuit[0:2].force_assign_random()
+    circuit[2:3].force_assign_random()
+    circuit[3:7].force_assign_random()
+    circuit[7:10].force_assign_random()
     order = [i for i in range(n)]
     reverse_order = [i for i in range(n)]
     for i in range(len(order)):

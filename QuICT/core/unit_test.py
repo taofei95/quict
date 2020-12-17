@@ -54,6 +54,58 @@ def generator_custom(n):
     U = A + B[:] * 1j
     return np.array(U).reshape(1, -1).tolist()
 
+def test_build_circuit():
+    """ test the circuit build method
+
+    """
+    circuit = Circuit(5)
+    qureg_slice_12 = circuit[0: 2]
+    qureg_call_12 = circuit([2, 3, 4])
+    qureg = qureg_slice_12 + qureg_call_12
+    X       | qureg
+    Measure | circuit[0:4]
+    circuit.exec()
+    for qubit in circuit:
+        if int(qubit) != 1:
+            assert 0
+
+    circuit.reset()
+    circuit.exec()
+    for qubit in circuit:
+        if int(qubit) != 1:
+            assert 0
+
+    circuit.clear()
+    Measure | circuit[0:4]
+    circuit.exec()
+    for qubit in circuit:
+        if int(qubit) != 0:
+            assert 0
+
+def test_add_gate():
+    """ test the method of adding gates
+
+    """
+    circuit = Circuit(10)
+    H             | circuit
+    X             | circuit[0]
+    X             | circuit[1:]
+    CX            | circuit([0, 2])
+    Ry(np.pi / 4) | circuit(3)
+    U3(0, 0, np.pi / 4) | circuit(3)
+
+    addX = X.copy()
+    qureg = circuit(0)
+    circuit.append(addX, qureg)
+    
+    addCX = CX.copy()
+    addCX.cargs = [0]
+    addCX.targs = [3]
+    circuit.append(addCX)
+
+    Measure       | circuit
+    circuit.exec()
+
 def test_single():
     for gate in single_gate:
         circuit = Circuit(1)
@@ -149,4 +201,4 @@ def test_get_item():
 
 if __name__ == "__main__":
     # pytest.main(["./_unit_test.py", "./circuit_unit_test.py", "./gate_unit_test.py", "./qubit_unit_test.py"])
-    pytest.main(["./_unit_test.py", "./gate_unit_test.py", "./qubit_unit_test.py"])
+    pytest.main(["./_unit_test.py"])
