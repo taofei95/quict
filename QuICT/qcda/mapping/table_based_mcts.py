@@ -50,7 +50,7 @@ class TableBasedMCTS(MCTSBase):
         """
         cur_node = node 
         while cur_node.is_leaf_node() is not True:
-            cur_node = cur_node.get_best_child()
+            cur_node = self._get_best_child()
         return cur_node
 
     def _expand(self, node : MCTSNode):
@@ -92,6 +92,12 @@ class TableBasedMCTS(MCTSBase):
         decide which child node to move into 
         """
         return node.decide_best_child() 
+
+    def _get_best_child(self, node: MCTSNode):
+        """
+        TODO: move code here instead of MCTSNode
+        """
+        return node.get_best_child(node)
 
     def _call_back(self, node: MCTSNode):
         """
