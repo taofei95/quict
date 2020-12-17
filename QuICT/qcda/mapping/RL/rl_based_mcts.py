@@ -5,18 +5,15 @@
 # @Contact :   jialrs.z@gmail.com
 # @File    :   rl_based_mcts.py
 
-from .._mcts_base import *
+from ..table_based_mcts import *
 from .state_agent import StateAgent
 
-class RLBasedMCTS(MCTSBase):
+class RLBasedMCTS(TableBasedMCTS):
     def __init__(self):
         self._state_agent = StateAgent()
 
-    def _select(self, cur_node: MCTSNode):
-        return super()._select(cur_node)
-
-    def _expand(self, cur_node: MCTSNode):
-        return super()._expand(cur_node)
+    def _get_best_child(self, cur_node: MCTSNode):
+        pass
 
     def _backpropagate(self, cur_node: MCTSNode):
-        return super()._backpropagate(cur_node)
+        self._state_agent.backward(cur_node)
