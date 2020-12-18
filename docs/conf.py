@@ -1,6 +1,6 @@
 project = 'QuICT'
 
-extensions = ['sphinx.ext.autodoc', 'm2r', 'recommonmark']
+extensions = ['sphinx.ext.autodoc', 'm2r2', 'recommonmark']
 numpydoc_class_members_toctree = False
 master_doc = 'index'
 html_theme = "classic"
