@@ -73,7 +73,6 @@ class TableBasedMCTS(MCTSBase):
         for swap in node.candidate_swap_list:
             node.add_child_node(swap)
             
-     
 
     def _rollout(self, node : MCTSNode, method: str):
         """
