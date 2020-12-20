@@ -1,6 +1,5 @@
 from  ._mcts_base import  *
 from queue import Queue, deque
-# TODO: layout storage 
 
 
 
