@@ -1,6 +1,6 @@
 #from collections import defaultdict
 from abc import ABC, abstractmethod
-from typing import List, Tuple, Dict, Callable, Optional, Iterable
+from typing import List, Tuple, Dict, Callable, Optional, Iterable, Union
 import copy
 from queue import deque
 from QuICT.tools.interface import *
@@ -88,7 +88,7 @@ class DAG:
                 raise Exception(str("The gate is not single qubit gate or two qubit gate"))
             num_gate = num_gate + 1
    
-    def _add_edge_in_dag(self, cur_node: int, qubit: int, qubit_mask: Optional[List[int], np.ndarray]):
+    def _add_edge_in_dag(self, cur_node: int, qubit: int, qubit_mask: np.ndarray):
         if qubit < len(qubit_mask):
             if qubit_mask[qubit] != -1:
                 self._dag.add_edge(qubit_mask[qubit], cur_node)
@@ -156,7 +156,6 @@ class CouplingGraph:
     
 
 class MCTSNode:
-
     #TODO: qubit_mask -> __init__.property
     def __init__(self, circuit_in_dag: DAG = None, coupling_graph: CouplingGraph = None, front_layer: List[int] = None, cur_mapping: List[int] = None, 
                  parent: MCTSNode =None, swap_with_edge: SwapGate = None):

@@ -4,7 +4,7 @@
 # @Author  : Han Yu
 # @File    : _mapping.py
 
-from qubit_mapping  import QubitMapping as qm
+from .lib.qubit_mapping  import QubitMapping as qm
 
 from .table_based_mcts import *
 from QuICT.core.circuit import * 
@@ -47,7 +47,7 @@ class  Mapping(object):
             # for i in init_mapping:
             #     print(i)
         else:
-            gates = cls._mapping_1D(circuit = circuit, num=num, init_mapping = init_mapping ,method = method)
+            gates = cls._mapping_2D(circuit = circuit, num=num, init_mapping = init_mapping ,method = method)
         
 
         circuit.const_lock = False
@@ -145,8 +145,9 @@ class  Mapping(object):
             gates.append(GateBuilder.getGate())
 
         return gates
-
-    def _mapping_NISQ(self, circuit: Circuit, init_mapping: List[int], method: str, num: int, paramter: Dict)-> Circuit:
+        
+    @staticmethod
+    def _mapping_NISQ(circuit: Circuit, init_mapping: List[int], method: str, num: int, paramter: Dict)-> Circuit:
         """
         
         """
