@@ -1,0 +1,7 @@
+QuICT.tools.web.web\_interface module
+=====================================
+
+.. automodule:: QuICT.tools.web.web_interface
+   :members:
+   :undoc-members:
+   :show-inheritance:

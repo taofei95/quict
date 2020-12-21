@@ -1,0 +1,7 @@
+QuICT.lib.qasm.exceptions module
+================================
+
+.. automodule:: QuICT.lib.qasm.exceptions
+   :members:
+   :undoc-members:
+   :show-inheritance:

@@ -9,7 +9,7 @@ import pytest
 from QuICT.algorithm import Amplitude
 from QuICT.core import *
 
-def test_1():
+def test_amplitude():
     for i in range(1, 10):
         circuit = Circuit(i)
         for j in range(i):

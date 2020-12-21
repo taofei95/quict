@@ -194,6 +194,7 @@ class Qubit(object):
         if self.__qState is not None:
             del self.__qState
         self.__qState = None
+        self.__measured = -1
 
 class Qureg(list):
     """ Implement a quantum register
@@ -225,7 +226,7 @@ class Qureg(list):
                 1) Circuit
                 2) Qureg
                 3) Qubit
-                4) tuple<Qubit/Qureg>
+                4) tuple/list<Qubit/Qureg>
         """
         from QuICT import Circuit
         super().__init__()
@@ -233,7 +234,7 @@ class Qureg(list):
             return
         if isinstance(qubits, Qubit):
             self.append(qubits)
-        elif isinstance(qubits, tuple):
+        elif isinstance(qubits, tuple) or isinstance(qubits, list):
             for qubit in qubits:
                 if isinstance(qubit, Qubit):
                     self.append(qubit)
@@ -341,6 +342,21 @@ class Qureg(list):
             for qubit in qureg_list:
                 qureg.append(qubit)
             return qureg
+
+    def __add__(self, other):
+        """ to fit the add operator, overloaded this function.
+
+        get a smaller qureg/qubit from this qureg
+
+        Args:
+            other(Qureg): qureg to be added.
+        Return:
+            Qureg: the result or slice
+        """
+        if not isinstance(other, Qureg):
+            raise Exception("type error!")
+        qureg_list = super().__add__(other)
+        return Qureg(qureg_list)
 
     def force_assign_random(self):
         """ assign random values for qureg which has initial values

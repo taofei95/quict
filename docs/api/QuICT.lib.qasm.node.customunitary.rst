@@ -1,0 +1,7 @@
+QuICT.lib.qasm.node.customunitary module
+========================================
+
+.. automodule:: QuICT.lib.qasm.node.customunitary
+   :members:
+   :undoc-members:
+   :show-inheritance:

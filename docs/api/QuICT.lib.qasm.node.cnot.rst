@@ -1,0 +1,7 @@
+QuICT.lib.qasm.node.cnot module
+===============================
+
+.. automodule:: QuICT.lib.qasm.node.cnot
+   :members:
+   :undoc-members:
+   :show-inheritance:

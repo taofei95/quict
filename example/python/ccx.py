@@ -24,6 +24,7 @@ CX          | circuit([0, 2])
 T           | circuit(0)
 T           | circuit(2)
 H           | circuit(2)
+circuit.draw_photo(show_depth=False)
 
 unitary = SyntheticalUnitary.run(circuit, showSU=False)
 print(unitary)

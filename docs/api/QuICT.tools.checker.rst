@@ -1,0 +1,16 @@
+QuICT.tools.checker package
+===========================
+
+.. automodule:: QuICT.tools.checker
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Submodules
+----------
+
+.. toctree::
+   :maxdepth: 4
+
+   QuICT.tools.checker.efficiency_checker
+   QuICT.tools.checker.equal_transform_checker

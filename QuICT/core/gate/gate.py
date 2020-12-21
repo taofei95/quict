@@ -42,7 +42,7 @@ def gate_implementation(cls):
     global GATE_ID
     global GATE_ID_CNT
 
-    GATE_REGISTER[GATE_ID_CNT] = cls.__name__
+    GATE_REGISTER[GATE_ID_CNT] = cls
     GATE_ID[cls.__name__] = GATE_ID_CNT
     GATE_ID_CNT += 1
 
@@ -389,6 +389,8 @@ class BasicGate(object):
         name = str(self.__class__.__name__)
         gate = globals()[name]()
         gate.pargs = copy.deepcopy(self.pargs)
+        gate.targs = copy.deepcopy(self.targs)
+        gate.cargs = copy.deepcopy(self.cargs)
         gate.targets = self.targets
         gate.controls = self.controls
         gate.params = self.params
@@ -1008,7 +1010,7 @@ class CXGate(BasicGate):
     def exec(self, circuit):
         exec_controlSingle(self, circuit)
 
-CX = CXGate(["CX", "Cx"])
+CX = CXGate(["CX", "Cx", "cx"])
 
 class CYGate(BasicGate):
     """ controlled-Y gate
