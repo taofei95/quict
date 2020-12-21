@@ -1,22 +1,17 @@
 import os
 import sys
-
 file_path = os.path.realpath(__file__)
 dir_path, file_name = os.path.split(file_path)
 sys.path.append(f"{dir_path}/..")
-
-from .._mapping import Mapping
-from QuICT.tools.interface import *
-
-
-
+print(f"{dir_path}")
+from _mapping import Mapping
+from QuICT.interface import *
 
 if __name__ == "__main__":
 
     QASM_file = f"{dir_path}/qasm/qft/qft_n6.qasm"
     qc = OPENQASMInterface.load_file(QASM_file)
     circuit =qc.circuit
-    circuit.add_topology()
     num = qc.qbits
     #print(num)
     init_layout = [i for i in range(num)]

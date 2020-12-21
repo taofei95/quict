@@ -2,28 +2,23 @@ from  ._mcts_base import  *
 from queue import Queue, deque
 
 
-
 class TableBasedMCTS(MCTSBase):
-    def __init__(self, play_times: int =20, mode: str = None, mode_sim :List[int] = None,
-                selection_times: int = 50, coupling_graph : List[Tuple] = None,  **params):
-        super.__init__(coupling_graph)
+    def __init__(self, play_times: int = 20, gamma: float = 0.6, Gsim: int = 10,
+                 Nsim: int = 5, selection_times: int = 50, **params):
         # TODO
         self._play_times = play_times 
-        self._mode = mode
-        self._mode_sim = mode_sim
         self._selection_times = selection_times 
         self._call_back_threshold = 100
-        self._gamma = 0.6
-        self._Gsim = 10
-        self._Nsim = 5
-        self._coupling_graph = coupling_graph
+        self._gamma = gamma
+        self._Gsim = Gsim
+        self._Nsim = Nsim
     
     @property
     def physical_circuit(self):
         """
         the physical circuit of the current root node
         """
-        return self._root_node.circuit
+        return self._physical_circuit
 
     @property
     def root_node(self):
@@ -34,22 +29,29 @@ class TableBasedMCTS(MCTSBase):
 
 
     #TODO: layout -> mapping
-    def search(self, logical_circuit: Circuit, cur_mapping: List[int]):
+    def search(self, logical_circuit: Circuit, cur_mapping: List[int], coupling_graph : List[Tuple] = None):
+        """
+
+        """
+        self._coupling_graph = CouplingGraph(coupling_graph = coupling_graph)
         self._circuit_in_dag = DAG(circuit = logical_circuit) 
-        self._physical_circuit =Circuit(logical_circuit.circuit_length())
+        #self._physical_circuit = Circuit(logical_circuit.circuit_length())
+        self._physical_circuit: List[BasicGate] = []
+
         self._root_node = MCTSNode(circuit_in_dag = self._circuit_in_dag , coupling_graph = self._coupling_graph,
                                   front_layer = self._circuit_in_dag.front_layer, cur_mapping = cur_mapping)
         
-        self._add_excutable_gates(self.root_node)
+        self._add_excutable_gates(self._root_node)
         self._expand(node = self._root_node)
         while self._root_node.is_terminal_node():
             self._search(root_node = self._root_node)
-            self._root_node, swap_gate = self._decide(node = self._root_node)
-            self._physical_circuit.append(swap_gate)
+            self._root_node = self._decide(node = self._root_node)
+            self._physical_circuit.append(self._root_node.swap_with_edge)
+            self._add_excutable_gates(self._root_node)
 
     def _search(self, root_node : MCTSNode):
         for i in range(self._selection_times):
-            cur_node, swap = self._select(node = root_node)
+            cur_node = self._select(node = root_node)
             self._expand(node = cur_node)
             self._rollout(node = cur_node, method = "random")
             self._backpropagate(cur_node)
@@ -112,35 +114,30 @@ class TableBasedMCTS(MCTSBase):
         return node._get_best_child() 
 
     #TODO: _select_next_child
-    def _select_next_child(self, node: MCTSNode)-> Tuple[MCTSNode, SwapGate]:
+    def _select_next_child(self, node: MCTSNode)-> MCTSNode:
         """
         """
         res_node = MCTSNode()
-        res_swap =  BasicGate()
         score = -1
         for child in node.children:
-            if child[0].upper_confidence_bound >score:
-                res_node = child[0]
-                res_swap = child[1]
+            if child.upper_confidence_bound >score:
+                res_node = child
                 score = res_node.upper_confidence_bound
-        return res_node, res_swap
+        return res_node
 
 
         
-    def _get_best_child(self, node: MCTSNode):
+    def _get_best_child(self, node: MCTSNode)-> MCTSNode:
         """
         TODO: move code here instead of MCTSNode
         """
         res_node = MCTSNode()
-        res_swap =  BasicGate()
         score = -1
         for child in node.children:
-            if child[0].value + child[0].reward >score:
-                res_node = child[0]
-                res_swap = child[1]
+            if child.value + child.reward >score:
+                res_node = child
                 score = res_node.value + res_node.reward  
-
-        return res_node, res_swap
+        return res_node
 
     def _call_back(self, node: MCTSNode):
         """
@@ -149,11 +146,15 @@ class TableBasedMCTS(MCTSBase):
         pass
 
     def _add_excutable_gates(self, node: MCTSNode):
+        """
+        add  excutable gates in the node to the physical circuit
+        """
         excution_list = self._root_node.excution_list()
         self._physical_circuit.extend(excution_list)
 
     def _gate_distance_in_device(self, cur_mapping: List[int])->Callable[[int],int]:
         """
+        return a function that can calculate the distance on the device between the control qubit and target qubit of the given gate 
         """
         cur_mapping = cur_mapping
         def func(gate_in_dag: int)->int:
@@ -227,6 +228,8 @@ class TableBasedMCTS(MCTSBase):
 
             mapping = self._change_mapping_with_single_swap(cur_node.cur_mapping, cur_node.candidate_swap_list[index])
             cur_node.cur_mapping = mapping
+            cur_node.swap_with_edge = cur_node.candidate_swap_list[index].copy()
+
             cur_node.update_node()
 
             excuted_gate = excuted_gate + len(cur_node.excution_list)

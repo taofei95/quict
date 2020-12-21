@@ -5,22 +5,24 @@
 # @File    : _mapping.py
 
 from qubit_mapping  import QubitMapping as qm
+
+from .table_based_mcts import *
 from QuICT.core.circuit import * 
 from QuICT.core.exception import *
 from QuICT.core.gate import *
 from typing import List, Dict,Tuple
 class  Mapping(object):
     @classmethod
-    def run(cls, circuit: Circuit, num: int, init_layout : List[int], is_lnn: bool = True,
-            method:str = "greedy_search", inplace:bool = False) -> Circuit:
+    def run(cls, circuit: Circuit, num: int, init_mapping: List[int], is_lnn: bool = True,
+            method: str = "greedy_search", inplace: bool = False, parameter:Dict = {}) -> Tuple[Circuit, List[int]]:
         """
         Args:
             circuit: The input circuit that needs to be mapped into a 1D physical architecture 
             num: The number of physical qubits
-            init_layout: Initial position of logical qubits on physical qubits. It might be changed by the mapping method.
+            init_mapping: Initial position of logical qubits on physical qubits. It might be changed by the mapping method.
             #. ``Layout`` instance:  
-            #. List  index : physic -> init_layout[index]:logic
-                * 4-qubit device init_layout: [ 3, 2, 0, 1 ]
+            #. List  index : physic -> init_mapping[index]:logic
+                * 4-qubit device init_mapping: [ 3, 2, 0, 1 ]
                   physic -> logic
                   0         3
                   1         2
@@ -31,7 +33,7 @@ class  Mapping(object):
             method: The algorithm used to transform the logical quantum circuit to hardware-compliant circuit.
             inplace: 
         Return:  
-            the hardware-compliant circuit after mapping 
+            the hardware-compliant circuit after mapping  and the init_mapping for the circuit
         Raise:
 
         """
@@ -41,24 +43,25 @@ class  Mapping(object):
             raise Exception("There are not enough phyical qubits to excute the circuit")
 
         if is_lnn is True:
-            gates, layout = cls._mapping_1D(circuit = circuit, num=num, init_layout = init_layout ,method = method)
-            init_layout[:] = layout
-            # for i in init_layout:
+            gates = cls._mapping_1D(circuit = circuit, num=num, init_mapping = init_mapping ,method = method)
+            # for i in init_mapping:
             #     print(i)
         else:
-            raise Exception("the code is not ready now~")
+            gates = cls._mapping_1D(circuit = circuit, num=num, init_mapping = init_mapping ,method = method)
+        
 
         circuit.const_lock = False
 
         if inplace:
             circuit.set_flush_gates(gates)
+
         else:
             new_circuit = Circuit(len(circuit.qubits))
             new_circuit.extend(gates)
             return new_circuit
     
     @staticmethod
-    def _mapping_1D(circuit : Circuit, method : str, init_layout: List[int], num : int) -> Tuple[List[BasicGate], List[int]]:
+    def _mapping_1D(circuit : Circuit, method : str, init_mapping: List[int], num : int) -> Tuple[List[BasicGate], List[int]]:
         """
         Args:
             circuit: the input circuit that needs to be mapped into a 1D physical architecture 
@@ -66,7 +69,7 @@ class  Mapping(object):
             num: the number of physical qubits
         Return:
             gates:  the hardware-compliant circuit after mapping 
-            init_layout: the optimal initial position of logical qubits on physical qubits found by the mapping method 
+            init_mapping: the optimal initial position of logical qubits on physical qubits found by the mapping method 
         """
         circuit_ori = []
         for g in circuit.gates:
@@ -98,8 +101,8 @@ class  Mapping(object):
         trans = qm(circuit = circuit_ori, num =num, method = method )
         #print("qm")
 
-        circuit_trans, init_layout = trans.get_circuit()
-
+        circuit_trans, mapping = trans.get_circuit()
+        init_mapping[:] = mapping
         gates = []
         index = 0
 
@@ -141,20 +144,17 @@ class  Mapping(object):
             # print(g.type().value )
             gates.append(GateBuilder.getGate())
 
-        return gates, init_layout  
+        return gates
 
-        def _mapping_2D(circuit : Circuit, init_layout: List[int], method : str, num : int, ) -> Circuit:
-            """
+    def _mapping_NISQ(self, circuit: Circuit, init_mapping: List[int], method: str, num: int, paramter: Dict)-> Circuit:
+        """
+        
+        """
+       
+        mcts_tree = TableBasedMCTS(**paramter)
+        mcts_tree.search(logical_circuit = circuit, cur_mapping = init_mapping, coupling_graph = circuit.topology)
 
-
-            """
-            
-
-            return circuit
-    
-
-
-
+        return mcts_tree.physical_circuit
 
 
         

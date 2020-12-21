@@ -118,7 +118,6 @@ class CouplingGraph:
         """
         return self._coupling_graph
 
-    @property
     def is_adjacent(self, vertex_i: int, vertex_j: int) -> bool:
         """
         indicate wthether the two vertices are adjacent on the coupling graph
@@ -127,13 +126,13 @@ class CouplingGraph:
             return True
         else:
             return False
-    @property
+
+
     def get_adjacent_vertex(self, vertex: int) ->Iterable[int]:
         """
         return the adjacent vertices of  the given vertex
         """
-        self._coupling_graph.neighbors(vertex)
-        pass 
+        return self._coupling_graph.neighbors(vertex)
 
     def distance(self, vertex_i: int, vertex_j: int)->int:
         """
@@ -142,7 +141,7 @@ class CouplingGraph:
         return self._shortest_paths[vertex_i][vertex_j]
 
 
-    def _transform_from_list(self,  coupling_graph : List[Tuple]) -> nx.Graph:
+    def _transform_from_list(self,  coupling_graph : List[Tuple]):
         """
         construct the coupling graph from the list of tuples
         """
@@ -160,7 +159,7 @@ class MCTSNode:
 
     #TODO: qubit_mask -> __init__.property
     def __init__(self, circuit_in_dag: DAG = None, coupling_graph: CouplingGraph = None, front_layer: List[int] = None, cur_mapping: List[int] = None, 
-                 parent: MCTSNode =None):
+                 parent: MCTSNode =None, swap_with_edge: SwapGate = None):
         """
         Parameters
         ----------
@@ -177,13 +176,15 @@ class MCTSNode:
         self._front_layer = front_layer
         # self._coupling_graph = coupling_graph
         self._parent = parent
+
+        self._swap_with_edge = swap_with_edge
         #self.epsilon = epsilon
-        self._children: List[Tuple[MCTSNode, SwapGate]] = [] 
-        self._excution_list = []  
-        self._candidate_swap_list = []
-        self._qubit_mask = []
+        self._children: List[MCTSNode] = [] 
+         
+        self._excution_list: List[BasicGate] = []  
+        self._candidate_swap_list: List[SwapGate] = []
+        self._qubit_mask: List[int] = []
         #self._front_layer = []
-        self.qubit_mask = []
         self._visit_count = 0 
         self._NNC = None
         self._c = 0
@@ -275,24 +276,6 @@ class MCTSNode:
         """
 
         return self._candidate_swap_list
-    # @property
-    # def logical_circuit(self):
-    #     """
-    #     logic circuit_in_dag corresponding to the current node
-    #     """
-    #     return self._logical_circuit
-
-    # @property
-    # def physical_circuit(self):
-    #     """
-    #     """
-    #     return self._physical_circuit
-
-    # @property
-    # def coupling_graph(self):
-    #     """
-    #     """
-    #     return self._coupling_graph
     
     @property
     def cur_mapping(self)->List[int]:
@@ -340,6 +323,16 @@ class MCTSNode:
         The upper confidence bound of the node
         """
         return self.reward + self.value + self.c* np.sqrt(np.log2(self.parent.visit_count)/ self.visit_count)
+    @property
+    def swap_with_edge(self)->SwapGate:
+        """
+        The swap gate associated with the edge from the current node's parent to itself  
+        """
+        return self._swap_with_edge
+
+    @swap_with_edge.setter
+    def swap_with_edge(self, swap: SwapGate):
+        self._swap_with_edge = swap
     
     def update_node(self):
         """
@@ -362,8 +355,11 @@ class MCTSNode:
                 cur_mapping = self.cur_mapping.copy()
                 cur_mapping[l_control] = p_target
                 cur_mapping[l_target] = p_control
-                child_node = MCTSNode(circuit_in_dag = self.circuit_in_dag, coupling_graph = self.coupling_graph, front_layer = self.front_layer.copy(), cur_mapping = cur_mapping, parent = self)
+                child_node = MCTSNode(circuit_in_dag = self.circuit_in_dag, coupling_graph = self.coupling_graph, 
+                             front_layer = self.front_layer.copy(), cur_mapping = cur_mapping, parent = self,
+                             swap_with_edge = swap)
                 self._children.append(child_node)
+                
             else:
                 raise MappingLayoutException()
         else:
@@ -388,34 +384,6 @@ class MCTSNode:
         else:
             return True
         
-
-    def select_next_child(self):
-        """
-        return the child_node with highest UCB score
-        """
-        score = -1 
-        node = MCTSNode()
-        for child in self._children:
-            if child[0].upper_confidence_bound > score:
-                node = child[0] 
-                score = node.upper_confidence_bound
-        return  node  
-    
-    def decide_best_child(self):
-        """
-        return the child_node with highest v value and its corresponding swap operation
-        """
-        node = MCTSNode()
-        res_swap =  BasicGate()
-        score = -1
-        for child in self._children:
-            if child[0].v >score:
-                node = child[0]
-                score = node.v
-                res_swap = child[1]
-
-        return node, res_swap
-
     
     def _update_candidate_swap_list(self):
         """
@@ -537,17 +505,16 @@ class MCTSNode:
 
 class MCTSBase:
 
-    def __init__(self, coupling_graph:List[Tuple] = None,**params):
+    def __init__(self, **params):
         """
         initialize the Monte Carlo tree search with the given parameters 
         """
-        self._coupling_graph = coupling_graph
 
     @property
     def coupling_graph(self):
         """
         """
-        return self._coupling_graph
+        pass
 
     @abstractmethod
     def search(self, circuit : Circuit):

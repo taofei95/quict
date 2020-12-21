@@ -23,5 +23,5 @@ if [[ $OS =~ "Darwin" ]];then
   cp $tbb_build_dir/libtbb.dylib /usr/local/lib
 fi
 
-cd $prj_build_dir && \
-  $PYTHON3 ../setup.py install
+cd $prj_root && \
+  pip install .
