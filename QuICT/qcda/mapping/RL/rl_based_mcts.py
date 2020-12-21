@@ -33,10 +33,12 @@ class RLBasedMCTS(TableBasedMCTS):
 
     def _process_state_from_node(self, cur_node: MCTSNode):
         """
-        Transform the info in `cur_node` into structured state info for state agent
+        Transform the info in `cur_node` into structured state info for state agent.
+
         The state contains two numpy arrays: 
           - The edges index array with size (num_edges, 2, 2)
           - The adjacent matrix where the i-th row contains the edge indices of the i-th node
+        
         This is designed for GPU acceleration.
         """
         DAG = cur_node.circuit_in_dag
@@ -44,19 +46,36 @@ class RLBasedMCTS(TableBasedMCTS):
 
         adj_matrix = []
         edge_list = []
-
+                
         cur_layer_nodes = set(cur_node.front_layer)
+        visited_node = set(cur_layer_nodes)
         next_layer_nodes = set()
 
         edge_cnt = 0
         node_cnt = 0
-        temp_node_mapping = {}
-
         while cur_layer_nodes:
             for node in cur_layer_nodes:
-                adj_matrix.append([])
-                temp_node_mapping[node] = node_cnt
+
+                # Filter out single-qubit gate in front layers
+                if node['gate'].is_single():
+                    next_layer_nodes = next_layer_nodes.union(DAG.get_successor_nodes(node))
+                    continue
+
+                # Filter out single-qubit gates in the successor nodes
+                suc_node_list = []
                 for suc_node in DAG.get_successor_nodes(node):
+                    while suc_node['gate'].is_single():
+                        if not DAG.get_successor_nodes(suc_node):
+                            break
+                        suc_node = DAG.get_successor_nodes(suc_node)[0]
+
+                    if not suc_node['gate'].is_single():
+                        suc_node_list.append(suc_node)
+
+                adj_matrix.append([])
+                for suc_node in suc_node_list:
+                    if suc_node in visited_node:
+                        continue
 
                     def get_physical_bits_of_gate(gate):
                         l_qubits = gate.cargs+gate.cargs
@@ -66,8 +85,9 @@ class RLBasedMCTS(TableBasedMCTS):
                                     get_physical_bits_of_gate(suc_node["gate"])])
                     adj_matrix[node_cnt].append(edge_cnt)
                     edge_cnt += 1
+                    next_layer_nodes.add(suc_node)
+                    visited_node.add(suc_node)
 
-                next_layer_nodes = next_layer_nodes.union(DAG.get_successor_nodes(node))
             cur_layer_nodes = next_layer_nodes
 
             node_cnt += 1
