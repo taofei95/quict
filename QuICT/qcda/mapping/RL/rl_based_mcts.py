@@ -33,19 +33,44 @@ class RLBasedMCTS(TableBasedMCTS):
 
     def _process_state_from_node(self, cur_node: MCTSNode):
         """
-        Transform the info in `cur_nod` into structured state info for state agent
+        Transform the info in `cur_node` into structured state info for state agent
         The state contains two numpy arrays: 
-          - The edges index array with size (num_edges, 2)
+          - The edges index array with size (num_edges, 2, 2)
           - The adjacent matrix where the i-th row contains the edge indices of the i-th node
         This is designed for GPU acceleration.
         """
-        front_layers = cur_node.front_layer()
-        DAG = cur_node.circuit
-        cur_mapping = cur_node.layout
-        front_layer = cur_node.front_layer
+        DAG = cur_node.circuit_in_dag
+        cur_mapping = cur_node.cur_mapping
+
         adj_matrix = []
         edge_list = []
-        for dag_node in front_layer:
-            pass
+
+        cur_layer_nodes = set(cur_node.front_layer)
+        next_layer_nodes = set()
+
+        edge_cnt = 0
+        node_cnt = 0
+        temp_node_mapping = {}
+
+        while cur_layer_nodes:
+            for node in cur_layer_nodes:
+                adj_matrix.append([])
+                temp_node_mapping[node] = node_cnt
+                for suc_node in DAG.get_successor_nodes(node):
+
+                    def get_physical_bits_of_gate(gate):
+                        l_qubits = gate.cargs+gate.cargs
+                        return [cur_mapping[qbit] for qbit in l_qubits]
+
+                    edge_list.append([get_physical_bits_of_gate(node["gate"]),\
+                                    get_physical_bits_of_gate(suc_node["gate"])])
+                    adj_matrix[node_cnt].append(edge_cnt)
+                    edge_cnt += 1
+
+                next_layer_nodes = next_layer_nodes.union(DAG.get_successor_nodes(node))
+            cur_layer_nodes = next_layer_nodes
+
+            node_cnt += 1
+            
 
         
