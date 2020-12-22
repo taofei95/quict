@@ -1,0 +1,277 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>QuICT.core.gate.gate_builder module &#8212; QuICT 0.5 documentation</title>
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    <script src="_static/language_data.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="module-QuICT.core.gate.gate_builder">
+<span id="quict-core-gate-gate-builder-module"></span><h1>QuICT.core.gate.gate_builder module<a class="headerlink" href="#module-QuICT.core.gate.gate_builder" title="Permalink to this headline">¶</a></h1>
+<dl class="py class">
+<dt id="QuICT.core.gate.gate_builder.GateBuilderModel">
+<em class="property">class </em><code class="sig-prename descclassname">QuICT.core.gate.gate_builder.</code><code class="sig-name descname">GateBuilderModel</code><a class="headerlink" href="#QuICT.core.gate.gate_builder.GateBuilderModel" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>A model that help users get gate without circuit</p>
+<p>The model is designed to help users get some gates independent of the circuit
+Because there is no clear API to setting a gate’s control bit indexes and
+target bit indexes without circuit or qureg.</p>
+<p>Users should set the gateType of the GateBuilder, than set necessary parameters
+(Targs, Cargs, Pargs). After that, user can get a gate from GateBuilder.</p>
+<dl class="py method">
+<dt id="QuICT.core.gate.gate_builder.GateBuilderModel.apply_gates">
+<em class="property">static </em><code class="sig-name descname">apply_gates</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">gate</span><span class="p">:</span> <span class="n"><a class="reference internal" href="QuICT.core.gate.gate.html#QuICT.core.gate.gate.BasicGate" title="QuICT.core.gate.gate.BasicGate">QuICT.core.gate.gate.BasicGate</a></span></em>, <em class="sig-param"><span class="n">circuit</span><span class="p">:</span> <span class="n"><a class="reference internal" href="QuICT.core.circuit.circuit.html#QuICT.core.circuit.circuit.Circuit" title="QuICT.core.circuit.circuit.Circuit">QuICT.core.circuit.circuit.Circuit</a></span></em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.gate.gate_builder.GateBuilderModel.apply_gates" title="Permalink to this definition">¶</a></dt>
+<dd><p>act a gate on some circuit.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>gate</strong> (<a class="reference internal" href="QuICT.core.gate.gate.html#QuICT.core.gate.gate.BasicGate" title="QuICT.core.gate.gate.BasicGate"><em>BasicGate</em></a>) – the gate which is to be act on the circuit.</p></li>
+<li><p><strong>circuit</strong> (<a class="reference internal" href="QuICT.core.circuit.circuit.html#QuICT.core.circuit.circuit.Circuit" title="QuICT.core.circuit.circuit.Circuit"><em>Circuit</em></a>) – the circuit which the gate acted on.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="QuICT.core.gate.gate_builder.GateBuilderModel.getCargsNumber">
+<code class="sig-name descname">getCargsNumber</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.gate.gate_builder.GateBuilderModel.getCargsNumber" title="Permalink to this definition">¶</a></dt>
+<dd><p>get the number of cargs of the gate</p>
+<p>once the gateType is set, the function is valid.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>the number of cargs</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="QuICT.core.gate.gate_builder.GateBuilderModel.getGate">
+<code class="sig-name descname">getGate</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.gate.gate_builder.GateBuilderModel.getGate" title="Permalink to this definition">¶</a></dt>
+<dd><p>get the gate</p>
+<p>once the parameters are set, the function is valid.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>the gate with parameters set in the builder</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><a class="reference internal" href="QuICT.core.gate.gate.html#QuICT.core.gate.gate.BasicGate" title="QuICT.core.gate.gate.BasicGate">BasicGate</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="QuICT.core.gate.gate_builder.GateBuilderModel.getParamsNumber">
+<code class="sig-name descname">getParamsNumber</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.gate.gate_builder.GateBuilderModel.getParamsNumber" title="Permalink to this definition">¶</a></dt>
+<dd><p>get the number of pargs of the gate</p>
+<p>once the gateType is set, the function is valid.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>the number of pargs</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="QuICT.core.gate.gate_builder.GateBuilderModel.getTargsNumber">
+<code class="sig-name descname">getTargsNumber</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.gate.gate_builder.GateBuilderModel.getTargsNumber" title="Permalink to this definition">¶</a></dt>
+<dd><p>get the number of targs of the gate</p>
+<p>once the gateType is set, the function is valid.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>the number of targs</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="QuICT.core.gate.gate_builder.GateBuilderModel.reflect_apply_gates">
+<em class="property">static </em><code class="sig-name descname">reflect_apply_gates</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">gates</span><span class="p">:</span> <span class="n">list</span></em>, <em class="sig-param"><span class="n">circuit</span><span class="p">:</span> <span class="n"><a class="reference internal" href="QuICT.core.circuit.circuit.html#QuICT.core.circuit.circuit.Circuit" title="QuICT.core.circuit.circuit.Circuit">QuICT.core.circuit.circuit.Circuit</a></span></em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.gate.gate_builder.GateBuilderModel.reflect_apply_gates" title="Permalink to this definition">¶</a></dt>
+<dd><p>act the inverse of a series of gates on some circuit.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>gates</strong> (<em>list&lt;BasicGate&gt;</em>) – the gate list whose inverse is need to be gotten.</p></li>
+<li><p><strong>circuit</strong> (<a class="reference internal" href="QuICT.core.circuit.circuit.html#QuICT.core.circuit.circuit.Circuit" title="QuICT.core.circuit.circuit.Circuit"><em>Circuit</em></a>) – the circuit which the inverse acted on.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="QuICT.core.gate.gate_builder.GateBuilderModel.reflect_gates">
+<em class="property">static </em><code class="sig-name descname">reflect_gates</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">gates</span><span class="p">:</span> <span class="n">list</span></em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.gate.gate_builder.GateBuilderModel.reflect_gates" title="Permalink to this definition">¶</a></dt>
+<dd><p>build the inverse of a series of gates.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>gates</strong> (<em>list&lt;BasicGate&gt;</em>) – the gate list whose inverse is need to be gotten.</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>the inverse of the gate list.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>list&lt;BasicGate&gt;</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="QuICT.core.gate.gate_builder.GateBuilderModel.setArgs">
+<code class="sig-name descname">setArgs</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">args</span></em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.gate.gate_builder.GateBuilderModel.setArgs" title="Permalink to this definition">¶</a></dt>
+<dd><p>pass the bits’ indexed of the gate by one time</p>
+<p>The control bits’ indexed first, and followed the targets bits’ indexed.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>args</strong> (<em>list/int/float/complex</em>) – the act bits’ indexes of the gate</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="QuICT.core.gate.gate_builder.GateBuilderModel.setCargs">
+<code class="sig-name descname">setCargs</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">cargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.gate.gate_builder.GateBuilderModel.setCargs" title="Permalink to this definition">¶</a></dt>
+<dd><p>pass the control bits’ indexes of the gate</p>
+<p>if the gate don’t need the control bits, needn’t to call this function.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>cargs</strong> (<em>list/int/float/complex</em>) – the control bits’ indexes the gate act on.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="QuICT.core.gate.gate_builder.GateBuilderModel.setGateType">
+<code class="sig-name descname">setGateType</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">type</span></em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.gate.gate_builder.GateBuilderModel.setGateType" title="Permalink to this definition">¶</a></dt>
+<dd><p>pass the gateType for the builder</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>type</strong> (<em>int</em>) – the type passed in</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="QuICT.core.gate.gate_builder.GateBuilderModel.setPargs">
+<code class="sig-name descname">setPargs</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">pargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.gate.gate_builder.GateBuilderModel.setPargs" title="Permalink to this definition">¶</a></dt>
+<dd><p>pass the parameters of the gate</p>
+<p>if the gate don’t need the parameters, needn’t to call this function.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>pargs</strong> (<em>list/int/float/complex</em>) – the parameters filled in the gate</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="QuICT.core.gate.gate_builder.GateBuilderModel.setTargs">
+<code class="sig-name descname">setTargs</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">targs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.gate.gate_builder.GateBuilderModel.setTargs" title="Permalink to this definition">¶</a></dt>
+<dd><p>pass the target bits’ indexes of the gate</p>
+<p>The targets should be passed.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>targs</strong> (<em>list/int/float/complex</em>) – the target bits’ indexes the gate act on.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">QuICT</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2020, ICT_theory.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.3.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="_sources/QuICT.core.gate.gate_builder.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

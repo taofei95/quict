@@ -1,0 +1,7 @@
+QuICT.core.gate.gate\_builder module
+====================================
+
+.. automodule:: QuICT.core.gate.gate_builder
+   :members:
+   :undoc-members:
+   :show-inheritance:

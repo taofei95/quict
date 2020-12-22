@@ -1,0 +1,7 @@
+QuICT.algorithm.shor.origin\_shor module
+========================================
+
+.. automodule:: QuICT.algorithm.shor.origin_shor
+   :members:
+   :undoc-members:
+   :show-inheritance:

@@ -1,0 +1,413 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>QuICT.core.qubit package &#8212; QuICT 0.5 documentation</title>
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    <script src="_static/language_data.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="quict-core-qubit-package">
+<h1>QuICT.core.qubit package<a class="headerlink" href="#quict-core-qubit-package" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-QuICT.core.qubit.qubit">
+<span id="quict-core-qubit-qubit-module"></span><h2>QuICT.core.qubit.qubit module<a class="headerlink" href="#module-QuICT.core.qubit.qubit" title="Permalink to this headline">¶</a></h2>
+<dl class="py class">
+<dt id="QuICT.core.qubit.qubit.QState">
+<em class="property">class </em><code class="sig-prename descclassname">QuICT.core.qubit.qubit.</code><code class="sig-name descname">QState</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">qubit</span></em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.qubit.qubit.QState" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Implement a QState</p>
+<p>a basic computation unit of the amplitude simulation, in which
+all qubits are seemed enqState with each other.</p>
+<dl class="py attribute">
+<dt id="QuICT.core.qubit.qubit.QState.id">
+<code class="sig-name descname">id</code><a class="headerlink" href="#QuICT.core.qubit.qubit.QState.id" title="Permalink to this definition">¶</a></dt>
+<dd><p>the unique identity code of a qState, which is generated globally.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="QuICT.core.qubit.qubit.QState.qureg">
+<code class="sig-name descname">qureg</code><a class="headerlink" href="#QuICT.core.qubit.qubit.QState.qureg" title="Permalink to this definition">¶</a></dt>
+<dd><p>the qubit register of the qState</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p><a class="reference internal" href="QuICT.core.qubit.qubit.html#QuICT.core.qubit.qubit.Qureg" title="QuICT.core.qubit.qubit.Qureg">Qureg</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="QuICT.core.qubit.qubit.QState.values">
+<code class="sig-name descname">values</code><a class="headerlink" href="#QuICT.core.qubit.qubit.QState.values" title="Permalink to this definition">¶</a></dt>
+<dd><p>the inner amplitude of this qState</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>np.array</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="QuICT.core.qubit.qubit.QState.force_assign_random">
+<code class="sig-name descname">force_assign_random</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.qubit.qubit.QState.force_assign_random" title="Permalink to this definition">¶</a></dt>
+<dd><p>assign random values to the qState</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="QuICT.core.qubit.qubit.QState.force_assign_zeros">
+<code class="sig-name descname">force_assign_zeros</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.qubit.qubit.QState.force_assign_zeros" title="Permalink to this definition">¶</a></dt>
+<dd><p>assign zero to the qState</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="QuICT.core.qubit.qubit.QState.force_copy">
+<code class="sig-name descname">force_copy</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">other</span></em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.qubit.qubit.QState.force_copy" title="Permalink to this definition">¶</a></dt>
+<dd><p>copy other qState’s values</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>other</strong> (<a class="reference internal" href="QuICT.core.qubit.qubit.html#QuICT.core.qubit.qubit.QState" title="QuICT.core.qubit.qubit.QState"><em>QState</em></a>) – the item to be copied.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="id0">
+<em class="property">property </em><code class="sig-name descname">id</code><a class="headerlink" href="#id0" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="QuICT.core.qubit.qubit.QState.index_for_qubit">
+<code class="sig-name descname">index_for_qubit</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">qubit</span></em><span class="sig-paren">)</span> &#x2192; int<a class="headerlink" href="#QuICT.core.qubit.qubit.QState.index_for_qubit" title="Permalink to this definition">¶</a></dt>
+<dd><p>find the index of qubit in this qState’s qureg</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>qubit</strong> (<a class="reference internal" href="QuICT.core.qubit.qubit.html#QuICT.core.qubit.qubit.Qubit" title="QuICT.core.qubit.qubit.Qubit"><em>Qubit</em></a>) – the qubit need to be indexed.</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>the index of the qubit.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+<dt class="field-even">Raises</dt>
+<dd class="field-even"><p><strong>Exception</strong> – the qubit is not in the qState</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="QuICT.core.qubit.qubit.QState.partial_prob">
+<code class="sig-name descname">partial_prob</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">indexes</span></em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.qubit.qubit.QState.partial_prob" title="Permalink to this definition">¶</a></dt>
+<dd><p>calculate the probabilities of the measure result of partial qureg in qState</p>
+<p>Note that this function is a cheat function, which do not change the state of the qureg.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>indexes</strong> (<em>list&lt;int&gt;</em>) – the indexes of the partial qureg.</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>the probabilities of the measure result, the memory mode is LittleEndian.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>list&lt;float&gt;</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="QuICT.core.qubit.qubit.QState.print_infomation">
+<code class="sig-name descname">print_infomation</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.qubit.qubit.QState.print_infomation" title="Permalink to this definition">¶</a></dt>
+<dd><p>print the infomation of the qState</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="id1">
+<em class="property">property </em><code class="sig-name descname">qureg</code><a class="headerlink" href="#id1" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="id2">
+<em class="property">property </em><code class="sig-name descname">values</code><a class="headerlink" href="#id2" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="QuICT.core.qubit.qubit.Qubit">
+<em class="property">class </em><code class="sig-prename descclassname">QuICT.core.qubit.qubit.</code><code class="sig-name descname">Qubit</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">circuit</span></em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.qubit.qubit.Qubit" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Implement a quantum bit</p>
+<p>Qubit is the basic unit of quantum circuits, it will appear with some certain circuit.</p>
+<dl class="py attribute">
+<dt id="QuICT.core.qubit.qubit.Qubit.id">
+<code class="sig-name descname">id</code><a class="headerlink" href="#QuICT.core.qubit.qubit.Qubit.id" title="Permalink to this definition">¶</a></dt>
+<dd><p>the unique identity code of a qubit, which is generated globally.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="QuICT.core.qubit.qubit.Qubit.qState">
+<code class="sig-name descname">qState</code><a class="headerlink" href="#QuICT.core.qubit.qubit.Qubit.qState" title="Permalink to this definition">¶</a></dt>
+<dd><p>a special qureg in which all qubits may enqState with each other.
+class QState will be defined and introduced below.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p><a class="reference internal" href="QuICT.core.qubit.qubit.html#QuICT.core.qubit.qubit.QState" title="QuICT.core.qubit.qubit.QState">QState</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="QuICT.core.qubit.qubit.Qubit.circuit">
+<code class="sig-name descname">circuit</code><a class="headerlink" href="#QuICT.core.qubit.qubit.Qubit.circuit" title="Permalink to this definition">¶</a></dt>
+<dd><p>the circuit this qubit belonged to.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p><a class="reference internal" href="QuICT.core.circuit.circuit.html#QuICT.core.circuit.circuit.Circuit" title="QuICT.core.circuit.circuit.Circuit">Circuit</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="QuICT.core.qubit.qubit.Qubit.measured">
+<code class="sig-name descname">measured</code><a class="headerlink" href="#QuICT.core.qubit.qubit.Qubit.measured" title="Permalink to this definition">¶</a></dt>
+<dd><p>the measure result of the qubit.
+After apply measure gate on the qubit, the measured will be 0 or 1,
+otherwise raise an exception</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="QuICT.core.qubit.qubit.Qubit.prob">
+<code class="sig-name descname">prob</code><a class="headerlink" href="#QuICT.core.qubit.qubit.Qubit.prob" title="Permalink to this definition">¶</a></dt>
+<dd><p>the probability of measure result to be 1, which range in [0, 1].
+After apply measure gate on the qubit, this attribute can be read,
+otherwise raise an exception</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="id3">
+<em class="property">property </em><code class="sig-name descname">circuit</code><a class="headerlink" href="#id3" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="QuICT.core.qubit.qubit.Qubit.has_qState">
+<code class="sig-name descname">has_qState</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.qubit.qubit.Qubit.has_qState" title="Permalink to this definition">¶</a></dt>
+<dd><p>whether the qubit is belonged to a qState.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>True if qubit is belonged to a qState</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="id4">
+<em class="property">property </em><code class="sig-name descname">id</code><a class="headerlink" href="#id4" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="id5">
+<em class="property">property </em><code class="sig-name descname">measured</code><a class="headerlink" href="#id5" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="id6">
+<em class="property">property </em><code class="sig-name descname">prob</code><a class="headerlink" href="#id6" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="id7">
+<em class="property">property </em><code class="sig-name descname">qState</code><a class="headerlink" href="#id7" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="QuICT.core.qubit.qubit.Qubit.qState_clear">
+<code class="sig-name descname">qState_clear</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.qubit.qubit.Qubit.qState_clear" title="Permalink to this definition">¶</a></dt>
+<dd><p>delete the qState of the qubit</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="QuICT.core.qubit.qubit.Qureg">
+<em class="property">class </em><code class="sig-prename descclassname">QuICT.core.qubit.qubit.</code><code class="sig-name descname">Qureg</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">qubits</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.qubit.qubit.Qureg" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code></p>
+<p>Implement a quantum register</p>
+<p>Qureg is a list of Qubit, which is a subClass of list.</p>
+<dl class="py attribute">
+<dt id="QuICT.core.qubit.qubit.Qureg.circuit">
+<code class="sig-name descname">circuit</code><a class="headerlink" href="#QuICT.core.qubit.qubit.Qureg.circuit" title="Permalink to this definition">¶</a></dt>
+<dd><p>the circuit this qureg belonged to.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p><a class="reference internal" href="QuICT.core.circuit.circuit.html#QuICT.core.circuit.circuit.Circuit" title="QuICT.core.circuit.circuit.Circuit">Circuit</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="id8">
+<em class="property">property </em><code class="sig-name descname">circuit</code><a class="headerlink" href="#id8" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="QuICT.core.qubit.qubit.Qureg.force_assign_random">
+<code class="sig-name descname">force_assign_random</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.qubit.qubit.Qureg.force_assign_random" title="Permalink to this definition">¶</a></dt>
+<dd><p>assign random values for qureg which has initial values</p>
+<p>after calling this function, all qubits will be in a QState.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="QuICT.core.qubit.qubit.Qureg.force_assign_zeros">
+<code class="sig-name descname">force_assign_zeros</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.qubit.qubit.Qureg.force_assign_zeros" title="Permalink to this definition">¶</a></dt>
+<dd><p>assign zero for qureg has initial values</p>
+<p>after calling this function, all qubits will be in a QState.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="QuICT.core.qubit.qubit.Qureg.force_copy">
+<code class="sig-name descname">force_copy</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">copy_item</span></em>, <em class="sig-param"><span class="n">indexes</span></em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.qubit.qubit.Qureg.force_copy" title="Permalink to this definition">¶</a></dt>
+<dd><p>copy values from other QState for this qureg which has initial values</p>
+<p>after calling this function, all qubits will be in a QState.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>copy_item</strong> (<a class="reference internal" href="QuICT.core.qubit.qubit.html#QuICT.core.qubit.qubit.QState" title="QuICT.core.qubit.qubit.QState"><em>QState</em></a>) – the QState need to be copied.</p></li>
+<li><p><strong>indexes</strong> (<em>list&lt;int&gt;</em>) – the indexes of goal qubits</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-QuICT.core.qubit.qubit_unit_test">
+<span id="quict-core-qubit-qubit-unit-test-module"></span><h2>QuICT.core.qubit.qubit_unit_test module<a class="headerlink" href="#module-QuICT.core.qubit.qubit_unit_test" title="Permalink to this headline">¶</a></h2>
+<dl class="py function">
+<dt id="QuICT.core.qubit.qubit_unit_test.test_Qubit_Attributes_prob">
+<code class="sig-prename descclassname">QuICT.core.qubit.qubit_unit_test.</code><code class="sig-name descname">test_Qubit_Attributes_prob</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.qubit.qubit_unit_test.test_Qubit_Attributes_prob" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt id="QuICT.core.qubit.qubit_unit_test.test_Qureg_Function_slice">
+<code class="sig-prename descclassname">QuICT.core.qubit.qubit_unit_test.</code><code class="sig-name descname">test_Qureg_Function_slice</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.qubit.qubit_unit_test.test_Qureg_Function_slice" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+<div class="section" id="module-QuICT.core.qubit">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-QuICT.core.qubit" title="Permalink to this headline">¶</a></h2>
+</div>
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">QuICT</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2020, ICT_theory.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.3.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="_sources/QuICT.core.qubit.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

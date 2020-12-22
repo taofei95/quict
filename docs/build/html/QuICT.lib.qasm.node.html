@@ -1,0 +1,852 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>QuICT.lib.qasm.node package &#8212; QuICT 0.5 documentation</title>
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    <script src="_static/language_data.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="quict-lib-qasm-node-package">
+<h1>QuICT.lib.qasm.node package<a class="headerlink" href="#quict-lib-qasm-node-package" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-QuICT.lib.qasm.node.barrier">
+<span id="quict-lib-qasm-node-barrier-module"></span><h2>QuICT.lib.qasm.node.barrier module<a class="headerlink" href="#module-QuICT.lib.qasm.node.barrier" title="Permalink to this headline">¶</a></h2>
+<p>Node for an OPENQASM barrier statement.</p>
+<dl class="py class">
+<dt id="QuICT.lib.qasm.node.barrier.Barrier">
+<em class="property">class </em><code class="sig-prename descclassname">QuICT.lib.qasm.node.barrier.</code><code class="sig-name descname">Barrier</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">children</span></em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.lib.qasm.node.barrier.Barrier" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="QuICT.lib.qasm.node.node.html#QuICT.lib.qasm.node.node.Node" title="QuICT.lib.qasm.node.node.Node"><code class="xref py py-class docutils literal notranslate"><span class="pre">QuICT.lib.qasm.node.node.Node</span></code></a></p>
+<p>Node for an OPENQASM barrier statement.</p>
+<p>children[0] is a primarylist node.</p>
+<dl class="py method">
+<dt id="QuICT.lib.qasm.node.barrier.Barrier.qasm">
+<code class="sig-name descname">qasm</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">prec</span><span class="o">=</span><span class="default_value">15</span></em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.lib.qasm.node.barrier.Barrier.qasm" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the corresponding OPENQASM string.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-QuICT.lib.qasm.node.binaryop">
+<span id="quict-lib-qasm-node-binaryop-module"></span><h2>QuICT.lib.qasm.node.binaryop module<a class="headerlink" href="#module-QuICT.lib.qasm.node.binaryop" title="Permalink to this headline">¶</a></h2>
+<p>Node for an OPENQASM binary operation expression.</p>
+<dl class="py class">
+<dt id="QuICT.lib.qasm.node.binaryop.BinaryOp">
+<em class="property">class </em><code class="sig-prename descclassname">QuICT.lib.qasm.node.binaryop.</code><code class="sig-name descname">BinaryOp</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">children</span></em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.lib.qasm.node.binaryop.BinaryOp" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="QuICT.lib.qasm.node.node.html#QuICT.lib.qasm.node.node.Node" title="QuICT.lib.qasm.node.node.Node"><code class="xref py py-class docutils literal notranslate"><span class="pre">QuICT.lib.qasm.node.node.Node</span></code></a></p>
+<p>Node for an OPENQASM binary operation expression.</p>
+<p>children[0] is the operation, as a binary operator node.
+children[1] is the left expression.
+children[2] is the right expression.</p>
+<dl class="py method">
+<dt id="QuICT.lib.qasm.node.binaryop.BinaryOp.latex">
+<code class="sig-name descname">latex</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">prec</span><span class="o">=</span><span class="default_value">15</span></em>, <em class="sig-param"><span class="n">nested_scope</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.lib.qasm.node.binaryop.BinaryOp.latex" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the corresponding math mode latex string.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="QuICT.lib.qasm.node.binaryop.BinaryOp.qasm">
+<code class="sig-name descname">qasm</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">prec</span><span class="o">=</span><span class="default_value">15</span></em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.lib.qasm.node.binaryop.BinaryOp.qasm" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the corresponding OPENQASM string.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="QuICT.lib.qasm.node.binaryop.BinaryOp.real">
+<code class="sig-name descname">real</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">nested_scope</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.lib.qasm.node.binaryop.BinaryOp.real" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the correspond floating point number.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="QuICT.lib.qasm.node.binaryop.BinaryOp.sym">
+<code class="sig-name descname">sym</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">nested_scope</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.lib.qasm.node.binaryop.BinaryOp.sym" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the correspond symbolic number.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-QuICT.lib.qasm.node.binaryoperator">
+<span id="quict-lib-qasm-node-binaryoperator-module"></span><h2>QuICT.lib.qasm.node.binaryoperator module<a class="headerlink" href="#module-QuICT.lib.qasm.node.binaryoperator" title="Permalink to this headline">¶</a></h2>
+<p>Node for an OPENQASM binary operator.</p>
+<dl class="py class">
+<dt id="QuICT.lib.qasm.node.binaryoperator.BinaryOperator">
+<em class="property">class </em><code class="sig-prename descclassname">QuICT.lib.qasm.node.binaryoperator.</code><code class="sig-name descname">BinaryOperator</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">operation</span></em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.lib.qasm.node.binaryoperator.BinaryOperator" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="QuICT.lib.qasm.node.node.html#QuICT.lib.qasm.node.node.Node" title="QuICT.lib.qasm.node.node.Node"><code class="xref py py-class docutils literal notranslate"><span class="pre">QuICT.lib.qasm.node.node.Node</span></code></a></p>
+<p>Node for an OPENQASM binary operator.</p>
+<p>This node has no children. The data is in the value field.</p>
+<dl class="py method">
+<dt id="QuICT.lib.qasm.node.binaryoperator.BinaryOperator.operation">
+<code class="sig-name descname">operation</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.lib.qasm.node.binaryoperator.BinaryOperator.operation" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the operator as a function f(left, right).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="QuICT.lib.qasm.node.binaryoperator.BinaryOperator.qasm">
+<code class="sig-name descname">qasm</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">prec</span><span class="o">=</span><span class="default_value">15</span></em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.lib.qasm.node.binaryoperator.BinaryOperator.qasm" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the QASM representation.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-QuICT.lib.qasm.node.cnot">
+<span id="quict-lib-qasm-node-cnot-module"></span><h2>QuICT.lib.qasm.node.cnot module<a class="headerlink" href="#module-QuICT.lib.qasm.node.cnot" title="Permalink to this headline">¶</a></h2>
+<p>Node for an OPENQASM CNOT statement.</p>
+<dl class="py class">
+<dt id="QuICT.lib.qasm.node.cnot.Cnot">
+<em class="property">class </em><code class="sig-prename descclassname">QuICT.lib.qasm.node.cnot.</code><code class="sig-name descname">Cnot</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">children</span></em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.lib.qasm.node.cnot.Cnot" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="QuICT.lib.qasm.node.node.html#QuICT.lib.qasm.node.node.Node" title="QuICT.lib.qasm.node.node.Node"><code class="xref py py-class docutils literal notranslate"><span class="pre">QuICT.lib.qasm.node.node.Node</span></code></a></p>
+<p>Node for an OPENQASM CNOT statement.</p>
+<p>children[0], children[1] are id nodes if CX is inside a gate body,
+otherwise they are primary nodes.</p>
+<dl class="py method">
+<dt id="QuICT.lib.qasm.node.cnot.Cnot.qasm">
+<code class="sig-name descname">qasm</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">prec</span><span class="o">=</span><span class="default_value">15</span></em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.lib.qasm.node.cnot.Cnot.qasm" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the corresponding OPENQASM string.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-QuICT.lib.qasm.node.creg">
+<span id="quict-lib-qasm-node-creg-module"></span><h2>QuICT.lib.qasm.node.creg module<a class="headerlink" href="#module-QuICT.lib.qasm.node.creg" title="Permalink to this headline">¶</a></h2>
+<p>Node for an OPENQASM creg statement.</p>
+<dl class="py class">
+<dt id="QuICT.lib.qasm.node.creg.Creg">
+<em class="property">class </em><code class="sig-prename descclassname">QuICT.lib.qasm.node.creg.</code><code class="sig-name descname">Creg</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">children</span></em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.lib.qasm.node.creg.Creg" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="QuICT.lib.qasm.node.node.html#QuICT.lib.qasm.node.node.Node" title="QuICT.lib.qasm.node.node.Node"><code class="xref py py-class docutils literal notranslate"><span class="pre">QuICT.lib.qasm.node.node.Node</span></code></a></p>
+<p>Node for an OPENQASM creg statement.</p>
+<p>children[0] is an indexedid node.</p>
+<dl class="py method">
+<dt id="QuICT.lib.qasm.node.creg.Creg.qasm">
+<code class="sig-name descname">qasm</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">prec</span><span class="o">=</span><span class="default_value">15</span></em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.lib.qasm.node.creg.Creg.qasm" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the corresponding OPENQASM string.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="QuICT.lib.qasm.node.creg.Creg.to_string">
+<code class="sig-name descname">to_string</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">indent</span></em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.lib.qasm.node.creg.Creg.to_string" title="Permalink to this definition">¶</a></dt>
+<dd><p>Print the node data, with indent.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-QuICT.lib.qasm.node.customunitary">
+<span id="quict-lib-qasm-node-customunitary-module"></span><h2>QuICT.lib.qasm.node.customunitary module<a class="headerlink" href="#module-QuICT.lib.qasm.node.customunitary" title="Permalink to this headline">¶</a></h2>
+<p>Node for an OPENQASM custom gate statement.</p>
+<dl class="py class">
+<dt id="QuICT.lib.qasm.node.customunitary.CustomUnitary">
+<em class="property">class </em><code class="sig-prename descclassname">QuICT.lib.qasm.node.customunitary.</code><code class="sig-name descname">CustomUnitary</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">children</span></em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.lib.qasm.node.customunitary.CustomUnitary" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="QuICT.lib.qasm.node.node.html#QuICT.lib.qasm.node.node.Node" title="QuICT.lib.qasm.node.node.Node"><code class="xref py py-class docutils literal notranslate"><span class="pre">QuICT.lib.qasm.node.node.Node</span></code></a></p>
+<p>Node for an OPENQASM custom gate statement.</p>
+<p>children[0] is an id node.
+children[1] is an exp_list (if len==3) or primary_list.
+children[2], if present, is a primary_list.</p>
+<p>Has properties:
+.id = id node
+.name = gate name string
+.arguments = None or exp_list node
+.bitlist = primary_list node</p>
+<dl class="py method">
+<dt id="QuICT.lib.qasm.node.customunitary.CustomUnitary.qasm">
+<code class="sig-name descname">qasm</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">prec</span><span class="o">=</span><span class="default_value">15</span></em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.lib.qasm.node.customunitary.CustomUnitary.qasm" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the corresponding OPENQASM string.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-QuICT.lib.qasm.node.expressionlist">
+<span id="quict-lib-qasm-node-expressionlist-module"></span><h2>QuICT.lib.qasm.node.expressionlist module<a class="headerlink" href="#module-QuICT.lib.qasm.node.expressionlist" title="Permalink to this headline">¶</a></h2>
+<p>Node for an OPENQASM expression list.</p>
+<dl class="py class">
+<dt id="QuICT.lib.qasm.node.expressionlist.ExpressionList">
+<em class="property">class </em><code class="sig-prename descclassname">QuICT.lib.qasm.node.expressionlist.</code><code class="sig-name descname">ExpressionList</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">children</span></em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.lib.qasm.node.expressionlist.ExpressionList" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="QuICT.lib.qasm.node.node.html#QuICT.lib.qasm.node.node.Node" title="QuICT.lib.qasm.node.node.Node"><code class="xref py py-class docutils literal notranslate"><span class="pre">QuICT.lib.qasm.node.node.Node</span></code></a></p>
+<p>Node for an OPENQASM expression list.</p>
+<p>children are expression nodes.</p>
+<dl class="py method">
+<dt id="QuICT.lib.qasm.node.expressionlist.ExpressionList.qasm">
+<code class="sig-name descname">qasm</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">prec</span><span class="o">=</span><span class="default_value">15</span></em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.lib.qasm.node.expressionlist.ExpressionList.qasm" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the corresponding OPENQASM string.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="QuICT.lib.qasm.node.expressionlist.ExpressionList.size">
+<code class="sig-name descname">size</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.lib.qasm.node.expressionlist.ExpressionList.size" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the number of expressions.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-QuICT.lib.qasm.node.external">
+<span id="quict-lib-qasm-node-external-module"></span><h2>QuICT.lib.qasm.node.external module<a class="headerlink" href="#module-QuICT.lib.qasm.node.external" title="Permalink to this headline">¶</a></h2>
+<p>Node for an OPENQASM external function.</p>
+<dl class="py class">
+<dt id="QuICT.lib.qasm.node.external.External">
+<em class="property">class </em><code class="sig-prename descclassname">QuICT.lib.qasm.node.external.</code><code class="sig-name descname">External</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">children</span></em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.lib.qasm.node.external.External" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="QuICT.lib.qasm.node.node.html#QuICT.lib.qasm.node.node.Node" title="QuICT.lib.qasm.node.node.Node"><code class="xref py py-class docutils literal notranslate"><span class="pre">QuICT.lib.qasm.node.node.Node</span></code></a></p>
+<p>Node for an OPENQASM external function.</p>
+<p>children[0] is an id node with the name of the function.
+children[1] is an expression node.</p>
+<dl class="py method">
+<dt id="QuICT.lib.qasm.node.external.External.latex">
+<code class="sig-name descname">latex</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">prec</span><span class="o">=</span><span class="default_value">15</span></em>, <em class="sig-param"><span class="n">nested_scope</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.lib.qasm.node.external.External.latex" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the corresponding math mode latex string.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="QuICT.lib.qasm.node.external.External.qasm">
+<code class="sig-name descname">qasm</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">prec</span><span class="o">=</span><span class="default_value">15</span></em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.lib.qasm.node.external.External.qasm" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the corresponding OPENQASM string.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="QuICT.lib.qasm.node.external.External.real">
+<code class="sig-name descname">real</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">nested_scope</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.lib.qasm.node.external.External.real" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the correspond floating point number.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="QuICT.lib.qasm.node.external.External.sym">
+<code class="sig-name descname">sym</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">nested_scope</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.lib.qasm.node.external.External.sym" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the corresponding symbolic expression.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-QuICT.lib.qasm.node.format">
+<span id="quict-lib-qasm-node-format-module"></span><h2>QuICT.lib.qasm.node.format module<a class="headerlink" href="#module-QuICT.lib.qasm.node.format" title="Permalink to this headline">¶</a></h2>
+<p>Node for an OPENQASM file identifier/version statement.</p>
+<dl class="py class">
+<dt id="QuICT.lib.qasm.node.format.Format">
+<em class="property">class </em><code class="sig-prename descclassname">QuICT.lib.qasm.node.format.</code><code class="sig-name descname">Format</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">value</span></em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.lib.qasm.node.format.Format" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="QuICT.lib.qasm.node.node.html#QuICT.lib.qasm.node.node.Node" title="QuICT.lib.qasm.node.node.Node"><code class="xref py py-class docutils literal notranslate"><span class="pre">QuICT.lib.qasm.node.node.Node</span></code></a></p>
+<p>Node for an OPENQASM file identifier/version statement.</p>
+<dl class="py method">
+<dt id="QuICT.lib.qasm.node.format.Format.qasm">
+<code class="sig-name descname">qasm</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">prec</span><span class="o">=</span><span class="default_value">15</span></em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.lib.qasm.node.format.Format.qasm" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the corresponding format string.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="QuICT.lib.qasm.node.format.Format.version">
+<code class="sig-name descname">version</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.lib.qasm.node.format.Format.version" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the version.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-QuICT.lib.qasm.node.gate">
+<span id="quict-lib-qasm-node-gate-module"></span><h2>QuICT.lib.qasm.node.gate module<a class="headerlink" href="#module-QuICT.lib.qasm.node.gate" title="Permalink to this headline">¶</a></h2>
+<p>Node for an OPENQASM gate definition.</p>
+<dl class="py class">
+<dt id="QuICT.lib.qasm.node.gate.Gate">
+<em class="property">class </em><code class="sig-prename descclassname">QuICT.lib.qasm.node.gate.</code><code class="sig-name descname">Gate</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">children</span></em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.lib.qasm.node.gate.Gate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="QuICT.lib.qasm.node.node.html#QuICT.lib.qasm.node.node.Node" title="QuICT.lib.qasm.node.node.Node"><code class="xref py py-class docutils literal notranslate"><span class="pre">QuICT.lib.qasm.node.node.Node</span></code></a></p>
+<p>Node for an OPENQASM gate definition.</p>
+<p>children[0] is an id node.
+If len(children) is 3, children[1] is an idlist node,
+and children[2] is a gatebody node.
+Otherwise, children[1] is an expressionlist node,
+children[2] is an idlist node, and children[3] is a gatebody node.</p>
+<dl class="py method">
+<dt id="QuICT.lib.qasm.node.gate.Gate.n_args">
+<code class="sig-name descname">n_args</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.lib.qasm.node.gate.Gate.n_args" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the number of parameter expressions.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="QuICT.lib.qasm.node.gate.Gate.n_bits">
+<code class="sig-name descname">n_bits</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.lib.qasm.node.gate.Gate.n_bits" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the number of qubit arguments.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="QuICT.lib.qasm.node.gate.Gate.qasm">
+<code class="sig-name descname">qasm</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">prec</span><span class="o">=</span><span class="default_value">15</span></em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.lib.qasm.node.gate.Gate.qasm" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the corresponding OPENQASM string.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-QuICT.lib.qasm.node.gatebody">
+<span id="quict-lib-qasm-node-gatebody-module"></span><h2>QuICT.lib.qasm.node.gatebody module<a class="headerlink" href="#module-QuICT.lib.qasm.node.gatebody" title="Permalink to this headline">¶</a></h2>
+<p>Node for an OPENQASM custom gate body.</p>
+<dl class="py class">
+<dt id="QuICT.lib.qasm.node.gatebody.GateBody">
+<em class="property">class </em><code class="sig-prename descclassname">QuICT.lib.qasm.node.gatebody.</code><code class="sig-name descname">GateBody</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">children</span></em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.lib.qasm.node.gatebody.GateBody" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="QuICT.lib.qasm.node.node.html#QuICT.lib.qasm.node.node.Node" title="QuICT.lib.qasm.node.node.Node"><code class="xref py py-class docutils literal notranslate"><span class="pre">QuICT.lib.qasm.node.node.Node</span></code></a></p>
+<p>Node for an OPENQASM custom gate body.</p>
+<p>children is a list of gate operation nodes.
+These are one of barrier, custom_unitary, U, or CX.</p>
+<dl class="py method">
+<dt id="QuICT.lib.qasm.node.gatebody.GateBody.calls">
+<code class="sig-name descname">calls</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.lib.qasm.node.gatebody.GateBody.calls" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a list of custom gate names in this gate body.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="QuICT.lib.qasm.node.gatebody.GateBody.qasm">
+<code class="sig-name descname">qasm</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">prec</span><span class="o">=</span><span class="default_value">15</span></em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.lib.qasm.node.gatebody.GateBody.qasm" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the corresponding OPENQASM string.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-QuICT.lib.qasm.node.id">
+<span id="quict-lib-qasm-node-id-module"></span><h2>QuICT.lib.qasm.node.id module<a class="headerlink" href="#module-QuICT.lib.qasm.node.id" title="Permalink to this headline">¶</a></h2>
+<p>Node for an OPENQASM id.</p>
+<dl class="py class">
+<dt id="QuICT.lib.qasm.node.id.Id">
+<em class="property">class </em><code class="sig-prename descclassname">QuICT.lib.qasm.node.id.</code><code class="sig-name descname">Id</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">id</span></em>, <em class="sig-param"><span class="n">line</span></em>, <em class="sig-param"><span class="n">file</span></em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.lib.qasm.node.id.Id" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="QuICT.lib.qasm.node.node.html#QuICT.lib.qasm.node.node.Node" title="QuICT.lib.qasm.node.node.Node"><code class="xref py py-class docutils literal notranslate"><span class="pre">QuICT.lib.qasm.node.node.Node</span></code></a></p>
+<p>Node for an OPENQASM id.</p>
+<p>The node has no children but has fields name, line, and file.
+There is a flag is_bit that is set when XXXXX to help with scoping.</p>
+<dl class="py method">
+<dt id="QuICT.lib.qasm.node.id.Id.latex">
+<code class="sig-name descname">latex</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">prec</span><span class="o">=</span><span class="default_value">15</span></em>, <em class="sig-param"><span class="n">nested_scope</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.lib.qasm.node.id.Id.latex" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the correspond math mode latex string.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="QuICT.lib.qasm.node.id.Id.qasm">
+<code class="sig-name descname">qasm</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">prec</span><span class="o">=</span><span class="default_value">15</span></em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.lib.qasm.node.id.Id.qasm" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the corresponding OPENQASM string.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="QuICT.lib.qasm.node.id.Id.real">
+<code class="sig-name descname">real</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">nested_scope</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.lib.qasm.node.id.Id.real" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the correspond floating point number.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="QuICT.lib.qasm.node.id.Id.sym">
+<code class="sig-name descname">sym</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">nested_scope</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.lib.qasm.node.id.Id.sym" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the correspond symbolic number.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="QuICT.lib.qasm.node.id.Id.to_string">
+<code class="sig-name descname">to_string</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">indent</span></em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.lib.qasm.node.id.Id.to_string" title="Permalink to this definition">¶</a></dt>
+<dd><p>Print the node with indent.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-QuICT.lib.qasm.node.idlist">
+<span id="quict-lib-qasm-node-idlist-module"></span><h2>QuICT.lib.qasm.node.idlist module<a class="headerlink" href="#module-QuICT.lib.qasm.node.idlist" title="Permalink to this headline">¶</a></h2>
+<p>Node for an OPENQASM idlist.</p>
+<dl class="py class">
+<dt id="QuICT.lib.qasm.node.idlist.IdList">
+<em class="property">class </em><code class="sig-prename descclassname">QuICT.lib.qasm.node.idlist.</code><code class="sig-name descname">IdList</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">children</span></em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.lib.qasm.node.idlist.IdList" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="QuICT.lib.qasm.node.node.html#QuICT.lib.qasm.node.node.Node" title="QuICT.lib.qasm.node.node.Node"><code class="xref py py-class docutils literal notranslate"><span class="pre">QuICT.lib.qasm.node.node.Node</span></code></a></p>
+<p>Node for an OPENQASM idlist.</p>
+<p>children is a list of id nodes.</p>
+<dl class="py method">
+<dt id="QuICT.lib.qasm.node.idlist.IdList.qasm">
+<code class="sig-name descname">qasm</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">prec</span><span class="o">=</span><span class="default_value">15</span></em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.lib.qasm.node.idlist.IdList.qasm" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the corresponding OPENQASM string.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="QuICT.lib.qasm.node.idlist.IdList.size">
+<code class="sig-name descname">size</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.lib.qasm.node.idlist.IdList.size" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the length of the list.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-QuICT.lib.qasm.node.if_">
+<span id="quict-lib-qasm-node-if-module"></span><h2>QuICT.lib.qasm.node.if_ module<a class="headerlink" href="#module-QuICT.lib.qasm.node.if_" title="Permalink to this headline">¶</a></h2>
+<p>Node for an OPENQASM if statement.</p>
+<dl class="py class">
+<dt id="QuICT.lib.qasm.node.if_.If">
+<em class="property">class </em><code class="sig-prename descclassname">QuICT.lib.qasm.node.if_.</code><code class="sig-name descname">If</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">children</span></em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.lib.qasm.node.if_.If" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="QuICT.lib.qasm.node.node.html#QuICT.lib.qasm.node.node.Node" title="QuICT.lib.qasm.node.node.Node"><code class="xref py py-class docutils literal notranslate"><span class="pre">QuICT.lib.qasm.node.node.Node</span></code></a></p>
+<p>Node for an OPENQASM if statement.</p>
+<p>children[0] is an id node.
+children[1] is an integer node.
+children[2] is quantum operation node, including U, CX, custom_unitary,
+measure, reset, (and BUG: barrier, if).</p>
+<dl class="py method">
+<dt id="QuICT.lib.qasm.node.if_.If.qasm">
+<code class="sig-name descname">qasm</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">prec</span><span class="o">=</span><span class="default_value">15</span></em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.lib.qasm.node.if_.If.qasm" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the corresponding OPENQASM string.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-QuICT.lib.qasm.node.indexedid">
+<span id="quict-lib-qasm-node-indexedid-module"></span><h2>QuICT.lib.qasm.node.indexedid module<a class="headerlink" href="#module-QuICT.lib.qasm.node.indexedid" title="Permalink to this headline">¶</a></h2>
+<p>Node for an OPENQASM indexed id.</p>
+<dl class="py class">
+<dt id="QuICT.lib.qasm.node.indexedid.IndexedId">
+<em class="property">class </em><code class="sig-prename descclassname">QuICT.lib.qasm.node.indexedid.</code><code class="sig-name descname">IndexedId</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">children</span></em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.lib.qasm.node.indexedid.IndexedId" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="QuICT.lib.qasm.node.node.html#QuICT.lib.qasm.node.node.Node" title="QuICT.lib.qasm.node.node.Node"><code class="xref py py-class docutils literal notranslate"><span class="pre">QuICT.lib.qasm.node.node.Node</span></code></a></p>
+<p>Node for an OPENQASM indexed id.</p>
+<p>children[0] is an id node.
+children[1] is an Int node.</p>
+<dl class="py method">
+<dt id="QuICT.lib.qasm.node.indexedid.IndexedId.qasm">
+<code class="sig-name descname">qasm</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">prec</span><span class="o">=</span><span class="default_value">15</span></em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.lib.qasm.node.indexedid.IndexedId.qasm" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the corresponding OPENQASM string.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="QuICT.lib.qasm.node.indexedid.IndexedId.to_string">
+<code class="sig-name descname">to_string</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">indent</span></em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.lib.qasm.node.indexedid.IndexedId.to_string" title="Permalink to this definition">¶</a></dt>
+<dd><p>Print with indent.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-QuICT.lib.qasm.node.intnode">
+<span id="quict-lib-qasm-node-intnode-module"></span><h2>QuICT.lib.qasm.node.intnode module<a class="headerlink" href="#module-QuICT.lib.qasm.node.intnode" title="Permalink to this headline">¶</a></h2>
+<p>Node for an OPENQASM integer.</p>
+<dl class="py class">
+<dt id="QuICT.lib.qasm.node.intnode.Int">
+<em class="property">class </em><code class="sig-prename descclassname">QuICT.lib.qasm.node.intnode.</code><code class="sig-name descname">Int</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">id</span></em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.lib.qasm.node.intnode.Int" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="QuICT.lib.qasm.node.node.html#QuICT.lib.qasm.node.node.Node" title="QuICT.lib.qasm.node.node.Node"><code class="xref py py-class docutils literal notranslate"><span class="pre">QuICT.lib.qasm.node.node.Node</span></code></a></p>
+<p>Node for an OPENQASM integer.</p>
+<p>This node has no children. The data is in the value field.</p>
+<dl class="py method">
+<dt id="QuICT.lib.qasm.node.intnode.Int.latex">
+<code class="sig-name descname">latex</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">prec</span><span class="o">=</span><span class="default_value">15</span></em>, <em class="sig-param"><span class="n">nested_scope</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.lib.qasm.node.intnode.Int.latex" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the corresponding math mode latex string.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="QuICT.lib.qasm.node.intnode.Int.qasm">
+<code class="sig-name descname">qasm</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">prec</span><span class="o">=</span><span class="default_value">15</span></em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.lib.qasm.node.intnode.Int.qasm" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the corresponding OPENQASM string.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="QuICT.lib.qasm.node.intnode.Int.real">
+<code class="sig-name descname">real</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">nested_scope</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.lib.qasm.node.intnode.Int.real" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the correspond floating point number.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="QuICT.lib.qasm.node.intnode.Int.sym">
+<code class="sig-name descname">sym</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">nested_scope</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.lib.qasm.node.intnode.Int.sym" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the correspond symbolic number.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="QuICT.lib.qasm.node.intnode.Int.to_string">
+<code class="sig-name descname">to_string</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">indent</span></em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.lib.qasm.node.intnode.Int.to_string" title="Permalink to this definition">¶</a></dt>
+<dd><p>Print with indent.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-QuICT.lib.qasm.node.measure">
+<span id="quict-lib-qasm-node-measure-module"></span><h2>QuICT.lib.qasm.node.measure module<a class="headerlink" href="#module-QuICT.lib.qasm.node.measure" title="Permalink to this headline">¶</a></h2>
+<p>Node for an OPENQASM measure statement.</p>
+<dl class="py class">
+<dt id="QuICT.lib.qasm.node.measure.Measure">
+<em class="property">class </em><code class="sig-prename descclassname">QuICT.lib.qasm.node.measure.</code><code class="sig-name descname">Measure</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">children</span></em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.lib.qasm.node.measure.Measure" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="QuICT.lib.qasm.node.node.html#QuICT.lib.qasm.node.node.Node" title="QuICT.lib.qasm.node.node.Node"><code class="xref py py-class docutils literal notranslate"><span class="pre">QuICT.lib.qasm.node.node.Node</span></code></a></p>
+<p>Node for an OPENQASM measure statement.</p>
+<p>children[0] is a primary node (id or indexedid)
+children[1] is a primary node (id or indexedid)</p>
+<dl class="py method">
+<dt id="QuICT.lib.qasm.node.measure.Measure.qasm">
+<code class="sig-name descname">qasm</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">prec</span><span class="o">=</span><span class="default_value">15</span></em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.lib.qasm.node.measure.Measure.qasm" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the corresponding OPENQASM string.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-QuICT.lib.qasm.node.node">
+<span id="quict-lib-qasm-node-node-module"></span><h2>QuICT.lib.qasm.node.node module<a class="headerlink" href="#module-QuICT.lib.qasm.node.node" title="Permalink to this headline">¶</a></h2>
+<p>Base node object for the OPENQASM syntax tree.</p>
+<dl class="py class">
+<dt id="QuICT.lib.qasm.node.node.Node">
+<em class="property">class </em><code class="sig-prename descclassname">QuICT.lib.qasm.node.node.</code><code class="sig-name descname">Node</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">type</span></em>, <em class="sig-param"><span class="n">children</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">root</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.lib.qasm.node.node.Node" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Base node object for the OPENQASM syntax tree.</p>
+<dl class="py method">
+<dt id="QuICT.lib.qasm.node.node.Node.add_child">
+<code class="sig-name descname">add_child</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">node</span></em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.lib.qasm.node.node.Node.add_child" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add a child node.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="QuICT.lib.qasm.node.node.Node.is_expression">
+<code class="sig-name descname">is_expression</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.lib.qasm.node.node.Node.is_expression" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return True if this is an expression node.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="QuICT.lib.qasm.node.node.Node.to_string">
+<code class="sig-name descname">to_string</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">indent</span></em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.lib.qasm.node.node.Node.to_string" title="Permalink to this definition">¶</a></dt>
+<dd><p>Print with indent.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-QuICT.lib.qasm.node.nodeexception">
+<span id="quict-lib-qasm-node-nodeexception-module"></span><h2>QuICT.lib.qasm.node.nodeexception module<a class="headerlink" href="#module-QuICT.lib.qasm.node.nodeexception" title="Permalink to this headline">¶</a></h2>
+<p>Exception for errors raised while interpreting nodes.</p>
+<dl class="py exception">
+<dt id="QuICT.lib.qasm.node.nodeexception.NodeException">
+<em class="property">exception </em><code class="sig-prename descclassname">QuICT.lib.qasm.node.nodeexception.</code><code class="sig-name descname">NodeException</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">msg</span></em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.lib.qasm.node.nodeexception.NodeException" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Exception</span></code></p>
+<p>Base class for errors raised while interpreting nodes.</p>
+</dd></dl>
+
+</div>
+<div class="section" id="module-QuICT.lib.qasm.node.opaque">
+<span id="quict-lib-qasm-node-opaque-module"></span><h2>QuICT.lib.qasm.node.opaque module<a class="headerlink" href="#module-QuICT.lib.qasm.node.opaque" title="Permalink to this headline">¶</a></h2>
+<p>Node for an OPENQASM opaque gate declaration.</p>
+<dl class="py class">
+<dt id="QuICT.lib.qasm.node.opaque.Opaque">
+<em class="property">class </em><code class="sig-prename descclassname">QuICT.lib.qasm.node.opaque.</code><code class="sig-name descname">Opaque</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">children</span></em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.lib.qasm.node.opaque.Opaque" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="QuICT.lib.qasm.node.node.html#QuICT.lib.qasm.node.node.Node" title="QuICT.lib.qasm.node.node.Node"><code class="xref py py-class docutils literal notranslate"><span class="pre">QuICT.lib.qasm.node.node.Node</span></code></a></p>
+<p>Node for an OPENQASM opaque gate declaration.</p>
+<p>children[0] is an id node.
+If len(children) is 3, children[1] is an expressionlist node,
+and children[2] is an idlist node.
+Otherwise, children[1] is an idlist node.</p>
+<dl class="py method">
+<dt id="QuICT.lib.qasm.node.opaque.Opaque.n_args">
+<code class="sig-name descname">n_args</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.lib.qasm.node.opaque.Opaque.n_args" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the number of parameter expressions.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="QuICT.lib.qasm.node.opaque.Opaque.n_bits">
+<code class="sig-name descname">n_bits</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.lib.qasm.node.opaque.Opaque.n_bits" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the number of qubit arguments.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="QuICT.lib.qasm.node.opaque.Opaque.qasm">
+<code class="sig-name descname">qasm</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">prec</span><span class="o">=</span><span class="default_value">15</span></em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.lib.qasm.node.opaque.Opaque.qasm" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the corresponding OPENQASM string.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-QuICT.lib.qasm.node.prefix">
+<span id="quict-lib-qasm-node-prefix-module"></span><h2>QuICT.lib.qasm.node.prefix module<a class="headerlink" href="#module-QuICT.lib.qasm.node.prefix" title="Permalink to this headline">¶</a></h2>
+<p>Node for an OPENQASM prefix expression.</p>
+<dl class="py class">
+<dt id="QuICT.lib.qasm.node.prefix.Prefix">
+<em class="property">class </em><code class="sig-prename descclassname">QuICT.lib.qasm.node.prefix.</code><code class="sig-name descname">Prefix</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">children</span></em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.lib.qasm.node.prefix.Prefix" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="QuICT.lib.qasm.node.node.html#QuICT.lib.qasm.node.node.Node" title="QuICT.lib.qasm.node.node.Node"><code class="xref py py-class docutils literal notranslate"><span class="pre">QuICT.lib.qasm.node.node.Node</span></code></a></p>
+<p>Node for an OPENQASM prefix expression.</p>
+<p>children[0] is a unary operator node.
+children[1] is an expression node.</p>
+<dl class="py method">
+<dt id="QuICT.lib.qasm.node.prefix.Prefix.latex">
+<code class="sig-name descname">latex</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">prec</span><span class="o">=</span><span class="default_value">15</span></em>, <em class="sig-param"><span class="n">nested_scope</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.lib.qasm.node.prefix.Prefix.latex" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the corresponding math mode latex string.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="QuICT.lib.qasm.node.prefix.Prefix.qasm">
+<code class="sig-name descname">qasm</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">prec</span><span class="o">=</span><span class="default_value">15</span></em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.lib.qasm.node.prefix.Prefix.qasm" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the corresponding OPENQASM string.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="QuICT.lib.qasm.node.prefix.Prefix.real">
+<code class="sig-name descname">real</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">nested_scope</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.lib.qasm.node.prefix.Prefix.real" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the correspond floating point number.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="QuICT.lib.qasm.node.prefix.Prefix.sym">
+<code class="sig-name descname">sym</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">nested_scope</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.lib.qasm.node.prefix.Prefix.sym" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the correspond symbolic number.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-QuICT.lib.qasm.node.primarylist">
+<span id="quict-lib-qasm-node-primarylist-module"></span><h2>QuICT.lib.qasm.node.primarylist module<a class="headerlink" href="#module-QuICT.lib.qasm.node.primarylist" title="Permalink to this headline">¶</a></h2>
+<p>Node for an OPENQASM primarylist.</p>
+<dl class="py class">
+<dt id="QuICT.lib.qasm.node.primarylist.PrimaryList">
+<em class="property">class </em><code class="sig-prename descclassname">QuICT.lib.qasm.node.primarylist.</code><code class="sig-name descname">PrimaryList</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">children</span></em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.lib.qasm.node.primarylist.PrimaryList" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="QuICT.lib.qasm.node.node.html#QuICT.lib.qasm.node.node.Node" title="QuICT.lib.qasm.node.node.Node"><code class="xref py py-class docutils literal notranslate"><span class="pre">QuICT.lib.qasm.node.node.Node</span></code></a></p>
+<p>Node for an OPENQASM primarylist.</p>
+<p>children is a list of primary nodes. Primary nodes are indexedid or id.</p>
+<dl class="py method">
+<dt id="QuICT.lib.qasm.node.primarylist.PrimaryList.qasm">
+<code class="sig-name descname">qasm</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">prec</span><span class="o">=</span><span class="default_value">15</span></em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.lib.qasm.node.primarylist.PrimaryList.qasm" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the corresponding OPENQASM string.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="QuICT.lib.qasm.node.primarylist.PrimaryList.size">
+<code class="sig-name descname">size</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.lib.qasm.node.primarylist.PrimaryList.size" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the size of the list.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-QuICT.lib.qasm.node.program">
+<span id="quict-lib-qasm-node-program-module"></span><h2>QuICT.lib.qasm.node.program module<a class="headerlink" href="#module-QuICT.lib.qasm.node.program" title="Permalink to this headline">¶</a></h2>
+<p>Node for an OPENQASM program.</p>
+<dl class="py class">
+<dt id="QuICT.lib.qasm.node.program.Program">
+<em class="property">class </em><code class="sig-prename descclassname">QuICT.lib.qasm.node.program.</code><code class="sig-name descname">Program</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">children</span></em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.lib.qasm.node.program.Program" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="QuICT.lib.qasm.node.node.html#QuICT.lib.qasm.node.node.Node" title="QuICT.lib.qasm.node.node.Node"><code class="xref py py-class docutils literal notranslate"><span class="pre">QuICT.lib.qasm.node.node.Node</span></code></a></p>
+<p>Node for an OPENQASM program.</p>
+<p>children is a list of nodes (statements).</p>
+<dl class="py method">
+<dt id="QuICT.lib.qasm.node.program.Program.qasm">
+<code class="sig-name descname">qasm</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">prec</span><span class="o">=</span><span class="default_value">15</span></em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.lib.qasm.node.program.Program.qasm" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the corresponding OPENQASM string.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-QuICT.lib.qasm.node.qreg">
+<span id="quict-lib-qasm-node-qreg-module"></span><h2>QuICT.lib.qasm.node.qreg module<a class="headerlink" href="#module-QuICT.lib.qasm.node.qreg" title="Permalink to this headline">¶</a></h2>
+<p>Node for an OPENQASM qreg statement.</p>
+<dl class="py class">
+<dt id="QuICT.lib.qasm.node.qreg.Qreg">
+<em class="property">class </em><code class="sig-prename descclassname">QuICT.lib.qasm.node.qreg.</code><code class="sig-name descname">Qreg</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">children</span></em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.lib.qasm.node.qreg.Qreg" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="QuICT.lib.qasm.node.node.html#QuICT.lib.qasm.node.node.Node" title="QuICT.lib.qasm.node.node.Node"><code class="xref py py-class docutils literal notranslate"><span class="pre">QuICT.lib.qasm.node.node.Node</span></code></a></p>
+<p>Node for an OPENQASM qreg statement.</p>
+<p>children[0] is an indexedid node.</p>
+<dl class="py method">
+<dt id="QuICT.lib.qasm.node.qreg.Qreg.qasm">
+<code class="sig-name descname">qasm</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">prec</span><span class="o">=</span><span class="default_value">15</span></em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.lib.qasm.node.qreg.Qreg.qasm" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the corresponding OPENQASM string.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="QuICT.lib.qasm.node.qreg.Qreg.to_string">
+<code class="sig-name descname">to_string</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">indent</span></em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.lib.qasm.node.qreg.Qreg.to_string" title="Permalink to this definition">¶</a></dt>
+<dd><p>Print the node data, with indent.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-QuICT.lib.qasm.node.real">
+<span id="quict-lib-qasm-node-real-module"></span><h2>QuICT.lib.qasm.node.real module<a class="headerlink" href="#module-QuICT.lib.qasm.node.real" title="Permalink to this headline">¶</a></h2>
+<p>Node for an OPENQASM real number.</p>
+<dl class="py class">
+<dt id="QuICT.lib.qasm.node.real.Real">
+<em class="property">class </em><code class="sig-prename descclassname">QuICT.lib.qasm.node.real.</code><code class="sig-name descname">Real</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">id</span></em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.lib.qasm.node.real.Real" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="QuICT.lib.qasm.node.node.html#QuICT.lib.qasm.node.node.Node" title="QuICT.lib.qasm.node.node.Node"><code class="xref py py-class docutils literal notranslate"><span class="pre">QuICT.lib.qasm.node.node.Node</span></code></a></p>
+<p>Node for an OPENQASM real number.</p>
+<p>This node has no children. The data is in the value field.</p>
+<dl class="py method">
+<dt id="QuICT.lib.qasm.node.real.Real.latex">
+<code class="sig-name descname">latex</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">prec</span><span class="o">=</span><span class="default_value">15</span></em>, <em class="sig-param"><span class="n">nested_scope</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.lib.qasm.node.real.Real.latex" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the corresponding math mode latex string.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="QuICT.lib.qasm.node.real.Real.qasm">
+<code class="sig-name descname">qasm</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">prec</span><span class="o">=</span><span class="default_value">15</span></em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.lib.qasm.node.real.Real.qasm" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the corresponding OPENQASM string.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="QuICT.lib.qasm.node.real.Real.real">
+<code class="sig-name descname">real</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">nested_scope</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.lib.qasm.node.real.Real.real" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the correspond floating point number.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="QuICT.lib.qasm.node.real.Real.sym">
+<code class="sig-name descname">sym</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">nested_scope</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.lib.qasm.node.real.Real.sym" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the correspond symbolic number.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="QuICT.lib.qasm.node.real.Real.to_string">
+<code class="sig-name descname">to_string</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">indent</span></em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.lib.qasm.node.real.Real.to_string" title="Permalink to this definition">¶</a></dt>
+<dd><p>Print with indent.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-QuICT.lib.qasm.node.reset">
+<span id="quict-lib-qasm-node-reset-module"></span><h2>QuICT.lib.qasm.node.reset module<a class="headerlink" href="#module-QuICT.lib.qasm.node.reset" title="Permalink to this headline">¶</a></h2>
+<p>Node for an OPENQASM reset statement.</p>
+<dl class="py class">
+<dt id="QuICT.lib.qasm.node.reset.Reset">
+<em class="property">class </em><code class="sig-prename descclassname">QuICT.lib.qasm.node.reset.</code><code class="sig-name descname">Reset</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">children</span></em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.lib.qasm.node.reset.Reset" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="QuICT.lib.qasm.node.node.html#QuICT.lib.qasm.node.node.Node" title="QuICT.lib.qasm.node.node.Node"><code class="xref py py-class docutils literal notranslate"><span class="pre">QuICT.lib.qasm.node.node.Node</span></code></a></p>
+<p>Node for an OPENQASM reset statement.</p>
+<p>children[0] is a primary node (id or indexedid)</p>
+<dl class="py method">
+<dt id="QuICT.lib.qasm.node.reset.Reset.qasm">
+<code class="sig-name descname">qasm</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">prec</span><span class="o">=</span><span class="default_value">15</span></em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.lib.qasm.node.reset.Reset.qasm" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the corresponding OPENQASM string.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-QuICT.lib.qasm.node.unaryoperator">
+<span id="quict-lib-qasm-node-unaryoperator-module"></span><h2>QuICT.lib.qasm.node.unaryoperator module<a class="headerlink" href="#module-QuICT.lib.qasm.node.unaryoperator" title="Permalink to this headline">¶</a></h2>
+<p>Node for an OPENQASM unary operator.</p>
+<dl class="py class">
+<dt id="QuICT.lib.qasm.node.unaryoperator.UnaryOperator">
+<em class="property">class </em><code class="sig-prename descclassname">QuICT.lib.qasm.node.unaryoperator.</code><code class="sig-name descname">UnaryOperator</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">operation</span></em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.lib.qasm.node.unaryoperator.UnaryOperator" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="QuICT.lib.qasm.node.node.html#QuICT.lib.qasm.node.node.Node" title="QuICT.lib.qasm.node.node.Node"><code class="xref py py-class docutils literal notranslate"><span class="pre">QuICT.lib.qasm.node.node.Node</span></code></a></p>
+<p>Node for an OPENQASM unary operator.</p>
+<p>This node has no children. The data is in the value field.</p>
+<dl class="py method">
+<dt id="QuICT.lib.qasm.node.unaryoperator.UnaryOperator.operation">
+<code class="sig-name descname">operation</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.lib.qasm.node.unaryoperator.UnaryOperator.operation" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the operator as a function f(left, right).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="QuICT.lib.qasm.node.unaryoperator.UnaryOperator.qasm">
+<code class="sig-name descname">qasm</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">prec</span><span class="o">=</span><span class="default_value">15</span></em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.lib.qasm.node.unaryoperator.UnaryOperator.qasm" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return QASM representation.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-QuICT.lib.qasm.node.universalunitary">
+<span id="quict-lib-qasm-node-universalunitary-module"></span><h2>QuICT.lib.qasm.node.universalunitary module<a class="headerlink" href="#module-QuICT.lib.qasm.node.universalunitary" title="Permalink to this headline">¶</a></h2>
+<p>Node for an OPENQASM U statement.</p>
+<dl class="py class">
+<dt id="QuICT.lib.qasm.node.universalunitary.UniversalUnitary">
+<em class="property">class </em><code class="sig-prename descclassname">QuICT.lib.qasm.node.universalunitary.</code><code class="sig-name descname">UniversalUnitary</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">children</span></em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.lib.qasm.node.universalunitary.UniversalUnitary" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="QuICT.lib.qasm.node.node.html#QuICT.lib.qasm.node.node.Node" title="QuICT.lib.qasm.node.node.Node"><code class="xref py py-class docutils literal notranslate"><span class="pre">QuICT.lib.qasm.node.node.Node</span></code></a></p>
+<p>Node for an OPENQASM U statement.</p>
+<p>children[0] is an expressionlist node.
+children[1] is a primary node (id or indexedid).</p>
+<dl class="py method">
+<dt id="QuICT.lib.qasm.node.universalunitary.UniversalUnitary.qasm">
+<code class="sig-name descname">qasm</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">prec</span><span class="o">=</span><span class="default_value">15</span></em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.lib.qasm.node.universalunitary.UniversalUnitary.qasm" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the corresponding OPENQASM string.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-QuICT.lib.qasm.node">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-QuICT.lib.qasm.node" title="Permalink to this headline">¶</a></h2>
+<p>QASM nodes.</p>
+</div>
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">QuICT</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2020, ICT_theory.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.3.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="_sources/QuICT.lib.qasm.node.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

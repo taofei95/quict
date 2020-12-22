@@ -1,0 +1,7 @@
+QuICT.lib.qasm.node.opaque module
+=================================
+
+.. automodule:: QuICT.lib.qasm.node.opaque
+   :members:
+   :undoc-members:
+   :show-inheritance:

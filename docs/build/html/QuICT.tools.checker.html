@@ -1,0 +1,360 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>QuICT.tools.checker package &#8212; QuICT 0.5 documentation</title>
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    <script src="_static/language_data.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="quict-tools-checker-package">
+<h1>QuICT.tools.checker package<a class="headerlink" href="#quict-tools-checker-package" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-QuICT.tools.checker.efficiency_checker">
+<span id="quict-tools-checker-efficiency-checker-module"></span><h2>QuICT.tools.checker.efficiency_checker module<a class="headerlink" href="#module-QuICT.tools.checker.efficiency_checker" title="Permalink to this headline">¶</a></h2>
+<dl class="py class">
+<dt id="QuICT.tools.checker.efficiency_checker.StandardEfficiencyCheckerModel">
+<em class="property">class </em><code class="sig-prename descclassname">QuICT.tools.checker.efficiency_checker.</code><code class="sig-name descname">StandardEfficiencyCheckerModel</code><a class="headerlink" href="#QuICT.tools.checker.efficiency_checker.StandardEfficiencyCheckerModel" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>this model is to check the efficiency of amplitude calculating</p>
+<dl class="py attribute">
+<dt id="QuICT.tools.checker.efficiency_checker.StandardEfficiencyCheckerModel.min_qubits">
+<code class="sig-name descname">min_qubits</code><a class="headerlink" href="#QuICT.tools.checker.efficiency_checker.StandardEfficiencyCheckerModel.min_qubits" title="Permalink to this definition">¶</a></dt>
+<dd><p>the min number of qubits when testing</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="QuICT.tools.checker.efficiency_checker.StandardEfficiencyCheckerModel.max_qubits">
+<code class="sig-name descname">max_qubits</code><a class="headerlink" href="#QuICT.tools.checker.efficiency_checker.StandardEfficiencyCheckerModel.max_qubits" title="Permalink to this definition">¶</a></dt>
+<dd><p>the max number of qubits when testing</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="QuICT.tools.checker.efficiency_checker.StandardEfficiencyCheckerModel.size">
+<code class="sig-name descname">size</code><a class="headerlink" href="#QuICT.tools.checker.efficiency_checker.StandardEfficiencyCheckerModel.size" title="Permalink to this definition">¶</a></dt>
+<dd><p>the size of circuit for testing</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="QuICT.tools.checker.efficiency_checker.StandardEfficiencyCheckerModel.typeList">
+<code class="sig-name descname">typeList</code><a class="headerlink" href="#QuICT.tools.checker.efficiency_checker.StandardEfficiencyCheckerModel.typeList" title="Permalink to this definition">¶</a></dt>
+<dd><p>the gate which participates in testing</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>list&lt;BasicGate&gt;</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="QuICT.tools.checker.efficiency_checker.StandardEfficiencyCheckerModel.getRandomList">
+<em class="property">static </em><code class="sig-name descname">getRandomList</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">l</span></em>, <em class="sig-param"><span class="n">n</span></em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.tools.checker.efficiency_checker.StandardEfficiencyCheckerModel.getRandomList" title="Permalink to this definition">¶</a></dt>
+<dd><p>get l number from 0, 1, …, n - 1 randomly.
+:param l:
+:type l: int
+:param n:
+:type n: int</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>the list of l random numbers</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>list&lt;int&gt;</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="id0">
+<em class="property">property </em><code class="sig-name descname">max_qubits</code><a class="headerlink" href="#id0" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="id1">
+<em class="property">property </em><code class="sig-name descname">min_qubits</code><a class="headerlink" href="#id1" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="QuICT.tools.checker.efficiency_checker.StandardEfficiencyCheckerModel.run">
+<code class="sig-name descname">run</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.tools.checker.efficiency_checker.StandardEfficiencyCheckerModel.run" title="Permalink to this definition">¶</a></dt>
+<dd><p>run the test</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="id2">
+<em class="property">property </em><code class="sig-name descname">size</code><a class="headerlink" href="#id2" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="id3">
+<em class="property">property </em><code class="sig-name descname">typeList</code><a class="headerlink" href="#id3" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-QuICT.tools.checker.equal_transform_checker">
+<span id="quict-tools-checker-equal-transform-checker-module"></span><h2>QuICT.tools.checker.equal_transform_checker module<a class="headerlink" href="#module-QuICT.tools.checker.equal_transform_checker" title="Permalink to this headline">¶</a></h2>
+<dl class="py class">
+<dt id="QuICT.tools.checker.equal_transform_checker.ETCheckerModel">
+<em class="property">class </em><code class="sig-prename descclassname">QuICT.tools.checker.equal_transform_checker.</code><code class="sig-name descname">ETCheckerModel</code><a class="headerlink" href="#QuICT.tools.checker.equal_transform_checker.ETCheckerModel" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>checker whether the input and output(circuit) of a algorithm is equivalence</p>
+<dl class="py method">
+<dt id="QuICT.tools.checker.equal_transform_checker.ETCheckerModel.big_circuit_run">
+<code class="sig-name descname">big_circuit_run</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">rand_qubit</span></em>, <em class="sig-param"><span class="n">rand_size</span></em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.tools.checker.equal_transform_checker.ETCheckerModel.big_circuit_run" title="Permalink to this definition">¶</a></dt>
+<dd><p>if the test circuit is small, get the amplitude of circuit</p>
+<p>generate random initial values for circuits and test for some times</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>rand_qubit</strong> (<em>int</em>) – number of qubits of the circuit</p></li>
+<li><p><strong>rand_size</strong> (<em>int</em>) – number of size of the circuit</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>True if pass the test</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="QuICT.tools.checker.equal_transform_checker.ETCheckerModel.cmp_array">
+<em class="property">static </em><code class="sig-name descname">cmp_array</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">arr0</span></em>, <em class="sig-param"><span class="n">arr1</span></em>, <em class="sig-param"><span class="n">eps</span><span class="o">=</span><span class="default_value">1e-06</span></em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.tools.checker.equal_transform_checker.ETCheckerModel.cmp_array" title="Permalink to this definition">¶</a></dt>
+<dd><p>compare two array with eps
+:param arr0: compare array 0
+:type arr0: list&lt;complex&gt;
+:param arr1: compare array 1
+:type arr1: list&lt;complex&gt;
+:param eps: permitted epsilon
+:type eps: float</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>True if arr0 is equal to arr1 with permitted epsilon</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="QuICT.tools.checker.equal_transform_checker.ETCheckerModel.getRandomList">
+<em class="property">static </em><code class="sig-name descname">getRandomList</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">l</span></em>, <em class="sig-param"><span class="n">n</span></em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.tools.checker.equal_transform_checker.ETCheckerModel.getRandomList" title="Permalink to this definition">¶</a></dt>
+<dd><p>get l number from 0, 1, …, n - 1 randomly.
+:param l:
+:type l: int
+:param n:
+:type n: int</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>the list of l random numbers</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>list&lt;int&gt;</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="QuICT.tools.checker.equal_transform_checker.ETCheckerModel.run">
+<code class="sig-name descname">run</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.tools.checker.equal_transform_checker.ETCheckerModel.run" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="QuICT.tools.checker.equal_transform_checker.ETCheckerModel.setAlgorithm">
+<code class="sig-name descname">setAlgorithm</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">_algorithm</span></em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.tools.checker.equal_transform_checker.ETCheckerModel.setAlgorithm" title="Permalink to this definition">¶</a></dt>
+<dd><p>set the algorithm to be tested</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>_algorithm</strong> – the algorithm to be tested</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="QuICT.tools.checker.equal_transform_checker.ETCheckerModel.setQubitNumber">
+<code class="sig-name descname">setQubitNumber</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">min_number</span></em>, <em class="sig-param"><span class="n">max_number</span></em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.tools.checker.equal_transform_checker.ETCheckerModel.setQubitNumber" title="Permalink to this definition">¶</a></dt>
+<dd><p>set the min and max number of qubits of circuit</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>min_number</strong> (<em>int</em>) – min number of qubits</p></li>
+<li><p><strong>max_number</strong> (<em>int</em>) – max number of qubits</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="QuICT.tools.checker.equal_transform_checker.ETCheckerModel.setRoundNumber">
+<code class="sig-name descname">setRoundNumber</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">_round_number</span></em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.tools.checker.equal_transform_checker.ETCheckerModel.setRoundNumber" title="Permalink to this definition">¶</a></dt>
+<dd><p>set the min and max number of test round</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>_round_number</strong> (<em>int</em>) – round number</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="QuICT.tools.checker.equal_transform_checker.ETCheckerModel.setSize">
+<code class="sig-name descname">setSize</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">min_number</span></em>, <em class="sig-param"><span class="n">max_number</span></em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.tools.checker.equal_transform_checker.ETCheckerModel.setSize" title="Permalink to this definition">¶</a></dt>
+<dd><p>set the min and max number of size of circuit</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>min_number</strong> (<em>int</em>) – min number of size</p></li>
+<li><p><strong>max_number</strong> (<em>int</em>) – max number of size</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="QuICT.tools.checker.equal_transform_checker.ETCheckerModel.setTypeList">
+<code class="sig-name descname">setTypeList</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">_typeList</span></em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.tools.checker.equal_transform_checker.ETCheckerModel.setTypeList" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set the checker type list</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>_typeList</strong> (<em>list&lt;BasicGate&gt;</em>) – types for testing</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="QuICT.tools.checker.equal_transform_checker.ETCheckerModel.small_circuit_run">
+<code class="sig-name descname">small_circuit_run</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">rand_qubit</span></em>, <em class="sig-param"><span class="n">rand_size</span></em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.tools.checker.equal_transform_checker.ETCheckerModel.small_circuit_run" title="Permalink to this definition">¶</a></dt>
+<dd><p>if the test circuit is small, get the matrix of circuit</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>rand_qubit</strong> (<em>int</em>) – number of qubits of the circuit</p></li>
+<li><p><strong>rand_size</strong> (<em>int</em>) – number of size of the circuit</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>True if pass the test</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-QuICT.tools.checker">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-QuICT.tools.checker" title="Permalink to this headline">¶</a></h2>
+</div>
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">QuICT</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2020, ICT_theory.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.3.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="_sources/QuICT.tools.checker.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

@@ -1,0 +1,7 @@
+QuICT.algorithm.amplitude.amplitude module
+==========================================
+
+.. automodule:: QuICT.algorithm.amplitude.amplitude
+   :members:
+   :undoc-members:
+   :show-inheritance:

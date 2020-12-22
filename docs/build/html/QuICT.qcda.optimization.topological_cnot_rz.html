@@ -1,0 +1,204 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>QuICT.qcda.optimization.topological_cnot_rz package &#8212; QuICT 0.5 documentation</title>
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    <script src="_static/language_data.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="quict-qcda-optimization-topological-cnot-rz-package">
+<h1>QuICT.qcda.optimization.topological_cnot_rz package<a class="headerlink" href="#quict-qcda-optimization-topological-cnot-rz-package" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-QuICT.qcda.optimization.topological_cnot_rz.topological_cnot_rz">
+<span id="quict-qcda-optimization-topological-cnot-rz-topological-cnot-rz-module"></span><h2>QuICT.qcda.optimization.topological_cnot_rz.topological_cnot_rz module<a class="headerlink" href="#module-QuICT.qcda.optimization.topological_cnot_rz.topological_cnot_rz" title="Permalink to this headline">¶</a></h2>
+<dl class="py class">
+<dt id="QuICT.qcda.optimization.topological_cnot_rz.topological_cnot_rz.TopologicalCnotRz">
+<em class="property">class </em><code class="sig-prename descclassname">QuICT.qcda.optimization.topological_cnot_rz.topological_cnot_rz.</code><code class="sig-name descname">TopologicalCnotRz</code><a class="headerlink" href="#QuICT.qcda.optimization.topological_cnot_rz.topological_cnot_rz.TopologicalCnotRz" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">QuICT.qcda.optimization._optimization.Optimization</span></code></p>
+<p>optimize the cnot_Rz circuit on topological device</p>
+<p>use topological_cnot to optimize a cnot circuit on topological device</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="QuICT.qcda.optimization.topological_cnot_rz.topological_cnot_rz.delete_dfs">
+<code class="sig-prename descclassname">QuICT.qcda.optimization.topological_cnot_rz.topological_cnot_rz.</code><code class="sig-name descname">delete_dfs</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">now</span></em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.qcda.optimization.topological_cnot_rz.topological_cnot_rz.delete_dfs" title="Permalink to this definition">¶</a></dt>
+<dd><p>search for a initial mapping to get better(maybe) topology</p>
+<p>in this order, vertex i is not cut in [i, n)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>now</strong> (<em>int</em>) – the index of vertex now</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="QuICT.qcda.optimization.topological_cnot_rz.topological_cnot_rz.read">
+<code class="sig-prename descclassname">QuICT.qcda.optimization.topological_cnot_rz.topological_cnot_rz.</code><code class="sig-name descname">read</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">circuit</span></em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.qcda.optimization.topological_cnot_rz.topological_cnot_rz.read" title="Permalink to this definition">¶</a></dt>
+<dd><p>get describe from the circuit or cnot_struct
+:param circuit: the input circuit, contained the information of topology and (maybe) cnot
+:type circuit: Circuit</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>the inverse of the initial mapping
+list&lt;int&gt;: the Rz_state wait to be deal
+list&lt;float&gt;: the Rz_angle wait to be deal
+set&lt;int&gt;: the index of Rz_state wait to be deal</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>list&lt;int&gt;</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="QuICT.qcda.optimization.topological_cnot_rz.topological_cnot_rz.solve">
+<code class="sig-prename descclassname">QuICT.qcda.optimization.topological_cnot_rz.topological_cnot_rz.</code><code class="sig-name descname">solve</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">input</span></em>, <em class="sig-param"><span class="n">th</span></em>, <em class="sig-param"><span class="n">waitDeal</span></em>, <em class="sig-param"><span class="n">undirected_topology</span></em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.qcda.optimization.topological_cnot_rz.topological_cnot_rz.solve" title="Permalink to this definition">¶</a></dt>
+<dd><p>main part of the algorithm</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>input</strong> (<em>list&lt;int&gt;</em>) – the Rz_state wait to be deal</p></li>
+<li><p><strong>th</strong> (<em>list&lt;float&gt;</em>) – the Rz_angle wait to be deal</p></li>
+<li><p><strong>waitDeal</strong> (<em>set&lt;int&gt;</em>) – the index of Rz_state wait to be deal)</p></li>
+<li><p><strong>undirected_topology</strong> (<em>list&lt;tuple&lt;int</em><em>, </em><em>int&gt;&gt;</em>) – make topology undirected</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>the result of the algorithm</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>list&lt;CXGates&gt;</p>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+<div class="section" id="module-QuICT.qcda.optimization.topological_cnot_rz.unit_test">
+<span id="quict-qcda-optimization-topological-cnot-rz-unit-test-module"></span><h2>QuICT.qcda.optimization.topological_cnot_rz.unit_test module<a class="headerlink" href="#module-QuICT.qcda.optimization.topological_cnot_rz.unit_test" title="Permalink to this headline">¶</a></h2>
+<dl class="py function">
+<dt id="QuICT.qcda.optimization.topological_cnot_rz.unit_test.check_equiv">
+<code class="sig-prename descclassname">QuICT.qcda.optimization.topological_cnot_rz.unit_test.</code><code class="sig-name descname">check_equiv</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">circuit1</span></em>, <em class="sig-param"><span class="n">circuit2</span></em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.qcda.optimization.topological_cnot_rz.unit_test.check_equiv" title="Permalink to this definition">¶</a></dt>
+<dd><p>check whether two circuit is equiv</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>circuit1</strong> (<a class="reference internal" href="QuICT.core.circuit.circuit.html#QuICT.core.circuit.circuit.Circuit" title="QuICT.core.circuit.circuit.Circuit"><em>Circuit</em></a>) – </p></li>
+<li><p><strong>circuit2</strong> (<em>Circuit/list&lt;BasicGate&gt;</em>) – </p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>True if equiv</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="QuICT.qcda.optimization.topological_cnot_rz.unit_test.test_1">
+<code class="sig-prename descclassname">QuICT.qcda.optimization.topological_cnot_rz.unit_test.</code><code class="sig-name descname">test_1</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.qcda.optimization.topological_cnot_rz.unit_test.test_1" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt id="QuICT.qcda.optimization.topological_cnot_rz.unit_test.test_2">
+<code class="sig-prename descclassname">QuICT.qcda.optimization.topological_cnot_rz.unit_test.</code><code class="sig-name descname">test_2</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.qcda.optimization.topological_cnot_rz.unit_test.test_2" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+<div class="section" id="module-QuICT.qcda.optimization.topological_cnot_rz">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-QuICT.qcda.optimization.topological_cnot_rz" title="Permalink to this headline">¶</a></h2>
+</div>
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">QuICT</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2020, ICT_theory.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.3.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="_sources/QuICT.qcda.optimization.topological_cnot_rz.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

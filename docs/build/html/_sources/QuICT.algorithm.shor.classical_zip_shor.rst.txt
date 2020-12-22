@@ -1,0 +1,7 @@
+QuICT.algorithm.shor.classical\_zip\_shor module
+================================================
+
+.. automodule:: QuICT.algorithm.shor.classical_zip_shor
+   :members:
+   :undoc-members:
+   :show-inheritance:

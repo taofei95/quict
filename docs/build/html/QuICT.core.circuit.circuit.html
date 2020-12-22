@@ -1,0 +1,536 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>QuICT.core.circuit.circuit module &#8212; QuICT 0.5 documentation</title>
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    <script src="_static/language_data.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="module-QuICT.core.circuit.circuit">
+<span id="quict-core-circuit-circuit-module"></span><h1>QuICT.core.circuit.circuit module<a class="headerlink" href="#module-QuICT.core.circuit.circuit" title="Permalink to this headline">¶</a></h1>
+<dl class="py class">
+<dt id="QuICT.core.circuit.circuit.Circuit">
+<em class="property">class </em><code class="sig-prename descclassname">QuICT.core.circuit.circuit.</code><code class="sig-name descname">Circuit</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">wires</span></em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.circuit.circuit.Circuit" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Implement a quantum circuit</p>
+<p>Circuit is the core part of the framework.</p>
+<dl class="py attribute">
+<dt id="QuICT.core.circuit.circuit.Circuit.id">
+<code class="sig-name descname">id</code><a class="headerlink" href="#QuICT.core.circuit.circuit.Circuit.id" title="Permalink to this definition">¶</a></dt>
+<dd><p>the unique identity code of a circuit, which is generated globally.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="QuICT.core.circuit.circuit.Circuit.const_lock">
+<code class="sig-name descname">const_lock</code><a class="headerlink" href="#QuICT.core.circuit.circuit.Circuit.const_lock" title="Permalink to this definition">¶</a></dt>
+<dd><p>a simple lock that ensures the circuit does not change when running some algorithm.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="QuICT.core.circuit.circuit.Circuit.name">
+<code class="sig-name descname">name</code><a class="headerlink" href="#QuICT.core.circuit.circuit.Circuit.name" title="Permalink to this definition">¶</a></dt>
+<dd><p>the name of the circuit</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="QuICT.core.circuit.circuit.Circuit.qubits">
+<code class="sig-name descname">qubits</code><a class="headerlink" href="#QuICT.core.circuit.circuit.Circuit.qubits" title="Permalink to this definition">¶</a></dt>
+<dd><p>the qureg formed by all qubits of the circuit</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p><a class="reference internal" href="QuICT.core.qubit.qubit.html#QuICT.core.qubit.qubit.Qureg" title="QuICT.core.qubit.qubit.Qureg">Qureg</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="QuICT.core.circuit.circuit.Circuit.gates">
+<code class="sig-name descname">gates</code><a class="headerlink" href="#QuICT.core.circuit.circuit.Circuit.gates" title="Permalink to this definition">¶</a></dt>
+<dd><p>all gates attached to the circuit</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>list&lt;BasicGate&gt;</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="QuICT.core.circuit.circuit.Circuit.topology">
+<code class="sig-name descname">topology</code><a class="headerlink" href="#QuICT.core.circuit.circuit.Circuit.topology" title="Permalink to this definition">¶</a></dt>
+<dd><p>The topology of the circuit. When the topology list is empty, it will be seemed as fully connected.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>list&lt;tuple&lt;int, int&gt;&gt;</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="QuICT.core.circuit.circuit.Circuit.fidelity">
+<code class="sig-name descname">fidelity</code><a class="headerlink" href="#QuICT.core.circuit.circuit.Circuit.fidelity" title="Permalink to this definition">¶</a></dt>
+<dd><p>the fidelity of the circuit</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="simple">
+<dt>Private Attributes:</dt><dd><p>__idmap(dictionary): the map from qubit’s id to its index in the circuit
+__queue_gates(list&lt;BasicGate&gt;): the gates haven’t be flushed</p>
+</dd>
+</dl>
+<dl class="py method">
+<dt id="QuICT.core.circuit.circuit.Circuit.add_topology">
+<code class="sig-name descname">add_topology</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">topology</span></em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.circuit.circuit.Circuit.add_topology" title="Permalink to this definition">¶</a></dt>
+<dd><p>public API to add directed edges in topology to the circuit</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>topology</strong> (<em>list&lt;tuple&lt;qureg/qubit/int&gt;&gt;</em>) – a list of directed edges</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="QuICT.core.circuit.circuit.Circuit.add_topology_complete">
+<code class="sig-name descname">add_topology_complete</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">qureg</span><span class="p">:</span> <span class="n"><a class="reference internal" href="QuICT.core.qubit.qubit.html#QuICT.core.qubit.qubit.Qureg" title="QuICT.core.qubit.qubit.Qureg">QuICT.core.qubit.qubit.Qureg</a></span></em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.circuit.circuit.Circuit.add_topology_complete" title="Permalink to this definition">¶</a></dt>
+<dd><p>add directed edges to make subgraph formed by qureg passed in fully connected</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>qureg</strong> (<a class="reference internal" href="QuICT.core.qubit.qubit.html#QuICT.core.qubit.qubit.Qureg" title="QuICT.core.qubit.qubit.Qureg"><em>Qureg</em></a>) – the qureg to be fully connected in topology</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="QuICT.core.circuit.circuit.Circuit.append">
+<code class="sig-name descname">append</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">gate</span></em>, <em class="sig-param"><span class="n">qureg</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.circuit.circuit.Circuit.append" title="Permalink to this definition">¶</a></dt>
+<dd><p>add a gate to the circuit</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>gate</strong> (<a class="reference internal" href="QuICT.core.gate.gate.html#QuICT.core.gate.gate.BasicGate" title="QuICT.core.gate.gate.BasicGate"><em>BasicGate</em></a>) – the gate to be added to the circuit</p></li>
+<li><p><strong>qureg</strong> (<em>Qureg/Qubit/None</em>) – the Qureg/Qubit gate added to.
+if Qureg is None, use the targs and cargs in gate</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="QuICT.core.circuit.circuit.Circuit.assign_initial_random">
+<code class="sig-name descname">assign_initial_random</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.circuit.circuit.Circuit.assign_initial_random" title="Permalink to this definition">¶</a></dt>
+<dd><p>remove all gates and set all qubits into a qState with random amplitude</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="QuICT.core.circuit.circuit.Circuit.assign_initial_zeros">
+<code class="sig-name descname">assign_initial_zeros</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.circuit.circuit.Circuit.assign_initial_zeros" title="Permalink to this definition">¶</a></dt>
+<dd><p>remove all gates and set all qubits into a qState with state 0</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="QuICT.core.circuit.circuit.Circuit.circuit_count_1qubit">
+<code class="sig-name descname">circuit_count_1qubit</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.circuit.circuit.Circuit.circuit_count_1qubit" title="Permalink to this definition">¶</a></dt>
+<dd><p>the number of the one qubit gates in the circuit</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>the number of the one qubit gates in the circuit</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="QuICT.core.circuit.circuit.Circuit.circuit_count_2qubit">
+<code class="sig-name descname">circuit_count_2qubit</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.circuit.circuit.Circuit.circuit_count_2qubit" title="Permalink to this definition">¶</a></dt>
+<dd><p>the number of the two qubit gates in the circuit</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>the number of the two qubit gates in the circuit</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="QuICT.core.circuit.circuit.Circuit.circuit_count_gateType">
+<code class="sig-name descname">circuit_count_gateType</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">gateType</span></em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.circuit.circuit.Circuit.circuit_count_gateType" title="Permalink to this definition">¶</a></dt>
+<dd><p>the number of the gates which are some type in the circuit</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>gateType</strong> (<em>GateType</em>) – the type of gates to be count</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>the number of the gates which are some type in the circuit</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="QuICT.core.circuit.circuit.Circuit.circuit_depth">
+<code class="sig-name descname">circuit_depth</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">gateTypes</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.circuit.circuit.Circuit.circuit_depth" title="Permalink to this definition">¶</a></dt>
+<dd><p>the depth of the circuit for some gate.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>gateTypes</strong> (<em>list&lt;GateType&gt;</em>) – the types to be count into depth calculate
+if count all type of gates, leave it being None.</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>the depth of the circuit</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="QuICT.core.circuit.circuit.Circuit.circuit_length">
+<code class="sig-name descname">circuit_length</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.circuit.circuit.Circuit.circuit_length" title="Permalink to this definition">¶</a></dt>
+<dd><p>the number of qubits in circuit</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>the number of qubits in circuit</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="QuICT.core.circuit.circuit.Circuit.circuit_size">
+<code class="sig-name descname">circuit_size</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.circuit.circuit.Circuit.circuit_size" title="Permalink to this definition">¶</a></dt>
+<dd><p>the size of the circuit</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>the number of gates in circuit</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="QuICT.core.circuit.circuit.Circuit.clear">
+<code class="sig-name descname">clear</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.circuit.circuit.Circuit.clear" title="Permalink to this definition">¶</a></dt>
+<dd><p>clear the circuit</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="id0">
+<em class="property">property </em><code class="sig-name descname">const_lock</code><a class="headerlink" href="#id0" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="QuICT.core.circuit.circuit.Circuit.draw_photo">
+<code class="sig-name descname">draw_photo</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">filename</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">show_depth</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.circuit.circuit.Circuit.draw_photo" title="Permalink to this definition">¶</a></dt>
+<dd><p>draw the photo of circuit in the run directory</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>filename</strong> (<em>str</em>) – the output filename without file extensions,
+default to be the name of the circuit</p></li>
+<li><p><strong>show_depth</strong> – whether to show a red frame for gates in the same layer
+(Note that some gates in the same layer cannot be represented
+in the row in the photo)</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="QuICT.core.circuit.circuit.Circuit.exec">
+<code class="sig-name descname">exec</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.circuit.circuit.Circuit.exec" title="Permalink to this definition">¶</a></dt>
+<dd><p>calculate the gates applied to the circuit, change the qStates’ values in the circuit</p>
+<p>It may cost a lot of time, the computational process is coded by
+C++ with intel tbb parallel library</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="QuICT.core.circuit.circuit.Circuit.exec_release">
+<code class="sig-name descname">exec_release</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.circuit.circuit.Circuit.exec_release" title="Permalink to this definition">¶</a></dt>
+<dd><p>calculate the gates applied to the circuit and remove the gates in the circuits</p>
+<p>when call the function “exec”, the gates in the list “self.gates” won’t be removed because
+the integrity of the information of circuit should be ensured.
+But sometimes, user may release the memory by removing them.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="QuICT.core.circuit.circuit.Circuit.extend">
+<code class="sig-name descname">extend</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">gates</span></em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.circuit.circuit.Circuit.extend" title="Permalink to this definition">¶</a></dt>
+<dd><p>add gates to the circuit</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>gates</strong> (<em>list&lt;BasicGate&gt;</em>) – the gate to be added to the circuit</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="id1">
+<em class="property">property </em><code class="sig-name descname">fidelity</code><a class="headerlink" href="#id1" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="QuICT.core.circuit.circuit.Circuit.force_copy">
+<code class="sig-name descname">force_copy</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">other</span></em>, <em class="sig-param"><span class="n">force_copy</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.circuit.circuit.Circuit.force_copy" title="Permalink to this definition">¶</a></dt>
+<dd><p>remove all gates and copy another circuits’ qubits state to the qureg in this circuit</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>other</strong> (<a class="reference internal" href="#QuICT.core.circuit.circuit.Circuit" title="QuICT.core.circuit.circuit.Circuit"><em>Circuit</em></a>) – the copy goal</p></li>
+<li><p><strong>force_copy</strong> – the indexes of qureg to be pasted in the circuit,
+if want cover whole circuit, leave it to be None</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="id2">
+<em class="property">property </em><code class="sig-name descname">gates</code><a class="headerlink" href="#id2" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="id3">
+<em class="property">property </em><code class="sig-name descname">id</code><a class="headerlink" href="#id3" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="QuICT.core.circuit.circuit.Circuit.index_for_qubit">
+<code class="sig-name descname">index_for_qubit</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">qubit</span></em>, <em class="sig-param"><span class="n">ancilla</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span> &#x2192; int<a class="headerlink" href="#QuICT.core.circuit.circuit.Circuit.index_for_qubit" title="Permalink to this definition">¶</a></dt>
+<dd><p>find the index of qubit in this circuit</p>
+<p>the index ignored the ancilla qubit</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>qubit</strong> (<a class="reference internal" href="QuICT.core.qubit.qubit.html#QuICT.core.qubit.qubit.Qubit" title="QuICT.core.qubit.qubit.Qubit"><em>Qubit</em></a>) – the qubit need to be indexed.</p></li>
+<li><p><strong>ancilla</strong> (<em>list&lt;Qubit&gt;</em>) – the ancillary qubit</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>the index of the qubit.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+<dt class="field-even">Raises</dt>
+<dd class="field-even"><p><strong>Exception</strong> – the qubit is not in the circuit</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="QuICT.core.circuit.circuit.Circuit.matrix_product_to_circuit">
+<code class="sig-name descname">matrix_product_to_circuit</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">gate</span></em><span class="sig-paren">)</span> &#x2192; numpy.ndarray<a class="headerlink" href="#QuICT.core.circuit.circuit.Circuit.matrix_product_to_circuit" title="Permalink to this definition">¶</a></dt>
+<dd><p>extend a gate’s matrix in the all circuit unitary linear space</p>
+<p>gate’s matrix tensor products some identity matrix.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>gate</strong> (<a class="reference internal" href="QuICT.core.gate.gate.html#QuICT.core.gate.gate.BasicGate" title="QuICT.core.gate.gate.BasicGate"><em>BasicGate</em></a>) – the gate to be extended.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="id4">
+<em class="property">property </em><code class="sig-name descname">name</code><a class="headerlink" href="#id4" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="QuICT.core.circuit.circuit.Circuit.partial_prob">
+<code class="sig-name descname">partial_prob</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">indexes</span></em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.circuit.circuit.Circuit.partial_prob" title="Permalink to this definition">¶</a></dt>
+<dd><p>calculate the probabilities of the measure result of partial qureg in circuit</p>
+<p>Note that the function “flush” will be called before calculating
+this function is a cheat function, which do not change the state of the qureg.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>indexes</strong> (<em>list&lt;int&gt;</em>) – the indexes of the partial qureg.</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>the probabilities of the measure result, the memory mode is LittleEndian.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>list&lt;float&gt;</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="QuICT.core.circuit.circuit.Circuit.print_infomation">
+<code class="sig-name descname">print_infomation</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.circuit.circuit.Circuit.print_infomation" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="QuICT.core.circuit.circuit.Circuit.qasm">
+<code class="sig-name descname">qasm</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.circuit.circuit.Circuit.qasm" title="Permalink to this definition">¶</a></dt>
+<dd><p>get OpenQASM 2.0 describe for the circuit</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>OpenQASM 2.0 describe or “error” when there are some gates cannot be resolved</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="id5">
+<em class="property">property </em><code class="sig-name descname">qubits</code><a class="headerlink" href="#id5" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="QuICT.core.circuit.circuit.Circuit.random_append">
+<code class="sig-name descname">random_append</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">rand_size</span><span class="o">=</span><span class="default_value">10</span></em>, <em class="sig-param"><span class="n">typeList</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.circuit.circuit.Circuit.random_append" title="Permalink to this definition">¶</a></dt>
+<dd><p>add some random gate to the circuit
+:param rand_size: the number of the gate added to the circuit
+:type rand_size: int
+:param typeList: the type of gate, default contains CX、ID、Rz、CY、CRz、CH
+:type typeList: list&lt;GateType&gt;</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="QuICT.core.circuit.circuit.Circuit.reset">
+<code class="sig-name descname">reset</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.circuit.circuit.Circuit.reset" title="Permalink to this definition">¶</a></dt>
+<dd><p>reset all qubits in the circuit with gates unchanged</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="QuICT.core.circuit.circuit.Circuit.set_exec_gates">
+<code class="sig-name descname">set_exec_gates</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">gates</span></em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.circuit.circuit.Circuit.set_exec_gates" title="Permalink to this definition">¶</a></dt>
+<dd><p>set circuit’s gates</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>gates</strong> (<em>list&lt;BasicGate&gt;</em>) – </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="id6">
+<em class="property">property </em><code class="sig-name descname">topology</code><a class="headerlink" href="#id6" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">QuICT</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2020, ICT_theory.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.3.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="_sources/QuICT.core.circuit.circuit.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>
