@@ -4,7 +4,7 @@
 # @Author  : Han Yu
 # @File    : Deutsch_Jozsa.py
 import numpy as np
-from QuICT.models import Circuit, H, X, Measure, PermFx
+from QuICT.core import Circuit, H, X, Measure, PermFx
 from QuICT.synthesis.initial_state_preparation import initial_state_preparation
 from QuICT.synthesis.MCT import MCT_one_aux
 
