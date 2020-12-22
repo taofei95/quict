@@ -1,7 +1,0 @@
-QuICT.lib.qasm.node.qreg module
-===============================
-
-.. automodule:: QuICT.lib.qasm.node.qreg
-   :members:
-   :undoc-members:
-   :show-inheritance:
