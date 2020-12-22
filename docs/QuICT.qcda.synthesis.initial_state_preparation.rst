@@ -1,0 +1,17 @@
+QuICT.qcda.synthesis.initial\_state\_preparation package
+========================================================
+
+.. automodule:: QuICT.qcda.synthesis.initial_state_preparation
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Submodules
+----------
+
+.. toctree::
+   :maxdepth: 4
+
+   QuICT.qcda.synthesis.initial_state_preparation.initial_state_preparation
+   QuICT.qcda.synthesis.initial_state_preparation.initial_state_preparation_cdll
+   QuICT.qcda.synthesis.initial_state_preparation.unit_test
