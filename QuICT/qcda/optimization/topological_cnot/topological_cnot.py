@@ -188,7 +188,7 @@ class Steiner_Tree(object):
                 GateBuilder.setCargs(son)
                 GateBuilder.setTargs(now)
                 gate = GateBuilder.getGate()
-                gauss_elimination[now] ^= gauss_elimination[self.father[now]]
+                gauss_elimination[now] ^= gauss_elimination[son]
                 GATES.append(gate)
 
         for son in self.sons[now]:

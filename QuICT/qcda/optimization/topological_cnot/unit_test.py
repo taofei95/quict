@@ -81,7 +81,7 @@ def check_equiv(circuit1, circuit2):
     return not np.any(matrix1 ^ matrix2)
 
 def test_1():
-    for _ in range(1):
+    for _ in range(20):
         for i in range(2, 10):
             circuit = Circuit(i)
             for _ in range(i * 100):
