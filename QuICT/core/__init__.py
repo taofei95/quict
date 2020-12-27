@@ -8,5 +8,5 @@ from .circuit import *
 from .qubit import *
 from .gate import *
 from .exception import *
-from .topology import *
+from .layout import *
 
