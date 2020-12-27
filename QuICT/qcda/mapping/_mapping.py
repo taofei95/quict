@@ -4,13 +4,13 @@
 # @Author  : Han Yu
 # @File    : _mapping.py
 
-from .lib.qubit_mapping  import QubitMapping as qm
+from lib.qubit_mapping  import QubitMapping as qm
 
-from .table_based_mcts import *
+from table_based_mcts import *
 from QuICT.core.circuit import * 
 from QuICT.core.exception import *
 from QuICT.core.gate import *
-from typing import List, Dict,Tuple
+from typing import List, Dict,Tuple,Union
 class  Mapping(object):
     @classmethod
     def run(cls, circuit: Circuit, num: int, init_mapping: List[int], is_lnn: bool = True,
@@ -39,7 +39,7 @@ class  Mapping(object):
         """
         circuit.const_lock = True
         num_logic = len(circuit.qubits)
-        if num_logic < num:
+        if num_logic > num:
             raise Exception("There are not enough phyical qubits to excute the circuit")
 
         if is_lnn is True:
@@ -47,16 +47,15 @@ class  Mapping(object):
             # for i in init_mapping:
             #     print(i)
         else:
-            gates = cls._mapping_2D(circuit = circuit, num=num, init_mapping = init_mapping ,method = method)
+            gates = cls._mapping_NISQ(circuit = circuit, num=num, init_mapping = init_mapping, method = method)
         
-
+       
         circuit.const_lock = False
-
+        circuit.qubits
         if inplace:
             circuit.set_flush_gates(gates)
-
         else:
-            new_circuit = Circuit(len(circuit.qubits))
+            new_circuit = Circuit(num)
             new_circuit.extend(gates)
             return new_circuit
     
@@ -91,7 +90,7 @@ class  Mapping(object):
                 temp['type'] = 1
             else:
                 raise TypeException("two-qubit gate or single qubit gate", "the gate acting on more than two qubits")        
-            temp['name'] = g.type().value
+            temp['name'] = g.type()
             #print(g.type().value)
             circuit_ori.append(temp)
        # for w in circuit_ori:
@@ -147,14 +146,17 @@ class  Mapping(object):
         return gates
         
     @staticmethod
-    def _mapping_NISQ(circuit: Circuit, init_mapping: List[int], method: str, num: int, paramter: Dict)-> Circuit:
+    def _mapping_NISQ(circuit: Circuit, init_mapping: List[int], method: str, num: int, paramter: Dict = {})-> Circuit:
         """
         
         """
        
         mcts_tree = TableBasedMCTS(**paramter)
         mcts_tree.search(logical_circuit = circuit, cur_mapping = init_mapping, coupling_graph = circuit.topology)
-
+        # mcts_tree.root_node.coupling_graph.draw()
+        # mcts_tree.root_node.circuit_dag.draw()
+        # for gate in mcts_tree.physical_circuit:
+        #     print(gate)
         return mcts_tree.physical_circuit
 
 

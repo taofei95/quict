@@ -357,7 +357,8 @@ class Circuit(object):
         if isinstance(topology, list):
             for item in topology:
                 self._inner_add_topology(item)
-        self._inner_add_topology(topology)
+        else:
+            self._inner_add_topology(topology)
 
     def add_topology_complete(self, qureg : Qureg):
         """ add directed edges to make subgraph formed by qureg passed in fully connected

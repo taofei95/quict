@@ -13,5 +13,6 @@ class StateAgent(object):
     def backpropagate(self, node: MCTSNode):
         pass
 
+
     def get_state(self, node: MCTSNode):
         pass

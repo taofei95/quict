@@ -30,7 +30,7 @@ class RLBasedMCTS(TableBasedMCTS):
 
     def _backpropagate(self, cur_node: MCTSNode):
         self._state_agent.backward(cur_node)
-
+   
     def _process_state_from_node(self, cur_node: MCTSNode):
         """
         Transform the info in `cur_node` into structured state info for state agent
