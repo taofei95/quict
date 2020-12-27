@@ -74,14 +74,14 @@ def check_equiv(circuit1, circuit2):
     Returns:
         bool: True if equiv
     """
-    n = circuit1.circuit_length()
+    n = circuit1.circuit_width()
     matrix1 = generate_matrix(circuit1.gates, n)
     matrix2 = generate_matrix(circuit2.gates if isinstance(circuit2, Circuit) else circuit2, n)
 
     return not np.any(matrix1 ^ matrix2)
 
 def test_1():
-    for _ in range(1):
+    for _ in range(20):
         for i in range(2, 10):
             circuit = Circuit(i)
             for _ in range(i * 100):

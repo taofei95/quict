@@ -507,7 +507,7 @@ class PhotoDrawerModel(object):
 
     def run(self, circuit, filename=None, show_depth=True):
         global cir_len
-        cir_len = circuit.circuit_length()
+        cir_len = circuit.circuit_width()
         name_dict = collections.OrderedDict()
         now = {
             'max_x': 0,

@@ -31,7 +31,7 @@ def generate_matrix(circuit, n):
     return matrix
 
 def generate_matrix_with_ancillary(circuit, n):
-    circuit_length = circuit.circuit_length()
+    circuit_length = circuit.circuit_width()
     matrix = np.identity(circuit_length, dtype=bool)
     for gate in circuit.gates:
         matrix[gate.targ, :] = matrix[gate.targ, :] ^ matrix[gate.carg, :]
@@ -52,7 +52,7 @@ def check_equiv(circuit1, circuit2):
     Returns:
         bool: True if equiv
     """
-    n = circuit1.circuit_length()
+    n = circuit1.circuit_width()
     matrix1 = generate_matrix(circuit1, n)
     matrix2 = generate_matrix_with_ancillary(circuit2, n)
     # circuit2.print_infomation()

@@ -48,14 +48,14 @@ class Amplitude(Algorithm):
             np.ctypeslib.ndpointer(dtype=np.int, ndim=1, flags="C_CONTIGUOUS"),
         ]
 
-        length = 1 << (circuit.circuit_length() - len(ancilla))
+        length = 1 << (circuit.circuit_width() - len(ancilla))
 
         amplitude_cheat_operator.restype = np.ctypeslib.ndpointer(dtype=np.complex, shape=(length,))
 
         tangle_list = []
         tangle_values = np.array([], dtype=np.complex)
         tangle_length = np.array([], dtype=np.int)
-        qubit_map     = np.array([i for i in range(circuit.circuit_length() - len(ancilla))], dtype=np.int)
+        qubit_map     = np.array([i for i in range(circuit.circuit_width() - len(ancilla))], dtype=np.int)
 
         tangle_iter = 0
         q_index = 0
