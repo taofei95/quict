@@ -41,10 +41,41 @@ def uniformlyRy(low, high, y):
     for i in range(length):
         Rxp.append((y[i] + y[i + length]) / 2)
         Rxn.append((y[i] - y[i + length]) / 2)
-    del y
     gates = uniformlyRy(low + 1, high, Rxp)
     gates.append(gateA)
     gates.extend(uniformlyRy(low + 1, high, Rxn))
+    gates.append(gateB)
+    return gates
+
+def uniformlyRz(low, high, z):
+    """ synthesis uniformRz gate, bits range [low, high)
+    Args:
+        low(int): the left range low
+        high(int): the right range high
+        z(list<int>): the list of angle y
+    Returns:
+        the synthesis result
+    """
+    if low + 1 == high:
+        GateBuilder.setGateType(GATE_ID["Rz"])
+        GateBuilder.setTargs(low)
+        print("?", z)
+        GateBuilder.setPargs(z[1] - z[0])
+        return [GateBuilder.getGate()]
+    length = len(z) // 2
+    GateBuilder.setGateType(GATE_ID["CX"])
+    GateBuilder.setTargs(high - 1)
+    GateBuilder.setCargs(low)
+    gateA = GateBuilder.getGate()
+    gateB = GateBuilder.getGate()
+    Rxp = []
+    Rxn = []
+    for i in range(length):
+        Rxp.append((z[i] + z[i + length]) / 2)
+        Rxn.append((z[i] - z[i + length]) / 2)
+    gates = uniformlyRz(low + 1, high, Rxp)
+    gates.append(gateA)
+    gates.extend(uniformlyRz(low + 1, high, Rxn))
     gates.append(gateB)
     return gates
 
@@ -119,12 +150,24 @@ class InitialStatePreparationOracle(Synthesis):
         if NN > N:
             self.pargs.extend([0] * (NN - N))
 
+        phases = []
+
         norm = 0
         for value in self.pargs:
-            norm += value
+            norm += abs(value)
         if abs(norm - 1) > 1e-10:
             for i in range(NN):
                 self.pargs[i] /= norm
+                phases.append(self.pargs[i])
+                self.pargs[i] = abs(self.pargs[i])
+                if self.pargs[i] > 0:
+                    phases[i] /= self.pargs[i]
+        else:
+            for i in range(NN):
+                phases.append(self.pargs[i])
+                self.pargs[i] = abs(self.pargs[i])
+                if self.pargs[i] > 0:
+                    phases[i] /= self.pargs[i]
 
         dll = self.initial_state_preparation_cdll
         state_theta_computation = dll.state_theta_computation
@@ -158,6 +201,10 @@ class InitialStatePreparationOracle(Synthesis):
             if not flag:
                 gates.extend(uniformlyRy(0, i + 1, alpha))
             now += add
+        print(phases)
+        phases = [np.angle(phase) for phase in phases]
+        print(phases)
+        gates.extend(uniformlyRz(0, n, phases))
         return gates
 
 InitialStatePreparation = InitialStatePreparationOracle()

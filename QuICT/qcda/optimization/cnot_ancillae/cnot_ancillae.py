@@ -354,7 +354,7 @@ def read(circuit : Circuit):
         np.matrix: the matrix transformed by the circuit
     """
     global n
-    n = circuit.circuit_length()
+    n = circuit.circuit_width()
     if n < 4:
         raise CircuitStructException("the qubit number of circuit n \
                 should greater than or equal 4")
@@ -391,7 +391,7 @@ class CnotAncillae(Optimization):
         circuit.const_lock = True
         gates = cls._run(circuit)
         circuit.const_lock = False
-        new_circuit = Circuit(circuit.circuit_length() * (2 + 3 * size))
+        new_circuit = Circuit(circuit.circuit_width() * (2 + 3 * size))
         new_circuit.set_exec_gates(gates)
         return new_circuit
 

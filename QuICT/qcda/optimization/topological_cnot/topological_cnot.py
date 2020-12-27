@@ -235,7 +235,7 @@ def read(circuit, cnot_struct, topology):
 
     global TOPO, READ_CNOT, N
     if circuit is not None:
-        N = circuit.circuit_length()
+        N = circuit.circuit_width()
         if len(circuit.topology) == 0:
             TOPO = [[True] * N] * N
         else:
@@ -421,7 +421,7 @@ class TopologicalCnot(Optimization):
         ans = solve(steiner_tree)
 
         if circuit is not None:
-            N = circuit.circuit_length()
+            N = circuit.circuit_width()
             if len(circuit.topology) == 0:
                 topo = [[True] * N] * N
             else:

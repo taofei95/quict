@@ -74,7 +74,7 @@ def check_equiv(circuit1, circuit2):
     Returns:
         bool: True if equiv
     """
-    n = circuit1.circuit_length()
+    n = circuit1.circuit_width()
     matrix1 = generate_matrix(circuit1.gates, n)
     matrix2 = generate_matrix(circuit2.gates if isinstance(circuit2, Circuit) else circuit2, n)
 
