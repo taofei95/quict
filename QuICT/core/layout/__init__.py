@@ -4,5 +4,5 @@
 # @Author  : Han Yu
 # @File    : __init__.py
 
-from .topology import Layout, LayoutEdge
+from .layout import Layout, LayoutEdge
 
