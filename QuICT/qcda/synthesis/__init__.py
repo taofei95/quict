@@ -7,3 +7,5 @@
 from .initial_state_preparation import *
 from .vbe import *
 from .mct import *
+from .uniformly_gate import *
+

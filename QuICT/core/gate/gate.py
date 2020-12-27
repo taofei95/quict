@@ -843,10 +843,10 @@ class RzGate(BasicGate):
     @property
     def matrix(self) -> np.ndarray:
         return np.array([
-            1,
+            np.exp(-self.parg / 2 * 1j),
             0,
             0,
-            np.cos(self.pargs) + 1j * np.sin(self.pargs)
+            np.exp(self.parg / 2 * 1j)
         ], dtype=np.complex)
 
     def __str__(self):
