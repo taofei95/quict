@@ -201,10 +201,10 @@ class InitialStatePreparationOracle(Synthesis):
             if not flag:
                 gates.extend(uniformlyRy(0, i + 1, alpha))
             now += add
-        print(phases)
-        phases = [np.angle(phase) for phase in phases]
-        print(phases)
-        gates.extend(uniformlyRz(0, n, phases))
+        # print(phases)
+        # phases = [np.angle(phase) for phase in phases]
+        # print(phases)
+        # gates.extend(uniformlyRz(0, n, phases))
         return gates
 
 InitialStatePreparation = InitialStatePreparationOracle()

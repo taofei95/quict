@@ -63,7 +63,7 @@ def test_build_circuit():
     qureg_call_12 = circuit([2, 3, 4])
     qureg = qureg_slice_12 + qureg_call_12
     X       | qureg
-    Measure | circuit[0:4]
+    Measure | circuit
     circuit.exec()
     for qubit in circuit:
         if int(qubit) != 1:
@@ -76,7 +76,7 @@ def test_build_circuit():
             assert 0
 
     circuit.clear()
-    Measure | circuit[0:4]
+    Measure | circuit
     circuit.exec()
     for qubit in circuit:
         if int(qubit) != 0:
@@ -92,7 +92,7 @@ def test_add_gate():
     X             | circuit[1:]
     CX            | circuit([0, 2])
     Ry(np.pi / 4) | circuit(3)
-    U3(0, 0, np.pi / 4) | circuit(3)
+    U3((0, 0, np.pi / 4)) | circuit(3)
 
     addX = X.copy()
     qureg = circuit(0)
