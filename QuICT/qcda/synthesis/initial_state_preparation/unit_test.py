@@ -35,7 +35,7 @@ def check_assert(a, b, n):
 def test_1():
     for i in range(1, 8):
         circuit = Circuit(i)
-        values = [1.0 / (1 << i) for now in range(1 << i)]
+        values = [1.0 / (1 << i) for _ in range(1 << i)]
         InitialStatePreparation(values) | circuit([j for j in range(i)])
         amplitude = Amplitude.run(circuit)
         circuit.print_infomation()

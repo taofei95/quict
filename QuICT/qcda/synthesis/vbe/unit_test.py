@@ -20,9 +20,9 @@ def Set(qreg, N):
         N = N//2
 
 def test_1():
-    for a in range(0, 6):
-        for x in range(0, 6):
-            for N in range(3, 6):
+    for a in range(0, 5):
+        for x in range(0, 5):
+            for N in range(3, 5):
                 if gcd(a, N) != 1:
                     continue
                 a = a % N

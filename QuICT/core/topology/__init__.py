@@ -2,4 +2,7 @@
 # -*- coding:utf8 -*-
 # @TIME    : 2020/12/27 5:03 下午
 # @Author  : Han Yu
-# @File    : __init__.py.py
+# @File    : __init__.py
+
+from .topology import Layout, LayoutEdge
+
