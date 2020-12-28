@@ -41,8 +41,8 @@ def check_equiv(circuit1, circuit2):
     Returns:
         bool: True if equiv
     """
-    n = circuit1.circuit_length()
-    if circuit2.circuit_length() != n:
+    n = circuit1.circuit_width()
+    if circuit2.circuit_width() != n:
         return False
     matrix1 = generate_matrix(circuit1, n)
     matrix2 = generate_matrix(circuit2, n)

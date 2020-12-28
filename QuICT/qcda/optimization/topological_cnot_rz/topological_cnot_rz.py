@@ -49,7 +49,7 @@ def read(circuit):
 
     global TOPO, READ_CNOT, N
     waitDeal = set()
-    N = circuit.circuit_length()
+    N = circuit.circuit_width()
     if len(circuit.topology) == 0:
         TOPO = [[True] * N] * N
     else:

@@ -149,7 +149,7 @@ class Circuit(object):
         self.topology = None
 
     # Attributes of the circuit
-    def circuit_length(self):
+    def circuit_width(self):
         """ the number of qubits in circuit
 
         Returns:
@@ -237,7 +237,7 @@ class Circuit(object):
         for gate in self.gates:
             if gate.qasm_name == "measure":
                 cbits += 1
-        string += f"qreg q[{self.circuit_length()}];\n"
+        string += f"qreg q[{self.circuit_width()}];\n"
         if cbits != 0:
             string += f"creg c[{cbits}];\n"
         cbits = 0
@@ -357,7 +357,8 @@ class Circuit(object):
         if isinstance(topology, list):
             for item in topology:
                 self._inner_add_topology(item)
-        self._inner_add_topology(topology)
+        else:
+            self._inner_add_topology(topology)
 
     def add_topology_complete(self, qureg : Qureg):
         """ add directed edges to make subgraph formed by qureg passed in fully connected
@@ -483,7 +484,7 @@ class Circuit(object):
     # display information of the circuit
     def print_infomation(self):
         print("-------------------")
-        print(f"number of bits:{self.circuit_length()}")
+        print(f"number of bits:{self.circuit_width()}")
         for gate in self.gates:
             gate.print_info()
         print("-------------------")
