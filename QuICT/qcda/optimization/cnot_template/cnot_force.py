@@ -57,7 +57,7 @@ def solve(input: Circuit):
         Circuit: optimal circuit
 
     """
-    n = input.circuit_length()
+    n = input.circuit_width()
     circuit = Circuit(n)
     input_matrix = np.identity(n, dtype=bool)
     now = 0

@@ -188,7 +188,7 @@ class Steiner_Tree(object):
                 GateBuilder.setCargs(son)
                 GateBuilder.setTargs(now)
                 gate = GateBuilder.getGate()
-                gauss_elimination[now] ^= gauss_elimination[self.father[now]]
+                gauss_elimination[now] ^= gauss_elimination[son]
                 GATES.append(gate)
 
         for son in self.sons[now]:
@@ -235,7 +235,7 @@ def read(circuit, cnot_struct, topology):
 
     global TOPO, READ_CNOT, N
     if circuit is not None:
-        N = circuit.circuit_length()
+        N = circuit.circuit_width()
         if len(circuit.topology) == 0:
             TOPO = [[True] * N] * N
         else:
@@ -421,7 +421,7 @@ class TopologicalCnot(Optimization):
         ans = solve(steiner_tree)
 
         if circuit is not None:
-            N = circuit.circuit_length()
+            N = circuit.circuit_width()
             if len(circuit.topology) == 0:
                 topo = [[True] * N] * N
             else:

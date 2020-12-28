@@ -1,4 +1,4 @@
-QuICT package
+API
 =============
 
 .. automodule:: QuICT

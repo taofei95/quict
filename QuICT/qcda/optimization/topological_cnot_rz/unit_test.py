@@ -61,7 +61,7 @@ def check_equiv(circuit1, circuit2):
 
 def test_1():
     for _ in range(1):
-        for i in range(2, 10):
+        for i in range(2, 6):
             circuit = Circuit(i)
             for j in range(i * 8):
                 CX | circuit(_getRandomList(2))
