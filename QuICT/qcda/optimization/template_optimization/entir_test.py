@@ -18,7 +18,7 @@ from template_matching import TemplateMatching, TemplateSubstitution, MaximalMat
 from template_matching.dagdependency import DAGDependency, circuit_to_dagdependency
 
 def mat_from_circuit(circuit):
-    n = circuit.circuit_length()
+    n = circuit.circuit_width()
     mat = np.identity(n, dtype=np.bool)
     for gate in circuit.gates:
         if gate.qasm_name == 'x':
@@ -43,7 +43,7 @@ def mat_from_circuit(circuit):
     return mat
 
 def equiv(circuit1, circuit2):
-    if circuit1.circuit_length() != circuit2.circuit_length():
+    if circuit1.circuit_width() != circuit2.circuit_width():
         return False
     # mat1 = mat_from_circuit(circuit1)
     # mat2 = mat_from_circuit(circuit2)

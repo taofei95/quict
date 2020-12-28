@@ -12,7 +12,7 @@ from template_optimization import TemplateOptimization
 from templates import template_nct_5a_3
 
 def equiv(circuit1, circuit2):
-    if circuit1.circuit_length() != circuit2.circuit_length():
+    if circuit1.circuit_width() != circuit2.circuit_width():
         return False
     mat1 = SyntheticalUnitary.run(circuit1, showSU=False)
     mat2 = SyntheticalUnitary.run(circuit2, showSU=False)

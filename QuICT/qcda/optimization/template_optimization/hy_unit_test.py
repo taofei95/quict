@@ -30,7 +30,7 @@ def test_can_run():
         for name2 in names:
             circuitC = eval(name1)()
             circuitT = eval(name2)()
-            if circuitT.circuit_length() > circuitC.circuit_length():
+            if circuitT.circuit_width() > circuitC.circuit_width():
                 continue
             dag_C = circuit_to_dagdependency(circuitC)
             dag_T = circuit_to_dagdependency(circuitT)
