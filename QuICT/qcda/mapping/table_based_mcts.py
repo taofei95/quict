@@ -7,7 +7,7 @@ class TableBasedMCTS(MCTSBase):
     @classmethod
     def _get_physical_gate(cls, gate: BasicGate, cur_mapping: List[int])->BasicGate:
         """
-        get the corresponding physical gate of the logical gate   
+        get the  physical gate of the given logical gate   
         """
         cur_gate = gate.copy()
         if cur_gate.is_single():
