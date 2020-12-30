@@ -35,6 +35,12 @@ class LengthException(Exception):
 
 class DAG:
     def __init__(self, circuit: Circuit = None,  mode = 1):
+        """
+        Params:
+            circuit: the logical ciruit
+            mode: deal with all the gates in the circuit when mode  = 1 
+                    and deal with only the two-qubit gates when mode =2 
+        """
         self._mode = mode
         if circuit is not None:
             if mode == 1:
@@ -61,12 +67,17 @@ class DAG:
     @property
     def dag(self) -> nx.DiGraph:
         """
+        the directed acyclic graph representation of the circuit
         """
         return self._dag
 
     @property
     def qubit_mask(self)->np.ndarray:
         """
+        the qubit mask stores the index of current closet gate in the DAG, e.g.,
+        given the  circuit with the sequential two-qubit gates {(0,1),(1,2),(2,3),(3,4),(4,1)},
+        the qubit mask should be (0,0,1,2,3), which means the first and second physical 
+        should be allocated to the first gate for it's the first gate on the qubit wires and so on.  
         """
         if self._mode == 1:
             return None
@@ -93,13 +104,14 @@ class DAG:
   
     def get_successor_nodes(self, vertex: int)->Iterable[int]:
         """
-
+        get the succeeding nodes of the current nodes
         """
         return self._dag.successors(vertex)
 
         
     def get_predecessor_nodes(self, vertex: int)->Iterable[int]:
         """
+        get the preceeding nodes of the current nodes
         """
         return self._dag.predecessors(vertex)
 
@@ -112,6 +124,9 @@ class DAG:
 
 
     def _transform_from_circuit(self, circuit : Circuit):
+        """
+        transform the whole circuit into a directed acyclic graph
+        """
         self._num_gate = 0
         self._qubit_mask = np.zeros(circuit.circuit_length(), dtype = np.int32) -1
         self._initial_qubit_mask = np.zeros(circuit.circuit_length(), dtype = np.int32) -1
@@ -132,10 +147,10 @@ class DAG:
             else:
                 raise Exception(str("The gate is not single qubit gate or two qubit gate"))
             self._num_gate = self._num_gate + 1
-        #print(num_gate)
 
     def _construct_two_qubit_gates_circuit(self, circuit: Circuit):
         """
+        transform the sub circuit only with two-qubit gates  in the original circuit into a directed acyclic graph
         """
         self._num_gate = 0
         self._qubit_mask = np.zeros(circuit.circuit_length(), dtype = np.int32) -1
@@ -161,8 +176,8 @@ class DAG:
     
     def _is_duplicate_gate(self, gate: BasicGate)->bool:
         """
+        indicate wether the gate share the same qubits with its preceeding gate
         """
-    
         if gate.type() == GATE_ID['Swap']:
             qubits = (gate.targs[0], gate.targs[1])
         else:
@@ -189,7 +204,6 @@ class DAG:
     
     def _gate_before_qubit_depth(self, qubit: int)->int:
         """
-
         """
         if self._qubit_mask[qubit] == -1:
             return 0
@@ -198,7 +212,6 @@ class DAG:
 
     def _add_edge_in_dag(self, qubit: int):
         """
-
         """
         if qubit < len(self._qubit_mask):
             if self._qubit_mask[qubit] != -1:
@@ -286,79 +299,78 @@ class CouplingGraph:
         plt.close()
 
 class MCTSNode:
-    #TODO: qubit_mask -> __init__.property
     def __init__(self, circuit_dag: DAG = None, coupling_graph: CouplingGraph = None, front_layer: List[int] = None, cur_mapping: List[int] = None, 
-                qubit_mask: np.ndarray = None, parent: MCTSNode = None, swap_with_edge: SwapGate = None):
+                qubit_mask: np.ndarray = None, parent: MCTSNode = None, swap_of_edge: SwapGate = None):
         """
         Parameters
         ----------
-        circuit_dag : 
-        parent : 
-        """
-        #self._physical_circuit: Circuit  
+            circuit_dag: the directed acyclic graph representation of the circuit, which is stored 
+                         in a static memory and shared by all the MCTS nodes.
+            coupling_graph: the physical device's graph.
+            front_layer: the set of all the nodes in the DAG with zero in-degree. 
+            cur_mapping: the current mapping of logical qubit to physical qubits 
+            qubit_mask: the qubit mask stores the index of current closet gate in the DAG, e.g.,
+                      given the  circuit with the sequential two-qubit gates {(0,1),(1,2),(2,3),(3,4),(4,1)},
+                      the qubit mask should be (0,0,1,2,3), which means the first and second physical 
+                      should be allocated to the first gate for it's the first gate on the qubit wires and so on.  
+            parent: the parent node of the current node.
+            swap_of_edge: the swap gate associated with the edge from the node's parent to itself.
+        """ 
 
         self._circuit_dag = circuit_dag
         self._gate_index = []
-        # index: logical qubit -> value physical qubit
         self._cur_mapping = cur_mapping
         self._coupling_graph = coupling_graph
         self._front_layer = front_layer
         self._qubit_mask = qubit_mask
-        # self._coupling_graph = coupling_graph
         self._parent = parent
-        #TODO : swap_on_edge / ..
-        self._swap_with_edge = swap_with_edge
-        #self.epsilon = epsilon
+
+        self._swap_of_edge = swap_of_edge
+
 
         self._children: List[MCTSNode] = [] 
          
         self._excution_list: List[int] = []  
         
-        # TODO: counetr example
         self._candidate_swap_list: List[SwapGate] = []
     
-
-        #self._front_layer = []
         self._visit_count = 1 
-        self._NNC = None
-        # TODO: move to MCTS class
-        self._c = 20
        
-        # TODO
         self._value = 0
         self._reward = 0
         
-        # TODO
         self._v = 0
         self._q = 0
 
         if circuit_dag is not None and cur_mapping is not None and coupling_graph is not None:
-            # self._update_qubit_mask()  
-            # self._update_excution_list()
-            # self._update_candidate_swap_list()
             self.update_node()
 
     
     @property
     def coupling_graph(self)->CouplingGraph:
         """
+        the physical device's graph
         """
         return self._coupling_graph
 
     @property
     def circuit_dag(self)->DAG:
         """
+        the directed acyclic graph representation of the circuit
         """
         return self._circuit_dag
     @property
     def reward(self)->int:
         """
+        the reward of the swap gate which transforms the mapping of node's parent to its. It equals the 
+        number of the excutable gates under the current mapping.
         """
         return self._reward
     
     @property
     def value(self)->float:
         """
+        the long-term value of the current node, the definition refers to the paper.
         """
         return self._value
     
@@ -383,15 +395,15 @@ class MCTSNode:
         value of the current node. v = argmax(q)
         """
         return self._v
-    @property
-    def c(self)->float:
-        """
-        value of the current node. v = argmax(q)
-        """
-        return self._c
+
     @property
     def qubit_mask(self)->np.ndarray:
         """
+        the qubit mask stores the index of current closet gate in the DAG, e.g.,
+                      given the  circuit with the sequential two-qubit gates {(0,1),(1,2),(2,3),(3,4),(4,1)},
+                      the qubit mask should be (0,0,1,2,3), which means the first and second physical 
+                      should be allocated to the first gate for it's the first gate on the qubit wires and so on.  
+            parent: the parent node of the current node.
         """
         return self._qubit_mask
 
@@ -403,6 +415,7 @@ class MCTSNode:
     @property
     def front_layer(self)->List[int]:
         """
+        the set of all the nodes in the DAG with zero in-degree. 
 
         """
 
@@ -411,6 +424,7 @@ class MCTSNode:
     @property 
     def excution_list(self)->List[BasicGate]:
         """
+        the list of the excutable gates under the current mapping
         """
         
         return self._excution_list
@@ -418,6 +432,7 @@ class MCTSNode:
     @property
     def candidate_swap_list(self)->List[SwapGate]:
         """
+        the list of the candidate swap gate, which has at least one qubit dominated by the gates in the front layer  
         """
 
         return self._candidate_swap_list
@@ -446,19 +461,20 @@ class MCTSNode:
     @visit_count.setter
     def visit_count(self, value:int):
         """
+        the times of the node been visited by the search algorithm
         """
         self._visit_count = value
     @property
     def parent(self)->MCTSNode:
         """
-
+        the parent node of the current node.
         """
         return self._parent
 
     @property
     def children(self)->List[MCTSNode]:
         """
-
+        the set of the child nodes of the current node
         """
         return self._children
 
@@ -469,15 +485,15 @@ class MCTSNode:
         """
         return self.reward + self.value + self.c* np.sqrt(np.log2(self.parent.visit_count) / self.visit_count)
     @property
-    def swap_with_edge(self)->SwapGate:
+    def swap_of_edge(self)->SwapGate:
         """
         The swap gate associated with the edge from the current node's parent to itself  
         """
-        return self._swap_with_edge
+        return self._swap_of_edge
 
-    @swap_with_edge.setter
-    def swap_with_edge(self, swap: SwapGate):
-        self._swap_with_edge = swap
+    @swap_of_edge.setter
+    def swap_of_edge(self, swap: SwapGate):
+        self._swap_of_edge = swap
     
     def update_node(self):
         """
@@ -495,20 +511,20 @@ class MCTSNode:
             l_target = [self.cur_mapping.index(p_target[i], 0, len(self.cur_mapping)) 
                         for i in  range(len(p_target)) ]
      
-            # self.cur_mapping.index(p_target[1], start = 0, stop = s)
+    
             if self._coupling_graph.is_adjacent(p_target[0], p_target[1]):
                 cur_mapping = self.cur_mapping.copy()
                 qubit_mask = self.qubit_mask.copy()
-                #
+                
                 temp = qubit_mask[p_target[0]]
                 qubit_mask[p_target[0]] = qubit_mask[p_target[1]]
                 qubit_mask[p_target[1]] = temp
-                #
+                
                 cur_mapping[l_target[0]] = p_target[1]
                 cur_mapping[l_target[1]] = p_target[0]
                 child_node = MCTSNode(circuit_dag = self.circuit_dag, coupling_graph = self.coupling_graph, 
                              front_layer = self.front_layer.copy(), qubit_mask = qubit_mask, cur_mapping = cur_mapping, parent = self,
-                             swap_with_edge = swap.copy())
+                             swap_of_edge = swap.copy())
                 self._children.append(child_node)
                 
             else:
@@ -519,7 +535,7 @@ class MCTSNode:
     
     def is_leaf_node(self):
         """
-        
+        indicate whether the node is a leaf node of the current the monte carlo tree
         """
         if len(self.children) != 0:
             return False
@@ -528,7 +544,8 @@ class MCTSNode:
             
     def is_terminal_node(self):
         """
-
+        indicate whether the node is a terminal node, i.e., the whole logical circuit has been transformed into 
+        the hardware-compliant circuit.
         """
         if len(self.front_layer)!=0:
             return False
@@ -556,22 +573,11 @@ class MCTSNode:
             candidate_swap_list.append(GateBuilder.getGate())
         
         self._candidate_swap_list =  candidate_swap_list
-
-    def _update_qubit_mask(self):
-        """
-        """
-        self._qubit_mask = np.zeros(self._coupling_graph.size, dtype = np.int32) - 1
-        for gate in self._front_layer:
-            if self._is_swap(gate_in_dag = gate):
-                self._qubit_mask[self._gate_target(gate_in_dag = gate)] = gate 
-                self._qubit_mask[self._gate_target(gate_in_dag = gate, index = 1)] = gate 
-            else:
-                self._qubit_mask[self._gate_control(gate_in_dag = gate)] = gate 
-                self._qubit_mask[self._gate_target(gate_in_dag = gate)] = gate 
-        
+   
 
     def _get_invloved_qubits(self)-> List[int] :
         """
+        get the list of the physical qubits dominated by the gates in front layer 
         """
         qubit_set = set()
         for gate in self._front_layer:
@@ -594,32 +600,12 @@ class MCTSNode:
         """
 
         self._excution_list = []
-        # self._fl_set = set(self._front_layer)
-        # self._depth_list = [ self._circuit_dag[gate]['depth'] for gate in self._front_layer ]
-
-        #excutable_gate_list = []
-        #fl_list = self._front_layer
         fl_stack = deque(self._front_layer)
         self._front_layer = []
-        index = 0
-        #reward = 0
-        #print(fl_list)
      
         while len(fl_stack) > 0:
-            # print(self._front_layer)
-            # print(self._fl_set)
-            #print("index:%d, length of fl_list:%d"%(index, len(fl_list)))
+           
             gate = fl_stack.pop()
-            # if gate == 13:
-            #      print(self._qubit_mask)
-            # if self._gate_qubits(gate) == 1:
-            #     self._excution_list.append(self._get_physical_gate(gate_in_dag = gate))
-            #     fl_list.pop(index)
-            #     self._fl_set.remove(gate)
-            #     self._gate_index.append(gate)
-            #     self._depth_list.remove(self._circuit_dag[gate]['depth'])
-            #     # self._qubit_mask[target] = 0
-            #     self._update_fl_list(fl_list = fl_list, gate_in_dag = gate)
                
             if self._is_swap(gate) is not True:
                 control = self._gate_control(gate)
@@ -630,13 +616,9 @@ class MCTSNode:
                 
             if self.coupling_graph.is_adjacent(control, target):
                 self._excution_list.append(gate)
-                # self._qubit_mask[target] = 0
-                # self._qubit_mask[control] = 0
                 self._update_fl_list(stack = fl_stack, gate_in_dag = gate)
             else:
                 self._front_layer.append(gate)
-
-        #print(self._excution_list)
         self._reward = len(self._excution_list)
 
     
@@ -644,13 +626,7 @@ class MCTSNode:
         """
         update the front layer list when a gate is removed from the list
         """
-        #suc_list = self.circuit_dag.get_successor_nodes(gate_in_dag)
-        #key = [ self._circuit_dag[x]['depth'] for x in suc_list ] 
-        #suc_list.sort(key = lambda x : self._circuit_dag[x]['depth'])
-        #print(key)
-        #print("gate:%d , its successor:[%s]"%(gate_in_dag, ','.join(map(str,suc_list))))
         for suc in self.circuit_dag.get_successor_nodes(gate_in_dag):
-           
             self._qubit_mask[self._edge_qubit(gate_in_dag, suc)] = suc
            
             if self._is_swap(suc) is not True:
@@ -669,35 +645,22 @@ class MCTSNode:
     def _is_qubit_free(self, qubit: int, gate: int)-> bool:
         """
         The qubit is free for the gate if and only if the qubit is not occupied by the other gate(qubit_mask[qubit] = -1)
-        or the qubit is occupied by the gate itself
+        or the qubit has been allocated to the gate itself
         """
         return self._qubit_mask[qubit] == -1 or self._qubit_mask[qubit] == gate
 
     def _edge_qubit(self, vertex_i: int, vertex_j: int )->int:
         """
-        
+        the qubit associated with the edge from the gate i to gate j in the DAG, i.e.,
+        the qubit is shared by the consecutive two gates. 
         """
         return self.cur_mapping[self.circuit_dag.get_egde_qubit(vertex_i, vertex_j)]
-
-    # def _is_below_front_layer(self, gate_in_dag: int)-> bool:
-        # """
-        # indicate whether the gate in the DAG is below the front layer
-        # """
-        # min_depth =  -1 if len(self._depth_list) == 0 else  min(self._depth_list)
-        # # print(min_depth)
-        # # print(gate_in_dag)
-        # for pre in self._circuit_dag.get_predecessor_nodes(vertex = gate_in_dag):
-        #     # print(pre)
-        #     if pre in self._fl_set:
-        #         return  True
-        #     elif self._circuit_dag[pre]['depth'] > min_depth:
-        #         if self._is_below_front_layer(gate_in_dag = pre) is True:
-        #             return True
-        # return False
+       
 
 
     def _get_physical_gate(self, gate_in_dag: int)-> BasicGate:
         """
+        get the physical gate of the given logical gate 
         """
         gate = self.circuit_dag[gate_in_dag]['gate'].copy()
         if self._gate_qubits(gate_in_dag) == 1:
@@ -716,17 +679,20 @@ class MCTSNode:
 
     def _gate_qubits(self, gate_in_dag: int)->int:
         """
+        the number of the qubits dominated by the gate.
         """
                    
         return self.circuit_dag[gate_in_dag]['gate'].controls + self.circuit_dag[gate_in_dag]['gate'].targets
     
     def _is_swap(self, gate_in_dag: int)->bool:
         """
+        indicate whether the gate is a swap gate
         """
         return self.circuit_dag[gate_in_dag]['gate'].type() == GATE_ID['Swap']
 
     def _gate_control(self, gate_in_dag: int, index: int = 0)->int:
         """
+        the physical qubit of the gate 'index'-th control qubit under the current mapping 
         """
         if  index < self.circuit_dag[gate_in_dag]['gate'].controls:
             return self._cur_mapping[self.circuit_dag[gate_in_dag]['gate'].cargs[index]]
@@ -735,6 +701,7 @@ class MCTSNode:
 
     def _gate_target(self, gate_in_dag: int, index: int = 0)->int:  
         """
+        the physical qubit of the gate 'index'-th target qubit under the current mapping 
         """
         return self._cur_mapping[self.circuit_dag[gate_in_dag]['gate'].targs[index]]
 
