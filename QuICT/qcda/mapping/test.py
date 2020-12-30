@@ -2,8 +2,7 @@ import os
 import sys
 from typing import List, Tuple, Optional, Union, Dict
 
-file_path = os.path.realpath(__file__)
-dir_path, file_name = os.path.split(file_path)
+
 
 
 from _mapping import Mapping
@@ -16,17 +15,17 @@ def get_line_topology(n: int)->List[Tuple[int,int]]:
         topology.append((i,i+1))
     return topology
 
-small_benchmark = (rd84_142,
-                    adr4_197,
-                    radd_250,
-                    z4_268,
-                    sym6_145,
-                    misex1_241,
-                    rd73_252,
-                    cycle10_2_110,
-                    square_root_7,
-                    sqn_258,
-                    rd84_253) 
+small_benchmark = ("rd84_142",
+                   "adr4_197",
+                   "radd_250",
+                   "z4_268",
+                   "sym6_145",
+                   "misex1_241",
+                   "rd73_252",
+                   "cycle10_2_110",
+                   "square_root_7",
+                   "sqn_258",
+                   "rd84_253") 
 
 topology = [(0,1),(0,5),
             (1,2),(1,6),(1,7),
@@ -56,43 +55,48 @@ def count_two_qubit_gates(circuit: Circuit)->int:
     return res
 
 #QASM_file = f"{dir_path}/benchmark/qasm/SABRE/rd84_253.qasm"
-QASM_file = f"{dir_path}/benchmark/qasm/qft/qft_n12.qasm"
-qc = OPENQASMInterface.load_file(QASM_file)
-circuit =qc.circuit
-#circuit.add_topology(get_line_topology(16))
-circuit.add_topology(topology)
+def test_mapping(input_path: str, output_path: str, topology: List[Tuple[int, int]], num_of_qubits: int, init_mapping: List[int]):
+    qc = OPENQASMInterface.load_file(input_path)
+    circuit =qc.circuit
+    #circuit.add_topology(get_line_topology(16))
+    circuit.add_topology(topology)
 
-# for gate in circuit.gates:
-#     print(gate)
+    # for gate in circuit.gates:
+    #     print(gate)
 
-logical_qubit_num = qc.qbits
-physical_qubit_num = 20
-#print(num)
-init_mapping = [i for i in range(physical_qubit_num)]
+    logical_qubit_num = qc.qbits
+    physical_qubit_num = num_of_qubits
+    #print(num)
 
-#circuit_trans = Mapping.run(circuit = circuit,num = logical_qubit_num, method = "global_sifting", is_lnn = True,init_mapping= init_mapping)
+    #circuit_trans = Mapping.run(circuit = circuit,num = logical_qubit_num, method = "global_sifting", is_lnn = True,init_mapping= init_mapping)
 
-circuit_trans = Mapping.run(circuit = circuit,num = physical_qubit_num, is_lnn =  False, init_mapping = init_mapping)
+    circuit_trans = Mapping.run(circuit = circuit,num = physical_qubit_num, is_lnn =  False, init_mapping = init_mapping)
 
+    with open(output_path, "w") as f:
+        print(circuit.circuit_size(), file = f)
+        print(circuit_trans.circuit_size(), file = f)
+        print(count_two_qubit_gates(circuit), file = f)
+        print(count_two_qubit_gates(circuit_trans), file = f)
+        print("Initial layout(physical qubits -> logic qubits):", file = f)
 
-print(circuit.circuit_size())
-print(circuit_trans.circuit_size())
-print(count_two_qubit_gates(circuit))
-print(count_two_qubit_gates(circuit_trans))
-print("Initial layout(physical qubits -> logic qubits):")
+        for i,elm in enumerate(init_mapping):
+            print("%d -> %d"%(i, elm), file = f)
 
-for i,elm in enumerate(init_mapping):
-    print("%d -> %d"%(i, elm))
+        for gate in circuit_trans.gates:
+            if gate.controls + gate.targets == 2:
+                if gate.controls == 1:
+                    print("control:%d  target :%d  gate type:%d" % (gate.carg, gate.targ, gate.type()), file = f)
+                elif gate.controls == 2:
+                    print("control:%d  target :%d  gate type:%d" % (gate.cargs[0], gate.cargs[1], gate.type()), file = f)
+                else:
+                    print("control:%d  target :%d  gate type:%d" % (gate.targs[0], gate.targs[1], gate.type()), file = f)
+            elif gate.controls + gate.targets == 1:
+                print("target :%d  gate type:%d" % (gate.targ, gate.type()), file = f)
 
-for gate in circuit_trans.gates:
-    print(gate)
-for gate in circuit_trans.gates:
-    if gate.controls + gate.targets == 2:
-        if gate.controls == 1:
-            print("control:%d  target :%d  gate type:%d" % (gate.carg, gate.targ, gate.type()))
-        elif gate.controls == 2:
-            print("control:%d  target :%d  gate type:%d" % (gate.cargs[0], gate.cargs[1], gate.type()))
-        else:
-            print("control:%d  target :%d  gate type:%d" % (gate.targs[0], gate.targs[1], gate.type()))
-    elif gate.controls + gate.targets == 1:
-        print("target :%d  gate type:%d" % (gate.targ, gate.type()))
+if __name__ == "__main__":
+    file_path = os.path.realpath(__file__)
+    dir_path, file_name = os.path.split(file_path)
+    for file_name in small_benchmark:
+        input_path = f"{dir_path}/benchmark/QASM example/{file_name}.qasm"
+        output_path =  f"{dir_path}/benchmark/QASM example/output/{file_name}.output"
+        test_mapping(input_path, output_path, topology, 20, init_mapping = [i for i in range(20)] )

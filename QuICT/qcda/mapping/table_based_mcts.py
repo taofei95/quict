@@ -68,8 +68,8 @@ class TableBasedMCTS(MCTSBase):
         self._coupling_graph = CouplingGraph(coupling_graph = coupling_graph)
         self._logical_circuit_dag = DAG(circuit = logical_circuit, mode = 1) 
         self._circuit_dag = DAG(circuit = logical_circuit, mode = 2)
-        self._circuit_dag.draw()
-        print(self._circuit_dag.size)
+        #self._circuit_dag.draw()
+        #print(self._circuit_dag.size)
         #self._physical_circuit = Circuit(logical_circuit.circuit_length())
         self._gate_index = []
         self._physical_circuit: List[BasicGate] = []
@@ -95,13 +95,13 @@ class TableBasedMCTS(MCTSBase):
             #     print(child._qubit_mask)
             #     print(child.reward)
             #     print(child.value)
-            print(self._root_node.front_layer)
-            print(self._root_node.cur_mapping)
+            #print(self._root_node.front_layer)
+            #print(self._root_node.cur_mapping)
             self._root_node = self._decide(node = self._root_node)
             #print(self._root_node.front_layer)
             self._physical_circuit.append(self._root_node.swap_with_edge)
             self._add_excutable_gates(self._root_node)
-            print("The %d-th search: the current size of physical circuit:%d"%(i, self._num_of_excutable_gate))
+            #print("The %d-th search: the current size of physical circuit:%d"%(i, self._num_of_excutable_gate))
             # self._gate_index.sort()
             # print(self._gate_index)
 
