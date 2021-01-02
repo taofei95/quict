@@ -13,6 +13,5 @@ from .gate.gate import *
 from .gate.gate_builder import *
 
 from .exception.exception import *
-
 from .layout.layout import *
 

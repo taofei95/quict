@@ -6,10 +6,10 @@
 
 import os
 import pytest
-from templates import *
-from template_optimization import TemplateOptimization
-from template_matching import TemplateMatching, TemplateSubstitution, MaximalMatches
-from template_matching.dagdependency import DAGDependency, circuit_to_dagdependency
+from QuICT.qcda.optimization.template_optimization.templates import *
+from QuICT.qcda.optimization.template_optimization import TemplateOptimization
+from QuICT.qcda.optimization.template_optimization.template_matching import TemplateMatching, TemplateSubstitution, MaximalMatches
+from QuICT.qcda.optimization.template_optimization.template_matching.dagdependency import DAGDependency, circuit_to_dagdependency
 
 
 def test_can_run():

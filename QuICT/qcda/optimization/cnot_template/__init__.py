@@ -5,3 +5,4 @@
 # @File    : __init__.py
 
 from .cnot_force import CnotForceBfs
+from .cnot_local_force import CnotLocalForceBfs

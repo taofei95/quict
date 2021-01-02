@@ -4,11 +4,13 @@
 # @Author  : Han Yu
 # @File    : cnot_local_force.py
 
+from itertools import combinations
+
 import numpy as np
 
 from .._optimization import Optimization
+from .cnot_force import CnotForceBfs
 from QuICT.core import *
-from QuICT.qcda.optimization import CnotForceBfs
 
 def traver_with_fix_qubits(gates: list, fix: set):
     """ local optimize for fix qubits
@@ -40,65 +42,65 @@ def traver_with_fix_qubits(gates: list, fix: set):
                 circuit = Circuit(len(fix))
                 for local_gate in local_list:
                     CX | circuit([mapping[local_gate.carg], mapping[local_gate.targ]])
-                new_gates = CnotForceBfs.run(circuit)
-                for local_gate in new_gates:
+                new_circuit = CnotForceBfs.run(circuit)
+                for local_gate in new_circuit.gates:
                     new_gate = CX.copy()
-                    new_gate.cargs = [back_map[local_gate.carg], back_map[local_gate.targ]]
+                    new_gate.cargs = [back_map[local_gate.carg]]
+                    new_gate.targs = [back_map[local_gate.targ]]
                     output.append(new_gate)
+                local_list = []
             output.append(gate)
+
+    if len(local_list) != 0:
+        circuit = Circuit(len(fix))
+        for local_gate in local_list:
+            CX | circuit([mapping[local_gate.carg], mapping[local_gate.targ]])
+        new_circuit = CnotForceBfs.run(circuit)
+        for local_gate in new_circuit.gates:
+            new_gate = CX.copy()
+            new_gate.cargs = [back_map[local_gate.carg]]
+            new_gate.targs = [back_map[local_gate.targ]]
+            output.append(new_gate)
+
     return output
 
-def traver(input: list, max_local_qubits = 5):
+def traver(input: list, width, max_local_qubits = 4):
     """ find the best circuit by bfs
 
     Args:
         input(list<BasicGate>): input circuit
+        width(int): circuit_width
         max_local_qubits(int): the max number of qubits
 
     Returns:
         list<BasicGate>: gates after optimization
-        bool: whether the gates decrease
 
     """
-    output = []
-    renew = False
-    last = 0
-    index_set = set()
-    length_input = len(input)
-    for i in range(length_input):
-        succ = add_set(index_set, input[i], max_local_qubits)
-        if not succ:
-            new_gates, succ = local_optimize(input[last:i], index_set)
-            last = i
-            if not succ:
-                output.extend(input[last:i])
-            else:
-                output.extend(new_gates)
-                renew = True
-    if last != length_input:
-        new_gates, succ = local_optimize(input[last:], index_set)
-        if not succ:
-            output.extend(input[last:])
-        else:
-            output.extend(new_gates)
-            renew = True
-    return output, renew
+    all_list = [i for i in range(width)]
+    for comb in combinations(all_list, min(width, max_local_qubits)):
+        input = traver_with_fix_qubits(input, set(comb))
+    return input
 
-def solve(input: list):
+def solve(gates: list, width):
     """ optimize the circuit locally
 
     Args:
-        input(list<BasicGate>): input circuit
+        gates(list<BasicGate>): input circuit
+        width(int): circuit_width
 
     Returns:
         Circuit: optimal circuit
 
     """
-    gates = input.gates
+    last_length = len(gates)
     while True:
-        gates, renew = traver(gates)
-        if not renew:
+        gates = traver(gates, width)
+        new_length = len(gates)
+        if last_length == new_length:
             break
+        last_length = new_length
+    circuit = Circuit(width)
+    circuit.extend(gates)
     return gates
 
 class CnotLocalForceBfs(Optimization):
@@ -108,10 +110,11 @@ class CnotLocalForceBfs(Optimization):
     @staticmethod
     def _run(circuit : Circuit, *pargs):
         """
-        circuit(Circuit): the circuit to be optimize
-        *pargs: other parameters
+        Args:
+            circuit(Circuit): the circuit to be optimize
+            *pargs: other parameters
+        Returns:
+            Circuit: output circuit
         """
         gates = circuit.gates
-        gates = solve(gates)
-        circuit.clear()
-        circuit.extend(gates)
+        return solve(gates, circuit.circuit_width())

@@ -24,10 +24,10 @@ import numpy as np
 
 from QuICT.core import * # pylint: disable=unused-wildcard-import
 from QuICT.qcda.optimization._optimization import Optimization
-from template_matching.dagdependency.circuit_to_dagdependency import circuit_to_dagdependency
-from template_matching.dagdependency.dagdependency_to_circuit import dagdependency_to_circuit
-from templates import template_nct_2a_1, template_nct_2a_2, template_nct_2a_3
-from template_matching import (TemplateMatching, TemplateSubstitution, MaximalMatches)
+from .template_matching.dagdependency.circuit_to_dagdependency import circuit_to_dagdependency
+from .template_matching.dagdependency.dagdependency_to_circuit import dagdependency_to_circuit
+from .templates import template_nct_2a_1, template_nct_2a_2, template_nct_2a_3
+from .template_matching import (TemplateMatching, TemplateSubstitution, MaximalMatches)
 
 
 class TemplateOptimization(Optimization):

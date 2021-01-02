@@ -10,8 +10,7 @@ import random
 import numpy as np
 
 from QuICT.core import *
-from QuICT.qcda.optimization import CnotForceBfs
-
+from QuICT.qcda.optimization import CnotForceBfs, CnotLocalForceBfs
 
 def _getRandomList(n):
     """ get first 2 number from 0, 1, ..., n - 1 randomly.
@@ -47,18 +46,25 @@ def check_equiv(circuit1, circuit2):
     matrix1 = generate_matrix(circuit1, n)
     matrix2 = generate_matrix(circuit2, n)
 
-    print(matrix1, matrix2)
-
     return not np.any(matrix1 ^ matrix2)
 
-
-def test_1():
+def w_test_1():
     for i in range(5, 6):
         circuit = Circuit(i)
         for _ in range(10000):
             cx = _getRandomList(i)
             CX | circuit(cx)
         new_circuit = CnotForceBfs.run(circuit)
+        if not check_equiv(circuit, new_circuit):
+            assert 0
+
+def test_2():
+    for i in range(5, 6):
+        circuit = Circuit(i)
+        for _ in range(100):
+            cx = _getRandomList(i)
+            CX | circuit(cx)
+        new_circuit = CnotLocalForceBfs.run(circuit)
         if not check_equiv(circuit, new_circuit):
             assert 0
 
