@@ -10,28 +10,43 @@ from .._optimization import Optimization
 from QuICT.core import *
 from QuICT.qcda.optimization import CnotForceBfs
 
-def local_optimize(gates: list, index_set: set):
-    return []
-
-def add_set(index_set: set, gate: BasicGate, max_local_qubits):
-    """ add gate into local set
-
-    :param index_set:
-    :param gate:
-    :param max_local_qubits:
-    :return:
+def traver_with_fix_qubits(gates: list, fix: set):
+    """ local optimize for fix qubits
+    Args:
+        gates(list<CXGate>): the gates to be optimized
+        fix(set<int>): the fix qubits
+    Returns:
+        list<CXGate>: results after optimization
     """
-    if gate.type() != GATE_ID["CX"]:
-        raise Exception("input gates should contain only CX gates")
-    if gate.carg not in index_set:
-        if len(index_set) >= max_local_qubits:
-            return False
-        index_set.add(gate.carg)
-    if gate.targ not in index_set:
-        if len(index_set) >= max_local_qubits:
-            return False
-        index_set.add(gate.targ)
-    return True
+
+    mapping = {}
+    back_map = {}
+    mapping_id = 0
+    for element in fix:
+        mapping[element] = mapping_id
+        back_map[mapping_id] = element
+        mapping_id += 1
+
+    output = []
+    local_list = []
+    for gate in gates:
+        fix_in = int(gate.carg in fix) + int(gate.targ in fix)
+        if fix_in == 2:
+            local_list.append(gate)
+        elif fix_in == 0:
+            output.append(gate)
+        else:
+            if len(local_list) != 0:
+                circuit = Circuit(len(fix))
+                for local_gate in local_list:
+                    CX | circuit([mapping[local_gate.carg], mapping[local_gate.targ]])
+                new_gates = CnotForceBfs.run(circuit)
+                for local_gate in new_gates:
+                    new_gate = CX.copy()
+                    new_gate.cargs = [back_map[local_gate.carg], back_map[local_gate.targ]]
+                    output.append(new_gate)
+            output.append(gate)
+    return output
 
 def traver(input: list, max_local_qubits = 5):
     """ find the best circuit by bfs
