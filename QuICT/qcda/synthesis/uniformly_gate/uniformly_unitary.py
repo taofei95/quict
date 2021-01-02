@@ -23,6 +23,8 @@ def gates_from_unitary(unitary):
 def get_parameters_from_unitaries(u1, u2):
     """ decomposition uniformly controlled one qubit unitaries
 
+    |0><0| ⊗ u1 + |1><1| ⊗ u2
+
     Args:
         u1(np.ndarray): unitary with 0
         u2(np.ndarray): unitary with 1
