@@ -21,11 +21,11 @@ def gates_from_unitary(unitary, target):
     """
     unitary = np.mat(unitary).reshape(2, 2)
     z = np.exp(1j * np.angle(unitary[0, 0]))
-    if abs(z) >= 1e-10:
-        unitary[:] /= z
+    unitary = unitary / z
+
     theta = np.arccos(unitary[0, 0])
     sint = np.sin(theta)
-    if abs(sint) >= 1e-10:
+    if abs(sint) >= 1e-6:
         lamda = np.angle(unitary[0, 1] / -sint)
         phi = np.angle(unitary[1, 0] / sint)
     else:
@@ -34,6 +34,7 @@ def gates_from_unitary(unitary, target):
     gate = U3.copy()
     gate.pargs = [theta * 2, phi, lamda]
     gate.targs = [target]
+    assert not np.any(abs(gate.matrix.reshape(2, 2) - unitary) > 1e-6)
     return gate
 
 def u2_expression(X):
@@ -47,14 +48,15 @@ def u2_expression(X):
         float: phase angle
     """
     if abs(abs(X[0, 0])) < 1e-10:
-        absX = X[1, 0] * X[0, 1]
-        phase = 1 / absX
-        X[:] /= np.sqrt(phase)
+        absX = -X[1, 0] * X[0, 1]
+        phase = np.angle(absX) / 2
+        X[:] /= np.exp(1j * phase)
     else:
-        phase = X[1, 1].conj() / X[0, 0]
-        X[:] /= np.sqrt(phase)
+        absX = X[0, 0] * X[1, 1]
+        phase = np.angle(absX) / 2
+        X[:] /= np.exp(1j * phase)
 
-    return np.angle(phase) * 2
+    return 2 * phase
 
 def get_parameters_from_unitaries(u1, u2):
     """ decomposition uniformly controlled one qubit unitaries
@@ -69,38 +71,51 @@ def get_parameters_from_unitaries(u1, u2):
         np.ndarray: u in the decomposition
         list<float>: angle list of Rz
     """
-    print()
     a = np.mat(u1).reshape(2, 2)
     b = np.mat(u2).reshape(2, 2)
+
     X = a * b.H
+
     phi = u2_expression(X)
 
     x1 = np.angle(X[0, 0])
+
     r11_angle = 1j / 2 * (-np.pi / 2 - phi / 2 - x1)
     r22_angle = 1j / 2 * (np.pi / 2 - phi / 2 + x1)
     r = np.mat(np.diag([np.exp(r11_angle), np.exp(r22_angle)]))
-    rXr = r * X * r
+
+    rXr = r * X * r * np.exp(1j * phi / 2)
+
     lamda, hU = np.linalg.eig(rXr)
+
     if abs(abs(lamda[0] - 1j)) >= 1e-10:
-        hU[[0, 1], :] = hU[[1, 0], :]
+        hU[:, [0, 1]] = hU[:, [1, 0]]
+
     u = np.mat(hU).reshape(2, 2)
 
     d = np.mat(np.diag([np.exp(1j * np.pi / 4), np.exp(-1j * np.pi / 4)]))
+
     v = d.H * u.H * r * a
+
+    assert not np.any(abs(u.H * u - np.diag([1, 1])) > 1e-7)
+    assert not np.any(abs(u * d * d * u.H - rXr) > 1e-7)
+    assert not np.any(abs(a - r.H * u * d * v) > 1e-7)
+    assert not np.any(abs(b - r * u * d.H * v) > 1e-7)
+    assert not np.any(abs(X * np.exp(1j * phi / 2) - r.H * u * d * d * u.H * r.H) > 1e-7)
 
     v = H.matrix.reshape(2, 2) * v
     v[:] *= np.exp(-1j * np.pi / 4)
+    u = u * Rz(-np.pi / 2).matrix.reshape(2, 2) * H.matrix.reshape(2, 2)
 
-    u = u * Rz(np.pi / 2).matrix.reshape(2, 2) * H.matrix.reshape(2, 2)
+    return v, u, [-np.pi - 1.0 * (x1 + phi / 2), 1.0 * (x1 - phi / 2)]
 
-    return v, u, [-1.0 / 2 * (x1 + phi / 2), np.pi / 2 + 1.0 / 2 * (x1 - phi / 2)]
-
-def uniformlyUnitarySolve(low, high, unitary):
+def uniformlyUnitarySolve(low, high, unitary, mapping):
     """ synthesis uniformlyUnitary gate, bits range [low, high)
     Args:
         low(int): the left range low
         high(int): the right range high
         unitary(list<int>): the list of unitaries
+        mapping(list<int>): the qubit order of gate
     Returns:
         the synthesis result
     """
@@ -108,23 +123,26 @@ def uniformlyUnitarySolve(low, high, unitary):
         return [gates_from_unitary(unitary[0], low)]
     length = len(unitary) // 2
     GateBuilder.setGateType(GATE_ID["CX"])
-    GateBuilder.setTargs(high - 1)
-    GateBuilder.setCargs(low)
+    GateBuilder.setTargs(mapping[high - 1])
+    GateBuilder.setCargs(mapping[low])
     gateA = GateBuilder.getGate()
-    gateB = GateBuilder.getGate()
-    Rxp = []
-    Rxn = []
-    angle_list = []
+    Rxv = []
+    Rxu = []
+    angle_list = [0] * 2 * length
     for i in range(length):
-        u, v, angles = get_parameters_from_unitaries(unitary[i], unitary[i + length])
-        angle_list.extend(angles)
-        Rxp.append(u)
-        Rxn.append(v)
-    gates = uniformlyUnitarySolve(low + 1, high, Rxp)
+        v, u, angles = get_parameters_from_unitaries(unitary[i], unitary[i + length])
+        Rxu.append(u)
+        Rxv.append(v)
+        dual_position = 0
+        for j in range(high - low - 2):
+            if (1 << j) & i:
+                dual_position += 1 << (high - low - 2 - j - 1)
+        angle_list[dual_position] = angles[0]
+        angle_list[dual_position + length] = angles[1]
+    gates = uniformlyUnitarySolve(low + 1, high, Rxv, mapping)
     gates.append(gateA)
-    gates.extend(uniformlyUnitarySolve(low + 1, high, Rxn))
-    gates.append(gateB)
-    gates.extend(uniformlyRz(angle_list).build_gate())
+    gates.extend(uniformlyUnitarySolve(low + 1, high, Rxu, mapping))
+    gates.extend(uniformlyRz(angle_list).build_gate([mapping[i] for i in range(high - 1, low - 1, -1)]))
     return gates
 
 class uniformlyUnitaryGate(Synthesis):
@@ -140,16 +158,19 @@ class uniformlyUnitaryGate(Synthesis):
         Returns:
             uniformlyUnitaryGate: model filled by the parameter angle_list.
         """
-        self.pargs = unitary_list
+        self.pargs = list(unitary_list)
+        self.targets = int(np.round(np.log2(len(self.pargs)))) + 1
         return self
 
-    def build_gate(self):
+    def build_gate(self, mapping = None):
         """ overloaded the function "build_gate"
 
         """
         n = self.targets
+        if mapping is None:
+            mapping = [i for i in range(n)]
         if 1 << (n - 1) != len(self.pargs):
             raise Exception("the number of parameters unmatched.")
-        return uniformlyUnitarySolve(0, n, self.pargs)
+        return uniformlyUnitarySolve(0, n, self.pargs, mapping)
 
 uniformlyUnitary = uniformlyUnitaryGate()

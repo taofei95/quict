@@ -9,25 +9,26 @@ import numpy as np
 from .._synthesis import Synthesis
 from QuICT.core import GateBuilder, GATE_ID
 
-def uniformlyRotation(low, high, z, gateType):
+def uniformlyRotation(low, high, z, gateType, mapping):
     """ synthesis uniformlyRotation gate, bits range [low, high)
     Args:
         low(int): the left range low
         high(int): the right range high
         z(list<int>): the list of angle y
         gateType(int): the gateType (Rz or Ry)
+        mapping(list<int>): the qubit order of gate
     Returns:
         the synthesis result
     """
     if low + 1 == high:
         GateBuilder.setGateType(gateType)
-        GateBuilder.setTargs(low)
-        GateBuilder.setPargs(z[0])
+        GateBuilder.setTargs(mapping[low])
+        GateBuilder.setPargs(float(z[0]))
         return [GateBuilder.getGate()]
     length = len(z) // 2
     GateBuilder.setGateType(GATE_ID["CX"])
-    GateBuilder.setTargs(high - 1)
-    GateBuilder.setCargs(low)
+    GateBuilder.setTargs(mapping[high - 1])
+    GateBuilder.setCargs(mapping[low])
     gateA = GateBuilder.getGate()
     gateB = GateBuilder.getGate()
     Rxp = []
@@ -35,9 +36,9 @@ def uniformlyRotation(low, high, z, gateType):
     for i in range(length):
         Rxp.append((z[i] + z[i + length]) / 2)
         Rxn.append((z[i] - z[i + length]) / 2)
-    gates = uniformlyRotation(low + 1, high, Rxp, gateType)
+    gates = uniformlyRotation(low + 1, high, Rxp, gateType, mapping)
     gates.append(gateA)
-    gates.extend(uniformlyRotation(low + 1, high, Rxn, gateType))
+    gates.extend(uniformlyRotation(low + 1, high, Rxn, gateType, mapping))
     gates.append(gateB)
     return gates
 
@@ -54,18 +55,20 @@ class uniformlyRyGate(Synthesis):
         Returns:
             uniformlyRyGate: model filled by the parameter angle_list.
         """
-        self.pargs = angle_list
+        self.pargs = list(angle_list)
         self.targets = int(np.round(np.log2(len(self.pargs)))) + 1
         return self
 
-    def build_gate(self):
+    def build_gate(self, mapping = None):
         """ overloaded the function "build_gate"
 
         """
         n = self.targets
+        if mapping is None:
+            mapping = [i for i in range(n)]
         if 1 << (n - 1) != len(self.pargs):
             raise Exception("the number of parameters unmatched.")
-        return uniformlyRotation(0, n, self.pargs, GATE_ID['Ry'])
+        return uniformlyRotation(0, n, self.pargs, GATE_ID['Ry'], mapping)
 
 uniformlyRy = uniformlyRyGate()
 
@@ -82,17 +85,19 @@ class uniformlyRzGate(Synthesis):
         Returns:
             uniformlyRzGate: model filled by the parameter angle_list.
         """
-        self.pargs = angle_list
+        self.pargs = list(angle_list)
         self.targets = int(np.round(np.log2(len(self.pargs)))) + 1
         return self
 
-    def build_gate(self):
+    def build_gate(self, mapping = None):
         """ overloaded the function "build_gate"
 
         """
         n = self.targets
+        if mapping is None:
+            mapping = [i for i in range(n)]
         if 1 << (n - 1) != len(self.pargs):
             raise Exception("the number of parameters unmatched.")
-        return uniformlyRotation(0, n, self.pargs, GATE_ID['Rz'])
+        return uniformlyRotation(0, n, self.pargs, GATE_ID['Rz'], mapping)
 
 uniformlyRz = uniformlyRzGate()
