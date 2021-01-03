@@ -4,6 +4,8 @@
 # @Author  : Han Yu
 # @File    : uniformRotation.py
 
+import numpy as np
+
 from .._synthesis import Synthesis
 from QuICT.core import GateBuilder, GATE_ID
 
@@ -53,6 +55,7 @@ class uniformlyRyGate(Synthesis):
             uniformlyRyGate: model filled by the parameter angle_list.
         """
         self.pargs = angle_list
+        self.targets = int(np.round(np.log2(len(self.pargs)))) + 1
         return self
 
     def build_gate(self):
@@ -80,6 +83,7 @@ class uniformlyRzGate(Synthesis):
             uniformlyRzGate: model filled by the parameter angle_list.
         """
         self.pargs = angle_list
+        self.targets = int(np.round(np.log2(len(self.pargs)))) + 1
         return self
 
     def build_gate(self):
