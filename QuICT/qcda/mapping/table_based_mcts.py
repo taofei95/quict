@@ -31,14 +31,13 @@ class TableBasedMCTS(MCTSBase):
         """
         Params:
             paly_times: the repeated times of the whole search procedure for the circuit.
-            gamma: the paramter measures the trade-off between the short-term reward and the long-term value.
-            c: the paramter measures the trade-off between the exploiation and exploration in the upper confidence bound.
+            gamma: the parameter measures the trade-off between the short-term reward and the long-term value.
+            c: the parameter measures the trade-off between the exploitation and exploration in the upper confidence bound.
             Gsim: size of the sub circuit that would be searched by the random simulation method.
             Nsim: the repeated times of the random simulation method.
             selection_times: the time of expansion and back propagation in the monte carlo tree search
         """
         self._play_times = play_times 
-
         self._selection_times = selection_times 
         self._call_back_threshold = 100
         self._gamma = gamma
@@ -66,8 +65,6 @@ class TableBasedMCTS(MCTSBase):
         """
         return node.reward + node.value + self._c* np.sqrt(np.log2(node.parent.visit_count) / node.visit_count)
     
-
-    #TODO: layout -> mapping
     def search(self, logical_circuit: Circuit, init_mapping: List[int], coupling_graph : List[Tuple] = None):
         """
         the main process of the qubit mapping algorithm based on the monte carlo tree search. 
@@ -78,7 +75,7 @@ class TableBasedMCTS(MCTSBase):
             coupling_graph: the list of the edges of the physical device's graph.
         """
         
-        self._num_of_excutable_gate = 0
+        self._num_of_executable_gate = 0
         self._coupling_graph = CouplingGraph(coupling_graph = coupling_graph)
         self._logical_circuit_dag = DAG(circuit = logical_circuit, mode = 1) 
         self._circuit_dag = DAG(circuit = logical_circuit, mode = 2)
@@ -92,7 +89,7 @@ class TableBasedMCTS(MCTSBase):
                                   front_layer = self._circuit_dag.front_layer, qubit_mask = qubit_mask, cur_mapping = init_mapping)
         
         self._add_initial_single_qubit_gate(self._root_node)
-        self._add_excutable_gates(self._root_node)
+        self._add_executable_gates(self._root_node)
         self._expand(node = self._root_node)
         i=0
         while self._root_node.is_terminal_node() is not True:
@@ -101,7 +98,7 @@ class TableBasedMCTS(MCTSBase):
             self._root_node = self._decide(node = self._root_node)
 
             self._physical_circuit.append(self._root_node.swap_of_edge)
-            self._add_excutable_gates(self._root_node)
+            self._add_executable_gates(self._root_node)
  
 
 
@@ -222,14 +219,14 @@ class TableBasedMCTS(MCTSBase):
                     if self._logical_circuit_dag[suc]['gate'].is_single():
                         sqg_stack.append(suc)
         
-    def _add_excutable_gates(self, node: MCTSNode):
+    def _add_executable_gates(self, node: MCTSNode):
         """
-        add  excutable gates in the node to the physical circuit
+        add  executable gates in the node to the physical circuit
         """
-        excution_list = self._root_node.excution_list
-        self._num_of_excutable_gate = self._num_of_excutable_gate + len(excution_list)
+        execution_list = self._root_node.excution_list
+        self._num_of_executable_gate = self._num_of_executable_gate + len(execution_list)
              
-        for gate in excution_list:
+        for gate in execution_list:
             if  self._logical_circuit_dag[gate]['gate'].is_single():
                 raise Exception("There shouldn't exist single qubit gate in two-qubit gate circuit")
             else:
