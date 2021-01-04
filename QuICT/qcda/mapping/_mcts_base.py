@@ -306,11 +306,7 @@ class MCTSNode:
         ----------
             circuit_dag: The directed acyclic graph representation of the circuit, which is stored 
                          in a static memory and shared by all the MCTS nodes.
-<<<<<<< HEAD
-            coupling_graph: the physical device's graph.
-=======
             coupling_graph: The physical device's graph.
->>>>>>> d20bc29ed4f502d8c6ecd0624fb639ac26425b24
             front_layer: The set of all the nodes in the DAG with zero in-degree. 
             cur_mapping: The current mapping of logical qubit to physical qubits 
             qubit_mask: The qubit mask stores the index of current closet gate in the DAG, e.g.,
@@ -329,17 +325,10 @@ class MCTSNode:
         self._qubit_mask = qubit_mask
         self._parent = parent
         self._swap_of_edge = swap_of_edge
-<<<<<<< HEAD
         self._children: List[MCTSNode] = []     
         self._execution_list: List[int] = []     
         self._candidate_swap_list: List[SwapGate] = []
         self._visit_count = 1    
-=======
-        self._children: List[MCTSNode] = []  
-        self._execution_list: List[int] = []  
-        self._candidate_swap_list: List[SwapGate] = []
-        self._visit_count = 1 
->>>>>>> d20bc29ed4f502d8c6ecd0624fb639ac26425b24
         self._value = 0
         self._reward = 0
         self._v = 0
@@ -364,11 +353,7 @@ class MCTSNode:
     def reward(self)->int:
         """
         The reward of the swap gate which transforms the mapping of node's parent to its. It equals the 
-<<<<<<< HEAD
         number of the executable gates under the current mapping.
-=======
-        number of the excutable gates under the current mapping.
->>>>>>> d20bc29ed4f502d8c6ecd0624fb639ac26425b24
         """
         return self._reward
     
@@ -402,11 +387,7 @@ class MCTSNode:
     @property
     def qubit_mask(self)->np.ndarray:
         """
-<<<<<<< HEAD
         The qubit mask stores the index of current closet gate in the DAG, e.g.,
-=======
-        Store the index of current closet gate in the DAG, e.g.,
->>>>>>> d20bc29ed4f502d8c6ecd0624fb639ac26425b24
                       given the  circuit with the sequential two-qubit gates {(0,1),(1,2),(2,3),(3,4),(4,1)},
                       the qubit mask should be (0,0,1,2,3), which means the first and second physical 
                       should be allocated to the first gate for it's the first gate on the qubit wires and so on.  
@@ -422,25 +403,15 @@ class MCTSNode:
     def front_layer(self)->List[int]:
         """
         The set of all the nodes in the DAG with zero in-degree. 
-<<<<<<< HEAD
-
-=======
->>>>>>> d20bc29ed4f502d8c6ecd0624fb639ac26425b24
         """
         return self._front_layer
 
     @property 
     def execution_list(self)->List[BasicGate]:
-<<<<<<< HEAD
         """
         The list of the executable gates under the current mapping
         """
         
-=======
-        """
-        The list of the executable gates under the current mapping
-        """  
->>>>>>> d20bc29ed4f502d8c6ecd0624fb639ac26425b24
         return self._execution_list
 
     @property
@@ -467,11 +438,7 @@ class MCTSNode:
     @property
     def visit_count(self)->int:
         """
-<<<<<<< HEAD
         The number of  times the node has been visited
-=======
-        The number of  times the node has been visted
->>>>>>> d20bc29ed4f502d8c6ecd0624fb639ac26425b24
         """
         return self._visit_count
    
@@ -602,10 +569,6 @@ class MCTSNode:
         The gates that can be executed immediately  with the qubit cur_mapping 
         and update the front layer and qubit mask of the nodes
         """
-<<<<<<< HEAD
-
-=======
->>>>>>> d20bc29ed4f502d8c6ecd0624fb639ac26425b24
         self._execution_list = []
         fl_stack = deque(self._front_layer)
         self._front_layer = []    
@@ -623,10 +586,6 @@ class MCTSNode:
             else:
                 self._front_layer.append(gate)
         self._reward = len(self._execution_list)
-<<<<<<< HEAD
-
-=======
->>>>>>> d20bc29ed4f502d8c6ecd0624fb639ac26425b24
     
     def _update_fl_list(self, stack: deque, gate_in_dag: int):
         """
@@ -681,12 +640,7 @@ class MCTSNode:
     def _gate_qubits(self, gate_in_dag: int)->int:
         """
         The number of the qubits dominated by the gate.
-<<<<<<< HEAD
-        """
-                   
-=======
         """            
->>>>>>> d20bc29ed4f502d8c6ecd0624fb639ac26425b24
         return self.circuit_dag[gate_in_dag]['gate'].controls + self.circuit_dag[gate_in_dag]['gate'].targets
     
     def _is_swap(self, gate_in_dag: int)->bool:

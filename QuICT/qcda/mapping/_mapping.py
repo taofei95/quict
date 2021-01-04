@@ -153,13 +153,6 @@ class  Mapping(object):
        
         mcts_tree = TableBasedMCTS(**paramter)
         mcts_tree.search(logical_circuit = circuit, init_mapping = init_mapping, coupling_graph = circuit.topology)
-<<<<<<< HEAD
-=======
-        # mcts_tree.root_node.coupling_graph.draw()
-        # mcts_tree.root_node.circuit_dag.draw()
-        # for gate in mcts_tree.physical_circuit:
-        #     print(gate)
->>>>>>> d20bc29ed4f502d8c6ecd0624fb639ac26425b24
         return mcts_tree.physical_circuit
 
 
