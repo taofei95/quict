@@ -7,7 +7,7 @@ class TableBasedMCTS(MCTSBase):
     @classmethod
     def _get_physical_gate(cls, gate: BasicGate, cur_mapping: List[int])->BasicGate:
         """
-        get the  physical gate of the given logical gate   
+        Get the  physical gate of the given logical gate   
         """
         cur_gate = gate.copy()
         if cur_gate.is_single():
@@ -30,12 +30,12 @@ class TableBasedMCTS(MCTSBase):
                  Nsim: int = 5, selection_times: int = 20, c = 20, **params):
         """
         Params:
-            paly_times: the repeated times of the whole search procedure for the circuit.
-            gamma: the parameter measures the trade-off between the short-term reward and the long-term value.
-            c: the parameter measures the trade-off between the exploitation and exploration in the upper confidence bound.
-            Gsim: size of the sub circuit that would be searched by the random simulation method.
-            Nsim: the repeated times of the random simulation method.
-            selection_times: the time of expansion and back propagation in the monte carlo tree search
+            paly_times: The repeated times of the whole search procedure for the circuit.
+            gamma: The parameter measures the trade-off between the short-term reward and the long-term value.
+            c: The parameter measures the trade-off between the exploitation and exploration in the upper confidence bound.
+            Gsim: Size of the sub circuit that would be searched by the random simulation method.
+            Nsim: The repeated times of the random simulation method.
+            selection_times: The time of expansion and back propagation in the monte carlo tree search
         """
         self._play_times = play_times 
         self._selection_times = selection_times 
@@ -48,14 +48,14 @@ class TableBasedMCTS(MCTSBase):
     @property
     def physical_circuit(self):
         """
-        the physical circuit of the current root node
+        The physical circuit of the current root node
         """
         return self._physical_circuit
 
     @property
     def root_node(self):
         """
-        the root node of the monte carlo tree
+        The root node of the monte carlo tree
         """
         return self._root_node
     
@@ -67,12 +67,12 @@ class TableBasedMCTS(MCTSBase):
     
     def search(self, logical_circuit: Circuit, init_mapping: List[int], coupling_graph : List[Tuple] = None):
         """
-        the main process of the qubit mapping algorithm based on the monte carlo tree search. 
+        The main process of the qubit mapping algorithm based on the monte carlo tree search. 
         Params:
-            logical_circuit: the logical circuit to be transformed into the circuit compliant with the physical device, i.e., 
+            logical_circuit: The logical circuit to be transformed into the circuit compliant with the physical device, i.e., 
                             each gate of the transformed circuit are adjacent on the device.
-            init_mapping: the initial mapping of the logical quibts to physical qubits.
-            coupling_graph: the list of the edges of the physical device's graph.
+            init_mapping: The initial mapping of the logical quibts to physical qubits.
+            coupling_graph: The list of the edges of the physical device's graph.
         """
         
         self._num_of_executable_gate = 0
@@ -91,18 +91,15 @@ class TableBasedMCTS(MCTSBase):
         self._add_initial_single_qubit_gate(self._root_node)
         self._add_executable_gates(self._root_node)
         self._expand(node = self._root_node)
-        i=0
         while self._root_node.is_terminal_node() is not True:
-            i = i+1
             self._search(root_node = self._root_node)
             self._root_node = self._decide(node = self._root_node)
-
             self._physical_circuit.append(self._root_node.swap_of_edge)
             self._add_executable_gates(self._root_node)
 
     def _search(self, root_node: MCTSNode):
         """
-        monte carlo tree search from the root node
+        Monte Carlo tree search from the root node
         """
         for i in range(self._selection_times):
             #print("MCTS:%d"%(i))
@@ -113,7 +110,7 @@ class TableBasedMCTS(MCTSBase):
 
     def _select(self, node: MCTSNode)-> MCTSNode:
         """
-        select the child node with highes score to expand
+        Select the child node with highest score to expand
         """
         cur_node = node 
         cur_node.visit_count = cur_node.visit_count + 1
@@ -124,14 +121,14 @@ class TableBasedMCTS(MCTSBase):
 
     def _expand(self, node : MCTSNode):
         """
-        open all child nodes of the current node by applying the swap gates in candidate swap list
+        Open all child nodes of the current node by applying the swap gates in candidate swap list
         """
         for swap in node.candidate_swap_list:
             node.add_child_node(swap)
             
     def _rollout(self, node : MCTSNode, method: str):
         """
-        do a heuristic search for the sub circuit with Gsim gates from the current node by the specified method
+        Do a heuristic search for the sub circuit with Gsim gates from the current node by the specified method
         """
         res = 0
         N = np.inf
@@ -146,7 +143,7 @@ class TableBasedMCTS(MCTSBase):
     
     def _backpropagate(self,node : MCTSNode):
         """
-        use the result of the rollout to update the score in the nodes on the path from the current node to the root 
+        Use the result of the rollout to update the score in the nodes on the path from the current node to the root 
         """
         cur_node = node
         while cur_node.parent is not None:
@@ -156,19 +153,19 @@ class TableBasedMCTS(MCTSBase):
 
     def _eval(self, node : MCTSNode):
         """
-        evaluate the vlaue of the current node by DNN method
+        Evaluate the vlaue of the current node by DNN method
         """
         pass
 
     def _decide(self,node : MCTSNode):
         """
-        decide which child node to move into 
+        Decide which child node to move into 
         """
         return self._get_best_child(node) 
 
     def _select_next_child(self, node: MCTSNode)-> MCTSNode:
         """
-        select the next child to be expanded of the current node 
+        Select the next child to be expanded of the current node 
         """
         res_node = MCTSNode()
         score = -1
@@ -181,7 +178,7 @@ class TableBasedMCTS(MCTSBase):
   
     def _get_best_child(self, node: MCTSNode)-> MCTSNode:
         """
-        get the child with highest score of the current node as the next root node. 
+        Get the child with highest score of the current node as the next root node. 
         """
         res_node = MCTSNode()
         score = -1
@@ -201,7 +198,7 @@ class TableBasedMCTS(MCTSBase):
 
     def _add_initial_single_qubit_gate(self, node: MCTSNode):
         """
-        add the single qubit gate in the initial front layer to the physical circuit
+        Add the single qubit gate in the initial front layer to the physical circuit
         """
         cur_mapping = self._root_node.cur_mapping
         sqg_stack = deque(self._logical_circuit_dag.front_layer)
@@ -216,9 +213,9 @@ class TableBasedMCTS(MCTSBase):
         
     def _add_executable_gates(self, node: MCTSNode):
         """
-        add  executable gates in the node to the physical circuit
+        Add  executable gates in the node to the physical circuit
         """
-        execution_list = self._root_node.excution_list
+        execution_list = self._root_node.execution_list
         self._num_of_executable_gate = self._num_of_executable_gate + len(execution_list)
              
         for gate in execution_list:
@@ -230,7 +227,7 @@ class TableBasedMCTS(MCTSBase):
     
     def _add_gate_and_successors(self, gate: int):
         """
-        add the current gate as well as  the gates succeed it to the physical circuit iff the succeeding gate 
+        Add the current gate as well as  the gates succeed it to the physical circuit iff the succeeding gate 
         satisfies one of the following conditions: 
             1) is a single qubit gates 
             2) or is a two-qubit gate shares the same qubits as the gate 
@@ -250,7 +247,7 @@ class TableBasedMCTS(MCTSBase):
 
     def _is_valid_successor(self, gate_index: int, pre_gate_index: int, mark: Set[int])->bool:
         """
-        indicate whether the succeeding node can be excuted as soon as the  
+        Indicate whether the succeeding node can be excuted as soon as the  
         """
         gate = self._logical_circuit_dag[gate_index]['gate']
         pre_gate = self._logical_circuit_dag[pre_gate_index]['gate']
@@ -269,7 +266,7 @@ class TableBasedMCTS(MCTSBase):
 
     def _get_gate_qubits(self, gate: BasicGate)->List[int]:
         """
-        get the qubits that the gate acts on 
+        Get the qubits that the gate acts on 
         """
         if gate.is_control_single():
             return [gate.targ, gate.carg]
@@ -280,7 +277,7 @@ class TableBasedMCTS(MCTSBase):
 
     def _gate_distance_in_device(self, cur_mapping: List[int])->Callable[[int],int]:
         """
-        return a function calculates the distance between the control qubit and target qubit of the given gate  on the physical device 
+        Return a function calculates the distance between the control qubit and target qubit of the given gate  on the physical device 
         """
         cur_mapping = cur_mapping
         def func(gate_in_dag: int)->int:
@@ -289,7 +286,7 @@ class TableBasedMCTS(MCTSBase):
 
     def _neareast_neighbour_count(self, front_layer: List[int], cur_mapping: List[int] )-> int:
         """
-        caculate the sum of the distance of all the gates in the front layer on the physical device
+        Caculate the sum of the distance of all the gates in the front layer on the physical device
         """
         gate_distance = self._gate_distance_in_device(cur_mapping = cur_mapping)
         NNC = 0
@@ -299,35 +296,30 @@ class TableBasedMCTS(MCTSBase):
 
     def _change_mapping_with_single_swap(self, cur_mapping: List[int], swap_gate: SwapGate)->List[int]:
         """
-        gate the new mapping changed by a single swap, e.g., the mapping [0, 1, 2, 3, 4] of 5 qubits will be changed
+        Get the new mapping changed by a single swap, e.g., the mapping [0, 1, 2, 3, 4] of 5 qubits will be changed
         to the mapping [1, 0, 2, 3, 4] by the swap gate SWAP(0,1).
         """
         res_mapping = cur_mapping.copy()
-
         if isinstance(swap_gate, SwapGate):
             p_target = swap_gate.targs
             l_target = [cur_mapping.index(p_target[i], 0, len(cur_mapping)) 
                         for i in  range(len(p_target)) ]
-    
             if self._coupling_graph.is_adjacent(p_target[0], p_target[1]):
                 res_mapping[l_target[0]] = p_target[1]
                 res_mapping[l_target[1]] = p_target[0]
             else:
                 raise MappingLayoutException()
         else:
-            raise TypeException("swap gate","other gate")
-
+                raise TypeException("swap gate","other gate")
         return res_mapping
 
     def _change_qubit_mask_with_single_swap(self, qubit_mask: List[int], swap_gate: SwapGate)->List[int]:
         """
-        get the new qubit mask changed by a single swap gate.
+        Get the new qubit mask changed by a single swap gate.
         """
         res_qubit_mask = qubit_mask.copy()
-
         if isinstance(swap_gate, SwapGate):
             p_target = swap_gate.targs
-    
             if self._coupling_graph.is_adjacent(p_target[0], p_target[1]):
                 res_qubit_mask[p_target[0]] = qubit_mask[p_target[1]]
                 res_qubit_mask[p_target[1]] = qubit_mask[p_target[0]]
@@ -335,7 +327,6 @@ class TableBasedMCTS(MCTSBase):
                 raise MappingLayoutException()
         else:
             raise TypeException("swap gate","other gate")
-
         return res_qubit_mask
 
     def _f(self, x: np.ndarray = None)->float:
@@ -352,38 +343,29 @@ class TableBasedMCTS(MCTSBase):
 
     def _random_simulation(self, node: MCTSNode):
         """
-        a fast random simulation method for qubit mapping problem. The method randomly select the swap gates 
-        from the candidate list by the probility distribution defined by the neareast_neighbour_count of the mapping 
+        A fast random simulation method for qubit mapping problem. The method randomly select the swap gates 
+        from the candidate list by the probability distribution defined by the neareast_neighbour_count of the mapping 
         changed by the swap 
         """
-        excuted_gate = 0
+        executed_gate = 0
         cur_node = node.copy()
         num_swap = 0
-
-        while  cur_node.is_terminal_node() is not True and  excuted_gate < self._Gsim:
-            base = self._neareast_neighbour_count(front_layer = cur_node.front_layer, cur_mapping = cur_node.cur_mapping)
-            
+        while  cur_node.is_terminal_node() is not True and  executed_gate < self._Gsim:
+            base = self._neareast_neighbour_count(front_layer = cur_node.front_layer, cur_mapping = cur_node.cur_mapping)    
             list_length = len(cur_node.candidate_swap_list)
             NNC= np.zeros(list_length, dtype=float)
-
             for i,swap_gate in enumerate(cur_node.candidate_swap_list):
                 mapping = self._change_mapping_with_single_swap(cur_node.cur_mapping, swap_gate)
                 NNC[i] = base - self._neareast_neighbour_count(cur_mapping = mapping, front_layer = cur_node.front_layer)
             dist_p = self._f(NNC)
             dist_p = dist_p / np.sum(dist_p)
             index = np.random.choice(a = list_length, p = dist_p)
-
             cur_node.cur_mapping  = self._change_mapping_with_single_swap(cur_node.cur_mapping, cur_node.candidate_swap_list[index])
             cur_node.qubit_mask = self._change_qubit_mask_with_single_swap(cur_node.qubit_mask, cur_node.candidate_swap_list[index])
             cur_node.swap_of_edge = cur_node.candidate_swap_list[index].copy()
-
             cur_node.update_node()
-
-            excuted_gate = excuted_gate + len(cur_node.excution_list)
+            executed_gate = executed_gate + len(cur_node.execution_list)
             num_swap = num_swap + 1
-
-            
-
         return num_swap
             
 

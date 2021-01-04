@@ -58,18 +58,11 @@ def count_two_qubit_gates(circuit: Circuit)->int:
 def test_mapping(input_path: str, output_path: str, topology: List[Tuple[int, int]], num_of_qubits: int, init_mapping: List[int]):
     qc = OPENQASMInterface.load_file(input_path)
     circuit =qc.circuit
-    #circuit.add_topology(get_line_topology(16))
     circuit.add_topology(topology)
-
-    # for gate in circuit.gates:
-    #     print(gate)
 
     logical_qubit_num = qc.qbits
     physical_qubit_num = num_of_qubits
-    #print(num)
-
-    #circuit_trans = Mapping.run(circuit = circuit,num = logical_qubit_num, method = "global_sifting", is_lnn = True,init_mapping= init_mapping)
-
+    
     circuit_trans = Mapping.run(circuit = circuit,num = physical_qubit_num, is_lnn =  False, init_mapping = init_mapping)
 
     with open(output_path, "w") as f:
