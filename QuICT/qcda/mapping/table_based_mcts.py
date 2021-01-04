@@ -99,8 +99,6 @@ class TableBasedMCTS(MCTSBase):
 
             self._physical_circuit.append(self._root_node.swap_of_edge)
             self._add_executable_gates(self._root_node)
- 
-
 
     def _search(self, root_node: MCTSNode):
         """
@@ -131,7 +129,6 @@ class TableBasedMCTS(MCTSBase):
         for swap in node.candidate_swap_list:
             node.add_child_node(swap)
             
-
     def _rollout(self, node : MCTSNode, method: str):
         """
         do a heuristic search for the sub circuit with Gsim gates from the current node by the specified method
@@ -146,7 +143,6 @@ class TableBasedMCTS(MCTSBase):
             res = np.float_power(self._gamma, N/2) * float(self._Gsim)
         node.value = res
         #print(res)
-
     
     def _backpropagate(self,node : MCTSNode):
         """
@@ -157,7 +153,6 @@ class TableBasedMCTS(MCTSBase):
             if self._gamma*(cur_node.value + cur_node.reward) > cur_node.parent.value:
                 cur_node.parent.vlaue = self._gamma*(cur_node.value + cur_node.reward)
             cur_node = cur_node._parent
-
 
     def _eval(self, node : MCTSNode):
         """
