@@ -152,7 +152,7 @@ class TableBasedMCTS(MCTSBase):
 
     def _eval(self, node : MCTSNode):
         """
-        Evaluate the vlaue of the current node by DNN method
+        Evaluate the value of the current node by DNN method
         """
         pass
 
