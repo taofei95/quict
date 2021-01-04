@@ -15,17 +15,27 @@ class RLBasedMCTS(TableBasedMCTS):
     def _select_best_child(self, cur_node: MCTSNode):
         """
         Select the best child for expansion
+        TODO: remove 
         """
         pass
 
     def _get_best_child(self, node: MCTSNode):
         """
         Used in decide function
+        TODO: remove 
         """
         return super()._get_best_child(node)
 
+    def _expand(self, node: MCTSNode):
+        """
+        TODO: add NN evaluation to the function
+        """
+        pass
+
     def _rollout(self, node: MCTSNode, method: str):
-        # TODO: add experience for the roll out trajectory
+        """
+        TODO: add experience for the roll out trajectory
+        """
         return super()._rollout(node, method)
 
     def _backpropagate(self, cur_node: MCTSNode):
@@ -36,7 +46,7 @@ class RLBasedMCTS(TableBasedMCTS):
         Transform the info in `cur_node` into structured state info for state agent.
 
         The state contains two numpy arrays: 
-          - The edges index array with size (num_edges, 2, 2)
+          - The edges index array with size (num_edges, 4)
           - The adjacent matrix where the i-th row contains the edge indices of the i-th node
         
         This is designed for GPU acceleration.
