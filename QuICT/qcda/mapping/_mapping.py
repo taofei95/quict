@@ -63,12 +63,12 @@ class  Mapping(object):
     def _mapping_1D(circuit : Circuit, method : str, init_mapping: List[int], num : int) -> Tuple[List[BasicGate], List[int]]:
         """
         Args:
-            circuit: the input circuit that needs to be mapped into a 1D physical architecture 
+            circuit: The input circuit that needs to be mapped into a 1D physical architecture 
             method: The algorithm used to transform the logical quantum circuit to hardware-compliant circuit.
-            num: the number of physical qubits
+            num: The number of physical qubits
         Return:
-            gates:  the hardware-compliant circuit after mapping 
-            init_mapping: the optimal initial position of logical qubits on physical qubits found by the mapping method 
+            gates:  The hardware-compliant circuit after mapping 
+            init_mapping: The optimal initial position of logical qubits on physical qubits found by the mapping method 
         """
         circuit_ori = []
         for g in circuit.gates:
@@ -153,6 +153,13 @@ class  Mapping(object):
        
         mcts_tree = TableBasedMCTS(**paramter)
         mcts_tree.search(logical_circuit = circuit, init_mapping = init_mapping, coupling_graph = circuit.topology)
+<<<<<<< HEAD
+=======
+        # mcts_tree.root_node.coupling_graph.draw()
+        # mcts_tree.root_node.circuit_dag.draw()
+        # for gate in mcts_tree.physical_circuit:
+        #     print(gate)
+>>>>>>> d20bc29ed4f502d8c6ecd0624fb639ac26425b24
         return mcts_tree.physical_circuit
 
 

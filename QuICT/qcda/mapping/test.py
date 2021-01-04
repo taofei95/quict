@@ -62,9 +62,18 @@ def test_mapping(input_path: str, output_path: str, topology: List[Tuple[int, in
 
     logical_qubit_num = qc.qbits
     physical_qubit_num = num_of_qubits
+<<<<<<< HEAD
     
-    circuit_trans = Mapping.run(circuit = circuit,num = physical_qubit_num, is_lnn =  False, init_mapping = init_mapping)
+=======
+    #print(num)
 
+    #circuit_trans = Mapping.run(circuit = circuit,num = logical_qubit_num, method = "global_sifting", is_lnn = True,init_mapping= init_mapping)
+    print(input_path) 
+>>>>>>> d20bc29ed4f502d8c6ecd0624fb639ac26425b24
+    circuit_trans = Mapping.run(circuit = circuit,num = physical_qubit_num, is_lnn =  False, init_mapping = init_mapping)
+    
+    print(circuit.circuit_size())
+    print(circuit_trans.circuit_size())
     with open(output_path, "w") as f:
         print(circuit.circuit_size(), file = f)
         print(circuit_trans.circuit_size(), file = f)
@@ -85,7 +94,7 @@ def test_mapping(input_path: str, output_path: str, topology: List[Tuple[int, in
                     print("control:%d  target :%d  gate type:%d" % (gate.targs[0], gate.targs[1], gate.type()), file = f)
             elif gate.controls + gate.targets == 1:
                 print("target :%d  gate type:%d" % (gate.targ, gate.type()), file = f)
-
+        print("——————————————————————————————")
 if __name__ == "__main__":
     file_path = os.path.realpath(__file__)
     dir_path, file_name = os.path.split(file_path)
