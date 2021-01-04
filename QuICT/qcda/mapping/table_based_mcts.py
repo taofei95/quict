@@ -74,7 +74,7 @@ class TableBasedMCTS(MCTSBase):
             coupling_graph: The list of the edges of the physical device's graph.
         """
         
-        self._num_of_excutable_gate = 0
+        self._num_of_executable_gate = 0
         self._coupling_graph = CouplingGraph(coupling_graph = coupling_graph)
         self._logical_circuit_dag = DAG(circuit = logical_circuit, mode = 1) 
         self._circuit_dag = DAG(circuit = logical_circuit, mode = 2)
@@ -86,13 +86,13 @@ class TableBasedMCTS(MCTSBase):
         self._root_node = MCTSNode(circuit_dag = self._circuit_dag , coupling_graph = self._coupling_graph,
                                   front_layer = self._circuit_dag.front_layer, qubit_mask = qubit_mask, cur_mapping = init_mapping)
         self._add_initial_single_qubit_gate(self._root_node)
-        self._add_excutable_gates(self._root_node)
+        self._add_executable_gates(self._root_node)
         self._expand(node = self._root_node)
         while self._root_node.is_terminal_node() is not True:
             self._search(root_node = self._root_node)
             self._root_node = self._decide(node = self._root_node)
             self._physical_circuit.append(self._root_node.swap_of_edge)
-            self._add_excutable_gates(self._root_node)
+            self._add_executable_gates(self._root_node)
 
     def _search(self, root_node: MCTSNode):
         """
@@ -189,7 +189,7 @@ class TableBasedMCTS(MCTSBase):
 
     def _fall_back(self, node: MCTSNode):
         """
-        TODO: If there is still no two-qubit gate can be excuted instancely after K consecutive moves, 
+        TODO: If there is still no two-qubit gate can be executed immediately after K consecutive moves, 
               select the gate in the front layer with smallest cost and then make qubits of the gate  adjacent 
               in the physical device by inserting swap gates.  
         """
@@ -210,14 +210,14 @@ class TableBasedMCTS(MCTSBase):
                     if self._logical_circuit_dag[suc]['gate'].is_single():
                         sqg_stack.append(suc)
         
-    def _add_excutable_gates(self, node: MCTSNode):
+    def _add_executable_gates(self, node: MCTSNode):
         """
-        Add  excutable gates in the node to the physical circuit
+        Add  executable gates in the node to the physical circuit
         """
-        excution_list = self._root_node.excution_list
-        self._num_of_excutable_gate = self._num_of_excutable_gate + len(excution_list)
+        execution_list = self._root_node.execution_list
+        self._num_of_executable_gate = self._num_of_executable_gate + len(execution_list)
              
-        for gate in excution_list:
+        for gate in execution_list:
             if  self._logical_circuit_dag[gate]['gate'].is_single():
                 raise Exception("There shouldn't exist single qubit gate in two-qubit gate circuit")
             else:
@@ -351,10 +351,10 @@ class TableBasedMCTS(MCTSBase):
         from the candidate list by the probility distribution defined by the neareast_neighbour_count of the mapping 
         changed by the swap 
         """
-        excuted_gate = 0
+        executed_gate = 0
         cur_node = node.copy()
         num_swap = 0
-        while  cur_node.is_terminal_node() is not True and  excuted_gate < self._Gsim:
+        while  cur_node.is_terminal_node() is not True and  executed_gate < self._Gsim:
             base = self._neareast_neighbour_count(front_layer = cur_node.front_layer, cur_mapping = cur_node.cur_mapping)   
             list_length = len(cur_node.candidate_swap_list)
             NNC= np.zeros(list_length, dtype=float)
@@ -368,7 +368,7 @@ class TableBasedMCTS(MCTSBase):
             cur_node.qubit_mask = self._change_qubit_mask_with_single_swap(cur_node.qubit_mask, cur_node.candidate_swap_list[index])
             cur_node.swap_of_edge = cur_node.candidate_swap_list[index].copy()
             cur_node.update_node()
-            excuted_gate = excuted_gate + len(cur_node.excution_list)
+            executed_gate = executed_gate + len(cur_node.execution_list)
             num_swap = num_swap + 1
         return num_swap
             

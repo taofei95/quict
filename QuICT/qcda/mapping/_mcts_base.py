@@ -326,7 +326,7 @@ class MCTSNode:
         self._parent = parent
         self._swap_of_edge = swap_of_edge
         self._children: List[MCTSNode] = []  
-        self._excution_list: List[int] = []  
+        self._execution_list: List[int] = []  
         self._candidate_swap_list: List[SwapGate] = []
         self._visit_count = 1 
         self._value = 0
@@ -408,11 +408,11 @@ class MCTSNode:
         return self._front_layer
 
     @property 
-    def excution_list(self)->List[BasicGate]:
+    def execution_list(self)->List[BasicGate]:
         """
-        The list of the excutable gates under the current mapping
+        The list of the executable gates under the current mapping
         """  
-        return self._excution_list
+        return self._execution_list
 
     @property
     def candidate_swap_list(self)->List[SwapGate]:
@@ -478,7 +478,7 @@ class MCTSNode:
         """
         Update the node's property with the new cur_mapping or front_layer
         """
-        self._update_excution_list()
+        self._update_execution_list()
         self._update_candidate_swap_list()
 
     def add_child_node(self, swap: SwapGate):
@@ -565,12 +565,12 @@ class MCTSNode:
         return list(qubit_set)
     
 
-    def _update_excution_list(self):
+    def _update_execution_list(self):
         """
-        The gates that can be excuted immediately  with the qubit cur_mapping 
+        The gates that can be executed immediately  with the qubit cur_mapping 
         and update the front layer and qubit mask of the nodes
         """
-        self._excution_list = []
+        self._execution_list = []
         fl_stack = deque(self._front_layer)
         self._front_layer = []    
         while len(fl_stack) > 0:  
@@ -582,11 +582,11 @@ class MCTSNode:
                 control = self._gate_target(gate,0)
                 target = self._gate_target(gate,1)        
             if self.coupling_graph.is_adjacent(control, target):
-                self._excution_list.append(gate)
+                self._execution_list.append(gate)
                 self._update_fl_list(stack = fl_stack, gate_in_dag = gate)
             else:
                 self._front_layer.append(gate)
-        self._reward = len(self._excution_list)
+        self._reward = len(self._execution_list)
     
     def _update_fl_list(self, stack: deque, gate_in_dag: int):
         """
