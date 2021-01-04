@@ -2,6 +2,8 @@
 from __future__ import annotations
 from abc import ABC, abstractmethod
 from typing import List, Tuple, Dict, Callable, Optional, Iterable, Union,Set
+from enum import Enum
+
 import copy
 from queue import deque
 from QuICT.tools.interface import *
@@ -32,20 +34,26 @@ class LengthException(Exception):
         Exception.__init__(self, string)
 
 
-#TODO : mode: Enumerate
+class Mode(Enum):
+    """
+    WHOLE_CIRCUIT: Deal with all the gates in the circuit.
+    TWO_QUBIT_CIRCUIT: Only deal with the two-qubit gates in the circuit.
+    """
+    WHOLE_CIRCUIT = 1 
+    TWO_QUBIT_CIRCUIT = 2
+
 class DAG:
-    def __init__(self, circuit: Circuit = None,  mode = 1):
+    def __init__(self, circuit: Circuit = None,  mode: Mode = 1):
         """
         Params:
-            circuit: The logical ciruit
-            mode: Deal with all the gates in the circuit when mode  = 1 
-                    and deal with only the two-qubit gates when mode =2 
+            circuit: The logical circuit.
+            mode:  The mode how the code deal with circuit. 
         """
         self._mode = mode
         if circuit is not None:
-            if mode == 1:
+            if mode == Mode.WHOLE_CIRCUIT:
                 self._transform_from_circuit(circuit = circuit)
-            elif mode == 2:
+            elif mode == Mode.TWO_QUBIT_CIRCUIT:
                 self._construct_two_qubit_gates_circuit(circuit = circuit)
             else:
                 raise Exception("The mode is not supported")
@@ -79,9 +87,9 @@ class DAG:
         the qubit mask should be (0,0,1,2,3), which means the first and second physical 
         should be allocated to the first gate for it's the first gate on the qubit wires and so on.  
         """
-        if self._mode == 1:
+        if self._mode == Mode.WHOLE_CIRCUIT:
             return None
-        elif self._mode == 2:
+        elif self._mode == Mode.TWO_QUBIT_CIRCUIT:
             return self._initial_qubit_mask
         else:
             raise Exception("The mode is not supported")

@@ -1,7 +1,6 @@
 from  _mcts_base import  *
 from queue import Queue, deque
 
-
 class TableBasedMCTS(MCTSBase):
     @classmethod
     def _get_physical_gate(cls, gate: BasicGate, cur_mapping: List[int])->BasicGate:
@@ -76,8 +75,8 @@ class TableBasedMCTS(MCTSBase):
         
         self._num_of_executable_gate = 0
         self._coupling_graph = CouplingGraph(coupling_graph = coupling_graph)
-        self._logical_circuit_dag = DAG(circuit = logical_circuit, mode = 1) 
-        self._circuit_dag = DAG(circuit = logical_circuit, mode = 2)
+        self._logical_circuit_dag = DAG(circuit = logical_circuit, mode = Mode.WHOLE_CIRCUIT) 
+        self._circuit_dag = DAG(circuit = logical_circuit, mode = Mode.TWO_QUBIT_CIRCUIT)
         self._gate_index = []
         self._physical_circuit: List[BasicGate] = []
         qubit_mask = np.zeros(self._coupling_graph.size, dtype = np.int32) -1

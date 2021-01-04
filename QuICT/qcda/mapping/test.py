@@ -62,7 +62,7 @@ def test_mapping(input_path: str, output_path: str, topology: List[Tuple[int, in
 
     logical_qubit_num = qc.qbits
     physical_qubit_num = num_of_qubits
-    
+    print(input_path)
     circuit_trans = Mapping.run(circuit = circuit,num = physical_qubit_num, is_lnn =  False, init_mapping = init_mapping)
     
     print(circuit.circuit_size())
