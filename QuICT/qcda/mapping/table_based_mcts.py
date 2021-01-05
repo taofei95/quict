@@ -80,25 +80,28 @@ class TableBasedMCTS(MCTSBase):
         self._gate_index = []
         self._physical_circuit: List[BasicGate] = []
         qubit_mask = np.zeros(self._coupling_graph.size, dtype = np.int32) -1
-        for i, qubit in enumerate(self._circuit_dag.qubit_mask):
+        # For the logical circuit, its initial mapping is [0,1,2,...,n] in default. Thus, the qubit_mask of initial logical circuit
+        # should be mapping to physical device with the actual initial mapping.
+        for i, qubit in enumerate(self._circuit_dag.initial_qubit_mask):
             qubit_mask[init_mapping[i]] = qubit 
         self._root_node = MCTSNode(circuit_dag = self._circuit_dag , coupling_graph = self._coupling_graph,
                                   front_layer = self._circuit_dag.front_layer, qubit_mask = qubit_mask, cur_mapping = init_mapping)
-        self._add_initial_single_qubit_gate(self._root_node)
-        self._add_executable_gates(self._root_node)
+        
+        self._add_initial_single_qubit_gate(node = self._root_node)
+        self._add_executable_gates(node = self._root_node)
+        
         self._expand(node = self._root_node)
         while self._root_node.is_terminal_node() is not True:
             self._search(root_node = self._root_node)
             self._root_node = self._decide(node = self._root_node)
             self._physical_circuit.append(self._root_node.swap_of_edge)
-            self._add_executable_gates(self._root_node)
+            self._add_executable_gates(node = self._root_node)
 
     def _search(self, root_node: MCTSNode):
         """
         Monte Carlo tree search from the root node
         """
         for i in range(self._selection_times):
-            #print("MCTS:%d"%(i))
             cur_node = self._select(node = root_node)
             self._expand(node = cur_node)
             self._rollout(node = cur_node, method = "random")
@@ -130,15 +133,12 @@ class TableBasedMCTS(MCTSBase):
         N = np.inf
         if method == "random":
             for i in range(self._Nsim):
-              # print("   roll out:%d"%(i))
                N = min(N, self._random_simulation(node))
-            #print(N)
             res = np.float_power(self._gamma, N/2) * float(self._Gsim)
         node.value = res
-        #print(res)
 
     
-    def _backpropagate(self,node : MCTSNode):
+    def _backpropagate(self, node : MCTSNode):
         """
         Use the result of the rollout to update the score in the nodes on the path from the current node to the root 
         """
@@ -165,7 +165,7 @@ class TableBasedMCTS(MCTSBase):
         """
         Select the next child to be expanded of the current node 
         """
-        res_node = MCTSNode()
+        res_node = None
         score = -1
         for child in node.children:
             UCB = self._upper_confidence_bound(node = child)
@@ -178,7 +178,7 @@ class TableBasedMCTS(MCTSBase):
         """
         Get the child with highest score of the current node as the next root node. 
         """
-        res_node = MCTSNode()
+        res_node = None
         score = -1
         for child in node.children:
             if child.value + child.reward >score:
@@ -198,7 +198,7 @@ class TableBasedMCTS(MCTSBase):
         """
         Add the single qubit gate in the initial front layer to the physical circuit
         """
-        cur_mapping = self._root_node.cur_mapping
+        cur_mapping = node.cur_mapping
         sqg_stack = deque(self._logical_circuit_dag.front_layer)
         while len(sqg_stack) > 0:
             gate = sqg_stack.pop()
@@ -213,7 +213,7 @@ class TableBasedMCTS(MCTSBase):
         """
         Add  executable gates in the node to the physical circuit
         """
-        execution_list = self._root_node.execution_list
+        execution_list = node.execution_list
         self._num_of_executable_gate = self._num_of_executable_gate + len(execution_list)
              
         for gate in execution_list:

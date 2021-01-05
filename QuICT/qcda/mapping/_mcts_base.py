@@ -80,12 +80,14 @@ class DAG:
         return self._dag
 
     @property
-    def qubit_mask(self)->np.ndarray:
+    def initial_qubit_mask(self)->np.ndarray:
         """
         The qubit mask stores the index of current closet gate in the DAG, e.g.,
         given the  circuit with the sequential two-qubit gates {(0,1),(1,2),(2,3),(3,4),(4,1)},
         the qubit mask should be (0,0,1,2,3), which means the first and second physical 
-        should be allocated to the first gate for it's the first gate on the qubit wires and so on.  
+        should be allocated to the first gate for it's the first gate on the qubit wires and so on. 
+
+        Therefore, the initial_qubit_mask is the qubit mask of the initial whole circuit.
         """
         if self._mode == Mode.WHOLE_CIRCUIT:
             return None
@@ -562,13 +564,13 @@ class MCTSNode:
         qubit_set = set()
         for gate in self._front_layer:
             if self._gate_qubits(gate) == 1:
-                qubit_set.add(self._gate_target(gate))
+                qubit_set.add(self._get_gate_target(gate))
             elif self._is_swap(gate) is not True:
-                qubit_set.add(self._gate_control(gate))
-                qubit_set.add(self._gate_target(gate))
+                qubit_set.add(self._get_gate_control(gate))
+                qubit_set.add(self._get_gate_target(gate))
             else:
-                qubit_set.add(self._gate_target(gate,0))
-                qubit_set.add(self._gate_target(gate,1))
+                qubit_set.add(self._get_gate_target(gate,0))
+                qubit_set.add(self._get_gate_target(gate,1))
         return list(qubit_set)
     
 
@@ -583,11 +585,11 @@ class MCTSNode:
         while len(fl_stack) > 0:  
             gate = fl_stack.pop()       
             if self._is_swap(gate) is not True:
-                control = self._gate_control(gate)
-                target = self._gate_target(gate)
+                control = self._get_gate_control(gate)
+                target = self._get_gate_target(gate)
             else:
-                control = self._gate_target(gate,0)
-                target = self._gate_target(gate,1)        
+                control = self._get_gate_target(gate,0)
+                target = self._get_gate_target(gate,1)        
             if self.coupling_graph.is_adjacent(control, target):
                 self._execution_list.append(gate)
                 self._update_fl_list(stack = fl_stack, gate_in_dag = gate)
@@ -602,11 +604,11 @@ class MCTSNode:
         for suc in self.circuit_dag.get_successor_nodes(gate_in_dag):
             self._qubit_mask[self._edge_qubit(gate_in_dag, suc)] = suc      
             if self._is_swap(suc) is not True:
-                control = self._gate_control(suc)
-                target = self._gate_target(suc)
+                control = self._get_gate_control(suc)
+                target = self._get_gate_target(suc)
             else:
-                control = self._gate_target(suc,0)
-                target = self._gate_target(suc,1)
+                control = self._get_gate_target(suc,0)
+                target = self._get_gate_target(suc,1)
             if self._is_qubit_free(control, suc)  and  self._is_qubit_free(target, suc):
                 stack.append(suc)
                 self._qubit_mask[control] = suc
@@ -632,16 +634,16 @@ class MCTSNode:
         """
         gate = self.circuit_dag[gate_in_dag]['gate'].copy()
         if self._gate_qubits(gate_in_dag) == 1:
-            target = self._gate_target(gate_in_dag)
+            target = self._get_gate_target(gate_in_dag)
             gate.targs = target
         elif self._is_swap(gate_in_dag) is not True:
-            control = self._gate_control(gate_in_dag)
-            target = self._gate_target(gate_in_dag)
+            control = self._get_gate_control(gate_in_dag)
+            target = self._get_gate_target(gate_in_dag)
             gate.cargs = control
             gate.targs = target
         else:
-            target_0 = self._gate_target(gate_in_dag,0)
-            target_1 = self._gate_target(gate_in_dag,1)
+            target_0 = self._get_gate_target(gate_in_dag,0)
+            target_1 = self._get_gate_target(gate_in_dag,1)
             gate.targs = [target_0, target_1]
         return gate
 
@@ -657,7 +659,7 @@ class MCTSNode:
         """
         return self.circuit_dag[gate_in_dag]['gate'].type() == GATE_ID['Swap']
 
-    def _gate_control(self, gate_in_dag: int, index: int = 0)->int:
+    def _get_gate_control(self, gate_in_dag: int, index: int = 0)->int:
         """
         The physical qubit of the gate 'index'-th control qubit under the current mapping 
         """
@@ -666,7 +668,7 @@ class MCTSNode:
         else:
             raise  IndexLimitException(self.circuit_dag[gate_in_dag]['gate'].controls, index)
 
-    def _gate_target(self, gate_in_dag: int, index: int = 0)->int:  
+    def _get_gate_target(self, gate_in_dag: int, index: int = 0)->int:  
         """
         The physical qubit of the gate 'index'-th target qubit under the current mapping 
         """
