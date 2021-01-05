@@ -4,9 +4,15 @@
 # @Author  : Han Yu
 # @File    : __init__.py.py
 
-from .circuit import *
-from .qubit import *
-from .gate import *
-from .exception import *
-from .layout import *
+from .circuit.circuit import *
+
+from .qubit.qubit import *
+
+from .gate.extension_gate import *
+from .gate.gate import *
+from .gate.gate_builder import *
+
+from .exception.exception import *
+
+from .layout.layout import *
 
