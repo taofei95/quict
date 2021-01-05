@@ -5,9 +5,10 @@ from typing import List, Tuple, Optional, Union, Dict
 
 
 
-from _mapping import Mapping
+from _mapping import *
 from QuICT.tools.interface import *
 from QuICT.core.circuit import *
+from QuICT.core.layout import *
 
 def get_line_topology(n: int)->List[Tuple[int,int]]:
     topology:List[Tuple[int,int]] = []
@@ -54,16 +55,15 @@ def count_two_qubit_gates(circuit: Circuit)->int:
             res = res + 1
     return res
 
-#QASM_file = f"{dir_path}/benchmark/qasm/SABRE/rd84_253.qasm"
-def test_mapping(input_path: str, output_path: str, topology: List[Tuple[int, int]], num_of_qubits: int, init_mapping: List[int]):
+def test_mapping(input_path: str, output_path: str,  num_of_qubits: int, init_mapping: List[int], topology):
     qc = OPENQASMInterface.load_file(input_path)
     circuit =qc.circuit
-    circuit.add_topology(topology)
 
     logical_qubit_num = qc.qbits
     physical_qubit_num = num_of_qubits
+
     print(input_path)
-    circuit_trans = Mapping.run(circuit = circuit,num = physical_qubit_num, is_lnn =  False, init_mapping = init_mapping)
+    circuit_trans = Mapping_NISQ.run(circuit = circuit, num = physical_qubit_num, layout = topology, init_mapping = init_mapping)
     
     print(circuit.circuit_size())
     print(circuit_trans.circuit_size())
@@ -88,10 +88,11 @@ def test_mapping(input_path: str, output_path: str, topology: List[Tuple[int, in
             elif gate.controls + gate.targets == 1:
                 print("target :%d  gate type:%d" % (gate.targ, gate.type()), file = f)
         print("——————————————————————————————")
+
 if __name__ == "__main__":
     file_path = os.path.realpath(__file__)
     dir_path, file_name = os.path.split(file_path)
     for file_name in small_benchmark:
         input_path = f"{dir_path}/benchmark/QASM example/{file_name}.qasm"
         output_path =  f"{dir_path}/benchmark/QASM example/output/{file_name}.output"
-        test_mapping(input_path, output_path, topology, 20, init_mapping = [i for i in range(20)] )
+        test_mapping(input_path, output_path, topology = topology, num_of_qubits = 20, init_mapping = [i for i in range(20)] )

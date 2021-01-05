@@ -123,7 +123,7 @@ class TableBasedMCTS(MCTSBase):
         Open all child nodes of the current node by applying the swap gates in candidate swap list
         """
         for swap in node.candidate_swap_list:
-            node.add_child_node(swap)
+            node.add_child_node_by_swap_gate(swap)
             
     def _rollout(self, node: MCTSNode, method: str):
         """
@@ -273,23 +273,19 @@ class TableBasedMCTS(MCTSBase):
         else:
             raise Exception("The gate type %d is not supported"%(gate.type()))
 
-    def _gate_distance_in_device(self, cur_mapping: List[int])->Callable[[int],int]:
+    def _get_logical_gate_distance_in_device(self, cur_mapping: List[int], gate: int)->int:
         """
-        Return a function calculates the distance between the control qubit and target qubit of the given gate  on the physical device 
+        return the distance between the control qubit and target qubit of the given gate  on the physical device 
         """
-        cur_mapping = cur_mapping
-        def func(gate_in_dag: int)->int:
-            return  self._coupling_graph.distance(cur_mapping[self._circuit_dag[gate_in_dag]['gate'].carg], cur_mapping[self._circuit_dag[gate_in_dag]['gate'].targ])
-        return func
+        return  self._coupling_graph.distance(cur_mapping[self._circuit_dag[gate]['gate'].carg], cur_mapping[self._circuit_dag[gate]['gate'].targ])
 
     def _neareast_neighbour_count(self, front_layer: List[int], cur_mapping: List[int] )-> int:
         """
         Caculate the sum of the distance of all the gates in the front layer on the physical device
         """
-        gate_distance = self._gate_distance_in_device(cur_mapping = cur_mapping)
         NNC = 0
         for gate in front_layer:
-            NNC = NNC + gate_distance(gate)
+            NNC = NNC + self._get_logical_gate_distance_in_device(cur_mapping, gate)
         return NNC
 
     def _change_mapping_with_single_swap(self, cur_mapping: List[int], swap_gate: SwapGate)->List[int]:

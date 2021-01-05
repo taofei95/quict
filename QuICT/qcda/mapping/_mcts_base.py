@@ -1,20 +1,24 @@
 #from collections import defaultdict
 from __future__ import annotations
+import copy
 from abc import ABC, abstractmethod
 from typing import List, Tuple, Dict, Callable, Optional, Iterable, Union,Set
 from enum import Enum
-
-import copy
 from queue import deque
+
+import numpy as np
+import networkx as nx
+import matplotlib.pyplot as plt
+
+
 from QuICT.tools.interface import *
 from QuICT.core.circuit import *
 from QuICT.core.gate import *
 from QuICT.core.gate.gate import *
 from QuICT.core.exception import *
+from QuICT.core.layout import *
 
-import numpy as np
-import networkx as nx
-import matplotlib.pyplot as plt
+
 
 
 class MappingLayoutException(Exception):
@@ -138,8 +142,8 @@ class DAG:
         Transform the whole circuit into a directed acyclic graph
         """
         self._num_gate = 0
-        self._qubit_mask = np.zeros(circuit.circuit_length(), dtype = np.int32) -1
-        self._initial_qubit_mask = np.zeros(circuit.circuit_length(), dtype = np.int32) -1
+        self._qubit_mask = np.zeros(circuit.circuit_width(), dtype = np.int32) -1
+        self._initial_qubit_mask = np.zeros(circuit.circuit_width(), dtype = np.int32) -1
         self._depth = np.zeros(circuit.circuit_size(), dtype = np.int32) 
         
         self._dag = nx.DiGraph()
@@ -163,8 +167,8 @@ class DAG:
         Transform the sub circuit only with two-qubit gates  in the original circuit into a directed acyclic graph
         """
         self._num_gate = 0
-        self._qubit_mask = np.zeros(circuit.circuit_length(), dtype = np.int32) -1
-        self._initial_qubit_mask = np.zeros(circuit.circuit_length(), dtype = np.int32) -1
+        self._qubit_mask = np.zeros(circuit.circuit_width(), dtype = np.int32) -1
+        self._initial_qubit_mask = np.zeros(circuit.circuit_width(), dtype = np.int32) -1
         self._depth = np.zeros(circuit.circuit_size(), dtype = np.int32)
         self._dag = nx.DiGraph()
         for gate in circuit.gates:
@@ -244,9 +248,14 @@ class DAG:
 
 
 class CouplingGraph:
-    def __init__(self, coupling_graph: List[Tuple] = None):
+    def __init__(self, coupling_graph: Union[Layout, List[Tuple[int,int]], None] = None):
         if coupling_graph is not None:
-            self._transform_from_list(coupling_graph = coupling_graph)
+            if isinstance(coupling_graph, Layout):
+                self._transform_from_layout(coupling_graph = coupling_graph)
+            elif isinstance(coupling_graph, list):
+                self._transform_from_list(coupling_graph = coupling_graph)
+            else:
+                raise Exception("The graph type is not supported")
         else:
             self._coupling_graph = nx.Graph()
 
@@ -288,11 +297,19 @@ class CouplingGraph:
         return self._shortest_paths[vertex_i][vertex_j]
 
 
-    def _transform_from_list(self,  coupling_graph : List[Tuple]):
+    def _transform_from_list(self,  coupling_graph : List[Tuple[int,int]]):
         """
         Construct the coupling graph from the list of tuples
         """
         res_graph = nx.Graph(coupling_graph)
+        self._coupling_graph = res_graph
+
+    def _transform_from_layout(self,  coupling_graph: Layout):
+        """
+        Construct the coupling graph from the layout class
+        """
+        edge_list = [ (edge.u, edge.v)  for edge in coupling_graph.edge_list ] 
+        res_graph = nx.Graph(edge_list)
         self._coupling_graph = res_graph
 
     def _cal_shortest_path(self):
@@ -491,7 +508,7 @@ class MCTSNode:
         self._update_execution_list()
         self._update_candidate_swap_list()
 
-    def add_child_node(self, swap: SwapGate):
+    def add_child_node_by_swap_gate(self, swap: SwapGate):
         """
         Add a child node by applying the swap gate
         """
@@ -589,15 +606,16 @@ class MCTSNode:
                 target = self._get_gate_target(gate)
             else:
                 control = self._get_gate_target(gate,0)
-                target = self._get_gate_target(gate,1)        
+                target = self._get_gate_target(gate,1)   
+                     
             if self.coupling_graph.is_adjacent(control, target):
                 self._execution_list.append(gate)
-                self._update_fl_list(stack = fl_stack, gate_in_dag = gate)
+                self._update_fl_stack(stack = fl_stack, gate_in_dag = gate)
             else:
                 self._front_layer.append(gate)
         self._reward = len(self._execution_list)
     
-    def _update_fl_list(self, stack: deque, gate_in_dag: int):
+    def _update_fl_stack(self, stack: deque, gate_in_dag: int):
         """
         Update the front layer list when a gate is removed from the list
         """

@@ -4,4 +4,4 @@
 # @Author  : Han Yu
 # @File    : __init__.py
 
-from ._mapping import Mapping
+from ._mapping import Mapping_1D, Mapping_NISQ

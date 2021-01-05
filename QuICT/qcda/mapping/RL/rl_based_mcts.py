@@ -10,8 +10,17 @@ from .state_agent import StateAgent
 
 class RLBasedMCTS(TableBasedMCTS):
     def __init__(self):
+        self._move = 0
         self._state_agent = StateAgent()
 
+    def search(self):
+
+        pass
+
+    def _search(self, root_node: MCTSNode):
+
+        pass
+    
     def _select_best_child(self, cur_node: MCTSNode):
         """
         Select the best child for expansion
