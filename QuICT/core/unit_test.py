@@ -12,7 +12,7 @@ import numpy as np
 from scipy.stats import ortho_group
 import copy
 
-single_gate = [X, H, S, S_dagger, X, Y, Z, ID, U1, U2, U3, Rx, Ry, Rz, T, T_dagger]
+single_gate = [X, H, S, S_dagger, X, Y, Z, ID, U1, U2, U3, Rx, Ry, Rz, T, T_dagger, Phase]
 other_gate = [CZ, CX, CY, CH, CRz, CCX, Swap]
 
 def getRandomList(l, n):

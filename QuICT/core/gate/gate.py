@@ -787,7 +787,7 @@ class RxGate(BasicGate):
     def exec(self, circuit):
         exec_single(self, circuit)
 
-Rx = RxGate(["Rx"])
+Rx = RxGate(["Rx", "RX"])
 
 class RyGate(BasicGate):
     """ Rotation around the y-axis gate
@@ -824,7 +824,7 @@ class RyGate(BasicGate):
     def exec(self, circuit):
         exec_single(self, circuit)
 
-Ry = RyGate(["Ry"])
+Ry = RyGate(["Ry", "RY"])
 
 class RzGate(BasicGate):
     """ Rotation around the z-axis gate
@@ -861,7 +861,7 @@ class RzGate(BasicGate):
     def exec(self, circuit):
         exec_single(self, circuit)
 
-Rz = RzGate(["Rz"])
+Rz = RzGate(["Rz", "RZ"])
 
 class TGate(BasicGate):
     """ T gate
@@ -924,6 +924,42 @@ class TDaggerGate(BasicGate):
         exec_single(self, circuit)
 
 T_dagger = TDaggerGate(["T_dagger"])
+
+class PhaseGate(BasicGate):
+    """ Phase gate
+
+    """
+
+    @property
+    def matrix(self) -> np.ndarray:
+        return np.array([
+            np.exp(self.parg * 1j),
+            0,
+            0,
+            np.exp(self.parg * 1j)
+        ], dtype=np.complex)
+
+    def __init__(self, alias=None):
+        _add_alias(alias=alias, standard_name=self.__class__.__name__)
+        super().__init__(alias=None)
+        self.controls = 0
+        self.targets = 1
+        self.params = 1
+        self.qasm_name = "phase"
+
+    def __str__(self):
+        return "Phase gate"
+
+    def inverse(self):
+        _Phase = PhaseGate()
+        _Phase.targs = copy.deepcopy(self.targs)
+        _Phase.pargs = [-self.parg]
+        return _Phase
+
+    def exec(self, circuit):
+        exec_single(self, circuit)
+
+Phase = PhaseGate(["Phase"])
 
 class CZGate(BasicGate):
     """ controlled-Z gate

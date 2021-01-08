@@ -385,7 +385,7 @@ class RZZModel(gateModel):
         GateBuilder.setTargs(other[1])
         gates.append(GateBuilder.getGate())
 
-        GateBuilder.setGateType(GATE_ID["U1"])
+        GateBuilder.setGateType(GATE_ID["Rz"])
         GateBuilder.setPargs(self.parg)
         GateBuilder.setTargs(other[1])
         gates.append(GateBuilder.getGate())
