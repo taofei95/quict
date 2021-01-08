@@ -144,7 +144,7 @@ def exec_unitary(gate, circuit):
     """
     qState = circuit.qubits[gate.targ].qState
     for i in range(1, gate.targets):
-        new_qState = circuit.qubits[targs[i]].qState
+        new_qState = circuit.qubits[gate.targs[i]].qState
         QState_merge(qState, new_qState)
     QState_deal_unitary_gate(qState, gate)
 
