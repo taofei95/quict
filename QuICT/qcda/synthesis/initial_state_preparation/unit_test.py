@@ -16,7 +16,7 @@ from QuICT.qcda.synthesis import InitialStatePreparation
 def check_assert(a, b, n):
     norm = 0
     for value in b:
-        norm += abs(value)
+        norm += abs(value) * abs(value)
     for i in range(n):
         b[i] /= norm
     flag = None
@@ -34,11 +34,15 @@ def check_assert(a, b, n):
 def test_1():
     for i in range(1, 8):
         circuit = Circuit(i)
-        values = [1.0 / (1 << i) for _ in range(1 << i)]
+        if i != 3:
+            values = [1.0 / (1 << i) * np.exp(1j * random.random()) for _ in range(1 << i)]
+        else:
+            values = [0.40824829046386296, 0.40824829046386296, 0.40824829046386296, 0.40824829046386296,
+                  0.40824829046386296, 0, 0.2886751345948131, -0.2886751345948128]
         InitialStatePreparation(values) | circuit([j for j in range(i)])
         amplitude = Amplitude.run(circuit)
         now = check_assert(amplitude, values, 1 << i)
-        print(np.round(amplitude, 2))
+        print(amplitude)
         print(i)
         assert now
 
