@@ -10,10 +10,7 @@ from scipy.optimize import minimize
 from .._algorithm import Algorithm
 from QuICT import *
 from QuICT.qcda.synthesis.initial_state_preparation import InitialStatePreparation
-from QuICT.qcda.synthesis.MCT import MCTOneAux
-
-def main_oracle(f, qreg, ancilla):
-    PermFx(f) | (qreg, ancilla)
+from QuICT.qcda.synthesis.mct import MCTOneAux
     
 p_global = []
 T_global = 1
@@ -22,6 +19,17 @@ def fun(x):
     return -np.dot(p_global, np.sin((2*T_global+1)*np.arcsin(np.sqrt(x)))**2)
 
 def run_search_with_prior_knowledge(f, n, p, T, oracle):
+    """ grover search for f with custom oracle
+
+    Args:
+        f(list<int>): the function to be decided
+        n(int): the length of input
+        p(list<float>): the distribute of priop probability
+        T(int): the query times
+        oracle(function): the oracle
+    Returns:
+        int: the a satisfies that f(a) = 1
+    """
     global p_global 
     p_global = p[:]
     global T_global
@@ -37,20 +45,20 @@ def run_search_with_prior_knowledge(f, n, p, T, oracle):
     tmp = np.min([1 / n, np.sin(np.pi/(4 * T + 2))**2])
     x = np.array([tmp] * n)
     option = {'maxiter' : 4, 'disp' : False}
-    res = minimize(fun, x, method='SLSQP', constraints=cons, bounds=bnd, options=option)
+    res = minimize(fun, x, method = 'SLSQP', constraints = cons, bounds = bnd, options = option)
     q = res.x
     
     # Start with qreg in equal superposition and ancilla in |->
     X | ancilla
     H | ancilla
-    initial_state_preparation(list(q)) | qreg
+    InitialStatePreparation(list(q)) | qreg
     for i in range(T):
         oracle(f, qreg, ancilla)
-        initial_state_preparation(list(q)) ^ qreg
+        InitialStatePreparation(list(q)) ^ qreg
         X | qreg
-        MCT_one_aux | circuit
+        MCTOneAux | circuit
         X | qreg
-        initial_state_preparation(list(q)) | qreg
+        InitialStatePreparation(list(q)) | qreg
     # Apply H
     H | ancilla
     X | ancilla
@@ -58,15 +66,26 @@ def run_search_with_prior_knowledge(f, n, p, T, oracle):
     Measure | qreg
     Measure | ancilla
     Measure | empty
-    circuit.flush()
+    circuit.exec()
+    return int(qreg)
 
-if __name__ == '__main__':
-    test_number = 3
-    i = 6
-    for i in range(2, 8):
-        test = [0, 0, 0, 0, 0, 0, 0, 0]
-        test[i] = 1
-        p = np.array([1/4, 0, 1/4, 1/4, 0, 1/4, 0, 0])
-        p /= p.sum()
-        T = 1
-        run_search_with_prior_knowledge(test, 2**test_number, p, T, main_oracle)
+class GroverWithPriorKnowledge(Algorithm):
+    """ grover search with prior knowledge
+
+    https://arxiv.org/abs/2009.08721
+
+    """
+    @classmethod
+    def run(cls, f, n, p, T, oracle):
+        """ grover search for f with custom oracle
+
+        Args:
+            f(list<int>): the function to be decided
+            n(int): the length of input
+            p(list<float>): the distribute of priop probability
+            T(int): the query times
+            oracle(function): the oracle
+        Returns:
+            int: the a satisfies that f(a) = 1
+        """
+        return run_search_with_prior_knowledge(f, n, p, T, oracle)

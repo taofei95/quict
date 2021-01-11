@@ -5,5 +5,8 @@
 # @File    : __init__.py.py
 
 from .amplitude.amplitude import *
+from .grover import *
 from .shor import *
 from .synthetical_unitary import *
+from .weight_decision import *
+
