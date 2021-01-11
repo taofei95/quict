@@ -1815,8 +1815,8 @@ class PermFxGate(PermGate):
 
         N_2 = N << 1
         for idx in range(N_2):
-            if f[idx & (N - 1)] == 1:
-                self.pargs.append(idx ^ N)
+            if f[idx >> 1] == 1:
+                self.pargs.append(idx ^ 1)
             else:
                 self.pargs.append(idx)
         return self
