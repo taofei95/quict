@@ -44,7 +44,7 @@ def run_weight_decision(f, n, k, l, oracle):
     for i in range(n):
         value[i]=1/np.sqrt(n+a**2+b**2)
     value[N-2]=a/np.sqrt(n+a**2+b**2)
-    value[N-1]=-b/np.sqrt(n+a**2+b**2)
+    value[N-1]=b/np.sqrt(n+a**2+b**2)
     print(value)
     # Apply oracle U_f which flips the phase of every state |x> with f(x) = 1
     InitialStatePreparation(value) | qreg
@@ -53,22 +53,26 @@ def run_weight_decision(f, n, k, l, oracle):
     H | ancilla
 
     print(amp)
+
+    print(abs(np.divide(value, amp)))
+
     for i in range(d-1):
         oracle(f, qreg, ancilla)
+        MCTOneAux | circuit
         #amp = Amplitude.run(circuit,ancilla=[num-1])
         #print(amp)
-        value[N-1]=-value[N-1]
         InitialStatePreparation(value) ^ qreg
         X|qreg
         MCTOneAux | circuit
         X|qreg
-        value[N-1]=-value[N-1]
         InitialStatePreparation(value) | qreg
     # Apply H
     H | ancilla
     X | ancilla
     oracle(f, qreg, ancilla)
+    MCTOneAux | circuit
     # Measure
+    print(np.abs(Amplitude.run(circuit, ancilla=[num-1])))
 
     Measure | qreg
     Measure | ancilla
@@ -79,12 +83,13 @@ def run_weight_decision(f, n, k, l, oracle):
     print()
     print(y)
     print(int(ancilla)==gamma%2)
-    if y == N-1 or int(ancilla)==gamma%2:
-        print('Weight is %d'%(k))
-    else:
+
+    if int(ancilla)==gamma%2:
         print('Weight is %d'%(l))
+    else:
+        print('Weight is %d'%(k))
 
 if __name__ == '__main__':
     test_number = 3
-    test = [1, 1, 0, 0, 0, 0, 0, 0]
-    run_weight_decision(test, 3, 1, 2, deutsch_jozsa_main_oracle)
+    test = [1, 1, 0, 0]
+    run_weight_decision(test, 2, 1, 2, deutsch_jozsa_main_oracle)
