@@ -45,7 +45,7 @@ def traver_with_fix_qubits(gates: list, fix: set, store):
                 circuit = Circuit(len(fix))
                 for local_gate in local_list:
                     CX | circuit([mapping[local_gate.carg], mapping[local_gate.targ]])
-                print((CnotStoreForceBfs if store else CnotForceBfs))
+                # print((CnotStoreForceBfs if store else CnotForceBfs))
                 new_circuit = (CnotStoreForceBfs if store else CnotForceBfs).run(circuit)
                 for local_gate in new_circuit.gates:
                     new_gate = CX.copy()
@@ -59,7 +59,7 @@ def traver_with_fix_qubits(gates: list, fix: set, store):
         circuit = Circuit(len(fix))
         for local_gate in local_list:
             CX | circuit([mapping[local_gate.carg], mapping[local_gate.targ]])
-        print((CnotStoreForceBfs if store else CnotForceBfs))
+        # print((CnotStoreForceBfs if store else CnotForceBfs))
         new_circuit = (CnotStoreForceBfs if store else CnotForceBfs).run(circuit)
         for local_gate in new_circuit.gates:
             new_gate = CX.copy()
