@@ -32,10 +32,13 @@ def test_1():
                         else:
                             final = l
                         test = [1] * final
-                        for i in range(final, 1 << int(np.ceil(np.log(T + 2)))):
+                        for i in range(final, 1 << int(np.ceil(np.log2(T + 2)))):
                             test.append(0)
                         randomList(test)
-                        assert final == WeightDecision.run(test, T, k, l, deutsch_jozsa_main_oracle)
+                        ans = WeightDecision.run(test, T, k, l, deutsch_jozsa_main_oracle)
+                        print(test, T, k, l)
+                        print(final, ans)
+                        assert final == ans
 
 if __name__ == '__main__':
     pytest.main(["./unit_test.py"])

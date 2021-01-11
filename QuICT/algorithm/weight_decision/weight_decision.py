@@ -8,8 +8,8 @@ from QuICT.qcda.synthesis.mct import MCTOneAux
 def weight_decison_para(n, k, l):
     kap = k / n
     lam = l / n
-    for d in range(n):
-        for gamma in range(2 * d - 1):
+    for d in range(n + 2):
+        for gamma in range(1, 2 * d - 2):
             s = (1 - np.cos(gamma * np.pi / (2 * d - 1))) / 2
             t = (1 - np.cos((gamma + 1) * np.pi / (2 * d - 1))) / 2
             if lam * s >= kap * t and (1 - kap) * (1 - t) >= (1 - lam) * (1 - s):
@@ -49,7 +49,6 @@ def run_weight_decision(f, n, k, l, oracle):
     value[N - 1] = -b / np.sqrt(n + a ** 2 + b ** 2)
     # Apply oracle U_f which flips the phase of every state |x> with f(x) = 1
     InitialStatePreparation(value) | qreg
-    amp = Amplitude.run(circuit, ancilla=[num - 2, num - 1])
     X | ancilla
     H | ancilla
     for i in range(d - 1):
