@@ -11,8 +11,7 @@ import random
 from QuICT.algorithm import WeightDecision
 from QuICT.core import *
 
-def randomList(_rand):
-    n = len(_rand) - 2
+def randomList(_rand, n):
     for i in range(n - 1, 0, -1):
         do_get = random.randint(0, i)
         _rand[do_get], _rand[i] = _rand[i], _rand[do_get]
@@ -34,11 +33,16 @@ def test_1():
                         test = [1] * final
                         for i in range(final, 1 << int(np.ceil(np.log2(T + 2)))):
                             test.append(0)
-                        randomList(test)
-                        ans = WeightDecision.run(test, T, k, l, deutsch_jozsa_main_oracle)
+                        randomList(test, T)
+                        flag = False
+                        for drjc in range(5):
+                            ans = WeightDecision.run(test, T, k, l, deutsch_jozsa_main_oracle)
+                            if final == ans:
+                                flag = True
+                                break
                         print(test, T, k, l)
                         print(final, ans)
-                        assert final == ans
+                        assert flag
 
 if __name__ == '__main__':
     pytest.main(["./unit_test.py"])

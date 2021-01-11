@@ -86,5 +86,5 @@ def run_weight_decision(f, n, k, l, oracle):
 
 if __name__ == '__main__':
     test_number = 3
-    test = [0, 0, 1, 1, 0, 0, 0, 0]
+    test = [1, 1, 0, 0, 0, 0, 0, 0]
     run_weight_decision(test, 3, 1, 2, deutsch_jozsa_main_oracle)
