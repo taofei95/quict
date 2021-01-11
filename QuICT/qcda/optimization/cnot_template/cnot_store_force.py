@@ -4,8 +4,9 @@
 # @Author  : Han Yu
 # @File    : cnot_store_force.py
 
-import json
+import ujson
 import os
+import time
 
 from .._optimization import Optimization
 from QuICT.core import *
@@ -32,13 +33,10 @@ class CnotStoreForceBfs(Optimization):
         n = input.circuit_width()
         if n > 5:
             raise Exception("the qubits number should be smaller than or equal to 5.")
-
-        if qubit_chart[n] is None:
-            path = f"{os.path.dirname(os.path.abspath(__file__))}{os.path.sep}json \
-                {os.path.sep}{n}qubit_cnot.json"
+        if CnotStoreForceBfs.qubit_chart[n - 1] is None:
+            path = f"{os.path.dirname(os.path.abspath(__file__))}{os.path.sep}json{os.path.sep}{n}qubit_cnot.json"
             with open(path, "r") as f:
-                json_data = f.readlines()
-                qubit_chart[n] = json.loads(json_data)
+                CnotStoreForceBfs.qubit_chart[n - 1] = ujson.load(f)
 
         circuit = Circuit(n)
         input_matrix = np.identity(n, dtype=bool)
@@ -51,6 +49,10 @@ class CnotStoreForceBfs(Optimization):
             for j in range(n):
                 if input_matrix[i, j]:
                     goal ^= 1 << (i * n + j)
+        ans = CnotStoreForceBfs.qubit_chart[n - 1][str(goal)]
+        for plist in ans:
+            CX | circuit(plist)
+        return circuit
 
     @staticmethod
     def _run(circuit : Circuit, *pargs):
@@ -61,5 +63,4 @@ class CnotStoreForceBfs(Optimization):
         Returns:
             Circuit: output circuit
         """
-        gates = circuit.gates
-        return solve(gates)
+        return CnotStoreForceBfs.solve(circuit)

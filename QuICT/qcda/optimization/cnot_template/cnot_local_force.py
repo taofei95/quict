@@ -10,13 +10,16 @@ import numpy as np
 
 from .._optimization import Optimization
 from .cnot_force import CnotForceBfs
+from .cnot_store_force import CnotStoreForceBfs
 from QuICT.core import *
 
-def traver_with_fix_qubits(gates: list, fix: set):
+
+def traver_with_fix_qubits(gates: list, fix: set, store):
     """ local optimize for fix qubits
     Args:
         gates(list<CXGate>): the gates to be optimized
         fix(set<int>): the fix qubits
+        store(bool): whether work with local data
     Returns:
         list<CXGate>: results after optimization
     """
@@ -42,7 +45,8 @@ def traver_with_fix_qubits(gates: list, fix: set):
                 circuit = Circuit(len(fix))
                 for local_gate in local_list:
                     CX | circuit([mapping[local_gate.carg], mapping[local_gate.targ]])
-                new_circuit = CnotForceBfs.run(circuit)
+                print((CnotStoreForceBfs if store else CnotForceBfs))
+                new_circuit = (CnotStoreForceBfs if store else CnotForceBfs).run(circuit)
                 for local_gate in new_circuit.gates:
                     new_gate = CX.copy()
                     new_gate.cargs = [back_map[local_gate.carg]]
@@ -55,7 +59,8 @@ def traver_with_fix_qubits(gates: list, fix: set):
         circuit = Circuit(len(fix))
         for local_gate in local_list:
             CX | circuit([mapping[local_gate.carg], mapping[local_gate.targ]])
-        new_circuit = CnotForceBfs.run(circuit)
+        print((CnotStoreForceBfs if store else CnotForceBfs))
+        new_circuit = (CnotStoreForceBfs if store else CnotForceBfs).run(circuit)
         for local_gate in new_circuit.gates:
             new_gate = CX.copy()
             new_gate.cargs = [back_map[local_gate.carg]]
@@ -64,12 +69,13 @@ def traver_with_fix_qubits(gates: list, fix: set):
 
     return output
 
-def traver(input: list, width, max_local_qubits = 4):
+def traver(input: list, width, store):
     """ find the best circuit by bfs
 
     Args:
         input(list<BasicGate>): input circuit
         width(int): circuit_width
+        store(bool): whether work with local data
         max_local_qubits(int): the max number of qubits
 
     Returns:
@@ -77,16 +83,18 @@ def traver(input: list, width, max_local_qubits = 4):
 
     """
     all_list = [i for i in range(width)]
+    max_local_qubits = 5 if store else 4
     for comb in combinations(all_list, min(width, max_local_qubits)):
-        input = traver_with_fix_qubits(input, set(comb))
+        input = traver_with_fix_qubits(input, set(comb), store)
     return input
 
-def solve(gates: list, width):
+def solve(gates: list, width, store):
     """ optimize the circuit locally
 
     Args:
         gates(list<BasicGate>): input circuit
         width(int): circuit_width
+        store(bool): whether work with local data
 
     Returns:
         Circuit: optimal circuit
@@ -94,7 +102,7 @@ def solve(gates: list, width):
     """
     last_length = len(gates)
     while True:
-        gates = traver(gates, width)
+        gates = traver(gates, width, store)
         new_length = len(gates)
         if last_length == new_length:
             break
@@ -108,13 +116,14 @@ class CnotLocalForceBfs(Optimization):
 
     """
     @staticmethod
-    def _run(circuit : Circuit, *pargs):
+    def _run(circuit : Circuit, store = False):
         """
         Args:
             circuit(Circuit): the circuit to be optimize
-            *pargs: other parameters
+            store(bool): whether work with local data
         Returns:
             Circuit: output circuit
         """
         gates = circuit.gates
-        return solve(gates, circuit.circuit_width())
+        return solve(gates, circuit.circuit_width(), store)
+
