@@ -23,7 +23,7 @@ def test_1():
     for test_number in range(3, 5):
         for k in range(1, 8):
             for l in range(k + 1, 8):
-                for T in range(l, 20):
+                for T in range(l, 10):
                     for _ in range(10):
                         ans = random.randint(0, 1)
                         if ans == 0:
@@ -40,8 +40,6 @@ def test_1():
                             if final == ans:
                                 flag = True
                                 break
-                        print(test, T, k, l)
-                        print(final, ans)
                         assert flag
 
 if __name__ == '__main__':

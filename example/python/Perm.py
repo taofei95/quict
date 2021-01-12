@@ -9,7 +9,8 @@ import numpy as np
 from QuICT import *
 from QuICT.algorithm import *
 
-circuit = Circuit(3)
+circuit = Circuit(4)
+circuit.assign_initial_zeros()
 PermFx([1, 0, 0, 0]) | circuit
 print(PermFx.pargs)
 amplitude = Amplitude.run(circuit)
