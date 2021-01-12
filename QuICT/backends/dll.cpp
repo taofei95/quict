@@ -341,8 +341,8 @@ DLLEXPORT void unitary_operator_gate(int qureg_length, complex<double> *values, 
 }
 
 DLLEXPORT void perm_operator_gate(int qureg_length, complex<double> *values, long long *index, int index_count, long long *perm){
-    for (int i = 0;i < index_count;++i)
-        index[i] = qureg_length - 1 - index[i];
+    //for (int i = 0;i < index_count;++i)
+    //    index[i] = qureg_length - 1 - index[i];
     int *indexlist = (int*)malloc(index_count * sizeof(int));
     for (int i = 0;i < index_count;++i)
         indexlist[i] = index[i];
@@ -368,6 +368,7 @@ DLLEXPORT void perm_operator_gate(int qureg_length, complex<double> *values, lon
                     perm[j] += 1 << index[i];
                 if ((1 << i) & j)
                     perms_to[j] += 1 << index[i];
+                //printf("%d %lld %lld %lld\n", j, perm[j], perms_to[j], now);
             }
         }
     });
