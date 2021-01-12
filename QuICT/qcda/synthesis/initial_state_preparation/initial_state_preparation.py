@@ -125,7 +125,7 @@ class InitialStatePreparationOracle(Synthesis):
 
         norm = 0
         for value in self.pargs:
-            norm += abs(value)
+            norm += abs(value) * abs(value)
         if abs(norm - 1) > 1e-10:
             for i in range(NN):
                 self.pargs[i] /= norm

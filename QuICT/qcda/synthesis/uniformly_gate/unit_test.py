@@ -14,7 +14,6 @@ from QuICT.core import *
 from QuICT.qcda.synthesis import uniformlyRy, uniformlyRz, uniformlyUnitary
 
 def generate_unitary():
-    return U3([0, 0, 0]).matrix
     matrix = U3([random.random() * np.pi, random.random() * np.pi, random.random() * np.pi]).matrix
     matrix[:] *= np.exp(2j * np.pi * random.random())
     matrix = U3([np.pi / 2, np.pi / 2, np.pi / 2]).matrix

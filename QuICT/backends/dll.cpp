@@ -364,9 +364,9 @@ DLLEXPORT void perm_operator_gate(int qureg_length, complex<double> *values, lon
             long long now = perm[j];
             perm[j] = 0;
             for (int i = 0;i < index_count;++i){
-                if ((1 << i) & now)
+                if ((1 << (index_count - i - 1)) & now)
                     perm[j] += 1 << index[i];
-                if ((1 << i) & j)
+                if ((1 << (index_count - i - 1)) & j)
                     perms_to[j] += 1 << index[i];
             }
         }
@@ -374,7 +374,7 @@ DLLEXPORT void perm_operator_gate(int qureg_length, complex<double> *values, lon
     parallel_for(blocked_range<size_t>(0, v_l >> index_count), [
         v_l,
         perms_to,
-        perm,   
+        perm,
         indexlist,
         index,
         xl_l,

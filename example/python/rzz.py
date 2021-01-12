@@ -9,9 +9,9 @@ import numpy as np
 from QuICT import *
 from QuICT.algorithm import *
 
-circuit = Circuit(2)
-H | circuit
-RZZ(np.pi / 2) | circuit
-Phase(np.pi / 4) | circuit(0)
+circuit = Circuit(3)
+X | circuit(1)
+PermFx([0, 0, 1, 0]) | circuit
+print(PermFx.pargs)
 amplitude = Amplitude.run(circuit)
 print(amplitude)
