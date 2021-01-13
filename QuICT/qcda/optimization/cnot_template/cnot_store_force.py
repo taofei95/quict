@@ -35,6 +35,9 @@ class CnotStoreForceBfs(Optimization):
             raise Exception("the qubits number should be smaller than or equal to 5.")
         if CnotStoreForceBfs.qubit_chart[n - 1] is None:
             path = f"{os.path.dirname(os.path.abspath(__file__))}{os.path.sep}json{os.path.sep}{n}qubit_cnot.json"
+            if not os.path.exists(path):
+                from .json.cnot_bfs import generate_json
+                generate_json(n)
             with open(path, "r") as f:
                 CnotStoreForceBfs.qubit_chart[n - 1] = ujson.load(f)
 

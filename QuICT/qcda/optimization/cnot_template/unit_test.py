@@ -9,8 +9,10 @@ import random
 
 import numpy as np
 
+from QuICT.algorithm import SyntheticalUnitary
 from QuICT.core import *
 from QuICT.qcda.optimization import CnotForceBfs, CnotLocalForceBfs, CnotStoreForceBfs
+
 
 def _getRandomList(n):
     """ get first 2 number from 0, 1, ..., n - 1 randomly.
@@ -59,14 +61,21 @@ def w_test_1():
             assert 0
 
 def test_2():
-    for i in range(5, 10):
+    for i in range(5, 6):
         circuit = Circuit(i)
         for _ in range(1000):
             cx = _getRandomList(i)
+            Z  | circuit(random.randrange(i))
+            S  | circuit(random.randrange(i))
+            T  | circuit(random.randrange(i))
+            X  | circuit(random.randrange(i))
             CX | circuit(cx)
         new_circuit = CnotLocalForceBfs.run(circuit, True)
-        if not check_equiv(circuit, new_circuit):
-            assert 0
+        circuit.print_infomation()
+        new_circuit.print_infomation()
+        syn1 = SyntheticalUnitary.run(circuit)
+        syn2 = SyntheticalUnitary.run(new_circuit)
+        assert not np.any(np.abs(syn1 - syn2) > 1e-7)
 
 def test_3():
     for i in range(5, 6):
