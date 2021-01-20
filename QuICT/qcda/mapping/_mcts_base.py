@@ -63,6 +63,7 @@ class DAG:
                 raise Exception("The mode is not supported")
         else:
             self._dag = nx.DiGraph()
+        self._width = circuit.circuit_width()
         self._front_layer = None
     
     def __getitem__(self, index):
@@ -71,7 +72,13 @@ class DAG:
         """
         return self._dag.nodes[index]
     @property
-    def size(self) -> int:
+    def width(self)-> int:
+        """
+        The number of qubits in the circuit
+        """
+        return self._width
+    @property
+    def size(self)-> int:
         """
         The number of nodes in DAG
         """
@@ -107,15 +114,32 @@ class DAG:
         The front layer of the DAG, which is the list of all the nodes with zero in-degree
         """
         if self._front_layer is not None:
-            return self._front_layer
+            return self._front_layer.copy()
         else:
             front_layer = []
             for v in list(self._dag.nodes()):
                 if self._dag.in_degree[v] == 0:
                     front_layer.append(v)
             self._front_layer = front_layer
-            return self._front_layer
-  
+            return self._front_layer.copy()
+        
+    @property
+    def compact_dag(self)->np.ndarray:
+        """
+        """
+        return self._successors
+    
+    @property
+    def node_qubits(self)->np.ndarray:
+        """
+        """
+        return self._node_qubits
+    @property
+    def index(self, i: int)->int:
+        """
+        """
+        return  self._index[i]
+
     def get_successor_nodes(self, vertex: int)->Iterable[int]:
         """
         Get the succeeding nodes of the current nodes
@@ -167,15 +191,30 @@ class DAG:
         Transform the sub circuit only with two-qubit gates  in the original circuit into a directed acyclic graph
         """
         self._num_gate = 0
+        self._num_two_qubit_gate = 0
+
         self._qubit_mask = np.zeros(circuit.circuit_width(), dtype = np.int32) -1
         self._initial_qubit_mask = np.zeros(circuit.circuit_width(), dtype = np.int32) -1
         self._depth = np.zeros(circuit.circuit_size(), dtype = np.int32)
         self._dag = nx.DiGraph()
+        
+        #Compact representation of DAG
+        self._successors = np.zeros(shape = (circuit.circuit_count_2qubit(), 2), dtype = np.int32) - 1
+        self._precessors = np.zeros(shape = (circuit.circuit_count_2qubit(), 2), dtype = np.int32) - 1 
+        self._node_qubits = np.zeros(shape = (circuit.circuit_count_2qubit(), 2), dtype = np.int32) - 1 
+
+        #Index and inverse index of gates from DAG to compact DAG
+        self._index = np.zeros(circuit.circuit_size(), dtype = np.int32) - 1
+        self._inverse_index = np.zeros(circuit.circuit_count_2qubit(), dtype = np.int32) -1
+    
         for gate in circuit.gates:
             if gate.is_single(): 
                 pass
             elif gate.controls + gate.targets == 2:
                 if self._is_duplicate_gate(gate) is not True:
+                    self._index[self._num_of_gate] = self._num_of_two_qubit_gate
+                    self._inverse_index[self._num_of_two_qubit_gate] = self._num_of_gate
+                    self._add_node_in_compact_dag(gate)
                     self._dag.add_node(self._num_gate, gate = gate, depth = self._gate_depth(gate))
                     if gate.type() == GATE_ID['Swap']:
                         self._add_edge_in_dag(gate.targs[0])  
@@ -183,10 +222,74 @@ class DAG:
                     else:
                         self._add_edge_in_dag(gate.targ)  
                         self._add_edge_in_dag(gate.carg)
+
+                    self._num_two_qubit_gate = self._num_two_qubit_gate + 1
             else:
                 raise Exception(str("The gate is not single qubit gate or two qubit gate"))
             
             self._num_gate = self._num_gate + 1
+
+        for i in range(self._num_two_qubit_gate):
+            self._fullfill_node(i)
+
+    
+    def _add_node_in_compact_dag(self, gate: BasicGate)->bool:
+        """
+        Add the node's information, including its successors ,precessors and node's qubits, to the compact matrix
+        """
+        if gate.type() == GATE_ID['Swap']:
+            qubits = (gate.targs[0], gate.targs[1])
+        else:
+            qubits = (gate.carg, gate.targ)
+        
+        precessors = [ 
+                        self._index[self._qubit_mask[qubits[0]]] if self._qubit_mask[qubits[0]] != -1 else -1, 
+                        self._index[self._qubit_mask[qubits[1]]] if self._qubit_mask[qubits[1]] != -1 else -1 
+                    ]
+        self._precessors[:] = precessors
+
+        self._add_successors(precessors[0], qubits[0])
+        self._add_successors(precessors[1], qubits[1])
+        
+    
+    def _add_successors(self, precessor: int, qubit: int):
+        """
+        Add the current two-qubit gate to its precessor as successor
+        """
+        if precessor != -1:
+            if self._successors[precessor][0] == -1  and self._successors[precessor][1] == -1:
+                self._successors[precessor][0] = self._num_of_two_qubit_gate
+                self._node_qubits[precessor][0] = qubit
+            elif self._successors[precessor][0] == -1  and self._successors[precessor][1] != -1:
+                self._successors[precessor][0] = self._num_of_two_qubit_gate
+                self._node_qubits[precessor][0] = qubit
+            elif self._successors[precessor][0] != -1  and self._successors[precessor][1] == -1:
+                self._successors[precessor][1] = self._num_of_two_qubit_gate
+                self._node_qubits[precessor][0] = qubit
+            else:
+                raise Exception("There is a conflict")
+    
+    def _fullfill_node(self, index: int):
+        """
+        Fullfill the node's information of qubits
+        """
+        if index  != -1
+            gate = self._dag[self._inverse_index[index]]['gates']
+            if gate.type() == GATE_ID['Swap']:
+                qubits = (gate.targs[0], gate.targs[1])
+            else:
+                qubits = (gate.carg, gate.targ)
+            
+            if self._node_qubits[0] == -1 and self._node_qubits[1] == -1:
+                self._node_qubits[0] = qubits[0]
+                self._node_qubits[1] = qubits[1]
+            elif self._node_qubits[0] == -1 and self._node_qubits[1] != -1:
+                self._node_qubits[0] = qubits[0] if self._node_qubits[1] == qubits[1] else qubits[1]
+            elif self._node_qubits[0] != -1 and self._node_qubits[1] == -1:
+                self._node_qubits[1] = qubits[1] if self._node_qubits[0] == qubits[0] else qubits[0]
+            else:
+                pass
+
     
     def _is_duplicate_gate(self, gate: BasicGate)->bool:
         """
@@ -259,8 +362,9 @@ class CouplingGraph:
         else:
             self._coupling_graph = nx.Graph()
 
-        self._size = self._coupling_graph.size()
+        self._size = len(self._coupling_graph.nodes)
         self._cal_shortest_path()
+        self._generate_matrix_representation()
     @property
     def size(self):
         """
@@ -273,6 +377,31 @@ class CouplingGraph:
         """
         """
         return self._coupling_graph
+    
+    @property
+    def adj_matrix(self)->np.ndarray:
+        """
+        The adjacent matrix of the coupling graph
+        """
+        return self._adj_matrix
+    @property
+    def distance_matrix(self)->np.ndarray:
+        """
+        The distance matrix of the coupling graph
+        """
+        return self._distance_matrix
+
+    def _generate_matrix_representation(self):
+        """
+        Transform the coupling graph to a adjacent matrix representation 
+        """
+        self._adj_matrix = np.zeros((self._size, self._size), dtype = np.int32)
+        self._distance_matrix = np.zeros((self._size, self._size), dtype = np.int32)
+        for i in range(self._size):
+            for j in range(self._size):
+                self._adj_matrix[i,j] = 1 if self.is_adjacent(i,j) else 0
+                self._distance_matrix = self.distance(i,j)
+
 
     def is_adjacent(self, vertex_i: int, vertex_j: int) -> bool:
         """
@@ -282,7 +411,7 @@ class CouplingGraph:
             return True
         else:
             return False
-
+     
 
     def get_adjacent_vertex(self, vertex: int) ->Iterable[int]:
         """

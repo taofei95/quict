@@ -1,5 +1,9 @@
-from  _mcts_base import  *
+import time
 from queue import Queue, deque
+
+from  _mcts_base import  *
+from random_simulator import *
+
 
 class TableBasedMCTS(MCTSBase):
     @classmethod
@@ -333,6 +337,42 @@ class TableBasedMCTS(MCTSBase):
                 return x
         else :
             return np.piecewise(x, [x<0, x==0, x>0], [0, 0.001, lambda x: x])
+    
+
+    def test_random_simulation(self, node: MCTSNode, num_of_gates: int , num_of_iterations: int):
+        """
+        """
+        self._num_of_executable_gate = 0
+        self._coupling_graph = CouplingGraph(coupling_graph = coupling_graph)
+        self._logical_circuit_dag = DAG(circuit = logical_circuit, mode = Mode.WHOLE_CIRCUIT) 
+        self._circuit_dag = DAG(circuit = logical_circuit, mode = Mode.TWO_QUBIT_CIRCUIT)
+        self._gate_index = []
+        self._physical_circuit: List[BasicGate] = []
+        qubit_mask = np.zeros(self._coupling_graph.size, dtype = np.int32) -1
+        # For the logical circuit, its initial mapping is [0,1,2,...,n] in default. Thus, the qubit_mask of initial logical circuit
+        # should be mapping to physical device with the actual initial mapping.
+        for i, qubit in enumerate(self._circuit_dag.initial_qubit_mask):
+            qubit_mask[init_mapping[i]] = qubit 
+        front_layer_ = [ self._circuit_dag.index(i)  for i in self._circuit_dag.front_layer ]
+        qubit_mask_ =  [ self._circuit_dag.index(i)  for i in qubit_mask ]
+        self._root_node = MCTSNode(circuit_dag = self._circuit_dag , coupling_graph = self._coupling_graph,
+                                  front_layer = self._circuit_dag.front_layer, qubit_mask = qubit_mask.copy(), cur_mapping = init_mapping.copy())
+
+        rs = RandomSimulator(graph = self._circuit_dag.compact_dag, gates = self._circuit_dag.node_qubits,
+                            coupling_graph = self._coupling_graph.adj_matrix, distance_matrix = self._coupling_graph.distance_matrix,
+                            num_of_gates = self._circuit_dag.size, num_of_logical_qubits = self._circuit_dag.width)
+        num_of_swap_gates = np.inf
+        t1 = time.clock()
+        for i in range(num_of_iterations):
+            num_of_swap_gates = min(num_of_swap_gates, self._random_simulation(node = self._root_node))
+        t2 = time.clock()
+        print("The average number of inserted swap gates is %s and the time consumed is %s ms"%(num_of_swap_gates, (t2-t1)*1000))
+
+
+        t1 = time.time()
+             num_of_swap_gates = rs(front_layer = front_layer_, qubit_mapping = init_mapping, qubit_mask = qubit_mask_, num_of_subcircuit_gates = num_of_gates, num_of_iterations = num_of_iterations)
+        t2 = time.time()
+        print("The average number of inserted swap gates is %s and the time consumed is %s ms"%(num_of_swap_gates, (t2-t1)*1000))
 
     def _random_simulation(self, node: MCTSNode):
         """
