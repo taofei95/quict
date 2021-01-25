@@ -11,7 +11,7 @@ from QuICT.core.circuit import *
 from QuICT.core.exception import *
 from QuICT.core.gate import *
 from QuICT.core.layout import *
-from lib.qubit_mapping  import QubitMapping as qm
+from qubit_mapping.qubit_mapping import QubitMapping as qm
 
 class Mapping(object):
     @abstractclassmethod

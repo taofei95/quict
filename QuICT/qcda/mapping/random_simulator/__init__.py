@@ -1,1 +1,1 @@
-from random_simulator import RandomSimulator
+from .random_simulator import RandomSimulator

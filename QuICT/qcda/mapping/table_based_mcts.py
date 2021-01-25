@@ -2,7 +2,7 @@ import time
 from queue import Queue, deque
 
 from  _mcts_base import  *
-from random_simulator import *
+from random_simulator.random_simulator import *
 
 
 class TableBasedMCTS(MCTSBase):
@@ -29,7 +29,7 @@ class TableBasedMCTS(MCTSBase):
         return cur_gate
    
     def __init__(self, play_times: int = 1, gamma: float = 0.7, Gsim: int = 30,
-                 Nsim: int = 5, selection_times: int = 20, c = 20, **params):
+                 Nsim: int = 500, selection_times: int = 40, c = 20, **params):
         """
         Params:
             paly_times: The repeated times of the whole search procedure for the circuit.
@@ -65,7 +65,10 @@ class TableBasedMCTS(MCTSBase):
         """
         The upper confidence bound of the node
         """
-        return node.reward + node.value + self._c* np.sqrt(np.log2(node.parent.visit_count) / node.visit_count)
+        if node.visit_count == 0:
+            return node.reward + node.value + self._c*100
+        else:
+            return node.reward + node.value + self._c* np.sqrt(np.log(node.parent.visit_count) / node.visit_count)
 
     def search(self, logical_circuit: Circuit, init_mapping: List[int], coupling_graph : List[Tuple] = None):
         """
@@ -86,10 +89,18 @@ class TableBasedMCTS(MCTSBase):
         qubit_mask = np.zeros(self._coupling_graph.size, dtype = np.int32) -1
         # For the logical circuit, its initial mapping is [0,1,2,...,n] in default. Thus, the qubit_mask of initial logical circuit
         # should be mapping to physical device with the actual initial mapping.
+        
+        
         for i, qubit in enumerate(self._circuit_dag.initial_qubit_mask):
             qubit_mask[init_mapping[i]] = qubit 
+
         self._root_node = MCTSNode(circuit_dag = self._circuit_dag , coupling_graph = self._coupling_graph,
-                                  front_layer = self._circuit_dag.front_layer, qubit_mask = qubit_mask, cur_mapping = init_mapping)
+                                  front_layer = self._circuit_dag.front_layer, qubit_mask = qubit_mask.copy(), cur_mapping = init_mapping.copy())
+  
+        self._rs = RandomSimulator(graph = self._circuit_dag.compact_dag, gates = self._circuit_dag.node_qubits,
+                            coupling_graph = self._coupling_graph.adj_matrix, distance_matrix = self._coupling_graph.distance_matrix,
+                            num_of_gates = self._circuit_dag.size, num_of_logical_qubits = self._circuit_dag.width)
+        
         
         self._add_initial_single_qubit_gate(node = self._root_node)
         self._add_executable_gates(node = self._root_node)
@@ -135,9 +146,12 @@ class TableBasedMCTS(MCTSBase):
         """
         res = 0
         N = np.inf
+        front_layer = [ self._circuit_dag.index[i]  for i in node.front_layer ]
+        qubit_mask =  [ self._circuit_dag.index[i]  for i in node.qubit_mask ]
         if method == "random":
-            for i in range(self._Nsim):
-               N = min(N, self._random_simulation(node))
+            # for i in range(self._Nsim):
+            #    N = min(N, self._random_simulation(node))
+            N = self._rs.simulate(front_layer = front_layer, qubit_mapping = node.cur_mapping, qubit_mask = qubit_mask, num_of_subcircuit_gates = self._Gsim, num_of_iterations = self._Nsim)
             res = np.float_power(self._gamma, N/2) * float(self._Gsim)
         node.value = res
 
@@ -148,8 +162,8 @@ class TableBasedMCTS(MCTSBase):
         """
         cur_node = node
         while cur_node.parent is not None:
-            if self._gamma*(cur_node.value + cur_node.reward) > cur_node.parent.value:
-                cur_node.parent.vlaue = self._gamma*(cur_node.value + cur_node.reward)
+            if cur_node.value + cur_node.reward > cur_node.parent.value:
+                cur_node.parent.vlaue = cur_node.value + cur_node.reward
             cur_node = cur_node._parent
 
 
@@ -300,7 +314,7 @@ class TableBasedMCTS(MCTSBase):
         res_mapping = cur_mapping.copy()
         if isinstance(swap_gate, SwapGate):
             p_target = swap_gate.targs
-            l_target = [cur_mapping.index(p_target[i], 0, len(cur_mapping)) 
+            l_target = [cur_mapping.index(p_target[i]) 
                         for i in  range(len(p_target)) ]
             if self._coupling_graph.is_adjacent(p_target[0], p_target[1]):
                 res_mapping[l_target[0]] = p_target[1]
@@ -339,7 +353,7 @@ class TableBasedMCTS(MCTSBase):
             return np.piecewise(x, [x<0, x==0, x>0], [0, 0.001, lambda x: x])
     
 
-    def test_random_simulation(self, node: MCTSNode, num_of_gates: int , num_of_iterations: int):
+    def test_random_simulation(self, logical_circuit: Circuit, init_mapping: List[int], coupling_graph : List[Tuple] = None, num_of_gates: int =30 , num_of_iterations: int = 500):
         """
         """
         self._num_of_executable_gate = 0
@@ -353,24 +367,32 @@ class TableBasedMCTS(MCTSBase):
         # should be mapping to physical device with the actual initial mapping.
         for i, qubit in enumerate(self._circuit_dag.initial_qubit_mask):
             qubit_mask[init_mapping[i]] = qubit 
-        front_layer_ = [ self._circuit_dag.index(i)  for i in self._circuit_dag.front_layer ]
-        qubit_mask_ =  [ self._circuit_dag.index(i)  for i in qubit_mask ]
+        
+        front_layer_ = [ self._circuit_dag.index[i]  for i in self._circuit_dag.front_layer ]
+        qubit_mask_ =  [ self._circuit_dag.index[i]  for i in qubit_mask ]
         self._root_node = MCTSNode(circuit_dag = self._circuit_dag , coupling_graph = self._coupling_graph,
                                   front_layer = self._circuit_dag.front_layer, qubit_mask = qubit_mask.copy(), cur_mapping = init_mapping.copy())
-
+  
         rs = RandomSimulator(graph = self._circuit_dag.compact_dag, gates = self._circuit_dag.node_qubits,
                             coupling_graph = self._coupling_graph.adj_matrix, distance_matrix = self._coupling_graph.distance_matrix,
                             num_of_gates = self._circuit_dag.size, num_of_logical_qubits = self._circuit_dag.width)
         num_of_swap_gates = np.inf
-        t1 = time.clock()
+        t1 = time.time()
         for i in range(num_of_iterations):
             num_of_swap_gates = min(num_of_swap_gates, self._random_simulation(node = self._root_node))
-        t2 = time.clock()
+        t2 = time.time()
         print("The average number of inserted swap gates is %s and the time consumed is %s ms"%(num_of_swap_gates, (t2-t1)*1000))
 
+        # print(list(front_layer_))
+        # print(list(init_mapping))
+        # print(list(qubit_mask_))
+        # for i in self._circuit_dag.compact_dag:
+        #     print(list(i))
+        # for i in self._circuit_dag.node_qubits:
+        #     print(list(i))
 
         t1 = time.time()
-             num_of_swap_gates = rs(front_layer = front_layer_, qubit_mapping = init_mapping, qubit_mask = qubit_mask_, num_of_subcircuit_gates = num_of_gates, num_of_iterations = num_of_iterations)
+        num_of_swap_gates = rs.simulate(front_layer = front_layer_, qubit_mapping = init_mapping, qubit_mask = qubit_mask_, num_of_subcircuit_gates = num_of_gates, num_of_iterations = num_of_iterations)
         t2 = time.time()
         print("The average number of inserted swap gates is %s and the time consumed is %s ms"%(num_of_swap_gates, (t2-t1)*1000))
 

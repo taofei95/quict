@@ -135,10 +135,10 @@ class DAG:
         """
         return self._node_qubits
     @property
-    def index(self, i: int)->int:
+    def index(self)->np.ndarray:
         """
         """
-        return  self._index[i]
+        return  self._index
 
     def get_successor_nodes(self, vertex: int)->Iterable[int]:
         """
@@ -165,14 +165,14 @@ class DAG:
         """
         Transform the whole circuit into a directed acyclic graph
         """
-        self._num_gate = 0
+        self._num_of_gate = 0
         self._qubit_mask = np.zeros(circuit.circuit_width(), dtype = np.int32) -1
         self._initial_qubit_mask = np.zeros(circuit.circuit_width(), dtype = np.int32) -1
         self._depth = np.zeros(circuit.circuit_size(), dtype = np.int32) 
         
         self._dag = nx.DiGraph()
         for gate in circuit.gates:
-            self._dag.add_node(self._num_gate, gate = gate, depth = self._gate_depth(gate))
+            self._dag.add_node(self._num_of_gate, gate = gate, depth = self._gate_depth(gate))
             if gate.controls + gate.targets == 1:
                 self._add_edge_in_dag(gate.targ)
             elif gate.controls + gate.targets == 2:
@@ -184,14 +184,14 @@ class DAG:
                     self._add_edge_in_dag(gate.carg)
             else:
                 raise Exception(str("The gate is not single qubit gate or two qubit gate"))
-            self._num_gate = self._num_gate + 1
+            self._num_of_gate = self._num_of_gate + 1
 
     def _construct_two_qubit_gates_circuit(self, circuit: Circuit):
         """
         Transform the sub circuit only with two-qubit gates  in the original circuit into a directed acyclic graph
         """
-        self._num_gate = 0
-        self._num_two_qubit_gate = 0
+        self._num_of_gate = 0
+        self._num_of_two_qubit_gate = 0
 
         self._qubit_mask = np.zeros(circuit.circuit_width(), dtype = np.int32) -1
         self._initial_qubit_mask = np.zeros(circuit.circuit_width(), dtype = np.int32) -1
@@ -215,7 +215,7 @@ class DAG:
                     self._index[self._num_of_gate] = self._num_of_two_qubit_gate
                     self._inverse_index[self._num_of_two_qubit_gate] = self._num_of_gate
                     self._add_node_in_compact_dag(gate)
-                    self._dag.add_node(self._num_gate, gate = gate, depth = self._gate_depth(gate))
+                    self._dag.add_node(self._num_of_gate, gate = gate, depth = self._gate_depth(gate))
                     if gate.type() == GATE_ID['Swap']:
                         self._add_edge_in_dag(gate.targs[0])  
                         self._add_edge_in_dag(gate.targs[1])
@@ -223,13 +223,13 @@ class DAG:
                         self._add_edge_in_dag(gate.targ)  
                         self._add_edge_in_dag(gate.carg)
 
-                    self._num_two_qubit_gate = self._num_two_qubit_gate + 1
+                    self._num_of_two_qubit_gate = self._num_of_two_qubit_gate + 1
             else:
                 raise Exception(str("The gate is not single qubit gate or two qubit gate"))
             
-            self._num_gate = self._num_gate + 1
+            self._num_of_gate = self._num_of_gate + 1
 
-        for i in range(self._num_two_qubit_gate):
+        for i in range(self._num_of_two_qubit_gate):
             self._fullfill_node(i)
 
     
@@ -265,7 +265,7 @@ class DAG:
                 self._node_qubits[precessor][0] = qubit
             elif self._successors[precessor][0] != -1  and self._successors[precessor][1] == -1:
                 self._successors[precessor][1] = self._num_of_two_qubit_gate
-                self._node_qubits[precessor][0] = qubit
+                self._node_qubits[precessor][1] = qubit
             else:
                 raise Exception("There is a conflict")
     
@@ -273,20 +273,19 @@ class DAG:
         """
         Fullfill the node's information of qubits
         """
-        if index  != -1
-            gate = self._dag[self._inverse_index[index]]['gates']
+        if index  != -1:
+            gate = self._dag.nodes[self._inverse_index[index]]['gate']
             if gate.type() == GATE_ID['Swap']:
                 qubits = (gate.targs[0], gate.targs[1])
             else:
                 qubits = (gate.carg, gate.targ)
-            
-            if self._node_qubits[0] == -1 and self._node_qubits[1] == -1:
-                self._node_qubits[0] = qubits[0]
-                self._node_qubits[1] = qubits[1]
-            elif self._node_qubits[0] == -1 and self._node_qubits[1] != -1:
-                self._node_qubits[0] = qubits[0] if self._node_qubits[1] == qubits[1] else qubits[1]
-            elif self._node_qubits[0] != -1 and self._node_qubits[1] == -1:
-                self._node_qubits[1] = qubits[1] if self._node_qubits[0] == qubits[0] else qubits[0]
+            i = index
+            if self._node_qubits[i][0] == -1 and self._node_qubits[i][1] == -1:
+                self._node_qubits[i] = np.array(qubits)
+            elif self._node_qubits[i][0] == -1 and self._node_qubits[i][1] != -1:
+                self._node_qubits[i][0] = qubits[0] if self._node_qubits[i][1] == qubits[1] else qubits[1]
+            elif self._node_qubits[i][0] != -1 and self._node_qubits[i][1] == -1:
+                self._node_qubits[i][1] = qubits[1] if self._node_qubits[i][0] == qubits[0] else qubits[0]
             else:
                 pass
 
@@ -310,14 +309,14 @@ class DAG:
 
         """
         if gate.controls + gate.targets == 1:
-            self._depth[self._num_gate] = self._gate_before_qubit_depth(gate.targ)
+            self._depth[self._num_of_gate] = self._gate_before_qubit_depth(gate.targ)
 
         elif gate.controls + gate.targets == 2:
-            self._depth[self._num_gate] = max(self._gate_before_qubit_depth(gate.targ), self._gate_before_qubit_depth(gate.carg))
+            self._depth[self._num_of_gate] = max(self._gate_before_qubit_depth(gate.targ), self._gate_before_qubit_depth(gate.carg))
         else:
             raise Exception(str("The gate is not single qubit gate or two qubit gate"))
         
-        return self._depth[self._num_gate]
+        return self._depth[self._num_of_gate]
     
     def _gate_before_qubit_depth(self, qubit: int)->int:
         """
@@ -332,10 +331,10 @@ class DAG:
         """
         if qubit < len(self._qubit_mask):
             if self._qubit_mask[qubit] != -1:
-                self._dag.add_edge(self._qubit_mask[qubit], self._num_gate, qubit = qubit )
+                self._dag.add_edge(self._qubit_mask[qubit], self._num_of_gate, qubit = qubit )
             else:
-                 self._initial_qubit_mask[qubit] = self._num_gate
-            self._qubit_mask[qubit] = self._num_gate
+                 self._initial_qubit_mask[qubit] = self._num_of_gate
+            self._qubit_mask[qubit] = self._num_of_gate
         else:
             raise Exception(str("   "))
     
@@ -400,7 +399,7 @@ class CouplingGraph:
         for i in range(self._size):
             for j in range(self._size):
                 self._adj_matrix[i,j] = 1 if self.is_adjacent(i,j) else 0
-                self._distance_matrix = self.distance(i,j)
+                self._distance_matrix[i,j] = self.distance(i,j)
 
 
     def is_adjacent(self, vertex_i: int, vertex_j: int) -> bool:
@@ -484,7 +483,7 @@ class MCTSNode:
         self._children: List[MCTSNode] = []     
         self._execution_list: List[int] = []     
         self._candidate_swap_list: List[SwapGate] = []
-        self._visit_count = 1    
+        self._visit_count = 0   
         self._value = 0
         self._reward = 0
         self._v = 0
