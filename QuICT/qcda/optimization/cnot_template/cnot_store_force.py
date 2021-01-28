@@ -52,14 +52,11 @@ class CnotStoreForceBfs(Optimization):
         goal_string = f";{goal}:"
         index = loadnow.find(goal_string)
         if index == -1:
-            print(goal)
             raise Exception("generate error")
         begin = index + len(goal_string)
         end = loadnow.find(";", begin)
         tuples_encode = loadnow[begin:end].split(",")
         ans = []
-        print(goal)
-        print(tuples_encode)
         for tuple_encode in tuples_encode:
             if len(tuple_encode) > 0:
                 ans.append((int(tuple_encode) // 5, int(tuple_encode) % 5))

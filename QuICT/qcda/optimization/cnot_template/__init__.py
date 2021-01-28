@@ -7,3 +7,5 @@
 from .cnot_force import CnotForceBfs
 from .cnot_store_force import CnotStoreForceBfs
 from .cnot_local_force import CnotLocalForceBfs
+from .json import generate_json
+
