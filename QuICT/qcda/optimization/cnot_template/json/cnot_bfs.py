@@ -114,4 +114,6 @@ def generate_json(n):
                 string += ';'
             file.write(string)
 
-generate_json(4)
+if __name__ == "__main__":
+    for n in range(1, 6):
+        generate_json(n)
