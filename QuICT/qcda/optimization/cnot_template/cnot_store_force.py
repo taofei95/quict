@@ -16,9 +16,6 @@ class CnotStoreForceBfs(Optimization):
     """ use bfs to optimize the cnot circuit
 
     """
-
-    qubit_chart = [None, None, None, None, None]
-
     @staticmethod
     def solve(input: Circuit):
         """ find the best circuit by bfs
@@ -33,13 +30,12 @@ class CnotStoreForceBfs(Optimization):
         n = input.circuit_width()
         if n > 5:
             raise Exception("the qubits number should be smaller than or equal to 5.")
-        if CnotStoreForceBfs.qubit_chart[n - 1] is None:
-            path = f"{os.path.dirname(os.path.abspath(__file__))}{os.path.sep}json{os.path.sep}{n}qubit_cnot.json"
-            if not os.path.exists(path):
-                from .json.cnot_bfs import generate_json
-                generate_json(n)
-            with open(path, "r") as f:
-                CnotStoreForceBfs.qubit_chart[n - 1] = ujson.load(f)
+        path = f"{os.path.dirname(os.path.abspath(__file__))}{os.path.sep}json{os.path.sep}{n}qubit_cnot.inf"
+        if not os.path.exists(path):
+            from .json.cnot_bfs import generate_json
+            generate_json(n)
+        with open(path, "r") as f:
+            loadnow = f.readline()
 
         circuit = Circuit(n)
         input_matrix = np.identity(n, dtype=bool)
@@ -52,7 +48,21 @@ class CnotStoreForceBfs(Optimization):
             for j in range(n):
                 if input_matrix[i, j]:
                     goal ^= 1 << (i * n + j)
-        ans = CnotStoreForceBfs.qubit_chart[n - 1][str(goal)]
+
+        goal_string = f";{goal}:"
+        index = loadnow.find(goal_string)
+        if index == -1:
+            print(goal)
+            raise Exception("generate error")
+        begin = index + len(goal_string)
+        end = loadnow.find(";", begin)
+        tuples_encode = loadnow[begin:end].split(",")
+        ans = []
+        print(goal)
+        print(tuples_encode)
+        for tuple_encode in tuples_encode:
+            if len(tuple_encode) > 0:
+                ans.append((int(tuple_encode) // 5, int(tuple_encode) % 5))
         for plist in ans:
             CX | circuit(plist)
         return circuit

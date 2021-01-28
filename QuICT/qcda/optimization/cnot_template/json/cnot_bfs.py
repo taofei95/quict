@@ -93,6 +93,25 @@ def generate_json(n):
         if total == ans:
             break
         l += 1
-    json_data = json.dumps(out)
-    with open("./json/" + str(n) + 'qubit_cnot.json', 'w+') as file:
-        file.write(json_data)
+    # json_data = json.dumps(out)
+    # with open("./json/" + str(n) + 'qubit_cnot.json', 'w+') as file:
+    #    file.write(json_data)
+    keys = out.keys()
+    with open(f"./json/{n}qubit_cnot.inf", 'w') as file:
+        file.write(";")
+        for key in keys:
+            string = f"{key}:"
+            tuples = out[key]
+            len_tuples = len(tuples)
+            for i in range(len_tuples):
+                _tuple = tuples[i]
+                string += f"{_tuple[0] * 5 + _tuple[1]}"
+                if i + 1 < len_tuples:
+                    string += ','
+                else:
+                    string += ';'
+            if len_tuples == 0:
+                string += ';'
+            file.write(string)
+
+generate_json(4)

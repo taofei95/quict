@@ -13,3 +13,4 @@ make.bat
 */.idea
 */*.jpg
 *qubit_cnot.json
+*qubit_cnot.inf
