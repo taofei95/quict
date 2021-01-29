@@ -92,7 +92,6 @@ def traver_with_fix_qubits(gates: list, fix: set, store):
         mapping[element] = mapping_id
         back_map[mapping_id] = element
         mapping_id += 1
-
     output = []
     local_list = []
     for gate in gates:
