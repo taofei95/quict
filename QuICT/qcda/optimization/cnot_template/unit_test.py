@@ -12,7 +12,7 @@ import numpy as np
 from QuICT.algorithm import SyntheticalUnitary
 from QuICT.core import *
 from QuICT.qcda.optimization import CnotForceBfs, CnotForceDepthBfs, CnotLocalForceBfs, CnotStoreForceBfs,\
-    CnotLocalForceBfs
+    CnotLocalForceDepthBfs
 
 
 def _getRandomList(n):
@@ -100,12 +100,12 @@ def w_test_4():
             assert 0
 
 def test_5():
-    for i in range(6, 7):
+    for i in range(5, 6):
         circuit = Circuit(i)
         for _ in range(10000):
             cx = _getRandomList(i)
             CX | circuit(cx)
-        new_circuit = CnotLocalForceBfs.run(circuit, True)
+        new_circuit = CnotLocalForceDepthBfs.run(circuit, True)
         if not check_equiv(circuit, new_circuit):
             assert 0
 

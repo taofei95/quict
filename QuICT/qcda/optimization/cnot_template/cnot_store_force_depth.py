@@ -73,4 +73,4 @@ class CnotStoreForceDepthBfs(Optimization):
         Returns:
             Circuit: output circuit
         """
-        return CnotStoreForceBfs.solve(circuit)
+        return CnotStoreForceDepthBfs.solve(circuit)
