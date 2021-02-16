@@ -14,3 +14,4 @@ make.bat
 */*.jpg
 *qubit_cnot.json
 *qubit_cnot.inf
+*qubit_cnot_depth.inf
