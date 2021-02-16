@@ -105,7 +105,7 @@ def test_5():
         for _ in range(10000):
             cx = _getRandomList(i)
             CX | circuit(cx)
-        new_circuit = CnotLocalForceBfs.run(circuit)
+        new_circuit = CnotLocalForceBfs.run(circuit, True)
         if not check_equiv(circuit, new_circuit):
             assert 0
 
