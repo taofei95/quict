@@ -11,7 +11,8 @@ import numpy as np
 
 from QuICT.algorithm import SyntheticalUnitary
 from QuICT.core import *
-from QuICT.qcda.optimization import CnotForceBfs, CnotLocalForceBfs, CnotStoreForceBfs
+from QuICT.qcda.optimization import CnotForceBfs, CnotForceDepthBfs, CnotLocalForceBfs, CnotStoreForceBfs,\
+    CnotLocalForceDepthBfs
 
 
 def _getRandomList(n):
@@ -77,16 +78,37 @@ def w_test_2():
         syn2 = SyntheticalUnitary.run(new_circuit)
         assert not np.any(np.abs(syn1 - syn2) > 1e-7)
 
-def test_3():
-    for _ in range(100):
-        for i in range(2, 6):
+def w_test_3():
+    for _ in range(1):
+        for i in range(6, 7):
             circuit = Circuit(i)
             for _ in range(100):
                 cx = _getRandomList(i)
                 CX | circuit(cx)
-            new_circuit = CnotStoreForceBfs.run(circuit)
+            new_circuit = CnotLocalForceBfs.run(circuit, True)
             if not check_equiv(circuit, new_circuit):
                 assert 0
 
+def w_test_4():
+    for i in range(2, 4):
+        circuit = Circuit(i)
+        for _ in range(10000):
+            cx = _getRandomList(i)
+            CX | circuit(cx)
+        new_circuit = CnotForceDepthBfs.run(circuit)
+        if not check_equiv(circuit, new_circuit):
+            assert 0
+
+def test_5():
+    for i in range(5, 6):
+        circuit = Circuit(i)
+        for _ in range(10000):
+            cx = _getRandomList(i)
+            CX | circuit(cx)
+        new_circuit = CnotLocalForceDepthBfs.run(circuit, True)
+        if not check_equiv(circuit, new_circuit):
+            assert 0
+
 if __name__ == '__main__':
-    pytest.main(["./unit_test.py"])
+    # pytest.main(["./unit_test.py"])
+    test_5()

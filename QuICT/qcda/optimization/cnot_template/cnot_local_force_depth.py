@@ -9,9 +9,29 @@ from itertools import combinations
 import numpy as np
 
 from .._optimization import Optimization
-from .cnot_force import CnotForceBfs
-from .cnot_store_force import CnotStoreForceBfs
+from .cnot_force_depth import CnotForceDepthBfs
+from .cnot_store_force_depth import CnotStoreForceDepthBfs
 from QuICT.core import *
+
+
+def circuit_depth(gates):
+    """ the depth of the circuit for some gate.
+
+    Args:
+        gates(list<BasicGate>): the gates
+
+    Returns:
+        int: the depth of the circuit
+    """
+    layers = []
+    for gate in gates:
+        now = set(gate.cargs) | set(gate.targs)
+        for i in range(len(layers) - 1, -2, -1):
+            if i == -1 or len(now & layers[i]) > 0:
+                if i + 1 == len(layers):
+                    layers.append(set())
+                layers[i + 1] |= now
+    return len(layers)
 
 def _matrix_product_to_bigger(space, gate) -> np.ndarray:
     q_len = len(space)
@@ -116,7 +136,7 @@ def traver_with_fix_qubits(gates: list, fix: set, store):
             circuit = Circuit(len(fix))
             for local_gate in local_list:
                 CX | circuit([mapping[local_gate.carg], mapping[local_gate.targ]])
-            new_circuit = (CnotStoreForceBfs if store else CnotForceBfs).run(circuit)
+            new_circuit = (CnotStoreForceDepthBfs if store else CnotForceDepthBfs).run(circuit)
             for local_gate in new_circuit.gates:
                 new_gate = CX.copy()
                 new_gate.cargs = [back_map[local_gate.carg]]
@@ -129,7 +149,7 @@ def traver_with_fix_qubits(gates: list, fix: set, store):
         circuit = Circuit(len(fix))
         for local_gate in local_list:
             CX | circuit([mapping[local_gate.carg], mapping[local_gate.targ]])
-        new_circuit = (CnotStoreForceBfs if store else CnotForceBfs).run(circuit)
+        new_circuit = (CnotStoreForceDepthBfs if store else CnotForceDepthBfs).run(circuit)
         for local_gate in new_circuit.gates:
             new_gate = CX.copy()
             new_gate.cargs = [back_map[local_gate.carg]]
@@ -174,12 +194,13 @@ def solve(gates: list, width, store):
         new_length = len(gates)
         if last_length == new_length:
             break
+        print(last_length, new_length)
         last_length = new_length
     circuit = Circuit(width)
     circuit.extend(gates)
     return gates
 
-class CnotLocalForceBfs(Optimization):
+class CnotLocalForceDepthBfs(Optimization):
     """ use bfs to optimize the cnot circuit
 
     """
