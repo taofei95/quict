@@ -174,6 +174,17 @@ class BasicGate(object):
     def qasm_name(self, qasm_name):
         self.__qasm_name = qasm_name
 
+    @property
+    def affectArgs(self):
+        args = []
+        if self.controls > 0:
+            for carg in self.cargs:
+                args.append(carg)
+        if self.targets > 0:
+            for targ in self.targs:
+                args.append(targ)
+        return args
+
     @classmethod
     def type(cls):
         if cls.__name__ in GATE_ID:
@@ -326,6 +337,45 @@ class BasicGate(object):
         """
         raise Exception("undefined inverse")
 
+    def communitive(self, goal, eps = 1e-13):
+        """ decide whether gate is communitive with another gate
+
+        note when the gate is special gates like Unitary, Permutation, Measure and so on, return False.
+
+        Args:
+            goal(BasicGate): the target gate
+            eps(float): the precision of comparision
+        Return:
+            bool: True if communitive
+        """
+        if self.is_special() or goal.is_special():
+            return False
+        if self.targets > 1 or goal.targets > 1:
+            return False
+
+        A = np.array(self.matrix).reshape(2, 2)
+        B = np.array(goal.matrix).reshape(2, 2)
+        if np.allclose(A, np.identity(2), rtol=1.0e-13, atol=1.0e-13):
+            return True
+        if np.allclose(B, np.identity(2), rtol=1.0e-13, atol=1.0e-13):
+            return True
+
+        set_controls = set(self.pargs)
+        set_targets  = set(self.targs)
+        set_goal_controls = set(goal.pargs)
+        set_goal_targets  = set(goal.targs)
+
+        communitive_set = set_controls.intersection(set_goal_targets)
+        if len(communitive_set) > 0 and not goal.is_diagonal():
+            return False
+        communitive_set = set_goal_controls.intersection(set_targets)
+        if len(communitive_set) > 0 and not self.is_diagonal():
+            return False
+        communitive_set = set_goal_targets.intersection(set_targets)
+        if len(communitive_set) > 0 and not np.allclose(A.dot(B), B.dot(A), rtol=1.0e-13, atol=1.0e-13):
+            return False
+        return True
+
     # gate information
     def is_single(self) -> bool:
         """ judge whether gate is a one qubit gate(excluding special gate like measure, reset, custom and so on)
@@ -368,6 +418,22 @@ class BasicGate(object):
                 return False
         else:
             return False
+
+    def is_special(self) -> bool:
+        """ judge whether gate's is special gate
+
+        Returns:
+            bool: True if gate's matrix is special
+        """
+        if self.type() == GATE_ID["Unitray"]:
+            return True
+        if self.type() == GATE_ID["Perm"]:
+            return True
+        if self.type() == GATE_ID["Measure"]:
+            return True
+        if self.type() == GATE_ID["Barrier"]:
+            return True
+        return False
 
     def exec(self, circuit):
         """ execute on the circuit
@@ -415,6 +481,7 @@ class BasicGate(object):
             if tp == np.int64 or tp == np.float or tp == np.complex128:
                 return True
             return False
+
 
 class HGate(BasicGate):
     """ Hadamard gate
