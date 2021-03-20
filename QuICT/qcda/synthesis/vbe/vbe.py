@@ -61,7 +61,6 @@ def ControlSet(control, qreg, N):
         if string[m - 1 - i] == '1':
             CX | (control, qreg[n - 1 - i])
 
-
 def CControlSet(control1, control2, qreg, N):
     """ Set the qreg as N, using CCX gates on specific qubits
 
