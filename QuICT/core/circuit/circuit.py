@@ -415,7 +415,6 @@ class Circuit(object):
                         break
             if max_size <= 0:
                 break
-
         if remove:
             for qubit in self.qubits:
                 qubit.qState_clear()
