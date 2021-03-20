@@ -37,7 +37,7 @@ def test_random_build():
             layout.add_edge(out_list[0], out_list[1], random.random())
             assert layout.check_edge(out_list[0], out_list[1])
 
-def test_load():
+def w_test_load():
     layout = Layout.load_file(os.path.abspath(r".") + "/../../../example/layout/ibmqx2.layout")
     assert layout.name == 'ibmqx2'
     assert layout.qubit_number == 5

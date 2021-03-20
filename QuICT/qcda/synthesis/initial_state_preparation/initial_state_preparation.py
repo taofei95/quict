@@ -12,10 +12,12 @@ import os
 
 from .._synthesis import Synthesis
 from QuICT.core import *
+from QuICT.qcda.synthesis import uniformlyRy, uniformlyUnitary
 
 # the allowed eps
 EPS = 1e-13
 
+'''
 def uniformlyRy(low, high, y):
     """ synthesis uniformRy gate, bits range [low, high)
     Args:
@@ -46,38 +48,7 @@ def uniformlyRy(low, high, y):
     gates.extend(uniformlyRy(low + 1, high, Rxn))
     gates.append(gateB)
     return gates
-
-def uniformlyRz(low, high, z):
-    """ synthesis uniformRz gate, bits range [low, high)
-    Args:
-        low(int): the left range low
-        high(int): the right range high
-        z(list<int>): the list of angle y
-    Returns:
-        the synthesis result
-    """
-    if low + 1 == high:
-        GateBuilder.setGateType(GATE_ID["Rz"])
-        GateBuilder.setTargs(low)
-        print("?", z)
-        GateBuilder.setPargs(z[1] - z[0])
-        return [GateBuilder.getGate()]
-    length = len(z) // 2
-    GateBuilder.setGateType(GATE_ID["CX"])
-    GateBuilder.setTargs(high - 1)
-    GateBuilder.setCargs(low)
-    gateA = GateBuilder.getGate()
-    gateB = GateBuilder.getGate()
-    Rxp = []
-    Rxn = []
-    for i in range(length):
-        Rxp.append((z[i] + z[i + length]) / 2)
-        Rxn.append((z[i] - z[i + length]) / 2)
-    gates = uniformlyRz(low + 1, high, Rxp)
-    gates.append(gateA)
-    gates.extend(uniformlyRz(low + 1, high, Rxn))
-    gates.append(gateB)
-    return gates
+'''
 
 class InitialStatePreparationOracle(Synthesis):
     """ initial state preparation
@@ -154,20 +125,16 @@ class InitialStatePreparationOracle(Synthesis):
 
         norm = 0
         for value in self.pargs:
-            norm += abs(value)
+            norm += abs(value) * abs(value)
         if abs(norm - 1) > 1e-10:
             for i in range(NN):
                 self.pargs[i] /= norm
-                phases.append(self.pargs[i])
+                phases.append(np.angle(self.pargs[i]))
                 self.pargs[i] = abs(self.pargs[i])
-                if self.pargs[i] > 0:
-                    phases[i] /= self.pargs[i]
         else:
             for i in range(NN):
-                phases.append(self.pargs[i])
+                phases.append(np.angle(self.pargs[i]))
                 self.pargs[i] = abs(self.pargs[i])
-                if self.pargs[i] > 0:
-                    phases[i] /= self.pargs[i]
 
         dll = self.initial_state_preparation_cdll
         state_theta_computation = dll.state_theta_computation
@@ -199,12 +166,13 @@ class InitialStatePreparationOracle(Synthesis):
                    flag = False
                    break
             if not flag:
-                gates.extend(uniformlyRy(0, i + 1, alpha))
+                gates.extend(uniformlyRy(alpha).build_gate())
             now += add
+        unitaries = [np.diag([np.exp(1j * phases[2 * i]), np.exp(1j * phases[2 * i + 1])])
+                     for i in range(len(phases) // 2)]
         # print(phases)
         # phases = [np.angle(phase) for phase in phases]
-        # print(phases)
-        # gates.extend(uniformlyRz(0, n, phases))
+        gates.extend(uniformlyUnitary(unitaries).build_gate())
         return gates
 
 InitialStatePreparation = InitialStatePreparationOracle()

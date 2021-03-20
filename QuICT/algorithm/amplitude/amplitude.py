@@ -26,8 +26,9 @@ class Amplitude(Algorithm):
             ancilla = []
         for qubit_index in ancilla:
             Measure | circuit(qubit_index)
+        circuit.exec()
         for qubit_index in ancilla:
-            if circuit(qubit_index) == 1:
+            if int(circuit(qubit_index)) == 1:
                 raise Exception("the ancillary is not 0")
         return cls._run(circuit, ancilla)
 
