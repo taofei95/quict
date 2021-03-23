@@ -339,8 +339,121 @@ def ExpMod(a, N, x, result, qubit_a, b, c, overflow, qubit_N, t):
         a = (a ** 2) % N
         a_inv = (a_inv ** 2) % N
 
-
 class VBEModel(Synthesis):
+    """ 
+    Quantum Networks for Elementary Arithmetic Operations
+    http://arxiv.org/abs/quant-ph/9511018v1
+
+    """
+    def __call__(self, *pargs):
+        """ 
+        Calling this empty class makes no effect
+        """
+        raise Exception('Calling this empty class makes no effect')
+
+    def build_gate(self):
+        """ 
+        Empty class builds no gate
+        """
+        raise Exception('Empty class builds no gate')
+
+VBE = VBEModel()
+
+class VBEAdderModel(VBEModel):
+    """ a circuit calculate a+b, a and b are gotten from some qubits.
+    
+    (a,b,c=0,overflow) -> (a,b'=a+b,c=0,overflow')
+
+    Args:
+        a(Qureg): the qureg stores a, length is n,
+        b(Qureg): the qureg stores b, length is n,
+        c(Qureg): the clean ancillary qubits, length is n,
+        overflow(Qureg): the dirty ancillary qubits, length is 1,
+                         flips when overflows.
+
+    Quantum Networks for Elementary Arithmetic Operations
+    http://arxiv.org/abs/quant-ph/9511018v1
+    """
+    def __call__(self,n):
+        """ Overload the function __call__,
+        Give parameters to the VBE.
+
+        Args:
+            n: the length of a, b and c.
+        Returns:
+            VBEAdderModel: the model filled by parameters.
+        """
+
+        self.pargs = [n]
+        return self
+
+    def build_gate(self):
+        """ Overload the function build_gate.
+
+        Returns:
+            Circuit: the VBE circuit
+        """
+        n = self.pargs[0]
+
+        circuit = Circuit(3*n + 1)
+        qubit_a = circuit([i for i in range(n)])
+        qubit_b = circuit([i for i in range(n, 2*n)])
+        qubit_c = circuit([i for i in range(2*n, 3*n)])
+        qubit_overflow = circuit(3*n)
+
+        PlainAdder(qubit_a, qubit_b, qubit_c, qubit_overflow)
+        return circuit
+
+VBEAdder = VBEAdderModel()
+
+class VBEAdderModModel(VBEModel):
+    """ a circuit calculate a+b mod N, a and b are gotten from some qubits.
+    
+    (a,b,c=0,overflow) -> (a,b'=a+b,c=0,overflow')
+
+    Args:
+        a(Qureg): the qureg stores a, length is n,
+        b(Qureg): the qureg stores b, length is n,
+        c(Qureg): the clean ancillary qubits, length is n,
+        overflow(Qureg): the dirty ancillary qubits, length is 1,
+                         flips when overflows.
+
+    Quantum Networks for Elementary Arithmetic Operations
+    http://arxiv.org/abs/quant-ph/9511018v1
+    """
+    def __call__(self,n):
+        """ Overload the function __call__,
+        Give parameters to the VBE.
+
+        Args:
+            n: the length of a, b and c.
+        Returns:
+            VBEAdderModel: the model filled by parameters.
+        """
+
+        self.pargs = [n]
+        return self
+
+    def build_gate(self):
+        """ Overload the function build_gate.
+
+        Returns:
+            Circuit: the VBE circuit
+        """
+        n = self.pargs[0]
+
+        circuit = Circuit(3*n + 1)
+        qubit_a = circuit([i for i in range(n)])
+        qubit_b = circuit([i for i in range(n, 2*n)])
+        qubit_c = circuit([i for i in range(2*n, 3*n)])
+        qubit_overflow = circuit(3*n)
+
+        PlainAdder(qubit_a, qubit_b, qubit_c, qubit_overflow)
+        return circuit
+
+VBEAdder = VBEAdderModel()
+
+class VBEExpModModel(VBEModel):
     """ a circuit calculate (a^x) mod N, x is gotten from some qubits
 
     Quantum Networks for Elementary Arithmetic Operations
@@ -391,4 +504,4 @@ class VBEModel(Synthesis):
 
         return circuit
 
-VBE = VBEModel()
+VBEExpMod = VBEExpModModel()
