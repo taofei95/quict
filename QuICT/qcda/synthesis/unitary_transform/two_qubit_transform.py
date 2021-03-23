@@ -2,7 +2,11 @@
 Decomposition of SU(4) with Cartan KAK Decomposition
 """
 
+from typing import *
+from QuICT.core import BasicGate
+
 from .._synthesis import Synthesis
+
 
 class TwoQubitTransform(Synthesis):
     """
@@ -12,6 +16,7 @@ class TwoQubitTransform(Synthesis):
     Reference:
         arxiv.org/abs/0806.4015
     """
+
     def __call__(self, matrix, eps=1e-15):
         """
         give parameters to the KAK
@@ -23,11 +28,10 @@ class TwoQubitTransform(Synthesis):
         self.pargs = [matrix, eps]
         return self
 
-
     def build_gate(self):
         """
         Return:
-            circuit(Circuit): Decomposed circuit
+            Tuple[BasicGate]: decomposed gates
         """
         matrix = self.pargs[0]
         eps = self.pargs[1]
