@@ -364,11 +364,11 @@ class VBEAdderModel(VBEModel):
     
     (a,b,c=0,overflow) -> (a,b'=a+b,c=0,overflow')
 
-    Args:
-        a(Qureg): the qureg stores a, length is n,
-        b(Qureg): the qureg stores b, length is n,
-        c(Qureg): the clean ancillary qubits, length is n,
-        overflow(Qureg): the dirty ancillary qubits, length is 1,
+    Quregs:
+        a: the qureg stores a, length is n,
+        b: the qureg stores b, length is n,
+        c: the clean ancillary qubits, length is n,
+        overflow: the dirty ancillary qubits, length is 1,
                          flips when overflows.
 
     Quantum Networks for Elementary Arithmetic Operations
@@ -409,29 +409,31 @@ VBEAdder = VBEAdderModel()
 class VBEAdderModModel(VBEModel):
     """ a circuit calculate a+b mod N, a and b are gotten from some qubits.
     
-    (a,b,c=0,overflow) -> (a,b'=a+b,c=0,overflow')
+    (a,b,c=0,overflow=0,N=0,t=0) -> (a,b'=a+b mod N,c=0,overflow,N,t)
 
-    Args:
-        a(Qureg): the qureg stores a, length is n,
-        b(Qureg): the qureg stores b, length is n,
-        c(Qureg): the clean ancillary qubits, length is n,
-        overflow(Qureg): the dirty ancillary qubits, length is 1,
-                         flips when overflows.
+    Quregs:
+        a: the qureg stores a, length is n,
+        b: the qureg stores b, length is n,
+        c: the clean ancillary qubits, length is n,
+        overflow: the clean ancillary qubits, length is 1,
+        N: the clean ancillary qubits, length is n,
+        t: the clean ancillary qubit, length is 1.
 
     Quantum Networks for Elementary Arithmetic Operations
     http://arxiv.org/abs/quant-ph/9511018v1
     """
-    def __call__(self,n):
+    def __call__(self,N,n):
         """ Overload the function __call__,
         Give parameters to the VBE.
 
         Args:
-            n: the length of a, b and c.
+            N: the modulus
+            n: the length of a, b, N and c.
         Returns:
-            VBEAdderModel: the model filled by parameters.
+            VBEAdderModModel: the model filled by parameters.
         """
 
-        self.pargs = [n]
+        self.pargs = [N,n]
         return self
 
     def build_gate(self):
@@ -440,18 +442,21 @@ class VBEAdderModModel(VBEModel):
         Returns:
             Circuit: the VBE circuit
         """
-        n = self.pargs[0]
+        N = self.pargs[0]
+        n = self.pargs[1]
 
-        circuit = Circuit(3*n + 1)
+        circuit = Circuit(4*n + 2)
         qubit_a = circuit([i for i in range(n)])
         qubit_b = circuit([i for i in range(n, 2*n)])
         qubit_c = circuit([i for i in range(2*n, 3*n)])
         qubit_overflow = circuit(3*n)
+        qubit_N = circuit([i for i in range(3*n + 1, 4*n + 1)])
+        qubit_t = circuit(4*n + 1)
 
-        PlainAdder(qubit_a, qubit_b, qubit_c, qubit_overflow)
+        AdderMod(N, qubit_a, qubit_b, qubit_c, qubit_overflow, qubit_N, qubit_t)
         return circuit
 
-VBEAdder = VBEAdderModel()
+VBEAdderMod = VBEAdderModModel()
 
 class VBEExpModModel(VBEModel):
     """ a circuit calculate (a^x) mod N, x is gotten from some qubits

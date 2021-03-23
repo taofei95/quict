@@ -4,4 +4,4 @@
 # @Author  : Han Yu
 # @File    : __init__.py.py
 
-from .vbe import VBEAdder, VBEExpMod
+from .vbe import VBEAdder, VBEAdderMod, VBEExpMod
