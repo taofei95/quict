@@ -4,17 +4,20 @@
 # @Author  : Han Yu
 # @File    : instruction_set.py
 
-from QuICT.core import Circuit
+from QuICT.core import BasicGate, Circuit, GATE_ID
 from .transform_rule import TransformRule
 
 class InstructionSet(object):
-    """
+    """ InstructionSet describes a set of gates(expectly to be universal set)
+
+    Instruction Set contains gates and some rules, which can be assigned by user.
 
     Attributes:
-
-
-    Private Attributes:
-
+        two_qubit_gate(int): the index of the two_qubit_gate
+        one_qubit_gates(list<int>): the indexes of the one_qubit_gate
+        SU4_rule(TransformRule): rules to transform SU(4) into instruction set
+        SU2_rule(TransformRule): rules to transform SU(2) into instruction set
+        rule_map(dictionary): A two-dimensional map from source gate and target gate to transform rule
 
     """
 
@@ -24,7 +27,15 @@ class InstructionSet(object):
 
     @two_qubit_gate.setter
     def two_qubit_gate(self, two_qubit_gate):
-        # trans to gate id
+        """ set two_qubit_gate
+
+        the basicGate class is transformed to gate id
+
+        Args:
+            two_qubit_gate(int/BasicGate):
+        """
+        if isinstance(two_qubit_gate, BasicGate):
+            two_qubit_gate = GATE_ID[two_qubit_gate.type()]
         self.__two_qubit_gate = two_qubit_gate
 
     @property
@@ -33,7 +44,19 @@ class InstructionSet(object):
 
     @one_qubit_gates.setter
     def one_qubit_gates(self, one_qubit_gates):
-        # trans to gate id
+        """ set one_qubit_gates
+
+        the basicGate class is transformed to gate id
+
+        Args:
+            two_qubit_gate(list<int/BasicGate>):
+        """
+        one_qubit_gates_list = []
+        for element in one_qubit_gates:
+            if isinstance(element, BasicGate):
+                one_qubit_gates_list.append(element.type())
+            else:
+                one_qubit_gates_list.append(element)
         self.__one_qubit_gates = one_qubit_gates
 
     @property
