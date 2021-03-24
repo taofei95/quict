@@ -5,6 +5,7 @@
 # @File    : _extensionGate.py
 
 from .gate import *
+from .gate_set import *
 from .gate_builder import GateBuilder
 
 def _add_alias(alias, standard_name):
