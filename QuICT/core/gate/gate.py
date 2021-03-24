@@ -236,6 +236,7 @@ class BasicGate(object):
         self.__params = 0
         self.__qasm_name = 'error'
         self.__name = None
+        self.__temp_name = None
         _add_alias(alias=alias, standard_name=self.__class__.__name__)
 
     # gate behavior
@@ -286,7 +287,7 @@ class BasicGate(object):
         Returns:
             BasicGate: the gate after filled by name
         """
-        self.name = str(name)
+        self.__temp_name = str(name)
         return self
 
     def __call__(self, params):
@@ -476,7 +477,7 @@ class BasicGate(object):
         Returns:
             bool: True if gate's matrix is special
         """
-        if self.type() == GATE_ID["Unitray"]:
+        if self.type() == GATE_ID["Unitary"]:
             return True
         if self.type() == GATE_ID["Perm"]:
             return True
@@ -515,11 +516,11 @@ class BasicGate(object):
         gate.targets = self.targets
         gate.controls = self.controls
         gate.params = self.params
-        if name:
+        if name is not None:
             gate_build_name(gate, name)
         else:
-            gate_build_name(gate, self.name)
-            self.name = None
+            gate_build_name(gate, self.__temp_name)
+            self.__temp_name = None
         return gate
 
     @staticmethod

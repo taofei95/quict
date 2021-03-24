@@ -162,7 +162,7 @@ def test_gate_name():
     X % 1 | circuit(1)
     CX | circuit([1, 2])
     circuit.print_infomation()
-    assert 1
+    assert 0
 
 if __name__ == "__main__":
     # pytest.main(["./_unit_test.py", "./circuit_unit_test.py", "./gate_unit_test.py", "./qubit_unit_test.py"])
