@@ -4,7 +4,7 @@
 # @Author  : Han Yu
 # @File    : __init__.py
 
-from .decomposition_rule import TransformRule
+from .transform_rule import TransformRule
 from .SU2_rules import *
 from .SU4_rules import *
 from .two_qubit_gate_rules import *
