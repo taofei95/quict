@@ -83,26 +83,57 @@ class InstructionSet(object):
         self.__SU4_rule = None
         self.__SU2_rule = None
         self.__rule_map = {}
-        self.select_default_rule(two_qubit_gate, one_qubit_gates)
+        self.select_default_rule(self.two_qubit_gate, self.one_qubit_gates)
 
-    def transform_circuit(self, circuit) -> Circuit:
-        # try SU(4) and rule decomposition, choose the better one
-        pass
+    def select_default_rule(self, two_qubit_gate, one_qubit_gates):
+        """ when setting the gates, select the default rules.
 
-    def select_default_rule(self, two_qubit_gate, one_qubit_gates) -> TransformRule:
+        Args:
+            two_qubit_gate(int): the id of 2-qubit gate
+            one_qubit_gates(list<int>): the ids of 1-qubit gates
+        """
         pass
 
     def select_transform_rule(self, source, target) ->  TransformRule:
+        """ choose a rule which transforms source gate into target gate
+
+        Args:
+            source(int): the id of source gate
+            target(int): the id of target gate
+
+        Returns:
+            TransformRule: the transform rules
+        """
         pass
 
-    def register_SU2_rule(self, function) ->  TransformRule:
+    def register_SU2_rule(self, function):
+        """ register SU(2) decompostion rule
+
+        Args:
+            function(TransformRule): decompostion rule
+        """
         pass
 
-    def register_SU4_rule(self, function) ->  TransformRule:
+    def register_SU4_rule(self, function):
+        """ register SU(4) decompostion rule
+
+        Args:
+            function(TransformRule): decompostion rule
+        """
         pass
 
-    def register_rule_map(self, source, target, function):
+    def register_rule_map(self, function):
+        """ register rule which transforms from source gate into target gate
+
+        Args:
+            function(TransformRule): the transform rule
+        """
         pass
 
-    def batch_register_rule_map(self, source : list, target : list, function : list):
+    def batch_register_rule_map(self, functions):
+        """ batch register rules which transforms from source gate into target gate
+
+        Args:
+            functions(list<TransformRule>): the transform rules
+        """
         pass

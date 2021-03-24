@@ -10,7 +10,9 @@ from .special_set import IBMQSet
 from .transform_rule import TransformRule
 
 class GateTransformModel(Synthesis):
-    """ GateTransform
+    """ synthesis gates into goal instruction set
+
+
 
     """
 
@@ -39,6 +41,19 @@ class GateTransformModel(Synthesis):
 
     @staticmethod
     def transform_circuit(circuit, instructionSet):
+        """ equivalently transfrom circuit into goal instruction set
+
+        The algorithm will try two possible path, and return a better result:
+        1. make continuous local two-qubit gates into SU(4), then decomposition with goal instruction set
+        2. transform the two-qubit gate into instruction set one by one, then one-qubit gate
+
+        Args:
+            circuit(Circuit): the circuit to be transformed
+            instructionSet(InstructionSet): the goal instruction set
+
+        Returns:
+            circuit(Circuit): the equivalent circuit with goal instruction set
+        """
         pass
 
 

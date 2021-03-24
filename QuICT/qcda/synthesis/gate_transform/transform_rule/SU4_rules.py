@@ -4,7 +4,13 @@
 # @Author  : Han Yu
 # @File    : SU4_rules.py
 
-from .decomposition_rule import TransformRule
+"""
+
+the file describe TransformRule the decomposite SU(4) into instruction set.
+
+"""
+
+from .transform_rule import TransformRule
 
 def _cnotRule(gate):
     pass

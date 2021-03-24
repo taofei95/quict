@@ -6,6 +6,12 @@
 
 from .transform_rule import TransformRule
 
+"""
+
+the file describe TransformRule between two kinds of 2-qubit gates.
+
+"""
+
 def _cx2rxx_rule(gate):
     pass
 Cx2RxxRule = TransformRule(_cx2rxx_rule)
