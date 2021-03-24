@@ -9,7 +9,7 @@ import random
 
 import numpy as np
 
-from QuICT import *
+from QuICT.core import *
 from QuICT.algorithm import SyntheticalUnitary
 
 def test_permMulDetail():
@@ -154,6 +154,14 @@ def test_CCRz():
             unitary = SyntheticalUnitary.run(circuit)
             if (abs(abs(unitary - np.identity((1 << i), dtype=np.complex))) > 1e-10).any():
                 assert 0
+    assert 1
+
+def test_gate_name():
+    circuit = Circuit(5)
+    X % "AA" | circuit
+    X % 1 | circuit(1)
+    CX | circuit([1, 2])
+    circuit.print_infomation()
     assert 1
 
 if __name__ == "__main__":

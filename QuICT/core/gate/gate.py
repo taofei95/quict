@@ -5,6 +5,7 @@
 # @File    : _gate.py
 
 import copy
+import string
 import functools
 
 import numpy as np
@@ -13,6 +14,9 @@ from QuICT.core.exception import TypeException, NotImplementedGateException
 from QuICT.core.qubit import Qubit, Qureg
 from QuICT.core.circuit import Circuit
 from .exec_operator import *
+
+# global gate order count
+gate_order = 0
 
 def _add_alias(alias, standard_name):
     if alias is not None:
@@ -26,16 +30,17 @@ def _add_alias(alias, standard_name):
                 GATE_ID[nm] = GATE_ID[standard_name]
 
 GATE_REGISTER = {-1: "Error"}
-"""Get standard gate name by gate id.
-"""
+# Get standard gate name by gate id.
+
 
 GATE_ID = {"Error": -1}
-"""Get gate id by gate name. You may use any one of the aliases of this gate.
-"""
+# Get gate id by gate name. You may use any one of the aliases of this gate.
 
 GATE_ID_CNT = 0
-"""Gate number counter.
-"""
+# Gate number counter.
+
+GATE_NAME = {}
+# Gate name mapping
 
 def gate_implementation(cls):
     global GATE_REGISTER
@@ -52,6 +57,22 @@ def gate_implementation(cls):
 
     return gate_variation
 
+def gate_build_name(gate, name = None):
+    global gate_order
+    gate_order += 1
+    if name is not None:
+        gate.name = name
+        if name in GATE_NAME:
+            raise Exception("the gate's name exists.")
+    else:
+        random_str = ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(6))
+        name = f"{gate.__class__.__name__}_{gate_order}_{random_str}"
+        while name in GATE_NAME:
+            random_str = ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(6))
+            name = f"{gate.__class__.__name__}_{gate_order}_{random_str}"
+        gate.name = name
+    GATE_NAME[gate.name] = gate
+
 class BasicGate(object):
     """ the abstract SuperClass of all basic quantum gates
 
@@ -60,6 +81,7 @@ class BasicGate(object):
     which defined in this class
 
     Attributes:
+        name(str): the unique name of the gate
         controls(int): the number of the control bits of the gate
         cargs(list<int>): the list of the index of control bits in the circuit
         carg(int, read only): the first object of cargs
@@ -80,6 +102,14 @@ class BasicGate(object):
     """
     # Attribute
     _matrix = None
+
+    @property
+    def name(self) -> str:
+        return self.__name
+
+    @name.setter
+    def name(self, name):
+        self.__name = name
 
     @property
     def matrix(self) -> np.ndarray:
@@ -205,6 +235,7 @@ class BasicGate(object):
         self.__targets = 0
         self.__params = 0
         self.__qasm_name = 'error'
+        self.__name = None
         _add_alias(alias=alias, standard_name=self.__class__.__name__)
 
     # gate behavior
@@ -230,10 +261,10 @@ class BasicGate(object):
                 2) qureg
                 3) tuple<qubit, qureg>
                 4) list<qubit, qureg>
+            name(string): the name of the gate
         Raise:
             TypeException: the type of other is wrong
         """
-
         try:
             qureg = Qureg(targets)
             circuit = qureg.circuit
@@ -246,6 +277,17 @@ class BasicGate(object):
                 circuit.append(gate, qureg)
         except Exception:
             raise TypeException("qubit or tuple<qubit, qureg> or qureg or list<qubit, qureg> or circuit", targets)
+
+    def __mod__(self, name):
+        """
+        Args:
+            name(string/int): the name of gate
+
+        Returns:
+            BasicGate: the gate after filled by name
+        """
+        self.name = str(name)
+        return self
 
     def __call__(self, params):
         """ give parameters for the gate
@@ -280,6 +322,12 @@ class BasicGate(object):
                                 "or tuple<int/float/complex>", params)
         return self
 
+    def __eq__(self, other):
+        if isinstance(other, BasicGate):
+            if other.name == self.name:
+                return True
+        return False
+
     # get information of gate
     def print_info(self):
         """ print the information of the gate
@@ -287,14 +335,17 @@ class BasicGate(object):
         print the gate's information, including controls, targets and parameters
 
         """
-        infomation = self.__str__()
+        if self.name is not None:
+            information = self.name
+        else:
+            information = self.__str__()
         if self.controls != 0:
-            infomation = infomation + f" control bit:{self.cargs} "
+            information = information + f" control bit:{self.cargs} "
         if self.targets != 0:
-            infomation = infomation + f" target bit:{self.targs} "
+            information = information + f" target bit:{self.targs} "
         if self.params != 0:
-            infomation = infomation + f" parameters:{self.pargs} "
-        print(infomation)
+            information = information + f" parameters:{self.pargs} "
+        print(information)
 
     def qasm(self):
         """ generator OpenQASM string for the gate
@@ -304,30 +355,30 @@ class BasicGate(object):
         """
         if self.qasm_name == 'error':
             return 'error'
-        string = self.qasm_name
+        qasm_string = self.qasm_name
         if self.params > 0:
-            string += '('
+            qasm_string += '('
             for i in range(len(self.pargs)):
                 if i != 0:
-                    string += ', '
-                string += str(self.pargs[i])
-            string += ')'
-        string += ' '
+                    qasm_string += ', '
+                qasm_string += str(self.pargs[i])
+            qasm_string += ')'
+        qasm_string += ' '
         first_in = True
         for p in self.cargs:
             if not first_in:
-                string += ', '
+                qasm_string += ', '
             else:
                 first_in = False
-            string += f'q[{p}]'
+            qasm_string += f'q[{p}]'
         for p in self.targs:
             if not first_in:
-                string += ', '
+                qasm_string += ', '
             else:
                 first_in = False
-            string += f'q[{p}]'
-        string += ';\n'
-        return string
+            qasm_string += f'q[{p}]'
+        qasm_string += ';\n'
+        return qasm_string
 
     def inverse(self):
         """ the inverse of the gate
@@ -355,9 +406,9 @@ class BasicGate(object):
 
         A = np.array(self.matrix).reshape(2, 2)
         B = np.array(goal.matrix).reshape(2, 2)
-        if np.allclose(A, np.identity(2), rtol=1.0e-13, atol=1.0e-13):
+        if np.allclose(A, np.identity(2), rtol=eps, atol=eps):
             return True
-        if np.allclose(B, np.identity(2), rtol=1.0e-13, atol=1.0e-13):
+        if np.allclose(B, np.identity(2), rtol=eps, atol=eps):
             return True
 
         set_controls = set(self.pargs)
@@ -446,20 +497,29 @@ class BasicGate(object):
         """
         raise Exception("cannot execute: undefined gate")
 
-    def copy(self):
+    def copy(self, name = None):
         """ return a copy of this gate
 
         Returns:
             gate(BasicGate): a copy of this gate
+            name(string): the name of new gate.
+                if name is None and self.name is not None
+                new gate's name will be self.name, and
+                self.name will be None.
         """
-        name = str(self.__class__.__name__)
-        gate = globals()[name]()
+        class_name = str(self.__class__.__name__)
+        gate = globals()[class_name]()
         gate.pargs = copy.deepcopy(self.pargs)
         gate.targs = copy.deepcopy(self.targs)
         gate.cargs = copy.deepcopy(self.cargs)
         gate.targets = self.targets
         gate.controls = self.controls
         gate.params = self.params
+        if name:
+            gate_build_name(gate, name)
+        else:
+            gate_build_name(gate, self.name)
+            self.name = None
         return gate
 
     @staticmethod
@@ -1952,8 +2012,8 @@ class UnitaryGate(BasicGate):
         self.matrix = np.array([matrix], dtype=np.complex)
         return self
 
-    def copy(self):
-        gate = super().copy()
+    def copy(self, name = None):
+        gate = super().copy(name)
         gate.matrix = self.matrix
         return gate
 
@@ -2020,4 +2080,3 @@ class ShorInitialGate(BasicGate):
         exec_shorInit(self, circuit)
 
 ShorInitial = ShorInitialGate(["ShorInitial"])
-
