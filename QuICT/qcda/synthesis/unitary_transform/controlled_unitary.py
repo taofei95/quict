@@ -3,6 +3,8 @@ import numpy as np
 from typing import *
 from .._synthesis import Synthesis
 from QuICT.core import BasicGate
+from ..uniformly_gate import uniformlyRz
+from .unitary_transform import UTrans
 
 
 class QuantumShannonDecompose:
@@ -62,10 +64,30 @@ class ControlledUnitary(Synthesis):
 
         return self
 
+    def _i_tensor_unitary(
+            self,
+            u: np.ndarray,
+            mapping: Sequence[int] = None
+    ) -> Tuple[BasicGate]:
+        """
+        Transform (I_{2x2} tensor U) into gates. The 1st bit is under the
+        identity transform before ordering.
+
+        Args:
+            u (np.ndarray): A unitary matrix.
+            mapping(Sequence[int]): Qubit ordering.
+
+        Returns:
+            Tuple[BasicGate]: Synthesized gates.
+        """
+        n = int(round(np.log2(u.shape[0])))
+        gates = UTrans(u).build_gate(mapping=[mapping[i + 1] for i in range(n)])
+        return gates
+
     def build_gate(
             self,
             mapping: Sequence[int] = None
-    ) -> Tuple[BasicGate]:
+    ) -> Sequence[BasicGate]:
         """
         Build gates from parameterized model according to given mapping.
 
@@ -76,6 +98,41 @@ class ControlledUnitary(Synthesis):
             mapping (Sequence[int]): Qubit ordering.
 
         Returns:
-            Tuple[BasicGate]: Synthesized gates.
+            Sequence[BasicGate]: Synthesized gates.
         """
-        pass
+        u1: np.ndarray = self.pargs[0]
+        u2: np.ndarray = self.pargs[1]
+        n = 1 + int(round(np.log2(u1.shape[0])))
+        """qubit number
+        """
+
+        if mapping is None:
+            mapping = [i for i in range(n)]
+
+        v, d, w = QuantumShannonDecompose.decompose(u1, u2)
+        gates = []
+
+        # diag(u1, u2) == diag(v, v) @ diag(d, d_dagger) @ diag(w, w)
+
+        # diag(w, w)
+        gates.extend(self._i_tensor_unitary(w, mapping=mapping))
+
+        # diag(d, d_dagger)
+        angle_list = []
+        for i in range(d.shape[0]):
+            s = d[i, i]
+            theta = -2 * np.log(s) / 1j
+            angle_list.append(theta)
+
+        gates.extend(
+            uniformlyRz(angle_list=angle_list)
+                .build_gate(mapping=[mapping[(i + 1) % n] for i in range(n)])
+        )
+
+        # diag(v, v)
+        gates.extend(self._i_tensor_unitary(v, mapping=mapping))
+
+        return gates
+
+
+CUTrans = ControlledUnitary()

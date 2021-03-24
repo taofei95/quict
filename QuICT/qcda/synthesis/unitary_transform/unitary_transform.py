@@ -10,6 +10,7 @@ from typing import *
 from QuICT.core import BasicGate
 from .._synthesis import Synthesis
 from .two_qubit_transform import KAK
+from .controlled_unitary import CUTrans
 
 
 class UnitaryTransform(Synthesis):
@@ -45,7 +46,7 @@ class UnitaryTransform(Synthesis):
         self.pargs = [matrix, recursive_basis, eps]
         return self
 
-    def build_gate(self):
+    def build_gate(self, mapping=None):
         """
         Return:
             Tuple[BasicGate]: Decomposed gates
