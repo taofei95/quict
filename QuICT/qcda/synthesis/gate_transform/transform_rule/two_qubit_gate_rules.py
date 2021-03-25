@@ -15,4 +15,9 @@ the file describe TransformRule between two kinds of 2-qubit gates.
 
 def _cx2rxx_rule(gate):
     pass
-Cx2RxxRule = TransformRule(_cx2rxx_rule, CX)
+Cx2RxxRule = TransformRule(_cx2rxx_rule, CX, Rxx)
+
+def _cy2cx_rule(gate):
+    pass
+Cy2cxRule = TransformRule(_cy2cx_rule, CX, CY)
+
