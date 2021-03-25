@@ -24,10 +24,11 @@ def test_uniform_ry():
     for i in range(1, 8):
         circuit = Circuit(i)
         angles = [random.random() for _ in range(1 << (i - 1))]
-        uniformlyRy(angles) | circuit
+        uniformlyRy(angles, i) | circuit
         unitary = SyntheticalUnitary.run(circuit)
         for j in range(1 << (i - 1)):
             unitary_slice = unitary[2 * j:2 * (j + 1), 2 * j:2 * (j + 1)]
+            circuit.print_infomation()
             assert not np.any(abs(unitary_slice - Ry(angles[j]).matrix.reshape(2, 2)) > 1e-10)
 
 def test_uniform_rz():

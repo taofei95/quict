@@ -9,6 +9,7 @@ from .circuit.circuit import *
 from .qubit.qubit import *
 
 from .gate.gate import *
+from .gate.gate_set import *
 from .gate.gate_builder import *
 
 from .exception.exception import *

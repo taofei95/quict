@@ -40,11 +40,14 @@ class GateSet(list):
         super().__init__()
         if gates is None:
             return
-        if isinstance(gates, Circuit):
-            gates = gates.gates
-        gates = list(gates)
-        for gate in gates:
-            self.append(gate)
+        if isinstance(gates, BasicGate):
+            self.append(gates)
+        else:
+            if isinstance(gates, Circuit):
+                gates = gates.gates
+            gates = list(gates)
+            for gate in gates:
+                self.append(gate)
 
     # Attributes of the circuit
     def circuit_width(self):
@@ -173,7 +176,59 @@ class GateSet(list):
         Raise:
             TypeException: the type of other is wrong
         """
+
+        if isinstance(targets, tuple):
+            targets = list(targets)
+        if isinstance(targets, list):
+            qureg = Qureg()
+            for item in targets:
+                if isinstance(item, Qubit):
+                    qureg.append(item)
+                elif isinstance(item, Qureg):
+                    qureg.extend(item)
+                else:
+                    raise TypeException("qubit or tuple<qubit, qureg> or qureg or list<qubit, qureg> or circuit", targets)
+        elif isinstance(targets, Qureg):
+            qureg = targets
+        elif isinstance(targets, Circuit):
+            qureg = Qureg(targets.qubits)
+        else:
+            raise TypeException("qubit or tuple<qubit> or qureg or circuit", targets)
+
+        self.targets = len(qureg)
+
+        for gate in gates:
+            qubits = []
+            for control in gate.cargs:
+                qubits.append(qureg[control])
+            for target in gate.targs:
+                qubits.append(qureg[target])
+            qureg.circuit.append(gate, qubits)
+
         for gate in self.gates:
+            gate | targets
+
+    def __xor__(self, targets):
+        """deal the operator '^'
+
+        Use the syntax "gateSet ^ circuit" or "gateSet ^ qureg" or "gateSet ^ qubit"
+        to add the gate of gateSet's inverse into the circuit/qureg/qubit
+
+        Note that the order of qubits is that control bits first
+        and target bits followed.
+
+        Args:
+            targets: the targets the gate acts on, it can have following form,
+                1) Circuit
+                2) qureg
+                3) tuple<qubit, qureg>
+                4) list<qubit, qureg>
+        Raise:
+            TypeException: the type of other is wrong
+        """
+
+
+        for gate in self.inverse():
             gate | targets
 
     def __getitem__(self, item):

@@ -145,32 +145,23 @@ def uniformlyUnitarySolve(low, high, unitary, mapping):
     gates.extend(uniformlyRz(angle_list).build_gate([mapping[i] for i in range(high - 1, low - 1, -1)]))
     return gates
 
-class uniformlyUnitaryGate(Synthesis):
+def uniformlyUnitaryDecomposition(angle_list, n, mapping=None):
     """ uniformUnitaryGate
 
     http://cn.arxiv.org/abs/quant-ph/0504100v1 Fig4 b)
+
+    Args:
+        angle_list(list<float>): the angles of Ry Gates
+        n(int) : the number of targets
+        mapping(list<int>) : the mapping of gates order
+    Returns:
+        gateSet: the synthesis gate list
     """
+    pargs = list(angle_list)
+    if mapping is None:
+        mapping = [i for i in range(n)]
+    if 1 << (n - 1) != len(pargs):
+        raise Exception("the number of parameters unmatched.")
+    return uniformlyUnitarySolve(0, n, pargs, mapping)
 
-    def __call__(self, unitary_list):
-        """
-        Args:
-            unitary_list(list<np.ndarray>): the angles of Unitary Gates
-        Returns:
-            uniformlyUnitaryGate: model filled by the parameter angle_list.
-        """
-        self.pargs = list(unitary_list)
-        self.targets = int(np.round(np.log2(len(self.pargs)))) + 1
-        return self
-
-    def build_gate(self, mapping = None):
-        """ overloaded the function "build_gate"
-
-        """
-        n = self.targets
-        if mapping is None:
-            mapping = [i for i in range(n)]
-        if 1 << (n - 1) != len(self.pargs):
-            raise Exception("the number of parameters unmatched.")
-        return uniformlyUnitarySolve(0, n, self.pargs, mapping)
-
-uniformlyUnitary = uniformlyUnitaryGate()
+uniformlyUnitary = Synthesis(uniformlyUnitaryDecomposition)
