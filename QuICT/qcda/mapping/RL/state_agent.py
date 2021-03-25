@@ -5,7 +5,7 @@
 # @Contact :   jialrs.z@gmail.com
 # @File    :   state_agent.py
 
-from .._mcts_base import MCTSNode
+from QuICT.qcda.mapping.mcts_node import MCTSNode
 class StateAgent(object):
     def __init__(self) -> None:
         super().__init__()

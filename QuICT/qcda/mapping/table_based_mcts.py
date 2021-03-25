@@ -1,8 +1,30 @@
-import time
-from queue import Queue, deque
 
-from  _mcts_base import  *
-from random_simulator.random_simulator import *
+from os import chmod
+import time
+import logging
+import logging.config
+from queue import Queue
+from collections import deque
+from enum import Enum
+
+from networkx.generators.degree_seq import expected_degree_graph
+
+from RL.experience_pool_v4 import ExperiencePool
+from mcts_node import  *
+from random_simulator.random_simulator import RandomSimulator
+
+class SimMode(Enum):
+    """
+    """
+    AVERAGE = 0
+    MAX = 1
+
+class MCTSMode(Enum):
+    """
+    """
+    TRAIN = 0
+    EVALUATE = 1
+    SEARCH = 2
 
 
 class TableBasedMCTS(MCTSBase):
@@ -27,9 +49,19 @@ class TableBasedMCTS(MCTSBase):
         else:
             raise Exception("the gate type is not valid ")
         return cur_gate
+    
+    @staticmethod
+    def _fill_adj(array: np.ndarray):
+        out = np.zeros(len(array)-1, dtype = array.dtype)
+        for i in range(len(out)):
+            if array[i+1] == -1:
+                out[i] = array[0]
+            else:
+                out[i] = array[i+1]
+        return out
    
-    def __init__(self, play_times: int = 1, gamma: float = 0.7, Gsim: int = 30,
-                 Nsim: int = 500, selection_times: int = 40, c = 20, **params):
+    def __init__(self, play_times: int = 1, gamma: float = 0.8, Gsim: int = 30, size_threshold: int = 150, coupling_graph : str = None,
+                 Nsim: int = 500, selection_times: int = 40, c = 20, mode: MCTSMode = MCTSMode.SEARCH, sim: SimMode = SimMode.MAX, experience_pool: ExperiencePool = None, log_path: str = None, **params):
         """
         Params:
             paly_times: The repeated times of the whole search procedure for the circuit.
@@ -41,11 +73,44 @@ class TableBasedMCTS(MCTSBase):
         """
         self._play_times = play_times 
         self._selection_times = selection_times 
-        self._call_back_threshold = 100
+        self._call_back_threshold = 15
         self._gamma = gamma
         self._Gsim = Gsim
         self._Nsim = Nsim
         self._c = c
+        self._mode = mode
+        self._sim = sim
+        self._size_threshold = size_threshold
+        self._experience_pool = experience_pool
+        self._log_path =  log_path
+        self._coupling_graph = get_coupling_graph(graph_name = coupling_graph)
+        
+        self._label_list = []
+        self._num_list = []
+        self._adj_list = []
+        self._qubits_list = []
+        self._feature_list = []
+        self._value_list = []
+        self._action_probability_list = []
+        
+        logging.config.dictConfig({"version":1,"disable_existing_loggers": False})
+        # 第一步，创建一个logger
+        self._logger = logging.getLogger("search")
+        self._logger.setLevel(logging.DEBUG)
+        
+        #第二步，创建一个handler，用于写入日志文件
+        formatter = logging.Formatter("%(asctime)s - %(filename)s[line:%(lineno)d] - %(levelname)s: %(message)s")
+        if log_path is not None:
+            fh = logging.FileHandler(self._log_path, mode='w')
+            fh.setLevel(logging.DEBUG)  # 输出到file的log等级的开关
+            # 第三步，定义handler的输出格式
+            fh.setFormatter(formatter)
+            self._logger.addHandler(fh)
+
+        ch = logging.StreamHandler()
+        ch.setLevel(logging.ERROR) 
+        ch.setFormatter(formatter)
+        self._logger.addHandler(ch)
     
     @property
     def physical_circuit(self):
@@ -65,12 +130,19 @@ class TableBasedMCTS(MCTSBase):
         """
         The upper confidence bound of the node
         """
-        if node.visit_count == 0:
-            return node.reward + node.value + self._c*100
-        else:
-            return node.reward + node.value + self._c* np.sqrt(np.log(node.parent.visit_count) / node.visit_count)
+        # if node.visit_count == 0:
+        #     return node.reward + node.value + self._c*100
+        # else:
+        #     return node.reward + node.value + self._c* np.sqrt(np.log(node.parent.visit_count) / node.visit_count)
+        return node.value + self._c* np.sqrt(np.log(node.parent.visit_count) / (node.visit_count+0.001))
 
-    def search(self, logical_circuit: Circuit, init_mapping: List[int], coupling_graph : List[Tuple] = None):
+    def _upper_confidence_bound_with_predictor(self, node: MCTSNode)->float:
+        """
+        The upper confidence bound with predictor of the node
+        """
+        return node.value + self._c* node.prob_of_edge *np.sqrt(node.parent.visit_count) / (node.visit_count+1) 
+
+    def search(self, logical_circuit: Circuit = None, init_mapping: List[int] = None):
         """
         The main process of the qubit mapping algorithm based on the monte carlo tree search. 
         Params:
@@ -79,11 +151,11 @@ class TableBasedMCTS(MCTSBase):
             init_mapping: The initial mapping of the logical quibts to physical qubits.
             coupling_graph: The list of the edges of the physical device's graph.
         """
-        
         self._num_of_executable_gate = 0
-        self._coupling_graph = CouplingGraph(coupling_graph = coupling_graph)
         self._logical_circuit_dag = DAG(circuit = logical_circuit, mode = Mode.WHOLE_CIRCUIT) 
         self._circuit_dag = DAG(circuit = logical_circuit, mode = Mode.TWO_QUBIT_CIRCUIT)
+        #print(self._logical_circuit_dag.size)
+        #print(self._circuit_dag.size)
         self._gate_index = []
         self._physical_circuit: List[BasicGate] = []
         qubit_mask = np.zeros(self._coupling_graph.size, dtype = np.int32) -1
@@ -95,32 +167,112 @@ class TableBasedMCTS(MCTSBase):
             qubit_mask[init_mapping[i]] = qubit 
 
         self._root_node = MCTSNode(circuit_dag = self._circuit_dag , coupling_graph = self._coupling_graph,
-                                  front_layer = self._circuit_dag.front_layer, qubit_mask = qubit_mask.copy(), cur_mapping = init_mapping.copy())
-  
+                                  front_layer = self._circuit_dag.front_layer, qubit_mask = qubit_mask.copy(), cur_mapping = init_mapping.copy(), parent =None)
+        if self._sim == SimMode.AVERAGE:
+            sim_mode = 0
+        elif self._sim == SimMode.MAX:
+            sim_mode = 1
+        else:
+            raise Exception("No such mode")
+
         self._rs = RandomSimulator(graph = self._circuit_dag.compact_dag, gates = self._circuit_dag.node_qubits,
-                            coupling_graph = self._coupling_graph.adj_matrix, distance_matrix = self._coupling_graph.distance_matrix,
-                            num_of_gates = self._circuit_dag.size, num_of_logical_qubits = self._circuit_dag.width)
+                            coupling_graph = self._coupling_graph.adj_matrix, distance_matrix = self._coupling_graph.distance_matrix, num_of_swap_gates = 15,
+                            num_of_gates = self._circuit_dag.size, num_of_logical_qubits = self._circuit_dag.width, gamma = self._gamma, mode = sim_mode)
         
         
         self._add_initial_single_qubit_gate(node = self._root_node)
         self._add_executable_gates(node = self._root_node)
         
+       
         self._expand(node = self._root_node)
+        i = 0
+        #print(self._root_node.num_of_gates)
         while self._root_node.is_terminal_node() is not True:
+            i += 1
+            t = time.time()
             self._search(root_node = self._root_node)
+            self._logger.info("every search time is:%s "%(float)(t-time.time()))
+            temp_node = self._root_node
+            
             self._root_node = self._decide(node = self._root_node)
+
+            if self._mode == MCTSMode.TRAIN:
+                self._transform_to_training_data(node = temp_node, swap_gate = self._root_node.swap_of_edge ,experience_pool = self._experience_pool)
+            #print([c.visit_count for c in self._root_node.children ])
+            self._logger.info([c.visit_count for c in self._root_node.children ])
+            
+           
             self._physical_circuit.append(self._root_node.swap_of_edge)
             self._add_executable_gates(node = self._root_node)
 
+            self._logger.info([i,self._num_of_executable_gate])
+            self._logger.info([i,self._num_of_executable_gate])
+            # print(self._root_node.value)
+            # print(self._root_node.num_of_gates)
+            # print(self._root_node.front_layer)
+            # print(self._root_node.sim_value)
+            #print(self._root_node.edge_prob)
+            # print(self._root_node.reward)
+            #print(self._root_node.visit_count)
+            #print(self._root_node.candidate_swap_list)
+            #print([c.visit_count for c in self._root_node.children ])
+            # print(self._num_of_executable_gate )
+    # self._gate_index.sort()
+    # print(self._gate_index)
+        if self._mode == MCTSMode.TRAIN:     
+            if self._experience_pool is not None:
+                circuit_size = np.array(self._num_list)
+                label = np.array(self._label_list)
+                adj = np.array(self._adj_list)
+                qubits = np.array(self._qubits_list)
+                feature = np.array(self._feature_list)
+                action_probability = np.array(self._action_probability_list)
+                value = np.array(self._value_list)
+                self._experience_pool.extend(adj = adj, qubits = qubits, feature = feature, action_probability = action_probability, value = value, circuit_size = circuit_size, swap_label = label, num = len(self._adj_list))
+            else:
+                raise Exception("Experience pool is not defined.")
+            
+        return self._logical_circuit_dag.size, len(self._physical_circuit)
+    
+
+    def _transform_to_training_data(self, node: MCTSNode, swap_gate: SwapGate):
+        """
+        Put the state of the current root node to the experience pool as the tranining data
+        """
+        num_of_gates = self._size_threshold
+
+        circuit_size, state = self._circuit_dag.get_subcircuit(front_layer = node.front_layer, num_of_gates = num_of_gates)
+        #print(1)
+        qubit_mapping = np.zeros(len(node.cur_mapping) + 1, dtype = np.int32) -1
+        #print(1)
+        qubit_mapping[0:-1] = np.array(node.cur_mapping)
+        #print(2)
+        #adj = np. state[:,0:5]
+        adj = np.apply_along_axis(self._fill_adj, axis = 1, arr = np.concatenate([np.arange(0, num_of_gates )[:,np.newaxis], state[0:num_of_gates,0:5]],axis = 1))
+        
+        qubit_indices = qubit_mapping[state[:,5:]]
+        feature = self._coupling_graph.node_feature[qubit_indices,:].reshape(state.shape[0],-1)
+
+        self._label_list.append(self._coupling_graph.edge_label(swap_gate))
+        self._num_list.append(circuit_size)
+        self._adj_list.append(adj)
+        self._qubits_list.append(qubit_indices)
+        self._feature_list.append(feature)
+        self._value_list.append(node.value)
+        self._action_probability_list.append(node.extended_edge_prob)
+        
+
+            
     def _search(self, root_node: MCTSNode):
         """
         Monte Carlo tree search from the root node
         """
-        for i in range(self._selection_times):
+        #print('search')
+        for _ in range(self._selection_times):
             cur_node = self._select(node = root_node)
             self._expand(node = cur_node)
-            self._rollout(node = cur_node, method = "random")
-            self._backpropagate(cur_node)
+            value = self._rollout(node = cur_node, method = "random")
+            self._backpropagate(node = cur_node, value = value)
 
     def _select(self, node: MCTSNode)-> MCTSNode:
         """
@@ -137,34 +289,55 @@ class TableBasedMCTS(MCTSBase):
         """
         Open all child nodes of the current node by applying the swap gates in candidate swap list
         """
-        for swap in node.candidate_swap_list:
-            node.add_child_node_by_swap_gate(swap)
+        if node is None:
+            raise Exception("Node can't be None")
+
+        for swap, prob in zip(node.candidate_swap_list, node.edge_prob):
+            node.add_child_node_by_swap_gate(swap, prob)
             
-    def _rollout(self, node: MCTSNode, method: str):
+    def _rollout(self, node: MCTSNode, method: str = "random")-> float:
         """
         Do a heuristic search for the sub circuit with Gsim gates from the current node by the specified method
         """
         res = 0
-        N = np.inf
         front_layer = [ self._circuit_dag.index[i]  for i in node.front_layer ]
-        qubit_mask =  [ self._circuit_dag.index[i]  for i in node.qubit_mask ]
-        if method == "random":
+        qubit_mask =  [ self._circuit_dag.index[i] if i != -1 else -1 for i in node.qubit_mask ]
             # for i in range(self._Nsim):
-            #    N = min(N, self._random_simulation(node))
-            N = self._rs.simulate(front_layer = front_layer, qubit_mapping = node.cur_mapping, qubit_mask = qubit_mask, num_of_subcircuit_gates = self._Gsim, num_of_iterations = self._Nsim)
-            res = np.float_power(self._gamma, N/2) * float(self._Gsim)
-        node.value = res
+            #     N = min(N, self._random_simulation(node))
+            #     print("%d and %d"%(N,node.num_of_gates))
+        res = self._rs.simulate(front_layer = front_layer, qubit_mapping = node.cur_mapping, qubit_mask = qubit_mask, num_of_subcircuit_gates = self._Gsim, num_of_iterations = self._Nsim)
+        #print(N)
+            #res = np.float_power(self._gamma, N/2) * float(self._Gsim)
+            #print(list(front_layer))
+            #print(list(qubit_mask))
+            #print("%d and %d"%(N,node.num_of_gates))
+        node.sim_value = res
+        node.value +=  res 
+        node.w += res
+        return node.value
 
     
-    def _backpropagate(self, node : MCTSNode):
+    def _backpropagate(self, node : MCTSNode, value: int):
         """
         Use the result of the rollout to update the score in the nodes on the path from the current node to the root 
         """
         cur_node = node
-        while cur_node.parent is not None:
-            if cur_node.value + cur_node.reward > cur_node.parent.value:
-                cur_node.parent.vlaue = cur_node.value + cur_node.reward
-            cur_node = cur_node._parent
+        bp_value = value
+        if self._sim == SimMode.AVERAGE:
+            while cur_node.parent is not None:
+                bp_value = cur_node.parent.reward + self._gamma * bp_value
+                cur_node.parent.w += bp_value
+                cur_node.parent.value = cur_node.parent.w / cur_node.parent.visit_count
+                cur_node = cur_node.parent
+        elif self._sim == SimMode.MAX:
+            while cur_node.parent is not None:
+                bp_value = cur_node.parent.reward + self._gamma * bp_value
+                if bp_value > cur_node.parent.value:
+                    cur_node.parent.value = bp_value
+                cur_node = cur_node.parent
+        else:
+            raise Exception("No such mode")
+
 
 
     def _eval(self, node : MCTSNode):
@@ -173,20 +346,23 @@ class TableBasedMCTS(MCTSBase):
         """
         pass
 
-    def _decide(self,node : MCTSNode):
+    def _decide(self,node : MCTSNode)-> MCTSNode:
         """
         Decide which child node to move into 
         """
-        return self._get_best_child(node) 
+        node = self._get_best_child(node)
+        node.parent = None
+        #node.clear()
+        return node
 
     def _select_next_child(self, node: MCTSNode)-> MCTSNode:
         """
         Select the next child to be expanded of the current node 
         """
         res_node = None
-        score = -1
+        score = float('-inf')
         for child in node.children:
-            UCB = self._upper_confidence_bound(node = child)
+            UCB = self._upper_confidence_bound_with_predictor(node = child)
             if UCB >score:
                 res_node = child
                 score = UCB
@@ -198,10 +374,16 @@ class TableBasedMCTS(MCTSBase):
         """
         res_node = None
         score = -1
+        # reward_list = []
+        # value_list = []
         for child in node.children:
-            if child.value + child.reward >score:
+            # reward_list.append(child.reward)
+            # value_list.append(child.value)
+            if child.value  > score:
                 res_node = child
-                score = res_node.value + res_node.reward  
+                score = res_node.value     
+        # print(reward_list)
+        # print(value_list) 
         return res_node
 
     def _fall_back(self, node: MCTSNode):
@@ -223,6 +405,7 @@ class TableBasedMCTS(MCTSBase):
             if self._logical_circuit_dag[gate]['gate'].is_single():
                 self._physical_circuit.append(self._get_physical_gate(gate = self._logical_circuit_dag[gate]['gate'],
                                                 cur_mapping = cur_mapping))
+                self._gate_index.append(gate)
                 for suc in self._logical_circuit_dag.get_successor_nodes(vertex = gate):
                     if self._logical_circuit_dag[suc]['gate'].is_single():
                         sqg_stack.append(suc)
@@ -257,28 +440,44 @@ class TableBasedMCTS(MCTSBase):
             gate_t = sqg_stack.pop()
             self._physical_circuit.append(self._get_physical_gate(gate = self._logical_circuit_dag[gate_t]['gate'],
                                         cur_mapping = cur_mapping))
+            # if gate_t in self._gate_index:
+            #     raise Exception("The gate index is %d"%(gate))
+            self._gate_index.append(gate_t)
             for suc in self._logical_circuit_dag.get_successor_nodes(vertex = gate_t):
-                if self._is_valid_successor(suc, gate, mark):
+                if self._is_valid_successor(suc, gate, gate_t, mark):
                     sqg_stack.append(suc)  
+        #print(mark)
 
-    def _is_valid_successor(self, gate_index: int, pre_gate_index: int, mark: Set[int])->bool:
+    def _is_valid_successor(self, gate_index: int, ori_gate_index: int, pre_gate_index: int, mark: Set[int])->bool:
         """
         Indicate whether the succeeding node can be excuted as soon as the  
         """
         gate = self._logical_circuit_dag[gate_index]['gate']
         pre_gate = self._logical_circuit_dag[pre_gate_index]['gate']
-        if gate.is_single():
+        ori_gate = self._logical_circuit_dag[ori_gate_index]['gate']
+        if  gate.is_single():
             return True
         elif gate.controls + gate.targets == 2:
             qubits = self._get_gate_qubits(gate)
-            pre_qubits = self._get_gate_qubits(pre_gate)
-            if gate not in mark and (qubits[0] == pre_qubits[0] and qubits[1] == pre_qubits[1]) or (qubits[0] == pre_qubits[1] and qubits[1] == pre_qubits[0]):
-               mark.add(gate)
-               return True
+            if  ori_gate_index == pre_gate_index:
+                pre_qubits = self._get_gate_qubits(pre_gate)
+                if is_two_qubit_gate_equal(qubits, pre_qubits):
+                    return True
+                else:
+                    return False
             else:
-                False 
+                ori_qubits = self._get_gate_qubits(ori_gate)
+                if is_two_qubit_gate_equal(qubits, ori_qubits):
+                    if gate_index in mark:
+                            return True
+                    else:
+                        mark.add(gate_index)
+                        return False 
+                else:
+                    return False
         else:
             raise Exception("The gate type is not supported")
+
 
     def _get_gate_qubits(self, gate: BasicGate)->List[int]:
         """
@@ -353,11 +552,11 @@ class TableBasedMCTS(MCTSBase):
             return np.piecewise(x, [x<0, x==0, x>0], [0, 0.001, lambda x: x])
     
 
-    def test_random_simulation(self, logical_circuit: Circuit, init_mapping: List[int], coupling_graph : List[Tuple] = None, num_of_gates: int =30 , num_of_iterations: int = 500):
+    def test_random_simulation(self, logical_circuit: Circuit, init_mapping: List[int], num_of_gates: int = -1):
         """
         """
         self._num_of_executable_gate = 0
-        self._coupling_graph = CouplingGraph(coupling_graph = coupling_graph)
+        
         self._logical_circuit_dag = DAG(circuit = logical_circuit, mode = Mode.WHOLE_CIRCUIT) 
         self._circuit_dag = DAG(circuit = logical_circuit, mode = Mode.TWO_QUBIT_CIRCUIT)
         self._gate_index = []
@@ -365,37 +564,31 @@ class TableBasedMCTS(MCTSBase):
         qubit_mask = np.zeros(self._coupling_graph.size, dtype = np.int32) -1
         # For the logical circuit, its initial mapping is [0,1,2,...,n] in default. Thus, the qubit_mask of initial logical circuit
         # should be mapping to physical device with the actual initial mapping.
+        if num_of_gates == -1:
+            self._Gsim = self._circuit_dag.size
         for i, qubit in enumerate(self._circuit_dag.initial_qubit_mask):
             qubit_mask[init_mapping[i]] = qubit 
         
-        front_layer_ = [ self._circuit_dag.index[i]  for i in self._circuit_dag.front_layer ]
-        qubit_mask_ =  [ self._circuit_dag.index[i]  for i in qubit_mask ]
         self._root_node = MCTSNode(circuit_dag = self._circuit_dag , coupling_graph = self._coupling_graph,
                                   front_layer = self._circuit_dag.front_layer, qubit_mask = qubit_mask.copy(), cur_mapping = init_mapping.copy())
-  
-        rs = RandomSimulator(graph = self._circuit_dag.compact_dag, gates = self._circuit_dag.node_qubits,
-                            coupling_graph = self._coupling_graph.adj_matrix, distance_matrix = self._coupling_graph.distance_matrix,
-                            num_of_gates = self._circuit_dag.size, num_of_logical_qubits = self._circuit_dag.width)
-        num_of_swap_gates = np.inf
-        t1 = time.time()
-        for i in range(num_of_iterations):
-            num_of_swap_gates = min(num_of_swap_gates, self._random_simulation(node = self._root_node))
-        t2 = time.time()
-        print("The average number of inserted swap gates is %s and the time consumed is %s ms"%(num_of_swap_gates, (t2-t1)*1000))
 
-        # print(list(front_layer_))
-        # print(list(init_mapping))
-        # print(list(qubit_mask_))
-        # for i in self._circuit_dag.compact_dag:
-        #     print(list(i))
-        # for i in self._circuit_dag.node_qubits:
-        #     print(list(i))
+        num_of_swap_gates = self._random_simulation(node = self._root_node)
+        #print(num_of_swap_gates)
+        if self._mode == MCTSMode.TRAIN:     
+            if self._experience_pool is not None:
+                circuit_size = np.array(self._num_list)
+                label = np.array(self._label_list)
+                adj = np.array(self._adj_list)
+                qubits = np.array(self._qubits_list)
+                feature = np.array(self._feature_list)
+                action_probability = np.array(self._action_probability_list)
+                value = np.array(self._value_list)
+                self._experience_pool.extend(adj = adj, qubits = qubits, feature = feature, action_probability = action_probability, value = value, circuit_size = circuit_size, swap_label = label, num = len(self._adj_list))
+            else:
+                raise Exception("Experience pool is not defined.")
+        #print("The average number of inserted swap gates is %s and the time consumed is %s ms"%(num_of_swap_gates, (t2-t1)*1000))
 
-        t1 = time.time()
-        num_of_swap_gates = rs.simulate(front_layer = front_layer_, qubit_mapping = init_mapping, qubit_mask = qubit_mask_, num_of_subcircuit_gates = num_of_gates, num_of_iterations = num_of_iterations)
-        t2 = time.time()
-        print("The average number of inserted swap gates is %s and the time consumed is %s ms"%(num_of_swap_gates, (t2-t1)*1000))
-
+        return num_of_swap_gates, self._circuit_dag.size
     def _random_simulation(self, node: MCTSNode):
         """
         A fast random simulation method for qubit mapping problem. The method randomly select the swap gates 
@@ -405,22 +598,27 @@ class TableBasedMCTS(MCTSBase):
         executed_gate = 0
         cur_node = node.copy()
         num_swap = 0
-        while  cur_node.is_terminal_node() is not True and  executed_gate < self._Gsim:
-            base = self._neareast_neighbour_count(front_layer = cur_node.front_layer, cur_mapping = cur_node.cur_mapping)    
-            list_length = len(cur_node.candidate_swap_list)
-            NNC= np.zeros(list_length, dtype=float)
-            for i,swap_gate in enumerate(cur_node.candidate_swap_list):
-                mapping = self._change_mapping_with_single_swap(cur_node.cur_mapping, swap_gate)
-                NNC[i] = base - self._neareast_neighbour_count(cur_mapping = mapping, front_layer = cur_node.front_layer)
-            dist_p = self._f(NNC)
-            dist_p = dist_p / np.sum(dist_p)
+        if self._Gsim == -1:
+            threshold = node.num_of_gates
+        else:
+            threshold = self._Gsim
+
+        while  cur_node.is_terminal_node() is not True and  executed_gate < threshold:    
+            list_length = len(cur_node.edge_prob)
+            dist_p = cur_node.edge_prob
+            #print(dist_p)
             index = np.random.choice(a = list_length, p = dist_p)
-            cur_node.cur_mapping  = self._change_mapping_with_single_swap(cur_node.cur_mapping, cur_node.candidate_swap_list[index])
-            cur_node.qubit_mask = self._change_qubit_mask_with_single_swap(cur_node.qubit_mask, cur_node.candidate_swap_list[index])
             cur_node.swap_of_edge = cur_node.candidate_swap_list[index].copy()
-            cur_node.update_node()
+            
+            if self._mode == MCTSMode.TRAIN:
+                self._transform_to_training_data(node = cur_node, swap_gate = cur_node.swap_of_edge)
+            
+            cur_node.update_by_swap_gate(swap = cur_node.swap_of_edge)
             executed_gate = executed_gate + len(cur_node.execution_list)
+            #print(executed_gate)
             num_swap = num_swap + 1
+
+        
         return num_swap
             
 
@@ -433,7 +631,6 @@ class TableBasedMCTS(MCTSBase):
     
 
 
-        
 
 
     

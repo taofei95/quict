@@ -1,9 +1,9 @@
 import os
 import sys
+from table_based_mcts import TableBasedMCTS
 
 from typing import List, Tuple, Optional, Union, Dict
 
-from _mapping import *
 from QuICT.tools.interface import *
 from QuICT.core.circuit import *
 from QuICT.core.layout import *
@@ -53,7 +53,7 @@ def count_two_qubit_gates(circuit: Circuit)->int:
             res = res + 1
     return res
 
-def test_mapping(input_path: str, output_path: str,  num_of_qubits: int, init_mapping: List[int], topology):
+def test_mapping(input_path: str, output_path: str, log_path: str,  num_of_qubits: int, init_mapping: List[int], topology):
     qc = OPENQASMInterface.load_file(input_path)
     circuit =qc.circuit
 
@@ -61,13 +61,15 @@ def test_mapping(input_path: str, output_path: str,  num_of_qubits: int, init_ma
     physical_qubit_num = num_of_qubits
 
     print(input_path)
-    circuit_trans = Mapping_NISQ.run(circuit = circuit, num = physical_qubit_num, layout = topology, init_mapping = init_mapping)
-    
+    mcts = TableBasedMCTS(coupling_graph =  "ibmq20", log_path = log_path)
+    mcts.search(logical_circuit = circuit, init_mapping = init_mapping)
+    circuit_trans = mcts.physical_circuit
+
     print(circuit.circuit_size())
-    print(circuit_trans.circuit_size())
+    print(len(circuit_trans))
     with open(output_path, "w") as f:
         print(circuit.circuit_size(), file = f)
-        print(circuit_trans.circuit_size(), file = f)
+        print(len(circuit_trans), file = f)
         print(count_two_qubit_gates(circuit), file = f)
         print(count_two_qubit_gates(circuit_trans), file = f)
         print("Initial layout(physical qubits -> logic qubits):", file = f)
@@ -92,5 +94,6 @@ if __name__ == "__main__":
     dir_path, file_name = os.path.split(file_path)
     for file_name in small_benchmark:
         input_path = f"{dir_path}/benchmark/QASM example/{file_name}.qasm"
-        output_path =  f"{dir_path}/benchmark/QASM example/output/{file_name}.output"
-        test_mapping(input_path, output_path, topology = topology, num_of_qubits = 20, init_mapping = [i for i in range(20)] )
+        output_path =  f"{dir_path}/benchmark/QASM example/output/{file_name}.test.output"
+        log_path = f"{dir_path}/benchmark/QASM example/output/{file_name}.test.log"
+        test_mapping(input_path, output_path, log_path, topology = topology, num_of_qubits = 20, init_mapping = [i for i in range(20)] )
