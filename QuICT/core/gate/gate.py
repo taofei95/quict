@@ -42,6 +42,9 @@ GATE_ID_CNT = 0
 GATE_NAME = {}
 # Gate name mapping
 
+GATE_SET_LIST = []
+# add gate into list environment
+
 def gate_implementation(cls):
     global GATE_REGISTER
     global GATE_ID
@@ -215,6 +218,14 @@ class BasicGate(object):
                 args.append(targ)
         return args
 
+    @affectArgs.setter
+    def affectArgs(self, affectArgs):
+        if len(affectArgs) != self.controls + self.targets:
+            raise Exception(f"length of affectArgs should equal to {self.controls + self.targets}")
+        if self.controls > 0:
+            self.cargs = affectArgs[:self.controls]
+        self.targs = affectArgs[self.controls:]
+
     @classmethod
     def type(cls):
         if cls.__name__ in GATE_ID:
@@ -259,9 +270,10 @@ class BasicGate(object):
         Args:
             targets: the targets the gate acts on, it can have following form,
                 1) Circuit
-                2) qureg
-                3) tuple<qubit, qureg>
-                4) list<qubit, qureg>
+                2) qubit
+                3) qureg
+                4) tuple<qubit, qureg>
+                5) list<qubit, qureg>
             name(string): the name of the gate
         Raise:
             TypeException: the type of other is wrong
@@ -278,6 +290,37 @@ class BasicGate(object):
                 circuit.append(gate, qureg)
         except Exception:
             raise TypeException("qubit or tuple<qubit, qureg> or qureg or list<qubit, qureg> or circuit", targets)
+
+    # gate behavior
+    def __and__(self, targets):
+        """deal the operator '&'
+
+        Use the syntax "gate & int" or "gate & list<int>" to add the parameter into the circuit
+        Some Examples are like this:
+
+        X       & 1
+        CX      & [0, 1]
+        Measure & 2
+
+        Note that the order of qubits is that control bits first
+        and target bits followed.
+
+        Args:
+            targets: the targets the gate acts on, it can have following form,
+                1) int
+                2) tuple<qubit, qureg>
+                3) list<qubit, qureg>
+            name(string): the name of the gate
+        Raise:
+            TypeException: the type of other is wrong
+        """
+        try:
+            targets = list(targets)
+            self.affectArgs = targets
+        except Exception:
+            raise TypeException("int or tuple<int> or list<int>", targets)
+        if len(GATE_SET_LIST):
+            GATE_SET_LIST[-1].append(self.copy())
 
     def __mod__(self, name):
         """
@@ -501,12 +544,14 @@ class BasicGate(object):
     def copy(self, name = None):
         """ return a copy of this gate
 
-        Returns:
-            gate(BasicGate): a copy of this gate
+        Args:
             name(string): the name of new gate.
                 if name is None and self.name is not None
                 new gate's name will be self.name, and
                 self.name will be None.
+
+        Returns:
+            gate(BasicGate): a copy of this gate
         """
         class_name = str(self.__class__.__name__)
         gate = globals()[class_name]()
@@ -687,13 +732,6 @@ class YGate(BasicGate):
         self.targets = 1
         self.params = 0
         self.qasm_name = "y"
-
-    @property
-    def matrix(self) -> np.ndarray:
-        return np.array([
-            0, -1j,
-            1j, 0
-        ], dtype=np.complex)
 
     def __str__(self):
         return "Pauli-Y gate"
@@ -1274,6 +1312,7 @@ class CRzGate(BasicGate):
         self.controls = 1
         self.targets = 1
         self.params = 1
+        self.pargs = [np.pi / 2]
         self.qasm_name = "crz"
 
     @property
@@ -1312,6 +1351,97 @@ class CRzGate(BasicGate):
         exec_controlSingle(self, circuit)
 
 CRz = CRzGate(["CRZ", "CRz", "Crz"])
+
+class CU1Gate(BasicGate):
+    """ Controlled-U1 gate
+
+    """
+
+    def __init__(self, alias=None):
+        _add_alias(alias=alias, standard_name=self.__class__.__name__)
+        super().__init__(alias=None)
+        self.controls = 1
+        self.targets = 1
+        self.params = 1
+        self.pargs = [np.pi / 2]
+        self.qasm_name = "cu1"
+
+    @property
+    def matrix(self) -> np.ndarray:
+        return np.array([
+            1, 0,
+            0, np.exp(1j * self.pargs[0])
+        ], dtype=np.complex)
+
+    def compute_matrix(self) -> np.ndarray:
+        return np.array([
+            1, 0, 0, 0,
+            0, 1, 0, 0,
+            0, 0, 1, 0,
+            0, 0, 0, np.exp(1j * self.pargs[0])
+        ], dtype=np.complex)
+
+    def __str__(self):
+        return "controlled-U1 gate"
+
+    def inverse(self):
+        _CU1 = CU1Gate(alias=None)
+        _CU1.cargs = copy.deepcopy(self.cargs)
+        _CU1.targs = copy.deepcopy(self.targs)
+        _CU1.pargs = [-self.pargs[0]]
+        return _CU1
+
+    def exec(self, circuit):
+        exec_controlSingle(self, circuit)
+
+CU1 = CU1Gate(["CU1", "cu1"])
+
+class CU3Gate(BasicGate):
+    """ Controlled-U3 gate
+
+    """
+
+    def __init__(self, alias=None):
+        _add_alias(alias=alias, standard_name=self.__class__.__name__)
+        super().__init__(alias=None)
+        self.controls = 1
+        self.targets = 1
+        self.params = 1
+        self.pargs = [np.pi / 2, 0, 0]
+        self.qasm_name = "cu3"
+
+    @property
+    def matrix(self) -> np.ndarray:
+        return np.array([
+            np.cos(self.pargs[0] / 2),
+            -np.exp(1j * self.pargs[2]) * np.sin(self.pargs[0] / 2),
+            np.exp(1j * self.pargs[1]) * np.sin(self.pargs[0] / 2),
+            np.exp(1j * (self.pargs[1] + self.pargs[2])) * np.cos(self.pargs[0] / 2)
+        ], dtype=np.complex)
+
+    def compute_matrix(self) -> np.ndarray:
+        return np.array([
+            1, 0, 0, 0,
+            0, 1, 0, 0,
+            0, 0, np.cos(self.pargs[0] / 2), -np.exp(1j * self.pargs[2]) * np.sin(self.pargs[0] / 2),
+            0, 0, np.exp(1j * self.pargs[1]) * np.sin(self.pargs[0] / 2),
+            np.exp(1j * (self.pargs[1] + self.pargs[2])) * np.cos(self.pargs[0] / 2)
+        ], dtype=np.complex)
+
+    def __str__(self):
+        return "controlled-U3 gate"
+
+    def inverse(self):
+        _CU3 = CU3Gate(alias=None)
+        _CU3.cargs = copy.deepcopy(self.cargs)
+        _CU3.targs = copy.deepcopy(self.targs)
+        _CU3.pargs = [self.pargs[0], np.pi - self.pargs[2], np.pi - self.pargs[1]]
+        return _CU3
+
+    def exec(self, circuit):
+        exec_controlSingle(self, circuit)
+
+CU3 = CU3Gate(["CU1", "cu1"])
 
 class CCXGate(BasicGate):
     """ Toffoli gate
@@ -2081,3 +2211,97 @@ class ShorInitialGate(BasicGate):
         exec_shorInit(self, circuit)
 
 ShorInitial = ShorInitialGate(["ShorInitial"])
+
+
+class ComplexGate(BasicGate):
+    """ the abstract SuperClass of all complex quantum gates
+
+    These quantum gates are generally too complex to act on reality quantum
+    hardware directly. The class is devoted to give some reasonable synthetize
+    of the gates so that user can use these gates as basic gates but get a
+    series one-qubit and two-qubit gates in final.
+
+    All complex quantum gates described in the framework have
+    some common attributes and some common functions
+    which defined in this class.
+
+    Note that the ComplexGate extends the BasicGate
+
+    Note that all subClass must overloaded the function "build_gate"
+    """
+
+    def build_gate(self):
+        """ generate BasicGate, affectArgs
+
+        Returns:
+            GateSet: synthetize result
+        """
+        affectArgs = self.affectArgs
+        GateBuilder.setGateType(GATE_ID["X"])
+        GateBuilder.setTargs(len(affectArgs) - 1)
+        return GateSet(GateBuilder.getGate())
+
+    def exec(self, circuit):
+        gateSet = self.build_gate()
+        for gate in gateSet:
+            gate.exec(circuit)
+
+class CCRzGate(ComplexGate):
+    """ controlled-Rz gate with two control bits
+
+    """
+
+    def __init__(self, alias=None):
+        _add_alias(alias=alias, standard_name=self.__class__.__name__)
+        super().__init__(alias=None)
+        self.controls = 2
+        self.targets = 1
+        self.params = 0
+        self.qasm_name = "CCRz"
+
+    @property
+    def matrix(self) -> np.ndarray:
+        return np.array([
+            np.exp(-self.parg / 2 * 1j),
+            0,
+            0,
+            np.exp(self.parg / 2 * 1j)
+        ], dtype=np.complex)
+
+    @property
+    def compute_matrix(self) -> np.ndarray:
+        return np.array([
+            1, 0, 0, 0, 0, 0, 0, 0,
+            0, 1, 0, 0, 0, 0, 0, 0,
+            0, 0, 1, 0, 0, 0, 0, 0,
+            0, 0, 0, 1, 0, 0, 0, 0,
+            0, 0, 0, 0, 1, 0, 0, 0,
+            0, 0, 0, 0, 0, 1, 0, 0,
+            0, 0, 0, 0, 0, 0, np.exp(-self.parg / 2 * 1j), 0,
+            0, 0, 0, 0, 0, 0, 0, np.exp(self.parg / 2 * 1j)
+        ], dtype=np.complex)
+
+    def __str__(self):
+        return "CCRz gate"
+
+    def inverse(self):
+        _CCRz = CCRzGate(alias=None)
+        _CCRz.cargs = copy.deepcopy(self.cargs)
+        _CCRz.targs = copy.deepcopy(self.targs)
+        _CCRz.pargs = -self.parg
+        return _CCRz
+
+    def build_gate(self):
+        from .gate_set import GateSet
+        qureg = self.affectArgs
+        gates = GateSet()
+
+        with gates:
+            CRz(self.parg / 2) & (qureg[1], qureg[2])
+            CX & (qureg[0], qureg[1])
+            CRz(-self.parg / 2) & (qureg[1], qureg[2])
+            CX & (qureg[0], qureg[1])
+            CRz(self.parg / 2) & (qureg[0], qureg[2])
+        return gates
+
+CCRz = CCRzGate(["CCRz"])

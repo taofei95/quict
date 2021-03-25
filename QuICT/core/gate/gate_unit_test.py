@@ -10,7 +10,7 @@ import random
 import numpy as np
 
 from QuICT.core import *
-from QuICT.algorithm import SyntheticalUnitary
+from QuICT.algorithm import Amplitude, SyntheticalUnitary
 
 def test_permMulDetail():
     max_test = 6
@@ -109,37 +109,6 @@ def test_Fredkin():
                 assert 0
     assert 1
 
-def test_CCX():
-    max_test = 6
-    every_round = 20
-    for i in range(3, max_test + 1):
-        for _ in range(every_round):
-            circuit = Circuit(i)
-            X | circuit
-            CCX_Decompose | circuit
-            CCX_Decompose | circuit
-            X | circuit
-            unitary = SyntheticalUnitary.run(circuit)
-            if (abs(abs(unitary - np.identity((1 << i), dtype=np.complex))) > 1e-10).any():
-                assert 0
-    assert 1
-
-def test_CRz():
-    max_test = 6
-    every_round = 20
-    for i in range(3, max_test + 1):
-        for _ in range(every_round):
-            circuit = Circuit(i)
-            ran = random.random() * np.pi
-            X | circuit
-            CRz_Decompose(ran) | circuit
-            CRz_Decompose(-ran) | circuit
-            X | circuit
-            unitary = SyntheticalUnitary.run(circuit)
-            if (abs(abs(unitary - np.identity((1 << i), dtype=np.complex))) > 1e-10).any():
-                assert 0
-    assert 1
-
 def test_CCRz():
     max_test = 6
     every_round = 20
@@ -149,11 +118,16 @@ def test_CCRz():
             X | circuit
             ran = random.random() * np.pi
             CCRz(ran) | circuit
+            # amplitude = Amplitude.run(circuit)
+            # print(amplitude)
             CCRz(-ran) | circuit
+            # amplitude = Amplitude.run(circuit)
+            # print(amplitude)
             X | circuit
             unitary = SyntheticalUnitary.run(circuit)
             if (abs(abs(unitary - np.identity((1 << i), dtype=np.complex))) > 1e-10).any():
                 assert 0
+            assert 1
     assert 1
 
 def test_gate_name():

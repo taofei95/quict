@@ -8,7 +8,6 @@ from .circuit.circuit import *
 
 from .qubit.qubit import *
 
-from .gate.extension_gate import *
 from .gate.gate import *
 from .gate.gate_builder import *
 

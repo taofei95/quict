@@ -6,6 +6,7 @@
 
 from .gate import *
 
+
 class GateSet(list):
     """ Implement a list of gate
 
@@ -17,6 +18,14 @@ class GateSet(list):
     @property
     def gates(self):
         return self
+
+    def __enter__(self):
+        GATE_SET_LIST.append(self)
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        global GATE_SET_LIST
+        GATE_SET_LIST.remove(self)
 
     def __init__(self, gates = None):
         """ initial a GateSet with gate(s)
@@ -166,6 +175,37 @@ class GateSet(list):
         """
         for gate in self.gates:
             gate | targets
+
+    def __getitem__(self, item):
+        """ to fit the slice operator, overloaded this function.
+
+        get a smaller qureg/qubit from this qureg
+
+        Args:
+            item(int/slice): slice passed in.
+        Return:
+            Qubit/Qureg: the result or slice
+        """
+        if isinstance(item, int):
+            return super().__getitem__(item)
+        elif isinstance(item, slice):
+            gate_list = super().__getitem__(item)
+            return GateSet(gate_list)
+
+    def __add__(self, other):
+        """ to fit the add operator, overloaded this function.
+
+        get a smaller qureg/qubit from this qureg
+
+        Args:
+            other(Qureg): qureg to be added.
+        Return:
+            Qureg: the result or slice
+        """
+        if not isinstance(other, Qureg):
+            raise Exception("type error!")
+        gate_list = super().__add__(other)
+        return GateSet(gate_list)
 
     # display information of the circuit
     def print_infomation(self):
