@@ -4,10 +4,12 @@ Decomposition of SU(4) with Cartan KAK Decomposition
 
 import numpy as np
 
+from QuICT.core import Circuit, Unitary, Ry, Rz, CX
 from .._synthesis import Synthesis
 
 class CartanKAKDecomposition:
     """Cartan KAK Decomposition in SU(4)
+
     ∀ U∈SU(4), ∃ KL0, KL1, KR0, KR1∈SU(2), a, b, c∈ℝ, s.t.
     U = (KL0⊗KL1).exp(i(a XX + b YY + c ZZ)).(KR0⊗KR1)
 
@@ -43,7 +45,31 @@ class CartanKAKDecomposition:
         Returns:
             Tuple(np.array): Decomposed result U0, U1
         """
-        pass
+        U = matrix.copy()
+        # Decompose U1
+        U1 = U[:2, :2].copy()
+        # There is chance that U0[0, 0] == 0 (or more explicitly, is close to 0)
+        if np.abs(np.linalg.det(U1)) < 0.1:
+            U1 = U[2:, :2].copy()
+        # If U0[0, 0], U0[1, 0] are both close to 0, U0 would not be unitary.
+        if np.abs(np.linalg.det(U1)) < 0.1:
+            raise ValueError("tensor_decompose: U1 failed")
+        U1 /= np.sqrt(np.linalg.det(U1))
+
+        # Decompose U0
+        U1_inv = np.kron(np.eye(2), U1.T.conj())
+        U0_tensor = U1_inv.dot(U)
+        U0 = U0_tensor[::2, ::2]
+        if np.abs(np.linalg.det(U0)) < 0.9:
+            raise ValueError("tensor_decompose: U0 failed")
+        U0 /= np.sqrt(np.linalg.det(U0))
+
+        # Final test
+        res = np.kron(U0, U1)
+        dev = np.abs(np.abs(res.conj(res).T.dot(U).trace()) - 4)
+        assert dev < 1e-13, \
+            ValueError("tensor_decompose: Final failed")
+        return U0, U1
 
 
     def decompose(self):
@@ -51,6 +77,7 @@ class CartanKAKDecomposition:
         Decomposition process
         """
         U = self.matrix.copy()
+        U /= np.linalg.det(U)**(0.25)
         eps = self.eps
 
         # Magic basis
@@ -83,7 +110,7 @@ class CartanKAKDecomposition:
         # Calculated D is usually in U(4) instead of SU(4), therefore d[3] is reset 
         # so that D is now in SU(4)
         d = np.angle(D) / 2
-        d[3] = -d[0]-d[1]-d[2]
+        d[3] = -d[0] - d[1] - d[2]
         self.a = (d[0] + d[2]) / 2
         self.b = (d[1] + d[2]) / 2
         self.c = (d[0] + d[1]) / 2
@@ -95,8 +122,12 @@ class CartanKAKDecomposition:
         # Now is the time to calculate KL and KR
         KL = B.dot(Up).dot(P).dot(np.diag(np.exp(-1j * d))).dot(B.T.conj())
         KR = B.dot(P.T).dot(B.T.conj())
-        self.KL1, self.KL2 = self.tensor_decompose(KL)
-        self.KR1, self.KR2 = self.tensor_decompose(KR)
+        KL.real[abs(KL.real) < eps] = 0.0
+        KL.imag[abs(KL.imag) < eps] = 0.0
+        KR.real[abs(KR.real) < eps] = 0.0
+        KR.imag[abs(KR.imag) < eps] = 0.0
+        self.KL0, self.KL1 = self.tensor_decompose(KL)
+        self.KR0, self.KR1 = self.tensor_decompose(KR)
 
 
 class TwoQubitTransform(Synthesis):
@@ -116,7 +147,7 @@ class TwoQubitTransform(Synthesis):
             matrix(np.array): 4*4 unitary matrix to be decomposed
             eps(float, optional): Eps of decomposition process
         """
-        assert matrix.shape() == (4, 4), \
+        assert matrix.shape == (4, 4), \
             ValueError("TwoQubitTransform: Input must be a 4*4 matrix.")
         assert np.allclose(matrix.T.conj().dot(matrix), np.eye(4)), \
             ValueError("TwoQubitTransform: Input must be a unitary matrix.")
@@ -126,12 +157,37 @@ class TwoQubitTransform(Synthesis):
 
     def build_gate(self):
         """
-        Return:
+        Final process after the Cartan KAK Decomposition, which is taken from [1]
+
+        Reference:
+            [1] arxiv.org/abs/quant-ph/0308006
+
+        Returns:
             Tuple(gates): Decomposed gates
         """
         matrix = self.pargs[0]
         eps = self.pargs[1]
-        # TODO: Cartan KAK Decomposition goes here
+
+        CKD = CartanKAKDecomposition(matrix, eps)
+        CKD.decompose()
+
+        KL0 = CKD.KL0
+        KL1 = CKD.KL1.dot(Rz(np.pi/2).matrix.reshape(2, 2))
+        KR0 = Rz(-np.pi/2).matrix.reshape(2, 2).dot(CKD.KR0)
+        KR1 = CKD.KR1
+        circuit = Circuit(2)
+        Unitary(list(KL0.flatten())) | circuit(0)
+        Unitary(list(KL1.flatten())) | circuit(1)
+        CX                           | circuit([1, 0])
+        Rz(2 * CKD.c - np.pi / 2)    | circuit(0)
+        Ry(np.pi / 2 - 2 * CKD.a)    | circuit(1)
+        CX                           | circuit([0, 1])
+        Ry(2 * CKD.b - np.pi / 2)    | circuit(1)
+        CX                           | circuit([1, 0])
+        Unitary(list(KR0.flatten())) | circuit(0)
+        Unitary(list(KR1.flatten())) | circuit(1)
+
+        return circuit
 
 
-two_qubit_transform = TwoQubitTransform()
+KAK = TwoQubitTransform()
