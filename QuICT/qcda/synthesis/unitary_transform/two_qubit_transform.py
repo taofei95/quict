@@ -157,7 +157,8 @@ class TwoQubitTransform(Synthesis):
 
     def build_gate(self):
         """
-        Final process after the Cartan KAK Decomposition, which is taken from [1]
+        Final process after the Cartan KAK Decomposition, which is taken from [1].
+        The decomposition of Exp(i(a XX + b YY + c ZZ)) may vary a global phase.
 
         Reference:
             [1] arxiv.org/abs/quant-ph/0308006
@@ -171,21 +172,21 @@ class TwoQubitTransform(Synthesis):
         CKD = CartanKAKDecomposition(matrix, eps)
         CKD.decompose()
 
-        KL0 = CKD.KL0
-        KL1 = CKD.KL1.dot(Rz(np.pi/2).matrix.reshape(2, 2))
-        KR0 = Rz(-np.pi/2).matrix.reshape(2, 2).dot(CKD.KR0)
-        KR1 = CKD.KR1
+        KL0 = CKD.KL0.dot(Rz(-np.pi/2).matrix.reshape(2, 2))
+        KL1 = CKD.KL1
+        KR0 = CKD.KR0
+        KR1 = Rz(np.pi/2).matrix.reshape(2, 2).dot(CKD.KR1)
         circuit = Circuit(2)
-        Unitary(list(KL0.flatten())) | circuit(0)
-        Unitary(list(KL1.flatten())) | circuit(1)
+        Unitary(list(KR0.flatten())) | circuit(0)
+        Unitary(list(KR1.flatten())) | circuit(1)
         CX                           | circuit([1, 0])
         Rz(2 * CKD.c - np.pi / 2)    | circuit(0)
         Ry(np.pi / 2 - 2 * CKD.a)    | circuit(1)
         CX                           | circuit([0, 1])
         Ry(2 * CKD.b - np.pi / 2)    | circuit(1)
         CX                           | circuit([1, 0])
-        Unitary(list(KR0.flatten())) | circuit(0)
-        Unitary(list(KR1.flatten())) | circuit(1)
+        Unitary(list(KL0.flatten())) | circuit(0)
+        Unitary(list(KL1.flatten())) | circuit(1)
 
         return circuit
 

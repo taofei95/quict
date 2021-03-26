@@ -17,6 +17,17 @@ def generate_unitary(n):
     U, _, _ = np.linalg.svd(M)
     return U
 
+
+def Ud(a, b, c):
+    """
+    Exp(i(a XX + b YY + c ZZ))
+    """
+    return np.array([[np.exp(1j*c)*np.cos(a-b), 0, 0, 1j*np.exp(1j*c)*np.sin(a-b)],
+                     [0, np.exp(-1j*c)*np.cos(a+b), 1j*np.exp(-1j*c)*np.sin(a+b), 0],
+                     [0, 1j*np.exp(-1j*c)*np.sin(a+b), np.exp(-1j*c)*np.cos(a+b), 0],
+                     [1j*np.exp(1j*c)*np.sin(a-b), 0, 0, np.exp(1j*c)*np.cos(a-b)]], dtype=complex)
+
+
 def test_tensor_decompose():
     U0 = generate_unitary(2)
     U1 = generate_unitary(2)
@@ -35,10 +46,13 @@ def test_CKD():
         KL1 = CKD.KL1
         KR0 = CKD.KR0
         KR1 = CKD.KR1
+        KL = np.kron(KL0, KL1)
+        KR = np.kron(KR0, KR1)
+        matexp = Ud(CKD.a, CKD.b, CKD.c)
 
         circuit = Circuit(2)
-        Unitary(list(KL0.flatten())) | circuit(0)
-        Unitary(list(KL1.flatten())) | circuit(1)
+        # Unitary(list(KR0.flatten())) | circuit(0)
+        # Unitary(list(KR1.flatten())) | circuit(1)
         Rz(np.pi / 2)                | circuit(1)
         CX                           | circuit([1, 0])
         Rz(2 * CKD.c - np.pi / 2)    | circuit(0)
@@ -47,12 +61,27 @@ def test_CKD():
         Ry(2 * CKD.b - np.pi / 2)    | circuit(1)
         CX                           | circuit([1, 0])
         Rz(-np.pi / 2)               | circuit(0)
-        Unitary(list(KR0.flatten())) | circuit(0)
-        Unitary(list(KR1.flatten())) | circuit(1)
+        # Unitary(list(KL0.flatten())) | circuit(0)
+        # Unitary(list(KL1.flatten())) | circuit(1)
 
         U /= np.linalg.det(U)**(0.25)
+        Usyn = KL.dot(matexp).dot(KR)
+        # print(U.dot(np.linalg.inv(Usyn)))
         unitary = SyntheticalUnitary.run(circuit, showSU = True)
-        print(unitary.dot(np.linalg.inv(U)))
+
+        # print(U.dot(np.linalg.inv(unitary)))
+        # print()
+        # dev = U.dot(np.linalg.inv(unitary))
+        # print(np.linalg.det(dev))
+        # print(dev.T.conj().dot(dev))
+
+        print(matexp.dot(np.linalg.inv(unitary)))
+        print()
+        dev = matexp.dot(np.linalg.inv(unitary))
+        print(np.linalg.det(dev))
+        print(dev.T.conj().dot(dev))
+
+        print('\n')
 
 
 def test():
@@ -60,10 +89,14 @@ def test():
         U = generate_unitary(4)
         circuit = Circuit(2)
         KAK(U) | circuit
-        
+
         U /= np.linalg.det(U)**(0.25)
         unitary = SyntheticalUnitary.run(circuit, showSU = True)
         print(unitary.dot(np.linalg.inv(U)))
+        dev = unitary.dot(np.linalg.inv(U))
+        print(np.linalg.det(dev))
+        print(dev.T.conj().dot(dev))
+        print()
 
 
 if __name__ == '__main__':
