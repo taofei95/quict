@@ -246,6 +246,34 @@ def ReverseAdderMod(N, a, b, c, overflow, qubit_N, t):
     ReversePlainAdder(a, b, c, overflow)
     Set(qubit_N, N)
 
+
+def MulAddMod(a, N, x, qubit_a, b, c, overflow, qubit_N, t):
+    """ store b + x*a mod N in b
+
+    (x,qubit_a=0,b,c=0,overflow=0,qubit_N=0,t=0) ->
+    (x,qubit_a=0,b'=b+a*x mod N,c,overflow',qubit_N,t)
+
+
+    Args:
+        a(int): the parameter a
+        N(int): the parameter N
+        x(Qureg): the qureg stores x, length is m
+        qubit_a(Qureg): the ancillary qubits, length is n
+        b(Qureg): length is n
+        c(Qureg): the ancillary qubits, length is n
+        overflow(Qureg): the ancillary qubits, length is 1
+        qubit_N(Qureg): the ancillary qubits, length is n
+        t(Qureg): the ancillary qubits, length is 1
+    """
+
+    n = len(qubit_N)
+
+    for i in range(n):
+        ControlSet(x[n - 1 - i], qubit_a, a)
+        AdderMod(N, qubit_a, b, c, overflow, qubit_N, t)
+        ControlSet(x[n - 1 - i], qubit_a, a)
+        a = (a * 2) % N
+
 def ControlMulMod(a, N, control, x, qubit_a, b, c, overflow, qubit_N, t):
     """ store x*(a^control) mod N in b
 
@@ -406,8 +434,11 @@ class VBEAdderModel(VBEModel):
 
 VBEAdder = VBEAdderModel()
 
+##here is a MulAddModel
+
 class VBEAdderModModel(VBEModel):
-    """ a circuit calculate a+b mod N, a and b are gotten from some qubits.
+    """ a circuit calculate a+b mod N.
+    a and b are gotten from some qubits, N is inherently designed in the circuit.
     
     (a,b,c=0,overflow=0,N=0,t=0) -> (a,b'=a+b mod N,c=0,overflow,N,t)
 
@@ -457,6 +488,66 @@ class VBEAdderModModel(VBEModel):
         return circuit
 
 VBEAdderMod = VBEAdderModModel()
+
+class VBEMulAddModModel(VBEModel):
+    """ a circuit calculate b + x*a mod N. 
+    x are gotten from some qubits, a and N are inherently designed in the circuit.
+    
+    (x,b,qubit_a=0,c=0,overflow=0,qubit_N=0,t=0) -> 
+    (x,b'=b+a*x mod N,qubit_a,c,overflow,qubit_N,t)
+
+    Quregs:
+        x: the qureg stores x, length is m,
+        b: the qureg stores b, length is n,
+        qubit_a: the clean ancillary qubits, length is n,
+        c: the clean ancillary qubits, length is n,
+        overflow: the clean ancillary qubit, length is 1,
+        qubit_N: the clean ancillary qubits, length is n,
+        t: the clean ancillary qubit, length is 1.
+
+    Quantum Networks for Elementary Arithmetic Operations
+    http://arxiv.org/abs/quant-ph/9511018v1
+    """
+    def __call__(self,a,N,n,m):
+        """ Overload the function __call__,
+        Give parameters to the VBE.
+
+        Args:
+            a: the constant to multiply.
+            N: the modulus.
+            n: the length of quregs: a_q, b, N and c.
+            m: the length of qureg: x.
+        Returns:
+            VBECMulAddModModel: the model filled by parameters.
+        """
+
+        self.pargs = [a,N,n,m]
+        return self
+
+    def build_gate(self):
+        """ Overload the function build_gate.
+
+        Returns:
+            Circuit: the VBE circuit
+        """
+        a = self.pargs[0]
+        N = self.pargs[1]
+        n = self.pargs[2]
+        m = self.pargs[3]
+
+        circuit = Circuit(4*n + m + 2)
+        qubit_x = circuit([i for i in range(m)])
+        qubit_a = circuit([i for i in range(m,n + m)])
+        qubit_b = circuit([i for i in range(n + m, 2*n + m)])
+        qubit_c = circuit([i for i in range(2*n + m, 3*n + m)])
+        qubit_overflow = circuit(3*n + m)
+        qubit_N = circuit([i for i in range(3*n + m + 1, 4*n + m + 1)])
+        qubit_t = circuit(4*n + m + 1)
+
+        MulAddMod(a, N, qubit_x, qubit_a, qubit_b, qubit_c, qubit_overflow, qubit_N, qubit_t)
+        return circuit
+
+VBEMulAddMod = VBEMulAddModModel()
 
 class VBEExpModModel(VBEModel):
     """ a circuit calculate (a^x) mod N, x is gotten from some qubits
