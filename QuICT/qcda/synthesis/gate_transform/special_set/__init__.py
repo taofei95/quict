@@ -4,4 +4,4 @@
 # @Author  : Han Yu
 # @File    : __init__.py
 
-from .ibmq_set import IBMQSet
+from .IBMQ_set import IBMQSet

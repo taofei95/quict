@@ -315,7 +315,10 @@ class BasicGate(object):
             TypeException: the type of other is wrong
         """
         try:
-            targets = list(targets)
+            if isinstance(targets, np.int):
+                targets = [targets]
+            else:
+                targets = list(targets)
             self.affectArgs = targets
         except Exception:
             raise TypeException("int or tuple<int> or list<int>", targets)
@@ -1442,6 +1445,45 @@ class CU3Gate(BasicGate):
         exec_controlSingle(self, circuit)
 
 CU3 = CU3Gate(["CU1", "cu1"])
+
+class FSimGate(BasicGate):
+    """ fSim gate
+
+    """
+
+    def __init__(self, alias=None):
+        _add_alias(alias=alias, standard_name=self.__class__.__name__)
+        super().__init__(alias=None)
+        self.controls = 0
+        self.targets = 2
+        self.params = 2
+        self.qasm_name = "fsim"
+
+    @property
+    def matrix(self) -> np.ndarray:
+        costh = np.cos(self.pargs[0])
+        sinth = np.sin(self.pargs[0])
+        phi = self.pargs[1]
+        return np.array([
+            1, 0, 0, 0,
+            0, costh, -1j * sinth, 0,
+            0, -1j * sinth, costh, 0,
+            0, 0, 0, np.exp(-1j * phi)
+        ], dtype=np.complex)
+
+    def __str__(self):
+        return "fSim gate"
+
+    def inverse(self):
+        _Fsim = FSimGate(alias=None)
+        _Fsim.targs = copy.deepcopy(self.targs)
+        _Fsim.pargs = [-self.pargs[0], -self.pargs[1]]
+        return _Fsim
+
+    def exec(self, circuit):
+        exec_two(self, circuit)
+
+FSim = FSimGate(["FSim", "fSim", "fsim"])
 
 class RxxGate(BasicGate):
     """ Rxx gate
