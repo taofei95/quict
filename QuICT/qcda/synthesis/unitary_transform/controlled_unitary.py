@@ -62,18 +62,18 @@ class ControlledUnitary(Synthesis):
 
         return self
 
+    @staticmethod
     def _i_tensor_unitary(
-            self,
             u: np.ndarray,
-            mapping: Sequence[int] = None
+            mapping: Sequence[int]
     ) -> Tuple[BasicGate]:
         """
-        Transform (I_{2x2} tensor U) into gates. The 1st bit is under the
-        identity transform before ordering.
+        Transform (I_{2x2} tensor U) into gates. The 1st bit(before ordering)
+        is under the identity transform.
 
         Args:
             u (np.ndarray): A unitary matrix.
-            mapping(Sequence[int]): Qubit ordering.
+            mapping (Sequence[int]): Qubit ordering.
 
         Returns:
             Tuple[BasicGate]: Synthesized gates.
@@ -81,9 +81,13 @@ class ControlledUnitary(Synthesis):
 
         # Dynamic import to avoid circular imports
         from .unitary_transform import UTrans
-
-        n = int(round(np.log2(u.shape[0])))
-        gates = UTrans(u).build_gate(mapping=[mapping[i + 1] for i in range(n)])
+        # Do not pass mapping into UTrans to avoid out-of-range issues
+        gates = UTrans(u).build_gate()
+        for gate in gates:
+            for idx, carg in enumerate(gate.cargs):
+                gate.cargs[idx] = mapping[carg + 1]
+            for idx, carg in enumerate(gate.targs):
+                gate.targs[idx] += mapping[carg + 1]
         return gates
 
     def build_gate(
@@ -104,12 +108,10 @@ class ControlledUnitary(Synthesis):
         """
         u1: np.ndarray = self.pargs[0]
         u2: np.ndarray = self.pargs[1]
-        n = 1 + int(round(np.log2(u1.shape[0])))
-        """qubit number
-        """
+        qubit_num = 1 + int(round(np.log2(u1.shape[0])))
 
         if mapping is None:
-            mapping = [i for i in range(n)]
+            mapping = [i for i in range(qubit_num)]
 
         v, d, w = QuantumShannonDecompose.decompose(u1, u2)
         gates = []
@@ -127,7 +129,7 @@ class ControlledUnitary(Synthesis):
             angle_list.append(theta)
 
         reversed_rz = uniformlyRz(angle_list=angle_list) \
-            .build_gate(mapping=[mapping[(i + 1) % n] for i in range(n)])
+            .build_gate(mapping=[mapping[(i + 1) % qubit_num] for i in range(qubit_num)])
 
         gates.extend(reversed_rz)
 
