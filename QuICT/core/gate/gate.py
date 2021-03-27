@@ -1321,10 +1321,10 @@ class CRzGate(BasicGate):
     @property
     def matrix(self) -> np.ndarray:
         return np.array([
-            1,
+            np.exp(-self.parg / 2 * 1j),
             0,
             0,
-            np.cos(self.parg) + 1j * np.sin(self.parg)
+            np.exp(self.parg / 2 * 1j)
         ], dtype=np.complex)
 
     @property
@@ -1332,8 +1332,8 @@ class CRzGate(BasicGate):
         return np.array([
             1, 0, 0, 0,
             0, 1, 0, 0,
-            0, 0, 1, 0,
-            0, 0, 0, np.cos(self.pargs[0]) + 1j * np.sin(self.pargs[0])
+            0, 0, np.exp(-self.parg / 2 * 1j), 0,
+            0, 0, 0, np.exp(self.parg / 2 * 1j)
         ], dtype=np.complex)
 
     def __str__(self):

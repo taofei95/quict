@@ -13,11 +13,14 @@ the file describe TransformRule between two kinds of 2-qubit gates.
 
 """
 
-def _cx2rxx_rule(gate):
-    pass
-Cx2RxxRule = TransformRule(_cx2rxx_rule, CX, Rxx)
-
-def _cy2cx_rule(gate):
-    pass
-Cy2cxRule = TransformRule(_cy2cx_rule, CX, CY)
-
+def _crz2cx_rule(gate):
+    theta = gate.pargs[0]
+    targs = gate.affectArgs
+    gateSet = GateSet()
+    with gateSet:
+        Rz(theta / 2) & targs[1]
+        CX & targs
+        Rz(-theta / 2) & targs[1]
+        CX & targs
+    return gateSet
+Crz2CxRule = TransformRule(_crz2cx_rule, CRz, CX)

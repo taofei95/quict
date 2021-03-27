@@ -60,7 +60,9 @@ def test_add_gate():
     circuit = Circuit(2)
     CX | circuit
     H | circuit(1)
-    np.all(SyntheticalUnitary.run(circuit) == gateSet.matrix())
+    Phase(0.2) | circuit
+    # assert np.all(SyntheticalUnitary.run(circuit) == gateSet.matrix())
+    assert gateSet.equal(circuit, ignore_phase = True)
 
 if __name__ == "__main__":
     # pytest.main(["./_unit_test.py", "./circuit_unit_test.py", "./gate_unit_test.py", "./qubit_unit_test.py"])

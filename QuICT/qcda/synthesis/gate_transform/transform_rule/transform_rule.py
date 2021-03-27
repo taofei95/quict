@@ -4,7 +4,11 @@
 # @Author  : Han Yu
 # @File    : TransformRule.py
 
-from QuICT.core import BasicGate, GATE_ID
+import random
+
+import numpy as np
+
+from QuICT.core import BasicGate, GATE_ID, GATE_REGISTER
 
 class TransformRule(object):
     """ a class describe a transform rule
@@ -37,6 +41,8 @@ class TransformRule(object):
 
     @source.setter
     def source(self, source):
+        if isinstance(source, BasicGate):
+            source = source.type()
         self.__source = source
 
     @property
@@ -47,6 +53,8 @@ class TransformRule(object):
 
     @target.setter
     def target(self, target):
+        if isinstance(target, BasicGate):
+            target = target.type()
         self.__target = target
 
     def __init__(self, funtion, source = None, target = None):
@@ -60,3 +68,22 @@ class TransformRule(object):
         self.transform = funtion
         self.source = source
         self.target = target
+
+    def check_equal(self, ignore_phase = True, eps = 1e-13):
+        """ check whether the rule is true
+
+        Args:
+            ignore_phase(bool): whether ignore the global phase
+            eps(float): tolerance of precision
+
+        Returns:
+            bool: whether the rule is ture
+        """
+        if not self.source:
+            raise Exception("it is used for two qubit rules.")
+        gate = GATE_REGISTER[self.source]().copy()
+        gate.affectArgs = [i for i in range(gate.targets + gate.controls)]
+        gate.pargs = [random.random() * 2 * np.pi for _ in range(gate.params)]
+        gateSet = self.transform(gate)
+        # gateSet.print_infomation()
+        return gateSet.equal(gate, ignore_phase=ignore_phase, eps=eps)
