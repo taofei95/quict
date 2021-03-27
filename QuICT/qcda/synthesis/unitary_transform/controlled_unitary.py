@@ -4,7 +4,6 @@ from typing import *
 from .._synthesis import Synthesis
 from QuICT.core import BasicGate
 from ..uniformly_gate import uniformlyRz
-from .unitary_transform import UTrans
 
 
 class QuantumShannonDecompose:
@@ -48,8 +47,7 @@ class ControlledUnitary(Synthesis):
             u2: np.ndarray
     ) -> "ControlledUnitary":
         """
-        Build a parameterized model. Both v1 and v2 might be changed during synthesis.
-        So pay attention to side effects.
+        Build a parameterized model.
 
 
         Args:
@@ -80,6 +78,10 @@ class ControlledUnitary(Synthesis):
         Returns:
             Tuple[BasicGate]: Synthesized gates.
         """
+
+        # Dynamic import to avoid circular imports
+        from .unitary_transform import UTrans
+
         n = int(round(np.log2(u.shape[0])))
         gates = UTrans(u).build_gate(mapping=[mapping[i + 1] for i in range(n)])
         return gates
@@ -124,10 +126,10 @@ class ControlledUnitary(Synthesis):
             theta = -2 * np.log(s) / 1j
             angle_list.append(theta)
 
-        gates.extend(
-            uniformlyRz(angle_list=angle_list)
-                .build_gate(mapping=[mapping[(i + 1) % n] for i in range(n)])
-        )
+        reversed_rz = uniformlyRz(angle_list=angle_list) \
+            .build_gate(mapping=[mapping[(i + 1) % n] for i in range(n)])
+
+        gates.extend(reversed_rz)
 
         # diag(v, v)
         gates.extend(self._i_tensor_unitary(v, mapping=mapping))
