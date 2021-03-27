@@ -65,19 +65,17 @@ def solve(n):
 
     return qubit_list
 
-class MCTOneAuxModel(Synthesis):
+def MCTOneAuxDecomposition(n):
     """ Decomposition of n-qubit Toffoli gates with one ancillary qubit and linear circuit complexity
 
     He Y, Luo M X, Zhang E, et al.
     Decompositions of n-qubit Toffoli gates with linear circuit complexity[J].
     International Journal of Theoretical Physics, 2017, 56(7): 2350-2361.
-
+    Args:
+        n(int): the bits of the toffoli gate
+    Return:
+        GateSet: the result of Decomposition
     """
-    def build_gate(self):
-        """ overloaded the function "build_gate"
+    return GateSet(solve(n).gates)
 
-        """
-        n = self.targets - 1
-        return solve(n)
-
-MCTOneAux = MCTOneAuxModel()
+MCTOneAux = Synthesis(MCTOneAuxDecomposition)

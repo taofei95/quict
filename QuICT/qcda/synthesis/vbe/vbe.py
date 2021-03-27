@@ -7,7 +7,7 @@
 from numpy import log2, floor, gcd
 
 from .._synthesis import Synthesis
-from QuICT.core import Circuit, CX, CCX, Swap, X
+from QuICT.core import Circuit, CX, CCX, GateSet, Swap, X
 
 def Inverse(a, N):
     """ Inversion of a in (mod N)
@@ -338,56 +338,33 @@ def ExpMod(a, N, x, result, qubit_a, b, c, overflow, qubit_N, t):
         a = (a ** 2) % N
         a_inv = (a_inv ** 2) % N
 
-
-class VBEModel(Synthesis):
-    """ a circuit calculate (a^x) mod N, x is gotten from some qubits
-
-    Quantum Networks for Elementary Arithmetic Operations
-    http://arxiv.org/abs/quant-ph/9511018v1
-
+def VBEDecomposition(m, a, N):
+    """ give parameters to the VBE
+    Args:
+        m(int): number of qubits of x
+        a(int): a
+        N(int): N
+    Returns:
+        GateSet: the model filled by parameters.
     """
-    def __call__(self, m, a, N):
-        """ give parameters to the VBE
-        Args:
-            m(int): number of qubits of x
-            a(int): a
-            N(int): N
-        Returns:
-            VBEModel: the model filled by parameters.
-        """
+    if N <= 2:
+        raise Exception("modulus should be great than 2")
+    if gcd(a, N) != 1:
+        raise Exception("a and N should be co-prime")
+    n = int(floor(log2(N))) + 1
 
-        self.pargs = [m, a, N]
-        return self
+    circuit = Circuit(m + 5 * n + 2)
+    qubit_x = circuit([i for i in range(m)])
+    qubit_r = circuit([i for i in range(m, m + n)])
+    qubit_a = circuit([i for i in range(m + n, m + 2 * n)])
+    qubit_b = circuit([i for i in range(m + 2 * n, m + 3 * n)])
+    qubit_c = circuit([i for i in range(m + 3 * n, m + 4 * n)])
 
-    def build_gate(self):
-        """ overload the function build_gate
+    overflow = circuit(m + 4 * n)
+    qubit_N = circuit([i for i in range(m + 4 * n + 1, m + 5 * n + 1)])
+    t = circuit(m + 5 * n + 1)
+    X | qubit_r[n - 1]
+    ExpMod(a, N, qubit_x, qubit_r, qubit_a, qubit_b, qubit_c, overflow, qubit_N, t)
+    return GateSet(circuit.gates)
 
-        Returns:
-            Circuit: the VBE circuit
-        """
-        m = self.pargs[0]
-        a = self.pargs[1]
-        N = self.pargs[2]
-
-        if N <= 2:
-            raise Exception("modulus should be great than 2")
-        if gcd(a, N) != 1:
-            raise Exception("a and N should be co-prime")
-        n = int(floor(log2(N))) + 1
-
-        circuit = Circuit(m + 5 * n + 2)
-        qubit_x = circuit([i for i in range(m)])
-        qubit_r = circuit([i for i in range(m, m + n)])
-        qubit_a = circuit([i for i in range(m + n, m + 2 * n)])
-        qubit_b = circuit([i for i in range(m + 2 * n, m + 3 * n)])
-        qubit_c = circuit([i for i in range(m + 3 * n, m + 4 * n)])
-
-        overflow = circuit(m + 4 * n)
-        qubit_N = circuit([i for i in range(m + 4 * n + 1, m + 5 * n + 1)])
-        t = circuit(m + 5 * n + 1)
-        X | qubit_r[n - 1]
-        ExpMod(a, N, qubit_x, qubit_r, qubit_a, qubit_b, qubit_c, overflow, qubit_N, t)
-
-        return circuit
-
-VBE = VBEModel()
+VBE = Synthesis(VBEDecomposition)
