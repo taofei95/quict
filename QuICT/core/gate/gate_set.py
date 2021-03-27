@@ -41,13 +41,13 @@ class GateSet(list):
         if gates is None:
             return
         if isinstance(gates, BasicGate):
-            self.append(gates)
+            self.append(gates.copy())
         else:
             if isinstance(gates, Circuit):
                 gates = gates.gates
             gates = list(gates)
             for gate in gates:
-                self.append(gate)
+                self.append(gate.copy())
 
     # Attributes of the circuit
     def circuit_width(self):
@@ -58,7 +58,8 @@ class GateSet(list):
         """
         qubits = set()
         for gate in self:
-            qubits.add(gate.affectArgs)
+            for arg in gate.affectArgs:
+                qubits.add(arg)
         return len(qubits)
 
     def circuit_size(self):
@@ -197,16 +198,13 @@ class GateSet(list):
 
         self.targets = len(qureg)
 
-        for gate in gates:
+        for gate in self:
             qubits = []
             for control in gate.cargs:
                 qubits.append(qureg[control])
             for target in gate.targs:
                 qubits.append(qureg[target])
             qureg.circuit.append(gate, qubits)
-
-        for gate in self.gates:
-            gate | targets
 
     def __xor__(self, targets):
         """deal the operator '^'
@@ -227,9 +225,33 @@ class GateSet(list):
             TypeException: the type of other is wrong
         """
 
+        if isinstance(targets, tuple):
+            targets = list(targets)
+        if isinstance(targets, list):
+            qureg = Qureg()
+            for item in targets:
+                if isinstance(item, Qubit):
+                    qureg.append(item)
+                elif isinstance(item, Qureg):
+                    qureg.extend(item)
+                else:
+                    raise TypeException("qubit or tuple<qubit, qureg> or qureg or list<qubit, qureg> or circuit", targets)
+        elif isinstance(targets, Qureg):
+            qureg = targets
+        elif isinstance(targets, Circuit):
+            qureg = Qureg(targets.qubits)
+        else:
+            raise TypeException("qubit or tuple<qubit> or qureg or circuit", targets)
+
+        self.targets = len(qureg)
 
         for gate in self.inverse():
-            gate | targets
+            qubits = []
+            for control in gate.cargs:
+                qubits.append(qureg[control])
+            for target in gate.targs:
+                qubits.append(qureg[target])
+            qureg.circuit.append(gate, qubits)
 
     def __getitem__(self, item):
         """ to fit the slice operator, overloaded this function.
@@ -289,3 +311,57 @@ class GateSet(list):
         for index in range(circuit_size - 1, -1, -1):
             inverse.append(self[index])
         return inverse
+
+    def matrix(self, local = False):
+        min_qubit = -1
+        max_qubit = -1
+        for gate in self:
+            for arg in gate.affectArgs:
+                if min_qubit == -1:
+                    min_qubit = arg
+                else:
+                    min_qubit = min(min_qubit, arg)
+                if max_qubit == -1:
+                    max_qubit = arg
+                else:
+                    max_qubit = max(max_qubit, arg)
+        if min_qubit == -1:
+            return np.eye(2, dtype=np.complex)
+
+        if local:
+            q_len = max_qubit - min_qubit + 1
+        else:
+            q_len = max_qubit + 1
+
+        n = 1 << q_len
+
+        result = np.eye(n, dtype=np.complex)
+
+        for gate in self.gates:
+            new_values = np.zeros((n, n), dtype=np.complex)
+            targs = gate.affectArgs
+            for i in range(len(targs)):
+                targs[i] -= min_qubit
+            xor = (1 << q_len) - 1
+            if not isinstance(targs, list):
+                raise Exception("unknown error")
+            matrix = gate.compute_matrix.reshape(1 << len(targs), 1 << len(targs))
+            datas = np.zeros(n, dtype=int)
+            for i in range(n):
+                nowi = 0
+                for kk in range(len(targs)):
+                    k = q_len - 1 - targs[kk]
+                    if (1 << k) & i != 0:
+                        nowi += (1 << (len(targs) - 1 - kk))
+                datas[i] = nowi
+            for i in targs:
+                xor = xor ^ (1 << (q_len - 1 - i))
+            for i in range(n):
+                nowi = datas[i]
+                for j in range(n):
+                    nowj = datas[j]
+                    if (i & xor) != (j & xor):
+                        continue
+                    new_values[i][j] = matrix[nowi][nowj]
+            result = np.dot(new_values, result)
+        return result

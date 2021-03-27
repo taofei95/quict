@@ -44,4 +44,4 @@ class SyntheticalUnitary(Algorithm):
             det = np.power(det, 1 / n)
             matrix[:] /= det
         matrix = matrix
-        return np.asmatrix(matrix)
+        return np.array(matrix)
