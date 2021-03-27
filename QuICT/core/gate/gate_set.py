@@ -27,7 +27,7 @@ class GateSet(list):
         global GATE_SET_LIST
         GATE_SET_LIST.remove(self)
 
-    def __init__(self, gates = None):
+    def __init__(self, gates = None, with_copy = True):
         """ initial a GateSet with gate(s)
 
         Args:
@@ -41,13 +41,19 @@ class GateSet(list):
         if gates is None:
             return
         if isinstance(gates, BasicGate):
-            self.append(gates.copy())
+            if with_copy:
+                self.append(gates.copy())
+            else:
+                self.append(gates)
         else:
             if isinstance(gates, Circuit):
                 gates = gates.gates
             gates = list(gates)
             for gate in gates:
-                self.append(gate.copy())
+                if with_copy:
+                    self.append(gate.copy())
+                else:
+                    self.append(gate)
 
     # Attributes of the circuit
     def circuit_width(self):
@@ -313,6 +319,14 @@ class GateSet(list):
         return inverse
 
     def matrix(self, local = False):
+        """
+
+        Args:
+            local: whether regards the min_qubit as the 0's qubit
+
+        Returns:
+            np.array: the matrix of the gates
+        """
         min_qubit = -1
         max_qubit = -1
         for gate in self:
@@ -365,3 +379,31 @@ class GateSet(list):
                     new_values[i][j] = matrix[nowi][nowj]
             result = np.dot(new_values, result)
         return result
+
+    def equal(self, target, ignore_phase = True, eps = 1e-13):
+        """
+
+        Args:
+            target(gateSet/BasicGate/Circuit): the target
+            ignore_phase(bool): ignore the global phase
+            eps(float): the tolerable error
+
+        Returns:
+            bool: whether the gateSet is equal with the targets
+        """
+        target = GateSet(target, with_copy=True)
+        self_matrix = self.matrix()
+        target_matrix = target.matrix()
+        if ignore_phase:
+            shape = self_matrix.shape
+            rotate = 0
+            for i in range(shape[0]):
+                for j in range(shape[1]):
+                    if self_matrix[i, j] > eps:
+                        rotate = target_matrix[i, j] / self_matrix[i, j]
+            if rotate == 0 or abs(abs(rotate) - 1) > eps:
+                return False
+            self_matrix = self_matrix * np.full(shape, rotate)
+        # print(self_matrix)
+        # print(target_matrix)
+        return np.allclose(self_matrix, target_matrix, rtol=eps, atol=eps)

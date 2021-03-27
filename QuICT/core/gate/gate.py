@@ -315,7 +315,10 @@ class BasicGate(object):
             TypeException: the type of other is wrong
         """
         try:
-            targets = list(targets)
+            if isinstance(targets, np.int):
+                targets = [targets]
+            else:
+                targets = list(targets)
             self.affectArgs = targets
         except Exception:
             raise TypeException("int or tuple<int> or list<int>", targets)
@@ -1318,10 +1321,10 @@ class CRzGate(BasicGate):
     @property
     def matrix(self) -> np.ndarray:
         return np.array([
-            1,
+            np.exp(-self.parg / 2 * 1j),
             0,
             0,
-            np.cos(self.parg) + 1j * np.sin(self.parg)
+            np.exp(self.parg / 2 * 1j)
         ], dtype=np.complex)
 
     @property
@@ -1329,8 +1332,8 @@ class CRzGate(BasicGate):
         return np.array([
             1, 0, 0, 0,
             0, 1, 0, 0,
-            0, 0, 1, 0,
-            0, 0, 0, np.cos(self.pargs[0]) + 1j * np.sin(self.pargs[0])
+            0, 0, np.exp(-self.parg / 2 * 1j), 0,
+            0, 0, 0, np.exp(self.parg / 2 * 1j)
         ], dtype=np.complex)
 
     def __str__(self):
@@ -1442,6 +1445,159 @@ class CU3Gate(BasicGate):
         exec_controlSingle(self, circuit)
 
 CU3 = CU3Gate(["CU1", "cu1"])
+
+class FSimGate(BasicGate):
+    """ fSim gate
+
+    """
+
+    def __init__(self, alias=None):
+        _add_alias(alias=alias, standard_name=self.__class__.__name__)
+        super().__init__(alias=None)
+        self.controls = 0
+        self.targets = 2
+        self.params = 2
+        self.qasm_name = "fsim"
+
+    @property
+    def matrix(self) -> np.ndarray:
+        costh = np.cos(self.pargs[0])
+        sinth = np.sin(self.pargs[0])
+        phi = self.pargs[1]
+        return np.array([
+            1, 0, 0, 0,
+            0, costh, -1j * sinth, 0,
+            0, -1j * sinth, costh, 0,
+            0, 0, 0, np.exp(-1j * phi)
+        ], dtype=np.complex)
+
+    def __str__(self):
+        return "fSim gate"
+
+    def inverse(self):
+        _Fsim = FSimGate(alias=None)
+        _Fsim.targs = copy.deepcopy(self.targs)
+        _Fsim.pargs = [-self.pargs[0], -self.pargs[1]]
+        return _Fsim
+
+    def exec(self, circuit):
+        exec_two(self, circuit)
+
+FSim = FSimGate(["FSim", "fSim", "fsim"])
+
+class RxxGate(BasicGate):
+    """ Rxx gate
+
+    """
+
+    def __init__(self, alias=None):
+        _add_alias(alias=alias, standard_name=self.__class__.__name__)
+        super().__init__(alias=None)
+        self.controls = 0
+        self.targets = 2
+        self.params = 1
+        self.qasm_name = "Rxx"
+
+    @property
+    def matrix(self) -> np.ndarray:
+        costh = np.cos(self.parg)
+        sinth = np.sin(self.parg)
+        return np.array([
+            costh, 0, 0, -1j * sinth,
+            0, costh, -1j * sinth, 0,
+            0, -1j * sinth, costh, 0,
+            -1j * sinth, 0, 0, costh
+        ], dtype=np.complex)
+
+    def __str__(self):
+        return "Rxx gate"
+
+    def inverse(self):
+        _Rxx = RxxGate(alias=None)
+        _Rxx.targs = copy.deepcopy(self.targs)
+        _Rxx.pargs = [-self.parg]
+        return _Rxx
+
+    def exec(self, circuit):
+        exec_two(self, circuit)
+
+Rxx = RxxGate(["Rxx", "rxx", "RXX"])
+
+class RyyGate(BasicGate):
+    """ Ryy gate
+
+    """
+
+    def __init__(self, alias=None):
+        _add_alias(alias=alias, standard_name=self.__class__.__name__)
+        super().__init__(alias=None)
+        self.controls = 0
+        self.targets = 2
+        self.params = 1
+        self.qasm_name = "Ryy"
+
+    @property
+    def matrix(self) -> np.ndarray:
+        costh = np.cos(self.parg)
+        sinth = np.sin(self.parg)
+        return np.array([
+            costh, 0, 0, 1j * sinth,
+            0, costh, -1j * sinth, 0,
+            0, -1j * sinth, costh, 0,
+            1j * sinth, 0, 0, costh
+        ], dtype=np.complex)
+
+    def __str__(self):
+        return "Ryy gate"
+
+    def inverse(self):
+        _Ryy = RyyGate(alias=None)
+        _Ryy.targs = copy.deepcopy(self.targs)
+        _Ryy.pargs = [-self.parg]
+        return _Ryy
+
+    def exec(self, circuit):
+        exec_two(self, circuit)
+
+Ryy = RyyGate(["Ryy", "ryy", "RYY"])
+
+class RzzGate(BasicGate):
+    """ Rzz gate
+
+    """
+
+    def __init__(self, alias=None):
+        _add_alias(alias=alias, standard_name=self.__class__.__name__)
+        super().__init__(alias=None)
+        self.controls = 0
+        self.targets = 2
+        self.params = 1
+        self.qasm_name = "Rzz"
+
+    @property
+    def matrix(self) -> np.ndarray:
+        expth = np.exp(0.5j * self.parg)
+        sexpth = np.exp(-0.5j * self.parg)
+        return np.array([
+            sexpth, 0, 0, 0,
+            0, expth, 0, 0,
+            0, 0, expth, 0,
+            0, 0, 0, sexpth
+        ], dtype=np.complex)
+
+    def __str__(self):
+        return "Rzz gate"
+
+    def inverse(self):
+        _Rzz = RzzGate(alias=None)
+        _Rzz.targs = copy.deepcopy(self.targs)
+        _Rzz.pargs = [-self.parg]
+        return _Rzz
+
+    def exec(self, circuit):
+        exec_two(self, circuit)
+
+Rzz = RzzGate(["Rzz", "rzz", "RZZ"])
 
 class CCXGate(BasicGate):
     """ Toffoli gate
@@ -2211,7 +2367,6 @@ class ShorInitialGate(BasicGate):
         exec_shorInit(self, circuit)
 
 ShorInitial = ShorInitialGate(["ShorInitial"])
-
 
 class ComplexGate(BasicGate):
     """ the abstract SuperClass of all complex quantum gates

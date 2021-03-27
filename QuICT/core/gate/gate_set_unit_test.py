@@ -52,12 +52,17 @@ def test_gate_matrix():
     gateSet = GateSet(circuit2)
     assert np.all(gateSet.matrix(local=True) == SyntheticalUnitary.run(circuit))
 
-def test_gate_add():
+def test_add_gate():
     gateSet = GateSet()
     with gateSet:
         CX & (0, 1)
-        H & 0
-    assert len(gateSet) == 2
+        H & 1
+    circuit = Circuit(2)
+    CX | circuit
+    H | circuit(1)
+    Phase(0.2) | circuit
+    # assert np.all(SyntheticalUnitary.run(circuit) == gateSet.matrix())
+    assert gateSet.equal(circuit, ignore_phase = True)
 
 if __name__ == "__main__":
     # pytest.main(["./_unit_test.py", "./circuit_unit_test.py", "./gate_unit_test.py", "./qubit_unit_test.py"])
