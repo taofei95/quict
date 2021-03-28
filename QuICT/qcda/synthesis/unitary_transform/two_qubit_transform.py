@@ -180,7 +180,7 @@ class TwoQubitTransform(Synthesis):
         Unitary(list(KR0.flatten())) | circuit(0)
         Unitary(list(KR1.flatten())) | circuit(1)
         CX                           | circuit([1, 0])
-        Rz(2 * CKD.c - np.pi / 2)    | circuit(0)
+        Rz(np.pi / 2 - 2 * CKD.c)    | circuit(0)
         Ry(np.pi / 2 - 2 * CKD.a)    | circuit(1)
         CX                           | circuit([0, 1])
         Ry(2 * CKD.b - np.pi / 2)    | circuit(1)

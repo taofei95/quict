@@ -55,7 +55,7 @@ def test_CKD():
         # Unitary(list(KR1.flatten())) | circuit(1)
         Rz(np.pi / 2)                | circuit(1)
         CX                           | circuit([1, 0])
-        Rz(2 * CKD.c - np.pi / 2)    | circuit(0)
+        Rz(np.pi / 2 - 2 * CKD.c)    | circuit(0)
         Ry(np.pi / 2 - 2 * CKD.a)    | circuit(1)
         CX                           | circuit([0, 1])
         Ry(2 * CKD.b - np.pi / 2)    | circuit(1)
@@ -101,5 +101,5 @@ def test():
 
 if __name__ == '__main__':
     # test_tensor_decompose()
-    test_CKD()
-    # test()
+    # test_CKD()
+    test()
