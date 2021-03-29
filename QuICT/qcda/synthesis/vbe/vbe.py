@@ -367,6 +367,7 @@ def ExpMod(a, N, x, result, qubit_a, b, c, overflow, qubit_N, t):
         a = (a ** 2) % N
         a_inv = (a_inv ** 2) % N
 
+
 class VBEModel(Synthesis):
     """ 
     Quantum Networks for Elementary Arithmetic Operations
@@ -434,60 +435,8 @@ class VBEAdderModel(VBEModel):
 
 VBEAdder = VBEAdderModel()
 
-##here is a MulAddModel
-
-class VBEAdderModModel(VBEModel):
-    """ a circuit calculate a+b mod N.
-    a and b are gotten from some qubits, N is inherently designed in the circuit.
-    
-    (a,b,c=0,overflow=0,N=0,t=0) -> (a,b'=a+b mod N,c=0,overflow,N,t)
-
-    Quregs:
-        a: the qureg stores a, length is n,
-        b: the qureg stores b, length is n,
-        c: the clean ancillary qubits, length is n,
-        overflow: the clean ancillary qubits, length is 1,
-        N: the clean ancillary qubits, length is n,
-        t: the clean ancillary qubit, length is 1.
-
-    Quantum Networks for Elementary Arithmetic Operations
-    http://arxiv.org/abs/quant-ph/9511018v1
-    """
-    def __call__(self,N,n):
-        """ Overload the function __call__,
-        Give parameters to the VBE.
-
-        Args:
-            N: the modulus
-            n: the length of a, b, N and c.
-        Returns:
-            VBEAdderModModel: the model filled by parameters.
-        """
-
-        self.pargs = [N,n]
-        return self
-
-    def build_gate(self):
-        """ Overload the function build_gate.
-
-        Returns:
-            Circuit: the VBE circuit
-        """
-        N = self.pargs[0]
-        n = self.pargs[1]
-
-        circuit = Circuit(4*n + 2)
-        qubit_a = circuit([i for i in range(n)])
-        qubit_b = circuit([i for i in range(n, 2*n)])
-        qubit_c = circuit([i for i in range(2*n, 3*n)])
-        qubit_overflow = circuit(3*n)
-        qubit_N = circuit([i for i in range(3*n + 1, 4*n + 1)])
-        qubit_t = circuit(4*n + 1)
-
-        AdderMod(N, qubit_a, qubit_b, qubit_c, qubit_overflow, qubit_N, qubit_t)
-        return circuit
-
-VBEAdderMod = VBEAdderModModel()
+## message for Peng Sirui --------------------------------------------
+## here is a VBEAdderModModel
 
 class VBEMulAddModModel(VBEModel):
     """ a circuit calculate b + x*a mod N. 
