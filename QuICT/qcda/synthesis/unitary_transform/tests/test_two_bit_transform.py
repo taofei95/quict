@@ -73,7 +73,7 @@ def test_CKD():
 
 
 def test_two_bit_transform():
-    for _ in range(20):
+    for _ in range(200):
         U = generate_unitary(4)
         circuit = Circuit(2)
         KAK(U) | circuit

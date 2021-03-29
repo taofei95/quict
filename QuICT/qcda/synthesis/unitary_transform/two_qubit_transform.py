@@ -3,8 +3,9 @@ Decomposition of SU(4) with Cartan KAK Decomposition
 """
 
 import numpy as np
-
-from QuICT.core import Circuit, Unitary, Ry, Rz, CX
+import copy
+from typing import *
+from QuICT.core import Circuit, Unitary, Ry, Rz, CX, BasicGate
 from .._synthesis import Synthesis
 
 
@@ -155,7 +156,9 @@ class TwoQubitTransform(Synthesis):
         self.pargs = [matrix, eps]
         return self
 
-    def build_gate(self):
+    def build_gate(
+            self
+    ) -> Sequence[BasicGate]:
         """
         Final process after the Cartan KAK Decomposition, which is taken from [1].
         The decomposition of Exp(i(a XX + b YY + c ZZ)) may vary a global phase.
@@ -164,7 +167,7 @@ class TwoQubitTransform(Synthesis):
             [1] arxiv.org/abs/quant-ph/0308006
 
         Returns:
-            Tuple(gates): Decomposed gates
+            Sequence[BasicGate]: Decomposed gates.
         """
         matrix = self.pargs[0]
         eps = self.pargs[1]
@@ -190,7 +193,10 @@ class TwoQubitTransform(Synthesis):
         Unitary(list(KL1.flatten())) | circuit(1)
         # @formatter:on
 
-        return circuit
+        gates = copy.deepcopy(circuit.gates)
+        del circuit
+
+        return gates
 
 
 KAK = TwoQubitTransform()

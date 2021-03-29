@@ -4,6 +4,7 @@ from typing import *
 from .._synthesis import Synthesis
 from QuICT.core import BasicGate
 from ..uniformly_gate import uniformlyRz
+from .unitary_transform import MappingBuilder
 
 
 class QuantumShannonDecompose:
@@ -37,7 +38,7 @@ class QuantumShannonDecompose:
         return v, d, w
 
 
-class ControlledUnitary(Synthesis):
+class ControlledUnitary(MappingBuilder):
     """Decompose a 1-bit-controlled generic unitary with multiple targets.
     """
 
@@ -64,16 +65,14 @@ class ControlledUnitary(Synthesis):
 
     def __i_tensor_unitary(
             self,
-            u: np.ndarray,
-            mapping: Sequence[int]
+            u: np.ndarray
     ) -> Tuple[BasicGate]:
         """
-        Transform (I_{2x2} tensor U) into gates. The 1st bit(before ordering)
+        Transform (I_{2x2} tensor U) into gates. The 1st bit
         is under the identity transform.
 
         Args:
             u (np.ndarray): A unitary matrix.
-            mapping (Sequence[int]): Qubit ordering for {I tensor U}.
 
         Returns:
             Tuple[BasicGate]: Synthesized gates.
@@ -84,10 +83,10 @@ class ControlledUnitary(Synthesis):
         # Do not pass mapping into UTrans to avoid out-of-range issues
         gates = UTrans(u).build_gate()
         for gate in gates:
-            for idx, carg in enumerate(gate.cargs):
-                gate.cargs[idx] = mapping[carg + 1]
-            for idx, carg in enumerate(gate.targs):
-                gate.targs[idx] = mapping[carg + 1]
+            for idx, _ in enumerate(gate.cargs):
+                gate.cargs[idx] += 1
+            for idx, _ in enumerate(gate.targs):
+                gate.targs[idx] += 1
         return gates
 
     def build_gate(
@@ -95,23 +94,29 @@ class ControlledUnitary(Synthesis):
             mapping: Sequence[int] = None
     ) -> Sequence[BasicGate]:
         """
-        Build gates from parameterized model according to given mapping.
+                Build gates from parameterized model according to given mapping.
 
-        References:
-            https://arxiv.org/abs/quant-ph/0406176 Theorem 12
+                References:
+                    https://arxiv.org/abs/quant-ph/0406176 Theorem 12
 
-        Args:
-            mapping (Sequence[int]): Qubit ordering.
+                Args:
+                    mapping (Sequence[int]): Qubit ordering.
 
-        Returns:
-            Sequence[BasicGate]: Synthesized gates.
+                Returns:
+                    Sequence[BasicGate]: Synthesized gates.
+                """
+        qubit_num = 1 + int(round(np.log2(self.pargs[0].shape[0])))
+        return self.remap(qubit_num, self.__build_gate, mapping)
+
+    def __build_gate(
+            self
+    ) -> Sequence[BasicGate]:
+        """
+        Build gates from parameterized model without mapping
         """
         u1: np.ndarray = self.pargs[0]
         u2: np.ndarray = self.pargs[1]
         qubit_num = 1 + int(round(np.log2(u1.shape[0])))
-
-        if mapping is None:
-            mapping = [i for i in range(qubit_num)]
 
         v, d, w = QuantumShannonDecompose.decompose(u1, u2)
         gates = []
@@ -119,7 +124,7 @@ class ControlledUnitary(Synthesis):
         # diag(u1, u2) == diag(v, v) @ diag(d, d_dagger) @ diag(w, w)
 
         # diag(w, w)
-        gates.extend(self.__i_tensor_unitary(w, mapping=mapping))
+        gates.extend(self.__i_tensor_unitary(w))
 
         # diag(d, d_dagger)
         angle_list = []
@@ -129,12 +134,12 @@ class ControlledUnitary(Synthesis):
             angle_list.append(theta)
 
         reversed_rz = uniformlyRz(angle_list=angle_list) \
-            .build_gate(mapping=[mapping[(i + 1) % qubit_num] for i in range(qubit_num)])
+            .build_gate(mapping=[(i + 1) % qubit_num for i in range(qubit_num)])
 
         gates.extend(reversed_rz)
 
         # diag(v, v)
-        gates.extend(self.__i_tensor_unitary(v, mapping=mapping))
+        gates.extend(self.__i_tensor_unitary(v))
 
         return gates
 
