@@ -7,7 +7,7 @@ from QuICT.algorithm import SyntheticalUnitary
 
 
 def test_i_tensor_unitary():
-    rnd = 10
+    rnd = 20
     for _ in range(rnd):
         qubit_num = 5
         circuit1 = Circuit(qubit_num)

@@ -57,12 +57,9 @@ class UnitaryTransform(Synthesis):
 
         mat: np.ndarray = np.array(self.pargs[0])
         recursive_basis: int = self.pargs[1]
-        eps: float = self.pargs[2]
+        # eps: float = self.pargs[2]
         mat_size: int = mat.shape[0]
         qubit_num = int(round(np.log2(mat_size)))
-
-        if mapping is None:
-            mapping = [i for i in range(qubit_num)]
 
         if recursive_basis == 2:
             raise NotImplementedError("SU(4) special decompose not implemented.")
@@ -76,9 +73,12 @@ class UnitaryTransform(Synthesis):
             u = GateBuilder.getGate()
             return [u]
 
+        if mapping is None:
+            mapping = [i for i in range(qubit_num)]
+
         gates = []
 
-        u, cs, v_dagger = cossin(mat, mat_size // 2, mat_size // 2)
+        u, angle_list, v_dagger = cossin(mat, mat_size // 2, mat_size // 2, separate=True)
 
         """
         Parts of following comments are from Scipy documentation
@@ -98,28 +98,20 @@ class UnitaryTransform(Synthesis):
         """
 
         # v_dagger
-        v1_dagger = v_dagger[:mat_size // 2, :mat_size // 2]
-        v2_dagger = v_dagger[mat_size // 2:, mat_size // 2:]
+        v1_dagger = v_dagger[0]
+        v2_dagger = v_dagger[1]
 
         gates.extend(CUTrans(v1_dagger, v2_dagger).build_gate(mapping=mapping))
 
         # (c,s\\s,c)
-
-        angle_list = []
-        for i in range(mat_size // 2):
-            c = mat[i, i]
-            s = -mat[i, i + mat_size // 2]
-            theta = np.arccos(c)
-            if np.isclose(-np.sin(theta), s):
-                theta = - theta
-            angle_list.append(theta * 2)
+        angle_list *= 2  # Ry use its angle as theta/2
         reversed_ry = uniformlyRy(angle_list=angle_list) \
             .build_gate(mapping=[mapping[(i + 1) % qubit_num] for i in range(qubit_num)])
         gates.extend(reversed_ry)
 
         # u
-        u1 = u[:mat_size // 2, :mat_size // 2]
-        u2 = u[mat_size // 2:, mat_size // 2:]
+        u1 = u[0]
+        u2 = u[1]
 
         gates.extend(CUTrans(u1, u2).build_gate(mapping=mapping))
 

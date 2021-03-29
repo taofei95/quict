@@ -11,8 +11,8 @@ from QuICT.algorithm import SyntheticalUnitary
 def test_controlled_unitary_first_level():  # Only test the first decomposition
     rnd = 10
     for _ in range(rnd):
-        n = 6
-        dim = 1 << n
+        qubit_num = 6
+        dim = 1 << qubit_num
         u1 = unitary_group.rvs(dim // 2)
         u2 = unitary_group.rvs(dim // 2)
         v, d, w = QuantumShannonDecompose.decompose(u1, u2)
@@ -22,8 +22,9 @@ def test_controlled_unitary_first_level():  # Only test the first decomposition
             theta = -2 * np.log(s) / 1j
             angle_list.append(theta)
 
-        gates = uniformlyRz(angle_list=angle_list).build_gate(mapping=[(i + 1) % n for i in range(n)])
-        circuit = Circuit(n)
+        gates = uniformlyRz(angle_list=angle_list) \
+            .build_gate(mapping=[(i + 1) % qubit_num for i in range(qubit_num)])
+        circuit = Circuit(qubit_num)
         circuit.extend(gates)
         mat = SyntheticalUnitary.run(circuit)
         assert np.allclose(mat, block_diag(d, d.conj().T))

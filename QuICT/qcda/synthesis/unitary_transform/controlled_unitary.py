@@ -22,7 +22,7 @@ class QuantumShannonDecompose:
             u2 (np.ndarray): right-bottom block
 
         Returns:
-
+            Tuple[np.ndarray,np.ndarray,np.ndarray]
         """
         s = u1 @ u2.conj().T
 
@@ -62,8 +62,8 @@ class ControlledUnitary(Synthesis):
 
         return self
 
-    @staticmethod
-    def _i_tensor_unitary(
+    def __i_tensor_unitary(
+            self,
             u: np.ndarray,
             mapping: Sequence[int]
     ) -> Tuple[BasicGate]:
@@ -73,7 +73,7 @@ class ControlledUnitary(Synthesis):
 
         Args:
             u (np.ndarray): A unitary matrix.
-            mapping (Sequence[int]): Qubit ordering.
+            mapping (Sequence[int]): Qubit ordering for {I tensor U}.
 
         Returns:
             Tuple[BasicGate]: Synthesized gates.
@@ -87,7 +87,7 @@ class ControlledUnitary(Synthesis):
             for idx, carg in enumerate(gate.cargs):
                 gate.cargs[idx] = mapping[carg + 1]
             for idx, carg in enumerate(gate.targs):
-                gate.targs[idx] += mapping[carg + 1]
+                gate.targs[idx] = mapping[carg + 1]
         return gates
 
     def build_gate(
@@ -119,7 +119,7 @@ class ControlledUnitary(Synthesis):
         # diag(u1, u2) == diag(v, v) @ diag(d, d_dagger) @ diag(w, w)
 
         # diag(w, w)
-        gates.extend(self._i_tensor_unitary(w, mapping=mapping))
+        gates.extend(self.__i_tensor_unitary(w, mapping=mapping))
 
         # diag(d, d_dagger)
         angle_list = []
@@ -134,7 +134,7 @@ class ControlledUnitary(Synthesis):
         gates.extend(reversed_rz)
 
         # diag(v, v)
-        gates.extend(self._i_tensor_unitary(v, mapping=mapping))
+        gates.extend(self.__i_tensor_unitary(v, mapping=mapping))
 
         return gates
 

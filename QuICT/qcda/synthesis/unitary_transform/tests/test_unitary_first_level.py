@@ -37,7 +37,8 @@ def test_unitary_first_level():
                 theta = -theta
             assert np.isclose(np.sin(theta), s)
             assert np.isclose(np.cos(theta), c)
-            angle_list.append(theta * 2)
+            theta *= 2
+            angle_list.append(theta)
         reversed_ry = uniformlyRy(angle_list=angle_list) \
             .build_gate(mapping=[(i + 1) % qubit_num for i in range(qubit_num)])
         circuit = Circuit(qubit_num)

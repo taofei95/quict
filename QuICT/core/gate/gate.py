@@ -1876,6 +1876,7 @@ class UnitaryGate(BasicGate):
         if length == 0:
             raise Exception("the list or tuple passed in shouldn't be empty")
         n2 = int(round(np.sqrt(length)))
+        n2 = int(round(np.sqrt(length)))
         if n2 * n2 != length:
             raise Exception("the length of list or tuple should be the square of power(2, n)")
         n = int(round(np.log2(n2)))
