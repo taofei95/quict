@@ -53,8 +53,6 @@ def test_CKD():
 
         circuit = Circuit(2)
         # @formatter:off
-        # Unitary(list(KR0.flatten())) | circuit(0)
-        # Unitary(list(KR1.flatten())) | circuit(1)
         Rz(np.pi / 2)                | circuit(1)
         CX                           | circuit([1, 0])
         Rz(np.pi / 2 - 2 * CKD.c)    | circuit(0)
@@ -63,8 +61,6 @@ def test_CKD():
         Ry(2 * CKD.b - np.pi / 2)    | circuit(1)
         CX                           | circuit([1, 0])
         Rz(-np.pi / 2)               | circuit(0)
-        # Unitary(list(KL0.flatten())) | circuit(0)
-        # Unitary(list(KL1.flatten())) | circuit(1)
         # @formatter:on
 
         U /= np.linalg.det(U) ** 0.25
@@ -72,19 +68,8 @@ def test_CKD():
         # print(U.dot(np.linalg.inv(Usyn)))
         unitary = SyntheticalUnitary.run(circuit, showSU=True)
 
-        # print(U.dot(np.linalg.inv(unitary)))
-        # print()
-        # dev = U.dot(np.linalg.inv(unitary))
-        # print(np.linalg.det(dev))
-        # print(dev.T.conj().dot(dev))
-
-        print(matexp.dot(np.linalg.inv(unitary)))
-        print()
-        dev = matexp.dot(np.linalg.inv(unitary))
-        print(np.linalg.det(dev))
-        print(dev.T.conj().dot(dev))
-
-        print('\n')
+        assert np.allclose(matexp.dot(np.linalg.inv(unitary)), np.eye(4)) \
+            or np.allclose(matexp.dot(np.linalg.inv(unitary)), 1j*np.eye(4))
 
 
 def test_two_bit_transform():
@@ -95,11 +80,8 @@ def test_two_bit_transform():
 
         U /= np.linalg.det(U) ** 0.25
         unitary = SyntheticalUnitary.run(circuit, showSU=True)
-        print(unitary.dot(np.linalg.inv(U)))
-        dev = unitary.dot(np.linalg.inv(U))
-        print(np.linalg.det(dev))
-        print(dev.T.conj().dot(dev))
-        print()
+        assert np.allclose(unitary.dot(np.linalg.inv(U)), np.eye(4)) \
+            or np.allclose(unitary.dot(np.linalg.inv(U)), -1j*np.eye(4))
 
 
 if __name__ == '__main__':
