@@ -946,6 +946,7 @@ class PhaseGate(BasicGate):
         self.targets = 1
         self.params = 1
         self.qasm_name = "phase"
+        self.pargs = [0]
 
     def __str__(self):
         return "Phase gate"

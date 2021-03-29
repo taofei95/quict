@@ -65,7 +65,7 @@ class UnitaryTransform(MappingBuilder):
 
     def __init__(self):
         super().__init__()
-        self.phase_shift_counter = 0  # how many -j==exp(-pi/2) in global phase.
+        self.factor_shift = 1.0
 
     def __call__(self, mat, recursive_basis=1, eps=1e-15):
         """
@@ -78,6 +78,7 @@ class UnitaryTransform(MappingBuilder):
         """
         if recursive_basis <= 0 or recursive_basis >= 3:
             raise NotImplementedError("Recursive must stops at 1 or 2!")
+        self.factor_shift = 1.0
         self.pargs = [mat, recursive_basis, eps]
         return self
 
@@ -90,16 +91,16 @@ class UnitaryTransform(MappingBuilder):
             Tuple[BasicGate]: Decomposed gates
         """
         qubit_num = int(round(np.log2(self.pargs[0].shape[0])))
+        basis = self.pargs[1]
         gates = self.remap(qubit_num, self.__build_gate, mapping)
         gates = list(gates)
 
-        if self.phase_shift_counter % 4 != 0:
-            phase = (-np.pi / 2) * (self.phase_shift_counter % 4)
-            for bit in range(qubit_num):
-                phase_gate: PhaseGate = Phase.copy()
-                phase_gate.pargs[0] = phase
-                phase_gate.targs = [bit]
-                gates.append(phase_gate)
+        if basis == 2:
+            phase = np.log(self.factor_shift) / 1j
+            phase_gate: PhaseGate = Phase.copy()
+            phase_gate.pargs = [phase]
+            phase_gate.targs = [0]
+            gates.append(phase_gate)
         return gates
 
     def __build_gate(self) -> Sequence[BasicGate]:
@@ -136,8 +137,8 @@ class UnitaryTransform(MappingBuilder):
             circuit = Circuit(qubit_num)
             circuit.extend(gates)
             syn_mat = SyntheticalUnitary.run(circuit)
-            if np.allclose(mat, -1j * syn_mat):
-                self.phase_shift_counter += 1
+            shift = mat[0, 0] / syn_mat[0, 0]
+            self.factor_shift *= shift
             del circuit, syn_mat
             return gates
 
