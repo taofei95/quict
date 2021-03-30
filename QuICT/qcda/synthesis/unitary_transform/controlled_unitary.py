@@ -5,6 +5,7 @@ from .._synthesis import Synthesis
 from QuICT.core import BasicGate
 from ..uniformly_gate import uniformlyRz
 from .mapping_builder import MappingBuilder
+from QuICT.core import *
 
 
 class QuantumShannonDecompose:
@@ -67,8 +68,8 @@ class ControlledUnitary(MappingBuilder):
     def __i_tensor_unitary(
             self,
             u: np.ndarray,
-            recurcive_basis: int
-    ) -> Tuple[BasicGate]:
+            recursive_basis: int
+    ) -> Tuple[List[BasicGate], complex]:
         """
         Transform (I_{2x2} tensor U) into gates. The 1st bit
         is under the identity transform.
@@ -77,24 +78,28 @@ class ControlledUnitary(MappingBuilder):
             u (np.ndarray): A unitary matrix.
 
         Returns:
-            Tuple[BasicGate]: Synthesized gates.
+            Tuple[List[BasicGate], complex]: Synthesized gates and a phase factor.
         """
 
         # Dynamically import for avoiding circular import.
-        from .unitary_transform import UnitaryTransform
-        _ut = UnitaryTransform()
-        gates = _ut(u, recurcive_basis).build_gate()
+        from .unitary_transform import UnitaryTransform, UTrans
+        gates: List[BasicGate]
+        shift: complex
+        gates, shift = UTrans(u, recursive_basis) \
+            .build_gate(mapping=None, include_phase_gate=False)
         for gate in gates:
             for idx, _ in enumerate(gate.cargs):
                 gate.cargs[idx] += 1
             for idx, _ in enumerate(gate.targs):
                 gate.targs[idx] += 1
-        return gates
+
+        return gates, shift
 
     def build_gate(
             self,
-            mapping: Sequence[int] = None
-    ) -> Sequence[BasicGate]:
+            mapping: Sequence[int] = None,
+            include_phase_gate: bool = True
+    ):
         """
                 Build gates from parameterized model according to given mapping.
 
@@ -103,19 +108,36 @@ class ControlledUnitary(MappingBuilder):
 
                 Args:
                     mapping (Sequence[int]): Qubit ordering.
+                    include_phase_gate (bool): Whether to add phase gate.
 
                 Returns:
-                    Sequence[BasicGate]: Synthesized gates.
+                    1. If include_phase_gate==True, return List[BasicGate] in which
+                    a phase gate is inserted to align phase gap.
+                    2. If include_phase_gate==False, return Tuple[List[BasicGate], complex]
+                    which means a gate sequence and corresponding phase factor f=exp(ia).
+
                 """
         qubit_num = 1 + int(round(np.log2(self.pargs[0].shape[0])))
-        gates = self.__build_gate()
-        return self.remap(qubit_num, gates, mapping)
+        gates, shift = self.__build_gate()
+        self.remap(qubit_num, gates, mapping)
+        if include_phase_gate:
+            phase = np.log(shift) / 1j
+            phase_gate = Phase.copy()
+            phase_gate.pargs = [phase]
+            phase_gate.targs = [0]
+            gates.append(phase_gate)
+            return gates
+        else:
+            return gates, shift
 
     def __build_gate(
             self
-    ) -> Sequence[BasicGate]:
+    ) -> Tuple[List[BasicGate], complex]:
         """
         Build gates from parameterized model without mapping
+
+        Returns:
+            Tuple[List[BasicGate], complex]: Synthesized gates and factor shift.
         """
         u1: np.ndarray = self.pargs[0]
         u2: np.ndarray = self.pargs[1]
@@ -126,11 +148,15 @@ class ControlledUnitary(MappingBuilder):
 
         v, d, w = QuantumShannonDecompose.decompose(u1, u2)
         gates = []
+        _gates = []
+        shift: complex = 1.0 + 0.0j
 
         # diag(u1, u2) == diag(v, v) @ diag(d, d_dagger) @ diag(w, w)
 
         # diag(w, w)
-        gates.extend(self.__i_tensor_unitary(w, recursive_basis))
+        _gates, _shift = self.__i_tensor_unitary(w, recursive_basis)
+        shift *= _shift
+        gates.extend(_gates)
 
         # diag(d, d_dagger)
         angle_list = []
@@ -145,8 +171,11 @@ class ControlledUnitary(MappingBuilder):
         gates.extend(reversed_rz)
 
         # diag(v, v)
-        gates.extend(self.__i_tensor_unitary(v, recursive_basis))
+        _gates, _shift = self.__i_tensor_unitary(v, recursive_basis)
+        shift *= _shift
+        gates.extend(_gates)
 
-        return gates
+        return gates, shift
 
-# CUTrans = ControlledUnitary()
+
+CUTrans = ControlledUnitary()

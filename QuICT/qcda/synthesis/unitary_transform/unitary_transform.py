@@ -35,7 +35,6 @@ class UnitaryTransform(MappingBuilder):
 
     def __init__(self):
         super().__init__()
-        self.factor_shift = 1.0
 
     def __call__(self, mat, recursive_basis=1, eps=1e-15):
         """
@@ -48,38 +47,43 @@ class UnitaryTransform(MappingBuilder):
         """
         if recursive_basis <= 0 or recursive_basis >= 3:
             raise NotImplementedError("Recursive must stops at 1 or 2!")
-        self.factor_shift = 1.0
         self.pargs = [mat, recursive_basis, eps]
         return self
 
     def build_gate(
             self,
-            mapping: Sequence[int] = None
-    ) -> Sequence[BasicGate]:
+            mapping: Sequence[int] = None,
+            include_phase_gate: bool = True
+    ):
         """
         Return:
-            Tuple[BasicGate]: Decomposed gates
+            1. If include_phase_gate==True, return List[BasicGate] in which
+            a phase gate is inserted to align phase gap.
+            2. If include_phase_gate==False, return Tuple[List[BasicGate], complex]
+            which means a gate sequence and corresponding phase factor f=exp(ia).
         """
         qubit_num = int(round(np.log2(self.pargs[0].shape[0])))
         basis = self.pargs[1]
-        gates = self.__build_gate()
-        gates = self.remap(qubit_num, gates, mapping)
+        gates, shift = self.__build_gate()
+        self.remap(qubit_num, gates, mapping)
         gates = list(gates)
 
-        if basis == 2:
-            phase = np.log(self.factor_shift) / 1j
-            phase_gate: PhaseGate = Phase.copy()
+        if basis == 2 and include_phase_gate:
+            phase = np.log(shift) / 1j
+            phase_gate = Phase.copy()
             phase_gate.pargs = [phase]
             phase_gate.targs = [0]
             gates.append(phase_gate)
-        return gates
+        if include_phase_gate:
+            return gates
+        else:
+            return gates, shift
 
-    def __build_gate(self) -> Sequence[BasicGate]:
+    def __build_gate(
+            self
+    ) -> Tuple[List[BasicGate], complex]:
         """
         No mapping
-
-        Return:
-            Sequence[BasicGate]: Decomposed gates.
         """
 
         mat: np.ndarray = np.array(self.pargs[0])
@@ -90,9 +94,6 @@ class UnitaryTransform(MappingBuilder):
         mat_size: int = mat.shape[0]
         qubit_num = int(round(np.log2(mat_size)))
 
-        # if recursive_basis == 2:
-        #     raise NotImplementedError("SU(4) special decompose not implemented.")
-
         if qubit_num == 1:
             GateBuilder.setGateType(GATE_ID["Unitary"])
             # TODO: Unitary Gate matrix type restrictions
@@ -100,17 +101,17 @@ class UnitaryTransform(MappingBuilder):
             GateBuilder.setPargs(parg)
             GateBuilder.setTargs([0])
             u = GateBuilder.getGate()
-            return [u]
+            return [u], 1.0 + 0.0j
         elif qubit_num == 2 and recursive_basis == 2:
-            gates = KAK(mat).build_gate()
+            gates: List[BasicGate] = KAK(mat).build_gate()
             # TODO: Avoid build a circuit.
             circuit = Circuit(qubit_num)
             circuit.extend(gates)
             syn_mat = SyntheticalUnitary.run(circuit)
-            shift = mat[0, 0] / syn_mat[0, 0]
-            self.factor_shift *= shift
+            shift: complex = mat[0, 0] / syn_mat[0, 0]
+            # self.factor_shift *= shift
             del circuit, syn_mat
-            return gates
+            return gates, shift
 
         gates = []
 
@@ -137,15 +138,15 @@ class UnitaryTransform(MappingBuilder):
         v1_dagger = v_dagger[0]
         v2_dagger = v_dagger[1]
 
-        # Avoid use CUTrnas because [self.factor_shift] might be messed up
-        # during cross recursion.
+        _gates = []
+        shift: complex = 1.0
 
         # Dynamically import for avoiding circular import.
-        from .controlled_unitary import ControlledUnitary
-        _cut = ControlledUnitary()
-        _gates = _cut(v1_dagger, v2_dagger, recursive_basis).build_gate()
+        from .controlled_unitary import ControlledUnitary, CUTrans
+        _gates, _shift = CUTrans(v1_dagger, v2_dagger, recursive_basis) \
+            .build_gate(include_phase_gate=False)
+        shift *= _shift
         gates.extend(_gates)
-        del _cut
 
         # (c,s\\s,c)
         angle_list *= 2  # Ry use its angle as theta/2
@@ -157,12 +158,12 @@ class UnitaryTransform(MappingBuilder):
         u1 = u[0]
         u2 = u[1]
 
-        _cut = ControlledUnitary()
-        _gates = _cut(u1, u2, recursive_basis).build_gate()
-        gates.extend(_cut(u1, u2, recursive_basis).build_gate())
-        del _cut
+        _gates, _shift = CUTrans(u1, u2, recursive_basis) \
+            .build_gate(include_phase_gate=False)
+        shift *= _shift
+        gates.extend(_gates)
 
-        return gates
+        return gates, shift
 
 
 UTrans = UnitaryTransform()

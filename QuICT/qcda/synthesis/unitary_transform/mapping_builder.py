@@ -9,7 +9,7 @@ class MappingBuilder(Synthesis):
             qubit_num: int,
             gates: Sequence[BasicGate],
             mapping: Sequence[int] = None,
-    ) -> Sequence[BasicGate]:
+    ) -> None:
         """
         Build gates with given mapping via an external gate_builder.
 
@@ -29,4 +29,3 @@ class MappingBuilder(Synthesis):
                 gate.cargs[idx] = mapping[val]
             for idx, val in enumerate(gate.targs):
                 gate.targs[idx] = mapping[val]
-        return gates
