@@ -47,6 +47,7 @@ class MCTSNode:
         self._circuit_dag = circuit_dag
         self._gate_index = []
         self._cur_mapping = cur_mapping
+        
         self._coupling_graph = coupling_graph
         self._front_layer = front_layer
         self._qubit_mask = qubit_mask
@@ -56,8 +57,11 @@ class MCTSNode:
         self._children: List[MCTSNode] = []     
         self._execution_list: List[int] = []     
         self._candidate_swap_list: List[SwapGate] = []
+        self._best_swap_gate: SwapGate = None
+        self._visit_count_prob: List[float] = []
+
         self._visit_count = 0   
-        self._value = 0
+        self._value: float = 0
         self._edge_prob: np.ndarray = None
         self._sim_value = 0
         self._reward = 0
@@ -66,6 +70,10 @@ class MCTSNode:
         self._w = 0
         self._state = None
         
+        self._inverse_mapping = [0  for _ in self._cur_mapping]
+        for i in self._cur_mapping:
+            self._inverse_mapping[self._cur_mapping[i]] = i
+
         if self._parent is None:
             self._num_of_gates = self._circuit_dag.size
         else:
@@ -75,11 +83,11 @@ class MCTSNode:
     
 
     @property
-    def state(self)->Tuple[np.ndarray, np.ndarray]:
+    def state(self)->Tuple[np.ndarray, np.ndarray, np.ndarray, int]:
         return self._state
 
     @state.setter
-    def state(self, s: Tuple[np.ndarray, np.ndarray]):
+    def state(self, s: Tuple[np.ndarray, np.ndarray, np.ndarray, int]):
         self._state = s
 
     @property
@@ -176,6 +184,26 @@ class MCTSNode:
         return self._extended_edge_prob
 
     @property
+    def visit_count_prob(self)->np.ndarray:
+        """
+        The probabity of each child node. The probability p_a is propotional to visit_count(a)
+        """
+        return self._visit_count_prob
+
+    @visit_count_prob.setter
+    def visit_count_prob(self, prob: np.ndarray):
+        
+        self._visit_count_prob = prob 
+        self._extended_visit_count_prob = self._extend_action_probability(self._visit_count_prob, self._candidate_swap_list)
+
+    @property
+    def extended_visit_count_prob(self)->np.ndarray:
+        """
+        The probabity of each child node. The probability p_a is propotional to visit_count(a)
+        """
+        return self._extended_visit_count_prob
+
+    @property
     def q(self)->float:
         """
         Score of the current node
@@ -259,6 +287,14 @@ class MCTSNode:
         self._cur_mapping = cur_mapping
 
     @property
+    def inverse_mapping(self)->List[int]:
+        """
+        The cur_mapping of physical qubits to logical qubits
+        """
+        return self._inverse_mapping
+
+
+    @property
     def visit_count(self)->int:
         """
         The number of  times the node has been visited
@@ -300,6 +336,14 @@ class MCTSNode:
     @swap_of_edge.setter
     def swap_of_edge(self, swap: SwapGate):
         self._swap_of_edge = swap
+
+    @property
+    def best_swap_gate(self)->SwapGate:
+        return self._best_swap_gate  
+    
+    @best_swap_gate.setter
+    def best_swap_gate(self, swap: SwapGate):
+        self._best_swap_gate = swap
     
     def clear(self):
         self._parent = None
@@ -323,14 +367,15 @@ class MCTSNode:
         """
         if isinstance(swap, SwapGate):
             p_target = swap.targs
-            l_target = [self.cur_mapping.index(p_target[i], 0, len(self.cur_mapping)) 
-                        for i in  range(len(p_target)) ]
+            l_target = [ self._inverse_mapping[p_target[0]], self._inverse_mapping[p_target[1]] ]
             if self._coupling_graph.is_adjacent(p_target[0], p_target[1]):
-
                 temp = self._qubit_mask[p_target[0]]
                 self._qubit_mask[p_target[0]] = self._qubit_mask[p_target[1]]
                 self._qubit_mask[p_target[1]] = temp   
-                     
+                
+                self._inverse_mapping[p_target[0]] = l_target[1]
+                self._inverse_mapping[p_target[1]] = l_target[0]
+                
                 self._cur_mapping[l_target[0]] = p_target[1]
                 self._cur_mapping[l_target[1]] = p_target[0]
                 self.update_node()          
@@ -346,16 +391,17 @@ class MCTSNode:
         """
         if isinstance(swap, SwapGate):
             p_target = swap.targs
-            l_target = [self.cur_mapping.index(p_target[i], 0, len(self.cur_mapping)) 
-                        for i in  range(len(p_target)) ]
+            # l_target = [self.cur_mapping.index(p_target[i], 0, len(self.cur_mapping)) 
+            #             for i in  range(len(p_target)) ]
+            l_target = [self._inverse_mapping[p_target[0]], self._inverse_mapping[p_target[1]]]
             if self._coupling_graph.is_adjacent(p_target[0], p_target[1]):
                 cur_mapping = self.cur_mapping.copy()
                 qubit_mask = self.qubit_mask.copy()    
-
+                 
                 temp = qubit_mask[p_target[0]]
                 qubit_mask[p_target[0]] = qubit_mask[p_target[1]]
                 qubit_mask[p_target[1]] = temp   
-                     
+                
                 cur_mapping[l_target[0]] = p_target[1]
                 cur_mapping[l_target[1]] = p_target[0]
 

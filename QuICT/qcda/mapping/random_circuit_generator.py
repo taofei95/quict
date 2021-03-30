@@ -2,6 +2,7 @@ from enum import Enum
 from collections import deque
 from copy import copy
 
+import time
 import numpy as np
 import networkx as nx
 import matplotlib.pyplot as plt
@@ -23,7 +24,7 @@ class RandomCircuitGenerator(object):
         self._maximum = maximum
         self._min_num_of_qubits = min_num_of_qubits
         self._max_num_of_qubits = max_num_of_qubits
-        self._prg = np.random.default_rng(seed)
+        self._prg = np.random.default_rng(seed * int(time.time()))
 
     def __call__(self)->Circuit:
         size = self._prg.integers(low = self._minimum, high = self._maximum)

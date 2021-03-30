@@ -13,7 +13,6 @@ import numpy as np
 import networkx as nx
 import matplotlib.pyplot as plt
 
-from utility import *
 from sklearn.manifold import MDS
 
 from QuICT.tools.interface import *

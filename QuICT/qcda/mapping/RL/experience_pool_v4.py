@@ -16,15 +16,12 @@ from utility import *
 
 class ExperiencePool(object):
 
-    def __init__(self, max_capacity: int = 1000000, num_of_nodes: int = 50, graph_name: str = None):
-        self._coupling_graph = get_coupling_graph(graph_name)
-        num_of_class = self._coupling_graph.num_of_edge
-        feature_dim = self._coupling_graph.node_feature.shape[1] * 2
+    def __init__(self, max_capacity: int = 1000000, num_of_nodes: int = 150, graph_name: str = None, num_of_class: int = 43):
         
         self._num_of_nodes = num_of_nodes
         self._max_capacity = max_capacity
         self._num_of_class = num_of_class
-        self._feature_dim = feature_dim
+
         num_of_neighgour = 5
         self._lock = Lock()
         self._idx = sharedctypes.Value('i', 0, lock = False)
@@ -32,7 +29,6 @@ class ExperiencePool(object):
         self._num_shm = shared_memory.SharedMemory(create = True, size =max_capacity * 4)
         self._adj_shm = shared_memory.SharedMemory(create = True, size = max_capacity * num_of_nodes * num_of_neighgour * 4)
         self._qubits_shm = shared_memory.SharedMemory(create = True, size = max_capacity * num_of_nodes * 2 * 4)
-        self._feature_shm = shared_memory.SharedMemory(create = True, size = max_capacity * num_of_nodes * feature_dim * 8)
         self._action_probability_shm = shared_memory.SharedMemory(create = True, size = max_capacity * num_of_class * 8)
         self._value_shm = shared_memory.SharedMemory(create = True, size = max_capacity * 8)
         
@@ -41,7 +37,6 @@ class ExperiencePool(object):
         self._num_list = np.ndarray(shape = (max_capacity), dtype = np.int32, buffer = self._num_shm.buf)
         self._adj_list = np.ndarray(shape = (max_capacity, num_of_nodes, num_of_neighgour ), dtype = np.int32, buffer = self._adj_shm.buf)
         self._qubits_list = np.ndarray(shape = (max_capacity, num_of_nodes, 2), dtype= np.int32, buffer = self._qubits_shm.buf)
-        self._feature_list = np.ndarray(shape = (max_capacity, num_of_nodes, feature_dim) , dtype = np.float, buffer = self._feature_shm.buf)
         self._value_list = np.ndarray(shape = (max_capacity) , dtype = np.float, buffer = self._value_shm.buf)
         self._action_probability_list = np.ndarray(shape = (max_capacity, num_of_class) , dtype = np.float, buffer = self._action_probability_shm.buf)
 
@@ -85,7 +80,6 @@ class ExperiencePool(object):
         del self._num_list
         del self._adj_list
         del self._qubits_list
-        del self._feature_list
         del self._value_list
         del self._action_probability_list 
         
@@ -93,7 +87,6 @@ class ExperiencePool(object):
         self._num_shm.close
         self._adj_shm.close()
         self._qubits_shm.close()
-        self._feature_shm.close()
         self._value_shm.close()
         self._action_probability_shm.close()
 
@@ -102,11 +95,10 @@ class ExperiencePool(object):
         self._num_shm.unlink()
         self._adj_shm.unlink()
         self._qubits_shm.unlink()
-        self._feature_shm.unlink()
         self._value_shm.unlink()
         self._action_probability_shm.unlink()
 
-    def extend(self, adj: np.ndarray, qubits: np.ndarray, feature: np.ndarray, action_probability: np.ndarray, value: np.ndarray, circuit_size: np.ndarray, swap_label: np.ndarray, num: int = 20):
+    def extend(self, adj: np.ndarray, qubits: np.ndarray, action_probability: np.ndarray, value: np.ndarray, circuit_size: np.ndarray, swap_label: np.ndarray, num: int = 20):
         self._lock.acquire() 
         try:
             if self._idx.value < self._max_capacity:
@@ -119,7 +111,6 @@ class ExperiencePool(object):
 
                 self._adj_list[idx : end, :, :] = adj[0 : input_end, :, :]
                 self._qubits_list[idx : end, :, :] = qubits[0 : input_end, :, :]
-                self._feature_list[idx : end, :, :] = feature[0 : input_end, :, :]
                 self._action_probability_list[idx : end, :] = action_probability[0 : input_end, :] 
                 self._value_list[idx : end] = value[0 : input_end]
                 self._idx.value += input_end
@@ -128,11 +119,10 @@ class ExperiencePool(object):
                 raise Exception("the experience pool is fullfilled")
         finally:
             self._lock.release()
+        
 
     
-
-    
-    def push(self, adj: np.ndarray, qubits: np.ndarray, feature: np.ndarray, action_probability: np.ndarray, value: float = 0, circuit_size: int = 0, swap_label: int = 0): 
+    def push(self, adj: np.ndarray, qubits: np.ndarray, action_probability: np.ndarray, value: float = 0, circuit_size: int = 0, swap_label: int = 0): 
         #print(self._idx.value)
         self._lock.acquire()
         if self._idx.value >= self._max_capacity:
@@ -143,7 +133,6 @@ class ExperiencePool(object):
             self._num_list[idx] = circuit_size
             self._adj_list[idx, :, :] = adj
             self._qubits_list[idx, :, :] = qubits
-            self._feature_list[idx, :, :] = feature
             self._action_probability_list[idx, :] = action_probability 
             self._value_list[idx] = value
             self._idx.value += 1
@@ -160,18 +149,18 @@ class ExperiencePool(object):
 
 
     def clear(self):
-        pass
+        self._lock.acquire()
+        try:
+            if self._idx.value >0:
+                self._idx.value = 0
+        finally:
+            self._lock.release()
 
-    def load_data(self, file_path: str, feature_update: bool = False):
+    def load_data(self, file_path: str):
         self._label_list[:] = np.load(f"{file_path}/label_list.npy", allow_pickle = True)
         self._num_list[:] = np.load(f"{file_path}/num_list.npy", allow_pickle = True)
         self._adj_list[:] = np.load(f"{file_path}/adj_list.npy", allow_pickle = True)
         self._qubits_list[:] = np.load(f"{file_path}/qubits_list.npy", allow_pickle = True)
-        
-        if  feature_update:
-            self._feature_list[:] =  self._coupling_graph.node_feature[self._qubits_list,:].reshape(self._max_capacity, self._num_of_nodes, -1)
-        else:
-            self._feature_list[:] = np.load(f"{file_path}/feature_list.npy", allow_pickle = True)
         
         self._value_list[:] = np.load(f"{file_path}/value_list.npy", allow_pickle = True)
         self._action_probability_list[:] = np.load(f"{file_path}/action_probability_list.npy", allow_pickle = True )
@@ -185,7 +174,6 @@ class ExperiencePool(object):
         np.save(f"{file_path}/num_list.npy", self._num_list)
         np.save(f"{file_path}/adj_list.npy", self._adj_list)
         np.save(f"{file_path}/qubits_list.npy", self._qubits_list)
-        np.save(f"{file_path}/feature_list.npy", self._feature_list)
         np.save(f"{file_path}/value_list.npy", self._value_list)
         np.save(f"{file_path}/action_probability_list.npy", self._action_probability_list)
         with open(f"{file_path}/metadata.txt",'w') as f:
@@ -201,9 +189,16 @@ class ExperiencePool(object):
         # print(batch_size)
         return self._get_chosen_data(indices)
    
-    
+    def get_train_data(self, start: int, end: int):
+        
+
+        indices = self._train_idx_list[start:end]
+
+        return self._get_chosen_data(indices)
+
     def get_evaluate_data(self, start: int, end: int):
         
+
         indices = self._evaluate_idx_list[start:end]
 
         return self._get_chosen_data(indices)
@@ -214,16 +209,19 @@ class ExperiencePool(object):
         label_list = np.take(indices = indices, a = self._label_list, axis = 0)
         num_list = np.take(indices = indices, a = self._num_list, axis = 0)
         adj_list = np.take(indices = indices, a = self._adj_list, axis = 0)
-        feature_list = np.take(indices = indices, a = self._feature_list, axis = 0 )
         value_list = np.take(indices = indices, a = self._value_list, axis = 0)
         action_probability_list = np.take(indices = indices, a = self._action_probability_list, axis = 0)
-        adj_list_modified = []
-        feature_list_modified = []
+        padding_mask_list = np.zeros(shape = (qubits_list.shape[0], qubits_list.shape[1]), dtype = np.uint8)
+
         for i,idx in enumerate(num_list):
-            adj_list_modified.append(adj_list[i,0:idx,:])
-            feature_list_modified.append(feature_list[i,0:idx,:])
+            padding_mask_list[i, idx:] = 1
             
-        return qubits_list, adj_list_modified,  feature_list_modified, value_list, action_probability_list, label_list
+        return  (qubits_list,
+                padding_mask_list, 
+                adj_list,  
+                value_list, 
+                action_probability_list, 
+                label_list)
 
     
     

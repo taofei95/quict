@@ -8,6 +8,7 @@ import numpy as np
 cimport numpy as np
 from cython.parallel cimport prange
 from libcpp.vector cimport vector
+from libcpp.unordered_set cimport unordered_set
 from libcpp.algorithm cimport sort
 from libcpp.utility cimport move
 from libc.time cimport time
@@ -39,12 +40,13 @@ cdef class RandomSimulator:
     cdef:
         int[:,::1] graph, gates, coupling_graph, distance_matrix
         vector[int] front_layer, qubit_mapping, qubit_inverse_mapping, qubit_mask
+        unordered_set[int] subcircuit
         int num_of_physical_qubits , num_of_gates, num_of_subcircuit_gates, num_of_iterations, num_of_logical_qubits, num_of_swap_gates, mode
         float gamma
 
     def __cinit__(self, np.ndarray[np.int32_t, ndim = 2] graph, np.ndarray[np.int32_t, ndim = 2] gates,
                 np.ndarray[np.int32_t, ndim = 2] coupling_graph, np.ndarray[np.int32_t, ndim = 2] distance_matrix, 
-                int num_of_swap_gates, int num_of_gates, int num_of_logical_qubits, int gamma, int mode):
+                int num_of_swap_gates, int num_of_gates, int num_of_logical_qubits, float gamma, int mode):
                 self.graph = graph
                 self.gates = gates
                 self.coupling_graph = coupling_graph
@@ -62,6 +64,13 @@ cdef class RandomSimulator:
         cdef:
             int i, res = 0
         for i in front_layer:
+            res += self.distance_matrix[qubit_mapping[self.gates[i,0]], qubit_mapping[self.gates[i,1]]]
+        return res
+    
+    cdef int NNC_2(self, unordered_set[int]& subcircuit, vector[int] qubit_mapping) nogil:
+        cdef:
+            int i, res = 0
+        for i in subcircuit:
             res += self.distance_matrix[qubit_mapping[self.gates[i,0]], qubit_mapping[self.gates[i,1]]]
         return res
     
@@ -177,6 +186,12 @@ cdef class RandomSimulator:
         else:
             return False
 
+    cdef bint is_free_2(self, int index, vector[int] &qubit_mask) nogil:
+        if (qubit_mask[self.gates[index][0]] == -1 or qubit_mask[self.gates[index][0]] == index) and  (qubit_mask[self.gates[index][1]] == -1 or qubit_mask[self.gates[index][1]] == index):
+            return True
+        else:
+            return False
+
     cdef int update_front_layer(self, vector[int] &front_layer, vector[int] &qubit_mapping, vector[int] &qubit_mask) nogil:
         cdef:
             vector[int] front_layer_stack
@@ -205,24 +220,78 @@ cdef class RandomSimulator:
             #print(front_layer)
         return num_of_executed_gates
 
-    cdef float simulation_thread(self, int seed) nogil:
+
+    cdef int update_front_layer_2(self, vector[int] &front_layer, vector[int] &qubit_mapping, vector[int] &qubit_mask, unordered_set[int] &subcircuit) nogil:
+        cdef:
+            vector[int] front_layer_stack
+            int num_of_executed_gates = 0, top, suc
+            unsigned int i 
+        
+        front_layer_stack.swap(front_layer)
+        while not front_layer_stack.empty():
+            top = front_layer_stack.back()
+            front_layer_stack.pop_back()
+            if self.is_executable(top, qubit_mapping):
+                # if subcircuit.find(top) == subcircuit.end():
+                #     print("There is a gate not in the subcircuit.")
+                subcircuit.erase(top)
+                num_of_executed_gates += 1
+                for i in range(2):
+                    suc = self.graph[top,i]
+                    qubit_mask[qubit_mapping[self.gates[top,i]]] = suc 
+                    # print(list(self.gates[suc]))
+                    # print(qubit_mask)
+                    # print(qubit_mapping)
+                    if suc != -1:
+                        #print(self.is_free(suc, qubit_mapping, qubit_mask))
+                        if self.is_free(suc, qubit_mapping, qubit_mask):
+                            #print(suc)
+                            front_layer_stack.push_back(suc)       
+            else:
+                front_layer.push_back(top)
+            #print(front_layer)
+        return num_of_executed_gates
+    
+    
+    cdef unordered_set[int] get_subcircuit(self, vector[int] front_layer, vector[int] qubit_mask ,int num_of_subcircuit_gates):
+        cdef:
+            unordered_set[int] subcircuit
+            int idx, tar, ctrl, i, suc, top
+
+        idx = 0
+        while idx < num_of_subcircuit_gates  and (front_layer.size()>0):
+            top = front_layer.back()
+            front_layer.pop_back()
+            subcircuit.insert(top)
+            idx += 1
+            for i in range(2):
+                suc = self.graph[top,i]
+                qubit_mask[self.gates[top,i]] = suc 
+                if suc != -1:
+                    if self.is_free_2(suc, qubit_mask):
+                        front_layer.push_back(suc)   
+        return subcircuit
+
+    cdef float simulation_thread_swap(self, int seed) nogil:
         cdef:
             vector[int] front_layer = self.front_layer
             vector[int] qubit_mapping = self.qubit_mapping
             vector[int] qubit_inverse_mapping = self.qubit_inverse_mapping
             vector[int] qubit_mask = self.qubit_mask
-            vector[int] candidate_swap_gate_list, NNC, swap_gate
+            vector[int] candidate_swap_gate_list, NNC, swap_gate, logical_qubit_mask
+            unordered_set[int] subcircuit = self.subcircuit
             vector[float] res
             vector[float] pf
             int NNC_base, j
-            float weight, weighted_executed_gates = 0, sim_res, num_of_swap_gates = 0
+            float weight, weighted_executed_gates = 0.0, sim_res, num_of_swap_gates = 0
             unsigned int i, num_of_executed_gates = 0, num_of_candidate_swap_gates, swap_gate_index
-
+        
         res.resize(2, 0)
         swap_gate.resize(2, INIT_NUM)
-        weighted_executed_gates += self.update_front_layer(front_layer, qubit_mapping, qubit_mask)
-        # num_of_executed_gates += self.update_front_layer(front_layer, qubit_mapping, qubit_mask)
-        weight = self.gamma
+        weighted_executed_gates += <float>(self.update_front_layer(front_layer, qubit_mapping, qubit_mask))
+        #num_of_executed_gates += self.update_front_layer(front_layer, qubit_mapping, qubit_mask)
+        weight = 1.0
+        #print(weight)
         while not front_layer.empty() and  num_of_swap_gates < self.num_of_swap_gates:
             candidate_swap_gate_list = self.get_candidate_swap_gate_list(front_layer, qubit_mapping)
             #print(qubit_mapping)
@@ -249,21 +318,91 @@ cdef class RandomSimulator:
             swap_gate[0] = candidate_swap_gate_list[2*swap_gate_index]
             swap_gate[1] = candidate_swap_gate_list[2*swap_gate_index+1]
             self.change_qubit_mapping_with_swap_gate(qubit_mapping, qubit_inverse_mapping, qubit_mask, swap_gate, True)
-            # num_of_executed_gates += self.update_front_layer(front_layer, qubit_mapping, qubit_mask)
-            weighted_executed_gates += weight * self.update_front_layer(front_layer, qubit_mapping, qubit_mask)
+            #num_of_executed_gates += self.update_front_layer(front_layer, qubit_mapping, qubit_mask)
+            weighted_executed_gates += weight * <float>(self.update_front_layer(front_layer, qubit_mapping, qubit_mask))
             weight *= self.gamma
             num_of_swap_gates += 1 
-            #print(num_of_executed_gates)
+            # print(weight)
+            # print(weighted_executed_gates)
+            # print(num_of_swap_gates)
+           # print(subcircuit)
         
         # res[0] = num_of_swap_gates
         # res[1] = num_of_executed_gates
-        # sim_res = num_of_executed_gates * cpow(weight, num_of_swap_gates / 2)s 
-        return weighted_executed_gates
+        #sim_res = num_of_executed_gates * cpow(weight, num_of_swap_gates / 2)
+        sim_res = weighted_executed_gates
+        #print(sim_res)
+        return sim_res
+
+    cdef float simulation_thread_gates(self, int seed) nogil:
+        cdef:
+            vector[int] front_layer = self.front_layer
+            vector[int] qubit_mapping = self.qubit_mapping
+            vector[int] qubit_inverse_mapping = self.qubit_inverse_mapping
+            vector[int] qubit_mask = self.qubit_mask
+            vector[int] candidate_swap_gate_list, NNC, swap_gate, logical_qubit_mask
+            unordered_set[int] subcircuit = self.subcircuit
+            vector[float] res
+            vector[float] pf
+            int NNC_base, j
+            float weight, weighted_executed_gates = 0.0, sim_res, num_of_swap_gates = 0
+            unsigned int i, num_of_executed_gates = 0, num_of_candidate_swap_gates, swap_gate_index
+        
+        res.resize(2, 0)
+        swap_gate.resize(2, INIT_NUM)
+        #weighted_executed_gates += <float>(self.update_front_layer(front_layer, qubit_mapping, qubit_mask))
+        num_of_executed_gates += self.update_front_layer(front_layer, qubit_mapping, qubit_mask)
+        weight = self.gamma
+        #print(weight)
+
+        while not front_layer.empty() and  num_of_executed_gates < self.num_of_subcircuit_gates:
+            candidate_swap_gate_list = self.get_candidate_swap_gate_list(front_layer, qubit_mapping)
+            #print(qubit_mapping)
+            # for j in front_layer:
+            #     print(list(self.gates[j]))
+            # print(candidate_swap_gate_list)
+            num_of_candidate_swap_gates = <int>(candidate_swap_gate_list.size() / 2)
+            NNC_base = self.NNC(front_layer, qubit_mapping)
+            NNC.resize(num_of_candidate_swap_gates, INIT_NUM)
+            for i in range(num_of_candidate_swap_gates):
+                swap_gate[0] = candidate_swap_gate_list[2*i]
+                swap_gate[1] = candidate_swap_gate_list[2*i+1]
+               #for j in front_layer:
+                #    print(list(self.gates[i])) 
+                #print(qubit_mapping)
+                #print(self.change_qubit_mapping_with_swap_gate(qubit_mapping, qubit_inverse_mapping, qubit_mask, swap_gate))
+                NNC[i] = NNC_base - self.NNC(front_layer, self.change_qubit_mapping_with_swap_gate(qubit_mapping, qubit_inverse_mapping, qubit_mask, swap_gate))
+               # print(NNC_base)
+                #print(NNC[i])
+            pf = self.f(NNC)
+            # print(NNC)
+            # print(pf)
+            swap_gate_index = self.random_choice(pf, seed)
+            swap_gate[0] = candidate_swap_gate_list[2*swap_gate_index]
+            swap_gate[1] = candidate_swap_gate_list[2*swap_gate_index+1]
+            self.change_qubit_mapping_with_swap_gate(qubit_mapping, qubit_inverse_mapping, qubit_mask, swap_gate, True)
+            num_of_executed_gates += self.update_front_layer(front_layer, qubit_mapping, qubit_mask)
+            #weighted_executed_gates += weight * <float>(self.update_front_layer(front_layer, qubit_mapping, qubit_mask))
+            #weight *= self.gamma
+            num_of_swap_gates += 1 
+            # print(weight)
+            # print(weighted_executed_gates)
+            # print(num_of_swap_gates)
+           # print(subcircuit)
+        
+        # res[0] = num_of_swap_gates
+        # res[1] = num_of_executed_gates
+        sim_res = <float>(num_of_executed_gates) * cpow(weight, num_of_swap_gates / 2)
+        #sim_res = weighted_executed_gates
+        #print(sim_res)
+        return sim_res
+        
         
     cpdef float simulate(self, list front_layer, list qubit_mapping, list qubit_mask,
-                    int num_of_subcircuit_gates, int num_of_iterations):
+                    int num_of_subcircuit_gates, int num_of_iterations, int simulation_mode):
             cdef:
                 vector[int] sim_res, sim_swap
+                vector[int] logical_qubit_mask
                 vector[float] res
                 unsigned int i , n
                 int num_of_executed_gates
@@ -275,7 +414,10 @@ cdef class RandomSimulator:
             self.qubit_mapping = qubit_mapping
             self.qubit_mask = qubit_mask
             self.qubit_inverse_mapping.resize(self.num_of_physical_qubits, INIT_NUM)
+            
             n = self.qubit_mapping.size()
+            
+            
             for i in range(n):
                 self.qubit_inverse_mapping[qubit_mapping[i]] = i 
             
@@ -290,9 +432,20 @@ cdef class RandomSimulator:
             sim_swap.resize(self.num_of_iterations)
             res.resize(self.num_of_iterations)
 
+
+            # logical_qubit_mask.resize(self.num_of_logical_qubits, -1)
+            # for i in range(self.num_of_logical_qubits):
+            #     logical_qubit_mask[self.qubit_inverse_mapping[i]] = self.qubit_mask[i]
+
+            # self.subcircuit = self.get_subcircuit(front_layer, logical_qubit_mask, self.num_of_subcircuit_gates)
+            #print(self.subcircuit)
             with nogil:
                 for i in prange(self.num_of_iterations):
-                    res[i] = self.simulation_thread(i)
+                    if  simulation_mode == 0:
+                        res[i] = self.simulation_thread_swap(i)
+                    elif simulation_mode == 1:
+                        res[i] = self.simulation_thread_gates(i)
+                    #print(res[i])
                     
 
             # for i in range(self.num_of_iterations):
@@ -309,9 +462,9 @@ cdef class RandomSimulator:
                 return average
             elif self.mode == 1:
                 for i in range(self.num_of_iterations):
-                    minimum  = min(res[i], minimum)
+                    maximum  = max(res[i], maximum)
                 #print(minimum)
-                return minimum
+                return maximum
             else:
                 return -1
             #print("%d and %d"%(minimum, num_of_executed_gates))

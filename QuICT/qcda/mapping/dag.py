@@ -11,9 +11,6 @@ import networkx as nx
 import matplotlib.pyplot as plt
 
 
-from utility import *
-
-
 from QuICT.tools.interface import *
 from QuICT.core.circuit import *
 from QuICT.core.gate import *
@@ -321,11 +318,18 @@ class DAG(object):
         else:
             raise Exception(str("   "))
     
-    def get_subcircuit(self, front_layer: List[int], num_of_gates: int)->np.ndarray:
+    def get_subcircuit(self, front_layer: List[int], qubit_mask: List[int], num_of_gates: int)->np.ndarray:
         """
         Get the subcircuit  from the front layer in the circuit
         """
-        mark = np.zeros(self.size + 1, dtype = np.int32) - 1 
+        mark = np.zeros(self.size + 1, dtype = np.int32) - 1
+        #front_layer = [ self._index[idx]   for idx in front_layer]
+        qubit_mask = [ self._index[idx] if idx != -1 else -1 for idx in qubit_mask ]
+        # qubit_mask = np.zeros(self.size, dtype = np.int32) -1 
+        # for idx in front_layer:
+        #     qubit_mask[self.node_qubits[idx][0]] = idx 
+        #     qubit_mask[self.node_qubits[idx][1]] = idx 
+
         subcircuit = np.zeros(shape = (num_of_gates, 5), dtype = np.int32) - 1
         qubits_of_gates = np.zeros(shape = (num_of_gates,2), dtype = np.int32) -1
         front_layer_stack = deque([ self._index[i]  for i in front_layer])
@@ -346,13 +350,21 @@ class DAG(object):
             subcircuit[index,1:] = np.concatenate((self._successors[top], self._precessors[top]))
             qubits_of_gates[index,:] = self._node_qubits[top]
             index += 1
-            for i in self._successors[top]:
-                if i != -1 and mark[i] == -1:
-                    front_layer_stack.append(i)
+            for i, suc in enumerate(self._successors[top]):
+                qubit_mask[self.node_qubits[top][i]] = suc
+                if suc != -1 and mark[suc] == -1 and self._is_free(suc, qubit_mask):
+                    #print(suc)
+                    front_layer_stack.append(suc)
         subcircuit = mark[subcircuit]
 
         return index, np.concatenate([subcircuit, qubits_of_gates], axis = 1)
 
+    def _is_free(self, gate_idx: int, qubit_mask: List[int]):
+        ctrl, tar = self.node_qubits[gate_idx]
+        if (qubit_mask[ctrl] == -1 or qubit_mask[ctrl] == gate_idx) and (qubit_mask[tar] == -1 or qubit_mask[tar] == gate_idx) :
+            return True
+        else:
+            return False
 
     def draw(self):
         """

@@ -7,6 +7,7 @@
 
     
 from utility import GNNConfig
+import math
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -73,6 +74,7 @@ class TransformerU2GNN(nn.Module):
     def forward(self, input_x, graph_pool, X_concat):
         policy_prediction_scores = 0
         value_hidden_vector = 0
+        input_x = torch.transpose(input_x, 0 ,1)
         # print(input_x.size())
         # print(X_concat.size())
         # print(input_x)
@@ -81,8 +83,8 @@ class TransformerU2GNN(nn.Module):
         for layer_idx in range(self.num_U2GNN_layers):
             #print(input_Tr.shape)
             output_Tr = self.u2gnn_layers[layer_idx](input_Tr)
-            output_Tr = torch.split(output_Tr, split_size_or_sections=1, dim=1)[0]
-            output_Tr = torch.squeeze(output_Tr, dim=1)
+            output_Tr = torch.split(output_Tr, split_size_or_sections=1, dim=0)[0]
+            output_Tr = torch.squeeze(output_Tr, dim=0)
             #new input for next layer
             input_Tr = F.embedding(input_x, output_Tr)
             #sum pooling
@@ -112,25 +114,37 @@ class FixedGraphAttentionLayer(nn.Module):
         self.W = nn.Parameter(torch.zeros(size=(in_features, out_features)))
         nn.init.xavier_normal_(self.W.data, gain=1.414)
                 
-        self.a = nn.Parameter(torch.zeros(size=(2*out_features,)))
+        self.a = nn.Parameter(torch.zeros(size=(2*out_features, 1)))
         nn.init.xavier_normal_(self.a.data, gain=1.414)
 
         self.dropout = nn.Dropout(dropout)
         self.leakyrelu = nn.LeakyReLU(self.alpha)
         self.softmax = nn.Softmax(dim = 2)
 
-    def forward(self, input):
+    def forward(self, x, adj):
         #dv = 'cuda' if input.is_cuda else 'cpu'
-         
-        bs, N, D, _ = input.size()
+          
+        bs, L, D  = adj.size()
+        input = torch.zeros(size = (bs, L, D, self.in_features), dtype = x.dtype, device = x.device)
+        # print(bs)
+        # print(adj.size())
+        # print(x.size())
+        # print(input.size())
+        for i in range(bs):
+            input[i,:,:,:] = x[i, adj[i,:,:],:]
+        #input :  bs x N x D x in
         #bs: batch_size, N: number of nodes, degree: max degree of the node with self-loop 
         h_prime = torch.matmul(input, self.W)
+        #print(h_prime.size())
         #h_prime: bs x N x D x out 
         h_node = torch.repeat_interleave(h_prime[:,:,0:1,:], D, dim = 2)
+        #print(h_node.size())
         h_edge = torch.cat([h_prime, h_node], dim = 3)
-        #h_prime: bs x N x D x out 
+        #print(h_edge.size())
+        #h_prime: bs x N x D x (2*out) 
         edge_e = self.softmax(self.leakyrelu(torch.matmul(h_edge, self.a)))
-        edge_e = self.dropout(edge_e[:,:,None,:])
+        edge_e = self.dropout(edge_e.transpose(2,3))
+        #print(edge_e.size())
         #edge: bs x N x 1 x D
         h_prime = torch.matmul(edge_e, h_prime).squeeze(dim = 2)
         #h_prime: bs x N x out
@@ -182,35 +196,123 @@ class DGATModel(nn.Module):
         return F.log_softmax(x, dim=1)
 
 
+
 class SequenceModel(nn.Module):
     def __init__(self, n_qubits , n_class, config: GNNConfig):
+        
         super(SequenceModel, self).__init__()
-        d_model, n_head, n_layer, dim_feedforward, dropout, n_encoder = config.d_model, config.n_head, config.n_layer, config.dim_feedforward, config.dropout, config.n_encoder
-        self.embedding = nn.Embedding(num_embeddings = n_qubits+2, embedding_dim = d_model, padding_idx = 1)
-        #nn.init.xavier_normal_(self.embedding.weight, gain=1.414)
+        d_embed, d_model, n_head, n_layer, dim_feedforward, dropout, n_encoder, hid_dim = config.d_embed, config.d_model, config.n_head, config.n_layer, \
+                                                                                    config.dim_feedforward, config.dropout, config.n_encoder, config.hid_dim
+        self.n_gat = config.n_gat
+        self.gat = config.gat
+        self.device = config.device
+        self.n_encoder = n_encoder
 
-        torch.nn.ModuleList()
+        self.embedding = nn.Embedding(num_embeddings = n_qubits+3, embedding_dim = d_embed, padding_idx = 2)
+        nn.init.xavier_normal_(self.embedding.weight, gain=1.414)
 
-        encoder_layers = TransformerEncoderLayer(d_model = d_model, nhead = n_head, dim_feedforward = dim_feedforward, dropout = dropout)
-        self.encoder = TransformerEncoder(encoder_layers, n_layer)
-
-        self.policy_prediction = nn.Linear(d_model, n_class)
-        self.dropout = nn.Dropout(dropout)
-        self.rectifier = nn.ReLU()
-        self.log_softmax = nn.LogSoftmax(dim = 1)
+        self.gat_layer = torch.nn.ModuleList()
+        for _ in range(self.n_gat): 
+            self.gat_layer.append(FixedGraphAttentionLayer(in_features = d_embed, out_features = d_model, dropout = dropout ,alpha = 0.01))
+    
+        
+       
+        
+        self.encoder = torch.nn.ModuleList()
+        self.policy_prediction = torch.nn.ModuleList()
+        self.value_hid_layer = torch.nn.ModuleList()
+        
+        self.norm = torch.nn.ModuleList()
+         
+    
+        for _ in range(n_encoder):
+            encoder_layers = TransformerEncoderLayer(d_model = d_model, nhead = n_head, dim_feedforward = dim_feedforward, dropout = dropout, activation='relu')
+            self.encoder.append(TransformerEncoder(encoder_layers, n_layer))
+            self.policy_prediction.append(nn.Linear(d_model, n_class))
+            self.value_hid_layer.append(nn.Linear(d_model, hid_dim))
+        # encoder_layers = TransformerEncoderLayer(d_model = d_model, nhead = n_head, dim_feedforward = dim_feedforward, dropout = dropout, activation='relu')
+        # self.encoder = TransformerEncoder(encoder_layers, n_layer)
+       
+        self.rectifier = nn.ReLU() 
+        self.value_prediction = nn.Linear(hid_dim, 1)
+        
         
     
-    def forward(self, x):
-        input_x = self.embedding(x)
-        # batch_size x num_of_gates x 2 x embedding_dim
+    def forward(self, src, padding_mask, adj):
+        padding_mask = torch.cat([torch.zeros(size =(padding_mask.size()[0], 2), dtype = torch.uint8, device = self.device) , padding_mask], dim = 1)
+        src = torch.cat([torch.zeros(size = (src.size()[0], 1 ,2), dtype = torch.long, device = self.device) , torch.ones(size = (src.size()[0], 1 ,2), dtype = torch.long, device = self.device) ,src + 3], dim = 1)
+        adj = torch.cat([torch.zeros(size = (adj.size()[0], 1 ,adj.size()[2]), dtype = torch.long, device = self.device) , torch.ones(size = (adj.size()[0], 1 ,adj.size()[2]), dtype = torch.long, device = self.device) ,adj + 2], dim = 1)
+        policy_prediction_score = 0.0
+        value_prediction_score = 0.0
+        value_hidden = 0.0
+
+        input_x = self.embedding(src)
         input_x = input_x[:,:,0,:] + input_x[:,:,1,:]
-        # batch_size x num_of_gates x embedding_dim
+        input_x  = self.rectifier(input_x)
+        if self.gat:
+            for i in range(self.n_gat):
+                input_x = self.gat_layer[i](self.rectifier(input_x), adj)
+        input_x.transpose_(0,1)
+        # num_of_gates x batch_size x embedding_dim  
+        length, batch_size, d_model = input_x.size() 
+        pe =  self._positionalencoding1d(batch_size,  d_model, length)
+        #print(pe.size())
+        input_x = input_x + pe
+        # num_of_gates x  batch_size xembedding_dim
+        # print(input_x[0,:])
+        # print(input_x[1,:])
+        #print(input_x.size())
+        #print(padding_mask.size())
+        for i in range(self.n_encoder):
+            output_temp = self.encoder[i](input_x,  src_key_padding_mask =  padding_mask)
+           
+            policy_output = torch.split(output_temp, split_size_or_sections=1, dim=0)[0]
+            policy_output = torch.squeeze(policy_output, dim=0)
 
-        output_Tr = self.encoder(input_x)
-        output_Tr = torch.split(output_Tr, split_size_or_sections=1, dim=1)[0]
-        output_Tr = torch.squeeze(output_Tr, dim=1)
+            value_output = torch.split(output_temp, split_size_or_sections=1, dim=0)[1]
+            value_output = torch.squeeze(value_output, dim=0)
 
-        policy_prediction_score = self.policy_prediction(self.dropout(self.rectifier(output_Tr)))
-        
-        return policy_prediction_score 
+            policy_prediction_score += self.policy_prediction[i](policy_output)
+            value_hidden += self.value_hid_layer[i](value_output)
+            
+            input_x = output_temp
+
+        # print(output_Tr.size())
+        # print(output_Tr[0,0,:])
+        # print(output_Tr[1,0,:])
+
+   
+        # print(output_Tr.size())
+        # print(output_Tr[0,:])
+        # print(output_Tr[1,:])
+
+        # print(policy_prediction_score[0])
+        # print(policy_prediction_score[1])
+        value_prediction_score = self.value_prediction(self.rectifier(value_hidden))
+        return policy_prediction_score, value_prediction_score 
+
+
+    def _positionalencoding1d(self, batch_size, d_model, length):
+       
+        """
+        :param d_model: dimension of the model
+        :param length: length of positions
+        :return: length*d_model position matrix
+        """
+
+        if d_model % 2 != 0:
+            raise ValueError("Cannot use sin/cos positional encoding with "
+                            "odd dim (got dim={:d})".format(d_model))
+        pe = torch.zeros(length, d_model)
+        position = torch.arange(0, length).unsqueeze(1)
+        div_term = torch.exp((torch.arange(0, d_model, 2, dtype=torch.float) *
+                            -(math.log(10000.0) / d_model)))
+        pe[:, 0::2] = torch.sin(position.float() * div_term)
+        pe[:, 1::2] = torch.cos(position.float() * div_term)
+
+        bpe = torch.zeros(size = (batch_size, length ,d_model))
+        bpe[:,:,:] = pe
+
+
+        return torch.transpose(bpe, 0, 1).to(self.device)
 

@@ -5,38 +5,54 @@
 # @Contact :   jialrs.z@gmail.com
 # @File    :   rl_based_mcts.py
 
-from networkx.algorithms.matching import matching_dict_to_set
-from networkx.exception import NodeNotFound
-from networkx.readwrite.gml import parse_gml_lines
 import torch 
 import torch.nn as nn
+from torch.distributions.dirichlet import Dirichlet
 
-from multiprocessing import Queue, Pipe
+from torch.multiprocessing import Queue, Pipe
 from multiprocessing.connection import Connection
 
-from QuICT.qcda.mapping.table_based_mcts import *
-from .state_agent import StateAgent
-from .nn_model import TransformerU2GNN
+from  QuICT.qcda.mapping.table_based_mcts import *
 from .experience_pool_v4 import ExperiencePool
+
 
 
 class RLBasedMCTS(TableBasedMCTS):
     def __init__(self, model: nn.Module = None, device: torch.device = torch.device('cpu') ,play_times: int = 1, gamma: float = 0.7, Gsim: int = 50, size_threshold: int = 150, 
-                 Nsim: int = 500, selection_times: int = 40 , c: int = 5, mode: MCTSMode = MCTSMode.TRAIN, 
-                experience_pool: ExperiencePool = None, coupling_graph: CouplingGraph = None,
+                 Nsim: int = 500, selection_times: int = 40 , c: int = 10, mode: MCTSMode = MCTSMode.SEARCH, rl: RLMode = RLMode.WARMUP,
+                experience_pool: ExperiencePool = None, coupling_graph: CouplingGraph = None, log_path: str = None,
                 input: Queue = None, output: Connection = None, id: int = 0, **params):
 
         super().__init__(play_times = play_times, selection_times = selection_times, gamma = gamma, Gsim = Gsim, size_threshold = size_threshold, 
-                        coupling_graph = coupling_graph, Nsim = Nsim, c = c, mode = mode, experience_pool = experience_pool)
+                        coupling_graph = coupling_graph, Nsim = Nsim, c = c, mode = mode, experience_pool = experience_pool, log_path = log_path, rl = rl)
 
+        self._tau = 1
         self._input = input
         self._output = output
         self._id = id
         self._device = device
-        self._softmax = nn.Softmax(dim = 1)
-        if self._mode == MCTSMode.EVALUATE:
-            self._model = model
+        
+        self._softmax = nn.Softmax(dim = 0)
+        # print(self._mode)
+        # print(self._mode.value)
+        # print(MCTSMode.SEARCH.value)
+        # print(self._mode.name)
+        # print(MCTSMode.SEARCH.name)
+        
+        # print(repr(self._mode))
+        # print(repr(MCTSMode.SEARCH))
+        # print(self._mode == MCTSMode.SEARCH)
+        # print(MCTSMode.SEARCH)
+        if self._mode == MCTSMode.SEARCH or self._mode == MCTSMode.EVALUATE:
+            print("model")
+            if model is not None:
+                self._model = model
+                self._model.eval()
+                print("model")
+            else:
+                raise Exception("No nn model")
 
+   
     def search(self, logical_circuit: Circuit = None, init_mapping: List[int] = None):
         self._num_of_executable_gate = 0
         self._logical_circuit_dag = DAG(circuit = logical_circuit, mode = Mode.WHOLE_CIRCUIT) 
@@ -60,34 +76,52 @@ class RLBasedMCTS(TableBasedMCTS):
         self._add_initial_single_qubit_gate(node = self._root_node)
         self._add_executable_gates(node = self._root_node)
         
-        self._expand(node = self._root_node)
-        num_of_swap_gates = 0
+        #self._expand(node = self._root_node)
+        self._num_of_swap_gates = 0
         while self._root_node.is_terminal_node() is not True:
             
             self._search(root_node = self._root_node)
             node = self._root_node
-            
-            if self._mode == MCTSMode.TRAIN:
-                if self._experience_pool is not None:
-                    self._transform_to_training_data(node = node, experience_pool = self._experience_pool)
-                else:
-                    raise Exception("Experience pool is not defined.")
+            print([self._root_node.num_of_gates, self._num_of_swap_gates ])
+            self._logger.info(self._root_node.value)
+            self._logger.info([self._root_node.num_of_gates, self._num_of_swap_gates ])
             
             self._root_node = self._decide(node = self._root_node)
-            num_of_swap_gates += 1
+            if self._mode == MCTSMode.TRAIN:
+                if self._experience_pool is not None:
+                    #print("exp")
+                    self._transform_to_training_data(node = node)
+                else:
+                    raise Exception("Experience pool is not defined.")
+
+            self._num_of_swap_gates += 1
             self._physical_circuit.append(self._root_node.swap_of_edge)
             self._add_executable_gates(node = self._root_node)
             #print(self._root_node.num_of_gates)
-    
-        return self._logical_circuit_dag.size, num_of_swap_gates
+
+
+        if self._mode == MCTSMode.TRAIN:     
+            if self._experience_pool is not None:
+                circuit_size = np.array(self._num_list)
+                label = np.array(self._label_list)
+                adj = np.array(self._adj_list)
+                qubits = np.array(self._qubits_list)
+                action_probability = np.array(self._action_probability_list)
+                value = np.array(self._value_list)
+                #print(value)
+                self._experience_pool.extend(adj = adj, qubits = qubits, action_probability = action_probability, value = value, circuit_size = circuit_size, swap_label = label, num = len(self._adj_list))
+            else:
+                raise Exception("Experience pool is not defined.")
+        
+        return self._logical_circuit_dag.size, self._num_of_swap_gates
     
 
     def _search(self, root_node: MCTSNode):
         for _ in range(self._selection_times):
             cur_node = self._select(node = root_node)
             if self._mode == MCTSMode.TRAIN:
-                value = self._evaluate_for_traning(node = cur_node)
-            elif self._mode == MCTSMode.EVALUATE:
+                value = self._evaluate_for_training(node = cur_node)
+            else:
                 value = self._evaluate(node = cur_node)
             self._expand(node = cur_node)
             self._backpropagate(node = cur_node, value = value)
@@ -95,48 +129,154 @@ class RLBasedMCTS(TableBasedMCTS):
     # def _decide(self, node: MCTSNode)->MCTSNode:
     #     pass
 
-    def _transform_to_training_data(self, node: MCTSNode, experience_pool: ExperiencePool):
+    def _transform_to_training_data(self, node: MCTSNode):
         if node.state is None:
-            super()._transform_to_training_data(node, experience_pool)
+            super()._transform_to_training_data(node, node.best_swap_gate)
         else:
-            adj, feature = node.state
-            experience_pool.push(adj = adj, feature = feature, action_probability = node.edge_prob, value = node.value)
+            adj, qubits, num_of_gates = node.state
+            self._label_list.append(self._coupling_graph.edge_label(node.best_swap_gate))
+            self._num_list.append(num_of_gates)
+            self._adj_list.append(adj)
+            self._qubits_list.append(qubits)
+            self._value_list.append(node.sim_value)
+            self._action_probability_list.append(node.extended_visit_count_prob)
+
 
     def _evaluate(self, node: MCTSNode):
-        adj, feature = self._get_data(node)
-        adj, graph_pool, feature = transform_batch(batch_data = (adj, feature), device = self._device)
-        policy_scores, value_scores = self._model(adj, graph_pool, feature)
-        node.value = value_scores[0]
-        extended_prob = self._softmax(policy_scores).detach().to(torch.device('cpu')).numpy().squeeze()
-            #print(p)
+        qubits, padding_mask, adj = self._get_data(node)
+
+        qubits, padding_mask, adj = transform_batch(batch_data = (qubits, padding_mask, adj), device = self._device)
+        qubits, padding_mask, adj =  qubits[None, :, :], padding_mask[None, :], adj[None,:,:]
+        policy_scores, value_scores = self._model(qubits, padding_mask, adj)
+        value = value_scores.detach().to(torch.device('cpu')).numpy().squeeze()
+        node.sim_value = value
+        node.value = node.reward + self._gamma * value
+        extended_prob = self._softmax(policy_scores.squeeze()).detach().to(torch.device('cpu')).numpy()
+        #print(p)
+        #del policy_scores, value_scores
+
         prob = np.array([  extended_prob[self._coupling_graph.edge_label(swap_gate)] 
-                      for swap_gate in node.candidate_swap_list ])
+                    for swap_gate in node.candidate_swap_list ])
         prob = prob / np.sum(prob)
         node.edge_prob = prob
-        return value_scores
+        return node.value
+
+    def _evaluate_for_training(self, node: MCTSNode):
+        """
+
+        """
+        qubits, padding_mask, adj = self._get_data(node)
+        qubits, padding_mask, adj = transform_batch(batch_data = (qubits, padding_mask, adj), device = torch.device("cpu") )
+        #print("put in")
+        self._input.put((self._id, qubits, padding_mask, adj))
+        #print("put after")
+        policy_scores, value_scores = self._output.recv()
+        value = value_scores.numpy().squeeze()
+        node.sim_value = value
+        node.value = node.reward + self._gamma * value
+        extended_prob = self._softmax(policy_scores).numpy()
+
+        #print(p)
+        #del policy_scores, value_scores
+
+        prob = np.array([  extended_prob[self._coupling_graph.edge_label(swap_gate)] 
+                    for swap_gate in node.candidate_swap_list ])
+        prob = prob / np.sum(prob)
+        node.edge_prob = prob
+        return node.value
 
 
-    def _evaluate_for_traning(self, node: MCTSNode):
-        adj, feature = self._get_data(node)
-        self._input.put((self._id, adj, feature))
+    def _decide(self,node : MCTSNode)-> MCTSNode:
+        """
+        Decide which child node to move into 
+        """
+        node = self._get_best_child(node)
+        node.parent = None
+        #node.clear()
+        return node
 
-        value, probability = self._output.recv()
-        node.value = value
-        node.edge_prob = probability
-        return value
+    def _get_best_child(self, node: MCTSNode)-> MCTSNode:
+        """
+        Get the child with highest score of the current node as the next root node. 
+        """
+        res_node = None
+        score = -1
+        idx = -1
+        prob = np.ndarray(len(node.candidate_swap_list), dtype = np.float)
+        value = np.ndarray(len(node.candidate_swap_list), dtype = np.float)
+        for i, child in enumerate(node.children):
+            prob[i] = child.visit_count
+            value[i] = child.value
+        #print(2)
+        prob = prob / np.sum(prob)
+        node.visit_count_prob = prob
+        if self._mode == MCTSMode.TRAIN:
+            #print(1)
+            if self._num_of_swap_gates < 30:
+                idx = np.random.choice(prob.shape[0], p = prob)
+            else: 
+                idx = np.argmax(prob)
+            #print(idx)
+        elif self._mode == MCTSMode.SEARCH:
+            idx = np.argmax(prob)
+        elif self._mode == MCTSMode.EVALUATE:
+            idx = np.argmax(value)
+        # for i, child in enumerate(node.children):
+        #     # reward_list.append(child.reward)
+        #     # value_list.append(child.value)
+        #     if child.value  > score:
+        #         res_node = child
+        #         score = res_node.value  
+        #         idx = i   
+        # # print(reward_list)
+        # # print(value_list) 
+        res_node = node.children[idx]
+        node.best_swap_gate = node.candidate_swap_list[idx]
+        return res_node
+    
+    def _select(self, node: MCTSNode)-> MCTSNode:
+        """
+        Select the child node with highest score to expand
+        """
+        cur_node = node 
+        cur_node.visit_count = cur_node.visit_count + 1
+        while cur_node.is_leaf_node() is not True:
+            cur_node = self._select_next_child(cur_node)
+            cur_node.visit_count = cur_node.visit_count + 1
+        return cur_node
+
+    def _select_next_child(self, node: MCTSNode)-> MCTSNode:
+        """
+        Select the next child to be expanded of the current node 
+        """
+        res_node = None
+        score = float('-inf')
+        for child in node.children:
+            UCB = self._upper_confidence_bound_with_predictor(node = child)
+            if UCB >score:
+                res_node = child
+                score = UCB
+        return res_node
 
     def _get_data(self, node: MCTSNode):
-        num_of_gates = self._size_threshold
        
-        num_of_gates, state = self._circuit_dag.get_subcircuit(front_layer = node.front_layer, num_of_gates = num_of_gates)
+        qubit_mask =  [  -1  for _ in range(len(node.cur_mapping))]
+        for i, q in  enumerate(node.qubit_mask):
+            qubit_mask[node.inverse_mapping[i]] = q
+        #print(qubit_mask)
+        num_of_gates, state = self._circuit_dag.get_subcircuit(front_layer = node.front_layer, qubit_mask = qubit_mask, num_of_gates = self._size_threshold)
+    
         qubit_mapping = np.zeros(len(node.cur_mapping) + 1, dtype = np.int32) -1  
         qubit_mapping[0:-1] = np.array(node.cur_mapping)
-       
-        adj = np.apply_along_axis(self._fill_adj, axis = 1, arr = np.concatenate([np.arange(0, num_of_gates )[:,np.newaxis], state[0:num_of_gates,0:5]],axis = 1))
-        qubit_indices = qubit_mapping[state[0:num_of_gates,5:]] + 1
-        feature = self._coupling_graph.node_feature[qubit_indices,:].reshape(num_of_gates, -1)
+
+        padding_mask = np.zeros(self._size_threshold, dtype = np.uint8)
+        padding_mask[num_of_gates:] = 1
+        adj = np.apply_along_axis(self._fill_adj, axis = 1, arr = np.concatenate([np.arange(0, self._size_threshold)[:,np.newaxis], state[:,0:5]],axis = 1))
+        qubit_indices = qubit_mapping[state[:,5:]] 
         
-        return adj, feature
+        node.state = (adj, qubit_indices, num_of_gates)
+
+        return qubit_indices, padding_mask, adj
 
      
     def random_simulate(self, logical_circuit: Circuit, init_mapping: List[int]):    
@@ -155,10 +295,10 @@ class RLBasedMCTS(TableBasedMCTS):
         
         num_of_swap_gates = 0
         while not cur_node.is_terminal_node():
-            adj, feature = self._get_data(cur_node)
-            adj, graph_pool, feature = transform_batch(batch_data = (adj, feature), device = self._device)
-            
-            policy_scores, _ = self._model(adj, graph_pool, feature)
+            qubits, padding_mask, adj = self._get_data(cur_node)
+            qubits, padding_mask, adj= transform_batch(batch_data = (qubits, padding_mask, adj), device = self._device)
+            qubits, padding_mask, adj = qubits[None,:,:], padding_mask[None,:], adj[None, :, :]
+            policy_scores, _ = self._model(qubits, padding_mask, adj)
             
             extended_prob = self._softmax(policy_scores).detach().to(torch.device('cpu')).numpy().squeeze()
             #print(p)
@@ -195,10 +335,10 @@ class RLBasedMCTS(TableBasedMCTS):
         
         num_of_swap_gates = 0
         while not cur_node.is_terminal_node():
-            adj, feature = self._get_data(cur_node)
-            adj, graph_pool, feature = transform_batch(batch_data = (adj, feature), device = self._device)
-            
-            policy_scores, _ = self._model(adj, graph_pool, feature)
+            qubits, padding_mask, adj = self._get_data(cur_node)
+            qubits, padding_mask, adj = transform_batch(batch_data = (qubits, padding_mask, adj), device = self._device)
+            qubits, padding_mask = qubits[None,:,:], padding_mask[None,:]
+            policy_scores, _ = self._model(qubits, padding_mask, adj)
             
             p = self._softmax(policy_scores).detach().to(torch.device('cpu')).numpy().squeeze()
             #print(p)

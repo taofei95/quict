@@ -6,9 +6,10 @@ import os
 from abc import ABC, abstractmethod
 from typing import List, Tuple, Dict, Callable, Optional, Iterable, Union,Set
 from enum import Enum
-from collections import deque
 from pickle import Pickler
+
 from dataclasses import dataclass
+
 
 import torch
 import numpy as np
@@ -41,17 +42,23 @@ def f(x: np.ndarray)->np.ndarray:
     return np.piecewise(x, [x<0, x==0, x>0], [0, 0.001, lambda x: x])
 
 
-def transform_batch(batch_data: Tuple[np.ndarray, np.ndarray], device: torch.device)->Tuple[torch.LongTensor, torch.FloatTensor]:
-    adj_list, feature_list = batch_data
+
+def transform_batch(batch_data: Tuple[np.ndarray, np.ndarray, np.ndarray], device: torch.device)->Tuple[torch.LongTensor, torch.FloatTensor]:
+    qubits_list, padding_mask_list, adj_list = batch_data
     
+    # padding_mask_list = np.concatenate([np.zeros(shape = (padding_mask_list.shape[0], 1), dtype = np.int32) , padding_mask_list], axis = 1)
+    # qubits_list = np.concatenate([np.zeros(shape = (qubits_list.shape[0], 1 ,2), dtype = np.uint8) , qubits_list+2], axis = 1)
+        
+    padding_mask = torch.from_numpy(padding_mask_list).to(device).to(torch.uint8)
+    qubits = torch.from_numpy(qubits_list).to(device).long()
+
     adj_list = get_adj_list(adj_list)
-    graph_pool = get_graph_pool(adj_list, device = device)
     if isinstance(adj_list, list):
         adj = torch.from_numpy(np.concatenate(adj_list, axis = 0)).to(device).long()
-        feature = torch.from_numpy(np.concatenate(feature_list, axis = 0)).to(device).float()
     else:
-        adj, feature =torch.from_numpy(adj_list).to(device).long(), torch.from_numpy(feature_list).to(device).float()
-    return adj, graph_pool, feature
+        adj =torch.from_numpy(adj_list).to(device).long()
+    
+    return qubits, padding_mask, adj
 
 def get_adj_list(adj_list: List[np.ndarray])->np.ndarray:
     if isinstance(adj_list, list):
@@ -158,38 +165,148 @@ class EdgeProb:
                 raise TypeException("swap gate","other gate")
         return res_mapping
 
-@dataclass
+
+# class GNNConfig(object):
+#     def __init__(self, 
+#                 num_of_gates: int = 150,
+#                 maximum_capacity: int = 100000,
+#                 num_of_nodes: int = 150,
+#                 maximum_circuit: int = 5000,
+#                 minimum_circuit: int = 50,
+#                 batch_size: int = 10,
+#                 ff_hidden_size: int = 128,
+#                 num_self_att_layers: int =4,
+#                 dropout: float = 0.5,
+#                 num_U2GNN_layers: int = 1,
+#                 value_head_size: int =256,
+#                 device: torch.device = torch.device("cuda" if torch.cuda.is_available() else "cpu"),
+#                 graph_name: str = 'ibmq20',
+#                 learning_rate: float = 0.1,
+#                 weight_decay: float = 1e-4,
+#                 num_of_epochs: int = 50,
+#                 num_of_process: int = 16,
+#                 feature_update: bool = False,
+#                 loss_c: float = 10,
+#                 mcts_c: float = 20,
+#                 gat: bool = False,
+#                 d_embed: int = 64,
+#                 d_model: int = 64,
+#                 n_head: int = 4,
+#                 n_layer: int = 4,
+#                 n_encoder: int = 8,
+#                 n_gat: int = 1,
+#                 hid_dim: int = 128,
+#                 dim_feedforward: int = 128):
+
+#         self.num_of_gates = num_of_gates
+#         self.maximum_capacity = maximum_capacity
+#         self.num_of_nodes = num_of_nodes
+#         self.maximum_circuit = maximum_circuit
+#         self.minimum_circuit = minimum_circuit
+#         self.batch_size = batch_size
+#         self.ff_hidden_size = ff_hidden_size
+#         self.num_self_att_layers = num_self_att_layers
+#         self.dropout = dropout
+#         self.num_U2GNN_layers = num_U2GNN_layers
+#         self.value_head_size = value_head_size
+#         self.device = device
+#         self.graph_name = graph_name 
+#         self.learning_rate = learning_rate
+#         self.weight_decay = weight_decay
+#         self.num_of_epochs = num_of_epochs
+#         self.num_of_process  = num_of_process
+#         self.feature_update = feature_update
+#         self.loss_c = loss_c
+#         self.mcts_c = mcts_c
+#         self.gat = gat
+#         self.d_embed = d_embed
+#         self.d_model = d_model
+#         self.n_head = n_head
+#         self.n_layer = n_layer
+#         self.n_encoder = n_encoder
+#         self.n_gat = n_gat
+#         self.hid_dim = hid_dim
+#         self.dim_feedforward = dim_feedforward
+@dataclass  
 class GNNConfig(object):
     num_of_gates: int = 150
     maximum_capacity: int = 100000
-    
+    num_of_nodes: int = 150
     maximum_circuit: int = 5000
     minimum_circuit: int = 50
+    gamma: int = 0.7
     batch_size: int = 10
     ff_hidden_size: int = 128
-    num_self_att_layers: int =4 
+    num_self_att_layers: int =4
     dropout: float = 0.5
     num_U2GNN_layers: int = 1
-    value_head_size: int =256
+    value_head_size: int = 256
     device: torch.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     graph_name: str = 'ibmq20'
     learning_rate: float = 0.1
+    weight_decay: float = 1e-4
     num_of_epochs: int = 50
-    num_of_process: int = 20
+    num_of_process: int = 16
     feature_update: bool = False
-    d_model: int = 512
+    loss_c: float = 10
+    mcts_c: float = 20
+    gat: bool = False
+    d_embed: int = 64
+    d_model: int = 64
     n_head: int = 4
-    n_layer: int = 2
-    n_encoder: int = 4
-    dim_feedforward: int = 2048
+    n_layer: int = 4
+    n_encoder: int = 8
+    n_gat: int = 2
+    hid_dim: int = 128
+    dim_feedforward: int = 128
 
-default_config = GNNConfig(maximum_capacity = 100000, num_of_gates = 150, maximum_circuit = 1500, minimum_circuit = 200, batch_size = 32, ff_hidden_size = 128, num_self_att_layers=1, dropout =0.5, value_head_size = 128,
-                       num_U2GNN_layers=4, learning_rate = 0.01, num_of_epochs = 100, device = torch.device( "cuda"), graph_name = 'ibmq20',num_of_process = 10, feature_update = True)
+
+
+default_config = GNNConfig(maximum_capacity = 800000, num_of_gates = 150, maximum_circuit = 1500, minimum_circuit = 200, batch_size = 256, ff_hidden_size = 128, num_self_att_layers=4, dropout = 0.5, value_head_size = 128, gamma = 0.9, 
+                       num_U2GNN_layers=2, learning_rate = 0.001, weight_decay = 1e-4, num_of_epochs = 1000, device = torch.device( "cuda"), graph_name = 'ibmq20',num_of_process = 10, feature_update = True, gat = False, n_gat = 2, mcts_c = 20, loss_c = 10 )
 
 @dataclass
 class SharedMemoryName:
-    adj_list_name: str
-    feature_list_name: str
-    value_list_name: str
+    adj_name: str
+    label_name: str
+    value_name: str
+    qubits_name: str
+    num_name: str
     action_probability_name: str
+
+
+class SimMode(Enum):
+    """
+    """
+    AVERAGE = 0
+    MAX = 1
+
+
+class MCTSMode(Enum):
+    """
+    """
+    TRAIN = 0
+    EVALUATE = 1
+    SEARCH = 2
+
+
+
+class RLMode(Enum):
+    """
+    """
+    WARMUP = 0
+    SELFPALY = 1 
+
+class EvaluateMode(Enum):
+    SEARCH = 0
+    EXTENDED_PROB = 1
+    PROB = 2
+
+
+class Benchmark(Enum):
+    REVLIB = 0
+    RANDOM = 1
+
+
+
     

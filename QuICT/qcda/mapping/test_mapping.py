@@ -56,20 +56,20 @@ def count_two_qubit_gates(circuit: Circuit)->int:
 def test_mapping(input_path: str, output_path: str, log_path: str,  num_of_qubits: int, init_mapping: List[int], topology):
     qc = OPENQASMInterface.load_file(input_path)
     circuit =qc.circuit
-
+    circuit_trans = Circuit(wires = 20)
     logical_qubit_num = qc.qbits
     physical_qubit_num = num_of_qubits
 
     print(input_path)
     mcts = TableBasedMCTS(coupling_graph =  "ibmq20", log_path = log_path)
     mcts.search(logical_circuit = circuit, init_mapping = init_mapping)
-    circuit_trans = mcts.physical_circuit
+    circuit_trans.extend(mcts.physical_circuit)
 
     print(circuit.circuit_size())
-    print(len(circuit_trans))
+    print(circuit_trans.circuit_size())
     with open(output_path, "w") as f:
         print(circuit.circuit_size(), file = f)
-        print(len(circuit_trans), file = f)
+        print(circuit_trans.circuit_size(), file = f)
         print(count_two_qubit_gates(circuit), file = f)
         print(count_two_qubit_gates(circuit_trans), file = f)
         print("Initial layout(physical qubits -> logic qubits):", file = f)
