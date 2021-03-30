@@ -4,7 +4,7 @@ from typing import *
 from .._synthesis import Synthesis
 from QuICT.core import BasicGate
 from ..uniformly_gate import uniformlyRz
-from .unitary_transform import MappingBuilder
+from .mapping_builder import MappingBuilder
 
 
 class QuantumShannonDecompose:
@@ -66,7 +66,8 @@ class ControlledUnitary(MappingBuilder):
 
     def __i_tensor_unitary(
             self,
-            u: np.ndarray
+            u: np.ndarray,
+            recurcive_basis: int
     ) -> Tuple[BasicGate]:
         """
         Transform (I_{2x2} tensor U) into gates. The 1st bit
@@ -79,11 +80,10 @@ class ControlledUnitary(MappingBuilder):
             Tuple[BasicGate]: Synthesized gates.
         """
 
-        # Dynamic import to avoid circular imports
-        from .unitary_transform import UTrans
-        # Do not pass mapping into UTrans to avoid out-of-range issues
-        basis = self.pargs[2]
-        gates = UTrans(u, recursive_basis=basis).build_gate()
+        # Dynamically import for avoiding circular import.
+        from .unitary_transform import UnitaryTransform
+        _ut = UnitaryTransform()
+        gates = _ut(u, recurcive_basis).build_gate()
         for gate in gates:
             for idx, _ in enumerate(gate.cargs):
                 gate.cargs[idx] += 1
@@ -108,7 +108,8 @@ class ControlledUnitary(MappingBuilder):
                     Sequence[BasicGate]: Synthesized gates.
                 """
         qubit_num = 1 + int(round(np.log2(self.pargs[0].shape[0])))
-        return self.remap(qubit_num, self.__build_gate, mapping)
+        gates = self.__build_gate()
+        return self.remap(qubit_num, gates, mapping)
 
     def __build_gate(
             self
@@ -118,6 +119,9 @@ class ControlledUnitary(MappingBuilder):
         """
         u1: np.ndarray = self.pargs[0]
         u2: np.ndarray = self.pargs[1]
+        recursive_basis: int = self.pargs[2]
+        self.pargs = []
+
         qubit_num = 1 + int(round(np.log2(u1.shape[0])))
 
         v, d, w = QuantumShannonDecompose.decompose(u1, u2)
@@ -126,7 +130,7 @@ class ControlledUnitary(MappingBuilder):
         # diag(u1, u2) == diag(v, v) @ diag(d, d_dagger) @ diag(w, w)
 
         # diag(w, w)
-        gates.extend(self.__i_tensor_unitary(w))
+        gates.extend(self.__i_tensor_unitary(w, recursive_basis))
 
         # diag(d, d_dagger)
         angle_list = []
@@ -141,9 +145,8 @@ class ControlledUnitary(MappingBuilder):
         gates.extend(reversed_rz)
 
         # diag(v, v)
-        gates.extend(self.__i_tensor_unitary(v))
+        gates.extend(self.__i_tensor_unitary(v, recursive_basis))
 
         return gates
 
-
-CUTrans = ControlledUnitary()
+# CUTrans = ControlledUnitary()

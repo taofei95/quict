@@ -9,39 +9,9 @@ from scipy.linalg import cossin
 from typing import *
 from QuICT.core import *
 from QuICT.algorithm import SyntheticalUnitary
-from .._synthesis import Synthesis
 from .two_qubit_transform import KAK
 from ..uniformly_gate import uniformlyRy
-
-
-class MappingBuilder(Synthesis):
-    @staticmethod
-    def remap(
-            qubit_num: int,
-            gate_builder: Callable[[], Sequence[BasicGate]],
-            mapping: Sequence[int] = None,
-    ) -> Sequence[BasicGate]:
-        """
-        Build gates with given mapping via an external gate_builder.
-
-        Args:
-            qubit_num (int): Total number of qubit.
-            gate_builder (Callable[[],Sequence[BasicGate]]): A callable object without any calling parameters.
-            It should return gates built without mapping.
-            mapping (Sequence[int]): Qubit ordering.
-
-        Returns:
-            Sequence[BasicGate]: Synthesized gates with given mapping.
-        """
-        if mapping is None:
-            mapping = [i for i in range(qubit_num)]
-        gates = gate_builder()
-        for gate in gates:
-            for idx, val in enumerate(gate.cargs):
-                gate.cargs[idx] = mapping[val]
-            for idx, val in enumerate(gate.targs):
-                gate.targs[idx] = mapping[val]
-        return gates
+from .mapping_builder import MappingBuilder
 
 
 class UnitaryTransform(MappingBuilder):
@@ -92,7 +62,8 @@ class UnitaryTransform(MappingBuilder):
         """
         qubit_num = int(round(np.log2(self.pargs[0].shape[0])))
         basis = self.pargs[1]
-        gates = self.remap(qubit_num, self.__build_gate, mapping)
+        gates = self.__build_gate()
+        gates = self.remap(qubit_num, gates, mapping)
         gates = list(gates)
 
         if basis == 2:
@@ -108,15 +79,14 @@ class UnitaryTransform(MappingBuilder):
         No mapping
 
         Return:
-            Tuple[BasicGate]: Decomposed gates
+            Sequence[BasicGate]: Decomposed gates.
         """
-
-        # Dynamic import to avoid circular imports
-        from .controlled_unitary import CUTrans
 
         mat: np.ndarray = np.array(self.pargs[0])
         recursive_basis: int = self.pargs[1]
-        # eps: float = self.pargs[2]
+        eps: float = self.pargs[2]
+        # clear pargs
+        self.pargs = []
         mat_size: int = mat.shape[0]
         qubit_num = int(round(np.log2(mat_size)))
 
@@ -167,7 +137,15 @@ class UnitaryTransform(MappingBuilder):
         v1_dagger = v_dagger[0]
         v2_dagger = v_dagger[1]
 
-        gates.extend(CUTrans(v1_dagger, v2_dagger, recursive_basis).build_gate())
+        # Avoid use CUTrnas because [self.factor_shift] might be messed up
+        # during cross recursion.
+
+        # Dynamically import for avoiding circular import.
+        from .controlled_unitary import ControlledUnitary
+        _cut = ControlledUnitary()
+        _gates = _cut(v1_dagger, v2_dagger, recursive_basis).build_gate()
+        gates.extend(_gates)
+        del _cut
 
         # (c,s\\s,c)
         angle_list *= 2  # Ry use its angle as theta/2
@@ -179,7 +157,10 @@ class UnitaryTransform(MappingBuilder):
         u1 = u[0]
         u2 = u[1]
 
-        gates.extend(CUTrans(u1, u2, recursive_basis).build_gate())
+        _cut = ControlledUnitary()
+        _gates = _cut(u1, u2, recursive_basis).build_gate()
+        gates.extend(_cut(u1, u2, recursive_basis).build_gate())
+        del _cut
 
         return gates
 
