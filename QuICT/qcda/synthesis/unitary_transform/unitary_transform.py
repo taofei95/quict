@@ -167,7 +167,7 @@ class UnitaryTransform(MappingBuilder):
         v1_dagger = v_dagger[0]
         v2_dagger = v_dagger[1]
 
-        gates.extend(CUTrans(v1_dagger, v2_dagger).build_gate())
+        gates.extend(CUTrans(v1_dagger, v2_dagger, recursive_basis).build_gate())
 
         # (c,s\\s,c)
         angle_list *= 2  # Ry use its angle as theta/2
@@ -179,7 +179,7 @@ class UnitaryTransform(MappingBuilder):
         u1 = u[0]
         u2 = u[1]
 
-        gates.extend(CUTrans(u1, u2).build_gate())
+        gates.extend(CUTrans(u1, u2, recursive_basis).build_gate())
 
         return gates
 

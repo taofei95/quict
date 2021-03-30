@@ -45,7 +45,8 @@ class ControlledUnitary(MappingBuilder):
     def __call__(
             self,
             u1: np.ndarray,
-            u2: np.ndarray
+            u2: np.ndarray,
+            recursive_basis: int = 1
     ) -> "ControlledUnitary":
         """
         Build a parameterized model.
@@ -58,7 +59,7 @@ class ControlledUnitary(MappingBuilder):
         Returns:
             ControlledUnitary: Model filled with parameters.
         """
-        self.pargs = [u1, u2]
+        self.pargs = [u1, u2, recursive_basis]
         self.targets = int(round(np.log2(u1.shape[0])))
 
         return self
@@ -81,7 +82,8 @@ class ControlledUnitary(MappingBuilder):
         # Dynamic import to avoid circular imports
         from .unitary_transform import UTrans
         # Do not pass mapping into UTrans to avoid out-of-range issues
-        gates = UTrans(u).build_gate()
+        basis = self.pargs[2]
+        gates = UTrans(u, recursive_basis=basis).build_gate()
         for gate in gates:
             for idx, _ in enumerate(gate.cargs):
                 gate.cargs[idx] += 1
