@@ -9,7 +9,7 @@ import numpy as np
 from .._synthesis import Synthesis
 from QuICT.core import GateBuilder, GATE_ID
 
-def uniformlyRotation(low, high, z, gateType, mapping):
+def uniformlyRotation(low, high, z, gateType, mapping, direction = None):
     """ synthesis uniformlyRotation gate, bits range [low, high)
     Args:
         low(int): the left range low
@@ -17,6 +17,7 @@ def uniformlyRotation(low, high, z, gateType, mapping):
         z(list<int>): the list of angle y
         gateType(int): the gateType (Rz or Ry)
         mapping(list<int>): the qubit order of gate
+        direction(bool): is cnot left decomposition
     Returns:
         the synthesis result
     """
@@ -36,10 +37,19 @@ def uniformlyRotation(low, high, z, gateType, mapping):
     for i in range(length):
         Rxp.append((z[i] + z[i + length]) / 2)
         Rxn.append((z[i] - z[i + length]) / 2)
-    gates = uniformlyRotation(low + 1, high, Rxp, gateType, mapping)
-    gates.append(gateA)
-    gates.extend(uniformlyRotation(low + 1, high, Rxn, gateType, mapping))
-    gates.append(gateB)
+    if direction is None:
+        gates = uniformlyRotation(low + 1, high, Rxp, gateType, mapping, False)
+        gates.append(gateA)
+        gates.extend(uniformlyRotation(low + 1, high, Rxn, gateType, mapping, True))
+        gates.append(gateB)
+    elif direction:
+        gates = uniformlyRotation(low + 1, high, Rxn, gateType, mapping, False)
+        gates.append(gateB)
+        gates.extend(uniformlyRotation(low + 1, high, Rxp, gateType, mapping, True))
+    else:
+        gates = uniformlyRotation(low + 1, high, Rxp, gateType, mapping, False)
+        gates.append(gateA)
+        gates.extend(uniformlyRotation(low + 1, high, Rxn, gateType, mapping, True))
     return gates
 
 class uniformlyRyGate(Synthesis):
