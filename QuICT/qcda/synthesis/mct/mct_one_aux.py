@@ -52,14 +52,14 @@ def solve(n):
         k1 = n // 2
     k2 = n // 2 - 1
 
-    MCTLinearSimulation(n + 1, k1) | qubit_list
+    MCTLinearSimulation(k1, n + 1) | qubit_list
     H        | qubit_list[-2]
     S        | qubit_list[-1]
-    MCTLinearSimulation(n + 1, k2 + 1) | merge_qubit(merge_qubit(qubit_list[k1:k1 + k2 + 1], qubit_list[:k1]), qubit_list[-1])
+    MCTLinearSimulation(k2 + 1, n + 1) | merge_qubit(merge_qubit(qubit_list[k1:k1 + k2 + 1], qubit_list[:k1]), qubit_list[-1])
     S_dagger | qubit_list[-1]
-    MCTLinearSimulation(n + 1, k1) | qubit_list
+    MCTLinearSimulation(k1, n + 1) | qubit_list
     S        | qubit_list[-1]
-    MCTLinearSimulation(n + 1, k2 + 1) | merge_qubit(merge_qubit(qubit_list[k1:k1 + k2 + 1], qubit_list[:k1]), qubit_list[-1])
+    MCTLinearSimulation(k2 + 1, n + 1) | merge_qubit(merge_qubit(qubit_list[k1:k1 + k2 + 1], qubit_list[:k1]), qubit_list[-1])
     H        | qubit_list[-2]
     S_dagger | qubit_list[-1]
 

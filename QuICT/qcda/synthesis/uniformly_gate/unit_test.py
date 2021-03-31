@@ -24,7 +24,7 @@ def test_uniform_ry():
     for i in range(1, 8):
         circuit = Circuit(i)
         angles = [random.random() for _ in range(1 << (i - 1))]
-        uniformlyRy(angles, i) | circuit
+        uniformlyRy(angles) | circuit
         unitary = SyntheticalUnitary.run(circuit)
         for j in range(1 << (i - 1)):
             unitary_slice = unitary[2 * j:2 * (j + 1), 2 * j:2 * (j + 1)]

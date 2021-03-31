@@ -9,12 +9,12 @@ from QuICT.core import *
 from QuICT.qcda.synthesis import MCTOneAux, MCTLinearSimulation
 from QuICT.algorithm import SyntheticalUnitary
 
-def _test_MCT_Linear_Simulation():
+def test_MCT_Linear_Simulation():
     max_qubit = 11
     for i in range(3, max_qubit):
         for m in range(1, i // 2 + (1 if i % 2 == 1 else 0)):
             circuit = Circuit(i)
-            MCTLinearSimulation(m) | circuit
+            MCTLinearSimulation(m, i) | circuit
             unitary = SyntheticalUnitary.run(circuit, showSU=False)
             for j in range(1 << i):
                 for k in range(1 << i):
@@ -47,6 +47,7 @@ def _test_MCT_Linear_Simulation():
                                 else:
                                     if abs(abs(unitary[j, k] - 1)) > 1e-30:
                                         print(i, j, k, unitary[j, k])
+                                        circuit.print_information()
                                         assert 0
                             else:
                                 if jj != kk:
@@ -64,7 +65,7 @@ def test_MCT():
     max_qubit = 11
     for i in range(3, max_qubit):
         circuit = Circuit(i)
-        MCTOneAux | circuit
+        MCTOneAux(i) | circuit
         # assert 0
         unitary = SyntheticalUnitary.run(circuit)
         circuit.print_information()

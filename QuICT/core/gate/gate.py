@@ -221,6 +221,9 @@ class BasicGate(object):
     @affectArgs.setter
     def affectArgs(self, affectArgs):
         if len(affectArgs) != self.controls + self.targets:
+            print(self.__class__.name)
+            print(self.controls, self.targets)
+            print(affectArgs)
             raise Exception(f"length of affectArgs should equal to {self.controls + self.targets}")
         if self.controls > 0:
             self.cargs = affectArgs[:self.controls]
@@ -2514,7 +2517,7 @@ class QFTGate(ComplexGate):
             for i in range(self.targets):
                 H & qureg[i]
                 for j in range(i + 1, self.targets):
-                    Rz(2 * np.pi / (1 << j - i + 1)) & (qureg[j], qureg[i])
+                    CRz(2 * np.pi / (1 << j - i + 1)) & (qureg[j], qureg[i])
         return gates
 
 QFT = QFTGate(["QFT", "qft"])
@@ -2575,7 +2578,7 @@ class IQFTGate(ComplexGate):
         with gates:
             for i in range(self.targets - 1, -1, -1):
                 for j in range(self.targets - 1, i, -1):
-                    Rz(-2 * np.pi / (1 << j - i + 1)) & (qureg[j], qureg[i])
+                    CRz(-2 * np.pi / (1 << j - i + 1)) & (qureg[j], qureg[i])
                 H & qureg[i]
         return gates
 
