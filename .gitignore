@@ -11,4 +11,5 @@ __pycache__/
 /source/
 make.bat
 */.idea
+.idea/
 */*.jpg
