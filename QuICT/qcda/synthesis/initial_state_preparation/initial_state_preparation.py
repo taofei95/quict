@@ -103,7 +103,7 @@ def InitialStatePreparationDecomposition(other):
             phases.append(np.angle(pargs[i]))
             pargs[i] = abs(pargs[i])
 
-    dll = initial_state_preparation_cdll
+    dll = _initial_state_preparation_cdll()
     state_theta_computation = dll.state_theta_computation
     state_theta_computation.argtypes = [
         c_int,
@@ -121,7 +121,7 @@ def InitialStatePreparationDecomposition(other):
 
     if safe == -1:
         raise Exception("the sum of input vector is 0")
-    gates = []
+    gates = GateSet()
     now = 0
     for i in range(n):
         add = (1 << i)
@@ -133,7 +133,7 @@ def InitialStatePreparationDecomposition(other):
                flag = False
                break
         if not flag:
-            gates.extend(uniformlyRy(alpha).build_gate())
+            gates.extend(uniformlyRy(alpha))
         now += add
     unitaries = [np.diag([np.exp(1j * phases[2 * i]), np.exp(1j * phases[2 * i + 1])])
                  for i in range(len(phases) // 2)]

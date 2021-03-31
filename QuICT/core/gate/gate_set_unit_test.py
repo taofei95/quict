@@ -41,6 +41,9 @@ def test_gateSet_attributes():
     gateSet = GateSet((_X, _Y))
     assert len(gateSet) == 2
 
+    gateSet.remapping([i for i in range(5 - 1, -1, -1)])
+    gateSet.print_information()
+
 def test_gate_matrix():
     circuit = Circuit(5)
     circuit.random_append()

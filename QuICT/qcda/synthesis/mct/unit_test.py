@@ -42,7 +42,7 @@ def _test_MCT_Linear_Simulation():
                                     if abs(abs(unitary[j, k])) > 1e-30:
                                         print(i, m, j, k, unitary[j, k])
                                         print(unitary)
-                                        circuit.print_infomation()
+                                        circuit.print_information()
                                         assert 0
                                 else:
                                     if abs(abs(unitary[j, k] - 1)) > 1e-30:
@@ -56,7 +56,7 @@ def _test_MCT_Linear_Simulation():
                                 else:
                                     if abs(abs(unitary[j, k] - 1)) > 1e-30:
                                         print(i, m, j, k, unitary[j, k])
-                                        circuit.print_infomation()
+                                        circuit.print_information()
                                         print(unitary)
                                         assert 0
 
@@ -67,7 +67,7 @@ def test_MCT():
         MCTOneAux | circuit
         # assert 0
         unitary = SyntheticalUnitary.run(circuit)
-        circuit.print_infomation()
+        circuit.print_information()
         for j in range(1 << i):
             flagj = True
             for l in range(2, i):

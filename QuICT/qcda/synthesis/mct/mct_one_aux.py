@@ -52,14 +52,14 @@ def solve(n):
         k1 = n // 2
     k2 = n // 2 - 1
 
-    MCTLinearSimulation(k1) | qubit_list
+    MCTLinearSimulation(n + 1, k1) | qubit_list
     H        | qubit_list[-2]
     S        | qubit_list[-1]
-    MCTLinearSimulation(k2 + 1) | merge_qubit(merge_qubit(qubit_list[k1:k1 + k2 + 1], qubit_list[:k1]), qubit_list[-1])
+    MCTLinearSimulation(n + 1, k2 + 1) | merge_qubit(merge_qubit(qubit_list[k1:k1 + k2 + 1], qubit_list[:k1]), qubit_list[-1])
     S_dagger | qubit_list[-1]
-    MCTLinearSimulation(k1) | qubit_list
+    MCTLinearSimulation(n + 1, k1) | qubit_list
     S        | qubit_list[-1]
-    MCTLinearSimulation(k2 + 1) | merge_qubit(merge_qubit(qubit_list[k1:k1 + k2 + 1], qubit_list[:k1]), qubit_list[-1])
+    MCTLinearSimulation(n + 1, k2 + 1) | merge_qubit(merge_qubit(qubit_list[k1:k1 + k2 + 1], qubit_list[:k1]), qubit_list[-1])
     H        | qubit_list[-2]
     S_dagger | qubit_list[-1]
 
@@ -76,6 +76,6 @@ def MCTOneAuxDecomposition(n):
     Return:
         GateSet: the result of Decomposition
     """
-    return GateSet(solve(n).gates)
+    return GateSet(solve(n - 1).gates)
 
 MCTOneAux = Synthesis(MCTOneAuxDecomposition)

@@ -19,6 +19,10 @@ class GateSet(list):
     def gates(self):
         return self
 
+    @property
+    def matrix(self):
+        return self.matrix()
+
     def __enter__(self):
         GATE_SET_LIST.append(self)
         return self
@@ -291,7 +295,7 @@ class GateSet(list):
         return GateSet(gate_list)
 
     # display information of the circuit
-    def print_infomation(self):
+    def print_information(self):
         print("-------------------")
         print(f"number of bits:{self.circuit_width()}")
         for gate in self:
@@ -319,7 +323,7 @@ class GateSet(list):
         return inverse
 
     def matrix(self, local = False):
-        """
+        """ matrix of these gates
 
         Args:
             local: whether regards the min_qubit as the 0's qubit
@@ -407,3 +411,19 @@ class GateSet(list):
         # print(self_matrix)
         # print(target_matrix)
         return np.allclose(self_matrix, target_matrix, rtol=eps, atol=eps)
+
+    def remapping(self, mapping):
+        """ remapping the gates' affectArgs
+
+        Args:
+            mapping(list): the mapping function
+
+        Returns:
+
+        """
+        size = self.circuit_size()
+        for i in range(size):
+            affectArgs = []
+            for arg in self[i].affectArgs:
+                affectArgs.append(mapping[arg])
+            self[i].affectArgs = affectArgs

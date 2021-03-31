@@ -36,7 +36,7 @@ def solve(n, m):
             CCX | circuit([i - 1, n - 1 - (m - i + 1), n - 1 - (m - i)])
     return circuit
 
-def MCTLinearSimulationDecomposition():
+def MCTLinearSimulationDecomposition(n, m):
     """ a linear simulation for toffoli gate
 
     https://arxiv.org/abs/quant-ph/9503016 Lemma 7.2

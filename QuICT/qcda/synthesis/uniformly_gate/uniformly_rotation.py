@@ -42,19 +42,19 @@ def uniformlyRotation(low, high, z, gateType, mapping):
     gates.append(gateB)
     return gates
 
-def uniformlyRyDecomposition(angle_list, n, mapping = None):
+def uniformlyRyDecomposition(angle_list, mapping = None):
     """ uniformRyGate
 
     http://cn.arxiv.org/abs/quant-ph/0504100v1 Fig4 a)
 
     Args:
         angle_list(list<float>): the angles of Ry Gates
-        n(int) : the number of targets
         mapping(list<int>) : the mapping of gates order
     Returns:
         gateSet: the synthesis gate list
     """
     pargs = list(angle_list)
+    n = int(np.round(np.log2(len(pargs)))) + 1
     if mapping is None:
         mapping = [i for i in range(n)]
     if 1 << (n - 1) != len(pargs):
@@ -63,19 +63,19 @@ def uniformlyRyDecomposition(angle_list, n, mapping = None):
 
 uniformlyRy = Synthesis(uniformlyRyDecomposition)
 
-def uniformlyRzDecomposition(angle_list, n, mapping = None):
+def uniformlyRzDecomposition(angle_list, mapping = None):
     """ uniformRzGate
 
     http://cn.arxiv.org/abs/quant-ph/0504100v1 Fig4 a)
 
     Args:
         angle_list(list<float>): the angles of Rz Gates
-        n(int) : the number of targets
         mapping(list<int>) : the mapping of gates order
     Returns:
         gateSet: the synthesis gate list
     """
     pargs = list(angle_list)
+    n = int(np.round(np.log2(len(pargs)))) + 1
     if mapping is None:
         mapping = [i for i in range(n)]
     if 1 << (n - 1) != len(pargs):

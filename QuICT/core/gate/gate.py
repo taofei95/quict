@@ -2460,3 +2460,123 @@ class CCRzGate(ComplexGate):
         return gates
 
 CCRz = CCRzGate(["CCRz"])
+
+class QFTGate(ComplexGate):
+    """ QFT gate
+
+    act QFT on the qureg
+
+    """
+
+    @property
+    def matrix(self) -> np.ndarray:
+        if self._matrix is None:
+            gateSet = self.build_gate()
+            self._matrix = gateSet.matrix
+        return self._matrix
+
+    def __init__(self, alias=None):
+        _add_alias(alias=alias, standard_name=self.__class__.__name__)
+        super().__init__(alias=None)
+        self._matrix = None
+        self.controls = 0
+        self.targets = 3
+        self.params = 0
+
+    def __call__(self, targets):
+        """ pass the unitary matrix
+
+        Args:
+            targets(int): point out the number of bits of the gate
+
+
+        Returns:
+            QFTGate: the QFTGate after filled by target number
+        """
+        self.targets = n
+        return self
+
+    def __str__(self):
+        return "QFT gate"
+
+    def inverse(self):
+        _IQFT = IQFTGate()
+        _IQFT.targs = copy.deepcopy(self.targs)
+        _IQFT.targets = self.targets
+        return _IQFT
+
+    def build_gate(self):
+        from .gate_set import GateSet
+        qureg = self.affectArgs
+        gates = GateSet()
+
+        with gates:
+            for i in range(self.targets):
+                H & qureg[i]
+                for j in range(i + 1, self.targets):
+                    Rz(2 * np.pi / (1 << j - i + 1)) & (qureg[j], qureg[i])
+        return gates
+
+QFT = QFTGate(["QFT", "qft"])
+
+class IQFTGate(ComplexGate):
+    """ IQFT gate
+
+    act IQFT on the qureg
+
+    """
+
+    @property
+    def matrix(self) -> np.ndarray:
+        if self._matrix is None:
+            gateSet = self.build_gate()
+            self._matrix = gateSet.matrix
+        return self._matrix
+
+    def __init__(self, alias=None):
+        _add_alias(alias=alias, standard_name=self.__class__.__name__)
+        super().__init__(alias=None)
+        self._matrix = None
+        self.controls = 0
+        self.targets = 3
+        self.params = 0
+
+    def __call__(self, targets):
+        """ pass the unitary matrix
+
+        Args:
+            targets(int): point out the number of bits of the gate
+
+
+        Returns:
+            IQFTGate: the IQFTGate after filled by target number
+        """
+        self.targets = n
+        return self
+
+    def __str__(self):
+        return "QFT gate"
+
+    def inverse(self):
+        _unitary = UnitaryGate()
+        _unitary.targs = copy.deepcopy(self.targs)
+        _unitary.matrix = np.array(np.mat(self._matrix).reshape(1 << self.targets, 1 << self.targets).
+                                   H.reshape(1, -1), dtype=np.complex)
+        _unitary.targets = self.targets
+        _unitary.params = self.params
+        _unitary.controls = self.controls
+        return _unitary
+
+    def build_gate(self):
+        from .gate_set import GateSet
+        qureg = self.affectArgs
+        gates = GateSet()
+
+        with gates:
+            for i in range(self.targets - 1, -1, -1):
+                for j in range(self.targets - 1, i, -1):
+                    Rz(-2 * np.pi / (1 << j - i + 1)) & (qureg[j], qureg[i])
+                H & qureg[i]
+        return gates
+
+IQFT = IQFTGate(["IQFT", "iqft"])

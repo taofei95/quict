@@ -53,7 +53,7 @@ def test_gate_name():
     X % "AA" | circuit
     X % 1 | circuit(1)
     CX | circuit([1, 2])
-    circuit.print_infomation()
+    circuit.print_information()
     assert 1
 
 def test_fSim():

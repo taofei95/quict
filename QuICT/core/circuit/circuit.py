@@ -584,7 +584,7 @@ class Circuit(object):
         self.gates = []
 
     # display information of the circuit
-    def print_infomation(self):
+    def print_information(self):
         print("-------------------")
         print(f"number of bits:{self.circuit_width()}")
         for gate in self.gates:

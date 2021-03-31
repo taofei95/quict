@@ -55,7 +55,7 @@ def check_equiv(circuit1, circuit2):
     n = circuit1.circuit_width()
     matrix1 = generate_matrix(circuit1, n)
     matrix2 = generate_matrix_with_ancillary(circuit2, n)
-    # circuit2.print_infomation()
+    # circuit2.print_information()
 
     print(matrix1)
 

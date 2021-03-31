@@ -28,7 +28,7 @@ def test_uniform_ry():
         unitary = SyntheticalUnitary.run(circuit)
         for j in range(1 << (i - 1)):
             unitary_slice = unitary[2 * j:2 * (j + 1), 2 * j:2 * (j + 1)]
-            circuit.print_infomation()
+            circuit.print_information()
             assert not np.any(abs(unitary_slice - Ry(angles[j]).matrix.reshape(2, 2)) > 1e-10)
 
 def test_uniform_rz():

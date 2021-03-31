@@ -142,22 +142,22 @@ def uniformlyUnitarySolve(low, high, unitary, mapping):
     gates = uniformlyUnitarySolve(low + 1, high, Rxv, mapping)
     gates.append(gateA)
     gates.extend(uniformlyUnitarySolve(low + 1, high, Rxu, mapping))
-    gates.extend(uniformlyRz(angle_list).build_gate([mapping[i] for i in range(high - 1, low - 1, -1)]))
+    gates.extend(uniformlyRz(angle_list, [mapping[i] for i in range(high - 1, low - 1, -1)]))
     return gates
 
-def uniformlyUnitaryDecomposition(angle_list, n, mapping=None):
+def uniformlyUnitaryDecomposition(angle_list, mapping=None):
     """ uniformUnitaryGate
 
     http://cn.arxiv.org/abs/quant-ph/0504100v1 Fig4 b)
 
     Args:
         angle_list(list<float>): the angles of Ry Gates
-        n(int) : the number of targets
         mapping(list<int>) : the mapping of gates order
     Returns:
         gateSet: the synthesis gate list
     """
     pargs = list(angle_list)
+    n = int(np.round(np.log2(len(pargs)))) + 1
     if mapping is None:
         mapping = [i for i in range(n)]
     if 1 << (n - 1) != len(pargs):
