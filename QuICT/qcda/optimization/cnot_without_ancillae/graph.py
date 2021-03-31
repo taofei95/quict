@@ -1,4 +1,5 @@
 import copy
+import numpy as np
 
 
 class Edge:
@@ -31,8 +32,8 @@ class Edge:
         """next edge(which is used in head array)"""
 
     def __repr__(self):
-        return f"edge [start: {self.start}," \
-               f" end: {self.end}, " \
+        return f"edge [start: {self.start}, " \
+               f"end: {self.end}, " \
                f"valid: {self.valid}, " \
                f"color: {self.color}, " \
                f"next={self.next}]"
@@ -53,15 +54,15 @@ class Graph:
 
         Parameters
         ----------
-        nodes : List
+        nodes : np.ndarray
             A list of all nodes. In most cases, it should be a continuous list
             which contains sequential integers.
         edges : List
             A list of all edges
         """
-        self.nodes = [] if nodes is None else copy.copy(nodes)
+        self.nodes = np.array([], dtype=np.int) if nodes is None else np.copy(nodes)
         self.edges = []
-        self.head = {}
+        self.head = np.empty(shape=len(self.nodes) + 1, dtype=np.int)
         for i in self.nodes:
             self.head[i] = -1
         """get edges that share the same head(start point)"""
@@ -164,9 +165,9 @@ class Bipartite(Graph):
         edges : array-like
             Specify edge between left and right. The next field of Edge could be invalid here.
         """
-        self.left = copy.copy(left)
-        self.right = copy.copy(right)
-        super().__init__(left + right, edges)
+        super().__init__(np.concatenate((left, right)), edges)
+        self.left = self.nodes[:len(left)]
+        self.right = self.nodes[len(left):]
 
     def list_degree(self) -> None:
         s = 0
