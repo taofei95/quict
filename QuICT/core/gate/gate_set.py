@@ -319,7 +319,7 @@ class GateSet(list):
         inverse = GateSet()
         circuit_size = len(self)
         for index in range(circuit_size - 1, -1, -1):
-            inverse.append(self[index])
+            inverse.append(self[index].inverse())
         return inverse
 
     def matrix(self, local = False):
