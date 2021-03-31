@@ -12,7 +12,7 @@ def test_max_deg_even():
 
 
 def test_bipartite():
-    rnd = 50
+    rnd = 70
     for _ in range(rnd):
         bipartite = get_bipartite(random.randint(100, 200))
         _, _, bipartite_regular = EdgeColoring.get_regular(bipartite)
@@ -22,7 +22,7 @@ def test_bipartite():
 
 
 def test_regularity():
-    rnd = 50
+    rnd = 70
     for _ in range(rnd):
         bipartite = get_bipartite(random.randint(100, 200))
         _, _, bipartite_regular = EdgeColoring.get_regular(bipartite)

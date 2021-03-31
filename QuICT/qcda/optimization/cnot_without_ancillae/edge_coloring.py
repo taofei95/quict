@@ -153,8 +153,7 @@ class EdgeColoring:
             bipartite: Bipartite,
             cur: int,
             in_alter_path: List[bool],
-            matching: List[int],
-            change_input: bool = True
+            matching: List[int]
     ) -> bool:
         """dfs used in hungarian algorithm
 
@@ -170,8 +169,6 @@ class EdgeColoring:
             if some point is in an alternative path
         matching : List[int]
             match point, -1 for no match
-        change_input : bool
-            Whether put color while dfs
 
         Returns
         -------
@@ -191,13 +188,10 @@ class EdgeColoring:
                         bipartite,
                         matching[to],
                         in_alter_path,
-                        matching,
-                        change_input
+                        matching
                 ):  # :(
                     matching[to] = cur
                     matching[cur] = to
-                    if change_input:
-                        edge.color = color
                     return True
         return False
 
@@ -209,6 +203,7 @@ class EdgeColoring:
             change_input: bool = True
     ) -> Tuple[int, Bipartite, Bipartite]:
         """Get a matching of a regular bipartite graph and color it if needed.
+        Remember that a regular graph always has a perfect matching.
 
         In fact, in the original paper, matching is found using a O(ElogD) algorithm.
         It's too difficult to implement. Use Hungarian instead. Time complexity is increased
@@ -227,7 +222,7 @@ class EdgeColoring:
 
         Returns
         ---------
-        Tuple[int, Bipartite, Bipartite]
+        Tuple[int, Bipartite, Bipartite]: Matching edge number, Match bipartite, Bipartite removed matching.
         """
         n = len(bipartite.nodes)
         matching = [-1 for _ in range(n + 1)]
@@ -235,7 +230,8 @@ class EdgeColoring:
         for node in bipartite.left:
             if matching[node] == -1:
                 in_alter_path = [False for _ in range(n + 1)]
-                if cls.hungarian_dfs(color, bipartite, node, in_alter_path, matching, change_input):
+                # DO NOT change color during dfs cause there is possible backtracing.
+                if cls.hungarian_dfs(color, bipartite, node, in_alter_path, matching):
                     cnt += 1
 
         matching_bipartite = Bipartite(bipartite.left, bipartite.right)
@@ -247,6 +243,23 @@ class EdgeColoring:
             e = other
             matching_bipartite.add_edge(start=s, end=e, valid=True, color=color)
             matching_bipartite.add_edge(start=e, end=s, valid=True, color=color)
+
+            # Color original bipartite if needed.
+            if change_input:
+                eid = bipartite.head[s]
+                while eid != -1:
+                    edge = bipartite.edges[eid]
+                    if edge.end == e:
+                        edge.color = color
+                        break
+                    eid = edge.next
+                eid = bipartite.head[e]
+                while eid != -1:
+                    edge = bipartite.edges[eid]
+                    if edge.end == s:
+                        edge.color = color
+                        break
+                    eid = edge.next
 
         extracted_bipartite = Bipartite(bipartite.left, bipartite.right)
         for node in bipartite.left:
@@ -480,4 +493,3 @@ class EdgeColoring:
                 old_eid = old_edge.next
 
         return colored_bipartite
-

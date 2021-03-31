@@ -12,9 +12,8 @@ def ensure_bipartite_max_degree_even(bipartite: Bipartite) -> None:
 
 
 def get_bipartite(size: int = 150, ensure_even: bool = True) -> Bipartite:
-    # (size-1) nodes
-    left = list(range(1, size))
-    right = list(range(size, size * 2 - 1))
+    left = list(range(1, size + 1))
+    right = list(range(size + 1, size * 2))
     bipartite = Bipartite(left, right)
     for _ in range(int(size * size * 1.2)):
         a = random.choice(left)

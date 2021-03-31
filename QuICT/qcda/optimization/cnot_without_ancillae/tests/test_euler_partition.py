@@ -5,7 +5,7 @@ from ..edge_coloring import *
 
 
 def test_euler_partition():
-    rnd = 50
+    rnd = 70
     for _ in range(rnd):
         bipartite = get_bipartite(random.randint(100, 200))
         _, _, bipartite_regular = EdgeColoring.get_regular(bipartite)

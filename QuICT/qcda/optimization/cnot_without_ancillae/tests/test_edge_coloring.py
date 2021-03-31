@@ -5,9 +5,9 @@ from ..edge_coloring import *
 
 
 def test_edge_coloring_for_regular():
-    rnd = 20
+    rnd = 30
     for _ in range(rnd):
-        bipartite = get_bipartite(100)
+        bipartite = get_bipartite(random.randint(100, 180), False)
         _, _, bipartite_regular = EdgeColoring.get_regular(bipartite)
         colored = EdgeColoring.get_edge_coloring_for_regular(bipartite_regular, 1)
         deg = colored.get_any_degree()
@@ -29,9 +29,9 @@ def test_edge_coloring_for_regular():
 
 
 def test_edge_coloring():
-    rnd = 20
+    rnd = 30
     for _ in range(rnd):
-        bipartite = get_bipartite(100)
+        bipartite = get_bipartite(random.randint(100, 180), False)
         colored_bipartite = EdgeColoring.get_edge_coloring(bipartite)
         # check color
         for node in colored_bipartite.nodes:
