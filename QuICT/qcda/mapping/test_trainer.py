@@ -45,7 +45,7 @@ def inference_process(graph_name: str, config: GNNConfig, model_path: str = None
 def trainer_process(graph_name: str, config: GNNConfig, log_path: str = None, tb_path: str = None, model_path: str = None, input_path: str = None):
     coupling_graph = get_coupling_graph(graph_name = graph_name)
     trainer = Trainer(coupling_graph = graph_name , config = config, log_path = log_path, tb_path = tb_path)
-    return trainer.run(model_path =  model_path, input_path = input_path) 
+    return trainer.run(model_path =  model_path, input_path = input_path, pre_train = True) 
 
 def mcts_process(qubit_mapping: List[int], graph_name: str,  minimum_circuit: int = 50, maximum_circuit: int = 1000, min_num_of_qubits: int = 5, max_num_of_qubits: int = 20, seed: int = 0, log_path: str = None, gpu_device: int = 0, model_path: str = None, config: GNNConfig = None):
     #print("rcg")
@@ -53,7 +53,7 @@ def mcts_process(qubit_mapping: List[int], graph_name: str,  minimum_circuit: in
     random_circuit_generator = RandomCircuitGenerator(minimum = minimum_circuit, maximum = maximum_circuit, min_num_of_qubits = min_num_of_qubits, max_num_of_qubits = max_num_of_qubits, seed = seed)
     qc = random_circuit_generator()
     mcts = RLBasedMCTS(mode = MCTSMode.TRAIN, rl = RLMode.SELFPALY, coupling_graph = graph_name, experience_pool = global_experience_pool, log_path = log_path, 
-                     c = config.mcts_c, size_threshold = config.num_of_nodes, device = config.device, input = gloabl_queue, output = global_conn, id = global_id, gamma = config.gamma)   
+                     c = config.mcts_c, size_threshold = config.num_of_nodes, device = config.device, input = gloabl_queue, output = global_conn, id = global_id, gamma = config.gamma, extended = True )   
     #cProfile.runctx('mcts.search(logical_circuit = qc, init_mapping = qubit_mapping)', globals(), locals())
     #print("mcts")
     res = mcts.search(logical_circuit = qc, init_mapping = qubit_mapping)
@@ -137,8 +137,10 @@ class AlphaQuts(object):
 
         self._experience_pool = ExperiencePool(max_capacity = config.maximum_capacity, num_of_nodes = config.num_of_nodes, num_of_class = self._coupling_graph.num_of_edge, shm_name = self._shm_name) 
         self._experience_pool.create()
+        
 
     def __call__(self, num_of_iterations: int = 5, num_of_circuits: int = 100, input_path: str = None):
+        #self._experience_pool.load_data(input_path)
         prg = np.random.default_rng(12345*int(time.time())) 
         init_mapping = [i for i in range(self._coupling_graph.size)]
         idx = Value('i')
@@ -166,7 +168,6 @@ class AlphaQuts(object):
             pool.join()
 
         self._experience_pool.save_data(input_path)  
-        self._experience_pool.clear()
         time_cost = time.time() - start_time
         p_inference.terminate()
         self._logger.info("The process of data generation cost {:5.2f}s".format(time_cost))   
@@ -183,7 +184,7 @@ class AlphaQuts(object):
 if __name__ == "__main__":
     file_path = os.path.realpath(__file__)
     dir_path, file_name = os.path.split(file_path)
-    torch.cuda.set_device(1)
+    torch.cuda.set_device(2)
 
     work_dir_path = os.path.abspath(os.path.join(dir_path, "alphaQ"))
     input_dir_path = os.path.abspath(os.path.join(work_dir_path, "input"))
@@ -191,7 +192,7 @@ if __name__ == "__main__":
     log_dir_path = os.path.abspath(os.path.join(work_dir_path, "log"))
     tb_dir_path = os.path.abspath(os.path.join(work_dir_path, "tensorboard"))
 
-    exp = "test_small_data"
+    exp = "test_small_data_extended"
     train_log_path = f"{log_dir_path}/train/train_{exp}.log"
     train_tb_path = f"{tb_dir_path}/train/train_{exp}"
     mcts_log_path = f"{log_dir_path}/mcts/mcts_{exp}.log"
@@ -204,18 +205,19 @@ if __name__ == "__main__":
     
     graph_name = "ibmq20"
     num_of_iterations = 5
-    num_of_circuits = 100
+    num_of_circuits = 300
     set_start_method("forkserver")
 
     alpha_config = GNNConfig(maximum_capacity = 200000, num_of_gates = 150, maximum_circuit = 1500, minimum_circuit = 200, batch_size = 128, ff_hidden_size = 128, num_self_att_layers=4, dropout = 0.5, value_head_size = 128,
-                       num_U2GNN_layers=2, learning_rate = 0.001, weight_decay = 1e-4, num_of_epochs = 5, device = torch.device("cuda"), graph_name = 'ibmq20',num_of_process = 20, feature_update = True, gat = False, 
+                       num_U2GNN_layers=2, learning_rate = 0.001, weight_decay = 1e-4, num_of_epochs = 50, device = torch.device("cuda"), graph_name = 'ibmq20',num_of_process = 64, feature_update = True, gat = False, 
                        mcts_c = 20, loss_c = 10, n_gat = 2)
     try:
         alphaQ = AlphaQuts(graph_name = graph_name, config = alpha_config, log_path = log_path, 
-                     train_log_path = train_log_path, train_tb_path = train_tb_path, 
+                      train_log_path = train_log_path, train_tb_path = train_tb_path, 
                      mcts_log_path = mcts_log_path, model_path = model_path)
     
         alphaQ(num_of_iterations = num_of_iterations, num_of_circuits = num_of_circuits, input_path = input_path)
-    #trainer_process(graph_name = graph_name, config = alpha_config , log_path = train_log_path, tb_path = train_tb_path, model_path = model_path, input_path = input_dir_path)
     finally:
         alphaQ.close()
+
+    #trainer_process(graph_name = graph_name, config = alpha_config , log_path = train_log_path, tb_path = train_tb_path, model_path = model_path, input_path = input_path)

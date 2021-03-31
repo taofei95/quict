@@ -98,7 +98,7 @@ class CouplingGraph(object):
         return GateBuilder.getGate()
         
 
-    def edge_label(self, edge:SwapGate)-> int:
+    def edge_label(self, edge: SwapGate)-> int:
         """
         The label of the edge in the graph 
         """

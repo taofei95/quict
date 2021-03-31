@@ -189,7 +189,7 @@ if __name__ == "__main__":
     set_start_method("forkserver")
 
     alpha_config = GNNConfig(maximum_capacity = 200000, num_of_gates = 150, maximum_circuit = 1500, minimum_circuit = 200, batch_size = 128, ff_hidden_size = 128, num_self_att_layers=4, dropout = 0.5, value_head_size = 128,
-                       gamma = 0.7, num_U2GNN_layers=2, learning_rate = 0.001, weight_decay = 1e-4, num_of_epochs = 20, device = torch.device("cuda"), graph_name = 'ibmq20',num_of_process = 40, feature_update = True, gat = False, 
+                       gamma = 0.7, num_U2GNN_layers=2, learning_rate = 0.001, weight_decay = 1e-4, num_of_epochs = 50, device = torch.device("cuda"), graph_name = 'ibmq20',num_of_process = 64, feature_update = True, gat = False, 
                        mcts_c = 20, loss_c = 10, n_gat = 2)
    
     alphaQ = AlphaQut(graph_name = graph_name, config = alpha_config, log_path = log_path, 

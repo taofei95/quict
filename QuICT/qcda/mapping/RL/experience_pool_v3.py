@@ -153,6 +153,9 @@ class ExperiencePool(object):
             self._lock.release()
 
     def load_data(self, file_path: str):
+        with open(f"{file_path}/metadata.txt",'r') as f:
+            self._idx.value = int(f.readline())
+            
         self._label_list[:] = np.load(f"{file_path}/label_list.npy", allow_pickle = True)
         self._num_list[:] = np.load(f"{file_path}/num_list.npy", allow_pickle = True)
         self._adj_list[:] = np.load(f"{file_path}/adj_list.npy", allow_pickle = True)
@@ -161,8 +164,7 @@ class ExperiencePool(object):
         self._value_list[:] = np.load(f"{file_path}/value_list.npy", allow_pickle = True)
         self._action_probability_list[:] = np.load(f"{file_path}/action_probability_list.npy", allow_pickle = True )
         
-        with open(f"{file_path}/metadata.txt",'r') as f:
-            self._idx.value = int(f.readline())
+       
 
 
     def save_data(self, file_path: str):

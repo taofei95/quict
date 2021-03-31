@@ -21,9 +21,9 @@ class RLBasedMCTS(TableBasedMCTS):
     def __init__(self, model: nn.Module = None, device: torch.device = torch.device('cpu') ,play_times: int = 1, gamma: float = 0.7, Gsim: int = 50, size_threshold: int = 150, 
                  Nsim: int = 500, selection_times: int = 40 , c: int = 10, mode: MCTSMode = MCTSMode.SEARCH, rl: RLMode = RLMode.WARMUP,
                 experience_pool: ExperiencePool = None, coupling_graph: CouplingGraph = None, log_path: str = None,
-                input: Queue = None, output: Connection = None, id: int = 0, **params):
+                input: Queue = None, output: Connection = None, id: int = 0, extended: bool = False, **params):
 
-        super().__init__(play_times = play_times, selection_times = selection_times, gamma = gamma, Gsim = Gsim, size_threshold = size_threshold, 
+        super().__init__(play_times = play_times, selection_times = selection_times, gamma = gamma, Gsim = Gsim, size_threshold = size_threshold, extended = extended,
                         coupling_graph = coupling_graph, Nsim = Nsim, c = c, mode = mode, experience_pool = experience_pool, log_path = log_path, rl = rl)
 
         self._tau = 1
@@ -31,7 +31,6 @@ class RLBasedMCTS(TableBasedMCTS):
         self._output = output
         self._id = id
         self._device = device
-        
         self._softmax = nn.Softmax(dim = 0)
         # print(self._mode)
         # print(self._mode.value)
@@ -134,12 +133,15 @@ class RLBasedMCTS(TableBasedMCTS):
             super()._transform_to_training_data(node, node.best_swap_gate)
         else:
             adj, qubits, num_of_gates = node.state
-            self._label_list.append(self._coupling_graph.edge_label(node.best_swap_gate))
+            self._label_list.append(node.best_swap_gate)
             self._num_list.append(num_of_gates)
             self._adj_list.append(adj)
             self._qubits_list.append(qubits)
-            self._value_list.append(node.sim_value)
-            self._action_probability_list.append(node.extended_visit_count_prob)
+            self._value_list.append(node.value)
+            if self._extended:
+                self._action_probability_list.append(node.visit_count_prob)
+            else:
+                self._action_probability_list.append(self._extend_action_probability(node.visit_count_prob, node.candidate_swap_list))
 
 
     def _evaluate(self, node: MCTSNode):
@@ -151,14 +153,14 @@ class RLBasedMCTS(TableBasedMCTS):
         value = value_scores.detach().to(torch.device('cpu')).numpy().squeeze()
         node.sim_value = value
         node.value = node.reward + self._gamma * value
-        extended_prob = self._softmax(policy_scores.squeeze()).detach().to(torch.device('cpu')).numpy()
-        #print(p)
-        #del policy_scores, value_scores
-
-        prob = np.array([  extended_prob[self._coupling_graph.edge_label(swap_gate)] 
-                    for swap_gate in node.candidate_swap_list ])
-        prob = prob / np.sum(prob)
-        node.edge_prob = prob
+        prob = self._softmax(policy_scores.squeeze()).detach().to(torch.device('cpu')).numpy()
+        
+        if self._extended:
+            self._get_candidate_swap_list(node = node)
+            node.edge_prob = prob
+        else:
+            super()._get_candidate_swap_list(node = node, pre_prob= True)
+            node.edge_prob = [prob[idx]  for idx in node.candidate_swap_list]
         return node.value
 
     def _evaluate_for_training(self, node: MCTSNode):
@@ -173,16 +175,15 @@ class RLBasedMCTS(TableBasedMCTS):
         policy_scores, value_scores = self._output.recv()
         value = value_scores.numpy().squeeze()
         node.sim_value = value
-        node.value = node.reward + self._gamma * value
-        extended_prob = self._softmax(policy_scores).numpy()
+        node.value = value
+        prob = self._softmax(policy_scores).numpy()
 
-        #print(p)
-        #del policy_scores, value_scores
-
-        prob = np.array([  extended_prob[self._coupling_graph.edge_label(swap_gate)] 
-                    for swap_gate in node.candidate_swap_list ])
-        prob = prob / np.sum(prob)
-        node.edge_prob = prob
+        if self._extended:
+            self._get_candidate_swap_list(node = node)
+            node.edge_prob = prob
+        else:
+            super()._get_candidate_swap_list(node = node, pre_prob= True)
+            node.edge_prob = [prob[idx]  for idx in node.candidate_swap_list]
         return node.value
 
 
@@ -194,6 +195,19 @@ class RLBasedMCTS(TableBasedMCTS):
         node.parent = None
         #node.clear()
         return node
+
+    def _expand(self, node: MCTSNode):
+        """
+        Open all child nodes of the current node by applying the swap gates in candidate swap list
+        """
+        if node is None:
+            raise Exception("Node can't be None")
+
+        for swap, prob in zip(node.candidate_swap_list, node.edge_prob):
+            node.add_child_node_by_swap_gate(swap, prob)
+   
+    def _get_candidate_swap_list(self, node: MCTSNode):
+        node.candidate_swap_list = [i  for i in range(self._coupling_graph.num_of_edge) ]
 
     def _get_best_child(self, node: MCTSNode)-> MCTSNode:
         """
@@ -292,7 +306,7 @@ class RLBasedMCTS(TableBasedMCTS):
 
         cur_node = MCTSNode(circuit_dag = self._circuit_dag , coupling_graph = self._coupling_graph,
                                   front_layer = self._circuit_dag.front_layer, qubit_mask = qubit_mask.copy(), cur_mapping = init_mapping.copy(), parent =None)
-        
+        super()._get_candidate_swap_list(cur_node)
         num_of_swap_gates = 0
         while not cur_node.is_terminal_node():
             qubits, padding_mask, adj = self._get_data(cur_node)
@@ -300,10 +314,10 @@ class RLBasedMCTS(TableBasedMCTS):
             qubits, padding_mask, adj = qubits[None,:,:], padding_mask[None,:], adj[None, :, :]
             policy_scores, _ = self._model(qubits, padding_mask, adj)
             
-            extended_prob = self._softmax(policy_scores).detach().to(torch.device('cpu')).numpy().squeeze()
+            extended_prob = self._softmax(policy_scores.squeeze()).detach().to(torch.device('cpu')).numpy()
             #print(p)
-            prob = np.array([  extended_prob[self._coupling_graph.edge_label(swap_gate)] 
-                       for swap_gate in cur_node.candidate_swap_list ])
+            prob = np.array([  extended_prob[swap_index] 
+                       for swap_index in cur_node.candidate_swap_list ])
             
             prob = prob / np.sum(prob)
             # prob = np.ones(len(cur_node.candidate_swap_list) , dtype = np.float32)
@@ -312,7 +326,8 @@ class RLBasedMCTS(TableBasedMCTS):
            # print(prob)
             swap_idx = np.random.choice(len(prob), p = prob)
             #swap_idx = np.argmax(prob)
-            cur_node.update_by_swap_gate(swap = cur_node.candidate_swap_list[swap_idx])
+            cur_node.update_by_swap_gate(swap_index = cur_node.candidate_swap_list[swap_idx])
+            super()._get_candidate_swap_list(cur_node)
             num_of_swap_gates += 1
             print(cur_node.num_of_gates)
 
@@ -337,16 +352,15 @@ class RLBasedMCTS(TableBasedMCTS):
         while not cur_node.is_terminal_node():
             qubits, padding_mask, adj = self._get_data(cur_node)
             qubits, padding_mask, adj = transform_batch(batch_data = (qubits, padding_mask, adj), device = self._device)
-            qubits, padding_mask = qubits[None,:,:], padding_mask[None,:]
+            qubits, padding_mask, adj = qubits[None,:,:], padding_mask[None,:], adj[None,:]
             policy_scores, _ = self._model(qubits, padding_mask, adj)
             
-            p = self._softmax(policy_scores).detach().to(torch.device('cpu')).numpy().squeeze()
+            p = self._softmax(policy_scores.squeeze()).detach().to(torch.device('cpu')).numpy()
             #print(p)
             swap_idx = np.random.choice(p.shape[0], p = p)
-            swap_gate = self._coupling_graph.get_swap_gate(swap_idx)
-            cur_node.update_by_swap_gate(swap = swap_gate)
+            cur_node.update_by_swap_gate(swap_index = swap_idx)
             num_of_swap_gates += 1
-            #print(cur_node.num_of_gates)
+            print(cur_node.num_of_gates)
 
         return num_of_swap_gates
 

@@ -112,11 +112,12 @@ class EdgeProb:
             self._inverse_qubit_mapping[elm] = i  
 
 
-    def __call__(self, swap_gate: SwapGate = None)-> int:
-        
-        if swap_gate is None:
+    def __call__(self, swap_index: int = -1)-> int:
+       
+        if swap_index == -1:
             return self._neareast_neighbour_count(self._gates, self._qubit_mapping)
         
+        swap_gate = self._coupling_graph.get_swap_gate(swap_index)
         if isinstance(swap_gate, SwapGate) is not True:
              raise TypeException("swap gate","other gate")
         qubit_mapping = self._change_mapping_with_single_swap(swap_gate)
@@ -262,7 +263,7 @@ class GNNConfig(object):
 
 
 
-default_config = GNNConfig(maximum_capacity = 800000, num_of_gates = 150, maximum_circuit = 1500, minimum_circuit = 200, batch_size = 256, ff_hidden_size = 128, num_self_att_layers=4, dropout = 0.5, value_head_size = 128, gamma = 0.9, 
+default_config = GNNConfig(maximum_capacity = 200000, num_of_gates = 150, maximum_circuit = 1500, minimum_circuit = 200, batch_size = 256, ff_hidden_size = 128, num_self_att_layers=4, dropout = 0.5, value_head_size = 128, gamma = 0.9, 
                        num_U2GNN_layers=2, learning_rate = 0.001, weight_decay = 1e-4, num_of_epochs = 1000, device = torch.device( "cuda"), graph_name = 'ibmq20',num_of_process = 10, feature_update = True, gat = False, n_gat = 2, mcts_c = 20, loss_c = 10 )
 
 @dataclass
@@ -288,6 +289,7 @@ class MCTSMode(Enum):
     TRAIN = 0
     EVALUATE = 1
     SEARCH = 2
+    EXTENDED_PROB = 3
 
 
 

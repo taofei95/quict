@@ -31,7 +31,7 @@ from RL.experience_pool_v4 import *
 from RL.nn_model import *
 from RL.dataloader import *
 
-exp_name = "tt_gamma0.9_bigdata_ngat"
+exp_name = "policy_gamma0.9_bigdata_ngat"
 
 
 def mcts_process(qubit_mapping: List[int], coupling_graph: str,  minimum_circuit: int = 50, maximum_circuit: int = 1000, min_num_of_qubits: int = 5, max_num_of_qubits: int = 20, seed: int = 0):
@@ -544,17 +544,17 @@ if __name__ == "__main__":
         print(tb_dir_path)
 
     config = default_config
-    new_data = True
+    new_data = False
 
     num_of_qubits=20
     init_mapping=[i for i in range(0,20)]
-    num_of_circuits = 1000
+    num_of_circuits = 100
    
-    warmup_process =  PolicyTrainer(graph_name = "ibmq20", num_of_qubits = num_of_qubits, log_path = f"{log_dir_path}/{exp_name}", tb_path = f"{tb_dir_path}/tt/{exp_name}")
+    warmup_process =  PolicyTrainer(graph_name = "ibmq20", num_of_qubits = num_of_qubits, log_path = f"{log_dir_path}/{exp_name}", tb_path = f"{tb_dir_path}/policy/{exp_name}")
     
     try:
         warmup_process.preprocess(init_mapping = init_mapping, config = config, new_data = new_data, num_of_circuits = num_of_circuits, input_dir_path = input_dir_path)
-        warmup_process.run(output_dir_path = output_dir_path )
+        warmup_process.run_policy(output_dir_path = output_dir_path )
     finally:
         warmup_process.close()
     

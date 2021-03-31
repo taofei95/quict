@@ -27,7 +27,7 @@ from QuICT.core.layout import *
 class MCTSNode:
 
     def __init__(self, circuit_dag: DAG = None, coupling_graph: CouplingGraph = None, front_layer: List[int] = None, cur_mapping: List[int] = None, 
-                qubit_mask: np.ndarray = None, parent: MCTSNode = None, swap_of_edge: SwapGate = None, prob_of_edge: float = 0):
+                qubit_mask: np.ndarray = None, parent: MCTSNode = None, swap_of_edge: int = -1, prob_of_edge: float = 0):
         """
         Parameters
         ----------
@@ -56,8 +56,8 @@ class MCTSNode:
         self._prob_of_edge = prob_of_edge
         self._children: List[MCTSNode] = []     
         self._execution_list: List[int] = []     
-        self._candidate_swap_list: List[SwapGate] = []
-        self._best_swap_gate: SwapGate = None
+        self._candidate_swap_list: List[int] = []
+        self._best_swap_gate: int = -1
         self._visit_count_prob: List[float] = []
 
         self._visit_count = 0   
@@ -116,6 +116,7 @@ class MCTSNode:
         The directed acyclic graph representation of the circuit
         """
         return self._circuit_dag
+
     @property
     def reward(self)->int:
         """
@@ -159,6 +160,7 @@ class MCTSNode:
         """
         """
         self._value = value
+    
     @property
     def prob_of_edge(self)->float:
         """
@@ -178,12 +180,6 @@ class MCTSNode:
         self._edge_prob = p
 
     @property
-    def extended_edge_prob(self)-> np.ndarray:
-        """
-        """
-        return self._extended_edge_prob
-
-    @property
     def visit_count_prob(self)->np.ndarray:
         """
         The probabity of each child node. The probability p_a is propotional to visit_count(a)
@@ -192,16 +188,8 @@ class MCTSNode:
 
     @visit_count_prob.setter
     def visit_count_prob(self, prob: np.ndarray):
-        
         self._visit_count_prob = prob 
-        self._extended_visit_count_prob = self._extend_action_probability(self._visit_count_prob, self._candidate_swap_list)
 
-    @property
-    def extended_visit_count_prob(self)->np.ndarray:
-        """
-        The probabity of each child node. The probability p_a is propotional to visit_count(a)
-        """
-        return self._extended_visit_count_prob
 
     @property
     def q(self)->float:
@@ -266,11 +254,17 @@ class MCTSNode:
         return self._execution_list
 
     @property
-    def candidate_swap_list(self)->List[SwapGate]:
+    def candidate_swap_list(self)->List[int]:
         """
         The list of the candidate swap gate, which has at least one qubit dominated by the gates in the front layer  
         """
         return self._candidate_swap_list
+    
+    @candidate_swap_list.setter
+    def candidate_swap_list(self, swap_list: List[int]):
+        """
+        """
+        self._candidate_swap_list = swap_list
     
     @property
     def cur_mapping(self)->List[int]:
@@ -314,6 +308,7 @@ class MCTSNode:
         The parent node of the current node.
         """
         return self._parent
+
     @parent.setter
     def parent(self, p: MCTSNode):
         """
@@ -327,22 +322,22 @@ class MCTSNode:
         return self._children
    
     @property
-    def swap_of_edge(self)->SwapGate:
+    def swap_of_edge(self)->int:
         """
         The swap gate associated with the edge from the current node's parent to itself  
         """
         return self._swap_of_edge
 
     @swap_of_edge.setter
-    def swap_of_edge(self, swap: SwapGate):
+    def swap_of_edge(self, swap: int):
         self._swap_of_edge = swap
 
     @property
-    def best_swap_gate(self)->SwapGate:
+    def best_swap_gate(self)->int:
         return self._best_swap_gate  
     
     @best_swap_gate.setter
-    def best_swap_gate(self, swap: SwapGate):
+    def best_swap_gate(self, swap: int):
         self._best_swap_gate = swap
     
     def clear(self):
@@ -360,11 +355,11 @@ class MCTSNode:
         Update the node's property with the new cur_mapping or front_layer
         """
         self._update_execution_list()
-        self._update_candidate_swap_list()
 
-    def update_by_swap_gate(self, swap: SwapGate):
+    def update_by_swap_gate(self, swap_index: int):
         """
         """
+        swap = self._coupling_graph.get_swap_gate(swap_index)
         if isinstance(swap, SwapGate):
             p_target = swap.targs
             l_target = [ self._inverse_mapping[p_target[0]], self._inverse_mapping[p_target[1]] ]
@@ -385,10 +380,11 @@ class MCTSNode:
             raise TypeException("swap gate","other gate")
 
     
-    def add_child_node_by_swap_gate(self, swap: SwapGate, prob: float):
+    def add_child_node_by_swap_gate(self, swap_index: int, prob: float):
         """
         Add a child node by applying the swap gate
         """
+        swap = self._coupling_graph.get_swap_gate(swap_index)
         if isinstance(swap, SwapGate):
             p_target = swap.targs
             # l_target = [self.cur_mapping.index(p_target[i], 0, len(self.cur_mapping)) 
@@ -407,7 +403,7 @@ class MCTSNode:
 
                 child_node = MCTSNode(circuit_dag = self.circuit_dag, coupling_graph = self.coupling_graph, 
                              front_layer = self.front_layer.copy(), qubit_mask = qubit_mask, cur_mapping = cur_mapping, parent = self,
-                             swap_of_edge = swap.copy(), prob_of_edge = prob)
+                             swap_of_edge = swap_index, prob_of_edge = prob)
                 self._children.append(child_node)           
             else:
                 raise MappingLayoutException()
@@ -434,58 +430,7 @@ class MCTSNode:
         else:
             return True
         
-    def _update_candidate_swap_list(self):
-        """
-        All the swap gates associated with the front layer of the current node
-        """
-        qubits_set = self._get_invloved_qubits()
-        candidate_swap_set = set()
 
-        for qubit in qubits_set:
-            for adj in self.coupling_graph.get_adjacent_vertex(qubit):
-                candidate_swap_set.add(frozenset([qubit,adj]))
-                
-        candidate_swap_list = []
-        for swap_index_set in candidate_swap_set:
-            swap_index_list = list(swap_index_set)
-            if  self.parent is None or self.parent.swap_of_edge is None or not is_two_qubit_gate_equal(swap_index_list, self.parent.swap_of_edge.targs):
-                GateBuilder.setGateType(GATE_ID['Swap']) 
-                GateBuilder.setTargs(swap_index_list)
-                candidate_swap_list.append(GateBuilder.getGate())
-        
-        self._candidate_swap_list =  candidate_swap_list
-        edge_prob_cal = EdgeProb(circuit = self._circuit_dag, coupling_graph = self._coupling_graph, qubit_mapping = self._cur_mapping, gates = self._front_layer)
-        base =  edge_prob_cal()
-        edge_prob = f(np.array([base - edge_prob_cal(swap) for swap in self._candidate_swap_list ],dtype=np.float))
-        edge_prob = edge_prob / np.sum(edge_prob)
-        self._edge_prob = edge_prob
-        self._extended_edge_prob = self._extend_action_probability(action_probability = edge_prob, swap_edges = candidate_swap_list)
-
-
-    def _extend_action_probability(self, action_probability: np.ndarray, swap_edges: List[SwapGate]):
-        res = np.zeros(self._coupling_graph.num_of_edge, dtype = float)
-        for p, swap in zip(action_probability, swap_edges):
-            idx = self._coupling_graph.edge_label(swap)
-            res[idx] = p
-        return res
-
-
-    def _get_invloved_qubits(self)-> List[int]:
-        """
-        Get the list of the physical qubits dominated by the gates in front layer 
-        """
-        qubit_set = set()
-        for gate in self._front_layer:
-            if self._gate_qubits(gate) == 1:
-                qubit_set.add(self._get_gate_target(gate))
-            elif self._is_swap(gate) is not True:
-                qubit_set.add(self._get_gate_control(gate))
-                qubit_set.add(self._get_gate_target(gate))
-            else:
-                qubit_set.add(self._get_gate_target(gate,0))
-                qubit_set.add(self._get_gate_target(gate,1))
-        return list(qubit_set)
-    
 
     def _update_execution_list(self):
         """

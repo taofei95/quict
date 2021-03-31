@@ -27,6 +27,7 @@ class Benchmark(enumerate):
     RANDOM = 1
 
 
+
 class Trainer(object):
     def __init__(self, coupling_graph: str = None, config: GNNConfig = None, log_path: str = None, tb_path: str = None):
         self._graph_name = coupling_graph
@@ -55,12 +56,12 @@ class Trainer(object):
         ch.setFormatter(formatter)
         self._logger.addHandler(ch)
 
-    def run(self, model_path: str = None, input_path: str = None, quota: float = 0.1):
+    def run(self, model_path: str = None, input_path: str = None, quota: float = 0.1, pre_train: bool = True):
         dataloader = DataLoader(max_capacity = self._config.maximum_capacity, num_of_nodes = self._config.num_of_nodes, num_of_class = self._coupling_graph.num_of_edge)
         dataloader.load_data(file_path = input_path)
         dataloader.split_data(quota = quota)
-       
-        self._model.load_state_dict(torch.load(model_path))
+        if pre_train:
+            self._model.load_state_dict(torch.load(model_path))
         
         self._experience_pool = dataloader 
         num_params = 0
@@ -70,6 +71,7 @@ class Trainer(object):
         
         self._optimizer = torch.optim.Adam(self._model.parameters(), lr = self._config.learning_rate)
         num_batches_per_epoch = int((self._experience_pool.train_set_size() - 1) / self._config.batch_size) + 1
+        self._scheduler = torch.optim.lr_scheduler.StepLR(self._optimizer, step_size = num_batches_per_epoch, gamma=0.1)
 
         mini_loss = 1e9
 
@@ -78,15 +80,15 @@ class Trainer(object):
             epoch_start_time = time.time()
             train_loss = self._train(num_batches_per_epoch = num_batches_per_epoch, batch_size = self._config.batch_size)
             cost_loss.append(train_loss)
-            test_value_loss, test_policy_loss = self._evaluate(batch_size = self._config.batch_size)
+            test_value_loss, test_policy_loss, test_policy_lb = self._evaluate(batch_size = self._config.batch_size)
             
-            self._logger.info("| epoch %3d | time: %5.2f s | loss %5.2f | test value loss %5.2f |  test policy loss %5.2f |"%(
-                        epoch, (time.time() - epoch_start_time), train_loss, test_value_loss, test_policy_loss))
+            self._logger.info("| epoch %3d | time: %5.3f s | loss %5.3f | test value loss %5.3f |  test policy loss %5.3f | test policy lower bound %5.3f|"%(
+                        epoch, (time.time() - epoch_start_time), train_loss, test_value_loss, test_policy_loss, test_policy_lb))
             
             if epoch > 5 and cost_loss[-1] > np.mean(cost_loss[-6:-1]):
                 self._scheduler.step()
             if test_value_loss + test_policy_loss < mini_loss:
-                mini_loss = test_value_loss + test_value_loss
+                mini_loss = test_value_loss + test_policy_loss
                 torch.save(self._model.state_dict(), model_path) 
 
         return 0
@@ -112,18 +114,21 @@ class Trainer(object):
         self._model.eval()
         value_loss = 0.0
         policy_loss = 0.0
+        policy_tb = 0.0
         num = self._experience_pool.evaluate_set_size()
         with torch.no_grad():
             # evaluating
             for i in range(0, num, batch_size):
                 test_input_x, test_padding_mask, adj,  value, policy, _ = self._transform_batch(self._experience_pool.get_evaluate_data(start = i, end = i + batch_size))
+                policy += 1e-7
                 policy_prediction_scores, value_prediction_scores = self._model(test_input_x, test_padding_mask, adj)
                 value_loss += self._MSE_loss(arr = value_prediction_scores.squeeze() , target = value)
                 policy_loss += self._cross_entropy_loss(arr = policy_prediction_scores.squeeze(), target = policy)
-                
+                policy_tb += self._NLL_loss(arr = policy, target = policy)
             acc_value_test = value_loss / float(num)
-            acc_policy_test = policy_loss /float(num)    
-            return acc_value_test, acc_policy_test  
+            acc_policy_test = policy_loss /float(num) 
+            acc_policy_tb = policy_tb / float(num)   
+            return acc_value_test, acc_policy_test,  acc_policy_tb
                
   
     def _transform_batch(self, batch_data: Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray,np.ndarray,np.ndarray])->Tuple[torch.LongTensor, torch.FloatTensor, torch.FloatTensor, torch.FloatTensor ]:
@@ -158,4 +163,81 @@ class Trainer(object):
     def _MSE_loss(self, arr, target):
         mse_loss = nn.MSELoss(reduction='sum')
         return mse_loss(target, arr)
-    
+
+
+
+class PolicyTrainer(Trainer):
+    def __init__(self, coupling_graph: str = None, config: GNNConfig = None, log_path: str = None, tb_path: str = None):
+        super.__init__(coupling_graph = coupling_graph, config = config, log_path = log_path, tb_path = tb_path)
+
+
+    def run(self, model_path: str = None, input_path: str = None, quota: float = 0.1, pre_train: bool = True):
+        dataloader = DataLoader(max_capacity = self._config.maximum_capacity, num_of_nodes = self._config.num_of_nodes, num_of_class = self._coupling_graph.num_of_edge)
+        dataloader.load_data(file_path = input_path)
+        dataloader.split_data(quota = quota)
+        if pre_train:
+            self._model.load_state_dict(torch.load(model_path))
+        
+        self._experience_pool = dataloader 
+        num_params = 0
+        for param in self._model.parameters():
+            num_params += param.numel()
+        self._logger.info(num_params)
+        
+        self._optimizer = torch.optim.Adam(self._model.parameters(), lr = self._config.learning_rate)
+        num_batches_per_epoch = int((self._experience_pool.train_set_size() - 1) / self._config.batch_size) + 1
+
+        mini_loss = 1e9
+
+        cost_loss = []
+        for epoch in range(1, self._config.num_of_epochs + 1):
+            epoch_start_time = time.time()
+            train_loss = self._train(num_batches_per_epoch = num_batches_per_epoch, batch_size = self._config.batch_size)
+            cost_loss.append(train_loss)
+            test_policy_loss, test_policy_tb = self._evaluate(batch_size = self._config.batch_size)
+            
+            self._logger.info("| epoch %3d | time: %5.3f s | loss %5.3f | test value loss %5.3f |  test policy loss %5.3f | test policy lower bound %5.3f|"%(
+                        epoch, (time.time() - epoch_start_time), train_loss, test_policy_loss, test_policy_tb))
+            
+            if epoch > 5 and cost_loss[-1] > np.mean(cost_loss[-6:-1]):
+                self._scheduler.step()
+            if  test_policy_loss < mini_loss:
+                mini_loss =  test_policy_loss
+                torch.save(self._model.state_dict(), model_path) 
+
+        return 0
+
+    def _train(self, num_batches_per_epoch: int, batch_size: int):
+        self._model.train() # Turn on the train mode
+        total_loss = 0.0
+        for _ in range(num_batches_per_epoch):
+            input_x, padding_mask, adj, value, policy, _ = self._transform_batch(self._experience_pool.get_batch_data(batch_size = batch_size))
+            self._optimizer.zero_grad()
+            policy_prediction_scores, _ = self._model(input_x, padding_mask, adj)
+            # loss = criterion(prediction_scores, graph_labels)
+            loss = self._cross_entropy_loss(policy_prediction_scores.squeeze(), policy)
+            loss.backward()
+            torch.nn.utils.clip_grad_norm_(self._model.parameters(), 0.5) # prevent the exploding gradient problem
+            self._optimizer.step()
+            total_loss += loss.item()
+        return total_loss
+
+    def _evaluate(self, batch_size: int):
+        """
+        """
+        self._model.eval()
+        value_loss = 0.0
+        policy_loss = 0.0
+        policy_tb = 0.0
+        num = self._experience_pool.evaluate_set_size()
+        with torch.no_grad():
+            # evaluating
+            for i in range(0, num, batch_size):
+                test_input_x, test_padding_mask, adj,  value, policy, _ = self._transform_batch(self._experience_pool.get_evaluate_data(start = i, end = i + batch_size))
+                policy_prediction_scores, _ = self._model(test_input_x, test_padding_mask, adj)
+                policy_loss += self._cross_entropy_loss(arr = policy_prediction_scores.squeeze(), target = policy)
+                policy_tb += self._NLL_loss(arr = policy, target = policy)
+            acc_value_test = value_loss / float(num)
+            acc_policy_test = policy_loss /float(num) 
+            acc_policy_tb = policy_tb / float(num)   
+            return acc_value_test, acc_policy_test,  acc_policy_tb
