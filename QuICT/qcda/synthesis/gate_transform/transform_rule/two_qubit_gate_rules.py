@@ -64,7 +64,7 @@ def _cx2crz_rule(gate):
     targs = gate.affectArgs
     gateSet = GateSet()
     with gateSet:
-        Phase(math.pi/2) & targs[0]
+        Rz(math.pi/2) & targs[0]
         H & targs[1]
         CRz(math.pi) & targs
         H & targs[1]
