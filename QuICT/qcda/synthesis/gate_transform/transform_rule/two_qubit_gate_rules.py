@@ -9,9 +9,7 @@ from .transform_rule import TransformRule
 from QuICT.core import *
 
 """
-
 the file describe TransformRule between two kinds of 2-qubit gates.
-
 """
 
 def _crz2cx_rule(gate):
@@ -64,7 +62,7 @@ def _cx2crz_rule(gate):
     targs = gate.affectArgs
     gateSet = GateSet()
     with gateSet:
-        Rz(math.pi/2) & targs[0]
+        Rz(math.pi / 2) & targs[0]
         H & targs[1]
         CRz(math.pi) & targs
         H & targs[1]
@@ -131,7 +129,7 @@ def _cz2crz_rule(gate):
     targs = gate.affectArgs
     gateSet = GateSet()
     with gateSet:
-        Phase(math.pi / 2) & targs[0]
+        Rz(math.pi / 2) & targs[0]
         CRz(math.pi) & targs
     return gateSet
 Cz2CrzRule = TransformRule(_cz2crz_rule, CZ, CRz)
@@ -229,7 +227,7 @@ def _rxx2cx_rule(gate):
     targs = gate.affectArgs
     gateSet = GateSet()
     with gateSet:
-       # H & targs[0]
+        H & targs[0]
         H & targs[1]
         CX & targs
         Rz(theta) & targs[1]
