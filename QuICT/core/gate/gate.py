@@ -1500,8 +1500,8 @@ class RxxGate(BasicGate):
 
     @property
     def matrix(self) -> np.ndarray:
-        costh = np.cos(self.parg)
-        sinth = np.sin(self.parg)
+        costh = np.cos(self.parg / 2)
+        sinth = np.sin(self.parg / 2)
         return np.array([
             costh, 0, 0, -1j * sinth,
             0, costh, -1j * sinth, 0,
@@ -1538,8 +1538,8 @@ class RyyGate(BasicGate):
 
     @property
     def matrix(self) -> np.ndarray:
-        costh = np.cos(self.parg)
-        sinth = np.sin(self.parg)
+        costh = np.cos(self.parg / 2)
+        sinth = np.sin(self.parg / 2)
         return np.array([
             costh, 0, 0, 1j * sinth,
             0, costh, -1j * sinth, 0,

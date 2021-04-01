@@ -399,11 +399,13 @@ class GateSet(list):
             rotate = 0
             for i in range(shape[0]):
                 for j in range(shape[1]):
-                    if self_matrix[i, j] > eps:
+                    if abs(self_matrix[i, j]) > eps:
                         rotate = target_matrix[i, j] / self_matrix[i, j]
+                        break
+                if rotate != 0:
+                    break
             if rotate == 0 or abs(abs(rotate) - 1) > eps:
                 return False
             self_matrix = self_matrix * np.full(shape, rotate)
-        # print(self_matrix)
-        # print(target_matrix)
+
         return np.allclose(self_matrix, target_matrix, rtol=eps, atol=eps)
