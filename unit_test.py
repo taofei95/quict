@@ -10,20 +10,4 @@ from QuICT.core import *
 from QuICT.qcda.synthesis.gate_transform import *
 
 if __name__ == "__main__":
-    # print(Crz2CxRule.check_equal())
-    # print(Cx2CyRule.check_equal())
-    # print(Cx2CzRule.check_equal())
-    # print(Cx2ChRule.check_equal()) 
-    # X print(Cx2CrzRule.check_equal())  print(gateSet.matrix())
-    # print(Cy2CzRule.check_equal())
-    # print(Cy2ChRule.check_equal())
-    # print(Cz2CyRule.check_equal())
-    # print(Cz2ChRule.check_equal())
-    # X print(Cz2CrzRule.check_equal())
-    # print(Crz2CyRule.check_equal())
-    # print(Crz2CzRule.check_equal())
-    # print(Crz2ChRule.check_equal())
-    # print(Ch2CyRule.check_equal())
-    # print(Ch2CzRule.check_equal())
-    print(Rxx2CxRule.check_equal())
-    print("16\n")
+    print(Crz2CxRule.check_equal())
