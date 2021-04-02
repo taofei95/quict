@@ -7,7 +7,7 @@
 from numpy import log2, floor, gcd
 
 from .._synthesis import Synthesis
-from QuICT.core import Circuit, CX, CCX, GateSet, Swap, X
+from QuICT.core import Circuit, CX, CCX, CompositeGate, Swap, X
 
 def Inverse(a, N):
     """ Inversion of a in (mod N)
@@ -345,7 +345,7 @@ def VBEDecomposition(m, a, N):
         a(int): a
         N(int): N
     Returns:
-        GateSet: the model filled by parameters.
+        CompositeGate: the model filled by parameters.
     """
     if N <= 2:
         raise Exception("modulus should be great than 2")
@@ -365,6 +365,6 @@ def VBEDecomposition(m, a, N):
     t = circuit(m + 5 * n + 1)
     X | qubit_r[n - 1]
     ExpMod(a, N, qubit_x, qubit_r, qubit_a, qubit_b, qubit_c, overflow, qubit_N, t)
-    return GateSet(circuit.gates)
+    return CompositeGate(circuit.gates)
 
 VBE = Synthesis(VBEDecomposition)

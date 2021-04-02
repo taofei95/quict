@@ -121,7 +121,7 @@ def InitialStatePreparationDecomposition(other):
 
     if safe == -1:
         raise Exception("the sum of input vector is 0")
-    gates = GateSet()
+    gates = CompositeGate()
     now = 0
     for i in range(n):
         add = (1 << i)

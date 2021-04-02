@@ -7,11 +7,11 @@
 from .gate import *
 
 
-class GateSet(list):
+class CompositeGate(list):
     """ Implement a list of gate
 
     Attributes:
-        gates:(list<BasicGate>): GateSet itself
+        gates:(list<BasicGate>): CompositeGate itself
 
     """
 
@@ -32,13 +32,13 @@ class GateSet(list):
         GATE_SET_LIST.remove(self)
 
     def __init__(self, gates = None, with_copy = True):
-        """ initial a GateSet with gate(s)
+        """ initial a CompositeGate with gate(s)
 
         Args:
             qubits: the qubits which make up the qureg, it can have below form,
                 1) Circuit
                 2) BasicGate
-                3) GateSet
+                3) CompositeGate
                 4) tuple/list<BasicGate>
         """
         super().__init__()
@@ -277,7 +277,7 @@ class GateSet(list):
             return super().__getitem__(item)
         elif isinstance(item, slice):
             gate_list = super().__getitem__(item)
-            return GateSet(gate_list)
+            return CompositeGate(gate_list)
 
     def __add__(self, other):
         """ to fit the add operator, overloaded this function.
@@ -292,7 +292,7 @@ class GateSet(list):
         if not isinstance(other, Qureg):
             raise Exception("type error!")
         gate_list = super().__add__(other)
-        return GateSet(gate_list)
+        return CompositeGate(gate_list)
 
     # display information of the circuit
     def print_information(self):
@@ -311,12 +311,12 @@ class GateSet(list):
         inner_random_append(self, rand_size, typeList)
 
     def inverse(self):
-        """ the inverse of GateSet
+        """ the inverse of CompositeGate
 
         Returns:
-            GateSet: the inverse of the gateSet
+            CompositeGate: the inverse of the gateSet
         """
-        inverse = GateSet()
+        inverse = CompositeGate()
         circuit_size = len(self)
         for index in range(circuit_size - 1, -1, -1):
             inverse.append(self[index].inverse())
@@ -395,7 +395,7 @@ class GateSet(list):
         Returns:
             bool: whether the gateSet is equal with the targets
         """
-        target = GateSet(target, with_copy=True)
+        target = CompositeGate(target, with_copy=True)
         self_matrix = self.matrix()
         target_matrix = target.matrix()
         if ignore_phase:

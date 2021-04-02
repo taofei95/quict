@@ -329,8 +329,8 @@ class Circuit(object):
         Raise:
             TypeException: the type of other is wrong
         """
-        from ..gate import GateSet
-        gates = GateSet(self.gates)
+        from ..gate import CompositeGate
+        gates = CompositeGate(self.gates)
         gates | targets
 
     # append gate methods

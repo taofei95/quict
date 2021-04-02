@@ -7,7 +7,7 @@
 import numpy as np
 
 from .._synthesis import Synthesis
-from QuICT.core import GATE_ID, GateBuilder, GateSet
+from QuICT.core import GATE_ID, GateBuilder, CompositeGate
 
 def uniformlyRotation(low, high, z, gateType, mapping):
     """ synthesis uniformlyRotation gate, bits range [low, high)
@@ -24,7 +24,7 @@ def uniformlyRotation(low, high, z, gateType, mapping):
         GateBuilder.setGateType(gateType)
         GateBuilder.setTargs(mapping[low])
         GateBuilder.setPargs(float(z[0]))
-        return GateSet(GateBuilder.getGate())
+        return CompositeGate(GateBuilder.getGate())
     length = len(z) // 2
     GateBuilder.setGateType(GATE_ID["CX"])
     GateBuilder.setTargs(mapping[high - 1])

@@ -74,8 +74,8 @@ def MCTOneAuxDecomposition(n):
     Args:
         n(int): the bits of the toffoli gate
     Return:
-        GateSet: the result of Decomposition
+        CompositeGate: the result of Decomposition
     """
-    return GateSet(solve(n - 1).gates)
+    return CompositeGate(solve(n - 1).gates)
 
 MCTOneAux = Synthesis(MCTOneAuxDecomposition)

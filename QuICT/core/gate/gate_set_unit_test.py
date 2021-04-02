@@ -15,7 +15,7 @@ def test_gateSet_attributes():
     circuit.random_append()
     H | circuit
     X | circuit
-    gateSet = GateSet(circuit)
+    gateSet = CompositeGate(circuit)
     assert len(gateSet.gates) == circuit.circuit_size()
     assert gateSet.circuit_width() == 5
     assert gateSet.circuit_count_1qubit() + gateSet.circuit_count_2qubit() == circuit.circuit_size()
@@ -24,21 +24,21 @@ def test_gateSet_attributes():
     # BasicGate
     _X = X.copy()
     _X.targs = [0]
-    gateSet = GateSet(_X)
+    gateSet = CompositeGate(_X)
     assert len(gateSet.gates) == 1
     assert gateSet.circuit_width() == 1
 
-    # GateSet
-    gateSet = GateSet(gateSet)
+    # CompositeGate
+    gateSet = CompositeGate(gateSet)
     assert len(gateSet.gates) == 1
     assert gateSet.circuit_width() == 1
 
     # list<BasicGate>
     _Y = Y.copy()
     _Y.targs = [0]
-    gateSet = GateSet([_X, _Y])
+    gateSet = CompositeGate([_X, _Y])
     assert len(gateSet) == 2
-    gateSet = GateSet((_X, _Y))
+    gateSet = CompositeGate((_X, _Y))
     assert len(gateSet) == 2
 
     gateSet.remapping([i for i in range(5 - 1, -1, -1)])
@@ -47,23 +47,25 @@ def test_gateSet_attributes():
 def test_gate_matrix():
     circuit = Circuit(5)
     circuit.random_append()
-    gateSet = GateSet(circuit)
+    gateSet = CompositeGate(circuit)
     assert np.all(gateSet.matrix() == SyntheticalUnitary.run(circuit))
 
     circuit2 = Circuit(6)
     gateSet | circuit2[1:]
-    gateSet = GateSet(circuit2)
+    gateSet = CompositeGate(circuit2)
     assert np.all(gateSet.matrix(local=True) == SyntheticalUnitary.run(circuit))
 
 def test_add_gate():
-    gateSet = GateSet()
+    gateSet = CompositeGate()
     with gateSet:
         CX & (0, 1)
         H & 1
     circuit = Circuit(2)
     CX | circuit
     H | circuit(1)
-    Phase(0.2) | circuit
+    # Phase(0.2, name = "XX") | circuit[0]
+    # U3((0.1, 0.2, 0.3), name = "YY") | circuit[0]
+
     # assert np.all(SyntheticalUnitary.run(circuit) == gateSet.matrix())
     assert gateSet.equal(circuit, ignore_phase = True)
 

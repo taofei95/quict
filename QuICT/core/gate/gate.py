@@ -334,18 +334,7 @@ class BasicGate(object):
         if len(GATE_SET_LIST):
             GATE_SET_LIST[-1].append(self.copy())
 
-    def __mod__(self, name):
-        """
-        Args:
-            name(string/int): the name of gate
-
-        Returns:
-            BasicGate: the gate after filled by name
-        """
-        self.__temp_name = str(name)
-        return self
-
-    def __call__(self, params):
+    def __call__(self, params = None, name = None):
         """ give parameters for the gate
 
         give parameters by "()".
@@ -366,16 +355,19 @@ class BasicGate(object):
             BasicGate: the gate after filled by parameters
         """
         self.pargs = []
-        try:
-            params = [params] if self.permit_element(params) else list(params)
-            for element in params:
-                if not self.permit_element(element):
-                    raise TypeException("int/float/complex or list<int/float/complex> "
-                                        "or tuple<int/float/complex>", params)
-                self.pargs.append(element)
-        except Exception:
-            raise TypeException("int/float/complex or list<int/float/complex> "
-                                "or tuple<int/float/complex>", params)
+        if self.params > 0:
+            try:
+                params = [params] if self.permit_element(params) else list(params)
+                for element in params:
+                    if not self.permit_element(element):
+                        raise TypeException("int/float/complex or list<int/float/complex> "
+                                            "or tuple<int/float/complex>", params)
+                    self.pargs.append(element)
+            except Exception:
+                raise TypeException("int/float/complex or list<int/float/complex> "
+                                    "or tuple<int/float/complex>", params)
+        if name is not None:
+            self.__temp_name = str(name)
         return self
 
     def __eq__(self, other):
@@ -1851,7 +1843,7 @@ class PermGate(BasicGate):
         self.targets = 0
         self.params = 0
 
-    def __call__(self, permutation):
+    def __call__(self, permutation, name = None):
         """ pass permutation to the gate
 
         the length of permutaion must be 2^n,
@@ -1863,6 +1855,7 @@ class PermGate(BasicGate):
         Returns:
             PermGate: the gate after filled by parameters
         """
+        self.__temp_name = name
         self.pargs = []
         if not isinstance(permutation, list) or not isinstance(permutation, tuple):
             TypeException("list or tuple", permutation)
@@ -1941,7 +1934,7 @@ class ControlPermMulDetailGate(BasicGate):
         self.targets = 0
         self.params = 0
 
-    def __call__(self, params):
+    def __call__(self, params, name = None):
         """ pass parameters to the gate
 
         give parameters (a, N) to the gate
@@ -1952,7 +1945,7 @@ class ControlPermMulDetailGate(BasicGate):
         Returns:
             ControlPermMulDetailGate: the gate after filled by parameters
         """
-
+        self.__temp_name = name
         self.pargs = []
         if not isinstance(params, list) or not isinstance(params, tuple):
             TypeException("list or tuple", params)
@@ -2043,7 +2036,7 @@ class PermShiftGate(PermGate):
         self.targets = 0
         self.params = 0
 
-    def __call__(self, shift, N=None):
+    def __call__(self, shift, N=None, name=None):
         """ pass parameters to the gate
 
         give parameters (shift, N) to the gate
@@ -2055,6 +2048,7 @@ class PermShiftGate(PermGate):
         Returns:
             PermShiftGate: the gate after filled by parameters
         """
+        self.__temp_name = name
         if not isinstance(shift, int):
             raise TypeException("int", shift)
         if N is None:
@@ -2098,7 +2092,7 @@ class ControlPermShiftGate(PermGate):
         self.targets = 0
         self.params = 0
 
-    def __call__(self, shift, N=None):
+    def __call__(self, shift, N=None, name=None):
         """ pass parameters to the gate
 
         give parameters (shift, N) to the gate
@@ -2110,6 +2104,7 @@ class ControlPermShiftGate(PermGate):
         Returns:
             PermShiftGate: the gate after filled by parameters
         """
+        self.__temp_name = name
         if not isinstance(shift, int):
             raise TypeException("int", shift)
         if N is None:
@@ -2154,7 +2149,7 @@ class PermMulGate(PermGate):
         self.targets = 0
         self.params = 0
 
-    def __call__(self, shift, N=None):
+    def __call__(self, shift, N=None, name=None):
         """ pass parameters to the gate
 
         give parameters (shift, N) to the gate
@@ -2166,6 +2161,7 @@ class PermMulGate(PermGate):
         Returns:
             PermMulGate: the gate after filled by parameters
         """
+        self.__temp_name = name
         if not isinstance(shift, int):
             raise TypeException("int", shift)
         if N is None:
@@ -2211,7 +2207,7 @@ class ControlPermMulGate(PermGate):
         self.targets = 0
         self.params = 0
 
-    def __call__(self, shift, N=None):
+    def __call__(self, shift, N=None, name=None):
         """ pass parameters to the gate
 
         give parameters (shift, N) to the gate
@@ -2223,6 +2219,7 @@ class ControlPermMulGate(PermGate):
         Returns:
             ControlPermMulGate: the gate after filled by parameters
         """
+        self.__temp_name = name
         if not isinstance(shift, int):
             raise TypeException("int", shift)
         if N is None:
@@ -2274,7 +2271,7 @@ class PermFxGate(PermGate):
         self.targets = 0
         self.params = 0
 
-    def __call__(self, f):
+    def __call__(self, f, name = None):
         """ pass Fx to the gate
 
         Fx should be a 2^n list that represent a boolean function
@@ -2286,6 +2283,7 @@ class PermFxGate(PermGate):
         Returns:
             PermFxGate: the gate after filled by parameters
         """
+        self.__temp_name = name
         if not isinstance(f, list):
             raise TypeException("list", f)
         n = int(round(np.log2(len(f))))
@@ -2346,7 +2344,7 @@ class UnitaryGate(BasicGate):
         self.targets = 0
         self.params = 0
 
-    def __call__(self, matrix):
+    def __call__(self, matrix, name = None):
         """ pass the unitary matrix
 
         Args:
@@ -2357,6 +2355,7 @@ class UnitaryGate(BasicGate):
         Returns:
             UnitaryGateGate: the gate after filled by parameters
         """
+        self.__temp_name = name
         if isinstance(matrix, np.ndarray):
             shape = matrix.shape
             n2 = shape[0]
@@ -2426,7 +2425,7 @@ class ShorInitialGate(BasicGate):
         self.targets = 0
         self.params = 0
 
-    def __call__(self, other):
+    def __call__(self, other, name = None):
         """ pass the parameters
 
         Args:
@@ -2437,6 +2436,7 @@ class ShorInitialGate(BasicGate):
             ShorInitialGate: the gate after filled by parameters
 
         """
+        self.__temp_name = name
         if not isinstance(other, list) and not isinstance(other, tuple):
             raise TypeException("list or tuple", other)
         if isinstance(other, tuple):
@@ -2480,12 +2480,12 @@ class ComplexGate(BasicGate):
         """ generate BasicGate, affectArgs
 
         Returns:
-            GateSet: synthetize result
+            CompositeGate: synthetize result
         """
         affectArgs = self.affectArgs
         GateBuilder.setGateType(GATE_ID["X"])
         GateBuilder.setTargs(len(affectArgs) - 1)
-        return GateSet(GateBuilder.getGate())
+        return CompositeGate(GateBuilder.getGate())
 
     def exec(self, circuit):
         gateSet = self.build_gate()
@@ -2537,9 +2537,9 @@ class CCRzGate(ComplexGate):
         return _CCRz
 
     def build_gate(self):
-        from .gate_set import GateSet
+        from .gate_set import CompositeGate
         qureg = self.affectArgs
-        gates = GateSet()
+        gates = CompositeGate()
 
         with gates:
             CRz(self.parg / 2) & (qureg[1], qureg[2])
@@ -2575,7 +2575,7 @@ class QFTGate(ComplexGate):
         self.targets = 3
         self.params = 0
 
-    def __call__(self, targets):
+    def __call__(self, targets, name = None):
         """ pass the unitary matrix
 
         Args:
@@ -2586,6 +2586,7 @@ class QFTGate(ComplexGate):
             QFTGate: the QFTGate after filled by target number
         """
         self.targets = n
+        self.__temp_name = name
         return self
 
     def __str__(self):
@@ -2598,9 +2599,9 @@ class QFTGate(ComplexGate):
         return _IQFT
 
     def build_gate(self):
-        from .gate_set import GateSet
+        from .gate_set import CompositeGate
         qureg = self.affectArgs
-        gates = GateSet()
+        gates = CompositeGate()
 
         with gates:
             for i in range(self.targets):
@@ -2635,7 +2636,7 @@ class IQFTGate(ComplexGate):
         self.targets = 3
         self.params = 0
 
-    def __call__(self, targets):
+    def __call__(self, targets, name = None):
         """ pass the unitary matrix
 
         Args:
@@ -2646,6 +2647,7 @@ class IQFTGate(ComplexGate):
             IQFTGate: the IQFTGate after filled by target number
         """
         self.targets = n
+        self.__temp_name = name
         return self
 
     def __str__(self):
@@ -2662,9 +2664,9 @@ class IQFTGate(ComplexGate):
         return _unitary
 
     def build_gate(self):
-        from .gate_set import GateSet
+        from .gate_set import CompositeGate
         qureg = self.affectArgs
-        gates = GateSet()
+        gates = CompositeGate()
 
         with gates:
             for i in range(self.targets - 1, -1, -1):

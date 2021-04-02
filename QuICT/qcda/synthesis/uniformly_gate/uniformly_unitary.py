@@ -8,7 +8,7 @@ import numpy as np
 
 from . import uniformlyRz
 from .._synthesis import Synthesis
-from QuICT.core import GateBuilder, GATE_ID, GateSet, H, Rz, U3
+from QuICT.core import GateBuilder, GATE_ID, CompositeGate, H, Rz, U3
 
 def gates_from_unitary(unitary, target):
     """ gates from a one-qubit unitary
@@ -120,7 +120,7 @@ def uniformlyUnitarySolve(low, high, unitary, mapping):
         the synthesis result
     """
     if low + 1 == high:
-        return GateSet(gates_from_unitary(unitary[0], low))
+        return CompositeGate(gates_from_unitary(unitary[0], low))
     length = len(unitary) // 2
     GateBuilder.setGateType(GATE_ID["CX"])
     GateBuilder.setTargs(mapping[high - 1])

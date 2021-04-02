@@ -50,9 +50,10 @@ def test_CCRz():
 
 def test_gate_name():
     circuit = Circuit(5)
-    X % "AA" | circuit
-    X % 1 | circuit(1)
+    X(name = "XX") | circuit
+    X(name = 1) | circuit(1)
     CX | circuit([1, 2])
+
     circuit.print_information()
     assert 1
 

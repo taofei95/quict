@@ -35,7 +35,7 @@ def solve(n, m):
         CCX | circuit([0, 1, n - m + 1])
         for i in range(3, m):
             CCX | circuit([i - 1, n - 1 - (m - i + 1), n - 1 - (m - i)])
-    return GateSet(circuit.gates)
+    return CompositeGate(circuit.gates)
 
 def MCTLinearSimulationDecomposition(m, n):
     """ a linear simulation for toffoli gate
@@ -51,7 +51,7 @@ def MCTLinearSimulationDecomposition(m, n):
         n(int): the number of the circuit's qubits
         m(int): the number of the control bits of the toffoli gates
     Returns:
-        GateSet
+        CompositeGate
     """
     if m > (n // 2) + (1 if n % 2 == 1 else 0):
         raise Exception("control bit cannot above ceil(n/2)")
