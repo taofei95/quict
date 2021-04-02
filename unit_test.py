@@ -67,4 +67,5 @@ if __name__ == "__main__":
     # print(Rzz2CzRule.check_equal())
     # print(Rzz2ChRule.check_equal())
     # print(Rzz2CrzRule.check_equal())
+    print(ZyzRule.check_equal())
     print("Finish\n")

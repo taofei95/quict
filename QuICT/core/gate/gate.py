@@ -2275,13 +2275,25 @@ class UnitaryGate(BasicGate):
         """ pass the unitary matrix
 
         Args:
-            matrix(list/tuple): contain 2^n * 2^n elements, which
+            matrix(np.array/list/tuple): contain 2^n * 2^n elements, which
             form an unitary matrix.
 
 
         Returns:
             UnitaryGateGate: the gate after filled by parameters
         """
+        if isinstance(matrix, np.ndarray):
+            shape = matrix.shape
+            n2 = shape[0]
+            if shape[0] != shape[1]:
+                raise Exception("the length of list or tuple should be the square of power(2, n)")
+            n = int(round(np.log2(n2)))
+            if (1 << n) != n2:
+                raise Exception("the length of list or tuple should be the square of power(2, n)")
+            self.targets = n
+            self.matrix = np.array(matrix, dtype=np.complex)
+            return self
+
         if not isinstance(matrix, list) and not isinstance(matrix, tuple):
             raise TypeException("list or tuple", matrix)
         if isinstance(matrix, tuple):

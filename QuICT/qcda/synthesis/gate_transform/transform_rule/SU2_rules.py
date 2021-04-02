@@ -10,24 +10,84 @@ the file describe TransformRule the decomposite SU(2) into instruction set.
 
 """
 
+import numpy as np
+from numpy import arccos, angle, exp, linalg
+from scipy.stats import ortho_group
+
+from QuICT.core import *
+
 from .transform_rule import TransformRule
 
 class SU2TransformRule(TransformRule):
-    def check_equal(self, ignore_phase = True, eps = 1e-13):
-        pass
+    """ a subClass of TransformRule, to check the decomposition of SU2
+
+    """
+    def check_equal(self, ignore_phase = True, eps = 1e-10):
+        qubit = 1
+        d = np.power(2, qubit)
+        Q = np.mat(ortho_group.rvs(dim=d))
+        Q = Q.reshape(d, d)
+        diag1 = []
+        diag2 = []
+        for i in range(d):
+            ran = random.random()
+            diag1.append(ran)
+            diag2.append(np.sqrt(1 - ran * ran))
+
+        d1 = np.diag(diag1)
+        d2 = np.diag(diag2)
+        A = Q.T * d1 * Q
+        B = Q.T * d2 * Q
+        U = A + B[:] * 1j
+
+        gate = Unitary(U)
+        gate.targs = [0]
+        gateSet = self.transform(gate)
+        return gateSet.equal(gate, ignore_phase=ignore_phase, eps=eps)
 
 def _zyzRule(gate):
-    pass
-ZyzRule = TransformRule(_zyzRule)
+    """ decomposition the unitary gate with 2 * 2 unitary into Rz Ry Rz sequence
+    Args:
+        gate(Unitary): the gate to be decomposed
+
+    Returns:
+        gateSet: a list of gateSet
+    """
+    unitary = gate.matrix
+    targ = gate.targ
+    eps = 1e-13
+
+    det = linalg.det(unitary)
+    gamma = 0
+    beta_plus_delta = 0
+    beta_dec_delta = 0
+    if abs(det - 1) > eps:
+        unitary[:] /= np.sqrt(det)
+    if abs(unitary[0, 0]) > eps:
+        beta_plus_delta = angle(unitary[1, 1] / unitary[0, 0])
+        gamma = arccos(abs(2 * unitary[0, 0] * unitary[1, 1] - 1))
+    if abs(unitary[0, 1]) > eps:
+        beta_dec_delta = angle(-unitary[1, 0] / unitary[0, 1])
+        gamma = arccos(abs(2 * unitary[0, 1] * unitary[1, 0] + 1))
+    beta = (beta_plus_delta + beta_dec_delta) / 2
+    delta = beta_plus_delta - beta
+    gateSet = GateSet()
+    with gateSet:
+        Rz(delta)  & targ
+        Ry(gamma) & targ
+        Rz(beta) & targ
+    return gateSet
+
+ZyzRule = SU2TransformRule(_zyzRule)
 
 def _xyxRule(gate):
     pass
-ZxzRule = TransformRule(_zxzRule)
+ZxzRule = SU2TransformRule(_xyxRule)
 
 def _ibmqRule(gate):
     pass
-IBMQRule = TransformRule(_ibmqRule)
+IBMQRule = SU2TransformRule(_ibmqRule)
 
 def _googleRule(gate):
     pass
-GoogleRule = TransformRule(_googleRule)
+GoogleRule = SU2TransformRule(_googleRule)
