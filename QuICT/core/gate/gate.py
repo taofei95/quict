@@ -2503,7 +2503,8 @@ class CCRzGate(ComplexGate):
         super().__init__(alias=None)
         self.controls = 2
         self.targets = 1
-        self.params = 0
+        self.params = 1
+        self.pargs = [0]
         self.qasm_name = "CCRz"
 
     @property
