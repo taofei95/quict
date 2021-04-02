@@ -2296,7 +2296,7 @@ class UnitaryGate(BasicGate):
         if (1 << n) != n2:
             raise Exception("the length of list or tuple should be the square of power(2, n)")
         self.targets = n
-        self.matrix = np.array([matrix], dtype=np.complex)
+        self.matrix = np.array(matrix, dtype=np.complex).reshape(n2, n2)
         return self
 
     def copy(self, name = None):
