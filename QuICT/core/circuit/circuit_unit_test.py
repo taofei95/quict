@@ -67,6 +67,9 @@ def test_sub_circuit():
     CX | circuit([2, 3])
     circuit.sub_circuit(slice(4), start="AA", max_size=1, remove=True).print_information()
     circuit.print_information()
+    new_circuit = Circuit(6)
+    circuit | new_circuit
+    new_circuit.print_information()
     assert 1
 
 def test_sub_circuit_local():

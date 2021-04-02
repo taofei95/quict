@@ -329,8 +329,9 @@ class Circuit(object):
         Raise:
             TypeException: the type of other is wrong
         """
-        for gate in self.gates:
-            gate | targets
+        from ..gate import GateSet
+        gates = GateSet(self.gates)
+        gates | targets
 
     # append gate methods
     def append(self, gate, qureg = None):
