@@ -6,6 +6,7 @@
 
 from .vbe import *
 from .mct import *
+from .hrs import *
 from .uniformly_gate import *
 from .initial_state_preparation import *
 
