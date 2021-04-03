@@ -2,7 +2,6 @@
 
 ## Project Structure
 
-
 Goto [detailed explanations](./doc/project_structure.md)
 
 ## How to use
@@ -13,7 +12,6 @@ Though releasing images on Docker Hub is in our agenda, currently
 docker users might need to build docker image from sources.
 With the docker file we provide in the repository, one can easily
 build a docker image with only a little performance loss. 
-
 
 ```
 docker build -t quict .
@@ -50,7 +48,6 @@ sudo dnf install make gcc gcc-c++ kernel-devel linux-headers tbb tbb-devel \
 
 ### Build & Install QuICT
 
-
 Following commands would build QuICT and install it system-wide.
 If you are going to install it into some python virtual environment, do it without any `sudo`. 
 
@@ -58,4 +55,3 @@ If you are going to install it into some python virtual environment, do it witho
 ./build.sh
 sudo ./install.sh
 ```
-
