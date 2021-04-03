@@ -31,7 +31,7 @@ def _add_alias(alias, standard_name):
                 GATE_ID[nm] = GATE_ID[standard_name]
 
 
-GATE_REGISTER = {-1: "Error"}
+GATE_STANDARD_NAME_OF = {-1: "Error"}
 # Get standard gate name by gate id.
 
 
@@ -41,7 +41,7 @@ GATE_ID = {"Error": -1}
 GATE_ID_CNT = 0
 # Gate number counter.
 
-GATE_NAME = {}
+GATE_NAME_TO_INSTANCE = {}
 # Gate name mapping
 
 GATE_SET_LIST = []
@@ -50,11 +50,11 @@ GATE_SET_LIST = []
 # add gate into list environment
 
 def gate_implementation(cls):
-    global GATE_REGISTER
+    global GATE_STANDARD_NAME_OF
     global GATE_ID
     global GATE_ID_CNT
 
-    GATE_REGISTER[GATE_ID_CNT] = cls
+    GATE_STANDARD_NAME_OF[GATE_ID_CNT] = cls
     GATE_ID[cls.__name__] = GATE_ID_CNT
     GATE_ID_CNT += 1
 
@@ -69,17 +69,17 @@ def gate_build_name(gate, name=None):
     global gate_order
     gate_order += 1
     if name is not None:
-        gate.name = name
-        if name in GATE_NAME:
+        if name in GATE_NAME_TO_INSTANCE:
             raise Exception("the gate's name exists.")
+        gate.name = name
     else:
         random_str = ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(6))
         name = f"{gate.__class__.__name__}_{gate_order}_{random_str}"
-        while name in GATE_NAME:
+        while name in GATE_NAME_TO_INSTANCE:
             random_str = ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(6))
             name = f"{gate.__class__.__name__}_{gate_order}_{random_str}"
         gate.name = name
-    GATE_NAME[gate.name] = gate
+    GATE_NAME_TO_INSTANCE[gate.name] = gate
 
 
 class BasicGate(object):
@@ -2538,7 +2538,7 @@ class CCRzGate(ComplexGate):
         return _CCRz
 
     def build_gate(self):
-        from .gate_set import CompositeGate
+        from .composite_gate import CompositeGate
         qureg = self.affectArgs
         gates = CompositeGate()
 
@@ -2600,7 +2600,7 @@ class QFTGate(ComplexGate):
         return _IQFT
 
     def build_gate(self):
-        from .gate_set import CompositeGate
+        from .composite_gate import CompositeGate
         qureg = self.affectArgs
         gates = CompositeGate()
 
@@ -2655,17 +2655,13 @@ class IQFTGate(ComplexGate):
         return "QFT gate"
 
     def inverse(self):
-        _unitary = UnitaryGate()
-        _unitary.targs = copy.deepcopy(self.targs)
-        _unitary.matrix = np.array(np.mat(self._matrix).reshape(1 << self.targets, 1 << self.targets).
-                                   H.reshape(1, -1), dtype=np.complex)
-        _unitary.targets = self.targets
-        _unitary.params = self.params
-        _unitary.controls = self.controls
-        return _unitary
+        _QFT = QFTGate()
+        _QFT.targs = copy.deepcopy(self.targs)
+        _QFT.targets = self.targets
+        return _QFT
 
     def build_gate(self):
-        from .gate_set import CompositeGate
+        from .composite_gate import CompositeGate
         qureg = self.affectArgs
         gates = CompositeGate()
 
@@ -2678,3 +2674,63 @@ class IQFTGate(ComplexGate):
 
 
 IQFT = IQFTGate(["IQFT", "iqft"])
+
+class CSwapGate(ComplexGate):
+    """ Fredkin gate
+
+    When using this gate, it will be showed as a whole gate
+    instend of being split into smaller gate
+
+    """
+
+    _matrix = np.array([
+        [1, 0, 0, 0],
+        [0, 0, 1, 0],
+        [0, 1, 0, 0],
+        [0, 0, 0, 1]
+    ], dtype=np.complex)
+
+    _compute_matrix = np.array([
+        [1, 0, 0, 0, 0, 0, 0, 0],
+        [0, 1, 0, 0, 0, 0, 0, 0],
+        [0, 0, 1, 0, 0, 0, 0, 0],
+        [0, 0, 0, 1, 0, 0, 0, 0],
+        [0, 0, 0, 0, 1, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 1, 0],
+        [0, 0, 0, 0, 0, 1, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 1]
+    ], dtype=np.complex)
+
+    @property
+    def compute_matrix(self) -> np.ndarray:
+        return self._compute_matrix
+
+    def __init__(self, alias=None):
+        _add_alias(alias=alias, standard_name=self.__class__.__name__)
+        super().__init__(alias=None)
+        self.controls = 1
+        self.targets = 2
+        self.params = 0
+        self.qasm_name = "cswap"
+
+    def __str__(self):
+        return "cswap gate"
+
+    def inverse(self):
+        _CSwap = CSwapGate(alias=None)
+        _CSwap.cargs = copy.deepcopy(self.cargs)
+        _CSwap.targs = copy.deepcopy(self.targs)
+        return _CSwap
+
+    def build_gate(self):
+        from .composite_gate import CompositeGate
+        qureg = self.affectArgs
+        gates = CompositeGate()
+
+        with gates:
+            CX & (qureg[2], qureg[1])
+            CCX & qureg
+            CX & (qureg[2], qureg[1])
+        return gates
+
+CSwap = CSwapGate(["Fredkin", "CSwap", "cswap"])

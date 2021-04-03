@@ -52,13 +52,11 @@ class OPENQASMInterface(BasicInterface):
                           "cy": GATE_ID["CY"],
                           "cz": GATE_ID["CZ"],
                           "ch": GATE_ID["CH"],
-                          "crz": GATE_ID["CRz"]}
-
-    extern_extension = {
-                          "rzz" : EXTENSION_GATE_ID["RZZ"],
-                          "cu1" : EXTENSION_GATE_ID["CU1"],
-                          "cu3" : EXTENSION_GATE_ID["CU3"],
-                          "cswap" : EXTENSION_GATE_ID["Fredkin"]
+                          "crz": GATE_ID["CRz"],
+                          "rzz" : GATE_ID["RZZ"],
+                          "cu1": GATE_ID["CU1"],
+                          "cu3": GATE_ID["CU3"],
+                          "cswap": GATE_ID["Fredkin"]
     }
 
     token = None

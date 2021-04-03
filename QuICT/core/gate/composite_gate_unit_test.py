@@ -2,7 +2,7 @@
 # -*- coding:utf8 -*-
 # @TIME    : 2021/3/28 12:03 上午
 # @Author  : Han Yu
-# @File    : gate_set_unit_test
+# @File    : composite_gate_unit_test
 
 import pytest
 
@@ -71,4 +71,4 @@ def test_add_gate():
 
 if __name__ == "__main__":
     # pytest.main(["./_unit_test.py", "./circuit_unit_test.py", "./gate_unit_test.py", "./qubit_unit_test.py"])
-    pytest.main(["./gate_set_unit_test.py"])
+    pytest.main(["./composite_gate_unit_test.py"])

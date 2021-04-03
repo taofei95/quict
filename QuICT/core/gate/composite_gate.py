@@ -2,7 +2,7 @@
 # -*- coding:utf8 -*-
 # @TIME    : 2021/3/24 9:36 下午
 # @Author  : Han Yu
-# @File    : gate_set
+# @File    : composite_gate
 
 from .gate import *
 

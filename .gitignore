@@ -12,3 +12,4 @@ __pycache__/
 make.bat
 .idea
 */*.jpg
+.vscode
