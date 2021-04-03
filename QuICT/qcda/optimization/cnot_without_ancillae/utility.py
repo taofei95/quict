@@ -41,9 +41,7 @@ class Merged:
         Merged
         """
         d = self.deg + other.deg
-        x = []
-        x.extend(self.nodes)
-        x.extend(other.nodes)
+        x = self.nodes + other.nodes
         return Merged(d, x)
 
     def __lt__(self, other):
