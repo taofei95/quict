@@ -780,6 +780,102 @@ class ZGate(BasicGate):
 
 Z = ZGate(alias=["Z"])
 
+class SXGate(BasicGate):
+    """ sqrt(X) gate
+
+    """
+
+    _matrix = np.array([
+            1 / np.sqrt(2), -1j / np.sqrt(2),
+            -1j / np.sqrt(2), 1 / np.sqrt(2)
+        ], dtype=np.complex)
+
+    def __init__(self, alias=None):
+        _add_alias(alias=alias, standard_name=self.__class__.__name__)
+        super().__init__(alias=None)
+        self.controls = 0
+        self.targets = 1
+        self.params = 0
+        self.qasm_name = "sx"
+
+    def __str__(self):
+        return "sqrt(X) gate"
+
+    def inverse(self):
+        _Rx = RxGate(alias=None)
+        _Rx.targs = copy.deepcopy(self.targs)
+        _Rx.pargs = [-np.pi / 2]
+        return _Rx
+
+    def exec(self, circuit):
+        exec_single(self, circuit)
+
+SX = SXGate(["SX", "sx", "Sx"])
+
+class SYGate(BasicGate):
+    """ sqrt(Y) gate
+
+    """
+
+    _matrix = np.array([
+        1 / np.sqrt(2), -1 / np.sqrt(2),
+        1 / np.sqrt(2), 1 / np.sqrt(2)
+    ], dtype=np.complex)
+
+    def __init__(self, alias=None):
+        _add_alias(alias=alias, standard_name=self.__class__.__name__)
+        super().__init__(alias=None)
+        self.controls = 0
+        self.targets = 1
+        self.params = 0
+        self.qasm_name = "sy"
+
+    def __str__(self):
+        return "sqrt(Y) gate"
+
+    def inverse(self):
+        _Ry = RyGate(alias=None)
+        _Ry.targs = copy.deepcopy(self.targs)
+        _Ry.pargs = [-np.pi / 2]
+        return _Ry
+
+    def exec(self, circuit):
+        exec_single(self, circuit)
+
+SY = SYGate(["SY", "sy", "Sy"])
+
+class SWGate(BasicGate):
+    """ sqrt(W) gate
+
+    """
+
+    _matrix = np.array([
+        1 / np.sqrt(2), -np.sqrt(1j / 2),
+        np.sqrt(-1j / 2), 1 / np.sqrt(2)
+    ], dtype=np.complex)
+
+    def __init__(self, alias=None):
+        _add_alias(alias=alias, standard_name=self.__class__.__name__)
+        super().__init__(alias=None)
+        self.controls = 0
+        self.targets = 1
+        self.params = 0
+        self.qasm_name = "sw"
+
+    def __str__(self):
+        return "sqrt(W) gate"
+
+    def inverse(self):
+        _U2 = U2Gate(alias=None)
+        _U2.targs = copy.deepcopy(self.targs)
+        _U2.pargs = [3 * np.pi / 4, 5 * np.pi / 4]
+        return _U2
+
+    def exec(self, circuit):
+        exec_single(self, circuit)
+
+SW = SWGate(["SW", "sw", "Sw"])
+
 class IDGate(BasicGate):
     """ Identity gate
 
