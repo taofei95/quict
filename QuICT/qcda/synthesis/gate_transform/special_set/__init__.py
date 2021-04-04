@@ -5,6 +5,6 @@
 # @File    : __init__.py
 
 from .google_set import GoogleSet
-from . import IBMQSet
+from .ibmq_set import IBMQSet
 from .ionq_set import IonQSet
 from .ustc_set import USTCSet

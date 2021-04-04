@@ -16,7 +16,7 @@ def test_gate_transform():
         circuit = Circuit(i)
         circuit.random_append(5)
         gateSet = GateTransform(circuit)
-        assert np.allclose(gateSet.matrix(), GateSet(circuit, with_copy=False).matrix(), rtol=eps, atol=eps):
+        assert np.allclose(gateSet.matrix(), GateSet(circuit, with_copy=False).matrix(), rtol=eps, atol=eps)
 
 if __name__ == "__main__":
     pytest.main(["./unit_test.py"])

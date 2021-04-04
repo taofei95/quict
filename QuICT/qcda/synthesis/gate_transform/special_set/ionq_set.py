@@ -5,8 +5,7 @@
 # @File    : ionq_set
 
 from .. import InstructionSet
-from ..transform_rule import TransformRule
-from .. import ZyzRule
+from ..transform_rule import TransformRule, ZyzRule
 
 from QuICT.core import *
 
