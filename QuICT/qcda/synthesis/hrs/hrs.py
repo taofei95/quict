@@ -436,6 +436,65 @@ def CCAdderModReverse(control1,control2,b,a,N,g,indicator):
     """
     CCAdderMod(control1,control2,b,N-a,N,g,indicator)
 
+#x: n bits, b: n bits
+def CMulModRaw(control,x,a,b,N,indicator):
+    """
+    Compute b(quantum) + x(quantum) * a(classical) mod N(classical), with target qubits b and ancilla qubit indicator, 1-controlled.
+
+    Args:
+        control: 1 qubit.
+        x: n qubits.
+        b: n qubits, target.
+        indicator: 1 ancilla qubit.
+        a: integer.
+        N: integer.
+    """
+    n = len(x)
+    a_list = []
+    for i in range(n):
+        a_list.append(a)
+        a = a*2 %N
+    for i in range(n):
+        #borrow all the n-1 unused qubits in x
+        g = x[:n-i-1]+x[n-i:]
+        CCAdderMod(control,x[n-1-i],b,a_list[i],N,g,indicator)
+
+def CMulModRawReverse(control,x,a,b,N,indicator):
+    n = len(x)
+    a_list = []
+    for i in range(n):
+        a_list.append(a)
+        a = a*2 %N
+    for i in range(n):
+        g = x[:i]+x[i+1:]
+        CCAdderMod(control,x[i],b,N-a_list[n-i-1],N,g,indicator)
+
+def CSwap(control,a,b):
+    CX  | (a,b)
+    CCX | (control,b,a)
+    CX  | (a,b)
+
+#x: n bits, ancilla: n bits, indicator: 1 bit
+def CMulMod(control,x,a,ancilla,N,indicator):
+    """
+    Compute x(quantum) * a(classical) mod N(classical), with ancilla qubits, 1-controlled.
+
+    Args:
+        control: 1 qubit.
+        x: n qubits.
+        ancilla: n qubits.
+        indicator: 1 qubit.
+        a: integer.
+        N: integer.
+    """
+    n = len(x)
+    a_r = ModReverse(a,N)
+    CMulModRaw(control,x,a,ancilla,N,indicator)
+    #CSwap
+    for i in range(n):
+        CSwap(control,x[i],ancilla[i])
+    CMulModRawReverse(control,x,a_r,ancilla,N,indicator)
+
 
 
 class HRSModel(Synthesis):
@@ -576,3 +635,56 @@ class HRSCCAdderModModel(HRSModel):
         return circuit
 
 HRSCCAdderMod = HRSCCAdderModModel()
+
+class HRSCMulModRawModel(HRSModel):
+    def __call__(self,n,a,N):
+        self.pargs = [n, a, N]
+        return self
+
+    def build_gate(self):
+        """ Overload the function build_gate.
+
+        Returns:
+            Circuit: the Incrementer circuit
+        """
+        n = self.pargs[0]
+        a = self.pargs[1]
+        N = self.pargs[2]
+
+        circuit = Circuit(2 * n + 2)
+        control = circuit(0)
+        qubit_x = circuit([i for i in range(1, n + 1)])
+        qubit_b = circuit([i for i in range(n + 1, 2 * n + 1)])
+        indicator = circuit(2 * n + 1)
+        CMulModRaw(control, qubit_x, a, qubit_b, N, indicator)
+        return circuit
+
+HRSCMulModRaw = HRSCMulModRawModel()
+
+
+class HRSCMulModModel(HRSModel):
+    def __call__(self,n,a,N):
+        self.pargs = [n, a, N]
+        return self
+
+    def build_gate(self):
+        """ Overload the function build_gate.
+
+        Returns:
+            Circuit: the Incrementer circuit
+        """
+        n = self.pargs[0]
+        a = self.pargs[1]
+        N = self.pargs[2]
+
+        circuit = Circuit(2 * n + 2)
+        control = circuit(0)
+        qubit_x = circuit([i for i in range(1, n + 1)])
+        ancilla = circuit([i for i in range(n + 1, 2 * n + 1)])
+        indicator = circuit(2 * n + 1)
+        CMulMod(control, qubit_x, a, ancilla, N, indicator)
+        return circuit
+
+HRSCMulMod = HRSCMulModModel()
+
+

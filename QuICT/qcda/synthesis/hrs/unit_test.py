@@ -1,6 +1,56 @@
 from QuICT.algorithm import *
 from QuICT.core import *
-from QuICT.qcda.synthesis import HRSIncrementer, HRSCAdder, HRSCSub, HRSCCCompare, HRSCCAdderMod
+from QuICT.qcda.synthesis import HRSIncrementer, HRSCAdder, HRSCSub, HRSCCCompare, HRSCCAdderMod, HRSCMulModRaw, HRSCMulMod
+
+def Set(qreg, N):
+    """
+    Set the qreg as N, using X gates on specific qubits
+    """
+    n = len(qreg)
+    for i in range(n):
+        if N % 2 == 1:
+            X | qreg[n-1-i]
+        N = N//2
+
+def test6():
+    # n > 2 should obey
+    circuit = Circuit(8)
+    circuit.assign_initial_zeros()
+    X | circuit(0)
+    b = 0
+    x = 1
+    a = 4
+    N = 2
+    # seems that b = 0 x = 1, the mod computation doesn't work.
+    # when b = 0, x = 1, a = 5, N = 4, expected result = 1, but the result we get is 5
+    qubit_x = circuit([1, 2, 3])
+    qubit_b = circuit([4, 5, 6])
+    Set(qubit_x, x)
+    Set(qubit_b, b)
+    HRSCMulModRaw(3, a, N) | circuit
+    Measure | circuit
+    circuit.exec()
+
+    qubit_target = circuit([4, 5, 6])
+    print(int(qubit_target))
+
+def test7():
+    # x * a mod N
+    # n = 3
+    circuit = Circuit(8)
+    circuit.assign_initial_zeros()
+    X | circuit(0)
+    x = 1
+    a = 2
+    N = 4
+    qubit_x = circuit([1, 2, 3])
+    Set(qubit_x, x)
+    HRSCMulMod(3, a, N) | circuit
+    Measure | circuit
+    circuit.exec()
+
+    qubit_target = circuit([1, 2, 3])
+    print(int(qubit_target))
 
 def test1():
     circuit = Circuit(4)
@@ -61,12 +111,9 @@ def test5():
     qreg = circuit([i for i in range(8)])
     y = int(qreg)
     print(y)
-    # amplitude = Amplitude.run(circuit)
-    # print(type(amplitude))
-    # print(amplitude)
 
 if __name__ == "__main__":
     s = "test"
-    num = 5 # change the number to switch test function
+    num = 7 # change the number to switch test function
     locals()[s + str(num)]()
 
