@@ -118,7 +118,6 @@ class InstructionSet(object):
         self.__SU4_rule = None
         self.__SU2_rule = None
         self.__rule_map = {}
-        self.select_default_rule(self.two_qubit_gate, self.one_qubit_gates)
 
     def select_transform_rule(self, source) ->  TransformRule:
         """ choose a rule which transforms source gate into target gate(2-qubit)

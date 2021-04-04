@@ -39,7 +39,7 @@ def GateTransformModel(circuit, instruction_set = USTCSet):
         instruction_set(InstructionSet): the goal instruction set
 
     Returns:
-        circuit(Circuit): the equivalent circuit with goal instruction set
+        GateSet: the equivalent gateSet with goal instruction set
     """
     gateSet = GateSet(circuit.gates, with_copy = False)
 
@@ -65,5 +65,6 @@ def GateTransformModel(circuit, instruction_set = USTCSet):
             unitaries[gate.carg] = np.identity(2, dtype=np.complex)
     for i in range(circuit.circuit_width()):
         gateSetStep2.extend(instruction_set.SU2_rule.transform(unitaries[i]))
+    return gateSetStep2
 
 GateTransform = Synthesis(GateTransformModel)
