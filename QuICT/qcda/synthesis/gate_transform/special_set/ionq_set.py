@@ -13,5 +13,5 @@ def _IonQ_SU4(gate):
     pass
 
 IonQSet = InstructionSet(Rxx, [Rx, Ry, Rz])
-IonQSet.register_SU2_rule(TransformRule(ZyzRule))
+IonQSet.register_SU2_rule(ZyzRule)
 IonQSet.register_SU4_rule(TransformRule(_IonQ_SU4))

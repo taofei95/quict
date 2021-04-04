@@ -48,8 +48,8 @@ def GateTransformModel(circuit, instruction_set = USTCSet):
     for gate in gateSet:
         if gate.targets + gate.controls > 2:
             raise Exception("gate_transform only support 2-qubit and 1-qubit gate now.")
-        if gate.targets + gate.controls == 2:
-            rule = _two_qubit_transform(gate, self)
+        if gate.type() != instruction_set.two_qubit_gate and gate.targets + gate.controls == 2:
+            rule = _two_qubit_transform(gate, instruction_set)
             gateSetStep1.extend(rule.transform(gate))
         else:
             gateSetStep1.append(gate)
@@ -59,12 +59,13 @@ def GateTransformModel(circuit, instruction_set = USTCSet):
     unitaries = [np.identity(2, dtype=np.complex) for i in range(circuit.circuit_width())]
     for gate in gateSetStep1:
         if gate.targets + gate.controls == 2:
-            gateSetStep2.extend(instruction_set.SU2_rule.transform(unitaries[gate.targ]))
-            gateSetStep2.extend(instruction_set.SU2_rule.transform(unitaries[gate.carg]))
+            print(instruction_set.SU2_rule.transform)
+            gateSetStep2.extend(instruction_set.SU2_rule.transform(Unitary(unitaries[gate.targ]) & gate.targ))
+            gateSetStep2.extend(instruction_set.SU2_rule.transform(Unitary(unitaries[gate.carg]) & gate.carg))
             unitaries[gate.targ] = np.identity(2, dtype=np.complex)
             unitaries[gate.carg] = np.identity(2, dtype=np.complex)
     for i in range(circuit.circuit_width()):
-        gateSetStep2.extend(instruction_set.SU2_rule.transform(unitaries[i]))
+        gateSetStep2.extend(instruction_set.SU2_rule.transform(Unitary(unitaries[i]) & i))
     return gateSetStep2
 
 GateTransform = Synthesis(GateTransformModel)

@@ -290,6 +290,7 @@ class BasicGate(object):
                 circuit.append(gate, qureg)
         except Exception:
             raise TypeException("qubit or tuple<qubit, qureg> or qureg or list<qubit, qureg> or circuit", targets)
+        return self
 
     # gate behavior
     def __and__(self, targets):
@@ -324,6 +325,7 @@ class BasicGate(object):
             raise TypeException("int or tuple<int> or list<int>", targets)
         if len(GATE_SET_LIST):
             GATE_SET_LIST[-1].append(self.copy())
+        return self
 
     def __mod__(self, name):
         """

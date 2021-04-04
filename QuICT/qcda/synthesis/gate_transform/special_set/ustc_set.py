@@ -13,5 +13,5 @@ def _IonQ_SU4(gate):
     pass
 
 USTCSet = InstructionSet(CX, [Rx, Ry, Rz, H, X])
-USTCSet.register_SU2_rule(TransformRule(ZyzRule))
+USTCSet.register_SU2_rule(ZyzRule)
 USTCSet.register_SU4_rule(TransformRule(_IonQ_SU4))

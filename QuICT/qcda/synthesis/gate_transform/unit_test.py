@@ -12,11 +12,12 @@ from QuICT.core import *
 from QuICT.qcda.synthesis import GateTransform
 
 def test_gate_transform():
-    for i in range(5):
+    for i in range(2, 3):
         circuit = Circuit(i)
-        circuit.random_append(5)
+        X | circuit
         gateSet = GateTransform(circuit)
-        assert np.allclose(gateSet.matrix(), GateSet(circuit, with_copy=False).matrix(), rtol=eps, atol=eps)
+        B = GateSet(circuit, with_copy=False)
+        assert gateSet.equal(B)
 
 if __name__ == "__main__":
     pytest.main(["./unit_test.py"])
