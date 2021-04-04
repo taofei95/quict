@@ -88,7 +88,7 @@ def inner_random_append(circuit, rand_size=10, typeList=None):
     from QuICT.core import GateBuilder, GATE_ID
     if typeList is None:
         typeList = [GATE_ID["CX"], GATE_ID["ID"], GATE_ID["Rz"], GATE_ID["CY"], GATE_ID["CRz"], GATE_ID["CH"]]
-    qubit = len(circuit.qubits)
+    qubit = circuit.circuit_width()
     for _ in range(rand_size):
         rand_type = random.randrange(0, len(typeList))
         GateBuilder.setGateType(typeList[rand_type])

@@ -376,7 +376,7 @@ class GateSet(list):
                     nowj = datas[j]
                     if (i & xor) != (j & xor):
                         continue
-                    new_values[i][j] = matrix[nowi][nowj]
+                    new_values[i][j] = matrix[nowi, nowj]
             result = np.dot(new_values, result)
         return result
 
