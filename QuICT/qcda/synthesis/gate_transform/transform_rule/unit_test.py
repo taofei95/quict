@@ -12,5 +12,4 @@ from QuICT.qcda.synthesis.gate_transform import *
 
 
 if __name__ == "__main__":
-    # print(Crz2CxRule.check_equal())
-    print(Ryy2RxxRule.check_equal())
+    print(Crz2CxRule.check_equal())
