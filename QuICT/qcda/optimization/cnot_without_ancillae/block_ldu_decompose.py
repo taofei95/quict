@@ -19,21 +19,22 @@ class BlockLDUDecompose:
         """
         mat = mat_.copy()
         n = mat.shape[0]
-        l_size = n // 2
-        selected = [0]
+        s_size = n // 2
+        selected = []
         unselected = []
-        rk = 1
-        for i in range(1, n):
+        rk = 0
+        for i in range(n):
             selected.append(i)
-            sub_mat: np.ndarray = mat[[selected], :l_size][0]  # shape manipulate
-            if len(selected) > f2_rank(sub_mat):
-                unselected.append(selected.pop())
-            else:
+            sub_mat = mat[selected, :s_size]
+            slct_rk = f2_rank(sub_mat)
+            if slct_rk == len(selected):
                 rk += 1
-                if rk == l_size:
+                if rk == s_size:
                     for j in range(i + 1, n):
-                        selected.append(j)
+                        unselected.append(j)
                     break
+            else:
+                unselected.append(selected.pop())
         selected.extend(unselected)
         return selected
 
@@ -41,7 +42,7 @@ class BlockLDUDecompose:
     def run(cls, mat_: np.ndarray) \
             -> Tuple[np.ndarray, np.ndarray, np.ndarray, List[int]]:
         """
-        Block LDU decompose of a boolean matrix.
+        Block LDU decomposition of a boolean matrix.
 
         Args:
             mat_(np.ndarray): Boolean matrix to be decomposed

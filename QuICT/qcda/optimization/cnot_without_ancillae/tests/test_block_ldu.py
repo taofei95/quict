@@ -18,21 +18,45 @@ def f2_random_invertible_matrix_gen(n) -> np.ndarray:
 
 
 def test_f2_half_gaussian_elimination():
-    rnd = 300
+    rnd = 500
     for _ in range(rnd):
-        n = random.randint(1, 200)
         m = random.randint(1, 200)
-        mat_ = np.empty(shape=(n, m), dtype=bool)
-        for i in range(n):
-            for j in range(m):
-                mat_[i, j] = np.random.choice((True, False))
-        mat_cpy = mat_.copy()
-        mat = f2_half_gaussian_elimination(mat_)
+        n = random.randint(1, 200)
+        mat_: np.ndarray = np.random.rand(m, n) > 0.5
+        mat_cpy: np.ndarray = mat_.copy()
+        mat_result = f2_half_gaussian_elimination(mat_)
         assert np.allclose(mat_, mat_cpy)
-        t = min(n, m)
-        for i in range(t):
-            for j in range(i):
-                assert not mat[i, j]
+        last = -1
+        for i in range(m):
+            j = 0
+            while j < n:
+                if not mat_result[i, j]:
+                    j += 1
+                else:
+                    break
+            assert j > last or j == n
+            assert j >= i or j == n
+            last = j
+
+
+def test_f2_rank():
+    rnd = 500
+    for _ in range(rnd):
+        n = random.randint(2, 200)
+        expected_rank = random.randint(1, n)
+        diag = [True for _ in range(expected_rank)]
+        diag.extend([False for _ in range(n - expected_rank)])
+        random.shuffle(diag)
+        diag = np.array(diag, dtype=bool)
+        mat = np.diag(diag)
+        rg_lst = [i for i in range(n)]
+        for _ in range(20 * n):
+            x = random.sample(rg_lst, 2)
+            i = x[0]
+            j = x[1]
+            mat[i, :] ^= mat[j, :]
+        rk = f2_rank(mat)
+        assert expected_rank == rk
 
 
 def test_f2_inverse():
@@ -48,6 +72,22 @@ def test_f2_inverse():
         prod = f2_matmul(mat_inv, mat_)
         eye = np.eye(n, dtype=bool)
         assert np.allclose(prod, eye)
+
+
+def test_ldu_remapping():
+    rnd = 500
+    for _ in range(rnd):
+        n = random.randint(2, 200)
+        mat_ = f2_random_invertible_matrix_gen(n)
+        mat_cpy = mat_.copy()
+        remapping = BlockLDUDecompose.remapping_select(mat_)
+        assert np.allclose(mat_, mat_cpy)
+        assert len(remapping) == n
+        assert len(set(remapping)) == n
+        assert sorted(remapping) == [i for i in range(n)]
+        sub_mat: np.ndarray = mat_[remapping][:n // 2, :n // 2]
+        assert sub_mat.shape == (n // 2, n // 2)
+        assert f2_rank(sub_mat) == n // 2
 
 
 def test_block_ldu():

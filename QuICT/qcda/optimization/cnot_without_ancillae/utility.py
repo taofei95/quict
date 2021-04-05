@@ -69,26 +69,32 @@ def f2_matmul(a: np.ndarray, b: np.ndarray) -> np.ndarray:
 
 def f2_half_gaussian_elimination(mat_: np.ndarray) -> np.ndarray:
     mat: np.ndarray = mat_.copy()
-    n = min(mat.shape[0], mat.shape[1])
-    for i in range(n):
-        if not mat[i, i]:
-            for j in range(i + 1, mat.shape[0]):
-                if mat[j, i]:
-                    mat[[i, j], :] = mat[[j, i], :]
+    row_pivot = 0
+    col_pivot = 0
+    m = mat.shape[0]
+    n = mat.shape[1]
+    while row_pivot < m and col_pivot < n:
+        if not mat[row_pivot, col_pivot]:
+            for k in range(row_pivot + 1, m):
+                if mat[k, col_pivot]:
+                    mat[[k, row_pivot], :] = mat[[row_pivot, k], :]
                     break
-        if mat[i, i]:
-            for j in range(i + 1, mat.shape[0]):
-                if mat[j, i]:
-                    mat[j, :] ^= mat[i, :]
+        if mat[row_pivot, col_pivot]:
+            for k in range(row_pivot + 1, m):
+                if mat[k, col_pivot]:
+                    mat[k, :] ^= mat[row_pivot, :]
+            row_pivot += 1
+            col_pivot += 1
+        else:
+            col_pivot += 1
     return mat
 
 
 def f2_rank(mat_: np.ndarray) -> int:
     mat = f2_half_gaussian_elimination(mat_)
     rk = 0
-    n = min(mat.shape[0], mat.shape[1])
-    for i in range(n):
-        if mat[i, i]:
+    for i in range(mat.shape[0]):
+        if np.any(mat[i, :]):
             rk += 1
     return rk
 
@@ -106,6 +112,8 @@ def f2_inverse(mat_: np.ndarray) -> np.ndarray:
                 if aug[k, i]:
                     aug[[k, i], :] = aug[[i, k], :]
                     break
+        if not aug[i, i]:
+            raise Exception("Matrix is not invertible!")
         for k in range(n):
             if i != k and aug[k, i]:
                 aug[k, :] ^= aug[i, :]
