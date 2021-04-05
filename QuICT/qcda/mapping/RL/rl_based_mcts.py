@@ -82,10 +82,16 @@ class RLBasedMCTS(TableBasedMCTS):
             self._search(root_node = self._root_node)
             node = self._root_node
             print([self._root_node.num_of_gates, self._num_of_swap_gates ])
+            print(self._root_node.value)
             self._logger.info(self._root_node.value)
             self._logger.info([self._root_node.num_of_gates, self._num_of_swap_gates ])
             
             self._root_node = self._decide(node = self._root_node)
+            if self._root_node.reward == 0:
+                self._fallback_count +=1
+            else:
+                self._fallback_count = 0
+
             if self._mode == MCTSMode.TRAIN:
                 if self._experience_pool is not None:
                     #print("exp")
@@ -94,10 +100,11 @@ class RLBasedMCTS(TableBasedMCTS):
                     raise Exception("Experience pool is not defined.")
 
             self._num_of_swap_gates += 1
-            self._physical_circuit.append(self._root_node.swap_of_edge)
+            self._physical_circuit.append(self._coupling_graph.get_swap_gate(self._root_node.swap_of_edge))
             self._add_executable_gates(node = self._root_node)
             #print(self._root_node.num_of_gates)
-
+            if self._fallback_count > self._fallback_threshold:
+                self._root_node = self._fall_back(node = self._root_node)
 
         if self._mode == MCTSMode.TRAIN:     
             if self._experience_pool is not None:
@@ -152,7 +159,8 @@ class RLBasedMCTS(TableBasedMCTS):
         policy_scores, value_scores = self._model(qubits, padding_mask, adj)
         value = value_scores.detach().to(torch.device('cpu')).numpy().squeeze()
         node.sim_value = value
-        node.value = node.reward + self._gamma * value
+        node.value =  value
+        node.w = value
         prob = self._softmax(policy_scores.squeeze()).detach().to(torch.device('cpu')).numpy()
         
         if self._extended:
@@ -175,14 +183,15 @@ class RLBasedMCTS(TableBasedMCTS):
         policy_scores, value_scores = self._output.recv()
         value = value_scores.numpy().squeeze()
         node.sim_value = value
-        node.value = value
+        node.value = value 
+        node.w = value
         prob = self._softmax(policy_scores).numpy()
 
         if self._extended:
             self._get_candidate_swap_list(node = node)
             node.edge_prob = prob
         else:
-            super()._get_candidate_swap_list(node = node, pre_prob= True)
+            super()._get_candidate_swap_list(node = node)
             node.edge_prob = [prob[idx]  for idx in node.candidate_swap_list]
         return node.value
 
@@ -220,7 +229,7 @@ class RLBasedMCTS(TableBasedMCTS):
         value = np.ndarray(len(node.candidate_swap_list), dtype = np.float)
         for i, child in enumerate(node.children):
             prob[i] = child.visit_count
-            value[i] = child.value
+            value[i] = self._gamma * child.value + child.reward
         #print(2)
         prob = prob / np.sum(prob)
         node.visit_count_prob = prob

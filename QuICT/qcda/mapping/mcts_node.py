@@ -60,9 +60,11 @@ class MCTSNode:
         self._best_swap_gate: int = -1
         self._visit_count_prob: List[float] = []
 
+        self._executed_gates: np.ndarray = None
         self._visit_count = 0   
         self._value: float = 0
         self._edge_prob: np.ndarray = None
+        self._sim_gates = 0
         self._sim_value = 0
         self._reward = 0
         self._v = 0
@@ -102,6 +104,19 @@ class MCTSNode:
         """
         """
         self._num_of_gates = value
+
+    @property
+    def sim_gates(self):
+        """
+        The number of gates remaining in the circuit
+        """
+        return self._sim_gates
+    
+    @sim_gates.setter
+    def sim_gates(self, value):
+        """
+        """
+        self._sim_gates = value
 
     @property
     def coupling_graph(self)->CouplingGraph:
@@ -160,6 +175,14 @@ class MCTSNode:
         """
         """
         self._value = value
+
+    @property
+    def executed_gates(self)->np.ndarray:
+        
+        return self._executed_gates
+    @executed_gates.setter
+    def executed_gates(self, gates: np.ndarray):
+        self._executed_gates = gates
     
     @property
     def prob_of_edge(self)->float:
@@ -320,6 +343,7 @@ class MCTSNode:
         The set of the child nodes of the current node
         """
         return self._children
+
    
     @property
     def swap_of_edge(self)->int:
@@ -409,6 +433,7 @@ class MCTSNode:
                 raise MappingLayoutException()
         else:
             raise TypeException("swap gate","other gate")
+        return child_node
         
     
     def is_leaf_node(self):
@@ -455,7 +480,7 @@ class MCTSNode:
             else:
                 self._front_layer.append(gate)
         self._reward = len(self._execution_list)
-        self._value = self._reward
+        #self._value = self._reward
         self._num_of_gates =self._num_of_gates - len(self._execution_list)
     
     def _update_fl_stack(self, stack: deque, gate_in_dag: int):
@@ -541,73 +566,5 @@ class MCTSNode:
         """
         return MCTSNode(circuit_dag=self._circuit_dag, coupling_graph= self._coupling_graph,
                        front_layer=self._front_layer.copy(), qubit_mask=self._qubit_mask.copy(),cur_mapping=self._cur_mapping.copy())
-
-
-
-
-class MCTSBase:
-
-    def __init__(self, **params):
-        """
-        initialize the Monte Carlo tree search with the given parameters 
-        """
-
-    @property
-    def coupling_graph(self):
-        """
-        """
-        pass
-
-    @abstractmethod
-    def search(self, circuit : Circuit):
-        """
-        """
-        pass
-
-    @abstractmethod
-    def _expand(self, cur_node : MCTSNode):
-        """
-        open all child nodes of the  current node by applying the swap gates in candidate swap list
-        """
-        pass
-
-    @abstractmethod
-    def _rollout(self, cur_node : MCTSNode, method: str):
-        """
-        complete a heuristic search from the current node
-        """
-        pass
-    
-    @abstractmethod
-    def _backpropagate(self, cur_node : MCTSNode):
-        """
-        use the result of the rollout to update the score in the nodes on the path from the current node to the root 
-        """
-        pass
-
-    @abstractmethod
-    def _select(self, cur_node : MCTSNode):
-        """
-        select the child node with highest score
-        """
-        pass
-    @abstractmethod
-    def _eval(self, cur_node : MCTSNode):
-        """
-        evaluate the value of the current node by DNN method
-        """
-        pass
-
-    @abstractmethod 
-    def _decide(self,cur_node : MCTSNode):
-        """
-
-        """
-        pass
-
-    def _read_coupling_graph(self, file_name: str):
-        """
-        """
-        pass
 
 

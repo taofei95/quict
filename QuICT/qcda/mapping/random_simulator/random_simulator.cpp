@@ -1280,8 +1280,8 @@ typedef npy_clongdouble __pyx_t_5numpy_clongdouble_t;
 typedef npy_cdouble __pyx_t_5numpy_complex_t;
 struct __pyx_opt_args_16random_simulator_15RandomSimulator_change_qubit_mapping_with_swap_gate;
 
-/* "random_simulator.pyx":108
- *         return n-1
+/* "random_simulator.pyx":120
+ * 
  * 
  *     cdef vector[int] change_qubit_mapping_with_swap_gate(self, vector[int] &qubit_mapping, vector[int] &qubit_inverse_mapping, vector[int] &qubit_mask,             # <<<<<<<<<<<<<<
  *                                                     vector[int] swap_gate, bint in_palace = False) nogil:
@@ -1414,6 +1414,7 @@ struct __pyx_vtabstruct_16random_simulator_RandomSimulator {
   float (*_f)(struct __pyx_obj_16random_simulator_RandomSimulator *, int);
   std::vector<float>  (*f)(struct __pyx_obj_16random_simulator_RandomSimulator *, std::vector<int>  &);
   unsigned int (*random_choice)(struct __pyx_obj_16random_simulator_RandomSimulator *, std::vector<float>  &, int);
+  unsigned int (*argmax)(struct __pyx_obj_16random_simulator_RandomSimulator *, std::vector<int>  &);
   std::vector<int>  (*change_qubit_mapping_with_swap_gate)(struct __pyx_obj_16random_simulator_RandomSimulator *, std::vector<int>  &, std::vector<int>  &, std::vector<int>  &, std::vector<int> , struct __pyx_opt_args_16random_simulator_15RandomSimulator_change_qubit_mapping_with_swap_gate *__pyx_optional_args);
   std::vector<int>  (*get_involved_qubits)(struct __pyx_obj_16random_simulator_RandomSimulator *, std::vector<int>  &, std::vector<int>  &);
   std::vector<int>  (*get_candidate_swap_gate_list)(struct __pyx_obj_16random_simulator_RandomSimulator *, std::vector<int>  &, std::vector<int>  &);
@@ -1424,8 +1425,9 @@ struct __pyx_vtabstruct_16random_simulator_RandomSimulator {
   int (*update_front_layer_2)(struct __pyx_obj_16random_simulator_RandomSimulator *, std::vector<int>  &, std::vector<int>  &, std::vector<int>  &, std::unordered_set<int>  &);
   std::unordered_set<int>  (*get_subcircuit)(struct __pyx_obj_16random_simulator_RandomSimulator *, std::vector<int> , std::vector<int> , int);
   float (*simulation_thread_swap)(struct __pyx_obj_16random_simulator_RandomSimulator *, int);
-  float (*simulation_thread_gates)(struct __pyx_obj_16random_simulator_RandomSimulator *, int);
-  float (*simulate)(struct __pyx_obj_16random_simulator_RandomSimulator *, PyObject *, PyObject *, PyObject *, int, int, int, int __pyx_skip_dispatch);
+  int (*simulation_thread_gates)(struct __pyx_obj_16random_simulator_RandomSimulator *, int);
+  std::vector<int>  (*simulation_thread_extended)(struct __pyx_obj_16random_simulator_RandomSimulator *, int);
+  int (*simulation_thread_determinstic)(struct __pyx_obj_16random_simulator_RandomSimulator *);
 };
 static struct __pyx_vtabstruct_16random_simulator_RandomSimulator *__pyx_vtabptr_16random_simulator_RandomSimulator;
 
@@ -1657,62 +1659,6 @@ static void __Pyx_WriteUnraisable(const char *name, int clineno,
                                   int lineno, const char *filename,
                                   int full_traceback, int nogil);
 
-/* PyDictVersioning.proto */
-#if CYTHON_USE_DICT_VERSIONS && CYTHON_USE_TYPE_SLOTS
-#define __PYX_DICT_VERSION_INIT  ((PY_UINT64_T) -1)
-#define __PYX_GET_DICT_VERSION(dict)  (((PyDictObject*)(dict))->ma_version_tag)
-#define __PYX_UPDATE_DICT_CACHE(dict, value, cache_var, version_var)\
-    (version_var) = __PYX_GET_DICT_VERSION(dict);\
-    (cache_var) = (value);
-#define __PYX_PY_DICT_LOOKUP_IF_MODIFIED(VAR, DICT, LOOKUP) {\
-    static PY_UINT64_T __pyx_dict_version = 0;\
-    static PyObject *__pyx_dict_cached_value = NULL;\
-    if (likely(__PYX_GET_DICT_VERSION(DICT) == __pyx_dict_version)) {\
-        (VAR) = __pyx_dict_cached_value;\
-    } else {\
-        (VAR) = __pyx_dict_cached_value = (LOOKUP);\
-        __pyx_dict_version = __PYX_GET_DICT_VERSION(DICT);\
-    }\
-}
-static CYTHON_INLINE PY_UINT64_T __Pyx_get_tp_dict_version(PyObject *obj);
-static CYTHON_INLINE PY_UINT64_T __Pyx_get_object_dict_version(PyObject *obj);
-static CYTHON_INLINE int __Pyx_object_dict_version_matches(PyObject* obj, PY_UINT64_T tp_dict_version, PY_UINT64_T obj_dict_version);
-#else
-#define __PYX_GET_DICT_VERSION(dict)  (0)
-#define __PYX_UPDATE_DICT_CACHE(dict, value, cache_var, version_var)
-#define __PYX_PY_DICT_LOOKUP_IF_MODIFIED(VAR, DICT, LOOKUP)  (VAR) = (LOOKUP);
-#endif
-
-/* PyFunctionFastCall.proto */
-#if CYTHON_FAST_PYCALL
-#define __Pyx_PyFunction_FastCall(func, args, nargs)\
-    __Pyx_PyFunction_FastCallDict((func), (args), (nargs), NULL)
-#if 1 || PY_VERSION_HEX < 0x030600B1
-static PyObject *__Pyx_PyFunction_FastCallDict(PyObject *func, PyObject **args, Py_ssize_t nargs, PyObject *kwargs);
-#else
-#define __Pyx_PyFunction_FastCallDict(func, args, nargs, kwargs) _PyFunction_FastCallDict(func, args, nargs, kwargs)
-#endif
-#define __Pyx_BUILD_ASSERT_EXPR(cond)\
-    (sizeof(char [1 - 2*!(cond)]) - 1)
-#ifndef Py_MEMBER_SIZE
-#define Py_MEMBER_SIZE(type, member) sizeof(((type *)0)->member)
-#endif
-  static size_t __pyx_pyframe_localsplus_offset = 0;
-  #include "frameobject.h"
-  #define __Pxy_PyFrame_Initialize_Offsets()\
-    ((void)__Pyx_BUILD_ASSERT_EXPR(sizeof(PyFrameObject) == offsetof(PyFrameObject, f_localsplus) + Py_MEMBER_SIZE(PyFrameObject, f_localsplus)),\
-     (void)(__pyx_pyframe_localsplus_offset = ((size_t)PyFrame_Type.tp_basicsize) - Py_MEMBER_SIZE(PyFrameObject, f_localsplus)))
-  #define __Pyx_PyFrame_GetLocalsplus(frame)\
-    (assert(__pyx_pyframe_localsplus_offset), (PyObject **)(((char *)(frame)) + __pyx_pyframe_localsplus_offset))
-#endif
-
-/* PyCFunctionFastCall.proto */
-#if CYTHON_FAST_PYCCALL
-static CYTHON_INLINE PyObject *__Pyx_PyCFunction_FastCall(PyObject *func, PyObject **args, Py_ssize_t nargs);
-#else
-#define __Pyx_PyCFunction_FastCall(func, args, nargs)  (assert(0), NULL)
-#endif
-
 /* PyObjectCall.proto */
 #if CYTHON_COMPILING_IN_CPYTHON
 static CYTHON_INLINE PyObject* __Pyx_PyObject_Call(PyObject *func, PyObject *arg, PyObject *kw);
@@ -1753,6 +1699,53 @@ static CYTHON_INLINE int __Pyx_PyErr_ExceptionMatchesInState(PyThreadState* tsta
 static int __Pyx__GetException(PyThreadState *tstate, PyObject **type, PyObject **value, PyObject **tb);
 #else
 static int __Pyx_GetException(PyObject **type, PyObject **value, PyObject **tb);
+#endif
+
+/* ListCompAppend.proto */
+#if CYTHON_USE_PYLIST_INTERNALS && CYTHON_ASSUME_SAFE_MACROS
+static CYTHON_INLINE int __Pyx_ListComp_Append(PyObject* list, PyObject* x) {
+    PyListObject* L = (PyListObject*) list;
+    Py_ssize_t len = Py_SIZE(list);
+    if (likely(L->allocated > len)) {
+        Py_INCREF(x);
+        PyList_SET_ITEM(list, len, x);
+        __Pyx_SET_SIZE(list, len + 1);
+        return 0;
+    }
+    return PyList_Append(list, x);
+}
+#else
+#define __Pyx_ListComp_Append(L,x) PyList_Append(L,x)
+#endif
+
+/* PyCFunctionFastCall.proto */
+#if CYTHON_FAST_PYCCALL
+static CYTHON_INLINE PyObject *__Pyx_PyCFunction_FastCall(PyObject *func, PyObject **args, Py_ssize_t nargs);
+#else
+#define __Pyx_PyCFunction_FastCall(func, args, nargs)  (assert(0), NULL)
+#endif
+
+/* PyFunctionFastCall.proto */
+#if CYTHON_FAST_PYCALL
+#define __Pyx_PyFunction_FastCall(func, args, nargs)\
+    __Pyx_PyFunction_FastCallDict((func), (args), (nargs), NULL)
+#if 1 || PY_VERSION_HEX < 0x030600B1
+static PyObject *__Pyx_PyFunction_FastCallDict(PyObject *func, PyObject **args, Py_ssize_t nargs, PyObject *kwargs);
+#else
+#define __Pyx_PyFunction_FastCallDict(func, args, nargs, kwargs) _PyFunction_FastCallDict(func, args, nargs, kwargs)
+#endif
+#define __Pyx_BUILD_ASSERT_EXPR(cond)\
+    (sizeof(char [1 - 2*!(cond)]) - 1)
+#ifndef Py_MEMBER_SIZE
+#define Py_MEMBER_SIZE(type, member) sizeof(((type *)0)->member)
+#endif
+  static size_t __pyx_pyframe_localsplus_offset = 0;
+  #include "frameobject.h"
+  #define __Pxy_PyFrame_Initialize_Offsets()\
+    ((void)__Pyx_BUILD_ASSERT_EXPR(sizeof(PyFrameObject) == offsetof(PyFrameObject, f_localsplus) + Py_MEMBER_SIZE(PyFrameObject, f_localsplus)),\
+     (void)(__pyx_pyframe_localsplus_offset = ((size_t)PyFrame_Type.tp_basicsize) - Py_MEMBER_SIZE(PyFrameObject, f_localsplus)))
+  #define __Pyx_PyFrame_GetLocalsplus(frame)\
+    (assert(__pyx_pyframe_localsplus_offset), (PyObject **)(((char *)(frame)) + __pyx_pyframe_localsplus_offset))
 #endif
 
 /* PyObjectCall2Args.proto */
@@ -1846,6 +1839,32 @@ static CYTHON_INLINE PyObject* __Pyx_decode_c_string(
 /* GetAttr3.proto */
 static CYTHON_INLINE PyObject *__Pyx_GetAttr3(PyObject *, PyObject *, PyObject *);
 
+/* PyDictVersioning.proto */
+#if CYTHON_USE_DICT_VERSIONS && CYTHON_USE_TYPE_SLOTS
+#define __PYX_DICT_VERSION_INIT  ((PY_UINT64_T) -1)
+#define __PYX_GET_DICT_VERSION(dict)  (((PyDictObject*)(dict))->ma_version_tag)
+#define __PYX_UPDATE_DICT_CACHE(dict, value, cache_var, version_var)\
+    (version_var) = __PYX_GET_DICT_VERSION(dict);\
+    (cache_var) = (value);
+#define __PYX_PY_DICT_LOOKUP_IF_MODIFIED(VAR, DICT, LOOKUP) {\
+    static PY_UINT64_T __pyx_dict_version = 0;\
+    static PyObject *__pyx_dict_cached_value = NULL;\
+    if (likely(__PYX_GET_DICT_VERSION(DICT) == __pyx_dict_version)) {\
+        (VAR) = __pyx_dict_cached_value;\
+    } else {\
+        (VAR) = __pyx_dict_cached_value = (LOOKUP);\
+        __pyx_dict_version = __PYX_GET_DICT_VERSION(DICT);\
+    }\
+}
+static CYTHON_INLINE PY_UINT64_T __Pyx_get_tp_dict_version(PyObject *obj);
+static CYTHON_INLINE PY_UINT64_T __Pyx_get_object_dict_version(PyObject *obj);
+static CYTHON_INLINE int __Pyx_object_dict_version_matches(PyObject* obj, PY_UINT64_T tp_dict_version, PY_UINT64_T obj_dict_version);
+#else
+#define __PYX_GET_DICT_VERSION(dict)  (0)
+#define __PYX_UPDATE_DICT_CACHE(dict, value, cache_var, version_var)
+#define __PYX_PY_DICT_LOOKUP_IF_MODIFIED(VAR, DICT, LOOKUP)  (VAR) = (LOOKUP);
+#endif
+
 /* GetModuleGlobalName.proto */
 #if CYTHON_USE_DICT_VERSIONS
 #define __Pyx_GetModuleGlobalName(var, name)  {\
@@ -1904,23 +1923,6 @@ static CYTHON_INLINE int __Pyx_PyErr_GivenExceptionMatches2(PyObject *err, PyObj
 #define __Pyx_PyException_Check(obj) __Pyx_TypeCheck(obj, PyExc_Exception)
 
 static CYTHON_UNUSED int __pyx_memoryview_getbuffer(PyObject *__pyx_v_self, Py_buffer *__pyx_v_info, int __pyx_v_flags); /*proto*/
-/* ListCompAppend.proto */
-#if CYTHON_USE_PYLIST_INTERNALS && CYTHON_ASSUME_SAFE_MACROS
-static CYTHON_INLINE int __Pyx_ListComp_Append(PyObject* list, PyObject* x) {
-    PyListObject* L = (PyListObject*) list;
-    Py_ssize_t len = Py_SIZE(list);
-    if (likely(L->allocated > len)) {
-        Py_INCREF(x);
-        PyList_SET_ITEM(list, len, x);
-        __Pyx_SET_SIZE(list, len + 1);
-        return 0;
-    }
-    return PyList_Append(list, x);
-}
-#else
-#define __Pyx_ListComp_Append(L,x) PyList_Append(L,x)
-#endif
-
 /* PyIntBinop.proto */
 #if !CYTHON_COMPILING_IN_PYPY
 static PyObject* __Pyx_PyInt_AddObjC(PyObject *op1, PyObject *op2, long intval, int inplace, int zerodivision_check);
@@ -2272,6 +2274,7 @@ static int __pyx_f_16random_simulator_15RandomSimulator_NNC_2(struct __pyx_obj_1
 static float __pyx_f_16random_simulator_15RandomSimulator__f(CYTHON_UNUSED struct __pyx_obj_16random_simulator_RandomSimulator *__pyx_v_self, int __pyx_v_x); /* proto*/
 static std::vector<float>  __pyx_f_16random_simulator_15RandomSimulator_f(struct __pyx_obj_16random_simulator_RandomSimulator *__pyx_v_self, std::vector<int>  &__pyx_v_NNC); /* proto*/
 static unsigned int __pyx_f_16random_simulator_15RandomSimulator_random_choice(CYTHON_UNUSED struct __pyx_obj_16random_simulator_RandomSimulator *__pyx_v_self, std::vector<float>  &__pyx_v_p, int __pyx_v_seed); /* proto*/
+static unsigned int __pyx_f_16random_simulator_15RandomSimulator_argmax(CYTHON_UNUSED struct __pyx_obj_16random_simulator_RandomSimulator *__pyx_v_self, std::vector<int>  &__pyx_v_v); /* proto*/
 static std::vector<int>  __pyx_f_16random_simulator_15RandomSimulator_change_qubit_mapping_with_swap_gate(CYTHON_UNUSED struct __pyx_obj_16random_simulator_RandomSimulator *__pyx_v_self, std::vector<int>  &__pyx_v_qubit_mapping, std::vector<int>  &__pyx_v_qubit_inverse_mapping, std::vector<int>  &__pyx_v_qubit_mask, std::vector<int>  __pyx_v_swap_gate, struct __pyx_opt_args_16random_simulator_15RandomSimulator_change_qubit_mapping_with_swap_gate *__pyx_optional_args); /* proto*/
 static std::vector<int>  __pyx_f_16random_simulator_15RandomSimulator_get_involved_qubits(struct __pyx_obj_16random_simulator_RandomSimulator *__pyx_v_self, std::vector<int>  &__pyx_v_front_layer, std::vector<int>  &__pyx_v_qubit_mapping); /* proto*/
 static std::vector<int>  __pyx_f_16random_simulator_15RandomSimulator_get_candidate_swap_gate_list(struct __pyx_obj_16random_simulator_RandomSimulator *__pyx_v_self, std::vector<int>  &__pyx_v_front_layer, std::vector<int>  &__pyx_v_qubit_mapping); /* proto*/
@@ -2282,8 +2285,9 @@ static int __pyx_f_16random_simulator_15RandomSimulator_update_front_layer(struc
 static int __pyx_f_16random_simulator_15RandomSimulator_update_front_layer_2(struct __pyx_obj_16random_simulator_RandomSimulator *__pyx_v_self, std::vector<int>  &__pyx_v_front_layer, std::vector<int>  &__pyx_v_qubit_mapping, std::vector<int>  &__pyx_v_qubit_mask, std::unordered_set<int>  &__pyx_v_subcircuit); /* proto*/
 static std::unordered_set<int>  __pyx_f_16random_simulator_15RandomSimulator_get_subcircuit(struct __pyx_obj_16random_simulator_RandomSimulator *__pyx_v_self, std::vector<int>  __pyx_v_front_layer, std::vector<int>  __pyx_v_qubit_mask, int __pyx_v_num_of_subcircuit_gates); /* proto*/
 static float __pyx_f_16random_simulator_15RandomSimulator_simulation_thread_swap(struct __pyx_obj_16random_simulator_RandomSimulator *__pyx_v_self, int __pyx_v_seed); /* proto*/
-static float __pyx_f_16random_simulator_15RandomSimulator_simulation_thread_gates(struct __pyx_obj_16random_simulator_RandomSimulator *__pyx_v_self, int __pyx_v_seed); /* proto*/
-static float __pyx_f_16random_simulator_15RandomSimulator_simulate(struct __pyx_obj_16random_simulator_RandomSimulator *__pyx_v_self, PyObject *__pyx_v_front_layer, PyObject *__pyx_v_qubit_mapping, PyObject *__pyx_v_qubit_mask, int __pyx_v_num_of_subcircuit_gates, int __pyx_v_num_of_iterations, int __pyx_v_simulation_mode, int __pyx_skip_dispatch); /* proto*/
+static int __pyx_f_16random_simulator_15RandomSimulator_simulation_thread_gates(struct __pyx_obj_16random_simulator_RandomSimulator *__pyx_v_self, int __pyx_v_seed); /* proto*/
+static std::vector<int>  __pyx_f_16random_simulator_15RandomSimulator_simulation_thread_extended(struct __pyx_obj_16random_simulator_RandomSimulator *__pyx_v_self, int __pyx_v_seed); /* proto*/
+static int __pyx_f_16random_simulator_15RandomSimulator_simulation_thread_determinstic(struct __pyx_obj_16random_simulator_RandomSimulator *__pyx_v_self); /* proto*/
 static PyObject *__pyx_array_get_memview(struct __pyx_array_obj *__pyx_v_self); /* proto*/
 static char *__pyx_memoryview_get_item_pointer(struct __pyx_memoryview_obj *__pyx_v_self, PyObject *__pyx_v_index); /* proto*/
 static PyObject *__pyx_memoryview_is_slice(struct __pyx_memoryview_obj *__pyx_v_self, PyObject *__pyx_v_obj); /* proto*/
@@ -2356,6 +2360,7 @@ static int __pyx_memoryview_thread_locks_used;
 static PyThread_type_lock __pyx_memoryview_thread_locks[8];
 static float __pyx_f_16random_simulator_random_generator(int); /*proto*/
 static std::vector<int>  __pyx_convert_vector_from_py_int(PyObject *); /*proto*/
+static PyObject *__pyx_convert_vector_to_py_int(const std::vector<int>  &); /*proto*/
 static struct __pyx_array_obj *__pyx_array_new(PyObject *, Py_ssize_t, char *, char *, char *); /*proto*/
 static void *__pyx_align_pointer(void *, size_t); /*proto*/
 static PyObject *__pyx_memoryview_new(PyObject *, int, int, __Pyx_TypeInfo *); /*proto*/
@@ -2449,7 +2454,6 @@ static const char __pyx_k_getstate[] = "__getstate__";
 static const char __pyx_k_itemsize[] = "itemsize";
 static const char __pyx_k_pyx_type[] = "__pyx_type";
 static const char __pyx_k_setstate[] = "__setstate__";
-static const char __pyx_k_simulate[] = "simulate";
 static const char __pyx_k_TypeError[] = "TypeError";
 static const char __pyx_k_enumerate[] = "enumerate";
 static const char __pyx_k_pyx_state[] = "__pyx_state";
@@ -2601,7 +2605,6 @@ static PyObject *__pyx_n_s_reduce_ex;
 static PyObject *__pyx_n_s_setstate;
 static PyObject *__pyx_n_s_setstate_cython;
 static PyObject *__pyx_n_s_shape;
-static PyObject *__pyx_n_s_simulate;
 static PyObject *__pyx_n_s_simulation_mode;
 static PyObject *__pyx_n_s_size;
 static PyObject *__pyx_n_s_start;
@@ -3648,7 +3651,7 @@ static unsigned int __pyx_f_16random_simulator_15RandomSimulator_random_choice(C
  *                 return i
  *         return n-1             # <<<<<<<<<<<<<<
  * 
- *     cdef vector[int] change_qubit_mapping_with_swap_gate(self, vector[int] &qubit_mapping, vector[int] &qubit_inverse_mapping, vector[int] &qubit_mask,
+ *     cdef unsigned int argmax(self, vector[int] &v) nogil:
  */
   __pyx_r = (__pyx_v_n - 1);
   goto __pyx_L0;
@@ -3669,6 +3672,117 @@ static unsigned int __pyx_f_16random_simulator_15RandomSimulator_random_choice(C
 /* "random_simulator.pyx":108
  *         return n-1
  * 
+ *     cdef unsigned int argmax(self, vector[int] &v) nogil:             # <<<<<<<<<<<<<<
+ *         cdef:
+ *             unsigned int i, n = v.size(), res = 0
+ */
+
+static unsigned int __pyx_f_16random_simulator_15RandomSimulator_argmax(CYTHON_UNUSED struct __pyx_obj_16random_simulator_RandomSimulator *__pyx_v_self, std::vector<int>  &__pyx_v_v) {
+  unsigned int __pyx_v_i;
+  unsigned int __pyx_v_n;
+  unsigned int __pyx_v_res;
+  int __pyx_v_m;
+  unsigned int __pyx_r;
+  unsigned int __pyx_t_1;
+  unsigned int __pyx_t_2;
+  unsigned int __pyx_t_3;
+  int __pyx_t_4;
+
+  /* "random_simulator.pyx":110
+ *     cdef unsigned int argmax(self, vector[int] &v) nogil:
+ *         cdef:
+ *             unsigned int i, n = v.size(), res = 0             # <<<<<<<<<<<<<<
+ *             int m = -1
+ * 
+ */
+  __pyx_v_n = __pyx_v_v.size();
+  __pyx_v_res = 0;
+
+  /* "random_simulator.pyx":111
+ *         cdef:
+ *             unsigned int i, n = v.size(), res = 0
+ *             int m = -1             # <<<<<<<<<<<<<<
+ * 
+ *         for i in range(n):
+ */
+  __pyx_v_m = -1;
+
+  /* "random_simulator.pyx":113
+ *             int m = -1
+ * 
+ *         for i in range(n):             # <<<<<<<<<<<<<<
+ *             if v[i] > m:
+ *                 m = v[i]
+ */
+  __pyx_t_1 = __pyx_v_n;
+  __pyx_t_2 = __pyx_t_1;
+  for (__pyx_t_3 = 0; __pyx_t_3 < __pyx_t_2; __pyx_t_3+=1) {
+    __pyx_v_i = __pyx_t_3;
+
+    /* "random_simulator.pyx":114
+ * 
+ *         for i in range(n):
+ *             if v[i] > m:             # <<<<<<<<<<<<<<
+ *                 m = v[i]
+ *                 res = i
+ */
+    __pyx_t_4 = (((__pyx_v_v[__pyx_v_i]) > __pyx_v_m) != 0);
+    if (__pyx_t_4) {
+
+      /* "random_simulator.pyx":115
+ *         for i in range(n):
+ *             if v[i] > m:
+ *                 m = v[i]             # <<<<<<<<<<<<<<
+ *                 res = i
+ *         return res
+ */
+      __pyx_v_m = (__pyx_v_v[__pyx_v_i]);
+
+      /* "random_simulator.pyx":116
+ *             if v[i] > m:
+ *                 m = v[i]
+ *                 res = i             # <<<<<<<<<<<<<<
+ *         return res
+ * 
+ */
+      __pyx_v_res = __pyx_v_i;
+
+      /* "random_simulator.pyx":114
+ * 
+ *         for i in range(n):
+ *             if v[i] > m:             # <<<<<<<<<<<<<<
+ *                 m = v[i]
+ *                 res = i
+ */
+    }
+  }
+
+  /* "random_simulator.pyx":117
+ *                 m = v[i]
+ *                 res = i
+ *         return res             # <<<<<<<<<<<<<<
+ * 
+ * 
+ */
+  __pyx_r = __pyx_v_res;
+  goto __pyx_L0;
+
+  /* "random_simulator.pyx":108
+ *         return n-1
+ * 
+ *     cdef unsigned int argmax(self, vector[int] &v) nogil:             # <<<<<<<<<<<<<<
+ *         cdef:
+ *             unsigned int i, n = v.size(), res = 0
+ */
+
+  /* function exit code */
+  __pyx_L0:;
+  return __pyx_r;
+}
+
+/* "random_simulator.pyx":120
+ * 
+ * 
  *     cdef vector[int] change_qubit_mapping_with_swap_gate(self, vector[int] &qubit_mapping, vector[int] &qubit_inverse_mapping, vector[int] &qubit_mask,             # <<<<<<<<<<<<<<
  *                                                     vector[int] swap_gate, bint in_palace = False) nogil:
  *         cdef:
@@ -3676,7 +3790,7 @@ static unsigned int __pyx_f_16random_simulator_15RandomSimulator_random_choice(C
 
 static std::vector<int>  __pyx_f_16random_simulator_15RandomSimulator_change_qubit_mapping_with_swap_gate(CYTHON_UNUSED struct __pyx_obj_16random_simulator_RandomSimulator *__pyx_v_self, std::vector<int>  &__pyx_v_qubit_mapping, std::vector<int>  &__pyx_v_qubit_inverse_mapping, std::vector<int>  &__pyx_v_qubit_mask, std::vector<int>  __pyx_v_swap_gate, struct __pyx_opt_args_16random_simulator_15RandomSimulator_change_qubit_mapping_with_swap_gate *__pyx_optional_args) {
 
-  /* "random_simulator.pyx":109
+  /* "random_simulator.pyx":121
  * 
  *     cdef vector[int] change_qubit_mapping_with_swap_gate(self, vector[int] &qubit_mapping, vector[int] &qubit_inverse_mapping, vector[int] &qubit_mask,
  *                                                     vector[int] swap_gate, bint in_palace = False) nogil:             # <<<<<<<<<<<<<<
@@ -3697,7 +3811,7 @@ static std::vector<int>  __pyx_f_16random_simulator_15RandomSimulator_change_qub
     }
   }
 
-  /* "random_simulator.pyx":112
+  /* "random_simulator.pyx":124
  *         cdef:
  *             int qubit_0, qubit_1 ,temp
  *             vector[int] res_mapping = qubit_mapping             # <<<<<<<<<<<<<<
@@ -3706,7 +3820,7 @@ static std::vector<int>  __pyx_f_16random_simulator_15RandomSimulator_change_qub
  */
   __pyx_v_res_mapping = __pyx_v_qubit_mapping;
 
-  /* "random_simulator.pyx":114
+  /* "random_simulator.pyx":126
  *             vector[int] res_mapping = qubit_mapping
  * 
  *         qubit_0 = qubit_inverse_mapping[swap_gate[0]]             # <<<<<<<<<<<<<<
@@ -3715,7 +3829,7 @@ static std::vector<int>  __pyx_f_16random_simulator_15RandomSimulator_change_qub
  */
   __pyx_v_qubit_0 = (__pyx_v_qubit_inverse_mapping[(__pyx_v_swap_gate[0])]);
 
-  /* "random_simulator.pyx":115
+  /* "random_simulator.pyx":127
  * 
  *         qubit_0 = qubit_inverse_mapping[swap_gate[0]]
  *         qubit_1 = qubit_inverse_mapping[swap_gate[1]]             # <<<<<<<<<<<<<<
@@ -3724,7 +3838,7 @@ static std::vector<int>  __pyx_f_16random_simulator_15RandomSimulator_change_qub
  */
   __pyx_v_qubit_1 = (__pyx_v_qubit_inverse_mapping[(__pyx_v_swap_gate[1])]);
 
-  /* "random_simulator.pyx":116
+  /* "random_simulator.pyx":128
  *         qubit_0 = qubit_inverse_mapping[swap_gate[0]]
  *         qubit_1 = qubit_inverse_mapping[swap_gate[1]]
  *         if qubit_0 == -1 and qubit_1 == -1:             # <<<<<<<<<<<<<<
@@ -3742,7 +3856,7 @@ static std::vector<int>  __pyx_f_16random_simulator_15RandomSimulator_change_qub
   __pyx_L4_bool_binop_done:;
   if (__pyx_t_1) {
 
-    /* "random_simulator.pyx":117
+    /* "random_simulator.pyx":129
  *         qubit_1 = qubit_inverse_mapping[swap_gate[1]]
  *         if qubit_0 == -1 and qubit_1 == -1:
  *             return res_mapping             # <<<<<<<<<<<<<<
@@ -3752,7 +3866,7 @@ static std::vector<int>  __pyx_f_16random_simulator_15RandomSimulator_change_qub
     __pyx_r = __pyx_v_res_mapping;
     goto __pyx_L0;
 
-    /* "random_simulator.pyx":116
+    /* "random_simulator.pyx":128
  *         qubit_0 = qubit_inverse_mapping[swap_gate[0]]
  *         qubit_1 = qubit_inverse_mapping[swap_gate[1]]
  *         if qubit_0 == -1 and qubit_1 == -1:             # <<<<<<<<<<<<<<
@@ -3761,7 +3875,7 @@ static std::vector<int>  __pyx_f_16random_simulator_15RandomSimulator_change_qub
  */
   }
 
-  /* "random_simulator.pyx":119
+  /* "random_simulator.pyx":131
  *             return res_mapping
  * 
  *         if in_palace:             # <<<<<<<<<<<<<<
@@ -3771,7 +3885,7 @@ static std::vector<int>  __pyx_f_16random_simulator_15RandomSimulator_change_qub
   __pyx_t_1 = (__pyx_v_in_palace != 0);
   if (__pyx_t_1) {
 
-    /* "random_simulator.pyx":120
+    /* "random_simulator.pyx":132
  * 
  *         if in_palace:
  *             qubit_inverse_mapping[swap_gate[0]] = qubit_1             # <<<<<<<<<<<<<<
@@ -3780,7 +3894,7 @@ static std::vector<int>  __pyx_f_16random_simulator_15RandomSimulator_change_qub
  */
     (__pyx_v_qubit_inverse_mapping[(__pyx_v_swap_gate[0])]) = __pyx_v_qubit_1;
 
-    /* "random_simulator.pyx":121
+    /* "random_simulator.pyx":133
  *         if in_palace:
  *             qubit_inverse_mapping[swap_gate[0]] = qubit_1
  *             qubit_inverse_mapping[swap_gate[1]] = qubit_0             # <<<<<<<<<<<<<<
@@ -3789,7 +3903,7 @@ static std::vector<int>  __pyx_f_16random_simulator_15RandomSimulator_change_qub
  */
     (__pyx_v_qubit_inverse_mapping[(__pyx_v_swap_gate[1])]) = __pyx_v_qubit_0;
 
-    /* "random_simulator.pyx":123
+    /* "random_simulator.pyx":135
  *             qubit_inverse_mapping[swap_gate[1]] = qubit_0
  * 
  *             temp = qubit_mask[swap_gate[0]]             # <<<<<<<<<<<<<<
@@ -3798,7 +3912,7 @@ static std::vector<int>  __pyx_f_16random_simulator_15RandomSimulator_change_qub
  */
     __pyx_v_temp = (__pyx_v_qubit_mask[(__pyx_v_swap_gate[0])]);
 
-    /* "random_simulator.pyx":124
+    /* "random_simulator.pyx":136
  * 
  *             temp = qubit_mask[swap_gate[0]]
  *             qubit_mask[swap_gate[0]] = qubit_mask[swap_gate[1]]             # <<<<<<<<<<<<<<
@@ -3807,7 +3921,7 @@ static std::vector<int>  __pyx_f_16random_simulator_15RandomSimulator_change_qub
  */
     (__pyx_v_qubit_mask[(__pyx_v_swap_gate[0])]) = (__pyx_v_qubit_mask[(__pyx_v_swap_gate[1])]);
 
-    /* "random_simulator.pyx":125
+    /* "random_simulator.pyx":137
  *             temp = qubit_mask[swap_gate[0]]
  *             qubit_mask[swap_gate[0]] = qubit_mask[swap_gate[1]]
  *             qubit_mask[swap_gate[1]] = temp             # <<<<<<<<<<<<<<
@@ -3816,7 +3930,7 @@ static std::vector<int>  __pyx_f_16random_simulator_15RandomSimulator_change_qub
  */
     (__pyx_v_qubit_mask[(__pyx_v_swap_gate[1])]) = __pyx_v_temp;
 
-    /* "random_simulator.pyx":127
+    /* "random_simulator.pyx":139
  *             qubit_mask[swap_gate[1]] = temp
  * 
  *             if qubit_0 == -1:             # <<<<<<<<<<<<<<
@@ -3826,7 +3940,7 @@ static std::vector<int>  __pyx_f_16random_simulator_15RandomSimulator_change_qub
     __pyx_t_1 = ((__pyx_v_qubit_0 == -1L) != 0);
     if (__pyx_t_1) {
 
-      /* "random_simulator.pyx":128
+      /* "random_simulator.pyx":140
  * 
  *             if qubit_0 == -1:
  *                 qubit_mapping[qubit_1] = swap_gate[0]             # <<<<<<<<<<<<<<
@@ -3835,7 +3949,7 @@ static std::vector<int>  __pyx_f_16random_simulator_15RandomSimulator_change_qub
  */
       (__pyx_v_qubit_mapping[__pyx_v_qubit_1]) = (__pyx_v_swap_gate[0]);
 
-      /* "random_simulator.pyx":127
+      /* "random_simulator.pyx":139
  *             qubit_mask[swap_gate[1]] = temp
  * 
  *             if qubit_0 == -1:             # <<<<<<<<<<<<<<
@@ -3845,7 +3959,7 @@ static std::vector<int>  __pyx_f_16random_simulator_15RandomSimulator_change_qub
       goto __pyx_L7;
     }
 
-    /* "random_simulator.pyx":129
+    /* "random_simulator.pyx":141
  *             if qubit_0 == -1:
  *                 qubit_mapping[qubit_1] = swap_gate[0]
  *             elif qubit_1 == -1:             # <<<<<<<<<<<<<<
@@ -3855,7 +3969,7 @@ static std::vector<int>  __pyx_f_16random_simulator_15RandomSimulator_change_qub
     __pyx_t_1 = ((__pyx_v_qubit_1 == -1L) != 0);
     if (__pyx_t_1) {
 
-      /* "random_simulator.pyx":130
+      /* "random_simulator.pyx":142
  *                 qubit_mapping[qubit_1] = swap_gate[0]
  *             elif qubit_1 == -1:
  *                 qubit_mapping[qubit_0] = swap_gate[1]             # <<<<<<<<<<<<<<
@@ -3864,7 +3978,7 @@ static std::vector<int>  __pyx_f_16random_simulator_15RandomSimulator_change_qub
  */
       (__pyx_v_qubit_mapping[__pyx_v_qubit_0]) = (__pyx_v_swap_gate[1]);
 
-      /* "random_simulator.pyx":129
+      /* "random_simulator.pyx":141
  *             if qubit_0 == -1:
  *                 qubit_mapping[qubit_1] = swap_gate[0]
  *             elif qubit_1 == -1:             # <<<<<<<<<<<<<<
@@ -3874,7 +3988,7 @@ static std::vector<int>  __pyx_f_16random_simulator_15RandomSimulator_change_qub
       goto __pyx_L7;
     }
 
-    /* "random_simulator.pyx":132
+    /* "random_simulator.pyx":144
  *                 qubit_mapping[qubit_0] = swap_gate[1]
  *             else:
  *                 qubit_mapping[qubit_0] = swap_gate[1]             # <<<<<<<<<<<<<<
@@ -3884,7 +3998,7 @@ static std::vector<int>  __pyx_f_16random_simulator_15RandomSimulator_change_qub
     /*else*/ {
       (__pyx_v_qubit_mapping[__pyx_v_qubit_0]) = (__pyx_v_swap_gate[1]);
 
-      /* "random_simulator.pyx":133
+      /* "random_simulator.pyx":145
  *             else:
  *                 qubit_mapping[qubit_0] = swap_gate[1]
  *                 qubit_mapping[qubit_1] = swap_gate[0]             # <<<<<<<<<<<<<<
@@ -3895,7 +4009,7 @@ static std::vector<int>  __pyx_f_16random_simulator_15RandomSimulator_change_qub
     }
     __pyx_L7:;
 
-    /* "random_simulator.pyx":119
+    /* "random_simulator.pyx":131
  *             return res_mapping
  * 
  *         if in_palace:             # <<<<<<<<<<<<<<
@@ -3905,7 +4019,7 @@ static std::vector<int>  __pyx_f_16random_simulator_15RandomSimulator_change_qub
     goto __pyx_L6;
   }
 
-  /* "random_simulator.pyx":135
+  /* "random_simulator.pyx":147
  *                 qubit_mapping[qubit_1] = swap_gate[0]
  *         else:
  *             if qubit_0 == -1:             # <<<<<<<<<<<<<<
@@ -3916,7 +4030,7 @@ static std::vector<int>  __pyx_f_16random_simulator_15RandomSimulator_change_qub
     __pyx_t_1 = ((__pyx_v_qubit_0 == -1L) != 0);
     if (__pyx_t_1) {
 
-      /* "random_simulator.pyx":136
+      /* "random_simulator.pyx":148
  *         else:
  *             if qubit_0 == -1:
  *                 res_mapping[qubit_1] = swap_gate[0]             # <<<<<<<<<<<<<<
@@ -3925,7 +4039,7 @@ static std::vector<int>  __pyx_f_16random_simulator_15RandomSimulator_change_qub
  */
       (__pyx_v_res_mapping[__pyx_v_qubit_1]) = (__pyx_v_swap_gate[0]);
 
-      /* "random_simulator.pyx":135
+      /* "random_simulator.pyx":147
  *                 qubit_mapping[qubit_1] = swap_gate[0]
  *         else:
  *             if qubit_0 == -1:             # <<<<<<<<<<<<<<
@@ -3935,7 +4049,7 @@ static std::vector<int>  __pyx_f_16random_simulator_15RandomSimulator_change_qub
       goto __pyx_L8;
     }
 
-    /* "random_simulator.pyx":137
+    /* "random_simulator.pyx":149
  *             if qubit_0 == -1:
  *                 res_mapping[qubit_1] = swap_gate[0]
  *             elif qubit_1 == -1:             # <<<<<<<<<<<<<<
@@ -3945,7 +4059,7 @@ static std::vector<int>  __pyx_f_16random_simulator_15RandomSimulator_change_qub
     __pyx_t_1 = ((__pyx_v_qubit_1 == -1L) != 0);
     if (__pyx_t_1) {
 
-      /* "random_simulator.pyx":138
+      /* "random_simulator.pyx":150
  *                 res_mapping[qubit_1] = swap_gate[0]
  *             elif qubit_1 == -1:
  *                 res_mapping[qubit_0] = swap_gate[1]             # <<<<<<<<<<<<<<
@@ -3954,7 +4068,7 @@ static std::vector<int>  __pyx_f_16random_simulator_15RandomSimulator_change_qub
  */
       (__pyx_v_res_mapping[__pyx_v_qubit_0]) = (__pyx_v_swap_gate[1]);
 
-      /* "random_simulator.pyx":137
+      /* "random_simulator.pyx":149
  *             if qubit_0 == -1:
  *                 res_mapping[qubit_1] = swap_gate[0]
  *             elif qubit_1 == -1:             # <<<<<<<<<<<<<<
@@ -3964,7 +4078,7 @@ static std::vector<int>  __pyx_f_16random_simulator_15RandomSimulator_change_qub
       goto __pyx_L8;
     }
 
-    /* "random_simulator.pyx":140
+    /* "random_simulator.pyx":152
  *                 res_mapping[qubit_0] = swap_gate[1]
  *             else:
  *                 res_mapping[qubit_0] = swap_gate[1]             # <<<<<<<<<<<<<<
@@ -3974,7 +4088,7 @@ static std::vector<int>  __pyx_f_16random_simulator_15RandomSimulator_change_qub
     /*else*/ {
       (__pyx_v_res_mapping[__pyx_v_qubit_0]) = (__pyx_v_swap_gate[1]);
 
-      /* "random_simulator.pyx":141
+      /* "random_simulator.pyx":153
  *             else:
  *                 res_mapping[qubit_0] = swap_gate[1]
  *                 res_mapping[qubit_1] = swap_gate[0]             # <<<<<<<<<<<<<<
@@ -3987,7 +4101,7 @@ static std::vector<int>  __pyx_f_16random_simulator_15RandomSimulator_change_qub
   }
   __pyx_L6:;
 
-  /* "random_simulator.pyx":143
+  /* "random_simulator.pyx":155
  *                 res_mapping[qubit_1] = swap_gate[0]
  * 
  *         return res_mapping             # <<<<<<<<<<<<<<
@@ -3997,8 +4111,8 @@ static std::vector<int>  __pyx_f_16random_simulator_15RandomSimulator_change_qub
   __pyx_r = __pyx_v_res_mapping;
   goto __pyx_L0;
 
-  /* "random_simulator.pyx":108
- *         return n-1
+  /* "random_simulator.pyx":120
+ * 
  * 
  *     cdef vector[int] change_qubit_mapping_with_swap_gate(self, vector[int] &qubit_mapping, vector[int] &qubit_inverse_mapping, vector[int] &qubit_mask,             # <<<<<<<<<<<<<<
  *                                                     vector[int] swap_gate, bint in_palace = False) nogil:
@@ -4010,7 +4124,7 @@ static std::vector<int>  __pyx_f_16random_simulator_15RandomSimulator_change_qub
   return __pyx_r;
 }
 
-/* "random_simulator.pyx":145
+/* "random_simulator.pyx":157
  *         return res_mapping
  * 
  *     cdef vector[int] get_involved_qubits(self, vector[int] &front_layer, vector[int] &qubit_mapping) nogil:             # <<<<<<<<<<<<<<
@@ -4032,7 +4146,7 @@ static std::vector<int>  __pyx_f_16random_simulator_15RandomSimulator_get_involv
   const char *__pyx_filename = NULL;
   int __pyx_clineno = 0;
 
-  /* "random_simulator.pyx":148
+  /* "random_simulator.pyx":160
  *         cdef:
  *             vector[int] qubits_set
  *             unsigned int  i, n = front_layer.size()             # <<<<<<<<<<<<<<
@@ -4041,7 +4155,7 @@ static std::vector<int>  __pyx_f_16random_simulator_15RandomSimulator_get_involv
  */
   __pyx_v_n = __pyx_v_front_layer.size();
 
-  /* "random_simulator.pyx":149
+  /* "random_simulator.pyx":161
  *             vector[int] qubits_set
  *             unsigned int  i, n = front_layer.size()
  *         qubits_set.reserve(self.num_of_physical_qubits)             # <<<<<<<<<<<<<<
@@ -4050,7 +4164,7 @@ static std::vector<int>  __pyx_f_16random_simulator_15RandomSimulator_get_involv
  */
   __pyx_v_qubits_set.reserve(__pyx_v_self->num_of_physical_qubits);
 
-  /* "random_simulator.pyx":151
+  /* "random_simulator.pyx":163
  *         qubits_set.reserve(self.num_of_physical_qubits)
  * 
  *         for i in range(n):             # <<<<<<<<<<<<<<
@@ -4062,14 +4176,14 @@ static std::vector<int>  __pyx_f_16random_simulator_15RandomSimulator_get_involv
   for (__pyx_t_3 = 0; __pyx_t_3 < __pyx_t_2; __pyx_t_3+=1) {
     __pyx_v_i = __pyx_t_3;
 
-    /* "random_simulator.pyx":152
+    /* "random_simulator.pyx":164
  * 
  *         for i in range(n):
  *             qubits_set.push_back(qubit_mapping[self.gates[front_layer[i]][0]])             # <<<<<<<<<<<<<<
  *             qubits_set.push_back(qubit_mapping[self.gates[front_layer[i]][1]])
  * 
  */
-    if (unlikely(!__pyx_v_self->gates.memview)) {PyErr_SetString(PyExc_AttributeError,"Memoryview is not initialized");__PYX_ERR(0, 152, __pyx_L1_error)}
+    if (unlikely(!__pyx_v_self->gates.memview)) {PyErr_SetString(PyExc_AttributeError,"Memoryview is not initialized");__PYX_ERR(0, 164, __pyx_L1_error)}
     __pyx_t_4 = (__pyx_v_front_layer[__pyx_v_i]);
     __pyx_t_5 = 0;
     try {
@@ -4082,17 +4196,17 @@ static std::vector<int>  __pyx_f_16random_simulator_15RandomSimulator_get_involv
       #ifdef WITH_THREAD
       __Pyx_PyGILState_Release(__pyx_gilstate_save);
       #endif
-      __PYX_ERR(0, 152, __pyx_L1_error)
+      __PYX_ERR(0, 164, __pyx_L1_error)
     }
 
-    /* "random_simulator.pyx":153
+    /* "random_simulator.pyx":165
  *         for i in range(n):
  *             qubits_set.push_back(qubit_mapping[self.gates[front_layer[i]][0]])
  *             qubits_set.push_back(qubit_mapping[self.gates[front_layer[i]][1]])             # <<<<<<<<<<<<<<
  * 
  *         return qubits_set
  */
-    if (unlikely(!__pyx_v_self->gates.memview)) {PyErr_SetString(PyExc_AttributeError,"Memoryview is not initialized");__PYX_ERR(0, 153, __pyx_L1_error)}
+    if (unlikely(!__pyx_v_self->gates.memview)) {PyErr_SetString(PyExc_AttributeError,"Memoryview is not initialized");__PYX_ERR(0, 165, __pyx_L1_error)}
     __pyx_t_5 = (__pyx_v_front_layer[__pyx_v_i]);
     __pyx_t_4 = 1;
     try {
@@ -4105,11 +4219,11 @@ static std::vector<int>  __pyx_f_16random_simulator_15RandomSimulator_get_involv
       #ifdef WITH_THREAD
       __Pyx_PyGILState_Release(__pyx_gilstate_save);
       #endif
-      __PYX_ERR(0, 153, __pyx_L1_error)
+      __PYX_ERR(0, 165, __pyx_L1_error)
     }
   }
 
-  /* "random_simulator.pyx":155
+  /* "random_simulator.pyx":167
  *             qubits_set.push_back(qubit_mapping[self.gates[front_layer[i]][1]])
  * 
  *         return qubits_set             # <<<<<<<<<<<<<<
@@ -4119,7 +4233,7 @@ static std::vector<int>  __pyx_f_16random_simulator_15RandomSimulator_get_involv
   __pyx_r = __pyx_v_qubits_set;
   goto __pyx_L0;
 
-  /* "random_simulator.pyx":145
+  /* "random_simulator.pyx":157
  *         return res_mapping
  * 
  *     cdef vector[int] get_involved_qubits(self, vector[int] &front_layer, vector[int] &qubit_mapping) nogil:             # <<<<<<<<<<<<<<
@@ -4135,7 +4249,7 @@ static std::vector<int>  __pyx_f_16random_simulator_15RandomSimulator_get_involv
   return __pyx_r;
 }
 
-/* "random_simulator.pyx":157
+/* "random_simulator.pyx":169
  *         return qubits_set
  * 
  *     cdef vector[int] get_candidate_swap_gate_list(self, vector[int] &front_layer, vector[int] &qubit_mapping) nogil:             # <<<<<<<<<<<<<<
@@ -4162,7 +4276,7 @@ static std::vector<int>  __pyx_f_16random_simulator_15RandomSimulator_get_candid
   const char *__pyx_filename = NULL;
   int __pyx_clineno = 0;
 
-  /* "random_simulator.pyx":163
+  /* "random_simulator.pyx":175
  *             int i, j
  * 
  *         candidate_swap_gate_list.reserve(self.num_of_physical_qubits*10)             # <<<<<<<<<<<<<<
@@ -4171,7 +4285,7 @@ static std::vector<int>  __pyx_f_16random_simulator_15RandomSimulator_get_candid
  */
   __pyx_v_candidate_swap_gate_list.reserve((__pyx_v_self->num_of_physical_qubits * 10));
 
-  /* "random_simulator.pyx":164
+  /* "random_simulator.pyx":176
  * 
  *         candidate_swap_gate_list.reserve(self.num_of_physical_qubits*10)
  *         qubits_mark.resize(self.num_of_physical_qubits)             # <<<<<<<<<<<<<<
@@ -4188,10 +4302,10 @@ static std::vector<int>  __pyx_f_16random_simulator_15RandomSimulator_get_candid
     #ifdef WITH_THREAD
     __Pyx_PyGILState_Release(__pyx_gilstate_save);
     #endif
-    __PYX_ERR(0, 164, __pyx_L1_error)
+    __PYX_ERR(0, 176, __pyx_L1_error)
   }
 
-  /* "random_simulator.pyx":165
+  /* "random_simulator.pyx":177
  *         candidate_swap_gate_list.reserve(self.num_of_physical_qubits*10)
  *         qubits_mark.resize(self.num_of_physical_qubits)
  *         qubits_set = self.get_involved_qubits(front_layer, qubit_mapping)             # <<<<<<<<<<<<<<
@@ -4200,7 +4314,7 @@ static std::vector<int>  __pyx_f_16random_simulator_15RandomSimulator_get_candid
  */
   __pyx_v_qubits_set = ((struct __pyx_vtabstruct_16random_simulator_RandomSimulator *)__pyx_v_self->__pyx_vtab)->get_involved_qubits(__pyx_v_self, __pyx_v_front_layer, __pyx_v_qubit_mapping);
 
-  /* "random_simulator.pyx":166
+  /* "random_simulator.pyx":178
  *         qubits_mark.resize(self.num_of_physical_qubits)
  *         qubits_set = self.get_involved_qubits(front_layer, qubit_mapping)
  *         sort(qubits_set.begin(), qubits_set.end())             # <<<<<<<<<<<<<<
@@ -4209,7 +4323,7 @@ static std::vector<int>  __pyx_f_16random_simulator_15RandomSimulator_get_candid
  */
   std::sort<std::vector<int> ::iterator>(__pyx_v_qubits_set.begin(), __pyx_v_qubits_set.end());
 
-  /* "random_simulator.pyx":168
+  /* "random_simulator.pyx":180
  *         sort(qubits_set.begin(), qubits_set.end())
  * 
  *         for i in qubits_set:             # <<<<<<<<<<<<<<
@@ -4223,7 +4337,7 @@ static std::vector<int>  __pyx_f_16random_simulator_15RandomSimulator_get_candid
     ++__pyx_t_1;
     __pyx_v_i = __pyx_t_2;
 
-    /* "random_simulator.pyx":169
+    /* "random_simulator.pyx":181
  * 
  *         for i in qubits_set:
  *             qubits_mark[i] = 1             # <<<<<<<<<<<<<<
@@ -4232,7 +4346,7 @@ static std::vector<int>  __pyx_f_16random_simulator_15RandomSimulator_get_candid
  */
     (__pyx_v_qubits_mark[__pyx_v_i]) = 1;
 
-    /* "random_simulator.pyx":170
+    /* "random_simulator.pyx":182
  *         for i in qubits_set:
  *             qubits_mark[i] = 1
  *             for j in range(self.num_of_physical_qubits):             # <<<<<<<<<<<<<<
@@ -4244,7 +4358,7 @@ static std::vector<int>  __pyx_f_16random_simulator_15RandomSimulator_get_candid
     for (__pyx_t_4 = 0; __pyx_t_4 < __pyx_t_3; __pyx_t_4+=1) {
       __pyx_v_j = __pyx_t_4;
 
-      /* "random_simulator.pyx":171
+      /* "random_simulator.pyx":183
  *             qubits_mark[i] = 1
  *             for j in range(self.num_of_physical_qubits):
  *                 if qubits_mark[j] == 0 and self.coupling_graph[i,j] == 1:             # <<<<<<<<<<<<<<
@@ -4257,7 +4371,7 @@ static std::vector<int>  __pyx_f_16random_simulator_15RandomSimulator_get_candid
         __pyx_t_5 = __pyx_t_6;
         goto __pyx_L8_bool_binop_done;
       }
-      if (unlikely(!__pyx_v_self->coupling_graph.memview)) {PyErr_SetString(PyExc_AttributeError,"Memoryview is not initialized");__PYX_ERR(0, 171, __pyx_L1_error)}
+      if (unlikely(!__pyx_v_self->coupling_graph.memview)) {PyErr_SetString(PyExc_AttributeError,"Memoryview is not initialized");__PYX_ERR(0, 183, __pyx_L1_error)}
       __pyx_t_7 = __pyx_v_i;
       __pyx_t_8 = __pyx_v_j;
       __pyx_t_6 = (((*((int *) ( /* dim=1 */ ((char *) (((int *) ( /* dim=0 */ (__pyx_v_self->coupling_graph.data + __pyx_t_7 * __pyx_v_self->coupling_graph.strides[0]) )) + __pyx_t_8)) ))) == 1) != 0);
@@ -4265,7 +4379,7 @@ static std::vector<int>  __pyx_f_16random_simulator_15RandomSimulator_get_candid
       __pyx_L8_bool_binop_done:;
       if (__pyx_t_5) {
 
-        /* "random_simulator.pyx":172
+        /* "random_simulator.pyx":184
  *             for j in range(self.num_of_physical_qubits):
  *                 if qubits_mark[j] == 0 and self.coupling_graph[i,j] == 1:
  *                     candidate_swap_gate_list.push_back(i)             # <<<<<<<<<<<<<<
@@ -4282,10 +4396,10 @@ static std::vector<int>  __pyx_f_16random_simulator_15RandomSimulator_get_candid
           #ifdef WITH_THREAD
           __Pyx_PyGILState_Release(__pyx_gilstate_save);
           #endif
-          __PYX_ERR(0, 172, __pyx_L1_error)
+          __PYX_ERR(0, 184, __pyx_L1_error)
         }
 
-        /* "random_simulator.pyx":173
+        /* "random_simulator.pyx":185
  *                 if qubits_mark[j] == 0 and self.coupling_graph[i,j] == 1:
  *                     candidate_swap_gate_list.push_back(i)
  *                     candidate_swap_gate_list.push_back(j)             # <<<<<<<<<<<<<<
@@ -4302,10 +4416,10 @@ static std::vector<int>  __pyx_f_16random_simulator_15RandomSimulator_get_candid
           #ifdef WITH_THREAD
           __Pyx_PyGILState_Release(__pyx_gilstate_save);
           #endif
-          __PYX_ERR(0, 173, __pyx_L1_error)
+          __PYX_ERR(0, 185, __pyx_L1_error)
         }
 
-        /* "random_simulator.pyx":171
+        /* "random_simulator.pyx":183
  *             qubits_mark[i] = 1
  *             for j in range(self.num_of_physical_qubits):
  *                 if qubits_mark[j] == 0 and self.coupling_graph[i,j] == 1:             # <<<<<<<<<<<<<<
@@ -4315,7 +4429,7 @@ static std::vector<int>  __pyx_f_16random_simulator_15RandomSimulator_get_candid
       }
     }
 
-    /* "random_simulator.pyx":168
+    /* "random_simulator.pyx":180
  *         sort(qubits_set.begin(), qubits_set.end())
  * 
  *         for i in qubits_set:             # <<<<<<<<<<<<<<
@@ -4324,7 +4438,7 @@ static std::vector<int>  __pyx_f_16random_simulator_15RandomSimulator_get_candid
  */
   }
 
-  /* "random_simulator.pyx":175
+  /* "random_simulator.pyx":187
  *                     candidate_swap_gate_list.push_back(j)
  * 
  *         return candidate_swap_gate_list             # <<<<<<<<<<<<<<
@@ -4334,7 +4448,7 @@ static std::vector<int>  __pyx_f_16random_simulator_15RandomSimulator_get_candid
   __pyx_r = __pyx_v_candidate_swap_gate_list;
   goto __pyx_L0;
 
-  /* "random_simulator.pyx":157
+  /* "random_simulator.pyx":169
  *         return qubits_set
  * 
  *     cdef vector[int] get_candidate_swap_gate_list(self, vector[int] &front_layer, vector[int] &qubit_mapping) nogil:             # <<<<<<<<<<<<<<
@@ -4350,7 +4464,7 @@ static std::vector<int>  __pyx_f_16random_simulator_15RandomSimulator_get_candid
   return __pyx_r;
 }
 
-/* "random_simulator.pyx":177
+/* "random_simulator.pyx":189
  *         return candidate_swap_gate_list
  * 
  *     cdef bint is_executable(self, int index, vector[int] &qubit_mapping) nogil:             # <<<<<<<<<<<<<<
@@ -4371,18 +4485,18 @@ static int __pyx_f_16random_simulator_15RandomSimulator_is_executable(struct __p
   const char *__pyx_filename = NULL;
   int __pyx_clineno = 0;
 
-  /* "random_simulator.pyx":178
+  /* "random_simulator.pyx":190
  * 
  *     cdef bint is_executable(self, int index, vector[int] &qubit_mapping) nogil:
  *         if self.coupling_graph[qubit_mapping[self.gates[index][0]], qubit_mapping[self.gates[index][1]]] == 1:             # <<<<<<<<<<<<<<
  *             return True
  *         else:
  */
-  if (unlikely(!__pyx_v_self->coupling_graph.memview)) {PyErr_SetString(PyExc_AttributeError,"Memoryview is not initialized");__PYX_ERR(0, 178, __pyx_L1_error)}
-  if (unlikely(!__pyx_v_self->gates.memview)) {PyErr_SetString(PyExc_AttributeError,"Memoryview is not initialized");__PYX_ERR(0, 178, __pyx_L1_error)}
+  if (unlikely(!__pyx_v_self->coupling_graph.memview)) {PyErr_SetString(PyExc_AttributeError,"Memoryview is not initialized");__PYX_ERR(0, 190, __pyx_L1_error)}
+  if (unlikely(!__pyx_v_self->gates.memview)) {PyErr_SetString(PyExc_AttributeError,"Memoryview is not initialized");__PYX_ERR(0, 190, __pyx_L1_error)}
   __pyx_t_1 = __pyx_v_index;
   __pyx_t_2 = 0;
-  if (unlikely(!__pyx_v_self->gates.memview)) {PyErr_SetString(PyExc_AttributeError,"Memoryview is not initialized");__PYX_ERR(0, 178, __pyx_L1_error)}
+  if (unlikely(!__pyx_v_self->gates.memview)) {PyErr_SetString(PyExc_AttributeError,"Memoryview is not initialized");__PYX_ERR(0, 190, __pyx_L1_error)}
   __pyx_t_3 = __pyx_v_index;
   __pyx_t_4 = 1;
   __pyx_t_5 = (__pyx_v_qubit_mapping[(*((int *) ( /* dim=1 */ ((char *) (((int *) ( /* dim=0 */ (__pyx_v_self->gates.data + __pyx_t_1 * __pyx_v_self->gates.strides[0]) )) + __pyx_t_2)) )))]);
@@ -4390,7 +4504,7 @@ static int __pyx_f_16random_simulator_15RandomSimulator_is_executable(struct __p
   __pyx_t_7 = (((*((int *) ( /* dim=1 */ ((char *) (((int *) ( /* dim=0 */ (__pyx_v_self->coupling_graph.data + __pyx_t_5 * __pyx_v_self->coupling_graph.strides[0]) )) + __pyx_t_6)) ))) == 1) != 0);
   if (__pyx_t_7) {
 
-    /* "random_simulator.pyx":179
+    /* "random_simulator.pyx":191
  *     cdef bint is_executable(self, int index, vector[int] &qubit_mapping) nogil:
  *         if self.coupling_graph[qubit_mapping[self.gates[index][0]], qubit_mapping[self.gates[index][1]]] == 1:
  *             return True             # <<<<<<<<<<<<<<
@@ -4400,7 +4514,7 @@ static int __pyx_f_16random_simulator_15RandomSimulator_is_executable(struct __p
     __pyx_r = 1;
     goto __pyx_L0;
 
-    /* "random_simulator.pyx":178
+    /* "random_simulator.pyx":190
  * 
  *     cdef bint is_executable(self, int index, vector[int] &qubit_mapping) nogil:
  *         if self.coupling_graph[qubit_mapping[self.gates[index][0]], qubit_mapping[self.gates[index][1]]] == 1:             # <<<<<<<<<<<<<<
@@ -4409,7 +4523,7 @@ static int __pyx_f_16random_simulator_15RandomSimulator_is_executable(struct __p
  */
   }
 
-  /* "random_simulator.pyx":181
+  /* "random_simulator.pyx":193
  *             return True
  *         else:
  *             return False             # <<<<<<<<<<<<<<
@@ -4421,7 +4535,7 @@ static int __pyx_f_16random_simulator_15RandomSimulator_is_executable(struct __p
     goto __pyx_L0;
   }
 
-  /* "random_simulator.pyx":177
+  /* "random_simulator.pyx":189
  *         return candidate_swap_gate_list
  * 
  *     cdef bint is_executable(self, int index, vector[int] &qubit_mapping) nogil:             # <<<<<<<<<<<<<<
@@ -4437,7 +4551,7 @@ static int __pyx_f_16random_simulator_15RandomSimulator_is_executable(struct __p
   return __pyx_r;
 }
 
-/* "random_simulator.pyx":183
+/* "random_simulator.pyx":195
  *             return False
  * 
  *     cdef bint is_free(self, int index, vector[int] &qubit_mapping, vector[int] &qubit_mask) nogil:             # <<<<<<<<<<<<<<
@@ -4455,14 +4569,14 @@ static int __pyx_f_16random_simulator_15RandomSimulator_is_free(struct __pyx_obj
   const char *__pyx_filename = NULL;
   int __pyx_clineno = 0;
 
-  /* "random_simulator.pyx":184
+  /* "random_simulator.pyx":196
  * 
  *     cdef bint is_free(self, int index, vector[int] &qubit_mapping, vector[int] &qubit_mask) nogil:
  *         if (qubit_mask[qubit_mapping[self.gates[index][0]]] == -1 or qubit_mask[qubit_mapping[self.gates[index][0]]] == index) and  (qubit_mask[qubit_mapping[self.gates[index][1]]] == -1 or qubit_mask[qubit_mapping[self.gates[index][1]]] == index):             # <<<<<<<<<<<<<<
  *             return True
  *         else:
  */
-  if (unlikely(!__pyx_v_self->gates.memview)) {PyErr_SetString(PyExc_AttributeError,"Memoryview is not initialized");__PYX_ERR(0, 184, __pyx_L1_error)}
+  if (unlikely(!__pyx_v_self->gates.memview)) {PyErr_SetString(PyExc_AttributeError,"Memoryview is not initialized");__PYX_ERR(0, 196, __pyx_L1_error)}
   __pyx_t_2 = __pyx_v_index;
   __pyx_t_3 = 0;
   __pyx_t_4 = (((__pyx_v_qubit_mask[(__pyx_v_qubit_mapping[(*((int *) ( /* dim=1 */ ((char *) (((int *) ( /* dim=0 */ (__pyx_v_self->gates.data + __pyx_t_2 * __pyx_v_self->gates.strides[0]) )) + __pyx_t_3)) )))])]) == -1L) != 0);
@@ -4470,7 +4584,7 @@ static int __pyx_f_16random_simulator_15RandomSimulator_is_free(struct __pyx_obj
   } else {
     goto __pyx_L5_next_and;
   }
-  if (unlikely(!__pyx_v_self->gates.memview)) {PyErr_SetString(PyExc_AttributeError,"Memoryview is not initialized");__PYX_ERR(0, 184, __pyx_L1_error)}
+  if (unlikely(!__pyx_v_self->gates.memview)) {PyErr_SetString(PyExc_AttributeError,"Memoryview is not initialized");__PYX_ERR(0, 196, __pyx_L1_error)}
   __pyx_t_3 = __pyx_v_index;
   __pyx_t_2 = 0;
   __pyx_t_4 = (((__pyx_v_qubit_mask[(__pyx_v_qubit_mapping[(*((int *) ( /* dim=1 */ ((char *) (((int *) ( /* dim=0 */ (__pyx_v_self->gates.data + __pyx_t_3 * __pyx_v_self->gates.strides[0]) )) + __pyx_t_2)) )))])]) == __pyx_v_index) != 0);
@@ -4480,7 +4594,7 @@ static int __pyx_f_16random_simulator_15RandomSimulator_is_free(struct __pyx_obj
     goto __pyx_L4_bool_binop_done;
   }
   __pyx_L5_next_and:;
-  if (unlikely(!__pyx_v_self->gates.memview)) {PyErr_SetString(PyExc_AttributeError,"Memoryview is not initialized");__PYX_ERR(0, 184, __pyx_L1_error)}
+  if (unlikely(!__pyx_v_self->gates.memview)) {PyErr_SetString(PyExc_AttributeError,"Memoryview is not initialized");__PYX_ERR(0, 196, __pyx_L1_error)}
   __pyx_t_2 = __pyx_v_index;
   __pyx_t_3 = 1;
   __pyx_t_4 = (((__pyx_v_qubit_mask[(__pyx_v_qubit_mapping[(*((int *) ( /* dim=1 */ ((char *) (((int *) ( /* dim=0 */ (__pyx_v_self->gates.data + __pyx_t_2 * __pyx_v_self->gates.strides[0]) )) + __pyx_t_3)) )))])]) == -1L) != 0);
@@ -4489,7 +4603,7 @@ static int __pyx_f_16random_simulator_15RandomSimulator_is_free(struct __pyx_obj
     __pyx_t_1 = __pyx_t_4;
     goto __pyx_L4_bool_binop_done;
   }
-  if (unlikely(!__pyx_v_self->gates.memview)) {PyErr_SetString(PyExc_AttributeError,"Memoryview is not initialized");__PYX_ERR(0, 184, __pyx_L1_error)}
+  if (unlikely(!__pyx_v_self->gates.memview)) {PyErr_SetString(PyExc_AttributeError,"Memoryview is not initialized");__PYX_ERR(0, 196, __pyx_L1_error)}
   __pyx_t_3 = __pyx_v_index;
   __pyx_t_2 = 1;
   __pyx_t_4 = (((__pyx_v_qubit_mask[(__pyx_v_qubit_mapping[(*((int *) ( /* dim=1 */ ((char *) (((int *) ( /* dim=0 */ (__pyx_v_self->gates.data + __pyx_t_3 * __pyx_v_self->gates.strides[0]) )) + __pyx_t_2)) )))])]) == __pyx_v_index) != 0);
@@ -4497,7 +4611,7 @@ static int __pyx_f_16random_simulator_15RandomSimulator_is_free(struct __pyx_obj
   __pyx_L4_bool_binop_done:;
   if (__pyx_t_1) {
 
-    /* "random_simulator.pyx":185
+    /* "random_simulator.pyx":197
  *     cdef bint is_free(self, int index, vector[int] &qubit_mapping, vector[int] &qubit_mask) nogil:
  *         if (qubit_mask[qubit_mapping[self.gates[index][0]]] == -1 or qubit_mask[qubit_mapping[self.gates[index][0]]] == index) and  (qubit_mask[qubit_mapping[self.gates[index][1]]] == -1 or qubit_mask[qubit_mapping[self.gates[index][1]]] == index):
  *             return True             # <<<<<<<<<<<<<<
@@ -4507,7 +4621,7 @@ static int __pyx_f_16random_simulator_15RandomSimulator_is_free(struct __pyx_obj
     __pyx_r = 1;
     goto __pyx_L0;
 
-    /* "random_simulator.pyx":184
+    /* "random_simulator.pyx":196
  * 
  *     cdef bint is_free(self, int index, vector[int] &qubit_mapping, vector[int] &qubit_mask) nogil:
  *         if (qubit_mask[qubit_mapping[self.gates[index][0]]] == -1 or qubit_mask[qubit_mapping[self.gates[index][0]]] == index) and  (qubit_mask[qubit_mapping[self.gates[index][1]]] == -1 or qubit_mask[qubit_mapping[self.gates[index][1]]] == index):             # <<<<<<<<<<<<<<
@@ -4516,7 +4630,7 @@ static int __pyx_f_16random_simulator_15RandomSimulator_is_free(struct __pyx_obj
  */
   }
 
-  /* "random_simulator.pyx":187
+  /* "random_simulator.pyx":199
  *             return True
  *         else:
  *             return False             # <<<<<<<<<<<<<<
@@ -4528,7 +4642,7 @@ static int __pyx_f_16random_simulator_15RandomSimulator_is_free(struct __pyx_obj
     goto __pyx_L0;
   }
 
-  /* "random_simulator.pyx":183
+  /* "random_simulator.pyx":195
  *             return False
  * 
  *     cdef bint is_free(self, int index, vector[int] &qubit_mapping, vector[int] &qubit_mask) nogil:             # <<<<<<<<<<<<<<
@@ -4544,7 +4658,7 @@ static int __pyx_f_16random_simulator_15RandomSimulator_is_free(struct __pyx_obj
   return __pyx_r;
 }
 
-/* "random_simulator.pyx":189
+/* "random_simulator.pyx":201
  *             return False
  * 
  *     cdef bint is_free_2(self, int index, vector[int] &qubit_mask) nogil:             # <<<<<<<<<<<<<<
@@ -4562,14 +4676,14 @@ static int __pyx_f_16random_simulator_15RandomSimulator_is_free_2(struct __pyx_o
   const char *__pyx_filename = NULL;
   int __pyx_clineno = 0;
 
-  /* "random_simulator.pyx":190
+  /* "random_simulator.pyx":202
  * 
  *     cdef bint is_free_2(self, int index, vector[int] &qubit_mask) nogil:
  *         if (qubit_mask[self.gates[index][0]] == -1 or qubit_mask[self.gates[index][0]] == index) and  (qubit_mask[self.gates[index][1]] == -1 or qubit_mask[self.gates[index][1]] == index):             # <<<<<<<<<<<<<<
  *             return True
  *         else:
  */
-  if (unlikely(!__pyx_v_self->gates.memview)) {PyErr_SetString(PyExc_AttributeError,"Memoryview is not initialized");__PYX_ERR(0, 190, __pyx_L1_error)}
+  if (unlikely(!__pyx_v_self->gates.memview)) {PyErr_SetString(PyExc_AttributeError,"Memoryview is not initialized");__PYX_ERR(0, 202, __pyx_L1_error)}
   __pyx_t_2 = __pyx_v_index;
   __pyx_t_3 = 0;
   __pyx_t_4 = (((__pyx_v_qubit_mask[(*((int *) ( /* dim=1 */ ((char *) (((int *) ( /* dim=0 */ (__pyx_v_self->gates.data + __pyx_t_2 * __pyx_v_self->gates.strides[0]) )) + __pyx_t_3)) )))]) == -1L) != 0);
@@ -4577,7 +4691,7 @@ static int __pyx_f_16random_simulator_15RandomSimulator_is_free_2(struct __pyx_o
   } else {
     goto __pyx_L5_next_and;
   }
-  if (unlikely(!__pyx_v_self->gates.memview)) {PyErr_SetString(PyExc_AttributeError,"Memoryview is not initialized");__PYX_ERR(0, 190, __pyx_L1_error)}
+  if (unlikely(!__pyx_v_self->gates.memview)) {PyErr_SetString(PyExc_AttributeError,"Memoryview is not initialized");__PYX_ERR(0, 202, __pyx_L1_error)}
   __pyx_t_3 = __pyx_v_index;
   __pyx_t_2 = 0;
   __pyx_t_4 = (((__pyx_v_qubit_mask[(*((int *) ( /* dim=1 */ ((char *) (((int *) ( /* dim=0 */ (__pyx_v_self->gates.data + __pyx_t_3 * __pyx_v_self->gates.strides[0]) )) + __pyx_t_2)) )))]) == __pyx_v_index) != 0);
@@ -4587,7 +4701,7 @@ static int __pyx_f_16random_simulator_15RandomSimulator_is_free_2(struct __pyx_o
     goto __pyx_L4_bool_binop_done;
   }
   __pyx_L5_next_and:;
-  if (unlikely(!__pyx_v_self->gates.memview)) {PyErr_SetString(PyExc_AttributeError,"Memoryview is not initialized");__PYX_ERR(0, 190, __pyx_L1_error)}
+  if (unlikely(!__pyx_v_self->gates.memview)) {PyErr_SetString(PyExc_AttributeError,"Memoryview is not initialized");__PYX_ERR(0, 202, __pyx_L1_error)}
   __pyx_t_2 = __pyx_v_index;
   __pyx_t_3 = 1;
   __pyx_t_4 = (((__pyx_v_qubit_mask[(*((int *) ( /* dim=1 */ ((char *) (((int *) ( /* dim=0 */ (__pyx_v_self->gates.data + __pyx_t_2 * __pyx_v_self->gates.strides[0]) )) + __pyx_t_3)) )))]) == -1L) != 0);
@@ -4596,7 +4710,7 @@ static int __pyx_f_16random_simulator_15RandomSimulator_is_free_2(struct __pyx_o
     __pyx_t_1 = __pyx_t_4;
     goto __pyx_L4_bool_binop_done;
   }
-  if (unlikely(!__pyx_v_self->gates.memview)) {PyErr_SetString(PyExc_AttributeError,"Memoryview is not initialized");__PYX_ERR(0, 190, __pyx_L1_error)}
+  if (unlikely(!__pyx_v_self->gates.memview)) {PyErr_SetString(PyExc_AttributeError,"Memoryview is not initialized");__PYX_ERR(0, 202, __pyx_L1_error)}
   __pyx_t_3 = __pyx_v_index;
   __pyx_t_2 = 1;
   __pyx_t_4 = (((__pyx_v_qubit_mask[(*((int *) ( /* dim=1 */ ((char *) (((int *) ( /* dim=0 */ (__pyx_v_self->gates.data + __pyx_t_3 * __pyx_v_self->gates.strides[0]) )) + __pyx_t_2)) )))]) == __pyx_v_index) != 0);
@@ -4604,7 +4718,7 @@ static int __pyx_f_16random_simulator_15RandomSimulator_is_free_2(struct __pyx_o
   __pyx_L4_bool_binop_done:;
   if (__pyx_t_1) {
 
-    /* "random_simulator.pyx":191
+    /* "random_simulator.pyx":203
  *     cdef bint is_free_2(self, int index, vector[int] &qubit_mask) nogil:
  *         if (qubit_mask[self.gates[index][0]] == -1 or qubit_mask[self.gates[index][0]] == index) and  (qubit_mask[self.gates[index][1]] == -1 or qubit_mask[self.gates[index][1]] == index):
  *             return True             # <<<<<<<<<<<<<<
@@ -4614,7 +4728,7 @@ static int __pyx_f_16random_simulator_15RandomSimulator_is_free_2(struct __pyx_o
     __pyx_r = 1;
     goto __pyx_L0;
 
-    /* "random_simulator.pyx":190
+    /* "random_simulator.pyx":202
  * 
  *     cdef bint is_free_2(self, int index, vector[int] &qubit_mask) nogil:
  *         if (qubit_mask[self.gates[index][0]] == -1 or qubit_mask[self.gates[index][0]] == index) and  (qubit_mask[self.gates[index][1]] == -1 or qubit_mask[self.gates[index][1]] == index):             # <<<<<<<<<<<<<<
@@ -4623,19 +4737,19 @@ static int __pyx_f_16random_simulator_15RandomSimulator_is_free_2(struct __pyx_o
  */
   }
 
-  /* "random_simulator.pyx":193
+  /* "random_simulator.pyx":205
  *             return True
  *         else:
  *             return False             # <<<<<<<<<<<<<<
  * 
- *     cdef int update_front_layer(self, vector[int] &front_layer, vector[int] &qubit_mapping, vector[int] &qubit_mask) nogil:
+ *     cdef int update_front_layer(self, vector[int] &front_layer, vector[int] &qubit_mapping, vector[int] &qubit_mask)nogil except +:
  */
   /*else*/ {
     __pyx_r = 0;
     goto __pyx_L0;
   }
 
-  /* "random_simulator.pyx":189
+  /* "random_simulator.pyx":201
  *             return False
  * 
  *     cdef bint is_free_2(self, int index, vector[int] &qubit_mask) nogil:             # <<<<<<<<<<<<<<
@@ -4651,10 +4765,10 @@ static int __pyx_f_16random_simulator_15RandomSimulator_is_free_2(struct __pyx_o
   return __pyx_r;
 }
 
-/* "random_simulator.pyx":195
+/* "random_simulator.pyx":207
  *             return False
  * 
- *     cdef int update_front_layer(self, vector[int] &front_layer, vector[int] &qubit_mapping, vector[int] &qubit_mask) nogil:             # <<<<<<<<<<<<<<
+ *     cdef int update_front_layer(self, vector[int] &front_layer, vector[int] &qubit_mapping, vector[int] &qubit_mask)nogil except +:             # <<<<<<<<<<<<<<
  *         cdef:
  *             vector[int] front_layer_stack
  */
@@ -4674,7 +4788,7 @@ static int __pyx_f_16random_simulator_15RandomSimulator_update_front_layer(struc
   const char *__pyx_filename = NULL;
   int __pyx_clineno = 0;
 
-  /* "random_simulator.pyx":198
+  /* "random_simulator.pyx":210
  *         cdef:
  *             vector[int] front_layer_stack
  *             int num_of_executed_gates = 0, top, suc             # <<<<<<<<<<<<<<
@@ -4683,18 +4797,18 @@ static int __pyx_f_16random_simulator_15RandomSimulator_update_front_layer(struc
  */
   __pyx_v_num_of_executed_gates = 0;
 
-  /* "random_simulator.pyx":201
+  /* "random_simulator.pyx":213
  *             unsigned int i
  * 
  *         front_layer_stack.swap(front_layer)             # <<<<<<<<<<<<<<
+ *         #print("into")
  *         while not front_layer_stack.empty():
- *             top = front_layer_stack.back()
  */
   __pyx_v_front_layer_stack.swap(__pyx_v_front_layer);
 
-  /* "random_simulator.pyx":202
- * 
+  /* "random_simulator.pyx":215
  *         front_layer_stack.swap(front_layer)
+ *         #print("into")
  *         while not front_layer_stack.empty():             # <<<<<<<<<<<<<<
  *             top = front_layer_stack.back()
  *             front_layer_stack.pop_back()
@@ -4703,45 +4817,45 @@ static int __pyx_f_16random_simulator_15RandomSimulator_update_front_layer(struc
     __pyx_t_1 = ((!(__pyx_v_front_layer_stack.empty() != 0)) != 0);
     if (!__pyx_t_1) break;
 
-    /* "random_simulator.pyx":203
- *         front_layer_stack.swap(front_layer)
+    /* "random_simulator.pyx":216
+ *         #print("into")
  *         while not front_layer_stack.empty():
  *             top = front_layer_stack.back()             # <<<<<<<<<<<<<<
  *             front_layer_stack.pop_back()
- *             if self.is_executable(top, qubit_mapping):
+ *             #print(top)
  */
     __pyx_v_top = __pyx_v_front_layer_stack.back();
 
-    /* "random_simulator.pyx":204
+    /* "random_simulator.pyx":217
  *         while not front_layer_stack.empty():
  *             top = front_layer_stack.back()
  *             front_layer_stack.pop_back()             # <<<<<<<<<<<<<<
- *             if self.is_executable(top, qubit_mapping):
- *                 num_of_executed_gates += 1
+ *             #print(top)
+ *             #print([self.gates[top][0], self.gates[top][1]])
  */
     __pyx_v_front_layer_stack.pop_back();
 
-    /* "random_simulator.pyx":205
- *             top = front_layer_stack.back()
- *             front_layer_stack.pop_back()
+    /* "random_simulator.pyx":220
+ *             #print(top)
+ *             #print([self.gates[top][0], self.gates[top][1]])
  *             if self.is_executable(top, qubit_mapping):             # <<<<<<<<<<<<<<
+ *                 #print(num_of_executed_gates)
  *                 num_of_executed_gates += 1
- *                 for i in range(2):
  */
     __pyx_t_1 = (((struct __pyx_vtabstruct_16random_simulator_RandomSimulator *)__pyx_v_self->__pyx_vtab)->is_executable(__pyx_v_self, __pyx_v_top, __pyx_v_qubit_mapping) != 0);
     if (__pyx_t_1) {
 
-      /* "random_simulator.pyx":206
- *             front_layer_stack.pop_back()
+      /* "random_simulator.pyx":222
  *             if self.is_executable(top, qubit_mapping):
+ *                 #print(num_of_executed_gates)
  *                 num_of_executed_gates += 1             # <<<<<<<<<<<<<<
  *                 for i in range(2):
  *                     suc = self.graph[top,i]
  */
       __pyx_v_num_of_executed_gates = (__pyx_v_num_of_executed_gates + 1);
 
-      /* "random_simulator.pyx":207
- *             if self.is_executable(top, qubit_mapping):
+      /* "random_simulator.pyx":223
+ *                 #print(num_of_executed_gates)
  *                 num_of_executed_gates += 1
  *                 for i in range(2):             # <<<<<<<<<<<<<<
  *                     suc = self.graph[top,i]
@@ -4750,31 +4864,31 @@ static int __pyx_f_16random_simulator_15RandomSimulator_update_front_layer(struc
       for (__pyx_t_2 = 0; __pyx_t_2 < 2; __pyx_t_2+=1) {
         __pyx_v_i = __pyx_t_2;
 
-        /* "random_simulator.pyx":208
+        /* "random_simulator.pyx":224
  *                 num_of_executed_gates += 1
  *                 for i in range(2):
  *                     suc = self.graph[top,i]             # <<<<<<<<<<<<<<
  *                     qubit_mask[qubit_mapping[self.gates[top,i]]] = suc
- *                     # print(list(self.gates[suc]))
+ *                     #print(list(self.gates[suc]))
  */
-        if (unlikely(!__pyx_v_self->graph.memview)) {PyErr_SetString(PyExc_AttributeError,"Memoryview is not initialized");__PYX_ERR(0, 208, __pyx_L1_error)}
+        if (unlikely(!__pyx_v_self->graph.memview)) {PyErr_SetString(PyExc_AttributeError,"Memoryview is not initialized");__PYX_ERR(0, 224, __pyx_L1_error)}
         __pyx_t_3 = __pyx_v_top;
         __pyx_t_4 = __pyx_v_i;
         __pyx_v_suc = (*((int *) ( /* dim=1 */ ((char *) (((int *) ( /* dim=0 */ (__pyx_v_self->graph.data + __pyx_t_3 * __pyx_v_self->graph.strides[0]) )) + __pyx_t_4)) )));
 
-        /* "random_simulator.pyx":209
+        /* "random_simulator.pyx":225
  *                 for i in range(2):
  *                     suc = self.graph[top,i]
  *                     qubit_mask[qubit_mapping[self.gates[top,i]]] = suc             # <<<<<<<<<<<<<<
- *                     # print(list(self.gates[suc]))
+ *                     #print(list(self.gates[suc]))
  *                     # print(qubit_mask)
  */
-        if (unlikely(!__pyx_v_self->gates.memview)) {PyErr_SetString(PyExc_AttributeError,"Memoryview is not initialized");__PYX_ERR(0, 209, __pyx_L1_error)}
+        if (unlikely(!__pyx_v_self->gates.memview)) {PyErr_SetString(PyExc_AttributeError,"Memoryview is not initialized");__PYX_ERR(0, 225, __pyx_L1_error)}
         __pyx_t_3 = __pyx_v_top;
         __pyx_t_4 = __pyx_v_i;
         (__pyx_v_qubit_mask[(__pyx_v_qubit_mapping[(*((int *) ( /* dim=1 */ ((char *) (((int *) ( /* dim=0 */ (__pyx_v_self->gates.data + __pyx_t_3 * __pyx_v_self->gates.strides[0]) )) + __pyx_t_4)) )))])]) = __pyx_v_suc;
 
-        /* "random_simulator.pyx":213
+        /* "random_simulator.pyx":229
  *                     # print(qubit_mask)
  *                     # print(qubit_mapping)
  *                     if suc != -1:             # <<<<<<<<<<<<<<
@@ -4784,7 +4898,7 @@ static int __pyx_f_16random_simulator_15RandomSimulator_update_front_layer(struc
         __pyx_t_1 = ((__pyx_v_suc != -1L) != 0);
         if (__pyx_t_1) {
 
-          /* "random_simulator.pyx":215
+          /* "random_simulator.pyx":231
  *                     if suc != -1:
  *                         #print(self.is_free(suc, qubit_mapping, qubit_mask))
  *                         if self.is_free(suc, qubit_mapping, qubit_mask):             # <<<<<<<<<<<<<<
@@ -4794,7 +4908,7 @@ static int __pyx_f_16random_simulator_15RandomSimulator_update_front_layer(struc
           __pyx_t_1 = (((struct __pyx_vtabstruct_16random_simulator_RandomSimulator *)__pyx_v_self->__pyx_vtab)->is_free(__pyx_v_self, __pyx_v_suc, __pyx_v_qubit_mapping, __pyx_v_qubit_mask) != 0);
           if (__pyx_t_1) {
 
-            /* "random_simulator.pyx":217
+            /* "random_simulator.pyx":233
  *                         if self.is_free(suc, qubit_mapping, qubit_mask):
  *                             #print(suc)
  *                             front_layer_stack.push_back(suc)             # <<<<<<<<<<<<<<
@@ -4811,10 +4925,10 @@ static int __pyx_f_16random_simulator_15RandomSimulator_update_front_layer(struc
               #ifdef WITH_THREAD
               __Pyx_PyGILState_Release(__pyx_gilstate_save);
               #endif
-              __PYX_ERR(0, 217, __pyx_L1_error)
+              __PYX_ERR(0, 233, __pyx_L1_error)
             }
 
-            /* "random_simulator.pyx":215
+            /* "random_simulator.pyx":231
  *                     if suc != -1:
  *                         #print(self.is_free(suc, qubit_mapping, qubit_mask))
  *                         if self.is_free(suc, qubit_mapping, qubit_mask):             # <<<<<<<<<<<<<<
@@ -4823,7 +4937,7 @@ static int __pyx_f_16random_simulator_15RandomSimulator_update_front_layer(struc
  */
           }
 
-          /* "random_simulator.pyx":213
+          /* "random_simulator.pyx":229
  *                     # print(qubit_mask)
  *                     # print(qubit_mapping)
  *                     if suc != -1:             # <<<<<<<<<<<<<<
@@ -4833,17 +4947,17 @@ static int __pyx_f_16random_simulator_15RandomSimulator_update_front_layer(struc
         }
       }
 
-      /* "random_simulator.pyx":205
- *             top = front_layer_stack.back()
- *             front_layer_stack.pop_back()
+      /* "random_simulator.pyx":220
+ *             #print(top)
+ *             #print([self.gates[top][0], self.gates[top][1]])
  *             if self.is_executable(top, qubit_mapping):             # <<<<<<<<<<<<<<
+ *                 #print(num_of_executed_gates)
  *                 num_of_executed_gates += 1
- *                 for i in range(2):
  */
       goto __pyx_L5;
     }
 
-    /* "random_simulator.pyx":219
+    /* "random_simulator.pyx":235
  *                             front_layer_stack.push_back(suc)
  *             else:
  *                 front_layer.push_back(top)             # <<<<<<<<<<<<<<
@@ -4861,13 +4975,13 @@ static int __pyx_f_16random_simulator_15RandomSimulator_update_front_layer(struc
         #ifdef WITH_THREAD
         __Pyx_PyGILState_Release(__pyx_gilstate_save);
         #endif
-        __PYX_ERR(0, 219, __pyx_L1_error)
+        __PYX_ERR(0, 235, __pyx_L1_error)
       }
     }
     __pyx_L5:;
   }
 
-  /* "random_simulator.pyx":221
+  /* "random_simulator.pyx":237
  *                 front_layer.push_back(top)
  *             #print(front_layer)
  *         return num_of_executed_gates             # <<<<<<<<<<<<<<
@@ -4877,23 +4991,31 @@ static int __pyx_f_16random_simulator_15RandomSimulator_update_front_layer(struc
   __pyx_r = __pyx_v_num_of_executed_gates;
   goto __pyx_L0;
 
-  /* "random_simulator.pyx":195
+  /* "random_simulator.pyx":207
  *             return False
  * 
- *     cdef int update_front_layer(self, vector[int] &front_layer, vector[int] &qubit_mapping, vector[int] &qubit_mask) nogil:             # <<<<<<<<<<<<<<
+ *     cdef int update_front_layer(self, vector[int] &front_layer, vector[int] &qubit_mapping, vector[int] &qubit_mask)nogil except +:             # <<<<<<<<<<<<<<
  *         cdef:
  *             vector[int] front_layer_stack
  */
 
   /* function exit code */
   __pyx_L1_error:;
-  __Pyx_WriteUnraisable("random_simulator.RandomSimulator.update_front_layer", __pyx_clineno, __pyx_lineno, __pyx_filename, 1, 1);
+  {
+    #ifdef WITH_THREAD
+    PyGILState_STATE __pyx_gilstate_save = __Pyx_PyGILState_Ensure();
+    #endif
+    __Pyx_AddTraceback("random_simulator.RandomSimulator.update_front_layer", __pyx_clineno, __pyx_lineno, __pyx_filename);
+    #ifdef WITH_THREAD
+    __Pyx_PyGILState_Release(__pyx_gilstate_save);
+    #endif
+  }
   __pyx_r = 0;
   __pyx_L0:;
   return __pyx_r;
 }
 
-/* "random_simulator.pyx":224
+/* "random_simulator.pyx":240
  * 
  * 
  *     cdef int update_front_layer_2(self, vector[int] &front_layer, vector[int] &qubit_mapping, vector[int] &qubit_mask, unordered_set[int] &subcircuit) nogil:             # <<<<<<<<<<<<<<
@@ -4916,7 +5038,7 @@ static int __pyx_f_16random_simulator_15RandomSimulator_update_front_layer_2(str
   const char *__pyx_filename = NULL;
   int __pyx_clineno = 0;
 
-  /* "random_simulator.pyx":227
+  /* "random_simulator.pyx":243
  *         cdef:
  *             vector[int] front_layer_stack
  *             int num_of_executed_gates = 0, top, suc             # <<<<<<<<<<<<<<
@@ -4925,7 +5047,7 @@ static int __pyx_f_16random_simulator_15RandomSimulator_update_front_layer_2(str
  */
   __pyx_v_num_of_executed_gates = 0;
 
-  /* "random_simulator.pyx":230
+  /* "random_simulator.pyx":246
  *             unsigned int i
  * 
  *         front_layer_stack.swap(front_layer)             # <<<<<<<<<<<<<<
@@ -4934,7 +5056,7 @@ static int __pyx_f_16random_simulator_15RandomSimulator_update_front_layer_2(str
  */
   __pyx_v_front_layer_stack.swap(__pyx_v_front_layer);
 
-  /* "random_simulator.pyx":231
+  /* "random_simulator.pyx":247
  * 
  *         front_layer_stack.swap(front_layer)
  *         while not front_layer_stack.empty():             # <<<<<<<<<<<<<<
@@ -4945,7 +5067,7 @@ static int __pyx_f_16random_simulator_15RandomSimulator_update_front_layer_2(str
     __pyx_t_1 = ((!(__pyx_v_front_layer_stack.empty() != 0)) != 0);
     if (!__pyx_t_1) break;
 
-    /* "random_simulator.pyx":232
+    /* "random_simulator.pyx":248
  *         front_layer_stack.swap(front_layer)
  *         while not front_layer_stack.empty():
  *             top = front_layer_stack.back()             # <<<<<<<<<<<<<<
@@ -4954,7 +5076,7 @@ static int __pyx_f_16random_simulator_15RandomSimulator_update_front_layer_2(str
  */
     __pyx_v_top = __pyx_v_front_layer_stack.back();
 
-    /* "random_simulator.pyx":233
+    /* "random_simulator.pyx":249
  *         while not front_layer_stack.empty():
  *             top = front_layer_stack.back()
  *             front_layer_stack.pop_back()             # <<<<<<<<<<<<<<
@@ -4963,7 +5085,7 @@ static int __pyx_f_16random_simulator_15RandomSimulator_update_front_layer_2(str
  */
     __pyx_v_front_layer_stack.pop_back();
 
-    /* "random_simulator.pyx":234
+    /* "random_simulator.pyx":250
  *             top = front_layer_stack.back()
  *             front_layer_stack.pop_back()
  *             if self.is_executable(top, qubit_mapping):             # <<<<<<<<<<<<<<
@@ -4973,7 +5095,7 @@ static int __pyx_f_16random_simulator_15RandomSimulator_update_front_layer_2(str
     __pyx_t_1 = (((struct __pyx_vtabstruct_16random_simulator_RandomSimulator *)__pyx_v_self->__pyx_vtab)->is_executable(__pyx_v_self, __pyx_v_top, __pyx_v_qubit_mapping) != 0);
     if (__pyx_t_1) {
 
-      /* "random_simulator.pyx":237
+      /* "random_simulator.pyx":253
  *                 # if subcircuit.find(top) == subcircuit.end():
  *                 #     print("There is a gate not in the subcircuit.")
  *                 subcircuit.erase(top)             # <<<<<<<<<<<<<<
@@ -4982,7 +5104,7 @@ static int __pyx_f_16random_simulator_15RandomSimulator_update_front_layer_2(str
  */
       (void)(__pyx_v_subcircuit.erase(__pyx_v_top));
 
-      /* "random_simulator.pyx":238
+      /* "random_simulator.pyx":254
  *                 #     print("There is a gate not in the subcircuit.")
  *                 subcircuit.erase(top)
  *                 num_of_executed_gates += 1             # <<<<<<<<<<<<<<
@@ -4991,7 +5113,7 @@ static int __pyx_f_16random_simulator_15RandomSimulator_update_front_layer_2(str
  */
       __pyx_v_num_of_executed_gates = (__pyx_v_num_of_executed_gates + 1);
 
-      /* "random_simulator.pyx":239
+      /* "random_simulator.pyx":255
  *                 subcircuit.erase(top)
  *                 num_of_executed_gates += 1
  *                 for i in range(2):             # <<<<<<<<<<<<<<
@@ -5001,31 +5123,31 @@ static int __pyx_f_16random_simulator_15RandomSimulator_update_front_layer_2(str
       for (__pyx_t_2 = 0; __pyx_t_2 < 2; __pyx_t_2+=1) {
         __pyx_v_i = __pyx_t_2;
 
-        /* "random_simulator.pyx":240
+        /* "random_simulator.pyx":256
  *                 num_of_executed_gates += 1
  *                 for i in range(2):
  *                     suc = self.graph[top,i]             # <<<<<<<<<<<<<<
  *                     qubit_mask[qubit_mapping[self.gates[top,i]]] = suc
  *                     # print(list(self.gates[suc]))
  */
-        if (unlikely(!__pyx_v_self->graph.memview)) {PyErr_SetString(PyExc_AttributeError,"Memoryview is not initialized");__PYX_ERR(0, 240, __pyx_L1_error)}
+        if (unlikely(!__pyx_v_self->graph.memview)) {PyErr_SetString(PyExc_AttributeError,"Memoryview is not initialized");__PYX_ERR(0, 256, __pyx_L1_error)}
         __pyx_t_3 = __pyx_v_top;
         __pyx_t_4 = __pyx_v_i;
         __pyx_v_suc = (*((int *) ( /* dim=1 */ ((char *) (((int *) ( /* dim=0 */ (__pyx_v_self->graph.data + __pyx_t_3 * __pyx_v_self->graph.strides[0]) )) + __pyx_t_4)) )));
 
-        /* "random_simulator.pyx":241
+        /* "random_simulator.pyx":257
  *                 for i in range(2):
  *                     suc = self.graph[top,i]
  *                     qubit_mask[qubit_mapping[self.gates[top,i]]] = suc             # <<<<<<<<<<<<<<
  *                     # print(list(self.gates[suc]))
  *                     # print(qubit_mask)
  */
-        if (unlikely(!__pyx_v_self->gates.memview)) {PyErr_SetString(PyExc_AttributeError,"Memoryview is not initialized");__PYX_ERR(0, 241, __pyx_L1_error)}
+        if (unlikely(!__pyx_v_self->gates.memview)) {PyErr_SetString(PyExc_AttributeError,"Memoryview is not initialized");__PYX_ERR(0, 257, __pyx_L1_error)}
         __pyx_t_3 = __pyx_v_top;
         __pyx_t_4 = __pyx_v_i;
         (__pyx_v_qubit_mask[(__pyx_v_qubit_mapping[(*((int *) ( /* dim=1 */ ((char *) (((int *) ( /* dim=0 */ (__pyx_v_self->gates.data + __pyx_t_3 * __pyx_v_self->gates.strides[0]) )) + __pyx_t_4)) )))])]) = __pyx_v_suc;
 
-        /* "random_simulator.pyx":245
+        /* "random_simulator.pyx":261
  *                     # print(qubit_mask)
  *                     # print(qubit_mapping)
  *                     if suc != -1:             # <<<<<<<<<<<<<<
@@ -5035,7 +5157,7 @@ static int __pyx_f_16random_simulator_15RandomSimulator_update_front_layer_2(str
         __pyx_t_1 = ((__pyx_v_suc != -1L) != 0);
         if (__pyx_t_1) {
 
-          /* "random_simulator.pyx":247
+          /* "random_simulator.pyx":263
  *                     if suc != -1:
  *                         #print(self.is_free(suc, qubit_mapping, qubit_mask))
  *                         if self.is_free(suc, qubit_mapping, qubit_mask):             # <<<<<<<<<<<<<<
@@ -5045,7 +5167,7 @@ static int __pyx_f_16random_simulator_15RandomSimulator_update_front_layer_2(str
           __pyx_t_1 = (((struct __pyx_vtabstruct_16random_simulator_RandomSimulator *)__pyx_v_self->__pyx_vtab)->is_free(__pyx_v_self, __pyx_v_suc, __pyx_v_qubit_mapping, __pyx_v_qubit_mask) != 0);
           if (__pyx_t_1) {
 
-            /* "random_simulator.pyx":249
+            /* "random_simulator.pyx":265
  *                         if self.is_free(suc, qubit_mapping, qubit_mask):
  *                             #print(suc)
  *                             front_layer_stack.push_back(suc)             # <<<<<<<<<<<<<<
@@ -5062,10 +5184,10 @@ static int __pyx_f_16random_simulator_15RandomSimulator_update_front_layer_2(str
               #ifdef WITH_THREAD
               __Pyx_PyGILState_Release(__pyx_gilstate_save);
               #endif
-              __PYX_ERR(0, 249, __pyx_L1_error)
+              __PYX_ERR(0, 265, __pyx_L1_error)
             }
 
-            /* "random_simulator.pyx":247
+            /* "random_simulator.pyx":263
  *                     if suc != -1:
  *                         #print(self.is_free(suc, qubit_mapping, qubit_mask))
  *                         if self.is_free(suc, qubit_mapping, qubit_mask):             # <<<<<<<<<<<<<<
@@ -5074,7 +5196,7 @@ static int __pyx_f_16random_simulator_15RandomSimulator_update_front_layer_2(str
  */
           }
 
-          /* "random_simulator.pyx":245
+          /* "random_simulator.pyx":261
  *                     # print(qubit_mask)
  *                     # print(qubit_mapping)
  *                     if suc != -1:             # <<<<<<<<<<<<<<
@@ -5084,7 +5206,7 @@ static int __pyx_f_16random_simulator_15RandomSimulator_update_front_layer_2(str
         }
       }
 
-      /* "random_simulator.pyx":234
+      /* "random_simulator.pyx":250
  *             top = front_layer_stack.back()
  *             front_layer_stack.pop_back()
  *             if self.is_executable(top, qubit_mapping):             # <<<<<<<<<<<<<<
@@ -5094,7 +5216,7 @@ static int __pyx_f_16random_simulator_15RandomSimulator_update_front_layer_2(str
       goto __pyx_L5;
     }
 
-    /* "random_simulator.pyx":251
+    /* "random_simulator.pyx":267
  *                             front_layer_stack.push_back(suc)
  *             else:
  *                 front_layer.push_back(top)             # <<<<<<<<<<<<<<
@@ -5112,13 +5234,13 @@ static int __pyx_f_16random_simulator_15RandomSimulator_update_front_layer_2(str
         #ifdef WITH_THREAD
         __Pyx_PyGILState_Release(__pyx_gilstate_save);
         #endif
-        __PYX_ERR(0, 251, __pyx_L1_error)
+        __PYX_ERR(0, 267, __pyx_L1_error)
       }
     }
     __pyx_L5:;
   }
 
-  /* "random_simulator.pyx":253
+  /* "random_simulator.pyx":269
  *                 front_layer.push_back(top)
  *             #print(front_layer)
  *         return num_of_executed_gates             # <<<<<<<<<<<<<<
@@ -5128,7 +5250,7 @@ static int __pyx_f_16random_simulator_15RandomSimulator_update_front_layer_2(str
   __pyx_r = __pyx_v_num_of_executed_gates;
   goto __pyx_L0;
 
-  /* "random_simulator.pyx":224
+  /* "random_simulator.pyx":240
  * 
  * 
  *     cdef int update_front_layer_2(self, vector[int] &front_layer, vector[int] &qubit_mapping, vector[int] &qubit_mask, unordered_set[int] &subcircuit) nogil:             # <<<<<<<<<<<<<<
@@ -5144,10 +5266,10 @@ static int __pyx_f_16random_simulator_15RandomSimulator_update_front_layer_2(str
   return __pyx_r;
 }
 
-/* "random_simulator.pyx":256
+/* "random_simulator.pyx":272
  * 
  * 
- *     cdef unordered_set[int] get_subcircuit(self, vector[int] front_layer, vector[int] qubit_mask ,int num_of_subcircuit_gates):             # <<<<<<<<<<<<<<
+ *     cdef unordered_set[int] get_subcircuit(self, vector[int] front_layer, vector[int] qubit_mask ,int num_of_subcircuit_gates)nogil:             # <<<<<<<<<<<<<<
  *         cdef:
  *             unordered_set[int] subcircuit
  */
@@ -5159,7 +5281,6 @@ static std::unordered_set<int>  __pyx_f_16random_simulator_15RandomSimulator_get
   int __pyx_v_suc;
   int __pyx_v_top;
   std::unordered_set<int>  __pyx_r;
-  __Pyx_RefNannyDeclarations
   int __pyx_t_1;
   int __pyx_t_2;
   int __pyx_t_3;
@@ -5168,9 +5289,8 @@ static std::unordered_set<int>  __pyx_f_16random_simulator_15RandomSimulator_get
   int __pyx_lineno = 0;
   const char *__pyx_filename = NULL;
   int __pyx_clineno = 0;
-  __Pyx_RefNannySetupContext("get_subcircuit", 0);
 
-  /* "random_simulator.pyx":261
+  /* "random_simulator.pyx":277
  *             int idx, tar, ctrl, i, suc, top
  * 
  *         idx = 0             # <<<<<<<<<<<<<<
@@ -5179,7 +5299,7 @@ static std::unordered_set<int>  __pyx_f_16random_simulator_15RandomSimulator_get
  */
   __pyx_v_idx = 0;
 
-  /* "random_simulator.pyx":262
+  /* "random_simulator.pyx":278
  * 
  *         idx = 0
  *         while idx < num_of_subcircuit_gates  and (front_layer.size()>0):             # <<<<<<<<<<<<<<
@@ -5198,7 +5318,7 @@ static std::unordered_set<int>  __pyx_f_16random_simulator_15RandomSimulator_get
     __pyx_L5_bool_binop_done:;
     if (!__pyx_t_1) break;
 
-    /* "random_simulator.pyx":263
+    /* "random_simulator.pyx":279
  *         idx = 0
  *         while idx < num_of_subcircuit_gates  and (front_layer.size()>0):
  *             top = front_layer.back()             # <<<<<<<<<<<<<<
@@ -5207,7 +5327,7 @@ static std::unordered_set<int>  __pyx_f_16random_simulator_15RandomSimulator_get
  */
     __pyx_v_top = __pyx_v_front_layer.back();
 
-    /* "random_simulator.pyx":264
+    /* "random_simulator.pyx":280
  *         while idx < num_of_subcircuit_gates  and (front_layer.size()>0):
  *             top = front_layer.back()
  *             front_layer.pop_back()             # <<<<<<<<<<<<<<
@@ -5216,7 +5336,7 @@ static std::unordered_set<int>  __pyx_f_16random_simulator_15RandomSimulator_get
  */
     __pyx_v_front_layer.pop_back();
 
-    /* "random_simulator.pyx":265
+    /* "random_simulator.pyx":281
  *             top = front_layer.back()
  *             front_layer.pop_back()
  *             subcircuit.insert(top)             # <<<<<<<<<<<<<<
@@ -5225,7 +5345,7 @@ static std::unordered_set<int>  __pyx_f_16random_simulator_15RandomSimulator_get
  */
     (void)(__pyx_v_subcircuit.insert(__pyx_v_top));
 
-    /* "random_simulator.pyx":266
+    /* "random_simulator.pyx":282
  *             front_layer.pop_back()
  *             subcircuit.insert(top)
  *             idx += 1             # <<<<<<<<<<<<<<
@@ -5234,7 +5354,7 @@ static std::unordered_set<int>  __pyx_f_16random_simulator_15RandomSimulator_get
  */
     __pyx_v_idx = (__pyx_v_idx + 1);
 
-    /* "random_simulator.pyx":267
+    /* "random_simulator.pyx":283
  *             subcircuit.insert(top)
  *             idx += 1
  *             for i in range(2):             # <<<<<<<<<<<<<<
@@ -5244,31 +5364,31 @@ static std::unordered_set<int>  __pyx_f_16random_simulator_15RandomSimulator_get
     for (__pyx_t_3 = 0; __pyx_t_3 < 2; __pyx_t_3+=1) {
       __pyx_v_i = __pyx_t_3;
 
-      /* "random_simulator.pyx":268
+      /* "random_simulator.pyx":284
  *             idx += 1
  *             for i in range(2):
  *                 suc = self.graph[top,i]             # <<<<<<<<<<<<<<
  *                 qubit_mask[self.gates[top,i]] = suc
  *                 if suc != -1:
  */
-      if (unlikely(!__pyx_v_self->graph.memview)) {PyErr_SetString(PyExc_AttributeError,"Memoryview is not initialized");__PYX_ERR(0, 268, __pyx_L1_error)}
+      if (unlikely(!__pyx_v_self->graph.memview)) {PyErr_SetString(PyExc_AttributeError,"Memoryview is not initialized");__PYX_ERR(0, 284, __pyx_L1_error)}
       __pyx_t_4 = __pyx_v_top;
       __pyx_t_5 = __pyx_v_i;
       __pyx_v_suc = (*((int *) ( /* dim=1 */ ((char *) (((int *) ( /* dim=0 */ (__pyx_v_self->graph.data + __pyx_t_4 * __pyx_v_self->graph.strides[0]) )) + __pyx_t_5)) )));
 
-      /* "random_simulator.pyx":269
+      /* "random_simulator.pyx":285
  *             for i in range(2):
  *                 suc = self.graph[top,i]
  *                 qubit_mask[self.gates[top,i]] = suc             # <<<<<<<<<<<<<<
  *                 if suc != -1:
  *                     if self.is_free_2(suc, qubit_mask):
  */
-      if (unlikely(!__pyx_v_self->gates.memview)) {PyErr_SetString(PyExc_AttributeError,"Memoryview is not initialized");__PYX_ERR(0, 269, __pyx_L1_error)}
+      if (unlikely(!__pyx_v_self->gates.memview)) {PyErr_SetString(PyExc_AttributeError,"Memoryview is not initialized");__PYX_ERR(0, 285, __pyx_L1_error)}
       __pyx_t_5 = __pyx_v_top;
       __pyx_t_4 = __pyx_v_i;
       (__pyx_v_qubit_mask[(*((int *) ( /* dim=1 */ ((char *) (((int *) ( /* dim=0 */ (__pyx_v_self->gates.data + __pyx_t_5 * __pyx_v_self->gates.strides[0]) )) + __pyx_t_4)) )))]) = __pyx_v_suc;
 
-      /* "random_simulator.pyx":270
+      /* "random_simulator.pyx":286
  *                 suc = self.graph[top,i]
  *                 qubit_mask[self.gates[top,i]] = suc
  *                 if suc != -1:             # <<<<<<<<<<<<<<
@@ -5278,7 +5398,7 @@ static std::unordered_set<int>  __pyx_f_16random_simulator_15RandomSimulator_get
       __pyx_t_1 = ((__pyx_v_suc != -1L) != 0);
       if (__pyx_t_1) {
 
-        /* "random_simulator.pyx":271
+        /* "random_simulator.pyx":287
  *                 qubit_mask[self.gates[top,i]] = suc
  *                 if suc != -1:
  *                     if self.is_free_2(suc, qubit_mask):             # <<<<<<<<<<<<<<
@@ -5288,7 +5408,7 @@ static std::unordered_set<int>  __pyx_f_16random_simulator_15RandomSimulator_get
         __pyx_t_1 = (((struct __pyx_vtabstruct_16random_simulator_RandomSimulator *)__pyx_v_self->__pyx_vtab)->is_free_2(__pyx_v_self, __pyx_v_suc, __pyx_v_qubit_mask) != 0);
         if (__pyx_t_1) {
 
-          /* "random_simulator.pyx":272
+          /* "random_simulator.pyx":288
  *                 if suc != -1:
  *                     if self.is_free_2(suc, qubit_mask):
  *                         front_layer.push_back(suc)             # <<<<<<<<<<<<<<
@@ -5298,11 +5418,17 @@ static std::unordered_set<int>  __pyx_f_16random_simulator_15RandomSimulator_get
           try {
             __pyx_v_front_layer.push_back(__pyx_v_suc);
           } catch(...) {
+            #ifdef WITH_THREAD
+            PyGILState_STATE __pyx_gilstate_save = __Pyx_PyGILState_Ensure();
+            #endif
             __Pyx_CppExn2PyErr();
-            __PYX_ERR(0, 272, __pyx_L1_error)
+            #ifdef WITH_THREAD
+            __Pyx_PyGILState_Release(__pyx_gilstate_save);
+            #endif
+            __PYX_ERR(0, 288, __pyx_L1_error)
           }
 
-          /* "random_simulator.pyx":271
+          /* "random_simulator.pyx":287
  *                 qubit_mask[self.gates[top,i]] = suc
  *                 if suc != -1:
  *                     if self.is_free_2(suc, qubit_mask):             # <<<<<<<<<<<<<<
@@ -5311,7 +5437,7 @@ static std::unordered_set<int>  __pyx_f_16random_simulator_15RandomSimulator_get
  */
         }
 
-        /* "random_simulator.pyx":270
+        /* "random_simulator.pyx":286
  *                 suc = self.graph[top,i]
  *                 qubit_mask[self.gates[top,i]] = suc
  *                 if suc != -1:             # <<<<<<<<<<<<<<
@@ -5322,37 +5448,36 @@ static std::unordered_set<int>  __pyx_f_16random_simulator_15RandomSimulator_get
     }
   }
 
-  /* "random_simulator.pyx":273
+  /* "random_simulator.pyx":289
  *                     if self.is_free_2(suc, qubit_mask):
  *                         front_layer.push_back(suc)
  *         return subcircuit             # <<<<<<<<<<<<<<
  * 
- *     cdef float simulation_thread_swap(self, int seed) nogil:
+ *     cdef float simulation_thread_swap(self, int seed)nogil except +:
  */
   __pyx_r = __pyx_v_subcircuit;
   goto __pyx_L0;
 
-  /* "random_simulator.pyx":256
+  /* "random_simulator.pyx":272
  * 
  * 
- *     cdef unordered_set[int] get_subcircuit(self, vector[int] front_layer, vector[int] qubit_mask ,int num_of_subcircuit_gates):             # <<<<<<<<<<<<<<
+ *     cdef unordered_set[int] get_subcircuit(self, vector[int] front_layer, vector[int] qubit_mask ,int num_of_subcircuit_gates)nogil:             # <<<<<<<<<<<<<<
  *         cdef:
  *             unordered_set[int] subcircuit
  */
 
   /* function exit code */
   __pyx_L1_error:;
-  __Pyx_WriteUnraisable("random_simulator.RandomSimulator.get_subcircuit", __pyx_clineno, __pyx_lineno, __pyx_filename, 1, 0);
+  __Pyx_WriteUnraisable("random_simulator.RandomSimulator.get_subcircuit", __pyx_clineno, __pyx_lineno, __pyx_filename, 1, 1);
   __Pyx_pretend_to_initialize(&__pyx_r);
   __pyx_L0:;
-  __Pyx_RefNannyFinishContext();
   return __pyx_r;
 }
 
-/* "random_simulator.pyx":275
+/* "random_simulator.pyx":291
  *         return subcircuit
  * 
- *     cdef float simulation_thread_swap(self, int seed) nogil:             # <<<<<<<<<<<<<<
+ *     cdef float simulation_thread_swap(self, int seed)nogil except +:             # <<<<<<<<<<<<<<
  *         cdef:
  *             vector[int] front_layer = self.front_layer
  */
@@ -5382,390 +5507,6 @@ static float __pyx_f_16random_simulator_15RandomSimulator_simulation_thread_swap
   std::unordered_set<int>  __pyx_t_2;
   int __pyx_t_3;
   int __pyx_t_4;
-  unsigned int __pyx_t_5;
-  unsigned int __pyx_t_6;
-  unsigned int __pyx_t_7;
-  struct __pyx_opt_args_16random_simulator_15RandomSimulator_change_qubit_mapping_with_swap_gate __pyx_t_8;
-  int __pyx_lineno = 0;
-  const char *__pyx_filename = NULL;
-  int __pyx_clineno = 0;
-
-  /* "random_simulator.pyx":277
- *     cdef float simulation_thread_swap(self, int seed) nogil:
- *         cdef:
- *             vector[int] front_layer = self.front_layer             # <<<<<<<<<<<<<<
- *             vector[int] qubit_mapping = self.qubit_mapping
- *             vector[int] qubit_inverse_mapping = self.qubit_inverse_mapping
- */
-  __pyx_t_1 = __pyx_v_self->front_layer;
-  __pyx_v_front_layer = __pyx_t_1;
-
-  /* "random_simulator.pyx":278
- *         cdef:
- *             vector[int] front_layer = self.front_layer
- *             vector[int] qubit_mapping = self.qubit_mapping             # <<<<<<<<<<<<<<
- *             vector[int] qubit_inverse_mapping = self.qubit_inverse_mapping
- *             vector[int] qubit_mask = self.qubit_mask
- */
-  __pyx_t_1 = __pyx_v_self->qubit_mapping;
-  __pyx_v_qubit_mapping = __pyx_t_1;
-
-  /* "random_simulator.pyx":279
- *             vector[int] front_layer = self.front_layer
- *             vector[int] qubit_mapping = self.qubit_mapping
- *             vector[int] qubit_inverse_mapping = self.qubit_inverse_mapping             # <<<<<<<<<<<<<<
- *             vector[int] qubit_mask = self.qubit_mask
- *             vector[int] candidate_swap_gate_list, NNC, swap_gate, logical_qubit_mask
- */
-  __pyx_t_1 = __pyx_v_self->qubit_inverse_mapping;
-  __pyx_v_qubit_inverse_mapping = __pyx_t_1;
-
-  /* "random_simulator.pyx":280
- *             vector[int] qubit_mapping = self.qubit_mapping
- *             vector[int] qubit_inverse_mapping = self.qubit_inverse_mapping
- *             vector[int] qubit_mask = self.qubit_mask             # <<<<<<<<<<<<<<
- *             vector[int] candidate_swap_gate_list, NNC, swap_gate, logical_qubit_mask
- *             unordered_set[int] subcircuit = self.subcircuit
- */
-  __pyx_t_1 = __pyx_v_self->qubit_mask;
-  __pyx_v_qubit_mask = __pyx_t_1;
-
-  /* "random_simulator.pyx":282
- *             vector[int] qubit_mask = self.qubit_mask
- *             vector[int] candidate_swap_gate_list, NNC, swap_gate, logical_qubit_mask
- *             unordered_set[int] subcircuit = self.subcircuit             # <<<<<<<<<<<<<<
- *             vector[float] res
- *             vector[float] pf
- */
-  __pyx_t_2 = __pyx_v_self->subcircuit;
-  __pyx_v_subcircuit = __pyx_t_2;
-
-  /* "random_simulator.pyx":286
- *             vector[float] pf
- *             int NNC_base, j
- *             float weight, weighted_executed_gates = 0.0, sim_res, num_of_swap_gates = 0             # <<<<<<<<<<<<<<
- *             unsigned int i, num_of_executed_gates = 0, num_of_candidate_swap_gates, swap_gate_index
- * 
- */
-  __pyx_v_weighted_executed_gates = 0.0;
-  __pyx_v_num_of_swap_gates = 0.0;
-
-  /* "random_simulator.pyx":287
- *             int NNC_base, j
- *             float weight, weighted_executed_gates = 0.0, sim_res, num_of_swap_gates = 0
- *             unsigned int i, num_of_executed_gates = 0, num_of_candidate_swap_gates, swap_gate_index             # <<<<<<<<<<<<<<
- * 
- *         res.resize(2, 0)
- */
-  __pyx_v_num_of_executed_gates = 0;
-
-  /* "random_simulator.pyx":289
- *             unsigned int i, num_of_executed_gates = 0, num_of_candidate_swap_gates, swap_gate_index
- * 
- *         res.resize(2, 0)             # <<<<<<<<<<<<<<
- *         swap_gate.resize(2, INIT_NUM)
- *         weighted_executed_gates += <float>(self.update_front_layer(front_layer, qubit_mapping, qubit_mask))
- */
-  try {
-    __pyx_v_res.resize(2, 0.0);
-  } catch(...) {
-    #ifdef WITH_THREAD
-    PyGILState_STATE __pyx_gilstate_save = __Pyx_PyGILState_Ensure();
-    #endif
-    __Pyx_CppExn2PyErr();
-    #ifdef WITH_THREAD
-    __Pyx_PyGILState_Release(__pyx_gilstate_save);
-    #endif
-    __PYX_ERR(0, 289, __pyx_L1_error)
-  }
-
-  /* "random_simulator.pyx":290
- * 
- *         res.resize(2, 0)
- *         swap_gate.resize(2, INIT_NUM)             # <<<<<<<<<<<<<<
- *         weighted_executed_gates += <float>(self.update_front_layer(front_layer, qubit_mapping, qubit_mask))
- *         #num_of_executed_gates += self.update_front_layer(front_layer, qubit_mapping, qubit_mask)
- */
-  try {
-    __pyx_v_swap_gate.resize(2, __pyx_v_16random_simulator_INIT_NUM);
-  } catch(...) {
-    #ifdef WITH_THREAD
-    PyGILState_STATE __pyx_gilstate_save = __Pyx_PyGILState_Ensure();
-    #endif
-    __Pyx_CppExn2PyErr();
-    #ifdef WITH_THREAD
-    __Pyx_PyGILState_Release(__pyx_gilstate_save);
-    #endif
-    __PYX_ERR(0, 290, __pyx_L1_error)
-  }
-
-  /* "random_simulator.pyx":291
- *         res.resize(2, 0)
- *         swap_gate.resize(2, INIT_NUM)
- *         weighted_executed_gates += <float>(self.update_front_layer(front_layer, qubit_mapping, qubit_mask))             # <<<<<<<<<<<<<<
- *         #num_of_executed_gates += self.update_front_layer(front_layer, qubit_mapping, qubit_mask)
- *         weight = 1.0
- */
-  __pyx_v_weighted_executed_gates = (__pyx_v_weighted_executed_gates + ((float)((struct __pyx_vtabstruct_16random_simulator_RandomSimulator *)__pyx_v_self->__pyx_vtab)->update_front_layer(__pyx_v_self, __pyx_v_front_layer, __pyx_v_qubit_mapping, __pyx_v_qubit_mask)));
-
-  /* "random_simulator.pyx":293
- *         weighted_executed_gates += <float>(self.update_front_layer(front_layer, qubit_mapping, qubit_mask))
- *         #num_of_executed_gates += self.update_front_layer(front_layer, qubit_mapping, qubit_mask)
- *         weight = 1.0             # <<<<<<<<<<<<<<
- *         #print(weight)
- *         while not front_layer.empty() and  num_of_swap_gates < self.num_of_swap_gates:
- */
-  __pyx_v_weight = 1.0;
-
-  /* "random_simulator.pyx":295
- *         weight = 1.0
- *         #print(weight)
- *         while not front_layer.empty() and  num_of_swap_gates < self.num_of_swap_gates:             # <<<<<<<<<<<<<<
- *             candidate_swap_gate_list = self.get_candidate_swap_gate_list(front_layer, qubit_mapping)
- *             #print(qubit_mapping)
- */
-  while (1) {
-    __pyx_t_4 = ((!(__pyx_v_front_layer.empty() != 0)) != 0);
-    if (__pyx_t_4) {
-    } else {
-      __pyx_t_3 = __pyx_t_4;
-      goto __pyx_L5_bool_binop_done;
-    }
-    __pyx_t_4 = ((__pyx_v_num_of_swap_gates < __pyx_v_self->num_of_swap_gates) != 0);
-    __pyx_t_3 = __pyx_t_4;
-    __pyx_L5_bool_binop_done:;
-    if (!__pyx_t_3) break;
-
-    /* "random_simulator.pyx":296
- *         #print(weight)
- *         while not front_layer.empty() and  num_of_swap_gates < self.num_of_swap_gates:
- *             candidate_swap_gate_list = self.get_candidate_swap_gate_list(front_layer, qubit_mapping)             # <<<<<<<<<<<<<<
- *             #print(qubit_mapping)
- *             # for j in front_layer:
- */
-    __pyx_v_candidate_swap_gate_list = ((struct __pyx_vtabstruct_16random_simulator_RandomSimulator *)__pyx_v_self->__pyx_vtab)->get_candidate_swap_gate_list(__pyx_v_self, __pyx_v_front_layer, __pyx_v_qubit_mapping);
-
-    /* "random_simulator.pyx":301
- *             #     print(list(self.gates[j]))
- *             # print(candidate_swap_gate_list)
- *             num_of_candidate_swap_gates = <int>(candidate_swap_gate_list.size() / 2)             # <<<<<<<<<<<<<<
- *             NNC_base = self.NNC(front_layer, qubit_mapping)
- *             NNC.resize(num_of_candidate_swap_gates, INIT_NUM)
- */
-    __pyx_v_num_of_candidate_swap_gates = ((int)(((double)__pyx_v_candidate_swap_gate_list.size()) / 2.0));
-
-    /* "random_simulator.pyx":302
- *             # print(candidate_swap_gate_list)
- *             num_of_candidate_swap_gates = <int>(candidate_swap_gate_list.size() / 2)
- *             NNC_base = self.NNC(front_layer, qubit_mapping)             # <<<<<<<<<<<<<<
- *             NNC.resize(num_of_candidate_swap_gates, INIT_NUM)
- *             for i in range(num_of_candidate_swap_gates):
- */
-    __pyx_v_NNC_base = ((struct __pyx_vtabstruct_16random_simulator_RandomSimulator *)__pyx_v_self->__pyx_vtab)->NNC(__pyx_v_self, __pyx_v_front_layer, __pyx_v_qubit_mapping);
-
-    /* "random_simulator.pyx":303
- *             num_of_candidate_swap_gates = <int>(candidate_swap_gate_list.size() / 2)
- *             NNC_base = self.NNC(front_layer, qubit_mapping)
- *             NNC.resize(num_of_candidate_swap_gates, INIT_NUM)             # <<<<<<<<<<<<<<
- *             for i in range(num_of_candidate_swap_gates):
- *                 swap_gate[0] = candidate_swap_gate_list[2*i]
- */
-    try {
-      __pyx_v_NNC.resize(__pyx_v_num_of_candidate_swap_gates, __pyx_v_16random_simulator_INIT_NUM);
-    } catch(...) {
-      #ifdef WITH_THREAD
-      PyGILState_STATE __pyx_gilstate_save = __Pyx_PyGILState_Ensure();
-      #endif
-      __Pyx_CppExn2PyErr();
-      #ifdef WITH_THREAD
-      __Pyx_PyGILState_Release(__pyx_gilstate_save);
-      #endif
-      __PYX_ERR(0, 303, __pyx_L1_error)
-    }
-
-    /* "random_simulator.pyx":304
- *             NNC_base = self.NNC(front_layer, qubit_mapping)
- *             NNC.resize(num_of_candidate_swap_gates, INIT_NUM)
- *             for i in range(num_of_candidate_swap_gates):             # <<<<<<<<<<<<<<
- *                 swap_gate[0] = candidate_swap_gate_list[2*i]
- *                 swap_gate[1] = candidate_swap_gate_list[2*i+1]
- */
-    __pyx_t_5 = __pyx_v_num_of_candidate_swap_gates;
-    __pyx_t_6 = __pyx_t_5;
-    for (__pyx_t_7 = 0; __pyx_t_7 < __pyx_t_6; __pyx_t_7+=1) {
-      __pyx_v_i = __pyx_t_7;
-
-      /* "random_simulator.pyx":305
- *             NNC.resize(num_of_candidate_swap_gates, INIT_NUM)
- *             for i in range(num_of_candidate_swap_gates):
- *                 swap_gate[0] = candidate_swap_gate_list[2*i]             # <<<<<<<<<<<<<<
- *                 swap_gate[1] = candidate_swap_gate_list[2*i+1]
- *                #for j in front_layer:
- */
-      (__pyx_v_swap_gate[0]) = (__pyx_v_candidate_swap_gate_list[(2 * __pyx_v_i)]);
-
-      /* "random_simulator.pyx":306
- *             for i in range(num_of_candidate_swap_gates):
- *                 swap_gate[0] = candidate_swap_gate_list[2*i]
- *                 swap_gate[1] = candidate_swap_gate_list[2*i+1]             # <<<<<<<<<<<<<<
- *                #for j in front_layer:
- *                 #    print(list(self.gates[i]))
- */
-      (__pyx_v_swap_gate[1]) = (__pyx_v_candidate_swap_gate_list[((2 * __pyx_v_i) + 1)]);
-
-      /* "random_simulator.pyx":311
- *                 #print(qubit_mapping)
- *                 #print(self.change_qubit_mapping_with_swap_gate(qubit_mapping, qubit_inverse_mapping, qubit_mask, swap_gate))
- *                 NNC[i] = NNC_base - self.NNC(front_layer, self.change_qubit_mapping_with_swap_gate(qubit_mapping, qubit_inverse_mapping, qubit_mask, swap_gate))             # <<<<<<<<<<<<<<
- *                # print(NNC_base)
- *                 #print(NNC[i])
- */
-      (__pyx_v_NNC[__pyx_v_i]) = (__pyx_v_NNC_base - ((struct __pyx_vtabstruct_16random_simulator_RandomSimulator *)__pyx_v_self->__pyx_vtab)->NNC(__pyx_v_self, __pyx_v_front_layer, ((struct __pyx_vtabstruct_16random_simulator_RandomSimulator *)__pyx_v_self->__pyx_vtab)->change_qubit_mapping_with_swap_gate(__pyx_v_self, __pyx_v_qubit_mapping, __pyx_v_qubit_inverse_mapping, __pyx_v_qubit_mask, __pyx_v_swap_gate, NULL)));
-    }
-
-    /* "random_simulator.pyx":314
- *                # print(NNC_base)
- *                 #print(NNC[i])
- *             pf = self.f(NNC)             # <<<<<<<<<<<<<<
- *             # print(NNC)
- *             # print(pf)
- */
-    __pyx_v_pf = ((struct __pyx_vtabstruct_16random_simulator_RandomSimulator *)__pyx_v_self->__pyx_vtab)->f(__pyx_v_self, __pyx_v_NNC);
-
-    /* "random_simulator.pyx":317
- *             # print(NNC)
- *             # print(pf)
- *             swap_gate_index = self.random_choice(pf, seed)             # <<<<<<<<<<<<<<
- *             swap_gate[0] = candidate_swap_gate_list[2*swap_gate_index]
- *             swap_gate[1] = candidate_swap_gate_list[2*swap_gate_index+1]
- */
-    __pyx_v_swap_gate_index = ((struct __pyx_vtabstruct_16random_simulator_RandomSimulator *)__pyx_v_self->__pyx_vtab)->random_choice(__pyx_v_self, __pyx_v_pf, __pyx_v_seed);
-
-    /* "random_simulator.pyx":318
- *             # print(pf)
- *             swap_gate_index = self.random_choice(pf, seed)
- *             swap_gate[0] = candidate_swap_gate_list[2*swap_gate_index]             # <<<<<<<<<<<<<<
- *             swap_gate[1] = candidate_swap_gate_list[2*swap_gate_index+1]
- *             self.change_qubit_mapping_with_swap_gate(qubit_mapping, qubit_inverse_mapping, qubit_mask, swap_gate, True)
- */
-    (__pyx_v_swap_gate[0]) = (__pyx_v_candidate_swap_gate_list[(2 * __pyx_v_swap_gate_index)]);
-
-    /* "random_simulator.pyx":319
- *             swap_gate_index = self.random_choice(pf, seed)
- *             swap_gate[0] = candidate_swap_gate_list[2*swap_gate_index]
- *             swap_gate[1] = candidate_swap_gate_list[2*swap_gate_index+1]             # <<<<<<<<<<<<<<
- *             self.change_qubit_mapping_with_swap_gate(qubit_mapping, qubit_inverse_mapping, qubit_mask, swap_gate, True)
- *             #num_of_executed_gates += self.update_front_layer(front_layer, qubit_mapping, qubit_mask)
- */
-    (__pyx_v_swap_gate[1]) = (__pyx_v_candidate_swap_gate_list[((2 * __pyx_v_swap_gate_index) + 1)]);
-
-    /* "random_simulator.pyx":320
- *             swap_gate[0] = candidate_swap_gate_list[2*swap_gate_index]
- *             swap_gate[1] = candidate_swap_gate_list[2*swap_gate_index+1]
- *             self.change_qubit_mapping_with_swap_gate(qubit_mapping, qubit_inverse_mapping, qubit_mask, swap_gate, True)             # <<<<<<<<<<<<<<
- *             #num_of_executed_gates += self.update_front_layer(front_layer, qubit_mapping, qubit_mask)
- *             weighted_executed_gates += weight * <float>(self.update_front_layer(front_layer, qubit_mapping, qubit_mask))
- */
-    __pyx_t_8.__pyx_n = 1;
-    __pyx_t_8.in_palace = 1;
-    ((struct __pyx_vtabstruct_16random_simulator_RandomSimulator *)__pyx_v_self->__pyx_vtab)->change_qubit_mapping_with_swap_gate(__pyx_v_self, __pyx_v_qubit_mapping, __pyx_v_qubit_inverse_mapping, __pyx_v_qubit_mask, __pyx_v_swap_gate, &__pyx_t_8); 
-
-    /* "random_simulator.pyx":322
- *             self.change_qubit_mapping_with_swap_gate(qubit_mapping, qubit_inverse_mapping, qubit_mask, swap_gate, True)
- *             #num_of_executed_gates += self.update_front_layer(front_layer, qubit_mapping, qubit_mask)
- *             weighted_executed_gates += weight * <float>(self.update_front_layer(front_layer, qubit_mapping, qubit_mask))             # <<<<<<<<<<<<<<
- *             weight *= self.gamma
- *             num_of_swap_gates += 1
- */
-    __pyx_v_weighted_executed_gates = (__pyx_v_weighted_executed_gates + (__pyx_v_weight * ((float)((struct __pyx_vtabstruct_16random_simulator_RandomSimulator *)__pyx_v_self->__pyx_vtab)->update_front_layer(__pyx_v_self, __pyx_v_front_layer, __pyx_v_qubit_mapping, __pyx_v_qubit_mask))));
-
-    /* "random_simulator.pyx":323
- *             #num_of_executed_gates += self.update_front_layer(front_layer, qubit_mapping, qubit_mask)
- *             weighted_executed_gates += weight * <float>(self.update_front_layer(front_layer, qubit_mapping, qubit_mask))
- *             weight *= self.gamma             # <<<<<<<<<<<<<<
- *             num_of_swap_gates += 1
- *             # print(weight)
- */
-    __pyx_v_weight = (__pyx_v_weight * __pyx_v_self->gamma);
-
-    /* "random_simulator.pyx":324
- *             weighted_executed_gates += weight * <float>(self.update_front_layer(front_layer, qubit_mapping, qubit_mask))
- *             weight *= self.gamma
- *             num_of_swap_gates += 1             # <<<<<<<<<<<<<<
- *             # print(weight)
- *             # print(weighted_executed_gates)
- */
-    __pyx_v_num_of_swap_gates = (__pyx_v_num_of_swap_gates + 1.0);
-  }
-
-  /* "random_simulator.pyx":333
- *         # res[1] = num_of_executed_gates
- *         #sim_res = num_of_executed_gates * cpow(weight, num_of_swap_gates / 2)
- *         sim_res = weighted_executed_gates             # <<<<<<<<<<<<<<
- *         #print(sim_res)
- *         return sim_res
- */
-  __pyx_v_sim_res = __pyx_v_weighted_executed_gates;
-
-  /* "random_simulator.pyx":335
- *         sim_res = weighted_executed_gates
- *         #print(sim_res)
- *         return sim_res             # <<<<<<<<<<<<<<
- * 
- *     cdef float simulation_thread_gates(self, int seed) nogil:
- */
-  __pyx_r = __pyx_v_sim_res;
-  goto __pyx_L0;
-
-  /* "random_simulator.pyx":275
- *         return subcircuit
- * 
- *     cdef float simulation_thread_swap(self, int seed) nogil:             # <<<<<<<<<<<<<<
- *         cdef:
- *             vector[int] front_layer = self.front_layer
- */
-
-  /* function exit code */
-  __pyx_L1_error:;
-  __Pyx_WriteUnraisable("random_simulator.RandomSimulator.simulation_thread_swap", __pyx_clineno, __pyx_lineno, __pyx_filename, 1, 1);
-  __pyx_r = 0;
-  __pyx_L0:;
-  return __pyx_r;
-}
-
-/* "random_simulator.pyx":337
- *         return sim_res
- * 
- *     cdef float simulation_thread_gates(self, int seed) nogil:             # <<<<<<<<<<<<<<
- *         cdef:
- *             vector[int] front_layer = self.front_layer
- */
-
-static float __pyx_f_16random_simulator_15RandomSimulator_simulation_thread_gates(struct __pyx_obj_16random_simulator_RandomSimulator *__pyx_v_self, int __pyx_v_seed) {
-  std::vector<int>  __pyx_v_front_layer;
-  std::vector<int>  __pyx_v_qubit_mapping;
-  std::vector<int>  __pyx_v_qubit_inverse_mapping;
-  std::vector<int>  __pyx_v_qubit_mask;
-  std::vector<int>  __pyx_v_candidate_swap_gate_list;
-  std::vector<int>  __pyx_v_NNC;
-  std::vector<int>  __pyx_v_swap_gate;
-  CYTHON_UNUSED std::unordered_set<int>  __pyx_v_subcircuit;
-  std::vector<float>  __pyx_v_res;
-  std::vector<float>  __pyx_v_pf;
-  int __pyx_v_NNC_base;
-  float __pyx_v_weight;
-  CYTHON_UNUSED float __pyx_v_weighted_executed_gates;
-  float __pyx_v_sim_res;
-  float __pyx_v_num_of_swap_gates;
-  unsigned int __pyx_v_i;
-  unsigned int __pyx_v_num_of_executed_gates;
-  unsigned int __pyx_v_num_of_candidate_swap_gates;
-  unsigned int __pyx_v_swap_gate_index;
-  float __pyx_r;
-  std::vector<int>  __pyx_t_1;
-  std::unordered_set<int>  __pyx_t_2;
-  float __pyx_t_3;
-  int __pyx_t_4;
   int __pyx_t_5;
   unsigned int __pyx_t_6;
   unsigned int __pyx_t_7;
@@ -5775,8 +5516,8 @@ static float __pyx_f_16random_simulator_15RandomSimulator_simulation_thread_gate
   const char *__pyx_filename = NULL;
   int __pyx_clineno = 0;
 
-  /* "random_simulator.pyx":339
- *     cdef float simulation_thread_gates(self, int seed) nogil:
+  /* "random_simulator.pyx":293
+ *     cdef float simulation_thread_swap(self, int seed)nogil except +:
  *         cdef:
  *             vector[int] front_layer = self.front_layer             # <<<<<<<<<<<<<<
  *             vector[int] qubit_mapping = self.qubit_mapping
@@ -5785,7 +5526,7 @@ static float __pyx_f_16random_simulator_15RandomSimulator_simulation_thread_gate
   __pyx_t_1 = __pyx_v_self->front_layer;
   __pyx_v_front_layer = __pyx_t_1;
 
-  /* "random_simulator.pyx":340
+  /* "random_simulator.pyx":294
  *         cdef:
  *             vector[int] front_layer = self.front_layer
  *             vector[int] qubit_mapping = self.qubit_mapping             # <<<<<<<<<<<<<<
@@ -5795,7 +5536,7 @@ static float __pyx_f_16random_simulator_15RandomSimulator_simulation_thread_gate
   __pyx_t_1 = __pyx_v_self->qubit_mapping;
   __pyx_v_qubit_mapping = __pyx_t_1;
 
-  /* "random_simulator.pyx":341
+  /* "random_simulator.pyx":295
  *             vector[int] front_layer = self.front_layer
  *             vector[int] qubit_mapping = self.qubit_mapping
  *             vector[int] qubit_inverse_mapping = self.qubit_inverse_mapping             # <<<<<<<<<<<<<<
@@ -5805,7 +5546,7 @@ static float __pyx_f_16random_simulator_15RandomSimulator_simulation_thread_gate
   __pyx_t_1 = __pyx_v_self->qubit_inverse_mapping;
   __pyx_v_qubit_inverse_mapping = __pyx_t_1;
 
-  /* "random_simulator.pyx":342
+  /* "random_simulator.pyx":296
  *             vector[int] qubit_mapping = self.qubit_mapping
  *             vector[int] qubit_inverse_mapping = self.qubit_inverse_mapping
  *             vector[int] qubit_mask = self.qubit_mask             # <<<<<<<<<<<<<<
@@ -5815,7 +5556,7 @@ static float __pyx_f_16random_simulator_15RandomSimulator_simulation_thread_gate
   __pyx_t_1 = __pyx_v_self->qubit_mask;
   __pyx_v_qubit_mask = __pyx_t_1;
 
-  /* "random_simulator.pyx":344
+  /* "random_simulator.pyx":298
  *             vector[int] qubit_mask = self.qubit_mask
  *             vector[int] candidate_swap_gate_list, NNC, swap_gate, logical_qubit_mask
  *             unordered_set[int] subcircuit = self.subcircuit             # <<<<<<<<<<<<<<
@@ -5825,7 +5566,7 @@ static float __pyx_f_16random_simulator_15RandomSimulator_simulation_thread_gate
   __pyx_t_2 = __pyx_v_self->subcircuit;
   __pyx_v_subcircuit = __pyx_t_2;
 
-  /* "random_simulator.pyx":348
+  /* "random_simulator.pyx":302
  *             vector[float] pf
  *             int NNC_base, j
  *             float weight, weighted_executed_gates = 0.0, sim_res, num_of_swap_gates = 0             # <<<<<<<<<<<<<<
@@ -5835,7 +5576,7 @@ static float __pyx_f_16random_simulator_15RandomSimulator_simulation_thread_gate
   __pyx_v_weighted_executed_gates = 0.0;
   __pyx_v_num_of_swap_gates = 0.0;
 
-  /* "random_simulator.pyx":349
+  /* "random_simulator.pyx":303
  *             int NNC_base, j
  *             float weight, weighted_executed_gates = 0.0, sim_res, num_of_swap_gates = 0
  *             unsigned int i, num_of_executed_gates = 0, num_of_candidate_swap_gates, swap_gate_index             # <<<<<<<<<<<<<<
@@ -5844,12 +5585,12 @@ static float __pyx_f_16random_simulator_15RandomSimulator_simulation_thread_gate
  */
   __pyx_v_num_of_executed_gates = 0;
 
-  /* "random_simulator.pyx":351
+  /* "random_simulator.pyx":305
  *             unsigned int i, num_of_executed_gates = 0, num_of_candidate_swap_gates, swap_gate_index
  * 
  *         res.resize(2, 0)             # <<<<<<<<<<<<<<
  *         swap_gate.resize(2, INIT_NUM)
- *         #weighted_executed_gates += <float>(self.update_front_layer(front_layer, qubit_mapping, qubit_mask))
+ *         #print("ft")
  */
   try {
     __pyx_v_res.resize(2, 0.0);
@@ -5861,15 +5602,15 @@ static float __pyx_f_16random_simulator_15RandomSimulator_simulation_thread_gate
     #ifdef WITH_THREAD
     __Pyx_PyGILState_Release(__pyx_gilstate_save);
     #endif
-    __PYX_ERR(0, 351, __pyx_L1_error)
+    __PYX_ERR(0, 305, __pyx_L1_error)
   }
 
-  /* "random_simulator.pyx":352
+  /* "random_simulator.pyx":306
  * 
  *         res.resize(2, 0)
  *         swap_gate.resize(2, INIT_NUM)             # <<<<<<<<<<<<<<
- *         #weighted_executed_gates += <float>(self.update_front_layer(front_layer, qubit_mapping, qubit_mask))
- *         num_of_executed_gates += self.update_front_layer(front_layer, qubit_mapping, qubit_mask)
+ *         #print("ft")
+ *         weighted_executed_gates += <float>(self.update_front_layer(front_layer, qubit_mapping, qubit_mask))
  */
   try {
     __pyx_v_swap_gate.resize(2, __pyx_v_16random_simulator_INIT_NUM);
@@ -5881,32 +5622,43 @@ static float __pyx_f_16random_simulator_15RandomSimulator_simulation_thread_gate
     #ifdef WITH_THREAD
     __Pyx_PyGILState_Release(__pyx_gilstate_save);
     #endif
-    __PYX_ERR(0, 352, __pyx_L1_error)
+    __PYX_ERR(0, 306, __pyx_L1_error)
   }
 
-  /* "random_simulator.pyx":354
+  /* "random_simulator.pyx":308
  *         swap_gate.resize(2, INIT_NUM)
- *         #weighted_executed_gates += <float>(self.update_front_layer(front_layer, qubit_mapping, qubit_mask))
- *         num_of_executed_gates += self.update_front_layer(front_layer, qubit_mapping, qubit_mask)             # <<<<<<<<<<<<<<
- *         weight = self.gamma
- *         #print(weight)
+ *         #print("ft")
+ *         weighted_executed_gates += <float>(self.update_front_layer(front_layer, qubit_mapping, qubit_mask))             # <<<<<<<<<<<<<<
+ *         #num_of_executed_gates += self.update_front_layer(front_layer, qubit_mapping, qubit_mask)
+ *         #print("ft")
  */
-  __pyx_v_num_of_executed_gates = (__pyx_v_num_of_executed_gates + ((struct __pyx_vtabstruct_16random_simulator_RandomSimulator *)__pyx_v_self->__pyx_vtab)->update_front_layer(__pyx_v_self, __pyx_v_front_layer, __pyx_v_qubit_mapping, __pyx_v_qubit_mask));
+  try {
+    __pyx_t_3 = ((struct __pyx_vtabstruct_16random_simulator_RandomSimulator *)__pyx_v_self->__pyx_vtab)->update_front_layer(__pyx_v_self, __pyx_v_front_layer, __pyx_v_qubit_mapping, __pyx_v_qubit_mask);
+  } catch(...) {
+    #ifdef WITH_THREAD
+    PyGILState_STATE __pyx_gilstate_save = __Pyx_PyGILState_Ensure();
+    #endif
+    __Pyx_CppExn2PyErr();
+    #ifdef WITH_THREAD
+    __Pyx_PyGILState_Release(__pyx_gilstate_save);
+    #endif
+    __PYX_ERR(0, 308, __pyx_L1_error)
+  }
+  __pyx_v_weighted_executed_gates = (__pyx_v_weighted_executed_gates + ((float)__pyx_t_3));
 
-  /* "random_simulator.pyx":355
- *         #weighted_executed_gates += <float>(self.update_front_layer(front_layer, qubit_mapping, qubit_mask))
- *         num_of_executed_gates += self.update_front_layer(front_layer, qubit_mapping, qubit_mask)
- *         weight = self.gamma             # <<<<<<<<<<<<<<
+  /* "random_simulator.pyx":311
+ *         #num_of_executed_gates += self.update_front_layer(front_layer, qubit_mapping, qubit_mask)
+ *         #print("ft")
+ *         weight = 1.0             # <<<<<<<<<<<<<<
  *         #print(weight)
- * 
+ *         while not front_layer.empty() and  num_of_swap_gates < self.num_of_swap_gates:
  */
-  __pyx_t_3 = __pyx_v_self->gamma;
-  __pyx_v_weight = __pyx_t_3;
+  __pyx_v_weight = 1.0;
 
-  /* "random_simulator.pyx":358
+  /* "random_simulator.pyx":313
+ *         weight = 1.0
  *         #print(weight)
- * 
- *         while not front_layer.empty() and  num_of_executed_gates < self.num_of_subcircuit_gates:             # <<<<<<<<<<<<<<
+ *         while not front_layer.empty() and  num_of_swap_gates < self.num_of_swap_gates:             # <<<<<<<<<<<<<<
  *             candidate_swap_gate_list = self.get_candidate_swap_gate_list(front_layer, qubit_mapping)
  *             #print(qubit_mapping)
  */
@@ -5917,21 +5669,21 @@ static float __pyx_f_16random_simulator_15RandomSimulator_simulation_thread_gate
       __pyx_t_4 = __pyx_t_5;
       goto __pyx_L5_bool_binop_done;
     }
-    __pyx_t_5 = ((__pyx_v_num_of_executed_gates < __pyx_v_self->num_of_subcircuit_gates) != 0);
+    __pyx_t_5 = ((__pyx_v_num_of_swap_gates < __pyx_v_self->num_of_swap_gates) != 0);
     __pyx_t_4 = __pyx_t_5;
     __pyx_L5_bool_binop_done:;
     if (!__pyx_t_4) break;
 
-    /* "random_simulator.pyx":359
- * 
- *         while not front_layer.empty() and  num_of_executed_gates < self.num_of_subcircuit_gates:
+    /* "random_simulator.pyx":314
+ *         #print(weight)
+ *         while not front_layer.empty() and  num_of_swap_gates < self.num_of_swap_gates:
  *             candidate_swap_gate_list = self.get_candidate_swap_gate_list(front_layer, qubit_mapping)             # <<<<<<<<<<<<<<
  *             #print(qubit_mapping)
  *             # for j in front_layer:
  */
     __pyx_v_candidate_swap_gate_list = ((struct __pyx_vtabstruct_16random_simulator_RandomSimulator *)__pyx_v_self->__pyx_vtab)->get_candidate_swap_gate_list(__pyx_v_self, __pyx_v_front_layer, __pyx_v_qubit_mapping);
 
-    /* "random_simulator.pyx":364
+    /* "random_simulator.pyx":319
  *             #     print(list(self.gates[j]))
  *             # print(candidate_swap_gate_list)
  *             num_of_candidate_swap_gates = <int>(candidate_swap_gate_list.size() / 2)             # <<<<<<<<<<<<<<
@@ -5940,7 +5692,7 @@ static float __pyx_f_16random_simulator_15RandomSimulator_simulation_thread_gate
  */
     __pyx_v_num_of_candidate_swap_gates = ((int)(((double)__pyx_v_candidate_swap_gate_list.size()) / 2.0));
 
-    /* "random_simulator.pyx":365
+    /* "random_simulator.pyx":320
  *             # print(candidate_swap_gate_list)
  *             num_of_candidate_swap_gates = <int>(candidate_swap_gate_list.size() / 2)
  *             NNC_base = self.NNC(front_layer, qubit_mapping)             # <<<<<<<<<<<<<<
@@ -5949,7 +5701,7 @@ static float __pyx_f_16random_simulator_15RandomSimulator_simulation_thread_gate
  */
     __pyx_v_NNC_base = ((struct __pyx_vtabstruct_16random_simulator_RandomSimulator *)__pyx_v_self->__pyx_vtab)->NNC(__pyx_v_self, __pyx_v_front_layer, __pyx_v_qubit_mapping);
 
-    /* "random_simulator.pyx":366
+    /* "random_simulator.pyx":321
  *             num_of_candidate_swap_gates = <int>(candidate_swap_gate_list.size() / 2)
  *             NNC_base = self.NNC(front_layer, qubit_mapping)
  *             NNC.resize(num_of_candidate_swap_gates, INIT_NUM)             # <<<<<<<<<<<<<<
@@ -5966,10 +5718,10 @@ static float __pyx_f_16random_simulator_15RandomSimulator_simulation_thread_gate
       #ifdef WITH_THREAD
       __Pyx_PyGILState_Release(__pyx_gilstate_save);
       #endif
-      __PYX_ERR(0, 366, __pyx_L1_error)
+      __PYX_ERR(0, 321, __pyx_L1_error)
     }
 
-    /* "random_simulator.pyx":367
+    /* "random_simulator.pyx":322
  *             NNC_base = self.NNC(front_layer, qubit_mapping)
  *             NNC.resize(num_of_candidate_swap_gates, INIT_NUM)
  *             for i in range(num_of_candidate_swap_gates):             # <<<<<<<<<<<<<<
@@ -5981,25 +5733,25 @@ static float __pyx_f_16random_simulator_15RandomSimulator_simulation_thread_gate
     for (__pyx_t_8 = 0; __pyx_t_8 < __pyx_t_7; __pyx_t_8+=1) {
       __pyx_v_i = __pyx_t_8;
 
-      /* "random_simulator.pyx":368
+      /* "random_simulator.pyx":323
  *             NNC.resize(num_of_candidate_swap_gates, INIT_NUM)
  *             for i in range(num_of_candidate_swap_gates):
  *                 swap_gate[0] = candidate_swap_gate_list[2*i]             # <<<<<<<<<<<<<<
  *                 swap_gate[1] = candidate_swap_gate_list[2*i+1]
- *                #for j in front_layer:
+ *                 # for j in front_layer:
  */
       (__pyx_v_swap_gate[0]) = (__pyx_v_candidate_swap_gate_list[(2 * __pyx_v_i)]);
 
-      /* "random_simulator.pyx":369
+      /* "random_simulator.pyx":324
  *             for i in range(num_of_candidate_swap_gates):
  *                 swap_gate[0] = candidate_swap_gate_list[2*i]
  *                 swap_gate[1] = candidate_swap_gate_list[2*i+1]             # <<<<<<<<<<<<<<
- *                #for j in front_layer:
- *                 #    print(list(self.gates[i]))
+ *                 # for j in front_layer:
+ *                 #     print(list(self.gates[i]))
  */
       (__pyx_v_swap_gate[1]) = (__pyx_v_candidate_swap_gate_list[((2 * __pyx_v_i) + 1)]);
 
-      /* "random_simulator.pyx":374
+      /* "random_simulator.pyx":329
  *                 #print(qubit_mapping)
  *                 #print(self.change_qubit_mapping_with_swap_gate(qubit_mapping, qubit_inverse_mapping, qubit_mask, swap_gate))
  *                 NNC[i] = NNC_base - self.NNC(front_layer, self.change_qubit_mapping_with_swap_gate(qubit_mapping, qubit_inverse_mapping, qubit_mask, swap_gate))             # <<<<<<<<<<<<<<
@@ -6009,7 +5761,7 @@ static float __pyx_f_16random_simulator_15RandomSimulator_simulation_thread_gate
       (__pyx_v_NNC[__pyx_v_i]) = (__pyx_v_NNC_base - ((struct __pyx_vtabstruct_16random_simulator_RandomSimulator *)__pyx_v_self->__pyx_vtab)->NNC(__pyx_v_self, __pyx_v_front_layer, ((struct __pyx_vtabstruct_16random_simulator_RandomSimulator *)__pyx_v_self->__pyx_vtab)->change_qubit_mapping_with_swap_gate(__pyx_v_self, __pyx_v_qubit_mapping, __pyx_v_qubit_inverse_mapping, __pyx_v_qubit_mask, __pyx_v_swap_gate, NULL)));
     }
 
-    /* "random_simulator.pyx":377
+    /* "random_simulator.pyx":332
  *                # print(NNC_base)
  *                 #print(NNC[i])
  *             pf = self.f(NNC)             # <<<<<<<<<<<<<<
@@ -6018,7 +5770,7 @@ static float __pyx_f_16random_simulator_15RandomSimulator_simulation_thread_gate
  */
     __pyx_v_pf = ((struct __pyx_vtabstruct_16random_simulator_RandomSimulator *)__pyx_v_self->__pyx_vtab)->f(__pyx_v_self, __pyx_v_NNC);
 
-    /* "random_simulator.pyx":380
+    /* "random_simulator.pyx":335
  *             # print(NNC)
  *             # print(pf)
  *             swap_gate_index = self.random_choice(pf, seed)             # <<<<<<<<<<<<<<
@@ -6027,7 +5779,7 @@ static float __pyx_f_16random_simulator_15RandomSimulator_simulation_thread_gate
  */
     __pyx_v_swap_gate_index = ((struct __pyx_vtabstruct_16random_simulator_RandomSimulator *)__pyx_v_self->__pyx_vtab)->random_choice(__pyx_v_self, __pyx_v_pf, __pyx_v_seed);
 
-    /* "random_simulator.pyx":381
+    /* "random_simulator.pyx":336
  *             # print(pf)
  *             swap_gate_index = self.random_choice(pf, seed)
  *             swap_gate[0] = candidate_swap_gate_list[2*swap_gate_index]             # <<<<<<<<<<<<<<
@@ -6036,7 +5788,433 @@ static float __pyx_f_16random_simulator_15RandomSimulator_simulation_thread_gate
  */
     (__pyx_v_swap_gate[0]) = (__pyx_v_candidate_swap_gate_list[(2 * __pyx_v_swap_gate_index)]);
 
+    /* "random_simulator.pyx":337
+ *             swap_gate_index = self.random_choice(pf, seed)
+ *             swap_gate[0] = candidate_swap_gate_list[2*swap_gate_index]
+ *             swap_gate[1] = candidate_swap_gate_list[2*swap_gate_index+1]             # <<<<<<<<<<<<<<
+ *             self.change_qubit_mapping_with_swap_gate(qubit_mapping, qubit_inverse_mapping, qubit_mask, swap_gate, True)
+ *             #num_of_executed_gates += self.update_front_layer(front_layer, qubit_mapping, qubit_mask)
+ */
+    (__pyx_v_swap_gate[1]) = (__pyx_v_candidate_swap_gate_list[((2 * __pyx_v_swap_gate_index) + 1)]);
+
+    /* "random_simulator.pyx":338
+ *             swap_gate[0] = candidate_swap_gate_list[2*swap_gate_index]
+ *             swap_gate[1] = candidate_swap_gate_list[2*swap_gate_index+1]
+ *             self.change_qubit_mapping_with_swap_gate(qubit_mapping, qubit_inverse_mapping, qubit_mask, swap_gate, True)             # <<<<<<<<<<<<<<
+ *             #num_of_executed_gates += self.update_front_layer(front_layer, qubit_mapping, qubit_mask)
+ *             weighted_executed_gates += weight * <float>(self.update_front_layer(front_layer, qubit_mapping, qubit_mask))
+ */
+    __pyx_t_9.__pyx_n = 1;
+    __pyx_t_9.in_palace = 1;
+    ((struct __pyx_vtabstruct_16random_simulator_RandomSimulator *)__pyx_v_self->__pyx_vtab)->change_qubit_mapping_with_swap_gate(__pyx_v_self, __pyx_v_qubit_mapping, __pyx_v_qubit_inverse_mapping, __pyx_v_qubit_mask, __pyx_v_swap_gate, &__pyx_t_9); 
+
+    /* "random_simulator.pyx":340
+ *             self.change_qubit_mapping_with_swap_gate(qubit_mapping, qubit_inverse_mapping, qubit_mask, swap_gate, True)
+ *             #num_of_executed_gates += self.update_front_layer(front_layer, qubit_mapping, qubit_mask)
+ *             weighted_executed_gates += weight * <float>(self.update_front_layer(front_layer, qubit_mapping, qubit_mask))             # <<<<<<<<<<<<<<
+ *             weight *= self.gamma
+ *             num_of_swap_gates += 1
+ */
+    try {
+      __pyx_t_3 = ((struct __pyx_vtabstruct_16random_simulator_RandomSimulator *)__pyx_v_self->__pyx_vtab)->update_front_layer(__pyx_v_self, __pyx_v_front_layer, __pyx_v_qubit_mapping, __pyx_v_qubit_mask);
+    } catch(...) {
+      #ifdef WITH_THREAD
+      PyGILState_STATE __pyx_gilstate_save = __Pyx_PyGILState_Ensure();
+      #endif
+      __Pyx_CppExn2PyErr();
+      #ifdef WITH_THREAD
+      __Pyx_PyGILState_Release(__pyx_gilstate_save);
+      #endif
+      __PYX_ERR(0, 340, __pyx_L1_error)
+    }
+    __pyx_v_weighted_executed_gates = (__pyx_v_weighted_executed_gates + (__pyx_v_weight * ((float)__pyx_t_3)));
+
+    /* "random_simulator.pyx":341
+ *             #num_of_executed_gates += self.update_front_layer(front_layer, qubit_mapping, qubit_mask)
+ *             weighted_executed_gates += weight * <float>(self.update_front_layer(front_layer, qubit_mapping, qubit_mask))
+ *             weight *= self.gamma             # <<<<<<<<<<<<<<
+ *             num_of_swap_gates += 1
+ *             # print(weight)
+ */
+    __pyx_v_weight = (__pyx_v_weight * __pyx_v_self->gamma);
+
+    /* "random_simulator.pyx":342
+ *             weighted_executed_gates += weight * <float>(self.update_front_layer(front_layer, qubit_mapping, qubit_mask))
+ *             weight *= self.gamma
+ *             num_of_swap_gates += 1             # <<<<<<<<<<<<<<
+ *             # print(weight)
+ *             # print(weighted_executed_gates)
+ */
+    __pyx_v_num_of_swap_gates = (__pyx_v_num_of_swap_gates + 1.0);
+  }
+
+  /* "random_simulator.pyx":351
+ *         # res[1] = num_of_executed_gates
+ *         #sim_res = num_of_executed_gates * cpow(weight, num_of_swap_gates / 2)
+ *         sim_res = weighted_executed_gates             # <<<<<<<<<<<<<<
+ *         #print(sim_res)
+ *         return sim_res
+ */
+  __pyx_v_sim_res = __pyx_v_weighted_executed_gates;
+
+  /* "random_simulator.pyx":353
+ *         sim_res = weighted_executed_gates
+ *         #print(sim_res)
+ *         return sim_res             # <<<<<<<<<<<<<<
+ * 
+ *     cdef int simulation_thread_gates(self, int seed)nogil except +:
+ */
+  __pyx_r = __pyx_v_sim_res;
+  goto __pyx_L0;
+
+  /* "random_simulator.pyx":291
+ *         return subcircuit
+ * 
+ *     cdef float simulation_thread_swap(self, int seed)nogil except +:             # <<<<<<<<<<<<<<
+ *         cdef:
+ *             vector[int] front_layer = self.front_layer
+ */
+
+  /* function exit code */
+  __pyx_L1_error:;
+  {
+    #ifdef WITH_THREAD
+    PyGILState_STATE __pyx_gilstate_save = __Pyx_PyGILState_Ensure();
+    #endif
+    __Pyx_AddTraceback("random_simulator.RandomSimulator.simulation_thread_swap", __pyx_clineno, __pyx_lineno, __pyx_filename);
+    #ifdef WITH_THREAD
+    __Pyx_PyGILState_Release(__pyx_gilstate_save);
+    #endif
+  }
+  __pyx_r = 0;
+  __pyx_L0:;
+  return __pyx_r;
+}
+
+/* "random_simulator.pyx":355
+ *         return sim_res
+ * 
+ *     cdef int simulation_thread_gates(self, int seed)nogil except +:             # <<<<<<<<<<<<<<
+ *         cdef:
+ *             vector[int] front_layer = self.front_layer
+ */
+
+static int __pyx_f_16random_simulator_15RandomSimulator_simulation_thread_gates(struct __pyx_obj_16random_simulator_RandomSimulator *__pyx_v_self, int __pyx_v_seed) {
+  std::vector<int>  __pyx_v_front_layer;
+  std::vector<int>  __pyx_v_qubit_mapping;
+  std::vector<int>  __pyx_v_qubit_inverse_mapping;
+  std::vector<int>  __pyx_v_qubit_mask;
+  std::vector<int>  __pyx_v_candidate_swap_gate_list;
+  std::vector<int>  __pyx_v_NNC;
+  std::vector<int>  __pyx_v_swap_gate;
+  CYTHON_UNUSED std::unordered_set<int>  __pyx_v_subcircuit;
+  std::vector<float>  __pyx_v_res;
+  std::vector<float>  __pyx_v_pf;
+  int __pyx_v_NNC_base;
+  int __pyx_v_num_of_swap_gates;
+  CYTHON_UNUSED float __pyx_v_weight;
+  CYTHON_UNUSED float __pyx_v_weighted_executed_gates;
+  unsigned int __pyx_v_i;
+  unsigned int __pyx_v_num_of_executed_gates;
+  unsigned int __pyx_v_num_of_candidate_swap_gates;
+  unsigned int __pyx_v_swap_gate_index;
+  int __pyx_r;
+  std::vector<int>  __pyx_t_1;
+  std::unordered_set<int>  __pyx_t_2;
+  int __pyx_t_3;
+  float __pyx_t_4;
+  int __pyx_t_5;
+  int __pyx_t_6;
+  unsigned int __pyx_t_7;
+  unsigned int __pyx_t_8;
+  unsigned int __pyx_t_9;
+  struct __pyx_opt_args_16random_simulator_15RandomSimulator_change_qubit_mapping_with_swap_gate __pyx_t_10;
+  int __pyx_lineno = 0;
+  const char *__pyx_filename = NULL;
+  int __pyx_clineno = 0;
+
+  /* "random_simulator.pyx":357
+ *     cdef int simulation_thread_gates(self, int seed)nogil except +:
+ *         cdef:
+ *             vector[int] front_layer = self.front_layer             # <<<<<<<<<<<<<<
+ *             vector[int] qubit_mapping = self.qubit_mapping
+ *             vector[int] qubit_inverse_mapping = self.qubit_inverse_mapping
+ */
+  __pyx_t_1 = __pyx_v_self->front_layer;
+  __pyx_v_front_layer = __pyx_t_1;
+
+  /* "random_simulator.pyx":358
+ *         cdef:
+ *             vector[int] front_layer = self.front_layer
+ *             vector[int] qubit_mapping = self.qubit_mapping             # <<<<<<<<<<<<<<
+ *             vector[int] qubit_inverse_mapping = self.qubit_inverse_mapping
+ *             vector[int] qubit_mask = self.qubit_mask
+ */
+  __pyx_t_1 = __pyx_v_self->qubit_mapping;
+  __pyx_v_qubit_mapping = __pyx_t_1;
+
+  /* "random_simulator.pyx":359
+ *             vector[int] front_layer = self.front_layer
+ *             vector[int] qubit_mapping = self.qubit_mapping
+ *             vector[int] qubit_inverse_mapping = self.qubit_inverse_mapping             # <<<<<<<<<<<<<<
+ *             vector[int] qubit_mask = self.qubit_mask
+ *             vector[int] candidate_swap_gate_list, NNC, swap_gate, logical_qubit_mask
+ */
+  __pyx_t_1 = __pyx_v_self->qubit_inverse_mapping;
+  __pyx_v_qubit_inverse_mapping = __pyx_t_1;
+
+  /* "random_simulator.pyx":360
+ *             vector[int] qubit_mapping = self.qubit_mapping
+ *             vector[int] qubit_inverse_mapping = self.qubit_inverse_mapping
+ *             vector[int] qubit_mask = self.qubit_mask             # <<<<<<<<<<<<<<
+ *             vector[int] candidate_swap_gate_list, NNC, swap_gate, logical_qubit_mask
+ *             unordered_set[int] subcircuit = self.subcircuit
+ */
+  __pyx_t_1 = __pyx_v_self->qubit_mask;
+  __pyx_v_qubit_mask = __pyx_t_1;
+
+  /* "random_simulator.pyx":362
+ *             vector[int] qubit_mask = self.qubit_mask
+ *             vector[int] candidate_swap_gate_list, NNC, swap_gate, logical_qubit_mask
+ *             unordered_set[int] subcircuit = self.subcircuit             # <<<<<<<<<<<<<<
+ *             vector[float] res
+ *             vector[float] pf
+ */
+  __pyx_t_2 = __pyx_v_self->subcircuit;
+  __pyx_v_subcircuit = __pyx_t_2;
+
+  /* "random_simulator.pyx":365
+ *             vector[float] res
+ *             vector[float] pf
+ *             int NNC_base, j, num_of_swap_gates = 0             # <<<<<<<<<<<<<<
+ *             float weight, weighted_executed_gates = 0.0, sim_res
+ *             unsigned int i, num_of_executed_gates = 0, num_of_candidate_swap_gates, swap_gate_index
+ */
+  __pyx_v_num_of_swap_gates = 0;
+
+  /* "random_simulator.pyx":366
+ *             vector[float] pf
+ *             int NNC_base, j, num_of_swap_gates = 0
+ *             float weight, weighted_executed_gates = 0.0, sim_res             # <<<<<<<<<<<<<<
+ *             unsigned int i, num_of_executed_gates = 0, num_of_candidate_swap_gates, swap_gate_index
+ * 
+ */
+  __pyx_v_weighted_executed_gates = 0.0;
+
+  /* "random_simulator.pyx":367
+ *             int NNC_base, j, num_of_swap_gates = 0
+ *             float weight, weighted_executed_gates = 0.0, sim_res
+ *             unsigned int i, num_of_executed_gates = 0, num_of_candidate_swap_gates, swap_gate_index             # <<<<<<<<<<<<<<
+ * 
+ *         res.resize(2, 0)
+ */
+  __pyx_v_num_of_executed_gates = 0;
+
+  /* "random_simulator.pyx":369
+ *             unsigned int i, num_of_executed_gates = 0, num_of_candidate_swap_gates, swap_gate_index
+ * 
+ *         res.resize(2, 0)             # <<<<<<<<<<<<<<
+ *         swap_gate.resize(2, INIT_NUM)
+ *         #weighted_executed_gates += <float>(self.update_front_layer(front_layer, qubit_mapping, qubit_mask))
+ */
+  try {
+    __pyx_v_res.resize(2, 0.0);
+  } catch(...) {
+    #ifdef WITH_THREAD
+    PyGILState_STATE __pyx_gilstate_save = __Pyx_PyGILState_Ensure();
+    #endif
+    __Pyx_CppExn2PyErr();
+    #ifdef WITH_THREAD
+    __Pyx_PyGILState_Release(__pyx_gilstate_save);
+    #endif
+    __PYX_ERR(0, 369, __pyx_L1_error)
+  }
+
+  /* "random_simulator.pyx":370
+ * 
+ *         res.resize(2, 0)
+ *         swap_gate.resize(2, INIT_NUM)             # <<<<<<<<<<<<<<
+ *         #weighted_executed_gates += <float>(self.update_front_layer(front_layer, qubit_mapping, qubit_mask))
+ *         num_of_executed_gates += self.update_front_layer(front_layer, qubit_mapping, qubit_mask)
+ */
+  try {
+    __pyx_v_swap_gate.resize(2, __pyx_v_16random_simulator_INIT_NUM);
+  } catch(...) {
+    #ifdef WITH_THREAD
+    PyGILState_STATE __pyx_gilstate_save = __Pyx_PyGILState_Ensure();
+    #endif
+    __Pyx_CppExn2PyErr();
+    #ifdef WITH_THREAD
+    __Pyx_PyGILState_Release(__pyx_gilstate_save);
+    #endif
+    __PYX_ERR(0, 370, __pyx_L1_error)
+  }
+
+  /* "random_simulator.pyx":372
+ *         swap_gate.resize(2, INIT_NUM)
+ *         #weighted_executed_gates += <float>(self.update_front_layer(front_layer, qubit_mapping, qubit_mask))
+ *         num_of_executed_gates += self.update_front_layer(front_layer, qubit_mapping, qubit_mask)             # <<<<<<<<<<<<<<
+ *         weight = self.gamma
+ *         #print(weight)
+ */
+  try {
+    __pyx_t_3 = ((struct __pyx_vtabstruct_16random_simulator_RandomSimulator *)__pyx_v_self->__pyx_vtab)->update_front_layer(__pyx_v_self, __pyx_v_front_layer, __pyx_v_qubit_mapping, __pyx_v_qubit_mask);
+  } catch(...) {
+    #ifdef WITH_THREAD
+    PyGILState_STATE __pyx_gilstate_save = __Pyx_PyGILState_Ensure();
+    #endif
+    __Pyx_CppExn2PyErr();
+    #ifdef WITH_THREAD
+    __Pyx_PyGILState_Release(__pyx_gilstate_save);
+    #endif
+    __PYX_ERR(0, 372, __pyx_L1_error)
+  }
+  __pyx_v_num_of_executed_gates = (__pyx_v_num_of_executed_gates + __pyx_t_3);
+
+  /* "random_simulator.pyx":373
+ *         #weighted_executed_gates += <float>(self.update_front_layer(front_layer, qubit_mapping, qubit_mask))
+ *         num_of_executed_gates += self.update_front_layer(front_layer, qubit_mapping, qubit_mask)
+ *         weight = self.gamma             # <<<<<<<<<<<<<<
+ *         #print(weight)
+ * 
+ */
+  __pyx_t_4 = __pyx_v_self->gamma;
+  __pyx_v_weight = __pyx_t_4;
+
+  /* "random_simulator.pyx":376
+ *         #print(weight)
+ * 
+ *         while not front_layer.empty() and  num_of_executed_gates < self.num_of_subcircuit_gates:             # <<<<<<<<<<<<<<
+ *             candidate_swap_gate_list = self.get_candidate_swap_gate_list(front_layer, qubit_mapping)
+ *             #print(qubit_mapping)
+ */
+  while (1) {
+    __pyx_t_6 = ((!(__pyx_v_front_layer.empty() != 0)) != 0);
+    if (__pyx_t_6) {
+    } else {
+      __pyx_t_5 = __pyx_t_6;
+      goto __pyx_L5_bool_binop_done;
+    }
+    __pyx_t_6 = ((__pyx_v_num_of_executed_gates < __pyx_v_self->num_of_subcircuit_gates) != 0);
+    __pyx_t_5 = __pyx_t_6;
+    __pyx_L5_bool_binop_done:;
+    if (!__pyx_t_5) break;
+
+    /* "random_simulator.pyx":377
+ * 
+ *         while not front_layer.empty() and  num_of_executed_gates < self.num_of_subcircuit_gates:
+ *             candidate_swap_gate_list = self.get_candidate_swap_gate_list(front_layer, qubit_mapping)             # <<<<<<<<<<<<<<
+ *             #print(qubit_mapping)
+ *             # for j in front_layer:
+ */
+    __pyx_v_candidate_swap_gate_list = ((struct __pyx_vtabstruct_16random_simulator_RandomSimulator *)__pyx_v_self->__pyx_vtab)->get_candidate_swap_gate_list(__pyx_v_self, __pyx_v_front_layer, __pyx_v_qubit_mapping);
+
     /* "random_simulator.pyx":382
+ *             #     print(list(self.gates[j]))
+ *             # print(candidate_swap_gate_list)
+ *             num_of_candidate_swap_gates = <int>(candidate_swap_gate_list.size() / 2)             # <<<<<<<<<<<<<<
+ *             NNC_base = self.NNC(front_layer, qubit_mapping)
+ *             NNC.resize(num_of_candidate_swap_gates, INIT_NUM)
+ */
+    __pyx_v_num_of_candidate_swap_gates = ((int)(((double)__pyx_v_candidate_swap_gate_list.size()) / 2.0));
+
+    /* "random_simulator.pyx":383
+ *             # print(candidate_swap_gate_list)
+ *             num_of_candidate_swap_gates = <int>(candidate_swap_gate_list.size() / 2)
+ *             NNC_base = self.NNC(front_layer, qubit_mapping)             # <<<<<<<<<<<<<<
+ *             NNC.resize(num_of_candidate_swap_gates, INIT_NUM)
+ *             for i in range(num_of_candidate_swap_gates):
+ */
+    __pyx_v_NNC_base = ((struct __pyx_vtabstruct_16random_simulator_RandomSimulator *)__pyx_v_self->__pyx_vtab)->NNC(__pyx_v_self, __pyx_v_front_layer, __pyx_v_qubit_mapping);
+
+    /* "random_simulator.pyx":384
+ *             num_of_candidate_swap_gates = <int>(candidate_swap_gate_list.size() / 2)
+ *             NNC_base = self.NNC(front_layer, qubit_mapping)
+ *             NNC.resize(num_of_candidate_swap_gates, INIT_NUM)             # <<<<<<<<<<<<<<
+ *             for i in range(num_of_candidate_swap_gates):
+ *                 swap_gate[0] = candidate_swap_gate_list[2*i]
+ */
+    try {
+      __pyx_v_NNC.resize(__pyx_v_num_of_candidate_swap_gates, __pyx_v_16random_simulator_INIT_NUM);
+    } catch(...) {
+      #ifdef WITH_THREAD
+      PyGILState_STATE __pyx_gilstate_save = __Pyx_PyGILState_Ensure();
+      #endif
+      __Pyx_CppExn2PyErr();
+      #ifdef WITH_THREAD
+      __Pyx_PyGILState_Release(__pyx_gilstate_save);
+      #endif
+      __PYX_ERR(0, 384, __pyx_L1_error)
+    }
+
+    /* "random_simulator.pyx":385
+ *             NNC_base = self.NNC(front_layer, qubit_mapping)
+ *             NNC.resize(num_of_candidate_swap_gates, INIT_NUM)
+ *             for i in range(num_of_candidate_swap_gates):             # <<<<<<<<<<<<<<
+ *                 swap_gate[0] = candidate_swap_gate_list[2*i]
+ *                 swap_gate[1] = candidate_swap_gate_list[2*i+1]
+ */
+    __pyx_t_7 = __pyx_v_num_of_candidate_swap_gates;
+    __pyx_t_8 = __pyx_t_7;
+    for (__pyx_t_9 = 0; __pyx_t_9 < __pyx_t_8; __pyx_t_9+=1) {
+      __pyx_v_i = __pyx_t_9;
+
+      /* "random_simulator.pyx":386
+ *             NNC.resize(num_of_candidate_swap_gates, INIT_NUM)
+ *             for i in range(num_of_candidate_swap_gates):
+ *                 swap_gate[0] = candidate_swap_gate_list[2*i]             # <<<<<<<<<<<<<<
+ *                 swap_gate[1] = candidate_swap_gate_list[2*i+1]
+ *                #for j in front_layer:
+ */
+      (__pyx_v_swap_gate[0]) = (__pyx_v_candidate_swap_gate_list[(2 * __pyx_v_i)]);
+
+      /* "random_simulator.pyx":387
+ *             for i in range(num_of_candidate_swap_gates):
+ *                 swap_gate[0] = candidate_swap_gate_list[2*i]
+ *                 swap_gate[1] = candidate_swap_gate_list[2*i+1]             # <<<<<<<<<<<<<<
+ *                #for j in front_layer:
+ *                 #    print(list(self.gates[i]))
+ */
+      (__pyx_v_swap_gate[1]) = (__pyx_v_candidate_swap_gate_list[((2 * __pyx_v_i) + 1)]);
+
+      /* "random_simulator.pyx":392
+ *                 #print(qubit_mapping)
+ *                 #print(self.change_qubit_mapping_with_swap_gate(qubit_mapping, qubit_inverse_mapping, qubit_mask, swap_gate))
+ *                 NNC[i] = NNC_base - self.NNC(front_layer, self.change_qubit_mapping_with_swap_gate(qubit_mapping, qubit_inverse_mapping, qubit_mask, swap_gate))             # <<<<<<<<<<<<<<
+ *                # print(NNC_base)
+ *                 #print(NNC[i])
+ */
+      (__pyx_v_NNC[__pyx_v_i]) = (__pyx_v_NNC_base - ((struct __pyx_vtabstruct_16random_simulator_RandomSimulator *)__pyx_v_self->__pyx_vtab)->NNC(__pyx_v_self, __pyx_v_front_layer, ((struct __pyx_vtabstruct_16random_simulator_RandomSimulator *)__pyx_v_self->__pyx_vtab)->change_qubit_mapping_with_swap_gate(__pyx_v_self, __pyx_v_qubit_mapping, __pyx_v_qubit_inverse_mapping, __pyx_v_qubit_mask, __pyx_v_swap_gate, NULL)));
+    }
+
+    /* "random_simulator.pyx":395
+ *                # print(NNC_base)
+ *                 #print(NNC[i])
+ *             pf = self.f(NNC)             # <<<<<<<<<<<<<<
+ *             # print(NNC)
+ *             # print(pf)
+ */
+    __pyx_v_pf = ((struct __pyx_vtabstruct_16random_simulator_RandomSimulator *)__pyx_v_self->__pyx_vtab)->f(__pyx_v_self, __pyx_v_NNC);
+
+    /* "random_simulator.pyx":398
+ *             # print(NNC)
+ *             # print(pf)
+ *             swap_gate_index = self.random_choice(pf, seed)             # <<<<<<<<<<<<<<
+ *             swap_gate[0] = candidate_swap_gate_list[2*swap_gate_index]
+ *             swap_gate[1] = candidate_swap_gate_list[2*swap_gate_index+1]
+ */
+    __pyx_v_swap_gate_index = ((struct __pyx_vtabstruct_16random_simulator_RandomSimulator *)__pyx_v_self->__pyx_vtab)->random_choice(__pyx_v_self, __pyx_v_pf, __pyx_v_seed);
+
+    /* "random_simulator.pyx":399
+ *             # print(pf)
+ *             swap_gate_index = self.random_choice(pf, seed)
+ *             swap_gate[0] = candidate_swap_gate_list[2*swap_gate_index]             # <<<<<<<<<<<<<<
+ *             swap_gate[1] = candidate_swap_gate_list[2*swap_gate_index+1]
+ *             self.change_qubit_mapping_with_swap_gate(qubit_mapping, qubit_inverse_mapping, qubit_mask, swap_gate, True)
+ */
+    (__pyx_v_swap_gate[0]) = (__pyx_v_candidate_swap_gate_list[(2 * __pyx_v_swap_gate_index)]);
+
+    /* "random_simulator.pyx":400
  *             swap_gate_index = self.random_choice(pf, seed)
  *             swap_gate[0] = candidate_swap_gate_list[2*swap_gate_index]
  *             swap_gate[1] = candidate_swap_gate_list[2*swap_gate_index+1]             # <<<<<<<<<<<<<<
@@ -6045,690 +6223,863 @@ static float __pyx_f_16random_simulator_15RandomSimulator_simulation_thread_gate
  */
     (__pyx_v_swap_gate[1]) = (__pyx_v_candidate_swap_gate_list[((2 * __pyx_v_swap_gate_index) + 1)]);
 
-    /* "random_simulator.pyx":383
+    /* "random_simulator.pyx":401
  *             swap_gate[0] = candidate_swap_gate_list[2*swap_gate_index]
  *             swap_gate[1] = candidate_swap_gate_list[2*swap_gate_index+1]
  *             self.change_qubit_mapping_with_swap_gate(qubit_mapping, qubit_inverse_mapping, qubit_mask, swap_gate, True)             # <<<<<<<<<<<<<<
  *             num_of_executed_gates += self.update_front_layer(front_layer, qubit_mapping, qubit_mask)
  *             #weighted_executed_gates += weight * <float>(self.update_front_layer(front_layer, qubit_mapping, qubit_mask))
  */
-    __pyx_t_9.__pyx_n = 1;
-    __pyx_t_9.in_palace = 1;
-    ((struct __pyx_vtabstruct_16random_simulator_RandomSimulator *)__pyx_v_self->__pyx_vtab)->change_qubit_mapping_with_swap_gate(__pyx_v_self, __pyx_v_qubit_mapping, __pyx_v_qubit_inverse_mapping, __pyx_v_qubit_mask, __pyx_v_swap_gate, &__pyx_t_9); 
+    __pyx_t_10.__pyx_n = 1;
+    __pyx_t_10.in_palace = 1;
+    ((struct __pyx_vtabstruct_16random_simulator_RandomSimulator *)__pyx_v_self->__pyx_vtab)->change_qubit_mapping_with_swap_gate(__pyx_v_self, __pyx_v_qubit_mapping, __pyx_v_qubit_inverse_mapping, __pyx_v_qubit_mask, __pyx_v_swap_gate, &__pyx_t_10); 
 
-    /* "random_simulator.pyx":384
+    /* "random_simulator.pyx":402
  *             swap_gate[1] = candidate_swap_gate_list[2*swap_gate_index+1]
  *             self.change_qubit_mapping_with_swap_gate(qubit_mapping, qubit_inverse_mapping, qubit_mask, swap_gate, True)
  *             num_of_executed_gates += self.update_front_layer(front_layer, qubit_mapping, qubit_mask)             # <<<<<<<<<<<<<<
  *             #weighted_executed_gates += weight * <float>(self.update_front_layer(front_layer, qubit_mapping, qubit_mask))
  *             #weight *= self.gamma
  */
-    __pyx_v_num_of_executed_gates = (__pyx_v_num_of_executed_gates + ((struct __pyx_vtabstruct_16random_simulator_RandomSimulator *)__pyx_v_self->__pyx_vtab)->update_front_layer(__pyx_v_self, __pyx_v_front_layer, __pyx_v_qubit_mapping, __pyx_v_qubit_mask));
+    try {
+      __pyx_t_3 = ((struct __pyx_vtabstruct_16random_simulator_RandomSimulator *)__pyx_v_self->__pyx_vtab)->update_front_layer(__pyx_v_self, __pyx_v_front_layer, __pyx_v_qubit_mapping, __pyx_v_qubit_mask);
+    } catch(...) {
+      #ifdef WITH_THREAD
+      PyGILState_STATE __pyx_gilstate_save = __Pyx_PyGILState_Ensure();
+      #endif
+      __Pyx_CppExn2PyErr();
+      #ifdef WITH_THREAD
+      __Pyx_PyGILState_Release(__pyx_gilstate_save);
+      #endif
+      __PYX_ERR(0, 402, __pyx_L1_error)
+    }
+    __pyx_v_num_of_executed_gates = (__pyx_v_num_of_executed_gates + __pyx_t_3);
 
-    /* "random_simulator.pyx":387
+    /* "random_simulator.pyx":405
  *             #weighted_executed_gates += weight * <float>(self.update_front_layer(front_layer, qubit_mapping, qubit_mask))
  *             #weight *= self.gamma
  *             num_of_swap_gates += 1             # <<<<<<<<<<<<<<
  *             # print(weight)
  *             # print(weighted_executed_gates)
  */
-    __pyx_v_num_of_swap_gates = (__pyx_v_num_of_swap_gates + 1.0);
+    __pyx_v_num_of_swap_gates = (__pyx_v_num_of_swap_gates + 1);
   }
 
-  /* "random_simulator.pyx":395
- *         # res[0] = num_of_swap_gates
- *         # res[1] = num_of_executed_gates
- *         sim_res = <float>(num_of_executed_gates) * cpow(weight, num_of_swap_gates / 2)             # <<<<<<<<<<<<<<
+  /* "random_simulator.pyx":416
  *         #sim_res = weighted_executed_gates
  *         #print(sim_res)
- */
-  __pyx_v_sim_res = (((float)__pyx_v_num_of_executed_gates) * pow(__pyx_v_weight, (__pyx_v_num_of_swap_gates / 2.0)));
-
-  /* "random_simulator.pyx":398
- *         #sim_res = weighted_executed_gates
- *         #print(sim_res)
- *         return sim_res             # <<<<<<<<<<<<<<
+ *         return num_of_swap_gates             # <<<<<<<<<<<<<<
  * 
- * 
+ *     cdef vector[int] simulation_thread_extended(self, int seed)nogil except +:
  */
-  __pyx_r = __pyx_v_sim_res;
+  __pyx_r = __pyx_v_num_of_swap_gates;
   goto __pyx_L0;
 
-  /* "random_simulator.pyx":337
+  /* "random_simulator.pyx":355
  *         return sim_res
  * 
- *     cdef float simulation_thread_gates(self, int seed) nogil:             # <<<<<<<<<<<<<<
+ *     cdef int simulation_thread_gates(self, int seed)nogil except +:             # <<<<<<<<<<<<<<
  *         cdef:
  *             vector[int] front_layer = self.front_layer
  */
 
   /* function exit code */
   __pyx_L1_error:;
-  __Pyx_WriteUnraisable("random_simulator.RandomSimulator.simulation_thread_gates", __pyx_clineno, __pyx_lineno, __pyx_filename, 1, 1);
+  {
+    #ifdef WITH_THREAD
+    PyGILState_STATE __pyx_gilstate_save = __Pyx_PyGILState_Ensure();
+    #endif
+    __Pyx_AddTraceback("random_simulator.RandomSimulator.simulation_thread_gates", __pyx_clineno, __pyx_lineno, __pyx_filename);
+    #ifdef WITH_THREAD
+    __Pyx_PyGILState_Release(__pyx_gilstate_save);
+    #endif
+  }
   __pyx_r = 0;
   __pyx_L0:;
   return __pyx_r;
 }
 
-/* "random_simulator.pyx":401
+/* "random_simulator.pyx":418
+ *         return num_of_swap_gates
  * 
- * 
- *     cpdef float simulate(self, list front_layer, list qubit_mapping, list qubit_mask,             # <<<<<<<<<<<<<<
- *                     int num_of_subcircuit_gates, int num_of_iterations, int simulation_mode):
- *             cdef:
+ *     cdef vector[int] simulation_thread_extended(self, int seed)nogil except +:             # <<<<<<<<<<<<<<
+ *         cdef:
+ *             vector[int] front_layer = self.front_layer
  */
 
-static PyObject *__pyx_pw_16random_simulator_15RandomSimulator_3simulate(PyObject *__pyx_v_self, PyObject *__pyx_args, PyObject *__pyx_kwds); /*proto*/
-static float __pyx_f_16random_simulator_15RandomSimulator_simulate(struct __pyx_obj_16random_simulator_RandomSimulator *__pyx_v_self, PyObject *__pyx_v_front_layer, PyObject *__pyx_v_qubit_mapping, PyObject *__pyx_v_qubit_mask, int __pyx_v_num_of_subcircuit_gates, int __pyx_v_num_of_iterations, int __pyx_v_simulation_mode, int __pyx_skip_dispatch) {
-  std::vector<int>  __pyx_v_sim_res;
-  std::vector<int>  __pyx_v_sim_swap;
-  std::vector<float>  __pyx_v_res;
+static std::vector<int>  __pyx_f_16random_simulator_15RandomSimulator_simulation_thread_extended(struct __pyx_obj_16random_simulator_RandomSimulator *__pyx_v_self, int __pyx_v_seed) {
+  std::vector<int>  __pyx_v_front_layer;
+  std::vector<int>  __pyx_v_qubit_mapping;
+  std::vector<int>  __pyx_v_qubit_inverse_mapping;
+  std::vector<int>  __pyx_v_qubit_mask;
+  std::vector<int>  __pyx_v_candidate_swap_gate_list;
+  std::vector<int>  __pyx_v_NNC;
+  std::vector<int>  __pyx_v_swap_gate;
+  CYTHON_UNUSED std::unordered_set<int>  __pyx_v_subcircuit;
+  std::vector<int>  __pyx_v_res;
+  std::vector<float>  __pyx_v_pf;
+  int __pyx_v_NNC_base;
+  CYTHON_UNUSED float __pyx_v_weight;
+  CYTHON_UNUSED float __pyx_v_weighted_executed_gates;
   unsigned int __pyx_v_i;
-  unsigned int __pyx_v_n;
-  CYTHON_UNUSED float __pyx_v_minimum;
-  float __pyx_v_average;
-  float __pyx_v_maximum;
-  float __pyx_r;
-  __Pyx_RefNannyDeclarations
-  PyObject *__pyx_t_1 = NULL;
-  PyObject *__pyx_t_2 = NULL;
-  PyObject *__pyx_t_3 = NULL;
-  PyObject *__pyx_t_4 = NULL;
-  PyObject *__pyx_t_5 = NULL;
-  PyObject *__pyx_t_6 = NULL;
-  PyObject *__pyx_t_7 = NULL;
-  int __pyx_t_8;
-  PyObject *__pyx_t_9 = NULL;
-  float __pyx_t_10;
-  std::vector<int>  __pyx_t_11;
-  unsigned int __pyx_t_12;
-  unsigned int __pyx_t_13;
-  unsigned int __pyx_t_14;
-  std::vector<int> ::size_type __pyx_t_15;
-  int __pyx_t_16;
-  int __pyx_t_17;
-  int __pyx_t_18;
-  float __pyx_t_19;
-  float __pyx_t_20;
+  unsigned int __pyx_v_num_of_executed_gates;
+  unsigned int __pyx_v_sum_executed_gates;
+  unsigned int __pyx_v_num_of_candidate_swap_gates;
+  unsigned int __pyx_v_swap_gate_index;
+  unsigned int __pyx_v_num_of_swap_gates;
+  std::vector<int>  __pyx_r;
+  std::vector<int>  __pyx_t_1;
+  std::unordered_set<int>  __pyx_t_2;
+  int __pyx_t_3;
+  int __pyx_t_4;
+  int __pyx_t_5;
+  unsigned int __pyx_t_6;
+  unsigned int __pyx_t_7;
+  unsigned int __pyx_t_8;
+  struct __pyx_opt_args_16random_simulator_15RandomSimulator_change_qubit_mapping_with_swap_gate __pyx_t_9;
   int __pyx_lineno = 0;
   const char *__pyx_filename = NULL;
   int __pyx_clineno = 0;
-  __Pyx_RefNannySetupContext("simulate", 0);
-  /* Check if called by wrapper */
-  if (unlikely(__pyx_skip_dispatch)) ;
-  /* Check if overridden in Python */
-  else if (unlikely((Py_TYPE(((PyObject *)__pyx_v_self))->tp_dictoffset != 0) || (Py_TYPE(((PyObject *)__pyx_v_self))->tp_flags & (Py_TPFLAGS_IS_ABSTRACT | Py_TPFLAGS_HEAPTYPE)))) {
-    #if CYTHON_USE_DICT_VERSIONS && CYTHON_USE_PYTYPE_LOOKUP && CYTHON_USE_TYPE_SLOTS
-    static PY_UINT64_T __pyx_tp_dict_version = __PYX_DICT_VERSION_INIT, __pyx_obj_dict_version = __PYX_DICT_VERSION_INIT;
-    if (unlikely(!__Pyx_object_dict_version_matches(((PyObject *)__pyx_v_self), __pyx_tp_dict_version, __pyx_obj_dict_version))) {
-      PY_UINT64_T __pyx_type_dict_guard = __Pyx_get_tp_dict_version(((PyObject *)__pyx_v_self));
-      #endif
-      __pyx_t_1 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_v_self), __pyx_n_s_simulate); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 401, __pyx_L1_error)
-      __Pyx_GOTREF(__pyx_t_1);
-      if (!PyCFunction_Check(__pyx_t_1) || (PyCFunction_GET_FUNCTION(__pyx_t_1) != (PyCFunction)(void*)__pyx_pw_16random_simulator_15RandomSimulator_3simulate)) {
-        __pyx_t_3 = __Pyx_PyInt_From_int(__pyx_v_num_of_subcircuit_gates); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 401, __pyx_L1_error)
-        __Pyx_GOTREF(__pyx_t_3);
-        __pyx_t_4 = __Pyx_PyInt_From_int(__pyx_v_num_of_iterations); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 401, __pyx_L1_error)
-        __Pyx_GOTREF(__pyx_t_4);
-        __pyx_t_5 = __Pyx_PyInt_From_int(__pyx_v_simulation_mode); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 401, __pyx_L1_error)
-        __Pyx_GOTREF(__pyx_t_5);
-        __Pyx_INCREF(__pyx_t_1);
-        __pyx_t_6 = __pyx_t_1; __pyx_t_7 = NULL;
-        __pyx_t_8 = 0;
-        if (CYTHON_UNPACK_METHODS && unlikely(PyMethod_Check(__pyx_t_6))) {
-          __pyx_t_7 = PyMethod_GET_SELF(__pyx_t_6);
-          if (likely(__pyx_t_7)) {
-            PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_6);
-            __Pyx_INCREF(__pyx_t_7);
-            __Pyx_INCREF(function);
-            __Pyx_DECREF_SET(__pyx_t_6, function);
-            __pyx_t_8 = 1;
-          }
-        }
-        #if CYTHON_FAST_PYCALL
-        if (PyFunction_Check(__pyx_t_6)) {
-          PyObject *__pyx_temp[7] = {__pyx_t_7, __pyx_v_front_layer, __pyx_v_qubit_mapping, __pyx_v_qubit_mask, __pyx_t_3, __pyx_t_4, __pyx_t_5};
-          __pyx_t_2 = __Pyx_PyFunction_FastCall(__pyx_t_6, __pyx_temp+1-__pyx_t_8, 6+__pyx_t_8); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 401, __pyx_L1_error)
-          __Pyx_XDECREF(__pyx_t_7); __pyx_t_7 = 0;
-          __Pyx_GOTREF(__pyx_t_2);
-          __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-          __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-          __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-        } else
-        #endif
-        #if CYTHON_FAST_PYCCALL
-        if (__Pyx_PyFastCFunction_Check(__pyx_t_6)) {
-          PyObject *__pyx_temp[7] = {__pyx_t_7, __pyx_v_front_layer, __pyx_v_qubit_mapping, __pyx_v_qubit_mask, __pyx_t_3, __pyx_t_4, __pyx_t_5};
-          __pyx_t_2 = __Pyx_PyCFunction_FastCall(__pyx_t_6, __pyx_temp+1-__pyx_t_8, 6+__pyx_t_8); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 401, __pyx_L1_error)
-          __Pyx_XDECREF(__pyx_t_7); __pyx_t_7 = 0;
-          __Pyx_GOTREF(__pyx_t_2);
-          __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-          __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-          __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-        } else
-        #endif
-        {
-          __pyx_t_9 = PyTuple_New(6+__pyx_t_8); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 401, __pyx_L1_error)
-          __Pyx_GOTREF(__pyx_t_9);
-          if (__pyx_t_7) {
-            __Pyx_GIVEREF(__pyx_t_7); PyTuple_SET_ITEM(__pyx_t_9, 0, __pyx_t_7); __pyx_t_7 = NULL;
-          }
-          __Pyx_INCREF(__pyx_v_front_layer);
-          __Pyx_GIVEREF(__pyx_v_front_layer);
-          PyTuple_SET_ITEM(__pyx_t_9, 0+__pyx_t_8, __pyx_v_front_layer);
-          __Pyx_INCREF(__pyx_v_qubit_mapping);
-          __Pyx_GIVEREF(__pyx_v_qubit_mapping);
-          PyTuple_SET_ITEM(__pyx_t_9, 1+__pyx_t_8, __pyx_v_qubit_mapping);
-          __Pyx_INCREF(__pyx_v_qubit_mask);
-          __Pyx_GIVEREF(__pyx_v_qubit_mask);
-          PyTuple_SET_ITEM(__pyx_t_9, 2+__pyx_t_8, __pyx_v_qubit_mask);
-          __Pyx_GIVEREF(__pyx_t_3);
-          PyTuple_SET_ITEM(__pyx_t_9, 3+__pyx_t_8, __pyx_t_3);
-          __Pyx_GIVEREF(__pyx_t_4);
-          PyTuple_SET_ITEM(__pyx_t_9, 4+__pyx_t_8, __pyx_t_4);
-          __Pyx_GIVEREF(__pyx_t_5);
-          PyTuple_SET_ITEM(__pyx_t_9, 5+__pyx_t_8, __pyx_t_5);
-          __pyx_t_3 = 0;
-          __pyx_t_4 = 0;
-          __pyx_t_5 = 0;
-          __pyx_t_2 = __Pyx_PyObject_Call(__pyx_t_6, __pyx_t_9, NULL); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 401, __pyx_L1_error)
-          __Pyx_GOTREF(__pyx_t_2);
-          __Pyx_DECREF(__pyx_t_9); __pyx_t_9 = 0;
-        }
-        __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
-        __pyx_t_10 = __pyx_PyFloat_AsFloat(__pyx_t_2); if (unlikely((__pyx_t_10 == (float)-1) && PyErr_Occurred())) __PYX_ERR(0, 401, __pyx_L1_error)
-        __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-        __pyx_r = __pyx_t_10;
-        __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-        goto __pyx_L0;
-      }
-      #if CYTHON_USE_DICT_VERSIONS && CYTHON_USE_PYTYPE_LOOKUP && CYTHON_USE_TYPE_SLOTS
-      __pyx_tp_dict_version = __Pyx_get_tp_dict_version(((PyObject *)__pyx_v_self));
-      __pyx_obj_dict_version = __Pyx_get_object_dict_version(((PyObject *)__pyx_v_self));
-      if (unlikely(__pyx_type_dict_guard != __pyx_tp_dict_version)) {
-        __pyx_tp_dict_version = __pyx_obj_dict_version = __PYX_DICT_VERSION_INIT;
-      }
-      #endif
-      __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-      #if CYTHON_USE_DICT_VERSIONS && CYTHON_USE_PYTYPE_LOOKUP && CYTHON_USE_TYPE_SLOTS
-    }
-    #endif
-  }
 
-  /* "random_simulator.pyx":409
- *                 unsigned int i , n
- *                 int num_of_executed_gates
- *                 float  minimum = self.num_of_gates * self.num_of_physical_qubits             # <<<<<<<<<<<<<<
- *                 float average = 0, maximum = -1
- * 
+  /* "random_simulator.pyx":420
+ *     cdef vector[int] simulation_thread_extended(self, int seed)nogil except +:
+ *         cdef:
+ *             vector[int] front_layer = self.front_layer             # <<<<<<<<<<<<<<
+ *             vector[int] qubit_mapping = self.qubit_mapping
+ *             vector[int] qubit_inverse_mapping = self.qubit_inverse_mapping
  */
-  __pyx_v_minimum = (__pyx_v_self->num_of_gates * __pyx_v_self->num_of_physical_qubits);
-
-  /* "random_simulator.pyx":410
- *                 int num_of_executed_gates
- *                 float  minimum = self.num_of_gates * self.num_of_physical_qubits
- *                 float average = 0, maximum = -1             # <<<<<<<<<<<<<<
- * 
- * 
- */
-  __pyx_v_average = 0.0;
-  __pyx_v_maximum = -1.0;
-
-  /* "random_simulator.pyx":413
- * 
- * 
- *             self.front_layer = front_layer             # <<<<<<<<<<<<<<
- *             self.qubit_mapping = qubit_mapping
- *             self.qubit_mask = qubit_mask
- */
-  __pyx_t_11 = __pyx_convert_vector_from_py_int(__pyx_v_front_layer); if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 413, __pyx_L1_error)
-  __pyx_v_self->front_layer = __pyx_t_11;
-
-  /* "random_simulator.pyx":414
- * 
- *             self.front_layer = front_layer
- *             self.qubit_mapping = qubit_mapping             # <<<<<<<<<<<<<<
- *             self.qubit_mask = qubit_mask
- *             self.qubit_inverse_mapping.resize(self.num_of_physical_qubits, INIT_NUM)
- */
-  __pyx_t_11 = __pyx_convert_vector_from_py_int(__pyx_v_qubit_mapping); if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 414, __pyx_L1_error)
-  __pyx_v_self->qubit_mapping = __pyx_t_11;
-
-  /* "random_simulator.pyx":415
- *             self.front_layer = front_layer
- *             self.qubit_mapping = qubit_mapping
- *             self.qubit_mask = qubit_mask             # <<<<<<<<<<<<<<
- *             self.qubit_inverse_mapping.resize(self.num_of_physical_qubits, INIT_NUM)
- * 
- */
-  __pyx_t_11 = __pyx_convert_vector_from_py_int(__pyx_v_qubit_mask); if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 415, __pyx_L1_error)
-  __pyx_v_self->qubit_mask = __pyx_t_11;
-
-  /* "random_simulator.pyx":416
- *             self.qubit_mapping = qubit_mapping
- *             self.qubit_mask = qubit_mask
- *             self.qubit_inverse_mapping.resize(self.num_of_physical_qubits, INIT_NUM)             # <<<<<<<<<<<<<<
- * 
- *             n = self.qubit_mapping.size()
- */
-  try {
-    __pyx_v_self->qubit_inverse_mapping.resize(__pyx_v_self->num_of_physical_qubits, __pyx_v_16random_simulator_INIT_NUM);
-  } catch(...) {
-    __Pyx_CppExn2PyErr();
-    __PYX_ERR(0, 416, __pyx_L1_error)
-  }
-
-  /* "random_simulator.pyx":418
- *             self.qubit_inverse_mapping.resize(self.num_of_physical_qubits, INIT_NUM)
- * 
- *             n = self.qubit_mapping.size()             # <<<<<<<<<<<<<<
- * 
- * 
- */
-  __pyx_v_n = __pyx_v_self->qubit_mapping.size();
+  __pyx_t_1 = __pyx_v_self->front_layer;
+  __pyx_v_front_layer = __pyx_t_1;
 
   /* "random_simulator.pyx":421
- * 
- * 
- *             for i in range(n):             # <<<<<<<<<<<<<<
- *                 self.qubit_inverse_mapping[qubit_mapping[i]] = i
- * 
+ *         cdef:
+ *             vector[int] front_layer = self.front_layer
+ *             vector[int] qubit_mapping = self.qubit_mapping             # <<<<<<<<<<<<<<
+ *             vector[int] qubit_inverse_mapping = self.qubit_inverse_mapping
+ *             vector[int] qubit_mask = self.qubit_mask
  */
-  __pyx_t_12 = __pyx_v_n;
-  __pyx_t_13 = __pyx_t_12;
-  for (__pyx_t_14 = 0; __pyx_t_14 < __pyx_t_13; __pyx_t_14+=1) {
-    __pyx_v_i = __pyx_t_14;
+  __pyx_t_1 = __pyx_v_self->qubit_mapping;
+  __pyx_v_qubit_mapping = __pyx_t_1;
 
-    /* "random_simulator.pyx":422
- * 
- *             for i in range(n):
- *                 self.qubit_inverse_mapping[qubit_mapping[i]] = i             # <<<<<<<<<<<<<<
- * 
- *             if num_of_subcircuit_gates == -1:
+  /* "random_simulator.pyx":422
+ *             vector[int] front_layer = self.front_layer
+ *             vector[int] qubit_mapping = self.qubit_mapping
+ *             vector[int] qubit_inverse_mapping = self.qubit_inverse_mapping             # <<<<<<<<<<<<<<
+ *             vector[int] qubit_mask = self.qubit_mask
+ *             vector[int] candidate_swap_gate_list, NNC, swap_gate, logical_qubit_mask
  */
-    if (unlikely(__pyx_v_qubit_mapping == Py_None)) {
-      PyErr_SetString(PyExc_TypeError, "'NoneType' object is not subscriptable");
-      __PYX_ERR(0, 422, __pyx_L1_error)
-    }
-    __pyx_t_15 = __Pyx_PyInt_As_size_t(PyList_GET_ITEM(__pyx_v_qubit_mapping, __pyx_v_i)); if (unlikely((__pyx_t_15 == (size_t)-1) && PyErr_Occurred())) __PYX_ERR(0, 422, __pyx_L1_error)
-    (__pyx_v_self->qubit_inverse_mapping[__pyx_t_15]) = __pyx_v_i;
-  }
+  __pyx_t_1 = __pyx_v_self->qubit_inverse_mapping;
+  __pyx_v_qubit_inverse_mapping = __pyx_t_1;
 
-  /* "random_simulator.pyx":424
- *                 self.qubit_inverse_mapping[qubit_mapping[i]] = i
- * 
- *             if num_of_subcircuit_gates == -1:             # <<<<<<<<<<<<<<
- *                 self.num_of_subcircuit_gates = self.num_of_gates
- *             else:
+  /* "random_simulator.pyx":423
+ *             vector[int] qubit_mapping = self.qubit_mapping
+ *             vector[int] qubit_inverse_mapping = self.qubit_inverse_mapping
+ *             vector[int] qubit_mask = self.qubit_mask             # <<<<<<<<<<<<<<
+ *             vector[int] candidate_swap_gate_list, NNC, swap_gate, logical_qubit_mask
+ *             unordered_set[int] subcircuit = self.subcircuit
  */
-  __pyx_t_16 = ((__pyx_v_num_of_subcircuit_gates == -1L) != 0);
-  if (__pyx_t_16) {
+  __pyx_t_1 = __pyx_v_self->qubit_mask;
+  __pyx_v_qubit_mask = __pyx_t_1;
 
-    /* "random_simulator.pyx":425
- * 
- *             if num_of_subcircuit_gates == -1:
- *                 self.num_of_subcircuit_gates = self.num_of_gates             # <<<<<<<<<<<<<<
- *             else:
- *                 self.num_of_subcircuit_gates = min(num_of_subcircuit_gates, self.num_of_gates)
+  /* "random_simulator.pyx":425
+ *             vector[int] qubit_mask = self.qubit_mask
+ *             vector[int] candidate_swap_gate_list, NNC, swap_gate, logical_qubit_mask
+ *             unordered_set[int] subcircuit = self.subcircuit             # <<<<<<<<<<<<<<
+ *             vector[int] res
+ *             vector[float] pf
  */
-    __pyx_t_8 = __pyx_v_self->num_of_gates;
-    __pyx_v_self->num_of_subcircuit_gates = __pyx_t_8;
-
-    /* "random_simulator.pyx":424
- *                 self.qubit_inverse_mapping[qubit_mapping[i]] = i
- * 
- *             if num_of_subcircuit_gates == -1:             # <<<<<<<<<<<<<<
- *                 self.num_of_subcircuit_gates = self.num_of_gates
- *             else:
- */
-    goto __pyx_L5;
-  }
-
-  /* "random_simulator.pyx":427
- *                 self.num_of_subcircuit_gates = self.num_of_gates
- *             else:
- *                 self.num_of_subcircuit_gates = min(num_of_subcircuit_gates, self.num_of_gates)             # <<<<<<<<<<<<<<
- * 
- *             self.num_of_iterations = num_of_iterations
- */
-  /*else*/ {
-    __pyx_t_8 = __pyx_v_self->num_of_gates;
-    __pyx_t_17 = __pyx_v_num_of_subcircuit_gates;
-    if (((__pyx_t_8 < __pyx_t_17) != 0)) {
-      __pyx_t_18 = __pyx_t_8;
-    } else {
-      __pyx_t_18 = __pyx_t_17;
-    }
-    __pyx_v_self->num_of_subcircuit_gates = __pyx_t_18;
-  }
-  __pyx_L5:;
+  __pyx_t_2 = __pyx_v_self->subcircuit;
+  __pyx_v_subcircuit = __pyx_t_2;
 
   /* "random_simulator.pyx":429
- *                 self.num_of_subcircuit_gates = min(num_of_subcircuit_gates, self.num_of_gates)
+ *             vector[float] pf
+ *             int NNC_base, j
+ *             float weight, weighted_executed_gates = 0.0, sim_res             # <<<<<<<<<<<<<<
+ *             unsigned int i, num_of_executed_gates = 0, sum_executed_gates = 0 ,num_of_candidate_swap_gates, swap_gate_index,  num_of_swap_gates = 0
  * 
- *             self.num_of_iterations = num_of_iterations             # <<<<<<<<<<<<<<
- * 
- *             sim_res.resize(self.num_of_iterations)
  */
-  __pyx_v_self->num_of_iterations = __pyx_v_num_of_iterations;
+  __pyx_v_weighted_executed_gates = 0.0;
 
-  /* "random_simulator.pyx":431
- *             self.num_of_iterations = num_of_iterations
+  /* "random_simulator.pyx":430
+ *             int NNC_base, j
+ *             float weight, weighted_executed_gates = 0.0, sim_res
+ *             unsigned int i, num_of_executed_gates = 0, sum_executed_gates = 0 ,num_of_candidate_swap_gates, swap_gate_index,  num_of_swap_gates = 0             # <<<<<<<<<<<<<<
  * 
- *             sim_res.resize(self.num_of_iterations)             # <<<<<<<<<<<<<<
- *             sim_swap.resize(self.num_of_iterations)
- *             res.resize(self.num_of_iterations)
+ *         res.resize(self.num_of_swap_gates+1, 0)
  */
-  try {
-    __pyx_v_sim_res.resize(__pyx_v_self->num_of_iterations);
-  } catch(...) {
-    __Pyx_CppExn2PyErr();
-    __PYX_ERR(0, 431, __pyx_L1_error)
-  }
+  __pyx_v_num_of_executed_gates = 0;
+  __pyx_v_sum_executed_gates = 0;
+  __pyx_v_num_of_swap_gates = 0;
 
   /* "random_simulator.pyx":432
+ *             unsigned int i, num_of_executed_gates = 0, sum_executed_gates = 0 ,num_of_candidate_swap_gates, swap_gate_index,  num_of_swap_gates = 0
  * 
- *             sim_res.resize(self.num_of_iterations)
- *             sim_swap.resize(self.num_of_iterations)             # <<<<<<<<<<<<<<
- *             res.resize(self.num_of_iterations)
- * 
+ *         res.resize(self.num_of_swap_gates+1, 0)             # <<<<<<<<<<<<<<
+ *         swap_gate.resize(2, INIT_NUM)
+ *         #print("ft")
  */
   try {
-    __pyx_v_sim_swap.resize(__pyx_v_self->num_of_iterations);
+    __pyx_v_res.resize((__pyx_v_self->num_of_swap_gates + 1), 0);
   } catch(...) {
+    #ifdef WITH_THREAD
+    PyGILState_STATE __pyx_gilstate_save = __Pyx_PyGILState_Ensure();
+    #endif
     __Pyx_CppExn2PyErr();
+    #ifdef WITH_THREAD
+    __Pyx_PyGILState_Release(__pyx_gilstate_save);
+    #endif
     __PYX_ERR(0, 432, __pyx_L1_error)
   }
 
   /* "random_simulator.pyx":433
- *             sim_res.resize(self.num_of_iterations)
- *             sim_swap.resize(self.num_of_iterations)
- *             res.resize(self.num_of_iterations)             # <<<<<<<<<<<<<<
  * 
- * 
+ *         res.resize(self.num_of_swap_gates+1, 0)
+ *         swap_gate.resize(2, INIT_NUM)             # <<<<<<<<<<<<<<
+ *         #print("ft")
+ *         sum_executed_gates += self.update_front_layer(front_layer, qubit_mapping, qubit_mask)
  */
   try {
-    __pyx_v_res.resize(__pyx_v_self->num_of_iterations);
+    __pyx_v_swap_gate.resize(2, __pyx_v_16random_simulator_INIT_NUM);
   } catch(...) {
+    #ifdef WITH_THREAD
+    PyGILState_STATE __pyx_gilstate_save = __Pyx_PyGILState_Ensure();
+    #endif
     __Pyx_CppExn2PyErr();
+    #ifdef WITH_THREAD
+    __Pyx_PyGILState_Release(__pyx_gilstate_save);
+    #endif
     __PYX_ERR(0, 433, __pyx_L1_error)
   }
 
-  /* "random_simulator.pyx":442
- *             # self.subcircuit = self.get_subcircuit(front_layer, logical_qubit_mask, self.num_of_subcircuit_gates)
- *             #print(self.subcircuit)
- *             with nogil:             # <<<<<<<<<<<<<<
- *                 for i in prange(self.num_of_iterations):
- *                     if  simulation_mode == 0:
+  /* "random_simulator.pyx":435
+ *         swap_gate.resize(2, INIT_NUM)
+ *         #print("ft")
+ *         sum_executed_gates += self.update_front_layer(front_layer, qubit_mapping, qubit_mask)             # <<<<<<<<<<<<<<
+ *         #num_of_executed_gates += self.update_front_layer(front_layer, qubit_mapping, qubit_mask)
+ *         weight = 1.0
  */
-  {
-      #ifdef WITH_THREAD
-      PyThreadState *_save;
-      Py_UNBLOCK_THREADS
-      __Pyx_FastGIL_Remember();
-      #endif
-      /*try:*/ {
-
-        /* "random_simulator.pyx":443
- *             #print(self.subcircuit)
- *             with nogil:
- *                 for i in prange(self.num_of_iterations):             # <<<<<<<<<<<<<<
- *                     if  simulation_mode == 0:
- *                         res[i] = self.simulation_thread_swap(i)
- */
-        __pyx_t_18 = __pyx_v_self->num_of_iterations;
-        if ((1 == 0)) abort();
-        {
-            #if ((defined(__APPLE__) || defined(__OSX__)) && (defined(__GNUC__) && (__GNUC__ > 2 || (__GNUC__ == 2 && (__GNUC_MINOR__ > 95)))))
-                #undef likely
-                #undef unlikely
-                #define likely(x)   (x)
-                #define unlikely(x) (x)
-            #endif
-            __pyx_t_13 = (__pyx_t_18 - 0 + 1 - 1/abs(1)) / 1;
-            if (__pyx_t_13 > 0)
-            {
-                #ifdef _OPENMP
-                #pragma omp parallel
-                #endif /* _OPENMP */
-                {
-                    #ifdef _OPENMP
-                    #pragma omp for firstprivate(__pyx_v_i) lastprivate(__pyx_v_i)
-                    #endif /* _OPENMP */
-                    for (__pyx_t_12 = 0; __pyx_t_12 < __pyx_t_13; __pyx_t_12++){
-                        {
-                            __pyx_v_i = (unsigned int)(0 + 1 * __pyx_t_12);
-
-                            /* "random_simulator.pyx":444
- *             with nogil:
- *                 for i in prange(self.num_of_iterations):
- *                     if  simulation_mode == 0:             # <<<<<<<<<<<<<<
- *                         res[i] = self.simulation_thread_swap(i)
- *                     elif simulation_mode == 1:
- */
-                            switch (__pyx_v_simulation_mode) {
-                              case 0:
-
-                              /* "random_simulator.pyx":445
- *                 for i in prange(self.num_of_iterations):
- *                     if  simulation_mode == 0:
- *                         res[i] = self.simulation_thread_swap(i)             # <<<<<<<<<<<<<<
- *                     elif simulation_mode == 1:
- *                         res[i] = self.simulation_thread_gates(i)
- */
-                              (__pyx_v_res[__pyx_v_i]) = ((struct __pyx_vtabstruct_16random_simulator_RandomSimulator *)__pyx_v_self->__pyx_vtab)->simulation_thread_swap(__pyx_v_self, __pyx_v_i);
-
-                              /* "random_simulator.pyx":444
- *             with nogil:
- *                 for i in prange(self.num_of_iterations):
- *                     if  simulation_mode == 0:             # <<<<<<<<<<<<<<
- *                         res[i] = self.simulation_thread_swap(i)
- *                     elif simulation_mode == 1:
- */
-                              break;
-                              case 1:
-
-                              /* "random_simulator.pyx":447
- *                         res[i] = self.simulation_thread_swap(i)
- *                     elif simulation_mode == 1:
- *                         res[i] = self.simulation_thread_gates(i)             # <<<<<<<<<<<<<<
- *                     #print(res[i])
- * 
- */
-                              (__pyx_v_res[__pyx_v_i]) = ((struct __pyx_vtabstruct_16random_simulator_RandomSimulator *)__pyx_v_self->__pyx_vtab)->simulation_thread_gates(__pyx_v_self, __pyx_v_i);
-
-                              /* "random_simulator.pyx":446
- *                     if  simulation_mode == 0:
- *                         res[i] = self.simulation_thread_swap(i)
- *                     elif simulation_mode == 1:             # <<<<<<<<<<<<<<
- *                         res[i] = self.simulation_thread_gates(i)
- *                     #print(res[i])
- */
-                              break;
-                              default: break;
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        #if ((defined(__APPLE__) || defined(__OSX__)) && (defined(__GNUC__) && (__GNUC__ > 2 || (__GNUC__ == 2 && (__GNUC_MINOR__ > 95)))))
-            #undef likely
-            #undef unlikely
-            #define likely(x)   __builtin_expect(!!(x), 1)
-            #define unlikely(x) __builtin_expect(!!(x), 0)
-        #endif
-      }
-
-      /* "random_simulator.pyx":442
- *             # self.subcircuit = self.get_subcircuit(front_layer, logical_qubit_mask, self.num_of_subcircuit_gates)
- *             #print(self.subcircuit)
- *             with nogil:             # <<<<<<<<<<<<<<
- *                 for i in prange(self.num_of_iterations):
- *                     if  simulation_mode == 0:
- */
-      /*finally:*/ {
-        /*normal exit:*/{
-          #ifdef WITH_THREAD
-          __Pyx_FastGIL_Forget();
-          Py_BLOCK_THREADS
-          #endif
-          goto __pyx_L8;
-        }
-        __pyx_L8:;
-      }
+  try {
+    __pyx_t_3 = ((struct __pyx_vtabstruct_16random_simulator_RandomSimulator *)__pyx_v_self->__pyx_vtab)->update_front_layer(__pyx_v_self, __pyx_v_front_layer, __pyx_v_qubit_mapping, __pyx_v_qubit_mask);
+  } catch(...) {
+    #ifdef WITH_THREAD
+    PyGILState_STATE __pyx_gilstate_save = __Pyx_PyGILState_Ensure();
+    #endif
+    __Pyx_CppExn2PyErr();
+    #ifdef WITH_THREAD
+    __Pyx_PyGILState_Release(__pyx_gilstate_save);
+    #endif
+    __PYX_ERR(0, 435, __pyx_L1_error)
   }
+  __pyx_v_sum_executed_gates = (__pyx_v_sum_executed_gates + __pyx_t_3);
 
-  /* "random_simulator.pyx":458
- *             #         minimum = sim_res[i]
- *             #         num_of_executed_gates = sim_swap[i]
- *             if self.mode == 0:             # <<<<<<<<<<<<<<
- *                 for i in range(self.num_of_iterations):
- *                     average += res[i]
+  /* "random_simulator.pyx":437
+ *         sum_executed_gates += self.update_front_layer(front_layer, qubit_mapping, qubit_mask)
+ *         #num_of_executed_gates += self.update_front_layer(front_layer, qubit_mapping, qubit_mask)
+ *         weight = 1.0             # <<<<<<<<<<<<<<
+ *         #print("ft")
+ *         #print(weight)
  */
-  switch (__pyx_v_self->mode) {
-    case 0:
+  __pyx_v_weight = 1.0;
+
+  /* "random_simulator.pyx":440
+ *         #print("ft")
+ *         #print(weight)
+ *         while not front_layer.empty() and  num_of_swap_gates < self.num_of_swap_gates:             # <<<<<<<<<<<<<<
+ *             candidate_swap_gate_list = self.get_candidate_swap_gate_list(front_layer, qubit_mapping)
+ *             #print(qubit_mapping)
+ */
+  while (1) {
+    __pyx_t_5 = ((!(__pyx_v_front_layer.empty() != 0)) != 0);
+    if (__pyx_t_5) {
+    } else {
+      __pyx_t_4 = __pyx_t_5;
+      goto __pyx_L5_bool_binop_done;
+    }
+    __pyx_t_5 = ((__pyx_v_num_of_swap_gates < __pyx_v_self->num_of_swap_gates) != 0);
+    __pyx_t_4 = __pyx_t_5;
+    __pyx_L5_bool_binop_done:;
+    if (!__pyx_t_4) break;
+
+    /* "random_simulator.pyx":441
+ *         #print(weight)
+ *         while not front_layer.empty() and  num_of_swap_gates < self.num_of_swap_gates:
+ *             candidate_swap_gate_list = self.get_candidate_swap_gate_list(front_layer, qubit_mapping)             # <<<<<<<<<<<<<<
+ *             #print(qubit_mapping)
+ *             # for j in front_layer:
+ */
+    __pyx_v_candidate_swap_gate_list = ((struct __pyx_vtabstruct_16random_simulator_RandomSimulator *)__pyx_v_self->__pyx_vtab)->get_candidate_swap_gate_list(__pyx_v_self, __pyx_v_front_layer, __pyx_v_qubit_mapping);
+
+    /* "random_simulator.pyx":446
+ *             #     print(list(self.gates[j]))
+ *             # print(candidate_swap_gate_list)
+ *             num_of_candidate_swap_gates = <int>(candidate_swap_gate_list.size() / 2)             # <<<<<<<<<<<<<<
+ *             NNC_base = self.NNC(front_layer, qubit_mapping)
+ *             NNC.resize(num_of_candidate_swap_gates, INIT_NUM)
+ */
+    __pyx_v_num_of_candidate_swap_gates = ((int)(((double)__pyx_v_candidate_swap_gate_list.size()) / 2.0));
+
+    /* "random_simulator.pyx":447
+ *             # print(candidate_swap_gate_list)
+ *             num_of_candidate_swap_gates = <int>(candidate_swap_gate_list.size() / 2)
+ *             NNC_base = self.NNC(front_layer, qubit_mapping)             # <<<<<<<<<<<<<<
+ *             NNC.resize(num_of_candidate_swap_gates, INIT_NUM)
+ *             for i in range(num_of_candidate_swap_gates):
+ */
+    __pyx_v_NNC_base = ((struct __pyx_vtabstruct_16random_simulator_RandomSimulator *)__pyx_v_self->__pyx_vtab)->NNC(__pyx_v_self, __pyx_v_front_layer, __pyx_v_qubit_mapping);
+
+    /* "random_simulator.pyx":448
+ *             num_of_candidate_swap_gates = <int>(candidate_swap_gate_list.size() / 2)
+ *             NNC_base = self.NNC(front_layer, qubit_mapping)
+ *             NNC.resize(num_of_candidate_swap_gates, INIT_NUM)             # <<<<<<<<<<<<<<
+ *             for i in range(num_of_candidate_swap_gates):
+ *                 swap_gate[0] = candidate_swap_gate_list[2*i]
+ */
+    try {
+      __pyx_v_NNC.resize(__pyx_v_num_of_candidate_swap_gates, __pyx_v_16random_simulator_INIT_NUM);
+    } catch(...) {
+      #ifdef WITH_THREAD
+      PyGILState_STATE __pyx_gilstate_save = __Pyx_PyGILState_Ensure();
+      #endif
+      __Pyx_CppExn2PyErr();
+      #ifdef WITH_THREAD
+      __Pyx_PyGILState_Release(__pyx_gilstate_save);
+      #endif
+      __PYX_ERR(0, 448, __pyx_L1_error)
+    }
+
+    /* "random_simulator.pyx":449
+ *             NNC_base = self.NNC(front_layer, qubit_mapping)
+ *             NNC.resize(num_of_candidate_swap_gates, INIT_NUM)
+ *             for i in range(num_of_candidate_swap_gates):             # <<<<<<<<<<<<<<
+ *                 swap_gate[0] = candidate_swap_gate_list[2*i]
+ *                 swap_gate[1] = candidate_swap_gate_list[2*i+1]
+ */
+    __pyx_t_6 = __pyx_v_num_of_candidate_swap_gates;
+    __pyx_t_7 = __pyx_t_6;
+    for (__pyx_t_8 = 0; __pyx_t_8 < __pyx_t_7; __pyx_t_8+=1) {
+      __pyx_v_i = __pyx_t_8;
+
+      /* "random_simulator.pyx":450
+ *             NNC.resize(num_of_candidate_swap_gates, INIT_NUM)
+ *             for i in range(num_of_candidate_swap_gates):
+ *                 swap_gate[0] = candidate_swap_gate_list[2*i]             # <<<<<<<<<<<<<<
+ *                 swap_gate[1] = candidate_swap_gate_list[2*i+1]
+ *                 # for j in front_layer:
+ */
+      (__pyx_v_swap_gate[0]) = (__pyx_v_candidate_swap_gate_list[(2 * __pyx_v_i)]);
+
+      /* "random_simulator.pyx":451
+ *             for i in range(num_of_candidate_swap_gates):
+ *                 swap_gate[0] = candidate_swap_gate_list[2*i]
+ *                 swap_gate[1] = candidate_swap_gate_list[2*i+1]             # <<<<<<<<<<<<<<
+ *                 # for j in front_layer:
+ *                 #     print(list(self.gates[i]))
+ */
+      (__pyx_v_swap_gate[1]) = (__pyx_v_candidate_swap_gate_list[((2 * __pyx_v_i) + 1)]);
+
+      /* "random_simulator.pyx":456
+ *                 #print(qubit_mapping)
+ *                 #print(self.change_qubit_mapping_with_swap_gate(qubit_mapping, qubit_inverse_mapping, qubit_mask, swap_gate))
+ *                 NNC[i] = NNC_base - self.NNC(front_layer, self.change_qubit_mapping_with_swap_gate(qubit_mapping, qubit_inverse_mapping, qubit_mask, swap_gate))             # <<<<<<<<<<<<<<
+ *                # print(NNC_base)
+ *                 #print(NNC[i])
+ */
+      (__pyx_v_NNC[__pyx_v_i]) = (__pyx_v_NNC_base - ((struct __pyx_vtabstruct_16random_simulator_RandomSimulator *)__pyx_v_self->__pyx_vtab)->NNC(__pyx_v_self, __pyx_v_front_layer, ((struct __pyx_vtabstruct_16random_simulator_RandomSimulator *)__pyx_v_self->__pyx_vtab)->change_qubit_mapping_with_swap_gate(__pyx_v_self, __pyx_v_qubit_mapping, __pyx_v_qubit_inverse_mapping, __pyx_v_qubit_mask, __pyx_v_swap_gate, NULL)));
+    }
 
     /* "random_simulator.pyx":459
- *             #         num_of_executed_gates = sim_swap[i]
- *             if self.mode == 0:
- *                 for i in range(self.num_of_iterations):             # <<<<<<<<<<<<<<
- *                     average += res[i]
- *                 average = average /  self.num_of_iterations
+ *                # print(NNC_base)
+ *                 #print(NNC[i])
+ *             pf = self.f(NNC)             # <<<<<<<<<<<<<<
+ *             # print(NNC)
+ *             # print(pf)
  */
-    __pyx_t_18 = __pyx_v_self->num_of_iterations;
-    __pyx_t_8 = __pyx_t_18;
-    for (__pyx_t_13 = 0; __pyx_t_13 < __pyx_t_8; __pyx_t_13+=1) {
-      __pyx_v_i = __pyx_t_13;
-
-      /* "random_simulator.pyx":460
- *             if self.mode == 0:
- *                 for i in range(self.num_of_iterations):
- *                     average += res[i]             # <<<<<<<<<<<<<<
- *                 average = average /  self.num_of_iterations
- *                 return average
- */
-      __pyx_v_average = (__pyx_v_average + (__pyx_v_res[__pyx_v_i]));
-    }
-
-    /* "random_simulator.pyx":461
- *                 for i in range(self.num_of_iterations):
- *                     average += res[i]
- *                 average = average /  self.num_of_iterations             # <<<<<<<<<<<<<<
- *                 return average
- *             elif self.mode == 1:
- */
-    if (unlikely(__pyx_v_self->num_of_iterations == 0)) {
-      PyErr_SetString(PyExc_ZeroDivisionError, "float division");
-      __PYX_ERR(0, 461, __pyx_L1_error)
-    }
-    __pyx_v_average = (__pyx_v_average / ((float)__pyx_v_self->num_of_iterations));
+    __pyx_v_pf = ((struct __pyx_vtabstruct_16random_simulator_RandomSimulator *)__pyx_v_self->__pyx_vtab)->f(__pyx_v_self, __pyx_v_NNC);
 
     /* "random_simulator.pyx":462
- *                     average += res[i]
- *                 average = average /  self.num_of_iterations
- *                 return average             # <<<<<<<<<<<<<<
- *             elif self.mode == 1:
- *                 for i in range(self.num_of_iterations):
+ *             # print(NNC)
+ *             # print(pf)
+ *             swap_gate_index = self.random_choice(pf, seed)             # <<<<<<<<<<<<<<
+ *             swap_gate[0] = candidate_swap_gate_list[2*swap_gate_index]
+ *             swap_gate[1] = candidate_swap_gate_list[2*swap_gate_index+1]
  */
-    __pyx_r = __pyx_v_average;
-    goto __pyx_L0;
-
-    /* "random_simulator.pyx":458
- *             #         minimum = sim_res[i]
- *             #         num_of_executed_gates = sim_swap[i]
- *             if self.mode == 0:             # <<<<<<<<<<<<<<
- *                 for i in range(self.num_of_iterations):
- *                     average += res[i]
- */
-    break;
-    case 1:
-
-    /* "random_simulator.pyx":464
- *                 return average
- *             elif self.mode == 1:
- *                 for i in range(self.num_of_iterations):             # <<<<<<<<<<<<<<
- *                     maximum  = max(res[i], maximum)
- *                 #print(minimum)
- */
-    __pyx_t_18 = __pyx_v_self->num_of_iterations;
-    __pyx_t_8 = __pyx_t_18;
-    for (__pyx_t_13 = 0; __pyx_t_13 < __pyx_t_8; __pyx_t_13+=1) {
-      __pyx_v_i = __pyx_t_13;
-
-      /* "random_simulator.pyx":465
- *             elif self.mode == 1:
- *                 for i in range(self.num_of_iterations):
- *                     maximum  = max(res[i], maximum)             # <<<<<<<<<<<<<<
- *                 #print(minimum)
- *                 return maximum
- */
-      __pyx_t_10 = __pyx_v_maximum;
-      __pyx_t_19 = (__pyx_v_res[__pyx_v_i]);
-      if (((__pyx_t_10 > __pyx_t_19) != 0)) {
-        __pyx_t_20 = __pyx_t_10;
-      } else {
-        __pyx_t_20 = __pyx_t_19;
-      }
-      __pyx_v_maximum = __pyx_t_20;
-    }
-
-    /* "random_simulator.pyx":467
- *                     maximum  = max(res[i], maximum)
- *                 #print(minimum)
- *                 return maximum             # <<<<<<<<<<<<<<
- *             else:
- *                 return -1
- */
-    __pyx_r = __pyx_v_maximum;
-    goto __pyx_L0;
+    __pyx_v_swap_gate_index = ((struct __pyx_vtabstruct_16random_simulator_RandomSimulator *)__pyx_v_self->__pyx_vtab)->random_choice(__pyx_v_self, __pyx_v_pf, __pyx_v_seed);
 
     /* "random_simulator.pyx":463
- *                 average = average /  self.num_of_iterations
- *                 return average
- *             elif self.mode == 1:             # <<<<<<<<<<<<<<
- *                 for i in range(self.num_of_iterations):
- *                     maximum  = max(res[i], maximum)
+ *             # print(pf)
+ *             swap_gate_index = self.random_choice(pf, seed)
+ *             swap_gate[0] = candidate_swap_gate_list[2*swap_gate_index]             # <<<<<<<<<<<<<<
+ *             swap_gate[1] = candidate_swap_gate_list[2*swap_gate_index+1]
+ *             self.change_qubit_mapping_with_swap_gate(qubit_mapping, qubit_inverse_mapping, qubit_mask, swap_gate, True)
  */
-    break;
-    default:
+    (__pyx_v_swap_gate[0]) = (__pyx_v_candidate_swap_gate_list[(2 * __pyx_v_swap_gate_index)]);
+
+    /* "random_simulator.pyx":464
+ *             swap_gate_index = self.random_choice(pf, seed)
+ *             swap_gate[0] = candidate_swap_gate_list[2*swap_gate_index]
+ *             swap_gate[1] = candidate_swap_gate_list[2*swap_gate_index+1]             # <<<<<<<<<<<<<<
+ *             self.change_qubit_mapping_with_swap_gate(qubit_mapping, qubit_inverse_mapping, qubit_mask, swap_gate, True)
+ *             #num_of_executed_gates += self.update_front_layer(front_layer, qubit_mapping, qubit_mask)
+ */
+    (__pyx_v_swap_gate[1]) = (__pyx_v_candidate_swap_gate_list[((2 * __pyx_v_swap_gate_index) + 1)]);
+
+    /* "random_simulator.pyx":465
+ *             swap_gate[0] = candidate_swap_gate_list[2*swap_gate_index]
+ *             swap_gate[1] = candidate_swap_gate_list[2*swap_gate_index+1]
+ *             self.change_qubit_mapping_with_swap_gate(qubit_mapping, qubit_inverse_mapping, qubit_mask, swap_gate, True)             # <<<<<<<<<<<<<<
+ *             #num_of_executed_gates += self.update_front_layer(front_layer, qubit_mapping, qubit_mask)
+ *             num_of_executed_gates =  self.update_front_layer(front_layer, qubit_mapping, qubit_mask)
+ */
+    __pyx_t_9.__pyx_n = 1;
+    __pyx_t_9.in_palace = 1;
+    ((struct __pyx_vtabstruct_16random_simulator_RandomSimulator *)__pyx_v_self->__pyx_vtab)->change_qubit_mapping_with_swap_gate(__pyx_v_self, __pyx_v_qubit_mapping, __pyx_v_qubit_inverse_mapping, __pyx_v_qubit_mask, __pyx_v_swap_gate, &__pyx_t_9); 
+
+    /* "random_simulator.pyx":467
+ *             self.change_qubit_mapping_with_swap_gate(qubit_mapping, qubit_inverse_mapping, qubit_mask, swap_gate, True)
+ *             #num_of_executed_gates += self.update_front_layer(front_layer, qubit_mapping, qubit_mask)
+ *             num_of_executed_gates =  self.update_front_layer(front_layer, qubit_mapping, qubit_mask)             # <<<<<<<<<<<<<<
+ *             sum_executed_gates +=  num_of_executed_gates
+ *             num_of_swap_gates += 1
+ */
+    try {
+      __pyx_t_3 = ((struct __pyx_vtabstruct_16random_simulator_RandomSimulator *)__pyx_v_self->__pyx_vtab)->update_front_layer(__pyx_v_self, __pyx_v_front_layer, __pyx_v_qubit_mapping, __pyx_v_qubit_mask);
+    } catch(...) {
+      #ifdef WITH_THREAD
+      PyGILState_STATE __pyx_gilstate_save = __Pyx_PyGILState_Ensure();
+      #endif
+      __Pyx_CppExn2PyErr();
+      #ifdef WITH_THREAD
+      __Pyx_PyGILState_Release(__pyx_gilstate_save);
+      #endif
+      __PYX_ERR(0, 467, __pyx_L1_error)
+    }
+    __pyx_v_num_of_executed_gates = __pyx_t_3;
+
+    /* "random_simulator.pyx":468
+ *             #num_of_executed_gates += self.update_front_layer(front_layer, qubit_mapping, qubit_mask)
+ *             num_of_executed_gates =  self.update_front_layer(front_layer, qubit_mapping, qubit_mask)
+ *             sum_executed_gates +=  num_of_executed_gates             # <<<<<<<<<<<<<<
+ *             num_of_swap_gates += 1
+ *             res[num_of_swap_gates] = num_of_executed_gates
+ */
+    __pyx_v_sum_executed_gates = (__pyx_v_sum_executed_gates + __pyx_v_num_of_executed_gates);
 
     /* "random_simulator.pyx":469
- *                 return maximum
- *             else:
- *                 return -1             # <<<<<<<<<<<<<<
- *             #print("%d and %d"%(minimum, num_of_executed_gates))
- * 
+ *             num_of_executed_gates =  self.update_front_layer(front_layer, qubit_mapping, qubit_mask)
+ *             sum_executed_gates +=  num_of_executed_gates
+ *             num_of_swap_gates += 1             # <<<<<<<<<<<<<<
+ *             res[num_of_swap_gates] = num_of_executed_gates
+ *             # print(weight)
  */
-    __pyx_r = -1.0;
-    goto __pyx_L0;
-    break;
+    __pyx_v_num_of_swap_gates = (__pyx_v_num_of_swap_gates + 1);
+
+    /* "random_simulator.pyx":470
+ *             sum_executed_gates +=  num_of_executed_gates
+ *             num_of_swap_gates += 1
+ *             res[num_of_swap_gates] = num_of_executed_gates             # <<<<<<<<<<<<<<
+ *             # print(weight)
+ *             # print(weighted_executed_gates)
+ */
+    (__pyx_v_res[__pyx_v_num_of_swap_gates]) = __pyx_v_num_of_executed_gates;
   }
 
-  /* "random_simulator.pyx":401
+  /* "random_simulator.pyx":479
+ *         # res[1] = num_of_executed_gates
+ *         #sim_res = num_of_executed_gates * cpow(weight, num_of_swap_gates / 2)
+ *         res[0] = sum_executed_gates             # <<<<<<<<<<<<<<
+ *         #print(sim_res)
+ *         return res
+ */
+  (__pyx_v_res[0]) = __pyx_v_sum_executed_gates;
+
+  /* "random_simulator.pyx":481
+ *         res[0] = sum_executed_gates
+ *         #print(sim_res)
+ *         return res             # <<<<<<<<<<<<<<
  * 
  * 
- *     cpdef float simulate(self, list front_layer, list qubit_mapping, list qubit_mask,             # <<<<<<<<<<<<<<
- *                     int num_of_subcircuit_gates, int num_of_iterations, int simulation_mode):
- *             cdef:
+ */
+  __pyx_r = __pyx_v_res;
+  goto __pyx_L0;
+
+  /* "random_simulator.pyx":418
+ *         return num_of_swap_gates
+ * 
+ *     cdef vector[int] simulation_thread_extended(self, int seed)nogil except +:             # <<<<<<<<<<<<<<
+ *         cdef:
+ *             vector[int] front_layer = self.front_layer
  */
 
   /* function exit code */
   __pyx_L1_error:;
-  __Pyx_XDECREF(__pyx_t_1);
-  __Pyx_XDECREF(__pyx_t_2);
-  __Pyx_XDECREF(__pyx_t_3);
-  __Pyx_XDECREF(__pyx_t_4);
-  __Pyx_XDECREF(__pyx_t_5);
-  __Pyx_XDECREF(__pyx_t_6);
-  __Pyx_XDECREF(__pyx_t_7);
-  __Pyx_XDECREF(__pyx_t_9);
-  __Pyx_WriteUnraisable("random_simulator.RandomSimulator.simulate", __pyx_clineno, __pyx_lineno, __pyx_filename, 1, 0);
-  __pyx_r = 0;
+  {
+    #ifdef WITH_THREAD
+    PyGILState_STATE __pyx_gilstate_save = __Pyx_PyGILState_Ensure();
+    #endif
+    __Pyx_AddTraceback("random_simulator.RandomSimulator.simulation_thread_extended", __pyx_clineno, __pyx_lineno, __pyx_filename);
+    #ifdef WITH_THREAD
+    __Pyx_PyGILState_Release(__pyx_gilstate_save);
+    #endif
+  }
+  __Pyx_pretend_to_initialize(&__pyx_r);
   __pyx_L0:;
-  __Pyx_RefNannyFinishContext();
   return __pyx_r;
 }
+
+/* "random_simulator.pyx":484
+ * 
+ * 
+ *     cdef int simulation_thread_determinstic(self) nogil except +:             # <<<<<<<<<<<<<<
+ *         cdef:
+ *             vector[int] front_layer = self.front_layer
+ */
+
+static int __pyx_f_16random_simulator_15RandomSimulator_simulation_thread_determinstic(struct __pyx_obj_16random_simulator_RandomSimulator *__pyx_v_self) {
+  std::vector<int>  __pyx_v_front_layer;
+  std::vector<int>  __pyx_v_qubit_mapping;
+  std::vector<int>  __pyx_v_qubit_inverse_mapping;
+  std::vector<int>  __pyx_v_qubit_mask;
+  std::vector<int>  __pyx_v_candidate_swap_gate_list;
+  std::vector<int>  __pyx_v_NNC;
+  std::vector<int>  __pyx_v_swap_gate;
+  CYTHON_UNUSED std::unordered_set<int>  __pyx_v_subcircuit;
+  int __pyx_v_NNC_base;
+  CYTHON_UNUSED float __pyx_v_weighted_executed_gates;
+  unsigned int __pyx_v_i;
+  CYTHON_UNUSED unsigned int __pyx_v_num_of_executed_gates;
+  CYTHON_UNUSED unsigned int __pyx_v_sum_executed_gates;
+  unsigned int __pyx_v_num_of_candidate_swap_gates;
+  unsigned int __pyx_v_swap_gate_index;
+  unsigned int __pyx_v_num_of_swap_gates;
+  int __pyx_r;
+  std::vector<int>  __pyx_t_1;
+  std::unordered_set<int>  __pyx_t_2;
+  int __pyx_t_3;
+  unsigned int __pyx_t_4;
+  unsigned int __pyx_t_5;
+  unsigned int __pyx_t_6;
+  struct __pyx_opt_args_16random_simulator_15RandomSimulator_change_qubit_mapping_with_swap_gate __pyx_t_7;
+  int __pyx_lineno = 0;
+  const char *__pyx_filename = NULL;
+  int __pyx_clineno = 0;
+
+  /* "random_simulator.pyx":486
+ *     cdef int simulation_thread_determinstic(self) nogil except +:
+ *         cdef:
+ *             vector[int] front_layer = self.front_layer             # <<<<<<<<<<<<<<
+ *             vector[int] qubit_mapping = self.qubit_mapping
+ *             vector[int] qubit_inverse_mapping = self.qubit_inverse_mapping
+ */
+  __pyx_t_1 = __pyx_v_self->front_layer;
+  __pyx_v_front_layer = __pyx_t_1;
+
+  /* "random_simulator.pyx":487
+ *         cdef:
+ *             vector[int] front_layer = self.front_layer
+ *             vector[int] qubit_mapping = self.qubit_mapping             # <<<<<<<<<<<<<<
+ *             vector[int] qubit_inverse_mapping = self.qubit_inverse_mapping
+ *             vector[int] qubit_mask = self.qubit_mask
+ */
+  __pyx_t_1 = __pyx_v_self->qubit_mapping;
+  __pyx_v_qubit_mapping = __pyx_t_1;
+
+  /* "random_simulator.pyx":488
+ *             vector[int] front_layer = self.front_layer
+ *             vector[int] qubit_mapping = self.qubit_mapping
+ *             vector[int] qubit_inverse_mapping = self.qubit_inverse_mapping             # <<<<<<<<<<<<<<
+ *             vector[int] qubit_mask = self.qubit_mask
+ *             vector[int] candidate_swap_gate_list, NNC, swap_gate, logical_qubit_mask
+ */
+  __pyx_t_1 = __pyx_v_self->qubit_inverse_mapping;
+  __pyx_v_qubit_inverse_mapping = __pyx_t_1;
+
+  /* "random_simulator.pyx":489
+ *             vector[int] qubit_mapping = self.qubit_mapping
+ *             vector[int] qubit_inverse_mapping = self.qubit_inverse_mapping
+ *             vector[int] qubit_mask = self.qubit_mask             # <<<<<<<<<<<<<<
+ *             vector[int] candidate_swap_gate_list, NNC, swap_gate, logical_qubit_mask
+ *             unordered_set[int] subcircuit = self.subcircuit
+ */
+  __pyx_t_1 = __pyx_v_self->qubit_mask;
+  __pyx_v_qubit_mask = __pyx_t_1;
+
+  /* "random_simulator.pyx":491
+ *             vector[int] qubit_mask = self.qubit_mask
+ *             vector[int] candidate_swap_gate_list, NNC, swap_gate, logical_qubit_mask
+ *             unordered_set[int] subcircuit = self.subcircuit             # <<<<<<<<<<<<<<
+ *             vector[float] pf
+ *             int NNC_base, j
+ */
+  __pyx_t_2 = __pyx_v_self->subcircuit;
+  __pyx_v_subcircuit = __pyx_t_2;
+
+  /* "random_simulator.pyx":494
+ *             vector[float] pf
+ *             int NNC_base, j
+ *             float weight, weighted_executed_gates = 0.0, sim_res             # <<<<<<<<<<<<<<
+ *             unsigned int i, num_of_executed_gates = 0, sum_executed_gates = 0 ,num_of_candidate_swap_gates, swap_gate_index,  num_of_swap_gates = 0
+ * 
+ */
+  __pyx_v_weighted_executed_gates = 0.0;
+
+  /* "random_simulator.pyx":495
+ *             int NNC_base, j
+ *             float weight, weighted_executed_gates = 0.0, sim_res
+ *             unsigned int i, num_of_executed_gates = 0, sum_executed_gates = 0 ,num_of_candidate_swap_gates, swap_gate_index,  num_of_swap_gates = 0             # <<<<<<<<<<<<<<
+ * 
+ *         swap_gate.resize(2, INIT_NUM)
+ */
+  __pyx_v_num_of_executed_gates = 0;
+  __pyx_v_sum_executed_gates = 0;
+  __pyx_v_num_of_swap_gates = 0;
+
+  /* "random_simulator.pyx":497
+ *             unsigned int i, num_of_executed_gates = 0, sum_executed_gates = 0 ,num_of_candidate_swap_gates, swap_gate_index,  num_of_swap_gates = 0
+ * 
+ *         swap_gate.resize(2, INIT_NUM)             # <<<<<<<<<<<<<<
+ *         #print("ft")
+ *         self.update_front_layer(front_layer, qubit_mapping, qubit_mask)
+ */
+  try {
+    __pyx_v_swap_gate.resize(2, __pyx_v_16random_simulator_INIT_NUM);
+  } catch(...) {
+    #ifdef WITH_THREAD
+    PyGILState_STATE __pyx_gilstate_save = __Pyx_PyGILState_Ensure();
+    #endif
+    __Pyx_CppExn2PyErr();
+    #ifdef WITH_THREAD
+    __Pyx_PyGILState_Release(__pyx_gilstate_save);
+    #endif
+    __PYX_ERR(0, 497, __pyx_L1_error)
+  }
+
+  /* "random_simulator.pyx":499
+ *         swap_gate.resize(2, INIT_NUM)
+ *         #print("ft")
+ *         self.update_front_layer(front_layer, qubit_mapping, qubit_mask)             # <<<<<<<<<<<<<<
+ *         #num_of_executed_gates += self.update_front_layer(front_layer, qubit_mapping, qubit_mask)
+ *         #print("ft")
+ */
+  try {
+    ((struct __pyx_vtabstruct_16random_simulator_RandomSimulator *)__pyx_v_self->__pyx_vtab)->update_front_layer(__pyx_v_self, __pyx_v_front_layer, __pyx_v_qubit_mapping, __pyx_v_qubit_mask);
+  } catch(...) {
+    #ifdef WITH_THREAD
+    PyGILState_STATE __pyx_gilstate_save = __Pyx_PyGILState_Ensure();
+    #endif
+    __Pyx_CppExn2PyErr();
+    #ifdef WITH_THREAD
+    __Pyx_PyGILState_Release(__pyx_gilstate_save);
+    #endif
+    __PYX_ERR(0, 499, __pyx_L1_error)
+  }
+
+  /* "random_simulator.pyx":503
+ *         #print("ft")
+ *         #print(weight)
+ *         while not front_layer.empty():             # <<<<<<<<<<<<<<
+ *             candidate_swap_gate_list = self.get_candidate_swap_gate_list(front_layer, qubit_mapping)
+ *             #print(qubit_mapping)
+ */
+  while (1) {
+    __pyx_t_3 = ((!(__pyx_v_front_layer.empty() != 0)) != 0);
+    if (!__pyx_t_3) break;
+
+    /* "random_simulator.pyx":504
+ *         #print(weight)
+ *         while not front_layer.empty():
+ *             candidate_swap_gate_list = self.get_candidate_swap_gate_list(front_layer, qubit_mapping)             # <<<<<<<<<<<<<<
+ *             #print(qubit_mapping)
+ *             # for j in front_layer:
+ */
+    __pyx_v_candidate_swap_gate_list = ((struct __pyx_vtabstruct_16random_simulator_RandomSimulator *)__pyx_v_self->__pyx_vtab)->get_candidate_swap_gate_list(__pyx_v_self, __pyx_v_front_layer, __pyx_v_qubit_mapping);
+
+    /* "random_simulator.pyx":509
+ *             #     print(list(self.gates[j]))
+ *             # print(candidate_swap_gate_list)
+ *             num_of_candidate_swap_gates = <int>(candidate_swap_gate_list.size() / 2)             # <<<<<<<<<<<<<<
+ *             NNC_base = self.NNC(front_layer, qubit_mapping)
+ *             NNC.resize(num_of_candidate_swap_gates, INIT_NUM)
+ */
+    __pyx_v_num_of_candidate_swap_gates = ((int)(((double)__pyx_v_candidate_swap_gate_list.size()) / 2.0));
+
+    /* "random_simulator.pyx":510
+ *             # print(candidate_swap_gate_list)
+ *             num_of_candidate_swap_gates = <int>(candidate_swap_gate_list.size() / 2)
+ *             NNC_base = self.NNC(front_layer, qubit_mapping)             # <<<<<<<<<<<<<<
+ *             NNC.resize(num_of_candidate_swap_gates, INIT_NUM)
+ *             for i in range(num_of_candidate_swap_gates):
+ */
+    __pyx_v_NNC_base = ((struct __pyx_vtabstruct_16random_simulator_RandomSimulator *)__pyx_v_self->__pyx_vtab)->NNC(__pyx_v_self, __pyx_v_front_layer, __pyx_v_qubit_mapping);
+
+    /* "random_simulator.pyx":511
+ *             num_of_candidate_swap_gates = <int>(candidate_swap_gate_list.size() / 2)
+ *             NNC_base = self.NNC(front_layer, qubit_mapping)
+ *             NNC.resize(num_of_candidate_swap_gates, INIT_NUM)             # <<<<<<<<<<<<<<
+ *             for i in range(num_of_candidate_swap_gates):
+ *                 swap_gate[0] = candidate_swap_gate_list[2*i]
+ */
+    try {
+      __pyx_v_NNC.resize(__pyx_v_num_of_candidate_swap_gates, __pyx_v_16random_simulator_INIT_NUM);
+    } catch(...) {
+      #ifdef WITH_THREAD
+      PyGILState_STATE __pyx_gilstate_save = __Pyx_PyGILState_Ensure();
+      #endif
+      __Pyx_CppExn2PyErr();
+      #ifdef WITH_THREAD
+      __Pyx_PyGILState_Release(__pyx_gilstate_save);
+      #endif
+      __PYX_ERR(0, 511, __pyx_L1_error)
+    }
+
+    /* "random_simulator.pyx":512
+ *             NNC_base = self.NNC(front_layer, qubit_mapping)
+ *             NNC.resize(num_of_candidate_swap_gates, INIT_NUM)
+ *             for i in range(num_of_candidate_swap_gates):             # <<<<<<<<<<<<<<
+ *                 swap_gate[0] = candidate_swap_gate_list[2*i]
+ *                 swap_gate[1] = candidate_swap_gate_list[2*i+1]
+ */
+    __pyx_t_4 = __pyx_v_num_of_candidate_swap_gates;
+    __pyx_t_5 = __pyx_t_4;
+    for (__pyx_t_6 = 0; __pyx_t_6 < __pyx_t_5; __pyx_t_6+=1) {
+      __pyx_v_i = __pyx_t_6;
+
+      /* "random_simulator.pyx":513
+ *             NNC.resize(num_of_candidate_swap_gates, INIT_NUM)
+ *             for i in range(num_of_candidate_swap_gates):
+ *                 swap_gate[0] = candidate_swap_gate_list[2*i]             # <<<<<<<<<<<<<<
+ *                 swap_gate[1] = candidate_swap_gate_list[2*i+1]
+ *                 # for j in front_layer:
+ */
+      (__pyx_v_swap_gate[0]) = (__pyx_v_candidate_swap_gate_list[(2 * __pyx_v_i)]);
+
+      /* "random_simulator.pyx":514
+ *             for i in range(num_of_candidate_swap_gates):
+ *                 swap_gate[0] = candidate_swap_gate_list[2*i]
+ *                 swap_gate[1] = candidate_swap_gate_list[2*i+1]             # <<<<<<<<<<<<<<
+ *                 # for j in front_layer:
+ *                 #     print(list(self.gates[i]))
+ */
+      (__pyx_v_swap_gate[1]) = (__pyx_v_candidate_swap_gate_list[((2 * __pyx_v_i) + 1)]);
+
+      /* "random_simulator.pyx":519
+ *                 #print(qubit_mapping)
+ *                 #print(self.change_qubit_mapping_with_swap_gate(qubit_mapping, qubit_inverse_mapping, qubit_mask, swap_gate))
+ *                 NNC[i] = NNC_base - self.NNC(front_layer, self.change_qubit_mapping_with_swap_gate(qubit_mapping, qubit_inverse_mapping, qubit_mask, swap_gate))             # <<<<<<<<<<<<<<
+ *                # print(NNC_base)
+ *                 #print(NNC[i])
+ */
+      (__pyx_v_NNC[__pyx_v_i]) = (__pyx_v_NNC_base - ((struct __pyx_vtabstruct_16random_simulator_RandomSimulator *)__pyx_v_self->__pyx_vtab)->NNC(__pyx_v_self, __pyx_v_front_layer, ((struct __pyx_vtabstruct_16random_simulator_RandomSimulator *)__pyx_v_self->__pyx_vtab)->change_qubit_mapping_with_swap_gate(__pyx_v_self, __pyx_v_qubit_mapping, __pyx_v_qubit_inverse_mapping, __pyx_v_qubit_mask, __pyx_v_swap_gate, NULL)));
+    }
+
+    /* "random_simulator.pyx":524
+ *             # print(NNC)
+ *             # print(pf)
+ *             swap_gate_index = self.argmax(NNC)             # <<<<<<<<<<<<<<
+ *             swap_gate[0] = candidate_swap_gate_list[2*swap_gate_index]
+ *             swap_gate[1] = candidate_swap_gate_list[2*swap_gate_index+1]
+ */
+    __pyx_v_swap_gate_index = ((struct __pyx_vtabstruct_16random_simulator_RandomSimulator *)__pyx_v_self->__pyx_vtab)->argmax(__pyx_v_self, __pyx_v_NNC);
+
+    /* "random_simulator.pyx":525
+ *             # print(pf)
+ *             swap_gate_index = self.argmax(NNC)
+ *             swap_gate[0] = candidate_swap_gate_list[2*swap_gate_index]             # <<<<<<<<<<<<<<
+ *             swap_gate[1] = candidate_swap_gate_list[2*swap_gate_index+1]
+ *             self.change_qubit_mapping_with_swap_gate(qubit_mapping, qubit_inverse_mapping, qubit_mask, swap_gate, True)
+ */
+    (__pyx_v_swap_gate[0]) = (__pyx_v_candidate_swap_gate_list[(2 * __pyx_v_swap_gate_index)]);
+
+    /* "random_simulator.pyx":526
+ *             swap_gate_index = self.argmax(NNC)
+ *             swap_gate[0] = candidate_swap_gate_list[2*swap_gate_index]
+ *             swap_gate[1] = candidate_swap_gate_list[2*swap_gate_index+1]             # <<<<<<<<<<<<<<
+ *             self.change_qubit_mapping_with_swap_gate(qubit_mapping, qubit_inverse_mapping, qubit_mask, swap_gate, True)
+ *             #num_of_executed_gates += self.update_front_layer(front_layer, qubit_mapping, qubit_mask)
+ */
+    (__pyx_v_swap_gate[1]) = (__pyx_v_candidate_swap_gate_list[((2 * __pyx_v_swap_gate_index) + 1)]);
+
+    /* "random_simulator.pyx":527
+ *             swap_gate[0] = candidate_swap_gate_list[2*swap_gate_index]
+ *             swap_gate[1] = candidate_swap_gate_list[2*swap_gate_index+1]
+ *             self.change_qubit_mapping_with_swap_gate(qubit_mapping, qubit_inverse_mapping, qubit_mask, swap_gate, True)             # <<<<<<<<<<<<<<
+ *             #num_of_executed_gates += self.update_front_layer(front_layer, qubit_mapping, qubit_mask)
+ *             self.update_front_layer(front_layer, qubit_mapping, qubit_mask)
+ */
+    __pyx_t_7.__pyx_n = 1;
+    __pyx_t_7.in_palace = 1;
+    ((struct __pyx_vtabstruct_16random_simulator_RandomSimulator *)__pyx_v_self->__pyx_vtab)->change_qubit_mapping_with_swap_gate(__pyx_v_self, __pyx_v_qubit_mapping, __pyx_v_qubit_inverse_mapping, __pyx_v_qubit_mask, __pyx_v_swap_gate, &__pyx_t_7); 
+
+    /* "random_simulator.pyx":529
+ *             self.change_qubit_mapping_with_swap_gate(qubit_mapping, qubit_inverse_mapping, qubit_mask, swap_gate, True)
+ *             #num_of_executed_gates += self.update_front_layer(front_layer, qubit_mapping, qubit_mask)
+ *             self.update_front_layer(front_layer, qubit_mapping, qubit_mask)             # <<<<<<<<<<<<<<
+ *             num_of_swap_gates += 1
+ *             # print(weight)
+ */
+    try {
+      ((struct __pyx_vtabstruct_16random_simulator_RandomSimulator *)__pyx_v_self->__pyx_vtab)->update_front_layer(__pyx_v_self, __pyx_v_front_layer, __pyx_v_qubit_mapping, __pyx_v_qubit_mask);
+    } catch(...) {
+      #ifdef WITH_THREAD
+      PyGILState_STATE __pyx_gilstate_save = __Pyx_PyGILState_Ensure();
+      #endif
+      __Pyx_CppExn2PyErr();
+      #ifdef WITH_THREAD
+      __Pyx_PyGILState_Release(__pyx_gilstate_save);
+      #endif
+      __PYX_ERR(0, 529, __pyx_L1_error)
+    }
+
+    /* "random_simulator.pyx":530
+ *             #num_of_executed_gates += self.update_front_layer(front_layer, qubit_mapping, qubit_mask)
+ *             self.update_front_layer(front_layer, qubit_mapping, qubit_mask)
+ *             num_of_swap_gates += 1             # <<<<<<<<<<<<<<
+ *             # print(weight)
+ *             # print(weighted_executed_gates)
+ */
+    __pyx_v_num_of_swap_gates = (__pyx_v_num_of_swap_gates + 1);
+  }
+
+  /* "random_simulator.pyx":540
+ *         #sim_res = num_of_executed_gates * cpow(weight, num_of_swap_gates / 2)
+ *         #print(sim_res)
+ *         return num_of_swap_gates             # <<<<<<<<<<<<<<
+ * 
+ * 
+ */
+  __pyx_r = __pyx_v_num_of_swap_gates;
+  goto __pyx_L0;
+
+  /* "random_simulator.pyx":484
+ * 
+ * 
+ *     cdef int simulation_thread_determinstic(self) nogil except +:             # <<<<<<<<<<<<<<
+ *         cdef:
+ *             vector[int] front_layer = self.front_layer
+ */
+
+  /* function exit code */
+  __pyx_L1_error:;
+  {
+    #ifdef WITH_THREAD
+    PyGILState_STATE __pyx_gilstate_save = __Pyx_PyGILState_Ensure();
+    #endif
+    __Pyx_AddTraceback("random_simulator.RandomSimulator.simulation_thread_determinstic", __pyx_clineno, __pyx_lineno, __pyx_filename);
+    #ifdef WITH_THREAD
+    __Pyx_PyGILState_Release(__pyx_gilstate_save);
+    #endif
+  }
+  __pyx_r = 0;
+  __pyx_L0:;
+  return __pyx_r;
+}
+
+/* "random_simulator.pyx":543
+ * 
+ * 
+ *     def  simulate(self, list front_layer, list qubit_mapping, list qubit_mask,             # <<<<<<<<<<<<<<
+ *                     int num_of_subcircuit_gates, int num_of_iterations, int simulation_mode):
+ *             cdef:
+ */
 
 /* Python wrapper */
 static PyObject *__pyx_pw_16random_simulator_15RandomSimulator_3simulate(PyObject *__pyx_v_self, PyObject *__pyx_args, PyObject *__pyx_kwds); /*proto*/
@@ -6776,35 +7127,35 @@ static PyObject *__pyx_pw_16random_simulator_15RandomSimulator_3simulate(PyObjec
         case  1:
         if (likely((values[1] = __Pyx_PyDict_GetItemStr(__pyx_kwds, __pyx_n_s_qubit_mapping)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("simulate", 1, 6, 6, 1); __PYX_ERR(0, 401, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("simulate", 1, 6, 6, 1); __PYX_ERR(0, 543, __pyx_L3_error)
         }
         CYTHON_FALLTHROUGH;
         case  2:
         if (likely((values[2] = __Pyx_PyDict_GetItemStr(__pyx_kwds, __pyx_n_s_qubit_mask)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("simulate", 1, 6, 6, 2); __PYX_ERR(0, 401, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("simulate", 1, 6, 6, 2); __PYX_ERR(0, 543, __pyx_L3_error)
         }
         CYTHON_FALLTHROUGH;
         case  3:
         if (likely((values[3] = __Pyx_PyDict_GetItemStr(__pyx_kwds, __pyx_n_s_num_of_subcircuit_gates)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("simulate", 1, 6, 6, 3); __PYX_ERR(0, 401, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("simulate", 1, 6, 6, 3); __PYX_ERR(0, 543, __pyx_L3_error)
         }
         CYTHON_FALLTHROUGH;
         case  4:
         if (likely((values[4] = __Pyx_PyDict_GetItemStr(__pyx_kwds, __pyx_n_s_num_of_iterations)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("simulate", 1, 6, 6, 4); __PYX_ERR(0, 401, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("simulate", 1, 6, 6, 4); __PYX_ERR(0, 543, __pyx_L3_error)
         }
         CYTHON_FALLTHROUGH;
         case  5:
         if (likely((values[5] = __Pyx_PyDict_GetItemStr(__pyx_kwds, __pyx_n_s_simulation_mode)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("simulate", 1, 6, 6, 5); __PYX_ERR(0, 401, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("simulate", 1, 6, 6, 5); __PYX_ERR(0, 543, __pyx_L3_error)
         }
       }
       if (unlikely(kw_args > 0)) {
-        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "simulate") < 0)) __PYX_ERR(0, 401, __pyx_L3_error)
+        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "simulate") < 0)) __PYX_ERR(0, 543, __pyx_L3_error)
       }
     } else if (PyTuple_GET_SIZE(__pyx_args) != 6) {
       goto __pyx_L5_argtuple_error;
@@ -6819,21 +7170,21 @@ static PyObject *__pyx_pw_16random_simulator_15RandomSimulator_3simulate(PyObjec
     __pyx_v_front_layer = ((PyObject*)values[0]);
     __pyx_v_qubit_mapping = ((PyObject*)values[1]);
     __pyx_v_qubit_mask = ((PyObject*)values[2]);
-    __pyx_v_num_of_subcircuit_gates = __Pyx_PyInt_As_int(values[3]); if (unlikely((__pyx_v_num_of_subcircuit_gates == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 402, __pyx_L3_error)
-    __pyx_v_num_of_iterations = __Pyx_PyInt_As_int(values[4]); if (unlikely((__pyx_v_num_of_iterations == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 402, __pyx_L3_error)
-    __pyx_v_simulation_mode = __Pyx_PyInt_As_int(values[5]); if (unlikely((__pyx_v_simulation_mode == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 402, __pyx_L3_error)
+    __pyx_v_num_of_subcircuit_gates = __Pyx_PyInt_As_int(values[3]); if (unlikely((__pyx_v_num_of_subcircuit_gates == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 544, __pyx_L3_error)
+    __pyx_v_num_of_iterations = __Pyx_PyInt_As_int(values[4]); if (unlikely((__pyx_v_num_of_iterations == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 544, __pyx_L3_error)
+    __pyx_v_simulation_mode = __Pyx_PyInt_As_int(values[5]); if (unlikely((__pyx_v_simulation_mode == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 544, __pyx_L3_error)
   }
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("simulate", 1, 6, 6, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 401, __pyx_L3_error)
+  __Pyx_RaiseArgtupleInvalid("simulate", 1, 6, 6, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 543, __pyx_L3_error)
   __pyx_L3_error:;
   __Pyx_AddTraceback("random_simulator.RandomSimulator.simulate", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __Pyx_RefNannyFinishContext();
   return NULL;
   __pyx_L4_argument_unpacking_done:;
-  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_front_layer), (&PyList_Type), 1, "front_layer", 1))) __PYX_ERR(0, 401, __pyx_L1_error)
-  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_qubit_mapping), (&PyList_Type), 1, "qubit_mapping", 1))) __PYX_ERR(0, 401, __pyx_L1_error)
-  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_qubit_mask), (&PyList_Type), 1, "qubit_mask", 1))) __PYX_ERR(0, 401, __pyx_L1_error)
+  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_front_layer), (&PyList_Type), 1, "front_layer", 1))) __PYX_ERR(0, 543, __pyx_L1_error)
+  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_qubit_mapping), (&PyList_Type), 1, "qubit_mapping", 1))) __PYX_ERR(0, 543, __pyx_L1_error)
+  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_qubit_mask), (&PyList_Type), 1, "qubit_mask", 1))) __PYX_ERR(0, 543, __pyx_L1_error)
   __pyx_r = __pyx_pf_16random_simulator_15RandomSimulator_2simulate(((struct __pyx_obj_16random_simulator_RandomSimulator *)__pyx_v_self), __pyx_v_front_layer, __pyx_v_qubit_mapping, __pyx_v_qubit_mask, __pyx_v_num_of_subcircuit_gates, __pyx_v_num_of_iterations, __pyx_v_simulation_mode);
 
   /* function exit code */
@@ -6846,23 +7197,906 @@ static PyObject *__pyx_pw_16random_simulator_15RandomSimulator_3simulate(PyObjec
 }
 
 static PyObject *__pyx_pf_16random_simulator_15RandomSimulator_2simulate(struct __pyx_obj_16random_simulator_RandomSimulator *__pyx_v_self, PyObject *__pyx_v_front_layer, PyObject *__pyx_v_qubit_mapping, PyObject *__pyx_v_qubit_mask, int __pyx_v_num_of_subcircuit_gates, int __pyx_v_num_of_iterations, int __pyx_v_simulation_mode) {
+  std::vector<int>  __pyx_v_sim_res;
+  std::vector<int>  __pyx_v_sim_swap;
+  std::vector<int>  __pyx_v_res_int;
+  std::vector<float>  __pyx_v_res;
+  std::vector<std::vector<int> >  __pyx_v_extended_res;
+  unsigned int __pyx_v_i;
+  unsigned int __pyx_v_n;
+  int __pyx_v_idx;
+  int __pyx_v_maximum_int;
+  int __pyx_v_minimum;
+  float __pyx_v_average;
+  float __pyx_v_maximum;
   PyObject *__pyx_r = NULL;
   __Pyx_RefNannyDeclarations
-  PyObject *__pyx_t_1 = NULL;
+  std::vector<int>  __pyx_t_1;
+  unsigned int __pyx_t_2;
+  unsigned int __pyx_t_3;
+  unsigned int __pyx_t_4;
+  std::vector<int> ::size_type __pyx_t_5;
+  int __pyx_t_6;
+  int __pyx_t_7;
+  int __pyx_t_8;
+  int __pyx_t_9;
+  std::vector<std::vector<int> >  __pyx_t_10;
+  PyObject *__pyx_t_11 = NULL;
+  float __pyx_t_12;
+  float __pyx_t_13;
+  float __pyx_t_14;
+  int __pyx_t_15;
+  int __pyx_t_16;
   int __pyx_lineno = 0;
   const char *__pyx_filename = NULL;
   int __pyx_clineno = 0;
   __Pyx_RefNannySetupContext("simulate", 0);
-  __Pyx_XDECREF(__pyx_r);
-  __pyx_t_1 = PyFloat_FromDouble(__pyx_f_16random_simulator_15RandomSimulator_simulate(__pyx_v_self, __pyx_v_front_layer, __pyx_v_qubit_mapping, __pyx_v_qubit_mask, __pyx_v_num_of_subcircuit_gates, __pyx_v_num_of_iterations, __pyx_v_simulation_mode, 1)); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 401, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_1);
-  __pyx_r = __pyx_t_1;
-  __pyx_t_1 = 0;
-  goto __pyx_L0;
+
+  /* "random_simulator.pyx":551
+ *                 vector[vector[int]] extended_res
+ *                 unsigned int i , n
+ *                 int num_of_executed_gates, idx, maximum_int = -1             # <<<<<<<<<<<<<<
+ *                 int  minimum = self.num_of_gates * self.num_of_physical_qubits
+ *                 float average = 0, maximum = -1
+ */
+  __pyx_v_maximum_int = -1;
+
+  /* "random_simulator.pyx":552
+ *                 unsigned int i , n
+ *                 int num_of_executed_gates, idx, maximum_int = -1
+ *                 int  minimum = self.num_of_gates * self.num_of_physical_qubits             # <<<<<<<<<<<<<<
+ *                 float average = 0, maximum = -1
+ * 
+ */
+  __pyx_v_minimum = (__pyx_v_self->num_of_gates * __pyx_v_self->num_of_physical_qubits);
+
+  /* "random_simulator.pyx":553
+ *                 int num_of_executed_gates, idx, maximum_int = -1
+ *                 int  minimum = self.num_of_gates * self.num_of_physical_qubits
+ *                 float average = 0, maximum = -1             # <<<<<<<<<<<<<<
+ * 
+ * 
+ */
+  __pyx_v_average = 0.0;
+  __pyx_v_maximum = -1.0;
+
+  /* "random_simulator.pyx":556
+ * 
+ * 
+ *             self.front_layer = front_layer             # <<<<<<<<<<<<<<
+ * 
+ *             self.qubit_mapping = qubit_mapping
+ */
+  __pyx_t_1 = __pyx_convert_vector_from_py_int(__pyx_v_front_layer); if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 556, __pyx_L1_error)
+  __pyx_v_self->front_layer = __pyx_t_1;
+
+  /* "random_simulator.pyx":558
+ *             self.front_layer = front_layer
+ * 
+ *             self.qubit_mapping = qubit_mapping             # <<<<<<<<<<<<<<
+ *             self.qubit_mask = qubit_mask
+ *             self.qubit_inverse_mapping.resize(self.num_of_physical_qubits, INIT_NUM)
+ */
+  __pyx_t_1 = __pyx_convert_vector_from_py_int(__pyx_v_qubit_mapping); if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 558, __pyx_L1_error)
+  __pyx_v_self->qubit_mapping = __pyx_t_1;
+
+  /* "random_simulator.pyx":559
+ * 
+ *             self.qubit_mapping = qubit_mapping
+ *             self.qubit_mask = qubit_mask             # <<<<<<<<<<<<<<
+ *             self.qubit_inverse_mapping.resize(self.num_of_physical_qubits, INIT_NUM)
+ * 
+ */
+  __pyx_t_1 = __pyx_convert_vector_from_py_int(__pyx_v_qubit_mask); if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 559, __pyx_L1_error)
+  __pyx_v_self->qubit_mask = __pyx_t_1;
+
+  /* "random_simulator.pyx":560
+ *             self.qubit_mapping = qubit_mapping
+ *             self.qubit_mask = qubit_mask
+ *             self.qubit_inverse_mapping.resize(self.num_of_physical_qubits, INIT_NUM)             # <<<<<<<<<<<<<<
+ * 
+ *             n = self.qubit_mapping.size()
+ */
+  try {
+    __pyx_v_self->qubit_inverse_mapping.resize(__pyx_v_self->num_of_physical_qubits, __pyx_v_16random_simulator_INIT_NUM);
+  } catch(...) {
+    __Pyx_CppExn2PyErr();
+    __PYX_ERR(0, 560, __pyx_L1_error)
+  }
+
+  /* "random_simulator.pyx":562
+ *             self.qubit_inverse_mapping.resize(self.num_of_physical_qubits, INIT_NUM)
+ * 
+ *             n = self.qubit_mapping.size()             # <<<<<<<<<<<<<<
+ *             # print(front_layer)
+ *             # print(qubit_mapping)
+ */
+  __pyx_v_n = __pyx_v_self->qubit_mapping.size();
+
+  /* "random_simulator.pyx":570
+ *             #     print(self.gates[g])
+ * 
+ *             for i in range(n):             # <<<<<<<<<<<<<<
+ *                 self.qubit_inverse_mapping[qubit_mapping[i]] = i
+ * 
+ */
+  __pyx_t_2 = __pyx_v_n;
+  __pyx_t_3 = __pyx_t_2;
+  for (__pyx_t_4 = 0; __pyx_t_4 < __pyx_t_3; __pyx_t_4+=1) {
+    __pyx_v_i = __pyx_t_4;
+
+    /* "random_simulator.pyx":571
+ * 
+ *             for i in range(n):
+ *                 self.qubit_inverse_mapping[qubit_mapping[i]] = i             # <<<<<<<<<<<<<<
+ * 
+ *             if num_of_subcircuit_gates == -1:
+ */
+    if (unlikely(__pyx_v_qubit_mapping == Py_None)) {
+      PyErr_SetString(PyExc_TypeError, "'NoneType' object is not subscriptable");
+      __PYX_ERR(0, 571, __pyx_L1_error)
+    }
+    __pyx_t_5 = __Pyx_PyInt_As_size_t(PyList_GET_ITEM(__pyx_v_qubit_mapping, __pyx_v_i)); if (unlikely((__pyx_t_5 == (size_t)-1) && PyErr_Occurred())) __PYX_ERR(0, 571, __pyx_L1_error)
+    (__pyx_v_self->qubit_inverse_mapping[__pyx_t_5]) = __pyx_v_i;
+  }
+
+  /* "random_simulator.pyx":573
+ *                 self.qubit_inverse_mapping[qubit_mapping[i]] = i
+ * 
+ *             if num_of_subcircuit_gates == -1:             # <<<<<<<<<<<<<<
+ *                 self.num_of_subcircuit_gates = self.num_of_gates
+ *             else:
+ */
+  __pyx_t_6 = ((__pyx_v_num_of_subcircuit_gates == -1L) != 0);
+  if (__pyx_t_6) {
+
+    /* "random_simulator.pyx":574
+ * 
+ *             if num_of_subcircuit_gates == -1:
+ *                 self.num_of_subcircuit_gates = self.num_of_gates             # <<<<<<<<<<<<<<
+ *             else:
+ *                 self.num_of_subcircuit_gates = min(num_of_subcircuit_gates, self.num_of_gates)
+ */
+    __pyx_t_7 = __pyx_v_self->num_of_gates;
+    __pyx_v_self->num_of_subcircuit_gates = __pyx_t_7;
+
+    /* "random_simulator.pyx":573
+ *                 self.qubit_inverse_mapping[qubit_mapping[i]] = i
+ * 
+ *             if num_of_subcircuit_gates == -1:             # <<<<<<<<<<<<<<
+ *                 self.num_of_subcircuit_gates = self.num_of_gates
+ *             else:
+ */
+    goto __pyx_L5;
+  }
+
+  /* "random_simulator.pyx":576
+ *                 self.num_of_subcircuit_gates = self.num_of_gates
+ *             else:
+ *                 self.num_of_subcircuit_gates = min(num_of_subcircuit_gates, self.num_of_gates)             # <<<<<<<<<<<<<<
+ * 
+ *             self.num_of_iterations = num_of_iterations
+ */
+  /*else*/ {
+    __pyx_t_7 = __pyx_v_self->num_of_gates;
+    __pyx_t_8 = __pyx_v_num_of_subcircuit_gates;
+    if (((__pyx_t_7 < __pyx_t_8) != 0)) {
+      __pyx_t_9 = __pyx_t_7;
+    } else {
+      __pyx_t_9 = __pyx_t_8;
+    }
+    __pyx_v_self->num_of_subcircuit_gates = __pyx_t_9;
+  }
+  __pyx_L5:;
+
+  /* "random_simulator.pyx":578
+ *                 self.num_of_subcircuit_gates = min(num_of_subcircuit_gates, self.num_of_gates)
+ * 
+ *             self.num_of_iterations = num_of_iterations             # <<<<<<<<<<<<<<
+ * 
+ *             sim_res.resize(self.num_of_iterations)
+ */
+  __pyx_v_self->num_of_iterations = __pyx_v_num_of_iterations;
+
+  /* "random_simulator.pyx":580
+ *             self.num_of_iterations = num_of_iterations
+ * 
+ *             sim_res.resize(self.num_of_iterations)             # <<<<<<<<<<<<<<
+ *             sim_swap.resize(self.num_of_iterations)
+ *             res.resize(self.num_of_iterations)
+ */
+  try {
+    __pyx_v_sim_res.resize(__pyx_v_self->num_of_iterations);
+  } catch(...) {
+    __Pyx_CppExn2PyErr();
+    __PYX_ERR(0, 580, __pyx_L1_error)
+  }
+
+  /* "random_simulator.pyx":581
+ * 
+ *             sim_res.resize(self.num_of_iterations)
+ *             sim_swap.resize(self.num_of_iterations)             # <<<<<<<<<<<<<<
+ *             res.resize(self.num_of_iterations)
+ *             res_int.resize(self.num_of_iterations)
+ */
+  try {
+    __pyx_v_sim_swap.resize(__pyx_v_self->num_of_iterations);
+  } catch(...) {
+    __Pyx_CppExn2PyErr();
+    __PYX_ERR(0, 581, __pyx_L1_error)
+  }
+
+  /* "random_simulator.pyx":582
+ *             sim_res.resize(self.num_of_iterations)
+ *             sim_swap.resize(self.num_of_iterations)
+ *             res.resize(self.num_of_iterations)             # <<<<<<<<<<<<<<
+ *             res_int.resize(self.num_of_iterations)
+ *             if simulation_mode == 2:
+ */
+  try {
+    __pyx_v_res.resize(__pyx_v_self->num_of_iterations);
+  } catch(...) {
+    __Pyx_CppExn2PyErr();
+    __PYX_ERR(0, 582, __pyx_L1_error)
+  }
+
+  /* "random_simulator.pyx":583
+ *             sim_swap.resize(self.num_of_iterations)
+ *             res.resize(self.num_of_iterations)
+ *             res_int.resize(self.num_of_iterations)             # <<<<<<<<<<<<<<
+ *             if simulation_mode == 2:
+ *                 extended_res = vector[vector[int]](self.num_of_iterations, vector[int](self.num_of_swap_gates, 0))
+ */
+  try {
+    __pyx_v_res_int.resize(__pyx_v_self->num_of_iterations);
+  } catch(...) {
+    __Pyx_CppExn2PyErr();
+    __PYX_ERR(0, 583, __pyx_L1_error)
+  }
+
+  /* "random_simulator.pyx":584
+ *             res.resize(self.num_of_iterations)
+ *             res_int.resize(self.num_of_iterations)
+ *             if simulation_mode == 2:             # <<<<<<<<<<<<<<
+ *                 extended_res = vector[vector[int]](self.num_of_iterations, vector[int](self.num_of_swap_gates, 0))
+ * 
+ */
+  __pyx_t_6 = ((__pyx_v_simulation_mode == 2) != 0);
+  if (__pyx_t_6) {
+
+    /* "random_simulator.pyx":585
+ *             res_int.resize(self.num_of_iterations)
+ *             if simulation_mode == 2:
+ *                 extended_res = vector[vector[int]](self.num_of_iterations, vector[int](self.num_of_swap_gates, 0))             # <<<<<<<<<<<<<<
+ * 
+ * 
+ */
+    try {
+      __pyx_t_1 = std::vector<int> (__pyx_v_self->num_of_swap_gates, 0);
+    } catch(...) {
+      __Pyx_CppExn2PyErr();
+      __PYX_ERR(0, 585, __pyx_L1_error)
+    }
+    try {
+      __pyx_t_10 = std::vector<std::vector<int> > (__pyx_v_self->num_of_iterations, __pyx_t_1);
+    } catch(...) {
+      __Pyx_CppExn2PyErr();
+      __PYX_ERR(0, 585, __pyx_L1_error)
+    }
+    __pyx_v_extended_res = __pyx_t_10;
+
+    /* "random_simulator.pyx":584
+ *             res.resize(self.num_of_iterations)
+ *             res_int.resize(self.num_of_iterations)
+ *             if simulation_mode == 2:             # <<<<<<<<<<<<<<
+ *                 extended_res = vector[vector[int]](self.num_of_iterations, vector[int](self.num_of_swap_gates, 0))
+ * 
+ */
+  }
+
+  /* "random_simulator.pyx":595
+ *             #print(self.subcircuit)
+ *             #print("it")
+ *             if simulation_mode == 3:             # <<<<<<<<<<<<<<
+ *                 return self.simulation_thread_determinstic()
+ * 
+ */
+  __pyx_t_6 = ((__pyx_v_simulation_mode == 3) != 0);
+  if (__pyx_t_6) {
+
+    /* "random_simulator.pyx":596
+ *             #print("it")
+ *             if simulation_mode == 3:
+ *                 return self.simulation_thread_determinstic()             # <<<<<<<<<<<<<<
+ * 
+ *             with nogil:
+ */
+    __Pyx_XDECREF(__pyx_r);
+    try {
+      __pyx_t_9 = ((struct __pyx_vtabstruct_16random_simulator_RandomSimulator *)__pyx_v_self->__pyx_vtab)->simulation_thread_determinstic(__pyx_v_self);
+    } catch(...) {
+      __Pyx_CppExn2PyErr();
+      __PYX_ERR(0, 596, __pyx_L1_error)
+    }
+    __pyx_t_11 = __Pyx_PyInt_From_int(__pyx_t_9); if (unlikely(!__pyx_t_11)) __PYX_ERR(0, 596, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_11);
+    __pyx_r = __pyx_t_11;
+    __pyx_t_11 = 0;
+    goto __pyx_L0;
+
+    /* "random_simulator.pyx":595
+ *             #print(self.subcircuit)
+ *             #print("it")
+ *             if simulation_mode == 3:             # <<<<<<<<<<<<<<
+ *                 return self.simulation_thread_determinstic()
+ * 
+ */
+  }
+
+  /* "random_simulator.pyx":598
+ *                 return self.simulation_thread_determinstic()
+ * 
+ *             with nogil:             # <<<<<<<<<<<<<<
+ *                 for i in prange(self.num_of_iterations):
+ *                     if  simulation_mode == 0:
+ */
+  {
+      #ifdef WITH_THREAD
+      PyThreadState *_save;
+      Py_UNBLOCK_THREADS
+      __Pyx_FastGIL_Remember();
+      #endif
+      /*try:*/ {
+
+        /* "random_simulator.pyx":599
+ * 
+ *             with nogil:
+ *                 for i in prange(self.num_of_iterations):             # <<<<<<<<<<<<<<
+ *                     if  simulation_mode == 0:
+ *                         res[i] = self.simulation_thread_swap(i)
+ */
+        __pyx_t_9 = __pyx_v_self->num_of_iterations;
+        if ((1 == 0)) abort();
+        {
+            unsigned int __pyx_parallel_temp0 = ((unsigned int)0xbad0bad0);
+            const char *__pyx_parallel_filename = NULL; int __pyx_parallel_lineno = 0, __pyx_parallel_clineno = 0;
+            PyObject *__pyx_parallel_exc_type = NULL, *__pyx_parallel_exc_value = NULL, *__pyx_parallel_exc_tb = NULL;
+            int __pyx_parallel_why;
+            __pyx_parallel_why = 0;
+            #if ((defined(__APPLE__) || defined(__OSX__)) && (defined(__GNUC__) && (__GNUC__ > 2 || (__GNUC__ == 2 && (__GNUC_MINOR__ > 95)))))
+                #undef likely
+                #undef unlikely
+                #define likely(x)   (x)
+                #define unlikely(x) (x)
+            #endif
+            __pyx_t_3 = (__pyx_t_9 - 0 + 1 - 1/abs(1)) / 1;
+            if (__pyx_t_3 > 0)
+            {
+                #ifdef _OPENMP
+                #pragma omp parallel private(__pyx_t_1, __pyx_t_12, __pyx_t_7) private(__pyx_filename, __pyx_lineno, __pyx_clineno) shared(__pyx_parallel_why, __pyx_parallel_exc_type, __pyx_parallel_exc_value, __pyx_parallel_exc_tb)
+                #endif /* _OPENMP */
+                {
+                    #ifdef _OPENMP
+                    #ifdef WITH_THREAD
+                    PyGILState_STATE __pyx_gilstate_save = __Pyx_PyGILState_Ensure();
+                    #endif
+                    Py_BEGIN_ALLOW_THREADS
+                    #endif /* _OPENMP */
+                    #ifdef _OPENMP
+                    #pragma omp for firstprivate(__pyx_v_i) lastprivate(__pyx_v_i)
+                    #endif /* _OPENMP */
+                    for (__pyx_t_2 = 0; __pyx_t_2 < __pyx_t_3; __pyx_t_2++){
+                        if (__pyx_parallel_why < 2)
+                        {
+                            __pyx_v_i = (unsigned int)(0 + 1 * __pyx_t_2);
+
+                            /* "random_simulator.pyx":600
+ *             with nogil:
+ *                 for i in prange(self.num_of_iterations):
+ *                     if  simulation_mode == 0:             # <<<<<<<<<<<<<<
+ *                         res[i] = self.simulation_thread_swap(i)
+ *                     elif simulation_mode == 1:
+ */
+                            switch (__pyx_v_simulation_mode) {
+                              case 0:
+
+                              /* "random_simulator.pyx":601
+ *                 for i in prange(self.num_of_iterations):
+ *                     if  simulation_mode == 0:
+ *                         res[i] = self.simulation_thread_swap(i)             # <<<<<<<<<<<<<<
+ *                     elif simulation_mode == 1:
+ *                         res_int[i] = self.simulation_thread_gates(i)
+ */
+                              try {
+                                __pyx_t_12 = ((struct __pyx_vtabstruct_16random_simulator_RandomSimulator *)__pyx_v_self->__pyx_vtab)->simulation_thread_swap(__pyx_v_self, __pyx_v_i);
+                              } catch(...) {
+                                #ifdef WITH_THREAD
+                                PyGILState_STATE __pyx_gilstate_save = __Pyx_PyGILState_Ensure();
+                                #endif
+                                __Pyx_CppExn2PyErr();
+                                #ifdef WITH_THREAD
+                                __Pyx_PyGILState_Release(__pyx_gilstate_save);
+                                #endif
+                                __PYX_ERR(0, 601, __pyx_L13_error)
+                              }
+                              (__pyx_v_res[__pyx_v_i]) = __pyx_t_12;
+
+                              /* "random_simulator.pyx":600
+ *             with nogil:
+ *                 for i in prange(self.num_of_iterations):
+ *                     if  simulation_mode == 0:             # <<<<<<<<<<<<<<
+ *                         res[i] = self.simulation_thread_swap(i)
+ *                     elif simulation_mode == 1:
+ */
+                              break;
+                              case 1:
+
+                              /* "random_simulator.pyx":603
+ *                         res[i] = self.simulation_thread_swap(i)
+ *                     elif simulation_mode == 1:
+ *                         res_int[i] = self.simulation_thread_gates(i)             # <<<<<<<<<<<<<<
+ *                     elif simulation_mode == 2:
+ *                         extended_res[i] = self.simulation_thread_extended(i)
+ */
+                              try {
+                                __pyx_t_7 = ((struct __pyx_vtabstruct_16random_simulator_RandomSimulator *)__pyx_v_self->__pyx_vtab)->simulation_thread_gates(__pyx_v_self, __pyx_v_i);
+                              } catch(...) {
+                                #ifdef WITH_THREAD
+                                PyGILState_STATE __pyx_gilstate_save = __Pyx_PyGILState_Ensure();
+                                #endif
+                                __Pyx_CppExn2PyErr();
+                                #ifdef WITH_THREAD
+                                __Pyx_PyGILState_Release(__pyx_gilstate_save);
+                                #endif
+                                __PYX_ERR(0, 603, __pyx_L13_error)
+                              }
+                              (__pyx_v_res_int[__pyx_v_i]) = __pyx_t_7;
+
+                              /* "random_simulator.pyx":602
+ *                     if  simulation_mode == 0:
+ *                         res[i] = self.simulation_thread_swap(i)
+ *                     elif simulation_mode == 1:             # <<<<<<<<<<<<<<
+ *                         res_int[i] = self.simulation_thread_gates(i)
+ *                     elif simulation_mode == 2:
+ */
+                              break;
+                              case 2:
+
+                              /* "random_simulator.pyx":605
+ *                         res_int[i] = self.simulation_thread_gates(i)
+ *                     elif simulation_mode == 2:
+ *                         extended_res[i] = self.simulation_thread_extended(i)             # <<<<<<<<<<<<<<
+ * 
+ *             #print(res[i])
+ */
+                              try {
+                                __pyx_t_1 = ((struct __pyx_vtabstruct_16random_simulator_RandomSimulator *)__pyx_v_self->__pyx_vtab)->simulation_thread_extended(__pyx_v_self, __pyx_v_i);
+                              } catch(...) {
+                                #ifdef WITH_THREAD
+                                PyGILState_STATE __pyx_gilstate_save = __Pyx_PyGILState_Ensure();
+                                #endif
+                                __Pyx_CppExn2PyErr();
+                                #ifdef WITH_THREAD
+                                __Pyx_PyGILState_Release(__pyx_gilstate_save);
+                                #endif
+                                __PYX_ERR(0, 605, __pyx_L13_error)
+                              }
+                              (__pyx_v_extended_res[__pyx_v_i]) = __pyx_t_1;
+
+                              /* "random_simulator.pyx":604
+ *                     elif simulation_mode == 1:
+ *                         res_int[i] = self.simulation_thread_gates(i)
+ *                     elif simulation_mode == 2:             # <<<<<<<<<<<<<<
+ *                         extended_res[i] = self.simulation_thread_extended(i)
+ * 
+ */
+                              break;
+                              default: break;
+                            }
+                            goto __pyx_L16;
+                            __pyx_L13_error:;
+                            {
+                                #ifdef WITH_THREAD
+                                PyGILState_STATE __pyx_gilstate_save = __Pyx_PyGILState_Ensure();
+                                #endif
+                                #ifdef _OPENMP
+                                #pragma omp flush(__pyx_parallel_exc_type)
+                                #endif /* _OPENMP */
+                                if (!__pyx_parallel_exc_type) {
+                                  __Pyx_ErrFetchWithState(&__pyx_parallel_exc_type, &__pyx_parallel_exc_value, &__pyx_parallel_exc_tb);
+                                  __pyx_parallel_filename = __pyx_filename; __pyx_parallel_lineno = __pyx_lineno; __pyx_parallel_clineno = __pyx_clineno;
+                                  __Pyx_GOTREF(__pyx_parallel_exc_type);
+                                }
+                                #ifdef WITH_THREAD
+                                __Pyx_PyGILState_Release(__pyx_gilstate_save);
+                                #endif
+                            }
+                            __pyx_parallel_why = 4;
+                            goto __pyx_L15;
+                            __pyx_L15:;
+                            #ifdef _OPENMP
+                            #pragma omp critical(__pyx_parallel_lastprivates0)
+                            #endif /* _OPENMP */
+                            {
+                                __pyx_parallel_temp0 = __pyx_v_i;
+                            }
+                            __pyx_L16:;
+                            #ifdef _OPENMP
+                            #pragma omp flush(__pyx_parallel_why)
+                            #endif /* _OPENMP */
+                        }
+                    }
+                    #ifdef _OPENMP
+                    Py_END_ALLOW_THREADS
+                    #else
+{
+#ifdef WITH_THREAD
+                    PyGILState_STATE __pyx_gilstate_save = __Pyx_PyGILState_Ensure();
+                    #endif
+                    #endif /* _OPENMP */
+                    /* Clean up any temporaries */
+                    #ifdef WITH_THREAD
+                    __Pyx_PyGILState_Release(__pyx_gilstate_save);
+                    #endif
+                    #ifndef _OPENMP
+}
+#endif /* _OPENMP */
+                }
+            }
+            if (__pyx_parallel_exc_type) {
+              /* This may have been overridden by a continue, break or return in another thread. Prefer the error. */
+              __pyx_parallel_why = 4;
+            }
+            if (__pyx_parallel_why) {
+              __pyx_v_i = __pyx_parallel_temp0;
+              switch (__pyx_parallel_why) {
+                    case 4:
+                {
+                    #ifdef WITH_THREAD
+                    PyGILState_STATE __pyx_gilstate_save = __Pyx_PyGILState_Ensure();
+                    #endif
+                    __Pyx_GIVEREF(__pyx_parallel_exc_type);
+                    __Pyx_ErrRestoreWithState(__pyx_parallel_exc_type, __pyx_parallel_exc_value, __pyx_parallel_exc_tb);
+                    __pyx_filename = __pyx_parallel_filename; __pyx_lineno = __pyx_parallel_lineno; __pyx_clineno = __pyx_parallel_clineno;
+                    #ifdef WITH_THREAD
+                    __Pyx_PyGILState_Release(__pyx_gilstate_save);
+                    #endif
+                }
+                goto __pyx_L9_error;
+              }
+            }
+        }
+        #if ((defined(__APPLE__) || defined(__OSX__)) && (defined(__GNUC__) && (__GNUC__ > 2 || (__GNUC__ == 2 && (__GNUC_MINOR__ > 95)))))
+            #undef likely
+            #undef unlikely
+            #define likely(x)   __builtin_expect(!!(x), 1)
+            #define unlikely(x) __builtin_expect(!!(x), 0)
+        #endif
+      }
+
+      /* "random_simulator.pyx":598
+ *                 return self.simulation_thread_determinstic()
+ * 
+ *             with nogil:             # <<<<<<<<<<<<<<
+ *                 for i in prange(self.num_of_iterations):
+ *                     if  simulation_mode == 0:
+ */
+      /*finally:*/ {
+        /*normal exit:*/{
+          #ifdef WITH_THREAD
+          __Pyx_FastGIL_Forget();
+          Py_BLOCK_THREADS
+          #endif
+          goto __pyx_L10;
+        }
+        __pyx_L9_error: {
+          #ifdef WITH_THREAD
+          __Pyx_FastGIL_Forget();
+          Py_BLOCK_THREADS
+          #endif
+          goto __pyx_L1_error;
+        }
+        __pyx_L10:;
+      }
+  }
+
+  /* "random_simulator.pyx":617
+ *             #         minimum = sim_res[i]
+ *             #         num_of_executed_gates = sim_swap[i]
+ *             if self.mode == 0:             # <<<<<<<<<<<<<<
+ *                 for i in range(self.num_of_iterations):
+ *                     average += res[i]
+ */
+  switch (__pyx_v_self->mode) {
+    case 0:
+
+    /* "random_simulator.pyx":618
+ *             #         num_of_executed_gates = sim_swap[i]
+ *             if self.mode == 0:
+ *                 for i in range(self.num_of_iterations):             # <<<<<<<<<<<<<<
+ *                     average += res[i]
+ *                 average = average /  self.num_of_iterations
+ */
+    __pyx_t_9 = __pyx_v_self->num_of_iterations;
+    __pyx_t_7 = __pyx_t_9;
+    for (__pyx_t_3 = 0; __pyx_t_3 < __pyx_t_7; __pyx_t_3+=1) {
+      __pyx_v_i = __pyx_t_3;
+
+      /* "random_simulator.pyx":619
+ *             if self.mode == 0:
+ *                 for i in range(self.num_of_iterations):
+ *                     average += res[i]             # <<<<<<<<<<<<<<
+ *                 average = average /  self.num_of_iterations
+ *                 return average
+ */
+      __pyx_v_average = (__pyx_v_average + (__pyx_v_res[__pyx_v_i]));
+    }
+
+    /* "random_simulator.pyx":620
+ *                 for i in range(self.num_of_iterations):
+ *                     average += res[i]
+ *                 average = average /  self.num_of_iterations             # <<<<<<<<<<<<<<
+ *                 return average
+ *             elif self.mode == 1:
+ */
+    if (unlikely(__pyx_v_self->num_of_iterations == 0)) {
+      PyErr_SetString(PyExc_ZeroDivisionError, "float division");
+      __PYX_ERR(0, 620, __pyx_L1_error)
+    }
+    __pyx_v_average = (__pyx_v_average / ((float)__pyx_v_self->num_of_iterations));
+
+    /* "random_simulator.pyx":621
+ *                     average += res[i]
+ *                 average = average /  self.num_of_iterations
+ *                 return average             # <<<<<<<<<<<<<<
+ *             elif self.mode == 1:
+ *                 if simulation_mode == 0:
+ */
+    __Pyx_XDECREF(__pyx_r);
+    __pyx_t_11 = PyFloat_FromDouble(__pyx_v_average); if (unlikely(!__pyx_t_11)) __PYX_ERR(0, 621, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_11);
+    __pyx_r = __pyx_t_11;
+    __pyx_t_11 = 0;
+    goto __pyx_L0;
+
+    /* "random_simulator.pyx":617
+ *             #         minimum = sim_res[i]
+ *             #         num_of_executed_gates = sim_swap[i]
+ *             if self.mode == 0:             # <<<<<<<<<<<<<<
+ *                 for i in range(self.num_of_iterations):
+ *                     average += res[i]
+ */
+    break;
+    case 1:
+
+    /* "random_simulator.pyx":623
+ *                 return average
+ *             elif self.mode == 1:
+ *                 if simulation_mode == 0:             # <<<<<<<<<<<<<<
+ *                     for i in range(self.num_of_iterations):
+ *                         maximum  = max(res[i], maximum)
+ */
+    switch (__pyx_v_simulation_mode) {
+      case 0:
+
+      /* "random_simulator.pyx":624
+ *             elif self.mode == 1:
+ *                 if simulation_mode == 0:
+ *                     for i in range(self.num_of_iterations):             # <<<<<<<<<<<<<<
+ *                         maximum  = max(res[i], maximum)
+ *                     #print(maximum)
+ */
+      __pyx_t_9 = __pyx_v_self->num_of_iterations;
+      __pyx_t_7 = __pyx_t_9;
+      for (__pyx_t_3 = 0; __pyx_t_3 < __pyx_t_7; __pyx_t_3+=1) {
+        __pyx_v_i = __pyx_t_3;
+
+        /* "random_simulator.pyx":625
+ *                 if simulation_mode == 0:
+ *                     for i in range(self.num_of_iterations):
+ *                         maximum  = max(res[i], maximum)             # <<<<<<<<<<<<<<
+ *                     #print(maximum)
+ *                     return maximum
+ */
+        __pyx_t_12 = __pyx_v_maximum;
+        __pyx_t_13 = (__pyx_v_res[__pyx_v_i]);
+        if (((__pyx_t_12 > __pyx_t_13) != 0)) {
+          __pyx_t_14 = __pyx_t_12;
+        } else {
+          __pyx_t_14 = __pyx_t_13;
+        }
+        __pyx_v_maximum = __pyx_t_14;
+      }
+
+      /* "random_simulator.pyx":627
+ *                         maximum  = max(res[i], maximum)
+ *                     #print(maximum)
+ *                     return maximum             # <<<<<<<<<<<<<<
+ *                 elif simulation_mode == 1:
+ *                     for i in range(self.num_of_iterations):
+ */
+      __Pyx_XDECREF(__pyx_r);
+      __pyx_t_11 = PyFloat_FromDouble(__pyx_v_maximum); if (unlikely(!__pyx_t_11)) __PYX_ERR(0, 627, __pyx_L1_error)
+      __Pyx_GOTREF(__pyx_t_11);
+      __pyx_r = __pyx_t_11;
+      __pyx_t_11 = 0;
+      goto __pyx_L0;
+
+      /* "random_simulator.pyx":623
+ *                 return average
+ *             elif self.mode == 1:
+ *                 if simulation_mode == 0:             # <<<<<<<<<<<<<<
+ *                     for i in range(self.num_of_iterations):
+ *                         maximum  = max(res[i], maximum)
+ */
+      break;
+      case 1:
+
+      /* "random_simulator.pyx":629
+ *                     return maximum
+ *                 elif simulation_mode == 1:
+ *                     for i in range(self.num_of_iterations):             # <<<<<<<<<<<<<<
+ *                         minimum  = min(res_int[i], minimum)
+ *                     #print(maximum)
+ */
+      __pyx_t_9 = __pyx_v_self->num_of_iterations;
+      __pyx_t_7 = __pyx_t_9;
+      for (__pyx_t_3 = 0; __pyx_t_3 < __pyx_t_7; __pyx_t_3+=1) {
+        __pyx_v_i = __pyx_t_3;
+
+        /* "random_simulator.pyx":630
+ *                 elif simulation_mode == 1:
+ *                     for i in range(self.num_of_iterations):
+ *                         minimum  = min(res_int[i], minimum)             # <<<<<<<<<<<<<<
+ *                     #print(maximum)
+ *                     return minimum
+ */
+        __pyx_t_8 = __pyx_v_minimum;
+        __pyx_t_15 = (__pyx_v_res_int[__pyx_v_i]);
+        if (((__pyx_t_8 < __pyx_t_15) != 0)) {
+          __pyx_t_16 = __pyx_t_8;
+        } else {
+          __pyx_t_16 = __pyx_t_15;
+        }
+        __pyx_v_minimum = __pyx_t_16;
+      }
+
+      /* "random_simulator.pyx":632
+ *                         minimum  = min(res_int[i], minimum)
+ *                     #print(maximum)
+ *                     return minimum             # <<<<<<<<<<<<<<
+ *                 elif simulation_mode == 2:
+ *                     for i in range(self.num_of_iterations):
+ */
+      __Pyx_XDECREF(__pyx_r);
+      __pyx_t_11 = __Pyx_PyInt_From_int(__pyx_v_minimum); if (unlikely(!__pyx_t_11)) __PYX_ERR(0, 632, __pyx_L1_error)
+      __Pyx_GOTREF(__pyx_t_11);
+      __pyx_r = __pyx_t_11;
+      __pyx_t_11 = 0;
+      goto __pyx_L0;
+
+      /* "random_simulator.pyx":628
+ *                     #print(maximum)
+ *                     return maximum
+ *                 elif simulation_mode == 1:             # <<<<<<<<<<<<<<
+ *                     for i in range(self.num_of_iterations):
+ *                         minimum  = min(res_int[i], minimum)
+ */
+      break;
+      case 2:
+
+      /* "random_simulator.pyx":634
+ *                     return minimum
+ *                 elif simulation_mode == 2:
+ *                     for i in range(self.num_of_iterations):             # <<<<<<<<<<<<<<
+ *                         if extended_res[i][0] > maximum_int:
+ *                             maximum_int = extended_res[i][0]
+ */
+      __pyx_t_9 = __pyx_v_self->num_of_iterations;
+      __pyx_t_7 = __pyx_t_9;
+      for (__pyx_t_3 = 0; __pyx_t_3 < __pyx_t_7; __pyx_t_3+=1) {
+        __pyx_v_i = __pyx_t_3;
+
+        /* "random_simulator.pyx":635
+ *                 elif simulation_mode == 2:
+ *                     for i in range(self.num_of_iterations):
+ *                         if extended_res[i][0] > maximum_int:             # <<<<<<<<<<<<<<
+ *                             maximum_int = extended_res[i][0]
+ *                             idx = i
+ */
+        __pyx_t_6 = ((((__pyx_v_extended_res[__pyx_v_i])[0]) > __pyx_v_maximum_int) != 0);
+        if (__pyx_t_6) {
+
+          /* "random_simulator.pyx":636
+ *                     for i in range(self.num_of_iterations):
+ *                         if extended_res[i][0] > maximum_int:
+ *                             maximum_int = extended_res[i][0]             # <<<<<<<<<<<<<<
+ *                             idx = i
+ *                     return extended_res[idx]
+ */
+          __pyx_v_maximum_int = ((__pyx_v_extended_res[__pyx_v_i])[0]);
+
+          /* "random_simulator.pyx":637
+ *                         if extended_res[i][0] > maximum_int:
+ *                             maximum_int = extended_res[i][0]
+ *                             idx = i             # <<<<<<<<<<<<<<
+ *                     return extended_res[idx]
+ *             else:
+ */
+          __pyx_v_idx = __pyx_v_i;
+
+          /* "random_simulator.pyx":635
+ *                 elif simulation_mode == 2:
+ *                     for i in range(self.num_of_iterations):
+ *                         if extended_res[i][0] > maximum_int:             # <<<<<<<<<<<<<<
+ *                             maximum_int = extended_res[i][0]
+ *                             idx = i
+ */
+        }
+      }
+
+      /* "random_simulator.pyx":638
+ *                             maximum_int = extended_res[i][0]
+ *                             idx = i
+ *                     return extended_res[idx]             # <<<<<<<<<<<<<<
+ *             else:
+ *                 return -1
+ */
+      __Pyx_XDECREF(__pyx_r);
+      __pyx_t_11 = __pyx_convert_vector_to_py_int((__pyx_v_extended_res[__pyx_v_idx])); if (unlikely(!__pyx_t_11)) __PYX_ERR(0, 638, __pyx_L1_error)
+      __Pyx_GOTREF(__pyx_t_11);
+      __pyx_r = __pyx_t_11;
+      __pyx_t_11 = 0;
+      goto __pyx_L0;
+
+      /* "random_simulator.pyx":633
+ *                     #print(maximum)
+ *                     return minimum
+ *                 elif simulation_mode == 2:             # <<<<<<<<<<<<<<
+ *                     for i in range(self.num_of_iterations):
+ *                         if extended_res[i][0] > maximum_int:
+ */
+      break;
+      default: break;
+    }
+
+    /* "random_simulator.pyx":622
+ *                 average = average /  self.num_of_iterations
+ *                 return average
+ *             elif self.mode == 1:             # <<<<<<<<<<<<<<
+ *                 if simulation_mode == 0:
+ *                     for i in range(self.num_of_iterations):
+ */
+    break;
+    default:
+
+    /* "random_simulator.pyx":640
+ *                     return extended_res[idx]
+ *             else:
+ *                 return -1             # <<<<<<<<<<<<<<
+ *             #print("%d and %d"%(minimum, num_of_executed_gates))
+ * 
+ */
+    __Pyx_XDECREF(__pyx_r);
+    __Pyx_INCREF(__pyx_int_neg_1);
+    __pyx_r = __pyx_int_neg_1;
+    goto __pyx_L0;
+    break;
+  }
+
+  /* "random_simulator.pyx":543
+ * 
+ * 
+ *     def  simulate(self, list front_layer, list qubit_mapping, list qubit_mask,             # <<<<<<<<<<<<<<
+ *                     int num_of_subcircuit_gates, int num_of_iterations, int simulation_mode):
+ *             cdef:
+ */
 
   /* function exit code */
+  __pyx_r = Py_None; __Pyx_INCREF(Py_None);
+  goto __pyx_L0;
   __pyx_L1_error:;
-  __Pyx_XDECREF(__pyx_t_1);
+  __Pyx_XDECREF(__pyx_t_11);
   __Pyx_AddTraceback("random_simulator.RandomSimulator.simulate", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __pyx_r = NULL;
   __pyx_L0:;
@@ -7945,6 +9179,71 @@ static std::vector<int>  __pyx_convert_vector_from_py_int(PyObject *__pyx_v_o) {
   __Pyx_pretend_to_initialize(&__pyx_r);
   __pyx_L0:;
   __Pyx_XDECREF(__pyx_v_item);
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+/* "vector.to_py":60
+ * 
+ * @cname("__pyx_convert_vector_to_py_int")
+ * cdef object __pyx_convert_vector_to_py_int(vector[X]& v):             # <<<<<<<<<<<<<<
+ *     return [v[i] for i in range(v.size())]
+ * 
+ */
+
+static PyObject *__pyx_convert_vector_to_py_int(const std::vector<int>  &__pyx_v_v) {
+  size_t __pyx_v_i;
+  PyObject *__pyx_r = NULL;
+  __Pyx_RefNannyDeclarations
+  PyObject *__pyx_t_1 = NULL;
+  size_t __pyx_t_2;
+  size_t __pyx_t_3;
+  size_t __pyx_t_4;
+  PyObject *__pyx_t_5 = NULL;
+  int __pyx_lineno = 0;
+  const char *__pyx_filename = NULL;
+  int __pyx_clineno = 0;
+  __Pyx_RefNannySetupContext("__pyx_convert_vector_to_py_int", 0);
+
+  /* "vector.to_py":61
+ * @cname("__pyx_convert_vector_to_py_int")
+ * cdef object __pyx_convert_vector_to_py_int(vector[X]& v):
+ *     return [v[i] for i in range(v.size())]             # <<<<<<<<<<<<<<
+ * 
+ * 
+ */
+  __Pyx_XDECREF(__pyx_r);
+  __pyx_t_1 = PyList_New(0); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 61, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_1);
+  __pyx_t_2 = __pyx_v_v.size();
+  __pyx_t_3 = __pyx_t_2;
+  for (__pyx_t_4 = 0; __pyx_t_4 < __pyx_t_3; __pyx_t_4+=1) {
+    __pyx_v_i = __pyx_t_4;
+    __pyx_t_5 = __Pyx_PyInt_From_int((__pyx_v_v[__pyx_v_i])); if (unlikely(!__pyx_t_5)) __PYX_ERR(1, 61, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_5);
+    if (unlikely(__Pyx_ListComp_Append(__pyx_t_1, (PyObject*)__pyx_t_5))) __PYX_ERR(1, 61, __pyx_L1_error)
+    __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+  }
+  __pyx_r = __pyx_t_1;
+  __pyx_t_1 = 0;
+  goto __pyx_L0;
+
+  /* "vector.to_py":60
+ * 
+ * @cname("__pyx_convert_vector_to_py_int")
+ * cdef object __pyx_convert_vector_to_py_int(vector[X]& v):             # <<<<<<<<<<<<<<
+ *     return [v[i] for i in range(v.size())]
+ * 
+ */
+
+  /* function exit code */
+  __pyx_L1_error:;
+  __Pyx_XDECREF(__pyx_t_1);
+  __Pyx_XDECREF(__pyx_t_5);
+  __Pyx_AddTraceback("vector.to_py.__pyx_convert_vector_to_py_int", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __pyx_r = 0;
+  __pyx_L0:;
+  __Pyx_XGIVEREF(__pyx_r);
   __Pyx_RefNannyFinishContext();
   return __pyx_r;
 }
@@ -21946,7 +23245,6 @@ static __Pyx_StringTabEntry __pyx_string_tab[] = {
   {&__pyx_n_s_setstate, __pyx_k_setstate, sizeof(__pyx_k_setstate), 0, 0, 1, 1},
   {&__pyx_n_s_setstate_cython, __pyx_k_setstate_cython, sizeof(__pyx_k_setstate_cython), 0, 0, 1, 1},
   {&__pyx_n_s_shape, __pyx_k_shape, sizeof(__pyx_k_shape), 0, 0, 1, 1},
-  {&__pyx_n_s_simulate, __pyx_k_simulate, sizeof(__pyx_k_simulate), 0, 0, 1, 1},
   {&__pyx_n_s_simulation_mode, __pyx_k_simulation_mode, sizeof(__pyx_k_simulation_mode), 0, 0, 1, 1},
   {&__pyx_n_s_size, __pyx_k_size, sizeof(__pyx_k_size), 0, 0, 1, 1},
   {&__pyx_n_s_start, __pyx_k_start, sizeof(__pyx_k_start), 0, 0, 1, 1},
@@ -22355,6 +23653,7 @@ static int __Pyx_modinit_type_init_code(void) {
   __pyx_vtable_16random_simulator_RandomSimulator._f = (float (*)(struct __pyx_obj_16random_simulator_RandomSimulator *, int))__pyx_f_16random_simulator_15RandomSimulator__f;
   __pyx_vtable_16random_simulator_RandomSimulator.f = (std::vector<float>  (*)(struct __pyx_obj_16random_simulator_RandomSimulator *, std::vector<int>  &))__pyx_f_16random_simulator_15RandomSimulator_f;
   __pyx_vtable_16random_simulator_RandomSimulator.random_choice = (unsigned int (*)(struct __pyx_obj_16random_simulator_RandomSimulator *, std::vector<float>  &, int))__pyx_f_16random_simulator_15RandomSimulator_random_choice;
+  __pyx_vtable_16random_simulator_RandomSimulator.argmax = (unsigned int (*)(struct __pyx_obj_16random_simulator_RandomSimulator *, std::vector<int>  &))__pyx_f_16random_simulator_15RandomSimulator_argmax;
   __pyx_vtable_16random_simulator_RandomSimulator.change_qubit_mapping_with_swap_gate = (std::vector<int>  (*)(struct __pyx_obj_16random_simulator_RandomSimulator *, std::vector<int>  &, std::vector<int>  &, std::vector<int>  &, std::vector<int> , struct __pyx_opt_args_16random_simulator_15RandomSimulator_change_qubit_mapping_with_swap_gate *__pyx_optional_args))__pyx_f_16random_simulator_15RandomSimulator_change_qubit_mapping_with_swap_gate;
   __pyx_vtable_16random_simulator_RandomSimulator.get_involved_qubits = (std::vector<int>  (*)(struct __pyx_obj_16random_simulator_RandomSimulator *, std::vector<int>  &, std::vector<int>  &))__pyx_f_16random_simulator_15RandomSimulator_get_involved_qubits;
   __pyx_vtable_16random_simulator_RandomSimulator.get_candidate_swap_gate_list = (std::vector<int>  (*)(struct __pyx_obj_16random_simulator_RandomSimulator *, std::vector<int>  &, std::vector<int>  &))__pyx_f_16random_simulator_15RandomSimulator_get_candidate_swap_gate_list;
@@ -22365,8 +23664,9 @@ static int __Pyx_modinit_type_init_code(void) {
   __pyx_vtable_16random_simulator_RandomSimulator.update_front_layer_2 = (int (*)(struct __pyx_obj_16random_simulator_RandomSimulator *, std::vector<int>  &, std::vector<int>  &, std::vector<int>  &, std::unordered_set<int>  &))__pyx_f_16random_simulator_15RandomSimulator_update_front_layer_2;
   __pyx_vtable_16random_simulator_RandomSimulator.get_subcircuit = (std::unordered_set<int>  (*)(struct __pyx_obj_16random_simulator_RandomSimulator *, std::vector<int> , std::vector<int> , int))__pyx_f_16random_simulator_15RandomSimulator_get_subcircuit;
   __pyx_vtable_16random_simulator_RandomSimulator.simulation_thread_swap = (float (*)(struct __pyx_obj_16random_simulator_RandomSimulator *, int))__pyx_f_16random_simulator_15RandomSimulator_simulation_thread_swap;
-  __pyx_vtable_16random_simulator_RandomSimulator.simulation_thread_gates = (float (*)(struct __pyx_obj_16random_simulator_RandomSimulator *, int))__pyx_f_16random_simulator_15RandomSimulator_simulation_thread_gates;
-  __pyx_vtable_16random_simulator_RandomSimulator.simulate = (float (*)(struct __pyx_obj_16random_simulator_RandomSimulator *, PyObject *, PyObject *, PyObject *, int, int, int, int __pyx_skip_dispatch))__pyx_f_16random_simulator_15RandomSimulator_simulate;
+  __pyx_vtable_16random_simulator_RandomSimulator.simulation_thread_gates = (int (*)(struct __pyx_obj_16random_simulator_RandomSimulator *, int))__pyx_f_16random_simulator_15RandomSimulator_simulation_thread_gates;
+  __pyx_vtable_16random_simulator_RandomSimulator.simulation_thread_extended = (std::vector<int>  (*)(struct __pyx_obj_16random_simulator_RandomSimulator *, int))__pyx_f_16random_simulator_15RandomSimulator_simulation_thread_extended;
+  __pyx_vtable_16random_simulator_RandomSimulator.simulation_thread_determinstic = (int (*)(struct __pyx_obj_16random_simulator_RandomSimulator *))__pyx_f_16random_simulator_15RandomSimulator_simulation_thread_determinstic;
   if (PyType_Ready(&__pyx_type_16random_simulator_RandomSimulator) < 0) __PYX_ERR(0, 39, __pyx_L1_error)
   #if PY_VERSION_HEX < 0x030800B1
   __pyx_type_16random_simulator_RandomSimulator.tp_print = 0;
@@ -23879,174 +25179,6 @@ static CYTHON_INLINE void __Pyx_ErrFetchInState(PyThreadState *tstate, PyObject 
 #endif
 }
 
-/* PyDictVersioning */
-  #if CYTHON_USE_DICT_VERSIONS && CYTHON_USE_TYPE_SLOTS
-static CYTHON_INLINE PY_UINT64_T __Pyx_get_tp_dict_version(PyObject *obj) {
-    PyObject *dict = Py_TYPE(obj)->tp_dict;
-    return likely(dict) ? __PYX_GET_DICT_VERSION(dict) : 0;
-}
-static CYTHON_INLINE PY_UINT64_T __Pyx_get_object_dict_version(PyObject *obj) {
-    PyObject **dictptr = NULL;
-    Py_ssize_t offset = Py_TYPE(obj)->tp_dictoffset;
-    if (offset) {
-#if CYTHON_COMPILING_IN_CPYTHON
-        dictptr = (likely(offset > 0)) ? (PyObject **) ((char *)obj + offset) : _PyObject_GetDictPtr(obj);
-#else
-        dictptr = _PyObject_GetDictPtr(obj);
-#endif
-    }
-    return (dictptr && *dictptr) ? __PYX_GET_DICT_VERSION(*dictptr) : 0;
-}
-static CYTHON_INLINE int __Pyx_object_dict_version_matches(PyObject* obj, PY_UINT64_T tp_dict_version, PY_UINT64_T obj_dict_version) {
-    PyObject *dict = Py_TYPE(obj)->tp_dict;
-    if (unlikely(!dict) || unlikely(tp_dict_version != __PYX_GET_DICT_VERSION(dict)))
-        return 0;
-    return obj_dict_version == __Pyx_get_object_dict_version(obj);
-}
-#endif
-
-/* PyFunctionFastCall */
-  #if CYTHON_FAST_PYCALL
-static PyObject* __Pyx_PyFunction_FastCallNoKw(PyCodeObject *co, PyObject **args, Py_ssize_t na,
-                                               PyObject *globals) {
-    PyFrameObject *f;
-    PyThreadState *tstate = __Pyx_PyThreadState_Current;
-    PyObject **fastlocals;
-    Py_ssize_t i;
-    PyObject *result;
-    assert(globals != NULL);
-    /* XXX Perhaps we should create a specialized
-       PyFrame_New() that doesn't take locals, but does
-       take builtins without sanity checking them.
-       */
-    assert(tstate != NULL);
-    f = PyFrame_New(tstate, co, globals, NULL);
-    if (f == NULL) {
-        return NULL;
-    }
-    fastlocals = __Pyx_PyFrame_GetLocalsplus(f);
-    for (i = 0; i < na; i++) {
-        Py_INCREF(*args);
-        fastlocals[i] = *args++;
-    }
-    result = PyEval_EvalFrameEx(f,0);
-    ++tstate->recursion_depth;
-    Py_DECREF(f);
-    --tstate->recursion_depth;
-    return result;
-}
-#if 1 || PY_VERSION_HEX < 0x030600B1
-static PyObject *__Pyx_PyFunction_FastCallDict(PyObject *func, PyObject **args, Py_ssize_t nargs, PyObject *kwargs) {
-    PyCodeObject *co = (PyCodeObject *)PyFunction_GET_CODE(func);
-    PyObject *globals = PyFunction_GET_GLOBALS(func);
-    PyObject *argdefs = PyFunction_GET_DEFAULTS(func);
-    PyObject *closure;
-#if PY_MAJOR_VERSION >= 3
-    PyObject *kwdefs;
-#endif
-    PyObject *kwtuple, **k;
-    PyObject **d;
-    Py_ssize_t nd;
-    Py_ssize_t nk;
-    PyObject *result;
-    assert(kwargs == NULL || PyDict_Check(kwargs));
-    nk = kwargs ? PyDict_Size(kwargs) : 0;
-    if (Py_EnterRecursiveCall((char*)" while calling a Python object")) {
-        return NULL;
-    }
-    if (
-#if PY_MAJOR_VERSION >= 3
-            co->co_kwonlyargcount == 0 &&
-#endif
-            likely(kwargs == NULL || nk == 0) &&
-            co->co_flags == (CO_OPTIMIZED | CO_NEWLOCALS | CO_NOFREE)) {
-        if (argdefs == NULL && co->co_argcount == nargs) {
-            result = __Pyx_PyFunction_FastCallNoKw(co, args, nargs, globals);
-            goto done;
-        }
-        else if (nargs == 0 && argdefs != NULL
-                 && co->co_argcount == Py_SIZE(argdefs)) {
-            /* function called with no arguments, but all parameters have
-               a default value: use default values as arguments .*/
-            args = &PyTuple_GET_ITEM(argdefs, 0);
-            result =__Pyx_PyFunction_FastCallNoKw(co, args, Py_SIZE(argdefs), globals);
-            goto done;
-        }
-    }
-    if (kwargs != NULL) {
-        Py_ssize_t pos, i;
-        kwtuple = PyTuple_New(2 * nk);
-        if (kwtuple == NULL) {
-            result = NULL;
-            goto done;
-        }
-        k = &PyTuple_GET_ITEM(kwtuple, 0);
-        pos = i = 0;
-        while (PyDict_Next(kwargs, &pos, &k[i], &k[i+1])) {
-            Py_INCREF(k[i]);
-            Py_INCREF(k[i+1]);
-            i += 2;
-        }
-        nk = i / 2;
-    }
-    else {
-        kwtuple = NULL;
-        k = NULL;
-    }
-    closure = PyFunction_GET_CLOSURE(func);
-#if PY_MAJOR_VERSION >= 3
-    kwdefs = PyFunction_GET_KW_DEFAULTS(func);
-#endif
-    if (argdefs != NULL) {
-        d = &PyTuple_GET_ITEM(argdefs, 0);
-        nd = Py_SIZE(argdefs);
-    }
-    else {
-        d = NULL;
-        nd = 0;
-    }
-#if PY_MAJOR_VERSION >= 3
-    result = PyEval_EvalCodeEx((PyObject*)co, globals, (PyObject *)NULL,
-                               args, (int)nargs,
-                               k, (int)nk,
-                               d, (int)nd, kwdefs, closure);
-#else
-    result = PyEval_EvalCodeEx(co, globals, (PyObject *)NULL,
-                               args, (int)nargs,
-                               k, (int)nk,
-                               d, (int)nd, closure);
-#endif
-    Py_XDECREF(kwtuple);
-done:
-    Py_LeaveRecursiveCall();
-    return result;
-}
-#endif
-#endif
-
-/* PyCFunctionFastCall */
-  #if CYTHON_FAST_PYCCALL
-static CYTHON_INLINE PyObject * __Pyx_PyCFunction_FastCall(PyObject *func_obj, PyObject **args, Py_ssize_t nargs) {
-    PyCFunctionObject *func = (PyCFunctionObject*)func_obj;
-    PyCFunction meth = PyCFunction_GET_FUNCTION(func);
-    PyObject *self = PyCFunction_GET_SELF(func);
-    int flags = PyCFunction_GET_FLAGS(func);
-    assert(PyCFunction_Check(func));
-    assert(METH_FASTCALL == (flags & ~(METH_CLASS | METH_STATIC | METH_COEXIST | METH_KEYWORDS | METH_STACKLESS)));
-    assert(nargs >= 0);
-    assert(nargs == 0 || args != NULL);
-    /* _PyCFunction_FastCallDict() must not be called with an exception set,
-       because it may clear it (directly or indirectly) and so the
-       caller loses its exception */
-    assert(!PyErr_Occurred());
-    if ((PY_VERSION_HEX < 0x030700A0) || unlikely(flags & METH_KEYWORDS)) {
-        return (*((__Pyx_PyCFunctionFastWithKeywords)(void*)meth)) (self, args, nargs, NULL);
-    } else {
-        return (*((__Pyx_PyCFunctionFast)(void*)meth)) (self, args, nargs);
-    }
-}
-#endif
-
 /* PyObjectCall */
   #if CYTHON_COMPILING_IN_CPYTHON
 static CYTHON_INLINE PyObject* __Pyx_PyObject_Call(PyObject *func, PyObject *arg, PyObject *kw) {
@@ -24380,6 +25512,148 @@ bad:
     Py_XDECREF(local_tb);
     return -1;
 }
+
+/* PyCFunctionFastCall */
+  #if CYTHON_FAST_PYCCALL
+static CYTHON_INLINE PyObject * __Pyx_PyCFunction_FastCall(PyObject *func_obj, PyObject **args, Py_ssize_t nargs) {
+    PyCFunctionObject *func = (PyCFunctionObject*)func_obj;
+    PyCFunction meth = PyCFunction_GET_FUNCTION(func);
+    PyObject *self = PyCFunction_GET_SELF(func);
+    int flags = PyCFunction_GET_FLAGS(func);
+    assert(PyCFunction_Check(func));
+    assert(METH_FASTCALL == (flags & ~(METH_CLASS | METH_STATIC | METH_COEXIST | METH_KEYWORDS | METH_STACKLESS)));
+    assert(nargs >= 0);
+    assert(nargs == 0 || args != NULL);
+    /* _PyCFunction_FastCallDict() must not be called with an exception set,
+       because it may clear it (directly or indirectly) and so the
+       caller loses its exception */
+    assert(!PyErr_Occurred());
+    if ((PY_VERSION_HEX < 0x030700A0) || unlikely(flags & METH_KEYWORDS)) {
+        return (*((__Pyx_PyCFunctionFastWithKeywords)(void*)meth)) (self, args, nargs, NULL);
+    } else {
+        return (*((__Pyx_PyCFunctionFast)(void*)meth)) (self, args, nargs);
+    }
+}
+#endif
+
+/* PyFunctionFastCall */
+  #if CYTHON_FAST_PYCALL
+static PyObject* __Pyx_PyFunction_FastCallNoKw(PyCodeObject *co, PyObject **args, Py_ssize_t na,
+                                               PyObject *globals) {
+    PyFrameObject *f;
+    PyThreadState *tstate = __Pyx_PyThreadState_Current;
+    PyObject **fastlocals;
+    Py_ssize_t i;
+    PyObject *result;
+    assert(globals != NULL);
+    /* XXX Perhaps we should create a specialized
+       PyFrame_New() that doesn't take locals, but does
+       take builtins without sanity checking them.
+       */
+    assert(tstate != NULL);
+    f = PyFrame_New(tstate, co, globals, NULL);
+    if (f == NULL) {
+        return NULL;
+    }
+    fastlocals = __Pyx_PyFrame_GetLocalsplus(f);
+    for (i = 0; i < na; i++) {
+        Py_INCREF(*args);
+        fastlocals[i] = *args++;
+    }
+    result = PyEval_EvalFrameEx(f,0);
+    ++tstate->recursion_depth;
+    Py_DECREF(f);
+    --tstate->recursion_depth;
+    return result;
+}
+#if 1 || PY_VERSION_HEX < 0x030600B1
+static PyObject *__Pyx_PyFunction_FastCallDict(PyObject *func, PyObject **args, Py_ssize_t nargs, PyObject *kwargs) {
+    PyCodeObject *co = (PyCodeObject *)PyFunction_GET_CODE(func);
+    PyObject *globals = PyFunction_GET_GLOBALS(func);
+    PyObject *argdefs = PyFunction_GET_DEFAULTS(func);
+    PyObject *closure;
+#if PY_MAJOR_VERSION >= 3
+    PyObject *kwdefs;
+#endif
+    PyObject *kwtuple, **k;
+    PyObject **d;
+    Py_ssize_t nd;
+    Py_ssize_t nk;
+    PyObject *result;
+    assert(kwargs == NULL || PyDict_Check(kwargs));
+    nk = kwargs ? PyDict_Size(kwargs) : 0;
+    if (Py_EnterRecursiveCall((char*)" while calling a Python object")) {
+        return NULL;
+    }
+    if (
+#if PY_MAJOR_VERSION >= 3
+            co->co_kwonlyargcount == 0 &&
+#endif
+            likely(kwargs == NULL || nk == 0) &&
+            co->co_flags == (CO_OPTIMIZED | CO_NEWLOCALS | CO_NOFREE)) {
+        if (argdefs == NULL && co->co_argcount == nargs) {
+            result = __Pyx_PyFunction_FastCallNoKw(co, args, nargs, globals);
+            goto done;
+        }
+        else if (nargs == 0 && argdefs != NULL
+                 && co->co_argcount == Py_SIZE(argdefs)) {
+            /* function called with no arguments, but all parameters have
+               a default value: use default values as arguments .*/
+            args = &PyTuple_GET_ITEM(argdefs, 0);
+            result =__Pyx_PyFunction_FastCallNoKw(co, args, Py_SIZE(argdefs), globals);
+            goto done;
+        }
+    }
+    if (kwargs != NULL) {
+        Py_ssize_t pos, i;
+        kwtuple = PyTuple_New(2 * nk);
+        if (kwtuple == NULL) {
+            result = NULL;
+            goto done;
+        }
+        k = &PyTuple_GET_ITEM(kwtuple, 0);
+        pos = i = 0;
+        while (PyDict_Next(kwargs, &pos, &k[i], &k[i+1])) {
+            Py_INCREF(k[i]);
+            Py_INCREF(k[i+1]);
+            i += 2;
+        }
+        nk = i / 2;
+    }
+    else {
+        kwtuple = NULL;
+        k = NULL;
+    }
+    closure = PyFunction_GET_CLOSURE(func);
+#if PY_MAJOR_VERSION >= 3
+    kwdefs = PyFunction_GET_KW_DEFAULTS(func);
+#endif
+    if (argdefs != NULL) {
+        d = &PyTuple_GET_ITEM(argdefs, 0);
+        nd = Py_SIZE(argdefs);
+    }
+    else {
+        d = NULL;
+        nd = 0;
+    }
+#if PY_MAJOR_VERSION >= 3
+    result = PyEval_EvalCodeEx((PyObject*)co, globals, (PyObject *)NULL,
+                               args, (int)nargs,
+                               k, (int)nk,
+                               d, (int)nd, kwdefs, closure);
+#else
+    result = PyEval_EvalCodeEx(co, globals, (PyObject *)NULL,
+                               args, (int)nargs,
+                               k, (int)nk,
+                               d, (int)nd, closure);
+#endif
+    Py_XDECREF(kwtuple);
+done:
+    Py_LeaveRecursiveCall();
+    return result;
+}
+#endif
+#endif
 
 /* PyObjectCall2Args */
   static CYTHON_UNUSED PyObject* __Pyx_PyObject_Call2Args(PyObject* function, PyObject* arg1, PyObject* arg2) {
@@ -24803,6 +26077,32 @@ static CYTHON_INLINE PyObject *__Pyx_GetAttr3(PyObject *o, PyObject *n, PyObject
     PyObject *r = __Pyx_GetAttr(o, n);
     return (likely(r)) ? r : __Pyx_GetAttr3Default(d);
 }
+
+/* PyDictVersioning */
+  #if CYTHON_USE_DICT_VERSIONS && CYTHON_USE_TYPE_SLOTS
+static CYTHON_INLINE PY_UINT64_T __Pyx_get_tp_dict_version(PyObject *obj) {
+    PyObject *dict = Py_TYPE(obj)->tp_dict;
+    return likely(dict) ? __PYX_GET_DICT_VERSION(dict) : 0;
+}
+static CYTHON_INLINE PY_UINT64_T __Pyx_get_object_dict_version(PyObject *obj) {
+    PyObject **dictptr = NULL;
+    Py_ssize_t offset = Py_TYPE(obj)->tp_dictoffset;
+    if (offset) {
+#if CYTHON_COMPILING_IN_CPYTHON
+        dictptr = (likely(offset > 0)) ? (PyObject **) ((char *)obj + offset) : _PyObject_GetDictPtr(obj);
+#else
+        dictptr = _PyObject_GetDictPtr(obj);
+#endif
+    }
+    return (dictptr && *dictptr) ? __PYX_GET_DICT_VERSION(*dictptr) : 0;
+}
+static CYTHON_INLINE int __Pyx_object_dict_version_matches(PyObject* obj, PY_UINT64_T tp_dict_version, PY_UINT64_T obj_dict_version) {
+    PyObject *dict = Py_TYPE(obj)->tp_dict;
+    if (unlikely(!dict) || unlikely(tp_dict_version != __PYX_GET_DICT_VERSION(dict)))
+        return 0;
+    return obj_dict_version == __Pyx_get_object_dict_version(obj);
+}
+#endif
 
 /* GetModuleGlobalName */
   #if CYTHON_USE_DICT_VERSIONS

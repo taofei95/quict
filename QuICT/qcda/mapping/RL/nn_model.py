@@ -235,6 +235,7 @@ class SequenceModel(nn.Module):
        
         self.rectifier = nn.ReLU() 
         self.value_prediction = nn.Linear(hid_dim, 1)
+        self.value_output = nn.Softplus()
         
         
     
@@ -288,7 +289,7 @@ class SequenceModel(nn.Module):
 
         # print(policy_prediction_score[0])
         # print(policy_prediction_score[1])
-        value_prediction_score = self.value_prediction(self.rectifier(value_hidden))
+        value_prediction_score = self.value_output(self.value_prediction(self.rectifier(value_hidden)))
         return policy_prediction_score, value_prediction_score 
 
 

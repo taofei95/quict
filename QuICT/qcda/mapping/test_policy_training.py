@@ -31,13 +31,14 @@ from RL.experience_pool_v4 import *
 from RL.nn_model import *
 from RL.dataloader import *
 
-exp_name = "policy_gamma0.9_bigdata_ngat"
+exp_name = "test_overfitting_swap_gates"
 
 
 def mcts_process(qubit_mapping: List[int], coupling_graph: str,  minimum_circuit: int = 50, maximum_circuit: int = 1000, min_num_of_qubits: int = 5, max_num_of_qubits: int = 20, seed: int = 0):
     random_circuit_generator = RandomCircuitGenerator(minimum = minimum_circuit, maximum = maximum_circuit, min_num_of_qubits = min_num_of_qubits, max_num_of_qubits = max_num_of_qubits, seed = seed)
     qc = random_circuit_generator()
-    mcts = TableBasedMCTS(mode = MCTSMode.TRAIN, coupling_graph = coupling_graph, experience_pool = global_experience_pool, gamma = config.gamma)   
+    mcts = TableBasedMCTS(mode = MCTSMode.TRAIN, coupling_graph = coupling_graph, experience_pool = global_experience_pool, gamma = config.gamma, 
+                        num_of_swap_gates = config.num_of_swap_gates, sim_method = config.sim_method, rl = RLMode.WARMUP)   
     #cProfile.runctx('mcts.search(logical_circuit = qc, init_mapping = qubit_mapping)', globals(), locals())
     res = mcts.test_random_simulation(logical_circuit = qc, init_mapping = qubit_mapping ,num_of_gates = -1)
     return res
@@ -542,19 +543,22 @@ if __name__ == "__main__":
     if os.path.exists(tb_dir_path) is not True:
         os.makedirs(tb_dir_path)
         print(tb_dir_path)
-
-    config = default_config
-    new_data = False
-
+    
+    warmup_config = GNNConfig(maximum_capacity = 600000, num_of_gates = 150, maximum_circuit = 1500, minimum_circuit = 200, batch_size = 256, ff_hidden_size = 128, num_self_att_layers=4, dropout = 0.5, value_head_size = 128, gamma = 0.7, 
+                      num_U2GNN_layers=2, learning_rate = 0.001, weight_decay = 1e-4, num_of_epochs = 1000, device = torch.device( "cuda"), graph_name = 'ibmq20',num_of_process = 10, feature_update = True, gat = False, n_gat = 2, mcts_c = 20, loss_c = 10,
+                      num_of_swap_gates = 15, sim_method = 2)
+    config = warmup_config
+    new_data = True
+    input_path = f"{input_dir_path}/swap_gates"
     num_of_qubits=20
     init_mapping=[i for i in range(0,20)]
-    num_of_circuits = 100
+    num_of_circuits = 500
    
     warmup_process =  PolicyTrainer(graph_name = "ibmq20", num_of_qubits = num_of_qubits, log_path = f"{log_dir_path}/{exp_name}", tb_path = f"{tb_dir_path}/policy/{exp_name}")
     
     try:
-        warmup_process.preprocess(init_mapping = init_mapping, config = config, new_data = new_data, num_of_circuits = num_of_circuits, input_dir_path = input_dir_path)
-        warmup_process.run_policy(output_dir_path = output_dir_path )
+        warmup_process.preprocess(init_mapping = init_mapping, config = config, new_data = new_data, num_of_circuits = num_of_circuits, input_dir_path = input_path)
+        warmup_process.run(output_dir_path = output_dir_path )
     finally:
         warmup_process.close()
     

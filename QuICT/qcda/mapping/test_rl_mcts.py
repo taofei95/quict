@@ -30,6 +30,7 @@ from RL.trainer import *
 from RL.dataloader import *
 from RL.trainer import *
 from RL.inference import *
+from RL.rl_based_mcts import *
 from utility import *
 
 from tensorboardX import SummaryWriter
@@ -53,7 +54,7 @@ def mcts_process(qubit_mapping: List[int], graph_name: str,  minimum_circuit: in
     random_circuit_generator = RandomCircuitGenerator(minimum = minimum_circuit, maximum = maximum_circuit, min_num_of_qubits = min_num_of_qubits, max_num_of_qubits = max_num_of_qubits, seed = seed)
     qc = random_circuit_generator()
     mcts = RLBasedMCTS(mode = MCTSMode.TRAIN, rl = RLMode.SELFPALY, coupling_graph = graph_name, experience_pool = global_experience_pool, log_path = log_path, 
-                     c = config.mcts_c, size_threshold = config.num_of_nodes, device = config.device, input = gloabl_queue, output = global_conn, id = global_id, gamma = config.gamma)   
+                     c = config.mcts_c, size_threshold = config.num_of_nodes, device = config.device, input = gloabl_queue, output = global_conn, id = global_id, gamma = config.gamma, extended = False)   
     #cProfile.runctx('mcts.search(logical_circuit = qc, init_mapping = qubit_mapping)', globals(), locals())
     #print("mcts")
     res = mcts.search(logical_circuit = qc, init_mapping = qubit_mapping)
@@ -173,13 +174,13 @@ if __name__ == "__main__":
     log_dir_path = os.path.abspath(os.path.join(work_dir_path, "log"))
     tb_dir_path = os.path.abspath(os.path.join(work_dir_path, "tensorboard"))
 
-    exp = "test_data"
+    exp = "test_data_2"
     train_log_path = f"{log_dir_path}/train/train_{exp}.log"
     train_tb_path = f"{tb_dir_path}/train/train_{exp}"
     mcts_log_path = f"{log_dir_path}/mcts/mcts_{exp}.log"
     log_path = f"{log_dir_path}/{exp}.log"
     initial_model_path = f"{output_dir_path}/checkpoint/model_state_dict_initial"
-    model_path = f"{output_dir_path}/checkpoint/{exp}/model_state_dict"
+    model_path = f"{output_dir_path}/checkpoint/model_state_dict_{exp}"
     input_path = f"{input_dir_path}/rl"
     copyfile(initial_model_path, model_path)
     

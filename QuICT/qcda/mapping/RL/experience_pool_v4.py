@@ -16,12 +16,12 @@ from utility import *
 
 class ExperiencePool(object):
 
-    def __init__(self, max_capacity: int = 1000000, num_of_nodes: int = 150, graph_name: str = None, num_of_class: int = 43):
+    def __init__(self, max_capacity: int = 1000000, num_of_nodes: int = 150, graph_name: str = None, num_of_class: int = 43, num_of_swap_gates: int = 15):
         
         self._num_of_nodes = num_of_nodes
         self._max_capacity = max_capacity
         self._num_of_class = num_of_class
-
+        self._num_of_swap_gates = num_of_swap_gates
         num_of_neighgour = 5
         self._lock = Lock()
         self._idx = sharedctypes.Value('i', 0, lock = False)
@@ -31,7 +31,7 @@ class ExperiencePool(object):
         self._qubits_shm = shared_memory.SharedMemory(create = True, size = max_capacity * num_of_nodes * 2 * 4)
         self._action_probability_shm = shared_memory.SharedMemory(create = True, size = max_capacity * num_of_class * 8)
         self._value_shm = shared_memory.SharedMemory(create = True, size = max_capacity * 8)
-        
+        self._executed_gates_shm = shared_memory.SharedMemory(create = True, size = max_capacity * num_of_swap_gates * 4)
 
         self._label_list = np.ndarray(shape = (max_capacity), dtype = np.int32, buffer = self._label_shm.buf)
         self._num_list = np.ndarray(shape = (max_capacity), dtype = np.int32, buffer = self._num_shm.buf)
@@ -39,7 +39,7 @@ class ExperiencePool(object):
         self._qubits_list = np.ndarray(shape = (max_capacity, num_of_nodes, 2), dtype= np.int32, buffer = self._qubits_shm.buf)
         self._value_list = np.ndarray(shape = (max_capacity) , dtype = np.float, buffer = self._value_shm.buf)
         self._action_probability_list = np.ndarray(shape = (max_capacity, num_of_class) , dtype = np.float, buffer = self._action_probability_shm.buf)
-
+        self._executed_gates_list = np.ndarray(shape = (max_capacity, num_of_swap_gates), dtype = np.int32, buffer = self._executed_gates_shm.buf)
 
         self._train_idx_list = []
         self._evaluate_idx_list = []
@@ -82,6 +82,7 @@ class ExperiencePool(object):
         del self._qubits_list
         del self._value_list
         del self._action_probability_list 
+        del self._executed_gates_list
         
         self._label_shm.close()
         self._num_shm.close
@@ -89,6 +90,7 @@ class ExperiencePool(object):
         self._qubits_shm.close()
         self._value_shm.close()
         self._action_probability_shm.close()
+        self._executed_gates_shm.close()
 
     def unlink(self):
         self._label_shm.unlink()
@@ -97,8 +99,9 @@ class ExperiencePool(object):
         self._qubits_shm.unlink()
         self._value_shm.unlink()
         self._action_probability_shm.unlink()
+        self._executed_gates_shm.unlink()
 
-    def extend(self, adj: np.ndarray, qubits: np.ndarray, action_probability: np.ndarray, value: np.ndarray, circuit_size: np.ndarray, swap_label: np.ndarray, num: int = 20):
+    def extend(self, adj: np.ndarray, qubits: np.ndarray, action_probability: np.ndarray, value: np.ndarray, circuit_size: np.ndarray, swap_label: np.ndarray, num: int = 20, executed_gates: np.ndarray = None):
         self._lock.acquire() 
         try:
             if self._idx.value < self._max_capacity:
@@ -113,6 +116,8 @@ class ExperiencePool(object):
                 self._qubits_list[idx : end, :, :] = qubits[0 : input_end, :, :]
                 self._action_probability_list[idx : end, :] = action_probability[0 : input_end, :] 
                 self._value_list[idx : end] = value[0 : input_end]
+                if executed_gates is not None:
+                    self._executed_gates_list[idx : end, : ] = executed_gates[0:input_end, :]
                 self._idx.value += input_end
                 print(self._idx.value)
             else:
@@ -122,7 +127,7 @@ class ExperiencePool(object):
         
 
     
-    def push(self, adj: np.ndarray, qubits: np.ndarray, action_probability: np.ndarray, value: float = 0, circuit_size: int = 0, swap_label: int = 0): 
+    def push(self, adj: np.ndarray, qubits: np.ndarray, action_probability: np.ndarray, value: float = 0, circuit_size: int = 0, swap_label: int = 0, executed_gates: np.ndarray = None): 
         #print(self._idx.value)
         self._lock.acquire()
         if self._idx.value >= self._max_capacity:
@@ -135,6 +140,8 @@ class ExperiencePool(object):
             self._qubits_list[idx, :, :] = qubits
             self._action_probability_list[idx, :] = action_probability 
             self._value_list[idx] = value
+            if executed_gates is not None:
+                self._executed_gates_list[idx, :] = executed_gates
             self._idx.value += 1
         finally:
             self._lock.release()
@@ -176,6 +183,7 @@ class ExperiencePool(object):
         np.save(f"{file_path}/qubits_list.npy", self._qubits_list)
         np.save(f"{file_path}/value_list.npy", self._value_list)
         np.save(f"{file_path}/action_probability_list.npy", self._action_probability_list)
+        np.save(f"{file_path}/executed_gates_list.npy", self._executed_gates_list)
         with open(f"{file_path}/metadata.txt",'w') as f:
             f.write("%d"%(self._idx.value))
 

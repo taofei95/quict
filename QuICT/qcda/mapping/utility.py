@@ -236,6 +236,8 @@ class GNNConfig(object):
     maximum_circuit: int = 5000
     minimum_circuit: int = 50
     gamma: int = 0.7
+    selection_times: int = 40
+    sim_method: int = 0
     batch_size: int = 10
     ff_hidden_size: int = 128
     num_self_att_layers: int =4
@@ -251,6 +253,7 @@ class GNNConfig(object):
     feature_update: bool = False
     loss_c: float = 10
     mcts_c: float = 20
+    num_of_swap_gates: int = 15
     gat: bool = False
     d_embed: int = 64
     d_model: int = 64
@@ -263,8 +266,11 @@ class GNNConfig(object):
 
 
 
-default_config = GNNConfig(maximum_capacity = 200000, num_of_gates = 150, maximum_circuit = 1500, minimum_circuit = 200, batch_size = 256, ff_hidden_size = 128, num_self_att_layers=4, dropout = 0.5, value_head_size = 128, gamma = 0.9, 
-                       num_U2GNN_layers=2, learning_rate = 0.001, weight_decay = 1e-4, num_of_epochs = 1000, device = torch.device( "cuda"), graph_name = 'ibmq20',num_of_process = 10, feature_update = True, gat = False, n_gat = 2, mcts_c = 20, loss_c = 10 )
+default_config = GNNConfig(maximum_capacity = 200000, num_of_gates = 150, maximum_circuit = 1500, minimum_circuit = 200, batch_size = 256,
+                        ff_hidden_size = 128, num_self_att_layers=4, dropout = 0.5, value_head_size = 128, gamma = 0.7, 
+                        num_U2GNN_layers=2, learning_rate = 0.001, weight_decay = 1e-4, num_of_epochs = 1000, device = torch.device( "cuda"),
+                        graph_name = 'ibmq20',num_of_process = 10, feature_update = True, gat = False, n_gat = 2, mcts_c = 20, loss_c = 10,
+                        num_of_swap_gates = 15, sim_method = 2 ) 
 
 @dataclass
 class SharedMemoryName:
@@ -309,6 +315,17 @@ class Benchmark(Enum):
     REVLIB = 0
     RANDOM = 1
 
+small_benchmark = ("rd84_142",
+                   "adr4_197",
+                   "radd_250",
+                   "z4_268",
+                   "sym6_145",
+                   "misex1_241",
+                   "rd73_252",
+                   "cycle10_2_110",
+                   "square_root_7",
+                   "sqn_258",
+                   "rd84_253") 
 
 
     

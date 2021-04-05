@@ -1,7 +1,8 @@
 import os
 import sys
+from utility import SimMode
 from table_based_mcts import TableBasedMCTS
-
+from oracle_based_mcts import OracleBasedMCTS
 from typing import List, Tuple, Optional, Union, Dict
 
 from QuICT.tools.interface import *
@@ -61,12 +62,12 @@ def test_mapping(input_path: str, output_path: str, log_path: str,  num_of_qubit
     physical_qubit_num = num_of_qubits
 
     print(input_path)
-    mcts = TableBasedMCTS(coupling_graph =  "ibmq20", log_path = log_path)
+   # mcts = OracleBasedMCTS(coupling_graph =  "ibmq20", log_path = log_path, sim = SimMode.MAX, Gsim = 150, Nsim = 50, selection_times = 200, c = 0.5)
+    mcts = OracleBasedMCTS(coupling_graph =  "ibmq20", log_path = log_path, sim = SimMode.MAX, gamma = 0.9, num_of_swap_gates = 20 , Gsim = 50, Nsim =500, selection_times = 100, c = 2, sim_method = 1)
     mcts.search(logical_circuit = circuit, init_mapping = init_mapping)
     circuit_trans.extend(mcts.physical_circuit)
+    
 
-    print(circuit.circuit_size())
-    print(circuit_trans.circuit_size())
     with open(output_path, "w") as f:
         print(circuit.circuit_size(), file = f)
         print(circuit_trans.circuit_size(), file = f)
@@ -88,12 +89,15 @@ def test_mapping(input_path: str, output_path: str, log_path: str,  num_of_qubit
             elif gate.controls + gate.targets == 1:
                 print("target :%d  gate type:%d" % (gate.targ, gate.type()), file = f)
         print("——————————————————————————————")
+    return circuit.circuit_size(), circuit_trans.circuit_size(),circuit_trans.circuit_size()- circuit.circuit_size()
 
 if __name__ == "__main__":
     file_path = os.path.realpath(__file__)
     dir_path, file_name = os.path.split(file_path)
-    for file_name in small_benchmark:
-        input_path = f"{dir_path}/benchmark/QASM example/{file_name}.qasm"
-        output_path =  f"{dir_path}/benchmark/QASM example/output/{file_name}.test.output"
-        log_path = f"{dir_path}/benchmark/QASM example/output/{file_name}.test.log"
-        test_mapping(input_path, output_path, log_path, topology = topology, num_of_qubits = 20, init_mapping = [i for i in range(20)] )
+    log_path = f"{dir_path}/benchmark/log/test_sep_50_500_100_2.log"
+    with open(log_path, "a+") as f:
+        for file_name in small_benchmark:
+            input_path = f"{dir_path}/benchmark/QASM example/{file_name}.qasm"
+            output_path =  f"{dir_path}/benchmark/QASM example/output/{file_name}.test.output"
+            cs, tcs, sg =  test_mapping(input_path, output_path, log_path, topology = topology, num_of_qubits = 20, init_mapping = [i for i in range(20)] )
+            print([cs, tcs, sg], file = f)

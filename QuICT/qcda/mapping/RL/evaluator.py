@@ -13,22 +13,22 @@ from QuICT.qcda.mapping.utility import *
 from QuICT.qcda.mapping.coupling_graph import *
 from QuICT.qcda.mapping.random_circuit_generator import *
 
-small_benchmark = ("rd84_142",
-                   "adr4_197",
-                   "radd_250",
-                   "z4_268",
-                   "sym6_145",
-                   "misex1_241",
-                   "rd73_252",
-                   "cycle10_2_110",
-                   "square_root_7",
-                   "sqn_258",
-                   "rd84_253") 
+# small_benchmark = ("rd84_142",
+#                    "adr4_197",
+#                    "radd_250",
+#                    "z4_268",
+#                    "sym6_145",
+#                    "misex1_241",
+#                    "rd73_252",
+#                    "cycle10_2_110",
+#                    "square_root_7",
+#                    "sqn_258",
+#                    "rd84_253") 
 
 dir_path = "/home/shoulifu/QuICT/QuICT/qcda/mapping/"
 
 class Evaluator(object):
-    def __init__(self, coupling_graph: str = None,  config: GNNConfig = None,  max_gates: int = 1000, min_gates: int = 100, max_qubits: int = 20, min_qubits: int = 5, num_of_circuits: int = 5, benchmark: Benchmark = Benchmark.RANDOM):
+    def __init__(self, coupling_graph: str = None,  config: GNNConfig = None,  max_gates: int = 150, min_gates: int = 100, max_qubits: int = 20, min_qubits: int = 5, num_of_circuits: int = 5, benchmark: Benchmark = Benchmark.RANDOM):
         self._graph_name = coupling_graph
         self._coupling_graph = get_coupling_graph(coupling_graph)
         self._config = config
@@ -59,8 +59,9 @@ class Evaluator(object):
             for i, circuit in enumerate(self._circuits):
                 if mode == EvaluateMode.SEARCH:
                     res = mcts.search(logical_circuit = circuit, init_mapping = init_mapping)
+                    counter_res =  counter_mcts.search(logical_circuit = circuit, init_mapping = init_mapping)
                     self._res.append(res)
-                    f.write("%d  %d \n"%(res[0], res[1]))
+                    f.write("%d  %d %d \n"%(res[0], res[1], counter_res[1]))
                 
                 elif mode == EvaluateMode.PROB:
                     

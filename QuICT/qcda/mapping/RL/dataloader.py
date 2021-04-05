@@ -55,7 +55,24 @@ class DataLoader(object):
         """
         return self._num_of_class
 
+    def extend(self, adj: np.ndarray, qubits: np.ndarray, action_probability: np.ndarray, value: np.ndarray, circuit_size: np.ndarray, swap_label: np.ndarray, num: int = 20):
+        if self._idx < self._max_capacity:
+            end = min(self._idx + num, self._max_capacity)
+            idx = self._idx
+            input_end = end - self._idx
+            self._num_list[idx : end] = circuit_size[0 : input_end]
+            
+            self._label_list[idx : end] =  swap_label[0 : input_end]
 
+            self._adj_list[idx : end, :, :] = adj[0 : input_end, :, :]
+            self._qubits_list[idx : end, :, :] = qubits[0 : input_end, :, :]
+            self._action_probability_list[idx : end, :] = action_probability[0 : input_end, :] 
+            self._value_list[idx : end] = value[0 : input_end]
+            self._idx += input_end
+            print(self._idx)
+        else:
+            raise Exception("the experience pool is fullfilled")
+    
     def split_data(self, quota: float):
         print(self._idx)
         indices = np.random.permutation(range(self._idx))
@@ -77,6 +94,16 @@ class DataLoader(object):
         
         with open(f"{file_path}/metadata.txt",'r') as f:
             self._idx = int(f.readline())
+
+    def save_data(self, file_path: str):
+        np.save(f"{file_path}/label_list.npy", self._label_list)
+        np.save(f"{file_path}/num_list.npy", self._num_list)
+        np.save(f"{file_path}/adj_list.npy", self._adj_list)
+        np.save(f"{file_path}/qubits_list.npy", self._qubits_list)
+        np.save(f"{file_path}/value_list.npy", self._value_list)
+        np.save(f"{file_path}/action_probability_list.npy", self._action_probability_list)
+        with open(f"{file_path}/metadata.txt",'w') as f:
+            f.write("%d"%(self._idx))
 
     def get_batch_data(self, batch_size: int = 32):
         if isinstance(self._train_idx_list, list):

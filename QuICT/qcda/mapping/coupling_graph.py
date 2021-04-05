@@ -13,6 +13,9 @@ import numpy as np
 import networkx as nx
 import matplotlib.pyplot as plt
 
+from networkx.algorithms.shortest_paths.dense import reconstruct_path
+from networkx.algorithms.shortest_paths.dense import floyd_warshall_predecessor_and_distance
+
 from sklearn.manifold import MDS
 
 from QuICT.tools.interface import *
@@ -96,7 +99,10 @@ class CouplingGraph(object):
         GateBuilder.setGateType(GATE_ID['Swap']) 
         GateBuilder.setTargs([self._edges[idx][0],self._edges[idx][1]])
         return GateBuilder.getGate()
-        
+
+    def get_path(self, source: int, target: int): 
+        path = reconstruct_path(source, target, self._predecesors)
+        return path
 
     def edge_label(self, edge: SwapGate)-> int:
         """
@@ -194,7 +200,8 @@ class CouplingGraph(object):
         """
         Calculate the shortest path between every two vertices on the graph
         """
-        self._shortest_paths = nx.algorithms.shortest_paths.dense.floyd_warshall(G = self._coupling_graph)
+        self._predecesors, self._shortest_paths = floyd_warshall_predecessor_and_distance(G = self._coupling_graph)
+  
     def draw(self):
         """
         """ 

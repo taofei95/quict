@@ -30,6 +30,7 @@ from RL.dataloader import *
 from RL.trainer import *
 from RL.inference import *
 from utility import *
+from RL.rl_based_mcts import *
 
 from tensorboardX import SummaryWriter
 from torch.multiprocessing import Value, Pipe, Queue, SimpleQueue ,set_start_method
@@ -191,13 +192,13 @@ if __name__ == "__main__":
     output_dir_path = os.path.abspath(os.path.join(work_dir_path, "output"))
     log_dir_path = os.path.abspath(os.path.join(work_dir_path, "log"))
     tb_dir_path = os.path.abspath(os.path.join(work_dir_path, "tensorboard"))
-
-    exp = "test_small_data_extended"
+    initial = "test_small_data_extended"
+    exp = "test_small_data_extended_1"
     train_log_path = f"{log_dir_path}/train/train_{exp}.log"
     train_tb_path = f"{tb_dir_path}/train/train_{exp}"
     mcts_log_path = f"{log_dir_path}/mcts/mcts_{exp}.log"
     log_path = f"{log_dir_path}/{exp}.log"
-    initial_model_path = f"{output_dir_path}/checkpoint/model_state_dict_initial"
+    initial_model_path = f"{output_dir_path}/checkpoint/model_state_dict_{initial}"
     model_path = f"{output_dir_path}/checkpoint/model_state_dict_{exp}"
     input_path = f"{input_dir_path}/test"
 
@@ -205,12 +206,12 @@ if __name__ == "__main__":
     
     graph_name = "ibmq20"
     num_of_iterations = 5
-    num_of_circuits = 300
+    num_of_circuits = 200
     set_start_method("forkserver")
 
-    alpha_config = GNNConfig(maximum_capacity = 200000, num_of_gates = 150, maximum_circuit = 1500, minimum_circuit = 200, batch_size = 128, ff_hidden_size = 128, num_self_att_layers=4, dropout = 0.5, value_head_size = 128,
-                       num_U2GNN_layers=2, learning_rate = 0.001, weight_decay = 1e-4, num_of_epochs = 50, device = torch.device("cuda"), graph_name = 'ibmq20',num_of_process = 64, feature_update = True, gat = False, 
-                       mcts_c = 20, loss_c = 10, n_gat = 2)
+    alpha_config = GNNConfig(maximum_capacity = 400000, num_of_gates = 150, maximum_circuit = 1500, minimum_circuit = 200, batch_size = 128, ff_hidden_size = 128, num_self_att_layers=4, dropout = 0.5, value_head_size = 128,
+                       num_U2GNN_layers=2, learning_rate = 0.001, weight_decay = 1e-4, num_of_epochs = 50, device = torch.device("cuda"), graph_name = 'ibmq20',num_of_process = 40, feature_update = True, gat = False, gamma = 0.7,
+                       mcts_c = 20, loss_c = 5, n_gat = 2)
     try:
         alphaQ = AlphaQuts(graph_name = graph_name, config = alpha_config, log_path = log_path, 
                       train_log_path = train_log_path, train_tb_path = train_tb_path, 
