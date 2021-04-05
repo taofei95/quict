@@ -58,6 +58,65 @@ class Merged:
         return self.deg < other.deg
 
 
-def is_not_identity(mat) -> bool:
-    n = mat.shape[0]
-    return not np.all(mat == np.eye(n, dtype=bool))
+def f2_prod(a: np.ndarray, b: np.ndarray) -> np.ndarray:
+    # n = a.shape[0]
+    # c = np.zeros(shape=(n, n), dtype=bool)
+    # b_ = b.T.copy()
+    # for i in range(n):
+    #     for j in range(n):
+    #         for k in range(n):
+    #             c[i, j] = np.logical_xor.reduce(a[i, :] & b_[j, :])
+    #             # c[i, j] = np.logical_xor.reduce(a[i, :] & b[:, j])
+    # return c
+    a_ = np.array(a, dtype=int)
+    b_ = np.array(b, dtype=int)
+    c_ = a_ @ b_
+    c_ %= 2
+    c = np.array(c_, dtype=bool)
+    return c
+
+
+def f2_half_gaussian_elimination(mat_: np.ndarray) -> np.ndarray:
+    mat: np.ndarray = mat_.copy()
+    n = min(mat.shape[0], mat.shape[1])
+    for i in range(n):
+        if not mat[i, i]:
+            for j in range(i + 1, mat.shape[0]):
+                if mat[j, i]:
+                    mat[[i, j], :] = mat[[j, i], :]
+                    break
+        if mat[i, i]:
+            for j in range(i + 1, mat.shape[0]):
+                if mat[j, i]:
+                    mat[j, :] ^= mat[i, :]
+    return mat
+
+
+def f2_rank(mat_: np.ndarray) -> int:
+    mat = f2_half_gaussian_elimination(mat_)
+    rk = 0
+    n = min(mat.shape[0], mat.shape[1])
+    for i in range(n):
+        if mat[i, i]:
+            rk += 1
+    return rk
+
+
+def f2_inverse(mat_: np.ndarray) -> np.ndarray:
+    n = mat_.shape[0]
+    aug = np.empty(shape=(n, 2 * n), dtype=bool)
+    aug[:, :n] = mat_
+    aug[:, n:] = np.eye(n, dtype=bool)
+
+    # gaussian elimination
+    for i in range(n):
+        if not aug[i, i]:
+            for k in range(i + 1, n):
+                if aug[k, i]:
+                    aug[[k, i], :] = aug[[i, k], :]
+                    break
+        for k in range(n):
+            if i != k and aug[k, i]:
+                aug[k, :] ^= aug[i, :]
+    ret = aug[:, n:].copy()
+    return ret
