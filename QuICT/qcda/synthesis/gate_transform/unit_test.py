@@ -15,6 +15,13 @@ def test_gate_transform():
     for i in range(2, 3):
         circuit = Circuit(i)
         X | circuit
+        Rz(np.pi / 4) | circuit(0)
+        CX | circuit
+        # circuit.random_append(1, [GATE_ID["Rx"]])
+        Rx(np.pi / 3.231) | circuit(1)
+        Rx(np.pi / 4.3123) | circuit(0)
+        CX | circuit
+        Rx(np.pi / 7.3123) | circuit(0)
         gateSet = GateTransform(circuit)
         B = GateSet(circuit, with_copy=False)
         assert gateSet.equal(B)

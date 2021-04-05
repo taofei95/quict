@@ -134,7 +134,7 @@ class GateBuilderModel(object):
         Return:
             BasicGate: the gate with parameters set in the builder
         """
-        gate = self._inner_generate_gate()
+        gate = self._inner_generate_gate().copy()
         return self._inner_complete_gate(gate)
 
     def _inner_generate_gate(self):

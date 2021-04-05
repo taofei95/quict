@@ -65,10 +65,10 @@ def _zyzRule(gate):
         unitary[:] /= np.sqrt(det)
     if abs(unitary[0, 0]) > eps:
         beta_plus_delta = angle(unitary[1, 1] / unitary[0, 0])
-        gamma = arccos(abs(2 * unitary[0, 0] * unitary[1, 1] - 1))
+        gamma = arccos((2 * unitary[0, 0] * unitary[1, 1] - 1).real)
     if abs(unitary[0, 1]) > eps:
         beta_dec_delta = angle(-unitary[1, 0] / unitary[0, 1])
-        gamma = arccos(abs(2 * unitary[0, 1] * unitary[1, 0] + 1))
+        gamma = arccos((2 * unitary[0, 1] * unitary[1, 0] + 1).real)
     beta = (beta_plus_delta + beta_dec_delta) / 2
     delta = beta_plus_delta - beta
     gateSet = GateSet()
