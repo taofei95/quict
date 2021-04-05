@@ -1,6 +1,5 @@
 import numpy as np
 import random
-from ..cnot_without_ancillae import CnotWithoutAncillae
 from ..block_ldu_decompose import BlockLDUDecompose
 from ..utility import *
 
@@ -91,7 +90,7 @@ def test_ldu_remapping():
 
 
 def test_block_ldu():
-    rnd = 300
+    rnd = 500
     for _ in range(rnd):
         n = random.randint(2, 200)
         mat_ = f2_random_invertible_matrix_gen(n)

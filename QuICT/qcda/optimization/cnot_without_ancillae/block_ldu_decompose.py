@@ -54,14 +54,18 @@ class BlockLDUDecompose:
         n = mat_.shape[0]
         if n <= 1:
             raise Exception("LDU decomposition is designed for matrix whose size >= 2.")
+
         remapping = cls.remapping_select(mat_)
         mat: np.ndarray = mat_.copy()[remapping]
+
         s_size = n // 2
         t_size = n - s_size
+
         a = mat[:s_size, :s_size]
         b = mat[:s_size, s_size:]
         c = mat[s_size:, :s_size]
         d = mat[s_size:, s_size:]
+
         ai = f2_inverse(a)
         c_ai = f2_matmul(c, ai)
         c_ai_b = f2_matmul(c_ai, b)
