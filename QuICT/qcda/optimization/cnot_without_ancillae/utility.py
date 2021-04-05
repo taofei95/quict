@@ -58,16 +58,7 @@ class Merged:
         return self.deg < other.deg
 
 
-def f2_prod(a: np.ndarray, b: np.ndarray) -> np.ndarray:
-    # n = a.shape[0]
-    # c = np.zeros(shape=(n, n), dtype=bool)
-    # b_ = b.T.copy()
-    # for i in range(n):
-    #     for j in range(n):
-    #         for k in range(n):
-    #             c[i, j] = np.logical_xor.reduce(a[i, :] & b_[j, :])
-    #             # c[i, j] = np.logical_xor.reduce(a[i, :] & b[:, j])
-    # return c
+def f2_matmul(a: np.ndarray, b: np.ndarray) -> np.ndarray:
     a_ = np.array(a, dtype=int)
     b_ = np.array(b, dtype=int)
     c_ = a_ @ b_

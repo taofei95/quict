@@ -25,12 +25,14 @@ class BlockLDUDecompose:
         rk = 1
         for i in range(1, n):
             selected.append(i)
-            sub_mat: np.ndarray = mat[[selected], :l_size]
+            sub_mat: np.ndarray = mat[[selected], :l_size][0]  # shape manipulate
             if len(selected) > f2_rank(sub_mat):
                 unselected.append(selected.pop())
             else:
                 rk += 1
                 if rk == l_size:
+                    for j in range(i + 1, n):
+                        selected.append(j)
                     break
         selected.extend(unselected)
         return selected
@@ -49,30 +51,37 @@ class BlockLDUDecompose:
         """
 
         n = mat_.shape[0]
-        if n == 1:
-            raise Exception("LDU decomposition is designed for matrix whose size > 2.")
+        if n <= 1:
+            raise Exception("LDU decomposition is designed for matrix whose size >= 2.")
         remapping = cls.remapping_select(mat_)
-        mat: np.ndarray = mat_[remapping].copy()
-        l_size = n // 2
-        r_size = n - l_size
-        a = mat[:l_size, :l_size]
-        b = mat[:l_size, l_size:]
-        c = mat[l_size:, :l_size]
-        d_ = mat[l_size:, l_size:]
-        a_inv = f2_inverse(a)
-        c_a_inv = f2_prod(c, a_inv)
-        c_a_inv_b = f2_prod(c_a_inv, b)
-        a_inv_b = f2_prod(a_inv, b)
-        l_ = np.block([
-            [np.eye(l_size, dtype=bool), np.zeros(shape=(l_size, r_size), dtype=bool)],
-            [c_a_inv, np.eye(r_size, dtype=bool)]
-        ])
-        d_ = np.block([
-            [a, np.zeros(shape=(l_size, r_size), dtype=bool)],
-            [np.zeros(shape=(r_size, l_size), dtype=bool), d_ - c_a_inv_b]
-        ])
-        u_ = np.block([
-            [np.eye(l_size, dtype=bool), a_inv_b],
-            [np.zeros(shape=(r_size, l_size), dtype=bool), np.eye(r_size, dtype=bool)]
-        ])
-        return l_, d_, u_, remapping
+        mat: np.ndarray = mat_.copy()[remapping]
+        s_size = n // 2
+        t_size = n - s_size
+        a = mat[:s_size, :s_size]
+        b = mat[:s_size, s_size:]
+        c = mat[s_size:, :s_size]
+        d = mat[s_size:, s_size:]
+        ai = f2_inverse(a)
+        c_ai = f2_matmul(c, ai)
+        c_ai_b = f2_matmul(c_ai, b)
+        ai_b = f2_matmul(ai, b)
+
+        lower = np.zeros(shape=(n, n), dtype=bool)
+        diagonal = np.zeros(shape=(n, n), dtype=bool)
+        upper = np.zeros(shape=(n, n), dtype=bool)
+
+        # lower
+        lower[:s_size, :s_size] = np.eye(s_size, dtype=bool)
+        lower[s_size:, s_size:] = np.eye(t_size, dtype=bool)
+        lower[s_size:, :s_size] = c_ai
+
+        # diagonal
+        diagonal[:s_size, :s_size] = a
+        diagonal[s_size:, s_size:] = d ^ c_ai_b
+
+        # upper
+        upper[:s_size, :s_size] = np.eye(s_size, dtype=bool)
+        upper[s_size:, s_size:] = np.eye(t_size, dtype=bool)
+        upper[:s_size, s_size:] = ai_b
+
+        return lower, diagonal, upper, remapping
