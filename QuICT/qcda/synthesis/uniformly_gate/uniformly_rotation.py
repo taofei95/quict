@@ -7,7 +7,7 @@
 import numpy as np
 
 from .._synthesis import Synthesis
-from QuICT.core import GateBuilder, GATE_ID
+from QuICT.core import GATE_ID, GateBuilder, CompositeGate
 
 def uniformlyRotation(low, high, z, gateType, mapping):
     """ synthesis uniformlyRotation gate, bits range [low, high)
@@ -18,13 +18,13 @@ def uniformlyRotation(low, high, z, gateType, mapping):
         gateType(int): the gateType (Rz or Ry)
         mapping(list<int>): the qubit order of gate
     Returns:
-        the synthesis result
+        gateSet: the synthesis gate list
     """
     if low + 1 == high:
         GateBuilder.setGateType(gateType)
         GateBuilder.setTargs(mapping[low])
         GateBuilder.setPargs(float(z[0]))
-        return [GateBuilder.getGate()]
+        return CompositeGate(GateBuilder.getGate())
     length = len(z) // 2
     GateBuilder.setGateType(GATE_ID["CX"])
     GateBuilder.setTargs(mapping[high - 1])
@@ -42,62 +42,44 @@ def uniformlyRotation(low, high, z, gateType, mapping):
     gates.append(gateB)
     return gates
 
-class uniformlyRyGate(Synthesis):
+def uniformlyRyDecomposition(angle_list, mapping = None):
     """ uniformRyGate
 
     http://cn.arxiv.org/abs/quant-ph/0504100v1 Fig4 a)
+
+    Args:
+        angle_list(list<float>): the angles of Ry Gates
+        mapping(list<int>) : the mapping of gates order
+    Returns:
+        gateSet: the synthesis gate list
     """
+    pargs = list(angle_list)
+    n = int(np.round(np.log2(len(pargs)))) + 1
+    if mapping is None:
+        mapping = [i for i in range(n)]
+    if 1 << (n - 1) != len(pargs):
+        raise Exception("the number of parameters unmatched.")
+    return uniformlyRotation(0, n, pargs, GATE_ID['Ry'], mapping)
 
-    def __call__(self, angle_list):
-        """
-        Args:
-            angle_list(list<float>): the angles of Ry Gates
-        Returns:
-            uniformlyRyGate: model filled by the parameter angle_list.
-        """
-        self.pargs = list(angle_list)
-        self.targets = int(np.round(np.log2(len(self.pargs)))) + 1
-        return self
+uniformlyRy = Synthesis(uniformlyRyDecomposition)
 
-    def build_gate(self, mapping = None):
-        """ overloaded the function "build_gate"
-
-        """
-        n = self.targets
-        if mapping is None:
-            mapping = [i for i in range(n)]
-        if 1 << (n - 1) != len(self.pargs):
-            raise Exception("the number of parameters unmatched.")
-        return uniformlyRotation(0, n, self.pargs, GATE_ID['Ry'], mapping)
-
-uniformlyRy = uniformlyRyGate()
-
-class uniformlyRzGate(Synthesis):
+def uniformlyRzDecomposition(angle_list, mapping = None):
     """ uniformRzGate
 
     http://cn.arxiv.org/abs/quant-ph/0504100v1 Fig4 a)
+
+    Args:
+        angle_list(list<float>): the angles of Rz Gates
+        mapping(list<int>) : the mapping of gates order
+    Returns:
+        gateSet: the synthesis gate list
     """
+    pargs = list(angle_list)
+    n = int(np.round(np.log2(len(pargs)))) + 1
+    if mapping is None:
+        mapping = [i for i in range(n)]
+    if 1 << (n - 1) != len(pargs):
+        raise Exception("the number of parameters unmatched.")
+    return uniformlyRotation(0, n, pargs, GATE_ID['Rz'], mapping)
 
-    def __call__(self, angle_list):
-        """
-        Args:
-            angle_list(list<float>): the angles of Rz Gates
-        Returns:
-            uniformlyRzGate: model filled by the parameter angle_list.
-        """
-        self.pargs = list(angle_list)
-        self.targets = int(np.round(np.log2(len(self.pargs)))) + 1
-        return self
-
-    def build_gate(self, mapping = None):
-        """ overloaded the function "build_gate"
-
-        """
-        n = self.targets
-        if mapping is None:
-            mapping = [i for i in range(n)]
-        if 1 << (n - 1) != len(self.pargs):
-            raise Exception("the number of parameters unmatched.")
-        return uniformlyRotation(0, n, self.pargs, GATE_ID['Rz'], mapping)
-
-uniformlyRz = uniformlyRzGate()
+uniformlyRz = Synthesis(uniformlyRzDecomposition)
