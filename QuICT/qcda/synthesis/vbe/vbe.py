@@ -439,14 +439,13 @@ class VBEAdderModModel(VBEModel):
     """ a circuit calculate (a+b) mod N.
     N are inherently designed in the circuit.
 
-    (a,b,c=0,overflow=0,t=0,N) -> (a,b'=(a+b)%N,c=0,overflow',t=0,N)
+    (a,b,c=0,overflow=0,t=0,N) -> (a,b'=(a+b)%N,c=0,overflow=0,t=0,N)
 
     Quregs:
         a:          the qureg stores a, length is n,
         b:          the qureg stores b, length is n,
         c:          the clean ancillary qubits, length is n,
-        overflow:   the dirty ancillary qubits, length is 1,
-                         flips when overflows,
+        overflow:   the clean ancillary qubits, length is 1,
         t:          the clean ancillary qubits, length is 1.
         N:          the qureg stores N, length is n,
 
