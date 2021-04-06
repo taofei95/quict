@@ -9,6 +9,12 @@ import numpy as np
 from QuICT.core import CompositeGate, CX, Ry, Rz, Unitary
 from .._synthesis import Synthesis
 
+# Magic basis
+B = (1.0 / np.sqrt(2)) * np.array([[1, 1j, 0, 0],
+                                   [0, 0, 1j, 1],
+                                   [0, 0, 1j, -1],
+                                   [1, -1j, 0, 0]], dtype=complex)
+
 
 class CartanKAKDecomposition:
     """Cartan KAK Decomposition in SU(4)
@@ -38,7 +44,33 @@ class CartanKAKDecomposition:
         self.matrix = matrix
         self.eps = eps
 
-    def tensor_decompose(self, matrix):
+    @staticmethod
+    def diagonalize_unitary_symmetric(matrix):
+        """
+        Diagonalize unitary symmetric matrix with real orthogonal matrix
+        TODO: this part is taken from qiskit, the FIXME should be removed.
+
+        Args:
+            matrix(np.array): unitary symmetric matrix to be diagonalized
+        
+        Returns:
+            Tuple[np.array, np.array]: Eigenvalues and eigenvectors
+        """
+        M2 = matrix.copy()
+        # D, P = la.eig(M2)  # this can fail for certain kinds of degeneracy
+        for i in range(100):  # FIXME: this randomized algorithm is horrendous
+            state = np.random.default_rng(i)
+            M2real = state.normal() * M2.real + state.normal() * M2.imag
+            _, P = np.linalg.eigh(M2real)
+            D = P.T.dot(M2).dot(P).diagonal()
+            if np.allclose(P.dot(np.diag(D)).dot(P.T), M2, rtol=1.0e-13, atol=1.0e-13):
+                break
+        else:
+            raise ValueError("CartanKAKDecomposition: failed to diagonalize M2")
+        return D, P
+
+    @staticmethod
+    def tensor_decompose(matrix):
         """
         Decompose U∈SU(2)⊗SU(2) to U0, U1∈SU(2), s.t. U = U0⊗U1
 
@@ -82,12 +114,6 @@ class CartanKAKDecomposition:
         U /= np.linalg.det(U) ** (0.25)
         eps = self.eps
 
-        # Magic basis
-        B = (1.0 / np.sqrt(2)) * np.array([[1, 1j, 0, 0],
-                                           [0, 0, 1j, 1],
-                                           [0, 0, 1j, -1],
-                                           [1, -1j, 0, 0]], dtype=complex)
-
         # Some preparation derived from Cartan involution
         Up = B.T.conj().dot(U).dot(B)
         M2 = Up.T.dot(Up)
@@ -97,17 +123,7 @@ class CartanKAKDecomposition:
         # Since M2 is a symmetric unitary matrix, we can diagonalize its real and
         # imaginary part simultaneously. That is, ∃ P∈SO(4), s.t. M2 = P.D.P^T, 
         # where D is diagonal with unit-magnitude elements.
-        # TODO: this part is taken from qiskit, the FIXME should be removed.
-        # D, P = la.eig(M2)  # this can fail for certain kinds of degeneracy
-        for i in range(100):  # FIXME: this randomized algorithm is horrendous
-            state = np.random.default_rng(i)
-            M2real = state.normal() * M2.real + state.normal() * M2.imag
-            _, P = np.linalg.eigh(M2real)
-            D = P.T.dot(M2).dot(P).diagonal()
-            if np.allclose(P.dot(np.diag(D)).dot(P.T), M2, rtol=1.0e-13, atol=1.0e-13):
-                break
-        else:
-            raise ValueError("TwoQubitWeylDecomposition: failed to diagonalize M2")
+        D, P = self.diagonalize_unitary_symmetric(M2)
 
         # Calculated D is usually in U(4) instead of SU(4), therefore d[3] is reset 
         # so that D is now in SU(4)

@@ -1,12 +1,12 @@
-# import sys
-# sys.path.append('/mnt/e/ICT/QuICT')
+import sys
+sys.path.append('/mnt/e/ICT/QuICT')
 
 import numpy as np
 
 from QuICT.core import Circuit, Unitary, Ry, Rz, CX
 from QuICT.algorithm.synthetical_unitary import SyntheticalUnitary
 from QuICT.qcda.synthesis.unitary_transform.two_qubit_transform import CartanKAKDecomposition, KAK
-# from QuICT.qcda.synthesis.unitary_transform.two_qubit_diagonal_transform import KAKDiag
+from QuICT.qcda.synthesis.unitary_transform.two_qubit_diagonal_transform import KAKDiag
 
 
 def generate_unitary(n):
@@ -34,8 +34,7 @@ def test_tensor_decompose():
     U0 = generate_unitary(2)
     U1 = generate_unitary(2)
     U = np.kron(U0, U1)
-    CKD = CartanKAKDecomposition(U)
-    CKD.tensor_decompose(U)
+    CartanKAKDecomposition.tensor_decompose(U)
 
 
 def test_CKD():
@@ -84,15 +83,20 @@ def test_two_bit_transform():
         assert np.allclose(phase, phase[0, 0] * np.eye(4))
 
 
-# def test_two_qubit_diagonal_transform():
-#     for _ in range(1):
-#         U = generate_unitary(4)
-#         U /= np.linalg.det(U) ** 0.25
-#         KAKDiag(U)
+def test_two_qubit_diagonal_transform():
+    for _ in range(200):
+        U = generate_unitary(4)
+        U /= np.linalg.det(U) ** 0.25
+        circuit = Circuit(2)
+        KAKDiag(U) | circuit
+
+        Ucir = SyntheticalUnitary.run(circuit)
+        phase = U.dot(np.linalg.inv(Ucir))
+        assert np.allclose(phase, phase[0, 0] * np.eye(4))
 
 
 if __name__ == '__main__':
     test_tensor_decompose()
     test_CKD()
     test_two_bit_transform()
-    # test_two_qubit_diagonal_transform()
+    test_two_qubit_diagonal_transform()
