@@ -5,14 +5,14 @@ from ..edge_coloring import *
 
 
 def test_max_deg_even():
-    rnd = 100
+    rnd = 200
     for _ in range(rnd):
         bipartite = get_bipartite(random.randint(100, 200))
         assert bipartite.get_max_degree() % 2 == 0
 
 
 def test_bipartite():
-    rnd = 70
+    rnd = 200
     for _ in range(rnd):
         bipartite = get_bipartite(random.randint(100, 200))
         _, _, bipartite_regular = EdgeColoring.get_regular(bipartite)
@@ -22,14 +22,14 @@ def test_bipartite():
 
 
 def test_regularity():
-    rnd = 70
+    rnd = 200
     for _ in range(rnd):
         bipartite = get_bipartite(random.randint(100, 200))
         _, _, bipartite_regular = EdgeColoring.get_regular(bipartite)
         mx_deg = bipartite_regular.get_max_degree()
         assert mx_deg == bipartite.get_max_degree()
-        for i in bipartite.nodes:
-            assert mx_deg <= 2 * bipartite_regular.get_degree(i)
+        # for i in bipartite.nodes:
+        #     assert mx_deg <= 2 * bipartite_regular.get_degree(i)
         deg = bipartite_regular.get_any_degree()
         for i in bipartite_regular.left:
             assert deg == bipartite_regular.get_degree(i)
@@ -38,7 +38,7 @@ def test_regularity():
 
 
 def test_remap():
-    rnd = 50
+    rnd = 200
     for _ in range(rnd):
         size = random.randint(100, 200)
         bipartite = get_bipartite(size=size)
@@ -48,7 +48,7 @@ def test_remap():
 
 
 def test_matching():
-    rnd = 50
+    rnd = 200
     for _ in range(rnd):
         bipartite = get_bipartite(random.randint(100, 200))
         _, _, bipartite_regular = EdgeColoring.get_regular(bipartite)
