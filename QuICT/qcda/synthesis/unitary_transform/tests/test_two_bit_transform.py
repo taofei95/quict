@@ -6,6 +6,7 @@ import numpy as np
 from QuICT.core import Circuit, Unitary, Ry, Rz, CX
 from QuICT.algorithm.synthetical_unitary import SyntheticalUnitary
 from QuICT.qcda.synthesis.unitary_transform.two_qubit_transform import CartanKAKDecomposition, KAK
+# from QuICT.qcda.synthesis.unitary_transform.two_qubit_diagonal_transform import KAKDiag
 
 
 def generate_unitary(n):
@@ -66,40 +67,32 @@ def test_CKD():
         U /= np.linalg.det(U) ** 0.25
         Usyn = KL.dot(matexp).dot(KR)
         # print(U.dot(np.linalg.inv(Usyn)))
-        unitary = SyntheticalUnitary.run(circuit, showSU=True)
+        Ucir = SyntheticalUnitary.run(circuit, showSU=True)
 
-        assert np.allclose(matexp.dot(np.linalg.inv(unitary)), np.eye(4)) \
-               or np.allclose(matexp.dot(np.linalg.inv(unitary)), 1j * np.eye(4))
+        assert np.allclose(matexp.dot(np.linalg.inv(Ucir)), np.eye(4)) \
+               or np.allclose(matexp.dot(np.linalg.inv(Ucir)), 1j * np.eye(4))
 
 
 def test_two_bit_transform():
     for _ in range(200):
-        mat1 = generate_unitary(4)
+        U = generate_unitary(4)
         circuit = Circuit(2)
-        KAK(mat1) | circuit
+        KAK(U) | circuit
 
-        mat2 = SyntheticalUnitary.run(circuit)
-        mat3 = np.linalg.inv(mat2)
-        mat4 = mat1 @ mat3
-        factor = mat1[0, 0] / mat2[0, 0]
-        for i in range(4):
-            for j in range(4):
-                if i == j:
-                    assert np.isclose(mat4[i, j], mat4[0, 0])
-                else:
-                    assert np.isclose(mat4[i, j], 0.0)
-                assert np.isclose(mat1[i, j] / mat2[i, j], factor)
+        Ucir = SyntheticalUnitary.run(circuit)
+        phase = U.dot(np.linalg.inv(Ucir))
+        assert np.allclose(phase, phase[0, 0] * np.eye(4))
 
-        mat5 = mat2 * factor
-        assert np.allclose(mat5, mat1)
 
-        # assert np.allclose(mat3.dot(np.linalg.inv(mat2)), np.eye(4)) \
-        #        or np.allclose(mat3.dot(np.linalg.inv(mat2)), -1j * np.eye(4))
-
-        # assert np.allclose(-1j * mat3, mat1) or np.allclose(mat3, mat1)
+# def test_two_qubit_diagonal_transform():
+#     for _ in range(1):
+#         U = generate_unitary(4)
+#         U /= np.linalg.det(U) ** 0.25
+#         KAKDiag(U)
 
 
 if __name__ == '__main__':
     test_tensor_decompose()
     test_CKD()
     test_two_bit_transform()
+    # test_two_qubit_diagonal_transform()

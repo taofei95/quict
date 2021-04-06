@@ -2,10 +2,11 @@
 Decomposition of SU(4) with Cartan KAK Decomposition
 """
 
-import numpy as np
-import copy
 from typing import *
-from QuICT.core import Circuit, Unitary, Ry, Rz, CX, BasicGate
+
+import numpy as np
+
+from QuICT.core import CompositeGate, CX, Ry, Rz, Unitary
 from .._synthesis import Synthesis
 
 
@@ -131,72 +132,52 @@ class CartanKAKDecomposition:
         self.KR0, self.KR1 = self.tensor_decompose(KR)
 
 
-class TwoQubitTransform(Synthesis):
+def TwoQubitTransform(matrix, eps=1e-15):
     """
     Decompose a matrix U∈SU(4) with Cartan KAK Decomposition to 
     a circuit, which contains only 1-qubit gates and CNOT gates.
+    The decomposition of Exp(i(a XX + b YY + c ZZ)) may vary a global phase.
+
+    Args:
+        matrix(np.array): 4*4 unitary matrix to be decomposed
+        eps(float, optional): Eps of decomposition process
+    
+    Returns:
+        CompositeGate: Decomposed gates.
 
     Reference:
-        arxiv.org/abs/0806.4015
-        arxiv.org/abs/quant-ph/0308006
+        [1] arxiv.org/abs/0806.4015
+        [2] arxiv.org/abs/quant-ph/0308006
     """
 
-    def __call__(self, matrix, eps=1e-15):
-        """
-        give parameters to the KAK
+    assert matrix.shape == (4, 4), \
+        ValueError("TwoQubitTransform: Input must be a 4*4 matrix.")
+    assert np.allclose(matrix.T.conj().dot(matrix), np.eye(4)), \
+        ValueError("TwoQubitTransform: Input must be a unitary matrix.")
 
-        Args:
-            matrix(np.array): 4*4 unitary matrix to be decomposed
-            eps(float, optional): Eps of decomposition process
-        """
-        assert matrix.shape == (4, 4), \
-            ValueError("TwoQubitTransform: Input must be a 4*4 matrix.")
-        assert np.allclose(matrix.T.conj().dot(matrix), np.eye(4)), \
-            ValueError("TwoQubitTransform: Input must be a unitary matrix.")
-        self.pargs = [matrix, eps]
-        return self
+    CKD = CartanKAKDecomposition(matrix, eps)
+    CKD.decompose()
 
-    def build_gate(
-            self
-    ) -> Sequence[BasicGate]:
-        """
-        Final process after the Cartan KAK Decomposition, which is taken from [1].
-        The decomposition of Exp(i(a XX + b YY + c ZZ)) may vary a global phase.
-
-        Reference:
-            [1] arxiv.org/abs/quant-ph/0308006
-
-        Returns:
-            Sequence[BasicGate]: Decomposed gates.
-        """
-        matrix = self.pargs[0]
-        eps = self.pargs[1]
-
-        CKD = CartanKAKDecomposition(matrix, eps)
-        CKD.decompose()
-
-        KL0 = CKD.KL0.dot(Rz(-np.pi / 2).matrix.reshape(2, 2))
-        KL1 = CKD.KL1
-        KR0 = CKD.KR0
-        KR1 = Rz(np.pi / 2).matrix.reshape(2, 2).dot(CKD.KR1)
-        circuit = Circuit(2)
+    KL0 = CKD.KL0.dot(Rz(-np.pi / 2).matrix.reshape(2, 2))
+    KL1 = CKD.KL1
+    KR0 = CKD.KR0
+    KR1 = Rz(np.pi / 2).matrix.reshape(2, 2).dot(CKD.KR1)
+    gates = CompositeGate()
+    with gates:
         # @formatter:off
-        Unitary(list(KR0.flatten())) | circuit(0)
-        Unitary(list(KR1.flatten())) | circuit(1)
-        CX                           | circuit([1, 0])
-        Rz(np.pi / 2 - 2 * CKD.c)    | circuit(0)
-        Ry(np.pi / 2 - 2 * CKD.a)    | circuit(1)
-        CX                           | circuit([0, 1])
-        Ry(2 * CKD.b - np.pi / 2)    | circuit(1)
-        CX                           | circuit([1, 0])
-        Unitary(list(KL0.flatten())) | circuit(0)
-        Unitary(list(KL1.flatten())) | circuit(1)
+        Unitary(KR0)                & 0
+        Unitary(KR1)                & 1
+        CX                          & [1, 0]
+        Rz(np.pi / 2 - 2 * CKD.c)   & 0
+        Ry(np.pi / 2 - 2 * CKD.a)   & 1
+        CX                          & [0, 1]
+        Ry(2 * CKD.b - np.pi / 2)   & 1
+        CX                          & [1, 0]
+        Unitary(KL0)                & 0
+        Unitary(KL1)                & 1
         # @formatter:on
 
-        gates = copy.deepcopy(circuit.gates)
-        del circuit
-
-        return gates
+    return gates
 
 
-KAK = TwoQubitTransform()
+KAK = Synthesis(TwoQubitTransform)
