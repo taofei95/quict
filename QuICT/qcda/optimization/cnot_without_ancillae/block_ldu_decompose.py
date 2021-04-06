@@ -15,7 +15,8 @@ class BlockLDUDecompose:
             mat_(np.ndarray): Boolean matrix to be decomposed
 
         Returns:
-            List[int]: Row reordering args.
+            List[int]: Row reordering args. The remapping ensures that if selected rows
+                are in the upper part before selecting, their locations won't be changed.
         """
         mat = mat_.copy()
         n = mat.shape[0]
@@ -35,8 +36,26 @@ class BlockLDUDecompose:
                     break
             else:
                 unselected.append(selected.pop())
-        selected.extend(unselected)
-        return selected
+
+        selected_part2 = []
+        swap_flag = [True for _ in range(s_size)]
+        for i in range(s_size):
+            if selected[i] < s_size:
+                swap_flag[selected[i]] = False
+            else:
+                selected_part2.append(selected[i])
+
+        remapping = [i for i in range(n)]
+
+        cur_part2_ptr = 0
+        for i in range(s_size):
+            if swap_flag[i]:
+                x = i
+                y = selected_part2[cur_part2_ptr]
+                remapping[x], remapping[y] = remapping[y], remapping[x]
+                cur_part2_ptr += 1
+
+        return remapping
 
     @classmethod
     def run(cls, mat_: np.ndarray) \

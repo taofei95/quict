@@ -4,45 +4,14 @@ from typing import *
 from .utility import *
 from .graph import *
 from .edge_coloring import EdgeColoring
-
-
-def test_bipartite_construction(
-        bipartite: Bipartite,
-        mat: np.ndarray,
-        is_lower_triangular: bool
-) -> bool:
-    def has_edge(_b: Bipartite, s: int, t: int) -> bool:
-        eid = _b.head[s]
-        while eid != -1:
-            edge = _b.edges[eid]
-            if edge.end == t:
-                return True
-            eid = edge.next
-        return False
-
-    n = mat.shape[0]
-    s_size = n // 2
-    t_size = n - s_size
-
-    if is_lower_triangular:
-        for j in range(s_size):
-            for i in range(t_size):
-                if mat[i + s_size, j] and (not has_edge(bipartite, j, i + s_size)):
-                    return False
-    else:
-        for j in range(t_size):
-            for i in range(s_size):
-                if mat[i, j + s_size] and (not has_edge(bipartite, j, i + t_size)):
-                    return False
-
-    return True
+from .block_ldu_decompose import BlockLDUDecompose
 
 
 class CnotWithoutAncillae:
 
     @classmethod
     def matrix_run(cls, mat: np.ndarray) \
-            -> List[List[Tuple[int, int]]]:
+            -> List[List[List[int]]]:
         """
         Get parallel row elimination of a boolean invertible matrix.
 
@@ -50,19 +19,131 @@ class CnotWithoutAncillae:
             mat (np.ndarray): A boolean invertible matrix
 
         Returns:
-            List[List[Tuple[int, int]]]: Parallel row elimination. In each depth level there are
+            List[List[List[int]]]: Parallel row elimination. In each depth level there are
             non-overlapping row eliminations.
         """
         if len(mat.shape) != 2 or mat.shape[0] != mat.shape[1]:
-            raise Exception("Must use a matrix!")
-        if mat.dtype is not bool:
+            raise Exception("Must use a square matrix!")
+        if mat.dtype != bool:
             raise Exception("Must use a boolean matrix!")
 
-        pass
+        return cls.__matrix_run(mat)
+
+    @classmethod
+    def small_matrix_run(cls, mat: np.ndarray) \
+            -> List[List[List[int]]]:
+        n = mat.shape[0]
+        if n == 1:
+            return [[]]
+        elif n == 2:
+            # Enumerate
+            if np.allclose(
+                    mat,
+                    np.array([
+                        [1, 0],
+                        [0, 1]
+                    ], dtype=bool)
+            ):  # :(
+                return [[]]
+            elif np.allclose(
+                    mat,
+                    np.array([
+                        [1, 0],
+                        [1, 1]
+                    ], dtype=bool)
+            ):  # :P
+                return [[[0, 1]]]
+            elif np.allclose(
+                    mat,
+                    np.array([
+                        [0, 1],
+                        [1, 0]
+                    ], dtype=bool)
+            ):  # :b
+                return [[[0, 1]], [[1, 0]], [[0, 1]]]
+            elif np.allclose(
+                    mat,
+                    np.array([
+                        [0, 1],
+                        [1, 1]
+                    ], dtype=bool)
+            ):  # :D
+                return [[[1, 0]], [[0, 1]]]
+            elif np.allclose(
+                    mat,
+                    np.array([
+                        [1, 1],
+                        [0, 1]
+                    ], dtype=bool)
+            ):  # :X
+                return [[[1, 0]]]
+            elif np.allclose(
+                    mat,
+                    np.array([
+                        [1, 1],
+                        [1, 0]
+                    ], dtype=bool)
+            ):  # :O
+                return [[[0, 1]], [[1, 0]]]
+        else:
+            raise Exception("Must use matrix size <= 2.")
+
+    @classmethod
+    def __matrix_run(cls, mat: np.ndarray) \
+            -> List[List[List[int]]]:
+        """
+        Get parallel row elimination of a boolean invertible matrix.
+        No shape & data type checks for inner methods.
+
+        Args:
+            mat (np.ndarray): A boolean invertible matrix
+
+        Returns:
+            List[List[List[int]]]: Parallel row elimination. In each depth level there are
+            non-overlapping row eliminations.
+        """
+
+        n = mat.shape[0]
+        s_size = n // 2
+
+        if n <= 2:
+            return cls.small_matrix_run(mat)
+
+        l_, d_, u_, remapping = BlockLDUDecompose.run(mat)
+
+        # Implement remapping using swap operations(3-depth CNOT).
+
+        """
+        Notes:
+        P @ M == L @ D @ U, where P == P^{-1}.
+        So, M == P @ L @ D @ U. We sequentially eliminate P, L, D, U.
+        If we reverse the eliminations' order to get a row transform sequence, 
+        changing an I into M, then that is exactly what we need for CNOT circuit.
+        
+        """
+
+        parallel_elimination: List[List[List[int]]] = []
+
+        r_p_e = cls.remapping_run(remapping)
+        parallel_elimination.extend(r_p_e)
+
+        l_p_e = cls.triangular_matrix_run(l_, is_lower_triangular=True)
+        if l_p_e != [[]]:
+            parallel_elimination.extend(l_p_e)
+
+        d_p_e = cls.block_diagonal_matrix_run(d_)
+        if d_p_e != [[]]:
+            parallel_elimination.extend(d_p_e)
+
+        u_p_e = cls.triangular_matrix_run(u_, is_lower_triangular=False)
+        if u_p_e != [[]]:
+            parallel_elimination.extend(u_p_e)
+
+        return parallel_elimination
 
     @classmethod
     def triangular_matrix_run(cls, mat: np.ndarray, is_lower_triangular: bool) \
-            -> List[List[Tuple[int, int]]]:
+            -> List[List[List[int]]]:
         """
         Get parallel row elimination of a triangular matrix by bipartite edge coloring.
 
@@ -74,7 +155,7 @@ class CnotWithoutAncillae:
                 be located in upper part.
 
         Returns:
-            List[List[Tuple[int, int]]]: Parallel row elimination. In each depth level there are
+            List[List[List[int]]]: Parallel row elimination. In each depth level there are
             non-overlapping row eliminations.
         """
         n = mat.shape[0]
@@ -105,11 +186,9 @@ class CnotWithoutAncillae:
                         bipartite.add_edge(j - s_size, i + t_size)
                         bipartite.add_edge(i + t_size, j - s_size)
 
-        assert test_bipartite_construction(bipartite, mat, is_lower_triangular)
-
         colored_bipartite = EdgeColoring.get_edge_coloring(bipartite)
         max_deg = colored_bipartite.get_max_degree()
-        parallel_elimination: List[List[Tuple[int, int]]] = [[] for _ in range(max_deg)]
+        parallel_elimination: List[List[List[int]]] = [[] for _ in range(max_deg)]
 
         # Iterate over left vertices to check edges with the same color
         for node in colored_bipartite.left:
@@ -123,7 +202,7 @@ class CnotWithoutAncillae:
                 else:
                     c = edge.start + s_size
                     t = edge.end - t_size
-                row_elimination = (c, t)
+                row_elimination = [c, t]
                 parallel_elimination[color_index].append(row_elimination)
                 eid = edge.next
 
@@ -131,7 +210,7 @@ class CnotWithoutAncillae:
 
     @classmethod
     def block_diagonal_matrix_run(cls, mat: np.ndarray) \
-            -> List[List[Tuple[int, int]]]:
+            -> List[List[List[int]]]:
         """
         Get parallel row elimination of a block diagonal matrix by bipartite edge coloring.
 
@@ -140,7 +219,48 @@ class CnotWithoutAncillae:
             mat (np.ndarray): A block diagonal boolean matrix.
 
         Returns:
-            List[List[Tuple[int, int]]]: Parallel row elimination. In each depth level there are
+            List[List[List[int]]]: Parallel row elimination. In each depth level there are
             non-overlapping row eliminations.
         """
-        pass
+        n = mat.shape[0]
+        s_size = n // 2
+
+        u1 = mat[:s_size, :s_size]
+        u2 = mat[s_size:, s_size:]
+
+        u1_parallel_elimination = cls.__matrix_run(u1)
+        u2_parallel_elimination = cls.__matrix_run(u2)
+
+        u1_p_l = len(u1_parallel_elimination)
+        u2_p_l = len(u2_parallel_elimination)
+        for lv in u2_parallel_elimination:
+            for r in lv:
+                r[0] += s_size
+                r[1] += s_size
+        p_l = max(u1_p_l, u2_p_l)
+
+        parallel_elimination: List[List[List[int]]] = [[] for _ in range(p_l)]
+
+        for i in range(p_l):
+            if i < u1_p_l:
+                parallel_elimination[i].extend(u1_parallel_elimination[i])
+            if i < u2_p_l:
+                parallel_elimination[i].extend(u2_parallel_elimination[i])
+
+        return parallel_elimination
+
+    @classmethod
+    def remapping_run(cls, remapping: List[int]) -> List[List[List[int]]]:
+        s_size = len(remapping) // 2
+
+        parallel_elimination: List[List[List[int]]] = [[],[],[]]
+
+        for i in range(s_size):
+            if remapping[i] >= s_size:
+                x = remapping[i]
+                y = i
+                parallel_elimination[0].append([x, y])
+                parallel_elimination[1].append([y, x])
+                parallel_elimination[2].append([x, y])
+
+        return parallel_elimination

@@ -2,18 +2,7 @@ import numpy as np
 import random
 from ..block_ldu_decompose import BlockLDUDecompose
 from ..utility import *
-
-
-def f2_random_invertible_matrix_gen(n) -> np.ndarray:
-    mat = np.eye(n, dtype=bool)
-    rnd = 20 * n
-    rg_lst = list(range(n))
-    for _ in range(rnd):
-        x = random.sample(rg_lst, 2)
-        i = x[0]
-        j = x[1]
-        mat[i, :] ^= mat[j, :]
-    return mat
+from .utility import *
 
 
 def test_f2_half_gaussian_elimination():
@@ -87,6 +76,9 @@ def test_ldu_remapping():
         sub_mat: np.ndarray = mat_[remapping][:n // 2, :n // 2]
         assert sub_mat.shape == (n // 2, n // 2)
         assert f2_rank(sub_mat) == n // 2
+
+        for i in range(n):
+            assert remapping[remapping[i]] == i
 
 
 def test_block_ldu():
