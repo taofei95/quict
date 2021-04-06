@@ -50,7 +50,6 @@ class InstructionSet(object):
     Attributes:
         two_qubit_gate(int): the index of the two_qubit_gate
         one_qubit_gates(list<int>): the indexes of the one_qubit_gate
-        SU4_rule(TransformRule): rules to transform SU(4) into instruction set
         SU2_rule(TransformRule): rules to transform SU(2) into instruction set
         rule_map(dictionary): A two-dimensional map from source gate and target gate to transform rule
 
@@ -95,10 +94,6 @@ class InstructionSet(object):
         self.__one_qubit_gates = one_qubit_gates
 
     @property
-    def SU4_rule(self) -> TransformRule:
-        return self.__SU4_rule
-
-    @property
     def SU2_rule(self) -> TransformRule:
         return self.__SU2_rule
 
@@ -115,7 +110,6 @@ class InstructionSet(object):
         if one_qubit_gates is None:
             one_qubit_gates = []
         self.one_qubit_gates = one_qubit_gates
-        self.__SU4_rule = None
         self.__SU2_rule = None
         self.__rule_map = {}
 
@@ -143,14 +137,6 @@ class InstructionSet(object):
             transformRule(TransformRule): decompostion rule
         """
         self.__SU2_rule = transformRule
-
-    def register_SU4_rule(self, transformRule):
-        """ register SU(4) decompostion rule
-
-        Args:
-            transformRule(TransformRule): decompostion rule
-        """
-        self.__SU4_rule = transformRule
 
     def register_rule_map(self, transformRule):
         """ register rule which transforms from source gate into target gate
