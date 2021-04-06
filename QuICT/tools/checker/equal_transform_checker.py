@@ -165,8 +165,8 @@ class ETCheckerModel(object):
         if self.cmp_array(origin, result):
             return True
         else:
-            circuit.print_infomation()
-            result_circuit.print_infomation()
+            circuit.print_information()
+            result_circuit.print_information()
             return False
 
     def big_circuit_run(self, rand_qubit, rand_size):
@@ -224,8 +224,8 @@ class ETCheckerModel(object):
             origin = Amplitude.run(circuit)
             result = Amplitude.run(result_circuit)
             if not self.cmp_array(origin, result):
-                circuit.print_infomation()
-                result_circuit.print_infomation()
+                circuit.print_information()
+                result_circuit.print_information()
                 return False
         return True
 

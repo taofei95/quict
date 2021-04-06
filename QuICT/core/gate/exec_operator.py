@@ -49,6 +49,21 @@ def exec_controlSingle(gate, circuit):
     QState_merge(qState0, qState1)
     QState_deal_control_single_gate(qState0, gate)
 
+def exec_two(gate, circuit):
+    """ apply a two-qubit gate on this qState
+
+    Args:
+        gate(BasicGate): the gate to be applied.
+        circuit(Circuit): the circuit to be dealt
+
+    Exceptions:
+        FrameworkException: the index is out of range
+    """
+    qState0 = circuit.qubits[gate.targs[0]].qState
+    qState1 = circuit.qubits[gate.targs[1]].qState
+    QState_merge(qState0, qState1)
+    QState_deal_two_qubit_gate(qState0, gate)
+
 def exec_toffoli(gate, circuit):
     """ apply a toffoli gate on this qState
 
@@ -133,7 +148,7 @@ def exec_perm(gate, circuit):
     QState_deal_perm_gate(qState, gate)
 
 def exec_unitary(gate, circuit):
-    """ apply a custom gate on this qState
+    """ apply a unitary gate on this qState
 
     Args:
         gate(UnitaryGate): the gate to be applied.
@@ -253,7 +268,7 @@ def QState_deal_single_gate(qState, gate, fidelity):
     if index == len(qState.qureg):
         raise FrameworkException("the index is out of range")
 
-    matrix = gate.matrix
+    matrix = gate.matrix.flatten()
     if fidelity is not None:
         theta = np.arccos(fidelity / np.sqrt(2)) - np.pi / 4
         theta *= (random.random() - 0.5) * 2
@@ -277,6 +292,51 @@ def QState_deal_single_gate(qState, gate, fidelity):
         index,
         qState.values,
         matrix
+    )
+
+def QState_deal_two_qubit_gate(qState, gate):
+    """ apply an two-qubit gate on this qState
+
+    Args:
+        qState(QState): the QState to be dealt
+        gate(BasicGate): the gate to be applied.
+
+    Exceptions:
+        FrameworkException: the index is out of range
+    """
+
+    dll = systemCdll.quick_operator_cdll
+    two_qubit_operator_func = dll.two_qubit_operator_func
+    two_qubit_operator_func.argtypes = [
+        c_int,
+        c_int,
+        c_int,
+        np.ctypeslib.ndpointer(dtype=np.complex, ndim=1, flags="C_CONTIGUOUS"),
+        np.ctypeslib.ndpointer(dtype=np.complex, ndim=1, flags="C_CONTIGUOUS"),
+    ]
+    index1 = 0
+    qubit = qState.qureg.circuit.qubits[gate.targs[0]]
+    for test in qState.qureg:
+        if test.id == qubit.id:
+            break
+        index1 = index1 + 1
+    if index1 == len(qState.qureg):
+        raise FrameworkException("the index is out of range")
+
+    index2 = 0
+    qubit = qState.qureg.circuit.qubits[gate.targs[1]]
+    for test in qState.qureg:
+        if test.id == qubit.id:
+            break
+        index2 = index2 + 1
+    if index2 == len(qState.qureg) or index2 == index1:
+        raise FrameworkException("the index is out of range")
+    two_qubit_operator_func(
+        len(qState.qureg),
+        index1,
+        index2,
+        qState.values,
+        gate.matrix.flatten()
     )
 
 def QState_deal_control_single_gate(qState, gate):
@@ -314,14 +374,14 @@ def QState_deal_control_single_gate(qState, gate):
         if test.id == qubit.id:
             break
         tindex = tindex + 1
-    if tindex == len(qState.qureg):
+    if tindex == len(qState.qureg) or tindex == cindex:
         raise FrameworkException("the index is out of range")
     control_single_operator_func(
         len(qState.qureg),
         cindex,
         tindex,
         qState.values,
-        gate.matrix
+        gate.matrix.flatten()
     )
 
 def QState_deal_ccx_gate(qState, gate):
@@ -576,7 +636,7 @@ def QState_deal_unitary_gate(qState, gate):
         qState.values,
         index,
         gate.targets,
-        gate.matrix
+        gate.matrix.flatten()
     )
 
 def QState_deal_shorInitial_gate(qState, gate):

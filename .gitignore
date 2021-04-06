@@ -10,6 +10,6 @@ __pycache__/
 /_templates/
 /source/
 make.bat
-*/.idea
-*/*.jpg
 .idea
+*/*.jpg
+.vscode
