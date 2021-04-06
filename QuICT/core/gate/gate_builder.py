@@ -6,7 +6,6 @@
 
 from .gate import *
 
-
 class GateBuilderModel(object):
     """ A model that help users get gate without circuit
 
@@ -282,6 +281,5 @@ class GateBuilderModel(object):
             for target in gate.targs:
                 qubits.append(circuit[target])
             circuit.append(gate, qubits)
-
 
 GateBuilder = GateBuilderModel()

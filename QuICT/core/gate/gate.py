@@ -1140,7 +1140,6 @@ class PhaseGate(BasicGate):
         self.targets = 1
         self.params = 1
         self.qasm_name = "phase"
-        self.pargs = [0]
 
     def __str__(self):
         return "Phase gate"
@@ -2376,7 +2375,6 @@ class UnitaryGate(BasicGate):
         length = len(matrix)
         if length == 0:
             raise Exception("the list or tuple passed in shouldn't be empty")
-        n2 = int(round(np.sqrt(length)))
         n2 = int(round(np.sqrt(length)))
         if n2 * n2 != length:
             raise Exception("the length of list or tuple should be the square of power(2, n)")
