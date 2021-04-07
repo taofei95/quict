@@ -34,18 +34,26 @@ def uniformlyRotation(low, high, z, mapping, direction = None):
         gates = uniformlyRotation(low + 1, high, Rxp,  mapping, False)
         with gates:
             CZ & [mapping[low], mapping[high - 1]]
+            """ The extra CZ derived from CCPhase can also be moved to the edge
+            # if high - low == 2, no CZ is needed here
+            if high - low > 2:
+                CZ & [mapping[low], mapping[low + 1]]
+            """
         gates.extend(uniformlyRotation(low + 1, high, Rxn, mapping, True))
         with gates:
             CZ & [mapping[low], mapping[high - 1]]
+            # if high - low == 2, no CZ is needed here
+            if high - low > 2:
+                CZ & [mapping[low], mapping[low + 1]]
     elif direction:
         gates = uniformlyRotation(low + 1, high, Rxn, mapping, False)
         with gates:
-            CZ & [mapping[low], mapping[high - 1]]
+            CX & [mapping[low], mapping[high - 1]]
         gates.extend(uniformlyRotation(low + 1, high, Rxp, mapping, True))
     else:
         gates = uniformlyRotation(low + 1, high, Rxp, mapping, False)
         with gates:
-            CZ & [mapping[low], mapping[high - 1]]
+            CX & [mapping[low], mapping[high - 1]]
         gates.extend(uniformlyRotation(low + 1, high, Rxn, mapping, True))
     return gates
 

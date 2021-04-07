@@ -15,9 +15,14 @@ def test_uniform_ry():
         angles = [random.random() for _ in range(1 << (i - 1))]
         uniformlyRyRevision(angles) | circuit
         unitary = SyntheticalUnitary.run(circuit)
+        circuit.print_information()
+        # print(unitary)
         for j in range(1 << (i - 1)):
             unitary_slice = unitary[2 * j:2 * (j + 1), 2 * j:2 * (j + 1)]
-            circuit.print_information()
+            # phase = Ry(angles[j]).matrix.dot(np.linalg.inv(unitary_slice))
+            # print(phase)
+            # print()
+            # assert np.allclose(phase, phase[0, 0] * np.eye(2))
             assert not np.any(abs(unitary_slice - Ry(angles[j]).matrix.reshape(2, 2)) > 1e-10)
 
             
