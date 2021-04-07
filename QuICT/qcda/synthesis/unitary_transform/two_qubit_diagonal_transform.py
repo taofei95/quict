@@ -1,5 +1,6 @@
 """
-Another version of decomposition of SU(4) with Cartan KAK Decomposition
+Another version of decomposition of SU(4) with Cartan KAK Decomposition,
+which is specially designed for the optimization of unitary transform.
 """
 
 import numpy as np
@@ -78,9 +79,6 @@ def TwoQubitDiagonalTransform(matrix, eps=1e-15):
     # imaginary part simultaneously. That is, ∃ P∈SO(4), s.t. M2 = P.D.P^T, 
     # where D is diagonal with unit-magnitude elements.
     D, P = CartanKAKDecomposition.diagonalize_unitary_symmetric(M2)
-
-    # Calculated D is usually in U(4) instead of SU(4), therefore d[3] is reset 
-    # so that D is now in SU(4)
     d = np.angle(D) / 2
 
     # Refinement time, by some mathematics we know that d here must be a rearragement
