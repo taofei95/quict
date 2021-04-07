@@ -1,6 +1,9 @@
 import random
 import numpy as np
 
+from QuICT.core import *
+from QuICT.algorithm import SyntheticalUnitary
+
 from ..cnot_without_ancillae import CnotWithoutAncillae
 from ..block_ldu_decompose import BlockLDUDecompose
 
@@ -169,3 +172,19 @@ def test_matrix_run():
                 assert t not in level_set
                 level_set.add(c)
                 level_set.add(t)
+
+
+def test_cnot_without_ancillae():
+    rnd = 10
+    for _rnd in range(rnd):
+        n = random.randint(2, 9)
+        # print(f"round = {_rnd} with {n} qubit(s).")
+        circuit1 = Circuit(n)
+        circuit1.random_append(30 * n, typeList=[GATE_ID["CX"]])
+        expected_mat = SyntheticalUnitary.run(circuit1)
+        gates = CnotWithoutAncillae.run(circuit1)
+        circuit2 = Circuit(n)
+        for gate in gates:
+            circuit2.append(gate)
+        result_mat = SyntheticalUnitary.run(circuit2)
+        assert np.allclose(expected_mat, result_mat)

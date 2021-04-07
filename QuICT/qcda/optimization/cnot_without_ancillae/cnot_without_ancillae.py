@@ -1,5 +1,6 @@
 import numpy as np
 from typing import *
+from QuICT.core import *
 from QuICT.core.gate import CompositeGate
 
 from .utility import *
@@ -9,6 +10,38 @@ from .block_ldu_decompose import BlockLDUDecompose
 
 
 class CnotWithoutAncillae:
+
+    @classmethod
+    def run(
+            cls,
+            circuit_segment: Union[Circuit, CompositeGate]
+    ) -> CompositeGate:
+        if isinstance(circuit_segment, Circuit):
+            gates = circuit_segment.gates
+            n = len(circuit_segment.qubits)
+        elif isinstance(circuit_segment, CompositeGate):
+            gates = circuit_segment
+            n = circuit_segment.circuit_width()
+        else:
+            raise Exception("Only accept Circuit/CompositeGate!")
+
+        mat = np.eye(n, dtype=bool)
+        for gate in gates:
+            gate: BasicGate
+            c = gate.carg
+            t = gate.targ
+            mat[t, :] ^= mat[c, :]
+
+        composite_gate = CompositeGate()
+
+        parallel_elimination = cls.matrix_run(mat)
+        parallel_elimination.reverse()
+        for level in parallel_elimination:
+            for c, t in level:
+                _cx: CXGate = CX.copy()
+                _cx.affectArgs = [c, t]
+                composite_gate.append(_cx)
+        return composite_gate
 
     @classmethod
     def matrix_run(cls, mat: np.ndarray) \
@@ -203,7 +236,7 @@ class CnotWithoutAncillae:
                 else:
                     c = edge.start + s_size
                     t = edge.end - t_size
-                row_elimination = [c, t]
+                row_elimination = (c, t)
                 parallel_elimination[color_index].append(row_elimination)
                 eid = edge.next
 
