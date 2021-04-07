@@ -1,5 +1,5 @@
-import sys
-sys.path.append('/mnt/e/ICT/QuICT')
+# import sys
+# sys.path.append('/mnt/e/ICT/QuICT')
 
 import random
 
