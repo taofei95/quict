@@ -175,16 +175,22 @@ def test_matrix_run():
 
 
 def test_cnot_without_ancillae():
-    rnd = 10
+    rnd = 50
     for _rnd in range(rnd):
-        n = random.randint(2, 9)
-        # print(f"round = {_rnd} with {n} qubit(s).")
+        n = random.randint(2, 200)
         circuit1 = Circuit(n)
         circuit1.random_append(30 * n, typeList=[GATE_ID["CX"]])
-        expected_mat = SyntheticalUnitary.run(circuit1)
         gates = CnotWithoutAncillae.run(circuit1)
-        circuit2 = Circuit(n)
+        test_mat1 = np.eye(n, dtype=bool)
+        test_mat2 = np.eye(n, dtype=bool)
+        for gate in circuit1.gates:
+            gate: BasicGate
+            c = gate.carg
+            t = gate.targ
+            test_mat1[t, :] ^= test_mat1[c, :]
         for gate in gates:
-            circuit2.append(gate)
-        result_mat = SyntheticalUnitary.run(circuit2)
-        assert np.allclose(expected_mat, result_mat)
+            gate: BasicGate
+            c = gate.carg
+            t = gate.targ
+            test_mat2[t, :] ^= test_mat2[c, :]
+        assert np.allclose(test_mat1, test_mat2)
