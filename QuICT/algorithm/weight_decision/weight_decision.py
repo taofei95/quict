@@ -19,7 +19,6 @@ def weight_decison_para(n, k, l):
 
 def run_weight_decision(f, n, k, l, oracle):
     """ decide function f by k-l algorithm by custom oracle
-
     https://arxiv.org/abs/1801.05717
     Args:
         f(list<int>): the function to be decided
@@ -53,11 +52,11 @@ def run_weight_decision(f, n, k, l, oracle):
 
     for i in range(d - 1):
         oracle(f, qreg, ancilla)
-        MCTOneAux | circuit
+        MCTOneAux(num) | circuit
 
         InitialStatePreparation(value) ^ qreg
         X | qreg
-        MCTOneAux | circuit
+        MCTOneAux(num) | circuit
         X | qreg
         InitialStatePreparation(value) | qreg
 
@@ -65,7 +64,7 @@ def run_weight_decision(f, n, k, l, oracle):
     H | ancilla
     X | ancilla
     oracle(f, qreg, ancilla)
-    MCTOneAux | circuit
+    MCTOneAux(num) | circuit
     # Measure
     Measure | qreg
     Measure | ancilla
@@ -82,7 +81,6 @@ class WeightDecision(Algorithm):
     @classmethod
     def run(cls, f, n, k, l, oracle):
         """ decide function f by k-l algorithm by custom oracle
-
         https://arxiv.org/abs/1801.05717
         Args:
             f(list<int>): the function to be decided

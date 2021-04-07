@@ -56,7 +56,7 @@ def run_search_with_prior_knowledge(f, n, p, T, oracle):
         oracle(f, qreg, ancilla)
         InitialStatePreparation(list(q)) ^ qreg
         X | qreg
-        MCTOneAux | circuit
+        MCTOneAux(num) | circuit
         X | qreg
         InitialStatePreparation(list(q)) | qreg
     # Apply H

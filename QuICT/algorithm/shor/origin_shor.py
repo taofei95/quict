@@ -67,7 +67,7 @@ def controlAddMod(c1, c2, a, Nth, L, circuit):
     QFT | circuit([i for i in range(4 * L, 3 * L - 1, -1)])
 
     for j in range(L + 1):
-        CRz_Decompose(np.pi * Nth[j]) | circuit([4 * L + 1, 3 * L + j])
+        CRz(np.pi * Nth[j]) | circuit([4 * L + 1, 3 * L + j])
 
     for j in range(L + 1):
         CCRz(-np.pi * th[j]) | circuit([c1, c2, 3 * L + j])
@@ -114,7 +114,7 @@ def controlAddMod_reverse(c1, c2, a, Nth, L, circuit):
         CCRz(np.pi * th[j]) | circuit([c1, c2, 3 * L + j])
 
     for j in range(L + 1):
-        CRz_Decompose(-np.pi * Nth[j]) | circuit([4 * L + 1, 3 * L + j])
+        CRz(-np.pi * Nth[j]) | circuit([4 * L + 1, 3 * L + j])
 
     IQFT | circuit([i for i in range(4 * L, 3 * L - 1, -1)])
 
@@ -151,7 +151,7 @@ def cmult_reverse(cqubit, a, N, Nth, L, circuit):
 def cswap(cqubit, L, circuit):
     for j in range(L):
         CX              | circuit([3 * L + j, 2 * L + j])
-        CCX_Decompose   | circuit([cqubit, 2 * L + j, 3 * L + j])
+        CCX   | circuit([cqubit, 2 * L + j, 3 * L + j])
         CX | circuit([3 * L + j, 2 * L + j])
 
 def cUa(cqubit, a, a_r, N,  Nth, L, circuit):

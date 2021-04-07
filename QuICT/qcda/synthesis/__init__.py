@@ -4,9 +4,9 @@
 # @Author  : Han Yu
 # @File    : __init__.py
 
-# from .vbe import *
-# from .mct import *
+from .vbe import *
+from .mct import *
 from .uniformly_gate import *
 from .initial_state_preparation import *
-from .gate_transform import GateTransform, InstructionSet, TransformRule
+# from .gate_transform import GateTransform, InstructionSet, TransformRule
 

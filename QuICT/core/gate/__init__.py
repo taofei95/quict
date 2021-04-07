@@ -6,3 +6,4 @@
 
 from .gate import *
 from .gate_builder import *
+from .composite_gate import *
