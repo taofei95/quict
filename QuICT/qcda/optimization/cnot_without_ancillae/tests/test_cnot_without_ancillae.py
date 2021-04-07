@@ -8,6 +8,30 @@ from .utility import *
 from ..utility import *
 
 
+def test_remapping_run():
+    rnd = 200
+    for _ in range(rnd):
+        n = random.randint(2, 200)
+        s_size = n // 2
+        t_size = n - s_size
+        eye = np.eye(n, dtype=bool)
+        mat = f2_random_invertible_matrix_gen(n)
+
+        mat_cpy: np.ndarray = mat.copy()
+
+        _, _, _, remapping = BlockLDUDecompose.run(mat)
+        assert np.allclose(mat_cpy, mat)
+
+        remapped_mat: np.ndarray = eye[remapping].copy()
+
+        parallel_elimination = CnotWithoutAncillae.remapping_run(remapping)
+        assert len(parallel_elimination) == 3
+        for elimination_level in parallel_elimination:
+            for c, t in elimination_level:
+                remapped_mat[t, :] ^= remapped_mat[c, :]
+        assert np.allclose(remapped_mat, eye)
+
+
 def test_triangular_matrix_run():
     rnd = 200
     for _ in range(rnd):
@@ -68,35 +92,6 @@ def test_triangular_matrix_run():
                 row_index_set.add(t)
 
 
-def test_matrix_run():
-    rnd = 200
-    for _ in range(rnd):
-        n = random.randint(2, 200)
-        s_size = n // 2
-        eye = np.eye(n, dtype=bool)
-        mat = f2_random_invertible_matrix_gen(n)
-
-        mat_cpy: np.ndarray = mat.copy()
-
-        parallel_elimination = CnotWithoutAncillae.matrix_run(mat)
-        assert np.allclose(mat, mat_cpy)
-
-        # Test elimination correctness
-        for elimination_level in parallel_elimination:
-            for c, t in elimination_level:
-                mat[t, :] ^= mat[c, :]
-        assert np.allclose(mat, eye)
-
-        # No overlapping
-        for elimination_level in parallel_elimination:
-            level_set = set([])
-            for c, t in elimination_level:
-                assert c not in level_set
-                assert t not in level_set
-                level_set.add(c)
-                level_set.add(t)
-
-
 def test_small_matrix_run():
     rnd = 200
     for _ in range(rnd):
@@ -112,30 +107,6 @@ def test_small_matrix_run():
             for c, t in elimination_level:
                 mat[t, :] ^= mat[c, :]
         assert np.allclose(mat, np.eye(2, dtype=bool))
-
-
-def test_remapping_run():
-    rnd = 200
-    for _ in range(rnd):
-        n = random.randint(2, 200)
-        s_size = n // 2
-        t_size = n - s_size
-        eye = np.eye(n, dtype=bool)
-        mat = f2_random_invertible_matrix_gen(n)
-
-        mat_cpy: np.ndarray = mat.copy()
-
-        _, _, _, remapping = BlockLDUDecompose.run(mat)
-        assert np.allclose(mat_cpy, mat)
-
-        remapped_mat: np.ndarray = eye[remapping].copy()
-
-        parallel_elimination = CnotWithoutAncillae.remapping_run(remapping)
-        assert len(parallel_elimination) == 3
-        for elimination_level in parallel_elimination:
-            for c, t in elimination_level:
-                remapped_mat[t, :] ^= remapped_mat[c, :]
-        assert np.allclose(remapped_mat, eye)
 
 
 def test_recursion_first_level():
@@ -169,3 +140,32 @@ def test_recursion_first_level():
                 mat[t, :] ^= mat[c, :]
 
         assert np.allclose(mat, np.eye(n, dtype=bool))
+
+
+def test_matrix_run():
+    rnd = 200
+    for _ in range(rnd):
+        n = random.randint(2, 200)
+        s_size = n // 2
+        eye = np.eye(n, dtype=bool)
+        mat = f2_random_invertible_matrix_gen(n)
+
+        mat_cpy: np.ndarray = mat.copy()
+
+        parallel_elimination = CnotWithoutAncillae.matrix_run(mat)
+        assert np.allclose(mat, mat_cpy)
+
+        # Test elimination correctness
+        for elimination_level in parallel_elimination:
+            for c, t in elimination_level:
+                mat[t, :] ^= mat[c, :]
+        assert np.allclose(mat, eye)
+
+        # No overlapping
+        for elimination_level in parallel_elimination:
+            level_set = set([])
+            for c, t in elimination_level:
+                assert c not in level_set
+                assert t not in level_set
+                level_set.add(c)
+                level_set.add(t)
