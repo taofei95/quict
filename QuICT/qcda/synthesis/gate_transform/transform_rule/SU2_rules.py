@@ -22,7 +22,7 @@ class SU2TransformRule(TransformRule):
     """ a subClass of TransformRule, to check the decomposition of SU2
 
     """
-    def check_equal(self, ignore_phase = True, eps = 1e-10):
+    def check_equal(self, ignore_phase = True, eps = 1e-7):
         qubit = 1
         d = np.power(2, qubit)
         Q = np.mat(ortho_group.rvs(dim=d))
@@ -40,10 +40,17 @@ class SU2TransformRule(TransformRule):
         B = Q.T * d2 * Q
         U = A + B[:] * 1j
 
+        U = np.array([[ 0.18722044+0.9779111j,  -0.0889144 +0.02706697j],
+ [-0.0889144 +0.02706697j,  0.38942514+0.91635674j]], dtype=np.complex)
+
         gate = Unitary(U)
         gate.targs = [0]
         gateSet = self.transform(gate)
-        return gateSet.equal(gate, ignore_phase=ignore_phase, eps=eps)
+        ans = gateSet.equal(gate, ignore_phase=ignore_phase, eps=eps)
+        if not ans:
+            print(U)
+            print(gateSet.matrix())
+        return ans
 
 def _zyzRule(gate):
     """ decomposition the unitary gate with 2 * 2 unitary into Rz Ry Rz sequence

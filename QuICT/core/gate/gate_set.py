@@ -407,5 +407,4 @@ class GateSet(list):
             if rotate == 0 or abs(abs(rotate) - 1) > eps:
                 return False
             self_matrix = self_matrix * np.full(shape, rotate)
-
         return np.allclose(self_matrix, target_matrix, rtol=eps, atol=eps)
