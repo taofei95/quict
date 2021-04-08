@@ -63,7 +63,7 @@ def _zyzRule(gate):
     unitary = gate.matrix
     targ = gate.targ
     eps = 1e-13
-
+    
     det = linalg.det(unitary)
     gamma = 0
     beta_plus_delta = 0
@@ -83,6 +83,8 @@ def _zyzRule(gate):
         Rz(delta)  & targ
         Ry(gamma) & targ
         Rz(beta) & targ
+    print(gate.matrix)
+    print(gateSet.matrix())
     return gateSet
 
 ZyzRule = SU2TransformRule(_zyzRule)
@@ -92,8 +94,36 @@ def _xyxRule(gate):
 ZxzRule = SU2TransformRule(_xyxRule)
 
 def _ibmqRule(gate):
-    pass
-IBMQRule = SU2TransformRule(_ibmqRule)
+    unitary = gate.matrix
+    targ = gate.targ
+    eps = 1e-13
+
+    det = linalg.det(unitary)
+    gamma = 0
+    beta_plus_delta = 0
+    beta_dec_delta = 0
+    if abs(det - 1) > eps:
+        unitary[:] /= np.sqrt(det)
+    if abs(unitary[0, 0]) > eps:
+        beta_plus_delta = angle(unitary[1, 1] / unitary[0, 0])
+        gamma = arccos((2 * unitary[0, 0] * unitary[1, 1] - 1).real)
+    if abs(unitary[0, 1]) > eps:
+        beta_dec_delta = angle(-unitary[1, 0] / unitary[0, 1])
+        gamma = arccos((2 * unitary[0, 1] * unitary[1, 0] + 1).real)
+    beta = (beta_plus_delta + beta_dec_delta) / 2
+    delta = beta_plus_delta - beta
+    gateSet = GateSet()
+    with gateSet:
+        Rz(delta)  & targ
+        SX & targ
+        Rz(gamma) & targ
+        SX & targ
+        X & targ
+        Rz(beta) & targ
+    print(unitary)
+    print(gateSet.matrix())
+    return gateSet
+IbmqRule = SU2TransformRule(_ibmqRule)
 
 def _googleRule(gate):
     pass
