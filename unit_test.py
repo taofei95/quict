@@ -12,8 +12,8 @@ from QuICT.qcda.synthesis.gate_transform import *
 if __name__ == "__main__":
     # CX -> others
     
-    # print(CX2CYRule.check_equal())
-    # print(CX2CZRule.check_equal())
+    # print(Cx2CyRule.check_equal())
+    # print(Cx2CzRule.check_equal())
     # print(CX2CHRule.check_equal()) 
     # print(CX2CRzRule.check_equal()) 
     # print(CX2RxxRule.check_equal())
@@ -39,6 +39,7 @@ if __name__ == "__main__":
     # print(CZ2RxxRule.check_equal())
     # print(CZ2RyyRule.check_equal()) 
     # print(CZ2RzzRule.check_equal()) 
+    # print(Cz2FsimRule.check_equal())
 
     # CH -> others
     # print(CH2CXRule.check_equal())
@@ -89,4 +90,9 @@ if __name__ == "__main__":
     # print(Rzz2RxxRule.check_equal())
     # print(Rzz2RyyRule.check_equal())
 
-    print("Finish\n")
+    # print(Cx2FsimRule.check_equal())
+    # print(Cy2FsimRule.check_equal())
+    # print(Ch2FsimRule.check_equal())
+
+    print(IbmqRule.check_equal())
+    print("99\n")

@@ -62,6 +62,16 @@ def _cx2crz_rule(gate):
     return gateSet
 Cx2CrzRule = TransformRule(_cx2crz_rule, CX, CRz)
 
+def _cx2fsim_rule(gate):
+    targs = gate.affectArgs
+    gateSet = GateSet()
+    with gateSet:
+        H & targs[1]
+        FSim([0, math.pi]) & targs
+        H & targs[1]
+    return gateSet
+Cx2FsimRule = TransformRule(_cx2fsim_rule, CX, FSim)
+
 def _cx2rxx_rule(gate):
     targs = gate.affectArgs
     gateSet = GateSet()
@@ -166,6 +176,18 @@ def _cy2crz_rule(gate):
         S & targs[1]
     return gateSet
 Cy2CrzRule = TransformRule(_cy2crz_rule, CY, CRz)
+
+def _cy2fsim_rule(gate):
+    targs = gate.affectArgs
+    gateSet = GateSet()
+    with gateSet:
+        S_dagger & targs[1]
+        H & targs[1]
+        FSim([0, math.pi]) & targs
+        H & targs[1]
+        S & targs[1]
+    return gateSet
+Cy2FsimRule = TransformRule(_cy2fsim_rule, CY, FSim)
 
 def _cy2rxx_rule(gate):
     targs = gate.affectArgs
@@ -273,6 +295,14 @@ def _cz2crz_rule(gate):
         CRz(math.pi) & targs
     return gateSet
 Cz2CrzRule = TransformRule(_cz2crz_rule, CZ, CRz)
+
+def _cz2fsim_rule(gate):
+    targs = gate.affectArgs
+    gateSet = GateSet()
+    with gateSet:
+        FSim([0, math.pi]) & targs
+    return gateSet
+Cz2FsimRule = TransformRule(_cz2fsim_rule, CZ, FSim)
 
 def _cz2rxx_rule(gate):
     targs = gate.affectArgs
@@ -564,6 +594,22 @@ def _ch2crz_rule(gate):
         S_dagger & targs[1]
     return gateSet
 CH2CRzRule = TransformRule(_ch2crz_rule, CH, CRz)
+
+def _ch2fsim_rule(gate):
+    targs = gate.affectArgs
+    gateSet = GateSet()
+    with gateSet:
+        S & targs[1]
+        H & targs[1]
+        T & targs[1]
+        H & targs[1]
+        FSim([0, math.pi]) & targs
+        H & targs[1]
+        T_dagger & targs[1]
+        H & targs[1]
+        S_dagger & targs[1]
+    return gateSet
+Ch2FsimRule = TransformRule(_ch2fsim_rule, CH, FSim)
 
 def _ch2rxx_rule(gate):
     targs = gate.affectArgs
