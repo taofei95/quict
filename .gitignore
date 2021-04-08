@@ -13,3 +13,4 @@ make.bat
 .idea
 */*.jpg
 .vscode
+.test_build
