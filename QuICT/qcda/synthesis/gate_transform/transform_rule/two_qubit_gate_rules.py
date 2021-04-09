@@ -1027,3 +1027,31 @@ def _rzz2ryy_rule(gate):
         Rx(math.pi / 2) & targs[0]
     return gateSet
 Rzz2RyyRule = TransformRule(_rzz2ryy_rule, Rzz, Ryy)
+
+
+def _fsim2crz_rule(gate):
+    theta = gate.pargs[0];
+    fai = gate.pargs[1];
+    targs = gate.affectArgs
+    gateSet = GateSet()
+    with gateSet:
+        """
+        CX & targs
+        H & targs[0]
+        CX & (targs[1], targs[0])
+        Rz(theta) & targs[0]
+        Phase(theta / 2) & targs[0]
+        CX & (targs[1], targs[0])
+        Rz(-theta) & targs[0]
+        Phase(-theta / 2) & targs[0]
+        H & targs[0]
+        CX & targs
+        CRz(-fai) & targs
+        Phase(-fai / 2) & targs[1]
+        """
+        Rxx(theta) & targs
+        Ryy(theta) & targs
+        CRz(-fai) & targs
+        Phase(-fai / 2) & targs[1]
+    return gateSet
+Fsim2CRzRule = TransformRule(_fsim2crz_rule, FSim, CRz)
