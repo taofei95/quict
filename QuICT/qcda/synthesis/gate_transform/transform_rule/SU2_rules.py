@@ -22,7 +22,7 @@ class SU2TransformRule(TransformRule):
     """ a subClass of TransformRule, to check the decomposition of SU2
 
     """
-    def check_equal(self, ignore_phase = True, eps = 1e-7):
+    def check_equal(self, ignore_phase = True, eps = 1e-13):
         qubit = 1
         d = np.power(2, qubit)
         Q = np.mat(ortho_group.rvs(dim=d))
@@ -40,16 +40,12 @@ class SU2TransformRule(TransformRule):
         B = Q.T * d2 * Q
         U = A + B[:] * 1j
 
-        U = np.array([[ 0.18722044+0.9779111j,  -0.0889144 +0.02706697j],
- [-0.0889144 +0.02706697j,  0.38942514+0.91635674j]], dtype=np.complex)
-
         gate = Unitary(U)
         gate.targs = [0]
         gateSet = self.transform(gate)
         ans = gateSet.equal(gate, ignore_phase=ignore_phase, eps=eps)
         if not ans:
             print(U)
-            print(gateSet.matrix())
         return ans
 
 def _zyzRule(gate):
@@ -70,12 +66,13 @@ def _zyzRule(gate):
     beta_dec_delta = 0
     if abs(det - 1) > eps:
         unitary[:] /= np.sqrt(det)
+    print(unitary)
     if abs(unitary[0, 0]) > eps:
-        beta_plus_delta = angle(unitary[1, 1] / unitary[0, 0])
-        gamma = arccos((2 * unitary[0, 0] * unitary[1, 1] - 1).real)
+        gamma = arccos((2 * abs(unitary[0, 0] * unitary[1, 1]) - 1))
+        beta_plus_delta = -np.angle(unitary[0, 0] / np.cos(gamma / 2)) * 2
     if abs(unitary[0, 1]) > eps:
-        beta_dec_delta = angle(-unitary[1, 0] / unitary[0, 1])
-        gamma = arccos((2 * unitary[0, 1] * unitary[1, 0] + 1).real)
+        gamma = arccos((2 * -abs(unitary[0, 1] * unitary[1, 0]) + 1))
+        beta_dec_delta = np.angle(unitary[1, 0] / np.sin(gamma / 2)) * 2
     beta = (beta_plus_delta + beta_dec_delta) / 2
     delta = beta_plus_delta - beta
     gateSet = GateSet()
@@ -83,8 +80,6 @@ def _zyzRule(gate):
         Rz(delta)  & targ
         Ry(gamma) & targ
         Rz(beta) & targ
-    print(gate.matrix)
-    print(gateSet.matrix())
     return gateSet
 
 ZyzRule = SU2TransformRule(_zyzRule)
@@ -105,11 +100,11 @@ def _ibmqRule(gate):
     if abs(det - 1) > eps:
         unitary[:] /= np.sqrt(det)
     if abs(unitary[0, 0]) > eps:
-        beta_plus_delta = angle(unitary[1, 1] / unitary[0, 0])
         gamma = arccos((2 * unitary[0, 0] * unitary[1, 1] - 1).real)
+        beta_plus_delta = -np.angle(unitary[0, 0] / np.cos(gamma / 2)) * 2
     if abs(unitary[0, 1]) > eps:
-        beta_dec_delta = angle(-unitary[1, 0] / unitary[0, 1])
         gamma = arccos((2 * unitary[0, 1] * unitary[1, 0] + 1).real)
+        beta_dec_delta = np.angle(unitary[1, 0] / np.sin(gamma / 2)) * 2
     beta = (beta_plus_delta + beta_dec_delta) / 2
     delta = beta_plus_delta - beta
     gateSet = GateSet()
@@ -120,8 +115,6 @@ def _ibmqRule(gate):
         SX & targ
         X & targ
         Rz(beta) & targ
-    print(unitary)
-    print(gateSet.matrix())
     return gateSet
 IbmqRule = SU2TransformRule(_ibmqRule)
 

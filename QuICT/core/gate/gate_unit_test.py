@@ -23,7 +23,7 @@ def test_permMulDetail():
             ControlPermMulDetail([2, 5]).inverse() | circuit
             X | circuit
             unitary = SyntheticalUnitary.run(circuit)
-            if (abs(abs(unitary - np.identity((1 << i), dtype=np.complex))) > 1e-10).any():
+            if (abs(abs(unitary - np.identity((1 << i), dtype=np.complex128))) > 1e-10).any():
                 assert 0
     assert 1
 
@@ -43,7 +43,7 @@ def test_CCRz():
             # print(amplitude)
             X | circuit
             unitary = SyntheticalUnitary.run(circuit)
-            if (abs(abs(unitary - np.identity((1 << i), dtype=np.complex))) > 1e-10).any():
+            if (abs(abs(unitary - np.identity((1 << i), dtype=np.complex128))) > 1e-10).any():
                 assert 0
             assert 1
     assert 1
@@ -76,7 +76,7 @@ def test_fSim():
                 print(amplitude)
                 assert 0
             unitary = SyntheticalUnitary.run(circuit)
-            if (abs(abs(unitary - np.identity((1 << i), dtype=np.complex))) > 1e-10).any():
+            if (abs(abs(unitary - np.identity((1 << i), dtype=np.complex128))) > 1e-10).any():
                 # print(unitary)
                 assert 0
     assert 1
@@ -100,7 +100,7 @@ def test_Rxx():
                 print(amplitude)
                 assert 0
             unitary = SyntheticalUnitary.run(circuit)
-            if (abs(abs(unitary - np.identity((1 << i), dtype=np.complex))) > 1e-10).any():
+            if (abs(abs(unitary - np.identity((1 << i), dtype=np.complex128))) > 1e-10).any():
                 # print(unitary)
                 assert 0
     assert 1
@@ -124,7 +124,7 @@ def test_Ryy():
                 print(amplitude)
                 assert 0
             unitary = SyntheticalUnitary.run(circuit)
-            if (abs(abs(unitary - np.identity((1 << i), dtype=np.complex))) > 1e-10).any():
+            if (abs(abs(unitary - np.identity((1 << i), dtype=np.complex128))) > 1e-10).any():
                 # print(unitary)
                 assert 0
     assert 1
@@ -148,7 +148,7 @@ def test_Rzz():
                 print(amplitude)
                 assert 0
             unitary = SyntheticalUnitary.run(circuit)
-            if (abs(abs(unitary - np.identity((1 << i), dtype=np.complex))) > 1e-10).any():
+            if (abs(abs(unitary - np.identity((1 << i), dtype=np.complex128))) > 1e-10).any():
                 # print(unitary)
                 assert 0
     assert 1
