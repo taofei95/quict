@@ -6,10 +6,11 @@
 
 import pytest
 
-from .two_qubit_gate_rules import *
+# from .two_qubit_gate_rules import *
 from QuICT.core import *
 from QuICT.qcda.synthesis.gate_transform import *
 
 
 if __name__ == "__main__":
-    print(Crz2CxRule.check_equal())
+    for i in range(100):
+        print(IbmqRule.check_equal())

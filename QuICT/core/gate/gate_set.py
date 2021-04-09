@@ -340,7 +340,7 @@ class GateSet(list):
                 else:
                     max_qubit = max(max_qubit, arg)
         if min_qubit == -1:
-            return np.eye(2, dtype=np.complex)
+            return np.eye(2, dtype=np.complex128)
 
         if local:
             q_len = max_qubit - min_qubit + 1
@@ -349,10 +349,10 @@ class GateSet(list):
 
         n = 1 << q_len
 
-        result = np.eye(n, dtype=np.complex)
+        result = np.eye(n, dtype=np.complex128)
 
         for gate in self.gates:
-            new_values = np.zeros((n, n), dtype=np.complex)
+            new_values = np.zeros((n, n), dtype=np.complex128)
             targs = gate.affectArgs
             for i in range(len(targs)):
                 targs[i] -= min_qubit
@@ -406,6 +406,5 @@ class GateSet(list):
                     break
             if rotate == 0 or abs(abs(rotate) - 1) > eps:
                 return False
-            self_matrix = self_matrix * np.full(shape, rotate)
-
-        return np.allclose(self_matrix, target_matrix, rtol=eps, atol=eps)
+            self_matrix = self_matrix * np.full(shape, rotate, dtype=np.complex128)
+        return np.allclose(self_matrix, target_matrix, atol=eps, rtol=eps)

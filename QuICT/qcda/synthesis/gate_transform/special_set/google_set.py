@@ -11,8 +11,6 @@ from QuICT.core import *
 
 def _Google_SU2():
     pass
-def _Google_SU4():
-    pass
+
 GoogleSet = InstructionSet(FSim, [SX, SY, SW])
 GoogleSet.register_SU2_rule(TransformRule(_Google_SU2))
-GoogleSet.register_SU4_rule(TransformRule(_Google_SU4))
