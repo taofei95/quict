@@ -19,9 +19,9 @@ class CompositeGate(list):
     def gates(self):
         return self
 
-    @property
-    def matrix(self):
-        return self.matrix()
+    # @property
+    # def matrix(self):
+    #     return self.matrix()
 
     def __enter__(self):
         GATE_SET_LIST.append(self)

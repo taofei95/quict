@@ -19,8 +19,11 @@ def test_csd():
         angle_list *= 2  # Ry gate use its angle as theta/2
 
         circuit_2 = Circuit(n)
-        gates = uniformlyRy(angle_list=angle_list).build_gate(mapping=[(i + 1) % n for i in range(n)])
+        gates = uniformlyRy(
+            angle_list=angle_list,
+            mapping=[(i + 1) % n for i in range(n)]
+        )
         circuit_2.extend(gates)
-        mat2 = SyntheticalUnitary.run(circuit_2)
+        mat2 = gates.matrix()
         assert np.allclose(cs, mat2)
         assert np.allclose(block_diag(u[0], u[1]) @ mat2 @ block_diag(v_dagger[0], v_dagger[1]), mat1)

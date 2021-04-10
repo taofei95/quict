@@ -12,11 +12,11 @@ def test_reversed_uniformly_ry():
         qubit_num = controlled_cnt + 1
         angle_cnt = 1 << controlled_cnt
         angle_list = [np.random.uniform(low=0, high=np.pi) for _ in range(angle_cnt)]
-        gates = uniformlyRy(angle_list=angle_list) \
-            .build_gate(mapping=[(i + 1) % qubit_num for i in range(qubit_num)])
-        circuit_seg = Circuit(qubit_num)
-        circuit_seg.extend(gates)
-        mat = SyntheticalUnitary.run(circuit_seg)
+        gates = uniformlyRy(
+            angle_list=angle_list,
+            mapping=[(i + 1) % qubit_num for i in range(qubit_num)]
+        )
+        mat = gates.matrix()
         for i in range(angle_cnt):
             for j in range(angle_cnt):
                 if i == j:

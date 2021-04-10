@@ -9,8 +9,6 @@ def test_unitary_transform_base_2():
     for _ in range(rnd):
         qubit_num = np.random.randint(1, 7)
         mat1 = unitary_group.rvs(1 << qubit_num)
-        synthesized_circuit = Circuit(qubit_num)
-        gates = UTrans(mat1, recursive_basis=2).build_gate()
-        synthesized_circuit.extend(gates)
-        mat2 = SyntheticalUnitary.run(synthesized_circuit)
+        gates = UTrans(mat1, recursive_basis=2)
+        mat2 = gates.matrix()
         assert np.allclose(mat1, mat2)

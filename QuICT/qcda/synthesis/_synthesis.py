@@ -7,7 +7,7 @@
 import numpy as np
 
 from QuICT.core.exception import TypeException
-from QuICT.core import Circuit, Qubit, Qureg
+from QuICT.core import Circuit, Qubit, Qureg, CompositeGate
 
 class Synthesis(object):
     """ synthesis some oracle into BasicGate
@@ -27,15 +27,16 @@ class Synthesis(object):
     def __init__(self, function):
         self._synthesisFuncion = function
 
-    def __call__(self, *pargs):
+    def __call__(self, *pargs, **kwargs)->CompositeGate:
         """
 
         Args:
             *pargs: parameters
+            **kwargs: key word arguments
         Returns:
             CompositeGate: the list of results
         """
-        return self._synthesisFuncion(*pargs)
+        return self._synthesisFuncion(*pargs, **kwargs)
 
     def _synthesisFuncion(*pargs):
         """
