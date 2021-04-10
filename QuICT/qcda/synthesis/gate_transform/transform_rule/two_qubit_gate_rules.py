@@ -1074,6 +1074,166 @@ def _rzz2ryy_rule(gate):
     return gateSet
 Rzz2RyyRule = TransformRule(_rzz2ryy_rule, Rzz, Ryy)
 
+"""
+transform Fsim gate into others
+"""
+
+def _fsim2cx_rule(gate):
+    theta = gate.pargs[0];
+    fai = gate.pargs[1];
+    targs = gate.affectArgs
+    gateSet = GateSet()
+    with gateSet:
+        CX & targs
+        H & targs[0]
+        CX & (targs[1], targs[0])
+        Rz(-theta) & targs[0]
+        Phase(-theta / 2) & targs[0]
+        CX & (targs[1], targs[0])
+        Rz(theta) & targs[0]
+        Phase(theta / 2) & targs[0]
+        H & targs[0]
+        CX & targs
+        U1(-fai / 2) & targs[1]
+        CX & targs
+        U1(fai / 2) & targs[1]
+        CX & targs
+        Rz(-fai / 2) & targs[0]
+    return gateSet
+Fsim2CxRule = TransformRule(_fsim2cx_rule, FSim, CX)
+
+def _fsim2cy_rule(gate):
+    theta = gate.pargs[0];
+    fai = gate.pargs[1];
+    targs = gate.affectArgs
+    gateSet = GateSet()
+    with gateSet:
+
+        S & targs[1]
+        CY & targs
+        S_dagger & targs[1]
+        H & targs[0]
+        S & targs[0]
+        CY & (targs[1], targs[0])
+        S_dagger & targs[0]
+        Rz(-theta) & targs[0]
+        Phase(-theta / 2) & targs[0]
+        S & targs[0]
+        CY & (targs[1], targs[0])
+        S_dagger & targs[0]
+        Rz(theta) & targs[0]
+        Phase(theta / 2) & targs[0]
+        H & targs[0]
+        S & targs[1]
+        CY & targs
+        S_dagger & targs[1]
+        U1(-fai / 2) & targs[1]
+        S & targs[1]
+        CY & targs
+        S_dagger & targs[1]
+        U1(fai / 2) & targs[1]
+        S & targs[1]
+        CY & targs
+        S_dagger & targs[1]
+        Rz(-fai / 2) & targs[0]
+    return gateSet
+Fsim2CyRule = TransformRule(_fsim2cy_rule, FSim, CY)
+
+def _fsim2cz_rule(gate):
+    theta = gate.pargs[0];
+    fai = gate.pargs[1];
+    targs = gate.affectArgs
+    gateSet = GateSet()
+    with gateSet:
+        H & targs[1]
+        CZ & targs
+        H & targs[1]
+        H & targs[0]
+        H & targs[0]
+        CZ & (targs[1], targs[0])
+        H & targs[0]
+        Rz(-theta) & targs[0]
+        Phase(-theta / 2) & targs[0]
+        H & targs[0]
+        CZ & (targs[1], targs[0])
+        H & targs[0]
+        Rz(theta) & targs[0]
+        Phase(theta / 2) & targs[0]
+        H & targs[0]
+        H & targs[1]
+        CZ & targs
+        H & targs[1]
+        U1(-fai / 2) & targs[1]
+        H & targs[1]
+        CZ & targs
+        H & targs[1]
+        U1(fai / 2) & targs[1]
+        H & targs[1]
+        CZ & targs
+        H & targs[1]
+        Rz(-fai / 2) & targs[0]
+    return gateSet
+Fsim2CzRule = TransformRule(_fsim2cz_rule, FSim, CZ)
+
+def _fsim2ch_rule(gate):
+    theta = gate.pargs[0];
+    fai = gate.pargs[1];
+    targs = gate.affectArgs
+    gateSet = GateSet()
+    with gateSet:
+        T_dagger & targs[1]
+        H & targs[1]
+        S_dagger & targs[1]
+        CH & targs
+        S & targs[1]
+        H & targs[1]
+        T & targs[1]
+        H & targs[0]
+        T_dagger & targs[0]
+        H & targs[0]
+        S_dagger & targs[0]
+        CH & (targs[1], targs[0])
+        S & targs[0]
+        H & targs[0]
+        T & targs[0]
+        Rz(-theta) & targs[0]
+        Phase(-theta / 2) & targs[0]
+        T_dagger & targs[0]
+        H & targs[0]
+        S_dagger & targs[0]
+        CH & (targs[1], targs[0])
+        S & targs[0]
+        H & targs[0]
+        T & targs[0]
+        Rz(theta) & targs[0]
+        Phase(theta / 2) & targs[0]
+        H & targs[0]
+        T_dagger & targs[1]
+        H & targs[1]
+        S_dagger & targs[1]
+        CH & targs
+        S & targs[1]
+        H & targs[1]
+        T & targs[1]
+        U1(-fai / 2) & targs[1]
+        T_dagger & targs[1]
+        H & targs[1]
+        S_dagger & targs[1]
+        CH & targs
+        S & targs[1]
+        H & targs[1]
+        T & targs[1]
+        U1(fai / 2) & targs[1]
+        T_dagger & targs[1]
+        H & targs[1]
+        S_dagger & targs[1]
+        CH & targs
+        S & targs[1]
+        H & targs[1]
+        T & targs[1]
+        Rz(-fai / 2) & targs[0]
+    return gateSet
+Fsim2ChRule = TransformRule(_fsim2ch_rule, FSim, CH)
 
 def _fsim2crz_rule(gate):
     theta = gate.pargs[0];
@@ -1081,23 +1241,166 @@ def _fsim2crz_rule(gate):
     targs = gate.affectArgs
     gateSet = GateSet()
     with gateSet:
-        """
-        CX & targs
+        Rz(math.pi / 2) & targs[0]
+        H & targs[1]
+        CRz(math.pi) & targs
+        H & targs[1]
         H & targs[0]
-        CX & (targs[1], targs[0])
-        Rz(theta) & targs[0]
-        Phase(theta / 2) & targs[0]
-        CX & (targs[1], targs[0])
+        Rz(math.pi / 2) & targs[1]
+        H & targs[0]
+        CRz(math.pi) & (targs[1], targs[0])
+        H & targs[0]
         Rz(-theta) & targs[0]
         Phase(-theta / 2) & targs[0]
+        Rz(math.pi / 2) & targs[1]
         H & targs[0]
-        CX & targs
-        CRz(-fai) & targs
-        Phase(-fai / 2) & targs[1]
-        """
-        Rxx(theta) & targs
-        Ryy(theta) & targs
-        CRz(-fai) & targs
-        Phase(-fai / 2) & targs[1]
+        CRz(math.pi) & (targs[1], targs[0])
+        H & targs[0]
+        Rz(theta) & targs[0]
+        Phase(theta / 2) & targs[0]
+        H & targs[0]
+        Rz(math.pi / 2) & targs[0]
+        H & targs[1]
+        CRz(math.pi) & targs
+        H & targs[1]
+        U1(-fai / 2) & targs[1]
+        Rz(math.pi / 2) & targs[0]
+        H & targs[1]
+        CRz(math.pi) & targs
+        H & targs[1]
+        U1(fai / 2) & targs[1]
+        Rz(math.pi / 2) & targs[0]
+        H & targs[1]
+        CRz(math.pi) & targs
+        H & targs[1]
+        Rz(-fai / 2) & targs[0]
     return gateSet
-Fsim2CRzRule = TransformRule(_fsim2crz_rule, FSim, CRz)
+Fsim2CrzRule = TransformRule(_fsim2crz_rule, FSim, CRz)
+
+
+def _fsim2rxx_rule(gate):
+    theta = gate.pargs[0];
+    fai = gate.pargs[1];
+    targs = gate.affectArgs
+    gateSet = GateSet()
+    with gateSet:
+        Rxx(theta) & targs
+        Rx(math.pi / 2) & targs[0]
+        Rx(math.pi / 2) & targs[1]
+        H & targs[0]
+        H & targs[1]
+        Rxx(theta) & targs
+        H & targs[1]
+        H & targs[0]
+        Rx(-math.pi / 2) & targs[1]
+        Rx(-math.pi / 2) & targs[0]
+        U1(-fai / 2) & targs[1]
+        Ry(math.pi / 2) & targs[0]
+        Phase(7 * math.pi / 4) & targs[0]
+        Rx(-math.pi / 2) & targs[0]
+        Rx(-math.pi / 2) & targs[1]
+        Rxx(math.pi / 2) & targs
+        Ry(-math.pi / 2) & targs[0]
+        U1(fai / 2) & targs[1]
+        Ry(math.pi / 2) & targs[0]
+        Phase(7 * math.pi / 4) & targs[0]
+        Rx(-math.pi / 2) & targs[0]
+        Rx(-math.pi / 2) & targs[1]
+        Rxx(math.pi / 2) & targs
+        Ry(-math.pi / 2) & targs[0]
+        Rz(-fai / 2) & targs[0]
+    return gateSet
+Fsim2RxxRule = TransformRule(_fsim2rxx_rule, FSim, Rxx)
+
+
+def _fsim2ryy_rule(gate):
+    theta = gate.pargs[0];
+    fai = gate.pargs[1];
+    targs = gate.affectArgs
+    gateSet = GateSet()
+    with gateSet:
+        H & targs[0]
+        H & targs[1]
+        Rx(-math.pi / 2) & targs[0]
+        Rx(-math.pi / 2) & targs[1]
+        Ryy(theta) & targs
+        Rx(math.pi / 2) & targs[1]
+        Rx(math.pi / 2) & targs[0]
+        H & targs[1]
+        H & targs[0]
+        Ryy(theta) & targs
+        U1(-fai / 2) & targs[1]
+        Ry(math.pi / 2) & targs[0]
+        Phase(7 * math.pi / 4) & targs[0]
+        Rx(-math.pi / 2) & targs[0]
+        Rx(-math.pi / 2) & targs[1]
+        H & targs[0]
+        H & targs[1]
+        Rx(-math.pi / 2) & targs[1]
+        Rx(-math.pi / 2) & targs[0]
+        Ryy(math.pi / 2) & targs
+        Rx(math.pi / 2) & targs[1]
+        Rx(math.pi / 2) & targs[0]
+        H & targs[1]
+        H & targs[0]
+        Ry(-math.pi / 2) & targs[0]
+        U1(fai / 2) & targs[1]
+        Ry(math.pi / 2) & targs[0]
+        Phase(7 * math.pi / 4) & targs[0]
+        Rx(-math.pi / 2) & targs[0]
+        Rx(-math.pi / 2) & targs[1]
+        H & targs[0]
+        H & targs[1]
+        Rx(-math.pi / 2) & targs[1]
+        Rx(-math.pi / 2) & targs[0]
+        Ryy(math.pi / 2) & targs
+        Rx(math.pi / 2) & targs[1]
+        Rx(math.pi / 2) & targs[0]
+        H & targs[1]
+        H & targs[0]
+        Ry(-math.pi / 2) & targs[0]
+        Rz(-fai / 2) & targs[0]
+    return gateSet
+Fsim2RyyRule = TransformRule(_fsim2ryy_rule, FSim, Ryy)
+
+def _fsim2rzz_rule(gate):
+    theta = gate.pargs[0];
+    fai = gate.pargs[1];
+    targs = gate.affectArgs
+    gateSet = GateSet()
+    with gateSet:
+        H & targs[0]
+        H & targs[1]
+        Rzz(theta) & targs
+        H & targs[1]
+        H & targs[0]
+        Rx(math.pi / 2) & targs[0]
+        Rx(math.pi / 2) & targs[1]
+        Rzz(theta) & targs
+        Rx(-math.pi / 2) & targs[1]
+        Rx(-math.pi / 2) & targs[0]
+        U1(-fai / 2) & targs[1]
+        Ry(math.pi / 2) & targs[0]
+        Phase(7 * math.pi / 4) & targs[0]
+        Rx(-math.pi / 2) & targs[0]
+        Rx(-math.pi / 2) & targs[1]
+        H & targs[0]
+        H & targs[1]
+        Rzz(math.pi / 2) & targs
+        H & targs[1]
+        H & targs[0]
+        Ry(-math.pi / 2) & targs[0]
+        U1(fai / 2) & targs[1]
+        Ry(math.pi / 2) & targs[0]
+        Phase(7 * math.pi / 4) & targs[0]
+        Rx(-math.pi / 2) & targs[0]
+        Rx(-math.pi / 2) & targs[1]
+        H & targs[0]
+        H & targs[1]
+        Rzz(math.pi / 2) & targs
+        H & targs[1]
+        H & targs[0]
+        Ry(-math.pi / 2) & targs[0]
+        Rz(-fai / 2) & targs[0]
+    return gateSet
+Fsim2RzzRule = TransformRule(_fsim2rzz_rule, FSim, Rzz)
