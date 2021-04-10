@@ -4,10 +4,13 @@
 # @Author  : Han Yu
 # @File    : _synthesis.py
 
+from typing import *
+
 import numpy as np
 
 from QuICT.core.exception import TypeException
 from QuICT.core import Circuit, Qubit, Qureg, CompositeGate
+
 
 class Synthesis(object):
     """ synthesis some oracle into BasicGate
@@ -24,10 +27,12 @@ class Synthesis(object):
     Note that all subClass must overloaded the function "__call__".
     """
 
-    def __init__(self, function):
-        self._synthesisFuncion = function
+    def __init__(self, function: Callable):
+        # TODO: annotations
+        # self.__call__.annotations__ = function.__annotations__
+        self._synthesisFunction = function
 
-    def __call__(self, *pargs, **kwargs)->CompositeGate:
+    def __call__(self, *pargs, **kwargs) -> CompositeGate:
         """
 
         Args:
@@ -36,7 +41,7 @@ class Synthesis(object):
         Returns:
             CompositeGate: the list of results
         """
-        return self._synthesisFuncion(*pargs, **kwargs)
+        return self._synthesisFunction(*pargs, **kwargs)
 
     def _synthesisFuncion(*pargs):
         """
