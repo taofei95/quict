@@ -3,7 +3,6 @@
 # @TIME    : 2020/8/22 2:39
 # @Author  : Han Yu
 # @File    : _synthesis.py
-
 from typing import *
 
 import numpy as np
@@ -27,28 +26,27 @@ class Synthesis(object):
     Note that all subClass must overloaded the function "__call__".
     """
 
-    def __init__(self, function: Callable):
-        # TODO: annotations
-        # self.__call__.annotations__ = function.__annotations__
-        self._synthesisFunction = function
+    def __init__(self, _fn: Callable):
+        self._synthesisFunction = _fn
+        self.__doc__ = _fn.__doc__
 
-    def __call__(self, *pargs, **kwargs) -> CompositeGate:
+    def __call__(self, *args, **kwargs) -> CompositeGate:
         """
 
         Args:
-            *pargs: parameters
+            *args: arguments
             **kwargs: key word arguments
         Returns:
             CompositeGate: the list of results
         """
-        return self._synthesisFunction(*pargs, **kwargs)
+        return self._synthesisFunction(*args, **kwargs)
 
-    def _synthesisFuncion(*pargs):
-        """
-
-        Args:
-            *pargs: parameters
-        Returns:
-            CompositeGate: the list of results
-        """
-        raise Exception('"__call__" function must be overloaded')
+    # def _synthesisFuncion(*pargs):
+    #     """
+    #
+    #     Args:
+    #         *pargs: parameters
+    #     Returns:
+    #         CompositeGate: the list of results
+    #     """
+    #     raise Exception('"__call__" function must be overloaded')

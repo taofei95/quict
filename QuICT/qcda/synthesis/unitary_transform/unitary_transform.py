@@ -70,7 +70,7 @@ def __build_gate(
     shift: complex = 1.0
 
     # Dynamically import for avoiding circular import.
-    from .controlled_unitary import controlled_unitary_transform
+    from .controlled_unitary import controlled_unitary_transform, CUTrans
     _gates, _shift = controlled_unitary_transform(
         u1=v1_dagger,
         u2=v2_dagger,
@@ -78,6 +78,7 @@ def __build_gate(
         mapping=None,
         include_phase_gate=False
     )
+    # CUTrans()
     shift *= _shift
     gates.extend(_gates)
 
