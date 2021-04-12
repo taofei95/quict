@@ -84,7 +84,7 @@ def __build_gate(
 
     v, d, w = quantum_shannon_decompose(u1, u2)
     gates = CompositeGate()
-    _gates: CompositeGate
+    # _gates: CompositeGate
     shift: complex = 1.0 + 0.0j
 
     # diag(u1, u2) == diag(v, v) @ diag(d, d_dagger) @ diag(w, w)
