@@ -97,8 +97,6 @@ def __build_gate(
     If qubit_num > 2, we would have gates[-1] as a CZ affecting on (0, 1), 
     while gates[-2] a CZ on (0, qubit_num - 1).
     If qubit_num == 2, there would only be one CZ affecting on (0, 1).
-    
-    Actually, when recursion steps into current branch, qubit_num must be greater than 2.
     """
 
     # u
@@ -111,11 +109,12 @@ def __build_gate(
     for j in range(_u_size // 2, _u_size):
         u2[:, j] = -u2[:, j]
 
-    gates.pop()  # CZ on (0, qubit_num - 1)
-    # For similar reasons, this CZ only affect 2 parts of matrix of U.
-    for j in range(_u_size - _u_size // 4, _u_size):
-        u1[:, j] = - u1[:, j]
-        u2[:, j] = - u2[:, j]
+    if qubit_num > 2:
+        gates.pop()  # CZ on (0, qubit_num - 1)
+        # For similar reasons, this CZ only affect 2 parts of matrix of U.
+        for j in range(_u_size - _u_size // 4, _u_size):
+            u1[:, j] = - u1[:, j]
+            u2[:, j] = - u2[:, j]
 
     _gates, _shift = controlled_unitary_transform(
         u1=u1,
