@@ -8,8 +8,11 @@ import numpy as np
 from QuICT.core import CompositeGate, CX, CZ, Ry, Rz
 from .._synthesis import Synthesis
 
-def uniformlyRotation(low, high, z, mapping, direction = None):
-    """ synthesis uniformlyRy gate, bits range [low, high)
+
+def uniformlyRotation(low, high, z, mapping, direction=None):
+    """
+    synthesis uniformlyRy gate, bits range [low, high)
+
     Args:
         low(int): the left range low
         high(int): the right range high
@@ -31,7 +34,7 @@ def uniformlyRotation(low, high, z, mapping, direction = None):
         Rxp.append((z[i] + z[i + length]) / 2)
         Rxn.append((z[i] - z[i + length]) / 2)
     if direction is None:
-        gates = uniformlyRotation(low + 1, high, Rxp,  mapping, False)
+        gates = uniformlyRotation(low + 1, high, Rxp, mapping, False)
         with gates:
             CZ & [mapping[low], mapping[high - 1]]
             """ The extra CZ derived from CCPhase can also be moved to the edge
@@ -40,6 +43,7 @@ def uniformlyRotation(low, high, z, mapping, direction = None):
                 CZ & [mapping[low], mapping[low + 1]]
             """
         gates.extend(uniformlyRotation(low + 1, high, Rxn, mapping, True))
+
         with gates:
             CZ & [mapping[low], mapping[high - 1]]
             # if high - low == 2, no CZ is needed here
@@ -58,7 +62,7 @@ def uniformlyRotation(low, high, z, mapping, direction = None):
     return gates
 
 
-def uniformlyRyDecompostionRevision(angle_list, mapping = None):
+def uniformlyRyDecompostionRevision(angle_list, mapping=None):
     """ uniformlyRyGate
 
     http://cn.arxiv.org/abs/quant-ph/0504100v1 Fig4 a)

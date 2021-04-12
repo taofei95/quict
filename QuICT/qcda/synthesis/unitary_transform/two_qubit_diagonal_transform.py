@@ -11,9 +11,9 @@ from .._synthesis import Synthesis
 
 # Magic basis
 B = (1.0 / np.sqrt(2)) * np.array([[1, 1j, 0, 0],
-                                    [0, 0, 1j, 1],
-                                    [0, 0, 1j, -1],
-                                    [1, -1j, 0, 0]], dtype=complex)
+                                   [0, 0, 1j, 1],
+                                   [0, 0, 1j, -1],
+                                   [1, -1j, 0, 0]], dtype=complex)
 
 
 def TwoQubitDiagonalTransform(matrix, eps=1e-15):
@@ -32,8 +32,8 @@ def TwoQubitDiagonalTransform(matrix, eps=1e-15):
         CompositeGate: Decomposed gates.
 
     Reference:
-        [1] arxiv.org/abs/0806.4015
-        [2] arxiv.org/abs/quant-ph/0308033
+        [1] https://arxiv.org/abs/0806.4015
+        [2] https://arxiv.org/abs/quant-ph/0308033
     """
     sy2 = np.array([[0, 0, 0, -1],
                     [0, 0, 1, 0],
@@ -44,14 +44,16 @@ def TwoQubitDiagonalTransform(matrix, eps=1e-15):
     U = matrix.copy()
     U /= np.linalg.det(U) ** 0.25
     gUTT = U.T.dot(sy2).dot(U).dot(sy2).T
-    psi = np.arctan((gUTT[0, 0] + gUTT[1, 1] + gUTT[2, 2] + gUTT[3, 3]).imag / 
+    psi = np.arctan((gUTT[0, 0] + gUTT[1, 1] + gUTT[2, 2] + gUTT[3, 3]).imag /
                     (gUTT[0, 0] - gUTT[1, 1] - gUTT[2, 2] + gUTT[3, 3]).real)
 
     gates_Delta = CompositeGate()
     with gates_Delta:
+        # @formatter:off
         CX      & [0, 1]
         Rz(psi) & 1
         CX      & [0, 1]
+        # @formatter:on
     Delta = gates_Delta.matrix()
     U = U.dot(Delta)
     """ Some unused calculation in the proposition, useful for understanding
@@ -91,7 +93,7 @@ def TwoQubitDiagonalTransform(matrix, eps=1e-15):
     b = (d[1] + d[2]) / 2
     c = (d[0] + d[1]) / 2
     assert np.isclose(b, 0)
-    
+
     # P could be in O(4) instead of SO(4).
     if np.linalg.det(P) < 0:
         P[:, -1] = -P[:, -1]
@@ -109,6 +111,7 @@ def TwoQubitDiagonalTransform(matrix, eps=1e-15):
     # Finally we could combine everything together
     gates = CompositeGate()
     with gates:
+        # @formatter:off
         Unitary(Delta.conj())   & [0, 1]
         Unitary(KR0)            & 0
         Unitary(KR1)            & 1
@@ -118,6 +121,7 @@ def TwoQubitDiagonalTransform(matrix, eps=1e-15):
         CX                      & [0, 1]
         Unitary(KL0)            & 0
         Unitary(KL1)            & 1
+        # @formatter:on
 
     return gates
 

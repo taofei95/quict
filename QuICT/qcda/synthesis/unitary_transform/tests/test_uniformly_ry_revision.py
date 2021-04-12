@@ -9,6 +9,7 @@ from QuICT.algorithm import Amplitude, SyntheticalUnitary
 from QuICT.core import *
 from QuICT.qcda.synthesis.unitary_transform.uniformly_ry_revision import uniformlyRyRevision
 
+
 def test_uniform_ry():
     for i in range(1, 8):
         circuit = Circuit(i)
@@ -25,6 +26,6 @@ def test_uniform_ry():
             # assert np.allclose(phase, phase[0, 0] * np.eye(2))
             assert not np.any(abs(unitary_slice - Ry(angles[j]).matrix.reshape(2, 2)) > 1e-10)
 
-            
+
 if __name__ == "__main__":
     test_uniform_ry()
