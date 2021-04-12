@@ -14,8 +14,8 @@ from .._synthesis import Synthesis
 
 
 def __build_gate(
-    mat: np.ndarray,
-    recursive_basis: int = 1
+        mat: np.ndarray,
+        recursive_basis: int = 1
 ) -> Tuple[CompositeGate, complex]:
     """
     No mapping
@@ -27,7 +27,6 @@ def __build_gate(
 
     if qubit_num == 1:
         GateBuilder.setGateType(GATE_ID["Unitary"])
-        # TODO: Unitary Gate matrix type restrictions
         parg = np.reshape(mat, -1).tolist()
         GateBuilder.setPargs(parg)
         GateBuilder.setTargs([0])
@@ -35,10 +34,12 @@ def __build_gate(
         _ret = CompositeGate(gates=[u])
         return _ret, 1.0 + 0.0j
     elif qubit_num == 2 and recursive_basis == 2:
-        gates:CompositeGate = KAK(mat)
-        # TODO: Avoid build a circuit.
+        gates = KAK(mat)
         syn_mat = gates.matrix()
-        shift: complex = mat[0, 0] / syn_mat[0, 0]
+        shift = 1.0 + 0.0j
+        for j in range(mat_size):
+            if not np.isclose(0, syn_mat[0, j]):
+                shift = mat[0, j] / syn_mat[0, j]
         return gates, shift
 
     gates = CompositeGate()
@@ -108,10 +109,10 @@ def __build_gate(
 
 
 def unitary_transform(
-    mat:np.ndarray,
-    recursive_basis:int=1,
-    mapping: Sequence[int] = None,
-    include_phase_gate: bool = True
+        mat: np.ndarray,
+        recursive_basis: int = 1,
+        mapping: Sequence[int] = None,
+        include_phase_gate: bool = True
 ):
     """
     Return:
@@ -122,7 +123,7 @@ def unitary_transform(
     """
     qubit_num = int(round(np.log2(mat.shape[0])))
     basis = recursive_basis
-    gates, shift = __build_gate(mat,recursive_basis)
+    gates, shift = __build_gate(mat, recursive_basis)
     if mapping is None:
         mapping = [i for i in range(qubit_num)]
     mapping = list(mapping)

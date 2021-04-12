@@ -33,6 +33,7 @@ def quantum_shannon_decompose(
 
     return v, d, w
 
+
 def __i_tensor_unitary(
         u: np.ndarray,
         recursive_basis: int
@@ -66,10 +67,11 @@ def __i_tensor_unitary(
 
     return gates, shift
 
+
 def __build_gate(
-    u1: np.ndarray,
-    u2: np.ndarray,
-    recursive_basis: int = 1
+        u1: np.ndarray,
+        u2: np.ndarray,
+        recursive_basis: int = 1
 ) -> Tuple[CompositeGate, complex]:
     """
     Build gates from parameterized model without mapping
@@ -82,7 +84,7 @@ def __build_gate(
 
     v, d, w = quantum_shannon_decompose(u1, u2)
     gates = CompositeGate()
-    _gates:CompositeGate
+    _gates: CompositeGate
     shift: complex = 1.0 + 0.0j
 
     # diag(u1, u2) == diag(v, v) @ diag(d, d_dagger) @ diag(w, w)
@@ -115,11 +117,11 @@ def __build_gate(
 
 
 def controlled_unitary_transform(
-    u1: np.ndarray,
-    u2: np.ndarray,
-    recursive_basis: int = 1,
-    mapping: Sequence[int] = None,
-    include_phase_gate: bool = True
+        u1: np.ndarray,
+        u2: np.ndarray,
+        recursive_basis: int = 1,
+        mapping: Sequence[int] = None,
+        include_phase_gate: bool = True
 ):
     """
     Build gates from parameterized model according to given mapping.
@@ -139,7 +141,7 @@ def controlled_unitary_transform(
 
     """
     qubit_num = 1 + int(round(np.log2(u1.shape[0])))
-    gates, shift = __build_gate(u1,u2,recursive_basis)
+    gates, shift = __build_gate(u1, u2, recursive_basis)
     if mapping is None:
         mapping = [i for i in range(qubit_num)]
     mapping = list(mapping)
