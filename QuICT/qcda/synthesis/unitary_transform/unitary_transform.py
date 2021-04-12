@@ -11,6 +11,7 @@ from QuICT.core import *
 from .two_qubit_transform import KAK
 from ..uniformly_gate import uniformlyRy
 from .._synthesis import Synthesis
+from .uniformly_ry_revision import uniformlyRyDecompostionRevision
 
 
 def __build_gate(
@@ -79,21 +80,42 @@ def __build_gate(
         mapping=None,
         include_phase_gate=False
     )
-    # CUTrans()
     shift *= _shift
     gates.extend(_gates)
 
     # (c,s\\s,c)
     angle_list *= 2  # Ry use its angle as theta/2
-    reversed_ry = uniformlyRy(
+    reversed_ry = uniformlyRyDecompostionRevision(
         angle_list=angle_list,
-        mapping=[(i + 1) % qubit_num for i in range(qubit_num)]
+        mapping=[(i + 1) % qubit_num for i in range(qubit_num)],
+        is_cz_left=False  # keep CZ at right side
     )
     gates.extend(reversed_ry)
 
+    """
+    Now, gates have CZ gate(s) at it's ending part.
+    If qubit_num > 2, we would have gates[-1] as a CZ affecting on (0, 1), 
+    while gates[-2] a CZ on (0, qubit_num - 1).
+    If qubit_num == 2, there would only be one CZ affecting on (0, 1).
+    
+    Actually, when recursion steps into current branch, qubit_num must be greater than 2.
+    """
+
     # u
-    u1 = u[0]
-    u2 = u[1]
+    u1: np.ndarray = u[0]
+    u2: np.ndarray = u[1]
+
+    gates.pop()  # CZ on (0,1)
+    # This CZ affects 1/4 last columns of the matrix of U, or 1/2 last columns of u2.
+    _u_size = u2.shape[0]
+    for j in range(_u_size // 2, _u_size):
+        u2[:, j] = -u2[:, j]
+
+    gates.pop()  # CZ on (0, qubit_num - 1)
+    # For similar reasons, this CZ only affect 2 parts of matrix of U.
+    for j in range(_u_size - _u_size // 4, _u_size):
+        u1[:, j] = - u1[:, j]
+        u2[:, j] = - u2[:, j]
 
     _gates, _shift = controlled_unitary_transform(
         u1=u1,
