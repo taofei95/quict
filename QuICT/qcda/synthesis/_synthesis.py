@@ -33,7 +33,7 @@ class Synthesis(object):
         Args:
             *pargs: parameters
         Returns:
-            GateSet: the list of results
+            CompositeGate: the list of results
         """
         return self._synthesisFuncion(*pargs)
 
@@ -43,6 +43,6 @@ class Synthesis(object):
         Args:
             *pargs: parameters
         Returns:
-            GateSet: the list of results
+            CompositeGate: the list of results
         """
         raise Exception('"__call__" function must be overloaded')

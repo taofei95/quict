@@ -268,7 +268,7 @@ def QState_deal_single_gate(qState, gate, fidelity):
     if index == len(qState.qureg):
         raise FrameworkException("the index is out of range")
 
-    matrix = gate.matrix
+    matrix = gate.matrix.flatten()
     if fidelity is not None:
         theta = np.arccos(fidelity / np.sqrt(2)) - np.pi / 4
         theta *= (random.random() - 0.5) * 2
@@ -336,7 +336,7 @@ def QState_deal_two_qubit_gate(qState, gate):
         index1,
         index2,
         qState.values,
-        gate.matrix
+        gate.matrix.flatten()
     )
 
 def QState_deal_control_single_gate(qState, gate):
@@ -381,7 +381,7 @@ def QState_deal_control_single_gate(qState, gate):
         cindex,
         tindex,
         qState.values,
-        gate.matrix
+        gate.matrix.flatten()
     )
 
 def QState_deal_ccx_gate(qState, gate):
@@ -636,7 +636,7 @@ def QState_deal_unitary_gate(qState, gate):
         qState.values,
         index,
         gate.targets,
-        gate.matrix
+        gate.matrix.flatten()
     )
 
 def QState_deal_shorInitial_gate(qState, gate):

@@ -477,7 +477,7 @@ class QState(object):
         self.values = None
         self.qureg = None
 
-    def print_infomation(self):
+    def print_information(self):
         """ print the infomation of the qState
 
         """

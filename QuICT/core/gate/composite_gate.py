@@ -2,22 +2,26 @@
 # -*- coding:utf8 -*-
 # @TIME    : 2021/3/24 9:36 下午
 # @Author  : Han Yu
-# @File    : gate_set
+# @File    : composite_gate
 
 from .gate import *
 
 
-class GateSet(list):
+class CompositeGate(list):
     """ Implement a list of gate
 
     Attributes:
-        gates:(list<BasicGate>): GateSet itself
+        gates:(list<BasicGate>): CompositeGate itself
 
     """
 
     @property
     def gates(self):
         return self
+
+    @property
+    def matrix(self):
+        return self.matrix()
 
     def __enter__(self):
         GATE_SET_LIST.append(self)
@@ -28,13 +32,13 @@ class GateSet(list):
         GATE_SET_LIST.remove(self)
 
     def __init__(self, gates = None, with_copy = True):
-        """ initial a GateSet with gate(s)
+        """ initial a CompositeGate with gate(s)
 
         Args:
             qubits: the qubits which make up the qureg, it can have below form,
                 1) Circuit
                 2) BasicGate
-                3) GateSet
+                3) CompositeGate
                 4) tuple/list<BasicGate>
         """
         super().__init__()
@@ -273,7 +277,7 @@ class GateSet(list):
             return super().__getitem__(item)
         elif isinstance(item, slice):
             gate_list = super().__getitem__(item)
-            return GateSet(gate_list)
+            return CompositeGate(gate_list)
 
     def __add__(self, other):
         """ to fit the add operator, overloaded this function.
@@ -288,10 +292,10 @@ class GateSet(list):
         if not isinstance(other, Qureg):
             raise Exception("type error!")
         gate_list = super().__add__(other)
-        return GateSet(gate_list)
+        return CompositeGate(gate_list)
 
     # display information of the circuit
-    def print_infomation(self):
+    def print_information(self):
         print("-------------------")
         print(f"number of bits:{self.circuit_width()}")
         for gate in self:
@@ -307,19 +311,19 @@ class GateSet(list):
         inner_random_append(self, rand_size, typeList)
 
     def inverse(self):
-        """ the inverse of GateSet
+        """ the inverse of CompositeGate
 
         Returns:
-            GateSet: the inverse of the gateSet
+            CompositeGate: the inverse of the gateSet
         """
-        inverse = GateSet()
+        inverse = CompositeGate()
         circuit_size = len(self)
         for index in range(circuit_size - 1, -1, -1):
-            inverse.append(self[index])
+            inverse.append(self[index].inverse())
         return inverse
 
     def matrix(self, local = False):
-        """
+        """ matrix of these gates
 
         Args:
             local: whether regards the min_qubit as the 0's qubit
@@ -391,7 +395,7 @@ class GateSet(list):
         Returns:
             bool: whether the gateSet is equal with the targets
         """
-        target = GateSet(target, with_copy=True)
+        target = CompositeGate(target, with_copy=True)
         self_matrix = self.matrix()
         target_matrix = target.matrix()
         if ignore_phase:
@@ -406,5 +410,26 @@ class GateSet(list):
                     break
             if rotate == 0 or abs(abs(rotate) - 1) > eps:
                 return False
+<<<<<<< HEAD:QuICT/core/gate/gate_set.py
             self_matrix = self_matrix * np.full(shape, rotate, dtype=np.complex128)
         return np.allclose(self_matrix, target_matrix, atol=eps, rtol=eps)
+=======
+            self_matrix = self_matrix * np.full(shape, rotate)
+        return np.allclose(self_matrix, target_matrix, rtol=eps, atol=eps)
+
+    def remapping(self, mapping):
+        """ remapping the gates' affectArgs
+
+        Args:
+            mapping(list): the mapping function
+
+        Returns:
+
+        """
+        size = self.circuit_size()
+        for i in range(size):
+            affectArgs = []
+            for arg in self[i].affectArgs:
+                affectArgs.append(mapping[arg])
+            self[i].affectArgs = affectArgs
+>>>>>>> 55c973e546b6d58b4107426c424afbcaac51a28d:QuICT/core/gate/composite_gate.py
