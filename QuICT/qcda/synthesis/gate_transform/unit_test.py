@@ -7,9 +7,8 @@
 
 import pytest
 
-from .instruction_set import InstructionSet
 from QuICT.core import *
-from QuICT.qcda.synthesis import GateTransform
+from QuICT.qcda.synthesis import InstructionSet, GateTransform
 
 def test_gate_transform():
     for i in range(2, 3):

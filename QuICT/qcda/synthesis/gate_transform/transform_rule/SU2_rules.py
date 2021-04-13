@@ -85,8 +85,48 @@ def _zyzRule(gate):
 ZyzRule = SU2TransformRule(_zyzRule)
 
 def _xyxRule(gate):
-    pass
-ZxzRule = SU2TransformRule(_xyxRule)
+    """ decomposition the unitary gate with 2 * 2 unitary into Rx Ry Rx sequence
+    Args:
+        gate(Unitary): the gate to be decomposed
+
+    Returns:
+        compositeGate: a list of compositeGate
+    """
+    unitary = gate.matrix
+    targ = gate.targ
+    eps = 1e-13
+
+    print(linalg.det(unitary))
+    unitary = np.array([
+        [0.5 * (unitary[0, 0] + unitary[0, 1] + unitary[1, 0] + unitary[1, 1])
+         , 0.5 * (unitary[0, 0] - unitary[0, 1] + unitary[1, 0] - unitary[1, 1])
+         ],
+        [0.5 * (unitary[0, 0] + unitary[0, 1] - unitary[1, 0] - unitary[1, 1])
+            , 0.5 * (unitary[0, 0] - unitary[0, 1] - unitary[1, 0] + unitary[1, 1])
+         ]
+    ], dtype = np.complex)
+    det = linalg.det(unitary)
+    gamma = 0
+    beta_plus_delta = 0
+    beta_dec_delta = 0
+    if abs(det - 1) > eps:
+        unitary[:] /= np.sqrt(det)
+    print(unitary)
+    if abs(unitary[0, 0]) > eps:
+        gamma = arccos((2 * abs(unitary[0, 0] * unitary[1, 1]) - 1))
+        beta_plus_delta = -np.angle(unitary[0, 0] / np.cos(gamma / 2)) * 2
+    if abs(unitary[0, 1]) > eps:
+        gamma = arccos((2 * -abs(unitary[0, 1] * unitary[1, 0]) + 1))
+        beta_dec_delta = np.angle(unitary[1, 0] / np.sin(gamma / 2)) * 2
+    beta = (beta_plus_delta + beta_dec_delta) / 2
+    delta = beta_plus_delta - beta
+    compositeGate = CompositeGate()
+    with compositeGate:
+        Rx(delta) & targ
+        Ry(-gamma) & targ
+        Rx(beta) & targ
+    return compositeGate
+XyxRule = SU2TransformRule(_xyxRule)
 
 def _ibmqRule(gate):
     unitary = gate.matrix

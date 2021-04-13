@@ -4,7 +4,7 @@
 # @Author  : Han Yu
 # @File    : instruction_set.py
 
-from QuICT.core import BasicGate, Circuit, GATE_ID, GATE_REGISTER
+from QuICT.core import BasicGate, Circuit, GATE_ID, GATE_STANDARD_NAME_OF
 from .transform_rule import TransformRule
 from .transform_rule.two_qubit_gate_rules import *
 
@@ -37,8 +37,8 @@ def _generate_default_rule(source, target):
         source = source.type()
     if isinstance(target, BasicGate):
         target = target.type()
-    source = _capitalize_name_of_gate(GATE_REGISTER[source].__name__)
-    target = _capitalize_name_of_gate(GATE_REGISTER[target].__name__)
+    source = _capitalize_name_of_gate(GATE_STANDARD_NAME_OF[source].__name__)
+    target = _capitalize_name_of_gate(GATE_STANDARD_NAME_OF[target].__name__)
     rule_name = f"{source}2{target}Rule"
     return eval(rule_name)
 

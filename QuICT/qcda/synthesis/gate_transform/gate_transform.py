@@ -8,7 +8,7 @@ import numpy as np
 
 from .._synthesis import Synthesis
 from .instruction_set import InstructionSet
-from .special_set import USTCSet
+from .special_set import *
 from .transform_rule import TransformRule
 
 from QuICT.core import *

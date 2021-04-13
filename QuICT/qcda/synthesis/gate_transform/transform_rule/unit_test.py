@@ -9,7 +9,21 @@ import pytest
 from QuICT.core import *
 from QuICT.qcda.synthesis.gate_transform import *
 
+def test_SU2():
+    assert XyxRule.check_equal()
+    assert IbmqRule.check_equal()
+    assert ZyzRule.check_equal()
+
+def test_rules_transform():
+    gateList = [CX, CY, CZ, CH, CRz, Rxx, Ryy, Rzz, FSim]
+    from ..instruction_set import _generate_default_rule
+    for i in range(len(gateList)):
+        for j in range(len(gateList)):
+            if i != j:
+                rule = _generate_default_rule(gateList[i], gateList[j])
+                print(gateList[i])
+                print(gateList[j])
+                assert rule.check_equal()
 
 if __name__ == "__main__":
-    for i in range(100):
-        print(IbmqRule.check_equal())
+    pytest.main(["./unit_test.py"])

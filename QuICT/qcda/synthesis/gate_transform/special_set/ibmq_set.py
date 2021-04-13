@@ -5,12 +5,9 @@
 # @File    : ibmq_set
 
 from .. import InstructionSet
-from ..transform_rule import TransformRule
+from ..transform_rule import TransformRule, IbmqRule
 
 from QuICT.core import *
 
-def _IBMQ_SU2(gate):
-    pass
-
 IBMQSet = InstructionSet(CX, [Rz, SX, X])
-IBMQSet.register_SU2_rule(TransformRule(_IBMQ_SU2))
+IBMQSet.register_SU2_rule(TransformRule(IbmqRule))

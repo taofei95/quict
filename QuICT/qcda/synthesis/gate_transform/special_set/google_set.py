@@ -5,12 +5,13 @@
 # @File    : IBMQ_set.py
 
 from .. import InstructionSet
-from ..transform_rule import TransformRule
+from ..transform_rule import TransformRule, XyxRule
 
 from QuICT.core import *
 
 def _Google_SU2():
     pass
 
-GoogleSet = InstructionSet(FSim, [SX, SY, SW])
-GoogleSet.register_SU2_rule(TransformRule(_Google_SU2))
+GoogleSet = InstructionSet(FSim, [SX, SY, SW, Rx, Ry])
+GoogleSet.register_SU2_rule(TransformRule(XyxRule))
+
