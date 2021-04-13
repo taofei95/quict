@@ -329,7 +329,7 @@ class CompositeGate(list):
             local: whether regards the min_qubit as the 0's qubit
 
         Returns:
-            np.array: the matrix of the gates
+            np.ndarray: the matrix of the gates
         """
         min_qubit = -1
         max_qubit = -1

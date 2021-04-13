@@ -1,42 +1,17 @@
+from typing import *
 import numpy as np
 
-from typing import *
 from .._synthesis import Synthesis
 from ..uniformly_gate import uniformlyRz
+from .utility import *
+
 from QuICT.core import *
-
-
-def quantum_shannon_decompose(
-        u1: np.ndarray,
-        u2: np.ndarray
-) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
-    """
-    Decompose a block diagonal even-size unitary matrix.
-    block_diag(u1,u2) == block_diag(v, v) @ block_diag(d, d_dagger) @ block_diag(w, w)
-
-    Args:
-        u1 (np.ndarray): upper-left block
-        u2 (np.ndarray): right-bottom block
-
-    Returns:
-        Tuple[np.ndarray,np.ndarray,np.ndarray]
-    """
-    s = u1 @ u2.conj().T
-
-    eig_values, v = np.linalg.eig(s)
-    v_dagger = v.conj().T
-    d = np.sqrt(np.diag(eig_values))
-
-    # u1 @ u2_dagger == v @ d_square @ v_dagger
-
-    w = d @ v_dagger @ u2
-
-    return v, d, w
 
 
 def __i_tensor_unitary(
         u: np.ndarray,
-        recursive_basis: int
+        recursive_basis: int,
+        keep_left_diagonal: bool = False,
 ) -> Tuple[CompositeGate, complex]:
     """
     Transform (I_{2x2} tensor U) into gates. The 1st bit
@@ -49,15 +24,14 @@ def __i_tensor_unitary(
         Tuple[CompositeGate, complex]: Synthesized gates and a phase factor.
     """
 
-    # Dynamically import for avoiding circular import.
-    from .unitary_transform import UTrans
     gates: CompositeGate
     shift: complex
-    gates, shift = UTrans(
+    # Dynamically import to avoid circulation.
+    from .unitary_transform import inner_utrans_build_gate
+    gates, shift = inner_utrans_build_gate(
         mat=u,
         recursive_basis=recursive_basis,
-        mapping=None,
-        include_phase_gate=False
+        keep_left_diagonal=keep_left_diagonal,
     )
     for gate in gates:
         for idx, _ in enumerate(gate.cargs):
@@ -68,10 +42,11 @@ def __i_tensor_unitary(
     return gates, shift
 
 
-def __build_gate(
+def inner_cutrans_build_gate(
         u1: np.ndarray,
         u2: np.ndarray,
-        recursive_basis: int = 1
+        recursive_basis: int = 1,
+        keep_left_diagonal: bool = False,
 ) -> Tuple[CompositeGate, complex]:
     """
     Build gates from parameterized model without mapping
@@ -83,16 +58,14 @@ def __build_gate(
     qubit_num = 1 + int(round(np.log2(u1.shape[0])))
 
     v, d, w = quantum_shannon_decompose(u1, u2)
-    gates = CompositeGate()
-    # _gates: CompositeGate
-    shift: complex = 1.0 + 0.0j
+
+    shift: complex = 1.0
 
     # diag(u1, u2) == diag(v, v) @ diag(d, d_dagger) @ diag(w, w)
 
-    # diag(w, w)
-    _gates, _shift = __i_tensor_unitary(w, recursive_basis)
+    # diag(v, v)
+    v_gates, _shift = __i_tensor_unitary(v, recursive_basis, keep_left_diagonal=True)
     shift *= _shift
-    gates.extend(_gates)
 
     # diag(d, d_dagger)
     angle_list = []
@@ -106,12 +79,21 @@ def __build_gate(
         mapping=[(i + 1) % qubit_num for i in range(qubit_num)]
     )
 
-    gates.extend(reversed_rz)
+    # diag(w, w)
+    if recursive_basis == 2:
+        forwarded_d_gate: BasicGate = v_gates.pop(0)
+        forwarded_mat = forwarded_d_gate.matrix
+        for i in range(0, w.shape[0], 4):
+            for k in range(4):
+                w[i + k, :] *= forwarded_mat[k, k]
 
-    # diag(v, v)
-    _gates, _shift = __i_tensor_unitary(v, recursive_basis)
+    w_gates, _shift = __i_tensor_unitary(w, recursive_basis, keep_left_diagonal=keep_left_diagonal)
     shift *= _shift
-    gates.extend(_gates)
+
+    gates = CompositeGate()
+    gates.extend(w_gates)
+    gates.extend(reversed_rz)
+    gates.extend(v_gates)
 
     return gates, shift
 
@@ -141,17 +123,13 @@ def controlled_unitary_transform(
 
     """
     qubit_num = 1 + int(round(np.log2(u1.shape[0])))
-    gates, shift = __build_gate(u1, u2, recursive_basis)
+    gates, shift = inner_cutrans_build_gate(u1, u2, recursive_basis)
     if mapping is None:
         mapping = [i for i in range(qubit_num)]
     mapping = list(mapping)
     gates.remapping(mapping)
     if include_phase_gate:
-        phase = np.log(shift) / 1j
-        phase_gate = Phase.copy()
-        phase_gate.pargs = [phase]
-        phase_gate.targs = [0]
-        gates.append(phase_gate)
+        gates = add_factor_shift_into_phase(gates, shift)
         return gates
     else:
         return gates, shift

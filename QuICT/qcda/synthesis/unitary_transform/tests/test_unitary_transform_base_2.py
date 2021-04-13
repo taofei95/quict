@@ -5,7 +5,7 @@ from QuICT.algorithm import SyntheticalUnitary
 
 
 def test_unitary_transform_base_2():
-    rnd = 30
+    rnd = 50
     for _ in range(rnd):
         qubit_num = np.random.randint(1, 7)
         mat1 = unitary_group.rvs(1 << qubit_num)
