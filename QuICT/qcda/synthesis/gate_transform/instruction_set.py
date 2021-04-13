@@ -96,6 +96,11 @@ class InstructionSet(object):
 
     @property
     def SU2_rule(self) -> TransformRule:
+        """ the rule of decompose 2*2 unitary into target gates
+
+        Returns:
+            TransformRule: the corresponding rule
+        """
         if self.__SU2_rule:
             return self.__SU2_rule
         if set(self.one_qubit_gates).issubset((GATE_ID["Rz"], GATE_ID["Ry"])):

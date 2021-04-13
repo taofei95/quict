@@ -13,20 +13,6 @@ from .transform_rule import TransformRule
 
 from QuICT.core import *
 
-def _two_qubit_transform(source, instruction_set):
-    """ transform source gate into target gate with function
-
-    if function is None, find the default rule
-
-    Args:
-        source(BasicGate): the source gate
-        instruction_set(InstructionSet): the target instruction set
-
-    Returns:
-        TransformRule: the gate list which contains only 2-qubit gates in target instruction set and one qubit gates
-    """
-    return instruction_set.select_transform_rule(source)
-
 def GateTransformModel(circuit, instruction_set = USTCSet):
     """ equivalently transfrom circuit into goal instruction set
 
@@ -35,25 +21,25 @@ def GateTransformModel(circuit, instruction_set = USTCSet):
     2. transform the two-qubit gate into instruction set one by one, then one-qubit gate
 
     Args:
-        circuit(Circuit): the circuit to be transformed
+        circuit(Circuit/CompositeGate): the circuit to be transformed
         instruction_set(InstructionSet): the goal instruction set
 
     Returns:
         CompositeGate: the equivalent compositeGate with goal instruction set
     """
-    compositeGate = CompositeGate(circuit.gates, with_copy = False)
+    compositeGate = CompositeGate(circuit if isinstance(circuit, CompositeGate) else circuit.gates, with_copy = False)
 
-    # trans 2-qubits gate
+    # transform 2-qubits gate
     compositeGateStep1 = CompositeGate()
     for gate in compositeGate:
         if gate.targets + gate.controls > 2:
             raise Exception("gate_transform only support 2-qubit and 1-qubit gate now.")
         if gate.type() != instruction_set.two_qubit_gate and gate.targets + gate.controls == 2:
-            rule = _two_qubit_transform(gate, instruction_set)
+            rule = instruction_set.select_transform_rule(gate)
             compositeGateStep1.extend(rule.transform(gate))
         else:
             compositeGateStep1.append(gate)
-    # trans one qubit gate
+    # transform one qubit gate
     compositeGateStep2 = CompositeGate()
     unitaries = [np.identity(2, dtype=np.complex128) for _ in range(circuit.circuit_width())]
     for gate in compositeGateStep1:
@@ -65,7 +51,7 @@ def GateTransformModel(circuit, instruction_set = USTCSet):
             unitaries[targs[1]] = np.identity(2, dtype=np.complex128)
             compositeGateStep2.append(gate)
         else:
-            unitaries[gate.targ] = np.dot(gate.matrix.reshape(2, 2), unitaries[gate.targ])
+            unitaries[gate.targ] = np.dot(gate.matrix, unitaries[gate.targ])
     for i in range(circuit.circuit_width()):
         compositeGateStep2.extend(instruction_set.SU2_rule.transform(Unitary(unitaries[i]) & i))
     return compositeGateStep2

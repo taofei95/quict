@@ -601,8 +601,8 @@ class HGate(BasicGate):
 
     """
     _matrix = np.array([
-        1 / np.sqrt(2), 1 / np.sqrt(2),
-        1 / np.sqrt(2), -1 / np.sqrt(2)
+        [1 / np.sqrt(2), 1 / np.sqrt(2)],
+        [1 / np.sqrt(2), -1 / np.sqrt(2)]
     ], dtype=np.complex)
 
     def __init__(self, alias=None):
@@ -636,8 +636,8 @@ class SGate(BasicGate):
     """
 
     _matrix = np.array([
-        1, 0,
-        0, 1j
+        [1, 0],
+        [0, 1j]
     ], dtype=np.complex)
 
     def __init__(self, alias=None):
@@ -669,8 +669,8 @@ class SDaggerGate(BasicGate):
 
     """
     _matrix = np.array([
-        1, 0,
-        0, -1j
+        [1, 0],
+        [0, -1j]
     ], dtype=np.complex)
 
     def __init__(self, alias=None):
@@ -702,8 +702,8 @@ class XGate(BasicGate):
     """
 
     _matrix = np.array([
-        0, 1,
-        1, 0
+        [0, 1],
+        [1, 0]
     ], dtype=np.complex)
 
     def __init__(self, alias=None):
@@ -735,8 +735,8 @@ class YGate(BasicGate):
     """
 
     _matrix = np.array([
-        0, -1j,
-        1j, 0
+        [0, -1j],
+        [1j, 0]
     ], dtype=np.complex)
 
     def __init__(self, alias=None):
@@ -768,8 +768,8 @@ class ZGate(BasicGate):
     """
 
     _matrix = np.array([
-        1, 0,
-        0, -1
+        [1, 0],
+        [0, -1]
     ], dtype=np.complex)
 
     def __init__(self, alias=None):
@@ -800,8 +800,8 @@ class SXGate(BasicGate):
     """
 
     _matrix = np.array([
-            1 / np.sqrt(2), -1j / np.sqrt(2),
-            -1j / np.sqrt(2), 1 / np.sqrt(2)
+            [1 / np.sqrt(2), -1j / np.sqrt(2)],
+            [-1j / np.sqrt(2), 1 / np.sqrt(2)]
         ], dtype=np.complex)
 
     def __init__(self, alias=None):
@@ -832,8 +832,8 @@ class SYGate(BasicGate):
     """
 
     _matrix = np.array([
-        1 / np.sqrt(2), -1 / np.sqrt(2),
-        1 / np.sqrt(2), 1 / np.sqrt(2)
+        [1 / np.sqrt(2), -1 / np.sqrt(2)],
+        [1 / np.sqrt(2), 1 / np.sqrt(2)]
     ], dtype=np.complex)
 
     def __init__(self, alias=None):
@@ -864,8 +864,8 @@ class SWGate(BasicGate):
     """
 
     _matrix = np.array([
-        1 / np.sqrt(2), -np.sqrt(1j / 2),
-        np.sqrt(-1j / 2), 1 / np.sqrt(2)
+        [1 / np.sqrt(2), -np.sqrt(1j / 2)],
+        [np.sqrt(-1j / 2), 1 / np.sqrt(2)]
     ], dtype=np.complex)
 
     def __init__(self, alias=None):
@@ -896,8 +896,8 @@ class IDGate(BasicGate):
     """
 
     _matrix = np.array([
-        1, 0,
-        0, 1
+        [1, 0],
+        [0, 1]
     ], dtype=np.complex)
 
     def __init__(self, alias=None):
@@ -939,8 +939,8 @@ class U1Gate(BasicGate):
     @property
     def matrix(self) -> np.ndarray:
         return np.array([
-            1, 0,
-            0, np.exp(1j * self.pargs[0])
+            [1, 0],
+            [0, np.exp(1j * self.pargs[0])]
         ], dtype=np.complex)
 
     def __str__(self):
@@ -977,10 +977,10 @@ class U2Gate(BasicGate):
     def matrix(self) -> np.ndarray:
         sqrt2 = 1 / np.sqrt(2)
         return np.array([
-            1 * sqrt2,
-            -np.exp(1j * self.pargs[1]) * sqrt2,
-            np.exp(1j * self.pargs[0]) * sqrt2,
-            np.exp(1j * (self.pargs[0] + self.pargs[1])) * sqrt2
+            [1 * sqrt2,
+            -np.exp(1j * self.pargs[1]) * sqrt2],
+            [np.exp(1j * self.pargs[0]) * sqrt2,
+            np.exp(1j * (self.pargs[0] + self.pargs[1])) * sqrt2]
         ], dtype=np.complex)
 
     def __str__(self):
@@ -1016,10 +1016,10 @@ class U3Gate(BasicGate):
     @property
     def matrix(self) -> np.ndarray:
         return np.array([
-            np.cos(self.pargs[0] / 2),
-            -np.exp(1j * self.pargs[2]) * np.sin(self.pargs[0] / 2),
-            np.exp(1j * self.pargs[1]) * np.sin(self.pargs[0] / 2),
-            np.exp(1j * (self.pargs[1] + self.pargs[2])) * np.cos(self.pargs[0] / 2)
+            [np.cos(self.pargs[0] / 2),
+            -np.exp(1j * self.pargs[2]) * np.sin(self.pargs[0] / 2)],
+            [np.exp(1j * self.pargs[1]) * np.sin(self.pargs[0] / 2),
+            np.exp(1j * (self.pargs[1] + self.pargs[2])) * np.cos(self.pargs[0] / 2)]
         ], dtype=np.complex)
 
     def __str__(self):
@@ -1055,10 +1055,10 @@ class RxGate(BasicGate):
     @property
     def matrix(self) -> np.ndarray:
         return np.array([
-            np.cos(self.parg / 2),
-            1j * -np.sin(self.parg / 2),
-            1j * -np.sin(self.parg / 2),
-            np.cos(self.parg / 2),
+            [np.cos(self.parg / 2),
+            1j * -np.sin(self.parg / 2)],
+            [1j * -np.sin(self.parg / 2),
+            np.cos(self.parg / 2)]
         ], dtype=np.complex)
 
     def __str__(self):
