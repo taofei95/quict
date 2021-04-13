@@ -42,8 +42,8 @@ class SU2TransformRule(TransformRule):
 
         gate = Unitary(U)
         gate.targs = [0]
-        gateSet = self.transform(gate)
-        ans = gateSet.equal(gate, ignore_phase=ignore_phase, eps=eps)
+        compositeGate = self.transform(gate)
+        ans = compositeGate.equal(gate, ignore_phase=ignore_phase, eps=eps)
         if not ans:
             print(U)
         return ans
@@ -54,7 +54,7 @@ def _zyzRule(gate):
         gate(Unitary): the gate to be decomposed
 
     Returns:
-        gateSet: a list of gateSet
+        compositeGate: a list of compositeGate
     """
     unitary = gate.matrix
     targ = gate.targ
@@ -75,12 +75,12 @@ def _zyzRule(gate):
         beta_dec_delta = np.angle(unitary[1, 0] / np.sin(gamma / 2)) * 2
     beta = (beta_plus_delta + beta_dec_delta) / 2
     delta = beta_plus_delta - beta
-    gateSet = GateSet()
-    with gateSet:
+    compositeGate = CompositeGate()
+    with compositeGate:
         Rz(delta)  & targ
         Ry(gamma) & targ
         Rz(beta) & targ
-    return gateSet
+    return compositeGate
 
 ZyzRule = SU2TransformRule(_zyzRule)
 
@@ -107,13 +107,13 @@ def _ibmqRule(gate):
         beta_dec_delta = np.angle(unitary[1, 0] / np.sin(gamma / 2)) * 2
     beta = (beta_plus_delta + beta_dec_delta) / 2
     delta = beta_plus_delta - beta
-    gateSet = GateSet()
-    with gateSet:
+    compositeGate = CompositeGate()
+    with compositeGate:
         Rz(delta)  & targ
         SX & targ
         Rz(gamma) & targ
         SX & targ
         X & targ
         Rz(beta) & targ
-    return gateSet
+    return compositeGate
 IbmqRule = SU2TransformRule(_ibmqRule)

@@ -39,34 +39,34 @@ def GateTransformModel(circuit, instruction_set = USTCSet):
         instruction_set(InstructionSet): the goal instruction set
 
     Returns:
-        GateSet: the equivalent gateSet with goal instruction set
+        CompositeGate: the equivalent compositeGate with goal instruction set
     """
-    gateSet = GateSet(circuit.gates, with_copy = False)
+    compositeGate = CompositeGate(circuit.gates, with_copy = False)
 
     # trans 2-qubits gate
-    gateSetStep1 = GateSet()
-    for gate in gateSet:
+    compositeGateStep1 = CompositeGate()
+    for gate in compositeGate:
         if gate.targets + gate.controls > 2:
             raise Exception("gate_transform only support 2-qubit and 1-qubit gate now.")
         if gate.type() != instruction_set.two_qubit_gate and gate.targets + gate.controls == 2:
             rule = _two_qubit_transform(gate, instruction_set)
-            gateSetStep1.extend(rule.transform(gate))
+            compositeGateStep1.extend(rule.transform(gate))
         else:
-            gateSetStep1.append(gate)
+            compositeGateStep1.append(gate)
     # trans one qubit gate
-    gateSetStep2 = GateSet()
+    compositeGateStep2 = CompositeGate()
     unitaries = [np.identity(2, dtype=np.complex128) for _ in range(circuit.circuit_width())]
-    for gate in gateSetStep1:
+    for gate in compositeGateStep1:
         if gate.targets + gate.controls == 2:
-            gateSetStep2.extend(instruction_set.SU2_rule.transform(Unitary(unitaries[gate.targ]) & gate.targ))
-            gateSetStep2.extend(instruction_set.SU2_rule.transform(Unitary(unitaries[gate.carg]) & gate.carg))
+            compositeGateStep2.extend(instruction_set.SU2_rule.transform(Unitary(unitaries[gate.targ]) & gate.targ))
+            compositeGateStep2.extend(instruction_set.SU2_rule.transform(Unitary(unitaries[gate.carg]) & gate.carg))
             unitaries[gate.targ] = np.identity(2, dtype=np.complex128)
             unitaries[gate.carg] = np.identity(2, dtype=np.complex128)
-            gateSetStep2.append(gate)
+            compositeGateStep2.append(gate)
         else:
             unitaries[gate.targ] = np.dot(gate.matrix.reshape(2, 2), unitaries[gate.targ])
     for i in range(circuit.circuit_width()):
-        gateSetStep2.extend(instruction_set.SU2_rule.transform(Unitary(unitaries[i]) & i))
-    return gateSetStep2
+        compositeGateStep2.extend(instruction_set.SU2_rule.transform(Unitary(unitaries[i]) & i))
+    return compositeGateStep2
 
 GateTransform = Synthesis(GateTransformModel)

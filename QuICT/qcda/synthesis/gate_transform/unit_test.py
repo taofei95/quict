@@ -22,9 +22,9 @@ def test_gate_transform():
         Rx(np.pi / 4.3123) | circuit(0)
         CX | circuit
         Rx(np.pi / 7.3123) | circuit(0)
-        gateSet = GateTransform(circuit)
-        B = GateSet(circuit, with_copy=False)
-        assert gateSet.equal(B)
+        compositeGate = GateTransform(circuit)
+        B = CompositeGate(circuit, with_copy=False)
+        assert compositeGate.equal(B)
 
 if __name__ == "__main__":
     pytest.main(["./unit_test.py"])

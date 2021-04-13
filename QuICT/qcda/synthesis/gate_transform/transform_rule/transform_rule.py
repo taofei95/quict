@@ -84,5 +84,5 @@ class TransformRule(object):
         gate = GATE_REGISTER[self.source]().copy()
         gate.affectArgs = [i for i in range(gate.targets + gate.controls)]
         gate.pargs = [random.random() * 2 * np.pi for _ in range(gate.params)]
-        gateSet = self.transform(gate)
-        return gateSet.equal(gate, ignore_phase=ignore_phase, eps=eps)
+        compositeGate = self.transform(gate)
+        return compositeGate.equal(gate, ignore_phase=ignore_phase, eps=eps)

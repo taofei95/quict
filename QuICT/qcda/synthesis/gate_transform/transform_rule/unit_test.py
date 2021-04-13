@@ -6,7 +6,6 @@
 
 import pytest
 
-# from .two_qubit_gate_rules import *
 from QuICT.core import *
 from QuICT.qcda.synthesis.gate_transform import *
 
