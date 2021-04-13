@@ -16,6 +16,7 @@ def inner_utrans_build_gate(
         mat: np.ndarray,
         recursive_basis: int = 1,
         keep_left_diagonal: bool = False,
+        use_cz_ry: bool = True,
 ) -> Tuple[CompositeGate, complex]:
     """
     No mapping
@@ -67,11 +68,17 @@ def inner_utrans_build_gate(
 
     # (c,s\\s,c)
     angle_list *= 2  # Ry use its angle as theta/2
-    reversed_ry = uniformlyRyDecompostionRevision(
-        angle_list=angle_list,
-        mapping=[(i + 1) % qubit_num for i in range(qubit_num)],
-        is_cz_left=False  # keep CZ at right side
-    )
+    if use_cz_ry:
+        reversed_ry = uniformlyRyDecompostionRevision(
+            angle_list=angle_list,
+            mapping=[(i + 1) % qubit_num for i in range(qubit_num)],
+            is_cz_left=False,  # keep CZ at right side
+        )
+    else:
+        reversed_ry = uniformlyRy(
+            angle_list=angle_list,
+            mapping=[(i + 1) % qubit_num for i in range(qubit_num)],
+        )
 
     """
     Now, gates have CZ gate(s) at it's ending part(the left side of u).
@@ -85,18 +92,19 @@ def inner_utrans_build_gate(
     u1: np.ndarray = u[0]
     u2: np.ndarray = u[1]
 
-    reversed_ry.pop()  # CZ on (0,1)
-    # This CZ affects 1/4 last columns of the matrix of U, or 1/2 last columns of u2.
-    _u_size = u2.shape[0]
-    for i in range(_u_size // 2, _u_size):
-        u2[:, i] = -u2[:, i]
+    if use_cz_ry:
+        reversed_ry.pop()  # CZ on (0,1)
+        # This CZ affects 1/4 last columns of the matrix of U, or 1/2 last columns of u2.
+        _u_size = u2.shape[0]
+        for i in range(_u_size // 2, _u_size):
+            u2[:, i] = -u2[:, i]
 
-    if qubit_num > 2:
-        reversed_ry.pop()  # CZ on (0, qubit_num - 1)
-        # For similar reasons, this CZ only affect 2 parts of matrix of U.
-        for i in range(_u_size - _u_size // 4, _u_size):
-            u1[:, i] = - u1[:, i]
-            u2[:, i] = - u2[:, i]
+        if qubit_num > 2:
+            reversed_ry.pop()  # CZ on (0, qubit_num - 1)
+            # For similar reasons, this CZ only affect 2 parts of matrix of U.
+            for i in range(_u_size - _u_size // 4, _u_size):
+                u1[:, i] = - u1[:, i]
+                u2[:, i] = - u2[:, i]
 
     u_gates, _shift = inner_cutrans_build_gate(
         u1=u1,
@@ -119,7 +127,7 @@ def inner_utrans_build_gate(
     if recursive_basis == 2:
         forwarded_d_gate: BasicGate = u_gates.pop(0)
         forwarded_mat = forwarded_d_gate.matrix
-        for i in range(0, mat_size//2, 4):
+        for i in range(0, mat_size // 2, 4):
             for k in range(4):
                 v1_dagger[i + k, :] *= forwarded_mat[k, k]
                 v2_dagger[i + k, :] *= forwarded_mat[k, k]
@@ -144,7 +152,8 @@ def unitary_transform(
         mat: np.ndarray,
         recursive_basis: int = 2,
         mapping: List[int] = None,
-        include_phase_gate: bool = True
+        include_phase_gate: bool = True,
+        use_cz_ry: bool = True,
 ):
     """
     Return:
@@ -168,7 +177,12 @@ def unitary_transform(
         add_factor_shift_into_phase(gates, shift)
         return gates
 
-    gates, shift = inner_utrans_build_gate(mat, recursive_basis, False)
+    gates, shift = inner_utrans_build_gate(
+        mat=mat,
+        recursive_basis=recursive_basis,
+        keep_left_diagonal=False,
+        use_cz_ry=use_cz_ry,
+    )
     if mapping is None:
         mapping = [i for i in range(qubit_num)]
     mapping = list(mapping)
