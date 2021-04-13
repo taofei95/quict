@@ -69,7 +69,7 @@ class TransformRule(object):
         self.source = source
         self.target = target
 
-    def check_equal(self, ignore_phase = True, eps = 1e-13):
+    def check_equal(self, ignore_phase = True, eps = 1e-7):
         """ check whether the rule is true
 
         Args:

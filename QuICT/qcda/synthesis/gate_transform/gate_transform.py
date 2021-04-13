@@ -58,10 +58,11 @@ def GateTransformModel(circuit, instruction_set = USTCSet):
     unitaries = [np.identity(2, dtype=np.complex128) for _ in range(circuit.circuit_width())]
     for gate in compositeGateStep1:
         if gate.targets + gate.controls == 2:
-            compositeGateStep2.extend(instruction_set.SU2_rule.transform(Unitary(unitaries[gate.targ]) & gate.targ))
-            compositeGateStep2.extend(instruction_set.SU2_rule.transform(Unitary(unitaries[gate.carg]) & gate.carg))
-            unitaries[gate.targ] = np.identity(2, dtype=np.complex128)
-            unitaries[gate.carg] = np.identity(2, dtype=np.complex128)
+            targs = gate.affectArgs
+            compositeGateStep2.extend(instruction_set.SU2_rule.transform(Unitary(unitaries[targs[0]]) & targs[0]))
+            compositeGateStep2.extend(instruction_set.SU2_rule.transform(Unitary(unitaries[targs[1]]) & targs[1]))
+            unitaries[targs[0]] = np.identity(2, dtype=np.complex128)
+            unitaries[targs[1]] = np.identity(2, dtype=np.complex128)
             compositeGateStep2.append(gate)
         else:
             unitaries[gate.targ] = np.dot(gate.matrix.reshape(2, 2), unitaries[gate.targ])

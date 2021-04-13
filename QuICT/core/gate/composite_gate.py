@@ -382,7 +382,7 @@ class CompositeGate(list):
             result = np.dot(new_values, result)
         return result
 
-    def equal(self, target, ignore_phase=True, eps=1e-13):
+    def equal(self, target, ignore_phase=True, eps=1e-7):
         """
 
         Args:

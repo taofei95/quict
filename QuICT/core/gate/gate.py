@@ -438,7 +438,7 @@ class BasicGate(object):
         """
         raise Exception("undefined inverse")
 
-    def communitive(self, goal, eps=1e-13):
+    def communitive(self, goal, eps=1e-7):
         """ decide whether gate is communitive with another gate
 
         note when the gate is special gates like Unitary, Permutation, Measure and so on, return False.
@@ -590,7 +590,7 @@ class BasicGate(object):
             return True
         else:
             tp = type(element)
-            if tp == np.int64 or tp == np.float or tp == np.complex128:
+            if tp == np.int64 or tp == np.float or tp == np.complex:
                 return True
             return False
 
@@ -802,7 +802,7 @@ class SXGate(BasicGate):
     _matrix = np.array([
             1 / np.sqrt(2), -1j / np.sqrt(2),
             -1j / np.sqrt(2), 1 / np.sqrt(2)
-        ], dtype=np.complex128)
+        ], dtype=np.complex)
 
     def __init__(self, alias=None):
         _add_alias(alias=alias, standard_name=self.__class__.__name__)
@@ -834,7 +834,7 @@ class SYGate(BasicGate):
     _matrix = np.array([
         1 / np.sqrt(2), -1 / np.sqrt(2),
         1 / np.sqrt(2), 1 / np.sqrt(2)
-    ], dtype=np.complex128)
+    ], dtype=np.complex)
 
     def __init__(self, alias=None):
         _add_alias(alias=alias, standard_name=self.__class__.__name__)
@@ -866,7 +866,7 @@ class SWGate(BasicGate):
     _matrix = np.array([
         1 / np.sqrt(2), -np.sqrt(1j / 2),
         np.sqrt(-1j / 2), 1 / np.sqrt(2)
-    ], dtype=np.complex128)
+    ], dtype=np.complex)
 
     def __init__(self, alias=None):
         _add_alias(alias=alias, standard_name=self.__class__.__name__)
@@ -941,7 +941,7 @@ class U1Gate(BasicGate):
         return np.array([
             1, 0,
             0, np.exp(1j * self.pargs[0])
-        ], dtype=np.complex128)
+        ], dtype=np.complex)
 
     def __str__(self):
         return "U1 gate"
@@ -981,7 +981,7 @@ class U2Gate(BasicGate):
             -np.exp(1j * self.pargs[1]) * sqrt2,
             np.exp(1j * self.pargs[0]) * sqrt2,
             np.exp(1j * (self.pargs[0] + self.pargs[1])) * sqrt2
-        ], dtype=np.complex128)
+        ], dtype=np.complex)
 
     def __str__(self):
         return "U2 gate"
@@ -1020,7 +1020,7 @@ class U3Gate(BasicGate):
             -np.exp(1j * self.pargs[2]) * np.sin(self.pargs[0] / 2),
             np.exp(1j * self.pargs[1]) * np.sin(self.pargs[0] / 2),
             np.exp(1j * (self.pargs[1] + self.pargs[2])) * np.cos(self.pargs[0] / 2)
-        ], dtype=np.complex128)
+        ], dtype=np.complex)
 
     def __str__(self):
         return "U3 gate"
@@ -1059,7 +1059,7 @@ class RxGate(BasicGate):
             1j * -np.sin(self.parg / 2),
             1j * -np.sin(self.parg / 2),
             np.cos(self.parg / 2),
-        ], dtype=np.complex128)
+        ], dtype=np.complex)
 
     def __str__(self):
         return "Rx gate"
@@ -1974,7 +1974,7 @@ class PermGate(BasicGate):
 
     @property
     def matrix(self) -> np.ndarray:
-        matrix = np.array([], dtype=np.complex128)
+        matrix = np.array([], dtype=np.complex)
         for i in range(self.params):
             for j in range(self.params):
                 if self.pargs[i] == j:
@@ -2059,7 +2059,7 @@ class ControlPermMulDetailGate(BasicGate):
 
     @property
     def matrix(self) -> np.ndarray:
-        matrix = np.array([], dtype=np.complex128)
+        matrix = np.array([], dtype=np.complex)
         a = self.pargs[0]
         N = self.pargs[1]
         pargs = []
@@ -2403,7 +2403,7 @@ class PermFxGate(PermGate):
 
     @property
     def matrix(self) -> np.ndarray:
-        matrix = np.array([], dtype=np.complex128)
+        matrix = np.array([], dtype=np.complex)
         for i in range(self.params):
             for j in range(self.params):
                 if self.pargs[i] == j:
@@ -2460,7 +2460,7 @@ class UnitaryGate(BasicGate):
             if (1 << n) != n2:
                 raise Exception("the length of list or tuple should be the square of power(2, n)")
             self.targets = n
-            self.matrix = np.array(params, dtype=np.complex128)
+            self.matrix = np.array(params, dtype=np.complex)
             return self
 
         if not isinstance(params, list) and not isinstance(params, tuple):
@@ -2477,7 +2477,7 @@ class UnitaryGate(BasicGate):
         if (1 << n) != n2:
             raise Exception("the length of list or tuple should be the square of power(2, n)")
         self.targets = n
-        self.matrix = np.array(params, dtype=np.complex128).reshape(n2, n2)
+        self.matrix = np.array(params, dtype=np.complex).reshape(n2, n2)
         return self
 
     def copy(self, name=None):
@@ -2492,7 +2492,7 @@ class UnitaryGate(BasicGate):
         _unitary = UnitaryGate()
         _unitary.targs = copy.deepcopy(self.targs)
         _unitary.matrix = np.array(np.mat(self._matrix).reshape(1 << self.targets, 1 << self.targets).
-                                   H.reshape(1, -1), dtype=np.complex128)
+                                   H.reshape(1, -1), dtype=np.complex)
         _unitary.targets = self.targets
         _unitary.params = self.params
         _unitary.controls = self.controls

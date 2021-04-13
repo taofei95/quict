@@ -7,6 +7,7 @@
 from QuICT.core import BasicGate, Circuit, GATE_ID, GATE_STANDARD_NAME_OF
 from .transform_rule import TransformRule
 from .transform_rule.two_qubit_gate_rules import *
+from .transform_rule.SU2_rules import *
 
 def _capitalize_name_of_gate(class_name):
     """ According to the class_name, generator the capitalized name
@@ -91,11 +92,19 @@ class InstructionSet(object):
                 one_qubit_gates_list.append(element.type())
             else:
                 one_qubit_gates_list.append(element)
-        self.__one_qubit_gates = one_qubit_gates
+        self.__one_qubit_gates = one_qubit_gates_list
 
     @property
     def SU2_rule(self) -> TransformRule:
-        return self.__SU2_rule
+        if self.__SU2_rule:
+            return self.__SU2_rule
+        if set(self.one_qubit_gates).issubset((GATE_ID["Rz"], GATE_ID["Ry"])):
+            return ZyzRule
+        if set(self.one_qubit_gates).issubset((GATE_ID["Rx"], GATE_ID["Ry"])):
+            return XyxRule
+        if set(self.one_qubit_gates).issubset((GATE_ID["Rz"], GATE_ID["SX"], GATE_ID["X"])):
+            return IbmqRule
+        raise Exception("please register the SU2 decomposition rule.")
 
     @property
     def rule_map(self):

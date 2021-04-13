@@ -13,5 +13,5 @@ def _Google_SU2():
     pass
 
 GoogleSet = InstructionSet(FSim, [SX, SY, SW, Rx, Ry])
-GoogleSet.register_SU2_rule(TransformRule(XyxRule))
+GoogleSet.register_SU2_rule(XyxRule)
 

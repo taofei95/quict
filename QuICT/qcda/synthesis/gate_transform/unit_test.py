@@ -8,20 +8,46 @@
 import pytest
 
 from QuICT.core import *
-from QuICT.qcda.synthesis import InstructionSet, GateTransform
+from QuICT.qcda.synthesis.gate_transform import *
 
-def test_gate_transform():
-    for i in range(2, 3):
+def test_google():
+    for i in range(2, 10):
         circuit = Circuit(i)
-        X | circuit
-        Rz(np.pi / 4) | circuit(0)
-        CX | circuit
-        # circuit.random_append(1, [GATE_ID["Rx"]])
-        Rx(np.pi / 3.231) | circuit(1)
-        Rx(np.pi / 4.3123) | circuit(0)
-        CX | circuit
-        Rx(np.pi / 7.3123) | circuit(0)
+        circuit.random_append(100)
+        compositeGate = GateTransform(circuit, GoogleSet)
+        B = CompositeGate(circuit, with_copy=False)
+        assert compositeGate.equal(B)
+
+def test_ustc():
+    for i in range(2, 10):
+        circuit = Circuit(i)
+        circuit.random_append(100)
         compositeGate = GateTransform(circuit)
+        B = CompositeGate(circuit, with_copy=False)
+        assert compositeGate.equal(B)
+
+def test_ibmq():
+    for i in range(2, 10):
+        circuit = Circuit(i)
+        circuit.random_append(100)
+        compositeGate = GateTransform(circuit, IBMQSet)
+        B = CompositeGate(circuit, with_copy=False)
+        assert compositeGate.equal(B)
+
+def test_ionq():
+    for i in range(2, 10):
+        circuit = Circuit(i)
+        circuit.random_append(100)
+        compositeGate = GateTransform(circuit, IonQSet)
+        B = CompositeGate(circuit, with_copy=False)
+        assert compositeGate.equal(B)
+
+def test_buildZyz():
+    buildSet = InstructionSet(CY, [Rz, Ry])
+    for i in range(2, 10):
+        circuit = Circuit(i)
+        circuit.random_append(100)
+        compositeGate = GateTransform(circuit, buildSet)
         B = CompositeGate(circuit, with_copy=False)
         assert compositeGate.equal(B)
 

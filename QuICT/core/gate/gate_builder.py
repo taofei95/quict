@@ -145,59 +145,7 @@ class GateBuilderModel(object):
         Return:
             BasicGate: the initial gate
         """
-        if self.gateType == GATE_ID["H"]:
-            return HGate()
-        elif self.gateType == GATE_ID["S"]:
-            return SGate()
-        elif self.gateType == GATE_ID["S_dagger"]:
-            return SDaggerGate()
-        elif self.gateType == GATE_ID["X"]:
-            return XGate()
-        elif self.gateType == GATE_ID["Y"]:
-            return YGate()
-        elif self.gateType == GATE_ID["Z"]:
-            return ZGate()
-        elif self.gateType == GATE_ID["ID"]:
-            return IDGate()
-        elif self.gateType == GATE_ID["U1"]:
-            return U1Gate()
-        elif self.gateType == GATE_ID["U2"]:
-            return U2Gate()
-        elif self.gateType == GATE_ID["U3"]:
-            return U3Gate()
-        elif self.gateType == GATE_ID["Rx"]:
-            return RxGate()
-        elif self.gateType == GATE_ID["Ry"]:
-            return RyGate()
-        elif self.gateType == GATE_ID["Rz"]:
-            return RzGate()
-        elif self.gateType == GATE_ID["T"]:
-            return TGate()
-        elif self.gateType == GATE_ID["T_dagger"]:
-            return TDaggerGate()
-        elif self.gateType == GATE_ID["CZ"]:
-            return CZGate()
-        elif self.gateType == GATE_ID["CX"]:
-            return CXGate()
-        elif self.gateType == GATE_ID["CY"]:
-            return CYGate()
-        elif self.gateType == GATE_ID["CH"]:
-            return CHGate()
-        elif self.gateType == GATE_ID["CRz"]:
-            return CRzGate()
-        elif self.gateType == GATE_ID["CCX"]:
-            return CCXGate()
-        elif self.gateType == GATE_ID["Measure"]:
-            return MeasureGate()
-        elif self.gateType == GATE_ID["Swap"]:
-            return SwapGate()
-        elif self.gateType == GATE_ID["Perm"]:
-            return PermGate()
-        elif self.gateType == GATE_ID["Unitary"]:
-            return UnitaryGate()
-        elif self.gateType == GATE_ID["Reset"]:
-            return ResetGate()
-        raise Exception("the gate type of the builder is wrong")
+        return GATE_STANDARD_NAME_OF[self.gateType]()
 
     def _inner_complete_gate(self, gate: BasicGate):
         """ private tool function
