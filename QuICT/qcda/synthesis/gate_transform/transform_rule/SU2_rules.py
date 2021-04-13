@@ -117,7 +117,3 @@ def _ibmqRule(gate):
         Rz(beta) & targ
     return gateSet
 IbmqRule = SU2TransformRule(_ibmqRule)
-
-def _googleRule(gate):
-    pass
-GoogleRule = SU2TransformRule(_googleRule)
