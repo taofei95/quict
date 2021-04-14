@@ -39,7 +39,8 @@ def GateTransformModel(circuit, instruction_set = USTCSet):
             compositeGateStep1.extend(rule.transform(gate))
         else:
             compositeGateStep1.append(gate)
-    # transform one qubit gate
+
+    # transform 1-qubit gate
     compositeGateStep2 = CompositeGate()
     unitaries = [np.identity(2, dtype=np.complex128) for _ in range(circuit.circuit_width())]
     for gate in compositeGateStep1:

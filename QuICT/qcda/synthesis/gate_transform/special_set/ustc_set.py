@@ -9,5 +9,5 @@ from ..transform_rule import TransformRule, XyxRule
 
 from QuICT.core import *
 
-USTCSet = InstructionSet(CX, [Rx, Ry, Rz, H, X])
+USTCSet = InstructionSet([CX, Rx, Ry, Rz, H, X])
 USTCSet.register_SU2_rule(XyxRule)

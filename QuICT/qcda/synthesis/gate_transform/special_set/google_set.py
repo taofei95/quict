@@ -9,9 +9,6 @@ from ..transform_rule import TransformRule, XyxRule
 
 from QuICT.core import *
 
-def _Google_SU2():
-    pass
-
-GoogleSet = InstructionSet(FSim, [SX, SY, SW, Rx, Ry])
+GoogleSet = InstructionSet([FSim, SX, SY, SW, Rx, Ry])
 GoogleSet.register_SU2_rule(XyxRule)
 

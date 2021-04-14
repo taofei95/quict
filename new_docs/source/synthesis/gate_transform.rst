@@ -149,10 +149,11 @@ GoogleSet**.
 .. code-block:: python
     :linenos:
 
-    buildSet = InstructionSet(CY, [Rz, Ry])
+    buildSet = InstructionSet([CY, Rz, Ry])
 
-One can register the instance with TransformRule, otherwise algorithm will call
-the default rules
+Developer can register the rule by calling function, otherwise algorithm will call
+the default rules. **Once developer register the transform rule, the corresponding default rule will be replaced**
+**if exists.**
 
 .. code-block:: python
     :linenos:

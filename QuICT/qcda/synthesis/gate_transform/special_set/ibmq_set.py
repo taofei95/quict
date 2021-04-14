@@ -9,5 +9,5 @@ from ..transform_rule import TransformRule, IbmqRule
 
 from QuICT.core import *
 
-IBMQSet = InstructionSet(CX, [Rz, SX, X])
+IBMQSet = InstructionSet([CX, Rz, SX, X])
 IBMQSet.register_SU2_rule(IbmqRule)

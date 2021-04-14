@@ -43,7 +43,7 @@ def test_ionq():
         assert compositeGate.equal(B)
 
 def test_buildZyz():
-    buildSet = InstructionSet(CY, [Rz, Ry])
+    buildSet = InstructionSet([CY, Rz, Ry])
     for i in range(2, 10):
         circuit = Circuit(i)
         circuit.random_append(100)
@@ -52,7 +52,7 @@ def test_buildZyz():
         assert compositeGate.equal(B)
 
 def test_buildZyzWithRegister():
-    buildSet = InstructionSet(CY, [Rz, Ry])
+    buildSet = InstructionSet([CY, Rz, Ry])
     buildSet.register_SU2_rule(ZyzRule)
     buildSet.register_rule_map(Cx2CyRule)
     for i in range(2, 10):

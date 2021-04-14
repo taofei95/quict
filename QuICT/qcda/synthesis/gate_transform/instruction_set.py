@@ -119,10 +119,14 @@ class InstructionSet(object):
     def rule_map(self, rule_map):
         self.__rule_map = rule_map
 
-    def __init__(self, two_qubit_gate = 0, one_qubit_gates = None):
-        self.two_qubit_gate = two_qubit_gate
-        if one_qubit_gates is None:
-            one_qubit_gates = []
+    def __init__(self, qubit_gates):
+        self.__two_qubit_gate = 0
+        one_qubit_gates = []
+        for gate in qubit_gates:
+            if gate.targets + gate.controls == 2:
+                self.two_qubit_gate = gate
+            else:
+                one_qubit_gates.append(gate)
         self.one_qubit_gates = one_qubit_gates
         self.__SU2_rule = None
         self.__rule_map = {}
