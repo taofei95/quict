@@ -1,0 +1,14 @@
+#!/usr/bin/env python
+# -*- coding:utf8 -*-
+# @TIME    : 2021/3/20 5:00 下午
+# @Author  : Han Yu
+# @File    : IBMQ_set.py
+
+from .. import InstructionSet
+from ..transform_rule import TransformRule, XyxRule
+
+from QuICT.core import *
+
+GoogleSet = InstructionSet([FSim, SX, SY, SW, Rx, Ry])
+GoogleSet.register_SU2_rule(XyxRule)
+

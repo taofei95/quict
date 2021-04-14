@@ -27,15 +27,16 @@ class Synthesis(object):
     def __init__(self, function):
         self._synthesisFuncion = function
 
-    def __call__(self, *pargs):
+    def __call__(self, *pargs, **kwargs):
         """
 
         Args:
             *pargs: parameters
+            **kwargs: parameters' name
         Returns:
             CompositeGate: the list of results
         """
-        return self._synthesisFuncion(*pargs)
+        return self._synthesisFuncion(*pargs, **kwargs)
 
     def _synthesisFuncion(*pargs):
         """

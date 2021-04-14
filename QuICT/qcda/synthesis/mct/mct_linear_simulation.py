@@ -47,9 +47,6 @@ def MCTLinearSimulationDecomposition(m, n):
     If n ≥ 5 and m ∈ {3, . . . , ⌈n/2⌉} then (m+1)-Toffoli gate can be simulated
     by a network consisting of 4(m − 2) toffoli gates
 
-    Args:
-        n(int): the number of the circuit's qubits
-        m(int): the number of the control bits of the toffoli gates
     Returns:
         CompositeGate
     """
