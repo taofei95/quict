@@ -313,16 +313,3 @@ class DAG(object):
         if indegree_map:
             raise ValueError("Graph contains a cycle")
         return node_list
-
-
-if __name__ == "__main__":
-    G = DAG()
-    H = DAG()
-    a = []
-    for i in range(7):
-        node = DAGNode(i, i)
-        G.add_node(node)
-        a.append(node)
-    H.add_nodes_from(a)
-    G.add_edges_from([(1, 2), (2, 3), (1, 3), (1, 4), (2, 6), (5, 1), (0, 5)])
-    G.draw()
