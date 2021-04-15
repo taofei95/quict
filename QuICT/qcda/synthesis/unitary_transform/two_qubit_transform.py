@@ -30,9 +30,9 @@ class CartanKAKDecomposition:
     The process of this part is taken from [1], while some notation is from [3], 
     which is useful in the build_gate.
     Reference:
-        [1] arxiv.org/abs/0806.4015
-        [2] arxiv.org/abs/quant-ph/0507171
-        [3] arxiv.org/abs/quant-ph/0308006
+        [1] https://arxiv.org/abs/0806.4015
+        [2] https://arxiv.org/abs/quant-ph/0507171
+        [3] https://arxiv.org/abs/quant-ph/0308006
     """
 
     def __init__(self, matrix, eps=1e-15):
@@ -162,8 +162,8 @@ def TwoQubitTransform(matrix, eps=1e-15):
         CompositeGate: Decomposed gates.
 
     Reference:
-        [1] arxiv.org/abs/0806.4015
-        [2] arxiv.org/abs/quant-ph/0308006
+        [1] https://arxiv.org/abs/0806.4015
+        [2] https://arxiv.org/abs/quant-ph/0308006
     """
 
     assert matrix.shape == (4, 4), \
