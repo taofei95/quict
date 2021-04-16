@@ -377,7 +377,7 @@ print(result.get_counts(circ))
             gate = gate_class().copy()
             gate.pargs = pargs
             gate.targs = targs
-            self.circuit_gates.extend(gate.unitary_transform())
+            self.circuit_gates.extend(gate.build_gate())
             # raise Exception("unsupported gate")
         else:
             body = self.gates[name]['body']

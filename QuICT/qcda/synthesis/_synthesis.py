@@ -28,16 +28,13 @@ class Synthesis(object):
 
     def __init__(self, _fn: Callable):
         self._synthesisFunction = _fn
-        self.__doc__ = _fn.__doc__
 
-    def __call__(self, *args, **kwargs) -> CompositeGate:
+    def __call__(self, *args, **kwargs):
         """
 
         Args:
             *args: arguments
             **kwargs: key word arguments
-        Returns:
-            CompositeGate: the list of results
         """
         return self._synthesisFunction(*args, **kwargs)
 

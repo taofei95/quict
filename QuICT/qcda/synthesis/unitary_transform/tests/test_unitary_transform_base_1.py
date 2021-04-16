@@ -22,5 +22,5 @@ def test_unitary_transform_base_1():
         gates = UTrans(mat1, recursive_basis=1)
         mat2 = gates.matrix()
         assert np.allclose(mat1, mat1_cpy)
-        assert np.isclose(np.linalg.det(mat1), np.linalg.det(mat2))
+        # assert np.isclose(np.linalg.det(mat1), np.linalg.det(mat2))
         assert np.allclose(mat1, mat2)

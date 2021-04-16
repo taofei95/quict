@@ -9,6 +9,11 @@ def test_unitary_transform_base_2():
     for _ in range(rnd):
         qubit_num = np.random.randint(1, 7)
         mat1 = unitary_group.rvs(1 << qubit_num)
-        gates = UTrans(mat1, recursive_basis=2)
+
+        _tmp = UTrans(mat1, recursive_basis=2)
+        # for gate in _tmp:
+        #     print(gate)
+        # print("=" * 40)
+        gates = _tmp
         mat2 = gates.matrix()
         assert np.allclose(mat1, mat2)

@@ -150,17 +150,26 @@ def inner_utrans_build_gate(
 
 def unitary_transform(
         mat: np.ndarray,
-        recursive_basis: int = 2,
-        mapping: List[int] = None,
         include_phase_gate: bool = True,
-        use_cz_ry: bool = True,
+        mapping: List[int] = None,
+        recursive_basis: int = 2,
 ):
     """
-    Return:
-        1. If include_phase_gate==True, return List[BasicGate] in which
-        a phase gate is inserted to align phase gap.
-        2. If include_phase_gate==False, return Tuple[List[BasicGate], complex]
-        which means a gate sequence and corresponding phase factor f=exp(ia).
+    Transform a general unitary matrix into CX gates and single qubit gates.
+
+    Args:
+        mat(np.ndarray): Unitary matrix.
+        include_phase_gate(bool): Whether to include a phase gate to keep synthesized gate matrix the same
+            as input. If set False, the output gates might have a matrix which has a factor shift to input:
+            np.allclose(<matrix_of_return_gates> * factor, <input_matrix>).
+        mapping(List[int]): The order of input qubits. Mapping is a list of their labels from top to bottom.
+        recursive_basis(int): Terminate recursion at which level. It could be set as 1 or 2, which would stop
+            recursion when matrix is 2 or 4, respectively. When set as 2, the final step is done by KAK decomposition.
+            Correctness of this algorithm is never influenced by recursive_basis.
+
+    Returns:
+        Union[CompositeGate, Tuple[CompositeGate,complex]]: If inlclude_phase_gate==True, this function returns
+            synthesized gates. Otherwise gates and a factor would be returned.
     """
     qubit_num = int(round(np.log2(mat.shape[0])))
 
@@ -181,7 +190,6 @@ def unitary_transform(
         mat=mat,
         recursive_basis=recursive_basis,
         keep_left_diagonal=False,
-        use_cz_ry=use_cz_ry,
     )
     if mapping is None:
         mapping = [i for i in range(qubit_num)]
