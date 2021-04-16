@@ -1,6 +1,5 @@
 Unitary Transform
 ===================
-
 As is known that any quantum circuit on :math:`n` qubits corresponds to a unitary matrix
 :math:`U\in SU(2^n)`. Unitary transform is a model that transforms a given unitary 
 matrix :math:`U\in SU(2^n)` to a :math:`n`-qubit quantum circuit which only contains
@@ -65,6 +64,24 @@ Then, we decompose the remaining :math:`SU(4)` matrices to :math:`3` CNOT gates 
 After that, we revise the process of decomposition of multiplexed-:math:`R_y` gates ([1], 
 Appendix A) and Cartan KAK decomposition ([3], Prop. IV.3, V.2) to reduce the coefficient 
 of :math:`4^n` in the number of CNOT gates from :math:`\frac{9}{16}` to :math:`\frac{23}{48}`. 
+
+Optional Parameters
+-------------------
+Despite of the matrix to be transformed, this model also provides some optional parameters for
+researchers of interest in this method.
+
+**recursive_basis**: Stop the recursive decomposition process at :math:`1` or :math:`2`-qubit
+gates, default :math:`2`. (then the next step could be Cartan KAK decomposition)
+
+**mapping**: Specify the qubits and their order implied in the matrix to be transformed, 
+default `None` (then the order is :math:`0, 1,\dots, n-1` where :math:`n` is decided by the 
+matrix)
+
+**include_phase_gate**: Decide whether to retain the phase shift as a phase gate produced in 
+the transform process, default `True`.
+
+**use_cz_ry**: Decide whether to use the revision described in the Principle part, default 
+`True`
 
 Reference
 -------------------
