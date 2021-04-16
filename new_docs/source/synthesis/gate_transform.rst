@@ -39,7 +39,7 @@ Before transform, the circuit has a wide variety of gates(10):
 
 .. figure:: ./images/0.jpg
 
-Asfter transform, the circuit only contain gates in USTCSet.
+After transform, the circuit only contain gates in USTCSet.
 
 .. figure:: ./images/1.jpg
 
