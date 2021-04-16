@@ -168,8 +168,8 @@ def unitary_transform(
             Correctness of this algorithm is never influenced by recursive_basis.
 
     Returns:
-        Union[CompositeGate, Tuple[CompositeGate,complex]]: If inlclude_phase_gate==True, this function returns
-            synthesized gates. Otherwise gates and a factor would be returned.
+        Union[Tuple[CompositeGate,None], Tuple[CompositeGate,complex]]: If inlclude_phase_gate==False, this function returns
+            synthesized gates and a shift factor. Otherwise a tuple like (<gates>, None) is returned.
     """
     qubit_num = int(round(np.log2(mat.shape[0])))
 
@@ -184,7 +184,7 @@ def unitary_transform(
         syn_mat = gates.matrix()
         shift = shift_ratio(mat, syn_mat)
         add_factor_shift_into_phase(gates, shift)
-        return gates
+        return gates, None
 
     gates, shift = inner_utrans_build_gate(
         mat=mat,
@@ -199,7 +199,7 @@ def unitary_transform(
     if recursive_basis == 2 and include_phase_gate:
         gates = add_factor_shift_into_phase(gates, shift)
     if include_phase_gate:
-        return gates
+        return gates, None
     else:
         return gates, shift
 

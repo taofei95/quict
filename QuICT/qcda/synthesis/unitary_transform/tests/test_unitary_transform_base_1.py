@@ -19,7 +19,7 @@ def test_unitary_transform_base_1():
         qubit_num = np.random.randint(1, 7)
         mat1 = unitary_group.rvs(1 << qubit_num)
         mat1_cpy = mat1.copy()
-        gates = UTrans(mat1, recursive_basis=1)
+        gates, _ = UTrans(mat1, recursive_basis=1)
         mat2 = gates.matrix()
         assert np.allclose(mat1, mat1_cpy)
         # assert np.isclose(np.linalg.det(mat1), np.linalg.det(mat2))

@@ -122,8 +122,8 @@ def controlled_unitary_transform(
             Correctness of this algorithm is never influenced by recursive_basis.
 
     Returns:
-        Union[CompositeGate, Tuple[CompositeGate,complex]]: If inlclude_phase_gate==True, this function returns
-            synthesized gates. Otherwise gates and a factor would be returned.
+        Union[Tuple[CompositeGate,None], Tuple[CompositeGate,complex]]: If inlclude_phase_gate==False, this function returns
+            synthesized gates and a shift factor. Otherwise a tuple like (<gates>, None) is returned.
     """
     qubit_num = 1 + int(round(np.log2(u1.shape[0])))
 
@@ -134,7 +134,7 @@ def controlled_unitary_transform(
     gates.remapping(mapping)
     if include_phase_gate:
         gates = add_factor_shift_into_phase(gates, shift)
-        return gates
+        return gates, None
     else:
         return gates, shift
 
