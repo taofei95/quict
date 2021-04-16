@@ -3,7 +3,7 @@ Unitary Transform
 As is known that any quantum circuit on :math:`n` qubits corresponds to a unitary matrix
 :math:`U\in SU(2^n)`. Unitary transform is a model that transforms a given unitary 
 matrix :math:`U\in SU(2^n)` to a :math:`n`-qubit quantum circuit which only contains
-:math:`R_{x,y,z}` and CNOT gates.
+:math:`1`-qubit and CNOT gates.
 
 Example
 -------------------
@@ -12,30 +12,20 @@ Here is a simple usage of this model.
 .. code-block:: python
     :linenos:
 
-    import numpy as np
-
+    from scipy.stats import unitary_group
+    
     from QuICT.core import *
     from QuICT.qcda.synthesis.unitary_transform import *
-
-    def generate_unitary(n):
-        detM = 0
-        while np.isclose(detM, 0, rtol=1.0e-13, atol=1.0e-13):
-            A = np.random.randn(n, n)
-            B = np.random.randn(n, n)
-            M = A + 1j * B
-            detM = np.linalg.det(M)
-        U, _, _ = np.linalg.svd(M)
-        return U
-
+    
     if __name__ == '__main__':
-        U = generate_unitary(2 ** 3)
+        U = unitary_group.rvs(2 ** 3)
         compositeGate = UTrans(U)
-
+    
         circuit = Circuit(3)
         circuit.set_exec_gates(compositeGate)
-        circuit.draw_photo(show_depth=False)
+        circuit.draw_photo(show_depth=False)    
 
-Function **generate_unitary** returns a random unitary matrix. Here we generates a random 
+Function **unitary_group.rvs** returns a random unitary matrix. Here we generates a random 
 :math:`8\times 8` matrix :math:`U\in SU(2^3)`, and transforms it to a :math:`3`-qubit 
 quantum circuit.
 
@@ -49,6 +39,9 @@ Result
 The algorithm implemented here would return a **CompositeGate** with :math:`\frac{23}{48}4^n
 -\frac{3}{2}2^n+\frac{4}{3}` CNOT gates and some :math:`1`-qubit gates.([1], Table 1) The lower 
 bound of the number of CNOT gates is proved to be :math:`\frac{1}{4}(4^n-n-1)`.([4], Prop. 4.1)
+
+If the optional parameter **include_phase_gate** is set `False`, the **return** will be also
+modified. Check *Optional Parameters* for more detail.
 
 Principle
 -------------------
@@ -70,18 +63,16 @@ Optional Parameters
 Despite of the matrix to be transformed, this model also provides some optional parameters for
 researchers of interest in this method.
 
+**include_phase_gate**: Decide whether to retain the global phase as a phase gate produced in 
+the transform process, default `True`.(Otherwise the **return** would be a tuple containing 
+the **CompositeGate** and a **complex** which is the global phase.)
+
+**mapping**: Specify the qubits and their order implied in the matrix to be transformed, which 
+is a list of their labels from top to bottom, default `None`.(Then the order is :math:`0, 1,\dots, 
+n-1` where :math:`n` is decided by the matrix.)
+
 **recursive_basis**: Stop the recursive decomposition process at :math:`1` or :math:`2`-qubit
-gates, default :math:`2`. (then the next step could be Cartan KAK decomposition)
-
-**mapping**: Specify the qubits and their order implied in the matrix to be transformed, 
-default `None` (then the order is :math:`0, 1,\dots, n-1` where :math:`n` is decided by the 
-matrix)
-
-**include_phase_gate**: Decide whether to retain the phase shift as a phase gate produced in 
-the transform process, default `True`.
-
-**use_cz_ry**: Decide whether to use the revision described in the Principle part, default 
-`True`
+gates, default :math:`2`.(Then the next step would be Cartan KAK decomposition.)
 
 Reference
 -------------------

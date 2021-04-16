@@ -67,11 +67,7 @@ def inner_uniformly_rotation_cz(
                 Ry(np.pi / 2) & mapping[high - 1]
                 CX & [mapping[low], mapping[high - 1]]
                 Ry(-np.pi / 2) & mapping[high - 1]
-                """ The extra CZ derived from CCPhase can also be moved to the edge
-                # if high - low == 2, no CZ is needed here
-                if high - low > 2:
-                    CZ & [mapping[low], mapping[low + 1]]
-                """
+                # The extra CZ derived from CCPhase can also be moved to the edge
 
             gates.extend(inner_uniformly_rotation_cz(low + 1, high, Rxp, mapping, False, True))
         else:
@@ -81,11 +77,7 @@ def inner_uniformly_rotation_cz(
                 Ry(np.pi / 2) & mapping[high - 1]
                 CX & [mapping[low], mapping[high - 1]]
                 Ry(-np.pi / 2) & mapping[high - 1]
-                """ The extra CZ derived from CCPhase can also be moved to the edge
-                # if high - low == 2, no CZ is needed here
-                if high - low > 2:
-                    CZ & [mapping[low], mapping[low + 1]]
-                """
+                # The extra CZ derived from CCPhase can also be moved to the edge
             gates.extend(inner_uniformly_rotation_cz(low + 1, high, Rxn, mapping, False, True))
 
             with gates:

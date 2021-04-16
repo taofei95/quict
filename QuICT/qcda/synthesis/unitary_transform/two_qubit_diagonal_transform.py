@@ -56,19 +56,6 @@ def TwoQubitDiagonalTransform(matrix, eps=1e-15):
         # @formatter:on
     Delta = gates_Delta.matrix()
     U = U.dot(Delta)
-    """ Some unused calculation in the proposition, useful for understanding
-    D_Ud, _ = np.linalg.eig(U.dot(sy2).dot(U.T).dot(sy2))
-    d_Ud = np.sort(np.angle(D_Ud))
-    theta = (d_Ud[3] + d_Ud[2]) / 2
-    phi = (d_Ud[3] - d_Ud[2]) / 2
-    gates_Ud = CompositeGate()
-    with gates_Ud:
-        CX          & [0, 1]
-        Rx(theta)   & 0
-        Rz(phi)     & 1
-        CX          & [0, 1]
-    Ud = gates_Ud.matrix()
-    """
 
     ## Refined Cartan KAK Decomposition for U (because we have known Ud here!)
     # Some preparation derived from Cartan involution
