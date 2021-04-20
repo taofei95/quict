@@ -1,6 +1,6 @@
 from QuICT.core import Circuit, CX, CCX, Swap, X, QFT, IQFT, CRz, Measure
 from QuICT.core import GateBuilder, GATE_ID
-from QuICT.qcda.synthesis import BEAAdder, BEAAdderWired, BEAAdderWiredCC, BEAReverseAdderWired, BEAReverseAdderWiredCC, BEAAdderMod
+from QuICT.qcda.synthesis import BEAAdder, BEAAdderWired, BEAAdderWiredCC, BEAReverseAdderWired, BEAReverseAdderWiredCC, BEAAdderMod, BEAMultMod
 
 def Set(qreg, N):
     """
@@ -146,10 +146,35 @@ def TestFourierAdderModSingle(n,N):
                 else:
                     assert bb==(a+b)%N
 
+def TestBEAMultMod():
+    n = 3
+    for N in range(0, 8):
+        for a in range(0, N):
+            for x in range(0, N):
+                circuit = Circuit(2*n+3)
+                qreg_b  = circuit([i for i in range(n+1)])
+                qreg_x  = circuit([i for i in range(n+1,2*n+1)])
+                qreg_c = circuit(2*n+1)
+                Set(qreg_c, 1)
+                Set(qreg_b, 0)
+                Set(qreg_x, x)
+                BEAMultMod(n, a, N) | circuit
+                Measure | circuit
+                circuit.exec()
+                bb = int(qreg_b)
+                # print("0 + {0}*{1} mod {2}={3}".format(str(a), str(x), str(N), str(bb)))
+                assert bb == (0 + a * x) % N
+
 
 if __name__ == "__main__":
     testlist = ["DraperAdder","FourierAdderWired","FourierAdderWiredCC","FourierReverseAdderWiredCC",]
     newlist  = ["FourierReverseAdderWired","FourierAdderMod"] 
+    xlist = ["BEAMultMod"]
+    for x in xlist:
+        print("------TEST:"+x+"------")
+        locals()["Test" + x]()
+    """
     for testname in newlist:
         print("------TEST:"+testname+"------")
         locals()["Test" + testname]()
+    """

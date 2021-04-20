@@ -160,6 +160,30 @@ def FourierAdderMod(a, N, phib, c, low):
     QFT  | phib
     FourierAdderWiredCC(a,phib,c,dualControlled=True)
 
+def FourierMultMod(a, N, x, phib, c, low):
+    """ use FourierAdderMod to calculate (b+ax)%N in Fourier space
+
+    (phib=Φ(b),x,c,low) -> (phib'=Φ((b+ax)%N),x,c,low)
+
+
+    Args:
+        a(int):      least n bits used as unsigned
+        N(int):      least n bits used as unsigned
+        x(Qureg):    the qureg stores x,        length is n,
+        phib(Qureg): the qureg stores b,        length is n+1,
+        c(Qureg):    the control qubits,        length is 2,
+        low(Qureg):  the clean ancillary qubit, length is 1,
+
+    Circuit for Shor’s algorithm using 2n+3 qubits
+    http://arxiv.org/abs/quant-ph/0205095v3
+    """
+
+    n = len(phib) - 1
+    p = 1
+    for i in range(n - 1, -1, -1):
+        FourierAdderMod(p * a % N, N, phib, (c, x[i]), low) # p * a % N
+        p = p * 2
+
 class BEAModel(Synthesis):
     def __call__(self, *pargs):
         """ 
@@ -425,3 +449,56 @@ class BEAAdderModModel(BEAModel):
         return circuit
 
 BEAAdderMod = BEAAdderModModel()
+
+class BEAMultModModel(BEAModel):
+    """ use FourierAdderMod to calculate (b+ax)%N in Fourier space
+
+    (phib=Φ(b),x,c,low) -> (phib'=Φ((b+ax)%N),x,c,low)
+
+
+    Args:
+        a(int):      least n bits used as unsigned
+        N(int):      least n bits used as unsigned
+        x(Qureg):    the qureg stores x,        length is n,
+        phib(Qureg): the qureg stores b,        length is n+1,
+        c(Qureg):    the control qubits,        length is 2,
+        low(Qureg):  the clean ancillary qubit, length is 1,
+
+    Circuit for Shor’s algorithm using 2n+3 qubits
+    http://arxiv.org/abs/quant-ph/0205095v3
+    """
+    def __call__(self,n,a,N):
+        """ Overload the function __call__,
+        Give parameters to the BEA.
+
+        Args:
+            n: the length of number a and x.
+            a:
+            N: the modulus
+        Returns:
+            BEAMultModModel: the model filled by parameters.
+        """
+        self.pargs = [n,a,N]
+        return self
+
+    def build_gate(self):
+        """ Overload the function build_gate.
+
+        Returns:
+            Circuit: the BEA circuit
+        """
+        n = self.pargs[0]
+        a = self.pargs[1]
+        N = self.pargs[2]
+
+        circuit = Circuit(2 * n + 3)
+        qreg_b  = circuit([i for i in range(n+1)])
+        qreg_x  = circuit([i for i in range(n+1,2*n+1)])
+        qreg_c = circuit(2 * n + 1)
+        qreg_low= circuit(2 * n + 2)
+        QFT | qreg_b
+        FourierMultMod(a, N, qreg_x, qreg_b, qreg_c, qreg_low)
+        IQFT| qreg_b
+        return circuit
+
+BEAMultMod = BEAMultModModel()
