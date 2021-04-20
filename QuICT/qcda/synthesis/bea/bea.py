@@ -154,7 +154,9 @@ def FourierAdderMod(a, N, phib, c, low):
     FourierAdderWiredCC(N,phib,low,dualControlled=False)
     FourierReverseAdderWiredCC(a,phib,c,dualControlled=True)
     IQFT | phib
+    X    | phib[0]
     CX   | (phib[0],low)
+    X    | phib[0]
     QFT  | phib
     FourierAdderWiredCC(a,phib,c,dualControlled=True)
 

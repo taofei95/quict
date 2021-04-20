@@ -138,6 +138,8 @@ def TestFourierAdderModSingle(n,N):
                 circuit.exec()
                 # aa = int(qreg_a)
                 bb = int(qreg_b)
+                low = int(circuit(n + 3))
+                assert low == 0
                 # print("({0}+{1}) % {3}={2}".format(str(a), str(b), str(bb),str(N)))
                 if c!=3:
                     assert bb==b
