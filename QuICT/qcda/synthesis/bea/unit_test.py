@@ -1,6 +1,6 @@
 from QuICT.core import Circuit, CX, CCX, Swap, X, QFT, IQFT, CRz, Measure
 from QuICT.core import GateBuilder, GATE_ID
-from QuICT.qcda.synthesis import BEAAdder, BEAAdderWired, BEAAdderWiredCC, BEAReverseAdderWired, BEAReverseAdderWiredCC, BEAAdderMod, BEAMultMod
+from QuICT.qcda.synthesis import BEAAdder, BEAAdderWired, BEAAdderWiredCC, BEAReverseAdderWired, BEAReverseAdderWiredCC, BEAAdderMod, BEAMultMod, BEACUa
 
 def Set(qreg, N):
     """
@@ -118,9 +118,9 @@ def TestFourierAdderMod():
     n = 3
     for N in (2,3,5,6):
         print("N=="+str(N))
-        TestFourierAdderModSingle(n,N)
+        _TestFourierAdderModSingle(n,N)
     
-def TestFourierAdderModSingle(n,N):
+def _TestFourierAdderModSingle(n,N):
     for c in (3,):
         if c!=3:
             print(format(c,"02b"),"disabled")
@@ -165,11 +165,54 @@ def TestBEAMultMod():
                 # print("0 + {0}*{1} mod {2}={3}".format(str(a), str(x), str(N), str(bb)))
                 assert bb == (0 + a * x) % N
 
+def ExGCD(a,b,coff):
+    if b==0:
+        coff[0]=1
+        coff[1]=0
+        return a
+    r = ExGCD(b,a%b,coff)
+    t       = coff[0]
+    coff[0] = coff[1]
+    coff[1] = t - a//b * coff[1]
+    return r
+
+def TestBEACUa():
+    n = 3
+    for c in (1,):
+        if c==0:
+            print("disabled")
+        else:
+            print("enabled")
+        for N in range(0, 8):
+            for a in range(0, N):
+                coff = [0,0]
+                r = ExGCD(a,N,coff)
+                if r!=1:
+                    continue
+                for x in range(0, N):
+                    circuit = Circuit(2*n+3)
+                    qreg_b  = circuit([i for i in range(n+1)])
+                    qreg_x  = circuit([i for i in range(n+1,2*n+1)])
+                    qreg_c = circuit(2*n+1)
+                    Set(qreg_c, c)
+                    Set(qreg_b, 0)
+                    Set(qreg_x, x)
+                    BEACUa(n, a, N) | circuit
+                    Measure | circuit
+                    circuit.exec()
+                    xx = int(qreg_x)
+                    bb = int(qreg_b)
+                    print("{0}*{1} mod {2}={3}".format(str(a), str(x), str(N), str(xx)))
+                    if c==0:
+                        assert xx == x
+                    else:
+                        assert xx == (a * x) % N
+                    # assert bb == 0
 
 if __name__ == "__main__":
-    testlist = ["DraperAdder","FourierAdderWired","FourierAdderWiredCC","FourierReverseAdderWiredCC",]
-    newlist  = ["FourierReverseAdderWired","FourierAdderMod"] 
-    xlist = ["BEAMultMod"]
+    testlist = ["DraperAdder","FourierAdderWired","FourierAdderWiredCC","FourierReverseAdderWiredCC","FourierReverseAdderWired","FourierAdderMod","BEAMultMod",]
+    newlist  = ["BEACUa",] 
+    """
     for x in xlist:
         print("------TEST:"+x+"------")
         locals()["Test" + x]()
@@ -177,4 +220,3 @@ if __name__ == "__main__":
     for testname in newlist:
         print("------TEST:"+testname+"------")
         locals()["Test" + testname]()
-    """

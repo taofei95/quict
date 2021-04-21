@@ -171,7 +171,7 @@ def FourierMultMod(a, N, x, phib, c, low):
         N(int):      least n bits used as unsigned
         x(Qureg):    the qureg stores x,        length is n,
         phib(Qureg): the qureg stores b,        length is n+1,
-        c(Qureg):    the control qubits,        length is 2,
+        c(Qureg):    the control qubits,        length is 1,
         low(Qureg):  the clean ancillary qubit, length is 1,
 
     Circuit for Shor’s algorithm using 2n+3 qubits
@@ -183,6 +183,30 @@ def FourierMultMod(a, N, x, phib, c, low):
     for i in range(n - 1, -1, -1):
         FourierAdderMod(p * a % N, N, phib, (c, x[i]), low) # p * a % N
         p = p * 2
+
+def MultMod(a, N, x, b, c, low):
+    QFT | b
+    FourierMultMod(a, N, x, b, c, low)
+    IQFT| b
+
+def ExGCD(a,b,coff):
+    if b==0:
+        coff[0]=1
+        coff[1]=0
+        return a
+    r = ExGCD(b,a%b,coff)
+    t       = coff[0]
+    coff[0] = coff[1]
+    coff[1] = t - a//b * coff[1]
+    return r
+
+def InverseMod(a,N):
+    coff=[0,0]
+    r=ExGCD(a,N,coff)
+    if r!=1:
+        return None
+    else:
+        return coff[0]%N
 
 class BEAModel(Synthesis):
     def __call__(self, *pargs):
@@ -502,3 +526,68 @@ class BEAMultModModel(BEAModel):
         return circuit
 
 BEAMultMod = BEAMultModModel()
+
+class BEACUaModel(BEAModel):
+    """ Controlled-U_a, ((a*x)MOD(N)) if c=1, else (x)
+
+    (b=0,x,c,low) -> (b=0,x',c,low)
+
+
+    Args:
+        a(int):      least n bits used as unsigned
+        N(int):      least n bits used as unsigned
+        x(Qureg):    the qureg stores x,        length is n,
+        b(Qureg):    the clean ancillary qubit, length is n+1,
+        c(Qureg):    the control qubit,         length is 1,
+        low(Qureg):  the clean ancillary qubit, length is 1,
+
+    Circuit for Shor’s algorithm using 2n+3 qubits
+    http://arxiv.org/abs/quant-ph/0205095v3
+    """
+    def __call__(self,n,a,N):
+        """ Overload the function __call__,
+        Give parameters to the BEA.
+
+        Args:
+            n: the length of number a and x.
+            a:
+            N: the modulus
+        Returns:
+            BEACUaModel: the model filled by parameters.
+        """
+        self.pargs = [n,a,N]
+        return self
+
+    def build_gate(self):
+        """ Overload the function build_gate.
+
+        Returns:
+            Circuit: the BEA circuit
+        """
+        n = self.pargs[0]
+        a = self.pargs[1]
+        N = self.pargs[2]
+
+        a_inv = InverseMod(a,N)
+        
+        circuit = Circuit(2 * n + 3)
+        qreg_b  = circuit([i for i in range(n+1)])
+        qreg_x  = circuit([i for i in range(n+1,2*n+1)])
+        qreg_c = circuit(2 * n + 1)
+        qreg_low= circuit(2 * n + 2)
+        
+        MultMod(a,N,qreg_x,qreg_b,qreg_c,qreg_low)
+        idx_start = 0
+        idx_end   = len(circuit.gates)
+        for i in range(n):     #n bits swapped, b[0] always 0
+            # controlledSwap | (c,x[i],b[i+1])
+            CX | (qreg_b[i+1], qreg_x[i])
+            CCX| (qreg_c,      qreg_x[i], qreg_b[i+1])
+            CX | (qreg_b[i+1], qreg_x[i])
+        #ReverseMultMod(a_inv,N,x,b,c,low)
+        for index in range(idx_end-1,idx_start-1,-1):
+            circuit.append(circuit.gates[index].inverse())
+
+        return circuit
+
+BEACUa = BEACUaModel()
