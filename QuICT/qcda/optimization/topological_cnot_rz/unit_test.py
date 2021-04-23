@@ -81,7 +81,7 @@ def test_2():
     CX | circuit((0, 1))
     Rz(np.pi / 4) | circuit(1)
     new_circuit = TopologicalCnotRz.run(circuit)
-    new_circuit.print_infomation()
+    new_circuit.print_information()
     if not check_equiv(circuit, new_circuit):
         assert 0
 

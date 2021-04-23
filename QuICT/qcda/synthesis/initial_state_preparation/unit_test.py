@@ -46,7 +46,7 @@ def test_1():
         print(i)
         assert now
 
-def w_test_2():
+def test_2():
     for i in range(1, 8):
         circuit = Circuit(i)
         values = [1.0 / (1 << i) * np.exp(1j * random.random()) for _ in range(1 << i)]

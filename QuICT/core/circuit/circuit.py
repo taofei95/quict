@@ -329,8 +329,9 @@ class Circuit(object):
         Raise:
             TypeException: the type of other is wrong
         """
-        for gate in self.gates:
-            gate | targets
+        from ..gate import CompositeGate
+        gates = CompositeGate(self.gates)
+        gates | targets
 
     # append gate methods
     def append(self, gate, qureg = None):
@@ -361,7 +362,7 @@ class Circuit(object):
 
         Args:
             targets(int/list<int>/tuple<int>/slice): target qubits indexes.
-            start(int): the start gate's index, default 0
+            start(int/string): the start gate's index, default 0
             max_size(int): max size of the sub circuit, default -1 without limit
             local(bool): whether the slice will stop when meeting an non-commutative gate, default False
             remove(bool): whether deleting the slice gates from origin circuit, default False
@@ -372,15 +373,14 @@ class Circuit(object):
         circuit_size   = self.circuit_size()
         circuit_width  = self.circuit_width()
         if isinstance(targets, slice):
-            targets = [i for i in range(circuit_size)][targets]
+            targets = [i for i in range(circuit_width)][targets]
         targets = list(targets)
-
         # the mapping from circuit's index to sub-circuit's index
         targets_mapping = [0] * circuit_width
         index = 0
         for target in targets:
             if target < 0 or target >= circuit_width:
-                raise Exception(f'list index out of range')
+                raise Exception('list index out of range')
             targets_mapping[target] = index
             index += 1
 
@@ -389,6 +389,16 @@ class Circuit(object):
         new_gates = []
         compare_gates = []
 
+        if isinstance(start, str):
+            count = 0
+            for gate in self.gates:
+                if gate.name == start:
+                    break
+                count += 1
+            start = count
+        if remove:
+            for gate_index in range(start):
+                new_gates.append(self.gates[gate_index])
         for gate_index in range(start, circuit_size):
             gate = self.gates[gate_index]
             affectArgs = gate.affectArgs
@@ -396,7 +406,10 @@ class Circuit(object):
             # if gate acts on given qubits
             if set_affectArgs <= set_targets:
                 compare_gates.append(gate)
-                gate | circuit(targets)
+                targ = []
+                for args in affectArgs:
+                    targ.append(targets[args])
+                gate | circuit(targ)
                 max_size -= 1
             elif len(set_affectArgs.intersection(set_targets)) == 0:
                 new_gates.append(gate)
@@ -413,9 +426,11 @@ class Circuit(object):
                         new_gates.append(gate)
                     else:
                         break
-            if max_size <= 0:
+            if max_size == 0:
+                if remove:
+                    for index in range(gate_index + 1, circuit_size):
+                        new_gates.append(self.gates[index])
                 break
-
         if remove:
             for qubit in self.qubits:
                 qubit.qState_clear()
@@ -570,7 +585,7 @@ class Circuit(object):
         self.gates = []
 
     # display information of the circuit
-    def print_infomation(self):
+    def print_information(self):
         print("-------------------")
         print(f"number of bits:{self.circuit_width()}")
         for gate in self.gates:
