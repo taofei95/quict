@@ -10,25 +10,6 @@ from .._synthesis import Synthesis
 from QuICT.core import Circuit, CX, CCX, CompositeGate, Swap, X, Ry, Rz, Measure
 from QuICT.algorithm import Amplitude
 
-def Set(qreg, N):
-    """ Set the qreg as N, using X gates on specific qubits
-
-    Args:
-        qreg(Qureg): the qureg to be set
-        N(int): the parameter N
-
-    """
-
-    string = bin(N)[2:]
-    n = len(qreg)
-    m = len(string)
-    if m > n:
-        print('When set qureg as N=%d, N exceeds the length of qureg n=%d, thus is truncated' % (N, n))
-
-    for i in range(min(n, m)):
-        if string[m - 1 - i] == '1':
-            X | qreg[n - 1 - i]
-
 def CV(control, target):
     Rz(pi/2)    | target
     Ry(pi/4)    | target
@@ -58,8 +39,7 @@ def PeresGate(a,b,c):
     CCX | (a,b,c)
     CX  | (a,b)
 
-
-def RippleCarryAdder1(a, b, overflow):
+def AdderOverflow(a, b, overflow):
     '''
      store a + b in b
 
@@ -101,10 +81,8 @@ def RippleCarryAdder1(a, b, overflow):
     for i in range(n-1):
         CX | (a[i],b[i])
 
-def RippleCarryAdder(a, b):
+def Adder(a, b):
     '''
-     store a + b in b
-
     (a,b) -> (a,b'=a+b)
 
     Args:
@@ -143,77 +121,129 @@ def RippleCarryAdder(a, b):
 
 def Subtraction(a,b):
     """
-    a-b
+    (a,b) -> (a,b-a)
     """
-    X | a
+    X | b
     RippleCarryAdder(a, b)
-    X | a
+    X | b
+
+def CtrlAddOverflowAncilla(ctrl,a,b,overflow,ancilla):
+    n = len(a)
+    #step 1
+    for i in range(n-1):
+        CX | (a[i],b[i])
+    #step 2
+    CCX | (ctrl,a[0],ancilla)
+    for i in range(n-2):
+        CX | (a[i+1],a[i])
+    #step 3
+    for i in range(n-1):
+        CCX | (a[n-1-i],b[n-1-i],a[n-2-i])
+    #step 4
+    CCX | (a[0],b[0],ancilla)
+    CCX | (ctrl,ancilla,overflow)
+    CCX | (a[0],b[0],ancilla)
+    CCX | (ctrl,a[0],b[0])
+    #step 5
+    for i in range(n-1):
+        CCX | (a[i+1],b[i+1],a[i])
+        CCX | (ctrl,a[i+1],b[i+1])
+    #step 6
+    for i in range(n-2):
+        CX | (a[n-2-i],a[n-3-i])
+    #step 7
+    for i in range(n-1):
+        CX | (a[i],b[i])
 
 def CtrlAdd(ctrl,a,b):
-    pass
+    """
+    (ctrl,a,b) -> (ctrl,a,b+a)
+    """
+    n = len(a)
+    #step 1
+    for i in range(n-1):
+        CX | (a[i],b[i])
+    #step 2
+    #CCX | (ctrl,a[0],ancilla)
+    for i in range(n-2):
+        CX | (a[i+1],a[i])
+    #step 3
+    for i in range(n-1):
+        CCX | (a[n-1-i],b[n-1-i],a[n-2-i])
+    #step 4
+    #CCX | (a[0],b[0],ancilla)
+    #CCX | (ctrl,ancilla,overflow)
+    #CCX | (a[0],b[0],ancilla)
+    CCX | (ctrl,a[0],b[0])
+    #step 5
+    for i in range(n-1):
+        CCX | (a[i+1],b[i+1],a[i])
+        CCX | (ctrl,a[i+1],b[i+1])
+    #step 6
+    for i in range(n-2):
+        CX | (a[n-2-i],a[n-3-i])
+    #step 7
+    for i in range(n-1):
+        CX | (a[i],b[i])
 
-def RestoringDivision(a,b,r):
+def Division(a,b,r):
     """
     Divided: a
     Divisor: b
+    (a,b,r=0) -> (a%b,b,a//b)
     """
     n = len(a)
 
-    for i in range(n):
-        y = r[i+1:n] + a[0:i+1]
+    for i in range(n-1):
         #Iteration(y,b,r[i])
-        Subtraction(y,b)
+        y = r[i+1:n] + a[0:i+1]
+        Subtraction(b,y)
         CX | (r[i+1],r[i])
-        CtrlAdd(r[i],y,b)
+        CtrlAdd(r[i],b,y)
         X | r[i]
+    #Iteration(a,b,r[n-1])
+    Subtraction(b,a)
+    CX | (a[0],r[n-1])
+    CtrlAdd(r[n-1],b,a)
+    X | r[n-1]
 
-def VBEDecomposition(m, a, N):
-    """ give parameters to the VBE
+def RippleCarryAdderDecomposition(n):
+    """ 
+    (a,b) -> (a,b'=a+b)
+
     Args:
-        m(int): number of qubits of x
-        a(int): a
-        N(int): N
-    Returns:
-        CompositeGate: the model filled by parameters.
+        n(int): the bit number of a and b
+
+    reference: HIMANSHU THAPLIYAL and NAGARAJAN RANGANATHAN - Design of Efficient Reversible Logic Based Binary and BCD Adder Circuits
     """
-    if N <= 2:
-        raise Exception("modulus should be great than 2")
-    if gcd(a, N) != 1:
-        raise Exception("a and N should be co-prime")
-    n = int(floor(log2(N))) + 1
 
-    circuit = Circuit(m + 5 * n + 2)
-    qubit_x = circuit([i for i in range(m)])
-    qubit_r = circuit([i for i in range(m, m + n)])
-    qubit_a = circuit([i for i in range(m + n, m + 2 * n)])
-    qubit_b = circuit([i for i in range(m + 2 * n, m + 3 * n)])
-    qubit_c = circuit([i for i in range(m + 3 * n, m + 4 * n)])
-
-    overflow = circuit(m + 4 * n)
-    qubit_N = circuit([i for i in range(m + 4 * n + 1, m + 5 * n + 1)])
-    t = circuit(m + 5 * n + 1)
-    X | qubit_r[n - 1]
-    RestoringDivision(qubit_a,qubit_b,qubit_r)
+    circuit = Circuit(2*n)
+    qubit_a = circuit([i for i in range(n)])
+    qubit_b = circuit([i for i in range(n, 2*n)])
+    
+    Adder(qubit_a,qubit_b)
     return CompositeGate(circuit.gates)
 
-VBE = Synthesis(VBEDecomposition)
+RippleCarryAdder = Synthesis(RippleCarryAdderDecomposition)
 
+def RestoringDivisionDecomposition(n):
+    """
+    (a,b,r=0) -> (a%b,b,a//b)
 
-(astr,bstr) = input("input a, b: ").split()
+    Args:
+        n(int): the bit number of a and b
 
-a = int(astr)
-b = int(bstr)
+    reference: Quantum Circuit Designs of Integer Division Optimizing T-count and T-depth
+    http://arxiv.org/abs/1809.09732v1
+    """
 
-n = max(len(bin(a))-2,len(bin(b))-2)
+    circuit = Circuit(3*n)
+    qubit_a = circuit([i for i in range(n)])
+    qubit_b = circuit([i for i in range(n, 2*n)])
+    qubit_r = circuit([i for i in range(2*n, 3*n)])
 
-circuit = Circuit(2*n+1)
-a_q = circuit([i for i in range(n)])
-b_q = circuit([i for i in range(n,2*n)])
-o_q = circuit(2*n)
-Set(a_q,a)
-Set(b_q,b)
-RippleCarryAdder(a_q,b_q)
-Measure | circuit
-circuit.exec()
+    Division(qubit_a,qubit_b,qubit_r)
+    
+    return CompositeGate(circuit.gates)
 
-print(int(a_q),int(b_q),int(o_q))
+RestoringDivision = Synthesis(RestoringDivisionDecomposition)
