@@ -18,6 +18,7 @@ def solve(n, m):
         the circuit which describe the decomposition result
     """
     circuit = Circuit(n)
+    print(n, m)
     if m == 1:
         CX  | circuit([0, n - 1])
     elif m == 2:
@@ -34,9 +35,9 @@ def solve(n, m):
         CCX | circuit([0, 1, n - m + 1])
         for i in range(3, m):
             CCX | circuit([i - 1, n - 1 - (m - i + 1), n - 1 - (m - i)])
-    return circuit
+    return CompositeGate(circuit.gates)
 
-def MCTLinearSimulationDecomposition():
+def MCTLinearSimulationDecomposition(m, n):
     """ a linear simulation for toffoli gate
 
     https://arxiv.org/abs/quant-ph/9503016 Lemma 7.2
@@ -50,7 +51,7 @@ def MCTLinearSimulationDecomposition():
         n(int): the number of the circuit's qubits
         m(int): the number of the control bits of the toffoli gates
     Returns:
-        GateSet
+        CompositeGate
     """
     if m > (n // 2) + (1 if n % 2 == 1 else 0):
         raise Exception("control bit cannot above ceil(n/2)")

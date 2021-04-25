@@ -1,6 +1,19 @@
+import numpy as np
 import random
 
 from ..graph import *
+
+
+def f2_random_invertible_matrix_gen(n) -> np.ndarray:
+    mat = np.eye(n, dtype=bool)
+    rnd = 20 * n
+    rg_lst = list(range(n))
+    for _ in range(rnd):
+        x = random.sample(rg_lst, 2)
+        i = x[0]
+        j = x[1]
+        mat[i, :] ^= mat[j, :]
+    return mat
 
 
 def ensure_bipartite_max_degree_even(bipartite: Bipartite) -> None:
@@ -12,10 +25,14 @@ def ensure_bipartite_max_degree_even(bipartite: Bipartite) -> None:
 
 
 def get_bipartite(size: int = 150, ensure_even: bool = True) -> Bipartite:
+    split_point = size + 1
+    delta = int(size / 10)
+    split_point += random.randint(-delta, delta)
     left = list(range(1, size + 1))
     right = list(range(size + 1, size * 2))
     bipartite = Bipartite(left, right)
-    for _ in range(int(size * size * 1.2)):
+    f = random.random() * 0.9 + 0.1
+    for _ in range(int(size * size * f)):
         a = random.choice(left)
         b = random.choice(right)
         bipartite.add_edge(a, b)

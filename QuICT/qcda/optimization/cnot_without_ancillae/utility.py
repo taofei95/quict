@@ -58,6 +58,64 @@ class Merged:
         return self.deg < other.deg
 
 
-def is_not_identity(mat) -> bool:
-    n = mat.shape[0]
-    return not np.all(mat == np.eye(n, dtype=bool))
+def f2_matmul(a: np.ndarray, b: np.ndarray) -> np.ndarray:
+    a_ = np.array(a, dtype=int)
+    b_ = np.array(b, dtype=int)
+    c_ = a_ @ b_
+    c_ %= 2
+    c = np.array(c_, dtype=bool)
+    return c
+
+
+def f2_half_gaussian_elimination(mat_: np.ndarray) -> np.ndarray:
+    mat: np.ndarray = mat_.copy()
+    row_pivot = 0
+    col_pivot = 0
+    m = mat.shape[0]
+    n = mat.shape[1]
+    while row_pivot < m and col_pivot < n:
+        if not mat[row_pivot, col_pivot]:
+            for k in range(row_pivot + 1, m):
+                if mat[k, col_pivot]:
+                    mat[[k, row_pivot], :] = mat[[row_pivot, k], :]
+                    break
+        if mat[row_pivot, col_pivot]:
+            for k in range(row_pivot + 1, m):
+                if mat[k, col_pivot]:
+                    mat[k, :] ^= mat[row_pivot, :]
+            row_pivot += 1
+            col_pivot += 1
+        else:
+            col_pivot += 1
+    return mat
+
+
+def f2_rank(mat_: np.ndarray) -> int:
+    mat = f2_half_gaussian_elimination(mat_)
+    rk = 0
+    for i in range(mat.shape[0]):
+        if np.any(mat[i, :]):
+            rk += 1
+    return rk
+
+
+def f2_inverse(mat_: np.ndarray) -> np.ndarray:
+    n = mat_.shape[0]
+    aug = np.empty(shape=(n, 2 * n), dtype=bool)
+    aug[:, :n] = mat_
+    aug[:, n:] = np.eye(n, dtype=bool)
+
+    # gaussian elimination
+    for i in range(n):
+        if not aug[i, i]:
+            for k in range(i + 1, n):
+                if aug[k, i]:
+                    aug[[k, i], :] = aug[[i, k], :]
+                    break
+        if not aug[i, i]:
+            raise Exception("Matrix is not invertible!")
+        for k in range(n):
+            if i != k and aug[k, i]:
+                aug[k, :] ^= aug[i, :]
+    ret = aug[:, n:].copy()
+    return ret

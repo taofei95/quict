@@ -115,7 +115,7 @@ class EdgeColoring:
         #     e = old_to_new[edge.end]
         #     regular_graph.add_edge(s, e, mark=1)
 
-        # you have add it pairwise
+        # you have to add it pairwise
         for node in bipartite.left:
             eid = bipartite.head[node]
             while eid != -1:
@@ -387,7 +387,9 @@ class EdgeColoring:
 
         ret = Bipartite(bipartite.left, bipartite.right)
         deg = bipartite.get_any_degree()
-        assert deg > 0
+        # assert deg > 0
+        if deg == 0:  # Sometimes there is really a empty graph
+            return ret
         if deg == 1:
             for node in bipartite.left:
                 eid = bipartite.head[node]
@@ -438,13 +440,13 @@ class EdgeColoring:
         Returns
         -------
         Bipartite
-            return a new bipartite with color
+            return a new bipartite with color. Color is represented as an integer, starting from 0.
         """
         new_to_olds: Dict[int, List[int]]
         old_to_new: Dict[int, int]
         bipartite_regular: Bipartite
         new_to_olds, old_to_new, bipartite_regular = cls.get_regular(bipartite)
-        colored_regular = cls.get_edge_coloring_for_regular(bipartite_regular, 1)
+        colored_regular = cls.get_edge_coloring_for_regular(bipartite_regular, 0)
         # del bipartite_regular
         colored_bipartite = Bipartite(bipartite.left, bipartite.right)
         e = len(colored_regular.edges)

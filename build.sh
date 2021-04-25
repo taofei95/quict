@@ -128,5 +128,11 @@ echo "Building python egg"
 
 print_segment
 
+# test_build file indicator
+test_build_file="$prj_root/.test_build"
+cmd_test_arg=$1
+[[ $cmd_test_arg == "--test" ]] && [[ ! -f "$test_build_file" ]] && echo "build a test version" > "$test_build_file"
+[[ $cmd_test_arg == "" ]] && [[ -f "$test_build_file" ]] && rm "$test_build_file"
+
 cd $prj_build_dir && \
 $PYTHON3 ../setup.py build

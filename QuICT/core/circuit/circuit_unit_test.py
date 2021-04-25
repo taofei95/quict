@@ -63,10 +63,13 @@ def test_pratial_prob_part():
 def test_sub_circuit():
     circuit = Circuit(5)
     CX | circuit([0, 1])
-    CX % "AA" | circuit([1, 2])
+    CX(name = "AA") | circuit([1, 2])
     CX | circuit([2, 3])
-    circuit.sub_circuit(slice(4), start="AA", max_size=1, remove=True).print_infomation()
-    circuit.print_infomation()
+    circuit.sub_circuit(slice(4), start="AA", max_size=1, remove=True).print_information()
+    circuit.print_information()
+    new_circuit = Circuit(6)
+    circuit | new_circuit
+    new_circuit.print_information()
     assert 1
 
 def test_sub_circuit_local():
@@ -74,8 +77,8 @@ def test_sub_circuit_local():
     CX | circuit([0, 1])
     CX | circuit([2, 1])
     CX | circuit([1, 0])
-    circuit.sub_circuit(slice(2), local=True, remove=True).print_infomation()
-    circuit.print_infomation()
+    circuit.sub_circuit(slice(2), local=True, remove=True).print_information()
+    circuit.print_information()
     assert 1
 
 if __name__ == "__main__":

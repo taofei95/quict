@@ -1,67 +1,67 @@
 from typing import *
 import numpy as np
 
+from .utility import *
+
 
 class BlockLDUDecompose:
-    @classmethod
-    def f2_half_gaussian_elimination(cls, mat_: np.ndarray) -> np.ndarray:
-        mat: np.ndarray = mat_.copy()
-        n = min(mat.shape[0], mat.shape[1])
-        for i in range(n):
-            if not mat[i, i]:
-                for j in range(i + 1, mat.shape[0]):
-                    if mat[j, i]:
-                        mat[[i, j], :] = mat[[j, i], :]
-                        break
-            if mat[i, i]:
-                for j in range(i + 1, mat.shape[0]):
-                    if mat[j, i]:
-                        mat[j, :] ^= mat[i, :]
-        return mat
-
-    @classmethod
-    def f2_rank(cls, mat_: np.ndarray) -> int:
-        mat = cls.f2_half_gaussian_elimination(mat_)
-        rk = 0
-        n = min(mat.shape[0], mat.shape[1])
-        for i in range(n):
-            if mat[i, i]:
-                rk += 1
-        return rk
-
     @classmethod
     def remapping_select(cls, mat_: np.ndarray) \
             -> List[int]:
         """
-        Select some rows to get a full-ranked sub-matrix.
+        Select some rows out of a square matrix to get a full-ranked sub-matrix.
 
         Args:
             mat_(np.ndarray): Boolean matrix to be decomposed
 
         Returns:
-            List[int]: Selected rows.
+            List[int]: Row reordering args. The remapping ensures that if selected rows
+                are in the upper part before selecting, their locations won't be changed.
         """
         mat = mat_.copy()
         n = mat.shape[0]
-        l_size = n // 2
-        selected = [0]
-        rk = 1
-        for i in range(1, n):
+        s_size = n // 2
+        selected = []
+        unselected = []
+        rk = 0
+        for i in range(n):
             selected.append(i)
-            sub_mat: np.ndarray = mat[[selected], :l_size]
-            if l_size == cls.f2_rank(sub_mat):
-                selected.pop()
-            else:
+            sub_mat = mat[selected, :s_size]
+            slct_rk = f2_rank(sub_mat)
+            if slct_rk == len(selected):
                 rk += 1
-                if rk == l_size:
+                if rk == s_size:
+                    for j in range(i + 1, n):
+                        unselected.append(j)
                     break
-        return selected
+            else:
+                unselected.append(selected.pop())
+
+        selected_part2 = []
+        swap_flag = [True for _ in range(s_size)]
+        for i in range(s_size):
+            if selected[i] < s_size:
+                swap_flag[selected[i]] = False
+            else:
+                selected_part2.append(selected[i])
+
+        remapping = [i for i in range(n)]
+
+        cur_part2_ptr = 0
+        for i in range(s_size):
+            if swap_flag[i]:
+                x = i
+                y = selected_part2[cur_part2_ptr]
+                remapping[x], remapping[y] = remapping[y], remapping[x]
+                cur_part2_ptr += 1
+
+        return remapping
 
     @classmethod
     def run(cls, mat_: np.ndarray) \
             -> Tuple[np.ndarray, np.ndarray, np.ndarray, List[int]]:
         """
-        Block LDU decompose of a boolean matrix.
+        Block LDU decomposition of a boolean matrix.
 
         Args:
             mat_(np.ndarray): Boolean matrix to be decomposed
@@ -70,7 +70,42 @@ class BlockLDUDecompose:
             Tuple[np.ndarray, np.ndarray, np.ndarray, List[int]]: Decomposed L, D, U and row remapping.
         """
 
-        mat = mat_.copy()
-        n = mat.shape[0]
-        if n == 1:
-            raise Exception("LDU decomposition is designed for matrix whose size > 2.")
+        n = mat_.shape[0]
+        if n <= 1:
+            raise Exception("LDU decomposition is designed for matrix whose size >= 2.")
+
+        remapping = cls.remapping_select(mat_)
+        mat: np.ndarray = mat_.copy()[remapping]
+
+        s_size = n // 2
+        t_size = n - s_size
+
+        a = mat[:s_size, :s_size]
+        b = mat[:s_size, s_size:]
+        c = mat[s_size:, :s_size]
+        d = mat[s_size:, s_size:]
+
+        ai = f2_inverse(a)
+        c_ai = f2_matmul(c, ai)
+        c_ai_b = f2_matmul(c_ai, b)
+        ai_b = f2_matmul(ai, b)
+
+        lower = np.zeros(shape=(n, n), dtype=bool)
+        diagonal = np.zeros(shape=(n, n), dtype=bool)
+        upper = np.zeros(shape=(n, n), dtype=bool)
+
+        # lower
+        lower[:s_size, :s_size] = np.eye(s_size, dtype=bool)
+        lower[s_size:, s_size:] = np.eye(t_size, dtype=bool)
+        lower[s_size:, :s_size] = c_ai
+
+        # diagonal
+        diagonal[:s_size, :s_size] = a
+        diagonal[s_size:, s_size:] = d ^ c_ai_b
+
+        # upper
+        upper[:s_size, :s_size] = np.eye(s_size, dtype=bool)
+        upper[s_size:, s_size:] = np.eye(t_size, dtype=bool)
+        upper[:s_size, s_size:] = ai_b
+
+        return lower, diagonal, upper, remapping

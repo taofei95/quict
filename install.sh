@@ -19,7 +19,7 @@ if [[ $OS =~ "Darwin" ]];then
     fi
   done
 
-  [[ tbb_build_dir == "" ]] && echo "No tbb built!" && exit 1
+  [[ $tbb_build_dir == "" ]] && echo "No tbb built!" && exit 1
   cp $tbb_build_dir/libtbb.dylib /usr/local/lib
 fi
 
