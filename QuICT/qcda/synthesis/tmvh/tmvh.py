@@ -10,32 +10,10 @@ from .._synthesis import Synthesis
 from QuICT.core import Circuit, CX, CCX, CompositeGate, Swap, X, Ry, Rz, Measure
 from QuICT.algorithm import Amplitude
 
-def CV(control, target):
-    Rz(pi/2)    | target
-    Ry(pi/4)    | target
-    CX          | (control,target)
-    Ry(-pi/4)   | target
-    CX          | (control,target)
-    Rz(-pi/2)   | target
-
-def CV_dagger(control,target):
-    Rz(pi/2)    | target
-    CX          | (control,target)
-    Ry(pi/4)    | target
-    CX          | (control,target)
-    Ry(-pi/4)   | target
-    Rz(pi/2)    | target
-
 def PeresGate(a,b,c):
     """
     (a, b, c) -> (a, a xor b, a.b xor c)
     """
-    '''
-    CV_dagger(a,c)
-    CV_dagger(b,c)
-    CX | (a,b)
-    CV(b,c)
-    '''
     CCX | (a,b,c)
     CX  | (a,b)
 
@@ -124,7 +102,7 @@ def Subtraction(a,b):
     (a,b) -> (a,b-a)
     """
     X | b
-    RippleCarryAdder(a, b)
+    Adder(a, b)
     X | b
 
 def CtrlAddOverflowAncilla(ctrl,a,b,overflow,ancilla):
