@@ -9,6 +9,7 @@ from .mct import *
 from .hrs import *
 from .bea import *
 from .uniformly_gate import *
+from .unitary_transform import UTrans, CUTrans
 from .initial_state_preparation import *
 from .gate_transform import *
 
