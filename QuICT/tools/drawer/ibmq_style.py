@@ -55,6 +55,8 @@ class DefaultStyle:
             'reset': '\\left|0\\right\\rangle',
             'barrier' : 'barrier',
             'Permutation gate' : 'perm',
+            'Unitary gate': 'unitary',
+            'phase': 'phase',
             'Custom gate' : 'custom'
         }
         self.dispcol = {
@@ -82,6 +84,8 @@ class DefaultStyle:
             'multi': other_color,
             'meas': non_gate_color,
             'Permutation gate' : other_color,
+            'Unitary gate' : other_color,
+            'phase' : other_color,
             'Custom gate' : other_color
         }
         self.latexmode = False

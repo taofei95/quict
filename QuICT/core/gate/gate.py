@@ -2486,7 +2486,7 @@ class UnitaryGate(BasicGate):
         return gate
 
     def __str__(self):
-        return "Custom gate"
+        return "Unitary gate"
 
     def inverse(self):
         _unitary = UnitaryGate()
