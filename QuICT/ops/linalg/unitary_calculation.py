@@ -3,8 +3,10 @@
 # @TIME    : 2021/4/15 8:47 下午
 # @Author  : Han Yu
 # @File    : unitary_calculation
+
 from numba import jit, njit, prange
 import numpy as np
+from typing import *
 
 
 @njit(parallel=True, nogil=True)
@@ -21,23 +23,68 @@ def MatrixTensorI(A, n, m):
     """
     i_m = np.identity(m)
     row_a, col_a = A.shape
-    MatrixTensor = np.zeros((n*m*row_a, n*m*col_a), dtype=np.complex_)
+    MatrixTensor = np.zeros((n * m * row_a, n * m * col_a), dtype=np.complex_)
 
     for i in prange(row_a):
         for j in prange(col_a):
             temp_M = A[i, j] * i_m
             for k in range(n):
-                start_row_idx = k*m*row_a + i*m
-                start_col_idx = k*m*col_a + j*m
-                MatrixTensor[start_row_idx:start_row_idx+m, start_col_idx:start_col_idx+m] = temp_M
+                start_row_idx = k * m * row_a + i * m
+                start_col_idx = k * m * col_a + j * m
+                MatrixTensor[start_row_idx:start_row_idx + m, start_col_idx:start_col_idx + m] = temp_M
 
     return MatrixTensor
 
-@njit()
-def MatrixPermutation(A, mapping, inplace = False):
-    """ permutaion A with mapping, inplace
 
-    2^n * 2^n matrix, n qubits
+@njit(nogil=True)
+def mapping_augment(mapping: np.ndarray) -> np.ndarray:
+    n = len(mapping)
+    p2n = 1 << n
+    res = np.zeros(shape=p2n, dtype=np.int64)
+    for i in range(p2n):
+        for k in range(n):
+            res[i] |= ((i >> (n - 1 - mapping[k])) & 1) << (n - 1 - k)
+    return res
+
+
+@njit(parallel=True, nogil=True)
+def _innerMatrixPermutation(mat: np.ndarray, mapping: np.ndarray, changeInput=False) -> np.ndarray:
+    idx_mapping = mapping_augment(mapping)
+
+    # Do NOT perform parallel operations over row permutations!
+    # They are just too spare in memory. Elements in the same column
+    # are distributed with a gap as matrix row length.
+    perm_mat = mat[idx_mapping, :]
+    for i in prange(idx_mapping.shape[0]):
+        perm_mat[i] = perm_mat[i][idx_mapping]
+
+    if changeInput:
+        mat[:, :] = perm_mat
+
+    return perm_mat
+
+
+def MatrixPermutation(mat: np.ndarray, mapping: Union[np.ndarray, List[int]], changeInput: bool = False) -> np.ndarray:
+    """ permute mat with mapping, inplace
+
+    Args:
+        mat: Matrix to be permuted.
+        mapping: An array-like object indicating bit ordering.
+        changeInput: Whether change the input matrix.
+
+    """
+
+    mapping = np.array(mapping, dtype=np.int64)
+
+    if not mat.shape[0] == 1 << mapping.shape[0]:
+        raise IndexError("Indices do not match!")
+
+    return _innerMatrixPermutation(mat, mapping, changeInput)
+
+
+@njit()
+def VectorPermutation(A, mapping, inplace=False):
+    """ permutaion A with mapping, inplace
 
     Args:
         A(np.array<np.complex>): the matrix A
@@ -47,31 +94,7 @@ def MatrixPermutation(A, mapping, inplace = False):
         np.array<np.complex>: the result of Permutation
     """
     n = A.shape[0]
-    assert(2**len(mapping) == n)
-
-    switched_idx = IndexRearrangement(mapping)
-
-    if not inplace:
-        out = A[(switched_idx),:].copy()
-        return out[:,(switched_idx)]
-
-    based_idx = np.arange(n, dtype=np.int64)
-    A[(based_idx),:] = A[(switched_idx),:]
-    A[:,(based_idx)] = A[:,(switched_idx)]
-
-@njit()
-def VectorPermutation(A, mapping, inplace = False):
-    """ permutaion A with mapping, inplace
-
-    Args:
-        A(np.array<np.complex>): the matrix A
-        mapping(list<int>): the qubit mapping
-        inplace(bool): whether changes in A
-    Returns:
-        np.array<np.complex>: the result of Permutation
-    """
-    n = A.shape[0]
-    assert(2**len(mapping) == n)
+    assert (2 ** len(mapping) == n)
 
     switched_idx = IndexRearrangement(mapping)
 
@@ -79,6 +102,7 @@ def VectorPermutation(A, mapping, inplace = False):
         return A[(switched_idx),].copy()
 
     A[(np.arange(n, dtype=np.int64)),] = A[(switched_idx),]
+
 
 @njit()
 def IndexRearrangement(mapping):
@@ -89,7 +113,7 @@ def IndexRearrangement(mapping):
     Returns:
         np.array<np.int64>: the array of new index
     """
-    n = 2**len(mapping)
+    n = 2 ** len(mapping)
     switched_idx = np.arange(n, dtype=np.int64)
 
     for idx, new_idx in enumerate(mapping):
@@ -97,8 +121,9 @@ def IndexRearrangement(mapping):
             if new_idx < idx and mapping[new_idx] == idx:
                 continue
             BitSwitch(switched_idx, idx, new_idx)
-    
+
     return switched_idx
+
 
 @njit()
 def BitSwitch(index, i: int, j: int):
@@ -114,6 +139,7 @@ def BitSwitch(index, i: int, j: int):
 
     index[w] = np.bitwise_xor(index[w], coef)
 
+
 @njit(parallel=True, nogil=True)
 def tensor(A, B):
     """ tensor A and B
@@ -127,13 +153,14 @@ def tensor(A, B):
     """
     row_a, col_a = A.shape
     row_b, col_b = B.shape
-    tensor_data = np.empty((row_a*row_b, col_a*col_b), dtype=np.complex_)
+    tensor_data = np.empty((row_a * row_b, col_a * col_b), dtype=np.complex_)
 
     for r in prange(row_a):
         for c in prange(col_a):
-            tensor_data[r*row_b:(r+1)*row_b, c*col_b:(c+1)*col_b] = A[r,c] * B
+            tensor_data[r * row_b:(r + 1) * row_b, c * col_b:(c + 1) * col_b] = A[r, c] * B
 
     return tensor_data
+
 
 @njit()
 def multiply(A, B):
