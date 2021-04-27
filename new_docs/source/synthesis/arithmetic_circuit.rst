@@ -8,18 +8,31 @@ users should decide which to use according to the description of each circuits.
 
 Usage
 -----------
-The arithmetic circuits are located in **QuICT.qcda.synthesis.XXX** modules, 
-where **XXX** is submodule according to different designs.
-After imported, the circuits in the module could be used like ordinary gates 
-by being applied on certain quregs with operator **|**. 
-The standard way to import and use them would be like (take **division** as example):
+The arithmetic circuits are located in **QuICT.qcda.synthesis.arithmetic.XXX** modules, 
+where **XXX** is submodules stands for different operations or designs, 
+that is, it can be operation names or designer names.
+The typical way to import a circuit would be like (take **division** as example):
 
 .. code-block:: python
     :linenos:
 
-    from QuICT.core import *
-    from QuICT.qcda.synthesis.tmvh import * 
-    #RestoringDivision is included in module tmvh
+    from QuICT.qcda.synthesis.arithmetic.division import * 
+    #RestoringDivision is included in module division
+
+or 
+
+.. code-block:: python
+    :linenos:
+
+    from QuICT.qcda.synthesis.arithmetic.tmvh import * 
+    #RestoringDivision is also included in module tmvh
+
+After imported, the circuits in the module could be used, like ordinary gates, 
+by being applied on certain quregs with operator **|**. 
+The typical way to use them would be like the (take **division** as example):
+
+.. code-block:: python
+    :linenos:
 
     circuit = Circuit(3*n)
     r_q = circuit([i for i in range(n)])
@@ -29,11 +42,11 @@ The standard way to import and use them would be like (take **division** as exam
     #After some procedures, a_q, b_q and r_q are now in arbitary states.
     RestoringDivision(n) | (a_q,b_q,r_q)
 
-Next we will use VBE module to demonstrate some details.
+Next we will use VBE module to demonstrate more detailed usage.
 
 VBE module
 --------------
-In **QuICT.qcda.synthesis.vbe**, we have **VBEAdder**, **VBEAdderMod**, **VBEMulAddMod** and **VBEExpMod**.
+In **QuICT.qcda.synthesis.arithmetic.vbe**, we have **VBEAdder**, **VBEAdderMod**, **VBEMulAddMod** and **VBEExpMod**.
 
 VBEAdder
 >>>>>>>>>>>>>>>>>
@@ -49,7 +62,7 @@ qureg **c** is clean ancilla, qubit **overflow** flips if the addition produces 
 .. code-block:: python
     :linenos:
 
-    from QuICT.qcda.synthesis.vbe import *
+    from QuICT.qcda.synthesis.arithmetic.vbe import *
 
     circuit = Circuit(3*n + 1)
     a_q = circuit([i for i in range(n)])
@@ -75,7 +88,7 @@ qureg **c**,**N_q**,**overflow** and **t** are clean ancilla.
 .. code-block:: python
     :linenos:
 
-    from QuICT.qcda.synthesis.vbe import *
+    from QuICT.qcda.synthesis.arithmetic.vbe import *
 
     circuit = Circuit(4*n + 2)
     a_q = circuit([i for i in range(n)])
@@ -105,7 +118,7 @@ qureg **a_q**,**c**,**N_q**,**overflow** and **t** are clean ancilla.
 .. code-block:: python
     :linenos:
 
-    from QuICT.qcda.synthesis.vbe import *
+    from QuICT.qcda.synthesis.arithmetic.vbe import *
 
     circuit = Circuit(4*n + m + 2)
     x_q = circuit([i for i in range(m)])
@@ -136,7 +149,7 @@ qureg **a_q**,**c**,**N_q**,**overflow** and **t** are clean ancilla.
 .. code-block:: python
     :linenos:
 
-    from QuICT.qcda.synthesis.vbe import *
+    from QuICT.qcda.synthesis.arithmetic.vbe import *
 
     circuit = Circuit(m + 5 * n + 2)
     x_q = circuit([i for i in range(m)])
