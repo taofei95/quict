@@ -59,7 +59,7 @@ def PeresGate(a,b,c):
     CX  | (a,b)
 
 
-def RippleCarryAdder1(a, b, overflow):
+def RippleCarryAdderOverflow(a, b, overflow):
     '''
      store a + b in b
 
