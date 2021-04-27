@@ -66,7 +66,7 @@ class QCDA(object):
             if isinstance(operation, Mapping):
                 circuit = self._execute_mapping(operation, gates)
 
-            return circuit
+        return circuit
 
     def _execute_synthesis(self, operation, gates):
         """ Execute Synthesis class
