@@ -1,17 +1,36 @@
-Gate Transform
-=================
+Arithmetic Circuit
+======================
 
-Gate Transform is a model that transform quantum gates into specified
-instruction set which used by different institutions(including IBMQ, Google,
-USTC, IonQ) by fixed rules. Also, developers can build their instruction set as well as long as
-the instruction set is universal and use **one kind of 2-qubit gate** and
-**1-qubit gates**.
+We implemented several arithmetic circuits , 
+including **Add**, **AddMod**, **MulMod**, **ExpMod** and **Division with remainder**.
+Each aithmetic may have different realizations based on different designs,
+users should decide which to use according to the description of each circuits.
 
-In fact, these instruction set contain only one 2-qubit gate and some 1-qubit
-gate. for example, IonQ's standard instruction set contain:
+Usage
+-----------
+The arithmetic circuits are located in **QuICT.qcda.synthesis.XXX** modules, 
+where **XXX** is submodule according to different designs.
+After imported, the circuits in the module could be used like ordinary gates, 
+by being applied on certain qubits
+The standard way to import them would be like:
 
-- one qubit gates: Rx, Ry, Rz
-- two qubit gate: Rxx
+.. code-block:: python
+    :linenos:
+
+    from QuICT.qcda.synthesis.vbe import *
+    from QuICT.qcda.synthesis.bea import *
+    from QuICT.qcda.synthesis.hrs import *
+    from QuICT.qcda.synthesis.tmvh import *
+
+    if __name__ == "__main__":
+        circuit = Circuit(5)
+        circuit.random_append(10)
+        circuit.draw_photo(show_depth=False)
+        compositeGate = GateTransform(circuit, USTCSet)
+
+        new_circuit = Circuit(5)
+        new_circuit.set_exec_gates(compositeGate)
+        new_circuit.draw_photo(show_depth=False)
 
 Example
 --------------
