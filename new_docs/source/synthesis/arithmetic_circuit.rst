@@ -81,7 +81,7 @@ It takes **N** as the constant modulus embedded in the structure of the circuit.
 It takes **n** as the parameter indicating the length of the integer, to tailor the circuit to proper size.
 
 Qureg **a** keeps unchanged, the result is stored in qureg **b**,
-qureg **c**,**N_q**,**overflow** and **t** are clean ancilla. 
+qureg **c**, **N_q**, **overflow** and **t** are clean ancilla. 
 
     |a,b,c=0,overflow=0,N_q=0,t=0> -> |a,(a+b) mod N,c=0,overflow,N_q,t>
 
@@ -111,7 +111,7 @@ It takes **n** as the parameter indicating the length of **N**, to tailor the ci
 It takes **m** as the parameter indicating the length of **x**, to tailor the circuit to proper size.
 
 Qureg **x** keeps unchanged, the result is stored in qureg **b**,
-qureg **a_q**,**c**,**N_q**,**overflow** and **t** are clean ancilla. 
+qureg **a_q**, **c**, **N_q**, **overflow** and **t** are clean ancilla. 
 
     |x,a_q=0,b,c=0,overflow=0,N_q=0,t=0> -> |x,a_q,(a*x + b) mod N,c,overflow,N_q,t>
 
@@ -142,7 +142,7 @@ It takes **n** as the parameter indicating the length of **N**, to tailor the ci
 It takes **m** as the parameter indicating the length of **x**, to tailor the circuit to proper size.
 
 Qureg **x** keeps unchanged, the result is stored in qureg **r**,
-qureg **a_q**,**c**,**N_q**,**overflow** and **t** are clean ancilla. 
+qureg **a_q**, **c**, **N_q**, **overflow** and **t** are clean ancilla. 
 
     |x,r=0,a_q=0,b=0,c=0,overflow=0,N_q=0,t=0> -> |x,(a^x) mod N,a_q,b,c,overflow,N_q,t>
 
