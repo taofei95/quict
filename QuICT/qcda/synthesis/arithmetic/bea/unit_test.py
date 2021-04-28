@@ -1,6 +1,6 @@
 from QuICT.core import Circuit, CX, CCX, Swap, X, QFT, IQFT, CRz, Measure
 from QuICT.core import GateBuilder, GATE_ID
-from QuICT.qcda.synthesis import BEAAdder, BEAAdderWired, BEAAdderWiredCC, BEAReverseAdderWired, BEAReverseAdderWiredCC, BEAAdderMod, BEAMultMod, BEACUa
+from QuICT.qcda.synthesis.arithmetic.bea import *
 
 def Set(qreg, N):
     """

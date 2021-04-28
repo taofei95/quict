@@ -6,7 +6,7 @@
 
 from numpy import log2, floor, gcd
 from QuICT.core import *
-from QuICT.qcda.synthesis.tmvh import *
+from QuICT.qcda.synthesis.arithmetic.tmvh import *
 import pytest
 
 def Set(qreg, N):

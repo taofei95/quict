@@ -6,7 +6,7 @@
 
 from numpy import log2, floor, gcd
 
-from .._synthesis import Synthesis
+from ..._synthesis import Synthesis
 from QuICT.core import Circuit, CompositeGate, CX, CCX, Swap, X
 
 def Inverse(a, N):
@@ -461,9 +461,10 @@ def VBEMulAddModDecomposition(a,N,n,m):
 
 VBEMulAddMod = Synthesis(VBEMulAddModDecomposition)
 
-def VBEExpModDecomposition(m, a, N):
+def VBEExpModDecomposition(a, N, n, m):
     """ give parameters to the VBE
     Args:
+        n(int): number of qubits of N
         m(int): number of qubits of x
         a(int): a
         N(int): N
@@ -474,7 +475,7 @@ def VBEExpModDecomposition(m, a, N):
         raise Exception("modulus should be great than 2")
     if gcd(a, N) != 1:
         raise Exception("a and N should be co-prime")
-    n = int(floor(log2(N))) + 1
+    #n = int(floor(log2(N))) + 1
 
     circuit = Circuit(m + 5 * n + 2)
     qubit_x = circuit([i for i in range(m)])

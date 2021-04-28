@@ -6,7 +6,7 @@
 
 from numpy import log2, floor, gcd, pi
 
-from .._synthesis import Synthesis
+from ..._synthesis import Synthesis
 from QuICT.core import Circuit, CX, CCX, CompositeGate, Swap, X, Ry, Rz, Measure
 from QuICT.algorithm import Amplitude
 

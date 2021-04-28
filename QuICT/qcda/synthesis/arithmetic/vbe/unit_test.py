@@ -6,7 +6,7 @@
 
 from numpy import log2, floor, gcd
 from QuICT.core import *
-from QuICT.qcda.synthesis.vbe import *
+from QuICT.qcda.synthesis.arithmetic.vbe import *
 import pytest
 
 def Set(qreg, N):
@@ -30,7 +30,7 @@ def test_Adder():
             qubit_overflow = circuit(3*n)
             Set(qubit_a, a)
             Set(qubit_b, b)
-            VBEAdder(n) | circuit
+            VBEAdder(n) | (qubit_a,qubit_b,qubit_c,qubit_overflow)
             Measure | circuit
             circuit.exec()
             if int(qubit_b) != (a+b)%(2**n):
@@ -98,7 +98,7 @@ def test_Exp():
                 circuit = Circuit(m + 5 * n + 2)
                 qubit_x = circuit([i for i in range(m)])
                 Set(qubit_x, x)
-                VBEExpMod(m, a, N) | circuit
+                VBEExpMod(a,N,n,m) | circuit
                 Measure | circuit
                 circuit.exec()
                 if int(circuit([i for i in range(m, m + n)])) != pow(a, x) % N:

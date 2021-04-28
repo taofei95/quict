@@ -2,7 +2,7 @@
 from numpy import log2, floor, gcd
 import numpy as np
 import sys
-from .._synthesis import Synthesis
+from ..._synthesis import Synthesis
 from QuICT.core import Circuit, CompositeGate, CX, CCX, Swap, X, QFT, IQFT, CRz, Rz, Measure
 from QuICT.core import GateBuilder, GATE_ID
 
@@ -350,7 +350,7 @@ def BEAMultModDecomposition(n,a,N):
     IQFT| qreg_b
     return CompositeGate(circuit.gates)
 
-BEAMultMod = Synthesis(BEAMultModDecomposition)
+BEAMulMod = Synthesis(BEAMultModDecomposition)
 
 def BEACUaDecomposition(n,a,N):
     """ Controlled-U_a, ((a*x)MOD(N)) if c=1, else (x)

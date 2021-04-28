@@ -1,6 +1,6 @@
 from QuICT.algorithm import *
 from QuICT.core import *
-from QuICT.qcda.synthesis import HRSIncrementer, HRSCAdder, HRSCSub, HRSCCCompare, HRSCCAdderMod, HRSCMulModRaw, HRSCMulMod
+from QuICT.qcda.synthesis.arithmetic.hrs import *
 
 def Set(qreg, N):
     """
@@ -12,6 +12,7 @@ def Set(qreg, N):
             X | qreg[n-1-i]
         N = N//2
 
+'''
 def test6():
     # n > 2 should obey
     circuit = Circuit(8)
@@ -33,25 +34,26 @@ def test6():
 
     qubit_target = circuit([4, 5, 6])
     print(int(qubit_target))
+'''
 
 def test7():
     # x * a mod N
     # n = 3
-    circuit = Circuit(8)
+    circuit = Circuit(7)
     circuit.assign_initial_zeros()
-    X | circuit(0)
     x = 1
     a = 2
     N = 4
-    qubit_x = circuit([1, 2, 3])
+    qubit_x = circuit([0, 1, 2])
     Set(qubit_x, x)
-    HRSCMulMod(3, a, N) | circuit
+    HRSMulMod(3, a, N) | circuit
     Measure | circuit
     circuit.exec()
 
-    qubit_target = circuit([1, 2, 3])
+    qubit_target = circuit([0, 1, 2])
     print(int(qubit_target))
 
+'''
 def test1():
     circuit = Circuit(4)
     circuit.assign_initial_zeros()
@@ -61,15 +63,16 @@ def test1():
     HRSIncrementer(2) | circuit
     amplitude = Amplitude.run(circuit)
     print(amplitude)
+'''
 
 def test2():
-    circuit = Circuit(5)
+    circuit = Circuit(4)
     circuit.assign_initial_zeros()
-    X | circuit(0) # control = 1 !!!
-    HRSCAdder(2, 2) | circuit
+    HRSAdder(2, 2) | circuit
     amplitude = Amplitude.run(circuit)
     print(amplitude)
 
+'''
 def test3():
     circuit = Circuit(5)
     circuit.assign_initial_zeros()
@@ -77,7 +80,8 @@ def test3():
     HRSCSub(2, 1) | circuit
     amplitude = Amplitude.run(circuit)
     print(amplitude)
-
+'''
+'''
 def test4():
     circuit = Circuit(6)
     circuit.assign_initial_zeros()
@@ -91,21 +95,19 @@ def test4():
 
     amplitude = Amplitude.run(circuit)
     print(amplitude)
-
+'''
 
 def test5():
-    circuit = Circuit(8)
+    circuit = Circuit(6)
     circuit.assign_initial_zeros()
-    X | circuit(0) # control1 = 1
-    X | circuit(1) # control2 = 1
     # b = 010 = 2
     X | circuit(3) 
     # len(g) needs to be larger than 1, so n needs to be larger than 2 !!!
     # indicator bit somtimes seems to change
-    HRSCCAdderMod(3, 1, 2) | circuit # a = 1, N = 3, (b + a) % N = 1
+    HRSAdderMod(3, 1, 2) | circuit # a = 1, N = 3, (b + a) % N = 1
 
     # expected result: 110100----52
-    for i in range(8):
+    for i in range(6):
         Measure | circuit(i)
     circuit.exec()
     qreg = circuit([i for i in range(8)])

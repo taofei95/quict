@@ -6,7 +6,7 @@
 
 from numpy import log2, floor, gcd
 
-from .._synthesis import Synthesis
+from ..._synthesis import Synthesis
 from QuICT.core import Circuit, CompositeGate, CX, CCX, Swap, X
 
 def EX_GCD(a, b, arr):
