@@ -2,11 +2,12 @@
 
 from QuICT.core import *
 from typing import *
+from copy import copy
 
 
 class TikzDrawer:
     wire_gap = 0.8
-    level_gap = 1.2
+    level_gap = 1.0
     rectangle_size = level_gap / 2
 
     @classmethod
@@ -18,27 +19,22 @@ class TikzDrawer:
         for gate in circuit.gates:
             gate: BasicGate
 
-            if len(gate.affectArgs) == 1:
-                flag = gate.targ not in cur_level_occ
-            elif len(gate.affectArgs) == 2:
-                gate_min = min(gate.carg, gate.targ)
-                gate_max = max(gate.carg, gate.targ)
-                flag = True
-                for bit in range(gate_min, gate_max + 1):
-                    flag = flag and (bit not in cur_level_occ)
-                    cur_level_occ.add(bit)
-            else:
-                raise NotImplementedError("Only can draw 2-bit gate now!!!")
+            gate_min = np.min(gate.affectArgs)
+            gate_max = np.max(gate.affectArgs)
+            is_not_occupied = True
+            for bit in range(gate_min, gate_max + 1):
+                if bit in cur_level_occ:
+                    is_not_occupied = False
+                cur_level_occ.add(bit)
 
-            if flag:
-                ret.append(cur_level)
-                cur_level = [gate]
-                cur_level_occ = set([])
-            else:
+            if is_not_occupied:
                 cur_level.append(gate)
+            else:
+                ret.append(copy(cur_level))
+                cur_level = [gate]
+                cur_level_occ = set(list(range(gate_min, gate_max + 1)))
 
         ret.append(cur_level)
-
         return ret
 
     @classmethod
@@ -92,7 +88,7 @@ class TikzDrawer:
 
         tikz_command += "% end of single qubit rectangle\n\n"
 
-        tikz_command += "% begin of single qubit wire next to rectangel\n"
+        tikz_command += "% begin of single qubit wire next to rectangle\n"
 
         tikz_command += f"\\draw " \
                         f"({x - cls.level_gap / 2},{y}) " \
@@ -104,7 +100,7 @@ class TikzDrawer:
                         f"-- " \
                         f"({x + cls.level_gap / 2},{y}) " \
                         f";\n"
-        tikz_command += "% end of single qubit wire next to rectangel\n\n"
+        tikz_command += "% end of single qubit wire next to rectangle\n\n"
         return tikz_command
 
     @classmethod
@@ -231,13 +227,46 @@ class TikzDrawer:
         return "".join(ret)
 
     @classmethod
+    def draw_empty_head_n_tail_wire(cls, level_max: int, qubit_num: int) -> str:
+        ret = []
+        for bit in range(qubit_num):
+            x, y = cls.get_center_pos(bit, 0)
+            tikz_command = "% begin of leading emtpy wires\n"
+            tikz_command += f"\\draw " \
+                            f"({x - cls.level_gap * 1.5 / 2},{y}) " \
+                            f"-- " \
+                            f"({x - cls.level_gap / 2},{y}) " \
+                            f";\n"
+            tikz_command += "% end of leading emtpy wires\n\n"
+
+            x, y = cls.get_center_pos(bit, level_max)
+            tikz_command += "% begin of tailing empty wires\n"
+            tikz_command += f"\\draw " \
+                            f"({x + cls.level_gap / 2},{y}) " \
+                            f"-- " \
+                            f"({x + cls.level_gap * 1.5 / 2},{y}) " \
+                            f";\n"
+            tikz_command += "% end of tailing empty wires\n\n"
+
+            ret.append(tikz_command)
+
+        return "".join(ret)
+
+    @classmethod
     def run(cls, circuit: Circuit):
         ans = ["\\begin{tikzpicture}\n"]
         circuit_width = circuit.circuit_width()
+
+        layer_cnt = 0
         for idx, layer in enumerate(cls.circuit_layers(circuit)):
             cmds = cls.draw_layer(layer, idx, circuit_width)
             ans.append(cmds)
+            layer_cnt += 1
+
+        ans.append(cls.draw_empty_head_n_tail_wire(layer_cnt - 1, circuit_width))
+
         ans.append("\\end{tikzpicture}")
+
         tikz_command = "".join(ans)
         # print()
         # print(tikz_command)
