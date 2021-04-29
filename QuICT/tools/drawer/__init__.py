@@ -5,3 +5,4 @@
 # @File    : __init__.py.py
 
 from .local_drawer import PhotoDrawerModel
+from .tikz_drawer import TikzDrawer
