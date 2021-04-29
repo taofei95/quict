@@ -36,6 +36,9 @@ class TikzDrawer:
                 cur_level_occ = set([])
             else:
                 cur_level.append(gate)
+
+        ret.append(cur_level)
+
         return ret
 
     @classmethod
