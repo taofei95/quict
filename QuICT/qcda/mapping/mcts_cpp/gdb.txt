@@ -1,0 +1,7 @@
+set args /home/shoulifu/QuICT/QuICT/qcda/mapping/cpp_test_data  0.8 20 0 1 0 15 5 150 0 5000 2 0
+
+set args /home/shoulifu/QuICT/QuICT/qcda/mapping/cpp_test_data  0.8 20 0 1 0 15 5 150 0 50 2 0 "/home/shoulifu/QuICT/QuICT/qcda/mapping/warmup/output/mcts_model.pt" 1
+
+
+set args /home/shoulifu/QuICT/QuICT/qcda/mapping/cpp_test_data  0.8 20 0 0 1 15 5 150 0 50 2 0 "/home/shoulifu/QuICT/QuICT/qcda/mapping/warmup/output/mcts_model.pt" 1 5 8 128
+

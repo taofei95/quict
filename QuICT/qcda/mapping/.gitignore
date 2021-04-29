@@ -1,5 +1,16 @@
+.vscode
+__pycache__
 warmup
 policy
 trash
 alphaQ
 benchmark
+data_process
+init_mapping
+tensorboard
+script
+test_data
+test_mapping
+test_mcts_cpp_temp.log
+test_mcts_cpp_single
+test_mcts_cpp

@@ -21,7 +21,7 @@ class RLBasedMCTS(TableBasedMCTS):
     def __init__(self, model: nn.Module = None, device: torch.device = torch.device('cpu') ,play_times: int = 1, gamma: float = 0.7, Gsim: int = 50, size_threshold: int = 150, 
                  Nsim: int = 500, selection_times: int = 40 , c: int = 10, mode: MCTSMode = MCTSMode.SEARCH, rl: RLMode = RLMode.WARMUP,
                 experience_pool: ExperiencePool = None, coupling_graph: CouplingGraph = None, log_path: str = None,
-                input: Queue = None, output: Connection = None, id: int = 0, extended: bool = False, **params):
+                input: Queue = None, output: Connection = None, id: int = 0, extended: bool = False, epsilon: float = 0.25,diri_alpha: float = 0.03,**params):
 
         super().__init__(play_times = play_times, selection_times = selection_times, gamma = gamma, Gsim = Gsim, size_threshold = size_threshold, extended = extended,
                         coupling_graph = coupling_graph, Nsim = Nsim, c = c, mode = mode, experience_pool = experience_pool, log_path = log_path, rl = rl)
@@ -32,6 +32,8 @@ class RLBasedMCTS(TableBasedMCTS):
         self._id = id
         self._device = device
         self._softmax = nn.Softmax(dim = 0)
+        self._epsilon = epsilon
+        self._diri_alpha = diri_alpha
         # print(self._mode)
         # print(self._mode.value)
         # print(MCTSMode.SEARCH.value)
@@ -51,7 +53,55 @@ class RLBasedMCTS(TableBasedMCTS):
             else:
                 raise Exception("No nn model")
 
-   
+    def run(self, logical_circuit: Circuit = None, init_mapping: List[int] = None):
+        self._num_of_executable_gate = 0
+        self._logical_circuit_dag = DAG(circuit = logical_circuit, mode = Mode.WHOLE_CIRCUIT) 
+        self._circuit_dag = DAG(circuit = logical_circuit, mode = Mode.TWO_QUBIT_CIRCUIT)
+      
+        self._gate_index = []
+        self._physical_circuit: List[BasicGate] = []
+        qubit_mask = np.zeros(self._coupling_graph.size, dtype = np.int32) -1
+        # For the logical circuit, its initial mapping is [0,1,2,...,n] in default. Thus, the qubit_mask of initial logical circuit
+        # should be mapping to physical device with the actual initial mapping.
+        
+        
+        for i, qubit in enumerate(self._circuit_dag.initial_qubit_mask):
+            qubit_mask[init_mapping[i]] = qubit 
+
+        cur_node = MCTSNode(circuit_dag = self._circuit_dag , coupling_graph = self._coupling_graph,
+                                  front_layer = self._circuit_dag.front_layer, qubit_mask = qubit_mask.copy(), cur_mapping = init_mapping.copy(), parent =None)
+        
+        
+        
+        self._add_initial_single_qubit_gate(node = cur_node)
+        self._add_executable_gates(node = cur_node)
+        
+        #self._expand(node = self._root_node)
+        self._num_of_swap_gates = 0
+        while cur_node.is_terminal_node() is not True:
+            self._get_candidate_swap_list(node = cur_node)
+            value = np.zeors(len(cur_node.children), dtype = np.float32)
+            for i,child in enumerate(cur_node.children):
+                value[i] = self._evaluate(node = child)
+            idx = np.argmax(value)
+            cur_node.update_by_swap_gate(cur_node.candidate_swap_list[idx])
+
+            if cur_node.reward == 0:
+                self._fallback_count +=1
+            else:
+                self._fallback_count = 0
+            self._num_of_swap_gates += 1
+
+            self._physical_circuit.append(self._coupling_graph.get_swap_gate(cur_node.swap_of_edge))
+            self._add_executable_gates(node = cur_node)
+            #print(self._root_node.num_of_gates)
+            if self._fallback_count > self._fallback_threshold:
+                cur_node = self._fall_back(node = cur_node)
+        
+            
+            
+
+
     def search(self, logical_circuit: Circuit = None, init_mapping: List[int] = None):
         self._num_of_executable_gate = 0
         self._logical_circuit_dag = DAG(circuit = logical_circuit, mode = Mode.WHOLE_CIRCUIT) 
@@ -81,11 +131,9 @@ class RLBasedMCTS(TableBasedMCTS):
             
             self._search(root_node = self._root_node)
             node = self._root_node
-            print([self._root_node.num_of_gates, self._num_of_swap_gates ])
-            print(self._root_node.value)
+            print([self._root_node.num_of_gates, self._num_of_executable_gate, self._num_of_swap_gates, self._root_node.value, self._root_node.reward ])
             self._logger.info(self._root_node.value)
             self._logger.info([self._root_node.num_of_gates, self._num_of_swap_gates ])
-            
             self._root_node = self._decide(node = self._root_node)
             if self._root_node.reward == 0:
                 self._fallback_count +=1
@@ -163,14 +211,18 @@ class RLBasedMCTS(TableBasedMCTS):
         node.w = value
         prob = self._softmax(policy_scores.squeeze()).detach().to(torch.device('cpu')).numpy()
         
-        if self._extended:
+        if self._extended:  
             self._get_candidate_swap_list(node = node)
             node.edge_prob = prob
         else:
-            super()._get_candidate_swap_list(node = node, pre_prob= True)
-            node.edge_prob = [prob[idx]  for idx in node.candidate_swap_list]
+            super()._get_candidate_swap_list(node = node)
+            node.edge_prob = np.array([prob[idx]  for idx in node.candidate_swap_list])
+            #print(node.edge_prob.sum())
+        if  node == self._root_node:
+            print(1)
+            node.edge_prob = (1-self._epsilon)*node.edge_prob + self._epsilon*np.random.default_rng().dirichlet([self._diri_alpha for _ in range(node.edge_prob.shape[0])], 1).squeeze()
         return node.value
-
+            
     def _evaluate_for_training(self, node: MCTSNode):
         """
 
@@ -192,7 +244,12 @@ class RLBasedMCTS(TableBasedMCTS):
             node.edge_prob = prob
         else:
             super()._get_candidate_swap_list(node = node)
-            node.edge_prob = [prob[idx]  for idx in node.candidate_swap_list]
+            node.edge_prob = np.array([prob[idx]  for idx in node.candidate_swap_list])
+        
+        if  node is self._root_node:
+            print(1)
+            node.edge_prob = (1-self._epsilon)*node.edge_prob + self._epsilon*np.random.default_rng().dirichlet([self._diri_alpha for _ in range(node.edge_prob.shape[0])], 1).squeeze()
+        
         return node.value
 
 
@@ -202,6 +259,8 @@ class RLBasedMCTS(TableBasedMCTS):
         """
         node = self._get_best_child(node)
         node.parent = None
+        #print(node.edge_prob)
+        node.edge_prob = (1-self._epsilon)*node.edge_prob + self._epsilon*np.random.default_rng().dirichlet([self._diri_alpha for _ in range(node.edge_prob.shape[0])], 1).squeeze()
         #node.clear()
         return node
 
@@ -231,6 +290,8 @@ class RLBasedMCTS(TableBasedMCTS):
             prob[i] = child.visit_count
             value[i] = self._gamma * child.value + child.reward
         #print(2)
+        print(prob)
+
         prob = prob / np.sum(prob)
         node.visit_count_prob = prob
         if self._mode == MCTSMode.TRAIN:
@@ -241,7 +302,7 @@ class RLBasedMCTS(TableBasedMCTS):
                 idx = np.argmax(prob)
             #print(idx)
         elif self._mode == MCTSMode.SEARCH:
-            idx = np.argmax(prob)
+            idx = np.argmax(value)
         elif self._mode == MCTSMode.EVALUATE:
             idx = np.argmax(value)
         # for i, child in enumerate(node.children):

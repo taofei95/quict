@@ -25,25 +25,22 @@ class CouplingGraph{
         CouplingGraph();
       
         CouplingGraph(int num_of_qubits, int feature_dim, int num_of_edges, int * coupling_graph, int * distance_matrix, int * edge_label, float * feature_matrix);
-        CouplingGraph& operator=(CouplingGraph && a);
         void print();
         bool is_adjacent(int v, int u);
         int distance(int v, int u);
+        int swap_gate_label(Gate& swap_gate);
+        std::vector<int> shortest_path(int s, int t);
+
         int num_of_qubits;
         int num_of_edges;
         int feature_dim;
+        std::vector<Gate> edges; 
         
     private:
-  
-        std::unique_ptr<torch::TensorAccessor<int, 2>> adj_matrix_accessor;
-        std::unique_ptr<torch::TensorAccessor<int, 2>> distance_matrix_accessor;
-        std::unique_ptr<torch::TensorAccessor<int, 2>> edge_label_accessor;
-        std::unique_ptr<torch::TensorAccessor<float, 2>> feature_matrix_accessor;
-
-        torch::Tensor adj_matrix;
-        torch::Tensor distance_matrix;
-        torch::Tensor edge_label;
-        torch::Tensor feature_matrix;
+        int* adj_matrix_accessor;
+        int* distance_matrix_accessor;
+        int* edge_label_accessor;
+        float* feature_matrix_accessor;
 };
 
 
@@ -51,17 +48,90 @@ class Circuit{
     public:
         Circuit();
         Circuit(int num_of_gates, int * circuit, int * dependency_graph);
-        Circuit& operator=(Circuit&& a);
         std::vector<int> get_succeed_gates(int gate);
         std::vector<int> get_gate_qubits(int gate);
-        void print();
-    private:
+        std::vector<int> get_adj_matrix(std::vector<int>& gates, int length);
+        std::vector<int> get_qubits_matrix(std::vector<int>& gates, std::vector<int>& qubit_mapping, int length);
+
         int num_of_gates;
-        std::unique_ptr<torch::TensorAccessor<int, 2>> circuit_accessor;
-        std::unique_ptr<torch::TensorAccessor<int, 2>> dependency_graph_accessor;
-        torch::Tensor circuit;
-        torch::Tensor dependency_graph;
+        int* circuit_accessor;
+        int*  dependency_graph_accessor;
+   
 };
+
+
+class Sample{
+    public:
+        int cid;
+        int pid;
+        torch::Tensor qubits;
+        torch::Tensor padding_mask;
+        torch::Tensor adj;
+        Sample(){
+            this->cid = 0;
+            this->pid = 0; 
+        }
+
+        Sample(int cid, int pid, 
+            torch::Tensor &qubits, torch::Tensor &padding_mask, torch::Tensor &adj){
+            this->cid = cid;
+            this->pid = pid;
+            this->qubits = qubits;
+            this->padding_mask = padding_mask;
+            this->adj  = adj;
+        }
+
+        
+        Sample(int cid, int pid, 
+            torch::Tensor &&qubits, torch::Tensor &&padding_mask, torch::Tensor &&adj){
+            this->cid = cid;
+            this->pid = pid;
+            this->qubits = std::move(qubits);
+            this->padding_mask = std::move(padding_mask);
+            this->adj  = std::move(adj);
+        }
+
+        Sample(Sample &s){
+            this->cid = s.cid;
+            this->pid = s.pid;
+            this->qubits = s.qubits;
+            this->padding_mask = s.padding_mask;
+            this->adj  = s.adj;
+        }
+
+        
+        Sample(Sample &&s){
+            this->cid = s.cid;
+            this->pid = s.pid;
+            this->qubits = std::move(s.qubits);
+            this->padding_mask = std::move(s.padding_mask);
+            this->adj  = std::move(s.adj);
+        }
+
+        Sample& operator=(Sample &s){
+            if(this != &s){
+                this->cid = s.cid;
+                this->pid = s.pid;
+                this->qubits = s.qubits;
+                this->padding_mask = s.padding_mask;
+                this->adj  = s.adj;
+            }
+            return *this;
+        }
+
+        
+        Sample& operator=(Sample &&s){
+            if(this != &s){
+                this->cid = s.cid;
+                this->pid = s.pid;
+                this->qubits = std::move(s.qubits);
+                this->padding_mask = std::move(s.padding_mask);
+                this->adj  = std::move(s.adj);
+            }
+            return *this;
+        }
+};
+
 
 }
 #endif

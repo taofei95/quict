@@ -9,6 +9,7 @@ import numpy as np
 
 from .nn_model import *
 from .rl_based_mcts import *
+from .rl_oracle_based_mcts import *
 from QuICT.qcda.mapping.utility import *
 from QuICT.qcda.mapping.coupling_graph import *
 from QuICT.qcda.mapping.random_circuit_generator import *
@@ -33,7 +34,6 @@ class Evaluator(object):
         self._coupling_graph = get_coupling_graph(coupling_graph)
         self._config = config
         self._model = SequenceModel(n_qubits = self._coupling_graph.size, n_class = self._coupling_graph.num_of_edge,  config = self._config).to(config.device).float()
-        self._counter_model = SequenceModel(n_qubits = self._coupling_graph.size, n_class = self._coupling_graph.num_of_edge,  config = self._config).to(config.device).float()
 
         self._radndom_circuit_generator = RandomCircuitGenerator(max_num_of_qubits = max_qubits, min_num_of_qubits = min_qubits, minimum = min_gates, maximum = max_gates, seed = int(time.time()))
         self._circuits =[]
@@ -47,30 +47,27 @@ class Evaluator(object):
                 self._circuits.append(circuit)
         self._res = []
 
-    def __call__(self, model_path: str = None, counter_model_path: str = None, rl_mode: MCTSMode = MCTSMode.SEARCH, mode: EvaluateMode = EvaluateMode.SEARCH, sim: SimMode = SimMode.MAX, output_path: str = None):
+    def __call__(self, model_path: str = None, rl_mode: MCTSMode = MCTSMode.SEARCH, mode: EvaluateMode = EvaluateMode.SEARCH, sim: SimMode = SimMode.MAX, output_path: str = None ,extended: bool = False, method: MCTSMethod  = MCTSMethod.RL):
         self._model.load_state_dict(torch.load(model_path))
-        self._counter_model.load_state_dict(torch.load(counter_model_path))
-
-        mcts = RLBasedMCTS(mode = rl_mode, device = self._config.device, model = self._model, coupling_graph = self._graph_name)
-        counter_mcts = RLBasedMCTS(mode = rl_mode, device = self._config.device, model = self._counter_model, coupling_graph = self._graph_name)
+        if method == MCTSMethod.RL:
+            mcts = RLBasedMCTS(mode = rl_mode, device = self._config.device, model = self._model, coupling_graph = self._graph_name, extended = extended, 
+                                selection_times = self._config.selection_times, c = self._config.mcts_c, diri_alpha = self._config.diri_alpha, epsilon = self._config.epsilon)
+        elif method == MCTSMethod.RL_ORACLE:
+            mcts = RLOracleBasedMCTS(mode = rl_mode, device = self._config.device, model = self._model, coupling_graph = self._graph_name, c =self._config.mcts_c, extended = extended, selection_times = self._config.selection_times)
         init_mapping = [i for i in range(self._coupling_graph.size)]
 
         with open(f"{output_path}",'w') as f:
             for i, circuit in enumerate(self._circuits):
                 if mode == EvaluateMode.SEARCH:
                     res = mcts.search(logical_circuit = circuit, init_mapping = init_mapping)
-                    counter_res =  counter_mcts.search(logical_circuit = circuit, init_mapping = init_mapping)
                     self._res.append(res)
-                    f.write("%d  %d %d \n"%(res[0], res[1], counter_res[1]))
+                    f.write("%d  %d \n"%(res[0], res[1]))
                 
-                elif mode == EvaluateMode.PROB:
-                    
-                    num_of_swap_gates_random= 0
-                    num_of_swap_gates_counter = counter_mcts.random_simulate(logical_circuit = circuit, init_mapping = init_mapping)
+                elif mode == EvaluateMode.PROB:    
                     num_of_swap_gates = mcts.random_simulate(logical_circuit = circuit, init_mapping = init_mapping)
                     #num_of_swap_gates_random = mcts.test_random_simulation(logical_circuit = circuit, init_mapping = init_mapping, num_of_gates = -1)
                     self._res.append(num_of_swap_gates)
-                    f.write("%d %d %d %d\n"%(circuit.circuit_size(), num_of_swap_gates, num_of_swap_gates_counter, num_of_swap_gates_random))
+                    f.write("%d %d\n"%(circuit.circuit_size(), num_of_swap_gates))
                 
                 elif mode == EvaluateMode.EXTENDED_PROB:
                     num_of_swap_gates_nn =  mcts.extended_random_simulate(logical_circuit = circuit, init_mapping = init_mapping)

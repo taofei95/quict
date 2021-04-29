@@ -10,48 +10,54 @@ namespace mcts{
 class MCTSNode{
     public:
         MCTSNode();
-        MCTSNode(std::shared_ptr<mcts::CouplingGraph>& coupling_graph, 
-                 std::shared_ptr<mcts::Circuit>& circuit,
+        MCTSNode(CouplingGraph* coupling_graph, 
+                 Circuit* circuit,
                  std::vector<int> &qubit_mapping,
                  std::vector<int> &qubit_mask,
                  std::vector<int> &front_layer,
                  mcts::Gate swap_gate,
-                 std::shared_ptr<MCTSNode>&& parent,
+                 MCTSNode* parent,
                  float prob);
+        MCTSNode(MCTSNode& node); 
+        void clear(); 
+        MCTSNode& operator=(MCTSNode&& node); 
 
         float value;
+        float w;
         float reward;
         float prob;
         int visit_count;
+
+        int num_of_children;
+
+        int num_of_gates;
         mcts::Gate swap_gate; 
-        std::shared_ptr<MCTSNode> parent;
+        MCTSNode* parent;
+        MCTSNode* brother;
+        MCTSNode* child;
 
         std::vector<int> front_layer;
         std::vector<int> qubit_mapping;
         std::vector<int> inverse_qubit_mapping;
         std::vector<int> qubit_mask;
         
-        std::vector<std::shared_ptr<MCTSNode>> children;
+        
         std::vector<Gate> candidate_swap_list;
         std::vector<float> probs_of_children;
-       
+        CouplingGraph* coupling_graph;
+        Circuit* circuit;
 
         int update_by_swap_gate(mcts::Gate& swap_gate);
-        void add_child_node_by_swap_gate(mcts::Gate& swap_gate, float prob);
         bool is_leaf_node();
         bool is_terminal_node();
         void update_candidate_swap_list();
+        void update_candidate_swap_list_extended();
+        std::vector<int> get_subcircuit(int num_of_circuit);
         std::vector<int> get_invloved_qubits();
         int update_front_layer();
         bool is_gate_executable(int index);
         bool is_gate_free(int index);
-        int nearest_neighbour_cost(std::vector<int>& qubit_mapping);
-        int swap_cost(mcts::Gate& swap_gate);
-
-        //~MCTSNode();
-    private:
-        std::shared_ptr<mcts::CouplingGraph> coupling_graph;
-        std::shared_ptr<mcts::Circuit> circuit;
+        bool is_gate_free(int gate, std::vector<int>& qubit_mapping);
 
 };
 
