@@ -10,6 +10,31 @@ import time
 from utils import mapping_augment
 
 
+DOT_TEMPLATE = SourceModule(r"""
+    #include <pycuda-complex.hpp>
+    __global__ void dot(pycuda::complex<double> *out, const pycuda::complex<double> *A, const pycuda::complex<double> *B, const int *size)
+    {
+        const int out_x = size[0];
+        const int out_y = size[3];
+
+        const int stride_x = blockDim.x;
+        const int stride_y = blockDim.y;
+
+        const int idx_x = threadIdx.x;
+        const int idx_y = threadIdx.y;
+
+        for (int i = idx_x; i < out_x; i += stride_x){
+            for (int j = idx_y; j < out_y; j += stride_y){
+                pycuda::complex<double> As = 0;
+                for (int z = 0; z < size[1]; z++){
+                    As += A[i*size[1] + z] * B[z*out_y + j];
+                }
+                out[i*out_y+j] = As;
+            }
+        }
+    }
+    """)
+
 TENSOR_TEMPLATE = SourceModule(r"""
     #include <pycuda-complex.hpp>
     __global__ void tensor(pycuda::complex<double> *out, const pycuda::complex<double> *A, const pycuda::complex<double> *B, const int *size)
@@ -63,12 +88,25 @@ TENSOR_MATRIX_TEMPLATE = SourceModule(r"""
     }
     """)
 
+
 class GPUCalculator:
     @staticmethod
     def dot(A, B):
-        a = gpuarray.to_gpu(A)
-        b = gpuarray.to_gpu(B)
-        return gpuarray.dot(a, b).get()
+        row_a, col_a = A.shape
+        row_b, col_b = B.shape
+        assert(col_a == row_b)
+
+        gpu_A = gpuarray.to_gpu(A)
+        gpu_B = gpuarray.to_gpu(B)
+        gpu_out = gpuarray.to_gpu(np.zeros([row_a, col_b], dtype=np.complex_))
+        gpu_size = gpuarray.to_gpu(np.array([row_a, col_a, row_b, col_b], dtype=np.int32))
+
+        gpu_dot = DOT_TEMPLATE.get_function("dot")
+
+        block = (min(row_a, 64), min(col_b, 64), 1)
+        gpu_dot(gpu_out, gpu_A, gpu_B, gpu_size, block=block)
+
+        return gpu_out.get()
 
     @staticmethod
     def tensor(A, B):
