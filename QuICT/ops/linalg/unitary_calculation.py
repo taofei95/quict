@@ -8,7 +8,11 @@ from numba import jit, njit, prange
 import numpy as np
 from typing import *
 
+from gpu_calculator import GPUCalculator
+from utils import gpu_decorator, mapping_augment
 
+
+@gpu_decorator(threshold=10, gpu_func=GPUCalculator.matrix_tensor)
 @njit(parallel=True, nogil=True)
 def MatrixTensorI(A, n, m):
     """ tensor I^n and A and I^m
@@ -35,35 +39,8 @@ def MatrixTensorI(A, n, m):
 
     return MatrixTensor
 
-
-@njit(nogil=True)
-def mapping_augment(mapping: np.ndarray) -> np.ndarray:
-    n = len(mapping)
-    p2n = 1 << n
-    res = np.zeros(shape=p2n, dtype=np.int64)
-    for i in range(p2n):
-        for k in range(n):
-            res[i] |= ((i >> (n - 1 - mapping[k])) & 1) << (n - 1 - k)
-    return res
-
-
-@njit(parallel=True, nogil=True)
-def _innerMatrixPermutation(mat: np.ndarray, mapping: np.ndarray, changeInput=False) -> np.ndarray:
-    idx_mapping = mapping_augment(mapping)
-
-    # Do NOT perform parallel operations over row permutations!
-    # They are just too spare in memory. Elements in the same column
-    # are distributed with a gap as matrix row length.
-    perm_mat = mat[idx_mapping, :]
-    for i in prange(idx_mapping.shape[0]):
-        perm_mat[i] = perm_mat[i][idx_mapping]
-
-    if changeInput:
-        mat[:, :] = perm_mat
-
-    return perm_mat
-
-
+@gpu_decorator(threshold=10, gpu_func=GPUCalculator.matrix_permutation)
+@njit()
 def MatrixPermutation(mat: np.ndarray, mapping: Union[np.ndarray, List[int]], changeInput: bool = False) -> np.ndarray:
     """ permute mat with mapping, inplace
 
@@ -81,7 +58,23 @@ def MatrixPermutation(mat: np.ndarray, mapping: Union[np.ndarray, List[int]], ch
 
     return _innerMatrixPermutation(mat, mapping, changeInput)
 
+@njit(parallel=True, nogil=True)
+def _innerMatrixPermutation(mat: np.ndarray, mapping: np.ndarray, changeInput=False) -> np.ndarray:
+    idx_mapping = mapping_augment(mapping)
 
+    # Do NOT perform parallel operations over row permutations!
+    # They are just too spare in memory. Elements in the same column
+    # are distributed with a gap as matrix row length.
+    perm_mat = mat[idx_mapping, :]
+    for i in prange(idx_mapping.shape[0]):
+        perm_mat[i] = perm_mat[i][idx_mapping]
+
+    if changeInput:
+        mat[:, :] = perm_mat
+
+    return perm_mat
+
+@gpu_decorator(threshold=10, gpu_func=GPUCalculator.vector_permutation)
 @njit()
 def VectorPermutation(A, mapping, inplace=False):
     """ permutaion A with mapping, inplace
@@ -93,53 +86,20 @@ def VectorPermutation(A, mapping, inplace=False):
     Returns:
         np.array<np.complex>: the result of Permutation
     """
-    n = A.shape[0]
-    assert (2 ** len(mapping) == n)
+    mapping = np.array(mapping, dtype=np.int64)
 
-    switched_idx = IndexRearrangement(mapping)
+    if not A.shape[0] == 1 << mapping.shape[0]:
+        raise IndexError("Indices do not match!")
 
-    if not inplace:
-        return A[(switched_idx),].copy()
+    switched_idx = mapping_augment(mapping)
 
-    A[(np.arange(n, dtype=np.int64)),] = A[(switched_idx),]
+    if inplace:
+        A[:] = A[switched_idx]
 
-
-@njit()
-def IndexRearrangement(mapping):
-    """ Depending on the qubit mapping, re-arrange the index
-
-    Args:
-        mapping(list<int>): the qubit mapping
-    Returns:
-        np.array<np.int64>: the array of new index
-    """
-    n = 2 ** len(mapping)
-    switched_idx = np.arange(n, dtype=np.int64)
-
-    for idx, new_idx in enumerate(mapping):
-        if idx != new_idx:
-            if new_idx < idx and mapping[new_idx] == idx:
-                continue
-            BitSwitch(switched_idx, idx, new_idx)
-
-    return switched_idx
+    return A[switched_idx]
 
 
-@njit()
-def BitSwitch(index, i: int, j: int):
-    """ switch bits in position i and j
-
-    Args:
-        A(np.array<np.int>): the array of index
-        i(int): the switched bit position
-        j(int): the switched bit position
-    """
-    coef = np.bitwise_or(np.left_shift(1, i), np.left_shift(1, j))
-    w = (np.bitwise_and(np.right_shift(index, i), 1) != np.bitwise_and(np.right_shift(index, j), 1))
-
-    index[w] = np.bitwise_xor(index[w], coef)
-
-
+@gpu_decorator(threshold=10, gpu_func=GPUCalculator.tensor)
 @njit(parallel=True, nogil=True)
 def tensor(A, B):
     """ tensor A and B
@@ -161,10 +121,10 @@ def tensor(A, B):
 
     return tensor_data
 
-
+@gpu_decorator(threshold=10, gpu_func=GPUCalculator.dot)
 @njit()
-def multiply(A, B):
-    """ multiply matrix A and matrix B
+def dot(A, B):
+    """ dot matrix A and matrix B
 
     Args:
         A(np.array<np.complex>): the matrix A
