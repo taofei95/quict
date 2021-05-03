@@ -1,21 +1,27 @@
-QuICT
-===============
+The Design Philosophy of QuICT
+-----------------------------------------------------------------------
+QuICT platform is a tool to describe, compile and execute quantum computer.
+In QuICT's Design Philosophy, the compiling and execution of the quantum circuit
+is separated.
 
-.. figure:: ./images/logo.png
-    :width: 666px
-    :align: center
-    :alt: QuICT
-    :target: https://github.com/vision-oihyxc/QuICT
+- Compiling: Design the quantum circuit with some special gate set. The input of the compiling can be some unitary or quantum circuit. QuICT devote itself to design an executable circuit with as small cost as possible in physical layout. Then, QuICT output IR(Intermediate representation) to the part of execution.
 
-.. QuICT documentation master file, created by
-   sphinx-quickstart on Tue Apr 13 22:47:38 2021.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
+- Execution: Execute the quantum circuit with classical simulator or actual quantum computers.
 
-Design Philosophy
----------------------
-.. figure:: ./images/quict_phi.png
+Key Components
+-----------------------------------------------------------------------
+
+.. figure:: ./images/code_en.png
    :width: 1000px
+
+According to the Design Philosophy of QuICT, QuICT's code and Components is
+divide in several parts:
+
+- Algorithm Library: it provides classical quantum algorithm(Shor, Grover and so on) and quantum simulation algorithm/application
+
+- Quantum Circuit Design Automation: it provide the data struction of quantum circuit, compiling process(including synthesis, optimization and mapping) and classical simulation.
+
+- Toolkit: it provide toolkit for users, including drawer of circuit, translator of other languages and so on.
 
 Quick Start
 -------------
@@ -70,15 +76,49 @@ Quick Start
         test = [0, 1] * 2 ** (test_number - 1)
         run_deutsch_jozsa(test, test_number, deutsch_jozsa_main_oracle)
 
-
-How To Use
--------------
-
 Contents
 ----------
 
 .. toctree::
+    :maxdepth: 2
+    :caption: Installaion
+
+    install/package.rst
+    install/docker.rst
+
+.. toctree::
+    :maxdepth: 2
+    :caption: Core and Workflow
+
+    workflow/DataStruction.rst
+    workflow/QCDA.rst
+    workflow/Examples.rst
+
+.. toctree::
    :maxdepth: 2
-   :caption: Synthesis
+   :caption: QCDA-Synthesis
 
    synthesis/gate_transform.rst
+
+.. toctree::
+   :maxdepth: 2
+   :caption: QCDA-Optimization
+   
+   optimization/cnot_template.rst
+
+.. toctree::
+   :maxdepth: 2
+   :caption: QCDA-Mapping
+
+   mapping/1D-mapping.rst
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Toolkit
+
+   toolkit/drawer.rst
+   toolkit/translator.rst
+
+.. toctree::
+   :maxdepth: 2
+   :caption: API-Documents
