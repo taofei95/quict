@@ -14,7 +14,7 @@ from matplotlib import pyplot as plt
 from .ibmq_style import DefaultStyle
 
 LINE_WIDTH = 1.5
-FOLD = 25
+FOLD = 26
 cir_len = 0
 FONT_SIZE = 13
 SUB_FONT_SIZE = 8
