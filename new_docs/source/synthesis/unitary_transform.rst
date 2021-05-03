@@ -23,7 +23,7 @@ Here is a simple usage of this model.
     
         circuit = Circuit(3)
         circuit.set_exec_gates(compositeGate)
-        circuit.draw_photo(show_depth=False)
+        circuit.draw()
 
 Function **unitary_group.rvs** returns a random unitary matrix. Here we generates a random 
 :math:`8\times 8` matrix :math:`U\in SU(2^3)`, and transforms it to a :math:`3`-qubit 
