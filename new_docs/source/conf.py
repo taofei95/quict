@@ -65,6 +65,11 @@ if os.environ["APIDOC_GEN"] == "True":
 else:
     exclude_patterns = ["_build", "Thumbs.db", ".DS_Store", "apidoc"]
 
+# The name of the Pygments (syntax highlighting) style to use.
+pygments_style = 'sphinx'
+
+# If true, `todo` and `todoList` produce output, else they produce nothing.
+todo_include_todos = False
 
 # -- Options for HTML output -------------------------------------------------
 
@@ -89,7 +94,7 @@ html_theme_options = {
 # html_favicon = "images/fav32x32.ico"
 html_title = "latest"
 # html_logo = "images/logo.svg"
-# htmlhelp_basename = "MaroDoc"
+htmlhelp_basename = "QuICTDoc"
 
 source_parsers = {
     ".md": CommonMarkParser,

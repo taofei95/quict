@@ -103,7 +103,7 @@ Contents
 .. toctree::
    :maxdepth: 2
    :caption: QCDA-Optimization
-   
+
    optimization/cnot_template.rst
 
 .. toctree::
@@ -122,3 +122,5 @@ Contents
 .. toctree::
    :maxdepth: 2
    :caption: API-Documents
+
+   api/QuICT.rst
