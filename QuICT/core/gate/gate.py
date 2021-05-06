@@ -438,8 +438,8 @@ class BasicGate(object):
         """
         raise Exception("undefined inverse")
 
-    def communitive(self, goal, eps=1e-7):
-        """ decide whether gate is communitive with another gate
+    def commutative(self, goal, eps=1e-7):
+        """ decide whether gate is commutative with another gate
 
         note when the gate is special gates like Unitary, Permutation, Measure and so on, return False.
 
@@ -447,7 +447,7 @@ class BasicGate(object):
             goal(BasicGate): the target gate
             eps(float): the precision of comparision
         Return:
-            bool: True if communitive
+            bool: True if commutative
         """
         if self.is_special() or goal.is_special():
             return False
@@ -466,14 +466,14 @@ class BasicGate(object):
         set_goal_controls = set(goal.pargs)
         set_goal_targets = set(goal.targs)
 
-        communitive_set = set_controls.intersection(set_goal_targets)
-        if len(communitive_set) > 0 and not goal.is_diagonal():
+        commutative_set = set_controls.intersection(set_goal_targets)
+        if len(commutative_set) > 0 and not goal.is_diagonal():
             return False
-        communitive_set = set_goal_controls.intersection(set_targets)
-        if len(communitive_set) > 0 and not self.is_diagonal():
+        commutative_set = set_goal_controls.intersection(set_targets)
+        if len(commutative_set) > 0 and not self.is_diagonal():
             return False
-        communitive_set = set_goal_targets.intersection(set_targets)
-        if len(communitive_set) > 0 and not np.allclose(A.dot(B), B.dot(A), rtol=1.0e-13, atol=1.0e-13):
+        commutative_set = set_goal_targets.intersection(set_targets)
+        if len(commutative_set) > 0 and not np.allclose(A.dot(B), B.dot(A), rtol=1.0e-13, atol=1.0e-13):
             return False
         return True
 

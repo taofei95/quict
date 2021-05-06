@@ -5,6 +5,8 @@ Class for customizing the process of synthesis, optimization and mapping
 import numpy as np
 
 from QuICT.core import Circuit, CompositeGate
+from QuICT.qcda.synthesis.unitary_transform import UTrans
+from QuICT.tools.interface import OPENQASMInterface
 from .mapping._mapping import Mapping
 from .optimization._optimization import Optimization
 from .synthesis._synthesis import Synthesis
@@ -12,127 +14,175 @@ from .synthesis._synthesis import Synthesis
 class QCDA(object):
     """ Customize the process of synthesis, optimization and mapping
 
-    In this class, we provide the users with a direct path to design the process
-    by which they could transform a unitary matrix to a quantum circuit and/or
-    optimize a quantum circuit.
+    In this class, we meant to provide the users with a direct path to design the
+    process by which they could transform a unitary matrix to a quantum circuit
+    and/or optimize a quantum circuit.
 
-    Users could choose whether to use the synthesis, optimization and mapping
-    operations implemented by us or to develop their own operations, only if
-    the executions are similar to the original ones.
+    In this version, users could choose whether to use the synthesis, optimization
+    and mapping operations implemented by us.
+
+    XXX: Although the structure of `process` is kept, now the revision of `process`
+    is highly restricted in case of unexpected behaviour resulting from inappropriate
+    modification. Now the users could only overload the `compile` function to completely
+    control the workflow of `process`. Still, it is needed that a certain design for
+    allowing the users to revise the `process` with their own operations, only if the 
+    executions are similar to the original ones.(How to ensure that the user gives a proper
+    `process`? That's why it is not implemented in this version.)
+
+    TODO: Optimization before synthesis is a good idea. However, because of the lack
+    of methods to deal with complex gates, this subprocess is omitted in this version.
     """
-    def __init__(self, process, config):
-        """ Initialize a QCDA process and its configuration
+    def __init__(self):
+        """ Initialize a QCDA process
 
         Args:
             process(list): A list of synthesis, optimization and mapping operations
-            config(dict): A dictionary which saves the configuration of the QCDA
-                process for the convenience of controlling the process
-        
+
         Note:
-            In current version, config is only used to store the parameters to be passed
-            to the operations. The key to the parameters of a certain operation must be
-            operation.__name__, otherwise the parameters would not be passed.
+            The element of `process` must be a list formatted as [operation, args, kwargs],
+            in which `operation`, `args`, `kwargs` are the class of operation, the arguments
+            and the keyword arguments respectively.
         """
-        self.process = process
-        self.config = config
+        self.process = []
 
-    def execute(self, gates):
-        """ Execute the QCDA Process
+    @classmethod
+    def load_gates(cls, objective):
+        """ Load the objective to CompositeGate with BasicGates only
 
-        By default, the operations in the self.process would be executed in sequence,
-        with the configuration saved in self.config. The output of the previous operation
-        would be the input of the current one, so be aware that the type of input and
-        output must be aligned.
+        The objective would be analyzed and tranformed to a CompositeGate depending on its
+        type, with the ComplexGates in it decomposed to BasicGates.
 
         Args:
-            gates(np.ndarray/CompositeGate/Circuit): The unitary matrix, CompositeGate
-                or circuit to be transformed
-
-        Returns:
-            Circuit: The circuit derived from the QCDA process
-        """
-        for operation in self.process:
-            # Pass the parameter to operation
-            try:
-                config = self.config[operation.__name__]
-                operation = operation(config)
-            except KeyError:
-                pass
-
-            if isinstance(operation, Synthesis):
-                gates = self._execute_synthesis(operation, gates)
-            if isinstance(operation, Optimization):
-                gates = self._execute_optimization(operation, gates)
-            if isinstance(operation, Mapping):
-                circuit = self._execute_mapping(operation, gates)
-
-        return circuit
-
-    def _execute_synthesis(self, operation, gates):
-        """ Execute Synthesis class
-
-        As is the expected first steps of QCDA, Synthesis would face the most complicated
-        conditions. It would deal with different input as follows:
-        1. If the gates is a unitary matrix, it will construct a CompositeGate equivalent
-        to the matrix.
-        2. If the gates is a CompositeGate, it will check and transform the gates in the 
-        CompositeGate.
-        3. If the gates is a Circuit, it will extract the gates in the circuit as a
-        CompositeGate and work as case 2.
-
-        Args:
-            operation(Synthesis): Operation to be executed
-            gates(np.ndarray/CompositeGate/Circuit): Object to be transformed
+            objective: objective of QCDA process, the following types are supported.
+                1. str: the objective is the path of an OPENQASM file
+                2. numpy.ndarray: the objective is a unitary matrix
+                3. Circuit: the objective is a Circuit
+                4. CompositeGate: the objective is a CompositeGate
         
         Returns:
-            CompositeGate: Transformation result
-        """
-        if isinstance(gates, np.ndarray):
-            qubits = int(np.log2(gates.shape[0]))
-            assert gates.ndim == 2 \
-                and gates.shape[0] == gates.shape[1] \
-                and 2 ** qubits == gates.shape[0], \
-                ValueError("Matrix with wrong shape encountered")
-            gates = operation.execute(gates)
-            return gates
+            CompositeGate: gates equivalent to the objective, with BasicGates only
 
-        if isinstance(gates, Circuit):
-            gates = CompositeGate(gates)
+        Raises:
+            If the objective could not be resolved as any of the above types.
+        """
+        # Load the objective as raw_gates
+        if isinstance(objective, str):
+            qasm = OPENQASMInterface.load_file(objective)
+            if qasm.valid_circuit:
+                # FIXME: no circuit here
+                circuit = qasm.circuit
+                raw_gates = CompositeGate(circuit)
+            else:
+                print("Invalid qasm file!")
+        if isinstance(objective, np.ndarray):
+            raw_gates, _ = UTrans(objective)
+        if isinstance(objective, Circuit):
+            raw_gates = CompositeGate(objective)
+        if isinstance(objective, CompositeGate):
+            raw_gates = CompositeGate(objective)
         
-        assert isinstance(gates, CompositeGate), \
-            TypeError("Invalid type of input for Synthesis execution.")
-        gates = operation.execute(gates)
+        assert isinstance(raw_gates, CompositeGate), TypeError('Invalid objective!')
+
+        # Decomposition of complex gates
+        gates = CompositeGate()
+        for gate in raw_gates:
+            gate_decomposed, _ = UTrans(gate)
+            gates.extend(gate_decomposed)
         return gates
 
-    def _execute_optimization(self, operation, gates):
-        """ Execute Optimization process
+    @staticmethod
+    def default_synthesis(instruction):
+        """ Generate the default synthesis process
+
+        The default synthesis process contains the CartanDecomposition and GateTransform, which would 
+        transform the gates in the original Circuit/CompositeGate to a certain InstructionSet.
 
         Args:
-            operation(Optimization): Operation to be executed
-            gates(CompositeGate/Circuit): Object to be transformed
+            instruction(InstructionSet): the objective InstrucationSet
 
         Returns:
-            CompositeGate: Transformation result
+            List: Synthesis subprocess
         """
-        if isinstance(gates, Circuit):
-            gates = CompositeGate(gates)
+        pass
+
+    @staticmethod
+    def default_optimization():
+        """ Generate the default optimization process
+
+        The default optimization process contains the CommutativeOptimization.
+        If there are CNOT gates in the original Circuit/CompositeGate, CNOTLocalForceBFS and
+        TemplateOptimization would also be used.
+
+        Returns:
+            List: Optimization subprocess
+        """
+        pass
+
+    @staticmethod
+    def default_mapping(topology):
+        """ Generate the default mapping process
+
+        The default mapping process contains the Mapping
+
+        Args:
+            topology
+
+        Returns:
+            List: Mapping subprocess
+        """
+        pass
+
+    def compile(self, objective, instruction, topology, synthesis=True, optimization=True, mapping=True):
+        """ Compile the objective with default process setting
+
+        The easy-to-use process for the users to compile the objective with certain InstructionSet
+        and topology. Three switches are given to control whether to use the corresponding subprocess.
+        Be aware that synthesis subprocess needs `instruction` and mapping subprocess needs `topology`.
+
+        Args:
+            objective: objective of QCDA process, the following types are supported.
+                1. str: the objective is the path of an OPENQASM file
+                2. numpy.ndarray: the objective is a unitary matrix
+                3. Circuit: the objective is a Circuit
+                4. CompositeGate: the objective is a CompositeGate
+            instruction(InstructionSet): The instruction set to be transformed to
+            topology(): TODO
+            synthesis(bool): whether to use synthesis subprocess(`instruction` needed)
+            optimization(bool): whether to use optimization subprocess
+            mapping(bool): whether to use mapping subprocess(`topology` needed)
+
+        Returns:
+            CompositeGate/Circuit: the resulting CompositeGate or Circuit(depending on whether to use
+            the mapping process)
+        """
+        gates = self.load_gates(objective)
+
+        if synthesis == True:
+            self.process.extend(self.default_synthesis(instruction))
+        if optimization == True:
+            self.process.extend(self.default_optimization())
+        if mapping == True:
+            self.process.extend(self.default_mapping(topology))
         
-        assert isinstance(gates, CompositeGate), \
-            TypeError("Invalid type of input for Optimization execution.")
-        gates = operation.execute(gates)
+        gates = self.custom_compile(gates)
+
         return gates
 
-    def _execute_mapping(self, operation, gates):
-        """ Execute the Mapping process
+    def custom_compile(self, gates):
+        """ The execution of the QCDA process
+
+        This is the exection part of the QCDA process, after the process is generated by default
+        or created by advanced users.
 
         Args:
-            operation(Mapping): Operation to be executed
-            gates(CompositeGate/Circuit): Object to be transformed
+            gates(CompositeGate): The CompositeGate to be compiled by `self.process`
 
         Returns:
-            Circuit: Transformation result
+            CompositeGate/Circuit: the resulting CompositeGate or Circuit
+
+        HACK: Feel free to hack this part if needed, though it works for default process.
         """
-        # TODO: Align the interface 
-        # FIXME: the input of Mapping.execute must be a circuit
-        circuit = operation.execute(gates)
-        return circuit
+        for operation, args, kwargs in self.process:
+            gates = operation.execute(gates, *args, **kwargs)
+
+        return gates
