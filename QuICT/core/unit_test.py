@@ -12,8 +12,8 @@ import numpy as np
 from scipy.stats import ortho_group
 import copy
 
-single_gate = [X, H, S, S_dagger, X, Y, Z, ID, U1, U2, U3, Rx, Ry, Rz, T, T_dagger, Phase]
-other_gate = [CZ, CX, CY, CH, CRz, CCX, Swap]
+single_gate = [X, H, S, S_dagger, X, Y, Z, ID, U1, U2, U3, Rx, Ry, Rz, T, T_dagger, Phase, SX, SY, SW]
+other_gate = [CZ, CX, CY, CH, CRz, CCX, Swap, Rxx, Ryy, Rzz, FSim]
 
 def getRandomList(l, n):
     _rand = [i for i in range(n)]
@@ -120,7 +120,7 @@ def test_single():
         gen_g | qureg
         gen_g.inverse() | qureg
         unitary = SyntheticalUnitary.run(circuit)
-        if (abs(abs(unitary - np.identity(2, dtype=np.complex))) > 1e-10).any():
+        if (abs(abs(unitary - np.identity(2, dtype=np.complex128))) > 1e-10).any():
             print(unitary, gen_g.matrix, gen_g.inverse().matrix, gen_g)
             assert 0
     assert 1
@@ -132,7 +132,7 @@ def test_other():
         gen_g | qureg
         gen_g.inverse() | qureg
         unitary = SyntheticalUnitary.run(circuit)
-        if (abs(abs(unitary - np.identity((1 << gate.controls + gate.targets), dtype=np.complex))) > 1e-10).any():
+        if (abs(abs(unitary - np.identity((1 << gate.controls + gate.targets), dtype=np.complex128))) > 1e-10).any():
             print(unitary, gen_g)
             assert 0
     assert 1
@@ -147,7 +147,7 @@ def test_perm():
             Perm(plist) | circuit
             Perm(plist).inverse() | circuit
             unitary = SyntheticalUnitary.run(circuit)
-            if (abs(abs(unitary - np.identity((1 << i), dtype=np.complex))) > 1e-10).any():
+            if (abs(abs(unitary - np.identity((1 << i), dtype=np.complex128))) > 1e-10).any():
                 print(unitary, plist)
                 assert 0
     assert 1
@@ -162,7 +162,7 @@ def test_unitary():
             Unitary(plist) | circuit
             Unitary(plist).inverse() | circuit
             unitary = SyntheticalUnitary.run(circuit)
-            if (abs(abs(unitary - np.identity((1 << i), dtype=np.complex))) > 1e-10).any():
+            if (abs(abs(unitary - np.identity((1 << i), dtype=np.complex128))) > 1e-10).any():
                 print(unitary, plist)
                 assert 0
     assert 1
@@ -186,7 +186,7 @@ def test_circuit():
                 gen_g           | qureg
                 gen_g.inverse() | qureg
             unitary = SyntheticalUnitary.run(circuit)
-            if (abs(abs(unitary - np.identity((1 << i), dtype=np.complex))) > 1e-10).any():
+            if (abs(abs(unitary - np.identity((1 << i), dtype=np.complex128))) > 1e-10).any():
                 assert 0
     assert 1
 

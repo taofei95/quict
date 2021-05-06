@@ -19,10 +19,6 @@ class CompositeGate(list):
     def gates(self):
         return self
 
-    @property
-    def matrix(self):
-        return self.matrix()
-
     def __enter__(self):
         GATE_SET_LIST.append(self)
         return self
@@ -31,7 +27,7 @@ class CompositeGate(list):
         global GATE_SET_LIST
         GATE_SET_LIST.remove(self)
 
-    def __init__(self, gates = None, with_copy = True):
+    def __init__(self, gates=None, with_copy=True):
         """ initial a CompositeGate with gate(s)
 
         Args:
@@ -119,7 +115,7 @@ class CompositeGate(list):
                 count += 1
         return count
 
-    def circuit_depth(self, gateTypes = None):
+    def circuit_depth(self, gateTypes=None):
         """ the depth of the circuit for some gate.
 
         Args:
@@ -198,7 +194,8 @@ class CompositeGate(list):
                 elif isinstance(item, Qureg):
                     qureg.extend(item)
                 else:
-                    raise TypeException("qubit or tuple<qubit, qureg> or qureg or list<qubit, qureg> or circuit", targets)
+                    raise TypeException("qubit or tuple<qubit, qureg> or qureg or list<qubit, qureg> or circuit",
+                                        targets)
         elif isinstance(targets, Qureg):
             qureg = targets
         elif isinstance(targets, Circuit):
@@ -245,7 +242,8 @@ class CompositeGate(list):
                 elif isinstance(item, Qureg):
                     qureg.extend(item)
                 else:
-                    raise TypeException("qubit or tuple<qubit, qureg> or qureg or list<qubit, qureg> or circuit", targets)
+                    raise TypeException("qubit or tuple<qubit, qureg> or qureg or list<qubit, qureg> or circuit",
+                                         targets)
         elif isinstance(targets, Qureg):
             qureg = targets
         elif isinstance(targets, Circuit):
@@ -302,7 +300,7 @@ class CompositeGate(list):
             gate.print_info()
         print("-------------------")
 
-    def random_append(self, rand_size = 10, typeList = None):
+    def random_append(self, rand_size=10, typeList=None):
         """ add some random gate to the circuit
         Args:
             rand_size(int): the number of the gate added to the circuit
@@ -322,14 +320,14 @@ class CompositeGate(list):
             inverse.append(self[index].inverse())
         return inverse
 
-    def matrix(self, local = False):
+    def matrix(self, local=False):
         """ matrix of these gates
 
         Args:
             local: whether regards the min_qubit as the 0's qubit
 
         Returns:
-            np.array: the matrix of the gates
+            np.ndarray: the matrix of the gates
         """
         min_qubit = -1
         max_qubit = -1
@@ -344,7 +342,7 @@ class CompositeGate(list):
                 else:
                     max_qubit = max(max_qubit, arg)
         if min_qubit == -1:
-            return np.eye(2, dtype=np.complex)
+            return np.eye(2, dtype=np.complex128)
 
         if local:
             q_len = max_qubit - min_qubit + 1
@@ -353,10 +351,10 @@ class CompositeGate(list):
 
         n = 1 << q_len
 
-        result = np.eye(n, dtype=np.complex)
+        result = np.eye(n, dtype=np.complex128)
 
         for gate in self.gates:
-            new_values = np.zeros((n, n), dtype=np.complex)
+            new_values = np.zeros((n, n), dtype=np.complex128)
             targs = gate.affectArgs
             for i in range(len(targs)):
                 targs[i] -= min_qubit
@@ -384,7 +382,7 @@ class CompositeGate(list):
             result = np.dot(new_values, result)
         return result
 
-    def equal(self, target, ignore_phase = True, eps = 1e-13):
+    def equal(self, target, ignore_phase=True, eps=1e-7):
         """
 
         Args:

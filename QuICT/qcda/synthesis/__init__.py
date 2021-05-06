@@ -7,6 +7,7 @@
 from .vbe import *
 from .mct import *
 from .uniformly_gate import *
+from .unitary_transform import UTrans, CUTrans
 from .initial_state_preparation import *
-# from .gate_transform import GateTransform, InstructionSet, TransformRule
+from .gate_transform import *
 

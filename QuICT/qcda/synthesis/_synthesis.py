@@ -3,11 +3,13 @@
 # @TIME    : 2020/8/22 2:39
 # @Author  : Han Yu
 # @File    : _synthesis.py
+from typing import *
 
 import numpy as np
 
 from QuICT.core.exception import TypeException
-from QuICT.core import Circuit, Qubit, Qureg
+from QuICT.core import Circuit, Qubit, Qureg, CompositeGate
+
 
 class Synthesis(object):
     """ synthesis some oracle into BasicGate
@@ -24,25 +26,24 @@ class Synthesis(object):
     Note that all subClass must overloaded the function "__call__".
     """
 
-    def __init__(self, function):
-        self._synthesisFuncion = function
+    def __init__(self, _fn: Callable):
+        self._synthesisFunction = _fn
 
-    def __call__(self, *pargs):
+    def __call__(self, *args, **kwargs):
         """
 
         Args:
-            *pargs: parameters
-        Returns:
-            CompositeGate: the list of results
+            *args: arguments
+            **kwargs: key word arguments
         """
-        return self._synthesisFuncion(*pargs)
+        return self._synthesisFunction(*args, **kwargs)
 
-    def _synthesisFuncion(*pargs):
-        """
-
-        Args:
-            *pargs: parameters
-        Returns:
-            CompositeGate: the list of results
-        """
-        raise Exception('"__call__" function must be overloaded')
+    # def _synthesisFuncion(*pargs):
+    #     """
+    #
+    #     Args:
+    #         *pargs: parameters
+    #     Returns:
+    #         CompositeGate: the list of results
+    #     """
+    #     raise Exception('"__call__" function must be overloaded')

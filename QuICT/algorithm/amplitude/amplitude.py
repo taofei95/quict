@@ -43,7 +43,7 @@ class Amplitude(Algorithm):
         dll = systemCdll.quick_operator_cdll
         amplitude_cheat_operator = dll.amplitude_cheat_operator
         amplitude_cheat_operator.argtypes = [
-            np.ctypeslib.ndpointer(dtype=np.complex, ndim=1, flags="C_CONTIGUOUS"),
+            np.ctypeslib.ndpointer(dtype=np.complex128, ndim=1, flags="C_CONTIGUOUS"),
             np.ctypeslib.ndpointer(dtype=np.int, ndim=1, flags="C_CONTIGUOUS"),
             c_int,
             np.ctypeslib.ndpointer(dtype=np.int, ndim=1, flags="C_CONTIGUOUS"),
@@ -51,10 +51,10 @@ class Amplitude(Algorithm):
 
         length = 1 << (circuit.circuit_width() - len(ancilla))
 
-        amplitude_cheat_operator.restype = np.ctypeslib.ndpointer(dtype=np.complex, shape=(length,))
+        amplitude_cheat_operator.restype = np.ctypeslib.ndpointer(dtype=np.complex128, shape=(length,))
 
         tangle_list = []
-        tangle_values = np.array([], dtype=np.complex)
+        tangle_values = np.array([], dtype=np.complex128)
         tangle_length = np.array([], dtype=np.int)
         qubit_map     = np.array([i for i in range(circuit.circuit_width() - len(ancilla))], dtype=np.int)
 
