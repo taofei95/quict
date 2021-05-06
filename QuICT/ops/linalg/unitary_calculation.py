@@ -8,8 +8,8 @@ from numba import jit, njit, prange
 import numpy as np
 from typing import *
 
-from .gpu_calculator import GPUCalculator
-from .utils import gpu_decorator, mapping_augment
+from gpu_calculator import GPUCalculator
+from utils import gpu_decorator, mapping_augment
 
 
 @gpu_decorator(threshold=10, gpu_func=GPUCalculator.matrix_tensor)
