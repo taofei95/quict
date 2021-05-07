@@ -32,7 +32,7 @@ def test_1():
                 circuit = Circuit(m + 5 * n + 2)
                 qubit_x = circuit([i for i in range(m)])
                 Set(qubit_x, x)
-                VBE(m, a, N) | circuit
+                VBE.execute(m, a, N) | circuit
                 Measure | circuit
                 circuit.exec()
                 if int(circuit([i for i in range(m, m + n)])) != pow(a, x) % N:
