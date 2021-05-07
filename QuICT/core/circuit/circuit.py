@@ -417,12 +417,12 @@ class Circuit(object):
                 if not local:
                     new_gates.append(gate)
                 else:
-                    communitive = True
+                    commutative = True
                     for goal in compare_gates:
-                        if not gate.communitive(goal):
-                            communitive = False
+                        if not gate.commutative(goal):
+                            commutative = False
                             break
-                    if communitive:
+                    if commutative:
                         new_gates.append(gate)
                     else:
                         break
