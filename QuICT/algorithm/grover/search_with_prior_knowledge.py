@@ -51,14 +51,14 @@ def run_search_with_prior_knowledge(f, n, p, T, oracle):
     # Start with qreg in equal superposition and ancilla in |->
     X | ancilla
     H | ancilla
-    InitialStatePreparation(list(q)) | qreg
+    InitialStatePreparation.execute(list(q)) | qreg
     for i in range(T):
         oracle(f, qreg, ancilla)
-        InitialStatePreparation(list(q)) ^ qreg
+        InitialStatePreparation.execute(list(q)) ^ qreg
         X | qreg
         MCTOneAux(num) | circuit
         X | qreg
-        InitialStatePreparation(list(q)) | qreg
+        InitialStatePreparation.execute(list(q)) | qreg
     # Apply H
     H | ancilla
     X | ancilla

@@ -47,7 +47,7 @@ def run_weight_decision(f, n, k, l, oracle):
     value[N - 1] = b / np.sqrt(n + a ** 2 + b ** 2)
 
     # Apply oracle U_f which flips the phase of every state |x> with f(x) = 1
-    InitialStatePreparation(value) | qreg
+    InitialStatePreparation.execute(value) | qreg
     X | ancilla
     H | ancilla
 
@@ -55,11 +55,11 @@ def run_weight_decision(f, n, k, l, oracle):
         oracle(f, qreg, ancilla)
         MCTOneAux | circuit
 
-        InitialStatePreparation(value) ^ qreg
+        InitialStatePreparation.execute(value) ^ qreg
         X | qreg
         MCTOneAux | circuit
         X | qreg
-        InitialStatePreparation(value) | qreg
+        InitialStatePreparation.execute(value) | qreg
 
     # Apply H,X to recover ancilla
     H | ancilla
