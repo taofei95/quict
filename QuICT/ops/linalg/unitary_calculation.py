@@ -8,11 +8,22 @@ from numba import jit, njit, prange
 import numpy as np
 from typing import *
 
-from gpu_calculator import GPUCalculator
-from utils import gpu_decorator, mapping_augment
+from utils import gpu_decorator, mapping_augment, GPU_NUMBER
+
+if GPU_NUMBER > 0:
+    from gpu_calculator import GPUCalculator
+    gpu_calculator = GPUCalculator()
+else:
+    class FakedGPUCalculator: pass
+    UNITARY_ALGORITHM = ["matrix_tensor", "matrix_permutation", "vector_permutation", "tensor", "dot"]
+
+    gpu_calculator = FakedGPUCalculator()
+
+    for alg_name in UNITARY_ALGORITHM:
+        setattr(gpu_calculator, alg_name, None)
 
 
-@gpu_decorator(threshold=10, gpu_func=GPUCalculator.matrix_tensor)
+@gpu_decorator(threshold=10, gpu_func=gpu_calculator.matrix_tensor)
 @njit(parallel=True, nogil=True)
 def MatrixTensorI(A, n, m):
     """ tensor I^n and A and I^m
@@ -39,7 +50,7 @@ def MatrixTensorI(A, n, m):
 
     return MatrixTensor
 
-@gpu_decorator(threshold=10, gpu_func=GPUCalculator.matrix_permutation)
+@gpu_decorator(threshold=10, gpu_func=gpu_calculator.matrix_permutation)
 @njit()
 def MatrixPermutation(mat: np.ndarray, mapping: Union[np.ndarray, List[int]], changeInput: bool = False) -> np.ndarray:
     """ permute mat with mapping, inplace
@@ -74,7 +85,7 @@ def _innerMatrixPermutation(mat: np.ndarray, mapping: np.ndarray, changeInput=Fa
 
     return perm_mat
 
-@gpu_decorator(threshold=10, gpu_func=GPUCalculator.vector_permutation)
+@gpu_decorator(threshold=10, gpu_func=gpu_calculator.vector_permutation)
 @njit()
 def VectorPermutation(A, mapping, inplace=False):
     """ permutaion A with mapping, inplace
@@ -99,7 +110,7 @@ def VectorPermutation(A, mapping, inplace=False):
     return A[switched_idx]
 
 
-@gpu_decorator(threshold=10, gpu_func=GPUCalculator.tensor)
+@gpu_decorator(threshold=10, gpu_func=gpu_calculator.tensor)
 @njit(parallel=True, nogil=True)
 def tensor(A, B):
     """ tensor A and B
@@ -121,7 +132,7 @@ def tensor(A, B):
 
     return tensor_data
 
-@gpu_decorator(threshold=10, gpu_func=GPUCalculator.dot)
+@gpu_decorator(threshold=10, gpu_func=gpu_calculator.dot)
 @njit()
 def dot(A, B):
     """ dot matrix A and matrix B
