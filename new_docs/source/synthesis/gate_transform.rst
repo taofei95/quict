@@ -29,7 +29,7 @@ USTCSet
         circuit = Circuit(5)
         circuit.random_append(10)
         circuit.draw_photo(show_depth=False)
-        compositeGate = GateTransform(circuit, USTCSet)
+        compositeGate = GateTransform.execute(circuit, USTCSet)
 
         new_circuit = Circuit(5)
         new_circuit.set_exec_gates(compositeGate)
