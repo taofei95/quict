@@ -441,7 +441,6 @@ def Adder(x,c,ancilla,ancilla_g):
     n = len(x)
     c_bitwise = int2bitwise(c,n)
     Adder_rec(x,c_bitwise,ancilla,ancilla_g)
-    #print(Amplitude.run(circuit))
     for i in range(n):
         if c_bitwise[i]=='1':
             X | x[i]

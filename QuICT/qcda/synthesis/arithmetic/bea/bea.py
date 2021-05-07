@@ -1,3 +1,8 @@
+#!/usr/bin/env python
+# -*- coding:utf8 -*-
+# @TIME    : 2021/4/20
+# @Author  : Li Haomin, Peng Sirui
+# @File    : bea.py
 
 from numpy import log2, floor, gcd
 import numpy as np
@@ -323,7 +328,7 @@ def BEAAdderModDecomposition(n,a,N):
 
 BEAAdderMod = Synthesis(BEAAdderModDecomposition)
 
-def BEAMultModDecomposition(n,a,N):
+def BEAMulModDecomposition(n,a,N):
     """ use FourierAdderMod to calculate (b+ax)%N in Fourier space
 
     (phib=Φ(b),x,c,low) -> (phib'=Φ((b+ax)%N),x,c,low)
@@ -350,7 +355,7 @@ def BEAMultModDecomposition(n,a,N):
     IQFT| qreg_b
     return CompositeGate(circuit.gates)
 
-BEAMulMod = Synthesis(BEAMultModDecomposition)
+BEAMulMod = Synthesis(BEAMulModDecomposition)
 
 def BEACUaDecomposition(n,a,N):
     """ Controlled-U_a, ((a*x)MOD(N)) if c=1, else (x)
