@@ -12,7 +12,7 @@ import os
 
 from .._synthesis import Synthesis
 from QuICT.core import *
-from QuICT.qcda.synthesis import uniformlyRy, uniformlyUnitary
+from QuICT.qcda.synthesis import UniformlyRy, UniformlyUnitary
 
 # the allowed eps
 EPS = 1e-13
@@ -135,11 +135,11 @@ class InitialStatePreparation(Synthesis):
                     flag = False
                     break
             if not flag:
-                gates.extend(uniformlyRy(alpha))
+                gates.extend(UniformlyRy.execute(alpha))
             now += add
         unitaries = [np.diag([np.exp(1j * phases[2 * i]), np.exp(1j * phases[2 * i + 1])])
                     for i in range(len(phases) // 2)]
         # print(phases)
         # phases = [np.angle(phase) for phase in phases]
-        gates.extend(uniformlyUnitary(unitaries))
+        gates.extend(UniformlyUnitary.execute(unitaries))
         return gates

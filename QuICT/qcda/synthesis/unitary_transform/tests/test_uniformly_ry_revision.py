@@ -7,7 +7,7 @@ import numpy as np
 
 from QuICT.algorithm import Amplitude, SyntheticalUnitary
 from QuICT.core import *
-from QuICT.qcda.synthesis.unitary_transform.uniformly_ry_revision import uniformlyRyRevision
+from QuICT.qcda.synthesis.unitary_transform.uniformly_ry_revision import UniformlyRyRevision
 
 
 def test_uniform_ry():
@@ -15,7 +15,7 @@ def test_uniform_ry():
         for i in range(1, 8):
             circuit = Circuit(i)
             angles = [random.random() for _ in range(1 << (i - 1))]
-            uniformlyRyRevision(angles) | circuit
+            UniformlyRyRevision.execute(angles) | circuit
             unitary = SyntheticalUnitary.run(circuit)
             # circuit.print_information()
             # print(unitary)

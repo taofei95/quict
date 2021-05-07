@@ -6,9 +6,9 @@ from QuICT.core import *
 
 from .two_qubit_transform import KAK
 from .two_qubit_diagonal_transform import KAKDiag
-from ..uniformly_gate import uniformlyRy
+from ..uniformly_gate import UniformlyRy
 from .._synthesis import Synthesis
-from .uniformly_ry_revision import uniformlyRyDecompostionRevision
+from .uniformly_ry_revision import UniformlyRyRevision
 from .utility import *
 
 
@@ -69,13 +69,13 @@ def inner_utrans_build_gate(
     # (c,s\\s,c)
     angle_list *= 2  # Ry use its angle as theta/2
     if use_cz_ry:
-        reversed_ry = uniformlyRyDecompostionRevision(
+        reversed_ry = UniformlyRyRevision.execute(
             angle_list=angle_list,
             mapping=[(i + 1) % qubit_num for i in range(qubit_num)],
             is_cz_left=False,  # keep CZ at right side
         )
     else:
-        reversed_ry = uniformlyRy(
+        reversed_ry = UniformlyRy.execute(
             angle_list=angle_list,
             mapping=[(i + 1) % qubit_num for i in range(qubit_num)],
         )

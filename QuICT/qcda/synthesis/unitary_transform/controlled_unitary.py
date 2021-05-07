@@ -2,7 +2,7 @@ from typing import *
 import numpy as np
 
 from .._synthesis import Synthesis
-from ..uniformly_gate import uniformlyRz
+from ..uniformly_gate import UniformlyRz
 from .utility import *
 
 from QuICT.core import *
@@ -74,7 +74,7 @@ def inner_cutrans_build_gate(
         theta = -2 * np.log(s) / 1j
         angle_list.append(theta)
 
-    reversed_rz = uniformlyRz(
+    reversed_rz = UniformlyRz.execute(
         angle_list=angle_list,
         mapping=[(i + 1) % qubit_num for i in range(qubit_num)]
     )

@@ -97,31 +97,30 @@ def inner_uniformly_rotation_cz(
         gates.extend(inner_uniformly_rotation_cz(low + 1, high, Rxn, mapping, False, True))
     return gates
 
+class UniformlyRyRevision(Synthesis):
+    @classmethod
+    def execute(cls, angle_list, mapping=None, is_cz_left: bool = False):
+        """ uniformlyRyGate
 
-def uniformlyRyDecompostionRevision(angle_list, mapping=None, is_cz_left: bool = False):
-    """ uniformlyRyGate
+        http://cn.arxiv.org/abs/quant-ph/0504100v1 Fig4 a)
+        This part is mainly copied from ../uniformly_gate/uniformly_rotation.py
+        Here we demand a CZ gate at the edge of the decomposition, therefore the
+        recursion process is slightly revised.
 
-    http://cn.arxiv.org/abs/quant-ph/0504100v1 Fig4 a)
-    This part is mainly copied from ../uniformly_gate/uniformly_rotation.py
-    Here we demand a CZ gate at the edge of the decomposition, therefore the
-    recursion process is slightly revised.
+        Args:
+            angle_list(list<float>): the angles of Ry Gates
+            mapping(list<int>) : the mapping of gates order
+        Returns:
+            CompositeGate: the synthesis gate list
+        """
+        pargs = list(angle_list)
+        n = int(np.round(np.log2(len(pargs)))) + 1
+        if mapping is None:
+            mapping = [i for i in range(n)]
+        if 1 << (n - 1) != len(pargs):
+            raise Exception("the number of parameters unmatched.")
+        return uniformly_rotation_cz(0, n, pargs, mapping, is_cz_left)
 
-    Args:
-        angle_list(list<float>): the angles of Ry Gates
-        mapping(list<int>) : the mapping of gates order
-    Returns:
-        CompositeGate: the synthesis gate list
-    """
-    pargs = list(angle_list)
-    n = int(np.round(np.log2(len(pargs)))) + 1
-    if mapping is None:
-        mapping = [i for i in range(n)]
-    if 1 << (n - 1) != len(pargs):
-        raise Exception("the number of parameters unmatched.")
-    return uniformly_rotation_cz(0, n, pargs, mapping, is_cz_left)
-
-
-uniformlyRyRevision = Synthesis(uniformlyRyDecompostionRevision)
 """
 If qubit_num > 2, synthesized gates would have 2 cz gates at rightmost place.
 If qubit_num == 2, there would be only 1 cz gate.

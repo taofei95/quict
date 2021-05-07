@@ -82,47 +82,45 @@ def inner_uniformly_rotation(
     return gates
 
 
-def uniformlyRyDecomposition(angle_list, mapping=None):
-    """ uniformRyGate
+class UniformlyRy(Synthesis):
+    @classmethod
+    def execute(cls, angle_list, mapping=None):
+        """ uniformRyGate
 
-    http://cn.arxiv.org/abs/quant-ph/0504100v1 Fig4 a)
+        http://cn.arxiv.org/abs/quant-ph/0504100v1 Fig4 a)
 
-    Args:
-        angle_list(list<float>): the angles of Ry Gates
-        mapping(list<int>) : the mapping of gates order
-    Returns:
-        gateSet: the synthesis gate list
-    """
-    pargs = list(angle_list)
-    n = int(np.round(np.log2(len(pargs)))) + 1
-    if mapping is None:
-        mapping = [i for i in range(n)]
-    if 1 << (n - 1) != len(pargs):
-        raise Exception("the number of parameters unmatched.")
-    return uniformlyRotation(0, n, pargs, GATE_ID['Ry'], mapping)
-
-
-uniformlyRy = Synthesis(uniformlyRyDecomposition)
-
-
-def uniformlyRzDecomposition(angle_list, mapping=None):
-    """ uniformRzGate
-
-    http://cn.arxiv.org/abs/quant-ph/0504100v1 Fig4 a)
-
-    Args:
-        angle_list(list<float>): the angles of Rz Gates
-        mapping(list<int>) : the mapping of gates order
-    Returns:
-        gateSet: the synthesis gate list
-    """
-    pargs = list(angle_list)
-    n = int(np.round(np.log2(len(pargs)))) + 1
-    if mapping is None:
-        mapping = [i for i in range(n)]
-    if 1 << (n - 1) != len(pargs):
-        raise Exception("the number of parameters unmatched.")
-    return uniformlyRotation(0, n, pargs, GATE_ID['Rz'], mapping)
+        Args:
+            angle_list(list<float>): the angles of Ry Gates
+            mapping(list<int>) : the mapping of gates order
+        Returns:
+            gateSet: the synthesis gate list
+        """
+        pargs = list(angle_list)
+        n = int(np.round(np.log2(len(pargs)))) + 1
+        if mapping is None:
+            mapping = [i for i in range(n)]
+        if 1 << (n - 1) != len(pargs):
+            raise Exception("the number of parameters unmatched.")
+        return uniformlyRotation(0, n, pargs, GATE_ID['Ry'], mapping)
 
 
-uniformlyRz = Synthesis(uniformlyRzDecomposition)
+class UniformlyRz(Synthesis):
+    @classmethod
+    def execute(cls, angle_list, mapping=None):
+        """ uniformRzGate
+
+        http://cn.arxiv.org/abs/quant-ph/0504100v1 Fig4 a)
+
+        Args:
+            angle_list(list<float>): the angles of Rz Gates
+            mapping(list<int>) : the mapping of gates order
+        Returns:
+            gateSet: the synthesis gate list
+        """
+        pargs = list(angle_list)
+        n = int(np.round(np.log2(len(pargs)))) + 1
+        if mapping is None:
+            mapping = [i for i in range(n)]
+        if 1 << (n - 1) != len(pargs):
+            raise Exception("the number of parameters unmatched.")
+        return uniformlyRotation(0, n, pargs, GATE_ID['Rz'], mapping)
