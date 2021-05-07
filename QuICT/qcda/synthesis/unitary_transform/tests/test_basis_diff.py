@@ -1,7 +1,7 @@
 # import numpy as np
 #
 # from scipy.stats import unitary_group
-# from ..unitary_transform import UTrans
+# from ..unitary_transform import UnitaryTransform
 # from time import time
 #
 # from ...uniformly_gate import UniformlyRy, UniformlyRz
@@ -36,7 +36,7 @@
 #         for basis in [1, 2]:
 #             print(f"Basis={basis}")
 #             start_time = time()
-#             gates = UTrans(mat, recursive_basis=basis).unitary_transform()
+#             gates = UnitaryTransform.execute(mat, recursive_basis=basis).unitary_transform()
 #             end_time = time()
 #             print(f"Time elapsed: {end_time - start_time:.4f} s")
 #             two_bit_gate_cnt = 0

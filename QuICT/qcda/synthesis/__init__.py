@@ -7,7 +7,7 @@
 from .vbe import *
 from .mct import *
 from .uniformly_gate import *
-from .unitary_transform import UTrans, CUTrans
+from .unitary_transform import UnitaryTransform, ControlledUnitaryTransform
 from .initial_state_preparation import *
 from .gate_transform import *
 

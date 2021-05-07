@@ -19,7 +19,7 @@ Here is a simple usage of this model.
     
     if __name__ == '__main__':
         U = unitary_group.rvs(2 ** 3)
-        compositeGate, _ = UTrans(U)
+        compositeGate, _ = UnitaryTransform.execute(U)
     
         circuit = Circuit(3)
         circuit.set_exec_gates(compositeGate)

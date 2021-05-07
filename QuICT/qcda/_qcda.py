@@ -5,7 +5,7 @@ Class for customizing the process of synthesis, optimization and mapping
 import numpy as np
 
 from QuICT.core import Circuit, CompositeGate
-from QuICT.qcda.synthesis.unitary_transform import UTrans
+from QuICT.qcda.synthesis.unitary_transform import UnitaryTransform
 from QuICT.tools.interface import OPENQASMInterface
 from .mapping._mapping import Mapping
 from .optimization._optimization import Optimization
@@ -75,7 +75,7 @@ class QCDA(object):
             else:
                 print("Invalid qasm file!")
         if isinstance(objective, np.ndarray):
-            raw_gates, _ = UTrans(objective)
+            raw_gates, _ = UnitaryTransform.execute(objective)
         if isinstance(objective, Circuit):
             raw_gates = CompositeGate(objective)
         if isinstance(objective, CompositeGate):
@@ -86,7 +86,7 @@ class QCDA(object):
         # Decomposition of complex gates
         gates = CompositeGate()
         for gate in raw_gates:
-            gate_decomposed, _ = UTrans(gate)
+            gate_decomposed, _ = UnitaryTransform.execute(gate)
             gates.extend(gate_decomposed)
         return gates
 
