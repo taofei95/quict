@@ -14,7 +14,7 @@ def test_MCT_Linear_Simulation():
     for i in range(3, max_qubit):
         for m in range(1, i // 2 + (1 if i % 2 == 1 else 0)):
             circuit = Circuit(i)
-            MCTLinearSimulation(m, i) | circuit
+            MCTLinearSimulation.execute(m, i) | circuit
             unitary = SyntheticalUnitary.run(circuit, showSU=False)
             for j in range(1 << i):
                 for k in range(1 << i):
@@ -65,7 +65,7 @@ def test_MCT():
     max_qubit = 11
     for i in range(3, max_qubit):
         circuit = Circuit(i)
-        MCTOneAux(i) | circuit
+        MCTOneAux.execute(i) | circuit
         # assert 0
         unitary = SyntheticalUnitary.run(circuit)
         circuit.print_information()

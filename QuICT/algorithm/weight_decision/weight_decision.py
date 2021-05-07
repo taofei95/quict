@@ -52,11 +52,11 @@ def run_weight_decision(f, n, k, l, oracle):
 
     for i in range(d - 1):
         oracle(f, qreg, ancilla)
-        MCTOneAux(num) | circuit
+        MCTOneAux.execute(num) | circuit
 
         InitialStatePreparation.execute(value) ^ qreg
         X | qreg
-        MCTOneAux(num) | circuit
+        MCTOneAux.execute(num) | circuit
         X | qreg
         InitialStatePreparation.execute(value) | qreg
 
@@ -64,7 +64,7 @@ def run_weight_decision(f, n, k, l, oracle):
     H | ancilla
     X | ancilla
     oracle(f, qreg, ancilla)
-    MCTOneAux(num) | circuit
+    MCTOneAux.execute(num) | circuit
     # Measure
     Measure | qreg
     Measure | ancilla
