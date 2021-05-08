@@ -397,18 +397,7 @@ class TopologicalCnot(Optimization):
     """
 
     @classmethod
-    def run_parameter(cls, cnot_struct, topology):
-        """ optimize the circuit
-
-        Args:
-            cnot_struct(list<int>): the struct of cnot circuit
-            topology(list<tuple<int, int>>): topology of circuit
-
-        """
-        return cls._run(cnot_struct = cnot_struct, topology = topology)
-
-    @staticmethod
-    def _run(circuit : Circuit = None, cnot_struct = None, topology = None):
+    def execute(cls, circuit : Circuit = None, cnot_struct = None, topology = None):
         """
         Args:
             circuit(Circuit): the circuit to be optimize
@@ -437,7 +426,7 @@ class TopologicalCnot(Optimization):
                 for topos in topology:
                     topo[topos[0]][topos[1]] = True
 
-        output = []
+        output = CompositeGate()
         for item in ans:
             c = topo_backward_map[item.carg]
             t = topo_backward_map[item.targ]

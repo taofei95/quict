@@ -91,7 +91,7 @@ def test_1():
                 circuit.add_topology((topo[j], topo[j + 1]))
             for _ in range(i // 10):
                 circuit.add_topology(_getRandomList(2))
-            new_circuit = TopologicalCnot.run(circuit)
+            new_circuit = TopologicalCnot.execute(circuit)
             if not check_equiv(circuit, new_circuit):
                 assert 0
 
@@ -104,7 +104,7 @@ def test_1():
                 topology.append((topo[j], topo[j + 1]))
             for _ in range(i // 10):
                 topology.append(_getRandomList(2))
-            new_circuit = TopologicalCnot.run_parameter(generate_matrix_list(circuit.gates, i), topology)
+            new_circuit = TopologicalCnot.execute(cnot_struct=generate_matrix_list(circuit.gates, i), topology=topology)
             if not check_equiv(circuit, new_circuit):
                 assert 0
 

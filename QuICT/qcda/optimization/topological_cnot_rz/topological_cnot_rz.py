@@ -207,7 +207,7 @@ def solve(input, th, waitDeal, undirected_topology):
         for gate in gates:
             gate.print_info()
 
-        gsxy_gate = TopologicalCnot.run_parameter(cnot_struct=gsxy, topology=undirected_topology)
+        gsxy_gate = TopologicalCnot.execute(cnot_struct=gsxy, topology=undirected_topology)
         gsxy_gate.reverse()
 
         gates.extend(gsxy_gate)
