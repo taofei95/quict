@@ -369,7 +369,7 @@ def read(circuit : Circuit):
 
 class CnotAncillae(Optimization):
     @classmethod
-    def run(cls, circuit : Circuit, size = 1, inplace = False):
+    def execute(cls, circuit : Circuit, size = 1, inplace = False):
         """ Optimization the circuit by (3s+1)n ancillary qubits
 
         Optimal Space-Depth Trade-Off of CNOT Circuits in Quantum Logic Synthesis
@@ -388,27 +388,16 @@ class CnotAncillae(Optimization):
 
         global s
         s = size
-        circuit.const_lock = True
-        gates = cls._run(circuit)
-        circuit.const_lock = False
-        new_circuit = Circuit(circuit.circuit_width() * (2 + 3 * size))
-        new_circuit.set_exec_gates(gates)
-        return new_circuit
-
-    @staticmethod
-    def _run(circuit : Circuit, *pargs):
-        """
-        Args:
-            circuit(Circuit): circuit to be optimize
-            *pargs: empty
-        """
 
         matrix = read(circuit)
         solve(matrix)
-        gates = []
+        gates = CompositeGate()
         GateBuilder.setGateType(GATE_ID["CX"])
         for cnot in CNOT:
             GateBuilder.setCargs(cnot[0])
             GateBuilder.setTargs(cnot[1])
             gates.append(GateBuilder.getGate())
-        return gates
+
+        new_circuit = Circuit(circuit.circuit_width() * (2 + 3 * size))
+        new_circuit.set_exec_gates(gates)
+        return new_circuit
