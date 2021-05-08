@@ -58,7 +58,7 @@ def test_1():
         for _ in range(10000):
             cx = _getRandomList(i)
             CX | circuit(cx)
-        new_circuit = CnotForceBfs.run(circuit)
+        new_circuit = CnotForceBfs.execute(circuit)
         if not check_equiv(circuit, new_circuit):
             assert 0
 
