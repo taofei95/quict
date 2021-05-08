@@ -3,7 +3,7 @@ Gate Transform
 
 Gate Transform is a model that transform quantum gates into specified
 instruction set which used by different institutions(including IBMQ, Google,
-UTSC, IonQ) by fixed rules. Also, developers can build their instruction set as well as long as
+USTC, IonQ) by fixed rules. Also, developers can build their instruction set as well as long as
 the instruction set is universal and use **one kind of 2-qubit gate** and
 **1-qubit gates**.
 
@@ -15,7 +15,7 @@ gate. for example, IonQ's standard instruction set contain:
 
 Example
 --------------
-another example is USTCSet, which contain **CX, Rx, Ry, Rz, H, X**.\
+Another example is USTCSet, which contain **CX, Rx, Ry, Rz, H, X**.\
 it's easy to use GateTransform to get a compositeGate by setting parameters as
 USTCSet
 
@@ -29,17 +29,17 @@ USTCSet
         circuit = Circuit(5)
         circuit.random_append(10)
         circuit.draw_photo(show_depth=False)
-        compositeGate = GateTransform(circuit, USTCSet)
+        compositeGate = GateTransform.execute(circuit, USTCSet)
 
         new_circuit = Circuit(5)
         new_circuit.set_exec_gates(compositeGate)
         new_circuit.draw_photo(show_depth=False)
 
-before transform, the circuit has a wide variety of gates(10):
+Before transform, the circuit has a wide variety of gates(10):
 
 .. figure:: ./images/0.jpg
 
-after transform, the circuit only contain gates in USTCSet.
+After transform, the circuit only contain gates in USTCSet.
 
 .. figure:: ./images/1.jpg
 
@@ -66,7 +66,7 @@ The Rule describe 2-qubits gates transformation.
 
 2-qubit transform rule
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-in file **two_qubit_gate_rules.py**, a series of function describe the
+In file **two_qubit_gate_rules.py**, a series of function describe the
 transform rule between 2-qubit gates. For example, a rule transform CX gate
 into CY gate is described as:
 
@@ -88,11 +88,11 @@ function, source gate and target gate.
 
 SU2_rule
 ^^^^^^^^^^^^^^^^^^
-in file **SU2_rule.py**, there types of 1-qubit gates' transformation rules are
+In file **SU2_rule.py**, there types of 1-qubit gates' transformation rules are
 given, for their particularity, a subClass **SU2TransformRule** is created for
 them.
 
-an example of SU2_rule is like this:
+An example of SU2_rule is like this:
 
 .. code-block:: python
     :linenos:
@@ -161,7 +161,7 @@ the default rules. **Once developer register the transform rule, the correspondi
     buildSet.register_SU2_rule(ZyzRule)
     buildSet.register_rule_map(Cx2CyRule)
 
-one can call function **select_transform_rule** to get a the 2-qubit
+One can call function **select_transform_rule** to get a the 2-qubit
 TransformRule and use property **SU2_rule** to get the 1-qubit TransformRule.
 
 .. code-block:: python
