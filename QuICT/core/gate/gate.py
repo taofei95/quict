@@ -325,7 +325,7 @@ class BasicGate(object):
             TypeException: the type of other is wrong
         """
         try:
-            if isinstance(targets, np.int64):
+            if isinstance(targets, int):
                 targets = [targets]
             else:
                 targets = list(targets)
