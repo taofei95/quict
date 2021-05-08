@@ -44,9 +44,9 @@ class Amplitude(Algorithm):
         amplitude_cheat_operator = dll.amplitude_cheat_operator
         amplitude_cheat_operator.argtypes = [
             np.ctypeslib.ndpointer(dtype=np.complex128, ndim=1, flags="C_CONTIGUOUS"),
-            np.ctypeslib.ndpointer(dtype=np.int, ndim=1, flags="C_CONTIGUOUS"),
+            np.ctypeslib.ndpointer(dtype=np.int64, ndim=1, flags="C_CONTIGUOUS"),
             c_int,
-            np.ctypeslib.ndpointer(dtype=np.int, ndim=1, flags="C_CONTIGUOUS"),
+            np.ctypeslib.ndpointer(dtype=np.int64, ndim=1, flags="C_CONTIGUOUS"),
         ]
 
         length = 1 << (circuit.circuit_width() - len(ancilla))
@@ -55,8 +55,8 @@ class Amplitude(Algorithm):
 
         tangle_list = []
         tangle_values = np.array([], dtype=np.complex128)
-        tangle_length = np.array([], dtype=np.int)
-        qubit_map     = np.array([i for i in range(circuit.circuit_width() - len(ancilla))], dtype=np.int)
+        tangle_length = np.array([], dtype=np.int64)
+        qubit_map     = np.array([i for i in range(circuit.circuit_width() - len(ancilla))], dtype=np.int64)
 
         tangle_iter = 0
         q_index = 0

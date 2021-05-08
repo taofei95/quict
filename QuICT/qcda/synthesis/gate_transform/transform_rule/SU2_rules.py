@@ -135,7 +135,7 @@ def _xyxRule(gate):
         [0.5 * (unitary[0, 0] + unitary[0, 1] - unitary[1, 0] - unitary[1, 1])
             , 0.5 * (unitary[0, 0] - unitary[0, 1] - unitary[1, 0] + unitary[1, 1])
          ]
-    ], dtype = np.complex)
+    ], dtype = np.complex128)
     det = linalg.det(unitary)
     beta_plus_delta = 0
     beta_dec_delta = 0

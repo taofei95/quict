@@ -47,7 +47,7 @@ def permit_element(element):
         return True
     else:
         tp = type(element)
-        if tp == np.int64 or tp == np.float or tp == np.complex128:
+        if tp == np.int64 or tp == np.float64 or tp == np.complex128:
             return True
         return False
 

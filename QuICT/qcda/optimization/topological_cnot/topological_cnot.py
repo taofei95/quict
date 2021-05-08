@@ -50,14 +50,14 @@ class Steiner_Tree(object):
         """
         self.N = n
         self.matrix = [[False] * n] * n
-        self.dp = np.array([], dtype=np.int)
+        self.dp = np.array([], dtype=np.int64)
         self.ST = []
         for i in range(n):
             for j in range(i + 1, n):
                 self.matrix[i][j] = self.matrix[j][i] = topo[i][j] or topo[j][i]
         self.father = []
         self.sons = []
-        self.pre = np.array([], dtype=np.int)
+        self.pre = np.array([], dtype=np.int64)
         self.root = 0
 
     def build_ST(self, ST_input : list, lower_bound):
@@ -74,8 +74,8 @@ class Steiner_Tree(object):
 
         size = len(ST_input)
         self.root = ST_input[-1]
-        self.dp = np.array([-1] * self.N * (1 << size), dtype=np.int).reshape((self.N, 1 << size))
-        self.pre = np.zeros((self.N, 1 << size, 2), dtype=np.int)
+        self.dp = np.array([-1] * self.N * (1 << size), dtype=np.int64).reshape((self.N, 1 << size))
+        self.pre = np.zeros((self.N, 1 << size, 2), dtype=np.int64)
         self.ST = [0] * self.N
         self.father = [-1] * self.N
         self.sons = []
