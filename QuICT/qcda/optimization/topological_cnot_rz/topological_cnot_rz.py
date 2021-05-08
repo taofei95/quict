@@ -207,7 +207,7 @@ def solve(input, th, waitDeal, undirected_topology):
         for gate in gates:
             gate.print_info()
 
-        gsxy_gate = TopologicalCnot.execute(cnot_struct=gsxy, topology=undirected_topology)
+        gsxy_gate = TopologicalCnot.execute(cnot_struct=gsxy, topology=undirected_topology).gates
         gsxy_gate.reverse()
 
         gates.extend(gsxy_gate)
@@ -227,8 +227,8 @@ class TopologicalCnotRz(Optimization):
 
     """
 
-    @staticmethod
-    def _run(circuit: Circuit, *pargs):
+    @classmethod
+    def execute(cls, circuit: Circuit, *pargs):
         """
         Args:
             circuit(Circuit): the circuit to be optimize
@@ -253,7 +253,7 @@ class TopologicalCnotRz(Optimization):
             for topology in circuit.topology:
                 topo[topology[0]][topology[1]] = True
 
-        output = []
+        output = CompositeGate()
         total = 0
         for item in ans:
             if item.type() == GATE_ID["Rz"] or topo[topo_backward_map[item.carg]][topo_backward_map[item.targ]]:
@@ -298,4 +298,7 @@ class TopologicalCnotRz(Optimization):
                 GateBuilder.setTargs(topo_backward_map[item.targ])
                 gate = GateBuilder.getGate()
                 output.append(gate)
-        return output
+        # return output
+        new_circuit = Circuit(len(circuit.qubits))
+        new_circuit.set_exec_gates(output)
+        return new_circuit

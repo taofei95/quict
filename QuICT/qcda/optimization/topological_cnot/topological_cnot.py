@@ -458,4 +458,7 @@ class TopologicalCnot(Optimization):
                 GateBuilder.setTargs(t)
                 gate = GateBuilder.getGate()
                 output.append(gate)
-        return output
+        # return output
+        new_circuit = Circuit(N)
+        new_circuit.set_exec_gates(output)
+        return new_circuit

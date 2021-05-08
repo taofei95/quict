@@ -133,7 +133,7 @@ class WebInterface(object):
         """
         circuit = WebInterface.load_object(ast)
         if method == "CNOT_Rz":
-            circuit = TopologicalCnotRz.run(circuit)
+            circuit = TopologicalCnotRz.execute(circuit)
         else:
             raise Exception("it is not supported now")
         return WebInterface.output_object(circuit)

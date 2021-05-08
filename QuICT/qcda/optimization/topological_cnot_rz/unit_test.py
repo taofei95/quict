@@ -72,7 +72,7 @@ def test_1():
                 circuit.add_topology((topo[j], topo[j + 1]))
             for _ in range(i // 10):
                 circuit.add_topology(_getRandomList(2))
-            new_circuit = TopologicalCnotRz.run(circuit)
+            new_circuit = TopologicalCnotRz.execute(circuit)
             if not check_equiv(circuit, new_circuit):
                 assert 0
 
@@ -80,7 +80,7 @@ def test_2():
     circuit = Circuit(2)
     CX | circuit((0, 1))
     Rz(np.pi / 4) | circuit(1)
-    new_circuit = TopologicalCnotRz.run(circuit)
+    new_circuit = TopologicalCnotRz.execute(circuit)
     new_circuit.print_information()
     if not check_equiv(circuit, new_circuit):
         assert 0
