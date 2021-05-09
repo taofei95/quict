@@ -1,4 +1,4 @@
-.vscode
+.vscode/*
 __pycache__
 warmup
 policy
@@ -10,6 +10,6 @@ init_mapping
 tensorboard
 cpp_test_data
 script.py
-test_(.*)
+test_*
 
 
