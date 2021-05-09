@@ -181,7 +181,7 @@ class BasicSimulator(object):
 
         pre_search(0, gate_length - 1)
         order.reverse()
-        return order, f[0][gate_length - 1].value
+        return order, small_gates
 
     @staticmethod
     def vector_pretreatment(circuit):
@@ -223,4 +223,4 @@ class BasicSimulator(object):
 
         pre_amplitude_search(gate_length - 1)
         order.reverse()
-        return order, f[0][gate_length - 1].value
+        return order, small_gates
