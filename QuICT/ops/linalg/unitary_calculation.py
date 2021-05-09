@@ -8,9 +8,10 @@ from numba import jit, njit, prange
 import numpy as np
 from typing import *
 
-from utils import gpu_decorator, mapping_augment, GPU_NUMBER
+from utils import gpu_decorator, mapping_augment, GPU_AVAILABLE
 
-if GPU_NUMBER > 0:
+
+if GPU_AVAILABLE:
     from gpu_calculator import GPUCalculator
     gpu_calculator = GPUCalculator()
 else:

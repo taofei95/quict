@@ -9,9 +9,9 @@ try:
     import pycuda.autoinit
     import pycuda.driver as drv
 
-    GPU_NUMBER = drv.Device.count()
+    GPU_AVAILABLE = bool(drv.Device.count())
 except Exception as _:
-    GPU_NUMBER = 0
+    GPU_AVAILABLE = False
 
 
 def gpu_decorator(threshold: int, gpu_func: Callable):
@@ -23,19 +23,29 @@ def gpu_decorator(threshold: int, gpu_func: Callable):
         gpu_func(function): the gpu function.
     """
 
-    def decorate(func):
+    def decorate(cpu_func):
 
-        @wraps(func)
+        @wraps(cpu_func)
         def wrapper(*args, **kwargs):
-            if GPU_NUMBER == 0:
-                return func(*args, **kwargs)
+            # grap CPU parameters (without gpu-in and gpu-out)
+            cpu_parameters = cpu_func.__code__.co_argcount
+            cpu_args, cpu_kwargs = args[:cpu_parameters], kwargs.copy()
+
+            if "gpu_in" in cpu_kwargs.keys():
+                del cpu_kwargs["gpu_in"]
+
+            if "gpu_out" in cpu_kwargs.keys():
+                del cpu_kwargs["gpu_out"]
+
+            if not GPU_AVAILABLE:
+                return cpu_func(*cpu_args, **cpu_kwargs)
 
             using_gpu = False
             for var in args:
                 if type(var) is np.ndarray:
                     using_gpu = var.size > 1 << threshold
 
-            result = gpu_func(*args, **kwargs) if using_gpu else func(*args, **kwargs)
+            result = gpu_func(*args, **kwargs) if using_gpu else cpu_func(*cpu_args, **cpu_kwargs)
             return result
 
         return wrapper
