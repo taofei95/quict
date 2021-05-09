@@ -244,11 +244,54 @@ DLLEXPORT void control_single_operator_func(
     }
 }
 
+DLLEXPORT void two_qubit_operator_func(
+    int qureg_length,
+    int index1,
+    int index2,
+    complex<double> *values,
+    complex<double> *matrix
+    ){
+    index1 = qureg_length - 1 - index1;
+    index2 = qureg_length - 1 - index2;
+    long long indexlist1 = min(index1, index2);
+    long long indexlist2 = max(index1, index2);
+    long long v_l = 1 << qureg_length;
+
+    parallel_for(blocked_range<size_t>(0, v_l >> 2), [
+        v_l,
+        index1,
+        index2,
+        indexlist1,
+        indexlist2,
+        values,
+        matrix
+    ](blocked_range<size_t>& blk){
+        for(size_t j=blk.begin();j<blk.end();j++){
+            long long other = j & ((1 << indexlist1) - 1);
+            long long gw = j >> indexlist1 << (indexlist1 + 1);
+            other += gw & ((1 << indexlist2) - (1 << indexlist1));
+            long long gwg = gw >> indexlist2 << (indexlist2 + 1);
+            other += gwg;
+            long long _0 = 1 << indexlist1;
+            long long _1 = 1 << indexlist2;
+            complex<double> _00 = values[other];
+            complex<double> _01 = values[other + _0];
+            complex<double> _10 = values[other + _1];
+            complex<double> _11 = values[other + _0 + _1];
+            values[other] = matrix[0] * _00 + matrix[1] * _01 + matrix[2] * _10 + matrix[3] * _11;
+            values[other + _0] = matrix[4] * _00 + matrix[5] * _01 + matrix[6] * _10 + matrix[7] * _11;
+            values[other + _1] = matrix[8] * _00 + matrix[9] * _01 + matrix[10] * _10 + matrix[11] * _11;
+            values[other + _0 + _1] = matrix[12] * _00 + matrix[13] * _01 + matrix[14] * _10 + matrix[15] * _11;
+        }
+    });
+
+}
+
 DLLEXPORT void ccx_single_operator_func(
-    int qureg_length, 
-    int cindex1, 
-    int cindex2, 
-    int tindex, 
+    int qureg_length,
+    int cindex1,
+    int cindex2,
+    int tindex,
     complex<double> *values){
     cindex1 = qureg_length - 1 - cindex1;
     cindex2 = qureg_length - 1 - cindex2;
@@ -364,9 +407,9 @@ DLLEXPORT void perm_operator_gate(int qureg_length, complex<double> *values, lon
             long long now = perm[j];
             perm[j] = 0;
             for (int i = 0;i < index_count;++i){
-                if ((1 << i) & now)
+                if ((1 << (index_count - i - 1)) & now)
                     perm[j] += 1 << index[i];
-                if ((1 << i) & j)
+                if ((1 << (index_count - i - 1)) & j)
                     perms_to[j] += 1 << index[i];
             }
         }
@@ -374,7 +417,7 @@ DLLEXPORT void perm_operator_gate(int qureg_length, complex<double> *values, lon
     parallel_for(blocked_range<size_t>(0, v_l >> index_count), [
         v_l,
         perms_to,
-        perm,   
+        perm,
         indexlist,
         index,
         xl_l,

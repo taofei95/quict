@@ -41,8 +41,8 @@ DLLEXPORT int state_theta_computation(
                 int suf = 1 << (n - i - 1);
                 long double _0 = 0, _1 = 0;
                 for (int k = 0;k < suf;++k){
-                    _0 += values[pre + k];
-                    _1 += values[pre + k + (1 << (n - i - 1))];
+                    _0 += values[pre + k] * values[pre + k];
+                    _1 += values[pre + k + (1 << (n - i - 1))] * values[pre + k + (1 << (n - i - 1))];
                 }
                 if (_0 < eps && _1 < eps){
                     back[now + j] = 0;

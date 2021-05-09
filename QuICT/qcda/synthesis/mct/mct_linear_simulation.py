@@ -18,6 +18,7 @@ def solve(n, m):
         the circuit which describe the decomposition result
     """
     circuit = Circuit(n)
+    print(n, m)
     if m == 1:
         CX  | circuit([0, n - 1])
     elif m == 2:
@@ -34,9 +35,9 @@ def solve(n, m):
         CCX | circuit([0, 1, n - m + 1])
         for i in range(3, m):
             CCX | circuit([i - 1, n - 1 - (m - i + 1), n - 1 - (m - i)])
-    return circuit
+    return CompositeGate(circuit.gates)
 
-class MCTLinearSimulationModel(Synthesis):
+def MCTLinearSimulationDecomposition(m, n):
     """ a linear simulation for toffoli gate
 
     https://arxiv.org/abs/quant-ph/9503016 Lemma 7.2
@@ -45,28 +46,14 @@ class MCTLinearSimulationModel(Synthesis):
 
     If n ≥ 5 and m ∈ {3, . . . , ⌈n/2⌉} then (m+1)-Toffoli gate can be simulated
     by a network consisting of 4(m − 2) toffoli gates
+
+    Returns:
+        CompositeGate
     """
+    if m > (n // 2) + (1 if n % 2 == 1 else 0):
+        raise Exception("control bit cannot above ceil(n/2)")
+    if m < 1:
+        raise Exception("there must be at least one control bit")
+    return solve(n, m)
 
-    def __call__(self, m):
-        """
-        Args:
-            the bits of the toffoli gate
-        Returns:
-            MCT_Linear_Simulation_model: model filled by the parameter m.
-        """
-        self.pargs = [m]
-        return self
-
-    def build_gate(self):
-        """ overloaded the function "build_gate"
-
-        """
-        n = self.targets
-        m = self.pargs[0]
-        if m > (n // 2) + (1 if n % 2 == 1 else 0):
-            raise Exception("control bit cannot above ceil(n/2)")
-        if m < 1:
-            raise Exception("there must be at least one control bit")
-        return solve(self.targets, m)
-
-MCTLinearSimulation = MCTLinearSimulationModel()
+MCTLinearSimulation = Synthesis(MCTLinearSimulationDecomposition)

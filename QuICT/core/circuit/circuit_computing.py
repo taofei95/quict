@@ -43,7 +43,7 @@ def inner_partial_prob(circuit, indexes):
     dll = systemCdll.quick_operator_cdll
     partial_prob_operator = dll.partial_prob_cheat_operator
     partial_prob_operator.argtypes = [
-        np.ctypeslib.ndpointer(dtype=np.complex, ndim=1, flags="C_CONTIGUOUS"),
+        np.ctypeslib.ndpointer(dtype=np.complex128, ndim=1, flags="C_CONTIGUOUS"),
         np.ctypeslib.ndpointer(dtype=np.int, ndim=1, flags="C_CONTIGUOUS"),
         c_int,
         c_int,
@@ -55,7 +55,7 @@ def inner_partial_prob(circuit, indexes):
     partial_prob_operator.restype = np.ctypeslib.ndpointer(dtype=np.float, shape=(length,))
 
     tangle_list = []
-    tangle_values = np.array([], dtype=np.complex)
+    tangle_values = np.array([], dtype=np.complex128)
     tangle_length = np.array([], dtype=np.int)
     qubit_map = np.array([i for i in range(len(indexes))], dtype=np.int)
 
@@ -87,8 +87,11 @@ def inner_partial_prob(circuit, indexes):
 def inner_random_append(circuit, rand_size=10, typeList=None):
     from QuICT.core import GateBuilder, GATE_ID
     if typeList is None:
-        typeList = [GATE_ID["CX"], GATE_ID["ID"], GATE_ID["Rz"], GATE_ID["CY"], GATE_ID["CRz"], GATE_ID["CH"]]
-    qubit = len(circuit.qubits)
+        typeList = [GATE_ID["Rx"], GATE_ID["Ry"], GATE_ID["Rz"],
+                    GATE_ID["CX"], GATE_ID["CY"], GATE_ID["CRz"], GATE_ID["CH"], GATE_ID["CZ"],
+                    GATE_ID["Rxx"], GATE_ID["Ryy"], GATE_ID["Rzz"], GATE_ID["FSim"]
+                    ]
+    qubit = circuit.circuit_width()
     for _ in range(rand_size):
         rand_type = random.randrange(0, len(typeList))
         GateBuilder.setGateType(typeList[rand_type])
@@ -114,7 +117,7 @@ def inner_matrix_product_to_circuit(circuit, gate) -> np.ndarray:
     q_len = len(circuit.qubits)
     n = 1 << len(circuit.qubits)
 
-    new_values = np.zeros((n, n), dtype=np.complex)
+    new_values = np.zeros((n, n), dtype=np.complex128)
     targs = gate.targs
     cargs = gate.cargs
     if not isinstance(targs, list):
