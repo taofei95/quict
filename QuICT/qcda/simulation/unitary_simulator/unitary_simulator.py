@@ -1,3 +1,5 @@
+#!/usr/bin/python3
+
 import numpy as np
 from QuICT.core import *
 from QuICT.ops.linalg.unitary_calculation import *
