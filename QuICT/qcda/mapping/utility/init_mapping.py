@@ -31,8 +31,11 @@ class Cost:
         self._adj = np.apply_along_axis(fill_adj, axis = 1, arr = np.concatenate([np.arange(0, size)[:,np.newaxis], subcircuit[:,0:5]],axis = 1))
         self._qubits = subcircuit[:,5:]
         self.num_of_gates = num_of_gates
-        self._nn_model = SequenceModel(n_qubits = self._coupling_graph.size, n_class = self._coupling_graph.num_of_edge,  config = config).to(config.device).float()
-        self._nn_model.load_state_dict(torch.load(model_file))
+        self._nn = False
+        if model_file is not None:
+            self._nn = True
+            self._nn_model = SequenceModel(n_qubits = self._coupling_graph.size, n_class = self._coupling_graph.num_of_edge,  config = config).to(config.device).float()
+            self._nn_model.load_state_dict(torch.load(model_file))
 
     def __call__(self, qubit_mapping: np.ndarray, method: str = "nnc"): 
         value = 0.0
@@ -42,6 +45,8 @@ class Cost:
                 value += self._coupling_graph.distance(qubits[i,0], qubits[i,1])
             return value 
         elif method == "nn": 
+            if self._nn is not True:
+                raise Exception("There is no avaliable nn model")
             qubits, padding_mask, adj = transform_batch(batch_data = (qubits, self._padding_mask, self._adj), device = self._config.device)
             qubits, padding_mask, adj =  qubits[None, :, :], padding_mask[None, :], adj[None,:,:]
             _, value_score = self._nn_model(qubits, padding_mask, adj)
@@ -107,7 +112,6 @@ def simulated_annealing(init_mapping: np.ndarray, cost: Cost,  method: str = Non
                 else:
                     new_mapping[:] = cur_mapping
         t = alpha*t
-        print(t)
         result.append(valuebest)
 
     return result, best_mapping

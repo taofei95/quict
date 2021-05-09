@@ -61,7 +61,7 @@ class Mapping(object):
     def _run(circuit: Circuit, init_mapping: List[int], layout: Layout, **parameter)-> Circuit:
         """Use Monte Carlo tree search algorithm to solve the qubit mapping problem
         """
-        circuit_dag = DAG(circuit = circuit, mode = Mode)
+        circuit_dag = DAG(circuit = circuit, mode = Mode.TWO_QUBIT_CIRCUIT)
         coupling_graph = CouplingGraph(coupling_graph=layout)
         if init_mapping is None:
             num_of_qubits = circuit.circuit_width()
@@ -69,9 +69,9 @@ class Mapping(object):
             init_mapping  = np.random.permutation(num_of_qubits)
             _, best_mapping = simulated_annealing(init_mapping = init_mapping, cost = cost_f, method = "nnc",
                          param = {"T_max": 100, "T_min": 1, "alpha": 0.98, "iterations": 1000})
-            init_mapping = best_mapping
+            init_mapping = list(best_mapping)
 
-        if isinstance(init_mapping, list):
+        if not isinstance(init_mapping, list):
             raise Exception("Layout should be a list of integers")
         mcts_tree = MCTS(coupling_graph = coupling_graph)
         mcts_tree.search(logical_circuit = circuit, init_mapping = init_mapping)
