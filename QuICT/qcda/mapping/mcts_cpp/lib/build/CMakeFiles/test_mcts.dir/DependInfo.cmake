@@ -4,10 +4,8 @@ set(CMAKE_DEPENDS_LANGUAGES
   )
 # The set of files for implicit dependencies of each language:
 set(CMAKE_DEPENDS_CHECK_CXX
-  "/home/shoulifu/QuICT/QuICT/qcda/mapping/mcts_cpp/lib/src/data_generator.cc" "/home/shoulifu/QuICT/QuICT/qcda/mapping/mcts_cpp/lib/build/CMakeFiles/test_mcts.dir/src/data_generator.cc.o"
   "/home/shoulifu/QuICT/QuICT/qcda/mapping/mcts_cpp/lib/src/mcts_node.cc" "/home/shoulifu/QuICT/QuICT/qcda/mapping/mcts_cpp/lib/build/CMakeFiles/test_mcts.dir/src/mcts_node.cc.o"
   "/home/shoulifu/QuICT/QuICT/qcda/mapping/mcts_cpp/lib/src/mcts_tree.cc" "/home/shoulifu/QuICT/QuICT/qcda/mapping/mcts_cpp/lib/build/CMakeFiles/test_mcts.dir/src/mcts_tree.cc.o"
-  "/home/shoulifu/QuICT/QuICT/qcda/mapping/mcts_cpp/lib/src/rl_mcts_tree.cc" "/home/shoulifu/QuICT/QuICT/qcda/mapping/mcts_cpp/lib/build/CMakeFiles/test_mcts.dir/src/rl_mcts_tree.cc.o"
   "/home/shoulifu/QuICT/QuICT/qcda/mapping/mcts_cpp/lib/src/utility.cc" "/home/shoulifu/QuICT/QuICT/qcda/mapping/mcts_cpp/lib/build/CMakeFiles/test_mcts.dir/src/utility.cc.o"
   "/home/shoulifu/QuICT/QuICT/qcda/mapping/mcts_cpp/lib/test_mcts_tree.cc" "/home/shoulifu/QuICT/QuICT/qcda/mapping/mcts_cpp/lib/build/CMakeFiles/test_mcts.dir/test_mcts_tree.cc.o"
   )
@@ -16,9 +14,6 @@ set(CMAKE_CXX_COMPILER_ID "GNU")
 # The include file search paths:
 set(CMAKE_CXX_TARGET_INCLUDE_PATH
   "../include"
-  "/home/shoulifu/anaconda3/envs/quict/lib/python3.8/site-packages/torch/include"
-  "/home/shoulifu/anaconda3/envs/quict/lib/python3.8/site-packages/torch/include/torch/csrc/api/include"
-  "/usr/local/cuda-11.1/include"
   )
 
 # Targets to which this target links.

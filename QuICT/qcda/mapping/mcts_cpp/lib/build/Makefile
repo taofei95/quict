@@ -136,36 +136,6 @@ mcts/fast:
 	$(MAKE) -f CMakeFiles/mcts.dir/build.make CMakeFiles/mcts.dir/build
 .PHONY : mcts/fast
 
-src/data_generator.o: src/data_generator.cc.o
-
-.PHONY : src/data_generator.o
-
-# target to build an object file
-src/data_generator.cc.o:
-	$(MAKE) -f CMakeFiles/test_mcts.dir/build.make CMakeFiles/test_mcts.dir/src/data_generator.cc.o
-	$(MAKE) -f CMakeFiles/mcts.dir/build.make CMakeFiles/mcts.dir/src/data_generator.cc.o
-.PHONY : src/data_generator.cc.o
-
-src/data_generator.i: src/data_generator.cc.i
-
-.PHONY : src/data_generator.i
-
-# target to preprocess a source file
-src/data_generator.cc.i:
-	$(MAKE) -f CMakeFiles/test_mcts.dir/build.make CMakeFiles/test_mcts.dir/src/data_generator.cc.i
-	$(MAKE) -f CMakeFiles/mcts.dir/build.make CMakeFiles/mcts.dir/src/data_generator.cc.i
-.PHONY : src/data_generator.cc.i
-
-src/data_generator.s: src/data_generator.cc.s
-
-.PHONY : src/data_generator.s
-
-# target to generate assembly for a file
-src/data_generator.cc.s:
-	$(MAKE) -f CMakeFiles/test_mcts.dir/build.make CMakeFiles/test_mcts.dir/src/data_generator.cc.s
-	$(MAKE) -f CMakeFiles/mcts.dir/build.make CMakeFiles/mcts.dir/src/data_generator.cc.s
-.PHONY : src/data_generator.cc.s
-
 src/mcts_node.o: src/mcts_node.cc.o
 
 .PHONY : src/mcts_node.o
@@ -225,36 +195,6 @@ src/mcts_tree.cc.s:
 	$(MAKE) -f CMakeFiles/test_mcts.dir/build.make CMakeFiles/test_mcts.dir/src/mcts_tree.cc.s
 	$(MAKE) -f CMakeFiles/mcts.dir/build.make CMakeFiles/mcts.dir/src/mcts_tree.cc.s
 .PHONY : src/mcts_tree.cc.s
-
-src/rl_mcts_tree.o: src/rl_mcts_tree.cc.o
-
-.PHONY : src/rl_mcts_tree.o
-
-# target to build an object file
-src/rl_mcts_tree.cc.o:
-	$(MAKE) -f CMakeFiles/test_mcts.dir/build.make CMakeFiles/test_mcts.dir/src/rl_mcts_tree.cc.o
-	$(MAKE) -f CMakeFiles/mcts.dir/build.make CMakeFiles/mcts.dir/src/rl_mcts_tree.cc.o
-.PHONY : src/rl_mcts_tree.cc.o
-
-src/rl_mcts_tree.i: src/rl_mcts_tree.cc.i
-
-.PHONY : src/rl_mcts_tree.i
-
-# target to preprocess a source file
-src/rl_mcts_tree.cc.i:
-	$(MAKE) -f CMakeFiles/test_mcts.dir/build.make CMakeFiles/test_mcts.dir/src/rl_mcts_tree.cc.i
-	$(MAKE) -f CMakeFiles/mcts.dir/build.make CMakeFiles/mcts.dir/src/rl_mcts_tree.cc.i
-.PHONY : src/rl_mcts_tree.cc.i
-
-src/rl_mcts_tree.s: src/rl_mcts_tree.cc.s
-
-.PHONY : src/rl_mcts_tree.s
-
-# target to generate assembly for a file
-src/rl_mcts_tree.cc.s:
-	$(MAKE) -f CMakeFiles/test_mcts.dir/build.make CMakeFiles/test_mcts.dir/src/rl_mcts_tree.cc.s
-	$(MAKE) -f CMakeFiles/mcts.dir/build.make CMakeFiles/mcts.dir/src/rl_mcts_tree.cc.s
-.PHONY : src/rl_mcts_tree.cc.s
 
 src/utility.o: src/utility.cc.o
 
@@ -323,18 +263,12 @@ help:
 	@echo "... edit_cache"
 	@echo "... test_mcts"
 	@echo "... mcts"
-	@echo "... src/data_generator.o"
-	@echo "... src/data_generator.i"
-	@echo "... src/data_generator.s"
 	@echo "... src/mcts_node.o"
 	@echo "... src/mcts_node.i"
 	@echo "... src/mcts_node.s"
 	@echo "... src/mcts_tree.o"
 	@echo "... src/mcts_tree.i"
 	@echo "... src/mcts_tree.s"
-	@echo "... src/rl_mcts_tree.o"
-	@echo "... src/rl_mcts_tree.i"
-	@echo "... src/rl_mcts_tree.s"
 	@echo "... src/utility.o"
 	@echo "... src/utility.i"
 	@echo "... src/utility.s"

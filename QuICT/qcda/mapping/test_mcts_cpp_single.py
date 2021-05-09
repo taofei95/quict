@@ -8,9 +8,9 @@ from QuICT.tools.interface import *
 from QuICT.core.circuit import *
 from QuICT.core.layout import *
 
-from QuICT.qcda.mapping.mcts.mcts import MCTS 
-from QuICT.qcda.mapping.utility.utility import *
-from init_mapping import simulated_annealing
+from mcts.mcts import MCTS 
+from utility.utility import *
+from utility.init_mapping import simulated_annealing
 
 
 

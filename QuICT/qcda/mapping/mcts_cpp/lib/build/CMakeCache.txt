@@ -142,7 +142,7 @@ CMAKE_OBJCOPY:FILEPATH=/usr/bin/objcopy
 CMAKE_OBJDUMP:FILEPATH=/usr/bin/objdump
 
 //No help, variable specified on the command line.
-CMAKE_PREFIX_PATH:UNINITIALIZED=/home/shoulifu/anaconda3/envs/quict/lib/python3.8/site-packages/torch/share/cmake
+CMAKE_PREFIX_PATH:UNINITIALIZED=/home/anaconda3/envs/shoulifu/lib/python3.8/site-packages/torch/share/cmake
 
 //Value Computed by CMake
 CMAKE_PROJECT_DESCRIPTION:STATIC=
@@ -235,7 +235,7 @@ CUDA_CUDART_LIBRARY:FILEPATH=/usr/local/cuda-11.1/lib64/libcudart.so
 CUDA_CUDA_LIB:FILEPATH=/usr/local/cuda-11.1/lib64/stubs/libcuda.so
 
 //"cuda" library (older versions only).
-CUDA_CUDA_LIBRARY:FILEPATH=CUDA_CUDA_LIBRARY-NOTFOUND
+CUDA_CUDA_LIBRARY:FILEPATH=/usr/lib/x86_64-linux-gnu/libcuda.so
 
 //Directory to put all the output files.  If blank it will default
 // to the CMAKE_CURRENT_BINARY_DIR
@@ -376,7 +376,7 @@ CUDNN_ROOT:PATH=
 CUDNN_STATIC:BOOL=OFF
 
 //The directory containing a CMake configuration file for Caffe2.
-Caffe2_DIR:PATH=/home/shoulifu/anaconda3/envs/quict/lib/python3.8/site-packages/torch/share/cmake/Caffe2
+Caffe2_DIR:PATH=/home/anaconda3/envs/shoulifu/lib/python3.8/site-packages/torch/share/cmake/Caffe2
 
 //Path to a library.
 LIBNVTOOLSEXT:FILEPATH=/usr/local/cuda-11.1/lib64/libnvToolsExt.so
@@ -415,13 +415,10 @@ TEST_RL_MCTS:BOOL=off
 TORCH_LIBRARY:FILEPATH=/home/shoulifu/anaconda3/envs/quict/lib/python3.8/site-packages/torch/lib/libtorch.so
 
 //The directory containing a CMake configuration file for Torch.
-Torch_DIR:PATH=/home/shoulifu/anaconda3/envs/quict/lib/python3.8/site-packages/torch/share/cmake/Torch
+Torch_DIR:PATH=/home/anaconda3/envs/shoulifu/lib/python3.8/site-packages/torch/share/cmake/Torch
 
 //Path to a library.
 c10_LIBRARY:FILEPATH=/home/shoulifu/anaconda3/envs/quict/lib/python3.8/site-packages/torch/lib/libc10.so
-
-//Dependencies for the target
-mcts_LIB_DEPENDS:STATIC=general;torch;torch_library;/home/shoulifu/anaconda3/envs/quict/lib/python3.8/site-packages/torch/lib/libc10.so;/usr/local/cuda-11.1/lib64/stubs/libcuda.so;/usr/local/cuda-11.1/lib64/libnvrtc.so;/usr/local/cuda-11.1/lib64/libnvToolsExt.so;/usr/local/cuda-11.1/lib64/libcudart.so;/home/shoulifu/anaconda3/envs/quict/lib/python3.8/site-packages/torch/lib/libc10_cuda.so;
 
 //Value Computed by CMake
 mcts_cpp_BINARY_DIR:STATIC=/home/shoulifu/QuICT/QuICT/qcda/mapping/mcts_cpp/lib/build
@@ -599,8 +596,6 @@ CUDA_CUDART_LIBRARY-ADVANCED:INTERNAL=1
 CUDA_CUDA_LIBRARY-ADVANCED:INTERNAL=1
 //ADVANCED property for variable: CUDA_GENERATED_OUTPUT_DIR
 CUDA_GENERATED_OUTPUT_DIR-ADVANCED:INTERNAL=1
-//Returned GPU architectures from detect_gpus tool
-CUDA_GPU_DETECT_OUTPUT:INTERNAL=8.6;8.6;8.6
 //ADVANCED property for variable: CUDA_HOST_COMPILATION_CPP
 CUDA_HOST_COMPILATION_CPP-ADVANCED:INTERNAL=1
 //ADVANCED property for variable: CUDA_NVCC_EXECUTABLE
@@ -655,7 +650,7 @@ CUDA_cusolver_LIBRARY-ADVANCED:INTERNAL=1
 //ADVANCED property for variable: CUDA_cusparse_LIBRARY
 CUDA_cusparse_LIBRARY-ADVANCED:INTERNAL=1
 //Location of make2cmake.cmake
-CUDA_make2cmake:INTERNAL=/home/shoulifu/anaconda3/envs/quict/lib/python3.8/site-packages/torch/share/cmake/Caffe2/Modules_CUDA_fix/upstream/FindCUDA/make2cmake.cmake
+CUDA_make2cmake:INTERNAL=/home/anaconda3/envs/shoulifu/lib/python3.8/site-packages/torch/share/cmake/Caffe2/Modules_CUDA_fix/upstream/FindCUDA/make2cmake.cmake
 //ADVANCED property for variable: CUDA_nppc_LIBRARY
 CUDA_nppc_LIBRARY-ADVANCED:INTERNAL=1
 //ADVANCED property for variable: CUDA_nppial_LIBRARY
@@ -681,9 +676,9 @@ CUDA_nppitc_LIBRARY-ADVANCED:INTERNAL=1
 //ADVANCED property for variable: CUDA_npps_LIBRARY
 CUDA_npps_LIBRARY-ADVANCED:INTERNAL=1
 //Location of parse_cubin.cmake
-CUDA_parse_cubin:INTERNAL=/home/shoulifu/anaconda3/envs/quict/lib/python3.8/site-packages/torch/share/cmake/Caffe2/Modules_CUDA_fix/upstream/FindCUDA/parse_cubin.cmake
+CUDA_parse_cubin:INTERNAL=/home/anaconda3/envs/shoulifu/lib/python3.8/site-packages/torch/share/cmake/Caffe2/Modules_CUDA_fix/upstream/FindCUDA/parse_cubin.cmake
 //Location of run_nvcc.cmake
-CUDA_run_nvcc:INTERNAL=/home/shoulifu/anaconda3/envs/quict/lib/python3.8/site-packages/torch/share/cmake/Caffe2/Modules_CUDA_fix/upstream/FindCUDA/run_nvcc.cmake
+CUDA_run_nvcc:INTERNAL=/home/anaconda3/envs/shoulifu/lib/python3.8/site-packages/torch/share/cmake/Caffe2/Modules_CUDA_fix/upstream/FindCUDA/run_nvcc.cmake
 //ADVANCED property for variable: CUDNN_INCLUDE_DIR
 CUDNN_INCLUDE_DIR-ADVANCED:INTERNAL=1
 //ADVANCED property for variable: CUDNN_LIBRARY

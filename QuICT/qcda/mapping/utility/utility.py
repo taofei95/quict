@@ -16,7 +16,7 @@ import numpy as np
 import networkx as nx
 import matplotlib.pyplot as plt
 
-from QuICT.qcda.mapping.utility.exception import *
+from .exception import *
 
 
 from QuICT.tools.interface import *
@@ -25,7 +25,7 @@ from QuICT.core.gate import *
 from QuICT.core.gate.gate import *
 from QuICT.core.exception import *
 from QuICT.core.layout import *
-from QuICT.qcda.mapping.utility.coupling_graph import CouplingGraph, get_coupling_graph
+from .coupling_graph import CouplingGraph, get_coupling_graph
 
 
 def is_two_qubit_gate_equal(s1: List[int], s2: List[int])->bool:

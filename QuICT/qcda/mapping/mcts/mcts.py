@@ -1,16 +1,13 @@
-from networkx.algorithms import swap
-
 import time
+import sys
+sys.path.append("..")
 from queue import Queue, deque
 
-from networkx.convert_matrix import from_numpy_matrix
 
-from  QuICT.qcda.mapping.mcts_cpp.mcts_wrapper  import MCTSTreeWrapper
-
-from  QuICT.qcda.mapping.utility.mcts_node import  *
-from  QuICT.qcda.mapping.utility.experience_pool import ExperiencePool
-from  QuICT.qcda.mapping.utility.utility import  *
-
+from  utility.mcts_node import  *
+from  utility.experience_pool import ExperiencePool
+from  utility.utility import  *
+from  mcts_cpp import MCTSTreeWrapper
 class MCTS(object):
     @classmethod
     def _get_physical_gate(cls, gate: BasicGate, cur_mapping: List[int])->BasicGate:

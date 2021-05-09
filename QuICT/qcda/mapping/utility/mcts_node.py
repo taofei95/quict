@@ -11,8 +11,8 @@ import networkx as nx
 import matplotlib.pyplot as plt
 
 
-from QuICT.qcda.mapping.utility.exception import *
-from QuICT.qcda.mapping.utility.utility import *
+from .exception import *
+from .utility import *
 
 
 from QuICT.tools.interface import *
@@ -22,8 +22,8 @@ from QuICT.core.gate.gate import *
 from QuICT.core.exception import *
 from QuICT.core.layout import *
 
-from QuICT.qcda.mapping.utility.dag import DAG
-from QuICT.qcda.mapping.utility.coupling_graph import CouplingGraph, get_coupling_graph
+from .dag import DAG
+from .coupling_graph import CouplingGraph, get_coupling_graph
 
 
 

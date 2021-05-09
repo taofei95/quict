@@ -1,13 +1,12 @@
-from networkx.algorithms import swap
-
-
 import time
+import sys
+sys.path.append("..")
 from queue import Queue, deque
-from QuICT.qcda.mapping.RL.nn_model import SequenceModel
+from RL.nn_model import SequenceModel
 from networkx.convert_matrix import from_numpy_matrix
-from  QuICT.qcda.mapping.utility.mcts_node import  *
-from  QuICT.qcda.mapping.utility.experience_pool import ExperiencePool
-from  QuICT.qcda.mapping.utility.utility import  *
+from  .mcts_node import  *
+from  .experience_pool import ExperiencePool
+from  .utility import  *
 
 
 def fill_adj(array: np.ndarray):
@@ -67,17 +66,14 @@ def simulated_annealing(init_mapping: np.ndarray, cost: Cost,  method: str = Non
     best_mapping = init_mapping.copy()
     while t > T_min:
         for i in np.arange(num_of_iterations):
-            #下面的两交换和三角换是两种扰动方式，用于产生新解
-            if np.random.rand() > 0.5:# 交换路径中的这2个节点的顺序
-                # np.random.rand()产生[0, 1)区间的均匀随机数
-                while True:#产生两个不同的随机数
+            if np.random.rand() > 0.5:
+                while True:
                     loc1 = np.int(np.ceil(np.random.rand()*(num-1)))
                     loc2 = np.int(np.ceil(np.random.rand()*(num-1)))
-                    ## print(loc1,loc2)
                     if loc1 != loc2:
                         break
                 new_mapping[loc1],new_mapping[loc2] = new_mapping[loc2], new_mapping[loc1]
-            else: #三交换
+            else: 
                 while True:
                     loc1 = np.int(np.ceil(np.random.rand()*(num-1)))
                     loc2 = np.int(np.ceil(np.random.rand()*(num-1))) 
@@ -85,8 +81,6 @@ def simulated_annealing(init_mapping: np.ndarray, cost: Cost,  method: str = Non
 
                     if((loc1 != loc2)&(loc2 != loc3)&(loc1 != loc3)):
                         break
-
-                # 下面的三个判断语句使得loc1<loc2<loc3
                 if loc1 > loc2:
                     loc1,loc2 = loc2,loc1
                 if loc2 > loc3:
@@ -94,22 +88,19 @@ def simulated_annealing(init_mapping: np.ndarray, cost: Cost,  method: str = Non
                 if loc1 > loc2:
                     loc1,loc2 = loc2,loc1
 
-                #下面的三行代码将[loc1,loc2)区间的数据插入到loc3之后
                 tmp = new_mapping[loc1 : loc2].copy()
                 new_mapping[loc1 : loc3-loc2+1+loc1] = new_mapping[loc2 : loc3+1]
                 new_mapping[loc3-loc2+1+loc1 : loc3+1] = tmp
 
             valuenew = cost(new_mapping, method)
-        # print (valuenew)
-            if valuenew < valuecurrent: #接受该解
-                #更新solutioncurrent 和solutionbest
+            if valuenew < valuecurrent:
                 valuecurrent = valuenew
                 cur_mapping[:] = new_mapping
 
                 if valuenew < valuebest:
                     valuebest = valuenew
                     best_mapping[:] = new_mapping
-            else:#按一定的概率接受该解
+            else:
                 if np.random.rand() < np.exp(-(valuenew-valuecurrent)/t):
                     valuecurrent = valuenew
                     cur_mapping[:] = new_mapping

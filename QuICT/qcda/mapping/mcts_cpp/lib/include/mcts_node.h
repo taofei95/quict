@@ -1,10 +1,10 @@
 #ifndef MCTS_NODE
 #define MCTS_NODE
 #include <vector>
+#include <queue>
 #include <memory>
 #include <algorithm>
 #include <utility.h>
-#include <torch/torch.h>
 namespace mcts{
 
 class MCTSNode{

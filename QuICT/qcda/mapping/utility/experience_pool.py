@@ -9,7 +9,7 @@ import numpy as np
 import torch
 
 from multiprocessing import shared_memory, Lock, sharedctypes 
-from QuICT.qcda.mapping.utility.utility import *
+from .utility import *
 
 
 

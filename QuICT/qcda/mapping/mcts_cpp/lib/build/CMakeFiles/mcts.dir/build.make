@@ -57,22 +57,9 @@ include CMakeFiles/mcts.dir/progress.make
 # Include the compile flags for this target's objects.
 include CMakeFiles/mcts.dir/flags.make
 
-CMakeFiles/mcts.dir/src/data_generator.cc.o: CMakeFiles/mcts.dir/flags.make
-CMakeFiles/mcts.dir/src/data_generator.cc.o: ../src/data_generator.cc
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/shoulifu/QuICT/QuICT/qcda/mapping/mcts_cpp/lib/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Building CXX object CMakeFiles/mcts.dir/src/data_generator.cc.o"
-	/usr/bin/c++  $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -o CMakeFiles/mcts.dir/src/data_generator.cc.o -c /home/shoulifu/QuICT/QuICT/qcda/mapping/mcts_cpp/lib/src/data_generator.cc
-
-CMakeFiles/mcts.dir/src/data_generator.cc.i: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/mcts.dir/src/data_generator.cc.i"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/shoulifu/QuICT/QuICT/qcda/mapping/mcts_cpp/lib/src/data_generator.cc > CMakeFiles/mcts.dir/src/data_generator.cc.i
-
-CMakeFiles/mcts.dir/src/data_generator.cc.s: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/mcts.dir/src/data_generator.cc.s"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/shoulifu/QuICT/QuICT/qcda/mapping/mcts_cpp/lib/src/data_generator.cc -o CMakeFiles/mcts.dir/src/data_generator.cc.s
-
 CMakeFiles/mcts.dir/src/mcts_node.cc.o: CMakeFiles/mcts.dir/flags.make
 CMakeFiles/mcts.dir/src/mcts_node.cc.o: ../src/mcts_node.cc
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/shoulifu/QuICT/QuICT/qcda/mapping/mcts_cpp/lib/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Building CXX object CMakeFiles/mcts.dir/src/mcts_node.cc.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/shoulifu/QuICT/QuICT/qcda/mapping/mcts_cpp/lib/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Building CXX object CMakeFiles/mcts.dir/src/mcts_node.cc.o"
 	/usr/bin/c++  $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -o CMakeFiles/mcts.dir/src/mcts_node.cc.o -c /home/shoulifu/QuICT/QuICT/qcda/mapping/mcts_cpp/lib/src/mcts_node.cc
 
 CMakeFiles/mcts.dir/src/mcts_node.cc.i: cmake_force
@@ -85,7 +72,7 @@ CMakeFiles/mcts.dir/src/mcts_node.cc.s: cmake_force
 
 CMakeFiles/mcts.dir/src/mcts_tree.cc.o: CMakeFiles/mcts.dir/flags.make
 CMakeFiles/mcts.dir/src/mcts_tree.cc.o: ../src/mcts_tree.cc
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/shoulifu/QuICT/QuICT/qcda/mapping/mcts_cpp/lib/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_3) "Building CXX object CMakeFiles/mcts.dir/src/mcts_tree.cc.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/shoulifu/QuICT/QuICT/qcda/mapping/mcts_cpp/lib/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Building CXX object CMakeFiles/mcts.dir/src/mcts_tree.cc.o"
 	/usr/bin/c++  $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -o CMakeFiles/mcts.dir/src/mcts_tree.cc.o -c /home/shoulifu/QuICT/QuICT/qcda/mapping/mcts_cpp/lib/src/mcts_tree.cc
 
 CMakeFiles/mcts.dir/src/mcts_tree.cc.i: cmake_force
@@ -96,22 +83,9 @@ CMakeFiles/mcts.dir/src/mcts_tree.cc.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/mcts.dir/src/mcts_tree.cc.s"
 	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/shoulifu/QuICT/QuICT/qcda/mapping/mcts_cpp/lib/src/mcts_tree.cc -o CMakeFiles/mcts.dir/src/mcts_tree.cc.s
 
-CMakeFiles/mcts.dir/src/rl_mcts_tree.cc.o: CMakeFiles/mcts.dir/flags.make
-CMakeFiles/mcts.dir/src/rl_mcts_tree.cc.o: ../src/rl_mcts_tree.cc
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/shoulifu/QuICT/QuICT/qcda/mapping/mcts_cpp/lib/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_4) "Building CXX object CMakeFiles/mcts.dir/src/rl_mcts_tree.cc.o"
-	/usr/bin/c++  $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -o CMakeFiles/mcts.dir/src/rl_mcts_tree.cc.o -c /home/shoulifu/QuICT/QuICT/qcda/mapping/mcts_cpp/lib/src/rl_mcts_tree.cc
-
-CMakeFiles/mcts.dir/src/rl_mcts_tree.cc.i: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/mcts.dir/src/rl_mcts_tree.cc.i"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/shoulifu/QuICT/QuICT/qcda/mapping/mcts_cpp/lib/src/rl_mcts_tree.cc > CMakeFiles/mcts.dir/src/rl_mcts_tree.cc.i
-
-CMakeFiles/mcts.dir/src/rl_mcts_tree.cc.s: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/mcts.dir/src/rl_mcts_tree.cc.s"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/shoulifu/QuICT/QuICT/qcda/mapping/mcts_cpp/lib/src/rl_mcts_tree.cc -o CMakeFiles/mcts.dir/src/rl_mcts_tree.cc.s
-
 CMakeFiles/mcts.dir/src/utility.cc.o: CMakeFiles/mcts.dir/flags.make
 CMakeFiles/mcts.dir/src/utility.cc.o: ../src/utility.cc
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/shoulifu/QuICT/QuICT/qcda/mapping/mcts_cpp/lib/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_5) "Building CXX object CMakeFiles/mcts.dir/src/utility.cc.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/shoulifu/QuICT/QuICT/qcda/mapping/mcts_cpp/lib/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_3) "Building CXX object CMakeFiles/mcts.dir/src/utility.cc.o"
 	/usr/bin/c++  $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -o CMakeFiles/mcts.dir/src/utility.cc.o -c /home/shoulifu/QuICT/QuICT/qcda/mapping/mcts_cpp/lib/src/utility.cc
 
 CMakeFiles/mcts.dir/src/utility.cc.i: cmake_force
@@ -124,38 +98,19 @@ CMakeFiles/mcts.dir/src/utility.cc.s: cmake_force
 
 # Object files for target mcts
 mcts_OBJECTS = \
-"CMakeFiles/mcts.dir/src/data_generator.cc.o" \
 "CMakeFiles/mcts.dir/src/mcts_node.cc.o" \
 "CMakeFiles/mcts.dir/src/mcts_tree.cc.o" \
-"CMakeFiles/mcts.dir/src/rl_mcts_tree.cc.o" \
 "CMakeFiles/mcts.dir/src/utility.cc.o"
 
 # External object files for target mcts
 mcts_EXTERNAL_OBJECTS =
 
-libmcts.so: CMakeFiles/mcts.dir/src/data_generator.cc.o
 libmcts.so: CMakeFiles/mcts.dir/src/mcts_node.cc.o
 libmcts.so: CMakeFiles/mcts.dir/src/mcts_tree.cc.o
-libmcts.so: CMakeFiles/mcts.dir/src/rl_mcts_tree.cc.o
 libmcts.so: CMakeFiles/mcts.dir/src/utility.cc.o
 libmcts.so: CMakeFiles/mcts.dir/build.make
-libmcts.so: /home/shoulifu/anaconda3/envs/quict/lib/python3.8/site-packages/torch/lib/libtorch.so
-libmcts.so: /home/shoulifu/anaconda3/envs/quict/lib/python3.8/site-packages/torch/lib/libc10.so
-libmcts.so: /usr/local/cuda-11.1/lib64/stubs/libcuda.so
-libmcts.so: /usr/local/cuda-11.1/lib64/libnvrtc.so
-libmcts.so: /usr/local/cuda-11.1/lib64/libnvToolsExt.so
-libmcts.so: /usr/local/cuda-11.1/lib64/libcudart.so
-libmcts.so: /home/shoulifu/anaconda3/envs/quict/lib/python3.8/site-packages/torch/lib/libc10_cuda.so
-libmcts.so: /home/shoulifu/anaconda3/envs/quict/lib/python3.8/site-packages/torch/lib/libc10_cuda.so
-libmcts.so: /home/shoulifu/anaconda3/envs/quict/lib/python3.8/site-packages/torch/lib/libc10.so
-libmcts.so: /usr/local/cuda-11.1/lib64/libcufft.so
-libmcts.so: /usr/local/cuda-11.1/lib64/libcurand.so
-libmcts.so: /usr/local/cuda-11.1/lib64/libcublas.so
-libmcts.so: /usr/local/cuda-11.1/lib64/libcudnn.so
-libmcts.so: /usr/local/cuda-11.1/lib64/libnvToolsExt.so
-libmcts.so: /usr/local/cuda-11.1/lib64/libcudart.so
 libmcts.so: CMakeFiles/mcts.dir/link.txt
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --bold --progress-dir=/home/shoulifu/QuICT/QuICT/qcda/mapping/mcts_cpp/lib/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_6) "Linking CXX shared library libmcts.so"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --bold --progress-dir=/home/shoulifu/QuICT/QuICT/qcda/mapping/mcts_cpp/lib/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_4) "Linking CXX shared library libmcts.so"
 	$(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/mcts.dir/link.txt --verbose=$(VERBOSE)
 
 # Rule to build all files generated by this target.

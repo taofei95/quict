@@ -8,10 +8,10 @@ from typing import List, Tuple, Optional, Union, Dict
 from QuICT.tools.interface import *
 from QuICT.core.circuit import *
 from QuICT.core.layout import *
-from QuICT.qcda.mapping.utility.coupling_graph import *
-from QuICT.qcda.mapping.utility.random_circuit_generator import RandomCircuitGenerator
-from QuICT.qcda.mapping.utility.dag import * 
-from QuICT.qcda.mapping.utility.utility import *
+from utility.coupling_graph import *
+from utility.random_circuit_generator import RandomCircuitGenerator
+from utility.dag import * 
+from utility.utility import *
 
 small_benchmark = ("rd84_142",
                     "adr4_197",

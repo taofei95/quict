@@ -1,5 +1,5 @@
-from QuICT.qcda.mapping.mcts_cpp.mcts_wrapper  import RLMCTSTreeWrapper
-from QuICT.qcda.mapping.mcts.mcts import *
+from ..mcts_cpp.mcts_wrapper  import RLMCTSTreeWrapper
+from ..mcts.mcts import *
 
 class RLMCTS(MCTS):
     def __init__(self, play_times: int = 1, gamma: float = 0.7, Gsim: int = 30, num_of_swap_gates: int = 10, num_of_process: int = 2, bp_mode: int = 0, extended: bool = False, 

@@ -1,4 +1,4 @@
- #include<data_generator.h>
+#include<data_generator.h>
  
  mcts::DataGenerator::DataGenerator(int major, int info, bool with_predictor, 
                         bool is_generate_data, int threshold_of_circuit, 

@@ -8,9 +8,9 @@ from QuICT.tools.interface import *
 from QuICT.core.circuit import *
 from QuICT.core.layout import *
 
-from QuICT.qcda.mapping.mcts.mcts import MCTS 
-from QuICT.qcda.mapping.utility.utility import *
-from init_mapping import simulated_annealing
+from mcts.mcts import MCTS 
+from utility.utility import *
+from utility.init_mapping import simulated_annealing
 
 
 
@@ -41,7 +41,7 @@ if __name__ == "__main__":
     log_path =  f"{dir_path}/benchmark/log/mcts_cpp_{bench_mark_name}_{major}_{gamma}_{c}_{Gsim}_{Nsim}_{selection_times}_{initial}_{num_of_swap_gates}_{extended}_{method}.log"
     with open(log_path, "w") as f:
         for  file_name, init_mapping in zip(bench_mark[bench_mark_name],initial_map_lists[bench_mark_name]):
-            input_path = f"{dir_path}/benchmark/QASM example/{file_name}"
+            input_path = f"{dir_path}/benchmark/{file_name}"
             if initial == 1:
                 init_mapping = [i for i in range(20)]
             else:

@@ -79,5 +79,8 @@
         "rope": "cpp",
         "slist": "cpp",
         "scoped_allocator": "cpp"
-    }
+    },
+    "python.pythonPath": "/home/anaconda3/envs/shoulifu/bin/python",
+    "python.linting.pylintEnabled": true,
+    "python.linting.enabled": true
 }

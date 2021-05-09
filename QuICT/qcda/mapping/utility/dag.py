@@ -18,7 +18,7 @@ from QuICT.core.gate.gate import *
 from QuICT.core.exception import *
 from QuICT.core.layout import *
 
-from QuICT.qcda.mapping.utility.utility import Mode
+from .utility import Mode
 
 class DAG(object):
     def __init__(self, circuit: Circuit = None,  mode: Mode = 1):

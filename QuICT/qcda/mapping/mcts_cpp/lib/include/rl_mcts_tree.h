@@ -2,12 +2,85 @@
 #define RL_MCTS_TREE
 
 #include<string>
+#include<torch/torch.h>
 #include <torch/script.h>
 #include"concurrentqueue.h"
 #include"blockingconcurrentqueue.h"
 #include"mcts_tree.h"
 
 namespace mcts{
+    class Sample{
+    public:
+        int cid;
+        int pid;
+        torch::Tensor qubits;
+        torch::Tensor padding_mask;
+        torch::Tensor adj;
+        Sample(){
+            this->cid = 0;
+            this->pid = 0; 
+        }
+
+        Sample(int cid, int pid, 
+            torch::Tensor &qubits, torch::Tensor &padding_mask, torch::Tensor &adj){
+            this->cid = cid;
+            this->pid = pid;
+            this->qubits = qubits;
+            this->padding_mask = padding_mask;
+            this->adj  = adj;
+        }
+
+        
+        Sample(int cid, int pid, 
+            torch::Tensor &&qubits, torch::Tensor &&padding_mask, torch::Tensor &&adj){
+            this->cid = cid;
+            this->pid = pid;
+            this->qubits = std::move(qubits);
+            this->padding_mask = std::move(padding_mask);
+            this->adj  = std::move(adj);
+        }
+
+        Sample(Sample &s){
+            this->cid = s.cid;
+            this->pid = s.pid;
+            this->qubits = s.qubits;
+            this->padding_mask = s.padding_mask;
+            this->adj  = s.adj;
+        }
+
+        
+        Sample(Sample &&s){
+            this->cid = s.cid;
+            this->pid = s.pid;
+            this->qubits = std::move(s.qubits);
+            this->padding_mask = std::move(s.padding_mask);
+            this->adj  = std::move(s.adj);
+        }
+
+        Sample& operator=(Sample &s){
+            if(this != &s){
+                this->cid = s.cid;
+                this->pid = s.pid;
+                this->qubits = s.qubits;
+                this->padding_mask = s.padding_mask;
+                this->adj  = s.adj;
+            }
+            return *this;
+        }
+
+        
+        Sample& operator=(Sample &&s){
+            if(this != &s){
+                this->cid = s.cid;
+                this->pid = s.pid;
+                this->qubits = std::move(s.qubits);
+                this->padding_mask = std::move(s.padding_mask);
+                this->adj  = std::move(s.adj);
+            }
+            return *this;
+        }
+    };
+
     typedef moodycamel::BlockingConcurrentQueue<Sample> SampleQueue;
     typedef torch::jit::script::Module Model;
     

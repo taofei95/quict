@@ -5,8 +5,9 @@
 # @Contact :   jialrs.z@gmail.com
 # @File    :   nn_model.py
 
-    
-from QuICT.qcda.mapping.utility.utility import RLConfig
+import sys
+sys.path.append("..")
+from utility.utility import RLConfig
 import math
 import torch
 import torch.nn as nn

@@ -1,22 +1,21 @@
+import os
 from setuptools import setup, Extension
-from Cython.Build import cythonize
+
 import numpy
+from Cython.Build import cythonize
 
-#from skbuild import setup
-
-# setup(
-#     name="mcts_cpp",
-#     description="a minimal example package (cython version)",
-#     author='shou lifu',
-#     license="MIT",
-#     packages=['mcts_cpp'],
-#     # The extra '/' was *only* added to check that scikit-build can handle it.
-#     package_dir={'mcts_cpp': '/'},
-# )
+file_path = os.path.realpath(__file__)
+dir, _ = os.path.split(file_path)
 
 ext_module = Extension(
     "mcts_wrapper",
     ["mcts_wrapper.pyx"],
+    extra_compile_args = ["-std=c++14",
+                           "-I{}/lib/include/".format(dir)
+                         # "-I /home/shoulifu/libtorch/include/torch/csrc/api/include",
+                         # "-I /home/shoulifu/libtorch/include"
+                         ],
+    extra_link_args = ["-L{}/lib/build/".format(dir)],
     include_dirs=[numpy.get_include()],
     libraries = ["mcts"],
 )

@@ -26,20 +26,20 @@ cdef extern from "mcts_tree.h" namespace "mcts":
         float* get_value_list()
         float* get_action_prob_list()
         
-cdef extern from "mcts_tree.h" namespace "mcts":
-    cdef cppclass RLMCTSTree(MCTSTree):
-        RLMCTSTree(int major, int info, bool extended, bool with_predictor, bool is_generate_data, 
-                int threshold_of_circuit, float gamma, float c, 
-                float virtual_loss, int bp_mode, 
-                int num_of_process, int size_of_subcircuits, 
-                int num_of_swap_gates, int num_of_iterations, 
-                int num_of_playout, 
-                int num_of_qubits, int feature_dim,  
-                int num_of_edges, int * coupling_graph, 
-                int * distance_matrix, int * edge_label, 
-                float * feature_matrix, const string model_file_path, int device)
+# cdef extern from "mcts_tree.h" namespace "mcts":
+#     cdef cppclass RLMCTSTree(MCTSTree):
+#         RLMCTSTree(int major, int info, bool extended, bool with_predictor, bool is_generate_data, 
+#                 int threshold_of_circuit, float gamma, float c, 
+#                 float virtual_loss, int bp_mode, 
+#                 int num_of_process, int size_of_subcircuits, 
+#                 int num_of_swap_gates, int num_of_iterations, 
+#                 int num_of_playout, 
+#                 int num_of_qubits, int feature_dim,  
+#                 int num_of_edges, int * coupling_graph, 
+#                 int * distance_matrix, int * edge_label, 
+#                 float * feature_matrix, const string model_file_path, int device)
         
-        vector[int] run_rl()
+#         vector[int] run_rl()
 
 
 

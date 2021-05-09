@@ -4,10 +4,10 @@
             "name": "Linux",
             "includePath": [
                 "${workspaceFolder}/**",
-                "${workspaceFolder}/mcts_cpp/lib/include",
-                "/home/shoulifu/libtorch/include/torch/csrc/api/include/",
-                "/home/shoulifu/libtorch/include/",
-                "/home/shoulifu/boost_1_75_0"
+                "${workspaceFolder}/mcts_cpp/lib/include"
+                // "/home/shoulifu/libtorch/include/torch/csrc/api/include/",
+                // "/home/shoulifu/libtorch/include/",
+                // "/home/shoulifu/boost_1_75_0"
             ],
             "defines": [],
             "compilerPath": "/usr/bin/gcc",

@@ -2,13 +2,9 @@
 #define UTILITY
 #include<vector>
 #include<memory>
-#include<torch/torch.h>
 #include<cassert>
 
 namespace mcts{
-
-void print_tensor(torch::Tensor & data);
-
 struct Gate{
     int ctrl;
     int tar;
@@ -55,83 +51,8 @@ class Circuit{
 
         int num_of_gates;
         int* circuit_accessor;
-        int*  dependency_graph_accessor;
-   
+        int* dependency_graph_accessor;
 };
-
-
-class Sample{
-    public:
-        int cid;
-        int pid;
-        torch::Tensor qubits;
-        torch::Tensor padding_mask;
-        torch::Tensor adj;
-        Sample(){
-            this->cid = 0;
-            this->pid = 0; 
-        }
-
-        Sample(int cid, int pid, 
-            torch::Tensor &qubits, torch::Tensor &padding_mask, torch::Tensor &adj){
-            this->cid = cid;
-            this->pid = pid;
-            this->qubits = qubits;
-            this->padding_mask = padding_mask;
-            this->adj  = adj;
-        }
-
-        
-        Sample(int cid, int pid, 
-            torch::Tensor &&qubits, torch::Tensor &&padding_mask, torch::Tensor &&adj){
-            this->cid = cid;
-            this->pid = pid;
-            this->qubits = std::move(qubits);
-            this->padding_mask = std::move(padding_mask);
-            this->adj  = std::move(adj);
-        }
-
-        Sample(Sample &s){
-            this->cid = s.cid;
-            this->pid = s.pid;
-            this->qubits = s.qubits;
-            this->padding_mask = s.padding_mask;
-            this->adj  = s.adj;
-        }
-
-        
-        Sample(Sample &&s){
-            this->cid = s.cid;
-            this->pid = s.pid;
-            this->qubits = std::move(s.qubits);
-            this->padding_mask = std::move(s.padding_mask);
-            this->adj  = std::move(s.adj);
-        }
-
-        Sample& operator=(Sample &s){
-            if(this != &s){
-                this->cid = s.cid;
-                this->pid = s.pid;
-                this->qubits = s.qubits;
-                this->padding_mask = s.padding_mask;
-                this->adj  = s.adj;
-            }
-            return *this;
-        }
-
-        
-        Sample& operator=(Sample &&s){
-            if(this != &s){
-                this->cid = s.cid;
-                this->pid = s.pid;
-                this->qubits = std::move(s.qubits);
-                this->padding_mask = std::move(s.padding_mask);
-                this->adj  = std::move(s.adj);
-            }
-            return *this;
-        }
-};
-
 
 }
 #endif

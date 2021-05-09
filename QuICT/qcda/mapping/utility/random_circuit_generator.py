@@ -8,7 +8,7 @@ import networkx as nx
 import matplotlib.pyplot as plt
 
 
-from QuICT.qcda.mapping.utility.utility import *
+from .utility import *
 
 from QuICT.tools.interface import *
 from QuICT.core.circuit import *

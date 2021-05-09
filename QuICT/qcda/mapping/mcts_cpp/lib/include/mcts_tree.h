@@ -2,6 +2,7 @@
 #define MCTS_TREE
 #include <vector>
 #include <iostream>
+#include <cstdlib>
 #include <memory>
 #include <cmath>
 #include <random>
@@ -9,10 +10,11 @@
 #include <ctime>
 #include <chrono>
 #include <omp.h>
-#include <torch/torch.h>
+#include <string.h>
+#include <limits.h>
+#include <stdio.h>
 #include "utility.h"
 #include "mcts_node.h"
-
 #include "object_pool.h"
 
 
