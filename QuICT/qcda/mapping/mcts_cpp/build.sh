@@ -1,5 +1,8 @@
 #!/bin/bash
-cd ./lib/build
+cd ./lib/
+if [ ! -d build ]; then
+    mkdir build && cd build
+fi
 
 cmake \
 -DTEST_MCTS=on \

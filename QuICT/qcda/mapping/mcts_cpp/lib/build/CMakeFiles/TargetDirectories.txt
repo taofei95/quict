@@ -1,4 +1,0 @@
-/home/shoulifu/QuICT/QuICT/qcda/mapping/mcts_cpp/lib/build/CMakeFiles/rebuild_cache.dir
-/home/shoulifu/QuICT/QuICT/qcda/mapping/mcts_cpp/lib/build/CMakeFiles/edit_cache.dir
-/home/shoulifu/QuICT/QuICT/qcda/mapping/mcts_cpp/lib/build/CMakeFiles/test_mcts.dir
-/home/shoulifu/QuICT/QuICT/qcda/mapping/mcts_cpp/lib/build/CMakeFiles/mcts.dir
