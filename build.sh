@@ -9,7 +9,7 @@ OS=$(uname -a)
 PYTHON3=$(which python3)
 
 print_segment () {
-   printf "%0.s=" {1..60}
+   printf "%0.s=" {1..40}
    echo ""
 }
 
@@ -121,6 +121,14 @@ else
     -std=c++11  -fPIC -shared -ltbb || exit 1
 fi
 
+
+print_segment
+
+echo "Building C++ graph structure"
+
+print_segment
+
+cd "$prj_root" && bash ./QuICT/utility/graph_structure/build.sh || exit 1
 
 print_segment
 
