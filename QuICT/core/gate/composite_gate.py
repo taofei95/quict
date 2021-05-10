@@ -4,6 +4,7 @@
 # @Author  : Han Yu
 # @File    : composite_gate
 
+from QuICT.core.circuit.circuit_computing import inner_random_append
 from .gate import *
 
 

@@ -65,36 +65,33 @@ class QCDA(object):
         Raises:
             If the objective could not be resolved as any of the above types.
         """
-        # Load the objective as raw_gates
+        # Load the objective as gates
+        if isinstance(objective, np.ndarray):
+            gates, _ = UnitaryTransform.execute(objective)
+
         if isinstance(objective, str):
             qasm = OPENQASMInterface.load_file(objective)
             if qasm.valid_circuit:
                 # FIXME: no circuit here
                 circuit = qasm.circuit
-                raw_gates = CompositeGate(circuit)
+                gates = CompositeGate(circuit)
             else:
-                print("Invalid qasm file!")
-        if isinstance(objective, np.ndarray):
-            raw_gates, _ = UnitaryTransform.execute(objective)
-        if isinstance(objective, Circuit):
-            raw_gates = CompositeGate(objective)
-        if isinstance(objective, CompositeGate):
-            raw_gates = CompositeGate(objective)
-        
-        assert isinstance(raw_gates, CompositeGate), TypeError('Invalid objective!')
+                raise ValueError("Invalid qasm file!")
 
-        # Decomposition of complex gates
-        gates = CompositeGate()
-        for gate in raw_gates:
-            gate_decomposed, _ = UnitaryTransform.execute(gate)
-            gates.extend(gate_decomposed)
+        if isinstance(objective, Circuit):
+            gates = CompositeGate(objective)
+
+        if isinstance(objective, CompositeGate):
+            gates = CompositeGate(objective)
+
+        assert isinstance(gates, CompositeGate), TypeError('Invalid objective!')
         return gates
 
     @staticmethod
     def default_synthesis(instruction):
         """ Generate the default synthesis process
 
-        The default synthesis process contains the CartanDecomposition and GateTransform, which would 
+        The default synthesis process contains the GateDecomposition and GateTransform, which would 
         transform the gates in the original Circuit/CompositeGate to a certain InstructionSet.
 
         Args:

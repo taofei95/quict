@@ -11,6 +11,8 @@ import functools
 import numpy as np
 
 from QuICT.core.exception import TypeException, NotImplementedGateException
+from QuICT.core.gate.gate_builder import GateBuilder
+from QuICT.core.gate.composite_gate import CompositeGate
 from QuICT.core.qubit import Qubit, Qureg
 from QuICT.core.circuit import Circuit
 from .exec_operator import *
@@ -1576,7 +1578,7 @@ class CU3Gate(BasicGate):
         exec_controlSingle(self, circuit)
 
 
-CU3 = CU3Gate(["CU1", "cu1"])
+CU3 = CU3Gate(["CU3", "cu3"])
 
 
 class FSimGate(BasicGate):
