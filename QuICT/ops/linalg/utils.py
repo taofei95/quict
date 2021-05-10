@@ -14,7 +14,7 @@ except Exception as _:
     GPU_AVAILABLE = False
 
 
-def gpu_decorator(threshold: int, gpu_func: Callable):
+def gpu_decorator(threshold: int, cpu_func: Callable, gpu_func: Callable):
     """
     Using the gpu function when condition is satisfied.
 
@@ -23,9 +23,9 @@ def gpu_decorator(threshold: int, gpu_func: Callable):
         gpu_func(function): the gpu function.
     """
 
-    def decorate(cpu_func):
+    def decorate(func):
 
-        @wraps(cpu_func)
+        @wraps(func)
         def wrapper(*args, **kwargs):
             # grap CPU parameters (without gpu-in and gpu-out)
             cpu_parameters = cpu_func.__code__.co_argcount
@@ -41,9 +41,10 @@ def gpu_decorator(threshold: int, gpu_func: Callable):
                 return cpu_func(*cpu_args, **cpu_kwargs)
 
             using_gpu = False
-            for var in args:
-                if type(var) is np.ndarray:
-                    using_gpu = var.size > 1 << threshold
+            for var in args + tuple(kwargs.values()):
+                if type(var) is np.ndarray and var.size > 1 << threshold:
+                    using_gpu = True
+                    break
 
             result = gpu_func(*args, **kwargs) if using_gpu else cpu_func(*cpu_args, **cpu_kwargs)
             return result
@@ -51,6 +52,7 @@ def gpu_decorator(threshold: int, gpu_func: Callable):
         return wrapper
 
     return decorate
+
 
 @njit(nogil=True)
 def mapping_augment(mapping: np.ndarray) -> np.ndarray:

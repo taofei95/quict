@@ -1,11 +1,11 @@
-import math
+#!/usr/bin/env python
+# -*- coding:utf8 -*-
+
 import numpy as np
 import pycuda.gpuarray as gpuarray
 import pycuda.driver as cuda
 import pycuda.autoinit
-import pycuda.tools
 from pycuda.compiler import SourceModule
-import time
 
 from utils import mapping_augment
 
@@ -162,7 +162,7 @@ class GPUCalculator:
         return gpu_out
 
     @staticmethod
-    def matrix_tensor(A, n, m, gpu_in: bool = True, gpu_out: bool = True):
+    def MatrixTensorI(A, n, m, gpu_in: bool = True, gpu_out: bool = True):
         """ tensor I^n and A and I^m
 
         Args:
@@ -195,13 +195,13 @@ class GPUCalculator:
         return gpu_out
 
     @staticmethod
-    def vector_permutation(A, mapping, inplace, gpu_in: bool = True, gpu_out: bool = True):
+    def VectorPermutation(A, mapping, changeInput: bool = False, gpu_in: bool = True, gpu_out: bool = True):
         """ permutaion A with mapping, inplace
 
         Args:
             A(np.array<np.complex>): the matrix A
             mapping(list<int>): the qubit mapping
-            inplace(bool): whether changes in A
+            changeInput(bool): whether changes in A
         Returns:
             np.array<np.complex>: the result of Permutation
         """
@@ -218,23 +218,22 @@ class GPUCalculator:
         idx_mapping = mapping_augment(mapping)
         gpu_idx = gpuarray.to_gpu(idx_mapping)
 
-        if not inplace:
+        if not changeInput:
             return gpuarray.take(gpu_A, gpu_idx).get() if gpu_out else gpuarray.take(gpu_A, gpu_idx)
         
         A = gpuarray.take(gpu_A, gpu_idx).get() if gpu_out else gpuarray.take(gpu_A, gpu_idx)
 
     @staticmethod
-    def matrix_permutation(A, mapping, inplace, gpu_in: bool = True, gpu_out: bool = True):
+    def MatrixPermutation(A, mapping, changeInput: bool = False, gpu_in: bool = True, gpu_out: bool = True):
         """ permute mat with mapping, inplace
 
         Args:
-            mat: Matrix to be permuted.
+            A: Matrix to be permuted.
             mapping: An array-like object indicating bit ordering.
-            inplace: Whether change the input matrix.
+            changeInput: Whether change the input matrix.
         """
-        mapping = np.array(mapping, dtype=np.int64)
-
-        if not A.shape[0] == 1 << mapping.shape[0]:
+        A_shape = A.shape
+        if not A_shape[0] == 1 << mapping.shape[0]:
             raise IndexError("Indices do not match!")
 
         if gpu_in:
@@ -243,9 +242,14 @@ class GPUCalculator:
             gpu_A = A
 
         idx_mapping = mapping_augment(mapping)
+
+        # change idx_mapping into 1-dims mapping
+        idx_mapping = np.repeat(idx_mapping * int(A_shape[1]), A_shape[1]).reshape(A_shape[0], A_shape[1]) + np.arange(A_shape[1])
+        idx_mapping = idx_mapping.reshape(A_shape[0]*A_shape[1])
+
         gpu_idx = gpuarray.to_gpu(idx_mapping)
 
-        if not inplace:
-            return gpuarray.take(gpu_A, gpu_idx).get() if gpu_out else gpuarray.take(gpu_A, gpu_idx)
+        if not changeInput:
+            return gpuarray.take(gpu_A, gpu_idx).get().reshape(A_shape) if gpu_out else gpuarray.take(gpu_A, gpu_idx)
         
-        A = gpuarray.take(gpu_A, gpu_idx).get() if gpu_out else gpuarray.take(gpu_A, gpu_idx)
+        A = gpuarray.take(gpu_A, gpu_idx).get().reshape(A_shape) if gpu_out else gpuarray.take(gpu_A, gpu_idx)
