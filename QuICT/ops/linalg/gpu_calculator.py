@@ -52,7 +52,7 @@ TENSOR_TEMPLATE = SourceModule(r"""
         {
             for (int j = idx_y; j < out_y; j += stride_y)
             {
-                out[j*out_y+i] = A[j/size[3]*size[1]+i/size[2]] * B[j/size[1]*size[3]+i/size[0]];
+                out[i*out_y+j] = A[(i/size[2])*size[1]+j/size[3]] * B[(i % size[2])*size[3]+(j % size[3])];
             }
         }
     }
@@ -80,7 +80,7 @@ TENSOR_MATRIX_TEMPLATE = SourceModule(r"""
                     int r_x = i % (m * size[0]);
                     int r_y = j % (m * size[1]);
                     if ((r_x == r_y) || (r_x % m) == r_y || r_x == (r_y % m) || (r_x % m) == (r_y % m)){
-                        out[j*out_y+i] = A[r_y / m * size[1] + r_x / m];
+                        out[i*out_y+j] = A[r_x / m * size[1] + r_y / m];
                     }
                 }
             }
