@@ -4,4 +4,4 @@
 # @Author  : Li Haomin
 # @File    : __init__.py.py
 
-from .hrs import HRSAdder, HRSAdderMod, HRSMulMod
+from .hrs import HRSAdder, HRSAdderMod, HRSMulMod, HRSCMulMod
