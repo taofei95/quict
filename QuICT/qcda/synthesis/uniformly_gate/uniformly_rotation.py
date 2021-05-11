@@ -21,6 +21,7 @@ def uniformlyRotation(
 ) -> CompositeGate:
     """
     synthesis uniformlyRotation gate, bits range [low, high)
+
     Args:
         low(int): the left range low
         high(int): the right range high

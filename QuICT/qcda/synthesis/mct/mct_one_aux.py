@@ -71,6 +71,7 @@ def MCTOneAuxDecomposition(n):
     He Y, Luo M X, Zhang E, et al.
     Decompositions of n-qubit Toffoli gates with linear circuit complexity[J].
     International Journal of Theoretical Physics, 2017, 56(7): 2350-2361.
+
     Args:
         n(int): the bits of the toffoli gate
     Return:

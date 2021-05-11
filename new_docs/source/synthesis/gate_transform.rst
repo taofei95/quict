@@ -13,8 +13,8 @@ gate. for example, IonQ's standard instruction set contain:
 - one qubit gates: Rx, Ry, Rz
 - two qubit gate: Rxx
 
-Example
---------------
+Example(USTCSet)
+----------------------------
 Another example is USTCSet, which contain **CX, Rx, Ry, Rz, H, X**.\
 it's easy to use GateTransform to get a compositeGate by setting parameters as
 USTCSet

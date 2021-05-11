@@ -1577,7 +1577,7 @@ class CU3Gate(BasicGate):
         exec_controlSingle(self, circuit)
 
 
-CU3 = CU3Gate(["CU1", "cu1"])
+CU3 = CU3Gate(["CU3", "cu3"])
 
 
 class FSimGate(BasicGate):

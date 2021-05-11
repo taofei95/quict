@@ -54,6 +54,7 @@ class Optimization(object):
     @staticmethod
     def _run(circuit : Circuit, *pargs):
         """ private function to solve the problem
+
         Args:
             circuit(Circuit): the circuit to be optimize
             *pargs:           the parameters to be filled

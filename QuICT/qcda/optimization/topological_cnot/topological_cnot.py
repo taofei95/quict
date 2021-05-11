@@ -43,6 +43,7 @@ class Steiner_Tree(object):
 
     def __init__(self, n, topo):
         """
+
         Args:
             n(int): number of the vertexes in the tree
             topo(n * n boolean matrix): topological relationship for n vertexes,
@@ -224,6 +225,7 @@ def delete_dfs(now):
 
 def read(circuit, cnot_struct, topology):
     """ get describe from the circuit or cnot_struct
+
     Args:
         circuit(Circuit): the input circuit, contained the information of topology and (maybe) cnot
         cnot_struct(list<int>): the information of cnot. if None, the information is contained in the circuit
@@ -410,6 +412,7 @@ class TopologicalCnot(Optimization):
     @staticmethod
     def _run(circuit : Circuit = None, cnot_struct = None, topology = None):
         """
+
         Args:
             circuit(Circuit): the circuit to be optimize
             cnot_struct(list<int>/None): the struct of cnot circuit. if None, read circuit

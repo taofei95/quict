@@ -78,6 +78,7 @@ class SU2TransformRule(TransformRule):
 
 def _zyzRule(gate):
     """ decomposition the unitary gate with 2 * 2 unitary into Rz Ry Rz sequence
+
     Args:
         gate(Unitary): the gate to be decomposed
 
@@ -119,6 +120,7 @@ ZyzRule = SU2TransformRule(_zyzRule)
 
 def _xyxRule(gate):
     """ decomposition the unitary gate with 2 * 2 unitary into Rx Ry Rx sequence
+
     Args:
         gate(Unitary): the gate to be decomposed
 

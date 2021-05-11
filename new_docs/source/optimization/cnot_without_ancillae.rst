@@ -6,8 +6,8 @@ provided with ``QuICT.qcda.optimization``. The input circuit would be
 transformed into a ``CompositeGate`` with depth about ``2n ~ 3n``, where
 n is the qubit number of input circuit.
 
-Example
--------
+Example(CnotWithoutAncillae)
+-------------------------------------------------
 
 .. code:: python
 
@@ -21,4 +21,3 @@ Example
 
    print(original_depth)
    print(new_depth)
-

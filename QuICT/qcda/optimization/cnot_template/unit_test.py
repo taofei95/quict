@@ -15,6 +15,7 @@ from QuICT.qcda.optimization import CnotForceBfs
 
 def _getRandomList(n):
     """ get first 2 number from 0, 1, ..., n - 1 randomly.
+
     Args:
         n(int)
     Returns:

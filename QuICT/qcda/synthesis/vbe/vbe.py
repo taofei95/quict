@@ -11,6 +11,7 @@ from QuICT.core import Circuit, CX, CCX, CompositeGate, Swap, X
 
 def Inverse(a, N):
     """ Inversion of a in (mod N)
+
     Args:
         a(int): the parameter a
         N(int): the parameter N
@@ -162,6 +163,7 @@ def PlainAdder(a, b, c, overflow):
 
 def ReversePlainAdder(a, b, c, overflow):
     """ the inverse of plainAdder
+
     Args:
         a(Qureg): the qureg stores a, length is n
         b(Qureg): the qureg stores b, length is n
@@ -340,6 +342,7 @@ def ExpMod(a, N, x, result, qubit_a, b, c, overflow, qubit_N, t):
 
 def VBEDecomposition(m, a, N):
     """ give parameters to the VBE
+
     Args:
         m(int): number of qubits of x
         a(int): a

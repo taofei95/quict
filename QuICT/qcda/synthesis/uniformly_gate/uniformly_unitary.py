@@ -61,7 +61,7 @@ def u2_expression(X):
 def get_parameters_from_unitaries(u1, u2):
     """ decomposition uniformly controlled one qubit unitaries
 
-    |0><0| ⊗ u1 + |1><1| ⊗ u2
+    (0><0) ⊗ u1 + (1><1) ⊗ u2
 
     Args:
         u1(np.ndarray): unitary with 0
@@ -111,6 +111,7 @@ def get_parameters_from_unitaries(u1, u2):
 
 def uniformlyUnitarySolve(low, high, unitary, mapping):
     """ synthesis uniformlyUnitary gate, bits range [low, high)
+
     Args:
         low(int): the left range low
         high(int): the right range high

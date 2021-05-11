@@ -99,12 +99,13 @@ Contents
    :caption: QCDA-Synthesis
 
    synthesis/gate_transform.rst
+   synthesis/unitary_transform.rst
 
 .. toctree::
    :maxdepth: 2
    :caption: QCDA-Optimization
 
-   optimization/cnot_template.rst
+   optimization/cnot_without_ancillae.rst
 
 .. toctree::
    :maxdepth: 2

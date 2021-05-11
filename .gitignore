@@ -11,6 +11,6 @@ __pycache__/
 /source/
 make.bat
 .idea
-*/*.jpg
+example/python/*.jpg
 .vscode
 _build

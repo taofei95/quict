@@ -53,6 +53,7 @@ def permit_element(element):
 
 def InitialStatePreparationDecomposition(other):
     """
+
     Args:
         other: the parameters to add in, it can have follow forms:
             1) int/float/complex

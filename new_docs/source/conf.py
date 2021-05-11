@@ -47,11 +47,9 @@ extensions = [
     "sphinx.ext.viewcode",
     "sphinx_markdown_tables",
     "sphinx_copybutton",
-    "sphinx.ext.autosectionlabel",
-    'sphinx_automodapi.automodapi',
+    "sphinx.ext.autosectionlabel"
 ]
 
-numpydoc_show_class_members = False
 napoleon_google_docstring = True
 napoleon_use_param = False
 napoleon_use_ivar = True

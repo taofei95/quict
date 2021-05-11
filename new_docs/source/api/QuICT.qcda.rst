@@ -1,8 +1,8 @@
 Synthesis
 ==========================================
 
-Gate Transform
->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+Gate Transform and Instruction Set
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
 .. automodule:: QuICT.qcda.synthesis.gate_transform.gate_transform
   :members:
@@ -45,7 +45,7 @@ Uniformly Gate
 Uniformly Transform
 >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
-.. automodule:: QuICT.qcda.synthesis.uniformly_transform.uniformly_transform
+.. automodule:: QuICT.qcda.synthesis.unitary_transform.unitary_transform
   :members:
   :show-inheritance:
 

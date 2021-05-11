@@ -160,6 +160,7 @@ def cUa(a, a_r, N,  Nth, L, circuit):
 
 def Shor(N, fidelity = None):
     """ run the algorithm with fidelity
+
     Args:
         N(int): the number to be factored
         fidelity(float): the fidelity
@@ -278,6 +279,7 @@ class ZipShorFactor(Algorithm):
     @staticmethod
     def _run(n, fidelity = None):
         """ run the algorithm with fidelity
+
         Args:
             n(int): the number to be factored
             fidelity(float): the fidelity

@@ -20,6 +20,7 @@ def weight_decison_para(n, k, l):
 def run_weight_decision(f, n, k, l, oracle):
     """ decide function f by k-l algorithm by custom oracle
     https://arxiv.org/abs/1801.05717
+
     Args:
         f(list<int>): the function to be decided
         n(int): the length of function
@@ -82,6 +83,7 @@ class WeightDecision(Algorithm):
     def run(cls, f, n, k, l, oracle):
         """ decide function f by k-l algorithm by custom oracle
         https://arxiv.org/abs/1801.05717
+
         Args:
             f(list<int>): the function to be decided
             n(int): the length of function

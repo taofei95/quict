@@ -10,7 +10,7 @@ from QuICT.qcda.synthesis.gate_transform import *
 if __name__ == "__main__":
     circuit = Circuit(2)
     CX | circuit
-    circuit.draw_photo(show_depth=False)
+    circuit.draw()
     compositeGate = GateTransform(circuit, GoogleSet)
     circuit.set_exec_gates(compositeGate)
-    circuit.draw_photo(show_depth=False)
+    circuit.draw()

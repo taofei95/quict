@@ -5,8 +5,8 @@ As is known that any quantum circuit on :math:`n` qubits corresponds to a unitar
 matrix :math:`U\in SU(2^n)` to a :math:`n`-qubit quantum circuit which only contains
 :math:`1`-qubit and CNOT gates.
 
-Example
--------------------
+Example(Unitary Transform)
+-------------------------------------
 Here is a simple usage of this model.
 
 .. code-block:: python

@@ -42,9 +42,6 @@ def Inverse(start, end):
 def Copy(x, copy_list):
     """ copy process in Lemma 5
 
-    :param x:
-    :param copy_list:
-    :return:
     """
     own = [x]
     x_l = 1
@@ -57,8 +54,8 @@ def Copy(x, copy_list):
             run_l += 1
 
 def ConstructPj(c, x, z, sqrtn, d2logn):
-    """ Apply Lemma 5 to make |x, z, 0> -> |x, (Pj)z, 0>
-
+    """
+    Apply Lemma 5 to make (x, z, 0) -> (x, (Pj)z, 0)$$
     Pj is the sqrt(n) * logn/2 matrix go through F_2^{logn / 2}
 
     Args:
@@ -230,7 +227,7 @@ def GenerateYBase(Y_part, c, length, x):
     Inverse(Step1_start, Step1_end)
 
 def GenerateYPart(Y_part, x, c, index, length, z):
-    """ apply Corollary 3 to make |x, z, 0> -> |x, (T_part)z, 0>
+    """ :: apply Corollary 3 to make (x, z, 0) -> (x, (T_part)z, 0)
 
     time complex: \tilde{O}(sn)
     depth : O(logn)
@@ -261,7 +258,7 @@ def GenerateYPart(Y_part, x, c, index, length, z):
     Inverse(init_len, end_len)
 
 def MainProcedure(M, x, c, z):
-    """ apply Lemma4 to make |x, z, 0> -> |x, z xor Mx, 0>
+    """ apply Lemma4 to make (x, z, 0) -> (x, z xor Mx, 0)
 
     time complex: \tilde{O}(n^2)
     depth : O(n/slogn)
@@ -398,6 +395,7 @@ class CnotAncillae(Optimization):
     @staticmethod
     def _run(circuit : Circuit, *pargs):
         """
+
         Args:
             circuit(Circuit): circuit to be optimize
             *pargs: empty

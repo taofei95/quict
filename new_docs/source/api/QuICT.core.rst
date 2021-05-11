@@ -1,7 +1,7 @@
 Qubit
 ===================
 
-.. automodapi:: QuICT.core.qubit.qubit
+.. automodule:: QuICT.core.qubit.qubit
   :members:
   :show-inheritance:
 
@@ -9,24 +9,24 @@ Qubit
 Circuit
 ===================
 
-.. automodapi:: QuICT.core.circuit.circuit
+.. automodule:: QuICT.core.circuit.circuit
   :members:
   :show-inheritance:
 
 Gate
 ===================
 
-.. automodapi:: QuICT.core.gate.gate
+.. automodule:: QuICT.core.gate.gate
    :members:
    :show-inheritance:
 
-.. automodapi:: QuICT.core.gate.composite_gate
+.. automodule:: QuICT.core.gate.composite_gate
    :members:
    :show-inheritance:
 
 Layout
 ===================
 
-.. automodapi:: QuICT.core.layout.layout
+.. automodule:: QuICT.core.layout.layout
   :members:
   :show-inheritance:
