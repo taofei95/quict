@@ -9,34 +9,58 @@ OS=$(uname -a)
 PYTHON3=$(which python3)
 
 print_segment () {
-   printf "%0.s=" {1..40}
-   echo ""
+   echo -e "\033[92m================================================================================\033[39m"
+}
+
+print_cyan() {
+  echo -e "\033[36m$1\033[39m"
 }
 
 # Set building directory
 
 print_segment
+print_cyan "[Temporary Building Directory]"
 
 echo "Prepare building directory"
 
-print_segment
-
 [[ -d $prj_build_dir ]] || mkdir $prj_build_dir
 
-echo "Selecting $prj_build_dir as building directory"
+echo "Selected $prj_build_dir as building directory"
 
 # Set C++ compiler
 
 print_segment
+print_cyan "[C/C++ Compiler]"
+
+echo "Selecting C compiler"
+
+[[ $CC == "" ]] && CC=gcc
+CC=$(command -v $CC)
+export CC=$CC
+
+echo "Selected $CC as C compiler"
 
 echo "Selecting C++ compiler"
 
+[[ $CXX == "" ]] && CXX=g++
+CXX=$(command -v $CXX)
+export CXX=$CXX
+
+echo "Selected $CXX as C++ compiler"
+
 print_segment
 
-[[ $CXX == "" ]] &&  CXX=g++
-CXX=$(which $CXX)
+print_cyan "[CMake Generator]"
 
-echo "Selecting $CXX as C++ compiler"
+echo "Selecting CMake generator"
+
+if [[ $CMAKE_GENERATOR == "" ]];then
+  [[ -x $(command -v make) ]] && cmake_gen="Unix Makefiles"
+  [[ -x $(command -v ninja) ]] && cmake_gen="Ninja"
+  export CMAKE_GENERATOR=$cmake_gen
+fi
+
+echo "Selected $cmake_gen as CMake generator"
 
 # Build TBB
 
@@ -90,47 +114,7 @@ fi
 
 print_segment
 
-echo "Build C++ sources in tree"
-
-print_segment
-
-if [[ $OS =~ "Darwin" ]];then
-  tbb_include_dir="$tbb_src_dir/include"
-  cd ./QuICT/backends && \
-  $CXX \
-  -o quick_operator_cdll.so dll.cpp \
-  -std=c++11  -fPIC \
-  -shared  -I$tbb_include_dir -ltbb -L$tbb_build_dir && 
-  cd ..  || exit 1
-
-  cd ./qcda/synthesis/initial_state_preparation && \
-  $CXX \
-    -o initial_state_preparation_cdll.so initial_state_preparation.cpp \
-    -std=c++11  -fPIC -shared  -I$tbb_include_dir -ltbb -L$tbb_build_dir  || exit 1
-else
-  cd ./QuICT/backends && \
-  $CXX \
-  -o quick_operator_cdll.so dll.cpp \
-  -std=c++11  -fPIC \
-  -shared -ltbb && 
-  cd ..  || exit 1
-
-  cd ./qcda/synthesis/initial_state_preparation && \
-  $CXX \
-    -o initial_state_preparation_cdll.so initial_state_preparation.cpp \
-    -std=c++11  -fPIC -shared -ltbb || exit 1
-fi
-
-
-print_segment
-
-echo "Building C++ graph structure"
-
-print_segment
-
-cd "$prj_root" && bash ./QuICT/utility/graph_structure/build.sh || exit 1
-
-print_segment
+print_cyan "[Python Egg]"
 
 echo "Building python egg"
 
