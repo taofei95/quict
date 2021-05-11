@@ -1,28 +1,19 @@
 Checker
 ===================
 
-.. autoclass:: QuICT.tools.checker.StandardEfficiencyChecker
-   :members:
-   :undoc-members:
-   :show-inheritance:
-   :private-members:
-   :inherited-members:
+.. automodule:: QuICT.tools.checker.efficiency_checker
+  :members:
+  :show-inheritance:
 
-.. autoclass:: QuICT.tools.checker.ETChecker
-   :members:
-   :undoc-members:
-   :show-inheritance:
-   :private-members:
-   :inherited-members:
+.. automodule:: QuICT.tools.checker.equal_transform_checker
+  :members:
+  :show-inheritance:
 
 Drawer
 =========================
-.. autoclass:: QuICT.tools.drawer.PhotoDrawerModel
-   :members:
-   :undoc-members:
-   :show-inheritance:
-   :private-members:
-   :inherited-members:
+.. automodule:: QuICT.tools.drawer.local_drawer
+  :members:
+  :show-inheritance:
 
 Translator
 =========================
