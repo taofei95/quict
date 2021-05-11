@@ -1,53 +1,32 @@
 Qubit
 ===================
 
-.. autoclass:: QuICT.core.Qubit
-   :members:
-   :undoc-members:
-   :show-inheritance:
-   :private-members:
-   :inherited-members:
+.. automodapi:: QuICT.core.qubit.qubit
+  :members:
+  :show-inheritance:
 
-.. autoclass:: QuICT.core.Qureg
-   :members:
-   :undoc-members:
-   :show-inheritance:
-   :private-members:
-   :inherited-members:
 
 Circuit
 ===================
 
-.. autoclass:: QuICT.core.Circuit
-   :members:
-   :undoc-members:
-   :show-inheritance:
-   :private-members:
-   :inherited-members:
+.. automodapi:: QuICT.core.circuit.circuit
+  :members:
+  :show-inheritance:
 
 Gate
 ===================
 
-.. autoclass:: QuICT.core.BasicGate
+.. automodapi:: QuICT.core.gate.gate
    :members:
-   :undoc-members:
    :show-inheritance:
-   :private-members:
-   :inherited-members:
 
-.. autoclass:: QuICT.core.ComplexGate
+.. automodapi:: QuICT.core.gate.composite_gate
    :members:
-   :undoc-members:
    :show-inheritance:
-   :private-members:
-   :inherited-members:
 
 Layout
 ===================
 
-.. autoclass:: QuICT.core.LayoutEdge
-   :members:
-   :undoc-members:
-   :show-inheritance:
-   :private-members:
-   :inherited-members:
+.. automodapi:: QuICT.core.layout.layout
+  :members:
+  :show-inheritance:

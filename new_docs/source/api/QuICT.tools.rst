@@ -15,5 +15,13 @@ Drawer
   :members:
   :show-inheritance:
 
+.. automodule:: QuICT.tools.drawer.text_drawer
+  :members:
+  :show-inheritance:
+
 Translator
 =========================
+
+.. automodule:: QuICT.tools.interface.qasm_interface
+  :members:
+  :show-inheritance:
