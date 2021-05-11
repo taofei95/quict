@@ -1235,6 +1235,7 @@ class PhaseGate(BasicGate):
         self.controls = 0
         self.targets = 1
         self.params = 1
+        self.pargs = [0]
         self.qasm_name = "phase"
 
     def __str__(self):
@@ -1541,7 +1542,7 @@ class CU3Gate(BasicGate):
         super().__init__(alias=None)
         self.controls = 1
         self.targets = 1
-        self.params = 1
+        self.params = 3
         self.pargs = [np.pi / 2, 0, 0]
         self.qasm_name = "cu3"
 
@@ -1590,6 +1591,7 @@ class FSimGate(BasicGate):
         self.controls = 0
         self.targets = 2
         self.params = 2
+        self.pargs = [np.pi / 2, 0]
         self.qasm_name = "fsim"
 
     @property
@@ -1631,6 +1633,7 @@ class RxxGate(BasicGate):
         self.controls = 0
         self.targets = 2
         self.params = 1
+        self.pargs = [0]
         self.qasm_name = "Rxx"
 
     @property
@@ -1671,6 +1674,7 @@ class RyyGate(BasicGate):
         self.controls = 0
         self.targets = 2
         self.params = 1
+        self.pargs = [np.pi / 2]
         self.qasm_name = "Ryy"
 
     @property
@@ -1711,6 +1715,7 @@ class RzzGate(BasicGate):
         self.controls = 0
         self.targets = 2
         self.params = 1
+        self.pargs = [np.pi / 2]
         self.qasm_name = "Rzz"
 
     @property
