@@ -97,7 +97,7 @@ class CouplingGraph(object):
         """
         """
         GateBuilder.setGateType(GATE_ID['Swap']) 
-        GateBuilder.setTargs([self._edges[idx][0],self._edges[idx][1]])
+        GateBuilder.setTargs([int(self._edges[idx][0]), int(self._edges[idx][1])])
         return GateBuilder.getGate()
 
     def get_path(self, source: int, target: int): 
@@ -202,12 +202,11 @@ class CouplingGraph(object):
         """
         self._predecesors, self._shortest_paths = floyd_warshall_predecessor_and_distance(G = self._coupling_graph)
   
-    def draw(self):
+    def draw(self, file_path: str = None):
         """
         """ 
-      
         nx.draw(G = self._coupling_graph)
-        plt.savefig("coupling_graph.png")
+        plt.savefig(file_path)
         plt.close()
 
 ibmq20_topology = [(0,1),(0,5),

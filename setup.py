@@ -28,6 +28,12 @@ file_data = [
     ("QuICT/qcda/synthesis/initial_state_preparation",
      [f"{prj_root_relative}/QuICT/qcda/synthesis/initial_state_preparation/initial_state_preparation_cdll.so"],
      ),
+    ("QuICT/qcda/mapping/mcts_cpp",
+     [f"{prj_root_relative}/QuICT/qcda/mapping/mcts_cpp/mcts_wrapper.cpython-38-x86_64-linux-gnu.so"]
+    ),
+    ("QuICT/qcda/mapping/mcts_cpp/lib/build",
+     [f"{prj_root_relative}/QuICT/qcda/mapping/mcts_cpp/lib/build/libmcts.so"]
+    )
 ]
 
 # 3rd party library

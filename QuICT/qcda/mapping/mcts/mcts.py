@@ -1,13 +1,9 @@
 import time
-import sys
-sys.path.append("..")
 from queue import Queue, deque
 
 
-from  utility.mcts_node import  *
-from  utility.experience_pool import ExperiencePool
-from  utility.utility import  *
-from  mcts_cpp import MCTSTreeWrapper
+from  QuICT.qcda.mapping.utility import *
+from  QuICT.qcda.mapping.mcts_cpp import MCTSTreeWrapper
 class MCTS(object):
     @classmethod
     def _get_physical_gate(cls, gate: BasicGate, cur_mapping: List[int])->BasicGate:
@@ -17,16 +13,16 @@ class MCTS(object):
         cur_gate = gate.copy()
         if cur_gate.is_single():
             target = cur_mapping[gate.targ]
-            cur_gate.targs = target
+            cur_gate.targs = int(target)
         elif cur_gate.is_control_single():
             control = cur_mapping[gate.carg]
             target = cur_mapping[gate.targ]
-            cur_gate.cargs = control
-            cur_gate.targs = target
+            cur_gate.cargs = int(control)
+            cur_gate.targs = int(target)
         elif cur_gate.type() == GATE_ID['Swap']:
             target_0 = cur_mapping[gate.targs[0]]
             target_1 = cur_mapping[gate.targs[1]]
-            cur_gate.targs = [target_0, target_1]
+            cur_gate.targs = [int(target_0), int(target_1)]
         else:
             raise Exception("the gate type is not valid ")
         return cur_gate
@@ -102,6 +98,8 @@ class MCTS(object):
         self._num_of_executable_gate = 0
         self._logical_circuit_dag = DAG(circuit = logical_circuit, mode = Mode.WHOLE_CIRCUIT) 
         self._circuit_dag = DAG(circuit = logical_circuit, mode = Mode.TWO_QUBIT_CIRCUIT)
+        # print(self._circuit_dag.size)
+        # print(self._logical_circuit_dag.size)
         self._gate_index = []
         self._physical_circuit: List[BasicGate] = []
         qubit_mask = np.zeros(self._coupling_graph.size, dtype = np.int32) -1
@@ -113,14 +111,14 @@ class MCTS(object):
         
         front_layer_ = [ self._circuit_dag.index[i]  for i in self._circuit_dag.front_layer ]
         qubit_mask_ =  [ self._circuit_dag.index[i] if i != -1 else -1 for i in qubit_mask ]
-        print(front_layer_)
-        print(qubit_mask_)
+        # print(front_layer_)
+        # print(qubit_mask_)
         self._mcts_wrapper.load_data(num_of_logical_qubits = logical_circuit.circuit_width(), num_of_gates = self._circuit_dag.size, 
                                 circuit = self._circuit_dag.node_qubits, dependency_graph = self._circuit_dag.compact_dag,
                                  qubit_mapping = init_mapping, qubit_mask = qubit_mask_, front_layer =  front_layer_)
+        
         self._cur_node = MCTSNode(circuit_dag = self._circuit_dag , coupling_graph = self._coupling_graph,
                                   front_layer = self._circuit_dag.front_layer, qubit_mask = qubit_mask.copy(), cur_mapping = init_mapping.copy())
-        print("search")
         res =  self._mcts_wrapper.search()
         swap_label_list = self._mcts_wrapper.get_swap_gate_list()
 
@@ -128,8 +126,9 @@ class MCTS(object):
         self._add_executable_gates(node = self._cur_node)
         for swap_label in  swap_label_list:
             self._cur_node.update_by_swap_gate(swap_label)
-            self._physical_circuit.append(self._coupling_graph.get_swap_gate(self._cur_node.swap_of_edge))
+            self._physical_circuit.append(self._coupling_graph.get_swap_gate(swap_label))
             self._add_executable_gates(node = self._cur_node)
+        
         assert(self._cur_node.is_terminal_node())
 
         if self._is_generate_data:
@@ -200,9 +199,12 @@ class MCTS(object):
         elif gate.controls + gate.targets == 2:
             qubits = self._get_gate_qubits(gate)
             pre_qubits = self._get_gate_qubits(pre_gate)
-            if gate not in mark and (qubits[0] == pre_qubits[0] and qubits[1] == pre_qubits[1]) or (qubits[0] == pre_qubits[1] and qubits[1] == pre_qubits[0]):
-               mark.add(gate)
-               return True
+            if (qubits[0] == pre_qubits[0] and qubits[1] == pre_qubits[1]) or (qubits[0] == pre_qubits[1] and qubits[1] == pre_qubits[0]):
+                if gate_index not in mark:
+                    mark.add(gate_index)
+                    return False
+                else:
+                    return True
             else:
                 False 
         else:

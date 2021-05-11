@@ -1,4 +1,6 @@
 # distutils: language = c++
+# distutils: extra_compile_args="-std=c++14" "-I./lib/include/"
+# distutils: extra_link_args="-L./lib/build/"
 # cython: language_level = 3
 # cython: boundscheck = False
 # cython: wraparound = False 
@@ -54,7 +56,6 @@ cdef class MCTSTreeWrapper:
         self.dependency_graph = dependency_graph
         deref(self.mcts_cpp).load_data(num_of_gates, num_of_logical_qubits, &self.circuit[0][0], &self.dependency_graph[0][0])
         deref(self.mcts_cpp).build_search_tree(qubit_mapping, qubit_mask, front_layer)
-        
 
     def search(self):
         return deref(self.mcts_cpp).run()

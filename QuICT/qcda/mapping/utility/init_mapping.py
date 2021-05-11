@@ -1,8 +1,7 @@
 import time
-import sys
-sys.path.append("..")
+
 from queue import Queue, deque
-from RL.nn_model import SequenceModel
+from QuICT.qcda.mapping.RL import SequenceModel
 from networkx.convert_matrix import from_numpy_matrix
 from  .mcts_node import  *
 from  .experience_pool import ExperiencePool
