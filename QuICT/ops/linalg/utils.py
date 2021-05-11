@@ -31,23 +31,17 @@ def gpu_decorator(threshold: int, cpu_func: Callable, gpu_func: Callable):
             cpu_parameters = cpu_func.__code__.co_argcount
             cpu_args, cpu_kwargs = args[:cpu_parameters], kwargs.copy()
 
-            if "gpu_in" in cpu_kwargs.keys():
-                del cpu_kwargs["gpu_in"]
-
             if "gpu_out" in cpu_kwargs.keys():
                 del cpu_kwargs["gpu_out"]
 
             if not GPU_AVAILABLE:
                 return cpu_func(*cpu_args, **cpu_kwargs)
 
-            using_gpu = False
             for var in args + tuple(kwargs.values()):
-                if type(var) is np.ndarray and var.size > 1 << threshold:
-                    using_gpu = True
-                    break
+                if type(var) is np.ndarray and var.size > 1 << (threshold*2):
+                    return gpu_func(*args, **kwargs)
 
-            result = gpu_func(*args, **kwargs) if using_gpu else cpu_func(*cpu_args, **cpu_kwargs)
-            return result
+            return cpu_func(*cpu_args, **cpu_kwargs)
 
         return wrapper
 

@@ -92,12 +92,13 @@ TENSOR_MATRIX_TEMPLATE = SourceModule(r"""
 class GPUCalculator:
     """ Based matrix algorithms for running in GPU. """
     @staticmethod
-    def dot(A, B, gpu_in: bool = True, gpu_out: bool = True):
+    def dot(A, B, gpu_out: bool = True):
         """ dot matrix A and matrix B
 
         Args:
             A(np.array<np.complex>): the matrix A
             B(np.array<np.complex>): the matrix B
+            gpu_out(bool): return result from GPU into CPU
 
         Returns:
             np.array<np.complex>: A * B
@@ -106,33 +107,32 @@ class GPUCalculator:
         row_b, col_b = B.shape
         assert(col_a == row_b)
 
-        if gpu_in:
-            gpu_A = gpuarray.to_gpu(A)
-            gpu_B = gpuarray.to_gpu(B)
-        else:
-            gpu_A = A
-            gpu_B = B
+        # Data in GPU.
+        gpu_A = gpuarray.to_gpu(A) if type(A) is np.ndarray else A
+        gpu_B = gpuarray.to_gpu(B) if type(B) is np.ndarray else B
 
-        gpu_out = gpuarray.zeros((row_a, col_b), dtype=np.complex_)
+        gpu_result = gpuarray.zeros((row_a, col_b), dtype=np.complex_)
         gpu_size = gpuarray.to_gpu(np.array([row_a, col_a, row_b, col_b], dtype=np.int32))
 
+        # GPU kernel function.
         gpu_dot = DOT_TEMPLATE.get_function("dot")
 
         block = (min(row_a, 32), min(col_b, 32), 1)
-        gpu_dot(gpu_out, gpu_A, gpu_B, gpu_size, block=block)
+        gpu_dot(gpu_result, gpu_A, gpu_B, gpu_size, block=block)
 
         if gpu_out:
-            return gpu_out.get()
+            return gpu_result.get()
 
-        return gpu_out
+        return gpu_result
 
     @staticmethod
-    def tensor(A, B, gpu_in: bool = True, gpu_out: bool = True):
+    def tensor(A, B, gpu_out: bool = True):
         """ tensor A and B
 
         Args:
             A(np.array<np.complex>): the matrix A
             B(np.array<np.complex>): the matrix B
+            gpu_out(bool): return result from GPU into CPU
 
         Returns:
             np.array<np.complex>: the tensor result A ⊗ B
@@ -140,68 +140,65 @@ class GPUCalculator:
         row_a, col_a = A.shape
         row_b, col_b = B.shape
 
-        if gpu_in:
-            gpu_A = gpuarray.to_gpu(A)
-            gpu_B = gpuarray.to_gpu(B)
-        else:
-            gpu_A = A
-            gpu_B = B
+        # Data in GPU.
+        gpu_A = gpuarray.to_gpu(A) if type(A) is np.ndarray else A
+        gpu_B = gpuarray.to_gpu(B) if type(B) is np.ndarray else B
 
-        gpu_out = gpuarray.zeros((row_a*row_b, col_a*col_b), dtype=np.complex_)
+        gpu_result = gpuarray.zeros((row_a*row_b, col_a*col_b), dtype=np.complex_)
         gpu_size = gpuarray.to_gpu(np.array([row_a, col_a, row_b, col_b], dtype=np.int32))
 
+        # GPU kernel function.
         gpu_tensor = TENSOR_TEMPLATE.get_function("tensor")
 
         block = (min(row_a, 32), min(col_a, 32), 1)
         grid = (min(row_b, 32), min(col_b, 32))
-        gpu_tensor(gpu_out, gpu_A, gpu_B, gpu_size, grid=grid, block=block)
+        gpu_tensor(gpu_result, gpu_A, gpu_B, gpu_size, grid=grid, block=block)
 
         if gpu_out:
-            return gpu_out.get()
+            return gpu_result.get()
 
-        return gpu_out
+        return gpu_result
 
     @staticmethod
-    def MatrixTensorI(A, n, m, gpu_in: bool = True, gpu_out: bool = True):
+    def MatrixTensorI(A, n, m, gpu_out: bool = True):
         """ tensor I^n and A and I^m
 
         Args:
             A(np.array<np.complex>): the matrix A
             n(int): the index of indentity
             m(int): the index of indentity
-            gpu_in(bool): put data into GPU
-            gpu_out(bool): return CPU data
+            gpu_out(bool): return result from GPU into CPU
 
         Returns:
             np.array<np.complex>: the tensor result I^n ⊗ A ⊗ I^m
         """
-        if gpu_in:
-            gpu_A = gpuarray.to_gpu(A)
-        else:
-            gpu_A = A
-
         row_a, col_a = A.shape
-        gpu_out = gpuarray.zeros((n*m*A.shape[0], n*m*A.shape[1]), dtype=np.complex_)
+
+        # Data in GPU.
+        gpu_A = gpuarray.to_gpu(A) if type(A) is np.ndarray else A
+        gpu_result = gpuarray.zeros((n*m*A.shape[0], n*m*A.shape[1]), dtype=np.complex_)
         gpu_size = gpuarray.to_gpu(np.array([row_a, col_a, n, m], dtype=np.int32))
 
+        # GPU kernel function
         block = (min(row_a, 32), min(col_a, 32), 1)
         grid = (min(n, 32), min(m, 32))
         gpu_tensorM = TENSOR_MATRIX_TEMPLATE.get_function("tensor_matrix")
-        gpu_tensorM(gpu_out, gpu_A, gpu_size, grid=grid, block=block)
-        
-        if gpu_out:
-            return gpu_out.get()
+        gpu_tensorM(gpu_result, gpu_A, gpu_size, grid=grid, block=block)
 
-        return gpu_out
+        if gpu_out:
+            return gpu_result.get()
+
+        return gpu_result
 
     @staticmethod
-    def VectorPermutation(A, mapping, changeInput: bool = False, gpu_in: bool = True, gpu_out: bool = True):
+    def VectorPermutation(A, mapping, changeInput: bool = False, gpu_out: bool = True):
         """ permutaion A with mapping, inplace
 
         Args:
-            A(np.array<np.complex>): the matrix A
-            mapping(list<int>): the qubit mapping
-            changeInput(bool): whether changes in A
+            A(np.array<np.complex>): the matrix A.
+            mapping(list<int>): the qubit mapping.
+            changeInput(bool): whether changes in A.
+            gpu_out(bool): return result from GPU.
         Returns:
             np.array<np.complex>: the result of Permutation
         """
@@ -210,46 +207,41 @@ class GPUCalculator:
         if not A.shape[0] == 1 << mapping.shape[0]:
             raise IndexError("Indices do not match!")
 
-        if gpu_in:
-            gpu_A = gpuarray.to_gpu(A)
-        else:
-            gpu_A = A
-
         idx_mapping = mapping_augment(mapping)
+
+        # data in GPU
+        gpu_A = gpuarray.to_gpu(A) if type(A) is np.ndarray else A
         gpu_idx = gpuarray.to_gpu(idx_mapping)
 
         if not changeInput:
             return gpuarray.take(gpu_A, gpu_idx).get() if gpu_out else gpuarray.take(gpu_A, gpu_idx)
-        
+
         A = gpuarray.take(gpu_A, gpu_idx).get() if gpu_out else gpuarray.take(gpu_A, gpu_idx)
 
     @staticmethod
-    def MatrixPermutation(A, mapping, changeInput: bool = False, gpu_in: bool = True, gpu_out: bool = True):
+    def MatrixPermutation(A, mapping, changeInput: bool = False, gpu_out: bool = True):
         """ permute mat with mapping, inplace
 
         Args:
             A: Matrix to be permuted.
             mapping: An array-like object indicating bit ordering.
             changeInput: Whether change the input matrix.
+            gpu_out(bool): return result from GPU into CPU.
         """
         A_shape = A.shape
         if not A_shape[0] == 1 << mapping.shape[0]:
             raise IndexError("Indices do not match!")
 
-        if gpu_in:
-            gpu_A = gpuarray.to_gpu(A)
-        else:
-            gpu_A = A
-
+        # generate new idx depending on given mapping
         idx_mapping = mapping_augment(mapping)
-
-        # change idx_mapping into 1-dims mapping
-        idx_mapping = np.repeat(idx_mapping * int(A_shape[1]), A_shape[1]).reshape(A_shape[0], A_shape[1]) + np.arange(A_shape[1])
+        idx_mapping = np.repeat(idx_mapping * int(A_shape[1]), A_shape[1]).reshape(A_shape[0], A_shape[1]) + idx_mapping
         idx_mapping = idx_mapping.reshape(A_shape[0]*A_shape[1])
 
+        # data in GPU
+        gpu_A = gpuarray.to_gpu(A) if type(A) is np.ndarray else A
         gpu_idx = gpuarray.to_gpu(idx_mapping)
 
         if not changeInput:
             return gpuarray.take(gpu_A, gpu_idx).get().reshape(A_shape) if gpu_out else gpuarray.take(gpu_A, gpu_idx)
-        
+
         A = gpuarray.take(gpu_A, gpu_idx).get().reshape(A_shape) if gpu_out else gpuarray.take(gpu_A, gpu_idx)
