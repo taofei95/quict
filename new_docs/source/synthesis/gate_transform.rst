@@ -28,12 +28,12 @@ USTCSet
     if __name__ == "__main__":
         circuit = Circuit(5)
         circuit.random_append(10)
-        circuit.draw_photo(show_depth=False)
-        compositeGate = GateTransform.execute(circuit, USTCSet)
+        circuit.draw()
+        compositeGate = GateTransform(circuit, USTCSet)
 
         new_circuit = Circuit(5)
         new_circuit.set_exec_gates(compositeGate)
-        new_circuit.draw_photo(show_depth=False)
+        new_circuit.draw()
 
 Before transform, the circuit has a wide variety of gates(10):
 

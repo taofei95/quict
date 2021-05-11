@@ -4,4 +4,5 @@
 # @Author  : Han Yu
 # @File    : __init__.py.py
 
-from .local_drawer import PhotoDrawerModel
+from .local_drawer import PhotoDrawer
+from .text_drawer import TextDrawing

@@ -14,9 +14,9 @@ if __name__ == "__main__":
     CY | circuit([1, 2])
     CZ | circuit([2, 3])
     CRz | circuit([3, 4])
-    circuit.draw_photo(show_depth=False)
+    circuit.draw()
     compositeGate = GateTransform(circuit, IBMQSet)
 
     new_circuit = Circuit(5)
     new_circuit.set_exec_gates(compositeGate)
-    new_circuit.draw_photo(show_depth=False)
+    new_circuit.draw()
