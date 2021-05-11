@@ -6,5 +6,6 @@
 
 from .cnot_ancillae import CnotAncillae
 from .cnot_template import CnotForceBfs
+from .commutative_optimization import CommutativeOptimization
 from .topological_cnot import TopologicalCnot
 from .topological_cnot_rz import TopologicalCnotRz

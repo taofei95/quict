@@ -11,8 +11,8 @@ import functools
 import numpy as np
 
 from QuICT.core.exception import TypeException, NotImplementedGateException
-from QuICT.core.gate.gate_builder import GateBuilder
-from QuICT.core.gate.composite_gate import CompositeGate
+# from QuICT.core.gate.gate_builder import GateBuilder
+# from QuICT.core.gate.composite_gate import CompositeGate
 from QuICT.core.qubit import Qubit, Qureg
 from QuICT.core.circuit import Circuit
 from .exec_operator import *
@@ -103,7 +103,7 @@ class BasicGate(object):
 
         params(list): the number of the parameter of the gate
         pargs(list): the list of the parameter
-        prag(read only): the first object of pargs
+        parg(read only): the first object of pargs
 
         qasm_name(str, read only): gate's name in the OpenQASM 2.0
         type(GateType, read only): gate's type described by GateType
@@ -463,9 +463,9 @@ class BasicGate(object):
         if np.allclose(B, np.identity(2), rtol=eps, atol=eps):
             return True
 
-        set_controls = set(self.pargs)
+        set_controls = set(self.cargs)
         set_targets = set(self.targs)
-        set_goal_controls = set(goal.pargs)
+        set_goal_controls = set(goal.cargs)
         set_goal_targets = set(goal.targs)
 
         commutative_set = set_controls.intersection(set_goal_targets)
@@ -509,13 +509,13 @@ class BasicGate(object):
             raise Exception("only consider one qubit and two qubits")
         if self.is_single():
             matrix = self.matrix
-            if abs(matrix[1]) < 1e-10 and abs(matrix[2]) < 1e-10:
+            if abs(matrix[0, 1]) < 1e-10 and abs(matrix[1, 0]) < 1e-10:
                 return True
             else:
                 return False
         elif self.is_control_single():
             matrix = self.matrix
-            if abs(matrix[1]) < 1e-10 and abs(matrix[2]) < 1e-10:
+            if abs(matrix[0, 1]) < 1e-10 and abs(matrix[1, 0]) < 1e-10:
                 return True
             else:
                 return False
@@ -1508,6 +1508,7 @@ class CU1Gate(BasicGate):
             [0, np.exp(1j * self.pargs[0])]
         ], dtype=np.complex128)
 
+    @property
     def compute_matrix(self) -> np.ndarray:
         return np.array([
             [1, 0, 0, 0],
@@ -1543,7 +1544,7 @@ class CU3Gate(BasicGate):
         super().__init__(alias=None)
         self.controls = 1
         self.targets = 1
-        self.params = 1
+        self.params = 3
         self.pargs = [np.pi / 2, 0, 0]
         self.qasm_name = "cu3"
 
@@ -1555,6 +1556,7 @@ class CU3Gate(BasicGate):
              np.exp(1j * (self.pargs[1] + self.pargs[2])) * np.cos(self.pargs[0] / 2)]
         ], dtype=np.complex128)
 
+    @property
     def compute_matrix(self) -> np.ndarray:
         return np.array([
             [1, 0, 0, 0],
