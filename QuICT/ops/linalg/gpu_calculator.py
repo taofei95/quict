@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding:utf8 -*-
 
+import os
 import numpy as np
 import pycuda.gpuarray as gpuarray
 import pycuda.driver as cuda
@@ -91,6 +92,28 @@ TENSOR_MATRIX_TEMPLATE = SourceModule(r"""
 
 class GPUCalculator:
     """ Based matrix algorithms for running in GPU. """
+    def __init__(self, gpu_device: int = 0):
+        self.gpu_device = gpu_device
+
+        if self.gpu_device != 0:
+            os.environ["CUDA_DEVICE"] = str(self.gpu_device)
+
+        cuda.init()
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        if self.gpu_device != 0:
+            os.environ["CUDA_DEVICE"] = "0"
+
+    @staticmethod
+    def htod(target):
+        if type(target) is not gpuarray.GPUArray:
+            return gpuarray.to_gpu(target)
+
+        raise(f"The given value has been added in the GPU.")
+
     @staticmethod
     def dot(A, B, gpu_out: bool = True):
         """ dot matrix A and matrix B
