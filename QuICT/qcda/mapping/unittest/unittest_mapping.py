@@ -17,7 +17,7 @@ if __name__ == "__main__":
     qasm.output_qasm(f"{dir}/output_circuit.qasm")
     print("The original circuit size is {}. After mapping, its size is {}."
             .format(qc.circuit_size(), transformed_circuit.circuit_size()))
-    CouplingGraph(coupling_graph = layout).draw(f"{dir}/coupling_graph.jpg")
+    CouplingGraph(coupling_graph = layout).draw(file_path = f"{dir}/coupling_graph.jpg")
     qc.draw(method = "matp", filename = f"{dir}/original_circuit.jpg")
     transformed_circuit.draw(method = "matp", filename = f"{dir}/transformed_circuit.jpg")    #Check if the number of single qubit gates and two qubit gates(except SWAP gates) remains the same  
     # print([qc.circuit_count_1qubit(), transformed_circuit.circuit_count_1qubit()] )

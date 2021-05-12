@@ -53,10 +53,10 @@ class Mapping(object):
         circuit.const_lock = False
         circuit.qubits
         if inplace:
-            circuit.set_flush_gates(gates)
+            circuit.set_exec_gates(gates)
         else:
             new_circuit = Circuit(num)
-            new_circuit.extend(gates)
+            new_circuit.set_exec_gates(gates)
             return new_circuit
         
     @staticmethod
