@@ -10,7 +10,7 @@ class Synthesis(ABC):
     """ Synthesize gates with some basic gates
 
     In general, these basic gates are one-qubit gates and two-qubit gates.
-    Note that all subclass must overloaded the function "execute".
+    Note that all subclass must overload the function "execute".
     """
     def __init__(self):
         """ Pass parameters in the synthesis process (if needed)

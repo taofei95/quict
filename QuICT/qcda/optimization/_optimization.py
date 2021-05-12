@@ -10,7 +10,8 @@ class Optimization(ABC):
     """ SuperClass of all optimization algorithm
 
     In general, optimization algorithm means the algorithm which optimizes the input circuit
-    to a better circuit, which is better is some aspect such as depth, size, T-count and so on
+    to a better circuit, which is better is some aspect such as depth, size, T-count and so on.
+    Note that all subclass must overload the function "execute".
     """
 
     def __init__(self):

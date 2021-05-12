@@ -30,6 +30,34 @@ def test_parameterize():
     gates_para.print_information()
     assert np.allclose(gates.matrix(), gates_para.matrix())
 
+def test_deparameterize():
+    gates = CompositeGate()
+    with gates:
+        Rx(np.pi) & 0
+        Rx(-np.pi) & 1
+        Ry(np.pi) & 2
+        Ry(-np.pi) & 3
+        Rz(np.pi) & 4
+        Rz(-np.pi) & 5
+        Rz(np.pi/2) & 0
+        Rz(-np.pi/2) & 1
+        Rz(np.pi/4) & 2
+        Rz(-np.pi/4) & 3
+        Rx(np.pi/2) & 0
+        Rx(5*np.pi/2) & 1
+        Ry(np.pi/2) & 2
+        Ry(5*np.pi/2) & 3
+    phase_angle = 0
+    gates_depara = CompositeGate()
+    for gate in gates:
+        gate_depara, phase = CommutativeOptimization.deparameterize(gate)
+        gates_depara.append(gate_depara)
+        phase_angle += phase
+    with gates_depara:
+        Phase(phase_angle) & 0
+    gates_depara.print_information()
+    assert np.allclose(gates.matrix(), gates_depara.matrix())
+
 def test_combine():
     gate_x = X & 0
     gate_y = X & 0
@@ -45,13 +73,14 @@ typelist = [GATE_ID['Rx'], GATE_ID['Ry'], GATE_ID['Rz'],
             GATE_ID['X'], GATE_ID['Y'], GATE_ID['Z'],
             GATE_ID['S'], GATE_ID['T'], GATE_ID['H'],
             GATE_ID['CX'], GATE_ID['CRz'], GATE_ID['FSim']]
+typelist = [GATE_ID['Rx'], GATE_ID['Ry'], GATE_ID['Rz'], GATE_ID['X'], GATE_ID['Y'], GATE_ID['Z'], GATE_ID['Phase']]
 # typelist = [GATE_ID['Rx'], GATE_ID['Ry'], GATE_ID['Rz']]
 # typelist = [GATE_ID['X'], GATE_ID['Y'], GATE_ID['Z']]
 # typelist = [GATE_ID['CX'], GATE_ID['CRz'], GATE_ID['FSim']]
 # typelist = [GATE_ID['U2'], GATE_ID['U3'], GATE_ID['CU3']]
 
 def test():
-    for _ in range(100):
+    for _ in range(1):
         n = 5
         circuit = Circuit(n)
         circuit.random_append(rand_size=100, typeList=typelist)
@@ -72,5 +101,5 @@ def test():
         # assert np.allclose(phase, phase[0, 0] * np.eye(2 ** n), rtol=1e-10, atol=1e-10)
 
 if __name__ == '__main__':
-    test()
-    # pytest.main(["./unit_test.py"])
+    # test()
+    pytest.main(["./unit_test.py"])
