@@ -56,11 +56,26 @@ echo "Selecting CMake generator"
 
 if [[ $CMAKE_GENERATOR == "" ]];then
   [[ -x $(command -v make) ]] && cmake_gen="Unix Makefiles"
-  [[ -x $(command -v ninja) ]] && cmake_gen="Ninja"
-  export CMAKE_GENERATOR=$cmake_gen
+#  [[ -x $(command -v ninja) ]] && cmake_gen="Ninja"
+  CMAKE_GENERATOR=$cmake_gen
+  export CMAKE_GENERATOR=$CMAKE_GENERATOR
 fi
 
 echo "Selected $cmake_gen as CMake generator"
+
+print_segment
+
+NPROC=4
+
+if [[ $OS =~ "Linux" ]]; then
+  NPROC=$(grep -c ^processor /proc/cpuinfo)
+elif [[ $OS =~ "Darwin" ]]; then
+  NPROC=$(sysctl hw.ncpu | awk '{print $$2}')
+fi
+
+NPROC=$($PYTHON3 -c "print(int($NPROC/2))")
+
+echo "Building with parallel parameter: $NPROC"
 
 # Build TBB
 
@@ -79,18 +94,6 @@ if [[ $OS =~ "Darwin" ]];then
   fi
 
   echo "Detecting protential parallel"
-
-  NPROC=4
-
-  if [[ $OS =~ "Linux" ]]; then
-    NPROC=$(grep -c ^processor /proc/cpuinfo)
-  elif [[ $OS =~ "Darwin" ]]; then
-    NPROC=$(sysctl hw.ncpu | awk '{print $$2}')
-  fi
-
-  NPROC=$($PYTHON3 -c "print(int($NPROC/2))")
-
-  echo "Building with parallel parameter: $NPROC"
 
   # possible build failure
   cd $tbb_src_dir && \
@@ -121,4 +124,4 @@ echo "Building python egg"
 print_segment
 
 cd $prj_build_dir && \
-$PYTHON3 ../setup.py build
+$PYTHON3 ../setup.py build --parallel $NPROC

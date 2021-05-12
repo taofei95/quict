@@ -18,6 +18,8 @@ from setuptools import setup
 from setuptools import find_packages, Extension
 from setuptools.command.build_ext import build_ext
 
+from typing import *
+
 
 # print helpers
 def print_segment():
@@ -26,6 +28,49 @@ def print_segment():
 
 def print_cyan(s):
     print(f"\033[36m{s}\033[39m")
+
+
+def print_yellow(s):
+    print(f"\033[33m{s}\033[39m")
+
+
+def print_if_not_none(s):
+    if s:
+        print(s)
+
+
+def print_with_wrapper(header, out_obj):
+    if out_obj is None:
+        return
+    for line in iter(out_obj.readline, b""):
+        print(header, line.decode("unicode_escape"), sep="", end="")
+
+
+def run_with_output_wrapper(header, args, cwd):
+    if len(header) > 12:
+        header = header[:9] + "..."
+    if len(header) < 12:
+        for i in range(12 - len(header)):
+            header += "."
+
+    header = f"\033[36m[{header}]\033[39m "
+
+    try:
+        with subprocess.Popen(
+                args=args,
+                cwd=cwd,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                # universal_newlines=True,
+        ) as proc:
+            print_with_wrapper(header, proc.stdout)
+    except:
+        proc.kill()
+        raise
+
+    ret_code = proc.wait()
+    if ret_code:
+        raise subprocess.CalledProcessError(ret_code, args)
 
 
 # Detect if I'm in `root` or `root/build`
@@ -124,12 +169,28 @@ class CMakeBuild(build_ext):
 
         print_cyan(f"[{ext_name}]")
         print(" ".join(["cmake", ext.source_dir] + cmake_args))
-        subprocess.check_call(
-            ["cmake", ext.source_dir] + cmake_args, cwd=build_temp
+        if hasattr(self, "parallel") and self.parallel:
+            print_yellow("Extensions are built in parallel. Shell output might be messed up.")
+        # configure_proc = subprocess.run(
+        #     args=["cmake", ext.source_dir] + cmake_args,
+        #     cwd=build_temp,
+        #     check=True,
+        # )
+        run_with_output_wrapper(
+            header=ext_name,
+            args=["cmake", ext.source_dir] + cmake_args,
+            cwd=build_temp,
         )
         print("building...")
-        subprocess.check_call(
-            ["cmake", "--build", "."] + build_args, cwd=build_temp
+        # build_proc = subprocess.run(
+        #     args=["cmake", "--build", "."] + build_args,
+        #     cwd=build_temp,
+        #     check=True,
+        # )
+        run_with_output_wrapper(
+            header=ext_name,
+            args=["cmake", "--build", "."] + build_args,
+            cwd=build_temp,
         )
 
 
