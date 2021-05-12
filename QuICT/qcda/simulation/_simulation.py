@@ -6,10 +6,9 @@
 
 from functools import lru_cache
 
-import numpy as np
-
 from QuICT.core import *
 from QuICT.ops.linalg import dot, MatrixPermutation
+
 
 # tool function
 def build_2qubit_gate(compositeGate, unitary, target1, target2):
@@ -19,10 +18,12 @@ def build_2qubit_gate(compositeGate, unitary, target1, target2):
     ugate.targs = [target1, target2]
     compositeGate.append(ugate)
 
+
 def build_1qubit_gate(compositeGate, unitary, target1):
     ugate = Unitary(unitary).copy()
     ugate.targs = [target1]
     compositeGate.append(ugate)
+
 
 # cost function
 @lru_cache(1000)
@@ -44,6 +45,7 @@ def multiply_cost(k):
 def multiply_vector_cost(k):
     return 1.0 * ((1 << k) ** 2)
 
+
 # tool class
 class dp:
     def __init__(self, args, value=0):
@@ -62,6 +64,7 @@ class dp:
 
     def amplitude_cost(self, width):
         return self.value + tensor_cost(self.length, width) + multiply_vector_cost(width)
+
 
 class BasicSimulator(object):
 
@@ -237,7 +240,7 @@ class BasicSimulator(object):
 
         def pre_amplitude_search(r):
             stick = pre_amplitude[r]
-            order.append(-1)
+            order.append(-(stick + 1))
             pre_search(stick, r)
             if stick <= 0:
                 return

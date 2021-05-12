@@ -12,7 +12,7 @@ from .cpu_calculator import CPUCalculator
 from .utils import gpu_decorator, GPU_AVAILABLE
 
 if GPU_AVAILABLE:
-    from gpu_calculator import GPUCalculator
+    from .gpu_calculator import GPUCalculator
     gpu_calculator = GPUCalculator()
 else:
     gpu_calculator = CPUCalculator()

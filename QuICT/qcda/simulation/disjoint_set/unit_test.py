@@ -14,4 +14,3 @@ def test_set():
 
     for i in range(cnt):
         print(disjoint_set.find(i))
-

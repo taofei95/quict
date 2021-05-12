@@ -111,7 +111,7 @@ def inner_random_append(circuit, rand_size=10, typeList=None):
                 params.append(random.uniform(0, 2 * np.pi))
             GateBuilder.setPargs(params)
         gate = GateBuilder.getGate()
-        circuit.gates.append(gate)
+        circuit.append(gate)
 
 def inner_matrix_product_to_circuit(circuit, gate) -> np.ndarray:
     q_len = len(circuit.qubits)

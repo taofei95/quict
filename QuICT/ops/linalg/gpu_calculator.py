@@ -8,7 +8,7 @@ import pycuda.driver as cuda
 import pycuda.autoinit
 from pycuda.compiler import SourceModule
 
-from utils import mapping_augment
+from .utils import mapping_augment
 
 
 DOT_TEMPLATE = SourceModule(r"""
