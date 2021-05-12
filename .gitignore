@@ -12,5 +12,10 @@ __pycache__/
 make.bat
 .idea
 */*.jpg
+<<<<<<< HEAD
 .vscode
 _build
+=======
+/*.jpg
+/.vscode/
+>>>>>>> bea
