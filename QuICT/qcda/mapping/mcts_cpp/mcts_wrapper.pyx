@@ -8,7 +8,7 @@
 
 
 import numpy as np
-
+cimport numpy as np
 from cython.operator cimport dereference as deref
 from mcts_tree cimport MCTSTree
 # from mcts_tree cimport RLMCTSTree

@@ -1,5 +1,3 @@
-from QuICT.qcda.mapping.RL import SequenceModel
-
 from .mcts_node import *
 from .utility import *
 
@@ -32,31 +30,15 @@ class Cost:
                                                            axis=1))
         self._qubits = subcircuit[:, 5:]
         self.num_of_gates = num_of_gates
-        self._nn = False
-        if model_file is not None:
-            self._nn = True
-            self._nn_model = SequenceModel(n_qubits=self._coupling_graph.size, n_class=self._coupling_graph.num_of_edge,
-                                           config=config).to(config.device).float()
-            self._nn_model.load_state_dict(torch.load(model_file))
 
-    def __call__(self, qubit_mapping: np.ndarray, method: str = "nnc"):
+
+    def __call__(self, qubit_mapping: np.ndarray):
         value = 0.0
         qubits = qubit_mapping[self._qubits]
-        if method == "nnc":
-            for i in range(self.num_of_gates):
-                value += self._coupling_graph.distance(qubits[i, 0], qubits[i, 1])
-            return value
-        elif method == "nn":
-            if self._nn is not True:
-                raise Exception("There is no avaliable nn model")
-            qubits, padding_mask, adj = transform_batch(batch_data=(qubits, self._padding_mask, self._adj),
-                                                        device=self._config.device)
-            qubits, padding_mask, adj = qubits[None, :, :], padding_mask[None, :], adj[None, :, :]
-            _, value_score = self._nn_model(qubits, padding_mask, adj)
-            value = value_score.detach().to(torch.device('cpu')).numpy().squeeze()
-            return -value
-
-
+        for i in range(self.num_of_gates):
+            value += self._coupling_graph.distance(qubits[i, 0], qubits[i, 1])
+        return value
+        
 def simulated_annealing(init_mapping: np.ndarray, cost: Cost, method: str = None, param: Dict = None) -> np.ndarray:
     result = []
     T_max = param["T_max"]
@@ -99,7 +81,7 @@ def simulated_annealing(init_mapping: np.ndarray, cost: Cost, method: str = None
                 new_mapping[loc1: loc3 - loc2 + 1 + loc1] = new_mapping[loc2: loc3 + 1]
                 new_mapping[loc3 - loc2 + 1 + loc1: loc3 + 1] = tmp
 
-            valuenew = cost(new_mapping, method)
+            valuenew = cost(new_mapping)
             if valuenew < valuecurrent:
                 valuecurrent = valuenew
                 cur_mapping[:] = new_mapping
@@ -119,38 +101,38 @@ def simulated_annealing(init_mapping: np.ndarray, cost: Cost, method: str = None
     return result, best_mapping
 
 
-if __name__ == "__main__":
-    file_path = os.path.realpath(__file__)
-    dir_path, _ = os.path.split(file_path)
-    circuit_name = "hwb8_113.qasm"
-    input_path = f"{dir_path}/benchmark/QASM example/{circuit_name}"
-    model_file = f"{dir_path}/warmup/output/checkpoints/value_model_state_dict_test_mcts_cpp_ngat_huber_loss_value"
-    graph_name = "ibmq20"
-    coupling_graph = get_coupling_graph(graph_name=graph_name)
-    num_of_qubits = coupling_graph.size
-    qc = OPENQASMInterface.load_file(input_path)
-    size = 200
-    logical_qubit_num = qc.qbits
-    physical_qubit_num = num_of_qubits
-    print(size)
-    output_file_path = f"{dir_path}/warmup/output.txt"
-
-    circuit_dag = DAG(circuit=qc.circuit, mode=Mode.TWO_QUBIT_CIRCUIT)
-
-    data_config = GNNConfig(maximum_capacity=400000, num_of_nodes=150, maximum_circuit=1000,
-                            num_of_process=10, minimum_circuit=200, graph_name='ibmq20',
-                            gamma=0.8, selection_times=5000, num_of_playout=2, virtual_loss=0,
-                            mcts_c=20, num_of_swap_gates=15, device=torch.device("cuda"),
-                            num_of_epochs=100, batch_size=256, learning_rate=0.001, weight_decay=1e-4,
-                            gat=False, d_embed=32, d_model=32, n_head=2, n_layer=2, n_encoder=4,
-                            n_gat=1, hid_dim=128, dim_feedforward=128, loss_c=10)
-
-    cost_f = Cost(circuit=circuit_dag, coupling_graph=coupling_graph,
-                  config=data_config, model_file=model_file)
-    init_mapping = np.random.permutation(num_of_qubits)
-    res, best_mapping = simulated_annealing(init_mapping=init_mapping, cost=cost_f, method="nnc",
-                                            param={"T_max": 100, "T_min": 1, "alpha": 0.98, "iterations": 1000})
-    print(list(best_mapping))
-    with open(output_file_path, "w") as f:
-        for r in res:
-            print(r, file=f)
+#if __name__ == "__main__":
+#    file_path = os.path.realpath(__file__)
+#    dir_path, _ = os.path.split(file_path)
+#    circuit_name = "hwb8_113.qasm"
+#    input_path = f"{dir_path}/benchmark/QASM example/{circuit_name}"
+#    model_file = f"{dir_path}/warmup/output/checkpoints/value_model_state_dict_test_mcts_cpp_ngat_huber_loss_value"
+#    graph_name = "ibmq20"
+#    coupling_graph = get_coupling_graph(graph_name=graph_name)
+#    num_of_qubits = coupling_graph.size
+#    qc = OPENQASMInterface.load_file(input_path)
+#    size = 200
+#    logical_qubit_num = qc.qbits
+#    physical_qubit_num = num_of_qubits
+#    print(size)
+#    output_file_path = f"{dir_path}/warmup/output.txt"
+#
+#    circuit_dag = DAG(circuit=qc.circuit, mode=Mode.TWO_QUBIT_CIRCUIT)
+#
+#    data_config = GNNConfig(maximum_capacity=400000, num_of_nodes=150, maximum_circuit=1000,
+#                            num_of_process=10, minimum_circuit=200, graph_name='ibmq20',
+#                            gamma=0.8, selection_times=5000, num_of_playout=2, virtual_loss=0,
+#                            mcts_c=20, num_of_swap_gates=15, device=torch.device("cuda"),
+#                            num_of_epochs=100, batch_size=256, learning_rate=0.001, weight_decay=1e-4,
+#                            gat=False, d_embed=32, d_model=32, n_head=2, n_layer=2, n_encoder=4,
+#                            n_gat=1, hid_dim=128, dim_feedforward=128, loss_c=10)
+#
+#    cost_f = Cost(circuit=circuit_dag, coupling_graph=coupling_graph,
+#                  config=data_config, model_file=model_file)
+#    init_mapping = np.random.permutation(num_of_qubits)
+#    res, best_mapping = simulated_annealing(init_mapping=init_mapping, cost=cost_f,
+#                                            param={"T_max": 100, "T_min": 1, "alpha": 0.98, "iterations": 1000})
+#    print(list(best_mapping))
+#    with open(output_file_path, "w") as f:
+#        for r in res:
+#            print(r, file=f)

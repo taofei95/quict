@@ -25,6 +25,9 @@
             "mcts"
         ],
         "name": "mcts_wrapper",
+        "runtime_library_dirs": [
+            "/home/shoulifu/QuICT/QuICT/qcda/mapping/mcts_cpp/lib/build"
+        ],
         "sources": [
             "mcts_wrapper.pyx"
         ]
@@ -669,21 +672,6 @@ static CYTHON_INLINE float __PYX_NAN() {
 #include "stdexcept"
 #include "typeinfo"
 #include <vector>
-#include <string>
-#include <algorithm>
-#include <memory>
-#include <utility>
-
-    #if __cplusplus > 199711L
-    #include <type_traits>
-
-    namespace cython_std {
-    template <typename T> typename std::remove_reference<T>::type&& move(T& t) noexcept { return std::move(t); }
-    template <typename T> typename std::remove_reference<T>::type&& move(T&& t) noexcept { return std::move(t); }
-    }
-
-    #endif
-    
 #include "mcts_tree.h"
 #include "pythread.h"
 #include <stdlib.h>
@@ -1288,7 +1276,7 @@ typedef npy_clongdouble __pyx_t_5numpy_clongdouble_t;
  */
 typedef npy_cdouble __pyx_t_5numpy_complex_t;
 
-/* "mcts_wrapper.pyx":23
+/* "mcts_wrapper.pyx":17
  * # from data_generator cimport DataGenerator
  * 
  * cdef class MCTSTreeWrapper:             # <<<<<<<<<<<<<<
@@ -1394,7 +1382,7 @@ struct __pyx_memoryviewslice_obj {
 
 
 
-/* "mcts_wrapper.pyx":23
+/* "mcts_wrapper.pyx":17
  * # from data_generator cimport DataGenerator
  * 
  * cdef class MCTSTreeWrapper:             # <<<<<<<<<<<<<<
@@ -2296,19 +2284,9 @@ static PyTypeObject *__pyx_ptype_5numpy_flexible = 0;
 static PyTypeObject *__pyx_ptype_5numpy_character = 0;
 static PyTypeObject *__pyx_ptype_5numpy_ufunc = 0;
 
-/* Module declarations from 'libcpp.vector' */
-
-/* Module declarations from 'libcpp.string' */
-
 /* Module declarations from 'libcpp' */
 
-/* Module declarations from 'libcpp.algorithm' */
-
-/* Module declarations from 'libcpp.memory' */
-
-/* Module declarations from 'libcpp.utility' */
-
-/* Module declarations from 'libcpp.pair' */
+/* Module declarations from 'libcpp.vector' */
 
 /* Module declarations from 'mcts_tree' */
 
@@ -2729,7 +2707,7 @@ static PyObject *__pyx_tuple__33;
 static PyObject *__pyx_codeobj__34;
 /* Late includes */
 
-/* "mcts_wrapper.pyx":32
+/* "mcts_wrapper.pyx":26
  *         int threshold_size, num_of_edges
  * 
  *     def __cinit__(self, int major, int method, int info, bint extended, bint with_predictor, bint is_generate_data,  int threshold_size, float gamma, float c, float virtual_loss, int bp_mode, int num_of_process,             # <<<<<<<<<<<<<<
@@ -2828,125 +2806,125 @@ static int __pyx_pw_12mcts_wrapper_15MCTSTreeWrapper_1__cinit__(PyObject *__pyx_
         case  1:
         if (likely((values[1] = __Pyx_PyDict_GetItemStr(__pyx_kwds, __pyx_n_s_method)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("__cinit__", 1, 21, 21, 1); __PYX_ERR(1, 32, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("__cinit__", 1, 21, 21, 1); __PYX_ERR(1, 26, __pyx_L3_error)
         }
         CYTHON_FALLTHROUGH;
         case  2:
         if (likely((values[2] = __Pyx_PyDict_GetItemStr(__pyx_kwds, __pyx_n_s_info)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("__cinit__", 1, 21, 21, 2); __PYX_ERR(1, 32, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("__cinit__", 1, 21, 21, 2); __PYX_ERR(1, 26, __pyx_L3_error)
         }
         CYTHON_FALLTHROUGH;
         case  3:
         if (likely((values[3] = __Pyx_PyDict_GetItemStr(__pyx_kwds, __pyx_n_s_extended)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("__cinit__", 1, 21, 21, 3); __PYX_ERR(1, 32, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("__cinit__", 1, 21, 21, 3); __PYX_ERR(1, 26, __pyx_L3_error)
         }
         CYTHON_FALLTHROUGH;
         case  4:
         if (likely((values[4] = __Pyx_PyDict_GetItemStr(__pyx_kwds, __pyx_n_s_with_predictor)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("__cinit__", 1, 21, 21, 4); __PYX_ERR(1, 32, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("__cinit__", 1, 21, 21, 4); __PYX_ERR(1, 26, __pyx_L3_error)
         }
         CYTHON_FALLTHROUGH;
         case  5:
         if (likely((values[5] = __Pyx_PyDict_GetItemStr(__pyx_kwds, __pyx_n_s_is_generate_data)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("__cinit__", 1, 21, 21, 5); __PYX_ERR(1, 32, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("__cinit__", 1, 21, 21, 5); __PYX_ERR(1, 26, __pyx_L3_error)
         }
         CYTHON_FALLTHROUGH;
         case  6:
         if (likely((values[6] = __Pyx_PyDict_GetItemStr(__pyx_kwds, __pyx_n_s_threshold_size)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("__cinit__", 1, 21, 21, 6); __PYX_ERR(1, 32, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("__cinit__", 1, 21, 21, 6); __PYX_ERR(1, 26, __pyx_L3_error)
         }
         CYTHON_FALLTHROUGH;
         case  7:
         if (likely((values[7] = __Pyx_PyDict_GetItemStr(__pyx_kwds, __pyx_n_s_gamma)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("__cinit__", 1, 21, 21, 7); __PYX_ERR(1, 32, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("__cinit__", 1, 21, 21, 7); __PYX_ERR(1, 26, __pyx_L3_error)
         }
         CYTHON_FALLTHROUGH;
         case  8:
         if (likely((values[8] = __Pyx_PyDict_GetItemStr(__pyx_kwds, __pyx_n_s_c)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("__cinit__", 1, 21, 21, 8); __PYX_ERR(1, 32, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("__cinit__", 1, 21, 21, 8); __PYX_ERR(1, 26, __pyx_L3_error)
         }
         CYTHON_FALLTHROUGH;
         case  9:
         if (likely((values[9] = __Pyx_PyDict_GetItemStr(__pyx_kwds, __pyx_n_s_virtual_loss)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("__cinit__", 1, 21, 21, 9); __PYX_ERR(1, 32, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("__cinit__", 1, 21, 21, 9); __PYX_ERR(1, 26, __pyx_L3_error)
         }
         CYTHON_FALLTHROUGH;
         case 10:
         if (likely((values[10] = __Pyx_PyDict_GetItemStr(__pyx_kwds, __pyx_n_s_bp_mode)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("__cinit__", 1, 21, 21, 10); __PYX_ERR(1, 32, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("__cinit__", 1, 21, 21, 10); __PYX_ERR(1, 26, __pyx_L3_error)
         }
         CYTHON_FALLTHROUGH;
         case 11:
         if (likely((values[11] = __Pyx_PyDict_GetItemStr(__pyx_kwds, __pyx_n_s_num_of_process)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("__cinit__", 1, 21, 21, 11); __PYX_ERR(1, 32, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("__cinit__", 1, 21, 21, 11); __PYX_ERR(1, 26, __pyx_L3_error)
         }
         CYTHON_FALLTHROUGH;
         case 12:
         if (likely((values[12] = __Pyx_PyDict_GetItemStr(__pyx_kwds, __pyx_n_s_size_of_subcircuits)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("__cinit__", 1, 21, 21, 12); __PYX_ERR(1, 32, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("__cinit__", 1, 21, 21, 12); __PYX_ERR(1, 26, __pyx_L3_error)
         }
         CYTHON_FALLTHROUGH;
         case 13:
         if (likely((values[13] = __Pyx_PyDict_GetItemStr(__pyx_kwds, __pyx_n_s_num_of_swap_gates)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("__cinit__", 1, 21, 21, 13); __PYX_ERR(1, 32, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("__cinit__", 1, 21, 21, 13); __PYX_ERR(1, 26, __pyx_L3_error)
         }
         CYTHON_FALLTHROUGH;
         case 14:
         if (likely((values[14] = __Pyx_PyDict_GetItemStr(__pyx_kwds, __pyx_n_s_num_of_iterations)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("__cinit__", 1, 21, 21, 14); __PYX_ERR(1, 32, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("__cinit__", 1, 21, 21, 14); __PYX_ERR(1, 26, __pyx_L3_error)
         }
         CYTHON_FALLTHROUGH;
         case 15:
         if (likely((values[15] = __Pyx_PyDict_GetItemStr(__pyx_kwds, __pyx_n_s_num_of_playout)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("__cinit__", 1, 21, 21, 15); __PYX_ERR(1, 32, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("__cinit__", 1, 21, 21, 15); __PYX_ERR(1, 26, __pyx_L3_error)
         }
         CYTHON_FALLTHROUGH;
         case 16:
         if (likely((values[16] = __Pyx_PyDict_GetItemStr(__pyx_kwds, __pyx_n_s_num_of_edges)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("__cinit__", 1, 21, 21, 16); __PYX_ERR(1, 32, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("__cinit__", 1, 21, 21, 16); __PYX_ERR(1, 26, __pyx_L3_error)
         }
         CYTHON_FALLTHROUGH;
         case 17:
         if (likely((values[17] = __Pyx_PyDict_GetItemStr(__pyx_kwds, __pyx_n_s_coupling_graph)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("__cinit__", 1, 21, 21, 17); __PYX_ERR(1, 32, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("__cinit__", 1, 21, 21, 17); __PYX_ERR(1, 26, __pyx_L3_error)
         }
         CYTHON_FALLTHROUGH;
         case 18:
         if (likely((values[18] = __Pyx_PyDict_GetItemStr(__pyx_kwds, __pyx_n_s_distance_matrix)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("__cinit__", 1, 21, 21, 18); __PYX_ERR(1, 32, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("__cinit__", 1, 21, 21, 18); __PYX_ERR(1, 26, __pyx_L3_error)
         }
         CYTHON_FALLTHROUGH;
         case 19:
         if (likely((values[19] = __Pyx_PyDict_GetItemStr(__pyx_kwds, __pyx_n_s_edge_label)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("__cinit__", 1, 21, 21, 19); __PYX_ERR(1, 32, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("__cinit__", 1, 21, 21, 19); __PYX_ERR(1, 26, __pyx_L3_error)
         }
         CYTHON_FALLTHROUGH;
         case 20:
         if (likely((values[20] = __Pyx_PyDict_GetItemStr(__pyx_kwds, __pyx_n_s_feature_matrix)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("__cinit__", 1, 21, 21, 20); __PYX_ERR(1, 32, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("__cinit__", 1, 21, 21, 20); __PYX_ERR(1, 26, __pyx_L3_error)
         }
       }
       if (unlikely(kw_args > 0)) {
-        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "__cinit__") < 0)) __PYX_ERR(1, 32, __pyx_L3_error)
+        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "__cinit__") < 0)) __PYX_ERR(1, 26, __pyx_L3_error)
       }
     } else if (PyTuple_GET_SIZE(__pyx_args) != 21) {
       goto __pyx_L5_argtuple_error;
@@ -2973,23 +2951,23 @@ static int __pyx_pw_12mcts_wrapper_15MCTSTreeWrapper_1__cinit__(PyObject *__pyx_
       values[19] = PyTuple_GET_ITEM(__pyx_args, 19);
       values[20] = PyTuple_GET_ITEM(__pyx_args, 20);
     }
-    __pyx_v_major = __Pyx_PyInt_As_int(values[0]); if (unlikely((__pyx_v_major == (int)-1) && PyErr_Occurred())) __PYX_ERR(1, 32, __pyx_L3_error)
-    __pyx_v_method = __Pyx_PyInt_As_int(values[1]); if (unlikely((__pyx_v_method == (int)-1) && PyErr_Occurred())) __PYX_ERR(1, 32, __pyx_L3_error)
-    __pyx_v_info = __Pyx_PyInt_As_int(values[2]); if (unlikely((__pyx_v_info == (int)-1) && PyErr_Occurred())) __PYX_ERR(1, 32, __pyx_L3_error)
-    __pyx_v_extended = __Pyx_PyObject_IsTrue(values[3]); if (unlikely((__pyx_v_extended == (int)-1) && PyErr_Occurred())) __PYX_ERR(1, 32, __pyx_L3_error)
-    __pyx_v_with_predictor = __Pyx_PyObject_IsTrue(values[4]); if (unlikely((__pyx_v_with_predictor == (int)-1) && PyErr_Occurred())) __PYX_ERR(1, 32, __pyx_L3_error)
-    __pyx_v_is_generate_data = __Pyx_PyObject_IsTrue(values[5]); if (unlikely((__pyx_v_is_generate_data == (int)-1) && PyErr_Occurred())) __PYX_ERR(1, 32, __pyx_L3_error)
-    __pyx_v_threshold_size = __Pyx_PyInt_As_int(values[6]); if (unlikely((__pyx_v_threshold_size == (int)-1) && PyErr_Occurred())) __PYX_ERR(1, 32, __pyx_L3_error)
-    __pyx_v_gamma = __pyx_PyFloat_AsFloat(values[7]); if (unlikely((__pyx_v_gamma == (float)-1) && PyErr_Occurred())) __PYX_ERR(1, 32, __pyx_L3_error)
-    __pyx_v_c = __pyx_PyFloat_AsFloat(values[8]); if (unlikely((__pyx_v_c == (float)-1) && PyErr_Occurred())) __PYX_ERR(1, 32, __pyx_L3_error)
-    __pyx_v_virtual_loss = __pyx_PyFloat_AsFloat(values[9]); if (unlikely((__pyx_v_virtual_loss == (float)-1) && PyErr_Occurred())) __PYX_ERR(1, 32, __pyx_L3_error)
-    __pyx_v_bp_mode = __Pyx_PyInt_As_int(values[10]); if (unlikely((__pyx_v_bp_mode == (int)-1) && PyErr_Occurred())) __PYX_ERR(1, 32, __pyx_L3_error)
-    __pyx_v_num_of_process = __Pyx_PyInt_As_int(values[11]); if (unlikely((__pyx_v_num_of_process == (int)-1) && PyErr_Occurred())) __PYX_ERR(1, 32, __pyx_L3_error)
-    __pyx_v_size_of_subcircuits = __Pyx_PyInt_As_int(values[12]); if (unlikely((__pyx_v_size_of_subcircuits == (int)-1) && PyErr_Occurred())) __PYX_ERR(1, 33, __pyx_L3_error)
-    __pyx_v_num_of_swap_gates = __Pyx_PyInt_As_int(values[13]); if (unlikely((__pyx_v_num_of_swap_gates == (int)-1) && PyErr_Occurred())) __PYX_ERR(1, 33, __pyx_L3_error)
-    __pyx_v_num_of_iterations = __Pyx_PyInt_As_int(values[14]); if (unlikely((__pyx_v_num_of_iterations == (int)-1) && PyErr_Occurred())) __PYX_ERR(1, 33, __pyx_L3_error)
-    __pyx_v_num_of_playout = __Pyx_PyInt_As_int(values[15]); if (unlikely((__pyx_v_num_of_playout == (int)-1) && PyErr_Occurred())) __PYX_ERR(1, 33, __pyx_L3_error)
-    __pyx_v_num_of_edges = __Pyx_PyInt_As_int(values[16]); if (unlikely((__pyx_v_num_of_edges == (int)-1) && PyErr_Occurred())) __PYX_ERR(1, 33, __pyx_L3_error)
+    __pyx_v_major = __Pyx_PyInt_As_int(values[0]); if (unlikely((__pyx_v_major == (int)-1) && PyErr_Occurred())) __PYX_ERR(1, 26, __pyx_L3_error)
+    __pyx_v_method = __Pyx_PyInt_As_int(values[1]); if (unlikely((__pyx_v_method == (int)-1) && PyErr_Occurred())) __PYX_ERR(1, 26, __pyx_L3_error)
+    __pyx_v_info = __Pyx_PyInt_As_int(values[2]); if (unlikely((__pyx_v_info == (int)-1) && PyErr_Occurred())) __PYX_ERR(1, 26, __pyx_L3_error)
+    __pyx_v_extended = __Pyx_PyObject_IsTrue(values[3]); if (unlikely((__pyx_v_extended == (int)-1) && PyErr_Occurred())) __PYX_ERR(1, 26, __pyx_L3_error)
+    __pyx_v_with_predictor = __Pyx_PyObject_IsTrue(values[4]); if (unlikely((__pyx_v_with_predictor == (int)-1) && PyErr_Occurred())) __PYX_ERR(1, 26, __pyx_L3_error)
+    __pyx_v_is_generate_data = __Pyx_PyObject_IsTrue(values[5]); if (unlikely((__pyx_v_is_generate_data == (int)-1) && PyErr_Occurred())) __PYX_ERR(1, 26, __pyx_L3_error)
+    __pyx_v_threshold_size = __Pyx_PyInt_As_int(values[6]); if (unlikely((__pyx_v_threshold_size == (int)-1) && PyErr_Occurred())) __PYX_ERR(1, 26, __pyx_L3_error)
+    __pyx_v_gamma = __pyx_PyFloat_AsFloat(values[7]); if (unlikely((__pyx_v_gamma == (float)-1) && PyErr_Occurred())) __PYX_ERR(1, 26, __pyx_L3_error)
+    __pyx_v_c = __pyx_PyFloat_AsFloat(values[8]); if (unlikely((__pyx_v_c == (float)-1) && PyErr_Occurred())) __PYX_ERR(1, 26, __pyx_L3_error)
+    __pyx_v_virtual_loss = __pyx_PyFloat_AsFloat(values[9]); if (unlikely((__pyx_v_virtual_loss == (float)-1) && PyErr_Occurred())) __PYX_ERR(1, 26, __pyx_L3_error)
+    __pyx_v_bp_mode = __Pyx_PyInt_As_int(values[10]); if (unlikely((__pyx_v_bp_mode == (int)-1) && PyErr_Occurred())) __PYX_ERR(1, 26, __pyx_L3_error)
+    __pyx_v_num_of_process = __Pyx_PyInt_As_int(values[11]); if (unlikely((__pyx_v_num_of_process == (int)-1) && PyErr_Occurred())) __PYX_ERR(1, 26, __pyx_L3_error)
+    __pyx_v_size_of_subcircuits = __Pyx_PyInt_As_int(values[12]); if (unlikely((__pyx_v_size_of_subcircuits == (int)-1) && PyErr_Occurred())) __PYX_ERR(1, 27, __pyx_L3_error)
+    __pyx_v_num_of_swap_gates = __Pyx_PyInt_As_int(values[13]); if (unlikely((__pyx_v_num_of_swap_gates == (int)-1) && PyErr_Occurred())) __PYX_ERR(1, 27, __pyx_L3_error)
+    __pyx_v_num_of_iterations = __Pyx_PyInt_As_int(values[14]); if (unlikely((__pyx_v_num_of_iterations == (int)-1) && PyErr_Occurred())) __PYX_ERR(1, 27, __pyx_L3_error)
+    __pyx_v_num_of_playout = __Pyx_PyInt_As_int(values[15]); if (unlikely((__pyx_v_num_of_playout == (int)-1) && PyErr_Occurred())) __PYX_ERR(1, 27, __pyx_L3_error)
+    __pyx_v_num_of_edges = __Pyx_PyInt_As_int(values[16]); if (unlikely((__pyx_v_num_of_edges == (int)-1) && PyErr_Occurred())) __PYX_ERR(1, 27, __pyx_L3_error)
     __pyx_v_coupling_graph = ((PyArrayObject *)values[17]);
     __pyx_v_distance_matrix = ((PyArrayObject *)values[18]);
     __pyx_v_edge_label = ((PyArrayObject *)values[19]);
@@ -2997,16 +2975,16 @@ static int __pyx_pw_12mcts_wrapper_15MCTSTreeWrapper_1__cinit__(PyObject *__pyx_
   }
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("__cinit__", 1, 21, 21, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(1, 32, __pyx_L3_error)
+  __Pyx_RaiseArgtupleInvalid("__cinit__", 1, 21, 21, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(1, 26, __pyx_L3_error)
   __pyx_L3_error:;
   __Pyx_AddTraceback("mcts_wrapper.MCTSTreeWrapper.__cinit__", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __Pyx_RefNannyFinishContext();
   return -1;
   __pyx_L4_argument_unpacking_done:;
-  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_coupling_graph), __pyx_ptype_5numpy_ndarray, 1, "coupling_graph", 0))) __PYX_ERR(1, 34, __pyx_L1_error)
-  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_distance_matrix), __pyx_ptype_5numpy_ndarray, 1, "distance_matrix", 0))) __PYX_ERR(1, 34, __pyx_L1_error)
-  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_edge_label), __pyx_ptype_5numpy_ndarray, 1, "edge_label", 0))) __PYX_ERR(1, 35, __pyx_L1_error)
-  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_feature_matrix), __pyx_ptype_5numpy_ndarray, 1, "feature_matrix", 0))) __PYX_ERR(1, 35, __pyx_L1_error)
+  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_coupling_graph), __pyx_ptype_5numpy_ndarray, 1, "coupling_graph", 0))) __PYX_ERR(1, 28, __pyx_L1_error)
+  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_distance_matrix), __pyx_ptype_5numpy_ndarray, 1, "distance_matrix", 0))) __PYX_ERR(1, 28, __pyx_L1_error)
+  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_edge_label), __pyx_ptype_5numpy_ndarray, 1, "edge_label", 0))) __PYX_ERR(1, 29, __pyx_L1_error)
+  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_feature_matrix), __pyx_ptype_5numpy_ndarray, 1, "feature_matrix", 0))) __PYX_ERR(1, 29, __pyx_L1_error)
   __pyx_r = __pyx_pf_12mcts_wrapper_15MCTSTreeWrapper___cinit__(((struct __pyx_obj_12mcts_wrapper_MCTSTreeWrapper *)__pyx_v_self), __pyx_v_major, __pyx_v_method, __pyx_v_info, __pyx_v_extended, __pyx_v_with_predictor, __pyx_v_is_generate_data, __pyx_v_threshold_size, __pyx_v_gamma, __pyx_v_c, __pyx_v_virtual_loss, __pyx_v_bp_mode, __pyx_v_num_of_process, __pyx_v_size_of_subcircuits, __pyx_v_num_of_swap_gates, __pyx_v_num_of_iterations, __pyx_v_num_of_playout, __pyx_v_num_of_edges, __pyx_v_coupling_graph, __pyx_v_distance_matrix, __pyx_v_edge_label, __pyx_v_feature_matrix);
 
   /* function exit code */
@@ -3061,78 +3039,78 @@ static int __pyx_pf_12mcts_wrapper_15MCTSTreeWrapper___cinit__(struct __pyx_obj_
   __pyx_pybuffernd_feature_matrix.rcbuffer = &__pyx_pybuffer_feature_matrix;
   {
     __Pyx_BufFmt_StackElem __pyx_stack[1];
-    if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_coupling_graph.rcbuffer->pybuffer, (PyObject*)__pyx_v_coupling_graph, &__Pyx_TypeInfo_nn___pyx_t_5numpy_int32_t, PyBUF_FORMAT| PyBUF_STRIDES, 2, 0, __pyx_stack) == -1)) __PYX_ERR(1, 32, __pyx_L1_error)
+    if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_coupling_graph.rcbuffer->pybuffer, (PyObject*)__pyx_v_coupling_graph, &__Pyx_TypeInfo_nn___pyx_t_5numpy_int32_t, PyBUF_FORMAT| PyBUF_STRIDES, 2, 0, __pyx_stack) == -1)) __PYX_ERR(1, 26, __pyx_L1_error)
   }
   __pyx_pybuffernd_coupling_graph.diminfo[0].strides = __pyx_pybuffernd_coupling_graph.rcbuffer->pybuffer.strides[0]; __pyx_pybuffernd_coupling_graph.diminfo[0].shape = __pyx_pybuffernd_coupling_graph.rcbuffer->pybuffer.shape[0]; __pyx_pybuffernd_coupling_graph.diminfo[1].strides = __pyx_pybuffernd_coupling_graph.rcbuffer->pybuffer.strides[1]; __pyx_pybuffernd_coupling_graph.diminfo[1].shape = __pyx_pybuffernd_coupling_graph.rcbuffer->pybuffer.shape[1];
   {
     __Pyx_BufFmt_StackElem __pyx_stack[1];
-    if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_distance_matrix.rcbuffer->pybuffer, (PyObject*)__pyx_v_distance_matrix, &__Pyx_TypeInfo_nn___pyx_t_5numpy_int32_t, PyBUF_FORMAT| PyBUF_STRIDES, 2, 0, __pyx_stack) == -1)) __PYX_ERR(1, 32, __pyx_L1_error)
+    if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_distance_matrix.rcbuffer->pybuffer, (PyObject*)__pyx_v_distance_matrix, &__Pyx_TypeInfo_nn___pyx_t_5numpy_int32_t, PyBUF_FORMAT| PyBUF_STRIDES, 2, 0, __pyx_stack) == -1)) __PYX_ERR(1, 26, __pyx_L1_error)
   }
   __pyx_pybuffernd_distance_matrix.diminfo[0].strides = __pyx_pybuffernd_distance_matrix.rcbuffer->pybuffer.strides[0]; __pyx_pybuffernd_distance_matrix.diminfo[0].shape = __pyx_pybuffernd_distance_matrix.rcbuffer->pybuffer.shape[0]; __pyx_pybuffernd_distance_matrix.diminfo[1].strides = __pyx_pybuffernd_distance_matrix.rcbuffer->pybuffer.strides[1]; __pyx_pybuffernd_distance_matrix.diminfo[1].shape = __pyx_pybuffernd_distance_matrix.rcbuffer->pybuffer.shape[1];
   {
     __Pyx_BufFmt_StackElem __pyx_stack[1];
-    if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_edge_label.rcbuffer->pybuffer, (PyObject*)__pyx_v_edge_label, &__Pyx_TypeInfo_nn___pyx_t_5numpy_int32_t, PyBUF_FORMAT| PyBUF_STRIDES, 2, 0, __pyx_stack) == -1)) __PYX_ERR(1, 32, __pyx_L1_error)
+    if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_edge_label.rcbuffer->pybuffer, (PyObject*)__pyx_v_edge_label, &__Pyx_TypeInfo_nn___pyx_t_5numpy_int32_t, PyBUF_FORMAT| PyBUF_STRIDES, 2, 0, __pyx_stack) == -1)) __PYX_ERR(1, 26, __pyx_L1_error)
   }
   __pyx_pybuffernd_edge_label.diminfo[0].strides = __pyx_pybuffernd_edge_label.rcbuffer->pybuffer.strides[0]; __pyx_pybuffernd_edge_label.diminfo[0].shape = __pyx_pybuffernd_edge_label.rcbuffer->pybuffer.shape[0]; __pyx_pybuffernd_edge_label.diminfo[1].strides = __pyx_pybuffernd_edge_label.rcbuffer->pybuffer.strides[1]; __pyx_pybuffernd_edge_label.diminfo[1].shape = __pyx_pybuffernd_edge_label.rcbuffer->pybuffer.shape[1];
   {
     __Pyx_BufFmt_StackElem __pyx_stack[1];
-    if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_feature_matrix.rcbuffer->pybuffer, (PyObject*)__pyx_v_feature_matrix, &__Pyx_TypeInfo_nn___pyx_t_5numpy_float32_t, PyBUF_FORMAT| PyBUF_STRIDES, 2, 0, __pyx_stack) == -1)) __PYX_ERR(1, 32, __pyx_L1_error)
+    if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_feature_matrix.rcbuffer->pybuffer, (PyObject*)__pyx_v_feature_matrix, &__Pyx_TypeInfo_nn___pyx_t_5numpy_float32_t, PyBUF_FORMAT| PyBUF_STRIDES, 2, 0, __pyx_stack) == -1)) __PYX_ERR(1, 26, __pyx_L1_error)
   }
   __pyx_pybuffernd_feature_matrix.diminfo[0].strides = __pyx_pybuffernd_feature_matrix.rcbuffer->pybuffer.strides[0]; __pyx_pybuffernd_feature_matrix.diminfo[0].shape = __pyx_pybuffernd_feature_matrix.rcbuffer->pybuffer.shape[0]; __pyx_pybuffernd_feature_matrix.diminfo[1].strides = __pyx_pybuffernd_feature_matrix.rcbuffer->pybuffer.strides[1]; __pyx_pybuffernd_feature_matrix.diminfo[1].shape = __pyx_pybuffernd_feature_matrix.rcbuffer->pybuffer.shape[1];
 
-  /* "mcts_wrapper.pyx":37
+  /* "mcts_wrapper.pyx":31
  *                 np.ndarray[np.int32_t, ndim = 2] edge_label, np.ndarray[np.float32_t, ndim = 2] feature_matrix):
  * 
  *         self.coupling_graph = coupling_graph             # <<<<<<<<<<<<<<
  *         self.distance_matrix = distance_matrix
  *         self.feature_matrix = feature_matrix
  */
-  __pyx_t_1 = __Pyx_PyObject_to_MemoryviewSlice_d_dc_int(((PyObject *)__pyx_v_coupling_graph), PyBUF_WRITABLE); if (unlikely(!__pyx_t_1.memview)) __PYX_ERR(1, 37, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyObject_to_MemoryviewSlice_d_dc_int(((PyObject *)__pyx_v_coupling_graph), PyBUF_WRITABLE); if (unlikely(!__pyx_t_1.memview)) __PYX_ERR(1, 31, __pyx_L1_error)
   __PYX_XDEC_MEMVIEW(&__pyx_v_self->coupling_graph, 0);
   __pyx_v_self->coupling_graph = __pyx_t_1;
   __pyx_t_1.memview = NULL;
   __pyx_t_1.data = NULL;
 
-  /* "mcts_wrapper.pyx":38
+  /* "mcts_wrapper.pyx":32
  * 
  *         self.coupling_graph = coupling_graph
  *         self.distance_matrix = distance_matrix             # <<<<<<<<<<<<<<
  *         self.feature_matrix = feature_matrix
  *         self.edge_label = edge_label
  */
-  __pyx_t_1 = __Pyx_PyObject_to_MemoryviewSlice_d_dc_int(((PyObject *)__pyx_v_distance_matrix), PyBUF_WRITABLE); if (unlikely(!__pyx_t_1.memview)) __PYX_ERR(1, 38, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyObject_to_MemoryviewSlice_d_dc_int(((PyObject *)__pyx_v_distance_matrix), PyBUF_WRITABLE); if (unlikely(!__pyx_t_1.memview)) __PYX_ERR(1, 32, __pyx_L1_error)
   __PYX_XDEC_MEMVIEW(&__pyx_v_self->distance_matrix, 0);
   __pyx_v_self->distance_matrix = __pyx_t_1;
   __pyx_t_1.memview = NULL;
   __pyx_t_1.data = NULL;
 
-  /* "mcts_wrapper.pyx":39
+  /* "mcts_wrapper.pyx":33
  *         self.coupling_graph = coupling_graph
  *         self.distance_matrix = distance_matrix
  *         self.feature_matrix = feature_matrix             # <<<<<<<<<<<<<<
  *         self.edge_label = edge_label
  *         self.num_of_swap_gates = num_of_swap_gates
  */
-  __pyx_t_2 = __Pyx_PyObject_to_MemoryviewSlice_d_dc_float(((PyObject *)__pyx_v_feature_matrix), PyBUF_WRITABLE); if (unlikely(!__pyx_t_2.memview)) __PYX_ERR(1, 39, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyObject_to_MemoryviewSlice_d_dc_float(((PyObject *)__pyx_v_feature_matrix), PyBUF_WRITABLE); if (unlikely(!__pyx_t_2.memview)) __PYX_ERR(1, 33, __pyx_L1_error)
   __PYX_XDEC_MEMVIEW(&__pyx_v_self->feature_matrix, 0);
   __pyx_v_self->feature_matrix = __pyx_t_2;
   __pyx_t_2.memview = NULL;
   __pyx_t_2.data = NULL;
 
-  /* "mcts_wrapper.pyx":40
+  /* "mcts_wrapper.pyx":34
  *         self.distance_matrix = distance_matrix
  *         self.feature_matrix = feature_matrix
  *         self.edge_label = edge_label             # <<<<<<<<<<<<<<
  *         self.num_of_swap_gates = num_of_swap_gates
  *         self.num_of_edges = num_of_edges
  */
-  __pyx_t_1 = __Pyx_PyObject_to_MemoryviewSlice_d_dc_int(((PyObject *)__pyx_v_edge_label), PyBUF_WRITABLE); if (unlikely(!__pyx_t_1.memview)) __PYX_ERR(1, 40, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyObject_to_MemoryviewSlice_d_dc_int(((PyObject *)__pyx_v_edge_label), PyBUF_WRITABLE); if (unlikely(!__pyx_t_1.memview)) __PYX_ERR(1, 34, __pyx_L1_error)
   __PYX_XDEC_MEMVIEW(&__pyx_v_self->edge_label, 0);
   __pyx_v_self->edge_label = __pyx_t_1;
   __pyx_t_1.memview = NULL;
   __pyx_t_1.data = NULL;
 
-  /* "mcts_wrapper.pyx":41
+  /* "mcts_wrapper.pyx":35
  *         self.feature_matrix = feature_matrix
  *         self.edge_label = edge_label
  *         self.num_of_swap_gates = num_of_swap_gates             # <<<<<<<<<<<<<<
@@ -3141,7 +3119,7 @@ static int __pyx_pf_12mcts_wrapper_15MCTSTreeWrapper___cinit__(struct __pyx_obj_
  */
   __pyx_v_self->num_of_swap_gates = __pyx_v_num_of_swap_gates;
 
-  /* "mcts_wrapper.pyx":42
+  /* "mcts_wrapper.pyx":36
  *         self.edge_label = edge_label
  *         self.num_of_swap_gates = num_of_swap_gates
  *         self.num_of_edges = num_of_edges             # <<<<<<<<<<<<<<
@@ -3150,7 +3128,7 @@ static int __pyx_pf_12mcts_wrapper_15MCTSTreeWrapper___cinit__(struct __pyx_obj_
  */
   __pyx_v_self->num_of_edges = __pyx_v_num_of_edges;
 
-  /* "mcts_wrapper.pyx":43
+  /* "mcts_wrapper.pyx":37
  *         self.num_of_swap_gates = num_of_swap_gates
  *         self.num_of_edges = num_of_edges
  *         self.threshold_size = threshold_size             # <<<<<<<<<<<<<<
@@ -3159,37 +3137,37 @@ static int __pyx_pf_12mcts_wrapper_15MCTSTreeWrapper___cinit__(struct __pyx_obj_
  */
   __pyx_v_self->threshold_size = __pyx_v_threshold_size;
 
-  /* "mcts_wrapper.pyx":48
+  /* "mcts_wrapper.pyx":42
  *         self.mcts_cpp = new MCTSTree(major, method, info, extended, with_predictor, is_generate_data, threshold_size, gamma, c, virtual_loss, bp_mode, num_of_process,
  *                                     size_of_subcircuits, num_of_swap_gates, num_of_iterations, num_of_playout,
  *                                     <int>self.coupling_graph.shape[0], <int>self.feature_matrix.shape[1], num_of_edges,             # <<<<<<<<<<<<<<
  *                                     &(self.coupling_graph[0,0]), &(self.distance_matrix[0,0]), &(self.edge_label[0][0]), &(self.feature_matrix[0,0]))
  * 
  */
-  if (unlikely(!__pyx_v_self->coupling_graph.memview)) {PyErr_SetString(PyExc_AttributeError,"Memoryview is not initialized");__PYX_ERR(1, 48, __pyx_L1_error)}
-  if (unlikely(!__pyx_v_self->feature_matrix.memview)) {PyErr_SetString(PyExc_AttributeError,"Memoryview is not initialized");__PYX_ERR(1, 48, __pyx_L1_error)}
+  if (unlikely(!__pyx_v_self->coupling_graph.memview)) {PyErr_SetString(PyExc_AttributeError,"Memoryview is not initialized");__PYX_ERR(1, 42, __pyx_L1_error)}
+  if (unlikely(!__pyx_v_self->feature_matrix.memview)) {PyErr_SetString(PyExc_AttributeError,"Memoryview is not initialized");__PYX_ERR(1, 42, __pyx_L1_error)}
 
-  /* "mcts_wrapper.pyx":49
+  /* "mcts_wrapper.pyx":43
  *                                     size_of_subcircuits, num_of_swap_gates, num_of_iterations, num_of_playout,
  *                                     <int>self.coupling_graph.shape[0], <int>self.feature_matrix.shape[1], num_of_edges,
  *                                     &(self.coupling_graph[0,0]), &(self.distance_matrix[0,0]), &(self.edge_label[0][0]), &(self.feature_matrix[0,0]))             # <<<<<<<<<<<<<<
  * 
  * 
  */
-  if (unlikely(!__pyx_v_self->coupling_graph.memview)) {PyErr_SetString(PyExc_AttributeError,"Memoryview is not initialized");__PYX_ERR(1, 49, __pyx_L1_error)}
+  if (unlikely(!__pyx_v_self->coupling_graph.memview)) {PyErr_SetString(PyExc_AttributeError,"Memoryview is not initialized");__PYX_ERR(1, 43, __pyx_L1_error)}
   __pyx_t_3 = 0;
   __pyx_t_4 = 0;
-  if (unlikely(!__pyx_v_self->distance_matrix.memview)) {PyErr_SetString(PyExc_AttributeError,"Memoryview is not initialized");__PYX_ERR(1, 49, __pyx_L1_error)}
+  if (unlikely(!__pyx_v_self->distance_matrix.memview)) {PyErr_SetString(PyExc_AttributeError,"Memoryview is not initialized");__PYX_ERR(1, 43, __pyx_L1_error)}
   __pyx_t_5 = 0;
   __pyx_t_6 = 0;
-  if (unlikely(!__pyx_v_self->edge_label.memview)) {PyErr_SetString(PyExc_AttributeError,"Memoryview is not initialized");__PYX_ERR(1, 49, __pyx_L1_error)}
+  if (unlikely(!__pyx_v_self->edge_label.memview)) {PyErr_SetString(PyExc_AttributeError,"Memoryview is not initialized");__PYX_ERR(1, 43, __pyx_L1_error)}
   __pyx_t_7 = 0;
   __pyx_t_8 = 0;
-  if (unlikely(!__pyx_v_self->feature_matrix.memview)) {PyErr_SetString(PyExc_AttributeError,"Memoryview is not initialized");__PYX_ERR(1, 49, __pyx_L1_error)}
+  if (unlikely(!__pyx_v_self->feature_matrix.memview)) {PyErr_SetString(PyExc_AttributeError,"Memoryview is not initialized");__PYX_ERR(1, 43, __pyx_L1_error)}
   __pyx_t_9 = 0;
   __pyx_t_10 = 0;
 
-  /* "mcts_wrapper.pyx":46
+  /* "mcts_wrapper.pyx":40
  *         #print((&self.feature_matrix[0,0]))
  *         #self.mcts_cpp
  *         self.mcts_cpp = new MCTSTree(major, method, info, extended, with_predictor, is_generate_data, threshold_size, gamma, c, virtual_loss, bp_mode, num_of_process,             # <<<<<<<<<<<<<<
@@ -3198,7 +3176,7 @@ static int __pyx_pf_12mcts_wrapper_15MCTSTreeWrapper___cinit__(struct __pyx_obj_
  */
   __pyx_v_self->mcts_cpp = new mcts::MCTSTree(__pyx_v_major, __pyx_v_method, __pyx_v_info, __pyx_v_extended, __pyx_v_with_predictor, __pyx_v_is_generate_data, __pyx_v_threshold_size, __pyx_v_gamma, __pyx_v_c, __pyx_v_virtual_loss, __pyx_v_bp_mode, __pyx_v_num_of_process, __pyx_v_size_of_subcircuits, __pyx_v_num_of_swap_gates, __pyx_v_num_of_iterations, __pyx_v_num_of_playout, ((int)(__pyx_v_self->coupling_graph.shape[0])), ((int)(__pyx_v_self->feature_matrix.shape[1])), __pyx_v_num_of_edges, (&(*((int *) ( /* dim=1 */ ((char *) (((int *) ( /* dim=0 */ (__pyx_v_self->coupling_graph.data + __pyx_t_3 * __pyx_v_self->coupling_graph.strides[0]) )) + __pyx_t_4)) )))), (&(*((int *) ( /* dim=1 */ ((char *) (((int *) ( /* dim=0 */ (__pyx_v_self->distance_matrix.data + __pyx_t_5 * __pyx_v_self->distance_matrix.strides[0]) )) + __pyx_t_6)) )))), (&(*((int *) ( /* dim=1 */ ((char *) (((int *) ( /* dim=0 */ (__pyx_v_self->edge_label.data + __pyx_t_7 * __pyx_v_self->edge_label.strides[0]) )) + __pyx_t_8)) )))), (&(*((float *) ( /* dim=1 */ ((char *) (((float *) ( /* dim=0 */ (__pyx_v_self->feature_matrix.data + __pyx_t_9 * __pyx_v_self->feature_matrix.strides[0]) )) + __pyx_t_10)) )))));
 
-  /* "mcts_wrapper.pyx":32
+  /* "mcts_wrapper.pyx":26
  *         int threshold_size, num_of_edges
  * 
  *     def __cinit__(self, int major, int method, int info, bint extended, bint with_predictor, bint is_generate_data,  int threshold_size, float gamma, float c, float virtual_loss, int bp_mode, int num_of_process,             # <<<<<<<<<<<<<<
@@ -3234,7 +3212,7 @@ static int __pyx_pf_12mcts_wrapper_15MCTSTreeWrapper___cinit__(struct __pyx_obj_
   return __pyx_r;
 }
 
-/* "mcts_wrapper.pyx":52
+/* "mcts_wrapper.pyx":46
  * 
  * 
  *     def load_data(self, int num_of_logical_qubits, int num_of_gates,             # <<<<<<<<<<<<<<
@@ -3291,41 +3269,41 @@ static PyObject *__pyx_pw_12mcts_wrapper_15MCTSTreeWrapper_3load_data(PyObject *
         case  1:
         if (likely((values[1] = __Pyx_PyDict_GetItemStr(__pyx_kwds, __pyx_n_s_num_of_gates)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("load_data", 1, 7, 7, 1); __PYX_ERR(1, 52, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("load_data", 1, 7, 7, 1); __PYX_ERR(1, 46, __pyx_L3_error)
         }
         CYTHON_FALLTHROUGH;
         case  2:
         if (likely((values[2] = __Pyx_PyDict_GetItemStr(__pyx_kwds, __pyx_n_s_circuit)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("load_data", 1, 7, 7, 2); __PYX_ERR(1, 52, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("load_data", 1, 7, 7, 2); __PYX_ERR(1, 46, __pyx_L3_error)
         }
         CYTHON_FALLTHROUGH;
         case  3:
         if (likely((values[3] = __Pyx_PyDict_GetItemStr(__pyx_kwds, __pyx_n_s_dependency_graph)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("load_data", 1, 7, 7, 3); __PYX_ERR(1, 52, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("load_data", 1, 7, 7, 3); __PYX_ERR(1, 46, __pyx_L3_error)
         }
         CYTHON_FALLTHROUGH;
         case  4:
         if (likely((values[4] = __Pyx_PyDict_GetItemStr(__pyx_kwds, __pyx_n_s_qubit_mapping)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("load_data", 1, 7, 7, 4); __PYX_ERR(1, 52, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("load_data", 1, 7, 7, 4); __PYX_ERR(1, 46, __pyx_L3_error)
         }
         CYTHON_FALLTHROUGH;
         case  5:
         if (likely((values[5] = __Pyx_PyDict_GetItemStr(__pyx_kwds, __pyx_n_s_qubit_mask)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("load_data", 1, 7, 7, 5); __PYX_ERR(1, 52, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("load_data", 1, 7, 7, 5); __PYX_ERR(1, 46, __pyx_L3_error)
         }
         CYTHON_FALLTHROUGH;
         case  6:
         if (likely((values[6] = __Pyx_PyDict_GetItemStr(__pyx_kwds, __pyx_n_s_front_layer)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("load_data", 1, 7, 7, 6); __PYX_ERR(1, 52, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("load_data", 1, 7, 7, 6); __PYX_ERR(1, 46, __pyx_L3_error)
         }
       }
       if (unlikely(kw_args > 0)) {
-        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "load_data") < 0)) __PYX_ERR(1, 52, __pyx_L3_error)
+        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "load_data") < 0)) __PYX_ERR(1, 46, __pyx_L3_error)
       }
     } else if (PyTuple_GET_SIZE(__pyx_args) != 7) {
       goto __pyx_L5_argtuple_error;
@@ -3338,8 +3316,8 @@ static PyObject *__pyx_pw_12mcts_wrapper_15MCTSTreeWrapper_3load_data(PyObject *
       values[5] = PyTuple_GET_ITEM(__pyx_args, 5);
       values[6] = PyTuple_GET_ITEM(__pyx_args, 6);
     }
-    __pyx_v_num_of_logical_qubits = __Pyx_PyInt_As_int(values[0]); if (unlikely((__pyx_v_num_of_logical_qubits == (int)-1) && PyErr_Occurred())) __PYX_ERR(1, 52, __pyx_L3_error)
-    __pyx_v_num_of_gates = __Pyx_PyInt_As_int(values[1]); if (unlikely((__pyx_v_num_of_gates == (int)-1) && PyErr_Occurred())) __PYX_ERR(1, 52, __pyx_L3_error)
+    __pyx_v_num_of_logical_qubits = __Pyx_PyInt_As_int(values[0]); if (unlikely((__pyx_v_num_of_logical_qubits == (int)-1) && PyErr_Occurred())) __PYX_ERR(1, 46, __pyx_L3_error)
+    __pyx_v_num_of_gates = __Pyx_PyInt_As_int(values[1]); if (unlikely((__pyx_v_num_of_gates == (int)-1) && PyErr_Occurred())) __PYX_ERR(1, 46, __pyx_L3_error)
     __pyx_v_circuit = ((PyArrayObject *)values[2]);
     __pyx_v_dependency_graph = ((PyArrayObject *)values[3]);
     __pyx_v_qubit_mapping = ((PyObject*)values[4]);
@@ -3348,17 +3326,17 @@ static PyObject *__pyx_pw_12mcts_wrapper_15MCTSTreeWrapper_3load_data(PyObject *
   }
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("load_data", 1, 7, 7, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(1, 52, __pyx_L3_error)
+  __Pyx_RaiseArgtupleInvalid("load_data", 1, 7, 7, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(1, 46, __pyx_L3_error)
   __pyx_L3_error:;
   __Pyx_AddTraceback("mcts_wrapper.MCTSTreeWrapper.load_data", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __Pyx_RefNannyFinishContext();
   return NULL;
   __pyx_L4_argument_unpacking_done:;
-  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_circuit), __pyx_ptype_5numpy_ndarray, 1, "circuit", 0))) __PYX_ERR(1, 53, __pyx_L1_error)
-  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_dependency_graph), __pyx_ptype_5numpy_ndarray, 1, "dependency_graph", 0))) __PYX_ERR(1, 53, __pyx_L1_error)
-  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_qubit_mapping), (&PyList_Type), 1, "qubit_mapping", 1))) __PYX_ERR(1, 54, __pyx_L1_error)
-  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_qubit_mask), (&PyList_Type), 1, "qubit_mask", 1))) __PYX_ERR(1, 54, __pyx_L1_error)
-  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_front_layer), (&PyList_Type), 1, "front_layer", 1))) __PYX_ERR(1, 54, __pyx_L1_error)
+  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_circuit), __pyx_ptype_5numpy_ndarray, 1, "circuit", 0))) __PYX_ERR(1, 47, __pyx_L1_error)
+  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_dependency_graph), __pyx_ptype_5numpy_ndarray, 1, "dependency_graph", 0))) __PYX_ERR(1, 47, __pyx_L1_error)
+  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_qubit_mapping), (&PyList_Type), 1, "qubit_mapping", 1))) __PYX_ERR(1, 48, __pyx_L1_error)
+  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_qubit_mask), (&PyList_Type), 1, "qubit_mask", 1))) __PYX_ERR(1, 48, __pyx_L1_error)
+  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_front_layer), (&PyList_Type), 1, "front_layer", 1))) __PYX_ERR(1, 48, __pyx_L1_error)
   __pyx_r = __pyx_pf_12mcts_wrapper_15MCTSTreeWrapper_2load_data(((struct __pyx_obj_12mcts_wrapper_MCTSTreeWrapper *)__pyx_v_self), __pyx_v_num_of_logical_qubits, __pyx_v_num_of_gates, __pyx_v_circuit, __pyx_v_dependency_graph, __pyx_v_qubit_mapping, __pyx_v_qubit_mask, __pyx_v_front_layer);
 
   /* function exit code */
@@ -3399,69 +3377,69 @@ static PyObject *__pyx_pf_12mcts_wrapper_15MCTSTreeWrapper_2load_data(struct __p
   __pyx_pybuffernd_dependency_graph.rcbuffer = &__pyx_pybuffer_dependency_graph;
   {
     __Pyx_BufFmt_StackElem __pyx_stack[1];
-    if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_circuit.rcbuffer->pybuffer, (PyObject*)__pyx_v_circuit, &__Pyx_TypeInfo_nn___pyx_t_5numpy_int32_t, PyBUF_FORMAT| PyBUF_STRIDES, 2, 0, __pyx_stack) == -1)) __PYX_ERR(1, 52, __pyx_L1_error)
+    if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_circuit.rcbuffer->pybuffer, (PyObject*)__pyx_v_circuit, &__Pyx_TypeInfo_nn___pyx_t_5numpy_int32_t, PyBUF_FORMAT| PyBUF_STRIDES, 2, 0, __pyx_stack) == -1)) __PYX_ERR(1, 46, __pyx_L1_error)
   }
   __pyx_pybuffernd_circuit.diminfo[0].strides = __pyx_pybuffernd_circuit.rcbuffer->pybuffer.strides[0]; __pyx_pybuffernd_circuit.diminfo[0].shape = __pyx_pybuffernd_circuit.rcbuffer->pybuffer.shape[0]; __pyx_pybuffernd_circuit.diminfo[1].strides = __pyx_pybuffernd_circuit.rcbuffer->pybuffer.strides[1]; __pyx_pybuffernd_circuit.diminfo[1].shape = __pyx_pybuffernd_circuit.rcbuffer->pybuffer.shape[1];
   {
     __Pyx_BufFmt_StackElem __pyx_stack[1];
-    if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_dependency_graph.rcbuffer->pybuffer, (PyObject*)__pyx_v_dependency_graph, &__Pyx_TypeInfo_nn___pyx_t_5numpy_int32_t, PyBUF_FORMAT| PyBUF_STRIDES, 2, 0, __pyx_stack) == -1)) __PYX_ERR(1, 52, __pyx_L1_error)
+    if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_dependency_graph.rcbuffer->pybuffer, (PyObject*)__pyx_v_dependency_graph, &__Pyx_TypeInfo_nn___pyx_t_5numpy_int32_t, PyBUF_FORMAT| PyBUF_STRIDES, 2, 0, __pyx_stack) == -1)) __PYX_ERR(1, 46, __pyx_L1_error)
   }
   __pyx_pybuffernd_dependency_graph.diminfo[0].strides = __pyx_pybuffernd_dependency_graph.rcbuffer->pybuffer.strides[0]; __pyx_pybuffernd_dependency_graph.diminfo[0].shape = __pyx_pybuffernd_dependency_graph.rcbuffer->pybuffer.shape[0]; __pyx_pybuffernd_dependency_graph.diminfo[1].strides = __pyx_pybuffernd_dependency_graph.rcbuffer->pybuffer.strides[1]; __pyx_pybuffernd_dependency_graph.diminfo[1].shape = __pyx_pybuffernd_dependency_graph.rcbuffer->pybuffer.shape[1];
 
-  /* "mcts_wrapper.pyx":55
+  /* "mcts_wrapper.pyx":49
  *                 np.ndarray[np.int32_t, ndim = 2] circuit, np.ndarray[np.int32_t, ndim =2] dependency_graph,
  *                 list qubit_mapping, list qubit_mask, list front_layer):
  *         self.circuit = circuit             # <<<<<<<<<<<<<<
  *         self.dependency_graph = dependency_graph
  *         deref(self.mcts_cpp).load_data(num_of_gates, num_of_logical_qubits, &self.circuit[0][0], &self.dependency_graph[0][0])
  */
-  __pyx_t_1 = __Pyx_PyObject_to_MemoryviewSlice_d_dc_int(((PyObject *)__pyx_v_circuit), PyBUF_WRITABLE); if (unlikely(!__pyx_t_1.memview)) __PYX_ERR(1, 55, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyObject_to_MemoryviewSlice_d_dc_int(((PyObject *)__pyx_v_circuit), PyBUF_WRITABLE); if (unlikely(!__pyx_t_1.memview)) __PYX_ERR(1, 49, __pyx_L1_error)
   __PYX_XDEC_MEMVIEW(&__pyx_v_self->circuit, 0);
   __pyx_v_self->circuit = __pyx_t_1;
   __pyx_t_1.memview = NULL;
   __pyx_t_1.data = NULL;
 
-  /* "mcts_wrapper.pyx":56
+  /* "mcts_wrapper.pyx":50
  *                 list qubit_mapping, list qubit_mask, list front_layer):
  *         self.circuit = circuit
  *         self.dependency_graph = dependency_graph             # <<<<<<<<<<<<<<
  *         deref(self.mcts_cpp).load_data(num_of_gates, num_of_logical_qubits, &self.circuit[0][0], &self.dependency_graph[0][0])
  *         deref(self.mcts_cpp).build_search_tree(qubit_mapping, qubit_mask, front_layer)
  */
-  __pyx_t_1 = __Pyx_PyObject_to_MemoryviewSlice_d_dc_int(((PyObject *)__pyx_v_dependency_graph), PyBUF_WRITABLE); if (unlikely(!__pyx_t_1.memview)) __PYX_ERR(1, 56, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyObject_to_MemoryviewSlice_d_dc_int(((PyObject *)__pyx_v_dependency_graph), PyBUF_WRITABLE); if (unlikely(!__pyx_t_1.memview)) __PYX_ERR(1, 50, __pyx_L1_error)
   __PYX_XDEC_MEMVIEW(&__pyx_v_self->dependency_graph, 0);
   __pyx_v_self->dependency_graph = __pyx_t_1;
   __pyx_t_1.memview = NULL;
   __pyx_t_1.data = NULL;
 
-  /* "mcts_wrapper.pyx":57
+  /* "mcts_wrapper.pyx":51
  *         self.circuit = circuit
  *         self.dependency_graph = dependency_graph
  *         deref(self.mcts_cpp).load_data(num_of_gates, num_of_logical_qubits, &self.circuit[0][0], &self.dependency_graph[0][0])             # <<<<<<<<<<<<<<
  *         deref(self.mcts_cpp).build_search_tree(qubit_mapping, qubit_mask, front_layer)
  * 
  */
-  if (unlikely(!__pyx_v_self->circuit.memview)) {PyErr_SetString(PyExc_AttributeError,"Memoryview is not initialized");__PYX_ERR(1, 57, __pyx_L1_error)}
+  if (unlikely(!__pyx_v_self->circuit.memview)) {PyErr_SetString(PyExc_AttributeError,"Memoryview is not initialized");__PYX_ERR(1, 51, __pyx_L1_error)}
   __pyx_t_2 = 0;
   __pyx_t_3 = 0;
-  if (unlikely(!__pyx_v_self->dependency_graph.memview)) {PyErr_SetString(PyExc_AttributeError,"Memoryview is not initialized");__PYX_ERR(1, 57, __pyx_L1_error)}
+  if (unlikely(!__pyx_v_self->dependency_graph.memview)) {PyErr_SetString(PyExc_AttributeError,"Memoryview is not initialized");__PYX_ERR(1, 51, __pyx_L1_error)}
   __pyx_t_4 = 0;
   __pyx_t_5 = 0;
   (*__pyx_v_self->mcts_cpp).load_data(__pyx_v_num_of_gates, __pyx_v_num_of_logical_qubits, (&(*((int *) ( /* dim=1 */ ((char *) (((int *) ( /* dim=0 */ (__pyx_v_self->circuit.data + __pyx_t_2 * __pyx_v_self->circuit.strides[0]) )) + __pyx_t_3)) )))), (&(*((int *) ( /* dim=1 */ ((char *) (((int *) ( /* dim=0 */ (__pyx_v_self->dependency_graph.data + __pyx_t_4 * __pyx_v_self->dependency_graph.strides[0]) )) + __pyx_t_5)) )))));
 
-  /* "mcts_wrapper.pyx":58
+  /* "mcts_wrapper.pyx":52
  *         self.dependency_graph = dependency_graph
  *         deref(self.mcts_cpp).load_data(num_of_gates, num_of_logical_qubits, &self.circuit[0][0], &self.dependency_graph[0][0])
  *         deref(self.mcts_cpp).build_search_tree(qubit_mapping, qubit_mask, front_layer)             # <<<<<<<<<<<<<<
  * 
  *     def search(self):
  */
-  __pyx_t_6 = __pyx_convert_vector_from_py_int(__pyx_v_qubit_mapping); if (unlikely(PyErr_Occurred())) __PYX_ERR(1, 58, __pyx_L1_error)
-  __pyx_t_7 = __pyx_convert_vector_from_py_int(__pyx_v_qubit_mask); if (unlikely(PyErr_Occurred())) __PYX_ERR(1, 58, __pyx_L1_error)
-  __pyx_t_8 = __pyx_convert_vector_from_py_int(__pyx_v_front_layer); if (unlikely(PyErr_Occurred())) __PYX_ERR(1, 58, __pyx_L1_error)
+  __pyx_t_6 = __pyx_convert_vector_from_py_int(__pyx_v_qubit_mapping); if (unlikely(PyErr_Occurred())) __PYX_ERR(1, 52, __pyx_L1_error)
+  __pyx_t_7 = __pyx_convert_vector_from_py_int(__pyx_v_qubit_mask); if (unlikely(PyErr_Occurred())) __PYX_ERR(1, 52, __pyx_L1_error)
+  __pyx_t_8 = __pyx_convert_vector_from_py_int(__pyx_v_front_layer); if (unlikely(PyErr_Occurred())) __PYX_ERR(1, 52, __pyx_L1_error)
   (*__pyx_v_self->mcts_cpp).build_search_tree(__pyx_t_6, __pyx_t_7, __pyx_t_8);
 
-  /* "mcts_wrapper.pyx":52
+  /* "mcts_wrapper.pyx":46
  * 
  * 
  *     def load_data(self, int num_of_logical_qubits, int num_of_gates,             # <<<<<<<<<<<<<<
@@ -3493,7 +3471,7 @@ static PyObject *__pyx_pf_12mcts_wrapper_15MCTSTreeWrapper_2load_data(struct __p
   return __pyx_r;
 }
 
-/* "mcts_wrapper.pyx":60
+/* "mcts_wrapper.pyx":54
  *         deref(self.mcts_cpp).build_search_tree(qubit_mapping, qubit_mask, front_layer)
  * 
  *     def search(self):             # <<<<<<<<<<<<<<
@@ -3523,7 +3501,7 @@ static PyObject *__pyx_pf_12mcts_wrapper_15MCTSTreeWrapper_4search(struct __pyx_
   int __pyx_clineno = 0;
   __Pyx_RefNannySetupContext("search", 0);
 
-  /* "mcts_wrapper.pyx":61
+  /* "mcts_wrapper.pyx":55
  * 
  *     def search(self):
  *         return deref(self.mcts_cpp).run()             # <<<<<<<<<<<<<<
@@ -3531,13 +3509,13 @@ static PyObject *__pyx_pf_12mcts_wrapper_15MCTSTreeWrapper_4search(struct __pyx_
  *     cpdef get_data(self):
  */
   __Pyx_XDECREF(__pyx_r);
-  __pyx_t_1 = __pyx_convert_vector_to_py_int((*__pyx_v_self->mcts_cpp).run()); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 61, __pyx_L1_error)
+  __pyx_t_1 = __pyx_convert_vector_to_py_int((*__pyx_v_self->mcts_cpp).run()); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 55, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __pyx_r = __pyx_t_1;
   __pyx_t_1 = 0;
   goto __pyx_L0;
 
-  /* "mcts_wrapper.pyx":60
+  /* "mcts_wrapper.pyx":54
  *         deref(self.mcts_cpp).build_search_tree(qubit_mapping, qubit_mask, front_layer)
  * 
  *     def search(self):             # <<<<<<<<<<<<<<
@@ -3556,7 +3534,7 @@ static PyObject *__pyx_pf_12mcts_wrapper_15MCTSTreeWrapper_4search(struct __pyx_
   return __pyx_r;
 }
 
-/* "mcts_wrapper.pyx":63
+/* "mcts_wrapper.pyx":57
  *         return deref(self.mcts_cpp).run()
  * 
  *     cpdef get_data(self):             # <<<<<<<<<<<<<<
@@ -3604,7 +3582,7 @@ static PyObject *__pyx_f_12mcts_wrapper_15MCTSTreeWrapper_get_data(struct __pyx_
     if (unlikely(!__Pyx_object_dict_version_matches(((PyObject *)__pyx_v_self), __pyx_tp_dict_version, __pyx_obj_dict_version))) {
       PY_UINT64_T __pyx_type_dict_guard = __Pyx_get_tp_dict_version(((PyObject *)__pyx_v_self));
       #endif
-      __pyx_t_1 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_v_self), __pyx_n_s_get_data); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 63, __pyx_L1_error)
+      __pyx_t_1 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_v_self), __pyx_n_s_get_data); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 57, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_1);
       if (!PyCFunction_Check(__pyx_t_1) || (PyCFunction_GET_FUNCTION(__pyx_t_1) != (PyCFunction)(void*)__pyx_pw_12mcts_wrapper_15MCTSTreeWrapper_7get_data)) {
         __Pyx_XDECREF(__pyx_r);
@@ -3621,7 +3599,7 @@ static PyObject *__pyx_f_12mcts_wrapper_15MCTSTreeWrapper_get_data(struct __pyx_
         }
         __pyx_t_2 = (__pyx_t_4) ? __Pyx_PyObject_CallOneArg(__pyx_t_3, __pyx_t_4) : __Pyx_PyObject_CallNoArg(__pyx_t_3);
         __Pyx_XDECREF(__pyx_t_4); __pyx_t_4 = 0;
-        if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 63, __pyx_L1_error)
+        if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 57, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_2);
         __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
         __pyx_r = __pyx_t_2;
@@ -3642,7 +3620,7 @@ static PyObject *__pyx_f_12mcts_wrapper_15MCTSTreeWrapper_get_data(struct __pyx_
     #endif
   }
 
-  /* "mcts_wrapper.pyx":65
+  /* "mcts_wrapper.pyx":59
  *     cpdef get_data(self):
  *         cdef:
  *             int num_of_samples = deref(self.mcts_cpp).get_num_of_samples()             # <<<<<<<<<<<<<<
@@ -3651,7 +3629,7 @@ static PyObject *__pyx_f_12mcts_wrapper_15MCTSTreeWrapper_get_data(struct __pyx_
  */
   __pyx_v_num_of_samples = (*__pyx_v_self->mcts_cpp).get_num_of_samples();
 
-  /* "mcts_wrapper.pyx":66
+  /* "mcts_wrapper.pyx":60
  *         cdef:
  *             int num_of_samples = deref(self.mcts_cpp).get_num_of_samples()
  *             int[:] adj_mem = <int[:num_of_samples*self.threshold_size*5]> deref(self.mcts_cpp).get_adj_list()             # <<<<<<<<<<<<<<
@@ -3661,24 +3639,24 @@ static PyObject *__pyx_f_12mcts_wrapper_15MCTSTreeWrapper_get_data(struct __pyx_
   __pyx_t_5 = (*__pyx_v_self->mcts_cpp).get_adj_list();
   if (!__pyx_t_5) {
     PyErr_SetString(PyExc_ValueError,"Cannot create cython.array from NULL pointer");
-    __PYX_ERR(1, 66, __pyx_L1_error)
+    __PYX_ERR(1, 60, __pyx_L1_error)
   }
-  __pyx_t_2 = __pyx_format_from_typeinfo(&__Pyx_TypeInfo_int); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 66, __pyx_L1_error)
+  __pyx_t_2 = __pyx_format_from_typeinfo(&__Pyx_TypeInfo_int); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 60, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_1 = Py_BuildValue((char*) "("  __PYX_BUILD_PY_SSIZE_T  ")", ((Py_ssize_t)((__pyx_v_num_of_samples * __pyx_v_self->threshold_size) * 5))); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 66, __pyx_L1_error)
+  __pyx_t_1 = Py_BuildValue((char*) "("  __PYX_BUILD_PY_SSIZE_T  ")", ((Py_ssize_t)((__pyx_v_num_of_samples * __pyx_v_self->threshold_size) * 5))); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 60, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __pyx_t_6 = __pyx_array_new(__pyx_t_1, sizeof(int), PyBytes_AS_STRING(__pyx_t_2), (char *) "c", (char *) __pyx_t_5);
-  if (unlikely(!__pyx_t_6)) __PYX_ERR(1, 66, __pyx_L1_error)
+  if (unlikely(!__pyx_t_6)) __PYX_ERR(1, 60, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_6);
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  __pyx_t_7 = __Pyx_PyObject_to_MemoryviewSlice_ds_int(((PyObject *)__pyx_t_6), PyBUF_WRITABLE); if (unlikely(!__pyx_t_7.memview)) __PYX_ERR(1, 66, __pyx_L1_error)
+  __pyx_t_7 = __Pyx_PyObject_to_MemoryviewSlice_ds_int(((PyObject *)__pyx_t_6), PyBUF_WRITABLE); if (unlikely(!__pyx_t_7.memview)) __PYX_ERR(1, 60, __pyx_L1_error)
   __Pyx_DECREF(((PyObject *)__pyx_t_6)); __pyx_t_6 = 0;
   __pyx_v_adj_mem = __pyx_t_7;
   __pyx_t_7.memview = NULL;
   __pyx_t_7.data = NULL;
 
-  /* "mcts_wrapper.pyx":67
+  /* "mcts_wrapper.pyx":61
  *             int num_of_samples = deref(self.mcts_cpp).get_num_of_samples()
  *             int[:] adj_mem = <int[:num_of_samples*self.threshold_size*5]> deref(self.mcts_cpp).get_adj_list()
  *             int[:] qubits_mem = <int[:num_of_samples*self.threshold_size*2]> deref(self.mcts_cpp).get_qubits_list()             # <<<<<<<<<<<<<<
@@ -3688,24 +3666,24 @@ static PyObject *__pyx_f_12mcts_wrapper_15MCTSTreeWrapper_get_data(struct __pyx_
   __pyx_t_5 = (*__pyx_v_self->mcts_cpp).get_qubits_list();
   if (!__pyx_t_5) {
     PyErr_SetString(PyExc_ValueError,"Cannot create cython.array from NULL pointer");
-    __PYX_ERR(1, 67, __pyx_L1_error)
+    __PYX_ERR(1, 61, __pyx_L1_error)
   }
-  __pyx_t_1 = __pyx_format_from_typeinfo(&__Pyx_TypeInfo_int); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 67, __pyx_L1_error)
+  __pyx_t_1 = __pyx_format_from_typeinfo(&__Pyx_TypeInfo_int); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 61, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_2 = Py_BuildValue((char*) "("  __PYX_BUILD_PY_SSIZE_T  ")", ((Py_ssize_t)((__pyx_v_num_of_samples * __pyx_v_self->threshold_size) * 2))); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 67, __pyx_L1_error)
+  __pyx_t_2 = Py_BuildValue((char*) "("  __PYX_BUILD_PY_SSIZE_T  ")", ((Py_ssize_t)((__pyx_v_num_of_samples * __pyx_v_self->threshold_size) * 2))); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 61, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __pyx_t_6 = __pyx_array_new(__pyx_t_2, sizeof(int), PyBytes_AS_STRING(__pyx_t_1), (char *) "c", (char *) __pyx_t_5);
-  if (unlikely(!__pyx_t_6)) __PYX_ERR(1, 67, __pyx_L1_error)
+  if (unlikely(!__pyx_t_6)) __PYX_ERR(1, 61, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_6);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-  __pyx_t_7 = __Pyx_PyObject_to_MemoryviewSlice_ds_int(((PyObject *)__pyx_t_6), PyBUF_WRITABLE); if (unlikely(!__pyx_t_7.memview)) __PYX_ERR(1, 67, __pyx_L1_error)
+  __pyx_t_7 = __Pyx_PyObject_to_MemoryviewSlice_ds_int(((PyObject *)__pyx_t_6), PyBUF_WRITABLE); if (unlikely(!__pyx_t_7.memview)) __PYX_ERR(1, 61, __pyx_L1_error)
   __Pyx_DECREF(((PyObject *)__pyx_t_6)); __pyx_t_6 = 0;
   __pyx_v_qubits_mem = __pyx_t_7;
   __pyx_t_7.memview = NULL;
   __pyx_t_7.data = NULL;
 
-  /* "mcts_wrapper.pyx":68
+  /* "mcts_wrapper.pyx":62
  *             int[:] adj_mem = <int[:num_of_samples*self.threshold_size*5]> deref(self.mcts_cpp).get_adj_list()
  *             int[:] qubits_mem = <int[:num_of_samples*self.threshold_size*2]> deref(self.mcts_cpp).get_qubits_list()
  *             int[:] num_mem = <int[:num_of_samples]> deref(self.mcts_cpp).get_num_list()             # <<<<<<<<<<<<<<
@@ -3715,24 +3693,24 @@ static PyObject *__pyx_f_12mcts_wrapper_15MCTSTreeWrapper_get_data(struct __pyx_
   __pyx_t_5 = (*__pyx_v_self->mcts_cpp).get_num_list();
   if (!__pyx_t_5) {
     PyErr_SetString(PyExc_ValueError,"Cannot create cython.array from NULL pointer");
-    __PYX_ERR(1, 68, __pyx_L1_error)
+    __PYX_ERR(1, 62, __pyx_L1_error)
   }
-  __pyx_t_2 = __pyx_format_from_typeinfo(&__Pyx_TypeInfo_int); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 68, __pyx_L1_error)
+  __pyx_t_2 = __pyx_format_from_typeinfo(&__Pyx_TypeInfo_int); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 62, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_1 = Py_BuildValue((char*) "("  __PYX_BUILD_PY_SSIZE_T  ")", ((Py_ssize_t)__pyx_v_num_of_samples)); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 68, __pyx_L1_error)
+  __pyx_t_1 = Py_BuildValue((char*) "("  __PYX_BUILD_PY_SSIZE_T  ")", ((Py_ssize_t)__pyx_v_num_of_samples)); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 62, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __pyx_t_6 = __pyx_array_new(__pyx_t_1, sizeof(int), PyBytes_AS_STRING(__pyx_t_2), (char *) "c", (char *) __pyx_t_5);
-  if (unlikely(!__pyx_t_6)) __PYX_ERR(1, 68, __pyx_L1_error)
+  if (unlikely(!__pyx_t_6)) __PYX_ERR(1, 62, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_6);
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  __pyx_t_7 = __Pyx_PyObject_to_MemoryviewSlice_ds_int(((PyObject *)__pyx_t_6), PyBUF_WRITABLE); if (unlikely(!__pyx_t_7.memview)) __PYX_ERR(1, 68, __pyx_L1_error)
+  __pyx_t_7 = __Pyx_PyObject_to_MemoryviewSlice_ds_int(((PyObject *)__pyx_t_6), PyBUF_WRITABLE); if (unlikely(!__pyx_t_7.memview)) __PYX_ERR(1, 62, __pyx_L1_error)
   __Pyx_DECREF(((PyObject *)__pyx_t_6)); __pyx_t_6 = 0;
   __pyx_v_num_mem = __pyx_t_7;
   __pyx_t_7.memview = NULL;
   __pyx_t_7.data = NULL;
 
-  /* "mcts_wrapper.pyx":69
+  /* "mcts_wrapper.pyx":63
  *             int[:] qubits_mem = <int[:num_of_samples*self.threshold_size*2]> deref(self.mcts_cpp).get_qubits_list()
  *             int[:] num_mem = <int[:num_of_samples]> deref(self.mcts_cpp).get_num_list()
  *             int[:] swap_gate_mem =<int[:num_of_samples]>  deref(self.mcts_cpp).get_swap_label_list()             # <<<<<<<<<<<<<<
@@ -3742,24 +3720,24 @@ static PyObject *__pyx_f_12mcts_wrapper_15MCTSTreeWrapper_get_data(struct __pyx_
   __pyx_t_5 = (*__pyx_v_self->mcts_cpp).get_swap_label_list();
   if (!__pyx_t_5) {
     PyErr_SetString(PyExc_ValueError,"Cannot create cython.array from NULL pointer");
-    __PYX_ERR(1, 69, __pyx_L1_error)
+    __PYX_ERR(1, 63, __pyx_L1_error)
   }
-  __pyx_t_1 = __pyx_format_from_typeinfo(&__Pyx_TypeInfo_int); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 69, __pyx_L1_error)
+  __pyx_t_1 = __pyx_format_from_typeinfo(&__Pyx_TypeInfo_int); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 63, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_2 = Py_BuildValue((char*) "("  __PYX_BUILD_PY_SSIZE_T  ")", ((Py_ssize_t)__pyx_v_num_of_samples)); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 69, __pyx_L1_error)
+  __pyx_t_2 = Py_BuildValue((char*) "("  __PYX_BUILD_PY_SSIZE_T  ")", ((Py_ssize_t)__pyx_v_num_of_samples)); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 63, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __pyx_t_6 = __pyx_array_new(__pyx_t_2, sizeof(int), PyBytes_AS_STRING(__pyx_t_1), (char *) "c", (char *) __pyx_t_5);
-  if (unlikely(!__pyx_t_6)) __PYX_ERR(1, 69, __pyx_L1_error)
+  if (unlikely(!__pyx_t_6)) __PYX_ERR(1, 63, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_6);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-  __pyx_t_7 = __Pyx_PyObject_to_MemoryviewSlice_ds_int(((PyObject *)__pyx_t_6), PyBUF_WRITABLE); if (unlikely(!__pyx_t_7.memview)) __PYX_ERR(1, 69, __pyx_L1_error)
+  __pyx_t_7 = __Pyx_PyObject_to_MemoryviewSlice_ds_int(((PyObject *)__pyx_t_6), PyBUF_WRITABLE); if (unlikely(!__pyx_t_7.memview)) __PYX_ERR(1, 63, __pyx_L1_error)
   __Pyx_DECREF(((PyObject *)__pyx_t_6)); __pyx_t_6 = 0;
   __pyx_v_swap_gate_mem = __pyx_t_7;
   __pyx_t_7.memview = NULL;
   __pyx_t_7.data = NULL;
 
-  /* "mcts_wrapper.pyx":70
+  /* "mcts_wrapper.pyx":64
  *             int[:] num_mem = <int[:num_of_samples]> deref(self.mcts_cpp).get_num_list()
  *             int[:] swap_gate_mem =<int[:num_of_samples]>  deref(self.mcts_cpp).get_swap_label_list()
  *             float[:] value_mem = <float[:num_of_samples]> deref(self.mcts_cpp).get_value_list()             # <<<<<<<<<<<<<<
@@ -3769,24 +3747,24 @@ static PyObject *__pyx_f_12mcts_wrapper_15MCTSTreeWrapper_get_data(struct __pyx_
   __pyx_t_8 = (*__pyx_v_self->mcts_cpp).get_value_list();
   if (!__pyx_t_8) {
     PyErr_SetString(PyExc_ValueError,"Cannot create cython.array from NULL pointer");
-    __PYX_ERR(1, 70, __pyx_L1_error)
+    __PYX_ERR(1, 64, __pyx_L1_error)
   }
-  __pyx_t_2 = __pyx_format_from_typeinfo(&__Pyx_TypeInfo_float); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 70, __pyx_L1_error)
+  __pyx_t_2 = __pyx_format_from_typeinfo(&__Pyx_TypeInfo_float); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 64, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_1 = Py_BuildValue((char*) "("  __PYX_BUILD_PY_SSIZE_T  ")", ((Py_ssize_t)__pyx_v_num_of_samples)); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 70, __pyx_L1_error)
+  __pyx_t_1 = Py_BuildValue((char*) "("  __PYX_BUILD_PY_SSIZE_T  ")", ((Py_ssize_t)__pyx_v_num_of_samples)); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 64, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __pyx_t_6 = __pyx_array_new(__pyx_t_1, sizeof(float), PyBytes_AS_STRING(__pyx_t_2), (char *) "c", (char *) __pyx_t_8);
-  if (unlikely(!__pyx_t_6)) __PYX_ERR(1, 70, __pyx_L1_error)
+  if (unlikely(!__pyx_t_6)) __PYX_ERR(1, 64, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_6);
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  __pyx_t_9 = __Pyx_PyObject_to_MemoryviewSlice_ds_float(((PyObject *)__pyx_t_6), PyBUF_WRITABLE); if (unlikely(!__pyx_t_9.memview)) __PYX_ERR(1, 70, __pyx_L1_error)
+  __pyx_t_9 = __Pyx_PyObject_to_MemoryviewSlice_ds_float(((PyObject *)__pyx_t_6), PyBUF_WRITABLE); if (unlikely(!__pyx_t_9.memview)) __PYX_ERR(1, 64, __pyx_L1_error)
   __Pyx_DECREF(((PyObject *)__pyx_t_6)); __pyx_t_6 = 0;
   __pyx_v_value_mem = __pyx_t_9;
   __pyx_t_9.memview = NULL;
   __pyx_t_9.data = NULL;
 
-  /* "mcts_wrapper.pyx":71
+  /* "mcts_wrapper.pyx":65
  *             int[:] swap_gate_mem =<int[:num_of_samples]>  deref(self.mcts_cpp).get_swap_label_list()
  *             float[:] value_mem = <float[:num_of_samples]> deref(self.mcts_cpp).get_value_list()
  *             float[:] action_prob_mem = <float[:num_of_samples*self.num_of_edges]> deref(self.mcts_cpp).get_action_prob_list()             # <<<<<<<<<<<<<<
@@ -3796,36 +3774,36 @@ static PyObject *__pyx_f_12mcts_wrapper_15MCTSTreeWrapper_get_data(struct __pyx_
   __pyx_t_8 = (*__pyx_v_self->mcts_cpp).get_action_prob_list();
   if (!__pyx_t_8) {
     PyErr_SetString(PyExc_ValueError,"Cannot create cython.array from NULL pointer");
-    __PYX_ERR(1, 71, __pyx_L1_error)
+    __PYX_ERR(1, 65, __pyx_L1_error)
   }
-  __pyx_t_1 = __pyx_format_from_typeinfo(&__Pyx_TypeInfo_float); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 71, __pyx_L1_error)
+  __pyx_t_1 = __pyx_format_from_typeinfo(&__Pyx_TypeInfo_float); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 65, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_2 = Py_BuildValue((char*) "("  __PYX_BUILD_PY_SSIZE_T  ")", ((Py_ssize_t)(__pyx_v_num_of_samples * __pyx_v_self->num_of_edges))); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 71, __pyx_L1_error)
+  __pyx_t_2 = Py_BuildValue((char*) "("  __PYX_BUILD_PY_SSIZE_T  ")", ((Py_ssize_t)(__pyx_v_num_of_samples * __pyx_v_self->num_of_edges))); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 65, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __pyx_t_6 = __pyx_array_new(__pyx_t_2, sizeof(float), PyBytes_AS_STRING(__pyx_t_1), (char *) "c", (char *) __pyx_t_8);
-  if (unlikely(!__pyx_t_6)) __PYX_ERR(1, 71, __pyx_L1_error)
+  if (unlikely(!__pyx_t_6)) __PYX_ERR(1, 65, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_6);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-  __pyx_t_9 = __Pyx_PyObject_to_MemoryviewSlice_ds_float(((PyObject *)__pyx_t_6), PyBUF_WRITABLE); if (unlikely(!__pyx_t_9.memview)) __PYX_ERR(1, 71, __pyx_L1_error)
+  __pyx_t_9 = __Pyx_PyObject_to_MemoryviewSlice_ds_float(((PyObject *)__pyx_t_6), PyBUF_WRITABLE); if (unlikely(!__pyx_t_9.memview)) __PYX_ERR(1, 65, __pyx_L1_error)
   __Pyx_DECREF(((PyObject *)__pyx_t_6)); __pyx_t_6 = 0;
   __pyx_v_action_prob_mem = __pyx_t_9;
   __pyx_t_9.memview = NULL;
   __pyx_t_9.data = NULL;
 
-  /* "mcts_wrapper.pyx":74
+  /* "mcts_wrapper.pyx":68
  * 
  * 
  *         adj = np.asarray(adj_mem)             # <<<<<<<<<<<<<<
  *         adj = adj.reshape((num_of_samples, self.threshold_size, 5))
  * 
  */
-  __Pyx_GetModuleGlobalName(__pyx_t_2, __pyx_n_s_np); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 74, __pyx_L1_error)
+  __Pyx_GetModuleGlobalName(__pyx_t_2, __pyx_n_s_np); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 68, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_asarray); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 74, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_asarray); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 68, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  __pyx_t_2 = __pyx_memoryview_fromslice(__pyx_v_adj_mem, 1, (PyObject *(*)(char *)) __pyx_memview_get_int, (int (*)(char *, PyObject *)) __pyx_memview_set_int, 0);; if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 74, __pyx_L1_error)
+  __pyx_t_2 = __pyx_memoryview_fromslice(__pyx_v_adj_mem, 1, (PyObject *(*)(char *)) __pyx_memview_get_int, (int (*)(char *, PyObject *)) __pyx_memview_set_int, 0);; if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 68, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __pyx_t_4 = NULL;
   if (CYTHON_UNPACK_METHODS && unlikely(PyMethod_Check(__pyx_t_3))) {
@@ -3840,26 +3818,26 @@ static PyObject *__pyx_f_12mcts_wrapper_15MCTSTreeWrapper_get_data(struct __pyx_
   __pyx_t_1 = (__pyx_t_4) ? __Pyx_PyObject_Call2Args(__pyx_t_3, __pyx_t_4, __pyx_t_2) : __Pyx_PyObject_CallOneArg(__pyx_t_3, __pyx_t_2);
   __Pyx_XDECREF(__pyx_t_4); __pyx_t_4 = 0;
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 74, __pyx_L1_error)
+  if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 68, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
   __pyx_v_adj = __pyx_t_1;
   __pyx_t_1 = 0;
 
-  /* "mcts_wrapper.pyx":75
+  /* "mcts_wrapper.pyx":69
  * 
  *         adj = np.asarray(adj_mem)
  *         adj = adj.reshape((num_of_samples, self.threshold_size, 5))             # <<<<<<<<<<<<<<
  * 
  *         qubits = np.asarray(qubits_mem)
  */
-  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_v_adj, __pyx_n_s_reshape); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 75, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_v_adj, __pyx_n_s_reshape); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 69, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
-  __pyx_t_2 = __Pyx_PyInt_From_int(__pyx_v_num_of_samples); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 75, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyInt_From_int(__pyx_v_num_of_samples); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 69, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_4 = __Pyx_PyInt_From_int(__pyx_v_self->threshold_size); if (unlikely(!__pyx_t_4)) __PYX_ERR(1, 75, __pyx_L1_error)
+  __pyx_t_4 = __Pyx_PyInt_From_int(__pyx_v_self->threshold_size); if (unlikely(!__pyx_t_4)) __PYX_ERR(1, 69, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
-  __pyx_t_10 = PyTuple_New(3); if (unlikely(!__pyx_t_10)) __PYX_ERR(1, 75, __pyx_L1_error)
+  __pyx_t_10 = PyTuple_New(3); if (unlikely(!__pyx_t_10)) __PYX_ERR(1, 69, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_10);
   __Pyx_GIVEREF(__pyx_t_2);
   PyTuple_SET_ITEM(__pyx_t_10, 0, __pyx_t_2);
@@ -3883,25 +3861,25 @@ static PyObject *__pyx_f_12mcts_wrapper_15MCTSTreeWrapper_get_data(struct __pyx_
   __pyx_t_1 = (__pyx_t_4) ? __Pyx_PyObject_Call2Args(__pyx_t_3, __pyx_t_4, __pyx_t_10) : __Pyx_PyObject_CallOneArg(__pyx_t_3, __pyx_t_10);
   __Pyx_XDECREF(__pyx_t_4); __pyx_t_4 = 0;
   __Pyx_DECREF(__pyx_t_10); __pyx_t_10 = 0;
-  if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 75, __pyx_L1_error)
+  if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 69, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
   __Pyx_DECREF_SET(__pyx_v_adj, __pyx_t_1);
   __pyx_t_1 = 0;
 
-  /* "mcts_wrapper.pyx":77
+  /* "mcts_wrapper.pyx":71
  *         adj = adj.reshape((num_of_samples, self.threshold_size, 5))
  * 
  *         qubits = np.asarray(qubits_mem)             # <<<<<<<<<<<<<<
  *         qubits = qubits.reshape((num_of_samples, self.threshold_size, 2))
  * 
  */
-  __Pyx_GetModuleGlobalName(__pyx_t_3, __pyx_n_s_np); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 77, __pyx_L1_error)
+  __Pyx_GetModuleGlobalName(__pyx_t_3, __pyx_n_s_np); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 71, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
-  __pyx_t_10 = __Pyx_PyObject_GetAttrStr(__pyx_t_3, __pyx_n_s_asarray); if (unlikely(!__pyx_t_10)) __PYX_ERR(1, 77, __pyx_L1_error)
+  __pyx_t_10 = __Pyx_PyObject_GetAttrStr(__pyx_t_3, __pyx_n_s_asarray); if (unlikely(!__pyx_t_10)) __PYX_ERR(1, 71, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_10);
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-  __pyx_t_3 = __pyx_memoryview_fromslice(__pyx_v_qubits_mem, 1, (PyObject *(*)(char *)) __pyx_memview_get_int, (int (*)(char *, PyObject *)) __pyx_memview_set_int, 0);; if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 77, __pyx_L1_error)
+  __pyx_t_3 = __pyx_memoryview_fromslice(__pyx_v_qubits_mem, 1, (PyObject *(*)(char *)) __pyx_memview_get_int, (int (*)(char *, PyObject *)) __pyx_memview_set_int, 0);; if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 71, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
   __pyx_t_4 = NULL;
   if (CYTHON_UNPACK_METHODS && unlikely(PyMethod_Check(__pyx_t_10))) {
@@ -3916,26 +3894,26 @@ static PyObject *__pyx_f_12mcts_wrapper_15MCTSTreeWrapper_get_data(struct __pyx_
   __pyx_t_1 = (__pyx_t_4) ? __Pyx_PyObject_Call2Args(__pyx_t_10, __pyx_t_4, __pyx_t_3) : __Pyx_PyObject_CallOneArg(__pyx_t_10, __pyx_t_3);
   __Pyx_XDECREF(__pyx_t_4); __pyx_t_4 = 0;
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-  if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 77, __pyx_L1_error)
+  if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 71, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __Pyx_DECREF(__pyx_t_10); __pyx_t_10 = 0;
   __pyx_v_qubits = __pyx_t_1;
   __pyx_t_1 = 0;
 
-  /* "mcts_wrapper.pyx":78
+  /* "mcts_wrapper.pyx":72
  * 
  *         qubits = np.asarray(qubits_mem)
  *         qubits = qubits.reshape((num_of_samples, self.threshold_size, 2))             # <<<<<<<<<<<<<<
  * 
  *         num = np.asarray(num_mem)
  */
-  __pyx_t_10 = __Pyx_PyObject_GetAttrStr(__pyx_v_qubits, __pyx_n_s_reshape); if (unlikely(!__pyx_t_10)) __PYX_ERR(1, 78, __pyx_L1_error)
+  __pyx_t_10 = __Pyx_PyObject_GetAttrStr(__pyx_v_qubits, __pyx_n_s_reshape); if (unlikely(!__pyx_t_10)) __PYX_ERR(1, 72, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_10);
-  __pyx_t_3 = __Pyx_PyInt_From_int(__pyx_v_num_of_samples); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 78, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyInt_From_int(__pyx_v_num_of_samples); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 72, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
-  __pyx_t_4 = __Pyx_PyInt_From_int(__pyx_v_self->threshold_size); if (unlikely(!__pyx_t_4)) __PYX_ERR(1, 78, __pyx_L1_error)
+  __pyx_t_4 = __Pyx_PyInt_From_int(__pyx_v_self->threshold_size); if (unlikely(!__pyx_t_4)) __PYX_ERR(1, 72, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
-  __pyx_t_2 = PyTuple_New(3); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 78, __pyx_L1_error)
+  __pyx_t_2 = PyTuple_New(3); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 72, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_GIVEREF(__pyx_t_3);
   PyTuple_SET_ITEM(__pyx_t_2, 0, __pyx_t_3);
@@ -3959,25 +3937,25 @@ static PyObject *__pyx_f_12mcts_wrapper_15MCTSTreeWrapper_get_data(struct __pyx_
   __pyx_t_1 = (__pyx_t_4) ? __Pyx_PyObject_Call2Args(__pyx_t_10, __pyx_t_4, __pyx_t_2) : __Pyx_PyObject_CallOneArg(__pyx_t_10, __pyx_t_2);
   __Pyx_XDECREF(__pyx_t_4); __pyx_t_4 = 0;
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 78, __pyx_L1_error)
+  if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 72, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __Pyx_DECREF(__pyx_t_10); __pyx_t_10 = 0;
   __Pyx_DECREF_SET(__pyx_v_qubits, __pyx_t_1);
   __pyx_t_1 = 0;
 
-  /* "mcts_wrapper.pyx":80
+  /* "mcts_wrapper.pyx":74
  *         qubits = qubits.reshape((num_of_samples, self.threshold_size, 2))
  * 
  *         num = np.asarray(num_mem)             # <<<<<<<<<<<<<<
  *         swap_gate = np.asarray(swap_gate_mem)
  *         value = np.asarray(value_mem)
  */
-  __Pyx_GetModuleGlobalName(__pyx_t_10, __pyx_n_s_np); if (unlikely(!__pyx_t_10)) __PYX_ERR(1, 80, __pyx_L1_error)
+  __Pyx_GetModuleGlobalName(__pyx_t_10, __pyx_n_s_np); if (unlikely(!__pyx_t_10)) __PYX_ERR(1, 74, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_10);
-  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_10, __pyx_n_s_asarray); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 80, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_10, __pyx_n_s_asarray); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 74, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_DECREF(__pyx_t_10); __pyx_t_10 = 0;
-  __pyx_t_10 = __pyx_memoryview_fromslice(__pyx_v_num_mem, 1, (PyObject *(*)(char *)) __pyx_memview_get_int, (int (*)(char *, PyObject *)) __pyx_memview_set_int, 0);; if (unlikely(!__pyx_t_10)) __PYX_ERR(1, 80, __pyx_L1_error)
+  __pyx_t_10 = __pyx_memoryview_fromslice(__pyx_v_num_mem, 1, (PyObject *(*)(char *)) __pyx_memview_get_int, (int (*)(char *, PyObject *)) __pyx_memview_set_int, 0);; if (unlikely(!__pyx_t_10)) __PYX_ERR(1, 74, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_10);
   __pyx_t_4 = NULL;
   if (CYTHON_UNPACK_METHODS && unlikely(PyMethod_Check(__pyx_t_2))) {
@@ -3992,25 +3970,25 @@ static PyObject *__pyx_f_12mcts_wrapper_15MCTSTreeWrapper_get_data(struct __pyx_
   __pyx_t_1 = (__pyx_t_4) ? __Pyx_PyObject_Call2Args(__pyx_t_2, __pyx_t_4, __pyx_t_10) : __Pyx_PyObject_CallOneArg(__pyx_t_2, __pyx_t_10);
   __Pyx_XDECREF(__pyx_t_4); __pyx_t_4 = 0;
   __Pyx_DECREF(__pyx_t_10); __pyx_t_10 = 0;
-  if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 80, __pyx_L1_error)
+  if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 74, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   __pyx_v_num = __pyx_t_1;
   __pyx_t_1 = 0;
 
-  /* "mcts_wrapper.pyx":81
+  /* "mcts_wrapper.pyx":75
  * 
  *         num = np.asarray(num_mem)
  *         swap_gate = np.asarray(swap_gate_mem)             # <<<<<<<<<<<<<<
  *         value = np.asarray(value_mem)
  * 
  */
-  __Pyx_GetModuleGlobalName(__pyx_t_2, __pyx_n_s_np); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 81, __pyx_L1_error)
+  __Pyx_GetModuleGlobalName(__pyx_t_2, __pyx_n_s_np); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 75, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_10 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_asarray); if (unlikely(!__pyx_t_10)) __PYX_ERR(1, 81, __pyx_L1_error)
+  __pyx_t_10 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_asarray); if (unlikely(!__pyx_t_10)) __PYX_ERR(1, 75, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_10);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  __pyx_t_2 = __pyx_memoryview_fromslice(__pyx_v_swap_gate_mem, 1, (PyObject *(*)(char *)) __pyx_memview_get_int, (int (*)(char *, PyObject *)) __pyx_memview_set_int, 0);; if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 81, __pyx_L1_error)
+  __pyx_t_2 = __pyx_memoryview_fromslice(__pyx_v_swap_gate_mem, 1, (PyObject *(*)(char *)) __pyx_memview_get_int, (int (*)(char *, PyObject *)) __pyx_memview_set_int, 0);; if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 75, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __pyx_t_4 = NULL;
   if (CYTHON_UNPACK_METHODS && unlikely(PyMethod_Check(__pyx_t_10))) {
@@ -4025,25 +4003,25 @@ static PyObject *__pyx_f_12mcts_wrapper_15MCTSTreeWrapper_get_data(struct __pyx_
   __pyx_t_1 = (__pyx_t_4) ? __Pyx_PyObject_Call2Args(__pyx_t_10, __pyx_t_4, __pyx_t_2) : __Pyx_PyObject_CallOneArg(__pyx_t_10, __pyx_t_2);
   __Pyx_XDECREF(__pyx_t_4); __pyx_t_4 = 0;
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 81, __pyx_L1_error)
+  if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 75, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __Pyx_DECREF(__pyx_t_10); __pyx_t_10 = 0;
   __pyx_v_swap_gate = __pyx_t_1;
   __pyx_t_1 = 0;
 
-  /* "mcts_wrapper.pyx":82
+  /* "mcts_wrapper.pyx":76
  *         num = np.asarray(num_mem)
  *         swap_gate = np.asarray(swap_gate_mem)
  *         value = np.asarray(value_mem)             # <<<<<<<<<<<<<<
  * 
  *         action_prob = np.asarray(action_prob_mem)
  */
-  __Pyx_GetModuleGlobalName(__pyx_t_10, __pyx_n_s_np); if (unlikely(!__pyx_t_10)) __PYX_ERR(1, 82, __pyx_L1_error)
+  __Pyx_GetModuleGlobalName(__pyx_t_10, __pyx_n_s_np); if (unlikely(!__pyx_t_10)) __PYX_ERR(1, 76, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_10);
-  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_10, __pyx_n_s_asarray); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 82, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_10, __pyx_n_s_asarray); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 76, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_DECREF(__pyx_t_10); __pyx_t_10 = 0;
-  __pyx_t_10 = __pyx_memoryview_fromslice(__pyx_v_value_mem, 1, (PyObject *(*)(char *)) __pyx_memview_get_float, (int (*)(char *, PyObject *)) __pyx_memview_set_float, 0);; if (unlikely(!__pyx_t_10)) __PYX_ERR(1, 82, __pyx_L1_error)
+  __pyx_t_10 = __pyx_memoryview_fromslice(__pyx_v_value_mem, 1, (PyObject *(*)(char *)) __pyx_memview_get_float, (int (*)(char *, PyObject *)) __pyx_memview_set_float, 0);; if (unlikely(!__pyx_t_10)) __PYX_ERR(1, 76, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_10);
   __pyx_t_4 = NULL;
   if (CYTHON_UNPACK_METHODS && unlikely(PyMethod_Check(__pyx_t_2))) {
@@ -4058,25 +4036,25 @@ static PyObject *__pyx_f_12mcts_wrapper_15MCTSTreeWrapper_get_data(struct __pyx_
   __pyx_t_1 = (__pyx_t_4) ? __Pyx_PyObject_Call2Args(__pyx_t_2, __pyx_t_4, __pyx_t_10) : __Pyx_PyObject_CallOneArg(__pyx_t_2, __pyx_t_10);
   __Pyx_XDECREF(__pyx_t_4); __pyx_t_4 = 0;
   __Pyx_DECREF(__pyx_t_10); __pyx_t_10 = 0;
-  if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 82, __pyx_L1_error)
+  if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 76, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   __pyx_v_value = __pyx_t_1;
   __pyx_t_1 = 0;
 
-  /* "mcts_wrapper.pyx":84
+  /* "mcts_wrapper.pyx":78
  *         value = np.asarray(value_mem)
  * 
  *         action_prob = np.asarray(action_prob_mem)             # <<<<<<<<<<<<<<
  *         action_prob = action_prob.reshape((num_of_samples, self.num_of_edges))
  * 
  */
-  __Pyx_GetModuleGlobalName(__pyx_t_2, __pyx_n_s_np); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 84, __pyx_L1_error)
+  __Pyx_GetModuleGlobalName(__pyx_t_2, __pyx_n_s_np); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 78, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_10 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_asarray); if (unlikely(!__pyx_t_10)) __PYX_ERR(1, 84, __pyx_L1_error)
+  __pyx_t_10 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_asarray); if (unlikely(!__pyx_t_10)) __PYX_ERR(1, 78, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_10);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  __pyx_t_2 = __pyx_memoryview_fromslice(__pyx_v_action_prob_mem, 1, (PyObject *(*)(char *)) __pyx_memview_get_float, (int (*)(char *, PyObject *)) __pyx_memview_set_float, 0);; if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 84, __pyx_L1_error)
+  __pyx_t_2 = __pyx_memoryview_fromslice(__pyx_v_action_prob_mem, 1, (PyObject *(*)(char *)) __pyx_memview_get_float, (int (*)(char *, PyObject *)) __pyx_memview_set_float, 0);; if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 78, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __pyx_t_4 = NULL;
   if (CYTHON_UNPACK_METHODS && unlikely(PyMethod_Check(__pyx_t_10))) {
@@ -4091,26 +4069,26 @@ static PyObject *__pyx_f_12mcts_wrapper_15MCTSTreeWrapper_get_data(struct __pyx_
   __pyx_t_1 = (__pyx_t_4) ? __Pyx_PyObject_Call2Args(__pyx_t_10, __pyx_t_4, __pyx_t_2) : __Pyx_PyObject_CallOneArg(__pyx_t_10, __pyx_t_2);
   __Pyx_XDECREF(__pyx_t_4); __pyx_t_4 = 0;
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 84, __pyx_L1_error)
+  if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 78, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __Pyx_DECREF(__pyx_t_10); __pyx_t_10 = 0;
   __pyx_v_action_prob = __pyx_t_1;
   __pyx_t_1 = 0;
 
-  /* "mcts_wrapper.pyx":85
+  /* "mcts_wrapper.pyx":79
  * 
  *         action_prob = np.asarray(action_prob_mem)
  *         action_prob = action_prob.reshape((num_of_samples, self.num_of_edges))             # <<<<<<<<<<<<<<
  * 
  *         return num_of_samples, adj, qubits, num, swap_gate, value, action_prob
  */
-  __pyx_t_10 = __Pyx_PyObject_GetAttrStr(__pyx_v_action_prob, __pyx_n_s_reshape); if (unlikely(!__pyx_t_10)) __PYX_ERR(1, 85, __pyx_L1_error)
+  __pyx_t_10 = __Pyx_PyObject_GetAttrStr(__pyx_v_action_prob, __pyx_n_s_reshape); if (unlikely(!__pyx_t_10)) __PYX_ERR(1, 79, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_10);
-  __pyx_t_2 = __Pyx_PyInt_From_int(__pyx_v_num_of_samples); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 85, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyInt_From_int(__pyx_v_num_of_samples); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 79, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_4 = __Pyx_PyInt_From_int(__pyx_v_self->num_of_edges); if (unlikely(!__pyx_t_4)) __PYX_ERR(1, 85, __pyx_L1_error)
+  __pyx_t_4 = __Pyx_PyInt_From_int(__pyx_v_self->num_of_edges); if (unlikely(!__pyx_t_4)) __PYX_ERR(1, 79, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
-  __pyx_t_3 = PyTuple_New(2); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 85, __pyx_L1_error)
+  __pyx_t_3 = PyTuple_New(2); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 79, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
   __Pyx_GIVEREF(__pyx_t_2);
   PyTuple_SET_ITEM(__pyx_t_3, 0, __pyx_t_2);
@@ -4131,13 +4109,13 @@ static PyObject *__pyx_f_12mcts_wrapper_15MCTSTreeWrapper_get_data(struct __pyx_
   __pyx_t_1 = (__pyx_t_4) ? __Pyx_PyObject_Call2Args(__pyx_t_10, __pyx_t_4, __pyx_t_3) : __Pyx_PyObject_CallOneArg(__pyx_t_10, __pyx_t_3);
   __Pyx_XDECREF(__pyx_t_4); __pyx_t_4 = 0;
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-  if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 85, __pyx_L1_error)
+  if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 79, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __Pyx_DECREF(__pyx_t_10); __pyx_t_10 = 0;
   __Pyx_DECREF_SET(__pyx_v_action_prob, __pyx_t_1);
   __pyx_t_1 = 0;
 
-  /* "mcts_wrapper.pyx":87
+  /* "mcts_wrapper.pyx":81
  *         action_prob = action_prob.reshape((num_of_samples, self.num_of_edges))
  * 
  *         return num_of_samples, adj, qubits, num, swap_gate, value, action_prob             # <<<<<<<<<<<<<<
@@ -4145,9 +4123,9 @@ static PyObject *__pyx_f_12mcts_wrapper_15MCTSTreeWrapper_get_data(struct __pyx_
  *     def get_swap_gate_list(self):
  */
   __Pyx_XDECREF(__pyx_r);
-  __pyx_t_1 = __Pyx_PyInt_From_int(__pyx_v_num_of_samples); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 87, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyInt_From_int(__pyx_v_num_of_samples); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 81, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_10 = PyTuple_New(7); if (unlikely(!__pyx_t_10)) __PYX_ERR(1, 87, __pyx_L1_error)
+  __pyx_t_10 = PyTuple_New(7); if (unlikely(!__pyx_t_10)) __PYX_ERR(1, 81, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_10);
   __Pyx_GIVEREF(__pyx_t_1);
   PyTuple_SET_ITEM(__pyx_t_10, 0, __pyx_t_1);
@@ -4174,7 +4152,7 @@ static PyObject *__pyx_f_12mcts_wrapper_15MCTSTreeWrapper_get_data(struct __pyx_
   __pyx_t_10 = 0;
   goto __pyx_L0;
 
-  /* "mcts_wrapper.pyx":63
+  /* "mcts_wrapper.pyx":57
  *         return deref(self.mcts_cpp).run()
  * 
  *     cpdef get_data(self):             # <<<<<<<<<<<<<<
@@ -4234,7 +4212,7 @@ static PyObject *__pyx_pf_12mcts_wrapper_15MCTSTreeWrapper_6get_data(struct __py
   int __pyx_clineno = 0;
   __Pyx_RefNannySetupContext("get_data", 0);
   __Pyx_XDECREF(__pyx_r);
-  __pyx_t_1 = __pyx_f_12mcts_wrapper_15MCTSTreeWrapper_get_data(__pyx_v_self, 1); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 63, __pyx_L1_error)
+  __pyx_t_1 = __pyx_f_12mcts_wrapper_15MCTSTreeWrapper_get_data(__pyx_v_self, 1); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 57, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __pyx_r = __pyx_t_1;
   __pyx_t_1 = 0;
@@ -4251,7 +4229,7 @@ static PyObject *__pyx_pf_12mcts_wrapper_15MCTSTreeWrapper_6get_data(struct __py
   return __pyx_r;
 }
 
-/* "mcts_wrapper.pyx":89
+/* "mcts_wrapper.pyx":83
  *         return num_of_samples, adj, qubits, num, swap_gate, value, action_prob
  * 
  *     def get_swap_gate_list(self):             # <<<<<<<<<<<<<<
@@ -4281,7 +4259,7 @@ static PyObject *__pyx_pf_12mcts_wrapper_15MCTSTreeWrapper_8get_swap_gate_list(s
   int __pyx_clineno = 0;
   __Pyx_RefNannySetupContext("get_swap_gate_list", 0);
 
-  /* "mcts_wrapper.pyx":90
+  /* "mcts_wrapper.pyx":84
  * 
  *     def get_swap_gate_list(self):
  *         return  deref(self.mcts_cpp).get_added_swap_label_list()             # <<<<<<<<<<<<<<
@@ -4289,13 +4267,13 @@ static PyObject *__pyx_pf_12mcts_wrapper_15MCTSTreeWrapper_8get_swap_gate_list(s
  * 
  */
   __Pyx_XDECREF(__pyx_r);
-  __pyx_t_1 = __pyx_convert_vector_to_py_int((*__pyx_v_self->mcts_cpp).get_added_swap_label_list()); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 90, __pyx_L1_error)
+  __pyx_t_1 = __pyx_convert_vector_to_py_int((*__pyx_v_self->mcts_cpp).get_added_swap_label_list()); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 84, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __pyx_r = __pyx_t_1;
   __pyx_t_1 = 0;
   goto __pyx_L0;
 
-  /* "mcts_wrapper.pyx":89
+  /* "mcts_wrapper.pyx":83
  *         return num_of_samples, adj, qubits, num, swap_gate, value, action_prob
  * 
  *     def get_swap_gate_list(self):             # <<<<<<<<<<<<<<
@@ -4314,7 +4292,7 @@ static PyObject *__pyx_pf_12mcts_wrapper_15MCTSTreeWrapper_8get_swap_gate_list(s
   return __pyx_r;
 }
 
-/* "mcts_wrapper.pyx":93
+/* "mcts_wrapper.pyx":87
  * 
  * 
  *     def __dealloc__(self):             # <<<<<<<<<<<<<<
@@ -4337,7 +4315,7 @@ static void __pyx_pf_12mcts_wrapper_15MCTSTreeWrapper_10__dealloc__(struct __pyx
   __Pyx_RefNannyDeclarations
   __Pyx_RefNannySetupContext("__dealloc__", 0);
 
-  /* "mcts_wrapper.pyx":94
+  /* "mcts_wrapper.pyx":88
  * 
  *     def __dealloc__(self):
  *         del self.mcts_cpp             # <<<<<<<<<<<<<<
@@ -4346,7 +4324,7 @@ static void __pyx_pf_12mcts_wrapper_15MCTSTreeWrapper_10__dealloc__(struct __pyx
  */
   delete __pyx_v_self->mcts_cpp;
 
-  /* "mcts_wrapper.pyx":93
+  /* "mcts_wrapper.pyx":87
  * 
  * 
  *     def __dealloc__(self):             # <<<<<<<<<<<<<<
@@ -20457,16 +20435,16 @@ static int __Pyx_modinit_type_init_code(void) {
   /*--- Type init code ---*/
   __pyx_vtabptr_12mcts_wrapper_MCTSTreeWrapper = &__pyx_vtable_12mcts_wrapper_MCTSTreeWrapper;
   __pyx_vtable_12mcts_wrapper_MCTSTreeWrapper.get_data = (PyObject *(*)(struct __pyx_obj_12mcts_wrapper_MCTSTreeWrapper *, int __pyx_skip_dispatch))__pyx_f_12mcts_wrapper_15MCTSTreeWrapper_get_data;
-  if (PyType_Ready(&__pyx_type_12mcts_wrapper_MCTSTreeWrapper) < 0) __PYX_ERR(1, 23, __pyx_L1_error)
+  if (PyType_Ready(&__pyx_type_12mcts_wrapper_MCTSTreeWrapper) < 0) __PYX_ERR(1, 17, __pyx_L1_error)
   #if PY_VERSION_HEX < 0x030800B1
   __pyx_type_12mcts_wrapper_MCTSTreeWrapper.tp_print = 0;
   #endif
   if ((CYTHON_USE_TYPE_SLOTS && CYTHON_USE_PYTYPE_LOOKUP) && likely(!__pyx_type_12mcts_wrapper_MCTSTreeWrapper.tp_dictoffset && __pyx_type_12mcts_wrapper_MCTSTreeWrapper.tp_getattro == PyObject_GenericGetAttr)) {
     __pyx_type_12mcts_wrapper_MCTSTreeWrapper.tp_getattro = __Pyx_PyObject_GenericGetAttr;
   }
-  if (__Pyx_SetVtable(__pyx_type_12mcts_wrapper_MCTSTreeWrapper.tp_dict, __pyx_vtabptr_12mcts_wrapper_MCTSTreeWrapper) < 0) __PYX_ERR(1, 23, __pyx_L1_error)
-  if (PyObject_SetAttr(__pyx_m, __pyx_n_s_MCTSTreeWrapper, (PyObject *)&__pyx_type_12mcts_wrapper_MCTSTreeWrapper) < 0) __PYX_ERR(1, 23, __pyx_L1_error)
-  if (__Pyx_setup_reduce((PyObject*)&__pyx_type_12mcts_wrapper_MCTSTreeWrapper) < 0) __PYX_ERR(1, 23, __pyx_L1_error)
+  if (__Pyx_SetVtable(__pyx_type_12mcts_wrapper_MCTSTreeWrapper.tp_dict, __pyx_vtabptr_12mcts_wrapper_MCTSTreeWrapper) < 0) __PYX_ERR(1, 17, __pyx_L1_error)
+  if (PyObject_SetAttr(__pyx_m, __pyx_n_s_MCTSTreeWrapper, (PyObject *)&__pyx_type_12mcts_wrapper_MCTSTreeWrapper) < 0) __PYX_ERR(1, 17, __pyx_L1_error)
+  if (__Pyx_setup_reduce((PyObject*)&__pyx_type_12mcts_wrapper_MCTSTreeWrapper) < 0) __PYX_ERR(1, 17, __pyx_L1_error)
   __pyx_ptype_12mcts_wrapper_MCTSTreeWrapper = &__pyx_type_12mcts_wrapper_MCTSTreeWrapper;
   __pyx_vtabptr_array = &__pyx_vtable_array;
   __pyx_vtable_array.get_memview = (PyObject *(*)(struct __pyx_array_obj *))__pyx_array_get_memview;
@@ -20805,16 +20783,16 @@ if (!__Pyx_RefNanny) {
   if (__Pyx_patch_abc() < 0) __PYX_ERR(1, 1, __pyx_L1_error)
   #endif
 
-  /* "mcts_wrapper.pyx":11
+  /* "mcts_wrapper.pyx":10
  * 
- * cimport numpy as np
+ * 
  * import numpy as np             # <<<<<<<<<<<<<<
- * 
+ * cimport numpy as np
  * from cython.operator cimport dereference as deref
  */
-  __pyx_t_1 = __Pyx_Import(__pyx_n_s_numpy, 0, 0); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 11, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_Import(__pyx_n_s_numpy, 0, 0); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 10, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  if (PyDict_SetItem(__pyx_d, __pyx_n_s_np, __pyx_t_1) < 0) __PYX_ERR(1, 11, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_d, __pyx_n_s_np, __pyx_t_1) < 0) __PYX_ERR(1, 10, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
   /* "mcts_wrapper.pyx":1

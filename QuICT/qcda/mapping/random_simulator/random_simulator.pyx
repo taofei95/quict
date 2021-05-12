@@ -656,10 +656,4 @@ cdef class RandomSimulator:
             else:
                 return -1
             #print("%d and %d"%(minimum, num_of_executed_gates))
-            
-            
-
-
-            
-            
 
