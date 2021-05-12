@@ -29,7 +29,7 @@ class RLMCTS(MCTS):
         self._coupling_graph = get_coupling_graph(graph_name=graph_name)
         self._experience_pool = experience_pool
         if device == torch.device("cpu"):
-            assert (device_id < 3 and device_id >= 0)
+            assert (3 > device_id >= 0)
             d = device_id + 1
         elif device == torch.device("cuda"):
             d = 0
