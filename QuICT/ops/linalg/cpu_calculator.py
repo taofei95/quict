@@ -7,7 +7,6 @@ from typing import *
 
 from .utils import mapping_augment
 
-
 class CPUCalculator:
     @staticmethod
     @njit(parallel=True, nogil=True)
