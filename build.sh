@@ -75,6 +75,8 @@ fi
 
 NPROC=$($PYTHON3 -c "print(int($NPROC/2))")
 
+export CMAKE_BUILD_PARALLEL_LEVEL=$NPROC
+
 echo "Building with parallel parameter: $NPROC"
 
 # Build TBB

@@ -30,6 +30,10 @@ def print_cyan(s):
     print(f"\033[36m{s}\033[39m")
 
 
+def print_magenta(s):
+    print(f"\033[95m{s}\033[39m")
+
+
 def print_yellow(s):
     print(f"\033[33m{s}\033[39m")
 
@@ -246,3 +250,4 @@ setup(
     zip_safe=False,
 )
 print_segment()
+print_magenta("Done.")
