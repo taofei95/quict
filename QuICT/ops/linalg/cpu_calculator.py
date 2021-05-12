@@ -78,8 +78,6 @@ class CPUCalculator:
         Returns:
             np.array<np.complex>: the result of Permutation
         """
-        mapping = np.array(mapping, dtype=np.int64)
-
         if not A.shape[0] == 1 << mapping.shape[0]:
             raise IndexError("Indices do not match!")
 

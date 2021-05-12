@@ -89,6 +89,29 @@ TENSOR_MATRIX_TEMPLATE = SourceModule(r"""
     }
     """)
 
+MATRIX_PERM_TEMPLATE = SourceModule(r"""
+    #include <pycuda-complex.hpp>
+    void __global__ perm_matrix(pycuda::complex<double> *out, const pycuda::complex<double> *A, const int *mapping, const int *size)
+    {
+        const int out_x = size[0];
+        const int out_y = size[1];
+
+        const int stride_x = blockDim.x * gridDim.x;
+        const int stride_y = blockDim.y * gridDim.y;
+
+        const int idx_x = threadIdx.x + blockIdx.x * blockDim.x;
+        const int idx_y = threadIdx.y + blockIdx.y * blockDim.y;
+
+        for(int i = idx_x; i < out_x; i += stride_x){
+            for(int j = idx_y; j < out_y; j += stride_y){
+                const int reverse_x = mapping[i];
+                const int reverse_y = mapping[j];
+                out[i * out_y + j] = A[reverse_x * out_y + reverse_y];
+            }
+        }
+    }
+""")
+
 
 class GPUCalculator:
     """ Based matrix algorithms for running in GPU. """
@@ -252,20 +275,28 @@ class GPUCalculator:
             changeInput: Whether change the input matrix.
             gpu_out(bool): return result from GPU into CPU.
         """
-        A_shape = A.shape
-        if not A_shape[0] == 1 << mapping.shape[0]:
+        row_a, col_a = A.shape
+        if not row_a == 1 << mapping.shape[0]:
             raise IndexError("Indices do not match!")
 
         # generate new idx depending on given mapping
         idx_mapping = mapping_augment(mapping)
-        idx_mapping = np.repeat(idx_mapping * int(A_shape[1]), A_shape[1]).reshape(A_shape[0], A_shape[1]) + idx_mapping
-        idx_mapping = idx_mapping.reshape(A_shape[0]*A_shape[1])
 
         # data in GPU
         gpu_A = gpuarray.to_gpu(A) if type(A) is np.ndarray else A
-        gpu_idx = gpuarray.to_gpu(idx_mapping)
+        gpu_idx = gpuarray.to_gpu(idx_mapping.astype(np.int32))
+        gpu_result = gpuarray.empty((row_a, col_a), dtype=np.complex_)
+        gpu_size = gpuarray.to_gpu(np.array([row_a, col_a], dtype=np.int32))
+
+        # GPU kernel function
+        gpu_permM = MATRIX_PERM_TEMPLATE.get_function("perm_matrix")
+
+        block = (min(row_a, 32), min(col_a, 32), 1)
+        grid = (max(row_a//block[0], 1), max(col_a//block[1], 1))
+        gpu_permM(gpu_result, gpu_A, gpu_idx, gpu_size, grid=grid, block=block)
 
         if not changeInput:
-            return gpuarray.take(gpu_A, gpu_idx).get().reshape(A_shape) if gpu_out else gpuarray.take(gpu_A, gpu_idx)
+            return gpu_result.get().reshape(row_a, col_a) if gpu_out else gpu_result
 
-        A = gpuarray.take(gpu_A, gpu_idx).get().reshape(A_shape) if gpu_out else gpuarray.take(gpu_A, gpu_idx)
+        A = gpu_result.get().reshape(row_a, col_a) if gpu_out else gpu_result
+
