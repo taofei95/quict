@@ -7,15 +7,9 @@
 
 
 
-cimport numpy as np
 import numpy as np
 
 from cython.operator cimport dereference as deref
-from libcpp.vector cimport vector
-from libcpp.string cimport string
-from libcpp.string cimport basestring
-from libcpp.algorithm cimport sort
-from libcpp.memory cimport shared_ptr, make_shared
 from mcts_tree cimport MCTSTree
 # from mcts_tree cimport RLMCTSTree
 # from data_generator cimport DataGenerator

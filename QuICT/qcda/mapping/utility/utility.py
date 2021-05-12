@@ -1,125 +1,108 @@
 from __future__ import annotations
-import copy
-import os
-
-
-from abc import ABC, abstractmethod
-from typing import List, Tuple, Dict, Callable, Optional, Iterable, Union,Set
-from enum import Enum
-from pickle import Pickler
 
 from dataclasses import dataclass
-
+from enum import Enum
+from typing import List, Tuple
 
 import torch
-import numpy as np
-import networkx as nx
-import matplotlib.pyplot as plt
 
+from QuICT.core.exception import *
+from QuICT.core.gate.gate import *
+from .coupling_graph import CouplingGraph
 from .exception import *
 
 
-from QuICT.tools.interface import *
-from QuICT.core.circuit import *
-from QuICT.core.gate import *
-from QuICT.core.gate.gate import *
-from QuICT.core.exception import *
-from QuICT.core.layout import *
-from .coupling_graph import CouplingGraph, get_coupling_graph
-
-
-def is_two_qubit_gate_equal(s1: List[int], s2: List[int])->bool:
+def is_two_qubit_gate_equal(s1: List[int], s2: List[int]) -> bool:
     """
     Indicate whether two two-qubit gates is same
     """
-    if ( s1[0] == s2[0] and s1[1] == s2[1] ) or ( s1[0] == s2[1] and s1[1] == s2[0] ) :
+    if (s1[0] == s2[0] and s1[1] == s2[1]) or (s1[0] == s2[1] and s1[1] == s2[0]):
         return True
     else:
         return False
 
 
-def f(x: np.ndarray)->np.ndarray:
-    return np.piecewise(x, [x<0, x==0, x>0], [0, 0.001, lambda x: x])
+def f(x: np.ndarray) -> np.ndarray:
+    return np.piecewise(x, [x < 0, x == 0, x > 0], [0, 0.001, lambda x: x])
 
 
-
-def transform_batch(batch_data: Tuple[np.ndarray, np.ndarray, np.ndarray], device: torch.device)->Tuple[torch.LongTensor, torch.FloatTensor]:
-    qubits_list, padding_mask_list, adj_list = batch_data 
+def transform_batch(batch_data: Tuple[np.ndarray, np.ndarray, np.ndarray], device: torch.device) -> Tuple[
+    torch.LongTensor, torch.FloatTensor]:
+    qubits_list, padding_mask_list, adj_list = batch_data
     padding_mask = torch.from_numpy(padding_mask_list).to(torch.uint8)
     qubits = torch.from_numpy(qubits_list).long()
 
     adj_list = get_adj_list(adj_list)
     if isinstance(adj_list, list):
-        adj = torch.from_numpy(np.concatenate(adj_list, axis = 0)).long()
+        adj = torch.from_numpy(np.concatenate(adj_list, axis=0)).long()
     else:
-        adj =torch.from_numpy(adj_list).long()
-    
+        adj = torch.from_numpy(adj_list).long()
+
     return qubits.to(device), padding_mask.to(device), adj.to(device)
 
-def get_adj_list(adj_list: List[np.ndarray])->np.ndarray:
+
+def get_adj_list(adj_list: List[np.ndarray]) -> np.ndarray:
     if isinstance(adj_list, list):
         idx_bias = 0
         for i in range(len(adj_list)):
-            adj_list[i] = adj_list[i] + idx_bias 
-            idx_bias +=  adj_list[i].shape[0]
+            adj_list[i] = adj_list[i] + idx_bias
+            idx_bias += adj_list[i].shape[0]
     return adj_list
 
-def get_graph_pool(batch_graph: List[np.ndarray], device: torch.device)-> torch.FloatTensor:
-        """
-        """
-        if isinstance(batch_graph, list):
-            num_of_graph = len(batch_graph)
-            num_of_nodes = 0
-            bias = [0]
-            for i in range(num_of_graph):
-                num_of_nodes += batch_graph[i].shape[0]
-                bias.append(num_of_nodes)
 
-            elem = torch.ones(num_of_nodes, dtype = torch.float)
-            idx = torch.zeros([2, num_of_nodes ], dtype = torch.long)
-            for i in range(num_of_graph):
-                v = torch.arange(start = 0, end = batch_graph[i].shape[0], dtype = torch.long)
-                idx[0, bias[i] : bias[i+1]] = i
-                idx[1, bias[i] : bias[i+1]] = v
-            graph_pool = torch.sparse.FloatTensor(idx, elem, torch.Size([num_of_graph, num_of_nodes])).to(device)
+def get_graph_pool(batch_graph: List[np.ndarray], device: torch.device) -> torch.FloatTensor:
+    """
+    """
+    if isinstance(batch_graph, list):
+        num_of_graph = len(batch_graph)
+        num_of_nodes = 0
+        bias = [0]
+        for i in range(num_of_graph):
+            num_of_nodes += batch_graph[i].shape[0]
+            bias.append(num_of_nodes)
 
-        else:
-            elem = torch.ones(batch_graph.shape[0], dtype = torch.float)
-            idx = torch.zeros([2, batch_graph.shape[0] ], dtype = torch.long)
-            idx[0,:] = 0
-            idx[1,:] = torch.arange(start = 0, end = batch_graph.shape[0], dtype = torch.long)
-            graph_pool = torch.sparse.FloatTensor(idx, elem, torch.Size([1,batch_graph.shape[0]])).to(device)
+        elem = torch.ones(num_of_nodes, dtype=torch.float)
+        idx = torch.zeros([2, num_of_nodes], dtype=torch.long)
+        for i in range(num_of_graph):
+            v = torch.arange(start=0, end=batch_graph[i].shape[0], dtype=torch.long)
+            idx[0, bias[i]: bias[i + 1]] = i
+            idx[1, bias[i]: bias[i + 1]] = v
+        graph_pool = torch.sparse.FloatTensor(idx, elem, torch.Size([num_of_graph, num_of_nodes])).to(device)
 
-        return graph_pool
+    else:
+        elem = torch.ones(batch_graph.shape[0], dtype=torch.float)
+        idx = torch.zeros([2, batch_graph.shape[0]], dtype=torch.long)
+        idx[0, :] = 0
+        idx[1, :] = torch.arange(start=0, end=batch_graph.shape[0], dtype=torch.long)
+        graph_pool = torch.sparse.FloatTensor(idx, elem, torch.Size([1, batch_graph.shape[0]])).to(device)
 
-
+    return graph_pool
 
 
 class EdgeProb:
-    def __init__(self, circuit: DAG = None, coupling_graph: CouplingGraph = None, qubit_mapping: List[int] = None, gates: List[int] = None , num_of_qubits: int = 0):
+    def __init__(self, circuit: DAG = None, coupling_graph: CouplingGraph = None, qubit_mapping: List[int] = None,
+                 gates: List[int] = None, num_of_qubits: int = 0):
         self._circuit = circuit
         self._coupling_graph = coupling_graph
         self._qubit_mapping = qubit_mapping
         self._gates = gates
         self._inverse_qubit_mapping = [-1 for _ in range(max(len(qubit_mapping), num_of_qubits))]
         for i, elm in enumerate(qubit_mapping):
-            self._inverse_qubit_mapping[elm] = i  
+            self._inverse_qubit_mapping[elm] = i
 
+    def __call__(self, swap_index: int = -1) -> int:
 
-    def __call__(self, swap_index: int = -1)-> int:
-       
         if swap_index == -1:
             return self._neareast_neighbour_count(self._gates, self._qubit_mapping)
-        
+
         swap_gate = self._coupling_graph.get_swap_gate(swap_index)
         if isinstance(swap_gate, SwapGate) is not True:
-             raise TypeException("swap gate","other gate")
+            raise TypeException("swap gate", "other gate")
         qubit_mapping = self._change_mapping_with_single_swap(swap_gate)
-        
+
         return self._neareast_neighbour_count(self._gates, qubit_mapping)
 
-
-    def _neareast_neighbour_count(self, gates: List[int], cur_mapping: List[int])-> int:
+    def _neareast_neighbour_count(self, gates: List[int], cur_mapping: List[int]) -> int:
         """
         Caculate the sum of the distance of all the gates in the front layer on the physical device
         """
@@ -128,19 +111,18 @@ class EdgeProb:
             NNC = NNC + self._get_logical_gate_distance_in_device(cur_mapping, gate)
         return NNC
 
-    def _get_logical_gate_distance_in_device(self, cur_mapping: List[int], gate: int)->int:
+    def _get_logical_gate_distance_in_device(self, cur_mapping: List[int], gate: int) -> int:
         """
         return the distance between the control qubit and target qubit of the given gate  on the physical device 
         """
         if self._circuit[gate]['gate'].type() == GATE_ID['Swap']:
             qubits = self._circuit[gate]['gate'].targs
         else:
-            qubits = [ self._circuit[gate]['gate'].carg, self._circuit[gate]['gate'].targ ]
-        
-        return  self._coupling_graph.distance(cur_mapping[qubits[0]], cur_mapping[qubits[1]])
+            qubits = [self._circuit[gate]['gate'].carg, self._circuit[gate]['gate'].targ]
 
+        return self._coupling_graph.distance(cur_mapping[qubits[0]], cur_mapping[qubits[1]])
 
-    def _change_mapping_with_single_swap(self, swap_gate: SwapGate)->List[int]:
+    def _change_mapping_with_single_swap(self, swap_gate: SwapGate) -> List[int]:
         """
         Get the new mapping changed by a single swap, e.g., the mapping [0, 1, 2, 3, 4] of 5 qubits will be changed
         to the mapping [1, 0, 2, 3, 4] by the swap gate SWAP(0,1).
@@ -148,7 +130,7 @@ class EdgeProb:
         res_mapping = self._qubit_mapping.copy()
         if isinstance(swap_gate, SwapGate):
             p_target = swap_gate.targs
-            l_target = [ self._inverse_qubit_mapping[i] for i in p_target ]
+            l_target = [self._inverse_qubit_mapping[i] for i in p_target]
             if self._coupling_graph.is_adjacent(p_target[0], p_target[1]):
                 if not l_target[0] == -1:
                     res_mapping[l_target[0]] = p_target[1]
@@ -157,10 +139,11 @@ class EdgeProb:
             else:
                 raise MappingLayoutException()
         else:
-                raise TypeException("swap gate","other gate")
+            raise TypeException("swap gate", "other gate")
         return res_mapping
 
-@dataclass  
+
+@dataclass
 class GNNConfig(object):
     num_of_gates: int = 150
     maximum_capacity: int = 100000
@@ -176,7 +159,7 @@ class GNNConfig(object):
     sim_method: int = 0
     batch_size: int = 10
     ff_hidden_size: int = 128
-    num_self_att_layers: int =4
+    num_self_att_layers: int = 4
     dropout: float = 0.5
     num_U2GNN_layers: int = 1
     value_head_size: int = 256
@@ -202,12 +185,15 @@ class GNNConfig(object):
     dim_feedforward: int = 128
 
 
+default_gnn_config = GNNConfig(maximum_capacity=200000, num_of_gates=150, maximum_circuit=1500, minimum_circuit=200,
+                               batch_size=256,
+                               ff_hidden_size=128, num_self_att_layers=4, dropout=0.5, value_head_size=128, gamma=0.7,
+                               num_U2GNN_layers=2, learning_rate=0.001, weight_decay=1e-4, num_of_epochs=1000,
+                               device=torch.device("cuda"),
+                               graph_name='ibmq20', num_of_process=10, feature_update=True, gat=True, n_gat=1,
+                               mcts_c=20, loss_c=10,
+                               num_of_swap_gates=15, sim_method=2)
 
-default_gnn_config = GNNConfig(maximum_capacity = 200000, num_of_gates = 150, maximum_circuit = 1500, minimum_circuit = 200, batch_size = 256,
-                        ff_hidden_size = 128, num_self_att_layers=4, dropout = 0.5, value_head_size = 128, gamma = 0.7, 
-                        num_U2GNN_layers=2, learning_rate = 0.001, weight_decay = 1e-4, num_of_epochs = 1000, device = torch.device( "cuda"),
-                        graph_name = 'ibmq20',num_of_process = 10, feature_update = True, gat = True, n_gat = 1, mcts_c = 20, loss_c = 10,
-                        num_of_swap_gates = 15, sim_method = 2 ) 
 
 @dataclass
 class SharedMemoryName:
@@ -224,8 +210,9 @@ class Mode(Enum):
     WHOLE_CIRCUIT: Deal with all the gates in the circuit.
     TWO_QUBIT_CIRCUIT: Only deal with the two-qubit gates in the circuit.
     """
-    WHOLE_CIRCUIT = 1 
+    WHOLE_CIRCUIT = 1
     TWO_QUBIT_CIRCUIT = 2
+
 
 class SimMode(Enum):
     """
@@ -243,12 +230,12 @@ class MCTSMode(Enum):
     EXTENDED_PROB = 3
 
 
-
 class RLMode(Enum):
     """
     """
     WARMUP = 0
-    SELFPALY = 1 
+    SELFPALY = 1
+
 
 class EvaluateMode(Enum):
     SEARCH = 0
@@ -260,9 +247,11 @@ class Benchmark(Enum):
     REVLIB = 0
     RANDOM = 1
 
+
 class MCTSMethod(Enum):
     RL = 0
-    RL_ORACLE =1
+    RL_ORACLE = 1
+
 
 small_benchmark = ("rd84_142",
                    "adr4_197",
@@ -274,10 +263,10 @@ small_benchmark = ("rd84_142",
                    "cycle10_2_110",
                    "square_root_7",
                    "sqn_258",
-                   "rd84_253") 
+                   "rd84_253")
 
 
-@dataclass  
+@dataclass
 class RLConfig(object):
     num_of_gates: int = 150
     maximum_capacity: int = 100000
@@ -318,55 +307,55 @@ class RLConfig(object):
     dim_feedforward: int = 128
 
 
-default_rl_config = RLConfig(num_of_gates= 150, 
-                maximum_capacity = 100000,
-                maximum_circuit = 5000,
-                minimum_circuit = 50,
-                gamma = 0.8,
-                num_of_playout = 2,
-                virtual_loss = 1,
-                diri_alpha = 0.03,
-                selection_times = 400,
-                epsilon = 0.25,
-                batch_size = 10,
-                dropout = 0.5,
-                device = torch.device("cuda" if torch.cuda.is_available() else "cpu"),  
-                graph_name = 'ibmq20',
-                learning_rate = 0.1,
-                weight_decay =  1e-4,
-                num_of_epochs = 50,
-                num_of_process = 4,
-                num_of_circuit_process = 8,
-                loss_c = 10,
-                mcts_c = 20, 
-                extended = False,
-                num_of_swap_gates = 15,
-                gat = False,
-                d_embed = 32,
-                d_model = 32,
-                n_head = 2,
-                n_layer = 2,
-                n_encoder = 4,
-                n_gat = 1,
-                hid_dim = 128,
-                dim_feedforward = 128,
-                with_predictor = False)
+default_rl_config = RLConfig(num_of_gates=150,
+                             maximum_capacity=100000,
+                             maximum_circuit=5000,
+                             minimum_circuit=50,
+                             gamma=0.8,
+                             num_of_playout=2,
+                             virtual_loss=1,
+                             diri_alpha=0.03,
+                             selection_times=400,
+                             epsilon=0.25,
+                             batch_size=10,
+                             dropout=0.5,
+                             device=torch.device("cuda" if torch.cuda.is_available() else "cpu"),
+                             graph_name='ibmq20',
+                             learning_rate=0.1,
+                             weight_decay=1e-4,
+                             num_of_epochs=50,
+                             num_of_process=4,
+                             num_of_circuit_process=8,
+                             loss_c=10,
+                             mcts_c=20,
+                             extended=False,
+                             num_of_swap_gates=15,
+                             gat=False,
+                             d_embed=32,
+                             d_model=32,
+                             n_head=2,
+                             n_layer=2,
+                             n_encoder=4,
+                             n_gat=1,
+                             hid_dim=128,
+                             dim_feedforward=128,
+                             with_predictor=False)
 
 bench_mark = {
-"mcts_small":(
-                    "rd84_142.qasm",
-                    "adr4_197.qasm",
-                    "radd_250.qasm",
-                    "z4_268.qasm",
-                    "sym6_145.qasm",
-                    "misex1_241.qasm",
-                    "rd73_252.qasm",
-                    "cycle10_2_110.qasm",
-                    "square_root_7.qasm",
-                    "sqn_258.qasm",
-                    "rd84_253.qasm",
-                   ),
-"extended":(
+    "mcts_small": (
+        "rd84_142.qasm",
+        "adr4_197.qasm",
+        "radd_250.qasm",
+        "z4_268.qasm",
+        "sym6_145.qasm",
+        "misex1_241.qasm",
+        "rd73_252.qasm",
+        "cycle10_2_110.qasm",
+        "square_root_7.qasm",
+        "sqn_258.qasm",
+        "rd84_253.qasm",
+    ),
+    "extended": (
         'graycode6_47.qasm',
         'xor5_254.qasm',
         'ex1_226.qasm',
@@ -467,13 +456,13 @@ bench_mark = {
         'cycle10_2_110.qasm',
         'hwb6_56.qasm',
         'cm85a_209.qasm',
-        ),
-    "large":(
-    #    'rd84_253.qasm',
-    #     'root_255.qasm',
-    #     'mlp4_245.qasm',
-    #     'urf2_277.qasm',
-         'sym9_148.qasm',
+    ),
+    "large": (
+        #    'rd84_253.qasm',
+        #     'root_255.qasm',
+        #     'mlp4_245.qasm',
+        #     'urf2_277.qasm',
+        'sym9_148.qasm',
         # 'hwb7_59.qasm',
         # 'clip_206.qasm',
         # 'sym9_193.qasm',
@@ -486,22 +475,22 @@ bench_mark = {
     ),
 }
 
-initial_map_lists ={
- "mcts_small":[
-            [19, 18, 13, 8, 4, 1, 10, 12, 14, 9, 3, 2, 6, 11, 17, 16, 5, 7, 15, 0],
-            [17, 3, 0, 10, 11, 5, 2, 8, 13, 12, 1, 7, 6, 18, 16, 4, 9, 19, 15, 14],
-            [5, 15, 13, 18, 19, 6, 10, 16, 8, 7, 12, 17, 11, 9, 3, 2, 0, 4, 14, 1],
-            [11, 6, 4, 1, 2, 8, 3, 13, 9, 7, 12, 15, 18, 14, 16, 0, 5, 10, 17, 19],
-            [7, 13, 12, 6, 1, 8, 11, 19, 5, 18, 16, 14, 2, 4, 15, 0, 17, 9, 3, 10],
-            [2, 1, 10, 3, 8, 16, 5, 17, 11, 13, 7, 6, 12, 18, 14, 9, 0, 4, 19, 15],
-            [1, 6, 9, 12, 3, 8, 2, 4, 13, 7, 16, 10, 19, 11, 14, 18, 0, 5, 15, 17],
-            [13, 16, 17, 12, 1, 10, 5, 8, 11, 6, 7, 2, 9, 19, 3, 14, 18, 15, 4, 0],
-            [6, 7, 13, 2, 1, 8, 18, 0, 11, 10, 16, 12, 17, 5, 19, 4, 9, 3, 14, 15],
-            [17, 16, 13, 8, 1, 2, 6, 11, 7, 12, 15, 5, 18, 0, 10, 14, 3, 9, 4, 19],
-            [8, 2, 0, 5, 13, 16, 10, 6, 1, 11, 12, 7, 17, 15, 19, 4, 14, 9, 3, 18]]
-,
-"extended": [
-    [14, 19, 13, 8, 3, 2, 17, 1, 15, 9, 18, 16, 5, 11, 10, 4, 6, 12, 7, 0],
+initial_map_lists = {
+    "mcts_small": [
+        [19, 18, 13, 8, 4, 1, 10, 12, 14, 9, 3, 2, 6, 11, 17, 16, 5, 7, 15, 0],
+        [17, 3, 0, 10, 11, 5, 2, 8, 13, 12, 1, 7, 6, 18, 16, 4, 9, 19, 15, 14],
+        [5, 15, 13, 18, 19, 6, 10, 16, 8, 7, 12, 17, 11, 9, 3, 2, 0, 4, 14, 1],
+        [11, 6, 4, 1, 2, 8, 3, 13, 9, 7, 12, 15, 18, 14, 16, 0, 5, 10, 17, 19],
+        [7, 13, 12, 6, 1, 8, 11, 19, 5, 18, 16, 14, 2, 4, 15, 0, 17, 9, 3, 10],
+        [2, 1, 10, 3, 8, 16, 5, 17, 11, 13, 7, 6, 12, 18, 14, 9, 0, 4, 19, 15],
+        [1, 6, 9, 12, 3, 8, 2, 4, 13, 7, 16, 10, 19, 11, 14, 18, 0, 5, 15, 17],
+        [13, 16, 17, 12, 1, 10, 5, 8, 11, 6, 7, 2, 9, 19, 3, 14, 18, 15, 4, 0],
+        [6, 7, 13, 2, 1, 8, 18, 0, 11, 10, 16, 12, 17, 5, 19, 4, 9, 3, 14, 15],
+        [17, 16, 13, 8, 1, 2, 6, 11, 7, 12, 15, 5, 18, 0, 10, 14, 3, 9, 4, 19],
+        [8, 2, 0, 5, 13, 16, 10, 6, 1, 11, 12, 7, 17, 15, 19, 4, 14, 9, 3, 18]]
+    ,
+    "extended": [
+        [14, 19, 13, 8, 3, 2, 17, 1, 15, 9, 18, 16, 5, 11, 10, 4, 6, 12, 7, 0],
         [7, 13, 1, 12, 6, 2, 5, 19, 4, 15, 17, 9, 18, 11, 10, 14, 3, 0, 8, 16],
         [12, 13, 8, 7, 11, 17, 15, 6, 10, 18, 2, 16, 4, 3, 19, 5, 1, 0, 9, 14],
         [7, 12, 8, 6, 13, 11, 2, 17, 3, 16, 1, 18, 5, 10, 9, 14, 0, 4, 15, 19],
@@ -601,18 +590,18 @@ initial_map_lists ={
         [18, 2, 6, 8, 16, 10, 5, 17, 11, 12, 7, 13, 0, 4, 3, 15, 1, 14, 19, 9],
         [17, 12, 6, 10, 5, 16, 11, 19, 2, 1, 14, 4, 9, 18, 3, 8, 7, 13, 0, 15],
         [3, 1, 15, 2, 6, 8, 13, 16, 17, 11, 10, 12, 5, 7, 4, 9, 0, 19, 18, 14],
-        ],
-    "large":[ 
+    ],
+    "large": [
         # [10, 1, 3, 8, 5, 16, 13, 7, 2, 12, 11, 6, 0, 17, 14, 19, 15, 18, 4, 9],
         # [1, 2, 8, 13, 18, 5, 17, 16, 12, 7, 11, 10, 6, 4, 3, 19, 9, 0, 15, 14],
         # [9, 15, 3, 18, 13, 2, 5, 1, 8, 10, 6, 7, 11, 12, 16, 17, 4, 0, 14, 19],
-        #[13, 11, 6, 1, 8, 12, 2, 7, 19, 3, 15, 17, 5, 10, 9, 0, 16, 18, 4, 14],
+        # [13, 11, 6, 1, 8, 12, 2, 7, 19, 3, 15, 17, 5, 10, 9, 0, 16, 18, 4, 14],
         [19, 18, 14, 17, 8, 13, 12, 7, 6, 2, 5, 9, 0, 1, 15, 4, 11, 10, 3, 16],
         # [11, 6, 1, 12, 8, 13, 2, 7, 19, 0, 18, 5, 15, 3, 10, 16, 4, 9, 14, 17],
         # [10, 3, 0, 5, 16, 6, 17, 8, 13, 12, 11, 7, 2, 1, 4, 18, 14, 9, 15, 19],
         # [17, 16, 13, 10, 1, 2, 5, 6, 7, 12, 11, 15, 19, 18, 8, 3, 14, 4, 9, 0],
         # [2, 3, 10, 5, 17, 13, 8, 16, 11, 6, 12, 7, 1, 18, 15, 4, 19, 9, 0, 14],
-        #[10, 5, 2, 15, 1, 8, 13, 18, 16, 11, 17, 12, 7, 6, 19, 9, 4, 0, 3, 14],
+        # [10, 5, 2, 15, 1, 8, 13, 18, 16, 11, 17, 12, 7, 6, 19, 9, 4, 0, 3, 14],
         [19, 17, 16, 8, 14, 18, 7, 12, 13, 5, 15, 2, 11, 3, 0, 9, 6, 1, 10, 4],
         [8, 12, 11, 1, 13, 3, 2, 6, 7, 19, 10, 0, 18, 15, 9, 16, 5, 4, 17, 14],
         [17, 5, 16, 13, 8, 1, 10, 2, 7, 12, 11, 6, 15, 3, 9, 14, 0, 19, 18, 4],

@@ -3,23 +3,16 @@
 # @TIME    : 2020/8/22 2:39 下午
 # @Author  : Han Yu
 # @File    : _mapping.py
-import copy
 
-from typing import List, Dict,Tuple,Union
-from abc import abstractmethod, abstractclassmethod, abstractstaticmethod
-
-from QuICT.core.circuit import * 
-from QuICT.core.exception import *
-from QuICT.core.gate import *
 from QuICT.core.layout import *
-from .utility import *
 from .mcts import *
+from .utility import *
 
 
-class Mapping(object):  
+class Mapping(object):
     @classmethod
-    def run(cls, circuit: Circuit, layout: Layout, init_mapping: List[int] = None, init_mapping_method: str = "naive", 
-            inplace: bool = False, **parameter)-> Circuit:
+    def run(cls, circuit: Circuit, layout: Layout, init_mapping: List[int] = None, init_mapping_method: str = "naive",
+            inplace: bool = False, **parameter) -> Circuit:
         """Mapping the logical circuit to a NISQ device.
         Args:
             circuit: The input circuit that needs to be mapped to a NISQ device.
@@ -47,8 +40,8 @@ class Mapping(object):
         """
         circuit.const_lock = True
         num = layout.qubit_number
-        gates = cls._run(circuit = circuit, layout = layout, init_mapping = init_mapping, 
-                    init_mapping_method = init_mapping_method, **parameter)
+        gates = cls._run(circuit=circuit, layout=layout, init_mapping=init_mapping,
+                         init_mapping_method=init_mapping_method, **parameter)
 
         circuit.const_lock = False
         circuit.qubits
@@ -58,21 +51,23 @@ class Mapping(object):
             new_circuit = Circuit(num)
             new_circuit.set_exec_gates(gates)
             return new_circuit
-        
+
     @staticmethod
-    def _run(circuit: Circuit, init_mapping: List[int], layout: Layout, init_mapping_method: str, **parameter)-> List[BasicGate]:
+    def _run(circuit: Circuit, init_mapping: List[int], layout: Layout, init_mapping_method: str, **parameter) -> List[
+        BasicGate]:
         """Use Monte Carlo tree search algorithm to solve the qubit mapping problem
         """
-        circuit_dag = DAG(circuit = circuit, mode = Mode.TWO_QUBIT_CIRCUIT)
+        circuit_dag = DAG(circuit=circuit, mode=Mode.TWO_QUBIT_CIRCUIT)
         coupling_graph = CouplingGraph(coupling_graph=layout)
-       
+
         if init_mapping is None:
             num_of_qubits = coupling_graph.size
             if init_mapping_method == "anneal":
-                cost_f = Cost(circuit=circuit_dag, coupling_graph = coupling_graph)
-                init_mapping  = np.random.permutation(num_of_qubits)
-                _, best_mapping = simulated_annealing(init_mapping = init_mapping, cost = cost_f, method = "nnc",
-                            param = {"T_max": 100, "T_min": 1, "alpha": 0.99, "iterations": 1000})
+                cost_f = Cost(circuit=circuit_dag, coupling_graph=coupling_graph)
+                init_mapping = np.random.permutation(num_of_qubits)
+                _, best_mapping = simulated_annealing(init_mapping=init_mapping, cost=cost_f, method="nnc",
+                                                      param={"T_max": 100, "T_min": 1, "alpha": 0.99,
+                                                             "iterations": 1000})
                 init_mapping = list(best_mapping)
             elif init_mapping_method == "naive":
                 init_mapping = [i for i in range(num_of_qubits)]
@@ -81,9 +76,6 @@ class Mapping(object):
 
         if not isinstance(init_mapping, list):
             raise Exception("Layout should be a list of integers")
-        mcts_tree = MCTS(coupling_graph = coupling_graph, info = 0)
-        mcts_tree.search(logical_circuit = circuit, init_mapping = init_mapping)
+        mcts_tree = MCTS(coupling_graph=coupling_graph, info=0)
+        mcts_tree.search(logical_circuit=circuit, init_mapping=init_mapping)
         return mcts_tree.physical_circuit
-
-
-        

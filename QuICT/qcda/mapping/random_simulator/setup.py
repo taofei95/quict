@@ -1,6 +1,6 @@
 import numpy
-from setuptools import setup, Extension
 from Cython.Build import cythonize
+from setuptools import setup, Extension
 
 ext_module = Extension(
     "random_simulator",
@@ -8,5 +8,4 @@ ext_module = Extension(
     include_dirs=[numpy.get_include()],
 )
 
-setup(ext_modules = cythonize(ext_module))
-
+setup(ext_modules=cythonize(ext_module))
