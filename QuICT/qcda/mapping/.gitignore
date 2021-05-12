@@ -13,5 +13,4 @@ cpp_test_data
 script.py
 test_*
 RL
-
-
+*.jpg
