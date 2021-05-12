@@ -86,7 +86,7 @@ def simulated_annealing(init_mapping: np.ndarray, cost: Cost, method: str = None
                     loc2 = np.int(np.ceil(np.random.rand() * (num - 1)))
                     loc3 = np.int(np.ceil(np.random.rand() * (num - 1)))
 
-                    if ((loc1 != loc2) & (loc2 != loc3) & (loc1 != loc3)):
+                    if (loc1 != loc2) & (loc2 != loc3) & (loc1 != loc3):
                         break
                 if loc1 > loc2:
                     loc1, loc2 = loc2, loc1

@@ -31,13 +31,13 @@ class ExperiencePool(object):
         self._value_shm = shared_memory.SharedMemory(create=True, size=max_capacity * 8)
         self._executed_gates_shm = shared_memory.SharedMemory(create=True, size=max_capacity * num_of_swap_gates * 4)
 
-        self._label_list = np.ndarray(shape=(max_capacity), dtype=np.int32, buffer=self._label_shm.buf)
-        self._num_list = np.ndarray(shape=(max_capacity), dtype=np.int32, buffer=self._num_shm.buf)
+        self._label_list = np.ndarray(shape=(max_capacity, ), dtype=np.int32, buffer=self._label_shm.buf)
+        self._num_list = np.ndarray(shape=(max_capacity, ), dtype=np.int32, buffer=self._num_shm.buf)
         self._adj_list = np.ndarray(shape=(max_capacity, num_of_nodes, num_of_neighgour), dtype=np.int32,
                                     buffer=self._adj_shm.buf)
         self._qubits_list = np.ndarray(shape=(max_capacity, num_of_nodes, 2), dtype=np.int32,
                                        buffer=self._qubits_shm.buf)
-        self._value_list = np.ndarray(shape=(max_capacity), dtype=np.float, buffer=self._value_shm.buf)
+        self._value_list = np.ndarray(shape=(max_capacity, ), dtype=np.float, buffer=self._value_shm.buf)
         self._action_probability_list = np.ndarray(shape=(max_capacity, num_of_class), dtype=np.float,
                                                    buffer=self._action_probability_shm.buf)
         self._executed_gates_list = np.ndarray(shape=(max_capacity, num_of_swap_gates), dtype=np.int32,
@@ -182,7 +182,7 @@ class ExperiencePool(object):
         np.save(f"{file_path}/action_probability_list.npy", self._action_probability_list)
         np.save(f"{file_path}/executed_gates_list.npy", self._executed_gates_list)
         with open(f"{file_path}/metadata.txt", 'w') as f:
-            f.write("%d" % (self._idx.value))
+            f.write("%d" % self._idx.value)
 
     def get_batch_data(self, batch_size: int = 32):
         if self._train_idx_list.shape[0] == 0:

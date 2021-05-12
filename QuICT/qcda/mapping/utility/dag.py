@@ -336,7 +336,7 @@ class DAG(object):
                 for s in subcircuit:
                     print(list(s))
                 raise Exception("The number of gates in the subcircuit %d is greater than the given number %d" % (
-                index, num_of_gates))
+                    index, num_of_gates))
             subcircuit[index, 0] = top
             subcircuit[index, 1:] = np.concatenate((self._successors[top], self._precessors[top]))
             qubits_of_gates[index, :] = self._node_qubits[top]
