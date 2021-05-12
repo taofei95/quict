@@ -21,7 +21,7 @@ else:
 
 MTENSOR_THRESHOLD = 8   # A*n*m size
 TENSOR_THRESHOLD = 9    # A.size + B.size
-DOT_THRESHOLD = 10      # A.size + B.size
+DOT_THRESHOLD = 8       # A.size + B.size
 MPERM_THRESHOLD = 10    # A.size
 VPERM_THRESHOLD = 14    # A.size
 

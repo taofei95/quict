@@ -17,21 +17,21 @@ DOT_TEMPLATE = SourceModule(r"""
     {
         const int out_x = size[0];
         const int out_y = size[3];
+        const int mul = size[1];
 
-        const int stride_x = blockDim.x;
-        const int stride_y = blockDim.y;
+        const int stride = blockDim.x;
 
-        const int idx_x = threadIdx.x;
-        const int idx_y = threadIdx.y;
+        const int idx_x = threadIdx.x + blockIdx.x * blockDim.x;
+        const int idx_y = threadIdx.y + blockIdx.y * blockDim.y;
 
-        for (int i = idx_x; i < out_x; i += stride_x){
-            for (int j = idx_y; j < out_y; j += stride_y){
-                pycuda::complex<double> As = 0;
-                for (int z = 0; z < size[1]; z++){
-                    As += A[i*size[1] + z] * B[z*out_y + j];
-                }
-                out[i*out_y+j] = As;
+        pycuda::complex<double> C = 0;
+        for (int i = 0; i < gridDim.x; i++){
+            for (int k = 0; k < stride; k++){
+                C += A[idx_x*mul + i*stride + k] * B[(i*blockDim.x + k)*out_y + idx_y];
             }
+        }
+        if ((idx_x < out_x) && (idx_y < out_y)){
+            out[idx_x*out_y + idx_y] = C;
         }
     }
     """)
@@ -140,8 +140,9 @@ class GPUCalculator:
         # GPU kernel function.
         gpu_dot = DOT_TEMPLATE.get_function("dot")
 
-        block = (min(row_a, 32), min(col_b, 32), 1)
-        gpu_dot(gpu_result, gpu_A, gpu_B, gpu_size, block=block)
+        block = (min(row_b, 32), min(row_b, 32), 1)
+        grid = (max(row_a//block[0], 1), max(col_b//block[0], 1), 1)
+        gpu_dot(gpu_result, gpu_A, gpu_B, gpu_size, grid=grid, block=block)
 
         if gpu_out:
             return gpu_result.get()
