@@ -14,3 +14,5 @@ script.py
 test_*
 RL
 *.jpg
+run_*
+gdb.txt
