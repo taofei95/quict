@@ -10,6 +10,8 @@
 # copyright notice, and modified files need to carry a notice indicating
 # that they have been altered from the originals.
 
+# Modification Notice: Code revised for QuICT
+
 """Helper function for converting a dag dependency to a circuit"""
 from QuICT.core import * # pylint: disable=unused-wildcard-import
 

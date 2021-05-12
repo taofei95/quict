@@ -10,6 +10,8 @@
 # copyright notice, and modified files need to carry a notice indicating
 # that they have been altered from the originals.
 
+# Modification Notice: Code revised for QuICT
+
 """
 Template matching in the forward direction, it takes an initial
 match, a configuration of qubit and both circuit and template as inputs. The

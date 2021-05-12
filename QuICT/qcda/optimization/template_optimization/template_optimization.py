@@ -10,6 +10,8 @@
 # copyright notice, and modified files need to carry a notice indicating
 # that they have been altered from the originals.
 
+# Modification Notice: Code revised for QuICT
+
 """
 Given a template and a circuit: it applies template matching and substitutes
 all compatible maximal matches that reduces the size of the circuit.

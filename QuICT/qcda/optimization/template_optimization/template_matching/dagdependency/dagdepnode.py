@@ -10,6 +10,8 @@
 # copyright notice, and modified files need to carry a notice indicating
 # that they have been altered from the originals.
 
+# Modification Notice: Code revised for QuICT
+
 # pylint: disable=redefined-builtin
 
 """Object to represent the information at a node in the DAGCircuit."""

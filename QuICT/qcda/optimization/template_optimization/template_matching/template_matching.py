@@ -10,6 +10,8 @@
 # copyright notice, and modified files need to carry a notice indicating
 # that they have been altered from the originals.
 
+# Modification Notice: Code revised for QuICT
+
 """
 Template matching for all possible qubit configurations and initial matches. It
 returns the list of all matches obtained from this algorithm.

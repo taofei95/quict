@@ -12,6 +12,8 @@
 # copyright notice, and modified files need to carry a notice indicating
 # that they have been altered from the originals.
 
+# Modification Notice: Code revised for QuICT
+
 """Tools for QASM.
 
 Use Unrollers in qiskit.unroll to convert a QASM specification to a qiskit circuit.
