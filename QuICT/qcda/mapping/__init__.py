@@ -1,1 +1,1 @@
-from ._mapping import Mapping
+from .mcts import MCTSMapping

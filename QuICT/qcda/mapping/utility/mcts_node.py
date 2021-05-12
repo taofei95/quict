@@ -11,7 +11,6 @@ from .utility import *
 
 
 class MCTSNode:
-
     def __init__(self, circuit_dag: DAG = None, coupling_graph: CouplingGraph = None, front_layer: List[int] = None,
                  cur_mapping: List[int] = None,
                  qubit_mask: np.ndarray = None, parent: MCTSNode = None, swap_of_edge: int = -1,

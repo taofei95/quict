@@ -1,7 +1,7 @@
 import os
 
 from QuICT.core.layout import *
-from QuICT.qcda.mapping import Mapping
+from QuICT.qcda.mapping import MCTSMapping as Mapping
 from QuICT.qcda.mapping.utility import CouplingGraph
 from QuICT.tools.interface import OPENQASMInterface
 
