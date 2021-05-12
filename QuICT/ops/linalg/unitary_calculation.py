@@ -8,9 +8,8 @@ from numba import jit, njit, prange
 import numpy as np
 from typing import *
 
-from cpu_calculator import CPUCalculator
-from utils import gpu_decorator, GPU_AVAILABLE
-
+from .cpu_calculator import CPUCalculator
+from .utils import gpu_decorator, GPU_AVAILABLE
 
 if GPU_AVAILABLE:
     from gpu_calculator import GPUCalculator

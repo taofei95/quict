@@ -5,8 +5,7 @@ from numba import jit, njit, prange
 import numpy as np
 from typing import *
 
-from utils import mapping_augment
-
+from .utils import mapping_augment
 
 class CPUCalculator:
     @staticmethod
