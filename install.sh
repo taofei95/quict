@@ -24,4 +24,4 @@ if [[ $OS =~ "Darwin" ]];then
 fi
 
 cd $prj_build_dir && \
-  $PYTHON3 ../setup.py install
+  $PYTHON3 ../setup.py install $@
