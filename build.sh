@@ -16,6 +16,22 @@ print_cyan() {
   echo -e "\033[36m$1\033[39m"
 }
 
+# Clear older version build.sh remnants
+
+print_segment
+
+print_cyan "[Clear Remnants]"
+
+echo "Deleting useless files in source code tree created by older version of build.sh"
+
+[[ -f "$prj_root/QuICT/backends/quick_operator_cdll.so" ]] && \
+echo "Deleting $prj_root/QuICT/backends/quick_operator_cdll.so" && \
+rm "$prj_root/QuICT/backends/quick_operator_cdll.so"
+
+[[ -f "$prj_root/QuICT/qcda/synthesis/initial_state_preparation/initial_state_preparation_cdll.so" ]] && \
+echo "Deleting $prj_root/QuICT/qcda/synthesis/initial_state_preparation/initial_state_preparation_cdll.so" && \
+rm "$prj_root/QuICT/qcda/synthesis/initial_state_preparation/initial_state_preparation_cdll.so"
+
 # Set building directory
 
 print_segment
