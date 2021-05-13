@@ -36,15 +36,35 @@ class MCTS(object):
                  method: int = 0, major: int = 4, **params):
         """
         Args:
-            paly_times: The repeated times of the whole search procedure for the circuit.
+            paly_times: Repeated times of the whole search procedure for the circuit.
             gamma: The parameter measures the trade-off between the short-term reward and the long-term value.
+            num_of_swap_gates: Number of SWAP gates inserted in simulation module.
+            num_of_process: Number of search thread used by the MCTS method.
+            bp_mode: Backprogation mode used by the MCTS method.
+                0: The value of the node would be updated if and only if the backpropagation value is larger than it.
+                1: All the backpropagation value will be added to the node and  
+                    the node's value equals the average of the backpropagation value. 
+            Gsim: Deprecated. Size of the sub circuit that would be searched by the random simulation method.
+            Nsim: The repeated times of the simulation module.
+            selection_times: The time of expansion and back propagation in the MCTS.
             c: The parameter measures the trade-off between the exploitation and exploration in the upper confidence bound.
-            Gsim: Size of the sub circuit that would be searched by the random simulation method.
-            c: The parameter measures the trade-off between the exploitation and exploration in the upper confidence bound.
+            graph_name: Name of the physical device's coupling graph(layout). 
+            coupling_graph:  Instacne of the physical device's coupling graph(layout).
+            virtual_loss: Deprecated. Virtual loss in the tree parallel MCTS.
+            is_generate_data: Deprecated. Indicate whether to save information of the node in search process.
+            threshold_size: Deprecated. The maximum size of circuit that the neural network take as input.
+            experience_pool: Deprecated. The experience pool that stores the data generated during search process.
+            extended: Indicate which candidate SWAP gate list in the expansion module.
+                0: Use the candidate SWAP gate list proposed by [1].
+                1: View all edges on the coupling graph as a legal SWAP gate and use them as candidate SWAP gate list.
+            with_predictor: Deprecated. 
+            info: Indicate wether to print the runtime information in MCTS search.
+            method: Deprecated. The simulation method used in MCTS.
+            major: Control the early-stopping strategy. If set as k, the search thread will stop immediately when there exist 
+                node whose visit count is larger than (1 - 1/k) selections times.   
 
-            Nsim: The repeated times of the random simulation method.
-            selection_times: The time of expansion and back propagation in the monte carlo tree search.
-            
+
+       [1]Zhou, XiangZhen et al. “A Monte Carlo Tree Search Framework for Quantum Circuit Transformation.” 2020 IEEE/ACM International Conference On Computer Aided Design (ICCAD) (2020): 1-7. 
         """
         self._play_times = play_times
         self._selection_times = selection_times
@@ -98,11 +118,10 @@ class MCTS(object):
     def search(self, logical_circuit: Circuit, init_mapping: List[int]):
         """
         The main process of the qubit mapping algorithm based on the monte carlo tree search. 
-        Params:
+        Args:
             logical_circuit: The logical circuit to be transformed into the circuit compliant with the physical device, i.e., 
                             each gate of the transformed circuit are adjacent on the device.
             init_mapping: The initial mapping of the logical quibts to physical qubits.
-            coupling_graph: The list of the edges of the physical device's graph.
         """
 
         self._num_of_executable_gate = 0
