@@ -1,8 +1,3 @@
-#!/usr/bin/env python
-# -*- coding:utf8 -*-
-# @TIME    : 2021/4/20
-# @Author  : Li Haomin, Peng Sirui
-# @File    : bea.py
 
 from numpy import log2, floor, gcd
 import numpy as np
@@ -135,7 +130,7 @@ def FourierReverseAdderWiredCC(a, phib,c,dualControlled):
                     CRz(- phase)    | (c[0],phib[i])
             p -= 1
 
-def FourierAdderMod(a, N, phib, c, low):
+def FourierAdderModCC(a, N, phib, c, low, dualControlled=True):
     """ use FourierAdderWired/FourierAdderWiredCC to calculate (a+b)%N in Fourier space
 
     (phib=Φ(b),c,low) -> (phib'=Φ((a+b)%N),c,low)
@@ -151,22 +146,51 @@ def FourierAdderMod(a, N, phib, c, low):
     Circuit for Shor’s algorithm using 2n+3 qubits
     http://arxiv.org/abs/quant-ph/0205095v3
     """
-    FourierAdderWiredCC(a,phib,c,dualControlled=True)
+    FourierAdderWiredCC(a,phib,c,dualControlled=dualControlled)
     FourierReverseAdderWired(N,phib)
     IQFT | phib
     CX   | (phib[0],low)
     QFT  | phib
     FourierAdderWiredCC(N,phib,low,dualControlled=False)
-    FourierReverseAdderWiredCC(a,phib,c,dualControlled=True)
+    FourierReverseAdderWiredCC(a,phib,c,dualControlled=dualControlled)
     IQFT | phib
     X    | phib[0]
     CX   | (phib[0],low)
     X    | phib[0]
     QFT  | phib
-    FourierAdderWiredCC(a,phib,c,dualControlled=True)
+    FourierAdderWiredCC(a,phib,c,dualControlled=dualControlled)
 
-def FourierMultMod(a, N, x, phib, c, low):
-    """ use FourierAdderMod to calculate (b+ax)%N in Fourier space
+def FourierAdderMod(a, N, phib, low):
+    """ use FourierAdderWired/FourierAdderWiredCC to calculate (a+b)%N in Fourier space
+
+    (phib=Φ(b),low) -> (phib'=Φ((a+b)%N),low)
+
+
+    Args:
+        a(int):      least n bits used as unsigned
+        N(int):      least n bits used as unsigned
+        phib(Qureg): the qureg stores b,        length is n+1,
+        low(Qureg):  the clean ancillary qubit, length is 1,
+
+    Circuit for Shor’s algorithm using 2n+3 qubits
+    http://arxiv.org/abs/quant-ph/0205095v3
+    """
+    FourierAdderWired(a,phib)
+    FourierReverseAdderWired(N,phib)
+    IQFT | phib
+    CX   | (phib[0],low)
+    QFT  | phib
+    FourierAdderWiredCC(N,phib,low,dualControlled=False)
+    FourierReverseAdderWired(a,phib)
+    IQFT | phib
+    X    | phib[0]
+    CX   | (phib[0],low)
+    X    | phib[0]
+    QFT  | phib
+    FourierAdderWired(a,phib)
+
+def FourierMultModC(a, N, x, phib, c, low):
+    """ use FourierAdderModCC to calculate (b+ax)%N in Fourier space
 
     (phib=Φ(b),x,c,low) -> (phib'=Φ((b+ax)%N),x,c,low)
 
@@ -186,12 +210,35 @@ def FourierMultMod(a, N, x, phib, c, low):
     n = len(phib) - 1
     p = 1
     for i in range(n - 1, -1, -1):
-        FourierAdderMod(p * a % N, N, phib, (c, x[i]), low) # p * a % N
+        FourierAdderModCC(p * a % N, N, phib, (c, x[i]), low) # p * a % N
         p = p * 2
 
-def MultMod(a, N, x, b, c, low):
+def FourierMultMod(a, N, x, phib, low):
+    """ use FourierAdderMod to calculate (b+ax)%N in Fourier space
+
+    (phib=Φ(b),x,low) -> (phib'=Φ((b+ax)%N),x,low)
+
+
+    Args:
+        a(int):      least n bits used as unsigned
+        N(int):      least n bits used as unsigned
+        x(Qureg):    the qureg stores x,        length is n,
+        phib(Qureg): the qureg stores b,        length is n+1,
+        low(Qureg):  the clean ancillary qubit, length is 1,
+
+    Circuit for Shor’s algorithm using 2n+3 qubits
+    http://arxiv.org/abs/quant-ph/0205095v3
+    """
+
+    n = len(phib) - 1
+    p = 1
+    for i in range(n - 1, -1, -1):
+        FourierAdderModCC(p * a % N, N, phib, x[i], low, dualControlled=False) # p * a % N
+        p = p * 2
+
+def MultModC(a, N, x, b, c, low):
     QFT | b
-    FourierMultMod(a, N, x, b, c, low)
+    FourierMultModC(a, N, x, b, c, low)
     IQFT| b
 
 def ExGCD(a,b,coff):
@@ -242,9 +289,9 @@ def BEAAdderWiredDecomposition(n,a):
     """
     circuit = Circuit(n+1)
     qreg_b = circuit([i for i in range(n+1)])
-    QFT | qreg_b
+    QFT(len(qreg_b))  | qreg_b
     FourierAdderWired(a,qreg_b)
-    IQFT | qreg_b
+    IQFT(len(qreg_b)) | qreg_b
     return CompositeGate(circuit.gates)
 
 BEAAdderWired = Synthesis(BEAAdderWiredDecomposition)
@@ -302,7 +349,7 @@ def BEAReverseAdderWiredCCDecomposition(n,a):
 
 BEAReverseAdderWiredCC = Synthesis(BEAReverseAdderWiredCCDecomposition)
 
-def BEAAdderModDecomposition(n,a,N):
+def BEAAdderModCCDecomposition(n,a,N):
     """ use FourierAdderWired/FourierAdderWiredCC to calculate (a+b)%N in Fourier space
 
     (phib=Φ(b),c,low) -> (phib'=Φ((a+b)%N),c,low)
@@ -322,14 +369,38 @@ def BEAAdderModDecomposition(n,a,N):
     qreg_c  = circuit([i for i in range(n+1,n+3)])
     qreg_low= circuit([i for i in range(n+3,n+4)])
     QFT | qreg_b
-    FourierAdderMod(a,N,qreg_b,qreg_c,qreg_low)
+    FourierAdderModCC(a,N,qreg_b,qreg_c,qreg_low)
+    IQFT| qreg_b
+    return CompositeGate(circuit.gates)
+
+BEAAdderModCC = Synthesis(BEAAdderModCCDecomposition)
+
+def BEAAdderModDecomposition(n,a,N):
+    """ use FourierAdderWired/FourierAdderWiredCC to calculate (a+b)%N in Fourier space
+
+    (phib=Φ(b),c,low) -> (phib'=Φ((a+b)%N),c,low)
+
+    Args:
+        a(int):      least n bits used as unsigned
+        N(int):      least n bits used as unsigned
+        phib(Qureg): the qureg stores b,        length is n+1,
+        low(Qureg):  the clean ancillary qubit, length is 1,
+
+    Circuit for Shor’s algorithm using 2n+3 qubits
+    http://arxiv.org/abs/quant-ph/0205095v3
+    """
+    circuit = Circuit(n + 2)
+    qreg_b  = circuit([i for i in range(n+1)])
+    qreg_low= circuit([i for i in range(n+1,n+2)])
+    QFT | qreg_b
+    FourierAdderMod(a,N,qreg_b,qreg_low)
     IQFT| qreg_b
     return CompositeGate(circuit.gates)
 
 BEAAdderMod = Synthesis(BEAAdderModDecomposition)
 
-def BEAMulModDecomposition(n,a,N):
-    """ use FourierAdderMod to calculate (b+ax)%N in Fourier space
+def BEAMultModCDecomposition(n,a,N):
+    """ use FourierAdderModCC to calculate (b+ax)%N in Fourier space
 
     (phib=Φ(b),x,c,low) -> (phib'=Φ((b+ax)%N),x,c,low)
 
@@ -351,11 +422,38 @@ def BEAMulModDecomposition(n,a,N):
     qreg_c = circuit(2 * n + 1)
     qreg_low= circuit(2 * n + 2)
     QFT | qreg_b
-    FourierMultMod(a, N, qreg_x, qreg_b, qreg_c, qreg_low)
+    FourierMultModC(a, N, qreg_x, qreg_b, qreg_c, qreg_low)
     IQFT| qreg_b
     return CompositeGate(circuit.gates)
 
-BEAMulMod = Synthesis(BEAMulModDecomposition)
+BEAMulModC = Synthesis(BEAMultModCDecomposition)
+
+def BEAMultModDecomposition(n,a,N):
+    """ use FourierAdderMod to calculate (b+ax)%N in Fourier space
+
+    (phib=Φ(b),x,c,low) -> (phib'=Φ((b+ax)%N),x,c,low)
+
+
+    Args:
+        a(int):      least n bits used as unsigned
+        N(int):      least n bits used as unsigned
+        x(Qureg):    the qureg stores x,        length is n,
+        phib(Qureg): the qureg stores b,        length is n+1,
+        low(Qureg):  the clean ancillary qubit, length is 1,
+
+    Circuit for Shor’s algorithm using 2n+3 qubits
+    http://arxiv.org/abs/quant-ph/0205095v3
+    """
+    circuit = Circuit(2 * n + 2)
+    qreg_b  = circuit([i for i in range(n+1)])
+    qreg_x  = circuit([i for i in range(n+1,2*n+1)])
+    qreg_low= circuit(2 * n + 1)
+    QFT | qreg_b
+    FourierMultMod(a, N, qreg_x, qreg_b, qreg_low)
+    IQFT| qreg_b
+    return CompositeGate(circuit.gates)
+
+BEAMulMod = Synthesis(BEAMultModDecomposition)
 
 def BEACUaDecomposition(n,a,N):
     """ Controlled-U_a, ((a*x)MOD(N)) if c=1, else (x)
@@ -382,7 +480,7 @@ def BEACUaDecomposition(n,a,N):
     qreg_c = circuit(2 * n + 1)
     qreg_low= circuit(2 * n + 2)
     
-    MultMod(a,N,qreg_x,qreg_b,qreg_c,qreg_low)
+    MultModC(a,N,qreg_x,qreg_b,qreg_c,qreg_low)
     idx_start = 0
     idx_end   = len(circuit.gates)
     for i in range(n):     #n bits swapped, b[0] always 0
@@ -390,7 +488,7 @@ def BEACUaDecomposition(n,a,N):
         CX | (qreg_b[i+1], qreg_x[i])
         CCX| (qreg_c,      qreg_x[i], qreg_b[i+1])
         CX | (qreg_b[i+1], qreg_x[i])
-    #ReverseMultMod(a_inv,N,x,b,c,low)
+    #ReverseMultModC(a_inv,N,x,b,c,low)
     for index in range(idx_end-1,idx_start-1,-1):
         circuit.append(circuit.gates[index].inverse())
     return CompositeGate(circuit.gates)
