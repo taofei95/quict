@@ -1,3 +1,5 @@
+import pytest
+
 from QuICT.algorithm import *
 from QuICT.core import *
 from QuICT.qcda.synthesis.arithmetic.hrs import *
@@ -123,6 +125,4 @@ def test5():
 
 
 if __name__ == "__main__":
-    s = "test"
-    num = 7  # change the number to switch test function
-    locals()[s + str(num)]()
+    pytest.main(["./unit_test.py"])

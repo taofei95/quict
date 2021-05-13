@@ -1,6 +1,7 @@
+import pytest
+
 from QuICT.core import Circuit, X, Measure
 from QuICT.qcda.synthesis.arithmetic.bea import *
-
 
 def Set(qreg, N):
     """
@@ -12,8 +13,7 @@ def Set(qreg, N):
             X | qreg[n - 1 - i]
         N = N // 2
 
-
-def TestDraperAdder():
+def test_DraperAdder():
     n = 3
     for a in range(0, 4):
         for b in range(0, 5):
@@ -30,7 +30,7 @@ def TestDraperAdder():
             print("{0}+{1}={2}".format(str(a), str(b), str(bb)))
 
 
-def TestFourierAdderWired():
+def test_FourierAdderWired():
     n = 3
     for a in range(0, 8):
         for b in range(0, 8):
@@ -46,7 +46,7 @@ def TestFourierAdderWired():
             assert bb == a + b
 
 
-def TestFourierReverseAdderWired():
+def test_FourierReverseAdderWired():
     n = 3
     for a in range(0, 8):
         for b in range(0, 8):
@@ -65,19 +65,20 @@ def TestFourierReverseAdderWired():
                 assert bb == (1 << (n + 1)) + b - a
 
 
-def TestFourierAdderMod():
+def test_FourierAdderMod():
     n = 3
-    for N in (2,3,5,6):
-        print("N=="+str(N))
-        _TestFourierAdderModSingle(n,N)
-    
-def _TestFourierAdderModSingle(n,N):
+    for N in (2, 3, 5, 6):
+        print("N==" + str(N))
+        _test_FourierAdderModSingle(n, N)
+
+
+def _test_FourierAdderModSingle(n, N):
     for a in range(0, N):
         for b in range(0, N):
-            circuit = Circuit(n+2)
-            qreg_b = circuit([i for i in range(n+1)])
+            circuit = Circuit(n + 2)
+            qreg_b = circuit([i for i in range(n + 1)])
             Set(qreg_b, b)
-            BEAAdderMod(n,a,N) | circuit
+            BEAAdderMod(n, a, N) | circuit
             Measure | circuit
             circuit.exec()
             # aa = int(qreg_a)
@@ -85,16 +86,17 @@ def _TestFourierAdderModSingle(n,N):
             low = int(circuit(n + 1))
             assert low == 0
             # print("({0}+{1}) % {3}={2}".format(str(a), str(b), str(bb),str(N)))
-            assert bb==(a+b)%N
+            assert bb == (a + b) % N
 
-def TestBEAMulMod():
+
+def test_BEAMulMod():
     n = 3
     for N in range(0, 8):
         for a in range(0, N):
             for x in range(0, N):
-                circuit = Circuit(2*n+2)
-                qreg_b  = circuit([i for i in range(n+1)])
-                qreg_x  = circuit([i for i in range(n+1,2*n+1)])
+                circuit = Circuit(2 * n + 2)
+                qreg_b = circuit([i for i in range(n + 1)])
+                qreg_x = circuit([i for i in range(n + 1, 2 * n + 1)])
                 Set(qreg_b, 0)
                 Set(qreg_x, x)
                 BEAMulMod(n, a, N) | circuit
@@ -117,7 +119,7 @@ def ExGCD(a, b, coff):
     return r
 
 
-def TestBEACUa():
+def test_BEACUa():
     n = 3
     for c in (1,):
         if c == 0:
@@ -150,15 +152,5 @@ def TestBEACUa():
                         assert xx == (a * x) % N
                     # assert bb == 0
 
-
 if __name__ == "__main__":
-    testlist = ["DraperAdder","FourierAdderWired","FourierReverseAdderWired","FourierAdderMod",]
-    newlist  = ["BEAMultMod","BEACUa",] 
-    """
-    for x in xlist:
-        print("------TEST:"+x+"------")
-        locals()["Test" + x]()
-    """
-    for testname in testlist+newlist:
-        print("------TEST:"+testname+"------")
-        locals()["Test" + testname]()
+    pytest.main(["./unit_test.py"])
