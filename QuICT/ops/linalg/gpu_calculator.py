@@ -2,6 +2,7 @@
 # -*- coding:utf8 -*-
 
 import os
+import math
 import numpy as np
 import pycuda.gpuarray as gpuarray
 import pycuda.driver as cuda
@@ -13,24 +14,32 @@ from .utils import mapping_augment
 
 DOT_TEMPLATE = SourceModule(r"""
     #include <pycuda-complex.hpp>
+    #define BLOCK_SIZE 32
     __global__ void dot(pycuda::complex<double> *out, const pycuda::complex<double> *A, const pycuda::complex<double> *B, const int *size)
     {
         const int out_x = size[0];
         const int out_y = size[3];
-        const int mul = size[1];
-
-        const int stride = blockDim.x;
+        const int a_y = size[1];
 
         const int idx_x = threadIdx.x + blockIdx.x * blockDim.x;
         const int idx_y = threadIdx.y + blockIdx.y * blockDim.y;
 
-        pycuda::complex<double> C = 0;
-        for (int i = 0; i < gridDim.x; i++){
-            for (int k = 0; k < stride; k++){
-                C += A[idx_x*mul + i*stride + k] * B[(i*blockDim.x + k)*out_y + idx_y];
-            }
-        }
         if ((idx_x < out_x) && (idx_y < out_y)){
+            pycuda::complex<double> C = 0;
+            __shared__ pycuda::complex<double> As[BLOCK_SIZE][BLOCK_SIZE];
+            __shared__ pycuda::complex<double> Bs[BLOCK_SIZE][BLOCK_SIZE];
+            for (int i = 0; i < a_y; i += blockDim.x){
+                As[threadIdx.x][threadIdx.y] = A[idx_x*a_y + threadIdx.y + i];
+                Bs[threadIdx.x][threadIdx.y] = B[(idx_x + i)*out_y + idx_y];
+
+                __syncthreads();
+
+                for (int k = 0; k < blockDim.x; k++){
+                    C += As[threadIdx.x][k] * Bs[k][threadIdx.y];
+                }
+                __syncthreads();
+            }
+
             out[idx_x*out_y + idx_y] = C;
         }
     }
@@ -132,6 +141,7 @@ class GPUCalculator:
 
     @staticmethod
     def htod(target):
+        """ mv target from host into GPU device. """
         if type(target) is not gpuarray.GPUArray:
             return gpuarray.to_gpu(target)
 
@@ -163,8 +173,8 @@ class GPUCalculator:
         # GPU kernel function.
         gpu_dot = DOT_TEMPLATE.get_function("dot")
 
-        block = (min(row_b, 32), min(row_b, 32), 1)
-        grid = (max(row_a//block[0], 1), max(col_b//block[0], 1), 1)
+        block = (min(row_a, 32), min(col_b, 32), 1)
+        grid = (math.ceil(row_a/block[0]), math.ceil(col_b/block[0]))
         gpu_dot(gpu_result, gpu_A, gpu_B, gpu_size, grid=grid, block=block)
 
         if gpu_out:
@@ -227,9 +237,10 @@ class GPUCalculator:
         gpu_size = gpuarray.to_gpu(np.array([row_a, col_a, n, m], dtype=np.int32))
 
         # GPU kernel function
+        gpu_tensorM = TENSOR_MATRIX_TEMPLATE.get_function("tensor_matrix")
+
         block = (min(row_a, 32), min(col_a, 32), 1)
         grid = (min(n, 32), min(m, 32))
-        gpu_tensorM = TENSOR_MATRIX_TEMPLATE.get_function("tensor_matrix")
         gpu_tensorM(gpu_result, gpu_A, gpu_size, grid=grid, block=block)
 
         if gpu_out:
@@ -243,14 +254,13 @@ class GPUCalculator:
 
         Args:
             A(np.array<np.complex>): the matrix A.
-            mapping(list<int>): the qubit mapping.
+            mapping(np.array<int>): the qubit mapping.
             changeInput(bool): whether changes in A.
             gpu_out(bool): return result from GPU.
+
         Returns:
             np.array<np.complex>: the result of Permutation
         """
-        mapping = np.array(mapping, dtype=np.int64)
-
         if not A.shape[0] == 1 << mapping.shape[0]:
             raise IndexError("Indices do not match!")
 
@@ -270,10 +280,10 @@ class GPUCalculator:
         """ permute mat with mapping, inplace
 
         Args:
-            A: Matrix to be permuted.
-            mapping: An array-like object indicating bit ordering.
-            changeInput: Whether change the input matrix.
-            gpu_out(bool): return result from GPU into CPU.
+            A(np.array<np.complex>): the matrix A.
+            mapping(np.array<int>): the qubit mapping.
+            changeInput(bool): whether changes in A.
+            gpu_out(bool): return result from GPU.
         """
         row_a, col_a = A.shape
         if not row_a == 1 << mapping.shape[0]:
