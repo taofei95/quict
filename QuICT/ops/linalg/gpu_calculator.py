@@ -121,6 +121,36 @@ MATRIX_PERM_TEMPLATE = SourceModule(r"""
     }
 """)
 
+VECTOR_DOT_TEMPLATE = SourceModule(r"""
+    #include <pycuda-complex.hpp>
+    #define BLOCK_SIZE 32
+    __global__ void vectordot(pycuda::complex<double> *out, const pycuda::complex<double> *A, const pycuda::complex<double> *B, const int *size)
+    {
+        const int width = size[0];
+
+        const int idx_x = threadIdx.x + blockIdx.x * blockDim.x;
+        const int idx_y = threadIdx.y + blockIdx.y * blockDim.y;
+
+        if ((idx_x < width) && (idx_y < width)){
+            pycuda::complex<double> C = 0;
+            __shared__ pycuda::complex<double> As[BLOCK_SIZE][BLOCK_SIZE];
+            __shared__ pycuda::complex<double> Bs[BLOCK_SIZE][BLOCK_SIZE];
+            for (int i = 0; i < width; i += blockDim.x){
+                As[threadIdx.x][threadIdx.y] = A[idx_x*width + threadIdx.y + i];
+                Bs[threadIdx.x][threadIdx.y] = B[(idx_x + i)*width + idx_y];
+                __syncthreads();
+
+                for (int k = 0; k < blockDim.x; k++){
+                    C += As[threadIdx.x][k] * Bs[k][threadIdx.y];
+                }
+                __syncthreads();
+            }
+
+            out[idx_x*width + idx_y] = C;
+        }
+    }
+    """)
+
 
 class GPUCalculator:
     """ Based matrix algorithms for running in GPU. """
@@ -310,3 +340,26 @@ class GPUCalculator:
 
         A = gpu_result.get().reshape(row_a, col_a) if gpu_out else gpu_result
 
+    @staticmethod
+    def vectordot(A, V, gpu_out: bool = True):
+        row_a, col_a = A.shape
+        assert(row_a * col_a == V.size)
+
+        # Data in GPU
+        gpu_A = gpuarray.to_gpu(A) if type(A) is np.ndarray else A
+        gpu_V = gpuarray.to_gpu(V) if type(V) is np.ndarray else V
+
+        gpu_result = gpuarray.zeros((row_a, col_a), dtype=np.complex_)
+        gpu_size = gpuarray.to_gpu(np.array([row_a, col_a], dtype=np.int32))
+
+        # GPU kernel function.
+        gpu_dot = VECTOR_DOT_TEMPLATE.get_function("vectordot")
+
+        block = (min(row_a, 32), min(col_a, 32), 1)
+        grid = (math.ceil(row_a/block[0]), math.ceil(col_a/block[0]))
+        gpu_dot(gpu_result, gpu_A, gpu_V, gpu_size, grid=grid, block=block)
+
+        if gpu_out:
+            return gpu_result.get()
+
+        return gpu_result

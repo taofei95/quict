@@ -114,3 +114,18 @@ def dot(A, B, gpu_out: bool = True):
         np.array<np.complex>: A * B
     """
     pass
+
+@gpu_decorator(threshold=DOT_THRESHOLD, cpu_func=CPUCalculator.vectordot, gpu_func=gpu_calculator.vectordot)
+def vectordot(A, V, gpu_out: bool = True):
+    """ dot matrix A and matrix B
+
+    Args:
+        A(np.array<np.complex>): the matrix A
+        V(np.array<np.complex>): the vector B
+        (below variables only available in gpu_function)
+        gpu_out(bool): return result from GPU into CPU
+
+    Returns:
+        np.array<np.complex>: A * B
+    """
+    pass

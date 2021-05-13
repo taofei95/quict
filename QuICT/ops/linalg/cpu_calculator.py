@@ -120,3 +120,12 @@ class CPUCalculator:
             np.array<np.complex>: A * B
         """
         return np.dot(A, B)
+
+    @staticmethod
+    @njit()
+    def vectordot(A, V):
+        row_a, col_a = A.shape
+        assert(row_a * col_a == V.size)
+
+        V = V.reshape((row_a, col_a))
+        return np.dot(A, V)
