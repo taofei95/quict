@@ -21,20 +21,14 @@ class EdgeColoring:
     def _merge_one_side(bipartite: Bipartite, is_left: bool, mx_deg: int) -> List[Merged]:
         """
 
-        Parameters
-        ----------
-        bipartite : Bipartite
-            exec merge on this bipartite
-
-        is_left : bool
-
-        mx_deg : int
-            max degree of bipartite
+        Args:
+            bipartite(Bipartite) : exec merge on this bipartite
+            is_left(bool) : Whether it's left
+            mx_deg(int) : max degree of bipartite
 
 
-        Returns
-        -------
-        List[Merged]
+        Returns:
+            List[Merged] : Merged side
         """
         side = copy.copy(bipartite.left) if is_left else copy.copy(bipartite.right)
         hq = []
@@ -60,16 +54,11 @@ class EdgeColoring:
         Get a regular graph(all nodes have the same degree) from a bipartite graph.
         After the transformation, some indices of nodes might be merged.
 
-        Parameters
-        ----------
-        bipartite : Bipartite
-            a bipartite graph
+        Args:
+            bipartite(Bipartite) : a bipartite graph
 
-        Returns
-        ---------
-        (dict, dict, Bipartite)
-            a tuple of (new_to_olds, old_to_new, regular_graph) where new_to_olds is a dict from new index to old indices,
-            old_to_new as the one from the old to the new and regular_graph is the graph we get.
+        Returns:
+            A tuple of (new_to_olds, old_to_new, regular_graph). Where new_to_olds is a dict from new index to old indices, old_to_new as the one from the old to the new and regular_graph is the graph we get.
         """
         new_to_olds = {}
         """int-int dict
@@ -155,25 +144,18 @@ class EdgeColoring:
             in_alter_path: List[bool],
             matching: List[int]
     ) -> bool:
-        """dfs used in hungarian algorithm
+        """
+        Dfs used in hungarian algorithm
 
-        Parameters
-        ----------
-        color : int
-            mark this color for matching edges
-        bipartite : Bipartite
-            execute dfs on this bipartite
-        cur : int
-            start point of current dfs
-        in_alter_path : List[bool]
-            if some point is in an alternative path
-        matching : List[int]
-            match point, -1 for no match
+        Args:
+            color(int) : mark this color for matching edges
+            bipartite(Bipartite) : execute dfs on this bipartite
+            cur(int) : start point of current dfs
+            in_alter_path(List[bool]) : if some point is in an alternative path
+            matching(List[int]) : match point, -1 for no match
 
-        Returns
-        -------
-        bool
-            dfs success
+        Returns:
+            bool : dfs success
         """
 
         eid: int = bipartite.head[cur]  # edge index
@@ -202,7 +184,8 @@ class EdgeColoring:
             color: int,
             change_input: bool = True
     ) -> Tuple[int, Bipartite, Bipartite]:
-        """Get a matching of a regular bipartite graph and color it if needed.
+        """
+        Get a matching of a regular bipartite graph and color it if needed.
         Remember that a regular graph always has a perfect matching.
 
         In fact, in the original paper, matching is found using a O(ElogD) algorithm.
@@ -211,18 +194,13 @@ class EdgeColoring:
 
         TODO: replace Hungarian matching algorithm(which runs in O(VE)) for a O(ElogE) or O(ElogD) one.
 
-        Parameters
-        ----------
-        bipartite : Bipartite
-            Exec colored matching on this bipartite
-        color : int
-            Integer index of some color
-        change_input : bool
-            Whether put color on the original graph
+        Args:
+            bipartite(Bipartite) : Exec colored matching on this bipartite
+            color(int) : Integer index of some color
+            change_input(bool) : Whether put color on the original graph
 
-        Returns
-        ---------
-        Tuple[int, Bipartite, Bipartite]: Matching edge number, Match bipartite, Bipartite removed matching.
+        Returns:
+            Tuple[int, Bipartite, Bipartite]: Matching edge number, Match bipartite, Bipartite removed matching.
         """
         n = len(bipartite.nodes)
         matching = [-1 for _ in range(n + 1)]
@@ -281,20 +259,16 @@ class EdgeColoring:
 
     @classmethod
     def get_euler_partition(cls, bipartite: Bipartite, skip_colored: bool = True) -> Tuple[Bipartite, Bipartite]:
-        """Split original 2r-regular bipartite into 2 r-regular bipartite.
+        """
+        Split original 2r-regular bipartite into 2 r-regular bipartite.
 
 
-        Parameters
-        ----------
-        bipartite : Bipartite
-            Split this.
-        skip_colored : bool
-            Whether to skip the colored edges in the graph. If true, edges without color should form a 2r-regular graph.
+        Args:
+            bipartite(Bipartite) : Split this.
+            skip_colored(bool) : Whether to skip the colored edges in the graph. If true, edges without color should form a 2r-regular graph.
 
-        Returns
-        -------
-        Tuple[Bipartite, Bipartite]
-            2 bipartite after split
+        Returns:
+            Tuple[Bipartite, Bipartite] : 2 bipartite after split
         """
         e = len(bipartite.edges)
         b1 = Bipartite(bipartite.left, bipartite.right)
@@ -370,19 +344,15 @@ class EdgeColoring:
 
     @classmethod
     def get_edge_coloring_for_regular(cls, bipartite: Bipartite, start_color: int) -> Bipartite:
-        """coloring this regular bipartite
+        """
+        Coloring this regular bipartite
 
-        Parameters
-        ----------
-        bipartite : Bipartite
-            exec on this bipartite
+        Args:
+            bipartite(Bipartite) : exec on this bipartite
+            start_color(int) : color used would start with this index
 
-        start_color : int
-            color used would start with this index
-
-        Returns
-        -------
-        Bipartite
+        Returns:
+            Bipartite
         """
 
         ret = Bipartite(bipartite.left, bipartite.right)
@@ -428,19 +398,16 @@ class EdgeColoring:
 
     @classmethod
     def get_edge_coloring(cls, bipartite: Bipartite) -> Bipartite:
-        """coloring all edges on this bipartite.
+        """
+        Coloring all edges on this bipartite.
 
         The input color attribute of edges in input bipartite would be ignored.
 
-        Parameters
-        ----------
-        bipartite : Bipartite
-            exec edge coloring on this bipartite
+        Args:
+        bipartite(Bipartite) : exec edge coloring on this bipartite
 
-        Returns
-        -------
-        Bipartite
-            return a new bipartite with color. Color is represented as an integer, starting from 0.
+        Returns:
+            Bipartite : return a new bipartite with color. Color is represented as an integer, starting from 0.
         """
         new_to_olds: Dict[int, List[int]]
         old_to_new: Dict[int, int]

@@ -138,7 +138,6 @@ class CnotWithoutAncillae:
         """
 
         n = mat.shape[0]
-        s_size = n // 2
 
         if n <= 2:
             return cls.small_matrix_run(mat)

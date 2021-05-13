@@ -6,59 +6,51 @@ import numpy as np
 
 
 class Merged:
-    """merged points in heap
+    """
+    Merged points in heap
 
-    Attributes
-    ----------
-    deg : int
-        degree of x
-    nodes : List[int]
-        node indices in a bipartite
+    Attributes:
+        deg(int) : degree of x
+        nodes(List[int]) : node indices in a bipartite
     """
 
     def __init__(self, deg: int, nodes: List[int]):
-        """get a merged point
+        """
+        Get a merged point
 
-        Parameters
-        ----------
-        deg : int
-            degree of x
-        nodes : List[int]
-            node indices in a bipartite
+        Args:
+            deg(int) : degree of x
+            nodes(List[int]) : node indices in a bipartite
         """
         self.deg = deg
         self.nodes = nodes
 
-    def __add__(self, other):
-        """combine two merged points to a larger merged
+    def __add__(self, other: "Merged") -> "Merged":
+        """
+        combine two merged points to a larger merged
 
-        Parameters
-        ----------
-        other : Merged
-
-        Returns
-        -------
-        Merged
+        Args:
+            other(Merged): Another Merged node.
         """
         d = self.deg + other.deg
         x = self.nodes + other.nodes
         return Merged(d, x)
 
     def __lt__(self, other):
-        """self is less than other
-
-        Parameters
-        ----------
-        other : Merged
-
-        Returns
-        -------
-        Boolean
-        """
         return self.deg < other.deg
 
 
 def f2_matmul(a: np.ndarray, b: np.ndarray) -> np.ndarray:
+    """
+    Multiply 2 matrices in F_2.
+
+    Args:
+        a (np.ndarray): Input boolean matrix a.
+        b (np.ndarray): Input boolean matrix b.
+
+    Returns:
+        np.ndarray: Production of ab over F_2.
+    """
     a_ = np.array(a, dtype=int)
     b_ = np.array(b, dtype=int)
     c_ = a_ @ b_
@@ -68,6 +60,14 @@ def f2_matmul(a: np.ndarray, b: np.ndarray) -> np.ndarray:
 
 
 def f2_half_gaussian_elimination(mat_: np.ndarray) -> np.ndarray:
+    """
+    Gaussian elimination to convert a matrix into triangular form over F_2.
+    Args:
+        mat_ (np.ndarray): Input boolean matrix.
+
+    Returns:
+        np.ndarray: Eliminated triangular matrix.
+    """
     mat: np.ndarray = mat_.copy()
     row_pivot = 0
     col_pivot = 0
@@ -91,6 +91,14 @@ def f2_half_gaussian_elimination(mat_: np.ndarray) -> np.ndarray:
 
 
 def f2_rank(mat_: np.ndarray) -> int:
+    """
+    Rank of a matrix over F_2.
+    Args:
+        mat_ (np.ndarray): Input boolean matrix.
+
+    Returns:
+        int: Rank of mat_ over F_2.
+    """
     mat = f2_half_gaussian_elimination(mat_)
     rk = 0
     for i in range(mat.shape[0]):
@@ -100,6 +108,14 @@ def f2_rank(mat_: np.ndarray) -> int:
 
 
 def f2_inverse(mat_: np.ndarray) -> np.ndarray:
+    """
+    Matrix inverse over F_2.
+    Args:
+        mat_ (np.ndarray): Input boolean matrix.
+
+    Returns:
+        np.ndarray: The inverse boolean matrix of mat_ over F_2.
+    """
     n = mat_.shape[0]
     aug = np.empty(shape=(n, 2 * n), dtype=bool)
     aug[:, :n] = mat_
