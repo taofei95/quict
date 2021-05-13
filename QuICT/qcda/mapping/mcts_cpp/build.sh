@@ -6,7 +6,7 @@ fi
 cd ./build
 
 cmake \
--DTEST_MCTS=on \
+-DTEST_MCTS=off \
 -DTEST_RL_MCTS=off \
 -DTEST_DATA_GENERATOR=off \
 -DCMAKE_BUILD_TYPE=Release .. 

@@ -131,10 +131,9 @@ class MCTS(object):
         # print(self._logical_circuit_dag.size)
         self._gate_index = []
         self._physical_circuit: List[BasicGate] = []
-        qubit_mask = np.zeros(self._coupling_graph.size, dtype=np.int32) - 1
         # For the logical circuit, its initial mapping is [0,1,2,...,n] in default. Thus, the qubit_mask of initial logical circuit
         # should be mapping to physical device with the actual initial mapping.
-
+        qubit_mask = np.zeros(self._coupling_graph.size, dtype=np.int32) - 1
         for i, qubit in enumerate(self._circuit_dag.initial_qubit_mask):
             qubit_mask[init_mapping[i]] = qubit
 
