@@ -37,20 +37,17 @@ class CPUCalculator:
 
     @staticmethod
     @njit(parallel=True, nogil=True)
-    def MatrixPermutation(A: np.ndarray, mapping: Union[np.ndarray, List[int]], changeInput: bool = False) -> np.ndarray:
+    def MatrixPermutation(A: np.ndarray, mapping: np.ndarray, changeInput: bool = False) -> np.ndarray:
         """ permute A with mapping, inplace
 
         Args:
-            A: Matrix to be permuted.
-            mapping: An array-like object indicating bit ordering.
-            changeInput: Whether change the input matrix.
+            A(np.array<np.complex>): the matrix A
+            mapping(np.ndarray<int>): the qubit mapping
+            changeInput(bool): whether changes in A
 
         """
-        # numba do not support np.array(np.array), and it need pre-defined variable types
-        # mapping = np.array(mapping, dtype=np.int64)
-
         if not A.shape[0] == 1 << mapping.shape[0]:
-            raise IndexError("Indices do not match!")
+            raise IndexError("Indices do not match!") 
 
         idx_mapping = mapping_augment(mapping)
 
@@ -68,13 +65,13 @@ class CPUCalculator:
 
     @staticmethod
     @njit()
-    def VectorPermutation(A, mapping, inplace=False):
+    def VectorPermutation(A: np.ndarray, mapping: np.ndarray, changeInput: bool = False):
         """ permutaion A with mapping, inplace
 
         Args:
             A(np.array<np.complex>): the matrix A
-            mapping(list<int>): the qubit mapping
-            inplace(bool): whether changes in A
+            mapping(np.ndarray<int>): the qubit mapping
+            changeInput(bool): whether changes in A
         Returns:
             np.array<np.complex>: the result of Permutation
         """

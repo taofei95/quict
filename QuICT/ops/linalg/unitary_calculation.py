@@ -18,11 +18,11 @@ else:
     gpu_calculator = CPUCalculator()
 
 
-MTENSOR_THRESHOLD = 8   # A*n*m size
+MTENSOR_THRESHOLD = 5   # A size
 TENSOR_THRESHOLD = 9    # A.size + B.size
-DOT_THRESHOLD = 8       # A.size + B.size
-MPERM_THRESHOLD = 10    # A.size
-VPERM_THRESHOLD = 14    # A.size
+DOT_THRESHOLD = -1      # A.size + B.size
+MPERM_THRESHOLD = 12     # A.size
+VPERM_THRESHOLD = 21    # A.size
 
 
 @gpu_decorator(threshold=MTENSOR_THRESHOLD, cpu_func=CPUCalculator.MatrixTensorI, gpu_func=gpu_calculator.MatrixTensorI)
