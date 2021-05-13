@@ -15,6 +15,7 @@ from QuICT.qcda.optimization import TopologicalCnotRz
 
 def _getRandomList(n):
     """ get first 2 number from 0, 1, ..., n - 1 randomly.
+
     Args:
         n(int)
     Returns:
@@ -28,6 +29,7 @@ def _getRandomList(n):
 
 def _getAllRandomList(n):
     """ get n number from 0, 1, ..., n - 1 randomly.
+
     Args:
         n(int)
     Returns:

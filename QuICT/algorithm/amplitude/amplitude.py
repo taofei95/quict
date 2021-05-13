@@ -18,6 +18,7 @@ class Amplitude(Algorithm):
     @classmethod
     def run(cls, circuit : Circuit, ancilla = None):
         """
+
         Args:
             circuit(Circuit)
             ancilla(list<int>): the indexes of ancillary qubits
@@ -35,6 +36,7 @@ class Amplitude(Algorithm):
     @staticmethod
     def _run(circuit: Circuit, ancilla = None):
         """
+
         Args:
             circuit(Circuit)
             ancilla(list<int>): the indexes of ancillary qubits

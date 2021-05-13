@@ -16,6 +16,7 @@ class Mapping(object):
     @classmethod
     def run(cls, circuit: Circuit, *pargs, inplace=False):
         """
+
         Args:
             circuit(Circuit): the circuit waited to be mapped, contained topology
             *pargs: other parameters

@@ -592,23 +592,34 @@ class Circuit(object):
             gate.print_info()
         print("-------------------")
 
-    def draw_photo(self, filename = None, show_depth = True):
+    def draw(self, method = 'matp', filename = None):
         """ draw the photo of circuit in the run directory
 
         Args:
             filename(str): the output filename without file extensions,
                            default to be the name of the circuit
-            show_depth: whether to show a red frame for gates in the same layer
-                        (Note that some gates in the same layer cannot be represented
-                        in the row in the photo)
+            method(str): the method to draw the circuit
+                matp: matplotlib
+                command : command
+                tex : tex source
         """
-        from QuICT.tools.drawer import PhotoDrawerModel
-        if filename is None:
-            filename = str(self.id) + '.jpg'
-        elif '.' not in filename:
-            filename += '.jpg'
-        PhotoDrawer = PhotoDrawerModel()
-        PhotoDrawer.run(self, filename, show_depth)
+        if method == 'matp':
+            from QuICT.tools.drawer import PhotoDrawer
+            if filename is None:
+                filename = str(self.id) + '.jpg'
+            elif '.' not in filename:
+                filename += '.jpg'
+            photoDrawer = PhotoDrawer()
+            photoDrawer.run(self, filename)
+        elif method == 'command':
+            from QuICT.tools.drawer import TextDrawing
+            textDrawing = TextDrawing([i for i in range(len(self.qubits))], self.gates)
+            if filename is None:
+                print(textDrawing.single_string())
+                return
+            elif '.' not in filename:
+                filename += '.txt'
+            textDrawing.dump(filename)
 
     # computation method of the circuit
     def partial_prob(self, indexes):
@@ -655,6 +666,7 @@ class Circuit(object):
 
     def random_append(self, rand_size = 10, typeList = None):
         """ add some random gate to the circuit
+
         Args:
             rand_size(int): the number of the gate added to the circuit
             typeList(list<GateType>): the type of gate, default contains CX、ID、Rz、CY、CRz、CH

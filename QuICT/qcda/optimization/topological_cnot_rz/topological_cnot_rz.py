@@ -38,6 +38,7 @@ def delete_dfs(now):
 
 def read(circuit):
     """ get describe from the circuit or cnot_struct
+
     Args:
         circuit(Circuit): the input circuit, contained the information of topology and (maybe) cnot
     Returns:
@@ -230,6 +231,7 @@ class TopologicalCnotRz(Optimization):
     @classmethod
     def execute(cls, circuit: Circuit, *pargs):
         """
+
         Args:
             circuit(Circuit): the circuit to be optimize
         """

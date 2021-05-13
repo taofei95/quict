@@ -96,6 +96,7 @@ class WebInterface(object):
     @staticmethod
     def output_object(circuit : Circuit):
         """ transform circuit form to js data dict
+
         Args:
 
         Returns:

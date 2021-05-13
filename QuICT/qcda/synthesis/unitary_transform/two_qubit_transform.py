@@ -37,6 +37,7 @@ class CartanKAKDecomposition:
 
     def __init__(self, matrix, eps=1e-15):
         """
+
         Args:
             matrix(np.array): 4*4 unitary matrix to be decomposed
             eps(float, optional): Eps of decomposition process

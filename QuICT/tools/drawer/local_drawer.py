@@ -14,7 +14,7 @@ from matplotlib import pyplot as plt
 from .ibmq_style import DefaultStyle
 
 LINE_WIDTH = 1.5
-FOLD = 25
+FOLD = 26
 cir_len = 0
 FONT_SIZE = 13
 SUB_FONT_SIZE = 8
@@ -138,7 +138,7 @@ class Anchor(object):
         return x + offset_x, y
 
 
-class PhotoDrawerModel(object):
+class PhotoDrawer(object):
 
     def __init__(self):
         self.style = DefaultStyle()
@@ -505,7 +505,7 @@ class PhotoDrawerModel(object):
                          zorder=PORDER_TEXT)
             self.draw_line([offset_x + 0.5, y], [now['max_x'], y], zorder=PORDER_REGLINE)
 
-    def run(self, circuit, filename=None, show_depth=True):
+    def run(self, circuit, filename=None, show_depth=False):
         global cir_len
         cir_len = circuit.circuit_width()
         name_dict = collections.OrderedDict()

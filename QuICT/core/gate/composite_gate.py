@@ -303,6 +303,7 @@ class CompositeGate(list):
 
     def random_append(self, rand_size=10, typeList=None):
         """ add some random gate to the circuit
+
         Args:
             rand_size(int): the number of the gate added to the circuit
             typeList(list<GateType>): the type of gate, default contains CX、ID、Rz、CY、CRz、CH
