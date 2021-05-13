@@ -5,7 +5,6 @@ the commutative relation between gates in consideration.
 
 import numpy as np
 
-from QuICT.algorithm import SyntheticalUnitary
 from QuICT.core import *
 from QuICT.qcda.optimization._optimization import Optimization
 
