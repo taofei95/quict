@@ -69,7 +69,7 @@ TENSOR_MATRIX_TEMPLATE = SourceModule(r"""
         const int out_x = n * m * size[0];
         const int out_y = n * m * size[1];
 
-        const int stride_x = blockDim.x * gridDim.y;
+        const int stride_x = blockDim.x * gridDim.x;
         const int stride_y = blockDim.y * gridDim.y;
 
         const int idx_x = threadIdx.x + blockIdx.x * blockDim.x;
