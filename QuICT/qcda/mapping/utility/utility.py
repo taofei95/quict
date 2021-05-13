@@ -4,8 +4,6 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import List, Tuple, Set, Dict
 
-import torch
-
 from QuICT.core.exception import *
 from QuICT.core.gate.gate import *
 from .coupling_graph import CouplingGraph
@@ -25,58 +23,6 @@ def is_two_qubit_gate_equal(s1: List[int], s2: List[int]) -> bool:
 def f(x: np.ndarray) -> np.ndarray:
     return np.piecewise(x, [x < 0, x == 0, x > 0], [0, 0.001, lambda x: x])
 
-
-def transform_batch(batch_data: Tuple[np.ndarray, np.ndarray, np.ndarray], device: torch.device) -> Tuple[
-    torch.LongTensor, torch.FloatTensor]:
-    qubits_list, padding_mask_list, adj_list = batch_data
-    padding_mask = torch.from_numpy(padding_mask_list).to(torch.uint8)
-    qubits = torch.from_numpy(qubits_list).long()
-
-    adj_list = get_adj_list(adj_list)
-    if isinstance(adj_list, list):
-        adj = torch.from_numpy(np.concatenate(adj_list, axis=0)).long()
-    else:
-        adj = torch.from_numpy(adj_list).long()
-
-    return qubits.to(device), padding_mask.to(device), adj.to(device)
-
-
-def get_adj_list(adj_list: List[np.ndarray]) -> np.ndarray:
-    if isinstance(adj_list, list):
-        idx_bias = 0
-        for i in range(len(adj_list)):
-            adj_list[i] = adj_list[i] + idx_bias
-            idx_bias += adj_list[i].shape[0]
-    return adj_list
-
-
-def get_graph_pool(batch_graph: List[np.ndarray], device: torch.device) -> torch.FloatTensor:
-    """
-    """
-    if isinstance(batch_graph, list):
-        num_of_graph = len(batch_graph)
-        num_of_nodes = 0
-        bias = [0]
-        for i in range(num_of_graph):
-            num_of_nodes += batch_graph[i].shape[0]
-            bias.append(num_of_nodes)
-
-        elem = torch.ones(num_of_nodes, dtype=torch.float)
-        idx = torch.zeros([2, num_of_nodes], dtype=torch.long)
-        for i in range(num_of_graph):
-            v = torch.arange(start=0, end=batch_graph[i].shape[0], dtype=torch.long)
-            idx[0, bias[i]: bias[i + 1]] = i
-            idx[1, bias[i]: bias[i + 1]] = v
-        graph_pool = torch.sparse.FloatTensor(idx, elem, torch.Size([num_of_graph, num_of_nodes])).to(device)
-
-    else:
-        elem = torch.ones(batch_graph.shape[0], dtype=torch.float)
-        idx = torch.zeros([2, batch_graph.shape[0]], dtype=torch.long)
-        idx[0, :] = 0
-        idx[1, :] = torch.arange(start=0, end=batch_graph.shape[0], dtype=torch.long)
-        graph_pool = torch.sparse.FloatTensor(idx, elem, torch.Size([1, batch_graph.shape[0]])).to(device)
-
-    return graph_pool
 
 
 class EdgeProb:
@@ -163,7 +109,6 @@ class GNNConfig(object):
     dropout: float = 0.5
     num_U2GNN_layers: int = 1
     value_head_size: int = 256
-    device: torch.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     graph_name: str = 'ibmq20'
     learning_rate: float = 0.1
     weight_decay: float = 1e-4
@@ -189,7 +134,6 @@ default_gnn_config = GNNConfig(maximum_capacity=200000, num_of_gates=150, maximu
                                batch_size=256,
                                ff_hidden_size=128, num_self_att_layers=4, dropout=0.5, value_head_size=128, gamma=0.7,
                                num_U2GNN_layers=2, learning_rate=0.001, weight_decay=1e-4, num_of_epochs=1000,
-                               device=torch.device("cuda"),
                                graph_name='ibmq20', num_of_process=10, feature_update=True, gat=True, n_gat=1,
                                mcts_c=20, loss_c=10,
                                num_of_swap_gates=15, sim_method=2)
@@ -281,7 +225,6 @@ class RLConfig(object):
     with_predictor: bool = False
     batch_size: int = 10
     dropout: float = 0.5
-    device: torch.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     graph_name: str = 'ibmq20'
 
     learning_rate: float = 0.1
@@ -319,7 +262,6 @@ default_rl_config = RLConfig(num_of_gates=150,
                              epsilon=0.25,
                              batch_size=10,
                              dropout=0.5,
-                             device=torch.device("cuda" if torch.cuda.is_available() else "cpu"),
                              graph_name='ibmq20',
                              learning_rate=0.1,
                              weight_decay=1e-4,

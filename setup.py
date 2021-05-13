@@ -37,7 +37,13 @@ file_data = [
 ]
 
 # 3rd party library
-requires = ['scipy']
+requires = [
+   'numpy>=1.20.1',
+   'networkx>=2.5.1',
+   'matplotlib>=3.3.4',
+   'cython>=0.29.23',
+   'ply>=3.11',  
+   'scipy']
 
 # version information
 about = {}

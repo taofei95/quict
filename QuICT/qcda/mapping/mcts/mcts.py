@@ -35,13 +35,16 @@ class MCTS(object):
                  with_predictor: bool = False, info: int = 0,
                  method: int = 0, major: int = 4, **params):
         """
-        Params:
+        Args:
             paly_times: The repeated times of the whole search procedure for the circuit.
             gamma: The parameter measures the trade-off between the short-term reward and the long-term value.
             c: The parameter measures the trade-off between the exploitation and exploration in the upper confidence bound.
             Gsim: Size of the sub circuit that would be searched by the random simulation method.
+            c: The parameter measures the trade-off between the exploitation and exploration in the upper confidence bound.
+
             Nsim: The repeated times of the random simulation method.
-            selection_times: The time of expansion and back propagation in the monte carlo tree search
+            selection_times: The time of expansion and back propagation in the monte carlo tree search.
+            
         """
         self._play_times = play_times
         self._selection_times = selection_times
