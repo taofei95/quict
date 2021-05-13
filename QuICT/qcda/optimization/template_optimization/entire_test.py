@@ -79,27 +79,25 @@ def test_can_run():
         circuit.random_append(100, typeList = [GATE_ID["X"], GATE_ID["CX"], GATE_ID["CCX"]])
         # indexes = _getRandomList(3, len(names))
 
-        circuits = []
+        templates = []
         for name in names:
             # name = names[index]
-            circuits.append(eval(name)())
-        template_o = TemplateOptimization(circuits)
-        circuit_opt = template_o.run(circuit)
+            templates.append(eval(name)())
+        circuit_opt = TemplateOptimization.execute(circuit, templates)
         equ = equiv(circuit, circuit_opt)
         if not equ:
-            circuit.print_infomation()
-            circuit_opt.print_infomation()
+            circuit.print_information()
+            circuit_opt.print_information()
             print(len(circuit.gates), len(circuit_opt.gates))
             assert 0
 
-        template_o = TemplateOptimization(circuits)
-        circuit_opt_opt = template_o.run(circuit_opt)
+        circuit_opt_opt = TemplateOptimization.execute(circuit_opt, templates)
         equ = equiv(circuit_opt_opt, circuit_opt)
-        if not equ:# or len(circuit_opt_opt) != len(circuit_opt):
-            circuit.print_infomation()
-            circuit_opt.print_infomation()
+        if not equ:
+            circuit.print_information()
+            circuit_opt.print_information()
             print(len(circuit.gates), len(circuit_opt.gates))
             assert 0
 
 if __name__ == '__main__':
-    pytest.main(["./entir_test.py"])
+    pytest.main(["./entire_test.py"])

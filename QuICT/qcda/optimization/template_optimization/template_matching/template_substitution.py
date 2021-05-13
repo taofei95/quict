@@ -346,7 +346,7 @@ class TemplateSubstitution:
 
                     node = group.template_dag_dep.get_node(index)
                     gate = node.copy().gate
-                    gate_inv = gate.inverse()
+                    gate_inv = gate.inverse().copy()
                     control = gate.controls
                     gate_inv.cargs = qargs[:control]
                     gate_inv.targs = qargs[control::]
@@ -407,8 +407,8 @@ class TemplateSubstitution:
                 the parameters bound. If no binding satisfies the
                 parameter constraints, returns None.
         """
-        import sympy as sym
-        from sympy.parsing.sympy_parser import parse_expr
+        # import sympy as sym
+        # from sympy.parsing.sympy_parser import parse_expr
         """
         circuit_params, template_params = [], []
 

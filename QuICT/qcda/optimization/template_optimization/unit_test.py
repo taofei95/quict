@@ -87,6 +87,5 @@ if __name__ == '__main__':
 
     # Not a correct use since circuit_T is not identity, only to
     # check if the code could run in case of a non-trivial input
-    template_o = TemplateOptimization([circuit_T])
-    circuit_opt = template_o.run(circuit_C)
-    circuit_opt.print_infomation()
+    circuit_opt = TemplateOptimization.execute(circuit_C, [circuit_T])
+    circuit_opt.print_information()
