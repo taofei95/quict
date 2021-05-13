@@ -40,33 +40,8 @@ def TestFourierAdderWired():
             circuit.exec()
             # aa = int(qreg_a)
             bb = int(qreg_b)
-            # print("{0}+{1}={2}".format(str(a), str(b), str(bb)))
-            assert bb==a+b
-
-def TestFourierAdderWiredCC():
-    n = 3
-    for c in (0,1,2,3):
-        if c!=3:
-            print(format(c,"02b"),"disabled")
-        else:
-            print(format(c,"02b"),"enabled")
-        for a in range(0, 8):
-            for b in range(0, 8):
-                circuit = Circuit(n+3)
-                qreg_b = circuit([i for i in range(n+1)])
-                qreg_c = circuit([i for i in range(n+1,n+3)])
-                Set(qreg_b, b)
-                Set(qreg_c, c)
-                BEAAdderWiredCC(3,a) | circuit
-                Measure | circuit
-                circuit.exec()
-                # aa = int(qreg_a)
-                bb = int(qreg_b)
-                #print("{0}+{1}={2}".format(str(a), str(b), str(bb)))
-                if c!=3:
-                    assert bb==b
-                else:
-                    assert bb==a+b
+            print("{0}+{1}={2}".format(str(a), str(b), str(bb)))
+            # assert bb==a+b
 
 def TestFourierReverseAdderWired():
     n = 3
@@ -86,34 +61,6 @@ def TestFourierReverseAdderWired():
             else:
                 assert bb==(1<<(n+1))+b-a
 
-def TestFourierReverseAdderWiredCC():
-    n = 3
-    for c in (0,1,2,3):
-        if c!=3:
-            print(format(c,"02b"),"disabled")
-        else:
-            print(format(c,"02b"),"enabled")
-        for a in range(0, 8):
-            for b in range(0, 8):
-                circuit = Circuit(n+3)
-                qreg_b = circuit([i for i in range(n+1)])
-                qreg_c = circuit([i for i in range(n+1,n+3)])
-                Set(qreg_b, b)
-                Set(qreg_c, c)
-                BEAReverseAdderWiredCC(3,a) | circuit
-                Measure | circuit
-                circuit.exec()
-                # aa = int(qreg_a)
-                bb = int(qreg_b)
-                #print("{0}+{1}={2}".format(str(a), str(b), str(bb)))
-                if c!=3:
-                    assert bb==b
-                else:
-                    if b-a>=0:
-                        assert bb==b-a
-                    else:
-                        assert bb==(1<<(n+1))+b-a
-
 def TestFourierAdderMod():
     n = 3
     for N in (2,3,5,6):
@@ -121,44 +68,32 @@ def TestFourierAdderMod():
         _TestFourierAdderModSingle(n,N)
     
 def _TestFourierAdderModSingle(n,N):
-    for c in (3,):
-        if c!=3:
-            print(format(c,"02b"),"disabled")
-        else:
-            print(format(c,"02b"),"enabled")
-        for a in range(0, N):
-            for b in range(0, N):
-                circuit = Circuit(n+4)
-                qreg_b = circuit([i for i in range(n+1)])
-                qreg_c = circuit([i for i in range(n+1,n+3)])
-                Set(qreg_b, b)
-                Set(qreg_c, c)
-                BEAAdderMod(n,a,N) | circuit
-                Measure | circuit
-                circuit.exec()
-                # aa = int(qreg_a)
-                bb = int(qreg_b)
-                low = int(circuit(n + 3))
-                assert low == 0
-                # print("({0}+{1}) % {3}={2}".format(str(a), str(b), str(bb),str(N)))
-                if c!=3:
-                    assert bb==b
-                else:
-                    assert bb==(a+b)%N
+    for a in range(0, N):
+        for b in range(0, N):
+            circuit = Circuit(n+2)
+            qreg_b = circuit([i for i in range(n+1)])
+            Set(qreg_b, b)
+            BEAAdderMod(n,a,N) | circuit
+            Measure | circuit
+            circuit.exec()
+            # aa = int(qreg_a)
+            bb = int(qreg_b)
+            low = int(circuit(n + 1))
+            assert low == 0
+            # print("({0}+{1}) % {3}={2}".format(str(a), str(b), str(bb),str(N)))
+            assert bb==(a+b)%N
 
-def TestBEAMultMod():
+def TestBEAMulMod():
     n = 3
     for N in range(0, 8):
         for a in range(0, N):
             for x in range(0, N):
-                circuit = Circuit(2*n+3)
+                circuit = Circuit(2*n+2)
                 qreg_b  = circuit([i for i in range(n+1)])
                 qreg_x  = circuit([i for i in range(n+1,2*n+1)])
-                qreg_c = circuit(2*n+1)
-                Set(qreg_c, 1)
                 Set(qreg_b, 0)
                 Set(qreg_x, x)
-                BEAMultMod(n, a, N) | circuit
+                BEAMulMod(n, a, N) | circuit
                 Measure | circuit
                 circuit.exec()
                 bb = int(qreg_b)
@@ -210,13 +145,13 @@ def TestBEACUa():
                     # assert bb == 0
 
 if __name__ == "__main__":
-    testlist = ["DraperAdder","FourierAdderWired","FourierAdderWiredCC","FourierReverseAdderWiredCC","FourierReverseAdderWired","FourierAdderMod","BEAMultMod",]
-    newlist  = ["BEACUa",] 
+    testlist = ["DraperAdder","FourierAdderWired","FourierReverseAdderWired","FourierAdderMod",]
+    newlist  = ["BEAMultMod","BEACUa",] 
     """
     for x in xlist:
         print("------TEST:"+x+"------")
         locals()["Test" + x]()
     """
-    for testname in newlist:
+    for testname in testlist+newlist:
         print("------TEST:"+testname+"------")
         locals()["Test" + testname]()
