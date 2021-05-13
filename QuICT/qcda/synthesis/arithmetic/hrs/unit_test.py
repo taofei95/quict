@@ -2,6 +2,7 @@ from QuICT.algorithm import *
 from QuICT.core import *
 from QuICT.qcda.synthesis.arithmetic.hrs import *
 
+
 def Set(qreg, N):
     """
     Set the qreg as N, using X gates on specific qubits
@@ -9,8 +10,9 @@ def Set(qreg, N):
     n = len(qreg)
     for i in range(n):
         if N % 2 == 1:
-            X | qreg[n-1-i]
-        N = N//2
+            X | qreg[n - 1 - i]
+        N = N // 2
+
 
 '''
 def test6():
@@ -36,6 +38,7 @@ def test6():
     print(int(qubit_target))
 '''
 
+
 def test7():
     # x * a mod N
     # n = 3
@@ -53,6 +56,7 @@ def test7():
     qubit_target = circuit([0, 1, 2])
     print(int(qubit_target))
 
+
 '''
 def test1():
     circuit = Circuit(4)
@@ -65,12 +69,14 @@ def test1():
     print(amplitude)
 '''
 
+
 def test2():
     circuit = Circuit(4)
     circuit.assign_initial_zeros()
     HRSAdder(2, 2) | circuit
     amplitude = Amplitude.run(circuit)
     print(amplitude)
+
 
 '''
 def test3():
@@ -97,14 +103,15 @@ def test4():
     print(amplitude)
 '''
 
+
 def test5():
     circuit = Circuit(6)
     circuit.assign_initial_zeros()
     # b = 010 = 2
-    X | circuit(3) 
+    X | circuit(3)
     # len(g) needs to be larger than 1, so n needs to be larger than 2 !!!
     # indicator bit somtimes seems to change
-    HRSAdderMod(3, 1, 2) | circuit # a = 1, N = 3, (b + a) % N = 1
+    HRSAdderMod(3, 1, 2) | circuit  # a = 1, N = 3, (b + a) % N = 1
 
     # expected result: 110100----52
     for i in range(6):
@@ -114,8 +121,8 @@ def test5():
     y = int(qreg)
     print(y)
 
+
 if __name__ == "__main__":
     s = "test"
-    num = 7 # change the number to switch test function
+    num = 7  # change the number to switch test function
     locals()[s + str(num)]()
-
