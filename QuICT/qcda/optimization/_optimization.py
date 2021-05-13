@@ -13,12 +13,6 @@ class Optimization(ABC):
     to a better circuit, which is better is some aspect such as depth, size, T-count and so on.
     Note that all subclass must overload the function "execute".
     """
-
-    def __init__(self):
-        """ Pass parameters in the optimization process (if needed)
-        """
-        pass
-
     @abstractclassmethod
     def execute(cls, *args, **kwargs):
         """ Optimization process to be implemented

@@ -4,38 +4,22 @@
 # @Author  : Han Yu
 # @File    : _mapping.py
 
-from QuICT.core import Circuit
+from abc import ABC, abstractclassmethod
 
-class Mapping(object):
+class Mapping(ABC):
     """ Mapping the logical qubits into reality device
 
-    Note that all subClass must overloaded the function "_run".
-    The overloaded of the function "run" is optional.
-
+    Note that all subclass must overload the function "execute".
     """
-    @classmethod
-    def run(cls, circuit: Circuit, *pargs, inplace=False):
-        """
+    @abstractclassmethod
+    def execute(cls, *args, **kwargs):
+        """ Mapping process to be implemented
 
         Args:
-            circuit(Circuit): the circuit waited to be mapped, contained topology
-            *pargs: other parameters
-            inplace(bool): return a new circuit if it is true,
-                otherwise change the origin circuit
-        """
-        circuit.const_lock = True
-        gates = cls._run(circuit, *pargs)
-        circuit.const_lock = False
-        if inplace:
-            circuit.set_exec_gates(gates)
-        else:
-            new_circuit = Circuit(len(circuit.qubits))
-            new_circuit.set_exec_gates(gates)
-            return new_circuit
+            *args: arguments
+            **kwargs: keyword arguments
 
-    @staticmethod
-    def _run(*pargs):
-        """ should be overloaded by subClass
-
+        Raises:
+            NotImplementedError: If it is not implemented.
         """
-        return pargs[0]
+        raise NotImplementedError
