@@ -1,91 +1,103 @@
-from QuICT.core import *
-from QuICT.qcda.optimization.template_optimization.template_optimization import TemplateOptimization
-from QuICT.qcda.optimization.template_optimization.template_matching import TemplateMatching, TemplateSubstitution, MaximalMatches
-from QuICT.qcda.optimization.template_optimization.template_matching.dagdependency import DAGDependency, circuit_to_dagdependency
-import networkx as nx
+#!/usr/bin/env python
+# -*- coding:utf8 -*-
+# @TIME    : 2020/12/13 1:35 下午
+# @Author  : Han Yu
+# @File    : entir_test.py
+
+import os
+import pytest
+import random
+
 import numpy as np
 
+from QuICT.core import *
+from QuICT.algorithm import *
+from QuICT.qcda.optimization.template_optimization.templates import *
+from QuICT.qcda.optimization.template_optimization import TemplateOptimization
+from QuICT.qcda.optimization.template_optimization.template_matching import TemplateMatching, TemplateSubstitution, MaximalMatches
+from QuICT.qcda.optimization.template_optimization.template_matching.dagdependency import DAGDependency, circuit_to_dagdependency
+
+def mat_from_circuit(circuit):
+    n = circuit.circuit_width()
+    mat = np.identity(n, dtype=np.bool)
+    for gate in circuit.gates:
+        if gate.qasm_name == 'x':
+            target = gate.targ
+            for i in range(n):
+                mat[target, i] = not mat[target, i]
+        elif gate.qasm_name == 'cx':
+            control = gate.carg
+            target = gate.targ
+            for i in range(n):
+                if mat[control, i]:
+                    mat[target, i] = not mat[target, i]
+        elif gate.qasm_name == 'ccx':
+            control1 = gate.cargs[0]
+            control2 = gate.cargs[1]
+            target = gate.targ
+            for i in range(n):
+                if mat[control1, i] and mat[control2, i]:
+                    mat[target, i] = not mat[target, i]
+        else:
+            raise Exception("wuhu")
+    return mat
+
+def equiv(circuit1, circuit2):
+    if circuit1.circuit_width() != circuit2.circuit_width():
+        return False
+    # mat1 = mat_from_circuit(circuit1)
+    # mat2 = mat_from_circuit(circuit2)
+    mat1 = SyntheticalUnitary.run(circuit1, showSU=False)
+    mat2 = SyntheticalUnitary.run(circuit2, showSU=False)
+    return not np.any(mat1 != mat2)
+
+def _getRandomList(l, n):
+    """ get l number from 0, 1, ..., n - 1 randomly.
+    Args:
+        l(int)
+        n(int)
+    Returns:
+        list<int>: the list of l random numbers
+    """
+    _rand = [i for i in range(n)]
+    for i in range(n - 1, 0, -1):
+        do_get = random.randint(0, i)
+        _rand[do_get], _rand[i] = _rand[i], _rand[do_get]
+    return _rand[:l]
+
+def test_can_run():
+    names = []
+    for root, dirs, files in os.walk('./templates/nct'):
+        for name in files:
+            if name == '__init__.py' or not name.endswith('.py'):
+                continue
+            name = name[:-3]
+            names.append(name)
+
+    for i in range(3, 4):
+        circuit = Circuit(i)
+        circuit.random_append(100, typeList = [GATE_ID["X"], GATE_ID["CX"], GATE_ID["CCX"]])
+        # indexes = _getRandomList(3, len(names))
+
+        templates = []
+        for name in names:
+            # name = names[index]
+            templates.append(eval(name)())
+        circuit_opt = TemplateOptimization.execute(circuit, templates)
+        equ = equiv(circuit, circuit_opt)
+        if not equ:
+            circuit.print_information()
+            circuit_opt.print_information()
+            print(len(circuit.gates), len(circuit_opt.gates))
+            assert 0
+
+        circuit_opt_opt = TemplateOptimization.execute(circuit_opt, templates)
+        equ = equiv(circuit_opt_opt, circuit_opt)
+        if not equ:
+            circuit.print_information()
+            circuit_opt.print_information()
+            print(len(circuit.gates), len(circuit_opt.gates))
+            assert 0
+
 if __name__ == '__main__':
-    # template in the paper
-    circuit_T = Circuit(5)
-
-    CX | circuit_T([3, 0])
-    X | circuit_T(4)
-    Z | circuit_T(0)
-    CX | circuit_T([4, 2])
-    CX | circuit_T([0, 1])
-    CX | circuit_T([3, 4])
-    CX | circuit_T([1, 2])
-    X | circuit_T(1)
-    CX | circuit_T([1, 0])
-    X | circuit_T(1)
-    CX | circuit_T([1, 2])
-    CX | circuit_T([0, 3])
-
-    dag_T = DAGDependency()
-    dag_T = circuit_to_dagdependency(circuit_T)
-
-    #dag_T._graph.draw(filename='T.jpg', layout=nx.shell_layout)
-    for node_id in dag_T.get_nodes():
-        node = dag_T.get_node(node_id)
-        print(node.node_id, node.gate.type(), node.cargs, node.targs)
-
-    # circuit in the paper
-    circuit_C = Circuit(8)
-
-    CX | circuit_C([6, 7])
-    CX | circuit_C([7, 5])
-    CX | circuit_C([6, 7])
-    CCX | circuit_C([7, 6, 5])
-    CX | circuit_C([6, 7])
-    CX | circuit_C([1, 4])
-    CX | circuit_C([6, 3])
-    CX | circuit_C([3, 4])
-    CX | circuit_C([4, 5])
-    CX | circuit_C([0, 5])
-    Z | circuit_C(3)
-    X | circuit_C(4)
-    CX | circuit_C([4, 3])
-    CX | circuit_C([3, 1])
-    X | circuit_C(4)
-    CX | circuit_C([1, 2])
-    CX | circuit_C([3, 1])
-    CX | circuit_C([3, 5])
-    CX | circuit_C([3, 6])
-    X | circuit_C(3)
-    CX | circuit_C([4, 5])
-
-    dag_C = DAGDependency()
-    dag_C = circuit_to_dagdependency(circuit_C)
-
-    #dag_C._graph.draw(filename='C.jpg', layout=nx.shell_layout)
-    for node_id in dag_C.get_nodes():
-        node = dag_C.get_node(node_id)
-        print(node.node_id, node.gate.type(), node.cargs, node.targs)
-
-    template_m = TemplateMatching(dag_C, dag_T)
-    all_list_first_match_q = \
-        template_m._list_first_match_new(template_m.circuit_dag_dep.get_node(6),
-                                    template_m.template_dag_dep.get_node(0),
-                                    5)
-
-    heuristics_qubits = template_m._explore_circuit(node_id_c=6,
-                                                node_id_t=0,
-                                                n_qubits_t=5,
-                                                length=2)
-
-    print(all_list_first_match_q, heuristics_qubits)
-    template_m.run_template_matching()
-    matches = template_m.match_list
-
-    maximal = MaximalMatches(matches)
-    maximal.run_maximal_matches()
-    max_matches = maximal.max_match_list
-
-    for match in max_matches:
-        print(match.match, match.qubit, '\n')
-
-    # Not a correct use since circuit_T is not identity, only to
-    # check if the code could run in case of a non-trivial input
-    circuit_opt = TemplateOptimization.execute(circuit_C, [circuit_T])
-    circuit_opt.print_information()
+    pytest.main(["./unit_test.py"])
