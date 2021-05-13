@@ -107,8 +107,7 @@ class QCDA(object):
         """ Generate the default optimization process
 
         The default optimization process contains the CommutativeOptimization.
-        If there are CNOT gates in the original Circuit/CompositeGate, CNOTLocalForceBFS and
-        TemplateOptimization would also be used.
+        If the original Circuit/CompositeGate is a Clifford+T one, TemplateOptimization would also be used.
 
         Returns:
             List: Optimization subprocess
