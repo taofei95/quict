@@ -23,10 +23,11 @@ def test_RestoringDivision():
     for a in range(0,20):
         for b in range(1,20):
             n = max(len(bin(a))-2,len(bin(b))-2)
-            circuit = Circuit(3*n)
+            circuit = Circuit(3*n + 1)
             a_q = circuit([i for i in range(n)])
             b_q = circuit([i for i in range(n,2*n)])
             r_q = circuit([i for i in range(2*n,3*n)])
+            of_q = circuit(3*n)
             Set(a_q,a)
             Set(b_q,b)
             RestoringDivision(n) | circuit

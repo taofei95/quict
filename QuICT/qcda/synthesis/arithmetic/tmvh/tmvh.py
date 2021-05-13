@@ -4,6 +4,7 @@
 # @Author  : Zhu Qinlin
 # @File    : tmvh.py
 
+from typing import overload
 from numpy import log2, floor, gcd, pi
 
 from ..._synthesis import Synthesis
@@ -33,6 +34,10 @@ def AdderOverflow(a, b, overflow):
 
     n = len(a)
 
+    if n == 1:
+        PeresGate(a,b,overflow)
+        return
+    
     #step 1
     for i in range(n-1):
         CX | (a[i],b[i])
@@ -105,6 +110,16 @@ def Subtraction(a,b):
     Adder(a, b)
     X | b
 
+def SubtractionOverflow(a,b,overflow):
+    """
+    (a,b) -> (a,b-a)
+    """
+    X | b
+    X | overflow
+    AdderOverflow(a, b, overflow)
+    X | b
+    X | overflow
+
 def CtrlAddOverflowAncilla(ctrl,a,b,overflow,ancilla):
     n = len(a)
     #step 1
@@ -164,26 +179,29 @@ def CtrlAdd(ctrl,a,b):
     for i in range(n-1):
         CX | (a[i],b[i])
 
-def Division(a,b,r):
+def Division(a,b,r,ancilla):
     """
     Divided: a
     Divisor: b
-    (a,b,r=0) -> (a%b,b,a//b)
+    (a,b,r=0,ancilla=0) -> (a%b,b,a//b,ancilla)
     """
     n = len(a)
 
-    for i in range(n-1):
-        #Iteration(y,b,r[i])
-        y = r[i+1:n] + a[0:i+1]
-        Subtraction(b,y)
-        CX | (r[i+1],r[i])
-        CtrlAdd(r[i],b,y)
-        X | r[i]
+    if n > 1:
+        for i in range(n-1):
+            #Iteration(y,b,r[i])
+            y = r[i+1:n] + a[0:i+1]
+            SubtractionOverflow(b,y,ancilla)
+            CX | (ancilla,r[i])
+            CtrlAdd(ancilla,b,y)
+            CX | (r[i],ancilla)
+            X  | r[i]
     #Iteration(a,b,r[n-1])
-    Subtraction(b,a)
-    CX | (a[0],r[n-1])
-    CtrlAdd(r[n-1],b,a)
-    X | r[n-1]
+    SubtractionOverflow(b,a,ancilla)
+    CX | (ancilla,r[n-1])
+    CtrlAdd(ancilla,b,a)
+    CX | (r[n-1],ancilla)
+    X  | r[n-1]
 
 def RippleCarryAdderDecomposition(n):
     """ 
@@ -215,12 +233,13 @@ def RestoringDivisionDecomposition(n):
     http://arxiv.org/abs/1809.09732v1
     """
 
-    circuit = Circuit(3*n)
+    circuit = Circuit(3*n + 1)
     qubit_a = circuit([i for i in range(n)])
     qubit_b = circuit([i for i in range(n, 2*n)])
     qubit_r = circuit([i for i in range(2*n, 3*n)])
+    qubit_of = circuit(3*n)
 
-    Division(qubit_a,qubit_b,qubit_r)
+    Division(qubit_a,qubit_b,qubit_r,qubit_of)
     
     return CompositeGate(circuit.gates)
 

@@ -34,13 +34,14 @@ The typical way to use them would be like the (take **division** as example):
 .. code-block:: python
     :linenos:
 
-    circuit = Circuit(3*n)
+    circuit = Circuit(3*n + 1)
     r_q = circuit([i for i in range(n)])
     a_q = circuit([i for i in range(n,2*n)])
     b_q = circuit([i for i in range(2*n,3*n)])
+    of_q = circuit(3*n)
 
     #After some procedures, a_q, b_q and r_q are now in arbitary states.
-    RestoringDivision(n) | (a_q,b_q,r_q)
+    RestoringDivision(n) | (a_q,b_q,r_q,of_q)
 
 Next we will use VBE module to demonstrate more detailed usage.
 
