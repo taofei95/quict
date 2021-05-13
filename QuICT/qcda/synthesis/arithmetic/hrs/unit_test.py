@@ -110,7 +110,7 @@ def test5():
     for i in range(6):
         Measure | circuit(i)
     circuit.exec()
-    qreg = circuit([i for i in range(8)])
+    qreg = circuit([i for i in range(6)])
     y = int(qreg)
     print(y)
 

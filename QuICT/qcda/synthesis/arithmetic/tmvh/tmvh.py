@@ -4,7 +4,6 @@
 # @Author  : Zhu Qinlin
 # @File    : tmvh.py
 
-from typing import overload
 from numpy import log2, floor, gcd, pi
 
 from ..._synthesis import Synthesis
@@ -187,15 +186,14 @@ def Division(a,b,r,ancilla):
     """
     n = len(a)
 
-    if n > 1:
-        for i in range(n-1):
-            #Iteration(y,b,r[i])
-            y = r[i+1:n] + a[0:i+1]
-            SubtractionOverflow(b,y,ancilla)
-            CX | (ancilla,r[i])
-            CtrlAdd(ancilla,b,y)
-            CX | (r[i],ancilla)
-            X  | r[i]
+    for i in range(n-1):
+        #Iteration(y,b,r[i])
+        y = r[i+1:n] + a[0:i+1]
+        SubtractionOverflow(b,y,ancilla)
+        CX | (ancilla,r[i])
+        CtrlAdd(ancilla,b,y)
+        CX | (r[i],ancilla)
+        X  | r[i]
     #Iteration(a,b,r[n-1])
     SubtractionOverflow(b,a,ancilla)
     CX | (ancilla,r[n-1])
