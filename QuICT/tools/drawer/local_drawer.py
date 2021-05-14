@@ -780,7 +780,7 @@ class PhotoDrawer(object):
                                                           text=gate.qasm_name, subtext=subtext)
                         else:
                             self.draw_gate(coord[-1],
-                                           text=gate.qasm_name,
+                                           text=gate.qasm_name[gate.controls:],
                                            fc=self.style.dispcol['multi'],
                                            p_string=subtext)
                         self.draw_line(bottom, top, lc=self.style.dispcol['swap'])
