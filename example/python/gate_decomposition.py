@@ -15,8 +15,6 @@ if __name__ == "__main__":
     circuit.draw()
 
     gates_decomposed = GateDecomposition.execute(circuit)
-    for gate in gates_decomposed:
-        assert isinstance(gate, BasicGate) and not isinstance(gate, ComplexGate)
     circuit_decomposed = Circuit(3)
     circuit_decomposed.set_exec_gates(gates_decomposed)
     circuit_decomposed.draw()
