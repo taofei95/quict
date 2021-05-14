@@ -2394,6 +2394,7 @@ class UnitaryGate(BasicGate):
         self.controls = 0
         self.targets = 0
         self.params = 0
+        self.qasm_name = "unitary"
 
     def __call__(self, params = None, name = None):
         """ pass the unitary matrix
