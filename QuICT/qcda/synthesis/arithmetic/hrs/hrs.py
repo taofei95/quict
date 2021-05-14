@@ -61,89 +61,15 @@ def int2bitwise(c, n):
     return c_bitwise
 
 
-def fast_power(a, b, N):
-    """ 
-    Implementation of Fase Power algorithm, calculate a^b mod N
-
-    Args:
-        q(int): the parameter a
-        b(int): the parameter b
-        N(int): the parameter N
-
-    """
-    x = 1
-    now_a = a
-    while b > 0:
-        if b % 2 == 1:
-            x = x * now_a % N
-        now_a = now_a * now_a % N
-        b >>= 1
-    return x
-
-
-def Split_Invert(n, d, CFE):
-    """ 
-    Recursive expansion part of CFE
-
-    Args:
-        n(int): numerator
-        d(int): denominator
-        CFE(list): store the result of expansion
-
-    """
-
-    CFE.append(n // d)
-    n = n % d
-    if n == 1:
-        CFE.append(d)
-        return
-    Split_Invert(d, n, CFE)
-
-
-def Continued_Fraction_Expansion(n, d):
-    """ 
-    Calculate the continued fraction expansion of a rational number n/d.
-
-    Args:
-        n: numerator.
-        d: denominator
-
-    """
-    CFE = []
-    Split_Invert(n, d, CFE)
-    return CFE
-
-
-def Set(qreg, N):
-    """ 
-    Set the qreg as N, using X gates on specific qubits.
-    
-    Args:
-        qreg(Qureg): the qureg to be set
-        N(int): the parameter N    
-
-    """
-    string = bin(N)[2:]
-    n = len(qreg)
-    m = len(string)
-    if m > n:
-        print('When set qureg as N=%d, N exceeds the length of qureg n=%d, thus is truncated' % (N, n))
-
-    for i in range(min(n, m)):
-        if string[m - 1 - i] == '1':
-            X | qreg[n - 1 - i]
-
-
 def Carry(a, c_bitwise, g_aug, overflow):
     """
-    compute the overflow of a(quantum)+c(classical) with borrowed qubits g.
+    Compute the overflow of a(quantum)+c(classical) with borrowed qubits g_aug.
 
     Args:
-        control: 1 qubit.
-        a: n qubits.
-        g_aug: n-1 qubits(more bits are OK).
-        overflow: 1 qubit.
-        c_bitwise: n bits.
+        a(Qureg): n qubits.
+        g_aug(Qureg): n-1 qubits(more bits are OK).
+        overflow(Qubit): 1 qubit.
+        c_bitwise(int array): n bits 0-1 array, representing binary int c.
     """
     n = len(a)
     g = g_aug[0:n - 1]
@@ -192,11 +118,11 @@ def CCarry(control, a, c_bitwise, g_aug, overflow):
     Constructed by changing the CX on overflow in Carry() to CCX.
 
     Args:
-        control: 1 qubit.
-        a: n qubits.
-        g_aug: n-1 qubits(more bits are OK).
-        overflow: 1 qubit.
-        c_bitwise: n bits.
+        control(Qubit): 1 qubit.
+        a(Qureg): n qubits.
+        g_aug(Qureg): n-1 qubits(more bits are OK).
+        overflow(Qubit): 1 qubit.
+        c_bitwise(int array): n bits 0-1 array, representing binary int c.
     """
     n = len(a)
     g = g_aug[0:n - 1]
@@ -245,12 +171,12 @@ def CCCarry(control1, control2, a, c_bitwise, g_aug, overflow):
     Constructed by changing the CX on overflow in Carry() to CCCX.
 
     Args:
-        control1: 1 qubit.
-        control2: 1 qubit.
-        a: n qubits .
-        g_aug: n-1 qubits(more bits are OK).
-        overflow: 1 qubit.
-        c_bitwise:n bits.
+        control1(Qubit): 1 qubit.
+        control2(Qubit): 1 qubit.
+        a(Qureg): n qubits.
+        g_aug(Qureg): n-1 qubits(more bits are OK).
+        overflow(Qubit): 1 qubit.
+        c_bitwise(int array): n bits 0-1 array, representing binary int c.
     """
     n = len(a)
     # n==1, no borrowed bits g
@@ -309,8 +235,8 @@ def SubWidget(v, g):
         Subwidget used in Incrementer().
 
         Args:
-            v: n qubits.
-            g: n qubits(more qubits are OK).
+            v(Qureg): n qubits.
+            g(Qureg): n qubits(more qubits are OK).
     """
     n = len(v)
     if len(g) < n:
@@ -332,8 +258,8 @@ def Incrementer(v, g):
     Incremente v by 1, with borrowed qubits g.
 
     Args:
-        v: n qubits.
-        g: n qubits(more qubits are OK).
+        v(Qureg): n qubits.
+        g(Qureg): n qubits(more qubits are OK).
     """
     n = len(v)
     if len(g) < n:
@@ -359,9 +285,9 @@ def CIncrementer(control, v, g_aug):
     Constructed by attaching the control qubit to the little-end of v, and apply an (n+1)-bit Incrementer() to it.
 
     Args:
-        control: 1 qubit.
-        v: n qubits.
-        g: n+1 qubits(more qubits are OK).
+        control(Qubit): 1 qubit.
+        v(Qureg): n qubits.
+        g(Qureg): n + 1 qubits(more qubits are OK).
     """
     n = len(v)
     m = len(g_aug)
@@ -375,15 +301,13 @@ def CIncrementer(control, v, g_aug):
 
 def Adder_rec(x, c_bitwise, ancilla, ancilla_g):
     """
-    The recursively applied partial-circuit in CAdder().
-    
-    Constructed by changing the Carry() in Adder_rec() to CCarry().
+    The recursively applied partial-circuit in Adder().
 
     Args:
-        x: n qubits.
-        ancilla: 1 qubit.
-        ancilla_g: 1 qubit, might be used as borrowed qubit in CIncrementer when x_H and x_L are of the same length.
-        c_bitwise: n bits.
+        x(Qureg): n qubits.
+        ancilla(Qubit): 1 qubit.
+        ancilla_g(Qubit): 1 qubit, might be used as borrowed qubit in CIncrementer when x_H and x_L are of the same length.
+        c_bitwise(int array): n bits.
     """
     n = len(x)
     if n == 1:
@@ -413,11 +337,11 @@ def C_Adder_rec(control, x, c_bitwise, ancilla, ancilla_g):
     Constructed by changing the Carry() in Adder_rec() to CCarry().
 
     Args:
-        control: 1 qubit.
-        x: n qubits.
-        ancilla: 1 qubit.
-        ancilla_g: 1 qubit, might be used as borrowed qubit in CIncrementer when x_H and x_L are of the same length.
-        c_bitwise: n bits.
+        control(Qubit): 1 qubit.
+        x(Qureg): n qubits.
+        ancilla(Qubit): 1 qubit.
+        ancilla_g(Qubit): 1 qubit, might be used as borrowed qubit in CIncrementer when x_H and x_L are of the same length.
+        c_bitwise(int array): n bits.
     """
     n = len(x)
     if n == 1:
@@ -445,11 +369,10 @@ def Adder(x, c, ancilla, ancilla_g):
     Compute x(quantum) + c(classical) with borrowed qubits.
 
     Args:
-        control: 1 qubit.
-        x: n qubits.
-        ancilla: 1 qubit, borrowed ancilla.
-        ancilla_g: 1 qubit, borrowed ancilla.
-        c: integer.
+        x(Qureg): n qubits.
+        ancilla(Qubit): 1 qubit, borrowed ancilla.
+        ancilla_g(Qubit): 1 qubit, borrowed ancilla.
+        c(int): integer.
     """
     n = len(x)
     c_bitwise = int2bitwise(c, n)
@@ -464,11 +387,11 @@ def CAdder(control, x, c, ancilla, ancilla_g):
     Compute x(quantum) + c(classical) with borrowed qubits, 1-controlled.
 
     Args:
-        control: 1 qubit.
-        x: n qubits.
-        ancilla: 1 qubit, borrowed ancilla.
-        ancilla_g: 1 qubit, borrowed ancilla.
-        c: integer.
+        control(Qubit): 1 qubit.
+        x(Qureg): n qubits.
+        ancilla(Qubit): 1 qubit, borrowed ancilla.
+        ancilla_g(Qubit): 1 qubit, borrowed ancilla.
+        c(int): integer.
     """
     n = len(x)
     c_bitwise = int2bitwise(c, n)
@@ -486,11 +409,11 @@ def CSub(control, x, c, ancilla, ancilla_g):
     Constructed on the basis of CAdder() with complement technique.
 
     Args:
-        control: 1 qubit.
-        x: n qubits.
-        ancilla: 1 qubit, borrowed ancilla.
-        ancilla_g: 1 qubit, borrowed ancilla.
-        c: integer.
+        control(Qubit): 1 qubit.
+        x(Qureg): n qubits.
+        ancilla(Qubit): 1 qubit, borrowed ancilla.
+        ancilla_g(Qubit): 1 qubit, borrowed ancilla.
+        c(int): integer.
     """
     n = len(x)
     c_complement = 2 ** n - c
@@ -505,15 +428,13 @@ def Compare(b, c, g_aug, indicator):
     """
     Compare b and c with borrowed qubits g_aug. The Indicator toggles if c > b, not if c <= b.
 
-    Constructed on the basis of CCCarry().
+    Constructed on the basis of Carry().
 
     Args:
-        control1: 1 qubit.
-        control2: 1 qubit.
-        b: n qubits.
-        g_aug: n-1 qubits(more qubits are OK).
-        indicator: 1 qubit.
-        c: integer with less-than-n length.
+        b(Qureg): n qubits.
+        g_aug(Qubit): n-1 qubits(more qubits are OK).
+        indicator(Qubit): 1 qubit.
+        c(int): integer with less-than-n length.
     """
     n = len(b)
     m = len(g_aug)
@@ -530,14 +451,14 @@ def CCompare(control, b, c, g_aug, indicator):
     """
     Compare b and c with borrowed qubits g_aug. The Indicator toggles if c > b, not if c <= b, 1controlled.
 
-    Constructed on the basis of CCCarry().
+    Constructed on the basis of CCarry().
 
     Args:
         control: 1 qubit.
-        b: n qubits.
-        g_aug: n-1 qubits(more qubits are OK).
-        indicator: 1 qubit.
-        c: integer with less-than-n length.
+        b(Qureg): n qubits.
+        g_aug(Qubit): n-1 qubits(more qubits are OK).
+        indicator(Qubit): 1 qubit.
+        c(int): integer with less-than-n length.
     """
     n = len(b)
     m = len(g_aug)
@@ -557,12 +478,12 @@ def CCCompare(control1, control2, b, c, g_aug, indicator):
     Constructed on the basis of CCCarry().
 
     Args:
-        control1: 1 qubit.
-        control2: 1 qubit.
-        b: n qubits.
-        g_aug: n-1 qubits(more qubits are OK).
-        indicator: 1 qubit.
-        c: integer with less-than-n length.
+        control1(Qubit): 1 qubit.
+        control2(Qubit): 1 qubit.
+        b(Qureg): n qubits.
+        g_aug(Qubit): n-1 qubits(more qubits are OK).
+        indicator(Qubit): 1 qubit.
+        c(int): integer with less-than-n length.
     """
     n = len(b)
     m = len(g_aug)
@@ -580,11 +501,11 @@ def AdderMod(b, a, N, g, indicator):
     Compute b(quantum) + a(classical) mod N(classical), with borrowed qubits g and ancilla qubit indicator.
 
     Args：
-        b: n qubits.
-        g: n-1 borrowed qubits(more qubits are OK).
-        indicator: 1 ancilla qubit.
-        a: integer less than N.
-        N: integer.
+        b(Qreg): n qubits.
+        g(Qureg): n-1 borrowed qubits(more qubits are OK).
+        indicator(Qubit): 1 ancilla qubit.
+        a(int): integer less than N.
+        N(int): integer.
     """
     Compare(b, N - a, g, indicator)
     CAdder(indicator, b, a, g[0:1], g[1:2])
@@ -604,15 +525,16 @@ def AdderModReverse(b, a, N, g, indicator):
 
 def CAdderMod(control, b, a, N, g, indicator):
     """
-    Compute b(quantum) + a(classical) mod N(classical), with borrowed qubits g and ancilla qubit indicator, 1-controlled.
+    Compute b(quantum) + a(classical) mod N(classical), 
+    with borrowed qubits g and ancilla qubit indicator, 1-controlled.
 
     Args：
-        control: 1 qubit.
-        b: n qubits.
-        g: n-1 borrowed qubits(more qubits are OK).
-        indicator: 1 ancilla qubit.
-        a: integer less than N.
-        N: integer.
+        control(Qubit): 1 qubit.
+        b(Qreg): n qubits.
+        g(Qureg): n-1 borrowed qubits(more qubits are OK).
+        indicator(Qubit): 1 ancilla qubit.
+        a(int): integer less than N.
+        N(int): integer.
     """
     CCompare(control, b, N - a, g, indicator)
     CAdder(indicator, b, a, g[0:1], g[1:2])
@@ -636,13 +558,13 @@ def CCAdderMod(control1, control2, b, a, N, g, indicator):
     with borrowed qubits g and ancilla qubit indicator, 2-controlled.
 
     Args：
-        control1: 1 qubit.
-        control2：1 qubit.
-        b: n qubits.
-        g: n-1 borrowed qubits(more qubits are OK).
-        indicator: 1 ancilla qubit.
-        a: integer less than N.
-        N: integer.
+        control1(Qubit): 1 qubit.
+        control2(Qubit)：1 qubit.
+        b(Qreg): n qubits.
+        g(Qureg): n-1 borrowed qubits(more qubits are OK).
+        indicator(Qubit): 1 ancilla qubit.
+        a(int): integer less than N.
+        N(int): integer.
     """
     CCCompare(control1, control2, b, N - a, g, indicator)
     CAdder(indicator, b, a, g[0:1], g[1:2])
@@ -666,11 +588,11 @@ def MulModRaw(x, a, b, N, indicator):
     Compute b(quantum) + x(quantum) * a(classical) mod N(classical), with target qubits b and ancilla qubit indicator.
 
     Args:
-        x: n qubits.
-        b: n qubits, target.
-        indicator: 1 ancilla qubit.
-        a: integer.
-        N: integer.
+        x(Qureg): n qubits.
+        b(Qureg): n qubits, target.
+        indicator(Qubit): 1 ancilla qubit.
+        a(int): integer.
+        N(int): integer.
     """
     n = len(x)
     a_list = []
@@ -701,12 +623,12 @@ def CMulModRaw(control, x, a, b, N, indicator):
     1-controlled.
 
     Args:
-        control: 1 qubit.
-        x: n qubits.
-        b: n qubits, target.
-        indicator: 1 ancilla qubit.
-        a: integer.
-        N: integer.
+        control(Qubit): 1 qubit.
+        x(Qureg): n qubits.
+        b(Qureg): n qubits, target.
+        indicator(Qubit): 1 ancilla qubit.
+        a(int): integer.
+        N(int): integer.
     """
     n = len(x)
     a_list = []
@@ -742,12 +664,11 @@ def MulMod(x, a, ancilla, N, indicator):
     Compute x(quantum) * a(classical) mod N(classical), with ancilla qubits.
 
     Args:
-        control: 1 qubit.
-        x: n qubits.
-        ancilla: n qubits.
-        indicator: 1 qubit.
-        a: integer.
-        N: integer.
+        x(Qureg): n qubits.
+        ancilla(Qureg): n qubits.
+        indicator(Qubit): 1 qubit.
+        a(int): integer.
+        N(int): integer.
     """
     n = len(x)
     a_r = ModReverse(a, N)
@@ -764,12 +685,12 @@ def CMulMod(control, x, a, ancilla, N, indicator):
     Compute x(quantum) * a(classical) mod N(classical), with ancilla qubits, 1-controlled.
 
     Args:
-        control: 1 qubit.
-        x: n qubits.
-        ancilla: n qubits.
-        indicator: 1 qubit.
-        a: integer.
-        N: integer.
+        control(Qubit): 1 qubit.
+        x(Qureg): n qubits.
+        ancilla(Qureg): n qubits.
+        indicator(Qubit): 1 qubit.
+        a(int): integer.
+        N(int): integer.
     """
     n = len(x)
     a_r = ModReverse(a, N)
