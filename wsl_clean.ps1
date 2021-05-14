@@ -1,0 +1,1 @@
+wsl bash clean.sh

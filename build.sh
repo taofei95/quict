@@ -1,12 +1,5 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
-prj_root=$(pwd)
-
-prj_build_dir="$prj_root/build"
-
-OS=$(uname -a)
-
-PYTHON3=$(which python3)
 
 print_segment () {
    echo -e "\033[92m================================================================================\033[39m"
@@ -15,6 +8,46 @@ print_segment () {
 print_cyan() {
   echo -e "\033[36m$1\033[39m"
 }
+
+print_magenta() {
+  echo -e "\033[95m$1\033[39m"
+}
+
+prj_root="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
+
+prj_build_dir="$prj_root/build"
+
+OS=$(uname -a)
+
+PYTHON3=$(command -v python3)
+
+# Set root & building directory
+
+print_segment
+
+print_cyan "[Project Root Directory]"
+
+echo "Detected $prj_root as project root directory"
+
+print_segment
+
+print_cyan "[Temporary Building Directory]"
+
+echo "Prepare building directory"
+
+[[ -d $prj_build_dir ]] || mkdir $prj_build_dir
+
+echo "Selected $prj_build_dir as building directory"
+
+# Initialize git submodule if needed
+
+print_segment
+
+print_cyan "[Git Submodule]"
+
+echo "git submodule update --init --recursive"
+
+git submodule update --init --recursive
 
 # Clear older version build.sh remnants
 
@@ -32,16 +65,7 @@ rm "$prj_root/QuICT/backends/quick_operator_cdll.so"
 echo "Deleting $prj_root/QuICT/qcda/synthesis/initial_state_preparation/initial_state_preparation_cdll.so" && \
 rm "$prj_root/QuICT/qcda/synthesis/initial_state_preparation/initial_state_preparation_cdll.so"
 
-# Set building directory
 
-print_segment
-print_cyan "[Temporary Building Directory]"
-
-echo "Prepare building directory"
-
-[[ -d $prj_build_dir ]] || mkdir $prj_build_dir
-
-echo "Selected $prj_build_dir as building directory"
 
 # Set C++ compiler
 
@@ -143,3 +167,5 @@ print_segment
 
 cd $prj_build_dir && \
 $PYTHON3 ../setup.py build --parallel $NPROC
+
+print_magenta "Done."

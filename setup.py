@@ -250,4 +250,4 @@ setup(
     zip_safe=False,
 )
 print_segment()
-print_magenta("Done.")
+

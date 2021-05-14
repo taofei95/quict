@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
 
-
 print_segment () {
    echo -e "\033[92m================================================================================\033[39m"
 }
@@ -21,22 +20,6 @@ OS=$(uname -a)
 
 PYTHON3=$(command -v python3)
 
-if [[ $OS =~ "Darwin" ]];then
-  echo "Installing TBB"
-  
-  tbb_build_dir=""
+echo "rm -rf $prj_build_dir"
 
-  for dir in ./build/oneTBB/build/*; do
-    if [[ -d $dir ]] && [[ $dir == *"_release" ]]; then
-      tbb_build_dir=$dir
-    fi
-  done
-
-  [[ $tbb_build_dir == "" ]] && echo "No tbb built!" && exit 1
-  cp $tbb_build_dir/libtbb.dylib /usr/local/lib
-fi
-
-cd $prj_build_dir && \
-  $PYTHON3 ../setup.py install "$@"
-
-print_magenta "Done."
+rm -rf "$prj_build_dir"
