@@ -68,13 +68,12 @@ def run_with_output_wrapper(header, args, cwd):
                 # universal_newlines=True,
         ) as proc:
             print_with_wrapper(header, proc.stdout)
+            ret_code = proc.wait()
+        if ret_code:
+            raise subprocess.CalledProcessError(ret_code, args)
     except:
         proc.kill()
         raise
-
-    ret_code = proc.wait()
-    if ret_code:
-        raise subprocess.CalledProcessError(ret_code, args)
 
 
 # Detect if I'm in `root` or `root/build`
@@ -173,22 +172,12 @@ class CMakeBuild(build_ext):
         print(" ".join(["cmake", ext.source_dir] + cmake_args))
         if hasattr(self, "parallel") and self.parallel:
             print_yellow("Extensions are built in parallel. Shell output might be messed up.")
-        # configure_proc = subprocess.run(
-        #     args=["cmake", ext.source_dir] + cmake_args,
-        #     cwd=build_temp,
-        #     check=True,
-        # )
         run_with_output_wrapper(
             header=ext_name,
             args=["cmake", ext.source_dir] + cmake_args,
             cwd=build_temp,
         )
-        print("building...")
-        # build_proc = subprocess.run(
-        #     args=["cmake", "--build", "."] + build_args,
-        #     cwd=build_temp,
-        #     check=True,
-        # )
+        print("Building...")
         run_with_output_wrapper(
             header=ext_name,
             args=["cmake", "--build", "."] + build_args,
@@ -248,4 +237,3 @@ setup(
     zip_safe=False,
 )
 print_segment()
-
