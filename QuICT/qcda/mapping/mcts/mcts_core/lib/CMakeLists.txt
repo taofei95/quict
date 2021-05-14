@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.0 FATAL_ERROR)
-project(mcts_cpp)
+project(mcts_core)
 
 option(TEST_MCTS "" on)
 option(TEST_RL_MCTS "" off)

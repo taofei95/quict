@@ -12,8 +12,8 @@ from .mcts import *
 
 class MCTSMapping(Mapping):  
     @classmethod
-    def run(cls, circuit: Circuit, layout: Layout, init_mapping: List[int] = None, init_mapping_method: str = "naive", 
-            inplace: bool = False, **parameter)-> Circuit:
+    def execute(cls, circuit: Circuit, layout: Layout, init_mapping: List[int] = None, init_mapping_method: str = "naive", 
+    inplace: bool = False, Nsim: int = 2, Nsch: int = 5000, num_of_process: int = 4)-> Circuit:
         """Mapping the logical circuit to a NISQ device.
         Args:
             circuit: The input circuit that needs to be mapped to a NISQ device.
@@ -32,7 +32,9 @@ class MCTSMapping(Mapping):
                 "naive": Using identity mapping, i.e., [0,1,...,n] as the initial mapping.
                 "anneal": Using simmulated annealing method[1] to generate the initial mapping.  
             inplace: Indicate wether the algorithm returns a new circuit or modifies the original circuit in place. 
-            parameter: The parameters that might  be used in the mapping method.
+            Nsim: The repeated times of the simulation module.
+            Nsch: Number of search times in MCTS.
+            num_of_process: Number of threads used in tree parallel MCTS.
         Return:  
             the hardware-compliant circuit after mapping.
 
@@ -41,22 +43,7 @@ class MCTSMapping(Mapping):
         """
         circuit.const_lock = True
         num = layout.qubit_number
-        gates = cls._run(circuit = circuit, layout = layout, init_mapping = init_mapping, 
-                    init_mapping_method = init_mapping_method, **parameter)
 
-        circuit.const_lock = False
-        circuit.qubits
-        if inplace:
-            circuit.set_flush_gates(gates)
-        else:
-            new_circuit = Circuit(num)
-            new_circuit.extend(gates)
-            return new_circuit
-        
-    @staticmethod
-    def _run(circuit: Circuit, init_mapping: List[int], layout: Layout, init_mapping_method: str, **parameter)-> List[BasicGate]:
-        """Use Monte Carlo tree search algorithm to solve the qubit mapping problem
-        """
         circuit_dag = DAG(circuit = circuit, mode = Mode.TWO_QUBIT_CIRCUIT)
         coupling_graph = CouplingGraph(coupling_graph=layout)
        
@@ -75,9 +62,19 @@ class MCTSMapping(Mapping):
 
         if not isinstance(init_mapping, list):
             raise Exception("Layout should be a list of integers")
-        mcts_tree = MCTS(coupling_graph = coupling_graph, info = 0)
+        mcts_tree = MCTS(coupling_graph = coupling_graph, Nsim = Nsim, selection_times = Nsch, num_of_process = num_of_process)
         mcts_tree.search(logical_circuit = circuit, init_mapping = init_mapping)
-        return mcts_tree.physical_circuit
+
+        gates = mcts_tree.physical_circuit
+        
+        circuit.const_lock = False
+        if inplace:
+            circuit.set_flush_gates(gates)
+        else:
+            new_circuit = Circuit(num)
+            new_circuit.extend(gates)
+            return new_circuit
+        
 
 
         

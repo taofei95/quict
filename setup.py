@@ -38,6 +38,7 @@ file_data = [
 
 # 3rd party library
 requires = [
+   'pytest>=6.2.3',
    'numpy>=1.20.1',
    'networkx>=2.5.1',
    'matplotlib>=3.3.4',

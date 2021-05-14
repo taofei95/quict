@@ -1,6 +1,6 @@
 from queue import deque
 
-from QuICT.qcda.mapping.mcts_cpp import MCTSTreeWrapper
+from .mcts_core import MCTSTreeWrapper
 from QuICT.qcda.mapping.utility import *
 
 
