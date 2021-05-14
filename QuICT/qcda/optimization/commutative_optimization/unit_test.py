@@ -73,26 +73,26 @@ typelist = [GATE_ID['Rx'], GATE_ID['Ry'], GATE_ID['Rz'],
             GATE_ID['X'], GATE_ID['Y'], GATE_ID['Z'],
             GATE_ID['S'], GATE_ID['T'], GATE_ID['H'],
             GATE_ID['CX'], GATE_ID['CRz'], GATE_ID['FSim']]
-typelist = [GATE_ID['Rx'], GATE_ID['Ry'], GATE_ID['Rz'], GATE_ID['X'], GATE_ID['Y'], GATE_ID['Z'], GATE_ID['Phase']]
+typelist = [GATE_ID['Rx'], GATE_ID['Ry'], GATE_ID['Rz'], GATE_ID['X'], GATE_ID['Y'], GATE_ID['Z'], GATE_ID['CX']]
 # typelist = [GATE_ID['Rx'], GATE_ID['Ry'], GATE_ID['Rz']]
 # typelist = [GATE_ID['X'], GATE_ID['Y'], GATE_ID['Z']]
 # typelist = [GATE_ID['CX'], GATE_ID['CRz'], GATE_ID['FSim']]
 # typelist = [GATE_ID['U2'], GATE_ID['U3'], GATE_ID['CU3']]
 
 def test():
-    for _ in range(1):
+    for _ in range(100):
         n = 5
         circuit = Circuit(n)
         circuit.random_append(rand_size=100, typeList=typelist)
         # circuit.print_information()
-        # circuit.draw_photo('0.jpg', show_depth=False)
+        # circuit.draw()
 
         gates = CommutativeOptimization.execute(circuit)
         circuit_opt = Circuit(n)
         circuit_opt.set_exec_gates(gates)
 
         # circuit_opt.print_information()
-        # circuit_opt.draw_photo('1.jpg', show_depth=False)
+        # circuit_opt.draw()
 
         original = SyntheticalUnitary.run(circuit)
         opt = SyntheticalUnitary.run(circuit_opt)

@@ -98,6 +98,7 @@ Contents
    :maxdepth: 2
    :caption: QCDA-Synthesis
 
+   synthesis/gate_decomposition.rst
    synthesis/gate_transform.rst
    synthesis/unitary_transform.rst
 
@@ -105,7 +106,9 @@ Contents
    :maxdepth: 2
    :caption: QCDA-Optimization
 
+   optimization/commutative_optimization.rst
    optimization/cnot_without_ancillae.rst
+   optimization/template_optimization.rst
 
 .. toctree::
    :maxdepth: 2

@@ -4,7 +4,7 @@ Gate Decomposition
 A quantum circuit may contains various kinds of gates. This method provides a direct process to
 decompose the 'complicated' gates in a given Circuit/CompositeGate/qasm_file to 'basic' gates.
 
-Example (Gate Decomposition)
+Example(Gate Decomposition)
 -----------------------------
 
 Here is an example on the usage of this model.
@@ -32,7 +32,7 @@ Here is an example on the usage of this model.
         circuit_decomposed.set_exec_gates(gates_decomposed)
         circuit_decomposed.draw()
 
-In this code we create a circuit with 4 gates and decompse it, the original circuit and the
+In this code we create a circuit with 4 gates and decompose it, the original circuit and the
 decomposed circuit are as follows.
 
 The original circuit:
