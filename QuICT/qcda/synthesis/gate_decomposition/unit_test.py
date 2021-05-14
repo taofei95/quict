@@ -24,7 +24,6 @@ def test_circuit():
     for _ in range(5):
         matrix = unitary_group.rvs(2 ** 3)
         target = random.sample(range(5), 3)
-        print(target)
         Unitary(matrix) | circuit(target)
 
     gates_decomposed = GateDecomposition.execute(circuit)
