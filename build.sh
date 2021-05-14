@@ -96,7 +96,7 @@ echo "Selecting CMake generator"
 
 if [[ $CMAKE_GENERATOR == "" ]];then
   [[ -x $(command -v make) ]] && cmake_gen="Unix Makefiles"
-#  [[ -x $(command -v ninja) ]] && cmake_gen="Ninja"
+  [[ -x $(command -v ninja) ]] && cmake_gen="Ninja"
   CMAKE_GENERATOR=$cmake_gen
   export CMAKE_GENERATOR=$CMAKE_GENERATOR
 fi

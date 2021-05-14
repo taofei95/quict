@@ -80,9 +80,7 @@ def run_with_output_wrapper(header, args, cwd):
 # Detect if I'm in `root` or `root/build`
 py_file_path = path.dirname(path.abspath(__file__))
 
-cwd = getcwd()
-
-prj_root_relative = "." if cwd == py_file_path else ".."
+prj_root_relative = "." if getcwd() == py_file_path else ".."
 prj_root = path.abspath(prj_root_relative)
 
 # Convert distutils Windows platform specifiers to CMake -A arguments
