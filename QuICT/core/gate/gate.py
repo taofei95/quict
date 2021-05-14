@@ -1748,59 +1748,6 @@ class RzzGate(BasicGate):
 
 Rzz = RzzGate(["Rzz", "rzz", "RZZ"])
 
-
-class CCXGate(BasicGate):
-    """ Toffoli gate
-
-    When using this gate, it will be showed as a whole gate
-    instend of being split into smaller gate
-
-    """
-
-    _matrix = np.array([
-        [0, 1],
-        [1, 0]
-    ], dtype=np.complex128)
-
-    _compute_matrix = np.array([
-        [1, 0, 0, 0, 0, 0, 0, 0],
-        [0, 1, 0, 0, 0, 0, 0, 0],
-        [0, 0, 1, 0, 0, 0, 0, 0],
-        [0, 0, 0, 1, 0, 0, 0, 0],
-        [0, 0, 0, 0, 1, 0, 0, 0],
-        [0, 0, 0, 0, 0, 1, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0, 1],
-        [0, 0, 0, 0, 0, 0, 1, 0]
-    ], dtype=np.complex128)
-
-    @property
-    def compute_matrix(self) -> np.ndarray:
-        return self._compute_matrix
-
-    def __init__(self, alias=None):
-        _add_alias(alias=alias, standard_name=self.__class__.__name__)
-        super().__init__(alias=None)
-        self.controls = 2
-        self.targets = 1
-        self.params = 0
-        self.qasm_name = "ccx"
-
-    def __str__(self):
-        return "Toffoli gate"
-
-    def inverse(self):
-        _CCX = CCXGate(alias=None)
-        _CCX.cargs = copy.deepcopy(self.cargs)
-        _CCX.targs = copy.deepcopy(self.targs)
-        return _CCX
-
-    def exec(self, circuit):
-        exec_toffoli(self, circuit)
-
-
-CCX = CCXGate(["CCX", "CCx", "Ccx"])
-
-
 class MeasureGate(BasicGate):
     """ z-axis Measure gate
 
@@ -2596,6 +2543,78 @@ class ComplexGate(BasicGate):
         for gate in gateSet:
             gate.exec(circuit)
 
+class CCXGate(ComplexGate):
+    """ Toffoli gate
+
+    When using this gate, it will be showed as a whole gate
+    instend of being split into smaller gate
+
+    """
+
+    _matrix = np.array([
+        [0, 1],
+        [1, 0]
+    ], dtype=np.complex128)
+
+    _compute_matrix = np.array([
+        [1, 0, 0, 0, 0, 0, 0, 0],
+        [0, 1, 0, 0, 0, 0, 0, 0],
+        [0, 0, 1, 0, 0, 0, 0, 0],
+        [0, 0, 0, 1, 0, 0, 0, 0],
+        [0, 0, 0, 0, 1, 0, 0, 0],
+        [0, 0, 0, 0, 0, 1, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 1],
+        [0, 0, 0, 0, 0, 0, 1, 0]
+    ], dtype=np.complex128)
+
+    @property
+    def compute_matrix(self) -> np.ndarray:
+        return self._compute_matrix
+
+    def __init__(self, alias=None):
+        _add_alias(alias=alias, standard_name=self.__class__.__name__)
+        super().__init__(alias=None)
+        self.controls = 2
+        self.targets = 1
+        self.params = 0
+        self.qasm_name = "ccx"
+
+    def __str__(self):
+        return "Toffoli gate"
+
+    def inverse(self):
+        _CCX = CCXGate(alias=None)
+        _CCX.cargs = copy.deepcopy(self.cargs)
+        _CCX.targs = copy.deepcopy(self.targs)
+        return _CCX
+
+    def build_gate(self):
+        from .composite_gate import CompositeGate
+        qureg = self.affectArgs
+        gates = CompositeGate()
+
+        with gates:
+            H        & qureg[2]
+            CX       & (qureg[2], qureg[1])
+            T_dagger & qureg[1]
+            CX       & (qureg[0], qureg[1])
+            T        & qureg[1]
+            CX       & (qureg[2], qureg[1])
+            T_dagger & qureg[1]
+            CX       & (qureg[0], qureg[1])
+            T        & qureg[1]
+            CX       & (qureg[0], qureg[2])
+            T_dagger & qureg[2]
+            CX       & (qureg[0], qureg[2])
+            T        & qureg[0]
+            T        & qureg[2]
+            H        & qureg[2]
+        return gates
+
+    def exec(self, circuit):
+        exec_toffoli(self, circuit)
+
+CCX = CCXGate(["CCX", "CCx", "Ccx"])
 
 class CCRzGate(ComplexGate):
     """ controlled-Rz gate with two control bits
@@ -2654,9 +2673,7 @@ class CCRzGate(ComplexGate):
             CRz(self.parg / 2) & (qureg[0], qureg[2])
         return gates
 
-
 CCRz = CCRzGate(["CCRz"])
-
 
 class QFTGate(ComplexGate):
     """ QFT gate
@@ -2669,7 +2686,7 @@ class QFTGate(ComplexGate):
     def matrix(self) -> np.ndarray:
         if self._matrix is None:
             gateSet = self.build_gate()
-            self._matrix = gateSet.matrix
+            self._matrix = gateSet.matrix()
         return self._matrix
 
     def __init__(self, alias=None):
@@ -2730,7 +2747,7 @@ class IQFTGate(ComplexGate):
     def matrix(self) -> np.ndarray:
         if self._matrix is None:
             gateSet = self.build_gate()
-            self._matrix = gateSet.matrix
+            self._matrix = gateSet.matrix()
         return self._matrix
 
     def __init__(self, alias=None):
@@ -2832,9 +2849,23 @@ class CSwapGate(ComplexGate):
         gates = CompositeGate()
 
         with gates:
-            CX & (qureg[2], qureg[1])
-            CCX & qureg
-            CX & (qureg[2], qureg[1])
+            CX       & (qureg[2], qureg[1])
+            H        & qureg[2]
+            CX       & (qureg[2], qureg[1])
+            T_dagger & qureg[1]
+            CX       & (qureg[0], qureg[1])
+            T        & qureg[1]
+            CX       & (qureg[2], qureg[1])
+            T_dagger & qureg[1]
+            CX       & (qureg[0], qureg[1])
+            T        & qureg[1]
+            CX       & (qureg[0], qureg[2])
+            T_dagger & qureg[2]
+            CX       & (qureg[0], qureg[2])
+            T        & qureg[0]
+            T        & qureg[2]
+            H        & qureg[2]
+            CX       & (qureg[2], qureg[1])
         return gates
 
 CSwap = CSwapGate(["Fredkin", "CSwap", "cswap"])

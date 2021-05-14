@@ -471,6 +471,46 @@ class PhotoDrawer(object):
                      [ypos, ypos], color=ac, linewidth=linewidth,
                      zorder=PORDER_GATE + 1)
 
+    def draw_multiqubit_gate(self, xy, fc=None, ec=None, gt=None, sc=None, text='', subtext=''):
+        xpos = min([x[0] for x in xy])
+        ypos = min([y[1] for y in xy])
+        ypos_max = max([y[1] for y in xy])
+        fs = self._style['fs']
+        sfs = self._style['sfs']
+
+        # added .21 is for qubit numbers on the left side
+        text_width = self._get_text_width(text, fs) + .21
+        sub_width = self._get_text_width(subtext, sfs, param=True) + .21
+        wid = max((text_width, sub_width, WID))
+
+        qubit_span = abs(ypos) - abs(ypos_max) + 1
+        height = HIG + (qubit_span - 1)
+        box = patches.Rectangle(
+            xy=(xpos - 0.5 * wid, ypos - .5 * HIG), width=wid, height=height,
+            fc=fc, ec=ec, linewidth=self._lwidth15, zorder=PORDER_GATE)
+        self._ax.add_patch(box)
+
+        # annotate inputs
+        for bit, y in enumerate([x[1] for x in xy]):
+            self._ax.text(xpos + .07 - 0.5 * wid, y, str(bit), ha='left', va='center',
+                          fontsize=fs, color=gt,
+                          clip_on=True, zorder=PORDER_TEXT)
+        if text:
+            if subtext:
+                self._ax.text(xpos + .11, ypos + 0.4 * height, text, ha='center',
+                              va='center', fontsize=fs,
+                              color=gt, clip_on=True,
+                              zorder=PORDER_TEXT)
+                self._ax.text(xpos + .11, ypos + 0.2 * height, subtext, ha='center',
+                              va='center', fontsize=sfs,
+                              color=sc, clip_on=True,
+                              zorder=PORDER_TEXT)
+            else:
+                self._ax.text(xpos + .11, ypos + .5 * (qubit_span - 1), text,
+                              ha='center', va='center', fontsize=fs,
+                              color=gt, clip_on=True,
+                              zorder=PORDER_TEXT, wrap=True)
+
     def draw_swap(self, xy):
         xpos, ypos = xy
         color = self.style.dispcol['swap']
@@ -603,7 +643,7 @@ class PhotoDrawer(object):
                         self.draw_swap(coord[0])
                         self.draw_swap(coord[1])
                         self.draw_line(bottom, top, lc=self.style.dispcol['swap'])
-                    else:
+                    elif gate.controls == 1:
                         disp = gate.qasm_name.replace('c', '')
 
                         color = None
@@ -621,6 +661,14 @@ class PhotoDrawer(object):
                                            fc=color)
                         # add qubit-qubit wiring
                         self.draw_line(bottom, top, lc=color)
+                    else:
+                        if param:
+                            subtext = '{}'.format(param)
+                        else:
+                            subtext = ''
+                        self.draw_multiqubit_gate(coord, fc=self.style.dispcol['multi'], ec=self.style.dispcol['multi'],
+                                                  gt=self.style.gt, sc=self.style.sc,
+                                                  text=gate.qasm_name, subtext=subtext)
                 elif len(coord) == 3:
                     if gate.type() == GATE_ID["CCX"]:
                         self.draw_ctrl_qubit(coord[0], fc=self.style.dispcol['multi'],
@@ -637,6 +685,26 @@ class PhotoDrawer(object):
                                                 ac=self.style.dispcol['multi'])
                         # add qubit-qubit wiring
                         self.draw_line(bottom, top, lc=self.style.dispcol['multi'])
+                    elif gate.type() == GATE_ID["CSwap"]:
+                        self.draw_ctrl_qubit(coord[0], fc=self.style.dispcol['multi'],
+                                             ec=self.style.dispcol['multi'])
+                        self.draw_swap(coord[1])
+                        self.draw_swap(coord[2])
+                        self.draw_line(bottom, top, lc=self.style.dispcol['swap'])
+                    elif gate.controls > 0:
+                        for i in range(gate.controls):
+                            self.draw_ctrl_qubit(coord[i], fc=self.style.dispcol['multi'],
+                                                 ec=self.style.dispcol['multi'])
+                        if param:
+                            subtext = '{}'.format(param)
+                        else:
+                            subtext = ''
+                        self.draw_multiqubit_gate(coord[gate.controls:], fc=self.style.dispcol['multi'],
+                                                  ec=self.style.dispcol['multi'],
+                                                  gt=self.style.gt, sc=self.style.sc,
+                                                  text=gate.qasm_name, subtext=subtext)
+                    else:
+                        pass
 
             layer_position.append(position)
             position = position + layer_width
