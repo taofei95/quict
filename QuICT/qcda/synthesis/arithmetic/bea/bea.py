@@ -76,7 +76,8 @@ def FourierAdderWiredCC(a, phib, c, dualControlled):
 
     Args:
         phib(Qureg): the qureg stores Φ(b), length is n
-        c(Qureg):    the control qubits,    length is 2
+        c(Qureg):    the control qubits,    length is 2 or 1, see dualControlled
+        dualControlled(bool): if True, c[0] will be used; else c[0:2] will be used
 
     Circuit for Shor’s algorithm using 2n+3 qubits
     http://arxiv.org/abs/quant-ph/0205095v3
@@ -108,7 +109,8 @@ def FourierReverseAdderWiredCC(a, phib, c, dualControlled):
 
     Args:
         phib(Qureg): the qureg stores Φ(b), length is n+1
-        c(Qureg):    the control qubits,    length is 2
+        c(Qureg):    the control qubits,    length is 2 or 1, see dualControlled
+        dualControlled(bool): default True. if True, c[0] will be used; else c[0:1] will be used
 
     Circuit for Shor’s algorithm using 2n+3 qubits
     http://arxiv.org/abs/quant-ph/0205095v3
@@ -143,8 +145,9 @@ def FourierAdderModCC(a, N, phib, c, low, dualControlled=True):
         a(int):      least n bits used as unsigned
         N(int):      least n bits used as unsigned
         phib(Qureg): the qureg stores b,        length is n+1,
-        c(Qureg):    the control qubits,        length is 2,
+        c(Qureg):    the control qubits,    length is 2 or 1, see dualControlled
         low(Qureg):  the clean ancillary qubit, length is 1,
+        dualControlled(bool): if True, c[0] will be used; else c[0:1] will be used
 
     Circuit for Shor’s algorithm using 2n+3 qubits
     http://arxiv.org/abs/quant-ph/0205095v3
@@ -165,7 +168,7 @@ def FourierAdderModCC(a, N, phib, c, low, dualControlled=True):
 
 
 def FourierAdderMod(a, N, phib, low):
-    """ use FourierAdderWired/FourierAdderWiredCC to calculate (a+b)%N in Fourier space
+    """ use FourierAdderWired/FourierAdderWiredCC to calculate (a+b)%N in Fourier space. no control bits.
 
     (phib=Φ(b),low) -> (phib'=Φ((a+b)%N),low)
 
@@ -375,8 +378,11 @@ def BEAAdderModCCDecomposition(n, a, N):
     (phib=Φ(b),c,low) -> (phib'=Φ((a+b)%N),c,low)
 
     Args:
+        n(int):      bits len
         a(int):      least n bits used as unsigned
         N(int):      least n bits used as unsigned
+
+    Quregs:
         phib(Qureg): the qureg stores b,        length is n+1,
         c(Qureg):    the control qubits,        length is 2,
         low(Qureg):  the clean ancillary qubit, length is 1,
@@ -398,13 +404,16 @@ BEAAdderModCC = Synthesis(BEAAdderModCCDecomposition)
 
 
 def BEAAdderModDecomposition(n, a, N):
-    """ use FourierAdderWired/FourierAdderWiredCC to calculate (a+b)%N in Fourier space
+    """ use FourierAdderWired/FourierAdderWiredCC to calculate (a+b)%N in Fourier space. No cotrol bits
 
-    (phib=Φ(b),c,low) -> (phib'=Φ((a+b)%N),c,low)
+    (phib=Φ(b),low) -> (phib'=Φ((a+b)%N),low)
 
     Args:
+        n(int):      bits len
         a(int):      least n bits used as unsigned
         N(int):      least n bits used as unsigned
+
+    Quregs:
         phib(Qureg): the qureg stores b,        length is n+1,
         low(Qureg):  the clean ancillary qubit, length is 1,
 
@@ -430,11 +439,14 @@ def BEAMultModCDecomposition(n, a, N):
 
 
     Args:
+        n(int):      bits len
         a(int):      least n bits used as unsigned
         N(int):      least n bits used as unsigned
-        x(Qureg):    the qureg stores x,        length is n,
+
+    Quregs:
         phib(Qureg): the qureg stores b,        length is n+1,
-        c(Qureg):    the control qubits,        length is 2,
+        x(Qureg):    the qureg stores x,        length is n,
+        c(Qureg):    the control qubits,        length is 1,
         low(Qureg):  the clean ancillary qubit, length is 1,
 
     Circuit for Shor’s algorithm using 2n+3 qubits
@@ -455,16 +467,19 @@ BEAMulModC = Synthesis(BEAMultModCDecomposition)
 
 
 def BEAMultModDecomposition(n, a, N):
-    """ use FourierAdderMod to calculate (b+ax)%N in Fourier space
+    """ use FourierAdderMod to calculate (b+ax)%N in Fourier space. No control bits
 
-    (phib=Φ(b),x,c,low) -> (phib'=Φ((b+ax)%N),x,c,low)
+    (phib=Φ(b),x,low) -> (phib'=Φ((b+ax)%N),x,low)
 
 
     Args:
+        n(int):      bits len
         a(int):      least n bits used as unsigned
         N(int):      least n bits used as unsigned
-        x(Qureg):    the qureg stores x,        length is n,
+
+    Quregs:
         phib(Qureg): the qureg stores b,        length is n+1,
+        x(Qureg):    the qureg stores x,        length is n,
         low(Qureg):  the clean ancillary qubit, length is 1,
 
     Circuit for Shor’s algorithm using 2n+3 qubits
@@ -488,13 +503,15 @@ def BEACUaDecomposition(n, a, N):
 
     (b=0,x,c,low) -> (b=0,x',c,low)
 
-
     Args:
+        n(int):      bits len
         a(int):      least n bits used as unsigned
         N(int):      least n bits used as unsigned
+
+    Quregs:
+        phib(Qureg): the qureg stores b,        length is n+1,
         x(Qureg):    the qureg stores x,        length is n,
-        b(Qureg):    the clean ancillary qubit, length is n+1,
-        c(Qureg):    the control qubit,         length is 1,
+        c(Qureg):    the qureg stores c,        length is 1,
         low(Qureg):  the clean ancillary qubit, length is 1,
 
     Circuit for Shor’s algorithm using 2n+3 qubits
