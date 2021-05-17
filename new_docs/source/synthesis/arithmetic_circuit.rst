@@ -58,7 +58,7 @@ It takes **n** as the parameter indicating the length of the integer, to tailor 
 Qureg **a** keeps unchanged, the result is stored in qureg **b**,
 qureg **c** is clean ancilla, qubit **overflow** flips if the addition produces overflow. 
 
-|a,b,c=0,overflow> -> |a,a+b,c=0,overflow'>
+\|a,b,c=0,overflow> -> \|a,a+b,c=0,overflow'>
 
 .. code-block:: python
     :linenos:
@@ -84,7 +84,7 @@ It takes **n** as the parameter indicating the length of the integer, to tailor 
 Qureg **a** keeps unchanged, the result is stored in qureg **b**,
 qureg **c**, **N_q**, **overflow** and **t** are clean ancilla. 
 
-    |a,b,c=0,overflow=0,N_q=0,t=0> -> |a,(a+b) mod N,c=0,overflow,N_q,t>
+    \|a,b,c=0,overflow=0,N_q=0,t=0> -> \|a,(a+b) mod N,c=0,overflow,N_q,t>
 
 .. code-block:: python
     :linenos:
@@ -114,7 +114,7 @@ It takes **m** as the parameter indicating the length of **x**, to tailor the ci
 Qureg **x** keeps unchanged, the result is stored in qureg **b**,
 qureg **a_q**, **c**, **N_q**, **overflow** and **t** are clean ancilla. 
 
-    |x,a_q=0,b,c=0,overflow=0,N_q=0,t=0> -> |x,a_q,(a*x + b) mod N,c,overflow,N_q,t>
+    \|x,a_q=0,b,c=0,overflow=0,N_q=0,t=0> -> \|x,a_q,(a*x + b) mod N,c,overflow,N_q,t>
 
 .. code-block:: python
     :linenos:
@@ -145,7 +145,7 @@ It takes **m** as the parameter indicating the length of **x**, to tailor the ci
 Qureg **x** keeps unchanged, the result is stored in qureg **r**,
 qureg **a_q**, **c**, **N_q**, **overflow** and **t** are clean ancilla. 
 
-    |x,r=0,a_q=0,b=0,c=0,overflow=0,N_q=0,t=0> -> |x,(a^x) mod N,a_q,b,c,overflow,N_q,t>
+    \|x,r=0,a_q=0,b=0,c=0,overflow=0,N_q=0,t=0> -> \|x,(a^x) mod N,a_q,b,c,overflow,N_q,t>
 
 .. code-block:: python
     :linenos:
@@ -178,7 +178,7 @@ It takes **n** as the parameter indicating the length of the integer, to tailor 
 
 Qureg **a** keeps unchanged, the result is stored in qureg **b**.
 
-|a,b> -> |a,a+b>
+\|a,b> -> \|a,a+b>
 
 .. code-block:: python
     :linenos:
@@ -197,7 +197,7 @@ BEAAdderWired
 
 **BEAAdderWired(n,a)** behaves like **BEAAdder(n)**, but `a` is wired. `b` use n+1 bits to store, therefore guarantee no overflow.
 
-|b> -> |a+b>
+\|b> -> \|a+b>
 
 .. code-block:: python
     :linenos:
@@ -215,7 +215,7 @@ BEAAdderWiredCC
 
 **BEAAdderWiredCC(n,a)** is **BEAAdderWired(n,a)** with 2 control bits.
 
-|b,c> -> |(c==0b11)?a+b:b,c>
+\|b,c> -> \|(c==0b11)?a+b:b,c>
 
 .. code-block:: python
     :linenos:
@@ -242,7 +242,7 @@ low(Qureg):  the clean ancillary qubit, length is 1,
 Qureg **b** stores result, guarantee no overflow,
 qureg **low** is  the clean ancillary qubit. 
 
-    |b,low> -> |(a+b)%N,low>
+    \|b,low> -> \|(a+b)%N,low>
 
 .. code-block:: python
     :linenos:
@@ -267,7 +267,7 @@ It takes **n** as the parameter indicating the length of **N** and **x**, to tai
 Qureg **x** keeps unchanged, the result is stored in qureg **b**,
 qureg **low** is the clean ancillary qubit. 
 
-    |b,x,low> -> |(b+ax)%N,x,low>
+    \|b,x,low> -> \|(b+ax)%N,x,low>
 
 .. code-block:: python
     :linenos:

@@ -29,7 +29,7 @@ QuICT.algorithm.HRSShorFactor
 
     Bases: QuICT.algorithm._algorithm.Algorithm
 
-implementation of shor algorithm
+implementation of shor algorithm.
 
 QuICT.algorithm.HRSShorFactor.run(N)
 >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
@@ -47,7 +47,7 @@ QuICT.algorithm.BEAShorFactor
 
     Bases: QuICT.algorithm._algorithm.Algorithm
 
-implementation of shor algorithm, which uses the one controlling-qubit trick.
+implementation of shor algorithm, which uses the one controlling-qubit trick. Notice that the algorithm uses only 2\*n+3 bits, but the circuit runs slower.  
 
 QuICT.algorithm.BEAShorFactor.run(N)
 >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
