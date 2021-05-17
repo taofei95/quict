@@ -1,5 +1,5 @@
 import numpy as np
-from numba import njit
+from numba import njit, prange
 
 from functools import wraps
 from collections.abc import Callable
@@ -61,3 +61,19 @@ def mapping_augment(mapping: np.ndarray) -> np.ndarray:
         for k in range(n):
             res[i] |= ((i >> (n - 1 - mapping[k])) & 1) << (n - 1 - k)
     return res
+
+
+def vector_reindex(n: int, mapping: np.ndarray) -> np.ndarray:
+    n_array = np.arange(n, dtype=np.int32)
+    remaining_bits = np.setdiff1d(n_array, mapping)
+    mapping_value, remaining_value = np.sum(2 ** mapping), np.sum(2 ** remaining_bits)
+
+    idx_array = np.arange(1 << n, dtype=np.int32)
+    idx_array = np.bitwise_and(idx_array, remaining_value)
+    idx_unique = np.unique(idx_array)
+    idx_out = np.empty((1<<mapping.shape[0], 1 << n - mapping.shape[0]), dtype=np.int32)
+
+    for i in prange(idx_unique.shape[0]):
+        idx_out[:, i] = np.where(idx_array == idx_unique[i])[0]
+
+    return idx_out

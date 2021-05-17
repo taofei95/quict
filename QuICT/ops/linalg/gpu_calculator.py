@@ -8,42 +8,12 @@ import pycuda.gpuarray as gpuarray
 import pycuda.driver as cuda
 import pycuda.autoinit
 from pycuda.compiler import SourceModule
+import skcuda.linalg as linalg
+linalg.init()
 
-from .utils import mapping_augment
 
+from .utils import mapping_augment, vector_reindex
 
-DOT_TEMPLATE = SourceModule(r"""
-    #include <pycuda-complex.hpp>
-    #define BLOCK_SIZE 32
-    __global__ void dot(pycuda::complex<double> *out, const pycuda::complex<double> *A, const pycuda::complex<double> *B, const int *size)
-    {
-        const int out_x = size[0];
-        const int out_y = size[3];
-        const int a_y = size[1];
-
-        const int idx_x = threadIdx.x + blockIdx.x * blockDim.x;
-        const int idx_y = threadIdx.y + blockIdx.y * blockDim.y;
-
-        if ((idx_x < out_x) && (idx_y < out_y)){
-            pycuda::complex<double> C = 0;
-            __shared__ pycuda::complex<double> As[BLOCK_SIZE][BLOCK_SIZE];
-            __shared__ pycuda::complex<double> Bs[BLOCK_SIZE][BLOCK_SIZE];
-            for (int i = 0; i < a_y; i += blockDim.x){
-                As[threadIdx.x][threadIdx.y] = A[idx_x*a_y + threadIdx.y + i];
-                Bs[threadIdx.x][threadIdx.y] = B[(idx_x + i)*out_y + idx_y];
-
-                __syncthreads();
-
-                for (int k = 0; k < blockDim.x; k++){
-                    C += As[threadIdx.x][k] * Bs[k][threadIdx.y];
-                }
-                __syncthreads();
-            }
-
-            out[idx_x*out_y + idx_y] = C;
-        }
-    }
-    """)
 
 TENSOR_TEMPLATE = SourceModule(r"""
     #include <pycuda-complex.hpp>
@@ -123,30 +93,21 @@ MATRIX_PERM_TEMPLATE = SourceModule(r"""
 
 VECTOR_DOT_TEMPLATE = SourceModule(r"""
     #include <pycuda-complex.hpp>
-    #define BLOCK_SIZE 32
-    __global__ void vectordot(pycuda::complex<double> *out, const pycuda::complex<double> *A, const pycuda::complex<double> *B, const int *size)
+    __global__ void v_reindex(pycuda::complex<double> *vout, const pycuda::complex<double> *V, const int *vidx, const int value)
     {
-        const int width = size[0];
+        const int stride_y = blockDim.y * gridDim.y;
 
         const int idx_x = threadIdx.x + blockIdx.x * blockDim.x;
         const int idx_y = threadIdx.y + blockIdx.y * blockDim.y;
 
-        if ((idx_x < width) && (idx_y < width)){
-            pycuda::complex<double> C = 0;
-            __shared__ pycuda::complex<double> As[BLOCK_SIZE][BLOCK_SIZE];
-            __shared__ pycuda::complex<double> Bs[BLOCK_SIZE][BLOCK_SIZE];
-            for (int i = 0; i < width; i += blockDim.x){
-                As[threadIdx.x][threadIdx.y] = A[idx_x*width + threadIdx.y + i];
-                Bs[threadIdx.x][threadIdx.y] = B[(idx_x + i)*width + idx_y];
-                __syncthreads();
+        const int idx_1dim = idx_x * stride_y + idx_y;
 
-                for (int k = 0; k < blockDim.x; k++){
-                    C += As[threadIdx.x][k] * Bs[k][threadIdx.y];
-                }
-                __syncthreads();
-            }
+        const int v_idx = vidx[idx_1dim];
 
-            out[idx_x*width + idx_y] = C;
+        if (value==0){
+            vout[idx_1dim] = V[v_idx];
+        }else{
+            vout[v_idx] = V[idx_1dim];
         }
     }
     """)
@@ -197,20 +158,7 @@ class GPUCalculator:
         gpu_A = gpuarray.to_gpu(A) if type(A) is np.ndarray else A
         gpu_B = gpuarray.to_gpu(B) if type(B) is np.ndarray else B
 
-        gpu_result = gpuarray.zeros((row_a, col_b), dtype=np.complex_)
-        gpu_size = gpuarray.to_gpu(np.array([row_a, col_a, row_b, col_b], dtype=np.int32))
-
-        # GPU kernel function.
-        gpu_dot = DOT_TEMPLATE.get_function("dot")
-
-        block = (min(row_a, 32), min(col_b, 32), 1)
-        grid = (math.ceil(row_a/block[0]), math.ceil(col_b/block[0]))
-        gpu_dot(gpu_result, gpu_A, gpu_B, gpu_size, grid=grid, block=block)
-
-        if gpu_out:
-            return gpu_result.get()
-
-        return gpu_result
+        return linalg.dot(gpu_A, gpu_B).get() if gpu_out else linalg.dot(gpu_A, gpu_B)
 
     @staticmethod
     def tensor(A, B, gpu_out: bool = True):
@@ -341,25 +289,54 @@ class GPUCalculator:
         A = gpu_result.get().reshape(row_a, col_a) if gpu_out else gpu_result
 
     @staticmethod
-    def vectordot(A, V, gpu_out: bool = True):
+    def vectordot(A, V, mapping, gpu_out: bool = True):
+        """ dot matrix A and matrix B
+
+        Args:
+            A(np.array<np.complex>): the matrix A.
+            V(np.array<np.complex>): the vector V.
+            mapping(np.array<int>): the qubit mapping.
+            gpu_out(bool): return result from GPU into CPU.
+
+        Returns:
+            np.array<np.complex>: the vector with length 2^n
+        """
         row_a, col_a = A.shape
-        assert(row_a * col_a == V.size)
+        n, m = np.log2(V.shape[0]).astype(np.int32), mapping.shape[0]
+        assert(row_a == 1 << mapping.shape[0])
+
+        # matrix permutation for A depending on mapping
+        argsorted_mapping = np.argsort(mapping)
+        m_array = np.arange(m, dtype=np.int32)
+
+        if not np.allclose(argsorted_mapping, m_array):
+            GPUCalculator.MatrixPermutation(A, argsorted_mapping, changeInput = True, gpu_out = False)
+
+        # grep m qubit idx depending on mapping
+        v_idx = vector_reindex(n, mapping)
 
         # Data in GPU
         gpu_A = gpuarray.to_gpu(A) if type(A) is np.ndarray else A
         gpu_V = gpuarray.to_gpu(V) if type(V) is np.ndarray else V
-
-        gpu_result = gpuarray.zeros((row_a, col_a), dtype=np.complex_)
-        gpu_size = gpuarray.to_gpu(np.array([row_a, col_a], dtype=np.int32))
+        gpu_idx = gpuarray.to_gpu(v_idx)
+        gpu_V_out = gpuarray.empty((1 << m, 1 << n - m), dtype=np.complex_)
 
         # GPU kernel function.
-        gpu_dot = VECTOR_DOT_TEMPLATE.get_function("vectordot")
+        gpu_vdot = VECTOR_DOT_TEMPLATE.get_function("v_reindex")
 
-        block = (min(row_a, 32), min(col_a, 32), 1)
-        grid = (math.ceil(row_a/block[0]), math.ceil(col_a/block[0]))
-        gpu_dot(gpu_result, gpu_A, gpu_V, gpu_size, grid=grid, block=block)
+        block = (min(row_a, 32), min(1 << int(n) - m, 32), 1)
+        grid = (row_a//block[0], (1 << int(n) - m)//block[1])
+        value = np.int32(0)
+        gpu_vdot(gpu_V_out, gpu_V, gpu_idx, value, grid=grid, block=block)
+
+        # GPU dot
+        gpu_V_dot = GPUCalculator.dot(gpu_A, gpu_V_out, gpu_out=False)
+
+        # reshape gpu_V_out
+        value = np.int32(1)
+        gpu_vdot(gpu_V, gpu_V_dot, gpu_idx, value, grid=grid, block=block)
 
         if gpu_out:
-            return gpu_result.get()
+            return gpu_V.get()
 
-        return gpu_result
+        return gpu_V

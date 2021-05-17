@@ -122,10 +122,23 @@ class CPUCalculator:
         return np.dot(A, B)
 
     @staticmethod
-    @njit()
-    def vectordot(A, V):
+    def vectordot(A, V, mapping):
         row_a, col_a = A.shape
-        assert(row_a * col_a == V.size)
+        n, m = np.log2(V.shape[0]).astype(np.int32), np.log2(row_a).astype(np.int32)
+        assert(m == mapping.shape[0])
 
-        V = V.reshape((row_a, col_a))
-        return np.dot(A, V)
+        # matrix permutation for A depending on mapping
+        argsorted_mapping = np.argsort(mapping)
+
+        if not (argsorted_mapping == np.arange(mapping.shape[0])).all():
+            CPUCalculator.MatrixPermutation(A, argsorted_mapping, changeInput = True)
+
+        return CPUCalculator.helper_vdot(A, V, n, m)
+
+    @staticmethod
+    @njit()
+    def helper_vdot(A, V, n, m):
+        # grep m qubit idx depending on mapping
+        A_tensor = np.kron(np.identity(1 << n - m).astype(np.complex_), A)
+
+        return np.dot(A_tensor, V)
