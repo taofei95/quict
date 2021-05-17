@@ -122,7 +122,7 @@ else
     -o initial_state_preparation_cdll.so initial_state_preparation.cpp \
     -std=c++11  -fPIC -shared -ltbb || exit 1
 
-  cd $prj_root/QuICT/qcda/mapping/mcts_cpp && ./build.sh  || exit 1
+  cd $prj_root/QuICT/qcda/mapping/mcts/mcts_core && ./build.sh  || exit 1
 fi
 
 
