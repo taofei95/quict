@@ -100,12 +100,12 @@ def inner_cutrans_build_gate(
 
 class ControlledUnitaryTransform(Synthesis):
     @classmethod
-    def controlled_unitary_transform(
+    def execute(
             cls,
             u1: np.ndarray,
             u2: np.ndarray,
             include_phase_gate: bool = True,
-            mapping: Sequence[int] = None,
+            mapping: List[int] = None,
             recursive_basis: int = 2,
     ):
         """

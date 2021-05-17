@@ -56,7 +56,7 @@ class InitialStatePreparation(Synthesis):
     def execute(cls, other):
         """
         Args:
-            other: the parameters to add in, it can have follow forms:
+            other: the parameters to be added in, it can have following forms:
                 1) int/float/complex
                 2) list<int/float/complex>
                 3) tuple<int/float/complex>

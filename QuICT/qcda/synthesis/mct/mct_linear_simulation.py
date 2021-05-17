@@ -40,11 +40,11 @@ def solve(n, m):
 class MCTLinearSimulation(Synthesis):
     @classmethod
     def execute(cls, m, n):
-        """ a linear simulation for toffoli gate
+        """ A linear simulation for Toffoli gate
 
         https://arxiv.org/abs/quant-ph/9503016 Lemma 7.2
 
-        implement m-bit toffoli gate in a qureg with n qubit with linear complexity.
+        Implement a m-bit toffoli gate in a qureg with n qubit with linear complexity.
 
         If n ≥ 5 and m ∈ {3, . . . , ⌈n/2⌉} then (m+1)-Toffoli gate can be simulated
         by a network consisting of 4(m − 2) toffoli gates
