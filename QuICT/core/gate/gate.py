@@ -2525,7 +2525,7 @@ class ComplexGate(BasicGate):
 
     Note that the ComplexGate extends the BasicGate
 
-    Note that all subClass must overloaded the function "build_gate"
+    Note that all subClass must overload the function "build_gate"
     """
 
     def build_gate(self):

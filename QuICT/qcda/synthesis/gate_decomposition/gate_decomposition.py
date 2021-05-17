@@ -67,10 +67,6 @@ class GateDecomposition(Synthesis):
             elif isinstance(gate, BasicGate):
                 gates.append(gate)
             else:
-                try:
-                    gate_decomposed, _ = UnitaryTransform.execute(gate.compute_matrix, mapping=gate.targs)
-                    gates.extend(gate_decomposed)
-                except Exception:
-                    raise ValueError('Unknown gate encountered')
+                raise ValueError('Unknown gate encountered')
 
         return gates

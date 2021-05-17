@@ -18,7 +18,19 @@ other = [GATE_ID['SX'], GATE_ID['SY'], GATE_ID['S'], GATE_ID['S_dagger'], GATE_I
 not_calculated = [GATE_ID['SW'], GATE_ID['U2'], GATE_ID['U3'], GATE_ID['CU3']]
 
 class Node(object):
+    """
+    (Temporary) implementation of Directed Acyclic Graph (DAG) used in this code
+
+    TODO: Replace this part with a graph structure
+    """
     def __init__(self, gate : BasicGate):
+        """
+        Args:
+            gate(BasicGate): Gate represented by the node
+            identity(bool): Whether the gate is identity (upon a global phase)
+            predecessor(list[int]): Predecessors of the node
+            reachable(bool): Whether this node needs to be compared with the new node
+        """
         self.gate = gate
         self.identity = False
         self.predecessor = set()
@@ -208,6 +220,11 @@ class CommutativeOptimization(Optimization):
         only (say, ComplexGates are not supported), other gates in the Circuit/
         CompositeGate may result in an exception or unexpected output.
 
+        FIXME: Merging gates may cause the modification of commutative relation.
+        In this version only the simplest (also the most common) case, i.e. the merged
+        gate is identity, is handled. More specified analysis of the DAG is needed
+        to deal with other cases, which is postponed until the graph structure is completed.
+
         Args:
             gates(Circuit/CompositeGate): Circuit/CompositeGate to be optimized
 
@@ -242,7 +259,7 @@ class CommutativeOptimization(Optimization):
                     nodes[prev].reachable = False
                 else:
                     nodes[prev].reachable = True
-            
+
             combined = False
             for prev in range(length - 1, -1, -1):
                 prev_node = nodes[prev]

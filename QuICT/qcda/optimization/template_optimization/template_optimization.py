@@ -22,7 +22,6 @@ all compatible maximal matches that reduces the size of the circuit.
 Exact and practical pattern matching for quantum circuit optimization.
 `arXiv:1909.05270 <https://arxiv.org/abs/1909.05270>`_
 """
-import numpy as np
 
 from QuICT.core import * # pylint: disable=unused-wildcard-import
 from QuICT.qcda.optimization._optimization import Optimization

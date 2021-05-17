@@ -56,3 +56,5 @@ SX, SY, S, S_dagger, T, T_dagger,
 SW, U2, U3, CU3
 
 The order stands for the different merge regulation, check the source code for more details.
+
+TODO: Modification of commutative relation other than IDGate during the merge process.
