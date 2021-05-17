@@ -66,7 +66,7 @@ class CPUCalculator:
     @staticmethod
     @njit()
     def VectorPermutation(A: np.ndarray, mapping: np.ndarray, changeInput: bool = False):
-        """ permutaion A with mapping, inplace
+        """ permutaion A with mapping, changeInput
 
         Args:
             A(np.array<np.complex>): the matrix A
@@ -80,7 +80,7 @@ class CPUCalculator:
 
         switched_idx = mapping_augment(mapping)
 
-        if inplace:
+        if changeInput:
             A[:] = A[switched_idx]
 
         return A[switched_idx]
