@@ -13,3 +13,4 @@ Contents
    synthesis/gate_transform.rst
    synthesis/unitary_transform.rst
    synthesis/arithmetic_circuit.rst
+   synthesis/shor_circuit.rst

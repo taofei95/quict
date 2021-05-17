@@ -336,7 +336,7 @@ class BasicGate(object):
             GATE_SET_LIST[-1].append(self.copy())
         return self
 
-    def __call__(self, params = None, name = None):
+    def __call__(self, params=None, name=None):
         """ give parameters for the gate
 
         give parameters by "()".
@@ -794,15 +794,16 @@ class ZGate(BasicGate):
 
 Z = ZGate(alias=["Z"])
 
+
 class SXGate(BasicGate):
     """ sqrt(X) gate
 
     """
 
     _matrix = np.array([
-            [1 / np.sqrt(2), -1j / np.sqrt(2)],
-            [-1j / np.sqrt(2), 1 / np.sqrt(2)]
-        ], dtype=np.complex)
+        [1 / np.sqrt(2), -1j / np.sqrt(2)],
+        [-1j / np.sqrt(2), 1 / np.sqrt(2)]
+    ], dtype=np.complex)
 
     def __init__(self, alias=None):
         _add_alias(alias=alias, standard_name=self.__class__.__name__)
@@ -824,7 +825,9 @@ class SXGate(BasicGate):
     def exec(self, circuit):
         exec_single(self, circuit)
 
+
 SX = SXGate(["SX", "sx", "Sx"])
+
 
 class SYGate(BasicGate):
     """ sqrt(Y) gate
@@ -856,7 +859,9 @@ class SYGate(BasicGate):
     def exec(self, circuit):
         exec_single(self, circuit)
 
+
 SY = SYGate(["SY", "sy", "Sy"])
+
 
 class SWGate(BasicGate):
     """ sqrt(W) gate
@@ -888,7 +893,9 @@ class SWGate(BasicGate):
     def exec(self, circuit):
         exec_single(self, circuit)
 
+
 SW = SWGate(["SW", "sw", "Sw"])
+
 
 class IDGate(BasicGate):
     """ Identity gate
@@ -921,6 +928,7 @@ class IDGate(BasicGate):
 
 
 ID = IDGate(["ID"])
+
 
 class U1Gate(BasicGate):
     """ Diagonal single-qubit gate
@@ -978,9 +986,9 @@ class U2Gate(BasicGate):
         sqrt2 = 1 / np.sqrt(2)
         return np.array([
             [1 * sqrt2,
-            -np.exp(1j * self.pargs[1]) * sqrt2],
+             -np.exp(1j * self.pargs[1]) * sqrt2],
             [np.exp(1j * self.pargs[0]) * sqrt2,
-            np.exp(1j * (self.pargs[0] + self.pargs[1])) * sqrt2]
+             np.exp(1j * (self.pargs[0] + self.pargs[1])) * sqrt2]
         ], dtype=np.complex)
 
     def __str__(self):
@@ -1017,9 +1025,9 @@ class U3Gate(BasicGate):
     def matrix(self) -> np.ndarray:
         return np.array([
             [np.cos(self.pargs[0] / 2),
-            -np.exp(1j * self.pargs[2]) * np.sin(self.pargs[0] / 2)],
+             -np.exp(1j * self.pargs[2]) * np.sin(self.pargs[0] / 2)],
             [np.exp(1j * self.pargs[1]) * np.sin(self.pargs[0] / 2),
-            np.exp(1j * (self.pargs[1] + self.pargs[2])) * np.cos(self.pargs[0] / 2)]
+             np.exp(1j * (self.pargs[1] + self.pargs[2])) * np.cos(self.pargs[0] / 2)]
         ], dtype=np.complex)
 
     def __str__(self):
@@ -1056,9 +1064,9 @@ class RxGate(BasicGate):
     def matrix(self) -> np.ndarray:
         return np.array([
             [np.cos(self.parg / 2),
-            1j * -np.sin(self.parg / 2)],
+             1j * -np.sin(self.parg / 2)],
             [1j * -np.sin(self.parg / 2),
-            np.cos(self.parg / 2)]
+             np.cos(self.parg / 2)]
         ], dtype=np.complex)
 
     def __str__(self):
@@ -1387,6 +1395,7 @@ class CYGate(BasicGate):
 
 
 CY = CYGate(["CY", "Cy"])
+
 
 class CHGate(BasicGate):
     """ controlled-Hadamard gate
@@ -1938,7 +1947,7 @@ class PermGate(BasicGate):
         self.targets = 0
         self.params = 0
 
-    def __call__(self, params = None, name = None):
+    def __call__(self, params=None, name=None):
         """ pass permutation to the gate
 
         the length of permutaion must be 2^n,
@@ -2029,7 +2038,7 @@ class ControlPermMulDetailGate(BasicGate):
         self.targets = 0
         self.params = 0
 
-    def __call__(self, params = None, name = None):
+    def __call__(self, params=None, name=None):
         """ pass parameters to the gate
 
         give parameters (a, N) to the gate
@@ -2131,7 +2140,7 @@ class PermShiftGate(PermGate):
         self.targets = 0
         self.params = 0
 
-    def __call__(self, params = None, N=None, name=None):
+    def __call__(self, params=None, N=None, name=None):
         """ pass parameters to the gate
 
         give parameters (params, N) to the gate
@@ -2187,7 +2196,7 @@ class ControlPermShiftGate(PermGate):
         self.targets = 0
         self.params = 0
 
-    def __call__(self, params = None, N=None, name=None):
+    def __call__(self, params=None, N=None, name=None):
         """ pass parameters to the gate
 
         give parameters (params, N) to the gate
@@ -2244,7 +2253,7 @@ class PermMulGate(PermGate):
         self.targets = 0
         self.params = 0
 
-    def __call__(self, params = None, N=None, name=None):
+    def __call__(self, params=None, N=None, name=None):
         """ pass parameters to the gate
 
         give parameters (params, N) to the gate
@@ -2302,7 +2311,7 @@ class ControlPermMulGate(PermGate):
         self.targets = 0
         self.params = 0
 
-    def __call__(self, params = None, N=None, name=None):
+    def __call__(self, params=None, N=None, name=None):
         """ pass parameters to the gate
 
         give parameters (params, N) to the gate
@@ -2366,7 +2375,7 @@ class PermFxGate(PermGate):
         self.targets = 0
         self.params = 0
 
-    def __call__(self, params = None, name = None):
+    def __call__(self, params=None, name=None):
         """ pass Fx to the gate
 
         Fx should be a 2^n list that represent a boolean function
@@ -2439,7 +2448,7 @@ class UnitaryGate(BasicGate):
         self.targets = 0
         self.params = 0
 
-    def __call__(self, params = None, name = None):
+    def __call__(self, params=None, name=None):
         """ pass the unitary matrix
 
         Args:
@@ -2520,7 +2529,7 @@ class ShorInitialGate(BasicGate):
         self.targets = 0
         self.params = 0
 
-    def __call__(self, params = None, name = None):
+    def __call__(self, params=None, name=None):
         """ pass the parameters
 
         Args:
@@ -2660,7 +2669,7 @@ class QFTGate(ComplexGate):
     def matrix(self) -> np.ndarray:
         if self._matrix is None:
             gateSet = self.build_gate()
-            self._matrix = gateSet.matrix
+            self._matrix = gateSet.matrix()
         return self._matrix
 
     def __init__(self, alias=None):
@@ -2671,7 +2680,7 @@ class QFTGate(ComplexGate):
         self.targets = 3
         self.params = 0
 
-    def __call__(self, params = None, name = None):
+    def __call__(self, params=None, name=None):
         """ pass the unitary matrix
 
         Args:
@@ -2681,7 +2690,7 @@ class QFTGate(ComplexGate):
         Returns:
             QFTGate: the QFTGate after filled by target number
         """
-        self.params = params
+        self.targets = params
         self.__temp_name = name
         return self
 
@@ -2721,7 +2730,7 @@ class IQFTGate(ComplexGate):
     def matrix(self) -> np.ndarray:
         if self._matrix is None:
             gateSet = self.build_gate()
-            self._matrix = gateSet.matrix
+            self._matrix = gateSet.matrix()
         return self._matrix
 
     def __init__(self, alias=None):
@@ -2732,7 +2741,7 @@ class IQFTGate(ComplexGate):
         self.targets = 3
         self.params = 0
 
-    def __call__(self, params = None, name = None):
+    def __call__(self, params=None, name=None):
         """ pass the unitary matrix
 
         Args:
@@ -2742,7 +2751,7 @@ class IQFTGate(ComplexGate):
         Returns:
             IQFTGate: the IQFTGate after filled by target number
         """
-        self.params = params
+        self.targets = params
         self.__temp_name = name
         return self
 
@@ -2769,6 +2778,7 @@ class IQFTGate(ComplexGate):
 
 
 IQFT = IQFTGate(["IQFT", "iqft"])
+
 
 class CSwapGate(ComplexGate):
     """ Fredkin gate
@@ -2827,5 +2837,6 @@ class CSwapGate(ComplexGate):
             CCX & qureg
             CX & (qureg[2], qureg[1])
         return gates
+
 
 CSwap = CSwapGate(["Fredkin", "CSwap", "cswap"])
