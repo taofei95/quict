@@ -1,6 +1,5 @@
 
-from typing import List, Dict,Tuple,Union
-from abc import abstractmethod, abstractclassmethod, abstractstaticmethod
+from typing import List
 
 from QuICT.core.circuit import * 
 from QuICT.core.exception import *
@@ -74,7 +73,3 @@ class MCTSMapping(Mapping):
             new_circuit = Circuit(num)
             new_circuit.extend(gates)
             return new_circuit
-        
-
-
-        
