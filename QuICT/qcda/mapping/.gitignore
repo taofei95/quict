@@ -18,3 +18,5 @@ run_*
 gdb.txt
 temp.txt
 random_simulator
+rl_mcts.py
+data_generator.py
