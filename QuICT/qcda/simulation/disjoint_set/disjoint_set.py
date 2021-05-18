@@ -3,7 +3,7 @@ import numpy as np
 
 class DisjointSet:
     def __init__(self, total_cnt: int):
-        self._father = [i for i in range(total_cnt)]
+        self._father = np.array([i for i in range(total_cnt)])
         self._rank = np.ones(shape=total_cnt, dtype=np.int64)
 
     def find(self, x: int) -> int:

@@ -128,4 +128,4 @@ class UnitarySimulator(BasicSimulator):
             gateB = gates[order_right]
             x = dSet.union(order_left, order_right)
             gates[x] = UnitarySimulator.merge_two_unitary(gateA, gateB)
-        return gates[x]
+        return gates[x].copy()
