@@ -1,3 +1,0 @@
-[submodule "benchmarks"]
-	path = benchmarks
-	url = git@github.com:GaryChan1997/QuICT_benchmarks.git
