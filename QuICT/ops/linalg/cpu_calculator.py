@@ -46,7 +46,7 @@ class CPUCalculator:
             changeInput(bool): whether changes in A
 
         """
-        if not A.shape[0] == 1 << mapping.shape[0]:
+        if not A.shape[0] == (1 << mapping.shape[0]):
             raise IndexError("Indices do not match!") 
 
         idx_mapping = mapping_augment(mapping)
