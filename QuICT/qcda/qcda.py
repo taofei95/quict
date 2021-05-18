@@ -7,9 +7,9 @@ import numpy as np
 from QuICT.core import Circuit, CompositeGate
 from QuICT.qcda.synthesis.unitary_transform import UnitaryTransform
 from QuICT.tools.interface import OPENQASMInterface
-from .mapping._mapping import Mapping
-from .optimization._optimization import Optimization
-from .synthesis._synthesis import Synthesis
+from .synthesis import GateDecomposition, GateTransform
+from .optimization import CommutativeOptimization, TemplateOptimization
+from .mapping import MCTSMapping
 
 class QCDA(object):
     """ Customize the process of synthesis, optimization and mapping
@@ -95,12 +95,17 @@ class QCDA(object):
         transform the gates in the original Circuit/CompositeGate to a certain InstructionSet.
 
         Args:
-            instruction(InstructionSet): the objective InstrucationSet
+            instruction(InstructionSet): The target InstructionSet
 
         Returns:
             List: Synthesis subprocess
         """
-        pass
+        assert instruction is not None,\
+            ValueError('No InstructionSet provided for Synthesis')
+        subprocess = []
+        subprocess.append([GateDecomposition, [], {}])
+        subprocess.append([GateTransform, [instruction], {}])
+        return subprocess
 
     @staticmethod
     def default_optimization():
@@ -112,23 +117,29 @@ class QCDA(object):
         Returns:
             List: Optimization subprocess
         """
-        pass
+        subprocess = []
+        subprocess.append([CommutativeOptimization, [], {}])
+        return subprocess
 
     @staticmethod
-    def default_mapping(topology):
+    def default_mapping(layout):
         """ Generate the default mapping process
 
         The default mapping process contains the Mapping
 
         Args:
-            topology
+            layout(Layout): Topology of the target physical device
 
         Returns:
             List: Mapping subprocess
         """
-        pass
+        assert layout is not None,\
+            ValueError('No Layout provided for Mapping')
+        subprocess = []
+        subprocess.append([MCTSMapping, [layout], {'init_mapping_method':'anneal'}])
+        return subprocess
 
-    def compile(self, objective, instruction, topology, synthesis=True, optimization=True, mapping=True):
+    def compile(self, objective, instruction=None, layout=None, synthesis=True, optimization=True, mapping=True):
         """ Compile the objective with default process setting
 
         The easy-to-use process for the users to compile the objective with certain InstructionSet
@@ -141,8 +152,8 @@ class QCDA(object):
                 2. numpy.ndarray: the objective is a unitary matrix
                 3. Circuit: the objective is a Circuit
                 4. CompositeGate: the objective is a CompositeGate
-            instruction(InstructionSet): The instruction set to be transformed to
-            topology(): TODO
+            instruction(InstructionSet): The target InstructionSet
+            layout(Layout): Topology of the target physical device
             synthesis(bool): whether to use synthesis subprocess(`instruction` needed)
             optimization(bool): whether to use optimization subprocess
             mapping(bool): whether to use mapping subprocess(`topology` needed)
@@ -158,7 +169,7 @@ class QCDA(object):
         if optimization == True:
             self.process.extend(self.default_optimization())
         if mapping == True:
-            self.process.extend(self.default_mapping(topology))
+            self.process.extend(self.default_mapping(layout))
         
         gates = self.__custom_compile(gates)
 
