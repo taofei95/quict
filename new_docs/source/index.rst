@@ -101,6 +101,7 @@ Contents
    synthesis/gate_decomposition.rst
    synthesis/gate_transform.rst
    synthesis/unitary_transform.rst
+   synthesis/arithmetic_circuit.rst
 
 .. toctree::
    :maxdepth: 2

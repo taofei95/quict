@@ -2,7 +2,7 @@
 # -*- coding:utf8 -*-
 # @TIME    : 2021/5/3 4:04 下午
 # @Author  : Han Yu
-# @File    : circuir_draw
+# @File    : circuit_draw
 
 from QuICT.core import *
 
