@@ -7,6 +7,9 @@ import numpy as np
 from QuICT.core import Circuit, CompositeGate
 from QuICT.qcda.synthesis.unitary_transform import UnitaryTransform
 from QuICT.tools.interface import OPENQASMInterface
+from .synthesis._synthesis import Synthesis
+from .optimization._optimization import Optimization
+from .mapping._mapping import Mapping
 from .synthesis import GateDecomposition, GateTransform
 from .optimization import CommutativeOptimization, TemplateOptimization
 from .mapping import MCTSMapping
@@ -31,6 +34,9 @@ class QCDA(object):
 
     TODO: Optimization before synthesis is a good idea. However, because of the lack
     of methods to deal with complex gates, this subprocess is omitted in this version.
+
+    TODO: Some optimization processes are related to topology, the structure of the process
+    might be revised.
     """
     def __init__(self):
         """ Initialize a QCDA process
@@ -112,7 +118,7 @@ class QCDA(object):
         """ Generate the default optimization process
 
         The default optimization process contains the CommutativeOptimization.
-        If the original Circuit/CompositeGate is a Clifford+T one, TemplateOptimization would also be used.
+        TODO: Now TemplateOptimization only works for Clifford+T circuits, to be added.
 
         Returns:
             List: Optimization subprocess
@@ -190,6 +196,12 @@ class QCDA(object):
         HACK: Feel free to hack this part if needed, though it works for default process.
         """
         for operation, args, kwargs in self.process:
+            if isinstance(operation, Synthesis) or isinstance(operation, Optimization):
+                gates = CompositeGate(gates)
+            if isinstance(operation, Mapping):
+                gates = gates.build_circuit()
+            print('Processing {}'.format(operation.__name__))
             gates = operation.execute(gates, *args, **kwargs)
+            print('Process {} finished'.format(operation.__name__))
 
         return gates
