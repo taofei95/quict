@@ -1,11 +1,19 @@
 import numpy as np
+import numba as nb
+from typing import *
 
 from ..disjoint_set import DisjointSet
 
 from .._simulation import BasicSimulator
 
 from QuICT.core import *
-from QuICT.ops.linalg.unitary_calculation import *
+import QuICT.ops.linalg.unitary_calculation as unitary_calculation
+
+# from QuICT.ops.linalg.unitary_calculation import *
+
+# TODO: Check platform features by QuICT.utility.xxx
+GPU_AVAILABLE = False
+GPU_OUT = False
 
 
 class UnitarySimulator(BasicSimulator):
@@ -13,8 +21,8 @@ class UnitarySimulator(BasicSimulator):
     Algorithms to the unitary matrix of a Circuit.
     """
 
-    @classmethod
-    def run(cls, circuit: Circuit) -> np.ndarray:
+    @staticmethod
+    def run(circuit: Circuit) -> np.ndarray:
         """
         Get the unitary matrix of circuit
 
@@ -30,34 +38,37 @@ class UnitarySimulator(BasicSimulator):
             return np.identity(1 << qubit, dtype=np.complex128)
         ordering, small_gates = BasicSimulator.unitary_pretreatment(circuit)
         print(ordering)
-        u_gate = cls.merge_unitary_by_ordering(small_gates, ordering)
-        unitary = Unitary(np.identity(1 << qubit, dtype=np.complex128)) & [i for i in range(qubit)]
-        u_gate = UnitarySimulator.merge_two_unitary(unitary, u_gate)
+        u_mat, u_args = UnitarySimulator.merge_unitary_by_ordering(small_gates, ordering)
+        result_mat, _ = UnitarySimulator.merge_two_unitary(
+            np.identity(1 << qubit, dtype=np.complex128),
+            [i for i in range(qubit)],
+            u_mat,
+            u_args
+        )
 
-        return u_gate.matrix
+        return result_mat.get() if GPU_AVAILABLE else result_mat
 
-    @classmethod
-    def merge_two_unitary(cls, gate_a: BasicGate, gate_b: BasicGate) -> UnitaryGate:
+    @staticmethod
+    def merge_two_unitary(
+            mat_a_: np.ndarray,
+            args_a: List[int],
+            mat_b_: np.ndarray,
+            args_b: List[int],
+    ) -> Tuple[np.ndarray, List[int]]:
         """
         Combine 2 gates into a new unitary gate.
 
-        Args:
-            gate_a (BasicGate): Gate in the left.
-            gate_b (BasicGate): Gate in the right.
 
         Returns:
-            UnitaryGate: Combined gate with matrix and affectArgs set properly.
+            matrix, affectArgs
         """
-
-        args_a = gate_a.affectArgs
-        args_b = gate_b.affectArgs
 
         seta = set(args_a)
         setb = set(args_b)
 
         if len(seta & setb) == 0:
             args_b.extend(args_a)
-            return Unitary(tensor(gate_b.compute_matrix, gate_a.compute_matrix)) & args_b
+            return unitary_calculation.tensor(mat_b_, mat_a_, gpu_out=GPU_OUT), args_b
 
         setc = seta | setb
         len_a = len(seta)
@@ -65,13 +76,13 @@ class UnitarySimulator(BasicSimulator):
         len_c = len(setc)
 
         if len_c == len_a:
-            mat_a = gate_a.compute_matrix
+            mat_a = mat_a_
         else:
-            mat_a = MatrixTensorI(gate_a.compute_matrix, 1, 1 << (len_c - len_a))
+            mat_a = unitary_calculation.MatrixTensorI(mat_a_, 1, 1 << (len_c - len_a), gpu_out=GPU_OUT)
         if len_c == len_b:
-            mat_b = gate_b.compute_matrix
+            mat_b = mat_b_
         else:
-            mat_b = MatrixTensorI(gate_b.compute_matrix, 1, 1 << (len_c - len_b))
+            mat_b = unitary_calculation.MatrixTensorI(mat_b_, 1, 1 << (len_c - len_b), gpu_out=GPU_OUT)
 
         mps = [0] * len_c
         affectArgs = [0] * len_c
@@ -93,12 +104,14 @@ class UnitarySimulator(BasicSimulator):
                 mps[cnt] = ra
                 affectArgs[ra] = args_a[ra]
                 cnt += 1
-        mat_b = MatrixPermutation(mat_b, np.array(mps))
-        gate = Unitary(dot(mat_b, mat_a)) & affectArgs
-        return gate
+        mat_b = unitary_calculation.MatrixPermutation(mat_b, np.array(mps), gpu_out=GPU_OUT)
+        return unitary_calculation.dot(mat_b, mat_a, gpu_out=GPU_OUT), affectArgs
 
-    @classmethod
-    def merge_unitary_by_ordering(cls, gates: List[BasicGate], ordering: List[int]) -> BasicGate:
+    @staticmethod
+    def merge_unitary_by_ordering(
+            gates: List[BasicGate],
+            ordering: List[int],
+    ) -> Tuple[np.ndarray, List[int]]:
         """
         Merge a gate sequence into single unitary gate. The combination order is determined by
         input parameter.
@@ -111,21 +124,26 @@ class UnitarySimulator(BasicSimulator):
                 gates).
 
         Returns:
-            BasicGate: Combined large gate
+            matrix, affectArgs
         """
 
         print(ordering)
         len_gate = len(gates)
 
-        dSet = DisjointSet(len_gate)
+        d_set = DisjointSet(len_gate)
         if len(ordering) + 1 != len(gates):
             assert 0
+        matrices = [gates[i].matrix for i in range(len_gate)]
+        mat_args = [gates[i].affectArgs for i in range(len_gate)]
         x = 0
         for order in ordering:
-            order_left = dSet.find(order)
-            order_right = dSet.find(order + 1)
-            gateA = gates[order_left]
-            gateB = gates[order_right]
-            x = dSet.union(order_left, order_right)
-            gates[x] = UnitarySimulator.merge_two_unitary(gateA, gateB)
-        return gates[x].copy()
+            order_left = d_set.find(order)
+            order_right = d_set.find(order + 1)
+            x = d_set.union(order_left, order_right)
+            matrices[x], mat_args[x] = UnitarySimulator.merge_two_unitary(
+                matrices[order_left],
+                mat_args[order_left],
+                matrices[order_right],
+                mat_args[order_right],
+            )
+        return matrices[x], mat_args[x]
