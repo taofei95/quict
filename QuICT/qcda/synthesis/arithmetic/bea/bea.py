@@ -16,13 +16,13 @@ def DraperAdder(a, b):
 
     """
     n = len(a)
-    QFT | b
+    QFT(n) | b
     for i in range(n):
         p = 0
         for j in range(i, n):
             p += 1
             CRz(2 * np.pi / (1 << p)) | (a[j], b[i])
-    IQFT | b
+    IQFT(n) | b
 
 
 def FourierAdderWired(a, phib):
@@ -154,16 +154,16 @@ def FourierAdderModCC(a, N, phib, c, low, dualControlled=True):
     """
     FourierAdderWiredCC(a, phib, c, dualControlled=dualControlled)
     FourierReverseAdderWired(N, phib)
-    IQFT | phib
+    IQFT(len(phib)) | phib
     CX | (phib[0], low)
-    QFT | phib
+    QFT(len(phib))  | phib
     FourierAdderWiredCC(N, phib, low, dualControlled=False)
     FourierReverseAdderWiredCC(a, phib, c, dualControlled=dualControlled)
-    IQFT | phib
+    IQFT(len(phib)) | phib
     X | phib[0]
     CX | (phib[0], low)
     X | phib[0]
-    QFT | phib
+    QFT(len(phib))  | phib
     FourierAdderWiredCC(a, phib, c, dualControlled=dualControlled)
 
 
@@ -184,16 +184,16 @@ def FourierAdderMod(a, N, phib, low):
     """
     FourierAdderWired(a, phib)
     FourierReverseAdderWired(N, phib)
-    IQFT | phib
+    IQFT(len(phib)) | phib
     CX | (phib[0], low)
-    QFT | phib
+    QFT(len(phib))  | phib
     FourierAdderWiredCC(N, phib, low, dualControlled=False)
     FourierReverseAdderWired(a, phib)
-    IQFT | phib
+    IQFT(len(phib))  | phib
     X | phib[0]
     CX | (phib[0], low)
     X | phib[0]
-    QFT | phib
+    QFT(len(phib))  | phib
     FourierAdderWired(a, phib)
 
 
@@ -247,9 +247,9 @@ def FourierMultMod(a, N, x, phib, low):
 
 
 def MultModC(a, N, x, b, c, low):
-    QFT | b
+    QFT(len(b))  | b
     FourierMultModC(a, N, x, b, c, low)
-    IQFT | b
+    IQFT(len(b)) | b
 
 
 def ExGCD(a, b, coff):
@@ -323,9 +323,9 @@ def BEAReverseAdderWiredDecomposition(n, a):
     """
     circuit = Circuit(n + 1)
     qreg_b = circuit([i for i in range(n + 1)])
-    QFT | qreg_b
+    QFT(len(qreg_b))  | qreg_b
     FourierReverseAdderWired(a, qreg_b)
-    IQFT | qreg_b
+    IQFT(len(qreg_b)) | qreg_b
     return CompositeGate(circuit.gates)
 
 
@@ -343,9 +343,9 @@ def BEAAdderWiredCCDecomposition(n, a):
     circuit = Circuit(n + 3)
     qreg_b = circuit([i for i in range(n + 1)])
     qreg_c = circuit([i for i in range(n + 1, n + 3)])
-    QFT | qreg_b
+    QFT(len(qreg_b))  | qreg_b
     FourierAdderWiredCC(a, qreg_b, qreg_c, dualControlled=True)
-    IQFT | qreg_b
+    IQFT(len(qreg_b)) | qreg_b
     return CompositeGate(circuit.gates)
 
 
@@ -363,9 +363,9 @@ def BEAReverseAdderWiredCCDecomposition(n, a):
     circuit = Circuit(n + 3)
     qreg_b = circuit([i for i in range(n + 1)])
     qreg_c = circuit([i for i in range(n + 1, n + 3)])
-    QFT | qreg_b
+    QFT(len(qreg_b))  | qreg_b
     FourierReverseAdderWiredCC(a, qreg_b, qreg_c, dualControlled=True)
-    IQFT | qreg_b
+    IQFT(len(qreg_b)) | qreg_b
     return CompositeGate(circuit.gates)
 
 
@@ -394,9 +394,9 @@ def BEAAdderModCCDecomposition(n, a, N):
     qreg_b = circuit([i for i in range(n + 1)])
     qreg_c = circuit([i for i in range(n + 1, n + 3)])
     qreg_low = circuit([i for i in range(n + 3, n + 4)])
-    QFT | qreg_b
+    QFT(len(qreg_b))  | qreg_b
     FourierAdderModCC(a, N, qreg_b, qreg_c, qreg_low)
-    IQFT | qreg_b
+    IQFT(len(qreg_b)) | qreg_b
     return CompositeGate(circuit.gates)
 
 
@@ -423,9 +423,9 @@ def BEAAdderModDecomposition(n, a, N):
     circuit = Circuit(n + 2)
     qreg_b = circuit([i for i in range(n + 1)])
     qreg_low = circuit([i for i in range(n + 1, n + 2)])
-    QFT | qreg_b
+    QFT(len(qreg_b))  | qreg_b
     FourierAdderMod(a, N, qreg_b, qreg_low)
-    IQFT | qreg_b
+    IQFT(len(qreg_b)) | qreg_b
     return CompositeGate(circuit.gates)
 
 
@@ -457,9 +457,9 @@ def BEAMultModCDecomposition(n, a, N):
     qreg_x = circuit([i for i in range(n + 1, 2 * n + 1)])
     qreg_c = circuit(2 * n + 1)
     qreg_low = circuit(2 * n + 2)
-    QFT | qreg_b
+    QFT(len(qreg_b)) | qreg_b
     FourierMultModC(a, N, qreg_x, qreg_b, qreg_c, qreg_low)
-    IQFT | qreg_b
+    IQFT(len(qreg_b)) | qreg_b
     return CompositeGate(circuit.gates)
 
 
@@ -489,9 +489,9 @@ def BEAMultModDecomposition(n, a, N):
     qreg_b = circuit([i for i in range(n + 1)])
     qreg_x = circuit([i for i in range(n + 1, 2 * n + 1)])
     qreg_low = circuit(2 * n + 1)
-    QFT | qreg_b
+    QFT(len(qreg_b)) | qreg_b
     FourierMultMod(a, N, qreg_x, qreg_b, qreg_low)
-    IQFT | qreg_b
+    IQFT(len(qreg_b)) | qreg_b
     return CompositeGate(circuit.gates)
 
 
