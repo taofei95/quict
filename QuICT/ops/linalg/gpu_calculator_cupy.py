@@ -179,3 +179,61 @@ class GPUCalculatorCP:
             return out_lvl2.get()
 
         return out_lvl2
+    
+    @staticmethod
+    def vectordot(A, V, mapping, gpu_out: bool = True):
+        """ dot matrix A and matrix B
+
+        Args:
+            A(np.array<np.complex>): the matrix A.
+            V(np.array<np.complex>): the vector V.
+            mapping(np.array<int>): the qubit mapping.
+            gpu_out(bool): return result from GPU into CPU.
+
+        Returns:
+            np.array<np.complex>: the vector with length 2^n
+        """
+        row_a, col_a = A.shape
+        n, m = np.log2(V.shape[0]).astype(np.int32), mapping.shape[0]
+        assert(row_a == 1 << mapping.shape[0])
+
+        # Data in GPU
+        gpu_A = cp.array(A) if type(A) is np.ndarray else A
+        gpu_V = cp.array(V) if type(V) is np.ndarray else V
+
+        # matrix permutation for A depending on mapping
+        argsorted_mapping = np.argsort(mapping)
+        m_array = np.arange(m, dtype=np.int32)
+
+        if not np.allclose(argsorted_mapping, m_array):
+            gpu_A = GPUCalculatorCP.MatrixPermutation(A, argsorted_mapping, changeInput = False, gpu_out = False)
+
+        # generate reindex
+        gpu_idx = cp.arange(1 << n, dtype=np.int64)
+        gpu_reidx = cp.zeros(int(1 << n), dtype=np.int64)
+
+        mapping_num, remaining_num = 0, 0
+        for i in range(n):
+            if i in mapping:
+                gpu_reidx = cp.add(gpu_reidx, cp.left_shift(cp.bitwise_and(cp.right_shift(gpu_idx, i), 1), n - m + mapping_num))
+                mapping_num += 1
+            else:
+                gpu_reidx = cp.add(gpu_reidx, cp.left_shift(cp.bitwise_and(cp.right_shift(gpu_idx, i), 1), remaining_num))
+                remaining_num += 1
+
+        gpu_reidx = cp.argsort(gpu_reidx)
+
+        # take V data with new index
+        gpu_V_reidx = cp.take(gpu_V, gpu_reidx)
+
+        # GPU dot
+        gpu_V_reidx = cp.dot(gpu_A, gpu_V_reidx.reshape(1 << m, -1))
+
+        # put back
+        gpu_reidx = cp.argsort(gpu_reidx)
+        gpu_result = cp.take(gpu_V_reidx, gpu_reidx)
+
+        if gpu_out:
+            return gpu_result.get()
+
+        return gpu_result
