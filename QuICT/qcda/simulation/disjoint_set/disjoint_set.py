@@ -7,10 +7,10 @@ class DisjointSet:
         self._rank = np.ones(shape=total_cnt, dtype=np.int64)
 
     def find(self, x: int) -> int:
-        while self._father[x] != x:
-            self._father[x] = self._father[self._father[x]]
-            x = self._father[x]
-        return x
+        if x == self._father[x]:
+            return x
+        self._father[x] = self.find(self._father[x])
+        return self._father[x]
 
     def union(self, x: int, y: int):
         x = self.find(x)

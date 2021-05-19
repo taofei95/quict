@@ -7,6 +7,7 @@ from typing import *
 
 from .utils import mapping_augment
 
+
 class CPUCalculator:
     @staticmethod
     @njit(parallel=True, nogil=True)
@@ -47,7 +48,7 @@ class CPUCalculator:
 
         """
         if not A.shape[0] == (1 << mapping.shape[0]):
-            raise IndexError("Indices do not match!") 
+            raise IndexError("Indices do not match!")
 
         idx_mapping = mapping_augment(mapping)
 
@@ -125,13 +126,13 @@ class CPUCalculator:
     def vectordot(A, V, mapping):
         row_a, col_a = A.shape
         n, m = np.log2(V.shape[0]).astype(np.int32), np.log2(row_a).astype(np.int32)
-        assert(m == mapping.shape[0])
+        assert (m == mapping.shape[0])
 
         # matrix permutation for A depending on mapping
         argsorted_mapping = np.argsort(mapping)
 
         if not (argsorted_mapping == np.arange(mapping.shape[0])).all():
-            CPUCalculator.MatrixPermutation(A, argsorted_mapping, changeInput = True)
+            CPUCalculator.MatrixPermutation(A, argsorted_mapping, changeInput=True)
 
         return CPUCalculator.helper_vdot(A, V, n, m)
 

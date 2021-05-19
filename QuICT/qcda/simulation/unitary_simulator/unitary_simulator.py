@@ -7,7 +7,10 @@ from ..disjoint_set import DisjointSet
 from .._simulation import BasicSimulator
 
 from QuICT.core import *
-import QuICT.ops.linalg.unitary_calculation as unitary_calculation
+# import QuICT.ops.linalg.unitary_calculation as unitary_calculation
+from QuICT.ops.linalg.cpu_calculator import CPUCalculator
+
+unitary_calculation = CPUCalculator
 
 # from QuICT.ops.linalg.unitary_calculation import *
 
@@ -68,7 +71,7 @@ class UnitarySimulator(BasicSimulator):
 
         if len(seta & setb) == 0:
             args_b.extend(args_a)
-            return unitary_calculation.tensor(mat_b_, mat_a_, gpu_out=GPU_OUT), args_b
+            return unitary_calculation.tensor(mat_b_, mat_a_), args_b
 
         setc = seta | setb
         len_a = len(seta)
@@ -78,11 +81,11 @@ class UnitarySimulator(BasicSimulator):
         if len_c == len_a:
             mat_a = mat_a_
         else:
-            mat_a = unitary_calculation.MatrixTensorI(mat_a_, 1, 1 << (len_c - len_a), gpu_out=GPU_OUT)
+            mat_a = unitary_calculation.MatrixTensorI(mat_a_, 1, 1 << (len_c - len_a))
         if len_c == len_b:
             mat_b = mat_b_
         else:
-            mat_b = unitary_calculation.MatrixTensorI(mat_b_, 1, 1 << (len_c - len_b), gpu_out=GPU_OUT)
+            mat_b = unitary_calculation.MatrixTensorI(mat_b_, 1, 1 << (len_c - len_b))
 
         mps = [0] * len_c
         affectArgs = [0] * len_c
@@ -104,8 +107,9 @@ class UnitarySimulator(BasicSimulator):
                 mps[cnt] = ra
                 affectArgs[ra] = args_a[ra]
                 cnt += 1
-        mat_b = unitary_calculation.MatrixPermutation(mat_b, np.array(mps), gpu_out=GPU_OUT)
-        return unitary_calculation.dot(mat_b, mat_a, gpu_out=GPU_OUT), affectArgs
+        mat_b = unitary_calculation.MatrixPermutation(mat_b, np.array(mps))
+        res_mat = unitary_calculation.dot(mat_b, mat_a)
+        return res_mat, affectArgs
 
     @staticmethod
     def merge_unitary_by_ordering(
@@ -132,7 +136,7 @@ class UnitarySimulator(BasicSimulator):
 
         d_set = DisjointSet(len_gate)
         if len(ordering) + 1 != len(gates):
-            assert 0
+            raise IndexError("Length not match!")
         matrices = [gates[i].matrix for i in range(len_gate)]
         mat_args = [gates[i].affectArgs for i in range(len_gate)]
         x = 0
@@ -146,4 +150,6 @@ class UnitarySimulator(BasicSimulator):
                 matrices[order_right],
                 mat_args[order_right],
             )
-        return matrices[x], mat_args[x]
+        res_mat = matrices[x]
+        res_arg = mat_args[x]
+        return res_mat, res_arg

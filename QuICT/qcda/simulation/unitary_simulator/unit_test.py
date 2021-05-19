@@ -29,7 +29,7 @@ the file describe Simulators between two basic gates.
 
 @pytest.mark.repeat(5)
 def test_merge_two_unitary_list():
-    qubit = 5
+    qubit = 10
     gate_number = 100
     circuit = Circuit(qubit)
     circuit.random_append(gate_number, typeList=[GATE_ID["CX"], GATE_ID["X"]])
@@ -67,7 +67,7 @@ def test_unitary_generate():
     result_mat = UnitarySimulator.run(circuit)
     end_time = time()
     duration_2 = end_time - start_time
-    print(f"Old algo time: {duration_1:.4f} s, current algo time: {duration_2:.4f} s")
+    print(f"\nOld algo time: {duration_1:.4f} s, current algo time: {duration_2:.4f} s")
     assert np.allclose(circuit_unitary, result_mat)
 
 # # @pytest.mark.repeat(5)
