@@ -168,4 +168,20 @@ print_segment
 cd $prj_build_dir && \
 $PYTHON3 ../setup.py build --parallel $NPROC
 
+print_segment
+
+print_cyan "[Copying Back]"
+
+echo -e "Copying built libraries back into source code tree to help run pytest\n"
+
+
+find "$prj_root/build/" -type f -name "*.so" | while read file
+do
+    dest=$(echo "$file" | grep -oE "build.*" | grep -oE "QuICT.*" ) || exit 1
+    dest="$prj_root/$dest"
+    dest=$(echo $dest | sed -E "s/[^/]*\.so//")
+    echo -e "cp $file $dest\n"
+    cp "$file" "$dest" || exit 1
+done
+
 print_magenta "Done."
