@@ -161,7 +161,20 @@ class StateVectorSimulator(BasicSimulator):
         return vector
 
 
+from QuICT.ops.linalg.gpu_calculator_cupy import GPUCalculatorCP
+
+calc = GPUCalculatorCP()
+
+
 class StateVectorSimulatorRefine:
+
     @staticmethod
-    def run(circuit: Circuit) -> np.ndarray:
-        pass
+    def run(circuit: Circuit, initial_state: np.ndarray) -> np.ndarray:
+        state = initial_state.copy()
+
+        for gate in circuit.gates:
+            gate: BasicGate
+            cur_state = calc.vectordot(gate.compute_matrix, state, False)
+            del state
+            state = cur_state
+        return state.get()
