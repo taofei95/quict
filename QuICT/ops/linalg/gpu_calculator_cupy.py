@@ -182,7 +182,7 @@ class GPUCalculatorCP:
     
     @staticmethod
     def vectordot(A, V, mapping, gpu_out: bool = True):
-        """ dot matrix A and matrix B
+        """ dot matrix A and vector V
 
         Args:
             A(np.array<np.complex>): the matrix A.

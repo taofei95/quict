@@ -13,6 +13,7 @@ from .._simulation import BasicSimulator
 from QuICT.core import *
 from QuICT.ops.linalg.unitary_calculation import *
 
+
 class StateVectorSimulator(BasicSimulator):
     """ Algorithms to the state vector of a Circuit.
 
@@ -158,3 +159,9 @@ class StateVectorSimulator(BasicSimulator):
                 x = dSet.union(order_left, order_right)
                 gates[x] = StateVectorSimulator.merge_two_unitary(gateA, gateB)
         return vector
+
+
+class StateVectorSimulatorRefine:
+    @staticmethod
+    def run(circuit: Circuit) -> np.ndarray:
+        pass
