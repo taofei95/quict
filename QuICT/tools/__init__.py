@@ -4,4 +4,3 @@
 # @Author  : Han Yu
 # @File    : __init__.py.py
 
-from .drawer import *
