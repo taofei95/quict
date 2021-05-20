@@ -70,7 +70,7 @@ def FourierReverseAdderWired(a, phib):
 
 
 def FourierAdderWiredCC(a, phib, c, dualControlled):
-    """ FourierAdderWired with 2 control bits
+    """ FourierAdderWired with 1 or 2 control bits
 
     (phib,c) -> (phib'=Φ(a + b),c)
 
@@ -104,7 +104,7 @@ def FourierAdderWiredCC(a, phib, c, dualControlled):
 
 
 def FourierReverseAdderWiredCC(a, phib, c, dualControlled):
-    """ FourierReverseAdderWired with 2 control bits
+    """ FourierReverseAdderWired with 1 or 2 control bits
 
     (phib,c) -> (phib',c)
 
@@ -280,10 +280,8 @@ def BEAAdderDecomposition(n):
     
     (a,b) -> (a,b'=a+b)
 
-    Quregs:
-        a: the qureg stores a, length is n,
-        b: the qureg stores b, length is n,
-
+    Args:
+        n(int): length of a and b 
     """
     circuit = Circuit(n * 2)
     qreg_a = circuit([i for i in range(n)])
@@ -300,9 +298,9 @@ def BEAAdderWiredDecomposition(n, a):
     
     (b) -> (b'=a+b)
 
-    Quregs:
-        b: the qureg stores b, length is n+1,
-
+    Args:
+        n(int): length of a. b is in length n+1
+        a(int): the operand to be added. low n bits used
     """
     circuit = Circuit(n + 1)
     qreg_b = circuit([i for i in range(n + 1)])
@@ -319,9 +317,9 @@ def BEAReverseAdderWiredDecomposition(n, a):
     """ 
     (b) -> (b'=b-a or b-a+2**(n+1))
 
-    Quregs:
-        b: the qureg stores b, length is n+1,
-
+    Args:
+        n(int): length of a. b is in length n+1
+        a(int): the operand to be subtracted. low n bits used
     """
     circuit = Circuit(n + 1)
     qreg_b = circuit([i for i in range(n + 1)])
@@ -336,11 +334,11 @@ BEAReverseAdderWired = Synthesis(BEAReverseAdderWiredDecomposition)
 
 def BEAAdderWiredCCDecomposition(n, a):
     """ 
-    (b) -> (b'=a+b)
+    (b,c) -> (b'=a+b,c) if c=0b11 else (b'=b,c)
 
-    Quregs:
-        b: the qureg stores b, length is n,
-        c: the control bits,   length is 2
+    Args:
+        n(int): length of a. b is in length n+1
+        a(int): the operand to be subtracted. low n bits used
     """
     circuit = Circuit(n + 3)
     qreg_b = circuit([i for i in range(n + 1)])
@@ -356,11 +354,11 @@ BEAAdderWiredCC = Synthesis(BEAAdderWiredCCDecomposition)
 
 def BEAReverseAdderWiredCCDecomposition(n, a):
     """ 
-    (b,c) -> (b'=b-a,c)
+    (b,c) -> (b'=b-a,c) if c=0b11 else (b'=b,c)
 
-    Quregs:
-        b: the qureg stores b, length is n+1,
-        c: the control bits,   length is 2
+    Args:
+        n(int): length of a. b is in length n+1
+        a(int): the operand to be subtracted. low n bits used
     """
     circuit = Circuit(n + 3)
     qreg_b = circuit([i for i in range(n + 1)])
@@ -377,7 +375,7 @@ BEAReverseAdderWiredCC = Synthesis(BEAReverseAdderWiredCCDecomposition)
 def BEAAdderModCCDecomposition(n, a, N):
     """ use FourierAdderWired/FourierAdderWiredCC to calculate (a+b)%N in Fourier space
 
-    (phib=Φ(b),c,low) -> (phib'=Φ((a+b)%N),c,low)
+    (phib=Φ(b),c,low) -> (phib'=Φ((a+b)%N),c,low) if c=0b11 else (phib'==Φ(b),c,low)
 
     Args:
         n(int):      bits len
@@ -437,8 +435,7 @@ BEAAdderMod = Synthesis(BEAAdderModDecomposition)
 def BEAMultModCDecomposition(n, a, N):
     """ use FourierAdderModCC to calculate (b+ax)%N in Fourier space
 
-    (phib=Φ(b),x,c,low) -> (phib'=Φ((b+ax)%N),x,c,low)
-
+    (phib=Φ(b),x,c,low) -> (phib'=Φ((b+ax)%N),x,c,low) if c=0b1 else (phib'=Φ(b),x,c,low)
 
     Args:
         n(int):      bits len
