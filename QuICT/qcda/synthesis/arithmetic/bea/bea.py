@@ -31,7 +31,7 @@ def FourierAdderWired(a, phib):
     (phib) -> (phib'=Φ(a + b))
 
     Args:
-        a(int):      unsigned integer, least n bits used
+        a(int):      unsigned integer, low n bits used
         phib(Qureg): the qureg stores Φ(b), length is n+1
 
     Circuit for Shor’s algorithm using 2n+3 qubits
@@ -53,7 +53,7 @@ def FourierReverseAdderWired(a, phib):
     (phib) -> (phib')
 
     Args:
-        a(int):      unsigned integer, least n bits used
+        a(int):      unsigned integer, low n bits used
         phib(Qureg): the qureg stores Φ(b), length is n+1
 
     Circuit for Shor’s algorithm using 2n+3 qubits
@@ -75,6 +75,7 @@ def FourierAdderWiredCC(a, phib, c, dualControlled):
     (phib,c) -> (phib'=Φ(a + b),c)
 
     Args:
+        a(int):      unsigned integer, low n bits used
         phib(Qureg): the qureg stores Φ(b), length is n
         c(Qureg):    the control qubits,    length is 2 or 1, see dualControlled
         dualControlled(bool): if True, c[0] will be used; else c[0:2] will be used
@@ -108,6 +109,7 @@ def FourierReverseAdderWiredCC(a, phib, c, dualControlled):
     (phib,c) -> (phib',c)
 
     Args:
+        a(int):      unsigned integer, low n bits used
         phib(Qureg): the qureg stores Φ(b), length is n+1
         c(Qureg):    the control qubits,    length is 2 or 1, see dualControlled
         dualControlled(bool): default True. if True, c[0] will be used; else c[0:1] will be used
@@ -142,8 +144,8 @@ def FourierAdderModCC(a, N, phib, c, low, dualControlled=True):
 
 
     Args:
-        a(int):      least n bits used as unsigned
-        N(int):      least n bits used as unsigned
+        a(int):      low n bits used as unsigned
+        N(int):      low n bits used as unsigned
         phib(Qureg): the qureg stores b,        length is n+1,
         c(Qureg):    the control qubits,    length is 2 or 1, see dualControlled
         low(Qureg):  the clean ancillary qubit, length is 1,
@@ -174,8 +176,8 @@ def FourierAdderMod(a, N, phib, low):
 
 
     Args:
-        a(int):      least n bits used as unsigned
-        N(int):      least n bits used as unsigned
+        a(int):      low n bits used as unsigned
+        N(int):      low n bits used as unsigned
         phib(Qureg): the qureg stores b,        length is n+1,
         low(Qureg):  the clean ancillary qubit, length is 1,
 
@@ -204,8 +206,8 @@ def FourierMultModC(a, N, x, phib, c, low):
 
 
     Args:
-        a(int):      least n bits used as unsigned
-        N(int):      least n bits used as unsigned
+        a(int):      low n bits used as unsigned
+        N(int):      low n bits used as unsigned
         x(Qureg):    the qureg stores x,        length is n,
         phib(Qureg): the qureg stores b,        length is n+1,
         c(Qureg):    the control qubits,        length is 1,
@@ -229,8 +231,8 @@ def FourierMultMod(a, N, x, phib, low):
 
 
     Args:
-        a(int):      least n bits used as unsigned
-        N(int):      least n bits used as unsigned
+        a(int):      low n bits used as unsigned
+        N(int):      low n bits used as unsigned
         x(Qureg):    the qureg stores x,        length is n,
         phib(Qureg): the qureg stores b,        length is n+1,
         low(Qureg):  the clean ancillary qubit, length is 1,
