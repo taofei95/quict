@@ -8,20 +8,20 @@ from numba import jit, njit, prange
 import numpy as np
 from typing import *
 
-from .cpu_calculator import CPUCalculator
+from . import cpu_calculator as CPUCalculator
 from .utils import gpu_decorator, GPU_AVAILABLE
 
 if GPU_AVAILABLE:
-    from .gpu_calculator import GPUCalculator
-    gpu_calculator = GPUCalculator()
+    from . import gpu_calculator as GPUCalculator
+    gpu_calculator = GPUCalculator
 else:
-    gpu_calculator = CPUCalculator()
+    gpu_calculator = CPUCalculator
 
 
 MTENSOR_THRESHOLD = 5   # A size
 TENSOR_THRESHOLD = 9    # A.size + B.size
 DOT_THRESHOLD = -1      # A.size + B.size
-MPERM_THRESHOLD = 12     # A.size
+MPERM_THRESHOLD = 12    # A.size
 VPERM_THRESHOLD = 21    # A.size
 
 
