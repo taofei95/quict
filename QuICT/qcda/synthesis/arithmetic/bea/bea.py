@@ -254,25 +254,25 @@ def MultModC(a, N, x, b, c, low):
     IQFT(len(b)) | b
 
 
-def ExGCD(a, b, coff):
-    if b == 0:
-        coff[0] = 1
-        coff[1] = 0
-        return a
-    r = ExGCD(b, a % b, coff)
-    t = coff[0]
-    coff[0] = coff[1]
-    coff[1] = t - a // b * coff[1]
-    return r
+# def ExGCD(a, b, coff):
+#     if b == 0:
+#         coff[0] = 1
+#         coff[1] = 0
+#         return a
+#     r = ExGCD(b, a % b, coff)
+#     t = coff[0]
+#     coff[0] = coff[1]
+#     coff[1] = t - a // b * coff[1]
+#     return r
 
 
-def InverseMod(a, N):
-    coff = [0, 0]
-    r = ExGCD(a, N, coff)
-    if r != 1:
-        return None
-    else:
-        return coff[0] % N
+# def InverseMod(a, N):
+#     coff = [0, 0]
+#     r = ExGCD(a, N, coff)
+#     if r != 1:
+#         return None
+#     else:
+#         return coff[0] % N
 
 
 def BEAAdderDecomposition(n):
@@ -516,7 +516,7 @@ def BEACUaDecomposition(n, a, N):
     Circuit for Shor’s algorithm using 2n+3 qubits
     http://arxiv.org/abs/quant-ph/0205095v3
     """
-    a_inv = InverseMod(a, N)
+    # a_inv = InverseMod(a, N)
 
     circuit = Circuit(2 * n + 3)
     qreg_b = circuit([i for i in range(n + 1)])
