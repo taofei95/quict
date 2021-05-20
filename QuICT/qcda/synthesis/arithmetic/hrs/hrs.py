@@ -232,11 +232,11 @@ def CCCarry(control1, control2, a, c_bitwise, g_aug, overflow):
 
 def SubWidget(v, g):
     """
-        Subwidget used in Incrementer().
+    Subwidget used in Incrementer().
 
-        Args:
-            v(Qureg): n qubits.
-            g(Qureg): n qubits(more qubits are OK).
+    Args:
+        v(Qureg): n qubits.
+        g(Qureg): n qubits(more qubits are OK).
     """
     n = len(v)
     if len(g) < n:
