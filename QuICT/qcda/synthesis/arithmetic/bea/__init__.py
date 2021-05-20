@@ -1,2 +1,2 @@
-from .bea import BEAAdder, BEAAdderWired, BEAAdderWiredCC, BEAReverseAdderWired, BEAReverseAdderWiredCC, BEAAdderMod, \
+from .bea import BEAAdder, BEAAdderWired, CCBEAAdderWired, BEAReverseAdderWired, CCBEAReverseAdderWired, BEAAdderMod, \
     BEAMulMod, BEACUa

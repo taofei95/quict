@@ -332,7 +332,7 @@ def BEAReverseAdderWiredDecomposition(n, a):
 BEAReverseAdderWired = Synthesis(BEAReverseAdderWiredDecomposition)
 
 
-def BEAAdderWiredCCDecomposition(n, a):
+def CCBEAAdderWiredDecomposition(n, a):
     """ 
     (b,c) -> (b'=a+b,c) if c=0b11 else (b'=b,c)
 
@@ -349,10 +349,10 @@ def BEAAdderWiredCCDecomposition(n, a):
     return CompositeGate(circuit.gates)
 
 
-BEAAdderWiredCC = Synthesis(BEAAdderWiredCCDecomposition)
+CCBEAAdderWired = Synthesis(CCBEAAdderWiredDecomposition)
 
 
-def BEAReverseAdderWiredCCDecomposition(n, a):
+def CCBEAReverseAdderWiredDecomposition(n, a):
     """ 
     (b,c) -> (b'=b-a,c) if c=0b11 else (b'=b,c)
 
@@ -369,10 +369,10 @@ def BEAReverseAdderWiredCCDecomposition(n, a):
     return CompositeGate(circuit.gates)
 
 
-BEAReverseAdderWiredCC = Synthesis(BEAReverseAdderWiredCCDecomposition)
+CCBEAReverseAdderWired = Synthesis(CCBEAReverseAdderWiredDecomposition)
 
 
-def BEAAdderModCCDecomposition(n, a, N):
+def CCBEAAdderModDecomposition(n, a, N):
     """ use FourierAdderWired/FourierAdderWiredCC to calculate (a+b)%N in Fourier space
 
     (phib=Φ(b),c,low) -> (phib'=Φ((a+b)%N),c,low) if c=0b11 else (phib'==Φ(b),c,low)
@@ -400,7 +400,7 @@ def BEAAdderModCCDecomposition(n, a, N):
     return CompositeGate(circuit.gates)
 
 
-BEAAdderModCC = Synthesis(BEAAdderModCCDecomposition)
+CCBEAAdderMod = Synthesis(CCBEAAdderModDecomposition)
 
 
 def BEAAdderModDecomposition(n, a, N):
@@ -432,7 +432,7 @@ def BEAAdderModDecomposition(n, a, N):
 BEAAdderMod = Synthesis(BEAAdderModDecomposition)
 
 
-def BEAMultModCDecomposition(n, a, N):
+def CBEAMultModDecomposition(n, a, N):
     """ use FourierAdderModCC to calculate (b+ax)%N in Fourier space
 
     (phib=Φ(b),x,c,low) -> (phib'=Φ((b+ax)%N),x,c,low) if c=0b1 else (phib'=Φ(b),x,c,low)
@@ -462,7 +462,7 @@ def BEAMultModCDecomposition(n, a, N):
     return CompositeGate(circuit.gates)
 
 
-BEAMulModC = Synthesis(BEAMultModCDecomposition)
+CBEAMulMod = Synthesis(CBEAMultModDecomposition)
 
 
 def BEAMultModDecomposition(n, a, N):
