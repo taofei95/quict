@@ -16,48 +16,66 @@ def Set(qreg, N):
         N = N // 2
 
 
-'''
-def test6():
-    # n > 2 should obey
-    circuit = Circuit(8)
-    circuit.assign_initial_zeros()
-    X | circuit(0)
-    b = 0
-    x = 1
-    a = 4
-    N = 2
-    # seems that b = 0 x = 1, the mod computation doesn't work.
-    # when b = 0, x = 1, a = 5, N = 4, expected result = 1, but the result we get is 5
-    qubit_x = circuit([1, 2, 3])
-    qubit_b = circuit([4, 5, 6])
-    Set(qubit_x, x)
-    Set(qubit_b, b)
-    HRSCMulModRaw(3, a, N) | circuit
-    Measure | circuit
-    circuit.exec()
+def EX_GCD(a, b, arr):
+    """ 
+    Implementation of Extended Euclidean algorithm
 
-    qubit_target = circuit([4, 5, 6])
-    print(int(qubit_target))
-'''
+    Args:
+        a(int): the parameter a
+        b(int): the parameter b
+        arr(list): store the solution of ax + by = gcd(a, b) in arr, length is 2
+
+    """
+
+    if b == 0:
+        arr[0] = 1
+        arr[1] = 0
+        return a
+    g = EX_GCD(b, a % b, arr)
+    t = arr[0]
+    arr[0] = arr[1]
+    arr[1] = t - int(a / b) * arr[1]
+    return g
 
 
-def test7():
-    # x * a mod N
-    # n = 3
-    circuit = Circuit(7)
-    circuit.assign_initial_zeros()
-    x = 1
-    a = 2
-    N = 4
-    qubit_x = circuit([0, 1, 2])
-    Set(qubit_x, x)
-    HRSMulMod(3, a, N) | circuit
-    Measure | circuit
-    circuit.exec()
+def test_HRSAdder():
+    for a in range(0,20):
+        for b in range(0,20):
+            n = max(len(bin(a)) - 2, len(bin(b)) - 2)
+            circuit = Circuit(n + 2)
+            a_q = circuit([i for i in range(n)])
+            ancilla = circuit(n)
+            ancilla_g = circuit(n + 1)
+            Set(a_q, a)
+            HRSAdder(n, b) | (a_q, ancilla, ancilla_g)
+            Measure | circuit
+            circuit.exec()
+            if int(a_q) != (a + b)%(2**n):
+                print("%d + %d = %d\n"%(a,b,int(a_q)))
+                assert 0
+    assert 1
+            
 
-    qubit_target = circuit([0, 1, 2])
-    print(int(qubit_target))
-
+def test_HRSMulMod():
+    arr = [0,0]
+    for N in range(0,20):
+        for a in range(0,N):
+            if EX_GCD(N, a, arr) != 1:
+                continue
+            for x in range(0,N):
+                n = len(bin(N)) - 2
+                circuit = Circuit(2*n + 1)
+                x_q = circuit([i for i in range(n)])
+                ancilla = circuit([i for i in range(n, 2*n)])
+                indicator = circuit(2*n)
+                Set(x_q, x)
+                HRSMulMod(n, a, N) | (x_q, ancilla, indicator)
+                Measure | circuit
+                circuit.exec()
+                if int(x_q) != (a*x)%(N):
+                    print("%d * %d mod %d = %d\n"%(a,x,N,int(x_q)))
+                    assert 0
+    assert 1
 
 '''
 def test1():
@@ -72,12 +90,7 @@ def test1():
 '''
 
 
-def test2():
-    circuit = Circuit(4)
-    circuit.assign_initial_zeros()
-    HRSAdder(2, 2) | circuit
-    amplitude = Amplitude.run(circuit)
-    print(amplitude)
+
 
 
 '''
