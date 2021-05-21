@@ -5,9 +5,6 @@ import os
 import math
 import numpy as np
 import cupy as cp
-import pycuda.gpuarray as gpuarray
-import pycuda.driver as cuda
-import pycuda.autoinit
 
 from typing import *
 
@@ -26,10 +23,7 @@ def htod(target):
 def dtoh(target):
     """ mv target from GPU device into host. """
     if type(target) is cp.ndarray:
-        host_target = target.get()
-        del target  # memory release
-
-        return host_target
+        return target.get()
 
     raise ("The given value not in GPU.")
 
@@ -145,9 +139,12 @@ def VectorPermutation(A, mapping, changeInput: bool = False, gpu_out: bool = Tru
     gpu_A = cp.array(A) if type(A) is np.ndarray else A
     gpu_reidx = _reindex_by_mapping(mapping)
 
-    out = cp.empty_like(gpu_A) if not changeInput else gpu_A
+    out = cp.empty_like(gpu_A)
     for i in range(gpu_A.ndim):
         cp.take(gpu_A, gpu_reidx, axis=i, out=out)
+
+    if changeInput:
+        A[:] = out.get() if type(A) is np.ndarray else out
 
     if gpu_out:
         return out.get()
@@ -178,7 +175,7 @@ def MatrixPermutation(A, mapping, changeInput: bool = False, gpu_out: bool = Tru
     cp.take(out_lvl1, gpu_reidx, axis=1, out=out_lvl2)
 
     if changeInput:
-        gpu_A = out_lvl2
+        A[:,:] = out_lvl2.get() if type(A) is np.ndarray else out_lvl2
 
     if gpu_out:
         return out_lvl2.get()
