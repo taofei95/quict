@@ -37,7 +37,7 @@ class StateVectorSimulator(BasicSimulator):
             vector[0] = 1 + 0j
             return vector
         ordering, small_gates = BasicSimulator.vector_pretreatment(circuit)
-        vector = cls.act_unitary_by_ordering(small_gates, ordering)
+        vector = cls.act_unitary_by_ordering(small_gates, ordering, qubit)
 
         return vector
 
@@ -161,20 +161,42 @@ class StateVectorSimulator(BasicSimulator):
         return vector
 
 
-from QuICT.ops.linalg.gpu_calculator_cupy import GPUCalculatorCP
+import QuICT.ops.linalg.gpu_calculator as GPUCalculator
 
-calc = GPUCalculatorCP()
+calc = GPUCalculator
+
+import cupy as cp
+import pycuda.gpuarray as gpuarray
+import pycuda.driver as cuda
+import pycuda.autoinit
+
+from time import time
 
 
 class StateVectorSimulatorRefine:
 
     @staticmethod
     def run(circuit: Circuit, initial_state: np.ndarray) -> np.ndarray:
-        state = initial_state.copy()
+        n = circuit.circuit_width()
+        state = cp.array(initial_state.copy())
 
-        for gate in circuit.gates:
-            gate: BasicGate
-            cur_state = calc.vectordot(gate.compute_matrix, state, False)
-            del state
+        gate_cnt = len(circuit.gates)
+        cuda_mat = [None for _ in range(gate_cnt)]
+        start_time = time()
+        for i in range(gate_cnt):
+            cuda_mat[i] = cp.array(circuit.gates[i].compute_matrix)
+        end_time = time()
+        transfer_duration = end_time - start_time
+
+        start_time = time()
+        for i in range(gate_cnt):
+            gate: BasicGate = circuit.gates[i]
+            cur_state = calc.vector_dot_refined(cuda_mat[i], state, np.array(gate.affectArgs), False)
+            # cur_state = calc.vectordot(gate.compute_matrix, state, np.array(gate.affectArgs), False)
+            # del state
             state = cur_state
+        end_time = time()
+        calculation_duration = end_time - start_time
+        print(f"Data transfer time: {transfer_duration: 0.4f} s.")
+        print(f"Real calculation time: {calculation_duration: 0.4f} s.")
         return state.get()
