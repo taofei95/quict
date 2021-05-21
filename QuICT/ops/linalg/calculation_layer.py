@@ -1,12 +1,8 @@
 #!/usr/bin/env python
 # -*- coding:utf8 -*-
-import contextvars
 import weakref
 import cupy as cp
 import numpy as np
-import sys
-from contextlib import contextmanager
-
 
 from . import gpu_calculator as GPUCalculator
 
