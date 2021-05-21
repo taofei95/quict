@@ -4,7 +4,7 @@
 # @Author  : Li Haomin
 # @File    : hrs.py
 
-from QuICT.core import Circuit, CompositeGate, CX, CCX, Swap, X
+from QuICT.core import Circuit, CompositeGate, CX, CCX, Swap, CSwap, X
 from ..._synthesis import Synthesis
 
 
@@ -606,6 +606,9 @@ def MulModRaw(x, a, b, N, indicator):
 
 
 def MulModRawReverse(x, a, b, N, indicator):
+    """
+    The reversed circuit of MulModRaw()
+    """
     n = len(x)
     a_list = []
     for i in range(n):
@@ -642,6 +645,9 @@ def CMulModRaw(control, x, a, b, N, indicator):
 
 
 def CMulModRawReverse(control, x, a, b, N, indicator):
+    """
+    The reversed circuit of CMulModRaw()
+    """
     n = len(x)
     a_list = []
     for i in range(n):
@@ -651,12 +657,12 @@ def CMulModRawReverse(control, x, a, b, N, indicator):
         g = x[:i] + x[i + 1:]
         CCAdderMod(control, x[i], b, N - a_list[n - i - 1], N, g, indicator)
 
-
+"""
 def CSwap(control, a, b):
     CX | (a, b)
     CCX | (control, b, a)
     CX | (a, b)
-
+"""
 
 # x: n bits, ancilla: n bits, indicator: 1 bit
 def MulMod(x, a, ancilla, N, indicator):

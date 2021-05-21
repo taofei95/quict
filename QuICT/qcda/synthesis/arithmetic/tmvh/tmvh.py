@@ -11,6 +11,11 @@ from ..._synthesis import Synthesis
 def PeresGate(a, b, c):
     """
     (a, b, c) -> (a, a xor b, a.b xor c)
+
+    Args:
+        a(Qubit): qubit
+        b(Qubit): qubit
+        c(Qubit): qubit
     """
     CCX | (a, b, c)
     CX | (a, b)
@@ -29,6 +34,7 @@ def AdderOverflow(a, b, overflow):
 
     reference: HIMANSHU THAPLIYAL and NAGARAJAN RANGANATHAN -
     Design of Efficient Reversible Logic Based Binary and BCD Adder Circuits
+    https://arxiv.org/abs/1712.02630v1
     """
 
     n = len(a)
@@ -74,6 +80,7 @@ def Adder(a, b):
 
     reference: HIMANSHU THAPLIYAL and NAGARAJAN RANGANATHAN -
     Design of Efficient Reversible Logic Based Binary and BCD Adder Circuits
+    https://arxiv.org/abs/1712.02630v1
     """
 
     n = len(a)
@@ -123,7 +130,7 @@ def SubtractionOverflow(a, b, overflow):
     X | b
     X | overflow
 
-
+"""
 def CtrlAddOverflowAncilla(ctrl, a, b, overflow, ancilla):
     n = len(a)
     # step 1
@@ -151,7 +158,7 @@ def CtrlAddOverflowAncilla(ctrl, a, b, overflow, ancilla):
     # step 7
     for i in range(n - 1):
         CX | (a[i], b[i])
-
+"""
 
 def CtrlAdd(ctrl, a, b):
     """
@@ -218,6 +225,7 @@ def RippleCarryAdderDecomposition(n):
 
     reference: HIMANSHU THAPLIYAL and NAGARAJAN RANGANATHAN -
     Design of Efficient Reversible Logic Based Binary and BCD Adder Circuits
+    https://arxiv.org/abs/1712.02630v1
     """
 
     circuit = Circuit(2 * n)
@@ -238,7 +246,8 @@ def RestoringDivisionDecomposition(n):
     Args:
         n(int): the bit number of a and b
 
-    reference: Quantum Circuit Designs of Integer Division Optimizing T-count and T-depth
+    reference: Himanshu Thapliyal, Edgard Munoz-Coreas, T. S. S. Varun, and Travis S. Humble - 
+    Quantum Circuit Designs of Integer Division Optimizing T-count and T-depth
     http://arxiv.org/abs/1809.09732v1
     """
 
