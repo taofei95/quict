@@ -11,10 +11,12 @@ import numpy as np
 from QuICT.algorithm import Amplitude
 from QuICT.core import *
 from QuICT.qcda.simulation.statevector_simulator import *
+from time import time
 
 """
 the file describe Simulators between two basic gates.
 """
+
 
 @pytest.mark.repeat(5)
 def w_test_vector_generate():
@@ -33,6 +35,7 @@ def w_test_vector_generate():
     vector = StateVectorSimulator.act_unitary_by_ordering(circuit.gates, pp, qubit)
     assert np.allclose(circuit_amplitude, vector)
 
+
 # @pytest.mark.repeat(5)
 def test_vector_run():
     circuit = Circuit(10)
@@ -45,3 +48,23 @@ def test_vector_run():
     # c = np.allclose(circuit_unitary, unitary)
     # print(a, b, c)
     assert np.allclose(circuit_amplitude, stateVector)
+
+
+def test_cupy_vec_sim():
+    from .statevector_simulator import StateVectorSimulatorRefine
+    qubit_num = 10
+    circuit = Circuit(qubit_num)
+    circuit.random_append(200)
+    initial_state = np.zeros(1 << qubit_num, dtype=np.complex32)
+    start_time = time()
+    state = StateVectorSimulatorRefine.run(circuit, initial_state)
+    end_time = time()
+    duration_1 = end_time - start_time
+    start_time = time()
+    state_expected = Amplitude.run(circuit)
+    end_time = time()
+    duration_2 = end_time - start_time
+    assert np.allclose(state,state_expected)
+    print()
+    print(f"Cur algo: {duration_1} s.")
+    print(f"Old algo: {duration_2} s.")
