@@ -4,339 +4,236 @@
 import os
 import math
 import numpy as np
+import cupy as cp
 import pycuda.gpuarray as gpuarray
 import pycuda.driver as cuda
 import pycuda.autoinit
-from pycuda.compiler import SourceModule
-import skcuda.linalg as linalg
-linalg.init()
-
-
-from .utils import mapping_augment, vector_reindex
-
-
-TENSOR_TEMPLATE = SourceModule(r"""
-    #include <pycuda-complex.hpp>
-    __global__ void tensor(pycuda::complex<double> *out, const pycuda::complex<double> *A, const pycuda::complex<double> *B, const int *size)
-    {
-        const int out_x = size[0] * size[2];
-        const int out_y = size[1] * size[3];
-
-        const int stride_x = blockDim.x * gridDim.x;
-        const int stride_y = blockDim.y * gridDim.y;
-
-        const int idx_x = threadIdx.x + blockIdx.x * blockDim.x;
-        const int idx_y = threadIdx.y + blockIdx.y * blockDim.y;
-
-        for (int i = idx_x; i < out_x; i += stride_x)
-        {
-            for (int j = idx_y; j < out_y; j += stride_y)
-            {
-                out[i*out_y+j] = A[(i/size[2])*size[1]+j/size[3]] * B[(i % size[2])*size[3]+(j % size[3])];
-            }
-        }
-    }
-    """)
-
-TENSOR_MATRIX_TEMPLATE = SourceModule(r"""
-    #include <pycuda-complex.hpp>
-    void __global__ tensor_matrix(pycuda::complex<double> *out, const pycuda::complex<double> *A, const int *size)
-    {
-        const int n = size[2];
-        const int m = size[3];
-
-        const int out_x = n * m * size[0];
-        const int out_y = n * m * size[1];
-
-        const int stride_x = blockDim.x * gridDim.x;
-        const int stride_y = blockDim.y * gridDim.y;
-
-        const int idx_x = threadIdx.x + blockIdx.x * blockDim.x;
-        const int idx_y = threadIdx.y + blockIdx.y * blockDim.y;
-
-        for(int i = idx_x; i < out_x; i += stride_x){
-            for(int j = idx_y; j < out_y; j += stride_y){
-                if (i / (m * size[0]) == j / (m * size[1])){
-                    int r_x = i % (m * size[0]);
-                    int r_y = j % (m * size[1]);
-                    if ((r_x == r_y) || (r_x % m) == r_y || r_x == (r_y % m) || (r_x % m) == (r_y % m)){
-                        out[i*out_y+j] = A[r_x / m * size[1] + r_y / m];
-                    }
-                }
-            }
-        }
-    }
-    """)
-
-MATRIX_PERM_TEMPLATE = SourceModule(r"""
-    #include <pycuda-complex.hpp>
-    void __global__ perm_matrix(pycuda::complex<double> *out, const pycuda::complex<double> *A, const int *mapping, const int *size)
-    {
-        const int out_x = size[0];
-        const int out_y = size[1];
-
-        const int stride_x = blockDim.x * gridDim.x;
-        const int stride_y = blockDim.y * gridDim.y;
-
-        const int idx_x = threadIdx.x + blockIdx.x * blockDim.x;
-        const int idx_y = threadIdx.y + blockIdx.y * blockDim.y;
-
-        for(int i = idx_x; i < out_x; i += stride_x){
-            for(int j = idx_y; j < out_y; j += stride_y){
-                const int reverse_x = mapping[i];
-                const int reverse_y = mapping[j];
-                out[i * out_y + j] = A[reverse_x * out_y + reverse_y];
-            }
-        }
-    }
-""")
-
-VECTOR_DOT_TEMPLATE = SourceModule(r"""
-    #include <pycuda-complex.hpp>
-    __global__ void v_reindex(pycuda::complex<double> *vout, const pycuda::complex<double> *V, const int *vidx, const int value)
-    {
-        const int stride_y = blockDim.y * gridDim.y;
-
-        const int idx_x = threadIdx.x + blockIdx.x * blockDim.x;
-        const int idx_y = threadIdx.y + blockIdx.y * blockDim.y;
-
-        const int idx_1dim = idx_x * stride_y + idx_y;
-
-        const int v_idx = vidx[idx_1dim];
-
-        if (value==0){
-            vout[idx_1dim] = V[v_idx];
-        }else{
-            vout[v_idx] = V[idx_1dim];
-        }
-    }
-    """)
 
-
-class GPUCalculator:
-    """ Based matrix algorithms for running in GPU. """
-    def __init__(self, gpu_device: int = 0):
-        self.gpu_device = gpu_device
 
-        if self.gpu_device != 0:
-            os.environ["CUDA_DEVICE"] = str(self.gpu_device)
-
-        cuda.init()
+def htod(target):
+    """ mv target from host into GPU device. """
+    if type(target) is not cp.ndarray:
+        return cp.array(target)
 
-    def __enter__(self):
-        return self
+    raise(f"The given value has been added in the GPU.")
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        if self.gpu_device != 0:
-            os.environ["CUDA_DEVICE"] = "0"
 
-    @staticmethod
-    def htod(target):
-        """ mv target from host into GPU device. """
-        if type(target) is not gpuarray.GPUArray:
-            return gpuarray.to_gpu(target)
+def dtoh(target):
+    """ mv target from GPU device into host. """
+    if type(target) is cp.ndarray:
+        host_target = target.get()
+        del target  # memory release
 
-        raise(f"The given value has been added in the GPU.")
+        return host_target
 
-    @staticmethod
-    def dot(A, B, gpu_out: bool = True):
-        """ dot matrix A and matrix B
-
-        Args:
-            A(np.array<np.complex>): the matrix A
-            B(np.array<np.complex>): the matrix B
-            gpu_out(bool): return result from GPU into CPU
+    raise("The given value not in GPU.")
 
-        Returns:
-            np.array<np.complex>: A * B
-        """
-        row_a, col_a = A.shape
-        row_b, col_b = B.shape
-        assert(col_a == row_b)
 
-        # Data in GPU.
-        gpu_A = gpuarray.to_gpu(A) if type(A) is np.ndarray else A
-        gpu_B = gpuarray.to_gpu(B) if type(B) is np.ndarray else B
+def flush_memory():
+    """ Release unused memory in current GPU device. """
+    cp.get_default_memory_pool().free_all_blocks()
+    cp.get_default_pinned_memory_pool().free_all_blocks()
 
-        return linalg.dot(gpu_A, gpu_B).get() if gpu_out else linalg.dot(gpu_A, gpu_B)
 
-    @staticmethod
-    def tensor(A, B, gpu_out: bool = True):
-        """ tensor A and B
+def dot(A, B, gpu_out: bool = True):
+    """ dot matrix A and matrix B
 
-        Args:
-            A(np.array<np.complex>): the matrix A
-            B(np.array<np.complex>): the matrix B
-            gpu_out(bool): return result from GPU into CPU
-
-        Returns:
-            np.array<np.complex>: the tensor result A ⊗ B
-        """
-        row_a, col_a = A.shape
-        row_b, col_b = B.shape
-
-        # Data in GPU.
-        gpu_A = gpuarray.to_gpu(A) if type(A) is np.ndarray else A
-        gpu_B = gpuarray.to_gpu(B) if type(B) is np.ndarray else B
-
-        gpu_result = gpuarray.zeros((row_a*row_b, col_a*col_b), dtype=np.complex_)
-        gpu_size = gpuarray.to_gpu(np.array([row_a, col_a, row_b, col_b], dtype=np.int32))
-
-        # GPU kernel function.
-        gpu_tensor = TENSOR_TEMPLATE.get_function("tensor")
-
-        block = (min(row_a, 32), min(col_a, 32), 1)
-        grid = (min(row_b, 32), min(col_b, 32))
-        gpu_tensor(gpu_result, gpu_A, gpu_B, gpu_size, grid=grid, block=block)
+    Args:
+        A(np.array<np.complex>): the matrix A
+        B(np.array<np.complex>): the matrix B
+        gpu_out(bool): return result from GPU into CPU
 
-        if gpu_out:
-            return gpu_result.get()
+    Returns:
+        np.array<np.complex>: A * B
+    """
+    assert(A.shape[1]  == B.shape[0])
 
-        return gpu_result
+    # Data in GPU.
+    gpu_A = cp.array(A) if type(A) is np.ndarray else A
+    gpu_B = cp.array(B) if type(B) is np.ndarray else B
 
-    @staticmethod
-    def MatrixTensorI(A, n, m, gpu_out: bool = True):
-        """ tensor I^n and A and I^m
-
-        Args:
-            A(np.array<np.complex>): the matrix A
-            n(int): the index of indentity
-            m(int): the index of indentity
-            gpu_out(bool): return result from GPU into CPU
-
-        Returns:
-            np.array<np.complex>: the tensor result I^n ⊗ A ⊗ I^m
-        """
-        row_a, col_a = A.shape
-
-        # Data in GPU.
-        gpu_A = gpuarray.to_gpu(A) if type(A) is np.ndarray else A
-        gpu_result = gpuarray.zeros((n*m*A.shape[0], n*m*A.shape[1]), dtype=np.complex_)
-        gpu_size = gpuarray.to_gpu(np.array([row_a, col_a, n, m], dtype=np.int32))
-
-        # GPU kernel function
-        gpu_tensorM = TENSOR_MATRIX_TEMPLATE.get_function("tensor_matrix")
-
-        block = (min(row_a, 32), min(col_a, 32), 1)
-        grid = (min(n, 32), min(m, 32))
-        gpu_tensorM(gpu_result, gpu_A, gpu_size, grid=grid, block=block)
-
-        if gpu_out:
-            return gpu_result.get()
-
-        return gpu_result
-
-    @staticmethod
-    def VectorPermutation(A, mapping, changeInput: bool = False, gpu_out: bool = True):
-        """ permutaion A with mapping, inplace
-
-        Args:
-            A(np.array<np.complex>): the matrix A.
-            mapping(np.array<int>): the qubit mapping.
-            changeInput(bool): whether changes in A.
-            gpu_out(bool): return result from GPU.
-
-        Returns:
-            np.array<np.complex>: the result of Permutation
-        """
-        if not A.shape[0] == 1 << mapping.shape[0]:
-            raise IndexError("Indices do not match!")
-
-        idx_mapping = mapping_augment(mapping)
-
-        # data in GPU
-        gpu_A = gpuarray.to_gpu(A) if type(A) is np.ndarray else A
-        gpu_idx = gpuarray.to_gpu(idx_mapping)
-
-        if not changeInput:
-            return gpuarray.take(gpu_A, gpu_idx).get() if gpu_out else gpuarray.take(gpu_A, gpu_idx)
-
-        A = gpuarray.take(gpu_A, gpu_idx).get() if gpu_out else gpuarray.take(gpu_A, gpu_idx)
-
-    @staticmethod
-    def MatrixPermutation(A, mapping, changeInput: bool = False, gpu_out: bool = True):
-        """ permute mat with mapping, inplace
-
-        Args:
-            A(np.array<np.complex>): the matrix A.
-            mapping(np.array<int>): the qubit mapping.
-            changeInput(bool): whether changes in A.
-            gpu_out(bool): return result from GPU.
-        """
-        row_a, col_a = A.shape
-        if not row_a == 1 << mapping.shape[0]:
-            raise IndexError("Indices do not match!")
-
-        # generate new idx depending on given mapping
-        idx_mapping = mapping_augment(mapping)
-
-        # data in GPU
-        gpu_A = gpuarray.to_gpu(A) if type(A) is np.ndarray else A
-        gpu_idx = gpuarray.to_gpu(idx_mapping.astype(np.int32))
-        gpu_result = gpuarray.empty((row_a, col_a), dtype=np.complex_)
-        gpu_size = gpuarray.to_gpu(np.array([row_a, col_a], dtype=np.int32))
-
-        # GPU kernel function
-        gpu_permM = MATRIX_PERM_TEMPLATE.get_function("perm_matrix")
-
-        block = (min(row_a, 32), min(col_a, 32), 1)
-        grid = (max(row_a//block[0], 1), max(col_a//block[1], 1))
-        gpu_permM(gpu_result, gpu_A, gpu_idx, gpu_size, grid=grid, block=block)
-
-        if not changeInput:
-            return gpu_result.get().reshape(row_a, col_a) if gpu_out else gpu_result
-
-        A = gpu_result.get().reshape(row_a, col_a) if gpu_out else gpu_result
-
-    @staticmethod
-    def vectordot(A, V, mapping, gpu_out: bool = True):
-        """ dot matrix A and matrix B
-
-        Args:
-            A(np.array<np.complex>): the matrix A.
-            V(np.array<np.complex>): the vector V.
-            mapping(np.array<int>): the qubit mapping.
-            gpu_out(bool): return result from GPU into CPU.
-
-        Returns:
-            np.array<np.complex>: the vector with length 2^n
-        """
-        row_a, col_a = A.shape
-        n, m = np.log2(V.shape[0]).astype(np.int32), mapping.shape[0]
-        assert(row_a == 1 << mapping.shape[0])
-
-        # matrix permutation for A depending on mapping
-        argsorted_mapping = np.argsort(mapping)
-        m_array = np.arange(m, dtype=np.int32)
-
-        if not np.allclose(argsorted_mapping, m_array):
-            GPUCalculator.MatrixPermutation(A, argsorted_mapping, changeInput = True, gpu_out = False)
-
-        # grep m qubit idx depending on mapping
-        v_idx = vector_reindex(n, mapping)
-
-        # Data in GPU
-        gpu_A = gpuarray.to_gpu(A) if type(A) is np.ndarray else A
-        gpu_V = gpuarray.to_gpu(V) if type(V) is np.ndarray else V
-        gpu_idx = gpuarray.to_gpu(v_idx)
-        gpu_V_out = gpuarray.empty((1 << m, 1 << n - m), dtype=np.complex_)
-
-        # GPU kernel function.
-        gpu_vdot = VECTOR_DOT_TEMPLATE.get_function("v_reindex")
-
-        block = (min(row_a, 32), min(1 << int(n) - m, 32), 1)
-        grid = (row_a//block[0], (1 << int(n) - m)//block[1])
-        value = np.int32(0)
-        gpu_vdot(gpu_V_out, gpu_V, gpu_idx, value, grid=grid, block=block)
-
-        # GPU dot
-        gpu_V_dot = GPUCalculator.dot(gpu_A, gpu_V_out, gpu_out=False)
-
-        # reshape gpu_V_out
-        value = np.int32(1)
-        gpu_vdot(gpu_V, gpu_V_dot, gpu_idx, value, grid=grid, block=block)
-
-        if gpu_out:
-            return gpu_V.get()
-
-        return gpu_V
+    return cp.dot(gpu_A, gpu_B).get() if gpu_out else cp.dot(gpu_A, gpu_B)
+
+
+def tensor(A, B, gpu_out: bool = True):
+    """ tensor A and B
+
+    Args:
+        A(np.array<np.complex>): the matrix A
+        B(np.array<np.complex>): the matrix B
+        gpu_out(bool): return result from GPU into CPU
+
+    Returns:
+        np.array<np.complex>: the tensor result A ⊗ B
+    """
+    # Data in GPU.
+    gpu_A = cp.array(A) if type(A) is np.ndarray else A
+    gpu_B = cp.array(B) if type(B) is np.ndarray else B
+
+    if gpu_out:
+        return cp.kron(gpu_A, gpu_B).get()
+
+    return cp.kron(gpu_A, gpu_B)
+
+
+def MatrixTensorI(A, n, m, gpu_out: bool = True):
+    """ tensor I^n and A and I^m
+
+    Args:
+        A(np.array<np.complex>): the matrix A
+        n(int): the index of indentity
+        m(int): the index of indentity
+        gpu_out(bool): return result from GPU into CPU
+
+    Returns:
+        np.array<np.complex>: the tensor result I^n ⊗ A ⊗ I^m
+    """
+    row_a, col_a = A.shape
+
+    # Data in GPU.
+    gpu_A = cp.array(A) if type(A) is np.ndarray else A
+    gpu_IN = cp.identity(n, dtype=np.complex128)
+    gpu_IM = cp.identity(m, dtype=np.complex128)
+    gpu_result = cp.kron(cp.kron(gpu_IN, gpu_A), gpu_IM)
+
+    if gpu_out:
+        return gpu_result.get()
+
+    return gpu_result
+
+
+def _reindex_by_mapping(mapping):
+    n= mapping.shape[0]
+    p2n = 1 << n 
+
+    gpu_idx = cp.arange(p2n, dtype=np.int64)
+    gpu_reidx = cp.zeros(p2n, dtype=np.int64)
+
+    for i in range(n):
+        right = n - 1 - mapping[i]
+        left = n - 1 - i
+        cp.bitwise_or(gpu_reidx, cp.left_shift(cp.bitwise_and(cp.right_shift(gpu_idx, right), 1), left), out=gpu_reidx)
+
+    # data clear
+    del gpu_idx
+
+    return gpu_reidx
+
+
+def VectorPermutation(A, mapping, changeInput: bool = False, gpu_out: bool = True):
+    """ permutaion A with mapping, inplace
+
+    Args:
+        A(np.array<np.complex>): the matrix A.
+        mapping(np.array<int>): the qubit mapping.
+        changeInput(bool): whether changes in A.
+        gpu_out(bool): return result from GPU.
+
+    Returns:
+        np.array<np.complex>: the result of Permutation
+    """
+    row_a, n = A.shape[0], mapping.shape[0]
+    if not row_a == 1 << n:
+        raise IndexError("Indices do not match!")
+
+    # data in GPU
+    gpu_A = cp.array(A) if type(A) is np.ndarray else A
+    gpu_reidx = _reindex_by_mapping(mapping)
+
+    out = cp.empty_like(gpu_A) if not changeInput else gpu_A
+    for i in range(gpu_A.ndim):
+        cp.take(gpu_A, gpu_reidx, axis=i, out=out)
+
+    if gpu_out:
+        return out.get()
+
+    return out
+
+
+def MatrixPermutation(A, mapping, changeInput: bool = False, gpu_out: bool = True):
+    """ permute mat with mapping, inplace
+
+    Args:
+        A(np.array<np.complex>): the matrix A.
+        mapping(np.array<int>): the qubit mapping.
+        changeInput(bool): whether changes in A.
+        gpu_out(bool): return result from GPU.
+    """
+    row_a, col_a = A.shape
+    if not row_a == 1 << mapping.shape[0]:
+        raise IndexError("Indices do not match!")
+
+    # data in GPU
+    gpu_A = cp.array(A) if type(A) is np.ndarray else A
+    gpu_reidx = _reindex_by_mapping(mapping)
+
+    out_lvl1 = cp.empty_like(gpu_A)
+    cp.take(gpu_A, gpu_reidx, axis=0, out=out_lvl1)
+    out_lvl2 = cp.empty_like(gpu_A)
+    cp.take(out_lvl1, gpu_reidx, axis=1, out=out_lvl2)
+
+    if changeInput:
+        gpu_A = out_lvl2
+
+    if gpu_out:
+        return out_lvl2.get()
+
+    return out_lvl2
+
+
+def vectordot(A, V, mapping, gpu_out: bool = True):
+    """ dot matrix A and matrix B
+
+    Args:
+        A(np.array<np.complex>): the matrix A.
+        V(np.array<np.complex>): the vector V.
+        mapping(np.array<int>): the qubit mapping.
+        gpu_out(bool): return result from GPU into CPU.
+
+    Returns:
+        np.array<np.complex>: the vector with length 2^n
+    """
+    row_a, col_a = A.shape
+    n, m = np.log2(V.shape[0]).astype(np.int32), mapping.shape[0]
+    assert(row_a == 1 << mapping.shape[0])
+
+    # Data in GPU
+    gpu_A = cp.array(A) if type(A) is np.ndarray else A
+    gpu_V = cp.array(V) if type(V) is np.ndarray else V
+
+    # matrix permutation for A depending on mapping
+    argsorted_mapping = np.argsort(mapping)
+    m_array = np.arange(m, dtype=np.int32)
+
+    if not np.allclose(argsorted_mapping, m_array):
+        gpu_A = MatrixPermutation(A, argsorted_mapping, changeInput = False, gpu_out = False)
+
+    # generate reindex
+    gpu_idx = cp.arange(1 << n, dtype=np.int64)
+    gpu_reidx = cp.zeros(int(1 << n), dtype=np.int64)
+
+    mapping_num, remaining_num = 0, 0
+    for i in range(n):
+        if i in mapping:
+            gpu_reidx = cp.add(gpu_reidx, cp.left_shift(cp.bitwise_and(cp.right_shift(gpu_idx, i), 1), n - m + mapping_num))
+            mapping_num += 1
+        else:
+            gpu_reidx = cp.add(gpu_reidx, cp.left_shift(cp.bitwise_and(cp.right_shift(gpu_idx, i), 1), remaining_num))
+            remaining_num += 1
+
+    gpu_reidx = cp.argsort(gpu_reidx)
+
+    # take V data with new index
+    gpu_V_reidx = cp.take(gpu_V, gpu_reidx)
+
+    # GPU dot
+    gpu_V_reidx = cp.dot(gpu_A, gpu_V_reidx.reshape(1 << m, -1))
+
+    # put back
+    gpu_reidx = cp.argsort(gpu_reidx)
+    gpu_result = cp.take(gpu_V_reidx, gpu_reidx)
+
+    if gpu_out:
+        return gpu_result.get()
+
+    return gpu_result
