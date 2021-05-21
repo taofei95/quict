@@ -19,7 +19,7 @@ from fractions import Fraction
 import time
 
 # from QuICT.core import *
-from QuICT.qcda.synthesis.arithmetic.hrs import *
+from QuICT.qcda.synthesis.arithmetic.bea import *
 
 def EX_GCD(a, b, arr):
     if b == 0:
@@ -102,16 +102,16 @@ def Order_Finding(a,N):
     t = 2*n
     print('\tOrder_Finding begin: circuit: L =',n,'t =',t)
     trickbit_store = [0]*t
-    circuit = Circuit(2*n+2)
-    x_reg = circuit([i for i in range(n)])
-    ancilla = circuit([i for i in range(n,2*n)])
-    indicator = circuit(2*n)
-    trickbit = circuit(2*n+1)
+    circuit = Circuit(2*n+3)
+    x_reg = circuit([i for i in range(n+1,2*n+1)])
+    ancilla = circuit([i for i in range(n+1)])
+    trickbit = circuit(2 * n + 1)
+    qreg_low= circuit(2 * n + 2)
     X | x_reg[n-1]
     for k in range(t):
         H | trickbit
         gate_pow = pow(a, 1<<(t-1-k), N)
-        HRSCMulMod(n, gate_pow, N) | circuit
+        BEACUa(n, gate_pow, N) | circuit
         for i in range(k):
             if trickbit_store[i]:
                 Rz(-pi /(1<<(k-i))) | trickbit
@@ -217,7 +217,7 @@ def Shor(N):
                     else:
                         print('Shor failed: can not find a factor with a = %d', a)
 
-class HRSShorFactor(Algorithm):
+class BEAShorFactor(Algorithm):
     """
     Shor algorithm by THOMAS HANER, MARTIN ROETTELER, and KRYSTA M. SVORE in "Factoring using 2n+2 qubits with Toffoli based modular multiplication"
     """
@@ -227,6 +227,6 @@ class HRSShorFactor(Algorithm):
 
 if __name__ == "__main__":
     time_start = time.time_ns()
-    HRSShorFactor.run(21)
+    BEAShorFactor.run(21)
     time_end = time.time_ns()
     print(time_end - time_start)

@@ -802,5 +802,18 @@ def HRSMulModDecomposition(n, a, N):
 
     return CompositeGate(circuit.gates)
 
-
 HRSMulMod = Synthesis(HRSMulModDecomposition)
+
+def HRSCMulModDecomposition(n,a,N):
+
+    circuit = Circuit(2 * n + 2)
+    qubit_x = circuit([i for i in range(n)])
+    ancilla = circuit([i for i in range(n, 2 * n)])
+    indicator = circuit(2 * n)
+    control = circuit(2 * n + 1)
+
+    CMulMod(control, qubit_x, a, ancilla, N, indicator)
+    
+    return CompositeGate(circuit.gates)
+
+HRSCMulMod = Synthesis(HRSCMulModDecomposition)
