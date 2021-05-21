@@ -415,12 +415,12 @@ def VBEAdderModDecomposition(N, n):
     (a,b,c=0,overflow=0,t=0,N) -> (a,b'=(a+b)%N,c=0,overflow=0,t=0,N)
 
     Quregs:
-        a:          the qureg stores a, length is n,
-        b:          the qureg stores b, length is n,
-        c:          the clean ancillary qubits, length is n,
-        overflow:   the clean ancillary qubits, length is 1,
-        t:          the clean ancillary qubits, length is 1.
-        N:          the qureg stores N, length is n,
+        a: the qureg stores a, length is n,
+        b: the qureg stores b, length is n,
+        c: the clean ancillary qubits, length is n,
+        overflow: the clean ancillary qubits, length is 1,
+        t: the clean ancillary qubits, length is 1.
+        N: the qureg stores N, length is n,
 
     Quantum Networks for Elementary Arithmetic Operations
     http://arxiv.org/abs/quant-ph/9511018v1
