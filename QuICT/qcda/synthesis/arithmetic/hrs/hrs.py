@@ -721,6 +721,11 @@ HRSIncrementer = Synthesis(HRSIncrementerDecomposition)
 
 
 def HRSAdderDecompossition(n, c):
+    """
+    Args:
+        n(int): length of numbers
+        c(int): the constant added to the quantum number
+    """
     circuit = Circuit(n + 2)
     qubit_x = circuit([i for i in range(n)])
     ancilla = circuit(n)
@@ -770,6 +775,12 @@ HRSCCCompare = Synthesis(HRSCCCompareDecomposition)
 
 
 def HRSAdderModDecomposition(n, a, N):
+    """
+    Args:
+        n(int): length of numbers
+        a(int): the constant added to the quantum number
+        N(int): the modulus
+    """
     circuit = Circuit(2 * n)
     qubit_b = circuit([i for i in range(n)])
     g = circuit([i for i in range(n, 2 * n - 1)])
@@ -801,6 +812,12 @@ HRSCMulModRaw = Synthesis(HRSCMulModRawDecomposition)
 
 
 def HRSMulModDecomposition(n, a, N):
+    """
+    Args:
+        n(int): length of numbers
+        a(int): the constant multiplied to the quantum number
+        N(int): the modulus
+    """
     circuit = Circuit(2 * n + 1)
     qubit_x = circuit([i for i in range(n)])
     ancilla = circuit([i for i in range(n, 2 * n)])
@@ -813,8 +830,13 @@ def HRSMulModDecomposition(n, a, N):
 HRSMulMod = Synthesis(HRSMulModDecomposition)
 
 
-def HRSCMulModDecomposition(n,a,N):
-
+def CHRSMulModDecomposition(n, a, N):
+    """
+    Args:
+        n(int): length of numbers
+        a(int): the constant multiplied to the quantum number
+        N(int): the modulus
+    """
     circuit = Circuit(2 * n + 2)
     qubit_x = circuit([i for i in range(n)])
     ancilla = circuit([i for i in range(n, 2 * n)])
@@ -825,4 +847,4 @@ def HRSCMulModDecomposition(n,a,N):
     
     return CompositeGate(circuit.gates)
 
-HRSCMulMod = Synthesis(HRSCMulModDecomposition)
+CHRSMulMod = Synthesis(CHRSMulModDecomposition)
