@@ -1,9 +1,9 @@
 from .bea import (
     BEAAdder, 
     BEAAdderWired, 
-    BEAAdderWiredCC, 
+    CCBEAAdderWired, 
     BEAReverseAdderWired, 
-    BEAReverseAdderWiredCC, 
+    CCBEAReverseAdderWired, 
     BEAAdderMod, 
     BEAMulMod, 
     BEACUa)
