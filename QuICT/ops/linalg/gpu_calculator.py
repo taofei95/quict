@@ -5,9 +5,6 @@ import os
 import math
 import numpy as np
 import cupy as cp
-import pycuda.gpuarray as gpuarray
-import pycuda.driver as cuda
-import pycuda.autoinit
 
 
 def htod(target):
@@ -21,10 +18,7 @@ def htod(target):
 def dtoh(target):
     """ mv target from GPU device into host. """
     if type(target) is cp.ndarray:
-        host_target = target.get()
-        del target  # memory release
-
-        return host_target
+        return target.get()
 
     raise("The given value not in GPU.")
 
