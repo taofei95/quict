@@ -8,8 +8,7 @@
 
 from QuICT.core import *
 import sys
-sys.path.append("/mnt/e/SPRING/Qwork/QuICT/QuICT/algorithm")
-from _algorithm import Algorithm
+from .._algorithm import Algorithm
 
 import random
 from math import log, ceil, floor, gcd, pi
@@ -162,6 +161,7 @@ def Shor(N):
     """
     Shor algorithm by THOMAS HANER, MARTIN ROETTELER, and KRYSTA M. SVORE in "Factoring using 2n+2 qubits with Toffoli based modular multiplication"
     """
+    #TODO: check if input is prime (using MillerRabin in log(n)^2)
 
     # 1. If n is even, return the factor 2
     if N % 2 == 0:
@@ -184,7 +184,8 @@ def Shor(N):
             return u2
     
     rd = 0
-    while True:
+    max_rd = 15
+    while rd<max_rd:
         # 3. Choose a random number a (1<a<N)
         a = random.randint(2,N-1)
         gcd = np.gcd(a,N)
@@ -208,10 +209,10 @@ def Shor(N):
                     print('Shor failed: found order r = %d of a = %d with negative square root'%(r,a))
                 else:
                     f1 = np.gcd(h-1,N); f2 = np.gcd(h+1,N)
-                    if f1 > 1:
+                    if f1 > 1 and f1 < N:
                         print('Shor succeed: found factor %d, with the help of a = %d, r = %d'%(f1,a,r))
                         return f1
-                    elif f2 > 1:
+                    elif f2 > 1 and f2 < N:
                         print('Shor succeed: found factor %d, with the help of a = %d, r = %d'%(f2,a,r))
                         return f2
                     else:
