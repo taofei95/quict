@@ -707,6 +707,7 @@ def CMulMod(control, x, a, ancilla, N, indicator):
     CMulModRawReverse(control, x, a_r, ancilla, N, indicator)
 
 
+"""
 def HRSIncrementerDecomposition(n):
     circuit = Circuit(n * 2)
     qubit_a = circuit([i for i in range(n)])
@@ -716,6 +717,7 @@ def HRSIncrementerDecomposition(n):
 
 
 HRSIncrementer = Synthesis(HRSIncrementerDecomposition)
+"""
 
 
 def HRSAdderDecompossition(n, c):
@@ -732,6 +734,7 @@ def HRSAdderDecompossition(n, c):
 HRSAdder = Synthesis(HRSAdderDecompossition)
 
 
+"""
 def HRSCSubDecomposition(n, c):
     circuit = Circuit(n + 3)
     control = circuit(0)
@@ -745,8 +748,10 @@ def HRSCSubDecomposition(n, c):
 
 
 HRSCSub = Synthesis(HRSCSubDecomposition)
+"""
 
 
+"""
 def HRSCCCompareDecomposition(n, c):
     circuit = Circuit(2 * n + 2)
     control1 = circuit(0)
@@ -761,6 +766,7 @@ def HRSCCCompareDecomposition(n, c):
 
 
 HRSCCCompare = Synthesis(HRSCCCompareDecomposition)
+"""
 
 
 def HRSAdderModDecomposition(n, a, N):
@@ -777,6 +783,7 @@ def HRSAdderModDecomposition(n, a, N):
 HRSAdderMod = Synthesis(HRSAdderModDecomposition)
 
 
+"""
 def HRSCMulModRawDecomposition(n, a, N):
     circuit = Circuit(2 * n + 2)
     control = circuit(0)
@@ -790,6 +797,7 @@ def HRSCMulModRawDecomposition(n, a, N):
 
 
 HRSCMulModRaw = Synthesis(HRSCMulModRawDecomposition)
+"""
 
 
 def HRSMulModDecomposition(n, a, N):
@@ -803,6 +811,7 @@ def HRSMulModDecomposition(n, a, N):
     return CompositeGate(circuit.gates)
 
 HRSMulMod = Synthesis(HRSMulModDecomposition)
+
 
 def HRSCMulModDecomposition(n,a,N):
 
