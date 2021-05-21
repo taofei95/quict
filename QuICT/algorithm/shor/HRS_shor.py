@@ -156,12 +156,36 @@ def Order_Finding(a,N):
         print('\tOrder_Finding failed: r = %d is not order of a = %d'%(r,a))
         return 0
 
+def MillerRabin(num):
+    Test = [2, 3, 5, 7, 11, 13, 17, 19, 23, 29]
+    if num == 1:
+        return False
+    t = num - 1
+    k = 0
+    while (t & 1) == 0:
+        k += 1
+        t >>= 1
+    for test_num in Test:
+        # test_num should be generated randomly
+        if num == test_num:
+            return True
+        a = fast_power(test_num, t, num)
+        nxt = a
+        for _ in range(k):
+            nxt = (a * a) % num
+            if nxt == 1 and a != 1 and a != num - 1:
+                return 0
+            a = nxt
+        if a != 1:
+            return False
+    return True
 
 def Shor(N):
     """
     Shor algorithm by THOMAS HANER, MARTIN ROETTELER, and KRYSTA M. SVORE in "Factoring using 2n+2 qubits with Toffoli based modular multiplication"
     """
-    #TODO: check if input is prime (using MillerRabin in log(n)^2)
+    # check if input is prime (using MillerRabin in klog(N), k is the number of rounds to run MillerRabin)
+    assert (not MillerRabin(N)), 'N is prime'
 
     # 1. If n is even, return the factor 2
     if N % 2 == 0:
