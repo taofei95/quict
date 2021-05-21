@@ -592,9 +592,3 @@ class HRSShorFactor(Algorithm):
     @staticmethod
     def _run(N):
         return Shor(N)
-
-if __name__ == "__main__":
-    time_start = time.time_ns()
-    HRSShorFactor.run(1019 * 1021)
-    time_end = time.time_ns()
-    print(time_end - time_start)
