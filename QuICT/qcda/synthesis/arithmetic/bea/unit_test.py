@@ -133,7 +133,7 @@ def test_BEACUa():
             print("disabled")
         else:
             print("enabled")
-        for N in range(0, 8):
+        for N in range(0, 1<<n):
             for a in range(0, N):
                 coff = [0, 0]
                 r = ExGCD(a, N, coff)

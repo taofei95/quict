@@ -16,13 +16,13 @@ def DraperAdder(a, b):
 
     """
     n = len(a)
-    QFT | b
+    QFT(n) | b
     for i in range(n):
         p = 0
         for j in range(i, n):
             p += 1
             CRz(2 * np.pi / (1 << p)) | (a[j], b[i])
-    IQFT | b
+    IQFT(n) | b
 
 
 def FourierAdderWired(a, phib):
@@ -31,7 +31,7 @@ def FourierAdderWired(a, phib):
     (phib) -> (phib'=Φ(a + b))
 
     Args:
-        a(int):      unsigned integer, least n bits used
+        a(int):      unsigned integer, low n bits used
         phib(Qureg): the qureg stores Φ(b), length is n+1
 
     Circuit for Shor’s algorithm using 2n+3 qubits
@@ -53,7 +53,7 @@ def FourierReverseAdderWired(a, phib):
     (phib) -> (phib')
 
     Args:
-        a(int):      unsigned integer, least n bits used
+        a(int):      unsigned integer, low n bits used
         phib(Qureg): the qureg stores Φ(b), length is n+1
 
     Circuit for Shor’s algorithm using 2n+3 qubits
@@ -70,11 +70,12 @@ def FourierReverseAdderWired(a, phib):
 
 
 def FourierAdderWiredCC(a, phib, c, dualControlled):
-    """ FourierAdderWired with 2 control bits
+    """ FourierAdderWired with 1 or 2 control bits
 
     (phib,c) -> (phib'=Φ(a + b),c)
 
     Args:
+        a(int):      unsigned integer, low n bits used
         phib(Qureg): the qureg stores Φ(b), length is n
         c(Qureg):    the control qubits,    length is 2 or 1, see dualControlled
         dualControlled(bool): if True, c[0] will be used; else c[0:2] will be used
@@ -103,11 +104,12 @@ def FourierAdderWiredCC(a, phib, c, dualControlled):
 
 
 def FourierReverseAdderWiredCC(a, phib, c, dualControlled):
-    """ FourierReverseAdderWired with 2 control bits
+    """ FourierReverseAdderWired with 1 or 2 control bits
 
     (phib,c) -> (phib',c)
 
     Args:
+        a(int):      unsigned integer, low n bits used
         phib(Qureg): the qureg stores Φ(b), length is n+1
         c(Qureg):    the control qubits,    length is 2 or 1, see dualControlled
         dualControlled(bool): default True. if True, c[0] will be used; else c[0:1] will be used
@@ -142,8 +144,8 @@ def FourierAdderModCC(a, N, phib, c, low, dualControlled=True):
 
 
     Args:
-        a(int):      least n bits used as unsigned
-        N(int):      least n bits used as unsigned
+        a(int):      low n bits used as unsigned
+        N(int):      low n bits used as unsigned
         phib(Qureg): the qureg stores b,        length is n+1,
         c(Qureg):    the control qubits,    length is 2 or 1, see dualControlled
         low(Qureg):  the clean ancillary qubit, length is 1,
@@ -154,16 +156,16 @@ def FourierAdderModCC(a, N, phib, c, low, dualControlled=True):
     """
     FourierAdderWiredCC(a, phib, c, dualControlled=dualControlled)
     FourierReverseAdderWired(N, phib)
-    IQFT | phib
+    IQFT(len(phib)) | phib
     CX | (phib[0], low)
-    QFT | phib
+    QFT(len(phib))  | phib
     FourierAdderWiredCC(N, phib, low, dualControlled=False)
     FourierReverseAdderWiredCC(a, phib, c, dualControlled=dualControlled)
-    IQFT | phib
+    IQFT(len(phib)) | phib
     X | phib[0]
     CX | (phib[0], low)
     X | phib[0]
-    QFT | phib
+    QFT(len(phib))  | phib
     FourierAdderWiredCC(a, phib, c, dualControlled=dualControlled)
 
 
@@ -174,8 +176,8 @@ def FourierAdderMod(a, N, phib, low):
 
 
     Args:
-        a(int):      least n bits used as unsigned
-        N(int):      least n bits used as unsigned
+        a(int):      low n bits used as unsigned
+        N(int):      low n bits used as unsigned
         phib(Qureg): the qureg stores b,        length is n+1,
         low(Qureg):  the clean ancillary qubit, length is 1,
 
@@ -184,16 +186,16 @@ def FourierAdderMod(a, N, phib, low):
     """
     FourierAdderWired(a, phib)
     FourierReverseAdderWired(N, phib)
-    IQFT | phib
+    IQFT(len(phib)) | phib
     CX | (phib[0], low)
-    QFT | phib
+    QFT(len(phib))  | phib
     FourierAdderWiredCC(N, phib, low, dualControlled=False)
     FourierReverseAdderWired(a, phib)
-    IQFT | phib
+    IQFT(len(phib))  | phib
     X | phib[0]
     CX | (phib[0], low)
     X | phib[0]
-    QFT | phib
+    QFT(len(phib))  | phib
     FourierAdderWired(a, phib)
 
 
@@ -204,8 +206,8 @@ def FourierMultModC(a, N, x, phib, c, low):
 
 
     Args:
-        a(int):      least n bits used as unsigned
-        N(int):      least n bits used as unsigned
+        a(int):      low n bits used as unsigned
+        N(int):      low n bits used as unsigned
         x(Qureg):    the qureg stores x,        length is n,
         phib(Qureg): the qureg stores b,        length is n+1,
         c(Qureg):    the control qubits,        length is 1,
@@ -229,8 +231,8 @@ def FourierMultMod(a, N, x, phib, low):
 
 
     Args:
-        a(int):      least n bits used as unsigned
-        N(int):      least n bits used as unsigned
+        a(int):      low n bits used as unsigned
+        N(int):      low n bits used as unsigned
         x(Qureg):    the qureg stores x,        length is n,
         phib(Qureg): the qureg stores b,        length is n+1,
         low(Qureg):  the clean ancillary qubit, length is 1,
@@ -247,30 +249,30 @@ def FourierMultMod(a, N, x, phib, low):
 
 
 def MultModC(a, N, x, b, c, low):
-    QFT | b
+    QFT(len(b))  | b
     FourierMultModC(a, N, x, b, c, low)
-    IQFT | b
+    IQFT(len(b)) | b
 
 
-def ExGCD(a, b, coff):
-    if b == 0:
-        coff[0] = 1
-        coff[1] = 0
-        return a
-    r = ExGCD(b, a % b, coff)
-    t = coff[0]
-    coff[0] = coff[1]
-    coff[1] = t - a // b * coff[1]
-    return r
+# def ExGCD(a, b, coff):
+#     if b == 0:
+#         coff[0] = 1
+#         coff[1] = 0
+#         return a
+#     r = ExGCD(b, a % b, coff)
+#     t = coff[0]
+#     coff[0] = coff[1]
+#     coff[1] = t - a // b * coff[1]
+#     return r
 
 
-def InverseMod(a, N):
-    coff = [0, 0]
-    r = ExGCD(a, N, coff)
-    if r != 1:
-        return None
-    else:
-        return coff[0] % N
+# def InverseMod(a, N):
+#     coff = [0, 0]
+#     r = ExGCD(a, N, coff)
+#     if r != 1:
+#         return None
+#     else:
+#         return coff[0] % N
 
 
 def BEAAdderDecomposition(n):
@@ -278,10 +280,8 @@ def BEAAdderDecomposition(n):
     
     (a,b) -> (a,b'=a+b)
 
-    Quregs:
-        a: the qureg stores a, length is n,
-        b: the qureg stores b, length is n,
-
+    Args:
+        n(int): length of a and b 
     """
     circuit = Circuit(n * 2)
     qreg_a = circuit([i for i in range(n)])
@@ -298,9 +298,9 @@ def BEAAdderWiredDecomposition(n, a):
     
     (b) -> (b'=a+b)
 
-    Quregs:
-        b: the qureg stores b, length is n+1,
-
+    Args:
+        n(int): length of a. b is in length n+1
+        a(int): the operand to be added. low n bits used
     """
     circuit = Circuit(n + 1)
     qreg_b = circuit([i for i in range(n + 1)])
@@ -317,65 +317,65 @@ def BEAReverseAdderWiredDecomposition(n, a):
     """ 
     (b) -> (b'=b-a or b-a+2**(n+1))
 
-    Quregs:
-        b: the qureg stores b, length is n+1,
-
+    Args:
+        n(int): length of a. b is in length n+1
+        a(int): the operand to be subtracted. low n bits used
     """
     circuit = Circuit(n + 1)
     qreg_b = circuit([i for i in range(n + 1)])
-    QFT | qreg_b
+    QFT(len(qreg_b))  | qreg_b
     FourierReverseAdderWired(a, qreg_b)
-    IQFT | qreg_b
+    IQFT(len(qreg_b)) | qreg_b
     return CompositeGate(circuit.gates)
 
 
 BEAReverseAdderWired = Synthesis(BEAReverseAdderWiredDecomposition)
 
 
-def BEAAdderWiredCCDecomposition(n, a):
+def CCBEAAdderWiredDecomposition(n, a):
     """ 
-    (b) -> (b'=a+b)
+    (b,c) -> (b'=a+b,c) if c=0b11 else (b'=b,c)
 
-    Quregs:
-        b: the qureg stores b, length is n,
-        c: the control bits,   length is 2
+    Args:
+        n(int): length of a. b is in length n+1
+        a(int): the operand to be subtracted. low n bits used
     """
     circuit = Circuit(n + 3)
     qreg_b = circuit([i for i in range(n + 1)])
     qreg_c = circuit([i for i in range(n + 1, n + 3)])
-    QFT | qreg_b
+    QFT(len(qreg_b))  | qreg_b
     FourierAdderWiredCC(a, qreg_b, qreg_c, dualControlled=True)
-    IQFT | qreg_b
+    IQFT(len(qreg_b)) | qreg_b
     return CompositeGate(circuit.gates)
 
 
-BEAAdderWiredCC = Synthesis(BEAAdderWiredCCDecomposition)
+CCBEAAdderWired = Synthesis(CCBEAAdderWiredDecomposition)
 
 
-def BEAReverseAdderWiredCCDecomposition(n, a):
+def CCBEAReverseAdderWiredDecomposition(n, a):
     """ 
-    (b,c) -> (b'=b-a,c)
+    (b,c) -> (b'=b-a,c) if c=0b11 else (b'=b,c)
 
-    Quregs:
-        b: the qureg stores b, length is n+1,
-        c: the control bits,   length is 2
+    Args:
+        n(int): length of a. b is in length n+1
+        a(int): the operand to be subtracted. low n bits used
     """
     circuit = Circuit(n + 3)
     qreg_b = circuit([i for i in range(n + 1)])
     qreg_c = circuit([i for i in range(n + 1, n + 3)])
-    QFT | qreg_b
+    QFT(len(qreg_b))  | qreg_b
     FourierReverseAdderWiredCC(a, qreg_b, qreg_c, dualControlled=True)
-    IQFT | qreg_b
+    IQFT(len(qreg_b)) | qreg_b
     return CompositeGate(circuit.gates)
 
 
-BEAReverseAdderWiredCC = Synthesis(BEAReverseAdderWiredCCDecomposition)
+CCBEAReverseAdderWired = Synthesis(CCBEAReverseAdderWiredDecomposition)
 
 
-def BEAAdderModCCDecomposition(n, a, N):
+def CCBEAAdderModDecomposition(n, a, N):
     """ use FourierAdderWired/FourierAdderWiredCC to calculate (a+b)%N in Fourier space
 
-    (phib=Φ(b),c,low) -> (phib'=Φ((a+b)%N),c,low)
+    (phib=Φ(b),c,low) -> (phib'=Φ((a+b)%N),c,low) if c=0b11 else (phib'==Φ(b),c,low)
 
     Args:
         n(int):      bits len
@@ -394,13 +394,13 @@ def BEAAdderModCCDecomposition(n, a, N):
     qreg_b = circuit([i for i in range(n + 1)])
     qreg_c = circuit([i for i in range(n + 1, n + 3)])
     qreg_low = circuit([i for i in range(n + 3, n + 4)])
-    QFT | qreg_b
+    QFT(len(qreg_b))  | qreg_b
     FourierAdderModCC(a, N, qreg_b, qreg_c, qreg_low)
-    IQFT | qreg_b
+    IQFT(len(qreg_b)) | qreg_b
     return CompositeGate(circuit.gates)
 
 
-BEAAdderModCC = Synthesis(BEAAdderModCCDecomposition)
+CCBEAAdderMod = Synthesis(CCBEAAdderModDecomposition)
 
 
 def BEAAdderModDecomposition(n, a, N):
@@ -423,20 +423,19 @@ def BEAAdderModDecomposition(n, a, N):
     circuit = Circuit(n + 2)
     qreg_b = circuit([i for i in range(n + 1)])
     qreg_low = circuit([i for i in range(n + 1, n + 2)])
-    QFT | qreg_b
+    QFT(len(qreg_b))  | qreg_b
     FourierAdderMod(a, N, qreg_b, qreg_low)
-    IQFT | qreg_b
+    IQFT(len(qreg_b)) | qreg_b
     return CompositeGate(circuit.gates)
 
 
 BEAAdderMod = Synthesis(BEAAdderModDecomposition)
 
 
-def BEAMultModCDecomposition(n, a, N):
+def CBEAMultModDecomposition(n, a, N):
     """ use FourierAdderModCC to calculate (b+ax)%N in Fourier space
 
-    (phib=Φ(b),x,c,low) -> (phib'=Φ((b+ax)%N),x,c,low)
-
+    (phib=Φ(b),x,c,low) -> (phib'=Φ((b+ax)%N),x,c,low) if c=0b1 else (phib'=Φ(b),x,c,low)
 
     Args:
         n(int):      bits len
@@ -457,13 +456,13 @@ def BEAMultModCDecomposition(n, a, N):
     qreg_x = circuit([i for i in range(n + 1, 2 * n + 1)])
     qreg_c = circuit(2 * n + 1)
     qreg_low = circuit(2 * n + 2)
-    QFT | qreg_b
+    QFT(len(qreg_b)) | qreg_b
     FourierMultModC(a, N, qreg_x, qreg_b, qreg_c, qreg_low)
-    IQFT | qreg_b
+    IQFT(len(qreg_b)) | qreg_b
     return CompositeGate(circuit.gates)
 
 
-BEAMulModC = Synthesis(BEAMultModCDecomposition)
+CBEAMulMod = Synthesis(CBEAMultModDecomposition)
 
 
 def BEAMultModDecomposition(n, a, N):
@@ -489,9 +488,9 @@ def BEAMultModDecomposition(n, a, N):
     qreg_b = circuit([i for i in range(n + 1)])
     qreg_x = circuit([i for i in range(n + 1, 2 * n + 1)])
     qreg_low = circuit(2 * n + 1)
-    QFT | qreg_b
+    QFT(len(qreg_b)) | qreg_b
     FourierMultMod(a, N, qreg_x, qreg_b, qreg_low)
-    IQFT | qreg_b
+    IQFT(len(qreg_b)) | qreg_b
     return CompositeGate(circuit.gates)
 
 
@@ -517,7 +516,7 @@ def BEACUaDecomposition(n, a, N):
     Circuit for Shor’s algorithm using 2n+3 qubits
     http://arxiv.org/abs/quant-ph/0205095v3
     """
-    a_inv = InverseMod(a, N)
+    # a_inv = InverseMod(a, N)
 
     circuit = Circuit(2 * n + 3)
     qreg_b = circuit([i for i in range(n + 1)])
