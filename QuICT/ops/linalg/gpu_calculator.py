@@ -175,7 +175,7 @@ def MatrixPermutation(A, mapping, changeInput: bool = False, gpu_out: bool = Tru
     cp.take(out_lvl1, gpu_reidx, axis=1, out=out_lvl2)
 
     if changeInput:
-        A[:,:] = out_lvl2.get() if type(A) is np.ndarray else out_lvl2
+        A[:, :] = out_lvl2.get() if type(A) is np.ndarray else out_lvl2
 
     if gpu_out:
         return out_lvl2.get()
@@ -247,45 +247,103 @@ def vectordot(A, V, mapping, gpu_out: bool = True):
 def _small_mat_large_vec_kernel(
         small_mat: cp.ndarray,
         large_vec: cp.ndarray,
+        qubit_num: int,
         affect_args: cp.ndarray,
         affect_args_sorted: cp.ndarray,
         offset: int,
+        upper_bound: int,
 ):
     bx = nb_cuda.blockIdx.x
     tx = nb_cuda.threadIdx.x
     bw = nb_cuda.blockDim.x
     label = offset + bx * bw + tx
+    if label >= upper_bound:
+        return
 
     mat_sz = small_mat.shape[0]
     affect_num = affect_args.shape[0]
 
-    inds = nb_cuda.local.array(shape=16, dtype=nb.types.int64)
-
-    inds[0] = label
-    for i in range(affect_num):
-        mask = (1 << affect_args_sorted[i]) - 1
-        tail = inds[0] & mask
-        inds[0] >>= affect_args_sorted[i]
-        inds[0] <<= affect_args_sorted[i] + 1
-        inds[0] |= tail
-    for i in range(affect_num):
-        n = 1 << i
-        mask = 1 << affect_args[i]
-        for k in range(n):
-            inds[n + k] = (inds[k] | mask)
-
-    tmp_res = nb_cuda.local.array(shape=16, dtype=nb.types.complex64)
-    tmp_vec_cache = nb_cuda.local.array(shape=16, dtype=nb.types.complex64)
+    indices = nb_cuda.local.array(shape=64, dtype=nb.types.int64)
 
     # insert affect_args into corresponding positions
+    indices[0] = label
+    cur_bit_width = qubit_num - affect_num
+    for i in range(affect_num):
+        tail_len = cur_bit_width - affect_args_sorted[i]
+        mask = (1 << tail_len) - 1
+        tail = indices[0] & mask
+        indices[0] >>= tail_len
+        indices[0] <<= tail_len + 1
+        indices[0] |= tail
+        cur_bit_width += 1
+    for i in range(affect_num):
+        n = 1 << i
+        mask = 1 << (qubit_num - affect_args[affect_num - 1 - i] - 1)
+        for j in range(n):
+            indices[n + j] = (indices[j] | mask)
+
+    tmp_vec_cache = nb_cuda.local.array(shape=64, dtype=nb.types.complex64)
+
     for i in range(mat_sz):
-        tmp_res[i] = 0.0 + 0.0j
-        tmp_vec_cache[i] = large_vec[inds[i]]
+        idx = indices[i]
+        tmp_vec_cache[i] = large_vec[idx]
+        large_vec[idx] = 0.0 + 0.0j
     for i in range(mat_sz):
-        for k in range(mat_sz):
-            tmp_res[i] += small_mat[i, k] * tmp_vec_cache[k]
-    for i in range(mat_sz):
-        large_vec[inds[i]] = tmp_res[i]
+        for j in range(mat_sz):
+            large_vec[indices[i]] += small_mat[i, j] * tmp_vec_cache[j]
+
+
+# def _small_mat_large_vec_kernel_sim(
+#         block_id: int,
+#         thread_id: int,
+#         block_size: int,
+#         small_mat: cp.ndarray,
+#         large_vec: cp.ndarray,
+#         qubit_num: int,
+#         affect_args: cp.ndarray,
+#         affect_args_sorted: cp.ndarray,
+#         offset: int,
+#         upper_bound: int,
+# ):
+#     bx = block_id
+#     tx = thread_id
+#     bw = block_size
+#     label = offset + bx * bw + tx
+#     if label >= upper_bound:
+#         return
+#
+#     mat_sz = small_mat.shape[0]
+#     affect_num = affect_args.shape[0]
+#
+#     indices = cp.empty(shape=64, dtype=np.int64)
+#
+#     # insert affect_args into corresponding positions
+#     indices[0] = label
+#     cur_bit_width = qubit_num - affect_num
+#     for i in range(affect_num):
+#         tail_len = cur_bit_width - affect_args_sorted[i]
+#         mask = (1 << tail_len) - 1
+#         tail = indices[0] & mask
+#         indices[0] >>= tail_len
+#         indices[0] <<= tail_len + 1
+#         indices[0] |= tail
+#         cur_bit_width += 1
+#     for i in range(affect_num):
+#         n = 1 << i
+#         mask = 1 << (qubit_num - affect_args[affect_num - 1 - i] - 1)
+#         for j in range(n):
+#             indices[n + j] = (indices[j] | mask)
+#
+#     tmp_vec_cache = cp.empty(shape=64, dtype=np.complex64)
+#
+#     for i in range(mat_sz):
+#         idx = indices[i]
+#         tmp_vec_cache[i] = large_vec[idx]
+#         large_vec[idx] = 0.0 + 0.0j
+#     for i in range(mat_sz):
+#         for j in range(mat_sz):
+#             large_vec[indices[i]] += small_mat[i, j] * tmp_vec_cache[j]
+#     return 1
 
 
 def vector_dot_cuda(
@@ -295,15 +353,49 @@ def vector_dot_cuda(
 ):
     thread_per_block = 256
     block_num = (large_vec_.shape[0] + thread_per_block - 1) // thread_per_block
+    qubit_num = np.log2(large_vec_.shape[0]).astype(np.int64)
+    remained_vec_index = large_vec_.shape[0] // small_mat_.shape[0]
     affect_args_sorted = affect_args_.copy()
-    cp.sort(affect_args_sorted)
+    affect_args_sorted = cp.sort(affect_args_sorted)
     _small_mat_large_vec_kernel[block_num, thread_per_block](
         small_mat_,
         large_vec_,
+        qubit_num,
         affect_args_,
         affect_args_sorted,
         0,
+        remained_vec_index,
     )
+
+
+# def vector_dot_cuda_sim(
+#         small_mat_: cp.ndarray,
+#         large_vec_: cp.ndarray,
+#         affect_args_: cp.ndarray,
+# ):
+#     thread_per_block = 256
+#     qubit_num = np.log2(large_vec_.shape[0]).astype(np.int64)
+#     remained_vec_index = large_vec_.shape[0] // small_mat_.shape[0]
+#     block_num = (remained_vec_index + thread_per_block - 1) // thread_per_block
+#     affect_args_sorted = affect_args_.copy()
+#     affect_args_sorted = cp.sort(affect_args_sorted)
+#     result = cp.array(large_vec_)
+#     for b in range(block_num):
+#         for t in range(thread_per_block):
+#             _small_mat_large_vec_kernel_sim(
+#                 b,
+#                 t,
+#                 thread_per_block,
+#                 cp.array(small_mat_),
+#                 result,
+#                 qubit_num,
+#                 cp.array(affect_args_),
+#                 cp.array(affect_args_sorted),
+#                 0,
+#                 remained_vec_index,
+#             )
+#     large_vec_[:] = result.get()[:]
+#     return 1
 
 
 def VectorPermutationRaw(A, mapping, changeInput: bool = False, gpu_out: bool = True):
