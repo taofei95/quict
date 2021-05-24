@@ -532,6 +532,8 @@ def Shor(N):
     """
 
     # 1. If n is even, return the factor 2
+    if N < 4:
+        print('Shor ignored: N is too small(<4) to use HRS shor circuit')
     if N % 2 == 0:
         print('Shor succeed: N is even, found factor 2 classically')
         return 2
