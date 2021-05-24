@@ -54,16 +54,36 @@ def test_HRSAdder():
                 print("%d + %d = %d\n"%(a,b,int(a_q)))
                 assert 0
     assert 1
-            
+          
+
+def test_HRSAdderMod():
+    for N in range(4,15):
+        n = len(bin(N)) - 2
+        for a in range(0,N):
+            for b in range(0,N):
+                print("%d + %d (mod %d)= "%(a,b,N))
+                circuit = Circuit(2*n)
+                b_q = circuit([i for i in range(n)])
+                g_q = circuit([i for i in range(n, 2*n - 1)])
+                indicator = circuit(2*n - 1)
+                Set(b_q, b)
+                HRSAdderMod(n, a, N) | (b_q, g_q, indicator)
+                Measure | circuit
+                circuit.exec()
+                print(int(b_q))
+                if int(b_q) != (a + b)%(N):
+                    assert 0
+    assert 1
 
 def test_HRSMulMod():
     arr = [0,0]
-    for N in range(0,20):
+    for N in range(4,12):
+        n = len(bin(N)) - 2
         for a in range(0,N):
             if EX_GCD(N, a, arr) != 1:
                 continue
             for x in range(0,N):
-                n = len(bin(N)) - 2
+                print("%d * %d mod %d = "%(a,x,N))
                 circuit = Circuit(2*n + 1)
                 x_q = circuit([i for i in range(n)])
                 ancilla = circuit([i for i in range(n, 2*n)])
@@ -77,64 +97,57 @@ def test_HRSMulMod():
                     assert 0
     assert 1
 
-'''
-def test1():
-    circuit = Circuit(4)
-    circuit.assign_initial_zeros()
-    X | circuit(1)
-    amplitude = Amplitude.run(circuit)
-    print(amplitude)
-    HRSIncrementer(2) | circuit
-    amplitude = Amplitude.run(circuit)
-    print(amplitude)
-'''
-
-
-
-
 
 '''
-def test3():
-    circuit = Circuit(5)
-    circuit.assign_initial_zeros()
-    X | circuit(0) # control = 1 !!!
-    HRSCSub(2, 1) | circuit
-    amplitude = Amplitude.run(circuit)
-    print(amplitude)
+def test_HRSMulModRaw():
+    arr = [0,0]
+    for N in range(4,7):
+        n = len(bin(N)) - 2
+        for a in range(3,4):
+            if EX_GCD(N, a, arr) != 1:
+                continue
+            for x in range(1,2):
+                print("%d * %d mod %d"%(a,x,N))
+                circuit = Circuit(2*n + 1)
+                x_q = circuit([i for i in range(n)])
+                ancilla = circuit([i for i in range(n, 2*n)])
+                indicator = circuit(2*n)
+                Set(x_q, x)
+                MulModRaw(x_q, a, ancilla, N, indicator)
+                Measure | circuit
+                circuit.exec()
+                print("(x,ancilla,ind): (%d,0,0) ->　(%d,%d,%d)"%(x,int(x_q),int(ancilla),int(indicator)))
+                if int(ancilla) != (a*x)%(N):
+                    #print("%d * %d mod %d = %d\n"%(a,x,N,int(x_q)))
+                    print("error")
+                    assert 0
+    assert 1
+
+def test_HRSMulModRawReverse():
+    arr = [0,0]
+    for N in range(4,5):
+        n = len(bin(N)) - 2
+        for a in range(3,4):
+            if EX_GCD(N, a, arr) != 1:
+                continue
+            for x in range(3,4):
+                print("%d * %d mod %d"%(a,x,N))
+                circuit = Circuit(2*n + 1)
+                x_q = circuit([i for i in range(n)])
+                ancilla = circuit([i for i in range(n, 2*n)])
+                indicator = circuit(2*n)
+                Set(x_q, x)
+                Set(ancilla, 1)
+                MulModRawReverse(x_q, a, ancilla, N, indicator)
+                Measure | circuit
+                circuit.exec()
+                print("(x,ancilla,ind): (%d,1,0) ->　(%d,%d,%d)"%(x,int(x_q),int(ancilla),int(indicator)))
+                if int(ancilla) != (a*x)%(N):
+                    #print("%d * %d mod %d = %d\n"%(a,x,N,int(x_q)))
+                    print("error")
+                    assert 0
+    assert 1
 '''
-'''
-def test4():
-    circuit = Circuit(6)
-    circuit.assign_initial_zeros()
-    X | circuit(0) # control1 = 1
-    X | circuit(1) # control2 = 1
-    # b = 00
-
-    HRSCCCompare(2, 1) | circuit # c = 1
-
-    # expected result: 110001----49
-
-    amplitude = Amplitude.run(circuit)
-    print(amplitude)
-'''
-
-
-def test5():
-    circuit = Circuit(6)
-    circuit.assign_initial_zeros()
-    # b = 010 = 2
-    X | circuit(3)
-    # len(g) needs to be larger than 1, so n needs to be larger than 2 !!!
-    # indicator bit somtimes seems to change
-    HRSAdderMod(3, 1, 2) | circuit  # a = 1, N = 3, (b + a) % N = 1
-
-    # expected result: 110100----52
-    for i in range(6):
-        Measure | circuit(i)
-    circuit.exec()
-    qreg = circuit([i for i in range(6)])
-    y = int(qreg)
-    print(y)
 
 
 if __name__ == "__main__":
