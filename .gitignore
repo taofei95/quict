@@ -11,8 +11,7 @@ __pycache__/
 /source/
 make.bat
 .idea
+*/*.jpg
 .vscode
 .test_build
 _build
-*.jpg
-.vscode
