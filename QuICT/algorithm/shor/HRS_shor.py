@@ -13,7 +13,6 @@ import random
 from math import log, ceil, floor, gcd, pi
 import numpy as np
 from fractions import Fraction
-from QuICT.algorithm import Amplitude
 import time
 
 def EX_GCD(a, b, arr):
@@ -533,6 +532,8 @@ def Shor(N):
     """
 
     # 1. If n is even, return the factor 2
+    if N < 4:
+        print('Shor ignored: N is too small(<4) to use HRS shor circuit')
     if N % 2 == 0:
         print('Shor succeed: N is even, found factor 2 classically')
         return 2
@@ -593,9 +594,3 @@ class HRSShorFactor(Algorithm):
     @staticmethod
     def _run(N):
         return Shor(N)
-
-if __name__ == "__main__":
-    time_start = time.time_ns()
-    HRSShorFactor.run(1019 * 1021)
-    time_end = time.time_ns()
-    print(time_end - time_start)

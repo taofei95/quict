@@ -48,10 +48,15 @@ sudo dnf install make gcc gcc-c++ kernel-devel linux-headers tbb tbb-devel \
 
 ### Build & Install QuICT
 
-Following commands would build QuICT and install it system-wide.
-If you are going to install it into some python virtual environment, do it without any `sudo`. 
+Following commands would build QuICT and install it system-wide(in user directory).
 
 ```
-./build.sh
-sudo ./install.sh
+./build.sh && ./install.sh
+```
+
+You can also specify `--test` flag for `build.sh` to add special post fix for version number.
+(This is only useful when testing.)
+
+```
+./build.sh --test && ./install.sh
 ```

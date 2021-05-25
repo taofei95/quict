@@ -4,10 +4,11 @@
 # @Author  : Han Yu
 # @File    : VBE.py
 
-from numpy import log2, floor, gcd
+from numpy import gcd
 
-from ..._synthesis import Synthesis
 from QuICT.core import Circuit, CompositeGate, X, CX, CCX, Swap
+from ..._synthesis import Synthesis
+
 
 def Inverse(a, N):
     """ Inversion of a in (mod N)
@@ -62,6 +63,7 @@ def ControlSet(control, qreg, N):
         if string[m - 1 - i] == '1':
             CX | (control, qreg[n - 1 - i])
 
+
 def CControlSet(control1, control2, qreg, N):
     """ Set the qreg as N, using CCX gates on specific qubits
 
@@ -82,6 +84,7 @@ def CControlSet(control1, control2, qreg, N):
         if string[m - 1 - i] == '1':
             CCX | (control1, control2, qreg[n - 1 - i])
 
+
 def Carry(c_in, a, b, c_out):
     """ Carry for one bit plus
 
@@ -98,6 +101,7 @@ def Carry(c_in, a, b, c_out):
     CX | (a, b)
     CCX | (c_in, b, c_out)
 
+
 def ReverseCarry(c_in, a, b, c_out):
     """ the inverse of Carry
 
@@ -110,6 +114,7 @@ def ReverseCarry(c_in, a, b, c_out):
     CCX | (c_in, b, c_out)
     CX | (a, b)
     CCX | (a, b, c_out)
+
 
 def Sum(c_in, a, b):
     """ Sum circuit
@@ -124,6 +129,7 @@ def Sum(c_in, a, b):
     CX | (a, b)
     CX | (c_in, b)
 
+
 def ReverseSum(c_in, a, b):
     """ Reverse of Sum
 
@@ -134,6 +140,7 @@ def ReverseSum(c_in, a, b):
     """
     CX | (c_in, b)
     CX | (a, b)
+
 
 def PlainAdder(a, b, c, overflow):
     """ store a + b in b
@@ -161,6 +168,7 @@ def PlainAdder(a, b, c, overflow):
         ReverseCarry(c[1 + i], a[1 + i], b[1 + i], c[i])
         Sum(c[1 + i], a[1 + i], b[1 + i])
 
+
 def ReversePlainAdder(a, b, c, overflow):
     """ the inverse of plainAdder
 
@@ -183,6 +191,7 @@ def ReversePlainAdder(a, b, c, overflow):
     ReverseCarry(c[0], a[0], b[0], overflow)
     for i in range(n - 1):
         ReverseCarry(c[1 + i], a[1 + i], b[1 + i], c[i])
+
 
 def AdderMod(N, a, b, c, overflow, qubit_N, t):
     """ store (a+b) mod N in b
@@ -275,6 +284,7 @@ def MulAddMod(a, N, x, qubit_a, b, c, overflow, qubit_N, t):
         ControlSet(x[n - 1 - i], qubit_a, a)
         a = (a * 2) % N
 
+
 def ControlMulMod(a, N, control, x, qubit_a, b, c, overflow, qubit_N, t):
     """ store x*(a^control) mod N in b
 
@@ -341,6 +351,7 @@ def ReverseControlMulMod(a, N, control, x, qubit_a, b, c, overflow, qubit_N, t):
         ReverseAdderMod(N, qubit_a, b, c, overflow, qubit_N, t)
         CControlSet(control, x[i], qubit_a, a_list[n - 1 - i])
 
+
 def ExpMod(a, N, x, result, qubit_a, b, c, overflow, qubit_N, t):
     """ store a^x mod N in result
 
@@ -368,6 +379,7 @@ def ExpMod(a, N, x, result, qubit_a, b, c, overflow, qubit_N, t):
         a = (a ** 2) % N
         a_inv = (a_inv ** 2) % N
 
+
 def VBEAdderDecomposition(n):
     """ a circuit calculate a+b, a and b are gotten from some qubits.
     
@@ -384,51 +396,55 @@ def VBEAdderDecomposition(n):
     http://arxiv.org/abs/quant-ph/9511018v1
     """
 
-    circuit = Circuit(3*n + 1)
+    circuit = Circuit(3 * n + 1)
     qubit_a = circuit([i for i in range(n)])
-    qubit_b = circuit([i for i in range(n, 2*n)])
-    qubit_c = circuit([i for i in range(2*n, 3*n)])
-    qubit_overflow = circuit(3*n)
+    qubit_b = circuit([i for i in range(n, 2 * n)])
+    qubit_c = circuit([i for i in range(2 * n, 3 * n)])
+    qubit_overflow = circuit(3 * n)
 
     PlainAdder(qubit_a, qubit_b, qubit_c, qubit_overflow)
 
     return CompositeGate(circuit.gates)
 
+
 VBEAdder = Synthesis(VBEAdderDecomposition)
 
-def VBEAdderModDecomposition(N,n):
+
+def VBEAdderModDecomposition(N, n):
     """ a circuit calculate (a+b) mod N.
     N are inherently designed in the circuit.
 
     (a,b,c=0,overflow=0,t=0,N) -> (a,b'=(a+b)%N,c=0,overflow=0,t=0,N)
 
     Quregs:
-        a:          the qureg stores a, length is n,
-        b:          the qureg stores b, length is n,
-        c:          the clean ancillary qubits, length is n,
-        overflow:   the clean ancillary qubits, length is 1,
-        t:          the clean ancillary qubits, length is 1.
-        N:          the qureg stores N, length is n,
+        a: the qureg stores a, length is n,
+        b: the qureg stores b, length is n,
+        c: the clean ancillary qubits, length is n,
+        overflow: the clean ancillary qubits, length is 1,
+        t: the clean ancillary qubits, length is 1.
+        N: the qureg stores N, length is n,
 
     Quantum Networks for Elementary Arithmetic Operations
     http://arxiv.org/abs/quant-ph/9511018v1
     """
 
-    circuit = Circuit(4*n + 2)
+    circuit = Circuit(4 * n + 2)
     qubit_a = circuit([i for i in range(n)])
-    qubit_b = circuit([i for i in range(n, 2*n)])
-    qubit_c = circuit([i for i in range(2*n, 3*n)])
-    qubit_N = circuit([i for i in range(3*n, 4*n)])
-    qubit_overflow  = circuit(4*n)
-    qubit_t         = circuit(4*n+1)
+    qubit_b = circuit([i for i in range(n, 2 * n)])
+    qubit_c = circuit([i for i in range(2 * n, 3 * n)])
+    qubit_N = circuit([i for i in range(3 * n, 4 * n)])
+    qubit_overflow = circuit(4 * n)
+    qubit_t = circuit(4 * n + 1)
 
-    AdderMod(N,qubit_a,qubit_b,qubit_c,qubit_overflow,qubit_N,qubit_t)
+    AdderMod(N, qubit_a, qubit_b, qubit_c, qubit_overflow, qubit_N, qubit_t)
 
     return CompositeGate(circuit.gates)
 
+
 VBEAdderMod = Synthesis(VBEAdderModDecomposition)
 
-def VBEMulAddModDecomposition(a,N,n,m):
+
+def VBEMulAddModDecomposition(a, N, n, m):
     """ a circuit calculate b + x*a mod N. 
     x are gotten from some qubits, a and N are inherently designed in the circuit.
     
@@ -448,20 +464,22 @@ def VBEMulAddModDecomposition(a,N,n,m):
     http://arxiv.org/abs/quant-ph/9511018v1
     """
 
-    circuit = Circuit(4*n + m + 2)
+    circuit = Circuit(4 * n + m + 2)
     qubit_x = circuit([i for i in range(m)])
-    qubit_a = circuit([i for i in range(m,n + m)])
-    qubit_b = circuit([i for i in range(n + m, 2*n + m)])
-    qubit_c = circuit([i for i in range(2*n + m, 3*n + m)])
-    qubit_overflow = circuit(3*n + m)
-    qubit_N = circuit([i for i in range(3*n + m + 1, 4*n + m + 1)])
-    qubit_t = circuit(4*n + m + 1)
-    
+    qubit_a = circuit([i for i in range(m, n + m)])
+    qubit_b = circuit([i for i in range(n + m, 2 * n + m)])
+    qubit_c = circuit([i for i in range(2 * n + m, 3 * n + m)])
+    qubit_overflow = circuit(3 * n + m)
+    qubit_N = circuit([i for i in range(3 * n + m + 1, 4 * n + m + 1)])
+    qubit_t = circuit(4 * n + m + 1)
+
     MulAddMod(a, N, qubit_x, qubit_a, qubit_b, qubit_c, qubit_overflow, qubit_N, qubit_t)
-    
+
     return CompositeGate(circuit.gates)
 
+
 VBEMulAddMod = Synthesis(VBEMulAddModDecomposition)
+
 
 def VBEExpModDecomposition(a, N, n, m):
     """ give parameters to the VBE
@@ -477,7 +495,7 @@ def VBEExpModDecomposition(a, N, n, m):
         raise Exception("modulus should be great than 2")
     if gcd(a, N) != 1:
         raise Exception("a and N should be co-prime")
-    #n = int(floor(log2(N))) + 1
+    # n = int(floor(log2(N))) + 1
 
     circuit = Circuit(m + 5 * n + 2)
     qubit_x = circuit([i for i in range(m)])
@@ -492,5 +510,6 @@ def VBEExpModDecomposition(a, N, n, m):
     X | qubit_r[n - 1]
     ExpMod(a, N, qubit_x, qubit_r, qubit_a, qubit_b, qubit_c, overflow, qubit_N, t)
     return CompositeGate(circuit.gates)
+
 
 VBEExpMod = Synthesis(VBEExpModDecomposition)
