@@ -41,7 +41,7 @@ The typical way to use them would be like the (take **division** as example):
     of_q = circuit(3*n)
 
     #After some procedures, a_q, b_q and r_q are now in arbitary states.
-    RestoringDivision(n) | (a_q,b_q,r_q,of_q)
+    RestoringDivision.execute(n) | (a_q,b_q,r_q,of_q)
 
 Next we will use VBE module to demonstrate more detailed usage.
 

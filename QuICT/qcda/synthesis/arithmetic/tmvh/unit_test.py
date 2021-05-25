@@ -29,7 +29,7 @@ def test_RippleCarryAdder():
             b_q = circuit([i for i in range(n, 2 * n)])
             Set(a_q,a)
             Set(b_q,b)
-            RippleCarryAdder(n) | circuit
+            RippleCarryAdder.execute(n) | circuit
             Measure | circuit
             circuit.exec()
             if int(a_q) != a or int(b_q) != (a + b)%(2**n):
@@ -48,7 +48,7 @@ def test_RestoringDivision():
             #of_q = circuit(3 * n)
             Set(a_q, a)
             Set(b_q, b)
-            RestoringDivision(n) | circuit
+            RestoringDivision.execute(n) | circuit
             Measure | circuit
             circuit.exec()
             if int(a_q) != a % b or int(r_q) != a // b or int(b_q) != b:
