@@ -52,7 +52,7 @@ In **QuICT.qcda.synthesis.arithmetic.vbe**, we have **VBEAdder**, **VBEAdderMod*
 VBEAdder
 >>>>>>>>>>>>>>>>>
 
-**VBEAdder(n)** constructs a circuit which can add two integers. 
+**VBEAdder.execute(n)** constructs a circuit which can add two integers. 
 It takes **n** as the parameter indicating the length of the integer, to tailor the circuit to proper size.
 
 Qureg **a** keeps unchanged, the result is stored in qureg **b**,
@@ -72,12 +72,12 @@ qureg **c** is clean ancilla, qubit **overflow** flips if the addition produces 
     overflow_q = circuit(3*n)
 
     #After some procedures, the quregs are now in arbitary states.
-    VBEAdder(n) | (a_q,b_q,c_q,overflow_q)
+    VBEAdder.execute(n) | (a_q,b_q,c_q,overflow_q)
 
 VBEAdderMod
 >>>>>>>>>>>>>>>>>
 
-**VBEAdderMod(N,n)** constructs a circuit which can add two integers module N. 
+**VBEAdderMod.execute(N,n)** constructs a circuit which can add two integers module N. 
 It takes **N** as the constant modulus embedded in the structure of the circuit. 
 It takes **n** as the parameter indicating the length of the integer, to tailor the circuit to proper size.
 
@@ -100,12 +100,12 @@ qureg **c**, **N_q**, **overflow** and **t** are clean ancilla.
     t_q = circuit(4*n + 1)
 
     #After some procedures, the quregs are now in arbitary states.
-    VBEAdderMod(n,N) | (a_q,b_q,c_q,overflow_q,N_q,t_q)
+    VBEAdderMod.execute(n,N) | (a_q,b_q,c_q,overflow_q,N_q,t_q)
 
 VBEMulAddMod
 >>>>>>>>>>>>>>>>>
 
-**VBEMulAddMod(a,N,n,m)** constructs a circuit which computes multiplication-addition module N. 
+**VBEMulAddMod.execute(a,N,n,m)** constructs a circuit which computes multiplication-addition module N. 
 It takes **a** as a constant multiplier embedded in the structure of the circuit.
 It takes **N** as the constant modulus embedded in the structure of the circuit. 
 It takes **n** as the parameter indicating the length of **N**, to tailor the circuit to proper size.
@@ -131,12 +131,12 @@ qureg **a_q**, **c**, **N_q**, **overflow** and **t** are clean ancilla.
     t_q = circuit(4*n + m + 1)
 
     #After some procedures, the quregs are now in arbitary states.
-    VBEMulAddMod(a,N,n,m) | (x_q,a_q,b_q,c_q,overflow_q,N_q,t_q)
+    VBEMulAddMod.execute(a,N,n,m) | (x_q,a_q,b_q,c_q,overflow_q,N_q,t_q)
 
 VBEExpMod
 >>>>>>>>>>>>>>>>>
 
-**VBEExpMod(a,N,n,m)** constructs a circuit which computes exponentiation module N. 
+**VBEExpMod.execute(a,N,n,m)** constructs a circuit which computes exponentiation module N. 
 It takes **a** as a constant base number embedded in the structure of the circuit.
 It takes **N** as the constant modulus embedded in the structure of the circuit. 
 It takes **n** as the parameter indicating the length of **N**, to tailor the circuit to proper size.
@@ -163,7 +163,7 @@ qureg **a_q**, **c**, **N_q**, **overflow** and **t** are clean ancilla.
     t_q = circuit(5*n + m + 1)
 
     #After some procedures, the quregs are now in arbitary states.
-    VBEExpMod(a,N,n,m) | (x_q,r_q,a_q,b_q,c_q,overflow_q,N_q,t_q)
+    VBEExpMod.execute(a,N,n,m) | (x_q,r_q,a_q,b_q,c_q,overflow_q,N_q,t_q)
 
 BEA module
 --------------
@@ -173,7 +173,7 @@ Besides,there are a few circuits used as intermediate implementation of Shor's a
 BEAAdder
 >>>>>>>>>>>>>>>>>
 
-**BEAAdder.execute(n)** behaves like **VBEAdder(n)**, but without Control and Overflow bits. 
+**BEAAdder.execute(n)** behaves like **VBEAdder.execute(n)**, but without Control and Overflow bits. 
 It takes **n** as the parameter indicating the length of the integer, to tailor the circuit to proper size.
 
 Qureg **a** keeps unchanged, the result is stored in qureg **b**.
