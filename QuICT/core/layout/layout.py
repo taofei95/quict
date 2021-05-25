@@ -78,6 +78,7 @@ class Layout:
 
     def out_edges(self, begin_point) -> list:
         """ edges begin from begin_point
+
         Args:
             begin_point(int): the index of begin node
 
@@ -139,6 +140,7 @@ class Layout:
     @staticmethod
     def load_file(file):
         """
+
         Args:
             file(str): the path of file
         Return:

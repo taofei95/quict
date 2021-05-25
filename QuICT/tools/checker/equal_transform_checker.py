@@ -20,6 +20,7 @@ class ETCheckerModel(object):
     @staticmethod
     def getRandomList(l, n):
         """ get l number from 0, 1, ..., n - 1 randomly.
+
         Args:
             l(int)
             n(int)
@@ -35,6 +36,7 @@ class ETCheckerModel(object):
     @staticmethod
     def cmp_array(arr0, arr1, eps = 1e-6):
         """ compare two array with eps
+
         Args:
             arr0(list<complex>): compare array 0
             arr1(list<complex>): compare array 1

@@ -571,12 +571,12 @@ def QState_deal_perm_gate(qState, gate):
     perm_operator_gate.argtypes = [
         c_int,
         np.ctypeslib.ndpointer(dtype=np.complex128, ndim=1, flags="C_CONTIGUOUS"),
-        np.ctypeslib.ndpointer(dtype=np.int, ndim=1, flags="C_CONTIGUOUS"),
+        np.ctypeslib.ndpointer(dtype=np.int64, ndim=1, flags="C_CONTIGUOUS"),
         c_int,
-        np.ctypeslib.ndpointer(dtype=np.int, ndim=1, flags="C_CONTIGUOUS")
+        np.ctypeslib.ndpointer(dtype=np.int64, ndim=1, flags="C_CONTIGUOUS")
     ]
 
-    index = np.array([], dtype=np.int)
+    index = np.array([], dtype=np.int64)
     targs = gate.targs
     if not isinstance(targs, list):
         targs = [targs]
@@ -595,7 +595,7 @@ def QState_deal_perm_gate(qState, gate):
         qState.values,
         index,
         gate.targets,
-        np.array(gate.pargs, dtype=np.int)
+        np.array(gate.pargs, dtype=np.int64)
     )
 
 def QState_deal_unitary_gate(qState, gate):
@@ -655,14 +655,14 @@ def QState_deal_shorInitial_gate(qState, gate):
     perm_operator_gate.argtypes = [
         c_int,
         np.ctypeslib.ndpointer(dtype=np.complex128, ndim=1, flags="C_CONTIGUOUS"),
-        np.ctypeslib.ndpointer(dtype=np.int, ndim=1, flags="C_CONTIGUOUS"),
+        np.ctypeslib.ndpointer(dtype=np.int64, ndim=1, flags="C_CONTIGUOUS"),
         c_int,
         c_int,
         c_int,
         c_int
     ]
 
-    index = np.array([], dtype=np.int)
+    index = np.array([], dtype=np.int64)
     targs = gate.targs
     if not isinstance(targs, list):
         targs = [targs]
@@ -702,14 +702,14 @@ def QState_deal_controlMulPerm_gate(qState, gate):
     perm_operator_gate.argtypes = [
         c_int,
         np.ctypeslib.ndpointer(dtype=np.complex128, ndim=1, flags="C_CONTIGUOUS"),
-        np.ctypeslib.ndpointer(dtype=np.int, ndim=1, flags="C_CONTIGUOUS"),
+        np.ctypeslib.ndpointer(dtype=np.int64, ndim=1, flags="C_CONTIGUOUS"),
         c_int,
         c_int,
         c_int,
         c_int
     ]
 
-    index = np.array([], dtype=np.int)
+    index = np.array([], dtype=np.int64)
     targs = gate.targs
     if not isinstance(targs, list):
         targs = [targs]

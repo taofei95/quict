@@ -39,7 +39,7 @@ def test_1():
         else:
             values = [0.40824829046386296, 0.40824829046386296, 0.40824829046386296, 0.40824829046386296,
                   0.40824829046386296, 0, 0.2886751345948131, -0.2886751345948128]
-        InitialStatePreparation(values) | circuit([j for j in range(i)])
+        InitialStatePreparation.execute(values) | circuit([j for j in range(i)])
         amplitude = Amplitude.run(circuit)
         now = check_assert(amplitude, values, 1 << i)
         print(amplitude)
@@ -50,8 +50,8 @@ def test_2():
     for i in range(1, 8):
         circuit = Circuit(i)
         values = [1.0 / (1 << i) * np.exp(1j * random.random()) for _ in range(1 << i)]
-        InitialStatePreparation(values) | circuit([j for j in range(i)])
-        InitialStatePreparation(values) ^ circuit([j for j in range(i)])
+        InitialStatePreparation.execute(values) | circuit([j for j in range(i)])
+        InitialStatePreparation.execute(values) ^ circuit([j for j in range(i)])
         amplitude = Amplitude.run(circuit)
         if abs(amplitude[0] - 1) > 1e-6:
             assert 0

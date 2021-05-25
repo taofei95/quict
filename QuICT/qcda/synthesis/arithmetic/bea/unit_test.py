@@ -36,7 +36,7 @@ def test_DraperAdder():
             qreg_b = circuit([i for i in range(n, n * 2)])
             Set(qreg_a, a)
             Set(qreg_b, b)
-            BEAAdder(n) | circuit
+            BEAAdder.execute(n) | circuit
             Measure | circuit
             circuit.exec()
             # aa = int(qreg_a)
@@ -54,7 +54,7 @@ def test_FourierAdderWired():
             circuit = Circuit(n + 1)
             qreg_b = circuit([i for i in range(n + 1)])
             Set(qreg_b, b)
-            BEAAdderWired(n, a) | circuit
+            BEAAdderWired.execute(n, a) | circuit
             Measure | circuit
             circuit.exec()
             # aa = int(qreg_a)
@@ -73,7 +73,7 @@ def test_FourierReverseAdderWired():
             circuit = Circuit(n + 1)
             qreg_b = circuit([i for i in range(n + 1)])
             Set(qreg_b, b)
-            BEAReverseAdderWired(n, a) | circuit
+            BEAReverseAdderWired.execute(n, a) | circuit
             Measure | circuit
             circuit.exec()
             # aa = int(qreg_a)
@@ -92,7 +92,7 @@ def test_FourierAdderMod():
                 circuit = Circuit(n + 2)
                 qreg_b = circuit([i for i in range(n + 1)])
                 Set(qreg_b, b)
-                BEAAdderMod(n, a, N) | circuit
+                BEAAdderMod.execute(n, a, N) | circuit
                 Measure | circuit
                 circuit.exec()
                 # aa = int(qreg_a)
@@ -113,7 +113,7 @@ def test_BEAMulMod():
                 qreg_x = circuit([i for i in range(n + 1, 2 * n + 1)])
                 Set(qreg_b, 0)
                 Set(qreg_x, x)
-                BEAMulMod(n, a, N) | circuit
+                BEAMulMod.execute(n, a, N) | circuit
                 Measure | circuit
                 circuit.exec()
                 bb = int(qreg_b)
@@ -142,7 +142,7 @@ def test_BEACUa():
                     Set(qreg_c, c)
                     Set(qreg_b, 0)
                     Set(qreg_x, x)
-                    BEACUa(n, a, N) | circuit
+                    BEACUa.execute(n, a, N) | circuit
                     Measure | circuit
                     circuit.exec()
                     xx = int(qreg_x)

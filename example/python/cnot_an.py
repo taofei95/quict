@@ -12,6 +12,6 @@ for n in range(4, 5):
     for _ in range(50):
         for i in range(n - 1):
             CX | circuit([i, i + 1])
-    result_circuit = CnotAncillae.run(circuit, size = 1)
+    result_circuit = CnotAncillae.execute(circuit, size = 1)
     result_circuit.print_infomation()
-    result_circuit.draw_photo(show_depth=False)
+    result_circuit.draw()

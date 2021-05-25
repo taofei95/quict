@@ -14,6 +14,7 @@ class Algorithm(object):
     @classmethod
     def run(cls, *pargs):
         """
+
         Args:
             *pargs: parameters which needed by the algorithm.
         """
@@ -23,6 +24,7 @@ class Algorithm(object):
     @staticmethod
     def _run(*pargs):
         """
+
         Args:
             *pargs: parameters which needed by the algorithm.
         """

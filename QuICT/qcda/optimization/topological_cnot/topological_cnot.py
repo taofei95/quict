@@ -43,6 +43,7 @@ class Steiner_Tree(object):
 
     def __init__(self, n, topo):
         """
+
         Args:
             n(int): number of the vertexes in the tree
             topo(n * n boolean matrix): topological relationship for n vertexes,
@@ -50,14 +51,14 @@ class Steiner_Tree(object):
         """
         self.N = n
         self.matrix = [[False] * n] * n
-        self.dp = np.array([], dtype=np.int)
+        self.dp = np.array([], dtype=np.int64)
         self.ST = []
         for i in range(n):
             for j in range(i + 1, n):
                 self.matrix[i][j] = self.matrix[j][i] = topo[i][j] or topo[j][i]
         self.father = []
         self.sons = []
-        self.pre = np.array([], dtype=np.int)
+        self.pre = np.array([], dtype=np.int64)
         self.root = 0
 
     def build_ST(self, ST_input : list, lower_bound):
@@ -74,8 +75,8 @@ class Steiner_Tree(object):
 
         size = len(ST_input)
         self.root = ST_input[-1]
-        self.dp = np.array([-1] * self.N * (1 << size), dtype=np.int).reshape((self.N, 1 << size))
-        self.pre = np.zeros((self.N, 1 << size, 2), dtype=np.int)
+        self.dp = np.array([-1] * self.N * (1 << size), dtype=np.int64).reshape((self.N, 1 << size))
+        self.pre = np.zeros((self.N, 1 << size, 2), dtype=np.int64)
         self.ST = [0] * self.N
         self.father = [-1] * self.N
         self.sons = []
@@ -224,6 +225,7 @@ def delete_dfs(now):
 
 def read(circuit, cnot_struct, topology):
     """ get describe from the circuit or cnot_struct
+
     Args:
         circuit(Circuit): the input circuit, contained the information of topology and (maybe) cnot
         cnot_struct(list<int>): the information of cnot. if None, the information is contained in the circuit
@@ -397,19 +399,9 @@ class TopologicalCnot(Optimization):
     """
 
     @classmethod
-    def run_parameter(cls, cnot_struct, topology):
-        """ optimize the circuit
-
-        Args:
-            cnot_struct(list<int>): the struct of cnot circuit
-            topology(list<tuple<int, int>>): topology of circuit
-
+    def execute(cls, circuit : Circuit = None, cnot_struct = None, topology = None):
         """
-        return cls._run(cnot_struct = cnot_struct, topology = topology)
 
-    @staticmethod
-    def _run(circuit : Circuit = None, cnot_struct = None, topology = None):
-        """
         Args:
             circuit(Circuit): the circuit to be optimize
             cnot_struct(list<int>/None): the struct of cnot circuit. if None, read circuit
@@ -437,7 +429,7 @@ class TopologicalCnot(Optimization):
                 for topos in topology:
                     topo[topos[0]][topos[1]] = True
 
-        output = []
+        output = CompositeGate()
         for item in ans:
             c = topo_backward_map[item.carg]
             t = topo_backward_map[item.targ]
@@ -469,4 +461,7 @@ class TopologicalCnot(Optimization):
                 GateBuilder.setTargs(t)
                 gate = GateBuilder.getGate()
                 output.append(gate)
-        return output
+        # return output
+        new_circuit = Circuit(N)
+        new_circuit.set_exec_gates(output)
+        return new_circuit

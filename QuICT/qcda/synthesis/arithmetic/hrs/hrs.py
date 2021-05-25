@@ -751,187 +751,180 @@ def CMulMod(control, x, a, ancilla, N, indicator):
 
 
 """
-def HRSIncrementerDecomposition(n):
-    circuit = Circuit(n * 2)
-    qubit_a = circuit([i for i in range(n)])
-    qubit_g = circuit([i for i in range(n, 2 * n)])
-    Incrementer(qubit_a, qubit_g)
-    return CompositeGate(circuit.gates)
-
-
-HRSIncrementer = Synthesis(HRSIncrementerDecomposition)
+class HRSIncrementer(Synthesis):
+    @classmethod
+    def execute(cls, n):
+        circuit = Circuit(n * 2)
+        qubit_a = circuit([i for i in range(n)])
+        qubit_g = circuit([i for i in range(n, 2 * n)])
+        Incrementer(qubit_a, qubit_g)
+        return CompositeGate(circuit.gates)
 """
 
+class HRSAdder(Synthesis):
+    @classmethod
+    def execute(cls, n, c):
+        """
+        Compute x(quantum) + c(classical) with borrowed qubits.
 
-def HRSAdderDecompossition(n, c):
-    """
-    Compute x(quantum) + c(classical) with borrowed qubits.
+        Args:
+            n(int): length of numbers
+            c(int): the constant added to the quantum number
 
-    Args:
-        n(int): length of numbers
-        c(int): the constant added to the quantum number
+        Quregs:
+            x(Qureg): n qubits.
+            ancilla(Qubit): 1 qubit, borrowed ancilla.
+            ancilla_g(Qubit): 1 qubit, borrowed ancilla.
+        """
+        circuit = Circuit(n + 2)
+        qubit_x = circuit([i for i in range(n)])
+        ancilla = circuit(n)
+        ancilla_g = circuit(n + 1)
 
-    Quregs:
-        x(Qureg): n qubits.
-        ancilla(Qubit): 1 qubit, borrowed ancilla.
-        ancilla_g(Qubit): 1 qubit, borrowed ancilla.
-    """
-    circuit = Circuit(n + 2)
-    qubit_x = circuit([i for i in range(n)])
-    ancilla = circuit(n)
-    ancilla_g = circuit(n + 1)
+        Adder(qubit_x, c, ancilla, ancilla_g)
 
-    Adder(qubit_x, c, ancilla, ancilla_g)
-
-    return CompositeGate(circuit.gates)
-
-
-HRSAdder = Synthesis(HRSAdderDecompossition)
+        return CompositeGate(circuit.gates)
 
 
 """
-def HRSCSubDecomposition(n, c):
-    circuit = Circuit(n + 3)
-    control = circuit(0)
-    qubit_x = circuit([i for i in range(1, n + 1)])
-    ancilla = circuit(n + 1)
-    ancilla_g = circuit(n + 2)
+class HRSCSub(Synthesis):
+    @classmethod
+    def execute(cls, n, c):
+        circuit = Circuit(n + 3)
+        control = circuit(0)
+        qubit_x = circuit([i for i in range(1, n + 1)])
+        ancilla = circuit(n + 1)
+        ancilla_g = circuit(n + 2)
 
-    CSub(control, qubit_x, c, ancilla, ancilla_g)
+        CSub(control, qubit_x, c, ancilla, ancilla_g)
 
-    return CompositeGate(circuit.gates)
-
-
-HRSCSub = Synthesis(HRSCSubDecomposition)
+        return CompositeGate(circuit.gates)
 """
 
 
 """
-def HRSCCCompareDecomposition(n, c):
-    circuit = Circuit(2 * n + 2)
-    control1 = circuit(0)
-    control2 = circuit(1)
-    qubit_b = circuit([i for i in range(2, n + 2)])
-    g_aug = circuit([i for i in range(n + 2, 2 * n + 1)])
-    indicator = circuit(2 * n + 1)
+class HRSCCCompare(Synthesis):
+    @classmethod
+    def execute(cls, n, c):
+        circuit = Circuit(2 * n + 2)
+        control1 = circuit(0)
+        control2 = circuit(1)
+        qubit_b = circuit([i for i in range(2, n + 2)])
+        g_aug = circuit([i for i in range(n + 2, 2 * n + 1)])
+        indicator = circuit(2 * n + 1)
 
-    CCCompare(control1, control2, qubit_b, c, g_aug, indicator)
+        CCCompare(control1, control2, qubit_b, c, g_aug, indicator)
 
-    return CompositeGate(circuit.gates)
-
-
-HRSCCCompare = Synthesis(HRSCCCompareDecomposition)
+        return CompositeGate(circuit.gates)
 """
 
 
-def HRSAdderModDecomposition(n, a, N):
-    """
-    Compute b(quantum) + a(classical) mod N(classical), with borrowed qubits g and ancilla qubit indicator.
-    
-    Args:
-        n(int): length of numbers
-        a(int): the constant added to the quantum number
-        N(int): the modulus
+class HRSAdderMod(Synthesis):
+    @classmethod
+    def execute(cls, n, a, N):
+        """
+        Compute b(quantum) + a(classical) mod N(classical), with borrowed qubits g and ancilla qubit indicator.
+        
+        Args:
+            n(int): length of numbers
+            a(int): the constant added to the quantum number
+            N(int): the modulus
 
-    Quregs：
-        b(Qreg): n qubits.
-        g(Qureg): n-1 borrowed qubits(more qubits are OK).
-        indicator(Qubit): 1 ancilla qubit.
+        Quregs：
+            b(Qreg): n qubits.
+            g(Qureg): n-1 borrowed qubits(more qubits are OK).
+            indicator(Qubit): 1 ancilla qubit.
 
-    Note that this circuit works only when n > 2.
-    So for smaller numbers we use another design.
-    """
-    if(n <= 2):
-        raise Exception("The numbers should be more than 2-length to use HRS circuits.")
-    circuit = Circuit(2 * n)
-    qubit_b = circuit([i for i in range(n)])
-    g = circuit([i for i in range(n, 2 * n - 1)])
-    indicator = circuit(2 * n - 1)
+        Note that this circuit works only when n > 2.
+        So for smaller numbers we use another design.
+        """
+        if(n <= 2):
+            raise Exception("The numbers should be more than 2-length to use HRS circuits.")
+        circuit = Circuit(2 * n)
+        qubit_b = circuit([i for i in range(n)])
+        g = circuit([i for i in range(n, 2 * n - 1)])
+        indicator = circuit(2 * n - 1)
 
-    AdderMod(qubit_b, a, N, g, indicator)
+        AdderMod(qubit_b, a, N, g, indicator)
 
-    return CompositeGate(circuit.gates)
-
-
-HRSAdderMod = Synthesis(HRSAdderModDecomposition)
+        return CompositeGate(circuit.gates)
 
 
 """
-def HRSCMulModRawDecomposition(n, a, N):
-    circuit = Circuit(2 * n + 2)
-    control = circuit(0)
-    qubit_x = circuit([i for i in range(1, n + 1)])
-    qubit_b = circuit([i for i in range(n + 1, 2 * n + 1)])
-    indicator = circuit(2 * n + 1)
+class HRSCMulModRaw(Synthesis):
+    @classmethod
+    def execute(cls, n, a, N):
+        circuit = Circuit(2 * n + 2)
+        control = circuit(0)
+        qubit_x = circuit([i for i in range(1, n + 1)])
+        qubit_b = circuit([i for i in range(n + 1, 2 * n + 1)])
+        indicator = circuit(2 * n + 1)
 
-    CMulModRaw(control, qubit_x, a, qubit_b, N, indicator)
+        CMulModRaw(control, qubit_x, a, qubit_b, N, indicator)
 
-    return CompositeGate(circuit.gates)
-
-
-HRSCMulModRaw = Synthesis(HRSCMulModRawDecomposition)
+        return CompositeGate(circuit.gates)
 """
 
 
-def HRSMulModDecomposition(n, a, N):
-    """
-    Compute x(quantum) * a(classical) mod N(classical), with ancilla qubits.
+class HRSMulMod(Synthesis):
+    @classmethod
+    def execute(cls, n, a, N):
+        """
+        Compute x(quantum) * a(classical) mod N(classical), with ancilla qubits.
 
-    Args:
-        n(int): length of numbers
-        a(int): the constant multiplied to the quantum number
-        N(int): the modulus
+        Args:
+            n(int): length of numbers
+            a(int): the constant multiplied to the quantum number
+            N(int): the modulus
 
-    Quregs:
-        x(Qureg): n qubits.
-        ancilla(Qureg): n qubits.
-        indicator(Qubit): 1 qubit.
-    
-    Note that this circuit works only when n > 2.
-    So for smaller numbers we use another design.
-    """
-    if(n <= 2):
-        raise Exception("The numbers should be more than 2-length to use HRS circuits.")
-    circuit = Circuit(2 * n + 1)
-    qubit_x = circuit([i for i in range(n)])
-    ancilla = circuit([i for i in range(n, 2 * n)])
-    indicator = circuit(2 * n)
+        Quregs:
+            x(Qureg): n qubits.
+            ancilla(Qureg): n qubits.
+            indicator(Qubit): 1 qubit.
+        
+        Note that this circuit works only when n > 2.
+        So for smaller numbers we use another design.
+        """
+        if(n <= 2):
+            raise Exception("The numbers should be more than 2-length to use HRS circuits.")
+        circuit = Circuit(2 * n + 1)
+        qubit_x = circuit([i for i in range(n)])
+        ancilla = circuit([i for i in range(n, 2 * n)])
+        indicator = circuit(2 * n)
 
-    MulMod(qubit_x, a, ancilla, N, indicator)
+        MulMod(qubit_x, a, ancilla, N, indicator)
 
-    return CompositeGate(circuit.gates)
-
-HRSMulMod = Synthesis(HRSMulModDecomposition)
+        return CompositeGate(circuit.gates)
 
 
-def CHRSMulModDecomposition(n, a, N):
-    """
-    Compute x(quantum) * a(classical) mod N(classical), with ancilla qubits, 1-controlled.
+class CHRSMulMod(Synthesis):
+    @classmethod
+    def execute(cls, n, a, N):
+        """
+        Compute x(quantum) * a(classical) mod N(classical), with ancilla qubits, 1-controlled.
 
-    Args:
-        n(int): length of numbers
-        a(int): the constant multiplied to the quantum number
-        N(int): the modulus
-    
-    Quregs:
-        control(Qubit): 1 qubit.
-        x(Qureg): n qubits.
-        ancilla(Qureg): n qubits.
-        indicator(Qubit): 1 qubit.
-    
-    Note that this circuit works only when n > 2.
-    So for smaller numbers we use another design.
-    """
-    if(n <= 2):
-        raise Exception("The numbers should be more than 2-length to use HRS circuits.")
-    circuit = Circuit(2 * n + 2)
-    qubit_x = circuit([i for i in range(n)])
-    ancilla = circuit([i for i in range(n, 2 * n)])
-    indicator = circuit(2 * n)
-    control = circuit(2 * n + 1)
+        Args:
+            n(int): length of numbers
+            a(int): the constant multiplied to the quantum number
+            N(int): the modulus
+        
+        Quregs:
+            control(Qubit): 1 qubit.
+            x(Qureg): n qubits.
+            ancilla(Qureg): n qubits.
+            indicator(Qubit): 1 qubit.
+        
+        Note that this circuit works only when n > 2.
+        So for smaller numbers we use another design.
+        """
+        if(n <= 2):
+            raise Exception("The numbers should be more than 2-length to use HRS circuits.")
+        circuit = Circuit(2 * n + 2)
+        qubit_x = circuit([i for i in range(n)])
+        ancilla = circuit([i for i in range(n, 2 * n)])
+        indicator = circuit(2 * n)
+        control = circuit(2 * n + 1)
 
-    CMulMod(control, qubit_x, a, ancilla, N, indicator)
-    
-    return CompositeGate(circuit.gates)
-
-CHRSMulMod = Synthesis(CHRSMulModDecomposition)
+        CMulMod(control, qubit_x, a, ancilla, N, indicator)
+        
+        return CompositeGate(circuit.gates)

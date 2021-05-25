@@ -5,8 +5,8 @@ import numpy as np
 
 from QuICT.core import Circuit, Unitary, Ry, Rz, CX
 from QuICT.algorithm.synthetical_unitary import SyntheticalUnitary
-from QuICT.qcda.synthesis.unitary_transform.two_qubit_transform import CartanKAKDecomposition, KAK
-from QuICT.qcda.synthesis.unitary_transform.two_qubit_diagonal_transform import KAKDiag
+from QuICT.qcda.synthesis.unitary_transform.two_qubit_transform import CartanKAKDecomposition, TwoQubitTransform
+from QuICT.qcda.synthesis.unitary_transform.two_qubit_diagonal_transform import TwoQubitDiagonalTransform
 
 
 def generate_unitary(n):
@@ -76,7 +76,7 @@ def test_two_bit_transform():
     for _ in range(200):
         U = generate_unitary(4)
         circuit = Circuit(2)
-        KAK(U) | circuit
+        TwoQubitTransform.execute(U) | circuit
 
         Ucir = SyntheticalUnitary.run(circuit)
         phase = U.dot(np.linalg.inv(Ucir))
@@ -88,7 +88,7 @@ def test_two_qubit_diagonal_transform():
         U = generate_unitary(4)
         U /= np.linalg.det(U) ** 0.25
         circuit = Circuit(2)
-        KAKDiag(U) | circuit
+        TwoQubitDiagonalTransform.execute(U) | circuit
 
         Ucir = SyntheticalUnitary.run(circuit)
         phase = U.dot(np.linalg.inv(Ucir))

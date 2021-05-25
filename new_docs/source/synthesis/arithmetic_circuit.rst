@@ -41,7 +41,7 @@ The typical way to use them would be like the (take **division** as example):
     of_q = circuit(3*n)
 
     #After some procedures, a_q, b_q and r_q are now in arbitary states.
-    RestoringDivision(n) | (a_q,b_q,r_q,of_q)
+    RestoringDivision.execute(n) | (a_q,b_q,r_q,of_q)
 
 Next we will use VBE module to demonstrate more detailed usage.
 
@@ -52,7 +52,7 @@ In **QuICT.qcda.synthesis.arithmetic.vbe**, we have **VBEAdder**, **VBEAdderMod*
 VBEAdder
 >>>>>>>>>>>>>>>>>
 
-**VBEAdder(n)** constructs a circuit which can add two integers. 
+**VBEAdder.execute(n)** constructs a circuit which can add two integers. 
 It takes **n** as the parameter indicating the length of the integer, to tailor the circuit to proper size.
 
 Qureg **a** keeps unchanged, the result is stored in qureg **b**,
@@ -72,12 +72,12 @@ qureg **c** is clean ancilla, qubit **overflow** flips if the addition produces 
     overflow_q = circuit(3*n)
 
     #After some procedures, the quregs are now in arbitary states.
-    VBEAdder(n) | (a_q,b_q,c_q,overflow_q)
+    VBEAdder.execute(n) | (a_q,b_q,c_q,overflow_q)
 
 VBEAdderMod
 >>>>>>>>>>>>>>>>>
 
-**VBEAdderMod(N,n)** constructs a circuit which can add two integers module N. 
+**VBEAdderMod.execute(N,n)** constructs a circuit which can add two integers module N. 
 It takes **N** as the constant modulus embedded in the structure of the circuit. 
 It takes **n** as the parameter indicating the length of the integer, to tailor the circuit to proper size.
 
@@ -100,12 +100,12 @@ qureg **c**, **N_q**, **overflow** and **t** are clean ancilla.
     t_q = circuit(4*n + 1)
 
     #After some procedures, the quregs are now in arbitary states.
-    VBEAdderMod(n,N) | (a_q,b_q,c_q,overflow_q,N_q,t_q)
+    VBEAdderMod.execute(n,N) | (a_q,b_q,c_q,overflow_q,N_q,t_q)
 
 VBEMulAddMod
 >>>>>>>>>>>>>>>>>
 
-**VBEMulAddMod(a,N,n,m)** constructs a circuit which computes multiplication-addition module N. 
+**VBEMulAddMod.execute(a,N,n,m)** constructs a circuit which computes multiplication-addition module N. 
 It takes **a** as a constant multiplier embedded in the structure of the circuit.
 It takes **N** as the constant modulus embedded in the structure of the circuit. 
 It takes **n** as the parameter indicating the length of **N**, to tailor the circuit to proper size.
@@ -131,12 +131,12 @@ qureg **a_q**, **c**, **N_q**, **overflow** and **t** are clean ancilla.
     t_q = circuit(4*n + m + 1)
 
     #After some procedures, the quregs are now in arbitary states.
-    VBEMulAddMod(a,N,n,m) | (x_q,a_q,b_q,c_q,overflow_q,N_q,t_q)
+    VBEMulAddMod.execute(a,N,n,m) | (x_q,a_q,b_q,c_q,overflow_q,N_q,t_q)
 
 VBEExpMod
 >>>>>>>>>>>>>>>>>
 
-**VBEExpMod(a,N,n,m)** constructs a circuit which computes exponentiation module N. 
+**VBEExpMod.execute(a,N,n,m)** constructs a circuit which computes exponentiation module N. 
 It takes **a** as a constant base number embedded in the structure of the circuit.
 It takes **N** as the constant modulus embedded in the structure of the circuit. 
 It takes **n** as the parameter indicating the length of **N**, to tailor the circuit to proper size.
@@ -163,7 +163,7 @@ qureg **a_q**, **c**, **N_q**, **overflow** and **t** are clean ancilla.
     t_q = circuit(5*n + m + 1)
 
     #After some procedures, the quregs are now in arbitary states.
-    VBEExpMod(a,N,n,m) | (x_q,r_q,a_q,b_q,c_q,overflow_q,N_q,t_q)
+    VBEExpMod.execute(a,N,n,m) | (x_q,r_q,a_q,b_q,c_q,overflow_q,N_q,t_q)
 
 BEA module
 --------------
@@ -173,7 +173,7 @@ Besides,there are a few circuits used as intermediate implementation of Shor's a
 BEAAdder
 >>>>>>>>>>>>>>>>>
 
-**BEAAdder(n)** behaves like **VBEAdder(n)**, but without Control and Overflow bits. 
+**BEAAdder.execute(n)** behaves like **VBEAdder.execute(n)**, but without Control and Overflow bits. 
 It takes **n** as the parameter indicating the length of the integer, to tailor the circuit to proper size.
 
 Qureg **a** keeps unchanged, the result is stored in qureg **b**.
@@ -190,12 +190,12 @@ Qureg **a** keeps unchanged, the result is stored in qureg **b**.
     qreg_b = circuit([i for i in range(n, n * 2)])
 
     #After some procedures, the quregs are now in arbitary states.
-    BEAAdder(n) | (qreg_a,qreg_b)
+    BEAAdder.execute(n) | (qreg_a,qreg_b)
 
 BEAAdderWired
 >>>>>>>>>>>>>>>>>
 
-**BEAAdderWired(n,a)** behaves like **BEAAdder(n)**, but `a` is wired. `b` use n+1 bits to store, therefore guarantee no overflow.
+**BEAAdderWired.execute(n,a)** behaves like **BEAAdder.execute(n)**, but `a` is wired. `b` use n+1 bits to store, therefore guarantee no overflow.
 
 \|b> -> \|a+b>
 
@@ -208,12 +208,12 @@ BEAAdderWired
     qreg_b = circuit([i for i in range(n + 1)])
 
     #After some procedures, the quregs are now in arbitary states.
-    BEAAdderWired(n,a) | qreg_b
+    BEAAdderWired.execute(n,a) | qreg_b
 
-BEAAdderWiredCC
+CCBEAAdderWired
 >>>>>>>>>>>>>>>>>
 
-**BEAAdderWiredCC(n,a)** is **BEAAdderWired(n,a)** with 2 control bits.
+**CCBEAAdderWired.execute(n,a)** is **BEAAdderWired.execute(n,a)** with 2 control bits.
 
 \|b,c> -> \|(c==0b11)?a+b:b,c>
 
@@ -227,12 +227,12 @@ BEAAdderWiredCC
     qreg_c = circuit([i for i in range(n + 1, n + 3)])
 
     #After some procedures, the quregs are now in arbitary states.
-    BEAAdderWiredCC(n,a) | (qreg_b,qreg_c)
+    CCBEAAdderWired.execute(n,a) | (qreg_b,qreg_c)
 
 BEAAdderMod
 >>>>>>>>>>>>>>>>>
 
-**BEAAdderMod(n,a,N)** constructs a circuit which can add two integers module N, and `a` is wired. 
+**BEAAdderMod.execute(n,a,N)** constructs a circuit which can add two integers module N, and `a` is wired. 
 It takes **N** as the constant modulus embedded in the structure of the circuit. 
 It takes **n** as the parameter indicating the length of the integer, to tailor the circuit to proper size.
 
@@ -254,12 +254,12 @@ qureg **low** is  the clean ancillary qubit.
     qreg_low = circuit([i for i in range(n + 1, n + 2)])
 
     #After some procedures, the quregs are now in arbitary states.
-    BEAAdderMod(n,a,N) | (qreg_b,qreg_low)
+    BEAAdderMod.execute(n,a,N) | (qreg_b,qreg_low)
 
 BEAMulMod
 >>>>>>>>>>>>>>>>>
 
-**BEAMulMod(n,a,N)** constructs a circuit which computes multiplication-addition module N. 
+**BEAMulMod.execute(n,a,N)** constructs a circuit which computes multiplication-addition module N. 
 It takes **a** as a constant multiplier embedded in the structure of the circuit.
 It takes **N** as the constant modulus embedded in the structure of the circuit. 
 It takes **n** as the parameter indicating the length of **N** and **x**, to tailor the circuit to proper size.
@@ -280,4 +280,4 @@ qureg **low** is the clean ancillary qubit.
     qreg_low = circuit(2 * n + 1)
 
     #After some procedures, the quregs are now in arbitary states.
-    BEAMulMod(n,a,N) | (qreg_b,qreg_x,qreg_low)
+    BEAMulMod.execute(n,a,N) | (qreg_b,qreg_x,qreg_low)
