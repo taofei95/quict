@@ -47,7 +47,7 @@ def test_HRSAdder():
             ancilla = circuit(n)
             ancilla_g = circuit(n + 1)
             Set(a_q, a)
-            HRSAdder(n, b) | (a_q, ancilla, ancilla_g)
+            HRSAdder.execute(n, b) | (a_q, ancilla, ancilla_g)
             Measure | circuit
             circuit.exec()
             if int(a_q) != (a + b)%(2**n):
@@ -67,7 +67,7 @@ def test_HRSAdderMod():
                 g_q = circuit([i for i in range(n, 2*n - 1)])
                 indicator = circuit(2*n - 1)
                 Set(b_q, b)
-                HRSAdderMod(n, a, N) | (b_q, g_q, indicator)
+                HRSAdderMod.execute(n, a, N) | (b_q, g_q, indicator)
                 Measure | circuit
                 circuit.exec()
                 print(int(b_q))
@@ -89,7 +89,7 @@ def test_HRSMulMod():
                 ancilla = circuit([i for i in range(n, 2*n)])
                 indicator = circuit(2*n)
                 Set(x_q, x)
-                HRSMulMod(n, a, N) | (x_q, ancilla, indicator)
+                HRSMulMod.execute(n, a, N) | (x_q, ancilla, indicator)
                 Measure | circuit
                 circuit.exec()
                 if int(x_q) != (a*x)%(N):
