@@ -29,7 +29,7 @@ class Edge:
         pass
 
 
-class GraphStructure:
+class DirectedGraph:
     # print_info
     def print_info(self):
         pass
@@ -66,15 +66,61 @@ class GraphStructure:
     def edges(self) -> Iterable[Edge]:
         pass
 
-    # dijkstra
-    def dijkstra(self, source, inf):
-        pass
+
+class DirectedGraphWrapper:
+    def __init__(self):
+        self._instance = directed_graph_builder(int)
+        self.index_to_label = {}
+        self.label_to_index = {}
+        self._index_cnt = 0
+
+    # print_info
+    def print_info(self):
+        self._instance.print_info()
+
+    # add_edge
+    def add_edge(self, from_, to_, data_):
+        self.add_vertex(from_)
+        self.add_vertex(to_)
+        self._instance.add_edge(self.label_to_index[from_], self.label_to_index[to_], data_)
+
+    # add_vertex
+    def add_vertex(self, v):
+        if v not in self.label_to_index:
+            self._instance.add_vertex(self._index_cnt)
+            self.label_to_index[v] = self._index_cnt
+            self.index_to_label[self._index_cnt] = v
+            self._index_cnt += 1
+
+    # edge_cnt
+    def edge_cnt(self) -> int:
+        return self._instance.edge_cnt()
+
+    # edges_from
+    def edges_from(self, v) -> Iterable[Edge]:
+        return self._instance.edges_from(self.label_to_index[v])
+
+    # edges_to
+    def edges_to(self, v) -> Iterable[Edge]:
+        return self._instance.edges_to(self.label_to_index[v])
+
+    # out_deg_of
+    def out_deg_of(self, v) -> int:
+        return self._instance.out_deg_of(self.label_to_index[v])
+
+    # in_deg_of
+    def in_deg_of(self, v) -> int:
+        return self._instance.in_deg_of(self.label_to_index[v])
+
+    # edges
+    def edges(self) -> Iterable[Edge]:
+        return self._instance.edges()
 
 
-def GraphStructureBuilder(vertex_label: type = int) -> GraphStructure:
+def directed_graph_builder(vertex_label: type = int) -> DirectedGraph:
     if vertex_label is int:
         return graph_structure_mod.directed_graph_vertex_label_int()
     elif vertex_label is str:
         return graph_structure_mod.directed_graph_vertex_label_str()
     else:
-        raise NotImplementedError("Only support int/str vertex label for now")
+        return DirectedGraphWrapper()

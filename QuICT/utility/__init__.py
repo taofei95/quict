@@ -1,1 +1,1 @@
-from .graph_structure import GraphStructureBuilder
+from .graph_structure import directed_graph_builder
