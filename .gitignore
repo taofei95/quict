@@ -11,8 +11,10 @@ __pycache__/
 /source/
 make.bat
 .idea
+example/python/*.jpg
 .vscode
 .test_build
 _build
-*.jpg
-.vscode
+*qubit_cnot.json
+*qubit_cnot.inf
+*qubit_cnot_depth.inf

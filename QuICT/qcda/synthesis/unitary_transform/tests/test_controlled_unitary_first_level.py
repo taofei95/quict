@@ -3,7 +3,7 @@ from scipy.linalg import cossin
 from scipy.linalg import block_diag
 from scipy.stats import unitary_group
 from ..controlled_unitary import quantum_shannon_decompose
-from ...uniformly_gate import uniformlyRz
+from ...uniformly_gate import UniformlyRz
 from QuICT.core import *
 
 
@@ -21,7 +21,7 @@ def test_controlled_unitary_first_level():  # Only test the first decomposition
             theta = -2 * np.log(s) / 1j
             angle_list.append(theta)
 
-        gates = uniformlyRz(
+        gates = UniformlyRz.execute(
             angle_list=angle_list,
             mapping=[(i + 1) % qubit_num for i in range(qubit_num)]
         )

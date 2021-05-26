@@ -272,7 +272,7 @@ print(result.get_counts(circ))
         else:
             de_gate["args"] = []
         de_gate["bits"] = [child.name for child in node.bitlist.children]
-        if node.name in self.standard_extension or node.name in self.extern_extension:
+        if node.name in self.standard_extension:
             return
         de_gate["body"] = node.body
 

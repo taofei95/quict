@@ -30,10 +30,23 @@ file_data = [
     ("QuICT/qcda/synthesis/initial_state_preparation",
      [f"{prj_root_relative}/QuICT/qcda/synthesis/initial_state_preparation/initial_state_preparation_cdll.so"],
      ),
+    ("QuICT/qcda/mapping/mcts/mcts_core",
+     [f"{prj_root_relative}/QuICT/qcda/mapping/mcts/mcts_core/mcts_wrapper.cpython-38-x86_64-linux-gnu.so"]
+    ),
+    ("QuICT/qcda/mapping/mcts/mcts_core/lib/build",
+     [f"{prj_root_relative}/QuICT/qcda/mapping/mcts/mcts_core/lib/build/libmcts.so"]
+    )
 ]
 
 # 3rd party library
-requires = ['scipy']
+requires = [
+   'pytest>=6.2.3',
+   'numpy>=1.20.1',
+   'networkx>=2.5.1',
+   'matplotlib>=3.3.4',
+   'cython>=0.29.23',
+   'ply>=3.11',  
+   'scipy']
 
 # version information
 about = {}

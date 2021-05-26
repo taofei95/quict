@@ -154,6 +154,19 @@ def test_Rzz():
                 assert 0
     assert 1
 
+def test_CCX():
+    max_test = 3
+    every_round = 1
+    for i in range(3, max_test + 1):
+        for _ in range(every_round):
+            circuit = Circuit(i)
+            CCX | circuit
+            amplitude1 = Amplitude.run(circuit)
+            circuit.clear()
+            (CCX & [0, 1, 2]).build_gate() | circuit
+            amplitude2 = Amplitude.run(circuit)
+            assert np.allclose(amplitude1, amplitude2)
+
 if __name__ == "__main__":
     # pytest.main(["./_unit_test.py", "./circuit_unit_test.py", "./gate_unit_test.py", "./qubit_unit_test.py"])
     pytest.main(["./gate_unit_test.py"])

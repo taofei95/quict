@@ -42,9 +42,6 @@ def Inverse(start, end):
 def Copy(x, copy_list):
     """ copy process in Lemma 5
 
-    :param x:
-    :param copy_list:
-    :return:
     """
     own = [x]
     x_l = 1
@@ -57,8 +54,8 @@ def Copy(x, copy_list):
             run_l += 1
 
 def ConstructPj(c, x, z, sqrtn, d2logn):
-    """ Apply Lemma 5 to make |x, z, 0> -> |x, (Pj)z, 0>
-
+    """
+    Apply Lemma 5 to make (x, z, 0) -> (x, (Pj)z, 0)$$
     Pj is the sqrt(n) * logn/2 matrix go through F_2^{logn / 2}
 
     Args:
@@ -230,7 +227,7 @@ def GenerateYBase(Y_part, c, length, x):
     Inverse(Step1_start, Step1_end)
 
 def GenerateYPart(Y_part, x, c, index, length, z):
-    """ apply Corollary 3 to make |x, z, 0> -> |x, (T_part)z, 0>
+    """ :: apply Corollary 3 to make (x, z, 0) -> (x, (T_part)z, 0)
 
     time complex: \tilde{O}(sn)
     depth : O(logn)
@@ -261,7 +258,7 @@ def GenerateYPart(Y_part, x, c, index, length, z):
     Inverse(init_len, end_len)
 
 def MainProcedure(M, x, c, z):
-    """ apply Lemma4 to make |x, z, 0> -> |x, z xor Mx, 0>
+    """ apply Lemma4 to make (x, z, 0) -> (x, z xor Mx, 0)
 
     time complex: \tilde{O}(n^2)
     depth : O(n/slogn)
@@ -369,7 +366,7 @@ def read(circuit : Circuit):
 
 class CnotAncillae(Optimization):
     @classmethod
-    def run(cls, circuit : Circuit, size = 1, inplace = False):
+    def execute(cls, circuit : Circuit, size = 1, inplace = False):
         """ Optimization the circuit by (3s+1)n ancillary qubits
 
         Optimal Space-Depth Trade-Off of CNOT Circuits in Quantum Logic Synthesis
@@ -388,27 +385,16 @@ class CnotAncillae(Optimization):
 
         global s
         s = size
-        circuit.const_lock = True
-        gates = cls._run(circuit)
-        circuit.const_lock = False
-        new_circuit = Circuit(circuit.circuit_width() * (2 + 3 * size))
-        new_circuit.set_exec_gates(gates)
-        return new_circuit
-
-    @staticmethod
-    def _run(circuit : Circuit, *pargs):
-        """
-        Args:
-            circuit(Circuit): circuit to be optimize
-            *pargs: empty
-        """
 
         matrix = read(circuit)
         solve(matrix)
-        gates = []
+        gates = CompositeGate()
         GateBuilder.setGateType(GATE_ID["CX"])
         for cnot in CNOT:
             GateBuilder.setCargs(cnot[0])
             GateBuilder.setTargs(cnot[1])
             gates.append(GateBuilder.getGate())
-        return gates
+
+        new_circuit = Circuit(circuit.circuit_width() * (2 + 3 * size))
+        new_circuit.set_exec_gates(gates)
+        return new_circuit

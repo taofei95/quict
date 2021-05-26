@@ -11,7 +11,7 @@ import numpy as np
 
 from QuICT.algorithm import Amplitude, SyntheticalUnitary
 from QuICT.core import *
-from QuICT.qcda.synthesis import uniformlyRy, uniformlyRz, uniformlyUnitary
+from QuICT.qcda.synthesis import UniformlyRy, UniformlyRz, UniformlyUnitary
 
 
 def generate_unitary():
@@ -26,7 +26,7 @@ def test_uniform_ry():
         for i in range(1, 8):
             circuit = Circuit(i)
             angles = [random.random() for _ in range(1 << (i - 1))]
-            uniformlyRy(angles) | circuit
+            UniformlyRy.execute(angles) | circuit
             unitary = SyntheticalUnitary.run(circuit)
             for j in range(1 << (i - 1)):
                 unitary_slice = unitary[2 * j:2 * (j + 1), 2 * j:2 * (j + 1)]
@@ -39,7 +39,7 @@ def test_uniform_rz():
         for i in range(1, 8):
             circuit = Circuit(i)
             angles = [random.random() for _ in range(1 << (i - 1))]
-            uniformlyRz(angles) | circuit
+            UniformlyRz.execute(angles) | circuit
             unitary = SyntheticalUnitary.run(circuit)
             for j in range(1 << (i - 1)):
                 unitary_slice = unitary[2 * j:2 * (j + 1), 2 * j:2 * (j + 1)]
@@ -51,12 +51,12 @@ def test_uniform_unitary():
         for i in range(1, 8):
             circuit = Circuit(i)
             unitaries = [generate_unitary() for _ in range(1 << (i - 1))]
-            uniformlyUnitary(unitaries) | circuit
+            UniformlyUnitary.execute(unitaries) | circuit
             unitary = SyntheticalUnitary.run(circuit)
             if abs(unitary[0, 0]) > 1e-10:
-                delta = unitaries[0][0] / unitary[0, 0]
+                delta = unitaries[0][0][0] / unitary[0, 0]
             else:
-                delta = unitaries[0][1] / unitary[0, 1]
+                delta = unitaries[0][0][1] / unitary[0, 1]
             for j in range(1 << (i - 1)):
                 unitary_slice = unitary[2 * j:2 * (j + 1), 2 * j:2 * (j + 1)]
                 unitary_slice[:] *= delta

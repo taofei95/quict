@@ -100,18 +100,18 @@ def solve(input: Circuit):
                             return circuit
                         queue.append(new_state)
         l += 1
-        if l % 100 == 0:
-            print(l)
-
 
 class CnotForceBfs(Optimization):
     """ use bfs to optimize the cnot circuit
 
     """
-    @staticmethod
-    def _run(circuit : Circuit, *pargs):
+    @classmethod
+    def execute(cls, circuit : Circuit, *pargs):
         """
-        circuit(Circuit): the circuit to be optimize
-        *pargs: other parameters
+        Args:
+            circuit(Circuit): the circuit to be optimize
+            *pargs: other parameters
+        Returns:
+            Circuit: output circuit
         """
         return solve(circuit)
