@@ -1,1 +1,1 @@
-from graph_structure import GraphStructure
+from .graph_structure_bind import GraphStructureBuilder

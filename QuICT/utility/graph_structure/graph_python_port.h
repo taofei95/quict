@@ -16,9 +16,9 @@ void expose_edge(py::module &m, const std::string &type_str_suffix) {
     using clazz = graph::edge_t<vertex_label_t, edge_data_t>;
     std::string type_str = "edge" + type_str_suffix;
     py::class_<clazz, std::shared_ptr<clazz>>(m, type_str.c_str())
-            .def_readwrite("from", &clazz::from_)
-            .def_readwrite("to", &clazz::to_)
-            .def_readwrite("data", &clazz::data_)
+            .def_readwrite("from_", &clazz::from_)
+            .def_readwrite("to_", &clazz::to_)
+            .def_readwrite("data_", &clazz::data_)
             .def("print_info", &clazz::print_info);
 }
 
