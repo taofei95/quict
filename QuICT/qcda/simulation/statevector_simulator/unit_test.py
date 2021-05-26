@@ -108,7 +108,7 @@ def test_small_mat_large_vec():
     print(final_state_expected)
     print(final_state_refined)
 
-    assert np.allclose(final_state, final_state_expected) # error!
+    assert np.allclose(final_state, final_state_expected)  # error!
     assert np.allclose(final_state_refined, final_state_expected)
 
 
@@ -116,16 +116,19 @@ def test_refine_vec_sim():
     qubit_num = 20
     circuit = Circuit(qubit_num)
     circuit.random_append(2000)
-    initial_state = np.zeros(1 << qubit_num, dtype=np.complex128)
+    initial_state = np.zeros(1 << qubit_num, dtype=np.complex64)
     initial_state[0] = 1.0 + 0.0j
-    start_time = time()
-    state = StateVectorSimulatorRefine.run(circuit, initial_state)
-    end_time = time()
-    duration_1 = end_time - start_time
+
     start_time = time()
     state_expected = Amplitude.run(circuit)
     end_time = time()
     duration_2 = end_time - start_time
+
+    start_time = time()
+    state = StateVectorSimulatorRefine.run(circuit, initial_state)
+    end_time = time()
+    duration_1 = end_time - start_time
+
     assert np.allclose(state, state_expected)
     print()
     print(f"Cur algo: {duration_1} s.")

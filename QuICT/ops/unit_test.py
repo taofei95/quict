@@ -3,6 +3,7 @@ import unittest
 import numpy as np
 
 from pprint import pprint
+from time import time
 
 import QuICT.ops.linalg.cpu_calculator as CPUCalculator
 import QuICT.ops.linalg.gpu_calculator as GPUCalculator
@@ -120,6 +121,9 @@ class TestGPULinalg(unittest.TestCase):
             small_mat = GPUCalculator.htod(small_mat_)
             large_vec = GPUCalculator.htod(large_vec_)
             affect_args = GPUCalculator.htod(affect_args_)
+            affect_args_sorted_ = affect_args_.copy()
+            affect_args_sorted_.sort()
+            affect_args_sorted = GPUCalculator.htod(affect_args_sorted_)
             result_expected = GPUCalculator.vector_dot_refined(small_mat, large_vec, affect_args)
             result_ = large_vec_.copy()
             result = GPUCalculator.htod(result_)
@@ -127,7 +131,7 @@ class TestGPULinalg(unittest.TestCase):
             # # for debug
             # GPUCalculator.vector_dot_cuda_sim(small_mat, result_, affect_args)
 
-            GPUCalculator.vector_dot_cuda(small_mat, result, affect_args)
+            GPUCalculator.vector_dot_cuda(small_mat, result, affect_args, affect_args_sorted)
             result_ = result.get()
 
             # # print if needed
@@ -140,6 +144,44 @@ class TestGPULinalg(unittest.TestCase):
             # pprint(result_expected)
 
             self.assertTrue(np.allclose(result_, result_expected))
+
+    def test_perf_small_mat_large_vec_cuda_kernel(self):
+        qubit_num = 25
+        affect_num = np.random.randint(2, min(qubit_num, 4))
+        affect_args_ = np.random.choice(np.arange(qubit_num), affect_num, False)
+        small_mat_ = np.random.rand(1 << affect_num, 1 << affect_num) + \
+                     np.random.rand(1 << affect_num, 1 << affect_num) * 1.0j
+        large_vec_ = np.random.rand(1 << qubit_num) + np.random.rand(1 << qubit_num) * 1.0j
+
+        small_mat = GPUCalculator.htod(small_mat_)
+        large_vec = GPUCalculator.htod(large_vec_)
+        affect_args = GPUCalculator.htod(affect_args_)
+        affect_args_sorted_ = affect_args_.copy()
+        affect_args_sorted_.sort()
+        affect_args_sorted = GPUCalculator.htod(affect_args_sorted_)
+
+        rnd = 100
+        start_time = time()
+        for _ in range(rnd):
+            tmp = GPUCalculator.vector_dot_refined(small_mat, large_vec, affect_args, False)
+            del tmp
+        end_time = time()
+        duration_refined = (end_time - start_time) * 1000 / rnd
+
+        # if count jit time
+        GPUCalculator.vector_dot_cuda(small_mat, large_vec, affect_args, affect_args_sorted)
+
+        start_time = time()
+        for _ in range(rnd):
+            GPUCalculator.vector_dot_cuda(small_mat, large_vec, affect_args, affect_args_sorted)
+        end_time = time()
+        duration_cuda = (end_time - start_time) * 1000 / rnd
+
+        print()
+        print(f"qubit_num = {qubit_num}")
+        print(f"gate_affect_qubit = {affect_num}")
+        print(f"2-permutation dot: {duration_refined:0.4f} ms per op.")
+        print(f"cuda: {duration_cuda:0.4f} ms per op.")
 
 
 if __name__ == "__main__":

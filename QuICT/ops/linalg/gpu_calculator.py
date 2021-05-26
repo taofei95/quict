@@ -347,22 +347,22 @@ def _small_mat_large_vec_kernel(
 
 
 def vector_dot_cuda(
-        small_mat_: cp.ndarray,
-        large_vec_: cp.ndarray,
-        affect_args_: cp.ndarray,
+        small_mat_,
+        large_vec_,
+        affect_args_,
+        affect_args_sorted_,
 ):
     thread_per_block = 256
     block_num = (large_vec_.shape[0] + thread_per_block - 1) // thread_per_block
     qubit_num = np.log2(large_vec_.shape[0]).astype(np.int64)
     remained_vec_index = large_vec_.shape[0] // small_mat_.shape[0]
-    affect_args_sorted = affect_args_.copy()
-    affect_args_sorted = cp.sort(affect_args_sorted)
+
     _small_mat_large_vec_kernel[block_num, thread_per_block](
         small_mat_,
         large_vec_,
         qubit_num,
         affect_args_,
-        affect_args_sorted,
+        affect_args_sorted_,
         0,
         remained_vec_index,
     )
