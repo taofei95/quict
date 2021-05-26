@@ -1,7 +1,7 @@
 # noinspection PyUnresolvedReferences
 from scipy.linalg import cossin
 from scipy.stats import unitary_group
-from ...uniformly_gate import UniformlyRy
+from QuICT.qcda.synthesis.uniformly_gate import UniformlyRy
 from QuICT.core import *
 from QuICT.algorithm import SyntheticalUnitary
 

@@ -6,10 +6,11 @@
 
 import argparse
 
-from os import path, getcwd
+from os import path, getcwd, system
 from datetime import datetime
 from setuptools import setup
 from setuptools import find_packages
+import platform
 
 py_file_path = path.dirname(path.abspath(__file__))
 
@@ -23,6 +24,14 @@ packages = find_packages(where=prj_root_relative)
 
 print(f"Found packages: {packages}")
 
+if platform.system() == 'Linux':
+    lib1 = f"{prj_root_relative}/QuICT/qcda/mapping/mcts/mcts_core/mcts_wrapper.cpython-38-x86_64-linux-gnu.so"
+    lib2 = f"{prj_root_relative}/QuICT/qcda/mapping/mcts/mcts_core/lib/build/libmcts.so"
+else:
+    lib1 = f"{prj_root_relative}/QuICT/qcda/mapping/mcts/mcts_core/mcts_wrapper.cpython-38-darwin.so"
+    lib2 = f"{prj_root_relative}/QuICT/qcda/mapping/mcts/mcts_core/lib/build/libmcts.dylib"
+    system(f"install_name_tool -add_rpath {path.dirname(lib2)} {lib1}")
+
 # static file
 file_data = [
     ("QuICT/backends", [f"{prj_root_relative}/QuICT/backends/quick_operator_cdll.so"]),
@@ -31,10 +40,10 @@ file_data = [
      [f"{prj_root_relative}/QuICT/qcda/synthesis/initial_state_preparation/initial_state_preparation_cdll.so"],
      ),
     ("QuICT/qcda/mapping/mcts/mcts_core",
-     [f"{prj_root_relative}/QuICT/qcda/mapping/mcts/mcts_core/mcts_wrapper.cpython-38-x86_64-linux-gnu.so"]
+     [lib1]
     ),
     ("QuICT/qcda/mapping/mcts/mcts_core/lib/build",
-     [f"{prj_root_relative}/QuICT/qcda/mapping/mcts/mcts_core/lib/build/libmcts.so"]
+     [lib2]
     )
 ]
 
@@ -46,7 +55,9 @@ requires = [
    'matplotlib>=3.3.4',
    'cython>=0.29.23',
    'ply>=3.11',  
-   'scipy']
+   'scipy',
+   'ujson',
+]
 
 # version information
 about = {}
@@ -69,7 +80,7 @@ setup(
     packages=packages,
     data_files=file_data,
     include_package_data=True,
-    python_requires=">=3.0",
+    python_requires=">=3.8",
     install_requires=requires,
     zip_safe=False,
     package_dir={"QuICT": f"{prj_root_relative}/QuICT/"}

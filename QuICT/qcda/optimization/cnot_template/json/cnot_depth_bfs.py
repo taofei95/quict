@@ -5,6 +5,7 @@
 # @File    : cnot_force_depth.py
 
 import json
+import os
 
 from QuICT import *
 
@@ -107,7 +108,7 @@ def generate_json(n):
         l += 1
 
     keys = out.keys()
-    with open(f"./json/{n}qubit_cnot_depth.inf", 'w') as file:
+    with open(f"{os.path.dirname(os.path.abspath(__file__))}/{n}qubit_cnot_depth.inf", 'w') as file:
         file.write(";")
         for key in keys:
             string = f"{key}:"

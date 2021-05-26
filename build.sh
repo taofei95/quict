@@ -100,13 +100,15 @@ if [[ $OS =~ "Darwin" ]];then
   $CXX \
   -o quick_operator_cdll.so dll.cpp \
   -std=c++11  -fPIC \
-  -shared  -I$tbb_include_dir -ltbb -L$tbb_build_dir && 
+  -shared  -I$tbb_include_dir -ltbb -L$tbb_build_dir &&
+  install_name_tool -add_rpath $tbb_build_dir quick_operator_cdll.so
   cd ..  || exit 1
 
   cd ./qcda/synthesis/initial_state_preparation && \
   $CXX \
     -o initial_state_preparation_cdll.so initial_state_preparation.cpp \
     -std=c++11  -fPIC -shared  -I$tbb_include_dir -ltbb -L$tbb_build_dir  || exit 1
+  install_name_tool -add_rpath $tbb_build_dir initial_state_preparation_cdll.so
 
   cd $prj_root/QuICT/qcda/mapping/mcts/mcts_core && ./build.sh  || exit 1
 else
@@ -122,7 +124,7 @@ else
     -o initial_state_preparation_cdll.so initial_state_preparation.cpp \
     -std=c++11  -fPIC -shared -ltbb || exit 1
 
-  cd $prj_root/QuICT/qcda/mapping/mcts/mcts_core && ./build.sh  || exit 1
+  cd $prj_root/QuICT/qcda/mapping/mcts/mcts_core && chmod u+x ./build.sh && ./build.sh  || exit 1
 fi
 
 

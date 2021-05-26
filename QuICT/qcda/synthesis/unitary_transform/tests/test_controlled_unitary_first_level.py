@@ -2,8 +2,8 @@
 from scipy.linalg import cossin
 from scipy.linalg import block_diag
 from scipy.stats import unitary_group
-from ..controlled_unitary import quantum_shannon_decompose
-from ...uniformly_gate import UniformlyRz
+from QuICT.qcda.synthesis.unitary_transform.controlled_unitary import quantum_shannon_decompose
+from QuICT.qcda.synthesis.uniformly_gate import UniformlyRz
 from QuICT.core import *
 
 

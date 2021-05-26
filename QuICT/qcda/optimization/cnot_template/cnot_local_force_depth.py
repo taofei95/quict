@@ -37,7 +37,7 @@ def _matrix_product_to_bigger(space, gate) -> np.ndarray:
     q_len = len(space)
     n = 1 << len(space)
 
-    new_values = np.zeros((n, n), dtype=np.complex)
+    new_values = np.zeros((n, n), dtype=np.complex128)
     targs = gate.targs
     cargs = gate.cargs
     if not isinstance(targs, list):
@@ -136,7 +136,7 @@ def traver_with_fix_qubits(gates: list, fix: set, store):
             circuit = Circuit(len(fix))
             for local_gate in local_list:
                 CX | circuit([mapping[local_gate.carg], mapping[local_gate.targ]])
-            new_circuit = (CnotStoreForceDepthBfs if store else CnotForceDepthBfs).run(circuit)
+            new_circuit = (CnotStoreForceDepthBfs if store else CnotForceDepthBfs).execute(circuit)
             for local_gate in new_circuit.gates:
                 new_gate = CX.copy()
                 new_gate.cargs = [back_map[local_gate.carg]]
@@ -149,7 +149,7 @@ def traver_with_fix_qubits(gates: list, fix: set, store):
         circuit = Circuit(len(fix))
         for local_gate in local_list:
             CX | circuit([mapping[local_gate.carg], mapping[local_gate.targ]])
-        new_circuit = (CnotStoreForceDepthBfs if store else CnotForceDepthBfs).run(circuit)
+        new_circuit = (CnotStoreForceDepthBfs if store else CnotForceDepthBfs).execute(circuit)
         for local_gate in new_circuit.gates:
             new_gate = CX.copy()
             new_gate.cargs = [back_map[local_gate.carg]]
@@ -205,7 +205,7 @@ class CnotLocalForceDepthBfs(Optimization):
 
     """
     @staticmethod
-    def _run(circuit : Circuit, store = False):
+    def execute(circuit : Circuit, store = False):
         """
         Args:
             circuit(Circuit): the circuit to be optimize
