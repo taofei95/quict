@@ -9,6 +9,7 @@ cmake \
 -DTEST_MCTS=off \
 -DTEST_RL_MCTS=off \
 -DTEST_DATA_GENERATOR=off \
+-USE_OpenMP=on\
 -DCMAKE_BUILD_TYPE=Release .. 
 #-DCMAKE_PREFIX_PATH=`python -c 'import torch;print(torch.utils.cmake_prefix_path)'` \
 
