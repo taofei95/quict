@@ -6,10 +6,20 @@
 
 import pytest
 from QuICT.core import *
-from QuICT.qcda.synthesis.mct import MCTOneAux, MCTLinearSimulation
+from QuICT.qcda.synthesis.mct import MCTOneAux, MCTLinearSimulationHalfDirtyAux, MCTLinearSimulationOneDirtyAux
 from QuICT.algorithm import SyntheticalUnitary
 
-def test_MCT_Linear_Simulation():
+def Set(qreg, N):
+    """
+    Set the qreg as N, using X gates on specific qubits
+    """
+    n = len(qreg)
+    for i in range(n):
+        if N % 2 == 1:
+            X | qreg[n - 1 - i]
+        N = N // 2
+
+def test_MCT_Linear_Simulation_Half():
     max_qubit = 11
     for i in range(3, max_qubit):
         for m in range(1, i // 2 + (1 if i % 2 == 1 else 0)):
@@ -60,7 +70,30 @@ def test_MCT_Linear_Simulation():
                                         circuit.print_information()
                                         print(unitary)
                                         assert 0
-"""
+    assert 1
+
+    
+def test_MCT_Linear_Simulation_One():
+    max_control_bit = 10
+    for n in range(1, max_control_bit):
+        for control_bits in range(0,2**n):
+            circuit = Circuit(n + 2)
+            controls = circuit([i for i in range(n)])
+            aux = circuit(n)
+            target = circuit(n + 1)
+            Set(controls, control_bits)
+            H | aux
+            print("%d bits control = %d" %(n,control_bits))
+            MCTLinearSimulationOneDirtyAux.execute(n) | (controls, aux, target)
+            Measure | circuit
+            circuit.exec()
+            if (control_bits == 2**n - 1 and int(target) == 0) or (control_bits != 2**n - 1 and int(target) == 1):
+                print("when control bits are %d, the targe is %d" %(control_bits, int(target)))
+                assert 0
+    
+    assert 1
+
+
 def test_MCT():
     max_qubit = 11
     for i in range(3, max_qubit):
@@ -103,6 +136,6 @@ def test_MCT():
                             assert 0
 
     assert 1
-"""
+
 if __name__ == "__main__":
     pytest.main(["./unit_test.py"])
