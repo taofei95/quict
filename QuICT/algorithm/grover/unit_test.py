@@ -4,13 +4,23 @@
 # @Author  : Han Yu
 # @File    : unit_test.py
 
+from os import O_RANDOM
 import pytest
 
-from QuICT.algorithm import GroverWithPriorKnowledge
+from QuICT.algorithm import Grover, GroverWithPriorKnowledge
 from QuICT.core import *
 
 def main_oracle(f, qreg, ancilla):
     PermFx(f) | (qreg, ancilla)
+
+def test_grover():
+    for n in range(3, 5):
+        N =  2**n
+        for target in range(0, N):
+            f = [0] * N
+            f[target] = 1
+            Grover.run(f, n, main_oracle)
+            
 
 def test_1():
     for test_number in range(3, 5):
