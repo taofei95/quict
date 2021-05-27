@@ -6,7 +6,7 @@
 
 import pytest
 from QuICT.core import *
-from QuICT.qcda.synthesis import MCTOneAux, MCTLinearSimulation
+from QuICT.qcda.synthesis.mct import MCTOneAux, MCTLinearSimulation
 from QuICT.algorithm import SyntheticalUnitary
 
 def test_MCT_Linear_Simulation():
@@ -14,7 +14,7 @@ def test_MCT_Linear_Simulation():
     for i in range(3, max_qubit):
         for m in range(1, i // 2 + (1 if i % 2 == 1 else 0)):
             circuit = Circuit(i)
-            MCTLinearSimulation.execute(m, i) | circuit
+            MCTLinearSimulationHalfDirtyAux.execute(m, i) | circuit
             unitary = SyntheticalUnitary.run(circuit, showSU=False)
             for j in range(1 << i):
                 for k in range(1 << i):
@@ -60,7 +60,7 @@ def test_MCT_Linear_Simulation():
                                         circuit.print_information()
                                         print(unitary)
                                         assert 0
-
+"""
 def test_MCT():
     max_qubit = 11
     for i in range(3, max_qubit):
@@ -103,6 +103,6 @@ def test_MCT():
                             assert 0
 
     assert 1
-
+"""
 if __name__ == "__main__":
     pytest.main(["./unit_test.py"])
