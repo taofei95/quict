@@ -37,7 +37,7 @@ class StateVectorSimulator(BasicSimulator):
             vector[0] = 1 + 0j
             return vector
         ordering, small_gates = BasicSimulator.vector_pretreatment(circuit)
-        vector = cls.act_unitary_by_ordering(small_gates, ordering)
+        vector = cls.act_unitary_by_ordering(small_gates, ordering, qubit)
 
         return vector
 
@@ -161,20 +161,36 @@ class StateVectorSimulator(BasicSimulator):
         return vector
 
 
-from QuICT.ops.linalg.gpu_calculator_cupy import GPUCalculatorCP
+import QuICT.ops.linalg.gpu_calculator as GPUCalculator
 
-calc = GPUCalculatorCP()
+import cupy as cp
+
+from numba import cuda
+
+from time import time
 
 
 class StateVectorSimulatorRefine:
 
     @staticmethod
     def run(circuit: Circuit, initial_state: np.ndarray) -> np.ndarray:
-        state = initial_state.copy()
+        state = cp.array(initial_state, cp.complex64)
 
-        for gate in circuit.gates:
-            gate: BasicGate
-            cur_state = calc.vectordot(gate.compute_matrix, state, False)
-            del state
-            state = cur_state
+        gate_cnt = len(circuit.gates)
+
+        for i in range(gate_cnt):
+            gate: BasicGate = circuit.gates[i]
+            affect_sorted = np.sort(gate.affectArgs)
+            mat = circuit.gates[i].compute_matrix
+            d_mat = cp.array(mat, dtype=cp.complex64)
+            d_args = cp.array(gate.affectArgs, dtype=cp.int64)
+            d_args_sorted = cp.array(affect_sorted, dtype=cp.int64)
+            GPUCalculator.vector_dot_cuda(
+                d_mat,
+                state,
+                d_args,
+                d_args_sorted,
+            )
+            # cur_state = calc.vectordot(gate.compute_matrix, state, np.array(gate.affectArgs), False)
+            # del state
         return state.get()
