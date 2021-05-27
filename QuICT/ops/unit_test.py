@@ -1,9 +1,11 @@
 import os
 import unittest
 import numpy as np
+import cupy as cp
 
 import linalg.cpu_calculator as CPUCalculator
 import linalg.gpu_calculator as GPUCalculator
+from linalg.calculation_layer import CalculationLayer
 
 
 @unittest.skipUnless(os.environ.get("test_with_gpu", False), "require GPU")
@@ -79,6 +81,27 @@ class TestGPULinalg(unittest.TestCase):
 
         gpu_result = GPUCalculator.vectordot(A, V, mapping, gpu_out=True)
         self.assertTrue(np.allclose(cpu_result, gpu_result))
+
+    def test_calculation_layer(self):
+        A = np.random.random((1 << TestGPULinalg.seed, 1 << TestGPULinalg.seed)).astype(np.complex128)
+        B = np.random.random((1 << TestGPULinalg.seed, 1 << TestGPULinalg.seed)).astype(np.complex128)
+
+        based_result = GPUCalculator.dot(A, B, gpu_out=True)
+
+        mempool = cp.get_default_memory_pool()
+        before_used_bytes = mempool.used_bytes()
+
+        with CalculationLayer() as CL:
+            gpu_A = CL.htod(A)
+            gpu_B = CL.htod(B)
+
+            layer_result = CL.dot(gpu_A, gpu_B, gpu_out=True)
+
+        self.assertTrue((based_result==layer_result).all())
+
+        after_used_bytes = mempool.used_bytes()
+        # Check for memory release, maybe failure caused by the mulit-process. 
+        self.assertEqual(before_used_bytes, after_used_bytes)
 
 
 if __name__ == "__main__":
