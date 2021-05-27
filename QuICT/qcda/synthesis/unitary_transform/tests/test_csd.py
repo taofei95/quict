@@ -3,7 +3,7 @@ from scipy.linalg import cossin
 from scipy.linalg import block_diag
 from QuICT.core import *
 from QuICT.algorithm import SyntheticalUnitary
-from ...uniformly_gate.uniformly_rotation import UniformlyRy
+from QuICT.qcda.synthesis.uniformly_gate import UniformlyRy
 
 
 def test_csd():

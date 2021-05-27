@@ -65,7 +65,7 @@ class CnotStoreForceBfs(Optimization):
         return circuit
 
     @staticmethod
-    def _run(circuit : Circuit, *pargs):
+    def execute(circuit : Circuit, *pargs):
         """
         Args:
             circuit(Circuit): the circuit to be optimize

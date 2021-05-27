@@ -5,6 +5,7 @@
 # @File    : cnot_bfs.py
 
 import json
+import os
 
 from QuICT import *
 
@@ -96,7 +97,7 @@ def generate_json(n):
     # with open("./json/" + str(n) + 'qubit_cnot.json', 'w+') as file:
     #    file.write(json_data)
     keys = out.keys()
-    with open(f"./json/{n}qubit_cnot.inf", 'w') as file:
+    with open(f"{os.path.dirname(os.path.abspath(__file__))}/{n}qubit_cnot.inf", 'w') as file:
         file.write(";")
         for key in keys:
             string = f"{key}:"

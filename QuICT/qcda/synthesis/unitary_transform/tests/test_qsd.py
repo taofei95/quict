@@ -1,7 +1,7 @@
 # noinspection PyUnresolvedReferences
 from scipy.linalg import cossin
 from scipy.stats import unitary_group
-from ..controlled_unitary import quantum_shannon_decompose
+from QuICT.qcda.synthesis.unitary_transform.controlled_unitary import quantum_shannon_decompose
 from QuICT.core import *
 
 
