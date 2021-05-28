@@ -21,7 +21,13 @@ type_mapping = {
 }
 
 class Proxy:
-    """ """
+    """ The proxy class of NCCL Communicators, which is used to transfer data between gpus.
+    
+    Args:
+        ndevs(int): number of total GPU devices.
+        uid(tuple): The unique ID, generate by cupy.cuda.nccl.get_unique_id().
+        rank(int): The rank of GPU, between 0 and ndevs-1; represent the gpu device use in current process.
+     """
     def __init__(self, ndevs: int, uid: tuple, rank: int):
         assert((rank < ndevs) and (ndevs == cuda.runtime.getDeviceCount()))
         if rank != cuda.runtime.getDevice():
@@ -38,26 +44,37 @@ class Proxy:
 
     @staticmethod
     def allInit(devs: Union[int, list]):
+        """ Initialize NCCL communicators for multiple devices in a single process. """
         return nccl.NcclCommunicator.initAll(devs)
 
     @property
     def ndevs(self):
+        """ return the number of GPU devices. """
         return self._ndevs
 
     @property
     def uid(self):
+        """ return the unique id of current communicator. """
         return self._uid
 
     @property
     def rank(self):
+        """ return the rank of current communicator. """
         return self._rank
 
     def send(
         self,
-        sendbuf,
+        sendbuf: cp.ndarray,
         destination: int,
         stream: cuda.stream.Stream = cuda.Stream.null.ptr
     ):
+        """ Send data to destination.
+        
+        Args:
+            sendbuf(cupy.ndarray): the sending data.
+            destination(int): the rank of destination communicator.
+            stream(Stream): the cupy stream.
+        """
         assert(type(sendbuf) == cp.ndarray)
         pointer = sendbuf.data.ptr
         count = sendbuf.size
@@ -70,16 +87,21 @@ class Proxy:
 
     def recv(
         self,
-        recv_shape: tuple,
-        recv_type: type,
+        recvbuf: cp.ndarray,
         source: int,
         stream: cuda.stream.Stream = cuda.Stream.null.ptr
     ):
-        recvbuf = cp.empty(recv_shape, dtype=recv_type)
-        count = recvbuf.size
-        nccl_datatype = type_mapping[str(recv_type)]
+        """ recv data from source and put it into recvbuf.
 
-        if recv_type == cp.complex128:
+        Args:
+            recvbuf(cupy.ndarray): the empty array waitting for comming data.
+            source(int): the rank of the source communicator.
+            stream(Stream): the cupy stream.
+        """
+        count = recvbuf.size
+        nccl_datatype = type_mapping[str(recvbuf.dtype)]
+
+        if recvbuf.dtype == cp.complex128:
             count *= 2
 
         self.comm.recv(recvbuf.data.ptr, count, nccl_datatype, source, stream)
@@ -92,7 +114,13 @@ class Proxy:
         root: int = 0,
         stream: cuda.stream.Stream = cuda.Stream.null.ptr
     ):
-        """ Sendbuf in root device, otherwise, it is receive buffer. """
+        """ Send data to all communicators except root. The sending data is in sendbuf of root communicator.
+
+        Args:
+            sendbuf(cupy.ndarray): the sending data in root, and received array for other communicators.
+            root(int): the rank of root communicator.
+            stream(Stream): the cupy stream.
+        """
         pointer = sendbuf.data.ptr
         count = sendbuf.size
         nccl_datatype = type_mapping[str(sendbuf.dtype)]
