@@ -122,18 +122,14 @@ def vectordot(A, V, mapping):
     n, m = np.log2(V.shape[0]).astype(np.int32), np.log2(row_a).astype(np.int32)
     assert (m == mapping.shape[0])
 
-    # matrix permutation for A depending on mapping
-    argsorted_mapping = np.argsort(mapping)
+    # Tensor Matrix A to 2^n * 2^n 
+    n_array = np.arange(n, dtype=np.int32)
+    remaining_bits = np.setdiff1d(n_array, mapping)
+    tensored_mapping = np.concatenate([remaining_bits, mapping])
 
-    A_reidx = A
-    if not (argsorted_mapping == np.arange(mapping.shape[0])).all():
-        A_reidx = MatrixPermutation(A, argsorted_mapping, changeInput=False)
+    A_reidx = np.kron(np.identity(1 << n - m).astype(np.complex_), A)
 
-    return _helper_vdot(A_reidx, V, n, m)
+    # Permutation depending on [remain + mapping]
+    MatrixPermutation(A_reidx, tensored_mapping, changeInput=True)
 
-@njit()
-def _helper_vdot(A, V, n, m):
-    # grep m qubit idx depending on mapping
-    A_tensor = np.kron(np.identity(1 << n - m).astype(np.complex_), A)
-
-    return np.dot(A_tensor, V)
+    return np.dot(A_reidx, V)
