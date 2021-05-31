@@ -75,7 +75,22 @@ def tensor(A, B, gpu_out: bool = True):
     return cp.kron(gpu_A, gpu_B)
 
 
-def MatrixTensorI(A, n, m, gpu_out: bool = True):
+matrixt_kernel = cp.RawKernel(r'''
+    #include <cupy/complex.cuh>
+    extern "C" __global__
+    void matrix_tensorI(const complex<double>* x, complex<double>* y, int n, int m, int rx, int cx) {
+        int tid = blockDim.x * blockIdx.x + threadIdx.x;
+        int xid = tid/(n*m);
+        int mnid = tid%(n*m);
+        int nid = mnid/m;
+        int mid = mnid%m;
+        int yid = (nid*rx*m + (xid/cx)*m + mid)*cx*m*n + nid*m*cx + (xid%cx)*m + mid;
+        y[yid] = x[xid];
+    }
+    ''', 'matrix_tensorI')
+
+
+def MatrixTensorI(A, n, m, gpu_out: bool =True):
     """ tensor I^n and A and I^m
 
     Args:
@@ -91,9 +106,19 @@ def MatrixTensorI(A, n, m, gpu_out: bool = True):
 
     # Data in GPU.
     gpu_A = cp.array(A) if type(A) is np.ndarray else A
-    gpu_IN = cp.identity(n, dtype=np.complex128)
-    gpu_IM = cp.identity(m, dtype=np.complex128)
-    gpu_result = cp.kron(cp.kron(gpu_IN, gpu_A), gpu_IM)
+
+    if n == 1 and m == 1:
+        gpu_result = gpu_A
+    elif n == 1:
+        gpu_IM = cp.identity(m, dtype=np.complex128)
+        gpu_result = cp.kron(gpu_A, gpu_IM)
+    elif m == 1:
+        gpu_IN = cp.identity(n, dtype=np.complex128)
+        gpu_result = cp.kron(gpu_IN, gpu_A)
+    else:
+        gpu_result = cp.zeros((row_a*n*m, col_a*n*m), dtype=np.complex128)
+        core_number = gpu_A.size*n*m
+        matrixt_kernel((math.ceil(core_number/1024),), (min(1024, core_number),), (gpu_A, gpu_result, cp.int32(n), cp.int32(m), cp.int32(row_a), cp.int32(col_a)))
 
     if gpu_out:
         return gpu_result.get()
