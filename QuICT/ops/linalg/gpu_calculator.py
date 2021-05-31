@@ -109,12 +109,6 @@ def MatrixTensorI(A, n, m, gpu_out: bool =True):
 
     if n == 1 and m == 1:
         gpu_result = gpu_A
-    elif n == 1:
-        gpu_IM = cp.identity(m, dtype=np.complex128)
-        gpu_result = cp.kron(gpu_A, gpu_IM)
-    elif m == 1:
-        gpu_IN = cp.identity(n, dtype=np.complex128)
-        gpu_result = cp.kron(gpu_IN, gpu_A)
     else:
         gpu_result = cp.zeros((row_a*n*m, col_a*n*m), dtype=np.complex128)
         core_number = gpu_A.size*n*m
