@@ -5,31 +5,12 @@
 # @File    : Deutsch_Jozsa.py
 
 import numpy as np
-from scipy.optimize import minimize
 
 from .._algorithm import Algorithm
 from QuICT import *
-from QuICT.qcda.synthesis.initial_state_preparation import InitialStatePreparation
 from QuICT.qcda.synthesis.mct import MCTLinearOneDirtyAux
-    
-p_global = []
-T_global = 1
-
-def fun(x):
-    return -np.dot(p_global, np.sin((2*T_global+1)*np.arcsin(np.sqrt(x)))**2)
 
 def run_grover(f, n, oracle):
-    """ grover search for f with custom oracle
-
-    Args:
-        f(list<int>): the function to be decided
-        n(int): the length of input
-        p(list<float>): the distribute of priop probability
-        T(int): the query times
-        oracle(function): the oracle
-    Returns:
-        int: the a satisfies that f(a) = 1
-    """
     circuit = Circuit(n + 1)
     index_q = circuit([i for i in range(n)])
     result_q = circuit(n)
@@ -39,11 +20,9 @@ def run_grover(f, n, oracle):
 
     # create equal superposition state in index_q
     H | index_q 
-    #print("equal superposition state made: ", Amplitude.run(circuit))
     # create |-> in result_q
     X | result_q
     H | result_q
-    #print("before grover iteration state: ", Amplitude.run(circuit))
     for i in range(T):
         #Grover iteration
         oracle(f, index_q, result_q)
@@ -56,19 +35,14 @@ def run_grover(f, n, oracle):
         X | index_q
         #control phase shift end
         H | index_q
-        #print("After %dth GI, the state is: " %i)
-        #print(Amplitude.run(circuit))
     Measure | index_q
     circuit.exec()
-    #amplitute = Amplitude.run(circuit)
-    #print(amplitute)
     return int(index_q)
 
-class Grover(Algorithm):
-    """ grover search with prior knowledge
+class SimpleGrover(Algorithm):
+    """ simple grover
 
-    https://arxiv.org/abs/2009.08721
-
+    Quantum Computation and Quantum Information - Michael A. Nielsen & Isaac L. Chuang
     """
     @classmethod
     def run(cls, f, n, oracle):
@@ -76,9 +50,7 @@ class Grover(Algorithm):
 
         Args:
             f(list<int>): the function to be decided
-            n(int): the length of input
-            p(list<float>): the distribute of priop probability
-            T(int): the query times
+            n(int): the length of input of f
             oracle(function): the oracle
         Returns:
             int: the a satisfies that f(a) = 1
