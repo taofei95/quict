@@ -24,8 +24,8 @@ class TestGPULinalg(unittest.TestCase):
         print(f"The GPU linalg unit test finished!")
 
     def test_dot(self):
-        A = np.random.random((1 << TestGPULinalg.seed, 1 << TestGPULinalg.seed)).astype(np.complex128)
-        B = np.random.random((1 << TestGPULinalg.seed, 1 << TestGPULinalg.seed)).astype(np.complex128)
+        A = np.random.random((1 << TestGPULinalg.seed, 1 << TestGPULinalg.seed)).astype(np.complex64)
+        B = np.random.random((1 << TestGPULinalg.seed, 1 << TestGPULinalg.seed)).astype(np.complex64)
 
         np_result = np.dot(A, B)
 
@@ -33,8 +33,8 @@ class TestGPULinalg(unittest.TestCase):
         self.assertTrue((np_result == gpu_result).all())
 
     def test_tensor(self):
-        A = np.random.random((1 << TestGPULinalg.seed, 1 << TestGPULinalg.seed)).astype(np.complex128)
-        B = np.random.random((1 << TestGPULinalg.seed, 1 << TestGPULinalg.seed)).astype(np.complex128)
+        A = np.random.random((1 << TestGPULinalg.seed, 1 << TestGPULinalg.seed)).astype(np.complex64)
+        B = np.random.random((1 << TestGPULinalg.seed, 1 << TestGPULinalg.seed)).astype(np.complex64)
 
         np_result = np.kron(A, B)
 
@@ -42,7 +42,7 @@ class TestGPULinalg(unittest.TestCase):
         self.assertTrue((np_result == gpu_result).all())
 
     def test_vector_permutation(self):
-        A = np.random.random(1 << (TestGPULinalg.seed * 2)).astype(np.complex128)
+        A = np.random.random(1 << (TestGPULinalg.seed * 2)).astype(np.complex64)
 
         # changeInput = False
         mapping = list(range(TestGPULinalg.seed * 2))[::-1]
@@ -63,7 +63,7 @@ class TestGPULinalg(unittest.TestCase):
         self.assertTrue((gpu_result == gpu_result_in_place).all())
 
     def test_matrix_permutation(self):
-        A = np.random.random((1 << TestGPULinalg.seed, 1 << TestGPULinalg.seed)).astype(np.complex128)
+        A = np.random.random((1 << TestGPULinalg.seed, 1 << TestGPULinalg.seed)).astype(np.complex64)
 
         mapping = list(range(TestGPULinalg.seed))[::-1]
         mapping = np.array(mapping)
@@ -74,7 +74,7 @@ class TestGPULinalg(unittest.TestCase):
         self.assertTrue((cpu_result == gpu_result).all())
 
     def test_matrix_tensorI(self):
-        A = np.random.random((1 << TestGPULinalg.seed, 1 << TestGPULinalg.seed)).astype(np.complex128)
+        A = np.random.random((1 << TestGPULinalg.seed, 1 << TestGPULinalg.seed)).astype(np.complex64)
         n, m = 2, 3
 
         I_N = np.identity(n)
@@ -84,8 +84,8 @@ class TestGPULinalg(unittest.TestCase):
         self.assertTrue((np_result == gpu_result).all())
 
     def test_vector_dot(self):
-        A = np.random.random((1 << TestGPULinalg.seed, 1 << TestGPULinalg.seed)).astype(np.complex128)
-        V = np.random.random(1 << (TestGPULinalg.seed * 2)).astype(np.complex128)
+        A = np.random.random((1 << TestGPULinalg.seed, 1 << TestGPULinalg.seed)).astype(np.complex64)
+        V = np.random.random(1 << (TestGPULinalg.seed * 2)).astype(np.complex64)
         mapping = list(range(TestGPULinalg.seed))[::-1]
         mapping = np.array(mapping)
         np.random.shuffle(mapping)
@@ -96,8 +96,8 @@ class TestGPULinalg(unittest.TestCase):
         self.assertTrue(np.allclose(cpu_result, gpu_result))
 
     def test_calculation_layer(self):
-        A = np.random.random((1 << TestGPULinalg.seed, 1 << TestGPULinalg.seed)).astype(np.complex128)
-        B = np.random.random((1 << TestGPULinalg.seed, 1 << TestGPULinalg.seed)).astype(np.complex128)
+        A = np.random.random((1 << TestGPULinalg.seed, 1 << TestGPULinalg.seed)).astype(np.complex64)
+        B = np.random.random((1 << TestGPULinalg.seed, 1 << TestGPULinalg.seed)).astype(np.complex64)
 
         based_result = GPUCalculator.dot(A, B, gpu_out=True)
 

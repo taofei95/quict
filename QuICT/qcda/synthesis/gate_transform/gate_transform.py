@@ -42,14 +42,14 @@ def GateTransformModel(circuit, instruction_set = USTCSet):
 
     # transform 1-qubit gate
     compositeGateStep2 = CompositeGate()
-    unitaries = [np.identity(2, dtype=np.complex128) for _ in range(circuit.circuit_width())]
+    unitaries = [np.identity(2, dtype=np.complex64) for _ in range(circuit.circuit_width())]
     for gate in compositeGateStep1:
         if gate.targets + gate.controls == 2:
             targs = gate.affectArgs
             compositeGateStep2.extend(instruction_set.SU2_rule.transform(Unitary(unitaries[targs[0]]) & targs[0]))
             compositeGateStep2.extend(instruction_set.SU2_rule.transform(Unitary(unitaries[targs[1]]) & targs[1]))
-            unitaries[targs[0]] = np.identity(2, dtype=np.complex128)
-            unitaries[targs[1]] = np.identity(2, dtype=np.complex128)
+            unitaries[targs[0]] = np.identity(2, dtype=np.complex64)
+            unitaries[targs[1]] = np.identity(2, dtype=np.complex64)
             compositeGateStep2.append(gate)
         else:
             unitaries[gate.targ] = np.dot(gate.matrix, unitaries[gate.targ])

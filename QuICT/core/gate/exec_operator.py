@@ -218,14 +218,14 @@ def QState_merge(qState, other):
     merge_operator_func = dll.merge_operator_func
     merge_operator_func.argtypes = [
         c_int,
-        np.ctypeslib.ndpointer(dtype=np.complex128, ndim=1, flags="C_CONTIGUOUS"),
+        np.ctypeslib.ndpointer(dtype=np.complex64, ndim=1, flags="C_CONTIGUOUS"),
         c_int,
-        np.ctypeslib.ndpointer(dtype=np.complex128, ndim=1, flags="C_CONTIGUOUS"),
-        np.ctypeslib.ndpointer(dtype=np.complex128, ndim=1, flags="C_CONTIGUOUS"),
+        np.ctypeslib.ndpointer(dtype=np.complex64, ndim=1, flags="C_CONTIGUOUS"),
+        np.ctypeslib.ndpointer(dtype=np.complex64, ndim=1, flags="C_CONTIGUOUS"),
     ]
     length = (1 << len(qState.qureg)) * (1 << len(other.qureg))
     merge_operator_func.restype = None
-    values = np.zeros(length, dtype=np.complex128)
+    values = np.zeros(length, dtype=np.complex64)
     merge_operator_func(
         len(qState.qureg),
         qState.values,
@@ -255,8 +255,8 @@ def QState_deal_single_gate(qState, gate, fidelity):
     single_operator_func.argtypes = [
         c_int,
         c_int,
-        np.ctypeslib.ndpointer(dtype=np.complex128, ndim=1, flags="C_CONTIGUOUS"),
-        np.ctypeslib.ndpointer(dtype=np.complex128, ndim=1, flags="C_CONTIGUOUS"),
+        np.ctypeslib.ndpointer(dtype=np.complex64, ndim=1, flags="C_CONTIGUOUS"),
+        np.ctypeslib.ndpointer(dtype=np.complex64, ndim=1, flags="C_CONTIGUOUS"),
     ]
 
     index = 0
@@ -277,7 +277,7 @@ def QState_deal_single_gate(qState, gate, fidelity):
                 np.cos(theta), -np.sin(theta),
                 np.sin(theta), np.cos(theta)
             ]
-            , dtype=np.complex128
+            , dtype=np.complex64
         )
         Ry0 = RyMatrix[0] * matrix[0] + RyMatrix[1] * matrix[2]
         Ry1 = RyMatrix[0] * matrix[1] + RyMatrix[1] * matrix[3]
@@ -311,8 +311,8 @@ def QState_deal_two_qubit_gate(qState, gate):
         c_int,
         c_int,
         c_int,
-        np.ctypeslib.ndpointer(dtype=np.complex128, ndim=1, flags="C_CONTIGUOUS"),
-        np.ctypeslib.ndpointer(dtype=np.complex128, ndim=1, flags="C_CONTIGUOUS"),
+        np.ctypeslib.ndpointer(dtype=np.complex64, ndim=1, flags="C_CONTIGUOUS"),
+        np.ctypeslib.ndpointer(dtype=np.complex64, ndim=1, flags="C_CONTIGUOUS"),
     ]
     index1 = 0
     qubit = qState.qureg.circuit.qubits[gate.targs[0]]
@@ -356,8 +356,8 @@ def QState_deal_control_single_gate(qState, gate):
         c_int,
         c_int,
         c_int,
-        np.ctypeslib.ndpointer(dtype=np.complex128, ndim=1, flags="C_CONTIGUOUS"),
-        np.ctypeslib.ndpointer(dtype=np.complex128, ndim=1, flags="C_CONTIGUOUS"),
+        np.ctypeslib.ndpointer(dtype=np.complex64, ndim=1, flags="C_CONTIGUOUS"),
+        np.ctypeslib.ndpointer(dtype=np.complex64, ndim=1, flags="C_CONTIGUOUS"),
     ]
     cindex = 0
     qubit = qState.qureg.circuit.qubits[gate.carg]
@@ -401,7 +401,7 @@ def QState_deal_ccx_gate(qState, gate):
         c_int,
         c_int,
         c_int,
-        np.ctypeslib.ndpointer(dtype=np.complex128, ndim=1, flags="C_CONTIGUOUS"),
+        np.ctypeslib.ndpointer(dtype=np.complex64, ndim=1, flags="C_CONTIGUOUS"),
     ]
     cindex1 = 0
     qubit = qState.qureg.circuit.qubits[gate.cargs[0]]
@@ -456,7 +456,7 @@ def QState_deal_measure_gate(qState, gate):
     measure_operator_func.argtypes = [
         c_int,
         c_int,
-        np.ctypeslib.ndpointer(dtype=np.complex128, ndim=1, flags="C_CONTIGUOUS"),
+        np.ctypeslib.ndpointer(dtype=np.complex64, ndim=1, flags="C_CONTIGUOUS"),
         c_double,
         POINTER(c_double)
     ]
@@ -504,7 +504,7 @@ def QState_deal_reset_gate(qState, gate):
     reset_operator_func.argtypes = [
         c_int,
         c_int,
-        np.ctypeslib.ndpointer(dtype=np.complex128, ndim=1, flags="C_CONTIGUOUS"),
+        np.ctypeslib.ndpointer(dtype=np.complex64, ndim=1, flags="C_CONTIGUOUS"),
     ]
 
     index = 0
@@ -570,7 +570,7 @@ def QState_deal_perm_gate(qState, gate):
     perm_operator_gate = dll.perm_operator_gate
     perm_operator_gate.argtypes = [
         c_int,
-        np.ctypeslib.ndpointer(dtype=np.complex128, ndim=1, flags="C_CONTIGUOUS"),
+        np.ctypeslib.ndpointer(dtype=np.complex64, ndim=1, flags="C_CONTIGUOUS"),
         np.ctypeslib.ndpointer(dtype=np.int, ndim=1, flags="C_CONTIGUOUS"),
         c_int,
         np.ctypeslib.ndpointer(dtype=np.int, ndim=1, flags="C_CONTIGUOUS")
@@ -613,10 +613,10 @@ def QState_deal_unitary_gate(qState, gate):
     unitary_operator_gate = dll.unitary_operator_gate
     unitary_operator_gate.argtypes = [
         c_int,
-        np.ctypeslib.ndpointer(dtype=np.complex128, ndim=1, flags="C_CONTIGUOUS"),
+        np.ctypeslib.ndpointer(dtype=np.complex64, ndim=1, flags="C_CONTIGUOUS"),
         POINTER(c_int),
         c_int,
-        np.ctypeslib.ndpointer(dtype=np.complex128, ndim=1, flags="C_CONTIGUOUS"),
+        np.ctypeslib.ndpointer(dtype=np.complex64, ndim=1, flags="C_CONTIGUOUS"),
     ]
 
     index = np.array([])
@@ -654,7 +654,7 @@ def QState_deal_shorInitial_gate(qState, gate):
     perm_operator_gate = dll.shor_classical_initial_gate
     perm_operator_gate.argtypes = [
         c_int,
-        np.ctypeslib.ndpointer(dtype=np.complex128, ndim=1, flags="C_CONTIGUOUS"),
+        np.ctypeslib.ndpointer(dtype=np.complex64, ndim=1, flags="C_CONTIGUOUS"),
         np.ctypeslib.ndpointer(dtype=np.int, ndim=1, flags="C_CONTIGUOUS"),
         c_int,
         c_int,
@@ -701,7 +701,7 @@ def QState_deal_controlMulPerm_gate(qState, gate):
     perm_operator_gate = dll.control_mul_perm_operator_gate
     perm_operator_gate.argtypes = [
         c_int,
-        np.ctypeslib.ndpointer(dtype=np.complex128, ndim=1, flags="C_CONTIGUOUS"),
+        np.ctypeslib.ndpointer(dtype=np.complex64, ndim=1, flags="C_CONTIGUOUS"),
         np.ctypeslib.ndpointer(dtype=np.int, ndim=1, flags="C_CONTIGUOUS"),
         c_int,
         c_int,

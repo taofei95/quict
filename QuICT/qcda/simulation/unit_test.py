@@ -27,7 +27,7 @@ def test_permutation():
         [0, 1, 0, 0],
         [1, 0, 0, 0],
         [0, 0, 0, 1]
-    ], dtype=np.complex128)
+    ], dtype=np.complex64)
     new_array = MatrixPermutation(array, np.array([1, 0]))
     print(new_array)
     assert not np.allclose(new_array, array)

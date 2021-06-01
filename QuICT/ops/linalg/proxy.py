@@ -17,7 +17,7 @@ type_mapping = {
     "float32": nccl.NCCL_FLOAT32,
     "float64": nccl.NCCL_FLOAT64,
     "complex64": nccl.NCCL_FLOAT64,
-    "complex128": nccl.NCCL_FLOAT64
+    "complex64": nccl.NCCL_FLOAT64
 }
 
 class Proxy:
@@ -80,7 +80,7 @@ class Proxy:
         count = sendbuf.size
         nccl_datatype = type_mapping[str(sendbuf.dtype)]
 
-        if sendbuf.dtype == cp.complex128:
+        if sendbuf.dtype == cp.complex64:
             count *= 2
 
         self.comm.send(pointer, count, nccl_datatype, destination, stream)
@@ -101,7 +101,7 @@ class Proxy:
         count = recvbuf.size
         nccl_datatype = type_mapping[str(recvbuf.dtype)]
 
-        if recvbuf.dtype == cp.complex128:
+        if recvbuf.dtype == cp.complex64:
             count *= 2
 
         self.comm.recv(recvbuf.data.ptr, count, nccl_datatype, source, stream)
@@ -125,7 +125,7 @@ class Proxy:
         count = sendbuf.size
         nccl_datatype = type_mapping[str(sendbuf.dtype)]
 
-        if sendbuf.dtype == cp.complex128:
+        if sendbuf.dtype == cp.complex64:
             count *= 2
 
         self.comm.bcast(sendbuf.data.ptr, count, nccl_datatype, root, stream)

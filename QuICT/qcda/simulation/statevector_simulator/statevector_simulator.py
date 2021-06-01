@@ -33,7 +33,7 @@ class StateVectorSimulator(BasicSimulator):
 
         qubit = circuit.circuit_width()
         if len(circuit.gates) == 0:
-            vector = np.zeros(1 << qubit, dtype=np.complex128)
+            vector = np.zeros(1 << qubit, dtype=np.complex64)
             vector[0] = 1 + 0j
             return vector
         ordering, small_gates = BasicSimulator.vector_pretreatment(circuit)
@@ -128,7 +128,7 @@ class StateVectorSimulator(BasicSimulator):
             np.ndarray: state vector
         """
 
-        vector = np.zeros(1 << qubit, dtype=np.complex128)
+        vector = np.zeros(1 << qubit, dtype=np.complex64)
         vector[0] = 1 + 0j
         len_gate = len(gates)
 

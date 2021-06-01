@@ -80,7 +80,7 @@ class BasicSimulator(object):
         """
         gates = CompositeGate()
         circuit_width = circuit.circuit_width()
-        gateSet = [np.identity(2, dtype=np.complex128) for _ in range(circuit_width)]
+        gateSet = [np.identity(2, dtype=np.complex64) for _ in range(circuit_width)]
         tangle = [i for i in range(circuit.circuit_width())]
         for gate in circuit.gates:
             if gate.targets + gate.controls >= 3:
@@ -92,10 +92,10 @@ class BasicSimulator(object):
                     gateSet[target] = dot(gate.matrix, gateSet[target])
                 else:
                     if tangle[target] < target:
-                        gateSet[target] = dot(np.kron(np.identity(2, dtype=np.complex128), gate.matrix),
+                        gateSet[target] = dot(np.kron(np.identity(2, dtype=np.complex64), gate.matrix),
                                               gateSet[target])
                     else:
-                        gateSet[target] = dot(np.kron(gate.matrix, np.identity(2, dtype=np.complex128)),
+                        gateSet[target] = dot(np.kron(gate.matrix, np.identity(2, dtype=np.complex64)),
                                               gateSet[target])
                     gateSet[tangle[target]] = gateSet[target]
             # 2-qubit gate
@@ -126,23 +126,23 @@ class BasicSimulator(object):
                         revive = target1
                         target = target2
                     build_2qubit_gate(gates, gateSet[target], target, tangle[target])
-                    gateSet[tangle[target]] = np.identity(2, dtype=np.complex128)
-                    gateSet[target] = np.identity(2, dtype=np.complex128)
+                    gateSet[tangle[target]] = np.identity(2, dtype=np.complex64)
+                    gateSet[target] = np.identity(2, dtype=np.complex64)
                     tangle[tangle[target]] = tangle[target]
                     tangle[target] = target
 
                     if tangle[revive] == revive:
                         if revive <= target1 and revive <= target2:
-                            target_matrix = np.kron(gateSet[revive], np.identity(2, dtype=np.complex128))
+                            target_matrix = np.kron(gateSet[revive], np.identity(2, dtype=np.complex64))
                         else:
-                            target_matrix = np.kron(np.identity(2, dtype=np.complex128), gateSet[revive])
+                            target_matrix = np.kron(np.identity(2, dtype=np.complex64), gateSet[revive])
                         gateSet[target1] = dot(matrix, target_matrix)
                         gateSet[target2] = gateSet[target1]
                         tangle[revive], tangle[target] = target, revive
                     else:
                         build_2qubit_gate(gates, gateSet[revive], revive, tangle[revive])
-                        gateSet[tangle[revive]] = np.identity(2, dtype=np.complex128)
-                        gateSet[revive] = np.identity(2, dtype=np.complex128)
+                        gateSet[tangle[revive]] = np.identity(2, dtype=np.complex64)
+                        gateSet[revive] = np.identity(2, dtype=np.complex64)
                         tangle[tangle[revive]] = tangle[revive]
                         tangle[revive] = revive
 
@@ -152,10 +152,10 @@ class BasicSimulator(object):
 
         for i in range(circuit_width):
             if tangle[i] == i:
-                if not np.allclose(np.identity(2, dtype=np.complex128), gateSet[i]):
+                if not np.allclose(np.identity(2, dtype=np.complex64), gateSet[i]):
                     build_1qubit_gate(gates, gateSet[i], i)
             elif tangle[i] > i:
-                if not np.allclose(np.identity(4, dtype=np.complex128), gateSet[i]):
+                if not np.allclose(np.identity(4, dtype=np.complex64), gateSet[i]):
                     build_2qubit_gate(gates, gateSet[i], i, tangle[i])
         return gates
 

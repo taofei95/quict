@@ -43,7 +43,7 @@ def inner_partial_prob(circuit, indexes):
     dll = systemCdll.quick_operator_cdll
     partial_prob_operator = dll.partial_prob_cheat_operator
     partial_prob_operator.argtypes = [
-        np.ctypeslib.ndpointer(dtype=np.complex128, ndim=1, flags="C_CONTIGUOUS"),
+        np.ctypeslib.ndpointer(dtype=np.complex64, ndim=1, flags="C_CONTIGUOUS"),
         np.ctypeslib.ndpointer(dtype=np.int, ndim=1, flags="C_CONTIGUOUS"),
         c_int,
         c_int,
@@ -55,7 +55,7 @@ def inner_partial_prob(circuit, indexes):
     partial_prob_operator.restype = np.ctypeslib.ndpointer(dtype=np.float, shape=(length,))
 
     tangle_list = []
-    tangle_values = np.array([], dtype=np.complex128)
+    tangle_values = np.array([], dtype=np.complex64)
     tangle_length = np.array([], dtype=np.int)
     qubit_map = np.array([i for i in range(len(indexes))], dtype=np.int)
 
@@ -117,7 +117,7 @@ def inner_matrix_product_to_circuit(circuit, gate) -> np.ndarray:
     q_len = len(circuit.qubits)
     n = 1 << len(circuit.qubits)
 
-    new_values = np.zeros((n, n), dtype=np.complex128)
+    new_values = np.zeros((n, n), dtype=np.complex64)
     targs = gate.targs
     cargs = gate.cargs
     if not isinstance(targs, list):

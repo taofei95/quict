@@ -110,7 +110,7 @@ def MatrixTensorI(A, n, m, gpu_out: bool =True):
     if n == 1 and m == 1:
         gpu_result = gpu_A
     else:
-        gpu_result = cp.zeros((row_a*n*m, col_a*n*m), dtype=np.complex128)
+        gpu_result = cp.zeros((row_a*n*m, col_a*n*m), dtype=np.complex64)
         core_number = gpu_A.size*n*m
         matrixt_kernel((math.ceil(core_number/1024),), (min(1024, core_number),), (gpu_A, gpu_result, cp.int32(n), cp.int32(m), cp.int32(row_a), cp.int32(col_a)))
 

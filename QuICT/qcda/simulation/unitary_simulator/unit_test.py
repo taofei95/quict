@@ -43,7 +43,7 @@ def test_merge_two_unitary_list():
         mat_now, args_now = UnitarySimulator.merge_two_unitary(mat_now, args_now, gate.compute_matrix, gate.affectArgs)
 
     mat_now, _ = UnitarySimulator.merge_two_unitary(
-        np.identity(1 << qubit, dtype=np.complex128),
+        np.identity(1 << qubit, dtype=np.complex64),
         [i for i in range(qubit)],
         mat_now,
         args_now
