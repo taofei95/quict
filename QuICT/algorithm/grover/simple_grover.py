@@ -4,7 +4,6 @@
 # @Author  : Han Yu
 # @File    : Deutsch_Jozsa.py
 
-#from QuICT.algorithm.amplitude.amplitude import Amplitude
 import numpy as np
 from scipy.optimize import minimize
 
@@ -31,10 +30,9 @@ def run_grover(f, n, oracle):
     Returns:
         int: the a satisfies that f(a) = 1
     """
-    circuit = Circuit(n + 2)
+    circuit = Circuit(n + 1)
     index_q = circuit([i for i in range(n)])
     result_q = circuit(n)
-    ancilla = circuit(n+1)
     N = 2**n
     theta = 2*np.arccos(np.sqrt(1-1/N))
     T = round(np.arccos(np.sqrt(1/N))/theta)
@@ -53,7 +51,7 @@ def run_grover(f, n, oracle):
         #control phase shift
         X | index_q
         H | index_q(n - 1)
-        MCTLinearOneDirtyAux.execute(n + 1) | (index_q([j for j in range(0,n - 1)]),index_q(n - 1), ancilla)
+        MCTLinearOneDirtyAux.execute(n + 1) | (index_q([j for j in range(0,n - 1)]),index_q(n - 1), result_q)
         H | index_q(n - 1)
         X | index_q
         #control phase shift end

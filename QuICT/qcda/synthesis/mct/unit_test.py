@@ -19,7 +19,7 @@ def Set(qreg, N):
             X | qreg[n - 1 - i]
         N = N // 2
 
-'''
+
 def test_MCT_Linear_Simulation_Half():
     max_qubit = 11
     for i in range(3, max_qubit):
@@ -72,9 +72,9 @@ def test_MCT_Linear_Simulation_Half():
                                         print(unitary)
                                         assert 0
     assert 1
-'''
 
-def test_MCT_Linear_Simulation_One_function():
+
+def test_MCT_Linear_Simulation_One_functional():
     max_qubit = 11
     for n in range(6, max_qubit):
         for control_bits in range(0,2**(n-2)):
@@ -87,15 +87,15 @@ def test_MCT_Linear_Simulation_One_function():
             MCTLinearOneDirtyAux.execute(n) | (controls, target, aux)
             Measure | circuit
             circuit.exec()
-            if ((control_bits == 2**n - 1 and int(target) == 0) 
-            or (control_bits != 2**n - 1 and int(target) == 1)
+            if ((control_bits == 2**(n-2) - 1 and int(target) == 0) 
+            or (control_bits != 2**(n-2) - 1 and int(target) == 1)
             or (int(aux) != 0)
             or (int(controls)!=control_bits)):
                 print("when control bits are %d, the targe is %d" %(control_bits, int(target)))
                 assert 0
     assert 1
 
-'''
+
 def test_MCT_Linear_Simulation_One_unitary():
     max_qubit = 11
     for n in range(6, max_qubit):
@@ -137,8 +137,8 @@ def test_MCT_Linear_Simulation_One_unitary():
                             print(unitary)
                             assert 0
     assert 1
-'''
-'''
+
+
 def test_MCT():
     max_qubit = 11
     for i in range(3, max_qubit):
@@ -181,6 +181,6 @@ def test_MCT():
                             assert 0
 
     assert 1
-'''
+
 if __name__ == "__main__":
     pytest.main(["./unit_test.py"])

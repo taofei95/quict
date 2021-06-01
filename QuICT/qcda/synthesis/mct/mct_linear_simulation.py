@@ -6,7 +6,6 @@
 
 from .._synthesis import Synthesis
 from QuICT.core import *
-#from QuICT.algorithm.amplitude import amplitude
 
 def HalfDirtyAux(n, m, controls, auxs, target):
     """
@@ -61,10 +60,9 @@ def OneDirtyAux(controls, target, aux):
     auxs2 = controls[0 : m1]
     target2 = target
     
-    HalfDirtyAux(n, m1, control1, auxs1, target1)
+    #HalfDirtyAux(n, m1, control1, auxs1, target1)
     if m2 == 2: # n == 6
         HalfDirtyAux(n, m1, control1, auxs1, target1)
-        #print(amplitude.run(circuit))
         CCX | (control2[0], control2[1], target2)
         HalfDirtyAux(n, m1, control1, auxs1, target1)
         CCX | (control2[0], control2[1], target2)
