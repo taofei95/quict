@@ -6,6 +6,7 @@
 
 from .._synthesis import Synthesis
 from QuICT.core import *
+#from QuICT.algorithm.amplitude import amplitude
 
 def HalfDirtyAux(n, m, controls, auxs, target):
     """
@@ -35,8 +36,9 @@ def HalfDirtyAux(n, m, controls, auxs, target):
         for i in range(3, m):
             CCX | circuit([i - 1, n - 1 - (m - i + 1), n - 1 - (m - i)])
     
-def OneDirtyAux(controls, aux, target):
+def OneDirtyAux(controls, target, aux):
     n = len(controls) + 2
+    circuit = controls + aux + target
     if n == 5:
         CCX | (controls[0], controls[1], aux)
         CCX | (controls[2], aux, target)
@@ -62,6 +64,7 @@ def OneDirtyAux(controls, aux, target):
     HalfDirtyAux(n, m1, control1, auxs1, target1)
     if m2 == 2: # n == 6
         HalfDirtyAux(n, m1, control1, auxs1, target1)
+        #print(amplitude.run(circuit))
         CCX | (control2[0], control2[1], target2)
         HalfDirtyAux(n, m1, control1, auxs1, target1)
         CCX | (control2[0], control2[1], target2)
@@ -72,7 +75,7 @@ def OneDirtyAux(controls, aux, target):
         HalfDirtyAux(n, m2, control2, auxs2, target2)
 
 
-class MCTLinearSimulationHalfDirtyAux(Synthesis):
+class MCTLinearHalfDirtyAux(Synthesis):
     @classmethod
     def execute(cls, m, n):
         """ A linear simulation for Toffoli gate
@@ -101,7 +104,7 @@ class MCTLinearSimulationHalfDirtyAux(Synthesis):
         
         return CompositeGate(circuit.gates)
 
-class MCTLinearSimulationOneDirtyAux(Synthesis):
+class MCTLinearOneDirtyAux(Synthesis):
     @classmethod
     def execute(cls, n):
         """ A linear simulation for Toffoli gate
@@ -110,20 +113,20 @@ class MCTLinearSimulationOneDirtyAux(Synthesis):
 
         Implement an n-bit toffoli gate in a qureg with n + 2 qubits with linear complexity.
 
-        On an (n+2)-bit circuit, an n-bit toffoli gate can be simulated by 
+        On an n-bit circuit, an (n-2)-bit toffoli gate can be simulated by 
         8(n-5) CCX gates, with 1 bit dirty ancilla.
 
         Returns:
             CompositeGate
         """
-        if n < 1:
+        if n < 3:
             raise Exception("there must be at least one control bit")
 
-        circuit = Circuit(n + 2)
-        controls = circuit([i for i in range(n)])
-        aux = circuit(n)       # this is a dirty ancilla
-        target = circuit(n + 1)
+        circuit = Circuit(n)
+        controls = circuit([i for i in range(n - 2)])
+        target = circuit(n - 2)
+        aux = circuit(n - 1)       # this is a dirty ancilla
         
-        OneDirtyAux(controls, aux, target)
+        OneDirtyAux(controls, target, aux)
         
         return CompositeGate(circuit.gates)

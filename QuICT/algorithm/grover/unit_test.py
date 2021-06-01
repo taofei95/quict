@@ -19,7 +19,8 @@ def test_grover():
         for target in range(0, N):
             f = [0] * N
             f[target] = 1
-            Grover.run(f, n, main_oracle)
+            result = Grover.run(f, n, main_oracle)
+            print("target = %d, found = %d" %(target, result))
             
 
 def test_1():

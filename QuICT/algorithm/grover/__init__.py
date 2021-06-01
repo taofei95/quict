@@ -4,6 +4,6 @@
 # @Author  : Han Yu
 # @File    : __init__.py
 
-from .grover import Grover
+from .simple_grover import Grover
 from .search_with_prior_knowledge import GroverWithPriorKnowledge
 from .partial_quantum_search import PartialGrover
