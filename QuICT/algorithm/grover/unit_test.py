@@ -1,10 +1,9 @@
 #!/usr/bin/env python
 # -*- coding:utf8 -*-
-# @TIME    : 2020/11/5 9:58
-# @Author  : Han Yu
+# @TIME    : 2021/6/1 16:58
+# @Author  : Zhu Qinlin
 # @File    : unit_test.py
 
-#from os import O_RANDOM
 import pytest
 
 from QuICT.algorithm import SimpleGrover, GroverWithPriorKnowledge

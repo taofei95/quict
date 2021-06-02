@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 # -*- coding:utf8 -*-
-# @TIME    : 2020/2/23 10:14 上午
-# @Author  : Han Yu
-# @File    : Deutsch_Jozsa.py
+# @TIME    : 2021/6/1 16:20 上午
+# @Author  : Zhu Qinlin
+# @File    : simple_grover.py
 
 import numpy as np
 
