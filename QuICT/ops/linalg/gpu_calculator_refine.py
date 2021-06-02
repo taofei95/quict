@@ -43,6 +43,7 @@ def _small_mat_large_vec_kernel(
         for k in range(matrix_bit):
             if i & (1 << k):
                 now += 1 << affect_args[matrix_bit - 1 - k]
+        auxiliary_vec[now] = 0
         for k in range(matrix_length):
             shift = other
             for l in range(matrix_bit):
@@ -55,9 +56,10 @@ def matrix_dot_vector_cuda(
     mat_bit,
     vec,
     vec_bit,
-    affect_args
+    affect_args,
+    auxiliary_vec
 ):
-    vec_length = 1 << vec_bit
+    htod_time_start = time()
     mat_length = 1 << mat_bit
 
     task_number = 1 << (vec_bit - mat_bit)
@@ -70,7 +72,7 @@ def matrix_dot_vector_cuda(
     affect_args_sorts = affect_args.copy()
     affect_args_sorts.sort()
 
-    htod_time_start = time()
+    htod_time_start_2 = time()
 
     mat = htod(mat)
     mat_bit = np.int32(mat_bit)
@@ -79,8 +81,6 @@ def matrix_dot_vector_cuda(
     affect_args_sorts = htod(affect_args_sorts)
 
     htod_time_end = time()
-
-    auxiliary_vec = htod(np.zeros([vec_length, ], dtype=np.complex64))
 
     cal_time_start = time()
 
@@ -96,8 +96,6 @@ def matrix_dot_vector_cuda(
 
     cal_time_end = time()
     print(f"{mat_bit}-qubit total", htod_time_end - htod_time_start + cal_time_end - cal_time_start)
-    print("matrix_htod", htod_time_end - htod_time_start)
+    print("matrix_all_htod", htod_time_end - htod_time_start)
+    print("matrix_htod", htod_time_end - htod_time_start_2)
     print("cal", cal_time_end - cal_time_start)
-
-    return auxiliary_vec
-

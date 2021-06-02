@@ -18,12 +18,13 @@ import time
 from QuICT.ops.linalg.gpu_calculator_refine import matrix_dot_vector_cuda
 
 def test_refine():
-    vec_bit = 30
+    vec_bit = 20
     vec = np.random.random((1 << vec_bit,)).astype(np.complex64)
+    anc = np.zeros((1 << vec_bit, )).astype(np.complex64)
     vec_htod_start = time.time()
     vec = numba.cuda.to_device(vec)
     vec_htod_end = time.time()
-    print("vec_htod_time", vec_htod_end - vec_htod_start)
+    # print("vec_htod_time", vec_htod_end - vec_htod_start)
     for i in range(10, 12):
         mat_bit = i
         mat = np.random.random((1 << mat_bit, 1 << mat_bit)).astype(np.complex64)
@@ -33,22 +34,24 @@ def test_refine():
         affect_args = affect_args[:mat_bit]
 
         with numba.cuda.gpus[0]:
-            vec = matrix_dot_vector_cuda(
+            matrix_dot_vector_cuda(
                 mat = mat,
                 mat_bit = mat_bit,
                 vec = vec,
                 vec_bit = vec_bit,
-                affect_args = affect_args
+                affect_args = affect_args,
+                auxiliary_vec = anc
             )
+            vec, anc = anc, vec
             dtot_time_start = time.time()
             # ans.copy_to_host(ans_arr)
             dtot_time_end = time.time()
-            print("dtoh", dtot_time_end - dtot_time_start)
+            # print("dtoh", dtot_time_end - dtot_time_start)
             numba.cuda.synchronize()
     ans_arr = np.zeros_like(vec, dtype=np.complex64)
     dtot_time_start = time.time()
     with numba.cuda.gpus[0]:
         vec.copy_to_host(ans_arr)
     dtot_time_end = time.time()
-    print("vec dtoh", dtot_time_end - dtot_time_start)
+    # print("vec dtoh", dtot_time_end - dtot_time_start)
     assert 0

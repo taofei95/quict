@@ -2695,9 +2695,10 @@ class QFTGate(ComplexGate):
         _IQFT.targets = self.targets
         return _IQFT
 
-    def build_gate(self):
+    def build_gate(self, targets):
         from .composite_gate import CompositeGate
-        qureg = self.affectArgs
+        self.targets = targets
+        qureg = [i for i in range(targets)]
         gates = CompositeGate()
 
         with gates:
