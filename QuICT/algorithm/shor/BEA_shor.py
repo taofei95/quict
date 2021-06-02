@@ -6,48 +6,14 @@
 
 'The (2n+2)-qubit circuit used in the Shor algorithm is designed by THOMAS HANER, MARTIN ROETTELER, and KRYSTA M. SVORE in "Factoring using 2n+2 qubits with Toffoli based modular multiplication'
 
-from QuICT.core import *
-import sys
-from .._algorithm import Algorithm
-
 import random
-from math import log, ceil, floor, gcd, pi
+from math import pi
 import numpy as np
 from fractions import Fraction
-# from QuICT.algorithm import Amplitude
-import time
 
-# from QuICT.core import *
+from .._algorithm import Algorithm
+from QuICT.core import *
 from QuICT.qcda.synthesis.arithmetic.bea import *
-
-def EX_GCD(a, b, arr):
-    if b == 0:
-        arr[0] = 1
-        arr[1] = 0
-        return a
-    g = EX_GCD(b, a % b, arr)
-    t = arr[0]
-    arr[0] = arr[1]
-    arr[1] = t - int(a / b) * arr[1]
-    return g
-
-def ModReverse(a, n):
-    arr = [0, 1]
-    EX_GCD(a, n, arr)
-    return (arr[0] % n + n) % n
-
-#transform an integer to n-length bitwise string
-def int2bitwise(c,n):
-    """
-    Transform an integer c to binary n-length bitwise string.
-    """
-    c_bitwise = bin(c)[2:]
-    if len(c_bitwise) > n:
-        c_bitwise = c_bitwise[-n:]
-        #print('c exceeds the length of a, thus is truncated')
-    else:
-        c_bitwise = '0'*(n-len(c_bitwise))+c_bitwise
-    return c_bitwise
 
 def fast_power(a, b, N):
     x = 1
@@ -103,9 +69,9 @@ def Order_Finding(a,N):
     trickbit_store = [0]*t
     circuit = Circuit(2*n+3)
     x_reg = circuit([i for i in range(n+1,2*n+1)])
-    ancilla = circuit([i for i in range(n+1)])
+    #ancilla = circuit([i for i in range(n+1)])
     trickbit = circuit(2 * n + 1)
-    qreg_low= circuit(2 * n + 2)
+    #qreg_low= circuit(2 * n + 2)
     X | x_reg[n-1]
     for k in range(t):
         H | trickbit
@@ -249,9 +215,3 @@ class BEAShorFactor(Algorithm):
     @staticmethod
     def _run(N):
         return Shor(N)
-
-if __name__ == "__main__":
-    time_start = time.time_ns()
-    BEAShorFactor.run(21)
-    time_end = time.time_ns()
-    print(time_end - time_start)
