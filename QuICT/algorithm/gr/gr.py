@@ -18,12 +18,16 @@ def calculate_r(nSolution, nSpace):
 
 
 def calculate_r1_r2_one_target(N, K, eps):
-    sin_theta = 2*np.sqrt(N-1)/N
-    sqrt_K_mul_alpha_yt = np.sqrt(K-sin_theta*sin_theta*(K-1))
     r1 = np.sqrt(N)*np.pi*0.25*(1-eps)
+    r1 = round(r1)
+    o_theta = 2*np.arccos(np.sqrt(1-1/N))
+    theta = np.pi/2 - (0.5+r1)*o_theta
+    sin_theta = np.sin(theta)
+    sqrt_K_mul_alpha_yt = np.sqrt(K-sin_theta*sin_theta*(K-1))
     r2 = (np.sqrt(N/K)*0.5)*(np.arcsin(sin_theta/sqrt_K_mul_alpha_yt) +
                              np.arcsin(sin_theta*(K-2)/(2*sqrt_K_mul_alpha_yt)))
-    return round(r1), round(r2)
+    r2 = round(r2)
+    return r1, r2
 
 
 def run_standard_grover(f, oracle):
@@ -78,7 +82,7 @@ def run_partial_grover(f, n, k, oracle):
     """
     K = 1 << k
     N = 1 << n
-    eps = 1/np.sqrt(K)  # can use other epsilon
+    eps = 1/K  # can use other epsilon
     r1, r2 = calculate_r1_r2_one_target(N, K, eps)
 
     circuit = Circuit(n + 3)
