@@ -12,7 +12,7 @@ from QuICT.core import *
 def main_oracle(f, qreg, ancilla):
     PermFx(f) | (qreg, ancilla)
 
-'''
+
 def test_SimpleGrover():
     for n in range(3, 9):
         error = 0
@@ -30,7 +30,7 @@ def test_SimpleGrover():
                     %(n, error, N, error_rate))
             assert 0
     assert 1
-'''            
+
 
 def test_PartialGrover():
     k = 3
@@ -53,7 +53,7 @@ def test_PartialGrover():
             assert 0
     assert 1
 
-'''
+
 def test_GroverWithPriorKnowledge():
     for test_number in range(3, 5):
         for i in range(2, 8):
@@ -66,7 +66,7 @@ def test_GroverWithPriorKnowledge():
                 p = np.array(prob)
                 p /= p.sum()
                 GroverWithPriorKnowledge.run(test, 2**test_number, p, T, main_oracle)
-'''
+
 
 if __name__ == '__main__':
     pytest.main(["./unit_test.py"])
