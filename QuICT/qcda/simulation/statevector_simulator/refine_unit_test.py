@@ -50,30 +50,30 @@ def test_constant_vec_sim():
         circuit = Circuit(qubit_num)
         # circuit.random_append(500)
         # X | circuit([0])
+        # QFT.build_gate(qubit_num) | circuit
+        # QFT.build_gate(qubit_num) | circuit
+        # QFT.build_gate(qubit_num) | circuit
+        # QFT.build_gate(qubit_num) | circuit
         QFT.build_gate(qubit_num) | circuit
-        QFT.build_gate(qubit_num) | circuit
-        # QFT.build_gate(qubit_num) | circuit
-        # QFT.build_gate(qubit_num) | circuit
-        # QFT.build_gate(qubit_num) | circuit
         # print(circuit.circuit_size())
         # QFT.build_gate(qubit_num) | circuit
         # QFT.build_gate(qubit_num) | circuit
 
-        # start_time = time()
-        # state_expected = Amplitude.run(circuit)
-        # end_time = time()
+        start_time = time()
+        state_expected = Amplitude.run(circuit)
+        end_time = time()
         #   duration_2 = end_time - start_time
-        with numba.cuda.defer_cleanup():
-            start_time = time()
-            state = ConstantStateVectorSimulator.run(circuit)
-            end_time = time()
-            duration_1 = end_time - start_time
+        #with numba.cuda.defer_cleanup():
+        #    start_time = time()
+        #    state = ConstantStateVectorSimulator.run(circuit)
+        #    end_time = time()
+        #    duration_1 = end_time - start_time
 
         # print(state_expected)
         # print(state)
 
         # assert np.allclose(state, state_expected)
         # print()
-        print(f"Cur algo: {duration_1} s.")
-        # print(f"Old algo: {duration_2} s.")
+        # print(f"Cur algo: {duration_1} s.")
+        print(f"Old algo: {end_time - start_time} s.")
         # assert 0
