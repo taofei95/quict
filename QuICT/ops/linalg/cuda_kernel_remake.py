@@ -11,6 +11,102 @@ thread_num_per_block = 128  # no structure
 
 
 @nb_cuda.jit()
+def _gate_on_state_vector_kernel_1bit(
+        state_vector,
+        mat_offset,
+        arg_offset,
+        compact_mat,
+        compact_arg,
+        compact_arg_sorted,
+):
+    index: int
+    mat_bit: int
+    index = nb_cuda.blockDim.x * nb_cuda.blockIdx.x + nb_cuda.threadIdx.x
+
+    mat_n_rows = 2
+
+    gate_id_in_blk: int = nb_cuda.threadIdx.x
+    mat_bit = nb_cuda.threadIdx.y
+
+    vec_cache_blk_shared = nb_cuda.shared.array(shape=64, dtype=nb.complex64)  # 512B
+
+    cache_offset = gate_id_in_blk * mat_n_rows
+
+    pos = compact_arg_sorted[arg_offset]
+    tail = index & ((1 << pos) - 1)
+    index = index >> pos << (pos + 1) | tail
+
+    pos = compact_arg[arg_offset]
+    val = mat_bit & 1
+    index |= val << pos
+
+    vec_cache_blk_shared[cache_offset + mat_bit] = state_vector[index]
+
+    nb_cuda.syncthreads()
+
+    tmp = nb.complex64(0.0 + 0.0j)
+
+    compact_mat_offset = mat_offset + mat_bit * mat_n_rows
+    tmp += compact_mat[compact_mat_offset] * vec_cache_blk_shared[cache_offset]
+    tmp += compact_mat[compact_mat_offset + 1] * vec_cache_blk_shared[cache_offset + 1]
+
+    state_vector[index] = tmp
+
+
+@nb_cuda.jit()
+def _gate_on_state_vector_kernel_2bit(
+        state_vector,
+        mat_offset,
+        arg_offset,
+        compact_mat,
+        compact_arg,
+        compact_arg_sorted,
+):
+    index: int
+    mat_bit: int
+    index = nb_cuda.blockDim.x * nb_cuda.blockIdx.x + nb_cuda.threadIdx.x
+
+    mat_n_rows = 4
+
+    gate_id_in_blk: int = nb_cuda.threadIdx.x
+    mat_bit = nb_cuda.threadIdx.y
+
+    vec_cache_blk_shared = nb_cuda.shared.array(shape=64, dtype=nb.complex64)  # 512B
+
+    cache_offset = gate_id_in_blk * mat_n_rows
+
+    pos = compact_arg_sorted[arg_offset + 0]
+    tail = index & ((1 << pos) - 1)
+    index = index >> pos << (pos + 1) | tail
+
+    pos = compact_arg_sorted[arg_offset + 1]
+    tail = index & ((1 << pos) - 1)
+    index = index >> pos << (pos + 1) | tail
+
+    pos = compact_arg[arg_offset]
+    val = mat_bit >> 1 & 1
+    index |= val << pos
+
+    pos = compact_arg[arg_offset]
+    val = mat_bit & 1
+    index |= val << pos
+
+    vec_cache_blk_shared[cache_offset + mat_bit] = state_vector[index]
+
+    nb_cuda.syncthreads()
+
+    tmp = nb.complex64(0.0 + 0.0j)
+
+    compact_mat_offset = mat_offset + mat_bit * mat_n_rows
+    tmp += compact_mat[compact_mat_offset] * vec_cache_blk_shared[cache_offset]
+    tmp += compact_mat[compact_mat_offset + 1] * vec_cache_blk_shared[cache_offset + 1]
+    tmp += compact_mat[compact_mat_offset + 2] * vec_cache_blk_shared[cache_offset + 2]
+    tmp += compact_mat[compact_mat_offset + 3] * vec_cache_blk_shared[cache_offset + 3]
+
+    state_vector[index] = tmp
+
+
+@nb_cuda.jit()
 def _gate_on_state_vector_kernel(
         state_vector,
         affect_num,
@@ -110,15 +206,34 @@ def state_vector_simulation(
             gate_in_blk = thread_num_per_block // mat_n_rows
             thread_per_block = (gate_in_blk, mat_n_rows)
             blk_cnt = initial_state.shape[0] // thread_num_per_block
-            _gate_on_state_vector_kernel[blk_cnt, thread_per_block](
-                d_state_vector,
-                affect_num,
-                mat_strides[i],
-                arg_strides[i],
-                d_compact_mat,
-                d_compact_arg,
-                d_compact_arg_sorted,
-            )
+            if affect_num == 1:
+                _gate_on_state_vector_kernel_1bit[blk_cnt, thread_per_block](
+                    d_state_vector,
+                    mat_strides[i],
+                    arg_strides[i],
+                    d_compact_mat,
+                    d_compact_arg,
+                    d_compact_arg_sorted,
+                )
+            elif affect_num == 2:
+                _gate_on_state_vector_kernel_2bit[blk_cnt, thread_per_block](
+                    d_state_vector,
+                    mat_strides[i],
+                    arg_strides[i],
+                    d_compact_mat,
+                    d_compact_arg,
+                    d_compact_arg_sorted,
+                )
+            else:
+                _gate_on_state_vector_kernel[blk_cnt, thread_per_block](
+                    d_state_vector,
+                    affect_num,
+                    mat_strides[i],
+                    arg_strides[i],
+                    d_compact_mat,
+                    d_compact_arg,
+                    d_compact_arg_sorted,
+                )
 
         end_time = time()
         cuda_run_time = end_time - start_time

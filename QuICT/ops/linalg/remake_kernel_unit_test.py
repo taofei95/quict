@@ -12,14 +12,25 @@ def test_kernel():
     qubit_num = 30
     initial_state = np.zeros(shape=1 << qubit_num, dtype=np.complex64)
     initial_state[0] = 1.0 + 0.0j
+
+    print()
+    print("JIT for the first time. Ignore all output of this section.")
+    trash = Circuit(4)
+    CX | trash([0, 1])
+    X | trash(0)
+    CCX | trash([0, 1, 2])
+    state_vector_simulation(initial_state, trash.gates)
+
+    print("Real results starts here")
+
     circuit = Circuit(qubit_num)
-    # circuit.random_append(500)
+
     QFT.build_gate(qubit_num) | circuit
     QFT.build_gate(qubit_num) | circuit
     QFT.build_gate(qubit_num) | circuit
-    # QFT.build_gate(qubit_num) | circuit
-    # QFT.build_gate(qubit_num) | circuit
-    # QFT.build_gate(qubit_num) | circuit
+    QFT.build_gate(qubit_num) | circuit
+    QFT.build_gate(qubit_num) | circuit
+    QFT.build_gate(qubit_num) | circuit
 
     with nb_cuda.defer_cleanup():
         start_time = time()
@@ -28,13 +39,4 @@ def test_kernel():
         end_time = time()
         cuda_duration = end_time - start_time
 
-    start_time = time()
-    # state_expected = Amplitude.run(circuit)
-    end_time = time()
-    old_algo_duration = end_time - start_time
-
-    # assert np.allclose(state, state_expected)
-
-    print()
-    print(f"Old algo: {old_algo_duration:0.4f} s")
     print(f"Remade cuda: {cuda_duration:0.4f} s")
