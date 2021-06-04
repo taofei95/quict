@@ -39,7 +39,7 @@ def run_grover(f, n, oracle):
     circuit.exec()
     return int(index_q)
 
-class SimpleGrover(Algorithm):
+class StandardGrover(Algorithm):
     """ simple grover
 
     Quantum Computation and Quantum Information - Michael A. Nielsen & Isaac L. Chuang
