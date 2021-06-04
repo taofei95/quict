@@ -50,8 +50,6 @@ def test_PartialGrover():
         print("for n = %d, %d errors in %d tests, error rate = %f" %
                 (n, error, N, error/N))
         if error_rate > 0.2:
-            print("for n = %d, %d errors in %d tests, error rate = %f" %
-                  (n, error, N, error/N))
             assert 0
     assert 1
 
