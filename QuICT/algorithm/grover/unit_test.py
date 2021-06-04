@@ -27,7 +27,7 @@ def test_SimpleGrover():
                 #print("target = %d, found = %d" %(target, result))
         error_rate = error/N
         if error_rate > 0.2:
-            print("for n = %d, %d errors in %d tests, error rate = %f" %(n, error, N, error/N))
+            print("for n = %d, %d errors in %d tests, error rate = %f" %(n, error, N, error_rate))
             assert 0
     assert 1
             
