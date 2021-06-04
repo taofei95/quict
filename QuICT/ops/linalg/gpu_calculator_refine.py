@@ -95,7 +95,7 @@ def matrix_dot_vector_cuda(
     )
 
     cal_time_end = time()
-    print(f"{mat_bit}-qubit total", htod_time_end - htod_time_start + cal_time_end - cal_time_start)
-    print("matrix_all_htod", htod_time_end - htod_time_start)
-    print("matrix_htod", htod_time_end - htod_time_start_2)
-    print("cal", cal_time_end - cal_time_start)
+    # print(f"{mat_bit}-qubit total", htod_time_end - htod_time_start + cal_time_end - cal_time_start)
+    # print("matrix_all_htod", htod_time_end - htod_time_start)
+    # print("matrix_htod", htod_time_end - htod_time_start_2)
+    # print("cal", cal_time_end - cal_time_start)
