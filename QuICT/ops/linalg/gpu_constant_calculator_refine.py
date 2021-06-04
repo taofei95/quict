@@ -14,12 +14,13 @@ from QuICT.core import *
 @cuda.jit()
 def _H_large_vec_kernel(
     index: int,
-    vec
+    vec,
+    xs
 ):
     label = cuda.blockIdx.x * cuda.blockDim.x + cuda.threadIdx.x
     _0 = (label & ((1 << index) - 1)) + (label >> index << (index + 1))
     _1 = _0 + (1 << index)
-    vec[_0], vec[_1] = (vec[_0] + vec[_1]) / cmath.sqrt(2), (vec[_0] - vec[_1]) / cmath.sqrt(2)
+    vec[_0], vec[_1] = (vec[_0] + vec[_1]) * xs, (vec[_0] - vec[_1]) * xs
 
 @cuda.jit()
 def _CRz_large_vec_kernel1(
@@ -64,7 +65,8 @@ def gate_dot_vector_cuda(
 
         _H_large_vec_kernel[[block_num, 1, 1], [thread_per_block, 1, 1]](
             vec_bit - 1 - gate.targ,
-            vec
+            vec,
+            np.sqrt(2)
         )
     elif gate.type() == GATE_ID["CRz"]:
         cindex = vec_bit - 1 - gate.carg
