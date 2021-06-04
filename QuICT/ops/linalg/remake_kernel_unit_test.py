@@ -17,6 +17,9 @@ def test_kernel():
     QFT.build_gate(qubit_num) | circuit
     QFT.build_gate(qubit_num) | circuit
     QFT.build_gate(qubit_num) | circuit
+    # QFT.build_gate(qubit_num) | circuit
+    # QFT.build_gate(qubit_num) | circuit
+    # QFT.build_gate(qubit_num) | circuit
 
     with nb_cuda.defer_cleanup():
         start_time = time()

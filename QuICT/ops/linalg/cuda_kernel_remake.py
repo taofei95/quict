@@ -25,43 +25,32 @@ def _gate_on_state_vector_kernel(
     index = nb_cuda.blockDim.x * nb_cuda.blockIdx.x + nb_cuda.threadIdx.x
 
     mat_n_rows = 1 << affect_num
-    # mat_n_elem = mat_n_rows * mat_n_rows
 
     gate_id_in_blk: int = nb_cuda.threadIdx.x
     mat_bit = nb_cuda.threadIdx.y
 
     vec_cache_blk_shared = nb_cuda.shared.array(shape=64, dtype=nb.complex64)  # 512B
-    gate_mat = nb_cuda.shared.array(shape=1024, dtype=nb.complex64)  # 8KB
-    gate_arg = nb_cuda.shared.array(shape=64, dtype=nb.int64)  # 512B
-    gate_arg_sorted = nb_cuda.shared.array(shape=64, dtype=nb.int64)  # 512B
 
-    vec_cache = vec_cache_blk_shared[gate_id_in_blk * mat_n_rows:gate_id_in_blk * mat_n_rows + mat_n_rows]
-
-    for i in range(mat_n_rows):
-        gate_mat[mat_bit * mat_n_rows + i] = \
-            compact_mat[mat_offset + mat_n_rows * mat_bit + i]
-    if gate_id_in_blk == 0 and nb_cuda.popc(mat_bit) == 1:
-        pos = nb_cuda.ffs(mat_bit)  # magic of log2 for one-hot integer
-        gate_arg[pos] = compact_arg[arg_offset + pos]
-        gate_arg_sorted[pos] = compact_arg_sorted[arg_offset + pos]
-    nb_cuda.syncthreads()
+    cache_offset = gate_id_in_blk * mat_n_rows
 
     for i in range(affect_num):
-        pos = gate_arg_sorted[i]
+        pos = compact_arg_sorted[arg_offset + i]
         tail = index & ((1 << pos) - 1)
         index = index >> pos << (pos + 1) | tail
     for i in range(affect_num):
-        pos = gate_arg[i]
+        pos = compact_arg[arg_offset + i]
         val = mat_bit >> (affect_num - 1 - i) & 1
         index |= val << pos
 
-    vec_cache[mat_bit] = state_vector[index]
+    vec_cache_blk_shared[cache_offset + mat_bit] = state_vector[index]
 
     nb_cuda.syncthreads()
 
-    tmp = 0.0 + 0.0j
+    tmp = nb.complex64(0.0 + 0.0j)
+
+    compact_mat_offset = mat_offset + mat_bit * mat_n_rows
     for i in range(mat_n_rows):
-        tmp += gate_mat[mat_bit * mat_n_rows + i] * vec_cache[i]
+        tmp += compact_mat[compact_mat_offset + i] * vec_cache_blk_shared[cache_offset + i]
 
     state_vector[index] = tmp
 
@@ -140,4 +129,3 @@ def state_vector_simulation(
         print(f"CUDA execution time: {cuda_run_time:0.4f} s")
 
         # return d_state_vector.copy_to_host()
-
