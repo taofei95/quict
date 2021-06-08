@@ -2,7 +2,7 @@
 # -*- coding:utf8 -*-
 # @TIME    : 2021/6/1 16:20 上午
 # @Author  : Zhu Qinlin
-# @File    : simple_grover.py
+# @File    : standard_grover.py
 
 import numpy as np
 

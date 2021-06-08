@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding:utf8 -*-
-# @TIME    : 2020/2/23 10:14 上午
+# @TIME    : 2020/6/3 10:14 上午
 # @Author  : Peng Sirui
 # @File    : partial_grover.py
 
