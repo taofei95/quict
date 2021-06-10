@@ -7,10 +7,14 @@ import os
 import sys
 import subprocess
 from os import path, getcwd, system
+from Cython.Build import cythonize
 from setuptools import setup
 from setuptools import find_packages, Extension
-from setuptools.command.build_ext import build_ext
+# from setuptools.command.build_ext import build_ext
+from Cython.Distutils.build_ext import build_ext
 import platform
+
+import numpy as np
 
 from typing import *
 
@@ -99,15 +103,53 @@ PLAT_TO_CMAKE = {
 
 # A CMakeExtension needs a sourcedir instead of a file list.
 # The name must be the _single_ output extension from the CMake build.
-# If you need multiple extensions, see scikit-build.
 class CMakeExtension(Extension):
-    def __init__(self, name, source_dir):
+    def __init__(self, name, source_dir, extra_cmake_macro=None):
         Extension.__init__(self, name, sources=[])
         self.source_dir = os.path.abspath(source_dir)
+        self.extra_cmake_macro = extra_cmake_macro
+
+
+class CythonExtension(Extension):
+    def __init__(self, name, cython_sources, extra_compile_args,
+                 extra_link_args, libraries,
+                 runtime_library_dirs, cmake_dep):
+        # self.name = name
+        # self.sources = sources
+
+        Extension.__init__(self, name, sources=[])
+        self.cython_sources = cython_sources
+        self.extra_compile_args = extra_compile_args
+        self.extra_link_args = extra_link_args
+        # self.include_dirs = include_dirs,
+        self.libraries = libraries
+        self.runtime_library_dirs = runtime_library_dirs
+        self.cmake_dep = cmake_dep
 
 
 class ExtensionBuild(build_ext):
     def build_extension(self, ext):
+        if isinstance(ext, CMakeExtension):
+            self.cmake_build_extension(ext)
+        elif isinstance(ext, CythonExtension):
+            self.cython_build_extension(ext)
+
+    def cython_build_extension(self, ext):
+        if ext.cmake_dep:
+            self.cmake_build_extension(ext.cmake_dep)
+        print('1')
+        cython_ext = cythonize(Extension(
+            ext.name,
+            ext.cython_sources,
+            extra_compile_args=ext.extra_compile_args,
+            extra_link_args=ext.extra_link_args,
+            libraries=ext.libraries,
+            runtime_library_dirs=ext.runtime_library_dirs,
+        ))
+        print('2')
+        build_ext.build_extension(self, cython_ext[0])
+
+    def cmake_build_extension(self, ext):
         ext_dir = os.path.abspath(os.path.dirname(self.get_ext_fullpath(ext.name)))
 
         # required for auto-detection of auxiliary "native" libs
@@ -168,8 +210,10 @@ class ExtensionBuild(build_ext):
         ext_name = ext.name
         if ext_name[-1] == ".":
             ext_name = ext_name[:-1]
-        ext_name = ext_name.split(".")[-1]
         build_temp = f"{self.build_temp}.{ext_name}"
+        ext_name_split = ext_name.split(".")
+        ext_name = ext_name_split[-1]
+
 
         if not os.path.exists(build_temp):
             os.makedirs(build_temp)
@@ -220,13 +264,13 @@ packages = find_packages(where=prj_root_relative)
 
 print(f"Found packages: {packages}")
 
-if platform.system() == 'Linux':
-    lib1 = f"{prj_root_relative}/QuICT/qcda/mapping/mcts/mcts_core/mcts_wrapper.cpython-38-x86_64-linux-gnu.so"
-    lib2 = f"{prj_root_relative}/QuICT/qcda/mapping/mcts/mcts_core/lib/build/libmcts.so"
-else:
-    lib1 = f"{prj_root_relative}/QuICT/qcda/mapping/mcts/mcts_core/mcts_wrapper.cpython-38-darwin.so"
-    lib2 = f"{prj_root_relative}/QuICT/qcda/mapping/mcts/mcts_core/lib/build/libmcts.dylib"
-    system(f"install_name_tool -add_rpath {path.dirname(lib2)} {lib1}")
+# if platform.system() == 'Linux':
+#     lib1 = f"{prj_root_relative}/QuICT/qcda/mapping/mcts/mcts_core/mcts_wrapper.cpython-38-x86_64-linux-gnu.so"
+#     lib2 = f"{prj_root_relative}/QuICT/qcda/mapping/mcts/mcts_core/lib/build/libmcts.so"
+# else:
+#     lib1 = f"{prj_root_relative}/QuICT/qcda/mapping/mcts/mcts_core/mcts_wrapper.cpython-38-darwin.so"
+#     lib2 = f"{prj_root_relative}/QuICT/qcda/mapping/mcts/mcts_core/lib/build/libmcts.dylib"
+#     system(f"install_name_tool -add_rpath {path.dirname(lib2)} {lib1}")
 
 # static file
 file_data = [
@@ -234,12 +278,12 @@ file_data = [
     # ("QuICT/qcda/synthesis/initial_state_preparation",
     #  [f"{prj_root_relative}/QuICT/qcda/synthesis/initial_state_preparation/initial_state_preparation_cdll.so"],
     #  ),
-    ("QuICT/qcda/mapping/mcts/mcts_core",
-     [lib1]
-     ),
-    ("QuICT/qcda/mapping/mcts/mcts_core/lib/build",
-     [lib2]
-     )
+    # ("QuICT/qcda/mapping/mcts/mcts_core",
+    #  [lib1]
+    #  ),
+    # ("QuICT/qcda/mapping/mcts/mcts_core/lib/build",
+    #  [lib2]
+    #  )
 ]
 
 # 3rd party library
@@ -274,7 +318,22 @@ setup(
         CMakeExtension("QuICT.utility.graph_structure.", f"{prj_root}/QuICT/utility/graph_structure"),
         CMakeExtension("QuICT.backends.", f"{prj_root}/QuICT/backends"),
         CMakeExtension("QuICT.qcda.synthesis.initial_state_preparation.",
-                       f"{prj_root}/QuICT/qcda/synthesis/initial_state_preparation/")
+                       f"{prj_root}/QuICT/qcda/synthesis/initial_state_preparation/"),
+        CythonExtension(
+            "QuICT.qcda.mapping.mcts.mcts_core.mcts_wrapper",
+            [f"{prj_root}/QuICT/qcda/mapping/mcts/mcts_core/mcts_wrapper.pyx"],
+            extra_compile_args=["-std=c++14",
+                                f"-I{prj_root}/QuICT/qcda/mapping/mcts/mcts_core/lib/include/",
+                                f"-I{np.get_include()}"
+                                ],
+            extra_link_args=[f"-L{prj_root}/QuICT/qcda/mapping/mcts/mcts_core/lib/"],
+            libraries=["mcts"],
+            runtime_library_dirs=[f"{prj_root}/QuICT/qcda/mapping/mcts/mcts_core/lib/"],
+            cmake_dep=CMakeExtension(
+                "QuICT.qcda.mapping.mcts.mcts_core.lib.",
+                f"{prj_root}/QuICT/qcda/mapping/mcts/mcts_core/lib/"
+            ),
+        ),
     ],
     cmdclass={"build_ext": ExtensionBuild},
     packages=packages,

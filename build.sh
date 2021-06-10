@@ -51,21 +51,19 @@ git submodule update --init --recursive
 
 # Clear older version build.sh remnants
 
-print_segment
-
-print_cyan "[Clear Remnants]"
-
-echo "Deleting useless files in source code tree created by older version of build.sh"
-
-[[ -f "$prj_root/QuICT/backends/quick_operator_cdll.so" ]] && \
-echo "Deleting $prj_root/QuICT/backends/quick_operator_cdll.so" && \
-rm "$prj_root/QuICT/backends/quick_operator_cdll.so"
-
-[[ -f "$prj_root/QuICT/qcda/synthesis/initial_state_preparation/initial_state_preparation_cdll.so" ]] && \
-echo "Deleting $prj_root/QuICT/qcda/synthesis/initial_state_preparation/initial_state_preparation_cdll.so" && \
-rm "$prj_root/QuICT/qcda/synthesis/initial_state_preparation/initial_state_preparation_cdll.so"
-
-
+#print_segment
+#
+#print_cyan "[Clear Remnants]"
+#
+#echo "Deleting useless files in source code tree created by older version of build.sh"
+#
+#[[ -f "$prj_root/QuICT/backends/quick_operator_cdll.so" ]] && \
+#echo "Deleting $prj_root/QuICT/backends/quick_operator_cdll.so" && \
+#rm "$prj_root/QuICT/backends/quick_operator_cdll.so"
+#
+#[[ -f "$prj_root/QuICT/qcda/synthesis/initial_state_preparation/initial_state_preparation_cdll.so" ]] && \
+#echo "Deleting $prj_root/QuICT/qcda/synthesis/initial_state_preparation/initial_state_preparation_cdll.so" && \
+#rm "$prj_root/QuICT/qcda/synthesis/initial_state_preparation/initial_state_preparation_cdll.so"
 
 # Set C++ compiler
 
@@ -167,48 +165,16 @@ echo "Building python egg"
 print_segment
 
 #if [[ $OS =~ "Darwin" ]];then
-#  tbb_include_dir="$tbb_src_dir/include"
-#  cd ./QuICT/backends && \
-#  $CXX \
-#  -o quick_operator_cdll.so dll.cpp \
-#  -std=c++11  -fPIC \
-#  -shared  -I$tbb_include_dir -ltbb -L$tbb_build_dir &&
-#  install_name_tool -add_rpath $tbb_build_dir quick_operator_cdll.so
-#  cd ..  || exit 1
-#
-#  cd ./qcda/synthesis/initial_state_preparation && \
-#  $CXX \
-#    -o initial_state_preparation_cdll.so initial_state_preparation.cpp \
-#    -std=c++11  -fPIC -shared  -I$tbb_include_dir -ltbb -L$tbb_build_dir  || exit 1
-#  install_name_tool -add_rpath $tbb_build_dir initial_state_preparation_cdll.so
-#
-#  cd $prj_root/QuICT/qcda/mapping/mcts/mcts_core && ./build.sh  || exit 1
+#  cd "$prj_root"/QuICT/qcda/mapping/mcts/mcts_core && ./build.sh  || exit 1
 #else
-#  cd ./QuICT/backends && \
-#  $CXX \
-#  -o quick_operator_cdll.so dll.cpp \
-#  -std=c++11  -fPIC \
-#  -shared -ltbb &&
-#  cd ..  || exit 1
-#
-#  cd ./qcda/synthesis/initial_state_preparation && \
-#  $CXX \
-#    -o initial_state_preparation_cdll.so initial_state_preparation.cpp \
-#    -std=c++11  -fPIC -shared -ltbb || exit 1
-#
-#  cd $prj_root/QuICT/qcda/mapping/mcts/mcts_core && chmod u+x ./build.sh && ./build.sh  || exit 1
+#  cd "$prj_root"/QuICT/qcda/mapping/mcts/mcts_core && chmod u+x ./build.sh && ./build.sh  || exit 1
 #fi
 
-if [[ $OS =~ "Darwin" ]];then
-  cd "$prj_root"/QuICT/qcda/mapping/mcts/mcts_core && ./build.sh  || exit 1
-else
-  cd "$prj_root"/QuICT/qcda/mapping/mcts/mcts_core && chmod u+x ./build.sh && ./build.sh  || exit 1
-fi
+cd $prj_root && \
+$PYTHON3 ./setup.py build_ext || exit 1
 
-cd $prj_build_dir && \
-$PYTHON3 ../setup.py build --parallel $NPROC
-
-print_segment
+cd $prj_root && \
+$PYTHON3 ./setup.py build_py || exit 1
 
 #print_cyan "[Copying Back]"
 #
