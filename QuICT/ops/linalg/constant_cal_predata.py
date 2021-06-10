@@ -20,7 +20,7 @@ def _H_large_vec_kernel(
     label = cuda.blockIdx.x * cuda.blockDim.x + cuda.threadIdx.x
     _0 = (label & ((1 << index) - 1)) + (label >> index << (index + 1))
     _1 = _0 + (1 << index)
-    vec[_0], vec[_1] = vec[_0]*mat[0,0] + vec[_1]*mat[0,1], vec[_0]*mat[1,0] + vec[_1]*mat[1,1]
+    vec[_0], vec[_1] = vec[_0]*mat[0] + vec[_1]*mat[1], vec[_0]*mat[2] + vec[_1]*mat[3]
 
 @cuda.jit()
 def _CRz_large_vec_kernel1(
@@ -34,8 +34,8 @@ def _CRz_large_vec_kernel1(
     _0 = (1 << cindex) + (gw & ((1 << tindex) - (1 << cindex))) + (gw >> tindex << (tindex + 1)) + \
          (label & ((1 << cindex) - 1))
     _1 = _0 + (1 << tindex)
-    vec[_0] = vec[_0] * mat[3,3]
-    vec[_1] = vec[_1] * mat[4,4]
+    vec[_0] = vec[_0] * mat[10]
+    vec[_1] = vec[_1] * mat[15]
 
 @cuda.jit()
 def _CRz_large_vec_kernel2(
@@ -49,8 +49,8 @@ def _CRz_large_vec_kernel2(
     _0 = (1 << cindex) + (gw & ((1 << cindex) - (1 << tindex))) + (gw >> cindex << (cindex + 1)) + \
          (label & ((1 << tindex) - 1))
     _1 = _0 + (1 << tindex)
-    vec[_0] = vec[_0] * mat[3,3]
-    vec[_1] = vec[_1] * mat[4,4]
+    vec[_0] = vec[_0] * mat[10]
+    vec[_1] = vec[_1] * mat[15]
 
 def gate_dot_vector_predata(
     gate : BasicGate,

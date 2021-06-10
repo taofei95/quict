@@ -46,6 +46,15 @@ def wtest_refine_vec_sim():
 
 def test_constant_vec_sim():
     for i in range(1):
+        print("Pre-compiled.")
+        qubit_num = 10
+        circuit = Circuit(qubit_num)
+        QFT.build_gate(qubit_num) | circuit
+
+        _ = ConstantStateVectorSimulator.run_predata_ot(circuit)
+
+    for i in range(1):
+        print("Start running.")
         qubit_num = 30
         circuit = Circuit(qubit_num)
         # circuit.random_append(500)
@@ -59,21 +68,17 @@ def test_constant_vec_sim():
         # QFT.build_gate(qubit_num) | circuit
         # QFT.build_gate(qubit_num) | circuit
 
-        start_time = time()
-        state_expected = Amplitude.run(circuit)
-        end_time = time()
+        # start_time = time()
+        # state_expected = Amplitude.run(circuit)
+        # end_time = time()
         #   duration_2 = end_time - start_time
-        #with numba.cuda.defer_cleanup():
-        #    start_time = time()
-        #    state = ConstantStateVectorSimulator.run(circuit)
-        #    end_time = time()
-        #    duration_1 = end_time - start_time
-
-        # print(state_expected)
-        # print(state)
+        with numba.cuda.defer_cleanup():
+           start_time = time()
+           state = ConstantStateVectorSimulator.run_predata_ot(circuit)
+           end_time = time()
+           duration_1 = end_time - start_time
 
         # assert np.allclose(state, state_expected)
-        # print()
         # print(f"Cur algo: {duration_1} s.")
         print(f"Old algo: {end_time - start_time} s.")
         # assert 0

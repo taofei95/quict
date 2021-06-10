@@ -15,28 +15,24 @@ STATIC_GATE_NAMES = [
 
 class GateMatrixs:
     def __init__(self, GPUBased: bool=True):
-        self.static_gate_matrixs = {}
-        self.param_gate_matrixs = defaultdict(dict)
+        self.gate_matrixs = {}
         self.GPUBased = GPUBased
         self.matrix_idx = []
         self.matrix_len = 0
 
     def build(self, gate):
         gate_name = gate.name.split("_")[0]
-        if gate_name in STATIC_GATE_NAMES:
-            if gate_name not in self.static_gate_matrixs.keys():
-                self._build_static_matrix_gate(gate_name, gate.matrix)
+        if gate_name not in STATIC_GATE_NAMES:
+            gate_name = f"{gate_name}_{gate.parg}"
+            matrix = gate.compute_matrix
         else:
-            if gate.parg not in self.param_gate_matrixs[gate_name].keys():
-                self._build_para_matrix_gate(gate_name, gate.parg, gate.compute_matrix)
-    
-    def _build_static_matrix_gate(self, gate_name, matrix):
-        self.static_gate_matrixs[gate_name] = (self.matrix_len, matrix.size)
-        self.matrix_len += matrix.size
-        self.matrix_idx.append(matrix)
+            matrix = gate.matrix
+        
+        if gate_name not in self.gate_matrixs.keys():
+            self._build_matrix_gate(gate_name, matrix)
 
-    def _build_para_matrix_gate(self, gate_name, gate_parg, matrix):
-        self.param_gate_matrixs[gate_name][gate_parg] = (self.matrix_len, matrix.size)
+    def _build_matrix_gate(self, gate_name, matrix):
+        self.gate_matrixs[gate_name] = (self.matrix_len, matrix.size)
         self.matrix_len += matrix.size
         self.matrix_idx.append(matrix)
 
@@ -53,50 +49,13 @@ class GateMatrixs:
 
     def target_matrix(self, gate):
         gate_name = gate.name.split("_")[0]
-        if gate_name in STATIC_GATE_NAMES:
-            return self.static_gate_matrixs[gate_name]
-        else:
-            gate_parg = gate.parg
-            return self.param_gate_matrixs[gate_name][gate_parg]
+        if gate_name not in STATIC_GATE_NAMES:
+            gate_name = f"{gate_name}_{gate.parg}"
+
+        start, itvl = self.gate_matrixs[gate_name]
+
+        return self.final_matrix[start:start+itvl]
 
     @property
     def matrix(self):
         return self.final_matrix
-
-
-class GateMatrixsMS:
-    def __init__(self, streams_num: int):
-        self.static_gate_matrixs = {}
-        self.param_gate_matrixs = defaultdict(dict)
-
-        self.stream_num = streams_num
-        self.streams = []
-        for i in range(self.stream_num):
-            self.streams.append(numba.cuda.stream())
-
-        self.count = 0
-
-    def build(self, gate):
-        gate_name = gate.name.split("_")[0]
-        if gate_name in STATIC_GATE_NAMES:
-            if gate_name not in self.static_gate_matrixs.keys():
-                self._build_static_matrix_gate(gate_name, gate.matrix)
-        else:
-            if gate.parg not in self.param_gate_matrixs[gate_name].keys():
-                self._build_para_matrix_gate(gate_name, gate.parg, gate.compute_matrix)
-
-    def _build_static_matrix_gate(self, gate_name, matrix):
-        self.static_gate_matrixs[gate_name] = numba.cuda.to_device(matrix, self.streams[self.count%self.stream_num])
-        self.count += 1
-
-    def _build_para_matrix_gate(self, gate_name, gate_parg, matrix):
-        self.param_gate_matrixs[gate_name][gate_parg] = numba.cuda.to_device(matrix, self.streams[self.count%self.stream_num])
-        self.count += 1
-
-    def target_matrix(self, gate):
-        gate_name = gate.name.split("_")[0]
-        if gate_name in STATIC_GATE_NAMES:
-            return self.static_gate_matrixs[gate_name]
-        else:
-            gate_parg = gate.parg
-            return self.param_gate_matrixs[gate_name][gate_parg]
