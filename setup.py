@@ -137,7 +137,6 @@ class ExtensionBuild(build_ext):
     def cython_build_extension(self, ext):
         if ext.cmake_dep:
             self.cmake_build_extension(ext.cmake_dep)
-        print('1')
         cython_ext = cythonize(Extension(
             ext.name,
             ext.cython_sources,
@@ -146,7 +145,6 @@ class ExtensionBuild(build_ext):
             libraries=ext.libraries,
             runtime_library_dirs=ext.runtime_library_dirs,
         ))
-        print('2')
         build_ext.build_extension(self, cython_ext[0])
 
     def cmake_build_extension(self, ext):
