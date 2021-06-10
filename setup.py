@@ -12,7 +12,9 @@ from setuptools import setup
 from setuptools import find_packages, Extension
 # from setuptools.command.build_ext import build_ext
 from Cython.Distutils.build_ext import build_ext
-import platform
+# import platform
+from contextlib import redirect_stdout,redirect_stderr
+from io import StringIO
 
 import numpy as np
 
@@ -118,7 +120,7 @@ class CythonExtension(Extension):
         # self.sources = sources
 
         Extension.__init__(self, name, sources=[])
-        self.cython_sources = cython_sources
+        self.cython_src = cython_sources
         self.extra_compile_args = extra_compile_args
         self.extra_link_args = extra_link_args
         # self.include_dirs = include_dirs,
@@ -139,13 +141,65 @@ class ExtensionBuild(build_ext):
             self.cmake_build_extension(ext.cmake_dep)
         cython_ext = cythonize(Extension(
             ext.name,
-            ext.cython_sources,
+            ext.cython_src,
             extra_compile_args=ext.extra_compile_args,
             extra_link_args=ext.extra_link_args,
             libraries=ext.libraries,
             runtime_library_dirs=ext.runtime_library_dirs,
         ))
-        build_ext.build_extension(self, cython_ext[0])
+
+        ext_dir = os.path.abspath(os.path.dirname(self.get_ext_fullpath(ext.name)))
+        # required for auto-detection of auxiliary "native" libs
+        if not ext_dir.endswith(os.path.sep):
+            ext_dir += os.path.sep
+
+        # print(ext_dir)
+        ext_name = ext.name
+        if ext_name[-1] == ".":
+            ext_name = ext_name[:-1]
+        build_temp = self.build_temp
+        ext_name_split = ext_name.split(".")
+        ext_name = ext_name_split[-1]
+
+        _stdout = StringIO()
+        _stderr = StringIO()
+        with redirect_stderr(_stderr):
+            with redirect_stdout(_stdout):
+                build_ext.build_extension(self, cython_ext[0])
+        _stderr = _stderr.getvalue().splitlines()
+        _stdout = _stdout.getvalue().splitlines()
+        for line in _stderr:
+            print_with_wrapper(ext_name, line)
+        for line in _stdout:
+            print_with_wrapper(ext_name, line)
+
+        print_with_wrapper(ext_name, "Copying back...")
+        libs = []
+        for f in os.listdir(ext_dir):
+            if f.endswith(".so"):
+                libs.append(f"{ext_dir}{f}")
+
+        source_dirs = ext.cython_src
+        for i, s in enumerate(source_dirs):
+            s: str
+            if s.endswith("/"):
+                s = s[:-1]
+            s_split = s.split("/")
+            if s_split[-1].endswith(".pyx"):
+                s_refine = "/".join(s_split[:-1])
+            else:
+                s_refine = "/".join(s_split)
+            if not s_refine.endswith("/"):
+                s_refine += "/"
+            source_dirs[i] = s_refine
+
+        for source_dir in source_dirs:
+            print_with_wrapper(ext_name, " ".join(["cp", " ".join(libs), source_dir]))
+            run_with_output_wrapper(
+                header=ext_name,
+                args=["cp", " ".join(libs), source_dir],
+                cwd=build_temp,
+            )
 
     def cmake_build_extension(self, ext):
         ext_dir = os.path.abspath(os.path.dirname(self.get_ext_fullpath(ext.name)))
@@ -212,7 +266,6 @@ class ExtensionBuild(build_ext):
         ext_name_split = ext_name.split(".")
         ext_name = ext_name_split[-1]
 
-
         if not os.path.exists(build_temp):
             os.makedirs(build_temp)
 
@@ -236,7 +289,6 @@ class ExtensionBuild(build_ext):
         libs = []
         for f in os.listdir(ext_dir):
             if f.endswith(".so"):
-                # print_with_wrapper(ext_name, f"!!!!!!!!!!!{f}")
                 libs.append(f"{ext_dir}{f}")
         run_with_output_wrapper(
             header=ext_name,
