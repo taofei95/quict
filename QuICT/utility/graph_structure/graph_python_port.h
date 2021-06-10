@@ -19,7 +19,8 @@ void expose_edge(py::module &m, const std::string &type_str_suffix) {
             .def_readwrite("from_", &clazz::from_)
             .def_readwrite("to_", &clazz::to_)
             .def_readwrite("data_", &clazz::data_)
-            .def("print_info", &clazz::print_info);
+            .def("print_info", &clazz::print_info)
+            .def("__repr__", &clazz::info_str);
 }
 
 template<typename vertex_label_t, typename edge_data_t>
@@ -40,7 +41,8 @@ void expose_graph(py::module &m, const std::string &type_str_suffix) {
             .def("edges_to", &clazz::edges_to)
             .def("in_deg_of", &clazz::in_deg_of)
             .def("edges", &clazz::edges)
-            .def("dijkstra", &clazz::dijkstra);
+            .def("dijkstra", &clazz::dijkstra)
+            .def("info_str", &clazz::info_str);
 }
 
 PYBIND11_MODULE(graph_structure, m) {

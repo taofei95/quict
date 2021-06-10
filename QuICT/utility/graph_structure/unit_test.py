@@ -1,4 +1,4 @@
-from QuICT.utility.graph_structure import DirectedGraph, Vertex
+from QuICT.utility.graph_structure import DirectedGraph, Vertex, Edge
 
 
 def test_graph():
@@ -17,12 +17,16 @@ def test_graph():
         .add_edge(v3, v4, 304)
 
     g.print_info()
+    print(g)  # the same
 
     print(g.out_deg_of(v1))
     print(g.in_deg_of(v4))
 
     for e in g.edges_from(v1):
         e.print_info()
+        print("#", e)  # the same
 
     for e in g.edges_to(v4):
         e.print_info()
+
+    print(g.get_vertex(3))

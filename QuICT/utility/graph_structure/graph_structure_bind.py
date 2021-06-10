@@ -20,16 +20,19 @@ spec.loader.exec_module(graph_structure_mod)
 
 
 class Vertex:
-    def __init__(self, id, attribute):
-        self.id = id
+    def __init__(self, id_, attribute):
+        self.id = id_
         self.attribute = attribute
+
+    def __str__(self):
+        return f"id = {self.id}, attribute = {self.attribute}"
 
 
 class Edge:
-    def __init__(self):
-        self.from_ = None
-        self.to_ = None
-        self.data_ = None
+    def __init__(self, from_: Vertex, to_: Vertex, data_: int):
+        self.from_: Vertex = from_
+        self.to_: Vertex = to_
+        self.data_: int = data_
 
     def print_info(self):
         pass
@@ -86,6 +89,9 @@ class DirectedGraph:
     # edges
     def edges(self) -> Iterable[Edge]:
         return self._instance.edges()
+
+    def __str__(self):
+        return self._instance.info_str()
 
 
 def directed_graph_builder(vertex_label: type = int) -> DirectedGraph:

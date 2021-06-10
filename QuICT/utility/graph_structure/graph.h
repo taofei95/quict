@@ -5,6 +5,7 @@
 #include <map>
 #include <memory>
 #include <iostream>
+#include <sstream>
 #include <queue>
 #include <set>
 
@@ -24,6 +25,12 @@ namespace graph {
 
         void print_info() const {
             std::cout << from_ << " -> " << to_ << ", data = " << data_ << std::endl;
+        }
+
+        std::string info_str() const {
+            std::stringstream ss;
+            ss << from_ << " -> " << to_ << ", data = " << data_ << std::endl;
+            return ss.str();
         }
     };
 
@@ -87,6 +94,23 @@ namespace graph {
                 it->print_info();
             }
             std::cout << "----------------------------------------" << std::endl;
+        }
+
+        std::string info_str() const {
+            std::stringstream ss;
+            ss << "----------------------------------------" << std::endl;
+            ss << "[Vertex]" << std::endl;
+            for (const auto&[key, value] : head_out_) {
+                ss << key << " ";
+            }
+            ss << std::endl << "----------------------------------------" << std::endl;
+            ss << "[Edge]" << std::endl;
+            for (const auto &it:edges_) {
+//                it->print_info();
+                ss << it->info_str();
+            }
+            ss << "----------------------------------------" << std::endl;
+            return ss.str();
         }
 
         inline void add_vertex(const vertex_label_t &vertex) {
