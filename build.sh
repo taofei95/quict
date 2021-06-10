@@ -163,25 +163,65 @@ print_cyan "[Python Egg]"
 
 echo "Building python egg"
 
+
 print_segment
+
+#if [[ $OS =~ "Darwin" ]];then
+#  tbb_include_dir="$tbb_src_dir/include"
+#  cd ./QuICT/backends && \
+#  $CXX \
+#  -o quick_operator_cdll.so dll.cpp \
+#  -std=c++11  -fPIC \
+#  -shared  -I$tbb_include_dir -ltbb -L$tbb_build_dir &&
+#  install_name_tool -add_rpath $tbb_build_dir quick_operator_cdll.so
+#  cd ..  || exit 1
+#
+#  cd ./qcda/synthesis/initial_state_preparation && \
+#  $CXX \
+#    -o initial_state_preparation_cdll.so initial_state_preparation.cpp \
+#    -std=c++11  -fPIC -shared  -I$tbb_include_dir -ltbb -L$tbb_build_dir  || exit 1
+#  install_name_tool -add_rpath $tbb_build_dir initial_state_preparation_cdll.so
+#
+#  cd $prj_root/QuICT/qcda/mapping/mcts/mcts_core && ./build.sh  || exit 1
+#else
+#  cd ./QuICT/backends && \
+#  $CXX \
+#  -o quick_operator_cdll.so dll.cpp \
+#  -std=c++11  -fPIC \
+#  -shared -ltbb &&
+#  cd ..  || exit 1
+#
+#  cd ./qcda/synthesis/initial_state_preparation && \
+#  $CXX \
+#    -o initial_state_preparation_cdll.so initial_state_preparation.cpp \
+#    -std=c++11  -fPIC -shared -ltbb || exit 1
+#
+#  cd $prj_root/QuICT/qcda/mapping/mcts/mcts_core && chmod u+x ./build.sh && ./build.sh  || exit 1
+#fi
+
+if [[ $OS =~ "Darwin" ]];then
+  cd "$prj_root"/QuICT/qcda/mapping/mcts/mcts_core && ./build.sh  || exit 1
+else
+  cd "$prj_root"/QuICT/qcda/mapping/mcts/mcts_core && chmod u+x ./build.sh && ./build.sh  || exit 1
+fi
 
 cd $prj_build_dir && \
 $PYTHON3 ../setup.py build --parallel $NPROC
 
 print_segment
 
-print_cyan "[Copying Back]"
-
-echo -e "Copying built libraries back into source code tree to help run pytest\n"
-
-
-find "$prj_root/build/" -type f -name "*.so" | while read file
-do
-    dest=$(echo "$file" | grep -oE "build.*" | grep -oE "QuICT.*" ) || exit 1
-    dest="$prj_root/$dest"
-    dest=$(echo $dest | sed -E "s/[^/]*\.so//")
-    echo -e "cp $file $dest\n"
-    cp "$file" "$dest" || exit 1
-done
+#print_cyan "[Copying Back]"
+#
+#echo -e "Copying built libraries back into source code tree to help run pytest\n"
+#
+#find "$prj_root/build/" -type f -name "*.so" | while read file
+#do
+#    dest=$(echo "$file" | grep -oE "build.*" | grep -oE "QuICT.*" ) || exit 1
+#    dest="$prj_root/$dest"
+#    dest=$(echo $dest | sed -E "s/[^/]*\.so//")
+#    echo -e "cp $file $dest\n"
+#    cp "$file" "$dest" || exit 1
+#done
 
 print_magenta "Done."
+

@@ -17,6 +17,7 @@ class SyntheticalUnitary(Algorithm):
     @classmethod
     def run(cls, circuit: Circuit, showSU = False):
         """
+
         Args:
             circuit(Circuit)
             showSU(bool): whether return an SU unitary
@@ -29,6 +30,7 @@ class SyntheticalUnitary(Algorithm):
     @staticmethod
     def __run__(circuit: Circuit, showSU = True):
         """
+
         Args:
             circuit(Circuit)
             showSU(bool): whether return an SU unitary

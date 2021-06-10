@@ -26,6 +26,7 @@ class StandardEfficiencyCheckerModel(object):
     @staticmethod
     def getRandomList(l, n):
         """ get l number from 0, 1, ..., n - 1 randomly.
+
         Args:
             l(int)
             n(int)

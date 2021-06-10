@@ -14,7 +14,7 @@ def test_google():
     for i in range(2, 10):
         circuit = Circuit(i)
         circuit.random_append(100)
-        compositeGate = GateTransform(circuit, GoogleSet)
+        compositeGate = GateTransform.execute(circuit, GoogleSet)
         B = CompositeGate(circuit, with_copy=False)
         assert compositeGate.equal(B)
 
@@ -22,7 +22,7 @@ def test_ustc():
     for i in range(2, 10):
         circuit = Circuit(i)
         circuit.random_append(100)
-        compositeGate = GateTransform(circuit)
+        compositeGate = GateTransform.execute(circuit)
         B = CompositeGate(circuit, with_copy=False)
         assert compositeGate.equal(B)
 
@@ -30,7 +30,7 @@ def test_ibmq():
     for i in range(2, 10):
         circuit = Circuit(i)
         circuit.random_append(100)
-        compositeGate = GateTransform(circuit, IBMQSet)
+        compositeGate = GateTransform.execute(circuit, IBMQSet)
         B = CompositeGate(circuit, with_copy=False)
         assert compositeGate.equal(B)
 
@@ -38,7 +38,7 @@ def test_ionq():
     for i in range(2, 10):
         circuit = Circuit(i)
         circuit.random_append(100)
-        compositeGate = GateTransform(circuit, IonQSet)
+        compositeGate = GateTransform.execute(circuit, IonQSet)
         B = CompositeGate(circuit, with_copy=False)
         assert compositeGate.equal(B)
 
@@ -47,7 +47,7 @@ def test_buildZyz():
     for i in range(2, 10):
         circuit = Circuit(i)
         circuit.random_append(100)
-        compositeGate = GateTransform(circuit, buildSet)
+        compositeGate = GateTransform.execute(circuit, buildSet)
         B = CompositeGate(circuit, with_copy=False)
         assert compositeGate.equal(B)
 
@@ -58,7 +58,7 @@ def test_buildZyzWithRegister():
     for i in range(2, 10):
         circuit = Circuit(i)
         circuit.random_append(100)
-        compositeGate = GateTransform(circuit, buildSet)
+        compositeGate = GateTransform.execute(circuit, buildSet)
         B = CompositeGate(circuit, with_copy=False)
         assert compositeGate.equal(B)
 

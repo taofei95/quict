@@ -11,6 +11,8 @@ import functools
 import numpy as np
 
 from QuICT.core.exception import TypeException, NotImplementedGateException
+# from QuICT.core.gate.gate_builder import GateBuilder
+# from QuICT.core.gate.composite_gate import CompositeGate
 from QuICT.core.qubit import Qubit, Qureg
 from QuICT.core.circuit import Circuit
 from .exec_operator import *
@@ -101,7 +103,7 @@ class BasicGate(object):
 
         params(list): the number of the parameter of the gate
         pargs(list): the list of the parameter
-        prag(read only): the first object of pargs
+        parg(read only): the first object of pargs
 
         qasm_name(str, read only): gate's name in the OpenQASM 2.0
         type(GateType, read only): gate's type described by GateType
@@ -325,7 +327,7 @@ class BasicGate(object):
             TypeException: the type of other is wrong
         """
         try:
-            if isinstance(targets, np.int):
+            if isinstance(targets, int):
                 targets = [targets]
             else:
                 targets = list(targets)
@@ -336,7 +338,7 @@ class BasicGate(object):
             GATE_SET_LIST[-1].append(self.copy())
         return self
 
-    def __call__(self, params = None, name = None):
+    def __call__(self, params=None, name=None):
         """ give parameters for the gate
 
         give parameters by "()".
@@ -438,8 +440,8 @@ class BasicGate(object):
         """
         raise Exception("undefined inverse")
 
-    def communitive(self, goal, eps=1e-7):
-        """ decide whether gate is communitive with another gate
+    def commutative(self, goal, eps=1e-7):
+        """ decide whether gate is commutative with another gate
 
         note when the gate is special gates like Unitary, Permutation, Measure and so on, return False.
 
@@ -447,7 +449,7 @@ class BasicGate(object):
             goal(BasicGate): the target gate
             eps(float): the precision of comparision
         Return:
-            bool: True if communitive
+            bool: True if commutative
         """
         if self.is_special() or goal.is_special():
             return False
@@ -461,19 +463,19 @@ class BasicGate(object):
         if np.allclose(B, np.identity(2), rtol=eps, atol=eps):
             return True
 
-        set_controls = set(self.pargs)
+        set_controls = set(self.cargs)
         set_targets = set(self.targs)
-        set_goal_controls = set(goal.pargs)
+        set_goal_controls = set(goal.cargs)
         set_goal_targets = set(goal.targs)
 
-        communitive_set = set_controls.intersection(set_goal_targets)
-        if len(communitive_set) > 0 and not goal.is_diagonal():
+        commutative_set = set_controls.intersection(set_goal_targets)
+        if len(commutative_set) > 0 and not goal.is_diagonal():
             return False
-        communitive_set = set_goal_controls.intersection(set_targets)
-        if len(communitive_set) > 0 and not self.is_diagonal():
+        commutative_set = set_goal_controls.intersection(set_targets)
+        if len(commutative_set) > 0 and not self.is_diagonal():
             return False
-        communitive_set = set_goal_targets.intersection(set_targets)
-        if len(communitive_set) > 0 and not np.allclose(A.dot(B), B.dot(A), rtol=1.0e-13, atol=1.0e-13):
+        commutative_set = set_goal_targets.intersection(set_targets)
+        if len(commutative_set) > 0 and not np.allclose(A.dot(B), B.dot(A), rtol=1.0e-13, atol=1.0e-13):
             return False
         return True
 
@@ -507,13 +509,13 @@ class BasicGate(object):
             raise Exception("only consider one qubit and two qubits")
         if self.is_single():
             matrix = self.matrix
-            if abs(matrix[1]) < 1e-10 and abs(matrix[2]) < 1e-10:
+            if abs(matrix[0, 1]) < 1e-10 and abs(matrix[1, 0]) < 1e-10:
                 return True
             else:
                 return False
         elif self.is_control_single():
             matrix = self.matrix
-            if abs(matrix[1]) < 1e-10 and abs(matrix[2]) < 1e-10:
+            if abs(matrix[0, 1]) < 1e-10 and abs(matrix[1, 0]) < 1e-10:
                 return True
             else:
                 return False
@@ -590,7 +592,7 @@ class BasicGate(object):
             return True
         else:
             tp = type(element)
-            if tp == np.int64 or tp == np.float or tp == np.complex:
+            if tp == np.int64 or tp == np.float64 or tp == np.complex128:
                 return True
             return False
 
@@ -603,7 +605,7 @@ class HGate(BasicGate):
     _matrix = np.array([
         [1 / np.sqrt(2), 1 / np.sqrt(2)],
         [1 / np.sqrt(2), -1 / np.sqrt(2)]
-    ], dtype=np.complex)
+    ], dtype=np.complex128)
 
     def __init__(self, alias=None):
         _add_alias(alias=alias, standard_name=self.__class__.__name__)
@@ -638,7 +640,7 @@ class SGate(BasicGate):
     _matrix = np.array([
         [1, 0],
         [0, 1j]
-    ], dtype=np.complex)
+    ], dtype=np.complex128)
 
     def __init__(self, alias=None):
         _add_alias(alias=alias, standard_name=self.__class__.__name__)
@@ -671,7 +673,7 @@ class SDaggerGate(BasicGate):
     _matrix = np.array([
         [1, 0],
         [0, -1j]
-    ], dtype=np.complex)
+    ], dtype=np.complex128)
 
     def __init__(self, alias=None):
         _add_alias(alias=alias, standard_name=self.__class__.__name__)
@@ -704,7 +706,7 @@ class XGate(BasicGate):
     _matrix = np.array([
         [0, 1],
         [1, 0]
-    ], dtype=np.complex)
+    ], dtype=np.complex128)
 
     def __init__(self, alias=None):
         _add_alias(alias=alias, standard_name=self.__class__.__name__)
@@ -737,7 +739,7 @@ class YGate(BasicGate):
     _matrix = np.array([
         [0, -1j],
         [1j, 0]
-    ], dtype=np.complex)
+    ], dtype=np.complex128)
 
     def __init__(self, alias=None):
         _add_alias(alias=alias, standard_name=self.__class__.__name__)
@@ -770,7 +772,7 @@ class ZGate(BasicGate):
     _matrix = np.array([
         [1, 0],
         [0, -1]
-    ], dtype=np.complex)
+    ], dtype=np.complex128)
 
     def __init__(self, alias=None):
         _add_alias(alias=alias, standard_name=self.__class__.__name__)
@@ -794,15 +796,16 @@ class ZGate(BasicGate):
 
 Z = ZGate(alias=["Z"])
 
+
 class SXGate(BasicGate):
     """ sqrt(X) gate
 
     """
 
     _matrix = np.array([
-            [1 / np.sqrt(2), -1j / np.sqrt(2)],
-            [-1j / np.sqrt(2), 1 / np.sqrt(2)]
-        ], dtype=np.complex)
+        [1 / np.sqrt(2), -1j / np.sqrt(2)],
+        [-1j / np.sqrt(2), 1 / np.sqrt(2)]
+    ], dtype=np.complex128)
 
     def __init__(self, alias=None):
         _add_alias(alias=alias, standard_name=self.__class__.__name__)
@@ -824,7 +827,9 @@ class SXGate(BasicGate):
     def exec(self, circuit):
         exec_single(self, circuit)
 
+
 SX = SXGate(["SX", "sx", "Sx"])
+
 
 class SYGate(BasicGate):
     """ sqrt(Y) gate
@@ -834,7 +839,7 @@ class SYGate(BasicGate):
     _matrix = np.array([
         [1 / np.sqrt(2), -1 / np.sqrt(2)],
         [1 / np.sqrt(2), 1 / np.sqrt(2)]
-    ], dtype=np.complex)
+    ], dtype=np.complex128)
 
     def __init__(self, alias=None):
         _add_alias(alias=alias, standard_name=self.__class__.__name__)
@@ -856,7 +861,9 @@ class SYGate(BasicGate):
     def exec(self, circuit):
         exec_single(self, circuit)
 
+
 SY = SYGate(["SY", "sy", "Sy"])
+
 
 class SWGate(BasicGate):
     """ sqrt(W) gate
@@ -866,7 +873,7 @@ class SWGate(BasicGate):
     _matrix = np.array([
         [1 / np.sqrt(2), -np.sqrt(1j / 2)],
         [np.sqrt(-1j / 2), 1 / np.sqrt(2)]
-    ], dtype=np.complex)
+    ], dtype=np.complex128)
 
     def __init__(self, alias=None):
         _add_alias(alias=alias, standard_name=self.__class__.__name__)
@@ -888,7 +895,9 @@ class SWGate(BasicGate):
     def exec(self, circuit):
         exec_single(self, circuit)
 
+
 SW = SWGate(["SW", "sw", "Sw"])
+
 
 class IDGate(BasicGate):
     """ Identity gate
@@ -898,7 +907,7 @@ class IDGate(BasicGate):
     _matrix = np.array([
         [1, 0],
         [0, 1]
-    ], dtype=np.complex)
+    ], dtype=np.complex128)
 
     def __init__(self, alias=None):
         _add_alias(alias=alias, standard_name=self.__class__.__name__)
@@ -922,6 +931,7 @@ class IDGate(BasicGate):
 
 ID = IDGate(["ID"])
 
+
 class U1Gate(BasicGate):
     """ Diagonal single-qubit gate
 
@@ -941,7 +951,7 @@ class U1Gate(BasicGate):
         return np.array([
             [1, 0],
             [0, np.exp(1j * self.pargs[0])]
-        ], dtype=np.complex)
+        ], dtype=np.complex128)
 
     def __str__(self):
         return "U1 gate"
@@ -978,10 +988,10 @@ class U2Gate(BasicGate):
         sqrt2 = 1 / np.sqrt(2)
         return np.array([
             [1 * sqrt2,
-            -np.exp(1j * self.pargs[1]) * sqrt2],
+             -np.exp(1j * self.pargs[1]) * sqrt2],
             [np.exp(1j * self.pargs[0]) * sqrt2,
-            np.exp(1j * (self.pargs[0] + self.pargs[1])) * sqrt2]
-        ], dtype=np.complex)
+             np.exp(1j * (self.pargs[0] + self.pargs[1])) * sqrt2]
+        ], dtype=np.complex128)
 
     def __str__(self):
         return "U2 gate"
@@ -1017,10 +1027,10 @@ class U3Gate(BasicGate):
     def matrix(self) -> np.ndarray:
         return np.array([
             [np.cos(self.pargs[0] / 2),
-            -np.exp(1j * self.pargs[2]) * np.sin(self.pargs[0] / 2)],
+             -np.exp(1j * self.pargs[2]) * np.sin(self.pargs[0] / 2)],
             [np.exp(1j * self.pargs[1]) * np.sin(self.pargs[0] / 2),
-            np.exp(1j * (self.pargs[1] + self.pargs[2])) * np.cos(self.pargs[0] / 2)]
-        ], dtype=np.complex)
+             np.exp(1j * (self.pargs[1] + self.pargs[2])) * np.cos(self.pargs[0] / 2)]
+        ], dtype=np.complex128)
 
     def __str__(self):
         return "U3 gate"
@@ -1056,10 +1066,10 @@ class RxGate(BasicGate):
     def matrix(self) -> np.ndarray:
         return np.array([
             [np.cos(self.parg / 2),
-            1j * -np.sin(self.parg / 2)],
+             1j * -np.sin(self.parg / 2)],
             [1j * -np.sin(self.parg / 2),
-            np.cos(self.parg / 2)]
-        ], dtype=np.complex)
+             np.cos(self.parg / 2)]
+        ], dtype=np.complex128)
 
     def __str__(self):
         return "Rx gate"
@@ -1096,7 +1106,7 @@ class RyGate(BasicGate):
         return np.array([
             [np.cos(self.pargs[0] / 2), -np.sin(self.pargs[0] / 2)],
             [np.sin(self.pargs[0] / 2), np.cos(self.pargs[0] / 2)],
-        ], dtype=np.complex)
+        ], dtype=np.complex128)
 
     def __str__(self):
         return "Ry gate"
@@ -1133,7 +1143,7 @@ class RzGate(BasicGate):
         return np.array([
             [np.exp(-self.parg / 2 * 1j), 0],
             [0, np.exp(self.parg / 2 * 1j)]
-        ], dtype=np.complex)
+        ], dtype=np.complex128)
 
     def __str__(self):
         return "Rz gate"
@@ -1159,7 +1169,7 @@ class TGate(BasicGate):
     _matrix = np.array([
         [1, 0],
         [0, 1 / np.sqrt(2) + 1j * 1 / np.sqrt(2)]
-    ], dtype=np.complex)
+    ], dtype=np.complex128)
 
     def __init__(self, alias=None):
         _add_alias(alias=alias, standard_name=self.__class__.__name__)
@@ -1192,7 +1202,7 @@ class TDaggerGate(BasicGate):
     _matrix = np.array([
         [1, 0],
         [0, 1 / np.sqrt(2) + 1j * -1 / np.sqrt(2)]
-    ], dtype=np.complex)
+    ], dtype=np.complex128)
 
     def __init__(self, alias=None):
         _add_alias(alias=alias, standard_name=self.__class__.__name__)
@@ -1227,7 +1237,7 @@ class PhaseGate(BasicGate):
         return np.array([
             [np.exp(self.parg * 1j), 0],
             [0, np.exp(self.parg * 1j)]
-        ], dtype=np.complex)
+        ], dtype=np.complex128)
 
     def __init__(self, alias=None):
         _add_alias(alias=alias, standard_name=self.__class__.__name__)
@@ -1235,6 +1245,7 @@ class PhaseGate(BasicGate):
         self.controls = 0
         self.targets = 1
         self.params = 1
+        self.pargs = [0]
         self.qasm_name = "phase"
 
     def __str__(self):
@@ -1261,14 +1272,14 @@ class CZGate(BasicGate):
     _matrix = np.array([
         [1, 0],
         [0, -1]
-    ], dtype=np.complex)
+    ], dtype=np.complex128)
 
     _compute_matrix = np.array([
         [1, 0, 0, 0],
         [0, 1, 0, 0],
         [0, 0, 1, 0],
         [0, 0, 0, -1]
-    ], dtype=np.complex)
+    ], dtype=np.complex128)
 
     @property
     def compute_matrix(self) -> np.ndarray:
@@ -1307,14 +1318,14 @@ class CXGate(BasicGate):
     _matrix = np.array([
         [0, 1],
         [1, 0]
-    ], dtype=np.complex)
+    ], dtype=np.complex128)
 
     _compute_matrix = np.array([
         [1, 0, 0, 0],
         [0, 1, 0, 0],
         [0, 0, 0, 1],
         [0, 0, 1, 0]
-    ], dtype=np.complex)
+    ], dtype=np.complex128)
 
     @property
     def compute_matrix(self) -> np.ndarray:
@@ -1352,14 +1363,14 @@ class CYGate(BasicGate):
     _matrix = np.array([
         [0, -1j],
         [1j, 0]
-    ], dtype=np.complex)
+    ], dtype=np.complex128)
 
     _compute_matrix = np.array([
         [1, 0, 0, 0],
         [0, 1, 0, 0],
         [0, 0, 0, -1j],
         [0, 0, 1j, 0]
-    ], dtype=np.complex)
+    ], dtype=np.complex128)
 
     @property
     def compute_matrix(self) -> np.ndarray:
@@ -1388,6 +1399,7 @@ class CYGate(BasicGate):
 
 CY = CYGate(["CY", "Cy"])
 
+
 class CHGate(BasicGate):
     """ controlled-Hadamard gate
 
@@ -1397,14 +1409,14 @@ class CHGate(BasicGate):
     _matrix = np.array([
         [1 / np.sqrt(2), 1 / np.sqrt(2)],
         [1 / np.sqrt(2), -1 / np.sqrt(2)]
-    ], dtype=np.complex)
+    ], dtype=np.complex128)
 
     _compute_matrix = np.array([
         [1, 0, 0, 0],
         [0, 1, 0, 0],
         [0, 0, 1 / np.sqrt(2), 1 / np.sqrt(2)],
         [0, 0, 1 / np.sqrt(2), -1 / np.sqrt(2)]
-    ], dtype=np.complex)
+    ], dtype=np.complex128)
 
     @property
     def compute_matrix(self) -> np.ndarray:
@@ -1453,7 +1465,7 @@ class CRzGate(BasicGate):
         return np.array([
             [np.exp(-self.parg / 2 * 1j), 0],
             [0, np.exp(self.parg / 2 * 1j)]
-        ], dtype=np.complex)
+        ], dtype=np.complex128)
 
     @property
     def compute_matrix(self) -> np.ndarray:
@@ -1462,7 +1474,7 @@ class CRzGate(BasicGate):
             [0, 1, 0, 0],
             [0, 0, np.exp(-self.parg / 2 * 1j), 0],
             [0, 0, 0, np.exp(self.parg / 2 * 1j)]
-        ], dtype=np.complex)
+        ], dtype=np.complex128)
 
     def __str__(self):
         return "controlled-Rz gate"
@@ -1504,15 +1516,16 @@ class CU1Gate(BasicGate):
         return np.array([
             [1, 0],
             [0, np.exp(1j * self.pargs[0])]
-        ], dtype=np.complex)
+        ], dtype=np.complex128)
 
+    @property
     def compute_matrix(self) -> np.ndarray:
         return np.array([
             [1, 0, 0, 0],
             [0, 1, 0, 0],
             [0, 0, 1, 0],
             [0, 0, 0, np.exp(1j * self.pargs[0])]
-        ], dtype=np.complex)
+        ], dtype=np.complex128)
 
     def __str__(self):
         return "controlled-U1 gate"
@@ -1541,7 +1554,7 @@ class CU3Gate(BasicGate):
         super().__init__(alias=None)
         self.controls = 1
         self.targets = 1
-        self.params = 1
+        self.params = 3
         self.pargs = [np.pi / 2, 0, 0]
         self.qasm_name = "cu3"
 
@@ -1551,8 +1564,9 @@ class CU3Gate(BasicGate):
             [np.cos(self.pargs[0] / 2), -np.exp(1j * self.pargs[2]) * np.sin(self.pargs[0] / 2)],
             [np.exp(1j * self.pargs[1]) * np.sin(self.pargs[0] / 2),
              np.exp(1j * (self.pargs[1] + self.pargs[2])) * np.cos(self.pargs[0] / 2)]
-        ], dtype=np.complex)
+        ], dtype=np.complex128)
 
+    @property
     def compute_matrix(self) -> np.ndarray:
         return np.array([
             [1, 0, 0, 0],
@@ -1560,7 +1574,7 @@ class CU3Gate(BasicGate):
             [0, 0, np.cos(self.pargs[0] / 2), -np.exp(1j * self.pargs[2]) * np.sin(self.pargs[0] / 2)],
             [0, 0, np.exp(1j * self.pargs[1]) * np.sin(self.pargs[0] / 2),
              np.exp(1j * (self.pargs[1] + self.pargs[2])) * np.cos(self.pargs[0] / 2)]
-        ], dtype=np.complex)
+        ], dtype=np.complex128)
 
     def __str__(self):
         return "controlled-U3 gate"
@@ -1576,7 +1590,7 @@ class CU3Gate(BasicGate):
         exec_controlSingle(self, circuit)
 
 
-CU3 = CU3Gate(["CU1", "cu1"])
+CU3 = CU3Gate(["CU3", "cu3"])
 
 
 class FSimGate(BasicGate):
@@ -1590,6 +1604,7 @@ class FSimGate(BasicGate):
         self.controls = 0
         self.targets = 2
         self.params = 2
+        self.pargs = [np.pi / 2, 0]
         self.qasm_name = "fsim"
 
     @property
@@ -1602,7 +1617,7 @@ class FSimGate(BasicGate):
             [0, costh, -1j * sinth, 0],
             [0, -1j * sinth, costh, 0],
             [0, 0, 0, np.exp(-1j * phi)]
-        ], dtype=np.complex)
+        ], dtype=np.complex128)
 
     def __str__(self):
         return "fSim gate"
@@ -1631,6 +1646,7 @@ class RxxGate(BasicGate):
         self.controls = 0
         self.targets = 2
         self.params = 1
+        self.pargs = [0]
         self.qasm_name = "Rxx"
 
     @property
@@ -1642,7 +1658,7 @@ class RxxGate(BasicGate):
             [0, costh, -1j * sinth, 0],
             [0, -1j * sinth, costh, 0],
             [-1j * sinth, 0, 0, costh]
-        ], dtype=np.complex)
+        ], dtype=np.complex128)
 
     def __str__(self):
         return "Rxx gate"
@@ -1671,6 +1687,7 @@ class RyyGate(BasicGate):
         self.controls = 0
         self.targets = 2
         self.params = 1
+        self.pargs = [np.pi / 2]
         self.qasm_name = "Ryy"
 
     @property
@@ -1682,7 +1699,7 @@ class RyyGate(BasicGate):
             [0, costh, -1j * sinth, 0],
             [0, -1j * sinth, costh, 0],
             [1j * sinth, 0, 0, costh]
-        ], dtype=np.complex)
+        ], dtype=np.complex128)
 
     def __str__(self):
         return "Ryy gate"
@@ -1711,6 +1728,7 @@ class RzzGate(BasicGate):
         self.controls = 0
         self.targets = 2
         self.params = 1
+        self.pargs = [np.pi / 2]
         self.qasm_name = "Rzz"
 
     @property
@@ -1722,7 +1740,7 @@ class RzzGate(BasicGate):
             [0, expth, 0, 0],
             [0, 0, expth, 0],
             [0, 0, 0, sexpth]
-        ], dtype=np.complex)
+        ], dtype=np.complex128)
 
     def __str__(self):
         return "Rzz gate"
@@ -1738,59 +1756,6 @@ class RzzGate(BasicGate):
 
 
 Rzz = RzzGate(["Rzz", "rzz", "RZZ"])
-
-
-class CCXGate(BasicGate):
-    """ Toffoli gate
-
-    When using this gate, it will be showed as a whole gate
-    instend of being split into smaller gate
-
-    """
-
-    _matrix = np.array([
-        [0, 1],
-        [1, 0]
-    ], dtype=np.complex)
-
-    _compute_matrix = np.array([
-        [1, 0, 0, 0, 0, 0, 0, 0],
-        [0, 1, 0, 0, 0, 0, 0, 0],
-        [0, 0, 1, 0, 0, 0, 0, 0],
-        [0, 0, 0, 1, 0, 0, 0, 0],
-        [0, 0, 0, 0, 1, 0, 0, 0],
-        [0, 0, 0, 0, 0, 1, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0, 1],
-        [0, 0, 0, 0, 0, 0, 1, 0]
-    ], dtype=np.complex)
-
-    @property
-    def compute_matrix(self) -> np.ndarray:
-        return self._compute_matrix
-
-    def __init__(self, alias=None):
-        _add_alias(alias=alias, standard_name=self.__class__.__name__)
-        super().__init__(alias=None)
-        self.controls = 2
-        self.targets = 1
-        self.params = 0
-        self.qasm_name = "ccx"
-
-    def __str__(self):
-        return "Toffoli gate"
-
-    def inverse(self):
-        _CCX = CCXGate(alias=None)
-        _CCX.cargs = copy.deepcopy(self.cargs)
-        _CCX.targs = copy.deepcopy(self.targs)
-        return _CCX
-
-    def exec(self, circuit):
-        exec_toffoli(self, circuit)
-
-
-CCX = CCXGate(["CCX", "CCx", "Ccx"])
-
 
 class MeasureGate(BasicGate):
     """ z-axis Measure gate
@@ -1896,7 +1861,7 @@ class SwapGate(BasicGate):
         [0, 0, 1, 0],
         [0, 1, 0, 0],
         [0, 0, 0, 1]
-    ], dtype=np.complex)
+    ], dtype=np.complex128)
 
     def __init__(self, alias=None):
         _add_alias(alias=alias, standard_name=self.__class__.__name__)
@@ -1938,7 +1903,7 @@ class PermGate(BasicGate):
         self.targets = 0
         self.params = 0
 
-    def __call__(self, params = None, name = None):
+    def __call__(self, params=None, name=None):
         """ pass permutation to the gate
 
         the length of permutaion must be 2^n,
@@ -1974,7 +1939,7 @@ class PermGate(BasicGate):
 
     @property
     def matrix(self) -> np.ndarray:
-        matrix = np.array([], dtype=np.complex)
+        matrix = np.array([], dtype=np.complex128)
         for i in range(self.params):
             for j in range(self.params):
                 if self.pargs[i] == j:
@@ -2029,7 +1994,7 @@ class ControlPermMulDetailGate(BasicGate):
         self.targets = 0
         self.params = 0
 
-    def __call__(self, params = None, name = None):
+    def __call__(self, params=None, name=None):
         """ pass parameters to the gate
 
         give parameters (a, N) to the gate
@@ -2059,7 +2024,7 @@ class ControlPermMulDetailGate(BasicGate):
 
     @property
     def matrix(self) -> np.ndarray:
-        matrix = np.array([], dtype=np.complex)
+        matrix = np.array([], dtype=np.complex128)
         a = self.pargs[0]
         N = self.pargs[1]
         pargs = []
@@ -2131,7 +2096,7 @@ class PermShiftGate(PermGate):
         self.targets = 0
         self.params = 0
 
-    def __call__(self, params = None, N=None, name=None):
+    def __call__(self, params=None, N=None, name=None):
         """ pass parameters to the gate
 
         give parameters (params, N) to the gate
@@ -2187,7 +2152,7 @@ class ControlPermShiftGate(PermGate):
         self.targets = 0
         self.params = 0
 
-    def __call__(self, params = None, N=None, name=None):
+    def __call__(self, params=None, N=None, name=None):
         """ pass parameters to the gate
 
         give parameters (params, N) to the gate
@@ -2244,7 +2209,7 @@ class PermMulGate(PermGate):
         self.targets = 0
         self.params = 0
 
-    def __call__(self, params = None, N=None, name=None):
+    def __call__(self, params=None, N=None, name=None):
         """ pass parameters to the gate
 
         give parameters (params, N) to the gate
@@ -2302,7 +2267,7 @@ class ControlPermMulGate(PermGate):
         self.targets = 0
         self.params = 0
 
-    def __call__(self, params = None, N=None, name=None):
+    def __call__(self, params=None, N=None, name=None):
         """ pass parameters to the gate
 
         give parameters (params, N) to the gate
@@ -2366,7 +2331,7 @@ class PermFxGate(PermGate):
         self.targets = 0
         self.params = 0
 
-    def __call__(self, params = None, name = None):
+    def __call__(self, params=None, name=None):
         """ pass Fx to the gate
 
         Fx should be a 2^n list that represent a boolean function
@@ -2403,7 +2368,7 @@ class PermFxGate(PermGate):
 
     @property
     def matrix(self) -> np.ndarray:
-        matrix = np.array([], dtype=np.complex)
+        matrix = np.array([], dtype=np.complex128)
         for i in range(self.params):
             for j in range(self.params):
                 if self.pargs[i] == j:
@@ -2438,8 +2403,9 @@ class UnitaryGate(BasicGate):
         self.controls = 0
         self.targets = 0
         self.params = 0
+        self.qasm_name = "unitary"
 
-    def __call__(self, params = None, name = None):
+    def __call__(self, params=None, name=None):
         """ pass the unitary matrix
 
         Args:
@@ -2460,7 +2426,7 @@ class UnitaryGate(BasicGate):
             if (1 << n) != n2:
                 raise Exception("the length of list or tuple should be the square of power(2, n)")
             self.targets = n
-            self.matrix = np.array(params, dtype=np.complex)
+            self.matrix = np.array(params, dtype=np.complex128)
             return self
 
         if not isinstance(params, list) and not isinstance(params, tuple):
@@ -2477,7 +2443,7 @@ class UnitaryGate(BasicGate):
         if (1 << n) != n2:
             raise Exception("the length of list or tuple should be the square of power(2, n)")
         self.targets = n
-        self.matrix = np.array(params, dtype=np.complex).reshape(n2, n2)
+        self.matrix = np.array(params, dtype=np.complex128).reshape(n2, n2)
         return self
 
     def copy(self, name=None):
@@ -2486,13 +2452,13 @@ class UnitaryGate(BasicGate):
         return gate
 
     def __str__(self):
-        return "Custom gate"
+        return "Unitary gate"
 
     def inverse(self):
         _unitary = UnitaryGate()
         _unitary.targs = copy.deepcopy(self.targs)
         _unitary.matrix = np.array(np.mat(self._matrix).reshape(1 << self.targets, 1 << self.targets).
-                                   H.reshape(1, -1), dtype=np.complex)
+                                   H.reshape(1, -1), dtype=np.complex128)
         _unitary.targets = self.targets
         _unitary.params = self.params
         _unitary.controls = self.controls
@@ -2520,7 +2486,7 @@ class ShorInitialGate(BasicGate):
         self.targets = 0
         self.params = 0
 
-    def __call__(self, params = None, name = None):
+    def __call__(self, params=None, name=None):
         """ pass the parameters
 
         Args:
@@ -2568,7 +2534,7 @@ class ComplexGate(BasicGate):
 
     Note that the ComplexGate extends the BasicGate
 
-    Note that all subClass must overloaded the function "build_gate"
+    Note that all subClass must overload the function "build_gate"
     """
 
     def build_gate(self):
@@ -2587,6 +2553,78 @@ class ComplexGate(BasicGate):
         for gate in gateSet:
             gate.exec(circuit)
 
+class CCXGate(ComplexGate):
+    """ Toffoli gate
+
+    When using this gate, it will be showed as a whole gate
+    instend of being split into smaller gate
+
+    """
+
+    _matrix = np.array([
+        [0, 1],
+        [1, 0]
+    ], dtype=np.complex128)
+
+    _compute_matrix = np.array([
+        [1, 0, 0, 0, 0, 0, 0, 0],
+        [0, 1, 0, 0, 0, 0, 0, 0],
+        [0, 0, 1, 0, 0, 0, 0, 0],
+        [0, 0, 0, 1, 0, 0, 0, 0],
+        [0, 0, 0, 0, 1, 0, 0, 0],
+        [0, 0, 0, 0, 0, 1, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 1],
+        [0, 0, 0, 0, 0, 0, 1, 0]
+    ], dtype=np.complex128)
+
+    @property
+    def compute_matrix(self) -> np.ndarray:
+        return self._compute_matrix
+
+    def __init__(self, alias=None):
+        _add_alias(alias=alias, standard_name=self.__class__.__name__)
+        super().__init__(alias=None)
+        self.controls = 2
+        self.targets = 1
+        self.params = 0
+        self.qasm_name = "ccx"
+
+    def __str__(self):
+        return "Toffoli gate"
+
+    def inverse(self):
+        _CCX = CCXGate(alias=None)
+        _CCX.cargs = copy.deepcopy(self.cargs)
+        _CCX.targs = copy.deepcopy(self.targs)
+        return _CCX
+
+    def build_gate(self):
+        from .composite_gate import CompositeGate
+        qureg = self.affectArgs
+        gates = CompositeGate()
+
+        with gates:
+            H        & qureg[2]
+            CX       & (qureg[2], qureg[1])
+            T_dagger & qureg[1]
+            CX       & (qureg[0], qureg[1])
+            T        & qureg[1]
+            CX       & (qureg[2], qureg[1])
+            T_dagger & qureg[1]
+            CX       & (qureg[0], qureg[1])
+            T        & qureg[1]
+            CX       & (qureg[0], qureg[2])
+            T_dagger & qureg[2]
+            CX       & (qureg[0], qureg[2])
+            T        & qureg[0]
+            T        & qureg[2]
+            H        & qureg[2]
+        return gates
+
+    def exec(self, circuit):
+        exec_toffoli(self, circuit)
+
+CCX = CCXGate(["CCX", "CCx", "Ccx"])
 
 class CCRzGate(ComplexGate):
     """ controlled-Rz gate with two control bits
@@ -2607,7 +2645,7 @@ class CCRzGate(ComplexGate):
         return np.array([
             [np.exp(-self.parg / 2 * 1j), 0],
             [0, np.exp(self.parg / 2 * 1j)]
-        ], dtype=np.complex)
+        ], dtype=np.complex128)
 
     @property
     def compute_matrix(self) -> np.ndarray:
@@ -2620,7 +2658,7 @@ class CCRzGate(ComplexGate):
             [0, 0, 0, 0, 0, 1, 0, 0],
             [0, 0, 0, 0, 0, 0, np.exp(-self.parg / 2 * 1j), 0],
             [0, 0, 0, 0, 0, 0, 0, np.exp(self.parg / 2 * 1j)]
-        ], dtype=np.complex)
+        ], dtype=np.complex128)
 
     def __str__(self):
         return "CCRz gate"
@@ -2645,9 +2683,7 @@ class CCRzGate(ComplexGate):
             CRz(self.parg / 2) & (qureg[0], qureg[2])
         return gates
 
-
 CCRz = CCRzGate(["CCRz"])
-
 
 class QFTGate(ComplexGate):
     """ QFT gate
@@ -2660,7 +2696,7 @@ class QFTGate(ComplexGate):
     def matrix(self) -> np.ndarray:
         if self._matrix is None:
             gateSet = self.build_gate()
-            self._matrix = gateSet.matrix
+            self._matrix = gateSet.matrix()
         return self._matrix
 
     def __init__(self, alias=None):
@@ -2671,7 +2707,7 @@ class QFTGate(ComplexGate):
         self.targets = 3
         self.params = 0
 
-    def __call__(self, params = None, name = None):
+    def __call__(self, params=None, name=None):
         """ pass the unitary matrix
 
         Args:
@@ -2681,7 +2717,7 @@ class QFTGate(ComplexGate):
         Returns:
             QFTGate: the QFTGate after filled by target number
         """
-        self.params = params
+        self.targets = params
         self.__temp_name = name
         return self
 
@@ -2721,7 +2757,7 @@ class IQFTGate(ComplexGate):
     def matrix(self) -> np.ndarray:
         if self._matrix is None:
             gateSet = self.build_gate()
-            self._matrix = gateSet.matrix
+            self._matrix = gateSet.matrix()
         return self._matrix
 
     def __init__(self, alias=None):
@@ -2732,7 +2768,7 @@ class IQFTGate(ComplexGate):
         self.targets = 3
         self.params = 0
 
-    def __call__(self, params = None, name = None):
+    def __call__(self, params=None, name=None):
         """ pass the unitary matrix
 
         Args:
@@ -2742,7 +2778,7 @@ class IQFTGate(ComplexGate):
         Returns:
             IQFTGate: the IQFTGate after filled by target number
         """
-        self.params = params
+        self.targets = params
         self.__temp_name = name
         return self
 
@@ -2770,6 +2806,7 @@ class IQFTGate(ComplexGate):
 
 IQFT = IQFTGate(["IQFT", "iqft"])
 
+
 class CSwapGate(ComplexGate):
     """ Fredkin gate
 
@@ -2783,7 +2820,7 @@ class CSwapGate(ComplexGate):
         [0, 0, 1, 0],
         [0, 1, 0, 0],
         [0, 0, 0, 1]
-    ], dtype=np.complex)
+    ], dtype=np.complex128)
 
     _compute_matrix = np.array([
         [1, 0, 0, 0, 0, 0, 0, 0],
@@ -2794,7 +2831,7 @@ class CSwapGate(ComplexGate):
         [0, 0, 0, 0, 0, 0, 1, 0],
         [0, 0, 0, 0, 0, 1, 0, 0],
         [0, 0, 0, 0, 0, 0, 0, 1]
-    ], dtype=np.complex)
+    ], dtype=np.complex128)
 
     @property
     def compute_matrix(self) -> np.ndarray:
@@ -2823,9 +2860,24 @@ class CSwapGate(ComplexGate):
         gates = CompositeGate()
 
         with gates:
-            CX & (qureg[2], qureg[1])
-            CCX & qureg
-            CX & (qureg[2], qureg[1])
+            CX       & (qureg[2], qureg[1])
+            H        & qureg[2]
+            CX       & (qureg[2], qureg[1])
+            T_dagger & qureg[1]
+            CX       & (qureg[0], qureg[1])
+            T        & qureg[1]
+            CX       & (qureg[2], qureg[1])
+            T_dagger & qureg[1]
+            CX       & (qureg[0], qureg[1])
+            T        & qureg[1]
+            CX       & (qureg[0], qureg[2])
+            T_dagger & qureg[2]
+            CX       & (qureg[0], qureg[2])
+            T        & qureg[0]
+            T        & qureg[2]
+            H        & qureg[2]
+            CX       & (qureg[2], qureg[1])
         return gates
+
 
 CSwap = CSwapGate(["Fredkin", "CSwap", "cswap"])

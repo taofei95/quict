@@ -1,10 +1,3 @@
-#!/usr/bin/env python
-# -*- coding:utf8 -*-
-# @TIME    : 2019/12/13 1:32 下午
-# @Author  : Han Yu
-# @File    : setup.py.py
-
-
 """
 Some codes below are from pybind11 cmake example:
 https://github.com/pybind/cmake_example/blob/0baee7e073a9b3738052f543e6bed412aaa22750/setup.py
@@ -13,10 +6,11 @@ https://github.com/pybind/cmake_example/blob/0baee7e073a9b3738052f543e6bed412aaa
 import os
 import sys
 import subprocess
-from os import path, getcwd
+from os import path, getcwd, system
 from setuptools import setup
 from setuptools import find_packages, Extension
 from setuptools.command.build_ext import build_ext
+import platform
 
 from typing import *
 
@@ -44,10 +38,22 @@ def print_if_not_none(s):
 
 
 def print_with_wrapper(header, out_obj):
+    if header[0] != '\033':
+        if len(header) > 12:
+            header = header[:9] + "..."
+        if len(header) < 12:
+            for i in range(12 - len(header)):
+                header += "."
+
+        header = f"\033[36m[{header}]\033[39m "
+
     if out_obj is None:
         return
-    for line in iter(out_obj.readline, b""):
-        print(header, line.decode("unicode_escape"), sep="", end="")
+    if isinstance(out_obj, str):
+        print(header, out_obj)
+    else:
+        for line in iter(out_obj.readline, b""):
+            print(header, line.decode("unicode_escape"), sep="", end="")
 
 
 def run_with_output_wrapper(header, args, cwd):
@@ -100,7 +106,7 @@ class CMakeExtension(Extension):
         self.source_dir = os.path.abspath(source_dir)
 
 
-class CMakeBuild(build_ext):
+class ExtensionBuild(build_ext):
     def build_extension(self, ext):
         ext_dir = os.path.abspath(os.path.dirname(self.get_ext_fullpath(ext.name)))
 
@@ -169,18 +175,30 @@ class CMakeBuild(build_ext):
             os.makedirs(build_temp)
 
         print_cyan(f"[{ext_name}]")
-        print(" ".join(["cmake", ext.source_dir] + cmake_args))
+        print_with_wrapper(ext_name, " ".join(["cmake", ext.source_dir] + cmake_args))
         if hasattr(self, "parallel") and self.parallel:
             print_yellow("Extensions are built in parallel. Shell output might be messed up.")
+        print_with_wrapper(ext_name, "Configuring...")
         run_with_output_wrapper(
             header=ext_name,
             args=["cmake", ext.source_dir] + cmake_args,
             cwd=build_temp,
         )
-        print("Building...")
+        print_with_wrapper(ext_name, "Building...")
         run_with_output_wrapper(
             header=ext_name,
             args=["cmake", "--build", "."] + build_args,
+            cwd=build_temp,
+        )
+        print_with_wrapper(ext_name, "Copying back...")
+        libs = []
+        for f in os.listdir(ext_dir):
+            if f.endswith(".so"):
+                # print_with_wrapper(ext_name, f"!!!!!!!!!!!{f}")
+                libs.append(f"{ext_dir}{f}")
+        run_with_output_wrapper(
+            header=ext_name,
+            args=["cp", " ".join(libs), ext.source_dir],
             cwd=build_temp,
         )
 
@@ -198,13 +216,43 @@ print(f"Found packages: {packages}")
 
 print_segment()
 
+packages = find_packages(where=prj_root_relative)
+
+print(f"Found packages: {packages}")
+
+if platform.system() == 'Linux':
+    lib1 = f"{prj_root_relative}/QuICT/qcda/mapping/mcts/mcts_core/mcts_wrapper.cpython-38-x86_64-linux-gnu.so"
+    lib2 = f"{prj_root_relative}/QuICT/qcda/mapping/mcts/mcts_core/lib/build/libmcts.so"
+else:
+    lib1 = f"{prj_root_relative}/QuICT/qcda/mapping/mcts/mcts_core/mcts_wrapper.cpython-38-darwin.so"
+    lib2 = f"{prj_root_relative}/QuICT/qcda/mapping/mcts/mcts_core/lib/build/libmcts.dylib"
+    system(f"install_name_tool -add_rpath {path.dirname(lib2)} {lib1}")
+
 # static file
 file_data = [
     ("QuICT/lib/qasm/libs", [f"{prj_root_relative}/QuICT/lib/qasm/libs/qelib1.inc"]),
+    # ("QuICT/qcda/synthesis/initial_state_preparation",
+    #  [f"{prj_root_relative}/QuICT/qcda/synthesis/initial_state_preparation/initial_state_preparation_cdll.so"],
+    #  ),
+    ("QuICT/qcda/mapping/mcts/mcts_core",
+     [lib1]
+     ),
+    ("QuICT/qcda/mapping/mcts/mcts_core/lib/build",
+     [lib2]
+     )
 ]
 
 # 3rd party library
-requires = ['scipy']
+requires = [
+    'pytest>=6.2.3',
+    'numpy>=1.20.1',
+    'networkx>=2.5.1',
+    'matplotlib>=3.3.4',
+    'cython>=0.29.23',
+    'ply>=3.11',
+    'scipy',
+    'ujson',
+]
 
 # version information
 about = {}
@@ -228,11 +276,11 @@ setup(
         CMakeExtension("QuICT.qcda.synthesis.initial_state_preparation.",
                        f"{prj_root}/QuICT/qcda/synthesis/initial_state_preparation/")
     ],
-    cmdclass={"build_ext": CMakeBuild},
+    cmdclass={"build_ext": ExtensionBuild},
     packages=packages,
     data_files=file_data,
     include_package_data=True,
-    python_requires=">=3.0",
+    python_requires=">=3.8",
     install_requires=requires,
     zip_safe=False,
 )

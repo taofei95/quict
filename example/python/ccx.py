@@ -6,6 +6,7 @@
 
 from QuICT.core import *
 from QuICT.algorithm import SyntheticalUnitary, Amplitude
+import code
 
 circuit = Circuit(3)
 
@@ -24,7 +25,9 @@ CX          | circuit([0, 2])
 T           | circuit(0)
 T           | circuit(2)
 H           | circuit(2)
-circuit.draw_photo(show_depth=False)
+circuit.draw()
 
 unitary = SyntheticalUnitary.run(circuit, showSU=False)
-print(unitary)
+#print(unitary)
+
+code.interact(banner = "", local = locals())
