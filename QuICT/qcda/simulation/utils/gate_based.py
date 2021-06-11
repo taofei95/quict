@@ -1,6 +1,5 @@
-import numba
 import numpy as np
-from collections import defaultdict
+import cupy as cp
 
 from QuICT.core.gate.gate import *
 
@@ -12,6 +11,7 @@ STATIC_GATE_NAMES = [
     "SXGate", "SYGate", "SWGate",
     "IDGate", "U1Gate", "U2Gate", "U3Gate"
 ]
+
 
 class GateMatrixs:
     def __init__(self, GPUBased: bool=True):
@@ -45,7 +45,7 @@ class GateMatrixs:
             start += matrix.size
 
         if self.GPUBased:
-            self.final_matrix = numba.cuda.to_device(self.final_matrix)
+            self.final_matrix = cp.array(self.final_matrix)
 
     def target_matrix(self, gate):
         gate_name = gate.name.split("_")[0]

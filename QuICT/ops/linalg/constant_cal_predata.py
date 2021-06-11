@@ -4,53 +4,52 @@
 # @Author  : Han Yu
 # @File    : gpu_constant_calculator_refine
 
-import numba
-from numba import cuda
 import numpy as np
+import cupy as cp
 import cmath
 
 from QuICT.core import *
 
-@cuda.jit()
-def _H_large_vec_kernel(
-    index: int,
-    mat,
-    vec
-):
-    label = cuda.blockIdx.x * cuda.blockDim.x + cuda.threadIdx.x
-    _0 = (label & ((1 << index) - 1)) + (label >> index << (index + 1))
-    _1 = _0 + (1 << index)
-    vec[_0], vec[_1] = vec[_0]*mat[0] + vec[_1]*mat[1], vec[_0]*mat[2] + vec[_1]*mat[3]
 
-@cuda.jit()
-def _CRz_large_vec_kernel1(
-    cindex,
-    tindex,
-    mat,
-    vec
-):
-    label = cuda.blockIdx.x * cuda.blockDim.x + cuda.threadIdx.x
-    gw = label >> cindex << (cindex + 1)
-    _0 = (1 << cindex) + (gw & ((1 << tindex) - (1 << cindex))) + (gw >> tindex << (tindex + 1)) + \
-         (label & ((1 << cindex) - 1))
-    _1 = _0 + (1 << tindex)
-    vec[_0] = vec[_0] * mat[10]
-    vec[_1] = vec[_1] * mat[15]
+HGate_kernel = cp.RawKernel(r'''
+    #include <cupy/complex.cuh>
+    extern "C" __global__
+    void HGate(int index, const complex<float>* mat, complex<float>* vec) {
+        int label = blockDim.x * blockIdx.x + threadIdx.x;
+        int _0 = (label & ((1 << index) - 1)) + (label >> index << (index + 1));
+        int _1 = _0 + (1 << index);
 
-@cuda.jit()
-def _CRz_large_vec_kernel2(
-    cindex,
-    tindex,
-    mat,
-    vec
-):
-    label = cuda.blockIdx.x * cuda.blockDim.x + cuda.threadIdx.x
-    gw = label >> tindex << (tindex + 1)
-    _0 = (1 << cindex) + (gw & ((1 << cindex) - (1 << tindex))) + (gw >> cindex << (cindex + 1)) + \
-         (label & ((1 << tindex) - 1))
-    _1 = _0 + (1 << tindex)
-    vec[_0] = vec[_0] * mat[10]
-    vec[_1] = vec[_1] * mat[15]
+        complex<float> temp_0 = vec[_0];
+        vec[_0] = vec[_0]*mat[0] + vec[_1]*mat[1];
+        vec[_1] = temp_0*mat[2] + vec[_1]*mat[3];
+    }
+    ''', 'HGate')
+
+CRZGate_kernel = cp.RawKernel(r'''
+    #include <cupy/complex.cuh>
+    extern "C" __global__
+    void CRZGate(int cindex, int tindex, const complex<float>* mat, complex<float>* vec) {
+        int label = blockDim.x * blockIdx.x + threadIdx.x;
+
+        int gw=0, _0=0;
+
+        if(tindex > cindex){
+            gw = label >> cindex << (cindex + 1);
+            _0 = (1 << cindex) + (gw & ((1 << tindex) - (1 << cindex))) + (gw >> tindex << (tindex + 1)) + (label & ((1 << cindex) - 1));
+        }
+        else
+        {
+            gw = label >> tindex << (tindex + 1);
+            _0 = (1 << cindex) + (gw & ((1 << cindex) - (1 << tindex))) + (gw >> cindex << (cindex + 1)) + (label & ((1 << tindex) - 1));
+        }
+
+        int _1 = _0 + (1 << tindex);
+
+        vec[_0] = vec[_0]*mat[10];
+        vec[_1] = vec[_1]*mat[15];
+    }
+    ''', 'CRZGate')
+
 
 def gate_dot_vector_predata(
     gate : BasicGate,
@@ -59,15 +58,13 @@ def gate_dot_vector_predata(
     vec_bit
 ):
     if gate.type() == GATE_ID["H"]:
-
         task_number = 1 << (vec_bit - 1)
         thread_per_block = min(256, task_number)
         block_num = task_number // thread_per_block
-
-        _H_large_vec_kernel[[block_num, 1, 1], [thread_per_block, 1, 1]](
-            vec_bit - 1 - gate.targ,
-            mat,
-            vec
+        HGate_kernel(
+            (block_num,),
+            (thread_per_block,),
+            (vec_bit - 1 - gate.targ, mat, vec)
         )
     elif gate.type() == GATE_ID["CRz"]:
         cindex = vec_bit - 1 - gate.carg
@@ -77,19 +74,12 @@ def gate_dot_vector_predata(
         thread_per_block = min(256, task_number)
         block_num = task_number // thread_per_block
 
-        if tindex > cindex:
-            _CRz_large_vec_kernel1[[block_num, 1, 1], [thread_per_block, 1, 1]](
-                cindex,
-                tindex,
-                mat,
-                vec
-            )
-        else:
-            _CRz_large_vec_kernel2[[block_num, 1, 1], [thread_per_block, 1, 1]](
-                cindex,
-                tindex,
-                mat,
-                vec
-            )
+        CRZGate_kernel(
+            (block_num,),
+            (thread_per_block,),
+            (cindex, tindex, mat, vec)
+        )
     else:
         raise Exception("ss")
+
+    cp.cuda.Device().synchronize()

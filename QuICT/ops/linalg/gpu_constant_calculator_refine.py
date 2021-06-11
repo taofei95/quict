@@ -92,3 +92,5 @@ def gate_dot_vector_cuda(
             )
     else:
         raise Exception("ss")
+    
+    cuda.synchronize()

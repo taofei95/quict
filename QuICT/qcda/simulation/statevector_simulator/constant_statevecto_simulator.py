@@ -7,6 +7,7 @@
 import time
 
 import numpy as np
+import cupy as cp
 import numba
 
 from QuICT.ops.linalg.gpu_constant_calculator_refine import gate_dot_vector_cuda
@@ -59,7 +60,7 @@ class ConstantStateVectorSimulator:
         # return vector
 
     @staticmethod
-    def run_predata_ot(circuit: Circuit) -> np.ndarray:
+    def run_predata(circuit: Circuit) -> np.ndarray:
         """
         Get the state vector of circuit
 
@@ -87,9 +88,10 @@ class ConstantStateVectorSimulator:
 
             start_time = time.time()
             gatematrixG.concentrate_gate_matrixs()
-            vec = numba.cuda.device_array((1 << qubit, ), dtype=np.complex64)
-            vec[0] = 1
+            vec = cp.empty(1 << qubit, dtype=np.complex64)
+            vec.put(0, cp.complex64(1))
             print(f"Data transfer time: {time.time() - start_time}")
+
             fy_end = time.time()
             time_start = time.time()
             for gate in gates:
