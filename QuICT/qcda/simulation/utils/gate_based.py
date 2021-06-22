@@ -14,8 +14,9 @@ STATIC_GATE_NAMES = [
 
 
 class GateMatrixs:
-    def __init__(self, GPUBased: bool=True):
+    def __init__(self, precision, GPUBased: bool=True):
         self.gate_matrixs = {}
+        self.precision = precision
         self.GPUBased = GPUBased
         self.matrix_idx = []
         self.matrix_len = 0
@@ -34,10 +35,12 @@ class GateMatrixs:
     def _build_matrix_gate(self, gate_name, matrix):
         self.gate_matrixs[gate_name] = (self.matrix_len, matrix.size)
         self.matrix_len += matrix.size
+        if matrix.dtype != self.precision:
+            matrix = matrix.astype(self.precision)
         self.matrix_idx.append(matrix)
 
     def concentrate_gate_matrixs(self):
-        self.final_matrix = np.empty(self.matrix_len, dtype=np.complex64)
+        self.final_matrix = np.empty(self.matrix_len, dtype=self.precision)
         start = 0
 
         for matrix in self.matrix_idx:
