@@ -163,8 +163,8 @@ class ExtensionBuild(build_ext):
 
         _stdout = StringIO()
         _stderr = StringIO()
-        with redirect_stderr(_stderr):
-            with redirect_stdout(_stdout):
+        with redirect_stdout(_stdout):
+            with redirect_stderr(_stderr):
                 build_ext.build_extension(self, cython_ext[0])
         _stderr = _stderr.getvalue().splitlines()
         _stdout = _stdout.getvalue().splitlines()
