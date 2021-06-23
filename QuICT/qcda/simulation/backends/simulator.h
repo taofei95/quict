@@ -12,14 +12,30 @@
 
 namespace QuICT {
 
-    template<typename precision_t>
+    enum SimulatorMode {
+        single,
+        batch,
+        avx,
+        fma
+    };
+
+
+    template<typename precision_t, SimulatorMode sim_mode = SimulatorMode::single>
     class Simulator {
     public:
         template<class gate_t>
         inline void apply_gate(const gate_t &gate) {
-            uint64_t task_num = 1ULL << (qubit_num_ - Gate::gate_qubit_num<gate_t>::value);
-            for (uint64_t task_id = 0; task_id < task_num; ++task_id) {
-                apply_gate_single_task(task_id, gate);
+            if constexpr(sim_mode == SimulatorMode::single) {
+                uint64_t task_num = 1ULL << (qubit_num_ - Gate::gate_qubit_num<gate_t>::value);
+                for (uint64_t task_id = 0; task_id < task_num; ++task_id) {
+                    apply_gate_single_task(task_id, gate);
+                }
+            } else if constexpr(sim_mode == SimulatorMode::batch) {
+
+            } else if constexpr(sim_mode == SimulatorMode::avx) {
+
+            } else if constexpr(sim_mode == SimulatorMode::fma) {
+
             }
         }
 
