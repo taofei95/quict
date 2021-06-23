@@ -19,8 +19,8 @@ def test_graph():
     g.print_info()
     print(g)  # the same
 
-    print(g.out_deg_of(v1))
-    print(g.in_deg_of(v4))
+    print(g.out_degree(v1))
+    print(g.in_degree(v4))
 
     for e in g.edges_from(v1):
         e.print_info()

@@ -4,7 +4,7 @@ from typing import *
 
 cur_path = os.path.dirname(os.path.abspath(__file__))
 
-print(cur_path)
+# print(cur_path)
 
 mod_name = "graph_structure"
 mod_path = "graph_structure"
@@ -56,13 +56,13 @@ class DirectedGraph:
 
     # add_edge
     def add_edge(self, from_: Vertex, to_: Vertex, data_: int):
-        self.add_vertex(from_)
-        self.add_vertex(to_)
+        self.add_node(from_)
+        self.add_node(to_)
         self._instance.add_edge(from_.id, to_.id, data_)
         return self
 
     # add_vertex
-    def add_vertex(self, v: Vertex):
+    def add_node(self, v: Vertex):
         if v.id not in self._vertex_by_id:
             self._vertex_by_id[v.id] = v
 
@@ -79,12 +79,12 @@ class DirectedGraph:
         return self._instance.edges_to(v.id)
 
     # out_deg_of
-    def out_deg_of(self, v: Vertex) -> int:
-        return self._instance.out_deg_of(v.id)
+    def out_degree(self, v: Vertex) -> int:
+        return self._instance.out_degree(v.id)
 
     # in_deg_of
-    def in_deg_of(self, v: Vertex) -> int:
-        return self._instance.in_deg_of(v.id)
+    def in_degree(self, v: Vertex) -> int:
+        return self._instance.in_degree(v.id)
 
     # edges
     def edges(self) -> Iterable[Edge]:
