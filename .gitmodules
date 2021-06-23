@@ -1,0 +1,3 @@
+[submodule "QuICT/utility/googletest"]
+	path = QuICT/utility/googletest
+	url = https://github.com/google/googletest.git

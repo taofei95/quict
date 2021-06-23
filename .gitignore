@@ -15,3 +15,4 @@ make.bat
 .vscode
 _build
 .ipynb_checkpoints
+cmake-build-debug/
