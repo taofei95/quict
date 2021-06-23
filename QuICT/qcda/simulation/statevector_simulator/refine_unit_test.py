@@ -26,7 +26,7 @@ def test_constant_vec_sim():
     QFT.build_gate(qubit_numt) | circuitt
 
     t = ConstantStateVectorSimulator(circuitt, np.complex128)
-    _ = t()
+    _ = t.run()
 
     for i in range(1):
         print("Start running.")
@@ -42,7 +42,7 @@ def test_constant_vec_sim():
 
         start_time = time()
         state = ConstantStateVectorSimulator(circuit, np.complex128)
-        res = state()
+        res = state.run()
         end_time = time()
         duration_1 = end_time - start_time
         

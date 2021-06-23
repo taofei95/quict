@@ -23,7 +23,16 @@ class ConstantStateVectorSimulator:
         # Initial gate_based algorithm
         self.gate_algorithm = gate_kernel_by_precision(self.precision)
 
-    def __call__(self):
+    def run(self) -> np.ndarray:
+        """
+        Get the state vector of circuit
+
+        Args:
+            circuit (Circuit): Input circuit to be simulated.
+
+        Returns:
+            np.ndarray: The state vector of input circuit.
+        """
         # Special Case for no gate circuit
         if len(self.gates) == 0:
             vec = np.zeros(1 << self.qubits, dtype=self.precision)
@@ -41,18 +50,6 @@ class ConstantStateVectorSimulator:
 
         self.gateM_manager.concentrate_gate_matrixs()
 
-        return self.run()
-
-    def run(self) -> np.ndarray:
-        """
-        Get the state vector of circuit
-
-        Args:
-            circuit (Circuit): Input circuit to be simulated.
-
-        Returns:
-            np.ndarray: The state vector of input circuit.
-        """
         with cp.cuda.Device(self.device):
             for gate in self.gates:
                 matrix = self.gateM_manager.target_matrix(gate)
@@ -64,4 +61,4 @@ class ConstantStateVectorSimulator:
                     self.qubits
                 )
 
-            return self.vector
+        return self.vector
