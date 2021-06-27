@@ -8,6 +8,7 @@
 #include <complex>
 #include <array>
 #include <cstdint>
+#include <string>
 #include "utility.h"
 
 namespace QuICT {
@@ -45,7 +46,7 @@ namespace QuICT {
         template<typename precision_t>
         struct UnitaryGate {
             uint64_t targ_;
-            marray_t<precision_t, 4> mat_;
+            mat_entry_t <precision_t> *mat_;
 
             // this->mat_ is initialized by subclasses
 
@@ -56,7 +57,7 @@ namespace QuICT {
         template<uint64_t N, typename precision_t>
         struct UnitaryGateN {
             uarray_t <N> affect_args_;
-            marray_t<precision_t, 1ULL << (N << 1ULL)> mat_;
+            mat_entry_t <precision_t> *mat_;
 
             // this->mat_ is initialized by subclasses
             template<typename _rand_iter>
@@ -71,7 +72,7 @@ namespace QuICT {
         template<typename precision_t>
         struct DiagonalGate {
             uint64_t targ_;
-            marray_t<precision_t, 2> diagonal_;
+            mat_entry_t <precision_t> *diagonal_;
 
             // this->diagonal_ is initialized by subclasses
 
@@ -83,7 +84,7 @@ namespace QuICT {
         template<uint64_t N, typename precision_t>
         struct DiagonalGateN {
             uarray_t <N> affect_args_;
-            marray_t<precision_t, 1ULL << N> diagonal_;
+            mat_entry_t <precision_t> *diagonal_;
 
             // this->diagonal_ is initialized by subclasses
             template<typename _rand_iter>
@@ -124,14 +125,22 @@ namespace QuICT {
         struct CrzGate : ControlledDiagonalGate<precision_t> {
             CrzGate(uint64_t carg, uint64_t targ, precision_t parg)
                     : ControlledDiagonalGate<precision_t>(carg, targ) {
+                this->diagonal_ = new mat_entry_t<precision_t>[2];
                 this->diagonal_[0] = std::exp(static_cast<mat_entry_t<precision_t>>(-1j * parg / 2));
                 this->diagonal_[1] = std::exp(static_cast<mat_entry_t<precision_t>>(1j * parg / 2));
+            }
+
+            ~CrzGate() {
+                delete[] this->diagonal_;
             }
         };
 
         template<typename precision_t>
         struct HGate : SimpleGate {
-            mat_entry_t <precision_t> sqrt2_inv = static_cast<std::complex<precision_t>>(1.0 / sqrt(2));
+//            std::complex<precision_t> sqrt2_inv = static_cast<std::complex<precision_t>>(1.0 / sqrt(2));
+            static constexpr auto sqrt2_inv =
+                    static_cast<mat_entry_t <precision_t>>(
+                            1.0 / 1.4142135623730950488016887242096980785696718753769480731766797379);
 
             HGate(uint64_t targ) : SimpleGate(targ) {}
         };
@@ -140,8 +149,13 @@ namespace QuICT {
         struct ZGate : DiagonalGate<precision_t> {
 
             ZGate(uint64_t targ) : DiagonalGate<precision_t>(targ) {
+                this->diagonal_ = new mat_entry_t<precision_t>[2];
                 this->diagonal_[0] = static_cast<mat_entry_t<precision_t>>(1);
                 this->diagonal_[1] = static_cast<mat_entry_t<precision_t>>(-1);
+            }
+
+            ~ZGate() {
+                delete[] this->diagonal_;
             }
         };
 

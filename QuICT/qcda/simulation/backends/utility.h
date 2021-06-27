@@ -11,6 +11,10 @@
 #include <type_traits>
 
 namespace QuICT {
+    //* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+    // Template Class Derive Check Helpers
+    //* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+
     //https://stackoverflow.com/questions/34672441/stdis-base-of-for-template-classes
     template<template<typename...> class _Base, typename..._Derive_Args>
     std::true_type is_base_of_template_impl(const _Base<_Derive_Args...> *);
@@ -35,6 +39,32 @@ namespace QuICT {
     template<typename precision_t, uint64_t N>
     using marray_t = std::array<mat_entry_t<precision_t>, N>;
 
+
+    //* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+    // Helper Class for Receiving Data from Python
+    //* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+
+    template<typename precision_t>
+    class GateBridgeEntry {
+    public:
+        // Not all members are used
+
+        std::string qasm_name_;
+        uint64_t targ_, carg_;
+        precision_t parg_;
+        std::vector<uint64_t> affect_args_;
+        mat_entry_t<precision_t> *data_ptr_;
+
+        GateBridgeEntry(
+                std::string qasm_name,
+                uint64_t targ,
+                uint64_t carg,
+                precision_t parg,
+                std::vector<uint64_t> affect_args,
+                mat_entry_t<precision_t> data_ptr
+        ) : qasm_name_(qasm_name), targ_(targ), carg_(carg), parg_(parg), affect_args_(affect_args), data_ptr_(data_ptr) {}
+    };
+
     //* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
     // Helper functions to create indices array
     //* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
@@ -56,8 +86,8 @@ namespace QuICT {
     inline uarray_t<1ULL << N> index(
             const uint64_t task_id,
             const uint64_t qubit_num,
-            const uarray_t<N> qubits,
-            const uarray_t<N> qubits_sorted
+            const uarray_t<N> &qubits,
+            const uarray_t<N> &qubits_sorted
     ) {
         auto ret = uarray_t<1ULL << N>();
         ret[0] = task_id;
