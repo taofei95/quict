@@ -11,18 +11,30 @@
 #include <string>
 #include "utility.h"
 
+
 namespace QuICT {
+    namespace ImplementDetail {
+        // Black magic from
+        // https://stackoverflow.com/questions/1005476/how-to-detect-whether-there-is-a-specific-member-variable-in-class
+
+#define DEFINE_MEMBER_CHECKER(member) \
+            template<typename T, typename = int> \
+            struct has_member_ ## member : std::false_type {}; \
+            template<typename T>      \
+            struct has_member_ ## member <T, decltype((void)T:: member, 0)> : std::true_type{};
+
+        DEFINE_MEMBER_CHECKER(affect_args_);
+        DEFINE_MEMBER_CHECKER(mat_);
+        DEFINE_MEMBER_CHECKER(diagonal_);
+        DEFINE_MEMBER_CHECKER(carg_);
+
+#undef DEFINE_MEMBER_CHECKER
+    }
+
     namespace Gate {
         //* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
         // Basic Gate Declaration
         //* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-
-        // Single qubit non-parameterized gate
-        struct SimpleGate {
-            uint64_t targ_;
-
-            SimpleGate(uint64_t targ) : targ_(targ) {}
-        };
 
         /*
          * Multiple qubit non-parameterized gate.
@@ -42,15 +54,12 @@ namespace QuICT {
             }
         };
 
-        // Single qubit unitary gate
-        template<typename precision_t>
-        struct UnitaryGate {
+        // Single qubit non-parameterized gate
+        template<>
+        struct SimpleGateN<1> {
             uint64_t targ_;
-            mat_entry_t <precision_t> *mat_;
 
-            // this->mat_ is initialized by subclasses
-
-            UnitaryGate(uint64_t targ) : targ_(targ) {}
+            SimpleGateN(uint64_t targ) : targ_(targ) {}
         };
 
         // Multiple qubit unitary gate
@@ -59,24 +68,40 @@ namespace QuICT {
             uarray_t <N> affect_args_;
             mat_entry_t <precision_t> *mat_;
 
-            // this->mat_ is initialized by subclasses
-            template<typename _rand_iter>
-            UnitaryGateN(_rand_iter qubit_begin, _rand_iter qubit_end) {
+            template<typename _qubit_iter>
+            UnitaryGateN(_qubit_iter qubit_begin, _qubit_iter qubit_end) {
                 std::copy(qubit_begin, qubit_end, affect_args_.begin());
+            }
+
+            template<typename _qubit_iter, typename _mat_iter>
+            UnitaryGateN(_qubit_iter qubit_begin, _mat_iter mat_begin) {
+                std::copy(qubit_begin, qubit_begin + N, affect_args_.begin());
+                mat_ = new mat_entry_t<precision_t>[1ULL << (N << 1)];
+                std::copy(mat_begin, mat_begin + (1ULL << (N << 1)), mat_);
+            }
+
+            ~UnitaryGateN() {
+                delete[] mat_;
             }
         };
 
-
-        // Single qubit diagonal gate
-        // Diagonal gate
+        // Single qubit unitary gate
         template<typename precision_t>
-        struct DiagonalGate {
+        struct UnitaryGateN<1, precision_t> {
             uint64_t targ_;
-            mat_entry_t <precision_t> *diagonal_;
+            mat_entry_t <precision_t> *mat_;
 
-            // this->diagonal_ is initialized by subclasses
+            UnitaryGateN(uint64_t targ) : targ_(targ) {}
 
-            DiagonalGate(uint64_t targ) : targ_(targ) {}
+            template<typename _mat_iter>
+            UnitaryGateN(uint64_t targ, _mat_iter mat_begin) : targ_(targ) {
+                mat_ = new mat_entry_t<precision_t>[4];
+                std::copy(mat_begin, mat_begin + 4, mat_);
+            }
+
+            ~UnitaryGateN() {
+                delete[] mat_;
+            }
         };
 
 
@@ -87,20 +112,32 @@ namespace QuICT {
             mat_entry_t <precision_t> *diagonal_;
 
             // this->diagonal_ is initialized by subclasses
-            template<typename _rand_iter>
-            DiagonalGateN(_rand_iter qubit_begin, _rand_iter qubit_end) {
-                std::copy(qubit_begin, qubit_end, affect_args_.begin());
+            template<typename _qubit_iter>
+            DiagonalGateN(_qubit_iter qubit_begin) {
+                std::copy(qubit_begin, qubit_begin + N, affect_args_.begin());
             }
+        };
+
+        // Single qubit diagonal gate
+        // Diagonal gate
+        template<typename precision_t>
+        struct DiagonalGateN<1, precision_t> {
+            uint64_t targ_;
+            mat_entry_t <precision_t> *diagonal_;
+
+            // this->diagonal_ is initialized by subclasses
+
+            DiagonalGateN(uint64_t targ) : targ_(targ) {}
         };
 
         // Controlled gate of 2 qubits(i.e. 1 control bit and 1 target bit).
         template<typename precision_t>
-        struct ControlledUnitaryGate : UnitaryGate<precision_t> {
+        struct ControlledUnitaryGate : UnitaryGateN<1, precision_t> {
             uint64_t carg_;
 
             // this->mat_ is initialized by subclasses
             ControlledUnitaryGate(uint64_t carg, uint64_t targ)
-                    : carg_(carg), UnitaryGate<precision_t>(targ) {}
+                    : carg_(carg), UnitaryGateN<1, precision_t>(targ) {}
         };
 
         // Multiple bits controlled unitary gates are not currently used.
@@ -108,12 +145,12 @@ namespace QuICT {
 
         // Controlled diagonal gate of 2 qubits(i.e. 1 control bit and 1 target bit).
         template<typename precision_t>
-        struct ControlledDiagonalGate : DiagonalGate<precision_t> {
+        struct ControlledDiagonalGate : DiagonalGateN<1, precision_t> {
             uint64_t carg_;
 
             // this->diagonal_ is initialized by subclasses
             ControlledDiagonalGate(uint64_t carg, uint64_t targ)
-                    : carg_(carg), DiagonalGate<precision_t>(targ) {}
+                    : carg_(carg), DiagonalGateN<1, precision_t>(targ) {}
         };
 
 
@@ -136,19 +173,19 @@ namespace QuICT {
         };
 
         template<typename precision_t>
-        struct HGate : SimpleGate {
+        struct HGate : SimpleGateN<1> {
 //            std::complex<precision_t> sqrt2_inv = static_cast<std::complex<precision_t>>(1.0 / sqrt(2));
             static constexpr auto sqrt2_inv =
                     static_cast<mat_entry_t <precision_t>>(
                             1.0 / 1.4142135623730950488016887242096980785696718753769480731766797379);
 
-            HGate(uint64_t targ) : SimpleGate(targ) {}
+            HGate(uint64_t targ) : SimpleGateN(targ) {}
         };
 
         template<typename precision_t>
-        struct ZGate : DiagonalGate<precision_t> {
+        struct ZGate : DiagonalGateN<1, precision_t> {
 
-            ZGate(uint64_t targ) : DiagonalGate<precision_t>(targ) {
+            ZGate(uint64_t targ) : DiagonalGateN<1, precision_t>(targ) {
                 this->diagonal_ = new mat_entry_t<precision_t>[2];
                 this->diagonal_[0] = static_cast<mat_entry_t<precision_t>>(1);
                 this->diagonal_[1] = static_cast<mat_entry_t<precision_t>>(-1);
@@ -164,58 +201,29 @@ namespace QuICT {
         // Type Helpers
         //* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
-        template<typename gate_t>
-        struct is_diagonal_gate {
-            constexpr static bool value = is_base_of_template<DiagonalGate, gate_t>::value &&
-                                          !is_base_of_template<ControlledDiagonalGate, gate_t>::value;
-        };
-
-        template<typename gate_t>
-        struct is_simple_gate {
-            constexpr static bool value = std::is_base_of<SimpleGate, gate_t>::value;
-        };
-
-        template<typename gate_t>
-        struct is_single_unitary_gate {
-            constexpr static bool value = is_base_of_template<UnitaryGate, gate_t>::value &&
-                                          !is_base_of_template<ControlledUnitaryGate, gate_t>::value;
-        };
-
-        template<typename gate_t>
-        struct is_single_bit {
-            constexpr static bool value = is_simple_gate<gate_t>::value ||
-                                          is_diagonal_gate<gate_t>::value ||
-                                          is_single_unitary_gate<gate_t>::value;
-        };
-
-        template<typename gate_t>
-        struct is_controlled_unitary_gate {
-            constexpr static bool value = is_base_of_template<ControlledUnitaryGate, gate_t>::value;
-        };
-
-        template<typename gate_t>
-        struct is_controlled_diagonal_gate {
-            constexpr static bool value = is_base_of_template<ControlledDiagonalGate, gate_t>::value;
-        };
-
-        template<typename gate_t>
-        struct is_controlled_2_bit {
-            constexpr static bool value = is_controlled_unitary_gate<gate_t>::value ||
-                                          is_controlled_diagonal_gate<gate_t>::value;
-        };
-
-        template<typename gate_t>
+        template<class gate_t>
         struct gate_qubit_num {
-            constexpr static uint64_t value = []() -> auto {
-                if constexpr(is_single_bit<gate_t>::value) {
-                    return 1;
-                } else if constexpr(is_controlled_2_bit<gate_t>::value) {
+            constexpr static uint64_t value = []() {
+                if constexpr(ImplementDetail::has_member_affect_args_<gate_t>::value) {
+                    return gate_t::affect_args_.size();
+                } else if constexpr(ImplementDetail::has_member_carg_<gate_t>::value) {
                     return 2;
                 } else {
-                    return std::declval<gate_t>().affect_args_.size();
+                    return 1;
                 }
             }();
         };
+
+        template<class gate_t>
+        struct gate_is_diagonal {
+            constexpr static bool value = ImplementDetail::has_member_diagonal_<gate_t>::value;
+        };
+
+        template<class gate_t>
+        struct gate_has_mat_repr {
+            constexpr static bool value = ImplementDetail::has_member_mat_<gate_t>::value;
+        };
+
     }
 }
 

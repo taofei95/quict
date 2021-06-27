@@ -18,5 +18,8 @@ add_executable(simulation_backends_test ../../../../QuICT/utility/extern/googlet
         simulation_backends_test.cpp gate.h simulator.h utility.h)
 target_link_libraries(simulation_backends_test gtest_main)
 
+set_target_properties(simulation_backends PROPERTIES LINKER_LANGUAGE CXX)
+set_target_properties(simulation_backends_test PROPERTIES LINKER_LANGUAGE CXX)
+
 #include(GoogleTest)
 #gtest_discover_tests(simulation_backends_test)

@@ -15,15 +15,15 @@ namespace QuICT {
     // Template Class Derive Check Helpers
     //* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
-    //https://stackoverflow.com/questions/34672441/stdis-base-of-for-template-classes
-    template<template<typename...> class _Base, typename..._Derive_Args>
-    std::true_type is_base_of_template_impl(const _Base<_Derive_Args...> *);
-
-    template<template<typename...> class _Base>
-    std::false_type is_base_of_template_impl(...);
-
-    template<template<typename...> class _Base, typename _Derived>
-    using is_base_of_template = decltype(is_base_of_template_impl<_Base>(std::declval<_Derived *>()));
+//    //https://stackoverflow.com/questions/34672441/stdis-base-of-for-template-classes
+//    template<template<typename...> class _Base, typename..._Derive_Args>
+//    std::true_type is_base_of_template_impl(const _Base<_Derive_Args...> *);
+//
+//    template<template<typename...> class _Base>
+//    std::false_type is_base_of_template_impl(...);
+//
+//    template<template<typename...> class _Base, typename _Derived>
+//    using is_base_of_template = decltype(is_base_of_template_impl<_Base>(std::declval<_Derived *>()));
 
 
     //* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
