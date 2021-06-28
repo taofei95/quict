@@ -1,6 +1,6 @@
 import numpy as np
 import cupy as cp
-import copy
+import math
 import time
 
 from QuICT.core import *
@@ -67,7 +67,6 @@ class ProxySimulator(BasicSimulator):
                 self._qubits,
                 self._sync
             )
-
         elif gate.type() == GATE_ID["CRz"]:
             c_index = self.total_qubits - 1 - gate.carg
             t_index = self.total_qubits - 1 - gate.targ
@@ -124,20 +123,32 @@ class ProxySimulator(BasicSimulator):
         Switch data with rank(self.rank & t_index >> limitQ) dev; 
         switched by highest index for limit qubit.
         """
-        buf_size = 1 << (self.limit_qubits - 1)
-        recv_buf = cp.zeros(buf_size, dtype=self._precision)
+        required_qubits = self.limit_qubits - 1
+        sending_per_qubits = min(required_qubits, 15)
+        sending_size = 1 << sending_per_qubits
+        recv_buf = cp.zeros(1 << required_qubits, dtype=self._precision)
         send_buf = self.vector
 
         destination = self.proxy.rank ^ (1 << (t_index - self.limit_qubits))
 
         front = self.proxy.rank > destination
 
-        if front:
-            self.proxy.send(send_buf[:buf_size], destination)
-        else:
-            self.proxy.send(send_buf[buf_size:], destination)
+        for i in range(math.ceil((1 << required_qubits)/(1 << sending_per_qubits))):
+            if front:
+                self.proxy.send(send_buf[i*sending_size:(i+1)*sending_size], destination)
+            else:
+                if i == 0:
+                    self.proxy.send(send_buf[-(i+1)*sending_size:], destination)
+                else:
+                    self.proxy.send(send_buf[-(i+1)*sending_size:-i*sending_size], destination)
 
-        self.proxy.recv(recv_buf, destination)
+            if not front:
+                self.proxy.recv(recv_buf[i*sending_size:(i+1)*sending_size], destination)
+            else:
+                if i == 0:
+                    self.proxy.recv(recv_buf[-(i+1)*sending_size:], destination)
+                else:
+                    self.proxy.recv(recv_buf[-(i+1)*sending_size:-i*sending_size], destination)
 
         #TODO: Add vector change in simulator
         self.reset_vector(recv_buf, front)

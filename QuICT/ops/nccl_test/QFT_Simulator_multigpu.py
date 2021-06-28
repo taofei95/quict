@@ -47,7 +47,7 @@ if __name__ == "__main__":
     multiprocessing.set_start_method("spawn")
 
     uid = nccl.get_unique_id()
-    qubits, QFT_n = 19, 1
+    qubits, QFT_n = 32, 1
     # array = multiprocessing.Array("i",[1,2,3,4,5])
 
     p1 = multiprocessing.Process(target=worker, args = (uid, 2, 0, qubits, QFT_n,))
