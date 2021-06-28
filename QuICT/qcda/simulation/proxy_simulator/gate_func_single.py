@@ -87,25 +87,21 @@ CRZGate_kernel_special_t = cp.RawKernel(r'''
 
 class GateFuncS:
     @classmethod
-    def HGate_matrixdot(self, targ, mat, vec, vec_bit, sync: bool = True):
-        print(mat)
+    def HGate_matrixdot(self, t_index, mat, vec, vec_bit, sync: bool = True):
         task_number = 1 << (vec_bit - 1)
         thread_per_block = min(256, task_number)
         block_num = task_number // thread_per_block
         HGate_single_kernel(
             (block_num,),
             (thread_per_block,),
-            (vec_bit - 1 - targ, mat, vec)
+            (t_index, mat, vec)
         )
 
         if sync:
             cp.cuda.Device().synchronize()
 
     @classmethod
-    def CRzGate_matrixdot(self, carg, targ, mat, vec, vec_bit, sync: bool = True):
-        cindex = vec_bit - 1 - carg
-        tindex = vec_bit - 1 - targ
-
+    def CRzGate_matrixdot(self, c_index, t_index, mat, vec, vec_bit, sync: bool = True):
         task_number = 1 << (vec_bit - 2)
         thread_per_block = min(256, task_number)
         block_num = task_number // thread_per_block
@@ -113,7 +109,7 @@ class GateFuncS:
         CRZGate_single_kernel(
             (block_num,),
             (thread_per_block,),
-            (cindex, tindex, mat, vec)
+            (c_index, t_index, mat, vec)
         )
 
         if sync:
@@ -139,9 +135,8 @@ class GateFuncMS:
             cp.cuda.Device().synchronize()
 
     @classmethod
-    def CRzGate_matrixdot_pc(self, _0_1, carg, mat, vec, vec_bit, sync: bool = True):
+    def CRzGate_matrixdot_pc(self, _0_1, c_index, mat, vec, vec_bit, sync: bool = True):
         mat_value = mat[10] if _0_1 else mat[15]
-        cindex = vec_bit - 1 - carg
 
         task_number = 1 << (vec_bit - 1)
         thread_per_block = min(256, task_number)
@@ -150,14 +145,14 @@ class GateFuncMS:
         CRZGate_kernel_special_c(
             (block_num,),
             (thread_per_block,),
-            (cindex, mat_value, vec)
+            (c_index, mat_value, vec)
         )
 
         if sync:
             cp.cuda.Device().synchronize()
 
     @classmethod
-    def CRzGate_matrixdot_pt(self, tindex, mat, vec, vec_bit, sync: bool = True):
+    def CRzGate_matrixdot_pt(self, t_index, mat, vec, vec_bit, sync: bool = True):
         task_number = 1 << (vec_bit - 1)
         thread_per_block = min(256, task_number)
         block_num = task_number // thread_per_block
@@ -165,7 +160,7 @@ class GateFuncMS:
         CRZGate_kernel_special_t(
             (block_num,),
             (thread_per_block,),
-            (tindex, mat, vec)
+            (t_index, mat, vec)
         )
 
         if sync:

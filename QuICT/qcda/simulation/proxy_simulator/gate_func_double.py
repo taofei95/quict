@@ -77,36 +77,35 @@ CRZGate_kernel_special = cp.RawKernel(r'''
     ''', 'CRZGateSingle')
 
 
-def HGate_matrixdot(targ, mat, vec, vec_bit, sync: bool = False):
-    task_number = 1 << (vec_bit - 1)
-    thread_per_block = min(256, task_number)
-    block_num = task_number // thread_per_block
-    HGate_double_kernel(
-        (block_num,),
-        (thread_per_block,),
-        (vec_bit - 1 - targ, mat, vec)
-    )
-
-    if sync:
-        cp.cuda.Device().synchronize()
-
-
-def CRzGate_matrixdot(carg, targ, mat, vec, vec_bit, sync: bool = False):
-    cindex = vec_bit - 1 - carg
-    tindex = vec_bit - 1 - targ
-
-    task_number = 1 << (vec_bit - 2)
-    thread_per_block = min(256, task_number)
-    block_num = task_number // thread_per_block
-
-    CRZGate_double_kernel(
-        (block_num,),
-        (thread_per_block,),
-        (cindex, tindex, mat, vec)
+class GateFuncD:
+    @classmethod
+    def HGate_matrixdot(self, t_index, mat, vec, vec_bit, sync: bool = False):
+        task_number = 1 << (vec_bit - 1)
+        thread_per_block = min(256, task_number)
+        block_num = task_number // thread_per_block
+        HGate_double_kernel(
+            (block_num,),
+            (thread_per_block,),
+            (t_index, mat, vec)
         )
 
-    if sync:
-        cp.cuda.Device().synchronize()
+        if sync:
+            cp.cuda.Device().synchronize()
+
+    @classmethod
+    def CRzGate_matrixdot(self, c_index, t_index, mat, vec, vec_bit, sync: bool = False):
+        task_number = 1 << (vec_bit - 2)
+        thread_per_block = min(256, task_number)
+        block_num = task_number // thread_per_block
+
+        CRZGate_double_kernel(
+            (block_num,),
+            (thread_per_block,),
+            (c_index, t_index, mat, vec)
+            )
+
+        if sync:
+            cp.cuda.Device().synchronize()
 
 
 def CRzGate_matrixdot_p(carg, targ, mat, vec, vec_bit, sync: bool = False):

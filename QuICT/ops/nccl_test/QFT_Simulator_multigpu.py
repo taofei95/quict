@@ -11,7 +11,6 @@ import multiprocessing
 from QuICT.core import *
 from QuICT.ops.linalg.proxy import Proxy
 from QuICT.qcda.simulation.proxy_simulator.proxy_simulator import ProxySimulator
-from QuICT.qcda.simulation.proxy_simulator.temp_statevecto_s import ConstantStateVectorSimulator
 
 from time import time
 
@@ -31,10 +30,14 @@ def worker(uid, ndevs, dev_id, qubits, QFT_number):
     proxy = Proxy(ndevs=ndevs, uid=uid, rank=dev_id)
 
     circuit = build_QFT_circuit(qubits, QFT_number)
-
-    based_simulator = ConstantStateVectorSimulator(circuit, np.complex64, dev_id)
     
-    simulator = ProxySimulator(proxy, based_simulator)
+    simulator = ProxySimulator(
+        proxy,
+        circuit,
+        precision=np.complex64,
+        device=dev_id
+    )
+
     res = simulator.run()
 
     print(f"finish! {res}")
@@ -44,7 +47,7 @@ if __name__ == "__main__":
     multiprocessing.set_start_method("spawn")
 
     uid = nccl.get_unique_id()
-    qubits, QFT_n = 20, 1
+    qubits, QFT_n = 19, 1
     # array = multiprocessing.Array("i",[1,2,3,4,5])
 
     p1 = multiprocessing.Process(target=worker, args = (uid, 2, 0, qubits, QFT_n,))

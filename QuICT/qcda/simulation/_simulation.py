@@ -3,11 +3,12 @@
 # @TIME    : 2021/4/27 2:02 下午
 # @Author  : Han Yu
 # @File    : _simulation
-
+import numpy as np
 from functools import lru_cache
 
 from QuICT.core import *
 from QuICT.ops.linalg import dot, MatrixPermutation
+from QuICT.qcda.simulation.utils.gate_based import GateMatrixs
 
 
 # tool function
@@ -67,6 +68,41 @@ class dp:
 
 
 class BasicSimulator(object):
+    def __init__(self, circuit: Circuit, precision, device: int = 0, qubits: int = None):
+        self._qubits = int(circuit.circuit_width()) if not qubits else qubits
+        self._precision = precision
+        self._gates = circuit.gates
+        self._device = device
+
+        # Pretreatment gate matrixs optimizer
+        self.gateM_optimizer = GateMatrixs(self._precision, self._device)
+        for gate in self._gates:
+            self.gateM_optimizer.build(gate)
+
+        self.gateM_optimizer.concentrate_gate_matrixs()
+
+    @property
+    def qubits(self):
+        return self._qubits
+
+    @qubits.setter
+    def qubits(self, qubit: int):
+        self._qubits = qubit
+
+    @property
+    def vector(self):
+        return self._vector
+
+    @property
+    def device(self):
+        return self._device
+
+    def run(self):
+        print("must be override")
+        pass
+
+    def get_Matrix(self, gate):
+        return self.gateM_optimizer.target_matrix(gate)
 
     @staticmethod
     def pretreatment(circuit):
