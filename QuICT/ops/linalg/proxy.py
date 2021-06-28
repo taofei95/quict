@@ -17,7 +17,7 @@ type_mapping = {
     "float32": nccl.NCCL_FLOAT32,
     "float64": nccl.NCCL_FLOAT64,
     "complex64": nccl.NCCL_FLOAT64,
-    "complex64": nccl.NCCL_FLOAT64
+    "complex128": nccl.NCCL_FLOAT64
 }
 
 class Proxy:
@@ -29,7 +29,7 @@ class Proxy:
         rank(int): The rank of GPU, between 0 and ndevs-1; represent the gpu device use in current process.
      """
     def __init__(self, ndevs: int, uid: tuple, rank: int):
-        assert((rank < ndevs) and (ndevs == cuda.runtime.getDeviceCount()))
+        assert((rank < ndevs) and (ndevs <= cuda.runtime.getDeviceCount()))
         if rank != cuda.runtime.getDevice():
             target_device = cuda.Device(rank)
             target_device.use()
@@ -37,6 +37,7 @@ class Proxy:
         self._ndevs = ndevs
         self._uid = uid
         self._rank = rank
+        self.peers = np.setdiff1d(np.arange(self._ndevs), self._rank)
         self.comm = nccl.NcclCommunicator(self._ndevs, self._uid, self._rank)
 
     def __exit__(self):
@@ -69,7 +70,7 @@ class Proxy:
         stream: cuda.stream.Stream = cuda.Stream.null.ptr
     ):
         """ Send data to destination.
-        
+
         Args:
             sendbuf(cupy.ndarray): the sending data.
             destination(int): the rank of destination communicator.
@@ -80,7 +81,7 @@ class Proxy:
         count = sendbuf.size
         nccl_datatype = type_mapping[str(sendbuf.dtype)]
 
-        if sendbuf.dtype == cp.complex64:
+        if sendbuf.dtype == cp.complex128:
             count *= 2
 
         self.comm.send(pointer, count, nccl_datatype, destination, stream)
@@ -101,7 +102,7 @@ class Proxy:
         count = recvbuf.size
         nccl_datatype = type_mapping[str(recvbuf.dtype)]
 
-        if recvbuf.dtype == cp.complex64:
+        if recvbuf.dtype == cp.complex128:
             count *= 2
 
         self.comm.recv(recvbuf.data.ptr, count, nccl_datatype, source, stream)
@@ -110,7 +111,7 @@ class Proxy:
 
     def broadcast(
         self,
-        sendbuf,
+        sendbuf: cp.ndarray,
         root: int = 0,
         stream: cuda.stream.Stream = cuda.Stream.null.ptr
     ):
@@ -125,7 +126,131 @@ class Proxy:
         count = sendbuf.size
         nccl_datatype = type_mapping[str(sendbuf.dtype)]
 
-        if sendbuf.dtype == cp.complex64:
+        if sendbuf.dtype == cp.complex128:
             count *= 2
 
-        self.comm.bcast(sendbuf.data.ptr, count, nccl_datatype, root, stream)
+        self.comm.bcast(pointer, count, nccl_datatype, root, stream)
+
+    def reduce(
+        self,
+        root: int,
+        op: int,
+        sendbuf: cp.ndarray = None,
+        recvbuf: cp.ndarray = None,
+        stream: cuda.stream.Stream = cuda.Stream.null.ptr
+    ):
+        """
+            NCCL_SUM = 0
+            NCCL_PROD = 1
+            NCCL_MAX = 2
+            NCCL_MIN = 3
+        """
+        if self._rank == root:
+            assert(recvbuf is not None)
+            pointer = recvbuf.data.ptr
+            count = recvbuf.size // self._ndevs
+            nccl_datatype = type_mapping[str(recvbuf.dtype)]
+
+            if recvbuf.dtype == cp.complex128:
+                count *= 2
+
+            self.comm.reduce(None, pointer, count, nccl_datatype, op, root, stream)
+        else:
+            assert(sendbuf is not None)
+            pointer = sendbuf.data.ptr
+            count = sendbuf.size
+            nccl_datatype = type_mapping[str(sendbuf.dtype)]
+
+            if sendbuf.dtype == cp.complex128:
+                count *= 2
+
+            self.comm.reduce(pointer, None, count, nccl_datatype, op, root, stream)
+
+    def reducescatter(
+        self,
+        sendbuf: cp.ndarray,
+        recvbuf: cp.ndarray,
+        op: int,
+        stream: cuda.stream.Stream = cuda.Stream.null.ptr
+    ):
+        send_pointer = sendbuf.data.ptr
+        recv_pointer = recvbuf.data.ptr
+        count = recvbuf.size
+        nccl_datatype = type_mapping[str(sendbuf.dtype)]
+
+        if sendbuf.dtype == cp.complex128:
+            count *= 2
+
+        self.comm.reducescatter(send_pointer, recv_pointer, count, nccl_datatype, op, stream)
+
+    def allreduce(
+        self,
+        sendbuf: cp.ndarray,
+        recvbuf: cp.ndarray,
+        op: int,
+        stream: cuda.stream.Stream = cuda.Stream.null.ptr
+    ):
+        send_pointer = sendbuf.data.ptr
+        recv_pointer = recvbuf.data.ptr
+        count = sendbuf.size
+        nccl_datatype = type_mapping[str(sendbuf.dtype)]
+
+        if sendbuf.dtype == cp.complex128:
+            count *= 2
+
+        self.comm.allReduce(send_pointer, recv_pointer, count, nccl_datatype, op, stream)
+
+    def scatter(
+        self,
+        sendbuf: cp.ndarray,
+        targets: list,
+        stream: cuda.stream.Stream = cuda.Stream.null.ptr
+    ):
+        # Divided data depending on the given rules
+        data_row, data_col = sendbuf.shape
+        dest_len = len(targets)
+        data_interval = sendbuf.size // dest_len
+
+        # Send data to each target
+        for dest_idx in range(dest_len):
+            if dest_idx == dest_len - 1:
+                temp_data = sendbuf[data_interval*dest_idx:]
+            else:
+                temp_data = sendbuf[data_interval*dest_idx:data_interval*dest_idx+data_interval]
+
+            self.send(temp_data, targets[dest_idx], stream)
+
+    def gather(
+        self,
+        root: int,
+        sendbuf: cp.ndarray = None,
+        recvbuf: cp.ndarray = None,
+        stream: cuda.stream.Stream = cuda.Stream.null.ptr
+    ):
+        if self._rank == root:
+            assert(recvbuf != None)
+
+            recv_count_per_dev = recvbuf.size // (self._ndevs - 1)
+            for idx, dest in enumerate(self.peers):
+                if i != root:
+                    self.recv(recvbuf[i*recv_count_per_dev:(i+1)*recv_count_per_dev], dest, stream)
+        else:
+            assert(sendbuf != None)
+
+            self.send(sendbuf, root, stream)
+
+    def allgather(
+        self,
+        sendbuf: cp.ndarray,
+        recvbuf: cp.ndarray,
+        stream: cuda.stream.Stream = cuda.Stream.null.ptr
+    ):
+        send_pointer = sendbuf.data.ptr
+        recv_pointer = recvbuf.data.ptr
+        count = sendbuf.size
+        nccl_datatype = type_mapping[str(sendbuf.dtype)]
+
+        if sendbuf.dtype == cp.complex128:
+            count *= 2
+        
+        self.comm.allGather(send_pointer, recv_pointer, count, nccl_datatype, stream)

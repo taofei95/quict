@@ -14,10 +14,10 @@ STATIC_GATE_NAMES = [
 
 
 class GateMatrixs:
-    def __init__(self, precision, GPUBased: bool=True):
+    def __init__(self, precision, device: int = 0):
         self.gate_matrixs = {}
         self.precision = precision
-        self.GPUBased = GPUBased
+        self.device = device
         self.matrix_idx = []
         self.matrix_len = 0
 
@@ -47,7 +47,7 @@ class GateMatrixs:
             self.final_matrix[start:start+matrix.size] = matrix.ravel()[:]
             start += matrix.size
 
-        if self.GPUBased:
+        with cp.cuda.Device(self.device):
             self.final_matrix = cp.array(self.final_matrix)
 
     def target_matrix(self, gate):
