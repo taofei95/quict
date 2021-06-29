@@ -6,9 +6,11 @@
 #define SIMULATION_BACKENDS_SIMULATOR_H
 
 #include <cstdint>
-#include "state_vector.h"
-#include "gate.h"
+#include <algorithm>
+#include <vector>
+#include <complex>
 #include "utility.h"
+#include "gate.h"
 
 namespace QuICT {
 
@@ -23,6 +25,95 @@ namespace QuICT {
     template<typename precision_t, SimulatorMode sim_mode = SimulatorMode::single>
     class Simulator {
     public:
+        //* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+        // Data Access Helper
+        //* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+
+        void append_gate(
+                std::string qasm_name,
+                uint64_t targ,
+                uint64_t carg,
+                precision_t parg,
+                std::vector<uint64_t> affect_args,
+                mat_entry_t <precision_t> data_ptr
+        ) {
+            gate_vec_.emplace_back(GateBridgeEntry<precision_t>(
+                    qasm_name, targ, carg, parg, affect_args, data_ptr
+            ));
+        }
+
+        void clear_gate() {
+            gate_vec_.clear();
+        }
+
+        //* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+        // Run Simulation
+        //* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+
+        void run(uint64_t qubit_num, std::complex<precision_t> *init_state) {
+            qubit_num_ = qubit_num;
+            state_vector_ = init_state;
+            for (const auto &gate_desc: gate_vec_) {
+                if (gate_desc.qasm_name_ == "h") {
+                    auto gate = apply_gate<Gate::HGate<precision_t>>(gate_desc);
+                } else if (gate_desc.qasm_name_ == "crz") {
+                    auto gate = apply_gate<Gate::CrzGate<precision_t>>(gate_desc);
+                } else {
+                    throw std::runtime_error("Not implemented gate: " + gate_desc.qasm_name_);
+                }
+            }
+
+            qubit_num_ = 0;
+            state_vector_ = nullptr;
+        }
+
+    private:
+        //* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+        // Private Simulation Methods
+        //* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+
+        template<typename gate_t>
+        void apply_gate(const GateBridgeEntry <precision_t> &gate_desc) {
+            using namespace Gate;
+            using namespace std;
+            if constexpr(is_same<HGate<precision_t>, gate_t>::value) {
+                // H gate
+                auto gate = HGate<precision_t>(gate_desc.targ_);
+                apply_gate(gate);
+            } else if constexpr(is_same<CrzGate<precision_t>, gate_t>::value) {
+                // Crz gate
+                auto gate = CrzGate<precision_t>(gate_desc.carg_, gate_desc.targ_, gate_desc.parg_);
+                apply_gate(gate);
+            } else if constexpr(gate_has_mat_repr<gate_t>::value) {
+                const auto gate_qubit_num = gate_desc.affect_args_.size();
+                switch (gate_qubit_num) {
+                    case 1: {
+                        auto gate = UnitaryGateN<1, precision_t>(gate_desc.affect_args_.begin(),
+                                                                 gate_desc.data_ptr_);
+                        apply_gate(gate);
+                        break;
+                    }
+                    case 2: {
+                        auto gate = UnitaryGateN<2, precision_t>(gate_desc.affect_args_.begin(),
+                                                                 gate_desc.data_ptr_);
+                        apply_gate(gate);
+                        break;
+                    }
+                    case 3: {
+                        auto gate = UnitaryGateN<3, precision_t>(gate_desc.affect_args_.begin(),
+                                                                 gate_desc.data_ptr_);
+                        apply_gate(gate);
+                        break;
+                    }
+                    default: {
+                        throw std::runtime_error("Not implemented for gate larger than 3");
+                    }
+                }
+            } else {
+                throw runtime_error("Cannot apply gate for " + gate_desc.qasm_name_);
+            }
+        }
+
         template<class gate_t>
         inline void apply_gate(const gate_t &gate) {
             if constexpr(sim_mode == SimulatorMode::single) {
@@ -39,11 +130,10 @@ namespace QuICT {
             }
         }
 
-    private:
-        // One task one run.
+        // One task per run.
         inline void apply_gate_single_task(
                 const uint64_t task_id,
-                const Gate::HGate<precision_t> &gate
+                const Gate::HGate <precision_t> &gate
         ) {
             auto ind = index(task_id, qubit_num_, gate.targ_);
             auto tmp_arr_1 = marray_t<precision_t, 2>();
@@ -55,14 +145,59 @@ namespace QuICT {
 
         inline void apply_gate_single_task(
                 const uint64_t task_id,
-                const Gate::CrzGate<precision_t> &gate
+                const Gate::CrzGate <precision_t> &gate
         ) {
+            uarray_t<2> qubits = {gate.carg_, gate.targ_};
+            uarray_t<2> qubits_sorted = {gate.carg_, gate.targ_};
+            std::sort(qubits_sorted.begin(), qubits_sorted.end());
+            auto ind = index(task_id, qubit_num_, qubits, qubits_sorted);
+            state_vector_[ind[2]] = gate.diagonal_[0] * state_vector_[ind[2]];
+            state_vector_[ind[3]] = gate.diagonal_[1] * state_vector_[ind[3]];
+        }
 
+        // Default fallback
+        template<uint64_t N>
+        inline void apply_gate_single_task(
+                const uint64_t task_id,
+                const Gate::UnitaryGateN <N, precision_t> &gate
+        ) {
+            const auto &qubits = gate.affect_args_;
+            uarray_t<N> qubits_sorted;
+            std::copy(gate.affect_args_.begin(), gate.affect_args_.end(), qubits_sorted);
+            auto ind = index(task_id, qubit_num_, qubits, qubits_sorted);
+            constexpr uint64_t vec_slice_sz = 1ULL << N;
+            marray_t<precision_t, vec_slice_sz> tmp_arr;
+#pragma unroll
+            for (size_t i = 0; i < vec_slice_sz; ++i) {
+                tmp_arr[i] = state_vector_[ind[i]];
+                state_vector_[ind[i]] = static_cast<mat_entry_t<precision_t>>(0);
+            }
+#pragma unroll
+            for (size_t i = 0; i < vec_slice_sz; ++i) {
+#pragma unroll
+                for (size_t j = 0; j < vec_slice_sz; ++j) {
+                    state_vector_[ind[i]] += tmp_arr[j] * gate.mat_[j];
+                }
+            }
+        }
+
+
+        inline void apply_gate_single_task(
+                const uint64_t task_id,
+                const Gate::UnitaryGateN<1, precision_t> &gate
+        ) {
+            auto ind = index(task_id, qubit_num_, gate.targ_);
+            auto tmp_arr_1 = marray_t<precision_t, 2>();
+            tmp_arr_1[0] = state_vector_[ind[0]];
+            tmp_arr_1[1] = state_vector_[ind[1]];
+            state_vector_[ind[0]] = gate.mat_[0 * 2 + 0] * tmp_arr_1[0] + gate.mat_[0 * 2 + 1] * tmp_arr_1[1];
+            state_vector_[ind[1]] = gate.mat_[1 * 2 + 0] * tmp_arr_1[0] + gate.mat_[1 * 2 + 1] * tmp_arr_1[1];
         }
 
     protected:
-        StateVector<precision_t> state_vector_;
-        uint64_t qubit_num_;
+        std::complex<precision_t> *state_vector_ = nullptr;
+        uint64_t qubit_num_ = 0;
+        std::vector<GateBridgeEntry < precision_t>> gate_vec_;
     };
 }
 

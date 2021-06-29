@@ -7,16 +7,19 @@ enable_testing()
 
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
-add_subdirectory(../../../../QuICT/utility/googletest ./cmake-build-gtest )
+add_subdirectory(../../../../QuICT/utility/extern/googletest ./cmake-build-gtest )
 
-include_directories(../../../../QuICT/utility/googletest/googletest/include)
-include_directories(../../../../QuICT/utility/googletest/googlemock/include)
+include_directories(../../../../QuICT/utility/extern/googletest/googletest/include)
+include_directories(../../../../QuICT/utility/extern/googletest/googlemock/include)
 
-add_library(simulation_backends SHARED state_vector.cpp state_vector.h gate.h simulator.h utility.h)
+add_library(simulation_backends SHARED gate.h simulator.h utility.h)
 
-add_executable(simulation_backends_test ../../../../QuICT/utility/googletest/googletest/src/gtest_main.cc
-        simulation_backends_test.cpp gate.h simulator.h state_vector.h state_vector.cpp utility.h)
+add_executable(simulation_backends_test ../../../../QuICT/utility/extern/googletest/googletest/src/gtest_main.cc
+        simulation_backends_test.cpp gate.h simulator.h utility.h)
 target_link_libraries(simulation_backends_test gtest_main)
+
+set_target_properties(simulation_backends PROPERTIES LINKER_LANGUAGE CXX)
+set_target_properties(simulation_backends_test PROPERTIES LINKER_LANGUAGE CXX)
 
 #include(GoogleTest)
 #gtest_discover_tests(simulation_backends_test)

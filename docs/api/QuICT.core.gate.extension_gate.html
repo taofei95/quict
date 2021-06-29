@@ -176,10 +176,10 @@
 <dd><p>Bases: <a class="reference internal" href="#QuICT.core.gate.extension_gate.gateModel" title="QuICT.core.gate.extension_gate.gateModel"><code class="xref py py-class docutils literal notranslate"><span class="pre">QuICT.core.gate.extension_gate.gateModel</span></code></a></p>
 <p>controlled-Rz gate with two control bits</p>
 <dl class="py method">
-<dt id="QuICT.core.gate.extension_gate.CCRzModel.build_gate">
-<code class="sig-name descname">build_gate</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">other</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.gate.extension_gate.CCRzModel.build_gate" title="Permalink to this definition">¶</a></dt>
+<dt id="QuICT.core.gate.extension_gate.CCRzModel.apply_gate">
+<code class="sig-name descname">apply_gate</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">other</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.gate.extension_gate.CCRzModel.apply_gate" title="Permalink to this definition">¶</a></dt>
 <dd><dl>
-<dt>the overloaded the build_gate can return two kind of values:</dt><dd><p>1)list&lt;BasicGate&gt;: in this way, developer use gateBuilder to generator a series of gates
+<dt>the overloaded the apply_gate can return two kind of values:</dt><dd><p>1)list&lt;BasicGate&gt;: in this way, developer use gateBuilder to generator a series of gates
 2)Circuit: in this way, developer can generator a circuit whose bits number is same as the</p>
 <blockquote>
 <div><dl class="simple">
@@ -205,10 +205,10 @@ return X</p>
 <em class="property">class </em><code class="sig-prename descclassname">QuICT.core.gate.extension_gate.</code><code class="sig-name descname">CCX_DecomposeModel</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">alias</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.gate.extension_gate.CCX_DecomposeModel" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#QuICT.core.gate.extension_gate.gateModel" title="QuICT.core.gate.extension_gate.gateModel"><code class="xref py py-class docutils literal notranslate"><span class="pre">QuICT.core.gate.extension_gate.gateModel</span></code></a></p>
 <dl class="py method">
-<dt id="QuICT.core.gate.extension_gate.CCX_DecomposeModel.build_gate">
-<code class="sig-name descname">build_gate</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">other</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.gate.extension_gate.CCX_DecomposeModel.build_gate" title="Permalink to this definition">¶</a></dt>
+<dt id="QuICT.core.gate.extension_gate.CCX_DecomposeModel.apply_gate">
+<code class="sig-name descname">apply_gate</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">other</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.gate.extension_gate.CCX_DecomposeModel.apply_gate" title="Permalink to this definition">¶</a></dt>
 <dd><dl>
-<dt>the overloaded the build_gate can return two kind of values:</dt><dd><p>1)list&lt;BasicGate&gt;: in this way, developer use gateBuilder to generator a series of gates
+<dt>the overloaded the apply_gate can return two kind of values:</dt><dd><p>1)list&lt;BasicGate&gt;: in this way, developer use gateBuilder to generator a series of gates
 2)Circuit: in this way, developer can generator a circuit whose bits number is same as the</p>
 <blockquote>
 <div><dl class="simple">
@@ -235,10 +235,10 @@ return X</p>
 <dd><p>Bases: <a class="reference internal" href="#QuICT.core.gate.extension_gate.gateModel" title="QuICT.core.gate.extension_gate.gateModel"><code class="xref py py-class docutils literal notranslate"><span class="pre">QuICT.core.gate.extension_gate.gateModel</span></code></a></p>
 <p>Controlled-Rz gate</p>
 <dl class="py method">
-<dt id="QuICT.core.gate.extension_gate.CRz_DecomposeModel.build_gate">
-<code class="sig-name descname">build_gate</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">other</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.gate.extension_gate.CRz_DecomposeModel.build_gate" title="Permalink to this definition">¶</a></dt>
+<dt id="QuICT.core.gate.extension_gate.CRz_DecomposeModel.apply_gate">
+<code class="sig-name descname">apply_gate</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">other</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.gate.extension_gate.CRz_DecomposeModel.apply_gate" title="Permalink to this definition">¶</a></dt>
 <dd><dl>
-<dt>the overloaded the build_gate can return two kind of values:</dt><dd><p>1)list&lt;BasicGate&gt;: in this way, developer use gateBuilder to generator a series of gates
+<dt>the overloaded the apply_gate can return two kind of values:</dt><dd><p>1)list&lt;BasicGate&gt;: in this way, developer use gateBuilder to generator a series of gates
 2)Circuit: in this way, developer can generator a circuit whose bits number is same as the</p>
 <blockquote>
 <div><dl class="simple">
@@ -265,10 +265,10 @@ return X</p>
 <dd><p>Bases: <a class="reference internal" href="#QuICT.core.gate.extension_gate.gateModel" title="QuICT.core.gate.extension_gate.gateModel"><code class="xref py py-class docutils literal notranslate"><span class="pre">QuICT.core.gate.extension_gate.gateModel</span></code></a></p>
 <p>Controlled-U1 gate</p>
 <dl class="py method">
-<dt id="QuICT.core.gate.extension_gate.CU1Gate.build_gate">
-<code class="sig-name descname">build_gate</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">other</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.gate.extension_gate.CU1Gate.build_gate" title="Permalink to this definition">¶</a></dt>
+<dt id="QuICT.core.gate.extension_gate.CU1Gate.apply_gate">
+<code class="sig-name descname">apply_gate</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">other</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.gate.extension_gate.CU1Gate.apply_gate" title="Permalink to this definition">¶</a></dt>
 <dd><dl>
-<dt>the overloaded the build_gate can return two kind of values:</dt><dd><p>1)list&lt;BasicGate&gt;: in this way, developer use gateBuilder to generator a series of gates
+<dt>the overloaded the apply_gate can return two kind of values:</dt><dd><p>1)list&lt;BasicGate&gt;: in this way, developer use gateBuilder to generator a series of gates
 2)Circuit: in this way, developer can generator a circuit whose bits number is same as the</p>
 <blockquote>
 <div><dl class="simple">
@@ -295,10 +295,10 @@ return X</p>
 <dd><p>Bases: <a class="reference internal" href="#QuICT.core.gate.extension_gate.gateModel" title="QuICT.core.gate.extension_gate.gateModel"><code class="xref py py-class docutils literal notranslate"><span class="pre">QuICT.core.gate.extension_gate.gateModel</span></code></a></p>
 <p>controlled-U3 gate</p>
 <dl class="py method">
-<dt id="QuICT.core.gate.extension_gate.CU3Gate.build_gate">
-<code class="sig-name descname">build_gate</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">other</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.gate.extension_gate.CU3Gate.build_gate" title="Permalink to this definition">¶</a></dt>
+<dt id="QuICT.core.gate.extension_gate.CU3Gate.apply_gate">
+<code class="sig-name descname">apply_gate</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">other</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.gate.extension_gate.CU3Gate.apply_gate" title="Permalink to this definition">¶</a></dt>
 <dd><dl>
-<dt>the overloaded the build_gate can return two kind of values:</dt><dd><p>1)list&lt;BasicGate&gt;: in this way, developer use gateBuilder to generator a series of gates
+<dt>the overloaded the apply_gate can return two kind of values:</dt><dd><p>1)list&lt;BasicGate&gt;: in this way, developer use gateBuilder to generator a series of gates
 2)Circuit: in this way, developer can generator a circuit whose bits number is same as the</p>
 <blockquote>
 <div><dl class="simple">
@@ -342,10 +342,10 @@ return X</p>
 <em class="property">class </em><code class="sig-prename descclassname">QuICT.core.gate.extension_gate.</code><code class="sig-name descname">FredkinModel</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">alias</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.gate.extension_gate.FredkinModel" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#QuICT.core.gate.extension_gate.gateModel" title="QuICT.core.gate.extension_gate.gateModel"><code class="xref py py-class docutils literal notranslate"><span class="pre">QuICT.core.gate.extension_gate.gateModel</span></code></a></p>
 <dl class="py method">
-<dt id="QuICT.core.gate.extension_gate.FredkinModel.build_gate">
-<code class="sig-name descname">build_gate</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">other</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.gate.extension_gate.FredkinModel.build_gate" title="Permalink to this definition">¶</a></dt>
+<dt id="QuICT.core.gate.extension_gate.FredkinModel.apply_gate">
+<code class="sig-name descname">apply_gate</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">other</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.gate.extension_gate.FredkinModel.apply_gate" title="Permalink to this definition">¶</a></dt>
 <dd><dl>
-<dt>the overloaded the build_gate can return two kind of values:</dt><dd><p>1)list&lt;BasicGate&gt;: in this way, developer use gateBuilder to generator a series of gates
+<dt>the overloaded the apply_gate can return two kind of values:</dt><dd><p>1)list&lt;BasicGate&gt;: in this way, developer use gateBuilder to generator a series of gates
 2)Circuit: in this way, developer can generator a circuit whose bits number is same as the</p>
 <blockquote>
 <div><dl class="simple">
@@ -372,10 +372,10 @@ return X</p>
 <dd><p>Bases: <a class="reference internal" href="#QuICT.core.gate.extension_gate.gateModel" title="QuICT.core.gate.extension_gate.gateModel"><code class="xref py py-class docutils literal notranslate"><span class="pre">QuICT.core.gate.extension_gate.gateModel</span></code></a></p>
 <p>IQFT gate</p>
 <dl class="py method">
-<dt id="QuICT.core.gate.extension_gate.IQFTModel.build_gate">
-<code class="sig-name descname">build_gate</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">other</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.gate.extension_gate.IQFTModel.build_gate" title="Permalink to this definition">¶</a></dt>
+<dt id="QuICT.core.gate.extension_gate.IQFTModel.apply_gate">
+<code class="sig-name descname">apply_gate</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">other</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.gate.extension_gate.IQFTModel.apply_gate" title="Permalink to this definition">¶</a></dt>
 <dd><dl>
-<dt>the overloaded the build_gate can return two kind of values:</dt><dd><p>1)list&lt;BasicGate&gt;: in this way, developer use gateBuilder to generator a series of gates
+<dt>the overloaded the apply_gate can return two kind of values:</dt><dd><p>1)list&lt;BasicGate&gt;: in this way, developer use gateBuilder to generator a series of gates
 2)Circuit: in this way, developer can generator a circuit whose bits number is same as the</p>
 <blockquote>
 <div><dl class="simple">
@@ -402,10 +402,10 @@ return X</p>
 <dd><p>Bases: <a class="reference internal" href="#QuICT.core.gate.extension_gate.gateModel" title="QuICT.core.gate.extension_gate.gateModel"><code class="xref py py-class docutils literal notranslate"><span class="pre">QuICT.core.gate.extension_gate.gateModel</span></code></a></p>
 <p>QFT oracle</p>
 <dl class="py method">
-<dt id="QuICT.core.gate.extension_gate.QFTModel.build_gate">
-<code class="sig-name descname">build_gate</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">other</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.gate.extension_gate.QFTModel.build_gate" title="Permalink to this definition">¶</a></dt>
+<dt id="QuICT.core.gate.extension_gate.QFTModel.apply_gate">
+<code class="sig-name descname">apply_gate</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">other</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.gate.extension_gate.QFTModel.apply_gate" title="Permalink to this definition">¶</a></dt>
 <dd><dl>
-<dt>the overloaded the build_gate can return two kind of values:</dt><dd><p>1)list&lt;BasicGate&gt;: in this way, developer use gateBuilder to generator a series of gates
+<dt>the overloaded the apply_gate can return two kind of values:</dt><dd><p>1)list&lt;BasicGate&gt;: in this way, developer use gateBuilder to generator a series of gates
 2)Circuit: in this way, developer can generator a circuit whose bits number is same as the</p>
 <blockquote>
 <div><dl class="simple">
@@ -432,10 +432,10 @@ return X</p>
 <dd><p>Bases: <a class="reference internal" href="#QuICT.core.gate.extension_gate.gateModel" title="QuICT.core.gate.extension_gate.gateModel"><code class="xref py py-class docutils literal notranslate"><span class="pre">QuICT.core.gate.extension_gate.gateModel</span></code></a></p>
 <p>RZZ gate</p>
 <dl class="py method">
-<dt id="QuICT.core.gate.extension_gate.RZZModel.build_gate">
-<code class="sig-name descname">build_gate</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">other</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.gate.extension_gate.RZZModel.build_gate" title="Permalink to this definition">¶</a></dt>
+<dt id="QuICT.core.gate.extension_gate.RZZModel.apply_gate">
+<code class="sig-name descname">apply_gate</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">other</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.gate.extension_gate.RZZModel.apply_gate" title="Permalink to this definition">¶</a></dt>
 <dd><dl>
-<dt>the overloaded the build_gate can return two kind of values:</dt><dd><p>1)list&lt;BasicGate&gt;: in this way, developer use gateBuilder to generator a series of gates
+<dt>the overloaded the apply_gate can return two kind of values:</dt><dd><p>1)list&lt;BasicGate&gt;: in this way, developer use gateBuilder to generator a series of gates
 2)Circuit: in this way, developer can generator a circuit whose bits number is same as the</p>
 <blockquote>
 <div><dl class="simple">
@@ -473,7 +473,7 @@ series one-qubit and two-qubit gates in final.</p>
 <p>All complex quantum gates described in the framework have
 some common attributes and some common functions
 which defined in this class.</p>
-<p>Note that all subClass must overloaded the function “build_gate”, the overloaded
+<p>Note that all subClass must overloaded the function “apply_gate”, the overloaded
 of the function “__or__” and “__call__” is optional.</p>
 <dl>
 <dt>Attributes:</dt><dd><p>controls(int): the number of the control bits of the gate
@@ -489,10 +489,10 @@ prag(read only): the first object of pargs</p>
 </dd>
 </dl>
 <dl class="py method">
-<dt id="QuICT.core.gate.extension_gate.gateModel.build_gate">
-<code class="sig-name descname">build_gate</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">qureg</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.gate.extension_gate.gateModel.build_gate" title="Permalink to this definition">¶</a></dt>
+<dt id="QuICT.core.gate.extension_gate.gateModel.apply_gate">
+<code class="sig-name descname">apply_gate</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">qureg</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#QuICT.core.gate.extension_gate.gateModel.apply_gate" title="Permalink to this definition">¶</a></dt>
 <dd><dl>
-<dt>the overloaded the build_gate can return two kind of values:</dt><dd><p>1)list&lt;BasicGate&gt;: in this way, developer use gateBuilder to generator a series of gates
+<dt>the overloaded the apply_gate can return two kind of values:</dt><dd><p>1)list&lt;BasicGate&gt;: in this way, developer use gateBuilder to generator a series of gates
 2)Circuit: in this way, developer can generator a circuit whose bits number is same as the</p>
 <blockquote>
 <div><dl class="simple">
