@@ -7,7 +7,7 @@ import numpy as np
 from functools import lru_cache
 
 from QuICT.core import *
-from QuICT.ops.linalg import dot, MatrixPermutation
+from QuICT.ops.linalg.gpu_calculator import dot, MatrixPermutation
 from QuICT.qcda.simulation.utils.gate_based import GateMatrixs
 
 

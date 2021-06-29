@@ -10,7 +10,7 @@ import numpy as np
 
 from QuICT.core import *
 from QuICT.algorithm import Amplitude
-from .constant_statevecto_simulator import ConstantStateVectorSimulator
+from QuICT.qcda.simulation.statevector_simulator.constant_statevecto_simulator import ConstantStateVectorSimulator
 
 
 """
@@ -46,7 +46,7 @@ def test_constant_statevectorsimulator():
     duration_2 = end_time - start_time
 
     assert np.allclose(state.get(), state_expected)
-    print()
+
     print(f"Cur algo: {duration_1} s.")
     print(f"Old algo: {duration_2} s.")
 
