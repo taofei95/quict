@@ -1,1 +1,1 @@
-from .statevector_simulator import StateVectorSimulator
+from .constant_statevecto_simulator import ConstantStateVectorSimulator

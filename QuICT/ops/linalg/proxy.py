@@ -231,7 +231,7 @@ class Proxy:
             assert(recvbuf != None)
 
             recv_count_per_dev = recvbuf.size // (self._ndevs - 1)
-            for idx, dest in enumerate(self.peers):
+            for i, dest in enumerate(self.peers):
                 if i != root:
                     self.recv(recvbuf[i*recv_count_per_dev:(i+1)*recv_count_per_dev], dest, stream)
         else:

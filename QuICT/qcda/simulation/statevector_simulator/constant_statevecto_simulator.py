@@ -7,8 +7,8 @@
 import numpy as np
 import cupy as cp
 
-from QuICT.qcda.simulation.proxy_simulator.gate_func_single import GateFuncS
-from QuICT.qcda.simulation.proxy_simulator.gate_func_double import GateFuncD
+from QuICT.ops.gate_kernel.gate_func_single import GateFuncS
+from QuICT.ops.gate_kernel.gate_func_double import GateFuncD
 from QuICT.qcda.simulation import BasicSimulator
 from QuICT.core import *
 

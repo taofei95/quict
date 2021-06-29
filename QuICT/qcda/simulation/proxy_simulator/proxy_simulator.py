@@ -1,13 +1,12 @@
 import numpy as np
 import cupy as cp
 import math
-import time
 
 from QuICT.core import *
 from QuICT.qcda.simulation import BasicSimulator
 from QuICT.ops.linalg.proxy import Proxy
-from QuICT.qcda.simulation.proxy_simulator.gate_func_single import GateFuncS, GateFuncMS
-from QuICT.qcda.simulation.proxy_simulator.gate_func_double import GateFuncD, GateFuncMD
+from QuICT.ops.gate_kernel.gate_func_single import GateFuncS, GateFuncMS
+from QuICT.ops.gate_kernel.gate_func_double import GateFuncD, GateFuncMD
 
 
 class ProxySimulator(BasicSimulator):
