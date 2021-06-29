@@ -86,8 +86,14 @@ CRZGate_kernel_special_t = cp.RawKernel(r'''
 
 
 class GateFuncS:
+    """
+    The class is the aggregation of gate dot functions with single precision.
+    """
     @classmethod
     def HGate_matrixdot(self, t_index, mat, vec, vec_bit, sync: bool = True):
+        """
+        HGate dot function with single precision.
+        """
         task_number = 1 << (vec_bit - 1)
         thread_per_block = min(256, task_number)
         block_num = task_number // thread_per_block
@@ -102,6 +108,9 @@ class GateFuncS:
 
     @classmethod
     def CRzGate_matrixdot(self, c_index, t_index, mat, vec, vec_bit, sync: bool = True):
+        """
+        CRzGate dot function with single precision.
+        """
         task_number = 1 << (vec_bit - 2)
         thread_per_block = min(256, task_number)
         block_num = task_number // thread_per_block
@@ -117,8 +126,17 @@ class GateFuncS:
 
 
 class GateFuncMS:
+    """
+    The class is the aggregation of gate dot single precision functions which using 
+    in the multi-GPUs.
+    """
     @classmethod
     def CRzGate_matrixdot_pd(self, _0_1, mat, vec, vec_bit, sync: bool = True):
+        """ 
+        Special CRzGate dot function for the multi-GPUs with single precision. 
+        Using when both c_index and t_index are higher than the maximum qubits 
+        in the current device.
+        """
         mat_value = mat[10] if _0_1 else mat[15]
 
         task_number = 1 << vec_bit
@@ -136,6 +154,11 @@ class GateFuncMS:
 
     @classmethod
     def CRzGate_matrixdot_pc(self, _0_1, c_index, mat, vec, vec_bit, sync: bool = True):
+        """ 
+        Special CRzGate dot function for the multi-GPUs with single precision. 
+        Using when the t_index is higher than the maximum qubits in the current
+        device, and the c_index doesn't.
+        """
         mat_value = mat[10] if _0_1 else mat[15]
 
         task_number = 1 << (vec_bit - 1)
@@ -153,6 +176,11 @@ class GateFuncMS:
 
     @classmethod
     def CRzGate_matrixdot_pt(self, t_index, mat, vec, vec_bit, sync: bool = True):
+        """ 
+        Special CRzGate dot function for the multi-GPUs with single precision.
+        Using when the c_index is higher than the maximum qubits in the current
+        device, and the t_index doesn't.
+        """
         task_number = 1 << (vec_bit - 1)
         thread_per_block = min(256, task_number)
         block_num = task_number // thread_per_block

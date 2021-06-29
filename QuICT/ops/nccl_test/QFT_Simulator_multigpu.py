@@ -31,6 +31,7 @@ def worker(uid, ndevs, dev_id, qubits, QFT_number):
 
     circuit = build_QFT_circuit(qubits, QFT_number)
     
+    s_time = time()
     simulator = ProxySimulator(
         proxy,
         circuit,
@@ -40,14 +41,16 @@ def worker(uid, ndevs, dev_id, qubits, QFT_number):
 
     res = simulator.run()
 
-    print(f"finish! {res}")
+    e_time = time()
+
+    print(f"finish with {qubits} qubits, spending time {e_time - s_time}")
 
 
 if __name__ == "__main__":
     multiprocessing.set_start_method("spawn")
 
     uid = nccl.get_unique_id()
-    qubits, QFT_n = 32, 1
+    qubits, QFT_n = 25, 2
     # array = multiprocessing.Array("i",[1,2,3,4,5])
 
     p1 = multiprocessing.Process(target=worker, args = (uid, 2, 0, qubits, QFT_n,))

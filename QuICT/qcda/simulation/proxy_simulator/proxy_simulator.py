@@ -7,6 +7,7 @@ from QuICT.core import *
 from QuICT.qcda.simulation import BasicSimulator
 from QuICT.ops.linalg.proxy import Proxy
 from QuICT.qcda.simulation.proxy_simulator.gate_func_single import GateFuncS, GateFuncMS
+from QuICT.qcda.simulation.proxy_simulator.gate_func_double import GateFuncD, GateFuncMD
 
 
 class ProxySimulator(BasicSimulator):
@@ -25,8 +26,12 @@ class ProxySimulator(BasicSimulator):
 
         self.initial_vector_state()
 
-        self._algorithm = GateFuncS
-        self._proxy_algorithm = GateFuncMS
+        if self._precision == np.complex64:
+            self._algorithm = GateFuncS
+            self._proxy_algorithm = GateFuncMS
+        else:
+            self._algorithm = GateFuncD
+            self._proxy_algorithm = GateFuncMD
 
     def initial_vector_state(self):
         vector_size = 1 << int(self._qubits)
@@ -123,17 +128,16 @@ class ProxySimulator(BasicSimulator):
         Switch data with rank(self.rank & t_index >> limitQ) dev; 
         switched by highest index for limit qubit.
         """
-        required_qubits = self.limit_qubits - 1
-        sending_per_qubits = min(required_qubits, 15)
-        sending_size = 1 << sending_per_qubits
-        recv_buf = cp.zeros(1 << required_qubits, dtype=self._precision)
+        required_qubits = 1 << (self.limit_qubits - 1)
+        sending_size = 1 << min(required_qubits, 15)
+        recv_buf = cp.zeros(required_qubits, dtype=self._precision)
         send_buf = self.vector
 
         destination = self.proxy.rank ^ (1 << (t_index - self.limit_qubits))
 
         front = self.proxy.rank > destination
 
-        for i in range(math.ceil((1 << required_qubits)/(1 << sending_per_qubits))):
+        for i in range(math.ceil(required_qubits/sending_size)):
             if front:
                 self.proxy.send(send_buf[i*sending_size:(i+1)*sending_size], destination)
             else:
