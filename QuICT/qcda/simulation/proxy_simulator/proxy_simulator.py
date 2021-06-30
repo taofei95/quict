@@ -4,12 +4,20 @@ import math
 
 from QuICT.core import *
 from QuICT.qcda.simulation import BasicSimulator
-from QuICT.ops.linalg.proxy import Proxy
-from QuICT.ops.gate_kernel.gate_func_single import GateFuncS, GateFuncMS
-from QuICT.ops.gate_kernel.gate_func_double import GateFuncD, GateFuncMD
+from QuICT.ops.utils import Proxy, LinAlgLoader
 
 
 class ProxySimulator(BasicSimulator):
+    """
+    The simulator which using multi-GPUs.
+
+    Args:
+        proxy (Proxy): The NCCL communicators.
+        circuit (Circuit): The quantum circuit.
+        precision [np.complex64, np.complex128]: The precision for the circuit and qubits.
+        device (int): The GPU device ID.
+        sync (bool): Sync mode or Async mode.
+    """
     def __init__(self, proxy: Proxy, circuit: Circuit, precision, device: int = 0, sync: bool = True):
         self.proxy = proxy
         self._sync = sync
@@ -22,17 +30,15 @@ class ProxySimulator(BasicSimulator):
 
         # Initial simulator with limit_qubits
         BasicSimulator.__init__(self, circuit, precision, device, qubits=self.limit_qubits)
-
         self.initial_vector_state()
 
-        if self._precision == np.complex64:
-            self._algorithm = GateFuncS
-            self._proxy_algorithm = GateFuncMS
-        else:
-            self._algorithm = GateFuncD
-            self._proxy_algorithm = GateFuncMD
+        # Initial the required algorithm.
+        self._algorithm = LinAlgLoader(device="GPU", extra_gate=True, extra_proxy=True)
 
     def initial_vector_state(self):
+        """
+        Initial qubits' vector states.
+        """
         vector_size = 1 << int(self._qubits)
         # Special Case for no gate circuit
         if len(self._gates) == 0:
@@ -48,6 +54,9 @@ class ProxySimulator(BasicSimulator):
                 self._vector.put(0, self._precision(1))
 
     def run(self) -> np.ndarray:
+        """
+        Start simulator.
+        """
         with cp.cuda.Device(self._device):
             for gate in self._gates:
                 self.exec(gate)
@@ -55,6 +64,9 @@ class ProxySimulator(BasicSimulator):
         return self.vector
 
     def exec(self, gate):
+        """
+        Trigger Gate event in the circuit.
+        """
         matrix = self.get_Matrix(gate)
 
         if gate.type() == GATE_ID["H"]:
@@ -79,7 +91,7 @@ class ProxySimulator(BasicSimulator):
                 if self.proxy.rank & 1 << (c_index - self.limit_qubits):
                     _0_1 = self.proxy.rank & 1 << (t_index - self.limit_qubits)
 
-                    self._proxy_algorithm.CRzGate_matrixdot_pd(
+                    self._algorithm.CRzGate_matrixdot_pd(
                         _0_1,
                         matrix,
                         self._vector,
@@ -90,7 +102,7 @@ class ProxySimulator(BasicSimulator):
             elif c_index >= self.limit_qubits or t_index >= self.limit_qubits:
                 if t_index > c_index:
                     _0_1 = self.proxy.rank & 1 << (t_index - self.limit_qubits)
-                    self._proxy_algorithm.CRzGate_matrixdot_pc(
+                    self._algorithm.CRzGate_matrixdot_pc(
                         _0_1,
                         c_index,
                         matrix,
@@ -101,7 +113,7 @@ class ProxySimulator(BasicSimulator):
                 else:
                     if self.proxy.rank & 1 << (c_index - self.limit_qubits - 1):
                         
-                        self._proxy_algorithm.CRzGate_matrixdot_pt(
+                        self._algorithm.CRzGate_matrixdot_pt(
                             t_index,
                             matrix,
                             self._vector,
@@ -124,18 +136,20 @@ class ProxySimulator(BasicSimulator):
 
     def _switch_data(self, t_index: int):
         """ 
-        Switch data with rank(self.rank & t_index >> limitQ) dev; 
-        switched by highest index for limit qubit.
+        Switch data with the paired GPU device.
         """
         required_qubits = 1 << (self.limit_qubits - 1)
         sending_size = 1 << min(required_qubits, 15)
         recv_buf = cp.zeros(required_qubits, dtype=self._precision)
         send_buf = self.vector
 
+        # Get the paired GPU device ID.
         destination = self.proxy.rank ^ (1 << (t_index - self.limit_qubits))
 
+        # Send first/second half piece of qubits' vector states
         front = self.proxy.rank > destination
 
+        # Date transfer
         for i in range(math.ceil(required_qubits/sending_size)):
             if front:
                 self.proxy.send(send_buf[i*sending_size:(i+1)*sending_size], destination)
@@ -153,10 +167,12 @@ class ProxySimulator(BasicSimulator):
                 else:
                     self.proxy.recv(recv_buf[-(i+1)*sending_size:-i*sending_size], destination)
 
-        #TODO: Add vector change in simulator
         self.reset_vector(recv_buf, front)
 
     def reset_vector(self, new_vector, front: bool = True):
+        """
+        Reset the qubits' vector states.
+        """
         new_vector_size = new_vector.size
 
         if front:

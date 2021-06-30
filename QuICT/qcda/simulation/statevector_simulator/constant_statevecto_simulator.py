@@ -7,8 +7,7 @@
 import numpy as np
 import cupy as cp
 
-from QuICT.ops.gate_kernel.gate_func_single import GateFuncS
-from QuICT.ops.gate_kernel.gate_func_double import GateFuncD
+from QuICT.ops.utils import LinAlgLoader
 from QuICT.qcda.simulation import BasicSimulator
 from QuICT.core import *
 
@@ -21,10 +20,13 @@ class ConstantStateVectorSimulator(BasicSimulator):
         # Initial vector state
         self.initial_vector_state()
 
-        # Initial gate_based algorithm
-        self._algorithm = GateFuncS if self._precision == np.complex64 else GateFuncD
+        # Initial simulator with limit_qubits
+        self._algorithm = LinAlgLoader(device="GPU", extra_gate=True, extra_proxy=False)
 
     def initial_vector_state(self):
+        """
+        Initial qubits' vector states.
+        """
         vector_size = 1 << int(self._qubits)
         # Special Case for no gate circuit
         if len(self._gates) == 0:
@@ -40,12 +42,6 @@ class ConstantStateVectorSimulator(BasicSimulator):
     def run(self) -> np.ndarray:
         """
         Get the state vector of circuit
-
-        Args:
-            circuit (Circuit): Input circuit to be simulated.
-
-        Returns:
-            np.ndarray: The state vector of input circuit.
         """
         with cp.cuda.Device(self._device):
             for gate in self._gates:

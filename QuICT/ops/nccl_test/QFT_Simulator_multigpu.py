@@ -9,12 +9,10 @@ import numpy as np
 import multiprocessing
 
 from QuICT.core import *
-from QuICT.ops.linalg.proxy import Proxy
+from QuICT.ops.utils import Proxy
 from QuICT.qcda.simulation.proxy_simulator.proxy_simulator import ProxySimulator
 
 from time import time
-
-from QuICT.ops.linalg.proxy import Proxy
 
 
 def build_QFT_circuit(qubit_number, QFT_number):
@@ -35,7 +33,7 @@ def worker(uid, ndevs, dev_id, qubits, QFT_number):
     simulator = ProxySimulator(
         proxy,
         circuit,
-        precision=np.complex64,
+        precision=np.complex128,
         device=dev_id
     )
 
@@ -43,7 +41,7 @@ def worker(uid, ndevs, dev_id, qubits, QFT_number):
 
     e_time = time()
 
-    print(f"finish with {qubits} qubits, spending time {e_time - s_time}")
+    print(f"finish with {qubits} qubits, spending time {e_time - s_time}, {res.dtype}")
 
 
 if __name__ == "__main__":
