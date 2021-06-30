@@ -368,20 +368,20 @@ def MatrixPermutation(A, mapping, changeInput: bool = False, gpu_out: bool = Tru
 matrix_dot_vector_single_kernel = cp.RawKernel(r'''
     #include <cupy/complex.cuh>
     extern "C" __global__
-    void matrix_dot_vector_single(const complex<single>* mat, int mat_bit, int mat_len, complex<single>* vec, int* affect_args, int* aff_argsorts, complex<single>* anc) {
+    void matrix_dot_vector_single(const complex<float>* mat, int mat_bit, int mat_len, complex<float>* vec, int* affect_args, int* aff_argsorts, complex<float>* anc) {
         int tid = blockDim.x * blockIdx.x + threadIdx.x;
-        int other = tid & ((1 << affect_args_sorted[0]) - 1)；
-        int gw = tid >> affect_args_sorted[0] << (affect_args_sorted[0] + 1);
+        int other = tid & ((1 << aff_argsorts[0]) - 1);
+        int gw = tid >> aff_argsorts[0] << (aff_argsorts[0] + 1);
         for(int i = 1; i < mat_bit; i++){
-            other += gw & ((1 << affect_args_sorted[i]) - (1 << affect_args_sorted[i - 1]));
-            gw = gw >> affect_args_sorted[i] << (affect_args_sorted[i] + 1);
+            other += gw & ((1 << aff_argsorts[i]) - (1 << aff_argsorts[i - 1]));
+            gw = gw >> aff_argsorts[i] << (aff_argsorts[i] + 1);
         }
         other += gw;
 
         for(int i = 0; i < mat_len; i++){
             int now = other;
             for(int k = 0; k < mat_bit; k++){
-                if i & (1 << k){
+                if (i & (1 << k)){
                     now += 1 << affect_args[mat_bit - 1 - k];
                 }
             }
@@ -389,14 +389,14 @@ matrix_dot_vector_single_kernel = cp.RawKernel(r'''
             for(int k = 0; k < mat_len; k++){
                 int shift = other;
                 for(int l = 0; l < mat_bit; l++){
-                    if k & (1 << l){
+                    if (k & (1 << l)){
                         shift += 1 << affect_args[mat_bit - 1 - l];
                     }
                 }
-                anc[now] += mat[i, k] * vec[shift];
+                anc[now] += mat[i*mat_len + k] * vec[shift];
             }
         }
-        
+
     }
     ''', 'matrix_dot_vector_single')
 
@@ -406,18 +406,18 @@ matrix_dot_vector_double_kernel = cp.RawKernel(r'''
     extern "C" __global__
     void matrix_dot_vector_double(const complex<double>* mat, int mat_bit, int mat_len, complex<double>* vec, int* affect_args, int* aff_argsorts, complex<double>* anc) {
         int tid = blockDim.x * blockIdx.x + threadIdx.x;
-        int other = tid & ((1 << affect_args_sorted[0]) - 1)；
-        int gw = tid >> affect_args_sorted[0] << (affect_args_sorted[0] + 1);
+        int other = tid & ((1 << aff_argsorts[0]) - 1);
+        int gw = tid >> aff_argsorts[0] << (aff_argsorts[0] + 1);
         for(int i = 1; i < mat_bit; i++){
-            other += gw & ((1 << affect_args_sorted[i]) - (1 << affect_args_sorted[i - 1]));
-            gw = gw >> affect_args_sorted[i] << (affect_args_sorted[i] + 1);
+            other += gw & ((1 << aff_argsorts[i]) - (1 << aff_argsorts[i - 1]));
+            gw = gw >> aff_argsorts[i] << (aff_argsorts[i] + 1);
         }
         other += gw;
 
         for(int i = 0; i < mat_len; i++){
             int now = other;
             for(int k = 0; k < mat_bit; k++){
-                if i & (1 << k){
+                if (i & (1 << k)){
                     now += 1 << affect_args[mat_bit - 1 - k];
                 }
             }
@@ -425,11 +425,11 @@ matrix_dot_vector_double_kernel = cp.RawKernel(r'''
             for(int k = 0; k < mat_len; k++){
                 int shift = other;
                 for(int l = 0; l < mat_bit; l++){
-                    if k & (1 << l){
+                    if (k & (1 << l)){
                         shift += 1 << affect_args[mat_bit - 1 - l];
                     }
                 }
-                anc[now] += mat[i, k] * vec[shift];
+                anc[now] += mat[i*mat_len + k] * vec[shift];
             }
         }
         
@@ -457,13 +457,13 @@ def matrix_dot_vector(
     affect_args_sorts = affect_args.copy()
     affect_args_sorts.sort()
 
-    mat = htod(mat)
+    mat = cp.array(mat, dtype=vec.dtype)
     mat_bit = np.int32(mat_bit)
     mat_length = np.int64(mat_length)
     affect_args = htod(affect_args)
     affect_args_sorts = htod(affect_args_sorts)
 
-    if vec.dtype == np.int32:
+    if vec.dtype == np.complex64:
         matrix_dot_vector_single_kernel(
             (block_num,),
             (thread_per_block,),
