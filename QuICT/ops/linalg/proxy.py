@@ -147,16 +147,18 @@ class Proxy:
         """
         if self._rank == root:
             assert(recvbuf is not None)
+            sendbuf = cp.empty(1, dtype=recvbuf.dtype)
             pointer = recvbuf.data.ptr
-            count = recvbuf.size // self._ndevs
+            count = recvbuf.size
             nccl_datatype = type_mapping[str(recvbuf.dtype)]
 
             if recvbuf.dtype == cp.complex128:
                 count *= 2
 
-            self.comm.reduce(None, pointer, count, nccl_datatype, op, root, stream)
+            self.comm.reduce(sendbuf.data.ptr, pointer, count, nccl_datatype, op, root, stream)
         else:
             assert(sendbuf is not None)
+            recvbuf = cp.empty(1, dtype=sendbuf.dtype)
             pointer = sendbuf.data.ptr
             count = sendbuf.size
             nccl_datatype = type_mapping[str(sendbuf.dtype)]
@@ -164,7 +166,7 @@ class Proxy:
             if sendbuf.dtype == cp.complex128:
                 count *= 2
 
-            self.comm.reduce(pointer, None, count, nccl_datatype, op, root, stream)
+            self.comm.reduce(pointer, recvbuf.data.ptr, count, nccl_datatype, op, root, stream)
 
     def reducescatter(
         self,
@@ -181,7 +183,7 @@ class Proxy:
         if sendbuf.dtype == cp.complex128:
             count *= 2
 
-        self.comm.reducescatter(send_pointer, recv_pointer, count, nccl_datatype, op, stream)
+        self.comm.reduceScatter(send_pointer, recv_pointer, count, nccl_datatype, op, stream)
 
     def allreduce(
         self,
@@ -207,18 +209,12 @@ class Proxy:
         stream: cuda.stream.Stream = cuda.Stream.null.ptr
     ):
         # Divided data depending on the given rules
-        data_row, data_col = sendbuf.shape
         dest_len = len(targets)
         data_interval = sendbuf.size // dest_len
 
         # Send data to each target
-        for dest_idx in range(dest_len):
-            if dest_idx == dest_len - 1:
-                temp_data = sendbuf[data_interval*dest_idx:]
-            else:
-                temp_data = sendbuf[data_interval*dest_idx:data_interval*dest_idx+data_interval]
-
-            self.send(temp_data, targets[dest_idx], stream)
+        for dest_idx, dest in enumerate(targets):
+            self.send(sendbuf[dest_idx*data_interval:(dest_idx+1)*data_interval], dest, stream)
 
     def gather(
         self,
@@ -228,14 +224,13 @@ class Proxy:
         stream: cuda.stream.Stream = cuda.Stream.null.ptr
     ):
         if self._rank == root:
-            assert(recvbuf != None)
+            assert(recvbuf is not None)
 
             recv_count_per_dev = recvbuf.size // (self._ndevs - 1)
-            for i, dest in enumerate(self.peers):
-                if i != root:
-                    self.recv(recvbuf[i*recv_count_per_dev:(i+1)*recv_count_per_dev], dest, stream)
+            for dest in self.peers:
+                self.recv(recvbuf[(dest-1)*recv_count_per_dev:dest*recv_count_per_dev], dest, stream)
         else:
-            assert(sendbuf != None)
+            assert(sendbuf is not None)
 
             self.send(sendbuf, root, stream)
 
