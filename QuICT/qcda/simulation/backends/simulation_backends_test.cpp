@@ -26,10 +26,10 @@ TEST(TypeTraisTest, GateQubitNum) {
 
 TEST(SimTest, RunCheck) {
     auto simulator = Simulator<double>();
-    simulator.append_gate("h", 0, {0}, 0);
     auto diagonal = new std::complex<double>[2];
     diagonal[0] = 1, diagonal[1] = -1;
-    simulator.append_gate("crz", 0, {0, 1}, diagonal);
+    simulator.append_gate("h", {0}, 0, 0);
+    simulator.append_gate("crz", {0, 1}, 0, diagonal);
     auto init_state = new std::complex<double>[1ULL << 10];
     simulator.run(10, init_state);
 }
