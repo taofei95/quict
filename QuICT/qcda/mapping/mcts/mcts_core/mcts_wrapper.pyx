@@ -10,7 +10,7 @@
 import numpy as np
 cimport numpy as np
 from cython.operator cimport dereference as deref
-from mcts_tree cimport MCTSTree
+from QuICT.qcda.mapping.mcts.mcts_core.mcts_tree cimport MCTSTree
 # from mcts_tree cimport RLMCTSTree
 # from data_generator cimport DataGenerator
 
