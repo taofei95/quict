@@ -50,19 +50,16 @@ namespace QuICT {
         // Not all members are used
 
         std::string qasm_name_;
-        uint64_t targ_, carg_;
         precision_t parg_;
         std::vector<uint64_t> affect_args_;
         mat_entry_t<precision_t> *data_ptr_;
 
         GateBridgeEntry(
                 std::string qasm_name,
-                uint64_t targ,
-                uint64_t carg,
-                precision_t parg,
                 std::vector<uint64_t> affect_args,
-                mat_entry_t<precision_t> data_ptr
-        ) : qasm_name_(qasm_name), targ_(targ), carg_(carg), parg_(parg), affect_args_(affect_args), data_ptr_(data_ptr) {}
+                precision_t parg,
+                mat_entry_t<precision_t> *data_ptr
+        ) : qasm_name_(qasm_name), affect_args_(affect_args), parg_(parg), data_ptr_(data_ptr) {}
     };
 
     //* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *

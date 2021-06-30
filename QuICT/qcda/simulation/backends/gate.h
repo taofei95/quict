@@ -13,7 +13,7 @@
 
 
 namespace QuICT {
-    namespace ImplementDetail {
+    namespace Details {
         // Black magic from
         // https://stackoverflow.com/questions/1005476/how-to-detect-whether-there-is-a-specific-member-variable-in-class
 
@@ -204,9 +204,9 @@ namespace QuICT {
         template<class gate_t>
         struct gate_qubit_num {
             constexpr static uint64_t value = []() {
-                if constexpr(ImplementDetail::has_member_affect_args_<gate_t>::value) {
+                if constexpr(Details::has_member_affect_args_<gate_t>::value) {
                     return gate_t::affect_args_.size();
-                } else if constexpr(ImplementDetail::has_member_carg_<gate_t>::value) {
+                } else if constexpr(Details::has_member_carg_<gate_t>::value) {
                     return 2;
                 } else {
                     return 1;
@@ -216,12 +216,12 @@ namespace QuICT {
 
         template<class gate_t>
         struct gate_is_diagonal {
-            constexpr static bool value = ImplementDetail::has_member_diagonal_<gate_t>::value;
+            constexpr static bool value = Details::has_member_diagonal_<gate_t>::value;
         };
 
         template<class gate_t>
         struct gate_has_mat_repr {
-            constexpr static bool value = ImplementDetail::has_member_mat_<gate_t>::value;
+            constexpr static bool value = Details::has_member_mat_<gate_t>::value;
         };
 
     }

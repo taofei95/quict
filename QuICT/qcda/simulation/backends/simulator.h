@@ -31,14 +31,12 @@ namespace QuICT {
 
         void append_gate(
                 std::string qasm_name,
-                uint64_t targ,
-                uint64_t carg,
-                precision_t parg,
                 std::vector<uint64_t> affect_args,
-                mat_entry_t <precision_t> data_ptr
+                precision_t parg,
+                mat_entry_t <precision_t> *data_ptr
         ) {
             gate_vec_.emplace_back(GateBridgeEntry<precision_t>(
-                    qasm_name, targ, carg, parg, affect_args, data_ptr
+                    qasm_name, affect_args, parg, data_ptr
             ));
         }
 
@@ -55,11 +53,12 @@ namespace QuICT {
             state_vector_ = init_state;
             for (const auto &gate_desc: gate_vec_) {
                 if (gate_desc.qasm_name_ == "h") {
-                    auto gate = apply_gate<Gate::HGate<precision_t>>(gate_desc);
+                    apply_gate<Gate::HGate<precision_t>>(gate_desc);
                 } else if (gate_desc.qasm_name_ == "crz") {
-                    auto gate = apply_gate<Gate::CrzGate<precision_t>>(gate_desc);
+                    apply_gate<Gate::CrzGate<precision_t>>(gate_desc);
                 } else {
-                    throw std::runtime_error("Not implemented gate: " + gate_desc.qasm_name_);
+                    throw std::runtime_error(
+                            std::string(__func__) + ": " + "Not implemented gate: " + gate_desc.qasm_name_);
                 }
             }
 
@@ -78,11 +77,14 @@ namespace QuICT {
             using namespace std;
             if constexpr(is_same<HGate<precision_t>, gate_t>::value) {
                 // H gate
-                auto gate = HGate<precision_t>(gate_desc.targ_);
+                auto gate = HGate<precision_t>(gate_desc.affect_args_[0]);
                 apply_gate(gate);
             } else if constexpr(is_same<CrzGate<precision_t>, gate_t>::value) {
                 // Crz gate
-                auto gate = CrzGate<precision_t>(gate_desc.carg_, gate_desc.targ_, gate_desc.parg_);
+                auto gate = CrzGate<precision_t>(
+                        gate_desc.affect_args_[0],
+                        gate_desc.affect_args_[1],
+                        gate_desc.parg_);
                 apply_gate(gate);
             } else if constexpr(gate_has_mat_repr<gate_t>::value) {
                 const auto gate_qubit_num = gate_desc.affect_args_.size();
@@ -106,7 +108,8 @@ namespace QuICT {
                         break;
                     }
                     default: {
-                        throw std::runtime_error("Not implemented for gate larger than 3");
+                        throw std::runtime_error(
+                                std::string(__func__) + ": " + "Not implemented for gate larger than 3");
                     }
                 }
             } else {
