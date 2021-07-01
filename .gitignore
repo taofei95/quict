@@ -16,3 +16,4 @@ make.bat
 _build
 .ipynb_checkpoints
 cmake-build-debug/
+QuICT/qcda/simulation/backends/*.txt

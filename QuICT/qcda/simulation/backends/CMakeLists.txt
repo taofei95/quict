@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.16)
-project(simulation_backends CXX)
+project(sim_back CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 
@@ -12,14 +12,14 @@ add_subdirectory(../../../../QuICT/utility/extern/googletest ./cmake-build-gtest
 include_directories(../../../../QuICT/utility/extern/googletest/googletest/include)
 include_directories(../../../../QuICT/utility/extern/googletest/googlemock/include)
 
-add_library(simulation_backends SHARED gate.h simulator.h utility.h)
+add_library(sim_back SHARED gate.h simulator.h utility.h)
 
-add_executable(simulation_backends_test ../../../../QuICT/utility/extern/googletest/googletest/src/gtest_main.cc
+add_executable(sim_back_test ../../../../QuICT/utility/extern/googletest/googletest/src/gtest_main.cc
         simulation_backends_test.cpp gate.h simulator.h utility.h)
-target_link_libraries(simulation_backends_test gtest_main)
+target_link_libraries(sim_back_test gtest_main)
 
-set_target_properties(simulation_backends PROPERTIES LINKER_LANGUAGE CXX)
-set_target_properties(simulation_backends_test PROPERTIES LINKER_LANGUAGE CXX)
+set_target_properties(sim_back PROPERTIES LINKER_LANGUAGE CXX)
+set_target_properties(sim_back_test PROPERTIES LINKER_LANGUAGE CXX)
 
 #include(GoogleTest)
-#gtest_discover_tests(simulation_backends_test)
+#gtest_discover_tests(sim_back_test)

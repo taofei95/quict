@@ -162,9 +162,12 @@ namespace QuICT {
         struct CrzGate : ControlledDiagonalGate<precision_t> {
             CrzGate(uint64_t carg, uint64_t targ, precision_t parg)
                     : ControlledDiagonalGate<precision_t>(carg, targ) {
-                this->diagonal_ = new mat_entry_t<precision_t>[2];
-                this->diagonal_[0] = std::exp(static_cast<mat_entry_t<precision_t>>(-1j * parg / 2));
-                this->diagonal_[1] = std::exp(static_cast<mat_entry_t<precision_t>>(1j * parg / 2));
+                this->diagonal_ = new mat_entry_t<precision_t>[4];
+                this->diagonal_[0] = this->diagonal_[1] = static_cast<mat_entry_t<precision_t>>(1);
+                this->diagonal_[2] = std::exp(
+                        static_cast<mat_entry_t<precision_t>>(std::complex<precision_t>(0, -1.0 * parg / 2)));
+                this->diagonal_[3] = std::exp(
+                        static_cast<mat_entry_t<precision_t>>(std::complex<precision_t>(0, 1.0 * parg / 2)));
             }
 
             ~CrzGate() {
@@ -175,9 +178,9 @@ namespace QuICT {
         template<typename precision_t>
         struct HGate : SimpleGateN<1> {
 //            std::complex<precision_t> sqrt2_inv = static_cast<std::complex<precision_t>>(1.0 / sqrt(2));
-            static constexpr auto sqrt2_inv =
-                    static_cast<mat_entry_t <precision_t>>(
-                            1.0 / 1.4142135623730950488016887242096980785696718753769480731766797379);
+            static constexpr std::complex<precision_t> sqrt2_inv =
+                    static_cast<std::complex<precision_t>>(
+                            1.0 / 1.414213562373095048801688724209698);
 
             HGate(uint64_t targ) : SimpleGateN(targ) {}
         };

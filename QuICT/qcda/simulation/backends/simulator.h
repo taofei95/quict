@@ -26,6 +26,16 @@ namespace QuICT {
     class Simulator {
     public:
         //* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+        // Constructor & Deconstructor
+        //* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+        ~Simulator() {
+            for (auto &gate_desc:gate_vec_) {
+                delete[] gate_desc.data_ptr_;
+            }
+        }
+
+
+        //* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
         // Data Access Helper
         //* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
@@ -72,7 +82,7 @@ namespace QuICT {
         //* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
         template<typename gate_t>
-        void apply_gate(const GateBridgeEntry <precision_t> &gate_desc) {
+        inline void apply_gate(const GateBridgeEntry <precision_t> &gate_desc) {
             using namespace Gate;
             using namespace std;
             if constexpr(is_same<HGate<precision_t>, gate_t>::value) {
