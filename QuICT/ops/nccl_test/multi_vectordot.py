@@ -6,7 +6,7 @@ from cupy.cuda import nccl
 import multiprocessing
 
 from QuICT.ops.linalg.gpu_calculator import *
-from QuICT.ops.linalg.proxy import Proxy
+from QuICT.ops.utils import Proxy
 
 
 def client(uid, dev_id):

@@ -8,7 +8,7 @@ from .._simulation import BasicSimulator
 
 from QuICT.core import *
 # import QuICT.ops.linalg.unitary_calculation as unitary_calculation
-from QuICT.ops.linalg.cpu_calculator import CPUCalculator
+import QuICT.ops.linalg.cpu_calculator as CPUCalculator
 
 unitary_calculation = CPUCalculator
 

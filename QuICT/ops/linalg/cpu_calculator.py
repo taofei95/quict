@@ -1,11 +1,10 @@
 #!/usr/bin/env python
 # -*- coding:utf8 -*-
 
-from numba import jit, njit, prange
+from numba import njit, prange
 import numpy as np
-from typing import *
 
-from .utils import mapping_augment
+from QuICT.ops.utils import mapping_augment
 
 
 
@@ -116,20 +115,3 @@ def dot(A, B):
         np.array<np.complex>: A * B
     """
     return np.dot(A, B)
-
-def vectordot(A, V, mapping):
-    row_a, col_a = A.shape
-    n, m = np.log2(V.shape[0]).astype(np.int32), np.log2(row_a).astype(np.int32)
-    assert (m == mapping.shape[0])
-
-    # Tensor Matrix A to 2^n * 2^n 
-    n_array = np.arange(n, dtype=np.int32)
-    remaining_bits = np.setdiff1d(n_array, mapping)
-    tensored_mapping = np.concatenate([remaining_bits, mapping])
-
-    A_reidx = np.kron(np.identity(1 << n - m).astype(np.complex_), A)
-
-    # Permutation depending on [remain + mapping]
-    MatrixPermutation(A_reidx, tensored_mapping, changeInput=True)
-
-    return np.dot(A_reidx, V)

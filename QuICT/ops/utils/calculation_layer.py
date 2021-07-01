@@ -4,7 +4,7 @@ import weakref
 import cupy as cp
 import numpy as np
 
-from . import gpu_calculator as GPUCalculator
+import QuICT.ops.linalg.gpu_calculator as GPUCalculator
 
 
 class CalculationLayer:
