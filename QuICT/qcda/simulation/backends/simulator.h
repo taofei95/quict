@@ -135,13 +135,24 @@ namespace QuICT {
                     apply_gate_single_task(task_id, gate);
                 }
             } else if constexpr(sim_mode == SimulatorMode::batch) {
-
+                uint64_t task_num = 1ULL << (qubit_num_ - Gate::gate_qubit_num<gate_t>::value);
+                constexpr uint64_t batch_size = 32;
+                if (task_num < batch_size) {
+                    throw std::runtime_error(std::string(__func__) + ": " + "Too few qubits to run in batch mode");
+                }
+                for (uint64_t task_id = 0; task_id < task_num; task_id += batch_size) {
+                    apply_gate_batch_task<batch_size, gate_t>(task_id, gate);
+                }
             } else if constexpr(sim_mode == SimulatorMode::avx) {
 
             } else if constexpr(sim_mode == SimulatorMode::fma) {
 
             }
         }
+
+        //* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+        // SimulatorMode::single
+        //* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
         // One task per run.
         inline void apply_gate_single_task(
@@ -194,7 +205,6 @@ namespace QuICT {
             }
         }
 
-
         inline void apply_gate_single_task(
                 const uint64_t task_id,
                 const Gate::UnitaryGateN<1, precision_t> &gate
@@ -206,6 +216,33 @@ namespace QuICT {
             state_vector_[ind[0]] = gate.mat_[0 * 2 + 0] * tmp_arr_1[0] + gate.mat_[0 * 2 + 1] * tmp_arr_1[1];
             state_vector_[ind[1]] = gate.mat_[1 * 2 + 0] * tmp_arr_1[0] + gate.mat_[1 * 2 + 1] * tmp_arr_1[1];
         }
+
+        //* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+        // SimulatorMode::batch
+        //* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+
+        template<uint64_t batch_size, class gate_t>
+        inline void apply_gate_batch_task(
+                const uint64_t task_id,
+                const gate_t &gate
+        ) {
+#pragma unroll
+            for (auto i = 0; i < batch_size; ++i) {
+                apply_gate_single_task(task_id + i, gate);
+            }
+        }
+
+        //* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+        // SimulatorMode::avx
+        //* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+
+        // TODO: Implement avx mode
+
+        //* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+        // SimulatorMode::fma
+        //* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+
+        // TODO: Implement fma mode
 
     protected:
         std::complex<precision_t> *state_vector_ = nullptr;

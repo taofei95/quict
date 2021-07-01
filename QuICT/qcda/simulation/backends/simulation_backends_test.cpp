@@ -28,15 +28,15 @@ TEST(TypeTraisTest, GateQubitNum) {
     EXPECT_EQ(2, Gate::gate_qubit_num<decltype(crz_gate)>::value);
 }
 
-//TEST(SimTest, RunCheck) {
-//    auto simulator = Simulator<double>();
-//    auto diagonal = new std::complex<double>[2];
-//    diagonal[0] = 1, diagonal[1] = -1;
-//    simulator.append_gate("h", {0}, 0, 0);
-//    simulator.append_gate("crz", {0, 1}, 0, diagonal);
-//    auto state = new std::complex<double>[1ULL << 10];
-//    simulator.run(10, state);
-//}
+TEST(SimTest, RunCheck) {
+    auto simulator = Simulator<double>();
+    auto diagonal = new std::complex<double>[2];
+    diagonal[0] = 1, diagonal[1] = -1;
+    simulator.append_gate("h", {0}, 0, 0);
+    simulator.append_gate("crz", {0, 1}, 0, diagonal);
+    auto state = new std::complex<double>[1ULL << 10];
+    simulator.run(10, state);
+}
 
 TEST(SimTest, QFTCorrectnessCheck) {
     using namespace std;
