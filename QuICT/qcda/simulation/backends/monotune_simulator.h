@@ -39,15 +39,15 @@ namespace QuICT {
             if constexpr(sim_mode == SimulatorMode::single) {
                 ss << "single";
             } else if constexpr(sim_mode == SimulatorMode::batch) {
-                ss << "batch";
+                ss << "batch ";
             } else if constexpr(sim_mode == SimulatorMode::avx) {
-                ss << "avx";
+                ss << "avx   ";
             } else if constexpr(sim_mode == SimulatorMode::fma) {
-                ss << "fma";
+                ss << "fma   ";
             }
-            ss << ",";
+            ss << ", ";
             if constexpr(std::is_same<precision_t, float>::value) {
-                ss << "float";
+                ss << "float ";
             } else if constexpr(std::is_same<precision_t, double>::value) {
                 ss << "double";
             }
@@ -70,14 +70,14 @@ namespace QuICT {
                 std::string qasm_name,
                 std::vector<uint64_t> affect_args,
                 precision_t parg,
-                mat_entry_t<precision_t> *data_ptr
+                mat_entry_t <precision_t> *data_ptr
         ) {
-            gate_vec_.emplace_back(GateBridgeEntry<precision_t>(
+            gate_vec_.emplace_back(GateDescription<precision_t>(
                     qasm_name, affect_args, parg, data_ptr
             ));
         }
 
-        void append_gate(const GateBridgeEntry<precision_t> &gate_desc) {
+        void append_gate(const GateDescription <precision_t> &gate_desc) {
             gate_vec_.push_back(gate_desc);
         }
 
@@ -123,7 +123,7 @@ namespace QuICT {
 
         // Transfer gate description into gate
         template<typename gate_t>
-        inline void apply_gate(const GateBridgeEntry<precision_t> &gate_desc) {
+        inline void apply_gate(const GateDescription <precision_t> &gate_desc) {
             using namespace Gate;
             using namespace std;
             if constexpr(is_same<HGate<precision_t>, gate_t>::value) {
@@ -268,7 +268,7 @@ namespace QuICT {
         // One task per run.
         inline void apply_gate_single_task(
                 const uint64_t task_id,
-                const Gate::HGate<precision_t> &gate
+                const Gate::HGate <precision_t> &gate
         ) {
             auto ind = index(task_id, qubit_num_, gate.targ_);
             auto tmp_arr_1 = marray_t<precision_t, 2>();
@@ -280,7 +280,7 @@ namespace QuICT {
 
         inline void apply_gate_single_task(
                 const uint64_t task_id,
-                const Gate::CrzGate<precision_t> &gate
+                const Gate::CrzGate <precision_t> &gate
         ) {
             uarray_t<2> qubits = {gate.carg_, gate.targ_};
             uarray_t<2> qubits_sorted = {gate.carg_, gate.targ_};
@@ -296,7 +296,7 @@ namespace QuICT {
         template<uint64_t N>
         inline void apply_gate_single_task(
                 const uint64_t task_id,
-                const Gate::UnitaryGateN<N, precision_t> &gate
+                const Gate::UnitaryGateN <N, precision_t> &gate
         ) {
             if constexpr(N == 1) {
                 auto ind = index(task_id, qubit_num_, gate.targ_);
@@ -351,7 +351,7 @@ namespace QuICT {
 
         inline void apply_gate_avx_task(
                 const uint64_t task_id,
-                const Gate::HGate<precision_t> &gate
+                const Gate::HGate <precision_t> &gate
         ) {
             // AVX256 can perform 8 32-bit floating operations or 4 64-bit operations at once
             if constexpr(std::is_same<precision_t, float>::value) {
@@ -426,7 +426,7 @@ namespace QuICT {
 
         inline void apply_gate_avx_task(
                 const uint64_t task_id,
-                const Gate::CrzGate<precision_t> &gate
+                const Gate::CrzGate <precision_t> &gate
         ) {
             if constexpr(std::is_same<precision_t, float>::value) {
                 throw std::runtime_error("Not implemented for 32-bit avx simulation mode");
@@ -505,7 +505,7 @@ namespace QuICT {
 
         inline void apply_gate_fma_task(
                 const uint64_t task_id,
-                const Gate::HGate<precision_t> &gate
+                const Gate::HGate <precision_t> &gate
         ) {
             if constexpr(std::is_same<precision_t, float>::value) {
                 throw std::runtime_error("Not implemented for 32-bit fma simulation mode");
@@ -561,13 +561,13 @@ namespace QuICT {
                 __m256d ymm0 = _mm256_loadu_pd(cc);
                 __m256d ymm1 = _mm256_loadu_pd(left_re);
                 __m256d ymm2 = _mm256_loadu_pd(right_re);
-                __m256d ymm3 = _mm256_fmadd_pd(ymm1, ymm2, ymm0);  // left + (cc * right)
+                __m256d ymm3 = _mm256_fmadd_pd(ymm0, ymm2, ymm1);  // left + (cc * right)
                 _mm256_storeu_pd(res_re, ymm3);
 
                 // imag
                 ymm1 = _mm256_loadu_pd(left_im);
                 ymm2 = _mm256_loadu_pd(right_im);
-                ymm3 = _mm256_fmadd_pd(ymm1, ymm2, ymm0);  // left + (cc * right)
+                ymm3 = _mm256_fmadd_pd(ymm0, ymm2, ymm1);  // left + (cc * right)
                 _mm256_storeu_pd(res_im, ymm3);
 
                 _mm256_zeroupper();
@@ -582,7 +582,7 @@ namespace QuICT {
 
         inline void apply_gate_fma_task(
                 const uint64_t task_id,
-                const Gate::CrzGate<precision_t> &gate
+                const Gate::CrzGate <precision_t> &gate
         ) {
             if constexpr(std::is_same<precision_t, float>::value) {
                 throw std::runtime_error("Not implemented for 32-bit fma simulation mode");
@@ -656,7 +656,7 @@ namespace QuICT {
         std::complex<precision_t> *state_vector_ = nullptr;
 //        precision_t *state_vec_sep_re_ = nullptr, *state_vec_sep_im_ = nullptr;
         uint64_t qubit_num_ = 0;
-        std::vector<GateBridgeEntry<precision_t>> gate_vec_;
+        std::vector<GateDescription < precision_t>> gate_vec_;
         std::string name_;
     };
 }

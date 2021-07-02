@@ -29,7 +29,7 @@ TEST(TypeTraisTest, GateQubitNum) {
 }
 
 TEST(SimTest, RunCheck) {
-    auto simulator = Simulator<double>();
+    auto simulator = MonoTuneSimulator<double>();
     auto diagonal = new std::complex<double>[2];
     diagonal[0] = 1, diagonal[1] = -1;
     simulator.append_gate("h", {0}, 0, 0);
@@ -40,7 +40,7 @@ TEST(SimTest, RunCheck) {
 
 TEST(SimTest, QFTCorrectnessCheck) {
     using namespace std;
-    auto simulator = Simulator<double>();
+    auto simulator = MonoTuneSimulator<double>();
 
     fstream fs;
     fs.open("qft.txt", ios::in);
@@ -86,4 +86,8 @@ TEST(SimTest, QFTCorrectnessCheck) {
         ASSERT_LE(fabs(state[i].imag() - expect_state[i].imag()), 1e-7)
                                     << i << " " << state[i].real() << " " << expect_state[i].real();
     }
+}
+
+TEST(SimTest, HTest) {
+
 }

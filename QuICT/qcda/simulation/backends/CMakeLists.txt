@@ -7,21 +7,26 @@ enable_testing()
 
 include(ProcessorCount)
 ProcessorCount(NPROC)
-if(NOT NPROC EQUAL 0)
+if (NOT NPROC EQUAL 0)
     MATH(EXPR NPROC_L "${NPROC}-4")
     if (${NPROC_L} LESS 1)
         set(NPROC_L 1)
     endif ()
     message("Set omp threads = ${NPROC_L}")
     add_compile_definitions(OMP_NPROC=${NPROC_L})
-endif()
+endif ()
 
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
-#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ftree-vectorize -fopenmp -mavx -mavx2 -mfma")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ftree-vectorize -mavx -mavx2 -mfma")
+if (MSVC)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /Qpar /arch:AVX /arch:AVX2")
+else ()
+    #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ftree-vectorize -fopenmp -mavx -mavx2 -mfma")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ftree-vectorize -mavx -mavx2 -mfma")
+endif ()
 
-add_subdirectory(../../../../QuICT/utility/extern/googletest ./cmake-build-gtest )
+
+add_subdirectory(../../../../QuICT/utility/extern/googletest ./cmake-build-gtest)
 
 include_directories(../../../../QuICT/utility/extern/googletest/googletest/include)
 include_directories(../../../../QuICT/utility/extern/googletest/googlemock/include)

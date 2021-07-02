@@ -50,7 +50,7 @@ namespace QuICT {
     //* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
     template<typename precision_t>
-    class GateBridgeEntry {
+    class GateDescription {
     public:
         // Not all members are used
 
@@ -59,7 +59,7 @@ namespace QuICT {
         std::vector<uint64_t> affect_args_;
         mat_entry_t<precision_t> *data_ptr_;
 
-        GateBridgeEntry(
+        GateDescription(
                 std::string qasm_name,
                 std::vector<uint64_t> affect_args,
                 precision_t parg,
@@ -105,6 +105,7 @@ namespace QuICT {
         for (uint64_t i = 0; i < N; ++i) {
             const auto half_cnt = 1ULL << i;
             const auto tail = 1ULL << qubits[i];
+#pragma unroll
             for (uint64_t j = 0; j < half_cnt; ++j) {
                 ret[half_cnt + j] = ret[j] | tail;
             }
