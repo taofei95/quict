@@ -10,7 +10,7 @@
 #include <cstdint>
 #include "utility.h"
 #include "gate.h"
-#include "simulator.h"
+#include "monotune_simulator.h"
 
 using namespace QuICT;
 
@@ -67,7 +67,7 @@ TEST(SimTest, QFTCorrectnessCheck) {
         }
     }
     auto state = new complex<double>[1ULL << qubit_num];
-    auto expect_state = vector<complex<double>>();
+    auto expect_state = new complex<double>[1ULL << qubit_num];
     fill(state, state + (1ULL << qubit_num), complex<double>(0));
     state[0] = complex<double>(1, 0);
 
@@ -75,7 +75,7 @@ TEST(SimTest, QFTCorrectnessCheck) {
     char sign, img_label;
     for (uint64_t i = 0; i < (1ULL << qubit_num); ++i) {
         fs >> re >> sign >> im >> img_label;
-        expect_state.emplace_back(re, sign == '+' ? im : -im);
+        expect_state[i] = complex<double>(re, sign == '+' ? im : -im);
     }
 
     simulator.run(qubit_num, state);

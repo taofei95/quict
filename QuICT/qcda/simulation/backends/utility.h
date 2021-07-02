@@ -10,7 +10,12 @@
 #include <complex>
 #include <type_traits>
 
+#ifndef OMP_NPROC
+#define OMP_NPROC 4
+#endif
+
 namespace QuICT {
+
     //* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
     // Template Class Derive Check Helpers
     //* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
