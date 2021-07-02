@@ -1,8 +1,5 @@
 #!/usr/bin/env python
 # -*- coding:utf8 -*-
-# @TIME    : 2021/5/28 6:28 下午
-# @Author  : Han Yu
-# @File    : refine_unit_test
 
 from cupy.cuda import nccl
 import numpy as np
@@ -37,11 +34,11 @@ def worker(uid, ndevs, dev_id, qubits, QFT_number):
         device=dev_id
     )
 
-    res = simulator.run()
+    _ = simulator.run()
 
     e_time = time()
 
-    print(f"finish with {qubits} qubits, spending time {e_time - s_time}, {res.dtype}")
+    print(f"finish with {qubits} qubits, spending time {e_time - s_time}")
 
 
 if __name__ == "__main__":
@@ -49,7 +46,6 @@ if __name__ == "__main__":
 
     uid = nccl.get_unique_id()
     qubits, QFT_n = 25, 2
-    # array = multiprocessing.Array("i",[1,2,3,4,5])
 
     p1 = multiprocessing.Process(target=worker, args = (uid, 2, 0, qubits, QFT_n,))
     p2 = multiprocessing.Process(target=worker, args = (uid, 2, 1, qubits, QFT_n,))

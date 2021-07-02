@@ -14,6 +14,13 @@ STATIC_GATE_NAMES = [
 
 
 class GateMatrixs:
+    """
+    The class of storing the gates' compute matrix, without duplicate.
+
+    Args:
+        precision(Union[np.complex64, np.complex128]): The precision of the gates.
+        device(int): The GPU device ID.
+    """
     def __init__(self, precision, device: int = 0):
         self.gate_matrixs = {}
         self.precision = precision
@@ -21,7 +28,18 @@ class GateMatrixs:
         self.matrix_idx = []
         self.matrix_len = 0
 
+    @property
+    def matrix(self):
+        """ Return the matrix with all gates' compute matrix. """
+        return self.final_matrix
+
     def build(self, gate):
+        """
+        Add gate into GateMatrixs, if the gate is the new one.
+
+        Args:
+            gate(Gate): the gate in circuit.
+        """
         gate_name = gate.name.split("_")[0]
         if gate_name not in STATIC_GATE_NAMES:
             gate_name = f"{gate_name}_{gate.parg}"
@@ -33,6 +51,7 @@ class GateMatrixs:
             self._build_matrix_gate(gate_name, matrix)
 
     def _build_matrix_gate(self, gate_name, matrix):
+        """ Add gate. """
         self.gate_matrixs[gate_name] = (self.matrix_len, matrix.size)
         self.matrix_len += matrix.size
         if matrix.dtype != self.precision:
@@ -40,6 +59,7 @@ class GateMatrixs:
         self.matrix_idx.append(matrix)
 
     def concentrate_gate_matrixs(self):
+        """ Combined all gates' computer matrix in one large matrix."""
         self.final_matrix = np.empty(self.matrix_len, dtype=self.precision)
         start = 0
 
@@ -51,6 +71,11 @@ class GateMatrixs:
             self.final_matrix = cp.array(self.final_matrix)
 
     def target_matrix(self, gate):
+        """ 
+        Find the compute matrix of the given gate.
+        Args:
+            gate(Gate): the gate in circuit.
+        """
         gate_name = gate.name.split("_")[0]
         if gate_name not in STATIC_GATE_NAMES:
             gate_name = f"{gate_name}_{gate.parg}"
@@ -59,6 +84,3 @@ class GateMatrixs:
 
         return self.final_matrix[start:start+itvl]
 
-    @property
-    def matrix(self):
-        return self.final_matrix
