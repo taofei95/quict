@@ -6,6 +6,7 @@ from cupy.cuda import nccl
 from typing import Union
 
 
+# Mapping between dtype and nccl dtype
 type_mapping = {
     "int8": nccl.NCCL_INT8,
     "uint8": nccl.NCCL_UINT8,
@@ -69,7 +70,8 @@ class Proxy:
         destination: int,
         stream: cuda.stream.Stream = cuda.Stream.null.ptr
     ):
-        """ Send data to destination.
+        """
+        Send data to destination.
 
         Args:
             sendbuf(cupy.ndarray): the sending data.
@@ -92,10 +94,11 @@ class Proxy:
         source: int,
         stream: cuda.stream.Stream = cuda.Stream.null.ptr
     ):
-        """ recv data from source and put it into recvbuf.
+        """
+        Receive data from source and put it into recvbuf.
 
         Args:
-            recvbuf(cupy.ndarray): the empty array waitting for comming data.
+            recvbuf(cupy.ndarray): the GPU array waitting for comming data.
             source(int): the rank of the source communicator.
             stream(Stream): the cupy stream.
         """
@@ -111,22 +114,23 @@ class Proxy:
 
     def broadcast(
         self,
-        sendbuf: cp.ndarray,
+        databuf: cp.ndarray,
         root: int = 0,
         stream: cuda.stream.Stream = cuda.Stream.null.ptr
     ):
-        """ Send data to all communicators except root. The sending data is in sendbuf of root communicator.
+        """
+        Send data to all communicators except root. The sending data is in sendbuf of root communicator.
 
         Args:
-            sendbuf(cupy.ndarray): the sending data in root, and received array for other communicators.
-            root(int): the rank of root communicator.
+            databuf(cupy.ndarray): the sending data in root, and the received array for other communicators.
+            root(int): the rank ID of root communicator.
             stream(Stream): the cupy stream.
         """
-        pointer = sendbuf.data.ptr
-        count = sendbuf.size
-        nccl_datatype = type_mapping[str(sendbuf.dtype)]
+        pointer = databuf.data.ptr
+        count = databuf.size
+        nccl_datatype = type_mapping[str(databuf.dtype)]
 
-        if sendbuf.dtype == cp.complex128:
+        if databuf.dtype == cp.complex128:
             count *= 2
 
         self.comm.bcast(pointer, count, nccl_datatype, root, stream)
@@ -140,10 +144,18 @@ class Proxy:
         stream: cuda.stream.Stream = cuda.Stream.null.ptr
     ):
         """
-            NCCL_SUM = 0
-            NCCL_PROD = 1
-            NCCL_MAX = 2
-            NCCL_MIN = 3
+        Compute the op with the data from other peers, and write the result in the root.
+
+        Args:
+            root(int): the rank ID of root communicator.
+            op (int): The operation with one of
+                NCCL_SUM = 0,
+                NCCL_PROD = 1,
+                NCCL_PROD = 2,
+                NCCL_MIN = 3.
+            sendbuf(cupy.ndarray): the sending data, not used in the root.
+            recvbuf(cupy.ndarray): the array waitting for comming data, must be defined in the root.
+            stream(Stream): the cupy stream.
         """
         if self._rank == root:
             assert(recvbuf is not None)
@@ -175,6 +187,19 @@ class Proxy:
         op: int,
         stream: cuda.stream.Stream = cuda.Stream.null.ptr
     ):
+        """
+        Compute the op with the data from all peers, and split the result into all peers.
+
+        Args:
+            sendbuf(cupy.ndarray): the sending data.
+            recvbuf(cupy.ndarray): the array waitting for the result.
+            op (int): The operation with one of
+                NCCL_SUM = 0,
+                NCCL_PROD = 1,
+                NCCL_PROD = 2,
+                NCCL_MIN = 3.
+            stream(Stream): the cupy stream.
+        """
         send_pointer = sendbuf.data.ptr
         recv_pointer = recvbuf.data.ptr
         count = recvbuf.size
@@ -192,6 +217,19 @@ class Proxy:
         op: int,
         stream: cuda.stream.Stream = cuda.Stream.null.ptr
     ):
+        """
+        Compute the op with the data from all peers, and send the result to all peers.
+
+        Args:
+            sendbuf(cupy.ndarray): the sending data.
+            recvbuf(cupy.ndarray): the array waitting for the result.
+            op (int): The operation with one of
+                NCCL_SUM = 0,
+                NCCL_PROD = 1,
+                NCCL_PROD = 2,
+                NCCL_MIN = 3.
+            stream(Stream): the cupy stream.
+        """
         send_pointer = sendbuf.data.ptr
         recv_pointer = recvbuf.data.ptr
         count = sendbuf.size
@@ -208,6 +246,15 @@ class Proxy:
         targets: list,
         stream: cuda.stream.Stream = cuda.Stream.null.ptr
     ):
+        """
+        Split sending data, and send to all peers in targets.
+        Note that target proxy should using proxy.recv to receive the piece of sending data.
+
+        Args:
+            sendbuf(cupy.ndarray): the sending data.
+            targets(list): List of the communicators' rank ID which hope to receive.
+            stream(Stream): the cupy stream.
+        """
         # Divided data depending on the given rules
         dest_len = len(targets)
         data_interval = sendbuf.size // dest_len
@@ -223,6 +270,16 @@ class Proxy:
         recvbuf: cp.ndarray = None,
         stream: cuda.stream.Stream = cuda.Stream.null.ptr
     ):
+        """
+        Collect all data from peers into the root.
+
+        Args:
+            root(int): the rank ID of the root communicator.
+            sendbuf(cupy.ndarray): the sending data, not use in the root communicator.
+            recvbuf(cupy.ndarray): the GPU array waitting for comming data, only use in the 
+            root communicator.
+            stream(Stream): the cupy stream.
+        """
         if self._rank == root:
             assert(recvbuf is not None)
 
@@ -240,6 +297,14 @@ class Proxy:
         recvbuf: cp.ndarray,
         stream: cuda.stream.Stream = cuda.Stream.null.ptr
     ):
+        """
+        Collect all data from peers, and send the aggregation bact to each peer.
+
+        Args:
+            sendbuf(cupy.ndarray): the sending data.
+            recvbuf(cupy.ndarray): the GPU array waitting for comming data.
+            stream(Stream): the cupy stream.
+        """
         send_pointer = sendbuf.data.ptr
         recv_pointer = recvbuf.data.ptr
         count = sendbuf.size

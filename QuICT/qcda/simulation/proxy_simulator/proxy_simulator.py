@@ -1,10 +1,14 @@
 import numpy as np
 import cupy as cp
 import math
+import os
 
 from QuICT.core import *
 from QuICT.qcda.simulation import BasicSimulator
 from QuICT.ops.utils import Proxy, LinAlgLoader
+
+
+LIMIT_BUFFER_SIZE = int(os.getenv("QuICT_BUFFER_SIZE", 17))
 
 
 class ProxySimulator(BasicSimulator):
@@ -21,6 +25,7 @@ class ProxySimulator(BasicSimulator):
     def __init__(self, proxy: Proxy, circuit: Circuit, precision, device: int = 0, sync: bool = True):
         self.proxy = proxy
         self._sync = sync
+        self._buffer_size = LIMIT_BUFFER_SIZE if precision == np.complex64 else LIMIT_BUFFER_SIZE - 1
         assert(proxy.rank == device)
 
         # Get qubits and limitation
@@ -139,7 +144,7 @@ class ProxySimulator(BasicSimulator):
         Switch data with the paired GPU device.
         """
         required_qubits = 1 << (self.limit_qubits - 1)
-        sending_size = 1 << min(required_qubits, 15)
+        sending_size = 1 << min(required_qubits, self._buffer_size)
         recv_buf = cp.zeros(required_qubits, dtype=self._precision)
         send_buf = self.vector
 
