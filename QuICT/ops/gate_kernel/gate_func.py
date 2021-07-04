@@ -8,7 +8,7 @@ import random
 
 prop_add = cp.ElementwiseKernel(
     'T x, raw T y, int32 index', 'T z',
-    'z = (i & index) ? abs(x) * abs(x) : 0',
+    'z = (i & index) ? 0 : abs(x) * abs(x)',
     'prop_add')
 
 MeasureGate_prop_kernel = cp.ReductionKernel(

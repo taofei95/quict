@@ -20,12 +20,11 @@ the file describe Simulators between two basic gates.
 
 def test_constant_statevectorsimulator():
     # pre-compiled kernel function
-    qubit = 2
+    qubit = 29
     circuit = Circuit(qubit)
     X | circuit
     Measure | circuit
     now = ConstantStateVectorSimulator(circuit, np.complex64)
     now.run()
-    print(circuit[:])
 
 test_constant_statevectorsimulator()
