@@ -50,9 +50,8 @@ class ConstantStateVectorSimulator(BasicSimulator):
         return self.vector
 
     def exec(self, gate):
-        matrix = self.get_Matrix(gate)
-
         if gate.type() == GATE_ID["H"]:
+            matrix = self.get_Matrix(gate)
             t_index = self._qubits - 1 - gate.targ
             self._algorithm.HGate_matrixdot(
                 t_index,
@@ -62,6 +61,7 @@ class ConstantStateVectorSimulator(BasicSimulator):
                 self._sync
             )
         elif gate.type() == GATE_ID["CRz"]:
+            matrix = self.get_Matrix(gate)
             t_index = self._qubits - 1 - gate.targ
             c_index = self._qubits - 1 - gate.carg
             self._algorithm.CRzGate_matrixdot(
@@ -72,5 +72,25 @@ class ConstantStateVectorSimulator(BasicSimulator):
                 self._qubits,
                 self._sync
             )
+        elif gate.type() == GATE_ID["Measure"]:
+            index = self._qubits - 1 - gate.targ
+            result = self._algorithm.MeasureGate_Measure(
+                index,
+                self._vector,
+                self._qubits,
+                self._sync
+            )
+            self.circuit.qubits[index].measured = result
+
         else:
-            raise KeyError(f"Unsupported gate type {gate.type()}")
+            matrix = self.get_Matrix(gate)
+            aux = cp.zeros_like(self._vector)
+            self._algorithm.matrix_dot_vector(
+                matrix,
+                gate.controls + gate.targets,
+                self._vector,
+                self._qubits,
+                gate.affectArgs,
+                aux,
+                self._sync
+            )

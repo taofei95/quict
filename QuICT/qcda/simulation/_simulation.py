@@ -73,11 +73,13 @@ class BasicSimulator(object):
         self._precision = precision
         self._gates = circuit.gates
         self._device = device
+        self._circuit = circuit
 
         # Pretreatment gate matrixs optimizer
         self.gateM_optimizer = GateMatrixs(self._precision, self._device)
         for gate in self._gates:
-            self.gateM_optimizer.build(gate)
+            if type(gate) != type(Measure):
+                self.gateM_optimizer.build(gate)
 
         self.gateM_optimizer.concentrate_gate_matrixs()
 
@@ -88,6 +90,14 @@ class BasicSimulator(object):
     @qubits.setter
     def qubits(self, qubit: int):
         self._qubits = qubit
+
+    @property
+    def circuit(self):
+        return self._circuit
+
+    @circuit.setter
+    def circuit(self, circuit: Circuit):
+        self._circuit = circuit
 
     @property
     def vector(self):

@@ -443,7 +443,8 @@ def matrix_dot_vector(
     vec,
     vec_bit,
     affect_args,
-    auxiliary_vec
+    auxiliary_vec,
+    sync
 ):
     mat_length = 1 << mat_bit
 
@@ -475,3 +476,6 @@ def matrix_dot_vector(
             (thread_per_block,),
             (mat, mat_bit, mat_length, vec, affect_args, affect_args_sorts, auxiliary_vec)
         )
+
+    if sync:
+        cp.cuda.Device().synchronize()

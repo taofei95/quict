@@ -3,7 +3,7 @@ import importlib
 
 DEVICE_LIST = ["CPU", "GPU"]
 BASED_LINALG = ["dot", "tensor", "MatrixTensorI", "MatrixPermutation", "VectorPermutation", "matrix_dot_vector"]
-GATE_KERNEL_FUNCTIONS = ["HGate_matrixdot", "CRzGate_matrixdot"]
+GATE_KERNEL_FUNCTIONS = ["HGate_matrixdot", "CRzGate_matrixdot", "MeasureGate_Measure"]
 PROXY_GATE_FUNCTIONS = ["CRzGate_matrixdot_pb", "CRzGate_matrixdot_pc", "CRzGate_matrixdot_pt"]
 
 
