@@ -3,47 +3,24 @@
 # @TIME    : 2020/8/22 2:39
 # @Author  : Han Yu
 # @File    : _synthesis.py
-from typing import *
 
-import numpy as np
+from abc import ABC, abstractclassmethod
 
-from QuICT.core.exception import TypeException
-from QuICT.core import Circuit, Qubit, Qureg, CompositeGate
+class Synthesis(ABC):
+    """ Synthesize gates with some basic gates
 
-
-class Synthesis(object):
-    """ synthesis some oracle into BasicGate
-
-    In general, these BasicGates are one-qubit gates and two-qubit gates.
-
-    in _gate.py, we define a class named gateModel, which is similar with this class.
-    The difference of them is that gateModel describes simple and widely accepted to a certain extent.
-    And this class describes harder synthesis method, some of which may have a lot room to improve.
-
-    When users use the synthesis method, it should be similar with class gateModel. So the attributes and
-    API is similar with class gateModel.
-
-    Note that all subClass must overloaded the function "__call__".
+    In general, these basic gates are one-qubit gates and two-qubit gates.
+    Note that all subclass must overload the function "execute".
     """
-
-    def __init__(self, _fn: Callable):
-        self._synthesisFunction = _fn
-
-    def __call__(self, *args, **kwargs):
-        """
+    @abstractclassmethod
+    def execute(cls, *args, **kwargs):
+        """ Synthesis process to be implemented
 
         Args:
             *args: arguments
-            **kwargs: key word arguments
-        """
-        return self._synthesisFunction(*args, **kwargs)
+            **kwargs: keyword arguments
 
-    # def _synthesisFuncion(*pargs):
-    #     """
-    #
-    #     Args:
-    #         *pargs: parameters
-    #     Returns:
-    #         CompositeGate: the list of results
-    #     """
-    #     raise Exception('"__call__" function must be overloaded')
+        Raises:
+            NotImplementedError: If it is not implemented.
+        """
+        raise NotImplementedError

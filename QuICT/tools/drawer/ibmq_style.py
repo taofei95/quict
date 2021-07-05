@@ -26,7 +26,7 @@ class DefaultStyle:
         self.lc = '#000000'
         self.not_gate_lc = '#ffffff'
         self.cc = '#778899'
-        self.gc = '#ffffff'
+        self.gc = other_color
         self.gt = '#000000'
         self.bc = '#bdbdbd'
         self.bg = '#ffffff'
@@ -55,8 +55,9 @@ class DefaultStyle:
             'reset': '\\left|0\\right\\rangle',
             'barrier' : 'barrier',
             'Permutation gate' : 'perm',
-            'Unitary gate' : 'unitary',
-            'phase' : 'phase'
+            'Unitary gate': 'unitary',
+            'phase': 'phase',
+            'Custom gate' : 'custom'
         }
         self.dispcol = {
             'u0': basis_color,
@@ -84,7 +85,8 @@ class DefaultStyle:
             'meas': non_gate_color,
             'Permutation gate' : other_color,
             'Unitary gate' : other_color,
-            'phase' : other_color
+            'phase' : other_color,
+            'Custom gate' : other_color
         }
         self.latexmode = False
         self.fold = None  # To be removed after 0.10 is released

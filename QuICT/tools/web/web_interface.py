@@ -96,6 +96,7 @@ class WebInterface(object):
     @staticmethod
     def output_object(circuit : Circuit):
         """ transform circuit form to js data dict
+
         Args:
 
         Returns:
@@ -133,7 +134,7 @@ class WebInterface(object):
         """
         circuit = WebInterface.load_object(ast)
         if method == "CNOT_Rz":
-            circuit = TopologicalCnotRz.run(circuit)
+            circuit = TopologicalCnotRz.execute(circuit)
         else:
             raise Exception("it is not supported now")
         return WebInterface.output_object(circuit)

@@ -1,5 +1,6 @@
 /dist/
 /build/
+**/build
 venv/
 /QuICT.egg-info/
 __pycache__/
@@ -11,9 +12,13 @@ __pycache__/
 /source/
 make.bat
 .idea
-*/*.jpg
+example/python/*.jpg
 .vscode
+.test_build
 _build
 .ipynb_checkpoints
 cmake-build*/
 QuICT/qcda/simulation/backends/*.txt
+*qubit_cnot.json
+*qubit_cnot.inf
+*qubit_cnot_depth.inf

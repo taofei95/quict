@@ -3,7 +3,7 @@ from scipy.linalg import cossin
 from scipy.linalg import block_diag
 from QuICT.core import *
 from QuICT.algorithm import SyntheticalUnitary
-from ...uniformly_gate.uniformly_rotation import uniformlyRy
+from QuICT.qcda.synthesis.uniformly_gate import UniformlyRy
 
 
 def test_csd():
@@ -19,7 +19,7 @@ def test_csd():
         angle_list *= 2  # Ry gate use its angle as theta/2
 
         circuit_2 = Circuit(n)
-        gates = uniformlyRy(
+        gates = UniformlyRy.execute(
             angle_list=angle_list,
             mapping=[(i + 1) % n for i in range(n)]
         )

@@ -18,6 +18,7 @@ class Amplitude(Algorithm):
     @classmethod
     def run(cls, circuit : Circuit, ancilla = None):
         """
+
         Args:
             circuit(Circuit)
             ancilla(list<int>): the indexes of ancillary qubits
@@ -35,6 +36,7 @@ class Amplitude(Algorithm):
     @staticmethod
     def _run(circuit: Circuit, ancilla = None):
         """
+
         Args:
             circuit(Circuit)
             ancilla(list<int>): the indexes of ancillary qubits
@@ -43,10 +45,10 @@ class Amplitude(Algorithm):
         dll = systemCdll.quick_operator_cdll
         amplitude_cheat_operator = dll.amplitude_cheat_operator
         amplitude_cheat_operator.argtypes = [
-            np.ctypeslib.ndpointer(dtype=np.complex64, ndim=1, flags="C_CONTIGUOUS"),
-            np.ctypeslib.ndpointer(dtype=np.int32, ndim=1, flags="C_CONTIGUOUS"),
+            np.ctypeslib.ndpointer(dtype=np.complex128, ndim=1, flags="C_CONTIGUOUS"),
+            np.ctypeslib.ndpointer(dtype=np.int64, ndim=1, flags="C_CONTIGUOUS"),
             c_int,
-            np.ctypeslib.ndpointer(dtype=np.int32, ndim=1, flags="C_CONTIGUOUS"),
+            np.ctypeslib.ndpointer(dtype=np.int64, ndim=1, flags="C_CONTIGUOUS"),
         ]
 
         length = 1 << (circuit.circuit_width() - len(ancilla))
@@ -54,9 +56,9 @@ class Amplitude(Algorithm):
         amplitude_cheat_operator.restype = np.ctypeslib.ndpointer(dtype=np.complex64, shape=(length,))
 
         tangle_list = []
-        tangle_values = np.array([], dtype=np.complex64)
-        tangle_length = np.array([], dtype=np.int32)
-        qubit_map     = np.array([i for i in range(circuit.circuit_width() - len(ancilla))], dtype=np.int32)
+        tangle_values = np.array([], dtype=np.complex128)
+        tangle_length = np.array([], dtype=np.int64)
+        qubit_map     = np.array([i for i in range(circuit.circuit_width() - len(ancilla))], dtype=np.int64)
 
         tangle_iter = 0
         q_index = 0
