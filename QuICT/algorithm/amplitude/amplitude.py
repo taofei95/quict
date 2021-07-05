@@ -53,7 +53,7 @@ class Amplitude(Algorithm):
 
         length = 1 << (circuit.circuit_width() - len(ancilla))
 
-        amplitude_cheat_operator.restype = np.ctypeslib.ndpointer(dtype=np.complex64, shape=(length,))
+        amplitude_cheat_operator.restype = np.ctypeslib.ndpointer(dtype=np.complex128, shape=(length,))
 
         tangle_list = []
         tangle_values = np.array([], dtype=np.complex128)

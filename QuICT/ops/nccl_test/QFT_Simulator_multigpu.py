@@ -30,12 +30,10 @@ def worker(uid, ndevs, dev_id, qubits, QFT_number):
     simulator = ProxySimulator(
         proxy,
         circuit,
-        precision=np.complex128,
+        precision=np.complex64,
         device=dev_id
     )
-
     _ = simulator.run()
-
     e_time = time()
 
     print(f"finish with {qubits} qubits, spending time {e_time - s_time}")

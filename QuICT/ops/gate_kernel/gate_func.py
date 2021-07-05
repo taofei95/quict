@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 # -*- coding:utf8 -*-
 
-import numpy as np
 import cupy as cp
+import numpy as np
 
 import random
 

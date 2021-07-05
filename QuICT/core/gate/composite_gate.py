@@ -344,7 +344,7 @@ class CompositeGate(list):
                 else:
                     max_qubit = max(max_qubit, arg)
         if min_qubit == -1:
-            return np.eye(2, dtype=np.complex64)
+            return np.eye(2, dtype=np.complex128)
 
         if local:
             q_len = max_qubit - min_qubit + 1
@@ -353,10 +353,10 @@ class CompositeGate(list):
 
         n = 1 << q_len
 
-        result = np.eye(n, dtype=np.complex64)
+        result = np.eye(n, dtype=np.complex128)
 
         for gate in self.gates:
-            new_values = np.zeros((n, n), dtype=np.complex64)
+            new_values = np.zeros((n, n), dtype=np.complex128)
             targs = gate.affectArgs
             for i in range(len(targs)):
                 targs[i] -= min_qubit

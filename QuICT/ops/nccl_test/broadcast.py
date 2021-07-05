@@ -11,7 +11,6 @@ from QuICT.ops.utils import Proxy
 
 def client(uid, dev_id):
     proxy = Proxy(ndevs=3, uid=uid, rank=dev_id)
-
     recvbuf = cp.zeros(15, dtype=cp.complex64)
     
     # Broadcast
@@ -22,7 +21,6 @@ def client(uid, dev_id):
 
 def server(uid):
     proxy = Proxy(ndevs=3, uid=uid, rank=0)
-
     based_data = np.arange(15).astype(np.complex64)
     gpu_bd = cp.array(based_data)
 

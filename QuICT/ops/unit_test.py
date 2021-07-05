@@ -124,7 +124,8 @@ class TestGPULinalg(unittest.TestCase):
                 vec,
                 qubit_num,
                 np.array(gate.affectArgs, dtype=np.int32),
-                auxiliary_vec=anc
+                auxiliary_vec=anc,
+                sync=True
             )
             anc, vec = vec, anc
 

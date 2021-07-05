@@ -118,7 +118,7 @@ def inner_matrix_product_to_circuit(circuit, gate) -> np.ndarray:
     q_len = len(circuit.qubits)
     n = 1 << len(circuit.qubits)
 
-    new_values = np.zeros((n, n), dtype=np.complex64)
+    new_values = np.zeros((n, n), dtype=np.complex128)
     targs = gate.targs
     cargs = gate.cargs
     if not isinstance(targs, list):

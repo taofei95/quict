@@ -34,7 +34,8 @@ class ProxySimulator(BasicSimulator):
         self.switch_data = False
 
         # Initial simulator with limit_qubits
-        BasicSimulator.__init__(self, circuit, precision, device, qubits=self.limit_qubits)
+        BasicSimulator.__init__(self, circuit, precision, device)
+        self.qubits = self.limit_qubits
         self.initial_vector_state()
 
         # Initial the required algorithm.
