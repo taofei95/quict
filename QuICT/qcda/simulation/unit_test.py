@@ -7,8 +7,6 @@
 from QuICT.algorithm import SyntheticalUnitary
 from QuICT.core import *
 
-from QuICT.ops.linalg import *
-
 from ._simulation import BasicSimulator
 
 
@@ -20,14 +18,3 @@ def test_pretreatment():
     pretreatment.print_information()
     unitary2 = pretreatment.matrix()
     assert np.allclose(unitary1, unitary2)
-
-def test_permutation():
-    array = np.array([
-        [0, 0, 1, 0],
-        [0, 1, 0, 0],
-        [1, 0, 0, 0],
-        [0, 0, 0, 1]
-    ], dtype=np.complex64)
-    new_array = MatrixPermutation(array, np.array([1, 0]))
-    print(new_array)
-    assert not np.allclose(new_array, array)

@@ -5,6 +5,9 @@ import numpy as np
 import cupy as cp
 
 
+__outward_functions = ["CRzGate_matrixdot_pb", "CRzGate_matrixdot_pc", "CRzGate_matrixdot_pt"]
+
+
 CRZGate_kernel_special_sd = cp.RawKernel(r'''
     #include <cupy/complex.cuh>
     extern "C" __global__

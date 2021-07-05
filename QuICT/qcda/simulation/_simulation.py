@@ -8,7 +8,7 @@ from functools import lru_cache
 
 from QuICT.core import *
 from QuICT.ops.linalg.gpu_calculator import dot, MatrixPermutation
-from QuICT.qcda.simulation.utils.gate_based import GateMatrixs
+from QuICT.qcda.simulation.utils import GateMatrixs
 
 
 # tool function
@@ -102,6 +102,10 @@ class BasicSimulator(object):
     @property
     def vector(self):
         return self._vector
+
+    @vector.setter
+    def vector(self, vec):
+        self._vector = vec
 
     @property
     def device(self):

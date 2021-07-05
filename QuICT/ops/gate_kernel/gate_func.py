@@ -6,6 +6,10 @@ import cupy as cp
 
 import random
 
+
+__outward_functions = ["HGate_matrixdot", "CRzGate_matrixdot", "MeasureGate_Measure"]
+
+
 prop_add = cp.ElementwiseKernel(
     'T x, raw T y, int32 index', 'T z',
     'z = (i & index) ? 0 : abs(x) * abs(x)',

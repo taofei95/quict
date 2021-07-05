@@ -3,8 +3,6 @@ import importlib
 
 DEVICE_LIST = ["CPU", "GPU"]
 BASED_LINALG = ["dot", "tensor", "MatrixTensorI", "MatrixPermutation", "VectorPermutation", "matrix_dot_vector"]
-GATE_KERNEL_FUNCTIONS = ["HGate_matrixdot", "CRzGate_matrixdot", "MeasureGate_Measure"]
-PROXY_GATE_FUNCTIONS = ["CRzGate_matrixdot_pb", "CRzGate_matrixdot_pc", "CRzGate_matrixdot_pt"]
 
 
 class LinAlgLoader:
@@ -32,6 +30,7 @@ class LinAlgLoader:
 
         if extra_gate:
             gate_lib = importlib.import_module('QuICT.ops.gate_kernel.gate_func')
+            GATE_KERNEL_FUNCTIONS = gate_lib.__dict__["__outward_functions"]
 
             for attr, value in gate_lib.__dict__.items():
                 if attr in GATE_KERNEL_FUNCTIONS:
@@ -39,6 +38,7 @@ class LinAlgLoader:
 
         if extra_proxy:
             proxy_lib = importlib.import_module('QuICT.ops.gate_kernel.proxy_gate_func')
+            PROXY_GATE_FUNCTIONS = proxy_lib.__dict__["__outward_functions"]
 
             for attr, value in proxy_lib.__dict__.items():
                 if attr in PROXY_GATE_FUNCTIONS:

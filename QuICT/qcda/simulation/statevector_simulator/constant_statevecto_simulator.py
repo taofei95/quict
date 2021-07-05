@@ -94,4 +94,4 @@ class ConstantStateVectorSimulator(BasicSimulator):
                 aux,
                 self._sync
             )
-            self._vector = aux
+            self.vector = aux
