@@ -38,9 +38,14 @@ add_executable(sim_back_test simulation_backends_test.cpp gate.h monotune_simula
 target_link_libraries(sim_back_test gtest_main)
 
 add_executable(sim_back_perf simulation_backends_perf.cpp gate.h monotune_simulator.h utility.h
-        ../../../../QuICT/utility/extern/googletest/googletest/src/gtest_main.cc hybrid_simulator.h)
+        ../../../../QuICT/utility/extern/googletest/googletest/src/gtest_main.cc hybrid_simulator.h miscllaneous_test.cpp)
 target_link_libraries(sim_back_perf gtest_main)
+
+add_executable(misc_test miscllaneous_test.cpp  gate.h monotune_simulator.h utility.h
+        ../../../../QuICT/utility/extern/googletest/googletest/src/gtest_main.cc hybrid_simulator.h)
+target_link_libraries(misc_test gtest_main)
 
 set_target_properties(sim_back PROPERTIES LINKER_LANGUAGE CXX)
 set_target_properties(sim_back_test PROPERTIES LINKER_LANGUAGE CXX)
 set_target_properties(sim_back_perf PROPERTIES LINKER_LANGUAGE CXX)
+set_target_properties(misc_test PROPERTIES LINKER_LANGUAGE CXX)

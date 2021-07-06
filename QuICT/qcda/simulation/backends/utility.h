@@ -9,12 +9,26 @@
 #include <array>
 #include <complex>
 #include <type_traits>
+#include <chrono>
 
 #ifndef OMP_NPROC
 #define OMP_NPROC 4
 #endif
 
 namespace QuICT {
+    //* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+    // Time Measurement
+    //* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+    template<typename callable_t, typename ...arg_t, typename time_unit=std::chrono::microseconds>
+    uint64_t time_elapse(callable_t callable, arg_t ... args) {
+        using namespace std;
+        auto start_time = chrono::steady_clock::now();
+        callable(args...);
+        auto end_time = chrono::steady_clock::now();
+        auto cnt = chrono::duration_cast<time_unit>(end_time - start_time).count();
+        return cnt;
+    }
+
 
     //* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
     // Template Class Derive Check Helpers
@@ -71,20 +85,10 @@ namespace QuICT {
     // Helper functions to create indices array
     //* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
-    inline uarray_t<2> index(
-            const uint64_t task_id,
-            const uint64_t qubit_num,
-            const uint64_t targ
-    ) {
-        uarray_t<2> ret = uarray_t<2>();
-        uint64_t pos = qubit_num - 1 - targ;
-        uint64_t tail = task_id & ((1ULL << pos) - 1);
-        ret[0] = task_id >> pos << (pos + 1) | tail;
-        ret[1] = ret[0] | (1ULL << pos);
-        return ret;
-    }
-
-    template<uint64_t N>
+    template<
+            uint64_t N,
+            typename std::enable_if<(N > 1), int>::type dummy = 0
+    >
     inline uarray_t<1ULL << N> index(
             const uint64_t task_id,
             const uint64_t qubit_num,
@@ -115,6 +119,22 @@ namespace QuICT {
     }
 
 
+    template<
+            uint64_t N = 1,
+            typename std::enable_if<(N == 1), int>::type dummy = 0
+    >
+    inline uarray_t<2> index(
+            const uint64_t task_id,
+            const uint64_t qubit_num,
+            const uint64_t targ
+    ) {
+        uarray_t<2> ret = uarray_t<2>();
+        uint64_t pos = qubit_num - 1 - targ;
+        uint64_t tail = task_id & ((1ULL << pos) - 1);
+        ret[0] = task_id >> pos << (pos + 1) | tail;
+        ret[1] = ret[0] | (1ULL << pos);
+        return ret;
+    }
 }
 
 #endif //SIMULATION_BACKENDS_UTILITY_H
