@@ -181,7 +181,7 @@ namespace QuICT {
                 uint64_t task_num = 1ULL << (qubit_num_ - Gate::gate_qubit_num<gate_t>::value);
 
 
-#pragma omp parallel for num_threads(OMP_NPROC)
+#pragma omp parallel for
                 for (uint64_t task_id = 0; task_id < task_num; ++task_id) {
                     apply_gate_single_task(task_id, gate);
                 }
@@ -195,7 +195,7 @@ namespace QuICT {
                 }
 
 
-#pragma omp parallel for num_threads(OMP_NPROC)
+#pragma omp parallel for
                 for (uint64_t task_id = 0; task_id < task_num; task_id += batch_size) {
                     apply_gate_batch_task<batch_size, gate_t>(task_id, gate);
                 }
@@ -207,21 +207,40 @@ namespace QuICT {
                                              "Too few qubits to run in avx mode");
                 }
                 if constexpr(std::is_same<Gate::HGate<precision_t>, gate_t>::value) {
-                    constexpr uint64_t batch_size = 2;
+                    constexpr uint64_t batch_size = 4;
+                    auto c = gate.sqrt2_inv.real();
+                    double cc[4] = {c, c, c, c};
+                    __m256d ymm0 = _mm256_loadu_pd(cc);  // 1/sqrt2 * (1, -1, 1, -1)
 
-
-#pragma omp parallel for num_threads(OMP_NPROC)
+#pragma omp parallel for
                     for (uint64_t task_id = 0; task_id < task_num; task_id += batch_size) {
-                        apply_gate_avx_task(task_id, gate);
+                        apply_gate_avx_task(task_id, gate, ymm0);
                     }
 
                 } else if constexpr(std::is_same<Gate::CrzGate<precision_t>, gate_t>::value) {
-                    constexpr uint64_t batch_size = 2;
+                    constexpr uint64_t batch_size = 4;
+                    __m256d ymmRE = _mm256_setr_pd(
+                        gate.diagonal_[0].real(),
+                        gate.diagonal_[1].real(),
+                        gate.diagonal_[0].real(),
+                        gate.diagonal_[1].real()
+                    );
+                    __m256d ymmIM = _mm256_setr_pd(
+                        gate.diagonal_[0].imag(),
+                        gate.diagonal_[1].imag(),
+                        gate.diagonal_[0].imag(),
+                        gate.diagonal_[1].imag()
+                    );
 
+                    uarray_t<2> qubits = {gate.carg_, gate.targ_};
+                    uarray_t<2> qubits_sorted = {gate.carg_, gate.targ_};
+                    if (qubits_sorted[0] > qubits_sorted[1]) {
+                        std::swap(qubits_sorted[0], qubits_sorted[1]);
+                    }
 
-#pragma omp parallel for num_threads(OMP_NPROC)
+#pragma omp parallel for
                     for (uint64_t task_id = 0; task_id < task_num; task_id += batch_size) {
-                        apply_gate_avx_task(task_id, gate);
+                        apply_gate_avx_task(task_id, ymmRE, ymmIM, qubits, qubits_sorted);
                     }
 
                 } else {
@@ -239,7 +258,7 @@ namespace QuICT {
                     constexpr uint64_t batch_size = 2;
 
 
-#pragma omp parallel for num_threads(OMP_NPROC)
+#pragma omp parallel for
                     for (uint64_t task_id = 0; task_id < task_num; task_id += batch_size) {
                         apply_gate_fma_task(task_id, gate);
                     }
@@ -248,7 +267,7 @@ namespace QuICT {
                     constexpr uint64_t batch_size = 2;
 
 
-#pragma omp parallel for num_threads(OMP_NPROC)
+#pragma omp parallel for
                     for (uint64_t task_id = 0; task_id < task_num; task_id += batch_size) {
                         apply_gate_fma_task(task_id, gate);
                     }
@@ -351,7 +370,8 @@ namespace QuICT {
 
         inline void apply_gate_avx_task(
                 const uint64_t task_id,
-                const Gate::HGate<precision_t> &gate
+                const Gate::HGate<precision_t> &gate,
+                const __m256d &ymmCC
         ) {
             // AVX256 can perform 8 32-bit floating operations or 4 64-bit operations at once
             if constexpr(std::is_same<precision_t, float>::value) {
@@ -359,9 +379,9 @@ namespace QuICT {
             } else if constexpr(std::is_same<precision_t, double>::value) {
                 auto ind_a = index(task_id, qubit_num_, gate.targ_);
                 auto ind_b = index(task_id + 1, qubit_num_, gate.targ_);
-                double res_re[4], res_im[4];
-                auto c = gate.sqrt2_inv.real();
-                double cc[4] = {c, -c, c, -c};
+                auto ind_c = index(task_id + 2, qubit_num_, gate.targ_);
+                auto ind_d = index(task_id + 3, qubit_num_, gate.targ_);
+                double res_0re[4], res_0im[4], res_1re[4], res_1im[4];
 
                 /*
                  *            ┎         ┒   ┎    ┒      ┎                ┒
@@ -378,63 +398,68 @@ namespace QuICT {
                  * */
 
 
-                _mm256_zeroupper();
+                // _mm256_zeroupper();
 
-                __m256d ymm0 = _mm256_loadu_pd(cc);  // 1/sqrt2 * (1, -1, 1, -1)
                 __m256d ymm1 = _mm256_setr_pd(
                         state_vector_[ind_a[0]].real(),
-                        state_vector_[ind_a[0]].real(),
                         state_vector_[ind_b[0]].real(),
-                        state_vector_[ind_b[0]].real()
+                        state_vector_[ind_c[0]].real(),
+                        state_vector_[ind_d[0]].real()
                 );
                 __m256d ymm2 = _mm256_setr_pd(
                         state_vector_[ind_a[1]].real(),
-                        state_vector_[ind_a[1]].real(),
                         state_vector_[ind_b[1]].real(),
-                        state_vector_[ind_b[1]].real()
+                        state_vector_[ind_c[1]].real(),
+                        state_vector_[ind_d[1]].real()
                 );
                 __m256d ymm3 = _mm256_setr_pd(
                         state_vector_[ind_a[0]].imag(),
-                        state_vector_[ind_a[0]].imag(),
                         state_vector_[ind_b[0]].imag(),
-                        state_vector_[ind_b[0]].imag()
+                        state_vector_[ind_c[0]].imag(),
+                        state_vector_[ind_d[0]].imag()
                 );
                 __m256d ymm4 = _mm256_setr_pd(
                         state_vector_[ind_a[1]].imag(),
-                        state_vector_[ind_a[1]].imag(),
                         state_vector_[ind_b[1]].imag(),
-                        state_vector_[ind_b[1]].imag()
+                        state_vector_[ind_c[1]].imag(),
+                        state_vector_[ind_d[1]].imag()
                 );
 
-                __m256d ymm5 = _mm256_mul_pd(ymm0, ymm2);
-                __m256d ymm6 = _mm256_mul_pd(ymm0, ymm4);
-                ymm5 = _mm256_add_pd(ymm1, ymm5);
-                ymm6 = _mm256_add_pd(ymm3, ymm6);
-                _mm256_storeu_pd(res_re, ymm5);
-                _mm256_storeu_pd(res_im, ymm6);
-                _mm256_zeroupper();
+                __m256d ymm5 = _mm256_mul_pd(ymmCC, ymm2);
+                __m256d ymm6 = _mm256_mul_pd(ymmCC, ymm4);
+                __m256d ymm0r = _mm256_add_pd(ymm1, ymm5);
+                __m256d ymm1r = _mm256_sub_pd(ymm1, ymm5);
+                __m256d ymm0i = _mm256_add_pd(ymm3, ymm6);
+                __m256d ymm1i = _mm256_sub_pd(ymm3, ymm6);
+                _mm256_storeu_pd(res_0re, ymm0r);
+                _mm256_storeu_pd(res_1re, ymm1r);
+                _mm256_storeu_pd(res_0im, ymm0i);
+                _mm256_storeu_pd(res_1im, ymm1i);
+                
+                // _mm256_zeroupper();
                 // combine
-                state_vector_[ind_a[0]] = {res_re[0], res_im[0]};
-                state_vector_[ind_a[1]] = {res_re[1], res_im[1]};
-                state_vector_[ind_b[0]] = {res_re[2], res_im[2]};
-                state_vector_[ind_b[1]] = {res_re[3], res_im[3]};
+                state_vector_[ind_a[0]] = {res_0re[0], res_0im[0]};
+                state_vector_[ind_b[0]] = {res_0re[1], res_0im[0]};
+                state_vector_[ind_c[0]] = {res_0re[2], res_0im[0]};
+                state_vector_[ind_d[0]] = {res_0re[3], res_0im[0]};
+                state_vector_[ind_a[1]] = {res_1re[0], res_1im[0]};
+                state_vector_[ind_b[1]] = {res_1re[1], res_1im[1]};
+                state_vector_[ind_c[1]] = {res_1re[2], res_1im[2]};
+                state_vector_[ind_d[1]] = {res_1re[3], res_1im[3]};
             }
         }
 
         inline void apply_gate_avx_task(
                 const uint64_t task_id,
-                const Gate::CrzGate<precision_t> &gate
+                const __m256d &ymmRE,
+                const __m256d &ymmIM,
+                uarray_t<2> qubits,
+                uarray_t<2> qubits_sorted
         ) {
             if constexpr(std::is_same<precision_t, float>::value) {
                 throw std::runtime_error("Not implemented for 32-bit avx simulation mode");
             } else if constexpr(std::is_same<precision_t, double>::value) {
                 // 1 crz results 2 64-bit op, then 4 64-bit op realize 2 crz
-
-                uarray_t<2> qubits = {gate.carg_, gate.targ_};
-                uarray_t<2> qubits_sorted = {gate.carg_, gate.targ_};
-                if (qubits_sorted[0] > qubits_sorted[1]) {
-                    std::swap(qubits_sorted[0], qubits_sorted[1]);
-                }
                 auto ind_a = index(task_id, qubit_num_, qubits, qubits_sorted);
                 auto ind_b = index(task_id + 1, qubit_num_, qubits, qubits_sorted);
                 double res_re[4], res_im[4];
@@ -455,42 +480,30 @@ namespace QuICT {
                  * */
 
                 // d * v == (d_re * v_re - d_im * v_im) + (d_re * v_im + d_im * v_re) * 1j
-                _mm256_zeroupper();
+                // _mm256_zeroupper();
 
-                __m256d ymm0 = _mm256_setr_pd(
-                        gate.diagonal_[0].real(),
-                        gate.diagonal_[1].real(),
-                        gate.diagonal_[0].real(),
-                        gate.diagonal_[1].real()
-                );
-                __m256d ymm1 = _mm256_setr_pd(
-                        gate.diagonal_[0].imag(),
-                        gate.diagonal_[1].imag(),
-                        gate.diagonal_[0].imag(),
-                        gate.diagonal_[1].imag()
-                );
                 __m256d ymm2 = _mm256_setr_pd(
                         state_vector_[ind_a[2]].real(),
                         state_vector_[ind_a[3]].real(),
                         state_vector_[ind_b[2]].real(),
-                        state_vector_[ind_a[3]].real()
+                        state_vector_[ind_b[3]].real()
                 );
                 __m256d ymm3 = _mm256_setr_pd(
                         state_vector_[ind_a[2]].imag(),
                         state_vector_[ind_a[3]].imag(),
                         state_vector_[ind_b[2]].imag(),
-                        state_vector_[ind_a[3]].imag()
+                        state_vector_[ind_b[3]].imag()
                 );
 
-                __m256d ymm4 = _mm256_mul_pd(ymm0, ymm2); // d_re * v_re
-                __m256d ymm5 = _mm256_mul_pd(ymm1, ymm3); // d_im * v_im
-                __m256d ymm6 = _mm256_mul_pd(ymm0, ymm3); // d_re * v_im
-                __m256d ymm7 = _mm256_mul_pd(ymm1, ymm2); // d_im * v_re
+                __m256d ymm4 = _mm256_mul_pd(ymmRE, ymm2); // d_re * v_re
+                __m256d ymm5 = _mm256_mul_pd(ymmIM, ymm3); // d_im * v_im
+                __m256d ymm6 = _mm256_mul_pd(ymmRE, ymm3); // d_re * v_im
+                __m256d ymm7 = _mm256_mul_pd(ymmIM, ymm2); // d_im * v_re
                 ymm4 = _mm256_sub_pd(ymm4, ymm5);         // d_re * v_re - d_im * v_im
                 ymm6 = _mm256_add_pd(ymm6, ymm7);         // d_re * v_im + d_im * v_re
                 _mm256_storeu_pd(res_re, ymm4);
                 _mm256_storeu_pd(res_im, ymm6);
-                _mm256_zeroupper();
+                // _mm256_zeroupper();
 
                 // combine
                 state_vector_[ind_a[2]] = {res_re[0], res_im[0]};

@@ -29,18 +29,25 @@ TEST(TypeTraisTest, GateQubitNum) {
 }
 
 TEST(SimTest, RunCheck) {
-    auto simulator = MonoTuneSimulator<double>();
+    using namespace std;
+
+    auto simulator = MonoTuneSimulator<double, SimulatorMode::avx>();
     auto diagonal = new std::complex<double>[2];
     diagonal[0] = 1, diagonal[1] = -1;
     simulator.append_gate("h", {0}, 0, 0);
     simulator.append_gate("crz", {0, 1}, 0, diagonal);
     auto state = new std::complex<double>[1ULL << 10];
+    state[0] = complex<double>(1, 0);
     simulator.run(10, state);
+
+    for (uint64_t i = 0; i < 10; ++i){
+        cout << state[i] << endl;
+    }
 }
 
 TEST(SimTest, QFTCorrectnessCheck) {
     using namespace std;
-    auto simulator = MonoTuneSimulator<double>();
+    auto simulator = MonoTuneSimulator<double, SimulatorMode::avx>();
 
     fstream fs;
     fs.open("qft.txt", ios::in);
