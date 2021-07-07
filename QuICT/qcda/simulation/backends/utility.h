@@ -98,18 +98,15 @@ namespace QuICT {
         auto ret = uarray_t<1ULL << N>();
         ret[0] = task_id;
 
-#pragma unroll
-        for (uint64_t i = 0; i < N; ++i) {
+        for (int64_t i = N - 1; i >= 0; --i) {
             uint64_t pos = qubit_num - 1 - qubits_sorted[i];
             uint64_t tail = ret[0] & ((1ULL << pos) - 1);
             ret[0] = ret[0] >> pos << (pos + 1) | tail;
         }
 
-#pragma unroll
-        for (uint64_t i = 0; i < N; ++i) {
+        for (int64_t i = 0; i < N; ++i) {
             const auto half_cnt = 1ULL << i;
-            const auto tail = 1ULL << qubits[i];
-#pragma unroll
+            const auto tail = 1ULL << (qubit_num - 1 - qubits[N - 1 - i]);
             for (uint64_t j = 0; j < half_cnt; ++j) {
                 ret[half_cnt + j] = ret[j] | tail;
             }

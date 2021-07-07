@@ -28,10 +28,10 @@ TEST(MiscTest, TimeTest) {
     cout << tm << "[us]" << endl;
 }
 
-TEST(MiscTest, SingleIndexTest) {
+TEST(MiscTest, SingleIndexPerf) {
     using namespace std;
 
-    cout << "[SingleIndexTest]" << endl;
+    cout << "[SingleIndexPerf]" << endl;
     uint64_t rnd = 1e7;
     int qubit_num = 30;
     uint64_t cnt = 0;
@@ -42,10 +42,10 @@ TEST(MiscTest, SingleIndexTest) {
     cout << tps << "[us/op]" << endl;
 }
 
-TEST(MiscTest, MultiIndexTest) {
+TEST(MiscTest, MultiIndexPerf) {
     using namespace std;
 
-    cout << "[MultiIndexTest]" << endl;
+    cout << "[MultiIndexPerf]" << endl;
     uint64_t rnd = 1e7;
     int qubit_num = 30;
     uint64_t cnt = 0;
@@ -59,4 +59,59 @@ TEST(MiscTest, MultiIndexTest) {
     }
     auto tps = 1.0 * cnt / rnd;
     cout << tps << "[us/op]" << endl;
+}
+
+TEST(MiscTest, SingleIndexTest) {
+    using namespace std;
+
+    cout << "[SingleIndexTest]" << endl;
+    uint64_t qubit_num = 20;
+    uint64_t task_num = 1ULL << (qubit_num - 1);
+    uint64_t targ = 3;
+    vector<uint64_t> res_vec;
+    for (uint64_t task_id = 0; task_id < task_num; ++task_id) {
+        auto ind = QuICT::index(task_id, qubit_num, targ);
+        res_vec.push_back(ind[0]);
+        res_vec.push_back(ind[1]);
+    }
+    ASSERT_EQ(1ULL << qubit_num, res_vec.size());
+    sort(res_vec.begin(), res_vec.end());
+    ASSERT_EQ(0, res_vec[0]);
+    for (uint64_t i = 1; i < (1ULL << qubit_num); ++i) {
+        ASSERT_EQ(res_vec[i], res_vec[i - 1] + 1);
+    }
+}
+
+TEST(MiscTest, MultiIndexTest) {
+    using namespace std;
+
+    cout << "[MultiIndexTest]" << endl;
+    uint64_t qubit_num = 20;
+    uint64_t task_num = 1ULL << (qubit_num - 2);
+    QuICT::uarray_t<2> qubits = {6, 3};
+    QuICT::uarray_t<2> qubits_sorted = {3, 6};
+    vector<uint64_t> res_vec;
+    for (uint64_t task_id = 0; task_id < task_num; ++task_id) {
+        auto ind = QuICT::index(task_id, qubit_num, qubits, qubits_sorted);
+        res_vec.push_back(ind[0]);
+        res_vec.push_back(ind[1]);
+        res_vec.push_back(ind[2]);
+        res_vec.push_back(ind[3]);
+    }
+    uint64_t mask01 = (1ULL << (qubit_num - 1 - qubits[1]));
+    uint64_t mask10 = (1ULL << (qubit_num - 1 - qubits[0]));
+    uint64_t mask11 = (1ULL << (qubit_num - 1 - qubits[1])) | (1UL << (qubit_num - 1 - qubits[0]));
+
+    ASSERT_EQ(1ULL << qubit_num, res_vec.size());
+    ASSERT_EQ(0, res_vec[0]);
+    ASSERT_EQ(res_vec[1], mask01);
+    ASSERT_EQ(res_vec[2], mask10);
+    ASSERT_EQ(res_vec[3], mask11);
+
+    sort(res_vec.begin(), res_vec.end());
+
+
+    for (uint64_t i = 1; i < (1ULL << qubit_num); ++i) {
+        ASSERT_EQ(res_vec[i], res_vec[i - 1] + 1) << "i = " << i;
+    }
 }
