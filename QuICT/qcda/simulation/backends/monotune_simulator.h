@@ -160,7 +160,7 @@ namespace QuICT {
                 uint64_t task_num = 1ULL << (qubit_num_ - Gate::gate_qubit_num<gate_t>::value);
 
 
-#pragma omp parallel for num_threads(OMP_NPROC)
+#pragma omp parallel for 
                 for (uint64_t task_id = 0; task_id < task_num; ++task_id) {
                     apply_gate_single_task(task_id, gate);
                 }
@@ -174,7 +174,7 @@ namespace QuICT {
                 }
 
 
-#pragma omp parallel for num_threads(OMP_NPROC)
+#pragma omp parallel for 
                 for (uint64_t task_id = 0; task_id < task_num; task_id += batch_size) {
                     apply_gate_batch_task<batch_size, gate_t>(task_id, gate);
                 }
@@ -189,7 +189,7 @@ namespace QuICT {
                     constexpr uint64_t batch_size = 4;
 
 
-#pragma omp parallel for num_threads(OMP_NPROC)
+#pragma omp parallel for 
                     for (uint64_t task_id = 0; task_id < task_num; task_id += batch_size) {
                         apply_gate_avx_task(task_id, gate);
                         apply_gate_avx_task(task_id + 2, gate);
@@ -199,7 +199,7 @@ namespace QuICT {
                     constexpr uint64_t batch_size = 4;
 
 
-#pragma omp parallel for num_threads(OMP_NPROC)
+#pragma omp parallel for 
                     for (uint64_t task_id = 0; task_id < task_num; task_id += batch_size) {
                         apply_gate_avx_task(task_id, gate);
                         apply_gate_avx_task(task_id + 2, gate);
@@ -220,7 +220,7 @@ namespace QuICT {
                     constexpr uint64_t batch_size = 4;
 
 
-#pragma omp parallel for num_threads(OMP_NPROC)
+#pragma omp parallel for 
                     for (uint64_t task_id = 0; task_id < task_num; task_id += batch_size) {
                         apply_gate_fma_task(task_id, gate);
                         apply_gate_fma_task(task_id + 2, gate);
@@ -230,7 +230,7 @@ namespace QuICT {
                     constexpr uint64_t batch_size = 4;
 
 
-#pragma omp parallel for num_threads(OMP_NPROC)
+#pragma omp parallel for 
                     for (uint64_t task_id = 0; task_id < task_num; task_id += batch_size) {
                         apply_gate_fma_task(task_id, gate);
                         apply_gate_fma_task(task_id + 2, gate);

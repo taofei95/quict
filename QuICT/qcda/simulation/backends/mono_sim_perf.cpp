@@ -54,7 +54,7 @@ inline void perf_simulator(
         uint64_t qubit_num,
         std::vector<QuICT::GateDescription<precision_t>> desc_vec,
         std::complex<precision_t> *state,
-        uint64_t round = 5
+        uint64_t round = 2
 ) {
     using namespace std;
     using namespace chrono;
