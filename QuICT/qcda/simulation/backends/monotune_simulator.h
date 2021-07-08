@@ -348,26 +348,26 @@ namespace QuICT {
                 auto ind_b = index(task_id + 1, qubit_num_, gate.targ_);
                 double res_re[4], res_im[4];
                 auto c = gate.sqrt2_inv.real();
-                double cc[4] = {c, -c, c, -c};
+
 
                 /*
-                 *            ┎         ┒   ┎    ┒      ┎                ┒
-                 *            ┃ 1     1 ┃   ┃ v0 ┃      ┃ v0 + ( C * v1) ┃
-                 *        C * ┃         ┃ * ┃    ┃   =  ┃                ┃
-                 *            ┃ 1    -1 ┃   ┃ v1 ┃      ┃ v0 + (-C * v1) ┃
-                 *            ┖         ┚   ┖    ┚      ┖                ┚
-                 *            ┎         ┒   ┎    ┒      ┎                ┒
-                 *            ┃ 1     1 ┃   ┃ v2 ┃      ┃ v2 + ( C * v3) ┃
-                 *        C * ┃         ┃ * ┃    ┃   =  ┃                ┃
-                 *            ┃ 1    -1 ┃   ┃ v3 ┃      ┃ v2 + (-C * v3) ┃
-                 *            ┖         ┚   ┖    ┚      ┖                ┚
+                 *            ┎         ┒   ┎    ┒         ┎         ┒
+                 *            ┃ 1     1 ┃   ┃ v0 ┃         ┃ v0 + v1 ┃
+                 *        C * ┃         ┃ * ┃    ┃   = C * ┃         ┃
+                 *            ┃ 1    -1 ┃   ┃ v1 ┃         ┃ v0 - v1 ┃
+                 *            ┖         ┚   ┖    ┚         ┖         ┚
+                 *            ┎         ┒   ┎    ┒         ┎         ┒
+                 *            ┃ 1     1 ┃   ┃ v2 ┃         ┃ v2 + v3 ┃
+                 *        C * ┃         ┃ * ┃    ┃   = C * ┃         ┃
+                 *            ┃ 1    -1 ┃   ┃ v3 ┃         ┃ v2 - v3 ┃
+                 *            ┖         ┚   ┖    ┚         ┖         ┚
                  *
                  * */
 
 
                 _mm256_zeroupper();
 
-                __m256d ymm0 = _mm256_loadu_pd(cc);  // 1/sqrt2 * (1, -1, 1, -1)
+                __m256d ymm0 = _mm256_broadcast_sd(&c);  // 1/sqrt2 * (1, 1, 1, 1)
                 __m256d ymm1 = _mm256_setr_pd(
                         state_vector_[ind_a[0]].real(),
                         state_vector_[ind_a[0]].real(),
@@ -376,9 +376,9 @@ namespace QuICT {
                 );
                 __m256d ymm2 = _mm256_setr_pd(
                         state_vector_[ind_a[1]].real(),
-                        state_vector_[ind_a[1]].real(),
+                        -state_vector_[ind_a[1]].real(),
                         state_vector_[ind_b[1]].real(),
-                        state_vector_[ind_b[1]].real()
+                        -state_vector_[ind_b[1]].real()
                 );
                 __m256d ymm3 = _mm256_setr_pd(
                         state_vector_[ind_a[0]].imag(),
@@ -388,15 +388,15 @@ namespace QuICT {
                 );
                 __m256d ymm4 = _mm256_setr_pd(
                         state_vector_[ind_a[1]].imag(),
-                        state_vector_[ind_a[1]].imag(),
+                        -state_vector_[ind_a[1]].imag(),
                         state_vector_[ind_b[1]].imag(),
-                        state_vector_[ind_b[1]].imag()
+                        -state_vector_[ind_b[1]].imag()
                 );
 
-                __m256d ymm5 = _mm256_mul_pd(ymm0, ymm2);
-                __m256d ymm6 = _mm256_mul_pd(ymm0, ymm4);
-                ymm5 = _mm256_add_pd(ymm1, ymm5);
-                ymm6 = _mm256_add_pd(ymm3, ymm6);
+                __m256d ymm5 = _mm256_add_pd(ymm1, ymm2);
+                __m256d ymm6 = _mm256_add_pd(ymm3, ymm4);
+                ymm5 = _mm256_mul_pd(ymm0, ymm5);
+                ymm6 = _mm256_mul_pd(ymm3, ymm6);
                 _mm256_storeu_pd(res_re, ymm5);
                 _mm256_storeu_pd(res_im, ymm6);
                 _mm256_zeroupper();
@@ -497,32 +497,31 @@ namespace QuICT {
         ) {
             if constexpr(std::is_same<precision_t, float>::value) {
                 throw std::runtime_error("Not implemented for 32-bit fma simulation mode");
-            } else if (std::is_same<precision_t, float>::value) {
+            } else if (std::is_same<precision_t, double>::value) {
 
                 auto ind_a = index(task_id, qubit_num_, gate.targ_);
                 auto ind_b = index(task_id + 1, qubit_num_, gate.targ_);
                 double res_re[4], res_im[4];
                 auto c = gate.sqrt2_inv.real();
-                double cc[4] = {c, -c, c, -c};
 
                 /*
-                 *            ┎         ┒   ┎    ┒      ┎                ┒
-                 *            ┃ 1     1 ┃   ┃ v0 ┃      ┃ v0 + ( C * v1) ┃
-                 *        C * ┃         ┃ * ┃    ┃   =  ┃                ┃
-                 *            ┃ 1    -1 ┃   ┃ v1 ┃      ┃ v0 + (-C * v1) ┃
-                 *            ┖         ┚   ┖    ┚      ┖                ┚
-                 *            ┎         ┒   ┎    ┒      ┎                ┒
-                 *            ┃ 1     1 ┃   ┃ v2 ┃      ┃ v2 + ( C * v3) ┃
-                 *        C * ┃         ┃ * ┃    ┃   =  ┃                ┃
-                 *            ┃ 1    -1 ┃   ┃ v3 ┃      ┃ v2 + (-C * v3) ┃
-                 *            ┖         ┚   ┖    ┚      ┖                ┚
+                 *            ┎         ┒   ┎    ┒         ┎         ┒
+                 *            ┃ 1     1 ┃   ┃ v0 ┃         ┃ v0 + v1 ┃
+                 *        C * ┃         ┃ * ┃    ┃   = C * ┃         ┃
+                 *            ┃ 1    -1 ┃   ┃ v1 ┃         ┃ v0 - v1 ┃
+                 *            ┖         ┚   ┖    ┚         ┖         ┚
+                 *            ┎         ┒   ┎    ┒         ┎         ┒
+                 *            ┃ 1     1 ┃   ┃ v2 ┃         ┃ v2 + v3 ┃
+                 *        C * ┃         ┃ * ┃    ┃   = C * ┃         ┃
+                 *            ┃ 1    -1 ┃   ┃ v3 ┃         ┃ v2 - v3 ┃
+                 *            ┖         ┚   ┖    ┚         ┖         ┚
                  *
                  * */
 
 
                 _mm256_zeroupper();
 
-                __m256d ymm0 = _mm256_loadu_pd(cc);  // 1/sqrt2 * (1, -1, 1, -1)
+                __m256d ymm0 = _mm256_broadcast_sd(&c);  // 1/sqrt2 * (1, 1, 1, 1)
                 __m256d ymm1 = _mm256_setr_pd(
                         state_vector_[ind_a[0]].real(),
                         state_vector_[ind_a[0]].real(),
@@ -547,8 +546,10 @@ namespace QuICT {
                         state_vector_[ind_b[1]].imag(),
                         state_vector_[ind_b[1]].imag()
                 );
-                __m256d ymm5 = _mm256_fmadd_pd(ymm0, ymm2, ymm1);  // left + (cc * right)
-                __m256d ymm6 = _mm256_fmadd_pd(ymm0, ymm4, ymm3);  // left + (cc * right)
+                __m256d ymm5 = _mm256_mul_pd(ymm0, ymm2);
+                __m256d ymm6 = _mm256_mul_pd(ymm0, ymm4);
+                ymm5 = _mm256_fmsubadd_pd(ymm0, ymm1, ymm5);
+                ymm6 = _mm256_fmsubadd_pd(ymm0, ymm3, ymm6);
                 _mm256_storeu_pd(res_re, ymm5);
                 _mm256_storeu_pd(res_im, ymm6);
                 _mm256_zeroupper();

@@ -101,6 +101,8 @@ inline void test_multi_simulator_by_file(const char *data_name) {
     test_by_data_file(data_name, batch_simulator);
     test_by_data_file(data_name, avx_simulator);
     test_by_data_file(data_name, fma_simulator);
+
+    cout << endl;
 }
 
 TEST(SimTest, HCorrectnessCheck) {
