@@ -70,14 +70,14 @@ namespace QuICT {
                 std::string qasm_name,
                 std::vector<uint64_t> affect_args,
                 precision_t parg,
-                mat_entry_t<precision_t> *data_ptr
+                mat_entry_t <precision_t> *data_ptr
         ) {
             gate_vec_.emplace_back(GateDescription<precision_t>(
                     qasm_name, affect_args, parg, data_ptr
             ));
         }
 
-        void append_gate(const GateDescription<precision_t> &gate_desc) {
+        void append_gate(const GateDescription <precision_t> &gate_desc) {
             gate_vec_.push_back(gate_desc);
         }
 
@@ -110,6 +110,8 @@ namespace QuICT {
                     apply_gate<Gate::HGate<precision_t>>(gate_desc);
                 } else if (gate_desc.qasm_name_ == "crz") {
                     apply_gate<Gate::CrzGate<precision_t>>(gate_desc);
+                } else if (gate_desc.qasm_name_ == "x") {
+                    apply_gate<Gate::XGate<precision_t>>(gate_desc);
                 } else {
                     throw std::runtime_error(
                             std::string(__FILE__) + ":" + std::to_string(__LINE__) + ": " + "Not implemented gate: " +
@@ -123,7 +125,7 @@ namespace QuICT {
 
         // Transfer gate description into gate
         template<typename gate_t>
-        inline void apply_gate(const GateDescription<precision_t> &gate_desc) {
+        inline void apply_gate(const GateDescription <precision_t> &gate_desc) {
             using namespace Gate;
             using namespace std;
             if constexpr(is_same<HGate<precision_t>, gate_t>::value) {
@@ -137,33 +139,10 @@ namespace QuICT {
                         gate_desc.affect_args_[1],
                         gate_desc.parg_);
                 apply_gate(gate);
-            } else if constexpr(gate_has_mat_repr<gate_t>::value) {
-                const auto gate_qubit_num = gate_desc.affect_args_.size();
-                switch (gate_qubit_num) {
-                    case 1: {
-                        auto gate = UnitaryGateN<1, precision_t>(gate_desc.affect_args_.begin(),
-                                                                 gate_desc.data_ptr_);
-                        apply_gate(gate);
-                        break;
-                    }
-                    case 2: {
-                        auto gate = UnitaryGateN<2, precision_t>(gate_desc.affect_args_.begin(),
-                                                                 gate_desc.data_ptr_);
-                        apply_gate(gate);
-                        break;
-                    }
-                    case 3: {
-                        auto gate = UnitaryGateN<3, precision_t>(gate_desc.affect_args_.begin(),
-                                                                 gate_desc.data_ptr_);
-                        apply_gate(gate);
-                        break;
-                    }
-                    default: {
-                        throw std::runtime_error(
-                                std::string(__FILE__) + ":" + std::to_string(__LINE__) + ": " +
-                                "Not implemented for gate larger than 3");
-                    }
-                }
+            } else if constexpr(is_same<XGate<precision_t>, gate_t>::value) {
+                // X gate
+                auto gate = XGate<precision_t>(gate_desc.affect_args_[0]);
+                apply_gate(gate);
             } else {
                 throw runtime_error("Cannot apply gate for " + gate_desc.qasm_name_);
             }
@@ -308,7 +287,7 @@ namespace QuICT {
         // One task per run.
         inline void apply_gate_single_task(
                 const uint64_t task_id,
-                const Gate::HGate<precision_t> &gate
+                const Gate::HGate <precision_t> &gate
         ) {
             auto ind = index(task_id, qubit_num_, gate.targ_);
             auto tmp_arr_1 = marray_t<precision_t, 2>();
@@ -320,7 +299,7 @@ namespace QuICT {
 
         inline void apply_gate_single_task(
                 const uint64_t task_id,
-                const Gate::CrzGate<precision_t> &gate
+                const Gate::CrzGate <precision_t> &gate
         ) {
             uarray_t<2> qubits = {gate.carg_, gate.targ_};
             uarray_t<2> qubits_sorted = {gate.carg_, gate.targ_};
@@ -332,11 +311,19 @@ namespace QuICT {
             state_vector_[ind[3]] = gate.diagonal_[1] * state_vector_[ind[3]];
         }
 
+        inline void apply_gate_single_task(
+                const uint64_t task_id,
+                const Gate::XGate <precision_t> &gate
+        ) {
+            auto ind = index(task_id, qubit_num_, gate.targ_);
+            std::swap(state_vector_[ind[0]], state_vector_[ind[1]]);
+        }
+
         // Default fallback
         template<uint64_t N>
         inline void apply_gate_single_task(
                 const uint64_t task_id,
-                const Gate::UnitaryGateN<N, precision_t> &gate
+                const Gate::UnitaryGateN <N, precision_t> &gate
         ) {
             if constexpr(N == 1) {
                 auto ind = index(task_id, qubit_num_, gate.targ_);
@@ -645,13 +632,13 @@ namespace QuICT {
                         state_vector_[ind_a[2]].real(),
                         state_vector_[ind_a[3]].real(),
                         state_vector_[ind_b[2]].real(),
-                        state_vector_[ind_a[3]].real()
+                        state_vector_[ind_b[3]].real()
                 );
                 __m256d ymm3 = _mm256_setr_pd(
                         state_vector_[ind_a[2]].imag(),
                         state_vector_[ind_a[3]].imag(),
                         state_vector_[ind_b[2]].imag(),
-                        state_vector_[ind_a[3]].imag()
+                        state_vector_[ind_b[3]].imag()
                 );
                 __m256d ymm4 = _mm256_mul_pd(ymmRE, ymm2);  // d_re * v_re
                 ymm4 = _mm256_fnmadd_pd(ymmIM, ymm3, ymm4); // d_re * v_re - d_im * v_im
@@ -672,7 +659,7 @@ namespace QuICT {
         std::complex<precision_t> *state_vector_ = nullptr;
 //        precision_t *state_vec_sep_re_ = nullptr, *state_vec_sep_im_ = nullptr;
         uint64_t qubit_num_ = 0;
-        std::vector<GateDescription<precision_t>> gate_vec_;
+        std::vector<GateDescription < precision_t>> gate_vec_;
         std::string name_;
     };
 }

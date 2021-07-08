@@ -46,7 +46,7 @@ namespace QuICT {
          * */
         template<uint64_t N>
         struct SimpleGateN {
-            uarray_t<N> affect_args_;
+            uarray_t <N> affect_args_;
 
             template<typename _rand_iter>
             SimpleGateN(_rand_iter qubit_begin, _rand_iter qubit_end) {
@@ -65,8 +65,8 @@ namespace QuICT {
         // Multiple qubit unitary gate
         template<uint64_t N, typename precision_t>
         struct UnitaryGateN {
-            uarray_t<N> affect_args_;
-            mat_entry_t<precision_t> *mat_;
+            uarray_t <N> affect_args_;
+            mat_entry_t <precision_t> *mat_;
 
             template<typename _qubit_iter>
             UnitaryGateN(_qubit_iter qubit_begin, _qubit_iter qubit_end) {
@@ -89,7 +89,7 @@ namespace QuICT {
         template<typename precision_t>
         struct UnitaryGateN<1, precision_t> {
             uint64_t targ_;
-            mat_entry_t<precision_t> *mat_;
+            mat_entry_t <precision_t> *mat_;
 
             UnitaryGateN(uint64_t targ) : targ_(targ) {}
 
@@ -108,8 +108,8 @@ namespace QuICT {
         // Multiple qubit diagonal gate
         template<uint64_t N, typename precision_t>
         struct DiagonalGateN {
-            uarray_t<N> affect_args_;
-            mat_entry_t<precision_t> *diagonal_;
+            uarray_t <N> affect_args_;
+            mat_entry_t <precision_t> *diagonal_;
 
             // this->diagonal_ is initialized by subclasses
             template<typename _qubit_iter>
@@ -123,7 +123,7 @@ namespace QuICT {
         template<typename precision_t>
         struct DiagonalGateN<1, precision_t> {
             uint64_t targ_;
-            mat_entry_t<precision_t> *diagonal_;
+            mat_entry_t <precision_t> *diagonal_;
 
             // this->diagonal_ is initialized by subclasses
 
@@ -197,6 +197,11 @@ namespace QuICT {
             ~ZGate() {
                 delete[] this->diagonal_;
             }
+        };
+
+        template<typename precision_t>
+        struct XGate : SimpleGateN<1> {
+            XGate(uint64_t targ) : SimpleGateN<1>(targ) {}
         };
 
 
