@@ -28,11 +28,15 @@ TEST(TypeTraisTest, GateQubitNum) {
     EXPECT_EQ(2, Gate::gate_qubit_num<decltype(crz_gate)>::value);
 }
 
-template<typename precision_t>
-void test_by_data_file(const char *data_name, MonoTuneSimulator<precision_t> &simulator) {
+template<typename precision_t, QuICT::SimulatorMode sim_mode>
+void test_by_data_file(
+        const char *data_name,
+        MonoTuneSimulator<precision_t, sim_mode> &simulator,
+        double eps = 1e-6
+) {
     using namespace std;
 
-    cout << "Testing by " << data_name << endl;
+    cout << simulator.name() << " " << "Testing by " << data_name << endl;
 
     fstream fs;
     fs.open(data_name, ios::in);
@@ -76,34 +80,39 @@ void test_by_data_file(const char *data_name, MonoTuneSimulator<precision_t> &si
     simulator.run(qubit_num, state);
 
     for (uint64_t i = 0; i < (1ULL << qubit_num); ++i) {
-        ASSERT_LE(fabs(state[i].real() - expect_state[i].real()), 1e-7)
+        ASSERT_LE(fabs(state[i].real() - expect_state[i].real()), eps)
                                     << i << " " << state[i].real() << " " << expect_state[i].real();
-        ASSERT_LE(fabs(state[i].imag() - expect_state[i].imag()), 1e-7)
+        ASSERT_LE(fabs(state[i].imag() - expect_state[i].imag()), eps)
                                     << i << " " << state[i].imag() << " " << expect_state[i].imag();
     }
     delete[] state;
     delete[] expect_state;
 }
 
-TEST(SimTest, HCorrectnessCheck) {
+inline void test_multi_simulator_by_file(const char *data_name) {
     using namespace std;
-    auto simulator = MonoTuneSimulator<double>();
+    using namespace QuICT;
+    auto single_simulator = MonoTuneSimulator<double, SimulatorMode::single>();
+    auto batch_simulator = MonoTuneSimulator<double, SimulatorMode::batch>();
+    auto avx_simulator = MonoTuneSimulator<double, SimulatorMode::avx>();
+    auto fma_simulator = MonoTuneSimulator<double, SimulatorMode::fma>();
 
-    test_by_data_file("h.txt", simulator);
+    test_by_data_file(data_name, single_simulator);
+    test_by_data_file(data_name, batch_simulator);
+    test_by_data_file(data_name, avx_simulator);
+    test_by_data_file(data_name, fma_simulator);
+}
+
+TEST(SimTest, HCorrectnessCheck) {
+    test_multi_simulator_by_file("h.txt");
 }
 
 TEST(SimTest, CrzCorrectnessCheck) {
-    using namespace std;
-    auto simulator = MonoTuneSimulator<double>();
-
-    test_by_data_file("crz.txt", simulator);
+    test_multi_simulator_by_file("crz.txt");
 }
 
 TEST(SimTest, QFTCorrectnessCheck) {
-    using namespace std;
-    auto simulator = MonoTuneSimulator<double>();
-
-    test_by_data_file("qft.txt", simulator);
+    test_multi_simulator_by_file("qft.txt");
 }
 
 
