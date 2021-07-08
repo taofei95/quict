@@ -433,12 +433,14 @@ namespace QuICT {
                         state_vector_[ind_d[1]].imag()
                 );
 
-                __m256d ymm5 = _mm256_mul_pd(ymmCC, ymm2);
-                __m256d ymm6 = _mm256_mul_pd(ymmCC, ymm4);
-                __m256d ymm0r = _mm256_add_pd(ymm1, ymm5);
-                __m256d ymm1r = _mm256_sub_pd(ymm1, ymm5);
-                __m256d ymm0i = _mm256_add_pd(ymm3, ymm6);
-                __m256d ymm1i = _mm256_sub_pd(ymm3, ymm6);
+                __m256d ymm5 = _mm256_mul_pd(ymmCC, ymm1);  // c * v0.real
+                __m256d ymm6 = _mm256_mul_pd(ymmCC, ymm2);  // c * v1.real
+                __m256d ymm7 = _mm256_mul_pd(ymmCC, ymm3);  // c * v0.image
+                __m256d ymm8 = _mm256_mul_pd(ymmCC, ymm4);  // c * v1.image
+                __m256d ymm0r = _mm256_add_pd(ymm5, ymm6);  // c * v0.real + c * v1.real
+                __m256d ymm1r = _mm256_sub_pd(ymm5, ymm6);  // c * v0.real - c * v1.real
+                __m256d ymm0i = _mm256_add_pd(ymm7, ymm8);  // c * v0.image + c * v1.image
+                __m256d ymm1i = _mm256_sub_pd(ymm7, ymm8);  // c * v0.image - c * v1.image
                 _mm256_storeu_pd(res_0re, ymm0r);
                 _mm256_storeu_pd(res_1re, ymm1r);
                 _mm256_storeu_pd(res_0im, ymm0i);
@@ -532,7 +534,7 @@ namespace QuICT {
         ) {
             if constexpr(std::is_same<precision_t, float>::value) {
                 throw std::runtime_error("Not implemented for 32-bit fma simulation mode");
-            } else if (std::is_same<precision_t, float>::value) {
+            } else if (std::is_same<precision_t, double>::value) {
 
                 auto ind_a = index(task_id, qubit_num_, gate.targ_);
                 auto ind_b = index(task_id + 1, qubit_num_, gate.targ_);
@@ -577,10 +579,12 @@ namespace QuICT {
                         state_vector_[ind_c[1]].imag(),
                         state_vector_[ind_d[1]].imag()
                 );
-                __m256d ymm0r = _mm256_fmadd_pd(ymmCC, ymm2, ymm1);  // left + (cc * right)
-                __m256d ymm1r = _mm256_fnmadd_pd(ymmCC, ymm2, ymm1); // left - (cc * right)
-                __m256d ymm0i = _mm256_fmadd_pd(ymmCC, ymm2, ymm1);
-                __m256d ymm1i = _mm256_fnmadd_pd(ymmCC, ymm4, ymm3);  // left - (cc * right)
+                __m256d ymm5 = _mm256_mul_pd(ymmCC, ymm2);  // c * v1.real
+                __m256d ymm0r = _mm256_fmadd_pd(ymmCC, ymm1, ymm5); // (c * v0.real) + ymm5
+                __m256d ymm1r = _mm256_fmsub_pd(ymmCC, ymm1, ymm5); // (c * v0.real) - ymm5
+                __m256d ymm6 = _mm256_mul_pd(ymmCC, ymm4);  // c * v1.image
+                __m256d ymm0i = _mm256_fmadd_pd(ymmCC, ymm3, ymm6); // (c * v0.image) + ymm6
+                __m256d ymm1i = _mm256_fmsub_pd(ymmCC, ymm3, ymm6); // (c * v0.image) - ymm6
                 _mm256_storeu_pd(res_0re, ymm0r);
                 _mm256_storeu_pd(res_1re, ymm1r);
                 _mm256_storeu_pd(res_0im, ymm0i);
@@ -588,9 +592,9 @@ namespace QuICT {
 
                 // combine
                 state_vector_[ind_a[0]] = {res_0re[0], res_0im[0]};
-                state_vector_[ind_b[0]] = {res_0re[1], res_0im[0]};
-                state_vector_[ind_c[0]] = {res_0re[2], res_0im[0]};
-                state_vector_[ind_d[0]] = {res_0re[3], res_0im[0]};
+                state_vector_[ind_b[0]] = {res_0re[1], res_0im[1]};
+                state_vector_[ind_c[0]] = {res_0re[2], res_0im[2]};
+                state_vector_[ind_d[0]] = {res_0re[3], res_0im[3]};
                 state_vector_[ind_a[1]] = {res_1re[0], res_1im[0]};
                 state_vector_[ind_b[1]] = {res_1re[1], res_1im[1]};
                 state_vector_[ind_c[1]] = {res_1re[2], res_1im[2]};
