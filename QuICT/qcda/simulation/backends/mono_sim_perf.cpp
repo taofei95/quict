@@ -104,31 +104,31 @@ inline void perf_all_simulator(
     // batch mode
     perf_simulator(batch_simulator, qubit_num, desc_vec, state);
 
-    // fma_mode
-    perf_simulator(fma_simulator, qubit_num, desc_vec, state);
-
     // avx mode
     perf_simulator(avx_simulator, qubit_num, desc_vec, state);
+
+    // fma mode
+    perf_simulator(fma_simulator, qubit_num, desc_vec, state);
 }
 
-TEST(SimPerf, ModePerfTest) {
-    using namespace std;
-    using namespace QuICT;
-    using namespace chrono;
-    cout << "[ModePerfTest]" << endl;
-    uint64_t qubit_num;
-    auto desc_vec = get_qft_desc<double>(qubit_num);
-    auto state = new complex<double>[1ULL << qubit_num];
-
-    perf_all_simulator(qubit_num, desc_vec, state);
-}
+//TEST(SimPerf, ModePerfTest) {
+//    using namespace std;
+//    using namespace QuICT;
+//    using namespace chrono;
+//    cout << "[ModePerfTest]" << endl;
+//    uint64_t qubit_num;
+//    auto desc_vec = get_qft_desc<double>(qubit_num);
+//    auto state = new complex<double>[1ULL << qubit_num];
+//
+//    perf_all_simulator(qubit_num, desc_vec, state);
+//}
 
 TEST(SimPerf, HPerfTest) {
     using namespace std;
     using namespace QuICT;
     using namespace chrono;
     cout << "[HPerfTest]" << endl;
-    uint64_t qubit_num = 20;
+    uint64_t qubit_num = 22;
     auto desc_vec = vector<GateDescription<double>>();
     for (uint64_t i = 0; i < 500; ++i) {
         desc_vec.emplace_back(GateDescription<double>("h", {i % qubit_num}, 0, nullptr));
@@ -143,7 +143,7 @@ TEST(SimPerf, CrzPerfTest) {
     using namespace QuICT;
     using namespace chrono;
     cout << "[CrzPerfTest]" << endl;
-    uint64_t qubit_num = 20;
+    uint64_t qubit_num = 22;
     auto desc_vec = vector<GateDescription<double>>();
     for (uint64_t i = 0; i < 500; ++i) {
         desc_vec.emplace_back(GateDescription<double>(

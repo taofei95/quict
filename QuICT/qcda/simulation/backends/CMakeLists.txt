@@ -21,8 +21,8 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 if (MSVC)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /Qpar /arch:AVX /arch:AVX2")
 else ()
-#    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ftree-vectorize -fopenmp -mavx -mavx2 -mfma")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ftree-vectorize -mavx -mavx2 -mfma")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ftree-vectorize -fopenmp -mavx -mavx2 -mfma")
+#    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ftree-vectorize -mavx -mavx2 -mfma")
 endif ()
 
 
@@ -33,11 +33,11 @@ include_directories(../../../../QuICT/utility/extern/googletest/googlemock/inclu
 
 add_library(sim_back SHARED gate.h monotune_simulator.h utility.h hybrid_simulator.h)
 
-add_executable(sim_back_test simulation_backends_test.cpp gate.h monotune_simulator.h utility.h
+add_executable(sim_back_test mono_sim_test.cpp gate.h monotune_simulator.h utility.h
         ../../../../QuICT/utility/extern/googletest/googletest/src/gtest_main.cc hybrid_simulator.h)
 target_link_libraries(sim_back_test gtest_main)
 
-add_executable(sim_back_perf simulation_backends_perf.cpp gate.h monotune_simulator.h utility.h
+add_executable(sim_back_perf mono_sim_perf.cpp gate.h monotune_simulator.h utility.h
         ../../../../QuICT/utility/extern/googletest/googletest/src/gtest_main.cc hybrid_simulator.h)
 target_link_libraries(sim_back_perf gtest_main)
 
