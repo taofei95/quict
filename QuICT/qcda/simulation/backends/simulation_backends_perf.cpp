@@ -104,11 +104,11 @@ inline void perf_all_simulator(
     // batch mode
     perf_simulator(batch_simulator, qubit_num, desc_vec, state);
 
-    // avx mode
-    perf_simulator(avx_simulator, qubit_num, desc_vec, state);
-
     // fma_mode
     perf_simulator(fma_simulator, qubit_num, desc_vec, state);
+
+    // avx mode
+    perf_simulator(avx_simulator, qubit_num, desc_vec, state);
 }
 
 TEST(SimPerf, ModePerfTest) {
