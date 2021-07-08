@@ -31,7 +31,7 @@ namespace QuICT {
     class MonoTuneSimulator {
     public:
         //* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-        // Constructor & Deconstructor
+        // Constructor & Destructor
         //* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
         MonoTuneSimulator() {
             auto ss = std::stringstream();
