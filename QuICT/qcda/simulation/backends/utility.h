@@ -19,13 +19,13 @@ namespace QuICT {
     //* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
     // Time Measurement
     //* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-    template<typename callable_t, typename ...arg_t, typename time_unit=std::chrono::microseconds>
-    uint64_t time_elapse(callable_t callable, arg_t ... args) {
+    template<typename Callable, typename ...Arg, typename TimeUnit=std::chrono::microseconds>
+    uint64_t time_elapse(Callable callable, Arg ... args) {
         using namespace std;
         auto start_time = chrono::steady_clock::now();
         callable(args...);
         auto end_time = chrono::steady_clock::now();
-        auto cnt = chrono::duration_cast<time_unit>(end_time - start_time).count();
+        auto cnt = chrono::duration_cast<TimeUnit>(end_time - start_time).count();
         return cnt;
     }
 
