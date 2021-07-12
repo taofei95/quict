@@ -31,21 +31,26 @@ add_subdirectory(../../../../QuICT/utility/extern/googletest ./cmake-build-gtest
 include_directories(../../../../QuICT/utility/extern/googletest/googletest/include)
 include_directories(../../../../QuICT/utility/extern/googletest/googlemock/include)
 
-add_library(sim_back SHARED gate.h monotune_simulator.h utility.h hybrid_simulator.h)
+#add_library(mono_sim SHARED gate.h monotune_simulator.h utility.h hybrid_simulator.h)
 
-add_executable(sim_back_test mono_sim_test.cpp gate.h monotune_simulator.h utility.h
-        ../../../../QuICT/utility/extern/googletest/googletest/src/gtest_main.cc hybrid_simulator.h)
-target_link_libraries(sim_back_test gtest_main)
+add_executable(mono_sim_test mono_sim_test.cpp monotonous_simulator.h gate.h utility.h
+        ../../../../QuICT/utility/extern/googletest/googletest/src/gtest_main.cc)
+target_link_libraries(mono_sim_test gtest_main)
 
-add_executable(sim_back_perf mono_sim_perf.cpp gate.h monotune_simulator.h utility.h
-        ../../../../QuICT/utility/extern/googletest/googletest/src/gtest_main.cc hybrid_simulator.h)
-target_link_libraries(sim_back_perf gtest_main)
+add_executable(mono_sim_perf mono_sim_perf.cpp monotonous_simulator.h gate.h utility.h
+        ../../../../QuICT/utility/extern/googletest/googletest/src/gtest_main.cc)
+target_link_libraries(mono_sim_perf gtest_main)
 
-add_executable(misc_test miscllaneous_test.cpp gate.h monotune_simulator.h utility.h
+add_executable(misc_test miscellaneous_test.cpp monotonous_simulator.h gate.h utility.h
         ../../../../QuICT/utility/extern/googletest/googletest/src/gtest_main.cc hybrid_simulator.h)
 target_link_libraries(misc_test gtest_main)
 
-set_target_properties(sim_back PROPERTIES LINKER_LANGUAGE CXX)
-set_target_properties(sim_back_test PROPERTIES LINKER_LANGUAGE CXX)
-set_target_properties(sim_back_perf PROPERTIES LINKER_LANGUAGE CXX)
+add_executable(hybrid_sim_test hybrid_sim_test.cpp hybrid_simulator.h gate.h utility.h
+        ../../../../QuICT/utility/extern/googletest/googletest/src/gtest_main.cc)
+target_link_libraries(hybrid_sim_test gtest_main)
+
+#set_target_properties(mono_sim PROPERTIES LINKER_LANGUAGE CXX)
+set_target_properties(mono_sim_test PROPERTIES LINKER_LANGUAGE CXX)
+set_target_properties(mono_sim_perf PROPERTIES LINKER_LANGUAGE CXX)
 set_target_properties(misc_test PROPERTIES LINKER_LANGUAGE CXX)
+set_target_properties(hybrid_sim_test PROPERTIES LINKER_LANGUAGE CXX)

@@ -11,7 +11,7 @@
 #include <sstream>
 #include "gate.h"
 #include "utility.h"
-#include "monotune_simulator.h"
+#include "monotonous_simulator.h"
 
 TEST(RunCheck, Ignored) {
     EXPECT_EQ(0, 0);

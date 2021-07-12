@@ -10,7 +10,7 @@
 #include <cstdint>
 #include "utility.h"
 #include "gate.h"
-#include "monotune_simulator.h"
+#include "monotonous_simulator.h"
 
 using namespace QuICT;
 
