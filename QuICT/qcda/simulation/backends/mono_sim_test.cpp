@@ -28,10 +28,10 @@ TEST(TypeTraisTest, GateQubitNum) {
     EXPECT_EQ(2, gate_qubit_num<decltype(crz_gate)>::value);
 }
 
-template<typename precision_t, QuICT::SimulatorMode sim_mode>
+template<typename Precision, QuICT::SimulatorMode sim_mode>
 void test_by_data_file(
         const char *data_name,
-        MonoTuneSimulator<precision_t, sim_mode> &simulator,
+        MonoTuneSimulator<Precision, sim_mode> &simulator,
         double eps = 1e-6
 ) {
     using namespace std;

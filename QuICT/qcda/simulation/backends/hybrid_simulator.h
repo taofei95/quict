@@ -14,47 +14,46 @@
 #include "monotune_simulator.h"
 
 namespace QuICT {
-    template<typename precision_t>
+    template<typename Precision>
     class HybridSimulator {
     public:
         void run(
                 uint64_t qubit_num,
-                const std::vector<GateDescription<precision_t>> &gate_desc_vec
+                const std::vector<GateDescription<Precision>> &gate_desc_vec
         );
 
         void run(
                 uint64_t qubit_num,
-                const std::vector<GateDescription<precision_t>> &gate_desc_vec,
-                std::complex<precision_t> *init_state
+                const std::vector<GateDescription<Precision>> &gate_desc_vec,
+                std::complex<Precision> *init_state
         );
 
         template<class Gate>
-        void apply_gate(const GateDescription<precision_t> &gate_desc);
+        void apply_gate(const GateDescription<Precision> &gate_desc);
 
         template<class Gate>
-
     };
 
-    template<typename precision_t>
-    void HybridSimulator<precision_t>::run(
+    template<typename Precision>
+    void HybridSimulator<Precision>::run(
             uint64_t qubit_num,
-            const std::vector<GateDescription<precision_t>> &gate_desc_vec
+            const std::vector<GateDescription<Precision>> &gate_desc_vec
     ) {
 
     }
 
-    template<typename precision_t>
-    void HybridSimulator<precision_t>::run(
+    template<typename Precision>
+    void HybridSimulator<Precision>::run(
             uint64_t qubit_num,
-            const std::vector<GateDescription<precision_t>> &gate_desc_vec,
-            std::complex<precision_t> *init_state
+            const std::vector<GateDescription<Precision>> &gate_desc_vec,
+            std::complex<Precision> *init_state
     ) {
 
     }
 
-    template<typename precision_t>
+    template<typename Precision>
     template<class Gate>
-    void HybridSimulator<precision_t>::apply_gate(const GateDescription<precision_t> &gate_desc) {
+    void HybridSimulator<Precision>::apply_gate(const GateDescription<Precision> &gate_desc) {
 
     }
 

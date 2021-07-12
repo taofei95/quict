@@ -17,8 +17,8 @@ TEST(RunCheck, Ignored) {
     EXPECT_EQ(0, 0);
 }
 
-template<typename precision_t>
-inline std::vector<QuICT::GateDescription<precision_t>> get_qft_desc(
+template<typename Precision>
+inline std::vector<QuICT::GateDescription<Precision>> get_qft_desc(
         uint64_t &qubit_num
 ) {
     using namespace std;
@@ -27,7 +27,7 @@ inline std::vector<QuICT::GateDescription<precision_t>> get_qft_desc(
     if (!fs) {
         throw runtime_error("Failed to open qft description.");
     }
-    auto vec = std::vector<QuICT::GateDescription<precision_t>>();
+    auto vec = std::vector<QuICT::GateDescription<Precision>>();
     fs >> qubit_num;
     string gate_name;
     while (fs >> gate_name) {
@@ -36,24 +36,24 @@ inline std::vector<QuICT::GateDescription<precision_t>> get_qft_desc(
         }
         uint64_t carg;
         uint64_t targ;
-        precision_t parg;
+        Precision parg;
         if (gate_name == "h") {
             fs >> targ;
-            vec.emplace_back(QuICT::GateDescription<precision_t>("h", {targ}, 0, nullptr));
+            vec.emplace_back(QuICT::GateDescription<Precision>("h", {targ}, 0, nullptr));
         } else if (gate_name == "crz") {
             fs >> carg >> targ >> parg;
-            vec.emplace_back(QuICT::GateDescription<precision_t>("crz", {carg, targ}, parg, nullptr));
+            vec.emplace_back(QuICT::GateDescription<Precision>("crz", {carg, targ}, parg, nullptr));
         }
     }
     return vec;
 }
 
-template<QuICT::SimulatorMode sim_mode, class precision_t>
+template<QuICT::SimulatorMode sim_mode, class Precision>
 inline void perf_simulator(
-        QuICT::MonoTuneSimulator<precision_t, sim_mode> &simulator,
+        QuICT::MonoTuneSimulator<Precision, sim_mode> &simulator,
         uint64_t qubit_num,
-        std::vector<QuICT::GateDescription<precision_t>> desc_vec,
-        std::complex<precision_t> *state,
+        std::vector<QuICT::GateDescription<Precision>> desc_vec,
+        std::complex<Precision> *state,
         uint64_t round = 5
 ) {
     using namespace std;
@@ -65,8 +65,8 @@ inline void perf_simulator(
     }
 
     steady_clock::time_point start_time, end_time;
-    fill(state, state + (1ULL << qubit_num), complex<precision_t>(0));
-    state[0] = complex<precision_t>(1);
+    fill(state, state + (1ULL << qubit_num), complex<Precision>(0));
+    state[0] = complex<Precision>(1);
     uint64_t tm = 0;
 
 
@@ -81,11 +81,11 @@ inline void perf_simulator(
     cout << simulator.name() << "\t" << tm << "[us]" << endl;
 }
 
-template<class precision_t>
+template<class Precision>
 inline void perf_all_simulator(
         uint64_t qubit_num,
-        std::vector<QuICT::GateDescription<precision_t>> desc_vec,
-        std::complex<precision_t> *state
+        std::vector<QuICT::GateDescription<Precision>> desc_vec,
+        std::complex<Precision> *state
 ) {
     using namespace QuICT;
     using namespace std;
