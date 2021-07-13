@@ -61,7 +61,6 @@ class CalculationLayer:
     def htod(self, target):
         """ mv target from host into GPU device. """
         if type(target) is not cp.ndarray:
-            # mmr_ptr = cp.cuda.memory.alloc(target.nbytes)
             cp_t = cp.array(target)
             weak_r = weakref.ref(cp_t)
             self.mempool_used.append(cp_t)
@@ -98,7 +97,7 @@ class CalculationLayer:
             wr_result = weakref.ref(result)
             return wr_result
 
-    def dot(self, A, B, gpu_out: bool = True):
+    def dot(self, A, B, gpu_out: bool = True, sync: bool = True):
         """ dot matrix A and matrix B
 
         Args:
@@ -112,11 +111,11 @@ class CalculationLayer:
         gpu_A = self._var_normalized(A)
         gpu_B = self._var_normalized(B)
 
-        result = GPUCalculator.dot(gpu_A, gpu_B, gpu_out)
+        result = GPUCalculator.dot(gpu_A, gpu_B, gpu_out, sync)
 
         return self._result_normalized(result, gpu_out)
 
-    def tensor(self, A, B, gpu_out: bool = True):
+    def tensor(self, A, B, gpu_out: bool = True, sync: bool = True):
         """ tensor A and B
 
         Args:
@@ -130,11 +129,11 @@ class CalculationLayer:
         gpu_A = self._var_normalized(A)
         gpu_B = self._var_normalized(B)
 
-        result = GPUCalculator.tensor(gpu_A, gpu_B, gpu_out)
+        result = GPUCalculator.tensor(gpu_A, gpu_B, gpu_out, sync)
 
         return self._result_normalized(result, gpu_out)
 
-    def MatrixTensorI(self, A, n, m, gpu_out: bool = True):
+    def MatrixTensorI(self, A, n, m, gpu_out: bool = True, sync: bool = True):
         """ tensor I^n and A and I^m
 
         Args:
@@ -148,11 +147,18 @@ class CalculationLayer:
         """
         gpu_A = self._var_normalized(A)
 
-        result = GPUCalculator.MatrixTensorI(gpu_A, n, m, gpu_out)
+        result = GPUCalculator.MatrixTensorI(gpu_A, n, m, gpu_out, sync)
 
         return self._result_normalized(result, gpu_out)
 
-    def VectorPermutation(self, A, mapping, changeInput: bool = False, gpu_out: bool = True):
+    def VectorPermutation(
+        self,
+        A,
+        mapping,
+        changeInput: bool = False,
+        gpu_out: bool = True,
+        sync: bool = True
+    ):
         """ permutaion A with mapping, inplace
 
         Args:
@@ -166,11 +172,18 @@ class CalculationLayer:
         """
         gpu_A = self._var_normalized(A)
 
-        result = GPUCalculator.VectorPermutation(gpu_A, mapping, changeInput, gpu_out)
+        result = GPUCalculator.VectorPermutation(gpu_A, mapping, changeInput, gpu_out, sync)
 
         return self._result_normalized(result, gpu_out)
 
-    def MatrixPermutation(self, A, mapping, changeInput: bool = False, gpu_out: bool = True):
+    def MatrixPermutation(
+        self,
+        A,
+        mapping,
+        changeInput: bool = False,
+        gpu_out: bool = True,
+        sync: bool = True
+    ):
         """ permute mat with mapping, inplace
 
         Args:
@@ -181,25 +194,6 @@ class CalculationLayer:
         """
         gpu_A = self._var_normalized(A)
 
-        result = GPUCalculator.MatrixPermutation(gpu_A, mapping, changeInput, gpu_out)
-
-        return self._result_normalized(result, gpu_out)
-
-    def vectordot(self, A, V, mapping, gpu_out: bool = True):
-        """ dot matrix A and vector V
-
-        Args:
-            A(np.array<np.complex>): the matrix A.
-            V(np.array<np.complex>): the vector V.
-            mapping(np.array<int>): the qubit mapping.
-            gpu_out(bool): return result from GPU into CPU.
-
-        Returns:
-            np.array<np.complex>: the vector with length 2^n
-        """
-        gpu_A = self._var_normalized(A)
-        gpu_V = self._var_normalized(V)
-
-        result = GPUCalculator.vectordot(gpu_A, gpu_V, mapping, gpu_out)
+        result = GPUCalculator.MatrixPermutation(gpu_A, mapping, changeInput, gpu_out, sync)
 
         return self._result_normalized(result, gpu_out)
