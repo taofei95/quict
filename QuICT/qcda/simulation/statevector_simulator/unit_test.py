@@ -10,7 +10,7 @@ import numpy as np
 
 from QuICT.core import *
 from QuICT.algorithm import Amplitude
-from QuICT.qcda.simulation.statevector_simulator.constant_statevecto_simulator import ConstantStateVectorSimulator
+from QuICT.qcda.simulation.statevector_simulator.constant_statevector_simulator import ConstantStateVectorSimulator
 
 
 """
@@ -20,13 +20,6 @@ the file describe Simulators between two basic gates.
 
 def test_constant_statevectorsimulator():
     # pre-compiled kernel function
-    qubit_numt = 5
-    circuitt = Circuit(qubit_numt)
-    QFT.build_gate(qubit_numt) | circuitt
-
-    test = ConstantStateVectorSimulator(circuitt, np.complex64, sync=True)
-    _ = test.run()
-
     print("Start running.")
     
     qubit_num = 20

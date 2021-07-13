@@ -30,7 +30,7 @@ def flush_memory():
     cp.get_default_pinned_memory_pool().free_all_blocks()
 
 
-def dot(A, B, gpu_out: bool = True):
+def dot(A, B, gpu_out: bool = True, sync: bool = True):
     """ dot matrix A and matrix B
 
     Args:
@@ -47,7 +47,15 @@ def dot(A, B, gpu_out: bool = True):
     gpu_A = cp.array(A) if type(A) is np.ndarray else A
     gpu_B = cp.array(B) if type(B) is np.ndarray else B
 
-    return cp.dot(gpu_A, gpu_B).get() if gpu_out else cp.dot(gpu_A, gpu_B)
+    gpu_result = cp.dot(gpu_A, gpu_B)
+
+    if sync:
+        cp.cuda.Device().synchronize()
+
+    if gpu_out:
+        return gpu_result.get()
+
+    return gpu_result
 
 
 tensor_single_kernel = cp.RawKernel(r'''
@@ -78,7 +86,7 @@ tensor_double_kernel = cp.RawKernel(r'''
     ''', 'tensordouble')
 
 
-def tensor(A, B, gpu_out=True):
+def tensor(A, B, gpu_out: bool = True, sync: bool = True):
     """ tensor A and B
 
     Args:
@@ -110,6 +118,9 @@ def tensor(A, B, gpu_out=True):
             (min(1024, core_number),),
             (gpu_A, gpu_B, gpu_result, cp.int32(gpu_A.shape[1]), cp.int32(gpu_B.shape[0]), cp.int32(gpu_B.shape[1]))
         )
+
+    if sync:
+        cp.cuda.Device().synchronize()
 
     if gpu_out:
         return gpu_result.get()
@@ -145,7 +156,7 @@ matrixt_double_kernel = cp.RawKernel(r'''
     ''', 'matrix_tensorI_double')
 
 
-def MatrixTensorI(A, n, m, gpu_out: bool =True):
+def MatrixTensorI(A, n, m, gpu_out: bool = True, sync: bool = True):
     """ tensor I^n and A and I^m
 
     Args:
@@ -177,6 +188,9 @@ def MatrixTensorI(A, n, m, gpu_out: bool =True):
             (min(1024, core_number),),
             (gpu_A, gpu_result, cp.int32(n), cp.int32(m), cp.int32(row_a), cp.int32(col_a))
         )
+
+    if sync:
+        cp.cuda.Device().synchronize()
 
     if gpu_out:
         return gpu_result.get()
@@ -224,7 +238,7 @@ vectorp_double_kernel = cp.RawKernel(r'''
     ''', 'vector_double_permutation')
 
 
-def VectorPermutation(A, mapping, changeInput: bool = False, gpu_out: bool = True):
+def VectorPermutation(A, mapping, changeInput: bool = False, gpu_out: bool = True, sync: bool = True):
     """ permutaion A with mapping, inplace
 
     Args:
@@ -264,6 +278,9 @@ def VectorPermutation(A, mapping, changeInput: bool = False, gpu_out: bool = Tru
 
     if changeInput:
         A[:] = gpu_result.get() if type(A) is np.ndarray else gpu_result
+
+    if sync:
+        cp.cuda.Device().synchronize()
 
     if gpu_out:
         return gpu_result.get()
@@ -321,7 +338,7 @@ matrixp_double_kernel = cp.RawKernel(r'''
     ''', 'matrix_double_permutation')
 
 
-def MatrixPermutation(A, mapping, changeInput: bool = False, gpu_out: bool = True):
+def MatrixPermutation(A, mapping, changeInput: bool = False, gpu_out: bool = True, sync: bool = True):
     """ permute mat with mapping, inplace
 
     Args:
@@ -358,6 +375,9 @@ def MatrixPermutation(A, mapping, changeInput: bool = False, gpu_out: bool = Tru
 
     if changeInput:
         A[:, :] = gpu_result.get() if type(A) is np.ndarray else gpu_result
+
+    if sync:
+        cp.cuda.Device().synchronize()
 
     if gpu_out:
         return gpu_result.get()

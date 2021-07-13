@@ -151,7 +151,7 @@ class Proxy:
             op (int): The operation with one of
                 NCCL_SUM = 0,
                 NCCL_PROD = 1,
-                NCCL_PROD = 2,
+                NCCL_MAX = 2,
                 NCCL_MIN = 3.
             sendbuf(cupy.ndarray): the sending data, not used in the root.
             recvbuf(cupy.ndarray): the array waitting for comming data, must be defined in the root.
@@ -196,7 +196,7 @@ class Proxy:
             op (int): The operation with one of
                 NCCL_SUM = 0,
                 NCCL_PROD = 1,
-                NCCL_PROD = 2,
+                NCCL_MAX = 2,
                 NCCL_MIN = 3.
             stream(Stream): the cupy stream.
         """
@@ -226,7 +226,7 @@ class Proxy:
             op (int): The operation with one of
                 NCCL_SUM = 0,
                 NCCL_PROD = 1,
-                NCCL_PROD = 2,
+                NCCL_MAX = 2,
                 NCCL_MIN = 3.
             stream(Stream): the cupy stream.
         """

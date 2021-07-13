@@ -22,7 +22,7 @@ class ProxySimulator(BasicSimulator):
         device (int): The GPU device ID.
         sync (bool): Sync mode or Async mode.
     """
-    def __init__(self, proxy: Proxy, circuit: Circuit, precision, device: int = 0, sync: bool = True):
+    def __init__(self, proxy: Proxy, circuit: Circuit, precision = np.complex64, device: int = 0, sync: bool = True):
         self.proxy = proxy
         self._sync = sync
         self._buffer_size = LIMIT_BUFFER_SIZE if precision == np.complex64 else LIMIT_BUFFER_SIZE - 1
@@ -45,7 +45,7 @@ class ProxySimulator(BasicSimulator):
         """
         Initial qubits' vector states.
         """
-        vector_size = 1 << int(self._qubits)
+        vector_size = 1 << int(self.qubits)
         # Special Case for no gate circuit
         if len(self._gates) == 0:
             self._vector = np.zeros(vector_size, dtype=self._precision)

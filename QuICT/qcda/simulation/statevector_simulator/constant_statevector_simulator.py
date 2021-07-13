@@ -13,7 +13,7 @@ from QuICT.core import *
 
 
 class ConstantStateVectorSimulator(BasicSimulator):
-    def __init__(self, circuit: Circuit, precision, device: int = 0, sync: bool = False):
+    def __init__(self, circuit: Circuit, precision = np.complex64, device: int = 0, sync: bool = False):
         BasicSimulator.__init__(self, circuit, precision, device)
         self._sync = sync
 

@@ -8,6 +8,7 @@ import cupy as cp
 __outward_functions = ["CRzGate_matrixdot_pb", "CRzGate_matrixdot_pc", "CRzGate_matrixdot_pt"]
 
 
+""" Special proxy CRzGate kernel function for both carg and targ are exceeded the limit of current device. """
 CRZGate_kernel_special_sd = cp.RawKernel(r'''
     #include <cupy/complex.cuh>
     extern "C" __global__
@@ -19,6 +20,7 @@ CRZGate_kernel_special_sd = cp.RawKernel(r'''
     ''', 'CRZGateSingleSD')
 
 
+""" Special proxy CRzGate kernel function for carg is exceeded the limit of current device. """
 CRZGate_kernel_special_sc = cp.RawKernel(r'''
     #include <cupy/complex.cuh>
     extern "C" __global__
@@ -32,6 +34,7 @@ CRZGate_kernel_special_sc = cp.RawKernel(r'''
     ''', 'CRZGateSingleSC')
 
 
+""" Special proxy CRzGate kernel function for targ is exceeded the limit of current device. """
 CRZGate_kernel_special_st = cp.RawKernel(r'''
     #include <cupy/complex.cuh>
     extern "C" __global__
@@ -47,6 +50,7 @@ CRZGate_kernel_special_st = cp.RawKernel(r'''
     ''', 'CRZGateSingleST')
 
 
+""" Special proxy CRzGate kernel function for both carg and targ are exceeded the limit of current device. """
 CRZGate_kernel_special_dd = cp.RawKernel(r'''
     #include <cupy/complex.cuh>
     extern "C" __global__
@@ -58,6 +62,7 @@ CRZGate_kernel_special_dd = cp.RawKernel(r'''
     ''', 'CRZGateDoubleSD')
 
 
+""" Special proxy CRzGate kernel function for carg is exceeded the limit of current device. """
 CRZGate_kernel_special_dc = cp.RawKernel(r'''
     #include <cupy/complex.cuh>
     extern "C" __global__
@@ -71,6 +76,7 @@ CRZGate_kernel_special_dc = cp.RawKernel(r'''
     ''', 'CRZGateDoubleSC')
 
 
+""" Special proxy CRzGate kernel function for targ is exceeded the limit of current device. """
 CRZGate_kernel_special_dt = cp.RawKernel(r'''
     #include <cupy/complex.cuh>
     extern "C" __global__
