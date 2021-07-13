@@ -76,8 +76,8 @@ class Amplitude(Algorithm):
                 qubit_map[tangle_iter + tangle.index_for_qubit(q)] = \
                     q.circuit.index_for_qubit(q, ancilla)
             tangle_iter = tangle_iter + len(tangle.qureg)
-        tangle_length = np.array(tangle_length, dtype=np.int32)
-        tangle_values = np.array(tangle_values, dtype=np.complex64)
+        tangle_length = np.array(tangle_length, dtype=np.int64)
+        tangle_values = np.array(tangle_values, dtype=np.complex128)
         ndpointer = amplitude_cheat_operator(
             tangle_values,
             tangle_length,
