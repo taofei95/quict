@@ -68,7 +68,7 @@ class dp:
 
 
 class BasicSimulator(object):
-    def __init__(self, circuit: Circuit, precision, device: int = 0):
+    def __init__(self, circuit: Circuit, precision = np.complex64, device: int = 0):
         self._qubits = int(circuit.circuit_width())
         self._precision = precision
         self._gates = circuit.gates
