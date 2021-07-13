@@ -10,14 +10,14 @@ using namespace tbb;
 
 DLLEXPORT void merge_operator_func(
     int qureg_length, 
-    complex<float> *values,
+    complex<double> *values, 
     int merge_length, 
-    complex<float> *merge_values,
-    complex<float> *merge_matrix
+    complex<double> *merge_values,
+    complex<double> *merge_matrix
     ){
     long long v_l = 1 << qureg_length;
     long long m_l = 1 << merge_length;
-    //complex<float> *merge_matrix = (complex<float>*)malloc(sizeof(complex<float>) * (v_l * m_l));
+    //complex<double> *merge_matrix = (complex<double>*)malloc(sizeof(complex<double>) * (v_l * m_l));
 
     parallel_for(blocked_range<size_t>(0, v_l * m_l), [
         merge_matrix,
@@ -36,8 +36,8 @@ DLLEXPORT void merge_operator_func(
 DLLEXPORT void single_operator_func(
     int qureg_length, 
     int index, 
-    complex<float> *values,
-    complex<float> *matrix
+    complex<double> *values, 
+    complex<double> *matrix
     ){
     index = qureg_length - 1 - index;
     long long v_l = 1 << qureg_length;
@@ -51,8 +51,8 @@ DLLEXPORT void single_operator_func(
             long long _0 = (j & ((1 << index) - 1)) 
                             + (j >> index << (index + 1));
             long long _1 = _0 + (1 << index);
-            complex<float> __0 = values[_0] * matrix[0] + values[_1] * matrix[1];
-            complex<float> __1 = values[_0] * matrix[2] + values[_1] * matrix[3];
+            complex<double> __0 = values[_0] * matrix[0] + values[_1] * matrix[1];
+            complex<double> __1 = values[_0] * matrix[2] + values[_1] * matrix[3];
             values[_0] = __0;
             values[_1] = __1;
         }
@@ -62,30 +62,30 @@ DLLEXPORT void single_operator_func(
 DLLEXPORT bool measure_operator_func(
     int qureg_length, 
     int index, 
-    complex<float> *values,
-    float generation,
-    float *prob
+    complex<double> *values,
+    double generation,
+    double *prob
     ){
     index = qureg_length - 1 - index;
     long long v_l = 1 << qureg_length;
 
-    complex<float> *newValues = (complex<float>*)malloc(sizeof(complex<float>) * (v_l >> 1));
+    complex<double> *newValues = (complex<double>*)malloc(sizeof(complex<double>) * (v_l >> 1));
 
-    float _0 = parallel_reduce(blocked_range<size_t>(0, v_l >> 1), 0.f, [
+    double _0 = parallel_reduce(blocked_range<size_t>(0, v_l >> 1), 0.f, [
         v_l,
         index, 
         values,
         newValues
-    ](blocked_range<size_t>& blk, float init = 0)->float{
+    ](blocked_range<size_t>& blk, double init = 0)->double{
         for (size_t j=blk.begin(); j<blk.end(); j++) {
             long long _0 = (j & ((1 << index) - 1)) 
                             + (j >> index << (index + 1));
-            float _real = real(values[_0]);
-            float _imag = imag(values[_0]);
+            double _real = real(values[_0]);
+            double _imag = imag(values[_0]);
             init += _real * _real + _imag * _imag;
         }
         return init;
-    },[](float x, float y)->float{return x+y;});
+    },[](double x, double y)->double{return x+y;});
 
     bool _1 = generation > _0;
     *prob = 1 - _0;
@@ -138,26 +138,26 @@ DLLEXPORT bool measure_operator_func(
 DLLEXPORT void reset_operator_func(
     int qureg_length, 
     int index, 
-    complex<float> *values
+    complex<double> *values
     ){
     index = qureg_length - 1 - index;
     long long v_l = 1 << qureg_length;      
-    float _0 = parallel_reduce(blocked_range<size_t>(0, v_l >> 1), 0.f, [
+    double _0 = parallel_reduce(blocked_range<size_t>(0, v_l >> 1), 0.f, [
         v_l,
         index, 
         values
-    ](blocked_range<size_t>& blk, float init = 0)->float{
+    ](blocked_range<size_t>& blk, double init = 0)->double{
         for (size_t j=blk.begin(); j<blk.end(); j++) {
             long long _0 = (j & ((1 << index) - 1)) 
                             + (j >> index << (index + 1));
-            float _real = real(values[_0]);
-            float _imag = imag(values[_0]);
+            double _real = real(values[_0]);
+            double _imag = imag(values[_0]);
             init += _real * _real + _imag * _imag;
         }
         return init;
-    },[](float x, float y)->float{return x+y;});
+    },[](double x, double y)->double{return x+y;});
 
-    float generation = sqrt(_0);
+    double generation = sqrt(_0);
 
     if (generation < 1e-6){
         parallel_for(blocked_range<size_t>(0, v_l >> 1), [
@@ -193,8 +193,8 @@ DLLEXPORT void control_single_operator_func(
     int qureg_length, 
     int cindex, 
     int tindex, 
-    complex<float> *values,
-    complex<float> *matrix
+    complex<double> *values, 
+    complex<double> *matrix
     ){
     cindex = qureg_length - 1 - cindex;
     tindex = qureg_length - 1 - tindex;
@@ -214,8 +214,8 @@ DLLEXPORT void control_single_operator_func(
                     (gw >> tindex << (tindex + 1)) + 
                     (j & ((1 << cindex) - 1));
                 long long _1 = _0 + (1 << tindex);
-                complex<float> __0 = values[_0] * matrix[0] + values[_1] * matrix[1];
-                complex<float> __1 = values[_0] * matrix[2] + values[_1] * matrix[3];
+                complex<double> __0 = values[_0] * matrix[0] + values[_1] * matrix[1];
+                complex<double> __1 = values[_0] * matrix[2] + values[_1] * matrix[3];
                 values[_0] = __0;
                 values[_1] = __1;
             }
@@ -235,8 +235,8 @@ DLLEXPORT void control_single_operator_func(
                     (gw >> cindex << (cindex + 1)) + 
                     (j & ((1 << tindex) - 1));
                 long long _1 = _0 + (1 << tindex);
-                complex<float> __0 = values[_0] * matrix[0] + values[_1] * matrix[1];
-                complex<float> __1 = values[_0] * matrix[2] + values[_1] * matrix[3];
+                complex<double> __0 = values[_0] * matrix[0] + values[_1] * matrix[1];
+                complex<double> __1 = values[_0] * matrix[2] + values[_1] * matrix[3];
                 values[_0] = __0;
                 values[_1] = __1;
             }
@@ -248,8 +248,8 @@ DLLEXPORT void two_qubit_operator_func(
     int qureg_length,
     int index1,
     int index2,
-    complex<float> *values,
-    complex<float> *matrix
+    complex<double> *values,
+    complex<double> *matrix
     ){
     index1 = qureg_length - 1 - index1;
     index2 = qureg_length - 1 - index2;
@@ -274,10 +274,10 @@ DLLEXPORT void two_qubit_operator_func(
             other += gwg;
             long long _0 = 1 << indexlist1;
             long long _1 = 1 << indexlist2;
-            complex<float> _00 = values[other];
-            complex<float> _01 = values[other + _0];
-            complex<float> _10 = values[other + _1];
-            complex<float> _11 = values[other + _0 + _1];
+            complex<double> _00 = values[other];
+            complex<double> _01 = values[other + _0];
+            complex<double> _10 = values[other + _1];
+            complex<double> _11 = values[other + _0 + _1];
             values[other] = matrix[0] * _00 + matrix[1] * _01 + matrix[2] * _10 + matrix[3] * _11;
             values[other + _0] = matrix[4] * _00 + matrix[5] * _01 + matrix[6] * _10 + matrix[7] * _11;
             values[other + _1] = matrix[8] * _00 + matrix[9] * _01 + matrix[10] * _10 + matrix[11] * _11;
@@ -292,7 +292,7 @@ DLLEXPORT void ccx_single_operator_func(
     int cindex1,
     int cindex2,
     int tindex,
-    complex<float> *values){
+    complex<double> *values){
     cindex1 = qureg_length - 1 - cindex1;
     cindex2 = qureg_length - 1 - cindex2;
     tindex = qureg_length - 1 - tindex;
@@ -324,19 +324,16 @@ DLLEXPORT void ccx_single_operator_func(
     });
 }
 
-DLLEXPORT void unitary_operator_gate(int qureg_length, complex<float> *values, int *index, int index_count, complex<float> *matrix){
-
+DLLEXPORT void unitary_operator_gate(int qureg_length, complex<double> *values, long long  *index, int index_count, complex<double> *matrix){
     int *indexlist = (int*)malloc(index_count * sizeof(int));
-    for (int i = 0;i < index_count;++i){
-        index[i] = qureg_length - 1 - index[i];
+    for (int i = 0;i < index_count;++i)
         indexlist[i] = index[i];
-    }
     sort(indexlist, indexlist + index_count);
 
 
     long long v_l = 1 << qureg_length;
     long long xl_l = 1 << index_count;
-    complex<float> *newValues = (complex<float>*)malloc(sizeof(complex<float>) * v_l);
+    complex<double> *newValues = (complex<double>*)malloc(sizeof(complex<double>) * xl_l);
     
     parallel_for(blocked_range<size_t>(0, v_l >> index_count), [
         v_l,
@@ -362,16 +359,14 @@ DLLEXPORT void unitary_operator_gate(int qureg_length, complex<float> *values, i
                 long long now = other;
                 for (int k = 0;k < index_count;++k)
                     if (i & (1 << k))
-                        now += 1 << index[index_count - 1 - k];
-                newValues[now] = complex<float>(0, 0);
+                        now += 1 << index[k];
+                newValues[now + other] = complex<double>(0, 0);
                 for (int k = 0;k < xl_l;++k){
                     long long shift = other;
                     for (int l = 0;l < index_count;++l)
-                        if (k & (1 << l))
-                            shift += 1 << index[index_count - 1 - l];
-                    //cout<<now<<" "<<i * xl_l + k<<" "<<shift<<endl;
-                    //printf("%lf, %lf\n", real(matrix[i * xl_l + k]), imag(matrix[i * xl_l + k]));
-                    newValues[now] += matrix[i * xl_l + k] * values[shift];
+                        if (i & (1 << l))
+                            shift += 1 << index[l];
+                    newValues[now + other] += matrix[k] * values[shift];
                 }
             }
         }
@@ -388,7 +383,7 @@ DLLEXPORT void unitary_operator_gate(int qureg_length, complex<float> *values, i
     free(newValues);
 }
 
-DLLEXPORT void perm_operator_gate(int qureg_length, complex<float> *values, long long *index, int index_count, long long *perm){
+DLLEXPORT void perm_operator_gate(int qureg_length, complex<double> *values, long long *index, int index_count, long long *perm){
     for (int i = 0;i < index_count;++i)
         index[i] = qureg_length - 1 - index[i];
     int *indexlist = (int*)malloc(index_count * sizeof(int));
@@ -398,7 +393,7 @@ DLLEXPORT void perm_operator_gate(int qureg_length, complex<float> *values, long
 
     long long v_l = 1 << qureg_length;
     long long xl_l = 1 << index_count;
-    complex<float> *newValues = (complex<float>*)malloc(sizeof(complex<float>) * v_l);
+    complex<double> *newValues = (complex<double>*)malloc(sizeof(complex<double>) * v_l);
     long long *perms_to = (long long *)malloc(sizeof(sizeof(long long)) * xl_l);
     parallel_for(blocked_range<size_t>(0, xl_l), [
         perms_to,
@@ -457,22 +452,22 @@ DLLEXPORT void perm_operator_gate(int qureg_length, complex<float> *values, long
     free(newValues);
 }
 
-DLLEXPORT complex<float> * amplitude_cheat_operator(
-    complex<float> *values,
-    int *values_length,
+DLLEXPORT complex<double> * amplitude_cheat_operator(
+    complex<double> *values, 
+    long long *values_length, 
     int tangle_number,
-    int *qubit_map
+    long long *qubit_map  
     ){
-    complex<float> **segment = (complex<float> **)malloc(sizeof(complex<float> *) * tangle_number);
+    complex<double> **segment = (complex<double> **)malloc(sizeof(complex<double> *) * tangle_number);
     long long all_length = 0;
-    complex<float> *now = values;
+    complex<double> *now = values;
     for(int i = 0;i < tangle_number;++i){
         all_length += values_length[i];
         segment[i] = now;
         now += (1 << values_length[i]);
     }
     long long v_l = 1 << all_length;
-    complex<float> *back = (complex<float>*)malloc(sizeof(complex<float>) * v_l);
+    complex<double> *back = (complex<double>*)malloc(sizeof(complex<double>) * v_l);
     parallel_for(blocked_range<size_t>(0, v_l), [
         all_length,
         values_length,
@@ -483,7 +478,7 @@ DLLEXPORT complex<float> * amplitude_cheat_operator(
     ](blocked_range<size_t>& blk){
         for(size_t k=blk.begin();k<blk.end();k++){
             int now = 0;
-            complex<float> ans(1, 0);
+            complex<double> ans(1, 0);
             for(int i = 0;i < tangle_number;++i){
                 long long index = 0;
                 for (int j = 0;j < values_length[i];++j)
@@ -499,21 +494,21 @@ DLLEXPORT complex<float> * amplitude_cheat_operator(
     return back;
 }
 
-DLLEXPORT float* partial_prob_cheat_operator(
-    complex<float> *values,
+DLLEXPORT double* partial_prob_cheat_operator(
+    complex<double> *values,
     long long *values_length,
     int tangle_number,
     int qubit_number,
     long long *qubit_map
     ){
-    complex<float> **segment = (complex<float> **)malloc(sizeof(complex<float> *) * tangle_number);
-    complex<float> *now = values;
+    complex<double> **segment = (complex<double> **)malloc(sizeof(complex<double> *) * tangle_number);
+    complex<double> *now = values;
     for(int i = 0;i < tangle_number;++i){
         segment[i] = now;
         now += (1 << values_length[i]);
     }
     long long v_l = 1 << qubit_number;
-    float *back = (float*)malloc(sizeof(float) * v_l);
+    double *back = (double*)malloc(sizeof(double) * v_l);
     parallel_for(blocked_range<size_t>(0, v_l), [
         qubit_number,
         values_length,
@@ -552,7 +547,7 @@ DLLEXPORT float* partial_prob_cheat_operator(
                     indexlist,
                     index_count,
                     k
-                ](blocked_range<size_t>& blk, float init = 0)->float{
+                ](blocked_range<size_t>& blk, double init = 0)->double{
                     for (size_t j=blk.begin(); j<blk.end(); j++) {
                         long long other;
                         if (index_count != 0){
@@ -570,12 +565,12 @@ DLLEXPORT float* partial_prob_cheat_operator(
                             other = j;
                         }
 
-                        float _real = real(segment[i][other]);
-                        float _imag = imag(segment[i][other]);
+                        double _real = real(segment[i][other]);
+                        double _imag = imag(segment[i][other]);
                         init += _real * _real + _imag * _imag;
                     }
                     return init;
-                },[](float x, float y)->float{return x + y;});
+                },[](double x, double y)->double{return x + y;});
 
 
                 free(indexlist);
@@ -588,7 +583,7 @@ DLLEXPORT float* partial_prob_cheat_operator(
     return back;
 }
 
-DLLEXPORT void control_mul_perm_operator_gate(int qureg_length, complex<float> *values, long long *index, int control, int index_count, int a, int N){
+DLLEXPORT void control_mul_perm_operator_gate(int qureg_length, complex<double> *values, long long *index, int control, int index_count, int a, int N){
     for (int i = 0;i < index_count;++i)
         index[i] = qureg_length - 1 - index[i];
     control = qureg_length - 1 - control;
@@ -599,7 +594,7 @@ DLLEXPORT void control_mul_perm_operator_gate(int qureg_length, complex<float> *
 
     long long v_l = 1 << qureg_length;
     long long xl_l = 1 << index_count;
-    complex<float> *newValues = (complex<float>*)malloc(sizeof(complex<float>) * v_l);
+    complex<double> *newValues = (complex<double>*)malloc(sizeof(complex<double>) * v_l);
 
     long long *perm = (long long *)malloc(sizeof(sizeof(long long)) * N);
     long long *perms_to = (long long *)malloc(sizeof(sizeof(long long)) * N);
@@ -693,7 +688,7 @@ DLLEXPORT void control_mul_perm_operator_gate(int qureg_length, complex<float> *
     free(newValues);
 }
 
-DLLEXPORT void shor_classical_initial_gate(int qureg_length, complex<float> *values, long long *index, int index_count, int x, int N, int u){
+DLLEXPORT void shor_classical_initial_gate(int qureg_length, complex<double> *values, long long *index, int index_count, int x, int N, int u){
     for (int i = 0;i < index_count;++i)
         index[i] = qureg_length - 1 - index[i];
 
@@ -728,7 +723,7 @@ DLLEXPORT void shor_classical_initial_gate(int qureg_length, complex<float> *val
 
     },[](long long x, long long y)->long long{return x+y;});
 
-    double state = (double)1.0 / sqrt(number);
+    long double state = (long double)1.0 / sqrt(number);
     values[0] = 0;
 
     parallel_for(blocked_range<size_t>(0, xl_l), [
