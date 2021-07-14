@@ -80,7 +80,7 @@ class ConstantStateVectorSimulator(BasicSimulator):
                 self._qubits,
                 self._sync
             )
-            self.circuit.qubits[index].measured = result
+            self.circuit.qubits[gate.targ].measured = result
 
         else:
             matrix = self.get_Matrix(gate)
