@@ -41,10 +41,10 @@ class GateMatrixs:
         """
         gate_name = gate.name.split("_")[0]
         if gate_name not in STATIC_GATE_NAMES:
-            gate_name = f"{gate_name}_{gate.parg}"
-            matrix = gate.compute_matrix
-        else:
-            matrix = gate.matrix
+            gate_name += f"_{gate.parg}"
+        
+        matrix = gate.compute_matrix
+
 
         if gate_name not in self.gate_matrixs.keys():
             self._build_matrix_gate(gate_name, matrix)
