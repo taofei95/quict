@@ -9,7 +9,7 @@ STATIC_GATE_NAMES = [
     "HGate", "SGate", "SDaggerGate",
     "XGate", "YGate", "ZGate",
     "SXGate", "SYGate", "SWGate",
-    "IDGate", "U1Gate", "U2Gate", "U3Gate",
+    "IDGate", "TGate", "TDaggerGate"
 ]
 
 class GateMatrixs:
@@ -45,7 +45,7 @@ class GateMatrixs:
             matrix = gate.compute_matrix
         else:
             matrix = gate.matrix
-        
+
         if gate_name not in self.gate_matrixs.keys():
             self._build_matrix_gate(gate_name, matrix)
 
