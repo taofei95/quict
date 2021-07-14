@@ -9,7 +9,7 @@ STATIC_GATE_NAMES = [
     "HGate", "SGate", "SDaggerGate",
     "XGate", "YGate", "ZGate",
     "SXGate", "SYGate", "SWGate",
-    "IDGate", "TGate", "TDaggerGate"
+    "IDGate", "TGate", "TDaggerGate", "CCXGate"
 ]
 
 class GateMatrixs:
