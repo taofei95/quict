@@ -128,7 +128,7 @@ TEST(SimPerf, HPerfTest) {
     using namespace QuICT;
     using namespace chrono;
     cout << "[HPerfTest]" << endl;
-    uint64_t qubit_num = 22;
+    uint64_t qubit_num = 20;
     auto desc_vec = vector<GateDescription<double>>();
     for (uint64_t i = 0; i < 500; ++i) {
         desc_vec.emplace_back(GateDescription<double>("h", {i % qubit_num}, 0, nullptr));
@@ -143,7 +143,7 @@ TEST(SimPerf, CrzPerfTest) {
     using namespace QuICT;
     using namespace chrono;
     cout << "[CrzPerfTest]" << endl;
-    uint64_t qubit_num = 22;
+    uint64_t qubit_num = 20;
     auto desc_vec = vector<GateDescription<double>>();
     for (uint64_t i = 0; i < 500; ++i) {
         desc_vec.emplace_back(GateDescription<double>(
