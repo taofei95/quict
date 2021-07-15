@@ -19,13 +19,13 @@ namespace QuICT {
     //* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
     // Time Measurement
     //* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-    template<typename callable_t, typename ...arg_t, typename time_unit=std::chrono::microseconds>
-    uint64_t time_elapse(callable_t callable, arg_t ... args) {
+    template<typename Callable, typename ...Arg, typename TimeUnit=std::chrono::microseconds>
+    uint64_t time_elapse(Callable callable, Arg ... args) {
         using namespace std;
         auto start_time = chrono::steady_clock::now();
         callable(args...);
         auto end_time = chrono::steady_clock::now();
-        auto cnt = chrono::duration_cast<time_unit>(end_time - start_time).count();
+        auto cnt = chrono::duration_cast<TimeUnit>(end_time - start_time).count();
         return cnt;
     }
 
@@ -52,32 +52,32 @@ namespace QuICT {
     template<uint64_t N>
     using uarray_t = std::array<uint64_t, N>;
 
-    template<typename precision_t>
-    using mat_entry_t = std::complex<precision_t>;
+    template<typename Precision>
+    using mat_entry_t = std::complex<Precision>;
 
-    template<typename precision_t, uint64_t N>
-    using marray_t = std::array<mat_entry_t<precision_t>, N>;
+    template<typename Precision, uint64_t N>
+    using marray_t = std::array<mat_entry_t<Precision>, N>;
 
 
     //* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
     // Helper Class for Receiving Data from Python
     //* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
-    template<typename precision_t>
+    template<typename Precision>
     class GateDescription {
     public:
         // Not all members are used
 
         std::string qasm_name_;
-        precision_t parg_;
+        Precision parg_;
         std::vector<uint64_t> affect_args_;
-        mat_entry_t<precision_t> *data_ptr_;
+        mat_entry_t<Precision> *data_ptr_;
 
         GateDescription(
                 std::string qasm_name,
                 std::vector<uint64_t> affect_args,
-                precision_t parg,
-                mat_entry_t<precision_t> *data_ptr
+                Precision parg,
+                mat_entry_t<Precision> *data_ptr
         ) : qasm_name_(qasm_name), affect_args_(affect_args), parg_(parg), data_ptr_(data_ptr) {}
     };
 
