@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding:utf8 -*-
-# @TIME    : 2021/6/1 下午4:03
-# @Author  : Han Yu
+# @TIME    : 2021/6/28 下午4:50
+# @Author  : Kaiqi Li
 # @File    : constant_statevecto_simulator
 
 import numpy as np
@@ -13,15 +13,24 @@ from QuICT.core import *
 
 
 class ConstantStateVectorSimulator(BasicSimulator):
-    def __init__(self, circuit: Circuit, precision = np.complex64, device: int = 0, sync: bool = False):
-        BasicSimulator.__init__(self, circuit, precision, device)
+    """
+    The simulator for qubits' vector state.
+
+    Args:
+        circuit (Circuit): The quantum circuit.
+        precision [np.complex64, np.complex128]: The precision for the circuit and qubits.
+        gpu_device_id (int): The GPU device ID.
+        sync (bool): Sync mode or Async mode.
+    """
+    def __init__(self, circuit: Circuit, precision = np.complex64, gpu_device_id: int = 0, sync: bool = False):
+        BasicSimulator.__init__(self, circuit, precision, gpu_device_id)
         self._sync = sync
 
         # Initial vector state
         self.initial_vector_state()
 
         # Initial simulator with limit_qubits
-        self._algorithm = LinAlgLoader(device="GPU", extra_gate=True, extra_proxy=False)
+        self._algorithm = LinAlgLoader(device="GPU", enable_gate_kernel=True, enable_multigpu_gate_kernel=False)
 
     def initial_vector_state(self):
         """
@@ -35,7 +44,7 @@ class ConstantStateVectorSimulator(BasicSimulator):
             return
 
         # Initial qubit's states
-        with cp.cuda.Device(self._device):
+        with cp.cuda.Device(self._device_id):
             self._vector = cp.empty(vector_size, dtype=self._precision)
             self._vector.put(0, self._precision(1))
 
@@ -43,7 +52,7 @@ class ConstantStateVectorSimulator(BasicSimulator):
         """
         Get the state vector of circuit
         """
-        with cp.cuda.Device(self._device):
+        with cp.cuda.Device(self._device_id):
             for gate in self._gates:
                 self.exec(gate)
     

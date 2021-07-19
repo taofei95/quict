@@ -1,5 +1,8 @@
 #!/usr/bin/env python
 # -*- coding:utf8 -*-
+# @TIME    : 2021/7/5 上午10:43
+# @Author  : Kaiqi Li
+# @File    : gate_func
 
 import cupy as cp
 import numpy as np

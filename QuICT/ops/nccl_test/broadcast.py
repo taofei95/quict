@@ -1,3 +1,8 @@
+#!/usr/bin/env python
+# -*- coding:utf8 -*-
+# @TIME    : 2021/7/2 下午2:41
+# @Author  : Kaiqi Li
+# @File    : broadcast
 
 import cupy as cp
 import numpy as np

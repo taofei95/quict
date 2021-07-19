@@ -1,5 +1,8 @@
 #!/usr/bin/env python
 # -*- coding:utf8 -*-
+# @TIME    : 2021/5/20 上午10:37
+# @Author  : Kaiqi Li
+# @File    : cpu_calculator
 
 from numba import njit, prange
 import numpy as np

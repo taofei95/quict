@@ -1,3 +1,9 @@
+#!/usr/bin/env python
+# -*- coding:utf8 -*-
+# @TIME    : 2021/5/27 下午4:23
+# @Author  : Kaiqi Li
+# @File    : proxy
+
 import cupy as cp
 import numpy as np
 from cupy import cuda

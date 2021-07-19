@@ -1,5 +1,8 @@
 #!/usr/bin/env python
 # -*- coding:utf8 -*-
+# @TIME    : 2021/6/29 下午5:35
+# @Author  : Kaiqi Li
+# @File    : gpu_calculator
 
 import math
 import numpy as np

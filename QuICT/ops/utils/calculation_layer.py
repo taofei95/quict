@@ -1,5 +1,9 @@
 #!/usr/bin/env python
 # -*- coding:utf8 -*-
+# @TIME    : 2021/5/21 下午3:24
+# @Author  : Kaiqi Li
+# @File    : calculation_layer
+
 import weakref
 import cupy as cp
 import numpy as np

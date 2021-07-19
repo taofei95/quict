@@ -1,3 +1,9 @@
+#!/usr/bin/env python
+# -*- coding:utf8 -*-
+# @TIME    : 2021/5/12 下午4:41
+# @Author  : Kaiqi Li
+# @File    : utils
+
 import numpy as np
 from numba import njit
 

@@ -1,3 +1,9 @@
+#!/usr/bin/env python
+# -*- coding:utf8 -*-
+# @TIME    : 2021/6/30 下午5:50
+# @Author  : Kaiqi Li
+# @File    : proxy_simulator
+
 import numpy as np
 import cupy as cp
 import math
@@ -19,14 +25,14 @@ class ProxySimulator(BasicSimulator):
         proxy (Proxy): The NCCL communicators.
         circuit (Circuit): The quantum circuit.
         precision [np.complex64, np.complex128]: The precision for the circuit and qubits.
-        device (int): The GPU device ID.
+        gpu_device_id (int): The GPU device ID.
         sync (bool): Sync mode or Async mode.
     """
-    def __init__(self, proxy: Proxy, circuit: Circuit, precision = np.complex64, device: int = 0, sync: bool = True):
+    def __init__(self, proxy: Proxy, circuit: Circuit, precision = np.complex64, gpu_device_id: int = 0, sync: bool = True):
         self.proxy = proxy
         self._sync = sync
         self._buffer_size = LIMIT_BUFFER_SIZE if precision == np.complex64 else LIMIT_BUFFER_SIZE - 1
-        assert(proxy.rank == device)
+        assert(proxy.rank == gpu_device_id)
 
         # Get qubits and limitation
         self.total_qubits = int(circuit.circuit_width())
@@ -34,12 +40,12 @@ class ProxySimulator(BasicSimulator):
         self.switch_data = False
 
         # Initial simulator with limit_qubits
-        BasicSimulator.__init__(self, circuit, precision, device)
+        BasicSimulator.__init__(self, circuit, precision, gpu_device_id)
         self.qubits = self.limit_qubits
         self.initial_vector_state()
 
         # Initial the required algorithm.
-        self._algorithm = LinAlgLoader(device="GPU", extra_gate=True, extra_proxy=True)
+        self._algorithm = LinAlgLoader(device="GPU", enable_gate_kernel=True, enable_multigpu_gate_kernel=True)
 
     def initial_vector_state(self):
         """
@@ -54,7 +60,7 @@ class ProxySimulator(BasicSimulator):
             return
 
         # Initial qubit's states
-        with cp.cuda.Device(self._device):
+        with cp.cuda.Device(self._device_id):
             self._vector = cp.empty(vector_size, dtype=self._precision)
             if self.proxy.rank == 0:
                 self._vector.put(0, self._precision(1))
@@ -63,7 +69,7 @@ class ProxySimulator(BasicSimulator):
         """
         Start simulator.
         """
-        with cp.cuda.Device(self._device):
+        with cp.cuda.Device(self._device_id):
             for gate in self._gates:
                 self.exec(gate)
 

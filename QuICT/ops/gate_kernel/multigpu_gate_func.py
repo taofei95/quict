@@ -1,5 +1,8 @@
 #!/usr/bin/env python
 # -*- coding:utf8 -*-
+# @TIME    : 2021/6/30 下午5:47
+# @Author  : Kaiqi Li
+# @File    : multigpu_gate_func
 
 import numpy as np
 import cupy as cp

@@ -1,5 +1,8 @@
 #!/usr/bin/env python
 # -*- coding:utf8 -*-
+# @TIME    : 2021/6/28 下午2:42
+# @Author  : Kaiqi Li
+# @File    : QFT_Simulator_multigpu
 
 from cupy.cuda import nccl
 import numpy as np
@@ -28,10 +31,11 @@ def worker(uid, ndevs, dev_id, qubits, QFT_number):
     
     s_time = time()
     simulator = ProxySimulator(
-        proxy,
-        circuit,
+        proxy=proxy,
+        circuit=circuit,
         precision=np.complex64,
-        device=dev_id
+        gpu_device_id=dev_id,
+        sync=True
     )
     _ = simulator.run()
     e_time = time()
@@ -43,7 +47,7 @@ if __name__ == "__main__":
     multiprocessing.set_start_method("spawn")
 
     uid = nccl.get_unique_id()
-    qubits, QFT_n = 25, 2
+    qubits, QFT_n = 26, 2
 
     p1 = multiprocessing.Process(target=worker, args = (uid, 2, 0, qubits, QFT_n,))
     p2 = multiprocessing.Process(target=worker, args = (uid, 2, 1, qubits, QFT_n,))

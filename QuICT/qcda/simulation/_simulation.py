@@ -3,6 +3,7 @@
 # @TIME    : 2021/4/27 2:02 下午
 # @Author  : Han Yu
 # @File    : _simulation
+
 import numpy as np
 from functools import lru_cache
 
@@ -68,15 +69,23 @@ class dp:
 
 
 class BasicSimulator(object):
-    def __init__(self, circuit: Circuit, precision = np.complex64, device: int = 0):
+    """
+    The based simulator class.
+
+    Args:
+        circuit (Circuit): The quantum circuit.
+        precision [np.complex64, np.complex128]: The precision for the circuit and qubits.
+        gpu_device_id (int): The GPU device ID.
+    """
+    def __init__(self, circuit: Circuit, precision = np.complex64, gpu_device_id: int = 0):
         self._qubits = int(circuit.circuit_width())
         self._precision = precision
         self._gates = circuit.gates
-        self._device = device
+        self._device_id = gpu_device_id
         self._circuit = circuit
 
         # Pretreatment gate matrixs optimizer
-        self.gateM_optimizer = GateMatrixs(self._precision, self._device)
+        self.gateM_optimizer = GateMatrixs(self._precision, self._device_id)
         for gate in self._gates:
             if type(gate) != type(Measure):
                 self.gateM_optimizer.build(gate)
@@ -109,7 +118,7 @@ class BasicSimulator(object):
 
     @property
     def device(self):
-        return self._device
+        return self._device_id
 
     def run(self):
         print("must be override")

@@ -1,3 +1,9 @@
+#!/usr/bin/env python
+# -*- coding:utf8 -*-
+# @TIME    : 2021/6/9 下午5:35
+# @Author  : Kaiqi Li
+# @File    : gate_based
+
 import numpy as np
 import cupy as cp
 
@@ -18,12 +24,12 @@ class GateMatrixs:
 
     Args:
         precision(Union[np.complex64, np.complex128]): The precision of the gates.
-        device(int): The GPU device ID.
+        gpu_device_id(int): The GPU device ID.
     """
-    def __init__(self, precision, device: int = 0):
+    def __init__(self, precision, gpu_device_id: int = 0):
         self.gate_matrixs = {}
         self.precision = precision
-        self.device = device
+        self.device_id = gpu_device_id
         self.matrix_idx = []
         self.matrix_len = 0
 
@@ -66,7 +72,7 @@ class GateMatrixs:
             self.final_matrix[start:start+matrix.size] = matrix.ravel()[:]
             start += matrix.size
 
-        with cp.cuda.Device(self.device):
+        with cp.cuda.Device(self.device_id):
             self.final_matrix = cp.array(self.final_matrix)
 
     def target_matrix(self, gate):
