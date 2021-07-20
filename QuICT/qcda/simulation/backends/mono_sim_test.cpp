@@ -20,11 +20,11 @@ using namespace QuICT;
 
 TEST(TypeTraisTest, GateQubitNum) {
     auto h_gate = HGate<double>(0);
-    auto z_gate = ZGate<double>(0);
+//    auto z_gate = ZGate<double>(0);
     auto crz_gate = CrzGate<double>(0, 1, 0);
 
     EXPECT_EQ(1, gate_qubit_num<decltype(h_gate)>::value);
-    EXPECT_EQ(1, gate_qubit_num<decltype(z_gate)>::value);
+//    EXPECT_EQ(1, gate_qubit_num<decltype(z_gate)>::value);
     EXPECT_EQ(2, gate_qubit_num<decltype(crz_gate)>::value);
 }
 
