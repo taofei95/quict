@@ -11,6 +11,8 @@ from QuICT.ops.utils import LinAlgLoader
 from QuICT.qcda.simulation import BasicSimulator
 from QuICT.core import *
 
+from QuICT.ops.gate_kernel.arch_test import multiply_2args_matrixdot
+
 
 class ConstantStateVectorSimulator(BasicSimulator):
     """
@@ -59,7 +61,7 @@ class ConstantStateVectorSimulator(BasicSimulator):
         return self.vector
 
     def exec(self, gate):
-        if gate.type() == GATE_ID["H"]:
+        if gate.type() == GATE_ID["H"] or gate.type == GATE_ID["SX"]:
             matrix = self.get_Matrix(gate)
             t_index = self._qubits - 1 - gate.targ
             self._algorithm.HGate_matrixdot(
@@ -73,7 +75,8 @@ class ConstantStateVectorSimulator(BasicSimulator):
             matrix = self.get_Matrix(gate)
             t_index = self._qubits - 1 - gate.targ
             c_index = self._qubits - 1 - gate.carg
-            self._algorithm.CRzGate_matrixdot(
+            # self._algorithm.CRzGate_matrixdot(
+            multiply_2args_matrixdot(
                 c_index,
                 t_index,
                 matrix,
