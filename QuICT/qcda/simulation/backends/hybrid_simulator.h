@@ -128,6 +128,9 @@ namespace QuICT {
         auto real = new Precision[len];
         auto imag = new Precision[len];
         auto result = new std::complex<Precision>[len];
+        std::fill(real, real + len, 0);
+        std::fill(imag, imag + len, 0);
+        real[0] = 1.0;
         run(circuit_qubit_num, gate_desc_vec, real, imag);
         combine_complex(circuit_qubit_num, real, imag, result);
         delete[] real;
@@ -229,6 +232,7 @@ namespace QuICT {
                 for (uint64_t task_id = 0; task_id < task_num; task_id += batch_size) {
                     auto ind_0 = index(task_id, circuit_qubit_num, gate.targ_);
                     auto cc = gate.sqrt2_inv.real();
+
                     __m256d ymm0 = _mm256_broadcast_sd(&cc);
                     // Load
                     __m256d ymm1 = _mm256_loadu_pd(&real[ind_0[0]]);
@@ -245,16 +249,17 @@ namespace QuICT {
                     __m256d ymm6 = _mm256_hadd_pd(ymm3, ymm4);
                     __m256d ymm7 = _mm256_hsub_pd(ymm1, ymm2);
                     __m256d ymm8 = _mm256_hsub_pd(ymm3, ymm4);
-                    // Shuffle combine
-                    ymm1 = _mm256_shuffle_pd(ymm5, ymm6, 0b1010);
-                    ymm2 = _mm256_shuffle_pd(ymm5, ymm6, 0b0101);
-                    ymm3 = _mm256_shuffle_pd(ymm7, ymm8, 0b1010);
-                    ymm4 = _mm256_shuffle_pd(ymm7, ymm8, 0b0101);
+
+                    ymm1 = _mm256_shuffle_pd(ymm5, ymm7, 0b0000);
+                    ymm2 = _mm256_shuffle_pd(ymm5, ymm7, 0b1111);
+
+                    ymm3 = _mm256_shuffle_pd(ymm6, ymm8, 0b0000);
+                    ymm4 = _mm256_shuffle_pd(ymm6, ymm8, 0b1111);
                     // Store
                     _mm256_storeu_pd(&real[ind_0[0]], ymm1);
                     _mm256_storeu_pd(&real[ind_0[0] + 4], ymm2);
-                    _mm256_storeu_pd(&imag[ind_0[0]], ymm1);
-                    _mm256_storeu_pd(&imag[ind_0[0] + 4], ymm2);
+                    _mm256_storeu_pd(&imag[ind_0[0]], ymm3);
+                    _mm256_storeu_pd(&imag[ind_0[0] + 4], ymm4);
                 }
             } else if (gate.targ_ == circuit_qubit_num - 2) {
                 // After some permutations, this is the same with the previous one.
@@ -262,17 +267,18 @@ namespace QuICT {
                 for (uint64_t task_id = 0; task_id < task_num; task_id += batch_size) {
                     auto ind_0 = index(task_id, circuit_qubit_num, gate.targ_);
                     auto cc = gate.sqrt2_inv.real();
-                    // In memory swap
-                    std::swap(real[ind_0[0] + 1], real[ind_0[0] + 2]);
-                    std::swap(real[ind_0[0] + 5], real[ind_0[0] + 6]);
-                    std::swap(imag[ind_0[0] + 1], imag[ind_0[0] + 2]);
-                    std::swap(imag[ind_0[0] + 5], imag[ind_0[0] + 6]);
+
                     __m256d ymm0 = _mm256_broadcast_sd(&cc);
                     // Load
                     __m256d ymm1 = _mm256_loadu_pd(&real[ind_0[0]]);
                     __m256d ymm2 = _mm256_loadu_pd(&real[ind_0[0] + 4]);
                     __m256d ymm3 = _mm256_loadu_pd(&imag[ind_0[0]]);
                     __m256d ymm4 = _mm256_loadu_pd(&imag[ind_0[0] + 4]);
+                    // Permute
+                    ymm1 = _mm256_permute4x64_pd(ymm1, 0b1101'1000);
+                    ymm2 = _mm256_permute4x64_pd(ymm2, 0b1101'1000);
+                    ymm3 = _mm256_permute4x64_pd(ymm3, 0b1101'1000);
+                    ymm4 = _mm256_permute4x64_pd(ymm4, 0b1101'1000);
                     // Scale
                     ymm1 = _mm256_mul_pd(ymm1, ymm0);
                     ymm2 = _mm256_mul_pd(ymm2, ymm0);
@@ -283,21 +289,22 @@ namespace QuICT {
                     __m256d ymm6 = _mm256_hadd_pd(ymm3, ymm4);
                     __m256d ymm7 = _mm256_hsub_pd(ymm1, ymm2);
                     __m256d ymm8 = _mm256_hsub_pd(ymm3, ymm4);
-                    // Shuffle combine
-                    ymm1 = _mm256_shuffle_pd(ymm5, ymm6, 0b1010);
-                    ymm2 = _mm256_shuffle_pd(ymm5, ymm6, 0b0101);
-                    ymm3 = _mm256_shuffle_pd(ymm7, ymm8, 0b1010);
-                    ymm4 = _mm256_shuffle_pd(ymm7, ymm8, 0b0101);
+
+                    ymm1 = _mm256_shuffle_pd(ymm5, ymm7, 0b0000);
+                    ymm2 = _mm256_shuffle_pd(ymm5, ymm7, 0b1111);
+
+                    ymm3 = _mm256_shuffle_pd(ymm6, ymm8, 0b0000);
+                    ymm4 = _mm256_shuffle_pd(ymm6, ymm8, 0b1111);
+                    // Permute back
+                    ymm1 = _mm256_permute4x64_pd(ymm1, 0b1101'1000);
+                    ymm2 = _mm256_permute4x64_pd(ymm2, 0b1101'1000);
+                    ymm3 = _mm256_permute4x64_pd(ymm3, 0b1101'1000);
+                    ymm4 = _mm256_permute4x64_pd(ymm4, 0b1101'1000);
                     // Store
                     _mm256_storeu_pd(&real[ind_0[0]], ymm1);
                     _mm256_storeu_pd(&real[ind_0[0] + 4], ymm2);
-                    _mm256_storeu_pd(&imag[ind_0[0]], ymm1);
-                    _mm256_storeu_pd(&imag[ind_0[0] + 4], ymm2);
-                    // In memory swap
-                    std::swap(real[ind_0[0] + 1], real[ind_0[0] + 2]);
-                    std::swap(real[ind_0[0] + 5], real[ind_0[0] + 6]);
-                    std::swap(imag[ind_0[0] + 1], imag[ind_0[0] + 2]);
-                    std::swap(imag[ind_0[0] + 5], imag[ind_0[0] + 6]);
+                    _mm256_storeu_pd(&imag[ind_0[0]], ymm3);
+                    _mm256_storeu_pd(&imag[ind_0[0] + 4], ymm4);
                 }
             } else {
                 constexpr uint64_t batch_size = 4;
@@ -312,18 +319,21 @@ namespace QuICT {
                     __m256d ymm3 = _mm256_loadu_pd(&imag[ind_0[0]]);   // imag_row_0
                     __m256d ymm4 = _mm256_loadu_pd(&imag[ind_0[1]]);   // imag_row_1
 
-                    __m256d ymm5 = _mm256_mul_pd(ymm0, ymm1);          // c * real_row_0
-                    __m256d ymm6 = _mm256_fmadd_pd(ymm0, ymm2, ymm5);  // c * real_row_0 + c * real_row_1
-                    __m256d ymm7 = _mm256_fnmadd_pd(ymm0, ymm2, ymm5); // c * real_row_0 - c * real_row_1
+                    __m256d ymm5 = _mm256_add_pd(ymm1, ymm2);
+                    __m256d ymm6 = _mm256_sub_pd(ymm1, ymm2);
+                    __m256d ymm7 = _mm256_add_pd(ymm3, ymm4);
+                    __m256d ymm8 = _mm256_sub_pd(ymm3, ymm4);
 
-                    __m256d ymm8 = _mm256_mul_pd(ymm0, ymm3);          // c * imag_row_0
-                    __m256d ymm9 = _mm256_fmadd_pd(ymm0, ymm4, ymm8);  // c * imag_row_0 + c * imag_row_1
-                    __m256d ymm10 = _mm256_fnmadd_pd(ymm0, ymm4, ymm8);// c * imag_row_0 - c * imag_row_1
+                    // Scale
+                    ymm5 = _mm256_mul_pd(ymm0, ymm5);
+                    ymm6 = _mm256_mul_pd(ymm0, ymm6);
+                    ymm7 = _mm256_mul_pd(ymm0, ymm7);
+                    ymm8 = _mm256_mul_pd(ymm0, ymm8);
 
-                    _mm256_storeu_pd(&real[ind_0[0]], ymm6);
-                    _mm256_storeu_pd(&real[ind_0[1]], ymm7);
-                    _mm256_storeu_pd(&imag[ind_0[0]], ymm9);
-                    _mm256_storeu_pd(&imag[ind_0[1]], ymm10);
+                    _mm256_storeu_pd(&real[ind_0[0]], ymm5);
+                    _mm256_storeu_pd(&real[ind_0[1]], ymm6);
+                    _mm256_storeu_pd(&imag[ind_0[0]], ymm7);
+                    _mm256_storeu_pd(&imag[ind_0[1]], ymm8);
                 }
             }
         }

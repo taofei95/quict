@@ -42,8 +42,12 @@ circuit.clear()
 for i in range(qubit_num):
     H | circuit(i)
 
-for i in range(100):
-    H | circuit(randint(0, qubit_num - 1))
+for i in range(200):
+    H | circuit(randint(0, qubit_num - 3))
+
+H | circuit(qubit_num - 1)
+H | circuit(qubit_num - 2)
+H | circuit(qubit_num - 3)
 
 out_circuit_to_file("h.txt", circuit)
 
