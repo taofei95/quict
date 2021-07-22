@@ -9,10 +9,12 @@
 #include <algorithm>
 #include <vector>
 #include <complex>
-#include <pair>
+#include <utility>
 #include <string>
 #include <omp.h>
 #include <immintrin.h>
+#include <avxintrin.h>
+#include <avx2intrin.h>
 
 #include "utility.h"
 #include "monotonous_simulator.h"
@@ -20,12 +22,24 @@
 namespace QuICT {
     template<typename Precision>
     class HybridSimulator {
+    protected:
+        std::string name_;
     public:
         HybridSimulator() {
             using namespace std;
             if constexpr(!is_same_v<Precision, double> && !is_same_v<Precision, float>) {
                 throw runtime_error("HybridSimulator only supports double/float precision.");
             }
+            name_ = "HybridSimulator";
+            if constexpr(std::is_same_v<Precision, double>) {
+                name_ += "[double]";
+            } else if (std::is_same_v<Precision, float>) {
+                name_ += "[float] ";
+            }
+        }
+
+        inline const std::string &name() {
+            return name_;
         }
 
         inline void run(
@@ -43,13 +57,13 @@ namespace QuICT {
         inline void run(
                 uint64_t circuit_qubit_num,
                 const std::vector<GateDescription<Precision>> &gate_desc_vec,
-                const Precision *real,
-                const Precision *imag
+                Precision *real,
+                Precision *imag
         );
 
         inline std::pair<Precision *, Precision *> separate_complex(
                 uint64_t circuit_qubit_num,
-                const complex <Precision> *c_arr
+                const std::complex<Precision> *c_arr
         );
 
         inline void combine_complex(
@@ -66,10 +80,25 @@ namespace QuICT {
                 Precision *imag
         );
 
-        template<typename Gate>
-        inline void apply_gate(
+//        template<class _Gate>
+//        inline void apply_gate(
+//                uint64_t circuit_qubit_num,
+//                const _Gate &gate,
+//                Precision *real,
+//                Precision *imag
+//        );
+
+        inline void apply_h_gate(
                 uint64_t circuit_qubit_num,
-                const Gate &gate,
+                const HGate<Precision> &gate,
+                Precision *real,
+                Precision *imag
+        );
+
+        template<template<typename ...> class _Gate>
+        inline void apply_ctrl_diag_gate(
+                uint64_t circuit_qubit_num,
+                const _Gate<Precision> &gate,
                 Precision *real,
                 Precision *imag
         );
@@ -81,11 +110,11 @@ namespace QuICT {
             const std::vector<GateDescription<Precision>> &gate_desc_vec,
             const std::complex<Precision> *init_state
     ) {
-        auto pr = separate_complex(qubit_num, init_state);
+        auto pr = separate_complex(circuit_qubit_num, init_state);
         auto real = pr.first;
         auto imag = pr.second;
-        run(qubit_num, gate_desc_vec, real, imag);
-        combine_complex(qubit_num, real, imag, init_state);
+        run(circuit_qubit_num, gate_desc_vec, real, imag);
+        combine_complex(circuit_qubit_num, real, imag, init_state);
         delete real;
         delete imag;
     }
@@ -95,14 +124,14 @@ namespace QuICT {
             uint64_t circuit_qubit_num,
             const std::vector<GateDescription<Precision>> &gate_desc_vec
     ) {
-        auto len = 1ULL << qubit_num;
+        auto len = 1ULL << circuit_qubit_num;
         auto real = new Precision[len];
         auto imag = new Precision[len];
         auto result = new std::complex<Precision>[len];
-        run(qubit_num, gate_desc_vec, real, imag);
-        combine_complex(qubit_num, real, imag, result);
-        delete real;
-        delete imag;
+        run(circuit_qubit_num, gate_desc_vec, real, imag);
+        combine_complex(circuit_qubit_num, real, imag, result);
+        delete[] real;
+        delete[] imag;
         return result;
     }
 
@@ -110,11 +139,11 @@ namespace QuICT {
     inline void HybridSimulator<Precision>::run(
             uint64_t circuit_qubit_num,
             const std::vector<GateDescription<Precision>> &gate_desc_vec,
-            const Precision *real,
-            const Precision *imag
+            Precision *real,
+            Precision *imag
     ) {
         for (const auto &gate_desc:gate_desc_vec) {
-            apply_gate(gate_desc, real, imag);
+            apply_gate(circuit_qubit_num, gate_desc, real, imag);
         }
     }
 
@@ -122,9 +151,9 @@ namespace QuICT {
     inline std::pair<Precision *, Precision *>
     HybridSimulator<Precision>::separate_complex(
             uint64_t circuit_qubit_num,
-            const complex <Precision> *c_arr
+            const std::complex<Precision> *c_arr
     ) {
-        auto len = 1ULL << qubit_num;
+        auto len = 1ULL << circuit_qubit_num;
         auto ptr = new Precision[len << 1ULL];
         auto real = ptr;
         auto imag = &ptr[len];
@@ -151,14 +180,14 @@ namespace QuICT {
             const Precision *imag,
             std::complex<Precision> *res
     ) {
-        auto len = 1ULL << qubit_num;
+        auto len = 1ULL << circuit_qubit_num;
         for (uint64_t i = 0; i < len; i += 4) {
             res[i] = {real[i], imag[i]};
             res[i + 1] = {real[i + 1], imag[i + 1]};
             res[i + 2] = {real[i + 2], imag[i + 2]};
             res[i + 3] = {real[i + 3], imag[i + 3]};
         }
-        return res;
+//        return res;
     }
 
     template<typename Precision>
@@ -170,13 +199,13 @@ namespace QuICT {
     ) {
         if (gate_desc.qasm_name_ == "h") { // Single Bit
             auto gate = HGate<Precision>(gate_desc.affect_args_[0]);
-            apply_gate(circuit_qubit_num, gate, real, imag);
-        } else if (gate_desc.qasm_name_ == "x") {
+            apply_h_gate(circuit_qubit_num, gate, real, imag);
+        } /*else if (gate_desc.qasm_name_ == "x") {
             auto gate = XGate<Precision>(gate_desc.affect_args_[0]);
             apply_gate(circuit_qubit_num, gate, real, imag);
-        } else if (gate_desc.qasm_name_ == "crz") { // Two Bit
+        } */ else if (gate_desc.qasm_name_ == "crz") { // Two Bit
             auto gate = CrzGate<Precision>(gate_desc.affect_args_[0], gate_desc.affect_args_[1], gate_desc.parg_);
-            apply_gate(circuit_qubit_num, gate, real, imag);
+            apply_ctrl_diag_gate(circuit_qubit_num, gate, real, imag);
         } else { // Not Implemented
             throw std::runtime_error(std::string(__func__) + ": " + "Not implemented gate - " + gate_desc.qasm_name_);
         }
@@ -184,7 +213,7 @@ namespace QuICT {
 
 
     template<typename Precision>
-    inline void HybridSimulator<Precision>::apply_gate(
+    inline void HybridSimulator<Precision>::apply_h_gate(
             uint64_t circuit_qubit_num,
             const HGate<Precision> &gate,
             Precision *real,
@@ -301,9 +330,10 @@ namespace QuICT {
     }
 
     template<typename Precision>
-    inline void HybridSimulator<Precision>::apply_gate(
+    template<template<typename ...> class _Gate>
+    inline void HybridSimulator<Precision>::apply_ctrl_diag_gate(
             uint64_t circuit_qubit_num,
-            const CrzGate<Precision> &gate,
+            const _Gate<Precision> &gate,
             Precision *real,
             Precision *imag
     ) {
@@ -340,10 +370,10 @@ namespace QuICT {
                 _mm256_storeu2_m128d(&real[ind_0[2]], &real[ind_0[3]], ymm4);
                 _mm256_storeu2_m128d(&imag[ind_0[2]], &imag[ind_0[3]], ymm5);
             } else if (ind_0[2] + 1 == ind_0[3] && ind_1[2] + 1 == ind_1[3]) {
-                _mm256d ymm0 = _mm256_loadu2_m128d(gate.diagonal_real_, gate.diagonal_real_);  // dr
-                _mm256d ymm1 = _mm256_loadu2_m128d(gate.diagonal_imag_, gate.diagonal_imag_);  // di
+                __m256d ymm0 = _mm256_loadu2_m128d(gate.diagonal_real_, gate.diagonal_real_);  // dr
+                __m256d ymm1 = _mm256_loadu2_m128d(gate.diagonal_imag_, gate.diagonal_imag_);  // di
 
-                _mm256d ymm2 = _mm256_loadu2_m128d(&real[ind_0[2]], &real[ind_1[2]]); // vr
+                __m256d ymm2 = _mm256_loadu2_m128d(&real[ind_0[2]], &real[ind_1[2]]); // vr
                 __m256d ymm3 = _mm256_loadu2_m128d(&imag[ind_0[2]], &imag[ind_1[2]]); // vi
                 // v * d == (vr * dr - vi * di) + (vi * dr + vr * di)I
                 __m256d ymm4 = _mm256_mul_pd(ymm2, ymm0);
