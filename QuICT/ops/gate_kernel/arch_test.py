@@ -121,13 +121,13 @@ pim_multiply_2args_kernel = cp.RawKernel(r'''
         int gw=0, _0=0;
 
         if (t_index > c_index){
-            int gw = label >> c_index << (c_index + 1);
-            int _0 = (gw >> t_index << (t_index + 1)) + (gw & (offset_t - offset_c)) + (label & mask_c);
+            gw = label >> c_index << (c_index + 1);
+            _0 = (gw >> t_index << (t_index + 1)) + (gw & (offset_t - offset_c)) + (label & mask_c);
         }
         else
         {
-            int gw = label >> t_index << (t_index + 1);
-            int _0 = (gw >> c_index << (c_index + 1)) + (gw & (offset_c - offset_t)) + (label & mask_t);
+            gw = label >> t_index << (t_index + 1);
+            _0 = (gw >> c_index << (c_index + 1)) + (gw & (offset_c - offset_t)) + (label & mask_t);
         }
 
         if(bit_pos & 1){
