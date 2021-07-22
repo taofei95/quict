@@ -24,7 +24,7 @@ multiply_1arg_kernel = cp.RawKernel(r'''
 multiply_2args_single_kernel = cp.RawKernel(r'''
     #include <cupy/complex.cuh>
     extern "C" __global__
-    void MultiplyTwoArgs(int* pargs, const complex<float>* mat, complex<float>* vec, bool reverse) {
+    void MultiplyTwoArgs(int* pargs, const complex<float>* mat, complex<float>* vec) {
         int label = blockDim.x * blockIdx.x + threadIdx.x;
 
         const int offset1 = 1 << pargs[0];
@@ -35,18 +35,9 @@ multiply_2args_single_kernel = cp.RawKernel(r'''
         int gw = label >> pargs[0] << (pargs[0] + 1);
         int _0 = (gw >> pargs[1] << (pargs[1] + 1)) + (gw & (offset2 - offset1)) + (label & mask1);
 
-        int _1=0, _2=0, _3=0;
-
-        if(reverse){
-            _1 = _0 + offset2;
-            _2 = _0 + offset1;
-            _3 = _2 + offset2;
-        }else{
-            _1 = _0 + offset1;
-            _2 = _0 + offset2;
-            _3 = _2 + offset1;
-        }
-
+        int _1 = _0 + offset1;
+        int _2 = _0 + offset2;
+        int _3 = _1 + offset2;
 
         vec[_0] = vec[_0]*mat[0];
         vec[_1] = vec[_1]*mat[5];
@@ -59,15 +50,15 @@ multiply_2args_single_kernel = cp.RawKernel(r'''
 iproduct_1arg_kernel = cp.RawKernel(r'''
     #include <cupy/complex.cuh>
     extern "C" __global__
-    void InnerProduct2x2Matrix(int parg, const complex<T>* mat, complex<T>* vec) {
+    void InnerProduct2x2Matrix(int parg, const complex<float>* mat, complex<float>* vec) {
         int label = blockDim.x * blockIdx.x + threadIdx.x;
 
-        int offset = 1 << parg
+        int offset = 1 << parg;
 
         int _0 = (label >> parg << (parg + 1)) + (label & (offset - 1));
         int _1 = _0 +  offset;
 
-        complex<T> temp_0 = vec[_0];
+        complex<float> temp_0 = vec[_0];
         vec[_0] = vec[_0]*mat[0] + vec[_1]*mat[1];
         vec[_1] = temp_0*mat[2] + vec[_1]*mat[3];
     }
@@ -107,7 +98,9 @@ pim_1arg_kernel = cp.RawKernel(r'''
     void pimMultiply2x2Matrix(int parg, const complex<float>* mat, complex<float>* vec) {
         int label = blockDim.x * blockIdx.x + threadIdx.x;
 
-        int _1 = (label >> parg << (parg + 1)) + (1 << parg) + (label & (offset - 1));
+        int offset = 1 << parg;
+
+        int _1 = (label >> parg << (parg + 1)) + offset + (label & (offset - 1));
 
         vec[_1] = vec[_1]*mat[3];
     }
@@ -254,7 +247,7 @@ Completed_IPxIP_kernel = cp.RawKernel(r'''
 swap_1arg_kernel = cp.RawKernel(r'''
     #include <cupy/complex.cuh>
     extern "C" __global__
-    void Swap2x2Matrix(int parg, const complex<float>* mat, complex<float>* vec) {
+    void Swap2x2Matrix(int parg, complex<float>* vec) {
         int label = blockDim.x * blockIdx.x + threadIdx.x;
 
         int offset = 1 << parg;
@@ -267,6 +260,89 @@ swap_1arg_kernel = cp.RawKernel(r'''
         vec[_1] = temp_0;
     }
     ''', 'Swap2x2Matrix')
+
+
+multiplyswap_1arg_kernel = cp.RawKernel(r'''
+    #include <cupy/complex.cuh>
+    extern "C" __global__
+    void Swap2x2Matrix(int parg, const complex<float>* mat, complex<float>* vec) {
+        int label = blockDim.x * blockIdx.x + threadIdx.x;
+
+        int offset = 1 << parg;
+
+        int _0 = (label >> parg << (parg + 1)) + (label & (offset - 1));
+        int _1 = _0 +  offset;
+
+        complex<T> temp_0 = vec[_0];
+        vec[_0] = vec[_1]*mat[1];
+        vec[_1] = temp_0*mat[2];
+    }
+    ''', 'Swap2x2Matrix')
+
+
+pim_multiplyswap_2args_kernel = cp.RawKernel(r'''
+    #include <cupy/complex.cuh>
+    extern "C" __global__
+    void pimMultiply4x4Matrix(const complex<float>* mat, complex<float>* vec, int c_index, int t_index, int bit_pos) {
+        int label = blockDim.x * blockIdx.x + threadIdx.x;
+
+        const int offset_c = 1 << c_index;
+        const int offset_t = 1 << t_index;
+        const int mask_c = offset_c - 1;
+        const int mask_t = offset_t - 1;
+
+        int gw=0, _0=0;
+
+        if (t_index > c_index){
+            int gw = label >> c_index << (c_index + 1);
+            int _0 = (gw >> t_index << (t_index + 1)) + (gw & (offset_t - offset_c)) + (label & mask_c);
+        }
+        else
+        {
+            int gw = label >> t_index << (t_index + 1);
+            int _0 = (gw >> c_index << (c_index + 1)) + (gw & (offset_c - offset_t)) + (label & mask_t);
+        }
+
+        int pos1=-1, pos2=-1, pos1_idx=0, pos2_idx=0;
+
+        if(bit_pos & 1){
+            pos1 = _0;
+            pos1_idx = 1;
+        }
+        
+        if(bit_pos & 2)
+        {
+            if (pos1 != -1){
+                pos2 = _0 + offset_t;
+                pos2_idx = 4;
+            }else{
+                pos1 = _0 + offset_t;
+                pos1_idx = 6;
+            }
+        }
+
+        if(bit_pos & 4)
+        {
+            if (pos1 != -1){
+                pos2 = _0 + offset_c;
+                pos2_idx = 9;
+            }else{
+                pos1 = _0 + offset_c;
+                pos1_idx = 11;
+            }
+        }
+
+        if(bit_pos & 8)
+        {
+            pos2 = _0 + offset_c + offset_t;
+            pos2_idx = 14;
+        }
+
+        complex<T> temp_0 = vec[pos1];
+        vec[pos1] = vec[pos2]*mat[pos1_idx];
+        vec[pos2] = temp_0*mat[pos2_idx];
+    }
+    ''', 'pimMultiply4x4Matrix')
 
 
 def multiply_1arg_matrixdot(t_index, mat, vec, vec_bit, sync: bool = False):
@@ -287,7 +363,7 @@ def multiply_1arg_matrixdot(t_index, mat, vec, vec_bit, sync: bool = False):
         cp.cuda.Device().synchronize()
 
 
-def multiply_2args_matrixdot(c_index, t_index, mat, vec, vec_bit, sync: bool = False):
+def multiply_2args_matrixdot(t_indexes, mat, vec, vec_bit, sync: bool = False):
     """
     CRzGate dot function.
     """
@@ -295,17 +371,12 @@ def multiply_2args_matrixdot(c_index, t_index, mat, vec, vec_bit, sync: bool = F
     thread_per_block = min(256, task_number)
     block_num = task_number // thread_per_block
 
-    if c_index > t_index:
-        indexes = cp.array([t_index, c_index], dtype=np.int32)
-        reverse = False
-    else:
-        indexes = cp.array([c_index, t_index], dtype=np.int32)
-        reverse = True
+    gpu_indexes = cp.array(t_indexes, dtype=np.int32)
 
     multiply_2args_single_kernel(
         (block_num,),
         (thread_per_block,),
-        (indexes, mat, vec, reverse)
+        (gpu_indexes, mat, vec)
     )
 
     if sync:
@@ -343,7 +414,7 @@ def innerproduct_2args_matrixdot(c_index, t_index, mat, vec, vec_bit, sync: bool
     else:
         indexes = cp.array([c_index, t_index], dtype=np.int32)
 
-    iproduct_2arg_kernel(
+    iproduct_2args_kernel(
         (block_num,),
         (thread_per_block,),
         (indexes, mat, vec)
@@ -352,3 +423,121 @@ def innerproduct_2args_matrixdot(c_index, t_index, mat, vec, vec_bit, sync: bool
     if sync:
         cp.cuda.Device().synchronize()
 
+
+def pim_1arg_matrixdot(t_index, mat, vec, vec_bit, sync: bool = False):
+    """
+    """
+    task_number = 1 << (vec_bit - 1)
+    thread_per_block = min(256, task_number)
+    block_num = task_number // thread_per_block
+
+    pim_1arg_kernel(
+        (block_num,),
+        (thread_per_block,),
+        (t_index, mat, vec)
+    )
+
+    if sync:
+        cp.cuda.Device().synchronize()
+
+
+def pim_multiply_2args_matrixdot(c_index, t_index, mat, vec, vec_bit, bit_pos, sync: bool = False):
+    """
+    """
+    task_number = 1 << (vec_bit - 2)
+    thread_per_block = min(256, task_number)
+    block_num = task_number // thread_per_block
+
+    pim_multiply_2args_kernel(
+        (block_num,),
+        (thread_per_block,),
+        (mat, vec, c_index, t_index, bit_pos)
+    )
+
+    if sync:
+        cp.cuda.Device().synchronize()
+
+
+def pim_innerproduct_2args_matrixdot(c_index, t_index, mat, vec, vec_bit, sync: bool = False):
+    """
+    """
+    task_number = 1 << (vec_bit - 2)
+    thread_per_block = min(256, task_number)
+    block_num = task_number // thread_per_block
+
+    pim_innerproduct_2args_kernel(
+        (block_num,),
+        (thread_per_block,),
+        (mat, vec, c_index, t_index)
+    )
+
+    if sync:
+        cp.cuda.Device().synchronize()
+
+
+def completed_MxIP_matrixdot(t_indexes, mat, vec, vec_bit, sync: bool = False):
+    task_number = 1 << (vec_bit - 2)
+    thread_per_block = min(256, task_number)
+    block_num = task_number // thread_per_block
+
+    gpu_indexes = cp.array(t_indexes, dtype=np.int32)
+
+    Completed_MxIP_kernel(
+        (block_num,),
+        (thread_per_block,),
+        (gpu_indexes, mat, vec)
+    )
+
+    if sync:
+        cp.cuda.Device().synchronize()
+
+
+def completed_IPxIP_matrixdot(t_indexes, mat, vec, vec_bit, sync: bool = False):
+    task_number = 1 << (vec_bit - 2)
+    thread_per_block = min(256, task_number)
+    block_num = task_number // thread_per_block
+
+    gpu_indexes = cp.array(t_indexes, dtype=np.int32)
+
+    Completed_IPxIP_kernel(
+        (block_num,),
+        (thread_per_block,),
+        (gpu_indexes, mat, vec)
+    )
+
+    if sync:
+        cp.cuda.Device().synchronize()
+
+
+def swap_1arg_matrixdot(t_index, vec, vec_bit, sync: bool = False):
+    """
+    """
+    task_number = 1 << (vec_bit - 1)
+    thread_per_block = min(256, task_number)
+    block_num = task_number // thread_per_block
+
+    swap_1arg_kernel(
+        (block_num,),
+        (thread_per_block,),
+        (t_index, vec)
+    )
+
+    if sync:
+        cp.cuda.Device().synchronize()
+
+
+def pim_multiplyswap_2args_matrixdot(c_index, t_index, mat, vec, vec_bit, bit_pos, sync: bool = False):
+    """
+    """
+    task_number = 1 << (vec_bit - 2)
+    thread_per_block = min(256, task_number)
+    block_num = task_number // thread_per_block
+
+    pim_multiplyswap_2args_kernel(
+        (block_num,),
+        (thread_per_block,),
+        (mat, vec, c_index, t_index, bit_pos)
+    )
+
+    if sync:
+        cp.cuda.Device().synchronize()
