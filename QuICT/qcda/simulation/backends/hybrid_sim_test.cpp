@@ -86,15 +86,20 @@ void test_by_data_file(
 
     for (uint64_t i = 0; i < (1ULL << qubit_num); ++i) {
         EXPECT_LE(fabs(state[i].real() - expect_state[i].real()), eps)
-                                    << i << " " << state[i].real() << " " << expect_state[i].real();
+                            << i << " " << state[i].real() << " " << expect_state[i].real();
         EXPECT_LE(fabs(state[i].imag() - expect_state[i].imag()), eps)
-                                    << i << " " << state[i].imag() << " " << expect_state[i].imag();
+                            << i << " " << state[i].imag() << " " << expect_state[i].imag();
     }
     delete[] state;
     delete[] expect_state;
 }
 
-TEST(HybridTest, HTest) {
-    auto simulator = QuICT::HybridSimulator<double>();
-    test_by_data_file("h.txt", simulator);
+auto simulator = QuICT::HybridSimulator<double>();
+
+//TEST(HybridTest, HTest) {
+//    test_by_data_file("h.txt", simulator);
+//}
+
+TEST(HybridTest, CrzTest) {
+    test_by_data_file("crz.txt", simulator);
 }

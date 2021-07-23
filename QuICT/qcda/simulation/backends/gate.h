@@ -46,7 +46,7 @@ namespace QuICT {
      * */
     template<uint64_t N>
     struct SimpleGateN {
-        uarray_t<N> affect_args_;
+        uarray_t <N> affect_args_;
 
         template<typename _rand_iter>
         SimpleGateN(_rand_iter qubit_begin, _rand_iter qubit_end) {
@@ -65,8 +65,8 @@ namespace QuICT {
     // Multiple qubit unitary gate
     template<uint64_t N, typename Precision>
     struct UnitaryGateN {
-        uarray_t<N> affect_args_;
-        mat_entry_t<Precision> *mat_;
+        uarray_t <N> affect_args_;
+        mat_entry_t <Precision> *mat_;
 
         template<typename _qubit_iter>
         UnitaryGateN(_qubit_iter qubit_begin, _qubit_iter qubit_end) {
@@ -89,7 +89,7 @@ namespace QuICT {
     template<typename Precision>
     struct UnitaryGateN<1, Precision> {
         uint64_t targ_;
-        mat_entry_t<Precision> *mat_;
+        mat_entry_t <Precision> *mat_;
 
         explicit UnitaryGateN(uint64_t targ) : targ_(targ) {}
 
@@ -108,7 +108,7 @@ namespace QuICT {
     // Multiple qubit diagonal gate
     template<uint64_t N, typename Precision>
     struct DiagonalGateN {
-        uarray_t<N> affect_args_;
+        uarray_t <N> affect_args_;
         Precision *diagonal_real_;
         Precision *diagonal_imag_;
 
@@ -164,8 +164,8 @@ namespace QuICT {
     struct CrzGate : ControlledDiagonalGate<Precision> {
         CrzGate(uint64_t carg, uint64_t targ, Precision parg)
                 : ControlledDiagonalGate<Precision>(carg, targ) {
-            this->diagonal_real_ = new Precision[4];
-            this->diagonal_imag_ = &(this->diagonal_real_[2]);
+            this->diagonal_real_ = new Precision[2];
+            this->diagonal_imag_ = new Precision[2];
             std::complex<Precision> t0 = std::exp(
                     static_cast<mat_entry_t<Precision>>(std::complex<Precision>(0, -1.0 * parg / 2)));
             std::complex<Precision> t1 = std::exp(

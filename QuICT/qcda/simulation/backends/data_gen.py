@@ -53,7 +53,8 @@ out_circuit_to_file("h.txt", circuit)
 
 circuit.clear()
 
-H | circuit(0)
+for i in range(qubit_num):
+    H | circuit(i)
 
 for i in range(1, qubit_num):
     CRz(uniform(0, 3.14)) | circuit([0, i])
