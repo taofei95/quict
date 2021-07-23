@@ -18,6 +18,7 @@ prop_add = cp.ElementwiseKernel(
     'z = (i & index) ? 0 : abs(x) * abs(x)',
     'prop_add')
 
+
 MeasureGate_prop_kernel = cp.ReductionKernel(
     'T x',
     'T y',
@@ -26,6 +27,7 @@ MeasureGate_prop_kernel = cp.ReductionKernel(
     'y = abs(a)',
     '0',
     'MeasureGate_prop_kernel')
+
 
 MeasureGate0_single_kernel = cp.RawKernel(r'''
     #include <cupy/complex.cuh>
@@ -39,6 +41,7 @@ MeasureGate0_single_kernel = cp.RawKernel(r'''
     }
     ''', 'MeasureGate0Single')
 
+
 MeasureGate1_single_kernel = cp.RawKernel(r'''
     #include <cupy/complex.cuh>
     extern "C" __global__
@@ -51,6 +54,7 @@ MeasureGate1_single_kernel = cp.RawKernel(r'''
         vec[_1] = vec[_1] * generation;
     }
     ''', 'MeasureGate1Single')
+
 
 HGate_single_kernel = cp.RawKernel(r'''
     #include <cupy/complex.cuh>
@@ -133,6 +137,7 @@ CRZGate_double_kernel = cp.RawKernel(r'''
     }
     ''', 'CRZGateDouble')
 
+
 MeasureGate0_double_kernel = cp.RawKernel(r'''
     #include <cupy/complex.cuh>
     extern "C" __global__
@@ -144,6 +149,7 @@ MeasureGate0_double_kernel = cp.RawKernel(r'''
         vec[_0 + (1 << index)] = complex<double>(0, 0);
     }
     ''', 'MeasureGate0Double')
+
 
 MeasureGate1_double_kernel = cp.RawKernel(r'''
     #include <cupy/complex.cuh>
@@ -210,6 +216,7 @@ def CRzGate_matrixdot(c_index, t_index, mat, vec, vec_bit, sync: bool = False):
 
     if sync:
         cp.cuda.Device().synchronize()
+
 
 def MeasureGate_Measure(index, vec, vec_bit, sync: bool = False):
     """

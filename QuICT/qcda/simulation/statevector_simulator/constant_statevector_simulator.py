@@ -64,9 +64,9 @@ class ConstantStateVectorSimulator(BasicSimulator):
         matrix = self.get_Matrix(gate)
         if (
             gate.type() == GATE_ID["H"] or 
-            gate.type == GATE_ID["SX"] or 
-            gate.type == GATE_ID["SY"] or
-            gate.type == GATE_ID["SW"] or
+            gate.type() == GATE_ID["SX"] or 
+            gate.type() == GATE_ID["SY"] or
+            gate.type() == GATE_ID["SW"] or
             gate.type() == GATE_ID["U2"] or 
             gate.type() == GATE_ID["U3"] or
             gate.type() == GATE_ID["RX"] or
