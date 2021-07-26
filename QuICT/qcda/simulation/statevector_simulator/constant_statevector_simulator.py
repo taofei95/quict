@@ -11,8 +11,6 @@ from QuICT.ops.utils import LinAlgLoader
 from QuICT.qcda.simulation import BasicSimulator
 from QuICT.core import *
 
-from QuICT.ops.gate_kernel.arch_test import *
-
 
 class ConstantStateVectorSimulator(BasicSimulator):
     """
@@ -73,8 +71,7 @@ class ConstantStateVectorSimulator(BasicSimulator):
             gate.type() == GATE_ID["RY"]
         ):
             t_index = self._qubits - 1 - gate.targ
-            # self._algorithm.HGate_matrixdot(
-            innerproduct_1arg_matrixdot(
+            self._algorithm.Based_InnerProduct_targ(
                 t_index,
                 matrix,
                 self._vector,
@@ -88,21 +85,24 @@ class ConstantStateVectorSimulator(BasicSimulator):
             gate.type() == GATE_ID["Phase"]
         ):
             t_index = self._qubits - 1 - gate.targ
-            multiply_1arg_matrixdot(
+            self._algorithm.Diagonal_Multiply_targ(
                 t_index,
                 matrix,
                 self._vector,
                 self._qubits,
                 self._sync
             )
-        elif (
-            gate.type() == GATE_ID["X"] or
-            gate.type() == GATE_ID["Y"] or
-            gate.type() == GATE_ID["T"] or
-            gate.type() == GATE_ID["T_dagger"]
-        ):
+        elif gate.type() == GATE_ID["X"]:
             t_index = self._qubits - 1 - gate.targ
-            swap_1arg_matrixdot(
+            self._algorithm.RDiagonal_swap_targ(
+                t_index,
+                self._vector,
+                self._qubits,
+                self._sync
+            )
+        elif gate.type() == GATE_ID["Y"]:
+            t_index = self._qubits - 1 - gate.targ
+            self._algorithm.RDiagonal_MultiplySwap_targ(
                 t_index,
                 self._vector,
                 self._qubits,
@@ -110,20 +110,13 @@ class ConstantStateVectorSimulator(BasicSimulator):
             )
         elif (
             gate.type() == GATE_ID["Z"] or
-            gate.type() == GATE_ID["U1"]
+            gate.type() == GATE_ID["U1"] or
+            gate.type() == GATE_ID["T"] or
+            gate.type() == GATE_ID["T_dagger"]
         ):
             t_index = self._qubits - 1 - gate.targ
-            pim_1arg_matrixdot(
+            self._algorithm.PartialIdentity_Multiply_targ(
                 t_index,
-                matrix,
-                self._vector,
-                self._qubits,
-                self._sync
-            )
-        elif gate.type() == GATE_ID["RXX"]:
-            t_indexes = [self._qubits - 1 - targ for targ in gate.targs]
-            multiply_2args_matrixdot(
-                t_indexes,
                 matrix,
                 self._vector,
                 self._qubits,
@@ -135,7 +128,7 @@ class ConstantStateVectorSimulator(BasicSimulator):
         ):
             t_index = self._qubits - 1 - gate.targ
             c_index = self._qubits - 1 - gate.carg
-            pim_multiply_2args_matrixdot(
+            self._algorithm.PartialIdentity_Multiply_ctargs(
                 c_index,
                 t_index,
                 matrix,
@@ -144,10 +137,10 @@ class ConstantStateVectorSimulator(BasicSimulator):
                 8,
                 self._sync
             )
-        elif gate.type() == GATE_ID["CX"]:
+        elif gate.type() == GATE_ID["CRz"]:
             t_index = self._qubits - 1 - gate.targ
             c_index = self._qubits - 1 - gate.carg
-            pim_multiplyswap_2args_matrixdot(
+            self._algorithm.PartialIdentity_Multiply_ctargs(
                 c_index,
                 t_index,
                 matrix,
@@ -156,15 +149,22 @@ class ConstantStateVectorSimulator(BasicSimulator):
                 12,
                 self._sync
             )
+        elif gate.type() == GATE_ID["RZZ"]:
+            t_indexes = [self._qubits - 1 - targ for targ in gate.targs]
+            self._algorithm.Diagonal_Multiply_targs(
+                t_indexes,
+                matrix,
+                self._vector,
+                self._qubits,
+                self._sync
+            )
         elif (
-            gate.type() == GATE_ID["CRz"] or
             gate.type() == GATE_ID["CX"] or
             gate.type() == GATE_ID["CY"]
         ):
             t_index = self._qubits - 1 - gate.targ
             c_index = self._qubits - 1 - gate.carg
-            # self._algorithm.CRzGate_matrixdot(
-            pim_multiply_2args_matrixdot(
+            self._algorithm.PartialIdentity_MultiplySwap_ctargs(
                 c_index,
                 t_index,
                 matrix,
@@ -176,8 +176,7 @@ class ConstantStateVectorSimulator(BasicSimulator):
         elif gate.type() == GATE_ID["CH"] or gate.type() == GATE_ID["CU3"]:
             t_index = self._qubits - 1 - gate.targ
             c_index = self._qubits - 1 - gate.carg
-
-            pim_innerproduct_2args_matrixdot(
+            self._algorithm.PartialIdentity_InnerProduct_ctargs(
                 c_index,
                 t_index,
                 matrix,
@@ -187,16 +186,16 @@ class ConstantStateVectorSimulator(BasicSimulator):
             )
         elif gate.type() == GATE_ID["FSim"]:
             t_indexes = [self._qubits - 1 - targ for targ in gate.targs]
-            completed_MxIP_matrixdot(
+            self._algorithm.Completed_MxIP_targs(
                 t_indexes,
                 matrix,
                 self._vector,
                 self._qubits,
                 self._sync
             )
-        elif gate.type() == GATE_ID["RXX"] or gate.type() == GATE_ID["RXX"]:
+        elif gate.type() == GATE_ID["RXX"] or gate.type() == GATE_ID["RYY"]:
             t_indexes = [self._qubits - 1 - targ for targ in gate.targs]
-            completed_IPxIP_matrixdot(
+            self._algorithm.Completed_IPxIP_targs(
                 t_indexes,
                 matrix,
                 self._vector,
@@ -205,13 +204,11 @@ class ConstantStateVectorSimulator(BasicSimulator):
             )
         elif gate.type() == GATE_ID["Swap"]:
             t_indexes = [self._qubits - 1 - targ for targ in gate.targs]
-            pim_multiplyswap_2args_matrixdot(
-                t_indexes[0],
-                t_indexes[1],
+            self._algorithm.PartialIdentity_swap_targs(
+                t_indexes,
                 matrix,
                 self._vector,
                 self._qubits,
-                6,
                 self._sync
             )
         elif gate.type() == GATE_ID["ID"]:

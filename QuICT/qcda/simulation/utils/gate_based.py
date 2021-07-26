@@ -10,14 +10,6 @@ import cupy as cp
 from QuICT.core.gate.gate import *
 
 
-# Static gate matrix
-STATIC_GATE_NAMES = [
-    "HGate", "SGate", "SDaggerGate",
-    "XGate", "YGate", "ZGate",
-    "SXGate", "SYGate", "SWGate",
-    "IDGate", "TGate", "TDaggerGate", "CCXGate", "CXGate"
-]
-
 class GateMatrixs:
     """
     The class of storing the gates' compute matrix, without duplicate.
@@ -46,11 +38,12 @@ class GateMatrixs:
             gate(Gate): the gate in circuit.
         """
         gate_name = gate.name.split("_")[0]
-        if gate_name not in STATIC_GATE_NAMES:
-            gate_name += f"_{gate.parg}"
-        
-        matrix = gate.compute_matrix
+        param_num = gate.params
+        if gate.params != 0:
+            for i in range(param_num):
+                gate_name += f"_{gate.pargs[i]}"
 
+        matrix = gate.compute_matrix
 
         if gate_name not in self.gate_matrixs.keys():
             self._build_matrix_gate(gate_name, matrix)
@@ -82,8 +75,10 @@ class GateMatrixs:
             gate(Gate): the gate in circuit.
         """
         gate_name = gate.name.split("_")[0]
-        if gate_name not in STATIC_GATE_NAMES:
-            gate_name = f"{gate_name}_{gate.parg}"
+        param_num = gate.params
+        if param_num != 0:
+            for i in range(param_num):
+                gate_name += f"_{gate.pargs[i]}"
 
         start, itvl = self.gate_matrixs[gate_name]
 

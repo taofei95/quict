@@ -42,6 +42,13 @@ class LinAlgLoader:
                 if attr in GATE_KERNEL_FUNCTIONS:
                     self.__dict__[attr] = value
 
+            gate_alg_lib = importlib.import_module('QuICT.ops.gate_kernel.gate_alg')
+            GATE_KERNEL_FUNCTIONS = gate_alg_lib.__dict__["__outward_functions"]
+
+            for attr, value in gate_alg_lib.__dict__.items():
+                if attr in GATE_KERNEL_FUNCTIONS:
+                    self.__dict__[attr] = value
+
         if enable_multigpu_gate_kernel:
             proxy_lib = importlib.import_module('QuICT.ops.gate_kernel.multigpu_gate_func')
             PROXY_GATE_FUNCTIONS = proxy_lib.__dict__["__outward_functions"]

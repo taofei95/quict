@@ -151,14 +151,44 @@ Case: completed matrix:
 """
 
 """
-TODO: 1. *CRz* & one of completed matrix (Finish)
-      2. Comparsion speed with gate_based kernel function (Finish)
-      3. Analysis Result (Finish)
+Gate Function Named Rules:
+{Matrix_type}_{ops}_{args}
+Matrix_type: - Based (normal matrix) [[a, b],
+                                      [c, d]]
+             - Diagonal (diagonal matrix) [[a, 0],
+                                           [0, b]]
+             - RDiagonal (reverse diagonal matrix) [[0, a],
+                                                    [b, 0]]
+             - PartialIdentity (partial identity matrix) [[1, 0, 0, 0],
+                                                          [0, 1, 0, 0],
+                                                          [0, 0, a, b],
+                                                          [0, 0, c, d]], a, b, c, d can be zero;
+             - Completed    [[a, 0, 0, b],
+                             [0, e, f, 0],
+                             [0, g, h, 0],
+                             [c, 0, 0, d]]
+ops:    - Multiply(M)
+        - InnerProduct(IP)
+        - Swap (when matrix value is 1)
+        - MultiplySwap
+args:   - targ (only one target)
+        - ctargs (one target and one control)
+        - targs (two targets)
+        - more (three targets and controls only for CXX)
 
-TODO: 1. data_t support -> float/double (Finish)
-      2. gate matrix permutation (followed by c-t or low-high) (...)
-      3. apply based multiply and inner product (Finish)
-      4. think new interface for customized vector state 
+e.g.    Diagonal_Multiply_ctargs ==> [[a, 0, 0, 0],     *       [v0,
+                                      [0, b, 0, 0],              v1,
+                                      [0, 0, c, 0],              v2,
+                                      [0, 0, 0, d]]              v3]
+
+        PartialIdentity_MultiplySwap_targs ==>  [[1, 0, 0, 0],     *       [v0,
+                                                 [0, 1, 0, 0],              v1,
+                                                 [0, 0, 0, a],              v2,
+                                                 [0, 0, b, 0]]              v3]
+        Completed_MxIP_targs ==>    [[c0, 0, 0, 0],         *           [v0,
+                                     [0, c1, c2, 0],                     v1,
+                                     [0, c3, c4, 0],                     v2,
+                                     [0, 0, 0, c5]]                      v3]
 """
 
 
