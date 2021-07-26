@@ -13,8 +13,6 @@
 #include <string>
 #include <omp.h>
 #include <immintrin.h>
-#include <avxintrin.h>
-#include <avx2intrin.h>
 
 #include "utility.h"
 #include "monotonous_simulator.h"
@@ -54,6 +52,8 @@ namespace QuICT {
         );
 
     private:
+        inline void qubit_num_checker(uint64_t qubit_num);
+
         inline void run(
                 uint64_t circuit_qubit_num,
                 const std::vector<GateDescription<Precision>> &gate_desc_vec,
@@ -110,6 +110,8 @@ namespace QuICT {
             const std::vector<GateDescription<Precision>> &gate_desc_vec,
             const std::complex<Precision> *init_state
     ) {
+        qubit_num_checker(circuit_qubit_num);
+
         auto pr = separate_complex(circuit_qubit_num, init_state);
         auto real = pr.first;
         auto imag = pr.second;
@@ -124,6 +126,8 @@ namespace QuICT {
             uint64_t circuit_qubit_num,
             const std::vector<GateDescription<Precision>> &gate_desc_vec
     ) {
+        qubit_num_checker(circuit_qubit_num);
+
         auto len = 1ULL << circuit_qubit_num;
         auto real = new Precision[len];
         auto imag = new Precision[len];
@@ -145,8 +149,17 @@ namespace QuICT {
             Precision *real,
             Precision *imag
     ) {
+        qubit_num_checker(circuit_qubit_num);
+
         for (const auto &gate_desc:gate_desc_vec) {
             apply_gate(circuit_qubit_num, gate_desc, real, imag);
+        }
+    }
+
+    template<typename Precision>
+    inline void HybridSimulator<Precision>::qubit_num_checker(uint64_t qubit_num) {
+        if (qubit_num <= 4) {
+            throw std::runtime_error("Only supports circuit with more than 4 qubits!");
         }
     }
 
@@ -347,76 +360,79 @@ namespace QuICT {
             Precision *real,
             Precision *imag
     ) {
-        // Two qubit distribution is much more sophisticated than
-        // single qubit's case. So we enumerate index distance instead
-        // of targets positions.
-        constexpr uint64_t batch_size = 2;
-        uint64_t task_num = 1ULL << (circuit_qubit_num - 2);
-        uarray_t<2> qubits = {gate.carg_, gate.targ_};
-        uarray_t<2> qubits_sorted = {gate.carg_, gate.targ_};
-        if (gate.carg_ > gate.targ_) {
-            std::swap(qubits_sorted[0], qubits_sorted[1]);
-        }
-        for (uint64_t task_id = 0; task_id < task_num; task_id += batch_size) {
-            auto ind_0 = index(task_id, circuit_qubit_num, qubits, qubits_sorted);
-            auto ind_1 = index(task_id + 1, circuit_qubit_num, qubits, qubits_sorted);
-            Precision res_r[4], res_i[4];
-            if (ind_0[2] + 1 == ind_1[2] && ind_0[3] + 1 == ind_1[3]) {
-                __m256d ymm0 = _mm256_broadcast_sd(&gate.diagonal_real_[0]);
-                __m256d ymm1 = _mm256_broadcast_sd(&gate.diagonal_real_[1]);
-                ymm0 = _mm256_permute2f128_pd(ymm0, ymm1, 0b1100);  // dr
-                ymm1 = _mm256_broadcast_sd(&gate.diagonal_imag_[0]);
-                __m256d ymm2 = _mm256_broadcast_sd(&gate.diagonal_imag_[1]);
-                ymm1 = _mm256_permute2f128_pd(ymm1, ymm2, 0b1100);  // di
-                ymm2 = _mm256_loadu2_m128d(&real[ind_0[2]], &real[ind_0[3]]); // vr
-                __m256d ymm3 = _mm256_loadu2_m128d(&imag[ind_0[2]], &imag[ind_0[3]]); // vi
-                // v * d == (vr * dr - vi * di) + (vi * dr + vr * di)I
-                __m256d ymm4 = _mm256_mul_pd(ymm2, ymm0);
-                ymm4 = _mm256_fnmadd_pd(ymm1, ymm3, ymm4);
-                __m256d ymm5 = _mm256_mul_pd(ymm3, ymm0);
-                ymm5 = _mm256_fmadd_pd(ymm2, ymm1, ymm5);
+        if constexpr(std::is_same_v<Precision, float>) {
+            throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__) + ": "
+                                     + "Not Implemented " + __func__);
+        } else if constexpr(std::is_same_v<Precision, double>) {
+            // Two qubit distribution is much more sophisticated than
+            // single qubit's case. So we enumerate index distance instead
+            // of targets positions.
+            constexpr uint64_t batch_size = 2;
+            uint64_t task_num = 1ULL << (circuit_qubit_num - 2);
+            uarray_t<2> qubits = {gate.carg_, gate.targ_};
+            uarray_t<2> qubits_sorted = {gate.carg_, gate.targ_};
+            if (gate.carg_ > gate.targ_) {
+                qubits_sorted[0] = gate.targ_;
+                qubits_sorted[1] = gate.carg_;
+            }
+            for (uint64_t task_id = 0; task_id < task_num; task_id += batch_size) {
+                auto ind_0 = index(task_id, circuit_qubit_num, qubits, qubits_sorted);
+                auto ind_1 = index(task_id + 1, circuit_qubit_num, qubits, qubits_sorted);
+                Precision res_r[4], res_i[4];
+                if (ind_0[2] + 1 == ind_1[2] && ind_0[3] + 1 == ind_1[3]) {
+                    __m256d ymm0 = _mm256_loadu2_m128d(gate.diagonal_real_, gate.diagonal_real_);
+                    __m256d ymm1 = _mm256_loadu2_m128d(gate.diagonal_imag_, gate.diagonal_imag_);
+                    ymm0 = _mm256_permute4x64_pd(ymm0, 0b1101'1000);                    // dr
+                    ymm1 = _mm256_permute4x64_pd(ymm1, 0b1101'1000);                    // di
+                    __m256d ymm2 = _mm256_loadu2_m128d(&real[ind_0[3]], &real[ind_0[2]]);  // vr
+                    __m256d ymm3 = _mm256_loadu2_m128d(&imag[ind_0[3]], &imag[ind_0[2]]);  // vi
+                    // v * d == (vr * dr - vi * di) + (vi * dr + vr * di)I
+                    __m256d ymm4 = _mm256_mul_pd(ymm2, ymm0);  // vr * dr
+                    ymm4 = _mm256_fnmadd_pd(ymm1, ymm3, ymm4); // vr * dr - vi * di
+                    __m256d ymm5 = _mm256_mul_pd(ymm3, ymm0);  // vi * dr
+                    ymm5 = _mm256_fmadd_pd(ymm2, ymm1, ymm5);  // vi * dr + vr * di
 
-                // Store
-                _mm256_storeu2_m128d(&real[ind_0[2]], &real[ind_0[3]], ymm4);
-                _mm256_storeu2_m128d(&imag[ind_0[2]], &imag[ind_0[3]], ymm5);
-            } else if (ind_0[2] + 1 == ind_0[3] && ind_1[2] + 1 == ind_1[3]) {
-                __m256d ymm0 = _mm256_loadu2_m128d(gate.diagonal_real_, gate.diagonal_real_);  // dr
-                __m256d ymm1 = _mm256_loadu2_m128d(gate.diagonal_imag_, gate.diagonal_imag_);  // di
+                    // Store
+                    _mm256_storeu2_m128d(&real[ind_0[3]], &real[ind_0[2]], ymm4);
+                    _mm256_storeu2_m128d(&imag[ind_0[3]], &imag[ind_0[2]], ymm5);
+                } else if (ind_0[2] + 1 == ind_0[3] && ind_1[2] + 1 == ind_1[3]) {
+                    __m256d ymm0 = _mm256_loadu2_m128d(gate.diagonal_real_, gate.diagonal_real_);  // dr
+                    __m256d ymm1 = _mm256_loadu2_m128d(gate.diagonal_imag_, gate.diagonal_imag_);  // di
+                    __m256d ymm2 = _mm256_loadu2_m128d(&real[ind_1[2]], &real[ind_0[2]]);          // vr
+                    __m256d ymm3 = _mm256_loadu2_m128d(&imag[ind_1[2]], &imag[ind_0[2]]);          // vi
+                    // v * d == (vr * dr - vi * di) + (vi * dr + vr * di)I
+                    __m256d ymm4 = _mm256_mul_pd(ymm2, ymm0);  // vr * dr
+                    ymm4 = _mm256_fnmadd_pd(ymm1, ymm3, ymm4); // vr * dr - vi * di
+                    __m256d ymm5 = _mm256_mul_pd(ymm3, ymm0);  // vi * dr
+                    ymm5 = _mm256_fmadd_pd(ymm2, ymm1, ymm5);  // vi * dr + vr * di
 
-                __m256d ymm2 = _mm256_loadu2_m128d(&real[ind_0[2]], &real[ind_1[2]]); // vr
-                __m256d ymm3 = _mm256_loadu2_m128d(&imag[ind_0[2]], &imag[ind_1[2]]); // vi
-                // v * d == (vr * dr - vi * di) + (vi * dr + vr * di)I
-                __m256d ymm4 = _mm256_mul_pd(ymm2, ymm0);
-                ymm4 = _mm256_fnmadd_pd(ymm1, ymm3, ymm4);
-                __m256d ymm5 = _mm256_mul_pd(ymm3, ymm0);
-                ymm5 = _mm256_fmadd_pd(ymm2, ymm1, ymm5);
+                    // Store
+                    _mm256_storeu2_m128d(&real[ind_1[2]], &real[ind_0[2]], ymm4);
+                    _mm256_storeu2_m128d(&real[ind_1[2]], &real[ind_0[2]], ymm5);
+                } else { // Default fallback
+                    __m256d ymm0 = _mm256_loadu2_m128d(gate.diagonal_real_, gate.diagonal_real_);                  // dr
+                    __m256d ymm1 = _mm256_loadu2_m128d(gate.diagonal_imag_, gate.diagonal_imag_);                  // di
+                    __m256d ymm2 = _mm256_setr_pd(real[ind_0[2]], real[ind_0[3]], real[ind_1[2]], real[ind_1[3]]); // vr
+                    __m256d ymm3 = _mm256_setr_pd(imag[ind_0[2]], imag[ind_0[3]], imag[ind_1[2]], imag[ind_1[3]]); // vi
+                    // v * d == (vr * dr - vi * di) + (vi * dr + vr * di)I
+                    __m256d ymm4 = _mm256_mul_pd(ymm2, ymm0);  // vr * dr
+                    ymm4 = _mm256_fnmadd_pd(ymm1, ymm3, ymm4); // vr * dr - vi * di
+                    __m256d ymm5 = _mm256_mul_pd(ymm3, ymm0);  // vi * dr
+                    ymm5 = _mm256_fmadd_pd(ymm2, ymm1, ymm5);  // vi * dr + vr * di
+                    _mm256_storeu_pd(res_r, ymm4);
+                    _mm256_storeu_pd(res_i, ymm5);
 
-                // Store
-                _mm256_storeu2_m128d(&real[ind_0[2]], &real[ind_1[2]], ymm4);
-                _mm256_storeu2_m128d(&real[ind_0[2]], &real[ind_1[2]], ymm5);
-            } else { // Default fallback
-                __m256d ymm0 = _mm256_loadu2_m128d(gate.diagonal_real_, gate.diagonal_real_);  // dr
-                __m256d ymm1 = _mm256_loadu2_m128d(gate.diagonal_imag_, gate.diagonal_imag_);  // di
-                __m256d ymm2 = _mm256_setr_pd(real[ind_0[2]], real[ind_0[3]], real[ind_1[2]], real[ind_1[3]]); // vr
-                __m256d ymm3 = _mm256_setr_pd(imag[ind_0[2]], imag[ind_0[3]], imag[ind_1[2]], imag[ind_1[3]]); // vi
-                // v * d == (vr * dr - vi * di) + (vi * dr + vr * di)I
-                __m256d ymm4 = _mm256_mul_pd(ymm2, ymm0);
-                ymm4 = _mm256_fnmadd_pd(ymm1, ymm3, ymm4);
-                __m256d ymm5 = _mm256_mul_pd(ymm3, ymm0);
-                ymm5 = _mm256_fmadd_pd(ymm2, ymm1, ymm5);
-                _mm256_storeu_pd(res_r, ymm4);
-                _mm256_storeu_pd(res_i, ymm5);
+                    // Store
+                    real[ind_0[2]] = res_r[0];
+                    real[ind_0[3]] = res_r[1];
+                    real[ind_1[2]] = res_r[2];
+                    real[ind_1[3]] = res_r[3];
 
-                // Store
-                real[ind_0[2]] = res_r[0];
-                real[ind_0[3]] = res_r[1];
-                imag[ind_0[2]] = res_i[0];
-                imag[ind_0[3]] = res_i[1];
-
-                real[ind_1[2]] = res_r[2];
-                real[ind_1[3]] = res_r[3];
-                imag[ind_1[2]] = res_i[2];
-                imag[ind_1[3]] = res_i[3];
+                    imag[ind_0[2]] = res_i[0];
+                    imag[ind_0[3]] = res_i[1];
+                    imag[ind_1[2]] = res_i[2];
+                    imag[ind_1[3]] = res_i[3];
+                }
             }
         }
     }
