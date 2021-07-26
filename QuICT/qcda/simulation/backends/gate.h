@@ -224,6 +224,53 @@ namespace QuICT {
     struct gate_has_mat_repr {
         constexpr static bool value = Details::has_member_mat_<Gate>::value;
     };
+
+    template<typename Precision, template<typename ...> class Gate>
+    struct is_simple_gate {
+        static constexpr bool value =
+                // TODO: Add more simple gates.
+                std::is_same_v<Gate<Precision>, HGate<Precision>>;
+    };
+
+    template<typename Precision, template<typename ...> class Gate>
+    inline constexpr bool is_simple_gate_v = is_simple_gate<Precision, Gate>::value;
+
+
+    template<typename Precision, template<typename ...> class Gate>
+    struct is_diag_n_gate {
+        static constexpr bool value =
+                std::is_same_v<Gate<Precision>, DiagonalGateN<1, Precision>> ||
+                std::is_same_v<Gate<Precision>, DiagonalGateN<2, Precision>>;
+    };
+
+    template<typename Precision, template<typename ...> class Gate>
+    inline constexpr bool is_diag_n_gate_v = is_diag_n_gate<Precision, Gate>::value;
+
+    template<typename Precision, template<typename ...> class Gate>
+    struct is_ctrl_diag_gate {
+        static constexpr bool value = std::is_same_v<Gate<Precision>, ControlledDiagonalGate<Precision>>;
+    };
+
+    template<typename Precision, template<typename ...> class Gate>
+    inline constexpr bool is_ctrl_diag_gate_v = is_ctrl_diag_gate<Precision, Gate>::value;
+
+    template<typename Precision, template<typename ...> class Gate>
+    struct is_unitary_n_gate {
+        static constexpr bool value =
+                std::is_same_v<Gate<Precision>, UnitaryGateN<1, Precision>> ||
+                std::is_same_v<Gate<Precision>, UnitaryGateN<2, Precision>>;
+    };
+
+    template<typename Precision, template<typename ...> class Gate>
+    inline constexpr bool is_unitary_n_gate_v = is_unitary_n_gate<Precision, Gate>::value;
+
+    template<typename Precision, template<typename ...> class Gate>
+    struct is_ctrl_unitary_gate {
+        static constexpr bool value = std::is_same_v<Gate<Precision>, ControlledUnitaryGate<Precision>>;
+    };
+
+    template<typename Precision, template<typename ...> class Gate>
+    inline constexpr bool is_ctrl_unitary_gate_v = is_ctrl_unitary_gate<Precision, Gate>::value;
 }
 
 #endif //SIMULATION_BACKENDS_GATE_H

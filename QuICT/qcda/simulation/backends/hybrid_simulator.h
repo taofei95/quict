@@ -80,25 +80,57 @@ namespace QuICT {
                 Precision *imag
         );
 
-//        template<class _Gate>
+//        template<class Gate>
 //        inline void apply_gate(
 //                uint64_t circuit_qubit_num,
-//                const _Gate &gate,
+//                const Gate &gate,
 //                Precision *real,
 //                Precision *imag
 //        );
 
-        inline void apply_h_gate(
+        template<template<typename ...> class Gate>
+        inline void apply_simple_gate(
                 uint64_t circuit_qubit_num,
-                const HGate<Precision> &gate,
+                const Gate<Precision> &gate,
                 Precision *real,
                 Precision *imag
         );
 
-        template<template<typename ...> class _Gate>
+        template<template<typename ...> class Gate>
+        inline void apply_diag_n_gate(
+                uint64_t circuit_qubit_num,
+                const Gate<Precision> &gate,
+                Precision *real,
+                Precision *imag
+        );
+
+        template<template<typename ...> class Gate>
         inline void apply_ctrl_diag_gate(
                 uint64_t circuit_qubit_num,
-                const _Gate<Precision> &gate,
+                const Gate<Precision> &gate,
+                Precision *real,
+                Precision *imag
+        );
+
+        template<template<typename ...> class Gate>
+        inline void apply_unitary_n_gate(
+                uint64_t circuit_qubit_num,
+                const Gate<Precision> &gate,
+                Precision *real,
+                Precision *imag
+        );
+
+        template<template<typename ...> class Gate>
+        inline void apply_ctrl_unitary_gate(
+                uint64_t circuit_qubit_num,
+                const Gate<Precision> &gate,
+                Precision *real,
+                Precision *imag
+        );
+
+        inline void apply_h_gate(
+                uint64_t circuit_qubit_num,
+                const HGate<Precision> &gate,
                 Precision *real,
                 Precision *imag
         );
@@ -353,10 +385,10 @@ namespace QuICT {
     }
 
     template<typename Precision>
-    template<template<typename ...> class _Gate>
+    template<template<typename ...> class Gate>
     inline void HybridSimulator<Precision>::apply_ctrl_diag_gate(
             uint64_t circuit_qubit_num,
-            const _Gate<Precision> &gate,
+            const Gate<Precision> &gate,
             Precision *real,
             Precision *imag
     ) {
