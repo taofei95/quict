@@ -12,11 +12,13 @@ __outward_functions = [
     "Controlled_InnerProduct_ctargs",
     "Completed_MxIP_targs",
     "Completed_IPxIP_targs",
-    "RDiagonal_swap_targ",
+    "RDiagonal_Swap_targ",
     "RDiagonal_MultiplySwap_targ",
     "Controlled_MultiplySwap_ctargs",
-    "Controlled_swap_targs",
-    "Controlled_swap_more"
+    "Controlled_Swap_targs",
+    "Controlled_Swap_more",
+    "Controlled_Multiply_more",
+    "Controlled_Swap_tmore"
 ]
 
 
@@ -450,10 +452,10 @@ Controlled_MultiplySwap_ctargs_double = cp.RawKernel(r'''
     ''', 'Controlled4x4MultiSwap')
 
 
-Controlled_swap_targs_single = cp.RawKernel(r'''
+Controlled_Swap_targs_single = cp.RawKernel(r'''
     #include <cupy/complex.cuh>
     extern "C" __global__
-    void Controlled4x4Swap(int* pargs, const complex<float>* mat, complex<float>* vec) {
+    void Controlled4x4Swap(int* pargs, complex<float>* vec) {
         int label = blockDim.x * blockIdx.x + threadIdx.x;
 
         const int offset1 = 1 << pargs[0];
@@ -474,10 +476,10 @@ Controlled_swap_targs_single = cp.RawKernel(r'''
     ''', 'Controlled4x4Swap')
 
 
-Controlled_swap_targs_double = cp.RawKernel(r'''
+Controlled_Swap_targs_double = cp.RawKernel(r'''
     #include <cupy/complex.cuh>
     extern "C" __global__
-    void Controlled4x4Swap(int* pargs, const complex<double>* mat, complex<double>* vec) {
+    void Controlled4x4Swap(int* pargs, complex<double>* vec) {
         int label = blockDim.x * blockIdx.x + threadIdx.x;
 
         const int offset1 = 1 << pargs[0];
@@ -612,7 +614,7 @@ Completed_IPxIP_targs_double = cp.RawKernel(r'''
     ''', 'CompletedIPxIP')
 
 
-RDiagonal_swap_targ_single = cp.RawKernel(r'''
+RDiagonal_Swap_targ_single = cp.RawKernel(r'''
     #include <cupy/complex.cuh>
     extern "C" __global__
     void RDiag2x2Swap(int parg, complex<float>* vec) {
@@ -630,7 +632,7 @@ RDiagonal_swap_targ_single = cp.RawKernel(r'''
     ''', 'RDiag2x2Swap')
 
 
-RDiagonal_swap_targ_double = cp.RawKernel(r'''
+RDiagonal_Swap_targ_double = cp.RawKernel(r'''
     #include <cupy/complex.cuh>
     extern "C" __global__
     void RDiag2x2Swap(int parg, complex<double>* vec) {
@@ -684,10 +686,10 @@ RDiagonal_MultiplySwap_targ_double = cp.RawKernel(r'''
     ''', 'RDiag2x2MultiSwap')
 
 
-Controlled_swap_more_single = cp.RawKernel(r'''
+Controlled_Swap_more_single = cp.RawKernel(r'''
     #include <cupy/complex.cuh>
     extern "C" __global__
-    void Controlled8x8Swap(int* cargs, int t_index, const complex<float>* mat, complex<float>* vec) {
+    void Controlled8x8Swap(int* cargs, int t_index, complex<float>* vec) {
         int label = blockDim.x * blockIdx.x + threadIdx.x;
 
         const int offset_c1 = 1 << cargs[0];
@@ -722,10 +724,10 @@ Controlled_swap_more_single = cp.RawKernel(r'''
     ''', 'Controlled8x8Swap')
 
 
-Controlled_swap_more_double = cp.RawKernel(r'''
+Controlled_Swap_more_double = cp.RawKernel(r'''
     #include <cupy/complex.cuh>
     extern "C" __global__
-    void Controlled8x8Swap(int* cargs, int t_index, const complex<double>* mat, complex<double>* vec) {
+    void Controlled8x8Swap(int* cargs, int t_index, complex<double>* vec) {
         int label = blockDim.x * blockIdx.x + threadIdx.x;
 
         const int offset_c1 = 1 << cargs[0];
@@ -758,6 +760,158 @@ Controlled_swap_more_double = cp.RawKernel(r'''
         vec[_1] = temp_0;
     }
     ''', 'Controlled8x8Swap')
+
+
+Controlled_Multiply_more_single = cp.RawKernel(r'''
+    #include <cupy/complex.cuh>
+    extern "C" __global__
+    void Controlled8x8Multiply(int* cargs, int t_index, const complex<float>* mat, complex<float>* vec) {
+        int label = blockDim.x * blockIdx.x + threadIdx.x;
+
+        const int offset_c1 = 1 << cargs[0];
+        const int offset_c2 = 1 << cargs[1];
+        const int offset_t = 1 << t_index;
+        const int mask1 = offset_c1 - 1;
+        const int mask2 = offset_c2 - 1;
+        const int mask_t = offset_t - 1;
+
+        int gw = 0, _0 = 0;
+
+        if (t_index < cargs[0]){
+            gw = label >> t_index << (t_index + 1);
+            _0 = offset_c1 + (gw >> cargs[0] << (cargs[0] + 1)) + (gw & (offset_c1 - offset_t)) + (label & mask_t);
+            _0 = offset_c2 + (_0 >> cargs[1] << (cargs[1] + 1)) + (_0 & mask2);
+        }else if(t_index < cargs[1]){
+            gw = label >> cargs[0] << (cargs[0] + 1);
+            _0 = offset_c1 + (gw >> t_index << (t_index + 1)) + (gw & (offset_t - offset_c1)) + (label & mask1);
+            _0 = offset_c2 + (_0 >> cargs[1] << (cargs[1] + 1)) + (_0 & mask2);
+        }else{
+            gw = label >> cargs[0] << (cargs[0] + 1);
+            _0 = offset_c1 + (gw >> cargs[1] << (cargs[1] + 1)) + (gw & (offset_c2 - offset_c1)) + (label & mask1);
+            _0 = offset_c2 + (_0 >> t_index << (t_index + 1)) + (_0 & mask_t);
+        }
+
+        int _1 = _0 + offset_t;
+
+        vec[_0] = vec[_0]*mat[54];
+        vec[_1] = vec[_1]*mat[63];
+    }
+    ''', 'Controlled8x8Multiply')
+
+
+Controlled_Multiply_more_double = cp.RawKernel(r'''
+    #include <cupy/complex.cuh>
+    extern "C" __global__
+    void Controlled8x8Multiply(int* cargs, int t_index, const complex<double>* mat, complex<double>* vec) {
+        int label = blockDim.x * blockIdx.x + threadIdx.x;
+
+        const int offset_c1 = 1 << cargs[0];
+        const int offset_c2 = 1 << cargs[1];
+        const int offset_t = 1 << t_index;
+        const int mask1 = offset_c1 - 1;
+        const int mask2 = offset_c2 - 1;
+        const int mask_t = offset_t - 1;
+
+        int gw = 0, _0 = 0;
+
+        if (t_index < cargs[0]){
+            gw = label >> t_index << (t_index + 1);
+            _0 = offset_c1 + (gw >> cargs[0] << (cargs[0] + 1)) + (gw & (offset_c1 - offset_t)) + (label & mask_t);
+            _0 = offset_c2 + (_0 >> cargs[1] << (cargs[1] + 1)) + (_0 & mask2);
+        }else if(t_index < cargs[1]){
+            gw = label >> cargs[0] << (cargs[0] + 1);
+            _0 = offset_c1 + (gw >> t_index << (t_index + 1)) + (gw & (offset_t - offset_c1)) + (label & mask1);
+            _0 = offset_c2 + (_0 >> cargs[1] << (cargs[1] + 1)) + (_0 & mask2);
+        }else{
+            gw = label >> cargs[0] << (cargs[0] + 1);
+            _0 = offset_c1 + (gw >> cargs[1] << (cargs[1] + 1)) + (gw & (offset_c2 - offset_c1)) + (label & mask1);
+            _0 = offset_c2 + (_0 >> t_index << (t_index + 1)) + (_0 & mask_t);
+        }
+
+        int _1 = _0 + offset_t;
+
+        vec[_0] = vec[_0]*mat[54];
+        vec[_1] = vec[_1]*mat[63];
+    }
+    ''', 'Controlled8x8Multiply')
+
+
+Controlled_Swap_tmore_single = cp.RawKernel(r'''
+    #include <cupy/complex.cuh>
+    extern "C" __global__
+    void Controlled8x8Swapt(int* targs, int c_index, complex<float>* vec) {
+        int label = blockDim.x * blockIdx.x + threadIdx.x;
+
+        const int offset_t1 = 1 << targs[0];
+        const int offset_t2 = 1 << targs[1];
+        const int offset_c = 1 << c_index;
+        const int mask1 = offset_t1 - 1;
+        const int mask2 = offset_t2 - 1;
+        const int mask_c = offset_c - 1;
+
+        int gw = 0, _0 = 0;
+
+        if (c_index < targs[0]){
+            gw = label >> c_index << (c_index + 1);
+            _0 = offset_c + (gw >> targs[0] << (targs[0] + 1)) + (gw & (offset_t1 - offset_c)) + (label & mask_c);
+            _0 = (_0 >> targs[1] << (targs[1] + 1)) + (_0 & mask2);
+        }else if(c_index < targs[1]){
+            gw = label >> targs[0] << (targs[0] + 1);
+            _0 = offset_c + (gw >> c_index << (c_index + 1)) + (gw & (offset_c - offset_t1)) + (label & mask1);
+            _0 = (_0 >> targs[1] << (targs[1] + 1)) + (_0 & mask2);
+        }else{
+            gw = label >> targs[0] << (targs[0] + 1);
+            _0 = (gw >> targs[1] << (targs[1] + 1)) + (gw & (offset_t2 - offset_t1)) + (label & mask1);
+            _0 = offset_c + (_0 >> c_index << (c_index + 1)) + (_0 & mask_c);
+        }
+
+        int _1 = _0 + offset_t1;
+        int _2 = _0 + offset_t2;
+
+        complex<float> temp_0 = vec[_1];
+        vec[_1] = vec[_2];
+        vec[_2] = temp_0;
+    }
+    ''', 'Controlled8x8Swapt')
+
+
+Controlled_Swap_tmore_double = cp.RawKernel(r'''
+    #include <cupy/complex.cuh>
+    extern "C" __global__
+    void Controlled8x8Swapt(int* targs, int c_index, complex<double>* vec) {
+        int label = blockDim.x * blockIdx.x + threadIdx.x;
+
+        const int offset_t1 = 1 << targs[0];
+        const int offset_t2 = 1 << targs[1];
+        const int offset_c = 1 << c_index;
+        const int mask1 = offset_t1 - 1;
+        const int mask2 = offset_t2 - 1;
+        const int mask_c = offset_c - 1;
+
+        int gw = 0, _0 = 0;
+
+        if (c_index < targs[0]){
+            gw = label >> c_index << (c_index + 1);
+            _0 = offset_c + (gw >> targs[0] << (targs[0] + 1)) + (gw & (offset_t1 - offset_c)) + (label & mask_c);
+            _0 = (_0 >> targs[1] << (targs[1] + 1)) + (_0 & mask2);
+        }else if(c_index < targs[1]){
+            gw = label >> targs[0] << (targs[0] + 1);
+            _0 = offset_c + (gw >> c_index << (c_index + 1)) + (gw & (offset_c - offset_t1)) + (label & mask1);
+            _0 = (_0 >> targs[1] << (targs[1] + 1)) + (_0 & mask2);
+        }else{
+            gw = label >> targs[0] << (targs[0] + 1);
+            _0 = (gw >> targs[1] << (targs[1] + 1)) + (gw & (offset_t2 - offset_t1)) + (label & mask1);
+            _0 = offset_c + (_0 >> c_index << (c_index + 1)) + (_0 & mask_c);
+        }
+
+        int _1 = _0 + offset_t1;
+        int _2 = _0 + offset_t2;
+
+        complex<double> temp_0 = vec[_1];
+        vec[_1] = vec[_2];
+        vec[_2] = temp_0;
+    }
+    ''', 'Controlled8x8Swapt')
 
 
 def Diagonal_Multiply_targ(t_index, mat, vec, vec_bit, sync: bool = False):
@@ -1035,7 +1189,7 @@ def Completed_IPxIP_targs(t_indexes, mat, vec, vec_bit, sync: bool = False):
         cp.cuda.Device().synchronize()
 
 
-def RDiagonal_swap_targ(t_index, vec, vec_bit, sync: bool = False):
+def RDiagonal_Swap_targ(t_index, vec, vec_bit, sync: bool = False):
     """
     reverse diagonal matrix (2x2) dot vector
         [[0, 1],        *       vec
@@ -1046,13 +1200,13 @@ def RDiagonal_swap_targ(t_index, vec, vec_bit, sync: bool = False):
     block_num = task_number // thread_per_block
 
     if vec.dtype == np.complex64:
-        RDiagonal_swap_targ_single(
+        RDiagonal_Swap_targ_single(
             (block_num,),
             (thread_per_block,),
             (t_index, vec)
         )
     else:
-        RDiagonal_swap_targ_double(
+        RDiagonal_Swap_targ_double(
             (block_num,),
             (thread_per_block,),
             (t_index, vec)
@@ -1118,7 +1272,7 @@ def Controlled_MultiplySwap_ctargs(c_index, t_index, mat, vec, vec_bit, sync: bo
         cp.cuda.Device().synchronize()
 
 
-def Controlled_swap_targs(t_indexes, mat, vec, vec_bit, sync: bool = False):
+def Controlled_Swap_targs(t_indexes, vec, vec_bit, sync: bool = False):
     """
     Controlled matrix (4x4) dot vector
             [[1, 0, 0, 0],    *   vec
@@ -1136,23 +1290,23 @@ def Controlled_swap_targs(t_indexes, mat, vec, vec_bit, sync: bool = False):
     gpu_indexes = cp.array(t_indexes, dtype=np.int32)
 
     if vec.dtype == np.complex64:
-        Controlled_swap_targs_single(
+        Controlled_Swap_targs_single(
             (block_num,),
             (thread_per_block,),
-            (gpu_indexes, mat, vec)
+            (gpu_indexes, vec)
         )
     else:
-        Controlled_swap_targs_double(
+        Controlled_Swap_targs_double(
             (block_num,),
             (thread_per_block,),
-            (gpu_indexes, mat, vec)
+            (gpu_indexes, vec)
         )
 
     if sync:
         cp.cuda.Device().synchronize()
 
 
-def Controlled_swap_more(c_indexes, t_index, mat, vec, vec_bit, sync: bool = False):
+def Controlled_Swap_more(c_indexes, t_index, vec, vec_bit, sync: bool = False):
     """
     Controlled matrix (8x8) dot vector
        [[1, 0, 0, 0, 0, 0, 0, 0],       *       vec
@@ -1174,13 +1328,51 @@ def Controlled_swap_more(c_indexes, t_index, mat, vec, vec_bit, sync: bool = Fal
     gpuc_indexes = cp.array(c_indexes, dtype=np.int32)
 
     if vec.dtype == np.complex64:
-        Controlled_swap_more_single(
+        Controlled_Swap_more_single(
+            (block_num,),
+            (thread_per_block,),
+            (gpuc_indexes, t_index, vec)
+        )
+    else:
+        Controlled_Swap_more_double(
+            (block_num,),
+            (thread_per_block,),
+            (gpuc_indexes, t_index, vec)
+        )
+
+    if sync:
+        cp.cuda.Device().synchronize()
+
+
+def Controlled_Multiply_more(c_indexes, t_index, mat, vec, vec_bit, sync: bool = False):
+    """
+    Controlled matrix (8x8) dot vector
+       [[1, 0, 0, 0, 0, 0, 0, 0],       *       vec
+        [0, 1, 0, 0, 0, 0, 0, 0],
+        [0, 0, 1, 0, 0, 0, 0, 0],
+        [0, 0, 0, 1, 0, 0, 0, 0],
+        [0, 0, 0, 0, 1, 0, 0, 0],
+        [0, 0, 0, 0, 0, 1, 0, 0],
+        [0, 0, 0, 0, 0, 0, a, 0],
+        [0, 0, 0, 0, 0, 0, 0, b]]
+    """
+    task_number = 1 << (vec_bit - 3)
+    thread_per_block = min(256, task_number)
+    block_num = task_number // thread_per_block
+
+    if c_indexes[0] > c_indexes[1]:
+        c_indexes[0], c_indexes[1] = c_indexes[1], c_indexes[0]
+
+    gpuc_indexes = cp.array(c_indexes, dtype=np.int32)
+
+    if vec.dtype == np.complex64:
+        Controlled_Multiply_more_single(
             (block_num,),
             (thread_per_block,),
             (gpuc_indexes, t_index, mat, vec)
         )
     else:
-        Controlled_swap_more_double(
+        Controlled_Multiply_more_double(
             (block_num,),
             (thread_per_block,),
             (gpuc_indexes, t_index, mat, vec)
@@ -1188,3 +1380,42 @@ def Controlled_swap_more(c_indexes, t_index, mat, vec, vec_bit, sync: bool = Fal
 
     if sync:
         cp.cuda.Device().synchronize()
+
+
+def Controlled_Swap_tmore(t_indexes, c_index, vec, vec_bit, sync: bool = False):
+    """
+    Controlled matrix (8x8) dot vector
+       [[1, 0, 0, 0, 0, 0, 0, 0],       *       vec
+        [0, 1, 0, 0, 0, 0, 0, 0],
+        [0, 0, 1, 0, 0, 0, 0, 0],
+        [0, 0, 0, 1, 0, 0, 0, 0],
+        [0, 0, 0, 0, 1, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 1, 0],
+        [0, 0, 0, 0, 0, 1, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 1]]
+    """
+    task_number = 1 << (vec_bit - 3)
+    thread_per_block = min(256, task_number)
+    block_num = task_number // thread_per_block
+
+    if t_indexes[0] > t_indexes[1]:
+        t_indexes[0], t_indexes[1] = t_indexes[1], t_indexes[0]
+
+    gput_indexes = cp.array(t_indexes, dtype=np.int32)
+
+    if vec.dtype == np.complex64:
+        Controlled_Swap_tmore_single(
+            (block_num,),
+            (thread_per_block,),
+            (gput_indexes, c_index, vec)
+        )
+    else:
+        Controlled_Swap_tmore_double(
+            (block_num,),
+            (thread_per_block,),
+            (gput_indexes, c_index, vec)
+        )
+
+    if sync:
+        cp.cuda.Device().synchronize()
+

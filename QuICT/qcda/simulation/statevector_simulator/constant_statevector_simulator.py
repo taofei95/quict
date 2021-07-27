@@ -94,7 +94,7 @@ class ConstantStateVectorSimulator(BasicSimulator):
             )
         elif gate.type() == GATE_ID["X"]:
             t_index = self._qubits - 1 - gate.targ
-            self._algorithm.RDiagonal_swap_targ(
+            self._algorithm.RDiagonal_Swap_targ(
                 t_index,
                 self._vector,
                 self._qubits,
@@ -204,9 +204,8 @@ class ConstantStateVectorSimulator(BasicSimulator):
             )
         elif gate.type() == GATE_ID["Swap"]:
             t_indexes = [self._qubits - 1 - targ for targ in gate.targs]
-            self._algorithm.Controlled_swap_targs(
+            self._algorithm.Controlled_Swap_targs(
                 t_indexes,
-                matrix,
                 self._vector,
                 self._qubits,
                 self._sync
@@ -217,7 +216,17 @@ class ConstantStateVectorSimulator(BasicSimulator):
             # TODO: GATE_ID["CCX"] = 30, not matched
             c_indexes = [self._qubits - 1 - carg for carg in gate.cargs]
             t_index = self._qubits - 1 - gate.targ
-            self._algorithm.Controlled_swap_more(
+            self._algorithm.Controlled_Swap_more(
+                c_indexes,
+                t_index,
+                self._vector,
+                self._qubits,
+                self._sync
+            )
+        elif gate.type() == GATE_ID["CCRz"]:
+            c_indexes = [self._qubits - 1 - carg for carg in gate.cargs]
+            t_index = self._qubits - 1 - gate.targ
+            self._algorithm.Controlled_Multiply_more(
                 c_indexes,
                 t_index,
                 matrix,
@@ -225,12 +234,16 @@ class ConstantStateVectorSimulator(BasicSimulator):
                 self._qubits,
                 self._sync
             )
-        elif gate.type() == GATE_ID["CCRz"]:
-            # TODO: Not applied yet.
-            pass
         elif gate.type() == GATE_ID["CSwap"]:
-            # TODO: Not applied yet.
-            pass
+            t_indexes = [self._qubits - 1 - targ for targ in gate.targs]
+            c_index = self._qubits - 1 - gate.carg
+            self._algorithm.Controlled_Swap_tmore(
+                t_indexes,
+                c_index,
+                self._vector,
+                self._qubits,
+                self._sync
+            )
         elif gate.type() == GATE_ID["Measure"]:
             index = self._qubits - 1 - gate.targ
             result = self._algorithm.MeasureGate_Measure(
