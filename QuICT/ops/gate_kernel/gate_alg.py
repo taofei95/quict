@@ -7,15 +7,16 @@ __outward_functions = [
     "Diagonal_Multiply_targs",
     "Based_InnerProduct_targ",
     "Based_InnerProduct_targs",
-    "PartialIdentity_Multiply_targ",
-    "PartialIdentity_Multiply_ctargs",
-    "PartialIdentity_InnerProduct_ctargs",
+    "Controlled_Multiply_targ",
+    "Controlled_Multiply_ctargs",
+    "Controlled_InnerProduct_ctargs",
     "Completed_MxIP_targs",
     "Completed_IPxIP_targs",
     "RDiagonal_swap_targ",
     "RDiagonal_MultiplySwap_targ",
-    "PartialIdentity_MultiplySwap_ctargs",
-    "RDiagonal_swap_targs"
+    "Controlled_MultiplySwap_ctargs",
+    "Controlled_swap_targs",
+    "Controlled_swap_more"
 ]
 
 
@@ -195,10 +196,10 @@ Based_InnerProduct_targs_double = cp.RawKernel(r'''
     ''', 'Based4x4InnerProduct')
 
 
-PartialIdentity_Multiply_targ_single = cp.RawKernel(r'''
+Controlled_Multiply_targ_single = cp.RawKernel(r'''
     #include <cupy/complex.cuh>
     extern "C" __global__
-    void PartI2x2Multiply(int parg, const complex<float>* mat, complex<float>* vec) {
+    void Controlled2x2Multiply(int parg, const complex<float>* mat, complex<float>* vec) {
         int label = blockDim.x * blockIdx.x + threadIdx.x;
 
         int offset = 1 << parg;
@@ -207,13 +208,13 @@ PartialIdentity_Multiply_targ_single = cp.RawKernel(r'''
 
         vec[_1] = vec[_1]*mat[3];
     }
-    ''', 'PartI2x2Multiply')
+    ''', 'Controlled2x2Multiply')
 
 
-PartialIdentity_Multiply_targ_double = cp.RawKernel(r'''
+Controlled_Multiply_targ_double = cp.RawKernel(r'''
     #include <cupy/complex.cuh>
     extern "C" __global__
-    void PartI2x2Multiply(int parg, const complex<double>* mat, complex<double>* vec) {
+    void Controlled2x2Multiply(int parg, const complex<double>* mat, complex<double>* vec) {
         int label = blockDim.x * blockIdx.x + threadIdx.x;
 
         int offset = 1 << parg;
@@ -222,13 +223,13 @@ PartialIdentity_Multiply_targ_double = cp.RawKernel(r'''
 
         vec[_1] = vec[_1]*mat[3];
     }
-    ''', 'PartI2x2Multiply')
+    ''', 'Controlled2x2Multiply')
 
 
-PartialIdentity_Multiply_ctargs_single = cp.RawKernel(r'''
+Controlled_Multiply_ctargs_single = cp.RawKernel(r'''
     #include <cupy/complex.cuh>
     extern "C" __global__
-    void PartI4x4Multiply(const complex<float>* mat, complex<float>* vec, int c_index, int t_index, int bit_pos) {
+    void Controlled4x4Multiply(const complex<float>* mat, complex<float>* vec, int c_index, int t_index, int bit_pos) {
         int label = blockDim.x * blockIdx.x + threadIdx.x;
 
         const int offset_c = 1 << c_index;
@@ -270,13 +271,13 @@ PartialIdentity_Multiply_ctargs_single = cp.RawKernel(r'''
             vec[_3] = vec[_3]*mat[15];
         }
     }
-    ''', 'PartI4x4Multiply')
+    ''', 'Controlled4x4Multiply')
 
 
-PartialIdentity_Multiply_ctargs_double = cp.RawKernel(r'''
+Controlled_Multiply_ctargs_double = cp.RawKernel(r'''
     #include <cupy/complex.cuh>
     extern "C" __global__
-    void PartI4x4Multiply(const complex<double>* mat, complex<double>* vec, int c_index, int t_index, int bit_pos) {
+    void Controlled4x4Multiply(const complex<double>* mat, complex<double>* vec, int c_index, int t_index, int bit_pos) {
         int label = blockDim.x * blockIdx.x + threadIdx.x;
 
         const int offset_c = 1 << c_index;
@@ -318,13 +319,13 @@ PartialIdentity_Multiply_ctargs_double = cp.RawKernel(r'''
             vec[_3] = vec[_3]*mat[15];
         }
     }
-    ''', 'PartI4x4Multiply')
+    ''', 'Controlled4x4Multiply')
 
 
-PartialIdentity_InnerProduct_ctargs_single = cp.RawKernel(r'''
+Controlled_InnerProduct_ctargs_single = cp.RawKernel(r'''
     #include <cupy/complex.cuh>
     extern "C" __global__
-    void PartI4x4InnerProduct(const complex<float>* mat, complex<float>* vec, int c_index, int t_index) {
+    void Controlled4x4InnerProduct(const complex<float>* mat, complex<float>* vec, int c_index, int t_index) {
         int label = blockDim.x * blockIdx.x + threadIdx.x;
 
         const int offset_c = 1 << c_index;
@@ -350,13 +351,13 @@ PartialIdentity_InnerProduct_ctargs_single = cp.RawKernel(r'''
         vec[_0] = vec[_0]*mat[10] + vec[_1]*mat[11];
         vec[_1] = temp_0*mat[14] + vec[_1]*mat[15];
     }
-    ''', 'PartI4x4InnerProduct')
+    ''', 'Controlled4x4InnerProduct')
 
 
-PartialIdentity_InnerProduct_ctargs_double = cp.RawKernel(r'''
+Controlled_InnerProduct_ctargs_double = cp.RawKernel(r'''
     #include <cupy/complex.cuh>
     extern "C" __global__
-    void PartI4x4InnerProduct(const complex<double>* mat, complex<double>* vec, int c_index, int t_index) {
+    void Controlled4x4InnerProduct(const complex<double>* mat, complex<double>* vec, int c_index, int t_index) {
         int label = blockDim.x * blockIdx.x + threadIdx.x;
 
         const int offset_c = 1 << c_index;
@@ -382,13 +383,13 @@ PartialIdentity_InnerProduct_ctargs_double = cp.RawKernel(r'''
         vec[_0] = vec[_0]*mat[10] + vec[_1]*mat[11];
         vec[_1] = temp_0*mat[14] + vec[_1]*mat[15];
     }
-    ''', 'PartI4x4InnerProduct')
+    ''', 'Controlled4x4InnerProduct')
 
 
-PartialIdentity_MultiplySwap_ctargs_single = cp.RawKernel(r'''
+Controlled_MultiplySwap_ctargs_single = cp.RawKernel(r'''
     #include <cupy/complex.cuh>
     extern "C" __global__
-    void PartI4x4MultiSwap(const complex<float>* mat, complex<float>* vec, int c_index, int t_index) {
+    void Controlled4x4MultiSwap(const complex<float>* mat, complex<float>* vec, int c_index, int t_index) {
         int label = blockDim.x * blockIdx.x + threadIdx.x;
 
         const int offset_c = 1 << c_index;
@@ -414,13 +415,13 @@ PartialIdentity_MultiplySwap_ctargs_single = cp.RawKernel(r'''
         vec[_0] = vec[_1]*mat[11];
         vec[_1] = temp_0*mat[14];
     }
-    ''', 'PartI4x4MultiSwap')
+    ''', 'Controlled4x4MultiSwap')
 
 
-PartialIdentity_MultiplySwap_ctargs_double = cp.RawKernel(r'''
+Controlled_MultiplySwap_ctargs_double = cp.RawKernel(r'''
     #include <cupy/complex.cuh>
     extern "C" __global__
-    void PartI4x4MultiSwap(const complex<double>* mat, complex<double>* vec, int c_index, int t_index) {
+    void Controlled4x4MultiSwap(const complex<double>* mat, complex<double>* vec, int c_index, int t_index) {
         int label = blockDim.x * blockIdx.x + threadIdx.x;
 
         const int offset_c = 1 << c_index;
@@ -446,13 +447,13 @@ PartialIdentity_MultiplySwap_ctargs_double = cp.RawKernel(r'''
         vec[_0] = vec[_1]*mat[11];
         vec[_1] = temp_0*mat[14];
     }
-    ''', 'PartI4x4MultiSwap')
+    ''', 'Controlled4x4MultiSwap')
 
 
-PartialIdentity_swap_targs_single = cp.RawKernel(r'''
+Controlled_swap_targs_single = cp.RawKernel(r'''
     #include <cupy/complex.cuh>
     extern "C" __global__
-    void PartI4x4Swap(int* pargs, const complex<float>* mat, complex<float>* vec) {
+    void Controlled4x4Swap(int* pargs, const complex<float>* mat, complex<float>* vec) {
         int label = blockDim.x * blockIdx.x + threadIdx.x;
 
         const int offset1 = 1 << pargs[0];
@@ -470,13 +471,13 @@ PartialIdentity_swap_targs_single = cp.RawKernel(r'''
         vec[_1] = vec[_2];
         vec[_2] = temp_0;
     }
-    ''', 'PartI4x4Swap')
+    ''', 'Controlled4x4Swap')
 
 
-PartialIdentity_swap_targs_double = cp.RawKernel(r'''
+Controlled_swap_targs_double = cp.RawKernel(r'''
     #include <cupy/complex.cuh>
     extern "C" __global__
-    void PartI4x4Swap(int* pargs, const complex<double>* mat, complex<double>* vec) {
+    void Controlled4x4Swap(int* pargs, const complex<double>* mat, complex<double>* vec) {
         int label = blockDim.x * blockIdx.x + threadIdx.x;
 
         const int offset1 = 1 << pargs[0];
@@ -494,7 +495,7 @@ PartialIdentity_swap_targs_double = cp.RawKernel(r'''
         vec[_1] = vec[_2];
         vec[_2] = temp_0;
     }
-    ''', 'PartI4x4Swap')
+    ''', 'Controlled4x4Swap')
 
 
 Completed_MxIP_targs_single = cp.RawKernel(r'''
@@ -683,80 +684,80 @@ RDiagonal_MultiplySwap_targ_double = cp.RawKernel(r'''
     ''', 'RDiag2x2MultiSwap')
 
 
-PartialIdentity_swap_more_single = cp.RawKernel(r'''
+Controlled_swap_more_single = cp.RawKernel(r'''
     #include <cupy/complex.cuh>
     extern "C" __global__
-    void PartI8x8Swap(int* pargs, int c_index, const complex<float>* mat, complex<float>* vec) {
+    void Controlled8x8Swap(int* cargs, int t_index, const complex<float>* mat, complex<float>* vec) {
         int label = blockDim.x * blockIdx.x + threadIdx.x;
 
-        const int offset1 = 1 << pargs[0];
-        const int offset2 = 1 << pargs[1];
-        const int offset_c = 1 << c_index;
-        const int mask1 = offset1 - 1;
-        const int mask2 = offset2 - 1;
-        const int mask_c = offset_c - 1;
+        const int offset_c1 = 1 << cargs[0];
+        const int offset_c2 = 1 << cargs[1];
+        const int offset_t = 1 << t_index;
+        const int mask1 = offset_c1 - 1;
+        const int mask2 = offset_c2 - 1;
+        const int mask_t = offset_t - 1;
 
         int gw = 0, _0 = 0;
 
-        if (c_index < pargs[0]){
-            gw = label >> c_index << (c_index + 1);
-            _0 = offset_c + (gw >> pargs[0] << (pargs[0] + 1)) + (gw & (offset1 - offset_c)) + (label & mask_c);
-            _0 = offset_2 + (_0 >> pargs[1] << (pargs[1] + 1)) + (_0 & mask2)
-        }elif(c_index < pargs[1]){
-            gw = label >> pargs[0] << (pargs[0] + 1);
-            _0 = offset_c + (gw >> c_index << (c_index + 1)) + (gw & (offset_c - offset1)) + (label & mask1);
-            _0 = offset_2 + (_0 >> pargs[1] << (pargs[1] + 1)) + (_0 & mask2)
+        if (t_index < cargs[0]){
+            gw = label >> t_index << (t_index + 1);
+            _0 = offset_c1 + (gw >> cargs[0] << (cargs[0] + 1)) + (gw & (offset_c1 - offset_t)) + (label & mask_t);
+            _0 = offset_c2 + (_0 >> cargs[1] << (cargs[1] + 1)) + (_0 & mask2);
+        }else if(t_index < cargs[1]){
+            gw = label >> cargs[0] << (cargs[0] + 1);
+            _0 = offset_c1 + (gw >> t_index << (t_index + 1)) + (gw & (offset_t - offset_c1)) + (label & mask1);
+            _0 = offset_c2 + (_0 >> cargs[1] << (cargs[1] + 1)) + (_0 & mask2);
         }else{
-            gw = label >> pargs[0] << (pargs[0] + 1);
-            _0 = offset_2 + (gw >> pargs[1] << (pargs[1] + 1)) + (gw & (offset2 - offset1)) + (label & mask1);
-            _0 = offset_c + (_0 >> c_index << (c_index + 1)) + (_0 & mask_c)
+            gw = label >> cargs[0] << (cargs[0] + 1);
+            _0 = offset_c1 + (gw >> cargs[1] << (cargs[1] + 1)) + (gw & (offset_c2 - offset_c1)) + (label & mask1);
+            _0 = offset_c2 + (_0 >> t_index << (t_index + 1)) + (_0 & mask_t);
         }
 
-        int _1 = _0 + offset1;
+        int _1 = _0 + offset_t;
 
         complex<float> temp_0 = vec[_0];
         vec[_0] = vec[_1];
         vec[_1] = temp_0;
     }
-    ''', 'PartI8x8Swap')
+    ''', 'Controlled8x8Swap')
 
 
-PartialIdentity_swap_more_double = cp.RawKernel(r'''
+Controlled_swap_more_double = cp.RawKernel(r'''
     #include <cupy/complex.cuh>
     extern "C" __global__
-    void PartI8x8Swap(int* pargs, int c_index, const complex<double>* mat, complex<double>* vec) {
+    void Controlled8x8Swap(int* cargs, int t_index, const complex<double>* mat, complex<double>* vec) {
         int label = blockDim.x * blockIdx.x + threadIdx.x;
 
-        const int offset1 = 1 << pargs[0];
-        const int offset2 = 1 << pargs[1];
-        const int offset_c = 1 << c_index;
-        const int mask1 = offset1 - 1;
-        const int mask2 = offset2 - 1;
-        const int mask_c = offset_c - 1;
+        const int offset_c1 = 1 << cargs[0];
+        const int offset_c2 = 1 << cargs[1];
+        const int offset_t = 1 << t_index;
+        const int mask1 = offset_c1 - 1;
+        const int mask2 = offset_c2 - 1;
+        const int mask_t = offset_t - 1;
 
         int gw = 0, _0 = 0;
 
-        if (c_index < pargs[0]){
-            gw = label >> c_index << (c_index + 1);
-            _0 = offset_c + (gw >> pargs[0] << (pargs[0] + 1)) + (gw & (offset1 - offset_c)) + (label & mask_c);
-            _0 = offset_2 + (_0 >> pargs[1] << (pargs[1] + 1)) + (_0 & mask2)
-        }elif(c_index < pargs[1]){
-            gw = label >> pargs[0] << (pargs[0] + 1);
-            _0 = offset_c + (gw >> c_index << (c_index + 1)) + (gw & (offset_c - offset1)) + (label & mask1);
-            _0 = offset_2 + (_0 >> pargs[1] << (pargs[1] + 1)) + (_0 & mask2)
+        if (t_index < cargs[0]){
+            gw = label >> t_index << (t_index + 1);
+            _0 = offset_c1 + (gw >> cargs[0] << (cargs[0] + 1)) + (gw & (offset_c1 - offset_t)) + (label & mask_t);
+            _0 = offset_c2 + (_0 >> cargs[1] << (cargs[1] + 1)) + (_0 & mask2);
+        }else if (t_index < cargs[1]) {
+            gw = label >> cargs[0] << (cargs[0] + 1);
+            _0 = offset_c1 + (gw >> t_index << (t_index + 1)) + (gw & (offset_t - offset_c1)) + (label & mask1);
+            _0 = offset_c2 + (_0 >> cargs[1] << (cargs[1] + 1)) + (_0 & mask2);
         }else{
-            gw = label >> pargs[0] << (pargs[0] + 1);
-            _0 = offset_2 + (gw >> pargs[1] << (pargs[1] + 1)) + (gw & (offset2 - offset1)) + (label & mask1);
-            _0 = offset_c + (_0 >> c_index << (c_index + 1)) + (_0 & mask_c)
+            gw = label >> cargs[0] << (cargs[0] + 1);
+            _0 = offset_c1 + (gw >> cargs[1] << (cargs[1] + 1)) + (gw & (offset_c2 - offset_c1)) + (label & mask1);
+            _0 = offset_c2 + (_0 >> t_index << (t_index + 1)) + (_0 & mask_t);
         }
 
-        int _1 = _0 + offset1;
+        int _1 = _0 + offset_t;
 
         complex<double> temp_0 = vec[_0];
         vec[_0] = vec[_1];
         vec[_1] = temp_0;
     }
-    ''', 'PartI8x8Swap')
+    ''', 'Controlled8x8Swap')
 
 
 def Diagonal_Multiply_targ(t_index, mat, vec, vec_bit, sync: bool = False):
@@ -881,9 +882,9 @@ def Based_InnerProduct_targs(c_index, t_index, mat, vec, vec_bit, sync: bool = F
         cp.cuda.Device().synchronize()
 
 
-def PartialIdentity_Multiply_targ(t_index, mat, vec, vec_bit, sync: bool = False):
+def Controlled_Multiply_targ(t_index, mat, vec, vec_bit, sync: bool = False):
     """
-    partial identity diagonal matrix (2x2) dot vector
+    Controlled matrix (2x2) dot vector
         [[1, 0],    *   vec
          [0, a]]
     """
@@ -892,13 +893,13 @@ def PartialIdentity_Multiply_targ(t_index, mat, vec, vec_bit, sync: bool = False
     block_num = task_number // thread_per_block
 
     if vec.dtype == np.complex64:
-        PartialIdentity_Multiply_targ_single(
+        Controlled_Multiply_targ_single(
             (block_num,),
             (thread_per_block,),
             (t_index, mat, vec)
         )
     else:
-        PartialIdentity_Multiply_targ_double(
+        Controlled_Multiply_targ_double(
             (block_num,),
             (thread_per_block,),
             (t_index, mat, vec)
@@ -908,9 +909,9 @@ def PartialIdentity_Multiply_targ(t_index, mat, vec, vec_bit, sync: bool = False
         cp.cuda.Device().synchronize()
 
 
-def PartialIdentity_Multiply_ctargs(c_index, t_index, mat, vec, vec_bit, bit_pos, sync: bool = False):
+def Controlled_Multiply_ctargs(c_index, t_index, mat, vec, vec_bit, bit_pos, sync: bool = False):
     """
-    partial identity diagonal matrix (4x4) dot vector
+    Controlled matrix (4x4) dot vector
      e.g.   [[1, 0, 0, 0],    *   vec
              [0, 1, 0, 0],
              [0, 0, a, 0],
@@ -921,13 +922,13 @@ def PartialIdentity_Multiply_ctargs(c_index, t_index, mat, vec, vec_bit, bit_pos
     block_num = task_number // thread_per_block
 
     if vec.dtype == np.complex64:
-        PartialIdentity_Multiply_ctargs_single(
+        Controlled_Multiply_ctargs_single(
             (block_num,),
             (thread_per_block,),
             (mat, vec, c_index, t_index, bit_pos)
         )
     else:
-        PartialIdentity_Multiply_ctargs_double(
+        Controlled_Multiply_ctargs_double(
             (block_num,),
             (thread_per_block,),
             (mat, vec, c_index, t_index, bit_pos)
@@ -937,9 +938,9 @@ def PartialIdentity_Multiply_ctargs(c_index, t_index, mat, vec, vec_bit, bit_pos
         cp.cuda.Device().synchronize()
 
 
-def PartialIdentity_InnerProduct_ctargs(c_index, t_index, mat, vec, vec_bit, sync: bool = False):
+def Controlled_InnerProduct_ctargs(c_index, t_index, mat, vec, vec_bit, sync: bool = False):
     """
-    partial identity based matrix (4x4) dot vector
+    Controlled matrix (4x4) dot vector
      e.g.   [[1, 0, 0, 0],    *   vec
              [0, 1, 0, 0],
              [0, 0, a, b],
@@ -950,13 +951,13 @@ def PartialIdentity_InnerProduct_ctargs(c_index, t_index, mat, vec, vec_bit, syn
     block_num = task_number // thread_per_block
 
     if vec.dtype == np.complex64:
-        PartialIdentity_InnerProduct_ctargs_single(
+        Controlled_InnerProduct_ctargs_single(
             (block_num,),
             (thread_per_block,),
             (mat, vec, c_index, t_index)
         )
     else:
-        PartialIdentity_InnerProduct_ctargs_double(
+        Controlled_InnerProduct_ctargs_double(
             (block_num,),
             (thread_per_block,),
             (mat, vec, c_index, t_index)
@@ -1088,9 +1089,9 @@ def RDiagonal_MultiplySwap_targ(t_index, mat, vec, vec_bit, sync: bool = False):
         cp.cuda.Device().synchronize()
 
 
-def PartialIdentity_MultiplySwap_ctargs(c_index, t_index, mat, vec, vec_bit, sync: bool = False):
+def Controlled_MultiplySwap_ctargs(c_index, t_index, mat, vec, vec_bit, sync: bool = False):
     """
-    partial identity rdiagonal matrix (4x4) dot vector
+    Controlled matrix (4x4) dot vector
      e.g.   [[1, 0, 0, 0],    *   vec
              [0, 1, 0, 0],
              [0, 0, 0, a],
@@ -1101,13 +1102,13 @@ def PartialIdentity_MultiplySwap_ctargs(c_index, t_index, mat, vec, vec_bit, syn
     block_num = task_number // thread_per_block
 
     if vec.dtype == np.complex64:
-        PartialIdentity_MultiplySwap_ctargs_single(
+        Controlled_MultiplySwap_ctargs_single(
             (block_num,),
             (thread_per_block,),
             (mat, vec, c_index, t_index)
         )
     else:
-        PartialIdentity_MultiplySwap_ctargs_double(
+        Controlled_MultiplySwap_ctargs_double(
             (block_num,),
             (thread_per_block,),
             (mat, vec, c_index, t_index)
@@ -1117,9 +1118,9 @@ def PartialIdentity_MultiplySwap_ctargs(c_index, t_index, mat, vec, vec_bit, syn
         cp.cuda.Device().synchronize()
 
 
-def PartialIdentity_swap_targs(t_indexes, mat, vec, vec_bit, sync: bool = False):
+def Controlled_swap_targs(t_indexes, mat, vec, vec_bit, sync: bool = False):
     """
-    partial identity rdiagonal matrix (4x4) dot vector
+    Controlled matrix (4x4) dot vector
             [[1, 0, 0, 0],    *   vec
              [0, 0, 1, 0],
              [0, 1, 0, 0],
@@ -1135,13 +1136,13 @@ def PartialIdentity_swap_targs(t_indexes, mat, vec, vec_bit, sync: bool = False)
     gpu_indexes = cp.array(t_indexes, dtype=np.int32)
 
     if vec.dtype == np.complex64:
-        PartialIdentity_swap_targs_single(
+        Controlled_swap_targs_single(
             (block_num,),
             (thread_per_block,),
             (gpu_indexes, mat, vec)
         )
     else:
-        PartialIdentity_swap_targs_double(
+        Controlled_swap_targs_double(
             (block_num,),
             (thread_per_block,),
             (gpu_indexes, mat, vec)
@@ -1151,9 +1152,9 @@ def PartialIdentity_swap_targs(t_indexes, mat, vec, vec_bit, sync: bool = False)
         cp.cuda.Device().synchronize()
 
 
-def PartialIdentity_swap_more(t_indexes, c_index, mat, vec, vec_bit, sync: bool = False):
+def Controlled_swap_more(c_indexes, t_index, mat, vec, vec_bit, sync: bool = False):
     """
-    partial identity rdiagonal matrix (8x8) dot vector
+    Controlled matrix (8x8) dot vector
        [[1, 0, 0, 0, 0, 0, 0, 0],       *       vec
         [0, 1, 0, 0, 0, 0, 0, 0],
         [0, 0, 1, 0, 0, 0, 0, 0],
@@ -1167,22 +1168,22 @@ def PartialIdentity_swap_more(t_indexes, c_index, mat, vec, vec_bit, sync: bool 
     thread_per_block = min(256, task_number)
     block_num = task_number // thread_per_block
 
-    if t_indexes[0] > t_indexes[1]:
-        t_indexes[0], t_indexes[1] = t_indexes[1], t_indexes[0]
+    if c_indexes[0] > c_indexes[1]:
+        c_indexes[0], c_indexes[1] = c_indexes[1], c_indexes[0]
 
-    gpu_indexes = cp.array(t_indexes, dtype=np.int32)
+    gpuc_indexes = cp.array(c_indexes, dtype=np.int32)
 
     if vec.dtype == np.complex64:
-        PartialIdentity_swap_more_single(
+        Controlled_swap_more_single(
             (block_num,),
             (thread_per_block,),
-            (gpu_indexes, c_index, mat, vec)
+            (gpuc_indexes, t_index, mat, vec)
         )
     else:
-        PartialIdentity_swap_more_double(
+        Controlled_swap_more_double(
             (block_num,),
             (thread_per_block,),
-            (gpu_indexes, c_index, mat, vec)
+            (gpuc_indexes, t_index, mat, vec)
         )
 
     if sync:

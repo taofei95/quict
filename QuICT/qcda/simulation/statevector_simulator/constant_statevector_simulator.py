@@ -116,7 +116,7 @@ class ConstantStateVectorSimulator(BasicSimulator):
             gate.type() == GATE_ID["T_dagger"]
         ):
             t_index = self._qubits - 1 - gate.targ
-            self._algorithm.PartialIdentity_Multiply_targ(
+            self._algorithm.Controlled_Multiply_targ(
                 t_index,
                 matrix,
                 self._vector,
@@ -129,7 +129,7 @@ class ConstantStateVectorSimulator(BasicSimulator):
         ):
             t_index = self._qubits - 1 - gate.targ
             c_index = self._qubits - 1 - gate.carg
-            self._algorithm.PartialIdentity_Multiply_ctargs(
+            self._algorithm.Controlled_Multiply_ctargs(
                 c_index,
                 t_index,
                 matrix,
@@ -141,7 +141,7 @@ class ConstantStateVectorSimulator(BasicSimulator):
         elif gate.type() == GATE_ID["CRz"]:
             t_index = self._qubits - 1 - gate.targ
             c_index = self._qubits - 1 - gate.carg
-            self._algorithm.PartialIdentity_Multiply_ctargs(
+            self._algorithm.Controlled_Multiply_ctargs(
                 c_index,
                 t_index,
                 matrix,
@@ -165,7 +165,7 @@ class ConstantStateVectorSimulator(BasicSimulator):
         ):
             t_index = self._qubits - 1 - gate.targ
             c_index = self._qubits - 1 - gate.carg
-            self._algorithm.PartialIdentity_MultiplySwap_ctargs(
+            self._algorithm.Controlled_MultiplySwap_ctargs(
                 c_index,
                 t_index,
                 matrix,
@@ -176,7 +176,7 @@ class ConstantStateVectorSimulator(BasicSimulator):
         elif gate.type() == GATE_ID["CH"] or gate.type() == GATE_ID["CU3"]:
             t_index = self._qubits - 1 - gate.targ
             c_index = self._qubits - 1 - gate.carg
-            self._algorithm.PartialIdentity_InnerProduct_ctargs(
+            self._algorithm.Controlled_InnerProduct_ctargs(
                 c_index,
                 t_index,
                 matrix,
@@ -204,7 +204,7 @@ class ConstantStateVectorSimulator(BasicSimulator):
             )
         elif gate.type() == GATE_ID["Swap"]:
             t_indexes = [self._qubits - 1 - targ for targ in gate.targs]
-            self._algorithm.PartialIdentity_swap_targs(
+            self._algorithm.Controlled_swap_targs(
                 t_indexes,
                 matrix,
                 self._vector,
@@ -213,12 +213,13 @@ class ConstantStateVectorSimulator(BasicSimulator):
             )
         elif gate.type() == GATE_ID["ID"]:
             pass
-        elif gate.type() == GATE_ID["CCX"]:
-            t_indexes = [self._qubits - 1 - targ for targ in gate.targs]
-            c_index = self._qubits - 1 - gate.carg
-            self._algorithm.PartialIdentity_swap_more(
-                t_indexes,
-                c_index,
+        elif gate.type() == 45:
+            # TODO: GATE_ID["CCX"] = 30, not matched
+            c_indexes = [self._qubits - 1 - carg for carg in gate.cargs]
+            t_index = self._qubits - 1 - gate.targ
+            self._algorithm.Controlled_swap_more(
+                c_indexes,
+                t_index,
                 matrix,
                 self._vector,
                 self._qubits,
