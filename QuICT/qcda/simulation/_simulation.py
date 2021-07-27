@@ -4,6 +4,7 @@
 # @Author  : Han Yu
 # @File    : _simulation
 
+import cupy as cp
 import numpy as np
 from functools import lru_cache
 
@@ -105,16 +106,21 @@ class BasicSimulator(object):
         return self._circuit
 
     @circuit.setter
-    def circuit(self, circuit: Circuit):
+    def reset_circuit(self, circuit: Circuit):
         self._circuit = circuit
+        self._gates = circuit.gates
 
     @property
     def vector(self):
         return self._vector
 
     @vector.setter
-    def vector(self, vec):
-        self._vector = vec
+    def reset_vector(self, vec):
+        with cp.cuda.Device(self._device_id):
+            if type(vec) is np.ndarray:
+                self._vector = cp.array(vec)
+            else:
+                self._vector = vec
 
     @property
     def device(self):
