@@ -104,6 +104,7 @@ class ConstantStateVectorSimulator(BasicSimulator):
             t_index = self._qubits - 1 - gate.targ
             self._algorithm.RDiagonal_MultiplySwap_targ(
                 t_index,
+                matrix,
                 self._vector,
                 self._qubits,
                 self._sync
@@ -170,7 +171,6 @@ class ConstantStateVectorSimulator(BasicSimulator):
                 matrix,
                 self._vector,
                 self._qubits,
-                12,
                 self._sync
             )
         elif gate.type() == GATE_ID["CH"] or gate.type() == GATE_ID["CU3"]:
@@ -214,8 +214,16 @@ class ConstantStateVectorSimulator(BasicSimulator):
         elif gate.type() == GATE_ID["ID"]:
             pass
         elif gate.type() == GATE_ID["CCX"]:
-            # TODO: Not applied yet.
-            pass
+            t_indexes = [self._qubits - 1 - targ for targ in gate.targs]
+            c_index = self._qubits - 1 - gate.carg
+            self._algorithm.PartialIdentity_swap_more(
+                t_indexes,
+                c_index,
+                matrix,
+                self._vector,
+                self._qubits,
+                self._sync
+            )
         elif gate.type() == GATE_ID["CCRz"]:
             # TODO: Not applied yet.
             pass
