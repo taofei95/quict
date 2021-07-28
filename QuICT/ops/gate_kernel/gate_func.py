@@ -10,7 +10,7 @@ import numpy as np
 import random
 
 
-__outward_functions = ["HGate_matrixdot", "CRzGate_matrixdot", "MeasureGate_Measure"]
+__outward_functions = ["HGate_matrixdot", "CRzGate_matrixdot", "MeasureGate_Apply"]
 
 
 prop_add = cp.ElementwiseKernel(
@@ -218,7 +218,7 @@ def CRzGate_matrixdot(c_index, t_index, mat, vec, vec_bit, sync: bool = False):
         cp.cuda.Device().synchronize()
 
 
-def MeasureGate_Measure(index, vec, vec_bit, sync: bool = False):
+def MeasureGate_Apply(index, vec, vec_bit, sync: bool = False):
     """
     Measure Gate Measure.
     """
