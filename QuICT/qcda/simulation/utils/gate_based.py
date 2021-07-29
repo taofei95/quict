@@ -10,6 +10,9 @@ import cupy as cp
 from QuICT.core.gate.gate import *
 
 
+_GATES_EXCEPT = ["MeasureGate", "ResetGate"]
+
+
 class GateMatrixs:
     """
     The class of storing the gates' compute matrix, without duplicate.
@@ -43,9 +46,14 @@ class GateMatrixs:
             for i in range(param_num):
                 gate_name += f"_{gate.pargs[i]}"
 
-        matrix = gate.compute_matrix
+        if gate_name == "UnitaryGate":
+            gate_name = gate.name
 
-        if gate_name not in self.gate_matrixs.keys():
+        if (
+            gate_name not in self.gate_matrixs.keys() and
+            gate_name not in _GATES_EXCEPT
+        ):
+            matrix = gate.compute_matrix
             self._build_matrix_gate(gate_name, matrix)
 
     def _build_matrix_gate(self, gate_name, matrix):
@@ -80,7 +88,12 @@ class GateMatrixs:
             for i in range(param_num):
                 gate_name += f"_{gate.pargs[i]}"
 
+        if gate_name in _GATES_EXCEPT:
+            raise KeyError(f"Wrong gate here. {gate_name}")
+
+        if gate_name == "UnitaryGate":
+            gate_name = gate.name
+
         start, itvl = self.gate_matrixs[gate_name]
 
         return self.final_matrix[start:start+itvl]
-

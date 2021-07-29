@@ -266,39 +266,58 @@ class ConstantStateVectorSimulator(BasicSimulator):
             self.circuit.qubits[gate.targ].measured = result
         elif gate.type() == GATE_ID["Reset"]:
             # TODO: Not applied yet.
-            pass
+            index = self._qubits - 1 - gate.targ
+            self._algorithm.ResetGate_Apply(
+                index,
+                self._vector,
+                self._qubits,
+                self._sync
+            )
         elif gate.type() == GATE_ID["Barrier"]:
-            # TODO: Not applied yet.
+            # TODO: Not applied in gate.py.
             pass
-        elif gate.type() == GATE_ID["Perm"]:
-            # TODO: Not applied yet.
-            pass
-        elif gate.type() == GATE_ID["ControlPermMulDetail"]:
-            # TODO: Not applied yet.
-            pass
-        elif gate.type() == GATE_ID["PermShift"]:
-            # TODO: Not applied yet.
-            pass
-        elif gate.type() == GATE_ID["ControlPermShift"]:
-            # TODO: Not applied yet.
-            pass
-        elif gate.type() == GATE_ID["PermMul"]:
-            # TODO: Not applied yet.
-            pass
-        elif gate.type() == GATE_ID["ControlPermMul"]:
-            # TODO: Not applied yet.
-            pass
-        elif gate.type() == GATE_ID["PermFx"]:
-            # TODO: Not applied yet.
-            pass
+        elif (
+            gate.type() == GATE_ID["Perm"] or 
+            gate.type() == GATE_ID["ControlPermMulDetail"] or
+            gate.type() == GATE_ID["PermShift"] or
+            gate.type() == GATE_ID["ControlPermShift"] or
+            gate.type() == GATE_ID["PermMul"] or
+            gate.type() == GATE_ID["ControlPermMul"] or
+            gate.type() == GATE_ID["PermFx"]
+        ):
+            # TODO: PermShift issue
+            matrix = self.get_Matrix(gate)
+            len_mat = np.int64(np.sqrt(matrix.size))
+            matrix = matrix.reshape(len_mat, len_mat)
+
+            self._vector = self._algorithm.dot(
+                matrix,
+                self._vector,
+                gpu_out=False,
+                sync=self._sync
+            )
         elif gate.type() == GATE_ID["Unitary"]:
-            # TODO: Not applied yet.
-            pass
+            # TODO: Use np.dot, matrix*vec = 2^n * 2^n x 2^n * 1.
+            matrix = self.get_Matrix(gate).reshape(1 << self._qubits, -1)
+            self._algorithm.MatrixPermutation(
+                matrix,
+                np.array(gate.targs),
+                changeInput=True,
+                gpu_out=False,
+                sync=self._sync
+            )
+            self._vector = self._algorithm.dot(
+                matrix,
+                self._vector,
+                gpu_out=False,
+                sync=self._sync
+            )
         elif gate.type() == GATE_ID["ShorInitial"]:
             # TODO: Not applied yet.
             pass
         else:
             aux = cp.zeros_like(self._vector)
+            matrix = self.get_Matrix(gate)
             self._algorithm.matrix_dot_vector(
                 matrix,
                 gate.controls + gate.targets,
