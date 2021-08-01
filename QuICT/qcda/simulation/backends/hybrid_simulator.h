@@ -468,6 +468,26 @@ namespace QuICT {
             }
         }
     }
+
+//    template<typename Precision>
+//    template<template<typename ...> class Gate>
+//    void apply_diag_gate(
+//            uint64_t circuit_qubit_num,
+//            const Gate<Precision> &gate,
+//            Precision *real,
+//            Precision *imag
+//    ) {
+//        if constexpr(std::is_same_v<Precision, float>) {
+//            throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__) + ": "
+//                                     + "Not Implemented " + __func__);
+//        } else if constexpr(std::is_same_v<Precision, double>) {
+//            if constexpr(gate_qubit_num<Gate>::value == 1) {
+//
+//            } else if constexpr(gate_qubit_num<Gate>::value == 2) {
+//
+//            }
+//        }
+//    }
 }
 
 #endif //SIM_BACK_HYBRID_SIMULATOR_H

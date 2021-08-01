@@ -49,8 +49,13 @@ add_executable(hybrid_sim_test hybrid_sim_test.cpp hybrid_simulator.h gate.h uti
         ../../../../QuICT/utility/extern/googletest/googletest/src/gtest_main.cc)
 target_link_libraries(hybrid_sim_test gtest_main)
 
+add_executable(gate_test gate_test.cpp hybrid_simulator.h gate.h utility.h
+        ../../../../QuICT/utility/extern/googletest/googletest/src/gtest_main.cc)
+target_link_libraries(gate_test gtest_main)
+
 #set_target_properties(mono_sim PROPERTIES LINKER_LANGUAGE CXX)
 set_target_properties(mono_sim_test PROPERTIES LINKER_LANGUAGE CXX)
 set_target_properties(mono_sim_perf PROPERTIES LINKER_LANGUAGE CXX)
 set_target_properties(misc_test PROPERTIES LINKER_LANGUAGE CXX)
 set_target_properties(hybrid_sim_test PROPERTIES LINKER_LANGUAGE CXX)
+set_target_properties(gate_test PROPERTIES LINKER_LANGUAGE CXX)
