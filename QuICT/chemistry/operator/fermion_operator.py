@@ -132,3 +132,15 @@ class FermionOperator(object):
         Implement the '/=' operation
         """
         pass
+
+    def __repr__(self) -> str:
+        """
+        Return the string format
+        """
+        pass
+
+    def parse(self):
+        """
+        Parse the tuple format to string format
+        """
+        pass
