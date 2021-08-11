@@ -103,3 +103,7 @@ TEST(HybridTest, HTest) {
 TEST(HybridTest, CrzTest) {
     test_by_data_file("crz.txt", simulator);
 }
+
+TEST(HybridTest, QftTest) {
+    test_by_data_file("qft.txt", simulator);
+}
