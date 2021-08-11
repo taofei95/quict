@@ -427,11 +427,11 @@ namespace QuICT {
                     // Store
                     _mm256_storeu2_m128d(&real[ind_0[3]], &real[ind_0[2]], ymm4);
                     _mm256_storeu2_m128d(&imag[ind_0[3]], &imag[ind_0[2]], ymm5);
-                } else if (ind_0[2] + 1 == ind_0[3] && ind_1[2] + 1 == ind_1[3]) {
+                } /*else if (ind_0[2] + 1 == ind_0[3] && ind_1[2] + 1 == ind_1[3]) {
                     __m256d ymm0 = _mm256_loadu2_m128d(gate.diagonal_real_, gate.diagonal_real_);  // dr
                     __m256d ymm1 = _mm256_loadu2_m128d(gate.diagonal_imag_, gate.diagonal_imag_);  // di
-                    __m256d ymm2 = _mm256_loadu2_m128d(&real[ind_1[2]], &real[ind_0[2]]);          // vr
-                    __m256d ymm3 = _mm256_loadu2_m128d(&imag[ind_1[2]], &imag[ind_0[2]]);          // vi
+                    __m256d ymm2 = _mm256_loadu2_m128d(&real[ind_1[3]], &real[ind_0[2]]);          // vr
+                    __m256d ymm3 = _mm256_loadu2_m128d(&imag[ind_1[3]], &imag[ind_0[2]]);          // vi
                     // v * d == (vr * dr - vi * di) + (vi * dr + vr * di)I
                     __m256d ymm4 = _mm256_mul_pd(ymm2, ymm0);  // vr * dr
                     ymm4 = _mm256_fnmadd_pd(ymm1, ymm3, ymm4); // vr * dr - vi * di
@@ -439,9 +439,9 @@ namespace QuICT {
                     ymm5 = _mm256_fmadd_pd(ymm2, ymm1, ymm5);  // vi * dr + vr * di
 
                     // Store
-                    _mm256_storeu2_m128d(&real[ind_1[2]], &real[ind_0[2]], ymm4);
-                    _mm256_storeu2_m128d(&real[ind_1[2]], &real[ind_0[2]], ymm5);
-                } else { // Default fallback
+                    _mm256_storeu2_m128d(&real[ind_1[3]], &real[ind_0[2]], ymm4);
+                    _mm256_storeu2_m128d(&real[ind_1[3]], &real[ind_0[2]], ymm5);
+                } */else { // Default fallback
                     __m256d ymm0 = _mm256_loadu2_m128d(gate.diagonal_real_, gate.diagonal_real_);                  // dr
                     __m256d ymm1 = _mm256_loadu2_m128d(gate.diagonal_imag_, gate.diagonal_imag_);                  // di
                     __m256d ymm2 = _mm256_setr_pd(real[ind_0[2]], real[ind_0[3]], real[ind_1[2]], real[ind_1[3]]); // vr

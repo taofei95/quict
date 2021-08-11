@@ -3,8 +3,6 @@ project(sim_back CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 
-enable_testing()
-
 #include(ProcessorCount)
 #ProcessorCount(NPROC)
 #if (NOT NPROC EQUAL 0)
@@ -27,35 +25,29 @@ endif ()
 
 
 add_subdirectory(../../../../QuICT/utility/extern/googletest ./cmake-build-gtest)
-
-include_directories(../../../../QuICT/utility/extern/googletest/googletest/include)
-include_directories(../../../../QuICT/utility/extern/googletest/googlemock/include)
-
-#add_library(mono_sim SHARED gate.h monotune_simulator.h utility.h hybrid_simulator.h)
+include_directories(${gtest_SOURCE_DIR}/include)
 
 add_executable(mono_sim_test mono_sim_test.cpp monotonous_simulator.h gate.h utility.h
         ../../../../QuICT/utility/extern/googletest/googletest/src/gtest_main.cc)
+add_dependencies(mono_sim_test gtest)
 target_link_libraries(mono_sim_test gtest_main)
 
 add_executable(mono_sim_perf mono_sim_perf.cpp monotonous_simulator.h gate.h utility.h
         ../../../../QuICT/utility/extern/googletest/googletest/src/gtest_main.cc)
-target_link_libraries(mono_sim_perf gtest_main)
+add_dependencies(mono_sim_perf gtest)
+target_link_libraries(mono_sim_perf gtest)
 
 add_executable(misc_test miscellaneous_test.cpp monotonous_simulator.h gate.h utility.h
         ../../../../QuICT/utility/extern/googletest/googletest/src/gtest_main.cc hybrid_simulator.h)
-target_link_libraries(misc_test gtest_main)
+add_dependencies(misc_test gtest)
+target_link_libraries(misc_test gtest)
 
 add_executable(hybrid_sim_test hybrid_sim_test.cpp hybrid_simulator.h gate.h utility.h
         ../../../../QuICT/utility/extern/googletest/googletest/src/gtest_main.cc)
-target_link_libraries(hybrid_sim_test gtest_main)
+add_dependencies(hybrid_sim_test gtest)
+target_link_libraries(hybrid_sim_test gtest)
 
 add_executable(gate_test gate_test.cpp hybrid_simulator.h gate.h utility.h
         ../../../../QuICT/utility/extern/googletest/googletest/src/gtest_main.cc)
-target_link_libraries(gate_test gtest_main)
-
-#set_target_properties(mono_sim PROPERTIES LINKER_LANGUAGE CXX)
-set_target_properties(mono_sim_test PROPERTIES LINKER_LANGUAGE CXX)
-set_target_properties(mono_sim_perf PROPERTIES LINKER_LANGUAGE CXX)
-set_target_properties(misc_test PROPERTIES LINKER_LANGUAGE CXX)
-set_target_properties(hybrid_sim_test PROPERTIES LINKER_LANGUAGE CXX)
-set_target_properties(gate_test PROPERTIES LINKER_LANGUAGE CXX)
+add_dependencies(gate_test gtest)
+target_link_libraries(gate_test gtest)

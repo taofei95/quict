@@ -8,6 +8,7 @@
 #include <iostream>
 #include <functional>
 #include <array>
+#include <immintrin.h>
 #include "utility.h"
 
 void nothing_at_all(int x, int y, int z) {
@@ -114,4 +115,17 @@ TEST(MiscTest, MultiIndexTest) {
     for (uint64_t i = 1; i < (1ULL << qubit_num); ++i) {
         ASSERT_EQ(res_vec[i], res_vec[i - 1] + 1) << "i = " << i;
     }
+}
+
+TEST(MiscTest, AVXTest) {
+    double arr[4] = {1, 2, 3, 4};
+    double res[4];
+
+    __m256d ymm0 = _mm256_loadu2_m128d(&arr[2], &arr[0]);
+    _mm256_storeu2_m128d(&res[2], &res[0], ymm0);
+
+    EXPECT_DOUBLE_EQ(arr[0], res[0]);
+    EXPECT_DOUBLE_EQ(arr[1], res[1]);
+    EXPECT_DOUBLE_EQ(arr[2], res[2]);
+    EXPECT_DOUBLE_EQ(arr[3], res[3]);
 }
