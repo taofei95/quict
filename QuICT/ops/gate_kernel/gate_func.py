@@ -97,6 +97,33 @@ CRZGate_single_kernel = cp.RawKernel(r'''
     ''', 'CRZGateSingle')
 
 
+ResetGate0_single_kernel = cp.RawKernel(r'''
+    #include <cupy/complex.cuh>
+    extern "C" __global__
+    void ResetGate0Single(const int index, const float generation, complex<float>* vec) {
+        int label = blockDim.x * blockIdx.x + threadIdx.x;
+        int _0 = (label & ((1 << index) - 1)) 
+                + (label >> index << (index + 1));
+        vec[_0] = vec[_0] * generation;
+        vec[_0 + (1 << index)] = complex<float>(0, 0);
+    }
+    ''', 'ResetGate0Single')
+
+
+ResetGate1_single_kernel = cp.RawKernel(r'''
+    #include <cupy/complex.cuh>
+    extern "C" __global__
+    void ResetGate1Single(const int index, const float generation, complex<float>* vec) {
+        int label = blockDim.x * blockIdx.x + threadIdx.x;
+        int _1 = (label & ((1 << index) - 1)) 
+                + (label >> index << (index + 1))
+                + (1 << index);
+
+        vec[label] = vec[_1];
+    }
+    ''', 'ResetGate1Single')
+
+
 HGate_double_kernel = cp.RawKernel(r'''
     #include <cupy/complex.cuh>
     extern "C" __global__
@@ -183,10 +210,11 @@ ResetGate1_double_kernel = cp.RawKernel(r'''
     extern "C" __global__
     void ResetGate1Double(const int index, const double generation, complex<double>* vec) {
         int label = blockDim.x * blockIdx.x + threadIdx.x;
-        int _0 = (label & ((1 << index) - 1)) 
-                + (label >> index << (index + 1));
+        int _1 = (label & ((1 << index) - 1)) 
+                + (label >> index << (index + 1))
+                + (1 << index);
 
-        vec[_0] = complex<double>(0, 0);
+        vec[label] = vec[_1];
     }
     ''', 'ResetGate1Double')
 
@@ -310,7 +338,7 @@ def ResetGate_Apply(index, vec, vec_bit, sync: bool = False):
 
     if alpha < 1e-6:
         if vec.dtype == np.complex64:
-            MeasureGate0_single_kernel(
+            ResetGate1_single_kernel(
                 (block_num, ),
                 (thread_per_block, ),
                 (index, alpha, vec)
@@ -323,7 +351,7 @@ def ResetGate_Apply(index, vec, vec_bit, sync: bool = False):
             )
     else:
         if vec.dtype == np.complex64:
-            MeasureGate1_single_kernel(
+            ResetGate0_single_kernel(
                 (block_num,),
                 (thread_per_block,),
                 (index, alpha, vec)

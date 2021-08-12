@@ -12,6 +12,7 @@ import os
 from QuICT.core import *
 from QuICT.qcda.simulation import BasicSimulator
 from QuICT.ops.utils import Proxy, LinAlgLoader
+from QuICT.qcda.simulation.proxy_simulator.data_switch import DataSwitcher
 
 
 LIMIT_BUFFER_SIZE = int(os.getenv("QuICT_BUFFER_SIZE", 17))
@@ -37,7 +38,6 @@ class ProxySimulator(BasicSimulator):
         # Get qubits and limitation
         self.total_qubits = int(circuit.circuit_width())
         self.limit_qubits = int(self.total_qubits - np.log2(self.proxy.ndevs))
-        self.switch_data = False
 
         # Initial simulator with limit_qubits
         BasicSimulator.__init__(self, circuit, precision, gpu_device_id)
@@ -46,6 +46,7 @@ class ProxySimulator(BasicSimulator):
 
         # Initial the required algorithm.
         self._algorithm = LinAlgLoader(device="GPU", enable_gate_kernel=True, enable_multigpu_gate_kernel=True)
+        self._data_switcher = DataSwitcher(self.proxy, self.limit_qubits)
 
     def initial_vector_state(self):
         """
@@ -71,69 +72,322 @@ class ProxySimulator(BasicSimulator):
         """
         with cp.cuda.Device(self._device_id):
             for gate in self._gates:
-                self.exec(gate)
+                self.apply_gate(gate)
 
         return self.vector
 
-    def exec(self, gate):
+    def apply_gate(self, gate):
         """
         Trigger Gate event in the circuit.
         """
-        matrix = self.get_Matrix(gate)
-
-        if gate.type() == GATE_ID["H"]:
-            t_index = self.total_qubits - 1 - gate.targ
+        is_switch_data = False
+        if (
+            gate.type() == GATE_ID["H"] or 
+            gate.type() == GATE_ID["SX"] or 
+            gate.type() == GATE_ID["SY"] or
+            gate.type() == GATE_ID["SW"] or
+            gate.type() == GATE_ID["U2"] or 
+            gate.type() == GATE_ID["U3"] or
+            gate.type() == GATE_ID["RX"] or
+            gate.type() == GATE_ID["RY"]
+        ):
+            t_index = self._qubits - 1 - gate.targ
+            matrix = self.get_Matrix(gate)
             if t_index >= self.limit_qubits:
-                self._switch_data(t_index)
+                destination = self.proxy.rank ^ (1 << (t_index - self.limit_qubits))
+                self._data_switcher.half_switch(self._vector, destination)
+                is_switch_data = True
                 t_index = self.limit_qubits - 1
-                self.switch_data = True
 
-            self._algorithm.HGate_matrixdot(
+            self._algorithm.Based_InnerProduct_targ(
                 t_index,
                 matrix,
                 self._vector,
                 self._qubits,
                 self._sync
             )
-        elif gate.type() == GATE_ID["CRz"]:
-            c_index = self.total_qubits - 1 - gate.carg
-            t_index = self.total_qubits - 1 - gate.targ
 
-            if c_index >= self.limit_qubits and t_index >= self.limit_qubits:
-                if self.proxy.rank & 1 << (c_index - self.limit_qubits):
-                    _0_1 = self.proxy.rank & 1 << (t_index - self.limit_qubits)
+            if is_switch_data:
+                self._data_switcher.half_switch(self._vector, destination)
 
-                    self._algorithm.CRzGate_matrixdot_pd(
-                        _0_1,
-                        matrix,
-                        self._vector,
-                        self._qubits,
-                        self._sync
-                    )
+        elif (
+            gate.type() == GATE_ID["S"] or
+            gate.type() == GATE_ID["S_dagger"] or
+            gate.type() == GATE_ID["RZ"] or
+            gate.type() == GATE_ID["Phase"]
+        ):
+            t_index = self._qubits - 1 - gate.targ
+            matrix = self.get_Matrix(gate)
+            if t_index >= self.limit_qubits:
+                value = matrix[3] if self.proxy.rank & (1 << (t_index - self.limit_qubits)) else \
+                    matrix[0]
 
-            elif c_index >= self.limit_qubits or t_index >= self.limit_qubits:
-                if t_index > c_index:
-                    _0_1 = self.proxy.rank & 1 << (t_index - self.limit_qubits)
-                    self._algorithm.CRzGate_matrixdot_pc(
-                        _0_1,
-                        c_index,
-                        matrix,
-                        self._vector,
-                        self._qubits,
-                        self._sync
-                    )
-                else:
-                    if self.proxy.rank & 1 << (c_index - self.limit_qubits - 1):
-                        
-                        self._algorithm.CRzGate_matrixdot_pt(
-                            t_index,
-                            matrix,
-                            self._vector,
-                            self._qubits,
-                            self._sync
-                        )
+                self._algorithm.Simple_Multiply(
+                    value,
+                    self._vector,
+                    self._qubits,
+                    self._sync
+                )
             else:
-                self._algorithm.CRzGate_matrixdot(
+                self._algorithm.Diagonal_Multiply_targ(
+                    t_index,
+                    matrix,
+                    self._vector,
+                    self._qubits,
+                    self._sync
+                )
+        elif gate.type() == GATE_ID["X"]:
+            t_index = self._qubits - 1 - gate.targ
+            if t_index >= self.limit_qubits:
+                destination = self.proxy.rank ^ (1 << (t_index - self.limit_qubits))
+                self._data_switcher.all_switch(destination)
+            else:
+                self._algorithm.RDiagonal_Swap_targ(
+                    t_index,
+                    self._vector,
+                    self._qubits,
+                    self._sync
+                )
+        elif gate.type() == GATE_ID["Y"]:
+            t_index = self._qubits - 1 - gate.targ
+            matrix = self.get_Matrix(gate)
+            if t_index >= self.limit_qubits:
+                destination = self.proxy.rank ^ (1 << (t_index - self.limit_qubits))
+                value = matrix[2] if self.proxy.rank & (1 << (t_index - self.limit_qubits)) else \
+                    matrix[1]
+
+                self._algorithm.Simple_Multiply(
+                    value,
+                    self._vector,
+                    self._qubits,
+                    self._sync
+                )
+
+                self._data_switcher.all_switch(destination)
+            else:
+                self._algorithm.RDiagonal_MultiplySwap_targ(
+                    t_index,
+                    matrix,
+                    self._vector,
+                    self._qubits,
+                    self._sync
+                )
+        elif (
+            gate.type() == GATE_ID["Z"] or
+            gate.type() == GATE_ID["U1"] or
+            gate.type() == GATE_ID["T"] or
+            gate.type() == GATE_ID["T_dagger"]
+        ):
+            t_index = self._qubits - 1 - gate.targ
+            matrix = self.get_Matrix(gate)
+            if (
+                t_index >= self.limit_qubits and
+                self.proxy.rank & (1 << (t_index - self.limit_qubits))
+            ):
+                self._algorithm.Simple_Multiply(
+                    matrix[3],
+                    self._vector,
+                    self._qubits,
+                    self._sync
+                )
+            else:
+                self._algorithm.Controlled_Multiply_targ(
+                    t_index,
+                    matrix,
+                    self._vector,
+                    self._qubits,
+                    self._sync
+                )
+        elif (
+            gate.type() == GATE_ID["CZ"] or
+            gate.type() == GATE_ID["CU1"]
+        ):
+            t_index = self._qubits - 1 - gate.targ
+            c_index = self._qubits - 1 - gate.carg
+            matrix = self.get_Matrix(gate)
+            if t_index >= self.limit_qubits and c_index >= self.limit_qubits:
+                if self.proxy.rank & (1 << (c_index - self.limit_qubits)):
+                    value = matrix[10] if self.proxy.rank & (1 << (t_index - self.limit_qubits)) else \
+                        matrix[15]
+                    self._algorithm.Simple_Multiply(
+                        value,
+                        self._vector,
+                        self._qubits,
+                        self._sync
+                    )
+            elif c_index >= self.limit_qubits:
+                if self.proxy.rank & (1 << (c_index - self.limit_qubits)):
+                    self._algorithm.Diagonal_Multiply_targ(
+                        t_index,
+                        matrix,
+                        self._vector,
+                        self._qubits,
+                        self._sync
+                    )
+            elif t_index >= self.limit_qubits:
+                temp_matrix = cp.array([1,0,0,0], dtype=self._precision)
+                temp_matrix[3] = matrix[10] if self.proxy.rank & (1 << (t_index - self.limit_qubits)) else \
+                    matrix[15]
+
+                self._algorithm.Controlled_Multiply_targ(
+                    c_index,
+                    temp_matrix,
+                    self._vector,
+                    self._qubits,
+                    self._sync
+                )
+            else:
+                self._algorithm.Controlled_Multiply_ctargs(
+                    c_index,
+                    t_index,
+                    matrix,
+                    self._vector,
+                    self._qubits,
+                    8,
+                    self._sync
+                )
+        elif gate.type() == GATE_ID["CRz"]:
+            t_index = self._qubits - 1 - gate.targ
+            c_index = self._qubits - 1 - gate.carg
+            matrix = self.get_Matrix(gate)
+            if t_index >= self.limit_qubits and c_index >= self.limit_qubits:
+                if self.proxy.rank & (1 << (c_index - self.limit_qubits)):
+                    value = matrix[10] if self.proxy.rank & (1 << (t_index - self.limit_qubits)) else \
+                        matrix[15]
+                    self._algorithm.Simple_Multiply(
+                        value,
+                        self._vector,
+                        self._qubits,
+                        self._sync
+                    )
+            elif c_index >= self.limit_qubits:
+                if self.proxy.rank & (1 << (c_index - self.limit_qubits)):
+                    self._algorithm.Diagonal_Multiply_targ(
+                        t_index,
+                        matrix,
+                        self._vector,
+                        self._qubits,
+                        self._sync
+                    )
+            elif t_index >= self.limit_qubits:
+                temp_matrix = cp.array([1,0,0,0], dtype=self._precision)
+                temp_matrix[3] = matrix[10] if self.proxy.rank & (1 << (t_index - self.limit_qubits)) else \
+                    matrix[15]
+
+                self._algorithm.Controlled_Multiply_targ(
+                    c_index,
+                    temp_matrix,
+                    self._vector,
+                    self._qubits,
+                    self._sync
+                )
+            else:
+                self._algorithm.Controlled_Multiply_ctargs(
+                    c_index,
+                    t_index,
+                    matrix,
+                    self._vector,
+                    self._qubits,
+                    12,
+                    self._sync
+                )
+        elif gate.type() == GATE_ID["RZZ"]:
+            t_indexes = [self._qubits - 1 - targ for targ in gate.targs]
+            matrix = self.get_Matrix(gate)
+            if t_indexes[0] > t_indexes[1]:
+                t_indexes[0], t_indexes[1] = t_indexes[1], t_indexes[0]
+
+            if t_indexes[0] >= self.limit_qubits:
+                _0 = self.proxy.rank & (1 << (t_indexes[0] - self.limit_qubits))
+                _1 = self.proxy.rank & (1 << (t_indexes[1] - self.limit_qubits))
+
+                index = 0
+                if _0:
+                    index += 5
+                if _1:
+                    index += 10
+                
+                self._algorithm.Simple_Multiply(
+                    matrix[index],
+                    self._vector,
+                    self._qubits,
+                    self._sync
+                )            
+            elif t_indexes[1] >= self.limit_qubits:
+                temp_matrix = cp.zeros((4,), dtype=self._precision)
+                if self.proxy.rank & (1 << (t_indexes[1] - self.limit_qubits)):
+                    temp_matrix[0], temp_matrix[3] = matrix[10], matrix[15]
+                else:
+                    temp_matrix[0], temp_matrix[3] = matrix[0], matrix[5]
+                
+                self._algorithm.Diagonal_Multiply_targ(
+                    t_indexes[0],
+                    temp_matrix,
+                    self._vector,
+                    self._qubits,
+                    self._sync
+                )
+            else: 
+                self._algorithm.Diagonal_Multiply_targs(
+                    t_indexes,
+                    matrix,
+                    self._vector,
+                    self._qubits,
+                    self._sync
+                )
+        elif (
+            gate.type() == GATE_ID["CX"] or
+            gate.type() == GATE_ID["CY"]
+        ):
+            t_index = self._qubits - 1 - gate.targ
+            c_index = self._qubits - 1 - gate.carg
+            matrix = self.get_Matrix(gate)
+            if t_index >= self.limit_qubits and c_index >= self.limit_qubits:
+                if self.proxy.rank & (1 << (c_index - self.limit_qubits)):
+                    value = matrix[11] if self.proxy.rank & (1 << (t_index - self.limit_qubits)) else \
+                        matrix[14]
+                    self.Simple_Multiply(
+                        value,
+                        self._vector,
+                        self._qubits,
+                        self._sync
+                    )
+
+                    destination = self.proxy.rank ^ (1 << (t_index - self.limit_qubits))
+                    self._data_switcher.all_switch(destination)
+            elif t_index >= self.limit_qubits:
+                temp_matrix = cp.zeros((4,), dtype=self._precision)
+                temp_matrix[0] = 1
+                temp_matrix[3] = matrix[11] if self.proxy.rank & (1 << (t_index - self.limit_qubits)) else \
+                    matrix[14]
+
+                self._algorithm.Controlled_Multiply_targ(
+                    c_index,
+                    temp_matrix,
+                    self._vector,
+                    self._qubits,
+                    self._sync
+                )
+
+                destination = self.proxy.rank ^ (1 << (t_index - self.limit_qubits))
+                self._data_switcher.ctargs_switch(
+                    self._vector,
+                    destination,
+                    {c_index: 1}
+                )
+            elif c_index >= self.limit_qubits:
+                temp_matrix = cp.zeros((4,), dtype=self._precision)
+                temp_matrix[1], temp_matrix[2] = matrix[11], matrix[14]
+                if self.proxy.rank & (1 << (c_index - self.limit_qubits)):
+                    self._algorithm.RDiagonal_MultiplySwap_targ(
+                        t_index,
+                        temp_matrix,
+                        self._vector,
+                        self._qubits,
+                        self._sync
+                    )
+            else:
+                self._algorithm.Controlled_MultiplySwap_ctargs(
                     c_index,
                     t_index,
                     matrix,
@@ -141,54 +395,564 @@ class ProxySimulator(BasicSimulator):
                     self._qubits,
                     self._sync
                 )
+        elif (
+            gate.type() == GATE_ID["CH"] or 
+            gate.type() == GATE_ID["CU3"]
+        ):
+            t_index = self._qubits - 1 - gate.targ
+            c_index = self._qubits - 1 - gate.carg
+            matrix = self.get_Matrix(gate)
+            if t_index >= self.limit_qubits and c_index >= self.limit_qubits:
+                if self.proxy.rank & (1 << (c_index - self.limit_qubits)):
+                    destination = self.proxy.rank ^ (1 << (t_index - self.limit_qubits))
+                    self._data_switcher.half_switch(
+                        self._vector,
+                        destination
+                    )
 
-        if self.switch_data:
-            self._switch_data(self.total_qubits - 1 - gate.targ)
-            self.switch_data = False
+                    self._algorithm.Based_InnerProduct_targ(
+                        self.limit_qubits - 1,
+                        matrix[[10,11,14,15]],
+                        self._vector,
+                        self._qubits,
+                        self._sync
+                    )
 
-    def _switch_data(self, t_index: int):
-        """ 
-        Switch data with the paired GPU device.
-        """
-        required_qubits = 1 << (self.limit_qubits - 1)
-        sending_size = 1 << min(required_qubits, self._buffer_size)
-        recv_buf = cp.zeros(required_qubits, dtype=self._precision)
-        send_buf = self.vector
+                    self._data_switcher.half_switch(
+                        self._vector,
+                        destination
+                    )
+            elif c_index >= self.limit_qubits:
+                if self.proxy.rank & (1 << (c_index - self.limit_qubits)):
+                    temp_matrix = matrix[[10,11,14,15]]
+                    self._algorithm.Based_InnerProduct_targ(
+                        t_index,
+                        temp_matrix,
+                        self._vector,
+                        self._qubits,
+                        self._sync
+                    )
+            elif t_index >= self.limit_qubits:
+                destination = self.proxy.rank ^ (1 << (t_index - self.limit_qubits))
+                switch_condition = {c_index: (self.proxy.rank & (1 << (t_index - self.limit_qubits)))}
 
-        # Get the paired GPU device ID.
-        destination = self.proxy.rank ^ (1 << (t_index - self.limit_qubits))
+                self._data_switcher.ctargs_switch(
+                    self._vector,
+                    destination,
+                    switch_condition
+                )
 
-        # Send first/second half piece of qubits' vector states
-        front = self.proxy.rank > destination
+                if switch_condition[c_index] == 1:
+                    temp_matrix = matrix[[14,15,10,11]]
+                    self._algorithm.Based_InnerProduct_targ(
+                        c_index,
+                        temp_matrix,
+                        self._vector,
+                        self._qubits,
+                        self._sync
+                    )
 
-        # Date transfer
-        for i in range(math.ceil(required_qubits/sending_size)):
-            if front:
-                self.proxy.send(send_buf[i*sending_size:(i+1)*sending_size], destination)
+                self._data_switcher.ctargs_switch(
+                    self._vector,
+                    destination,
+                    switch_condition
+                )
             else:
-                if i == 0:
-                    self.proxy.send(send_buf[-(i+1)*sending_size:], destination)
-                else:
-                    self.proxy.send(send_buf[-(i+1)*sending_size:-i*sending_size], destination)
+                self._algorithm.Controlled_InnerProduct_ctargs(
+                    c_index,
+                    t_index,
+                    matrix,
+                    self._vector,
+                    self._qubits,
+                    self._sync
+                )
+        elif gate.type() == GATE_ID["FSim"]:
+            t_indexes = [self._qubits - 1 - targ for targ in gate.targs]
+            matrix = self.get_Matrix(gate)
+            if t_indexes[0] > t_indexes[1]:
+                t_indexes[0], t_indexes[1] = t_indexes[1], t_indexes[0]
 
-            if not front:
-                self.proxy.recv(recv_buf[i*sending_size:(i+1)*sending_size], destination)
+            if t_indexes[0] >= self.limit_qubits:
+                _0 = self.proxy.rank & (1 << (t_indexes[0] - self.limit_qubits))
+                _1 = self.proxy.rank & (1 << (t_indexes[1] - self.limit_qubits))
+
+                if _0 and _1:
+                    self._algorithm.Simple_Multiply(
+                        matrix[15],
+                        self._vector,
+                        self._qubits,
+                        self._sync
+                    )
+                elif _0 or _1:
+                    destination = self.proxy.rank ^ ((1 << (t_indexes[0] - self.limit_qubits)) + (1 << (t_indexes[1] - self.limit_qubits)))
+                    self._data_switcher.half_switch(
+                        self._vector,
+                        destination
+                    )
+                    self._algorithm.Based_InnerProduct_targ(
+                        self.limit_qubits - 1,
+                        matrix[[5,6,9,10]],
+                        self._vector,
+                        self._qubits,
+                        self._sync
+                    )
+                    self._data_switcher.half_switch(
+                        self._vector,
+                        destination
+                    )
+                else:
+                    self._algorithm.Simple_Multiply(
+                        matrix[0],
+                        self._vector,
+                        self._qubits,
+                        self._sync
+                    )
+            elif t_indexes[1] >= self.limit_qubits:
+                destination = self.proxy.rank ^ (1 << (t_indexes[1] - self.limit_qubits))
+                self._data_switcher.ctargs_switch(
+                    self.vector,
+                    destination,
+                    {t_indexes[0]: 1}
+                )
+
+                if self.proxy.rank & (1 << (t_indexes[1] - self.limit_qubits)):
+                    temp_matrix = matrix[[9,10,5,6]]
+                    self._algorithm.Based_InnerProduct_targ(
+                        t_indexes[0],
+                        temp_matrix,
+                        self._vector,
+                        self._qubits,
+                        self._sync
+                    )
+                else:
+                    temp_matrix = matrix[[0,1,14,15]]
+                    self._algorithm.Diagonal_Multiply_targ(
+                        t_indexes[0],
+                        temp_matrix,
+                        self._vector,
+                        self._qubits,
+                        self._sync
+                    )
+                
+                self._data_switcher.ctargs_switch(
+                    self.vector,
+                    destination,
+                    {t_indexes[0]: 1}
+                )
             else:
-                if i == 0:
-                    self.proxy.recv(recv_buf[-(i+1)*sending_size:], destination)
+                self._algorithm.Completed_MxIP_targs(
+                    t_indexes,
+                    matrix,
+                    self._vector,
+                    self._qubits,
+                    self._sync
+                )
+        elif gate.type() == GATE_ID["RXX"] or gate.type() == GATE_ID["RYY"]:
+            t_indexes = [self._qubits - 1 - targ for targ in gate.targs]
+            matrix = self.get_Matrix(gate)
+            if t_indexes[0] > t_indexes[1]:
+                t_indexes[0], t_indexes[1] = t_indexes[1], t_indexes[0]
+
+            if t_indexes[0] >= self.limit_qubits:
+                destination = self.proxy.rank ^ ((1 << (t_indexes[0] - self.limit_qubits)) + (1 << (t_indexes[1] - self.limit_qubits)))
+                self._data_switcher.half_switch(
+                    self._vector,
+                    destination
+                )
+
+                temp_matrix = matrix[[0,3,12,15]] if (self.proxy.rank & (1 << (t_indexes[0] - self.limit_qubits))) == (self.proxy.rank & (1 << (t_indexes[1] - self.limit_qubits))) else \
+                    matrix[[5,6,9,10]]
+
+                self._algorithm.Based_InnerProduct_targ(
+                    self.limit_qubits - 1,
+                    temp_matrix,
+                    self._vector,
+                    self._qubits,
+                    self._sync
+                )
+
+                self._data_switcher.half_switch(
+                    self._vector,
+                    destination
+                ) 
+            elif t_indexes[1] >= self.limit_qubits:
+                destination = self.proxy.rank ^ (1 << (t_indexes[1] - self.limit_qubits))
+                self._data_switcher.ctargs_switch(
+                    self.vector,
+                    destination,
+                    {t_indexes[0]: 1}
+                )
+
+                temp_matrix = matrix[[9,10,5,6]] if self.proxy.rank & (1 << (t_indexes[1] - self.limit_qubits)) else \
+                    matrix[[0,1,14,15]]
+                self._algorithm.Based_InnerProduct_targ(
+                    t_indexes[0],
+                    temp_matrix,
+                    self._vector,
+                    self._qubits,
+                    self._sync
+                )
+
+                self._data_switcher.ctargs_switch(
+                    self.vector,
+                    destination,
+                    {t_indexes[0]: 1}
+                )
+            else:
+                self._algorithm.Completed_IPxIP_targs(
+                    t_indexes,
+                    matrix,
+                    self._vector,
+                    self._qubits,
+                    self._sync
+                )
+        elif gate.type() == GATE_ID["Swap"]:
+            t_indexes = [self._qubits - 1 - targ for targ in gate.targs]
+            if t_indexes[0] > t_indexes[1]:
+                t_indexes[0], t_indexes[1] = t_indexes[1], t_indexes[0]
+
+            if t_indexes[0] >= self.limit_qubits:
+                _0 = self.proxy.rank & (1 << (t_indexes[0] - self.limit_qubits))
+                _1 = self.proxy.rank & (1 << (t_indexes[1] - self.limit_qubits))
+
+                if _0 != _1:
+                    destination = self.proxy.rank ^ ((1 << (t_indexes[0] - self.limit_qubits)) + (1 << (t_indexes[1] - self.limit_qubits)))
+                    self._data_switcher.all_switch(destination)
+            elif t_indexes[1] >= self.limit_qubits:
+                destination = self.proxy.rank ^ (1 << (t_indexes[1] - self.limit_qubits))
+                if self.proxy.rank & (1 << (t_indexes[1] - self.limit_qubits)):
+                    switch_condition = {t_indexes[0]: 0}
                 else:
-                    self.proxy.recv(recv_buf[-(i+1)*sending_size:-i*sending_size], destination)
+                    switch_condition = {t_indexes[0]: 1}
+                
+                self._data_switcher.ctargs_switch(
+                    self._vector,
+                    destination,
+                    switch_condition
+                )
+            else:
+                self._algorithm.Controlled_Swap_targs(
+                    t_indexes,
+                    self._vector,
+                    self._qubits,
+                    self._sync
+                )
+        elif gate.type() == GATE_ID["ID"]:
+            pass
+        elif gate.type() == 45:
+            # TODO: GATE_ID["CCX"] = 30, not matched
+            c_indexes = [self._qubits - 1 - carg for carg in gate.cargs]
+            t_index = self._qubits - 1 - gate.targ
+            matrix = self.get_Matrix(gate)
+            if c_indexes[0] > c_indexes[1]:
+                c_indexes[0], c_indexes[1] = c_indexes[1], c_indexes[0]
 
-        self.reset_vector(recv_buf, front)
+            _t = t_index >= self.limit_qubits
+            _c0 = c_indexes[0] >= self.limit_qubits
+            _c1 = c_indexes[1] >= self.limit_qubits
+            if _t and _c0:
+                if (
+                    self.proxy.rank & (1 << (c_indexes[0] - self.limit_qubits)) and
+                    self.proxy.rank & (1 << (c_indexes[1] - self.limit_qubits))
+                ):
+                    destination = self.proxy.rank ^ (1 << (t_index - self.limit_qubits))
+                    self._data_switcher.all_switch(destination)
+            elif _t and _c1:
+                if self.proxy.rank & (1 << (c_indexes[1] - self.limit_qubits)):
+                    destination = self.proxy.rank ^ (1 << (t_index - self.limit_qubits))
+                    switch_condition = {c_indexes[0]: 1}
+                    self._data_switcher.ctargs_switch(
+                        self._vector,
+                        destination,
+                        switch_condition
+                    )
+            elif _c0:
+                if (
+                    self.proxy.rank & (1 << (c_indexes[0] - self.limit_qubits)) and
+                    self.proxy.rank & (1 << (c_indexes[1] - self.limit_qubits))
+                ):
+                    self._algorithm.RDiagonal_Swap_targ(
+                        t_index,
+                        self._vector,
+                        self._qubits,
+                        self._sync
+                    )
+            elif _c1:
+                if self.proxy.rank & (1 << (c_indexes[1] - self.limit_qubits)):
+                    temp_matrix = matrix[[36,37,38,39,44,45,46,47,52,53,54,55,60,61,62,63]]
+                    self._algorithm.Controlled_MultiplySwap_ctargs(
+                        c_indexes[0],
+                        t_index,
+                        temp_matrix,
+                        self._vector,
+                        self._qubits,
+                        self._sync
+                    )
+            elif _t:
+                destination = self.proxy.rank ^ (1 << (t_index - self.limit_qubits))
+                switch_condition = {
+                    c_indexes[0]: 1,
+                    c_indexes[1]: 1
+                }
+                self._data_switcher.ctargs_switch(
+                    self._vector,
+                    destination,
+                    switch_condition
+                )
+            else:
+                self._algorithm.Controlled_Swap_more(
+                    c_indexes,
+                    t_index,
+                    self._vector,
+                    self._qubits,
+                    self._sync
+                )
+        elif gate.type() == GATE_ID["CCRz"]:
+            c_indexes = [self._qubits - 1 - carg for carg in gate.cargs]
+            t_index = self._qubits - 1 - gate.targ
+            matrix = self.get_Matrix(gate)
+            if c_indexes[0] > c_indexes[1]:
+                c_indexes[0], c_indexes[1] = c_indexes[1], c_indexes[0]
 
-    def reset_vector(self, new_vector, front: bool = True):
-        """
-        Reset the qubits' vector states.
-        """
-        new_vector_size = new_vector.size
+            _t = t_index >= self.limit_qubits
+            _c0 = c_indexes[0] >= self.limit_qubits
+            _c1 = c_indexes[1] >= self.limit_qubits
+            if _t and _c0:
+                if (
+                    self.proxy.rank & (1 << (c_indexes[0] - self.limit_qubits)) and
+                    self.proxy.rank & (1 << (c_indexes[1] - self.limit_qubits))
+                ):
+                    value = matrix[63] if self.proxy.rank & (1 << (t_index - self.limit_qubits)) else \
+                        matrix[54]
 
-        if front:
-            self._vector[:new_vector_size] = new_vector
+                    self._algorithm.Simple_Multiply(
+                        value,
+                        self._vector,
+                        self._qubits,
+                        self._sync
+                    )
+            elif _t and _c1:
+                if self.proxy.rank & (1 << (c_indexes[1] - self.limit_qubits)):
+                    temp_matrix = matrix[[45,46,62,63]] if self.proxy.rank & (1 << (c_indexes[1] - self.limit_qubits)) else \
+                        matrix[[36,37,53,54]]
+                    self._algorithm.Controlled_Multiply_targ(
+                        c_indexes[0],
+                        temp_matrix,
+                        self._vector,
+                        self._qubits,
+                        self._sync
+                    )
+            elif _c0:
+                if (
+                    self.proxy.rank & (1 << (c_indexes[0] - self.limit_qubits)) and
+                    self.proxy.rank & (1 << (c_indexes[1] - self.limit_qubits))
+                ):
+                    self._algorithm.Diagonal_Multiply_targ(
+                        t_index,
+                        matrix[[54,55,62,63]],
+                        self._vector,
+                        self._qubits,
+                        self._sync
+                    )
+            elif _c1:
+                if self.proxy.rank & (1 << (c_indexes[1] - self.limit_qubits)):
+                    temp_matrix = matrix[[36,37,38,39,44,45,46,47,52,53,54,55,60,61,62,63]]
+                    self._algorithm.Controlled_Multiply_ctargs(
+                        c_indexes[0],
+                        t_index,
+                        temp_matrix,
+                        self._vector,
+                        self._qubits,
+                        12,
+                        self._sync
+                    )
+            elif _t:
+                temp_matrix = cp.zeros((16,), dtype=self._precision)
+                temp_matrix[15] = matrix[63] if self.proxy.rank ^ (1 << (t_index - self.limit_qubits)) else \
+                    matrix[54]
+
+                self._algorithm.Controlled_Multiply_ctargs(
+                    c_indexes[1],
+                    c_indexes[0],
+                    temp_matrix,
+                    self._vector,
+                    self._qubits,
+                    8,
+                    self._sync
+                )        
+            else:
+                self._algorithm.Controlled_Multiply_more(
+                    c_indexes,
+                    t_index,
+                    matrix,
+                    self._vector,
+                    self._qubits,
+                    self._sync
+                )
+        elif gate.type() == GATE_ID["CSwap"]:
+            t_indexes = [self._qubits - 1 - targ for targ in gate.targs]
+            c_index = self._qubits - 1 - gate.carg
+            if t_indexes[0] > t_indexes[1]:
+                t_indexes[0], t_indexes[1] = t_indexes[1], t_indexes[0]
+        
+            _c = c_index >= self.limit_qubits
+            _t0 = t_indexes[0] >= self.limit_qubits
+            _t1 = t_indexes[1] >= self.limit_qubits
+
+            if _c and _t0:
+                if self.proxy.rank & (1 << (c_index - self.limit_qubits)):
+                    _0 = (self.proxy.rank & (1 << (t_indexes[0] - self.limit_qubits))) >> (t_indexes[0] - self.limit_qubits)
+                    _1 = self.proxy.rank & (1 << (t_indexes[1] - self.limit_qubits)) >> (t_indexes[1] - self.limit_qubits)
+
+                    if _0 != _1:
+                        destination = self.proxy.rank ^ ((1 << (t_indexes[1] - self.limit_qubits)) + (1 << 1 << (t_indexes[0] - self.limit_qubits)))
+                        self._data_switcher.all_switch(destination)
+            elif _c and _t1:
+                if self.proxy.rank & (1 << (c_index - self.limit_qubits)):
+                    destination = self.proxy.rank ^ (1 << (t_indexes[1] - self.limit_qubits))
+                    switch_condition = {
+                        t_indexes[0]: destination & (1 << (t_indexes[1] - self.limit_qubits))
+                    }
+                    self._data_switcher.ctargs_switch(
+                        self._vector,
+                        destination,
+                        switch_condition
+                    )
+            elif _t0:
+                _0 = (self.proxy.rank & (1 << (t_indexes[0] - self.limit_qubits))) >> (t_indexes[0] - self.limit_qubits)
+                _1 = self.proxy.rank & (1 << (t_indexes[1] - self.limit_qubits)) >> (t_indexes[1] - self.limit_qubits)
+
+                if _0 != _1:
+                    destination = self.proxy.rank ^ ((1 << (t_indexes[1] - self.limit_qubits)) + (1 << 1 << (t_indexes[0] - self.limit_qubits)))
+                    self._data_switcher.ctargs_switch(
+                        self._vector,
+                        destination,
+                        {c_index: 1}
+                    )
+            elif _t1:
+                destination = self.proxy.rank ^ (1 << (t_indexes[1] - self.limit_qubits))
+                switch_condition = {
+                    c_index:1,
+                    t_indexes[0]: destination & (1 << (t_indexes[1] - self.limit_qubits))
+                }
+                
+                self._data_switcher.ctargs_switch(
+                    self._vector,
+                    destination,
+                    switch_condition
+                )
+            elif _c:
+                if self.proxy.rank & (1 << (c_index - self.limit_qubits)):
+                    self._algorithm.Controlled_Swap_targs(
+                        t_indexes,
+                        self._vector,
+                        self._qubits,
+                        self._sync
+                    )
+            else:
+                self._algorithm.Controlled_Swap_tmore(
+                    t_indexes,
+                    c_index,
+                    self._vector,
+                    self._qubits,
+                    self._sync
+                )
+        elif gate.type() == GATE_ID["Measure"]:
+            index = self._qubits - 1 - gate.targ
+            prob_result = self._algorithm.Device_Prob_Calculator(
+                index,
+                self._vector,
+                self.limit_qubits,
+                self.proxy.rank
+            )
+
+            total_prob = self._data_switcher.add_prob(prob_result)
+
+            if index >= self.limit_qubits:
+                result = self._algorithm.Multi_MeasureGate_Extra(
+                    total_prob,
+                    self.proxy.rank & (1 << (index - self.limit_qubits)),
+                    self._vector,
+                    self._qubits,
+                    self._sync
+                )
+            else:
+                result = self._algorithm.Multi_MeasureGate(
+                    total_prob,
+                    index,
+                    self._vector,
+                    self._qubits,
+                    self._sync
+                )
+
+            self.circuit.qubits[gate.targ].measured = result
+        elif gate.type() == GATE_ID["Reset"]:
+            index = self._qubits - 1 - gate.targ
+            prob_result = self._algorithm.Device_Prob_Calculator(
+                index,
+                self._vector,
+                self.limit_qubits,
+                self.proxy.rank
+            )
+
+            total_prob = self._data_switcher.add_prob(prob_result)
+            if index >= self.limit_qubits:
+                self._algorithm.Multi_ResetGate(
+                    total_prob,
+                    self.proxy.rank & (1 << (index - self.limit_qubits)),
+                    self._vector,
+                    self._qubits,
+                    self._sync
+                )
+            else:
+                self._algorithm.ResetGate_Apply(
+                    index,
+                    self._vector,
+                    self._qubits,
+                    self._sync
+                )
+        elif gate.type() == GATE_ID["Barrier"]:
+            # TODO: Not applied in gate.py.
+            pass
+        elif (
+            gate.type() == GATE_ID["Perm"] or 
+            gate.type() == GATE_ID["ControlPermMulDetail"] or
+            gate.type() == GATE_ID["PermShift"] or
+            gate.type() == GATE_ID["ControlPermShift"] or
+            gate.type() == GATE_ID["PermMul"] or
+            gate.type() == GATE_ID["ControlPermMul"] or
+            gate.type() == GATE_ID["PermFx"]
+        ):
+            # TODO: PermShift issue
+            matrix = self.get_Matrix(gate)
+            len_mat = np.int64(np.sqrt(matrix.size))
+            matrix = matrix.reshape(len_mat, len_mat)
+
+            self._vector = self._algorithm.dot(
+                matrix,
+                self._vector,
+                gpu_out=False,
+                sync=self._sync
+            )
+        elif gate.type() == GATE_ID["Unitary"]:
+            # TODO: Use np.dot, matrix*vec = 2^n * 2^n x 2^n * 1.
+            matrix = self.get_Matrix(gate).reshape(1 << self._qubits, -1)
+            self._algorithm.MatrixPermutation(
+                matrix,
+                np.array(gate.targs),
+                changeInput=True,
+                gpu_out=False,
+                sync=self._sync
+            )
+            self._vector = self._algorithm.dot(
+                matrix,
+                self._vector,
+                gpu_out=False,
+                sync=self._sync
+            )
+        elif gate.type() == GATE_ID["ShorInitial"]:
+            # TODO: Not applied yet.
+            pass
         else:
-            self._vector[new_vector_size:] = new_vector
+            raise KeyError("Unsupported Gate in multi-GPU version.")
  

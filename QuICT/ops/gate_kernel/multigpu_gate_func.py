@@ -1,184 +1,278 @@
-#!/usr/bin/env python
-# -*- coding:utf8 -*-
-# @TIME    : 2021/6/30 下午5:47
-# @Author  : Kaiqi Li
-# @File    : multigpu_gate_func
-
-import numpy as np
 import cupy as cp
+import numpy as np
+import random
 
 
-__outward_functions = ["CRzGate_matrixdot_pb", "CRzGate_matrixdot_pc", "CRzGate_matrixdot_pt"]
+__outward_functions = [
+    "Simple_Multiply"
+]
 
 
-""" Special proxy CRzGate kernel function for both carg and targ are exceeded the limit of current device. """
-CRZGate_kernel_special_sd = cp.RawKernel(r'''
+Simple_Multiply_single = cp.RawKernel(r'''
     #include <cupy/complex.cuh>
     extern "C" __global__
-    void CRZGateSingleSD(const complex<float> mat, complex<float>* vec) {
+    void SimpleMultiply(int value, complex<float>* vec) {
         int label = blockDim.x * blockIdx.x + threadIdx.x;
 
-        vec[label] = vec[label]*mat;
+        vec[label] = vec[label]*value;
     }
-    ''', 'CRZGateSingleSD')
+    ''', 'SimpleMultiply')
 
 
-""" Special proxy CRzGate kernel function for carg is exceeded the limit of current device. """
-CRZGate_kernel_special_sc = cp.RawKernel(r'''
+Simple_Multiply_double = cp.RawKernel(r'''
     #include <cupy/complex.cuh>
     extern "C" __global__
-    void CRZGateSingleSC(int cindex, const complex<float> mat, complex<float>* vec) {
+    void SimpleMultiply(int value, complex<double>* vec) {
         int label = blockDim.x * blockIdx.x + threadIdx.x;
 
-        int _0 = (1 << cindex) + (label & ((1 << cindex) - 1)) + (label >> cindex << (cindex + 1));
-
-        vec[_0] = vec[_0]*mat;
-    } 
-    ''', 'CRZGateSingleSC')
-
-
-""" Special proxy CRzGate kernel function for targ is exceeded the limit of current device. """
-CRZGate_kernel_special_st = cp.RawKernel(r'''
-    #include <cupy/complex.cuh>
-    extern "C" __global__
-    void CRZGateSingleST(int tindex, const complex<float>* mat, complex<float>* vec) {
-        int label = blockDim.x * blockIdx.x + threadIdx.x;
-
-        int _0 = (label & ((1 << tindex) - 1)) + (label >> tindex << (tindex + 1));
-        int _1 = _0 + (1 << tindex);
-
-        vec[_0] = vec[_0]*mat[10];
-        vec[_1] = vec[_1]*mat[15];
+        vec[label] = vec[label]*value;
     }
-    ''', 'CRZGateSingleST')
+    ''', 'SimpleMultiply')
 
 
-""" Special proxy CRzGate kernel function for both carg and targ are exceeded the limit of current device. """
-CRZGate_kernel_special_dd = cp.RawKernel(r'''
+MeasureGate0_single_kernel = cp.RawKernel(r'''
     #include <cupy/complex.cuh>
     extern "C" __global__
-    void CRZGateDoubleSD(const complex<double> mat, complex<double>* vec) {
+    void MeasureGate0Single(const int index, const float generation, complex<float>* vec) {
         int label = blockDim.x * blockIdx.x + threadIdx.x;
-
-        vec[label] = vec[label]*mat;
+        int _0 = (label & ((1 << index) - 1)) 
+                + (label >> index << (index + 1));
+        vec[_0] = vec[_0] * generation;
+        vec[_0 + (1 << index)] = complex<float>(0, 0);
     }
-    ''', 'CRZGateDoubleSD')
+    ''', 'MeasureGate0Single')
 
 
-""" Special proxy CRzGate kernel function for carg is exceeded the limit of current device. """
-CRZGate_kernel_special_dc = cp.RawKernel(r'''
+MeasureGate1_single_kernel = cp.RawKernel(r'''
     #include <cupy/complex.cuh>
     extern "C" __global__
-    void CRZGateDoubleSC(int cindex, const complex<double> mat, complex<double>* vec) {
+    void MeasureGate1Single(const int index, const float generation, complex<float>* vec) {
         int label = blockDim.x * blockIdx.x + threadIdx.x;
-
-        int _0 = (1 << cindex) + (label & ((1 << cindex) - 1)) + (label >> cindex << (cindex + 1));
-
-        vec[_0] = vec[_0]*mat;
-    } 
-    ''', 'CRZGateDoubleSC')
-
-
-""" Special proxy CRzGate kernel function for targ is exceeded the limit of current device. """
-CRZGate_kernel_special_dt = cp.RawKernel(r'''
-    #include <cupy/complex.cuh>
-    extern "C" __global__
-    void CRZGateDoubleST(int tindex, const complex<double>* mat, complex<double>* vec) {
-        int label = blockDim.x * blockIdx.x + threadIdx.x;
-
-        int _0 = (label & ((1 << tindex) - 1)) + (label >> tindex << (tindex + 1));
-        int _1 = _0 + (1 << tindex);
-
-        vec[_0] = vec[_0]*mat[10];
-        vec[_1] = vec[_1]*mat[15];
+        int _0 = (label & ((1 << index) - 1)) 
+                + (label >> index << (index + 1));
+        int _1 = _0 + (1 << index);
+        vec[_0] = complex<float>(0, 0);
+        vec[_1] = vec[_1] * generation;
     }
-    ''', 'CRZGateDoubleST')
+    ''', 'MeasureGate1Single')
 
 
-def CRzGate_matrixdot_pb(_0_1, mat, vec, vec_bit, sync: bool = True):
-    """ 
-    Special CRzGate dot function for the multi-GPUs. Using when both c_index 
-    and t_index are higher than the maximum qubits in the current device.
-    """
-    mat_value = mat[10] if _0_1 else mat[15]
+MeasureGate0_double_kernel = cp.RawKernel(r'''
+    #include <cupy/complex.cuh>
+    extern "C" __global__
+    void MeasureGate0Double(const int index, const double generation, complex<double>* vec) {
+        int label = blockDim.x * blockIdx.x + threadIdx.x;
+        int _0 = (label & ((1 << index) - 1)) 
+                + (label >> index << (index + 1));
+        vec[_0] = vec[_0] * generation;
+        vec[_0 + (1 << index)] = complex<double>(0, 0);
+    }
+    ''', 'MeasureGate0Double')
 
+
+MeasureGate1_double_kernel = cp.RawKernel(r'''
+    #include <cupy/complex.cuh>
+    extern "C" __global__
+    void MeasureGate1Double(const int index, const double generation, complex<double>* vec) {
+        int label = blockDim.x * blockIdx.x + threadIdx.x;
+        int _0 = (label & ((1 << index) - 1)) 
+                + (label >> index << (index + 1));
+        int _1 = _0 + (1 << index);
+        vec[_0] = complex<double>(0, 0);
+        vec[_1] = vec[_1] * generation;
+    }
+    ''', 'MeasureGate1Double')
+
+
+prop_add = cp.ElementwiseKernel(
+    'T x, raw T y, int32 index', 'T z',
+    'z = (i & index) ? 0 : abs(x) * abs(x)',
+    'prop_add')
+
+
+prob_1 = cp.ElementwiseKernel(
+    'T x, raw T y', 'T z',
+    'z = abs(x) * abs(x)',
+    'prop_add')
+
+
+MeasureGate_prop_kernel = cp.ReductionKernel(
+    'T x',
+    'T y',
+    'x',
+    'a + b',
+    'y = abs(a)',
+    '0',
+    'MeasureGate_prop_kernel')
+
+
+def Simple_Multiply(value, vec, vec_bit, sync: bool = False):
     task_number = 1 << vec_bit
     thread_per_block = min(256, task_number)
     block_num = task_number // thread_per_block
 
     if vec.dtype == np.complex64:
-        CRZGate_kernel_special_sd(
+        Simple_Multiply_single(
             (block_num,),
             (thread_per_block,),
-            (mat_value, vec)
-        )
-    elif vec.dtype == np.complex128:
-        CRZGate_kernel_special_dd(
-            (block_num,),
-            (thread_per_block,),
-            (mat_value, vec)
+            (value, vec)
         )
     else:
-        raise TypeError(f"Unsupported type of {vec.dtype}.")
+        Simple_Multiply_double(
+            (block_num,),
+            (thread_per_block,),
+            (value, vec)
+        )
 
     if sync:
         cp.cuda.Device().synchronize()
 
 
-def CRzGate_matrixdot_pc(_0_1, c_index, mat, vec, vec_bit, sync: bool = True):
-    """ 
-    Special CRzGate dot function for the multi-GPUs. Using when the t_index is higher 
-    than the maximum qubits in the current device, and the c_index doesn't.
+def Device_Prob_Calculator(index, vec, device_qubits, rank):
     """
-    mat_value = mat[10] if _0_1 else mat[15]
+    Measure Gate Measure.
+    """
+    if index >= device_qubits:
+        if rank & (1 << (index - device_qubits)):
+            prob = cp.array([0], dtype=vec.dtype)
+        else:
+            prob = prob_1(vec, vec)
+    else:
+        prob = prop_add(vec, vec, 1 << index)
+        prob = MeasureGate_prop_kernel(prob, axis = 0).real
+
+    return prob
+
+
+def Multi_MeasureGate(prob, index, vec, vec_bit, sync: bool = False):
+    _0 = random.random()
+    _1 = _0 > prob
+    prob = prob.get()
 
     task_number = 1 << (vec_bit - 1)
     thread_per_block = min(256, task_number)
     block_num = task_number // thread_per_block
 
+    if not _1:
+        if vec.dtype == np.complex64:
+            alpha = np.float32(1 / np.sqrt(prob))
+            MeasureGate0_single_kernel(
+                (block_num, ),
+                (thread_per_block, ),
+                (index, alpha, vec)
+            )
+        else:
+            alpha = np.float64(1 / np.sqrt(prob))
+            MeasureGate0_double_kernel(
+                (block_num,),
+                (thread_per_block,),
+                (index, alpha, vec)
+            )
+    else:
+        if vec.dtype == np.complex64:
+            alpha = np.float32(1 / np.sqrt(1 - prob))
+            MeasureGate1_single_kernel(
+                (block_num,),
+                (thread_per_block,),
+                (index, alpha, vec)
+            )
+        else:
+            alpha = np.float64(1 / np.sqrt(1 - prob))
+            MeasureGate1_double_kernel(
+                (block_num,),
+                (thread_per_block,),
+                (index, alpha, vec)
+            )
+    if sync:
+        cp.cuda.Device().synchronize()
+
+    return _1
+
+
+def Multi_MeasureGate_Extra(prob, device_index, vec, vec_bit, sync: bool = False):
+    _0 = random.random()
+    _1 = _0 > prob
+    prob = prob.get()
+
+    if not _1:
+        alpha = np.float32(1 / np.sqrt(prob)) if vec.dtype == np.complex64 else \
+            np.float64(1 / np.sqrt(prob))
+
+        if device_index:
+            Set_Zeros(vec, vec_bit, sync)
+        else:
+            Simple_Multiply(alpha, vec, vec_bit, sync)
+    else:
+        alpha = np.float32(1 / np.sqrt(1 - prob)) if vec.dtype == np.complex64 else \
+            np.float64(1 / np.sqrt(1 - prob))
+        
+        if device_index:
+            Simple_Multiply(alpha, vec, vec_bit, sync)
+        else:
+            Set_Zeros(vec, vec_bit, sync)
+
+    if sync:
+        cp.cuda.Device().synchronize()
+
+    return _1
+
+
+SetZeros_single = cp.RawKernel(r'''
+    #include <cupy/complex.cuh>
+    extern "C" __global__
+    void SetZeros(const int index, const float generation, complex<float>* vec) {
+        int label = blockDim.x * blockIdx.x + threadIdx.x;
+
+        vec[label] = complex<float>(0, 0);
+    }
+    ''', 'SetZeros')
+
+
+SetZeros_double = cp.RawKernel(r'''
+    #include <cupy/complex.cuh>
+    extern "C" __global__
+    void SetZeros(complex<double>* vec) {
+        int label = blockDim.x * blockIdx.x + threadIdx.x;
+
+        vec[label] = complex<double>(0, 0);
+    }
+    ''', 'SetZeros')
+
+
+def Set_Zeros(vec, vec_bit, sync: bool = False):
+    task_number = 1 << vec_bit
+    thread_per_block = min(256, task_number)
+    block_num = task_number // thread_per_block
+
     if vec.dtype == np.complex64:
-        CRZGate_kernel_special_sc(
+        SetZeros_single(
             (block_num,),
             (thread_per_block,),
-            (c_index, mat_value, vec)
-        )
-    elif vec.dtype == np.complex128:
-        CRZGate_kernel_special_dc(
-            (block_num,),
-            (thread_per_block,),
-            (c_index, mat_value, vec)
+            (vec)
         )
     else:
-        raise TypeError(f"Unsupported type of {vec.dtype}.")
+        SetZeros_double(
+            (block_num,),
+            (thread_per_block,),
+            (vec)
+        )
 
     if sync:
         cp.cuda.Device().synchronize()
 
 
-def CRzGate_matrixdot_pt(t_index, mat, vec, vec_bit, sync: bool = True):
-    """ 
-    Special CRzGate dot function for the multi-GPUs. Using when the c_index is 
-    higher than the maximum qubits in the current device, and the t_index doesn't.
-    """
-    task_number = 1 << (vec_bit - 1)
-    thread_per_block = min(256, task_number)
-    block_num = task_number // thread_per_block
+def Multi_ResetGate(prob, device_index, vec, vec_bit, sync: bool = False):
+    prob = prob.get()
+    alpha = 1 / np.sqrt(prob)
 
-
-    if vec.dtype == np.complex64:
-        CRZGate_kernel_special_st(
-            (block_num,),
-            (thread_per_block,),
-            (t_index, mat, vec)
-        )
-    elif vec.dtype == np.complex128:
-        CRZGate_kernel_special_dt(
-            (block_num,),
-            (thread_per_block,),
-            (t_index, mat, vec)
-        )
+    if alpha < 1e-6:
+        if not device_index:
+            Set_Zeros(vec, vec_bit, sync)
     else:
-        raise TypeError(f"Unsupported type of {vec.dtype}.")
+        if device_index:
+            Set_Zeros(vec, vec_bit, sync)
+        else:
+            Simple_Multiply(alpha, vec, vec_bit, sync)
 
     if sync:
         cp.cuda.Device().synchronize()
