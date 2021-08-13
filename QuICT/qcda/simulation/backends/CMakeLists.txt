@@ -51,3 +51,8 @@ add_executable(gate_test gate_test.cpp hybrid_simulator.h gate.h utility.h
         ../../../../QuICT/utility/extern/googletest/googletest/src/gtest_main.cc)
 add_dependencies(gate_test gtest)
 target_link_libraries(gate_test gtest)
+
+add_executable(index_test index_test.cpp gate.h utility.h
+        ../../../../QuICT/utility/extern/googletest/googletest/src/gtest_main.cc)
+add_dependencies(index_test gtest)
+target_link_libraries(index_test gtest)

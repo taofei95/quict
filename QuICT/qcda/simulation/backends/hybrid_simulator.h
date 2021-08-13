@@ -81,14 +81,6 @@ namespace QuICT {
         );
 
         template<template<typename ...> class Gate>
-        inline void apply_simple_gate(
-                uint64_t circuit_qubit_num,
-                const Gate<Precision> &gate,
-                Precision *real,
-                Precision *imag
-        );
-
-        template<template<typename ...> class Gate>
         inline void apply_diag_n_gate(
                 uint64_t circuit_qubit_num,
                 const Gate<Precision> &gate,
@@ -123,6 +115,13 @@ namespace QuICT {
         inline void apply_h_gate(
                 uint64_t circuit_qubit_num,
                 const HGate<Precision> &gate,
+                Precision *real,
+                Precision *imag
+        );
+
+        inline void apply_x_gate(
+                uint64_t circuit_qubit_num,
+                const XGate<Precision> &gate,
                 Precision *real,
                 Precision *imag
         );
@@ -240,16 +239,17 @@ namespace QuICT {
         if (gate_desc.qasm_name_ == "h") { // Single Bit
             auto gate = HGate<Precision>(gate_desc.affect_args_[0]);
             apply_h_gate(circuit_qubit_num, gate, real, imag);
-        } /*else if (gate_desc.qasm_name_ == "x") {
-            auto gate = XGate<Precision>(gate_desc.affect_args_[0]);
-            apply_gate(circuit_qubit_num, gate, real, imag);
-        } */ else if (gate_desc.qasm_name_ == "crz") { // Two Bit
+        } else if (gate_desc.qasm_name_ == "crz") { // Two Bit
             auto gate = CrzGate<Precision>(gate_desc.affect_args_[0], gate_desc.affect_args_[1], gate_desc.parg_);
             apply_ctrl_diag_gate(circuit_qubit_num, gate, real, imag);
         } else { // Not Implemented
             throw std::runtime_error(std::string(__func__) + ": " + "Not implemented gate - " + gate_desc.qasm_name_);
         }
     }
+
+    //**********************************************************************
+    // Special simple gates
+    //**********************************************************************
 
 
     template<typename Precision>
@@ -377,6 +377,28 @@ namespace QuICT {
     }
 
     template<typename Precision>
+    inline void HybridSimulator<Precision>::apply_x_gate(
+            uint64_t circuit_qubit_num,
+            const XGate<Precision> &gate,
+            Precision *real,
+            Precision *imag
+    ) {
+        if constexpr(std::is_same_v<Precision, float>) {
+            throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__) + ": "
+                                     + "Not Implemented " + __func__);
+        } else if constexpr(std::is_same_v<Precision, double>) {
+            uint64_t task_num = 1ULL << (circuit_qubit_num - 1);
+
+        }
+    }
+
+
+
+    //**********************************************************************
+    // Special matrix pattern gates
+    //**********************************************************************
+
+    template<typename Precision>
     template<template<typename ...> class Gate>
     inline void HybridSimulator<Precision>::apply_ctrl_diag_gate(
             uint64_t circuit_qubit_num,
@@ -496,23 +518,6 @@ namespace QuICT {
     template<typename Precision>
     template<template<typename ...> class Gate>
     void HybridSimulator<Precision>::apply_ctrl_unitary_gate(
-            uint64_t circuit_qubit_num,
-            const Gate<Precision> &gate,
-            Precision *real,
-            Precision *imag
-    ) {
-        if constexpr(std::is_same_v<Precision, float>) {
-            throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__) + ": "
-                                     + "Not Implemented " + __func__);
-        } else if constexpr(std::is_same_v<Precision, double>) {
-
-        }
-    }
-
-
-    template<typename Precision>
-    template<template<typename ...> class Gate>
-    void HybridSimulator<Precision>::apply_simple_gate(
             uint64_t circuit_qubit_num,
             const Gate<Precision> &gate,
             Precision *real,
