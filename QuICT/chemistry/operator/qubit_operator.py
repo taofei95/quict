@@ -3,7 +3,7 @@ A Qubit operator is a polynomial of Pauli matrices {X, Y, Z} = {sigma_1, sigma_2
 which is a useful representation for circuits by second quantization. 
 """
 
-from polynomial import Polynomial
+from polynomial_operator import PolynomialOperator
 
 COMMU = [
 [],
@@ -12,7 +12,7 @@ COMMU = [
 [0,2,1,3]
 ]
 
-class QubitOperator(Polynomial):
+class QubitOperator(PolynomialOperator):
     """    
     A Qubit operator is a polynomial of Pauli matrices {X, Y, Z} = {sigma_1, sigma_2, sigma_3}, 
     which is a useful representation for circuits by second quantization. 

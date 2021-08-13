@@ -3,9 +3,9 @@ A fermion operator is a polynomial of anti-commutative creation-annihilation ope
 which is a useful representation for states and Hamiltonians by second quantization. 
 """
 
-from polynomial import Polynomial
+from polynomial_operator import PolynomialOperator
 
-class FermionOperator(Polynomial):
+class FermionOperator(PolynomialOperator):
     """    
     A fermion operator is a polynomial of anti-commutative creation-annihilation operators, 
     which is a useful representation for states and Hamiltonians by second quantization. 

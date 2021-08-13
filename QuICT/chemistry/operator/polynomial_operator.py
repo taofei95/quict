@@ -1,13 +1,13 @@
 """
-A polynomial of symbolic operators.
+A PolynomialOperator of symbolic operators.
 The superClass of FermionOperator and QubitOperator.
 """
 
 import copy
 
-class Polynomial(object):
+class PolynomialOperator(object):
     """    
-    A polynomial of symbolic operators.
+    A PolynomialOperator of symbolic operators.
     The superClass of FermionOperator and QubitOperator.
 
     In this class, the operator could be represented as below.
@@ -30,12 +30,12 @@ class Polynomial(object):
             monomial(list/str): Operator monomial in list/string format
             coefficient(int/float/complex): Coefficient of the monomial
         """
-        # If monomial is None, it means identity operator.(not the zero operator)
+        # If monomial is None or [], it means identity operator.(not the zero operator)
         # If monomial is 0, it means the zero operator
         if monomial == 0 or coefficient == 0:
             self.operators = []
             return
-        if monomial == None:
+        if monomial == None or monomial == []:
             self.operators = [[[], coefficient]]
             return
         variables = []
@@ -54,7 +54,7 @@ class Polynomial(object):
             monomial(list/str): Operator monomial in list/string format
             coefficient(int/float/complex): Coefficient of the monomial
         '''
-        raise Exception("Construction of Polynomial is prohibited")
+        raise Exception("Construction of PolynomialOperator is prohibited")
 
     def str2tuple(cls, single_operator):
         """
@@ -85,10 +85,10 @@ class Polynomial(object):
         Addition of two operators
 
         Args:
-            other(Polynomial): Operator to be added
+            other(PolynomialOperator): Operator to be added
 
         Returns:
-            Polynomial: self + other
+            PolynomialOperator: self + other
         """
         ans = self.getPolynomial(0)
         A = self.operators
@@ -129,13 +129,13 @@ class Polynomial(object):
         Multiplication of two operators or an operator with a number
 
         Args:
-            other(Polynomial/int/float/complex): multiplier
+            other(PolynomialOperator/int/float/complex): multiplier
 
         Returns:
-            Polynomial: self * other
+            PolynomialOperator: self * other
         """
         ans = self.getPolynomial(0)
-        if not isinstance(other, Polynomial):
+        if not isinstance(other, PolynomialOperator):
             ans.operators = [[copy.deepcopy(mono[0]), mono[1] * other] for mono in self.operators]
             return ans
         A = self.operators
@@ -156,12 +156,12 @@ class Polynomial(object):
     def __rmul__(self, other):
         """
         Args:
-            other(Polynomial/int/float/complex): multiplier
+            other(PolynomialOperator/int/float/complex): multiplier
 
         Returns:
-            Polynomial: other * self
+            PolynomialOperator: other * self
         """
-        if not isinstance(other, Polynomial):
+        if not isinstance(other, PolynomialOperator):
             return self * other
         return other * self
     
@@ -170,10 +170,10 @@ class Polynomial(object):
         Substraction of two operators
 
         Args:
-            other(Polynomial): Operator to be substracted
+            other(PolynomialOperator): Operator to be substracted
 
         Returns:
-            Polynomial: self - other
+            PolynomialOperator: self - other
         """
         return self + other * (-1)
 
@@ -192,7 +192,7 @@ class Polynomial(object):
             other(int/float/complex): divisor
 
         Returns:
-            Polynomial: self / other
+            PolynomialOperator: self / other
         """
         return self * (1./other)
 
