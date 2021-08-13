@@ -4,7 +4,6 @@ which is a useful representation for states and Hamiltonians by second quantizat
 """
 
 from polynomial import Polynomial
-import copy
 
 class FermionOperator(Polynomial):
     """    
