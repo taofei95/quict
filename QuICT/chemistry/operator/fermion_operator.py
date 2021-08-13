@@ -3,9 +3,10 @@ A fermion operator is a polynomial of anti-commutative creation-annihilation ope
 which is a useful representation for states and Hamiltonians by second quantization. 
 """
 
+from polynomial import Polynomial
 import copy
 
-class FermionOperator(object):
+class FermionOperator(Polynomial):
     """    
     A fermion operator is a polynomial of anti-commutative creation-annihilation operators, 
     which is a useful representation for states and Hamiltonians by second quantization. 
@@ -28,26 +29,13 @@ class FermionOperator(object):
             monomial(list/str): Operator monomial in list/string format
             coefficient(int/float/complex): Coefficient of the monomial
         """
-        # If monomial is None, it means identity operator.(not the zero operator)
-        # If monomial is 0, it means the zero operator
-        if monomial == 0 or coefficient == 0:
-            self.operators = []
+        super().__init__(monomial,coefficient)
+        if self.operators == []:
             return
-        if monomial == None:
-            self.operators = [[[], coefficient]]
-            return
-        variables = []
-        if isinstance(monomial, list):
-            variables = copy.deepcopy(monomial)
-        elif isinstance(monomial, str):
-            for var in monomial.split():
-                if var[-1] == '^':
-                    variables.append((int(var[:-1]), 1))
-                else:
-                    variables.append((int(var), 0))
+        variables = self.operators[0][0]
 
         # The variables in a monomial should be in ascending order.
-        # So do monomials in the polynomial.
+        # Anti-commutation relation for operators on different targets
         l = len(variables)
         for i in range(l-1, 0, -1):
             fl = False
@@ -60,11 +48,12 @@ class FermionOperator(object):
                 break
 
         # Adjacent identical operators lead to zero operator
-        self.operators = []
         if any([variables[i] == variables[i+1] for i in range(l - 1)]):
+            self.operators = []
             return
 
-        # Anti-commutation relation
+        # Anti-commutation relation for operators on identical targets
+        operators = []
         for i in range(l):
             if i == 0 or variables[i][0] != variables[i-1][0]:
                 k = l
@@ -73,183 +62,48 @@ class FermionOperator(object):
                         k = j
                         break
                 if (k - i) % 2 == 1:
-                    self.operators += [variables[i]]
+                    operators += [variables[i]]
                 elif variables[i][1] == 1:
-                    self.operators += [variables[i], variables[i+1]]
+                    operators += [variables[i], variables[i+1]]
                 else:
-                    self.operators = [[self.operators, coefficient], [self.operators + [variables[i+1], variables[i]], -coefficient]]
+                    self.operators = [[operators, coefficient], [operators + [variables[i+1], variables[i]], -coefficient]]
                     self *= FermionOperator(variables[k:]) # mul promises the ascending order
                     return
-        self.operators = [[self.operators, coefficient]]
+        self.operators = [[operators, coefficient]]
 
-    def __add__(self, other):
-        """
-        Addition of two operators
-
-        Args:
-            other(FermionOperator): Operator to be added
-
-        Returns:
-            FermionOperator: self + other
-        """
-        ans = FermionOperator(0)
-        A = self.operators
-        B = other.operators
-        ia = ib = 0
-        lenA = len(A)
-        lenB = len(B)
-        while ia < lenA and ib < lenB:
-            if A[ia][0] == B[ib][0]:
-                if A[ia][1] + B[ib][1] != 0:
-                    ans.operators += [[copy.deepcopy(A[ia][0]),A[ia][1]+B[ib][1]]]
-                ia += 1
-                ib += 1
-            elif A[ia][0]<B[ib][0]:
-                ans.operators += [copy.deepcopy(A[ia])]
-                ia += 1
-            else:
-                ans.operators += [copy.deepcopy(B[ib])]
-                ib += 1
-        while ia < lenA:
-            ans.operators += [copy.deepcopy(A[ia])]
-            ia += 1
-        while ib < lenB:
-            ans.operators += [copy.deepcopy(B[ib])]
-            ib += 1
-        return ans
-
-    def __iadd__(self, other):
-        """
-        Implement the '+=' operation
-        """
-        A = copy.deepcopy(self.operators)
-        B = other.operators
-        self.operators = []
-        ia = ib = 0
-        while ia < len(A) and ib < len(B):
-            if A[ia][0] == B[ib][0]:
-                if A[ia][1]+B[ib][1] != 0:
-                    self.operators += [[copy.deepcopy(A[ia][0]),A[ia][1]+B[ib][1]]]
-                ia += 1
-                ib += 1
-            elif A[ia][0]<B[ib][0]:
-                self.operators += [copy.deepcopy(A[ia])]
-                ia += 1
-            else:
-                self.operators += [copy.deepcopy(B[ib])]
-                ib += 1
-        while ia < len(A):
-            self.operators += [copy.deepcopy(A[ia])]
-            ia += 1
-        while ib < len(B):
-            self.operators += [copy.deepcopy(B[ib])]
-            ib += 1
-        return self
-
-    def __sub__(self, other):
-        """
-        Substraction of two operators
+    def getPolynomial(self, monomial=None, coefficient=1.):
+        '''
+        Construct an instance of the same class as 'self'
 
         Args:
-            other(FermionOperator): Operator to be substracted
+            monomial(list/str): Operator monomial in list/string format
+            coefficient(int/float/complex): Coefficient of the monomial
+        '''
+        return FermionOperator(monomial, coefficient)
 
-        Returns:
-            FermionOperator: self - other
+    def str2tuple(cls, single_operator):
         """
-        return self + other * (-1)
-
-    def __isub__(self, other):
-        """
-        Implement the '-=' operation
-        """
-        self += other * (-1)
-        return self
-
-    def __mul__(self, other):
-        """
-        Multiplication of two operators or an operator with a number
+        Transform a string format of a single operator to a tuple
 
         Args:
-            other(FermionOperator/int/float/complex): multiplier
+            single_operator(str): string format
 
         Returns:
-            FermionOperator: self * other
+            tuple: the corresponding tuple in list format
         """
-        ans = FermionOperator(0)
-        if not isinstance(other, FermionOperator):
-            ans.operators = [[copy.deepcopy(mono[0]), mono[1] * other] for mono in self.operators]
-            return ans
-        A = self.operators
-        B = other.operators
-        for mono_A in A:
-            for mono_B in B:
-                ans += FermionOperator(mono_A[0] + mono_B[0], mono_A[1] * mono_B[1])
-        return ans
+        if single_operator[-1] == '^':
+            return (int(single_operator[:-1]), 1)
+        else:
+            return (int(single_operator), 0)
 
-    def __imul__(self, other):
+    def tuple2str(cls, single_operator):
         """
-        Implement the '*=' operation
-        """
-        if not isinstance(other, FermionOperator):
-            for mono in self.operators:
-                mono[1] *= other
-            return self
-        A = copy.deepcopy(self.operators)
-        B = other.operators
-        self.operators = []
-        for mono_A in A:
-            for mono_B in B:
-                self += FermionOperator(mono_A[0] + mono_B[0], mono_A[1] * mono_B[1])
-        return self
-
-    def __rmul__(self, other):
-        """
-        Args:
-            other(FermionOperator/int/float/complex): multiplier
-
-        Returns:
-            FermionOperator: other * self
-        """
-        if not isinstance(other, FermionOperator):
-            return self * other
-        return other * self
-
-    def __truediv__(self, other):
-        """
-        Division of an operator with a number
+        Transform a tuple format of a single operator to a string
 
         Args:
-            other(int/float/complex): divisor
+            single_operator(tuple): list format
 
         Returns:
-            FermionOperator: self / other
+            string: the corresponding string format
         """
-        return self * (1./other)
-
-    def __itruediv__(self, other):
-        """
-        Implement the '/=' operation
-        """
-        self *= (1./other)
-        return self
-
-    def __repr__(self) -> str:
-        """
-        Return the string format
-        """
-        return f"{self.operators}"
-
-    def parse(self):
-        """
-        Parse the list format to string format
-        """
-        if self.operators == []:
-            return '0'
-        ans=''
-        for mono in self.operators:
-            ans += '+ ('+str(mono[1])+') '
-            if mono[0] != []:
-                ans += '* '
-                for var in mono[0]:
-                    ans += str(var[0]) + ('^ ' if var[1] else ' ')
-        return ans
+        return str(single_operator[0])+('^ ' if single_operator[1] else ' ')

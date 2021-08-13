@@ -45,6 +45,16 @@ class Polynomial(object):
             for var in monomial.split():
                 variables.append(self.str2tuple(var))
         self.operators=[[variables,coefficient]]
+    
+    def getPolynomial(self, monomial=None, coefficient=1.):
+        '''
+        Construct an instance of the same class as 'self'
+
+        Args:
+            monomial(list/str): Operator monomial in list/string format
+            coefficient(int/float/complex): Coefficient of the monomial
+        '''
+        raise Exception("Construction of Polynomial is prohibited")
 
     def str2tuple(cls, single_operator):
         """
@@ -80,7 +90,7 @@ class Polynomial(object):
         Returns:
             Polynomial: self + other
         """
-        ans = Polynomial(0)
+        ans = self.getPolynomial(0)
         A = self.operators
         B = other.operators
         ia = ib = 0
@@ -124,7 +134,7 @@ class Polynomial(object):
         Returns:
             Polynomial: self * other
         """
-        ans = Polynomial(0)
+        ans = self.getPolynomial(0)
         if not isinstance(other, Polynomial):
             ans.operators = [[copy.deepcopy(mono[0]), mono[1] * other] for mono in self.operators]
             return ans
@@ -132,7 +142,7 @@ class Polynomial(object):
         B = other.operators
         for mono_A in A:
             for mono_B in B:
-                ans += Polynomial(mono_A[0] + mono_B[0], mono_A[1] * mono_B[1])
+                ans += self.getPolynomial(mono_A[0] + mono_B[0], mono_A[1] * mono_B[1])
         return ans
 
     def __imul__(self, other):
@@ -205,9 +215,9 @@ class Polynomial(object):
         """
         if self.operators == []:
             return '0'
-        ans=''
+        ans = ''
         for mono in self.operators:
-            ans += '+ ('+str(mono[1])+') '
+            ans += '+ (' + str(mono[1]) + ') '
             if mono[0] != []:
                 ans += '* '
                 for var in mono[0]:
