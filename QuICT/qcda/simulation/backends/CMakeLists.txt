@@ -19,8 +19,8 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 if (MSVC)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /Qpar /arch:AVX /arch:AVX2")
 else ()
-#    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ftree-vectorize -fopenmp -mavx -mavx2 -mfma")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ftree-vectorize -mavx -mavx2 -mfma")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ftree-vectorize -fopenmp -mavx -mavx2 -mfma")
+#    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ftree-vectorize -mavx -mavx2 -mfma")
 endif ()
 
 
@@ -46,6 +46,11 @@ add_executable(hybrid_sim_test hybrid_sim_test.cpp hybrid_simulator.h gate.h uti
         ../../../../QuICT/utility/extern/googletest/googletest/src/gtest_main.cc)
 add_dependencies(hybrid_sim_test gtest)
 target_link_libraries(hybrid_sim_test gtest)
+
+add_executable(hybrid_sim_perf hybrid_sim_perf.cpp hybrid_simulator.h gate.h utility.h
+        ../../../../QuICT/utility/extern/googletest/googletest/src/gtest_main.cc)
+add_dependencies(hybrid_sim_perf gtest)
+target_link_libraries(hybrid_sim_perf gtest)
 
 add_executable(gate_test gate_test.cpp hybrid_simulator.h gate.h utility.h
         ../../../../QuICT/utility/extern/googletest/googletest/src/gtest_main.cc)

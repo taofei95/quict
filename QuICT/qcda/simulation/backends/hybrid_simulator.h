@@ -266,6 +266,7 @@ namespace QuICT {
             uint64_t task_num = 1ULL << (circuit_qubit_num - 1);
             if (gate.targ_ == circuit_qubit_num - 1) {
                 constexpr uint64_t batch_size = 4;
+#pragma omp parallel for shared(batch_size, circuit_qubit_num, gate, imag, real)
                 for (uint64_t task_id = 0; task_id < task_num; task_id += batch_size) {
                     auto ind_0 = index(task_id, circuit_qubit_num, gate.targ_);
                     auto cc = gate.sqrt2_inv.real();
@@ -301,6 +302,7 @@ namespace QuICT {
             } else if (gate.targ_ == circuit_qubit_num - 2) {
                 // After some permutations, this is the same with the previous one.
                 constexpr uint64_t batch_size = 4;
+#pragma omp parallel for shared(batch_size, circuit_qubit_num, gate, imag, real)
                 for (uint64_t task_id = 0; task_id < task_num; task_id += batch_size) {
                     auto ind_0 = index(task_id, circuit_qubit_num, gate.targ_);
                     auto cc = gate.sqrt2_inv.real();
@@ -345,6 +347,7 @@ namespace QuICT {
                 }
             } else {
                 constexpr uint64_t batch_size = 4;
+#pragma omp parallel for shared(batch_size, circuit_qubit_num, gate, imag, real)
                 for (uint64_t task_id = 0; task_id < task_num; task_id += batch_size) {
                     auto ind_0 = index(task_id, circuit_qubit_num, gate.targ_);
 
@@ -387,8 +390,14 @@ namespace QuICT {
             throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__) + ": "
                                      + "Not Implemented " + __func__);
         } else if constexpr(std::is_same_v<Precision, double>) {
-            uint64_t task_num = 1ULL << (circuit_qubit_num - 1);
+            // Definition of helper functions
+            auto array_op = [&gate, circuit_qubit_num](Precision *arr) {
+                uint64_t task_num = 1ULL << (circuit_qubit_num - 1);
+            };
 
+            // Call !!!
+            array_op(real);
+            array_op(imag);
         }
     }
 
@@ -421,6 +430,7 @@ namespace QuICT {
                 qubits_sorted[0] = gate.targ_;
                 qubits_sorted[1] = gate.carg_;
             }
+#pragma omp parallel for shared(batch_size, circuit_qubit_num, gate, imag, real, qubits, qubits_sorted)
             for (uint64_t task_id = 0; task_id < task_num; task_id += batch_size) {
                 auto ind_0 = index(task_id, circuit_qubit_num, qubits, qubits_sorted);
                 auto ind_1 = index(task_id + 1, circuit_qubit_num, qubits, qubits_sorted);
