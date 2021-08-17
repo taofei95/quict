@@ -2,16 +2,16 @@
 Encoders transform ladder operators to CompositeGate on zero state of qubits.
 """
 
-from abc import ABC, abstractclassmethod
 from qubit_operator import QubitOperator
 from fermion_operator import FermionOperator
 import numpy as np
 
-class Encoder(ABC):
+class Encoder:
     """
-    Abstract class of encoding methods.
+    Superclass of encoding methods.
     """
-    def encoder(cls, fermion_operator, maxN):
+    @classmethod
+    def encoder(cls, fermion_operator, maxN = 10):
         """
         Encoders transform ladder operators to Qubit Operators.
 
@@ -30,7 +30,7 @@ class Encoder(ABC):
             ans += mono_q
         return ans
     
-    @abstractclassmethod
+    @classmethod
     def encoder_single(cls, target, kind, maxN):
         '''
         Encode a single ladder operator (To be overrided).
@@ -75,7 +75,7 @@ class JordanWigner(Encoder):
     @classmethod
     def encoder_single(cls, target, kind, maxN):
         Zlist = [(i, 3) for i in range(target)]
-        ans = FermionOperator(Zlist)
+        ans = QubitOperator(Zlist)
         if kind == 0:               #annihilation
             ans *= Trans_01(target)
         else:                       #creation
@@ -89,7 +89,7 @@ class Parity(Encoder):
     @classmethod
     def encoder_single(cls, target, kind, maxN):
         Xlist = [(i, 1) for i in range(target+1, maxN)]
-        ans = FermionOperator(Xlist)
+        ans = QubitOperator(Xlist)
         if kind == 0:               #annihilation
             if target == 0:
                 ans *= Trans_01(target)
@@ -144,8 +144,8 @@ class BravyiKitaev(Encoder):
     @classmethod
     def encoder_single(cls, target, kind, maxN):
         Xlist = [(i,1) for i in update(target, maxN)]
-        ans = FermionOperator(Xlist, 0.5)
+        ans = QubitOperator(Xlist, 0.5)
         Zlist1 = [(i,3) for i in sumup(target - 1)]
         Zlist2 = [(i,3) for i in sumup(target)]
-        ans *= FermionOperator(Zlist1) - FermionOperator(Zlist2, (-1)**kind)
+        ans *= QubitOperator(Zlist1) - QubitOperator(Zlist2, (-1)**kind)
         return ans
