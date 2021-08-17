@@ -102,10 +102,50 @@ class Parity(Encoder):
                 ans *= Trans_00(target - 1) * Trans_10(target) - Trans_11(target - 1) * Trans_01(target)
         return ans
 
+def update(x, maxN):
+    '''
+    Construct a list of indexes involved in update n_x
+
+    Args:
+        x(integer): id of the target qubit.
+        maxN(integer): the number of all the fermions.
+    
+    Returns:
+        list: the indexes involved in update
+    '''
+    index = []
+    x += 1
+    while (x <= maxN):
+        index.append(x - 1)
+        x += x&(-x)
+    return index
+
+def sumup(x):
+    '''
+    Construct a list of indexes involved in summation n_1,...,n_x
+
+    Args:
+        x(integer): id of the target qubit.
+    
+    Returns:
+        list: the indexes involved in summation
+    '''
+    index = []
+    x += 1
+    while (x > 0):
+        index.append(x - 1)
+        x -= x&(-x)
+    return index[::-1]
+
 class BravyiKitaev(Encoder):
     """
     Implement the Bravyi-Kitaev encoding method
     """
     @classmethod
     def encoder_single(cls, target, kind, maxN):
-        pass
+        Xlist = [(i,1) for i in update(target, maxN)]
+        ans = FermionOperator(Xlist, 0.5)
+        Zlist1 = [(i,3) for i in sumup(target - 1)]
+        Zlist2 = [(i,3) for i in sumup(target)]
+        ans *= FermionOperator(Zlist1) - FermionOperator(Zlist2, (-1)**kind)
+        return ans
