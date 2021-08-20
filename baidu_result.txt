@@ -1,5 +1,0 @@
-time, cores, build_in, hardware, program, algorithm
-2.9s, 8x, False, True, QEnv + backend + circult, less
-
-QProject
-without_build_in QFT: 0.12s (20 qubits)  3.7s (25 qubits)
