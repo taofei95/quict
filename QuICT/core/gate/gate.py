@@ -2420,16 +2420,16 @@ class PermFxGate(PermGate):
                 self.pargs.append(idx)
         return self
 
-    @property
-    def matrix(self) -> np.ndarray:
-        matrix = np.array([], dtype=np.complex128)
-        for i in range(self.params):
-            for j in range(self.params):
-                if self.pargs[i] == j:
-                    np.append(matrix, 1)
-                else:
-                    np.append(matrix, 0)
-        return matrix
+    # @property
+    # def matrix(self) -> np.ndarray:
+    #     matrix = np.array([], dtype=np.complex128)
+    #     for i in range(self.params):
+    #         for j in range(self.params):
+    #             if self.pargs[i] == j:
+    #                 np.append(matrix, 1)
+    #             else:
+    #                 np.append(matrix, 0)
+    #     return matrix
 
 
 PermFx = PermFxGate(["PermFx"])
@@ -2846,9 +2846,10 @@ class IQFTGate(ComplexGate):
         _QFT.targets = self.targets
         return _QFT
 
-    def build_gate(self):
+    def build_gate(self, targets):
         from .composite_gate import CompositeGate
-        qureg = self.affectArgs
+        self.targets = targets
+        qureg = [i for i in range(targets)]
         gates = CompositeGate()
 
         with gates:

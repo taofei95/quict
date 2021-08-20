@@ -10,7 +10,7 @@ import numpy as np
 import random
 
 
-__outward_functions = ["HGate_matrixdot", "CRzGate_matrixdot", "MeasureGate_Measure"]
+__outward_functions = ["MeasureGate_Apply", "ResetGate_Apply"]
 
 
 prop_add = cp.ElementwiseKernel(
@@ -56,88 +56,6 @@ MeasureGate1_single_kernel = cp.RawKernel(r'''
     ''', 'MeasureGate1Single')
 
 
-HGate_single_kernel = cp.RawKernel(r'''
-    #include <cupy/complex.cuh>
-    extern "C" __global__
-    void HGateSingle(int index, const complex<float>* mat, complex<float>* vec) {
-        int label = blockDim.x * blockIdx.x + threadIdx.x;
-        int _0 = (label & ((1 << index) - 1)) + (label >> index << (index + 1));
-        int _1 = _0 + (1 << index);
-
-        complex<float> temp_0 = vec[_0];
-        vec[_0] = vec[_0]*mat[0] + vec[_1]*mat[1];
-        vec[_1] = temp_0*mat[2] + vec[_1]*mat[3];
-    }
-    ''', 'HGateSingle')
-
-
-CRZGate_single_kernel = cp.RawKernel(r'''
-    #include <cupy/complex.cuh>
-    extern "C" __global__
-    void CRZGateSingle(int cindex, int tindex, const complex<float>* mat, complex<float>* vec) {
-        int label = blockDim.x * blockIdx.x + threadIdx.x;
-
-        int gw=0, _0=0;
-
-        if(tindex > cindex){
-            gw = label >> cindex << (cindex + 1);
-            _0 = (1 << cindex) + (gw & ((1 << tindex) - (1 << cindex))) + (gw >> tindex << (tindex + 1)) + (label & ((1 << cindex) - 1));
-        }
-        else
-        {
-            gw = label >> tindex << (tindex + 1);
-            _0 = (1 << cindex) + (gw & ((1 << cindex) - (1 << tindex))) + (gw >> cindex << (cindex + 1)) + (label & ((1 << tindex) - 1));
-        }
-
-        int _1 = _0 + (1 << tindex);
-
-        vec[_0] = vec[_0]*mat[10];
-        vec[_1] = vec[_1]*mat[15];
-    }
-    ''', 'CRZGateSingle')
-
-
-HGate_double_kernel = cp.RawKernel(r'''
-    #include <cupy/complex.cuh>
-    extern "C" __global__
-    void HGateDouble(int index, const complex<double>* mat, complex<double>* vec) {
-        int label = blockDim.x * blockIdx.x + threadIdx.x;
-        int _0 = (label & ((1 << index) - 1)) + (label >> index << (index + 1));
-        int _1 = _0 + (1 << index);
-
-        complex<double> temp_0 = vec[_0];
-        vec[_0] = vec[_0]*mat[0] + vec[_1]*mat[1];
-        vec[_1] = temp_0*mat[2] + vec[_1]*mat[3];
-    }
-    ''', 'HGateDouble')
-
-
-CRZGate_double_kernel = cp.RawKernel(r'''
-    #include <cupy/complex.cuh>
-    extern "C" __global__
-    void CRZGateDouble(int cindex, int tindex, const complex<double>* mat, complex<double>* vec) {
-        int label = blockDim.x * blockIdx.x + threadIdx.x;
-
-        int gw=0, _0=0;
-
-        if(tindex > cindex){
-            gw = label >> cindex << (cindex + 1);
-            _0 = (1 << cindex) + (gw & ((1 << tindex) - (1 << cindex))) + (gw >> tindex << (tindex + 1)) + (label & ((1 << cindex) - 1));
-        }
-        else
-        {
-            gw = label >> tindex << (tindex + 1);
-            _0 = (1 << cindex) + (gw & ((1 << cindex) - (1 << tindex))) + (gw >> cindex << (cindex + 1)) + (label & ((1 << tindex) - 1));
-        }
-
-        int _1 = _0 + (1 << tindex);
-
-        vec[_0] = vec[_0]*mat[10];
-        vec[_1] = vec[_1]*mat[15];
-    }
-    ''', 'CRZGateDouble')
-
-
 MeasureGate0_double_kernel = cp.RawKernel(r'''
     #include <cupy/complex.cuh>
     extern "C" __global__
@@ -165,68 +83,74 @@ MeasureGate1_double_kernel = cp.RawKernel(r'''
     ''', 'MeasureGate1Double')
 
 
-def HGate_matrixdot(t_index, mat, vec, vec_bit, sync: bool = False):
-    """
-    HGate dot function.
-    """
-    task_number = 1 << (vec_bit - 1)
-    thread_per_block = min(256, task_number)
-    block_num = task_number // thread_per_block
-    if vec.dtype == np.complex64:
-        HGate_single_kernel(
-            (block_num,),
-            (thread_per_block,),
-            (t_index, mat, vec)
-        )
-    elif vec.dtype == np.complex128:
-        HGate_double_kernel(
-            (block_num,),
-            (thread_per_block,),
-            (t_index, mat, vec)
-        )
-    else:
-        raise TypeError(f"Unsupported type of {vec.dtype}.")
-
-    if sync:
-        cp.cuda.Device().synchronize()
+ResetGate0_single_kernel = cp.RawKernel(r'''
+    #include <cupy/complex.cuh>
+    extern "C" __global__
+    void ResetGate0Float(const int index, const float generation, complex<float>* vec) {
+        int label = blockDim.x * blockIdx.x + threadIdx.x;
+        int _0 = (label & ((1 << index) - 1)) 
+                + (label >> index << (index + 1));
+        vec[_0] = vec[_0] / generation;
+        vec[_0 + (1 << index)] = complex<float>(0, 0);
+    }
+    ''', 'ResetGate0Float')
 
 
-def CRzGate_matrixdot(c_index, t_index, mat, vec, vec_bit, sync: bool = False):
-    """
-    CRzGate dot function.
-    """
-    task_number = 1 << (vec_bit - 2)
-    thread_per_block = min(256, task_number)
-    block_num = task_number // thread_per_block
+ResetGate1_single_kernel = cp.RawKernel(r'''
+    #include <cupy/complex.cuh>
+    extern "C" __global__
+    void ResetGate1Float(const int index, const float generation, complex<float>* vec) {
+        int label = blockDim.x * blockIdx.x + threadIdx.x;
+        int _0 = (label & ((1 << index) - 1)) 
+                + (label >> index << (index + 1));
+        int _1 = _0 + (1 << index)
 
-    if vec.dtype == np.complex64:
-        CRZGate_single_kernel(
-            (block_num,),
-            (thread_per_block,),
-            (c_index, t_index, mat, vec)
-        )
-    elif vec.dtype == np.complex128:
-        CRZGate_double_kernel(
-            (block_num,),
-            (thread_per_block,),
-            (c_index, t_index, mat, vec)
-        )
-    else:
-        raise TypeError(f"Unsupported type of {vec.dtype}.")
-
-    if sync:
-        cp.cuda.Device().synchronize()
+        vec[_0] = vec[_1];
+        vec[_1] = complex<float>(0, 0);
+    }
+    ''', 'ResetGate1Float')
 
 
-def MeasureGate_Measure(index, vec, vec_bit, sync: bool = False):
+ResetGate0_double_kernel = cp.RawKernel(r'''
+    #include <cupy/complex.cuh>
+    extern "C" __global__
+    void ResetGate0Double(const int index, const double generation, complex<double>* vec) {
+        int label = blockDim.x * blockIdx.x + threadIdx.x;
+        int _0 = (label & ((1 << index) - 1)) 
+                + (label >> index << (index + 1));
+        vec[_0] = vec[_0] / generation;
+        vec[_0 + (1 << index)] = complex<double>(0, 0);
+    }
+    ''', 'ResetGate0Double')
+
+
+ResetGate1_double_kernel = cp.RawKernel(r'''
+    #include <cupy/complex.cuh>
+    extern "C" __global__
+    void ResetGate1Double(const int index, const double generation, complex<double>* vec) {
+        int label = blockDim.x * blockIdx.x + threadIdx.x;
+        int _1 = (label & ((1 << index) - 1)) 
+                + (label >> index << (index + 1))
+                + (1 << index);
+
+        vec[label] = vec[_1];
+    }
+    ''', 'ResetGate1Double')
+
+
+def MeasureGate_Apply(index, vec, vec_bit, sync: bool = False, multigpu_prob = None):
     """
     Measure Gate Measure.
     """
-    prob = prop_add(vec, vec, 1 << index)
-    prob = MeasureGate_prop_kernel(prob, axis = 0).real
+    if not multigpu_prob:
+        prob = prop_add(vec, vec, 1 << index)
+        prob = MeasureGate_prop_kernel(prob, axis = 0).real
+        prob = prob.get()
+    else:
+        prob = multigpu_prob
+
     _0 = random.random()
     _1 = _0 > prob
-    prob = prob.get()
 
     task_number = 1 << (vec_bit - 1)
     thread_per_block = min(256, task_number)
@@ -266,3 +190,50 @@ def MeasureGate_Measure(index, vec, vec_bit, sync: bool = False):
         cp.cuda.Device().synchronize()
 
     return _1
+
+
+def ResetGate_Apply(index, vec, vec_bit, sync: bool = False, multigpu_prob = None):
+    """
+    Measure Gate Measure.
+    """
+    if not multigpu_prob:
+        prob = prop_add(vec, vec, 1 << index)
+        prob = MeasureGate_prop_kernel(prob, axis = 0).real
+        prob = prob.get()
+    else:
+        prob = multigpu_prob
+
+    task_number = 1 << (vec_bit - 1)
+    thread_per_block = min(256, task_number)
+    block_num = task_number // thread_per_block
+
+    alpha = np.float64(np.sqrt(prob))
+
+    if alpha < 1e-6:
+        if vec.dtype == np.complex64:
+            ResetGate1_single_kernel(
+                (block_num, ),
+                (thread_per_block,),
+                (index, alpha, vec)
+            )
+        else:
+            ResetGate1_double_kernel(
+                (block_num,),
+                (thread_per_block,),
+                (index, alpha, vec)
+            )
+    else:
+        if vec.dtype == np.complex64:
+            ResetGate0_single_kernel(
+                (block_num,),
+                (thread_per_block,),
+                (index, alpha, vec)
+            )
+        else:
+            ResetGate0_double_kernel(
+                (block_num,),
+                (thread_per_block,),
+                (index, alpha, vec)
+            )
+    if sync:
+        cp.cuda.Device().synchronize()
