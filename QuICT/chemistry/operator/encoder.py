@@ -1,3 +1,9 @@
+#!/usr/bin/env python
+# -*- coding:utf8 -*-
+# @TIME    : 2021/8/17 17:30
+# @Author  : Xiaoquan Xu
+# @File    : encoder.py
+
 """
 Encoders transform ladder operators to CompositeGate on zero state of qubits.
 """
@@ -116,7 +122,7 @@ def flip(x, n_fermions):
     x += 1
     while (x <= n_fermions):
         index.append(x - 1)
-        x += x&(-x)
+        x += x & (-x)
     return index
 
 def sumup(x):
@@ -133,7 +139,7 @@ def sumup(x):
     x += 1
     while (x > 0):
         index.append(x - 1)
-        x -= x&(-x)
+        x -= x & (-x)
     return index[::-1]
 
 class BravyiKitaev(Encoder):

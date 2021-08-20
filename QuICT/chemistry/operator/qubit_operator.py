@@ -62,7 +62,8 @@ class QubitOperator(PolynomialOperator):
                     operators += [(variables[i][0], cur)]
         self.operators = [[operators, coefficient]]
 
-    def getPolynomial(self, monomial=None, coefficient=1.):
+    @classmethod
+    def getPolynomial(cls, monomial=None, coefficient=1.):
         '''
         Construct an instance of the same class as 'self'
 
@@ -72,7 +73,8 @@ class QubitOperator(PolynomialOperator):
         '''
         return QubitOperator(monomial, coefficient)
 
-    def str2tuple(cls, single_operator):
+    @classmethod
+    def analyze_single(cls, single_operator):
         """
         Transform a string format of a single operator to a tuple
 
@@ -91,7 +93,8 @@ class QubitOperator(PolynomialOperator):
         else:
             raise Exception("The string format is not recognized: "+single_operator)
 
-    def tuple2str(cls, single_operator):
+    @classmethod
+    def parse_single(cls, single_operator):
         """
         Transform a tuple format of a single operator to a string
 

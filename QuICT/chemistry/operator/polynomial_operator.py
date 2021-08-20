@@ -1,3 +1,9 @@
+#!/usr/bin/env python
+# -*- coding:utf8 -*-
+# @TIME    : 2021/08/13 14:30
+# @Author  : Xiaoquan Xu
+# @File    : polynomial_operator.py
+ 
 """
 A PolynomialOperator of symbolic operators.
 The superClass of FermionOperator and QubitOperator.
@@ -43,12 +49,18 @@ class PolynomialOperator(object):
             variables = copy.deepcopy(monomial)
         elif isinstance(monomial, str):
             for var in monomial.split():
-                variables.append(self.str2tuple(var))
+                #print(type(self))
+                #print(id(self.analyze_single))
+                #print(id(PolynomialOperator.analyze_single))
+                #print(id(FermionOperator.analyze_single))
+                variables.append(self.analyze_single(var))
         self.operators=[[variables,coefficient]]
     
-    def getPolynomial(self, monomial=None, coefficient=1.):
+    @classmethod
+    def getPolynomial(cls, monomial=None, coefficient=1.):
         '''
-        Construct an instance of the same class as 'self'
+        Construct an instance of the same class using the arguments.
+        To be overrided.
 
         Args:
             monomial(list/str): Operator monomial in list/string format
@@ -56,9 +68,11 @@ class PolynomialOperator(object):
         '''
         raise Exception("Construction of PolynomialOperator is prohibited")
 
-    def str2tuple(cls, single_operator):
+    @classmethod
+    def analyze_single(cls, single_operator):
         """
-        Transform a string format of a single operator to a tuple
+        Transform a string format of a single operator to a tuple.
+        To be overrided.
 
         Args:
             single_operator(str): string format
@@ -68,9 +82,11 @@ class PolynomialOperator(object):
         """
         raise Exception("The string format is not recognized.")
 
-    def tuple2str(cls, single_operator):
+    @classmethod
+    def parse_single(cls, single_operator):
         """
-        Transform a tuple format of a single operator to a string
+        Transform a tuple format of a single operator to a string.
+        To be overrided.
 
         Args:
             single_operator(tuple): list format
@@ -82,7 +98,7 @@ class PolynomialOperator(object):
 
     def __add__(self, other):
         """
-        Addition of two operators
+        Addition of two operators.
 
         Args:
             other(PolynomialOperator): Operator to be added
@@ -94,9 +110,7 @@ class PolynomialOperator(object):
         A = self.operators
         B = other.operators
         ia = ib = 0
-        lenA = len(A)
-        lenB = len(B)
-        while ia < lenA and ib < lenB:
+        while ia < len(A) and ib < len(B):
             if A[ia][0] == B[ib][0]:
                 if A[ia][1] + B[ib][1] != 0:
                     ans.operators += [[copy.deepcopy(A[ia][0]),A[ia][1]+B[ib][1]]]
@@ -108,17 +122,17 @@ class PolynomialOperator(object):
             else:
                 ans.operators += [copy.deepcopy(B[ib])]
                 ib += 1
-        while ia < lenA:
+        while ia < len(A):
             ans.operators += [copy.deepcopy(A[ia])]
             ia += 1
-        while ib < lenB:
+        while ib < len(B):
             ans.operators += [copy.deepcopy(B[ib])]
             ib += 1
         return ans
 
     def __iadd__(self, other):
         """
-        Implement the '+=' operation
+        Implement the '+=' operation.
         """
         ans = self + other
         self.operators = ans.operators
@@ -126,7 +140,7 @@ class PolynomialOperator(object):
 
     def __mul__(self, other):
         """
-        Multiplication of two operators or an operator with a number
+        Multiplication of two operators or an operator with a number.
 
         Args:
             other(PolynomialOperator/int/float/complex): multiplier
@@ -147,7 +161,7 @@ class PolynomialOperator(object):
 
     def __imul__(self, other):
         """
-        Implement the '*=' operation
+        Implement the '*=' operation.
         """
         ans = self * other
         self.operators = ans.operators
@@ -167,7 +181,7 @@ class PolynomialOperator(object):
     
     def __sub__(self, other):
         """
-        Substraction of two operators
+        Substraction of two operators.
 
         Args:
             other(PolynomialOperator): Operator to be substracted
@@ -179,14 +193,14 @@ class PolynomialOperator(object):
 
     def __isub__(self, other):
         """
-        Implement the '-=' operation
+        Implement the '-=' operation.
         """
         self += other * (-1)
         return self
 
     def __truediv__(self, other):
         """
-        Division of an operator with a number
+        Division of an operator with a number.
 
         Args:
             other(int/float/complex): divisor
@@ -198,20 +212,34 @@ class PolynomialOperator(object):
 
     def __itruediv__(self, other):
         """
-        Implement the '/=' operation
+        Implement the '/=' operation.
         """
         self *= (1./other)
         return self
 
-    def __repr__(self) -> str:
+    def __eq__(self, other) -> bool:
         """
-        Return the string format
+        Judge whether two opperator polynomials are the same
+
+        Args:
+            other(PolynomialOperator): Operator to be judged
+        
+        Returns:
+            bool: whether two opperator polynomials are the same
         """
-        return f"{self.operators}"
+        if not isinstance(other, PolynomialOperator):
+            return False
+        return self.operators == other.operators
 
     def parse(self):
         """
-        Parse the list format to string format
+        Simply parse the list of the operators to string.
+        """
+        return f"{self.operators}"
+
+    def __repr__(self) -> str:
+        """
+        Parse the list format to string format.
         """
         if self.operators == []:
             return '0'
@@ -221,5 +249,5 @@ class PolynomialOperator(object):
             if mono[0] != []:
                 ans += '* '
                 for var in mono[0]:
-                    ans += self.tuple2str(var)
+                    ans += self.parse_single(var)
         return ans

@@ -1,9 +1,15 @@
+#!/usr/bin/env python
+# -*- coding:utf8 -*-
+# @TIME    : 2021/08/13 15:30
+# @Author  : Xiaoquan Xu
+# @File    : fermion_operator.py
+
 """
 A fermion operator is a polynomial of anti-commutative creation-annihilation operators, 
 which is a useful representation for states and Hamiltonians by second quantization. 
 """
 
-from polynomial_operator import PolynomialOperator
+from QuICT.chemistry.operator.polynomial_operator import PolynomialOperator
 
 class FermionOperator(PolynomialOperator):
     """    
@@ -17,8 +23,8 @@ class FermionOperator(PolynomialOperator):
     stands for (1.2 a_i^\dagger a_j^\dagger a_k a_l - 1.2 a_k^\dagger a_l^\dagger a_i a_j + ...),
     which could also be parsed as string '1.2 * i^ j^ k l - 1.2 * k^ l^ i j + ...'.
 
-    In the following descriptions, the above list is called list format, while the above string
-    is called string format.
+    In the following descriptions, the above list is called list format,
+    while the above string is called string format.
     """
     def __init__(self, monomial=None, coefficient=1.):
         """
@@ -70,9 +76,10 @@ class FermionOperator(PolynomialOperator):
                     return
         self.operators = [[operators, coefficient]]
 
-    def getPolynomial(self, monomial=None, coefficient=1.):
+    @classmethod
+    def getPolynomial(cls, monomial=None, coefficient=1.):
         '''
-        Construct an instance of the same class as 'self'
+        Construct an instance of the same class(i.e. FermionOperator) using the arguments.
 
         Args:
             monomial(list/str): Operator monomial in list/string format
@@ -80,9 +87,11 @@ class FermionOperator(PolynomialOperator):
         '''
         return FermionOperator(monomial, coefficient)
 
-    def str2tuple(cls, single_operator):
+    def analyze_single(self, single_operator):
         """
-        Transform a string format of a single operator to a tuple
+        Transform a string format of a single operator to a tuple.
+        For example,
+        '231' -> (231,0); '426^' -> (426,1) 
 
         Args:
             single_operator(str): string format
@@ -95,9 +104,12 @@ class FermionOperator(PolynomialOperator):
         else:
             return (int(single_operator), 0)
 
-    def tuple2str(cls, single_operator):
+    @classmethod
+    def parse_single(cls, single_operator):
         """
-        Transform a tuple format of a single operator to a string
+        Transform a tuple format of a single operator to a string.
+        For example,
+        (21,0) -> '21 '; (88,1) -> '88^ '
 
         Args:
             single_operator(tuple): list format
