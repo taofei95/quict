@@ -17,7 +17,7 @@
 #define OMP_NPROC 4
 #endif
 
-// #define LLC_OPTIM
+#define LLC_OPTIM
 // #define LLC_OPTIM_2
 
 namespace QuICT {
@@ -99,11 +99,7 @@ namespace QuICT {
 
     template<
             uint64_t N,
-#ifdef LLC_OPTIM
             typename std::enable_if<(N > 2), int>::type dummy = 0
-#else
-            typename std::enable_if<(N > 1), int>::type dummy = 0
-#endif
     >
     inline uarray_t<1ULL << N> index(
             const uint64_t task_id,
@@ -120,14 +116,6 @@ namespace QuICT {
 //            ret[0] = (ret[0] << 1) - tail;
             ret[0] = ret[0] >> pos << (pos + 1) | tail;
         }
-
-#ifdef LLC_OPTIM
-//        auto f = uarray_t<N>();
-//        for(int64_t i = 0; i < N; ++i)
-//            f[i] = 1ULL << (qubit_num - 1 - qubits[N - 1 - i]);
-//
-//        for (uint64_t i = 1; i < (1ULL << N); ++i)
-//            ret[i] = ret[i & (i-1)] | f[__builtin_ffsll(i) - 1];
 
         ret[1] = ret[0] | (1ULL << (qubit_num - 1 - qubits[N - 1]));
         ret[2] = ret[0] | (1ULL << (qubit_num - 1 - qubits[N - 2]));
@@ -146,43 +134,11 @@ namespace QuICT {
                 _mm256_storeu_pd((double *)&ret[half_cnt+j], res);
             }
         }
-
-//        for (int64_t i = 0; i < N; ++i) {
-//            const auto half_cnt = 1ULL << i;
-//            const auto tail = 1ULL << (qubit_num - 1 - qubits[N - 1 - i]);
-//            for (uint64_t j = 0; j < half_cnt; ++j) {
-//                uint64_t tmp = ret[j] | tail;
-//                assert(tmp == ret[half_cnt + j]);
-//            }
-//        }
-
-#else
-        for (int64_t i = 0; i < N; ++i) {
-            const auto half_cnt = 1ULL << i;
-            const auto tail = 1ULL << (qubit_num - 1 - qubits[N - 1 - i]);
-            for (uint64_t j = 0; j < half_cnt; ++j) {
-                ret[half_cnt + j] = ret[j] | tail;
-            }
-        }
-#endif
-
-
-#ifdef LLC_DEBUG
-        std::cout << "indexing " << N << " qubit: ";
-        for(int i = 0; i < N; i++) std::cout << qubits[i] << ' ';
-        std::cout << std::endl;
-        std::cout << "index array: " << std::endl;
-        for(int i = 0; i < ret.size(); i++)
-            std::cout << ((i&0xf) ? ' ' : '\n') << ret[i];
-        std::cout << std::endl;
-#endif
-
         return ret;
     }
 
-#ifdef LLC_OPTIM
     template<
-            uint64_t N,
+            uint64_t N = 2,
             typename std::enable_if<(N == 2), int>::type dummy = 0
     >
     inline uarray_t<4> index(
@@ -206,30 +162,11 @@ namespace QuICT {
         const uint64_t part2 = task_id & (~msk1);
         const uint64_t init = part0 | (part1 << 1) | (part2 << 2);
 
-#ifdef LLC_OPTIM_2
-        const uint64_t bit0 = (1ULL << (qubit_num - 1 - qubits[1]));
-        const uint64_t bit1 = (1ULL << (qubit_num - 1 - qubits[0]));
-        const uint64_t bits[4] = {0, bit0, bit1, bit0 | bit1};
-
-        __m256d A = _mm256_loadu_pd((double *)bits);
-        __m256d B = _mm256_set1_pd(*(double *)&init);
-        __m256d C = _mm256_or_pd(A, B);
-        _mm256_storeu_pd((double *)&ret[0], C);
-#else
         ret[0] = init;
         ret[1] = ret[0] | (1ULL << (qubit_num - 1 - qubits[N - 1]));
         ret[2] = ret[0] | (1ULL << (qubit_num - 1 - qubits[N - 2]));
         ret[3] = ret[1] | (1ULL << (qubit_num - 1 - qubits[N - 2]));
-#endif
-
-#ifdef LLC_CHECK
-        assert(ret[0] == init);
-        assert(ret[1] == (ret[0] | (1ULL << (qubit_num - 1 - qubits[N - 1]))));
-        assert(ret[2] == (ret[0] | (1ULL << (qubit_num - 1 - qubits[N - 2]))));
-        assert(ret[3] == (ret[1] | (1ULL << (qubit_num - 1 - qubits[N - 2]))));
-#endif
     }
-#endif
 
     template<
             uint64_t N = 1,
@@ -244,6 +181,7 @@ namespace QuICT {
         uint64_t pos = qubit_num - 1 - targ;
         uint64_t tail = task_id & ((1ULL << pos) - 1);
         ret[0] = task_id >> pos << (pos + 1) | tail;
+//        ret[0] = (task_id << 1) - tail;
         ret[1] = ret[0] | (1ULL << pos);
         return ret;
     }
