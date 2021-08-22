@@ -109,7 +109,6 @@ class ProxySimulator(BasicSimulator):
 
             if is_switch_data:
                 self._data_switcher.half_switch(self._vector, destination)
-
         elif (
             gate.type() == GATE_ID["S"] or
             gate.type() == GATE_ID["S_dagger"] or
@@ -119,11 +118,12 @@ class ProxySimulator(BasicSimulator):
             t_index = self.total_qubits - 1 - gate.targ
             matrix = self.get_Matrix(gate)
             if t_index >= self.limit_qubits:
-                value = matrix[3] if self.proxy.rank & (1 << (t_index - self.limit_qubits)) else \
-                    matrix[0]
+                index = 3 if self.proxy.rank & (1 << (t_index - self.limit_qubits)) else \
+                    0
 
                 self._algorithm.Simple_Multiply(
-                    value,
+                    index,
+                    matrix,
                     self._vector,
                     self._qubits,
                     self._sync
@@ -137,10 +137,10 @@ class ProxySimulator(BasicSimulator):
                     self._sync
                 )
         elif gate.type() == GATE_ID["X"]:
-            t_index = self._qubits - 1 - gate.targ
+            t_index = self.total_qubits - 1 - gate.targ
             if t_index >= self.limit_qubits:
                 destination = self.proxy.rank ^ (1 << (t_index - self.limit_qubits))
-                self._data_switcher.all_switch(destination)
+                self._data_switcher.all_switch(self.vector, destination)
             else:
                 self._algorithm.RDiagonal_Swap_targ(
                     t_index,
@@ -149,21 +149,22 @@ class ProxySimulator(BasicSimulator):
                     self._sync
                 )
         elif gate.type() == GATE_ID["Y"]:
-            t_index = self._qubits - 1 - gate.targ
+            t_index = self.total_qubits - 1 - gate.targ
             matrix = self.get_Matrix(gate)
             if t_index >= self.limit_qubits:
                 destination = self.proxy.rank ^ (1 << (t_index - self.limit_qubits))
-                value = matrix[2] if self.proxy.rank & (1 << (t_index - self.limit_qubits)) else \
-                    matrix[1]
+                index = 1 if self.proxy.rank & (1 << (t_index - self.limit_qubits)) else \
+                    2
 
                 self._algorithm.Simple_Multiply(
-                    value,
+                    index,
+                    matrix,
                     self._vector,
                     self._qubits,
                     self._sync
                 )
 
-                self._data_switcher.all_switch(destination)
+                self._data_switcher.all_switch(self._vector, destination)
             else:
                 self._algorithm.RDiagonal_MultiplySwap_targ(
                     t_index,
@@ -178,14 +179,15 @@ class ProxySimulator(BasicSimulator):
             gate.type() == GATE_ID["T"] or
             gate.type() == GATE_ID["T_dagger"]
         ):
-            t_index = self._qubits - 1 - gate.targ
+            t_index = self.total_qubits - 1 - gate.targ
             matrix = self.get_Matrix(gate)
             if (
                 t_index >= self.limit_qubits and
                 self.proxy.rank & (1 << (t_index - self.limit_qubits))
             ):
                 self._algorithm.Simple_Multiply(
-                    matrix[3],
+                    3,
+                    matrix,
                     self._vector,
                     self._qubits,
                     self._sync
@@ -202,15 +204,16 @@ class ProxySimulator(BasicSimulator):
             gate.type() == GATE_ID["CZ"] or
             gate.type() == GATE_ID["CU1"]
         ):
-            t_index = self._qubits - 1 - gate.targ
-            c_index = self._qubits - 1 - gate.carg
+            t_index = self.total_qubits - 1 - gate.targ
+            c_index = self.total_qubits - 1 - gate.carg
             matrix = self.get_Matrix(gate)
             if t_index >= self.limit_qubits and c_index >= self.limit_qubits:
                 if self.proxy.rank & (1 << (c_index - self.limit_qubits)):
-                    value = matrix[10] if self.proxy.rank & (1 << (t_index - self.limit_qubits)) else \
-                        matrix[15]
+                    index = 15 if self.proxy.rank & (1 << (t_index - self.limit_qubits)) else \
+                        10
                     self._algorithm.Simple_Multiply(
-                        value,
+                        index,
+                        matrix,
                         self._vector,
                         self._qubits,
                         self._sync
@@ -219,15 +222,15 @@ class ProxySimulator(BasicSimulator):
                 if self.proxy.rank & (1 << (c_index - self.limit_qubits)):
                     self._algorithm.Diagonal_Multiply_targ(
                         t_index,
-                        matrix,
+                        matrix[[10,11,14,15]],
                         self._vector,
                         self._qubits,
                         self._sync
                     )
             elif t_index >= self.limit_qubits:
                 temp_matrix = cp.array([1,0,0,0], dtype=self._precision)
-                temp_matrix[3] = matrix[10] if self.proxy.rank & (1 << (t_index - self.limit_qubits)) else \
-                    matrix[15]
+                temp_matrix[3] = matrix[15] if self.proxy.rank & (1 << (t_index - self.limit_qubits)) else \
+                    matrix[10]
 
                 self._algorithm.Controlled_Multiply_targ(
                     c_index,
@@ -247,15 +250,16 @@ class ProxySimulator(BasicSimulator):
                     self._sync
                 )
         elif gate.type() == GATE_ID["CRz"]:
-            t_index = self._qubits - 1 - gate.targ
-            c_index = self._qubits - 1 - gate.carg
+            t_index = self.total_qubits - 1 - gate.targ
+            c_index = self.total_qubits - 1 - gate.carg
             matrix = self.get_Matrix(gate)
             if t_index >= self.limit_qubits and c_index >= self.limit_qubits:
                 if self.proxy.rank & (1 << (c_index - self.limit_qubits)):
-                    value = matrix[10] if self.proxy.rank & (1 << (t_index - self.limit_qubits)) else \
-                        matrix[15]
+                    index = 15 if self.proxy.rank & (1 << (t_index - self.limit_qubits)) else \
+                        10
                     self._algorithm.Simple_Multiply(
-                        value,
+                        index,
+                        matrix,
                         self._vector,
                         self._qubits,
                         self._sync
@@ -264,15 +268,15 @@ class ProxySimulator(BasicSimulator):
                 if self.proxy.rank & (1 << (c_index - self.limit_qubits)):
                     self._algorithm.Diagonal_Multiply_targ(
                         t_index,
-                        matrix,
+                        matrix[[10,11,14,15]],
                         self._vector,
                         self._qubits,
                         self._sync
                     )
             elif t_index >= self.limit_qubits:
                 temp_matrix = cp.array([1,0,0,0], dtype=self._precision)
-                temp_matrix[3] = matrix[10] if self.proxy.rank & (1 << (t_index - self.limit_qubits)) else \
-                    matrix[15]
+                temp_matrix[3] = matrix[15] if self.proxy.rank & (1 << (t_index - self.limit_qubits)) else \
+                    matrix[10]
 
                 self._algorithm.Controlled_Multiply_targ(
                     c_index,
@@ -292,7 +296,7 @@ class ProxySimulator(BasicSimulator):
                     self._sync
                 )
         elif gate.type() == GATE_ID["RZZ"]:
-            t_indexes = [self._qubits - 1 - targ for targ in gate.targs]
+            t_indexes = [self.total_qubits - 1 - targ for targ in gate.targs]
             matrix = self.get_Matrix(gate)
             if t_indexes[0] > t_indexes[1]:
                 t_indexes[0], t_indexes[1] = t_indexes[1], t_indexes[0]
@@ -308,7 +312,8 @@ class ProxySimulator(BasicSimulator):
                     index += 10
                 
                 self._algorithm.Simple_Multiply(
-                    matrix[index],
+                    index,
+                    matrix,
                     self._vector,
                     self._qubits,
                     self._sync
@@ -339,22 +344,23 @@ class ProxySimulator(BasicSimulator):
             gate.type() == GATE_ID["CX"] or
             gate.type() == GATE_ID["CY"]
         ):
-            t_index = self._qubits - 1 - gate.targ
-            c_index = self._qubits - 1 - gate.carg
+            t_index = self.total_qubits - 1 - gate.targ
+            c_index = self.total_qubits - 1 - gate.carg
             matrix = self.get_Matrix(gate)
             if t_index >= self.limit_qubits and c_index >= self.limit_qubits:
                 if self.proxy.rank & (1 << (c_index - self.limit_qubits)):
-                    value = matrix[11] if self.proxy.rank & (1 << (t_index - self.limit_qubits)) else \
-                        matrix[14]
+                    index = 11 if self.proxy.rank & (1 << (t_index - self.limit_qubits)) else \
+                        14
                     self.Simple_Multiply(
-                        value,
+                        index,
+                        matrix,
                         self._vector,
                         self._qubits,
                         self._sync
                     )
 
                     destination = self.proxy.rank ^ (1 << (t_index - self.limit_qubits))
-                    self._data_switcher.all_switch(destination)
+                    self._data_switcher.all_switch(self._vector, destination)
             elif t_index >= self.limit_qubits:
                 temp_matrix = cp.zeros((4,), dtype=self._precision)
                 temp_matrix[0] = 1
@@ -399,8 +405,8 @@ class ProxySimulator(BasicSimulator):
             gate.type() == GATE_ID["CH"] or 
             gate.type() == GATE_ID["CU3"]
         ):
-            t_index = self._qubits - 1 - gate.targ
-            c_index = self._qubits - 1 - gate.carg
+            t_index = self.total_qubits - 1 - gate.targ
+            c_index = self.total_qubits - 1 - gate.carg
             matrix = self.get_Matrix(gate)
             if t_index >= self.limit_qubits and c_index >= self.limit_qubits:
                 if self.proxy.rank & (1 << (c_index - self.limit_qubits)):
@@ -434,7 +440,7 @@ class ProxySimulator(BasicSimulator):
                     )
             elif t_index >= self.limit_qubits:
                 destination = self.proxy.rank ^ (1 << (t_index - self.limit_qubits))
-                switch_condition = {c_index: (self.proxy.rank & (1 << (t_index - self.limit_qubits)))}
+                switch_condition = {c_index: int(self.proxy.rank < destination)}
 
                 self._data_switcher.ctargs_switch(
                     self._vector,
@@ -442,8 +448,8 @@ class ProxySimulator(BasicSimulator):
                     switch_condition
                 )
 
-                if switch_condition[c_index] == 1:
-                    temp_matrix = matrix[[14,15,10,11]]
+                if self.proxy.rank & (1 << (t_index - self.limit_qubits)):
+                    temp_matrix = matrix[[10,11,14,15]]
                     self._algorithm.Based_InnerProduct_targ(
                         c_index,
                         temp_matrix,
@@ -467,7 +473,7 @@ class ProxySimulator(BasicSimulator):
                     self._sync
                 )
         elif gate.type() == GATE_ID["FSim"]:
-            t_indexes = [self._qubits - 1 - targ for targ in gate.targs]
+            t_indexes = [self.total_qubits - 1 - targ for targ in gate.targs]
             matrix = self.get_Matrix(gate)
             if t_indexes[0] > t_indexes[1]:
                 t_indexes[0], t_indexes[1] = t_indexes[1], t_indexes[0]
@@ -478,7 +484,8 @@ class ProxySimulator(BasicSimulator):
 
                 if _0 and _1:
                     self._algorithm.Simple_Multiply(
-                        matrix[15],
+                        15,
+                        matrix,
                         self._vector,
                         self._qubits,
                         self._sync
@@ -501,12 +508,7 @@ class ProxySimulator(BasicSimulator):
                         destination
                     )
                 else:
-                    self._algorithm.Simple_Multiply(
-                        matrix[0],
-                        self._vector,
-                        self._qubits,
-                        self._sync
-                    )
+                    pass
             elif t_indexes[1] >= self.limit_qubits:
                 destination = self.proxy.rank ^ (1 << (t_indexes[1] - self.limit_qubits))
                 self._data_switcher.ctargs_switch(
@@ -516,7 +518,7 @@ class ProxySimulator(BasicSimulator):
                 )
 
                 if self.proxy.rank & (1 << (t_indexes[1] - self.limit_qubits)):
-                    temp_matrix = matrix[[9,10,5,6]]
+                    temp_matrix = matrix[[10,9,6,5]]
                     self._algorithm.Based_InnerProduct_targ(
                         t_indexes[0],
                         temp_matrix,
@@ -548,7 +550,7 @@ class ProxySimulator(BasicSimulator):
                     self._sync
                 )
         elif gate.type() == GATE_ID["RXX"] or gate.type() == GATE_ID["RYY"]:
-            t_indexes = [self._qubits - 1 - targ for targ in gate.targs]
+            t_indexes = [self.total_qubits - 1 - targ for targ in gate.targs]
             matrix = self.get_Matrix(gate)
             if t_indexes[0] > t_indexes[1]:
                 t_indexes[0], t_indexes[1] = t_indexes[1], t_indexes[0]
@@ -583,8 +585,8 @@ class ProxySimulator(BasicSimulator):
                     {t_indexes[0]: 1}
                 )
 
-                temp_matrix = matrix[[9,10,5,6]] if self.proxy.rank & (1 << (t_indexes[1] - self.limit_qubits)) else \
-                    matrix[[0,1,14,15]]
+                temp_matrix = matrix[[10,9,6,5]] if self.proxy.rank & (1 << (t_indexes[1] - self.limit_qubits)) else \
+                    matrix[[0,3,12,15]]
                 self._algorithm.Based_InnerProduct_targ(
                     t_indexes[0],
                     temp_matrix,
@@ -607,7 +609,7 @@ class ProxySimulator(BasicSimulator):
                     self._sync
                 )
         elif gate.type() == GATE_ID["Swap"]:
-            t_indexes = [self._qubits - 1 - targ for targ in gate.targs]
+            t_indexes = [self.total_qubits - 1 - targ for targ in gate.targs]
             if t_indexes[0] > t_indexes[1]:
                 t_indexes[0], t_indexes[1] = t_indexes[1], t_indexes[0]
 
@@ -617,13 +619,10 @@ class ProxySimulator(BasicSimulator):
 
                 if _0 != _1:
                     destination = self.proxy.rank ^ ((1 << (t_indexes[0] - self.limit_qubits)) + (1 << (t_indexes[1] - self.limit_qubits)))
-                    self._data_switcher.all_switch(destination)
+                    self._data_switcher.all_switch(self._vector, destination)
             elif t_indexes[1] >= self.limit_qubits:
                 destination = self.proxy.rank ^ (1 << (t_indexes[1] - self.limit_qubits))
-                if self.proxy.rank & (1 << (t_indexes[1] - self.limit_qubits)):
-                    switch_condition = {t_indexes[0]: 0}
-                else:
-                    switch_condition = {t_indexes[0]: 1}
+                switch_condition = {t_indexes[0]: int(self.proxy.rank < destination)}
                 
                 self._data_switcher.ctargs_switch(
                     self._vector,
@@ -641,8 +640,8 @@ class ProxySimulator(BasicSimulator):
             pass
         elif gate.type() == 45:
             # TODO: GATE_ID["CCX"] = 30, not matched
-            c_indexes = [self._qubits - 1 - carg for carg in gate.cargs]
-            t_index = self._qubits - 1 - gate.targ
+            c_indexes = [self.total_qubits - 1 - carg for carg in gate.cargs]
+            t_index = self.total_qubits - 1 - gate.targ
             matrix = self.get_Matrix(gate)
             if c_indexes[0] > c_indexes[1]:
                 c_indexes[0], c_indexes[1] = c_indexes[1], c_indexes[0]
@@ -656,7 +655,7 @@ class ProxySimulator(BasicSimulator):
                     self.proxy.rank & (1 << (c_indexes[1] - self.limit_qubits))
                 ):
                     destination = self.proxy.rank ^ (1 << (t_index - self.limit_qubits))
-                    self._data_switcher.all_switch(destination)
+                    self._data_switcher.all_switch(self._vector, destination)
             elif _t and _c1:
                 if self.proxy.rank & (1 << (c_indexes[1] - self.limit_qubits)):
                     destination = self.proxy.rank ^ (1 << (t_index - self.limit_qubits))
@@ -691,8 +690,8 @@ class ProxySimulator(BasicSimulator):
             elif _t:
                 destination = self.proxy.rank ^ (1 << (t_index - self.limit_qubits))
                 switch_condition = {
-                    c_indexes[0]: 1,
-                    c_indexes[1]: 1
+                    c_indexes[1]: 1,
+                    c_indexes[0]: 1
                 }
                 self._data_switcher.ctargs_switch(
                     self._vector,
@@ -708,8 +707,8 @@ class ProxySimulator(BasicSimulator):
                     self._sync
                 )
         elif gate.type() == GATE_ID["CCRz"]:
-            c_indexes = [self._qubits - 1 - carg for carg in gate.cargs]
-            t_index = self._qubits - 1 - gate.targ
+            c_indexes = [self.total_qubits - 1 - carg for carg in gate.cargs]
+            t_index = self.total_qubits - 1 - gate.targ
             matrix = self.get_Matrix(gate)
             if c_indexes[0] > c_indexes[1]:
                 c_indexes[0], c_indexes[1] = c_indexes[1], c_indexes[0]
@@ -722,11 +721,12 @@ class ProxySimulator(BasicSimulator):
                     self.proxy.rank & (1 << (c_indexes[0] - self.limit_qubits)) and
                     self.proxy.rank & (1 << (c_indexes[1] - self.limit_qubits))
                 ):
-                    value = matrix[63] if self.proxy.rank & (1 << (t_index - self.limit_qubits)) else \
-                        matrix[54]
+                    index = 63 if self.proxy.rank & (1 << (t_index - self.limit_qubits)) else \
+                        54
 
                     self._algorithm.Simple_Multiply(
-                        value,
+                        index,
+                        matrix,
                         self._vector,
                         self._qubits,
                         self._sync
@@ -768,7 +768,7 @@ class ProxySimulator(BasicSimulator):
                     )
             elif _t:
                 temp_matrix = cp.zeros((16,), dtype=self._precision)
-                temp_matrix[15] = matrix[63] if self.proxy.rank ^ (1 << (t_index - self.limit_qubits)) else \
+                temp_matrix[15] = matrix[63] if self.proxy.rank & (1 << (t_index - self.limit_qubits)) else \
                     matrix[54]
 
                 self._algorithm.Controlled_Multiply_ctargs(
@@ -790,8 +790,8 @@ class ProxySimulator(BasicSimulator):
                     self._sync
                 )
         elif gate.type() == GATE_ID["CSwap"]:
-            t_indexes = [self._qubits - 1 - targ for targ in gate.targs]
-            c_index = self._qubits - 1 - gate.carg
+            t_indexes = [self.total_qubits - 1 - targ for targ in gate.targs]
+            c_index = self.total_qubits - 1 - gate.carg
             if t_indexes[0] > t_indexes[1]:
                 t_indexes[0], t_indexes[1] = t_indexes[1], t_indexes[0]
         
@@ -806,12 +806,12 @@ class ProxySimulator(BasicSimulator):
 
                     if _0 != _1:
                         destination = self.proxy.rank ^ ((1 << (t_indexes[1] - self.limit_qubits)) + (1 << 1 << (t_indexes[0] - self.limit_qubits)))
-                        self._data_switcher.all_switch(destination)
+                        self._data_switcher.all_switch(self._vector, destination)
             elif _c and _t1:
                 if self.proxy.rank & (1 << (c_index - self.limit_qubits)):
                     destination = self.proxy.rank ^ (1 << (t_indexes[1] - self.limit_qubits))
                     switch_condition = {
-                        t_indexes[0]: destination & (1 << (t_indexes[1] - self.limit_qubits))
+                        t_indexes[0]: int(self.proxy.rank < destination)
                     }
                     self._data_switcher.ctargs_switch(
                         self._vector,
@@ -833,9 +833,9 @@ class ProxySimulator(BasicSimulator):
                 destination = self.proxy.rank ^ (1 << (t_indexes[1] - self.limit_qubits))
                 switch_condition = {
                     c_index:1,
-                    t_indexes[0]: destination & (1 << (t_indexes[1] - self.limit_qubits))
+                    t_indexes[0]: int(self.proxy.rank < destination)
                 }
-                
+
                 self._data_switcher.ctargs_switch(
                     self._vector,
                     destination,
@@ -858,7 +858,7 @@ class ProxySimulator(BasicSimulator):
                     self._sync
                 )
         elif gate.type() == GATE_ID["Measure"]:
-            index = self._qubits - 1 - gate.targ
+            index = self.total_qubits - 1 - gate.targ
             prob_result = self._algorithm.Device_Prob_Calculator(
                 index,
                 self._vector,
@@ -879,7 +879,7 @@ class ProxySimulator(BasicSimulator):
                     if self.proxy.rank & (1 << (index - self.limit_qubits)):
                         self._vector = cp.zeros_like(self._vector)
                     else:
-                        self._algorithm.Simple_Multiply(
+                        self._algorithm.Float_Multiply(
                             alpha,
                             self._vector,
                             self._qubits,
@@ -890,7 +890,7 @@ class ProxySimulator(BasicSimulator):
                         np.float64(1 / np.sqrt(1 - prob))
 
                     if self.proxy.rank & (1 << (index - self.limit_qubits)):
-                        self._algorithm.Simple_Multiply(
+                        self._algorithm.Float_Multiply(
                             alpha,
                             self._vector,
                             self._qubits,
@@ -899,7 +899,7 @@ class ProxySimulator(BasicSimulator):
                     else:
                         self._vector = cp.zeros_like(self._vector)
             else:
-                result = self._algorithm.MeasureGate_Apply(
+                _ = self._algorithm.MeasureGate_Apply(
                     index,
                     self._vector,
                     self._qubits,
@@ -907,9 +907,9 @@ class ProxySimulator(BasicSimulator):
                     multigpu_prob=prob
                 )
 
-            self.circuit.qubits[gate.targ].measured = result
+            self.circuit.qubits[gate.targ].measured = _1
         elif gate.type() == GATE_ID["Reset"]:
-            index = self._qubits - 1 - gate.targ
+            index = self.total_qubits - 1 - gate.targ
             prob_result = self._algorithm.Device_Prob_Calculator(
                 index,
                 self._vector,
@@ -926,16 +926,16 @@ class ProxySimulator(BasicSimulator):
                 if alpha < 1e-6:
                     destination = self.proxy.rank ^ (1 << (index - self.limit_qubits))
                     if self.proxy.rank & (1 << (index - self.limit_qubits)):
-                        self._data_switcher.all_switch(destination)
+                        self._data_switcher.all_switch(self._vector, destination)
                     else:
                         self._vector = cp.zeros_like(self._vector)
-                        self._data_switcher.all_switch(destination)
+                        self._data_switcher.all_switch(self._vector, destination)
                 else:
                     if self.proxy.rank & (1 << (index - self.limit_qubits)):
                         self._vector = cp.zeros_like(self._vector)
                     else:
                         alpha = np.float64(1 / alpha)
-                        self._algorithm.Simple_Multiply(
+                        self._algorithm.Float_Multiply(
                             alpha,
                             self._vector,
                             self._qubits,

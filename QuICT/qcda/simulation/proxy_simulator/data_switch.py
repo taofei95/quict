@@ -26,14 +26,14 @@ class DataSwitcher:
 
         return recv_buf
 
-    def all_switch(self, destination):
-        self._proxy.rank = destination
+    def all_switch(self, vector, destination):
+        vector[:] = self._switch(vector, destination)
 
     def half_switch(self, vector, destination):
         _0_1 = self._id < destination
         sending_size = vector.size//2
 
-        if _0_1:
+        if not _0_1:
             sending_data = vector[:sending_size]
             recv_buf = self._switch(sending_data, destination)
             vector[:sending_size] = recv_buf
@@ -48,10 +48,13 @@ class DataSwitcher:
         """
         target_idx = self._based_idx
         for idx, _0_1 in condition.items():
+            if isinstance(target_idx, tuple):
+                target_idx = target_idx[0]
+            
             if _0_1:
-                target_idx = np.where(target_idx & (1 << idx))
+                target_idx = target_idx[np.where(target_idx & (1 << idx))]
             else:
-                target_idx = np.where(target_idx ^ (1 << idx))
+                target_idx = target_idx[np.where((target_idx & (1 << idx)) == 0)]
 
         sending_data = vector[target_idx]
         recv_buf = self._switch(sending_data, destination)

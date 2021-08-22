@@ -5,6 +5,7 @@ import random
 
 __outward_functions = [
     "Simple_Multiply",
+    "Float_Multiply",
     "Device_Prob_Calculator"
 ]
 
@@ -12,10 +13,10 @@ __outward_functions = [
 Simple_Multiply_single = cp.RawKernel(r'''
     #include <cupy/complex.cuh>
     extern "C" __global__
-    void SimpleMultiply(complex<float> value, complex<float>* vec) {
+    void SimpleMultiply(int index, complex<float>* mat, complex<float>* vec) {
         int label = blockDim.x * blockIdx.x + threadIdx.x;
 
-        vec[label] = vec[label]*value;
+        vec[label] = vec[label]*mat[index];
     }
     ''', 'SimpleMultiply')
 
@@ -23,12 +24,34 @@ Simple_Multiply_single = cp.RawKernel(r'''
 Simple_Multiply_double = cp.RawKernel(r'''
     #include <cupy/complex.cuh>
     extern "C" __global__
-    void SimpleMultiply(complex<double> value, complex<double>* vec) {
+    void SimpleMultiply(int index, complex<double>* mat, complex<double>* vec) {
         int label = blockDim.x * blockIdx.x + threadIdx.x;
 
-        vec[label] = vec[label]*value;
+        vec[label] = vec[label]*mat[index];
     }
     ''', 'SimpleMultiply')
+
+
+Float_Multiply_single = cp.RawKernel(r'''
+    #include <cupy/complex.cuh>
+    extern "C" __global__
+    void FloatMultiply(const float value, complex<float>* vec) {
+        int label = blockDim.x * blockIdx.x + threadIdx.x;
+
+        vec[label] = vec[label] * value;
+    }
+    ''', 'FloatMultiply')
+
+
+Float_Multiply_double = cp.RawKernel(r'''
+    #include <cupy/complex.cuh>
+    extern "C" __global__
+    void FloatMultiply(const double value, complex<double>* vec) {
+        int label = blockDim.x * blockIdx.x + threadIdx.x;
+
+        vec[label] = vec[label] * value;
+    }
+    ''', 'FloatMultiply')
 
 
 prop_add = cp.ElementwiseKernel(
@@ -59,7 +82,7 @@ MeasureGate_prop_kernel = cp.ReductionKernel(
     'MeasureGate_prop_kernel')
 
 
-def Simple_Multiply(value, vec, vec_bit, sync: bool = False):
+def Simple_Multiply(index, mat, vec, vec_bit, sync: bool = False):
     task_number = 1 << vec_bit
     thread_per_block = min(256, task_number)
     block_num = task_number // thread_per_block
@@ -68,13 +91,13 @@ def Simple_Multiply(value, vec, vec_bit, sync: bool = False):
         Simple_Multiply_single(
             (block_num,),
             (thread_per_block,),
-            (value, vec)
+            (index, mat, vec)
         )
     else:
         Simple_Multiply_double(
             (block_num,),
             (thread_per_block,),
-            (value, vec)
+            (index, mat, vec)
         )
 
     if sync:
@@ -96,3 +119,25 @@ def Device_Prob_Calculator(index, vec, device_qubits, rank):
     prob = MeasureGate_prop_kernel(prob, axis = 0).real
 
     return prob
+
+
+def Float_Multiply(val, vec, vec_bit, sync: bool = False):
+    task_number = 1 << vec_bit
+    thread_per_block = min(256, task_number)
+    block_num = task_number // thread_per_block
+
+    if vec.dtype == np.complex64:
+        Float_Multiply_single(
+            (block_num,),
+            (thread_per_block,),
+            (val, vec)
+        )
+    else:
+        Float_Multiply_double(
+            (block_num,),
+            (thread_per_block,),
+            (val, vec)
+        )
+
+    if sync:
+        cp.cuda.Device().synchronize()
