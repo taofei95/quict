@@ -30,10 +30,14 @@ class QubitOperator(PolynomialOperator):
         if self.operators == []:
             return
         variables = self.operators[0][0]
+        l = len(variables)
+
+        # The second parameter(kind) in fermion operator should be {1,2,3}
+        if any([var[1] not in [1,2,3] for var in variables]):
+            raise Exception("Illegal qubit operator.")
 
         # The variables in a monomial should be in ascending order.
         # Commutation relation for operators on different targets
-        l = len(variables)
         for i in range(l-1, 0, -1):
             fl = False
             for j in range(i):
