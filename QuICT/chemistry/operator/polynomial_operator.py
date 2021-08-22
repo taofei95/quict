@@ -13,7 +13,7 @@ import copy
 
 class PolynomialOperator(object):
     """    
-    A PolynomialOperator of symbolic operators.
+    A polynomial of symbolic operators.
     The superClass of FermionOperator and QubitOperator.
 
     In this class, the operator could be represented as below.
@@ -219,7 +219,8 @@ class PolynomialOperator(object):
 
     def __eq__(self, other) -> bool:
         """
-        Judge whether two opperator polynomials are the same
+        Judge whether two opperator polynomials are the same.
+        Error within 10^(-6) can be ignored
 
         Args:
             other(PolynomialOperator): Operator to be judged
@@ -229,7 +230,11 @@ class PolynomialOperator(object):
         """
         if not isinstance(other, PolynomialOperator):
             return False
-        return self.operators == other.operators
+        delta = self - other
+        for mono in delta.operators:
+            if (abs(mono[1]) > 1e-6):
+                return False
+        return True
 
     def parse(self):
         """
