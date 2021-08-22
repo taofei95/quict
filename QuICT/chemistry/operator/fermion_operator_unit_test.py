@@ -21,20 +21,20 @@ def test_construction():
     assert f_a + f_b == f_c + f_d
 
 def test_operation():
-    f_a = FermionOperator([(2,1),(8,0),(1,1),(2,0)],-0.2)
-    f_b = FermionOperator([(2,0),(8,0),(1,1),(2,1)],-0.4)
+    f_a = FermionOperator([(2,1), (8,0), (1,1), (2,0)], -0.2)
+    f_b = FermionOperator([(2,0), (8,0), (1,1), (2,1)], -0.4)
     assert f_a - f_b == f_a + (-1) * f_b
     f_c = f_a + f_b
-    f_C = FermionOperator([(1,1),(2,1),(2,0),(8,0)],-0.2)+FermionOperator([(1,1),(8,0)],0.4)
+    f_C = FermionOperator([(1,1), (2,1), (2,0), (8,0)],-0.2)+FermionOperator([(1,1), (8,0)], 0.4)
     assert f_c == f_C
 
-    f_c = FermionOperator([(2,0),(3,1),(1,0)],0.5)
+    f_c = FermionOperator([(2,0), (3,1), (1,0)], 0.5)
     assert f_a * f_c == FermionOperator(0)
-    assert f_c * f_a == FermionOperator('1^ 1 2 3^ 8',-0.1) + FermionOperator('2 3^ 8',0.1)
+    assert f_c * f_a == FermionOperator('1^ 1 2 3^ 8', -0.1) + FermionOperator('2 3^ 8', 0.1)
 
-    f_c = FermionOperator([(2,1),(8,1),(1,0)],5)
+    f_c = FermionOperator([(2,1), (8,1), (1,0)], 5)
     assert f_a * f_b == FermionOperator(0)
-    assert f_a * f_c * f_b == FermionOperator('1^ 8 2^',0.4)
+    assert f_a * f_c * f_b == FermionOperator('1^ 8 2^', 0.4)
 
 if __name__ == "__main__":
     pytest.main(["./fermion_operator_unit_test.py"])
