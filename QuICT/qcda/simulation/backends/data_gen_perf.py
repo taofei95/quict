@@ -29,10 +29,19 @@ def out_circuit_to_file(f_name: str, circuit: Circuit):
         #         print(str(val)[1:-1], file=f)
 
 
-qubit_num = 25
+qubit_num = 27
 
 circuit = Circuit(qubit_num)
 
 QFT.build_gate(qubit_num) | circuit
 
 out_circuit_to_file("qft_perf.txt", circuit)
+
+circuit.clear()
+
+for i in range(qubit_num):
+    H | circuit(i)
+
+out_circuit_to_file("h_perf.txt", circuit)
+
+

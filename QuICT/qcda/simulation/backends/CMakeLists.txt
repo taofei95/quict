@@ -3,25 +3,14 @@ project(sim_back CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 
-#include(ProcessorCount)
-#ProcessorCount(NPROC)
-#if (NOT NPROC EQUAL 0)
-#    MATH(EXPR NPROC_L "${NPROC}-4")
-#    if (${NPROC_L} LESS 1)
-#        set(NPROC_L 1)
-#    endif ()
-#    message("Set omp threads = ${NPROC_L}")
-#    add_compile_definitions(OMP_NPROC=${NPROC_L})
-#endif ()
+set(CMAKE_CXX_FLAGS_RELEASE "-O3")
 
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
-if (MSVC)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /Qpar /arch:AVX /arch:AVX2")
-else ()
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ftree-vectorize -fopenmp -mavx -mavx2 -mfma")
+
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ftree-vectorize -fopenmp -mavx -mavx2 -mfma")
 #    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ftree-vectorize -mavx -mavx2 -mfma")
-endif ()
+
 
 
 add_subdirectory(../../../../QuICT/utility/extern/googletest ./cmake-build-gtest)

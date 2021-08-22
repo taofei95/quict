@@ -51,6 +51,11 @@ namespace QuICT {
                 const std::vector<GateDescription<Precision>> &gate_desc_vec
         );
 
+        inline std::pair<Precision *, Precision *> run_without_combine(
+                uint64_t circuit_qubit_num,
+                const std::vector<GateDescription<Precision>> &gate_desc_vec
+        );
+
     private:
         inline void qubit_num_checker(uint64_t qubit_num);
 
@@ -166,6 +171,24 @@ namespace QuICT {
     }
 
     template<typename Precision>
+    inline std::pair<Precision *, Precision *>
+    HybridSimulator<Precision>::run_without_combine(
+            uint64_t circuit_qubit_num,
+            const std::vector<GateDescription<Precision>> &gate_desc_vec
+    ) {
+        qubit_num_checker(circuit_qubit_num);
+
+        auto len = 1ULL << circuit_qubit_num;
+        auto real = new Precision[len];
+        auto imag = new Precision[len];
+        std::fill(real, real + len, 0);
+        std::fill(imag, imag + len, 0);
+        real[0] = 1.0;
+        run(circuit_qubit_num, gate_desc_vec, real, imag);
+        return {real, imag};
+    }
+
+    template<typename Precision>
     inline void HybridSimulator<Precision>::run(
             uint64_t circuit_qubit_num,
             const std::vector<GateDescription<Precision>> &gate_desc_vec,
@@ -259,17 +282,17 @@ namespace QuICT {
             Precision *real,
             Precision *imag
     ) {
-        if (std::is_same_v<Precision, float>) { // float
+        if constexpr (std::is_same_v<Precision, float>) { // float
             throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__) + ": "
                                      + "Not Implemented " + __func__);
-        } else { // double
+        } else if constexpr (std::is_same_v<Precision, double>) { // double
             uint64_t task_num = 1ULL << (circuit_qubit_num - 1);
             if (gate.targ_ == circuit_qubit_num - 1) {
                 constexpr uint64_t batch_size = 4;
-#pragma omp parallel for shared(batch_size, circuit_qubit_num, gate, imag, real)
+                auto cc = gate.sqrt2_inv.real();
+#pragma omp parallel for default(shared)
                 for (uint64_t task_id = 0; task_id < task_num; task_id += batch_size) {
                     auto ind_0 = index(task_id, circuit_qubit_num, gate.targ_);
-                    auto cc = gate.sqrt2_inv.real();
 
                     __m256d ymm0 = _mm256_broadcast_sd(&cc);
                     // Load
@@ -302,10 +325,10 @@ namespace QuICT {
             } else if (gate.targ_ == circuit_qubit_num - 2) {
                 // After some permutations, this is the same with the previous one.
                 constexpr uint64_t batch_size = 4;
-#pragma omp parallel for shared(batch_size, circuit_qubit_num, gate, imag, real)
+                auto cc = gate.sqrt2_inv.real();
+#pragma omp parallel for default(shared)
                 for (uint64_t task_id = 0; task_id < task_num; task_id += batch_size) {
                     auto ind_0 = index(task_id, circuit_qubit_num, gate.targ_);
-                    auto cc = gate.sqrt2_inv.real();
 
                     __m256d ymm0 = _mm256_broadcast_sd(&cc);
                     // Load
@@ -347,12 +370,12 @@ namespace QuICT {
                 }
             } else {
                 constexpr uint64_t batch_size = 4;
-#pragma omp parallel for shared(batch_size, circuit_qubit_num, gate, imag, real)
+                auto cc = gate.sqrt2_inv.real();
+#pragma omp parallel for default(shared)
                 for (uint64_t task_id = 0; task_id < task_num; task_id += batch_size) {
                     auto ind_0 = index(task_id, circuit_qubit_num, gate.targ_);
 
                     // ind_0[i], ind_1[i], ind_2[i], ind_3[i] are continuous in mem
-                    auto cc = gate.sqrt2_inv.real();
                     __m256d ymm0 = _mm256_broadcast_sd(&cc);           // constant array
                     __m256d ymm1 = _mm256_loadu_pd(&real[ind_0[0]]);   // real_row_0
                     __m256d ymm2 = _mm256_loadu_pd(&real[ind_0[1]]);   // real_row_1
@@ -422,22 +445,29 @@ namespace QuICT {
             // Two qubit distribution is much more sophisticated than
             // single qubit's case. So we enumerate index distance instead
             // of targets positions.
-            constexpr uint64_t batch_size = 2;
-            uint64_t task_num = 1ULL << (circuit_qubit_num - 2);
+
             uarray_t<2> qubits = {gate.carg_, gate.targ_};
             uarray_t<2> qubits_sorted = {gate.carg_, gate.targ_};
             if (gate.carg_ > gate.targ_) {
                 qubits_sorted[0] = gate.targ_;
                 qubits_sorted[1] = gate.carg_;
             }
-#pragma omp parallel for shared(batch_size, circuit_qubit_num, gate, imag, real, qubits, qubits_sorted)
+
+            constexpr uint64_t batch_size = 2;
+            uint64_t task_num = 1ULL << (circuit_qubit_num - 2);
+            Precision gate_diagonal_real_2323[4], gate_diagonal_imag_2323[4];
+            gate_diagonal_real_2323[0] = gate_diagonal_real_2323[2] = gate.diagonal_real_[0];
+            gate_diagonal_real_2323[1] = gate_diagonal_real_2323[3] = gate.diagonal_real_[1];
+            gate_diagonal_imag_2323[0] = gate_diagonal_imag_2323[2] = gate.diagonal_imag_[0];
+            gate_diagonal_imag_2323[1] = gate_diagonal_imag_2323[3] = gate.diagonal_imag_[1];
+#pragma omp parallel for default(shared)
             for (uint64_t task_id = 0; task_id < task_num; task_id += batch_size) {
                 auto ind_0 = index(task_id, circuit_qubit_num, qubits, qubits_sorted);
                 auto ind_1 = index(task_id + 1, circuit_qubit_num, qubits, qubits_sorted);
                 Precision res_r[4], res_i[4];
                 if (ind_0[2] + 1 == ind_1[2] && ind_0[3] + 1 == ind_1[3]) {
-                    __m256d ymm0 = _mm256_loadu2_m128d(gate.diagonal_real_, gate.diagonal_real_);
-                    __m256d ymm1 = _mm256_loadu2_m128d(gate.diagonal_imag_, gate.diagonal_imag_);
+                    __m256d ymm0 = _mm256_loadu_pd(gate_diagonal_real_2323);
+                    __m256d ymm1 = _mm256_loadu_pd(gate_diagonal_imag_2323);
                     ymm0 = _mm256_permute4x64_pd(ymm0, 0b1101'1000);                    // dr
                     ymm1 = _mm256_permute4x64_pd(ymm1, 0b1101'1000);                    // di
                     __m256d ymm2 = _mm256_loadu2_m128d(&real[ind_0[3]], &real[ind_0[2]]);  // vr
@@ -452,8 +482,8 @@ namespace QuICT {
                     _mm256_storeu2_m128d(&real[ind_0[3]], &real[ind_0[2]], ymm4);
                     _mm256_storeu2_m128d(&imag[ind_0[3]], &imag[ind_0[2]], ymm5);
                 } else if (ind_0[2] + 1 == ind_0[3] && ind_1[2] + 1 == ind_1[3]) {
-                    __m256d ymm0 = _mm256_loadu2_m128d(gate.diagonal_real_, gate.diagonal_real_);  // dr
-                    __m256d ymm1 = _mm256_loadu2_m128d(gate.diagonal_imag_, gate.diagonal_imag_);  // di
+                    __m256d ymm0 = _mm256_loadu_pd(gate_diagonal_real_2323);                        // dr
+                    __m256d ymm1 = _mm256_loadu_pd(gate_diagonal_imag_2323);                        // di
                     __m256d ymm2 = _mm256_loadu2_m128d(&real[ind_1[2]], &real[ind_0[2]]);          // vr
                     __m256d ymm3 = _mm256_loadu2_m128d(&imag[ind_1[2]], &imag[ind_0[2]]);          // vi
                     // v * d == (vr * dr - vi * di) + (vi * dr + vr * di)I
@@ -466,8 +496,10 @@ namespace QuICT {
                     _mm256_storeu2_m128d(&real[ind_1[2]], &real[ind_0[2]], ymm4);
                     _mm256_storeu2_m128d(&imag[ind_1[2]], &imag[ind_0[2]], ymm5);
                 } else { // Default fallback
-                    __m256d ymm0 = _mm256_loadu2_m128d(gate.diagonal_real_, gate.diagonal_real_);                  // dr
-                    __m256d ymm1 = _mm256_loadu2_m128d(gate.diagonal_imag_, gate.diagonal_imag_);                  // di
+                    __m256d ymm0 = _mm256_loadu_pd(
+                            gate_diagonal_real_2323);                                        // dr
+                    __m256d ymm1 = _mm256_loadu_pd(
+                            gate_diagonal_imag_2323);                                        // di
                     __m256d ymm2 = _mm256_setr_pd(real[ind_0[2]], real[ind_0[3]], real[ind_1[2]], real[ind_1[3]]); // vr
                     __m256d ymm3 = _mm256_setr_pd(imag[ind_0[2]], imag[ind_0[3]], imag[ind_1[2]], imag[ind_1[3]]); // vi
                     // v * d == (vr * dr - vi * di) + (vi * dr + vr * di)I
@@ -490,6 +522,85 @@ namespace QuICT {
                     imag[ind_1[3]] = res_i[3];
                 }
             }
+
+
+/*
+            uint64_t task_num = 1ULL << (circuit_qubit_num - 2);
+            if (qubits_sorted[1] == circuit_qubit_num - 1) {
+                if (qubits_sorted[0] == circuit_qubit_num - 2) {
+                    Precision c_arr_real[4];
+                    Precision c_arr_imag[4];
+                    constexpr uint64_t batch_size = 4;
+                    __m256d ymm0;
+                    __m256d ymm1;
+                    if (qubits_sorted[0] == qubits[0]) {  // ...q0q1
+                        c_arr_real[0] = c_arr_real[1] = c_arr_imag[0] = c_arr_imag[1] = 1;
+                        c_arr_real[2] = gate.diagonal_real_[0];
+                        c_arr_real[3] = gate.diagonal_real_[1];
+                        c_arr_imag[2] = gate.diagonal_imag_[0];
+                        c_arr_imag[3] = gate.diagonal_imag_[1];
+                    } else { // ...q1q0
+                        c_arr_real[0] = c_arr_real[2] = c_arr_imag[0] = c_arr_imag[2] = 1;
+                        c_arr_real[1] = gate.diagonal_real_[0];
+                        c_arr_real[3] = gate.diagonal_real_[1];
+                        c_arr_imag[1] = gate.diagonal_imag_[0];
+                        c_arr_imag[3] = gate.diagonal_imag_[1];
+                    }
+
+                    ymm0 = _mm256_loadu_pd(c_arr_real);  // dr
+                    ymm1 = _mm256_loadu_pd(c_arr_imag);  // di
+
+                    for (uint64_t task_id = 0; task_id < task_num; task_id += batch_size) {
+                        // Unroll a loop to get small improvement :)
+#pragma unroll
+                        for (uint64_t i = 0; i < 4; ++i) {
+                            uint64_t tid = task_id + i;
+                            uint64_t ind = index0(tid, circuit_qubit_num, qubits, qubits_sorted);
+                            __m256d ymm2 = _mm256_loadu_pd(&real[ind]);  // vr
+                            __m256d ymm3 = _mm256_loadu_pd(&imag[ind]);  // vi
+                            __m256d ymm4;  // res_r
+                            __m256d ymm5;  // res_i
+                            COMPLEX_YMM_MUL(ymm0, ymm1, ymm2, ymm3, ymm4, ymm5);
+                            _mm256_storeu_pd(&real[ind], ymm4);
+                            _mm256_storeu_pd(&imag[ind], ymm5);
+                        }
+                    }
+                } else if (qubits_sorted[0] < circuit_qubit_num - 2) {
+                    if (qubits_sorted[0] == qubits[0]) { // ...q0.q1
+                        constexpr uint64_t batch_size = 2;
+                        Precision c_arr_real[4] =
+                                {gate.diagonal_real_[0], gate.diagonal_real_[1],
+                                 gate.diagonal_real_[0], gate.diagonal_real_[1]};
+                        Precision c_arr_imag[4] =
+                                {gate.diagonal_imag_[0], gate.diagonal_imag_[1],
+                                 gate.diagonal_imag_[0], gate.diagonal_imag_[1]};
+                        __m256d ymm0 = _mm256_loadu_pd(c_arr_real);
+                        __m256d ymm1 = _mm256_loadu_pd(c_arr_imag);
+                        for (uint64_t task_id = 0; task_id < task_num; task_id += batch_size) {
+                            auto inds = index(task_id, circuit_qubit_num, qubits, qubits_sorted);
+                            __m256d ymm2 = _mm256_loadu_pd(&real[inds[2]]);  // vr
+                            __m256d ymm3 = _mm256_loadu_pd(&imag[inds[2]]);  // vi
+                            __m256d ymm4;  // res_r
+                            __m256d ymm5;  // res_i
+                            COMPLEX_YMM_MUL(ymm0, ymm1, ymm2, ymm3, ymm4, ymm5);
+                            _mm256_storeu_pd(&real[inds[2]], ymm4);
+                            _mm256_storeu_pd(&imag[inds[2]], ymm5);
+                        }
+                    } else { // ...q1.q0
+
+                    }
+                }
+            } else if (qubits_sorted[1] == circuit_qubit_num - 2) {
+                if (qubits_sorted[0] == circuit_qubit_num - 3) { // ...qq.
+
+                } else if (qubits_sorted[0] < circuit_qubit_num - 3) { // ...q.q.
+
+                }
+            } else if (qubits_sorted[1] < circuit_qubit_num - 2) { // ...q...q..
+                // Easiest branch :)
+            }
+            */
+
         }
     }
 

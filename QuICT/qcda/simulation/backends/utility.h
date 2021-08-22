@@ -11,16 +11,20 @@
 #include <type_traits>
 #include <chrono>
 
-#ifndef OMP_NPROC
-#define OMP_NPROC 4
-#endif
+// v1 * v2 == (v1r * v2r - v1i * v2i) + (v1i * v2r + v1r * v2i)*J
+#define COMPLEX_YMM_MUL(v1r, v1i, v2r, v2i, res_r, res_i)  \
+     res_r = _mm256_mul_pd(v1r,v2r);                                       \
+     res_r = _mm256_fnmadd_pd(v1i,v2i,res_r);                            \
+     res_i = _mm256_mul_pd(v1i,v2r);                                       \
+     res_i = _mm256_fmadd_pd(v1r,v2i,res_i);
+
 
 namespace QuICT {
     //* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
     // Time Measurement
     //* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
     template<typename Callable, typename ...Arg, typename TimeUnit=std::chrono::microseconds>
-    uint64_t time_elapse(Callable callable, Arg ... args) {
+    uint64_t time_elapse(Callable callable, Arg&& ... args) {
         using namespace std;
         auto start_time = chrono::steady_clock::now();
         callable(args...);
@@ -92,6 +96,41 @@ namespace QuICT {
     // Helper functions to create indices array
     //* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
+
+    template<
+            uint64_t N,
+            typename std::enable_if<(N > 1), int>::type dummy = 0
+    >
+    inline uint64_t index0(
+            const uint64_t task_id,
+            const uint64_t qubit_num,
+            const uarray_t<N> &qubits,
+            const uarray_t<N> &qubits_sorted
+    ) {
+        uint64_t ret = task_id;
+        for (int64_t i = N - 1; i >= 0; --i) {
+            uint64_t pos = qubit_num - 1 - qubits_sorted[i];
+            uint64_t tail = ret & ((1ULL << pos) - 1);
+            ret = ret >> pos << (pos + 1) | tail;
+        }
+        return ret;
+    }
+
+    template<
+            uint64_t N,
+            typename std::enable_if<(N == 1), int>::type dummy = 0
+    >
+    inline uint64_t index0(
+            const uint64_t task_id,
+            const uint64_t qubit_num,
+            const uint64_t targ
+    ) {
+        uint64_t pos = qubit_num - 1 - targ;
+        uint64_t tail = task_id & ((1ULL << pos) - 1);
+        uint64_t ret = task_id >> pos << (pos + 1) | tail;
+        return ret;
+    }
+
     template<
             uint64_t N,
             typename std::enable_if<(N > 1), int>::type dummy = 0
@@ -103,13 +142,7 @@ namespace QuICT {
             const uarray_t<N> &qubits_sorted
     ) {
         auto ret = uarray_t<1ULL << N>();
-        ret[0] = task_id;
-
-        for (int64_t i = N - 1; i >= 0; --i) {
-            uint64_t pos = qubit_num - 1 - qubits_sorted[i];
-            uint64_t tail = ret[0] & ((1ULL << pos) - 1);
-            ret[0] = ret[0] >> pos << (pos + 1) | tail;
-        }
+        ret[0] = index0(task_id, qubit_num, qubits, qubits_sorted);
 
         for (int64_t i = 0; i < N; ++i) {
             const auto half_cnt = 1ULL << i;
