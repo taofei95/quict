@@ -41,7 +41,7 @@ class FermionOperator(PolynomialOperator):
         l = len(variables)
 
         # The variables in a monomial should be in ascending order.
-        # Anti-commutation relation for operators on different targets
+        # Anti-commutation relation for operators on different targets.
         for i in range(l-1, 0, -1):
             fl = False
             for j in range(i):
@@ -52,12 +52,12 @@ class FermionOperator(PolynomialOperator):
             if not fl:
                 break
 
-        # Adjacent identical operators lead to zero operator
+        # Adjacent identical operators lead to zero operator.
         if any([variables[i] == variables[i+1] for i in range(l - 1)]):
             self.operators = []
             return
 
-        # Anti-commutation relation for operators on identical targets
+        # Anti-commutation relation for operators on identical targets.
         operators = []
         for i in range(l):
             if i == 0 or variables[i][0] != variables[i-1][0]:
