@@ -40,7 +40,7 @@ class QubitOperator(PolynomialOperator):
 
         # The second parameter(kind) in fermion operator should be {1,2,3}.
         if any([var[1] not in [1, 2, 3] for var in variables]):
-            raise Exception("Illegal qubit operator.")
+            raise ValueError
 
         # The variables in a monomial should be in ascending order.
         # Commutation relation for operators on different targets.

@@ -13,15 +13,16 @@ def test_construction():
     f_b = QubitOperator("Z1 Y4 Z13 X2", 1.2j)
     assert f_a == f_A and f_a + f_b == QubitOperator(0)
 
+    f_a = QubitOperator("X1 X1 Y1 Z1 Y1 Z1 X1 Y1")
+    assert f_a == -1j * QubitOperator("Z1")
+
+def test_invalidInput():
     try:
-        f_e = QubitOperator([(1,0)])
-    except Exception:
+        QubitOperator([(1,0)])
+    except ValueError:
         pass
     else:
         assert 0
-
-    f_a = QubitOperator("X1 X1 Y1 Z1 Y1 Z1 X1 Y1")
-    assert f_a == -1j * QubitOperator("Z1")
 
 def test_operation():
     f_a = QubitOperator([(2,1), (8,3), (1,1), (2,2)], 0.5)
