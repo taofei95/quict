@@ -12,7 +12,7 @@ which is a useful representation for states and Hamiltonians by second quantizat
 from QuICT.chemistry.operator.polynomial_operator import PolynomialOperator
 
 class FermionOperator(PolynomialOperator):
-    """    
+    """
     A fermion operator is a polynomial of anti-commutative creation-annihilation operators, 
     which is a useful representation for states and Hamiltonians by second quantization. 
 
@@ -38,10 +38,10 @@ class FermionOperator(PolynomialOperator):
         if self.operators == []:
             return
         variables = self.operators[0][0]
+        l = len(variables)
 
         # The variables in a monomial should be in ascending order.
         # Anti-commutation relation for operators on different targets
-        l = len(variables)
         for i in range(l-1, 0, -1):
             fl = False
             for j in range(i):

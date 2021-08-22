@@ -242,7 +242,7 @@ class PolynomialOperator(object):
         Parse the list format to string format.
         """
         if self.operators == []:
-            return '0'
+            return '= 0 '
         ans = ''
         for mono in self.operators:
             ans += '+ (' + str(mono[1]) + ') '
@@ -250,4 +250,5 @@ class PolynomialOperator(object):
                 ans += '* '
                 for var in mono[0]:
                     ans += self.parse_single(var)
+        ans = '=' + ans[1:]
         return ans
