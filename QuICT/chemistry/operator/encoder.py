@@ -9,24 +9,30 @@ Encoders transform ladder operators to CompositeGate on zero state of qubits.
 """
 
 from QuICT.chemistry.operator.qubit_operator import QubitOperator
-import numpy as np
 
 class Encoder:
     """
     Superclass of encoding methods.
+
+    Attributes:
+        n_fermions_default(integer): the default number of fermions
     """
+    n_fermions_default = 10
+
     @classmethod
-    def encoder(cls, fermion_operator, n_fermions):
+    def encoder(cls, fermion_operator, n_fermions = -1):
         """
         Encoders transform ladder operators to Qubit Operators.
 
         Args:
-            fermion_operator(FermionOperator): FermionOperator to be transformed.
-            n_fermions(integer): the number of all the fermions.
+            fermion_operator(FermionOperator): FermionOperator to be transformed
+            n_fermions(integer): the number of all the fermions
 
         Returns:
-            QubitOperator: The corresponding operators on qubits.
+            QubitOperator: The corresponding operators on qubits
         """
+        if n_fermions == -1:
+            n_fermions = Encoder.n_fermions_default
         ans = QubitOperator(0)
         for mono_f in fermion_operator.operators:
             mono_q = QubitOperator([],mono_f[1])
@@ -41,11 +47,12 @@ class Encoder:
         Encode a single ladder operator (To be overrided).
 
         Args:
-            latter_operator(tuple): a single ladder operator to be transformed.
-            n_fermions(integer): the number of all the fermions.
+            target(integer): the target fermion of the single ladder operator (>=0)
+            kind(integer): whether the operator is annihilation(1) or creation(0)
+            n_fermions(integer): the number of all the fermions
 
         Returns:
-            QubitOperator: The corresponding operators on qubits.
+            QubitOperator: The corresponding operators on qubits
         """
         raise Exception("The encoder is not realized.")
     
@@ -55,7 +62,7 @@ def trans_01(target):
     The next three functions are similar.
 
     Args:
-        target(integer): id of the target qubit.
+        target(integer): index of the target qubit (>=0)
     
     Returns:
         QubitOperator: '0.5X+0.5iY' on the target qubit
@@ -75,11 +82,11 @@ def trans_11(target):
 
 class JordanWigner(Encoder):
     """
-    Implement the Jordan-Wigner encoding method
+    Implement the Jordan-Wigner encoding method.
     """         
     @classmethod
     def encoder_single(cls, target, kind, n_fermions):
-        Zlist = [(i, 3) for i in range(target)]
+        Zlist = [(i,3) for i in range(target)]
         ans = QubitOperator(Zlist)
         if kind == 0:               #annihilation
             ans *= trans_01(target)
@@ -89,11 +96,11 @@ class JordanWigner(Encoder):
 
 class Parity(Encoder):
     """
-    Implement the parity encoding method
+    Implement the parity encoding method.
     """
     @classmethod
     def encoder_single(cls, target, kind, n_fermions):
-        Xlist = [(i, 1) for i in range(target+1, n_fermions)]
+        Xlist = [(i,1) for i in range(target+1, n_fermions)]
         ans = QubitOperator(Xlist)
         if kind == 0:               #annihilation
             if target == 0:
@@ -109,11 +116,11 @@ class Parity(Encoder):
 
 def flip(x, n_fermions):
     """
-    Construct a list of indexes involved in flipping n_x
+    Construct a list of indexes involved in flipping n_x.
 
     Args:
-        x(integer): id of the target qubit.
-        n_fermions(integer): the number of all the fermions.
+        x(integer): index of the target qubit (x>=0)
+        n_fermions(integer): the number of all the fermions
     
     Returns:
         list: the indexes involved in flipping n_x
@@ -127,13 +134,14 @@ def flip(x, n_fermions):
 
 def sumup(x):
     """
-    Construct a list of indexes involved in summation n_1,...,n_x
+    Construct a list of indexes involved in summation n_0, ..., n_x
 
     Args:
-        x(integer): id of the target qubit.
+        x(integer): index of the target qubit. (x>=0)
+            Specially, if x is -1, return []
     
     Returns:
-        list: the indexes involved in summation n_1,...,n_x
+        list: the indexes involved in summation n_0, ..., n_x
     """
     index = []
     x += 1
