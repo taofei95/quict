@@ -10,7 +10,7 @@ import numpy as np
 import random
 
 
-__outward_functions = ["MeasureGate_Apply", "ResetGate_Apply"]
+__outward_functions = ["MeasureGate_Apply", "ResetGate_Apply", "PermGate_Apply"]
 
 
 prop_add = cp.ElementwiseKernel(
@@ -138,6 +138,54 @@ ResetGate1_double_kernel = cp.RawKernel(r'''
     ''', 'ResetGate1Double')
 
 
+PermGate_single_kernel = cp.RawKernel(r'''
+    #include <cupy/complex.cuh>
+    extern "C" __global__
+    void PermGate(const int idx_len, int vec_bit, int* indexes, complex<float>* vec) {
+        int label = blockDim.x * blockIdx.x + threadIdx.x;
+
+        complex<float> temp[1 << 5];
+        int swap_idx=0, vec_idx=0;
+        for(int i = 0; i < idx_len; i++){
+            swap_idx = indexes[i];
+            if (swap_idx != i){
+                vec_idx = (i << vec_bit) + label;
+                temp[i] = vec[vec_idx];
+                if (swap_idx < i){
+                    vec[vec_idx] = temp[swap_idx];
+                }else{
+                    vec[vec_idx] = vec[(swap_idx << vec_bit) + label];
+                }
+            }
+        }
+    }
+    ''', 'PermGate')
+
+
+PermGate_double_kernel = cp.RawKernel(r'''
+    #include <cupy/complex.cuh>
+    extern "C" __global__
+    void PermGate(const int idx_len, int vec_bit, int* indexes, complex<double>* vec) {
+        int label = blockDim.x * blockIdx.x + threadIdx.x;
+
+        complex<double> temp[1 << 5];
+        int swap_idx=0, vec_idx=0;
+        for(int i = 0; i < idx_len; i++){
+            swap_idx = indexes[i];
+            if (swap_idx != i){
+                vec_idx = (i << vec_bit) + label;
+                temp[i] = vec[vec_idx];
+                if (swap_idx < i){
+                    vec[vec_idx] = temp[swap_idx];
+                }else{
+                    vec[vec_idx] = vec[(swap_idx << vec_bit) + label];
+                }
+            }
+        }
+    }
+    ''', 'PermGate')
+
+
 def MeasureGate_Apply(index, vec, vec_bit, sync: bool = False, multigpu_prob = None):
     """
     Measure Gate Measure.
@@ -235,5 +283,32 @@ def ResetGate_Apply(index, vec, vec_bit, sync: bool = False, multigpu_prob = Non
                 (thread_per_block,),
                 (index, alpha, vec)
             )
+
+    if sync:
+        cp.cuda.Device().synchronize()
+
+
+def PermGate_Apply(indexes, vec, vec_bit, sync: bool = False):
+    len_indexes = len(indexes)
+    targets = np.int32(np.log2(len(indexes)))
+    indexes = cp.array(indexes, dtype=np.int32)
+
+    task_number = 1 << (vec_bit - targets)
+    thread_per_block = min(256, task_number)
+    block_num = task_number // thread_per_block
+
+    if vec.dtype == np.complex64:
+        PermGate_single_kernel(
+            (block_num, ),
+            (thread_per_block,),
+            (len_indexes, vec_bit - targets, indexes, vec)
+        )
+    else:
+        PermGate_double_kernel(
+            (block_num,),
+            (thread_per_block,),
+            (len_indexes, vec_bit - targets, indexes, vec)
+        )
+
     if sync:
         cp.cuda.Device().synchronize()

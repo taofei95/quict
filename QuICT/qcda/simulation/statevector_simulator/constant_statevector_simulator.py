@@ -285,36 +285,15 @@ class ConstantStateVectorSimulator(BasicSimulator):
             gate.type() == GATE_ID["ControlPermMul"] or
             gate.type() == GATE_ID["PermFx"]
         ):
-            # TODO: PermShift issue
-            matrix = self.get_Matrix(gate)
-            len_mat = np.int64(np.sqrt(matrix.size))
-            matrix = matrix.reshape(len_mat, len_mat)
-
-            self._vector = self._algorithm.dot(
-                matrix,
-                self._vector,
-                gpu_out=False,
-                sync=self._sync
-            )
-        elif gate.type() == GATE_ID["Unitary"]:
-            # TODO: Use np.dot, matrix*vec = 2^n * 2^n x 2^n * 1.
-            matrix = self.get_Matrix(gate).reshape(1 << self._qubits, -1)
-            self._algorithm.MatrixPermutation(
-                matrix,
-                np.array(gate.targs),
-                changeInput=True,
-                gpu_out=False,
-                sync=self._sync
-            )
-            self._vector = self._algorithm.dot(
-                matrix,
-                self._vector,
-                gpu_out=False,
-                sync=self._sync
-            )
-        elif gate.type() == GATE_ID["ShorInitial"]:
-            # TODO: Not applied yet.
-            pass
+            if gate.targets >= 5:
+                pass
+            else:
+                self._algorithm.PermGate_Apply(
+                    gate.pargs,
+                    self._vector,
+                    self._qubits,
+                    self._sync
+                )
         else:
             aux = cp.zeros_like(self._vector)
             matrix = self.get_Matrix(gate)

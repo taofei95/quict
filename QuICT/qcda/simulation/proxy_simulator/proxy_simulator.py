@@ -11,7 +11,7 @@ import os
 
 from QuICT.core import *
 from QuICT.qcda.simulation import BasicSimulator
-from QuICT.ops.utils import Proxy, LinAlgLoader
+from QuICT.ops.utils import Proxy, LinAlgLoader, perm_sort
 from QuICT.qcda.simulation.proxy_simulator.data_switch import DataSwitcher
 
 
@@ -961,17 +961,17 @@ class ProxySimulator(BasicSimulator):
             gate.type() == GATE_ID["ControlPermMul"] or
             gate.type() == GATE_ID["PermFx"]
         ):
-            # TODO: PermShift issue
-            matrix = self.get_Matrix(gate)
-            len_mat = np.int64(np.sqrt(matrix.size))
-            matrix = matrix.reshape(len_mat, len_mat)
-
-            self._vector = self._algorithm.dot(
-                matrix,
-                self._vector,
-                gpu_out=False,
-                sync=self._sync
-            )
+            if gate.targets >= 5:
+                pass
+            else:
+                indexes = gate.pargs
+                swaped_pargs = self.perm_operation(indexes)
+                self._algorithm.PermGate_Apply(
+                    swaped_pargs,
+                    self._vector,
+                    self._qubits,
+                    self._sync
+                )
         elif gate.type() == GATE_ID["Unitary"]:
             # TODO: Use np.dot, matrix*vec = 2^n * 2^n x 2^n * 1.
             pass
@@ -981,3 +981,41 @@ class ProxySimulator(BasicSimulator):
         else:
             raise KeyError("Unsupported Gate in multi-GPU version.")
  
+    def perm_operation(self, indexes):
+        dev_num = self.proxy.ndevs
+        current_dev = self.proxy.rank
+        iter = len(indexes) // dev_num
+
+        ops, perm_indexes = perm_sort(indexes, dev_num)
+        for op in ops:
+            operation, sender, destination = op
+            if operation == "ALL":
+                if sender == current_dev:
+                    self._data_switcher.all_switch(
+                        self._vector,
+                        destination
+                    )
+            elif operation == "IDX":
+                if sender // iter == current_dev:
+                    ctargs = {}
+                    device_idx = sender % iter
+
+                    temp_iter, len_iter = iter, int(np.log2(iter))
+                    for c in range(len_iter):
+                        temp_iter //= 2
+                        if device_idx >= temp_iter:
+                            ctargs[len_iter - 1 - c] = 1
+                            device_idx -= temp_iter
+                        else:
+                            ctargs[len_iter - 1 - c] = 0
+                    
+                    self._data_switcher.ctargs_switch(
+                        self._vector,
+                        destination,
+                        ctargs
+                    )
+                        
+        swaped_indexes = perm_indexes[current_dev*iter:current_dev*iter + iter]
+        swaped_pargs = np.argsort(swaped_indexes)
+
+        return swaped_pargs
