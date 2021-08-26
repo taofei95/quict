@@ -40,7 +40,7 @@ def perm_sort(indexes: np.ndarray, blocks: int):
     for i in range(n):
         block_interval = i // iter
         if indexes[i] // iter != block_interval:
-            for j in range(indexes[i] // iter + iter, n):
+            for j in range(indexes[i] // iter, indexes[i] // iter + iter):
                 if indexes[j] // iter == block_interval:
                     break
 
