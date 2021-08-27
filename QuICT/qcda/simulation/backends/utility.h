@@ -166,6 +166,8 @@ namespace QuICT {
         ret[1] = ret[0] | (1ULL << (qubit_num - 1 - qubits[N - 1]));
         ret[2] = ret[0] | (1ULL << (qubit_num - 1 - qubits[N - 2]));
         ret[3] = ret[1] | (1ULL << (qubit_num - 1 - qubits[N - 2]));
+
+        return ret;
     }
 
     template<
