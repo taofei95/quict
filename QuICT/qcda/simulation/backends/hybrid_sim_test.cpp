@@ -53,7 +53,15 @@ void test_by_data_file(
                     std::vector<uint64_t>{targ},
                     0,
                     nullptr
-            );
+                    );
+        } else if(gate_name == "x") {
+            fs >> targ;
+            gate_desc_vec.emplace_back(
+                    "x",
+                    std::vector<uint64_t>{targ},
+                    0,
+                    nullptr
+                    );
         } else if (gate_name == "crz") {
             fs >> carg >> targ >> parg;
             gate_desc_vec.emplace_back(
@@ -97,7 +105,7 @@ void test_by_data_file(
 auto simulator = QuICT::HybridSimulator<double>();
 
 TEST(HybridTest, HTest) {
-    test_by_data_file("h.txt", simulator);
+    test_by_data_file("crz.txt", simulator);
 }
 
 TEST(HybridTest, CrzTest) {
@@ -106,4 +114,8 @@ TEST(HybridTest, CrzTest) {
 
 TEST(HybridTest, QftTest) {
     test_by_data_file("qft.txt", simulator);
+}
+
+TEST(HybridTest, XTest) {
+    test_by_data_file("x.txt", simulator);
 }
