@@ -1008,13 +1008,31 @@ class ProxySimulator(BasicSimulator):
                             device_idx -= temp_iter
                         else:
                             ctargs[len_iter - 1 - c] = 0
-                    
+
                     self._data_switcher.ctargs_switch(
                         self._vector,
-                        destination,
+                        destination // iter,
                         ctargs
                     )
-                        
+                if destination // iter == current_dev:
+                    ctargs = {}
+                    device_idx = destination % iter
+
+                    temp_iter, len_iter = iter, int(np.log2(iter))
+                    for c in range(len_iter):
+                        temp_iter //= 2
+                        if device_idx >= temp_iter:
+                            ctargs[len_iter - 1 - c] = 1
+                            device_idx -= temp_iter
+                        else:
+                            ctargs[len_iter - 1 - c] = 0
+
+                    self._data_switcher.ctargs_switch(
+                        self._vector,
+                        sender // iter,
+                        ctargs
+                    )
+
         swaped_indexes = perm_indexes[current_dev*iter:current_dev*iter + iter]
         swaped_pargs = np.argsort(swaped_indexes)
 
