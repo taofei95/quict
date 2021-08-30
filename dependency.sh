@@ -1,10 +1,10 @@
-NAME=$(cat /etc/*release | grep ^NAME= | sed s/NAME=// | sed s/\"//g)
+NAME=$(cat /etc/*release | grep ^NAME= | sed s/NAME=// | sed s'/GNU\/Linux//' | tr -d " \t\r " | sed s/\"//g)
 
 case $NAME in
 
-    "Ubuntu")
-    echo "Ubuntu"
-    apt install build-essential python3-setuptools python3-numpy python3-scipy libtbb2 libtbb-dev
+    "Ubuntu"|"Debian")
+    echo "Ubuntu|Debian"
+    apt install build-essential python3-setuptools python3-numpy python3-scipy libtbb2 libtbb-dev -y
     ;;
 
     "Fedora")
@@ -13,6 +13,7 @@ case $NAME in
     ;;
 
     *)
-    echo "Unknown Platform"
+    echo "Unknown Platform:"
+    echo $NAME
 
 esac
