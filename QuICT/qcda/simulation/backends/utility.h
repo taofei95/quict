@@ -10,6 +10,8 @@
 #include <complex>
 #include <type_traits>
 #include <chrono>
+#include <cassert>
+#include <immintrin.h>
 
 // v1 * v2 == (v1r * v2r - v1i * v2i) + (v1i * v2r + v1r * v2i)*J
 #define COMPLEX_YMM_MUL(v1r, v1i, v2r, v2i, res_r, res_i)  \
@@ -18,6 +20,9 @@
      res_i = _mm256_mul_pd(v1i,v2r);                                       \
      res_i = _mm256_fmadd_pd(v1r,v2i,res_i);
 
+
+#define LLC_OPTIM
+// #define LLC_OPTIM_2
 
 namespace QuICT {
     //* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
@@ -133,7 +138,7 @@ namespace QuICT {
 
     template<
             uint64_t N,
-            typename std::enable_if<(N > 1), int>::type dummy = 0
+            typename std::enable_if<(N > 2), int>::type dummy = 0
     >
     inline uarray_t<1ULL << N> index(
             const uint64_t task_id,
@@ -144,17 +149,58 @@ namespace QuICT {
         auto ret = uarray_t<1ULL << N>();
         ret[0] = index0(task_id, qubit_num, qubits, qubits_sorted);
 
-        for (int64_t i = 0; i < N; ++i) {
+        ret[1] = ret[0] | (1ULL << (qubit_num - 1 - qubits[N - 1]));
+        ret[2] = ret[0] | (1ULL << (qubit_num - 1 - qubits[N - 2]));
+        ret[3] = ret[1] | (1ULL << (qubit_num - 1 - qubits[N - 2]));
+
+        for(int64_t i = 2; i < N; ++i)
+        {
             const auto half_cnt = 1ULL << i;
             const auto tail = 1ULL << (qubit_num - 1 - qubits[N - 1 - i]);
-            for (uint64_t j = 0; j < half_cnt; ++j) {
-                ret[half_cnt + j] = ret[j] | tail;
+            __m256d tail4 = _mm256_set1_pd(*((double *)&tail));
+
+            for(uint64_t j = 0; j < half_cnt; j += 4)
+            {
+                __m256d cur = _mm256_loadu_pd((double *)&ret[j]);
+                __m256d res = _mm256_or_pd(cur, tail4);
+                _mm256_storeu_pd((double *)&ret[half_cnt+j], res);
             }
         }
-
         return ret;
     }
 
+    template<
+            uint64_t N = 2,
+            typename std::enable_if<(N == 2), int>::type dummy = 0
+    >
+    inline uarray_t<4> index(
+            const uint64_t task_id,
+            const uint64_t qubit_num,
+            const uarray_t<2> &qubits,
+            const uarray_t<2> &qubits_sorted)
+    {
+        auto ret = uarray_t<4>();
+
+        const uint64_t pos0 = qubit_num - 1 - qubits_sorted[1];
+        const uint64_t pos1 = qubit_num - 2 - qubits_sorted[0];
+        const uint64_t msk0 = (1ULL << pos0) - 1;
+        const uint64_t msk1 = (1ULL << pos1) - 1;
+        // 0 ... pos0 ... pos1 ... q-1
+        // [    ][       ][          ] ->
+        // [    ]0[        ]0[         ]
+
+        const uint64_t part0 = task_id & msk0;
+        const uint64_t part1 = task_id & (msk1 ^ msk0);
+        const uint64_t part2 = task_id & (~msk1);
+        const uint64_t init = part0 | (part1 << 1) | (part2 << 2);
+
+        ret[0] = init;
+        ret[1] = ret[0] | (1ULL << (qubit_num - 1 - qubits[N - 1]));
+        ret[2] = ret[0] | (1ULL << (qubit_num - 1 - qubits[N - 2]));
+        ret[3] = ret[1] | (1ULL << (qubit_num - 1 - qubits[N - 2]));
+
+        return ret;
+    }
 
     template<
             uint64_t N = 1,

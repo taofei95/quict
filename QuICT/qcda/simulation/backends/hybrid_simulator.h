@@ -262,6 +262,9 @@ namespace QuICT {
         if (gate_desc.qasm_name_ == "h") { // Single Bit
             auto gate = HGate<Precision>(gate_desc.affect_args_[0]);
             apply_h_gate(circuit_qubit_num, gate, real, imag);
+        } else if(gate_desc.qasm_name_ == "x") {
+            auto gate = XGate<Precision>(gate_desc.affect_args_[0]);
+            apply_x_gate(circuit_qubit_num, gate, real, imag);
         } else if (gate_desc.qasm_name_ == "crz") { // Two Bit
             auto gate = CrzGate<Precision>(gate_desc.affect_args_[0], gate_desc.affect_args_[1], gate_desc.parg_);
             apply_ctrl_diag_gate(circuit_qubit_num, gate, real, imag);
@@ -413,14 +416,52 @@ namespace QuICT {
             throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__) + ": "
                                      + "Not Implemented " + __func__);
         } else if constexpr(std::is_same_v<Precision, double>) {
-            // Definition of helper functions
-            auto array_op = [&gate, circuit_qubit_num](Precision *arr) {
-                uint64_t task_num = 1ULL << (circuit_qubit_num - 1);
-            };
+            uint64_t task_num = 1ULL << (circuit_qubit_num - 1);
+            if(gate.targ_ == circuit_qubit_num - 1)
+            {
+                constexpr uint64_t batch_size = 4;
+                for(uint64_t ind = 0; ind < (1ULL << circuit_qubit_num); ind += batch_size)
+                {
+                    __m256d ymm1 = _mm256_loadu_pd(&real[ind]);
+                    __m256d ymm2 = _mm256_loadu_pd(&imag[ind]);
 
-            // Call !!!
-            array_op(real);
-            array_op(imag);
+                    ymm1 = _mm256_permute4x64_pd(ymm1, 0b1011'0001);
+                    ymm2 = _mm256_permute4x64_pd(ymm2, 0b1011'0001);
+                    _mm256_storeu_pd(&real[ind], ymm1);
+                    _mm256_storeu_pd(&imag[ind], ymm2);
+                }
+            }
+            else if(gate.targ_ == circuit_qubit_num - 2)
+            {
+                constexpr uint64_t batch_size = 4;
+                for(uint64_t ind = 0; ind < (1ULL << circuit_qubit_num); ind += batch_size)
+                {
+                    __m256d ymm1 = _mm256_loadu_pd(&real[ind]);
+                    __m256d ymm2 = _mm256_loadu_pd(&imag[ind]);
+
+                    ymm1 = _mm256_permute4x64_pd(ymm1, 0b0100'1110);
+                    ymm2 = _mm256_permute4x64_pd(ymm2, 0b0100'1110);
+                    _mm256_storeu_pd(&real[ind], ymm1);
+                    _mm256_storeu_pd(&imag[ind], ymm2);
+                }
+            }
+            else
+            {
+                constexpr uint64_t batch_size = 4;
+                for(uint64_t task_id = 0; task_id < task_num; task_id += batch_size)
+                {
+                    auto ind_0 = index(task_id, circuit_qubit_num, gate.targ_);
+                    __m256d ymm1 = _mm256_loadu_pd(&real[ind_0[0]]);
+                    __m256d ymm2 = _mm256_loadu_pd(&real[ind_0[1]]);
+                    __m256d ymm3 = _mm256_loadu_pd(&imag[ind_0[0]]);
+                    __m256d ymm4 = _mm256_loadu_pd(&imag[ind_0[1]]);
+
+                    _mm256_storeu_pd(&real[ind_0[0]], ymm2);
+                    _mm256_storeu_pd(&real[ind_0[1]], ymm1);
+                    _mm256_storeu_pd(&imag[ind_0[0]], ymm4);
+                    _mm256_storeu_pd(&imag[ind_0[1]], ymm3);
+                }
+            }
         }
     }
 
