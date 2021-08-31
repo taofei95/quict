@@ -13,8 +13,8 @@ gate. for example, IonQ's standard instruction set contain:
 - one qubit gates: Rx, Ry, Rz
 - two qubit gate: Rxx
 
-Example
---------------
+Example(USTCSet)
+----------------------------
 Another example is USTCSet, which contain **CX, Rx, Ry, Rz, H, X**.\
 it's easy to use GateTransform to get a compositeGate by setting parameters as
 USTCSet
@@ -28,20 +28,20 @@ USTCSet
     if __name__ == "__main__":
         circuit = Circuit(5)
         circuit.random_append(10)
-        circuit.draw_photo(show_depth=False)
-        compositeGate = GateTransform(circuit, USTCSet)
+        circuit.draw()
+        compositeGate = GateTransform.execute(circuit, USTCSet)
 
         new_circuit = Circuit(5)
         new_circuit.set_exec_gates(compositeGate)
-        new_circuit.draw_photo(show_depth=False)
+        new_circuit.draw()
 
 Before transform, the circuit has a wide variety of gates(10):
 
-.. figure:: ./images/0.jpg
+.. figure:: ./images/gt_0.jpg
 
 After transform, the circuit only contain gates in USTCSet.
 
-.. figure:: ./images/1.jpg
+.. figure:: ./images/gt_1.jpg
 
 Overview
 --------------

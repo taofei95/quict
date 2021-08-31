@@ -6,6 +6,7 @@
 
 from QuICT.core import *
 import math
+import re
 import collections
 import numpy as np
 from matplotlib import patches
@@ -14,7 +15,7 @@ from matplotlib import pyplot as plt
 from .ibmq_style import DefaultStyle
 
 LINE_WIDTH = 1.5
-FOLD = 25
+FOLD = 26
 cir_len = 0
 FONT_SIZE = 13
 SUB_FONT_SIZE = 8
@@ -138,7 +139,7 @@ class Anchor(object):
         return x + offset_x, y
 
 
-class PhotoDrawerModel(object):
+class PhotoDrawer(object):
 
     def __init__(self):
         self.style = DefaultStyle()
@@ -147,6 +148,41 @@ class PhotoDrawerModel(object):
         self.ax = self.figure.add_subplot(111)
         self.ax.set_xticks([])
         self.ax.set_yticks([])
+        self.scale = 1
+        self.lwidth15 = 1.5 * self.scale
+        self.lwidth2 = 2.0 * self.scale
+        self.char_list = {' ': (0.0958, 0.0583), '!': (0.1208, 0.0729), '"': (0.1396, 0.0875),
+                           '#': (0.2521, 0.1562), '$': (0.1917, 0.1167), '%': (0.2854, 0.1771),
+                           '&': (0.2333, 0.1458), "'": (0.0833, 0.0521), '(': (0.1167, 0.0729),
+                           ')': (0.1167, 0.0729), '*': (0.15, 0.0938), '+': (0.25, 0.1562),
+                           ',': (0.0958, 0.0583), '-': (0.1083, 0.0667), '.': (0.0958, 0.0604),
+                           '/': (0.1021, 0.0625), '0': (0.1875, 0.1167), '1': (0.1896, 0.1167),
+                           '2': (0.1917, 0.1188), '3': (0.1917, 0.1167), '4': (0.1917, 0.1188),
+                           '5': (0.1917, 0.1167), '6': (0.1896, 0.1167), '7': (0.1917, 0.1188),
+                           '8': (0.1896, 0.1188), '9': (0.1917, 0.1188), ':': (0.1021, 0.0604),
+                           ';': (0.1021, 0.0604), '<': (0.25, 0.1542), '=': (0.25, 0.1562),
+                           '>': (0.25, 0.1542), '?': (0.1583, 0.0979), '@': (0.2979, 0.1854),
+                           'A': (0.2062, 0.1271), 'B': (0.2042, 0.1271), 'C': (0.2083, 0.1292),
+                           'D': (0.2312, 0.1417), 'E': (0.1875, 0.1167), 'F': (0.1708, 0.1062),
+                           'G': (0.2312, 0.1438), 'H': (0.225, 0.1396), 'I': (0.0875, 0.0542),
+                           'J': (0.0875, 0.0542), 'K': (0.1958, 0.1208), 'L': (0.1667, 0.1042),
+                           'M': (0.2583, 0.1604), 'N': (0.225, 0.1396), 'O': (0.2354, 0.1458),
+                           'P': (0.1812, 0.1125), 'Q': (0.2354, 0.1458), 'R': (0.2083, 0.1292),
+                           'S': (0.1896, 0.1188), 'T': (0.1854, 0.1125), 'U': (0.2208, 0.1354),
+                           'V': (0.2062, 0.1271), 'W': (0.2958, 0.1833), 'X': (0.2062, 0.1271),
+                           'Y': (0.1833, 0.1125), 'Z': (0.2042, 0.1271), '[': (0.1167, 0.075),
+                           '\\': (0.1021, 0.0625), ']': (0.1167, 0.0729), '^': (0.2521, 0.1562),
+                           '_': (0.1521, 0.0938), '`': (0.15, 0.0938), 'a': (0.1854, 0.1146),
+                           'b': (0.1917, 0.1167), 'c': (0.1646, 0.1021), 'd': (0.1896, 0.1188),
+                           'e': (0.1854, 0.1146), 'f': (0.1042, 0.0667), 'g': (0.1896, 0.1188),
+                           'h': (0.1896, 0.1188), 'i': (0.0854, 0.0521), 'j': (0.0854, 0.0521),
+                           'k': (0.1729, 0.1083), 'l': (0.0854, 0.0521), 'm': (0.2917, 0.1812),
+                           'n': (0.1896, 0.1188), 'o': (0.1833, 0.1125), 'p': (0.1917, 0.1167),
+                           'q': (0.1896, 0.1188), 'r': (0.125, 0.0771), 's': (0.1562, 0.0958),
+                           't': (0.1167, 0.0729), 'u': (0.1896, 0.1188), 'v': (0.1771, 0.1104),
+                           'w': (0.2458, 0.1521), 'x': (0.1771, 0.1104), 'y': (0.1771, 0.1104),
+                           'z': (0.1562, 0.0979), '{': (0.1917, 0.1188), '|': (0.1, 0.0604),
+                           '}': (0.1896, 0.1188)}
         pass
 
     @staticmethod
@@ -471,6 +507,84 @@ class PhotoDrawerModel(object):
                      [ypos, ypos], color=ac, linewidth=linewidth,
                      zorder=PORDER_GATE + 1)
 
+    def _get_text_width(self, text, fontsize, param=False):
+        if not text:
+            return 0.0
+
+        if False:
+            t = self.plt_mod.text(0.5, 0.5, text, fontsize=fontsize)
+            return t.get_window_extent(renderer=self._renderer).width / 60.0
+        else:
+            math_mode_match = re.compile(r"(?<!\\)\$(.*)(?<!\\)\$").search(text)
+            num_underscores = 0
+            num_carets = 0
+            if math_mode_match:
+                math_mode_text = math_mode_match.group(1)
+                num_underscores = math_mode_text.count('_')
+                num_carets = math_mode_text.count('^')
+
+            # If there are subscripts or superscripts in mathtext string
+            # we need to account for that spacing by manually removing
+            # from text string for text length
+            if num_underscores:
+                text = text.replace('_', '', num_underscores)
+            if num_carets:
+                text = text.replace('^', '', num_carets)
+
+            # This changes hyphen to + to match width of math mode minus sign.
+            if param:
+                text = text.replace('-', '+')
+
+            f = 0 if fontsize == self.style else 1
+            sum_text = 0.0
+            for c in text:
+                try:
+                    sum_text += self.char_list[c][f]
+                except KeyError:
+                    # if non-ASCII char, use width of 'c', an average size
+                    sum_text += self.char_list['c'][f]
+            return sum_text
+
+    def draw_multiqubit_gate(self, xy, fc=None, ec=None, gt=None, sc=None, text='', subtext=''):
+        xpos = min([x[0] for x in xy])
+        ypos = min([y[1] for y in xy])
+        ypos_max = max([y[1] for y in xy])
+        fs = self.style.fs
+        sfs = self.style.sfs
+
+        # added .21 is for qubit numbers on the left side
+        text_width = self._get_text_width(text, fs) + .21 * 2
+        sub_width = self._get_text_width(subtext, sfs, param=True) + .21 * 2
+        wid = max((text_width, sub_width, WID))
+
+        qubit_span = abs(ypos) - abs(ypos_max) + 1
+        height = HIG + (qubit_span - 1)
+        box = patches.Rectangle(
+            xy=(xpos - 0.5 * wid, ypos - .5 * HIG), width=wid, height=height,
+            fc=fc, ec=ec, linewidth=self.lwidth15, zorder=PORDER_GATE)
+        self.ax.add_patch(box)
+
+        # annotate inputs
+        for bit, y in enumerate([x[1] for x in xy]):
+            self.ax.text(xpos + .07 - 0.5 * wid, y, str(bit), ha='left', va='center',
+                          fontsize=fs, color=gt,
+                          clip_on=True, zorder=PORDER_TEXT)
+        if text:
+            if subtext:
+                self.ax.text(xpos + .11, ypos + 0.4 * height, text, ha='center',
+                              va='center', fontsize=fs,
+                              color=gt, clip_on=True,
+                              zorder=PORDER_TEXT)
+                self.ax.text(xpos + .11, ypos + 0.2 * height, subtext, ha='center',
+                              va='center', fontsize=sfs,
+                              color=sc, clip_on=True,
+                              zorder=PORDER_TEXT)
+            else:
+                self.ax.text(xpos + .11, ypos + .5 * (qubit_span - 1), text,
+                              ha='center', va='center', fontsize=fs,
+                              color=gt, clip_on=True,
+                              zorder=PORDER_TEXT, wrap=True)
+
     def draw_swap(self, xy):
         xpos, ypos = xy
         color = self.style.dispcol['swap']
@@ -505,7 +619,7 @@ class PhotoDrawerModel(object):
                          zorder=PORDER_TEXT)
             self.draw_line([offset_x + 0.5, y], [now['max_x'], y], zorder=PORDER_REGLINE)
 
-    def run(self, circuit, filename=None, show_depth=True):
+    def run(self, circuit, filename=None, show_depth=False):
         global cir_len
         cir_len = circuit.circuit_width()
         name_dict = collections.OrderedDict()
@@ -572,7 +686,7 @@ class PhotoDrawerModel(object):
                 if gate.params > 0:
                     param = self.get_parameter_str(gate.pargs)
 
-                if gate.type() == GATE_ID["Perm"] or gate.type() == GATE_ID["Unitary"]:
+                if gate.type() == GATE_ID["Perm"]:
                     name = str(gate)
                     for coor in coord:
                         self.draw_gate(coor, name, '')
@@ -603,7 +717,7 @@ class PhotoDrawerModel(object):
                         self.draw_swap(coord[0])
                         self.draw_swap(coord[1])
                         self.draw_line(bottom, top, lc=self.style.dispcol['swap'])
-                    else:
+                    elif gate.controls == 1:
                         disp = gate.qasm_name.replace('c', '')
 
                         color = None
@@ -621,6 +735,14 @@ class PhotoDrawerModel(object):
                                            fc=color)
                         # add qubit-qubit wiring
                         self.draw_line(bottom, top, lc=color)
+                    else:
+                        if param:
+                            subtext = '{}'.format(param)
+                        else:
+                            subtext = ''
+                        self.draw_multiqubit_gate(coord, fc=self.style.dispcol['multi'], ec=self.style.dispcol['multi'],
+                                                  gt=self.style.gt, sc=self.style.sc,
+                                                  text=gate.qasm_name, subtext=subtext)
                 elif len(coord) == 3:
                     if gate.type() == GATE_ID["CCX"]:
                         self.draw_ctrl_qubit(coord[0], fc=self.style.dispcol['multi'],
@@ -637,6 +759,40 @@ class PhotoDrawerModel(object):
                                                 ac=self.style.dispcol['multi'])
                         # add qubit-qubit wiring
                         self.draw_line(bottom, top, lc=self.style.dispcol['multi'])
+                    elif gate.type() == GATE_ID["CSwap"]:
+                        self.draw_ctrl_qubit(coord[0], fc=self.style.dispcol['multi'],
+                                             ec=self.style.dispcol['multi'])
+                        self.draw_swap(coord[1])
+                        self.draw_swap(coord[2])
+                        self.draw_line(bottom, top, lc=self.style.dispcol['swap'])
+                    elif gate.controls > 0:
+                        for i in range(gate.controls):
+                            self.draw_ctrl_qubit(coord[i], fc=self.style.dispcol['multi'],
+                                                 ec=self.style.dispcol['multi'])
+                        if param:
+                            subtext = '{}'.format(param)
+                        else:
+                            subtext = ''
+                        if gate.targets >= 2:
+                            self.draw_multiqubit_gate(coord[gate.controls:], fc=self.style.dispcol['multi'],
+                                                          ec=self.style.dispcol['multi'],
+                                                          gt=self.style.gt, sc=self.style.sc,
+                                                          text=gate.qasm_name, subtext=subtext)
+                        else:
+                            self.draw_gate(coord[-1],
+                                           text=gate.qasm_name[gate.controls:],
+                                           fc=self.style.dispcol['multi'],
+                                           p_string=subtext)
+                        self.draw_line(bottom, top, lc=self.style.dispcol['swap'])
+                    else:
+                        if param:
+                            subtext = '{}'.format(param)
+                        else:
+                            subtext = ''
+                        self.draw_multiqubit_gate(coord, fc=self.style.dispcol['multi'],
+                                                  ec=self.style.dispcol['multi'],
+                                                  gt=self.style.gt, sc=self.style.sc,
+                                                  text=gate.qasm_name, subtext=subtext)
 
             layer_position.append(position)
             position = position + layer_width

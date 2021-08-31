@@ -6,7 +6,7 @@
 
 import numpy as np
 
-from . import uniformlyRz
+from . import UniformlyRz
 from .._synthesis import Synthesis
 from QuICT.core import GateBuilder, GATE_ID, CompositeGate, H, Rz, U3
 
@@ -61,7 +61,7 @@ def u2_expression(X):
 def get_parameters_from_unitaries(u1, u2):
     """ decomposition uniformly controlled one qubit unitaries
 
-    |0><0| ⊗ u1 + |1><1| ⊗ u2
+    (0><0) ⊗ u1 + (1><1) ⊗ u2
 
     Args:
         u1(np.ndarray): unitary with 0
@@ -111,6 +111,7 @@ def get_parameters_from_unitaries(u1, u2):
 
 def uniformlyUnitarySolve(low, high, unitary, mapping):
     """ synthesis uniformlyUnitary gate, bits range [low, high)
+
     Args:
         low(int): the left range low
         high(int): the right range high
@@ -142,26 +143,26 @@ def uniformlyUnitarySolve(low, high, unitary, mapping):
     gates = uniformlyUnitarySolve(low + 1, high, Rxv, mapping)
     gates.append(gateA)
     gates.extend(uniformlyUnitarySolve(low + 1, high, Rxu, mapping))
-    gates.extend(uniformlyRz(angle_list, [mapping[i] for i in range(high - 1, low - 1, -1)]))
+    gates.extend(UniformlyRz.execute(angle_list, [mapping[i] for i in range(high - 1, low - 1, -1)]))
     return gates
 
-def uniformlyUnitaryDecomposition(angle_list, mapping=None):
-    """ uniformUnitaryGate
+class UniformlyUnitary(Synthesis):
+    @classmethod
+    def execute(cls, angle_list, mapping=None):
+        """ uniformUnitaryGate
 
-    http://cn.arxiv.org/abs/quant-ph/0504100v1 Fig4 b)
+        http://cn.arxiv.org/abs/quant-ph/0504100v1 Fig4 b)
 
-    Args:
-        angle_list(list<float>): the angles of Ry Gates
-        mapping(list<int>) : the mapping of gates order
-    Returns:
-        gateSet: the synthesis gate list
-    """
-    pargs = list(angle_list)
-    n = int(np.round(np.log2(len(pargs)))) + 1
-    if mapping is None:
-        mapping = [i for i in range(n)]
-    if 1 << (n - 1) != len(pargs):
-        raise Exception("the number of parameters unmatched.")
-    return uniformlyUnitarySolve(0, n, pargs, mapping)
-
-uniformlyUnitary = Synthesis(uniformlyUnitaryDecomposition)
+        Args:
+            angle_list(list<float>): the angles of Ry Gates
+            mapping(list<int>) : the mapping of gates order
+        Returns:
+            gateSet: the synthesis gate list
+        """
+        pargs = list(angle_list)
+        n = int(np.round(np.log2(len(pargs)))) + 1
+        if mapping is None:
+            mapping = [i for i in range(n)]
+        if 1 << (n - 1) != len(pargs):
+            raise Exception("the number of parameters unmatched.")
+        return uniformlyUnitarySolve(0, n, pargs, mapping)

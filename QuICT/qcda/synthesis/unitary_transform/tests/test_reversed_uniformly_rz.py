@@ -1,9 +1,8 @@
 # noinspection PyUnresolvedReferences
 from scipy.linalg import cossin
-from ...uniformly_gate import uniformlyRz
+from QuICT.qcda.synthesis.uniformly_gate import UniformlyRz
 from QuICT.core import *
 from QuICT.algorithm import SyntheticalUnitary
-
 
 def test_reversed_uniformly_rz():
     rnd = 10
@@ -12,7 +11,7 @@ def test_reversed_uniformly_rz():
         qubit_cnt = controlled_cnt + 1
         angle_cnt = 1 << controlled_cnt
         angle_list = [np.random.uniform(low=0, high=np.pi) for _ in range(angle_cnt)]
-        gates = uniformlyRz(
+        gates = UniformlyRz.execute(
             angle_list=angle_list,
             mapping=[(i + 1) % qubit_cnt for i in range(qubit_cnt)]
         )
