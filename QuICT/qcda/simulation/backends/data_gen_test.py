@@ -57,12 +57,11 @@ def main():
     circuit.clear()
 
     for i in range(qubit_num):
+        H | circuit(i)
+    for i in range(qubit_num):
         X | circuit(i)
-    for i in range(200):
-        X | circuit(randint(0, qubit_num - 3))
-    X | circuit(qubit_num - 1)
-    X | circuit(qubit_num - 2)
-    X | circuit(qubit_num - 3)
+    for _ in range(qubit_num):
+        X | circuit(randint(0, qubit_num - 1))
 
     out_circuit_to_file(qubit_num, "x.txt", circuit)
     circuit.clear()

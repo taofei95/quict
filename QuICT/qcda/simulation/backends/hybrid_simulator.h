@@ -420,6 +420,7 @@ namespace QuICT {
             if(gate.targ_ == circuit_qubit_num - 1)
             {
                 constexpr uint64_t batch_size = 4;
+#pragma omp parallel for default(shared)
                 for(uint64_t ind = 0; ind < (1ULL << circuit_qubit_num); ind += batch_size)
                 {
                     __m256d ymm1 = _mm256_loadu_pd(&real[ind]);
@@ -434,6 +435,7 @@ namespace QuICT {
             else if(gate.targ_ == circuit_qubit_num - 2)
             {
                 constexpr uint64_t batch_size = 4;
+#pragma omp parallel for default(shared)
                 for(uint64_t ind = 0; ind < (1ULL << circuit_qubit_num); ind += batch_size)
                 {
                     __m256d ymm1 = _mm256_loadu_pd(&real[ind]);
@@ -448,6 +450,7 @@ namespace QuICT {
             else
             {
                 constexpr uint64_t batch_size = 4;
+#pragma omp parallel for default(shared)
                 for(uint64_t task_id = 0; task_id < task_num; task_id += batch_size)
                 {
                     auto ind_0 = index(task_id, circuit_qubit_num, gate.targ_);
