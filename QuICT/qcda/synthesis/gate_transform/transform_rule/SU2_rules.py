@@ -76,18 +76,18 @@ class SU2TransformRule(TransformRule):
         gate.targs = [0]
         compositeGate = self.transform(gate)
         ans = compositeGate.equal(gate, ignore_phase=ignore_phase, eps=eps)
-        if not ans:
-            print()
-            print("U:")
-            print(U)
-            print("Decomposed as:")
-            prod = np.eye(2)
-            for gate in compositeGate.gates:
-                prod = gate.matrix @ prod
-                print(gate.matrix)
-                print()
-            print("Decompose product")
-            print(prod)
+        # if not ans:
+        #     print()
+        #     print("U:")
+        #     print(U)
+        #     print("Decomposed as:")
+        #     prod = np.eye(2)
+        #     for gate in compositeGate.gates:
+        #         prod = gate.matrix @ prod
+        #         print(gate.matrix)
+        #         print()
+        #     print("Decompose product")
+        #     print(prod)
         return ans
 
 
@@ -148,12 +148,10 @@ def _xyxRule(gate):
     targ = gate.targ
     eps = 1e-13
     unitary = np.array([
-        [0.5 * (unitary[0, 0] + unitary[0, 1] + unitary[1, 0] + unitary[1, 1])
-            , 0.5 * (unitary[0, 0] - unitary[0, 1] + unitary[1, 0] - unitary[1, 1])
-         ],
-        [0.5 * (unitary[0, 0] + unitary[0, 1] - unitary[1, 0] - unitary[1, 1])
-            , 0.5 * (unitary[0, 0] - unitary[0, 1] - unitary[1, 0] + unitary[1, 1])
-         ]
+        [0.5 * (unitary[0, 0] + unitary[0, 1] + unitary[1, 0] + unitary[1, 1]),
+         0.5 * (unitary[0, 0] - unitary[0, 1] + unitary[1, 0] - unitary[1, 1])],
+        [0.5 * (unitary[0, 0] + unitary[0, 1] - unitary[1, 0] - unitary[1, 1]),
+         0.5 * (unitary[0, 0] - unitary[0, 1] - unitary[1, 0] + unitary[1, 1])]
     ], dtype=np.complex128)
     det = linalg.det(unitary)
     beta_plus_delta = 0
