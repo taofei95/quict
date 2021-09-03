@@ -307,3 +307,23 @@ class ConstantStateVectorSimulator(BasicSimulator):
                 self._sync
             )
             self.vector = aux
+
+    def apply_combined_gates(self, gates):
+        based_matrix = gates[0].compute_matrix
+        t_index = self._qubits - 1 - gates[0].targ
+
+        for gate in gates[1:]:
+            based_matrix = np.dot(based_matrix, gate.compute_matrix)
+
+        if self._precision == np.complex64:
+            based_matrix = cp.array(based_matrix).astype(cp.complex64)
+        else:
+            based_matrix = cp.array(based_matrix)
+
+        self._algorithm.Based_InnerProduct_targ(
+            t_index,
+            based_matrix,
+            self._vector,
+            self._qubits,
+            self._sync
+        )
