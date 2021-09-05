@@ -10,7 +10,7 @@ from .._algorithm import Algorithm
 from QuICT import *
 from QuICT.qcda.synthesis.mct import MCTLinearOneDirtyAux
 
-def run_grover(f, n, oracle):
+def build_gate(f, n, oracle):
     circuit = Circuit(n + 1)
     index_q = circuit([i for i in range(n)])
     result_q = circuit(n)
@@ -35,6 +35,11 @@ def run_grover(f, n, oracle):
         X | index_q
         #control phase shift end
         H | index_q
+    return circuit
+
+def run_grover(f, n, oracle):
+    circuit = build_gate(f, n, oracle)
+    index_q = circuit([i for i in range(n)])
     Measure | index_q
     circuit.exec()
     return int(index_q)
@@ -56,3 +61,7 @@ class StandardGrover(Algorithm):
             int: the a satisfies that f(a) = 1
         """
         return run_grover(f, n, oracle)
+    @classmethod
+    def build_gate(cls, f, n, oracle):
+        return build_gate(f, n, oracle)
+
