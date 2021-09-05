@@ -2,7 +2,7 @@
 # -*- coding:utf8 -*-
 # @TIME    : 2020/2/23 10:14 上午
 # @Author  : Han Yu
-# @File    : Deutsch_Jozsa.py
+# @File    : search_with_prior_knowledge.py
 
 import numpy as np
 from scipy.optimize import minimize

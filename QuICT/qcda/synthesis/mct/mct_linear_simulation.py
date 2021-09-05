@@ -7,7 +7,7 @@
 from .._synthesis import Synthesis
 from QuICT.core import *
 
-def solve(n, m):
+def HalfDirtyAux(n, m, controls, auxs, target):
     """
 
     Args:
@@ -17,8 +17,7 @@ def solve(n, m):
     Returns:
         the circuit which describe the decomposition result
     """
-    circuit = Circuit(n)
-    print(n, m)
+    circuit = controls + auxs + target
     if m == 1:
         CX  | circuit([0, n - 1])
     elif m == 2:
@@ -35,9 +34,46 @@ def solve(n, m):
         CCX | circuit([0, 1, n - m + 1])
         for i in range(3, m):
             CCX | circuit([i - 1, n - 1 - (m - i + 1), n - 1 - (m - i)])
-    return CompositeGate(circuit.gates)
+    
+def OneDirtyAux(controls, target, aux):
+    n = len(controls) + 2
+    circuit = controls + aux + target
+    if n == 5:
+        CCX | (controls[0], controls[1], aux)
+        CCX | (controls[2], aux, target)
+        CCX | (controls[0], controls[1], aux)
+        CCX | (controls[2], aux, target)
+        return
+    if n == 4:
+        CCX | (controls[0], controls[1], target)
+        return
+    if n == 3:
+        CX | (controls, target)
+        return
+    # n > 5
+    m1 = n // 2
+    m2 = n - m1 - 1
+    control1 = controls[0 : m1]
+    auxs1 = controls[m1 : n - 2] + target
+    target1 = aux
+    control2 = controls[m1 : n - 2] + aux
+    auxs2 = controls[0 : m1]
+    target2 = target
+    
+    #HalfDirtyAux(n, m1, control1, auxs1, target1)
+    if m2 == 2: # n == 6
+        HalfDirtyAux(n, m1, control1, auxs1, target1)
+        CCX | (control2[0], control2[1], target2)
+        HalfDirtyAux(n, m1, control1, auxs1, target1)
+        CCX | (control2[0], control2[1], target2)
+    else:
+        HalfDirtyAux(n, m1, control1, auxs1, target1)
+        HalfDirtyAux(n, m2, control2, auxs2, target2)
+        HalfDirtyAux(n, m1, control1, auxs1, target1)
+        HalfDirtyAux(n, m2, control2, auxs2, target2)
 
-class MCTLinearSimulation(Synthesis):
+
+class MCTLinearHalfDirtyAux(Synthesis):
     @classmethod
     def execute(cls, m, n):
         """ A linear simulation for Toffoli gate
@@ -56,4 +92,39 @@ class MCTLinearSimulation(Synthesis):
             raise Exception("control bit cannot above ceil(n/2)")
         if m < 1:
             raise Exception("there must be at least one control bit")
-        return solve(n, m)
+        
+        circuit = Circuit(n)
+        controls = circuit([i for i in range(m)])
+        auxs = circuit([i for i in range(m, n - 1)])
+        target = circuit(n - 1)
+        
+        HalfDirtyAux(n, m, controls, auxs, target)
+        
+        return CompositeGate(circuit.gates)
+
+class MCTLinearOneDirtyAux(Synthesis):
+    @classmethod
+    def execute(cls, n):
+        """ A linear simulation for Toffoli gate
+
+        https://arxiv.org/abs/quant-ph/9503016 Corollary 7.4
+
+        Implement an n-bit toffoli gate in a qureg with n + 2 qubits with linear complexity.
+
+        On an n-bit circuit, an (n-2)-bit toffoli gate can be simulated by 
+        8(n-5) CCX gates, with 1 bit dirty ancilla.
+
+        Returns:
+            CompositeGate
+        """
+        if n < 3:
+            raise Exception("there must be at least one control bit")
+
+        circuit = Circuit(n)
+        controls = circuit([i for i in range(n - 2)])
+        target = circuit(n - 2)
+        aux = circuit(n - 1)       # this is a dirty ancilla
+        
+        OneDirtyAux(controls, target, aux)
+        
+        return CompositeGate(circuit.gates)
