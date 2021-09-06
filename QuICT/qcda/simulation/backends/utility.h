@@ -21,9 +21,6 @@
      res_i = _mm256_fmadd_pd(v1r,v2i,res_i);
 
 
-#define LLC_OPTIM
-// #define LLC_OPTIM_2
-
 namespace QuICT {
     //* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
     // Time Measurement

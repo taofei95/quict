@@ -1,9 +1,34 @@
 #!/usr/bin/env python3
 
 from random import randint, uniform
+from random import random as _random
 
 from QuICT.core import *
 from QuICT.algorithm import Amplitude
+from math import sqrt
+
+
+def out_unitary_circuit_to_file(qubit_num: int, f_name: str, circuit: Circuit):
+    with open(f_name, 'w') as f:
+        print(qubit_num, file=f)
+
+        for gate in circuit.gates:
+            gate: BasicGate
+            if gate.type() == GATE_ID['H']:
+                val_pos = str(complex(1/sqrt(2), 0))[1:-1]
+                val_neg = str(complex(-1/sqrt(2), 0))[1:-1]
+                print(f"u1 {gate.targ} {val_pos} {val_pos} {val_pos} {val_neg}", file=f)
+            elif gate.type() == GATE_ID['X']:
+                print(f"u1 {gate.targ} 0+0j 1+0j 1+0j 0+0j", file=f)
+
+        print("__TERM__", file=f)
+
+        res = Amplitude.run(circuit)
+        for val in res:
+            if abs(val - 0) <= 1e-8:
+                print("0+0j", file=f)
+            else:
+                print(str(val)[1:-1], file=f)
 
 
 def out_circuit_to_file(qubit_num: int, f_name: str, circuit: Circuit):
@@ -65,6 +90,15 @@ def main():
     X | circuit(qubit_num - 3)
 
     out_circuit_to_file(qubit_num, "x.txt", circuit)
+    circuit.clear()
+
+    for i in range(200):
+        if _random() > 0.5:
+            H | circuit(randint(0, qubit_num - 1))
+        else:
+            X | circuit(randint(0, qubit_num - 1))
+
+    out_unitary_circuit_to_file(qubit_num, "u1.txt", circuit)
     circuit.clear()
 
 
