@@ -144,7 +144,7 @@ PermGate_single_kernel = cp.RawKernel(r'''
     void PermGate(const int idx_len, int vec_bit, int* indexes, complex<float>* vec) {
         int label = blockDim.x * blockIdx.x + threadIdx.x;
 
-        complex<float> temp[1 << 5];
+        complex<float> temp[1 << 12];
         int swap_idx=0, vec_idx=0;
         for(int i = 0; i < idx_len; i++){
             swap_idx = indexes[i];
@@ -168,7 +168,7 @@ PermGate_double_kernel = cp.RawKernel(r'''
     void PermGate(const int idx_len, int vec_bit, int* indexes, complex<double>* vec) {
         int label = blockDim.x * blockIdx.x + threadIdx.x;
 
-        complex<double> temp[1 << 5];
+        complex<double> temp[1 << 12];
         int swap_idx=0, vec_idx=0;
         for(int i = 0; i < idx_len; i++){
             swap_idx = indexes[i];

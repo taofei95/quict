@@ -24,7 +24,7 @@ def main_oracle(f, qreg, ancilla):
 def test_constant_statevectorsimulator_grover():
     # pre-compiled kernel function
     print("Start running.")
-    
+
     qubit_num = 10
     print("[%2d-bit standard grover]..." % qubit_num)
 
@@ -36,22 +36,23 @@ def test_constant_statevectorsimulator_grover():
     s_time = time()
     simulator = ConstantStateVectorSimulator(
         circuit=circuit,
-        precision=np.complex64,
+        precision=np.complex128,
         gpu_device_id=0,
         sync=True)
     state = simulator.run()
     e_time = time()
     duration_1 = e_time - s_time
 
+    print(f"Cur algo: {duration_1} s.")
+
     start_time = time()
     state_expected = Amplitude.run(circuit)
     end_time = time()
     duration_2 = end_time - start_time
 
-    # assert np.allclose(state.get(), state_expected)
-
-    print(f"Cur algo: {duration_1} s.")
     print(f"Old algo: {duration_2} s.")
+
+    assert np.allclose(state.get(), state_expected)
 
 def test_constant_statevectorsimulator_QFT():
     # pre-compiled kernel function
@@ -66,7 +67,7 @@ def test_constant_statevectorsimulator_QFT():
     s_time = time()
     simulator = ConstantStateVectorSimulator(
         circuit=circuit,
-        precision=np.complex64,
+        precision=np.complex128,
         gpu_device_id=0,
         sync=True)
     state = simulator.run()

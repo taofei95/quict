@@ -285,7 +285,7 @@ class ConstantStateVectorSimulator(BasicSimulator):
             gate.type() == GATE_ID["ControlPermMul"] or
             gate.type() == GATE_ID["PermFx"]
         ):
-            if gate.targets >= 5:
+            if gate.targets >= 12:
                 pass
             else:
                 self._algorithm.PermGate_Apply(

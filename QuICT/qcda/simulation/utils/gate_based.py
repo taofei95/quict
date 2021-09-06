@@ -10,7 +10,7 @@ import cupy as cp
 from QuICT.core.gate.gate import *
 
 
-_GATES_EXCEPT = ["MeasureGate", "ResetGate"]
+_GATES_EXCEPT = ["MeasureGate", "ResetGate", "PermFxGate", "PermGate"]
 
 
 class GateMatrixs:
@@ -41,6 +41,10 @@ class GateMatrixs:
             gate(Gate): the gate in circuit.
         """
         gate_name = gate.name.split("_")[0]
+
+        if gate_name in _GATES_EXCEPT:
+            return
+
         param_num = gate.params
         if gate.params != 0:
             for i in range(param_num):
@@ -49,10 +53,7 @@ class GateMatrixs:
         if gate_name == "UnitaryGate":
             gate_name = gate.name
 
-        if (
-            gate_name not in self.gate_matrixs.keys() and
-            gate_name not in _GATES_EXCEPT
-        ):
+        if gate_name not in self.gate_matrixs.keys():
             matrix = gate.compute_matrix
             self._build_matrix_gate(gate_name, matrix)
 
