@@ -1418,4 +1418,3 @@ def Controlled_Swap_tmore(t_indexes, c_index, vec, vec_bit, sync: bool = False):
 
     if sync:
         cp.cuda.Device().synchronize()
-
