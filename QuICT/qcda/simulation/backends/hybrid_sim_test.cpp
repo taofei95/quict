@@ -74,9 +74,26 @@ void test_by_data_file(
             fs >> targ;
             gate_desc_vec.emplace_back(
                     "x",
-                    std::vector<uint64_t>(targ),
+                    std::vector<uint64_t> {targ},
                     0,
                     nullptr
+            );
+        } else if (gate_name == "u1") {
+            fs >> targ;
+            auto *mat_ = new complex<Precision>[4];
+            for(int i = 0; i < 4; i++)
+            {
+                double re, im;
+                char sign, img_label;
+                fs >> re >> sign >> im >> img_label;
+                mat_[i] = complex<double>(re, sign == '+' ? im : -im);
+            }
+
+            gate_desc_vec.emplace_back(
+                    "u1",
+                    std::vector<uint64_t> {targ},
+                    0,
+                    mat_
             );
         }
     }
@@ -118,4 +135,8 @@ TEST(HybridTest, QftTest) {
 
 TEST(HybridTest, XTest) {
     test_by_data_file("x.txt", simulator);
+}
+
+TEST(HybridTest, U1Test) {
+    test_by_data_file("u1.txt", simulator);
 }
