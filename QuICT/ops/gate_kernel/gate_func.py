@@ -10,7 +10,12 @@ import numpy as np
 import random
 
 
-__outward_functions = ["MeasureGate_Apply", "ResetGate_Apply", "PermGate_Apply"]
+__outward_functions = [
+    "MeasureGate_Apply",
+    "ResetGate_Apply",
+    "PermGate_Apply",
+    "PermFxGate_Apply"
+]
 
 
 prop_add = cp.ElementwiseKernel(
@@ -186,6 +191,32 @@ PermGate_double_kernel = cp.RawKernel(r'''
     ''', 'PermGate')
 
 
+PermFxGate_single_kernel = cp.RawKernel(r'''
+    #include <cupy/complex.cuh>
+    extern "C" __global__
+    void PermFxGate(const int start_idx, const int interval, complex<float>* vec) {
+        int label = start_idx + blockDim.x * blockIdx.x + threadIdx.x;
+
+        complex<float> temp = vec[label];
+        vec[label] = vec[label + interval];
+        vec[label + interval] = temp;
+    }
+    ''', 'PermFxGate')
+
+
+PermFxGate_double_kernel = cp.RawKernel(r'''
+    #include <cupy/complex.cuh>
+    extern "C" __global__
+    void PermFxGate(const int start_idx, int interval, complex<double>* vec) {
+        int label = start_idx + blockDim.x * blockIdx.x + threadIdx.x;
+
+        complex<double> temp = vec[label];
+        vec[label] = vec[label + interval];
+        vec[label + interval] = temp;
+    }
+    ''', 'PermFxGate')
+
+
 def MeasureGate_Apply(index, vec, vec_bit, sync: bool = False, multigpu_prob = None):
     """
     Measure Gate Measure.
@@ -312,3 +343,25 @@ def PermGate_Apply(indexes, vec, vec_bit, sync: bool = False):
 
     if sync:
         cp.cuda.Device().synchronize()
+
+
+def PermFxGate_Apply(indexes, blocks, vec, vec_bit, sync: bool = False):
+    half_block_size = 1 << (vec_bit - blocks - 1)
+    task_number = half_block_size
+    thread_per_block = min(256, task_number)
+    block_num = task_number // thread_per_block
+
+    for idx in indexes:
+        start_idx = idx * 2 * half_block_size
+        if vec.dtype == np.complex64:
+            PermFxGate_single_kernel(
+                (block_num, ),
+                (thread_per_block,),
+                (start_idx, half_block_size, vec)
+            )
+        else:
+            PermFxGate_double_kernel(
+                (block_num,),
+                (thread_per_block,),
+                (start_idx, half_block_size, vec)
+            )

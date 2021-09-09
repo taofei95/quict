@@ -222,7 +222,7 @@ class ConstantStateVectorSimulator(BasicSimulator):
             )
         elif gate.type() == GATE_ID["ID"]:
             pass
-        elif gate.type() == 45:
+        elif gate.type() == 46 or gate.type() == GATE_ID["CCX"]:
             # TODO: GATE_ID["CCX"] = 30, not matched
             c_indexes = [self._qubits - 1 - carg for carg in gate.cargs]
             t_index = self._qubits - 1 - gate.targ
@@ -294,6 +294,23 @@ class ConstantStateVectorSimulator(BasicSimulator):
                     self._qubits,
                     self._sync
                 )
+        elif gate.type() == GATE_ID["PermFxT"]:
+            self._algorithm.PermFxGate_Apply(
+                gate.pargs,
+                gate.targets,
+                self._vector,
+                self._qubits,
+                self._sync
+            )
+        elif gate.type() == GATE_ID["PermT"]:
+            mapping = np.array(gate.pargs)
+            self._algorithm.VectorPermutation(
+                self.vector,
+                mapping,
+                changeInput=True,
+                gpu_out=False,
+                sync=self._sync
+            )
         else:
             aux = cp.zeros_like(self._vector)
             matrix = self.get_Matrix(gate)
@@ -320,10 +337,50 @@ class ConstantStateVectorSimulator(BasicSimulator):
         else:
             based_matrix = cp.array(based_matrix)
 
+        """
+        H;
+        self._algorithm.Based_InnerProduct_targ
+
+        MSwap (odd)/ [Multiply/CMultiply with swap (odd)]
+        self._algorithm.RDiagonal_MultiplySwap_targ
+
+        Only Swap: (odd)
+        self._algorithm.RDiagonal_Swap_targ
+
+        Multiply/[Swap/MSwap (even)]
+        self._algorithm.Diagonal_Multiply_targ
+        
+        CMultiply
+        self._algorithm.Controlled_Multiply_targ
+        """
+
         self._algorithm.Based_InnerProduct_targ(
             t_index,
             based_matrix,
             self._vector,
             self._qubits,
             self._sync
+        )
+
+    def apply_2qubits_gates(self, gates: list):
+        matrix = np.kron(gates[1].compute_matrix, gates[0].compute_matrix)
+
+        if self._precision == np.complex64:
+            matrix = cp.array(matrix).astype(cp.complex64)
+        else:
+            matrix = cp.array(matrix)
+
+        print(matrix)
+
+        """
+        gates from low - high
+        """
+
+        self._algorithm.Based_InnerProduct_targs(
+            c_index = self._qubits - 1 - gates[0].targ,
+            t_index = self._qubits - 1 - gates[1].targ,
+            mat=matrix,
+            vec=self._vector,
+            vec_bit = self._qubits,
+            sync=self._sync
         )

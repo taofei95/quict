@@ -162,7 +162,7 @@ Based_InnerProduct_targs_single = cp.RawKernel(r'''
         int _2 = _0 + offset2;
         int _3 = _1 + offset2;
 
-        complex<float> temp_0 = vec[_0], temp_1 = vec[_1], temp_2 = vec[_2]
+        complex<float> temp_0 = vec[_0], temp_1 = vec[_1], temp_2 = vec[_2];
         vec[_0] = vec[_0]*mat[0] + vec[_1]*mat[1] + vec[_2]*mat[2] + vec[_3]*mat[3];
         vec[_1] = temp_0*mat[4] + vec[_1]*mat[5] + vec[_2]*mat[6] + vec[_3]*mat[7];
         vec[_2] = temp_0*mat[8] + temp_1*mat[9] + vec[_2]*mat[10] + vec[_3]*mat[11];
@@ -189,7 +189,7 @@ Based_InnerProduct_targs_double = cp.RawKernel(r'''
         int _2 = _0 + offset2;
         int _3 = _1 + offset2;
 
-        complex<double> temp_0 = vec[_0], temp_1 = vec[_1], temp_2 = vec[_2]
+        complex<double> temp_0 = vec[_0], temp_1 = vec[_1], temp_2 = vec[_2];
         vec[_0] = vec[_0]*mat[0] + vec[_1]*mat[1] + vec[_2]*mat[2] + vec[_3]*mat[3];
         vec[_1] = temp_0*mat[4] + vec[_1]*mat[5] + vec[_2]*mat[6] + vec[_3]*mat[7];
         vec[_2] = temp_0*mat[8] + temp_1*mat[9] + vec[_2]*mat[10] + vec[_3]*mat[11];
