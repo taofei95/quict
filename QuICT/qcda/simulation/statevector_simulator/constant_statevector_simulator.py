@@ -222,8 +222,7 @@ class ConstantStateVectorSimulator(BasicSimulator):
             )
         elif gate.type() == GATE_ID["ID"]:
             pass
-        elif gate.type() == 46 or gate.type() == GATE_ID["CCX"]:
-            # TODO: GATE_ID["CCX"] = 30, not matched
+        elif gate.type() == GATE_ID["CCX"]:
             c_indexes = [self._qubits - 1 - carg for carg in gate.cargs]
             t_index = self._qubits - 1 - gate.targ
             self._algorithm.Controlled_Swap_more(
@@ -265,7 +264,6 @@ class ConstantStateVectorSimulator(BasicSimulator):
             )
             self.circuit.qubits[gate.targ].measured = result
         elif gate.type() == GATE_ID["Reset"]:
-            # TODO: Not applied yet.
             index = self._qubits - 1 - gate.targ
             self._algorithm.ResetGate_Apply(
                 index,

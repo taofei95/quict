@@ -638,8 +638,7 @@ class ProxySimulator(BasicSimulator):
                 )
         elif gate.type() == GATE_ID["ID"]:
             pass
-        elif gate.type() == 45:
-            # TODO: GATE_ID["CCX"] = 30, not matched
+        elif gate.type() == GATE_ID["CCX"]:
             c_indexes = [self.total_qubits - 1 - carg for carg in gate.cargs]
             t_index = self.total_qubits - 1 - gate.targ
             matrix = self.get_Matrix(gate)

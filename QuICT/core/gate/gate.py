@@ -1759,58 +1759,6 @@ class RzzGate(BasicGate):
 Rzz = RzzGate(["Rzz", "rzz", "RZZ"])
 
 
-class CCXGate(BasicGate):
-    """ Toffoli gate
-
-    When using this gate, it will be showed as a whole gate
-    instend of being split into smaller gate
-
-    """
-
-    _matrix = np.array([
-        [0, 1],
-        [1, 0]
-    ], dtype=np.complex64)
-
-    _compute_matrix = np.array([
-        [1, 0, 0, 0, 0, 0, 0, 0],
-        [0, 1, 0, 0, 0, 0, 0, 0],
-        [0, 0, 1, 0, 0, 0, 0, 0],
-        [0, 0, 0, 1, 0, 0, 0, 0],
-        [0, 0, 0, 0, 1, 0, 0, 0],
-        [0, 0, 0, 0, 0, 1, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0, 1],
-        [0, 0, 0, 0, 0, 0, 1, 0]
-    ], dtype=np.complex64)
-
-    @property
-    def compute_matrix(self) -> np.ndarray:
-        return self._compute_matrix
-
-    def __init__(self, alias=None):
-        _add_alias(alias=alias, standard_name=self.__class__.__name__)
-        super().__init__(alias=None)
-        self.controls = 2
-        self.targets = 1
-        self.params = 0
-        self.qasm_name = "ccx"
-
-    def __str__(self):
-        return "Toffoli gate"
-
-    def inverse(self):
-        _CCX = CCXGate(alias=None)
-        _CCX.cargs = copy.deepcopy(self.cargs)
-        _CCX.targs = copy.deepcopy(self.targs)
-        return _CCX
-
-    def exec(self, circuit):
-        exec_toffoli(self, circuit)
-
-
-CCX = CCXGate(["CCX", "CCx", "Ccx"])
-
-
 class MeasureGate(BasicGate):
     """ z-axis Measure gate
 
