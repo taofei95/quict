@@ -487,8 +487,6 @@ namespace QuICT {
             // single qubit's case. So we enumerate index distance instead
             // of targets positions.
 
-
-
             uarray_t<2> qubits = {gate.carg_, gate.targ_};
             uarray_t<2> qubits_sorted = {gate.carg_, gate.targ_};
             if (gate.carg_ > gate.targ_) {
