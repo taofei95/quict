@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-from random import randint, uniform
+from random import choices, randint, sample, uniform
 from random import choice
 
 from QuICT.core import *
@@ -17,7 +17,8 @@ def out_unitary_circuit_to_file(qubit_num: int, f_name: str, circuit: Circuit):
             if gate.type() == GATE_ID['H']:
                 val_pos = str(complex(1/sqrt(2), 0))[1:-1]
                 val_neg = str(complex(-1/sqrt(2), 0))[1:-1]
-                print(f"u1 {gate.targ} {val_pos} {val_pos} {val_pos} {val_neg}", file=f)
+                print(
+                    f"u1 {gate.targ} {val_pos} {val_pos} {val_pos} {val_neg}", file=f)
             elif gate.type() == GATE_ID['X']:
                 print(f"u1 {gate.targ} 0+0j 1+0j 1+0j 0+0j", file=f)
             elif gate.type() == GATE_ID['S']:
@@ -33,7 +34,8 @@ def out_unitary_circuit_to_file(qubit_num: int, f_name: str, circuit: Circuit):
             if abs(val - 0) <= 1e-8:
                 print("0+0j", file=f)
             else:
-                print("%s%s%sj" % (val.real, '+' if val.imag >= 0 else '-', abs(val.imag)), file=f)
+                print("%s%s%sj" % (val.real, '+' if val.imag >=
+                      0 else '-', abs(val.imag)), file=f)
                 # opt = str(val)[1:-1]
                 # print(opt, file=f)
 
@@ -82,8 +84,8 @@ def main():
 
     for i in range(qubit_num):
         H | circuit(i)
-    for i in range(1, qubit_num):
-        CRz(uniform(0, 3.14)) | circuit([0, i])
+    for _ in range(qubit_num*20):
+        CRz(uniform(0, 3.14)) | circuit(sample(range(0, qubit_num), 2))
 
     out_circuit_to_file(qubit_num, "crz.txt", circuit)
     circuit.clear()
