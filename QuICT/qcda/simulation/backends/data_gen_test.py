@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-from random import choices, randint, sample, uniform
+from random import choices, randint, sample, shuffle, uniform
 from random import choice
 
 from QuICT.core import *
@@ -73,19 +73,18 @@ def main():
 
     for i in range(qubit_num):
         H | circuit(i)
-    for i in range(200):
-        H | circuit(randint(0, qubit_num - 3))
-    H | circuit(qubit_num - 1)
-    H | circuit(qubit_num - 2)
-    H | circuit(qubit_num - 3)
 
     out_circuit_to_file(qubit_num, "h.txt", circuit)
     circuit.clear()
 
     for i in range(qubit_num):
         H | circuit(i)
-    for _ in range(qubit_num*20):
-        CRz(uniform(0, 3.14)) | circuit(sample(range(0, qubit_num), 2))
+    for _ in range(qubit_num*30):
+        lst = sample(range(0, qubit_num),2)
+        shuffle(lst)
+        i = lst[0]
+        j = lst[1]
+        CRz(uniform(0, 3.14)) | circuit([i,j])
 
     out_circuit_to_file(qubit_num, "crz.txt", circuit)
     circuit.clear()

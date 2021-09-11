@@ -29,7 +29,7 @@ def out_circuit_to_file(f_name: str, circuit: Circuit):
         #         print(str(val)[1:-1], file=f)
 
 
-qubit_num = 27
+qubit_num = 25
 
 circuit = Circuit(qubit_num)
 

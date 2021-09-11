@@ -102,12 +102,12 @@ void test_by_data_file(
     delete[] imag;
 }
 
-TEST(HybridTest, QFTPerf) {
-    auto simulator = QuICT::HybridSimulator<double>();
-    test_by_data_file("qft_perf.txt", simulator);
-}
-
 TEST(HybridTest, HPerf) {
     auto simulator = QuICT::HybridSimulator<double>();
     test_by_data_file("h_perf.txt", simulator);
+}
+
+TEST(HybridTest, QFTPerf) {
+    auto simulator = QuICT::HybridSimulator<double>();
+    test_by_data_file("qft_perf.txt", simulator);
 }
