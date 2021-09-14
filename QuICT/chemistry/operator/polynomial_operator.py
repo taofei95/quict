@@ -49,10 +49,6 @@ class PolynomialOperator(object):
             variables = copy.deepcopy(monomial)
         elif isinstance(monomial, str):
             for var in monomial.split():
-                #print(type(self))
-                #print(id(self.analyze_single))
-                #print(id(PolynomialOperator.analyze_single))
-                #print(id(FermionOperator.analyze_single))
                 variables.append(self.analyze_single(var))
         self.operators=[[variables,coefficient]]
     
