@@ -18,6 +18,7 @@ from QuICT.core import *
 
 from .transform_rule import TransformRule
 
+
 def _arccos(value):
     """ calculate arccos(value)
 
@@ -33,7 +34,8 @@ def _arccos(value):
         value = 1
     return arccos(value)
 
-def _check2pi(theta, eps = 1e-15):
+
+def _check2pi(theta, eps=1e-15):
     """ check whether theta is a multiple of 2π
 
     Args:
@@ -46,11 +48,13 @@ def _check2pi(theta, eps = 1e-15):
     multiple = np.round(theta / (2 * np.pi))
     return abs(2 * np.pi * multiple - theta) < eps
 
+
 class SU2TransformRule(TransformRule):
     """ a subClass of TransformRule, to check the decomposition of SU2
 
     """
-    def check_equal(self, ignore_phase = True, eps = 1e-7):
+
+    def check_equal(self, ignore_phase=True, eps=1e-7):
         qubit = 1
         d = np.power(2, qubit)
         Q = np.mat(ortho_group.rvs(dim=d))
@@ -72,9 +76,20 @@ class SU2TransformRule(TransformRule):
         gate.targs = [0]
         compositeGate = self.transform(gate)
         ans = compositeGate.equal(gate, ignore_phase=ignore_phase, eps=eps)
-        if not ans:
-            print(U)
+        # if not ans:
+        #     print()
+        #     print("U:")
+        #     print(U)
+        #     print("Decomposed as:")
+        #     prod = np.eye(2)
+        #     for gate in compositeGate.gates:
+        #         prod = gate.matrix @ prod
+        #         print(gate.matrix)
+        #         print()
+        #     print("Decompose product")
+        #     print(prod)
         return ans
+
 
 def _zyzRule(gate):
     """ decomposition the unitary gate with 2 * 2 unitary into Rz Ry Rz sequence
@@ -88,7 +103,7 @@ def _zyzRule(gate):
     unitary = gate.matrix
     targ = gate.targ
     eps = 1e-13
-    
+
     det = linalg.det(unitary)
     beta_plus_delta = 0
     beta_dec_delta = 0
@@ -116,7 +131,9 @@ def _zyzRule(gate):
             Rz(beta) & targ
     return compositeGate
 
+
 ZyzRule = SU2TransformRule(_zyzRule)
+
 
 def _xyxRule(gate):
     """ decomposition the unitary gate with 2 * 2 unitary into Rx Ry Rx sequence
@@ -131,13 +148,11 @@ def _xyxRule(gate):
     targ = gate.targ
     eps = 1e-13
     unitary = np.array([
-        [0.5 * (unitary[0, 0] + unitary[0, 1] + unitary[1, 0] + unitary[1, 1])
-         , 0.5 * (unitary[0, 0] - unitary[0, 1] + unitary[1, 0] - unitary[1, 1])
-         ],
-        [0.5 * (unitary[0, 0] + unitary[0, 1] - unitary[1, 0] - unitary[1, 1])
-            , 0.5 * (unitary[0, 0] - unitary[0, 1] - unitary[1, 0] + unitary[1, 1])
-         ]
-    ], dtype = np.complex128)
+        [0.5 * (unitary[0, 0] + unitary[0, 1] + unitary[1, 0] + unitary[1, 1]),
+         0.5 * (unitary[0, 0] - unitary[0, 1] + unitary[1, 0] - unitary[1, 1])],
+        [0.5 * (unitary[0, 0] + unitary[0, 1] - unitary[1, 0] - unitary[1, 1]),
+         0.5 * (unitary[0, 0] - unitary[0, 1] - unitary[1, 0] + unitary[1, 1])]
+    ], dtype=np.complex128)
     det = linalg.det(unitary)
     beta_plus_delta = 0
     beta_dec_delta = 0
@@ -164,7 +179,10 @@ def _xyxRule(gate):
         if not _check2pi(beta):
             Rx(beta) & targ
     return compositeGate
+
+
 XyxRule = SU2TransformRule(_xyxRule)
+
 
 def _ibmqRule(gate):
     unitary = gate.matrix
@@ -191,7 +209,7 @@ def _ibmqRule(gate):
     compositeGate = CompositeGate()
     with compositeGate:
         if not _check2pi(delta):
-            Rz(delta)  & targ
+            Rz(delta) & targ
         if not _check2pi(gamma):
             SX & targ
             Rz(gamma) & targ
@@ -200,4 +218,33 @@ def _ibmqRule(gate):
         if not _check2pi(beta):
             Rz(beta) & targ
     return compositeGate
+
+
 IbmqRule = SU2TransformRule(_ibmqRule)
+
+
+def _xzxRule(gate: BasicGate):
+    unitary = gate.matrix
+    det = linalg.det(unitary)
+    targ = gate.targ
+    eps = 1e-13
+    if abs(det - 1) > eps:
+        unitary[:] /= np.sqrt(det)
+
+    delta1 = (unitary[0, 0] + unitary[1, 1]) ** 2 - (unitary[0, 1] + unitary[1, 0]) ** 2
+    beta = _arccos((delta1.real - 2) / 2)
+    alpha_plus_gamma_half = _arccos((unitary[0, 0] + unitary[1, 1]).real / (2 * np.cos(beta / 2)))
+    alpha_minus_gamma_half = (_arccos((unitary[0, 0] - unitary[1, 1]) / (-2j * np.sin(beta / 2)))).real
+    alpha = alpha_plus_gamma_half + alpha_minus_gamma_half
+    gamma = alpha_plus_gamma_half - alpha_minus_gamma_half
+
+    cg = CompositeGate()
+    with cg:
+        Rx(gamma) & targ
+        Rz(beta) & targ
+        Rx(alpha) & targ
+
+    return cg
+
+
+XzxRule = SU2TransformRule(_xzxRule)
