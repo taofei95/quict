@@ -971,6 +971,10 @@ class ProxySimulator(BasicSimulator):
                     self._qubits,
                     self._sync
                 )
+        elif gate.type() == GATE_ID["PermT"]:
+            pass
+        elif gate.type() == GATE_ID["PermFxT"]:
+            pass
         elif gate.type() == GATE_ID["Unitary"]:
             # TODO: Use np.dot, matrix*vec = 2^n * 2^n x 2^n * 1.
             pass
