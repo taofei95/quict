@@ -14,11 +14,26 @@
 #include <immintrin.h>
 
 // v1 * v2 == (v1r * v2r - v1i * v2i) + (v1i * v2r + v1r * v2i)*J
-#define COMPLEX_YMM_MUL(v1r, v1i, v2r, v2i, res_r, res_i)  \
-     res_r = _mm256_mul_pd(v1r,v2r);                                       \
-     res_r = _mm256_fnmadd_pd(v1i,v2i,res_r);                            \
-     res_i = _mm256_mul_pd(v1i,v2r);                                       \
-     res_i = _mm256_fmadd_pd(v1r,v2i,res_i);
+#define COMPLEX_YMM_MUL(v1r, v1i, v2r, v2i, res_r, res_i) \
+    res_r = _mm256_mul_pd(v1r, v2r);\
+    res_r = _mm256_fnmadd_pd(v1i, v2i, res_r);\
+    res_i = _mm256_mul_pd(v1i, v2r);\
+    res_i = _mm256_fmadd_pd(v1r, v2i, res_i);
+
+
+#define STRIDE_2_LOAD_ODD_PD(from_addr, to_reg, tmp1, tmp2) \
+    tmp1 = _mm256_loadu_pd(from_addr);\
+    tmp2 = _mm256_loadu_pd(((double*)from_addr) + 4);\
+    tmp1 = _mm256_shuffle_pd(tmp1, tmp2, 0b1111);\
+    to_reg = _mm256_permute4x64_pd(tmp1, 0b11011000);
+
+
+#define STRIDE_2_STORE_ODD_PD(to_addr, from_reg, tmp_arr) \
+    _mm256_storeu_pd(tmp_arr, from_reg);\
+    (to_addr)[1] = tmp_arr[0];\
+    (to_addr)[3] = tmp_arr[1];\
+    (to_addr)[5] = tmp_arr[2];\
+    (to_addr)[7] = tmp_arr[3];
 
 
 namespace QuICT {
@@ -26,7 +41,7 @@ namespace QuICT {
     // Time Measurement
     //* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
     template<typename Callable, typename ...Arg, typename TimeUnit=std::chrono::microseconds>
-    uint64_t time_elapse(Callable callable, Arg&& ... args) {
+    uint64_t time_elapse(Callable callable, Arg &&... args) {
         using namespace std;
         auto start_time = chrono::steady_clock::now();
         callable(args...);
@@ -150,17 +165,15 @@ namespace QuICT {
         ret[2] = ret[0] | (1ULL << (qubit_num - 1 - qubits[N - 2]));
         ret[3] = ret[1] | (1ULL << (qubit_num - 1 - qubits[N - 2]));
 
-        for(int64_t i = 2; i < N; ++i)
-        {
+        for (int64_t i = 2; i < N; ++i) {
             const auto half_cnt = 1ULL << i;
             const auto tail = 1ULL << (qubit_num - 1 - qubits[N - 1 - i]);
-            __m256d tail4 = _mm256_set1_pd(*((double *)&tail));
+            __m256d tail4 = _mm256_set1_pd(*((double *) &tail));
 
-            for(uint64_t j = 0; j < half_cnt; j += 4)
-            {
-                __m256d cur = _mm256_loadu_pd((double *)&ret[j]);
+            for (uint64_t j = 0; j < half_cnt; j += 4) {
+                __m256d cur = _mm256_loadu_pd((double *) &ret[j]);
                 __m256d res = _mm256_or_pd(cur, tail4);
-                _mm256_storeu_pd((double *)&ret[half_cnt+j], res);
+                _mm256_storeu_pd((double *) &ret[half_cnt + j], res);
             }
         }
         return ret;
@@ -174,8 +187,7 @@ namespace QuICT {
             const uint64_t task_id,
             const uint64_t qubit_num,
             const uarray_t<2> &qubits,
-            const uarray_t<2> &qubits_sorted)
-    {
+            const uarray_t<2> &qubits_sorted) {
         auto ret = uarray_t<4>();
 
         const uint64_t pos0 = qubit_num - 1 - qubits_sorted[1];

@@ -1,5 +1,3 @@
-#pragma clang diagnostic push
-#pragma ide diagnostic ignored "openmp-use-default-none"
 //
 // Created by Ci Lei on 2021-07-02.
 //
@@ -298,11 +296,11 @@ namespace QuICT {
             if (gate.targ_ == circuit_qubit_num - 1) {
                 constexpr uint64_t batch_size = 4;
                 auto cc = gate.sqrt2_inv.real();
+                __m256d ymm0 = _mm256_broadcast_sd(&cc);
 #pragma omp parallel for
                 for (uint64_t task_id = 0; task_id < task_num; task_id += batch_size) {
                     auto ind_0 = index(task_id, circuit_qubit_num, gate.targ_);
 
-                    __m256d ymm0 = _mm256_broadcast_sd(&cc);
                     // Load
                     __m256d ymm1 = _mm256_loadu_pd(&real[ind_0[0]]);
                     __m256d ymm2 = _mm256_loadu_pd(&real[ind_0[0] + 4]);
@@ -497,32 +495,43 @@ namespace QuICT {
             uint64_t task_num = 1ULL << (circuit_qubit_num - 2);
             if (qubits_sorted[1] == circuit_qubit_num - 1) {
                 if (qubits_sorted[0] == circuit_qubit_num - 2) {
-                    // Test Passed 2021-09-11
                     __m256d ymm0; // dr
                     __m256d ymm1; // di
-                    if (qubits[0] == qubits_sorted[0]) { // ...q0q1
-                        // v00 v01 v02 v03 v10 v11 v12 v13
-                        ymm0 = _mm256_setr_pd(1, 1, gate.diagonal_real_[0], gate.diagonal_real_[1]);
-                        ymm1 = _mm256_setr_pd(0, 0, gate.diagonal_imag_[0], gate.diagonal_imag_[1]);
-                    } else { // ...q1q0
-                        // v00 v02 v01 v03 v10 v12 v11 v13
-                        ymm0 = _mm256_setr_pd(1, gate.diagonal_real_[0], 1, gate.diagonal_real_[1]);
-                        ymm1 = _mm256_setr_pd(0, gate.diagonal_imag_[0], 0, gate.diagonal_imag_[1]);
-                    }
-                    constexpr uint64_t batch_size = 1;
+                    ymm0 = _mm256_setr_pd(gate.diagonal_real_[0], gate.diagonal_real_[1],
+                                          gate.diagonal_real_[0], gate.diagonal_real_[1]);
+                    ymm1 = _mm256_setr_pd(gate.diagonal_imag_[0], gate.diagonal_imag_[1],
+                                          gate.diagonal_imag_[0], gate.diagonal_imag_[1]);
+                    constexpr uint64_t batch_size = 2;
 #pragma omp parallel for
                     for (uint64_t task_id = 0; task_id < task_num; task_id += batch_size) {
-                        auto ind = index0(task_id, circuit_qubit_num, qubits, qubits_sorted);
-                        __m256d ymm2 = _mm256_loadu_pd(&real[ind]); // vr
-                        __m256d ymm3 = _mm256_loadu_pd(&imag[ind]); // vi
+                        __m256d ymm2; // vr
+                        __m256d ymm3; // vi
+                        __m256d ymm6, ymm7; // tmp reg
+                        auto inds = index(task_id, circuit_qubit_num, qubits, qubits_sorted);
+                        if (qubits[0] == qubits_sorted[0]) { // ...q0q1
+                            // v00 v01 v02 v03 v10 v11 v12 v13
+                            ymm2 = _mm256_loadu2_m128d(&real[inds[2] + 4], &real[inds[2]]);
+                            ymm3 = _mm256_loadu2_m128d(&imag[inds[2] + 4], &imag[inds[2]]);
+                        } else { // ...q1q0
+                            // v00 v02 v01 v03 v10 v12 v11 v13
+                            STRIDE_2_LOAD_ODD_PD(&real[inds[0]], ymm2, ymm6, ymm7);
+                            STRIDE_2_LOAD_ODD_PD(&imag[inds[0]], ymm3, ymm6, ymm7);
+                        }
                         __m256d ymm4; // res_r
-                        __m256d ymm5; // res_is
+                        __m256d ymm5; // res_i
                         COMPLEX_YMM_MUL(ymm0, ymm1, ymm2, ymm3, ymm4, ymm5);
-                        _mm256_storeu_pd(&real[ind], ymm4);
-                        _mm256_storeu_pd(&imag[ind], ymm5);
+                        if (qubits[0] == qubits_sorted[0]) { // ...q0q1
+                            // v00 v01 v02 v03 v10 v11 v12 v13
+                            _mm256_storeu2_m128d(&real[inds[2] + 4], &real[inds[2]], ymm4);
+                            _mm256_storeu2_m128d(&imag[inds[2] + 4], &imag[inds[2]], ymm5);
+                        } else { // ...q1q0
+                            // v00 v02 v01 v03 v10 v12 v11 v13
+                            Precision tmp[4];
+                            STRIDE_2_STORE_ODD_PD(&real[inds[0]], ymm4, tmp);
+                            STRIDE_2_STORE_ODD_PD(&imag[inds[0]], ymm5, tmp);
+                        }
                     }
                 } else if (qubits_sorted[0] < circuit_qubit_num - 2) {
-                    // Test Passed 2021-09-11
                     if (qubits_sorted[0] == qubits[0]) { // ...q0.q1
                         // v00 v01 v10 v11 v02 v03 v12 v13
                         constexpr uint64_t batch_size = 2;
@@ -590,7 +599,7 @@ namespace QuICT {
                         __m256d ymm2 = _mm256_loadu_pd(&real[inds[2]]); // vr
                         __m256d ymm3 = _mm256_loadu_pd(&imag[inds[2]]);  // vi
                         __m256d ymm4, ymm5;
-                        COMPLEX_YMM_MUL(ymm0, ymm1, ymm2, ymm3, ymm4, ymm5)
+                        COMPLEX_YMM_MUL(ymm0, ymm1, ymm2, ymm3, ymm4, ymm5);
                         _mm256_storeu_pd(&real[inds[2]], ymm4);
                         _mm256_storeu_pd(&imag[inds[2]], ymm5);
                     }
@@ -609,8 +618,8 @@ namespace QuICT {
                         __m256d ymm6 = _mm256_loadu_pd(&imag[inds[0]]); // v00 v10 v02 v12, imag
                         __m256d ymm7 = _mm256_loadu_pd(&imag[inds[1]]); // v01 v11 v03 v13, imag
                         __m256d ymm8, ymm9, ymm10, ymm11;
-                        COMPLEX_YMM_MUL(ymm0, ymm2, ymm4, ymm6, ymm8, ymm9)
-                        COMPLEX_YMM_MUL(ymm1, ymm3, ymm5, ymm7, ymm10, ymm11)
+                        COMPLEX_YMM_MUL(ymm0, ymm2, ymm4, ymm6, ymm8, ymm9);
+                        COMPLEX_YMM_MUL(ymm1, ymm3, ymm5, ymm7, ymm10, ymm11);
                         _mm256_storeu_pd(&real[inds[0]], ymm8);
                         _mm256_storeu_pd(&real[inds[1]], ymm10);
                         _mm256_storeu_pd(&imag[inds[0]], ymm9);
@@ -619,7 +628,6 @@ namespace QuICT {
                 }
             } else if (qubits_sorted[1] < circuit_qubit_num - 2) { // ...q...q..
                 // Easiest branch :)
-                // Test Passed 2021-09-11
                 __m256d ymm0 = _mm256_broadcast_sd(&gate.diagonal_real_[0]);
                 __m256d ymm1 = _mm256_broadcast_sd(&gate.diagonal_real_[1]);
                 __m256d ymm2 = _mm256_broadcast_sd(&gate.diagonal_imag_[0]);
@@ -634,8 +642,8 @@ namespace QuICT {
                     __m256d ymm7 = _mm256_loadu_pd(&imag[inds[3]]);
 
                     __m256d ymm8, ymm9, ymm10, ymm11;
-                    COMPLEX_YMM_MUL(ymm0, ymm2, ymm4, ymm6, ymm8, ymm9)
-                    COMPLEX_YMM_MUL(ymm1, ymm3, ymm5, ymm7, ymm10, ymm11)
+                    COMPLEX_YMM_MUL(ymm0, ymm2, ymm4, ymm6, ymm8, ymm9);
+                    COMPLEX_YMM_MUL(ymm1, ymm3, ymm5, ymm7, ymm10, ymm11);
                     _mm256_storeu_pd(&real[inds[2]], ymm8);
                     _mm256_storeu_pd(&real[inds[3]], ymm10);
                     _mm256_storeu_pd(&imag[inds[2]], ymm9);
@@ -798,12 +806,46 @@ namespace QuICT {
             throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__) + ": "
                                      + "Not Implemented " + __func__);
         } else if constexpr(std::is_same_v<Precision, double>) {
+            uarray_t<2> qubits = {gate.carg_, gate.targ_};
+            uarray_t<2> qubits_sorted = {gate.carg_, gate.targ_};
+            if (gate.carg_ > gate.targ_) {
+                qubits_sorted[0] = gate.targ_;
+                qubits_sorted[1] = gate.carg_;
+            }
 
+            uint64_t task_num = 1ULL << (circuit_qubit_num - 2);
+            if (qubits_sorted[1] == circuit_qubit_num - 1) {
+                if (qubits_sorted[0] == circuit_qubit_num - 2) {
+                    __m256d ymm0, ymm1; // vr, vi
+                    if (qubits_sorted[0] == qubits[0]) {
+                        // v00 v01 v02 v03 v10 v11 v12 v13
+                    } else {
+                        // v00 v02 v01 v03 v10 v12 v11 v13
+                    }
+                } else if (qubits_sorted[0] < circuit_qubit_num - 2) {
+                    if (qubits_sorted[0] == qubits[0]) { // ...q0.q1
+                        // v00 v01 v10 v11 v02 v03 v12 v13
 
+                    } else { // ...q1.q0
+                        // v00 v02 v10 v12 v01 v03 v11 v13
+
+                    }
+                }
+            } else if (qubits_sorted[1] == circuit_qubit_num - 2) {
+                // ...q.q.
+                // Test Passed 2021-09-11
+                if (qubits[0] == qubits_sorted[0]) { // ...q0.q1.
+                    // v00 v10 v01 v11 ... v02 v12 v03 v13
+
+                } else { // ...q1.q0.
+                    // v00 v10 v02 v12 ... v01 v11 v03 v13
+
+                }
+            } else if (qubits_sorted[1] < circuit_qubit_num - 2) { // ...q...q..
+
+            }
         }
     }
 }
 
 #endif //SIM_BACK_HYBRID_SIMULATOR_H
-
-#pragma clang diagnostic pop
