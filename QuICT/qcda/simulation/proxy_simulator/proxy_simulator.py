@@ -254,11 +254,12 @@ class ProxySimulator(BasicSimulator):
             c_index = self.total_qubits - 1 - gate.carg
             matrix = self.get_Matrix(gate)
             if t_index >= self.limit_qubits and c_index >= self.limit_qubits:
-                if self.proxy.rank & (1 << (c_index - self.limit_qubits)):
-                    index = 15 if self.proxy.rank & (1 << (t_index - self.limit_qubits)) else \
-                        10
+                if (
+                    self.proxy.rank & (1 << (c_index - self.limit_qubits)) and
+                    self.proxy.rank & (1 << (t_index - self.limit_qubits))
+                ):
                     self._algorithm.Simple_Multiply(
-                        index,
+                        15,
                         matrix,
                         self._vector,
                         self._qubits,
@@ -549,7 +550,10 @@ class ProxySimulator(BasicSimulator):
                     self._qubits,
                     self._sync
                 )
-        elif gate.type() == GATE_ID["RXX"] or gate.type() == GATE_ID["RYY"]:
+        elif (
+            gate.type() == GATE_ID["RXX"] or 
+            gate.type() == GATE_ID["RYY"]
+        ):
             t_indexes = [self.total_qubits - 1 - targ for targ in gate.targs]
             matrix = self.get_Matrix(gate)
             if t_indexes[0] > t_indexes[1]:
@@ -613,29 +617,7 @@ class ProxySimulator(BasicSimulator):
             if t_indexes[0] > t_indexes[1]:
                 t_indexes[0], t_indexes[1] = t_indexes[1], t_indexes[0]
 
-            if t_indexes[0] >= self.limit_qubits:
-                _0 = self.proxy.rank & (1 << (t_indexes[0] - self.limit_qubits))
-                _1 = self.proxy.rank & (1 << (t_indexes[1] - self.limit_qubits))
-
-                if _0 != _1:
-                    destination = self.proxy.rank ^ ((1 << (t_indexes[0] - self.limit_qubits)) + (1 << (t_indexes[1] - self.limit_qubits)))
-                    self._data_switcher.all_switch(self._vector, destination)
-            elif t_indexes[1] >= self.limit_qubits:
-                destination = self.proxy.rank ^ (1 << (t_indexes[1] - self.limit_qubits))
-                switch_condition = {t_indexes[0]: int(self.proxy.rank < destination)}
-                
-                self._data_switcher.ctargs_switch(
-                    self._vector,
-                    destination,
-                    switch_condition
-                )
-            else:
-                self._algorithm.Controlled_Swap_targs(
-                    t_indexes,
-                    self._vector,
-                    self._qubits,
-                    self._sync
-                )
+            self.swap_operation(t_indexes)
         elif gate.type() == GATE_ID["ID"]:
             pass
         elif gate.type() == GATE_ID["CCX"]:
@@ -972,7 +954,17 @@ class ProxySimulator(BasicSimulator):
                     self._sync
                 )
         elif gate.type() == GATE_ID["PermT"]:
-            pass
+            mapping = np.array(gate.pargs)
+            count, indexes = [], []
+            for idx, map in enumerate(mapping):
+                if idx not in count:
+                    while idx != map:
+                        count.append(map)
+                        indexes.append([self.total_qubits - 1 - map, self.total_qubits - 1 - idx])
+                        map = mapping[map]
+
+            for t_indexes in indexes:
+                self.swap_operation(t_indexes)
         elif gate.type() == GATE_ID["PermFxT"]:
             pass
         elif gate.type() == GATE_ID["Unitary"]:
@@ -1040,3 +1032,29 @@ class ProxySimulator(BasicSimulator):
         swaped_pargs = np.argsort(swaped_indexes)
 
         return swaped_pargs
+
+    def swap_operation(self, indexes):
+        if indexes[0] >= self.limit_qubits:
+            _0 = self.proxy.rank & (1 << (indexes[0] - self.limit_qubits))
+            _1 = self.proxy.rank & (1 << (indexes[1] - self.limit_qubits))
+
+            if _0 != _1:
+                destination = self.proxy.rank ^ ((1 << (indexes[0] - self.limit_qubits)) + (1 << (indexes[1] - self.limit_qubits)))
+                self._data_switcher.all_switch(self._vector, destination)
+        elif indexes[1] >= self.limit_qubits:
+            destination = self.proxy.rank ^ (1 << (indexes[1] - self.limit_qubits))
+            switch_condition = {indexes[0]: int(self.proxy.rank < destination)}
+            
+            self._data_switcher.ctargs_switch(
+                self._vector,
+                destination,
+                switch_condition
+            )
+        else:
+            self._algorithm.Controlled_Swap_targs(
+                indexes,
+                self._vector,
+                self._qubits,
+                self._sync
+            )
+
