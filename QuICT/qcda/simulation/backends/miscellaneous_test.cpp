@@ -94,6 +94,8 @@ TEST(MiscTest, MultiIndexTest) {
     vector<uint64_t> res_vec;
     for (uint64_t task_id = 0; task_id < task_num; ++task_id) {
         auto ind = QuICT::index(task_id, qubit_num, qubits, qubits_sorted);
+        auto ind0 = QuICT::index0(task_id, qubit_num, qubits, qubits_sorted);
+        ASSERT_EQ(ind0, ind[0]);
         res_vec.push_back(ind[0]);
         res_vec.push_back(ind[1]);
         res_vec.push_back(ind[2]);
@@ -128,4 +130,29 @@ TEST(MiscTest, AVXTest) {
     EXPECT_DOUBLE_EQ(arr[1], res[1]);
     EXPECT_DOUBLE_EQ(arr[2], res[2]);
     EXPECT_DOUBLE_EQ(arr[3], res[3]);
+}
+
+TEST(MiscTest, StridLoadStoreTest) {
+    double a[8], a_cpy[8];
+    double b[8], b_cpy[8];
+    double tmp[4];
+    constexpr double eps = 1e-6;
+    for (int i = 0; i < 8; ++i) {
+        a[i] = a_cpy[i] = i;
+        b[i] = b_cpy[i] = -i;
+    }
+    __m256d ymm0, ymm1, ymm2, ymm3;
+    STRIDE_2_LOAD_ODD_PD(a, ymm0, ymm2, ymm3);
+    STRIDE_2_LOAD_ODD_PD(a_cpy, ymm1, ymm2, ymm3);
+    STRIDE_2_STORE_ODD_PD(b, ymm0, tmp);
+    STRIDE_2_STORE_ODD_PD(b_cpy, ymm1, tmp);
+    for (int i = 0; i < 8; ++i) {
+        if (i & 1) {
+            ASSERT_NEAR(b[i], i, eps);
+            ASSERT_NEAR(b_cpy[i], i, eps);
+        } else {
+            ASSERT_NEAR(b[i], -i, eps);
+            ASSERT_NEAR(b_cpy[i], -i, eps);
+        }
+    }
 }

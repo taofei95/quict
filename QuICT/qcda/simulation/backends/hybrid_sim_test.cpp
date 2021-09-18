@@ -108,8 +108,8 @@ void test_by_data_file(
 
     std::complex<Precision> *state = simulator.run(qubit_num, gate_desc_vec);
     for (uint64_t i = 0; i < (1ULL << qubit_num); ++i) {
-        EXPECT_NEAR(state[i].real(), expect_state[i].real(), eps);
-        EXPECT_NEAR(state[i].imag(), expect_state[i].imag(), eps);
+        ASSERT_NEAR(state[i].real(), expect_state[i].real(), eps);
+        ASSERT_NEAR(state[i].imag(), expect_state[i].imag(), eps);
     }
     delete[] state;
     delete[] expect_state;
