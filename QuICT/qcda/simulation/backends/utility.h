@@ -23,17 +23,17 @@
 
 #define STRIDE_2_LOAD_ODD_PD(from_addr, to_reg, tmp1, tmp2) \
     tmp1 = _mm256_loadu_pd(from_addr);\
-    tmp2 = _mm256_loadu_pd(((double*)from_addr) + 4);\
+    tmp2 = _mm256_loadu_pd(((double*)(from_addr)) + 4);\
     to_reg = _mm256_shuffle_pd(tmp1, tmp2, 0b1111);\
     to_reg = _mm256_permute4x64_pd(to_reg, 0b11011000);
 
 
 #define STRIDE_2_STORE_ODD_PD(to_addr, from_reg, tmp_arr) \
     _mm256_storeu_pd(tmp_arr, from_reg);\
-    ((double*)(to_addr))[1] = (double)tmp_arr[0];\
-    ((double*)(to_addr))[3] = (double)tmp_arr[1];\
-    ((double*)(to_addr))[5] = (double)tmp_arr[2];\
-    ((double*)(to_addr))[7] = (double)tmp_arr[3];
+    ((double*)(to_addr))[1] = (double)(tmp_arr)[0];\
+    ((double*)(to_addr))[3] = (double)(tmp_arr)[1];\
+    ((double*)(to_addr))[5] = (double)(tmp_arr)[2];\
+    ((double*)(to_addr))[7] = (double)(tmp_arr)[3];
 
 
 namespace QuICT {

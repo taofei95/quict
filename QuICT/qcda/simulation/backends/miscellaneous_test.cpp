@@ -141,15 +141,18 @@ TEST(MiscTest, StridLoadStoreTest) {
         a[i] = a_cpy[i] = i;
         b[i] = b_cpy[i] = -i;
     }
-    __m256d ymm0, ymm1, ymm2, ymm3;
+    __m256d ymm0, ymm1, ymm2, ymm3, ymm4;
+    ymm4 = _mm256_setr_pd(10, 20, 30, 40);
     STRIDE_2_LOAD_ODD_PD(a, ymm0, ymm2, ymm3);
     STRIDE_2_LOAD_ODD_PD(a_cpy, ymm1, ymm2, ymm3);
+    ymm0 = _mm256_mul_pd(ymm4, ymm0);
+    ymm1 = _mm256_mul_pd(ymm4, ymm1);
     STRIDE_2_STORE_ODD_PD(b, ymm0, tmp);
     STRIDE_2_STORE_ODD_PD(b_cpy, ymm1, tmp);
     for (int i = 0; i < 8; ++i) {
         if (i & 1) {
-            ASSERT_NEAR(b[i], i, eps);
-            ASSERT_NEAR(b_cpy[i], i, eps);
+            ASSERT_NEAR(b[i], i * 5 * (i + 1), eps);
+            ASSERT_NEAR(b_cpy[i], i * 5 * (i + 1), eps);
         } else {
             ASSERT_NEAR(b[i], -i, eps);
             ASSERT_NEAR(b_cpy[i], -i, eps);

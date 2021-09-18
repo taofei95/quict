@@ -108,8 +108,8 @@ void test_by_data_file(
 
     std::complex<Precision> *state = simulator.run(qubit_num, gate_desc_vec);
     for (uint64_t i = 0; i < (1ULL << qubit_num); ++i) {
-        ASSERT_NEAR(state[i].real(), expect_state[i].real(), eps);
-        ASSERT_NEAR(state[i].imag(), expect_state[i].imag(), eps);
+        ASSERT_NEAR(state[i].real(), expect_state[i].real(), eps) << "i = " << i;
+        ASSERT_NEAR(state[i].imag(), expect_state[i].imag(), eps) << "i = " << i;
     }
     delete[] state;
     delete[] expect_state;
@@ -117,22 +117,22 @@ void test_by_data_file(
 
 auto simulator = QuICT::HybridSimulator<double>();
 
-TEST(HybridTest, HTest) {
-    test_by_data_file("h.txt", simulator);
-}
+//TEST(HybridTest, HTest) {
+//    test_by_data_file("h.txt", simulator);
+//}
 
 TEST(HybridTest, CrzTest) {
     test_by_data_file("crz.txt", simulator);
 }
 
-TEST(HybridTest, QftTest) {
-    test_by_data_file("qft.txt", simulator);
-}
-
-TEST(HybridTest, XTest) {
-    test_by_data_file("x.txt", simulator);
-}
-
-TEST(HybridTest, U1Test) {
-    test_by_data_file("u1.txt", simulator);
-}
+//TEST(HybridTest, QftTest) {
+//    test_by_data_file("qft.txt", simulator);
+//}
+//
+//TEST(HybridTest, XTest) {
+//    test_by_data_file("x.txt", simulator);
+//}
+//
+//TEST(HybridTest, U1Test) {
+//    test_by_data_file("u1.txt", simulator);
+//}
