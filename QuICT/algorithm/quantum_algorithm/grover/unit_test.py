@@ -6,21 +6,21 @@
 
 import pytest
 
-from QuICT.algorithm import StandardGrover, PartialGrover, GroverWithPriorKnowledge
+from QuICT.algorithm.quantum_algorithm.grover import Grover, PartialGrover, GroverWithPriorKnowledge
 from QuICT.core import *
 
 def main_oracle(f, qreg, ancilla):
     PermFx(f) | (qreg, ancilla)
 
 
-def test_SimpleGrover():
+def test_grover():
     for n in range(3, 9):
         error = 0
         N =  2**n
         for target in range(0, N):
             f = [0] * N
             f[target] = 1
-            result = StandardGrover.run(f, n, main_oracle)
+            result = Grover.run(f, n, main_oracle)
             if target != result:
                 error += 1
                 print("For n = %d, target = %d, found = %d" %(n, target, result))
@@ -32,7 +32,7 @@ def test_SimpleGrover():
     assert 1
 
 
-def test_PartialGrover():
+def test_partial_grover():
     k = 3
     for n in range(5, 9):
         print("run with n = ", n)
@@ -54,7 +54,7 @@ def test_PartialGrover():
     assert 1
 
 
-def test_GroverWithPriorKnowledge():
+def test_grover_with_prior_knowledge():
     for test_number in range(3, 5):
         for i in range(2, 8):
             for T in range(1, 4):

@@ -9,36 +9,11 @@ import random
 
 import numpy as np
 
-from .._algorithm import Algorithm
+from QuICT.algorithm import Algorithm
 from QuICT.core import *
+from .utility import *
 
-def EX_GCD(a, b, arr):
-    if b == 0:
-        arr[0] = 1
-        arr[1] = 0
-        return a
-    g = EX_GCD(b, a % b, arr)
-    t = arr[0]
-    arr[0] = arr[1]
-    arr[1] = t - int(a / b) * arr[1]
-    return g
-
-def ModReverse(a, n):
-    arr = [0, 1]
-    EX_GCD(a, n, arr)
-    return (arr[0] % n + n) % n
-
-def fast_power(a, b):
-    x = 1
-    now_a = a
-    while b > 0:
-        if b % 2 == 1:
-            x *= now_a
-        now_a *= now_a
-        b >>= 1
-    return x
-
-def controlAddMod(c1, c2, a, Nth, L, circuit):
+def c_add_mod(c1, c2, a, Nth, L, circuit):
     an = []
     for j in range(L + 1):
         an.append(a % 2)
@@ -55,35 +30,35 @@ def controlAddMod(c1, c2, a, Nth, L, circuit):
         th.append(tht)
     th.reverse()
     for j in range(L + 1):
-        CCRz(np.pi * th[j]) | circuit([c1, c2, L + 1 + j])
+        CCRz(np.pi * th[j]) | circuit([c1, c2, 3 * L + j])
 
     for j in range(L + 1):
-        Rz(-np.pi * Nth[j]) | circuit(L + 1 + j)
+        Rz(-np.pi * Nth[j]) | circuit(3 * L + j)
 
-    IQFT | circuit([i for i in range(2 * L + 1, L, -1)])
+    IQFT | circuit([i for i in range(4 * L, 3 * L - 1, -1)])
 
-    CX  | circuit([2 * L + 1, 2 * L + 2])
+    CX  | circuit([4 * L, 4 * L + 1])
 
-    QFT | circuit([i for i in range(2 * L + 1, L, -1)])
-
-    for j in range(L + 1):
-        CRz(np.pi * Nth[j]) | circuit([2 * L + 2, L + 1 + j])
+    QFT | circuit([i for i in range(4 * L, 3 * L - 1, -1)])
 
     for j in range(L + 1):
-        CCRz(-np.pi * th[j]) | circuit([c1, c2, L + 1 + j])
-
-    IQFT | circuit([i for i in range(2 * L + 1, L, -1)])
-
-    X | circuit(2 * L + 1)
-    CX | circuit([2 * L + 1, 2 * L + 2])
-    X | circuit(2 * L + 1)
-
-    QFT | circuit([i for i in range(2 * L + 1, L, -1)])
+        CRz(np.pi * Nth[j]) | circuit([4 * L + 1, 3 * L + j])
 
     for j in range(L + 1):
-        CCRz(np.pi * th[j]) | circuit([c1, c2, L + 1 + j])
+        CCRz(-np.pi * th[j]) | circuit([c1, c2, 3 * L + j])
 
-def controlAddMod_reverse(c1, c2, a, Nth, L, circuit):
+    IQFT | circuit([i for i in range(4 * L, 3 * L - 1, -1)])
+
+    X | circuit(4 * L)
+    CX | circuit([4 * L, 4 * L + 1])
+    X | circuit(4 * L)
+
+    QFT | circuit([i for i in range(4 * L, 3 * L - 1, -1)])
+
+    for j in range(L + 1):
+        CCRz(np.pi * th[j]) | circuit([c1, c2, 3 * L + j])
+
+def c_add_mod_reverse(c1, c2, a, Nth, L, circuit):
     an = []
     for j in range(L + 1):
         an.append(a % 2)
@@ -100,65 +75,72 @@ def controlAddMod_reverse(c1, c2, a, Nth, L, circuit):
         th.append(tht)
     th.reverse()
     for j in range(L + 1):
-        CCRz(-np.pi * th[j]) | circuit([c1, c2, L + 1 + j])
+        CCRz(-np.pi * th[j]) | circuit([c1, c2, 3 * L + j])
 
-    IQFT | circuit([i for i in range(2 * L + 1, L, -1)])
+    IQFT | circuit([i for i in range(4 * L, 3 * L - 1, -1)])
 
-    X | circuit(2 * L + 1)
-    CX | circuit([2 * L + 1, 2 * L + 2])
-    X | circuit(2 * L + 1)
+    X | circuit(4 * L)
+    CX | circuit([4 * L, 4 * L + 1])
+    X | circuit(4 * L)
 
-    QFT | circuit([i for i in range(2 * L + 1, L, -1)])
-
-    for j in range(L + 1):
-        CCRz(np.pi * th[j]) | circuit([c1, c2, L + 1 + j])
+    QFT | circuit([i for i in range(4 * L, 3 * L - 1, -1)])
 
     for j in range(L + 1):
-        CRz(-np.pi * Nth[j]) | circuit([2 * L + 2, L + 1 + j])
-
-    IQFT | circuit([i for i in range(2 * L + 1, L, -1)])
-
-    CX  | circuit([2 * L + 1, 2 * L + 2])
-
-    QFT | circuit([i for i in range(2 * L + 1, L, -1)])
+        CCRz(np.pi * th[j]) | circuit([c1, c2, 3 * L + j])
 
     for j in range(L + 1):
-        Rz(np.pi * Nth[j]) | circuit(L + 1 + j)
+        CRz(-np.pi * Nth[j]) | circuit([4 * L + 1, 3 * L + j])
+
+    IQFT | circuit([i for i in range(4 * L, 3 * L - 1, -1)])
+
+    CX  | circuit([4 * L, 4 * L + 1])
+
+    QFT | circuit([i for i in range(4 * L, 3 * L - 1, -1)])
 
     for j in range(L + 1):
-        CCRz(-np.pi * th[j]) | circuit([c1, c2, L + 1 + j])
+        Rz(np.pi * Nth[j]) | circuit(3 * L + j)
 
-def cmult(a, N, Nth, L, circuit):
-    QFT  | circuit([i for i in range(2 * L + 1, L, -1)])
+    for j in range(L + 1):
+        CCRz(-np.pi * th[j]) | circuit([c1, c2, 3 * L + j])
+
+def c_mult(cqubit, a, N, Nth, L, circuit):
+    QFT  | circuit([i for i in range(4 * L, 3 * L - 1, -1)])
 
     aa = a
     for i in range(L):
-        controlAddMod(0, i + 1, aa, Nth, L, circuit)
+        c_add_mod(cqubit, 2 * L + i, aa, Nth, L, circuit)
         aa = aa * 2 % N
 
-    IQFT | circuit([i for i in range(2 * L + 1, L, -1)])
+    IQFT | circuit([i for i in range(4 * L, 3 * L - 1, -1)])
 
-def cmult_reverse(a, N, Nth, L, circuit):
-    QFT  | circuit([i for i in range(2 * L + 1, L, -1)])
+def c_mult_reverse(cqubit, a, N, Nth, L, circuit):
+    QFT  | circuit([i for i in range(4 * L, 3 * L - 1, -1)])
     aa = a
     for i in range(L):
-        controlAddMod(0, i + 1, N - aa, Nth, L, circuit)
+        c_add_mod(cqubit, 2 * L + i, N - aa, Nth, L, circuit)
         aa = aa * 2 % N
 
-    IQFT | circuit([i for i in range(2 * L + 1, L, -1)])
+    IQFT | circuit([i for i in range(4 * L, 3 * L - 1, -1)])
 
-def cswap(L, circuit):
+
+def c_swap(cqubit, L, circuit):
     for j in range(L):
-        CX              | circuit([L + 1 + j, 1 + j])
-        CCX   | circuit([0, 1 + j, L + 1 + j])
-        CX | circuit([L + 1 + j, 1 + j])
+        CX              | circuit([3 * L + j, 2 * L + j])
+        CCX   | circuit([cqubit, 2 * L + j, 3 * L + j])
+        CX | circuit([3 * L + j, 2 * L + j])
 
-def cUa(a, a_r, N,  Nth, L, circuit):
-    cmult(a, N, Nth, L, circuit)
-    cswap(L, circuit)
-    cmult_reverse(a_r, N,  Nth, L, circuit)
+def cUa(cqubit, a, a_r, N,  Nth, L, circuit):
+    c_mult(cqubit, a, N, Nth, L, circuit)
+    c_swap(cqubit, L, circuit)
+    c_mult_reverse(cqubit, a_r, N,  Nth, L, circuit)
 
-def Shor(N, fidelity = None):
+def classical_cUa(a, N, L, circuit):
+    plist = [0]
+    for i in range(1, L + 1):
+        plist.append(i)
+    ControlPermMul(a, N) | circuit(plist)
+
+def shor(N, fidelity = None):
     """ run the algorithm with fidelity
 
     Args:
@@ -183,19 +165,21 @@ def Shor(N, fidelity = None):
         squeeze = np.power(2, x)
         u1 = int(np.floor(squeeze))
         u2 = int(np.ceil(squeeze))
-        if fast_power(u1, b) == N or fast_power(u2, b) == N:
+        if fast_power(u1, b, N) == 0 or fast_power(u2, b, N) == 0:
             return b, 0, 0, 0, []
 
     rd = 0
+    circuit = None
     while True:
         # 3. Choose a random number a, 1 < a <= N - 1
         a = random.randint(2, N - 1)
         gcd = np.gcd(a, N)
         if gcd > 1:
-            return gcd, 0, 0, 0, []
+            return gcd, 0, 0, rd, []
         rd += 1
 
         # 4. Use the order-finding quantum algorithm to find the order r of a modulo N
+
         NN = N
         Nan = []
         for i in range(L + 1):
@@ -212,17 +196,25 @@ def Shor(N, fidelity = None):
                 coe /= 2
             Nth.append(tht)
         Nth.reverse()
-        # 1
+        # 2L
         # L
         # L + 2
-        circuit = Circuit(2 * L + 3)
+        if circuit is None:
+            circuit = Circuit(4 * L + 2)
+        else:
+            circuit.clear()
+        # circuit.reset_initial_zeros()
+
         if fidelity is not None:
             circuit.fidelity = fidelity
-        X | circuit(1)
+
+        for i in range(0, 2 * L):
+            H | circuit(i)
+        X | circuit(2 * L)
+
         a_r = ModReverse(a, N)
         aa = a
         aa_r = a_r
-        Rth = 0
         M = 0.0
         a_list = []
         a_r_list = []
@@ -234,46 +226,42 @@ def Shor(N, fidelity = None):
         a_list.reverse()
         a_r_list.reverse()
         for i in range(2 * L):
-            H | circuit(0)
             aa = a_list[i]
             aa_r = a_r_list[i]
 
-            cUa(aa, aa_r, N, Nth, L, circuit)
+            cUa(i, aa, aa_r, N, Nth, L, circuit)
 
-            if i != 0:
-                Rz(-np.pi * Rth) | circuit(0)
-            H | circuit(0)
+        IQFT | circuit([i for i in range(2 * L - 1, -1, -1)])
+        circuit.exec_release()
 
-            Measure | circuit(0)
+        prob = circuit.partial_prob([i for i in range(2 * L)])
 
-            circuit.exec_release()
+        for i in range(0, 2 * L):
+            Measure | circuit(i)
 
-            measure = int(circuit(0))
+        circuit.exec_release()
+
+        for i in range(0, 2 * L):
+            measure = int(circuit(i))
             if measure == 1:
-                Rth += 1
-                X | circuit(0)
                 M += 1.0 / (1 << (2 * L - i))
-            Rth /= 2
 
         r = Fraction(M).limit_denominator(N - 1).denominator
 
         # 5. cal
-        if fast_power(a, r) % N != 1 or r % 2 == 1 or fast_power(a, r // 2) % N == N - 1:
+        if fast_power(a, r, N) % N != 1 or r % 2 == 1 or fast_power(a, r // 2, N) % N == N - 1:
             continue
-        b = np.gcd(fast_power(a, r // 2) - 1, N)
+        b = np.gcd(fast_power(a, r // 2, N) - 1, N)
         if N % b == 0 and b != 1 and N != b:
-            return b, a, r, rd, []
-        c = np.gcd(fast_power(a, r // 2) + 1, N)
+            return b, a, r, rd, prob
+        c = np.gcd(fast_power(a, r // 2, N) + 1, N)
         if N % c == 0 and c != 1 and N != b:
-            return c, a, r, rd, []
+            return c, a, r, rd, prob
 
-class ZipShorFactor(Algorithm):
-    """ shor algorithm with oracle decomposed into gates, first register zip to 1
+class ShorFactor(Algorithm):
+    """ shor algorithm with oracle decomposed into gates
 
-    Circuit for Shor’s algorithm using 2n+3 qubits
-    http://arxiv.org/abs/quant-ph/0205095v3
-
-    a L-bit number need (2L + 3) qubits
+    a L-bit number need (4L + 2) qubits
 
     """
     @staticmethod
@@ -290,4 +278,4 @@ class ZipShorFactor(Algorithm):
             int: the round shor run
             list<float>: the probability of the first register
         """
-        return Shor(n, fidelity)
+        return shor(n, fidelity)

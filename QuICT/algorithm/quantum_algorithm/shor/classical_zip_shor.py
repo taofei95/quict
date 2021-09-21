@@ -9,34 +9,9 @@ import random
 
 import numpy as np
 
-from .._algorithm import Algorithm
+from QuICT.algorithm import Algorithm
 from QuICT.core import *
-
-def EX_GCD(a, b, arr):
-    if b == 0:
-        arr[0] = 1
-        arr[1] = 0
-        return a
-    g = EX_GCD(b, a % b, arr)
-    t = arr[0]
-    arr[0] = arr[1]
-    arr[1] = t - int(a / b) * arr[1]
-    return g
-
-def ModReverse(a, n):
-    arr = [0, 1]
-    EX_GCD(a, n, arr)
-    return (arr[0] % n + n) % n
-
-def fast_power(a, b, N):
-    x = 1
-    now_a = a
-    while b > 0:
-        if b % 2 == 1:
-            x = x * now_a % N
-        now_a = now_a * now_a % N
-        b >>= 1
-    return x
+from .utility import *
 
 def classical_cUa(a, N, L, circuit):
     plist = [0]

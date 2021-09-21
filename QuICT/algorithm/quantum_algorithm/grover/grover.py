@@ -6,7 +6,6 @@
 
 import numpy as np
 
-from .._algorithm import Algorithm
 from QuICT import *
 from QuICT.qcda.synthesis.mct import MCTLinearOneDirtyAux
 
@@ -39,7 +38,7 @@ def run_grover(f, n, oracle):
     circuit.exec()
     return int(index_q)
 
-class StandardGrover(Algorithm):
+class Grover:
     """ simple grover
 
     Quantum Computation and Quantum Information - Michael A. Nielsen & Isaac L. Chuang

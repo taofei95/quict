@@ -6,7 +6,6 @@
 
 import numpy as np
 
-from .._algorithm import Algorithm
 from QuICT import *
 from QuICT.qcda.synthesis.mct import MCTLinearOneDirtyAux
     
@@ -91,7 +90,7 @@ def run_partial_grover(f, n, k, oracle):
     circuit.exec()
     return int(qreg)
 
-class PartialGrover(Algorithm):
+class PartialGrover:
     """ partial grover search with one target
 
     https://arxiv.org/abs/quant-ph/0407122

@@ -6,6 +6,6 @@
 
 from .classical_shor import ClassicalShorFactor
 from .classical_zip_shor import ClassicalZipShorFactor
-from .origin_shor import ShorFactor
+from .shor import ShorFactor
 from .zip_shor import ZipShorFactor
 from .HRS_shor import HRSShorFactor

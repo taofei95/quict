@@ -7,7 +7,6 @@
 import numpy as np
 from scipy.optimize import minimize
 
-from .._algorithm import Algorithm
 from QuICT import *
 from QuICT.qcda.synthesis.initial_state_preparation import InitialStatePreparation
 from QuICT.qcda.synthesis.mct import MCTOneAux
@@ -69,7 +68,7 @@ def run_search_with_prior_knowledge(f, n, p, T, oracle):
     circuit.exec()
     return int(qreg)
 
-class GroverWithPriorKnowledge(Algorithm):
+class GroverWithPriorKnowledge:
     """ grover search with prior knowledge
 
     https://arxiv.org/abs/2009.08721

@@ -7,62 +7,24 @@
 'The (2n+2)-qubit circuit used in the Shor algorithm is designed by THOMAS HANER, MARTIN ROETTELER, and KRYSTA M. SVORE in "Factoring using 2n+2 qubits with Toffoli based modular multiplication'
 
 from QuICT.core import *
-from .._algorithm import Algorithm
+from QuICT.algorithm import Algorithm
 
 import random
 from math import log, ceil, floor, gcd, pi
 import numpy as np
 from fractions import Fraction
 import time
+from .utility import *
 
-def EX_GCD(a, b, arr):
-    if b == 0:
-        arr[0] = 1
-        arr[1] = 0
-        return a
-    g = EX_GCD(b, a % b, arr)
-    t = arr[0]
-    arr[0] = arr[1]
-    arr[1] = t - int(a / b) * arr[1]
-    return g
-
-def ModReverse(a, n):
-    arr = [0, 1]
-    EX_GCD(a, n, arr)
-    return (arr[0] % n + n) % n
-
-#transform an integer to n-length bitwise string
-def int2bitwise(c,n):
-    """
-    Transform an integer c to binary n-length bitwise string.
-    """
-    c_bitwise = bin(c)[2:]
-    if len(c_bitwise) > n:
-        c_bitwise = c_bitwise[-n:]
-        #print('c exceeds the length of a, thus is truncated')
-    else:
-        c_bitwise = '0'*(n-len(c_bitwise))+c_bitwise
-    return c_bitwise
-
-def fast_power(a, b, N):
-    x = 1
-    now_a = a
-    while b > 0:
-        if b % 2 == 1:
-            x = x * now_a % N
-        now_a = now_a * now_a % N
-        b >>= 1
-    return x
-
-def Split_Invert(n,d,CFE):
+def split_invert(n,d,CFE):
     CFE.append(n//d)
     n = n%d
     if n == 1:
         CFE.append(d)
         return
-    Split_Invert(d,n,CFE)
+    split_invert(d,n,CFE)
 
-def Continued_Fraction_Expansion(n,d):
+def continued_fraction_expansion(n,d):
     """
     Calculate the continued fraction expansion of a rational number n/d.
 
@@ -71,23 +33,10 @@ def Continued_Fraction_Expansion(n,d):
         d: denominator.
     """
     CFE = []
-    Split_Invert(n,d,CFE)
+    split_invert(n,d,CFE)
     return CFE
 
-def Set(qreg, N):
-    """
-    Set the qreg as N, using X gates on specific qubits.
-    """
-    str = bin(N)[2:]
-    n = len(qreg); m = len(str)
-    if m > n:
-        print('Warning: When set qureg as N=%d, N exceeds the length of qureg n=%d, thus is truncated'%(N,n))
-    
-    for i in range(min(n,m)):
-        if str[m-1-i] == '1':
-            X | qreg[n-1-i]
-
-def CCarry(control,a,c_bitwise,g_aug,overflow):
+def c_carry(control,a,c_bitwise,g_aug,overflow):
     """
     1-controlled computation the overflow of a(quantum)+c(classical) with borrowed qubits g.
 
@@ -140,7 +89,7 @@ def CCarry(control,a,c_bitwise,g_aug,overflow):
             CX | (a[n-3-i],g[n-3-i])
 
 
-def CCCarry(control1,control2,a,c_bitwise,g_aug,overflow):
+def cc_carry(control1,control2,a,c_bitwise,g_aug,overflow):
     """
     2-controlled computation the overflow of a(quantum)+c(classical) with borrowed qubits g.
 
@@ -206,7 +155,7 @@ def CCCarry(control1,control2,a,c_bitwise,g_aug,overflow):
             CX | (a[n-3-i],g[n-3-i])
 
 
-def SubWidget(v,g):
+def sub_widget(v,g):
     """
         Subwidget used in Incrementer().
 
@@ -229,7 +178,7 @@ def SubWidget(v,g):
         CX  | (g[i],v[i+1])
 
 
-def Incrementer(v,g):
+def incrementer(v,g):
     """
     Incremente v by 1, with borrowed qubits g.
 
@@ -246,15 +195,15 @@ def Incrementer(v,g):
     for i in range(n-1):
         X | g[i]
     X | v[0]
-    SubWidget(v,g)
+    sub_widget(v,g)
     for i in range(n-1):
         X | g[i]
-    SubWidget(v,g)
+    sub_widget(v,g)
     for i in range(n):
         CX | (g[n-1],v[i])
 
 
-def CIncrementer(control, v, g_aug):
+def c_incrementer(control, v, g_aug):
     """
     1-controlled incremente v by 1, with borrowed qubits g.
 
@@ -271,10 +220,10 @@ def CIncrementer(control, v, g_aug):
         print("no edequate ancilla bits")
     g = g_aug[0:n+1]
     vc = v + control
-    Incrementer(vc,g)
+    incrementer(vc,g)
     X | vc[n]
 
-def C_Adder_rec(control,x,c_bitwise,ancilla,ancilla_g):
+def c_adder_rec(control,x,c_bitwise,ancilla,ancilla_g):
     """
     The recursively applied partial-circuit in CAdder().
     
@@ -296,19 +245,19 @@ def C_Adder_rec(control,x,c_bitwise,ancilla,ancilla_g):
     c_H = c_bitwise[0:mid]
     c_L = c_bitwise[mid:n]
     g = x_L + ancilla_g
-    CIncrementer(ancilla,x_H,g)
+    c_incrementer(ancilla,x_H,g)
     for i in range(mid):
         CX | (ancilla, x_H[i])
-    CCarry(control,x_L,c_L,x_H,ancilla)
-    CIncrementer(ancilla,x_H,g)
-    CCarry(control,x_L,c_L,x_H,ancilla)
+    c_carry(control,x_L,c_L,x_H,ancilla)
+    c_incrementer(ancilla,x_H,g)
+    c_carry(control,x_L,c_L,x_H,ancilla)
     for i in range(mid):
         CX | (ancilla, x_H[i])
-    C_Adder_rec(control,x_L,c_L,ancilla,ancilla_g)
-    C_Adder_rec(control,x_H,c_H,ancilla,ancilla_g)
+    c_adder_rec(control,x_L,c_L,ancilla,ancilla_g)
+    c_adder_rec(control,x_H,c_H,ancilla,ancilla_g)
 
 
-def CAdder(control,x,c,ancilla,ancilla_g):
+def c_adder(control,x,c,ancilla,ancilla_g):
     """
     Compute x(quantum) + c(classical) with borrowed qubits, 1-controlled.
 
@@ -321,14 +270,14 @@ def CAdder(control,x,c,ancilla,ancilla_g):
     """
     n = len(x)
     c_bitwise = int2bitwise(c,n)
-    C_Adder_rec(control,x,c_bitwise,ancilla,ancilla_g)
+    c_adder_rec(control,x,c_bitwise,ancilla,ancilla_g)
     #print(Amplitude.run(circuit))
     for i in range(n):
         if c_bitwise[i]=='1':
             CX | (control,x[i])
 
 
-def CSub(control,x,c,ancilla,ancilla_g):
+def c_sub(control,x,c,ancilla,ancilla_g):
     """
     Compute x(quantum) + c(classical) with borrowed qubits, 1-controlled.
 
@@ -344,13 +293,13 @@ def CSub(control,x,c,ancilla,ancilla_g):
     n = len(x)
     c_complement = 2**n-c
     cc_bitwise = int2bitwise(c_complement,n)
-    C_Adder_rec(control,x,cc_bitwise,ancilla,ancilla_g)
+    c_adder_rec(control,x,cc_bitwise,ancilla,ancilla_g)
     for i in range(n):
         if cc_bitwise[i]=='1':
             CX | (control,x[i])
 
 #controlled compare b and c. indicator toggles if c > b, not if c <= b
-def CCCompare(control1,control2,b,c,g_aug,indicator):
+def cc_compare(control1,control2,b,c,g_aug,indicator):
     """
     Compare b and c with borrowed qubits g_aug. The Indicator toggles if c > b, not if c <= b, 2controlled.
 
@@ -371,11 +320,11 @@ def CCCompare(control1,control2,b,c,g_aug,indicator):
         return
     c_bitwise = int2bitwise(c,n)
     X | b
-    CCCarry(control1,control2,b,c_bitwise,g_aug,indicator)
+    c_carry(control1,control2,b,c_bitwise,g_aug,indicator)
     X | b
 
 #b: n bit, g: n-1 bit, indicator: 1 bit
-def CCAdder_Mod(control1,control2,b,a,N,g,indicator):
+def cc_adder_mod(control1,control2,b,a,N,g,indicator):
     """
     Compute b(quantum) + a(classical) mod N(classical), with borrowed qubits g and ancilla qubit indicator, 2-controlled.
 
@@ -388,24 +337,24 @@ def CCAdder_Mod(control1,control2,b,a,N,g,indicator):
         a: integer less than N.
         N: integer.
     """
-    CCCompare(control1,control2,b,N-a,g,indicator)
-    CAdder(indicator,b,a,g[0:1],g[1:2])
+    cc_compare(control1,control2,b,N-a,g,indicator)
+    c_adder(indicator,b,a,g[0:1],g[1:2])
     CCX | (control1,control2,indicator)
-    CSub(indicator,b,N-a,g[0:1],g[1:2])
+    c_sub(indicator,b,N-a,g[0:1],g[1:2])
     CCX | (control1,control2,indicator)
-    CCCompare(control1,control2,b,a,g,indicator)
+    cc_compare(control1,control2,b,a,g,indicator)
     CCX | (control1,control2,indicator)
 
 
-def CCAdder_Mod_Reverse(control1,control2,b,a,N,g,indicator):
+def cc_adder_mod_reverse(control1,control2,b,a,N,g,indicator):
     """
     The reversed circuit of CCAdder_Mod()
     """
-    CCAdder_Mod(control1,control2,b,N-a,N,g,indicator)
+    cc_adder_mod(control1,control2,b,N-a,N,g,indicator)
 
 
 #x: n bits, b: n bits
-def CMul_Mod_Raw(control,x,a,b,N,indicator):
+def c_mul_mod_raw(control,x,a,b,N,indicator):
     """
     Compute b(quantum) + x(quantum) * a(classical) mod N(classical), with target qubits b and ancilla qubit indicator, 1-controlled.
 
@@ -425,10 +374,10 @@ def CMul_Mod_Raw(control,x,a,b,N,indicator):
     for i in range(n):
         #borrow all the n-1 unused qubits in x
         g = x[:n-i-1]+x[n-i:]
-        CCAdder_Mod(control,x[n-1-i],b,a_list[i],N,g,indicator)
+        cc_adder_mod(control,x[n-1-i],b,a_list[i],N,g,indicator)
 
 
-def CMul_Mod_Raw_Reverse(control,x,a,b,N,indicator):
+def c_mul_mod_raw_reverse(control,x,a,b,N,indicator):
     n = len(x)
     a_list = []
     for i in range(n):
@@ -436,11 +385,11 @@ def CMul_Mod_Raw_Reverse(control,x,a,b,N,indicator):
         a = a*2 %N
     for i in range(n):
         g = x[:i]+x[i+1:]
-        CCAdder_Mod(control,x[i],b,N-a_list[n-i-1],N,g,indicator)
+        cc_adder_mod(control,x[i],b,N-a_list[n-i-1],N,g,indicator)
 
 
 #x: n bits, ancilla: n bits, indicator: 1 bit
-def CMul_Mod(control,x,a,ancilla,N,indicator):
+def c_mul_mod(control,x,a,ancilla,N,indicator):
     """
     Compute x(quantum) * a(classical) mod N(classical), with ancilla qubits, 1-controlled.
 
@@ -454,21 +403,21 @@ def CMul_Mod(control,x,a,ancilla,N,indicator):
     """
     n = len(x)
     a_r = ModReverse(a,N)
-    CMul_Mod_Raw(control,x,a,ancilla,N,indicator)
+    c_mul_mod_raw(control,x,a,ancilla,N,indicator)
     #CSwap
     for i in range(n):
         CSwap(control,x[i],ancilla[i])
-    CMul_Mod_Raw_Reverse(control,x,a_r,ancilla,N,indicator)
+    c_mul_mod_raw_reverse(control,x,a_r,ancilla,N,indicator)
 
 
-def Order_Finding(a,N):
+def order_finding(a,N):
     """
     Quantum algorithm to compute the order of a (mod N), when gcd(a,N)=1.
     """
     #phase estimation procedure
     n = int(np.ceil(np.log2(N)))
     t = 2*n
-    print('\tOrder_Finding begin: circuit: L =',n,'t =',t)
+    print('\torder_finding begin: circuit: L =',n,'t =',t)
     trickbit_store = [0]*t
     circuit = Circuit(2*n+2)
     x_reg = circuit([i for i in range(n)])
@@ -479,7 +428,7 @@ def Order_Finding(a,N):
     for k in range(t):
         H | trickbit
         gate_pow = pow(a, 1<<(t-1-k), N)
-        CMul_Mod(trickbit,x_reg,gate_pow,ancilla,N,indicator)
+        c_mul_mod(trickbit,x_reg,gate_pow,ancilla,N,indicator)
         for i in range(k):
             if trickbit_store[i]:
                 Rz(-pi /(1<<(k-i))) | trickbit
@@ -499,10 +448,10 @@ def Order_Finding(a,N):
     phi_ = sum([(trickbit_store[i]*1. / (1<<(i+1))) for i in range(t)])
     print('\tphi~ (approximately s/r) in decimal form is',phi_)
     if phi_ == 0.0:
-        print('\tOrder_Finding failed: phi~ = 0')
+        print('\torder_finding failed: phi~ = 0')
         return 0
     (num,den) = (Fraction(phi_).numerator,Fraction(phi_).denominator)
-    CFE = Continued_Fraction_Expansion(num,den)
+    CFE = continued_fraction_expansion(num,den)
     print('\tContinued fraction expansion of phi~ is',CFE)
     num1 = CFE[0]; den1 = 1; num2 = 1; den2 = 0
     print('\tthe 0th convergence is %d/%d'%(num1,den1))
@@ -519,10 +468,10 @@ def Order_Finding(a,N):
             den1 = den
     r = den1
     if pow(a,r,N) == 1:
-        print('\tOrder_Finding succeed: r = %d is the order of a = %d'%(r,a))
+        print('\torder_finding succeed: r = %d is the order of a = %d'%(r,a))
         return r
     else:
-        print('\tOrder_Finding failed: r = %d is not order of a = %d'%(r,a))
+        print('\torder_finding failed: r = %d is not order of a = %d'%(r,a))
         return 0
 
 
@@ -566,7 +515,7 @@ def Shor(N):
         rd += 1
         # 4. Use quantum order-finding algorithm to find the order of a
         print('Quantumly determine the order of the randomly chosen a =',a)
-        r = Order_Finding(a,N)
+        r = order_finding(a,N)
         if r == 0:
             print('Shor failed: did not found the order of a =',a)
         else:
