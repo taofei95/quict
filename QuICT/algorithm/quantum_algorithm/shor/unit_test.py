@@ -10,6 +10,8 @@ from QuICT.algorithm import ClassicalShorFactor
 from QuICT.algorithm import ClassicalZipShorFactor
 from QuICT.algorithm import ShorFactor
 from QuICT.algorithm import ZipShorFactor
+from QuICT.algorithm import BEAShorFactor
+from QuICT.algorithm import HRSShorFactor
 
 def test_1():
     a, _, _, _, _ = ShorFactor.run(15)
@@ -44,6 +46,34 @@ def test_4():
     for number in number_list:
         a, _, _, _, _ = ClassicalZipShorFactor.run(number)
         assert number % a == 0
+
+def test_5():
+    number_list = [
+        4, 6, 8, 9, 10,
+        12, 14, 15, 16, 18, 20,
+        21, 22, 24, 25, 26, 27,
+        30, 32, 33, 34, 35, 36,
+        45, 51, 55, 57, 95, 85,
+    ]
+    for number in number_list:
+        print('-------------------FACTORING %d-------------------------'%number)
+        a = BEAShorFactor.run(number)
+        print(a)
+        assert number % a == 0
+
+def test_6():
+    number_list = [
+        4, 6, 8, 9, 10,
+        12, 14, 15, 16, 18, 20,
+        21, 22, 24, 25, 26, 27,
+        30, 32, 33, 34, 35, 36,
+        45, 51, 55, 57, 95, 85,
+    ]
+    for number in number_list:
+        print('--------------------------------------------')
+        a = HRSShorFactor.run(number)
+        assert number % a == 0
+
 
 if __name__ == '__main__':
     pytest.main(["./unit_test.py"])

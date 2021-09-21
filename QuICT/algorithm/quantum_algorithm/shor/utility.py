@@ -52,3 +52,47 @@ def set(qreg, N):
         if str[m-1-i] == '1':
             X | qreg[n-1-i]
 
+def split_invert(n,d,CFE):
+    CFE.append(n//d)
+    n = n%d
+    if n == 1:
+        CFE.append(d)
+        return
+    split_invert(d,n,CFE)
+
+def continued_fraction_expansion(n,d):
+    """
+    Calculate the continued fraction expansion of a rational number n/d.
+
+    Args:
+        n: numerator.
+        d: denominator.
+    """
+    CFE = []
+    split_invert(n,d,CFE)
+    return CFE
+
+def miller_rabin(num):
+    Test = [2, 3, 5, 7, 11, 13, 17, 19, 23, 29]
+    if num == 1:
+        return False
+    t = num - 1
+    k = 0
+    while (t & 1) == 0:
+        k += 1
+        t >>= 1
+    for test_num in Test:
+        # test_num should be generated randomly
+        if num == test_num:
+            return True
+        a = fast_power(test_num, t, num)
+        nxt = a
+        for _ in range(k):
+            nxt = (a * a) % num
+            if nxt == 1 and a != 1 and a != num - 1:
+                return 0
+            a = nxt
+        if a != 1:
+            return False
+    return True
+

@@ -4,18 +4,15 @@
 # @Author  : Zhu Qinlin
 # @File    : HRS_shor.py
 
-'''
-The (2n+2)-qubit circuit used in the Shor algorithm is designed by THOMAS HANER, MARTIN ROETTELER, and KRYSTA M. SVORE in 
-"Factoring using 2n+2 qubits with Toffoli based modular multiplication"
-'''
-
-from QuICT.core import *
-from QuICT.qcda.synthesis.arithmetic.hrs import *
+'The (2n+2)-qubit circuit used in the Shor algorithm is designed by THOMAS HANER, MARTIN ROETTELER, and KRYSTA M. SVORE in "Factoring using 2n+2 qubits with Toffoli based modular multiplication'
 
 import random
 from math import pi
 import numpy as np
 from fractions import Fraction
+
+from QuICT.core import *
+from QuICT.qcda.synthesis.arithmetic.bea import *
 from .utility import *
 
 def order_finding(a,N):
@@ -27,16 +24,16 @@ def order_finding(a,N):
     t = 2*n
     print('\torder_finding begin: circuit: L =',n,'t =',t)
     trickbit_store = [0]*t
-    circuit = Circuit(2*n+2)
-    x_reg = circuit([i for i in range(n)])
-    #ancilla = circuit([i for i in range(n,2*n)])
-    #indicator = circuit(2*n)
-    trickbit = circuit(2*n+1)
+    circuit = Circuit(2*n+3)
+    x_reg = circuit([i for i in range(n+1,2*n+1)])
+    #ancilla = circuit([i for i in range(n+1)])
+    trickbit = circuit(2 * n + 1)
+    #qreg_low= circuit(2 * n + 2)
     X | x_reg[n-1]
     for k in range(t):
         H | trickbit
         gate_pow = pow(a, 1<<(t-1-k), N)
-        HRSCMulMod(n, gate_pow, N) | circuit
+        BEACUa(n, gate_pow, N) | circuit
         for i in range(k):
             if trickbit_store[i]:
                 Rz(-pi /(1<<(k-i))) | trickbit
@@ -82,12 +79,11 @@ def order_finding(a,N):
         print('\torder_finding failed: r = %d is not order of a = %d'%(r,a))
         return 0
 
-
-def Shor(N):
+def shor(N):
     """
     Shor algorithm by THOMAS HANER, MARTIN ROETTELER, and KRYSTA M. SVORE in "Factoring using 2n+2 qubits with Toffoli based modular multiplication"
     """
-    # 0. Check if input is prime (using MillerRabin in klog(N), k is the number of rounds to run MillerRabin)
+    # check if input is prime (using MillerRabin in klog(N), k is the number of rounds to run MillerRabin)
     assert (not miller_rabin(N)), 'N is prime'
 
     # 1. If n is even, return the factor 2
@@ -145,10 +141,10 @@ def Shor(N):
                     else:
                         print('Shor failed: can not find a factor with a = %d', a)
 
-class HRSShorFactor:
+class BEAShorFactor:
     """
     Shor algorithm by THOMAS HANER, MARTIN ROETTELER, and KRYSTA M. SVORE in "Factoring using 2n+2 qubits with Toffoli based modular multiplication"
     """
     @staticmethod
     def _run(N):
-        return Shor(N)
+        return shor(N)

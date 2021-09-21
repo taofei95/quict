@@ -9,3 +9,4 @@ from .classical_zip_shor import ClassicalZipShorFactor
 from .shor import ShorFactor
 from .zip_shor import ZipShorFactor
 from .HRS_shor import HRSShorFactor
+from .BEA_shor import BEAShorFactor
