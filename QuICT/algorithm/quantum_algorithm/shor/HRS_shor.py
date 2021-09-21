@@ -11,6 +11,7 @@ The (2n+2)-qubit circuit used in the Shor algorithm is designed by THOMAS HANER,
 
 from QuICT.core import *
 from QuICT.qcda.synthesis.arithmetic.hrs import *
+from QuICT.algorithm import Algorithm
 
 import random
 from math import pi
@@ -36,7 +37,7 @@ def order_finding(a,N):
     for k in range(t):
         H | trickbit
         gate_pow = pow(a, 1<<(t-1-k), N)
-        HRSCMulMod(n, gate_pow, N) | circuit
+        CHRSMulMod.execute(n, gate_pow, N) | circuit
         for i in range(k):
             if trickbit_store[i]:
                 Rz(-pi /(1<<(k-i))) | trickbit
@@ -82,8 +83,7 @@ def order_finding(a,N):
         print('\torder_finding failed: r = %d is not order of a = %d'%(r,a))
         return 0
 
-
-def Shor(N):
+def shor(N):
     """
     Shor algorithm by THOMAS HANER, MARTIN ROETTELER, and KRYSTA M. SVORE in "Factoring using 2n+2 qubits with Toffoli based modular multiplication"
     """
@@ -145,10 +145,10 @@ def Shor(N):
                     else:
                         print('Shor failed: can not find a factor with a = %d', a)
 
-class HRSShorFactor:
+class HRSShorFactor(Algorithm):
     """
     Shor algorithm by THOMAS HANER, MARTIN ROETTELER, and KRYSTA M. SVORE in "Factoring using 2n+2 qubits with Toffoli based modular multiplication"
     """
     @staticmethod
     def _run(N):
-        return Shor(N)
+        return shor(N)

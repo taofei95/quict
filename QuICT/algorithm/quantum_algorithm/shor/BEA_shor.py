@@ -13,6 +13,7 @@ from fractions import Fraction
 
 from QuICT.core import *
 from QuICT.qcda.synthesis.arithmetic.bea import *
+from QuICT.algorithm import Algorithm
 from .utility import *
 
 def order_finding(a,N):
@@ -33,7 +34,7 @@ def order_finding(a,N):
     for k in range(t):
         H | trickbit
         gate_pow = pow(a, 1<<(t-1-k), N)
-        BEACUa(n, gate_pow, N) | circuit
+        BEACUa.execute(n, gate_pow, N) | circuit
         for i in range(k):
             if trickbit_store[i]:
                 Rz(-pi /(1<<(k-i))) | trickbit
@@ -141,7 +142,7 @@ def shor(N):
                     else:
                         print('Shor failed: can not find a factor with a = %d', a)
 
-class BEAShorFactor:
+class BEAShorFactor(Algorithm):
     """
     Shor algorithm by THOMAS HANER, MARTIN ROETTELER, and KRYSTA M. SVORE in "Factoring using 2n+2 qubits with Toffoli based modular multiplication"
     """
