@@ -171,7 +171,7 @@ print_segment
 #fi
 
 cd $prj_root && \
-$PYTHON3 ./setup.py build || exit 1
+$PYTHON3 ./setup.py build "$@" || exit 1
 
 #print_cyan "[Copying Back]"
 #

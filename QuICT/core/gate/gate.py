@@ -1577,7 +1577,7 @@ class CU3Gate(BasicGate):
         exec_controlSingle(self, circuit)
 
 
-CU3 = CU3Gate(["CU1", "cu1"])
+CU3 = CU3Gate(["CU3", "cu3"])
 
 
 class FSimGate(BasicGate):
@@ -2697,7 +2697,7 @@ class QFTGate(ComplexGate):
 
     def build_gate(self):
         from .composite_gate import CompositeGate
-        qureg = self.affectArgs
+        qureg = [i for i in range(self.targets)]
         gates = CompositeGate()
 
         with gates:
