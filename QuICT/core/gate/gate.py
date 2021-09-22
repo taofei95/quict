@@ -2682,7 +2682,7 @@ class QFTGate(ComplexGate):
         Returns:
             QFTGate: the QFTGate after filled by target number
         """
-        self.params = params
+        self.targets = params
         self.__temp_name = name
         return self
 
