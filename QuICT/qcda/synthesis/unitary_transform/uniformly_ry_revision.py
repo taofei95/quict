@@ -1,12 +1,12 @@
 """
-Decomposition of uniformly-Ry gate, which is specially designed for 
+Decomposition of uniformly-Ry gate, which is specially designed for
 the optimization of unitary transform
 """
 
 from typing import *
 import numpy as np
 
-from QuICT.core import CompositeGate, CX, CZ, Ry, Rz
+from QuICT.core import CompositeGate, CX, CZ, Ry
 from .._synthesis import Synthesis
 
 
@@ -97,6 +97,7 @@ def inner_uniformly_rotation_cz(
         gates.extend(inner_uniformly_rotation_cz(low + 1, high, Rxn, mapping, False, True))
     return gates
 
+
 class UniformlyRyRevision(Synthesis):
     @classmethod
     def execute(cls, angle_list, mapping=None, is_cz_left: bool = False):
@@ -120,6 +121,7 @@ class UniformlyRyRevision(Synthesis):
         if 1 << (n - 1) != len(pargs):
             raise Exception("the number of parameters unmatched.")
         return uniformly_rotation_cz(0, n, pargs, mapping, is_cz_left)
+
 
 """
 If qubit_num > 2, synthesized gates would have 2 cz gates at rightmost place.

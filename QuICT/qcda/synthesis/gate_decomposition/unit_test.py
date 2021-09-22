@@ -9,12 +9,14 @@ from QuICT.algorithm import SyntheticalUnitary
 from QuICT.core import *
 from QuICT.qcda.synthesis.gate_decomposition import GateDecomposition
 
+
 def test_unitary():
     matrix = unitary_group.rvs(2 ** 5)
     gates_decomposed = GateDecomposition.execute(matrix)
     for gate in gates_decomposed:
         assert isinstance(gate, BasicGate) and not isinstance(gate, ComplexGate)
     assert np.allclose(matrix, gates_decomposed.matrix())
+
 
 def test_circuit():
     circuit = Circuit(5)
@@ -38,6 +40,7 @@ def test_circuit():
     original = SyntheticalUnitary.run(circuit)
     decomposed = SyntheticalUnitary.run(circuit_decomposed)
     assert np.allclose(original, decomposed)
+
 
 if __name__ == "__main__":
     # test_circuit()

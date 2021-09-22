@@ -130,6 +130,7 @@ def SubtractionOverflow(a, b, overflow):
     X | b
     X | overflow
 
+
 """
 def CtrlAddOverflowAncilla(ctrl, a, b, overflow, ancilla):
     n = len(a)
@@ -159,6 +160,7 @@ def CtrlAddOverflowAncilla(ctrl, a, b, overflow, ancilla):
     for i in range(n - 1):
         CX | (a[i], b[i])
 """
+
 
 def CtrlAdd(ctrl, a, b):
     """
@@ -219,7 +221,7 @@ def Division(a, b, r, ancilla):
 class RippleCarryAdder(Synthesis):
     @classmethod
     def execute(cls, n):
-        """ 
+        """
         (a,b) -> (a,b'=a+b)
 
         Args:
@@ -247,7 +249,7 @@ class RestoringDivision(Synthesis):
         Args:
             n(int): the bit number of a and b
 
-        reference: Himanshu Thapliyal, Edgard Munoz-Coreas, T. S. S. Varun, and Travis S. Humble - 
+        reference: Himanshu Thapliyal, Edgard Munoz-Coreas, T. S. S. Varun, and Travis S. Humble -
         Quantum Circuit Designs of Integer Division Optimizing T-count and T-depth
         http://arxiv.org/abs/1809.09732v1
         """

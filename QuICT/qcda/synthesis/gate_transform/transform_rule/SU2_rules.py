@@ -11,7 +11,7 @@ the file describe TransformRule the decomposite SU(2) into instruction set.
 """
 
 import numpy as np
-from numpy import arccos, angle, exp, linalg
+from numpy import arccos, linalg
 from scipy.stats import ortho_group
 
 from QuICT.core import *

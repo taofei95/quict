@@ -19,6 +19,7 @@ EPS = 1e-13
 
 __initial_state_preparation_cdll = None
 
+
 def _initial_state_preparation_cdll():
     """
 
@@ -31,6 +32,7 @@ def _initial_state_preparation_cdll():
         path = os.path.dirname(os.path.abspath(__file__)) + os.path.sep + "initial_state_preparation_cdll.so"
         __initial_state_preparation_cdll = ctypes.cdll.LoadLibrary(path)
     return __initial_state_preparation_cdll
+
 
 def permit_element(element):
     """ judge whether the type of a parameter is int/float/complex
@@ -50,6 +52,7 @@ def permit_element(element):
         if tp == np.int64 or tp == np.float64 or tp == np.complex128:
             return True
         return False
+
 
 class InitialStatePreparation(Synthesis):
     @classmethod
@@ -138,7 +141,7 @@ class InitialStatePreparation(Synthesis):
                 gates.extend(UniformlyRy.execute(alpha))
             now += add
         unitaries = [np.diag([np.exp(1j * phases[2 * i]), np.exp(1j * phases[2 * i + 1])])
-                    for i in range(len(phases) // 2)]
+                     for i in range(len(phases) // 2)]
         # print(phases)
         # phases = [np.angle(phase) for phase in phases]
         gates.extend(UniformlyUnitary.execute(unitaries))
