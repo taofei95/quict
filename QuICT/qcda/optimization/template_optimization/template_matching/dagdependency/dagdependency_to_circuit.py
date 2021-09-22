@@ -13,7 +13,7 @@
 # Modification Notice: Code revised for QuICT
 
 """Helper function for converting a dag dependency to a circuit"""
-from QuICT.core import * # pylint: disable=unused-wildcard-import
+from QuICT.core import *    # pylint: disable=unused-wildcard-import
 
 
 def dagdependency_to_circuit(dagdependency):
@@ -32,6 +32,5 @@ def dagdependency_to_circuit(dagdependency):
     for node_id in dagdependency.get_nodes():
         node = dagdependency.get_node(node_id)
         circuit.gates.append(node.gate)
-        #circuit.__queue_gates.append(node.gate)
 
     return circuit

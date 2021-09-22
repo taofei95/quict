@@ -1,6 +1,6 @@
 class MappingLayoutException(Exception):
     """
-    
+
     """
 
     def __init__(self):

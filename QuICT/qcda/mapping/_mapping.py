@@ -6,6 +6,7 @@
 
 from abc import ABC, abstractclassmethod
 
+
 class Mapping(ABC):
     """ Mapping the logical qubits into reality device
 

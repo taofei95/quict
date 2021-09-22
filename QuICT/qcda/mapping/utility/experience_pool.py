@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- encoding: utf-8 -*-
 # @Time    :   2020/12/16 20:51:46
-# @Author  :   Jia Zhang 
+# @Author  :   Jia Zhang
 # @Contact :   jialrs.z@gmail.com
 # @File    :   experience_pool.py
 from __future__ import division
@@ -64,7 +64,7 @@ class ExperiencePool(object):
 
     def feature_dim(self) -> int:
         """
-        The dimension of the feature vector 
+        The dimension of the feature vector
         """
 
         return self._feature_dim

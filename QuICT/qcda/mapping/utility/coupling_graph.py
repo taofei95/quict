@@ -96,7 +96,7 @@ class CouplingGraph(object):
 
     def edge_label(self, edge: SwapGate) -> int:
         """
-        The label of the edge in the graph 
+        The label of the edge in the graph
         """
         return self._label_matrix[edge.targs[0], edge.targs[1]]
 
@@ -116,7 +116,7 @@ class CouplingGraph(object):
 
     def _generate_matrix_representation(self):
         """
-        Transform the coupling graph to a adjacent matrix representation 
+        Transform the coupling graph to a adjacent matrix representation
         """
         self._adj_matrix = np.zeros((self._size, self._size), dtype=np.int32)
         self._distance_matrix = np.zeros((self._size, self._size), dtype=np.int32)

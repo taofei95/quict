@@ -6,6 +6,7 @@
 
 from abc import ABC, abstractclassmethod
 
+
 class Optimization(ABC):
     """ SuperClass of all optimization algorithm
 

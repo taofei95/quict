@@ -2,7 +2,6 @@ import random
 import numpy as np
 
 from QuICT.core import *
-from QuICT.algorithm import SyntheticalUnitary
 
 from ..cnot_without_ancillae import CnotWithoutAncillae
 from ..block_ldu_decompose import BlockLDUDecompose
@@ -15,8 +14,6 @@ def test_remapping_run():
     rnd = 200
     for _ in range(rnd):
         n = random.randint(2, 200)
-        s_size = n // 2
-        t_size = n - s_size
         eye = np.eye(n, dtype=bool)
         mat = f2_random_invertible_matrix_gen(n)
 
@@ -40,7 +37,6 @@ def test_triangular_matrix_run():
     for _ in range(rnd):
         n = random.randint(2, 200)
         s_size = n // 2
-        t_size = n - s_size
         eye = np.eye(n, dtype=bool)
         mat = f2_random_invertible_matrix_gen(n)
 
@@ -116,8 +112,6 @@ def test_recursion_first_level():
     rnd = 200
     for _ in range(rnd):
         n = random.randint(2, 200)
-        s_size = n // 2
-        t_size = n - s_size
         mat = f2_random_invertible_matrix_gen(n)
         l_, d_, u_, remapping = BlockLDUDecompose.run(mat)
         p_: np.ndarray = np.eye(n, dtype=bool)[remapping]
@@ -149,7 +143,6 @@ def test_matrix_run():
     rnd = 200
     for _ in range(rnd):
         n = random.randint(2, 200)
-        s_size = n // 2
         eye = np.eye(n, dtype=bool)
         mat = f2_random_invertible_matrix_gen(n)
 

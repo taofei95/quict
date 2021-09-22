@@ -5,7 +5,6 @@ import heapq
 from typing import *
 from .graph import *
 from .utility import *
-from collections import deque
 
 
 class EdgeColoring:
@@ -58,7 +57,9 @@ class EdgeColoring:
             bipartite(Bipartite) : a bipartite graph
 
         Returns:
-            A tuple of (new_to_olds, old_to_new, regular_graph). Where new_to_olds is a dict from new index to old indices, old_to_new as the one from the old to the new and regular_graph is the graph we get.
+            A tuple of (new_to_olds, old_to_new, regular_graph). Where new_to_olds
+            is a dict from new index to old indices, old_to_new as the one from the
+            old to the new and regular_graph is the graph we get.
         """
         new_to_olds = {}
         """int-int dict
@@ -265,7 +266,8 @@ class EdgeColoring:
 
         Args:
             bipartite(Bipartite) : Split this.
-            skip_colored(bool) : Whether to skip the colored edges in the graph. If true, edges without color should form a 2r-regular graph.
+            skip_colored(bool) : Whether to skip the colored edges in the graph.
+            If true, edges without color should form a 2r-regular graph.
 
         Returns:
             Tuple[Bipartite, Bipartite] : 2 bipartite after split

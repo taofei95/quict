@@ -27,7 +27,7 @@ Exact and practical pattern matching for quantum circuit optimization.
 
 import itertools
 
-from QuICT.core import * # pylint: disable=unused-wildcard-import
+from QuICT.core import *    # pylint: disable=unused-wildcard-import
 from .forward_match import ForwardMatch
 from .backward_match import BackwardMatch
 
@@ -255,20 +255,24 @@ class TemplateMatching:
                                         self._list_qubit_circuit(list_first_match_q, perm_q)
 
                                     # Apply the forward match part of the algorithm.
-                                    forward = ForwardMatch(self.circuit_dag_dep,
-                                                            self.template_dag_dep,
-                                                            node_id_c, node_id_t,
-                                                            list_qubit_circuit)
+                                    forward = ForwardMatch(
+                                        self.circuit_dag_dep,
+                                        self.template_dag_dep,
+                                        node_id_c, node_id_t,
+                                        list_qubit_circuit
+                                    )
                                     forward.run_forward_match()
 
                                     # Apply the backward match part of the algorithm.
-                                    backward = BackwardMatch(forward.circuit_dag_dep,
-                                                                forward.template_dag_dep,
-                                                                forward.match,
-                                                                node_id_c,
-                                                                node_id_t,
-                                                                list_qubit_circuit,
-                                                                self.heuristics_backward_param)
+                                    backward = BackwardMatch(
+                                        forward.circuit_dag_dep,
+                                        forward.template_dag_dep,
+                                        forward.match,
+                                        node_id_c,
+                                        node_id_t,
+                                        list_qubit_circuit,
+                                        self.heuristics_backward_param
+                                    )
                                     backward.run_backward_match()
 
                                     # Add the matches to the list.
