@@ -1,6 +1,6 @@
 import os
 import pytest
-from  typing import List
+from typing import List
 from QuICT.core.layout import *
 from QuICT.core.gate import *
 from QuICT.core.circuit import *
@@ -8,6 +8,7 @@ from QuICT.algorithm import SyntheticalUnitary
 from QuICT.qcda.mapping import MCTSMapping as Mapping
 from QuICT.qcda.mapping.utility import CouplingGraph
 from QuICT.tools.interface import OPENQASMInterface
+
 
 def test_mapping():
     file_path = os.path.realpath(__file__)
@@ -32,10 +33,12 @@ def test_mapping():
 #           .format(qc.circuit_size(), transformed_circuit.circuit_size()))
 #     CouplingGraph(coupling_graph=layout).draw(file_path=f"{dir}/coupling_graph.jpg")
 #     qc.draw(method="matp", filename=f"{dir}/original_circuit.jpg")
+#     Check if the number of single qubit gates and two qubit gates(except SWAP gates) remains the same
 #     transformed_circuit.draw(method="matp",
-#                              filename=f"{dir}/transformed_circuit.jpg")  # Check if the number of single qubit gates and two qubit gates(except SWAP gates) remains the same
-    # print([qc.circuit_count_1qubit(), transformed_circuit.circuit_count_1qubit()] )
-    # print([qc.circuit_count_2qubit(), transformed_circuit.circuit_count_2qubit()] )
+#                              filename=f"{dir}/transformed_circuit.jpg")
+#     print([qc.circuit_count_1qubit(), transformed_circuit.circuit_count_1qubit()] )
+#     print([qc.circuit_count_2qubit(), transformed_circuit.circuit_count_2qubit()] )
+
 
 if __name__ == "__main__":
-      pytest.main("./mapping_test.py")
+    pytest.main("./mapping_test.py")

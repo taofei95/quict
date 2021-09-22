@@ -21,15 +21,15 @@ class TwoQubitDiagonalTransform(Synthesis):
     def execute(cls, matrix, eps=1e-15):
         """
         Decompose a matrix U∈SU(4) with Cartan KAK Decomposition. Unlike the
-        original version, now the result circuit has a two-qubit gate whose 
+        original version, now the result circuit has a two-qubit gate whose
         matrix is diagonal at the edge, which is useful in the optimization.
-        The process is taken from [2] Proposition V.2 and Theorem VI.3, 
+        The process is taken from [2] Proposition V.2 and Theorem VI.3,
         while the Cartan KAK Decomposition process is refined from [1].
 
         Args:
             matrix(np.array): 4*4 unitary matrix to be decomposed
             eps(float, optional): Eps of decomposition process
-        
+
         Returns:
             CompositeGate: Decomposed gates.
 
@@ -51,15 +51,13 @@ class TwoQubitDiagonalTransform(Synthesis):
 
         gates_Delta = CompositeGate()
         with gates_Delta:
-            # @formatter:off
-            CX      & [0, 1]
+            CX & [0, 1]
             Rz(psi) & 1
-            CX      & [0, 1]
-            # @formatter:on
+            CX & [0, 1]
         Delta = gates_Delta.matrix()
         U = U.dot(Delta)
 
-        ## Refined Cartan KAK Decomposition for U (because we have known Ud here!)
+        # Refined Cartan KAK Decomposition for U (because we have known Ud here!)
         # Some preparation derived from Cartan involution
         Up = B.T.conj().dot(U).dot(B)
         M2 = Up.T.dot(Up)
@@ -67,13 +65,13 @@ class TwoQubitDiagonalTransform(Synthesis):
         M2.imag[abs(M2.imag) < eps] = 0.0
 
         # Since M2 is a symmetric unitary matrix, we can diagonalize its real and
-        # imaginary part simultaneously. That is, ∃ P∈SO(4), s.t. M2 = P.D.P^T, 
+        # imaginary part simultaneously. That is, ∃ P∈SO(4), s.t. M2 = P.D.P^T,
         # where D is diagonal with unit-magnitude elements.
         D, P = CartanKAKDecomposition.diagonalize_unitary_symmetric(M2)
         d = np.angle(D) / 2
 
         # Refinement time, by some mathematics we know that d here must be a rearragement
-        # of d_Ud. However, the diagonalization process does not guarantee that they are 
+        # of d_Ud. However, the diagonalization process does not guarantee that they are
         # correctly sorted.
         order = np.argsort(d)[::-1]
         d[:] = d[order]
@@ -100,16 +98,14 @@ class TwoQubitDiagonalTransform(Synthesis):
         # Finally we could combine everything together
         gates = CompositeGate()
         with gates:
-            # @formatter:off
-            Unitary(Delta.conj())   & [0, 1]
-            Unitary(KR0)            & 0
-            Unitary(KR1)            & 1
-            CX                      & [0, 1]
-            Rx(-2 * a)              & 0
-            Rz(-2 * c)              & 1
-            CX                      & [0, 1]
-            Unitary(KL0)            & 0
-            Unitary(KL1)            & 1
-            # @formatter:on
+            Unitary(Delta.conj()) & [0, 1]
+            Unitary(KR0) & 0
+            Unitary(KR1) & 1
+            CX & [0, 1]
+            Rx(-2 * a) & 0
+            Rz(-2 * c) & 1
+            CX & [0, 1]
+            Unitary(KL0) & 0
+            Unitary(KL1) & 1
 
         return gates

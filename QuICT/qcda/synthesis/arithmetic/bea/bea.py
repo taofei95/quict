@@ -136,6 +136,7 @@ def FourierReverseAdderWiredCC(a, phib, c, dualControlled):
                     CRz(- phase) | (c[0], phib[i])
             p -= 1
 
+
 def FourierAdderModCC(a, N, phib, c, low, dualControlled=True):
     """ use FourierAdderWired/FourierAdderWiredCC to calculate (a+b)%N in Fourier space
 
@@ -157,14 +158,14 @@ def FourierAdderModCC(a, N, phib, c, low, dualControlled=True):
     FourierReverseAdderWired(N, phib)
     IQFT(len(phib)) | phib
     CX | (phib[0], low)
-    QFT(len(phib))  | phib
+    QFT(len(phib)) | phib
     FourierAdderWiredCC(N, phib, low, dualControlled=False)
     FourierReverseAdderWiredCC(a, phib, c, dualControlled=dualControlled)
     IQFT(len(phib)) | phib
     X | phib[0]
     CX | (phib[0], low)
     X | phib[0]
-    QFT(len(phib))  | phib
+    QFT(len(phib)) | phib
     FourierAdderWiredCC(a, phib, c, dualControlled=dualControlled)
 
 
@@ -187,14 +188,14 @@ def FourierAdderMod(a, N, phib, low):
     FourierReverseAdderWired(N, phib)
     IQFT(len(phib)) | phib
     CX | (phib[0], low)
-    QFT(len(phib))  | phib
+    QFT(len(phib)) | phib
     FourierAdderWiredCC(N, phib, low, dualControlled=False)
     FourierReverseAdderWired(a, phib)
-    IQFT(len(phib))  | phib
+    IQFT(len(phib)) | phib
     X | phib[0]
     CX | (phib[0], low)
     X | phib[0]
-    QFT(len(phib))  | phib
+    QFT(len(phib)) | phib
     FourierAdderWired(a, phib)
 
 
@@ -248,7 +249,7 @@ def FourierMultMod(a, N, x, phib, low):
 
 
 def MultModC(a, N, x, b, c, low):
-    QFT(len(b))  | b
+    QFT(len(b)) | b
     FourierMultModC(a, N, x, b, c, low)
     IQFT(len(b)) | b
 
@@ -278,11 +279,11 @@ class BEAAdder(Synthesis):
     @classmethod
     def execute(cls, n):
         """ a circuit calculate a+b, a and b are gotten from some qubits.
-        
+
         (a,b) -> (a,b'=a+b)
 
         Args:
-            n(int): length of a and b 
+            n(int): length of a and b
         """
         circuit = Circuit(n * 2)
         qreg_a = circuit([i for i in range(n)])
@@ -295,7 +296,7 @@ class BEAAdderWired(Synthesis):
     @classmethod
     def execute(cls, n, a):
         """ a circuit calculate a+b, a is wired, and b are gotten from some qubits.
-        
+
         (b) -> (b'=a+b)
 
         Args:
@@ -322,7 +323,7 @@ class BEAReverseAdderWired(Synthesis):
         """
         circuit = Circuit(n + 1)
         qreg_b = circuit([i for i in range(n + 1)])
-        QFT(len(qreg_b))  | qreg_b
+        QFT(len(qreg_b)) | qreg_b
         FourierReverseAdderWired(a, qreg_b)
         IQFT(len(qreg_b)) | qreg_b
         return CompositeGate(circuit.gates)
@@ -331,7 +332,7 @@ class BEAReverseAdderWired(Synthesis):
 class CCBEAAdderWired(Synthesis):
     @classmethod
     def execute(cls, n, a):
-        """ 
+        """
         (b,c) -> (b'=a+b,c) if c=0b11 else (b'=b,c)
 
         Args:
@@ -341,7 +342,7 @@ class CCBEAAdderWired(Synthesis):
         circuit = Circuit(n + 3)
         qreg_b = circuit([i for i in range(n + 1)])
         qreg_c = circuit([i for i in range(n + 1, n + 3)])
-        QFT(len(qreg_b))  | qreg_b
+        QFT(len(qreg_b)) | qreg_b
         FourierAdderWiredCC(a, qreg_b, qreg_c, dualControlled=True)
         IQFT(len(qreg_b)) | qreg_b
         return CompositeGate(circuit.gates)
@@ -350,7 +351,7 @@ class CCBEAAdderWired(Synthesis):
 class CCBEAReverseAdderWired(Synthesis):
     @classmethod
     def execute(cls, n, a):
-        """ 
+        """
         (b,c) -> (b'=b-a,c) if c=0b11 else (b'=b,c)
 
         Args:
@@ -360,7 +361,7 @@ class CCBEAReverseAdderWired(Synthesis):
         circuit = Circuit(n + 3)
         qreg_b = circuit([i for i in range(n + 1)])
         qreg_c = circuit([i for i in range(n + 1, n + 3)])
-        QFT(len(qreg_b))  | qreg_b
+        QFT(len(qreg_b)) | qreg_b
         FourierReverseAdderWiredCC(a, qreg_b, qreg_c, dualControlled=True)
         IQFT(len(qreg_b)) | qreg_b
         return CompositeGate(circuit.gates)
@@ -390,7 +391,7 @@ class CCBEAAdderMod(Synthesis):
         qreg_b = circuit([i for i in range(n + 1)])
         qreg_c = circuit([i for i in range(n + 1, n + 3)])
         qreg_low = circuit([i for i in range(n + 3, n + 4)])
-        QFT(len(qreg_b))  | qreg_b
+        QFT(len(qreg_b)) | qreg_b
         FourierAdderModCC(a, N, qreg_b, qreg_c, qreg_low)
         IQFT(len(qreg_b)) | qreg_b
         return CompositeGate(circuit.gates)
@@ -418,7 +419,7 @@ class BEAAdderMod(Synthesis):
         circuit = Circuit(n + 2)
         qreg_b = circuit([i for i in range(n + 1)])
         qreg_low = circuit([i for i in range(n + 1, n + 2)])
-        QFT(len(qreg_b))  | qreg_b
+        QFT(len(qreg_b)) | qreg_b
         FourierAdderMod(a, N, qreg_b, qreg_low)
         IQFT(len(qreg_b)) | qreg_b
         return CompositeGate(circuit.gates)

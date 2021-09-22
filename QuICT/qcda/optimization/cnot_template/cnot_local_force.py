@@ -13,6 +13,7 @@ from .cnot_force import CnotForceBfs
 from .cnot_store_force import CnotStoreForceBfs
 from QuICT.core import *
 
+
 def _matrix_product_to_bigger(space, gate) -> np.ndarray:
     q_len = len(space)
     n = 1 << len(space)
@@ -57,6 +58,7 @@ def _matrix_product_to_bigger(space, gate) -> np.ndarray:
             new_values[i][j] = matrix[nowi][nowj]
     return new_values
 
+
 def commutative(gateA, gateB):
     spaceA = set()
     spaceB = set()
@@ -74,6 +76,7 @@ def commutative(gateA, gateB):
     matrix1 = _matrix_product_to_bigger(space, gateA)
     matrix2 = _matrix_product_to_bigger(space, gateB)
     return not np.any(np.abs(matrix1 - matrix2) > 1e-10)
+
 
 def traver_with_fix_qubits(gates: list, fix: set, store):
     """ local optimize for fix qubits
@@ -138,6 +141,7 @@ def traver_with_fix_qubits(gates: list, fix: set, store):
 
     return output
 
+
 def traver(input: list, width, store):
     """ find the best circuit by bfs
 
@@ -155,6 +159,7 @@ def traver(input: list, width, store):
     for comb in combinations(all_list, min(width, max_local_qubits)):
         input = traver_with_fix_qubits(input, set(comb), store)
     return input
+
 
 def solve(gates: list, width, store):
     """ optimize the circuit locally
@@ -179,12 +184,13 @@ def solve(gates: list, width, store):
     circuit.extend(gates)
     return gates
 
+
 class CnotLocalForceBfs(Optimization):
     """ use bfs to optimize the cnot circuit
 
     """
     @staticmethod
-    def execute(circuit : Circuit, store = False):
+    def execute(circuit: Circuit, store=False):
         """
         Args:
             circuit(Circuit): the circuit to be optimize
@@ -194,4 +200,3 @@ class CnotLocalForceBfs(Optimization):
         """
         gates = circuit.gates
         return solve(gates, circuit.circuit_width(), store)
-

@@ -363,7 +363,7 @@ def _does_commute(node1, node2):
         return _matrix_commute(node1.gate.matrix, node2.gate.matrix)
 
     # One 1-qubit gate and one controlled gate
-    # Be aware that by construction, not is_single() just means 
+    # Be aware that by construction, not is_single() just means
     # is_control_single() or is_ccx()
     # Assume node1 is the 1-qubit gate, otherwise exchange them
     if not node1.gate.is_single() and node2.gate.is_single():
@@ -378,7 +378,7 @@ def _does_commute(node1, node2):
             else:
                 return False
         if node1.targs[0] in node2.targs:
-            # Now the matrix must commute 
+            # Now the matrix must commute
             return _matrix_commute(node1.gate.matrix, node2.gate.matrix)
 
     # Double controlled gates

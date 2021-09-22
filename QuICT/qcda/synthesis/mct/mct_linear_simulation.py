@@ -7,6 +7,7 @@
 from .._synthesis import Synthesis
 from QuICT.core import *
 
+
 def solve(n, m):
     """
 
@@ -20,7 +21,7 @@ def solve(n, m):
     circuit = Circuit(n)
     print(n, m)
     if m == 1:
-        CX  | circuit([0, n - 1])
+        CX | circuit([0, n - 1])
     elif m == 2:
         CCX | circuit([0, 1, n - 1])
     else:
@@ -36,6 +37,7 @@ def solve(n, m):
         for i in range(3, m):
             CCX | circuit([i - 1, n - 1 - (m - i + 1), n - 1 - (m - i)])
     return CompositeGate(circuit.gates)
+
 
 class MCTLinearSimulation(Synthesis):
     @classmethod

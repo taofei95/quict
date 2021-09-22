@@ -21,6 +21,7 @@ READ_CNOT = []
 # the the gates which makes the identity of "read_cnot", the ans is its inverse
 GATES = []
 
+
 class Steiner_Tree(object):
     """ the Steiner_Tree struct
 
@@ -61,7 +62,7 @@ class Steiner_Tree(object):
         self.pre = np.array([], dtype=np.int64)
         self.root = 0
 
-    def build_ST(self, ST_input : list, lower_bound):
+    def build_ST(self, ST_input: list, lower_bound):
         """ build Steiner_Tree with ST_input in it
 
         ST_input[-1] must be the root of the tree.
@@ -147,7 +148,7 @@ class Steiner_Tree(object):
             self.father[_pre[0] + self.N] = root
             self.build_STtree(_pre[0] + self.N, _pre[1])
 
-    def elimination_below(self, gauss_elimination : list):
+    def elimination_below(self, gauss_elimination: list):
         """ elimination with some rows below ith row and ith column.
 
         Args:
@@ -156,7 +157,7 @@ class Steiner_Tree(object):
 
         self._elimination_below_dfs(self.root, gauss_elimination)
 
-    def _elimination_below_dfs(self, now, gauss_elimination : list):
+    def _elimination_below_dfs(self, now, gauss_elimination: list):
         """ elimination with dfs
 
         Args:
@@ -179,11 +180,11 @@ class Steiner_Tree(object):
             gauss_elimination[now] ^= gauss_elimination[self.father[now]]
             GATES.append(gate)
 
-    def elimination_above(self, gauss_elimination : list):
+    def elimination_above(self, gauss_elimination: list):
         self._elimination_above_preorder(self.root, gauss_elimination)
         self._elimination_above_postorder(self.root, gauss_elimination)
 
-    def _elimination_above_preorder(self, now, gauss_elimination : list):
+    def _elimination_above_preorder(self, now, gauss_elimination: list):
         for son in self.sons[now]:
             if self.ST[son] == 0:
                 GateBuilder.setCargs(son)
@@ -205,6 +206,7 @@ class Steiner_Tree(object):
             gate = GateBuilder.getGate()
             GATES.append(gate)
 
+
 def delete_dfs(now):
     """ search for a initial mapping to get better(maybe) topology
 
@@ -222,6 +224,7 @@ def delete_dfs(now):
     delete_dfs.topo_forward_map[now] = delete_dfs.delete_total
     delete_dfs.topo_backward_map[delete_dfs.delete_total] = now
     delete_dfs.delete_total += 1
+
 
 def read(circuit, cnot_struct, topology):
     """ get describe from the circuit or cnot_struct
@@ -274,10 +277,11 @@ def read(circuit, cnot_struct, topology):
             gate = circuit.gates[i]
             if gate.type() == GATE_ID["CX"]:
                 READ_CNOT[topo_forward_map[gate.targ]] ^= \
-                        READ_CNOT[topo_forward_map[gate.carg]]
+                    READ_CNOT[topo_forward_map[gate.carg]]
 
     ST = Steiner_Tree(N, TOPO)
     return ST, topo_backward_map
+
 
 def solve(ST_tree):
     """ main part of the algorithm
@@ -390,6 +394,7 @@ def solve(ST_tree):
     GATES.reverse()
     return GATES
 
+
 class TopologicalCnot(Optimization):
     """ optimize the cnot circuit on topological device
     https://arxiv.org/pdf/1910.14478.pdf
@@ -399,7 +404,7 @@ class TopologicalCnot(Optimization):
     """
 
     @classmethod
-    def execute(cls, circuit : Circuit = None, cnot_struct = None, topology = None):
+    def execute(cls, circuit: Circuit = None, cnot_struct=None, topology=None):
         """
 
         Args:

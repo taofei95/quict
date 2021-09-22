@@ -1,4 +1,0 @@
-Install
-===========
-
-.. mdinclude:: ./install.md

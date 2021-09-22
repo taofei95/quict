@@ -16,7 +16,6 @@
 Template matching substitution, given a list of maximal matches it substitutes
 them in circuit and creates a new optimized dag version of the circuit.
 """
-import copy
 
 # from qiskit.circuit import ParameterExpression
 from .dagdependency import DAGDependency
@@ -224,7 +223,7 @@ class TemplateSubstitution:
                 continue
             index_a = self.substitution_list.index(scenario_a)
             circuit_a = scenario_a.circuit_config
-            for scenario_b in self.substitution_list[index_a+1::]:
+            for scenario_b in self.substitution_list[index_a + 1::]:
                 if scenario_b in remove_list:
                     continue
                 index_b = self.substitution_list.index(scenario_b)
@@ -269,16 +268,19 @@ class TemplateSubstitution:
 
             # If the match obey the rule then it is added to the list.
             if self._rules(circuit_sublist, template_sublist, template_complement):
-                template_sublist_inverse = self._template_inverse(template_list,
-                                                                  template_sublist,
-                                                                  template_complement)
+                template_sublist_inverse = self._template_inverse(
+                    template_list,
+                    template_sublist,
+                    template_complement
+                )
 
-                config = SubstitutionConfig(circuit_sublist,
-                                            template_sublist_inverse,
-                                            [],
-                                            current_qubit,
-                                            self.template_dag_dep)
-                                            #template)
+                config = SubstitutionConfig(
+                    circuit_sublist,
+                    template_sublist_inverse,
+                    [],
+                    current_qubit,
+                    self.template_dag_dep
+                )
                 self.substitution_list.append(config)
 
         # Remove incompatible matches.

@@ -9,6 +9,7 @@ from QuICT.core import *
 from QuICT.qcda.synthesis import MCTOneAux, MCTLinearSimulation
 from QuICT.algorithm import SyntheticalUnitary
 
+
 def test_MCT_Linear_Simulation():
     max_qubit = 11
     for i in range(3, max_qubit):
@@ -61,6 +62,7 @@ def test_MCT_Linear_Simulation():
                                         print(unitary)
                                         assert 0
 
+
 def test_MCT():
     max_qubit = 11
     for i in range(3, max_qubit):
@@ -101,8 +103,8 @@ def test_MCT():
                         if abs(abs(unitary[j, k])) > 1e-10:
                             print(i, j, k, unitary[j, k])
                             assert 0
-
     assert 1
+
 
 if __name__ == "__main__":
     pytest.main(["./unit_test.py"])

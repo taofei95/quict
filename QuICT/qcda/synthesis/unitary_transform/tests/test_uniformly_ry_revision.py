@@ -5,7 +5,7 @@ import random
 
 import numpy as np
 
-from QuICT.algorithm import Amplitude, SyntheticalUnitary
+from QuICT.algorithm import SyntheticalUnitary
 from QuICT.core import *
 from QuICT.qcda.synthesis.unitary_transform.uniformly_ry_revision import UniformlyRyRevision
 

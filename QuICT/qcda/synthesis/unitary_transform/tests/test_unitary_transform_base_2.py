@@ -1,7 +1,6 @@
 from scipy.stats import unitary_group
 from QuICT.qcda.synthesis.unitary_transform import UnitaryTransform
 from QuICT.core import *
-from QuICT.algorithm import SyntheticalUnitary
 
 
 def test_unitary_transform_base_2():

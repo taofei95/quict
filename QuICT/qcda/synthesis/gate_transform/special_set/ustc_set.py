@@ -5,7 +5,7 @@
 # @File    : ustc_set
 
 from .. import InstructionSet
-from ..transform_rule import TransformRule, XyxRule
+from ..transform_rule import XyxRule
 
 from QuICT.core import *
 

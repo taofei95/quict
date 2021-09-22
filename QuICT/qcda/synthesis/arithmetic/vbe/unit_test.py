@@ -74,12 +74,12 @@ def test_MulAddMod():
                     m = len(bin(N)) - 2
                     circuit = Circuit(4 * n + m + 2)
                     qubit_x = circuit([i for i in range(m)])
-                    qubit_a = circuit([i for i in range(m, n + m)])
+                    # qubit_a = circuit([i for i in range(m, n + m)])
                     qubit_b = circuit([i for i in range(n + m, 2 * n + m)])
-                    qubit_c = circuit([i for i in range(2 * n + m, 3 * n + m)])
-                    qubit_overflow = circuit(3 * n + m)
-                    qubit_N = circuit([i for i in range(3 * n + m + 1, 4 * n + m + 1)])
-                    qubit_t = circuit(4 * n + m + 1)
+                    # qubit_c = circuit([i for i in range(2 * n + m, 3 * n + m)])
+                    # qubit_overflow = circuit(3 * n + m)
+                    # qubit_N = circuit([i for i in range(3 * n + m + 1, 4 * n + m + 1)])
+                    # qubit_t = circuit(4 * n + m + 1)
                     Set(qubit_x, x)
                     Set(qubit_b, b)
                     VBEMulAddMod.execute(a, N, n, m) | circuit

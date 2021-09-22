@@ -1,8 +1,6 @@
 # noinspection PyUnresolvedReferences
-from scipy.linalg import cossin
 from QuICT.qcda.synthesis.uniformly_gate import UniformlyRy
 from QuICT.core import *
-from QuICT.algorithm import SyntheticalUnitary
 
 
 def test_reversed_uniformly_ry():
