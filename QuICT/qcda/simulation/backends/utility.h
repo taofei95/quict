@@ -30,10 +30,10 @@
 
 #define STRIDE_2_STORE_ODD_PD(to_addr, from_reg, tmp_arr) \
     _mm256_storeu_pd(tmp_arr, from_reg);\
-    ((double*)(to_addr))[1] = (double)(tmp_arr)[0];\
-    ((double*)(to_addr))[3] = (double)(tmp_arr)[1];\
-    ((double*)(to_addr))[5] = (double)(tmp_arr)[2];\
-    ((double*)(to_addr))[7] = (double)(tmp_arr)[3];
+    ((double*)(to_addr))[1] = ((double*)(tmp_arr))[0];\
+    ((double*)(to_addr))[3] = ((double*)(tmp_arr))[1];\
+    ((double*)(to_addr))[5] = ((double*)(tmp_arr))[2];\
+    ((double*)(to_addr))[7] = ((double*)(tmp_arr))[3];
 
 
 namespace QuICT {

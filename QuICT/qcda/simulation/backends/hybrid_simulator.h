@@ -555,27 +555,36 @@ namespace QuICT {
                             _mm256_storeu_pd(&imag[inds[2]], ymm5);
                         }
                     } else { // ...q1.q0
-                        // v00 v02 v10 v12 v01 v03 v11 v13
+                        // v00 v02 v10 v12 . v01 v03 v11 v13
                         constexpr uint64_t batch_size = 2;
-                        __m256d ymm0 = _mm256_setr_pd(1, gate.diagonal_real_[0], 1, gate.diagonal_real_[0]);
-                        __m256d ymm1 = _mm256_setr_pd(1, gate.diagonal_real_[1], 1, gate.diagonal_real_[1]);
-                        __m256d ymm2 = _mm256_setr_pd(0, gate.diagonal_imag_[0], 0, gate.diagonal_imag_[0]);
-                        __m256d ymm3 = _mm256_setr_pd(0, gate.diagonal_imag_[1], 0, gate.diagonal_imag_[1]);
+                        __m256d ymm0 = _mm256_setr_pd(gate.diagonal_real_[0], gate.diagonal_real_[1],
+                                                      gate.diagonal_real_[0], gate.diagonal_real_[1]);
+                        __m256d ymm1 = _mm256_setr_pd(gate.diagonal_imag_[0], gate.diagonal_imag_[1],
+                                                      gate.diagonal_imag_[0], gate.diagonal_imag_[1]);
 #pragma omp parallel for
                         for (uint64_t task_id = 0; task_id < task_num; task_id += batch_size) {
                             auto inds = index(task_id, circuit_qubit_num, qubits, qubits_sorted);
-                            __m256d ymm4 = _mm256_loadu_pd(&real[inds[0]]); // v00 v02 v10 v12, real
-                            __m256d ymm5 = _mm256_loadu_pd(&real[inds[1]]); // v01 v03 v11 v13, real
+                            __m256d ymm2 = _mm256_loadu_pd(&real[inds[0]]); // v00 v02 v10 v12, real
+                            __m256d ymm3 = _mm256_loadu_pd(&real[inds[1]]); // v01 v03 v11 v13, real
+                            __m256d ymm4 = _mm256_loadu_pd(&imag[inds[0]]); // v00 v02 v10 v12, imag
+                            __m256d ymm5 = _mm256_loadu_pd(&imag[inds[1]]); // v01 v03 v11 v13, imag
 
-                            __m256d ymm6 = _mm256_loadu_pd(&imag[inds[0]]); // v00 v02 v10 v12, imag
-                            __m256d ymm7 = _mm256_loadu_pd(&imag[inds[1]]); // v01 v03 v11 v13, imag
-                            __m256d ymm8, ymm9, ymm10, ymm11;
-                            COMPLEX_YMM_MUL(ymm0, ymm2, ymm4, ymm6, ymm8, ymm9)
-                            COMPLEX_YMM_MUL(ymm1, ymm3, ymm5, ymm7, ymm10, ymm11)
-                            _mm256_storeu_pd(&real[inds[0]], ymm8);
-                            _mm256_storeu_pd(&real[inds[1]], ymm10);
-                            _mm256_storeu_pd(&imag[inds[0]], ymm9);
-                            _mm256_storeu_pd(&imag[inds[1]], ymm11);
+                            __m256d ymm6 = _mm256_shuffle_pd(ymm2, ymm3, 0b0000); // v00 v01 v10 v11, real
+                            __m256d ymm7 = _mm256_shuffle_pd(ymm2, ymm3, 0b1111); // v02 v03 v12 v13, real
+                            __m256d ymm8 = _mm256_shuffle_pd(ymm4, ymm5, 0b0000); // v00 v01 v10 v11, imag
+                            __m256d ymm9 = _mm256_shuffle_pd(ymm4, ymm5, 0b1111); // v02 v03 v12 v13, imag
+
+                            __m256d ymm10, ymm11; // res_r, res_i
+                            COMPLEX_YMM_MUL(ymm0, ymm1, ymm7, ymm9, ymm10, ymm11);
+                            ymm2 = _mm256_shuffle_pd(ymm6, ymm10, 0b0000);
+                            ymm3 = _mm256_shuffle_pd(ymm6, ymm10, 0b1111);
+                            ymm4 = _mm256_shuffle_pd(ymm8, ymm11, 0b0000);
+                            ymm5 = _mm256_shuffle_pd(ymm8, ymm11, 0b1111);
+
+                            _mm256_storeu_pd(&real[inds[0]], ymm2);
+                            _mm256_storeu_pd(&real[inds[1]], ymm3);
+                            _mm256_storeu_pd(&imag[inds[0]], ymm4);
+                            _mm256_storeu_pd(&imag[inds[1]], ymm5);
                         }
                     }
                 }

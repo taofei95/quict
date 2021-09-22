@@ -6,7 +6,7 @@ from QuICT.core import *
 from QuICT.algorithm import Amplitude
 
 
-def out_circuit_to_file(f_name: str, circuit: Circuit):
+def out_circuit_to_file(qubit_num:int,f_name: str, circuit: Circuit):
     with open(f_name, 'w') as f:
         print(qubit_num, file=f)
 
@@ -33,15 +33,15 @@ qubit_num = 25
 
 circuit = Circuit(qubit_num)
 
-QFT.build_gate(qubit_num) | circuit
+QFT(qubit_num).build_gate() | circuit
 
-out_circuit_to_file("qft_perf.txt", circuit)
+out_circuit_to_file(qubit_num, "qft_perf.txt", circuit)
 
 circuit.clear()
 
 for i in range(qubit_num):
     H | circuit(i)
 
-out_circuit_to_file("h_perf.txt", circuit)
+out_circuit_to_file(qubit_num, "h_perf.txt", circuit)
 
 
