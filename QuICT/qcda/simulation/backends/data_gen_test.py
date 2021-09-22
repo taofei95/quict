@@ -67,7 +67,7 @@ def main():
     qubit_num = 18
     circuit = Circuit(qubit_num)
 
-    QFT.build_gate(qubit_num) | circuit
+    QFT(qubit_num).build_gate() | circuit
     out_circuit_to_file(qubit_num, "qft.txt", circuit)
     circuit.clear()
 
