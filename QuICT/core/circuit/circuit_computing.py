@@ -13,7 +13,6 @@ from QuICT.backends.systemcdll import systemCdll
 
 def _getRandomList(l, n):
     """ get l number from 0, 1, ..., n - 1 randomly.
-
     Args:
         l(int)
         n(int)
@@ -45,20 +44,20 @@ def inner_partial_prob(circuit, indexes):
     partial_prob_operator = dll.partial_prob_cheat_operator
     partial_prob_operator.argtypes = [
         np.ctypeslib.ndpointer(dtype=np.complex128, ndim=1, flags="C_CONTIGUOUS"),
-        np.ctypeslib.ndpointer(dtype=np.int64, ndim=1, flags="C_CONTIGUOUS"),
+        np.ctypeslib.ndpointer(dtype=np.int, ndim=1, flags="C_CONTIGUOUS"),
         c_int,
         c_int,
-        np.ctypeslib.ndpointer(dtype=np.int64, ndim=1, flags="C_CONTIGUOUS"),
+        np.ctypeslib.ndpointer(dtype=np.int, ndim=1, flags="C_CONTIGUOUS"),
     ]
 
     length = 1 << len(indexes)
 
-    partial_prob_operator.restype = np.ctypeslib.ndpointer(dtype=np.float64, shape=(length,))
+    partial_prob_operator.restype = np.ctypeslib.ndpointer(dtype=np.float, shape=(length,))
 
     tangle_list = []
     tangle_values = np.array([], dtype=np.complex128)
-    tangle_length = np.array([], dtype=np.int64)
-    qubit_map = np.array([i for i in range(len(indexes))], dtype=np.int64)
+    tangle_length = np.array([], dtype=np.int)
+    qubit_map = np.array([i for i in range(len(indexes))], dtype=np.int)
 
     tangle_iter = 0
     for index in indexes:
@@ -112,7 +111,7 @@ def inner_random_append(circuit, rand_size=10, typeList=None):
                 params.append(random.uniform(0, 2 * np.pi))
             GateBuilder.setPargs(params)
         gate = GateBuilder.getGate()
-        circuit.gates.append(gate)
+        circuit.append(gate)
 
 def inner_matrix_product_to_circuit(circuit, gate) -> np.ndarray:
     q_len = len(circuit.qubits)

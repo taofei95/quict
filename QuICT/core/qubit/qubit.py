@@ -463,9 +463,9 @@ class QState(object):
         """
         self.__qureg = Qureg(qubit)
         if qubit.measured == -1 or qubit.measured == 0:
-            self.__values = np.array([1, 0], dtype=np.complex64)
+            self.__values = np.array([1, 0], dtype=np.complex128)
         else:
-            self.__values = np.array([0, 1], dtype=np.complex64)
+            self.__values = np.array([0, 1], dtype=np.complex128)
         global QState_id
         self.__id = QState_id
         QState_id = QState_id + 1
@@ -507,7 +507,7 @@ class QState(object):
         """ assign random values to the qState
 
         """
-        self.values = np.zeros(1 << len(self.qureg), dtype=np.complex64)
+        self.values = np.zeros(1 << len(self.qureg), dtype=np.complex128)
         sqrnorm = 0
         for i in range(1 << len(self.qureg)):
             real = random.random()
@@ -523,7 +523,7 @@ class QState(object):
         """ assign zero to the qState
 
         """
-        self.values = np.zeros(1 << len(self.qureg), dtype=np.complex64)
+        self.values = np.zeros(1 << len(self.qureg), dtype=np.complex128)
         self.values[0] = 1 + 0j
 
     def force_copy(self, other):

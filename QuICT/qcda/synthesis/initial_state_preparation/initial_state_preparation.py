@@ -12,7 +12,7 @@ import os
 
 from .._synthesis import Synthesis
 from QuICT.core import *
-from QuICT.qcda.synthesis import UniformlyRy, UniformlyUnitary
+from QuICT.qcda.synthesis import uniformlyRy, uniformlyUnitary
 
 # the allowed eps
 EPS = 1e-13
@@ -47,99 +47,99 @@ def permit_element(element):
         return True
     else:
         tp = type(element)
-        if tp == np.int64 or tp == np.float64 or tp == np.complex128:
+        if tp == np.int64 or tp == np.float or tp == np.complex128:
             return True
         return False
 
-class InitialStatePreparation(Synthesis):
-    @classmethod
-    def execute(cls, other):
-        """
-        Args:
-            other: the parameters to be added in, it can have following forms:
-                1) int/float/complex
-                2) list<int/float/complex>
-                3) tuple<int/float/complex>
-        Raises:
-            TypeException: the parameters filled in are wrong
-        Returns:
-            gateSet
-        """
+def InitialStatePreparationDecomposition(other):
+    """
+    Args:
+        other: the parameters to add in, it can have follow forms:
+            1) int/float/complex
+            2) list<int/float/complex>
+            3) tuple<int/float/complex>
+    Raises:
+        TypeException: the parameters filled in are wrong
+    Returns:
+        gateSet
+    """
 
+    pargs = [other]
+    if permit_element(other):
         pargs = [other]
-        if permit_element(other):
-            pargs = [other]
-        elif isinstance(other, list):
-            pargs = []
-            for element in other:
-                if not permit_element(element):
-                    raise TypeException("int or float or complex", element)
-                pargs.append(element)
-        elif isinstance(other, tuple):
-            pargs = []
-            for element in other:
-                if not permit_element(element):
-                    raise TypeException("int or float or complex", element)
-                pargs.append(element)
-        else:
-            raise TypeException("int/float/complex or list<int/float/complex> or tuple<int/float/complex>", other)
+    elif isinstance(other, list):
+        pargs = []
+        for element in other:
+            if not permit_element(element):
+                raise TypeException("int or float or complex", element)
+            pargs.append(element)
+    elif isinstance(other, tuple):
+        pargs = []
+        for element in other:
+            if not permit_element(element):
+                raise TypeException("int or float or complex", element)
+            pargs.append(element)
+    else:
+        raise TypeException("int/float/complex or list<int/float/complex> or tuple<int/float/complex>", other)
 
-        N = len(pargs)
-        n = int(np.ceil(np.log2(N)))
-        NN = 1 << n
-        if NN > N:
-            pargs.extend([0] * (NN - N))
+    N = len(pargs)
+    n = int(np.ceil(np.log2(N)))
+    NN = 1 << n
+    if NN > N:
+        pargs.extend([0] * (NN - N))
 
-        phases = []
+    phases = []
 
-        norm = 0
-        for value in pargs:
-            norm += abs(value) * abs(value)
-        if abs(norm - 1) > 1e-10:
-            for i in range(NN):
-                pargs[i] /= norm
-                phases.append(np.angle(pargs[i]))
-                pargs[i] = abs(pargs[i])
-        else:
-            for i in range(NN):
-                phases.append(np.angle(pargs[i]))
-                pargs[i] = abs(pargs[i])
+    norm = 0
+    for value in pargs:
+        norm += abs(value) * abs(value)
+    if abs(norm - 1) > 1e-10:
+        for i in range(NN):
+            pargs[i] /= norm
+            phases.append(np.angle(pargs[i]))
+            pargs[i] = abs(pargs[i])
+    else:
+        for i in range(NN):
+            phases.append(np.angle(pargs[i]))
+            pargs[i] = abs(pargs[i])
 
-        dll = _initial_state_preparation_cdll()
-        state_theta_computation = dll.state_theta_computation
-        state_theta_computation.argtypes = [
-            c_int,
-            np.ctypeslib.ndpointer(dtype=np.longdouble, ndim=1, flags="C_CONTIGUOUS"),
-            np.ctypeslib.ndpointer(dtype=np.longdouble, ndim=1, flags="C_CONTIGUOUS"),
-        ]
-        state_theta_computation.restype = c_int
+    dll = _initial_state_preparation_cdll()
+    state_theta_computation = dll.state_theta_computation
+    state_theta_computation.argtypes = [
+        c_int,
+        np.ctypeslib.ndpointer(dtype=np.longdouble, ndim=1, flags="C_CONTIGUOUS"),
+        np.ctypeslib.ndpointer(dtype=np.longdouble, ndim=1, flags="C_CONTIGUOUS"),
+    ]
+    state_theta_computation.restype = c_int
 
-        back = np.zeros(NN - 1, dtype=np.longdouble)
-        safe = state_theta_computation(
-            N,
-            np.array(pargs, dtype=np.longdouble),
-            back
-        )
+    back = np.zeros(NN - 1, dtype=np.longdouble)
+    safe = state_theta_computation(
+        N,
+        np.array(pargs, dtype=np.longdouble),
+        back
+    )
 
-        if safe == -1:
-            raise Exception("the sum of input vector is 0")
-        gates = CompositeGate()
-        now = 0
-        for i in range(n):
-            add = (1 << i)
-            alpha = back[now:now + add]
-            flag = True
-            for angle in alpha:
-                test = np.floor(angle / np.pi)
-                if abs(test * np.pi - angle) > 1e-13:
-                    flag = False
-                    break
-            if not flag:
-                gates.extend(UniformlyRy.execute(alpha))
-            now += add
-        unitaries = [np.diag([np.exp(1j * phases[2 * i]), np.exp(1j * phases[2 * i + 1])])
-                    for i in range(len(phases) // 2)]
-        # print(phases)
-        # phases = [np.angle(phase) for phase in phases]
-        gates.extend(UniformlyUnitary.execute(unitaries))
-        return gates
+    if safe == -1:
+        raise Exception("the sum of input vector is 0")
+    gates = CompositeGate()
+    now = 0
+    for i in range(n):
+        add = (1 << i)
+        alpha = back[now:now + add]
+        flag = True
+        for angle in alpha:
+           test = np.floor(angle / np.pi)
+           if abs(test * np.pi - angle) > 1e-13:
+               flag = False
+               break
+        if not flag:
+            gates.extend(uniformlyRy(alpha))
+        now += add
+    unitaries = [np.diag([np.exp(1j * phases[2 * i]), np.exp(1j * phases[2 * i + 1])])
+                 for i in range(len(phases) // 2)]
+    # print(phases)
+    # phases = [np.angle(phase) for phase in phases]
+    gates.extend(uniformlyUnitary(unitaries))
+    return gates
+
+InitialStatePreparation = Synthesis(InitialStatePreparationDecomposition)

@@ -1,11 +1,15 @@
 #!/usr/bin/env python
 # -*- coding:utf8 -*-
 
+import os
 import math
 import numpy as np
 import cupy as cp
 
 from typing import *
+
+from numba import cuda as nb_cuda
+import numba as nb
 
 
 def htod(target):
@@ -50,35 +54,7 @@ def dot(A, B, gpu_out: bool = True):
     return cp.dot(gpu_A, gpu_B).get() if gpu_out else cp.dot(gpu_A, gpu_B)
 
 
-tensor_single_kernel = cp.RawKernel(r'''
-    #include <cupy/complex.cuh>
-    extern "C" __global__
-    void tensorsingle(complex<float>* x, complex<float>* y, complex<float>* out, int cx, int ry, int cy) {
-        int out_id = blockDim.x * blockIdx.x + threadIdx.x;
-        int out_width = cx * cy;
-        int y_size = ry * cy;
-        int x_id = (out_id/out_width)/ry * cx + (out_id%out_width) / cy;
-        int y_id = (out_id/out_width)%ry * cy + (out_id%out_width) % cy;
-        out[out_id] = x[x_id] * y[y_id];
-    }
-    ''', 'tensorsingle')
-
-
-tensor_double_kernel = cp.RawKernel(r'''
-    #include <cupy/complex.cuh>
-    extern "C" __global__
-    void tensordouble(complex<double>* x, complex<double>* y, complex<double>* out, int cx, int ry, int cy) {
-        int out_id = blockDim.x * blockIdx.x + threadIdx.x;
-        int out_width = cx * cy;
-        int y_size = ry * cy;
-        int x_id = (out_id/out_width)/ry * cx + (out_id%out_width) / cy;
-        int y_id = (out_id/out_width)%ry * cy + (out_id%out_width) % cy;
-        out[out_id] = x[x_id] * y[y_id];
-    }
-    ''', 'tensordouble')
-
-
-def tensor(A, B, gpu_out=True):
+def tensor(A, B, gpu_out: bool = True):
     """ tensor A and B
 
     Args:
@@ -93,56 +69,25 @@ def tensor(A, B, gpu_out=True):
     gpu_A = cp.array(A) if type(A) is np.ndarray else A
     gpu_B = cp.array(B) if type(B) is np.ndarray else B
 
-    precision = A.dtype
-
-    gpu_result = cp.empty((gpu_A.shape[0]*gpu_B.shape[0], gpu_A.shape[1]*gpu_B.shape[1]), dtype=precision)
-    core_number = gpu_result.size
-
-    if precision == np.complex64:
-        tensor_single_kernel(
-            (math.ceil(core_number/1024),),
-            (min(1024, core_number),),
-            (gpu_A, gpu_B, gpu_result, cp.int32(gpu_A.shape[1]), cp.int32(gpu_B.shape[0]), cp.int32(gpu_B.shape[1]))
-        )
-    else:
-        tensor_double_kernel(
-            (math.ceil(core_number/1024),),
-            (min(1024, core_number),),
-            (gpu_A, gpu_B, gpu_result, cp.int32(gpu_A.shape[1]), cp.int32(gpu_B.shape[0]), cp.int32(gpu_B.shape[1]))
-        )
-
     if gpu_out:
-        return gpu_result.get()
+        return cp.kron(gpu_A, gpu_B).get()
 
-    return gpu_result
+    return cp.kron(gpu_A, gpu_B)
 
 
-matrixt_single_kernel = cp.RawKernel(r'''
+matrixt_kernel = cp.RawKernel(r'''
     #include <cupy/complex.cuh>
     extern "C" __global__
-    void matrix_tensorI_single(const complex<float>* A, complex<float>* out, int n, int m, int rx, int cx) {
+    void matrix_tensorI(const complex<double>* x, complex<double>* y, int n, int m, int rx, int cx) {
         int tid = blockDim.x * blockIdx.x + threadIdx.x;
-        int x_id = tid/cx;
-        int y_id = (x_id/(rx*m))*(m*cx) + (tid%cx)*m + (x_id%(rx*m))%m;
-        int out_xid = (x_id%(rx*m))/m;
-        int out_yid = tid%cx;
-        out[x_id*(cx*n*m) + y_id] = A[out_xid*cx + out_yid];
+        int xid = tid/(n*m);
+        int mnid = tid%(n*m);
+        int nid = mnid/m;
+        int mid = mnid%m;
+        int yid = (nid*rx*m + (xid/cx)*m + mid)*cx*m*n + nid*m*cx + (xid%cx)*m + mid;
+        y[yid] = x[xid];
     }
-    ''', 'matrix_tensorI_single')
-
-
-matrixt_double_kernel = cp.RawKernel(r'''
-    #include <cupy/complex.cuh>
-    extern "C" __global__
-    void matrix_tensorI_double(const complex<double>* A, complex<double>* out, int n, int m, int rx, int cx) {
-        int tid = blockDim.x * blockIdx.x + threadIdx.x;
-        int x_id = tid/cx;
-        int y_id = (x_id/(rx*m))*(m*cx) + (tid%cx)*m + (x_id%(rx*m))%m;
-        int out_xid = (x_id%(rx*m))/m;
-        int out_yid = tid%cx;
-        out[x_id*(cx*n*m) + y_id] = A[out_xid*cx + out_yid];
-    }
-    ''', 'matrix_tensorI_double')
+    ''', 'matrix_tensorI')
 
 
 def MatrixTensorI(A, n, m, gpu_out: bool =True):
@@ -160,23 +105,14 @@ def MatrixTensorI(A, n, m, gpu_out: bool =True):
     row_a, col_a = A.shape
 
     # Data in GPU.
-    precision = A.dtype
     gpu_A = cp.array(A) if type(A) is np.ndarray else A
 
-    gpu_result = cp.zeros((row_a*n*m, col_a*n*m), dtype=precision)
-    core_number = gpu_A.size*n*m
-    if precision == np.complex64:
-        matrixt_single_kernel(
-            (math.ceil(core_number/1024),),
-            (min(1024, core_number),),
-            (gpu_A, gpu_result, cp.int32(n), cp.int32(m), cp.int32(row_a), cp.int32(col_a))
-        )
+    if n == 1 and m == 1:
+        gpu_result = gpu_A
     else:
-        matrixt_double_kernel(
-            (math.ceil(core_number/1024),),
-            (min(1024, core_number),),
-            (gpu_A, gpu_result, cp.int32(n), cp.int32(m), cp.int32(row_a), cp.int32(col_a))
-        )
+        gpu_result = cp.zeros((row_a*n*m, col_a*n*m), dtype=np.complex128)
+        core_number = gpu_A.size*n*m
+        matrixt_kernel((math.ceil(core_number/1024),), (min(1024, core_number),), (gpu_A, gpu_result, cp.int32(n), cp.int32(m), cp.int32(row_a), cp.int32(col_a)))
 
     if gpu_out:
         return gpu_result.get()
@@ -184,44 +120,22 @@ def MatrixTensorI(A, n, m, gpu_out: bool =True):
     return gpu_result
 
 
-vectorp_single_kernel = cp.RawKernel(r'''
-    #include <cupy/complex.cuh>
-    extern "C" __global__
-    void vector_single_permutation(const complex<float>* x, complex<float>* y, int* mapping, int m) {
-        int tid = blockDim.x * blockIdx.x + threadIdx.x;
-        int xid = 0;
-        int l = 0;
-        for(int i = 0; i < m; i++){
-            if ((i != m - 1) && ((mapping[i] + 1) == mapping[i+1])){
-                l += 1;
-            }else{
-                xid |= ((tid >> (m - 1 - mapping[i])) & ((1 << (l + 1)) - 1)) << (m - 1 - i);
-                l = 0;
-            }
-        }
-        y[tid] = x[xid];
-    }
-    ''', 'vector_single_permutation')
+def _reindex_by_mapping(mapping):
+    n = mapping.shape[0]
+    p2n = 1 << n
 
+    gpu_idx = cp.arange(p2n, dtype=np.int64)
+    gpu_reidx = cp.zeros(p2n, dtype=np.int64)
 
-vectorp_double_kernel = cp.RawKernel(r'''
-    #include <cupy/complex.cuh>
-    extern "C" __global__
-    void vector_double_permutation(const complex<double>* x, complex<double>* y, int* mapping, int m) {
-        int tid = blockDim.x * blockIdx.x + threadIdx.x;
-        int xid = 0;
-        int l = 0;
-        for(int i = 0; i < m; i++){
-            if ((i != m - 1) && ((mapping[i] + 1) == mapping[i+1])){
-                l += 1;
-            }else{
-                xid |= ((tid >> (m - 1 - mapping[i])) & ((1 << (l + 1)) - 1)) << (m - 1 - i);
-                l = 0;
-            }
-        }
-        y[tid] = x[xid];
-    }
-    ''', 'vector_double_permutation')
+    for i in range(n):
+        right = n - 1 - mapping[i]
+        left = n - 1 - i
+        cp.bitwise_or(gpu_reidx, cp.left_shift(cp.bitwise_and(cp.right_shift(gpu_idx, right), 1), left), out=gpu_reidx)
+
+    # data clear
+    del gpu_idx
+
+    return gpu_reidx
 
 
 def VectorPermutation(A, mapping, changeInput: bool = False, gpu_out: bool = True):
@@ -240,85 +154,21 @@ def VectorPermutation(A, mapping, changeInput: bool = False, gpu_out: bool = Tru
     if not row_a == 1 << n:
         raise IndexError("Indices do not match!")
 
-    if mapping.dtype == np.int64:
-        mapping = mapping.astype(np.int32)
-
     # data in GPU
     gpu_A = cp.array(A) if type(A) is np.ndarray else A
-    gpu_mapping = cp.array(mapping)
-    gpu_result = cp.empty_like(gpu_A)
-    core_number = gpu_result.size
+    gpu_reidx = _reindex_by_mapping(mapping)
 
-    if A.dtype == np.complex64:
-        vectorp_single_kernel(
-            (math.ceil(core_number/1024),),
-            (min(1024, core_number),),
-            (gpu_A, gpu_result, gpu_mapping, cp.int32(n))
-        )
-    else:
-        vectorp_double_kernel(
-            (math.ceil(core_number/1024),),
-            (min(1024, core_number),),
-            (gpu_A, gpu_result, gpu_mapping, cp.int32(n))
-        )
+    out = cp.empty_like(gpu_A)
+    for i in range(gpu_A.ndim):
+        cp.take(gpu_A, gpu_reidx, axis=i, out=out)
 
     if changeInput:
-        A[:] = gpu_result.get() if type(A) is np.ndarray else gpu_result
+        A[:] = out.get() if type(A) is np.ndarray else out
 
     if gpu_out:
-        return gpu_result.get()
+        return out.get()
 
-    return gpu_result
-
-
-matrixp_single_kernel = cp.RawKernel(r'''
-    #include <cupy/complex.cuh>
-    extern "C" __global__
-    void matrix_single_permutation(const complex<float>* x, complex<float>* y, int* mapping, int m) {
-        int tid = blockDim.x * blockIdx.x + threadIdx.x;
-        int len = 1 << m;
-        int rx = tid/len;
-        int cx = tid%len;
-        int rtemp = 0;
-        int ctemp = 0;
-        int l = 1;
-        for(int i = 0; i < m; i++){
-            if ((i != m - 1) && ((mapping[i] | 1) == mapping[i+1])){
-                l = (l << 1) | 1;
-            }else{
-                rtemp |= ((rx >> (m - 1 - mapping[i])) & l) << (m - 1 - i);
-                ctemp |= ((cx >> (m - 1 - mapping[i])) & l) << (m - 1 - i);
-                l = 1;
-            }
-        }
-        y[tid] = x[rtemp*len + ctemp];
-    }
-    ''', 'matrix_single_permutation')
-
-
-matrixp_double_kernel = cp.RawKernel(r'''
-    #include <cupy/complex.cuh>
-    extern "C" __global__
-    void matrix_double_permutation(const complex<double>* x, complex<double>* y, int* mapping, int m) {
-        int tid = blockDim.x * blockIdx.x + threadIdx.x;
-        int len = 1 << m;
-        int rx = tid/len;
-        int cx = tid%len;
-        int rtemp = 0;
-        int ctemp = 0;
-        int l = 1;
-        for(int i = 0; i < m; i++){
-            if ((i != m - 1) && ((mapping[i] | 1) == mapping[i+1])){
-                l = (l << 1) | 1;
-            }else{
-                rtemp |= ((rx >> (m - 1 - mapping[i])) & l) << (m - 1 - i);
-                ctemp |= ((cx >> (m - 1 - mapping[i])) & l) << (m - 1 - i);
-                l = 1;
-            }
-        }
-        y[tid] = x[rtemp*len + ctemp];
-    }
-    ''', 'matrix_double_permutation')
+    return out
 
 
 def MatrixPermutation(A, mapping, changeInput: bool = False, gpu_out: bool = True):
@@ -330,34 +180,80 @@ def MatrixPermutation(A, mapping, changeInput: bool = False, gpu_out: bool = Tru
         changeInput(bool): whether changes in A.
         gpu_out(bool): return result from GPU.
     """
-    row_a, n = A.shape[0], mapping.shape[0]
-    if not row_a == 1 << n:
+    row_a, col_a = A.shape
+    if not row_a == 1 << mapping.shape[0]:
         raise IndexError("Indices do not match!")
-
-    if mapping.dtype == np.int64:
-        mapping = mapping.astype(np.int32)
 
     # data in GPU
     gpu_A = cp.array(A) if type(A) is np.ndarray else A
-    gpu_mapping = cp.array(mapping)
-    gpu_result = cp.empty_like(gpu_A)
+    gpu_reidx = _reindex_by_mapping(mapping)
 
-    core_number = gpu_result.size
-    if A.dtype == np.complex64:
-        matrixp_single_kernel(
-            (math.ceil(core_number/1024),),
-            (min(1024, core_number),),
-            (gpu_A, gpu_result, gpu_mapping, cp.int32(n))
-        )
-    else:
-        matrixp_double_kernel(
-            (math.ceil(core_number/1024),),
-            (min(1024, core_number),),
-            (gpu_A, gpu_result, gpu_mapping, cp.int32(n))
-        )
+    out_lvl1 = cp.empty_like(gpu_A)
+    cp.take(gpu_A, gpu_reidx, axis=0, out=out_lvl1)
+    out_lvl2 = cp.empty_like(gpu_A)
+    cp.take(out_lvl1, gpu_reidx, axis=1, out=out_lvl2)
 
     if changeInput:
-        A[:, :] = gpu_result.get() if type(A) is np.ndarray else gpu_result
+        A[:, :] = out_lvl2.get() if type(A) is np.ndarray else out_lvl2
+
+    if gpu_out:
+        return out_lvl2.get()
+
+    return out_lvl2
+
+
+def vectordot(A, V, mapping, gpu_out: bool = True):
+    """ dot matrix A and matrix B
+
+    Args:
+        A(np.array<np.complex>): the matrix A.
+        V(np.array<np.complex>): the vector V.
+        mapping(np.array<int>): the qubit mapping.
+        gpu_out(bool): return result from GPU into CPU.
+
+    Returns:
+        np.array<np.complex>: the vector with length 2^n
+    """
+    row_a, col_a = A.shape
+    n, m = np.log2(V.shape[0]).astype(np.int32), mapping.shape[0]
+    assert (row_a == 1 << mapping.shape[0])
+
+    # Data in GPU
+    gpu_A = cp.array(A) if type(A) is np.ndarray else A
+    gpu_V = cp.array(V) if type(V) is np.ndarray else V
+
+    # matrix permutation for A depending on mapping
+    argsorted_mapping = np.argsort(mapping)
+    m_array = np.arange(m, dtype=np.int32)
+
+    if not np.allclose(argsorted_mapping, m_array):
+        gpu_A = MatrixPermutation(A, argsorted_mapping, changeInput=False, gpu_out=False)
+
+    # generate reindex
+    gpu_idx = cp.arange(1 << n, dtype=np.int64)
+    gpu_reidx = cp.zeros(int(1 << n), dtype=np.int64)
+
+    mapping_num, remaining_num = 0, 0
+    for i in range(n):
+        if i in mapping:
+            gpu_reidx = cp.add(gpu_reidx,
+                               cp.left_shift(cp.bitwise_and(cp.right_shift(gpu_idx, i), 1), n - m + mapping_num))
+            mapping_num += 1
+        else:
+            gpu_reidx = cp.add(gpu_reidx, cp.left_shift(cp.bitwise_and(cp.right_shift(gpu_idx, i), 1), remaining_num))
+            remaining_num += 1
+
+    gpu_reidx = cp.argsort(gpu_reidx)
+
+    # take V data with new index
+    gpu_V_reidx = cp.take(gpu_V, gpu_reidx)
+
+    # GPU dot
+    gpu_V_reidx = cp.dot(gpu_A, gpu_V_reidx.reshape(1 << m, -1))
+
+    # put back
+    gpu_reidx = cp.argsort(gpu_reidx)
+    gpu_result = cp.take(gpu_V_reidx, gpu_reidx)
 
     if gpu_out:
         return gpu_result.get()
@@ -365,113 +261,233 @@ def MatrixPermutation(A, mapping, changeInput: bool = False, gpu_out: bool = Tru
     return gpu_result
 
 
-matrix_dot_vector_single_kernel = cp.RawKernel(r'''
-    #include <cupy/complex.cuh>
-    extern "C" __global__
-    void matrix_dot_vector_single(const complex<float>* mat, int mat_bit, int mat_len, complex<float>* vec, int* affect_args, int* aff_argsorts, complex<float>* anc) {
-        int tid = blockDim.x * blockIdx.x + threadIdx.x;
-        int other = tid & ((1 << aff_argsorts[0]) - 1);
-        int gw = tid >> aff_argsorts[0] << (aff_argsorts[0] + 1);
-        for(int i = 1; i < mat_bit; i++){
-            other += gw & ((1 << aff_argsorts[i]) - (1 << aff_argsorts[i - 1]));
-            gw = gw >> aff_argsorts[i] << (aff_argsorts[i] + 1);
-        }
-        other += gw;
-
-        for(int i = 0; i < mat_len; i++){
-            int now = other;
-            for(int k = 0; k < mat_bit; k++){
-                if (i & (1 << k)){
-                    now += 1 << affect_args[mat_bit - 1 - k];
-                }
-            }
-            anc[now] = 0;
-            for(int k = 0; k < mat_len; k++){
-                int shift = other;
-                for(int l = 0; l < mat_bit; l++){
-                    if (k & (1 << l)){
-                        shift += 1 << affect_args[mat_bit - 1 - l];
-                    }
-                }
-                anc[now] += mat[i*mat_len + k] * vec[shift];
-            }
-        }
-
-    }
-    ''', 'matrix_dot_vector_single')
-
-
-matrix_dot_vector_double_kernel = cp.RawKernel(r'''
-    #include <cupy/complex.cuh>
-    extern "C" __global__
-    void matrix_dot_vector_double(const complex<double>* mat, int mat_bit, int mat_len, complex<double>* vec, int* affect_args, int* aff_argsorts, complex<double>* anc) {
-        int tid = blockDim.x * blockIdx.x + threadIdx.x;
-        int other = tid & ((1 << aff_argsorts[0]) - 1);
-        int gw = tid >> aff_argsorts[0] << (aff_argsorts[0] + 1);
-        for(int i = 1; i < mat_bit; i++){
-            other += gw & ((1 << aff_argsorts[i]) - (1 << aff_argsorts[i - 1]));
-            gw = gw >> aff_argsorts[i] << (aff_argsorts[i] + 1);
-        }
-        other += gw;
-
-        for(int i = 0; i < mat_len; i++){
-            int now = other;
-            for(int k = 0; k < mat_bit; k++){
-                if (i & (1 << k)){
-                    now += 1 << affect_args[mat_bit - 1 - k];
-                }
-            }
-            anc[now] = 0;
-            for(int k = 0; k < mat_len; k++){
-                int shift = other;
-                for(int l = 0; l < mat_bit; l++){
-                    if (k & (1 << l)){
-                        shift += 1 << affect_args[mat_bit - 1 - l];
-                    }
-                }
-                anc[now] += mat[i*mat_len + k] * vec[shift];
-            }
-        }
-        
-    }
-    ''', 'matrix_dot_vector_double')
-
-
-def matrix_dot_vector(
-    mat,
-    mat_bit,
-    vec,
-    vec_bit,
-    affect_args,
-    auxiliary_vec
+# state vector is in reversed qubit order
+@nb_cuda.jit()
+def _small_mat_large_vec_kernel(
+        small_mat: cp.ndarray,
+        large_vec: cp.ndarray,
+        qubit_num: int,
+        affect_args: cp.ndarray,
+        affect_args_sorted: cp.ndarray,
+        offset: int,
+        upper_bound: int,
 ):
-    mat_length = 1 << mat_bit
+    bx = nb_cuda.blockIdx.x
+    tx = nb_cuda.threadIdx.x
+    bw = nb_cuda.blockDim.x
+    label = offset + bx * bw + tx
+    if label >= upper_bound:
+        return
 
-    task_number = 1 << (vec_bit - mat_bit)
-    thread_per_block = min(256, task_number)
-    block_num = task_number // thread_per_block
+    mat_sz = small_mat.shape[0]
+    affect_num = affect_args.shape[0]
 
-    for i in range(mat_bit):
-       affect_args[i] = vec_bit - 1 - affect_args[i]
+    indices = nb_cuda.local.array(shape=64, dtype=nb.types.int64)
 
-    affect_args_sorts = affect_args.copy()
-    affect_args_sorts.sort()
+    # insert affect_args into corresponding positions
+    indices[0] = label
+    cur_bit_width = qubit_num - affect_num
+    for i in range(affect_num):
+        tail_len = cur_bit_width - affect_args_sorted[i]
+        mask = (1 << tail_len) - 1
+        tail = indices[0] & mask
+        indices[0] >>= tail_len
+        indices[0] <<= tail_len + 1
+        indices[0] |= tail
+        cur_bit_width += 1
+    for i in range(affect_num):
+        n = 1 << i
+        mask = 1 << (qubit_num - affect_args[affect_num - 1 - i] - 1)
+        for j in range(n):
+            indices[n + j] = (indices[j] | mask)
 
-    mat = cp.array(mat, dtype=vec.dtype)
-    mat_bit = np.int32(mat_bit)
-    mat_length = np.int64(mat_length)
-    affect_args = htod(affect_args)
-    affect_args_sorts = htod(affect_args_sorts)
+    tmp_vec_cache = nb_cuda.local.array(shape=64, dtype=nb.types.complex64)
 
-    if vec.dtype == np.complex64:
-        matrix_dot_vector_single_kernel(
-            (block_num,),
-            (thread_per_block,),
-            (mat, mat_bit, mat_length, vec, affect_args, affect_args_sorts, auxiliary_vec)
-        )
+    for i in range(mat_sz):
+        idx = indices[i]
+        tmp_vec_cache[i] = large_vec[idx]
+        large_vec[idx] = 0.0 + 0.0j
+    for i in range(mat_sz):
+        for j in range(mat_sz):
+            large_vec[indices[i]] += small_mat[i, j] * tmp_vec_cache[j]
+
+
+# def _small_mat_large_vec_kernel_sim(
+#         block_id: int,
+#         thread_id: int,
+#         block_size: int,
+#         small_mat: cp.ndarray,
+#         large_vec: cp.ndarray,
+#         qubit_num: int,
+#         affect_args: cp.ndarray,
+#         affect_args_sorted: cp.ndarray,
+#         offset: int,
+#         upper_bound: int,
+# ):
+#     bx = block_id
+#     tx = thread_id
+#     bw = block_size
+#     label = offset + bx * bw + tx
+#     if label >= upper_bound:
+#         return
+#
+#     mat_sz = small_mat.shape[0]
+#     affect_num = affect_args.shape[0]
+#
+#     indices = cp.empty(shape=64, dtype=np.int64)
+#
+#     # insert affect_args into corresponding positions
+#     indices[0] = label
+#     cur_bit_width = qubit_num - affect_num
+#     for i in range(affect_num):
+#         tail_len = cur_bit_width - affect_args_sorted[i]
+#         mask = (1 << tail_len) - 1
+#         tail = indices[0] & mask
+#         indices[0] >>= tail_len
+#         indices[0] <<= tail_len + 1
+#         indices[0] |= tail
+#         cur_bit_width += 1
+#     for i in range(affect_num):
+#         n = 1 << i
+#         mask = 1 << (qubit_num - affect_args[affect_num - 1 - i] - 1)
+#         for j in range(n):
+#             indices[n + j] = (indices[j] | mask)
+#
+#     tmp_vec_cache = cp.empty(shape=64, dtype=np.complex64)
+#
+#     for i in range(mat_sz):
+#         idx = indices[i]
+#         tmp_vec_cache[i] = large_vec[idx]
+#         large_vec[idx] = 0.0 + 0.0j
+#     for i in range(mat_sz):
+#         for j in range(mat_sz):
+#             large_vec[indices[i]] += small_mat[i, j] * tmp_vec_cache[j]
+#     return 1
+
+
+def vector_dot_cuda(
+        small_mat_,
+        large_vec_,
+        affect_args_,
+        affect_args_sorted_,
+):
+    thread_per_block = 256
+    block_num = (large_vec_.shape[0] + thread_per_block - 1) // thread_per_block
+    qubit_num = np.log2(large_vec_.shape[0]).astype(np.int64)
+    remained_vec_index = large_vec_.shape[0] // small_mat_.shape[0]
+
+    _small_mat_large_vec_kernel[block_num, thread_per_block](
+        small_mat_,
+        large_vec_,
+        qubit_num,
+        affect_args_,
+        affect_args_sorted_,
+        0,
+        remained_vec_index,
+    )
+
+
+# def vector_dot_cuda_sim(
+#         small_mat_: cp.ndarray,
+#         large_vec_: cp.ndarray,
+#         affect_args_: cp.ndarray,
+# ):
+#     thread_per_block = 256
+#     qubit_num = np.log2(large_vec_.shape[0]).astype(np.int64)
+#     remained_vec_index = large_vec_.shape[0] // small_mat_.shape[0]
+#     block_num = (remained_vec_index + thread_per_block - 1) // thread_per_block
+#     affect_args_sorted = affect_args_.copy()
+#     affect_args_sorted = cp.sort(affect_args_sorted)
+#     result = cp.array(large_vec_)
+#     for b in range(block_num):
+#         for t in range(thread_per_block):
+#             _small_mat_large_vec_kernel_sim(
+#                 b,
+#                 t,
+#                 thread_per_block,
+#                 cp.array(small_mat_),
+#                 result,
+#                 qubit_num,
+#                 cp.array(affect_args_),
+#                 cp.array(affect_args_sorted),
+#                 0,
+#                 remained_vec_index,
+#             )
+#     large_vec_[:] = result.get()[:]
+#     return 1
+
+
+def VectorPermutationRaw(A, mapping, changeInput: bool = False, gpu_out: bool = True):
+    """ permutaion A with mapping, inplace
+
+    Args:
+        A(np.array<np.complex>): the matrix A.
+        mapping(np.array<int>): the qubit mapping.
+        changeInput(bool): whether changes in A.
+        gpu_out(bool): return result from GPU.
+
+    Returns:
+        np.array<np.complex>: the result of Permutation
+    """
+    gpu_A = A
+    gpu_reidx = _reindex_by_mapping(mapping)
+
+    # out = cp.empty_like(gpu_A) if not changeInput else gpu_A
+    out = cp.empty_like(gpu_A)
+    cp.take(gpu_A, gpu_reidx, axis=0, out=out)
+
+    if changeInput:
+        gpu_A[:] = out[:]
+
+    if gpu_out:
+        return out.get()
+
+    return out
+
+
+def _get_vec_mapping(qubit_num, affect_args_):
+    if type(affect_args_) is cp.ndarray:
+        affect_args = dtoh(affect_args_)
     else:
-        matrix_dot_vector_double_kernel(
-            (block_num,),
-            (thread_per_block,),
-            (mat, mat_bit, mat_length, vec, affect_args, affect_args_sorts, auxiliary_vec)
-        )
+        affect_args = affect_args_
+    occ_indicator = np.zeros(qubit_num, dtype=bool)
+    for bit in affect_args:
+        occ_indicator[bit] = True
+    tail = 0
+    vec_mapping = np.empty(qubit_num, dtype=np.int32)
+    vec_mapping_inv = np.empty(qubit_num, dtype=np.int32)
+    for i in range(qubit_num):
+        if not occ_indicator[i]:
+            vec_mapping[tail] = i
+            tail += 1
+    vec_mapping[tail:] = affect_args
+    for i in range(qubit_num):
+        vec_mapping_inv[vec_mapping[i]] = i
+    return vec_mapping, vec_mapping_inv
+
+
+def vector_dot_refined(
+        small_mat_: cp.ndarray,
+        large_vec_: cp.ndarray,
+        affect_args_: cp.ndarray,
+        gpu_out_: bool = True,
+):
+    # small_mat: cp.ndarray = cp.array(small_mat_) if type(small_mat_) is np.ndarray else small_mat_
+    # large_vec: cp.ndarray = cp.array(large_vec_) if type(large_vec_) is np.ndarray else large_vec_
+    small_mat = small_mat_
+    large_vec = large_vec_
+
+    qubit_num = np.log2(large_vec_.shape[0]).astype(np.int32)
+    affect_num = affect_args_.shape[0]
+
+    vec_mapping, vec_mapping_inv = _get_vec_mapping(qubit_num, affect_args_)
+
+    VectorPermutationRaw(large_vec, vec_mapping_inv, True, False)
+    large_vec_mat_form = large_vec.reshape(1 << affect_num, 1 << (qubit_num - affect_num), order='F')
+    large_vec_mat_form = cp.dot(small_mat, large_vec_mat_form)
+    large_vec = large_vec_mat_form.reshape(1 << qubit_num, order='F')
+    VectorPermutationRaw(large_vec, vec_mapping, True, False)
+    if gpu_out_:
+        return large_vec.get()
+    else:
+        return large_vec
