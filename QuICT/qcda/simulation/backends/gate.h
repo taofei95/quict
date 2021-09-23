@@ -9,6 +9,7 @@
 #include <array>
 #include <cstdint>
 #include <string>
+#include <vector>
 #include "utility.h"
 
 
@@ -181,6 +182,14 @@ namespace QuICT {
     template<typename Precision>
     struct XGate : SimpleGateN<1> {
         explicit XGate(uint64_t targ) : SimpleGateN<1>(targ) {}
+    };
+
+    template<typename Precision>
+    struct CU3Gate : ControlledUnitaryGate<Precision> {
+        std::vector<Precision> pargs_;
+
+        explicit CU3Gate(uint64_t carg, uint64_t targ, const std::vector<Precision> &pargs)
+                : ControlledUnitaryGate<Precision>(carg, targ), pargs_(pargs) {}
     };
 
 

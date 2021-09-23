@@ -80,6 +80,14 @@ void test_by_data_file(
                     0,
                     nullptr
             );
+        } else if (gate_name == "cu3") {
+            fs >> carg >> targ >> parg >> parg1 >> parg2;
+            gate_desc_vec.emplace_back(
+                    "cu3",
+                    std::vector<uint64_t>{carg, targ},
+                    std::vector<double>{parg, parg1, parg2},
+                    nullptr
+            );
         } else if (gate_name == "u1") {
             fs >> targ;
             auto *mat_ = new complex<Precision>[4];
@@ -96,9 +104,6 @@ void test_by_data_file(
                     0,
                     mat_
             );
-        } else if (gate_name == "cu3") {
-            fs >> carg >> targ >> parg >> parg1 >> parg2;
-//            auto *
         }
     }
 
@@ -136,6 +141,10 @@ TEST(HybridTest, QftTest) {
 
 TEST(HybridTest, XTest) {
     test_by_data_file("x.txt", simulator);
+}
+
+TEST(HybridTest, CU3Test) {
+    test_by_data_file("cu3.txt", simulator);
 }
 
 //TEST(HybridTest, U1Test) {

@@ -95,19 +95,19 @@ namespace QuICT {
         mat_entry_t<Precision> *data_ptr_;
         std::vector<Precision> pargs_;
 
-//        GateDescription(
-//                std::string qasm_name,
-//                std::vector<uint64_t> affect_args,
-//                Precision parg,
-//                mat_entry_t<Precision> *data_ptr
-//        ) : qasm_name_(qasm_name), affect_args_(affect_args), parg_(parg), data_ptr_(data_ptr), pargs_(1, parg) {}
-
         GateDescription(
                 const char *qasm_name,
                 std::vector<uint64_t> affect_args,
                 Precision parg,
                 mat_entry_t<Precision> *data_ptr
         ) : qasm_name_(qasm_name), affect_args_(affect_args), parg_(parg), data_ptr_(data_ptr), pargs_(1, parg) {}
+
+        GateDescription(
+                const char *qasm_name,
+                std::vector<uint64_t> affect_args,
+                const std::vector<Precision> &pargs,
+                mat_entry_t<Precision> *data_ptr
+        ) : qasm_name_(qasm_name), affect_args_(affect_args), parg_(pargs[0]), data_ptr_(data_ptr), pargs_(pargs) {}
     };
 
     //* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *

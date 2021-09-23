@@ -266,10 +266,15 @@ namespace QuICT {
         } else if (gate_desc.qasm_name_ == "crz") { // Two Bit
             auto gate = CrzGate<Precision>(gate_desc.affect_args_[0], gate_desc.affect_args_[1], gate_desc.parg_);
             apply_ctrl_diag_gate(circuit_qubit_num, gate, real, imag);
-        } /*else if (gate_desc.qasm_name_ == "u1") {
-            auto gate = UnitaryGateN<1, Precision>(gate_desc.affect_args_[0], gate_desc.data_ptr_);
-            apply_unitary_n_gate(circuit_qubit_num, gate, real, imag);
-        }*/ else { // Not Implemented
+        }
+//        else if (gate_desc.qasm_name_ == "u1") {
+//            auto gate = UnitaryGateN<1, Precision>(gate_desc.affect_args_[0], gate_desc.data_ptr_);
+//            apply_unitary_n_gate(circuit_qubit_num, gate, real, imag);
+//        }
+        else if (gate_desc.qasm_name_ == "cu3") {
+            auto gate = CU3Gate<Precision>(gate_desc.affect_args_[0], gate_desc.affect_args_[1], gate_desc.pargs_);
+            apply_ctrl_unitary_gate(circuit_qubit_num, gate, real, imag);
+        } else { // Not Implemented
             throw std::runtime_error(std::string(__func__) + ": " + "Not implemented gate - " + gate_desc.qasm_name_);
         }
     }
