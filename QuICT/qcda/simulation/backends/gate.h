@@ -66,22 +66,12 @@ namespace QuICT {
     template<uint64_t N, typename Precision>
     struct UnitaryGateN {
         uarray_t<N> affect_args_;
-        mat_entry_t<Precision> *mat_;
-
-        template<typename _qubit_iter>
-        UnitaryGateN(_qubit_iter qubit_begin, _qubit_iter qubit_end) {
-            std::copy(qubit_begin, qubit_end, affect_args_.begin());
-        }
-
-        template<typename _qubit_iter, typename _mat_iter>
-        UnitaryGateN(_qubit_iter qubit_begin, _mat_iter mat_begin) {
-            std::copy(qubit_begin, qubit_begin + N, affect_args_.begin());
-            mat_ = new mat_entry_t<Precision>[1ULL << (N << 1)];
-            std::copy(mat_begin, mat_begin + (1ULL << (N << 1)), mat_);
-        }
+        Precision *mat_real_;
+        Precision *mat_imag_;
 
         ~UnitaryGateN() {
-            delete[] mat_;
+            delete[] mat_real_;
+            delete[] mat_imag_;
         }
     };
 
@@ -89,18 +79,14 @@ namespace QuICT {
     template<typename Precision>
     struct UnitaryGateN<1, Precision> {
         uint64_t targ_;
-        mat_entry_t<Precision> *mat_;
+        Precision *mat_real_;
+        Precision *mat_imag_;
 
         explicit UnitaryGateN(uint64_t targ) : targ_(targ) {}
 
-        template<typename _mat_iter>
-        UnitaryGateN(uint64_t targ, _mat_iter mat_begin) : targ_(targ) {
-            mat_ = new mat_entry_t<Precision>[4];
-            std::copy(mat_begin, mat_begin + 4, mat_);
-        }
-
         ~UnitaryGateN() {
-            delete[] mat_;
+            delete[] mat_real_;
+            delete[] mat_imag_;
         }
     };
 

@@ -44,6 +44,8 @@ void test_by_data_file(
         uint64_t carg;
         uint64_t targ;
         double parg;
+        double parg1;
+        double parg2;
 
         if (gate_name == "h") {
 
@@ -94,6 +96,9 @@ void test_by_data_file(
                     0,
                     mat_
             );
+        } else if (gate_name == "cu3") {
+            fs >> carg >> targ >> parg >> parg1 >> parg2;
+//            auto *
         }
     }
 
@@ -133,6 +138,6 @@ TEST(HybridTest, XTest) {
     test_by_data_file("x.txt", simulator);
 }
 
-TEST(HybridTest, U1Test) {
-    test_by_data_file("u1.txt", simulator);
-}
+//TEST(HybridTest, U1Test) {
+//    test_by_data_file("u1.txt", simulator);
+//}

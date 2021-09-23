@@ -52,6 +52,8 @@ def out_circuit_to_file(qubit_num: int, f_name: str, circuit: Circuit):
                 print(f"crz {gate.carg} {gate.targ} {gate.parg}", file=f)
             elif gate.type() == GATE_ID['X']:
                 print(f"x {gate.targ}", file=f)
+            elif gate.type() == GATE_ID['CU3']:
+                print(f"cu3 {gate.carg} {gate.targ} {gate.pargs[0]} {gate.pargs[1]} {gate.pargs[2]}", file=f)
 
         print("__TERM__", file=f)
 
@@ -87,6 +89,18 @@ def main():
         CRz(uniform(0, 3.14)) | circuit([i,j])
 
     out_circuit_to_file(qubit_num, "crz.txt", circuit)
+    circuit.clear()
+
+    for i in range(qubit_num):
+        H | circuit(i)
+    for _ in range(qubit_num*30):
+        lst = sample(range(0, qubit_num),2)
+        shuffle(lst)
+        i = lst[0]
+        j = lst[1]
+        CU3((uniform(0, 3.14),uniform(0, 3.14),uniform(0, 3.14))) | circuit([i,j])
+
+    out_circuit_to_file(qubit_num, "cu3.txt", circuit)
     circuit.clear()
 
     for i in range(qubit_num):
