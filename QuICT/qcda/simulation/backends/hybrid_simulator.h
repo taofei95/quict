@@ -93,10 +93,9 @@ namespace QuICT {
                 Precision *imag
         );
 
-        template<template<typename ...> class Gate>
         inline void apply_ctrl_diag_gate(
                 uint64_t circuit_qubit_num,
-                const Gate<Precision> &gate,
+                const ControlledDiagonalGate<Precision> &gate,
                 Precision *real,
                 Precision *imag
         );
@@ -109,10 +108,9 @@ namespace QuICT {
                 Precision *imag
         );
 
-        template<template<typename ...> class Gate>
         inline void apply_ctrl_unitary_gate(
                 uint64_t circuit_qubit_num,
-                const Gate<Precision> &gate,
+                const ControlledUnitaryGate<Precision> &gate,
                 Precision *real,
                 Precision *imag
         );
@@ -470,10 +468,9 @@ namespace QuICT {
     //**********************************************************************
 
     template<typename Precision>
-    template<template<typename ...> class Gate>
     inline void HybridSimulator<Precision>::apply_ctrl_diag_gate(
             uint64_t circuit_qubit_num,
-            const Gate<Precision> &gate,
+            const ControlledDiagonalGate<Precision> &gate,
             Precision *real,
             Precision *imag
     ) {
@@ -801,10 +798,9 @@ namespace QuICT {
     }
 
     template<typename Precision>
-    template<template<typename ...> class Gate>
     void HybridSimulator<Precision>::apply_ctrl_unitary_gate(
             uint64_t circuit_qubit_num,
-            const Gate<Precision> &gate,
+            const ControlledUnitaryGate<Precision> &gate,
             Precision *real,
             Precision *imag
     ) {
@@ -830,16 +826,15 @@ namespace QuICT {
                     }
                 } else if (qubits_sorted[0] < circuit_qubit_num - 2) {
                     if (qubits_sorted[0] == qubits[0]) { // ...q0.q1
-                        // v00 v01 v10 v11 v02 v03 v12 v13
+                        // v00 v01 v10 v11 . v02 v03 v12 v13
 
                     } else { // ...q1.q0
-                        // v00 v02 v10 v12 v01 v03 v11 v13
+                        // v00 v02 v10 v12 . v01 v03 v11 v13
 
                     }
                 }
             } else if (qubits_sorted[1] == circuit_qubit_num - 2) {
                 // ...q.q.
-                // Test Passed 2021-09-11
                 if (qubits[0] == qubits_sorted[0]) { // ...q0.q1.
                     // v00 v10 v01 v11 ... v02 v12 v03 v13
 
