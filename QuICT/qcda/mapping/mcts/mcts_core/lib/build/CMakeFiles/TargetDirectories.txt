@@ -1,3 +1,0 @@
-/root/QuICT/QuICT/qcda/mapping/mcts/mcts_core/lib/build/CMakeFiles/rebuild_cache.dir
-/root/QuICT/QuICT/qcda/mapping/mcts/mcts_core/lib/build/CMakeFiles/edit_cache.dir
-/root/QuICT/QuICT/qcda/mapping/mcts/mcts_core/lib/build/CMakeFiles/mcts.dir
