@@ -10,6 +10,7 @@ import pytest
 from QuICT.core import *
 from QuICT.qcda.synthesis.gate_transform import *
 
+
 def test_google():
     for i in range(2, 10):
         circuit = Circuit(i)
@@ -17,6 +18,7 @@ def test_google():
         compositeGate = GateTransform.execute(circuit, GoogleSet)
         B = CompositeGate(circuit, with_copy=False)
         assert compositeGate.equal(B)
+
 
 def test_ustc():
     for i in range(2, 10):
@@ -26,6 +28,7 @@ def test_ustc():
         B = CompositeGate(circuit, with_copy=False)
         assert compositeGate.equal(B)
 
+
 def test_ibmq():
     for i in range(2, 10):
         circuit = Circuit(i)
@@ -33,6 +36,7 @@ def test_ibmq():
         compositeGate = GateTransform.execute(circuit, IBMQSet)
         B = CompositeGate(circuit, with_copy=False)
         assert compositeGate.equal(B)
+
 
 def test_ionq():
     for i in range(2, 10):
@@ -42,6 +46,7 @@ def test_ionq():
         B = CompositeGate(circuit, with_copy=False)
         assert compositeGate.equal(B)
 
+
 def test_buildZyz():
     buildSet = InstructionSet([CY, Rz, Ry])
     for i in range(2, 10):
@@ -50,6 +55,7 @@ def test_buildZyz():
         compositeGate = GateTransform.execute(circuit, buildSet)
         B = CompositeGate(circuit, with_copy=False)
         assert compositeGate.equal(B)
+
 
 def test_buildZyzWithRegister():
     buildSet = InstructionSet([CY, Rz, Ry])
@@ -61,6 +67,7 @@ def test_buildZyzWithRegister():
         compositeGate = GateTransform.execute(circuit, buildSet)
         B = CompositeGate(circuit, with_copy=False)
         assert compositeGate.equal(B)
+
 
 if __name__ == "__main__":
     pytest.main(["./unit_test.py"])

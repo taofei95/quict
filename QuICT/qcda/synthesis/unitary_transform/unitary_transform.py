@@ -57,8 +57,8 @@ def inner_utrans_build_gate(
                                │ 0  0  I │ 0  0  0 │
                                └                   ┘
 
-    Both u and v are controlled unitary operations hence can be 
-    decomposed into 2 (smaller) unitary operations and 1 controlled rotation.        
+    Both u and v are controlled unitary operations hence can be
+    decomposed into 2 (smaller) unitary operations and 1 controlled rotation.
     """
 
     # Dynamically import to avoid circulation.
@@ -83,7 +83,7 @@ def inner_utrans_build_gate(
     """
     Now, gates have CZ gate(s) at it's ending part(the left side of u).
     Left gate of u is right multiplied to u in matrix view.
-    If qubit_num > 2, we would have reversed_ry[-1] as a CZ affecting on (0, 1), 
+    If qubit_num > 2, we would have reversed_ry[-1] as a CZ affecting on (0, 1),
     while reversed_ry[-2] a CZ on (0, qubit_num - 1).
     If qubit_num == 2, there would only be one CZ affecting on (0, 1).
     """
@@ -117,8 +117,8 @@ def inner_utrans_build_gate(
     # v_dagger
 
     """
-    Now, leftmost gate decompose by u is a diagonal gate on (n-2, n-1), which 
-    is commutable with reversed_ry. That gate is in right side of v_dagger, so 
+    Now, leftmost gate decompose by u is a diagonal gate on (n-2, n-1), which
+    is commutable with reversed_ry. That gate is in right side of v_dagger, so
     it would be left multiplied to v_dagger.
     """
     v1_dagger = v_dagger[0]
@@ -167,18 +167,19 @@ class UnitaryTransform(Synthesis):
                 np.allclose(<matrix_of_return_gates> * factor, <input_matrix>).
             mapping(List[int]): The order of input qubits. Mapping is a list of their labels from top to bottom.
             recursive_basis(int): Terminate recursion at which level. It could be set as 1 or 2, which would stop
-                recursion when matrix is 2 or 4, respectively. When set as 2, the final step is done by KAK decomposition.
-                Correctness of this algorithm is never influenced by recursive_basis.
+                recursion when matrix is 2 or 4, respectively. When set as 2, the final step is done by KAK
+                decomposition. Correctness of this algorithm is never influenced by recursive_basis.
 
         Returns:
-            Union[Tuple[CompositeGate,None], Tuple[CompositeGate,complex]]: If inlclude_phase_gate==False, this function returns
-                synthesized gates and a shift factor. Otherwise a tuple like (<gates>, None) is returned.
+            Union[Tuple[CompositeGate,None], Tuple[CompositeGate,complex]]: If inlclude_phase_gate==False,
+            this function returns synthesized gates and a shift factor. Otherwise a tuple like (<gates>, None)
+            is returned.
         """
         qubit_num = int(round(np.log2(mat.shape[0])))
 
         """
-        After adding KAK diagonal optimization, inner built gates would have a 
-        leading diagonal gate not decomposed. If our first-level recursion is 
+        After adding KAK diagonal optimization, inner built gates would have a
+        leading diagonal gate not decomposed. If our first-level recursion is
         2-bit, using older version of KAK is OK.
         """
 

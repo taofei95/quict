@@ -1,42 +1,121 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
-prj_root=$(pwd)
+
+print_segment () {
+   echo -e "\033[92m================================================================================\033[39m"
+}
+
+print_cyan() {
+  echo -e "\033[36m$1\033[39m"
+}
+
+print_magenta() {
+  echo -e "\033[95m$1\033[39m"
+}
+
+prj_root="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 
 prj_build_dir="$prj_root/build"
 
 OS=$(uname -a)
 
-PYTHON3=$(which python3)
+PYTHON3=$(command -v python3)
 
-print_segment () {
-   printf "%0.s=" {1..60}
-   echo ""
-}
-
-# Set building directory
+# Set root & building directory
 
 print_segment
+
+print_cyan "[Project Root Directory]"
+
+echo "Detected $prj_root as project root directory"
+
+print_segment
+
+print_cyan "[Temporary Building Directory]"
 
 echo "Prepare building directory"
 
-print_segment
-
 [[ -d $prj_build_dir ]] || mkdir $prj_build_dir
 
-echo "Selecting $prj_build_dir as building directory"
+echo "Selected $prj_build_dir as building directory"
+
+# Initialize git submodule if needed
+
+print_segment
+
+print_cyan "[Git Submodule]"
+
+echo "git submodule update --init --recursive"
+
+git submodule update --init --recursive
+
+# Clear older version build.sh remnants
+
+#print_segment
+#
+#print_cyan "[Clear Remnants]"
+#
+#echo "Deleting useless files in source code tree created by older version of build.sh"
+#
+#[[ -f "$prj_root/QuICT/backends/quick_operator_cdll.so" ]] && \
+#echo "Deleting $prj_root/QuICT/backends/quick_operator_cdll.so" && \
+#rm "$prj_root/QuICT/backends/quick_operator_cdll.so"
+#
+#[[ -f "$prj_root/QuICT/qcda/synthesis/initial_state_preparation/initial_state_preparation_cdll.so" ]] && \
+#echo "Deleting $prj_root/QuICT/qcda/synthesis/initial_state_preparation/initial_state_preparation_cdll.so" && \
+#rm "$prj_root/QuICT/qcda/synthesis/initial_state_preparation/initial_state_preparation_cdll.so"
 
 # Set C++ compiler
 
 print_segment
+print_cyan "[C/C++ Compiler]"
+
+echo "Selecting C compiler"
+
+[[ $CC == "" ]] && CC=gcc
+CC=$(command -v $CC)
+export CC=$CC
+
+echo "Selected $CC as C compiler"
 
 echo "Selecting C++ compiler"
 
+[[ $CXX == "" ]] && CXX=g++
+CXX=$(command -v $CXX)
+export CXX=$CXX
+
+echo "Selected $CXX as C++ compiler"
+
 print_segment
 
-[[ $CXX == "" ]] &&  CXX=g++
-CXX=$(which $CXX)
+print_cyan "[CMake Generator]"
 
-echo "Selecting $CXX as C++ compiler"
+echo "Selecting CMake generator"
+
+if [[ $CMAKE_GENERATOR == "" ]];then
+  [[ -x $(command -v make) ]] && cmake_gen="Unix Makefiles"
+  [[ -x $(command -v ninja) ]] && cmake_gen="Ninja"
+  CMAKE_GENERATOR=$cmake_gen
+  export CMAKE_GENERATOR=$CMAKE_GENERATOR
+fi
+
+echo "Selected $cmake_gen as CMake generator"
+
+print_segment
+
+NPROC=4
+
+if [[ $OS =~ "Linux" ]]; then
+  NPROC=$(grep -c ^processor /proc/cpuinfo)
+elif [[ $OS =~ "Darwin" ]]; then
+  NPROC=$(sysctl hw.ncpu | awk '{print $$2}')
+fi
+
+NPROC=$($PYTHON3 -c "print(int($NPROC/2))")
+
+export CMAKE_BUILD_PARALLEL_LEVEL=$NPROC
+
+echo "Building with parallel parameter: $NPROC"
 
 # Build TBB
 
@@ -55,18 +134,6 @@ if [[ $OS =~ "Darwin" ]];then
   fi
 
   echo "Detecting protential parallel"
-
-  NPROC=4
-
-  if [[ $OS =~ "Linux" ]]; then
-    NPROC=$(grep -c ^processor /proc/cpuinfo)
-  elif [[ $OS =~ "Darwin" ]]; then
-    NPROC=$(sysctl hw.ncpu | awk '{print $$2}')
-  fi
-
-  NPROC=$($PYTHON3 -c "print(int($NPROC/2))")
-
-  echo "Building with parallel parameter: $NPROC"
 
   # possible build failure
   cd $tbb_src_dir && \
@@ -90,53 +157,34 @@ fi
 
 print_segment
 
-echo "Build C++ sources in tree"
-
-print_segment
-
-if [[ $OS =~ "Darwin" ]];then
-  tbb_include_dir="$tbb_src_dir/include"
-  cd ./QuICT/backends && \
-  $CXX \
-  -o quick_operator_cdll.so dll.cpp \
-  -std=c++11  -fPIC \
-  -shared  -I$tbb_include_dir -ltbb -L$tbb_build_dir && 
-  cd ..  || exit 1
-
-  cd ./qcda/synthesis/initial_state_preparation && \
-  $CXX \
-    -o initial_state_preparation_cdll.so initial_state_preparation.cpp \
-    -std=c++11  -fPIC -shared  -I$tbb_include_dir -ltbb -L$tbb_build_dir  || exit 1
-
-  cd $prj_root/QuICT/qcda/mapping/mcts_cpp && ./build.sh  || exit 1
-else
-  cd ./QuICT/backends && \
-  $CXX \
-  -o quick_operator_cdll.so dll.cpp \
-  -std=c++11  -fPIC \
-  -shared -ltbb && 
-  cd ..  || exit 1
-
-  cd ./qcda/synthesis/initial_state_preparation && \
-  $CXX \
-    -o initial_state_preparation_cdll.so initial_state_preparation.cpp \
-    -std=c++11  -fPIC -shared -ltbb || exit 1
-
-  cd $prj_root/QuICT/qcda/mapping/mcts/mcts_core && ./build.sh  || exit 1
-fi
-
-
-print_segment
+print_cyan "[Python Egg]"
 
 echo "Building python egg"
 
+
 print_segment
 
-# test_build file indicator
-test_build_file="$prj_root/.test_build"
-cmd_test_arg=$1
-[[ $cmd_test_arg == "--test" ]] && [[ ! -f "$test_build_file" ]] && echo "build a test version" > "$test_build_file"
-[[ $cmd_test_arg == "" ]] && [[ -f "$test_build_file" ]] && rm "$test_build_file"
+#if [[ $OS =~ "Darwin" ]];then
+#  cd "$prj_root"/QuICT/qcda/mapping/mcts/mcts_core && ./build.sh  || exit 1
+#else
+#  cd "$prj_root"/QuICT/qcda/mapping/mcts/mcts_core && chmod u+x ./build.sh && ./build.sh  || exit 1
+#fi
 
-cd $prj_build_dir && \
-$PYTHON3 ../setup.py build
+cd $prj_root && \
+$PYTHON3 ./setup.py build || exit 1
+
+#print_cyan "[Copying Back]"
+#
+#echo -e "Copying built libraries back into source code tree to help run pytest\n"
+#
+#find "$prj_root/build/" -type f -name "*.so" | while read file
+#do
+#    dest=$(echo "$file" | grep -oE "build.*" | grep -oE "QuICT.*" ) || exit 1
+#    dest="$prj_root/$dest"
+#    dest=$(echo $dest | sed -E "s/[^/]*\.so//")
+#    echo -e "cp $file $dest\n"
+#    cp "$file" "$dest" || exit 1
+#done
+
+print_magenta "Done."
+

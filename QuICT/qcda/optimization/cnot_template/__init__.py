@@ -11,4 +11,3 @@ from .cnot_store_force_depth import CnotStoreForceDepthBfs
 from .cnot_local_force import CnotLocalForceBfs
 from .cnot_local_force_depth import CnotLocalForceDepthBfs
 from .json import generate_json
-

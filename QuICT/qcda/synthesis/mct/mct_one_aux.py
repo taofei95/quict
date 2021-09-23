@@ -8,6 +8,7 @@ from .._synthesis import Synthesis
 from QuICT.core import *
 from .mct_linear_simulation import MCTLinearHalfDirtyAux
 
+
 def merge_qubit(qubit_a, qubit_b):
     """ merge two qureg into one in order
 
@@ -30,6 +31,7 @@ def merge_qubit(qubit_a, qubit_b):
         for qubit in qubit_b:
             qureg.append(qubit)
     return qureg
+
 
 def solve(n):
     """ Decomposition of n-qubit Toffoli gates with one ancillary qubit and linear circuit complexity
@@ -64,6 +66,7 @@ def solve(n):
     S_dagger | qubit_list[-1]
 
     return qubit_list
+
 
 class MCTOneAux(Synthesis):
     @classmethod

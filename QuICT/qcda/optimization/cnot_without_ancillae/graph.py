@@ -46,7 +46,7 @@ class Graph:
         """
         Construct a graph. It's empty if both nodes and edges are None.
 
-        Args: 
+        Args:
             nodes(List[int]) : A list of all nodes. In most cases, it should be a continuous list
                 which contains sequential integers.
             edges(List[Edge]) : A list of all edges

@@ -12,6 +12,7 @@ import numpy as np
 from QuICT.core import *
 from QuICT.qcda.optimization import TopologicalCnot
 
+
 def _getRandomList(n):
     """ get first 2 number from 0, 1, ..., n - 1 randomly.
 
@@ -25,6 +26,7 @@ def _getRandomList(n):
         do_get = random.randint(0, i)
         _rand[do_get], _rand[i] = _rand[i], _rand[do_get]
     return _rand[0], _rand[1]
+
 
 def _getAllRandomList(n):
     """ get n number from 0, 1, ..., n - 1 randomly.
@@ -56,6 +58,7 @@ def generate_matrix(gates, n):
         i += 1
     return matrix
 
+
 def generate_matrix_list(gates, n):
     matrix = generate_matrix(gates, n)
     matrix_values = []
@@ -66,6 +69,7 @@ def generate_matrix_list(gates, n):
                 values += 1 << j
         matrix_values.append(values)
     return matrix_values
+
 
 def check_equiv(circuit1, circuit2):
     """ check whether two circuit is equiv
@@ -81,6 +85,7 @@ def check_equiv(circuit1, circuit2):
     matrix2 = generate_matrix(circuit2.gates if isinstance(circuit2, Circuit) else circuit2, n)
 
     return not np.any(matrix1 ^ matrix2)
+
 
 def test_1():
     for _ in range(20):
@@ -109,6 +114,7 @@ def test_1():
             new_circuit = TopologicalCnot.execute(cnot_struct=generate_matrix_list(circuit.gates, i), topology=topology)
             if not check_equiv(circuit, new_circuit):
                 assert 0
+
 
 if __name__ == '__main__':
     pytest.main(["./unit_test.py"])

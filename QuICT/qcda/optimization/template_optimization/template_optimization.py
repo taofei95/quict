@@ -23,7 +23,7 @@ Exact and practical pattern matching for quantum circuit optimization.
 `arXiv:1909.05270 <https://arxiv.org/abs/1909.05270>`_
 """
 
-from QuICT.core import * # pylint: disable=unused-wildcard-import
+from QuICT.core import *    # pylint: disable=unused-wildcard-import
 from QuICT.qcda.optimization._optimization import Optimization
 from .template_matching.dagdependency.circuit_to_dagdependency import circuit_to_dagdependency
 from .template_matching.dagdependency.dagdependency_to_circuit import dagdependency_to_circuit
@@ -36,10 +36,13 @@ class TemplateOptimization(Optimization):
     Class for the template optimization pass.
     """
     @classmethod
-    def execute(cls, circuit,
-            template_list=None,
-            heuristics_qubits_param=None,
-            heuristics_backward_param=None):
+    def execute(
+        cls,
+        circuit,
+        template_list=None,
+        heuristics_qubits_param=None,
+        heuristics_backward_param=None
+    ):
         """
         Args:
             circuit(Circuit): circuit.

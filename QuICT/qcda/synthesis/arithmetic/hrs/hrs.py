@@ -446,14 +446,14 @@ def cc_compare(control1, control2, b, c, g_aug, indicator):
 def adder_mod(b, a, N, g, indicator):
     """
     Compute b(quantum) + a(classical) mod N(classical), with borrowed qubits g and ancilla qubit indicator.
-    
+
     Args：
         b(Qreg): n qubits.
         g(Qureg): n-1 borrowed qubits(more qubits are OK).
         indicator(Qubit): 1 ancilla qubit.
         a(int): integer less than N.
         N(int): integer.
-    
+
     Note that this circuit works only when n > 2.
     So for smaller numbers, use another design.
     """
@@ -477,7 +477,7 @@ def adder_mod_reversed(b, a, N, g, indicator):
 
 def c_adder_mod(control, b, a, N, g, indicator):
     """
-    Compute b(quantum) + a(classical) mod N(classical), 
+    Compute b(quantum) + a(classical) mod N(classical),
     with borrowed qubits g and ancilla qubit indicator, 1-controlled.
 
     Args：
@@ -523,7 +523,7 @@ def cc_adder_mod(control1, control2, b, a, N, g, indicator):
         indicator(Qubit): 1 ancilla qubit.
         a(int): integer less than N.
         N(int): integer.
-    
+
     Note that this circuit works only when n > 2.
     So for smaller numbers, use another design.
     """
@@ -556,18 +556,18 @@ def mul_mod_raw(x, a, b, N, indicator):
         indicator(Qubit): 1 ancilla qubit.
         a(int): integer.
         N(int): integer.
-    
+
     Note that this circuit works only when n > 2.
     So for smaller numbers, use another design.
     """
-    
+
     n = len(x)
     if(n <= 2):
         raise Exception("The numbers should be more than 2-length to use HRS circuits.")
     a_list = []
     for i in range(n):
         a_list.append(a)
-        a = (a*2) % N
+        a = (a * 2) % N
     for i in range(n):
         # borrow all the n-1 unused qubits in x
         g = x[:n - i - 1] + x[n - i:]
@@ -580,7 +580,7 @@ def mul_mod_raw_reversed(x, a, b, N, indicator):
     Note that this circuit works only when n > 2.
     So for smaller numbers, use another design.
     """
-    
+
     n = len(x)
     if(n <= 2):
         raise Exception("The numbers should be more than 2-length to use HRS circuits.")
@@ -609,7 +609,7 @@ def c_mul_mod_raw(control, x, a, b, N, indicator):
     Note that this circuit works only when n > 2.
     So for smaller numbers, use another design.
     """
-    
+
     n = len(x)
     if(n <= 2):
         raise Exception("The numbers should be more than 2-length to use HRS circuits.")
@@ -630,7 +630,7 @@ def c_mul_mod_raw_reversed(control, x, a, b, N, indicator):
     Note that this circuit works only when n > 2.
     So for smaller numbers, use another design.
     """
-    
+
     n = len(x)
     if(n <= 2):
         raise Exception("The numbers should be more than 2-length to use HRS circuits.")
@@ -641,6 +641,7 @@ def c_mul_mod_raw_reversed(control, x, a, b, N, indicator):
     for i in range(n):
         g = x[:i] + x[i + 1:]
         cc_adder_mod(control, x[i], b, N - a_list[n - i - 1], N, g, indicator)
+
 
 # x: n bits, ancilla: n bits, indicator: 1 bit
 def mul_mod(x, a, ancilla, N, indicator):
@@ -653,11 +654,11 @@ def mul_mod(x, a, ancilla, N, indicator):
         indicator(Qubit): 1 qubit.
         a(int): integer.
         N(int): integer.
-    
+
     Note that this circuit works only when n > 2.
     So for smaller numbers, use another design.
     """
-    
+
     n = len(x)
     if(n <= 2):
         raise Exception("The numbers should be more than 2-length to use HRS circuits.")
@@ -681,11 +682,11 @@ def c_mul_mod(control, x, a, ancilla, N, indicator):
         indicator(Qubit): 1 qubit.
         a(int): integer.
         N(int): integer.
-    
+
     Note that this circuit works only when n > 2.
     So for smaller numbers, use another design.
     """
-    
+
     n = len(x)
     if(n <= 2):
         raise Exception("The numbers should be more than 2-length to use HRS circuits.")
@@ -707,6 +708,7 @@ class HRSincrementer(Synthesis):
         incrementer(qubit_a, qubit_g)
         return CompositeGate(circuit.gates)
 """
+
 
 class HRSAdder(Synthesis):
     @classmethod
@@ -738,7 +740,7 @@ class HRSAdderMod(Synthesis):
     def execute(cls, n, a, N):
         """
         Compute b(quantum) + a(classical) mod N(classical), with borrowed qubits g and ancilla qubit indicator.
-        
+
         Args:
             n(int): length of numbers
             a(int): the constant added to the quantum number
@@ -779,7 +781,7 @@ class HRSMulMod(Synthesis):
             x(Qureg): n qubits.
             ancilla(Qureg): n qubits.
             indicator(Qubit): 1 qubit.
-        
+
         Note that this circuit works only when n > 2.
         So for smaller numbers we use another design.
         """
@@ -805,13 +807,13 @@ class CHRSMulMod(Synthesis):
             n(int): length of numbers
             a(int): the constant multiplied to the quantum number
             N(int): the modulus
-        
+
         Quregs:
             control(Qubit): 1 qubit.
             x(Qureg): n qubits.
             ancilla(Qureg): n qubits.
             indicator(Qubit): 1 qubit.
-        
+
         Note that this circuit works only when n > 2.
         So for smaller numbers we use another design.
         """

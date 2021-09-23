@@ -1,8 +1,7 @@
 from typing import *
 from scipy.stats import unitary_group
-from ..unitary_transform import UnitaryTransform
+from QuICT.qcda.synthesis.unitary_transform import UnitaryTransform
 from QuICT.core import *
-from QuICT.algorithm import SyntheticalUnitary
 
 
 def check_args(gates: Sequence[BasicGate]):

@@ -21,3 +21,4 @@ random_simulator
 rl_mcts.py
 data_generator.py*
 mcts_wrapper.cpp
+qubit_mapping

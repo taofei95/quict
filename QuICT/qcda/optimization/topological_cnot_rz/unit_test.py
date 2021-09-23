@@ -13,6 +13,7 @@ from QuICT.algorithm import SyntheticalUnitary
 from QuICT.core import *
 from QuICT.qcda.optimization import TopologicalCnotRz
 
+
 def _getRandomList(n):
     """ get first 2 number from 0, 1, ..., n - 1 randomly.
 
@@ -26,6 +27,7 @@ def _getRandomList(n):
         do_get = random.randint(0, i)
         _rand[do_get], _rand[i] = _rand[i], _rand[do_get]
     return _rand[0], _rand[1]
+
 
 def _getAllRandomList(n):
     """ get n number from 0, 1, ..., n - 1 randomly.
@@ -61,6 +63,7 @@ def check_equiv(circuit1, circuit2):
 
     return not np.any(abs(abs(matrix1 - matrix2)) > 1e-6)
 
+
 def test_1():
     for _ in range(1):
         for i in range(2, 6):
@@ -78,6 +81,7 @@ def test_1():
             if not check_equiv(circuit, new_circuit):
                 assert 0
 
+
 def test_2():
     circuit = Circuit(2)
     CX | circuit((0, 1))
@@ -86,6 +90,7 @@ def test_2():
     new_circuit.print_information()
     if not check_equiv(circuit, new_circuit):
         assert 0
+
 
 if __name__ == '__main__':
     pytest.main(["./unit_test.py"])

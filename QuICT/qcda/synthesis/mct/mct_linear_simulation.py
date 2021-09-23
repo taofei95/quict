@@ -19,7 +19,7 @@ def HalfDirtyAux(n, m, controls, auxs, target):
     """
     circuit = controls + auxs + target
     if m == 1:
-        CX  | circuit([0, n - 1])
+        CX | circuit([0, n - 1])
     elif m == 2:
         CCX | circuit([0, 1, n - 1])
     else:

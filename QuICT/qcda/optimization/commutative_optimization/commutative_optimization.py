@@ -9,13 +9,18 @@ from QuICT.core import *
 from QuICT.qcda.optimization._optimization import Optimization
 
 # Categories of combination
-elimination = [GATE_ID['H'], GATE_ID['X'], GATE_ID['Y'], GATE_ID['Z'], GATE_ID['CX'],
-    GATE_ID['CY'], GATE_ID['CZ'], GATE_ID['CH'], GATE_ID['CCX'], GATE_ID['Swap']]
-addition = [GATE_ID['U1'], GATE_ID['Rx'], GATE_ID['Ry'], GATE_ID['Rz'], GATE_ID['Phase'],
-    GATE_ID['CRz'], GATE_ID['CU1'], GATE_ID['FSim'], GATE_ID['Rxx'], GATE_ID['Ryy'], GATE_ID['Rzz']]
+elimination = [
+    GATE_ID['H'], GATE_ID['X'], GATE_ID['Y'], GATE_ID['Z'], GATE_ID['CX'],
+    GATE_ID['CY'], GATE_ID['CZ'], GATE_ID['CH'], GATE_ID['CCX'], GATE_ID['Swap']
+]
+addition = [
+    GATE_ID['U1'], GATE_ID['Rx'], GATE_ID['Ry'], GATE_ID['Rz'], GATE_ID['Phase'],
+    GATE_ID['CRz'], GATE_ID['CU1'], GATE_ID['FSim'], GATE_ID['Rxx'], GATE_ID['Ryy'], GATE_ID['Rzz']
+]
 multiplication = [GATE_ID['Unitary']]
 other = [GATE_ID['SX'], GATE_ID['SY'], GATE_ID['S'], GATE_ID['S_dagger'], GATE_ID['T'], GATE_ID['T_dagger']]
 not_calculated = [GATE_ID['SW'], GATE_ID['U2'], GATE_ID['U3'], GATE_ID['CU3']]
+
 
 class Node(object):
     """
@@ -23,7 +28,7 @@ class Node(object):
 
     TODO: Replace this part with a graph structure
     """
-    def __init__(self, gate : BasicGate):
+    def __init__(self, gate: BasicGate):
         """
         Args:
             gate(BasicGate): Gate represented by the node
@@ -36,13 +41,14 @@ class Node(object):
         self.predecessor = set()
         self.reachable = True
 
+
 class CommutativeOptimization(Optimization):
     """
     Optimize the given Circuit/CompositeGate by merging the adjacent gates with
     the commutative relation between gates in consideration.
     """
     @staticmethod
-    def parameterize(gate : BasicGate):
+    def parameterize(gate: BasicGate):
         """
         In BasicGates, (X, SX), (Y, SY), (Z, S, Sdagger, T, Tdagger) could be
         'parameterized' to Rx, Ry, Rz respectively, which is helpful in the
@@ -77,7 +83,7 @@ class CommutativeOptimization(Optimization):
         return gate, 0
 
     @staticmethod
-    def deparameterize(gate : BasicGate):
+    def deparameterize(gate: BasicGate):
         """
         Deparameterize the parameterized gates if possible, as an inverse process of
         `parameterize` function.
@@ -91,74 +97,74 @@ class CommutativeOptimization(Optimization):
         Returns:
             Tuple[BasicGate, float]: If deparameterization process is possible, the
                 'deparameterized' version of the gate with the phase angle derived in
-                the process will be returned. Otherwise, the `gate` itself with phase 
+                the process will be returned. Otherwise, the `gate` itself with phase
                 angle 0 will be returned.
         """
         # Rx
         if gate.type() == GATE_ID['Rx']:
             # X
-            if np.isclose(np.mod(gate.parg, 2*np.pi), np.pi):
-                if np.isclose(np.mod(gate.parg, 4*np.pi), np.pi):
+            if np.isclose(np.mod(gate.parg, 2 * np.pi), np.pi):
+                if np.isclose(np.mod(gate.parg, 4 * np.pi), np.pi):
                     return X.copy() & gate.targ, -np.pi / 2
-                if np.isclose(np.mod(gate.parg, 4*np.pi), 3*np.pi):
+                if np.isclose(np.mod(gate.parg, 4 * np.pi), 3 * np.pi):
                     return X.copy() & gate.targ, np.pi / 2
             # SX
-            if np.isclose(np.mod(gate.parg, 2*np.pi), np.pi / 2):
-                if np.isclose(np.mod(gate.parg, 4*np.pi), np.pi / 2):
+            if np.isclose(np.mod(gate.parg, 2 * np.pi), np.pi / 2):
+                if np.isclose(np.mod(gate.parg, 4 * np.pi), np.pi / 2):
                     return SX.copy() & gate.targ, 0
-                if np.isclose(np.mod(gate.parg, 4*np.pi), 5*np.pi / 2):
+                if np.isclose(np.mod(gate.parg, 4 * np.pi), 5 * np.pi / 2):
                     return SX.copy() & gate.targ, np.pi
         # Ry
         if gate.type() == GATE_ID['Ry']:
             # Y
-            if np.isclose(np.mod(gate.parg, 2*np.pi), np.pi):
-                if np.isclose(np.mod(gate.parg, 4*np.pi), np.pi):
+            if np.isclose(np.mod(gate.parg, 2 * np.pi), np.pi):
+                if np.isclose(np.mod(gate.parg, 4 * np.pi), np.pi):
                     return Y.copy() & gate.targ, -np.pi / 2
-                if np.isclose(np.mod(gate.parg, 4*np.pi), 3*np.pi):
+                if np.isclose(np.mod(gate.parg, 4 * np.pi), 3 * np.pi):
                     return Y.copy() & gate.targ, np.pi / 2
             # SY
-            if np.isclose(np.mod(gate.parg, 2*np.pi), np.pi / 2):
-                if np.isclose(np.mod(gate.parg, 4*np.pi), np.pi / 2):
+            if np.isclose(np.mod(gate.parg, 2 * np.pi), np.pi / 2):
+                if np.isclose(np.mod(gate.parg, 4 * np.pi), np.pi / 2):
                     return SY.copy() & gate.targ, 0
-                if np.isclose(np.mod(gate.parg, 4*np.pi), 5*np.pi / 2):
+                if np.isclose(np.mod(gate.parg, 4 * np.pi), 5 * np.pi / 2):
                     return SY.copy() & gate.targ, np.pi
         # Rz
         if gate.type() == GATE_ID['Rz']:
             # Z
-            if np.isclose(np.mod(gate.parg, 2*np.pi), np.pi):
-                if np.isclose(np.mod(gate.parg, 4*np.pi), np.pi):
+            if np.isclose(np.mod(gate.parg, 2 * np.pi), np.pi):
+                if np.isclose(np.mod(gate.parg, 4 * np.pi), np.pi):
                     return Z.copy() & gate.targ, -np.pi / 2
-                if np.isclose(np.mod(gate.parg, 4*np.pi), 3*np.pi):
+                if np.isclose(np.mod(gate.parg, 4 * np.pi), 3 * np.pi):
                     return Z.copy() & gate.targ, np.pi / 2
             # S
-            if np.isclose(np.mod(gate.parg, 2*np.pi), np.pi / 2):
-                if np.isclose(np.mod(gate.parg, 4*np.pi), np.pi / 2):
+            if np.isclose(np.mod(gate.parg, 2 * np.pi), np.pi / 2):
+                if np.isclose(np.mod(gate.parg, 4 * np.pi), np.pi / 2):
                     return S.copy() & gate.targ, -np.pi / 4
-                if np.isclose(np.mod(gate.parg, 4*np.pi), 5*np.pi / 2):
-                    return S.copy() & gate.targ, 3*np.pi / 4
+                if np.isclose(np.mod(gate.parg, 4 * np.pi), 5 * np.pi / 2):
+                    return S.copy() & gate.targ, 3 * np.pi / 4
             # S_dagger
-            if np.isclose(np.mod(gate.parg, 2*np.pi), 3*np.pi / 2):
-                if np.isclose(np.mod(gate.parg, 4*np.pi), 3*np.pi / 2):
+            if np.isclose(np.mod(gate.parg, 2 * np.pi), 3 * np.pi / 2):
+                if np.isclose(np.mod(gate.parg, 4 * np.pi), 3 * np.pi / 2):
                     return S_dagger.copy() & gate.targ, np.pi / 4
-                if np.isclose(np.mod(gate.parg, 4*np.pi), 7*np.pi / 2):
-                    return S_dagger.copy() & gate.targ, -3*np.pi / 4
+                if np.isclose(np.mod(gate.parg, 4 * np.pi), 7 * np.pi / 2):
+                    return S_dagger.copy() & gate.targ, -3 * np.pi / 4
             # T
-            if np.isclose(np.mod(gate.parg, 2*np.pi), np.pi / 4):
-                if np.isclose(np.mod(gate.parg, 4*np.pi), np.pi / 4):
+            if np.isclose(np.mod(gate.parg, 2 * np.pi), np.pi / 4):
+                if np.isclose(np.mod(gate.parg, 4 * np.pi), np.pi / 4):
                     return T.copy() & gate.targ, -np.pi / 8
-                if np.isclose(np.mod(gate.parg, 4*np.pi), 9*np.pi / 4):
-                    return T.copy() & gate.targ, 7*np.pi / 8
+                if np.isclose(np.mod(gate.parg, 4 * np.pi), 9 * np.pi / 4):
+                    return T.copy() & gate.targ, 7 * np.pi / 8
             # T_dagger
-            if np.isclose(np.mod(gate.parg, 2*np.pi), 7*np.pi / 4):
-                if np.isclose(np.mod(gate.parg, 4*np.pi), 7*np.pi / 4):
+            if np.isclose(np.mod(gate.parg, 2 * np.pi), 7 * np.pi / 4):
+                if np.isclose(np.mod(gate.parg, 4 * np.pi), 7 * np.pi / 4):
                     return T_dagger.copy() & gate.targ, np.pi / 8
-                if np.isclose(np.mod(gate.parg, 4*np.pi), 15*np.pi / 4):
-                    return T_dagger.copy() & gate.targ, -7*np.pi / 8
+                if np.isclose(np.mod(gate.parg, 4 * np.pi), 15 * np.pi / 4):
+                    return T_dagger.copy() & gate.targ, -7 * np.pi / 8
         # Other
         return gate, 0
 
     @staticmethod
-    def combine(gate_x : BasicGate, gate_y : BasicGate):
+    def combine(gate_x: BasicGate, gate_y: BasicGate):
         """
         Combine `gate_x` and `gate_y` of the same type
 
@@ -186,7 +192,7 @@ class CommutativeOptimization(Optimization):
             TypeError('Gates to be combined are not of the same type.')
         assert gate_x.cargs == gate_y.cargs and gate_x.targs == gate_y.targs,\
             ValueError('Gates to be combined are not operated on the same qubits in the same way.')
-        
+
         if gate_x.type() in elimination:
             # IDGates operating on all qubits are the same
             return ID.copy() & gate_x.targ
@@ -195,9 +201,9 @@ class CommutativeOptimization(Optimization):
             gate = gate_x.copy()
             for id_para in range(gate_x.params):
                 if gate_x.type() in [GATE_ID['U1'], GATE_ID['CU1'], GATE_ID['FSim']]:
-                    gate.pargs[id_para] = np.mod(gate_x.pargs[id_para] + gate_y.pargs[id_para], 2*np.pi)
+                    gate.pargs[id_para] = np.mod(gate_x.pargs[id_para] + gate_y.pargs[id_para], 2 * np.pi)
                 else:
-                    gate.pargs[id_para] = np.mod(gate_x.pargs[id_para] + gate_y.pargs[id_para], 4*np.pi)
+                    gate.pargs[id_para] = np.mod(gate_x.pargs[id_para] + gate_y.pargs[id_para], 4 * np.pi)
             return gate
 
         if gate_x.type() in multiplication:
@@ -207,7 +213,7 @@ class CommutativeOptimization(Optimization):
 
         if gate_x.type() in other or gate_x.type() in not_calculated:
             raise ValueError('Gates to be combined could not be combined directly to a gate with the same type.')
-        
+
         raise TypeError('Gate {} of unknown type encountered'.format(gate_x.name))
 
     @classmethod
@@ -232,12 +238,12 @@ class CommutativeOptimization(Optimization):
             CompositeGate: The CompositeGate after optimization
         """
         gates = CompositeGate(gates)
-        nodes : list[Node] = []
+        nodes: list[Node] = []
         phase_angle = 0
 
         # Greedy optimizationn
         for gate in gates:
-            gate : BasicGate
+            gate: BasicGate
             # IDGate
             if gate.type() == GATE_ID['ID']:
                 continue
@@ -255,7 +261,7 @@ class CommutativeOptimization(Optimization):
             # Main Procedure
             length = len(nodes)
             for prev in range(length):
-                if nodes[prev].identity == True:
+                if nodes[prev].identity:
                     nodes[prev].reachable = False
                 else:
                     nodes[prev].reachable = True
@@ -266,15 +272,19 @@ class CommutativeOptimization(Optimization):
                 if prev_node.reachable:
                     prev_gate = prev_node.gate
                     # Combination of prev_gate and gate if same type
-                    if (prev_gate.type() == gate.type()
-                        and prev_gate.cargs == gate.cargs
-                        and prev_gate.targs == gate.targs
-                        and not gate.type() in not_calculated):
+                    if (
+                        prev_gate.type() == gate.type() and
+                        prev_gate.cargs == gate.cargs and
+                        prev_gate.targs == gate.targs and
+                        not gate.type() in not_calculated
+                    ):
                         combined = True
                         nodes[prev].gate = cls.combine(prev_gate, gate)
                         mat = nodes[prev].gate.matrix
-                        if nodes[prev].gate.type() == GATE_ID['ID']\
-                        or np.allclose(mat, mat[0, 0] * np.eye(2 ** nodes[prev].gate.targets)):
+                        if (
+                            nodes[prev].gate.type() == GATE_ID['ID'] or
+                            np.allclose(mat, mat[0, 0] * np.eye(2 ** nodes[prev].gate.targets))
+                        ):
                             nodes[prev].identity = True
                         break
 
@@ -294,7 +304,7 @@ class CommutativeOptimization(Optimization):
             else:
                 gates_opt.append(node.gate)
 
-        phase_angle = np.mod(float(phase_angle), 2*np.pi)
+        phase_angle = np.mod(float(phase_angle), 2 * np.pi)
         if not np.isclose(phase_angle, 0):
             with gates_opt:
                 Phase(phase_angle) & 0

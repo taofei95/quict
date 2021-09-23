@@ -8,7 +8,7 @@ class MCTS(object):
     @classmethod
     def _get_physical_gate(cls, gate: BasicGate, cur_mapping: List[int]) -> BasicGate:
         """
-        Get the  physical gate of the given logical gate   
+        Get the  physical gate of the given logical gate
         """
         cur_gate = gate.copy()
         if cur_gate.is_single():
@@ -42,13 +42,14 @@ class MCTS(object):
             num_of_process: Number of search thread used by the MCTS method.
             bp_mode: Backprogation mode used by the MCTS method.
                 0: The value of the node would be updated if and only if the backpropagation value is larger than it.
-                1: All the backpropagation value will be added to the node and  
-                    the node's value equals the average of the backpropagation value. 
+                1: All the backpropagation value will be added to the node and
+                    the node's value equals the average of the backpropagation value.
             Gsim: Deprecated. Size of the sub circuit that would be searched by the random simulation method.
             Nsim: The repeated times of the simulation module.
             selection_times: The time of expansion and back propagation in the MCTS.
-            c: The parameter measures the trade-off between the exploitation and exploration in the upper confidence bound.
-            graph_name: Name of the physical device's coupling graph(layout). 
+            c: The parameter measures the trade-off between the exploitation and exploration in the upper
+                confidence bound.
+            graph_name: Name of the physical device's coupling graph(layout).
             coupling_graph:  Instacne of the physical device's coupling graph(layout).
             virtual_loss: Deprecated. Virtual loss in the tree parallel MCTS.
             is_generate_data: Deprecated. Indicate whether to save information of the node in search process.
@@ -57,14 +58,15 @@ class MCTS(object):
             extended: Indicate which candidate SWAP gate list in the expansion module.
                 0: Use the candidate SWAP gate list proposed by [1].
                 1: View all edges on the coupling graph as a legal SWAP gate and use them as candidate SWAP gate list.
-            with_predictor: Deprecated. 
+            with_predictor: Deprecated.
             info: Indicate wether to print the runtime information in MCTS search.
             method: Deprecated. The simulation method used in MCTS.
-            major: Control the early-stopping strategy. If set as k, the search thread will stop immediately when there exist 
-                node whose visit count is larger than (1 - 1/k) selections times.   
+            major: Control the early-stopping strategy. If set as k, the search thread will stop immediately
+                when there exist node whose visit count is larger than (1 - 1/k) selections times.
 
 
-       [1]Zhou, XiangZhen et al. “A Monte Carlo Tree Search Framework for Quantum Circuit Transformation.” 2020 IEEE/ACM International Conference On Computer Aided Design (ICCAD) (2020): 1-7. 
+        [1]Zhou, XiangZhen et al. “A Monte Carlo Tree Search Framework for Quantum Circuit Transformation.”
+        2020 IEEE/ACM International Conference On Computer Aided Design (ICCAD) (2020): 1-7.
         """
         self._play_times = play_times
         self._selection_times = selection_times
@@ -117,10 +119,11 @@ class MCTS(object):
 
     def search(self, logical_circuit: Circuit, init_mapping: List[int]):
         """
-        The main process of the qubit mapping algorithm based on the monte carlo tree search. 
+        The main process of the qubit mapping algorithm based on the monte carlo tree search.
         Args:
-            logical_circuit: The logical circuit to be transformed into the circuit compliant with the physical device, i.e., 
-                            each gate of the transformed circuit are adjacent on the device.
+            logical_circuit: The logical circuit to be transformed into the circuit compliant
+            with the physical device, i.e.,
+                each gate of the transformed circuit are adjacent on the device.
             init_mapping: The initial mapping of the logical quibts to physical qubits.
         """
 
@@ -131,8 +134,9 @@ class MCTS(object):
         # print(self._logical_circuit_dag.size)
         self._gate_index = []
         self._physical_circuit: List[BasicGate] = []
-        # For the logical circuit, its initial mapping is [0,1,2,...,n] in default. Thus, the qubit_mask of initial logical circuit
-        # should be mapping to physical device with the actual initial mapping.
+        # For the logical circuit, its initial mapping is [0,1,2,...,n] in default. Thus,
+        # the qubit_mask of initial logical circuit should be mapping to physical device with
+        # the actual initial mapping.
         qubit_mask = np.zeros(self._coupling_graph.size, dtype=np.int32) - 1
         for i, qubit in enumerate(self._circuit_dag.initial_qubit_mask):
             qubit_mask[init_mapping[i]] = qubit
@@ -199,11 +203,10 @@ class MCTS(object):
 
     def _add_gate_and_successors(self, gate: int):
         """
-        Add the current gate as well as  the gates succeed it to the physical circuit iff the succeeding gate 
-        satisfies one of the following conditions: 
-            1) is a single qubit gates 
-            2) or is a two-qubit gate shares the same qubits as the gate 
-
+        Add the current gate as well as  the gates succeed it to the physical circuit iff the succeeding gate
+        satisfies one of the following conditions:
+            1) is a single qubit gates
+            2) or is a two-qubit gate shares the same qubits as the gate
         """
         cur_mapping = self._cur_node.cur_mapping
         sqg_stack = deque([gate])
@@ -219,7 +222,7 @@ class MCTS(object):
 
     def _is_valid_successor(self, gate_index: int, pre_gate_index: int, mark: Set[int]) -> bool:
         """
-        Indicate whether the succeeding node can be excuted as soon as the  
+        Indicate whether the succeeding node can be excuted as soon as the
         """
         gate = self._logical_circuit_dag[gate_index]['gate']
         pre_gate = self._logical_circuit_dag[pre_gate_index]['gate']
@@ -242,7 +245,7 @@ class MCTS(object):
 
     def _get_gate_qubits(self, gate: BasicGate) -> List[int]:
         """
-        Get the qubits that the gate acts on 
+        Get the qubits that the gate acts on
         """
         if gate.is_control_single():
             return [gate.targ, gate.carg]

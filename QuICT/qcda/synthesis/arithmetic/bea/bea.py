@@ -257,11 +257,11 @@ class BEAAdder(Synthesis):
     @classmethod
     def execute(cls, n):
         """ a circuit calculate a+b, a and b are gotten from some qubits.
-        
+
         (a,b) -> (a,b'=a+b)
 
         Args:
-            n(int): length of a and b 
+            n(int): length of a and b
         """
         circuit = Circuit(n * 2)
         qreg_a = circuit([i for i in range(n)])
@@ -274,7 +274,7 @@ class BEAAdderWired(Synthesis):
     @classmethod
     def execute(cls, n, a):
         """ a circuit calculate a+b, a is wired, and b are gotten from some qubits.
-        
+
         (b) -> (b'=a+b)
 
         Args:
@@ -310,7 +310,7 @@ class BEAReverseAdderWired(Synthesis):
 class CCBEAAdderWired(Synthesis):
     @classmethod
     def execute(cls, n, a):
-        """ 
+        """
         (b,c) -> (b'=a+b,c) if c=0b11 else (b'=b,c)
 
         Args:
@@ -329,7 +329,7 @@ class CCBEAAdderWired(Synthesis):
 class CCBEAReverseAdderWired(Synthesis):
     @classmethod
     def execute(cls, n, a):
-        """ 
+        """
         (b,c) -> (b'=b-a,c) if c=0b11 else (b'=b,c)
 
         Args:

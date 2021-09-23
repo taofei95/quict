@@ -9,6 +9,7 @@ import numpy as np
 from .._optimization import Optimization
 from QuICT.core import *
 
+
 def generate_layer(n):
     """ generate combination layer for n qubits(n in [2, 5])
 
@@ -35,6 +36,7 @@ def generate_layer(n):
 
     return layers
 
+
 def apply_cx(state, control, target, n):
     """ apply cnot gate to the state
 
@@ -48,12 +50,13 @@ def apply_cx(state, control, target, n):
     """
 
     control_col: int = n * control
-    target_col : int = n * target
+    target_col: int = n * target
 
     for i in range(n):
         if state & (1 << (control_col + i)):
-            state ^=  (1 << (target_col + i))
+            state ^= (1 << (target_col + i))
     return state
+
 
 def solve(input: Circuit):
     """ find the best circuit by bfs
@@ -111,12 +114,13 @@ def solve(input: Circuit):
                 queue.append(new_state)
         l += 1
 
+
 class CnotForceDepthBfs(Optimization):
     """ use bfs to optimize the cnot circuit
 
     """
     @staticmethod
-    def _run(circuit : Circuit, *pargs):
+    def execute(circuit: Circuit, *pargs):
         """
         Args:
             circuit(Circuit): the circuit to be optimize

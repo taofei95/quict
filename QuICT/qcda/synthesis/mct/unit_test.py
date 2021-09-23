@@ -139,6 +139,7 @@ def test_MCT_Linear_Simulation_One_unitary():
     assert 1
 
 
+
 def test_MCT():
     max_qubit = 11
     for i in range(3, max_qubit):
@@ -179,8 +180,8 @@ def test_MCT():
                         if abs(abs(unitary[j, k])) > 1e-10:
                             print(i, j, k, unitary[j, k])
                             assert 0
-
     assert 1
+
 
 if __name__ == "__main__":
     pytest.main(["./unit_test.py"])

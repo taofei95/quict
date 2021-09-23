@@ -4,9 +4,7 @@
 # @Author  : Han Yu
 # @File    : cnot_store_force.py
 
-import ujson
 import os
-import time
 
 from .._optimization import Optimization
 from QuICT.core import *
@@ -65,7 +63,7 @@ class CnotStoreForceBfs(Optimization):
         return circuit
 
     @staticmethod
-    def _run(circuit : Circuit, *pargs):
+    def execute(circuit: Circuit):
         """
         Args:
             circuit(Circuit): the circuit to be optimize

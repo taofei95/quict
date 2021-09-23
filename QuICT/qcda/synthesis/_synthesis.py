@@ -6,6 +6,7 @@
 
 from abc import ABC, abstractclassmethod
 
+
 class Synthesis(ABC):
     """ Synthesize gates with some basic gates
 

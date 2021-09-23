@@ -24,11 +24,21 @@ class DAGDepNode:
     be supplied to functions that take a node.
     """
 
-    __slots__ = ['gate', 'name', 'cargs', 'targs', 'qargs', 'node_id', 'successors', 
+    __slots__ = ['gate', 'name', 'cargs', 'targs', 'qargs', 'node_id', 'successors',
                  'predecessors', 'reachable', 'matchedwith', 'isblocked', 'successorstovisit']
 
-    def __init__(self, gate=None, qargs=None, successors=None, predecessors=None, 
-                 reachable=None, matchedwith=None, successorstovisit=None, isblocked=None, nid=-1):
+    def __init__(
+        self,
+        gate=None,
+        qargs=None,
+        successors=None,
+        predecessors=None,
+        reachable=None,
+        matchedwith=None,
+        successorstovisit=None,
+        isblocked=None,
+        nid=-1
+    ):
 
         self.gate = gate
         self.name = gate.qasm_name if gate is not None else 'Error'
@@ -63,7 +73,7 @@ class DAGDepNode:
         if node1.name == node2.name:
             if node1.cargs == node2.cargs:
                 if node1.targs == node2.targs:
-                        result = True
+                    result = True
         return result
 
     def copy(self):

@@ -4,6 +4,7 @@
 # @Author  : Han Yu
 # @File    : __init__.py
 
+from .mct import *
 from .arithmetic import *
 from .uniformly_gate import *
 from .unitary_transform import *

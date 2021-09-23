@@ -231,11 +231,7 @@ def AdderMod(N, a, b, c, overflow, qubit_N, t):
 
 
 def ReverseAdderMod(N, a, b, c, overflow, qubit_N, t):
-    """ Reverse of AdderMod
-    
-    
-
-    """
+    """ Reverse of AdderMod """
     n = len(qubit_N)
 
     Set(qubit_N, N)
@@ -263,7 +259,6 @@ def MulAddMod(a, N, x, qubit_a, b, c, overflow, qubit_N, t):
     (x,qubit_a=0,b,c=0,overflow=0,qubit_N=0,t=0) ->
     (x,qubit_a=0,b'=b+a*x mod N,c,overflow',qubit_N,t)
 
-
     Args:
         a(int): the parameter a
         N(int): the parameter N
@@ -290,7 +285,6 @@ def ControlMulMod(a, N, control, x, qubit_a, b, c, overflow, qubit_N, t):
 
     (control,x,qubit_a=0,b=0,c=0,overflow=0,qubit_N=0,t=0) ->
      (control,x,qubit_a=0,b'=(a**control)*x mod N,c,overflow',qubit_N,t)
-
 
     Args:
         a(int): the parameter a
@@ -384,7 +378,7 @@ class VBEAdder(Synthesis):
     @classmethod
     def execute(cls, n):
         """ a circuit calculate a+b, a and b are gotten from some qubits.
-        
+
         (a,b,c=0,overflow) -> (a,b'=a+b,c=0,overflow')
 
         Quregs:
@@ -445,10 +439,10 @@ class VBEAdderMod(Synthesis):
 class VBEMulAddMod(Synthesis):
     @classmethod
     def execute(cls, a, N, n, m):
-        """ a circuit calculate b + x*a mod N. 
+        """ a circuit calculate b + x*a mod N.
         x are gotten from some qubits, a and N are inherently designed in the circuit.
-        
-        (x,b,qubit_a=0,c=0,overflow=0,qubit_N=0,t=0) -> 
+
+        (x,b,qubit_a=0,c=0,overflow=0,qubit_N=0,t=0) ->
         (x,b'=b+a*x mod N,qubit_a,c,overflow,qubit_N,t)
 
         Quregs:

@@ -6,6 +6,7 @@
 
 from QuICT.core import *
 
+
 def lemma12_2():
     circuit = Circuit(4)
     CX | circuit([0, 1])
@@ -16,4 +17,3 @@ def lemma12_2():
     CX | circuit([0, 2])
     CX | circuit([2, 3])
     return circuit
-
