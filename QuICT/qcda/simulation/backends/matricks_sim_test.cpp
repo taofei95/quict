@@ -11,7 +11,7 @@
 #include <iostream>
 #include <fstream>
 
-#include "hybrid_simulator.h"
+#include "matricks_simulator.h"
 #include "utility.h"
 
 auto dist = std::uniform_real_distribution<double>(-1, 1);
@@ -21,7 +21,7 @@ std::mt19937 rd;
 template<typename Precision>
 void test_by_data_file(
         const char *data_name,
-        QuICT::HybridSimulator<Precision> &simulator,
+        QuICT::MaTricksSimulator<Precision> &simulator,
         double eps = 1e-6
 ) {
     using namespace std;
@@ -125,7 +125,7 @@ void test_by_data_file(
     delete[] expect_state;
 }
 
-auto simulator = QuICT::HybridSimulator<double>();
+auto simulator = QuICT::MaTricksSimulator<double>();
 
 TEST(HybridTest, HTest) {
     test_by_data_file("h.txt", simulator);

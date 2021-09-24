@@ -8,13 +8,13 @@
 #include <utility>
 
 #include "gate.h"
-#include "hybrid_simulator.h"
+#include "matricks_simulator.h"
 #include "utility.h"
 
 
 template<typename Precision>
 void exec_sim(
-        QuICT::HybridSimulator<Precision> &simulator,
+        QuICT::MaTricksSimulator<Precision> &simulator,
         Precision **real,
         Precision **imag,
         uint64_t qubit_num,
@@ -28,7 +28,7 @@ void exec_sim(
 template<typename Precision>
 void get_desc_vec_by_file(
         const char *data_name,
-        QuICT::HybridSimulator<Precision> &simulator,
+        QuICT::MaTricksSimulator<Precision> &simulator,
         std::vector<QuICT::GateDescription<Precision>> &gate_desc_vec,
         uint64_t &qubit_num
 ) {
@@ -83,7 +83,7 @@ void get_desc_vec_by_file(
 template<typename Precision>
 void test_by_data_file(
         const char *data_name,
-        QuICT::HybridSimulator<Precision> &simulator
+        QuICT::MaTricksSimulator<Precision> &simulator
 ) {
     using namespace std;
     uint64_t qubit_num;
@@ -103,11 +103,11 @@ void test_by_data_file(
 }
 
 TEST(HybridTest, HPerf) {
-    auto simulator = QuICT::HybridSimulator<double>();
+    auto simulator = QuICT::MaTricksSimulator<double>();
     test_by_data_file("h_perf.txt", simulator);
 }
 
 TEST(HybridTest, QFTPerf) {
-    auto simulator = QuICT::HybridSimulator<double>();
+    auto simulator = QuICT::MaTricksSimulator<double>();
     test_by_data_file("qft_perf.txt", simulator);
 }

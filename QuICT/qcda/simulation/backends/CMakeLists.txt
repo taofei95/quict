@@ -16,21 +16,21 @@ add_subdirectory(../../../../QuICT/utility/extern/googletest ./cmake-build-gtest
 include_directories(${gtest_SOURCE_DIR}/include)
 
 add_executable(misc_test miscellaneous_test.cpp gate.h utility.h
-        ../../../../QuICT/utility/extern/googletest/googletest/src/gtest_main.cc hybrid_simulator.h)
+        ../../../../QuICT/utility/extern/googletest/googletest/src/gtest_main.cc matricks_simulator.h)
 add_dependencies(misc_test gtest)
 target_link_libraries(misc_test gtest)
 
-add_executable(hybrid_sim_test hybrid_sim_test.cpp hybrid_simulator.h gate.h utility.h
+add_executable(matricks_sim_test matricks_sim_test.cpp matricks_simulator.h gate.h utility.h
         ../../../../QuICT/utility/extern/googletest/googletest/src/gtest_main.cc)
-add_dependencies(hybrid_sim_test gtest)
-target_link_libraries(hybrid_sim_test gtest)
+add_dependencies(matricks_sim_test gtest)
+target_link_libraries(matricks_sim_test gtest)
 
-add_executable(hybrid_sim_perf hybrid_sim_perf.cpp hybrid_simulator.h gate.h utility.h
+add_executable(matricks_sim_perf matricks_sim_perf.cpp matricks_simulator.h gate.h utility.h
         ../../../../QuICT/utility/extern/googletest/googletest/src/gtest_main.cc)
-add_dependencies(hybrid_sim_perf gtest)
-target_link_libraries(hybrid_sim_perf gtest)
+add_dependencies(matricks_sim_perf gtest)
+target_link_libraries(matricks_sim_perf gtest)
 
-add_executable(gate_test gate_test.cpp hybrid_simulator.h gate.h utility.h
+add_executable(gate_test gate_test.cpp matricks_simulator.h gate.h utility.h
         ../../../../QuICT/utility/extern/googletest/googletest/src/gtest_main.cc)
 add_dependencies(gate_test gtest)
 target_link_libraries(gate_test gtest)

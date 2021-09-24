@@ -83,7 +83,7 @@ def main():
 
     for i in range(qubit_num):
         H | circuit(i)
-    for _ in range(qubit_num * 30):
+    for _ in range(qubit_num * 40):
         lst = sample(range(0, qubit_num), 2)
         shuffle(lst)
         i = lst[0]
@@ -95,23 +95,12 @@ def main():
 
     for i in range(qubit_num):
         H | circuit(i)
-    for _ in range(qubit_num * 30):
+    for _ in range(qubit_num * 40):
         lst = sample(range(0, qubit_num), 2)
         shuffle(lst)
         i = lst[0]
         j = lst[1]
         CU3((uniform(0, 3.14), uniform(0, 3.14), uniform(0, 3.14))) | circuit([i, j])
-    # CU3((uniform(0, 3.14), uniform(0, 3.14), uniform(0, 3.14))) | circuit([qubit_num - 2, qubit_num - 1])
-    # CU3((uniform(0, 3.14), uniform(0, 3.14), uniform(0, 3.14))) | circuit([qubit_num - 1, qubit_num - 2])
-    # for i in range(qubit_num - 2):
-    #     CU3((uniform(0, 3.14), uniform(0, 3.14), uniform(0, 3.14))) | circuit([i, qubit_num - 1])
-    #     CU3((uniform(0, 3.14), uniform(0, 3.14), uniform(0, 3.14))) | circuit([qubit_num - 1, i])
-    # for _ in range(qubit_num * 30):
-    #     lst = sample(range(0, qubit_num - 2), 2)
-    #     shuffle(lst)
-    #     i = lst[0]
-    #     j = lst[1]
-    #     CU3((uniform(0, 3.14), uniform(0, 3.14), uniform(0, 3.14))) | circuit([i, j])
 
     out_circuit_to_file(qubit_num, "cu3.txt", circuit)
     circuit.clear()

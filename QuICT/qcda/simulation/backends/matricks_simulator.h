@@ -2,8 +2,8 @@
 // Created by Ci Lei on 2021-07-02.
 //
 
-#ifndef SIM_BACK_HYBRID_SIMULATOR_H
-#define SIM_BACK_HYBRID_SIMULATOR_H
+#ifndef SIM_BACK_MATRICKS_SIMULATOR_H
+#define SIM_BACK_MATRICKS_SIMULATOR_H
 
 #include <cstdint>
 #include <algorithm>
@@ -19,20 +19,20 @@
 
 namespace QuICT {
     template<typename Precision>
-    class HybridSimulator {
+    class MaTricksSimulator {
     protected:
         std::string name_;
     public:
-        HybridSimulator() {
+        MaTricksSimulator() {
             using namespace std;
             if constexpr(!is_same_v<Precision, double> && !is_same_v<Precision, float>) {
-                throw runtime_error("HybridSimulator only supports double/float precision.");
+                throw runtime_error("MaTricksSimulator only supports double/float precision.");
             }
-            name_ = "HybridSimulator";
+            name_ = "MaTricksSimulator";
             if constexpr(std::is_same_v<Precision, double>) {
                 name_ += "[double]";
             } else if (std::is_same_v<Precision, float>) {
-                name_ += "[float] ";
+                name_ += " [float]";
             }
         }
 
@@ -131,7 +131,7 @@ namespace QuICT {
     };
 
     template<typename Precision>
-    inline void HybridSimulator<Precision>::run(
+    inline void MaTricksSimulator<Precision>::run(
             uint64_t circuit_qubit_num,
             const std::vector<GateDescription<Precision>> &gate_desc_vec,
             const std::complex<Precision> *init_state
@@ -148,7 +148,7 @@ namespace QuICT {
     }
 
     template<typename Precision>
-    inline std::complex<Precision> *HybridSimulator<Precision>::run(
+    inline std::complex<Precision> *MaTricksSimulator<Precision>::run(
             uint64_t circuit_qubit_num,
             const std::vector<GateDescription<Precision>> &gate_desc_vec
     ) {
@@ -170,7 +170,7 @@ namespace QuICT {
 
     template<typename Precision>
     inline std::pair<Precision *, Precision *>
-    HybridSimulator<Precision>::run_without_combine(
+    MaTricksSimulator<Precision>::run_without_combine(
             uint64_t circuit_qubit_num,
             const std::vector<GateDescription<Precision>> &gate_desc_vec
     ) {
@@ -187,7 +187,7 @@ namespace QuICT {
     }
 
     template<typename Precision>
-    inline void HybridSimulator<Precision>::run(
+    inline void MaTricksSimulator<Precision>::run(
             uint64_t circuit_qubit_num,
             const std::vector<GateDescription<Precision>> &gate_desc_vec,
             Precision *real,
@@ -201,7 +201,7 @@ namespace QuICT {
     }
 
     template<typename Precision>
-    inline void HybridSimulator<Precision>::qubit_num_checker(uint64_t qubit_num) {
+    inline void MaTricksSimulator<Precision>::qubit_num_checker(uint64_t qubit_num) {
         if (qubit_num <= 4) {
             throw std::runtime_error("Only supports circuit with more than 4 qubits!");
         }
@@ -209,7 +209,7 @@ namespace QuICT {
 
     template<typename Precision>
     inline std::pair<Precision *, Precision *>
-    HybridSimulator<Precision>::separate_complex(
+    MaTricksSimulator<Precision>::separate_complex(
             uint64_t circuit_qubit_num,
             const std::complex<Precision> *c_arr
     ) {
@@ -234,7 +234,7 @@ namespace QuICT {
     }
 
     template<typename Precision>
-    inline void HybridSimulator<Precision>::combine_complex(
+    inline void MaTricksSimulator<Precision>::combine_complex(
             uint64_t circuit_qubit_num,
             const Precision *real,
             const Precision *imag,
@@ -251,7 +251,7 @@ namespace QuICT {
     }
 
     template<typename Precision>
-    inline void HybridSimulator<Precision>::apply_gate(
+    inline void MaTricksSimulator<Precision>::apply_gate(
             uint64_t circuit_qubit_num,
             const GateDescription<Precision> &gate_desc,
             Precision *real,
@@ -285,7 +285,7 @@ namespace QuICT {
 
 
     template<typename Precision>
-    inline void HybridSimulator<Precision>::apply_h_gate(
+    inline void MaTricksSimulator<Precision>::apply_h_gate(
             uint64_t circuit_qubit_num,
             const HGate<Precision> &gate,
             Precision *real,
@@ -412,7 +412,7 @@ namespace QuICT {
     }
 
     template<typename Precision>
-    inline void HybridSimulator<Precision>::apply_x_gate(
+    inline void MaTricksSimulator<Precision>::apply_x_gate(
             uint64_t circuit_qubit_num,
             const XGate<Precision> &gate,
             Precision *real,
@@ -473,7 +473,7 @@ namespace QuICT {
     //**********************************************************************
 
     template<typename Precision>
-    inline void HybridSimulator<Precision>::apply_ctrl_diag_gate(
+    inline void MaTricksSimulator<Precision>::apply_ctrl_diag_gate(
             uint64_t circuit_qubit_num,
             const ControlledDiagonalGate<Precision> &gate,
             Precision *real,
@@ -664,7 +664,7 @@ namespace QuICT {
 
     template<typename Precision>
     template<template<typename ...> class Gate>
-    void HybridSimulator<Precision>::apply_diag_n_gate(
+    void MaTricksSimulator<Precision>::apply_diag_n_gate(
             uint64_t circuit_qubit_num,
             const Gate<Precision> &gate,
             Precision *real,
@@ -680,7 +680,7 @@ namespace QuICT {
 
     template<typename Precision>
     template<class Gate>
-    void HybridSimulator<Precision>::apply_unitary_n_gate(
+    void MaTricksSimulator<Precision>::apply_unitary_n_gate(
             uint64_t circuit_qubit_num,
             const Gate &gate,
             Precision *real,
@@ -803,7 +803,7 @@ namespace QuICT {
     }
 
     template<typename Precision>
-    void HybridSimulator<Precision>::apply_ctrl_unitary_gate(
+    void MaTricksSimulator<Precision>::apply_ctrl_unitary_gate(
             uint64_t circuit_qubit_num,
             const ControlledUnitaryGate<Precision> &gate,
             Precision *real,
@@ -991,4 +991,4 @@ namespace QuICT {
     }
 }
 
-#endif //SIM_BACK_HYBRID_SIMULATOR_H
+#endif //SIM_BACK_MATRICKS_SIMULATOR_H
