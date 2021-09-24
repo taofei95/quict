@@ -9,34 +9,37 @@ import numpy as np
 from QuICT import *
 from QuICT.qcda.synthesis.mct import MCTLinearOneDirtyAux
 
+
 def run_grover(f, n, oracle):
     circuit = Circuit(n + 1)
     index_q = circuit([i for i in range(n)])
     result_q = circuit(n)
     N = 2**n
-    theta = 2*np.arccos(np.sqrt(1-1/N))
-    T = round(np.arccos(np.sqrt(1/N))/theta)
+    theta = 2 * np.arccos(np.sqrt(1 - 1 / N))
+    T = round(np.arccos(np.sqrt(1 / N)) / theta)
 
     # create equal superposition state in index_q
-    H | index_q 
+    H | index_q
     # create |-> in result_q
     X | result_q
     H | result_q
     for i in range(T):
-        #Grover iteration
+        # Grover iteration
         oracle(f, index_q, result_q)
         H | index_q
-        #control phase shift
+        # control phase shift
         X | index_q
         H | index_q(n - 1)
-        MCTLinearOneDirtyAux.execute(n + 1) | (index_q([j for j in range(0,n - 1)]),index_q(n - 1), result_q)
+        MCTLinearOneDirtyAux.execute(
+            n + 1) | (index_q([j for j in range(0, n - 1)]), index_q(n - 1), result_q)
         H | index_q(n - 1)
         X | index_q
-        #control phase shift end
+        # control phase shift end
         H | index_q
     Measure | index_q
     circuit.exec()
     return int(index_q)
+
 
 class Grover:
     """ simple grover

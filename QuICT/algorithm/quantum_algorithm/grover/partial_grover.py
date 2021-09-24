@@ -8,18 +8,20 @@ import numpy as np
 
 from QuICT import *
 from QuICT.qcda.synthesis.mct import MCTLinearOneDirtyAux
-    
+
+
 def calculate_r1_r2_one_target(N, K, eps):
-    r1 = np.sqrt(N)*np.pi*0.25*(1-eps)
+    r1 = np.sqrt(N) * np.pi * 0.25 * (1 - eps)
     r1 = round(r1)
-    o_theta = 2*np.arccos(np.sqrt(1-1/N))
-    theta = np.pi/2 - (0.5+r1)*o_theta
+    o_theta = 2 * np.arccos(np.sqrt(1 - 1 / N))
+    theta = np.pi / 2 - (0.5 + r1) * o_theta
     sin_theta = np.sin(theta)
-    sqrt_K_mul_alpha_yt = np.sqrt(K-sin_theta*sin_theta*(K-1))
-    r2 = (np.sqrt(N/K)*0.5)*(np.arcsin(sin_theta/sqrt_K_mul_alpha_yt) +
-                             np.arcsin(sin_theta*(K-2)/(2*sqrt_K_mul_alpha_yt)))
+    sqrt_K_mul_alpha_yt = np.sqrt(K - sin_theta * sin_theta * (K - 1))
+    r2 = (np.sqrt(N / K) * 0.5) * (np.arcsin(sin_theta / sqrt_K_mul_alpha_yt) +
+        np.arcsin(sin_theta * (K - 2) / (2 * sqrt_K_mul_alpha_yt)))
     r2 = round(r2)
     return r1, r2
+
 
 def run_partial_grover(f, n, k, oracle):
     """ partial grover search with one target
@@ -34,15 +36,15 @@ def run_partial_grover(f, n, k, oracle):
     """
     K = 1 << k
     N = 1 << n
-    eps = 1/K  # can use other epsilon
+    eps = 1 / K  # can use other epsilon
     r1, r2 = calculate_r1_r2_one_target(N, K, eps)
 
     circuit = Circuit(n + 3)
     qreg = circuit([i for i in range(n)])
     ancilla = circuit(n)
-    dirty = circuit(n+1)
-    ctarget = circuit(n+2)
-    cqreg = circuit([n+2]+[i for i in range(n)])
+    dirty = circuit(n + 1)
+    ctarget = circuit(n + 2)
+    cqreg = circuit([n + 2] + [i for i in range(n)])
     # step 1
     H | qreg
     X | ancilla
@@ -64,8 +66,8 @@ def run_partial_grover(f, n, k, oracle):
         # global inversion about target
         oracle(f, qreg, ancilla)
         # local inversion about average
-        local_n = n-k
-        local_qreg = qreg([j for j in range(k, k+local_n)])
+        local_n = n - k
+        local_qreg = qreg([j for j in range(k, k + local_n)])
         H | local_qreg
         X | local_qreg
         H | local_qreg(local_n - 1)
@@ -89,6 +91,7 @@ def run_partial_grover(f, n, k, oracle):
     Measure | qreg
     circuit.exec()
     return int(qreg)
+
 
 class PartialGrover:
     """ partial grover search with one target
