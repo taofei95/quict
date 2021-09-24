@@ -71,8 +71,10 @@ namespace QuICT {
         Precision *mat_imag_;
 
         ~UnitaryGateN() {
-            delete[] mat_real_;
-            delete[] mat_imag_;
+//            delete[] mat_real_;
+//            delete[] mat_imag_;
+            delete_all_and_set_null(mat_real_);
+            delete_all_and_set_null(mat_imag_);
         }
     };
 
@@ -86,8 +88,10 @@ namespace QuICT {
         explicit UnitaryGateN(uint64_t targ) : targ_(targ) {}
 
         ~UnitaryGateN() {
-            delete[] mat_real_;
-            delete[] mat_imag_;
+//            delete[] mat_real_;
+//            delete[] mat_imag_;
+            delete_all_and_set_null(mat_real_);
+            delete_all_and_set_null(mat_imag_);
         }
     };
 
@@ -164,8 +168,10 @@ namespace QuICT {
         }
 
         ~CrzGate() {
-            delete[] this->diagonal_real_;
-            delete[] this->diagonal_imag_;
+//            delete[] this->diagonal_real_;
+//            delete[] this->diagonal_imag_;
+            delete_all_and_set_null(this->diagonal_real_);
+            delete_all_and_set_null(this->diagonal_imag_);
         }
     };
 
@@ -189,7 +195,25 @@ namespace QuICT {
         std::vector<Precision> pargs_;
 
         explicit CU3Gate(uint64_t carg, uint64_t targ, const std::vector<Precision> &pargs)
-                : ControlledUnitaryGate<Precision>(carg, targ), pargs_(pargs) {}
+                : ControlledUnitaryGate<Precision>(carg, targ), pargs_(pargs) {
+            std::complex<Precision> tmp[4];
+            auto j = std::complex<Precision>(0, 1);
+            tmp[0] = std::cos(pargs_[0] / 2);
+            tmp[1] = -std::exp(j * pargs_[2]) * std::sin(pargs_[0] / 2);
+            tmp[2] = std::exp(j * pargs_[1]) * std::sin(pargs_[0] / 2);
+            tmp[3] = std::exp(j * (pargs_[1] + pargs_[2])) * std::cos(pargs_[0] / 2);
+            this->mat_real_ = new Precision[4];
+            this->mat_imag_ = new Precision[4];
+            for (int i = 0; i < 4; ++i) {
+                this->mat_real_[i] = tmp[i].real();
+                this->mat_imag_[i] = tmp[i].imag();
+            }
+        }
+
+        ~CU3Gate() {
+            delete_all_and_set_null(this->mat_real_);
+            delete_all_and_set_null(this->mat_imag_);
+        }
     };
 
 

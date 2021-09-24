@@ -15,8 +15,8 @@ def out_unitary_circuit_to_file(qubit_num: int, f_name: str, circuit: Circuit):
         for gate in circuit.gates:
             gate: BasicGate
             if gate.type() == GATE_ID['H']:
-                val_pos = str(complex(1/sqrt(2), 0))[1:-1]
-                val_neg = str(complex(-1/sqrt(2), 0))[1:-1]
+                val_pos = str(complex(1 / sqrt(2), 0))[1:-1]
+                val_neg = str(complex(-1 / sqrt(2), 0))[1:-1]
                 print(
                     f"u1 {gate.targ} {val_pos} {val_pos} {val_pos} {val_neg}", file=f)
             elif gate.type() == GATE_ID['X']:
@@ -24,7 +24,7 @@ def out_unitary_circuit_to_file(qubit_num: int, f_name: str, circuit: Circuit):
             elif gate.type() == GATE_ID['S']:
                 print(f"u1 {gate.targ} 1+0j 0+0j 0+0j 0+1j", file=f)
             elif gate.type() == GATE_ID['T']:
-                val = str(complex(1/sqrt(2), 1/sqrt(2)))[1:-1]
+                val = str(complex(1 / sqrt(2), 1 / sqrt(2)))[1:-1]
                 print(f"u1 {gate.targ} 1+0j 0+0j 0+0j {val}", file=f)
 
         print("__TERM__", file=f)
@@ -34,8 +34,10 @@ def out_unitary_circuit_to_file(qubit_num: int, f_name: str, circuit: Circuit):
             if abs(val - 0) <= 1e-8:
                 print("0+0j", file=f)
             else:
-                print("%s%s%sj" % (val.real, '+' if val.imag >=
-                      0 else '-', abs(val.imag)), file=f)
+                print(
+                    "%s%s%sj" % (val.real, '+' if val.imag >= 0 else '-', abs(val.imag)),
+                    file=f
+                )
                 # opt = str(val)[1:-1]
                 # print(opt, file=f)
 
@@ -81,24 +83,29 @@ def main():
 
     for i in range(qubit_num):
         H | circuit(i)
-    for _ in range(qubit_num*30):
-        lst = sample(range(0, qubit_num),2)
+    for _ in range(qubit_num * 30):
+        lst = sample(range(0, qubit_num), 2)
         shuffle(lst)
         i = lst[0]
         j = lst[1]
-        CRz(uniform(0, 3.14)) | circuit([i,j])
+        CRz(uniform(0, 3.14)) | circuit([i, j])
 
     out_circuit_to_file(qubit_num, "crz.txt", circuit)
     circuit.clear()
 
     for i in range(qubit_num):
         H | circuit(i)
-    for _ in range(qubit_num*30):
-        lst = sample(range(0, qubit_num),2)
-        shuffle(lst)
-        i = lst[0]
-        j = lst[1]
-        CU3((uniform(0, 3.14),uniform(0, 3.14),uniform(0, 3.14))) | circuit([i,j])
+    # for _ in range(qubit_num * 30):
+    #     lst = sample(range(0, qubit_num), 2)
+    #     shuffle(lst)
+    #     i = lst[0]
+    #     j = lst[1]
+    #     CU3((uniform(0, 3.14), uniform(0, 3.14), uniform(0, 3.14))) | circuit([i, j])
+    CU3((uniform(0, 3.14), uniform(0, 3.14), uniform(0, 3.14))) | circuit([qubit_num - 2, qubit_num - 1])
+    CU3((uniform(0, 3.14), uniform(0, 3.14), uniform(0, 3.14))) | circuit([qubit_num - 1, qubit_num - 2])
+    for i in range(qubit_num - 2):
+        CU3((uniform(0, 3.14), uniform(0, 3.14), uniform(0, 3.14))) | circuit([i, qubit_num - 1])
+        CU3((uniform(0, 3.14), uniform(0, 3.14), uniform(0, 3.14))) | circuit([qubit_num - 1, i])
 
     out_circuit_to_file(qubit_num, "cu3.txt", circuit)
     circuit.clear()

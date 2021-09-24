@@ -127,21 +127,21 @@ void test_by_data_file(
 
 auto simulator = QuICT::HybridSimulator<double>();
 
-TEST(HybridTest, HTest) {
-    test_by_data_file("h.txt", simulator);
-}
-
-TEST(HybridTest, CrzTest) {
-    test_by_data_file("crz.txt", simulator);
-}
-
-TEST(HybridTest, QftTest) {
-    test_by_data_file("qft.txt", simulator);
-}
-
-TEST(HybridTest, XTest) {
-    test_by_data_file("x.txt", simulator);
-}
+//TEST(HybridTest, HTest) {
+//    test_by_data_file("h.txt", simulator);
+//}
+//
+//TEST(HybridTest, CrzTest) {
+//    test_by_data_file("crz.txt", simulator);
+//}
+//
+//TEST(HybridTest, QftTest) {
+//    test_by_data_file("qft.txt", simulator);
+//}
+//
+//TEST(HybridTest, XTest) {
+//    test_by_data_file("x.txt", simulator);
+//}
 
 TEST(HybridTest, CU3Test) {
     test_by_data_file("cu3.txt", simulator);

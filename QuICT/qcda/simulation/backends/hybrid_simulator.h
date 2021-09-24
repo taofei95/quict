@@ -535,7 +535,7 @@ namespace QuICT {
                     }
                 } else if (qubits_sorted[0] < circuit_qubit_num - 2) {
                     if (qubits_sorted[0] == qubits[0]) { // ...q0.q1
-                        // v00 v01 v10 v11 v02 v03 v12 v13
+                        // v00 v01 v10 v11 . v02 v03 v12 v13
                         constexpr uint64_t batch_size = 2;
                         Precision c_arr_real[4] =
                                 {gate.diagonal_real_[0], gate.diagonal_real_[1],
@@ -830,79 +830,64 @@ namespace QuICT {
             if (qubits_sorted[1] == circuit_qubit_num - 1) {
                 if (qubits_sorted[0] == circuit_qubit_num - 2) {
                     __m256d ymm0, ymm1, ymm2, ymm3;
-                    __m256d ymm4, ymm5;
+                    __m256d ymm4, ymm5, ymm6, ymm7, ymm8, ymm9;
                     ymm4 = _mm256_loadu_pd(gate.mat_real_); // m0 m1 m2 m3, real
                     ymm5 = _mm256_loadu_pd(gate.mat_imag_); // m0 m1 m2 m3, imag
-                    ymm4 = _mm256_permute4x64_pd(ymm4, 0b11011000); // m0 m2 m1 m3, real
-                    ymm5 = _mm256_permute4x64_pd(ymm5, 0b11011000); // m0 m2 m1 m3, imag
 
-                    ymm0 = _mm256_permute2f128_pd(ymm4, ymm4, 0b000000); // m0 m2 m0 m2, real
-                    ymm1 = _mm256_permute2f128_pd(ymm4, ymm4, 0b001001); // m1 m3 m1 m3, real
-                    ymm2 = _mm256_permute2f128_pd(ymm5, ymm5, 0b000000); // m0 m2 m0 m2, imag
-                    ymm3 = _mm256_permute2f128_pd(ymm5, ymm5, 0b001001); // m1 m3 m1 m3, imag
+                    ymm0 = _mm256_permute2f128_pd(ymm4, ymm4, 0b0000'0000); // m0 m1 m0 m1, real
+                    ymm1 = _mm256_permute2f128_pd(ymm5, ymm5, 0b0000'0000); // m0 m1 m0 m1, imag
+                    ymm2 = _mm256_permute2f128_pd(ymm4, ymm4, 0b0001'0001); // m2 m3 m2 m3, real
+                    ymm3 = _mm256_permute2f128_pd(ymm5, ymm5, 0b0001'0001); // m2 m3 m2 m3, imag
 
-                    // Now we need 2 vectors of v02 v02 v12 v12, v03 v03 v13 v13
                     constexpr uint64_t batch_size = 2;
                     for (uint64_t task_id = 0; task_id < task_num; task_id += batch_size) {
                         auto ind0 = index0(task_id, circuit_qubit_num, qubits, qubits_sorted);
-                        __m256d ymm6, ymm7, ymm8, ymm9;
-
-                        if (qubits_sorted[0] == qubits[0]) {
+                        if (qubits[0] == qubits_sorted[0]) { // ...q0q1
                             // v00 v01 v02 v03 v10 v11 v12 v13
-                            ymm4 = _mm256_loadu2_m128d(&real[ind0 + 6], &real[ind0 + 2]); // v02 v03 v12 v13, real
-                            ymm5 = _mm256_loadu2_m128d(&imag[ind0 + 6], &imag[ind0 + 2]); // v02 v03 v12 v13, imag
-                        } else {
+                            ymm4 = _mm256_loadu2_m128d(&real[ind0 + 6], &real[ind0 + 2]);
+                            ymm5 = _mm256_loadu2_m128d(&imag[ind0 + 6], &imag[ind0 + 2]);
+                        } else { // ...q1q0
                             // v00 v02 v01 v03 v10 v12 v11 v13
-                            STRIDE_2_LOAD_ODD_PD(&real[ind0], ymm4, ymm6, ymm7); // v02 v03 v12 v13, real
-                            STRIDE_2_LOAD_ODD_PD(&imag[ind0], ymm5, ymm6, ymm7); // v02 v03 v12 v13, imag
+                            STRIDE_2_LOAD_ODD_PD(&real[ind0], ymm4, ymm6, ymm7);
+                            STRIDE_2_LOAD_ODD_PD(&imag[ind0], ymm5, ymm6, ymm7);
                         }
-                        ymm6 = _mm256_shuffle_pd(ymm4, ymm4, 0b0000); // v02 v02 v12 v12, real
-                        ymm7 = _mm256_shuffle_pd(ymm4, ymm4, 0b1111); // v03 v03 v13 v13, real
-                        ymm8 = _mm256_shuffle_pd(ymm5, ymm5, 0b0000); // v02 v02 v12 v12, imag
-                        ymm9 = _mm256_shuffle_pd(ymm5, ymm5, 0b1111); // v02 v02 v12 v12, imag
+                        // Now: ymm4 -> v_r, ymm5 -> v_i
+                        COMPLEX_YMM_MUL(ymm0, ymm1, ymm4, ymm5, ymm6, ymm7);
+                        COMPLEX_YMM_MUL(ymm2, ymm3, ymm4, ymm5, ymm8, ymm9);
+                        ymm4 = _mm256_hadd_pd(ymm6, ymm8); // res_r
+                        ymm5 = _mm256_hadd_pd(ymm7, ymm9); // res_i
 
-                        __m256d ymm10; // res_r1
-                        __m256d ymm11; // res_r2
-                        __m256d ymm12; // res_i1
-                        __m256d ymm13; // res_i2
-                        COMPLEX_YMM_MUL(ymm0, ymm2, ymm6, ymm8, ymm10, ymm12);
-                        COMPLEX_YMM_MUL(ymm1, ymm3, ymm7, ymm9, ymm11, ymm13);
-                        ymm10 = _mm256_add_pd(ymm10, ymm11); // res_r
-                        ymm12 = _mm256_add_pd(ymm12, ymm13); // res_i
-                        if (qubits_sorted[0] == qubits[0]) {
+                        if (qubits[0] == qubits_sorted[0]) { // ...q0q1
                             // v00 v01 v02 v03 v10 v11 v12 v13
-                            _mm256_storeu2_m128d(&real[ind0 + 6], &real[ind0 + 2], ymm10);
-                            _mm256_storeu2_m128d(&imag[ind0 + 6], &imag[ind0 + 2], ymm12);
-                        } else {
+                            _mm256_storeu2_m128d(&real[ind0 + 6], &real[ind0 + 2], ymm4);
+                            _mm256_storeu2_m128d(&imag[ind0 + 6], &imag[ind0 + 2], ymm5);
+                        } else { // ...q1q0
                             // v00 v02 v01 v03 v10 v12 v11 v13
-                            Precision res_r[4], res_i[4];
-                            STRIDE_2_STORE_ODD_PD(&real[ind0], ymm10, res_r);
-                            STRIDE_2_STORE_ODD_PD(&imag[ind0], ymm12, res_i);
+                            Precision tmp_r[4], tmp_i[4];
+                            STRIDE_2_STORE_ODD_PD(&real[ind0], ymm4, tmp_r);
+                            STRIDE_2_STORE_ODD_PD(&imag[ind0], ymm5, tmp_i);
                         }
                     }
                 } else if (qubits_sorted[0] < circuit_qubit_num - 2) {
                     // Actually copied from above codes
                     // Maybe we can eliminate duplications :(
                     __m256d ymm0, ymm1, ymm2, ymm3;
-                    __m256d ymm4, ymm5;
+                    __m256d ymm4, ymm5, ymm6, ymm7, ymm8, ymm9, ymm10, ymm11;
                     ymm4 = _mm256_loadu_pd(gate.mat_real_); // m0 m1 m2 m3, real
                     ymm5 = _mm256_loadu_pd(gate.mat_imag_); // m0 m1 m2 m3, imag
-                    ymm4 = _mm256_permute4x64_pd(ymm4, 0b11011000); // m0 m2 m1 m3, real
-                    ymm5 = _mm256_permute4x64_pd(ymm5, 0b11011000); // m0 m2 m1 m3, imag
 
-                    ymm0 = _mm256_permute2f128_pd(ymm4, ymm4, 0b000000); // m0 m2 m0 m2, real
-                    ymm1 = _mm256_permute2f128_pd(ymm4, ymm4, 0b001001); // m1 m3 m1 m3, real
-                    ymm2 = _mm256_permute2f128_pd(ymm5, ymm5, 0b000000); // m0 m2 m0 m2, imag
-                    ymm3 = _mm256_permute2f128_pd(ymm5, ymm5, 0b001001); // m1 m3 m1 m3, imag
+                    ymm0 = _mm256_permute2f128_pd(ymm4, ymm4, 0b0000'0000); // m0 m1 m0 m1, real
+                    ymm1 = _mm256_permute2f128_pd(ymm5, ymm5, 0b0000'0000); // m0 m1 m0 m1, imag
+                    ymm2 = _mm256_permute2f128_pd(ymm4, ymm4, 0b0001'0001); // m2 m3 m2 m3, real
+                    ymm3 = _mm256_permute2f128_pd(ymm5, ymm5, 0b0001'0001); // m2 m3 m2 m3, imag
 
                     constexpr uint64_t batch_size = 2;
                     for (uint64_t task_id = 0; task_id < task_num; task_id += batch_size) {
                         auto inds = index(task_id, circuit_qubit_num, qubits, qubits_sorted);
-                        __m256d ymm6, ymm7, ymm8, ymm9;
                         if (qubits_sorted[0] == qubits[0]) { // ...q0.q1
                             // v00 v01 v10 v11 . v02 v03 v12 v13
-                            ymm4 = _mm256_loadu_pd(&real[inds[2]]); // v02 v03 v12 v13, real
-                            ymm5 = _mm256_loadu_pd(&imag[inds[2]]); // v02 v03 v12 v13, imag
+                            ymm4 = _mm256_loadu_pd(&real[inds[2]]); // v_r
+                            ymm5 = _mm256_loadu_pd(&imag[inds[2]]); // v_r
                         } else { // ...q1.q0
                             // v00 v02 v10 v12 . v01 v03 v11 v13
                             ymm6 = _mm256_loadu_pd(&real[inds[0]]);
@@ -911,38 +896,29 @@ namespace QuICT {
                             ymm9 = _mm256_loadu_pd(&imag[inds[1]]);
                             ymm4 = _mm256_shuffle_pd(ymm6, ymm7, 0b1111); // v02 v03 v12 v13, real
                             ymm5 = _mm256_shuffle_pd(ymm8, ymm9, 0b1111); // v02 v03 v12 v13, imag
+                            ymm10 = _mm256_shuffle_pd(ymm6, ymm7, 0b0000); // v00 v01 v10 v11, real
+                            ymm11 = _mm256_shuffle_pd(ymm8, ymm9, 0b0000); // v00 v01 v10 v11, imag
                         }
-                        ymm6 = _mm256_shuffle_pd(ymm4, ymm4, 0b0000); // v02 v02 v12 v12, real
-                        ymm7 = _mm256_shuffle_pd(ymm4, ymm4, 0b1111); // v03 v03 v13 v13, real
-                        ymm8 = _mm256_shuffle_pd(ymm5, ymm5, 0b0000); // v02 v02 v12 v12, imag
-                        ymm9 = _mm256_shuffle_pd(ymm5, ymm5, 0b1111); // v02 v02 v12 v12, imag
+                        // Now: ymm4 -> v_r, ymm5 -> v_i
+                        COMPLEX_YMM_MUL(ymm0, ymm1, ymm4, ymm5, ymm6, ymm7);
+                        COMPLEX_YMM_MUL(ymm2, ymm3, ymm4, ymm5, ymm8, ymm9);
+                        ymm4 = _mm256_hadd_pd(ymm6, ymm8); // res_r
+                        ymm5 = _mm256_hadd_pd(ymm7, ymm9); // res_i
 
-                        __m256d ymm10; // res_r1
-                        __m256d ymm11; // res_r2
-                        __m256d ymm12; // res_i1
-                        __m256d ymm13; // res_i2
-                        COMPLEX_YMM_MUL(ymm0, ymm2, ymm6, ymm8, ymm10, ymm12);
-                        COMPLEX_YMM_MUL(ymm1, ymm3, ymm7, ymm9, ymm11, ymm13);
-                        ymm10 = _mm256_add_pd(ymm10, ymm11); // res_r
-                        ymm12 = _mm256_add_pd(ymm12, ymm13); // res_i
                         if (qubits_sorted[0] == qubits[0]) { // ...q0.q1
                             // v00 v01 v10 v11 . v02 v03 v12 v13
-                            _mm256_storeu_pd(&real[inds[2]], ymm10);
-                            _mm256_storeu_pd(&imag[inds[2]], ymm12);
+                            _mm256_storeu_pd(&real[inds[2]], ymm4);
+                            _mm256_storeu_pd(&imag[inds[2]], ymm5);
                         } else { // ...q1.q0
                             // v00 v02 v10 v12 . v01 v03 v11 v13
-                            Precision res_r[4], res_i[4];
-                            _mm256_storeu_pd(res_r, ymm10);
-                            _mm256_storeu_pd(res_i, ymm12);
-                            real[inds[2]] = res_r[0];
-                            real[inds[2] + 2] = res_r[1];
-                            real[inds[3]] = res_r[2];
-                            real[inds[3] + 2] = res_r[3];
-
-                            imag[inds[2]] = res_i[0];
-                            imag[inds[2] + 2] = res_i[1];
-                            imag[inds[3]] = res_i[2];
-                            imag[inds[3] + 2] = res_i[3];
+                            ymm6 = _mm256_shuffle_pd(ymm10, ymm4, 0b0000); // v00 v02 v12 v12, real
+                            ymm7 = _mm256_shuffle_pd(ymm11, ymm5, 0b0000); // v00 v02 v12 v12, imag
+                            ymm8 = _mm256_shuffle_pd(ymm10, ymm4, 0b1111); // v01 v03 v11 v13, real
+                            ymm9 = _mm256_shuffle_pd(ymm11, ymm5, 0b1111); // v01 v03 v11 v13, imag
+                            _mm256_storeu_pd(&real[inds[0]], ymm6);
+                            _mm256_storeu_pd(&real[inds[1]], ymm8);
+                            _mm256_storeu_pd(&imag[inds[0]], ymm7);
+                            _mm256_storeu_pd(&imag[inds[1]], ymm9);
                         }
                     }
                 }

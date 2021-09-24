@@ -67,6 +67,21 @@ namespace QuICT {
 
 
     //* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+    // Pointer helpers
+    //* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+
+    template<typename T>
+    inline void delete_and_set_null(T &ptr) {
+        delete ptr;
+        ptr = nullptr;
+    }
+    template<typename T>
+    inline void delete_all_and_set_null(T &ptr) {
+        delete[] ptr;
+        ptr = nullptr;
+    }
+
+    //* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
     // Data type aliases
     //* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
