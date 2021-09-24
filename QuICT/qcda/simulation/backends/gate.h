@@ -87,6 +87,17 @@ namespace QuICT {
 
         explicit UnitaryGateN(uint64_t targ) : targ_(targ) {}
 
+        UnitaryGateN(uint64_t targ, std::complex<Precision> *mat_) : targ_(targ)
+        {
+            mat_real_ = new Precision[4];
+            mat_imag_ = new Precision[4];
+            for(int i = 0; i < 4; i++)
+            {
+                mat_real_[i] = mat_[i].real();
+                mat_imag_[i] = mat_[i].imag();
+            }
+        }
+
         ~UnitaryGateN() {
 //            delete[] mat_real_;
 //            delete[] mat_imag_;

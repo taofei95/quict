@@ -147,6 +147,6 @@ TEST(HybridTest, CU3Test) {
     test_by_data_file("cu3.txt", simulator);
 }
 
-//TEST(HybridTest, U1Test) {
-//    test_by_data_file("u1.txt", simulator);
-//}
+TEST(HybridTest, U1Test) {
+    test_by_data_file("u1.txt", simulator);
+}
