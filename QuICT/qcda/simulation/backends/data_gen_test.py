@@ -2,6 +2,7 @@
 
 from random import choices, randint, sample, shuffle, uniform
 from random import choice
+from scipy.stats import unitary_group
 
 from QuICT.core import *
 from QuICT.algorithm import Amplitude
@@ -56,6 +57,15 @@ def out_circuit_to_file(qubit_num: int, f_name: str, circuit: Circuit):
                 print(f"x {gate.targ}", file=f)
             elif gate.type() == GATE_ID['CU3']:
                 print(f"cu3 {gate.carg} {gate.targ} {gate.pargs[0]} {gate.pargs[1]} {gate.pargs[2]}", file=f)
+            elif gate.type() == GATE_ID['Unitary']:
+                format_cpx = lambda n: '{0}{1}{2}j'.format(n.real, '+-'[n.imag < 0], abs(n.imag))
+                if gate.compute_matrix.shape[0] == 2:
+                    print(f'u1 {gate.targ}', file=f, end=' ')
+                elif gate.compute_matrix.shape[1] == 4:
+                    print(f'u2 {gate.targ}', file=f, end=' ')
+                for c in gate.compute_matrix.flatten():
+                    print(format_cpx(c), file=f, end=' ')
+                print(file=f)
 
         print("__TERM__", file=f)
 
@@ -115,13 +125,14 @@ def main():
     out_circuit_to_file(qubit_num, "x.txt", circuit)
     circuit.clear()
 
-    gates = [H, X, S, T]
-    for i in range(200):
-        random.choice(gates) | circuit(randint(0, qubit_num - 1))
+    # gates = [H, X, S, T]
+    # for i in range(200):
+    #     random.choice(gates) | circuit(randint(0, qubit_num - 1))
+    for i in range(1):
+        mat_ = unitary_group.rvs(dim=2)
+        Unitary(mat_) | circuit(randint(0, qubit_num - 1))
 
-    # H | circuit(0)
-    # H | circuit(0)
-    out_unitary_circuit_to_file(qubit_num, "u1.txt", circuit)
+    out_circuit_to_file(qubit_num, "u1.txt", circuit)
     circuit.clear()
 
 
