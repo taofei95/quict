@@ -923,7 +923,42 @@ namespace QuICT {
                     }
                 }
             } else if (qubits_sorted[1] == circuit_qubit_num - 2) {
+                constexpr uint64_t batch_size = 2;
+                __m256d ymm0 = _mm256_loadu2_m128d(&gate.mat_real_[0], &gate.mat_real_[0]); // m0 m1 m0 m1, real
+                __m256d ymm1 = _mm256_loadu2_m128d(&gate.mat_real_[2], &gate.mat_real_[2]); // m2 m3 m2 m3, real
+                __m256d ymm2 = _mm256_loadu2_m128d(&gate.mat_imag_[0], &gate.mat_imag_[0]); // m0 m1 m0 m1, imag
+                __m256d ymm3 = _mm256_loadu2_m128d(&gate.mat_imag_[2], &gate.mat_imag_[2]); // m2 m3 m2 m3, imag
 
+                for (uint64_t task_id = 0; task_id < task_num; task_id += batch_size) {
+                    __m256d ymm4, ymm5, ymm6, ymm7, ymm8, ymm9;
+                    auto inds = index(task_id, circuit_qubit_num, qubits, qubits_sorted);
+                    if (qubits[0] == qubits_sorted[0]) { // ...q0.q1.
+                        // v00 v10 v01 v11 ... v02 v12 v03 v13
+                        ymm4 = _mm256_loadu_pd(&real[inds[2]]);
+                        ymm5 = _mm256_loadu_pd(&imag[inds[2]]);
+                    } else { // ...q1.q0.
+                        // v00 v10 v02 v12 ... v01 v11 v03 v13
+                        ymm4 = _mm256_loadu2_m128d(&real[inds[3]], &real[inds[2]]);
+                        ymm5 = _mm256_loadu2_m128d(&imag[inds[3]], &imag[inds[2]]);
+                    }
+                    ymm4 = _mm256_permute4x64_pd(ymm4, 0b1101'1000); // v02 v03 v12 v13, real
+                    ymm5 = _mm256_permute4x64_pd(ymm5, 0b1101'1000); // v02 v03 v12 v13, imag
+                    COMPLEX_YMM_MUL(ymm0, ymm2, ymm4, ymm5, ymm6, ymm7);
+                    COMPLEX_YMM_MUL(ymm1, ymm3, ymm4, ymm5, ymm8, ymm9);
+                    ymm4 = _mm256_hadd_pd(ymm6, ymm8); // v02 v03 v12 v13, real
+                    ymm5 = _mm256_hadd_pd(ymm7, ymm9); // v02 v03 v12 v13, imag
+                    ymm4 = _mm256_permute4x64_pd(ymm4, 0b1101'1000); // v02 v12 v03 v13, real
+                    ymm5 = _mm256_permute4x64_pd(ymm5, 0b1101'1000); // v02 v12 v03 v13, real
+                    if (qubits[0] == qubits_sorted[0]) { // ...q0.q1.
+                        // v00 v10 v01 v11 ... v02 v12 v03 v13
+                        _mm256_storeu_pd(&real[inds[2]], ymm4);
+                        _mm256_storeu_pd(&imag[inds[2]], ymm5);
+                    } else { // ...q1.q0.
+                        // v00 v10 v02 v12 ... v01 v11 v03 v13
+                        _mm256_storeu2_m128d(&real[inds[3]], &real[inds[2]], ymm4);
+                        _mm256_storeu2_m128d(&imag[inds[3]], &imag[inds[2]], ymm5);
+                    }
+                }
             } else if (qubits_sorted[1] < circuit_qubit_num - 2) { // ...q...q..
                 constexpr uint64_t batch_size = 2;
                 __m256d ymm0 = _mm256_loadu2_m128d(&gate.mat_real_[0], &gate.mat_real_[0]); // m0 m1 m0 m1, real
