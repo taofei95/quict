@@ -923,55 +923,7 @@ namespace QuICT {
                     }
                 }
             } else if (qubits_sorted[1] == circuit_qubit_num - 2) {
-                // ...q.q.
 
-                // We need 2 vectors as [m0 m0 m2 m2], [m1 m1 m3 m3] now.
-                __m256d ymm0, ymm1, ymm2, ymm3, ymm4, ymm5, ymm6, ymm7, ymm8, ymm9, ymm10, ymm11;
-                ymm4 = _mm256_loadu_pd(gate.mat_real_); // m0 m1 m2 m3, real
-                ymm5 = _mm256_loadu_pd(gate.mat_imag_); // m0 m1 m2 m3, imag
-
-                ymm0 = _mm256_shuffle_pd(ymm4, ymm4, 0b0000); // m0 m0 m2 m2, real
-                ymm1 = _mm256_shuffle_pd(ymm4, ymm4, 0b1111); // m1 m1 m3 m3, real
-                ymm2 = _mm256_shuffle_pd(ymm5, ymm5, 0b0000); // m0 m0 m2 m2, imag
-                ymm3 = _mm256_shuffle_pd(ymm5, ymm5, 0b1111); // m1 m1 m3 m3, imag
-
-                // We need [v02 v12 v02 v12], [v03 v13 v03 v13] now.
-                constexpr uint64_t batch_size = 2;
-                for (uint64_t task_id = 0; task_id < task_num; task_id += batch_size) {
-                    auto inds = index(task_id, circuit_qubit_num, qubits, qubits_sorted);
-                    if (qubits[0] == qubits_sorted[0]) { // ...q0.q1.
-                        // v00 v10 v01 v11 ... v02 v12 v03 v13
-                        ymm8 = _mm256_loadu_pd(&real[inds[2]]); // v02 v12 v03 v13, real
-                        ymm9 = _mm256_loadu_pd(&imag[inds[2]]); // v02 v12 v03 v13, imag
-                        ymm4 = _mm256_permute2f128_pd(ymm8, ymm8, 0b000000); // v02 v12 v02 v12, real
-                        ymm5 = _mm256_permute2f128_pd(ymm8, ymm8, 0b001001); // v03 v13 v03 v13, real
-                        ymm6 = _mm256_permute2f128_pd(ymm9, ymm9, 0b000000); // v02 v12 v02 v12, imag
-                        ymm7 = _mm256_permute2f128_pd(ymm9, ymm9, 0b001001); // v03 v13 v03 v13, imag
-                    } else { // ...q1.q0.
-                        // v00 v10 v02 v12 ... v01 v11 v03 v13
-                        ymm4 = _mm256_loadu2_m128d(&real[inds[2]], &real[inds[2]]); // v02 v12 v02 v12, real
-                        ymm5 = _mm256_loadu2_m128d(&real[inds[3]], &real[inds[3]]); // v03 v13 v03 v13, real
-                        ymm6 = _mm256_loadu2_m128d(&imag[inds[2]], &imag[inds[2]]); // v02 v12 v02 v12, imag
-                        ymm7 = _mm256_loadu2_m128d(&imag[inds[3]], &imag[inds[3]]); // v03 v13 v03 v13, imag
-                    }
-                    COMPLEX_YMM_MUL(ymm0, ymm2, ymm4, ymm6, ymm8, ymm10);
-                    COMPLEX_YMM_MUL(ymm1, ymm3, ymm5, ymm7, ymm9, ymm11);
-                    // ymm8: res_r1
-                    // ymm10: res_i1
-                    // ymm9: res_r2
-                    // ymm11: res_i2
-                    ymm8 = _mm256_add_pd(ymm8, ymm9); // res_r
-                    ymm10 = _mm256_add_pd(ymm10, ymm11); // res_i
-                    if (qubits[0] == qubits_sorted[0]) { // ...q0.q1.
-                        // v00 v10 v01 v11 ... v02 v12 v03 v13
-                        _mm256_storeu_pd(&real[inds[2]], ymm8);
-                        _mm256_storeu_pd(&imag[inds[2]], ymm10);
-                    } else { // ...q1.q0.
-                        // v00 v10 v02 v12 ... v01 v11 v03 v13
-                        _mm256_storeu2_m128d(&real[inds[3]], &real[inds[2]], ymm8);
-                        _mm256_storeu2_m128d(&imag[inds[3]], &imag[inds[2]], ymm10);
-                    }
-                }
             } else if (qubits_sorted[1] < circuit_qubit_num - 2) { // ...q...q..
                 constexpr uint64_t batch_size = 2;
                 __m256d ymm0 = _mm256_loadu2_m128d(&gate.mat_real_[0], &gate.mat_real_[0]); // m0 m1 m0 m1, real
@@ -983,15 +935,15 @@ namespace QuICT {
                     auto inds = index(task_id, circuit_qubit_num, qubits, qubits_sorted);
                     __m256d ymm4 = _mm256_loadu2_m128d(&real[inds[3]], &real[inds[2]]); // v02 v12 v03 v13, real
                     __m256d ymm5 = _mm256_loadu2_m128d(&imag[inds[3]], &imag[inds[2]]); // v02 v12 v03 v13, imag
-                    ymm4 = _mm256_permute4x64_pd(ymm4, 0b11011000); // v02 v03 v12 v13, real
-                    ymm5 = _mm256_permute4x64_pd(ymm5, 0b11011000); // v02 v03 v12 v13, imag
+                    ymm4 = _mm256_permute4x64_pd(ymm4, 0b1101'1000); // v02 v03 v12 v13, real
+                    ymm5 = _mm256_permute4x64_pd(ymm5, 0b1101'1000); // v02 v03 v12 v13, imag
                     __m256d ymm6, ymm7, ymm8, ymm9;
                     COMPLEX_YMM_MUL(ymm0, ymm2, ymm4, ymm5, ymm6, ymm7);
                     COMPLEX_YMM_MUL(ymm1, ymm3, ymm4, ymm5, ymm8, ymm9);
                     ymm4 = _mm256_hadd_pd(ymm6, ymm8); // v02 v03 v12 v13, real
                     ymm5 = _mm256_hadd_pd(ymm7, ymm9); // v02 v03 v12 v13, imag
-                    ymm4 = _mm256_permute4x64_pd(ymm4, 0b11011000); // v02 v12 v03 v13, real
-                    ymm5 = _mm256_permute4x64_pd(ymm5, 0b11011000); // v02 v12 v03 v13, real
+                    ymm4 = _mm256_permute4x64_pd(ymm4, 0b1101'1000); // v02 v12 v03 v13, real
+                    ymm5 = _mm256_permute4x64_pd(ymm5, 0b1101'1000); // v02 v12 v03 v13, real
                     _mm256_storeu2_m128d(&real[inds[3]], &real[inds[2]], ymm4);
                     _mm256_storeu2_m128d(&imag[inds[3]], &imag[inds[2]], ymm5);
                 }
