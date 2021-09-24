@@ -840,6 +840,7 @@ namespace QuICT {
                     ymm3 = _mm256_permute2f128_pd(ymm5, ymm5, 0b0001'0001); // m2 m3 m2 m3, imag
 
                     constexpr uint64_t batch_size = 2;
+#pragma omp parallel for firstprivate(ymm0, ymm1, ymm2, ymm3) private(ymm4, ymm5, ymm6, ymm7, ymm8, ymm9)
                     for (uint64_t task_id = 0; task_id < task_num; task_id += batch_size) {
                         auto ind0 = index0(task_id, circuit_qubit_num, qubits, qubits_sorted);
                         if (qubits[0] == qubits_sorted[0]) { // ...q0q1
@@ -882,6 +883,7 @@ namespace QuICT {
                     ymm3 = _mm256_permute2f128_pd(ymm5, ymm5, 0b0001'0001); // m2 m3 m2 m3, imag
 
                     constexpr uint64_t batch_size = 2;
+#pragma omp parallel for firstprivate(ymm0, ymm1, ymm2, ymm3) private(ymm4, ymm5, ymm6, ymm7, ymm8, ymm9, ymm10, ymm11)
                     for (uint64_t task_id = 0; task_id < task_num; task_id += batch_size) {
                         auto inds = index(task_id, circuit_qubit_num, qubits, qubits_sorted);
                         if (qubits_sorted[0] == qubits[0]) { // ...q0.q1
@@ -929,6 +931,7 @@ namespace QuICT {
                 __m256d ymm2 = _mm256_loadu2_m128d(&gate.mat_imag_[0], &gate.mat_imag_[0]); // m0 m1 m0 m1, imag
                 __m256d ymm3 = _mm256_loadu2_m128d(&gate.mat_imag_[2], &gate.mat_imag_[2]); // m2 m3 m2 m3, imag
 
+#pragma omp parallel for firstprivate(ymm0, ymm1, ymm2, ymm3)
                 for (uint64_t task_id = 0; task_id < task_num; task_id += batch_size) {
                     __m256d ymm4, ymm5, ymm6, ymm7, ymm8, ymm9;
                     auto inds = index(task_id, circuit_qubit_num, qubits, qubits_sorted);
@@ -966,6 +969,7 @@ namespace QuICT {
                 __m256d ymm2 = _mm256_loadu2_m128d(&gate.mat_imag_[0], &gate.mat_imag_[0]); // m0 m1 m0 m1, imag
                 __m256d ymm3 = _mm256_loadu2_m128d(&gate.mat_imag_[2], &gate.mat_imag_[2]); // m2 m3 m2 m3, imag
 
+#pragma omp parallel for firstprivate(ymm0, ymm1, ymm2, ymm3)
                 for (uint64_t task_id = 0; task_id < task_num; task_id += batch_size) {
                     auto inds = index(task_id, circuit_qubit_num, qubits, qubits_sorted);
                     __m256d ymm4 = _mm256_loadu2_m128d(&real[inds[3]], &real[inds[2]]); // v02 v12 v03 v13, real
