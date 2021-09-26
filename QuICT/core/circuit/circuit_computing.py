@@ -13,7 +13,7 @@ from QuICT.backends.systemcdll import systemCdll
 
 
 def _getRandomList(count, upper_bound):
-    """ get l number from 0, 1, ..., n - 1 randomly.
+    """ get `count` number from 0, 1, ..., `upper_bound - 1` randomly.
 
     Args:
         count(int)
