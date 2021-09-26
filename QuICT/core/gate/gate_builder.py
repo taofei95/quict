@@ -5,6 +5,7 @@
 # @File    : _gateBuilder.py
 
 from .gate import *
+from QuICT.core.circuit import Circuit
 
 class GateBuilderModel(object):
     """ A model that help users get gate without circuit
@@ -229,5 +230,6 @@ class GateBuilderModel(object):
             for target in gate.targs:
                 qubits.append(circuit[target])
             circuit.append(gate, qubits)
+
 
 GateBuilder = GateBuilderModel()

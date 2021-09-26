@@ -25,12 +25,12 @@ done
 print_segment
 
 print_cyan "[Start Running Code Style Check]"
-if flake8 --config linters/tox.ini $files; then
+if python3 -m flake8 --config linters/tox.ini $files; then
     print_segment "Successed run-pass style check!";
 fi
 
 print_segment
 
 print_cyan "[Start Running Code Unit Test Check]"
-pytest QuICT --ignore=QuICT/utility;
+python3 -m pytest QuICT --ignore=QuICT/utility;
  
