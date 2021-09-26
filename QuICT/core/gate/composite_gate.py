@@ -5,7 +5,10 @@
 # @File    : composite_gate
 
 from QuICT.core.circuit.circuit_computing import inner_random_append
+
 from .gate import *
+from ..circuit import Circuit
+from ..qubit import Qubit
 
 
 class CompositeGate(list):
@@ -244,7 +247,7 @@ class CompositeGate(list):
                     qureg.extend(item)
                 else:
                     raise TypeException("qubit or tuple<qubit, qureg> or qureg or list<qubit, qureg> or circuit",
-                                         targets)
+                                        targets)
         elif isinstance(targets, Qureg):
             qureg = targets
         elif isinstance(targets, Circuit):

@@ -2,6 +2,7 @@ from queue import deque
 from typing import Set
 
 from .mcts_core import MCTSTreeWrapper
+from QuICT.core import *
 from QuICT.qcda.mapping.utility import *
 
 

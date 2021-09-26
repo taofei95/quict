@@ -4,9 +4,9 @@
 # @Author  : Han Yu
 # @File    : _qubit.py
 
-from math import sqrt
 import random
 import weakref
+from math import sqrt
 
 import numpy as np
 
@@ -17,6 +17,7 @@ qubit_id = 0
 
 # global qState id count
 QState_id = 0
+
 
 class Qubit(object):
     """ Implement a quantum bit
@@ -196,6 +197,7 @@ class Qubit(object):
         self.__qState = None
         self.__measured = -1
 
+
 class Qureg(list):
     """ Implement a quantum register
 
@@ -218,7 +220,7 @@ class Qureg(list):
         for qubit in self:
             qubit.circuit = circuit
 
-    def __init__(self, qubits = None):
+    def __init__(self, qubits=None):
         """ initial a qureg with qubit(s)
 
         Args:
@@ -415,6 +417,7 @@ class Qureg(list):
             qState.qureg.append(self[indexes[i]])
             self[indexes[i]].qState = qState
         qState.force_copy(copy_item)
+
 
 class QState(object):
     """ Implement a QState

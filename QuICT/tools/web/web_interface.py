@@ -6,13 +6,15 @@
 
 import numpy as np
 
-from QuICT.qcda.optimization import *
 from QuICT.core import *
+from QuICT.qcda.optimization import *
+
 
 class WebInterface(object):
     """ The model servers for Web Interface for QuICT
 
     """
+
     @staticmethod
     def load_object(ast):
         """ load data from js and generator a circuit
@@ -87,14 +89,14 @@ class WebInterface(object):
             if pargs > 0:
                 parg = sgate["args"]
                 for p in parg:
-                   params.append(p * np.pi)
+                    params.append(p * np.pi)
                 GateBuilder.setPargs(params)
             gates.append(GateBuilder.getGate())
         circuit.set_exec_gates(gates)
         return circuit
 
     @staticmethod
-    def output_object(circuit : Circuit):
+    def output_object(circuit: Circuit):
         """ transform circuit form to js data dict
 
         Args:
@@ -102,12 +104,12 @@ class WebInterface(object):
         Returns:
 
         """
-        ast = {"circuit" : {}}
+        ast = {"circuit": {}}
         ast["circuit"]["size"] = circuit.circuit_size()
         ast["circuit"]["name"] = circuit.name
         gates = []
         for gate in circuit.gates:
-            g = {"name" : str(gate)[:-1]}
+            g = {"name": str(gate)[:-1]}
             bits = []
             for c in gate.cargs:
                 bits.append(c)

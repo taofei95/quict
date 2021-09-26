@@ -18,15 +18,14 @@ import sys
 from shutil import get_terminal_size
 from warnings import warn
 
-from numpy import ndarray
-
 from QuICT.core import *
 
 MAX_FRAC = 16
-N, D = np.meshgrid(np.arange(1, MAX_FRAC+1), np.arange(1, MAX_FRAC+1))
+N, D = np.meshgrid(np.arange(1, MAX_FRAC + 1), np.arange(1, MAX_FRAC + 1))
 FRAC_MESH = N / D * np.pi
 RECIP_MESH = N / D / np.pi
 POW_LIST = np.pi ** np.arange(2, 5)
+
 
 class circuit_layer(object):
     def __init__(self):
@@ -52,6 +51,7 @@ class circuit_layer(object):
                 return False
         return True
 
+
 def pi_check(inpt, eps=1e-6, output='text', ndigits=5):
     """ Computes if a number is close to an integer
     fraction or multiple of PI and returns the
@@ -69,6 +69,7 @@ def pi_check(inpt, eps=1e-6, output='text', ndigits=5):
         str: string representation of output.
 
     """
+
     def normalize(single_inpt):
         if abs(single_inpt) < 1e-14:
             return '0'
@@ -83,7 +84,7 @@ def pi_check(inpt, eps=1e-6, output='text', ndigits=5):
             pi = '$\\pi$'
         else:
             raise Exception('pi_check parameter output should be text, '
-                              'latex, mpl, or qasm.')
+                            'latex, mpl, or qasm.')
 
         neg_str = '-' if single_inpt < 0 else ''
 
@@ -185,7 +186,6 @@ def pi_check(inpt, eps=1e-6, output='text', ndigits=5):
     return str_out
 
 
-
 class DrawElement:
     """ An element is an instruction or an operation that need to be drawn."""
 
@@ -205,7 +205,7 @@ class DrawElement:
     def top(self):
         """ Constructs the top line of the element"""
         if (self.width % 2) == 0 and len(self.top_format) % 2 == 1 and len(self.top_connect) == 1:
-            ret = self.top_format % (self.top_pad+self.top_connect).center(self.width, self.top_pad)
+            ret = self.top_format % (self.top_pad + self.top_connect).center(self.width, self.top_pad)
         else:
             ret = self.top_format % self.top_connect.center(self.width, self.top_pad)
         if self.right_fill:
@@ -231,7 +231,7 @@ class DrawElement:
     def bot(self):
         """ Constructs the bottom line of the element"""
         if (self.width % 2) == 0 and len(self.top_format) % 2 == 1:
-            ret = self.bot_format % (self.bot_pad+self.bot_connect).center(self.width, self.bot_pad)
+            ret = self.bot_format % (self.bot_pad + self.bot_connect).center(self.width, self.bot_pad)
         else:
             ret = self.bot_format % self.bot_connect.center(self.width, self.bot_pad)
         if self.right_fill:
@@ -1169,6 +1169,7 @@ class TextDrawing:
             layer.connect_with("│")
             layers.append(layer.full_layer)
         return layers
+
 
 class Layer:
     """ A layer is the "column" of the circuit. """

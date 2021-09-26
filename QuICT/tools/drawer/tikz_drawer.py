@@ -1,8 +1,9 @@
 # -*- coding:utf8 -*-
 
-from QuICT.core import *
-from typing import *
 from copy import copy
+from typing import *
+
+from QuICT.core import *
 
 
 class TikzDrawer:
@@ -81,10 +82,10 @@ class TikzDrawer:
         tikz_command = "% begin of single qubit rectangle\n"
         tikz_command += f"\\draw " \
                         f"({x - rectangle_size / 2},{y + rectangle_size / 2})" \
-                        f" rectangle " \
+                        " rectangle " \
                         f"({x + rectangle_size / 2},{y - rectangle_size / 2})" + \
                         gate_specification + \
-                        f";\n"
+                        ";\n"
 
         tikz_command += "% end of single qubit rectangle\n\n"
 
@@ -127,10 +128,10 @@ class TikzDrawer:
 
         tikz_command += f"\\draw " \
                         f"({t_x - rectangle_size / 2},{t_y + rectangle_size / 2})" \
-                        f" rectangle " \
+                        " rectangle " \
                         f"({t_x + rectangle_size / 2},{t_y - rectangle_size / 2})" + \
                         gate_specification + \
-                        f";\n"
+                        ";\n"
 
         tikz_command += "% end of 2 qubit gate target rectangle\n\n"
 

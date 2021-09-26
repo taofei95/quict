@@ -4,23 +4,27 @@
 # @Author  : Han Yu
 # @File    : _unit_test.py
 
+import copy
+import random
+
+import numpy as np
 import pytest
+from scipy.stats import ortho_group
+
 from QuICT import *
 from QuICT.algorithm import SyntheticalUnitary
-import random
-import numpy as np
-from scipy.stats import ortho_group
-import copy
 
 single_gate = [X, H, S, S_dagger, X, Y, Z, ID, U1, U2, U3, Rx, Ry, Rz, T, T_dagger, Phase, SX, SY, SW]
 other_gate = [CZ, CX, CY, CH, CRz, CCX, Swap, Rxx, Ryy, Rzz, FSim]
 
-def getRandomList(l, n):
-    _rand = [i for i in range(n)]
-    for i in range(n - 1, 0, -1):
+
+def getRandomList(count, upper_bound):
+    _rand = [i for i in range(upper_bound)]
+    for i in range(upper_bound - 1, 0, -1):
         do_get = random.randint(0, i)
         _rand[do_get], _rand[i] = _rand[i], _rand[do_get]
-    return _rand[:l]
+    return _rand[:count]
+
 
 def generate_gate(gate, n, circuit):
     generator_number = gate.controls + gate.targets
@@ -28,13 +32,15 @@ def generate_gate(gate, n, circuit):
     gate.cargs = rand[:gate.controls]
     gate.targs = rand[gate.controls:gate.controls + gate.targets]
     if gate.params > 0:
-       gate.pargs = [random.random() * 2 * np.pi for _ in range(gate.params)]
+        gate.pargs = [random.random() * 2 * np.pi for _ in range(gate.params)]
     return circuit(rand[:gate.controls + gate.targets]), gate
+
 
 def generator_per(n):
     s = [i for i in range(1 << n)]
     np.random.shuffle(s)
     return s
+
 
 def generator_custom(n):
     N = 1 << n
@@ -54,6 +60,7 @@ def generator_custom(n):
     U = A + B[:] * 1j
     return np.array(U).reshape(1, -1).tolist()
 
+
 def test_build_circuit():
     """ test the circuit build method
 
@@ -62,7 +69,7 @@ def test_build_circuit():
     qureg_slice_12 = circuit[0: 2]
     qureg_call_12 = circuit([2, 3, 4])
     qureg = qureg_slice_12 + qureg_call_12
-    X       | qureg
+    X | qureg
     Measure | circuit
     circuit.exec()
     for qubit in circuit:
@@ -82,29 +89,31 @@ def test_build_circuit():
         if int(qubit) != 0:
             assert 0
 
+
 def test_add_gate():
     """ test the method of adding gates
 
     """
     circuit = Circuit(10)
-    H             | circuit
-    X             | circuit[0]
-    X             | circuit[1:]
-    CX            | circuit([0, 2])
+    H | circuit
+    X | circuit[0]
+    X | circuit[1:]
+    CX | circuit([0, 2])
     Ry(np.pi / 4) | circuit(3)
     U3((0, 0, np.pi / 4)) | circuit(3)
 
     addX = X.copy()
     qureg = circuit(0)
     circuit.append(addX, qureg)
-    
+
     addCX = CX.copy()
     addCX.cargs = [0]
     addCX.targs = [3]
     circuit.append(addCX)
 
-    Measure       | circuit
+    Measure | circuit
     circuit.exec()
+
 
 def test_gate_name():
     """ test the gate name
@@ -112,6 +121,7 @@ def test_gate_name():
     """
     assert CX.type() == GATE_ID["CX"]
     assert CX.type() == GATE_ID["cx"]
+
 
 def test_single():
     for gate in single_gate:
@@ -125,6 +135,7 @@ def test_single():
             assert 0
     assert 1
 
+
 def test_other():
     for gate in other_gate:
         circuit = Circuit(gate.controls + gate.targets)
@@ -136,6 +147,7 @@ def test_other():
             print(unitary, gen_g)
             assert 0
     assert 1
+
 
 def test_perm():
     max_test = 5
@@ -152,6 +164,7 @@ def test_perm():
                 assert 0
     assert 1
 
+
 def test_unitary():
     max_test = 5
     every_round = 20
@@ -166,6 +179,7 @@ def test_unitary():
                 print(unitary, plist)
                 assert 0
     assert 1
+
 
 def test_circuit():
     gates = copy.deepcopy(single_gate)
@@ -183,12 +197,13 @@ def test_circuit():
                     if gate.controls + gate.targets > i:
                         gate = None
                 qureg, gen_g = generate_gate(gate, i, circuit)
-                gen_g           | qureg
+                gen_g | qureg
                 gen_g.inverse() | qureg
             unitary = SyntheticalUnitary.run(circuit)
             if (abs(abs(unitary - np.identity((1 << i), dtype=np.complex128))) > 1e-10).any():
                 assert 0
     assert 1
+
 
 def test_get_item():
     circuit = Circuit(5)
@@ -205,6 +220,7 @@ def test_get_item():
     for qubit in qureg4:
         print(qubit.id)
     assert 1
+
 
 if __name__ == "__main__":
     # pytest.main(["./_unit_test.py", "./circuit_unit_test.py", "./gate_unit_test.py", "./qubit_unit_test.py"])
