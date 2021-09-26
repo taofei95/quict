@@ -23,12 +23,12 @@ class TestGPULinalg(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        print(f"The GPU linalg unit test start!")
+        print("The GPU linalg unit test start!")
         cls.seed = np.random.randint(3, 7)
 
     @classmethod
     def tearDownClass(cls) -> None:
-        print(f"The GPU linalg unit test finished!")
+        print("The GPU linalg unit test finished!")
 
     def test_dot(self):
         A = np.random.random((1 << TestGPULinalg.seed, 1 << TestGPULinalg.seed)).astype(np.complex64)
@@ -105,10 +105,11 @@ class TestGPULinalg(unittest.TestCase):
 
             layer_result = CL.dot(gpu_A, gpu_B, gpu_out=True)
 
-        self.assertTrue((based_result==layer_result).all())
+        self.assertTrue((based_result == layer_result).all())
 
         after_used_bytes = mempool.used_bytes()
-        # Check for memory release, maybe failure caused by the mulit-process. 
+
+        # Check for memory release, maybe failure caused by the mulit-process.
         self.assertEqual(before_used_bytes, after_used_bytes)
 
     def test_matrix_dot_vector(self):
@@ -139,20 +140,20 @@ class TestGPULinalg(unittest.TestCase):
 
 
 class TestCPULinalg(unittest.TestCase):
-    
+
     @classmethod
     def setUpClass(cls):
-        print(f"The CPU linalg unit test start!")
+        print("The CPU linalg unit test start!")
         cls.seed = np.random.randint(3, 7)
 
-        cls.vector = np.random.random(1 << (cls.seed*2)).astype(np.complex64)
+        cls.vector = np.random.random(1 << (cls.seed * 2)).astype(np.complex64)
 
         cls.matrix_A = np.random.random((1 << cls.seed, 1 << cls.seed)).astype(np.complex64)
         cls.matrix_B = np.random.random((1 << cls.seed, 1 << cls.seed)).astype(np.complex64)
 
     @classmethod
     def tearDownClass(cls) -> None:
-        print(f"The CPU linalg unit test finished!")
+        print("The CPU linalg unit test finished!")
 
     def test_dot_cpu(self):
         np_result = np.dot(TestCPULinalg.matrix_A, TestCPULinalg.matrix_B)
@@ -176,7 +177,7 @@ class TestCPULinalg(unittest.TestCase):
         self.assertTrue((np_result == cpu_result).all())
 
     def test_vectorpermutation_cpu(self):
-        mapping = list(range(TestCPULinalg.seed*2))[::-1]
+        mapping = list(range(TestCPULinalg.seed * 2))[::-1]
         mapping = np.array(mapping)
         np.random.shuffle(mapping)
 

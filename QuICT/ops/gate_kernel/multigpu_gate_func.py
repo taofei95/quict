@@ -1,6 +1,5 @@
 import cupy as cp
 import numpy as np
-import random
 
 
 __outward_functions = [
@@ -116,7 +115,7 @@ def Device_Prob_Calculator(index, vec, device_qubits, rank):
     else:
         prob = prop_add(vec, vec, 1 << index)
 
-    prob = MeasureGate_prop_kernel(prob, axis = 0).real
+    prob = MeasureGate_prop_kernel(prob, axis=0).real
 
     return prob
 

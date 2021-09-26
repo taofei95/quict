@@ -8,29 +8,7 @@ import math
 import numpy as np
 import cupy as cp
 
-from typing import *
-
-
-def htod(target):
-    """ mv target from host into GPU device. """
-    if type(target) is not cp.ndarray:
-        return cp.array(target)
-
-    raise (f"The given value has been added in the GPU.")
-
-
-def dtoh(target):
-    """ mv target from GPU device into host. """
-    if type(target) is cp.ndarray:
-        return target.get()
-
-    raise ("The given value not in GPU.")
-
-
-def flush_memory():
-    """ Release unused memory in current GPU device. """
-    cp.get_default_memory_pool().free_all_blocks()
-    cp.get_default_pinned_memory_pool().free_all_blocks()
+from QuICT.ops.utils.utils import htod
 
 
 def dot(A, B, gpu_out: bool = True, sync: bool = True):
@@ -106,18 +84,18 @@ def tensor(A, B, gpu_out: bool = True, sync: bool = True):
 
     precision = A.dtype
 
-    gpu_result = cp.empty((gpu_A.shape[0]*gpu_B.shape[0], gpu_A.shape[1]*gpu_B.shape[1]), dtype=precision)
+    gpu_result = cp.empty((gpu_A.shape[0] * gpu_B.shape[0], gpu_A.shape[1] * gpu_B.shape[1]), dtype=precision)
     core_number = gpu_result.size
 
     if precision == np.complex64:
         tensor_single_kernel(
-            (math.ceil(core_number/1024),),
+            (math.ceil(core_number / 1024),),
             (min(1024, core_number),),
             (gpu_A, gpu_B, gpu_result, cp.int32(gpu_A.shape[1]), cp.int32(gpu_B.shape[0]), cp.int32(gpu_B.shape[1]))
         )
     else:
         tensor_double_kernel(
-            (math.ceil(core_number/1024),),
+            (math.ceil(core_number / 1024),),
             (min(1024, core_number),),
             (gpu_A, gpu_B, gpu_result, cp.int32(gpu_A.shape[1]), cp.int32(gpu_B.shape[0]), cp.int32(gpu_B.shape[1]))
         )
@@ -177,17 +155,17 @@ def MatrixTensorI(A, n, m, gpu_out: bool = True, sync: bool = True):
     precision = A.dtype
     gpu_A = cp.array(A) if type(A) is np.ndarray else A
 
-    gpu_result = cp.zeros((row_a*n*m, col_a*n*m), dtype=precision)
-    core_number = gpu_A.size*n*m
+    gpu_result = cp.zeros((row_a * n * m, col_a * n * m), dtype=precision)
+    core_number = gpu_A.size * n * m
     if precision == np.complex64:
         matrixt_single_kernel(
-            (math.ceil(core_number/1024),),
+            (math.ceil(core_number / 1024),),
             (min(1024, core_number),),
             (gpu_A, gpu_result, cp.int32(n), cp.int32(m), cp.int32(row_a), cp.int32(col_a))
         )
     else:
         matrixt_double_kernel(
-            (math.ceil(core_number/1024),),
+            (math.ceil(core_number / 1024),),
             (min(1024, core_number),),
             (gpu_A, gpu_result, cp.int32(n), cp.int32(m), cp.int32(row_a), cp.int32(col_a))
         )
@@ -268,13 +246,13 @@ def VectorPermutation(A, mapping, changeInput: bool = False, gpu_out: bool = Tru
 
     if A.dtype == np.complex64:
         vectorp_single_kernel(
-            (math.ceil(core_number/1024),),
+            (math.ceil(core_number / 1024),),
             (min(1024, core_number),),
             (gpu_A, gpu_result, gpu_mapping, cp.int32(n))
         )
     else:
         vectorp_double_kernel(
-            (math.ceil(core_number/1024),),
+            (math.ceil(core_number / 1024),),
             (min(1024, core_number),),
             (gpu_A, gpu_result, gpu_mapping, cp.int32(n))
         )
@@ -365,13 +343,13 @@ def MatrixPermutation(A, mapping, changeInput: bool = False, gpu_out: bool = Tru
     core_number = gpu_result.size
     if A.dtype == np.complex64:
         matrixp_single_kernel(
-            (math.ceil(core_number/1024),),
+            (math.ceil(core_number / 1024),),
             (min(1024, core_number),),
             (gpu_A, gpu_result, gpu_mapping, cp.int32(n))
         )
     else:
         matrixp_double_kernel(
-            (math.ceil(core_number/1024),),
+            (math.ceil(core_number / 1024),),
             (min(1024, core_number),),
             (gpu_A, gpu_result, gpu_mapping, cp.int32(n))
         )
@@ -391,7 +369,15 @@ def MatrixPermutation(A, mapping, changeInput: bool = False, gpu_out: bool = Tru
 matrix_dot_vector_single_kernel = cp.RawKernel(r'''
     #include <cupy/complex.cuh>
     extern "C" __global__
-    void matrix_dot_vector_single(const complex<float>* mat, int mat_bit, int mat_len, complex<float>* vec, int* affect_args, int* aff_argsorts, complex<float>* anc) {
+    void matrix_dot_vector_single(
+        const complex<float>* mat,
+        int mat_bit,
+        int mat_len,
+        complex<float>* vec,
+        int* affect_args,
+        int* aff_argsorts,
+        complex<float>* anc
+    ){
         int tid = blockDim.x * blockIdx.x + threadIdx.x;
         int other = tid & ((1 << aff_argsorts[0]) - 1);
         int gw = tid >> aff_argsorts[0] << (aff_argsorts[0] + 1);
@@ -427,7 +413,15 @@ matrix_dot_vector_single_kernel = cp.RawKernel(r'''
 matrix_dot_vector_double_kernel = cp.RawKernel(r'''
     #include <cupy/complex.cuh>
     extern "C" __global__
-    void matrix_dot_vector_double(const complex<double>* mat, int mat_bit, int mat_len, complex<double>* vec, int* affect_args, int* aff_argsorts, complex<double>* anc) {
+    void matrix_dot_vector_double(
+        const complex<double>* mat,
+        int mat_bit,
+        int mat_len,
+        complex<double>* vec,
+        int* affect_args,
+        int* aff_argsorts,
+        complex<double>* anc
+    ){
         int tid = blockDim.x * blockIdx.x + threadIdx.x;
         int other = tid & ((1 << aff_argsorts[0]) - 1);
         int gw = tid >> aff_argsorts[0] << (aff_argsorts[0] + 1);
@@ -455,7 +449,7 @@ matrix_dot_vector_double_kernel = cp.RawKernel(r'''
                 anc[now] += mat[i*mat_len + k] * vec[shift];
             }
         }
-        
+
     }
     ''', 'matrix_dot_vector_double')
 
@@ -476,7 +470,7 @@ def matrix_dot_vector(
     block_num = task_number // thread_per_block
 
     for i in range(mat_bit):
-       affect_args[i] = vec_bit - 1 - affect_args[i]
+        affect_args[i] = vec_bit - 1 - affect_args[i]
 
     affect_args_sorts = affect_args.copy()
     affect_args_sorts.sort()
@@ -486,7 +480,7 @@ def matrix_dot_vector(
     mat_length = np.int64(mat_length)
     affect_args = htod(np.array(affect_args, dtype=np.int32))
     affect_args_sorts = htod(np.array(affect_args_sorts, dtype=np.int32))
-    
+
     if vec.dtype == np.complex64:
         matrix_dot_vector_single_kernel(
             (block_num,),

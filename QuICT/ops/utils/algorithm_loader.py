@@ -13,8 +13,8 @@ BASED_LINALG = ["dot", "tensor", "MatrixTensorI", "MatrixPermutation", "VectorPe
 
 class LinAlgLoader:
     """
-    The Algorithm class with used to load all required algorithm, including based linear algorithm, gate-based matrix dot 
-    vector algorithm, and algorithms for multi-GPUs.
+    The Algorithm class with used to load all required algorithm, including based linear algorithm, gate-based matrix
+    dot vector algorithm, and algorithms for multi-GPUs.
 
     Args:
         device(str): one of ["GPU", "CPU"].
@@ -35,17 +35,10 @@ class LinAlgLoader:
                 self.__dict__[attr] = value
 
         if enable_gate_kernel:
-            gate_lib = importlib.import_module('QuICT.ops.gate_kernel.gate_func')
+            gate_lib = importlib.import_module('QuICT.ops.gate_kernel.gate_function')
             GATE_KERNEL_FUNCTIONS = gate_lib.__dict__["__outward_functions"]
 
             for attr, value in gate_lib.__dict__.items():
-                if attr in GATE_KERNEL_FUNCTIONS:
-                    self.__dict__[attr] = value
-
-            gate_alg_lib = importlib.import_module('QuICT.ops.gate_kernel.gate_alg')
-            GATE_KERNEL_FUNCTIONS = gate_alg_lib.__dict__["__outward_functions"]
-
-            for attr, value in gate_alg_lib.__dict__.items():
                 if attr in GATE_KERNEL_FUNCTIONS:
                     self.__dict__[attr] = value
 

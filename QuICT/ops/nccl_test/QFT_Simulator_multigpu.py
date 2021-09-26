@@ -32,7 +32,7 @@ def worker(uid, ndevs, dev_id, qubits, QFT_number):
     proxy = Proxy(ndevs=ndevs, uid=uid, rank=dev_id)
 
     circuit = build_QFT_circuit(qubits, QFT_number)
-    
+
     s_time = time()
     simulator = ProxySimulator(
         proxy=proxy,
@@ -50,7 +50,7 @@ def worker(uid, ndevs, dev_id, qubits, QFT_number):
 
 def amplitude_simulator(circuit):
     state_expected = Amplitude.run(circuit)
-    
+
     print(np.array(state_expected))
 
 
@@ -60,8 +60,8 @@ if __name__ == "__main__":
     uid = nccl.get_unique_id()
     qubits, QFT_n = 5, 5
 
-    p1 = multiprocessing.Process(target=worker, args = (uid, 2, 0, qubits, QFT_n,))
-    p2 = multiprocessing.Process(target=worker, args = (uid, 2, 1, qubits, QFT_n,))
+    p1 = multiprocessing.Process(target=worker, args=(uid, 2, 0, qubits, QFT_n,))
+    p2 = multiprocessing.Process(target=worker, args=(uid, 2, 1, qubits, QFT_n,))
 
     p1.start()
     p2.start()

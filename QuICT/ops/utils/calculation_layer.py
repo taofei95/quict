@@ -34,7 +34,7 @@ class CalculationLayer:
         self.pinned_mempool = cp.get_default_pinned_memory_pool()
 
         if memory_limit:
-            self.mempool.set_limit(memory_limit*1024**3)
+            self.mempool.set_limit(memory_limit * 1024 ** 3)
 
         # Set Memory allocator
         cp.cuda.set_allocator(self.mempool.malloc)
@@ -71,7 +71,7 @@ class CalculationLayer:
 
             return weak_r
 
-        raise(f"The given value has been added in the GPU.")
+        raise("The given value has been added in the GPU.")
 
     def dtoh(self, target):
         """ mv target from GPU device into host. """
@@ -86,7 +86,7 @@ class CalculationLayer:
     def _var_normalized(self, target):
         if type(target) is weakref.ref:
             return target()
-        
+
         if type(target) is np.ndarray:
             wr_target = self.htod(target)
             return wr_target()

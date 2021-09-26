@@ -5,7 +5,30 @@
 # @File    : utils
 
 import numpy as np
+import cupy as cp
 from numba import njit
+
+
+def htod(target):
+    """ mv target from host into GPU device. """
+    if type(target) is not cp.ndarray:
+        return cp.array(target)
+
+    raise ("The given value has been added in the GPU.")
+
+
+def dtoh(target):
+    """ mv target from GPU device into host. """
+    if type(target) is cp.ndarray:
+        return target.get()
+
+    raise ("The given value not in GPU.")
+
+
+def flush_memory():
+    """ Release unused memory in current GPU device. """
+    cp.get_default_memory_pool().free_all_blocks()
+    cp.get_default_pinned_memory_pool().free_all_blocks()
 
 
 @njit(nogil=True)
@@ -26,16 +49,17 @@ def perm_sort(indexes: np.ndarray, blocks: int):
 
     # block level swap
     for i in range(blocks):
-        for j in range(i+1, blocks):
+        for j in range(i + 1, blocks):
             swap = True
             for z in range(iter):
-                if indexes[j*iter + z] // iter != i:
+                if indexes[j * iter + z] // iter != i:
                     swap = False
                     break
 
             if swap:
                 perm_op.append(("ALL", i, j))
-                indexes[i*iter:i*iter+iter], indexes[j*iter:j*iter+iter] = indexes[j*iter:j*iter+iter], indexes[i*iter:i*iter+iter]
+                indexes[i * iter:i * iter + iter], indexes[j * iter:j * iter + iter] = \
+                    indexes[j * iter:j * iter + iter], indexes[i * iter:i * iter + iter]
 
     for i in range(n):
         block_interval = i // iter

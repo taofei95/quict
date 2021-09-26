@@ -10,7 +10,6 @@ import numpy as np
 from QuICT.ops.utils import mapping_augment
 
 
-
 @njit(parallel=True, nogil=True)
 def MatrixTensorI(A, n, m):
     """ tensor I^n and A and I^m
@@ -36,6 +35,7 @@ def MatrixTensorI(A, n, m):
                 MatrixTensor[start_row_idx:start_row_idx + m, start_col_idx:start_col_idx + m] = temp_M
 
     return MatrixTensor
+
 
 @njit(parallel=True, nogil=True)
 def MatrixPermutation(A: np.ndarray, mapping: np.ndarray, changeInput: bool = False) -> np.ndarray:
@@ -64,6 +64,7 @@ def MatrixPermutation(A: np.ndarray, mapping: np.ndarray, changeInput: bool = Fa
 
     return perm_mat
 
+
 @njit()
 def VectorPermutation(A: np.ndarray, mapping: np.ndarray, changeInput: bool = False):
     """ permutaion A with mapping, changeInput
@@ -85,6 +86,7 @@ def VectorPermutation(A: np.ndarray, mapping: np.ndarray, changeInput: bool = Fa
 
     return A[switched_idx]
 
+
 @njit(parallel=True, nogil=True)
 def tensor(A, B):
     """ tensor A and B
@@ -105,6 +107,7 @@ def tensor(A, B):
             tensor_data[r * row_b:(r + 1) * row_b, c * col_b:(c + 1) * col_b] = A[r, c] * B
 
     return tensor_data
+
 
 @njit()
 def dot(A, B):

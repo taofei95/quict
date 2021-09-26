@@ -27,9 +27,10 @@ type_mapping = {
     "complex128": nccl.NCCL_FLOAT64
 }
 
+
 class Proxy:
     """ The proxy class of NCCL Communicators, which is used to transfer data between gpus.
-    
+
     Args:
         ndevs(int): number of total GPU devices.
         uid(tuple): The unique ID, generate by cupy.cuda.nccl.get_unique_id().
@@ -267,7 +268,7 @@ class Proxy:
 
         # Send data to each target
         for dest_idx, dest in enumerate(targets):
-            self.send(sendbuf[dest_idx*data_interval:(dest_idx+1)*data_interval], dest, stream)
+            self.send(sendbuf[dest_idx * data_interval:(dest_idx + 1) * data_interval], dest, stream)
 
     def gather(
         self,
@@ -282,7 +283,7 @@ class Proxy:
         Args:
             root(int): the rank ID of the root communicator.
             sendbuf(cupy.ndarray): the sending data, not use in the root communicator.
-            recvbuf(cupy.ndarray): the GPU array waitting for comming data, only use in the 
+            recvbuf(cupy.ndarray): the GPU array waitting for comming data, only use in the
             root communicator.
             stream(Stream): the cupy stream.
         """
@@ -291,7 +292,7 @@ class Proxy:
 
             recv_count_per_dev = recvbuf.size // (self._ndevs - 1)
             for dest in self.peers:
-                self.recv(recvbuf[(dest-1)*recv_count_per_dev:dest*recv_count_per_dev], dest, stream)
+                self.recv(recvbuf[(dest - 1) * recv_count_per_dev:dest * recv_count_per_dev], dest, stream)
         else:
             assert(sendbuf is not None)
 
@@ -318,5 +319,5 @@ class Proxy:
 
         if sendbuf.dtype == cp.complex128:
             count *= 2
-        
+
         self.comm.allGather(send_pointer, recv_pointer, count, nccl_datatype, stream)
