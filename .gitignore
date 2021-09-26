@@ -20,3 +20,4 @@ _build
 *qubit_cnot.inf
 *qubit_cnot_depth.inf
 cmake-build*/
+QuICT/qcda/simulation/backends/*.txt
