@@ -19,10 +19,10 @@ class DataSwitcher:
         recv_buf = cp.zeros(vector.size, dtype=vector.dtype)
         sliced_data = min(vector.size, self._max_data_size_per_time)
 
-        for i in range(math.ceil(vector.size/sliced_data)):
-            self._proxy.send(vector[i*sliced_data:(i+1)*sliced_data], destination)
+        for i in range(math.ceil(vector.size / sliced_data)):
+            self._proxy.send(vector[i * sliced_data:(i + 1) * sliced_data], destination)
 
-            self._proxy.recv(recv_buf[i*sliced_data:(i+1)*sliced_data], destination)
+            self._proxy.recv(recv_buf[i * sliced_data:(i + 1) * sliced_data], destination)
 
         return recv_buf
 
@@ -31,7 +31,7 @@ class DataSwitcher:
 
     def half_switch(self, vector, destination):
         _0_1 = self._id < destination
-        sending_size = vector.size//2
+        sending_size = vector.size // 2
 
         if not _0_1:
             sending_data = vector[:sending_size]
@@ -50,7 +50,7 @@ class DataSwitcher:
         for idx, _0_1 in condition.items():
             if isinstance(target_idx, tuple):
                 target_idx = target_idx[0]
-            
+
             if _0_1:
                 target_idx = target_idx[np.where(target_idx & (1 << idx))]
             else:
@@ -66,7 +66,7 @@ class DataSwitcher:
         self._proxy.allreduce(
             sendbuf=prob_result,
             recvbuf=recv_buf,
-            op = 0
+            op=0
         )
 
         return recv_buf

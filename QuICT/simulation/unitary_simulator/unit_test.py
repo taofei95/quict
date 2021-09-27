@@ -14,18 +14,6 @@ from QuICT.qcda.simulation.unitary_simulator import *
 
 from time import time
 
-"""
-the file describe Simulators between two basic gates.
-"""
-
-
-# def w_test_merge_two_unitary():
-#     targs = [0, 1]
-#     compositeGate1 = CZ & targs
-#     compositeGate2 = X & targs[1]
-#     print(UnitarySimulator.merge_two_unitary(compositeGate1, compositeGate2).compute_matrix)
-#     print("\nfinish\n")
-
 
 @pytest.mark.repeat(5)
 def test_merge_two_unitary_list():
@@ -69,16 +57,3 @@ def test_unitary_generate():
     duration_2 = end_time - start_time
     print(f"\nOld algo time: {duration_1:.4f} s, current algo time: {duration_2:.4f} s")
     assert np.allclose(circuit_unitary, result_mat)
-
-# # @pytest.mark.repeat(5)
-# def w_test_unitary_run():
-#     circuit = Circuit(10)
-#     circuit.random_append(100, typeList=[GATE_ID["CX"], GATE_ID["X"]])
-#     # circuit.print_information()
-#     circuit_unitary = SyntheticalUnitary.run(circuit)
-#     unitary = UnitarySimulator.run(circuit)
-#     # a = np.allclose(small_matrix, unitary)
-#     # b = np.allclose(small_matrix, circuit_unitary)
-#     # c = np.allclose(circuit_unitary, unitary)
-#     # print(a, b, c)
-#     assert np.allclose(circuit_unitary, unitary)

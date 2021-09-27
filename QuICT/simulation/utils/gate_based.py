@@ -7,8 +7,6 @@
 import numpy as np
 import cupy as cp
 
-from QuICT.core.gate.gate import *
-
 
 _GATES_EXCEPT = ["MeasureGate", "ResetGate", "PermFxGate", "PermGate"]
 
@@ -71,14 +69,14 @@ class GateMatrixs:
         start = 0
 
         for matrix in self.matrix_idx:
-            self.final_matrix[start:start+matrix.size] = matrix.ravel()[:]
+            self.final_matrix[start:start + matrix.size] = matrix.ravel()[:]
             start += matrix.size
 
         with cp.cuda.Device(self.device_id):
             self.final_matrix = cp.array(self.final_matrix)
 
     def target_matrix(self, gate):
-        """ 
+        """
         Find the compute matrix of the given gate.
         Args:
             gate(Gate): the gate in circuit.
@@ -97,4 +95,4 @@ class GateMatrixs:
 
         start, itvl = self.gate_matrixs[gate_name]
 
-        return self.final_matrix[start:start+itvl]
+        return self.final_matrix[start:start + itvl]

@@ -10,7 +10,7 @@ from functools import lru_cache
 
 from QuICT.core import *
 from QuICT.ops.linalg.gpu_calculator import dot, MatrixPermutation
-from QuICT.qcda.simulation.utils import GateMatrixs
+from QuICT.simulation.utils import GateMatrixs
 
 
 # tool function
@@ -69,27 +69,29 @@ class dp:
         return self.value + tensor_cost(self.length, width) + multiply_vector_cost(width)
 
 
-class BasicSimulator(object):
+class BasicGPUSimulator(object):
     """
-    The based simulator class.
+    The based class for GPU simulators
 
     Args:
         circuit (Circuit): The quantum circuit.
         precision [np.complex64, np.complex128]: The precision for the circuit and qubits.
         gpu_device_id (int): The GPU device ID.
     """
-    def __init__(self, circuit: Circuit, precision = np.complex64, gpu_device_id: int = 0):
+    def __init__(self, circuit: Circuit, precision=np.complex64, gpu_device_id: int = 0):
         self._qubits = int(circuit.circuit_width())
         self._precision = precision
         self._gates = circuit.gates
         self._device_id = gpu_device_id
         self._circuit = circuit
 
+        self._gate_matrix_prepare()
+
+    def _gate_matrix_prepare(self):
         # Pretreatment gate matrixs optimizer
         self.gateM_optimizer = GateMatrixs(self._precision, self._device_id)
         for gate in self._gates:
-            if type(gate) != type(Measure):
-                self.gateM_optimizer.build(gate)
+            self.gateM_optimizer.build(gate)
 
         self.gateM_optimizer.concentrate_gate_matrixs()
 
@@ -98,8 +100,8 @@ class BasicSimulator(object):
         return self._qubits
 
     @qubits.setter
-    def qubits(self, qubit: int):
-        self._qubits = qubit
+    def qubits(self, value):
+        self._qubits = value
 
     @property
     def circuit(self):
@@ -109,6 +111,8 @@ class BasicSimulator(object):
     def reset_circuit(self, circuit: Circuit):
         self._circuit = circuit
         self._gates = circuit.gates
+
+        self._gate_matrix_prepare()
 
     @property
     def vector(self):
@@ -127,10 +131,9 @@ class BasicSimulator(object):
         return self._device_id
 
     def run(self):
-        print("must be override")
         pass
 
-    def get_Matrix(self, gate):
+    def get_gate_matrix(self, gate):
         return self.gateM_optimizer.target_matrix(gate)
 
     @staticmethod
@@ -246,22 +249,22 @@ class BasicSimulator(object):
 
     @staticmethod
     def unitary_pretreatment(circuit):
-        small_gates = BasicSimulator.pretreatment(circuit)
+        small_gates = BasicGPUSimulator.pretreatment(circuit)
         gates = []
         for gate in small_gates:
             gates.append(gate.affectArgs.copy())
         # gates as input
-        f, pre = BasicSimulator.unitary_merge_layer(gates)
+        f, pre = BasicGPUSimulator.unitary_merge_layer(gates)
 
         order = []
 
-        def pre_search(l, r):
-            if l >= r:
+        def pre_search(left, right):
+            if left >= right:
                 return
-            stick = pre[l][r]
+            stick = pre[left][right]
             order.append(stick)
-            pre_search(l, stick)
-            pre_search(stick + 1, r)
+            pre_search(left, stick)
+            pre_search(stick + 1, right)
 
         pre_search(0, len(gates) - 1)
         order.reverse()
@@ -269,12 +272,12 @@ class BasicSimulator(object):
 
     @staticmethod
     def vector_pretreatment(circuit):
-        small_gates = BasicSimulator.pretreatment(circuit)
+        small_gates = BasicGPUSimulator.pretreatment(circuit)
         gates = []
         for gate in small_gates:
             gates.append(gate.affectArgs.copy())
         # gates as input
-        f, pre = BasicSimulator.unitary_merge_layer(gates)
+        f, pre = BasicGPUSimulator.unitary_merge_layer(gates)
 
         gate_length = len(gates)
         width = circuit.circuit_width()
@@ -295,18 +298,18 @@ class BasicSimulator(object):
 
         order = []
 
-        def pre_search(l, r):
-            if l >= r:
+        def pre_search(left, right):
+            if left >= right:
                 return
-            stick = pre[l][r]
+            stick = pre[left][right]
             order.append(stick)
-            pre_search(l, stick)
-            pre_search(stick + 1, r)
+            pre_search(left, stick)
+            pre_search(stick + 1, right)
 
-        def pre_amplitude_search(r):
-            stick = pre_amplitude[r]
+        def pre_amplitude_search(right):
+            stick = pre_amplitude[right]
             order.append(-(stick + 1))
-            pre_search(stick, r)
+            pre_search(stick, right)
             if stick <= 0:
                 return
             pre_amplitude_search(stick)
