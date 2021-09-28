@@ -8,8 +8,6 @@ import copy
 import functools
 import string
 
-from QuICT.core.qubit import Qureg
-
 # from QuICT.core.gate.gate_builder import GateBuilder
 # from QuICT.core.gate.composite_gate import CompositeGate
 from QuICT.core.qubit import Qureg

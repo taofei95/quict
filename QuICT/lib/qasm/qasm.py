@@ -22,6 +22,7 @@ import warnings
 from .exceptions import QasmError
 from .qasmparser import QasmParser
 
+
 class Qasm:
     """OPENQASM circuit object."""
 

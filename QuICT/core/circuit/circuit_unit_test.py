@@ -12,6 +12,7 @@ from QuICT import *
 from QuICT.algorithm import Amplitude
 from .circuit import Circuit
 
+
 def getRandomList(count, upper_bound):
     _rand = [i for i in range(upper_bound)]
     for i in range(upper_bound - 1, 0, -1):

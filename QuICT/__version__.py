@@ -16,4 +16,3 @@ __description__ = "quantum algorithm library"
 __author__ = "ICT_thoery"
 __email__ = "hanyu16@mails.ucas.ac.cn"
 __url__ = "http://theory.ict.ac.cn/"
-

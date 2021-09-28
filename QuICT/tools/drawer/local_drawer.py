@@ -409,7 +409,6 @@ class PhotoDrawer(object):
                     _fc = self.style.gc
                 else:
                     _fc = self.style.dispcol['multi']
-                _ec = self.style.dispcol['multi']
             else:
                 _fc = self.style.gc
 

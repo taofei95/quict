@@ -18,6 +18,7 @@
 Exception for errors raised while parsing OPENQASM.
 """
 
+
 class QasmError(Exception):
     """Base class for errors raised while parsing OPENQASM."""
 
