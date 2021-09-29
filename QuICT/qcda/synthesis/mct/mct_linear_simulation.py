@@ -7,7 +7,7 @@
 from .._synthesis import Synthesis
 from QuICT.core import *
 
-def HalfDirtyAux(n, m, controls, auxs, target):
+def half_dirty_aux(n, m, controls, auxs, target):
     """
 
     Args:
@@ -35,7 +35,7 @@ def HalfDirtyAux(n, m, controls, auxs, target):
         for i in range(3, m):
             CCX | circuit([i - 1, n - 1 - (m - i + 1), n - 1 - (m - i)])
     
-def OneDirtyAux(controls, target, aux):
+def one_dirty_aux(controls, target, aux):
     n = len(controls) + 2
     circuit = controls + aux + target
     if n == 5:
@@ -60,22 +60,22 @@ def OneDirtyAux(controls, target, aux):
     auxs2 = controls[0 : m1]
     target2 = target
     
-    #HalfDirtyAux(n, m1, control1, auxs1, target1)
+    #half_dirty_aux(n, m1, control1, auxs1, target1)
     if m2 == 2: # n == 6
-        HalfDirtyAux(n, m1, control1, auxs1, target1)
+        half_dirty_aux(n, m1, control1, auxs1, target1)
         CCX | (control2[0], control2[1], target2)
-        HalfDirtyAux(n, m1, control1, auxs1, target1)
+        half_dirty_aux(n, m1, control1, auxs1, target1)
         CCX | (control2[0], control2[1], target2)
     else:
-        HalfDirtyAux(n, m1, control1, auxs1, target1)
-        HalfDirtyAux(n, m2, control2, auxs2, target2)
-        HalfDirtyAux(n, m1, control1, auxs1, target1)
-        HalfDirtyAux(n, m2, control2, auxs2, target2)
+        half_dirty_aux(n, m1, control1, auxs1, target1)
+        half_dirty_aux(n, m2, control2, auxs2, target2)
+        half_dirty_aux(n, m1, control1, auxs1, target1)
+        half_dirty_aux(n, m2, control2, auxs2, target2)
 
 
 class MCTLinearHalfDirtyAux(Synthesis):
-    @classmethod
-    def execute(cls, m, n):
+    @staticmethod
+    def execute(m, n):
         """ A linear simulation for Toffoli gate
 
         https://arxiv.org/abs/quant-ph/9503016 Lemma 7.2
@@ -98,13 +98,13 @@ class MCTLinearHalfDirtyAux(Synthesis):
         auxs = circuit([i for i in range(m, n - 1)])
         target = circuit(n - 1)
         
-        HalfDirtyAux(n, m, controls, auxs, target)
+        half_dirty_aux(n, m, controls, auxs, target)
         
         return CompositeGate(circuit.gates)
 
 class MCTLinearOneDirtyAux(Synthesis):
-    @classmethod
-    def execute(cls, n):
+    @staticmethod
+    def execute(n):
         """ A linear simulation for Toffoli gate
 
         https://arxiv.org/abs/quant-ph/9503016 Corollary 7.4
@@ -125,6 +125,6 @@ class MCTLinearOneDirtyAux(Synthesis):
         target = circuit(n - 2)
         aux = circuit(n - 1)       # this is a dirty ancilla
         
-        OneDirtyAux(controls, target, aux)
+        one_dirty_aux(controls, target, aux)
         
         return CompositeGate(circuit.gates)

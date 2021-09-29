@@ -15,8 +15,8 @@ class Grover:
 
     Quantum Computation and Quantum Information - Michael A. Nielsen & Isaac L. Chuang
     """
-    @classmethod
-    def run(cls, f, n, oracle):
+    @staticmethod
+    def run(f, n, oracle):
         """ grover search for f with custom oracle
 
         Args:

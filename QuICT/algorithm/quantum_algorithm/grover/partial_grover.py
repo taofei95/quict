@@ -28,8 +28,8 @@ class PartialGrover:
 
     https://arxiv.org/abs/quant-ph/0407122
     """
-    @classmethod
-    def run(cls, f, n, k, oracle):
+    @staticmethod
+    def run(f, n, k, oracle):
         """ partial grover search with one target
 
         Args:

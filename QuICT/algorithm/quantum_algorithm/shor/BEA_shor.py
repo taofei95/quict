@@ -90,73 +90,6 @@ def order_finding(a, N):
         return 0
 
 
-def shor(N):
-    # check if input is prime (using MillerRabin in klog(N), k is the number of rounds to run MillerRabin)
-    assert (not miller_rabin(N)), 'N is prime'
-
-    # 1. If n is even, return the factor 2
-    if N % 2 == 0:
-        logging.info('Shor succeed: N is even, found factor 2 classically')
-        return 2
-
-    # 2. Classically determine if N = p^q
-    y = np.log2(N)
-    L = int(np.ceil(np.log2(N)))
-    for b in range(2, L):
-        x = y / b
-        squeeze = np.power(2, x)
-        u1 = int(np.floor(squeeze))
-        u2 = int(np.ceil(squeeze))
-        if pow(u1, b) == N:
-            logging.info(
-                f'Shor succeed: N is exponential, found the only factor {u1} classically')
-            return u1
-        if pow(u2, b) == N:
-            logging.info(
-                f'Shor succeed: N is exponential, found the only factor {u2} classically')
-            return u2
-
-    rd = 0
-    max_rd = 15
-    while rd < max_rd:
-        # 3. Choose a random number a (1<a<N)
-        a = random.randint(2, N - 1)
-        gcd = np.gcd(a, N)
-        if gcd > 1:
-            logging.info(
-                f'Shor succeed: randomly chosen a = {a}, who has common factor {gcd} with N classically')
-            return gcd
-
-        logging.info(f'round = {rd}')
-        rd += 1
-        # 4. Use quantum order-finding algorithm to find the order of a
-        logging.info(f'Quantumly determine the order of the randomly chosen a = {a}')
-        r = order_finding(a, N)
-        if r == 0:
-            logging.info(f'Shor failed: did not found the order of a = {a}')
-        else:
-            if r % 2 == 1:
-                logging.info(f'Shor failed: found odd order r = {r} of a = {a}')
-            else:
-                h = pow(a, int(r / 2), N)
-                if h == N - 1:
-                    logging.info(
-                        f'Shor failed: found order r = {r} of a = {a} with negative square root')
-                else:
-                    f1 = np.gcd(h - 1, N)
-                    f2 = np.gcd(h + 1, N)
-                    if f1 > 1 and f1 < N:
-                        logging.info(
-                            f'Shor succeed: found factor {f1}, with the help of a = {a}, r = {r}')
-                        return f1
-                    elif f2 > 1 and f2 < N:
-                        logging.info(
-                            f'Shor succeed: found factor {f2}, with the help of a = {a}, r = {r}')
-                        return f2
-                    else:
-                        logging.info(f'Shor failed: can not find a factor with a = {a}')
-
-
 class BEAShorFactor(Algorithm):
     '''
     The (2n+2)-qubit circuit used in the Shor algorithm is designed by \
@@ -165,4 +98,67 @@ class BEAShorFactor(Algorithm):
     '''
     @staticmethod
     def _run(N):
-        return shor(N)
+        # check if input is prime (using MillerRabin in klog(N), k is the number of rounds to run MillerRabin)
+        assert (not miller_rabin(N)), 'N is prime'
+
+        # 1. If n is even, return the factor 2
+        if N % 2 == 0:
+            logging.info('Shor succeed: N is even, found factor 2 classically')
+            return 2
+
+        # 2. Classically determine if N = p^q
+        y = np.log2(N)
+        L = int(np.ceil(np.log2(N)))
+        for b in range(2, L):
+            x = y / b
+            squeeze = np.power(2, x)
+            u1 = int(np.floor(squeeze))
+            u2 = int(np.ceil(squeeze))
+            if pow(u1, b) == N:
+                logging.info(
+                    f'Shor succeed: N is exponential, found the only factor {u1} classically')
+                return u1
+            if pow(u2, b) == N:
+                logging.info(
+                    f'Shor succeed: N is exponential, found the only factor {u2} classically')
+                return u2
+
+        rd = 0
+        max_rd = 15
+        while rd < max_rd:
+            # 3. Choose a random number a (1<a<N)
+            a = random.randint(2, N - 1)
+            gcd = np.gcd(a, N)
+            if gcd > 1:
+                logging.info(
+                    f'Shor succeed: randomly chosen a = {a}, who has common factor {gcd} with N classically')
+                return gcd
+
+            logging.info(f'round = {rd}')
+            rd += 1
+            # 4. Use quantum order-finding algorithm to find the order of a
+            logging.info(f'Quantumly determine the order of the randomly chosen a = {a}')
+            r = order_finding(a, N)
+            if r == 0:
+                logging.info(f'Shor failed: did not found the order of a = {a}')
+            else:
+                if r % 2 == 1:
+                    logging.info(f'Shor failed: found odd order r = {r} of a = {a}')
+                else:
+                    h = pow(a, int(r / 2), N)
+                    if h == N - 1:
+                        logging.info(
+                            f'Shor failed: found order r = {r} of a = {a} with negative square root')
+                    else:
+                        f1 = np.gcd(h - 1, N)
+                        f2 = np.gcd(h + 1, N)
+                        if f1 > 1 and f1 < N:
+                            logging.info(
+                                f'Shor succeed: found factor {f1}, with the help of a = {a}, r = {r}')
+                            return f1
+                        elif f2 > 1 and f2 < N:
+                            logging.info(
+                                f'Shor succeed: found factor {f2}, with the help of a = {a}, r = {r}')
+                            return f2
+                        else:
+                            logging.info(f'Shor failed: can not find a factor with a = {a}')

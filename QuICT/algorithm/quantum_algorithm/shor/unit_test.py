@@ -14,19 +14,19 @@ from QuICT.algorithm import BEAShorFactor
 from QuICT.algorithm import HRSShorFactor
 
 
-def test_1():
+def test_ShorFactor():
     a, _, _, _, _ = ShorFactor.run(15)
     assert 15 % a == 0
 
 
-def test_2():
+def test_ZipShorFactor():
     test_list = [15, 57]
     for number in test_list:
         a, _, _, _, _ = ZipShorFactor.run(number)
         assert number % a == 0
 
 
-def test_3():
+def test_ClassicalShorFactor():
     number_list = [
         2, 4, 6, 8, 9, 10,
         12, 14, 15, 16, 18, 20,
@@ -39,7 +39,7 @@ def test_3():
         assert number % a == 0
 
 
-def test_4():
+def test_ClassicalZipShorFactor():
     number_list = [
         2, 4, 6, 8, 9, 10,
         12, 14, 15, 16, 18, 20,
@@ -52,7 +52,7 @@ def test_4():
         assert number % a == 0
 
 
-def test_5():
+def test_BEAShorFactor():
     number_list = [
         4, 6, 8, 9, 10,
         12, 14, 15, 16, 18, 20,
@@ -67,7 +67,7 @@ def test_5():
         assert number % a == 0
 
 
-def test_6():
+def test_HRSShorFactor():
     number_list = [
         4, 6, 8, 9, 10,
         12, 14, 15, 16, 18, 20,

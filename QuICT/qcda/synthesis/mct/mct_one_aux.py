@@ -69,8 +69,8 @@ def solve(n):
 
 
 class MCTOneAux(Synthesis):
-    @classmethod
-    def execute(cls, n):
+    @staticmethod
+    def execute(n):
         """ Decomposition of n-qubit Toffoli gates with one ancillary qubit and linear circuit complexity
 
         He Y, Luo M X, Zhang E, et al.

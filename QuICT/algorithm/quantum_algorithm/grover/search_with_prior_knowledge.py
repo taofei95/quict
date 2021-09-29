@@ -78,8 +78,8 @@ class GroverWithPriorKnowledge:
     https://arxiv.org/abs/2009.08721
 
     """
-    @classmethod
-    def run(cls, f, n, p, T, oracle):
+    @staticmethod
+    def run(f, n, p, T, oracle):
         """ grover search for f with custom oracle
 
         Args:
