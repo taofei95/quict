@@ -70,6 +70,17 @@ namespace QuICT {
         Precision *mat_real_;
         Precision *mat_imag_;
 
+        UnitaryGateN(const std::vector<uint64_t> &args, std::complex<Precision> *mat) {
+            for(int i = 0; i < N; i++) affect_args_[i] = args[i];
+
+            mat_real_ = new Precision[1 << (N << 1)];
+            mat_imag_ = new Precision[1 << (N << 1)];
+            for(int i = 0; i < 1 << (N << 1); i++) {
+                mat_real_[i] = mat[i].real();
+                mat_imag_[i] = mat[i].imag();
+            }
+        }
+
         ~UnitaryGateN() {
 //            delete[] mat_real_;
 //            delete[] mat_imag_;
@@ -87,14 +98,12 @@ namespace QuICT {
 
         explicit UnitaryGateN(uint64_t targ) : targ_(targ) {}
 
-        UnitaryGateN(uint64_t targ, std::complex<Precision> *mat_) : targ_(targ)
-        {
+        UnitaryGateN(uint64_t targ, std::complex<Precision> *mat) : targ_(targ) {
             mat_real_ = new Precision[4];
             mat_imag_ = new Precision[4];
-            for(int i = 0; i < 4; i++)
-            {
-                mat_real_[i] = mat_[i].real();
-                mat_imag_[i] = mat_[i].imag();
+            for(int i = 0; i < 4; i++) {
+                mat_real_[i] = mat[i].real();
+                mat_imag_[i] = mat[i].imag();
             }
         }
 
@@ -236,6 +245,7 @@ namespace QuICT {
     struct gate_qubit_num {
         constexpr static uint64_t value = []() {
             if constexpr(Details::has_member_affect_args_<Gate>::value) {
+                // Compile Error: Invalid use of non-static member affect_args_ (2021-09-25)
                 return Gate::affect_args_.size();
             } else if constexpr(Details::has_member_carg_<Gate>::value) {
                 return 2;

@@ -104,6 +104,22 @@ void test_by_data_file(
                     0,
                     mat_
             );
+        } else if (gate_name == "u2") {
+            fs >> carg >> targ;
+            auto *mat_ = new complex<Precision>[16];
+            for (int i = 0; i < 16; i++) {
+                double re, im;
+                char sign, img_label;
+                fs >> re >> sign >> im >> img_label;
+                mat_[i] = complex<double>(re, sign == '+' ? im : -im);
+            }
+
+            gate_desc_vec.emplace_back(
+                    "u2",
+                    std::vector<uint64_t>{carg, targ},
+                    0,
+                    mat_
+                    );
         }
     }
 
@@ -149,4 +165,8 @@ TEST(HybridTest, CU3Test) {
 
 TEST(HybridTest, U1Test) {
     test_by_data_file("u1.txt", simulator);
+}
+
+TEST(HybridTest, U2Test) {
+    test_by_data_file("u2.txt", simulator);
 }
