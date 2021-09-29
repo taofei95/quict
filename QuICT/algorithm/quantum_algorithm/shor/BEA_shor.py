@@ -97,7 +97,7 @@ class BEAShorFactor(Algorithm):
     in "Factoring using 2n+2 qubits with Toffoli based modular multiplication\
     '''
     @staticmethod
-    def _run(N):
+    def run(N):
         # check if input is prime (using MillerRabin in klog(N), k is the number of rounds to run MillerRabin)
         assert (not miller_rabin(N)), 'N is prime'
 

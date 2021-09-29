@@ -154,7 +154,7 @@ class ShorFactor(Algorithm):
 
     """
     @staticmethod
-    def _run(N, fidelity=None):
+    def run(N, fidelity=None):
         """ run the algorithm with fidelity
 
         Args:
