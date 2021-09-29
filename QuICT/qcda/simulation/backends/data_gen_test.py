@@ -55,8 +55,8 @@ def out_circuit_to_file(qubit_num: int, f_name: str, circuit: Circuit):
             gate: BasicGate
             if gate.type() == GATE_ID['H']:
                 print(f"h {gate.targ}", file=f)
-            # elif gate.type() == GATE_ID['Crz']:
-            #     print(f"crz {gate.carg} {gate.targ} {gate.parg}", file=f)
+            elif gate.type() == GATE_ID['Crz']:
+                print(f"crz {gate.carg} {gate.targ} {gate.parg}", file=f)
             elif gate.type() == GATE_ID['X']:
                 print(f"x {gate.targ}", file=f)
             elif gate.type() == GATE_ID['CU3']:
@@ -105,13 +105,15 @@ def main():
 
     for i in range(qubit_num):
         H | circuit(i)
-    for _ in range(100):
-        # CRz(uniform(0, 3.14)) | circuit([qubit_num-1, randint(0, qubit_num-3)])
-        lst = sample(range(0, qubit_num), 2)
-        CRz(uniform(0, 3.14)) | circuit([lst[0], lst[1]])
+    # for _ in range(100):
+    #     lst = sample(range(0, qubit_num), 2)
+    #     CRz(uniform(0, 3.14)) | circuit([lst[0], lst[1]])
     # X | circuit(qubit_num-1)
     # X | circuit(qubit_num-3)
     # CRz(pi) | circuit([qubit_num-3, qubit_num-1])
+    for _ in range(100):
+        lst = sample(range(0, qubit_num), 2)
+        rand_unitary_gate(2) | circuit([lst[0], lst[1]])
 
     out_circuit_to_file(qubit_num, "u2.txt", circuit)
     circuit.clear()
