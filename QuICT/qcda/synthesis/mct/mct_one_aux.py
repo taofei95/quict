@@ -6,7 +6,7 @@
 
 from .._synthesis import Synthesis
 from QuICT.core import *
-from .mct_linear_simulation import MCTLinearSimulation
+from .mct_linear_simulation import MCTLinearHalfDirtyAux
 
 
 def merge_qubit(qubit_a, qubit_b):
@@ -54,25 +54,23 @@ def solve(n):
         k1 = n // 2
     k2 = n // 2 - 1
 
-    MCTLinearSimulation.execute(k1, n + 1) | qubit_list
-    H | qubit_list[-2]
-    S | qubit_list[-1]
-    MCTLinearSimulation.execute(k2 + 1, n + 1) | merge_qubit(merge_qubit(qubit_list[k1:k1 + k2 + 1],
-                                                                         qubit_list[:k1]), qubit_list[-1])
+    MCTLinearHalfDirtyAux.execute(k1, n + 1) | qubit_list
+    H        | qubit_list[-2]
+    S        | qubit_list[-1]
+    MCTLinearHalfDirtyAux.execute(k2 + 1, n + 1) | merge_qubit(merge_qubit(qubit_list[k1:k1 + k2 + 1], qubit_list[:k1]), qubit_list[-1])
     S_dagger | qubit_list[-1]
-    MCTLinearSimulation.execute(k1, n + 1) | qubit_list
-    S | qubit_list[-1]
-    MCTLinearSimulation.execute(k2 + 1, n + 1) | merge_qubit(merge_qubit(qubit_list[k1:k1 + k2 + 1],
-                                                                         qubit_list[:k1]), qubit_list[-1])
-    H | qubit_list[-2]
+    MCTLinearHalfDirtyAux.execute(k1, n + 1) | qubit_list
+    S        | qubit_list[-1]
+    MCTLinearHalfDirtyAux.execute(k2 + 1, n + 1) | merge_qubit(merge_qubit(qubit_list[k1:k1 + k2 + 1], qubit_list[:k1]), qubit_list[-1])
+    H        | qubit_list[-2]
     S_dagger | qubit_list[-1]
 
     return qubit_list
 
 
 class MCTOneAux(Synthesis):
-    @classmethod
-    def execute(cls, n):
+    @staticmethod
+    def execute(n):
         """ Decomposition of n-qubit Toffoli gates with one ancillary qubit and linear circuit complexity
 
         He Y, Luo M X, Zhang E, et al.
