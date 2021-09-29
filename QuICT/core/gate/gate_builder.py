@@ -6,6 +6,7 @@
 
 from .gate import *
 
+
 class GateBuilderModel(object):
     """ A model that help users get gate without circuit
 
@@ -137,7 +138,7 @@ class GateBuilderModel(object):
         gate = self._inner_generate_gate().copy()
         return self._inner_complete_gate(gate)
 
-    def _inner_generate_gate(self):
+    def _inner_generate_gate(self) -> BasicGate:
         """ private tool function
 
         get an initial gate by the gateType set for builder
@@ -145,7 +146,8 @@ class GateBuilderModel(object):
         Return:
             BasicGate: the initial gate
         """
-        return GATE_STANDARD_NAME_OF[self.gateType]()
+        gate = GATE_CLASS_BY_ID[self.gateType]()
+        return gate
 
     def _inner_complete_gate(self, gate: BasicGate):
         """ private tool function
@@ -229,5 +231,6 @@ class GateBuilderModel(object):
             for target in gate.targs:
                 qubits.append(circuit[target])
             circuit.append(gate, qubits)
+
 
 GateBuilder = GateBuilderModel()

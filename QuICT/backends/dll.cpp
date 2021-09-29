@@ -324,7 +324,13 @@ DLLEXPORT void ccx_single_operator_func(
     });
 }
 
-DLLEXPORT void unitary_operator_gate(int qureg_length, complex<double> *values, long long  *index, int index_count, complex<double> *matrix){
+DLLEXPORT void unitary_operator_gate(
+    int qureg_length,
+    complex<double> *values,
+    long long  *index,
+    int index_count,
+    <double> *matrix
+){
     int *indexlist = (int*)malloc(index_count * sizeof(int));
     for (int i = 0;i < index_count;++i)
         indexlist[i] = index[i];

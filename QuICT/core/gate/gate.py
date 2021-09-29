@@ -31,7 +31,7 @@ def _add_alias(alias, standard_name):
                 GATE_ID[nm] = GATE_ID[standard_name]
 
 
-GATE_STANDARD_NAME_OF = {-1: "Error"}
+GATE_CLASS_BY_ID = {-1: "Error"}
 # Get standard gate name by gate id.
 
 
@@ -50,11 +50,11 @@ GATE_SET_LIST = []
 # add gate into list environment
 
 def gate_implementation(cls):
-    global GATE_STANDARD_NAME_OF
+    global GATE_CLASS_BY_ID
     global GATE_ID
     global GATE_ID_CNT
 
-    GATE_STANDARD_NAME_OF[GATE_ID_CNT] = cls
+    GATE_CLASS_BY_ID[GATE_ID_CNT] = cls
     GATE_ID[cls.__name__] = GATE_ID_CNT
     GATE_ID_CNT += 1
 
