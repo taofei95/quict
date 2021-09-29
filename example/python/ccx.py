@@ -28,6 +28,6 @@ H           | circuit(2)
 circuit.draw()
 
 unitary = SyntheticalUnitary.run(circuit, showSU=False)
-#print(unitary)
+# print(unitary)
 
-code.interact(banner = "", local = locals())
+code.interact(banner="", local=locals())

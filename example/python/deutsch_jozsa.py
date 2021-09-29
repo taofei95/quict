@@ -6,8 +6,10 @@
 
 from QuICT.core import Circuit, H, X, Measure, PermFx
 
+
 def deutsch_jozsa_main_oracle(f, qreg, ancilla):
     PermFx(f) | (qreg, ancilla)
+
 
 def run_deutsch_jozsa(f, n, oracle):
     """ an oracle, use Deutsch_Jozsa to decide whether f is balanced
@@ -46,6 +48,7 @@ def run_deutsch_jozsa(f, n, oracle):
         print('Function is constant. y={}'.format(y))
     else:
         print('Function is balanced. y={}'.format(y))
+
 
 if __name__ == '__main__':
     test_number = 5

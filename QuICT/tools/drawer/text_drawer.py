@@ -807,10 +807,10 @@ class TextDrawing:
         """
         if with_initial_state:
             initial_qubit_value = '|0>'
-            initial_clbit_value = '0 '
+            # initial_clbit_value = '0 '
         else:
             initial_qubit_value = ''
-            initial_clbit_value = ''
+            # initial_clbit_value = ''
 
         qubit_labels = []
         if self.layout is None:
@@ -1071,8 +1071,8 @@ class TextDrawing:
         ctrl_label = None
         box_label = None
         conditional = False
-        multi_qubit_instruction = gate.targets >= 2
-        label_multibox = False
+        # multi_qubit_instruction = gate.targets >= 2
+        # label_multibox = False
 
         # add in a gate that operates over multiple qubits
         def add_connected_gate(gate, gates, layer, current_cons):
