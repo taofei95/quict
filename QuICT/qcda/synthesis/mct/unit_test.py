@@ -87,10 +87,12 @@ def test_MCT_Linear_Simulation_One_functional():
             MCTLinearOneDirtyAux.execute(n) | (controls, target, aux)
             Measure | circuit
             circuit.exec()
-            if ((control_bits == 2**(n-2) - 1 and int(target) == 0) 
-            or (control_bits != 2**(n-2) - 1 and int(target) == 1)
-            or (int(aux) != 0)
-            or (int(controls)!=control_bits)):
+            if (
+                (control_bits == 2**(n-2) - 1 and int(target) == 0) or
+                (control_bits != 2**(n-2) - 1 and int(target) == 1) or
+                (int(aux) != 0) or
+                (int(controls)!=control_bits)
+            ):
                 print("when control bits are %d, the targe is %d" %(control_bits, int(target)))
                 assert 0
     assert 1

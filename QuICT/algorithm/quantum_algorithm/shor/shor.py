@@ -13,6 +13,7 @@ from QuICT.algorithm import Algorithm
 from QuICT.core import *
 from .utility import *
 
+
 def c_add_mod(c1, c2, a, Nth, L, circuit):
     an = []
     for j in range(L + 1):
@@ -37,7 +38,7 @@ def c_add_mod(c1, c2, a, Nth, L, circuit):
 
     IQFT | circuit([i for i in range(4 * L, 3 * L - 1, -1)])
 
-    CX  | circuit([4 * L, 4 * L + 1])
+    CX | circuit([4 * L, 4 * L + 1])
 
     QFT | circuit([i for i in range(4 * L, 3 * L - 1, -1)])
 
@@ -57,6 +58,7 @@ def c_add_mod(c1, c2, a, Nth, L, circuit):
 
     for j in range(L + 1):
         CCRz(np.pi * th[j]) | circuit([c1, c2, 3 * L + j])
+
 
 def c_add_mod_reverse(c1, c2, a, Nth, L, circuit):
     an = []
@@ -93,7 +95,7 @@ def c_add_mod_reverse(c1, c2, a, Nth, L, circuit):
 
     IQFT | circuit([i for i in range(4 * L, 3 * L - 1, -1)])
 
-    CX  | circuit([4 * L, 4 * L + 1])
+    CX | circuit([4 * L, 4 * L + 1])
 
     QFT | circuit([i for i in range(4 * L, 3 * L - 1, -1)])
 
@@ -103,8 +105,9 @@ def c_add_mod_reverse(c1, c2, a, Nth, L, circuit):
     for j in range(L + 1):
         CCRz(-np.pi * th[j]) | circuit([c1, c2, 3 * L + j])
 
+
 def c_mult(cqubit, a, N, Nth, L, circuit):
-    QFT  | circuit([i for i in range(4 * L, 3 * L - 1, -1)])
+    QFT | circuit([i for i in range(4 * L, 3 * L - 1, -1)])
 
     aa = a
     for i in range(L):
@@ -113,8 +116,9 @@ def c_mult(cqubit, a, N, Nth, L, circuit):
 
     IQFT | circuit([i for i in range(4 * L, 3 * L - 1, -1)])
 
+
 def c_mult_reverse(cqubit, a, N, Nth, L, circuit):
-    QFT  | circuit([i for i in range(4 * L, 3 * L - 1, -1)])
+    QFT | circuit([i for i in range(4 * L, 3 * L - 1, -1)])
     aa = a
     for i in range(L):
         c_add_mod(cqubit, 2 * L + i, N - aa, Nth, L, circuit)
@@ -125,14 +129,16 @@ def c_mult_reverse(cqubit, a, N, Nth, L, circuit):
 
 def c_swap(cqubit, L, circuit):
     for j in range(L):
-        CX              | circuit([3 * L + j, 2 * L + j])
-        CCX   | circuit([cqubit, 2 * L + j, 3 * L + j])
+        CX | circuit([3 * L + j, 2 * L + j])
+        CCX | circuit([cqubit, 2 * L + j, 3 * L + j])
         CX | circuit([3 * L + j, 2 * L + j])
 
-def cUa(cqubit, a, a_r, N,  Nth, L, circuit):
+
+def cUa(cqubit, a, a_r, N, Nth, L, circuit):
     c_mult(cqubit, a, N, Nth, L, circuit)
     c_swap(cqubit, L, circuit)
-    c_mult_reverse(cqubit, a_r, N,  Nth, L, circuit)
+    c_mult_reverse(cqubit, a_r, N, Nth, L, circuit)
+
 
 def classical_cUa(a, N, L, circuit):
     plist = [0]
@@ -140,7 +146,8 @@ def classical_cUa(a, N, L, circuit):
         plist.append(i)
     ControlPermMul(a, N) | circuit(plist)
 
-def shor(N, fidelity = None):
+
+def shor(N, fidelity=None):
     """ run the algorithm with fidelity
 
     Args:
@@ -212,7 +219,7 @@ def shor(N, fidelity = None):
             H | circuit(i)
         X | circuit(2 * L)
 
-        a_r = ModReverse(a, N)
+        a_r = mod_reverse(a, N)
         aa = a
         aa_r = a_r
         M = 0.0
@@ -258,6 +265,7 @@ def shor(N, fidelity = None):
         if N % c == 0 and c != 1 and N != b:
             return c, a, r, rd, prob
 
+
 class ShorFactor(Algorithm):
     """ shor algorithm with oracle decomposed into gates
 
@@ -265,7 +273,7 @@ class ShorFactor(Algorithm):
 
     """
     @staticmethod
-    def _run(n, fidelity = None):
+    def _run(n, fidelity=None):
         """ run the algorithm with fidelity
 
         Args:

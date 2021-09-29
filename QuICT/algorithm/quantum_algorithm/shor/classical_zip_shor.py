@@ -13,13 +13,15 @@ from QuICT.algorithm import Algorithm
 from QuICT.core import *
 from .utility import *
 
+
 def classical_cUa(a, N, L, circuit):
     plist = [0]
     for i in range(1, L + 1):
         plist.append(i)
     ControlPermMulDetail([a, N]) | circuit(plist)
 
-def Shor(N, fidelity = None):
+
+def Shor(N, fidelity=None):
     """ run the algorithm with fidelity
 
     Args:
@@ -80,7 +82,7 @@ def Shor(N, fidelity = None):
         if fidelity is not None:
             circuit.fidelity = fidelity
         X | circuit(1)
-        a_r = ModReverse(a, N)
+        a_r = mod_reverse(a, N)
         aa = a
         aa_r = a_r
         Rth = 0
@@ -126,6 +128,7 @@ def Shor(N, fidelity = None):
         if N % c == 0 and c != 1 and N != b:
             return b, a, r, rd, []
 
+
 class ClassicalZipShorFactor(Algorithm):
     """ shor algorithm with oracle decomposed into gates.
         Use classical method calculate the oracle, first register zip to 1.
@@ -137,7 +140,7 @@ class ClassicalZipShorFactor(Algorithm):
 
     """
     @staticmethod
-    def _run(n, fidelity = None):
+    def _run(n, fidelity=None):
         """ run the algorithm with fidelity
 
         Args:

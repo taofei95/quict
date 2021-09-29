@@ -11,12 +11,12 @@ from QuICT import *
 from QuICT.qcda.synthesis.initial_state_preparation import InitialStatePreparation
 from QuICT.qcda.synthesis.mct import MCTOneAux
 
-p_global = []
-T_global = 1
+P_GLOBAL = []
+T_GLOBAL = 1
 
 
 def fun(x):
-    return -np.dot(p_global, np.sin((2 * T_global + 1) * np.arcsin(np.sqrt(x)))**2)
+    return -np.dot(P_GLOBAL, np.sin((2 * T_GLOBAL + 1) * np.arcsin(np.sqrt(x)))**2)
 
 
 def run_search_with_prior_knowledge(f, n, p, T, oracle):
@@ -31,10 +31,10 @@ def run_search_with_prior_knowledge(f, n, p, T, oracle):
     Returns:
         int: the a satisfies that f(a) = 1
     """
-    global p_global
-    p_global = p[:]
-    global T_global
-    T_global = T
+    global P_GLOBAL
+    P_GLOBAL = p[:]
+    global T_GLOBAL
+    T_GLOBAL = T
     num = int(np.ceil(np.log2(n))) + 2
     # Determine number of qreg
     circuit = Circuit(num)

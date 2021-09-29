@@ -14,7 +14,8 @@ from QuICT.algorithm import Amplitude
 from QuICT.core import *
 from .utility import *
 
-def Shor(N, fidelity = None):
+
+def Shor(N, fidelity=None):
     """ run the algorithm with fidelity
 
     Args:
@@ -97,6 +98,7 @@ def Shor(N, fidelity = None):
         if N % c == 0 and c != 1 and N != b:
             return c, a, r, rd, prob
 
+
 class ClassicalShorFactor(Algorithm):
     """ shor algorithm with oracle decomposed into gates, use classical method calculate the oracle
 
@@ -104,7 +106,7 @@ class ClassicalShorFactor(Algorithm):
 
     """
     @staticmethod
-    def _run(n, fidelity = None):
+    def _run(n, fidelity=None):
         """ run the algorithm with fidelity
 
         Args:

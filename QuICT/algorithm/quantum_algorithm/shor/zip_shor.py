@@ -13,6 +13,7 @@ from QuICT.algorithm import Algorithm
 from QuICT.core import *
 from .utility import *
 
+
 def fast_power(a, b):
     x = 1
     now_a = a
@@ -22,6 +23,7 @@ def fast_power(a, b):
         now_a = now_a * now_a
         b >>= 1
     return x
+
 
 def c_add_mod(c1, c2, a, Nth, L, circuit):
     an = []
@@ -47,7 +49,7 @@ def c_add_mod(c1, c2, a, Nth, L, circuit):
 
     IQFT | circuit([i for i in range(2 * L + 1, L, -1)])
 
-    CX  | circuit([2 * L + 1, 2 * L + 2])
+    CX | circuit([2 * L + 1, 2 * L + 2])
 
     QFT | circuit([i for i in range(2 * L + 1, L, -1)])
 
@@ -67,6 +69,7 @@ def c_add_mod(c1, c2, a, Nth, L, circuit):
 
     for j in range(L + 1):
         CCRz(np.pi * th[j]) | circuit([c1, c2, L + 1 + j])
+
 
 def c_add_mod_reverse(c1, c2, a, Nth, L, circuit):
     an = []
@@ -103,7 +106,7 @@ def c_add_mod_reverse(c1, c2, a, Nth, L, circuit):
 
     IQFT | circuit([i for i in range(2 * L + 1, L, -1)])
 
-    CX  | circuit([2 * L + 1, 2 * L + 2])
+    CX | circuit([2 * L + 1, 2 * L + 2])
 
     QFT | circuit([i for i in range(2 * L + 1, L, -1)])
 
@@ -113,8 +116,9 @@ def c_add_mod_reverse(c1, c2, a, Nth, L, circuit):
     for j in range(L + 1):
         CCRz(-np.pi * th[j]) | circuit([c1, c2, L + 1 + j])
 
+
 def c_mult(a, N, Nth, L, circuit):
-    QFT  | circuit([i for i in range(2 * L + 1, L, -1)])
+    QFT | circuit([i for i in range(2 * L + 1, L, -1)])
 
     aa = a
     for i in range(L):
@@ -123,8 +127,9 @@ def c_mult(a, N, Nth, L, circuit):
 
     IQFT | circuit([i for i in range(2 * L + 1, L, -1)])
 
+
 def c_mult_reverse(a, N, Nth, L, circuit):
-    QFT  | circuit([i for i in range(2 * L + 1, L, -1)])
+    QFT | circuit([i for i in range(2 * L + 1, L, -1)])
     aa = a
     for i in range(L):
         c_add_mod(0, i + 1, N - aa, Nth, L, circuit)
@@ -132,18 +137,21 @@ def c_mult_reverse(a, N, Nth, L, circuit):
 
     IQFT | circuit([i for i in range(2 * L + 1, L, -1)])
 
+
 def c_swap(L, circuit):
     for j in range(L):
-        CX              | circuit([L + 1 + j, 1 + j])
-        CCX   | circuit([0, 1 + j, L + 1 + j])
+        CX | circuit([L + 1 + j, 1 + j])
+        CCX | circuit([0, 1 + j, L + 1 + j])
         CX | circuit([L + 1 + j, 1 + j])
 
-def cUa(a, a_r, N,  Nth, L, circuit):
+
+def cUa(a, a_r, N, Nth, L, circuit):
     c_mult(a, N, Nth, L, circuit)
     c_swap(L, circuit)
-    c_mult_reverse(a_r, N,  Nth, L, circuit)
+    c_mult_reverse(a_r, N, Nth, L, circuit)
 
-def shor(N, fidelity = None):
+
+def shor(N, fidelity=None):
     """ run the algorithm with fidelity
 
     Args:
@@ -204,7 +212,7 @@ def shor(N, fidelity = None):
         if fidelity is not None:
             circuit.fidelity = fidelity
         X | circuit(1)
-        a_r = ModReverse(a, N)
+        a_r = mod_reverse(a, N)
         aa = a
         aa_r = a_r
         Rth = 0
@@ -252,6 +260,7 @@ def shor(N, fidelity = None):
         if N % c == 0 and c != 1 and N != b:
             return c, a, r, rd, []
 
+
 class ZipShorFactor(Algorithm):
     """ shor algorithm with oracle decomposed into gates, first register zip to 1
 
@@ -262,7 +271,7 @@ class ZipShorFactor(Algorithm):
 
     """
     @staticmethod
-    def _run(n, fidelity = None):
+    def _run(n, fidelity=None):
         """ run the algorithm with fidelity
 
         Args:

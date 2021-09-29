@@ -662,7 +662,7 @@ def mul_mod(x, a, ancilla, N, indicator):
     n = len(x)
     if(n <= 2):
         raise Exception("The numbers should be more than 2-length to use HRS circuits.")
-    a_r = ModReverse(a, N)
+    a_r = mod_reverse(a, N)
     mul_mod_raw(x, a, ancilla, N, indicator)
     # Swap
     for i in range(n):
@@ -690,7 +690,7 @@ def c_mul_mod(control, x, a, ancilla, N, indicator):
     n = len(x)
     if(n <= 2):
         raise Exception("The numbers should be more than 2-length to use HRS circuits.")
-    a_r = ModReverse(a, N)
+    a_r = mod_reverse(a, N)
     c_mul_mod_raw(control, x, a, ancilla, N, indicator)
     # CSwap
     for i in range(n):

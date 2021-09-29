@@ -1,21 +1,22 @@
 from QuICT.core import *
+import logging
 
 
-def EX_GCD(a, b, arr):
+def ex_gcd(a, b, arr):
     if b == 0:
         arr[0] = 1
         arr[1] = 0
         return a
-    g = EX_GCD(b, a % b, arr)
+    g = ex_gcd(b, a % b, arr)
     t = arr[0]
     arr[0] = arr[1]
     arr[1] = t - int(a / b) * arr[1]
     return g
 
 
-def ModReverse(a, n):
+def mod_reverse(a, n):
     arr = [0, 1]
-    EX_GCD(a, n, arr)
+    ex_gcd(a, n, arr)
     return (arr[0] % n + n) % n
 
 
@@ -53,7 +54,8 @@ def set(qreg, N):
     n = len(qreg)
     m = len(str)
     if m > n:
-        print('Warning: When set qureg as N=%d, N exceeds the length of qureg n=%d, thus is truncated' % (N, n))
+        logging.warning(
+            f'When set qureg as N={N}, N exceeds the length of qureg n={n}, thus is truncated')
 
     for i in range(min(n, m)):
         if str[m - 1 - i] == '1':
