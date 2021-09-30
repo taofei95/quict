@@ -11,6 +11,7 @@ import numpy as np
 
 from QuICT.core import *
 from QuICT.algorithm import Amplitude, SyntheticalUnitary
+from scipy.stats import unitary_group
 
 
 def test_permMulDetail():
@@ -177,6 +178,21 @@ def test_CCX():
             (CCX & [0, 1, 2]).build_gate() | circuit
             amplitude2 = Amplitude.run(circuit)
             assert np.allclose(amplitude1, amplitude2)
+
+
+def test_unitary():
+    qubit_num = 2
+    every_round = 2
+    for _ in range(every_round):
+        circuit1 = Circuit(qubit_num)
+        circuit1.random_append(rand_size=5)
+        circuit2 = Circuit(qubit_num)
+        for gate in circuit1.gates:
+            gate: BasicGate
+            Unitary(gate.compute_matrix) | circuit2(gate.affectArgs)
+        res1 = Amplitude.run(circuit1)
+        res2 = Amplitude.run(circuit2)
+        assert np.allclose(res1, res2)
 
 
 if __name__ == "__main__":

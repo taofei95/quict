@@ -8,7 +8,7 @@ import random
 
 import numpy as np
 
-from QuICT.core import BasicGate, GATE_STANDARD_NAME_OF
+from QuICT.core import BasicGate, GATE_CLASS_BY_ID
 
 
 class TransformRule(object):
@@ -82,7 +82,7 @@ class TransformRule(object):
         """
         if not self.source:
             raise Exception("it is used for two qubit rules.")
-        gate = GATE_STANDARD_NAME_OF[self.source]().copy()
+        gate = GATE_CLASS_BY_ID[self.source]().copy()
         gate.affectArgs = [i for i in range(gate.targets + gate.controls)]
         gate.pargs = [random.random() * 2 * np.pi for _ in range(gate.params)]
         compositeGate = self.transform(gate)

@@ -19,6 +19,7 @@ import numpy as np
 from QuICT.backends import systemCdll
 from QuICT.core.exception import *
 
+
 # gate exec operator
 
 def exec_single(gate, circuit):
@@ -33,6 +34,7 @@ def exec_single(gate, circuit):
     """
     qState = circuit.qubits[gate.targ].qState
     QState_deal_single_gate(qState, gate, circuit.fidelity)
+
 
 def exec_controlSingle(gate, circuit):
     """ apply a controlled one-qubit gate on this qState
@@ -49,6 +51,7 @@ def exec_controlSingle(gate, circuit):
     QState_merge(qState0, qState1)
     QState_deal_control_single_gate(qState0, gate)
 
+
 def exec_two(gate, circuit):
     """ apply a two-qubit gate on this qState
 
@@ -63,6 +66,7 @@ def exec_two(gate, circuit):
     qState1 = circuit.qubits[gate.targs[1]].qState
     QState_merge(qState0, qState1)
     QState_deal_two_qubit_gate(qState0, gate)
+
 
 def exec_toffoli(gate, circuit):
     """ apply a toffoli gate on this qState
@@ -81,6 +85,7 @@ def exec_toffoli(gate, circuit):
     QState_merge(qState0, qState2)
     QState_deal_ccx_gate(qState0, gate)
 
+
 def exec_measure(gate, circuit):
     """ apply a measure gate on this qState
 
@@ -96,6 +101,7 @@ def exec_measure(gate, circuit):
     """
     qState0 = circuit.qubits[gate.targ].qState
     QState_deal_measure_gate(qState0, gate)
+
 
 def exec_reset(gate, circuit):
     """ apply a reset gate on this qState
@@ -113,8 +119,10 @@ def exec_reset(gate, circuit):
     qState0 = circuit.qubits[gate.targ].qState
     QState_deal_reset_gate(qState0, gate)
 
+
 def exec_barrier(gate, circuit):
     pass
+
 
 def exec_swap(gate, circuit):
     """ apply a swap gate on this qState
@@ -130,6 +138,7 @@ def exec_swap(gate, circuit):
     qState1 = circuit.qubits[gate.targs[1]].qState
     QState_merge(qState0, qState1)
     QState_deal_swap_gate(qState0, gate)
+
 
 def exec_perm(gate, circuit):
     """ apply a Perm gate on this qState
@@ -147,6 +156,7 @@ def exec_perm(gate, circuit):
         QState_merge(qState, new_qState)
     QState_deal_perm_gate(qState, gate)
 
+
 def exec_unitary(gate, circuit):
     """ apply a unitary gate on this qState
 
@@ -162,6 +172,7 @@ def exec_unitary(gate, circuit):
         new_qState = circuit.qubits[gate.targs[i]].qState
         QState_merge(qState, new_qState)
     QState_deal_unitary_gate(qState, gate)
+
 
 def exec_shorInit(gate, circuit):
     """ apply a shorInitial gate on this qState
@@ -180,6 +191,7 @@ def exec_shorInit(gate, circuit):
         QState_merge(qState, new_qState)
     QState_deal_shorInitial_gate(qState, gate)
 
+
 def exec_controlMulPerm(gate, circuit):
     """ apply a controlMulPerm gate on this qState
 
@@ -196,6 +208,7 @@ def exec_controlMulPerm(gate, circuit):
         new_qState = circuit.qubits[gate.targs[i]].qState
         QState_merge(qState, new_qState)
     QState_deal_controlMulPerm_gate(qState, gate)
+
 
 # qState exec operator
 
@@ -238,6 +251,7 @@ def QState_merge(qState, other):
     qState.qureg.extend(other.qureg)
     del other
     qState.values = values
+
 
 def QState_deal_single_gate(qState, gate, fidelity):
     """ apply an one-qubit gate on this qState
@@ -294,6 +308,7 @@ def QState_deal_single_gate(qState, gate, fidelity):
         matrix
     )
 
+
 def QState_deal_two_qubit_gate(qState, gate):
     """ apply an two-qubit gate on this qState
 
@@ -339,6 +354,7 @@ def QState_deal_two_qubit_gate(qState, gate):
         gate.matrix.flatten()
     )
 
+
 def QState_deal_control_single_gate(qState, gate):
     """ apply a controlled one-qubit gate on this qState
 
@@ -383,6 +399,7 @@ def QState_deal_control_single_gate(qState, gate):
         qState.values,
         gate.matrix.flatten()
     )
+
 
 def QState_deal_ccx_gate(qState, gate):
     """ apply a toffoli gate on this qState
@@ -437,6 +454,7 @@ def QState_deal_ccx_gate(qState, gate):
         qState.values
     )
 
+
 def QState_deal_measure_gate(qState, gate):
     """ apply a measure gate on this qState
 
@@ -486,6 +504,7 @@ def QState_deal_measure_gate(qState, gate):
     qubit.measured = result
     qubit.prob = prob.value
 
+
 def QState_deal_reset_gate(qState, gate):
     """ apply a reset gate on this qState
 
@@ -524,6 +543,7 @@ def QState_deal_reset_gate(qState, gate):
     qState.values = qState.values[:(1 << len(qState.qureg))]
     qubit.qState = None
 
+
 def QState_deal_swap_gate(qState, gate):
     """ apply a swap gate on this qState
 
@@ -555,6 +575,7 @@ def QState_deal_swap_gate(qState, gate):
     t = qState.qureg[cindex]
     qState.qureg[cindex] = qState.qureg[tindex]
     qState.qureg[tindex] = t
+
 
 def QState_deal_perm_gate(qState, gate):
     """ apply a Perm gate on this qState
@@ -598,6 +619,7 @@ def QState_deal_perm_gate(qState, gate):
         np.array(gate.pargs, dtype=np.int)
     )
 
+
 def QState_deal_unitary_gate(qState, gate):
     """ apply a custom gate on this qState
 
@@ -614,12 +636,12 @@ def QState_deal_unitary_gate(qState, gate):
     unitary_operator_gate.argtypes = [
         c_int,
         np.ctypeslib.ndpointer(dtype=np.complex128, ndim=1, flags="C_CONTIGUOUS"),
-        POINTER(c_int),
+        np.ctypeslib.ndpointer(dtype=np.int64, ndim=1, flags="C_CONTIGUOUS"),
         c_int,
         np.ctypeslib.ndpointer(dtype=np.complex128, ndim=1, flags="C_CONTIGUOUS"),
     ]
 
-    index = np.array([])
+    index = np.array([], dtype=np.int64)
     for idx in gate.targs:
         qubit = qState.qureg.circuit.qubits[idx]
         temp_idx = 0
@@ -629,7 +651,7 @@ def QState_deal_unitary_gate(qState, gate):
             temp_idx = temp_idx + 1
         if temp_idx == len(qState.qureg):
             raise FrameworkException("the index is out of range")
-        np.append(index, temp_idx)
+        index = np.append(index, temp_idx)
 
     unitary_operator_gate(
         len(qState.qureg),
@@ -638,6 +660,7 @@ def QState_deal_unitary_gate(qState, gate):
         gate.targets,
         gate.matrix.flatten()
     )
+
 
 def QState_deal_shorInitial_gate(qState, gate):
     """ apply a shorInitial gate on this qState
@@ -685,6 +708,7 @@ def QState_deal_shorInitial_gate(qState, gate):
         gate.pargs[1],
         gate.pargs[2]
     )
+
 
 def QState_deal_controlMulPerm_gate(qState, gate):
     """ apply a controlMulPerm gate on this qState
