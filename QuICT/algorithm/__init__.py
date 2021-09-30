@@ -8,4 +8,3 @@ from .amplitude.amplitude import *
 from .quantum_algorithm import *
 from .synthetical_unitary import *
 from .weight_decision import *
-

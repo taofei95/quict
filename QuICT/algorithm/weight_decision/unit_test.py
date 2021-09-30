@@ -11,13 +11,16 @@ import random
 from QuICT.algorithm import WeightDecision
 from QuICT.core import *
 
+
 def randomList(_rand, n):
     for i in range(n - 1, 0, -1):
         do_get = random.randint(0, i)
         _rand[do_get], _rand[i] = _rand[i], _rand[do_get]
 
+
 def deutsch_jozsa_main_oracle(f, qreg, ancilla):
     PermFx(f) | (qreg, ancilla)
+
 
 def test_1():
     for test_number in range(3, 5):
@@ -41,6 +44,7 @@ def test_1():
                                 flag = True
                                 break
                         assert flag
+
 
 if __name__ == '__main__':
     pytest.main(["./unit_test.py"])
