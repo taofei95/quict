@@ -764,16 +764,6 @@ namespace QuICT {
 
             constexpr uint64_t batch_size = 4;
             for (int i = 0; i < (1 << circuit_qubit_num); i += batch_size) {
-                /*
-                 * old  := < t0_0, t0_1, t1_0, t1_1 >
-                 * res0 := old * op0
-                 *       = < a00*t0_0, a01*t0_1, a00*t1_0, a01*t1_1 >
-                 * res1 := old * op1
-                 *       = < a10*t0_0, a11*t0_1, a10*t1_0, a11*t1_1 >
-                 * new  := hadd(res0, res1)
-                 *       = < a00*t0_0 + a01*t0_1, a10*t0_0 + a11*t0_1,
-                 *           a00*t1_0 + a01*t1_1, a10*t1_0 + a11*t1_1 >
-                 */
                 __m256d re = _mm256_loadu_pd(&real[i]);
                 __m256d im = _mm256_loadu_pd(&imag[i]);
                 __m256d res_re[2], res_im[2];
@@ -904,9 +894,8 @@ namespace QuICT {
                                 _mm256_storeu_pd(imag + i, tmp_im[0]);
                             }
                         } else { // ...10
-                            auto *mat_real_ = new Precision[16];
-                            auto *mat_imag_ = new Precision[16];
-                            for (int row = 0; row < 4; row++) {
+                            Precision mat_real_[16], mat_imag_[16];
+                            for(int row = 0; row < 4; row++) {
                                 __m256d ymm0 = _mm256_loadu_pd(gate.mat_real_ + (row << 2));
                                 __m256d ymm1 = _mm256_loadu_pd(gate.mat_imag_ + (row << 2));
                                 ymm0 = _mm256_permute4x64_pd(ymm0, 0b1101'1000);
@@ -941,8 +930,6 @@ namespace QuICT {
                                 _mm256_storeu_pd(real + i, tmp_re[0]);
                                 _mm256_storeu_pd(imag + i, tmp_im[0]);
                             }
-                            delete[] mat_real_;
-                            delete[] mat_imag_;
                         }
                     } else { // ...q.q
                         if (qubits_sorted[0] == qubits[0]) { // ...0.1
@@ -985,9 +972,8 @@ namespace QuICT {
                                 }
                             }
                         } else { // ...1.0
-                            auto *mat_real_ = new Precision[16];
-                            auto *mat_imag_ = new Precision[16];
-                            for (int row = 0; row < 4; row++) {
+                            Precision mat_real_[16], mat_imag_[16];
+                            for(int row = 0; row < 4; row++) {
                                 __m256d ymm0 = _mm256_loadu_pd(gate.mat_real_ + (row << 2));
                                 __m256d ymm1 = _mm256_loadu_pd(gate.mat_imag_ + (row << 2));
                                 ymm0 = _mm256_permute4x64_pd(ymm0, 0b1101'1000);
@@ -1036,8 +1022,6 @@ namespace QuICT {
                                     _mm256_storeu_pd(imag + idx[row], tmp_im);
                                 }
                             }
-                            delete[] mat_real_;
-                            delete[] mat_imag_;
                         }
                     }
                 } else if (qubits_sorted[1] == circuit_qubit_num - 2) { // ...q.
@@ -1102,28 +1086,27 @@ namespace QuICT {
 
                         constexpr uint64_t batch_size = 2;
                         uint64_t task_size = 1 << (circuit_qubit_num - 2);
-                        for (uint64_t task_id = 0; task_id < task_size; task_id += batch_size) {
+                        for(uint64_t task_id = 0; task_id < task_size; task_id += batch_size) {
                             auto idx = index(task_id, circuit_qubit_num, qubits, qubits_sorted);
+
                             __m256d v02_re = _mm256_loadu_pd(real + idx[0]);
                             __m256d v13_re = _mm256_loadu_pd(real + idx[1]);
                             __m256d v02_im = _mm256_loadu_pd(imag + idx[0]);
                             __m256d v13_im = _mm256_loadu_pd(imag + idx[1]);
 
-                            for (int row = 0; row < 2; row++) {
+                            for(int row = 0; row < 2; row ++) {
                                 __m256d a02_re[2], a02_im[2], a13_re[2], a13_im[2];
                                 __m256d tmp_re, tmp_im;
-                                for (int i = 0; i < 2; i++) {
-                                    a02_re[i] = _mm256_loadu_pd(mat02_real_ + ((row + (i << 1)) << 2));
-                                    a02_im[i] = _mm256_loadu_pd(mat02_imag_ + ((row + (i << 1)) << 2));
+                                for(int i = 0; i < 2; i ++) {
+                                    a02_re[i] = _mm256_loadu_pd(mat02_real_ + ((row+(i<<1))<<2));
+                                    a02_im[i] = _mm256_loadu_pd(mat02_imag_ + ((row+(i<<1))<<2));
                                     COMPLEX_YMM_MUL(a02_re[i], a02_im[i], v02_re, v02_im, tmp_re, tmp_im);
-                                    a02_re[i] = tmp_re;
-                                    a02_im[i] = tmp_im;
+                                    a02_re[i] = tmp_re; a02_im[i] = tmp_im;
 
-                                    a13_re[i] = _mm256_loadu_pd(mat13_real_ + ((row + (i << 1)) << 2));
-                                    a13_im[i] = _mm256_loadu_pd(mat13_imag_ + ((row + (i << 1)) << 2));
+                                    a13_re[i] = _mm256_loadu_pd(mat13_real_ + ((row+(i<<1))<<2));
+                                    a13_im[i] = _mm256_loadu_pd(mat13_imag_ + ((row+(i<<1))<<2));
                                     COMPLEX_YMM_MUL(a13_re[i], a13_im[i], v13_re, v13_im, tmp_re, tmp_im);
-                                    a13_re[i] = tmp_re;
-                                    a13_im[i] = tmp_im;
+                                    a13_re[i] = tmp_re; a13_im[i] = tmp_im;
 
                                     a02_re[i] = _mm256_add_pd(a02_re[i], a13_re[i]);
                                     a02_im[i] = _mm256_add_pd(a02_im[i], a13_im[i]);
@@ -1140,7 +1123,7 @@ namespace QuICT {
                             }
                         }
                     }
-                } else {
+                } else { // xxx..
                     constexpr uint64_t batch_size = 4;
                     uint64_t task_size = 1 << (circuit_qubit_num - 2);
                     for (uint64_t task_id = 0; task_id < task_size; task_id += batch_size) {
@@ -1158,7 +1141,7 @@ namespace QuICT {
                                 __m256d op_re = _mm256_set1_pd(gate.mat_real_[(i << 2) + j]);
                                 __m256d op_im = _mm256_set1_pd(gate.mat_imag_[(i << 2) + j]);
                                 __m256d res_re, res_im;
-                                COMPLEX_YMM_MUL(op_re, op_im, v_re[i], v_im[i], res_re, res_im);
+                                COMPLEX_YMM_MUL(op_re, op_im, v_re[j], v_im[j], res_re, res_im);
                                 acc_re = _mm256_add_pd(acc_re, res_re);
                                 acc_im = _mm256_add_pd(acc_im, res_im);
                             }

@@ -159,11 +159,6 @@ TEST(HybridTest, CrzTest) {
     test_by_data_file("crz.txt", simulator);
 }
 
-TEST(HybridTest, CU3Test) {
-    test_by_data_file("cu3.txt", simulator);
-}
-
-
 TEST(HybridTest, QftTest) {
     test_by_data_file("qft.txt", simulator);
 }
@@ -177,10 +172,10 @@ TEST(HybridTest, XTest) {
     test_by_data_file("x.txt", simulator);
 }
 
-TEST(HybridTest, U1Test) {
-    test_by_data_file("u1.txt", simulator);
+TEST(HybridTest, CU3Test) {
+    test_by_data_file("cu3.txt", simulator);
 }
 
-//TEST(HybridTest, U2Test) {
-//    test_by_data_file("u2.txt", simulator);
-//}
+TEST(HybridTest, UnitaryTest) {
+    test_by_data_file("u.txt", simulator);
+}
