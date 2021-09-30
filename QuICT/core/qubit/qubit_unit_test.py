@@ -4,23 +4,25 @@
 # @Author  : Han Yu
 # @File    : qubit_unit_test.py
 
-from QuICT.core import Circuit, X, H, Measure
+from QuICT.core import Circuit, H, Measure, X
+
 
 def test_Qubit_Attributes_prob():
     circuit = Circuit(3)
-    X       | circuit(0)
+    X | circuit(0)
     Measure | circuit(0)
     circuit.exec()
     if circuit[0].measured != 1:
         assert 0
     if abs(circuit[0].prob - 1) > 1e-10:
         assert 0
-    H       | circuit(1)
+    H | circuit(1)
     Measure | circuit(1)
     circuit.exec()
     if abs(circuit[1].prob - 0.5) > 1e-10:
         print(circuit[1].prob)
         assert 0
+
 
 def test_Qureg_Function_slice():
     circuit = Circuit(10)
@@ -33,6 +35,9 @@ def test_Qureg_Function_slice():
             assert 0
         i = i + 1
 
+
 if __name__ == "__main__":
     # pytest.main(["./_unit_test.py", "./circuit_unit_test.py", "./gate_unit_test.py", "./qubit_unit_test.py"])
+    import pytest
+
     pytest.main(["./qubit_unit_test.py"])

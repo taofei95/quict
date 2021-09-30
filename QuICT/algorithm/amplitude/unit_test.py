@@ -9,6 +9,7 @@ import pytest
 from QuICT.algorithm import Amplitude
 from QuICT.core import *
 
+
 def test_amplitude():
     for i in range(1, 10):
         circuit = Circuit(i)
@@ -22,6 +23,7 @@ def test_amplitude():
                 print(i, k, abs(amplitude[k]) * abs(amplitude[k]), (1.0 / (1 << i)))
                 assert 0
         assert 1
+
 
 if __name__ == '__main__':
     pytest.main(["./unit_test.py"])

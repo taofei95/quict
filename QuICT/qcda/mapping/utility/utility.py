@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from enum import Enum
-from typing import List, Tuple, Set, Dict
+from typing import List
 
 from QuICT.core.exception import *
 from QuICT.core.gate.gate import *
@@ -22,7 +22,6 @@ def is_two_qubit_gate_equal(s1: List[int], s2: List[int]) -> bool:
 
 def f(x: np.ndarray) -> np.ndarray:
     return np.piecewise(x, [x < 0, x == 0, x > 0], [0, 0.001, lambda x: x])
-
 
 
 class EdgeProb:
@@ -59,7 +58,7 @@ class EdgeProb:
 
     def _get_logical_gate_distance_in_device(self, cur_mapping: List[int], gate: int) -> int:
         """
-        return the distance between the control qubit and target qubit of the given gate  on the physical device 
+        return the distance between the control qubit and target qubit of the given gate  on the physical device
         """
         if self._circuit[gate]['gate'].type() == GATE_ID['Swap']:
             qubits = self._circuit[gate]['gate'].targs
@@ -429,8 +428,8 @@ initial_map_lists = {
         [13, 16, 17, 12, 1, 10, 5, 8, 11, 6, 7, 2, 9, 19, 3, 14, 18, 15, 4, 0],
         [6, 7, 13, 2, 1, 8, 18, 0, 11, 10, 16, 12, 17, 5, 19, 4, 9, 3, 14, 15],
         [17, 16, 13, 8, 1, 2, 6, 11, 7, 12, 15, 5, 18, 0, 10, 14, 3, 9, 4, 19],
-        [8, 2, 0, 5, 13, 16, 10, 6, 1, 11, 12, 7, 17, 15, 19, 4, 14, 9, 3, 18]]
-    ,
+        [8, 2, 0, 5, 13, 16, 10, 6, 1, 11, 12, 7, 17, 15, 19, 4, 14, 9, 3, 18]
+    ],
     "extended": [
         [14, 19, 13, 8, 3, 2, 17, 1, 15, 9, 18, 16, 5, 11, 10, 4, 6, 12, 7, 0],
         [7, 13, 1, 12, 6, 2, 5, 19, 4, 15, 17, 9, 18, 11, 10, 14, 3, 0, 8, 16],

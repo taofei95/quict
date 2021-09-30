@@ -15,7 +15,7 @@ class DAG(object):
         """
         Params:
             circuit: The logical circuit.
-            mode:  The mode how the code deal with circuit. 
+            mode:  The mode how the code deal with circuit.
         """
         self._mode = mode
         if circuit is not None:
@@ -62,8 +62,8 @@ class DAG(object):
         """
         The qubit mask stores the index of current closet gate in the DAG, e.g.,
         given the  circuit with the sequential two-qubit gates {(0,1),(1,2),(2,3),(3,4),(4,1)},
-        the qubit mask should be (0,0,1,2,3), which means the first and second physical 
-        should be allocated to the first gate for it's the first gate on the qubit wires and so on. 
+        the qubit mask should be (0,0,1,2,3), which means the first and second physical
+        should be allocated to the first gate for it's the first gate on the qubit wires and so on.
 
         Therefore, the initial_qubit_mask is the qubit mask of the initial whole circuit.
         """
@@ -314,10 +314,10 @@ class DAG(object):
         mark = np.zeros(self.size + 1, dtype=np.int32) - 1
         # front_layer = [ self._index[idx]   for idx in front_layer]
         qubit_mask = [self._index[idx] if idx != -1 else -1 for idx in qubit_mask]
-        # qubit_mask = np.zeros(self.size, dtype = np.int32) -1 
+        # qubit_mask = np.zeros(self.size, dtype = np.int32) -1
         # for idx in front_layer:
-        #     qubit_mask[self.node_qubits[idx][0]] = idx 
-        #     qubit_mask[self.node_qubits[idx][1]] = idx 
+        #     qubit_mask[self.node_qubits[idx][0]] = idx
+        #     qubit_mask[self.node_qubits[idx][1]] = idx
 
         subcircuit = np.zeros(shape=(gates_threshold, 5), dtype=np.int32) - 1
         qubits_of_gates = np.zeros(shape=(gates_threshold, 2), dtype=np.int32) - 1
@@ -360,7 +360,7 @@ class DAG(object):
 
     def draw(self):
         """
-        Draw the DAG of the circuit with 
+        Draw the DAG of the circuit with
         """
         plt.figure(figsize=(200, 10))
         nx.draw(G=self._dag, pos=nx.multipartite_layout(self._dag, subset_key='depth'), node_size=50, width=1,

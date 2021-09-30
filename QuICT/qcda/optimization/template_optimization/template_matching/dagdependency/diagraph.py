@@ -13,8 +13,8 @@ class DAGNode(object):
     Class for Node in the DAG
 
     In practical use, a node could have more attributes (as in DAGDepNode).
-    Here we emphasize the existence of node_id for the convenience to index it, 
-    which would be useful later. In further (perhaps) C++ implementation, 
+    Here we emphasize the existence of node_id for the convenience to index it,
+    which would be useful later. In further (perhaps) C++ implementation,
     similar attribute should also be reserved.
     """
     def __init__(self, node, node_id):
@@ -22,7 +22,7 @@ class DAGNode(object):
         Create a node in the DAG
 
         Args:
-            node(Any): Information of this node except for node_id, 
+            node(Any): Information of this node except for node_id,
                         just an abstraction here
             node_id(int): ID of this node
         """
@@ -41,7 +41,6 @@ class DAG(object):
         """
         self._graph = nx.DiGraph()
 
-
     def __getitem__(self, node_id):
         """
         Index the node and edge by node_id and 2-Tuple of node_id respectively
@@ -56,7 +55,6 @@ class DAG(object):
             assert dest in self.nodes(), "Invalid node_id of destination"
             return self._graph.edges[src, dest]
 
-
     def draw(self, filename='a.jpg', layout=nx.shell_layout):
         """
         Draw the graph with matplotlib
@@ -64,13 +62,12 @@ class DAG(object):
             layout(callable): Choose a layout of nodes
 
             Possible choice list in networkx:
-            bipartite_layout, circular_layout, kamada_kawai_layout, 
-            planar_layout, random_layout, rescale_layout, shell_layout, 
+            bipartite_layout, circular_layout, kamada_kawai_layout,
+            planar_layout, random_layout, rescale_layout, shell_layout,
             spring_layout, spectral_layout, spiral_layout, multipartite_layout
         """
         nx.draw(self._graph, with_labels=True, pos=layout(self._graph))
         plt.savefig(filename)
-
 
     """
     Nodes and Edges
@@ -82,14 +79,12 @@ class DAG(object):
         """
         return list(self._graph.nodes)
 
-
     def __len__(self):
         """
         Returns:
             Number of the nodes in the graph
         """
         return self._graph.number_of_nodes()
-
 
     def get_node_data(self, node_id):
         """
@@ -102,14 +97,12 @@ class DAG(object):
         """
         return self._graph.nodes[node_id]["node"]
 
-
     def edges(self):
         """
         Returns:
             List of all edges in the graph
         """
         return list(self._graph.edges)
-
 
     def out_edges(self, node_id):
         """
@@ -120,7 +113,6 @@ class DAG(object):
         """
         return self._graph.out_edges(node_id)
 
-
     def in_edges(self, node_id):
         """
         Args:
@@ -129,7 +121,6 @@ class DAG(object):
             List: In edges ending in given node
         """
         return self._graph.in_edges(node_id)
-
 
     def out_degree(self, node_id):
         """
@@ -140,7 +131,6 @@ class DAG(object):
         """
         return self._graph.out_degree(node_id)
 
-
     def in_degree(self, node_id):
         """
         Args:
@@ -149,7 +139,6 @@ class DAG(object):
             int: In degree of given node
         """
         return self._graph.in_degree(node_id)
-
 
     """
     Add node(s) and edge(s) by networkx method
@@ -163,7 +152,6 @@ class DAG(object):
         assert node.node_id not in self.nodes(), "Replicated node_id"
         self._graph.add_node(node.node_id, node=node)
 
-
     def add_nodes_from(self, nodes):
         """
         Args:
@@ -176,7 +164,6 @@ class DAG(object):
             nodes_for_adding.append((node.node_id, {"node": node}))
         self._graph.add_nodes_from(nodes_for_adding)
 
-
     def add_edge(self, src, dest):
         """
         Args:
@@ -185,14 +172,12 @@ class DAG(object):
         """
         self._graph.add_edge(src, dest)
 
-
     def add_edges_from(self, edges):
         """
         Args:
             edges(list): Edges to be added
         """
         self._graph.add_edges_from(edges)
-
 
     """
     Successors and Predecessors
@@ -208,7 +193,6 @@ class DAG(object):
             List: Direct successors of node
         """
         return list(self._graph.successors(node_id))
-
 
     def descendants(self, node_id):
         """
@@ -232,7 +216,6 @@ class DAG(object):
                     q.put(successor)
                     visited.add(successor)
         return desc
-            
 
     def predecessors(self, node_id):
         """
@@ -245,7 +228,6 @@ class DAG(object):
             List: Direct predecessors of node
         """
         return list(self._graph.predecessors(node_id))
-
 
     def ancestors(self, node_id):
         """
@@ -270,7 +252,6 @@ class DAG(object):
                     visited.add(predecessor)
         return ance
 
-
     """
     Correctness and topological sort of DAG
     """
@@ -288,7 +269,6 @@ class DAG(object):
         else:
             return True
 
-    
     def topological_sort(self):
         """
         Sort nodes in topological order.

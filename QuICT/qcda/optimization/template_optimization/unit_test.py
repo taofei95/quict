@@ -14,8 +14,7 @@ from QuICT.core import *
 from QuICT.algorithm import *
 from QuICT.qcda.optimization.template_optimization.templates import *
 from QuICT.qcda.optimization.template_optimization import TemplateOptimization
-from QuICT.qcda.optimization.template_optimization.template_matching import TemplateMatching, TemplateSubstitution, MaximalMatches
-from QuICT.qcda.optimization.template_optimization.template_matching.dagdependency import DAGDependency, circuit_to_dagdependency
+
 
 def mat_from_circuit(circuit):
     n = circuit.circuit_width()
@@ -42,6 +41,7 @@ def mat_from_circuit(circuit):
             raise Exception("wuhu")
     return mat
 
+
 def equiv(circuit1, circuit2):
     if circuit1.circuit_width() != circuit2.circuit_width():
         return False
@@ -50,6 +50,7 @@ def equiv(circuit1, circuit2):
     mat1 = SyntheticalUnitary.run(circuit1, showSU=False)
     mat2 = SyntheticalUnitary.run(circuit2, showSU=False)
     return not np.any(mat1 != mat2)
+
 
 def _getRandomList(l, n):
     """ get l number from 0, 1, ..., n - 1 randomly.
@@ -65,6 +66,7 @@ def _getRandomList(l, n):
         _rand[do_get], _rand[i] = _rand[i], _rand[do_get]
     return _rand[:l]
 
+
 def test_can_run():
     names = []
     for root, dirs, files in os.walk('./templates/nct'):
@@ -76,7 +78,7 @@ def test_can_run():
 
     for i in range(3, 4):
         circuit = Circuit(i)
-        circuit.random_append(100, typeList = [GATE_ID["X"], GATE_ID["CX"], GATE_ID["CCX"]])
+        circuit.random_append(100, typeList=[GATE_ID["X"], GATE_ID["CX"], GATE_ID["CCX"]])
         # indexes = _getRandomList(3, len(names))
 
         templates = []
@@ -98,6 +100,7 @@ def test_can_run():
             circuit_opt.print_information()
             print(len(circuit.gates), len(circuit_opt.gates))
             assert 0
+
 
 if __name__ == '__main__':
     pytest.main(["./unit_test.py"])

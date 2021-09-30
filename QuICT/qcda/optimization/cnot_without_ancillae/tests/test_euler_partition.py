@@ -1,6 +1,6 @@
 import random
 
-from .utility import get_bipartite, ensure_bipartite_max_degree_even, _b_bipartite_test
+from .utility import get_bipartite, _b_bipartite_test
 from ..edge_coloring import *
 
 

@@ -4,10 +4,11 @@
 # @Author  : Han Yu
 # @File    : instruction_set.py
 
-from QuICT.core import BasicGate, Circuit, GATE_ID, GATE_STANDARD_NAME_OF
+from QuICT.core import BasicGate, GATE_ID, GATE_STANDARD_NAME_OF
 from .transform_rule import TransformRule
 from .transform_rule.two_qubit_gate_rules import *
 from .transform_rule.SU2_rules import *
+
 
 def _capitalize_name_of_gate(class_name):
     """ According to the class_name, generator the capitalized name
@@ -23,6 +24,7 @@ def _capitalize_name_of_gate(class_name):
         raise Exception("the parameter is not legal.")
     class_name = class_name[:index]
     return class_name.capitalize()
+
 
 def _generate_default_rule(source, target):
     """ According to the source gate and target gate(2-qubit), choose a appropriate default rule
@@ -42,6 +44,7 @@ def _generate_default_rule(source, target):
     target = _capitalize_name_of_gate(GATE_STANDARD_NAME_OF[target].__name__)
     rule_name = f"{source}2{target}Rule"
     return eval(rule_name)
+
 
 class InstructionSet(object):
     """ InstructionSet describes a set of gates(expectly to be universal set)
@@ -131,7 +134,7 @@ class InstructionSet(object):
         self.__SU2_rule = None
         self.__rule_map = {}
 
-    def select_transform_rule(self, source) ->  TransformRule:
+    def select_transform_rule(self, source) -> TransformRule:
         """ choose a rule which transforms source gate into target gate(2-qubit)
 
         Args:

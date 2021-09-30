@@ -9,13 +9,14 @@ import numpy as np
 from .._algorithm import Algorithm
 from QuICT.core import Circuit
 
+
 class SyntheticalUnitary(Algorithm):
     """ get the unitary matrix of the circuit
 
 
     """
     @classmethod
-    def run(cls, circuit: Circuit, showSU = False):
+    def run(cls, circuit: Circuit, showSU=False):
         """
 
         Args:
@@ -28,7 +29,7 @@ class SyntheticalUnitary(Algorithm):
         return params
 
     @staticmethod
-    def __run__(circuit: Circuit, showSU = True):
+    def __run__(circuit: Circuit, showSU=True):
         """
 
         Args:

@@ -6,6 +6,7 @@
 
 from QuICT.core import *
 
+
 class BasicInterface(object):
     """ the basic interface of general processor
 
@@ -41,7 +42,7 @@ class BasicInterface(object):
         self.text_content = None
 
     @staticmethod
-    def load_circuit(circuit : Circuit):
+    def load_circuit(circuit: Circuit):
         """ load the circuit from our framework
 
         Args:
@@ -53,7 +54,7 @@ class BasicInterface(object):
         return instance
 
     @staticmethod
-    def load_file(filename : str):
+    def load_file(filename: str):
         """ load the content from our file
 
         Args:

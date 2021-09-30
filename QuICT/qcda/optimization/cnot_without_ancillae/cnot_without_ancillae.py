@@ -150,9 +150,9 @@ class CnotWithoutAncillae:
         Notes:
         P @ M == L @ D @ U, where P == P^{-1}.
         So, M == P @ L @ D @ U. We sequentially eliminate P, L, D, U.
-        If we reverse the eliminations' order to get a row transform sequence, 
+        If we reverse the eliminations' order to get a row transform sequence,
         changing an I into M, then that is exactly what we need for CNOT circuit.
-        
+
         """
 
         parallel_elimination: List[List[Tuple[int, int]]] = []

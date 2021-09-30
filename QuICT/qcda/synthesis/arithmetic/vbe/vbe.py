@@ -57,7 +57,8 @@ def ControlSet(control, qreg, N):
     n = len(qreg)
     m = len(string)
     if m > n:
-        print(f'When cset qureg as N={N}, N exceeds the length of qureg n={n}, thus is truncated')
+        print(
+            f'When cset qureg as N={N}, N exceeds the length of qureg n={n}, thus is truncated')
 
     for i in range(min(n, m)):
         if string[m - 1 - i] == '1':
@@ -78,7 +79,8 @@ def CControlSet(control1, control2, qreg, N):
     n = len(qreg)
     m = len(string)
     if m > n:
-        print(f'When ccset qureg as N={N}, N exceeds the length of qureg n={n}, thus is truncated')
+        print(
+            f'When ccset qureg as N={N}, N exceeds the length of qureg n={n}, thus is truncated')
 
     for i in range(min(n, m)):
         if string[m - 1 - i] == '1':
@@ -231,11 +233,7 @@ def AdderMod(N, a, b, c, overflow, qubit_N, t):
 
 
 def ReverseAdderMod(N, a, b, c, overflow, qubit_N, t):
-    """ Reverse of AdderMod
-    
-    
-
-    """
+    """ Reverse of AdderMod """
     n = len(qubit_N)
 
     Set(qubit_N, N)
@@ -263,7 +261,6 @@ def MulAddMod(a, N, x, qubit_a, b, c, overflow, qubit_N, t):
     (x,qubit_a=0,b,c=0,overflow=0,qubit_N=0,t=0) ->
     (x,qubit_a=0,b'=b+a*x mod N,c,overflow',qubit_N,t)
 
-
     Args:
         a(int): the parameter a
         N(int): the parameter N
@@ -290,7 +287,6 @@ def ControlMulMod(a, N, control, x, qubit_a, b, c, overflow, qubit_N, t):
 
     (control,x,qubit_a=0,b=0,c=0,overflow=0,qubit_N=0,t=0) ->
      (control,x,qubit_a=0,b'=(a**control)*x mod N,c,overflow',qubit_N,t)
-
 
     Args:
         a(int): the parameter a
@@ -372,19 +368,21 @@ def ExpMod(a, N, x, result, qubit_a, b, c, overflow, qubit_N, t):
     a_inv = Inverse(a, N)
 
     for i in range(m):
-        ControlMulMod(a, N, x[m - 1 - i], result, qubit_a, b, c, overflow, qubit_N, t)
+        ControlMulMod(a, N, x[m - 1 - i], result,
+                      qubit_a, b, c, overflow, qubit_N, t)
         for j in range(n):
             Swap | (result[j], b[j])
-        ReverseControlMulMod(a_inv, N, x[m - 1 - i], result, qubit_a, b, c, overflow, qubit_N, t)
+        ReverseControlMulMod(
+            a_inv, N, x[m - 1 - i], result, qubit_a, b, c, overflow, qubit_N, t)
         a = (a ** 2) % N
         a_inv = (a_inv ** 2) % N
 
 
 class VBEAdder(Synthesis):
-    @classmethod
-    def execute(cls, n):
+    @staticmethod
+    def execute(n):
         """ a circuit calculate a+b, a and b are gotten from some qubits.
-        
+
         (a,b,c=0,overflow) -> (a,b'=a+b,c=0,overflow')
 
         Quregs:
@@ -410,8 +408,8 @@ class VBEAdder(Synthesis):
 
 
 class VBEAdderMod(Synthesis):
-    @classmethod
-    def execute(cls, N, n):
+    @staticmethod
+    def execute(N, n):
         """ a circuit calculate (a+b) mod N.
         N are inherently designed in the circuit.
 
@@ -437,18 +435,19 @@ class VBEAdderMod(Synthesis):
         qubit_overflow = circuit(4 * n)
         qubit_t = circuit(4 * n + 1)
 
-        AdderMod(N, qubit_a, qubit_b, qubit_c, qubit_overflow, qubit_N, qubit_t)
+        AdderMod(N, qubit_a, qubit_b, qubit_c,
+                 qubit_overflow, qubit_N, qubit_t)
 
         return CompositeGate(circuit.gates)
 
 
 class VBEMulAddMod(Synthesis):
-    @classmethod
-    def execute(cls, a, N, n, m):
-        """ a circuit calculate b + x*a mod N. 
+    @staticmethod
+    def execute(a, N, n, m):
+        """ a circuit calculate b + x*a mod N.
         x are gotten from some qubits, a and N are inherently designed in the circuit.
-        
-        (x,b,qubit_a=0,c=0,overflow=0,qubit_N=0,t=0) -> 
+
+        (x,b,qubit_a=0,c=0,overflow=0,qubit_N=0,t=0) ->
         (x,b'=b+a*x mod N,qubit_a,c,overflow,qubit_N,t)
 
         Quregs:
@@ -473,14 +472,15 @@ class VBEMulAddMod(Synthesis):
         qubit_N = circuit([i for i in range(3 * n + m + 1, 4 * n + m + 1)])
         qubit_t = circuit(4 * n + m + 1)
 
-        MulAddMod(a, N, qubit_x, qubit_a, qubit_b, qubit_c, qubit_overflow, qubit_N, qubit_t)
+        MulAddMod(a, N, qubit_x, qubit_a, qubit_b, qubit_c,
+                  qubit_overflow, qubit_N, qubit_t)
 
         return CompositeGate(circuit.gates)
 
 
 class VBEExpMod(Synthesis):
-    @classmethod
-    def execute(cls, a, N, n, m):
+    @staticmethod
+    def execute(a, N, n, m):
         """ give parameters to the VBE
         Args:
             n(int): number of qubits of N
@@ -507,5 +507,6 @@ class VBEExpMod(Synthesis):
         qubit_N = circuit([i for i in range(m + 4 * n + 1, m + 5 * n + 1)])
         t = circuit(m + 5 * n + 1)
         X | qubit_r[n - 1]
-        ExpMod(a, N, qubit_x, qubit_r, qubit_a, qubit_b, qubit_c, overflow, qubit_N, t)
+        ExpMod(a, N, qubit_x, qubit_r, qubit_a,
+               qubit_b, qubit_c, overflow, qubit_N, t)
         return CompositeGate(circuit.gates)

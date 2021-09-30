@@ -11,8 +11,9 @@ from .synthesis._synthesis import Synthesis
 from .optimization._optimization import Optimization
 from .mapping._mapping import Mapping
 from .synthesis import GateDecomposition, GateTransform
-from .optimization import CommutativeOptimization, TemplateOptimization
+from .optimization import CommutativeOptimization
 from .mapping import MCTSMapping
+
 
 class QCDA(object):
     """ Customize the process of synthesis, optimization and mapping
@@ -28,7 +29,7 @@ class QCDA(object):
     is highly restricted in case of unexpected behaviour resulting from inappropriate
     modification. Now the users could only overload the `compile` function to completely
     control the workflow of `process`. Still, it is needed that a certain design for
-    allowing the users to revise the `process` with their own operations, only if the 
+    allowing the users to revise the `process` with their own operations, only if the
     executions are similar to the original ones.(How to ensure that the user gives a proper
     `process`? That's why it is not implemented in this version.)
 
@@ -64,7 +65,7 @@ class QCDA(object):
                 2. numpy.ndarray: the objective is a unitary matrix
                 3. Circuit: the objective is a Circuit
                 4. CompositeGate: the objective is a CompositeGate
-        
+
         Returns:
             CompositeGate: gates equivalent to the objective, with BasicGates only
 
@@ -97,7 +98,7 @@ class QCDA(object):
     def default_synthesis(instruction):
         """ Generate the default synthesis process
 
-        The default synthesis process contains the GateDecomposition and GateTransform, which would 
+        The default synthesis process contains the GateDecomposition and GateTransform, which would
         transform the gates in the original Circuit/CompositeGate to a certain InstructionSet.
 
         Args:
@@ -142,7 +143,7 @@ class QCDA(object):
         assert layout is not None,\
             ValueError('No Layout provided for Mapping')
         subprocess = []
-        subprocess.append([MCTSMapping, [layout], {'init_mapping_method':'anneal'}])
+        subprocess.append([MCTSMapping, [layout], {'init_mapping_method': 'anneal'}])
         return subprocess
 
     def compile(self, objective, instruction=None, layout=None, synthesis=True, optimization=True, mapping=True):
@@ -170,13 +171,13 @@ class QCDA(object):
         """
         gates = self.load_gates(objective)
 
-        if synthesis == True:
+        if synthesis:
             self.process.extend(self.default_synthesis(instruction))
-        if optimization == True:
+        if optimization:
             self.process.extend(self.default_optimization())
-        if mapping == True:
+        if mapping:
             self.process.extend(self.default_mapping(layout))
-        
+
         gates = self.__custom_compile(gates)
 
         return gates

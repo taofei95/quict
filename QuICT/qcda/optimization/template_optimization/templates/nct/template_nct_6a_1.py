@@ -22,7 +22,7 @@ Template 6a_1:
          └───┘     └───┘     └───┘
 """
 
-from QuICT.core import * # pylint: disable=unused-wildcard-import
+from QuICT.core import *    # pylint: disable=unused-wildcard-import
 
 
 def template_nct_6a_1():

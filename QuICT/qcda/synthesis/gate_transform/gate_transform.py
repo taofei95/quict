@@ -7,15 +7,14 @@
 import numpy as np
 
 from .._synthesis import Synthesis
-from .instruction_set import InstructionSet
 from .special_set import *
-from .transform_rule import TransformRule
 
 from QuICT.core import *
 
+
 class GateTransform(Synthesis):
     @classmethod
-    def execute(cls, circuit, instruction_set = USTCSet):
+    def execute(cls, circuit, instruction_set=USTCSet):
         """ equivalently transfrom circuit into goal instruction set
 
         The algorithm will try two possible path, and return a better result:
@@ -29,7 +28,8 @@ class GateTransform(Synthesis):
         Returns:
             CompositeGate: the equivalent compositeGate with goal instruction set
         """
-        compositeGate = CompositeGate(circuit if isinstance(circuit, CompositeGate) else circuit.gates, with_copy = False)
+        compositeGate = CompositeGate(circuit if isinstance(circuit, CompositeGate)
+                                      else circuit.gates, with_copy=False)
 
         # transform 2-qubits gate
         compositeGateStep1 = CompositeGate()

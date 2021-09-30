@@ -10,6 +10,7 @@ from . import UniformlyRz
 from .._synthesis import Synthesis
 from QuICT.core import GateBuilder, GATE_ID, CompositeGate, H, Rz, U3
 
+
 def gates_from_unitary(unitary, target):
     """ gates from a one-qubit unitary
 
@@ -37,6 +38,7 @@ def gates_from_unitary(unitary, target):
     assert not np.any(abs(gate.matrix.reshape(2, 2) - unitary) > 1e-6)
     return gate
 
+
 def u2_expression(X):
     """ express U(2) with SU(2) and phase
 
@@ -57,6 +59,7 @@ def u2_expression(X):
         X[:] /= np.exp(1j * phase)
 
     return 2 * phase
+
 
 def get_parameters_from_unitaries(u1, u2):
     """ decomposition uniformly controlled one qubit unitaries
@@ -109,6 +112,7 @@ def get_parameters_from_unitaries(u1, u2):
 
     return v, u, [-np.pi - 1.0 * (x1 + phi / 2), 1.0 * (x1 - phi / 2)]
 
+
 def uniformlyUnitarySolve(low, high, unitary, mapping):
     """ synthesis uniformlyUnitary gate, bits range [low, high)
 
@@ -145,6 +149,7 @@ def uniformlyUnitarySolve(low, high, unitary, mapping):
     gates.extend(uniformlyUnitarySolve(low + 1, high, Rxu, mapping))
     gates.extend(UniformlyRz.execute(angle_list, [mapping[i] for i in range(high - 1, low - 1, -1)]))
     return gates
+
 
 class UniformlyUnitary(Synthesis):
     @classmethod

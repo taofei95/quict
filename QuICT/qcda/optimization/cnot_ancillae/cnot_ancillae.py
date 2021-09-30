@@ -15,6 +15,7 @@ s = 0
 n = 0
 CNOT = []
 
+
 def add_CNOT(a, b):
     """ add a cont gate with control bit a and target bit b into list CNOT
 
@@ -26,7 +27,7 @@ def add_CNOT(a, b):
     global CNOT
     CNOT.append((a, b))
 
-#   inverse [start, end)
+
 def Inverse(start, end):
     """ apply the inverse of gate list in CNOT[start:end] on the circuit
 
@@ -38,7 +39,7 @@ def Inverse(start, end):
     for i in range(end - 1, start - 1, -1):
         add_CNOT(CNOT[i][0], CNOT[i][1])
 
-#   Lemma 5 x copy to c[:length]
+
 def Copy(x, copy_list):
     """ copy process in Lemma 5
 
@@ -52,6 +53,7 @@ def Copy(x, copy_list):
             add_CNOT(own[i], copy_list[run_l])
             own.append(copy_list[run_l])
             run_l += 1
+
 
 def ConstructPj(c, x, z, sqrtn, d2logn):
     """
@@ -166,7 +168,7 @@ def GenerateYBase(Y_part, c, length, x):
 
         r_sqrtn = int(pow(2, cols))
 
-        sl        = [0] * (r_sqrtn - 1)
+        sl = [0] * (r_sqrtn - 1)
         sl_origin = [[] * 0 for _ in range(r_sqrtn - 1)]
         for u in range(n):
             l = 0
@@ -203,11 +205,11 @@ def GenerateYBase(Y_part, c, length, x):
 
         Step2_end = len(CNOT)
 
-        #   Step 3
+        # Step 3
         for u in range(n):
             l = 0
             for i in range(cols):
-                if Y_part[u,  d2logn * k + i]:
+                if Y_part[u, d2logn * k + i]:
                     l += 1 << i
             if l == 0:
                 continue
@@ -225,6 +227,7 @@ def GenerateYBase(Y_part, c, length, x):
 
     # Step 4.2 restore of Step1
     Inverse(Step1_start, Step1_end)
+
 
 def GenerateYPart(Y_part, x, c, index, length, z):
     """ :: apply Corollary 3 to make (x, z, 0) -> (x, (T_part)z, 0)
@@ -257,6 +260,7 @@ def GenerateYPart(Y_part, x, c, index, length, z):
     # operate R_a^{-1} in Corollary 3
     Inverse(init_len, end_len)
 
+
 def MainProcedure(M, x, c, z):
     """ apply Lemma4 to make (x, z, 0) -> (x, z xor Mx, 0)
 
@@ -280,6 +284,8 @@ def MainProcedure(M, x, c, z):
     t = round(log2n * log2n)
     for i in range(ceil(n / (s * t))):
         GenerateYPart(M[:, i * s * t:], x[i * t * s:], c, i, t, z)
+
+
 def InverseMatrixF2(a):
     """ get the inverse matrix of a in F_2
 
@@ -317,6 +323,7 @@ def InverseMatrixF2(a):
             b[i][j] = b[i][j + n]
     return b[:, :n]
 
+
 def solve(matrix):
     """ apply Theorem 7 to build new circuit
 
@@ -339,7 +346,8 @@ def solve(matrix):
     # do C_2 operate
     MainProcedure(InvMatrix, z, c, x)
 
-def read(circuit : Circuit):
+
+def read(circuit: Circuit):
     """ transform the CNOT circuit into a matrix with 0 and 1
 
     apply xor operator in an identity matrix, the cnot list can be represented by a matrix with 0 and 1
@@ -364,9 +372,10 @@ def read(circuit : Circuit):
         matrix[tindex] = np.bitwise_xor(matrix[cindex], matrix[tindex])
     return matrix
 
+
 class CnotAncillae(Optimization):
     @classmethod
-    def execute(cls, circuit : Circuit, size = 1, inplace = False):
+    def execute(cls, circuit: Circuit, size=1, inplace=False):
         """ Optimization the circuit by (3s+1)n ancillary qubits
 
         Optimal Space-Depth Trade-Off of CNOT Circuits in Quantum Logic Synthesis

@@ -36,6 +36,7 @@ def delete_dfs(now):
     delete_dfs.topo_backward_map[delete_dfs.delete_total] = now
     delete_dfs.delete_total += 1
 
+
 def read(circuit):
     """ get describe from the circuit or cnot_struct
 
@@ -80,7 +81,7 @@ def read(circuit):
         gate = circuit.gates[i]
         if gate.type() == GATE_ID["CX"]:
             READ_CNOT[topo_forward_map[gate.targ]] ^= \
-                    READ_CNOT[topo_forward_map[gate.carg]]
+                READ_CNOT[topo_forward_map[gate.carg]]
         elif gate.type() == GATE_ID["Rz"]:
             index = cnot_index.setdefault(READ_CNOT[topo_forward_map[gate.targ]], 0)
             if index != 0:
@@ -93,6 +94,7 @@ def read(circuit):
                 waitDeal.add(termNumber - 1)
 
     return topo_backward_map, input, th, waitDeal
+
 
 def solve(input, th, waitDeal, undirected_topology):
     """ main part of the algorithm
@@ -220,6 +222,7 @@ def solve(input, th, waitDeal, undirected_topology):
                 stateChange[gates[j].targ] ^= stateChange[gates[j].carg]
 
     return ans
+
 
 class TopologicalCnotRz(Optimization):
     """ optimize the cnot_Rz circuit on topological device

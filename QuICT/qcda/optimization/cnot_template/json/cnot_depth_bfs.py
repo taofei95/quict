@@ -4,16 +4,17 @@
 # @Author  : Han Yu
 # @File    : cnot_force_depth.py
 
-import json
 import os
 
 from QuICT import *
+
 
 def count(nn):
     ans = 1
     for i in range(nn):
         ans *= ((1 << nn) - (1 << i))
     return ans
+
 
 def generate_layer(n):
     """ generate combination layer for n qubits(n in [2, 5])
@@ -41,6 +42,7 @@ def generate_layer(n):
 
     return layers
 
+
 def apply_cx(state, control, target, n):
     """ apply cnot gate to the state
 
@@ -54,12 +56,13 @@ def apply_cx(state, control, target, n):
     """
 
     control_col: int = n * control
-    target_col : int = n * target
+    target_col: int = n * target
 
     for i in range(n):
         if state & (1 << (control_col + i)):
-            state ^=  (1 << (target_col + i))
+            state ^= (1 << (target_col + i))
     return state
+
 
 def generate_json(n):
     """ find the best circuit by bfs
@@ -124,8 +127,3 @@ def generate_json(n):
             if len_tuples == 0:
                 string += ';'
             file.write(string)
-
-generate_json(2)
-generate_json(3)
-generate_json(4)
-generate_json(5)

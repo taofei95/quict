@@ -4,27 +4,29 @@
 # @Author  : Han Yu
 # @File    : _circuit_computing.py
 
-from ctypes import c_int
 import random
+from ctypes import c_int
 
 import numpy as np
 
 from QuICT.backends.systemcdll import systemCdll
 
-def _getRandomList(l, n):
-    """ get l number from 0, 1, ..., n - 1 randomly.
+
+def _getRandomList(count, upper_bound):
+    """ get `count` number from 0, 1, ..., `upper_bound - 1` randomly.
 
     Args:
-        l(int)
-        n(int)
+        count(int)
+        upper_bound(int)
     Returns:
         list<int>: the list of l random numbers
     """
-    _rand = [i for i in range(n)]
-    for i in range(n - 1, 0, -1):
+    _rand = [i for i in range(upper_bound)]
+    for i in range(upper_bound - 1, 0, -1):
         do_get = random.randint(0, i)
         _rand[do_get], _rand[i] = _rand[i], _rand[do_get]
-    return _rand[:l]
+    return _rand[:count]
+
 
 def inner_partial_prob(circuit, indexes):
     """ calculate the probabilities of the measure result of partial qureg in circuit
@@ -85,8 +87,9 @@ def inner_partial_prob(circuit, indexes):
     values = np.ctypeslib.as_array(ndpointer, shape=(length,))
     return values.tolist()
 
+
 def inner_random_append(circuit, rand_size=10, typeList=None):
-    from QuICT.core import GateBuilder, GATE_ID
+    from QuICT.core import GATE_ID, GateBuilder
     if typeList is None:
         typeList = [GATE_ID["Rx"], GATE_ID["Ry"], GATE_ID["Rz"],
                     GATE_ID["CX"], GATE_ID["CY"], GATE_ID["CRz"], GATE_ID["CH"], GATE_ID["CZ"],
@@ -113,6 +116,7 @@ def inner_random_append(circuit, rand_size=10, typeList=None):
             GateBuilder.setPargs(params)
         gate = GateBuilder.getGate()
         circuit.append(gate)
+
 
 def inner_matrix_product_to_circuit(circuit, gate) -> np.ndarray:
     q_len = len(circuit.qubits)

@@ -8,11 +8,13 @@ import json
 
 from QuICT import *
 
+
 def count(nn):
     ans = 1
     for i in range(nn):
         ans *= ((1 << nn) - (1 << i))
     return ans
+
 
 class path(object):
     """ record the path of bfs
@@ -32,6 +34,7 @@ class path(object):
         self.father_node = father_node
         self.CX_tuple = (control, target)
 
+
 def apply_cx(state, control, target, n):
     """ apply cnot gate to the state
 
@@ -45,11 +48,11 @@ def apply_cx(state, control, target, n):
     """
 
     control_col: int = n * control
-    target_col : int = n * target
+    target_col: int = n * target
 
     for i in range(n):
         if state & (1 << (control_col + i)):
-            state ^=  (1 << (target_col + i))
+            state ^= (1 << (target_col + i))
     return state
 
 

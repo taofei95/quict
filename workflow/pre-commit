@@ -1,0 +1,48 @@
+#!/usr/bin/env bash
+
+print_segment () {
+   echo -e "\033[92m================================================================================\033[39m";
+}
+
+print_cyan() {
+  echo -e "\033[36m$1\033[39m";
+}
+
+print_magenta() {
+  echo -e "\033[95m$1\033[39m";
+}
+
+print_cyan "[Code Style Guide Check]";
+print_segment;
+
+print_cyan "The modified files: ";
+files=$(git diff --cached --name-only HEAD);
+for file in $files; do
+  print_magenta $file;
+done
+
+print_segment;
+
+print_cyan "[Start Running Code Style Check]";
+if flake8 --config linters/tox.ini $files; then
+  print_magenta "Successed run-pass style check!";
+fi
+
+print_segment;
+
+UT_path="";
+for file in $files; do
+  if [ ${file%%/*} == "QuICT" ]; then
+    mv_left_slash=(${file#*/});
+    mv_right_slash=(${mv_left_slash%%/*});
+
+    UT_path+="QuICT/$mv_right_slash ";
+  fi
+done
+
+if [ ${UT_path} != "" ]; then
+  print_cyan "[Start Running Code Unit Test Check]"
+  python3 -m pytest $UT_path --ignore=QuICT/utility;
+else
+  print_cyan "[Don't need to run Code Unit Test Check]"
+fi

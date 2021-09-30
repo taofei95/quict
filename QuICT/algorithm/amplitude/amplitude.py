@@ -10,13 +10,14 @@ from QuICT.backends import systemCdll
 import numpy as np
 from ctypes import c_int
 
+
 class Amplitude(Algorithm):
     """ get the amplitude of some circuit with some ancillary qubits which are ignored
 
     """
 
     @classmethod
-    def run(cls, circuit : Circuit, ancilla = None):
+    def run(cls, circuit: Circuit, ancilla=None):
         """
 
         Args:
@@ -34,7 +35,7 @@ class Amplitude(Algorithm):
         return cls._run(circuit, ancilla)
 
     @staticmethod
-    def _run(circuit: Circuit, ancilla = None):
+    def _run(circuit: Circuit, ancilla=None):
         """
 
         Args:
@@ -58,7 +59,7 @@ class Amplitude(Algorithm):
         tangle_list = []
         tangle_values = np.array([], dtype=np.complex128)
         tangle_length = np.array([], dtype=np.int64)
-        qubit_map     = np.array([i for i in range(circuit.circuit_width() - len(ancilla))], dtype=np.int64)
+        qubit_map = np.array([i for i in range(circuit.circuit_width() - len(ancilla))], dtype=np.int64)
 
         tangle_iter = 0
         q_index = 0

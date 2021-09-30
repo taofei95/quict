@@ -121,12 +121,14 @@ class ControlledUnitaryTransform(Synthesis):
                 np.allclose(<matrix_of_return_gates> * factor, <input_matrix>).
             mapping(List[int]): The order of input qubits. Mapping is a list of their labels from top to bottom.
             recursive_basis(int): Terminate recursion at which level. It could be set as 1 or 2, which would stop
-                recursion when matrix is 2 or 4, respectively. When set as 2, the final step is done by KAK decomposition.
+                recursion when matrix is 2 or 4, respectively. When set as 2, the final step is done by KAK
+                decomposition.
                 Correctness of this algorithm is never influenced by recursive_basis.
 
         Returns:
-            Union[Tuple[CompositeGate,None], Tuple[CompositeGate,complex]]: If inlclude_phase_gate==False, this function returns
-                synthesized gates and a shift factor. Otherwise a tuple like (<gates>, None) is returned.
+            Union[Tuple[CompositeGate,None], Tuple[CompositeGate,complex]]: If inlclude_phase_gate==False,
+                this function returns synthesized gates and a shift factor. Otherwise a tuple like (<gates>, None)
+                is returned.
         """
         qubit_num = 1 + int(round(np.log2(u1.shape[0])))
 

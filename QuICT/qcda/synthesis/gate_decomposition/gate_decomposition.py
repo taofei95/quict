@@ -9,15 +9,15 @@ from QuICT.qcda.synthesis.unitary_transform import UnitaryTransform
 from QuICT.tools.interface import OPENQASMInterface
 from .._synthesis import Synthesis
 
+
 class GateDecomposition(Synthesis):
-    """ Gate decomposition method
-    """
+    """ Gate decomposition method """
     @classmethod
     def execute(cls, objective):
         """
         Decompose gates except for BasicGates in a CompositeGate or a Circuit
         to BasicGates with the `build_gate` method if it is implemented.
-        Otherwise the `UnitaryTransform` would be used. 
+        Otherwise the `UnitaryTransform` would be used.
 
         Args:
             objective: objective of GateDecomposition, the following types are supported.
@@ -52,7 +52,7 @@ class GateDecomposition(Synthesis):
 
         if isinstance(objective, CompositeGate):
             raw_gates = CompositeGate(objective)
-        
+
         assert isinstance(raw_gates, CompositeGate), TypeError('Invalid objective!')
 
         # Decomposition of complex gates

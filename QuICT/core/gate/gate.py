@@ -5,16 +5,12 @@
 # @File    : _gate.py
 
 import copy
-import string
 import functools
+import string
 
-import numpy as np
-
-from QuICT.core.exception import TypeException, NotImplementedGateException
 # from QuICT.core.gate.gate_builder import GateBuilder
 # from QuICT.core.gate.composite_gate import CompositeGate
-from QuICT.core.qubit import Qubit, Qureg
-from QuICT.core.circuit import Circuit
+from QuICT.core.qubit import Qureg
 from .exec_operator import *
 
 # global gate order count
@@ -2677,6 +2673,7 @@ class ComplexGate(BasicGate):
         for gate in gateSet:
             gate.exec(circuit)
 
+
 class CCXGate(ComplexGate):
     """ Toffoli gate
 
@@ -2728,27 +2725,29 @@ class CCXGate(ComplexGate):
         gates = CompositeGate()
 
         with gates:
-            H        & qureg[2]
-            CX       & (qureg[2], qureg[1])
+            H & qureg[2]
+            CX & (qureg[2], qureg[1])
             T_dagger & qureg[1]
-            CX       & (qureg[0], qureg[1])
-            T        & qureg[1]
-            CX       & (qureg[2], qureg[1])
+            CX & (qureg[0], qureg[1])
+            T & qureg[1]
+            CX & (qureg[2], qureg[1])
             T_dagger & qureg[1]
-            CX       & (qureg[0], qureg[1])
-            T        & qureg[1]
-            CX       & (qureg[0], qureg[2])
+            CX & (qureg[0], qureg[1])
+            T & qureg[1]
+            CX & (qureg[0], qureg[2])
             T_dagger & qureg[2]
-            CX       & (qureg[0], qureg[2])
-            T        & qureg[0]
-            T        & qureg[2]
-            H        & qureg[2]
+            CX & (qureg[0], qureg[2])
+            T & qureg[0]
+            T & qureg[2]
+            H & qureg[2]
         return gates
 
     def exec(self, circuit):
         exec_toffoli(self, circuit)
 
+
 CCX = CCXGate(["CCX", "CCx", "Ccx"])
+
 
 class CCRzGate(ComplexGate):
     """ controlled-Rz gate with two control bits
@@ -2807,7 +2806,9 @@ class CCRzGate(ComplexGate):
             CRz(self.parg / 2) & (qureg[0], qureg[2])
         return gates
 
+
 CCRz = CCRzGate(["CCRz"])
+
 
 class QFTGate(ComplexGate):
     """ QFT gate
@@ -2986,23 +2987,23 @@ class CSwapGate(ComplexGate):
         gates = CompositeGate()
 
         with gates:
-            CX       & (qureg[2], qureg[1])
-            H        & qureg[2]
-            CX       & (qureg[2], qureg[1])
+            CX & (qureg[2], qureg[1])
+            H & qureg[2]
+            CX & (qureg[2], qureg[1])
             T_dagger & qureg[1]
-            CX       & (qureg[0], qureg[1])
-            T        & qureg[1]
-            CX       & (qureg[2], qureg[1])
+            CX & (qureg[0], qureg[1])
+            T & qureg[1]
+            CX & (qureg[2], qureg[1])
             T_dagger & qureg[1]
-            CX       & (qureg[0], qureg[1])
-            T        & qureg[1]
-            CX       & (qureg[0], qureg[2])
+            CX & (qureg[0], qureg[1])
+            T & qureg[1]
+            CX & (qureg[0], qureg[2])
             T_dagger & qureg[2]
-            CX       & (qureg[0], qureg[2])
-            T        & qureg[0]
-            T        & qureg[2]
-            H        & qureg[2]
-            CX       & (qureg[2], qureg[1])
+            CX & (qureg[0], qureg[2])
+            T & qureg[0]
+            T & qureg[2]
+            H & qureg[2]
+            CX & (qureg[2], qureg[1])
         return gates
 
 

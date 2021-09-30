@@ -4,29 +4,36 @@
 # @Author  : Han Yu
 # @File    : _qasmInterface.py
 
-from .basic_interface import BasicInterface
-from QuICT.core import *
-from QuICT.lib import Qasm
-from QuICT.core.exception import QasmInputException
+import os
 from collections import OrderedDict
 from configparser import ConfigParser
-import os
+
+from QuICT.core import *
+from QuICT.core.exception import QasmInputException
+from QuICT.lib import Qasm
+
+from .basic_interface import BasicInterface
+
 
 class qasm_qreg(object):
     """ the target bit in the qasm grammer tree
 
     """
+
     def __init__(self, index_list, name):
         self.index = index_list
         self.name = name
+
 
 class qasm_creg(object):
     """ the control bit in the qasm grammer tree
 
     """
+
     def __init__(self, index_list, name):
         self.index = index_list
         self.name = name
+
 
 class OPENQASMInterface(BasicInterface):
     # qasm mapping to QuICT
@@ -48,16 +55,16 @@ class OPENQASMInterface(BasicInterface):
                           "id": GATE_ID["ID"],
                           "h": GATE_ID["H"],
                           "cx": GATE_ID["CX"],
-                          "ccx" : GATE_ID["CCX"],
+                          "ccx": GATE_ID["CCX"],
                           "cy": GATE_ID["CY"],
                           "cz": GATE_ID["CZ"],
                           "ch": GATE_ID["CH"],
                           "crz": GATE_ID["CRz"],
-                          "rzz" : GATE_ID["RZZ"],
+                          "rzz": GATE_ID["RZZ"],
                           "cu1": GATE_ID["CU1"],
                           "cu3": GATE_ID["CU3"],
                           "cswap": GATE_ID["Fredkin"]
-    }
+                          }
 
     token = None
 
@@ -65,17 +72,17 @@ class OPENQASMInterface(BasicInterface):
                                       '.QuICT')
 
     DEFAULT_QUICT_FILE = os.path.join(os.path.expanduser("~"),
-                                         '.QuICT', 'accounts.ini')
+                                      '.QuICT', 'accounts.ini')
 
     @staticmethod
-    def load_circuit(circuit : Circuit):
+    def load_circuit(circuit: Circuit):
         instance = OPENQASMInterface()
         instance.circuit = circuit
         instance.analyse_code_from_circuit()
         return instance
 
     @staticmethod
-    def load_file(filename : str):
+    def load_file(filename: str):
         instance = OPENQASMInterface()
         instance.ast = Qasm(filename).parse()
         instance.analyse_circuit_from_ast(instance.ast)
@@ -114,7 +121,7 @@ class OPENQASMInterface(BasicInterface):
             self.qasm = None
             self.valid_qasm = False
 
-    def output_qasm(self, filename = None):
+    def output_qasm(self, filename=None):
         if not self.valid_qasm or self.qasm is None:
             if self.circuit is None:
                 return
@@ -147,12 +154,12 @@ class OPENQASMInterface(BasicInterface):
         self.enable_path()
         config_parser = ConfigParser()
         config_parser['account'] = {
-            'token' : token,
+            'token': token,
         }
         with open(self.DEFAULT_QUICT_FILE, 'w') as f:
             config_parser.write(f)
 
-    def output_qiskit(self, filename, generator_qasm = False, shots = 1024):
+    def output_qiskit(self, filename, generator_qasm=False, shots=1024):
         if not self.valid_qasm or self.qasm is None:
             if self.circuit is None:
                 return
@@ -299,8 +306,8 @@ print(result.get_counts(circ))
                 self.bit_stack.append({gbits[j]: bits[j][element[j]]
                                        for j in range(len(gbits))})
                 self.analyse_name(name,
-                                   gargs,
-                                   gbits)
+                                  gargs,
+                                  gbits)
                 self.arg_stack.pop()
                 self.bit_stack.pop()
         else:
