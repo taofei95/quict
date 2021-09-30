@@ -85,10 +85,10 @@ namespace QuICT {
                 Precision *imag
         );
 
-        template<template<typename ...> class Gate>
+        template<uint64_t N>
         inline void apply_diag_n_gate(
                 uint64_t circuit_qubit_num,
-                const Gate<Precision> &gate,
+                const DiagonalGateN<N, Precision> &gate,
                 Precision *real,
                 Precision *imag
         );
@@ -264,25 +264,25 @@ namespace QuICT {
             Precision *real,
             Precision *imag
     ) {
-        if (gate_desc.qasm_name_ == "h") { // Single Bit
+        if (gate_desc.qasm_name_ == "h") {
             auto gate = HGate<Precision>(gate_desc.affect_args_[0]);
             apply_h_gate(circuit_qubit_num, gate, real, imag);
         } else if (gate_desc.qasm_name_ == "x") {
             auto gate = XGate<Precision>(gate_desc.affect_args_[0]);
             apply_x_gate(circuit_qubit_num, gate, real, imag);
-        } else if (gate_desc.qasm_name_ == "crz") { // Two Bit
+        } else if (gate_desc.qasm_name_ == "rz") {
+            auto gate = RzGate(gate_desc.affect_args_[0], gate_desc.parg_);
+            apply_diag_n_gate(circuit_qubit_num, gate, real, imag);
+        } else if (gate_desc.qasm_name_ == "crz") {
             auto gate = CrzGate<Precision>(gate_desc.affect_args_[0], gate_desc.affect_args_[1], gate_desc.parg_);
             apply_ctrl_diag_gate(circuit_qubit_num, gate, real, imag);
-        }
-        else if (gate_desc.qasm_name_ == "u1") {
+        } else if (gate_desc.qasm_name_ == "u1") {
             auto gate = UnitaryGateN<1, Precision>(gate_desc.affect_args_[0], gate_desc.data_ptr_);
             apply_unitary_n_gate(circuit_qubit_num, gate, real, imag);
-        }
-        else if (gate_desc.qasm_name_ == "u2") {
+        } else if (gate_desc.qasm_name_ == "u2") {
             auto gate = UnitaryGateN<2, Precision>(gate_desc.affect_args_, gate_desc.data_ptr_);
             apply_unitary_n_gate(circuit_qubit_num, gate, real, imag);
-        }
-        else if (gate_desc.qasm_name_ == "cu3") {
+        } else if (gate_desc.qasm_name_ == "cu3") {
             auto gate = CU3Gate<Precision>(gate_desc.affect_args_[0], gate_desc.affect_args_[1], gate_desc.pargs_);
             apply_ctrl_unitary_gate(circuit_qubit_num, gate, real, imag);
         } else { // Not Implemented
@@ -674,10 +674,10 @@ namespace QuICT {
 
 
     template<typename Precision>
-    template<template<typename ...> class Gate>
+    template<uint64_t N>
     void MaTricksSimulator<Precision>::apply_diag_n_gate(
             uint64_t circuit_qubit_num,
-            const Gate<Precision> &gate,
+            const DiagonalGateN<N, Precision> &gate,
             Precision *real,
             Precision *imag
     ) {
@@ -685,7 +685,61 @@ namespace QuICT {
             throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__) + ": "
                                      + "Not Implemented " + __func__);
         } else if constexpr(std::is_same_v<Precision, double>) {
-
+            if constexpr(N == 2) {
+                throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__) + ": "
+                                         + "Not Implemented " + __func__);
+            } else {
+                uint64_t task_num = 1ULL << (circuit_qubit_num - 1);
+                if (gate.targ_ == circuit_qubit_num - 1) {
+                    __m256d ymm0 = _mm256_loadu2_m128d(gate.diagonal_real_, gate.diagonal_real_); // d_r
+                    __m256d ymm1 = _mm256_loadu2_m128d(gate.diagonal_imag_, gate.diagonal_imag_); // d_i
+                    constexpr uint64_t batch_size = 2;
+                    for (uint64_t task_id = 0; task_id < task_num; task_id += batch_size) {
+                        auto ind0 = index0(task_id, circuit_qubit_num, gate.targ_);
+                        __m256d ymm2 = _mm256_loadu_pd(&real[ind0]); // v_r
+                        __m256d ymm3 = _mm256_loadu_pd(&imag[ind0]); // v_i
+                        __m256d ymm4, ymm5;
+                        COMPLEX_YMM_MUL(ymm0, ymm1, ymm2, ymm3, ymm4, ymm5);
+                        _mm256_storeu_pd(&real[ind0], ymm4);
+                        _mm256_storeu_pd(&imag[ind0], ymm5);
+                    }
+                } else if (gate.targ_ == circuit_qubit_num - 2) {
+                    __m256d ymm0 = _mm256_loadu2_m128d(gate.diagonal_real_, gate.diagonal_real_);
+                    __m256d ymm1 = _mm256_loadu2_m128d(gate.diagonal_imag_, gate.diagonal_imag_);
+                    ymm0 = _mm256_permute4x64_pd(ymm0, 0b1101'1000); // d_r
+                    ymm1 = _mm256_permute4x64_pd(ymm1, 0b1101'1000); // d_i
+                    constexpr uint64_t batch_size = 2;
+                    for (uint64_t task_id = 0; task_id < task_num; task_id += batch_size) {
+                        auto ind0 = index0(task_id, circuit_qubit_num, gate.targ_);
+                        __m256d ymm2 = _mm256_loadu_pd(&real[ind0]); // v_r
+                        __m256d ymm3 = _mm256_loadu_pd(&imag[ind0]); // v_i
+                        __m256d ymm4, ymm5;
+                        COMPLEX_YMM_MUL(ymm0, ymm1, ymm2, ymm3, ymm4, ymm5);
+                        _mm256_storeu_pd(&real[ind0], ymm4);
+                        _mm256_storeu_pd(&imag[ind0], ymm5);
+                    }
+                } else { // gate.targ_ < circuit_qubit_num - 2
+                    __m256d ymm0 = _mm256_broadcast_sd(&gate.diagonal_real_[0]);
+                    __m256d ymm1 = _mm256_broadcast_sd(&gate.diagonal_imag_[0]);
+                    __m256d ymm2 = _mm256_broadcast_sd(&gate.diagonal_real_[1]);
+                    __m256d ymm3 = _mm256_broadcast_sd(&gate.diagonal_imag_[1]);
+                    constexpr uint64_t batch_size = 2;
+                    for (uint64_t task_id = 0; task_id < task_num; task_id += batch_size) {
+                        auto inds = index(task_id, circuit_qubit_num, gate.targ_);
+                        __m256d ymm4 = _mm256_loadu_pd(&real[inds[0]]); // v00 v10 v20 v30, real
+                        __m256d ymm5 = _mm256_loadu_pd(&imag[inds[0]]); // v00 v10 v20 v30, imag
+                        __m256d ymm6 = _mm256_loadu_pd(&real[inds[1]]); // v01 v11 v21 v31, real
+                        __m256d ymm7 = _mm256_loadu_pd(&imag[inds[1]]); // v01 v11 v21 v31, imag
+                        __m256d ymm8, ymm9, ymm10, ymm11;
+                        COMPLEX_YMM_MUL(ymm0, ymm1, ymm4, ymm5, ymm8, ymm9);
+                        COMPLEX_YMM_MUL(ymm2, ymm3, ymm5, ymm6, ymm10, ymm11);
+                        _mm256_storeu_pd(&real[inds[0]], ymm8);
+                        _mm256_storeu_pd(&imag[inds[0]], ymm9);
+                        _mm256_storeu_pd(&real[inds[1]], ymm10);
+                        _mm256_storeu_pd(&imag[inds[1]], ymm11);
+                    }
+                }
+            }
         }
     }
 
@@ -809,7 +863,7 @@ namespace QuICT {
             throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__) + ": "
                                      + "Not Implemented " + __func__);
         } else if constexpr(std::is_same_v<Precision, double>) {
-            if(N == 2) {
+            if (N == 2) {
                 uarray_t<2> qubits = {gate.affect_args_[0], gate.affect_args_[1]};
                 uarray_t<2> qubits_sorted;
                 if (gate.affect_args_[0] < gate.affect_args_[1]) {
@@ -820,16 +874,16 @@ namespace QuICT {
                     qubits_sorted[0] = gate.affect_args_[1];
                 }
 
-                if(qubits_sorted[1] == circuit_qubit_num - 1) { // ...q
-                    if(qubits_sorted[0] == circuit_qubit_num - 2) { // ...qq
-                        if(qubits_sorted[0] == qubits[0]) { // ...01
+                if (qubits_sorted[1] == circuit_qubit_num - 1) { // ...q
+                    if (qubits_sorted[0] == circuit_qubit_num - 2) { // ...qq
+                        if (qubits_sorted[0] == qubits[0]) { // ...01
                             constexpr uint64_t batch_size = 4;
-                            for(uint64_t i = 0; i < (1 << circuit_qubit_num); i += batch_size) {
+                            for (uint64_t i = 0; i < (1 << circuit_qubit_num); i += batch_size) {
                                 __m256d v_re = _mm256_loadu_pd(real + i);
                                 __m256d v_im = _mm256_loadu_pd(imag + i);
                                 __m256d tmp_re[4], tmp_im[4];
 
-                                for(int row = 0; row < 4; row++) {
+                                for (int row = 0; row < 4; row++) {
                                     __m256d op_re = _mm256_loadu_pd(gate.mat_real_ + (row << 2));
                                     __m256d op_im = _mm256_loadu_pd(gate.mat_imag_ + (row << 2));
                                     COMPLEX_YMM_MUL(op_re, op_im, v_re, v_im, tmp_re[row], tmp_im[row]);
@@ -852,7 +906,7 @@ namespace QuICT {
                         } else { // ...10
                             auto *mat_real_ = new Precision[16];
                             auto *mat_imag_ = new Precision[16];
-                            for(int row = 0; row < 4; row++) {
+                            for (int row = 0; row < 4; row++) {
                                 __m256d ymm0 = _mm256_loadu_pd(gate.mat_real_ + (row << 2));
                                 __m256d ymm1 = _mm256_loadu_pd(gate.mat_imag_ + (row << 2));
                                 ymm0 = _mm256_permute4x64_pd(ymm0, 0b1101'1000);
@@ -862,12 +916,12 @@ namespace QuICT {
                             }
 
                             constexpr uint64_t batch_size = 4;
-                            for(uint64_t i = 0; i < (1 << circuit_qubit_num); i += batch_size) {
+                            for (uint64_t i = 0; i < (1 << circuit_qubit_num); i += batch_size) {
                                 __m256d v_re = _mm256_loadu_pd(real + i);
                                 __m256d v_im = _mm256_loadu_pd(imag + i);
                                 __m256d tmp_re[4], tmp_im[4];
 
-                                for(int row = 0; row < 4; row++) {
+                                for (int row = 0; row < 4; row++) {
                                     __m256d op_re = _mm256_loadu_pd(mat_real_ + (row << 2));
                                     __m256d op_im = _mm256_loadu_pd(mat_imag_ + (row << 2));
                                     COMPLEX_YMM_MUL(op_re, op_im, v_re, v_im, tmp_re[row], tmp_im[row]);
@@ -887,34 +941,36 @@ namespace QuICT {
                                 _mm256_storeu_pd(real + i, tmp_re[0]);
                                 _mm256_storeu_pd(imag + i, tmp_im[0]);
                             }
-                            delete [] mat_real_;
-                            delete [] mat_imag_;
+                            delete[] mat_real_;
+                            delete[] mat_imag_;
                         }
                     } else { // ...q.q
-                        if(qubits_sorted[0] == qubits[0]) { // ...0.1
+                        if (qubits_sorted[0] == qubits[0]) { // ...0.1
                             constexpr uint64_t batch_size = 2;
                             uint64_t task_size = 1 << (circuit_qubit_num - 2);
-                            for(uint64_t task_id = 0; task_id < task_size; task_id += batch_size) {
+                            for (uint64_t task_id = 0; task_id < task_size; task_id += batch_size) {
                                 auto idx = index(task_id, circuit_qubit_num, qubits, qubits_sorted);
                                 __m256d v01_re = _mm256_loadu_pd(real + idx[0]);
                                 __m256d v23_re = _mm256_loadu_pd(real + idx[2]);
                                 __m256d v01_im = _mm256_loadu_pd(imag + idx[0]);
                                 __m256d v23_im = _mm256_loadu_pd(imag + idx[2]);
 
-                                for(int row = 0; row < 4; row += 2) {
+                                for (int row = 0; row < 4; row += 2) {
                                     __m256d a01_re[2], a01_im[2], a23_re[2], a23_im[2];
                                     __m256d tmp_re, tmp_im;
 
-                                    for(int i = 0; i < 2; i++) {
-                                        a01_re[i] = _mm256_loadu2_m128d(TWICE(gate.mat_real_ + ((row+i)<<2)));
-                                        a01_im[i] = _mm256_loadu2_m128d(TWICE(gate.mat_imag_ + ((row+i)<<2)));
+                                    for (int i = 0; i < 2; i++) {
+                                        a01_re[i] = _mm256_loadu2_m128d(TWICE(gate.mat_real_ + ((row + i) << 2)));
+                                        a01_im[i] = _mm256_loadu2_m128d(TWICE(gate.mat_imag_ + ((row + i) << 2)));
                                         COMPLEX_YMM_MUL(a01_re[i], a01_im[i], v01_re, v01_im, tmp_re, tmp_im);
-                                        a01_re[i] = tmp_re; a01_im[i] = tmp_im;
+                                        a01_re[i] = tmp_re;
+                                        a01_im[i] = tmp_im;
 
-                                        a23_re[i] = _mm256_loadu2_m128d(TWICE(gate.mat_real_ + (((row+i)<<2)+2)));
-                                        a23_im[i] = _mm256_loadu2_m128d(TWICE(gate.mat_imag_ + (((row+i)<<2)+2)));
+                                        a23_re[i] = _mm256_loadu2_m128d(TWICE(gate.mat_real_ + (((row + i) << 2) + 2)));
+                                        a23_im[i] = _mm256_loadu2_m128d(TWICE(gate.mat_imag_ + (((row + i) << 2) + 2)));
                                         COMPLEX_YMM_MUL(a23_re[i], a23_im[i], v23_re, v23_im, tmp_re, tmp_im);
-                                        a23_re[i] = tmp_re; a23_im[i] = tmp_im;
+                                        a23_re[i] = tmp_re;
+                                        a23_im[i] = tmp_im;
                                     }
 
                                     a01_re[0] = _mm256_hadd_pd(a01_re[0], a23_re[0]);
@@ -931,7 +987,7 @@ namespace QuICT {
                         } else { // ...1.0
                             auto *mat_real_ = new Precision[16];
                             auto *mat_imag_ = new Precision[16];
-                            for(int row = 0; row < 4; row++) {
+                            for (int row = 0; row < 4; row++) {
                                 __m256d ymm0 = _mm256_loadu_pd(gate.mat_real_ + (row << 2));
                                 __m256d ymm1 = _mm256_loadu_pd(gate.mat_imag_ + (row << 2));
                                 ymm0 = _mm256_permute4x64_pd(ymm0, 0b1101'1000);
@@ -942,27 +998,31 @@ namespace QuICT {
 
                             constexpr uint64_t batch_size = 2;
                             uint64_t task_size = 1 << (circuit_qubit_num - 2);
-                            for(uint64_t task_id = 0; task_id < task_size; task_id += batch_size) {
+                            for (uint64_t task_id = 0; task_id < task_size; task_id += batch_size) {
                                 auto idx = index(task_id, circuit_qubit_num, qubits, qubits_sorted);
                                 __m256d v02_re = _mm256_loadu_pd(real + idx[0]);
                                 __m256d v13_re = _mm256_loadu_pd(real + idx[1]);
                                 __m256d v02_im = _mm256_loadu_pd(imag + idx[0]);
                                 __m256d v13_im = _mm256_loadu_pd(imag + idx[1]);
 
-                                for(int row = 0; row < 2; row ++) {
+                                for (int row = 0; row < 2; row++) {
                                     __m256d a02_re[2], a02_im[2], a13_re[2], a13_im[2];
                                     __m256d tmp_re, tmp_im;
 
-                                    for(int i = 0; i < 2; i ++) {
-                                        a02_re[i] = _mm256_loadu2_m128d(TWICE(mat_real_ + ((row+(i<<1))<<2)));
-                                        a02_im[i] = _mm256_loadu2_m128d(TWICE(mat_imag_ + ((row+(i<<1))<<2)));
+                                    for (int i = 0; i < 2; i++) {
+                                        a02_re[i] = _mm256_loadu2_m128d(TWICE(mat_real_ + ((row + (i << 1)) << 2)));
+                                        a02_im[i] = _mm256_loadu2_m128d(TWICE(mat_imag_ + ((row + (i << 1)) << 2)));
                                         COMPLEX_YMM_MUL(a02_re[i], a02_im[i], v02_re, v02_im, tmp_re, tmp_im);
-                                        a02_re[i] = tmp_re; a02_im[i] = tmp_im;
+                                        a02_re[i] = tmp_re;
+                                        a02_im[i] = tmp_im;
 
-                                        a13_re[i] = _mm256_loadu2_m128d(TWICE(mat_real_ + (((row+(i<<1))<<2)+2)));
-                                        a13_im[i] = _mm256_loadu2_m128d(TWICE(mat_imag_ + (((row+(i<<1))<<2)+2)));
+                                        a13_re[i] = _mm256_loadu2_m128d(
+                                                TWICE(mat_real_ + (((row + (i << 1)) << 2) + 2)));
+                                        a13_im[i] = _mm256_loadu2_m128d(
+                                                TWICE(mat_imag_ + (((row + (i << 1)) << 2) + 2)));
                                         COMPLEX_YMM_MUL(a13_re[i], a13_im[i], v13_re, v13_im, tmp_re, tmp_im);
-                                        a13_re[i] = tmp_re; a13_im[i] = tmp_im;
+                                        a13_re[i] = tmp_re;
+                                        a13_im[i] = tmp_im;
                                     }
 
                                     a02_re[0] = _mm256_hadd_pd(a02_re[0], a13_re[0]);
@@ -976,121 +1036,125 @@ namespace QuICT {
                                     _mm256_storeu_pd(imag + idx[row], tmp_im);
                                 }
                             }
-                            delete [] mat_real_;
-                            delete [] mat_imag_;
+                            delete[] mat_real_;
+                            delete[] mat_imag_;
                         }
                     }
-                } else if(qubits_sorted[1] == circuit_qubit_num - 2) { // ...q.
-                    if(qubits_sorted[0] == qubits[0]) { // ...0.
+                } else if (qubits_sorted[1] == circuit_qubit_num - 2) { // ...q.
+                    if (qubits_sorted[0] == qubits[0]) { // ...0.
                         Precision mat01_real_[16], mat01_imag_[16], mat23_real_[16], mat23_imag_[16];
-                        for(int i = 0; i < 4; i++)
-                            for(int j = 0; j < 4; j++) {
-                                mat01_real_[(i<<2)+j] = gate.mat_real_[(i<<2)+(j>>1)];
-                                mat01_imag_[(i<<2)+j] = gate.mat_imag_[(i<<2)+(j>>1)];
-                                mat23_real_[(i<<2)+j] = gate.mat_real_[(i<<2)+(j>>1)+2];
-                                mat23_imag_[(i<<2)+j] = gate.mat_imag_[(i<<2)+(j>>1)+2];
+                        for (int i = 0; i < 4; i++)
+                            for (int j = 0; j < 4; j++) {
+                                mat01_real_[(i << 2) + j] = gate.mat_real_[(i << 2) + (j >> 1)];
+                                mat01_imag_[(i << 2) + j] = gate.mat_imag_[(i << 2) + (j >> 1)];
+                                mat23_real_[(i << 2) + j] = gate.mat_real_[(i << 2) + (j >> 1) + 2];
+                                mat23_imag_[(i << 2) + j] = gate.mat_imag_[(i << 2) + (j >> 1) + 2];
                             }
 
                         constexpr uint64_t batch_size = 2;
-                            uint64_t task_size = 1 << (circuit_qubit_num - 2);
-                            for(uint64_t task_id = 0; task_id < task_size; task_id += batch_size) {
-                                auto idx = index(task_id, circuit_qubit_num, qubits, qubits_sorted);
-                                __m256d v01_re = _mm256_loadu_pd(real + idx[0]);
-                                __m256d v23_re = _mm256_loadu_pd(real + idx[2]);
-                                __m256d v01_im = _mm256_loadu_pd(imag + idx[0]);
-                                __m256d v23_im = _mm256_loadu_pd(imag + idx[2]);
+                        uint64_t task_size = 1 << (circuit_qubit_num - 2);
+                        for (uint64_t task_id = 0; task_id < task_size; task_id += batch_size) {
+                            auto idx = index(task_id, circuit_qubit_num, qubits, qubits_sorted);
+                            __m256d v01_re = _mm256_loadu_pd(real + idx[0]);
+                            __m256d v23_re = _mm256_loadu_pd(real + idx[2]);
+                            __m256d v01_im = _mm256_loadu_pd(imag + idx[0]);
+                            __m256d v23_im = _mm256_loadu_pd(imag + idx[2]);
 
-                                for(int row = 0; row < 4; row += 2) {
-                                    __m256d a01_re[2], a01_im[2], a23_re[2], a23_im[2];
-                                    __m256d tmp_re, tmp_im;
-                                    for(int i = 0; i < 2; i++) {
-                                        a01_re[i] = _mm256_loadu_pd(mat01_real_ + ((row+i)<<2));
-                                        a01_im[i] = _mm256_loadu_pd(mat01_imag_ + ((row+i)<<2));
-                                        COMPLEX_YMM_MUL(a01_re[i], a01_im[i], v01_re, v01_im, tmp_re, tmp_im);
-                                        a01_re[i] = tmp_re; a01_im[i] = tmp_im;
+                            for (int row = 0; row < 4; row += 2) {
+                                __m256d a01_re[2], a01_im[2], a23_re[2], a23_im[2];
+                                __m256d tmp_re, tmp_im;
+                                for (int i = 0; i < 2; i++) {
+                                    a01_re[i] = _mm256_loadu_pd(mat01_real_ + ((row + i) << 2));
+                                    a01_im[i] = _mm256_loadu_pd(mat01_imag_ + ((row + i) << 2));
+                                    COMPLEX_YMM_MUL(a01_re[i], a01_im[i], v01_re, v01_im, tmp_re, tmp_im);
+                                    a01_re[i] = tmp_re;
+                                    a01_im[i] = tmp_im;
 
-                                        a23_re[i] = _mm256_loadu_pd(mat23_real_ + ((row+i)<<2));
-                                        a23_im[i] = _mm256_loadu_pd(mat23_imag_ + ((row+i)<<2));
-                                        COMPLEX_YMM_MUL(a23_re[i], a23_im[i], v23_re, v23_im, tmp_re, tmp_im);
-                                        a23_re[i] = tmp_re; a23_im[i] = tmp_im;
+                                    a23_re[i] = _mm256_loadu_pd(mat23_real_ + ((row + i) << 2));
+                                    a23_im[i] = _mm256_loadu_pd(mat23_imag_ + ((row + i) << 2));
+                                    COMPLEX_YMM_MUL(a23_re[i], a23_im[i], v23_re, v23_im, tmp_re, tmp_im);
+                                    a23_re[i] = tmp_re;
+                                    a23_im[i] = tmp_im;
 
-                                        a01_re[i] = _mm256_add_pd(a01_re[i], a23_re[i]);
-                                        a01_im[i] = _mm256_add_pd(a01_im[i], a23_im[i]);
-                                        a01_re[i] = _mm256_permute4x64_pd(a01_re[i], 0b1101'1000);
-                                        a01_im[i] = _mm256_permute4x64_pd(a01_im[i], 0b1101'1000);
-                                    }
-
-                                    a01_re[0] = _mm256_hadd_pd(a01_re[0], a01_re[1]);
-                                    a01_im[0] = _mm256_hadd_pd(a01_im[0], a01_im[1]);
-                                    a01_re[0] = _mm256_permute4x64_pd(a01_re[0], 0b1101'1000);
-                                    a01_im[0] = _mm256_permute4x64_pd(a01_im[0], 0b1101'1000);
-                                    _mm256_storeu_pd(real + idx[row], a01_re[0]);
-                                    _mm256_storeu_pd(imag + idx[row], a01_im[0]);
+                                    a01_re[i] = _mm256_add_pd(a01_re[i], a23_re[i]);
+                                    a01_im[i] = _mm256_add_pd(a01_im[i], a23_im[i]);
+                                    a01_re[i] = _mm256_permute4x64_pd(a01_re[i], 0b1101'1000);
+                                    a01_im[i] = _mm256_permute4x64_pd(a01_im[i], 0b1101'1000);
                                 }
+
+                                a01_re[0] = _mm256_hadd_pd(a01_re[0], a01_re[1]);
+                                a01_im[0] = _mm256_hadd_pd(a01_im[0], a01_im[1]);
+                                a01_re[0] = _mm256_permute4x64_pd(a01_re[0], 0b1101'1000);
+                                a01_im[0] = _mm256_permute4x64_pd(a01_im[0], 0b1101'1000);
+                                _mm256_storeu_pd(real + idx[row], a01_re[0]);
+                                _mm256_storeu_pd(imag + idx[row], a01_im[0]);
                             }
+                        }
                     } else { // ...1.
                         Precision mat02_real_[16], mat02_imag_[16], mat13_real_[16], mat13_imag_[16];
-                        for(int i = 0; i < 4; i++)
-                            for(int j = 0; j < 4; j++) {
-                                mat02_real_[(i<<2)+j] = gate.mat_real_[(i<<2)+((j>>1)<<1)];
-                                mat02_imag_[(i<<2)+j] = gate.mat_imag_[(i<<2)+((j>>1)<<1)];
-                                mat13_real_[(i<<2)+j] = gate.mat_real_[(i<<2)+((j>>1)<<1)+1];
-                                mat13_imag_[(i<<2)+j] = gate.mat_imag_[(i<<2)+((j>>1)<<1)+1];
+                        for (int i = 0; i < 4; i++)
+                            for (int j = 0; j < 4; j++) {
+                                mat02_real_[(i << 2) + j] = gate.mat_real_[(i << 2) + ((j >> 1) << 1)];
+                                mat02_imag_[(i << 2) + j] = gate.mat_imag_[(i << 2) + ((j >> 1) << 1)];
+                                mat13_real_[(i << 2) + j] = gate.mat_real_[(i << 2) + ((j >> 1) << 1) + 1];
+                                mat13_imag_[(i << 2) + j] = gate.mat_imag_[(i << 2) + ((j >> 1) << 1) + 1];
                             }
 
                         constexpr uint64_t batch_size = 2;
-                            uint64_t task_size = 1 << (circuit_qubit_num - 2);
-                            for(uint64_t task_id = 0; task_id < task_size; task_id += batch_size) {
-                                auto idx = index(task_id, circuit_qubit_num, qubits, qubits_sorted);
-                                __m256d v02_re = _mm256_loadu_pd(real + idx[0]);
-                                __m256d v13_re = _mm256_loadu_pd(real + idx[1]);
-                                __m256d v02_im = _mm256_loadu_pd(imag + idx[0]);
-                                __m256d v13_im = _mm256_loadu_pd(imag + idx[1]);
+                        uint64_t task_size = 1 << (circuit_qubit_num - 2);
+                        for (uint64_t task_id = 0; task_id < task_size; task_id += batch_size) {
+                            auto idx = index(task_id, circuit_qubit_num, qubits, qubits_sorted);
+                            __m256d v02_re = _mm256_loadu_pd(real + idx[0]);
+                            __m256d v13_re = _mm256_loadu_pd(real + idx[1]);
+                            __m256d v02_im = _mm256_loadu_pd(imag + idx[0]);
+                            __m256d v13_im = _mm256_loadu_pd(imag + idx[1]);
 
-                                for(int row = 0; row < 2; row ++) {
-                                    __m256d a02_re[2], a02_im[2], a13_re[2], a13_im[2];
-                                    __m256d tmp_re, tmp_im;
-                                    for(int i = 0; i < 2; i ++) {
-                                        a02_re[i] = _mm256_loadu_pd(mat02_real_ + ((row+(i<<1))<<2));
-                                        a02_im[i] = _mm256_loadu_pd(mat02_imag_ + ((row+(i<<1))<<2));
-                                        COMPLEX_YMM_MUL(a02_re[i], a02_im[i], v02_re, v02_im, tmp_re, tmp_im);
-                                        a02_re[i] = tmp_re; a02_im[i] = tmp_im;
+                            for (int row = 0; row < 2; row++) {
+                                __m256d a02_re[2], a02_im[2], a13_re[2], a13_im[2];
+                                __m256d tmp_re, tmp_im;
+                                for (int i = 0; i < 2; i++) {
+                                    a02_re[i] = _mm256_loadu_pd(mat02_real_ + ((row + (i << 1)) << 2));
+                                    a02_im[i] = _mm256_loadu_pd(mat02_imag_ + ((row + (i << 1)) << 2));
+                                    COMPLEX_YMM_MUL(a02_re[i], a02_im[i], v02_re, v02_im, tmp_re, tmp_im);
+                                    a02_re[i] = tmp_re;
+                                    a02_im[i] = tmp_im;
 
-                                        a13_re[i] = _mm256_loadu_pd(mat13_real_ + ((row+(i<<1))<<2));
-                                        a13_im[i] = _mm256_loadu_pd(mat13_imag_ + ((row+(i<<1))<<2));
-                                        COMPLEX_YMM_MUL(a13_re[i], a13_im[i], v13_re, v13_im, tmp_re, tmp_im);
-                                        a13_re[i] = tmp_re; a13_im[i] = tmp_im;
+                                    a13_re[i] = _mm256_loadu_pd(mat13_real_ + ((row + (i << 1)) << 2));
+                                    a13_im[i] = _mm256_loadu_pd(mat13_imag_ + ((row + (i << 1)) << 2));
+                                    COMPLEX_YMM_MUL(a13_re[i], a13_im[i], v13_re, v13_im, tmp_re, tmp_im);
+                                    a13_re[i] = tmp_re;
+                                    a13_im[i] = tmp_im;
 
-                                        a02_re[i] = _mm256_add_pd(a02_re[i], a13_re[i]);
-                                        a02_im[i] = _mm256_add_pd(a02_im[i], a13_im[i]);
-                                        a02_re[i] = _mm256_permute4x64_pd(a02_re[i], 0b1101'1000);
-                                        a02_im[i] = _mm256_permute4x64_pd(a02_im[i], 0b1101'1000);
-                                    }
-
-                                    a02_re[0] = _mm256_hadd_pd(a02_re[0], a02_re[1]);
-                                    a02_im[0] = _mm256_hadd_pd(a02_im[0], a02_im[1]);
-                                    a02_re[0] = _mm256_permute4x64_pd(a02_re[0], 0b1101'1000);
-                                    a02_im[0] = _mm256_permute4x64_pd(a02_im[0], 0b1101'1000);
-                                    _mm256_storeu_pd(real + idx[row], a02_re[0]);
-                                    _mm256_storeu_pd(imag + idx[row], a02_im[0]);
+                                    a02_re[i] = _mm256_add_pd(a02_re[i], a13_re[i]);
+                                    a02_im[i] = _mm256_add_pd(a02_im[i], a13_im[i]);
+                                    a02_re[i] = _mm256_permute4x64_pd(a02_re[i], 0b1101'1000);
+                                    a02_im[i] = _mm256_permute4x64_pd(a02_im[i], 0b1101'1000);
                                 }
+
+                                a02_re[0] = _mm256_hadd_pd(a02_re[0], a02_re[1]);
+                                a02_im[0] = _mm256_hadd_pd(a02_im[0], a02_im[1]);
+                                a02_re[0] = _mm256_permute4x64_pd(a02_re[0], 0b1101'1000);
+                                a02_im[0] = _mm256_permute4x64_pd(a02_im[0], 0b1101'1000);
+                                _mm256_storeu_pd(real + idx[row], a02_re[0]);
+                                _mm256_storeu_pd(imag + idx[row], a02_im[0]);
                             }
+                        }
                     }
                 } else {
                     constexpr uint64_t batch_size = 4;
                     uint64_t task_size = 1 << (circuit_qubit_num - 2);
-                    for(uint64_t task_id = 0; task_id < task_size; task_id += batch_size) {
+                    for (uint64_t task_id = 0; task_id < task_size; task_id += batch_size) {
                         auto idx = index(task_id, circuit_qubit_num, qubits, qubits_sorted);
                         __m256d v_re[4], v_im[4];
-                        for(int i = 0; i < 4; i++) {
+                        for (int i = 0; i < 4; i++) {
                             v_re[i] = _mm256_loadu_pd(real + idx[i]);
                             v_im[i] = _mm256_loadu_pd(imag + idx[i]);
                         }
 
-                        for(int i = 0; i < 4; i++) {
+                        for (int i = 0; i < 4; i++) {
                             __m256d acc_re = _mm256_set1_pd(0);
                             __m256d acc_im = _mm256_set1_pd(0);
-                            for(int j = 0; j < 4; j++) {
+                            for (int j = 0; j < 4; j++) {
                                 __m256d op_re = _mm256_set1_pd(gate.mat_real_[(i << 2) + j]);
                                 __m256d op_im = _mm256_set1_pd(gate.mat_imag_[(i << 2) + j]);
                                 __m256d res_re, res_im;

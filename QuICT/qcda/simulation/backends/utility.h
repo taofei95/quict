@@ -72,13 +72,18 @@ namespace QuICT {
 
     template<typename T>
     inline void delete_and_set_null(T &ptr) {
-        delete ptr;
-        ptr = nullptr;
+        if (ptr) {
+            delete ptr;
+            ptr = nullptr;
+        }
     }
+
     template<typename T>
     inline void delete_all_and_set_null(T &ptr) {
-        delete[] ptr;
-        ptr = nullptr;
+        if (ptr) {
+            delete[] ptr;
+            ptr = nullptr;
+        }
     }
 
     //* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
@@ -150,7 +155,7 @@ namespace QuICT {
     }
 
     template<
-            uint64_t N,
+            uint64_t N = 1,
             typename std::enable_if<(N == 1), int>::type dummy = 0
     >
     inline uint64_t index0(

@@ -67,23 +67,21 @@ namespace QuICT {
     template<uint64_t N, typename Precision>
     struct UnitaryGateN {
         uarray_t<N> affect_args_;
-        Precision *mat_real_;
-        Precision *mat_imag_;
+        Precision *mat_real_ = nullptr;
+        Precision *mat_imag_ = nullptr;
 
         UnitaryGateN(const std::vector<uint64_t> &args, std::complex<Precision> *mat) {
-            for(int i = 0; i < N; i++) affect_args_[i] = args[i];
+            for (int i = 0; i < N; i++) affect_args_[i] = args[i];
 
             mat_real_ = new Precision[1 << (N << 1)];
             mat_imag_ = new Precision[1 << (N << 1)];
-            for(int i = 0; i < 1 << (N << 1); i++) {
+            for (int i = 0; i < 1 << (N << 1); i++) {
                 mat_real_[i] = mat[i].real();
                 mat_imag_[i] = mat[i].imag();
             }
         }
 
         ~UnitaryGateN() {
-//            delete[] mat_real_;
-//            delete[] mat_imag_;
             delete_all_and_set_null(mat_real_);
             delete_all_and_set_null(mat_imag_);
         }
@@ -93,23 +91,21 @@ namespace QuICT {
     template<typename Precision>
     struct UnitaryGateN<1, Precision> {
         uint64_t targ_;
-        Precision *mat_real_;
-        Precision *mat_imag_;
+        Precision *mat_real_ = nullptr;
+        Precision *mat_imag_ = nullptr;
 
         explicit UnitaryGateN(uint64_t targ) : targ_(targ) {}
 
         UnitaryGateN(uint64_t targ, std::complex<Precision> *mat) : targ_(targ) {
             mat_real_ = new Precision[4];
             mat_imag_ = new Precision[4];
-            for(int i = 0; i < 4; i++) {
+            for (int i = 0; i < 4; i++) {
                 mat_real_[i] = mat[i].real();
                 mat_imag_[i] = mat[i].imag();
             }
         }
 
         ~UnitaryGateN() {
-//            delete[] mat_real_;
-//            delete[] mat_imag_;
             delete_all_and_set_null(mat_real_);
             delete_all_and_set_null(mat_imag_);
         }
@@ -120,13 +116,18 @@ namespace QuICT {
     template<uint64_t N, typename Precision>
     struct DiagonalGateN {
         uarray_t<N> affect_args_;
-        Precision *diagonal_real_;
-        Precision *diagonal_imag_;
+        Precision *diagonal_real_ = nullptr;
+        Precision *diagonal_imag_ = nullptr;
 
         // this->diagonal_ is initialized by subclasses
         template<typename _qubit_iter>
         explicit DiagonalGateN(_qubit_iter qubit_begin) {
             std::copy(qubit_begin, qubit_begin + N, affect_args_.begin());
+        }
+
+        ~DiagonalGateN() {
+            delete_all_and_set_null(this->diagonal_real_);
+            delete_all_and_set_null(this->diagonal_imag_);
         }
     };
 
@@ -135,12 +136,17 @@ namespace QuICT {
     template<typename Precision>
     struct DiagonalGateN<1, Precision> {
         uint64_t targ_;
-        Precision *diagonal_real_;
-        Precision *diagonal_imag_;
+        Precision *diagonal_real_ = nullptr;
+        Precision *diagonal_imag_ = nullptr;
 
         // this->diagonal_ is initialized by subclasses
 
         explicit DiagonalGateN(uint64_t targ) : targ_(targ) {}
+
+        ~DiagonalGateN() {
+            delete_all_and_set_null(this->diagonal_real_);
+            delete_all_and_set_null(this->diagonal_imag_);
+        }
     };
 
     // Controlled gate of 2 qubits(i.e. 1 control bit and 1 target bit).
@@ -171,6 +177,8 @@ namespace QuICT {
     // Specific Gate Declaration
     //* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
+    // TODO: Remove all specific gates in the future.
+
     template<typename Precision>
     struct CrzGate : ControlledDiagonalGate<Precision> {
         CrzGate(uint64_t carg, uint64_t targ, Precision parg)
@@ -185,13 +193,6 @@ namespace QuICT {
             this->diagonal_real_[1] = t1.real();
             this->diagonal_imag_[0] = t0.imag();
             this->diagonal_imag_[1] = t1.imag();
-        }
-
-        ~CrzGate() {
-//            delete[] this->diagonal_real_;
-//            delete[] this->diagonal_imag_;
-            delete_all_and_set_null(this->diagonal_real_);
-            delete_all_and_set_null(this->diagonal_imag_);
         }
     };
 
@@ -229,10 +230,21 @@ namespace QuICT {
                 this->mat_imag_[i] = tmp[i].imag();
             }
         }
+    };
 
-        ~CU3Gate() {
-            delete_all_and_set_null(this->mat_real_);
-            delete_all_and_set_null(this->mat_imag_);
+    template<typename Precision>
+    struct RzGate : DiagonalGateN<1, Precision> {
+        explicit RzGate(uint64_t targ, Precision parg) : DiagonalGateN<1, Precision>(targ) {
+            this->diagonal_real_ = new Precision[2];
+            this->diagonal_imag_ = new Precision[2];
+            std::complex<Precision> tmp[2];
+            auto j = std::complex<Precision>(0, 1);
+            tmp[0] = std::exp(-j * parg / 2.0);
+            tmp[1] = std::exp(j * parg / 2.0);
+            this->diagonal_real_[0] = tmp[0].real();
+            this->diagonal_imag_[0] = tmp[0].imag();
+            this->diagonal_real_[1] = tmp[1].real();
+            this->diagonal_imag_[1] = tmp[1].imag();
         }
     };
 

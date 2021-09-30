@@ -119,7 +119,15 @@ void test_by_data_file(
                     std::vector<uint64_t>{carg, targ},
                     0,
                     mat_
-                    );
+            );
+        } else if (gate_name == "rz") {
+            fs >> targ >> parg;
+            gate_desc_vec.emplace_back(
+                    "rz",
+                    std::vector<uint64_t>{targ},
+                    parg,
+                    nullptr
+            );
         }
     }
 
@@ -151,22 +159,28 @@ TEST(HybridTest, CrzTest) {
     test_by_data_file("crz.txt", simulator);
 }
 
+TEST(HybridTest, CU3Test) {
+    test_by_data_file("cu3.txt", simulator);
+}
+
+
 TEST(HybridTest, QftTest) {
     test_by_data_file("qft.txt", simulator);
+}
+
+
+TEST(HybridTest, DiagTest) {
+    test_by_data_file("diag.txt", simulator);
 }
 
 TEST(HybridTest, XTest) {
     test_by_data_file("x.txt", simulator);
 }
 
-TEST(HybridTest, CU3Test) {
-    test_by_data_file("cu3.txt", simulator);
-}
-
 TEST(HybridTest, U1Test) {
     test_by_data_file("u1.txt", simulator);
 }
 
-TEST(HybridTest, U2Test) {
-    test_by_data_file("u2.txt", simulator);
-}
+//TEST(HybridTest, U2Test) {
+//    test_by_data_file("u2.txt", simulator);
+//}
