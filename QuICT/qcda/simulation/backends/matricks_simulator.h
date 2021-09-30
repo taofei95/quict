@@ -1042,6 +1042,7 @@ namespace QuICT {
                             uint64_t task_size = 1 << (circuit_qubit_num - 2);
                             for(uint64_t task_id = 0; task_id < task_size; task_id += batch_size) {
                                 auto idx = index(task_id, circuit_qubit_num, qubits, qubits_sorted);
+
                                 __m256d v02_re = _mm256_loadu_pd(real + idx[0]);
                                 __m256d v13_re = _mm256_loadu_pd(real + idx[1]);
                                 __m256d v02_im = _mm256_loadu_pd(imag + idx[0]);
@@ -1094,7 +1095,7 @@ namespace QuICT {
                                 __m256d op_re = _mm256_set1_pd(gate.mat_real_[(i << 2) + j]);
                                 __m256d op_im = _mm256_set1_pd(gate.mat_imag_[(i << 2) + j]);
                                 __m256d res_re, res_im;
-                                COMPLEX_YMM_MUL(op_re, op_im, v_re[i], v_im[i], res_re, res_im);
+                                COMPLEX_YMM_MUL(op_re, op_im, v_re[j], v_im[j], res_re, res_im);
                                 acc_re = _mm256_add_pd(acc_re, res_re);
                                 acc_im = _mm256_add_pd(acc_im, res_im);
                             }

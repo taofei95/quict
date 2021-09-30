@@ -61,9 +61,7 @@ def out_circuit_to_file(qubit_num: int, f_name: str, circuit: Circuit):
                 print(f"x {gate.targ}", file=f)
             elif gate.type() == GATE_ID['CU3']:
                 print(f"cu3 {gate.carg} {gate.targ} {gate.pargs[0]} {gate.pargs[1]} {gate.pargs[2]}", file=f)
-            # elif gate.type() == GATE_ID['Unitary']:
             else:
-
                 if gate.compute_matrix.shape[0] == 2:
                     print(f'u1 {gate.targ}', file=f, end=' ')
                 elif gate.compute_matrix.shape[1] == 4:
@@ -87,35 +85,51 @@ def rand_unitary_gate(qubit_num):
     return Unitary(mat)
 
 
+def manual_rand_unitary_gate(qubit_num):
+    if qubit_num == 1:
+        theta = random.random() * 2 * pi
+        return random.choice([Rx, Ry])(theta)
+    elif qubit_num == 2:
+        return random.choice([
+            Rxx(uniform(0, 2 * pi)),
+            Ryy(uniform(0, 2 * pi)),
+            Rzz(uniform(0, 2 * pi)),
+            FSim([uniform(0, 2 * pi), uniform(0, 2 * pi)])
+        ])
+
+
 def main():
     qubit_num = 18
     circuit = Circuit(qubit_num)
 
+    for i in range(qubit_num):
+        H | circuit(i)
     # gates = [H, X, S, T]
     # for i in range(200):
     #     random.choice(gates) | circuit(randint(0, qubit_num - 1))
-    gates = [Rx, Ry]
-    for i in range(200):
-        theta = random.random() * 2 * pi
-        random.choice(gates)(theta) | circuit(randint(0, qubit_num - 1))
-
+    # gates = [Rx, Ry]
+    # for i in range(200):
+    #     theta = random.random() * 2 * pi
+    #     random.choice(gates)(theta) | circuit(randint(0, qubit_num - 1))
     # Rx(1) | circuit(1)
-    out_circuit_to_file(qubit_num, "u1.txt", circuit)
-    circuit.clear()
+    # out_circuit_to_file(qubit_num, "u1.txt", circuit)
+    # circuit.clear()
 
-    for i in range(qubit_num):
-        H | circuit(i)
-    # for _ in range(100):
-    #     lst = sample(range(0, qubit_num), 2)
-    #     CRz(uniform(0, 3.14)) | circuit([lst[0], lst[1]])
-    # X | circuit(qubit_num-1)
-    # X | circuit(qubit_num-3)
-    # CRz(pi) | circuit([qubit_num-3, qubit_num-1])
-    for _ in range(100):
-        lst = sample(range(0, qubit_num), 2)
-        rand_unitary_gate(2) | circuit([lst[0], lst[1]])
+    for _ in range(qubit_num * 10):
+        n = randint(1, 2)
+        gate = manual_rand_unitary_gate(n)
+        if n == 1:
+            gate | circuit(randint(0, qubit_num-1))
+        else:
+            gate | circuit(sample(range(0, qubit_num), 2))
 
-    out_circuit_to_file(qubit_num, "u2.txt", circuit)
+    # FSim([5.846525242595107, 2.0823455758230054]) | circuit([12, 13])
+    # FSim([5.565028741078166, 4.830440067024413]) | circuit([13, 9])
+    # FSim([5.96115365029842, 4.48219039802639]) | circuit([13, 1])
+
+    # Rxx(uniform(0, 2 * pi)) | circuit([13, 12])
+    # FSim([uniform(0, 2 * pi), uniform(0, 2 * pi)]) | circuit([10, 16])
+    out_circuit_to_file(qubit_num, "u.txt", circuit)
     circuit.clear()
 
     QFT(qubit_num).build_gate() | circuit

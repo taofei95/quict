@@ -170,3 +170,7 @@ TEST(HybridTest, U1Test) {
 TEST(HybridTest, U2Test) {
     test_by_data_file("u2.txt", simulator);
 }
+
+TEST(HybridTest, UnitaryTest) {
+    test_by_data_file("u.txt", simulator);
+}
