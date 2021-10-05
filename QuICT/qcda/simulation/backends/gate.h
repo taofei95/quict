@@ -246,6 +246,11 @@ namespace QuICT {
             this->diagonal_real_[1] = tmp[1].real();
             this->diagonal_imag_[1] = tmp[1].imag();
         }
+
+        ~RzGate() {
+            delete_all_and_set_null(this->diagonal_real_);
+            delete_all_and_set_null(this->diagonal_imag_);
+        }
     };
 
 

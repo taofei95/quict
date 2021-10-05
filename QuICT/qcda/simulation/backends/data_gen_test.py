@@ -85,6 +85,9 @@ def main():
     out_circuit_to_file(qubit_num, "u.txt", circuit)
     circuit.clear()
 
+    for i in range(qubit_num):
+        H | circuit(i)
+
     for _ in range(30):
         Rz(uniform(0, 3.14)) | circuit(randint(0, qubit_num - 1))
     out_circuit_to_file(qubit_num, "diag.txt", circuit)
