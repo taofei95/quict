@@ -13,31 +13,44 @@ def format_cpx(n):
     return '{0}{1}{2}j'.format(n.real, '+-'[int(n.imag < 0)], abs(n.imag))
 
 
+diag_1_gates = {GATE_ID["Rz"]}
+diag_2_gates = {}
+ctrl_diag_gates = {GATE_ID["Crz"], GATE_ID["CU1"]}
+
+ctrl_unitary_gate = {GATE_ID["CU3"]}
+
+
 def out_circuit_to_file(qubit_num: int, f_name: str, circuit: Circuit):
     with open(f_name, 'w') as f:
         print(qubit_num, file=f)
 
         for gate in circuit.gates:
             gate: BasicGate
-            if gate.type() == GATE_ID['H']:
-                print(f"h {gate.targ}", file=f)
-            elif gate.type() == GATE_ID['Crz']:
-                print(f"crz {gate.carg} {gate.targ} {gate.parg}", file=f)
-            elif gate.type() == GATE_ID['X']:
-                print(f"x {gate.targ}", file=f)
-            elif gate.type() == GATE_ID['CU3']:
-                print(f"cu3 {gate.carg} {gate.targ} {gate.pargs[0]} {gate.pargs[1]} {gate.pargs[2]}", file=f)
-            # elif gate.type() == GATE_ID['Unitary']:
-            elif gate.type() == GATE_ID['Rz']:
-                print(f"rz {gate.targ} {gate.parg}", file=f)
+            if gate.type() == GATE_ID["X"]:
+                print(f"special_x {gate.targ}", file=f)
+            elif gate.type() == GATE_ID["H"]:
+                print(f"special_h {gate.targ}", file=f)
+            elif gate.type() in diag_1_gates:  # all 1-bit diagonal gates
+                print(f"diag_1 {gate.targ} "
+                      f"{format_cpx(gate.matrix[0, 0])} {format_cpx(gate.matrix[1, 1])}", file=f)
+            elif gate.type() in diag_2_gates:  # all 2-bit diagonal gates (not supported now)
+                NotImplementedError("No 2-bit diagonal gates for now")
+            elif gate.type() in ctrl_diag_gates:
+                print(f"ctrl_diag {gate.carg} {gate.targ} "
+                      f"{format_cpx(gate.compute_matrix[2, 2])} {format_cpx(gate.compute_matrix[3, 3])}", file=f)
             else:
-                if gate.compute_matrix.shape[0] == 2:
-                    print(f'u1 {gate.targ}', file=f, end=' ')
-                elif gate.compute_matrix.shape[1] == 4:
-                    print(f'u2 {gate.affectArgs[0]} {gate.affectArgs[1]}', file=f, end=' ')
-                for c in gate.compute_matrix.flatten():
-                    print(format_cpx(c), file=f, end=' ')
-                print(file=f)
+                if len(gate.affectArgs) == 1:  # all 1-bit unitary gates
+                    print(f"unitary_1 {gate.targ} "
+                          f"{format_cpx(gate.compute_matrix[0, 0])} {format_cpx(gate.compute_matrix[0, 1])} "
+                          f"{format_cpx(gate.compute_matrix[1, 0])} {format_cpx(gate.compute_matrix[1, 1])}", file=f)
+                elif len(gate.affectArgs) == 2:  # all 2-bit unitary gates
+                    res_str = f"unitary_2 {gate.affectArgs[0]} {gate.affectArgs[1]} "
+                    for i in range(4):
+                        for j in range(4):
+                            res_str += f"{format_cpx(gate.compute_matrix[i, j])} "
+                    print(res_str, file=f)
+                else:
+                    NotImplementedError("No support for gate >= 3 bit for now")
 
         print("__TERM__", file=f)
 
@@ -78,7 +91,7 @@ def main():
         n = randint(1, 2)
         gate = manual_rand_unitary_gate(n)
         if n == 1:
-            gate | circuit(randint(0, qubit_num-1))
+            gate | circuit(randint(0, qubit_num - 1))
         else:
             gate | circuit(sample(range(0, qubit_num), 2))
 

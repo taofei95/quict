@@ -1554,6 +1554,7 @@ class CU3Gate(BasicGate):
              np.exp(1j * (self.pargs[1] + self.pargs[2])) * np.cos(self.pargs[0] / 2)]
         ], dtype=np.complex128)
 
+    @property
     def compute_matrix(self) -> np.ndarray:
         return np.array([
             [1, 0, 0, 0],

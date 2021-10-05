@@ -329,7 +329,7 @@ DLLEXPORT void unitary_operator_gate(
     complex<double> *values,
     long long  *index,
     int index_count,
-    <double> *matrix
+    complex<double> *matrix
 ){
     int *indexlist = (int*)malloc(index_count * sizeof(int));
     for (int i = 0;i < index_count;++i)

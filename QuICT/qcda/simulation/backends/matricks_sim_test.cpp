@@ -7,15 +7,13 @@
 #include <random>
 #include <complex>
 #include <vector>
+#include <memory>
 #include <algorithm>
 #include <iostream>
 #include <fstream>
 
-#include "matricks_simulator.h"
 #include "utility.h"
-
-auto dist = std::uniform_real_distribution<double>(-1, 1);
-std::mt19937 rd;
+#include "matricks_simulator.h"
 
 
 template<typename Precision>
@@ -43,90 +41,90 @@ void test_by_data_file(
         }
         uint64_t carg;
         uint64_t targ;
-        double parg;
-        double parg1;
-        double parg2;
 
-        if (gate_name == "h") {
-
+        if (gate_name == "special_h") {
             fs >> targ;
             gate_desc_vec.emplace_back(
-                    "h",
-                    std::vector<uint64_t>{targ},
-                    0,
-                    nullptr
+                    "special_h",
+                    std::vector<uint64_t>{targ}
             );
-        } else if (gate_name == "x") {
+        } else if (gate_name == "special_x") {
             fs >> targ;
             gate_desc_vec.emplace_back(
-                    "x",
-                    std::vector<uint64_t>{targ},
-                    0,
-                    nullptr
+                    "special_x",
+                    std::vector<uint64_t>{targ}
             );
-        } else if (gate_name == "crz") {
-            fs >> carg >> targ >> parg;
-            gate_desc_vec.emplace_back(
-                    "crz",
-                    std::vector<uint64_t>{carg, targ},
-                    parg,
-                    nullptr
-            );
-        } else if (gate_name == "x") {
+        } else if (gate_name == "unitary_1") {
             fs >> targ;
-            gate_desc_vec.emplace_back(
-                    "x",
-                    std::vector<uint64_t>{targ},
-                    0,
-                    nullptr
-            );
-        } else if (gate_name == "cu3") {
-            fs >> carg >> targ >> parg >> parg1 >> parg2;
-            gate_desc_vec.emplace_back(
-                    "cu3",
-                    std::vector<uint64_t>{carg, targ},
-                    std::vector<double>{parg, parg1, parg2},
-                    nullptr
-            );
-        } else if (gate_name == "u1") {
-            fs >> targ;
-            auto *mat_ = new complex<Precision>[4];
+            auto mat = std::shared_ptr<std::complex<Precision>[]>(new complex<Precision>[4]);
             for (int i = 0; i < 4; i++) {
                 double re, im;
                 char sign, img_label;
                 fs >> re >> sign >> im >> img_label;
-                mat_[i] = complex<double>(re, sign == '+' ? im : -im);
+                mat[i] = complex<double>(re, sign == '+' ? im : -im);
             }
 
             gate_desc_vec.emplace_back(
-                    "u1",
+                    "unitary_1",
                     std::vector<uint64_t>{targ},
-                    0,
-                    mat_
+                    mat
             );
-        } else if (gate_name == "u2") {
+        } else if (gate_name == "unitary_2") {
             fs >> carg >> targ;
-            auto *mat_ = new complex<Precision>[16];
+            auto mat = std::shared_ptr<std::complex<Precision>[]>(new complex<Precision>[16]);
             for (int i = 0; i < 16; i++) {
                 double re, im;
                 char sign, img_label;
                 fs >> re >> sign >> im >> img_label;
-                mat_[i] = complex<double>(re, sign == '+' ? im : -im);
+                mat[i] = complex<double>(re, sign == '+' ? im : -im);
             }
 
             gate_desc_vec.emplace_back(
-                    "u2",
+                    "unitary_2",
                     std::vector<uint64_t>{carg, targ},
-                    0,
-                    mat_
+                    mat
             );
-        } else if (gate_name == "rz") {
-            fs >> targ >> parg;
+        } else if (gate_name == "diag_1") {
+            fs >> targ;
+            auto diag = std::shared_ptr<std::complex<Precision>[]>(new complex<Precision>[2]);
+            for (int i = 0; i < 2; ++i) {
+                double re, im;
+                char sign, img_label;
+                fs >> re >> sign >> im >> img_label;
+                diag[i] = complex<double>(re, sign == '+' ? im : -im);
+            }
             gate_desc_vec.emplace_back(
-                    "rz",
+                    "diag_1",
                     std::vector<uint64_t>{targ},
-                    parg,
-                    nullptr
+                    diag
+            );
+        } else if (gate_name == "ctrl_diag") {
+            fs >> carg >> targ;
+            auto diag = std::shared_ptr<std::complex<Precision>[]>(new complex<Precision>[2]);
+            for (int i = 0; i < 2; ++i) {
+                double re, im;
+                char sign, img_label;
+                fs >> re >> sign >> im >> img_label;
+                diag[i] = complex<double>(re, sign == '+' ? im : -im);
+            }
+            gate_desc_vec.emplace_back(
+                    "ctrl_diag",
+                    std::vector<uint64_t>{carg, targ},
+                    diag
+            );
+        } else if (gate_name == "ctrl_unitary") {
+            fs >> carg >> targ;
+            auto mat = std::shared_ptr<std::complex<Precision>[]>(new complex<Precision>[4]);
+            for (int i = 0; i < 4; i++) {
+                double re, im;
+                char sign, img_label;
+                fs >> re >> sign >> im >> img_label;
+                mat[i] = complex<double>(re, sign == '+' ? im : -im);
+            }
+            gate_desc_vec.emplace_back(
+                    "ctrl_unitary",
+                    std::vector<uint64_t>{carg, targ},
+                    mat
             );
         }
     }
@@ -155,7 +153,7 @@ TEST(HybridTest, HTest) {
     test_by_data_file("h.txt", simulator);
 }
 
-TEST(HybridTest, CrzTest) {
+TEST(HybridTest, CtrlDiagTest) {
     test_by_data_file("crz.txt", simulator);
 }
 
@@ -172,7 +170,7 @@ TEST(HybridTest, XTest) {
     test_by_data_file("x.txt", simulator);
 }
 
-TEST(HybridTest, CU3Test) {
+TEST(HybridTest, CtrlUnitaryTest) {
     test_by_data_file("cu3.txt", simulator);
 }
 

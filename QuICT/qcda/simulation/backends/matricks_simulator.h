@@ -22,6 +22,17 @@ namespace QuICT {
     class MaTricksSimulator {
     protected:
         std::string name_;
+        enum target_ {
+            diag_1,
+            diag_2,
+            ctrl_diag,
+            unitary_1,
+            unitary_2,
+            ctrl_unitary,
+            special_h,
+            special_x
+        };
+        std::map<std::string, target_> dispatcher_;
     public:
         MaTricksSimulator() {
             using namespace std;
@@ -34,6 +45,15 @@ namespace QuICT {
             } else if (std::is_same_v<Precision, float>) {
                 name_ += " [float]";
             }
+
+            dispatcher_["special_h"] = target_::special_h;
+            dispatcher_["special_x"] = target_::special_x;
+            dispatcher_["diag_1"] = target_::diag_1;
+            dispatcher_["diag_2"] = target_::diag_2;
+            dispatcher_["ctrl_diag"] = target_::ctrl_diag;
+            dispatcher_["unitary_1"] = target_::unitary_1;
+            dispatcher_["unitary_2"] = target_::unitary_2;
+            dispatcher_["ctrl_unitary"] = target_::ctrl_unitary;
         }
 
         inline const std::string &name() {
@@ -268,29 +288,65 @@ namespace QuICT {
             Precision *real,
             Precision *imag
     ) {
-        if (gate_desc.gate_name_ == "h") {
-            auto gate = HGate<Precision>(gate_desc.affect_args_[0]);
-            apply_h_gate(circuit_qubit_num, gate, real, imag);
-        } else if (gate_desc.gate_name_ == "x") {
-            auto gate = XGate<Precision>(gate_desc.affect_args_[0]);
-            apply_x_gate(circuit_qubit_num, gate, real, imag);
-        } else if (gate_desc.gate_name_ == "rz") {
-            auto gate = RzGate<Precision>(gate_desc.affect_args_[0], gate_desc.parg_);
-            apply_diag_n_gate(circuit_qubit_num, gate, real, imag);
-        } else if (gate_desc.gate_name_ == "crz") {
-            auto gate = CrzGate<Precision>(gate_desc.affect_args_[0], gate_desc.affect_args_[1], gate_desc.parg_);
-            apply_ctrl_diag_gate(circuit_qubit_num, gate, real, imag);
-        } else if (gate_desc.gate_name_ == "u1") {
-            auto gate = UnitaryGateN<1, Precision>(gate_desc.affect_args_[0], gate_desc.data_ptr_);
-            apply_unitary_n_gate(circuit_qubit_num, gate, real, imag);
-        } else if (gate_desc.gate_name_ == "u2") {
-            auto gate = UnitaryGateN<2, Precision>(gate_desc.affect_args_, gate_desc.data_ptr_);
-            apply_unitary_n_gate(circuit_qubit_num, gate, real, imag);
-        } else if (gate_desc.gate_name_ == "cu3") {
-            auto gate = CU3Gate<Precision>(gate_desc.affect_args_[0], gate_desc.affect_args_[1], gate_desc.pargs_);
-            apply_ctrl_unitary_gate(circuit_qubit_num, gate, real, imag);
-        } else { // Not Implemented
+        auto search = dispatcher_.find(gate_desc.gate_name_);
+        if (search == dispatcher_.end()) {
             throw std::runtime_error(std::string(__func__) + ": " + "Not implemented gate - " + gate_desc.gate_name_);
+        } else {
+            target_ gate_category = search->second;
+            switch (gate_category) {
+                case target_::special_x: {
+                    auto gate = XGate<Precision>(gate_desc.affect_args_[0]);
+                    apply_x_gate(circuit_qubit_num, gate, real, imag);
+                    break;
+                }
+                case target_::special_h: {
+                    auto gate = HGate<Precision>(gate_desc.affect_args_[0]);
+                    apply_h_gate(circuit_qubit_num, gate, real, imag);
+                    break;
+                }
+                case target_::diag_1: {
+                    auto diag_1_gate = DiagonalGateN<1, Precision>(gate_desc.affect_args_[0], gate_desc.data_ptr_);
+                    apply_diag_n_gate(circuit_qubit_num, diag_1_gate, real, imag);
+                    break;
+                }
+                case target_::diag_2: {
+                    throw std::runtime_error(
+                            std::string(__func__) + ": " + "Not implemented gate - " + gate_desc.gate_name_);
+                    break;
+                }
+                case target_::ctrl_diag: {
+                    auto ctrl_diag_gate = ControlledDiagonalGate<Precision>(
+                            gate_desc.affect_args_[0],
+                            gate_desc.affect_args_[1],
+                            gate_desc.data_ptr_
+                    );
+                    apply_ctrl_diag_gate(circuit_qubit_num, ctrl_diag_gate, real, imag);
+                    break;
+                }
+                case target_::unitary_1: {
+                    auto unitary_1_gate = UnitaryGateN<1, Precision>(gate_desc.affect_args_[0], gate_desc.data_ptr_);
+                    apply_unitary_n_gate(circuit_qubit_num, unitary_1_gate, real, imag);
+                    break;
+                }
+                case target_::unitary_2: {
+                    auto unitary_2_gate = UnitaryGateN<2, Precision>(gate_desc.affect_args_, gate_desc.data_ptr_);
+                    apply_unitary_n_gate(circuit_qubit_num, unitary_2_gate, real, imag);
+                    break;
+                }
+                case target_::ctrl_unitary: {
+                    auto ctrl_unitary_gate = ControlledUnitaryGate<Precision>(
+                            gate_desc.affect_args_[0],
+                            gate_desc.affect_args_[1],
+                            gate_desc.data_ptr_
+                    );
+                    apply_ctrl_unitary_gate(circuit_qubit_num, ctrl_unitary_gate, real, imag);
+                    break;
+                }
+                default: {
+                    throw std::runtime_error(
+                            std::string(__func__) + ": " + "Not implemented gate - " + gate_desc.gate_name_);
+                }
+            };
         }
     }
 

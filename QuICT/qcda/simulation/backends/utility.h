@@ -10,6 +10,7 @@
 #include <complex>
 #include <type_traits>
 #include <chrono>
+#include <memory>
 #include <cassert>
 #include <immintrin.h>
 
@@ -97,7 +98,7 @@ namespace QuICT {
     using mat_entry_t = std::complex<Precision>;
 
     template<typename Precision, uint64_t N>
-    using marray_t = std::array<mat_entry_t<Precision>, N>;
+    using marray_t = std::array<std::complex<Precision>, N>;
 
 
     //* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
@@ -110,24 +111,20 @@ namespace QuICT {
         // Not all members are used
 
         std::string gate_name_;
-        Precision parg_;
+
         std::vector<uint64_t> affect_args_;
-        mat_entry_t<Precision> *data_ptr_;
-        std::vector<Precision> pargs_;
+        std::shared_ptr<std::complex<Precision>[]> data_ptr_;
+
+        GateDescription(
+                const char *gate_name,
+                std::vector<uint64_t> affect_args
+        ) : gate_name_(gate_name), affect_args_(affect_args) {}
 
         GateDescription(
                 const char *gate_name,
                 std::vector<uint64_t> affect_args,
-                Precision parg,
-                mat_entry_t<Precision> *data_ptr
-        ) : gate_name_(gate_name), affect_args_(affect_args), parg_(parg), data_ptr_(data_ptr), pargs_(1, parg) {}
-
-        GateDescription(
-                const char *gate_name,
-                std::vector<uint64_t> affect_args,
-                const std::vector<Precision> &pargs,
-                mat_entry_t<Precision> *data_ptr
-        ) : gate_name_(gate_name), affect_args_(affect_args), parg_(pargs[0]), data_ptr_(data_ptr), pargs_(pargs) {}
+                std::shared_ptr<std::complex<Precision>[]> data_ptr
+        ) : gate_name_(gate_name), affect_args_(affect_args), data_ptr_(data_ptr) {}
     };
 
     //* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
