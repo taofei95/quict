@@ -47,7 +47,7 @@ namespace QuICT {
      * */
     template<uint64_t N>
     struct SimpleGateN {
-        uarray_t<N> affect_args_;
+        uarray_t <N> affect_args_;
 
         template<typename _rand_iter>
         SimpleGateN(_rand_iter qubit_begin, _rand_iter qubit_end) {
@@ -66,7 +66,7 @@ namespace QuICT {
     // Multiple qubit unitary gate
     template<uint64_t N, typename Precision>
     struct UnitaryGateN {
-        uarray_t<N> affect_args_;
+        uarray_t <N> affect_args_;
         Precision *mat_real_ = nullptr;
         Precision *mat_imag_ = nullptr;
 
@@ -116,11 +116,11 @@ namespace QuICT {
     // Multiple qubit diagonal gate
     template<uint64_t N, typename Precision>
     struct DiagonalGateN {
-        uarray_t<N> affect_args_;
+        uarray_t <N> affect_args_;
         Precision *diagonal_real_ = nullptr;
         Precision *diagonal_imag_ = nullptr;
 
-        explicit DiagonalGateN(const uarray_t<N> &affect_args,
+        explicit DiagonalGateN(const uarray_t <N> &affect_args,
                                const std::shared_ptr<std::complex<Precision>[]> data_ptr) {
             std::copy(affect_args.begin(), affect_args.end(), this->affect_args_.begin());
             this->diagonal_real_ = new Precision[1ULL << N];
@@ -198,28 +198,8 @@ namespace QuICT {
     // Specific Gate Declaration
     //* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
-    // TODO: Remove all specific parameterized gates in the future.
-
-    template<typename Precision>
-    struct CrzGate : ControlledDiagonalGate<Precision> {
-        CrzGate(uint64_t carg, uint64_t targ, Precision parg)
-                : ControlledDiagonalGate<Precision>(carg, targ) {
-            this->diagonal_real_ = new Precision[2];
-            this->diagonal_imag_ = new Precision[2];
-            std::complex<Precision> t0 = std::exp(
-                    static_cast<mat_entry_t<Precision>>(std::complex<Precision>(0, -1.0 * parg / 2)));
-            std::complex<Precision> t1 = std::exp(
-                    static_cast<mat_entry_t<Precision>>(std::complex<Precision>(0, 1.0 * parg / 2)));
-            this->diagonal_real_[0] = t0.real();
-            this->diagonal_real_[1] = t1.real();
-            this->diagonal_imag_[0] = t0.imag();
-            this->diagonal_imag_[1] = t1.imag();
-        }
-    };
-
     template<typename Precision>
     struct HGate : SimpleGateN<1> {
-//            std::complex<Precision> sqrt2_inv = static_cast<std::complex<Precision>>(1.0 / sqrt(2));
         static constexpr std::complex<Precision> sqrt2_inv =
                 static_cast<std::complex<Precision>>(
                         1.0 / 1.414213562373095048801688724209698);
@@ -230,48 +210,6 @@ namespace QuICT {
     template<typename Precision>
     struct XGate : SimpleGateN<1> {
         explicit XGate(uint64_t targ) : SimpleGateN<1>(targ) {}
-    };
-
-    template<typename Precision>
-    struct CU3Gate : ControlledUnitaryGate<Precision> {
-        std::vector<Precision> pargs_;
-
-        explicit CU3Gate(uint64_t carg, uint64_t targ, const std::vector<Precision> &pargs)
-                : ControlledUnitaryGate<Precision>(carg, targ), pargs_(pargs) {
-            std::complex<Precision> tmp[4];
-            auto j = std::complex<Precision>(0, 1);
-            tmp[0] = std::cos(pargs_[0] / 2);
-            tmp[1] = -std::exp(j * pargs_[2]) * std::sin(pargs_[0] / 2);
-            tmp[2] = std::exp(j * pargs_[1]) * std::sin(pargs_[0] / 2);
-            tmp[3] = std::exp(j * (pargs_[1] + pargs_[2])) * std::cos(pargs_[0] / 2);
-            this->mat_real_ = new Precision[4];
-            this->mat_imag_ = new Precision[4];
-            for (int i = 0; i < 4; ++i) {
-                this->mat_real_[i] = tmp[i].real();
-                this->mat_imag_[i] = tmp[i].imag();
-            }
-        }
-    };
-
-    template<typename Precision>
-    struct RzGate : DiagonalGateN<1, Precision> {
-        explicit RzGate(uint64_t targ, Precision parg) : DiagonalGateN<1, Precision>(targ) {
-            this->diagonal_real_ = new Precision[2];
-            this->diagonal_imag_ = new Precision[2];
-            std::complex<Precision> tmp[2];
-            auto j = std::complex<Precision>(0, 1);
-            tmp[0] = std::exp(-j * parg / 2.0);
-            tmp[1] = std::exp(j * parg / 2.0);
-            this->diagonal_real_[0] = tmp[0].real();
-            this->diagonal_imag_[0] = tmp[0].imag();
-            this->diagonal_real_[1] = tmp[1].real();
-            this->diagonal_imag_[1] = tmp[1].imag();
-        }
-
-        ~RzGate() {
-            delete_all_and_set_null(this->diagonal_real_);
-            delete_all_and_set_null(this->diagonal_imag_);
-        }
     };
 
 
