@@ -1,3 +1,9 @@
+#!/usr/bin/env python
+# -*- coding:utf8 -*-
+# @TIME    : 2021/9/11 08:06
+# @Author  : Xiaoquan Xu
+# @File    : moleculardata.py
+
 import h5py
 
 def get_from_file(item, molfile, set_type = None):
@@ -11,10 +17,12 @@ def get_from_file(item, molfile, set_type = None):
         data = molfile[item][...]
         if data.dtype.num == 0:
             data = None
+            print("False " + item)
         elif set_type != None:
             data = data.astype(set_type)
     except Exception:
         data = None
+        print("!! no " + item)
     return data
 
 class MolecularData:
@@ -34,10 +42,12 @@ class MolecularData:
         Args:
             molfile(str): the molecular file name
         """
+        molfile = molfile.strip()
         if molfile[-5:] != ".hdf5":
             self.molfile = molfile + ".hdf5"
         else:
             self.molfile = molfile
+        
         with h5py.File(self.molfile, "r") as f:
             self.n_orbitals = get_from_file("n_orbitals", f, 'int')
             self.n_electrons = get_from_file("n_electrons", f, 'int')
@@ -53,3 +63,12 @@ class MolecularData:
 
     def get_molecular_rdm(self, use_fci=False):
         pass
+
+    def save(self):
+        with h5py.File("save_"+self.molfile, "w") as f:
+            f.create_dataset("n_orbitals", data=str(self.n_orbitals))
+            f.create_dataset("n_electrons", data=str(self.n_electrons))
+            f.create_dataset("nuclear_repulsion", data=str(self.nuclear_repulsion))
+            f.create_dataset("one_body_integrals", data=str(self.one_body_integrals))
+            f.create_dataset("two_body_integrals", data=str(self.two_body_integrals))
+
