@@ -22,17 +22,6 @@ namespace QuICT {
     class MaTricksSimulator {
     protected:
         std::string name_;
-        enum target_ {
-            diag_1,
-            diag_2,
-            ctrl_diag,
-            unitary_1,
-            unitary_2,
-            ctrl_unitary,
-            special_h,
-            special_x
-        };
-        std::map<std::string, target_> dispatcher_;
     public:
         MaTricksSimulator() {
             using namespace std;
@@ -45,15 +34,6 @@ namespace QuICT {
             } else if (std::is_same_v<Precision, float>) {
                 name_ += " [float]";
             }
-
-            dispatcher_["special_h"] = target_::special_h;
-            dispatcher_["special_x"] = target_::special_x;
-            dispatcher_["diag_1"] = target_::diag_1;
-            dispatcher_["diag_2"] = target_::diag_2;
-            dispatcher_["ctrl_diag"] = target_::ctrl_diag;
-            dispatcher_["unitary_1"] = target_::unitary_1;
-            dispatcher_["unitary_2"] = target_::unitary_2;
-            dispatcher_["ctrl_unitary"] = target_::ctrl_unitary;
         }
 
         inline const std::string &name() {
@@ -288,33 +268,33 @@ namespace QuICT {
             Precision *real,
             Precision *imag
     ) {
-        auto search = dispatcher_.find(gate_desc.gate_name_);
-        if (search == dispatcher_.end()) {
+        auto search = dispatcher.find(gate_desc.gate_name_);
+        if (search == dispatcher.end()) {
             throw std::runtime_error(std::string(__func__) + ": " + "Not implemented gate - " + gate_desc.gate_name_);
         } else {
-            target_ gate_category = search->second;
+            gate_category gate_category = search->second;
             switch (gate_category) {
-                case target_::special_x: {
+                case gate_category::special_x: {
                     auto gate = XGate<Precision>(gate_desc.affect_args_[0]);
                     apply_x_gate(q_state_bit_num, gate, real, imag);
                     break;
                 }
-                case target_::special_h: {
+                case gate_category::special_h: {
                     auto gate = HGate<Precision>(gate_desc.affect_args_[0]);
                     apply_h_gate(q_state_bit_num, gate, real, imag);
                     break;
                 }
-                case target_::diag_1: {
+                case gate_category::diag_1: {
                     auto diag_1_gate = DiagonalGateN<1, Precision>(gate_desc.affect_args_[0], gate_desc.data_ptr_);
                     apply_diag_n_gate(q_state_bit_num, diag_1_gate, real, imag);
                     break;
                 }
-                case target_::diag_2: {
+                case gate_category::diag_2: {
                     throw std::runtime_error(
                             std::string(__func__) + ": " + "Not implemented gate - " + gate_desc.gate_name_);
                     break;
                 }
-                case target_::ctrl_diag: {
+                case gate_category::ctrl_diag: {
                     auto ctrl_diag_gate = ControlledDiagonalGate<Precision>(
                             gate_desc.affect_args_[0],
                             gate_desc.affect_args_[1],
@@ -323,17 +303,17 @@ namespace QuICT {
                     apply_ctrl_diag_gate(q_state_bit_num, ctrl_diag_gate, real, imag);
                     break;
                 }
-                case target_::unitary_1: {
+                case gate_category::unitary_1: {
                     auto unitary_1_gate = UnitaryGateN<1, Precision>(gate_desc.affect_args_[0], gate_desc.data_ptr_);
                     apply_unitary_n_gate(q_state_bit_num, unitary_1_gate, real, imag);
                     break;
                 }
-                case target_::unitary_2: {
+                case gate_category::unitary_2: {
                     auto unitary_2_gate = UnitaryGateN<2, Precision>(gate_desc.affect_args_, gate_desc.data_ptr_);
                     apply_unitary_n_gate(q_state_bit_num, unitary_2_gate, real, imag);
                     break;
                 }
-                case target_::ctrl_unitary: {
+                case gate_category::ctrl_unitary: {
                     auto ctrl_unitary_gate = ControlledUnitaryGate<Precision>(
                             gate_desc.affect_args_[0],
                             gate_desc.affect_args_[1],
@@ -757,6 +737,7 @@ namespace QuICT {
                     __m256d ymm0 = _mm256_loadu2_m128d(gate.diagonal_real_, gate.diagonal_real_); // d_r
                     __m256d ymm1 = _mm256_loadu2_m128d(gate.diagonal_imag_, gate.diagonal_imag_); // d_i
                     constexpr uint64_t batch_size = 2;
+#pragma omp parallel for
                     for (uint64_t task_id = 0; task_id < task_num; task_id += batch_size) {
                         auto ind0 = index0(task_id, q_state_bit_num, gate.targ_);
                         __m256d ymm2 = _mm256_loadu_pd(&real[ind0]); // v_r
@@ -772,6 +753,7 @@ namespace QuICT {
                     ymm0 = _mm256_permute4x64_pd(ymm0, 0b1101'1000); // d_r
                     ymm1 = _mm256_permute4x64_pd(ymm1, 0b1101'1000); // d_i
                     constexpr uint64_t batch_size = 2;
+#pragma omp parallel for
                     for (uint64_t task_id = 0; task_id < task_num; task_id += batch_size) {
                         auto ind0 = index0(task_id, q_state_bit_num, gate.targ_);
                         __m256d ymm2 = _mm256_loadu_pd(&real[ind0]); // v_r
@@ -787,6 +769,7 @@ namespace QuICT {
                     __m256d ymm2 = _mm256_broadcast_sd(&gate.diagonal_real_[1]);
                     __m256d ymm3 = _mm256_broadcast_sd(&gate.diagonal_imag_[1]);
                     constexpr uint64_t batch_size = 4;
+#pragma omp parallel for
                     for (uint64_t task_id = 0; task_id < task_num; task_id += batch_size) {
                         auto inds = index(task_id, q_state_bit_num, gate.targ_);
                         __m256d ymm4 = _mm256_loadu_pd(&real[inds[0]]); // v00 v10 v20 v30, real
@@ -930,6 +913,7 @@ namespace QuICT {
                     }
 
                     constexpr uint64_t batch_size = 4;
+#pragma omp parallel for
                     for (int i = 0; i < (1 << q_state_bit_num); i += batch_size) {
                         __m256d re = _mm256_loadu_pd(&real[i]);
                         __m256d im = _mm256_loadu_pd(&imag[i]);
@@ -952,6 +936,7 @@ namespace QuICT {
                     }
 
                     constexpr uint64_t batch_size = 4;
+#pragma omp parallel for
                     for (int i = 0; i < (1 << q_state_bit_num); i += batch_size) {
                         __m256d re = _mm256_loadu_pd(&real[i]);
                         __m256d im = _mm256_loadu_pd(&imag[i]);
@@ -979,7 +964,7 @@ namespace QuICT {
                         op_re[i] = _mm256_set1_pd(gate.mat_real_[i]);
                         op_im[i] = _mm256_set1_pd(gate.mat_imag_[i]);
                     }
-
+#pragma omp parallel for
                     for (uint64_t task_id = 0; task_id < task_num; task_id += batch_size) {
                         auto ind = index(task_id, q_state_bit_num, gate.targ_);
                         __m256d i0_re = _mm256_loadu_pd(&real[ind[0]]);
@@ -1020,6 +1005,7 @@ namespace QuICT {
                     if (qubits_sorted[0] == q_state_bit_num - 2) { // ...qq
                         if (qubits_sorted[0] == qubits[0]) { // ...01
                             constexpr uint64_t batch_size = 4;
+#pragma omp parallel for
                             for (uint64_t i = 0; i < (1 << q_state_bit_num); i += batch_size) {
                                 __m256d v_re = _mm256_loadu_pd(real + i);
                                 __m256d v_im = _mm256_loadu_pd(imag + i);
@@ -1057,6 +1043,7 @@ namespace QuICT {
                             }
 
                             constexpr uint64_t batch_size = 4;
+#pragma omp parallel for
                             for (uint64_t i = 0; i < (1 << q_state_bit_num); i += batch_size) {
                                 __m256d v_re = _mm256_loadu_pd(real + i);
                                 __m256d v_im = _mm256_loadu_pd(imag + i);
@@ -1087,6 +1074,7 @@ namespace QuICT {
                         if (qubits_sorted[0] == qubits[0]) { // ...0.1
                             constexpr uint64_t batch_size = 2;
                             uint64_t task_size = 1 << (q_state_bit_num - 2);
+#pragma omp parallel for
                             for (uint64_t task_id = 0; task_id < task_size; task_id += batch_size) {
                                 auto idx = index(task_id, q_state_bit_num, qubits, qubits_sorted);
                                 __m256d v01_re = _mm256_loadu_pd(real + idx[0]);
@@ -1136,6 +1124,7 @@ namespace QuICT {
 
                             constexpr uint64_t batch_size = 2;
                             uint64_t task_size = 1 << (q_state_bit_num - 2);
+#pragma omp parallel for
                             for (uint64_t task_id = 0; task_id < task_size; task_id += batch_size) {
                                 auto idx = index(task_id, q_state_bit_num, qubits, qubits_sorted);
                                 __m256d v02_re = _mm256_loadu_pd(real + idx[0]);
@@ -1189,6 +1178,7 @@ namespace QuICT {
 
                         constexpr uint64_t batch_size = 2;
                         uint64_t task_size = 1 << (q_state_bit_num - 2);
+#pragma omp parallel for
                         for (uint64_t task_id = 0; task_id < task_size; task_id += batch_size) {
                             auto idx = index(task_id, q_state_bit_num, qubits, qubits_sorted);
                             __m256d v01_re = _mm256_loadu_pd(real + idx[0]);
@@ -1238,6 +1228,7 @@ namespace QuICT {
 
                         constexpr uint64_t batch_size = 2;
                         uint64_t task_size = 1 << (q_state_bit_num - 2);
+#pragma omp parallel for
                         for (uint64_t task_id = 0; task_id < task_size; task_id += batch_size) {
                             auto idx = index(task_id, q_state_bit_num, qubits, qubits_sorted);
 
@@ -1280,6 +1271,7 @@ namespace QuICT {
                 } else { // xxx..
                     constexpr uint64_t batch_size = 4;
                     uint64_t task_size = 1 << (q_state_bit_num - 2);
+#pragma omp parallel for
                     for (uint64_t task_id = 0; task_id < task_size; task_id += batch_size) {
                         auto idx = index(task_id, q_state_bit_num, qubits, qubits_sorted);
                         __m256d v_re[4], v_im[4];
@@ -1352,7 +1344,7 @@ namespace QuICT {
                     ymm3 = _mm256_permute2f128_pd(ymm5, ymm5, 0b0001'0001); // m2 m3 m2 m3, imag
 
                     constexpr uint64_t batch_size = 2;
-#pragma omp parallel for firstprivate(ymm0, ymm1, ymm2, ymm3) private(ymm4, ymm5, ymm6, ymm7, ymm8, ymm9)
+#pragma omp parallel for
                     for (uint64_t task_id = 0; task_id < task_num; task_id += batch_size) {
                         auto ind0 = index0(task_id, q_state_bit_num, qubits, qubits_sorted);
                         if (qubits[0] == qubits_sorted[0]) { // ...q0q1
@@ -1395,7 +1387,7 @@ namespace QuICT {
                     ymm3 = _mm256_permute2f128_pd(ymm5, ymm5, 0b0001'0001); // m2 m3 m2 m3, imag
 
                     constexpr uint64_t batch_size = 2;
-#pragma omp parallel for firstprivate(ymm0, ymm1, ymm2, ymm3) private(ymm4, ymm5, ymm6, ymm7, ymm8, ymm9, ymm10, ymm11)
+#pragma omp parallel for
                     for (uint64_t task_id = 0; task_id < task_num; task_id += batch_size) {
                         auto inds = index(task_id, q_state_bit_num, qubits, qubits_sorted);
                         if (qubits_sorted[0] == qubits[0]) { // ...q0.q1
@@ -1443,7 +1435,7 @@ namespace QuICT {
                 __m256d ymm2 = _mm256_loadu2_m128d(&gate.mat_imag_[0], &gate.mat_imag_[0]); // m0 m1 m0 m1, imag
                 __m256d ymm3 = _mm256_loadu2_m128d(&gate.mat_imag_[2], &gate.mat_imag_[2]); // m2 m3 m2 m3, imag
 
-#pragma omp parallel for firstprivate(ymm0, ymm1, ymm2, ymm3)
+#pragma omp parallel for
                 for (uint64_t task_id = 0; task_id < task_num; task_id += batch_size) {
                     __m256d ymm4, ymm5, ymm6, ymm7, ymm8, ymm9;
                     auto inds = index(task_id, q_state_bit_num, qubits, qubits_sorted);
@@ -1481,7 +1473,7 @@ namespace QuICT {
                 __m256d ymm2 = _mm256_loadu2_m128d(&gate.mat_imag_[0], &gate.mat_imag_[0]); // m0 m1 m0 m1, imag
                 __m256d ymm3 = _mm256_loadu2_m128d(&gate.mat_imag_[2], &gate.mat_imag_[2]); // m2 m3 m2 m3, imag
 
-#pragma omp parallel for firstprivate(ymm0, ymm1, ymm2, ymm3)
+#pragma omp parallel for
                 for (uint64_t task_id = 0; task_id < task_num; task_id += batch_size) {
                     auto inds = index(task_id, q_state_bit_num, qubits, qubits_sorted);
                     __m256d ymm4 = _mm256_loadu2_m128d(&real[inds[3]], &real[inds[2]]); // v02 v12 v03 v13, real

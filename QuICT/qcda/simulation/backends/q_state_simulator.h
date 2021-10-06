@@ -16,7 +16,7 @@ namespace QuICT {
     class QState {
     public:
         uint64_t id;
-        
+
     };
 
 

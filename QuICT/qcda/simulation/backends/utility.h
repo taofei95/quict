@@ -51,6 +51,32 @@ namespace QuICT {
         return cnt;
     }
 
+    //* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+    // Some Definitions
+    //* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+
+    enum gate_category {
+        diag_1,
+        diag_2,
+        ctrl_diag,
+        unitary_1,
+        unitary_2,
+        ctrl_unitary,
+        special_h,
+        special_x
+    };
+
+    std::map<std::string, gate_category> dispatcher = {
+            {"special_h", gate_category::special_h},
+            {"special_x", gate_category::special_x},
+            {"diag_1", gate_category::diag_1},
+            {"diag_2", gate_category::diag_2},
+            {"ctrl_diag", gate_category::ctrl_diag},
+            {"unitary_1", gate_category::unitary_1},
+            {"unitary_2", gate_category::unitary_2},
+            {"ctrl_unitary", gate_category::ctrl_unitary}
+    };
+
 
     //* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
     // Template Class Derive Check Helpers
