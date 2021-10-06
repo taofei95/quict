@@ -149,31 +149,31 @@ void test_by_data_file(
 
 auto simulator = QuICT::MaTricksSimulator<double>();
 
-TEST(HybridTest, HTest) {
+TEST(MatricksTest, HTest) {
     test_by_data_file("h.txt", simulator);
 }
 
-TEST(HybridTest, CtrlDiagTest) {
+TEST(MatricksTest, CtrlDiagTest) {
     test_by_data_file("crz.txt", simulator);
 }
 
-TEST(HybridTest, QftTest) {
+TEST(MatricksTest, QftTest) {
     test_by_data_file("qft.txt", simulator);
 }
 
 
-TEST(HybridTest, DiagTest) {
+TEST(MatricksTest, DiagTest) {
     test_by_data_file("diag.txt", simulator);
 }
 
-TEST(HybridTest, XTest) {
+TEST(MatricksTest, XTest) {
     test_by_data_file("x.txt", simulator);
 }
 
-TEST(HybridTest, CtrlUnitaryTest) {
+TEST(MatricksTest, CtrlUnitaryTest) {
     test_by_data_file("cu3.txt", simulator);
 }
 
-TEST(HybridTest, UnitaryTest) {
+TEST(MatricksTest, UnitaryTest) {
     test_by_data_file("u.txt", simulator);
 }

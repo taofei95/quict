@@ -39,3 +39,8 @@ add_executable(index_test index_test.cpp gate.h utility.h
         ../../../../QuICT/utility/extern/googletest/googletest/src/gtest_main.cc)
 add_dependencies(index_test gtest)
 target_link_libraries(index_test gtest)
+
+add_executable(tiny_sim_test tiny_sim_test.cpp tiny_simulator.h gate.h utility.h
+        ../../../../QuICT/utility/extern/googletest/googletest/src/gtest_main.cc)
+add_dependencies(tiny_sim_test gtest)
+target_link_libraries(tiny_sim_test gtest)

@@ -165,6 +165,16 @@ def main():
     out_circuit_to_file(qubit_num, "x.txt", circuit)
     circuit.clear()
 
+    for tiny_circuit_qubit_num in range(1, 5):
+        tiny_circuit = Circuit(tiny_circuit_qubit_num)
+        for i in range(tiny_circuit_qubit_num):
+            H | tiny_circuit(i)
+        for i in range(tiny_circuit_qubit_num):
+            for _ in range(4):
+                Rz(uniform(0, 3.14)) | tiny_circuit(i)
+        out_circuit_to_file(tiny_circuit_qubit_num, f"tiny_diag_{tiny_circuit_qubit_num}.txt", tiny_circuit)
+        tiny_circuit.clear()
+
 
 if __name__ == '__main__':
     main()

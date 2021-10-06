@@ -11,6 +11,7 @@
 #include <type_traits>
 #include <chrono>
 #include <memory>
+#include <vector>
 #include <cassert>
 #include <immintrin.h>
 
@@ -67,15 +68,56 @@ namespace QuICT {
     };
 
     std::map<std::string, gate_category> dispatcher = {
-            {"special_h", gate_category::special_h},
-            {"special_x", gate_category::special_x},
-            {"diag_1", gate_category::diag_1},
-            {"diag_2", gate_category::diag_2},
-            {"ctrl_diag", gate_category::ctrl_diag},
-            {"unitary_1", gate_category::unitary_1},
-            {"unitary_2", gate_category::unitary_2},
+            {"special_h",    gate_category::special_h},
+            {"special_x",    gate_category::special_x},
+            {"diag_1",       gate_category::diag_1},
+            {"diag_2",       gate_category::diag_2},
+            {"ctrl_diag",    gate_category::ctrl_diag},
+            {"unitary_1",    gate_category::unitary_1},
+            {"unitary_2",    gate_category::unitary_2},
             {"ctrl_unitary", gate_category::ctrl_unitary}
     };
+
+    template<typename Precision>
+    inline std::pair<Precision *, Precision *> separate_complex(
+            uint64_t q_state_bit_num,
+            const std::complex<Precision> *c_arr
+    ) {
+        auto len = 1ULL << q_state_bit_num;
+        auto ptr = new Precision[len << 1ULL];
+        auto real = ptr;
+        auto imag = &ptr[len];
+        for (uint64_t i = 0; i < len; i += 4) {
+            real[i] = c_arr[i].real();
+            imag[i] = c_arr[i].imag();
+
+            real[i + 1] = c_arr[i + 1].real();
+            imag[i + 1] = c_arr[i + 1].imag();
+
+            real[i + 2] = c_arr[i + 2].real();
+            imag[i + 2] = c_arr[i + 2].imag();
+
+            real[i + 3] = c_arr[i + 3].real();
+            imag[i + 3] = c_arr[i + 3].imag();
+        }
+        return {real, imag};
+    }
+
+    template<typename Precision>
+    inline void combine_complex(
+            uint64_t q_state_bit_num,
+            const Precision *real,
+            const Precision *imag,
+            std::complex<Precision> *res
+    ) {
+        auto len = 1ULL << q_state_bit_num;
+        for (uint64_t i = 0; i < len; i += 4) {
+            res[i] = {real[i], imag[i]};
+            res[i + 1] = {real[i + 1], imag[i + 1]};
+            res[i + 2] = {real[i + 2], imag[i + 2]};
+            res[i + 3] = {real[i + 3], imag[i + 3]};
+        }
+    }
 
 
     //* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
@@ -134,23 +176,25 @@ namespace QuICT {
     template<typename Precision>
     class GateDescription {
     public:
-        // Not all members are used
-
         std::string gate_name_;
-
         std::vector<uint64_t> affect_args_;
         std::shared_ptr<std::complex<Precision>[]> data_ptr_;
 
         GateDescription(
                 const char *gate_name,
                 std::vector<uint64_t> affect_args
-        ) : gate_name_(gate_name), affect_args_(affect_args) {}
+        ) :
+                gate_name_(gate_name),
+                affect_args_(affect_args.begin(), affect_args.end()) {}
 
         GateDescription(
                 const char *gate_name,
                 std::vector<uint64_t> affect_args,
                 std::shared_ptr<std::complex<Precision>[]> data_ptr
-        ) : gate_name_(gate_name), affect_args_(affect_args), data_ptr_(data_ptr) {}
+        ) :
+                gate_name_(gate_name),
+                affect_args_(affect_args.begin(), affect_args.end()),
+                data_ptr_(data_ptr) {}
     };
 
     //* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *

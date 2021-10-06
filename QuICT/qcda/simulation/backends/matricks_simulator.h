@@ -40,6 +40,13 @@ namespace QuICT {
             return name_;
         }
 
+        inline void apply_gate(
+                uint64_t q_state_bit_num,
+                const GateDescription<Precision> &gate_desc,
+                Precision *real,
+                Precision *imag
+        );
+
         inline void run(
                 uint64_t q_state_bit_num,
                 const std::vector<GateDescription<Precision>> &gate_desc_vec,
@@ -51,36 +58,12 @@ namespace QuICT {
                 const std::vector<GateDescription<Precision>> &gate_desc_vec
         );
 
-        inline std::pair<Precision *, Precision *> run_without_combine(
-                uint64_t q_state_bit_num,
-                const std::vector<GateDescription<Precision>> &gate_desc_vec
-        );
-
     private:
         inline void qubit_num_checker(uint64_t qubit_num);
 
         inline void run(
                 uint64_t q_state_bit_num,
                 const std::vector<GateDescription<Precision>> &gate_desc_vec,
-                Precision *real,
-                Precision *imag
-        );
-
-        inline std::pair<Precision *, Precision *> separate_complex(
-                uint64_t q_state_bit_num,
-                const std::complex<Precision> *c_arr
-        );
-
-        inline void combine_complex(
-                uint64_t q_state_bit_num,
-                const Precision *real,
-                const Precision *imag,
-                std::complex<Precision> *res
-        );
-
-        inline void apply_gate(
-                uint64_t q_state_bit_num,
-                const GateDescription<Precision> &gate_desc,
                 Precision *real,
                 Precision *imag
         );
@@ -100,13 +83,6 @@ namespace QuICT {
                 Precision *real,
                 Precision *imag
         );
-
-//        void apply_unitary_n_gate(
-//                uint64_t q_state_bit_num,
-//                const UnitaryGateN<1, Precision> &gate,
-//                Precision *real,
-//                Precision *imag
-//        );
 
         template<uint64_t N, template<uint64_t, typename> class Gate>
         void apply_unitary_n_gate(
@@ -180,24 +156,6 @@ namespace QuICT {
     }
 
     template<typename Precision>
-    inline std::pair<Precision *, Precision *>
-    MaTricksSimulator<Precision>::run_without_combine(
-            uint64_t q_state_bit_num,
-            const std::vector<GateDescription<Precision>> &gate_desc_vec
-    ) {
-        qubit_num_checker(q_state_bit_num);
-
-        auto len = 1ULL << q_state_bit_num;
-        auto real = new Precision[len];
-        auto imag = new Precision[len];
-        std::fill(real, real + len, 0);
-        std::fill(imag, imag + len, 0);
-        real[0] = 1.0;
-        run(q_state_bit_num, gate_desc_vec, real, imag);
-        return {real, imag};
-    }
-
-    template<typename Precision>
     inline void MaTricksSimulator<Precision>::run(
             uint64_t q_state_bit_num,
             const std::vector<GateDescription<Precision>> &gate_desc_vec,
@@ -216,49 +174,6 @@ namespace QuICT {
         if (qubit_num <= 4) {
             throw std::runtime_error("Only supports circuit with more than 4 qubits!");
         }
-    }
-
-    template<typename Precision>
-    inline std::pair<Precision *, Precision *>
-    MaTricksSimulator<Precision>::separate_complex(
-            uint64_t q_state_bit_num,
-            const std::complex<Precision> *c_arr
-    ) {
-        auto len = 1ULL << q_state_bit_num;
-        auto ptr = new Precision[len << 1ULL];
-        auto real = ptr;
-        auto imag = &ptr[len];
-        for (uint64_t i = 0; i < len; i += 4) {
-            real[i] = c_arr[i].real();
-            imag[i] = c_arr[i].imag();
-
-            real[i + 1] = c_arr[i + 1].real();
-            imag[i + 1] = c_arr[i + 1].imag();
-
-            real[i + 2] = c_arr[i + 2].real();
-            imag[i + 2] = c_arr[i + 2].imag();
-
-            real[i + 3] = c_arr[i + 3].real();
-            imag[i + 3] = c_arr[i + 3].imag();
-        }
-        return {real, imag};
-    }
-
-    template<typename Precision>
-    inline void MaTricksSimulator<Precision>::combine_complex(
-            uint64_t q_state_bit_num,
-            const Precision *real,
-            const Precision *imag,
-            std::complex<Precision> *res
-    ) {
-        auto len = 1ULL << q_state_bit_num;
-        for (uint64_t i = 0; i < len; i += 4) {
-            res[i] = {real[i], imag[i]};
-            res[i + 1] = {real[i + 1], imag[i + 1]};
-            res[i + 2] = {real[i + 2], imag[i + 2]};
-            res[i + 3] = {real[i + 3], imag[i + 3]};
-        }
-//        return res;
     }
 
     template<typename Precision>
