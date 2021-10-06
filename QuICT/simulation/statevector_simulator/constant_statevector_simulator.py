@@ -46,7 +46,7 @@ class ConstantStateVectorSimulator(BasicGPUSimulator):
 
         # Initial qubit's states
         with cp.cuda.Device(self._device_id):
-            self._vector = cp.empty(vector_size, dtype=self._precision)
+            self._vector = cp.zeros(vector_size, dtype=self._precision)
             self._vector.put(0, self._precision(1))
 
     def run(self) -> np.ndarray:

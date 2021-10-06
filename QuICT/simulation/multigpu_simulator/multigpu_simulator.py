@@ -15,9 +15,6 @@ from QuICT.simulation.utils import GateType, GATE_TYPE_to_ID, MATRIX_INDEXES
 from QuICT.simulation.multigpu_simulator.data_switch import DataSwitcher
 
 
-LIMIT_BUFFER_SIZE = int(os.getenv("QuICT_BUFFER_SIZE", 17))
-
-
 class MultiStateVectorSimulator(BasicGPUSimulator):
     """
     The simulator which using multi-GPUs.
@@ -39,7 +36,6 @@ class MultiStateVectorSimulator(BasicGPUSimulator):
     ):
         self.proxy = proxy
         self._sync = sync
-        self._buffer_size = LIMIT_BUFFER_SIZE if precision == np.complex64 else LIMIT_BUFFER_SIZE - 1
         assert(proxy.rank == gpu_device_id)
 
         # Initial simulator with qubits
@@ -53,7 +49,7 @@ class MultiStateVectorSimulator(BasicGPUSimulator):
 
         # Initial the required algorithm.
         self._algorithm = LinAlgLoader(device="GPU", enable_gate_kernel=True, enable_multigpu_gate_kernel=True)
-        self._data_switcher = DataSwitcher(self.proxy, self.qubits)
+        self._data_switcher = DataSwitcher(self.proxy, self.qubits, self._precision)
 
     def initial_vector_state(self):
         """
@@ -69,7 +65,7 @@ class MultiStateVectorSimulator(BasicGPUSimulator):
 
         # Initial qubit's states
         with cp.cuda.Device(self._device_id):
-            self._vector = cp.empty(vector_size, dtype=self._precision)
+            self._vector = cp.zeros(vector_size, dtype=self._precision)
             if self.proxy.rank == 0:
                 self._vector.put(0, self._precision(1))
 

@@ -8,12 +8,15 @@ LIMIT_BUFFER_SIZE = int(os.getenv("QuICT_BUFFER_SIZE", 17))
 
 
 class DataSwitcher:
-    def __init__(self, proxy, qubits: int):
+    def __init__(self, proxy, qubits: int, precision=np.complex64):
         self._proxy = proxy
         self._qubits = qubits
         self._based_idx = np.arange(1 << qubits, dtype=np.int64)
         self._id = proxy.rank
-        self._max_data_size_per_time = 1 << LIMIT_BUFFER_SIZE
+        if precision == np.complex64:
+            self._max_data_size_per_time = 1 << LIMIT_BUFFER_SIZE
+        else:
+            self._max_data_size_per_time = 1 << (LIMIT_BUFFER_SIZE - 1)
 
     def _switch(self, vector, destination):
         recv_buf = cp.zeros(vector.size, dtype=vector.dtype)
