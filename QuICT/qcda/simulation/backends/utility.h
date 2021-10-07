@@ -13,6 +13,7 @@
 #include <memory>
 #include <vector>
 #include <cassert>
+#include <fstream>
 #include <immintrin.h>
 
 // v1 * v2 == (v1r * v2r - v1i * v2i) + (v1i * v2r + v1r * v2i)*J
@@ -42,6 +43,7 @@ namespace QuICT {
     //* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
     // Time Measurement
     //* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+
     template<typename Callable, typename ...Arg, typename TimeUnit=std::chrono::microseconds>
     uint64_t time_elapse(Callable callable, Arg &&... args) {
         using namespace std;
@@ -67,7 +69,7 @@ namespace QuICT {
         special_x
     };
 
-    std::map<std::string, gate_category> dispatcher = {
+    const std::map<std::string, gate_category> dispatcher = {
             {"special_h",    gate_category::special_h},
             {"special_x",    gate_category::special_x},
             {"diag_1",       gate_category::diag_1},
@@ -178,23 +180,25 @@ namespace QuICT {
     public:
         std::string gate_name_;
         std::vector<uint64_t> affect_args_;
-        std::shared_ptr<std::complex<Precision>[]> data_ptr_;
+        std::vector<std::complex<Precision>> data_ptr_;
 
+        template<typename _u64_vec_T>
         GateDescription(
                 const char *gate_name,
-                std::vector<uint64_t> affect_args
+                _u64_vec_T &&affect_args
         ) :
                 gate_name_(gate_name),
-                affect_args_(affect_args.begin(), affect_args.end()) {}
+                affect_args_(std::move(affect_args)) {}
 
+        template<typename _u64_vec_T>
         GateDescription(
                 const char *gate_name,
-                std::vector<uint64_t> affect_args,
-                std::shared_ptr<std::complex<Precision>[]> data_ptr
+                _u64_vec_T &&affect_args,
+                std::vector<std::complex<Precision>> &&data_ptr
         ) :
                 gate_name_(gate_name),
-                affect_args_(affect_args.begin(), affect_args.end()),
-                data_ptr_(data_ptr) {}
+                affect_args_(std::move(affect_args)),
+                data_ptr_(std::move(data_ptr)) {}
     };
 
     //* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
@@ -314,6 +318,147 @@ namespace QuICT {
         ret[0] = task_id >> pos << (pos + 1) | tail;
         ret[1] = ret[0] | (1ULL << pos);
         return ret;
+    }
+
+    namespace Test {
+        //* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+        // Test helper
+        //* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+
+        template<
+                template<typename...> class _sim_T,
+                typename _str_T,
+                typename Precision
+        >
+        void test_by_data_file(
+                _str_T data_name,
+                _sim_T<Precision> &simulator,
+                double eps = 1e-6
+        ) {
+            using namespace std;
+
+            cout << simulator.name() << " " << "Testing by " << data_name << endl;
+
+            fstream fs;
+            fs.open(data_name, ios::in);
+            if (!fs) {
+                ASSERT_EQ(0, 1) << "Open " << data_name << " description failed.";
+            }
+            uint64_t qubit_num;
+            fs >> qubit_num;
+            string gate_name;
+            std::vector<QuICT::GateDescription<Precision>> gate_desc_vec;
+            while (fs >> gate_name) {
+                if (gate_name == "__TERM__") {
+                    break;
+                }
+                uint64_t carg;
+                uint64_t targ;
+
+                if (gate_name == "special_h") {
+                    fs >> targ;
+                    gate_desc_vec.emplace_back(
+                            "special_h",
+                            std::vector<uint64_t>{targ}
+                    );
+                } else if (gate_name == "special_x") {
+                    fs >> targ;
+                    gate_desc_vec.emplace_back(
+                            "special_x",
+                            std::vector<uint64_t>{targ}
+                    );
+                } else if (gate_name == "unitary_1") {
+                    fs >> targ;
+                    auto mat = std::vector<std::complex<Precision>>(4);
+                    for (int i = 0; i < 4; i++) {
+                        double re, im;
+                        char sign, img_label;
+                        fs >> re >> sign >> im >> img_label;
+                        mat[i] = std::complex<double>(re, sign == '+' ? im : -im);
+                    }
+
+                    gate_desc_vec.emplace_back(
+                            "unitary_1",
+                            std::vector<uint64_t>{targ},
+                            std::move(mat)
+                    );
+                } else if (gate_name == "unitary_2") {
+                    fs >> carg >> targ;
+                    auto mat = std::vector<std::complex<Precision>>(16);
+                    for (int i = 0; i < 16; i++) {
+                        double re, im;
+                        char sign, img_label;
+                        fs >> re >> sign >> im >> img_label;
+                        mat[i] = std::complex<double>(re, sign == '+' ? im : -im);
+                    }
+
+                    gate_desc_vec.emplace_back(
+                            "unitary_2",
+                            std::vector<uint64_t>{carg, targ},
+                            std::move(mat)
+                    );
+                } else if (gate_name == "ctrl_unitary") {
+                    fs >> carg >> targ;
+                    auto mat = std::vector<std::complex<Precision>>(4);
+                    for (int i = 0; i < 4; i++) {
+                        double re, im;
+                        char sign, img_label;
+                        fs >> re >> sign >> im >> img_label;
+                        mat[i] = std::complex<double>(re, sign == '+' ? im : -im);
+                    }
+                    gate_desc_vec.emplace_back(
+                            "ctrl_unitary",
+                            std::vector<uint64_t>{carg, targ},
+                            std::move(mat)
+                    );
+                } else if (gate_name == "diag_1") {
+                    fs >> targ;
+                    auto diag = std::vector<std::complex<Precision>>(2);
+                    for (int i = 0; i < 2; ++i) {
+                        double re, im;
+                        char sign, img_label;
+                        fs >> re >> sign >> im >> img_label;
+                        diag[i] = std::complex<double>(re, sign == '+' ? im : -im);
+                    }
+                    gate_desc_vec.emplace_back(
+                            "diag_1",
+                            std::vector<uint64_t>{targ},
+                            std::move(diag)
+                    );
+                } else if (gate_name == "ctrl_diag") {
+                    fs >> carg >> targ;
+                    auto diag = std::vector<std::complex<Precision>>(2);
+                    for (int i = 0; i < 2; ++i) {
+                        double re, im;
+                        char sign, img_label;
+                        fs >> re >> sign >> im >> img_label;
+                        diag[i] = std::complex<double>(re, sign == '+' ? im : -im);
+                    }
+                    gate_desc_vec.emplace_back(
+                            "ctrl_diag",
+                            std::vector<uint64_t>{carg, targ},
+                            std::move(diag)
+                    );
+                }
+            }
+
+            auto expect_state = new std::complex<double>[1ULL << qubit_num];
+
+            double re, im;
+            char sign, img_label;
+            for (uint64_t i = 0; i < (1ULL << qubit_num); ++i) {
+                fs >> re >> sign >> im >> img_label;
+                expect_state[i] = std::complex<double>(re, sign == '+' ? im : -im);
+            }
+
+            std::complex<Precision> *state = simulator.run(qubit_num, gate_desc_vec);
+            for (uint64_t i = 0; i < (1ULL << qubit_num); ++i) {
+                ASSERT_NEAR(state[i].real(), expect_state[i].real(), eps) << "i = " << i;
+                ASSERT_NEAR(state[i].imag(), expect_state[i].imag(), eps) << "i = " << i;
+            }
+            delete[] state;
+            delete[] expect_state;
+        }
     }
 }
 

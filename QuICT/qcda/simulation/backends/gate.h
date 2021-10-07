@@ -70,8 +70,9 @@ namespace QuICT {
         Precision *mat_real_ = nullptr;
         Precision *mat_imag_ = nullptr;
 
+        template<typename _complex_ptr_T>
         explicit UnitaryGateN(const std::vector<uint64_t> &args,
-                              const std::shared_ptr<std::complex<Precision>[]> data_ptr) {
+                              _complex_ptr_T data_ptr) {
             std::copy(args.begin(), args.end(), this->affect_args_.begin());
 
             this->mat_real_ = new Precision[1 << (N << 1)];
@@ -97,7 +98,8 @@ namespace QuICT {
 
         explicit UnitaryGateN(uint64_t targ) : targ_(targ) {}
 
-        explicit UnitaryGateN(uint64_t targ, const std::shared_ptr<std::complex<Precision>[]> data_ptr) : targ_(targ) {
+        template<typename _complex_ptr_T>
+        explicit UnitaryGateN(uint64_t targ, _complex_ptr_T data_ptr) : targ_(targ) {
             this->mat_real_ = new Precision[4];
             this->mat_imag_ = new Precision[4];
             for (int i = 0; i < 4; i++) {
@@ -120,8 +122,9 @@ namespace QuICT {
         Precision *diagonal_real_ = nullptr;
         Precision *diagonal_imag_ = nullptr;
 
+        template<typename _complex_ptr_T>
         explicit DiagonalGateN(const uarray_t <N> &affect_args,
-                               const std::shared_ptr<std::complex<Precision>[]> data_ptr) {
+                               _complex_ptr_T data_ptr) {
             std::copy(affect_args.begin(), affect_args.end(), this->affect_args_.begin());
             this->diagonal_real_ = new Precision[1ULL << N];
             this->diagonal_imag_ = new Precision[1ULL << N];
@@ -149,7 +152,8 @@ namespace QuICT {
 
         explicit DiagonalGateN(uint64_t targ) : targ_(targ) {}
 
-        explicit DiagonalGateN(uint64_t targ, const std::shared_ptr<std::complex<Precision>[]> data_ptr) : targ_(targ) {
+        template<typename _complex_ptr_T>
+        explicit DiagonalGateN(uint64_t targ, _complex_ptr_T data_ptr) : targ_(targ) {
             this->diagonal_real_ = new Precision[2];
             this->diagonal_imag_ = new Precision[2];
             for (int i = 0; i < 2; ++i) {
@@ -172,8 +176,9 @@ namespace QuICT {
         explicit ControlledUnitaryGate(uint64_t carg, uint64_t targ)
                 : carg_(carg), UnitaryGateN<1, Precision>(targ) {}
 
+        template<typename _complex_ptr_T>
         explicit ControlledUnitaryGate(uint64_t carg, uint64_t targ,
-                                       const std::shared_ptr<std::complex<Precision>[]> data_ptr)
+                                       _complex_ptr_T data_ptr)
                 : carg_(carg), UnitaryGateN<1, Precision>(targ, data_ptr) {}
     };
 
@@ -188,8 +193,9 @@ namespace QuICT {
         explicit ControlledDiagonalGate(uint64_t carg, uint64_t targ)
                 : carg_(carg), DiagonalGateN<1, Precision>(targ) {}
 
+        template<typename _complex_ptr_T>
         explicit ControlledDiagonalGate(uint64_t carg, uint64_t targ,
-                                        const std::shared_ptr<std::complex<Precision>[]> data_ptr)
+                                        _complex_ptr_T data_ptr)
                 : carg_(carg), DiagonalGateN<1, Precision>(targ, data_ptr) {}
     };
 
