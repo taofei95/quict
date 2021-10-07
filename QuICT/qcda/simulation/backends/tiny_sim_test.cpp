@@ -10,7 +10,14 @@
 
 auto simulator = QuICT::TinySimulator<double>();
 
-TEST(TinyTest, Diag1Test) {
+TEST(TinyTest, HTest) {
+    for (int i = 1; i <= 4; ++i) {
+        std::string category = "tiny_h_";
+        test_by_data_file(category + std::to_string(i) + ".txt", simulator);
+    }
+}
+
+TEST(TinyTest, DiagTest) {
     for (int i = 1; i <= 4; ++i) {
         std::string category = "tiny_diag_";
         test_by_data_file(category + std::to_string(i) + ".txt", simulator);

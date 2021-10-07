@@ -213,15 +213,15 @@ namespace QuICT {
             Precision *real,
             Precision *imag
     ) {
+        uint64_t task_num = 1ULL << (q_state_bit_num - N);
         if constexpr(N == 1) {
-            uint64_t task_num = 1ULL << (q_state_bit_num - 1);
             for (uint64_t task_id = 0; task_id < task_num; task_id += 1) {
                 auto inds = index(task_id, q_state_bit_num, gate.targ_);
                 for (int i = 0; i < 2; ++i) {
                     auto res_r = real[inds[i]] * gate.diagonal_real_[i] - imag[inds[i]] * gate.diagonal_imag_[i];
                     auto res_i = real[inds[i]] * gate.diagonal_imag_[i] + imag[inds[i]] * gate.diagonal_real_[i];
-                    real[i] = res_r;
-                    imag[i] = res_i;
+                    real[inds[i]] = res_r;
+                    imag[inds[i]] = res_i;
                 }
             }
         } else {

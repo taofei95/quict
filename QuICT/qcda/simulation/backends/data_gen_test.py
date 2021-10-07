@@ -167,6 +167,14 @@ def main():
 
     for tiny_circuit_qubit_num in range(1, 5):
         tiny_circuit = Circuit(tiny_circuit_qubit_num)
+
+        # H
+        for i in range(tiny_circuit_qubit_num):
+            H | tiny_circuit(i)
+        out_circuit_to_file(tiny_circuit_qubit_num, f"tiny_h_{tiny_circuit_qubit_num}.txt", tiny_circuit)
+        tiny_circuit.clear()
+
+        # Diag
         for i in range(tiny_circuit_qubit_num):
             H | tiny_circuit(i)
         for i in range(tiny_circuit_qubit_num):
