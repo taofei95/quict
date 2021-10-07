@@ -10,6 +10,7 @@
 #include <iostream>
 
 #include "utility.h"
+#include "test_utility.h"
 #include "matricks_simulator.h"
 
 using namespace QuICT::Test;
