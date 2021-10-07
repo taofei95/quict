@@ -3,17 +3,11 @@
 //
 
 #include <gtest/gtest.h>
-#include <cstdint>
-#include <complex>
-#include <vector>
-#include <memory>
-#include <iostream>
 
 #include "utility.h"
 #include "test_utility.h"
 #include "matricks_simulator.h"
 
-using namespace QuICT::Test;
 
 auto simulator = QuICT::MaTricksSimulator<double>();
 

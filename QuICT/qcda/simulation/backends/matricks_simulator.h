@@ -85,7 +85,7 @@ namespace QuICT {
         );
 
         template<uint64_t N, template<uint64_t, typename> class Gate>
-        void apply_unitary_n_gate(
+        inline void apply_unitary_n_gate(
                 uint64_t q_state_bit_num,
                 const Gate<N, Precision> &gate,
                 Precision *real,
@@ -118,7 +118,7 @@ namespace QuICT {
     };
 
     template<typename Precision>
-    inline void MaTricksSimulator<Precision>::run(
+    void MaTricksSimulator<Precision>::run(
             uint64_t q_state_bit_num,
             const std::vector<GateDescription<Precision>> &gate_desc_vec,
             const std::complex<Precision> *init_state
@@ -135,7 +135,7 @@ namespace QuICT {
     }
 
     template<typename Precision>
-    inline std::complex<Precision> *MaTricksSimulator<Precision>::run(
+    std::complex<Precision> *MaTricksSimulator<Precision>::run(
             uint64_t q_state_bit_num,
             const std::vector<GateDescription<Precision>> &gate_desc_vec
     ) {
@@ -156,7 +156,7 @@ namespace QuICT {
     }
 
     template<typename Precision>
-    inline void MaTricksSimulator<Precision>::run(
+    void MaTricksSimulator<Precision>::run(
             uint64_t q_state_bit_num,
             const std::vector<GateDescription<Precision>> &gate_desc_vec,
             Precision *real,
@@ -170,14 +170,14 @@ namespace QuICT {
     }
 
     template<typename Precision>
-    inline void MaTricksSimulator<Precision>::qubit_num_checker(uint64_t qubit_num) {
+    void MaTricksSimulator<Precision>::qubit_num_checker(uint64_t qubit_num) {
         if (qubit_num <= 4) {
             throw std::runtime_error("Only supports circuit with more than 4 qubits!");
         }
     }
 
     template<typename Precision>
-    inline void MaTricksSimulator<Precision>::apply_gate(
+    void MaTricksSimulator<Precision>::apply_gate(
             uint64_t q_state_bit_num,
             const GateDescription<Precision> &gate_desc,
             Precision *real,
@@ -252,7 +252,7 @@ namespace QuICT {
 
     template<typename Precision>
     template<template<typename> class Gate>
-    inline void MaTricksSimulator<Precision>::apply_h_gate(
+    void MaTricksSimulator<Precision>::apply_h_gate(
             uint64_t q_state_bit_num,
             const Gate<Precision> &gate,
             Precision *real,
@@ -380,7 +380,7 @@ namespace QuICT {
 
     template<typename Precision>
     template<template<typename> class Gate>
-    inline void MaTricksSimulator<Precision>::apply_x_gate(
+    void MaTricksSimulator<Precision>::apply_x_gate(
             uint64_t q_state_bit_num,
             const Gate<Precision> &gate,
             Precision *real,
@@ -442,7 +442,7 @@ namespace QuICT {
 
     template<typename Precision>
     template<template<typename> class Gate>
-    inline void MaTricksSimulator<Precision>::apply_ctrl_diag_gate(
+    void MaTricksSimulator<Precision>::apply_ctrl_diag_gate(
             uint64_t q_state_bit_num,
             const Gate<Precision> &gate,
             Precision *real,

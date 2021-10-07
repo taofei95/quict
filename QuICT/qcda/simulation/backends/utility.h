@@ -10,7 +10,6 @@
 #include <complex>
 #include <type_traits>
 #include <chrono>
-#include <memory>
 #include <vector>
 #include <cassert>
 #include <fstream>
@@ -86,23 +85,30 @@ namespace QuICT {
             const std::complex<Precision> *c_arr
     ) {
         auto len = 1ULL << q_state_bit_num;
-        auto ptr = new Precision[len << 1ULL];
-        auto real = ptr;
-        auto imag = &ptr[len];
-        for (uint64_t i = 0; i < len; i += 4) {
-            real[i] = c_arr[i].real();
-            imag[i] = c_arr[i].imag();
+        auto real = new Precision[len];
+        auto imag = new Precision[len];
+        if (q_state_bit_num >= 2) {
+            for (uint64_t i = 0; i < len; i += 4) {
+                real[i] = c_arr[i].real();
+                imag[i] = c_arr[i].imag();
 
-            real[i + 1] = c_arr[i + 1].real();
-            imag[i + 1] = c_arr[i + 1].imag();
+                real[i + 1] = c_arr[i + 1].real();
+                imag[i + 1] = c_arr[i + 1].imag();
 
-            real[i + 2] = c_arr[i + 2].real();
-            imag[i + 2] = c_arr[i + 2].imag();
+                real[i + 2] = c_arr[i + 2].real();
+                imag[i + 2] = c_arr[i + 2].imag();
 
-            real[i + 3] = c_arr[i + 3].real();
-            imag[i + 3] = c_arr[i + 3].imag();
+                real[i + 3] = c_arr[i + 3].real();
+                imag[i + 3] = c_arr[i + 3].imag();
+            }
+            return {real, imag};
+        } else {
+            real[0] = c_arr[0].real();
+            imag[0] = c_arr[0].imag();
+
+            real[1] = c_arr[1].real();
+            imag[1] = c_arr[1].imag();
         }
-        return {real, imag};
     }
 
     template<typename Precision>
@@ -112,12 +118,17 @@ namespace QuICT {
             const Precision *imag,
             std::complex<Precision> *res
     ) {
-        auto len = 1ULL << q_state_bit_num;
-        for (uint64_t i = 0; i < len; i += 4) {
-            res[i] = {real[i], imag[i]};
-            res[i + 1] = {real[i + 1], imag[i + 1]};
-            res[i + 2] = {real[i + 2], imag[i + 2]};
-            res[i + 3] = {real[i + 3], imag[i + 3]};
+        if (q_state_bit_num >= 2) {
+            auto len = 1ULL << q_state_bit_num;
+            for (uint64_t i = 0; i < len; i += 4) {
+                res[i] = {real[i], imag[i]};
+                res[i + 1] = {real[i + 1], imag[i + 1]};
+                res[i + 2] = {real[i + 2], imag[i + 2]};
+                res[i + 3] = {real[i + 3], imag[i + 3]};
+            }
+        } else {
+            res[0] = {real[0], imag[0]};
+            res[1] = {real[1], imag[1]};
         }
     }
 
