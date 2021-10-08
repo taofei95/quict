@@ -31,3 +31,10 @@ TEST(TinyTest, XTest) {
     }
 }
 
+TEST(TinyTest, CtrlDiagTest) {
+    for (int i = 2; i <= 4; ++i) {
+        std::string category = "tiny_ctrl_diag_";
+        test_by_data_file(category + std::to_string(i) + ".txt", simulator);
+    }
+}
+

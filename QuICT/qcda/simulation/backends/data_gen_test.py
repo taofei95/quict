@@ -193,6 +193,19 @@ def main():
         out_circuit_to_file(tiny_circuit_qubit_num, f"tiny_x_{tiny_circuit_qubit_num}.txt", tiny_circuit)
         tiny_circuit.clear()
 
+        # Ctrl diag
+        if tiny_circuit_qubit_num > 1:
+            for i in range(tiny_circuit_qubit_num):
+                H | tiny_circuit(i)
+            for _ in range(15):
+                lst = sample(range(0, tiny_circuit_qubit_num), 2)
+                shuffle(lst)
+                i = lst[0]
+                j = lst[1]
+                CRz(uniform(0, 3.14)) | tiny_circuit([i, j])
+            out_circuit_to_file(tiny_circuit_qubit_num, f"tiny_ctrl_diag_{tiny_circuit_qubit_num}.txt", tiny_circuit)
+            tiny_circuit.clear()
+
 
 if __name__ == '__main__':
     main()

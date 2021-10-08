@@ -238,7 +238,22 @@ namespace QuICT {
             Precision *real,
             Precision *imag
     ) {
-        // TODO: Finish this
+        uint64_t task_num = 1ULL << (q_state_bit_num - 2);
+        uarray_t<2> qubits = {gate.carg_, gate.targ_};
+        uarray_t<2> qubits_sorted = {gate.carg_, gate.targ_};
+        if (gate.carg_ > gate.targ_) {
+            qubits_sorted[0] = gate.targ_;
+            qubits_sorted[1] = gate.carg_;
+        }
+        for (uint64_t task_id = 0; task_id < task_num; task_id += 1) {
+            auto inds = index(task_id, q_state_bit_num, qubits, qubits_sorted);
+            for (int j = 0; j < 2; ++j) {
+                auto res_r = real[inds[j + 2]] * gate.diagonal_real_[j] - imag[inds[j + 2]] * gate.diagonal_imag_[j];
+                auto res_i = real[inds[j + 2]] * gate.diagonal_imag_[j] + imag[inds[j + 2]] * gate.diagonal_real_[j];
+                real[inds[j + 2]] = res_r;
+                imag[inds[j + 2]] = res_i;
+            }
+        }
     }
 
     template<typename Precision>
