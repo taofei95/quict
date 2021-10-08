@@ -33,7 +33,7 @@ TEST(MatricksTest, XTest) {
 }
 
 TEST(MatricksTest, CtrlUnitaryTest) {
-    test_by_data_file("cu3.txt", simulator);
+    test_by_data_file("cu.txt", simulator);
 }
 
 TEST(MatricksTest, UnitaryTest) {

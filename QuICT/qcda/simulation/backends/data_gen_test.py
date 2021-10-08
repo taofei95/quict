@@ -36,6 +36,12 @@ def out_circuit_to_file(qubit_num: int, f_name: str, circuit: Circuit):
             elif gate.type() in ctrl_diag_gates:
                 print(f"ctrl_diag {gate.carg} {gate.targ} "
                       f"{format_cpx(gate.compute_matrix[2, 2])} {format_cpx(gate.compute_matrix[3, 3])}", file=f)
+            elif gate.type() in ctrl_unitary_gate:
+                print(f"ctrl_unitary {gate.carg} {gate.targ} ", end="", file=f)
+                for i in range(2, 4):
+                    for j in range(2, 4):
+                        print(f"{format_cpx(gate.compute_matrix[i, j])} ", end="", file=f)
+                print("", file=f)
             else:
                 if len(gate.affectArgs) == 1:  # all 1-bit unitary gates
                     print(f"unitary_1 {gate.targ} "
@@ -150,7 +156,7 @@ def main():
         j = lst[1]
         CU3((uniform(0, 3.14), uniform(0, 3.14), uniform(0, 3.14))) | circuit([i, j])
 
-    out_circuit_to_file(qubit_num, "cu3.txt", circuit)
+    out_circuit_to_file(qubit_num, "cu.txt", circuit)
     circuit.clear()
 
     for i in range(0, qubit_num, 2):
@@ -219,6 +225,21 @@ def main():
                 gate | tiny_circuit(sample(range(0, tiny_circuit_qubit_num), 2))
         out_circuit_to_file(tiny_circuit_qubit_num, f"tiny_unitary_{tiny_circuit_qubit_num}.txt", tiny_circuit)
         tiny_circuit.clear()
+
+        # Ctrl unitary
+        if tiny_circuit_qubit_num > 1:
+            for i in range(tiny_circuit_qubit_num):
+                H | tiny_circuit(i)
+            for _ in range(10):
+                lst = sample(range(0, tiny_circuit_qubit_num), 2)
+                shuffle(lst)
+                i = lst[0]
+                j = lst[1]
+                CU3((uniform(0, 3.14), uniform(0, 3.14), uniform(0, 3.14))) | tiny_circuit([i, j])
+            out_circuit_to_file(tiny_circuit_qubit_num,
+                                f"tiny_ctrl_unitary_{tiny_circuit_qubit_num}.txt",
+                                tiny_circuit)
+            tiny_circuit.clear()
 
 
 if __name__ == '__main__':
