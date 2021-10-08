@@ -155,7 +155,7 @@ def main():
     out_circuit_to_file(qubit_num, "cu3.txt", circuit)
     circuit.clear()
 
-    for i in range(qubit_num):
+    for i in range(0, qubit_num, 2):
         H | circuit(i)
     for i in range(qubit_num):
         X | circuit(i)
@@ -181,6 +181,16 @@ def main():
             for _ in range(4):
                 Rz(uniform(0, 3.14)) | tiny_circuit(i)
         out_circuit_to_file(tiny_circuit_qubit_num, f"tiny_diag_{tiny_circuit_qubit_num}.txt", tiny_circuit)
+        tiny_circuit.clear()
+
+        # X
+        for i in range(0, tiny_circuit_qubit_num, 2):
+            H | tiny_circuit(i)
+        for i in range(tiny_circuit_qubit_num):
+            X | tiny_circuit(i)
+        for _ in range(tiny_circuit_qubit_num):
+            X | tiny_circuit(randint(0, tiny_circuit_qubit_num - 1))
+        out_circuit_to_file(tiny_circuit_qubit_num, f"tiny_x_{tiny_circuit_qubit_num}.txt", tiny_circuit)
         tiny_circuit.clear()
 
 

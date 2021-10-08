@@ -24,3 +24,10 @@ TEST(TinyTest, DiagTest) {
     }
 }
 
+TEST(TinyTest, XTest) {
+    for (int i = 1; i <= 4; ++i) {
+        std::string category = "tiny_x_";
+        test_by_data_file(category + std::to_string(i) + ".txt", simulator);
+    }
+}
+

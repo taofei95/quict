@@ -292,7 +292,12 @@ namespace QuICT {
             Precision *real,
             Precision *imag
     ) {
-        // TODO: Finish this
+        uint64_t task_num = 1ULL << (q_state_bit_num - 1);
+        for (uint64_t task_id = 0; task_id < task_num; task_id += 1) {
+            auto inds = index(task_id, q_state_bit_num, gate.targ_);
+            std::swap(real[inds[0]], real[inds[1]]);
+            std::swap(imag[inds[0]], imag[inds[1]]);
+        }
     }
 }
 
