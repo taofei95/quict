@@ -10,7 +10,7 @@ import numpy as np
 
 from QuICT.algorithm import SyntheticalUnitary
 from QuICT.core import *
-from QuICT.qcda.simulation.unitary_simulator import *
+from QuICT.simulation.unitary_simulator import *
 
 from time import time
 

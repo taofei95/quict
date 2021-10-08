@@ -3,7 +3,7 @@ from typing import *
 
 from ..disjoint_set import DisjointSet
 
-from .._simulation import BasicSimulator
+from .._simulation import BasicGPUSimulator
 
 from QuICT.core import *
 # import QuICT.ops.linalg.unitary_calculation as unitary_calculation
@@ -18,7 +18,7 @@ GPU_AVAILABLE = False
 GPU_OUT = False
 
 
-class UnitarySimulator(BasicSimulator):
+class UnitarySimulator(BasicGPUSimulator):
     """
     Algorithms to the unitary matrix of a Circuit.
     """
@@ -38,7 +38,7 @@ class UnitarySimulator(BasicSimulator):
         qubit = circuit.circuit_width()
         if len(circuit.gates) == 0:
             return np.identity(1 << qubit, dtype=np.complex64)
-        ordering, small_gates = BasicSimulator.unitary_pretreatment(circuit)
+        ordering, small_gates = BasicGPUSimulator.unitary_pretreatment(circuit)
         print(ordering)
         u_mat, u_args = UnitarySimulator.merge_unitary_by_ordering(small_gates, ordering)
         result_mat, _ = UnitarySimulator.merge_two_unitary(

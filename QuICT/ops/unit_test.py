@@ -15,7 +15,7 @@ from QuICT.ops.utils import CalculationLayer
 
 from QuICT.core import *
 from QuICT.algorithm import Amplitude
-from QuICT.qcda.simulation import BasicSimulator
+from QuICT.simulation import BasicGPUSimulator
 
 
 @unittest.skipUnless(os.environ.get("test_with_gpu", False), "require GPU")
@@ -123,7 +123,7 @@ class TestGPULinalg(unittest.TestCase):
         vec = cp.zeros((1 << qubit_num, ), dtype=np.complex64)
         vec.put(0, np.complex64(1))
 
-        small_gates = BasicSimulator.pretreatment(circuit)
+        small_gates = BasicGPUSimulator.pretreatment(circuit)
         for gate in small_gates:
             GPUCalculator.matrix_dot_vector(
                 gate.compute_matrix,

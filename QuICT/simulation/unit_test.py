@@ -7,13 +7,13 @@
 from QuICT.algorithm import SyntheticalUnitary
 from QuICT.core import *
 
-from ._simulation import BasicSimulator
+from ._simulation import BasicGPUSimulator
 
 
 def test_pretreatment():
     circuit = Circuit(10)
     circuit.random_append(100, typeList=[GATE_ID["CX"], GATE_ID["X"]])
-    pretreatment = BasicSimulator.pretreatment(circuit)
+    pretreatment = BasicGPUSimulator.pretreatment(circuit)
     unitary1 = SyntheticalUnitary.run(circuit)
     pretreatment.print_information()
     unitary2 = pretreatment.matrix()

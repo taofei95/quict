@@ -11,7 +11,7 @@ import multiprocessing
 from QuICT.core import *
 from QuICT.algorithm import Amplitude
 from QuICT.ops.utils import Proxy
-from QuICT.qcda.simulation.proxy_simulator.proxy_simulator import ProxySimulator
+from QuICT.simulation.multigpu_simulator import MultiStateVectorSimulator
 
 from time import time
 
@@ -34,7 +34,7 @@ def worker(uid, ndevs, dev_id, qubits, QFT_number):
     circuit = build_QFT_circuit(qubits, QFT_number)
 
     s_time = time()
-    simulator = ProxySimulator(
+    simulator = MultiStateVectorSimulator(
         proxy=proxy,
         circuit=circuit,
         precision=np.complex64,
