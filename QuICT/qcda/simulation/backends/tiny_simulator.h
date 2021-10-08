@@ -264,7 +264,42 @@ namespace QuICT {
             Precision *real,
             Precision *imag
     ) {
-        // TODO: Finish this
+        if constexpr(1 <= N && N <= 2) {
+            uint64_t task_num = 1ULL << (q_state_bit_num - N);
+            constexpr uint64_t dim = 1ULL << N;
+            for (uint64_t task_id = 0; task_id < task_num; task_id += 1) {
+                uarray_t<dim> inds;
+                if constexpr(N == 1) {
+                    inds = index(task_id, q_state_bit_num, gate.targ_);
+                } else if constexpr(N == 2) {
+                    uarray_t<2> qubits = {gate.affect_args_[0], gate.affect_args_[1]};
+                    uarray_t<2> qubits_sorted;
+                    if (gate.affect_args_[0] > gate.affect_args_[1]) {
+                        qubits_sorted = {gate.affect_args_[1], gate.affect_args_[0]};
+                    } else {
+                        qubits_sorted = qubits;
+                    }
+                    inds = index(task_id, q_state_bit_num, qubits, qubits_sorted);
+                }
+                Precision res_r[dim], res_i[dim];
+                for (uint64_t i = 0; i < dim; ++i) {
+                    res_r[i] = res_i[i] = 0;
+                    for (uint64_t k = 0; k < dim; ++k) {
+                        res_r[i] += gate.mat_real_[i * dim + k] * real[inds[k]] -
+                                    gate.mat_imag_[i * dim + k] * imag[inds[k]];
+                        res_i[i] += gate.mat_real_[i * dim + k] * imag[inds[k]] +
+                                    gate.mat_imag_[i * dim + k] * real[inds[k]];
+                    }
+                }
+                for (uint64_t i = 0; i < dim; ++i) {
+                    real[inds[i]] = res_r[i];
+                    imag[inds[i]] = res_i[i];
+                }
+            }
+        } else {
+            throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__) + ": "
+                                     + "Not Implemented " + __func__);
+        }
     }
 
     template<typename Precision>

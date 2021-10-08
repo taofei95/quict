@@ -1,12 +1,10 @@
 #!/usr/bin/env python3
 
-from random import choices, randint, sample, shuffle, uniform
-from random import choice
+from random import randint, sample, shuffle, uniform
 from scipy.stats import unitary_group
-
-from QuICT.core import *
+import numpy as np
 from QuICT.algorithm import Amplitude
-from math import sqrt, pi
+from QuICT.core import *
 
 
 def format_cpx(n):
@@ -69,14 +67,14 @@ def rand_unitary_gate(qubit_num):
 
 def manual_rand_unitary_gate(qubit_num):
     if qubit_num == 1:
-        theta = random.random() * 2 * pi
+        theta = random.random() * 2 * np.pi
         return random.choice([Rx, Ry])(theta)
     elif qubit_num == 2:
         return random.choice([
-            Rxx(uniform(0, 2 * pi)),
-            Ryy(uniform(0, 2 * pi)),
-            Rzz(uniform(0, 2 * pi)),
-            FSim([uniform(0, 2 * pi), uniform(0, 2 * pi)])
+            Rxx(uniform(0, 2 * np.pi)),
+            Ryy(uniform(0, 2 * np.pi)),
+            Rzz(uniform(0, 2 * np.pi)),
+            FSim([uniform(0, 2 * np.pi), uniform(0, 2 * np.pi)])
         ])
 
 
@@ -113,7 +111,7 @@ def main():
     # #     CRz(uniform(0, 3.14)) | circuit([lst[0], lst[1]])
     # # X | circuit(qubit_num-1)
     # # X | circuit(qubit_num-3)
-    # # CRz(pi) | circuit([qubit_num-3, qubit_num-1])
+    # # CRz(np.pi) | circuit([qubit_num-3, qubit_num-1])
     # for _ in range(100):
     #     lst = sample(range(0, qubit_num), 2)
     #     rand_unitary_gate(2) | circuit([lst[0], lst[1]])
@@ -165,6 +163,8 @@ def main():
     out_circuit_to_file(qubit_num, "x.txt", circuit)
     circuit.clear()
 
+    del circuit
+
     for tiny_circuit_qubit_num in range(1, 5):
         tiny_circuit = Circuit(tiny_circuit_qubit_num)
 
@@ -205,6 +205,20 @@ def main():
                 CRz(uniform(0, 3.14)) | tiny_circuit([i, j])
             out_circuit_to_file(tiny_circuit_qubit_num, f"tiny_ctrl_diag_{tiny_circuit_qubit_num}.txt", tiny_circuit)
             tiny_circuit.clear()
+
+        # Unitary
+        for i in range(tiny_circuit_qubit_num):
+            H | tiny_circuit(i)
+        for _ in range(15):
+            n = randint(1, 2)
+            n = min(n, tiny_circuit_qubit_num)
+            gate = manual_rand_unitary_gate(n)
+            if n == 1:
+                gate | tiny_circuit(randint(0, tiny_circuit_qubit_num - 1))
+            else:
+                gate | tiny_circuit(sample(range(0, tiny_circuit_qubit_num), 2))
+        out_circuit_to_file(tiny_circuit_qubit_num, f"tiny_unitary_{tiny_circuit_qubit_num}.txt", tiny_circuit)
+        tiny_circuit.clear()
 
 
 if __name__ == '__main__':

@@ -38,3 +38,10 @@ TEST(TinyTest, CtrlDiagTest) {
     }
 }
 
+TEST(TinyTest, UnitaryTest) {
+    for (int i = 1; i <= 4; ++i) {
+        std::string category = "tiny_unitary_";
+        test_by_data_file(category + std::to_string(i) + ".txt", simulator);
+    }
+}
+
