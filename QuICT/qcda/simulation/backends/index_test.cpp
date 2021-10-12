@@ -14,8 +14,7 @@ template<
         uint64_t N = 1,
         typename std::enable_if<(N == 1), int>::type dummy = 0
 >
-void index_test(uint64_t repeat_rounds, uint64_t qubit_num)
-{
+void index_test(uint64_t repeat_rounds, uint64_t qubit_num) {
     std::random_device rd;
     std::mt19937 gen(rd());
     std::uniform_int_distribution<uint64_t> targ_dist(0, qubit_num - 1);
@@ -37,8 +36,7 @@ template<
         uint64_t N = 1,
         typename std::enable_if<(N > 1), int>::type dummy = 0
 >
-void index_test(uint64_t repeat_rounds, uint64_t qubit_num)
-{
+void index_test(uint64_t repeat_rounds, uint64_t qubit_num) {
     std::random_device rd;
     std::mt19937 gen(rd());
     std::uniform_int_distribution<uint64_t> targ_dist(0, qubit_num - 1);
@@ -48,7 +46,7 @@ void index_test(uint64_t repeat_rounds, uint64_t qubit_num)
     std::cout << N << " Bit Test" << std::endl;
     for (int i = 0; i < repeat_rounds; ++i) {
         std::array<uint64_t, N> qubits;
-        for(int i = 0; i < N; i++) qubits[i] = targ_dist(gen);
+        for (int i = 0; i < N; i++) qubits[i] = targ_dist(gen);
         std::array<uint64_t, N> qubits_sorted(qubits);
         std::sort(qubits_sorted.begin(), qubits_sorted.end());
 
@@ -64,4 +62,11 @@ TEST(IndexTest, BaseLineTest) {
     index_test<1>(1e8, 30);
     index_test<2>(1e8, 30);
     index_test<10>(1e6, 30);
+}
+
+TEST(IndexTest, CorrectTest) {
+    QuICT::uarray_t<2> qubits = {16, 17};
+    QuICT::uarray_t<2> qubits_sorted = {16, 17};
+    auto ind0 = QuICT::index0(0, 18, qubits, qubits_sorted);
+    ASSERT_EQ(ind0, 0);
 }

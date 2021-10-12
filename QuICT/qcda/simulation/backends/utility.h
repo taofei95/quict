@@ -25,7 +25,7 @@
 
 #define STRIDE_2_LOAD_ODD_PD(from_addr, to_reg, tmp1, tmp2) \
     tmp1 = _mm256_loadu_pd(from_addr);\
-    tmp2 = _mm256_loadu_pd(((double*)(from_addr)) + 4);\
+    tmp2 = _mm256_loadu_pd(&(((double*)(from_addr))[4]));\
     to_reg = _mm256_shuffle_pd(tmp1, tmp2, 0b1111);\
     to_reg = _mm256_permute4x64_pd(to_reg, 0b11011000);
 
