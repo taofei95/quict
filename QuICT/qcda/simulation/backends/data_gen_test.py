@@ -99,7 +99,7 @@ def main():
         else:
             gate | circuit(sample(range(0, qubit_num), 2))
 
-    out_circuit_to_file(qubit_num, "u.txt", circuit)
+    out_circuit_to_file(qubit_num, "./test_data/u.txt", circuit)
     circuit.clear()
 
     for i in range(qubit_num):
@@ -107,32 +107,17 @@ def main():
 
     for _ in range(30):
         Rz(uniform(0, 3.14)) | circuit(randint(0, qubit_num - 1))
-    out_circuit_to_file(qubit_num, "diag.txt", circuit)
+    out_circuit_to_file(qubit_num, "./test_data/diag.txt", circuit)
     circuit.clear()
 
-    # for i in range(qubit_num):
-    #     H | circuit(i)
-    # # for _ in range(100):
-    # #     lst = sample(range(0, qubit_num), 2)
-    # #     CRz(uniform(0, 3.14)) | circuit([lst[0], lst[1]])
-    # # X | circuit(qubit_num-1)
-    # # X | circuit(qubit_num-3)
-    # # CRz(np.pi) | circuit([qubit_num-3, qubit_num-1])
-    # for _ in range(100):
-    #     lst = sample(range(0, qubit_num), 2)
-    #     rand_unitary_gate(2) | circuit([lst[0], lst[1]])
-    #
-    # out_circuit_to_file(qubit_num, "u2.txt", circuit)
-    # circuit.clear()
-
     QFT(qubit_num).build_gate() | circuit
-    out_circuit_to_file(qubit_num, "qft.txt", circuit)
+    out_circuit_to_file(qubit_num, "./test_data/qft.txt", circuit)
     circuit.clear()
 
     for i in range(qubit_num):
         H | circuit(i)
 
-    out_circuit_to_file(qubit_num, "h.txt", circuit)
+    out_circuit_to_file(qubit_num, "./test_data/h.txt", circuit)
     circuit.clear()
 
     for i in range(qubit_num):
@@ -144,7 +129,7 @@ def main():
         j = lst[1]
         CRz(uniform(0, 3.14)) | circuit([i, j])
 
-    out_circuit_to_file(qubit_num, "crz.txt", circuit)
+    out_circuit_to_file(qubit_num, "./test_data/crz.txt", circuit)
     circuit.clear()
 
     for i in range(qubit_num):
@@ -156,7 +141,7 @@ def main():
         j = lst[1]
         CU3((uniform(0, 3.14), uniform(0, 3.14), uniform(0, 3.14))) | circuit([i, j])
 
-    out_circuit_to_file(qubit_num, "cu.txt", circuit)
+    out_circuit_to_file(qubit_num, "./test_data/cu.txt", circuit)
     circuit.clear()
 
     for i in range(0, qubit_num, 2):
@@ -166,7 +151,7 @@ def main():
     for _ in range(qubit_num):
         X | circuit(randint(0, qubit_num - 1))
 
-    out_circuit_to_file(qubit_num, "x.txt", circuit)
+    out_circuit_to_file(qubit_num, "./test_data/x.txt", circuit)
     circuit.clear()
 
     del circuit
@@ -177,7 +162,7 @@ def main():
         # H
         for i in range(tiny_circuit_qubit_num):
             H | tiny_circuit(i)
-        out_circuit_to_file(tiny_circuit_qubit_num, f"tiny_h_{tiny_circuit_qubit_num}.txt", tiny_circuit)
+        out_circuit_to_file(tiny_circuit_qubit_num, f"./test_data/tiny_h_{tiny_circuit_qubit_num}.txt", tiny_circuit)
         tiny_circuit.clear()
 
         # Diag
@@ -186,7 +171,7 @@ def main():
         for i in range(tiny_circuit_qubit_num):
             for _ in range(4):
                 Rz(uniform(0, 3.14)) | tiny_circuit(i)
-        out_circuit_to_file(tiny_circuit_qubit_num, f"tiny_diag_{tiny_circuit_qubit_num}.txt", tiny_circuit)
+        out_circuit_to_file(tiny_circuit_qubit_num, f"./test_data/tiny_diag_{tiny_circuit_qubit_num}.txt", tiny_circuit)
         tiny_circuit.clear()
 
         # X
@@ -196,7 +181,7 @@ def main():
             X | tiny_circuit(i)
         for _ in range(tiny_circuit_qubit_num):
             X | tiny_circuit(randint(0, tiny_circuit_qubit_num - 1))
-        out_circuit_to_file(tiny_circuit_qubit_num, f"tiny_x_{tiny_circuit_qubit_num}.txt", tiny_circuit)
+        out_circuit_to_file(tiny_circuit_qubit_num, f"./test_data/tiny_x_{tiny_circuit_qubit_num}.txt", tiny_circuit)
         tiny_circuit.clear()
 
         # Ctrl diag
@@ -209,7 +194,7 @@ def main():
                 i = lst[0]
                 j = lst[1]
                 CRz(uniform(0, 3.14)) | tiny_circuit([i, j])
-            out_circuit_to_file(tiny_circuit_qubit_num, f"tiny_ctrl_diag_{tiny_circuit_qubit_num}.txt", tiny_circuit)
+            out_circuit_to_file(tiny_circuit_qubit_num, f"./test_data/tiny_ctrl_diag_{tiny_circuit_qubit_num}.txt", tiny_circuit)
             tiny_circuit.clear()
 
         # Unitary
@@ -223,7 +208,7 @@ def main():
                 gate | tiny_circuit(randint(0, tiny_circuit_qubit_num - 1))
             else:
                 gate | tiny_circuit(sample(range(0, tiny_circuit_qubit_num), 2))
-        out_circuit_to_file(tiny_circuit_qubit_num, f"tiny_unitary_{tiny_circuit_qubit_num}.txt", tiny_circuit)
+        out_circuit_to_file(tiny_circuit_qubit_num, f"./test_data/tiny_unitary_{tiny_circuit_qubit_num}.txt", tiny_circuit)
         tiny_circuit.clear()
 
         # Ctrl unitary
@@ -237,7 +222,7 @@ def main():
                 j = lst[1]
                 CU3((uniform(0, 3.14), uniform(0, 3.14), uniform(0, 3.14))) | tiny_circuit([i, j])
             out_circuit_to_file(tiny_circuit_qubit_num,
-                                f"tiny_ctrl_unitary_{tiny_circuit_qubit_num}.txt",
+                                f"./test_data/tiny_ctrl_unitary_{tiny_circuit_qubit_num}.txt",
                                 tiny_circuit)
             tiny_circuit.clear()
 
