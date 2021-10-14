@@ -1,0 +1,28 @@
+4
+special_h 0
+special_h 2
+special_x 0
+special_x 1
+special_x 2
+special_x 3
+special_x 0
+special_x 3
+special_x 3
+special_x 2
+__TERM__
+0+0j
+0+0j
+0+0j
+0+0j
+0+0j
+0.4999999999999999+0.0j
+0+0j
+0.4999999999999999+0.0j
+0+0j
+0+0j
+0+0j
+0+0j
+0+0j
+0.4999999999999999+0.0j
+0+0j
+0.4999999999999999+0.0j
