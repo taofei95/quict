@@ -132,6 +132,58 @@ namespace QuICT {
         }
     }
 
+    //* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+    // Disjoint Set
+    //* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+
+    template<typename _int_T>
+    class DisjointSet {
+    public:
+        DisjointSet(size_t n) {
+            fa_(n);
+            rank_(n, 1);
+            for (size_t i = 0; i < n; ++i) {
+                fa_[i] = i;
+            }
+        }
+
+        bool is_merged(_int_T a, _int_T b) {
+            return find(a) == find(b);
+        }
+
+        _int_T find(_int_T a) {
+            while (a != fa_[a]) {
+                auto p = fa_[a];
+                auto pp = fa_[fa_[a]];
+                fa_[a] = pp;
+                a = p;
+            }
+            return a;
+        }
+
+        _int_T merge(_int_T a, _int_T b) {
+            auto rt_a = find(a);
+            auto rt_b = find(b);
+            if (rt_a == rt_b) {
+                return rt_a;
+            }
+            if (rank_[rt_a] < rank_[rt_b]) {
+                fa_[rt_a] = rt_b;
+                return rt_b;
+            } else if (rank_[rt_a] == rank_[rt_b]) {
+                fa_[rt_b] = rt_a;
+                rank_[rt_a]++;
+                return rt_a;
+            } else {
+                fa_[rt_b] = rt_a;
+                return rt_a;
+            }
+        }
+
+    private:
+        std::vector<_int_T> fa_;
+        std::vector<_int_T> rank_;
+    };
 
     //* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
     // Template Class Derive Check Helpers

@@ -14,10 +14,17 @@
 #include "matricks_simulator.h"
 
 namespace QuICT {
+    template<typename Precision>
     class QState {
     public:
         uint64_t id;
+        std::vector<uint64_t> qubits;
+        Precision *real;
+        Precision *imag;
 
+        static QState<Precision> merge(const QState<Precision> &a, const QState<Precision> &b) {
+
+        }
     };
 
 
@@ -39,7 +46,11 @@ namespace QuICT {
             QState q_state,
             const GateDescription<Precision> &gate_desc
     ) {
-        // TODO: Finish this
+        if (q_state.qubits.size() <= 4) {
+            tiny_sim_.apply_gate(q_state.qubits.size(), gate_desc, q_state.real, q_state.imag);
+        } else {
+            matricks_sim_.apply_gate(q_state.qubits.size(), gate_desc, q_state.real, q_state.imag);
+        }
     }
 }
 
