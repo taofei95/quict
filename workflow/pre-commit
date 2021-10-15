@@ -30,17 +30,17 @@ fi
 
 print_segment;
 
-$(> temp)
+$(> .git/temp)
 for file in $files; do
   if [ ${file%%/*} == "QuICT" ]; then
     mv_left_slash=(${file#*/});
     mv_right_slash=(${mv_left_slash%%/*});
 
-    echo -n "QuICT/${mv_right_slash} " >> temp
+    echo -n "QuICT/${mv_right_slash} " >> .git/temp
   fi
 done
 
-UT_path=$(cat temp)
+UT_path=$(cat .git/temp)
 
 if [ "$UT_path" ]; then
   print_cyan "[Start Running Code Unit Test Check]"
