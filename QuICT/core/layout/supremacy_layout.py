@@ -48,20 +48,20 @@ class SupremacyLayout(Layout):
                         if qubit_a != -1:
                             self._pattern_edge["A"].append([current_qubit, qubit_a])
                             self.add_edge(current_qubit, qubit_a)
-                    
+
                     # pattern "B"
                     if j + 1 < col:
                         qubit_b = self.qubit_table[i - 1, j + 1]
                         if qubit_b != -1:
                             self._pattern_edge["B"].append([current_qubit, qubit_b])
                             self.add_edge(current_qubit, qubit_b)
-                    
+
                     # pattern "C"
                     qubit_c = self.qubit_table[i - 1, j]
                     if qubit_c != -1:
                         self._pattern_edge["C"].append([current_qubit, qubit_c])
                         self.add_edge(current_qubit, qubit_c)
-                    
+
                     # pattern "D"
                     if i + 1 < row and j + 1 < col:
                         qubit_d = self.qubit_table[i + 1, j + 1]
