@@ -685,3 +685,13 @@ class Circuit(object):
 
         """
         return inner_matrix_product_to_circuit(self, gate)
+
+    def append_supremacy(self, repeat: int = 1, pattern: str = "ABCDCDAB"):
+        """
+        Add a supremacy circuit to the circuit
+
+        Args:
+            repeat(int): the number of two-qubit gates' sequence
+            pattern(str): indicate the two-qubit gates' sequence
+        """
+        inner_supremacy_append(self, repeat, pattern)
