@@ -34,3 +34,6 @@ target_link_libraries(index_test gtest_main)
 
 add_executable(tiny_sim_test tiny_sim_test.cpp tiny_simulator.h gate.h utility.h test_utility.h)
 target_link_libraries(tiny_sim_test gtest_main)
+
+add_executable(q_state_test q_state_test.cpp gate.h utility.h test_utility.h q_state.h)
+target_link_libraries(q_state_test gtest_main)
