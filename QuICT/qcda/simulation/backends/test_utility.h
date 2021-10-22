@@ -147,7 +147,7 @@ template<
         typename _str_T,
         typename Precision
 >
-void test_simulator(
+void test_stateless_simulator(
         _str_T data_name,
         _sim_T<Precision> &simulator,
         double eps = 1e-6
