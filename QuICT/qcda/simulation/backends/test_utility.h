@@ -162,12 +162,34 @@ void test_stateless_simulator(
 
     get_compare_data(data_name, qubit_num, &expect_state, gate_desc_vec);
 
-    std::complex<Precision> *state;
-    if constexpr(is_same_v<_sim_T<Precision>, QuICT::CircuitSimulator<Precision>>) {
-        state = simulator.run(gate_desc_vec);
-    } else {
-        state = simulator.run(qubit_num, gate_desc_vec);
+    std::complex<Precision> *state = simulator.run(qubit_num, gate_desc_vec);
+    for (uint64_t i = 0; i < (1ULL << qubit_num); ++i) {
+        ASSERT_NEAR(state[i].real(), expect_state[i].real(), eps) << "i = " << i;
+        ASSERT_NEAR(state[i].imag(), expect_state[i].imag(), eps) << "i = " << i;
     }
+    delete[] state;
+    delete[] expect_state;
+}
+
+template<
+        typename _str_T,
+        typename Precision=double
+>
+void test_circuit_simulator(
+        _str_T data_name,
+        double eps = 1e-6
+) {
+    using namespace std;
+
+    uint64_t qubit_num;
+    std::vector<QuICT::GateDescription<Precision>> gate_desc_vec;
+    complex<Precision> *expect_state;
+    get_compare_data(data_name, qubit_num, &expect_state, gate_desc_vec);
+
+    auto simulator = QuICT::CircuitSimulator<Precision>(qubit_num);
+    cout << simulator.name() << " " << "Testing by " << data_name << endl;
+
+    std::complex<Precision> *state = simulator.run(gate_desc_vec);
     for (uint64_t i = 0; i < (1ULL << qubit_num); ++i) {
         ASSERT_NEAR(state[i].real(), expect_state[i].real(), eps) << "i = " << i;
         ASSERT_NEAR(state[i].imag(), expect_state[i].imag(), eps) << "i = " << i;

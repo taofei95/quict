@@ -12,6 +12,7 @@
 
 #include "utility.h"
 #include "q_state.h"
+#include "q_state_set.h"
 #include "gate.h"
 #include "tiny_simulator.h"
 #include "matricks_simulator.h"
@@ -22,9 +23,9 @@ namespace QuICT {
     template<typename Precision>
     class QStateSimulator {
     protected:
-        std::string name_
+        std::string name_;
         TinySimulator<Precision> tiny_sim_;
-        MatricksSimulator <Precision> matricks_sim_;
+        MaTricksSimulator<Precision> matricks_sim_;
 
     public:
         QStateSimulator() {
@@ -41,19 +42,19 @@ namespace QuICT {
         }
 
         inline void apply_gate(
-                QState <Precision> q_state,
+                const QState<Precision> &q_state,
                 const GateDescription<Precision> &gate_desc
         );
     };
 
     template<typename Precision>
     void QStateSimulator<Precision>::apply_gate(
-            QState <Precision> q_state,
+            const QState<Precision> &q_state,
             const GateDescription<Precision> &gate_desc
     ) {
         auto desc_cpy = gate_desc;
         for (auto &it: desc_cpy.affect_args_) {
-            it = q_state.qubit_mapping_[it];
+            it = q_state.qubit_mapping_.at(it);
         }
         if (q_state.qubit_num_ <= 4) {
             tiny_sim_.apply_gate(q_state.qubit_num_, desc_cpy, q_state.real_, q_state.imag_);
