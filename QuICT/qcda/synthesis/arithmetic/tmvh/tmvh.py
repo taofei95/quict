@@ -130,7 +130,7 @@ def SubtractionOverflow(a, b, overflow):
     X | b
     X | overflow
 
-"""
+
 def CtrlAddOverflowAncilla(ctrl, a, b, overflow, ancilla):
     n = len(a)
     # step 1
@@ -158,7 +158,7 @@ def CtrlAddOverflowAncilla(ctrl, a, b, overflow, ancilla):
     # step 7
     for i in range(n - 1):
         CX | (a[i], b[i])
-"""
+
 
 def CtrlAdd(ctrl, a, b):
     """
@@ -192,6 +192,22 @@ def CtrlAdd(ctrl, a, b):
         CX | (a[i], b[i])
 
 
+def Mult(a, b, p, ancilla):
+    """
+    Multiplicant: a, b
+    Product: p
+    (a, b, p=0, ancilla=0) -> (a, b, a*b, ancilla=0)
+    """
+    n = len(a)
+
+    #step 1
+    for i in range(n):
+        CCX | (a[i], b[i], p[i])
+    #step 2
+    for i in range(1,n-1):
+        CtrlAddOverflowAncilla(b[i],a,p[i:i+n],p[i+n],p[i+n+1])
+    CtrlAddOverflowAncilla(b[n-1],a,p[n-1:2*n-1],p[2*n-1],ancilla)
+
 def Division(a, b, r, ancilla):
     """
     Divided: a
@@ -216,50 +232,64 @@ def Division(a, b, r, ancilla):
     X | r[n - 1]
 
 
-def RippleCarryAdderDecomposition(n):
-    """ 
-    (a,b) -> (a,b'=a+b)
+class RippleCarryAdder(Synthesis):
+    @staticmethod
+    def execute(n):
+        """
+        (a,b) -> (a,b'=a+b)
 
-    Args:
-        n(int): the bit number of a and b
+        Args:
+            n(int): the bit number of a and b
 
-    reference: HIMANSHU THAPLIYAL and NAGARAJAN RANGANATHAN -
-    Design of Efficient Reversible Logic Based Binary and BCD Adder Circuits
-    https://arxiv.org/abs/1712.02630v1
-    """
+        reference: HIMANSHU THAPLIYAL and NAGARAJAN RANGANATHAN -
+        Design of Efficient Reversible Logic Based Binary and BCD Adder Circuits
+        https://arxiv.org/abs/1712.02630v1
+        """
 
-    circuit = Circuit(2 * n)
-    qubit_a = circuit([i for i in range(n)])
-    qubit_b = circuit([i for i in range(n, 2 * n)])
+        circuit = Circuit(2 * n)
+        qubit_a = circuit([i for i in range(n)])
+        qubit_b = circuit([i for i in range(n, 2 * n)])
 
-    Adder(qubit_a, qubit_b)
-    return CompositeGate(circuit.gates)
-
-
-RippleCarryAdder = Synthesis(RippleCarryAdderDecomposition)
-
-
-def RestoringDivisionDecomposition(n):
-    """
-    (a,b,r=0) -> (a%b,b,a//b)
-
-    Args:
-        n(int): the bit number of a and b
-
-    reference: Himanshu Thapliyal, Edgard Munoz-Coreas, T. S. S. Varun, and Travis S. Humble - 
-    Quantum Circuit Designs of Integer Division Optimizing T-count and T-depth
-    http://arxiv.org/abs/1809.09732v1
-    """
-
-    circuit = Circuit(3 * n + 1)
-    qubit_a = circuit([i for i in range(n)])
-    qubit_b = circuit([i for i in range(n, 2 * n)])
-    qubit_r = circuit([i for i in range(2 * n, 3 * n)])
-    qubit_of = circuit(3 * n)
-
-    Division(qubit_a, qubit_b, qubit_r, qubit_of)
-
-    return CompositeGate(circuit.gates)
+        Adder(qubit_a, qubit_b)
+        return CompositeGate(circuit.gates)
 
 
-RestoringDivision = Synthesis(RestoringDivisionDecomposition)
+class Multiplication(Synthesis):
+    @staticmethod
+    def execute(n):
+        """
+        (a,b,p=0,ancilla=0) -> (a,b,p=a*b,ancilla=0)
+        """
+        circuit = Circuit(4*n+1)
+        a_q = circuit([i for i in range(n)])
+        b_q = circuit([i for i in range(n, 2 * n)])
+        p_q = circuit([i for i in range(2 * n, 4 * n)])
+        ancilla = circuit(4 * n)
+        
+        Mult(a_q,b_q,p_q,ancilla)
+
+        return CompositeGate(circuit.gates)
+
+class RestoringDivision(Synthesis):
+    @staticmethod
+    def execute(n):
+        """
+        (a,b,r=0) -> (a%b,b,a//b)
+
+        Args:
+            n(int): the bit number of a and b
+
+        reference: Himanshu Thapliyal, Edgard Munoz-Coreas, T. S. S. Varun, and Travis S. Humble -
+        Quantum Circuit Designs of Integer Division Optimizing T-count and T-depth
+        http://arxiv.org/abs/1809.09732v1
+        """
+
+        circuit = Circuit(3 * n + 1)
+        qubit_a = circuit([i for i in range(n)])
+        qubit_b = circuit([i for i in range(n, 2 * n)])
+        qubit_r = circuit([i for i in range(2 * n, 3 * n)])
+        qubit_of = circuit(3 * n)
+
+        Division(qubit_a, qubit_b, qubit_r, qubit_of)
+
+        return CompositeGate(circuit.gates)
