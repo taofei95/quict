@@ -4,9 +4,8 @@
 # @Author  : Zhu Qinlin
 # @File    : tmvh.py
 
-from QuICT.core import Circuit, CX, CCX, CompositeGate, X
+from QuICT.core import Circuit, CX, CCX, CompositeGate, X, Measure
 from ..._synthesis import Synthesis
-
 
 def PeresGate(a, b, c):
     """
@@ -130,14 +129,22 @@ def SubtractionOverflow(a, b, overflow):
     X | b
     X | overflow
 
-
 def CtrlAddOverflowAncilla(ctrl, a, b, overflow, ancilla):
     n = len(a)
+    
+    if n == 1:
+        #CCX | (a[0],b[0],overflow)
+        CCX | (a[0],b[0],ancilla)
+        CCX | (ancilla,ctrl,overflow)
+        CCX | (a[0],b[0],ancilla)
+        CX  | (a[0],b[0])
+        return
+    
     # step 1
     for i in range(n - 1):
         CX | (a[i], b[i])
     # step 2
-    CCX | (ctrl, a[0], ancilla)
+    CCX | (ctrl, a[0], overflow)
     for i in range(n - 2):
         CX | (a[i + 1], a[i])
     # step 3
@@ -158,7 +165,6 @@ def CtrlAddOverflowAncilla(ctrl, a, b, overflow, ancilla):
     # step 7
     for i in range(n - 1):
         CX | (a[i], b[i])
-
 
 
 def CtrlAdd(ctrl, a, b):
@@ -201,13 +207,17 @@ def Mult(a, b, p, ancilla):
     """
     n = len(a)
 
+    if n == 1:
+        CCX | (a[0],b[0],p[1])
+        return
+    
     #step 1
     for i in range(n):
-        CCX | (a[i], b[i], p[i])
+        CCX | (b[n-1], a[n-1-i], p[2*n-1-i])
     #step 2
-    for i in range(1,n-1):
-        CtrlAddOverflowAncilla(b[i],a,p[i:i+n],p[i+n],p[i+n+1])
-    CtrlAddOverflowAncilla(b[n-1],a,p[n-1:2*n-1],p[2*n-1],ancilla)
+    for i in range(n-2):
+        CtrlAddOverflowAncilla(b[n-2-i],a,p[n-1-i:2*n-1-i],p[n-2-i],p[n-3-i])
+    CtrlAddOverflowAncilla(b[0],a,p[1:n+1],p[0],ancilla)
 
 def Division(a, b, r, ancilla):
     """

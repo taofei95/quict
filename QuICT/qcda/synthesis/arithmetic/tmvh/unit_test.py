@@ -19,7 +19,7 @@ def Set(qreg, N):
         if N % 2 == 1:
             X | qreg[n - 1 - i]
         N = N // 2
-"""
+
 def test_RippleCarryAdder():
     for a in range(0, 20):
         for b in range(0, 20):
@@ -36,7 +36,7 @@ def test_RippleCarryAdder():
                 print("%d + %d = %d" % (a, b, int(b_q)))
                 assert 0
     assert 1
-"""
+
 def test_multiplication():
     for a in range(0,20):
         for b in range(0,20):
@@ -56,7 +56,6 @@ def test_multiplication():
                 assert 0
     assert 1
 
-"""
 def test_RestoringDivision():
     for a in range(0, 20):
         for b in range(1, 20):
@@ -75,7 +74,6 @@ def test_RestoringDivision():
                 print("%d // %d = %d …… %d" % (a, b, int(r_q), int(a_q)))
                 assert 0
     assert 1
-"""
 
 if __name__ == "__main__":
     pytest.main(["./unit_test.py"])
