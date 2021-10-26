@@ -38,7 +38,7 @@ def test_RippleCarryAdder():
     assert 1
 """
 def test_multiplication():
-    for a in range(8,20):
+    for a in range(0,20):
         for b in range(0,20):
             n = max(len(bin(a)) - 2, len(bin(b)) - 2)
             circuit = Circuit(4*n+1)
