@@ -5,17 +5,20 @@
 # @File    : topology_unit_test.py
 
 import os
-import pytest
 import random
 
-from QuICT.core import Layout, LayoutEdge
+import pytest
 
-def getRandomList(l, n):
-    _rand = [i for i in range(n)]
-    for i in range(n - 1, 0, -1):
+from QuICT.core import Layout
+
+
+def getRandomList(count, upper_bound):
+    _rand = [i for i in range(upper_bound)]
+    for i in range(upper_bound - 1, 0, -1):
         do_get = random.randint(0, i)
         _rand[do_get], _rand[i] = _rand[i], _rand[do_get]
-    return _rand[:l]
+    return _rand[:count]
+
 
 def test_build():
     layout = Layout(10)
@@ -29,6 +32,7 @@ def test_build():
     assert not layout.check_edge(1, 3)
     # layout.write_file()
 
+
 def test_random_build():
     for i in range(2, 10):
         layout = Layout(i)
@@ -37,11 +41,13 @@ def test_random_build():
             layout.add_edge(out_list[0], out_list[1], random.random())
             assert layout.check_edge(out_list[0], out_list[1])
 
-def w_test_load():
-    layout = Layout.load_file(os.path.abspath(r".") + "/../../../example/layout/ibmqx2.layout")
+
+def test_load():
+    layout = Layout.load_file(os.path.dirname(os.path.abspath(__file__)) + "/../../../example/layout/ibmqx2.layout")
     assert layout.name == 'ibmqx2'
     assert layout.qubit_number == 5
     assert len(layout.edge_list) == 6
+
 
 if __name__ == "__main__":
     pytest.main(["./topology_unit_test.py"])

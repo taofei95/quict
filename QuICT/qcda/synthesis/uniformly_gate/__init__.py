@@ -4,5 +4,5 @@
 # @Author  : Han Yu
 # @File    : __init__.py
 
-from .uniformly_rotation import uniformlyRy, uniformlyRz
-from .uniformly_unitary import uniformlyUnitary
+from .uniformly_rotation import UniformlyRy, UniformlyRz
+from .uniformly_unitary import UniformlyUnitary

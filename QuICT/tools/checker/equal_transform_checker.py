@@ -4,13 +4,14 @@
 # @Author  : Han Yu
 # @File    : _ETChecker.py
 
-from math import pi
 import random
+from math import pi
 
 import numpy as np
 
-from QuICT.algorithm import SyntheticalUnitary, Amplitude
+from QuICT.algorithm import Amplitude, SyntheticalUnitary
 from QuICT.core import *
+
 
 class ETCheckerModel(object):
     """ checker whether the input and output(circuit) of a algorithm is equivalence
@@ -18,23 +19,25 @@ class ETCheckerModel(object):
     """
 
     @staticmethod
-    def getRandomList(l, n):
-        """ get l number from 0, 1, ..., n - 1 randomly.
+    def getRandomList(count, upper_bound):
+        """ get `count` number from 0, 1, ..., `upper_bound - 1` randomly.
+
         Args:
-            l(int)
-            n(int)
+            count(int)
+            upper_bound(int)
         Returns:
             list<int>: the list of l random numbers
         """
-        _rand = [i for i in range(n)]
-        for i in range(n - 1, 0, -1):
+        _rand = [i for i in range(upper_bound)]
+        for i in range(upper_bound - 1, 0, -1):
             do_get = random.randint(0, i)
             _rand[do_get], _rand[i] = _rand[i], _rand[do_get]
-        return _rand[:l]
+        return _rand[:count]
 
     @staticmethod
-    def cmp_array(arr0, arr1, eps = 1e-6):
+    def cmp_array(arr0, arr1, eps=1e-6):
         """ compare two array with eps
+
         Args:
             arr0(list<complex>): compare array 0
             arr1(list<complex>): compare array 1
@@ -254,5 +257,6 @@ class ETCheckerModel(object):
                 print(f"failed in the {i} round test")
                 return
         print("pass all test")
+
 
 ETChecker = ETCheckerModel()

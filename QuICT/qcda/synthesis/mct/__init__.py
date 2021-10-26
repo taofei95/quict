@@ -5,4 +5,4 @@
 # @File    : __init__.py.py
 
 from .mct_one_aux import MCTOneAux
-from .mct_linear_simulation import MCTLinearSimulation
+from .mct_linear_simulation import MCTLinearHalfDirtyAux, MCTLinearOneDirtyAux

@@ -5,7 +5,7 @@
 # @File    : ibmq_set
 
 from .. import InstructionSet
-from ..transform_rule import TransformRule, IbmqRule
+from ..transform_rule import IbmqRule
 
 from QuICT.core import *
 

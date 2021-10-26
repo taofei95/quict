@@ -6,7 +6,7 @@
 
 from QuICT import *
 from QuICT.algorithm import SyntheticalUnitary
-from QuICT.qcda.synthesis import uniformlyUnitary
+from QuICT.qcda.synthesis import UniformlyUnitary
 
 circuit = Circuit(4)
 unitary1 = U3([0, 0, 0]).matrix
@@ -18,7 +18,7 @@ unitary6 = U3([0, 0, 0]).matrix
 unitary7 = U3([0, 0, 0]).matrix
 unitary8 = U3([0, 0, 0]).matrix
 unitaries = [unitary1, unitary2, unitary3, unitary4, unitary5, unitary6, unitary7, unitary8]
-uniformlyUnitary(unitaries) | circuit
+UniformlyUnitary.execute(unitaries) | circuit
 unitary = SyntheticalUnitary.run(circuit)
 print(np.round(unitary, 2))
 if abs(unitary[0, 0]) > 1e-10:

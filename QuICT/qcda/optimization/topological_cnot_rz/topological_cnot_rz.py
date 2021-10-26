@@ -36,8 +36,10 @@ def delete_dfs(now):
     delete_dfs.topo_backward_map[delete_dfs.delete_total] = now
     delete_dfs.delete_total += 1
 
+
 def read(circuit):
     """ get describe from the circuit or cnot_struct
+
     Args:
         circuit(Circuit): the input circuit, contained the information of topology and (maybe) cnot
     Returns:
@@ -79,7 +81,7 @@ def read(circuit):
         gate = circuit.gates[i]
         if gate.type() == GATE_ID["CX"]:
             READ_CNOT[topo_forward_map[gate.targ]] ^= \
-                    READ_CNOT[topo_forward_map[gate.carg]]
+                READ_CNOT[topo_forward_map[gate.carg]]
         elif gate.type() == GATE_ID["Rz"]:
             index = cnot_index.setdefault(READ_CNOT[topo_forward_map[gate.targ]], 0)
             if index != 0:
@@ -92,6 +94,7 @@ def read(circuit):
                 waitDeal.add(termNumber - 1)
 
     return topo_backward_map, input, th, waitDeal
+
 
 def solve(input, th, waitDeal, undirected_topology):
     """ main part of the algorithm
@@ -207,7 +210,7 @@ def solve(input, th, waitDeal, undirected_topology):
         for gate in gates:
             gate.print_info()
 
-        gsxy_gate = TopologicalCnot.run_parameter(cnot_struct=gsxy, topology=undirected_topology)
+        gsxy_gate = TopologicalCnot.execute(cnot_struct=gsxy, topology=undirected_topology).gates
         gsxy_gate.reverse()
 
         gates.extend(gsxy_gate)
@@ -220,6 +223,7 @@ def solve(input, th, waitDeal, undirected_topology):
 
     return ans
 
+
 class TopologicalCnotRz(Optimization):
     """ optimize the cnot_Rz circuit on topological device
 
@@ -227,9 +231,10 @@ class TopologicalCnotRz(Optimization):
 
     """
 
-    @staticmethod
-    def _run(circuit: Circuit, *pargs):
+    @classmethod
+    def execute(cls, circuit: Circuit, *pargs):
         """
+
         Args:
             circuit(Circuit): the circuit to be optimize
         """
@@ -253,7 +258,7 @@ class TopologicalCnotRz(Optimization):
             for topology in circuit.topology:
                 topo[topology[0]][topology[1]] = True
 
-        output = []
+        output = CompositeGate()
         total = 0
         for item in ans:
             if item.type() == GATE_ID["Rz"] or topo[topo_backward_map[item.carg]][topo_backward_map[item.targ]]:
@@ -298,4 +303,7 @@ class TopologicalCnotRz(Optimization):
                 GateBuilder.setTargs(topo_backward_map[item.targ])
                 gate = GateBuilder.getGate()
                 output.append(gate)
-        return output
+        # return output
+        new_circuit = Circuit(len(circuit.qubits))
+        new_circuit.set_exec_gates(output)
+        return new_circuit

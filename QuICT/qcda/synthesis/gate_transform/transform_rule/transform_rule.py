@@ -8,7 +8,8 @@ import random
 
 import numpy as np
 
-from QuICT.core import BasicGate, GATE_ID, GATE_STANDARD_NAME_OF
+from QuICT.core import BasicGate, GATE_STANDARD_NAME_OF
+
 
 class TransformRule(object):
     """ a class describe a transform rule
@@ -57,7 +58,7 @@ class TransformRule(object):
             target = target.type()
         self.__target = target
 
-    def __init__(self, funtion, source = None, target = None):
+    def __init__(self, funtion, source=None, target=None):
         """ initial transform rule
 
         Args:
@@ -69,7 +70,7 @@ class TransformRule(object):
         self.source = source
         self.target = target
 
-    def check_equal(self, ignore_phase = True, eps = 1e-7):
+    def check_equal(self, ignore_phase=True, eps=1e-7):
         """ check whether the rule is true
 
         Args:

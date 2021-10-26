@@ -12,9 +12,12 @@
 # copyright notice, and modified files need to carry a notice indicating
 # that they have been altered from the originals.
 
+# Modification Notice: Code revised for QuICT
+
 """
 Exception for errors raised while parsing OPENQASM.
 """
+
 
 class QasmError(Exception):
     """Base class for errors raised while parsing OPENQASM."""

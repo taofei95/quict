@@ -6,6 +6,7 @@
 
 import warnings
 
+
 class LayoutEdge:
     """ Implement a physical connection between physical qubits
 
@@ -15,6 +16,7 @@ class LayoutEdge:
         error_rate(float): the error_rate between u and v, default 1
 
     """
+
     @property
     def u(self) -> int:
         return self._u
@@ -46,6 +48,7 @@ class LayoutEdge:
         self._v = v
         self._error_rate = error_rate
 
+
 class Layout:
     """ Implement a topology in a physical device
 
@@ -71,13 +74,14 @@ class Layout:
     def qubit_number(self):
         return self._qubit_number
 
-    def __init__(self, n, name = "unkown"):
+    def __init__(self, n, name="unkown"):
         self._qubit_number = n
         self._name = name
         self._edge_list = []
 
     def out_edges(self, begin_point) -> list:
         """ edges begin from begin_point
+
         Args:
             begin_point(int): the index of begin node
 
@@ -90,7 +94,7 @@ class Layout:
                 prior_list.append(edge)
         return prior_list
 
-    def add_edge(self, u, v, error_rate = 1.0, two_way = False):
+    def add_edge(self, u, v, error_rate=1.0, two_way=False):
         """ add an edge in the layout
 
         Args:
@@ -121,7 +125,7 @@ class Layout:
                 return True
         return False
 
-    def write_file(self, path = './'):
+    def write_file(self, path='./'):
         """ write file
 
         Args:
@@ -139,6 +143,7 @@ class Layout:
     @staticmethod
     def load_file(file):
         """
+
         Args:
             file(str): the path of file
         Return:
@@ -163,7 +168,7 @@ class Layout:
                     layout.add_edge(u, v)
         return layout
 
-    def _inner_add_edge(self, edge : LayoutEdge):
+    def _inner_add_edge(self, edge: LayoutEdge):
         """ add/replace edge in layout
 
         Args:
@@ -174,4 +179,3 @@ class Layout:
                 check.error_rate = edge.error_rate
                 return
         self.edge_list.append(edge)
-

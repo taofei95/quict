@@ -9,6 +9,7 @@ import numpy as np
 from .._optimization import Optimization
 from QuICT.core import *
 
+
 class path(object):
     """ record the path of bfs
 
@@ -27,6 +28,7 @@ class path(object):
         self.father_node = father_node
         self.CX_tuple = (control, target)
 
+
 def apply_cx(state, control, target, n):
     """ apply cnot gate to the state
 
@@ -40,12 +42,13 @@ def apply_cx(state, control, target, n):
     """
 
     control_col: int = n * control
-    target_col : int = n * target
+    target_col: int = n * target
 
     for i in range(n):
         if state & (1 << (control_col + i)):
-            state ^=  (1 << (target_col + i))
+            state ^= (1 << (target_col + i))
     return state
+
 
 def solve(input: Circuit):
     """ find the best circuit by bfs
@@ -100,18 +103,19 @@ def solve(input: Circuit):
                             return circuit
                         queue.append(new_state)
         l += 1
-        if l % 100 == 0:
-            print(l)
 
 
 class CnotForceBfs(Optimization):
     """ use bfs to optimize the cnot circuit
 
     """
-    @staticmethod
-    def _run(circuit : Circuit, *pargs):
+    @classmethod
+    def execute(cls, circuit: Circuit):
         """
-        circuit(Circuit): the circuit to be optimize
-        *pargs: other parameters
+        Args:
+            circuit(Circuit): the circuit to be optimize
+            *pargs: other parameters
+        Returns:
+            Circuit: output circuit
         """
         return solve(circuit)

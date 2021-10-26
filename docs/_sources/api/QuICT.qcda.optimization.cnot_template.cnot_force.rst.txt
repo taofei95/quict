@@ -1,7 +1,0 @@
-QuICT.qcda.optimization.cnot\_template.cnot\_force module
-=========================================================
-
-.. automodule:: QuICT.qcda.optimization.cnot_template.cnot_force
-   :members:
-   :undoc-members:
-   :show-inheritance:

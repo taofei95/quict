@@ -7,21 +7,11 @@
 class Algorithm(object):
     """ quantum algorithm which should run in the quantum hardware
 
-    the subClass should overloaded the function _run,
-    the overloaded of run is optional
-
+    the subClass should overloaded the function run
     """
-    @classmethod
-    def run(cls, *pargs):
-        """
-        Args:
-            *pargs: parameters which needed by the algorithm.
-        """
-        result = cls._run(*pargs)
-        return result
 
     @staticmethod
-    def _run(*pargs):
+    def run(*pargs):
         """
         Args:
             *pargs: parameters which needed by the algorithm.

@@ -1,4 +1,0 @@
-QuICT Structure
-============
-
-.. mdinclude:: ./project_structure.md

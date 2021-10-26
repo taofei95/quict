@@ -1,9 +1,8 @@
 # noinspection PyUnresolvedReferences
 from scipy.linalg import cossin
 from scipy.stats import unitary_group
-from ...uniformly_gate import uniformlyRy
+from QuICT.qcda.synthesis.uniformly_gate import UniformlyRy
 from QuICT.core import *
-from QuICT.algorithm import SyntheticalUnitary
 
 
 def test_unitary_first_level():
@@ -39,7 +38,7 @@ def test_unitary_first_level():
             assert np.isclose(np.cos(theta), c)
             theta *= 2
             angle_list.append(theta)
-        reversed_ry = uniformlyRy(
+        reversed_ry = UniformlyRy.execute(
             angle_list=angle_list,
             mapping=[(i + 1) % qubit_num for i in range(qubit_num)]
         )

@@ -6,12 +6,14 @@
 
 import copy
 
+from QuICT.core.exception import ConstException, IndexDuplicateException, IndexLimitException, TypeException
 from QuICT.core.qubit import Qubit, Qureg
-from QuICT.core.exception import TypeException, ConstException, IndexLimitException, IndexDuplicateException
+
 from .circuit_computing import *
 
 # global circuit id count
 circuit_id = 0
+
 
 class Circuit(object):
     """ Implement a quantum circuit
@@ -204,7 +206,7 @@ class Circuit(object):
                 count += 1
         return count
 
-    def circuit_depth(self, gateTypes = None):
+    def circuit_depth(self, gateTypes=None):
         """ the depth of the circuit for some gate.
 
         Args:
@@ -334,7 +336,7 @@ class Circuit(object):
         gates | targets
 
     # append gate methods
-    def append(self, gate, qureg = None):
+    def append(self, gate, qureg=None):
         """ add a gate to the circuit
 
         Args:
@@ -357,7 +359,7 @@ class Circuit(object):
         for gate in gates:
             self.append(gate)
 
-    def sub_circuit(self, targets, start = 0, max_size = -1, local = False, remove = False):
+    def sub_circuit(self, targets, start=0, max_size=-1, local=False, remove=False):
         """ get a sub circuit
 
         Args:
@@ -370,8 +372,8 @@ class Circuit(object):
             Circuit: the sub circuit
 
         """
-        circuit_size   = self.circuit_size()
-        circuit_width  = self.circuit_width()
+        circuit_size = self.circuit_size()
+        circuit_width = self.circuit_width()
         if isinstance(targets, slice):
             targets = [i for i in range(circuit_width)][targets]
         targets = list(targets)
@@ -417,12 +419,12 @@ class Circuit(object):
                 if not local:
                     new_gates.append(gate)
                 else:
-                    communitive = True
+                    commutative = True
                     for goal in compare_gates:
-                        if not gate.communitive(goal):
-                            communitive = False
+                        if not gate.commutative(goal):
+                            commutative = False
                             break
-                    if communitive:
+                    if commutative:
                         new_gates.append(gate)
                     else:
                         break
@@ -463,7 +465,7 @@ class Circuit(object):
         else:
             self._inner_add_topology(topology)
 
-    def add_topology_complete(self, qureg : Qureg):
+    def add_topology_complete(self, qureg: Qureg):
         """ add directed edges to make subgraph formed by qureg passed in fully connected
 
         Args:
@@ -559,7 +561,7 @@ class Circuit(object):
         self.clear()
         self.qubits.force_assign_zeros()
 
-    def force_copy(self, other, force_copy = None):
+    def force_copy(self, other, force_copy=None):
         """ remove all gates and copy another circuits' qubits state to the qureg in this circuit
 
         Args:
@@ -592,23 +594,34 @@ class Circuit(object):
             gate.print_info()
         print("-------------------")
 
-    def draw_photo(self, filename = None, show_depth = True):
+    def draw(self, method='matp', filename=None):
         """ draw the photo of circuit in the run directory
 
         Args:
             filename(str): the output filename without file extensions,
                            default to be the name of the circuit
-            show_depth: whether to show a red frame for gates in the same layer
-                        (Note that some gates in the same layer cannot be represented
-                        in the row in the photo)
+            method(str): the method to draw the circuit
+                matp: matplotlib
+                command : command
+                tex : tex source
         """
-        from QuICT.tools.drawer import PhotoDrawerModel
-        if filename is None:
-            filename = str(self.id) + '.jpg'
-        elif '.' not in filename:
-            filename += '.jpg'
-        PhotoDrawer = PhotoDrawerModel()
-        PhotoDrawer.run(self, filename, show_depth)
+        if method == 'matp':
+            from QuICT.tools.drawer import PhotoDrawer
+            if filename is None:
+                filename = str(self.id) + '.jpg'
+            elif '.' not in filename:
+                filename += '.jpg'
+            photoDrawer = PhotoDrawer()
+            photoDrawer.run(self, filename)
+        elif method == 'command':
+            from QuICT.tools.drawer import TextDrawing
+            textDrawing = TextDrawing([i for i in range(len(self.qubits))], self.gates)
+            if filename is None:
+                print(textDrawing.single_string())
+                return
+            elif '.' not in filename:
+                filename += '.txt'
+            textDrawing.dump(filename)
 
     # computation method of the circuit
     def partial_prob(self, indexes):
@@ -626,7 +639,7 @@ class Circuit(object):
         """
         return inner_partial_prob(self, indexes)
 
-    def index_for_qubit(self, qubit, ancilla = None) -> int:
+    def index_for_qubit(self, qubit, ancilla=None) -> int:
         """ find the index of qubit in this circuit
 
         the index ignored the ancilla qubit
@@ -653,8 +666,9 @@ class Circuit(object):
                 return i - enterspace
         raise Exception("the qubit is not in the circuit or it is an ancillary qubit.")
 
-    def random_append(self, rand_size = 10, typeList = None):
+    def random_append(self, rand_size=10, typeList=None):
         """ add some random gate to the circuit
+
         Args:
             rand_size(int): the number of the gate added to the circuit
             typeList(list<GateType>): the type of gate, default contains CX、ID、Rz、CY、CRz、CH

@@ -4,11 +4,11 @@ import numpy as np
 from scipy.linalg import cossin
 from QuICT.core import *
 
-from .two_qubit_transform import KAK
-from .two_qubit_diagonal_transform import KAKDiag
-from ..uniformly_gate import uniformlyRy
+from .two_qubit_transform import TwoQubitTransform
+from .two_qubit_diagonal_transform import TwoQubitDiagonalTransform
+from ..uniformly_gate import UniformlyRy
 from .._synthesis import Synthesis
-from .uniformly_ry_revision import uniformlyRyDecompostionRevision
+from .uniformly_ry_revision import UniformlyRyRevision
 from .utility import *
 
 
@@ -26,7 +26,7 @@ def inner_utrans_build_gate(
     mat_size: int = mat.shape[0]
     qubit_num = int(round(np.log2(mat_size)))
 
-    _kak = KAKDiag if keep_left_diagonal else KAK
+    _kak = TwoQubitDiagonalTransform if keep_left_diagonal else TwoQubitTransform
 
     if qubit_num == 1:
         GateBuilder.setGateType(GATE_ID["Unitary"])
@@ -37,7 +37,7 @@ def inner_utrans_build_gate(
         _ret = CompositeGate(gates=[u])
         return _ret, 1.0 + 0.0j
     elif qubit_num == 2 and recursive_basis == 2:
-        gates = _kak(mat)
+        gates = _kak.execute(mat)
         syn_mat = gates.matrix()
         shift = shift_ratio(mat, syn_mat)
         return gates, shift
@@ -57,8 +57,8 @@ def inner_utrans_build_gate(
                                │ 0  0  I │ 0  0  0 │
                                └                   ┘
 
-    Both u and v are controlled unitary operations hence can be 
-    decomposed into 2 (smaller) unitary operations and 1 controlled rotation.        
+    Both u and v are controlled unitary operations hence can be
+    decomposed into 2 (smaller) unitary operations and 1 controlled rotation.
     """
 
     # Dynamically import to avoid circulation.
@@ -69,13 +69,13 @@ def inner_utrans_build_gate(
     # (c,s\\s,c)
     angle_list *= 2  # Ry use its angle as theta/2
     if use_cz_ry:
-        reversed_ry = uniformlyRyDecompostionRevision(
+        reversed_ry = UniformlyRyRevision.execute(
             angle_list=angle_list,
             mapping=[(i + 1) % qubit_num for i in range(qubit_num)],
             is_cz_left=False,  # keep CZ at right side
         )
     else:
-        reversed_ry = uniformlyRy(
+        reversed_ry = UniformlyRy.execute(
             angle_list=angle_list,
             mapping=[(i + 1) % qubit_num for i in range(qubit_num)],
         )
@@ -83,7 +83,7 @@ def inner_utrans_build_gate(
     """
     Now, gates have CZ gate(s) at it's ending part(the left side of u).
     Left gate of u is right multiplied to u in matrix view.
-    If qubit_num > 2, we would have reversed_ry[-1] as a CZ affecting on (0, 1), 
+    If qubit_num > 2, we would have reversed_ry[-1] as a CZ affecting on (0, 1),
     while reversed_ry[-2] a CZ on (0, qubit_num - 1).
     If qubit_num == 2, there would only be one CZ affecting on (0, 1).
     """
@@ -117,8 +117,8 @@ def inner_utrans_build_gate(
     # v_dagger
 
     """
-    Now, leftmost gate decompose by u is a diagonal gate on (n-2, n-1), which 
-    is commutable with reversed_ry. That gate is in right side of v_dagger, so 
+    Now, leftmost gate decompose by u is a diagonal gate on (n-2, n-1), which
+    is commutable with reversed_ry. That gate is in right side of v_dagger, so
     it would be left multiplied to v_dagger.
     """
     v1_dagger = v_dagger[0]
@@ -148,60 +148,61 @@ def inner_utrans_build_gate(
     return gates, shift
 
 
-def unitary_transform(
-        mat: np.ndarray,
-        include_phase_gate: bool = True,
-        mapping: List[int] = None,
-        recursive_basis: int = 2,
-):
-    """
-    Transform a general unitary matrix into CX gates and single qubit gates.
+class UnitaryTransform(Synthesis):
+    @classmethod
+    def execute(
+            cls,
+            mat: np.ndarray,
+            include_phase_gate: bool = True,
+            mapping: List[int] = None,
+            recursive_basis: int = 2,
+    ):
+        """
+        Transform a general unitary matrix into CX gates and single qubit gates.
 
-    Args:
-        mat(np.ndarray): Unitary matrix.
-        include_phase_gate(bool): Whether to include a phase gate to keep synthesized gate matrix the same
-            as input. If set False, the output gates might have a matrix which has a factor shift to input:
-            np.allclose(<matrix_of_return_gates> * factor, <input_matrix>).
-        mapping(List[int]): The order of input qubits. Mapping is a list of their labels from top to bottom.
-        recursive_basis(int): Terminate recursion at which level. It could be set as 1 or 2, which would stop
-            recursion when matrix is 2 or 4, respectively. When set as 2, the final step is done by KAK decomposition.
-            Correctness of this algorithm is never influenced by recursive_basis.
+        Args:
+            mat(np.ndarray): Unitary matrix.
+            include_phase_gate(bool): Whether to include a phase gate to keep synthesized gate matrix the same
+                as input. If set False, the output gates might have a matrix which has a factor shift to input:
+                np.allclose(<matrix_of_return_gates> * factor, <input_matrix>).
+            mapping(List[int]): The order of input qubits. Mapping is a list of their labels from top to bottom.
+            recursive_basis(int): Terminate recursion at which level. It could be set as 1 or 2, which would stop
+                recursion when matrix is 2 or 4, respectively. When set as 2, the final step is done by KAK
+                decomposition. Correctness of this algorithm is never influenced by recursive_basis.
 
-    Returns:
-        Union[Tuple[CompositeGate,None], Tuple[CompositeGate,complex]]: If inlclude_phase_gate==False, this function returns
-            synthesized gates and a shift factor. Otherwise a tuple like (<gates>, None) is returned.
-    """
-    qubit_num = int(round(np.log2(mat.shape[0])))
+        Returns:
+            Union[Tuple[CompositeGate,None], Tuple[CompositeGate,complex]]: If inlclude_phase_gate==False,
+            this function returns synthesized gates and a shift factor. Otherwise a tuple like (<gates>, None)
+            is returned.
+        """
+        qubit_num = int(round(np.log2(mat.shape[0])))
 
-    """
-    After adding KAK diagonal optimization, inner built gates would have a 
-    leading diagonal gate not decomposed. If our first-level recursion is 
-    2-bit, using older version of KAK is OK.
-    """
+        """
+        After adding KAK diagonal optimization, inner built gates would have a
+        leading diagonal gate not decomposed. If our first-level recursion is
+        2-bit, using older version of KAK is OK.
+        """
 
-    if qubit_num == 2 and recursive_basis == 2:
-        gates = KAK(mat)
-        syn_mat = gates.matrix()
-        shift = shift_ratio(mat, syn_mat)
-        add_factor_shift_into_phase(gates, shift)
-        return gates, None
+        if qubit_num == 2 and recursive_basis == 2:
+            gates = TwoQubitTransform.execute(mat)
+            syn_mat = gates.matrix()
+            shift = shift_ratio(mat, syn_mat)
+            add_factor_shift_into_phase(gates, shift)
+            return gates, None
 
-    gates, shift = inner_utrans_build_gate(
-        mat=mat,
-        recursive_basis=recursive_basis,
-        keep_left_diagonal=False,
-    )
-    if mapping is None:
-        mapping = [i for i in range(qubit_num)]
-    mapping = list(mapping)
+        gates, shift = inner_utrans_build_gate(
+            mat=mat,
+            recursive_basis=recursive_basis,
+            keep_left_diagonal=False,
+        )
+        if mapping is None:
+            mapping = [i for i in range(qubit_num)]
+        mapping = list(mapping)
 
-    gates.remapping(mapping)
-    if recursive_basis == 2 and include_phase_gate:
-        gates = add_factor_shift_into_phase(gates, shift)
-    if include_phase_gate:
-        return gates, None
-    else:
-        return gates, shift
-
-
-UTrans = Synthesis(unitary_transform)
+        gates.remapping(mapping)
+        if recursive_basis == 2 and include_phase_gate:
+            gates = add_factor_shift_into_phase(gates, shift)
+        if include_phase_gate:
+            return gates, None
+        else:
+            return gates, shift

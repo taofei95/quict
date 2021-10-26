@@ -21,6 +21,7 @@ READ_CNOT = []
 # the the gates which makes the identity of "read_cnot", the ans is its inverse
 GATES = []
 
+
 class Steiner_Tree(object):
     """ the Steiner_Tree struct
 
@@ -43,6 +44,7 @@ class Steiner_Tree(object):
 
     def __init__(self, n, topo):
         """
+
         Args:
             n(int): number of the vertexes in the tree
             topo(n * n boolean matrix): topological relationship for n vertexes,
@@ -50,17 +52,17 @@ class Steiner_Tree(object):
         """
         self.N = n
         self.matrix = [[False] * n] * n
-        self.dp = np.array([], dtype=np.int)
+        self.dp = np.array([], dtype=np.int64)
         self.ST = []
         for i in range(n):
             for j in range(i + 1, n):
                 self.matrix[i][j] = self.matrix[j][i] = topo[i][j] or topo[j][i]
         self.father = []
         self.sons = []
-        self.pre = np.array([], dtype=np.int)
+        self.pre = np.array([], dtype=np.int64)
         self.root = 0
 
-    def build_ST(self, ST_input : list, lower_bound):
+    def build_ST(self, ST_input: list, lower_bound):
         """ build Steiner_Tree with ST_input in it
 
         ST_input[-1] must be the root of the tree.
@@ -74,8 +76,8 @@ class Steiner_Tree(object):
 
         size = len(ST_input)
         self.root = ST_input[-1]
-        self.dp = np.array([-1] * self.N * (1 << size), dtype=np.int).reshape((self.N, 1 << size))
-        self.pre = np.zeros((self.N, 1 << size, 2), dtype=np.int)
+        self.dp = np.array([-1] * self.N * (1 << size), dtype=np.int64).reshape((self.N, 1 << size))
+        self.pre = np.zeros((self.N, 1 << size, 2), dtype=np.int64)
         self.ST = [0] * self.N
         self.father = [-1] * self.N
         self.sons = []
@@ -146,7 +148,7 @@ class Steiner_Tree(object):
             self.father[_pre[0] + self.N] = root
             self.build_STtree(_pre[0] + self.N, _pre[1])
 
-    def elimination_below(self, gauss_elimination : list):
+    def elimination_below(self, gauss_elimination: list):
         """ elimination with some rows below ith row and ith column.
 
         Args:
@@ -155,7 +157,7 @@ class Steiner_Tree(object):
 
         self._elimination_below_dfs(self.root, gauss_elimination)
 
-    def _elimination_below_dfs(self, now, gauss_elimination : list):
+    def _elimination_below_dfs(self, now, gauss_elimination: list):
         """ elimination with dfs
 
         Args:
@@ -178,11 +180,11 @@ class Steiner_Tree(object):
             gauss_elimination[now] ^= gauss_elimination[self.father[now]]
             GATES.append(gate)
 
-    def elimination_above(self, gauss_elimination : list):
+    def elimination_above(self, gauss_elimination: list):
         self._elimination_above_preorder(self.root, gauss_elimination)
         self._elimination_above_postorder(self.root, gauss_elimination)
 
-    def _elimination_above_preorder(self, now, gauss_elimination : list):
+    def _elimination_above_preorder(self, now, gauss_elimination: list):
         for son in self.sons[now]:
             if self.ST[son] == 0:
                 GateBuilder.setCargs(son)
@@ -204,6 +206,7 @@ class Steiner_Tree(object):
             gate = GateBuilder.getGate()
             GATES.append(gate)
 
+
 def delete_dfs(now):
     """ search for a initial mapping to get better(maybe) topology
 
@@ -222,8 +225,10 @@ def delete_dfs(now):
     delete_dfs.topo_backward_map[delete_dfs.delete_total] = now
     delete_dfs.delete_total += 1
 
+
 def read(circuit, cnot_struct, topology):
     """ get describe from the circuit or cnot_struct
+
     Args:
         circuit(Circuit): the input circuit, contained the information of topology and (maybe) cnot
         cnot_struct(list<int>): the information of cnot. if None, the information is contained in the circuit
@@ -272,10 +277,11 @@ def read(circuit, cnot_struct, topology):
             gate = circuit.gates[i]
             if gate.type() == GATE_ID["CX"]:
                 READ_CNOT[topo_forward_map[gate.targ]] ^= \
-                        READ_CNOT[topo_forward_map[gate.carg]]
+                    READ_CNOT[topo_forward_map[gate.carg]]
 
     ST = Steiner_Tree(N, TOPO)
     return ST, topo_backward_map
+
 
 def solve(ST_tree):
     """ main part of the algorithm
@@ -388,6 +394,7 @@ def solve(ST_tree):
     GATES.reverse()
     return GATES
 
+
 class TopologicalCnot(Optimization):
     """ optimize the cnot circuit on topological device
     https://arxiv.org/pdf/1910.14478.pdf
@@ -397,19 +404,9 @@ class TopologicalCnot(Optimization):
     """
 
     @classmethod
-    def run_parameter(cls, cnot_struct, topology):
-        """ optimize the circuit
-
-        Args:
-            cnot_struct(list<int>): the struct of cnot circuit
-            topology(list<tuple<int, int>>): topology of circuit
-
+    def execute(cls, circuit: Circuit = None, cnot_struct=None, topology=None):
         """
-        return cls._run(cnot_struct = cnot_struct, topology = topology)
 
-    @staticmethod
-    def _run(circuit : Circuit = None, cnot_struct = None, topology = None):
-        """
         Args:
             circuit(Circuit): the circuit to be optimize
             cnot_struct(list<int>/None): the struct of cnot circuit. if None, read circuit
@@ -437,7 +434,7 @@ class TopologicalCnot(Optimization):
                 for topos in topology:
                     topo[topos[0]][topos[1]] = True
 
-        output = []
+        output = CompositeGate()
         for item in ans:
             c = topo_backward_map[item.carg]
             t = topo_backward_map[item.targ]
@@ -469,4 +466,7 @@ class TopologicalCnot(Optimization):
                 GateBuilder.setTargs(t)
                 gate = GateBuilder.getGate()
                 output.append(gate)
-        return output
+        # return output
+        new_circuit = Circuit(N)
+        new_circuit.set_exec_gates(output)
+        return new_circuit

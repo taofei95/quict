@@ -12,6 +12,8 @@
 # copyright notice, and modified files need to carry a notice indicating
 # that they have been altered from the originals.
 
+# Modification Notice: Code revised for QuICT
+
 """
 OPENQASM circuit object.
 """
@@ -19,6 +21,7 @@ import warnings
 
 from .exceptions import QasmError
 from .qasmparser import QasmParser
+
 
 class Qasm:
     """OPENQASM circuit object."""

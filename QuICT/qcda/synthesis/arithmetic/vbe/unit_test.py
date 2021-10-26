@@ -33,7 +33,7 @@ def test_Adder():
             qubit_overflow = circuit(3 * n)
             Set(qubit_a, a)
             Set(qubit_b, b)
-            VBEAdder(n) | (qubit_a, qubit_b, qubit_c, qubit_overflow)
+            VBEAdder.execute(n) | (qubit_a, qubit_b, qubit_c, qubit_overflow)
             Measure | circuit
             circuit.exec()
             if int(qubit_b) != (a + b) % (2 ** n):
@@ -56,7 +56,7 @@ def test_AdderMod():
                 qubit_t = circuit(4 * n + 1)
                 Set(qubit_a, a)
                 Set(qubit_b, b)
-                VBEAdderMod(N, n) | (qubit_a, qubit_b, qubit_c, qubit_overflow, qubit_N, qubit_t)
+                VBEAdderMod.execute(N, n) | (qubit_a, qubit_b, qubit_c, qubit_overflow, qubit_N, qubit_t)
                 Measure | circuit
                 circuit.exec()
                 if int(qubit_b) != (a + b) % N:
@@ -74,15 +74,15 @@ def test_MulAddMod():
                     m = len(bin(N)) - 2
                     circuit = Circuit(4 * n + m + 2)
                     qubit_x = circuit([i for i in range(m)])
-                    qubit_a = circuit([i for i in range(m, n + m)])
+                    # qubit_a = circuit([i for i in range(m, n + m)])
                     qubit_b = circuit([i for i in range(n + m, 2 * n + m)])
-                    qubit_c = circuit([i for i in range(2 * n + m, 3 * n + m)])
-                    qubit_overflow = circuit(3 * n + m)
-                    qubit_N = circuit([i for i in range(3 * n + m + 1, 4 * n + m + 1)])
-                    qubit_t = circuit(4 * n + m + 1)
+                    # qubit_c = circuit([i for i in range(2 * n + m, 3 * n + m)])
+                    # qubit_overflow = circuit(3 * n + m)
+                    # qubit_N = circuit([i for i in range(3 * n + m + 1, 4 * n + m + 1)])
+                    # qubit_t = circuit(4 * n + m + 1)
                     Set(qubit_x, x)
                     Set(qubit_b, b)
-                    VBEMulAddMod(a, N, n, m) | circuit
+                    VBEMulAddMod.execute(a, N, n, m) | circuit
                     Measure | circuit
                     circuit.exec()
                     if int(qubit_b) != (b + a * x) % N:
@@ -104,7 +104,7 @@ def test_Exp():
                 circuit = Circuit(m + 5 * n + 2)
                 qubit_x = circuit([i for i in range(m)])
                 Set(qubit_x, x)
-                VBEExpMod(a, N, n, m) | circuit
+                VBEExpMod.execute(a, N, n, m) | circuit
                 Measure | circuit
                 circuit.exec()
                 if int(circuit([i for i in range(m, m + n)])) != pow(a, x) % N:

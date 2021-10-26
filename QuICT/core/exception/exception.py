@@ -11,6 +11,7 @@ class TypeException(Exception):
 
     def __init__(self, type, now):
         """
+
         Args:
             type: the type should passed in
             now: the type actually passed in
@@ -26,6 +27,7 @@ class ConstException(Exception):
 
     def __init__(self, other):
         """
+
         Args:
             other: the variable
         """
@@ -39,6 +41,7 @@ class FrameworkException(Exception):
 
     def __init__(self, other):
         """
+
         Args:
             other: error information
         """
@@ -52,6 +55,7 @@ class CircuitStructException(Exception):
 
     def __init__(self, other):
         """
+
         Args:
             other: error information
         """
@@ -65,6 +69,7 @@ class QasmInputException(Exception):
 
     def __init__(self, other, line, file):
         """
+
         Args:
             other: error type
             line: error line
@@ -80,6 +85,7 @@ class IndexLimitException(Exception):
 
     def __init__(self, wire, try_index):
         """
+
         Args:
             wire: the index range
             try_index: index passed in
@@ -94,15 +100,18 @@ class IndexDuplicateException(Exception):
 
     def __init__(self, other):
         """
+
         Args:
             other: the indexes passed in
         :param other:
         """
         Exception.__init__(self, f"duplicate indexes: {other}")
 
+
 class GateDigitException(Exception):
     def __init__(self, controls, targets, indeed):
         """
+
         Args:
             controls(int): the number of controls
             targets(int) : the number of targets
@@ -112,6 +121,7 @@ class GateDigitException(Exception):
                                  the number of target bits indexed is {targets}, \
                                  so {controls + targets} parameters should be passed in, \
                                  infact {indeed} parameters are passed in.")
+
 
 class NotImplementedGateException(Exception):
     """Exception when you try to query ID for a non-existing gate

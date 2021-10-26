@@ -1,12 +1,9 @@
-# import sys
-# sys.path.append('/mnt/e/ICT/QuICT')
-
 import numpy as np
 
-from QuICT.core import Circuit, Unitary, Ry, Rz, CX
+from QuICT.core import Circuit, Ry, Rz, CX
 from QuICT.algorithm.synthetical_unitary import SyntheticalUnitary
-from QuICT.qcda.synthesis.unitary_transform.two_qubit_transform import CartanKAKDecomposition, KAK
-from QuICT.qcda.synthesis.unitary_transform.two_qubit_diagonal_transform import KAKDiag
+from QuICT.qcda.synthesis.unitary_transform.two_qubit_transform import CartanKAKDecomposition, TwoQubitTransform
+from QuICT.qcda.synthesis.unitary_transform.two_qubit_diagonal_transform import TwoQubitDiagonalTransform
 
 
 def generate_unitary(n):
@@ -43,28 +40,26 @@ def test_CKD():
         CKD = CartanKAKDecomposition(U)
         CKD.decompose()
 
-        KL0 = CKD.KL0
-        KL1 = CKD.KL1
-        KR0 = CKD.KR0
-        KR1 = CKD.KR1
-        KL = np.kron(KL0, KL1)
-        KR = np.kron(KR0, KR1)
+        # KL0 = CKD.KL0
+        # KL1 = CKD.KL1
+        # KR0 = CKD.KR0
+        # KR1 = CKD.KR1
+        # KL = np.kron(KL0, KL1)
+        # KR = np.kron(KR0, KR1)
         matexp = Ud(CKD.a, CKD.b, CKD.c)
 
         circuit = Circuit(2)
-        # @formatter:off
-        Rz(np.pi / 2)                | circuit(1)
-        CX                           | circuit([1, 0])
-        Rz(np.pi / 2 - 2 * CKD.c)    | circuit(0)
-        Ry(np.pi / 2 - 2 * CKD.a)    | circuit(1)
-        CX                           | circuit([0, 1])
-        Ry(2 * CKD.b - np.pi / 2)    | circuit(1)
-        CX                           | circuit([1, 0])
-        Rz(-np.pi / 2)               | circuit(0)
-        # @formatter:on
+        Rz(np.pi / 2) | circuit(1)
+        CX | circuit([1, 0])
+        Rz(np.pi / 2 - 2 * CKD.c) | circuit(0)
+        Ry(np.pi / 2 - 2 * CKD.a) | circuit(1)
+        CX | circuit([0, 1])
+        Ry(2 * CKD.b - np.pi / 2) | circuit(1)
+        CX | circuit([1, 0])
+        Rz(-np.pi / 2) | circuit(0)
 
         U /= np.linalg.det(U) ** 0.25
-        Usyn = KL.dot(matexp).dot(KR)
+        # Usyn = KL.dot(matexp).dot(KR)
         # print(U.dot(np.linalg.inv(Usyn)))
         Ucir = SyntheticalUnitary.run(circuit, showSU=True)
 
@@ -76,7 +71,7 @@ def test_two_bit_transform():
     for _ in range(200):
         U = generate_unitary(4)
         circuit = Circuit(2)
-        KAK(U) | circuit
+        TwoQubitTransform.execute(U) | circuit
 
         Ucir = SyntheticalUnitary.run(circuit)
         phase = U.dot(np.linalg.inv(Ucir))
@@ -88,7 +83,7 @@ def test_two_qubit_diagonal_transform():
         U = generate_unitary(4)
         U /= np.linalg.det(U) ** 0.25
         circuit = Circuit(2)
-        KAKDiag(U) | circuit
+        TwoQubitDiagonalTransform.execute(U) | circuit
 
         Ucir = SyntheticalUnitary.run(circuit)
         phase = U.dot(np.linalg.inv(Ucir))

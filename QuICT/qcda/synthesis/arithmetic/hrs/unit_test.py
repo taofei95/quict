@@ -17,7 +17,7 @@ def Set(qreg, N):
 
 
 def EX_GCD(a, b, arr):
-    """ 
+    """
     Implementation of Extended Euclidean algorithm
 
     Args:
@@ -39,61 +39,62 @@ def EX_GCD(a, b, arr):
 
 
 def test_HRSAdder():
-    for a in range(0,20):
-        for b in range(0,20):
+    for a in range(0, 20):
+        for b in range(0, 20):
             n = max(len(bin(a)) - 2, len(bin(b)) - 2)
             circuit = Circuit(n + 2)
             a_q = circuit([i for i in range(n)])
             ancilla = circuit(n)
             ancilla_g = circuit(n + 1)
             Set(a_q, a)
-            HRSAdder(n, b) | (a_q, ancilla, ancilla_g)
+            HRSAdder.execute(n, b) | (a_q, ancilla, ancilla_g)
             Measure | circuit
             circuit.exec()
-            if int(a_q) != (a + b)%(2**n):
-                print("%d + %d = %d\n"%(a,b,int(a_q)))
+            if int(a_q) != (a + b) % (2 ** n):
+                print("%d + %d = %d\n" % (a, b, int(a_q)))
                 assert 0
     assert 1
-          
+
 
 def test_HRSAdderMod():
-    for N in range(4,15):
+    for N in range(4, 15):
         n = len(bin(N)) - 2
-        for a in range(0,N):
-            for b in range(0,N):
-                print("%d + %d (mod %d)= "%(a,b,N))
-                circuit = Circuit(2*n)
+        for a in range(0, N):
+            for b in range(0, N):
+                print("%d + %d (mod %d)= " % (a, b, N))
+                circuit = Circuit(2 * n)
                 b_q = circuit([i for i in range(n)])
-                g_q = circuit([i for i in range(n, 2*n - 1)])
-                indicator = circuit(2*n - 1)
+                g_q = circuit([i for i in range(n, 2 * n - 1)])
+                indicator = circuit(2 * n - 1)
                 Set(b_q, b)
-                HRSAdderMod(n, a, N) | (b_q, g_q, indicator)
+                HRSAdderMod.execute(n, a, N) | (b_q, g_q, indicator)
                 Measure | circuit
                 circuit.exec()
                 print(int(b_q))
-                if int(b_q) != (a + b)%(N):
+                if int(b_q) != (a + b) % (N):
                     assert 0
     assert 1
 
+
 def test_HRSMulMod():
-    arr = [0,0]
-    for N in range(4,12):
+    arr = [0, 0]
+    for N in range(4, 12):
         n = len(bin(N)) - 2
-        for a in range(0,N):
+        for a in range(0, N):
             if EX_GCD(N, a, arr) != 1:
                 continue
-            for x in range(0,N):
-                print("%d * %d mod %d = "%(a,x,N))
-                circuit = Circuit(2*n + 1)
+            for x in range(0, N):
+                print("%d * %d mod %d = " % (a, x, N))
+                circuit = Circuit(2 * n + 1)
                 x_q = circuit([i for i in range(n)])
-                ancilla = circuit([i for i in range(n, 2*n)])
-                indicator = circuit(2*n)
+                ancilla = circuit([i for i in range(n, 2 * n)])
+                indicator = circuit(2 * n)
                 Set(x_q, x)
-                HRSMulMod(n, a, N) | (x_q, ancilla, indicator)
+                HRSMulMod.execute(n, a, N) | (x_q, ancilla, indicator)
                 Measure | circuit
                 circuit.exec()
-                if int(x_q) != (a*x)%(N):
-                    print("%d * %d mod %d = %d\n"%(a,x,N,int(x_q)))
+                if int(x_q) != (a * x) % (N):
+                    print("%d * %d mod %d = %d\n" % (a, x, N, int(x_q)))
                     assert 0
     assert 1
 
