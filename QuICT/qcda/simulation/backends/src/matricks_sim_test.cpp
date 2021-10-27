@@ -24,8 +24,12 @@ TEST(MatricksTest, QftTest) {
 }
 
 
-TEST(MatricksTest, DiagTest) {
+TEST(MatricksTest, Diag1Test) {
     test_stateless_simulator("./test_data/diag.txt", simulator);
+}
+
+TEST(MatricksTest, Diag2Test) {
+    test_stateless_simulator("./test_data/diag_2.txt", simulator);
 }
 
 TEST(MatricksTest, XTest) {

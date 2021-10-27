@@ -23,6 +23,17 @@ namespace QuICT {
     public:
         CircuitSimulator(uint64_t qubit_num)
                 : qubit_num_(qubit_num), q_state_set_(qubit_num) {
+            // Try to merge qubits into 4-bit-block
+            uint64_t blk_num = qubit_num / 4;
+            for (uint64_t blk = 0; blk < blk_num; ++blk) {
+                q_state_set_.merge_q_state(4 * blk, 4 * blk + 1);
+                q_state_set_.merge_q_state(4 * blk + 2, 4 * blk + 3);
+                q_state_set_.merge_q_state(4 * blk, 4 * blk + 2);
+            }
+            for (uint64_t i = 4 * blk_num + 1; i < qubit_num; ++i) {
+                q_state_set_.merge_q_state(4 * blk_num, i);
+            }
+
             // name
             using namespace std;
             if constexpr(!is_same_v<Precision, double> && !is_same_v<Precision, float>) {
@@ -30,10 +41,11 @@ namespace QuICT {
             }
             name_ = "CircuitSimulator";
             if constexpr(std::is_same_v<Precision, double>) {
-                name_ += "[double]";
+                name_ += "[double, ";
             } else if (std::is_same_v<Precision, float>) {
-                name_ += " [float]";
+                name_ += " [float, ";
             }
+            name_ += std::to_string(qubit_num) + " bit(s)]";
         }
 
         const std::string &name() {

@@ -165,8 +165,8 @@ namespace QuICT {
                     break;
                 }
                 case gate_category::diag_2: {
-                    throw std::runtime_error(
-                            std::string(__func__) + ": " + "Not implemented gate - " + gate_desc.gate_name_);
+                    auto diag_2_gate = DiagonalGateN<2, Precision>(gate_desc.affect_args_, gate_desc.data_ptr_);
+                    apply_diag_n_gate(q_state_bit_num, diag_2_gate, real, imag);
                     break;
                 }
                 case gate_category::ctrl_diag: {
@@ -217,7 +217,25 @@ namespace QuICT {
         if constexpr(N == 1) {
             for (uint64_t task_id = 0; task_id < task_num; task_id += 1) {
                 auto inds = index(task_id, q_state_bit_num, gate.targ_);
+#pragma unroll
                 for (int i = 0; i < 2; ++i) {
+                    auto res_r = real[inds[i]] * gate.diagonal_real_[i] - imag[inds[i]] * gate.diagonal_imag_[i];
+                    auto res_i = real[inds[i]] * gate.diagonal_imag_[i] + imag[inds[i]] * gate.diagonal_real_[i];
+                    real[inds[i]] = res_r;
+                    imag[inds[i]] = res_i;
+                }
+            }
+        } else if constexpr(N == 2){
+            uarray_t<2> qubits = gate.affect_args_;
+            uarray_t<2> qubits_sorted = qubits;
+            if (qubits[0]>qubits[1]){
+                qubits_sorted[0] = qubits[1];
+                qubits_sorted[1] = qubits[0];
+            }
+            for (uint64_t task_id = 0; task_id < task_num; task_id += 1) {
+                auto inds = index(task_id, q_state_bit_num, qubits,qubits_sorted);
+#pragma unroll
+                for (int i = 0; i < 4; ++i) {
                     auto res_r = real[inds[i]] * gate.diagonal_real_[i] - imag[inds[i]] * gate.diagonal_imag_[i];
                     auto res_i = real[inds[i]] * gate.diagonal_imag_[i] + imag[inds[i]] * gate.diagonal_real_[i];
                     real[inds[i]] = res_r;
@@ -226,7 +244,7 @@ namespace QuICT {
             }
         } else {
             throw std::runtime_error(
-                    std::string(__func__) + ": " + "Not implemented for diag gate >= 2");
+                    std::string(__func__) + ": " + "Not implemented for diag gate >= 3");
         }
     }
 

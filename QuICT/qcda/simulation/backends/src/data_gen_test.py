@@ -12,7 +12,7 @@ def format_cpx(n):
 
 
 diag_1_gates = {GATE_ID["Rz"]}
-diag_2_gates = {}
+diag_2_gates = {GATE_ID["Rzz"]}
 ctrl_diag_gates = {GATE_ID["Crz"], GATE_ID["CU1"]}
 
 ctrl_unitary_gate = {GATE_ID["CU3"]}
@@ -31,8 +31,10 @@ def out_circuit_to_file(qubit_num: int, f_name: str, circuit: Circuit):
             elif gate.type() in diag_1_gates:  # all 1-bit diagonal gates
                 print(f"diag_1 {gate.targ} "
                       f"{format_cpx(gate.matrix[0, 0])} {format_cpx(gate.matrix[1, 1])}", file=f)
-            elif gate.type() in diag_2_gates:  # all 2-bit diagonal gates (not supported now)
-                NotImplementedError("No 2-bit diagonal gates for now")
+            elif gate.type() in diag_2_gates:  # all 2-bit diagonal gates
+                print(f"diag_2 {gate.affectArgs[0]} {gate.affectArgs[1]} "
+                      f"{format_cpx(gate.compute_matrix[0, 0])} {format_cpx(gate.compute_matrix[1, 1])} "
+                      f"{format_cpx(gate.compute_matrix[2, 2])} {format_cpx(gate.compute_matrix[3, 3])}", file=f)
             elif gate.type() in ctrl_diag_gates:
                 print(f"ctrl_diag {gate.carg} {gate.targ} "
                       f"{format_cpx(gate.compute_matrix[2, 2])} {format_cpx(gate.compute_matrix[3, 3])}", file=f)
@@ -79,7 +81,6 @@ def manual_rand_unitary_gate(qubit_num):
         return random.choice([
             Rxx(uniform(0, 2 * np.pi)),
             Ryy(uniform(0, 2 * np.pi)),
-            Rzz(uniform(0, 2 * np.pi)),
             FSim([uniform(0, 2 * np.pi), uniform(0, 2 * np.pi)])
         ])
 
@@ -154,6 +155,19 @@ def main():
     out_circuit_to_file(qubit_num, "./test_data/x.txt", circuit)
     circuit.clear()
 
+    for i in range(qubit_num):
+        H | circuit(i)
+
+    for _ in range(qubit_num * 40):
+        lst = sample(range(0, qubit_num), 2)
+        shuffle(lst)
+        i = lst[0]
+        j = lst[1]
+        Rzz(uniform(0, 3.14)) | circuit([i, j])
+
+    out_circuit_to_file(qubit_num, "./test_data/diag_2.txt", circuit)
+    circuit.clear()
+
     del circuit
 
     for tiny_circuit_qubit_num in range(1, 5):
@@ -194,7 +208,8 @@ def main():
                 i = lst[0]
                 j = lst[1]
                 CRz(uniform(0, 3.14)) | tiny_circuit([i, j])
-            out_circuit_to_file(tiny_circuit_qubit_num, f"./test_data/tiny_ctrl_diag_{tiny_circuit_qubit_num}.txt", tiny_circuit)
+            out_circuit_to_file(tiny_circuit_qubit_num, f"./test_data/tiny_ctrl_diag_{tiny_circuit_qubit_num}.txt",
+                                tiny_circuit)
             tiny_circuit.clear()
 
         # Unitary
@@ -208,7 +223,8 @@ def main():
                 gate | tiny_circuit(randint(0, tiny_circuit_qubit_num - 1))
             else:
                 gate | tiny_circuit(sample(range(0, tiny_circuit_qubit_num), 2))
-        out_circuit_to_file(tiny_circuit_qubit_num, f"./test_data/tiny_unitary_{tiny_circuit_qubit_num}.txt", tiny_circuit)
+        out_circuit_to_file(tiny_circuit_qubit_num, f"./test_data/tiny_unitary_{tiny_circuit_qubit_num}.txt",
+                            tiny_circuit)
         tiny_circuit.clear()
 
         # Ctrl unitary

@@ -17,8 +17,12 @@ TEST(CircuitTest, XTest) {
     test_circuit_simulator("./test_data/x.txt");
 }
 
-TEST(CircuitTest, DiagTest) {
+TEST(CircuitTest, Diag1Test) {
     test_circuit_simulator("./test_data/diag.txt");
+}
+
+TEST(CircuitTest, Diag2Test) {
+    test_circuit_simulator("./test_data/diag_2.txt");
 }
 
 TEST(CircuitTest, CtrlDiagTest) {

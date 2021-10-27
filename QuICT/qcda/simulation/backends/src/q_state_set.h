@@ -31,24 +31,26 @@ namespace QuICT {
             }
         }
 
-        inline QState<Precision> *get_q_state(uint64_t qubit_id);
+        inline QState <Precision> *get_q_state(uint64_t qubit_id);
 
-        inline QState<Precision> *merge_q_state(uint64_t qubit_id_a, uint64_t qubit_id_b);
+        inline QState <Precision> *merge_q_state(uint64_t qubit_id_a, uint64_t qubit_id_b);
 
-        inline QState<Precision> *merge_all();
+        inline QState <Precision> *merge_all();
 
-    private:
+    protected:
         std::vector<uint64_t> fa_;
         std::vector<uint64_t> rank_;
-        std::vector<QState<Precision> *>
-                states_;
+        std::vector<QState < Precision> *>
+        states_;
         uint64_t qubit_num_;
 
         inline uint64_t find(uint64_t id);
+
+        QState <Precision> *merge_range(uint64_t l, uint64_t r);
     };
 
     template<typename Precision>
-    QState<Precision> *QStateSet<Precision>::get_q_state(uint64_t qubit_id) {
+    QState <Precision> *QStateSet<Precision>::get_q_state(uint64_t qubit_id) {
         uint64_t id = find(qubit_id);
         return states_[id];
     }
@@ -64,7 +66,7 @@ namespace QuICT {
     }
 
     template<typename Precision>
-    QState<Precision> *QStateSet<Precision>::merge_q_state(uint64_t qubit_id_a, uint64_t qubit_id_b) {
+    QState <Precision> *QStateSet<Precision>::merge_q_state(uint64_t qubit_id_a, uint64_t qubit_id_b) {
         uint64_t rt_a = find(qubit_id_a);
         uint64_t rt_b = find(qubit_id_b);
         if (rt_a == rt_b) {
@@ -87,15 +89,30 @@ namespace QuICT {
     }
 
     template<typename Precision>
-    QState<Precision> *QStateSet<Precision>::merge_all() {
-        QState<Precision> *res = nullptr;
-        for (uint64_t id = 1; id < qubit_num_; ++id) {
-            res = merge_q_state(0, id);
+    QState <Precision> *QStateSet<Precision>::merge_all() {
+        return merge_range(0, qubit_num_);
+    }
+
+    template<typename Precision>
+    QState <Precision> *QStateSet<Precision>::merge_range(uint64_t l, uint64_t r) {
+        switch (r - l) {
+            case 1: {
+                return states_[find(l)];
+            }
+            case 2: {
+                return merge_q_state(l, l + 1);
+            }
+            case 3: {
+                merge_q_state(l, l + 1);
+                return merge_q_state(l, l + 2);
+            }
+            default: {
+                auto m = (l + r) >> 1;
+                merge_range(l, m);
+                merge_range(m, r);
+                return merge_q_state(l, m);
+            }
         }
-        if (res == nullptr) {
-            res = states_[find(0)];
-        }
-        return res;
     }
 }
 

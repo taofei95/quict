@@ -115,6 +115,20 @@ void get_compare_data(
                     std::vector<uint64_t>{targ},
                     std::move(diag)
             );
+        } else if (gate_name == "diag_2") {
+            fs >> carg >> targ;
+            auto diag = std::vector<std::complex<Precision>>(4);
+            for (int i = 0; i < 4; ++i) {
+                double re, im;
+                char sign, img_label;
+                fs >> re >> sign >> im >> img_label;
+                diag[i] = std::complex<Precision>(re, sign == '+' ? im : -im);
+            }
+            gate_desc_vec.emplace_back(
+                    "diag_2",
+                    std::vector<uint64_t>{carg, targ},
+                    std::move(diag)
+            );
         } else if (gate_name == "ctrl_diag") {
             fs >> carg >> targ;
             auto diag = std::vector<std::complex<Precision>>(2);
@@ -129,6 +143,8 @@ void get_compare_data(
                     std::vector<uint64_t>{carg, targ},
                     std::move(diag)
             );
+        } else {
+            throw std::runtime_error("Not recognized for " + gate_name + " in " + std::string(__func__));
         }
     }
 

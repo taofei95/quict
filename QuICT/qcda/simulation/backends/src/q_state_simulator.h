@@ -56,7 +56,7 @@ namespace QuICT {
         for (auto &it: desc_cpy.affect_args_) {
             it = q_state.qubit_mapping_.at(it);
         }
-        if (q_state.qubit_num_ <= 4) {
+        if (q_state.qubit_num_ < 4) {
             tiny_sim_.apply_gate(q_state.qubit_num_, desc_cpy, q_state.real_, q_state.imag_);
         } else {
             matricks_sim_.apply_gate(q_state.qubit_num_, desc_cpy, q_state.real_, q_state.imag_);

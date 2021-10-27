@@ -8,6 +8,7 @@
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 #include <pybind11/numpy.h>
+#include <vector>
 #include <complex>
 #include <cstdint>
 #include "./src/utility.h"
@@ -39,10 +40,11 @@ namespace QuICT {
     };
 }
 
-PYBIND11_MODULE(simulator_backend, m) {
+PYBIND11_MODULE(sim_back_bind, m) {
     using sim_class = QuICT::CircuitSimulatorBind;
     using desc_class = QuICT::GateDescription<double>;
     py::class_<desc_class>(m, "GateDescription")
+            .def(py::init<const char *, std::vector<uint64_t>, std::vector<std::complex<double>>>())
             .def_readwrite("gateName", &desc_class::gate_name_)
             .def_readwrite("affectArgs", &desc_class::affect_args_)
             .def_readwrite("dataPtr", &desc_class::data_ptr_);
