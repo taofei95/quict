@@ -24,8 +24,8 @@ namespace QuICT {
     class QStateSimulator {
     protected:
         std::string name_;
-        TinySimulator<Precision> tiny_sim_;
-        MaTricksSimulator<Precision> matricks_sim_;
+        inline static TinySimulator<Precision> tiny_sim_;
+        inline static MaTricksSimulator<Precision> matricks_sim_;
 
     public:
         QStateSimulator() {
