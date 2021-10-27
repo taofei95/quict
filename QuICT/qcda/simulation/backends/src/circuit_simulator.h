@@ -42,7 +42,7 @@ namespace QuICT {
 
         inline std::complex<Precision> *run(const std::vector<GateDescription<Precision>> &gate_desc_vec);
 
-    private:
+    protected:
         std::string name_;
         uint64_t qubit_num_;
         QStateSet<Precision> q_state_set_;
