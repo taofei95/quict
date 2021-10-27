@@ -7,7 +7,7 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 find_package(Python3 COMPONENTS Interpreter Development)
 
-add_subdirectory(../extern/pybind11 ../extern/pybind11 EXCLUDE_FROM_ALL)
+add_subdirectory(../extern/pybind11 ../extern/pybind11/graph_structure EXCLUDE_FROM_ALL)
 include_directories(${Python3_INCLUDE_DIRS})
 
 
