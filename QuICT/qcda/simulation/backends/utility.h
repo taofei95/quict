@@ -14,6 +14,7 @@
 #include <cassert>
 #include <fstream>
 #include <immintrin.h>
+#include <omp.h>
 
 // v1 * v2 == (v1r * v2r - v1i * v2i) + (v1i * v2r + v1r * v2i)*J
 #define COMPLEX_YMM_MUL(v1r, v1i, v2r, v2i, res_r, res_i) \
@@ -36,7 +37,6 @@
     ((double*)(to_addr))[3] = ((double*)(tmp_arr))[1];\
     ((double*)(to_addr))[5] = ((double*)(tmp_arr))[2];\
     ((double*)(to_addr))[7] = ((double*)(tmp_arr))[3];
-
 
 namespace QuICT {
     //* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
@@ -79,6 +79,21 @@ namespace QuICT {
             {"ctrl_unitary", gate_category::ctrl_unitary}
     };
 
+    inline uint64_t omp_chunk_size(uint64_t qubit_num, uint64_t batch_size=4)
+    {
+#define MSB(x) (63 - __builtin_clzll(x))
+        constexpr uint64_t SCALE_FACTOR = 4;
+        constexpr uint64_t MAX_CHUNK_SIZE = 65536;
+        constexpr uint64_t MIN_CHUNK_SIZE = 1;
+
+        uint64_t b_thread = MSB(omp_get_thread_num());
+        uint64_t task_size = (1 << qubit_num) / batch_size;
+        uint64_t chunk_size = std::max(std::min(task_size >> b_thread >> SCALE_FACTOR, MAX_CHUNK_SIZE), MIN_CHUNK_SIZE);
+//        std::cout << "chunk_size=" << chunk_size << std::endl;
+        return chunk_size;
+#undef MSB
+    }
+
     template<typename Precision>
     inline std::pair<Precision *, Precision *> separate_complex(
             uint64_t q_state_bit_num,
@@ -88,6 +103,7 @@ namespace QuICT {
         auto real = new Precision[len];
         auto imag = new Precision[len];
         if (q_state_bit_num >= 2) {
+#pragma omp for schedule(dynamic, omp_chunk_size(q_state_bit_num))
             for (uint64_t i = 0; i < len; i += 4) {
                 real[i] = c_arr[i].real();
                 imag[i] = c_arr[i].imag();
@@ -120,6 +136,7 @@ namespace QuICT {
     ) {
         if (q_state_bit_num >= 2) {
             auto len = 1ULL << q_state_bit_num;
+#pragma omp for schedule(dynamic, omp_chunk_size(q_state_bit_num))
             for (uint64_t i = 0; i < len; i += 4) {
                 res[i] = {real[i], imag[i]};
                 res[i + 1] = {real[i + 1], imag[i + 1]};
