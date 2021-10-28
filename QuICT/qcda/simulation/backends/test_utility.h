@@ -162,7 +162,12 @@ void test_stateless_simulator(
 
     get_compare_data(data_name, qubit_num, &expect_state, gate_desc_vec);
 
+    auto start = std::chrono::system_clock::now();
     std::complex<Precision> *state = simulator.run(qubit_num, gate_desc_vec);
+    auto end = std::chrono::system_clock::now();
+    std::chrono::duration<double> diff = end - start;
+    std::cout << "Simulation costs " << diff.count() << " s\n";
+
     for (uint64_t i = 0; i < (1ULL << qubit_num); ++i) {
         ASSERT_NEAR(state[i].real(), expect_state[i].real(), eps) << "i = " << i;
         ASSERT_NEAR(state[i].imag(), expect_state[i].imag(), eps) << "i = " << i;

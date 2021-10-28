@@ -37,5 +37,7 @@ TEST(MatricksTest, CtrlUnitaryTest) {
 }
 
 TEST(MatricksTest, UnitaryTest) {
-    test_stateless_simulator("./test_data/u.txt", simulator);
+    omp_set_num_threads(4);
+//    test_stateless_simulator("./test_data/u.txt", simulator);
+    test_stateless_simulator("./u.txt", simulator);
 }
