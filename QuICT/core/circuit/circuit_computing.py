@@ -98,6 +98,7 @@ def inner_random_append(circuit, rand_size=10, typeList=None):
     qubit = circuit.circuit_width()
     for _ in range(rand_size):
         rand_type = random.randrange(0, len(typeList))
+        #TODO: replace GateBuilder
         GateBuilder.setGateType(typeList[rand_type])
 
         targs = GateBuilder.getTargsNumber()

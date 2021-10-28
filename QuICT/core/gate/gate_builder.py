@@ -6,7 +6,7 @@
 
 from .gate import *
 from QuICT.core.circuit import Circuit
-
+from deprecated import deprecated
 
 class GateBuilderModel(object):
     """ A model that help users get gate without circuit
@@ -128,6 +128,7 @@ class GateBuilderModel(object):
         gate = self._inner_generate_gate()
         return gate.params
 
+    @deprecated(reason="replaced with ?")
     def getGate(self):
         """ get the gate
 
@@ -181,6 +182,7 @@ class GateBuilderModel(object):
         return gate
 
     @staticmethod
+    @deprecated(reason="replaced with BasicGate::__or__ method")
     def apply_gates(gate: BasicGate, circuit: Circuit):
         """ act a gate on some circuit.
 
@@ -197,6 +199,7 @@ class GateBuilderModel(object):
         circuit.append(gate, qubits)
 
     @staticmethod
+    @deprecated(reason="replaced with BasicGate::__and__ method")
     def reflect_gates(gates: list):
         """ build the inverse of a series of gates.
 
@@ -214,6 +217,7 @@ class GateBuilderModel(object):
         return reflect
 
     @staticmethod
+    @deprecated(reason="replaced with BasicGate::__and__ and BasicGate::__or__ method")
     def reflect_apply_gates(gates: list, circuit: Circuit):
         """ act the inverse of a series of gates on some circuit.
 

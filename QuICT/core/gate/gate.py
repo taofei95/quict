@@ -2540,6 +2540,7 @@ class ComplexGate(BasicGate):
         Returns:
             CompositeGate: synthetize result
         """
+        #TODO: replace GateBuilder
         affectArgs = self.affectArgs
         GateBuilder.setGateType(GATE_ID["X"])
         GateBuilder.setTargs(len(affectArgs) - 1)
