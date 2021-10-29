@@ -369,6 +369,8 @@ setup(
         CMakeExtension("QuICT.backends.", f"{prj_root}/QuICT/backends"),
         CMakeExtension("QuICT.qcda.synthesis.initial_state_preparation.",
                        f"{prj_root}/QuICT/qcda/synthesis/initial_state_preparation/"),
+        CMakeExtension("QuICT.qcda.simulation.backends.",
+                       f"{prj_root}/QuICT/qcda/simulation/backends/"),
         CythonExtension(
             "QuICT.qcda.mapping.mcts.mcts_core.mcts_wrapper",
             [f"{prj_root}/QuICT/qcda/mapping/mcts/mcts_core/mcts_wrapper.pyx"],

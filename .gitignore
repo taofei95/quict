@@ -18,8 +18,7 @@ example/python/*.jpg
 _build
 .ipynb_checkpoints
 cmake-build*/
-QuICT/qcda/simulation/backends/*.txt
+/QuICT/qcda/simulation/backends/src/test_data/
 *qubit_cnot.json
 *qubit_cnot.inf
 *qubit_cnot_depth.inf
-cmake-build*/
