@@ -43,11 +43,81 @@ The typical way to use them would be like the (take **division** as example):
     #After some procedures, a_q, b_q and r_q are now in arbitary states.
     RestoringDivision.execute(n) | (a_q,b_q,r_q,of_q)
 
-Next we will use VBE module to demonstrate more detailed usage.
+TMVH module
+--------------
+In **QuICT.qcda.synthesis.arithmetic.tmvh**, we have **RippleCarryAdder**, **Multiplication**, **RestoringDivision**. 
+These circuits are designed for most ordinary usage.
+Circuits are based on theses - https://arxiv.org/abs/1706.05113v1, https://arxiv.org/abs/1809.09732v1.
+
+RippleCarryAdder
+>>>>>>>>>>>>>>>>>
+
+**RippleCarryAdder.execute(n)** takes **n** as the parameter indicating the length of the integer, to tailor the circuit to proper size.
+The circuit leaves out the overflow bit. Qureg **a** keeps unchanged, the result is stored in qureg **b**.
+
+\|a,b> -> \|a,a+b>
+
+.. code-block:: python
+    :linenos:
+
+    from QuICT.qcda.synthesis.arithmetic.tmvh import *
+
+    circuit = Circuit(n * 2)
+    qreg_a = circuit([i for i in range(n)])
+    qreg_b = circuit([i for i in range(n, n * 2)])
+
+    #After some procedures, the quregs are now in arbitary states.
+    RippleCarryAdder.execute(n) | (qreg_a,qreg_b)
+
+Multiplication
+>>>>>>>>>>>>>>>>>
+
+**Multiplication.execute(n)** takes **n** as the parameter indicating the length of the integer, to tailor the circuit to proper size.
+The circuit takes two n-bit quantum inputs, stores the product in 2n-bit Qureg **p**, in need of one-bit **ancilla**.
+
+\|a,b,p=0,ancilla=0> -> \|a,b,a*b,0>
+
+.. code-block:: python
+    :linenos:
+
+    from QuICT.qcda.synthesis.arithmetic.tmvh import *
+
+    circuit = Circuit(4*n + 1)
+    qreg_a = circuit([i for i in range(n)])
+    qreg_b = circuit([i for i in range(n, 2 * n)])
+    qreg_p = circuit([i for i in range(2*n, 4*n)])
+    ancilla = circuit(4*n)
+
+    #After some procedures, the qreg_a and qreg_b are now in arbitary states.
+    Multiplication.execute(n) | (qreg_a,qreg_b,qreg_p,ancilla)
+
+RestoringDivision
+>>>>>>>>>>>>>>>>>
+
+**RestoringDivision.execute(n)** takes **n** as the parameter indicating the length of the integer, to tailor the circuit to proper size.
+The circuit takes two n-bit quantum inputs, stores the quotient in n-bit Qureg **a**, the remainder in n-bit Qureg **r**, in need of one-bit ancilla **overflow**.
+
+\|b,c> -> \|(c==0b11)?a+b:b,c>
+\|a,b,r=0,overflow=0> -> \|a%b,b,a//b,0>
+
+.. code-block:: python
+    :linenos:
+
+    from QuICT.qcda.synthesis.arithmetic.tmvh import *
+
+    circuit = Circuit(3 * n + 1)
+    qreg_a = circuit([i for i in range(n)])
+    qreg_b = circuit([i for i in range(n, 2 * n)])
+    qreg_r = circuit([i for i in range(2 * n, 3 * n)])
+    overflow = circuit(3 * n)
+
+    #After some procedures, the qreg_a and qreg_b are now in arbitary states.
+    RestoringDivision.execute(n) | circuit
 
 VBE module
 --------------
 In **QuICT.qcda.synthesis.arithmetic.vbe**, we have **VBEAdder**, **VBEAdderMod**, **VBEMulAddMod** and **VBEExpMod**.
+These circuits are designed more for Shor usage than general arithmetic purpose.
 
 VBEAdder
 >>>>>>>>>>>>>>>>>
@@ -169,6 +239,7 @@ BEA module
 --------------
 In **QuICT.qcda.synthesis.arithmetic.bea**, we have **BEAAdder**, **BEAAdderWired**, **BEAAdderWiredCC**, **BEAAdderMod**, **BEAMulMod**. 
 Besides,there are a few circuits used as intermediate implementation of Shor's algorithm, which are not listed in the doc, but still tested and can be used.
+These circuits are designed more for Shor usage than general arithmetic purpose.
 
 BEAAdder
 >>>>>>>>>>>>>>>>>

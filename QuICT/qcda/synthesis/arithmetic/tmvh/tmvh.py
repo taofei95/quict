@@ -304,14 +304,14 @@ class RestoringDivision(Synthesis):
     @staticmethod
     def execute(n):
         """
-        (a,b,r=0) -> (a%b,b,a//b)
+        (a,b,r=0,overflow=0) -> (a%b,b,a//b,0)
 
         Args:
             n(int): the bit number of a and b
 
         Quregs:
             a_q(Qureg): the qureg stores a, n qubits.
-            b_q(Qureg): the qureg stores b, and stores the quotient 
+            b_q(Qureg): the qureg stores b, and stores the quotient
                         after computation, n qubits.
             r_q(Qureg): the qureg stores the remainder, n qubits.
             of_q(Qubit): the clean ancilla qubit, 1 qubit.

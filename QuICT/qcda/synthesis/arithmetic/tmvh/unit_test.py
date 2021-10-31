@@ -37,7 +37,7 @@ def test_RippleCarryAdder():
                 assert 0
     assert 1
 
-def test_multiplication():
+def test_Multiplication():
     for a in range(0,20):
         for b in range(0,20):
             n = max(len(bin(a)) - 2, len(bin(b)) - 2)
