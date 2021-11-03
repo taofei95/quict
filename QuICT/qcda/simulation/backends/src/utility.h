@@ -79,8 +79,7 @@ namespace QuICT {
             {"ctrl_unitary", gate_category::ctrl_unitary}
     };
 
-    inline uint64_t omp_chunk_size(uint64_t qubit_num, uint64_t batch_size=4)
-    {
+    inline uint64_t omp_chunk_size(uint64_t qubit_num, uint64_t batch_size = 4) {
 #define MSB(x) (63 - __builtin_clzll(x))
         constexpr uint64_t SCALE_FACTOR = 4;
         constexpr uint64_t MAX_CHUNK_SIZE = 65536;
