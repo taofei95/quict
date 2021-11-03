@@ -1300,11 +1300,11 @@ namespace QuICT {
                             }
                         } else { // xxx..
                             constexpr uint64_t batch_size = 4;
-                            uint64_t task_size = 1 << (q_state_bit_num - 2);
+                            uint64_t task_num = 1 << (q_state_bit_num - 2);
 
                             {
 #pragma omp for schedule(static, omp_chunk_size(q_state_bit_num))
-                                for (uint64_t task_id = 0; task_id < task_size; task_id += batch_size) {
+                                for (uint64_t task_id = 0; task_id < task_num; task_id += batch_size) {
                                     auto idx = index(task_id, q_state_bit_num, qubits, qubits_sorted);
                                     __m256d v_re[4], v_im[4];
                                     for (int i = 0; i < 4; i++) {
