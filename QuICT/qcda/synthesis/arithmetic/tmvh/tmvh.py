@@ -4,7 +4,7 @@
 # @Author  : Zhu Qinlin
 # @File    : tmvh.py
 
-from QuICT.core import Circuit, CX, CCX, CompositeGate, X, Measure
+from QuICT.core import Circuit, CX, CCX, CompositeGate, X
 from ..._synthesis import Synthesis
 
 def peres_gate(a, b, c):
@@ -219,6 +219,7 @@ def mult(a, b, p, ancilla):
         ctrl_add_overflow_ancilla(b[n-2-i],a,p[n-1-i:2*n-1-i],p[n-2-i],p[n-3-i])
     ctrl_add_overflow_ancilla(b[0],a,p[1:n+1],p[0],ancilla)
 
+
 def division(a, b, r, ancilla):
     """
     Divided: a
@@ -244,26 +245,24 @@ def division(a, b, r, ancilla):
 
 
 class RippleCarryAdder(Synthesis):
+    """
+    (a,b) -> (a,b'=a+b)
+    Args:
+        n(int): the bit number of a and b
+    
+    Quregs:
+        a_q(Qureg): the qureg stores a, n qubits.
+        b_q(Qureg): the qureg stores b, and stores the sum 
+                    after computation, n qubits.
+    reference: HIMANSHU THAPLIYAL and NAGARAJAN RANGANATHAN -
+    Design of Efficient Reversible Logic Based Binary and BCD adder Circuits
+    https://arxiv.org/abs/1712.02630v1
+    """
+    
     @staticmethod
     def execute(n):
-        """
-        (a,b) -> (a,b'=a+b)
-
-        Args:
-            n(int): the bit number of a and b
-        
-        Quregs:
-            a_q(Qureg): the qureg stores a, n qubits.
-            b_q(Qureg): the qureg stores b, and stores the sum 
-                        after computation, n qubits.
-
-        reference: HIMANSHU THAPLIYAL and NAGARAJAN RANGANATHAN -
-        Design of Efficient Reversible Logic Based Binary and BCD adder Circuits
-        https://arxiv.org/abs/1712.02630v1
-        """
-
         circuit = Circuit(2 * n)
-        a_q = circuit([i for i in range(n)])
+        a_q = circuit(list(range(n)))
         b_q = circuit([i for i in range(n, 2 * n)])
 
         adder(a_q, b_q)
@@ -271,25 +270,25 @@ class RippleCarryAdder(Synthesis):
 
 
 class Multiplication(Synthesis):
+    """
+    (a,b,p=0,ancilla=0) -> (a,b,p=a*b,ancilla=0)
+
+    Args:
+        n(int): the bit number of a and b
+
+    Quregs:
+        a_q(Qureg): the qureg stores a, n qubits.
+        b_q(Qureg): the qureg stores b, n qubits.
+        p_q(Qureg): the qureg stores the product, 2n qubits.
+        ancilla(Qubit): the clean ancilla qubit, 1 qubit.
+    
+    reference: Edgard Mu˜noz-Coreas, Himanshu Thapliya -
+    T-count Optimized Design of Quantum Integer Multiplication
+    https://arxiv.org/abs/1706.05113v1
+    """
+
     @staticmethod
     def execute(n):
-        """
-        (a,b,p=0,ancilla=0) -> (a,b,p=a*b,ancilla=0)
-
-        Args:
-            n(int): the bit number of a and b
-
-        Quregs:
-            a_q(Qureg): the qureg stores a, n qubits.
-            b_q(Qureg): the qureg stores b, n qubits.
-            p_q(Qureg): the qureg stores the product, 2n qubits.
-            ancilla(Qubit): the clean ancilla qubit, 1 qubit.
-        
-        reference: Edgard Mu˜noz-Coreas, Himanshu Thapliya -
-        T-count Optimized Design of Quantum Integer Multiplication
-        https://arxiv.org/abs/1706.05113v1
-        """
-
         circuit = Circuit(4*n + 1)
         a_q = circuit([i for i in range(n)])
         b_q = circuit([i for i in range(n, 2 * n)])
@@ -301,26 +300,23 @@ class Multiplication(Synthesis):
         return CompositeGate(circuit.gates)
 
 class RestoringDivision(Synthesis):
+    """
+    (a,b,r=0,overflow=0) -> (a%b,b,a//b,0)
+    Args:
+        n(int): the bit number of a and b
+    Quregs:
+        a_q(Qureg): the qureg stores a, n qubits.
+        b_q(Qureg): the qureg stores b, and stores the quotient
+                    after computation, n qubits.
+        r_q(Qureg): the qureg stores the remainder, n qubits.
+        of_q(Qubit): the clean ancilla qubit, 1 qubit.
+    reference: Himanshu Thapliyal, Edgard Munoz-Coreas, T. S. S. Varun, and Travis S. Humble -
+    Quantum Circuit Designs of Integer Division Optimizing T-count and T-depth
+    http://arxiv.org/abs/1809.09732v1
+    """
+
     @staticmethod
     def execute(n):
-        """
-        (a,b,r=0,overflow=0) -> (a%b,b,a//b,0)
-
-        Args:
-            n(int): the bit number of a and b
-
-        Quregs:
-            a_q(Qureg): the qureg stores a, n qubits.
-            b_q(Qureg): the qureg stores b, and stores the quotient
-                        after computation, n qubits.
-            r_q(Qureg): the qureg stores the remainder, n qubits.
-            of_q(Qubit): the clean ancilla qubit, 1 qubit.
-
-        reference: Himanshu Thapliyal, Edgard Munoz-Coreas, T. S. S. Varun, and Travis S. Humble -
-        Quantum Circuit Designs of Integer Division Optimizing T-count and T-depth
-        http://arxiv.org/abs/1809.09732v1
-        """
-
         circuit = Circuit(3 * n + 1)
         a_q = circuit([i for i in range(n)])
         b_q = circuit([i for i in range(n, 2 * n)])
