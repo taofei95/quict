@@ -18,8 +18,6 @@
 #include "utility.h"
 
 #define DEFAULT_NUM_THREADS 4
-//#define DEFAULT_SCHEDULE_METHOD dynamic, omp_chunk_size(q_state_bit_num)
-#define DEFAULT_SCHEDULE_METHOD static
 
 namespace QuICT {
     template<typename Precision>
@@ -886,7 +884,7 @@ namespace QuICT {
         }
     }
 
-    
+
     template<typename Precision>
     template<uint64_t N, template<uint64_t, typename> class Gate>
             void MaTricksSimulator<Precision>::apply_unitary_n_gate(
