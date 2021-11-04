@@ -4,7 +4,7 @@
 # @Author  : Zhu Qinlin
 # @File    : tmvh.py
 
-from QuICT.core import Circuit, CX, CCX, CompositeGate, X, Measure
+from QuICT.core import Circuit, CX, CCX, CompositeGate, X
 from ..._synthesis import Synthesis
 
 def peres_gate(a, b, c):

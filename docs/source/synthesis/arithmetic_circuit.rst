@@ -367,7 +367,5 @@ Addition circuits
  :widths: 15, 30, 10, 10
 
  BEAAdder,  ":math:`|a,b\rangle \rightarrow |a,a+b\rangle`",       2n,     ":math:`\frac{3}{2}n^2`"
- RippleCarryAdder,  ":math:`|a,b\rangle \rightarrow |a,a+b\rangle`",       2n,     ":math:`\frac{3}{2}n^2`"
- "Crunchy Frog", 1.49, "If we took the bones out, it wouldn't be
- crunchy, now would it?", alkjld
- "Gannet Ripple", 1.99, "On a stick!", aldjf
+ RippleCarryAdder,  ":math:`|a,b\rangle \rightarrow |a,a+b\rangle`",       2n,     ":math:`7n`"
+ HRSAdder, ":math:`|x,a_1,a_2\rangle \rightarrow |x+c,a_1,a_2\rangle`",       n+2,     ":math:`25n\log{n}`"

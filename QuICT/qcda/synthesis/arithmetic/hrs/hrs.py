@@ -346,7 +346,6 @@ def c_adder(control, x, c, ancilla, ancilla_g):
     n = len(x)
     c_bitwise = int2bitwise(c, n)
     c_adder_rec(control, x, c_bitwise, ancilla, ancilla_g)
-    # print(Amplitude.run(circuit))
     for i in range(n):
         if c_bitwise[i] == '1':
             CX | (control, x[i])
@@ -474,7 +473,7 @@ def adder_mod(b, a, N, g, indicator):
 
 def adder_mod_reversed(b, a, N, g, indicator):
     """
-    The reversed circuit of Cc_adder_Mod()
+    The reversed circuit of adder_mod()
     """
     adder_mod(b, N - a, N, g, indicator)
 
