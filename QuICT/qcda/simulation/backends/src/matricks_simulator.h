@@ -17,7 +17,7 @@
 #include "gate.h"
 #include "utility.h"
 
-#define DEFAULT_NUM_THREADS 4
+#define DEFAULT_NUM_THREADS 12
 //#define DEFAULT_SCHEDULE_METHOD dynamic, omp_chunk_size(q_state_bit_num)
 #define DEFAULT_SCHEDULE_METHOD static
 
