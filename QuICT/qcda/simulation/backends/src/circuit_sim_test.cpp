@@ -40,3 +40,4 @@ TEST(CircuitTest, CtrlUnitaryTest) {
 TEST(CircuitTest, QFTTest) {
     test_circuit_simulator("./test_data/qft.txt");
 }
+
