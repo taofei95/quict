@@ -216,7 +216,7 @@ namespace QuICT {
                 _u64_vec_T &&affect_args
         ) :
                 gate_name_(gate_name),
-                affect_args_(std::move(affect_args)) {}
+                affect_args_(std::forward<_u64_vec_T>(affect_args)) {}
 
         template<typename _u64_vec_T>
         GateDescription(
@@ -225,9 +225,27 @@ namespace QuICT {
                 std::vector<std::complex<Precision>> &&data_ptr
         ) :
                 gate_name_(gate_name),
-                affect_args_(std::move(affect_args)),
-                data_ptr_(std::move(data_ptr)) {}
+                affect_args_(std::forward<_u64_vec_T>(affect_args)),
+                data_ptr_(std::forward<std::vector<std::complex<Precision>>>(data_ptr)) {}
     };
+
+    //* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+    // Helper class to detect system config
+    //* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+
+    namespace Detail {
+        class SysConfig {
+        public:
+            explicit SysConfig() {
+                // TODO: automatically set num_thread_
+            }
+
+            uint32_t omp_num_thread_ = 8;
+            uint64_t omp_threshold_ = 10;
+        };
+    }
+
+    extern Detail::SysConfig sysconfig;
 
     //* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
     // Helper functions to create indices array
