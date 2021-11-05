@@ -235,7 +235,7 @@ namespace QuICT {
         }
     }
 
-    // Original source file has too complex structure for IDE static analysis.
+    // Original source file has complex structure for IDE static analysis.
     // Separate it into `.tcc` implementations.
 
     //**********************************************************************
@@ -245,14 +245,13 @@ namespace QuICT {
     //**********************************************************************
     // Special matrix pattern gates
     //**********************************************************************
+}
 
-#include "avx_impl/avx_h_gate.tcc"
 #include "avx_impl/avx_x_gate.tcc"
 #include "avx_impl/avx_ctrl_diag_gate.tcc"
 #include "avx_impl/avx_diag_n_gate.tcc"
 #include "avx_impl/avx_unitary_n_gate.tcc"
 #include "avx_impl/avx_ctrl_unitary_gate.tcc"
-
-}
+#include "avx_impl/avx_h_gate.tcc"
 
 #endif //SIM_BACK_MATRICKS_SIMULATOR_H
