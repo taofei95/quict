@@ -233,19 +233,19 @@ namespace QuICT {
     // Helper class to detect system config
     //* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
-    namespace Detail {
+    namespace Details {
         class SysConfig {
         public:
             explicit SysConfig() {
                 // TODO: automatically set num_thread_
             }
 
-            uint32_t omp_num_thread_ = 8;
+            uint32_t omp_num_thread_ = 12;
             uint64_t omp_threshold_ = 10;
         };
     }
 
-    extern Detail::SysConfig sysconfig;
+//    extern Detail::SysConfig sysconfig;
 
     //* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
     // Helper functions to create indices array

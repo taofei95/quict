@@ -22,6 +22,7 @@ namespace QuICT {
     class MaTricksSimulator {
     protected:
         std::string name_;
+        const Details::SysConfig sysconfig_;
     public:
         MaTricksSimulator() {
             using namespace std;
