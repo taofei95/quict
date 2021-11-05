@@ -351,68 +351,27 @@ namespace QuICT {
                 }
             } else if (qubits_sorted[1] < q_state_bit_num - 2) { // ...q...q..
                 // Easiest branch :)
-
-                constexpr uint64_t blk_size = 64;
+                __m256d ymm0 = _mm256_broadcast_sd(&gate.diagonal_real_[0]);
+                __m256d ymm1 = _mm256_broadcast_sd(&gate.diagonal_real_[1]);
+                __m256d ymm2 = _mm256_broadcast_sd(&gate.diagonal_imag_[0]);
+                __m256d ymm3 = _mm256_broadcast_sd(&gate.diagonal_imag_[1]);
+                constexpr uint64_t batch_size = 4;
 
 #pragma omp parallel for if(q_state_bit_num > sysconfig_.omp_threshold_) num_threads(sysconfig_.omp_num_thread_)
-                for (uint64_t blk = 0; blk < task_num; blk += blk_size) {
-                    __m256d ymm0 = _mm256_broadcast_sd(&gate.diagonal_real_[0]);
-                    __m256d ymm1 = _mm256_broadcast_sd(&gate.diagonal_real_[1]);
-                    __m256d ymm2 = _mm256_broadcast_sd(&gate.diagonal_imag_[0]);
-                    __m256d ymm3 = _mm256_broadcast_sd(&gate.diagonal_imag_[1]);
+                for (uint64_t task_id = 0; task_id < task_num; task_id += batch_size) {
+                    auto inds = index(task_id, q_state_bit_num, qubits, qubits_sorted);
+                    __m256d ymm4 = _mm256_loadu_pd(&real[inds[2]]);
+                    __m256d ymm5 = _mm256_loadu_pd(&real[inds[3]]);
+                    __m256d ymm6 = _mm256_loadu_pd(&imag[inds[2]]);
+                    __m256d ymm7 = _mm256_loadu_pd(&imag[inds[3]]);
 
-                    constexpr uint64_t batch_size = 4;
-                    Precision cache_real[blk_size * 4], cache_imag[blk_size * 4];
-                    // Preload
-                    for (uint64_t task_id = 0;
-                         task_id + blk < std::min(blk + blk_size, task_num);
-                         task_id += batch_size) {
-                        auto inds = index(task_id + blk, q_state_bit_num, qubits, qubits_sorted);
-                        auto cur_real = &cache_real[task_id / 2 * 4];
-                        auto cur_imag = &cache_imag[task_id / 2 * 4];
-                        std::copy(&real[inds[2]], &real[inds[2] + 4], &cur_real[0]);
-                        std::copy(&real[inds[3]], &real[inds[3] + 4], &cur_real[4]);
-                        std::copy(&imag[inds[2]], &imag[inds[2] + 4], &cur_imag[0]);
-                        std::copy(&imag[inds[3]], &imag[inds[3] + 4], &cur_imag[4]);
-                    }
-                    for (uint64_t task_id = 0;
-                         task_id + blk < std::min(blk + blk_size, task_num);
-                         task_id += batch_size) {
-//                        auto inds = index(task_id + blk, q_state_bit_num, qubits, qubits_sorted);
-                        auto cur_real = &cache_real[task_id / 2 * 4];
-                        auto cur_imag = &cache_imag[task_id / 2 * 4];
-                        __m256d ymm4 = _mm256_loadu_pd(&cur_real[0]);
-                        __m256d ymm5 = _mm256_loadu_pd(&cur_real[4]);
-                        __m256d ymm6 = _mm256_loadu_pd(&cur_imag[0]);
-                        __m256d ymm7 = _mm256_loadu_pd(&cur_imag[4]);
-
-                        __m256d ymm8, ymm9, ymm10, ymm11;
-                        COMPLEX_YMM_MUL(ymm0, ymm2, ymm4, ymm6, ymm8, ymm9);
-                        COMPLEX_YMM_MUL(ymm1, ymm3, ymm5, ymm7, ymm10, ymm11);
-                        _mm256_storeu_pd(&cur_real[0], ymm8);
-                        _mm256_storeu_pd(&cur_real[4], ymm10);
-                        _mm256_storeu_pd(&cur_imag[0], ymm9);
-                        _mm256_storeu_pd(&cur_imag[4], ymm11);
-                    }
-                    for (uint64_t task_id = 0;
-                         task_id + blk < std::min(blk + blk_size, task_num);
-                         task_id += batch_size) {
-                        auto inds = index(task_id + blk, q_state_bit_num, qubits, qubits_sorted);
-                        auto cur_real = &cache_real[task_id / 2 * 4];
-                        auto cur_imag = &cache_imag[task_id / 2 * 4];
-                        std::copy(&cur_real[0],
-                                  &cur_real[4],
-                                  &real[inds[2]]);
-                        std::copy(&cur_real[4],
-                                  &cur_real[8],
-                                  &real[inds[3]]);
-                        std::copy(&cur_imag[0],
-                                  &cur_imag[4],
-                                  &imag[inds[2]]);
-                        std::copy(&cur_imag[4],
-                                  &cur_imag[8],
-                                  &imag[inds[3]]);
-                    }
+                    __m256d ymm8, ymm9, ymm10, ymm11;
+                    COMPLEX_YMM_MUL(ymm0, ymm2, ymm4, ymm6, ymm8, ymm9);
+                    COMPLEX_YMM_MUL(ymm1, ymm3, ymm5, ymm7, ymm10, ymm11);
+                    _mm256_storeu_pd(&real[inds[2]], ymm8);
+                    _mm256_storeu_pd(&real[inds[3]], ymm10);
+                    _mm256_storeu_pd(&imag[inds[2]], ymm9);
+                    _mm256_storeu_pd(&imag[inds[3]], ymm11);
                 }
             }
         }
