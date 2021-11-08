@@ -362,10 +362,41 @@ Here we list the performance indices of most circuits.
 Addition circuits
 >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
-.. csv-table:: Addition circuits
+.. csv-table::
  :header: "Circuit", "Description", "Qubit", "Size"
  :widths: 15, 30, 10, 10
 
- BEAAdder,  ":math:`|a,b\rangle \rightarrow |a,a+b\rangle`",       2n,     ":math:`\frac{3}{2}n^2`"
- RippleCarryAdder,  ":math:`|a,b\rangle \rightarrow |a,a+b\rangle`",       2n,     ":math:`7n`"
- HRSAdder, ":math:`|x,a_1,a_2\rangle \rightarrow |x+c,a_1,a_2\rangle`",       n+2,     ":math:`25n\log{n}`"
+ RippleCarryAdder,  ":math:`|a,b\rangle \rightarrow |a,a+b\rangle`",       :math:`2n`,     ":math:`7n`"
+ BEAAdder,  ":math:`|a,b\rangle \rightarrow |a,a+b\rangle`",       :math:`2n`,     ":math:`\frac{3}{2}n^2`"
+ HRSAdder, ":math:`|x,a_1,a_2\rangle \rightarrow |x+c,a_1,a_2\rangle`",       :math:`n+2`,     ":math:`25n\log{n}`"
+
+
+Multiplication circuits
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+.. csv-table::
+ :header: "Circuit", "Description", "Qubit", "Size"
+ :widths: 15, 30, 10, 10
+
+ Multiplication,  ":math:`|a,b,p=0,ancilla=0\rangle \rightarrow |a,b,a*b,0\rangle`",       :math:`4n+1`,     ":math:`7n^2`"
+ BEAMulMod,  ":math:`|b,x,c,low\rangle \rightarrow |(b+ax) mod N,x,c,low\rangle`",       :math:`2n+3`,     ":math:`\frac{21}{2}n^3`"
+ HRSMulMod, ":math:`|x,anc,ind\rangle \rightarrow |(ax) mod N,anc,ind\rangle`",       :math:`2n+1`,     ":math:`50n^2\log{n}`"
+
+Division circuits
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+.. csv-table::
+ :header: "Circuit", "Description", "Qubit", "Size"
+ :widths: 15, 30, 10, 10
+
+ RestoringDivision,  ":math:`|a,b,r=0,overflow=0\rangle \rightarrow |a\%b,b,a//b,0\rangle`",       :math:`3n`,     ":math:`14n^2`"
+
+Exponentiation circuits
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+.. csv-table::
+ :header: "Circuit", "Description", "Qubit", "Size"
+ :widths: 15, 30, 10, 10
+
+ BEAExpMod,  ":math:`|b,x,c,low\rangle \rightarrow |a^x mod N,x,c,low\rangle`",       :math:`2n+m+2`,     ":math:`\frac{21}{2}mn^3`"
+ HRSExpMod, ":math:`|x,anc,ind\rangle \rightarrow |(a^x) mod N,anc,ind\rangle`",       :math:`2n+m+1`,     ":math:`50mn^2\log{n}`"
