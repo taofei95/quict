@@ -55,7 +55,7 @@ def test_HRSAdder():
                 assert 0
     assert 1
 
-
+'''
 def test_HRSAdderMod():
     for N in range(4, 15):
         n = len(bin(N)) - 2
@@ -97,7 +97,7 @@ def test_HRSMulMod():
                     print("%d * %d mod %d = %d\n" % (a, x, N, int(x_q)))
                     assert 0
     assert 1
-
+'''
 
 '''
 def test_HRSMulModRaw():

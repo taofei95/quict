@@ -298,7 +298,7 @@ class Multiplication(Synthesis):
         a_q = list(range(n))
         b_q = list(range(n, 2 * n))
         p_q = list(range(2 * n, 4 * n))
-        ancilla = 4 * n
+        ancilla = [4 * n]
         
         mult(gateSet, a_q, b_q, p_q, ancilla)
 
@@ -329,7 +329,7 @@ class RestoringDivision(Synthesis):
         a_q = list(range(n))
         b_q = list(range(n, 2 * n))
         r_q = list(range(2 * n, 3 * n))
-        of_q = 3 * n
+        of_q = [3 * n]
 
         division(gateSet, a_q, b_q, r_q, of_q)
 
