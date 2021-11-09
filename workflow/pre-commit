@@ -1,0 +1,36 @@
+#!/usr/bin/env bash
+
+print_segment () {
+   echo -e "\033[92m================================================================================\033[39m"
+}
+
+print_cyan() {
+  echo -e "\033[36m$1\033[39m"
+}
+
+print_magenta() {
+  echo -e "\033[95m$1\033[39m"
+}
+
+
+print_cyan "[Code Style Guide Check]"
+print_segment
+
+print_cyan "The modified files: "
+files=$(git diff --cached --name-only HEAD);
+for file in $files; do
+    print_magenta $file;
+done
+
+print_segment
+
+print_cyan "[Start Running Code Style Check]"
+if flake8 --config linters/tox.ini $files; then
+    print_segment "Successed run-pass style check!";
+fi
+
+print_segment
+
+print_cyan "[Start Running Code Unit Test Check]"
+pytest QuICT --ignore=QuICT/utility;
+ 

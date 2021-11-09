@@ -1,4 +1,5 @@
 import time
+from typing import Tuple
 
 from QuICT.core.gate import *
 from QuICT.core.gate.gate import *
