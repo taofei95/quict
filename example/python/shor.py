@@ -10,7 +10,8 @@ from math import log, ceil, gcd, pi
 from fractions import Fraction
 from QuICT.algorithm import Amplitude
 
-def run_shor(N, t = None):
+
+def run_shor(N, t=None):
     if N % 2 == 0:
         return 2
 
@@ -24,7 +25,7 @@ def run_shor(N, t = None):
 
     _gcd = gcd(x, N)
     if _gcd != 1:
-       return _gcd
+        return _gcd
 
     circuit = Circuit(n + 1)
     X | circuit(0)
@@ -66,6 +67,7 @@ def run_shor(N, t = None):
         if _gcd != 1:
             return _gcd
     return 0
+
 
 factor = run_shor(3939)
 if factor != 0:

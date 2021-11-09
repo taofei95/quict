@@ -4,13 +4,14 @@
 # @Author  : Han Yu
 # @File    : _efficiencyChecker.py
 
-from math import *
 import random
 import time
+from math import *
 
 import numpy as np
 
 from QuICT.core import *
+
 
 class StandardEfficiencyCheckerModel(object):
     """ this model is to check the efficiency of amplitude calculating
@@ -24,20 +25,20 @@ class StandardEfficiencyCheckerModel(object):
     """
 
     @staticmethod
-    def getRandomList(l, n):
-        """ get l number from 0, 1, ..., n - 1 randomly.
+    def getRandomList(count, upper_bound):
+        """ get `count` number from 0, 1, ..., `upper_bound - 1` randomly.
 
         Args:
-            l(int)
-            n(int)
+            count(int)
+            upper_bound(int)
         Returns:
             list<int>: the list of l random numbers
         """
-        _rand = [i for i in range(n)]
-        for i in range(n - 1, 0, -1):
+        _rand = [i for i in range(upper_bound)]
+        for i in range(upper_bound - 1, 0, -1):
             do_get = random.randint(0, i)
             _rand[do_get], _rand[i] = _rand[i], _rand[do_get]
-        return _rand[:l]
+        return _rand[:count]
 
     @property
     def min_qubits(self):
@@ -173,6 +174,5 @@ class StandardEfficiencyCheckerModel(object):
                   f'{np.round(min_tt, decimals=2)}({np.round(min_t, decimals=2)}) '
                   f'{np.round(max_tt, decimals=2)}({np.round(max_t, decimals=2)})')
 
+
 StandardEfficiencyChecker = StandardEfficiencyCheckerModel()
-
-

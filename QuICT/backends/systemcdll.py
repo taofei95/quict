@@ -7,6 +7,7 @@
 import ctypes
 import os
 
+
 class SystemCdll(object):
     """ calculation module that coded by C++ with Inter tbb parallel library
 
@@ -23,5 +24,6 @@ class SystemCdll(object):
 
     def __init__(self):
         self.__quick_operator_cdll = None
+
 
 systemCdll = SystemCdll()

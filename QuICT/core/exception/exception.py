@@ -107,6 +107,7 @@ class IndexDuplicateException(Exception):
         """
         Exception.__init__(self, f"duplicate indexes: {other}")
 
+
 class GateDigitException(Exception):
     def __init__(self, controls, targets, indeed):
         """
@@ -120,6 +121,7 @@ class GateDigitException(Exception):
                                  the number of target bits indexed is {targets}, \
                                  so {controls + targets} parameters should be passed in, \
                                  infact {indeed} parameters are passed in.")
+
 
 class NotImplementedGateException(Exception):
     """Exception when you try to query ID for a non-existing gate

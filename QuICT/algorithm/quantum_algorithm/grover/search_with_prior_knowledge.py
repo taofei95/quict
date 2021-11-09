@@ -2,21 +2,22 @@
 # -*- coding:utf8 -*-
 # @TIME    : 2020/2/23 10:14 上午
 # @Author  : Han Yu
-# @File    : Deutsch_Jozsa.py
+# @File    : search_with_prior_knowledge.py
 
 import numpy as np
 from scipy.optimize import minimize
 
-from .._algorithm import Algorithm
 from QuICT import *
 from QuICT.qcda.synthesis.initial_state_preparation import InitialStatePreparation
 from QuICT.qcda.synthesis.mct import MCTOneAux
-    
-p_global = []
-T_global = 1
+
+P_GLOBAL = []
+T_GLOBAL = 1
+
 
 def fun(x):
-    return -np.dot(p_global, np.sin((2*T_global+1)*np.arcsin(np.sqrt(x)))**2)
+    return -np.dot(P_GLOBAL, np.sin((2 * T_GLOBAL + 1) * np.arcsin(np.sqrt(x)))**2)
+
 
 def run_search_with_prior_knowledge(f, n, p, T, oracle):
     """ grover search for f with custom oracle
@@ -30,24 +31,25 @@ def run_search_with_prior_knowledge(f, n, p, T, oracle):
     Returns:
         int: the a satisfies that f(a) = 1
     """
-    global p_global 
-    p_global = p[:]
-    global T_global
-    T_global = T
+    global P_GLOBAL
+    P_GLOBAL = p[:]
+    global T_GLOBAL
+    T_GLOBAL = T
     num = int(np.ceil(np.log2(n))) + 2
     # Determine number of qreg
     circuit = Circuit(num)
     qreg = circuit([i for i in range(num - 2)])
     ancilla = circuit(num - 2)
     empty = circuit(num - 1)
-    cons = ({'type': 'ineq', 'fun': lambda x: 1-np.dot(np.ones(n), x)},)
+    cons = ({'type': 'ineq', 'fun': lambda x: 1 - np.dot(np.ones(n), x)},)
     bnd = [(0, np.sin(np.pi / (4 * T + 2))**2) for _ in range(n)]
-    tmp = np.min([1 / n, np.sin(np.pi/(4 * T + 2))**2])
+    tmp = np.min([1 / n, np.sin(np.pi / (4 * T + 2))**2])
     x = np.array([tmp] * n)
-    option = {'maxiter' : 4, 'disp' : False}
-    res = minimize(fun, x, method = 'SLSQP', constraints = cons, bounds = bnd, options = option)
+    option = {'maxiter': 4, 'disp': False}
+    res = minimize(fun, x, method='SLSQP', constraints=cons,
+                   bounds=bnd, options=option)
     q = res.x
-    
+
     # Start with qreg in equal superposition and ancilla in |->
     X | ancilla
     H | ancilla
@@ -69,14 +71,15 @@ def run_search_with_prior_knowledge(f, n, p, T, oracle):
     circuit.exec()
     return int(qreg)
 
-class GroverWithPriorKnowledge(Algorithm):
+
+class GroverWithPriorKnowledge:
     """ grover search with prior knowledge
 
     https://arxiv.org/abs/2009.08721
 
     """
-    @classmethod
-    def run(cls, f, n, p, T, oracle):
+    @staticmethod
+    def run(f, n, p, T, oracle):
         """ grover search for f with custom oracle
 
         Args:

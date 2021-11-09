@@ -5,6 +5,7 @@ from QuICT import *
 from QuICT.qcda.synthesis.initial_state_preparation import InitialStatePreparation
 from QuICT.qcda.synthesis.mct import MCTOneAux
 
+
 def weight_decison_para(n, k, l):
     kap = k / n
     lam = l / n
@@ -16,6 +17,7 @@ def weight_decison_para(n, k, l):
                 a = np.sqrt((l - k) / (t - s) - (l * s - k * t) / (t - s) - n)
                 b = np.sqrt(abs(l * s - k * t) / (t - s))
                 return d, gamma, a, b
+
 
 def run_weight_decision(f, n, k, l, oracle):
     """ decide function f by k-l algorithm by custom oracle
@@ -72,11 +74,12 @@ def run_weight_decision(f, n, k, l, oracle):
 
     circuit.exec()
 
-    y = int(qreg)
+    _ = int(qreg)
     if int(ancilla) == gamma % 2:
         return k
     else:
         return l
+
 
 class WeightDecision(Algorithm):
     @classmethod

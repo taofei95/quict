@@ -219,8 +219,8 @@ def Division(a, b, r, ancilla):
 
 
 class RippleCarryAdder(Synthesis):
-    @classmethod
-    def execute(cls, n):
+    @staticmethod
+    def execute(n):
         """
         (a,b) -> (a,b'=a+b)
 
@@ -241,8 +241,8 @@ class RippleCarryAdder(Synthesis):
 
 
 class RestoringDivision(Synthesis):
-    @classmethod
-    def execute(cls, n):
+    @staticmethod
+    def execute(n):
         """
         (a,b,r=0) -> (a%b,b,a//b)
 

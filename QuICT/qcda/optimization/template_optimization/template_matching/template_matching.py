@@ -27,7 +27,6 @@ Exact and practical pattern matching for quantum circuit optimization.
 
 import itertools
 
-from QuICT.core import *    # pylint: disable=unused-wildcard-import
 from .forward_match import ForwardMatch
 from .backward_match import BackwardMatch
 

@@ -9,6 +9,7 @@ import pytest
 from QuICT.algorithm import SyntheticalUnitary
 from QuICT.core import *
 
+
 def test_gateSet_attributes():
     # circuit
     circuit = Circuit(5)
@@ -44,6 +45,7 @@ def test_gateSet_attributes():
     gateSet.remapping([i for i in range(5 - 1, -1, -1)])
     gateSet.print_information()
 
+
 def test_gate_matrix():
     circuit = Circuit(5)
     circuit.random_append()
@@ -54,6 +56,7 @@ def test_gate_matrix():
     gateSet | circuit2[1:]
     gateSet = CompositeGate(circuit2)
     assert np.all(gateSet.matrix(local=True) == SyntheticalUnitary.run(circuit))
+
 
 def test_add_gate():
     gateSet = CompositeGate()
@@ -67,7 +70,8 @@ def test_add_gate():
     # U3((0.1, 0.2, 0.3), name = "YY") | circuit[0]
 
     # assert np.all(SyntheticalUnitary.run(circuit) == gateSet.matrix())
-    assert gateSet.equal(circuit, ignore_phase = True)
+    assert gateSet.equal(circuit, ignore_phase=True)
+
 
 if __name__ == "__main__":
     # pytest.main(["./_unit_test.py", "./circuit_unit_test.py", "./gate_unit_test.py", "./qubit_unit_test.py"])
