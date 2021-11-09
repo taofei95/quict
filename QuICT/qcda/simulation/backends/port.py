@@ -2,6 +2,7 @@ from ctypes import cdll
 import os
 from QuICT.core import *
 
+import warnings
 import os
 import importlib.util
 from typing import List, Union
@@ -143,6 +144,10 @@ def gate_to_desc(gate: BasicGate) -> GateDescription:
 
 
 def run_simulation(circuit: Union[Circuit, CompositeGate]) -> np.ndarray:
+    warnings.warn(
+        message="Attention! You are using a working-in-process version of circuit simulator!",
+        category=Warning,
+        stacklevel=1)
     circuit_simulator: CircuitSimulator = sim_back_bind.CircuitSimulator(circuit.circuit_width())
     gate_desc_vec: List[GateDescription] = []
     for gate in circuit.gates:
