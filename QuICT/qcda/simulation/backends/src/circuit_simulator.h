@@ -17,7 +17,7 @@
 #include "q_state_simulator.h"
 #include "matricks_simulator.h"
 
-#define NO_SPLIT_Q_STATE
+//#define NO_SPLIT_Q_STATE
 
 
 #ifndef NO_SPLIT_Q_STATE

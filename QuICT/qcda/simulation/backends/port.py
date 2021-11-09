@@ -50,7 +50,6 @@ diag_1 = (
     GATE_ID["T"],
     GATE_ID["T_dagger"],
     GATE_ID["Phase"],  # TODO: optimize this with special_phase
-
 )
 
 unitary_1 = (

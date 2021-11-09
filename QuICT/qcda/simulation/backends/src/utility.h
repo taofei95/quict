@@ -104,7 +104,7 @@ namespace QuICT {
         auto real = new Precision[len];
         auto imag = new Precision[len];
         if (q_state_bit_num >= 2) {
-#pragma omp parallel for num_threads(DEFAULT_NUM_THREADS) schedule(dynamic, omp_chunk_size(q_state_bit_num))
+//#pragma omp parallel for num_threads(DEFAULT_NUM_THREADS) schedule(dynamic, omp_chunk_size(q_state_bit_num))
             for (uint64_t i = 0; i < len; i += 4) {
                 real[i] = c_arr[i].real();
                 imag[i] = c_arr[i].imag();
@@ -137,7 +137,7 @@ namespace QuICT {
     ) {
         if (q_state_bit_num >= 2) {
             auto len = 1ULL << q_state_bit_num;
-#pragma omp parallel for num_threads(DEFAULT_NUM_THREADS) schedule(dynamic, omp_chunk_size(q_state_bit_num))
+//#pragma omp parallel for num_threads(DEFAULT_NUM_THREADS) schedule(dynamic, omp_chunk_size(q_state_bit_num))
             for (uint64_t i = 0; i < len; i += 4) {
                 res[i] = {real[i], imag[i]};
                 res[i + 1] = {real[i + 1], imag[i + 1]};

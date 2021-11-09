@@ -4,12 +4,8 @@ case $NAME in
 
     "Ubuntu"|"Debian")
     echo "Ubuntu|Debian"
-    apt install build-essential python3-setuptools python3-numpy python3-scipy libtbb2 libtbb-dev -y
-    ;;
-
-    "Fedora")
-    echo "Fedora"
-    dnf install  make gcc gcc-c++ kernel-devel linux-headers tbb tbb-devel python3-setuptools python3-numpy python3-scipy
+    apt install  build-essential libtbb2 libtbb-dev clang llvm \
+    python3 python3-setuptools python3-numpy python3-scipy -y
     ;;
 
     *)
