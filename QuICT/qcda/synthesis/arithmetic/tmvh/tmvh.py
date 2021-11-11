@@ -41,7 +41,7 @@ def adder_overflow(gateSet, a, b, overflow):
     n = len(a)
     with gateSet:
         if n == 1:
-            peres_gate(gateSet, a, b, overflow)
+            peres_gate(gateSet, a[0], b[0], overflow)
             return
 
         # step 1
@@ -117,11 +117,14 @@ def subtraction_overflow(gateSet, a, b, overflow):
     """
     (a,b) -> (a,b-a)
     """
+    n = len(b)
     with gateSet:
-        X & b
+        for i in range(n):
+            X & b[i]
         X & overflow
         adder_overflow(gateSet, a, b, overflow)
-        X & b
+        for i in range(n):
+            X & b[i]
         X & overflow
 
 def ctrl_add_overflow_ancilla(gateSet, ctrl, a, b, overflow, ancilla):
@@ -298,7 +301,7 @@ class Multiplication(Synthesis):
         a_q = list(range(n))
         b_q = list(range(n, 2 * n))
         p_q = list(range(2 * n, 4 * n))
-        ancilla = [4 * n]
+        ancilla = 4 * n
         
         mult(gateSet, a_q, b_q, p_q, ancilla)
 
@@ -329,7 +332,7 @@ class RestoringDivision(Synthesis):
         a_q = list(range(n))
         b_q = list(range(n, 2 * n))
         r_q = list(range(2 * n, 3 * n))
-        of_q = [3 * n]
+        of_q = 3 * n
 
         division(gateSet, a_q, b_q, r_q, of_q)
 

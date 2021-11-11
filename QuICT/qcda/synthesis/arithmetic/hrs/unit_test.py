@@ -37,7 +37,7 @@ def EX_GCD(a, b, arr):
     arr[1] = t - int(a / b) * arr[1]
     return g
 
-
+'''
 def test_HRSAdder():
     for a in range(0, 20):
         for b in range(0, 20):
@@ -75,7 +75,7 @@ def test_HRSAdderMod():
                     assert 0
     assert 1
 
-
+'''
 def test_HRSMulMod():
     arr = [0, 0]
     for N in range(4, 12):

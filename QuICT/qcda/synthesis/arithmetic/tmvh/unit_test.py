@@ -64,7 +64,7 @@ def test_RestoringDivision():
             a_q = circuit([i for i in range(n)])
             b_q = circuit([i for i in range(n, 2 * n)])
             r_q = circuit([i for i in range(2 * n, 3 * n)])
-            of_q = circuit(3 * n)
+            #of_q = circuit(3 * n)
             Set(a_q, a)
             Set(b_q, b)
             RestoringDivision.execute(n) | circuit

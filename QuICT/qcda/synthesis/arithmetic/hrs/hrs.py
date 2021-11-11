@@ -60,7 +60,7 @@ def carry(gateSet, a, c_bitwise, g_aug, overflow):
                 CX & (a[n - 3 - i], g[n - 3 - i])
 
 
-def c_carry(control, a, c_bitwise, g_aug, overflow):
+def c_carry(gateSet, control, a, c_bitwise, g_aug, overflow):
     """
     1-controlled computation the overflow of a(quantum)+c(classical) with borrowed qubits g.
 
@@ -76,41 +76,42 @@ def c_carry(control, a, c_bitwise, g_aug, overflow):
     n = len(a)
     g = g_aug[0:n - 1]
     # n==1, no borrowed bits g
-    if n == 1:
-        if c_bitwise[0] == '1':
-            CCX | (control, a[0], overflow)
-        return
-    # n>=2
-    CCX | (control, g[0], overflow)
+    with gateSet:
+        if n == 1:
+            if c_bitwise[0] == '1':
+                CCX & (control, a[0], overflow)
+            return
+        # n>=2
+        CCX & (control, g[0], overflow)
 
-    for i in range(n - 2):
-        if c_bitwise[i] == '1':
-            CX | (a[i], g[i])
-            X | a[i]
-        CCX | (g[i + 1], a[i], g[i])
-    if c_bitwise[n - 2] == '1':
-        CX | (a[n - 2], g[n - 2])
-        X | a[n - 2]
-    if c_bitwise[n - 1] == '1':
-        CCX | (a[n - 1], a[n - 2], g[n - 2])
-    for i in range(n - 2):
-        CCX | (g[n - 2 - i], a[n - 3 - i], g[n - 3 - i])
+        for i in range(n - 2):
+            if c_bitwise[i] == '1':
+                CX & (a[i], g[i])
+                X & a[i]
+            CCX & (g[i + 1], a[i], g[i])
+        if c_bitwise[n - 2] == '1':
+            CX & (a[n - 2], g[n - 2])
+            X & a[n - 2]
+        if c_bitwise[n - 1] == '1':
+            CCX & (a[n - 1], a[n - 2], g[n - 2])
+        for i in range(n - 2):
+            CCX & (g[n - 2 - i], a[n - 3 - i], g[n - 3 - i])
 
-    CCX | (control, g[0], overflow)
+        CCX & (control, g[0], overflow)
 
-    # uncomputation
-    for i in range(n - 2):
-        CCX | (g[i + 1], a[i], g[i])
-    if c_bitwise[n - 1] == '1':
-        CCX | (a[n - 1], a[n - 2], g[n - 2])
-    if c_bitwise[n - 2] == '1':
-        X | a[n - 2]
-        CX | (a[n - 2], g[n - 2])
-    for i in range(n - 2):
-        CCX | (g[n - 2 - i], a[n - 3 - i], g[n - 3 - i])
-        if c_bitwise[n - 3 - i] == '1':
-            X | a[n - 3 - i]
-            CX | (a[n - 3 - i], g[n - 3 - i])
+        # uncomputation
+        for i in range(n - 2):
+            CCX & (g[i + 1], a[i], g[i])
+        if c_bitwise[n - 1] == '1':
+            CCX & (a[n - 1], a[n - 2], g[n - 2])
+        if c_bitwise[n - 2] == '1':
+            X & a[n - 2]
+            CX & (a[n - 2], g[n - 2])
+        for i in range(n - 2):
+            CCX & (g[n - 2 - i], a[n - 3 - i], g[n - 3 - i])
+            if c_bitwise[n - 3 - i] == '1':
+                X & a[n - 3 - i]
+                CX & (a[n - 3 - i], g[n - 3 - i])
 
 
 def cc_carry(control1, control2, a, c_bitwise, g_aug, overflow):
@@ -243,7 +244,7 @@ def c_incrementer(gateSet, control, v, g_aug):
     if m < n + 1:
         print("no edequate ancilla bits")
     g = g_aug[0:n + 1]
-    vc = v + control
+    vc = v + [control]
     with gateSet:
         incrementer(gateSet, vc, g)
         X & vc[n]
@@ -268,7 +269,7 @@ def adder_rec(gateSet, x, c_bitwise, ancilla, ancilla_g):
     x_L = x[mid:n]
     c_H = c_bitwise[0:mid]
     c_L = c_bitwise[mid:n]
-    g = x_L + ancilla_g
+    g = x_L + [ancilla_g]
     with gateSet:
         c_incrementer(gateSet, ancilla, x_H, g)
         for i in range(mid):
@@ -282,7 +283,7 @@ def adder_rec(gateSet, x, c_bitwise, ancilla, ancilla_g):
         adder_rec(gateSet, x_H, c_H, ancilla, ancilla_g)
 
 
-def c_adder_rec(control, x, c_bitwise, ancilla, ancilla_g):
+def c_adder_rec(gateSet, control, x, c_bitwise, ancilla, ancilla_g):
     """
     The recursively applied partial-circuit in c_adder().
 
@@ -304,17 +305,18 @@ def c_adder_rec(control, x, c_bitwise, ancilla, ancilla_g):
     x_L = x[mid:n]
     c_H = c_bitwise[0:mid]
     c_L = c_bitwise[mid:n]
-    g = x_L + ancilla_g
-    c_incrementer(ancilla, x_H, g)
-    for i in range(mid):
-        CX | (ancilla, x_H[i])
-    c_carry(control, x_L, c_L, x_H, ancilla)
-    c_incrementer(ancilla, x_H, g)
-    c_carry(control, x_L, c_L, x_H, ancilla)
-    for i in range(mid):
-        CX | (ancilla, x_H[i])
-    c_adder_rec(control, x_L, c_L, ancilla, ancilla_g)
-    c_adder_rec(control, x_H, c_H, ancilla, ancilla_g)
+    g = x_L + [ancilla_g]
+    with gateSet:
+        c_incrementer(gateSet, ancilla, x_H, g)
+        for i in range(mid):
+            CX & (ancilla, x_H[i])
+        c_carry(gateSet, control, x_L, c_L, x_H, ancilla)
+        c_incrementer(gateSet, ancilla, x_H, g)
+        c_carry(gateSet, control, x_L, c_L, x_H, ancilla)
+        for i in range(mid):
+            CX & (ancilla, x_H[i])
+        c_adder_rec(gateSet, control, x_L, c_L, ancilla, ancilla_g)
+        c_adder_rec(gateSet, control, x_H, c_H, ancilla, ancilla_g)
 
 
 def adder(gateSet, x, c, ancilla, ancilla_g):
@@ -336,7 +338,7 @@ def adder(gateSet, x, c, ancilla, ancilla_g):
                 X & x[i]
 
 
-def c_adder(control, x, c, ancilla, ancilla_g):
+def c_adder(gateSet, control, x, c, ancilla, ancilla_g):
     """
     Compute x(quantum) + c(classical) with borrowed qubits, 1-controlled.
 
@@ -349,13 +351,14 @@ def c_adder(control, x, c, ancilla, ancilla_g):
     """
     n = len(x)
     c_bitwise = int2bitwise(c, n)
-    c_adder_rec(control, x, c_bitwise, ancilla, ancilla_g)
-    for i in range(n):
-        if c_bitwise[i] == '1':
-            CX | (control, x[i])
+    with gateSet:
+        c_adder_rec(gateSet, control, x, c_bitwise, ancilla, ancilla_g)
+        for i in range(n):
+            if c_bitwise[i] == '1':
+                CX & (control, x[i])
 
 
-def c_sub(control, x, c, ancilla, ancilla_g):
+def c_sub(gateSet, control, x, c, ancilla, ancilla_g):
     """
     Compute x(quantum) - c(classical) with borrowed qubits, 1-controlled.
 
@@ -371,13 +374,14 @@ def c_sub(control, x, c, ancilla, ancilla_g):
     n = len(x)
     c_complement = 2 ** n - c
     cc_bitwise = int2bitwise(c_complement, n)
-    c_adder_rec(control, x, cc_bitwise, ancilla, ancilla_g)
-    for i in range(n):
-        if cc_bitwise[i] == '1':
-            CX | (control, x[i])
+    with gateSet:
+        c_adder_rec(gateSet, control, x, cc_bitwise, ancilla, ancilla_g)
+        for i in range(n):
+            if cc_bitwise[i] == '1':
+                CX & (control, x[i])
 
 
-def compare(b, c, g_aug, indicator):
+def compare(gateSet, b, c, g_aug, indicator):
     """
     compare b and c with borrowed qubits g_aug. The Indicator toggles if c > b, not if c <= b.
 
@@ -395,9 +399,12 @@ def compare(b, c, g_aug, indicator):
         print('No edequate ancilla bits when compare\n')
         return
     c_bitwise = int2bitwise(c, n)
-    X | b
-    carry(b, c_bitwise, g_aug, indicator)
-    X | b
+    with gateSet:
+        for i in range(n):
+            X & b[i]
+        carry(gateSet, b, c_bitwise, g_aug, indicator)
+        for i in range(n):
+            X & b[i]
 
 
 def c_compare(control, b, c, g_aug, indicator):
@@ -449,7 +456,7 @@ def cc_compare(control1, control2, b, c, g_aug, indicator):
     X | b
 
 
-def adder_mod(b, a, N, g, indicator):
+def adder_mod(gateSet, b, a, N, g, indicator):
     """
     Compute b(quantum) + a(classical) mod N(classical), with borrowed qubits g and ancilla qubit indicator.
 
@@ -466,13 +473,14 @@ def adder_mod(b, a, N, g, indicator):
     if(len(b) <= 2):
         raise Exception(
             "The numbers should be more than 2-length to use HRS circuits.")
-    compare(b, N - a, g, indicator)
-    c_adder(indicator, b, a, g[0:1], g[1:2])
-    X | indicator
-    c_sub(indicator, b, N - a, g[0:1], g[1:2])
-    X | indicator
-    compare(b, a, g, indicator)
-    X | indicator
+    with gateSet:
+        compare(gateSet, b, N - a, g, indicator)
+        c_adder(gateSet, indicator, b, a, g[0:1], g[1:2])
+        X & indicator
+        c_sub(gateSet, indicator, b, N - a, g[0:1], g[1:2])
+        X & indicator
+        compare(gateSet, b, a, g, indicator)
+        X & indicator
 
 
 def adder_mod_reversed(b, a, N, g, indicator):
@@ -743,8 +751,8 @@ class HRSAdder(Synthesis):
         #circuit = Circuit(n + 2)
         gateSet = CompositeGate()
         qubit_x = list(range(n))
-        ancilla = [n]
-        ancilla_g = [n + 1]
+        ancilla = n
+        ancilla_g = n + 1
 
         adder(gateSet, qubit_x, c, ancilla, ancilla_g)
 
@@ -773,14 +781,15 @@ class HRSAdderMod(Synthesis):
         if(n <= 2):
             raise Exception(
                 "The numbers should be more than 2-length to use HRS circuits.")
-        circuit = Circuit(2 * n)
-        qubit_b = circuit([i for i in range(n)])
-        g = circuit([i for i in range(n, 2 * n - 1)])
-        indicator = circuit(2 * n - 1)
+        #circuit = Circuit(2 * n)
+        gateSet = CompositeGate()
+        qubit_b = list(range(n))
+        g = list(range(n, 2 * n - 1))
+        indicator = 2 * n - 1
 
-        adder_mod(qubit_b, a, N, g, indicator)
+        adder_mod(gateSet, qubit_b, a, N, g, indicator)
 
-        return CompositeGate(circuit.gates)
+        return gateSet
 
 
 class HRSMulMod(Synthesis):
