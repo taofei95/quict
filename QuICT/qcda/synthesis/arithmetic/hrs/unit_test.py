@@ -37,7 +37,6 @@ def EX_GCD(a, b, arr):
     arr[1] = t - int(a / b) * arr[1]
     return g
 
-'''
 def test_HRSAdder():
     for a in range(0, 20):
         for b in range(0, 20):
@@ -76,7 +75,6 @@ def test_HRSAdderMod():
                     assert 0
     assert 1
 
-'''
 def test_HRSMulMod():
     arr = [0, 0]
     for N in range(4, 12):
@@ -98,61 +96,8 @@ def test_HRSMulMod():
                     print("%d * %d mod %d = %d\n" % (a, x, N, int(x_q)))
                     assert 0
     assert 1
-'''
 
-
-def test_HRSMulModRaw():
-    arr = [0,0]
-    for N in range(4,7):
-        n = len(bin(N)) - 2
-        for a in range(3,4):
-            if EX_GCD(N, a, arr) != 1:
-                continue
-            for x in range(1,2):
-                print("%d * %d mod %d"%(a,x,N))
-                circuit = Circuit(2*n + 1)
-                x_q = circuit([i for i in range(n)])
-                ancilla = circuit([i for i in range(n, 2*n)])
-                indicator = circuit(2*n)
-                Set(x_q, x)
-                MulModRaw(x_q, a, ancilla, N, indicator)
-                Measure | circuit
-                circuit.exec()
-                print("(x,ancilla,ind): (%d,0,0) ->　(%d,%d,%d)"%(x,int(x_q),int(ancilla),int(indicator)))
-                if int(ancilla) != (a*x)%(N):
-                    #print("%d * %d mod %d = %d\n"%(a,x,N,int(x_q)))
-                    print("error")
-                    assert 0
-    assert 1
-
-def test_HRSMulModRawReverse():
-    arr = [0,0]
-    for N in range(4,5):
-        n = len(bin(N)) - 2
-        for a in range(3,4):
-            if EX_GCD(N, a, arr) != 1:
-                continue
-            for x in range(3,4):
-                print("%d * %d mod %d"%(a,x,N))
-                circuit = Circuit(2*n + 1)
-                x_q = circuit([i for i in range(n)])
-                ancilla = circuit([i for i in range(n, 2*n)])
-                indicator = circuit(2*n)
-                Set(x_q, x)
-                Set(ancilla, 1)
-                MulModRawReverse(x_q, a, ancilla, N, indicator)
-                Measure | circuit
-                circuit.exec()
-                print("(x,ancilla,ind): (%d,1,0) ->　(%d,%d,%d)"%(x,int(x_q),int(ancilla),int(indicator)))
-                if int(ancilla) != (a*x)%(N):
-                    #print("%d * %d mod %d = %d\n"%(a,x,N,int(x_q)))
-                    print("error")
-                    assert 0
-    assert 1
-'''
 
 
 if __name__ == "__main__":
     pytest.main(["./unit_test.py"])
-
-#test_HRSAdderMod()
