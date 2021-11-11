@@ -475,9 +475,9 @@ def adder_mod(gateSet, b, a, N, g, indicator):
             "The numbers should be more than 2-length to use HRS circuits.")
     with gateSet:
         compare(gateSet, b, N - a, g, indicator)
-        c_adder(gateSet, indicator, b, a, g[0:1], g[1:2])
+        c_adder(gateSet, indicator, b, a, g[0], g[1])
         X & indicator
-        c_sub(gateSet, indicator, b, N - a, g[0:1], g[1:2])
+        c_sub(gateSet, indicator, b, N - a, g[0], g[1])
         X & indicator
         compare(gateSet, b, a, g, indicator)
         X & indicator

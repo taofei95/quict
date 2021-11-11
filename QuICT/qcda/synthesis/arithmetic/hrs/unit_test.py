@@ -55,7 +55,7 @@ def test_HRSAdder():
                 assert 0
     assert 1
 
-'''
+
 def test_HRSAdderMod():
     for N in range(4, 15):
         n = len(bin(N)) - 2
@@ -67,7 +67,8 @@ def test_HRSAdderMod():
                 g_q = circuit([i for i in range(n, 2 * n - 1)])
                 indicator = circuit(2 * n - 1)
                 Set(b_q, b)
-                HRSAdderMod.execute(n, a, N) | (b_q, g_q, indicator)
+                composite_gate = HRSAdderMod.execute(n, a, N) 
+                composite_gate | (b_q, g_q, indicator)
                 Measure | circuit
                 circuit.exec()
                 print(int(b_q))
@@ -99,7 +100,7 @@ def test_HRSMulMod():
     assert 1
 '''
 
-'''
+
 def test_HRSMulModRaw():
     arr = [0,0]
     for N in range(4,7):
@@ -153,3 +154,5 @@ def test_HRSMulModRawReverse():
 
 if __name__ == "__main__":
     pytest.main(["./unit_test.py"])
+
+#test_HRSAdderMod()
