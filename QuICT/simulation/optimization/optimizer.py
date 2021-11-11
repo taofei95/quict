@@ -116,3 +116,54 @@ class Optimizer:
 
             self._two_qubits_opt_gates_idxes_dict[gate_idx_bit] = len(self._opt_gates)
             self._opt_gates.append(opt_gate)
+ 
+    def circuit_divide(self, gates: list) -> list:
+        gate_groups = defaultdict(list)
+        qubit_groups = {}
+
+        for gate in gates:
+            if gate.is_single():
+                continue
+
+            gate_idx = gate.cargs + gate.targs
+
+            gate_idx_bit = 1 << gate_idx[0] + 1 << gate_idx[1]
+            idx_in_group = []
+
+            for qubits in qubit_groups.keys():
+                if qubits & gate_idx_bit:
+                    idx_in_group.append(qubits)
+
+            if len(idx_in_group) == 0:
+                qubit_groups[gate_idx_bit] = 2
+                gate_groups[gate_idx_bit].append(gate)
+            elif len(idx_in_group) == 1:
+                pre_gate_bit = idx_in_group[0]
+                new_qubit_group = gate_idx_bit | pre_gate_bit
+                group_qubit_num = qubit_groups[pre_gate_bit] + 1
+                qubit_groups[new_qubit_group] = group_qubit_num
+                gate_groups[new_qubit_group] = gate_groups[pre_gate_bit].append(gate)
+                
+                del gate_groups[pre_gate_bit]
+                del qubit_groups[pre_gate_bit]
+                
+                if group_qubit_num >= 15:
+                    break
+
+            elif len(idx_in_group) == 2:
+                for gate_bit in idx_in_group:
+                    gate_idx_bit = gate_idx_bit | gate_bit
+                
+                group_qubit_num = qubit_groups[idx_in_group[0]] + qubit_groups[idx_in_group[1]]
+                
+                if group_qubit_num >= 15:
+                    break
+                else:
+                    qubit_groups[gate_idx_bit] = qubit_groups[idx_in_group[0]] + qubit_groups[idx_in_group[1]]
+                    gate_groups[gate_idx_bit] = gate_groups[idx_in_group[0]] + gate_groups[idx_in_group[1]] + [gate]
+
+                for gate_bit in idx_in_group:
+                    del gate_groups[gate_bit]
+                    del qubit_groups[gate_bit]
+
+        return gate_groups

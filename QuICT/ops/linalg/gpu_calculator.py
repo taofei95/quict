@@ -84,20 +84,30 @@ def tensor(A, B, gpu_out: bool = True, sync: bool = True):
 
     precision = A.dtype
 
-    gpu_result = cp.empty((gpu_A.shape[0] * gpu_B.shape[0], gpu_A.shape[1] * gpu_B.shape[1]), dtype=precision)
+    if A.ndim == 1:
+        row_a, col_a = A.shape[0], 1
+    else:
+        row_a, col_a = A.shape
+    
+    if B.ndim == 1:
+        row_b, col_b = B.shape[0], 1
+    else:
+        row_b, col_b = B.shape
+
+    gpu_result = cp.empty((row_a * row_b, col_a * col_b), dtype=precision)
     core_number = gpu_result.size
 
     if precision == np.complex64:
         tensor_single_kernel(
             (math.ceil(core_number / 1024),),
             (min(1024, core_number),),
-            (gpu_A, gpu_B, gpu_result, cp.int32(gpu_A.shape[1]), cp.int32(gpu_B.shape[0]), cp.int32(gpu_B.shape[1]))
+            (gpu_A, gpu_B, gpu_result, cp.int32(col_a), cp.int32(row_b), cp.int32(col_b))
         )
     else:
         tensor_double_kernel(
             (math.ceil(core_number / 1024),),
             (min(1024, core_number),),
-            (gpu_A, gpu_B, gpu_result, cp.int32(gpu_A.shape[1]), cp.int32(gpu_B.shape[0]), cp.int32(gpu_B.shape[1]))
+            (gpu_A, gpu_B, gpu_result, cp.int32(col_a), cp.int32(row_b), cp.int32(col_b))
         )
 
     if sync:
