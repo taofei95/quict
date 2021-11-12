@@ -531,6 +531,7 @@ class BEACUa(Synthesis):
         qreg_low = [2 * n + 2]
 
         with gate_set:
+            gate_set:CompositeGate
             c_mult_mod(gate_set, a, N, qreg_x, qreg_b, qreg_c, qreg_low)
             idx_start = 0
             idx_end = len(gate_set.gates)
@@ -540,6 +541,7 @@ class BEACUa(Synthesis):
                 CCX & (qreg_c[0], qreg_x[i], qreg_b[i + 1])
                 CX & (qreg_b[i + 1], qreg_x[i])
             # Reversec_mult_mod(a_inv,N,x,b,c,low)
-            # for index in range(idx_end - 1, idx_start - 1, -1):
-            #     circuit.append(circuit.gates[index].inverse())
+            for index in range(idx_end - 1, idx_start - 1, -1):
+                gate_set.gates.append(gate_set.gates[index].inverse())
+            
         return gate_set
