@@ -220,7 +220,7 @@ class ConstantStateVectorSimulator(BasicGPUSimulator):
                 self._qubits,
                 self._sync
             )
-        elif gate.type() == GATE_ID["Measure"]:
+        elif gate_type == GATE_ID["Measure"]:
             index = self._qubits - 1 - gate.targ
             result = self._algorithm.MeasureGate_Apply(
                 index,
@@ -229,7 +229,7 @@ class ConstantStateVectorSimulator(BasicGPUSimulator):
                 self._sync
             )
             self.circuit.qubits[gate.targ].measured = result
-        elif gate.type() == GATE_ID["Reset"]:
+        elif gate_type == GATE_ID["Reset"]:
             index = self._qubits - 1 - gate.targ
             self._algorithm.ResetGate_Apply(
                 index,
@@ -237,17 +237,17 @@ class ConstantStateVectorSimulator(BasicGPUSimulator):
                 self._qubits,
                 self._sync
             )
-        elif gate.type() == GATE_ID["Barrier"]:
+        elif gate_type == GATE_ID["Barrier"]:
             # TODO: Not applied in gate.py.
             pass
         elif (
-            gate.type() == GATE_ID["Perm"] or
-            gate.type() == GATE_ID["ControlPermMulDetail"] or
-            gate.type() == GATE_ID["PermShift"] or
-            gate.type() == GATE_ID["ControlPermShift"] or
-            gate.type() == GATE_ID["PermMul"] or
-            gate.type() == GATE_ID["ControlPermMul"] or
-            gate.type() == GATE_ID["PermFx"]
+            gate_type == GATE_ID["Perm"] or
+            gate_type == GATE_ID["ControlPermMulDetail"] or
+            gate_type == GATE_ID["PermShift"] or
+            gate_type == GATE_ID["ControlPermShift"] or
+            gate_type == GATE_ID["PermMul"] or
+            gate_type == GATE_ID["ControlPermMul"] or
+            gate_type == GATE_ID["PermFx"]
         ):
             if gate.targets >= 12:
                 pass
@@ -258,7 +258,7 @@ class ConstantStateVectorSimulator(BasicGPUSimulator):
                     self._qubits,
                     self._sync
                 )
-        elif gate.type() == GATE_ID["PermFxT"]:
+        elif gate_type == GATE_ID["PermFxT"]:
             self._algorithm.PermFxGate_Apply(
                 gate.pargs,
                 gate.targets,
@@ -266,7 +266,7 @@ class ConstantStateVectorSimulator(BasicGPUSimulator):
                 self._qubits,
                 self._sync
             )
-        elif gate.type() == GATE_ID["PermT"]:
+        elif gate_type == GATE_ID["PermT"]:
             mapping = np.array(gate.pargs)
             self._algorithm.VectorPermutation(
                 self.vector,
@@ -288,63 +288,3 @@ class ConstantStateVectorSimulator(BasicGPUSimulator):
                 self._sync
             )
             self.vector = aux
-
-    def apply_combined_gates(self, gates):
-        based_matrix = gates[0].compute_matrix
-        t_index = self._qubits - 1 - gates[0].targ
-
-        for gate in gates[1:]:
-            based_matrix = np.dot(based_matrix, gate.compute_matrix)
-
-        if self._precision == np.complex64:
-            based_matrix = cp.array(based_matrix).astype(cp.complex64)
-        else:
-            based_matrix = cp.array(based_matrix)
-
-        """
-        H;
-        self._algorithm.Based_InnerProduct_targ
-
-        MSwap (odd)/ [Multiply/CMultiply with swap (odd)]
-        self._algorithm.RDiagonal_MultiplySwap_targ
-
-        Only Swap: (odd)
-        self._algorithm.RDiagonal_Swap_targ
-
-        Multiply/[Swap/MSwap (even)]
-        self._algorithm.Diagonal_Multiply_targ
-
-        CMultiply
-        self._algorithm.Controlled_Multiply_targ
-        """
-
-        self._algorithm.Based_InnerProduct_targ(
-            t_index,
-            based_matrix,
-            self._vector,
-            self._qubits,
-            self._sync
-        )
-
-    def apply_2qubits_gates(self, gates: list):
-        matrix = np.kron(gates[1].compute_matrix, gates[0].compute_matrix)
-
-        if self._precision == np.complex64:
-            matrix = cp.array(matrix).astype(cp.complex64)
-        else:
-            matrix = cp.array(matrix)
-
-        print(matrix)
-
-        """
-        gates from low - high
-        """
-
-        self._algorithm.Based_InnerProduct_targs(
-            c_index=self._qubits - 1 - gates[0].targ,
-            t_index=self._qubits - 1 - gates[1].targ,
-            mat=matrix,
-            vec=self._vector,
-            vec_bit=self._qubits,
-            sync=self._sync
-        )
