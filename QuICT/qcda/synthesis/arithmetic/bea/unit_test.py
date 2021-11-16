@@ -73,7 +73,7 @@ def test_FourierReverseAdderWired():
         for b in range(0, 20):
             n = max(len(bin(a)) - 2, len(bin(b)) - 2)
             circuit = Circuit(n + 1)
-            qreg_b = circuit(list((n + 1)))
+            qreg_b = circuit(list(range(n + 1)))
             set_qureg(qreg_b, b)
             BEAReverseAdderWired.execute(n, a) | circuit
             Measure | circuit

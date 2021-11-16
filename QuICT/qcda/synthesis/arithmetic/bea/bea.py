@@ -218,7 +218,6 @@ def c_fourier_mult_mod(gate_set, a, N, x, phib, c, low):
 
     (phib=Φ(b),x,c,low) -> (phib'=Φ((b+ax)%N),x,c,low)
 
-
     Args:
         a(int):      low n bits used as unsigned
         N(int):      low n bits used as unsigned
@@ -242,7 +241,6 @@ def fourier_mult_mod(gate_set, a, N, x, phib, low):
     """ use fourier_adder_mod to calculate (b+ax)%N in Fourier space
 
     (phib=Φ(b),x,low) -> (phib'=Φ((b+ax)%N),x,low)
-
 
     Args:
         a(int):      low n bits used as unsigned
@@ -280,10 +278,10 @@ class BEAAdder(Synthesis):
         Args:
             n(int): length of a and b
         """
-        # circuit = Circuit(n * 2)
+
         gate_set = CompositeGate()
-        qreg_a = [i for i in range(n)]
-        qreg_b = [i for i in range(n, n * 2)]
+        qreg_a = list(range(n))
+        qreg_b = list(range(n, n * 2))
         draper_adder(gate_set, qreg_a, qreg_b)
         return gate_set
 
@@ -299,9 +297,9 @@ class BEAAdderWired(Synthesis):
             n(int): length of a. b is in length n+1
             a(int): the operand to be added. low n bits used
         """
-        # circuit = Circuit(n + 1)
+
         gate_set = CompositeGate()
-        qreg_b = [i for i in range(n + 1)]
+        qreg_b = list(range(n + 1))
         with gate_set:
             QFT(len(qreg_b)) & qreg_b
             fourier_adder_wired(gate_set, a, qreg_b)
@@ -319,9 +317,9 @@ class BEAReverseAdderWired(Synthesis):
             n(int): length of a. b is in length n+1
             a(int): the operand to be subtracted. low n bits used
         """
-        # circuit = Circuit(n + 1)
+
         gate_set = CompositeGate()
-        qreg_b = [i for i in range(n + 1)]
+        qreg_b = list(range(n + 1))
         with gate_set:
             QFT(len(qreg_b)) & qreg_b
             fourier_adder_wired_reversed(gate_set, a, qreg_b)
@@ -339,10 +337,10 @@ class CCBEAAdderWired(Synthesis):
             n(int): length of a. b is in length n+1
             a(int): the operand to be subtracted. low n bits used
         """
-        # circuit = Circuit(n + 3)
+
         gate_set = CompositeGate()
-        qreg_b = [i for i in range(n + 1)]
-        qreg_c = [i for i in range(n + 1, n + 3)]
+        qreg_b = list(range(n + 1))
+        qreg_c = list(range(n + 1, n + 3))
         with gate_set:
             QFT(len(qreg_b)) & qreg_b
             cc_fourier_adder_wired(gate_set, a, qreg_b, qreg_c, dualControlled=True)
@@ -360,10 +358,10 @@ class CCBEAReverseAdderWired(Synthesis):
             n(int): length of a. b is in length n+1
             a(int): the operand to be subtracted. low n bits used
         """
-        # circuit = Circuit(n + 3)
+
         gate_set = CompositeGate()
-        qreg_b = [i for i in range(n + 1)]
-        qreg_c = [i for i in range(n + 1, n + 3)]
+        qreg_b = list(range(n + 1))
+        qreg_c = list(range(n + 1, n + 3))
         with gate_set:
             QFT(len(qreg_b)) & qreg_b
             cc_fourier_adder_wired_reversed(gate_set, a, qreg_b, qreg_c, dualControlled=True)
@@ -391,11 +389,11 @@ class CCBEAAdderMod(Synthesis):
         Circuit for Shor’s algorithm using 2n+3 qubits
         http://arxiv.org/abs/quant-ph/0205095v3
         """
-        # circuit = Circuit(n + 4)
+
         gate_set = CompositeGate()
-        qreg_b = [i for i in range(n + 1)]
-        qreg_c = [i for i in range(n + 1, n + 3)]
-        qreg_low = [i for i in range(n + 3, n + 4)]
+        qreg_b = list(range(n + 1))
+        qreg_c = list(range(n + 1, n + 3))
+        qreg_low = list(range(n + 3, n + 4))
         with gate_set:
             QFT(len(qreg_b)) & qreg_b
             cc_fourier_adder_mod(gate_set, a, N, qreg_b, qreg_c, qreg_low)
@@ -423,10 +421,10 @@ class BEAAdderMod(Synthesis):
         Circuit for Shor’s algorithm using 2n+3 qubits
         http://arxiv.org/abs/quant-ph/0205095v3
         """
-        # circuit = Circuit(n + 2)
+
         gate_set = CompositeGate()
-        qreg_b = [i for i in range(n + 1)]
-        qreg_low = [i for i in range(n + 1, n + 2)]
+        qreg_b = list(range(n + 1))
+        qreg_low = list(range(n + 1, n + 2))
         with gate_set:
             QFT(len(qreg_b)) & qreg_b
             fourier_adder_mod(gate_set, a, N, qreg_b, qreg_low)
@@ -455,10 +453,10 @@ class CBEAMulMod(Synthesis):
         Circuit for Shor’s algorithm using 2n+3 qubits
         http://arxiv.org/abs/quant-ph/0205095v3
         """
-        # circuit = Circuit(2 * n + 3)
+        
         gate_set = CompositeGate()
-        qreg_b = [i for i in range(n + 1)]
-        qreg_x = [i for i in range(n + 1, 2 * n + 1)]
+        qreg_b = list(range(n + 1))
+        qreg_x = list(range(n + 1, 2 * n + 1))
         qreg_c = [2 * n + 1]
         qreg_low = [2 * n + 2]
         with gate_set:
@@ -489,10 +487,10 @@ class BEAMulMod(Synthesis):
         Circuit for Shor’s algorithm using 2n+3 qubits
         http://arxiv.org/abs/quant-ph/0205095v3
         """
-        # circuit = Circuit(2 * n + 2)
+        
         gate_set = CompositeGate()
-        qreg_b = [i for i in range(n + 1)]
-        qreg_x = [i for i in range(n + 1, 2 * n + 1)]
+        qreg_b = list(range(n + 1))
+        qreg_x = list(range(n + 1, 2 * n + 1))
         qreg_low = [2 * n + 1]
         with gate_set:
             QFT(len(qreg_b)) & qreg_b
@@ -522,12 +520,10 @@ class BEACUa(Synthesis):
         Circuit for Shor’s algorithm using 2n+3 qubits
         http://arxiv.org/abs/quant-ph/0205095v3
         """
-        # a_inv = InverseMod(a, N)
-
-        # circuit = Circuit(2 * n + 3)
+        
         gate_set = CompositeGate()
-        qreg_b = [i for i in range(n + 1)]
-        qreg_x = [i for i in range(n + 1, 2 * n + 1)]
+        qreg_b = list(range(n + 1))
+        qreg_x = list(range(n + 1, 2 * n + 1))
         qreg_c = [2 * n + 1]
         qreg_low = [2 * n + 2]
 
