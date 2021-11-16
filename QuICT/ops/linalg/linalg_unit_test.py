@@ -20,7 +20,6 @@ from QuICT.simulation import BasicGPUSimulator
 
 @unittest.skipUnless(os.environ.get("test_with_gpu", False), "require GPU")
 class TestGPULinalg(unittest.TestCase):
-
     @classmethod
     def setUpClass(cls):
         print("The GPU linalg unit test start!")
@@ -90,28 +89,6 @@ class TestGPULinalg(unittest.TestCase):
         gpu_result = GPUCalculator.MatrixTensorI(A, n, m, gpu_out=True)
         self.assertTrue((np_result == gpu_result).all())
 
-    def test_calculation_layer(self):
-        A = np.random.random((1 << TestGPULinalg.seed, 1 << TestGPULinalg.seed)).astype(np.complex64)
-        B = np.random.random((1 << TestGPULinalg.seed, 1 << TestGPULinalg.seed)).astype(np.complex64)
-
-        based_result = GPUCalculator.dot(A, B, gpu_out=True)
-
-        mempool = cp.get_default_memory_pool()
-        before_used_bytes = mempool.used_bytes()
-
-        with CalculationLayer() as CL:
-            gpu_A = CL.htod(A)
-            gpu_B = CL.htod(B)
-
-            layer_result = CL.dot(gpu_A, gpu_B, gpu_out=True)
-
-        self.assertTrue((based_result == layer_result).all())
-
-        after_used_bytes = mempool.used_bytes()
-
-        # Check for memory release, maybe failure caused by the mulit-process.
-        self.assertEqual(before_used_bytes, after_used_bytes)
-
     def test_matrix_dot_vector(self):
         qubit_num = 20
         circuit = Circuit(qubit_num)
@@ -140,7 +117,6 @@ class TestGPULinalg(unittest.TestCase):
 
 
 class TestCPULinalg(unittest.TestCase):
-
     @classmethod
     def setUpClass(cls):
         print("The CPU linalg unit test start!")

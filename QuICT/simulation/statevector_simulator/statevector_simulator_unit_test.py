@@ -34,31 +34,5 @@ def test_constant_statevectorsimulator():
     assert np.allclose(state.get(), state_expected)
 
 
-def test_simulator_with_qasm():
-    from QuICT.tools.interface import OPENQASMInterface
-
-    default_path = "/home/likaiqi/Workplace/test/QuICT/QuICT/qcda/circuit_example/Arithmetic_and_Toffoli_qasm"
-    filename = "/qcla_com_7_after_heavy.qasm"
-    qasm = OPENQASMInterface.load_file(default_path + filename)
-
-    if qasm.valid_circuit:
-        circuit = qasm.circuit
-    else:
-        print("No qasm file.")
-
-    simulator = ConstantStateVectorSimulator(
-        circuit=circuit,
-        precision=np.complex128,
-        gpu_device_id=0,
-        sync=True
-    )
-    state = simulator.run()
-
-    state_expected = Amplitude.run(circuit)
-
-    assert np.allclose(state.get(), state_expected)
-
-
 if __name__ == "__main__":
-    # pytest.main(["./_unit_test.py", "./circuit_unit_test.py", "./gate_unit_test.py", "./qubit_unit_test.py"])
     pytest.main([".statevector_simulator_unit_test.py"])
