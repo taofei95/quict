@@ -4,11 +4,10 @@
 # @Author  : Zhu Qinlin
 # @File    : tmvh.py
 
-from QuICT.core import Circuit, CX, CCX, CompositeGate, X
-from QuICT.qcda.synthesis.uniformly_gate.uniformly_unitary import gates_from_unitary
+from QuICT.core import CX, CCX, CompositeGate, X
 from ..._synthesis import Synthesis
 
-def peres_gate(gateSet, a, b, c):
+def peres_gate(gate_set, a, b, c):
     """
     (a, b, c) -> (a, a xor b, a.b xor c)
 
@@ -17,12 +16,12 @@ def peres_gate(gateSet, a, b, c):
         b(Qubit): qubit
         c(Qubit): qubit
     """
-    with gateSet:
+    with gate_set:
         CCX & (a, b, c)
         CX & (a, b)
 
 
-def adder_overflow(gateSet, a, b, overflow):
+def adder_overflow(gate_set, a, b, overflow):
     """
      store a + b in b
 
@@ -39,9 +38,9 @@ def adder_overflow(gateSet, a, b, overflow):
     """
 
     n = len(a)
-    with gateSet:
+    with gate_set:
         if n == 1:
-            peres_gate(gateSet, a[0], b[0], overflow)
+            peres_gate(gate_set, a[0], b[0], overflow)
             return
 
         # step 1
@@ -58,9 +57,9 @@ def adder_overflow(gateSet, a, b, overflow):
             CCX & (a[n - 1 - i], b[n - 1 - i], a[n - 2 - i])
 
         # step 4
-        peres_gate(gateSet, a[0], b[0], overflow)
+        peres_gate(gate_set, a[0], b[0], overflow)
         for i in range(n - 1):
-            peres_gate(gateSet, a[i + 1], b[i + 1], a[i])
+            peres_gate(gate_set, a[i + 1], b[i + 1], a[i])
 
         # step 5
         for i in range(n - 2):
@@ -71,7 +70,7 @@ def adder_overflow(gateSet, a, b, overflow):
             CX & (a[i], b[i])
 
 
-def adder(gateSet, a, b):
+def adder(gate_set, a, b):
     """
     (a,b) -> (a,b'=a+b)
 
@@ -86,7 +85,7 @@ def adder(gateSet, a, b):
 
     n = len(a)
 
-    with gateSet:
+    with gate_set:
         # step 1
         for i in range(n - 1):
             CX & (a[i], b[i])
@@ -102,7 +101,7 @@ def adder(gateSet, a, b):
         # step 4
         CX & (a[0], b[0])
         for i in range(n - 1):
-            peres_gate(gateSet, a[i + 1], b[i + 1], a[i])
+            peres_gate(gate_set, a[i + 1], b[i + 1], a[i])
 
         # step 5
         for i in range(n - 2):
@@ -113,26 +112,26 @@ def adder(gateSet, a, b):
             CX & (a[i], b[i])
 
 
-def subtraction_overflow(gateSet, a, b, overflow):
+def subtraction_overflow(gate_set, a, b, overflow):
     """
     (a,b) -> (a,b-a)
     """
     n = len(b)
-    with gateSet:
+    with gate_set:
         for i in range(n):
             X & b[i]
         X & overflow
-        adder_overflow(gateSet, a, b, overflow)
+        adder_overflow(gate_set, a, b, overflow)
         for i in range(n):
             X & b[i]
         X & overflow
 
-def ctrl_add_overflow_ancilla(gateSet, ctrl, a, b, overflow, ancilla):
+def ctrl_add_overflow_ancilla(gate_set, ctrl, a, b, overflow, ancilla):
     """
     (c,a,b,of,ancilla) -> (c,a,b+c*a,of',ancilla)
     """
     n = len(a)
-    with gateSet:
+    with gate_set:
         if n == 1:
             #CCX | (a[0],b[0],overflow)
             CCX & (a[0],b[0],ancilla)
@@ -168,13 +167,13 @@ def ctrl_add_overflow_ancilla(gateSet, ctrl, a, b, overflow, ancilla):
             CX & (a[i], b[i])
 
 
-def ctrl_add(gateSet, ctrl, a, b):
+def ctrl_add(gate_set, ctrl, a, b):
     """
     (ctrl,a,b) -> (ctrl,a,b+a)
     """
     n = len(a)
     # step 1
-    with gateSet:
+    with gate_set:
         for i in range(n - 1):
             CX & (a[i], b[i])
         # step 2
@@ -201,14 +200,14 @@ def ctrl_add(gateSet, ctrl, a, b):
             CX & (a[i], b[i])
 
 
-def mult(gateSet, a, b, p, ancilla):
+def mult(gate_set, a, b, p, ancilla):
     """
     Multiplicant: a, b
     Product: p
     (a, b, p=0, ancilla=0) -> (a, b, a*b, ancilla=0)
     """
     n = len(a)
-    with gateSet:
+    with gate_set:
         if n == 1:
             CCX & (a[0],b[0],p[1])
             return
@@ -218,30 +217,30 @@ def mult(gateSet, a, b, p, ancilla):
             CCX & (b[n-1], a[n-1-i], p[2*n-1-i])
         #step 2
         for i in range(n-2):
-            ctrl_add_overflow_ancilla(gateSet, b[n-2-i],a,p[n-1-i:2*n-1-i],p[n-2-i],p[n-3-i])
-        ctrl_add_overflow_ancilla(gateSet, b[0],a,p[1:n+1],p[0],ancilla)
+            ctrl_add_overflow_ancilla(gate_set, b[n-2-i],a,p[n-1-i:2*n-1-i],p[n-2-i],p[n-3-i])
+        ctrl_add_overflow_ancilla(gate_set, b[0],a,p[1:n+1],p[0],ancilla)
 
 
-def division(gateSet, a, b, r, ancilla):
+def division(gate_set, a, b, r, ancilla):
     """
     Divided: a
     Divisor: b
     (a,b,r=0,ancilla=0) -> (a%b,b,a//b,ancilla)
     """
     n = len(a)
-    with gateSet:
+    with gate_set:
         for i in range(n - 1):
             # Iteration(y,b,r[i])
             y = r[i + 1:n] + a[0:i + 1]
-            subtraction_overflow(gateSet, b, y, ancilla)
+            subtraction_overflow(gate_set, b, y, ancilla)
             CX & (ancilla, r[i])
-            ctrl_add(gateSet, ancilla, b, y)
+            ctrl_add(gate_set, ancilla, b, y)
             CX & (r[i], ancilla)
             X & r[i]
         # Iteration(a,b,r[n-1])
-        subtraction_overflow(gateSet, b, a, ancilla)
+        subtraction_overflow(gate_set, b, a, ancilla)
         CX & (ancilla, r[n - 1])
-        ctrl_add(gateSet, ancilla, b, a)
+        ctrl_add(gate_set, ancilla, b, a)
         CX & (r[n - 1], ancilla)
         X & r[n - 1]
 
@@ -266,12 +265,12 @@ class RippleCarryAdder(Synthesis):
         """
         Construct a compositegate tailored to the size n
         """
-        gateSet = CompositeGate()
+        gate_set = CompositeGate()
         a_q = list(range(n))
         b_q = list(range(n, 2*n))
 
-        adder(gateSet, a_q, b_q)
-        return gateSet
+        adder(gate_set, a_q, b_q)
+        return gate_set
 
 
 class Multiplication(Synthesis):
@@ -297,15 +296,15 @@ class Multiplication(Synthesis):
         """
         Construct a compositegate tailored to the size n
         """
-        gateSet = CompositeGate()
+        gate_set = CompositeGate()
         a_q = list(range(n))
         b_q = list(range(n, 2 * n))
         p_q = list(range(2 * n, 4 * n))
         ancilla = 4 * n
         
-        mult(gateSet, a_q, b_q, p_q, ancilla)
+        mult(gate_set, a_q, b_q, p_q, ancilla)
 
-        return gateSet
+        return gate_set
 
 class RestoringDivision(Synthesis):
     """
@@ -328,12 +327,12 @@ class RestoringDivision(Synthesis):
         """
         Construct a compositegate tailored to the size n
         """
-        gateSet = CompositeGate()
+        gate_set = CompositeGate()
         a_q = list(range(n))
         b_q = list(range(n, 2 * n))
         r_q = list(range(2 * n, 3 * n))
         of_q = 3 * n
 
-        division(gateSet, a_q, b_q, r_q, of_q)
+        division(gate_set, a_q, b_q, r_q, of_q)
 
-        return gateSet
+        return gate_set

@@ -1,6 +1,6 @@
 import numpy as np
 
-from QuICT.core import Circuit, CompositeGate, CX, CCX, X, QFT, IQFT, CRz, Rz, gate
+from QuICT.core import CompositeGate, CX, CCX, X, QFT, IQFT, CRz, Rz
 from ..._synthesis import Synthesis
 
 
@@ -11,7 +11,7 @@ def draper_adder(gate_set, a, b):
 
 
     Args:
-        gate_set(CompositeGate): 
+        gate_set(CompositeGate):
         a(list): the list of indices of qureg stores a, length is n
         b(list): the list of indices of qureg stores b, length is n
 
@@ -182,10 +182,10 @@ def cc_fourier_adder_mod(gate_set, a, N, phib, c, low, dualControlled=True):
 
 
 def fourier_adder_mod(gate_set, a, N, phib, low):
-    """ use fourier_adder_wired/cc_fourier_adder_wired to calculate (a+b)%N in Fourier space. no control bits.
+    """ use fourier_adder_wired/cc_fourier_adder_wired 
+    to calculate (a+b)%N in Fourier space. no control bits.
 
     (phib=Φ(b),low) -> (phib'=Φ((a+b)%N),low)
-
 
     Args:
         a(int):      low n bits used as unsigned
@@ -406,7 +406,8 @@ class CCBEAAdderMod(Synthesis):
 class BEAAdderMod(Synthesis):
     @staticmethod
     def execute(n, a, N):
-        """ use fourier_adder_wired/cc_fourier_adder_wired to calculate (a+b)%N in Fourier space. No cotrol bits
+        """ use fourier_adder_wired/cc_fourier_adder_wired 
+        to calculate (a+b)%N in Fourier space. No cotrol bits
 
         (phib=Φ(b),low) -> (phib'=Φ((a+b)%N),low)
 
