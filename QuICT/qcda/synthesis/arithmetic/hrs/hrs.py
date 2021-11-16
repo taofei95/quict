@@ -71,7 +71,7 @@ def c_carry(gate_set, control, a, c_bitwise, g_aug, overflow):
         a(Qureg): n qubits.
         g_aug(Qureg): n-1 qubits(more bits are OK).
         overflow(Qubit): 1 qubit.
-        c_bitwise(int array): n bits 0-1 array, representing binary int c.
+        c_bitwise(char array): n bits '0'-'1' array, representing binary int c.
     """
     n = len(a)
     g = g_aug[0:n - 1]
@@ -126,7 +126,7 @@ def cc_carry(gate_set, control1, control2, a, c_bitwise, g_aug, overflow):
         a(Qureg): n qubits.
         g_aug(Qureg): n-1 qubits(more bits are OK).
         overflow(Qubit): 1 qubit.
-        c_bitwise(int array): n bits 0-1 array, representing binary int c.
+        c_bitwise(char array): n bits '0'-'1' array, representing binary int c.
     """
     n = len(a)
     # n==1, no borrowed bits g
@@ -261,7 +261,7 @@ def adder_rec(gate_set, x, c_bitwise, ancilla, ancilla_g):
         ancilla(Qubit): 1 qubit.
         ancilla_g(Qubit): 1 qubit, might be used as borrowed qubit in c_incrementer
             when x_H and x_L are of the same length.
-        c_bitwise(int array): n bits.
+        c_bitwise(char array): n bits '0'-'1' array, representing binary int c.
     """
     n = len(x)
     if n == 1:
@@ -298,7 +298,7 @@ def c_adder_rec(gate_set, control, x, c_bitwise, ancilla, ancilla_g):
         ancilla_g(Qubit): 1 qubit, 
             might be used as borrowed qubit in c_incrementer
             when x_H and x_L are of the same length.
-        c_bitwise(int array): n bits.
+        c_bitwise(char array): n bits '0'-'1' array, representing binary int c.
     """
     n = len(x)
     if n == 1:
