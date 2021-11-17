@@ -10,6 +10,7 @@ from QuICT.core.exception import ConstException, IndexDuplicateException, IndexL
 from QuICT.core.qubit import Qubit, Qureg
 
 from .circuit_computing import *
+from QuICT.utility.decorators import deprecated
 
 # global circuit id count
 circuit_id = 0
@@ -510,6 +511,7 @@ class Circuit(object):
         self.topology.append((item1, item2))
 
     # exec method
+    @deprecated("This method uses an outdated buggy version of simulator!")
     def exec(self):
         """ calculate the gates applied to the circuit, change the qStates' values in the circuit
 

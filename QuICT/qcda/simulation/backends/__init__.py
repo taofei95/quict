@@ -1,1 +1,1 @@
-from .port import run_simulation
+from .cpu import run_simulation

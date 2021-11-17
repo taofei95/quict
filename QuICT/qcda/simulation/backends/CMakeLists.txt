@@ -13,7 +13,7 @@ find_package(Python3 COMPONENTS Interpreter Development)
 add_subdirectory(../../../utility/extern/pybind11 ../cmake-build-pybind11/sim_back_bind EXCLUDE_FROM_ALL)
 include_directories(${Python3_INCLUDE_DIRS})
 
-pybind11_add_module(sim_back_bind port.cpp src/circuit_simulator.h src/q_state_simulator.h src/matricks_simulator.h
+pybind11_add_module(sim_back_bind cpu.cpp src/circuit_simulator.h src/q_state_simulator.h src/matricks_simulator.h
         src/tiny_simulator.h src/q_state.h src/q_state_set.h src/gate.h src/utility.h)
 
 target_compile_definitions(sim_back_bind PRIVATE VERSION_INFO=${BUILD_VERSION_INFO})

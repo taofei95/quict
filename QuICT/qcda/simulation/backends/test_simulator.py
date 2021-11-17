@@ -3,7 +3,7 @@ import sys
 import numpy as np
 
 from QuICT.core import *
-from .port import run_simulation, sim_back_bind
+from .cpu import run_simulation, sim_back_bind
 from QuICT.algorithm import Amplitude
 
 
