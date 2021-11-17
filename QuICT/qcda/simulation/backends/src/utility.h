@@ -251,6 +251,15 @@ namespace QuICT {
     // Helper functions to create indices array
     //* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
+    /*
+     * Index is created from task_id and qubit positions.
+     * Insert some bits to task_id's binary form at positions
+     * specified by qubit positions.
+     * Example:
+     * task_id has binary form of (abcd). And qubits = {0,2}.
+     * Result would be {(abc0d0), (abc0d1), (abc1d0), (abc1d1)}.
+     * If qubits are {2, 0} instead of {0, 2}, result is {(abc0d0), (abc1d0), (abc0d1), (abc1d1)}.
+     * */
 
     template<
             uint64_t N,

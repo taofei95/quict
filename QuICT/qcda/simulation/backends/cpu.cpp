@@ -17,6 +17,10 @@
 namespace py = pybind11;
 
 namespace QuICT {
+    /*
+     * CircuitSimulator wrapper which automatically wraps return value of
+     * `run` method of CircuitSimulator as a numpy array.
+     * */
     class CircuitSimulatorBind : public CircuitSimulator<double> {
     public:
         CircuitSimulatorBind(uint64_t qubit_num) : CircuitSimulator<double>(qubit_num) {}
@@ -43,12 +47,13 @@ namespace QuICT {
 PYBIND11_MODULE(sim_back_bind, m) {
     using sim_class = QuICT::CircuitSimulatorBind;
     using desc_class = QuICT::GateDescription<double>;
+    // Export GateDescription interface.
     py::class_<desc_class>(m, "GateDescription")
             .def(py::init<const char *, std::vector<uint64_t>, std::vector<std::complex<double>>>())
             .def_readwrite("gateName", &desc_class::gate_name_)
             .def_readwrite("affectArgs", &desc_class::affect_args_)
             .def_readwrite("dataPtr", &desc_class::data_ptr_);
-
+    // Export CircuitSimulator interface using wrapper class.
     py::class_<sim_class>(m, "CircuitSimulator")
             .def(py::init<uint64_t>())
             .def("name", &sim_class::name)
