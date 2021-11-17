@@ -4,6 +4,7 @@
 # @Author  : Han Yu
 # @File    : __init__.py.py
 
+from ._algorithm import Algorithm
 from .amplitude.amplitude import *
 from .quantum_algorithm import *
 from .synthetical_unitary import *

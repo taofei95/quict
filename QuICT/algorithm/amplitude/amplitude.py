@@ -4,7 +4,7 @@
 # @Author  : Han Yu
 # @File    : Amplitude.py
 
-from .._algorithm import Algorithm
+from QuICT.algorithm import Algorithm
 from QuICT import *
 from QuICT.backends import systemCdll
 from QuICT.qcda.simulation.backends import run_simulation

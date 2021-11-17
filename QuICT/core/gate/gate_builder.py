@@ -8,7 +8,6 @@ from .gate import *
 from QuICT.core.circuit import Circuit
 
 
-
 class GateBuilderModel(object):
     """ A model that help users get gate without circuit
 

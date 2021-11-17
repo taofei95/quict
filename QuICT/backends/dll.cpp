@@ -327,7 +327,7 @@ DLLEXPORT void ccx_single_operator_func(
 DLLEXPORT void unitary_operator_gate(
     int qureg_length,
     complex<double> *values,
-    long long  *index,
+    long long *index,
     int index_count,
     complex<double> *matrix
 ){
