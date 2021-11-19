@@ -17,17 +17,18 @@ from QuICT.ops.utils import Proxy
 from QuICT.simulation import MultiStateVectorSimulator
 
 
+CIRCUIT = Circuit(5)
+QFT.build_gate(5) | CIRCUIT
+QFT.build_gate(5) | CIRCUIT
+QFT.build_gate(5) | CIRCUIT
+
+
 def worker(ndev, uid, dev_id):
     proxy = Proxy(ndevs=ndev, uid=uid, rank=dev_id)
 
-    circuit = Circuit(5)
-    QFT.build_gate(5) | circuit
-    QFT.build_gate(5) | circuit
-    QFT.build_gate(5) | circuit
-
     simulator = MultiStateVectorSimulator(
         proxy=proxy,
-        circuit=circuit,
+        circuit=CIRCUIT,
         precision=np.complex128,
         gpu_device_id=dev_id,
         sync=True
@@ -39,15 +40,6 @@ def worker(ndev, uid, dev_id):
 
 @unittest.skipUnless(os.environ.get("test_with_gpu", False), "require GPU")
 class TestMultiSVSimulator(unittest.TestCase):
-    @classmethod
-    def setUpClass(cls):
-        circuit = Circuit(5)
-        QFT.build_gate(5) | circuit
-        QFT.build_gate(5) | circuit
-        QFT.build_gate(5) | circuit
-
-        cls.circ = circuit
-
     def test_simulator(self):
         ndev = 2
         uid = nccl.get_unique_id()
@@ -60,7 +52,7 @@ class TestMultiSVSimulator(unittest.TestCase):
         for t in as_completed(tasks):
             results.append(t.result())
 
-        state_expected = Amplitude.run(TestMultiSVSimulator.circ)
+        state_expected = Amplitude.run(CIRCUIT)
         state_expected = np.array(state_expected)
 
         assert np.allclose(state_expected[:16], results[0])

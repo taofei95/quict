@@ -154,17 +154,51 @@ class MultiStateVectorSimulator(BasicGPUSimulator):
                 )
         elif gate_type in GATE_TYPE_to_ID[GateType.control_1arg]:
             t_index = self.total_qubits - 1 - gate.targ
-            if (
-                t_index >= self.qubits and
-                self.proxy.rank & (1 << (t_index - self.qubits))
-            ):
-                self._algorithm.Simple_Multiply(
-                    gate.compute_matrix[1, 1],
+            val = gate.compute_matrix[1, 1]
+            if t_index >= self.qubits:
+                if self.proxy.rank & (1 << (t_index - self.qubits)):
+                    self._algorithm.Simple_Multiply(
+                        val,
+                        *default_parameters
+                    )
+            else:
+                self._algorithm.Controlled_Multiply_targ(
+                    t_index,
+                    val,
+                    *default_parameters
+                )
+        elif gate_type == GATE_ID["CRz"]:
+            t_index = self.total_qubits - 1 - gate.targ
+            c_index = self.total_qubits - 1 - gate.carg
+            if t_index >= self.qubits and c_index >= self.qubits:
+                if self.proxy.rank & (1 << (c_index - self.qubits)):
+                    value = gate.compute_matrix[3, 3] if self.proxy.rank & (1 << (t_index - self.qubits)) else \
+                        gate.compute_matrix[2, 2]
+                    self._algorithm.Simple_Multiply(
+                        value,
+                        *default_parameters
+                    )
+            elif c_index >= self.qubits:
+                if self.proxy.rank & (1 << (c_index - self.qubits)):
+                    matrix = self.get_gate_matrix(gate)
+                    temp_matrix = matrix[MATRIX_INDEXES[0]]
+                    self._algorithm.Diagonal_Multiply_targ(
+                        t_index,
+                        temp_matrix,
+                        *default_parameters
+                    )
+            elif t_index >= self.qubits:
+                value = gate.compute_matrix[3, 3] if self.proxy.rank & (1 << (t_index - self.qubits)) else \
+                    gate.compute_matrix[2, 2]
+                self._algorithm.Controlled_Multiply_targ(
+                    c_index,
+                    value,
                     *default_parameters
                 )
             else:
                 matrix = self.get_gate_matrix(gate)
-                self._algorithm.Controlled_Multiply_targ(
+                self._algorithm.Controlled_Multiply_ctargs(
+                    c_index,
                     t_index,
                     matrix,
                     *default_parameters
