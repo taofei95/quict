@@ -106,7 +106,7 @@ class BasicGPUSimulator(object):
         return self._circuit
 
     @circuit.setter
-    def reset_circuit(self, circuit: Circuit):
+    def circuit(self, circuit: Circuit):
         self._circuit = circuit
         self._gates = circuit.gates
 
@@ -117,7 +117,7 @@ class BasicGPUSimulator(object):
         return self._vector
 
     @vector.setter
-    def reset_vector(self, vec):
+    def vector(self, vec):
         with cp.cuda.Device(self._device_id):
             if type(vec) is np.ndarray:
                 self._vector = cp.array(vec)

@@ -27,7 +27,7 @@ GATE_TYPE_to_ID = {
         GATE_ID["U2"], GATE_ID["U3"], GATE_ID["RX"], GATE_ID["RY"]
     ],
     GateType.matrix_2arg: [GATE_ID["CH"], GATE_ID["CU3"]],
-    GateType.diagonal_1arg: [GATE_ID["S"], GATE_ID["S_dagger"], GATE_ID["RZ"], GATE_ID["Phase"]],
+    GateType.diagonal_1arg: [GATE_ID["RZ"], GATE_ID["Phase"]],
     GateType.diagonal_2arg: [GATE_ID["RZZ"]],
     GateType.swap_1arg: [GATE_ID["X"]],
     GateType.swap_2arg: [GATE_ID["Swap"]],
@@ -35,7 +35,10 @@ GATE_TYPE_to_ID = {
     GateType.reverse_1arg: [GATE_ID["Y"]],
     GateType.reverse_2arg: [GATE_ID["CX"], GATE_ID["CY"]],
     GateType.reverse_3arg: [GATE_ID["CCX"]],
-    GateType.control_1arg: [GATE_ID["Z"], GATE_ID["U1"], GATE_ID["T"], GATE_ID["T_dagger"]],
+    GateType.control_1arg: [
+        GATE_ID["Z"], GATE_ID["U1"], GATE_ID["T"],
+        GATE_ID["T_dagger"], GATE_ID["S"], GATE_ID["S_dagger"]
+    ],
     GateType.control_2arg: [GATE_ID["CZ"], GATE_ID["CU1"], GATE_ID["CRz"]],
     GateType.control_3arg: [GATE_ID["CCRz"]],
     GateType.complexMIP_2arg: [GATE_ID["FSim"]],

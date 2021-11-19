@@ -84,7 +84,9 @@ class MultiStateVectorSimulator(BasicGPUSimulator):
         Trigger Gate event in the circuit.
         """
         gate_type = gate.type()
+        default_parameters = (self._vector, self._qubits, self._sync)
         is_switch_data = False
+
         if gate_type in GATE_TYPE_to_ID[GateType.matrix_1arg]:
             t_index = self.total_qubits - 1 - gate.targ
             matrix = self.get_gate_matrix(gate)
@@ -97,34 +99,27 @@ class MultiStateVectorSimulator(BasicGPUSimulator):
             self._algorithm.Based_InnerProduct_targ(
                 t_index,
                 matrix,
-                self._vector,
-                self._qubits,
-                self._sync
+                *default_parameters
             )
 
             if is_switch_data:
                 self._data_switcher.half_switch(self._vector, destination)
         elif gate_type in GATE_TYPE_to_ID[GateType.diagonal_1arg]:
             t_index = self.total_qubits - 1 - gate.targ
-            matrix = self.get_gate_matrix(gate)
             if t_index >= self.qubits:
-                index = 3 if self.proxy.rank & (1 << (t_index - self.qubits)) else \
-                    0
+                index = self.proxy.rank & (1 << (t_index - self.qubits))
+                value = gate.compute_matrix[index, index]
 
                 self._algorithm.Simple_Multiply(
-                    index,
-                    matrix,
-                    self._vector,
-                    self._qubits,
-                    self._sync
+                    value,
+                    *default_parameters
                 )
             else:
+                matrix = self.get_gate_matrix(gate)
                 self._algorithm.Diagonal_Multiply_targ(
                     t_index,
                     matrix,
-                    self._vector,
-                    self._qubits,
-                    self._sync
+                    *default_parameters
                 )
         elif gate_type in GATE_TYPE_to_ID[GateType.swap_1arg]:
             t_index = self.total_qubits - 1 - gate.targ
@@ -134,109 +129,117 @@ class MultiStateVectorSimulator(BasicGPUSimulator):
             else:
                 self._algorithm.RDiagonal_Swap_targ(
                     t_index,
-                    self._vector,
-                    self._qubits,
-                    self._sync
+                    *default_parameters
                 )
         elif gate_type in GATE_TYPE_to_ID[GateType.reverse_1arg]:
             t_index = self.total_qubits - 1 - gate.targ
-            matrix = self.get_gate_matrix(gate)
             if t_index >= self.qubits:
                 destination = self.proxy.rank ^ (1 << (t_index - self.qubits))
-                index = 1 if self.proxy.rank & (1 << (t_index - self.qubits)) else \
-                    2
+                index = (0, 1) if self.proxy.rank & (1 << (t_index - self.qubits)) else \
+                    (1, 0)
+                value = gate.compute_matrix[index]
 
                 self._algorithm.Simple_Multiply(
-                    index,
-                    matrix,
-                    self._vector,
-                    self._qubits,
-                    self._sync
+                    value,
+                    *default_parameters
                 )
 
                 self._data_switcher.all_switch(self._vector, destination)
             else:
+                matrix = self.get_gate_matrix(gate)
                 self._algorithm.RDiagonal_MultiplySwap_targ(
                     t_index,
                     matrix,
-                    self._vector,
-                    self._qubits,
-                    self._sync
+                    *default_parameters
                 )
         elif gate_type in GATE_TYPE_to_ID[GateType.control_1arg]:
             t_index = self.total_qubits - 1 - gate.targ
-            matrix = self.get_gate_matrix(gate)
-            if (
-                t_index >= self.qubits and
-                self.proxy.rank & (1 << (t_index - self.qubits))
-            ):
-                self._algorithm.Simple_Multiply(
-                    3,
-                    matrix,
-                    self._vector,
-                    self._qubits,
-                    self._sync
-                )
+            val = gate.compute_matrix[1, 1]
+            if t_index >= self.qubits:
+                if self.proxy.rank & (1 << (t_index - self.qubits)):
+                    self._algorithm.Simple_Multiply(
+                        val,
+                        *default_parameters
+                    )
             else:
                 self._algorithm.Controlled_Multiply_targ(
                     t_index,
-                    matrix,
-                    self._vector,
-                    self._qubits,
-                    self._sync
+                    val,
+                    *default_parameters
                 )
-        elif gate_type in GATE_TYPE_to_ID[GateType.control_2arg]:
+        elif gate_type == GATE_ID["CRz"]:
             t_index = self.total_qubits - 1 - gate.targ
             c_index = self.total_qubits - 1 - gate.carg
-            matrix = self.get_gate_matrix(gate)
             if t_index >= self.qubits and c_index >= self.qubits:
                 if self.proxy.rank & (1 << (c_index - self.qubits)):
-                    index = 15 if self.proxy.rank & (1 << (t_index - self.qubits)) else \
-                        10
+                    value = gate.compute_matrix[3, 3] if self.proxy.rank & (1 << (t_index - self.qubits)) else \
+                        gate.compute_matrix[2, 2]
                     self._algorithm.Simple_Multiply(
-                        index,
-                        matrix,
-                        self._vector,
-                        self._qubits,
-                        self._sync
+                        value,
+                        *default_parameters
                     )
             elif c_index >= self.qubits:
                 if self.proxy.rank & (1 << (c_index - self.qubits)):
+                    matrix = self.get_gate_matrix(gate)
+                    temp_matrix = matrix[MATRIX_INDEXES[0]]
                     self._algorithm.Diagonal_Multiply_targ(
                         t_index,
-                        matrix[MATRIX_INDEXES[0]],
-                        self._vector,
-                        self._qubits,
-                        self._sync
+                        temp_matrix,
+                        *default_parameters
                     )
             elif t_index >= self.qubits:
-                temp_matrix = cp.array([1, 0, 0, 0], dtype=self._precision)
-                temp_matrix[3] = matrix[15] if self.proxy.rank & (1 << (t_index - self.qubits)) else \
-                    matrix[10]
-
+                value = gate.compute_matrix[3, 3] if self.proxy.rank & (1 << (t_index - self.qubits)) else \
+                    gate.compute_matrix[2, 2]
                 self._algorithm.Controlled_Multiply_targ(
                     c_index,
-                    temp_matrix,
-                    self._vector,
-                    self._qubits,
-                    self._sync
+                    value,
+                    *default_parameters
                 )
             else:
-                position = 12 if gate_type == GATE_ID["CRz"] else 8
+                matrix = self.get_gate_matrix(gate)
                 self._algorithm.Controlled_Multiply_ctargs(
                     c_index,
                     t_index,
                     matrix,
-                    self._vector,
-                    self._qubits,
-                    position,
-                    self._sync
+                    *default_parameters
+                )
+        elif gate_type in GATE_TYPE_to_ID[GateType.control_2arg]:
+            t_index = self.total_qubits - 1 - gate.targ
+            c_index = self.total_qubits - 1 - gate.carg
+            value = gate.compute_matrix[3, 3]
+            if t_index >= self.qubits and c_index >= self.qubits:
+                if (
+                    self.proxy.rank & (1 << (c_index - self.qubits)) and
+                    self.proxy.rank & (1 << (t_index - self.qubits))
+                ):
+                    self._algorithm.Simple_Multiply(
+                        value,
+                        *default_parameters
+                    )
+            elif c_index >= self.qubits:
+                if self.proxy.rank & (1 << (c_index - self.qubits)):
+                    self._algorithm.Controlled_Multiply_targ(
+                        t_index,
+                        value,
+                        *default_parameters
+                    )
+            elif t_index >= self.qubits:
+                if self.proxy.rank & (1 << (t_index - self.qubits)):
+                    self._algorithm.Controlled_Multiply_targ(
+                        c_index,
+                        value,
+                        *default_parameters
+                    )
+            else:
+                self._algorithm.Controlled_Product_ctargs(
+                    c_index,
+                    t_index,
+                    value,
+                    *default_parameters
                 )
         elif gate_type in GATE_TYPE_to_ID[GateType.diagonal_2arg]:
             t_indexes = [self.total_qubits - 1 - targ for targ in gate.targs]
-            matrix = self.get_gate_matrix(gate)
-            if t_indexes[0] > t_indexes[1]:
-                t_indexes[0], t_indexes[1] = t_indexes[1], t_indexes[0]
+            t_indexes.sort()
 
             if t_indexes[0] >= self.qubits:
                 _0 = self.proxy.rank & (1 << (t_indexes[0] - self.qubits))
@@ -244,18 +247,16 @@ class MultiStateVectorSimulator(BasicGPUSimulator):
 
                 index = 0
                 if _0:
-                    index += 5
+                    index += 1
                 if _1:
-                    index += 10
+                    index += 2
 
                 self._algorithm.Simple_Multiply(
-                    index,
-                    matrix,
-                    self._vector,
-                    self._qubits,
-                    self._sync
+                    gate.compute_matrix[index, index],
+                    *default_parameters
                 )
             elif t_indexes[1] >= self.qubits:
+                matrix = self.get_gate_matrix(gate)
                 temp_matrix = cp.zeros((4,), dtype=self._precision)
                 if self.proxy.rank & (1 << (t_indexes[1] - self.qubits)):
                     temp_matrix[0], temp_matrix[3] = matrix[10], matrix[15]
@@ -265,48 +266,38 @@ class MultiStateVectorSimulator(BasicGPUSimulator):
                 self._algorithm.Diagonal_Multiply_targ(
                     t_indexes[0],
                     temp_matrix,
-                    self._vector,
-                    self._qubits,
-                    self._sync
+                    *default_parameters
                 )
             else:
+                matrix = self.get_gate_matrix(gate)
                 self._algorithm.Diagonal_Multiply_targs(
                     t_indexes,
                     matrix,
-                    self._vector,
-                    self._qubits,
-                    self._sync
+                    *default_parameters
                 )
         elif gate_type in GATE_TYPE_to_ID[GateType.reverse_2arg]:
             t_index = self.total_qubits - 1 - gate.targ
             c_index = self.total_qubits - 1 - gate.carg
-            matrix = self.get_gate_matrix(gate)
+
             if t_index >= self.qubits and c_index >= self.qubits:
                 if self.proxy.rank & (1 << (c_index - self.qubits)):
-                    index = 11 if self.proxy.rank & (1 << (t_index - self.qubits)) else \
-                        14
+                    index = (2, 3) if self.proxy.rank & (1 << (t_index - self.qubits)) else \
+                        (3, 2)
                     self.Simple_Multiply(
-                        index,
-                        matrix,
-                        self._vector,
-                        self._qubits,
-                        self._sync
+                        gate.compute_matrix[index],
+                        *default_parameters
                     )
 
                     destination = self.proxy.rank ^ (1 << (t_index - self.qubits))
                     self._data_switcher.all_switch(self._vector, destination)
             elif t_index >= self.qubits:
-                temp_matrix = cp.zeros((4,), dtype=self._precision)
-                temp_matrix[0] = 1
-                temp_matrix[3] = matrix[11] if self.proxy.rank & (1 << (t_index - self.qubits)) else \
-                    matrix[14]
+                value = gate.compute_matrix[2, 3] if self.proxy.rank & (1 << (t_index - self.qubits)) else \
+                    gate.compute_matrix[3, 2]
 
                 self._algorithm.Controlled_Multiply_targ(
                     c_index,
-                    temp_matrix,
-                    self._vector,
-                    self._qubits,
-                    self._sync
+                    value,
+                    *default_parameters
                 )
 
                 destination = self.proxy.rank ^ (1 << (t_index - self.qubits))
@@ -316,29 +307,28 @@ class MultiStateVectorSimulator(BasicGPUSimulator):
                     {c_index: 1}
                 )
             elif c_index >= self.qubits:
+                matrix = self.get_gate_matrix(gate)
                 temp_matrix = cp.zeros((4,), dtype=self._precision)
                 temp_matrix[1], temp_matrix[2] = matrix[11], matrix[14]
                 if self.proxy.rank & (1 << (c_index - self.qubits)):
                     self._algorithm.RDiagonal_MultiplySwap_targ(
                         t_index,
                         temp_matrix,
-                        self._vector,
-                        self._qubits,
-                        self._sync
+                        *default_parameters
                     )
             else:
+                matrix = self.get_gate_matrix(gate)
                 self._algorithm.Controlled_MultiplySwap_ctargs(
                     c_index,
                     t_index,
                     matrix,
-                    self._vector,
-                    self._qubits,
-                    self._sync
+                    *default_parameters
                 )
         elif gate_type in GATE_TYPE_to_ID[GateType.matrix_2arg]:
             t_index = self.total_qubits - 1 - gate.targ
             c_index = self.total_qubits - 1 - gate.carg
             matrix = self.get_gate_matrix(gate)
+
             if t_index >= self.qubits and c_index >= self.qubits:
                 if self.proxy.rank & (1 << (c_index - self.qubits)):
                     destination = self.proxy.rank ^ (1 << (t_index - self.qubits))
@@ -350,9 +340,7 @@ class MultiStateVectorSimulator(BasicGPUSimulator):
                     self._algorithm.Based_InnerProduct_targ(
                         self.qubits - 1,
                         matrix[MATRIX_INDEXES[0]],
-                        self._vector,
-                        self._qubits,
-                        self._sync
+                        *default_parameters
                     )
 
                     self._data_switcher.half_switch(
@@ -365,9 +353,7 @@ class MultiStateVectorSimulator(BasicGPUSimulator):
                     self._algorithm.Based_InnerProduct_targ(
                         t_index,
                         temp_matrix,
-                        self._vector,
-                        self._qubits,
-                        self._sync
+                        *default_parameters
                     )
             elif t_index >= self.qubits:
                 destination = self.proxy.rank ^ (1 << (t_index - self.qubits))
@@ -384,9 +370,7 @@ class MultiStateVectorSimulator(BasicGPUSimulator):
                     self._algorithm.Based_InnerProduct_targ(
                         c_index,
                         temp_matrix,
-                        self._vector,
-                        self._qubits,
-                        self._sync
+                        *default_parameters
                     )
 
                 self._data_switcher.ctargs_switch(
@@ -399,15 +383,12 @@ class MultiStateVectorSimulator(BasicGPUSimulator):
                     c_index,
                     t_index,
                     matrix,
-                    self._vector,
-                    self._qubits,
-                    self._sync
+                    *default_parameters
                 )
         elif gate_type in GATE_TYPE_to_ID[GateType.complexMIP_2arg]:
             t_indexes = [self.total_qubits - 1 - targ for targ in gate.targs]
+            t_indexes.sort()
             matrix = self.get_gate_matrix(gate)
-            if t_indexes[0] > t_indexes[1]:
-                t_indexes[0], t_indexes[1] = t_indexes[1], t_indexes[0]
 
             if t_indexes[0] >= self.qubits:
                 _0 = self.proxy.rank & (1 << (t_indexes[0] - self.qubits))
@@ -415,11 +396,8 @@ class MultiStateVectorSimulator(BasicGPUSimulator):
 
                 if _0 and _1:
                     self._algorithm.Simple_Multiply(
-                        15,
-                        matrix,
-                        self._vector,
-                        self._qubits,
-                        self._sync
+                        gate.compute_matrix[3, 3],
+                        *default_parameters
                     )
                 elif _0 or _1:
                     destination = self.proxy.rank ^ \
@@ -431,9 +409,7 @@ class MultiStateVectorSimulator(BasicGPUSimulator):
                     self._algorithm.Based_InnerProduct_targ(
                         self.qubits - 1,
                         matrix[MATRIX_INDEXES[1]],
-                        self._vector,
-                        self._qubits,
-                        self._sync
+                        *default_parameters
                     )
                     self._data_switcher.half_switch(
                         self._vector,
@@ -454,18 +430,13 @@ class MultiStateVectorSimulator(BasicGPUSimulator):
                     self._algorithm.Based_InnerProduct_targ(
                         t_indexes[0],
                         temp_matrix,
-                        self._vector,
-                        self._qubits,
-                        self._sync
+                        *default_parameters
                     )
                 else:
-                    temp_matrix = matrix[MATRIX_INDEXES[3]]
-                    self._algorithm.Diagonal_Multiply_targ(
+                    self._algorithm.Controlled_Multiply_targ(
                         t_indexes[0],
-                        temp_matrix,
-                        self._vector,
-                        self._qubits,
-                        self._sync
+                        gate.compute_matrix[3, 3],
+                        *default_parameters
                     )
 
                 self._data_switcher.ctargs_switch(
@@ -477,15 +448,12 @@ class MultiStateVectorSimulator(BasicGPUSimulator):
                 self._algorithm.Completed_MxIP_targs(
                     t_indexes,
                     matrix,
-                    self._vector,
-                    self._qubits,
-                    self._sync
+                    *default_parameters
                 )
         elif gate_type in GATE_TYPE_to_ID[GateType.complexIPIP_2arg]:
             t_indexes = [self.total_qubits - 1 - targ for targ in gate.targs]
+            t_indexes.sort()
             matrix = self.get_gate_matrix(gate)
-            if t_indexes[0] > t_indexes[1]:
-                t_indexes[0], t_indexes[1] = t_indexes[1], t_indexes[0]
 
             if t_indexes[0] >= self.qubits:
                 destination = self.proxy.rank ^ \
@@ -506,9 +474,7 @@ class MultiStateVectorSimulator(BasicGPUSimulator):
                 self._algorithm.Based_InnerProduct_targ(
                     self.qubits - 1,
                     temp_matrix,
-                    self._vector,
-                    self._qubits,
-                    self._sync
+                    *default_parameters
                 )
 
                 self._data_switcher.half_switch(
@@ -531,9 +497,7 @@ class MultiStateVectorSimulator(BasicGPUSimulator):
                 self._algorithm.Based_InnerProduct_targ(
                     t_indexes[0],
                     temp_matrix,
-                    self._vector,
-                    self._qubits,
-                    self._sync
+                    *default_parameters
                 )
 
                 self._data_switcher.ctargs_switch(
@@ -545,24 +509,20 @@ class MultiStateVectorSimulator(BasicGPUSimulator):
                 self._algorithm.Completed_IPxIP_targs(
                     t_indexes,
                     matrix,
-                    self._vector,
-                    self._qubits,
-                    self._sync
+                    *default_parameters
                 )
         elif gate_type in GATE_TYPE_to_ID[GateType.swap_2arg]:
             t_indexes = [self.total_qubits - 1 - targ for targ in gate.targs]
-            if t_indexes[0] > t_indexes[1]:
-                t_indexes[0], t_indexes[1] = t_indexes[1], t_indexes[0]
+            t_indexes.sort()
 
             self.swap_operation(t_indexes)
         elif gate.type() == GATE_ID["ID"]:
             pass
         elif gate_type in GATE_TYPE_to_ID[GateType.reverse_3arg]:
             c_indexes = [self.total_qubits - 1 - carg for carg in gate.cargs]
+            c_indexes.sort()
             t_index = self.total_qubits - 1 - gate.targ
             matrix = self.get_gate_matrix(gate)
-            if c_indexes[0] > c_indexes[1]:
-                c_indexes[0], c_indexes[1] = c_indexes[1], c_indexes[0]
 
             _t = t_index >= self.qubits
             _c0 = c_indexes[0] >= self.qubits
@@ -590,9 +550,7 @@ class MultiStateVectorSimulator(BasicGPUSimulator):
                 ):
                     self._algorithm.RDiagonal_Swap_targ(
                         t_index,
-                        self._vector,
-                        self._qubits,
-                        self._sync
+                        *default_parameters
                     )
             elif _c1:
                 if self.proxy.rank & (1 << (c_indexes[1] - self.qubits)):
@@ -601,9 +559,7 @@ class MultiStateVectorSimulator(BasicGPUSimulator):
                         c_indexes[0],
                         t_index,
                         temp_matrix,
-                        self._vector,
-                        self._qubits,
-                        self._sync
+                        *default_parameters
                     )
             elif _t:
                 destination = self.proxy.rank ^ (1 << (t_index - self.qubits))
@@ -620,16 +576,13 @@ class MultiStateVectorSimulator(BasicGPUSimulator):
                 self._algorithm.Controlled_Swap_more(
                     c_indexes,
                     t_index,
-                    self._vector,
-                    self._qubits,
-                    self._sync
+                    *default_parameters
                 )
         elif gate_type in GATE_TYPE_to_ID[GateType.control_3arg]:
             c_indexes = [self.total_qubits - 1 - carg for carg in gate.cargs]
+            c_indexes.sort()
             t_index = self.total_qubits - 1 - gate.targ
             matrix = self.get_gate_matrix(gate)
-            if c_indexes[0] > c_indexes[1]:
-                c_indexes[0], c_indexes[1] = c_indexes[1], c_indexes[0]
 
             _t = t_index >= self.qubits
             _c0 = c_indexes[0] >= self.qubits
@@ -639,28 +592,23 @@ class MultiStateVectorSimulator(BasicGPUSimulator):
                     self.proxy.rank & (1 << (c_indexes[0] - self.qubits)) and
                     self.proxy.rank & (1 << (c_indexes[1] - self.qubits))
                 ):
-                    index = 63 if self.proxy.rank & (1 << (t_index - self.qubits)) else \
-                        54
+                    index = (7, 7) if self.proxy.rank & (1 << (t_index - self.qubits)) else \
+                        (6, 6)
 
                     self._algorithm.Simple_Multiply(
-                        index,
-                        matrix,
-                        self._vector,
-                        self._qubits,
-                        self._sync
+                        gate.compute_matrix[index],
+                        *default_parameters
                     )
             elif _t and _c1:
                 if self.proxy.rank & (1 << (c_indexes[1] - self.qubits)):
-                    if self.proxy.rank & (1 << (c_indexes[1] - self.qubits)):
-                        temp_matrix = matrix[MATRIX_INDEXES[5]]
+                    if self.proxy.rank & (1 << (t_index - self.qubits)):
+                        value = gate.compute_matrix[7, 7]
                     else:
-                        temp_matrix = matrix[MATRIX_INDEXES[6]]
+                        value = gate.compute_matrix[6, 6]
                     self._algorithm.Controlled_Multiply_targ(
                         c_indexes[0],
-                        temp_matrix,
-                        self._vector,
-                        self._qubits,
-                        self._sync
+                        value,
+                        *default_parameters
                     )
             elif _c0:
                 if (
@@ -670,9 +618,7 @@ class MultiStateVectorSimulator(BasicGPUSimulator):
                     self._algorithm.Diagonal_Multiply_targ(
                         t_index,
                         matrix[MATRIX_INDEXES[7]],
-                        self._vector,
-                        self._qubits,
-                        self._sync
+                        *default_parameters
                     )
             elif _c1:
                 if self.proxy.rank & (1 << (c_indexes[1] - self.qubits)):
@@ -681,39 +627,29 @@ class MultiStateVectorSimulator(BasicGPUSimulator):
                         c_indexes[0],
                         t_index,
                         temp_matrix,
-                        self._vector,
-                        self._qubits,
-                        12,
-                        self._sync
+                        *default_parameters
                     )
             elif _t:
-                temp_matrix = cp.zeros((16,), dtype=self._precision)
-                temp_matrix[15] = matrix[63] if self.proxy.rank & (1 << (t_index - self.qubits)) else \
-                    matrix[54]
+                index = (7, 7) if self.proxy.rank & (1 << (t_index - self.qubits)) else \
+                    (6, 6)
 
-                self._algorithm.Controlled_Multiply_ctargs(
+                self._algorithm.Controlled_Product_ctargs(
                     c_indexes[1],
                     c_indexes[0],
-                    temp_matrix,
-                    self._vector,
-                    self._qubits,
-                    8,
-                    self._sync
+                    gate.compute_matrix[index],
+                    *default_parameters
                 )
             else:
                 self._algorithm.Controlled_Multiply_more(
                     c_indexes,
                     t_index,
                     matrix,
-                    self._vector,
-                    self._qubits,
-                    self._sync
+                    *default_parameters
                 )
         elif gate_type in GATE_TYPE_to_ID[GateType.swap_3arg]:
             t_indexes = [self.total_qubits - 1 - targ for targ in gate.targs]
+            t_indexes.sort()
             c_index = self.total_qubits - 1 - gate.carg
-            if t_indexes[0] > t_indexes[1]:
-                t_indexes[0], t_indexes[1] = t_indexes[1], t_indexes[0]
 
             _c = c_index >= self.qubits
             _t0 = t_indexes[0] >= self.qubits
@@ -769,17 +705,13 @@ class MultiStateVectorSimulator(BasicGPUSimulator):
                 if self.proxy.rank & (1 << (c_index - self.qubits)):
                     self._algorithm.Controlled_Swap_targs(
                         t_indexes,
-                        self._vector,
-                        self._qubits,
-                        self._sync
+                        *default_parameters
                     )
             else:
                 self._algorithm.Controlled_Swap_tmore(
                     t_indexes,
                     c_index,
-                    self._vector,
-                    self._qubits,
-                    self._sync
+                    *default_parameters
                 )
         elif gate.type() == GATE_ID["Measure"]:
             index = self.total_qubits - 1 - gate.targ
@@ -805,9 +737,7 @@ class MultiStateVectorSimulator(BasicGPUSimulator):
                     else:
                         self._algorithm.Float_Multiply(
                             alpha,
-                            self._vector,
-                            self._qubits,
-                            self._sync
+                            *default_parameters
                         )
                 else:
                     alpha = np.float32(1 / np.sqrt(1 - prob)) if self._precision == np.complex64 else \
@@ -816,18 +746,14 @@ class MultiStateVectorSimulator(BasicGPUSimulator):
                     if self.proxy.rank & (1 << (index - self.qubits)):
                         self._algorithm.Float_Multiply(
                             alpha,
-                            self._vector,
-                            self._qubits,
-                            self._sync
+                            *default_parameters
                         )
                     else:
                         self._vector = cp.zeros_like(self._vector)
             else:
-                _ = self._algorithm.MeasureGate_Apply(
+                self._algorithm.MeasureGate_Apply(
                     index,
-                    self._vector,
-                    self._qubits,
-                    self._sync,
+                    *default_parameters,
                     multigpu_prob=prob
                 )
 
@@ -849,9 +775,7 @@ class MultiStateVectorSimulator(BasicGPUSimulator):
 
                 if alpha < 1e-6:
                     destination = self.proxy.rank ^ (1 << (index - self.qubits))
-                    if self.proxy.rank & (1 << (index - self.qubits)):
-                        self._data_switcher.all_switch(self._vector, destination)
-                    else:
+                    if not (self.proxy.rank & (1 << (index - self.qubits))):
                         self._vector = cp.zeros_like(self._vector)
                         self._data_switcher.all_switch(self._vector, destination)
                 else:
@@ -861,16 +785,12 @@ class MultiStateVectorSimulator(BasicGPUSimulator):
                         alpha = np.float64(1 / alpha)
                         self._algorithm.Float_Multiply(
                             alpha,
-                            self._vector,
-                            self._qubits,
-                            self._sync
+                            *default_parameters
                         )
             else:
                 self._algorithm.ResetGate_Apply(
                     index,
-                    self._vector,
-                    self._qubits,
-                    self._sync,
+                    *default_parameters,
                     multigpu_prob=prob
                 )
         elif gate.type() == GATE_ID["Barrier"]:
@@ -892,9 +812,7 @@ class MultiStateVectorSimulator(BasicGPUSimulator):
                 swaped_pargs = self.perm_operation(indexes)
                 self._algorithm.PermGate_Apply(
                     swaped_pargs,
-                    self._vector,
-                    self._qubits,
-                    self._sync
+                    *default_parameters
                 )
         elif gate.type() == GATE_ID["PermT"]:
             mapping = np.array(gate.pargs)

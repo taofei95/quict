@@ -1,6 +1,8 @@
 import cupy as cp
 import numpy as np
 
+from .gate_function import prop_add, MeasureGate_prop_kernel
+
 
 __outward_functions = [
     "Simple_Multiply",
@@ -12,10 +14,10 @@ __outward_functions = [
 Simple_Multiply_single = cp.RawKernel(r'''
     #include <cupy/complex.cuh>
     extern "C" __global__
-    void SimpleMultiply(int index, complex<float>* mat, complex<float>* vec) {
+    void SimpleMultiply(complex<float> val, complex<float>* vec) {
         int label = blockDim.x * blockIdx.x + threadIdx.x;
 
-        vec[label] = vec[label]*mat[index];
+        vec[label] = vec[label]*val;
     }
     ''', 'SimpleMultiply')
 
@@ -23,10 +25,10 @@ Simple_Multiply_single = cp.RawKernel(r'''
 Simple_Multiply_double = cp.RawKernel(r'''
     #include <cupy/complex.cuh>
     extern "C" __global__
-    void SimpleMultiply(int index, complex<double>* mat, complex<double>* vec) {
+    void SimpleMultiply(complex<double> val, complex<double>* vec) {
         int label = blockDim.x * blockIdx.x + threadIdx.x;
 
-        vec[label] = vec[label]*mat[index];
+        vec[label] = vec[label]*val;
     }
     ''', 'SimpleMultiply')
 
@@ -53,12 +55,6 @@ Float_Multiply_double = cp.RawKernel(r'''
     ''', 'FloatMultiply')
 
 
-prop_add = cp.ElementwiseKernel(
-    'T x, raw T y, int32 index', 'T z',
-    'z = (i & index) ? 0 : abs(x) * abs(x)',
-    'prop_add')
-
-
 prob_0 = cp.ElementwiseKernel(
     'T x, raw T y', 'T z',
     'z = 0',
@@ -71,17 +67,7 @@ prob_1 = cp.ElementwiseKernel(
     'prop_add')
 
 
-MeasureGate_prop_kernel = cp.ReductionKernel(
-    'T x',
-    'T y',
-    'x',
-    'a + b',
-    'y = abs(a)',
-    '0',
-    'MeasureGate_prop_kernel')
-
-
-def Simple_Multiply(index, mat, vec, vec_bit, sync: bool = False):
+def Simple_Multiply(val, vec, vec_bit, sync: bool = False):
     task_number = 1 << vec_bit
     thread_per_block = min(256, task_number)
     block_num = task_number // thread_per_block
@@ -90,13 +76,13 @@ def Simple_Multiply(index, mat, vec, vec_bit, sync: bool = False):
         Simple_Multiply_single(
             (block_num,),
             (thread_per_block,),
-            (index, mat, vec)
+            (val, vec)
         )
     else:
         Simple_Multiply_double(
             (block_num,),
             (thread_per_block,),
-            (index, mat, vec)
+            (val, vec)
         )
 
     if sync:
