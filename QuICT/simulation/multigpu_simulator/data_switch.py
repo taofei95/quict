@@ -1,31 +1,24 @@
 import numpy as np
 import cupy as cp
 import math
-import os
-
-
-LIMIT_BUFFER_SIZE = int(os.getenv("QuICT_BUFFER_SIZE", 17))
 
 
 class DataSwitcher:
-    def __init__(self, proxy, qubits: int, precision=np.complex64):
+    def __init__(self, proxy, qubits: int):
         self._proxy = proxy
         self._qubits = qubits
         self._based_idx = np.arange(1 << qubits, dtype=np.int64)
-        self._id = proxy.rank
-        if precision == np.complex64:
-            self._max_data_size_per_time = 1 << LIMIT_BUFFER_SIZE
-        else:
-            self._max_data_size_per_time = 1 << (LIMIT_BUFFER_SIZE - 1)
+        self._id = proxy.dev_id
 
-    def _switch(self, vector, destination):
+    def _switch(self, vector, destination, _0_1: bool):
         recv_buf = cp.zeros(vector.size, dtype=vector.dtype)
-        sliced_data = min(vector.size, self._max_data_size_per_time)
 
-        for i in range(math.ceil(vector.size / sliced_data)):
-            self._proxy.send(vector[i * sliced_data:(i + 1) * sliced_data], destination)
-
-            self._proxy.recv(recv_buf[i * sliced_data:(i + 1) * sliced_data], destination)
+        if _0_1:
+            self._proxy.send(vector, destination)
+            self._proxy.recv(recv_buf, destination)
+        else:
+            self._proxy.recv(recv_buf, destination)
+            self._proxy.send(vector, destination)
 
         return recv_buf
 
@@ -38,11 +31,11 @@ class DataSwitcher:
 
         if not _0_1:
             sending_data = vector[:sending_size]
-            recv_buf = self._switch(sending_data, destination)
+            recv_buf = self._switch(sending_data, destination, _0_1)
             vector[:sending_size] = recv_buf
         else:
             sending_data = vector[sending_size:]
-            recv_buf = self._switch(sending_data, destination)
+            recv_buf = self._switch(sending_data, destination, _0_1)
             vector[sending_size:] = recv_buf
 
     def ctargs_switch(self, vector, destination: int, condition: dict):
@@ -60,7 +53,7 @@ class DataSwitcher:
                 target_idx = target_idx[np.where((target_idx & (1 << idx)) == 0)]
 
         sending_data = vector[target_idx]
-        recv_buf = self._switch(sending_data, destination)
+        recv_buf = self._switch(sending_data, destination, self._id < destination)
         vector[target_idx] = recv_buf
 
     def add_prob(self, prob_result):

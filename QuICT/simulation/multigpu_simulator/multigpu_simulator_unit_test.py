@@ -13,18 +13,19 @@ from cupy.cuda import nccl
 
 from QuICT.core import *
 from QuICT.algorithm import Amplitude
-from QuICT.ops.utils import Proxy
+from QuICT.utility import Proxy
 from QuICT.simulation import MultiStateVectorSimulator
 
 
-CIRCUIT = Circuit(5)
-QFT.build_gate(5) | CIRCUIT
-QFT.build_gate(5) | CIRCUIT
-QFT.build_gate(5) | CIRCUIT
+q = 5
+CIRCUIT = Circuit(q)
+QFT.build_gate(q) | CIRCUIT
+QFT.build_gate(q) | CIRCUIT
+QFT.build_gate(q) | CIRCUIT
 
 
 def worker(ndev, uid, dev_id):
-    proxy = Proxy(ndevs=ndev, uid=uid, rank=dev_id)
+    proxy = Proxy(ndevs=ndev, uid=uid, dev_id=dev_id)
 
     simulator = MultiStateVectorSimulator(
         proxy=proxy,
@@ -45,7 +46,7 @@ class TestMultiSVSimulator(unittest.TestCase):
         uid = nccl.get_unique_id()
         with ProcessPoolExecutor(max_workers=ndev) as executor:
             tasks = [
-                executor.submit(worker, ndev, uid, rank) for rank in range(ndev)
+                executor.submit(worker, ndev, uid, dev_id) for dev_id in range(ndev)
             ]
 
         results = []

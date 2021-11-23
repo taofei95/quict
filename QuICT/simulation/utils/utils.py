@@ -1,3 +1,4 @@
+import subprocess
 from enum import Enum
 
 from QuICT.core import GATE_ID
@@ -39,7 +40,7 @@ GATE_TYPE_to_ID = {
         GATE_ID["Z"], GATE_ID["U1"], GATE_ID["T"],
         GATE_ID["T_dagger"], GATE_ID["S"], GATE_ID["S_dagger"]
     ],
-    GateType.control_2arg: [GATE_ID["CZ"], GATE_ID["CU1"], GATE_ID["CRz"]],
+    GateType.control_2arg: [GATE_ID["CZ"], GATE_ID["CU1"]],
     GateType.control_3arg: [GATE_ID["CCRz"]],
     GateType.complexMIP_2arg: [GATE_ID["FSim"]],
     GateType.complexIPIP_2arg: [GATE_ID["RXX"], GATE_ID["RYY"]]
@@ -56,3 +57,33 @@ MATRIX_INDEXES = [
     [36, 37, 53, 54],
     [54, 55, 62, 63]
 ]
+
+
+def get_bandwidth():
+    default = 10
+
+    try:
+        # Get nvidia device ip
+        ret = subprocess.check_output(['lspci | grep -i nvidia'], shell=True)
+        ret = ret.decode()
+        device_ip = ret.split(" ")[0]
+
+        # Get vendor ip
+        ret = subprocess.check_output([f'lspci -n | grep -i {device_ip}'], shell=True)
+        ret = ret.decode()
+        vendor_ip = ret.split(" ")[2]
+
+        # Get bandwidth
+        ret = subprocess.check_output([f'lspci -n -d {vendor_ip} -vvv | grep -i width'], shell=True)
+        ret = ret.decode()
+    except Exception as _:
+        return default
+
+
+def set_buffsize(qubits: int):
+    import os
+
+    buffsize = (1 << qubits) * 8    # Get buffsize by the given qubits with complex64
+    user_path = os.path.expanduser('~')
+    with open(f"{user_path}/.nccl.conf", mode="w") as f:
+        f.write(f"NCCL_BUFFSIZE={buffsize}")

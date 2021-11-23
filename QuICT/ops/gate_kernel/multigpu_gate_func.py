@@ -89,12 +89,12 @@ def Simple_Multiply(val, vec, vec_bit, sync: bool = False):
         cp.cuda.Device().synchronize()
 
 
-def Device_Prob_Calculator(index, vec, device_qubits, rank):
+def Device_Prob_Calculator(index, vec, device_qubits, dev_id):
     """
     Measure Gate Measure.
     """
     if index >= device_qubits:
-        if rank & (1 << (index - device_qubits)):
+        if dev_id & (1 << (index - device_qubits)):
             prob = prob_0(vec, vec)
         else:
             prob = prob_1(vec, vec)
