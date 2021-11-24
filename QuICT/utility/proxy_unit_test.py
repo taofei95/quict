@@ -13,11 +13,11 @@ import cupy as cp
 from cupy import cuda
 from cupy.cuda import nccl
 
-from QuICT.ops.utils import Proxy
+from QuICT.utility import Proxy
 
 
-def sender(ndev, uid, rank):
-    proxy = Proxy(ndev, uid, rank)
+def sender(ndev, uid, dev_id):
+    proxy = Proxy(ndev, uid, dev_id)
     based_data = np.random.rand(10).astype(np.complex64)
     gpu_data = cp.array(based_data)
 
@@ -26,8 +26,8 @@ def sender(ndev, uid, rank):
     return based_data
 
 
-def receiver(ndev, uid, rank):
-    proxy = Proxy(ndev, uid, rank)
+def receiver(ndev, uid, dev_id):
+    proxy = Proxy(ndev, uid, dev_id)
     gpu_receive_buff = cp.zeros(10, dtype=np.complex64)
 
     proxy.recv(gpu_receive_buff, 0)
@@ -35,9 +35,9 @@ def receiver(ndev, uid, rank):
     return gpu_receive_buff.get()
 
 
-def broadcast(ndev, uid, rank):
-    proxy = Proxy(ndevs=ndev, uid=uid, rank=rank)
-    if rank == 0:
+def broadcast(ndev, uid, dev_id):
+    proxy = Proxy(ndevs=ndev, uid=uid, dev_id=dev_id)
+    if dev_id == 0:
         based_data = np.random.rand(10).astype(np.complex64)
         gpu_bd = cp.array(based_data)
     else:
@@ -69,7 +69,7 @@ class TestProxy(unittest.TestCase):
         ndev = 3
         uid = nccl.get_unique_id()
         with ProcessPoolExecutor(max_workers=ndev) as executor:
-            tasks = [executor.submit(broadcast, ndev, uid, rank) for rank in range(ndev)]
+            tasks = [executor.submit(broadcast, ndev, uid, dev_id) for dev_id in range(ndev)]
 
         results = []
         for t in as_completed(tasks):

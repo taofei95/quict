@@ -11,6 +11,7 @@ from cupy import cuda
 from cupy.cuda import nccl
 
 from typing import Union
+from QuICT.utility.timeout import timeout
 
 
 # Mapping between dtype and nccl dtype
@@ -27,6 +28,9 @@ type_mapping = {
     "complex64": nccl.NCCL_FLOAT64,
     "complex128": nccl.NCCL_FLOAT64
 }
+
+
+TIMEOUT = 300   # The timeout for receiving data
 
 
 class Proxy:
@@ -97,6 +101,7 @@ class Proxy:
 
         self.comm.send(pointer, count, nccl_datatype, destination, stream)
 
+    @timeout(TIMEOUT)
     def recv(
         self,
         recvbuf: cp.ndarray,
