@@ -5,7 +5,7 @@ import math
 
 class DataSwitcher:
     """ A class of data switch functions using by multi-GPU simulator.
-    
+
     Args:
         proxy (Proxy): The NCCL Communicator.
         qubits (int): The number of qubits.
@@ -17,7 +17,7 @@ class DataSwitcher:
         self._id = proxy.dev_id
 
     def _switch(self, vector, destination: int):
-        """ Based data switch function, swithc the data between self and destination. 
+        """ Based data switch function, swithc the data between self and destination.
 
         Args:
             vector (cp.array): The data which will be sent to destination.
@@ -68,7 +68,7 @@ class DataSwitcher:
             vector[sending_size:] = recv_buf
 
     def ctargs_switch(self, vector, destination: int, condition: dict):
-        """ Switch the data by the given condition. 
+        """ Switch the data by the given condition.
             e.g. if condition = {3: 1}, switch the data which the third bit-indexes is 1 with the data
             from the destination.
 
