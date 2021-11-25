@@ -4,12 +4,14 @@
 # @Author  : Kaiqi Li
 # @File    : proxy
 
+import os
 import cupy as cp
 import numpy as np
 from cupy import cuda
 from cupy.cuda import nccl
 
 from typing import Union
+from QuICT.utility.timeout import timeout
 
 
 # Mapping between dtype and nccl dtype
@@ -28,25 +30,29 @@ type_mapping = {
 }
 
 
+TIMEOUT = 300   # The timeout for receiving data
+
+
 class Proxy:
     """ The proxy class of NCCL Communicators, which is used to transfer data between gpus.
 
     Args:
         ndevs(int): number of total GPU devices.
         uid(tuple): The unique ID, generate by cupy.cuda.nccl.get_unique_id().
-        rank(int): The rank of GPU, between 0 and ndevs-1; represent the gpu device use in current process.
-     """
-    def __init__(self, ndevs: int, uid: tuple, rank: int):
-        assert((rank < ndevs) and (ndevs <= cuda.runtime.getDeviceCount()))
-        if rank != cuda.runtime.getDevice():
-            target_device = cuda.Device(rank)
+        dev_id(int): The dev_id of GPU, between 0 and ndevs-1; represent the gpu device use in current process.
+    """
+    def __init__(self, ndevs: int, uid: tuple, dev_id: int):
+        assert((dev_id < ndevs) and (ndevs <= cuda.runtime.getDeviceCount()))
+        if dev_id != cuda.runtime.getDevice():
+            target_device = cuda.Device(dev_id)
             target_device.use()
 
         self._ndevs = ndevs
         self._uid = uid
-        self._rank = rank
-        self.peers = np.setdiff1d(np.arange(self._ndevs), self._rank)
-        self.comm = nccl.NcclCommunicator(self._ndevs, self._uid, self._rank)
+        self._dev_id = dev_id
+        self.peers = np.setdiff1d(np.arange(self._ndevs), self._dev_id)
+
+        self.comm = nccl.NcclCommunicator(self._ndevs, self._uid, self._dev_id)
 
     def __exit__(self):
         self.comm.destroy()
@@ -67,9 +73,9 @@ class Proxy:
         return self._uid
 
     @property
-    def rank(self):
-        """ return the rank of current communicator. """
-        return self._rank
+    def dev_id(self):
+        """ return the dev_id of current communicator. """
+        return self._dev_id
 
     def send(
         self,
@@ -82,7 +88,7 @@ class Proxy:
 
         Args:
             sendbuf(cupy.ndarray): the sending data.
-            destination(int): the rank of destination communicator.
+            destination(int): the dev_id of destination communicator.
             stream(Stream): the cupy stream.
         """
         assert(type(sendbuf) == cp.ndarray)
@@ -95,6 +101,7 @@ class Proxy:
 
         self.comm.send(pointer, count, nccl_datatype, destination, stream)
 
+    @timeout(TIMEOUT)
     def recv(
         self,
         recvbuf: cp.ndarray,
@@ -106,7 +113,7 @@ class Proxy:
 
         Args:
             recvbuf(cupy.ndarray): the GPU array waitting for comming data.
-            source(int): the rank of the source communicator.
+            source(int): the dev_id of the source communicator.
             stream(Stream): the cupy stream.
         """
         count = recvbuf.size
@@ -130,7 +137,7 @@ class Proxy:
 
         Args:
             databuf(cupy.ndarray): the sending data in root, and the received array for other communicators.
-            root(int): the rank ID of root communicator.
+            root(int): the dev_id ID of root communicator.
             stream(Stream): the cupy stream.
         """
         pointer = databuf.data.ptr
@@ -154,7 +161,7 @@ class Proxy:
         Compute the op with the data from other peers, and write the result in the root.
 
         Args:
-            root(int): the rank ID of root communicator.
+            root(int): the dev_id ID of root communicator.
             op (int): The operation with one of
                 NCCL_SUM = 0,
                 NCCL_PROD = 1,
@@ -164,7 +171,7 @@ class Proxy:
             recvbuf(cupy.ndarray): the array waitting for comming data, must be defined in the root.
             stream(Stream): the cupy stream.
         """
-        if self._rank == root:
+        if self._dev_id == root:
             assert(recvbuf is not None)
             sendbuf = cp.empty(1, dtype=recvbuf.dtype)
             pointer = recvbuf.data.ptr
@@ -259,7 +266,7 @@ class Proxy:
 
         Args:
             sendbuf(cupy.ndarray): the sending data.
-            targets(list): List of the communicators' rank ID which hope to receive.
+            targets(list): List of the communicators' dev_id ID which hope to receive.
             stream(Stream): the cupy stream.
         """
         # Divided data depending on the given rules
@@ -281,13 +288,13 @@ class Proxy:
         Collect all data from peers into the root.
 
         Args:
-            root(int): the rank ID of the root communicator.
+            root(int): the dev_id ID of the root communicator.
             sendbuf(cupy.ndarray): the sending data, not use in the root communicator.
             recvbuf(cupy.ndarray): the GPU array waitting for comming data, only use in the
             root communicator.
             stream(Stream): the cupy stream.
         """
-        if self._rank == root:
+        if self._dev_id == root:
             assert(recvbuf is not None)
 
             recv_count_per_dev = recvbuf.size // (self._ndevs - 1)

@@ -1,3 +1,4 @@
+import subprocess
 from enum import Enum
 
 from QuICT.core import GATE_ID
@@ -39,7 +40,7 @@ GATE_TYPE_to_ID = {
         GATE_ID["Z"], GATE_ID["U1"], GATE_ID["T"],
         GATE_ID["T_dagger"], GATE_ID["S"], GATE_ID["S_dagger"]
     ],
-    GateType.control_2arg: [GATE_ID["CZ"], GATE_ID["CU1"], GATE_ID["CRz"]],
+    GateType.control_2arg: [GATE_ID["CZ"], GATE_ID["CU1"]],
     GateType.control_3arg: [GATE_ID["CCRz"]],
     GateType.complexMIP_2arg: [GATE_ID["FSim"]],
     GateType.complexIPIP_2arg: [GATE_ID["RXX"], GATE_ID["RYY"]]

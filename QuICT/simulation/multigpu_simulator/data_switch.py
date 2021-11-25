@@ -1,38 +1,60 @@
 import numpy as np
 import cupy as cp
 import math
-import os
-
-
-LIMIT_BUFFER_SIZE = int(os.getenv("QuICT_BUFFER_SIZE", 17))
 
 
 class DataSwitcher:
-    def __init__(self, proxy, qubits: int, precision=np.complex64):
+    """ A class of data switch functions using by multi-GPU simulator.
+
+    Args:
+        proxy (Proxy): The NCCL Communicator.
+        qubits (int): The number of qubits.
+    """
+    def __init__(self, proxy, qubits: int):
         self._proxy = proxy
         self._qubits = qubits
         self._based_idx = np.arange(1 << qubits, dtype=np.int64)
-        self._id = proxy.rank
-        if precision == np.complex64:
-            self._max_data_size_per_time = 1 << LIMIT_BUFFER_SIZE
-        else:
-            self._max_data_size_per_time = 1 << (LIMIT_BUFFER_SIZE - 1)
+        self._id = proxy.dev_id
 
-    def _switch(self, vector, destination):
+    def _switch(self, vector, destination: int):
+        """ Based data switch function, swithc the data between self and destination.
+
+        Args:
+            vector (cp.array): The data which will be sent to destination.
+            destination (int): The communicator which switch the data with us.
+            _0_1 (bool): Is the initiator or the follower about the switch behavior.
+
+        Returns:
+            np.array: the switched data from the destination.
+        """
+        is_initiator = self._id < destination
         recv_buf = cp.zeros(vector.size, dtype=vector.dtype)
-        sliced_data = min(vector.size, self._max_data_size_per_time)
 
-        for i in range(math.ceil(vector.size / sliced_data)):
-            self._proxy.send(vector[i * sliced_data:(i + 1) * sliced_data], destination)
-
-            self._proxy.recv(recv_buf[i * sliced_data:(i + 1) * sliced_data], destination)
+        if is_initiator:
+            self._proxy.send(vector, destination)
+            self._proxy.recv(recv_buf, destination)
+        else:
+            self._proxy.recv(recv_buf, destination)
+            self._proxy.send(vector, destination)
 
         return recv_buf
 
-    def all_switch(self, vector, destination):
+    def all_switch(self, vector, destination: int):
+        """ Switch the whole data with the destination.
+
+        Args:
+            vector (cp.array): the switched data.
+            destination (int): The communicator which switch the data with us.
+        """
         vector[:] = self._switch(vector, destination)
 
-    def half_switch(self, vector, destination):
+    def half_switch(self, vector, destination: int):
+        """ Switch the half data with the destination.
+
+        Args:
+            vector (cp.array): the switched data.
+            destination (int): The communicator which switch the data with us.
+        """
         _0_1 = self._id < destination
         sending_size = vector.size // 2
 
@@ -46,8 +68,14 @@ class DataSwitcher:
             vector[sending_size:] = recv_buf
 
     def ctargs_switch(self, vector, destination: int, condition: dict):
-        """
-            condition: dict{index, 0/1}
+        """ Switch the data by the given condition.
+            e.g. if condition = {3: 1}, switch the data which the third bit-indexes is 1 with the data
+            from the destination.
+
+        Args:
+            vector (cp.array): the switched data.
+            destination (int): The communicator which switch the data with us.
+            condition (dict[index(int): 0/1]): Describe the indexes of the data will be switched.
         """
         target_idx = self._based_idx
         for idx, _0_1 in condition.items():
