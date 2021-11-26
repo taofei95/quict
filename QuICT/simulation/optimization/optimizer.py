@@ -2,7 +2,7 @@ from collections import defaultdict
 import numpy as np
 
 from QuICT.core import *
-from QuICT.ops.linalg.cpu_calculator import multiply, dot, tensor
+from QuICT.ops.linalg.cpu_calculator import multiply, dot, tensor, MatrixPermutation
 
 
 class Optimizer:
@@ -50,7 +50,8 @@ class Optimizer:
                     gate,
                     self._gates_by_qubit[qubit_idxes[0]],
                     self._gates_by_qubit[qubit_idxes[1]],
-                    gate_idx_bit
+                    gate_idx_bit,
+                    qubit_idxes[0] > qubit_idxes[1]
                 )
 
                 for idx in qubit_idxes:
@@ -81,6 +82,10 @@ class Optimizer:
         Returns:
             (UnitaryGate, np.array): the new Unitary gate or the gate matrix
         """
+        if len(gates) == 1 and not matrix_only:
+            self._opt_gates.append(gates[0])
+            return
+
         based_matrix = gates[0].compute_matrix
         is_diagonal = gates[0].is_diagonal
 
@@ -105,7 +110,7 @@ class Optimizer:
 
         self._opt_gates.append(opt_gate)
 
-    def two_qubits_gates_combined(self, two_qubit_gate, cidx_gates: list, tidx_gates: list, gate_idx_bit: int):
+    def two_qubits_gates_combined(self, two_qubit_gate, cidx_gates: list, tidx_gates: list, gate_idx_bit: int, reverse):
         """ The optimized algorithm for 2-qubits gates and related 1-qubit gates.
 
         Args:
@@ -114,6 +119,10 @@ class Optimizer:
             tidx_gates (gates, None): The 1-qubit quantum gates in the target index
             gate_idx_bit (int): The bit-represent for the indexes of the 2-qubits quantum gate
         """
+        if not cidx_gates and not tidx_gates:
+            self._opt_gates.append(two_qubit_gate)
+            return
+
         # Combined single-qubit gates first
         cm_diag, tm_diag = True, True       # diagonal matrix signal
         if cidx_gates:
@@ -135,6 +144,9 @@ class Optimizer:
             opt_gate_matrix = multiply(two_qubit_gate.compute_matrix, combined_single_gates)
         else:
             opt_gate_matrix = dot(two_qubit_gate.compute_matrix, combined_single_gates)
+
+        if reverse:
+            MatrixPermutation(opt_gate_matrix, np.array([1,0]), changeInput=True)
 
         # Overwrite the indexes of the 2-qubits quantum gate in the circuit.
         is_find = False     # find the pre-generate two qubits gate with same qubit indexes

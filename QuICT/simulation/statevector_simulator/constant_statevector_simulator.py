@@ -273,17 +273,52 @@ class ConstantStateVectorSimulator(BasicGPUSimulator):
                     gate.pargs,
                     *default_parameters
                 )
-        # extra gates. i.e. [Unitary, Customied]
+        # [Unitary]
+        elif gate_type == GATE_ID["Unitary"]:
+            qubit_idxes = gate.cargs + gate.targs
+            if len(qubit_idxes) == 1:
+                t_index = self._qubits - 1 - qubit_idxes[0]
+                matrix = self.get_gate_matrix(gate)
+                if gate.is_diagonal:
+                    self._algorithm.Diagonal_Multiply_targ(
+                        t_index,
+                        matrix,
+                        *default_parameters
+                    )
+                else:
+                    self._algorithm.Based_InnerProduct_targ(
+                        t_index,
+                        matrix,
+                        *default_parameters
+                    )
+            elif len(qubit_idxes) == 2:
+                indexes = [self._qubits - 1 - index for index in qubit_idxes]
+                matrix = self.get_gate_matrix(gate)
+                if gate.is_diagonal:
+                    self._algorithm.Diagonal_Multiply_targs(
+                        indexes,
+                        matrix,
+                        *default_parameters
+                    )
+                else:
+                    self._algorithm.Based_InnerProduct_targs(
+                        indexes,
+                        matrix,
+                        *default_parameters
+                    )
+            else:
+                aux = cp.zeros_like(self._vector)
+                matrix = self.get_gate_matrix(gate)
+                self._algorithm.matrix_dot_vector(
+                    matrix,
+                    gate.controls + gate.targets,
+                    self._vector,
+                    self._qubits,
+                    gate.affectArgs,
+                    aux,
+                    self._sync
+                )
+                self.vector = aux
         else:
-            aux = cp.zeros_like(self._vector)
-            matrix = self.get_gate_matrix(gate)
-            self._algorithm.matrix_dot_vector(
-                matrix,
-                gate.controls + gate.targets,
-                self._vector,
-                self._qubits,
-                gate.affectArgs,
-                aux,
-                self._sync
-            )
-            self.vector = aux
+            raise KeyError(f"unrecognized quantum gate: {gate_type}")
+            
