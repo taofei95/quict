@@ -7,7 +7,7 @@
 from QuICT.algorithm import Algorithm
 from QuICT import *
 from QuICT.backends import systemCdll
-from QuICT.qcda.simulation.backends import run_simulation
+from QuICT.simulation.CPU_simulator import run_simulation
 import numpy as np
 from ctypes import c_int
 

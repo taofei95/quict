@@ -2471,7 +2471,7 @@ Unitary = UnitaryGate(["Unitary"])
 class ShorInitialGate(BasicGate):
     """ a oracle gate to preparation the initial state before IQFT in Shor algorithm
 
-    backends will preparation the initial state by classical operator
+    CPU_simulator will preparation the initial state by classical operator
     with a fixed measure result of second register.
 
     """

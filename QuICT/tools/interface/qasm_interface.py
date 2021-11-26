@@ -186,7 +186,7 @@ IBMQ.save_account('{}', overwrite=True)
 circ = QuantumCircuit.from_qasm_file("{}.qasm")
 provider = IBMQ.load_account()
 least_busy_device = least_busy(
-provider.backends(simulator=False,
+provider.CPU_simulator(simulator=False,
     filters=lambda x: x.configuration().n_qubits > 4))
 job = execute(circ, least_busy_device, shots={})
 result = job.result()
@@ -203,7 +203,7 @@ IBMQ.save_account('{}')
 circ = QuantumCircuit.from_qasm_str({})
 provider = IBMQ.load_account()
 least_busy_device = least_busy(
-provider.backends(simulator=False,
+provider.CPU_simulator(simulator=False,
     filters=lambda x: x.configuration().n_qubits > 4))
 job = execute(circ, least_busy_device, shots={})
 result = job.result()

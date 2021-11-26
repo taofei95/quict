@@ -57,9 +57,9 @@ git submodule update --init --recursive
 #
 #echo "Deleting useless files in source code tree created by older version of build.sh"
 #
-#[[ -f "$prj_root/QuICT/backends/quick_operator_cdll.so" ]] && \
-#echo "Deleting $prj_root/QuICT/backends/quick_operator_cdll.so" && \
-#rm "$prj_root/QuICT/backends/quick_operator_cdll.so"
+#[[ -f "$prj_root/QuICT/CPU_simulator/quick_operator_cdll.so" ]] && \
+#echo "Deleting $prj_root/QuICT/CPU_simulator/quick_operator_cdll.so" && \
+#rm "$prj_root/QuICT/CPU_simulator/quick_operator_cdll.so"
 #
 #[[ -f "$prj_root/QuICT/qcda/synthesis/initial_state_preparation/initial_state_preparation_cdll.so" ]] && \
 #echo "Deleting $prj_root/QuICT/qcda/synthesis/initial_state_preparation/initial_state_preparation_cdll.so" && \

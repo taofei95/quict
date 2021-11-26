@@ -366,11 +366,11 @@ setup(
     package_dir={"QuICT": f"{prj_root_relative}/QuICT/"},
     ext_modules=[
         CMakeExtension("QuICT.utility.graph_structure.", f"{prj_root}/QuICT/utility/graph_structure"),
-        CMakeExtension("QuICT.backends.", f"{prj_root}/QuICT/backends"),
+        CMakeExtension("QuICT.backends.", f"{prj_root}/QuICT/backends"),  # this is the old c++ backends
         CMakeExtension("QuICT.qcda.synthesis.initial_state_preparation.",
                        f"{prj_root}/QuICT/qcda/synthesis/initial_state_preparation/"),
-        CMakeExtension("QuICT.qcda.simulation.backends.",
-                       f"{prj_root}/QuICT/qcda/simulation/backends/"),
+        CMakeExtension("QuICT.simulation.CPU_simulator.",
+                       f"{prj_root}/QuICT/simulation/CPU_simulator/"),
         CythonExtension(
             "QuICT.qcda.mapping.mcts.mcts_core.mcts_wrapper",
             [f"{prj_root}/QuICT/qcda/mapping/mcts/mcts_core/mcts_wrapper.pyx"],
