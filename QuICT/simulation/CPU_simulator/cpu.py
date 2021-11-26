@@ -26,6 +26,7 @@ spec.loader.exec_module(sim_back_bind)
 class GateDescription:
     """An interface used for type hints. This class is actually implemented in C++ side.
     """
+
     def __init__(self, gate_name: str, affect_args: List[int], data_ptr: List[complex]):
         pass
 
@@ -33,6 +34,7 @@ class GateDescription:
 class CircuitSimulator:
     """An interface used for type hints. This class is actually implemented in C++ side.
     """
+
     def __init__(self, qubit_num: int):
         pass
 
@@ -109,6 +111,10 @@ ctrl_unitary = (
     GATE_ID["CU3"],
 )
 
+measure_gate = (
+    GATE_ID["measure"]
+)
+
 
 def gate_to_desc(gate: BasicGate) -> GateDescription:
     """Helper function to create GateDescription from a quantum gate.
@@ -170,6 +176,12 @@ def gate_to_desc(gate: BasicGate) -> GateDescription:
             "ctrl_unitary",
             list(gate.affectArgs),
             list(gate.compute_matrix[2:, 2:].copy().flatten())
+        )
+    elif gate_type in measure_gate:
+        return sim_back_bind.GateDescription(
+            "measure",
+            list(gate.affectArgs),
+            list([])
         )
     else:
         NotImplementedError(f"No implementation for {gate.name}")

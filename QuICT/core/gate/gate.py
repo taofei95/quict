@@ -1782,7 +1782,7 @@ class MeasureGate(BasicGate):
         exec_measure(self, circuit)
 
 
-Measure = MeasureGate(["Measure"])
+Measure = MeasureGate(["Measure", "measure"])
 
 
 class ResetGate(BasicGate):
