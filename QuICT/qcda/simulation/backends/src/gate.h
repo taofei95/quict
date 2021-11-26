@@ -218,6 +218,10 @@ namespace QuICT {
         explicit XGate(uint64_t targ) : SimpleGateN<1>(targ) {}
     };
 
+    struct MeasureGate : SimpleGateN<1> {
+        explicit MeasureGate(uint64_t targ) : SimpleGateN<1>(targ) {}
+    };
+
 
     //* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
     // Type Helpers

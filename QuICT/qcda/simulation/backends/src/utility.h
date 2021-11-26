@@ -67,7 +67,8 @@ namespace QuICT {
         unitary_2,
         ctrl_unitary,
         special_h,
-        special_x
+        special_x,
+        measure
     };
 
     const std::map<std::string, gate_category> dispatcher = {
@@ -78,7 +79,8 @@ namespace QuICT {
             {"ctrl_diag",    gate_category::ctrl_diag},
             {"unitary_1",    gate_category::unitary_1},
             {"unitary_2",    gate_category::unitary_2},
-            {"ctrl_unitary", gate_category::ctrl_unitary}
+            {"ctrl_unitary", gate_category::ctrl_unitary},
+            {"measure",      gate_category::measure}
     };
 
     inline uint64_t omp_chunk_size(uint64_t qubit_num, uint64_t batch_size = 4) {

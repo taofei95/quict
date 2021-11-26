@@ -103,6 +103,13 @@ namespace QuICT {
                 Precision *real,
                 Precision *imag
         );
+
+        inline void apply_measure_gate(
+                uint64_t q_state_bit_num,
+                const MeasureGate &gate,
+                Precision *real,
+                Precision *imag
+        );
     };
 
     template<typename Precision>
@@ -195,6 +202,11 @@ namespace QuICT {
                             gate_desc.data_ptr_
                     );
                     apply_ctrl_unitary_gate(q_state_bit_num, ctrl_unitary_gate, real, imag);
+                    break;
+                }
+                case gate_category::measure: {
+                    throw std::runtime_error(
+                            std::string(__func__) + ": " + "Not implemented gate - " + gate_desc.gate_name_);
                     break;
                 }
                 default: {
