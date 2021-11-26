@@ -204,14 +204,6 @@ class BasicGate(object):
         return self.targs[0]
 
     @property
-    def matrix_type(self):
-        return self.__matrix_type
-
-    @matrix_type.setter
-    def matrix_type(self, matrix_type):
-        self.__matrix_type = matrix_type
-
-    @property
     def qasm_name(self):
         return self.__qasm_name
 
@@ -263,7 +255,7 @@ class BasicGate(object):
         self.__qasm_name = 'error'
         self.__name = None
         self.__temp_name = None
-        self.__matrix_type = "non-diagonal"
+        self.__is_diagonal = False
         _add_alias(alias=alias, standard_name=self.__class__.__name__)
 
     # gate behavior
@@ -475,10 +467,10 @@ class BasicGate(object):
         set_goal_targets = set(goal.targs)
 
         commutative_set = set_controls.intersection(set_goal_targets)
-        if len(commutative_set) > 0 and not goal.is_diagonal():
+        if len(commutative_set) > 0 and not goal.is_diagonal:
             return False
         commutative_set = set_goal_controls.intersection(set_targets)
-        if len(commutative_set) > 0 and not self.is_diagonal():
+        if len(commutative_set) > 0 and not self.is_diagonal:
             return False
         commutative_set = set_goal_targets.intersection(set_targets)
         if len(commutative_set) > 0 and not np.allclose(A.dot(B), B.dot(A), rtol=1.0e-13, atol=1.0e-13):
@@ -502,6 +494,7 @@ class BasicGate(object):
         """
         return self.controls == 1 and self.targets == 1
 
+    @property
     def is_diagonal(self) -> bool:
         """ judge whether gate's matrix is diagonal
 
@@ -511,7 +504,11 @@ class BasicGate(object):
         Returns:
             bool: True if gate's matrix is diagonal
         """
-        return self.matrix_type == "diagonal"
+        return self.__is_diagonal
+
+    @is_diagonal.setter
+    def is_diagonal(self, is_diag: bool):
+        self.__is_diagonal = is_diag
 
     def is_special(self) -> bool:
         """ judge whether gate's is special gate
@@ -640,7 +637,7 @@ class SGate(BasicGate):
         self.targets = 1
         self.params = 0
         self.qasm_name = "s"
-        self.matrix_type = "diagonal"
+        self.is_diagonal = True
 
     def __str__(self):
         return "S gate"
@@ -674,7 +671,7 @@ class SDaggerGate(BasicGate):
         self.targets = 1
         self.params = 0
         self.qasm_name = "sdg"
-        self.matrix_type = "diagonal"
+        self.is_diagonal = True
 
     def __str__(self):
         return "The conjugate transpose of Phase gate"
@@ -1130,7 +1127,7 @@ class RzGate(BasicGate):
         self.params = 1
         self.pargs = [np.pi / 2]
         self.qasm_name = "rz"
-        self.matrix_type = "diagonal"
+        self.is_diagonal = True
 
     @property
     def matrix(self) -> np.ndarray:
@@ -1241,7 +1238,7 @@ class PhaseGate(BasicGate):
         self.params = 1
         self.pargs = [0]
         self.qasm_name = "phase"
-        self.matrix_type = "diagonal"
+        self.is_diagonal = True
 
     def __str__(self):
         return "Phase gate"
@@ -1725,7 +1722,7 @@ class RzzGate(BasicGate):
         self.params = 1
         self.pargs = [np.pi / 2]
         self.qasm_name = "Rzz"
-        self.matrix_type = "diagonal"
+        self.is_diagonal = True
 
     @property
     def matrix(self) -> np.ndarray:

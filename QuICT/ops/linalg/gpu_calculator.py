@@ -88,7 +88,7 @@ def tensor(A, B, gpu_out: bool = True, sync: bool = True):
         row_a, col_a = A.shape[0], 1
     else:
         row_a, col_a = A.shape
-    
+
     if B.ndim == 1:
         row_b, col_b = B.shape[0], 1
     else:
