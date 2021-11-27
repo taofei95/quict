@@ -5,7 +5,7 @@ from QuICT.core import *
 import warnings
 import os
 import importlib.util
-from typing import List, Union
+from typing import List, Union, Iterable
 import numpy as np
 
 cur_path = os.path.dirname(os.path.abspath(__file__))
@@ -27,7 +27,7 @@ class GateDescription:
     """An interface used for type hints. This class is actually implemented in C++ side.
     """
 
-    def __init__(self, gate_name: str, affect_args: List[int], data_ptr: List[complex]):
+    def __init__(self, gate_name: str, affect_args: Iterable[int], data_ptr: Iterable[complex]):
         pass
 
 
@@ -61,6 +61,9 @@ class CircuitSimulator:
         """
         pass
 
+
+sim_back_bind.GateDescription: GateDescription.__class__
+sim_back_bind.CircuitSimulator: CircuitSimulator.__class__
 
 special_x = (GATE_ID["X"],)
 special_h = (GATE_ID["H"],)
@@ -111,12 +114,10 @@ ctrl_unitary = (
     GATE_ID["CU3"],
 )
 
-measure_gate = (
-    GATE_ID["measure"]
-)
+measure_gate = tuple([GATE_ID["measure"]])
 
 
-def gate_to_desc(gate: BasicGate) -> GateDescription:
+def gate_to_desc(gate: BasicGate) -> List[GateDescription]:
     """Helper function to create GateDescription from a quantum gate.
 
     Parameters
@@ -130,59 +131,65 @@ def gate_to_desc(gate: BasicGate) -> GateDescription:
     """
     gate_type = gate.type()
     if gate_type in special_x:
-        return sim_back_bind.GateDescription(
+        return [sim_back_bind.GateDescription(
             "special_x",
             list(gate.affectArgs),
             list([])
-        )
+        )]
     elif gate_type in special_h:
-        return sim_back_bind.GateDescription(
+        return [sim_back_bind.GateDescription(
             "special_h",
             list(gate.affectArgs),
             list([])
-        )
+        )]
     elif gate_type in diag_1:
-        return sim_back_bind.GateDescription(
+        return [sim_back_bind.GateDescription(
             "diag_1",
             list(gate.affectArgs),
             list(np.diag(gate.compute_matrix))
-        )
+        )]
     elif gate_type in diag_2:
-        return sim_back_bind.GateDescription(
+        return [sim_back_bind.GateDescription(
             "diag_2",
             list(gate.affectArgs),
             list(np.diag(gate.compute_matrix))
-        )
+        )]
     elif gate_type in unitary_1:
-        return sim_back_bind.GateDescription(
+        return [sim_back_bind.GateDescription(
             "unitary_1",
             list(gate.affectArgs),
             list(gate.compute_matrix.flatten())
-        )
+        )]
     elif gate_type in unitary_2:
-        return sim_back_bind.GateDescription(
+        return [sim_back_bind.GateDescription(
             "unitary_2",
             list(gate.affectArgs),
             list(gate.compute_matrix.flatten())
-        )
+        )]
     elif gate_type in ctrl_diag:
-        return sim_back_bind.GateDescription(
+        return [sim_back_bind.GateDescription(
             "ctrl_diag",
             list(gate.affectArgs),
             list(np.diag(gate.compute_matrix)[2:].copy())
-        )
+        )]
     elif gate_type in ctrl_unitary:
-        return sim_back_bind.GateDescription(
+        return [sim_back_bind.GateDescription(
             "ctrl_unitary",
             list(gate.affectArgs),
             list(gate.compute_matrix[2:, 2:].copy().flatten())
-        )
+        )]
     elif gate_type in measure_gate:
-        return sim_back_bind.GateDescription(
+        return [sim_back_bind.GateDescription(
             "measure",
             list(gate.affectArgs),
             list([])
-        )
+        )]
+    elif isinstance(gate, ComplexGate):
+        # Try build gate to simpler gates
+        result = []
+        for simple_gate in gate.build_gate():
+            result.extend(gate_to_desc(simple_gate))
+        return result
     else:
         NotImplementedError(f"No implementation for {gate.name}")
 
@@ -206,5 +213,5 @@ def run_simulation(circuit: Union[Circuit, CompositeGate]) -> np.ndarray:
     circuit_simulator: CircuitSimulator = sim_back_bind.CircuitSimulator(circuit.circuit_width())
     gate_desc_vec: List[GateDescription] = []
     for gate in circuit.gates:
-        gate_desc_vec.append(gate_to_desc(gate))
+        gate_desc_vec.extend(gate_to_desc(gate))
     return circuit_simulator.run(gate_desc_vec)

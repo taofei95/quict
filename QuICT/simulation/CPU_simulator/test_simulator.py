@@ -13,3 +13,15 @@ def test_sim():
         flag = np.allclose(res, expected)
         assert flag
         # print(f"Testing for qubit {qubit_num}: {flag}")
+
+
+def test_complex_gate():
+    for qubit_num in range(3, 20):
+        circuit = Circuit(qubit_num)
+        QFT | circuit
+        CCX | circuit
+        CCRz(0.1) | circuit
+        res = Amplitude.run(circuit)  # New simulator would be used by default.
+        expected = Amplitude.run(circuit, ancilla=None, use_old_simulator=True)
+        flag = np.allclose(res, expected)
+        assert flag
