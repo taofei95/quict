@@ -276,37 +276,37 @@ class ConstantStateVectorSimulator(BasicGPUSimulator):
         # [Unitary]
         elif gate_type == GATE_ID["Unitary"]:
             qubit_idxes = gate.cargs + gate.targs
-            if len(qubit_idxes) == 1:
+            if len(qubit_idxes) == 1:   # 1-qubit unitary gate
                 t_index = self._qubits - 1 - qubit_idxes[0]
                 matrix = self.get_gate_matrix(gate)
-                if gate.is_diagonal:
+                if gate.is_diagonal:    # diagonal gate
                     self._algorithm.Diagonal_Multiply_targ(
                         t_index,
                         matrix,
                         *default_parameters
                     )
-                else:
+                else:   # non-diagonal gate
                     self._algorithm.Based_InnerProduct_targ(
                         t_index,
                         matrix,
                         *default_parameters
                     )
-            elif len(qubit_idxes) == 2:
+            elif len(qubit_idxes) == 2:     # 2-qubits unitary gate
                 indexes = [self._qubits - 1 - index for index in qubit_idxes]
                 matrix = self.get_gate_matrix(gate)
-                if gate.is_diagonal:
+                if gate.is_diagonal:        # diagonal gate
                     self._algorithm.Diagonal_Multiply_targs(
                         indexes,
                         matrix,
                         *default_parameters
                     )
-                else:
+                else:   # non-diagonal gate
                     self._algorithm.Based_InnerProduct_targs(
                         indexes,
                         matrix,
                         *default_parameters
                     )
-            else:
+            else:   # common unitary gate supported, but run slowly
                 aux = cp.zeros_like(self._vector)
                 matrix = self.get_gate_matrix(gate)
                 self._algorithm.matrix_dot_vector(
@@ -319,6 +319,7 @@ class ConstantStateVectorSimulator(BasicGPUSimulator):
                     self._sync
                 )
                 self.vector = aux
+        # unsupported quantum gates
         else:
-            raise KeyError(f"unrecognized quantum gate: {gate_type}")
+            raise KeyError(f"Unsupported Gate: {gate_type}")
             

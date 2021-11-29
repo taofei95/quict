@@ -6,7 +6,6 @@
 
 import numpy as np
 import cupy as cp
-import os
 
 from QuICT.core import *
 from QuICT.simulation import BasicGPUSimulator
@@ -556,7 +555,7 @@ class MultiStateVectorSimulator(BasicGPUSimulator):
 
             self.swap_operation(t_indexes)
         # [ID]
-        elif gate.type() == GATE_ID["ID"]:
+        elif gate_type == GATE_ID["ID"]:
             pass
         # [CCX]
         elif gate_type in GATE_TYPE_to_ID[GateType.reverse_3arg]:
@@ -759,7 +758,7 @@ class MultiStateVectorSimulator(BasicGPUSimulator):
                     *default_parameters
                 )
         # [Measure]
-        elif gate.type() == GATE_ID["Measure"]:
+        elif gate_type == GATE_ID["Measure"]:
             index = self.total_qubits - 1 - gate.targ
             prob_result = self._algorithm.Device_Prob_Calculator(
                 index,
@@ -805,7 +804,7 @@ class MultiStateVectorSimulator(BasicGPUSimulator):
 
             self.circuit.qubits[gate.targ].measured = _1
         # [Reset]
-        elif gate.type() == GATE_ID["Reset"]:
+        elif gate_type == GATE_ID["Reset"]:
             index = self.total_qubits - 1 - gate.targ
             prob_result = self._algorithm.Device_Prob_Calculator(
                 index,
@@ -841,18 +840,18 @@ class MultiStateVectorSimulator(BasicGPUSimulator):
                     multigpu_prob=prob
                 )
         # [Barrier]
-        elif gate.type() == GATE_ID["Barrier"]:
+        elif gate_type == GATE_ID["Barrier"]:
             # TODO: Not applied in gate.py.
             pass
         # [Perm]
         elif (
-            gate.type() == GATE_ID["Perm"] or
-            gate.type() == GATE_ID["ControlPermMulDetail"] or
-            gate.type() == GATE_ID["PermShift"] or
-            gate.type() == GATE_ID["ControlPermShift"] or
-            gate.type() == GATE_ID["PermMul"] or
-            gate.type() == GATE_ID["ControlPermMul"] or
-            gate.type() == GATE_ID["PermFx"]
+            gate_type == GATE_ID["Perm"] or
+            gate_type == GATE_ID["ControlPermMulDetail"] or
+            gate_type == GATE_ID["PermShift"] or
+            gate_type == GATE_ID["ControlPermShift"] or
+            gate_type == GATE_ID["PermMul"] or
+            gate_type == GATE_ID["ControlPermMul"] or
+            gate_type == GATE_ID["PermFx"]
         ):
             if gate.targets >= 5:
                 pass
@@ -863,14 +862,51 @@ class MultiStateVectorSimulator(BasicGPUSimulator):
                     swaped_pargs,
                     *default_parameters
                 )
-        elif gate.type() == GATE_ID["Unitary"]:
-            # TODO: Use np.dot, matrix*vec = 2^n * 2^n x 2^n * 1.
-            pass
-        elif gate.type() == GATE_ID["ShorInitial"]:
+        # [Unitary]
+        elif gate_type == GATE_ID["Unitary"]:
+            # TODO: Currently only support the 1-, 2-qubits unitary quantum gates
+            qubit_idxes = gate.cargs + gate.targs
+            if len(qubit_idxes) == 1:   # 1-qubit unitary gate
+                t_index = self._qubits - 1 - qubit_idxes[0]
+                matrix = self.get_gate_matrix(gate)
+                if gate.is_diagonal:    # diagonal gate
+                    self._algorithm.Diagonal_Multiply_targ(
+                        t_index,
+                        matrix,
+                        *default_parameters
+                    )
+                else:   # non-diagonal gate
+                    self._algorithm.Based_InnerProduct_targ(
+                        t_index,
+                        matrix,
+                        *default_parameters
+                    )
+            elif len(qubit_idxes) == 2:     # 2-qubits unitary gate
+                indexes = [self._qubits - 1 - index for index in qubit_idxes]
+                matrix = self.get_gate_matrix(gate)
+                if gate.is_diagonal:        # diagonal gate
+                    self._algorithm.Diagonal_Multiply_targs(
+                        indexes,
+                        matrix,
+                        *default_parameters
+                    )
+                else:   # non-diagonal gate
+                    self._algorithm.Based_InnerProduct_targs(
+                        indexes,
+                        matrix,
+                        *default_parameters
+                    )
+            else:   # common unitary gate supported, but run slowly
+                raise ValueError(
+                    "do not support the unitary gate with more than 2 qubits, please use gate decomposition first."
+                )
+        # [ShorInitial]
+        elif gate_type == GATE_ID["ShorInitial"]:
             # TODO: Not applied yet.
             pass
+        # unsupported quantum gates
         else:
-            raise KeyError("Unsupported Gate in multi-GPU version.")
+            raise KeyError("Unsupported Gate in multi-GPU version: {gate_type}.")
 
     def perm_operation(self, indexes):
         """ Temporary algorithm for the PermGate.
