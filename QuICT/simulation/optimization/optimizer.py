@@ -146,7 +146,7 @@ class Optimizer:
             opt_gate_matrix = dot(two_qubit_gate.compute_matrix, combined_single_gates)
 
         if reverse:
-            MatrixPermutation(opt_gate_matrix, np.array([1,0]), changeInput=True)
+            MatrixPermutation(opt_gate_matrix, np.array([1, 0]), changeInput=True)
 
         # Overwrite the indexes of the 2-qubits quantum gate in the circuit.
         is_find = False     # find the pre-generate two qubits gate with same qubit indexes

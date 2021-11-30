@@ -293,6 +293,7 @@ class ConstantStateVectorSimulator(BasicGPUSimulator):
                     )
             elif len(qubit_idxes) == 2:     # 2-qubits unitary gate
                 indexes = [self._qubits - 1 - index for index in qubit_idxes]
+                indexes.sort()
                 matrix = self.get_gate_matrix(gate)
                 if gate.is_diagonal:        # diagonal gate
                     self._algorithm.Diagonal_Multiply_targs(
@@ -322,4 +323,3 @@ class ConstantStateVectorSimulator(BasicGPUSimulator):
         # unsupported quantum gates
         else:
             raise KeyError(f"Unsupported Gate: {gate_type}")
-            

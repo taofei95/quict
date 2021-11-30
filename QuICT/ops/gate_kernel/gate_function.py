@@ -153,16 +153,24 @@ Based_InnerProduct_targ_double = cp.RawKernel(r'''
 Based_InnerProduct_targs_single = cp.RawKernel(r'''
     #include <cupy/complex.cuh>
     extern "C" __global__
-    void Based4x4InnerProduct(int high, int low, const complex<float>* mat, complex<float>* vec) {
+    void Based4x4InnerProduct(int t0, int t1, const complex<float>* mat, complex<float>* vec) {
         int label = blockDim.x * blockIdx.x + threadIdx.x;
 
-        const int offset1 = 1 << low;
-        const int offset2 = 1 << high;
+        const int offset1 = 1 << t0;
+        const int offset2 = 1 << t1;
         const int mask1 = offset1 - 1;
         const int mask2 = offset2 - 1;
 
-        int gw = label >> low << (low + 1);
-        int _0 = (gw >> high << (high + 1)) + (gw & (offset2 - offset1)) + (label & mask1);
+        int gw=0, _0=0;
+
+        if (t0 > t1){
+            gw = label >> t1 << (t1 + 1);
+            _0 = (gw >> t0 << (t0 + 1)) + (gw & (offset1 - offset2)) + (label & mask2);
+        }
+        else{
+            gw = label >> t0 << (t0 + 1);
+            _0 = (gw >> t1 << (t1 + 1)) + (gw & (offset2 - offset1)) + (label & mask1);
+        }
 
         int _1 = _0 + offset1;
         int _2 = _0 + offset2;
@@ -180,16 +188,24 @@ Based_InnerProduct_targs_single = cp.RawKernel(r'''
 Based_InnerProduct_targs_double = cp.RawKernel(r'''
     #include <cupy/complex.cuh>
     extern "C" __global__
-    void Based4x4InnerProduct(int high, int low, const complex<double>* mat, complex<double>* vec) {
+    void Based4x4InnerProduct(int t0, int t1, const complex<double>* mat, complex<double>* vec) {
         int label = blockDim.x * blockIdx.x + threadIdx.x;
 
-        const int offset1 = 1 << low;
-        const int offset2 = 1 << high;
+        const int offset1 = 1 << t0;
+        const int offset2 = 1 << t1;
         const int mask1 = offset1 - 1;
         const int mask2 = offset2 - 1;
 
-        int gw = label >> low << (low + 1);
-        int _0 = (gw >> high << (high + 1)) + (gw & (offset2 - offset1)) + (label & mask1);
+        int gw=0, _0=0;
+
+        if (t0 > t1){
+            gw = label >> t1 << (t1 + 1);
+            _0 = (gw >> t0 << (t0 + 1)) + (gw & (offset1 - offset2)) + (label & mask2);
+        }
+        else{
+            gw = label >> t0 << (t0 + 1);
+            _0 = (gw >> t1 << (t1 + 1)) + (gw & (offset2 - offset1)) + (label & mask1);
+        }
 
         int _1 = _0 + offset1;
         int _2 = _0 + offset2;
@@ -1044,22 +1060,17 @@ def Based_InnerProduct_targs(t_indexes, mat, vec, vec_bit, sync: bool = False):
     thread_per_block = min(256, task_number)
     block_num = task_number // thread_per_block
 
-    if t_indexes[0] > t_indexes[1]:
-        high, low = t_indexes[0], t_indexes[1]
-    else:
-        high, low = t_indexes[1], t_indexes[0]
-
     if vec.dtype == np.complex64:
         Based_InnerProduct_targs_single(
             (block_num,),
             (thread_per_block,),
-            (high, low, mat, vec)
+            (t_indexes[0], t_indexes[1], mat, vec)
         )
     else:
         Based_InnerProduct_targs_double(
             (block_num,),
             (thread_per_block,),
-            (high, low, mat, vec)
+            (t_indexes[0], t_indexes[1], mat, vec)
         )
 
     if sync:

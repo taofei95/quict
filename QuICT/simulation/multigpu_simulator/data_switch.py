@@ -67,6 +67,15 @@ class DataSwitcher:
             recv_buf = self._switch(sending_data, destination)
             vector[sending_size:] = recv_buf
 
+    def quarter_switch(self, vector, destination: list):
+        assert(len(destination) == 4)
+        sending_size = vector.size // 4
+
+        for idx, dest in enumerate(destination):
+            if dest != self._id:
+                sending_data = vector[idx * sending_size: (idx + 1) * sending_size]
+                vector[idx * sending_size: (idx + 1) * sending_size] = self._switch(sending_data, dest)
+
     def ctargs_switch(self, vector, destination: int, condition: dict):
         """ Switch the data by the given condition.
             e.g. if condition = {3: 1}, switch the data which the third bit-indexes is 1 with the data
