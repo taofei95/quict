@@ -87,10 +87,10 @@ class Optimizer:
             return
 
         based_matrix = gates[0].compute_matrix
-        is_diagonal = gates[0].is_diagonal
+        is_diagonal = gates[0].is_diagonal()
 
         for gate in gates[1:]:
-            if is_diagonal and gate.is_diagonal:  # Using multiply for diagonal gates
+            if is_diagonal and gate.is_diagonal():  # Using multiply for diagonal gates
                 based_matrix = multiply(gate.compute_matrix, based_matrix)
             else:   # Using dot for non-diagonal gates
                 based_matrix = dot(gate.compute_matrix, based_matrix)
@@ -106,7 +106,7 @@ class Optimizer:
         opt_gate.targs = gates[0].targs
         opt_gate.targets = 1
         opt_gate.matrix = based_matrix
-        opt_gate.is_diagonal = is_diagonal
+        opt_gate.diagonal = is_diagonal
 
         self._opt_gates.append(opt_gate)
 
@@ -139,7 +139,7 @@ class Optimizer:
         combined_single_gates = tensor(cidx_matrix, tidx_matrix)
 
         # Combined the gate matrix of the 2-qubits gate and the merged one
-        is_diagonal = (cm_diag and tm_diag and two_qubit_gate.is_diagonal)
+        is_diagonal = (cm_diag and tm_diag and two_qubit_gate.is_diagonal())
         if is_diagonal:
             opt_gate_matrix = multiply(two_qubit_gate.compute_matrix, combined_single_gates)
         else:
@@ -165,7 +165,7 @@ class Optimizer:
         # Add the optimized quantum gate
         if is_find:
             opt_gate = self._opt_gates[self._two_qubits_opt_gates_idxes_dict[gate_idx_bit]]
-            if is_diagonal and opt_gate.is_diagonal:
+            if is_diagonal and opt_gate.is_diagonal():
                 opt_gate.matrix = multiply(opt_gate_matrix, opt_gate.matrix)
             else:
                 opt_gate.matrix = dot(opt_gate_matrix, opt_gate.matrix)
@@ -177,7 +177,7 @@ class Optimizer:
             opt_gate.targets = len(two_qubit_gate.targs)
             opt_gate.controls = len(two_qubit_gate.cargs)
             opt_gate.matrix = opt_gate_matrix
-            opt_gate.is_diagonal = is_diagonal
+            opt_gate.diagonal = is_diagonal
 
             self._two_qubits_opt_gates_idxes_dict[gate_idx_bit] = len(self._opt_gates)
             self._opt_gates.append(opt_gate)

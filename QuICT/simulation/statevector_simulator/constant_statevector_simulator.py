@@ -279,7 +279,7 @@ class ConstantStateVectorSimulator(BasicGPUSimulator):
             if len(qubit_idxes) == 1:   # 1-qubit unitary gate
                 t_index = self._qubits - 1 - qubit_idxes[0]
                 matrix = self.get_gate_matrix(gate)
-                if gate.is_diagonal:    # diagonal gate
+                if gate.is_diagonal():    # diagonal gate
                     self._algorithm.Diagonal_Multiply_targ(
                         t_index,
                         matrix,
@@ -295,7 +295,7 @@ class ConstantStateVectorSimulator(BasicGPUSimulator):
                 indexes = [self._qubits - 1 - index for index in qubit_idxes]
                 indexes.sort()
                 matrix = self.get_gate_matrix(gate)
-                if gate.is_diagonal:        # diagonal gate
+                if gate.is_diagonal():        # diagonal gate
                     self._algorithm.Diagonal_Multiply_targs(
                         indexes,
                         matrix,

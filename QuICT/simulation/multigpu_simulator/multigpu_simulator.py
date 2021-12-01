@@ -108,7 +108,10 @@ class MultiStateVectorSimulator(BasicGPUSimulator):
             self._based_matrix_operation(t_index, matrix)
         # [RZ, Phase]
         elif gate_type in GATE_TYPE_to_ID[GateType.diagonal_1arg]:
-            self._diagonal_matrix_operation(gate)
+            t_index = self.total_qubits - 1 - gate.targ
+            matrix = self.get_gate_matrix(gate) if t_index < self.qubits else gate.compute_matrix
+
+            self._diagonal_matrix_operation(t_index, matrix)
         # [X]
         elif gate_type in GATE_TYPE_to_ID[GateType.swap_1arg]:
             t_index = self.total_qubits - 1 - gate.targ
@@ -116,7 +119,10 @@ class MultiStateVectorSimulator(BasicGPUSimulator):
             self._swap_matrix_operation(t_index)
         # [Y]
         elif gate_type in GATE_TYPE_to_ID[GateType.reverse_1arg]:
-            self._reverse_matrix_operation(gate)
+            t_index = self.total_qubits - 1 - gate.targ
+            matrix = self.get_gate_matrix(gate) if t_index < self.qubits else gate.compute_matrix
+
+            self._reverse_matrix_operation(t_index, matrix)
         # [Z, U1, T, T_dagger, S, S_dagger]
         elif gate_type in GATE_TYPE_to_ID[GateType.control_1arg]:
             t_index = self.total_qubits - 1 - gate.targ
@@ -203,11 +209,10 @@ class MultiStateVectorSimulator(BasicGPUSimulator):
         elif gate_type in GATE_TYPE_to_ID[GateType.diagonal_2arg]:
             t_indexes = [self.total_qubits - 1 - targ for targ in gate.targs]
             t_indexes.sort()
-            matrix = self.get_gate_matrix(gate)
+            matrix = self.get_gate_matrix(gate) if t_indexes[0] < self.qubits else gate.compute_matrix
 
             self._diagonal_2args_matrix_operation(
                 t_indexes,
-                gate.compute_matrix,
                 matrix
             )
         # [CX, CY]
@@ -724,20 +729,23 @@ class MultiStateVectorSimulator(BasicGPUSimulator):
             # TODO: Currently only support the 1-, 2-qubits unitary quantum gates
             qubit_idxes = gate.cargs + gate.targs
             if len(qubit_idxes) == 1:   # 1-qubit unitary gate
-                if gate.is_diagonal:    # diagonal gate
-                    self._diagonal_matrix_operation(gate)
+                if gate.is_diagonal():    # diagonal gate
+                    t_index = self.total_qubits - 1 - qubit_idxes[0]
+                    matrix = self.get_gate_matrix(gate) if t_index < self.qubits else gate.compute_matrix
+
+                    self._diagonal_matrix_operation(t_index, matrix)
                 else:   # non-diagonal gate
                     t_index = self.total_qubits - 1 - qubit_idxes[0]
                     matrix = self.get_gate_matrix(gate)
+
                     self._based_matrix_operation(t_index, matrix)
             elif len(qubit_idxes) == 2:     # 2-qubits unitary gate
                 indexes = [self.total_qubits - 1 - index for index in qubit_idxes]
                 indexes.sort()
-                matrix = self.get_gate_matrix(gate)
-                if gate.is_diagonal:        # diagonal gate
+                matrix = self.get_gate_matrix(gate) if indexes[0] < self.qubits else gate.compute_matrix
+                if gate.is_diagonal():        # diagonal gate
                     self._diagonal_2args_matrix_operation(
                         indexes,
-                        gate.compute_matrix,
                         matrix
                     )
                 else:   # non-diagonal gate
@@ -758,6 +766,12 @@ class MultiStateVectorSimulator(BasicGPUSimulator):
             raise KeyError("Unsupported Gate in multi-GPU version: {gate_type}.")
 
     def _based_matrix_operation(self, index, matrix):
+        """ The algorithm for 1-qubit non-diagonal quantum gate.
+
+        Args:
+            index (int): The target qubit of the applied quantum gate.
+            matrix (cp.array): The compute matrix of the applied quantum gate.
+        """
         default_parameters = (self._vector, self._qubits, self._sync)
         is_exceed = (index >= self.qubits)
 
@@ -776,18 +790,26 @@ class MultiStateVectorSimulator(BasicGPUSimulator):
             self._data_switcher.half_switch(self._vector, destination)
 
     def _based_2args_matrix_operation(self, indexes, matrix):
+        """ The algorithm for 2-qubits non-diagonal quantum gate.
+
+        Args:
+            index (int): The target/control qubits of the applied quantum gate.
+            matrix (cp.array): The compute matrix of the applied quantum gate.
+        """
         default_parameters = (self._vector, self._qubits, self._sync)
 
-        if indexes[0] >= self.qubits:
+        if indexes[0] >= self.qubits:       # all qubits exceed the device limit
             curr_dev_id = self.proxy.dev_id
+            # Get all destination for the current device.
             destination = np.array([
                 curr_dev_id,
-                curr_dev_id ^ (1 << (indexes[0] - self.qubits)),
-                curr_dev_id ^ (1 << (indexes[1] - self.qubits)),
-                curr_dev_id ^ (1 << (indexes[0] - self.qubits) + 1 << (indexes[1] - self.qubits)),
+                curr_dev_id ^ (1 << (indexes[0] - self.qubits)),    # destination with different indexes[0]
+                curr_dev_id ^ (1 << (indexes[1] - self.qubits)),    # destination with different indexes[1]
+                curr_dev_id ^ (1 << (indexes[0] - self.qubits) + 1 << (indexes[1] - self.qubits))
             ])
             destination = np.sort(destination)
 
+            # Switch data with other destinations
             self._data_switcher.quarter_switch(self._vector, destination)
 
             self._algorithm.Based_InnerProduct_targs(
@@ -795,9 +817,9 @@ class MultiStateVectorSimulator(BasicGPUSimulator):
                 matrix,
                 *default_parameters
             )
-        elif indexes[1] >= self.qubits:
+        elif indexes[1] >= self.qubits:     # if one qubit exceed the device limit
             destination = self.proxy.dev_id ^ (1 << (indexes[1] - self.qubits))
-            if indexes[0] != self.qubits - 1:
+            if indexes[0] != self.qubits - 1:   # swap data by the index not equal to indexes[0]
                 self._data_switcher.half_switch(self._vector, destination)
                 indexes[1] = self.qubits - 1
             else:
@@ -815,6 +837,7 @@ class MultiStateVectorSimulator(BasicGPUSimulator):
                 *default_parameters
             )
 
+            # Swap data back to the destination
             if indexes[0] != self.qubits - 1:
                 self._data_switcher.half_switch(self._vector, destination)
             else:
@@ -823,37 +846,47 @@ class MultiStateVectorSimulator(BasicGPUSimulator):
                     destination,
                     {0: _0_1}
                 )
-        else:
+        else:   # no qubits exceed the device limit.
             self._algorithm.Based_InnerProduct_targs(
                 indexes,
                 matrix,
                 *default_parameters
             )
 
-    def _diagonal_matrix_operation(self, gate):
-        t_index = self.total_qubits - 1 - gate.targ
+    def _diagonal_matrix_operation(self, t_index, matrix):
+        """ The algorithm for 1-qubit diagonal quantum gate.
+
+        Args:
+            index (int): The target qubit of the applied quantum gate.
+            matrix (cp.array): The compute matrix of the applied quantum gate.
+        """
         default_parameters = (self._vector, self._qubits, self._sync)
 
         if t_index >= self.qubits:  # target index exceed the device limit
             index = self.proxy.dev_id & (1 << (t_index - self.qubits))
-            value = gate.compute_matrix[index, index]
+            value = matrix[index, index]
 
             self._algorithm.Simple_Multiply(
                 value,
                 *default_parameters
             )
         else:
-            matrix = self.get_gate_matrix(gate)
             self._algorithm.Diagonal_Multiply_targ(
                 t_index,
                 matrix,
                 *default_parameters
             )
 
-    def _diagonal_2args_matrix_operation(self, indexes, gate_matrix, gpu_matrix):
+    def _diagonal_2args_matrix_operation(self, indexes, matrix):
+        """ The algorithm for 2-qubits diagonal quantum gate.
+
+        Args:
+            indexes (int): The target/control qubits of the applied quantum gate.
+            matrix (cp.array): The compute matrix of the applied quantum gate.
+        """
         default_parameters = (self._vector, self._qubits, self._sync)
 
-        if indexes[0] >= self.qubits:
+        if indexes[0] >= self.qubits:       # All qubits exceed the device limit.
             _0 = self.proxy.dev_id & (1 << (indexes[0] - self.qubits))
             _1 = self.proxy.dev_id & (1 << (indexes[1] - self.qubits))
 
@@ -864,29 +897,34 @@ class MultiStateVectorSimulator(BasicGPUSimulator):
                 index += 2
 
             self._algorithm.Simple_Multiply(
-                gate_matrix[index, index],
+                matrix[index, index],
                 *default_parameters
             )
-        elif indexes[1] >= self.qubits:   # larger target index exceed the device limit
+        elif indexes[1] >= self.qubits:     # one qubit exceed the device limit
             temp_matrix = cp.zeros((4,), dtype=self._precision)
             if self.proxy.dev_id & (1 << (indexes[1] - self.qubits)):
-                temp_matrix[0], temp_matrix[3] = gpu_matrix[10], gpu_matrix[15]
+                temp_matrix[0], temp_matrix[3] = matrix[10], matrix[15]
             else:
-                temp_matrix[0], temp_matrix[3] = gpu_matrix[0], gpu_matrix[5]
+                temp_matrix[0], temp_matrix[3] = matrix[0], matrix[5]
 
             self._algorithm.Diagonal_Multiply_targ(
                 indexes[0],
                 temp_matrix,
                 *default_parameters
             )
-        else:
+        else:       # no qubits exceed the device limit
             self._algorithm.Diagonal_Multiply_targs(
                 indexes,
-                gpu_matrix,
+                matrix,
                 *default_parameters
             )
 
     def _swap_matrix_operation(self, t_index):
+        """ The algorithm for the 1-qubit swap quantum gate
+
+        Args:
+            t_index (int): The target qubit of the applied quantum gate.
+        """
         default_parameters = (self._vector, self._qubits, self._sync)
 
         if t_index >= self.qubits:  # Swap the whole data if target idx is exceed.
@@ -898,15 +936,20 @@ class MultiStateVectorSimulator(BasicGPUSimulator):
                 *default_parameters
             )
 
-    def _reverse_matrix_operation(self, gate):
-        t_index = self.total_qubits - 1 - gate.targ
+    def _reverse_matrix_operation(self, t_index, matrix):
+        """ The algorithm of the 1-qubit reverse quantum gate.
+
+        Args:
+            index (int): The target qubit of the applied quantum gate.
+            matrix (cp.array): The compute matrix of the applied quantum gate.
+        """
         default_parameters = (self._vector, self._qubits, self._sync)
 
         if t_index >= self.qubits:  # target index exceed the device limit
             destination = self.proxy.dev_id ^ (1 << (t_index - self.qubits))
             index = (0, 1) if self.proxy.dev_id & (1 << (t_index - self.qubits)) else \
                 (1, 0)
-            value = gate.compute_matrix[index]
+            value = matrix[index]
 
             self._algorithm.Simple_Multiply(
                 value,
@@ -915,7 +958,6 @@ class MultiStateVectorSimulator(BasicGPUSimulator):
 
             self._data_switcher.all_switch(self._vector, destination)
         else:
-            matrix = self.get_gate_matrix(gate)
             self._algorithm.RDiagonal_MultiplySwap_targ(
                 t_index,
                 matrix,
@@ -923,6 +965,14 @@ class MultiStateVectorSimulator(BasicGPUSimulator):
             )
 
     def _control_matrix_operation(self, t_index, value):
+        """ The algorithm of the 1-qubit quantum gate with controlled matrix.
+        e.g. the quantum gate with matrix  [[1, 0],
+                                            [0, a]]
+
+        Args:
+            index (int): The target qubit of the applied quantum gate.
+            matrix (cp.array): The compute matrix of the applied quantum gate.
+        """
         default_parameters = (self._vector, self._qubits, self._sync)
 
         if t_index >= self.qubits:  # target index exceed the device limit.
@@ -939,6 +989,14 @@ class MultiStateVectorSimulator(BasicGPUSimulator):
             )
 
     def _measure_operation(self, index):
+        """ The algorithm for the Measure gate.
+
+        Args:
+            index (int): The target qubit of the applied quantum gate.
+
+        Returns:
+            [bool]: state 0 or state 1
+        """
         default_parameters = (self._vector, self._qubits, self._sync)
 
         # Calculate the device's probability.
@@ -988,6 +1046,11 @@ class MultiStateVectorSimulator(BasicGPUSimulator):
         return _1
 
     def _reset_operation(self, index):
+        """ The algorithm for the Reset gate.
+
+        Args:
+            index (int): The target qubit of the applied quantum gate.
+        """
         default_parameters = (self._vector, self._qubits, self._sync)
 
         # Calculate the device's probability
