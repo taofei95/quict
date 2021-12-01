@@ -332,7 +332,8 @@ class BasicGate(object):
             raise TypeException("int or tuple<int> or list<int>", targets)
         if len(GATE_SET_LIST):
             GATE_SET_LIST[-1].append(self.copy())
-        return self
+            return self
+        return self.copy()
 
     def __call__(self, params=None, name=None):
         """ give parameters for the gate
@@ -647,7 +648,7 @@ class SGate(BasicGate):
         self.qasm_name = "s"
 
     def __str__(self):
-        return "Phase gate"
+        return "S gate"
 
     def inverse(self):
         _S_dagger = SDaggerGate(alias=None)
@@ -2363,16 +2364,16 @@ class PermFxGate(PermGate):
                 self.pargs.append(idx)
         return self
 
-    @property
-    def matrix(self) -> np.ndarray:
-        matrix = np.array([], dtype=np.complex128)
-        for i in range(self.params):
-            for j in range(self.params):
-                if self.pargs[i] == j:
-                    np.append(matrix, 1)
-                else:
-                    np.append(matrix, 0)
-        return matrix
+    # @property
+    # def matrix(self) -> np.ndarray:
+    #     matrix = np.array([], dtype=np.complex128)
+    #     for i in range(self.params):
+    #         for j in range(self.params):
+    #             if self.pargs[i] == j:
+    #                 np.append(matrix, 1)
+    #             else:
+    #                 np.append(matrix, 0)
+    #     return matrix
 
 
 PermFx = PermFxGate(["PermFx"])
@@ -2732,9 +2733,10 @@ class QFTGate(ComplexGate):
         _IQFT.targets = self.targets
         return _IQFT
 
-    def build_gate(self):
+    def build_gate(self, targets):
         from .composite_gate import CompositeGate
-        qureg = self.affectArgs
+        self.targets = targets
+        qureg = [i for i in range(targets)]
         gates = CompositeGate()
 
         with gates:
@@ -2793,9 +2795,10 @@ class IQFTGate(ComplexGate):
         _QFT.targets = self.targets
         return _QFT
 
-    def build_gate(self):
+    def build_gate(self, targets):
         from .composite_gate import CompositeGate
-        qureg = self.affectArgs
+        self.targets = targets
+        qureg = [i for i in range(targets)]
         gates = CompositeGate()
 
         with gates:

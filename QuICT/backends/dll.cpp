@@ -326,8 +326,10 @@ DLLEXPORT void ccx_single_operator_func(
 
 DLLEXPORT void unitary_operator_gate(int qureg_length, complex<double> *values, long long  *index, int index_count, complex<double> *matrix){
     int *indexlist = (int*)malloc(index_count * sizeof(int));
-    for (int i = 0;i < index_count;++i)
+    for (int i = 0;i < index_count;++i){
+        index[i] = qureg_length - 1 - index[i];
         indexlist[i] = index[i];
+    }
     sort(indexlist, indexlist + index_count);
 
 
@@ -359,14 +361,14 @@ DLLEXPORT void unitary_operator_gate(int qureg_length, complex<double> *values, 
                 long long now = other;
                 for (int k = 0;k < index_count;++k)
                     if (i & (1 << k))
-                        now += 1 << index[k];
-                newValues[now + other] = complex<double>(0, 0);
+                        now += 1 << index[index_count - 1 - k];
+                newValues[now] = complex<float>(0, 0);
                 for (int k = 0;k < xl_l;++k){
                     long long shift = other;
                     for (int l = 0;l < index_count;++l)
-                        if (i & (1 << l))
-                            shift += 1 << index[l];
-                    newValues[now + other] += matrix[k] * values[shift];
+                        if (k & (1 << l))
+                            shift += 1 << index[index_count - 1 - l];
+                    newValues[now] += matrix[i * xl_l + k] * values[shift];
                 }
             }
         }
