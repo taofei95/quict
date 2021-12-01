@@ -475,10 +475,10 @@ class BasicGate(object):
         set_goal_targets = set(goal.targs)
 
         commutative_set = set_controls.intersection(set_goal_targets)
-        if len(commutative_set) > 0 and not goal.is_diagonal:
+        if len(commutative_set) > 0 and not goal.is_diagonal():
             return False
         commutative_set = set_goal_controls.intersection(set_targets)
-        if len(commutative_set) > 0 and not self.is_diagonal:
+        if len(commutative_set) > 0 and not self.is_diagonal():
             return False
         commutative_set = set_goal_targets.intersection(set_targets)
         if len(commutative_set) > 0 and not np.allclose(A.dot(B), B.dot(A), rtol=1.0e-13, atol=1.0e-13):
