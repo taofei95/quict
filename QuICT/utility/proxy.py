@@ -4,7 +4,6 @@
 # @Author  : Kaiqi Li
 # @File    : proxy
 
-import os
 import cupy as cp
 import numpy as np
 from cupy import cuda
@@ -40,8 +39,9 @@ class Proxy:
         ndevs(int): number of total GPU devices.
         uid(tuple): The unique ID, generate by cupy.cuda.nccl.get_unique_id().
         dev_id(int): The dev_id of GPU, between 0 and ndevs-1; represent the gpu device use in current process.
+        timeout(int): The maximum waiting time for receiving data, default to 300 seconds.
     """
-    def __init__(self, ndevs: int, uid: tuple, dev_id: int):
+    def __init__(self, ndevs: int, uid: tuple, dev_id: int, timeout: int = 300):
         assert((dev_id < ndevs) and (ndevs <= cuda.runtime.getDeviceCount()))
         if dev_id != cuda.runtime.getDevice():
             target_device = cuda.Device(dev_id)
@@ -50,6 +50,7 @@ class Proxy:
         self._ndevs = ndevs
         self._uid = uid
         self._dev_id = dev_id
+        self._timeout = timeout
         self.peers = np.setdiff1d(np.arange(self._ndevs), self._dev_id)
 
         self.comm = nccl.NcclCommunicator(self._ndevs, self._uid, self._dev_id)
@@ -101,7 +102,7 @@ class Proxy:
 
         self.comm.send(pointer, count, nccl_datatype, destination, stream)
 
-    @timeout(TIMEOUT)
+    @timeout()
     def recv(
         self,
         recvbuf: cp.ndarray,

@@ -1,10 +1,12 @@
 import pytest
 
 from QuICT.core import Circuit, X, Measure
-from QuICT.qcda.synthesis.arithmetic.bea import *
+from QuICT.qcda.synthesis.arithmetic.bea import (BEAAdder, BEAAdderWired, 
+                                                BEAReverseAdderWired, BEAAdderMod, 
+                                                BEAMulMod, BEACUa)
 
 
-def Set(qreg, N):
+def set_qureg(qreg, N):
     """
     Set the qreg as N, using X gates on specific qubits
     """
@@ -15,12 +17,12 @@ def Set(qreg, N):
         N = N // 2
 
 
-def ExGCD(a, b, coff):
+def ex_gcd(a, b, coff):
     if b == 0:
         coff[0] = 1
         coff[1] = 0
         return a
-    r = ExGCD(b, a % b, coff)
+    r = ex_gcd(b, a % b, coff)
     t = coff[0]
     coff[0] = coff[1]
     coff[1] = t - a // b * coff[1]
@@ -32,10 +34,10 @@ def test_DraperAdder():
         for b in range(0, 20):
             n = max(len(bin(a)) - 2, len(bin(b)) - 2)
             circuit = Circuit(n * 2)
-            qreg_a = circuit([i for i in range(n)])
-            qreg_b = circuit([i for i in range(n, n * 2)])
-            Set(qreg_a, a)
-            Set(qreg_b, b)
+            qreg_a = circuit(list(range(n)))
+            qreg_b = circuit(list(range(n, n * 2)))
+            set_qureg(qreg_a, a)
+            set_qureg(qreg_b, b)
             BEAAdder.execute(n) | circuit
             Measure | circuit
             circuit.exec()
@@ -52,8 +54,8 @@ def test_FourierAdderWired():
         for b in range(0, 20):
             n = max(len(bin(a)) - 2, len(bin(b)) - 2)
             circuit = Circuit(n + 1)
-            qreg_b = circuit([i for i in range(n + 1)])
-            Set(qreg_b, b)
+            qreg_b = circuit(list(range(n + 1)))
+            set_qureg(qreg_b, b)
             BEAAdderWired.execute(n, a) | circuit
             Measure | circuit
             circuit.exec()
@@ -71,8 +73,8 @@ def test_FourierReverseAdderWired():
         for b in range(0, 20):
             n = max(len(bin(a)) - 2, len(bin(b)) - 2)
             circuit = Circuit(n + 1)
-            qreg_b = circuit([i for i in range(n + 1)])
-            Set(qreg_b, b)
+            qreg_b = circuit(list(range(n + 1)))
+            set_qureg(qreg_b, b)
             BEAReverseAdderWired.execute(n, a) | circuit
             Measure | circuit
             circuit.exec()
@@ -90,8 +92,8 @@ def test_FourierAdderMod():
             for b in range(0, N):
                 n = len(bin(N)) - 2
                 circuit = Circuit(n + 2)
-                qreg_b = circuit([i for i in range(n + 1)])
-                Set(qreg_b, b)
+                qreg_b = circuit(list(range(n + 1)))
+                set_qureg(qreg_b, b)
                 BEAAdderMod.execute(n, a, N) | circuit
                 Measure | circuit
                 circuit.exec()
@@ -109,10 +111,10 @@ def test_BEAMulMod():
             for x in range(0, N):
                 n = len(bin(N)) - 2
                 circuit = Circuit(2 * n + 2)
-                qreg_b = circuit([i for i in range(n + 1)])
-                qreg_x = circuit([i for i in range(n + 1, 2 * n + 1)])
-                Set(qreg_b, 0)
-                Set(qreg_x, x)
+                qreg_b = circuit(list(range(n + 1)))
+                qreg_x = circuit(list(range(n + 1, 2 * n + 1)))
+                set_qureg(qreg_b, 0)
+                set_qureg(qreg_x, x)
                 BEAMulMod.execute(n, a, N) | circuit
                 Measure | circuit
                 circuit.exec()
@@ -131,17 +133,17 @@ def test_BEACUa():
         for N in range(0, 1 << n):
             for a in range(0, N):
                 coff = [0, 0]
-                r = ExGCD(a, N, coff)
+                r = ex_gcd(a, N, coff)
                 if r != 1:
                     continue
                 for x in range(0, N):
                     circuit = Circuit(2 * n + 3)
-                    qreg_b = circuit([i for i in range(n + 1)])
-                    qreg_x = circuit([i for i in range(n + 1, 2 * n + 1)])
+                    qreg_b = circuit(list(range(n + 1)))
+                    qreg_x = circuit(list(range(n + 1, 2 * n + 1)))
                     qreg_c = circuit(2 * n + 1)
-                    Set(qreg_c, c)
-                    Set(qreg_b, 0)
-                    Set(qreg_x, x)
+                    set_qureg(qreg_c, c)
+                    set_qureg(qreg_b, 0)
+                    set_qureg(qreg_x, x)
                     BEACUa.execute(n, a, N) | circuit
                     Measure | circuit
                     circuit.exec()

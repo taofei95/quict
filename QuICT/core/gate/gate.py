@@ -1980,74 +1980,6 @@ class PermGate(BasicGate):
 Perm = PermGate(["Perm"])
 
 
-class PermTGate(BasicGate):
-    """ Permutation gate
-
-    A special gate defined in our circuit,
-    It can change an n-qubit qureg's amplitude by permutaion,
-    the parameter is a 2^n list describes the permutation.
-
-    """
-
-    # life cycle
-    def __init__(self, alias=None):
-        _add_alias(alias=alias, standard_name=self.__class__.__name__)
-        super().__init__(alias=None)
-        self.controls = 0
-        self.targets = 0
-        self.params = 0
-
-    def __call__(self, params=None, name=None):
-        """ pass permutation to the gate
-
-        the length of permutaion must be n,
-        by which we can calculate the number of targets
-
-        Args:
-            params(list/tuple): the permutation parameters
-
-        Returns:
-            PermGate: the gate after filled by parameters
-        """
-        self.__temp_name = name
-        self.pargs = []
-        if not isinstance(params, list) or not isinstance(params, tuple):
-            TypeException("list or tuple", params)
-        if isinstance(params, tuple):
-            params = list(params)
-        length = len(params)
-        if length == 0:
-            raise Exception("list or tuple shouldn't be empty")
-
-        self.params = length
-        self.targets = length
-        self.pargs = params
-
-        return self
-
-    @property
-    def matrix(self) -> np.ndarray:
-        matrix = np.array([], dtype=np.complex128)
-        for i in range(self.params):
-            for j in range(self.params):
-                if self.pargs[i] == j:
-                    matrix = np.append(matrix, 1)
-                else:
-                    matrix = np.append(matrix, 0)
-        matrix = matrix.reshape(self.params, self.params)
-        return matrix
-
-    @property
-    def compute_matrix(self):
-        return self.matrix
-
-    def __str__(self):
-        return "Permutation gate"
-
-
-PermT = PermTGate(["PermT"])
-
-
 class ControlPermMulDetailGate(BasicGate):
     """ controlled-Permutation gate
 
@@ -2447,60 +2379,6 @@ class PermFxGate(PermGate):
 
 
 PermFx = PermFxGate(["PermFx"])
-
-
-class PermFxTGate(PermGate):
-    """ act an Fx oracle on a qureg
-
-    This Class is the subClass of PermGate.
-    In fact, we calculate the permutation by the parameters.
-
-    """
-
-    def __init__(self, alias=None):
-        _add_alias(alias=alias, standard_name=self.__class__.__name__)
-        super().__init__(alias=None)
-        self.controls = 0
-        self.targets = 0
-        self.params = 0
-
-    def __call__(self, params=None, blocks=None, name=None):
-        """ pass Fx to the gate
-
-        Fx should be a 2^n list that represent a boolean function
-        {0, 1}^n -> {0, 1}
-
-        Args:
-            params(list): contain 2^n values which are 0 or 1
-
-        Returns:
-            PermFxGate: the gate after filled by parameters
-        """
-        self.__temp_name = name
-        if not isinstance(params, list):
-            raise TypeException("list", params)
-        for idx in params:
-            if idx >= (1 << blocks):
-                raise Exception("the range of params should be [0, 1<<blocks)")
-
-        self.targets = blocks
-        self.pargs = params
-
-        return self
-
-    # @property
-    # def matrix(self) -> np.ndarray:
-    #     matrix = np.array([], dtype=np.complex128)
-    #     for i in range(self.params):
-    #         for j in range(self.params):
-    #             if self.pargs[i] == j:
-    #                 np.append(matrix, 1)
-    #             else:
-    #                 np.append(matrix, 0)
-    #     return matrix
-
-
-PermFxT = PermFxTGate(["PermFxT"])
 
 
 class UnitaryGate(BasicGate):
