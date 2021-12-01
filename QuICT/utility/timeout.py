@@ -33,13 +33,14 @@ def terminal_thread(thread):
     _async_raise(thread.ident, SystemExit)
 
 
-def timeout(t_out: int):
+def timeout():
     def decorator(func):
-        def wraps(*args, **kwargs):
-            new_thread = TimeoutThread(func, *args, **kwargs)
+        def wraps(self, *args, **kwargs):
+            t_out = self._timeout
+            new_thread = TimeoutThread(func, self, *args, **kwargs)
             new_thread.start()
             new_thread.join(t_out)
-            
+
             if new_thread.is_alive():
                 terminal_thread(new_thread)
                 raise TimeoutError("Running time exceed the time limit.")
