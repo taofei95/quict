@@ -45,3 +45,8 @@ TEST(MatricksTest, UnitaryTest) {
     test_stateless_simulator("./test_data/u.txt", simulator);
 //    test_stateless_simulator("./u.txt", simulator);
 }
+
+TEST(MatricksTest, MeasureTest) {
+    omp_set_num_threads(4);
+    test_stateless_simulator("./test_data/measure.txt", simulator, 1e-6, false);
+}
