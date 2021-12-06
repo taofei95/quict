@@ -8,11 +8,11 @@ import numpy as np
 import cupy as cp
 
 from QuICT.core import *
-from QuICT.simulation import BasicGPUSimulator
+from QuICT.simulation.gpu_simulator import BasicGPUSimulator
 from QuICT.utility import Proxy
 from QuICT.ops.utils import LinAlgLoader, perm_sort
 from QuICT.simulation.utils import GateType, GATE_TYPE_to_ID, MATRIX_INDEXES
-from QuICT.simulation.multigpu_simulator.data_switch import DataSwitcher
+from QuICT.simulation.gpu_simulator.multigpu_simulator.data_switch import DataSwitcher
 
 
 class MultiStateVectorSimulator(BasicGPUSimulator):

@@ -4,6 +4,5 @@
 # @Author  : Han Yu
 # @File    : __init__.py
 
-from ._simulation import BasicGPUSimulator
-from .multigpu_simulator import MultiStateVectorSimulator
-from .statevector_simulator import ConstantStateVectorSimulator
+from ._simulator import BasicSimulator
+from .gpu_simulator import MultiStateVectorSimulator, ConstantStateVectorSimulator, UnitarySimulator

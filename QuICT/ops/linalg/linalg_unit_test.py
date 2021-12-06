@@ -11,11 +11,10 @@ import cupy as cp
 
 import QuICT.ops.linalg.cpu_calculator as CPUCalculator
 import QuICT.ops.linalg.gpu_calculator as GPUCalculator
-from QuICT.ops.utils import CalculationLayer
 
 from QuICT.core import *
 from QuICT.algorithm import Amplitude
-from QuICT.simulation import BasicGPUSimulator
+from QuICT.simulation import BasicSimulator
 
 
 @unittest.skipUnless(os.environ.get("test_with_gpu", False), "require GPU")
@@ -100,7 +99,7 @@ class TestGPULinalg(unittest.TestCase):
         vec = cp.zeros((1 << qubit_num, ), dtype=np.complex64)
         vec.put(0, np.complex64(1))
 
-        small_gates = BasicGPUSimulator.pretreatment(circuit)
+        small_gates = BasicSimulator.pretreatment(circuit)
         for gate in small_gates:
             GPUCalculator.matrix_dot_vector(
                 gate.compute_matrix,

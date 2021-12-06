@@ -9,8 +9,8 @@ import cupy as cp
 
 from QuICT.core import *
 from QuICT.ops.utils import LinAlgLoader
-from QuICT.simulation import BasicGPUSimulator
-from QuICT.simulation.optimization.optimizer import Optimizer
+from QuICT.simulation.gpu_simulator import BasicGPUSimulator
+from QuICT.simulation.optimization import Optimizer
 from QuICT.simulation.utils import GateType, GATE_TYPE_to_ID
 
 

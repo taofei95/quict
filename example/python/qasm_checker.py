@@ -5,7 +5,7 @@
 # @File    : qasm_checker.py
 
 from QuICT.tools.interface import OPENQASMInterface
-from QuICT.qcda.simulation.statevector_simulator import ConstantStateVectorSimulator
+from QuICT.simulation import ConstantStateVectorSimulator
 from QuICT.core import *
 
 # with open("../qasm/test_2.qasm") as ifile:

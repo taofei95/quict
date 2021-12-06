@@ -2,7 +2,7 @@
 # -*- coding:utf8 -*-
 # @TIME    : 2021/4/27 2:02 下午
 # @Author  : Han Yu
-# @File    : _simulation
+# @File    : _simulator
 
 import cupy as cp
 import numpy as np
@@ -69,7 +69,7 @@ class dp:
         return self.value + tensor_cost(self.length, width) + multiply_vector_cost(width)
 
 
-class BasicGPUSimulator(object):
+class BasicSimulator(object):
     """
     The based class for GPU simulators
 
@@ -78,62 +78,6 @@ class BasicGPUSimulator(object):
         precision [np.complex64, np.complex128]: The precision for the circuit and qubits.
         gpu_device_id (int): The GPU device ID.
     """
-    def __init__(self, circuit: Circuit, precision=np.complex64, gpu_device_id: int = 0):
-        self._qubits = int(circuit.circuit_width())
-        self._precision = precision
-        self._gates = circuit.gates
-        self._device_id = gpu_device_id
-        self._circuit = circuit
-
-    def _gate_matrix_prepare(self):
-        # Pretreatment gate matrixs optimizer
-        self.gateM_optimizer = GateMatrixs(self._precision, self._device_id)
-        for gate in self._gates:
-            self.gateM_optimizer.build(gate)
-
-        self.gateM_optimizer.concentrate_gate_matrixs()
-
-    @property
-    def qubits(self):
-        return self._qubits
-
-    @qubits.setter
-    def qubits(self, value):
-        self._qubits = value
-
-    @property
-    def circuit(self):
-        return self._circuit
-
-    @circuit.setter
-    def circuit(self, circuit: Circuit):
-        self._circuit = circuit
-        self._gates = circuit.gates
-
-        self._gate_matrix_prepare()
-
-    @property
-    def vector(self):
-        return self._vector
-
-    @vector.setter
-    def vector(self, vec):
-        with cp.cuda.Device(self._device_id):
-            if type(vec) is np.ndarray:
-                self._vector = cp.array(vec)
-            else:
-                self._vector = vec
-
-    @property
-    def device(self):
-        return self._device_id
-
-    def run(self):
-        pass
-
-    def get_gate_matrix(self, gate):
-        return self.gateM_optimizer.target_matrix(gate)
-
     @staticmethod
     def pretreatment(circuit):
         """
@@ -247,12 +191,12 @@ class BasicGPUSimulator(object):
 
     @staticmethod
     def unitary_pretreatment(circuit):
-        small_gates = BasicGPUSimulator.pretreatment(circuit)
+        small_gates = BasicSimulator.pretreatment(circuit)
         gates = []
         for gate in small_gates:
             gates.append(gate.affectArgs.copy())
         # gates as input
-        f, pre = BasicGPUSimulator.unitary_merge_layer(gates)
+        f, pre = BasicSimulator.unitary_merge_layer(gates)
 
         order = []
 
@@ -270,12 +214,12 @@ class BasicGPUSimulator(object):
 
     @staticmethod
     def vector_pretreatment(circuit):
-        small_gates = BasicGPUSimulator.pretreatment(circuit)
+        small_gates = BasicSimulator.pretreatment(circuit)
         gates = []
         for gate in small_gates:
             gates.append(gate.affectArgs.copy())
         # gates as input
-        f, pre = BasicGPUSimulator.unitary_merge_layer(gates)
+        f, pre = BasicSimulator.unitary_merge_layer(gates)
 
         gate_length = len(gates)
         width = circuit.circuit_width()
