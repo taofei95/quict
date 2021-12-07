@@ -1,12 +1,9 @@
-shots: 1
-circuit: 1
-precision: 1
-
 # CPU simulator
 
 # GPU simulator
 GPU:
   # based config
+  precision: 1
   gpu_device_id: 0
   sync: False
 

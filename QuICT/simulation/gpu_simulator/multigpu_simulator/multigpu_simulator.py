@@ -29,32 +29,37 @@ class MultiStateVectorSimulator(BasicGPUSimulator):
     def __init__(
         self,
         proxy: Proxy,
-        circuit: Circuit,
         precision=np.complex64,
         gpu_device_id: int = 0,
         sync: bool = True
     ):
         self.proxy = proxy
-        self._sync = sync
         assert(proxy.dev_id == gpu_device_id)
 
         # Initial simulator with qubits
-        BasicGPUSimulator.__init__(self, circuit, precision, gpu_device_id)
+        BasicGPUSimulator.__init__(self, precision, gpu_device_id, sync)
+
+        # Initial the required algorithm.
+        self._algorithm = LinAlgLoader(device="GPU", enable_gate_kernel=True, enable_multigpu_gate_kernel=True)
+        self._data_switcher = DataSwitcher(self.proxy)
+
+    def _initial_circuit(self, circuit, use_previous):
+        self._circuit = circuit
 
         # Get qubits and limitation
         self.total_qubits = int(circuit.circuit_width())
         self.qubits = int(self.total_qubits - np.log2(self.proxy.ndevs))
 
+        self._gates = circuit.gates
+
         # Initial GateMatrix
         self._gate_matrix_prepare()
 
-        self.initial_vector_state()
+        # Initial vector state
+        if not use_previous or self._vector is None:
+            self._initial_vector_state()
 
-        # Initial the required algorithm.
-        self._algorithm = LinAlgLoader(device="GPU", enable_gate_kernel=True, enable_multigpu_gate_kernel=True)
-        self._data_switcher = DataSwitcher(self.proxy, self.qubits)
-
-    def initial_vector_state(self):
+    def _initial_vector_state(self):
         """
         Initial qubits' vector states.
         """
@@ -72,10 +77,12 @@ class MultiStateVectorSimulator(BasicGPUSimulator):
             if self.proxy.dev_id == 0:
                 self._vector.put(0, self._precision(1))
 
-    def run(self) -> np.ndarray:
+    def run(self, circuit: Circuit, use_previous: bool = False) -> np.ndarray:
         """
         Start simulator.
         """
+        self._initial_circuit(circuit, use_previous)
+
         with cp.cuda.Device(self._device_id):
             for gate in self._gates:
                 self.apply_gate(gate)
@@ -98,7 +105,7 @@ class MultiStateVectorSimulator(BasicGPUSimulator):
             gate (Gate): the quantum gate in the circuit.
         """
         gate_type = gate.type()
-        default_parameters = (self._vector, self._qubits, self._sync)
+        default_parameters = (self._vector, self.total_qubits, self._sync)
 
         # [H, SX, SY, SW, U2, U3, Rx, Ry]
         if gate_type in GATE_TYPE_to_ID[GateType.matrix_1arg]:
@@ -484,9 +491,7 @@ class MultiStateVectorSimulator(BasicGPUSimulator):
             else:
                 self._algorithm.Controlled_Swap_targs(
                     indexes,
-                    self._vector,
-                    self._qubits,
-                    self._sync
+                    *default_parameters
                 )
         # [ID]
         elif gate_type == GATE_ID["ID"]:
@@ -772,7 +777,7 @@ class MultiStateVectorSimulator(BasicGPUSimulator):
             index (int): The target qubit of the applied quantum gate.
             matrix (cp.array): The compute matrix of the applied quantum gate.
         """
-        default_parameters = (self._vector, self._qubits, self._sync)
+        default_parameters = (self._vector, self.total_qubits, self._sync)
         is_exceed = (index >= self.qubits)
 
         if is_exceed:  # target index exceed the device limit; switch data with dest
@@ -796,7 +801,7 @@ class MultiStateVectorSimulator(BasicGPUSimulator):
             index (int): The target/control qubits of the applied quantum gate.
             matrix (cp.array): The compute matrix of the applied quantum gate.
         """
-        default_parameters = (self._vector, self._qubits, self._sync)
+        default_parameters = (self._vector, self.total_qubits, self._sync)
 
         if indexes[0] >= self.qubits:       # all qubits exceed the device limit
             curr_dev_id = self.proxy.dev_id
@@ -860,7 +865,7 @@ class MultiStateVectorSimulator(BasicGPUSimulator):
             index (int): The target qubit of the applied quantum gate.
             matrix (cp.array): The compute matrix of the applied quantum gate.
         """
-        default_parameters = (self._vector, self._qubits, self._sync)
+        default_parameters = (self._vector, self.total_qubits, self._sync)
 
         if t_index >= self.qubits:  # target index exceed the device limit
             index = self.proxy.dev_id & (1 << (t_index - self.qubits))
@@ -884,7 +889,7 @@ class MultiStateVectorSimulator(BasicGPUSimulator):
             indexes (int): The target/control qubits of the applied quantum gate.
             matrix (cp.array): The compute matrix of the applied quantum gate.
         """
-        default_parameters = (self._vector, self._qubits, self._sync)
+        default_parameters = (self._vector, self.total_qubits, self._sync)
 
         if indexes[0] >= self.qubits:       # All qubits exceed the device limit.
             _0 = self.proxy.dev_id & (1 << (indexes[0] - self.qubits))
@@ -925,7 +930,7 @@ class MultiStateVectorSimulator(BasicGPUSimulator):
         Args:
             t_index (int): The target qubit of the applied quantum gate.
         """
-        default_parameters = (self._vector, self._qubits, self._sync)
+        default_parameters = (self._vector, self.total_qubits, self._sync)
 
         if t_index >= self.qubits:  # Swap the whole data if target idx is exceed.
             destination = self.proxy.dev_id ^ (1 << (t_index - self.qubits))
@@ -943,7 +948,7 @@ class MultiStateVectorSimulator(BasicGPUSimulator):
             index (int): The target qubit of the applied quantum gate.
             matrix (cp.array): The compute matrix of the applied quantum gate.
         """
-        default_parameters = (self._vector, self._qubits, self._sync)
+        default_parameters = (self._vector, self.total_qubits, self._sync)
 
         if t_index >= self.qubits:  # target index exceed the device limit
             destination = self.proxy.dev_id ^ (1 << (t_index - self.qubits))
@@ -973,7 +978,7 @@ class MultiStateVectorSimulator(BasicGPUSimulator):
             index (int): The target qubit of the applied quantum gate.
             matrix (cp.array): The compute matrix of the applied quantum gate.
         """
-        default_parameters = (self._vector, self._qubits, self._sync)
+        default_parameters = (self._vector, self.total_qubits, self._sync)
 
         if t_index >= self.qubits:  # target index exceed the device limit.
             if self.proxy.dev_id & (1 << (t_index - self.qubits)):
@@ -997,7 +1002,7 @@ class MultiStateVectorSimulator(BasicGPUSimulator):
         Returns:
             [bool]: state 0 or state 1
         """
-        default_parameters = (self._vector, self._qubits, self._sync)
+        default_parameters = (self._vector, self.total_qubits, self._sync)
 
         # Calculate the device's probability.
         prob_result = self._algorithm.Device_Prob_Calculator(
@@ -1051,7 +1056,7 @@ class MultiStateVectorSimulator(BasicGPUSimulator):
         Args:
             index (int): The target qubit of the applied quantum gate.
         """
-        default_parameters = (self._vector, self._qubits, self._sync)
+        default_parameters = (self._vector, self.total_qubits, self._sync)
 
         # Calculate the device's probability
         prob_result = self._algorithm.Device_Prob_Calculator(

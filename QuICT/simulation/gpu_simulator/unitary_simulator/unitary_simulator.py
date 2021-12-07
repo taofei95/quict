@@ -20,11 +20,10 @@ class UnitarySimulator(BasicSimulator):
     """
     Algorithms to the unitary matrix of a Circuit.
     """
-    def __init__(self, circuit, precision=np.complex64):
-        self._circuit = circuit
+    def __init__(self, precision=np.complex64):
         self._precision = precision
 
-    def run(self) -> np.ndarray:
+    def run(self, circuit) -> np.ndarray:
         """
         Get the unitary matrix of circuit
 
@@ -35,10 +34,10 @@ class UnitarySimulator(BasicSimulator):
             np.ndarray: The unitary matrix of input circuit.
         """
 
-        qubit = self._circuit.circuit_width()
-        if len(self._circuit.gates) == 0:
+        qubit = circuit.circuit_width()
+        if len(circuit.gates) == 0:
             return np.identity(1 << qubit, dtype=self._precision)
-        ordering, small_gates = BasicSimulator.unitary_pretreatment(self._circuit)
+        ordering, small_gates = BasicSimulator.unitary_pretreatment(circuit)
         u_mat, u_args = UnitarySimulator.merge_unitary_by_ordering(small_gates, ordering)
         result_mat, _ = UnitarySimulator.merge_two_unitary(
             np.identity(1 << qubit, dtype=self._precision),

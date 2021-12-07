@@ -59,6 +59,7 @@ MATRIX_INDEXES = [
     [54, 55, 62, 63]
 ]
 
+
 def _get_default_config():
     curPath = os.path.dirname(os.path.realpath(__file__))
     simPath = os.path.split(curPath)[0]
@@ -66,10 +67,11 @@ def _get_default_config():
 
     with open(confPath, 'r', encoding='utf-8') as f:
         config = f.read()
-        
+
     config = yaml.load(config, Loader=yaml.FullLoader)
 
     return config
+
 
 _DEFAULT_CONFIG = _get_default_config()
 

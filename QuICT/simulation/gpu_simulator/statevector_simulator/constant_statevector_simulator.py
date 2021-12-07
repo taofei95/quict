@@ -26,30 +26,37 @@ class ConstantStateVectorSimulator(BasicGPUSimulator):
     """
     def __init__(
         self,
-        circuit: Circuit,
         precision=np.complex64,
         optimize: bool = False,
         gpu_device_id: int = 0,
-        sync: bool = False
+        sync: bool = True
     ):
-        BasicGPUSimulator.__init__(self, circuit, precision, gpu_device_id)
+        BasicGPUSimulator.__init__(self, precision, gpu_device_id, sync)
         self._optimize = optimize
-        self._sync = sync
 
         if self._optimize:
             self._optimizor = Optimizer()
+
+        # Initial simulator with limit_qubits
+        self._algorithm = LinAlgLoader(device="GPU", enable_gate_kernel=True, enable_multigpu_gate_kernel=False)
+
+    def _initial_circuit(self, circuit, use_previous):
+        self._circuit = circuit
+        self._qubits = int(circuit.circuit_width())
+
+        if self._optimize:
             self._gates = self._optimizor.optimize(circuit.gates)
+        else:
+            self._gates = circuit.gates
 
         # Initial GateMatrix
         self._gate_matrix_prepare()
 
         # Initial vector state
-        self.initial_vector_state()
+        if not use_previous or self._vector is None:
+            self._initial_vector_state()
 
-        # Initial simulator with limit_qubits
-        self._algorithm = LinAlgLoader(device="GPU", enable_gate_kernel=True, enable_multigpu_gate_kernel=False)
-
-    def initial_vector_state(self):
+    def _initial_vector_state(self):
         """
         Initial qubits' vector states.
         """
@@ -65,10 +72,12 @@ class ConstantStateVectorSimulator(BasicGPUSimulator):
             self._vector = cp.zeros(vector_size, dtype=self._precision)
             self._vector.put(0, self._precision(1))
 
-    def run(self) -> np.ndarray:
+    def run(self, circuit: Circuit, use_previous: bool = False) -> np.ndarray:
         """
         Get the state vector of circuit
         """
+        self._initial_circuit(circuit, use_previous)
+
         with cp.cuda.Device(self._device_id):
             for gate in self._gates:
                 self.apply_gate(gate)

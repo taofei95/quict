@@ -20,12 +20,11 @@ class BasicGPUSimulator(object):
         precision [np.complex64, np.complex128]: The precision for the circuit and qubits.
         gpu_device_id (int): The GPU device ID.
     """
-    def __init__(self, circuit: Circuit, precision=np.complex64, gpu_device_id: int = 0):
-        self._qubits = int(circuit.circuit_width())
+    def __init__(self, precision=np.complex128, gpu_device_id: int = 0, sync: bool = True):
         self._precision = precision
-        self._gates = circuit.gates
         self._device_id = gpu_device_id
-        self._circuit = circuit
+        self._sync = sync
+        self._vector = None
 
     def _gate_matrix_prepare(self):
         # Pretreatment gate matrixs optimizer
@@ -38,14 +37,6 @@ class BasicGPUSimulator(object):
     @property
     def circuit(self):
         return self._circuit
-
-    @circuit.setter
-    def circuit(self, circuit: Circuit):
-        self._circuit = circuit
-        self._gates = circuit.gates
-        self._qubits = int(circuit.circuit_width())
-
-        self._gate_matrix_prepare()
 
     @property
     def vector(self):

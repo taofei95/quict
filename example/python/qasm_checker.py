@@ -19,10 +19,8 @@ if qasm.valid_circuit:
     circuit = qasm.circuit
     circuit.print_information()
 
-    simulator = ConstantStateVectorSimulator(
-        circuit=circuit
-    )
-    state = simulator.run()
+    simulator = ConstantStateVectorSimulator()
+    state = simulator.run(circuit)
 
     print(state)
 
@@ -48,9 +46,7 @@ Ryy(0) | circuit([0, 1])
 
 circuit.print_information()
 
-simulator = ConstantStateVectorSimulator(
-    circuit=circuit
-)
-state = simulator.run()
+simulator = ConstantStateVectorSimulator()
+state = simulator.run(circuit)
 
 print(state)
