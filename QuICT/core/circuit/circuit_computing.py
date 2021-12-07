@@ -11,6 +11,7 @@ from typing import no_type_check_decorator
 import numpy as np
 
 from QuICT.backends.systemcdll import systemCdll
+from QuICT.core import *
 
 
 def _getRandomList(count, upper_bound):

@@ -16,6 +16,9 @@ example/python/*.jpg
 .vscode
 .test_build
 _build
+.ipynb_checkpoints
+cmake-build*/
+QuICT/qcda/simulation/backends/*.txt
 *qubit_cnot.json
 *qubit_cnot.inf
 *qubit_cnot_depth.inf

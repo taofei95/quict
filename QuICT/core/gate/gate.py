@@ -205,6 +205,14 @@ class BasicGate(object):
         return self.targs[0]
 
     @property
+    def diagonal(self) -> bool:
+        return self.__is_diagonal
+
+    @diagonal.setter
+    def diagonal(self, is_diag: bool):
+        self.__is_diagonal = is_diag
+
+    @property
     def qasm_name(self):
         return self.__qasm_name
 
@@ -256,6 +264,7 @@ class BasicGate(object):
         self.__qasm_name = 'error'
         self.__name = None
         self.__temp_name = None
+        self.__is_diagonal = False
         _add_alias(alias=alias, standard_name=self.__class__.__name__)
 
     # gate behavior
@@ -333,7 +342,8 @@ class BasicGate(object):
             raise TypeException("int or tuple<int> or list<int>", targets)
         if len(GATE_SET_LIST):
             GATE_SET_LIST[-1].append(self.copy())
-        return self
+            return self
+        return self.copy()
 
     def __call__(self, params=None, name=None):
         """ give parameters for the gate
@@ -502,25 +512,11 @@ class BasicGate(object):
         Returns:
             bool: True if gate's matrix is diagonal
         """
-        if not self.is_single() and not self.is_control_single() and not self.type() == GATE_ID['Swap']:
-            raise Exception("only consider one qubit and two qubits")
-        if self.is_single():
-            matrix = self.matrix
-            if abs(matrix[0, 1]) < 1e-10 and abs(matrix[1, 0]) < 1e-10:
-                return True
-            else:
-                return False
-        elif self.is_control_single():
-            matrix = self.matrix
-            if abs(matrix[0, 1]) < 1e-10 and abs(matrix[1, 0]) < 1e-10:
-                return True
-            else:
-                return False
-        else:
-            return False
+        return self.__is_diagonal
 
     def is_special(self) -> bool:
-        """ judge whether gate's is special gate
+        """ judge whether gate's is special gate, which is one of
+        [Measure, Reset, Barrier, Perm, Unitary]
 
         Returns:
             bool: True if gate's matrix is special
@@ -528,6 +524,8 @@ class BasicGate(object):
         if self.type() == GATE_ID["Unitary"]:
             return True
         if self.type() == GATE_ID["Perm"]:
+            return True
+        if self.type() == GATE_ID["Reset"]:
             return True
         if self.type() == GATE_ID["Measure"]:
             return True
@@ -646,9 +644,10 @@ class SGate(BasicGate):
         self.targets = 1
         self.params = 0
         self.qasm_name = "s"
+        self.diagonal = True
 
     def __str__(self):
-        return "Phase gate"
+        return "S gate"
 
     def inverse(self):
         _S_dagger = SDaggerGate(alias=None)
@@ -679,6 +678,7 @@ class SDaggerGate(BasicGate):
         self.targets = 1
         self.params = 0
         self.qasm_name = "sdg"
+        self.diagonal = True
 
     def __str__(self):
         return "The conjugate transpose of Phase gate"
@@ -1134,6 +1134,7 @@ class RzGate(BasicGate):
         self.params = 1
         self.pargs = [np.pi / 2]
         self.qasm_name = "rz"
+        self.diagonal = True
 
     @property
     def matrix(self) -> np.ndarray:
@@ -1244,6 +1245,7 @@ class PhaseGate(BasicGate):
         self.params = 1
         self.pargs = [0]
         self.qasm_name = "phase"
+        self.diagonal = True
 
     def __str__(self):
         return "Phase gate"
@@ -1727,6 +1729,7 @@ class RzzGate(BasicGate):
         self.params = 1
         self.pargs = [np.pi / 2]
         self.qasm_name = "Rzz"
+        self.diagonal = True
 
     @property
     def matrix(self) -> np.ndarray:
@@ -2364,16 +2367,16 @@ class PermFxGate(PermGate):
                 self.pargs.append(idx)
         return self
 
-    @property
-    def matrix(self) -> np.ndarray:
-        matrix = np.array([], dtype=np.complex128)
-        for i in range(self.params):
-            for j in range(self.params):
-                if self.pargs[i] == j:
-                    np.append(matrix, 1)
-                else:
-                    np.append(matrix, 0)
-        return matrix
+    # @property
+    # def matrix(self) -> np.ndarray:
+    #     matrix = np.array([], dtype=np.complex128)
+    #     for i in range(self.params):
+    #         for j in range(self.params):
+    #             if self.pargs[i] == j:
+    #                 np.append(matrix, 1)
+    #             else:
+    #                 np.append(matrix, 0)
+    #     return matrix
 
 
 PermFx = PermFxGate(["PermFx"])
@@ -2735,9 +2738,10 @@ class QFTGate(ComplexGate):
         _IQFT.targets = self.targets
         return _IQFT
 
-    def build_gate(self):
+    def build_gate(self, targets):
         from .composite_gate import CompositeGate
-        qureg = self.affectArgs
+        self.targets = targets
+        qureg = [i for i in range(targets)]
         gates = CompositeGate()
 
         with gates:
@@ -2796,9 +2800,10 @@ class IQFTGate(ComplexGate):
         _QFT.targets = self.targets
         return _QFT
 
-    def build_gate(self):
+    def build_gate(self, targets):
         from .composite_gate import CompositeGate
-        qureg = self.affectArgs
+        self.targets = targets
+        qureg = [i for i in range(targets)]
         gates = CompositeGate()
 
         with gates:
