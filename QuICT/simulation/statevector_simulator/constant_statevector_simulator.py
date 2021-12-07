@@ -10,6 +10,7 @@ import cupy as cp
 from QuICT.core import *
 from QuICT.ops.utils import LinAlgLoader
 from QuICT.simulation import BasicGPUSimulator
+from QuICT.simulation.optimization.optimizer import Optimizer
 from QuICT.simulation.utils import GateType, GATE_TYPE_to_ID
 
 
@@ -23,9 +24,24 @@ class ConstantStateVectorSimulator(BasicGPUSimulator):
         gpu_device_id (int): The GPU device ID.
         sync (bool): Sync mode or Async mode.
     """
-    def __init__(self, circuit: Circuit, precision=np.complex64, gpu_device_id: int = 0, sync: bool = False):
+    def __init__(
+        self,
+        circuit: Circuit,
+        precision=np.complex64,
+        optimize: bool = False,
+        gpu_device_id: int = 0,
+        sync: bool = False
+    ):
         BasicGPUSimulator.__init__(self, circuit, precision, gpu_device_id)
+        self._optimize = optimize
         self._sync = sync
+
+        if self._optimize:
+            self._optimizor = Optimizer()
+            self._gates = self._optimizor.optimize(circuit.gates)
+
+        # Initial GateMatrix
+        self._gate_matrix_prepare()
 
         # Initial vector state
         self.initial_vector_state()
@@ -257,17 +273,53 @@ class ConstantStateVectorSimulator(BasicGPUSimulator):
                     gate.pargs,
                     *default_parameters
                 )
-        # extra gates. i.e. [Unitary, Customied]
+        # [Unitary]
+        elif gate_type == GATE_ID["Unitary"]:
+            qubit_idxes = gate.cargs + gate.targs
+            if len(qubit_idxes) == 1:   # 1-qubit unitary gate
+                t_index = self._qubits - 1 - qubit_idxes[0]
+                matrix = self.get_gate_matrix(gate)
+                if gate.is_diagonal():    # diagonal gate
+                    self._algorithm.Diagonal_Multiply_targ(
+                        t_index,
+                        matrix,
+                        *default_parameters
+                    )
+                else:   # non-diagonal gate
+                    self._algorithm.Based_InnerProduct_targ(
+                        t_index,
+                        matrix,
+                        *default_parameters
+                    )
+            elif len(qubit_idxes) == 2:     # 2-qubits unitary gate
+                indexes = [self._qubits - 1 - index for index in qubit_idxes]
+                indexes.sort()
+                matrix = self.get_gate_matrix(gate)
+                if gate.is_diagonal():        # diagonal gate
+                    self._algorithm.Diagonal_Multiply_targs(
+                        indexes,
+                        matrix,
+                        *default_parameters
+                    )
+                else:   # non-diagonal gate
+                    self._algorithm.Based_InnerProduct_targs(
+                        indexes,
+                        matrix,
+                        *default_parameters
+                    )
+            else:   # common unitary gate supported, but run slowly
+                aux = cp.zeros_like(self._vector)
+                matrix = self.get_gate_matrix(gate)
+                self._algorithm.matrix_dot_vector(
+                    matrix,
+                    gate.controls + gate.targets,
+                    self._vector,
+                    self._qubits,
+                    gate.affectArgs,
+                    aux,
+                    self._sync
+                )
+                self.vector = aux
+        # unsupported quantum gates
         else:
-            aux = cp.zeros_like(self._vector)
-            matrix = self.get_gate_matrix(gate)
-            self._algorithm.matrix_dot_vector(
-                matrix,
-                gate.controls + gate.targets,
-                self._vector,
-                self._qubits,
-                gate.affectArgs,
-                aux,
-                self._sync
-            )
-            self.vector = aux
+            raise KeyError(f"Unsupported Gate: {gate_type}")

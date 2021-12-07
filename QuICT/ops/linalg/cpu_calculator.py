@@ -121,3 +121,8 @@ def dot(A, B):
         np.array<np.complex>: A * B
     """
     return np.dot(A, B)
+
+
+@njit()
+def multiply(A, B):
+    return np.multiply(A, B)

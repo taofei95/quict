@@ -85,8 +85,6 @@ class BasicGPUSimulator(object):
         self._device_id = gpu_device_id
         self._circuit = circuit
 
-        self._gate_matrix_prepare()
-
     def _gate_matrix_prepare(self):
         # Pretreatment gate matrixs optimizer
         self.gateM_optimizer = GateMatrixs(self._precision, self._device_id)

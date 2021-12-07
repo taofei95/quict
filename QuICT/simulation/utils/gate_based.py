@@ -39,7 +39,6 @@ class GateMatrixs:
             gate(Gate): the gate in circuit.
         """
         gate_name = gate.name.split("_")[0]
-
         if gate_name in _GATES_EXCEPT:
             return
 
