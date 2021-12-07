@@ -27,7 +27,8 @@ void get_compare_data(
         _str_T data_name,
         uint64_t &qubit_num,
         std::complex<Precision> **expect_state,
-        std::vector<QuICT::GateDescription<Precision>> &gate_desc_vec
+        std::vector<QuICT::GateDescription<Precision>> &gate_desc_vec,
+        bool if_compare_data = true
 ) {
     using namespace std;
 
@@ -142,19 +143,29 @@ void get_compare_data(
                     "ctrl_diag",
                     std::vector<uint64_t>{carg, targ},
                     std::move(diag)
-            );
+                    );
+        } else if (gate_name == "measure") {
+            fs >> targ;
+            gate_desc_vec.emplace_back(
+                    "measure",
+                    std::vector<uint64_t>{targ}
+                    );
         } else {
             throw std::runtime_error("Not recognized for " + gate_name + " in " + std::string(__func__));
         }
     }
 
-    *expect_state = new std::complex<Precision>[1ULL << qubit_num];
+    *expect_state = nullptr;
+    if(if_compare_data)
+    {
+        *expect_state = new std::complex<Precision>[1ULL << qubit_num];
 
-    double re, im;
-    char sign, img_label;
-    for (uint64_t i = 0; i < (1ULL << qubit_num); ++i) {
-        fs >> re >> sign >> im >> img_label;
-        (*expect_state)[i] = std::complex<Precision>(re, sign == '+' ? im : -im);
+        double re, im;
+        char sign, img_label;
+        for (uint64_t i = 0; i < (1ULL << qubit_num); ++i) {
+            fs >> re >> sign >> im >> img_label;
+            (*expect_state)[i] = std::complex<Precision>(re, sign == '+' ? im : -im);
+        }
     }
 }
 
@@ -166,7 +177,8 @@ template<
 void test_stateless_simulator(
         _str_T data_name,
         _sim_T<Precision> &simulator,
-        double eps = 1e-6
+        double eps = 1e-6,
+        bool if_compare_data = true
 ) {
     using namespace std;
 
@@ -176,7 +188,7 @@ void test_stateless_simulator(
     std::vector<QuICT::GateDescription<Precision>> gate_desc_vec;
     complex<Precision> *expect_state;
 
-    get_compare_data(data_name, qubit_num, &expect_state, gate_desc_vec);
+    get_compare_data(data_name, qubit_num, &expect_state, gate_desc_vec, if_compare_data);
 
     auto start = std::chrono::system_clock::now();
     std::complex<Precision> *state = simulator.run(qubit_num, gate_desc_vec);
@@ -184,10 +196,17 @@ void test_stateless_simulator(
     std::chrono::duration<double> diff = end - start;
     std::cout << "Simulation costs " << diff.count() << " s\n";
 
-    for (uint64_t i = 0; i < (1ULL << qubit_num); ++i) {
-        ASSERT_NEAR(state[i].real(), expect_state[i].real(), eps) << "i = " << i;
-        ASSERT_NEAR(state[i].imag(), expect_state[i].imag(), eps) << "i = " << i;
+    if (if_compare_data) {
+        for (uint64_t i = 0; i < (1ULL << qubit_num); ++i) {
+            ASSERT_NEAR(state[i].real(), expect_state[i].real(), eps) << "i = " << i;
+            ASSERT_NEAR(state[i].imag(), expect_state[i].imag(), eps) << "i = " << i;
+        }
+    } else {
+        for (uint64_t i = 0; i < (1ULL << qubit_num); ++i) {
+            cout << i << ":\t" << state[i] << endl;
+        }
     }
+
     delete[] state;
     delete[] expect_state;
 }

@@ -13,6 +13,7 @@
 #include <string>
 #include <omp.h>
 #include <immintrin.h>
+#include <random>
 
 #include "gate.h"
 #include "utility.h"
@@ -23,6 +24,9 @@ namespace QuICT {
     protected:
         std::string name_;
         const Details::SysConfig sysconfig_;
+        std::default_random_engine random_gen;
+        std::uniform_real_distribution<double> random_dist;
+
     public:
         MaTricksSimulator() {
             using namespace std;
@@ -35,6 +39,9 @@ namespace QuICT {
             } else if (std::is_same_v<Precision, float>) {
                 name_ += " [float]";
             }
+
+            random_gen.seed(std::chrono::system_clock::now().time_since_epoch().count());
+            random_dist =  std::uniform_real_distribution<double>(0.0,1.0);
         }
 
         inline const std::string &name() {
@@ -236,8 +243,8 @@ namespace QuICT {
                     break;
                 }
                 case gate_category::measure: {
-                    throw std::runtime_error(
-                            std::string(__func__) + ": " + "Not implemented gate - " + gate_desc.gate_name_);
+                    auto measure_gate = MeasureGate(gate_desc.affect_args_[0]);
+                    apply_measure_gate(q_state_bit_num, measure_gate, real, imag);
                     break;
                 }
                 default: {
@@ -266,5 +273,6 @@ namespace QuICT {
 #include "avx_impl/avx_unitary_n_gate.tcc"
 #include "avx_impl/avx_ctrl_unitary_gate.tcc"
 #include "avx_impl/avx_h_gate.tcc"
+#include "avx_impl/avx_measure_gate.tcc"
 
 #endif //SIM_BACK_MATRICKS_SIMULATOR_H
