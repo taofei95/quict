@@ -1,4 +1,5 @@
-import subprocess
+import os
+import yaml
 from enum import Enum
 
 from QuICT.core import GATE_ID
@@ -57,3 +58,26 @@ MATRIX_INDEXES = [
     [36, 37, 53, 54],
     [54, 55, 62, 63]
 ]
+
+def _get_default_config():
+    curPath = os.path.dirname(os.path.realpath(__file__))
+    simPath = os.path.split(curPath)[0]
+    confPath = os.path.join(simPath, "config", "default.yml")
+
+    with open(confPath, 'r', encoding='utf-8') as f:
+        config = f.read()
+        
+    config = yaml.load(config, Loader=yaml.FullLoader)
+
+    return config
+
+_DEFAULT_CONFIG = _get_default_config()
+
+# def config_validation():
+#     def decorator(func):
+#         def wraps(self, *args, **kwargs):
+#             device = self._device
+#             backend = self._backend
+
+#         return wraps
+#     return decorator

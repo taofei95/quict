@@ -9,6 +9,7 @@ import numpy as np
 
 from QuICT.core import *
 from QuICT.simulation import ConstantStateVectorSimulator, MultiStateVectorSimulator, UnitarySimulator
+from QuICT.simulation.remote_simulator.RemoteAgent import QuantumLeafAgent, QiskitAgent
 
 
 """
@@ -26,25 +27,23 @@ Raises:
 
 class Simulator:
     __DEVICE = ["CPU", "GPU", "Remote"]
-    __BACKEND = ["unitary", "statevector", "multiGPU"]
+    __GPU_BACKEND_MAPPING = {
+        "unitary": UnitarySimulator,
+        "statevector": ConstantStateVectorSimulator,
+        "multiGPU": MultiStateVectorSimulator
+    }
 
-    def __init__(self, device, backend, options: dict):
+    def __init__(self, device, backend, **options):
         self._device = device
         self._backend = backend
-        self._options = options
         self._simulator = None
 
         if device not in Simulator.__DEVICE:
             raise ValueError(
                 f"Unsupportted device {device}, please select one of [CPU, GPU, MultiGPU]."
             )
-            
-        if backend not in Simulator.__BACKEND:
-            raise ValueError(
-                f"Unsupportted backend {backend}, please select one of [unitary, statevector, multiGPU]."
-            )
 
-        self._validate_options()
+        self._options = self._validate_options(options)
 
         if device == "CPU":
             self._load_cpu_simulator()
@@ -53,7 +52,7 @@ class Simulator:
         else:
             self._load_remote_simulator()
 
-    def _validate_options(self):
+    def _validate_options(self, options, default_options = None):
         pass
 
     def _load_cpu_simulator(self):
@@ -65,19 +64,23 @@ class Simulator:
             )
 
     def _load_gpu_simulator(self):
-        if self._backend == "statevector":
-            self._simulator = ConstantStateVectorSimulator(**self._options)
-        elif self._backend == "multiGPU":
-            self._simulator = MultiStateVectorSimulator(**self._options)
-        elif self._backend == "unitary":
-            self._simulator = UnitarySimulator(**self._options)
-        else:
+        if self._backend not in Simulator.__GPU_BACKEND_MAPPING.keys():
             raise ValueError(
                 f"Unsupportted backend {self._backend} in gpu simulator, please select one of [unitary, statevector, multiGPU]."
             )
 
+        self._simulator = Simulator.__GPU_BACKEND_MAPPING[self._backend](**self._options)
+
     def _load_remote_simulator(self):
-        pass
+        if self._backend in QuantumLeafAgent.__backends:
+            self._simulator = QuantumLeafAgent(**self._options)
+        elif self._backend in QiskitAgent.__backends:
+            self._simulator = QiskitAgent(**self._options)
+        else:
+            raise ValueError(
+                f"Unsupportted backend {self._backend} in remote simulator, please using one of "
+                f"{QuantumLeafAgent.__backends} {QiskitAgent.__backends}"
+            )
 
     def run(self):
         self._simulator.run()

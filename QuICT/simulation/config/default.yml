@@ -1,0 +1,21 @@
+shots: 1
+circuit: 1
+precision: 1
+
+# CPU simulator
+
+# GPU simulator
+GPU:
+  # based config
+  gpu_device_id: 0
+  sync: False
+
+  statevector: 
+    optimize: False
+
+  # Multi-GPU simulator
+  multiGPU:
+    proxy: 1
+
+Remote:
+  token: 1

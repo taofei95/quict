@@ -50,7 +50,8 @@ def test_unitary_generate():
     end_time = time()
     duration_1 = end_time - start_time
     start_time = time()
-    result_mat = UnitarySimulator.run(circuit)
+    sim = UnitarySimulator(circuit)
+    result_mat = sim.run()
     end_time = time()
     duration_2 = end_time - start_time
     print(f"\nOld algo time: {duration_1:.4f} s, current algo time: {duration_2:.4f} s")
