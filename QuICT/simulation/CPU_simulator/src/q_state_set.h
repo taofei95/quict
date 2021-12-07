@@ -2,6 +2,11 @@
 // Created by Ci Lei on 2021-10-22.
 //
 
+/*
+ * This file should not be used! Performance tests showed that
+ * q_state is a bad abstraction!
+ * */
+
 #ifndef SIM_BACK_Q_STATE_SET_H
 #define SIM_BACK_Q_STATE_SET_H
 

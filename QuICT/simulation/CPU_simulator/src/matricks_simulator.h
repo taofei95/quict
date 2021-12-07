@@ -59,14 +59,14 @@ namespace QuICT {
                 const std::vector<GateDescription<Precision>> &gate_desc_vec
         );
 
-    private:
-
         inline void run(
                 uint64_t q_state_bit_num,
                 const std::vector<GateDescription<Precision>> &gate_desc_vec,
                 Precision *real,
                 Precision *imag
         );
+
+    private:
 
         template<uint64_t N, template<uint64_t, typename> class Gate>
         inline void apply_diag_n_gate(

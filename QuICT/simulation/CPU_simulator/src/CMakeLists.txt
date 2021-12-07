@@ -13,7 +13,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ftree-vectorize -fopenmp -mavx -mavx2 -
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ftree-vectorize -mavx -mavx2 -mfma")
 
 
-add_subdirectory(../../../../../QuICT/utility/extern/googletest ./cmake-build-gtest)
+add_subdirectory(../../../../QuICT/utility/extern/googletest ./cmake-build-gtest)
 #include_directories(${gtest_SOURCE_DIR}/include)
 include(GoogleTest)
 
