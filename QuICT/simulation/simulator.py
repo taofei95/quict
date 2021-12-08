@@ -4,29 +4,19 @@
 # @Author  : Han Yu
 # @File    : _simulator
 
-import cupy as cp
-import numpy as np
-
 from QuICT.core import *
-from QuICT.simulation import ConstantStateVectorSimulator, MultiStateVectorSimulator, UnitarySimulator
-from QuICT.simulation.remote_simulator.RemoteAgent import QuantumLeafAgent, QiskitAgent
-
-
-"""
-device: [CPU, GPU, Multi-GPU, Remote]
-backend:   [CPU - [statevector]
-            GPU - [statevector, unitary]
-            Multi-GPU - [statevector]
-            Remote - [...]]
-parameters: parameters check; using decorator?
-
-Raises:
-    ValueError: [description]
-"""
+from QuICT.simulation import (
+    ConstantStateVectorSimulator,
+    MultiStateVectorSimulator,
+    UnitarySimulator,
+    QuantumLeafSimulator,
+    QiskitSimulator
+)
+from QuICT.simulation.utils import option_validation
 
 
 class Simulator:
-    __DEVICE = ["CPU", "GPU", "Remote"]
+    __DEVICE = ["CPU", "GPU", "Qiskit", "QCompute"]
     __GPU_BACKEND_MAPPING = {
         "unitary": UnitarySimulator,
         "statevector": ConstantStateVectorSimulator,
@@ -37,9 +27,10 @@ class Simulator:
         self,
         device: str,
         backend: str,
-        shots: int,
+        shots: int = 1,
         **options
     ):
+        assert (shots >= 1)
         self._device = device
         self._backend = backend
         self._shots = shots
@@ -47,10 +38,10 @@ class Simulator:
 
         if device not in Simulator.__DEVICE:
             raise ValueError(
-                f"Unsupportted device {device}, please select one of [CPU, GPU, MultiGPU]."
+                f"Unsupportted device {device}, please select one of {Simulator.__DEVICE}."
             )
 
-        self._options = self._validate_options(options)
+        self._options = self._validate_options(options=options)
 
         if device == "CPU":
             self._load_cpu_simulator()
@@ -59,8 +50,12 @@ class Simulator:
         else:
             self._load_remote_simulator()
 
+    @option_validation()
     def _validate_options(self, options, default_options=None):
-        pass
+        for key, value in options.items():
+            default_options[key] = value
+
+        return default_options
 
     def _load_cpu_simulator(self):
         if self._backend == "statevector":
@@ -77,21 +72,32 @@ class Simulator:
                 f"please select one of [unitary, statevector, multiGPU]."
             )
 
-        self._simulator = Simulator.__GPU_BACKEND_MAPPING[self._backend](
-            circuit=self._circuit,
-            **self._options
-        )
+        self._simulator = Simulator.__GPU_BACKEND_MAPPING[self._backend](**self._options)
 
     def _load_remote_simulator(self):
-        if self._backend in QuantumLeafAgent.__backends:
-            self._simulator = QuantumLeafAgent(**self._options)
-        elif self._backend in QiskitAgent.__backends:
-            self._simulator = QiskitAgent(**self._options)
+        if self._device == "QCompute":
+            self._simulator = QuantumLeafSimulator(
+                backend=self._backend,
+                shots=self._shots,
+                **self._options
+            )
+        elif self._device == "Qiskit":
+            self._simulator = QiskitSimulator(
+                backend=self._backend,
+                shots=self._shots,
+                **self._options
+            )
         else:
             raise ValueError(
                 f"Unsupportted backend {self._backend} in remote simulator, please using one of "
-                f"{QuantumLeafAgent.__backends} {QiskitAgent.__backends}"
+                f"{Simulator.__DEVICE[2:]}."
             )
 
     def run(self, circuit: Circuit, use_previous: bool = False):
-        self._simulator.run(circuit, use_previous)
+        if self._device in Simulator.__DEVICE[2:]:
+            self._shots = 1
+
+        for _ in range(self._shots):
+            result = self._simulator.run(circuit, use_previous)
+
+            yield result

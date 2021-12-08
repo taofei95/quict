@@ -2,17 +2,23 @@
 
 # GPU simulator
 GPU:
-  # based config
-  precision: 1
-  gpu_device_id: 0
-  sync: False
+  unitary:
+    precision: 1
 
-  statevector: 
+  statevector:
+    precision: 1
+    gpu_device_id: 0
+    sync: False
     optimize: False
 
-  # Multi-GPU simulator
   multiGPU:
+    precision: 1
+    gpu_device_id: 0
+    sync: False
     proxy: 1
 
-Remote:
+Qiskit:
+  token: 1
+
+QCompute:
   token: 1
