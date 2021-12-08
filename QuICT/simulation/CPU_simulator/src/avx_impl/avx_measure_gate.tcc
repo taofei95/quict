@@ -129,6 +129,7 @@ namespace QuICT {
                         __m256d ymm1 = _mm256_loadu_pd(&real[ind[0]]);
                         __m256d ymm2 = _mm256_loadu_pd(&imag[ind[0]]);
                         __m256d ymm3;
+
                         COMPLEX_YMM_NORM(ymm1, ymm2, ymm3);
                         ymm0 = _mm256_add_pd(ymm0, ymm3);
                     }

@@ -92,6 +92,7 @@ def manual_rand_unitary_gate(qubit_num):
         # print(gate.qasm_name, gate.pargs)
         return gate
 
+
 def measure_test():
     # Measure gate test
     qubit_num = 5
@@ -277,6 +278,7 @@ def main():
             tiny_circuit.clear()
 
     measure_test()
+
 
 if __name__ == '__main__':
     main()
