@@ -27,7 +27,7 @@
 
 #define COMPLEX_YMM_NORM(vr, vi, res) \
     res = _mm256_mul_pd(vr, vr);      \
-    res = _mm256_fnmadd_pd(vi, vi, res);
+    res = _mm256_fmadd_pd(vi, vi, res);
 
 #define STRIDE_2_LOAD_ODD_PD(from_addr, to_reg, tmp1, tmp2) \
     tmp1 = _mm256_loadu_pd(from_addr);\

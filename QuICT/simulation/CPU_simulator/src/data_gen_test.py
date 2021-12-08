@@ -18,7 +18,7 @@ ctrl_diag_gates = {GATE_ID["Crz"], GATE_ID["CU1"]}
 ctrl_unitary_gate = {GATE_ID["CU3"]}
 
 
-def out_circuit_to_file(qubit_num: int, f_name: str, circuit: Circuit):
+def out_circuit_to_file(qubit_num: int, f_name: str, circuit: Circuit, result=None):
     with open(f_name, 'w') as f:
         print(qubit_num, file=f)
 
@@ -44,6 +44,8 @@ def out_circuit_to_file(qubit_num: int, f_name: str, circuit: Circuit):
                     for j in range(2, 4):
                         print(f"{format_cpx(gate.compute_matrix[i, j])} ", end="", file=f)
                 print("", file=f)
+            elif gate.type() == GATE_ID['Measure']:
+                print(f"measure {gate.targ}", file=f)
             else:
                 if len(gate.affectArgs) == 1:  # all 1-bit unitary gates
                     print(f"unitary_1 {gate.targ} "
@@ -60,7 +62,11 @@ def out_circuit_to_file(qubit_num: int, f_name: str, circuit: Circuit):
 
         print("__TERM__", file=f)
 
-        res = Amplitude.run(circuit)
+        if result is None:
+            res = Amplitude.run(circuit)
+        else:
+            res = result
+
         for val in res:
             if abs(val - 0) <= 1e-8:
                 print("0+0j", file=f)
@@ -78,12 +84,40 @@ def manual_rand_unitary_gate(qubit_num):
         theta = random.random() * 2 * np.pi
         return random.choice([Rx, Ry])(theta)
     elif qubit_num == 2:
-        return random.choice([
+        gate = random.choice([
             Rxx(uniform(0, 2 * np.pi)),
             Ryy(uniform(0, 2 * np.pi)),
             FSim([uniform(0, 2 * np.pi), uniform(0, 2 * np.pi)])
         ])
+        # print(gate.qasm_name, gate.pargs)
+        return gate
 
+def measure_test():
+    # Measure gate test
+    qubit_num = 5
+    gate_num = 10
+    measure_num = 3
+    n_run = 10000
+
+    gates = []
+    for i in range(qubit_num):
+        gates.append([H, i])
+    for i in range(gate_num):
+        gates.append([manual_rand_unitary_gate(2), sample(range(0, qubit_num), 2)])
+    for i in range(measure_num):
+        gates.append([Measure, randint(0, qubit_num - 1)])
+
+    res = np.zeros(1 << qubit_num, dtype=complex)
+    for _ in range(n_run):
+        circuit = Circuit(qubit_num)
+        for gate, targ in gates:
+            gate | circuit(targ)
+        res += Amplitude.run(circuit)
+
+    out_circuit_to_file(qubit_num,
+                        "./test_data/measure.txt",
+                        circuit,
+                        result=res / n_run)
 
 def main():
     qubit_num = 18
@@ -242,6 +276,7 @@ def main():
                                 tiny_circuit)
             tiny_circuit.clear()
 
+    measure_test()
 
 if __name__ == '__main__':
     main()
