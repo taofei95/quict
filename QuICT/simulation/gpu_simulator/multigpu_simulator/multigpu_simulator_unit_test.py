@@ -29,7 +29,7 @@ def worker(ndev, uid, dev_id):
 
     simulator = MultiStateVectorSimulator(
         proxy=proxy,
-        precision=np.complex128,
+        precision="double",
         gpu_device_id=dev_id,
         sync=True
     )

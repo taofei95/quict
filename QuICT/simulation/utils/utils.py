@@ -82,9 +82,9 @@ _DEFAULT_CONFIG = _get_default_config()
 
 
 def option_validation():
-    """ Check options' correctness for specified simulator. """
+    """ Check options' correctness for the given simulator. """
     def decorator(func):
-        def wraps(self, *args, **kwargs):
+        def wraps(self, **kwargs):
             device = self._device
             backend = self._backend
             if device == "GPU":

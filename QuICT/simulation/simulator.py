@@ -16,11 +16,24 @@ from QuICT.simulation.utils import option_validation
 
 
 class Simulator:
-    __DEVICE = ["CPU", "GPU", "Qiskit", "QCompute"]
+    """ The high-level simulation class, including CPU/GPU/Remote simulator mode.
+
+    Args:
+        device (str): The device of the simulator.
+        backend (str): The backend for the simulator.
+        shots (int): The running times; must be a positive integer.
+        **options (dict): other optional parameters for the simulator.
+    """
+
+    __DEVICE = ["CPU", "GPU", "qiskit", "qcompute"]
     __GPU_BACKEND_MAPPING = {
         "unitary": UnitarySimulator,
         "statevector": ConstantStateVectorSimulator,
         "multiGPU": MultiStateVectorSimulator
+    }
+    __REMOTE_BACKEND_MAPPING = {
+        "qiskit": QiskitSimulator,
+        "qcompute": QuantumLeafSimulator
     }
 
     def __init__(
@@ -41,6 +54,7 @@ class Simulator:
                 f"Unsupportted device {device}, please select one of {Simulator.__DEVICE}."
             )
 
+        # validated the optional parameters
         self._options = self._validate_options(options=options)
 
         if device == "CPU":
@@ -58,6 +72,11 @@ class Simulator:
         return default_options
 
     def _load_cpu_simulator(self):
+        """ Initial CPU simulator.
+
+        Raises:
+            ValueError: Unsupportted backend
+        """
         if self._backend == "statevector":
             pass
         else:
@@ -66,6 +85,11 @@ class Simulator:
             )
 
     def _load_gpu_simulator(self):
+        """ Initial GPU simulator.
+
+        Raises:
+            ValueError: Unsupportted backend
+        """
         if self._backend not in Simulator.__GPU_BACKEND_MAPPING.keys():
             raise ValueError(
                 f"Unsupportted backend {self._backend} in gpu simulator, "
@@ -75,25 +99,23 @@ class Simulator:
         self._simulator = Simulator.__GPU_BACKEND_MAPPING[self._backend](**self._options)
 
     def _load_remote_simulator(self):
-        if self._device == "QCompute":
-            self._simulator = QuantumLeafSimulator(
-                backend=self._backend,
-                shots=self._shots,
-                **self._options
-            )
-        elif self._device == "Qiskit":
-            self._simulator = QiskitSimulator(
-                backend=self._backend,
-                shots=self._shots,
-                **self._options
-            )
-        else:
-            raise ValueError(
-                f"Unsupportted backend {self._backend} in remote simulator, please using one of "
-                f"{Simulator.__DEVICE[2:]}."
-            )
+        """ Initial Remote simulator. """
+        self._simulator = Simulator.__REMOTE_BACKEND_MAPPING[self._device](
+            backend=self._backend,
+            shots=self._shots,
+            **self._options
+        )
 
     def run(self, circuit: Circuit, use_previous: bool = False):
+        """ start simulator with given circuit
+
+        Args:
+            circuit (Circuit): The quantum circuits.
+            use_previous (bool, optional): Using the previous state vector. Defaults to False.
+
+        Yields:
+            [array]: The state vector.
+        """
         if self._device in Simulator.__DEVICE[2:]:
             self._shots = 1
 

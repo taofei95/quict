@@ -16,7 +16,7 @@ class QuantumLeafSimulator(RemoteSimulator):
     Args:
         token ([str]): The token to connect the QCompute simulator.
         backend ([str]): The backend for the remote simulator.
-        shots ([int]): The repeat times of running circuit, always be a positive integer.
+        shots ([int]): The running times; must be a positive integer.
     """
 
     __BACKEND = [   # simulators
@@ -143,8 +143,14 @@ class QuantumLeafSimulator(RemoteSimulator):
         return self._env
 
     def run(self, circuit, use_previous):
-        """
-        Get the state vector of circuit
+        """ start simulator with given circuit
+
+        Args:
+            circuit (Circuit): The quantum circuits.
+            use_previous (bool, optional): Using the previous state vector. Defaults to False.
+
+        return:
+            [data]: The experience result.
         """
         self._env.backend(self._backend)
         env = self._initial_circuit(circuit, use_previous)
@@ -153,6 +159,11 @@ class QuantumLeafSimulator(RemoteSimulator):
         return result
 
     def get_gates(self):
+        """ The supportted quantum gates in QCompute.
+
+        Returns:
+            [dict]: quantum gates with matrix.
+        """
         gates = {}
         for gate in QuantumLeafSimulator.__GATES:
             gates[gate.name] = gate.getMatrix()
@@ -166,7 +177,7 @@ class QiskitSimulator(RemoteSimulator):
     Args:
         token ([str]): The token to connect the Qiskit simulator.
         backend ([str]): The backend for the remote simulator.
-        shots ([int]): The repeat times of running circuit, always be a positive integer.
+        shots ([int]): The running times; must be a positive integer.
     """
 
     __BACKEND = [
@@ -216,15 +227,20 @@ class QiskitSimulator(RemoteSimulator):
             [object]: The Qiskit circuit.
         """
         qasm_str = circuit.qasm()
-        qasm_str = qasm_str[:-1]
         translated_circuit = QuantumCircuit.from_qasm_str(qasm_str)
         compiled_circuit = transpile(translated_circuit, self._backend)
 
         return compiled_circuit
 
     def run(self, circuit, use_previous):
-        """
-        Get the state vector of circuit
+        """ start simulator with given circuit
+
+        Args:
+            circuit (Circuit): The quantum circuits.
+            use_previous (bool, optional): Using the previous state vector. Defaults to False.
+
+        return:
+            [data]: The experience result.
         """
         compiled_circuit = self._initial_circuit(circuit, use_previous)
         result = self._backend.run(compiled_circuit, shots=self._shots)

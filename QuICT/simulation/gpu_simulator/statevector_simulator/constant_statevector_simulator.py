@@ -20,13 +20,14 @@ class ConstantStateVectorSimulator(BasicGPUSimulator):
 
     Args:
         circuit (Circuit): The quantum circuit.
-        precision [np.complex64, np.complex128]: The precision for the circuit and qubits.
+        precision (str): The precision for the state vector, single precision means complex64,
+            double precision means complex128.
         gpu_device_id (int): The GPU device ID.
         sync (bool): Sync mode or Async mode.
     """
     def __init__(
         self,
-        precision=np.complex64,
+        precision: str = "double",
         optimize: bool = False,
         gpu_device_id: int = 0,
         sync: bool = True
@@ -41,6 +42,7 @@ class ConstantStateVectorSimulator(BasicGPUSimulator):
         self._algorithm = LinAlgLoader(device="GPU", enable_gate_kernel=True, enable_multigpu_gate_kernel=False)
 
     def _initial_circuit(self, circuit, use_previous):
+        """ Initial the qubits, quantum gates and state vector by given quantum circuit. """
         self._circuit = circuit
         self._qubits = int(circuit.circuit_width())
 
@@ -57,9 +59,7 @@ class ConstantStateVectorSimulator(BasicGPUSimulator):
             self._initial_vector_state()
 
     def _initial_vector_state(self):
-        """
-        Initial qubits' vector states.
-        """
+        """ Initial qubits' vector states. """
         vector_size = 1 << int(self._qubits)
         # Special Case for no gate circuit
         if len(self._gates) == 0:
@@ -73,8 +73,14 @@ class ConstantStateVectorSimulator(BasicGPUSimulator):
             self._vector.put(0, self._precision(1))
 
     def run(self, circuit: Circuit, use_previous: bool = False) -> np.ndarray:
-        """
-        Get the state vector of circuit
+        """ start simulator with given circuit
+
+        Args:
+            circuit (Circuit): The quantum circuits.
+            use_previous (bool, optional): Using the previous state vector. Defaults to False.
+
+        Returns:
+            [array]: The state vector.
         """
         self._initial_circuit(circuit, use_previous)
 

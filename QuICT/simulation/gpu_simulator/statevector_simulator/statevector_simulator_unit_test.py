@@ -23,9 +23,10 @@ def test_constant_statevectorsimulator():
     QFT.build_gate(qubit_num) | circuit
 
     simulator = ConstantStateVectorSimulator(
-        precision=np.complex128,
+        precision="double",
         gpu_device_id=0,
-        sync=True)
+        sync=True
+    )
     state = simulator.run(circuit)
 
     state_expected = Amplitude.run(circuit)

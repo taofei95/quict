@@ -20,8 +20,14 @@ class BasicGPUSimulator(object):
         precision [np.complex64, np.complex128]: The precision for the circuit and qubits.
         gpu_device_id (int): The GPU device ID.
     """
-    def __init__(self, precision=np.complex128, gpu_device_id: int = 0, sync: bool = True):
-        self._precision = precision
+
+    __PRECISION = ["single", "double"]
+
+    def __init__(self, precision: str = "double", gpu_device_id: int = 0, sync: bool = True):
+        if precision not in BasicGPUSimulator.__PRECISION:
+            raise ValueError("Wrong precision. Please use one of [single, double].")
+
+        self._precision = np.complex128 if precision == "double" else np.complex64
         self._device_id = gpu_device_id
         self._sync = sync
         self._vector = None
