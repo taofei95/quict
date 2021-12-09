@@ -20,6 +20,7 @@ def set_qureg(qreg, N):
             X | qreg[n - 1 - i]
         N = N // 2
 
+
 def test_RippleCarryAdder():
     for a in range(0, 20):
         for b in range(0, 20):
@@ -27,8 +28,8 @@ def test_RippleCarryAdder():
             circuit = Circuit(2 * n)
             a_q = circuit(list(range(n)))
             b_q = circuit(list(range(n, 2 * n)))
-            set_qureg(a_q,a)
-            set_qureg(b_q,b)
+            set_qureg(a_q, a)
+            set_qureg(b_q, b)
             RippleCarryAdder.execute(n) | circuit
             Measure | circuit
             circuit.exec()
@@ -37,24 +38,26 @@ def test_RippleCarryAdder():
                 assert 0
     assert 1
 
+
 def test_Multiplication():
-    for a in range(0,20):
-        for b in range(0,20):
+    for a in range(0, 20):
+        for b in range(0, 20):
             n = max(len(bin(a)) - 2, len(bin(b)) - 2)
-            circuit = Circuit(4*n+1)
+            circuit = Circuit(4 * n + 1)
             a_q = circuit(list(range(n)))
             b_q = circuit(list(range(n, 2 * n)))
-            p_q = circuit(list(range(2*n, 4*n)))
-            ancilla = circuit(4*n)
-            set_qureg(a_q,a)
-            set_qureg(b_q,b)
+            p_q = circuit(list(range(2 * n, 4 * n)))
+            ancilla = circuit(4 * n)
+            set_qureg(a_q, a)
+            set_qureg(b_q, b)
             Multiplication.execute(n) | circuit
             Measure | circuit
             circuit.exec()
-            if int(a_q) != a or int(b_q) != b or int(p_q) != a*b or int(ancilla) != 0:
-                print("%d * %d = %d, ancilla = %d" %(a,b,int(p_q),int(ancilla)))
+            if int(a_q) != a or int(b_q) != b or int(p_q) != a * b or int(ancilla) != 0:
+                print("%d * %d = %d, ancilla = %d" % (a, b, int(p_q), int(ancilla)))
                 assert 0
     assert 1
+
 
 def test_RestoringDivision():
     for a in range(0, 20):
@@ -64,7 +67,7 @@ def test_RestoringDivision():
             a_q = circuit(list(range(n)))
             b_q = circuit(list(range(n, 2 * n)))
             r_q = circuit(list(range(2 * n, 3 * n)))
-            #of_q = circuit(3 * n)
+            # of_q = circuit(3 * n)
             set_qureg(a_q, a)
             set_qureg(b_q, b)
             RestoringDivision.execute(n) | circuit
@@ -74,6 +77,7 @@ def test_RestoringDivision():
                 print("%d // %d = %d …… %d" % (a, b, int(r_q), int(a_q)))
                 assert 0
     assert 1
+
 
 if __name__ == "__main__":
     pytest.main(["./unit_test.py"])
