@@ -12,7 +12,7 @@ from QuICT.simulation import (
     QuantumLeafSimulator,
     QiskitSimulator
 )
-from QuICT.simulation.utils import option_validation
+from QuICT.simulation.utils import option_validation, Result
 
 
 class Simulator:
@@ -116,10 +116,15 @@ class Simulator:
         Yields:
             [array]: The state vector.
         """
+        result = Result(f"{self._device}-{self._backend}", self._shots, self._options)
+
         if self._device in Simulator.__DEVICE[2:]:
-            self._shots = 1
+            res = self._simulator.run(circuit, use_previous)
+            result.record(res["counts"])
+        else:
+            for _ in range(self._shots):
+                _ = self._simulator.run(circuit, use_previous)
 
-        for _ in range(self._shots):
-            result = self._simulator.run(circuit, use_previous)
+                result.record(circuit.qubits)
 
-            yield result
+        return result.dumps()
