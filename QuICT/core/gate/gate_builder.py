@@ -4,9 +4,12 @@
 # @Author  : Han Yu
 # @File    : _gateBuilder.py
 
-from .gate import *
-from QuICT.core.circuit import Circuit
 from deprecated import deprecated
+
+from QuICT.core.circuit import Circuit
+
+from .gate import *
+
 
 class GateBuilderModel(object):
     """ A model that help users get gate without circuit
@@ -239,6 +242,7 @@ class GateBuilderModel(object):
 
 GateBuilder = GateBuilderModel()
 
+
 def get_n_args(gate_type: int):
     """get arg number.
 
@@ -251,7 +255,8 @@ def get_n_args(gate_type: int):
     tmp_gate = GATE_STANDARD_NAME_OF[gate_type]()
     return (tmp_gate.params, tmp_gate.targets, tmp_gate.controls)
 
-def get_gate(gate_type: int, affect_args: list, pargs: list=None):
+
+def get_gate(gate_type: int, affect_args: list, pargs: list = None):
     """get a gate with specified arguments.
 
     Args:
