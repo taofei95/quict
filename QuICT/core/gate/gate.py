@@ -2748,6 +2748,11 @@ class QFTGate(ComplexGate):
                     CRz(2 * np.pi / (1 << j - i + 1)) & (qureg[j], qureg[i])
         return gates
 
+    def exec(self, circuit):
+        gateSet = self.build_gate(self.targets)
+        for gate in gateSet:
+            gate.exec(circuit)
+
 
 QFT = QFTGate(["QFT", "qft"])
 
@@ -2809,6 +2814,11 @@ class IQFTGate(ComplexGate):
                     CRz(-2 * np.pi / (1 << j - i + 1)) & (qureg[j], qureg[i])
                 H & qureg[i]
         return gates
+
+    def exec(self, circuit):
+        gateSet = self.build_gate(self.targets)
+        for gate in gateSet:
+            gate.exec(circuit)
 
 
 IQFT = IQFTGate(["IQFT", "iqft"])
