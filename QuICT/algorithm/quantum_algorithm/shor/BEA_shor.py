@@ -47,7 +47,22 @@ def order_finding(a, N):
         H | trickbit
 
         Measure | trickbit
-        circuit.exec()
+        #original
+        # circuit.exec()
+
+        #gpu vec(with problem)
+        from QuICT.simulation import ConstantStateVectorSimulator
+        simulator = ConstantStateVectorSimulator(
+            precision="double",
+            gpu_device_id=0,
+            sync=True
+        )
+        state = simulator.run(circuit)
+
+        #Amp
+        # from QuICT.algorithm import Amplitude
+        # state = Amplitude.run(circuit)
+
         logging.info(f'the {k}th trickbit measured to be {int(trickbit)}')
         trickbit_store[k] = int(trickbit)
         if trickbit_store[k] == 1:
