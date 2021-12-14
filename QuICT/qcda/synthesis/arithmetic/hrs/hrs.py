@@ -464,7 +464,7 @@ def cc_compare(gate_set, control1, control2, b, c, g_aug, indicator):
             X & b[i]
         cc_carry(gate_set, control1, control2, b, c_bitwise, g_aug, indicator)
         for i in range(n):
-            X & b
+            X & b[i]
 
 
 def adder_mod(gate_set, b, a, N, g, indicator):
@@ -561,11 +561,11 @@ def cc_adder_mod(gate_set, control1, control2, b, a, N, g, indicator):
     with gate_set:
         cc_compare(gate_set, control1, control2, b, N - a, g, indicator)
         c_adder(gate_set, indicator, b, a, g[0], g[1])
-        CCX | (control1, control2, indicator)
+        CCX & (control1, control2, indicator)
         c_sub(gate_set, indicator, b, N - a, g[0], g[1])
-        CCX | (control1, control2, indicator)
+        CCX & (control1, control2, indicator)
         cc_compare(gate_set, control1, control2, b, a, g, indicator)
-        CCX | (control1, control2, indicator)
+        CCX & (control1, control2, indicator)
 
 
 def mul_mod_raw(gate_set, x, a, b, N, indicator):
