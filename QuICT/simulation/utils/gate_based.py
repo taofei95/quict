@@ -9,6 +9,7 @@ import cupy as cp
 
 
 _GATES_EXCEPT = ["MeasureGate", "ResetGate", "PermFxGate", "PermGate"]
+_SPECIAL_GATES = ["UnitaryGate", "QFTGate", "IQFTGate"]
 
 
 class GateMatrixs:
@@ -31,6 +32,21 @@ class GateMatrixs:
         """ Return the matrix with all gates' compute matrix. """
         return self.final_matrix
 
+    def _get_gate_name(self, gate):
+        gate_name = gate.name.split("_")[0]
+        if gate_name in _GATES_EXCEPT:
+            return None
+
+        if gate_name in _SPECIAL_GATES:
+            gate_name = gate.name
+        else:
+            param_num = gate.params
+            if gate.params != 0:
+                for i in range(param_num):
+                    gate_name += f"_{gate.pargs[i]}"
+
+        return gate_name
+
     def build(self, gate):
         """
         Add gate into GateMatrixs, if the gate is the new one.
@@ -38,19 +54,12 @@ class GateMatrixs:
         Args:
             gate(Gate): the gate in circuit.
         """
-        gate_name = gate.name.split("_")[0]
-        if gate_name in _GATES_EXCEPT:
-            return
+        gate_name = self._get_gate_name(gate)
 
-        param_num = gate.params
-        if gate.params != 0:
-            for i in range(param_num):
-                gate_name += f"_{gate.pargs[i]}"
-
-        if gate_name == "UnitaryGate":
-            gate_name = gate.name
-
-        if gate_name not in self.gate_matrixs.keys():
+        if (
+            gate_name is not None and
+            gate_name not in self.gate_matrixs.keys()
+        ):
             matrix = gate.compute_matrix
             self._build_matrix_gate(gate_name, matrix)
 
@@ -77,20 +86,11 @@ class GateMatrixs:
     def target_matrix(self, gate):
         """
         Find the compute matrix of the given gate.
+
         Args:
             gate(Gate): the gate in circuit.
         """
-        gate_name = gate.name.split("_")[0]
-        param_num = gate.params
-        if param_num != 0:
-            for i in range(param_num):
-                gate_name += f"_{gate.pargs[i]}"
-
-        if gate_name in _GATES_EXCEPT:
-            raise KeyError(f"Wrong gate here. {gate_name}")
-
-        if gate_name == "UnitaryGate":
-            gate_name = gate.name
+        gate_name = self._get_gate_name(gate)
 
         start, itvl = self.gate_matrixs[gate_name]
 
