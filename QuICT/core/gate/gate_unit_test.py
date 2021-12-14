@@ -178,4 +178,4 @@ def test_CCX():
 
 if __name__ == "__main__":
     # pytest.main(["./_unit_test.py", "./circuit_unit_test.py", "./gate_unit_test.py", "./qubit_unit_test.py"])
-    pytest.main(["./gate_unit_test.py", "./new_gate_builder_unit_test.py"])
+    pytest.main(["./gate_unit_test.py", "./gate_builder_unit_test.py"])
