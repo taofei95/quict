@@ -8,9 +8,8 @@ import copy
 import functools
 import string
 
-# from QuICT.core.gate.gate_builder import GateBuilder
-# from QuICT.core.gate.composite_gate import CompositeGate
 from QuICT.core.qubit import Qureg
+
 from .exec_operator import *
 
 # global gate order count
@@ -31,10 +30,12 @@ def _add_alias(alias, standard_name):
 
 GATE_STANDARD_NAME_OF = {-1: "Error"}
 # Get standard gate name by gate id.
-
+GATE_INSTANCE_OF = {}
+# Get instance for calling __call__ method, by gate id.
 
 GATE_ID = {"Error": -1}
 # Get gate id by gate name. You may use any one of the aliases of this gate.
+
 
 GATE_ID_CNT = 0
 # Gate number counter.
@@ -53,6 +54,7 @@ def gate_implementation(cls):
     global GATE_ID_CNT
 
     GATE_STANDARD_NAME_OF[GATE_ID_CNT] = cls
+    GATE_INSTANCE_OF[GATE_ID_CNT] = cls()
     GATE_ID[cls.__name__] = GATE_ID_CNT
     GATE_ID_CNT += 1
 
@@ -2543,10 +2545,12 @@ class ComplexGate(BasicGate):
         Returns:
             CompositeGate: synthetize result
         """
+        from .composite_gate import CompositeGate
         affectArgs = self.affectArgs
-        GateBuilder.setGateType(GATE_ID["X"])
-        GateBuilder.setTargs(len(affectArgs) - 1)
-        return CompositeGate(GateBuilder.getGate())
+        gate = GATE_INSTANCE_OF[GATE_ID["X"]]()
+        gate: BasicGate
+        gate.targs = [len(affectArgs) - 1]
+        return CompositeGate(gate)
 
     def exec(self, circuit):
         gateSet = self.build_gate()
