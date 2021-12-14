@@ -9,8 +9,8 @@ import cupy as cp
 
 from QuICT.core import *
 from QuICT.ops.utils import LinAlgLoader
-from QuICT.simulation import BasicGPUSimulator
-from QuICT.simulation.optimization.optimizer import Optimizer
+from QuICT.simulation.gpu_simulator import BasicGPUSimulator
+from QuICT.simulation.optimization import Optimizer
 from QuICT.simulation.utils import GateType, GATE_TYPE_to_ID
 
 
@@ -20,39 +20,46 @@ class ConstantStateVectorSimulator(BasicGPUSimulator):
 
     Args:
         circuit (Circuit): The quantum circuit.
-        precision [np.complex64, np.complex128]: The precision for the circuit and qubits.
+        precision (str): The precision for the state vector, single precision means complex64,
+            double precision means complex128.
         gpu_device_id (int): The GPU device ID.
         sync (bool): Sync mode or Async mode.
     """
     def __init__(
         self,
-        circuit: Circuit,
-        precision=np.complex64,
+        precision: str = "double",
         optimize: bool = False,
         gpu_device_id: int = 0,
-        sync: bool = False
+        sync: bool = True
     ):
-        BasicGPUSimulator.__init__(self, circuit, precision, gpu_device_id)
+        BasicGPUSimulator.__init__(self, precision, gpu_device_id, sync)
         self._optimize = optimize
-        self._sync = sync
 
         if self._optimize:
             self._optimizor = Optimizer()
+
+        # Initial simulator with limit_qubits
+        self._algorithm = LinAlgLoader(device="GPU", enable_gate_kernel=True, enable_multigpu_gate_kernel=False)
+
+    def _initial_circuit(self, circuit, use_previous):
+        """ Initial the qubits, quantum gates and state vector by given quantum circuit. """
+        self._circuit = circuit
+        self._qubits = int(circuit.circuit_width())
+
+        if self._optimize:
             self._gates = self._optimizor.optimize(circuit.gates)
+        else:
+            self._gates = circuit.gates
 
         # Initial GateMatrix
         self._gate_matrix_prepare()
 
         # Initial vector state
-        self.initial_vector_state()
+        if not use_previous or self._vector is None:
+            self._initial_vector_state()
 
-        # Initial simulator with limit_qubits
-        self._algorithm = LinAlgLoader(device="GPU", enable_gate_kernel=True, enable_multigpu_gate_kernel=False)
-
-    def initial_vector_state(self):
-        """
-        Initial qubits' vector states.
-        """
+    def _initial_vector_state(self):
+        """ Initial qubits' vector states. """
         vector_size = 1 << int(self._qubits)
         # Special Case for no gate circuit
         if len(self._gates) == 0:
@@ -65,10 +72,18 @@ class ConstantStateVectorSimulator(BasicGPUSimulator):
             self._vector = cp.zeros(vector_size, dtype=self._precision)
             self._vector.put(0, self._precision(1))
 
-    def run(self) -> np.ndarray:
+    def run(self, circuit: Circuit, use_previous: bool = False) -> np.ndarray:
+        """ start simulator with given circuit
+
+        Args:
+            circuit (Circuit): The quantum circuits.
+            use_previous (bool, optional): Using the previous state vector. Defaults to False.
+
+        Returns:
+            [array]: The state vector.
         """
-        Get the state vector of circuit
-        """
+        self._initial_circuit(circuit, use_previous)
+
         with cp.cuda.Device(self._device_id):
             for gate in self._gates:
                 self.apply_gate(gate)

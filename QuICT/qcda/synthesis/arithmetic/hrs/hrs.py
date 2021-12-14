@@ -729,6 +729,7 @@ def c_mul_mod(gate_set, control, x, a, ancilla, N, indicator):
             CSwap & (control, x[i], ancilla[i])
         c_mul_mod_raw_reversed(gate_set, control, x, a_r, ancilla, N, indicator)
 
+
 class HRSAdder(Synthesis):
     @staticmethod
     def execute(n, c):

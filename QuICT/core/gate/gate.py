@@ -616,6 +616,7 @@ class HGate(BasicGate):
     def inverse(self):
         _H = HGate(alias=None)
         _H.targs = copy.deepcopy(self.targs)
+        gate_build_name(_H, None)
         return _H
 
     def exec(self, circuit):
@@ -651,6 +652,7 @@ class SGate(BasicGate):
     def inverse(self):
         _S_dagger = SDaggerGate(alias=None)
         _S_dagger.targs = copy.deepcopy(self.targs)
+        gate_build_name(_S_dagger, None)
         return _S_dagger
 
     def exec(self, circuit):
@@ -685,6 +687,7 @@ class SDaggerGate(BasicGate):
     def inverse(self):
         _SBACK = SGate(alias=None)
         _SBACK.targs = copy.deepcopy(self.targs)
+        gate_build_name(_SBACK, None)
         return _SBACK
 
     def exec(self, circuit):
@@ -718,6 +721,7 @@ class XGate(BasicGate):
     def inverse(self):
         _X = XGate(alias=None)
         _X.targs = copy.deepcopy(self.targs)
+        gate_build_name(_X, None)
         return _X
 
     def exec(self, circuit):
@@ -751,6 +755,7 @@ class YGate(BasicGate):
     def inverse(self):
         _Y = YGate(alias=None)
         _Y.targs = copy.deepcopy(self.targs)
+        gate_build_name(_Y, None)
         return _Y
 
     def exec(self, circuit):
@@ -784,6 +789,7 @@ class ZGate(BasicGate):
     def inverse(self):
         _Z = ZGate(alias=None)
         _Z.targs = copy.deepcopy(self.targs)
+        gate_build_name(_Z, None)
         return _Z
 
     def exec(self, circuit):
@@ -818,6 +824,7 @@ class SXGate(BasicGate):
         _Rx = RxGate(alias=None)
         _Rx.targs = copy.deepcopy(self.targs)
         _Rx.pargs = [-np.pi / 2]
+        gate_build_name(_Rx, None)
         return _Rx
 
     def exec(self, circuit):
@@ -852,6 +859,7 @@ class SYGate(BasicGate):
         _Ry = RyGate(alias=None)
         _Ry.targs = copy.deepcopy(self.targs)
         _Ry.pargs = [-np.pi / 2]
+        gate_build_name(_Ry, None)
         return _Ry
 
     def exec(self, circuit):
@@ -886,6 +894,7 @@ class SWGate(BasicGate):
         _U2 = U2Gate(alias=None)
         _U2.targs = copy.deepcopy(self.targs)
         _U2.pargs = [3 * np.pi / 4, 5 * np.pi / 4]
+        gate_build_name(_U2, None)
         return _U2
 
     def exec(self, circuit):
@@ -919,6 +928,7 @@ class IDGate(BasicGate):
     def inverse(self):
         _ID = IDGate(alias=None)
         _ID.targs = copy.deepcopy(self.targs)
+        gate_build_name(_ID, None)
         return _ID
 
     def exec(self, circuit):
@@ -956,6 +966,7 @@ class U1Gate(BasicGate):
         _U1 = U1Gate(alias=None)
         _U1.targs = copy.deepcopy(self.targs)
         _U1.pargs = [-self.pargs[0]]
+        gate_build_name(_U1, None)
         return _U1
 
     def exec(self, circuit):
@@ -996,6 +1007,7 @@ class U2Gate(BasicGate):
         _U2 = U2Gate(alias=None)
         _U2.targs = copy.deepcopy(self.targs)
         _U2.pargs = [np.pi - self.pargs[1], np.pi - self.pargs[0]]
+        gate_build_name(_U2, None)
         return _U2
 
     def exec(self, circuit):
@@ -1035,6 +1047,7 @@ class U3Gate(BasicGate):
         _U3 = U3Gate(alias=None)
         _U3.targs = copy.deepcopy(self.targs)
         _U3.pargs = [self.pargs[0], np.pi - self.pargs[2], np.pi - self.pargs[1]]
+        gate_build_name(_U3, None)
         return _U3
 
     def exec(self, circuit):
@@ -1074,6 +1087,7 @@ class RxGate(BasicGate):
         _Rx = RxGate(alias=None)
         _Rx.targs = copy.deepcopy(self.targs)
         _Rx.pargs = [-self.pargs[0]]
+        gate_build_name(_Rx, None)
         return _Rx
 
     def exec(self, circuit):
@@ -1111,6 +1125,7 @@ class RyGate(BasicGate):
         _Ry = RyGate(alias=None)
         _Ry.targs = copy.deepcopy(self.targs)
         _Ry.pargs = [-self.pargs[0]]
+        gate_build_name(_Ry, None)
         return _Ry
 
     def exec(self, circuit):
@@ -1149,6 +1164,7 @@ class RzGate(BasicGate):
         _Rz = RzGate(alias=None)
         _Rz.targs = copy.deepcopy(self.targs)
         _Rz.pargs = [-self.pargs[0]]
+        gate_build_name(_Rz, None)
         return _Rz
 
     def exec(self, circuit):
@@ -1182,6 +1198,7 @@ class TGate(BasicGate):
     def inverse(self):
         _Tdagger = TDaggerGate()
         _Tdagger.targs = copy.deepcopy(self.targs)
+        gate_build_name(_Tdagger, None)
         return _Tdagger
 
     def exec(self, circuit):
@@ -1215,6 +1232,7 @@ class TDaggerGate(BasicGate):
     def inverse(self):
         _Tgate = TGate(alias=None)
         _Tgate.targs = copy.deepcopy(self.targs)
+        gate_build_name(_Tgate, None)
         return _Tgate
 
     def exec(self, circuit):
@@ -1253,6 +1271,7 @@ class PhaseGate(BasicGate):
         _Phase = PhaseGate()
         _Phase.targs = copy.deepcopy(self.targs)
         _Phase.pargs = [-self.parg]
+        gate_build_name(_Phase, None)
         return _Phase
 
     def exec(self, circuit):
@@ -1298,6 +1317,7 @@ class CZGate(BasicGate):
         _CZ = CZGate(alias=None)
         _CZ.cargs = copy.deepcopy(self.cargs)
         _CZ.targs = copy.deepcopy(self.targs)
+        gate_build_name(_CZ, None)
         return _CZ
 
     def exec(self, circuit):
@@ -1344,6 +1364,7 @@ class CXGate(BasicGate):
         _CX = CXGate(alias=None)
         _CX.cargs = copy.deepcopy(self.cargs)
         _CX.targs = copy.deepcopy(self.targs)
+        gate_build_name(_CX, None)
         return _CX
 
     def exec(self, circuit):
@@ -1389,6 +1410,7 @@ class CYGate(BasicGate):
         _CY = CYGate(alias=None)
         _CY.cargs = copy.deepcopy(self.cargs)
         _CY.targs = copy.deepcopy(self.targs)
+        gate_build_name(_CY, None)
         return _CY
 
     def exec(self, circuit):
@@ -1435,6 +1457,7 @@ class CHGate(BasicGate):
         _CH = CHGate(alias=None)
         _CH.cargs = copy.deepcopy(self.cargs)
         _CH.targs = copy.deepcopy(self.targs)
+        gate_build_name(_CH, None)
         return _CH
 
     def exec(self, circuit):
@@ -1486,6 +1509,7 @@ class CRzGate(BasicGate):
         _CRz.cargs = copy.deepcopy(self.cargs)
         _CRz.targs = copy.deepcopy(self.targs)
         _CRz.pargs = [-self.pargs[0]]
+        gate_build_name(_CRz, None)
         return _CRz
 
     def exec(self, circuit):
@@ -1533,6 +1557,7 @@ class CU1Gate(BasicGate):
         _CU1.cargs = copy.deepcopy(self.cargs)
         _CU1.targs = copy.deepcopy(self.targs)
         _CU1.pargs = [-self.pargs[0]]
+        gate_build_name(_CU1, None)
         return _CU1
 
     def exec(self, circuit):
@@ -1582,6 +1607,7 @@ class CU3Gate(BasicGate):
         _CU3.cargs = copy.deepcopy(self.cargs)
         _CU3.targs = copy.deepcopy(self.targs)
         _CU3.pargs = [self.pargs[0], np.pi - self.pargs[2], np.pi - self.pargs[1]]
+        gate_build_name(_CU3, None)
         return _CU3
 
     def exec(self, circuit):
@@ -1624,6 +1650,7 @@ class FSimGate(BasicGate):
         _Fsim = FSimGate(alias=None)
         _Fsim.targs = copy.deepcopy(self.targs)
         _Fsim.pargs = [-self.pargs[0], -self.pargs[1]]
+        gate_build_name(_Fsim, None)
         return _Fsim
 
     def exec(self, circuit):
@@ -1665,6 +1692,7 @@ class RxxGate(BasicGate):
         _Rxx = RxxGate(alias=None)
         _Rxx.targs = copy.deepcopy(self.targs)
         _Rxx.pargs = [-self.parg]
+        gate_build_name(_Rxx, None)
         return _Rxx
 
     def exec(self, circuit):
@@ -1706,6 +1734,7 @@ class RyyGate(BasicGate):
         _Ryy = RyyGate(alias=None)
         _Ryy.targs = copy.deepcopy(self.targs)
         _Ryy.pargs = [-self.parg]
+        gate_build_name(_Ryy, None)
         return _Ryy
 
     def exec(self, circuit):
@@ -1748,6 +1777,7 @@ class RzzGate(BasicGate):
         _Rzz = RzzGate(alias=None)
         _Rzz.targs = copy.deepcopy(self.targs)
         _Rzz.pargs = [-self.parg]
+        gate_build_name(_Rzz, None)
         return _Rzz
 
     def exec(self, circuit):
@@ -1877,6 +1907,7 @@ class SwapGate(BasicGate):
     def inverse(self):
         _swap = SwapGate(alias=None)
         _swap.targs = copy.deepcopy(self.targs)
+        gate_build_name(_swap, None)
         return _swap
 
     def exec(self, circuit):
@@ -1971,6 +2002,7 @@ class PermGate(BasicGate):
         _perm.pargs = matrix
         _perm.params = self.params
         _perm.targets = self.targets
+        gate_build_name(_perm, None)
         return _perm
 
     def exec(self, circuit):
@@ -2072,6 +2104,7 @@ class ControlPermMulDetailGate(BasicGate):
         _ControlP.targets = self.targets
         _ControlP.params = self.params
         _ControlP.controls = self.controls
+        gate_build_name(_ControlP, None)
         return _ControlP
 
     def exec(self, circuit):
@@ -2462,6 +2495,7 @@ class UnitaryGate(BasicGate):
         _unitary.targets = self.targets
         _unitary.params = self.params
         _unitary.controls = self.controls
+        gate_build_name(_unitary, None)
         return _unitary
 
     def exec(self, circuit):
@@ -2597,6 +2631,7 @@ class CCXGate(ComplexGate):
         _CCX = CCXGate(alias=None)
         _CCX.cargs = copy.deepcopy(self.cargs)
         _CCX.targs = copy.deepcopy(self.targs)
+        gate_build_name(_CCX, None)
         return _CCX
 
     def build_gate(self):
@@ -2671,6 +2706,7 @@ class CCRzGate(ComplexGate):
         _CCRz.cargs = copy.deepcopy(self.cargs)
         _CCRz.targs = copy.deepcopy(self.targs)
         _CCRz.pargs = -self.parg
+        gate_build_name(_CCRz, None)
         return _CCRz
 
     def build_gate(self):
@@ -2700,7 +2736,7 @@ class QFTGate(ComplexGate):
     @property
     def matrix(self) -> np.ndarray:
         if self._matrix is None:
-            gateSet = self.build_gate()
+            gateSet = self.build_gate(self.targets) #this should conflict with quantum_algorithm branch. Keep this or gpu simulator cannot work on bea shor
             self._matrix = gateSet.matrix()
         return self._matrix
 
@@ -2733,6 +2769,7 @@ class QFTGate(ComplexGate):
         _IQFT = IQFTGate()
         _IQFT.targs = copy.deepcopy(self.targs)
         _IQFT.targets = self.targets
+        gate_build_name(_IQFT, None)
         return _IQFT
 
     def build_gate(self, targets):
@@ -2767,7 +2804,7 @@ class IQFTGate(ComplexGate):
     @property
     def matrix(self) -> np.ndarray:
         if self._matrix is None:
-            gateSet = self.build_gate()
+            gateSet = self.build_gate(self.targets) #this should conflict with quantum_algorithm branch. Keep this or gpu simulator cannot work on bea shor
             self._matrix = gateSet.matrix()
         return self._matrix
 
@@ -2800,6 +2837,7 @@ class IQFTGate(ComplexGate):
         _QFT = QFTGate()
         _QFT.targs = copy.deepcopy(self.targs)
         _QFT.targets = self.targets
+        gate_build_name(_QFT, None)
         return _QFT
 
     def build_gate(self, targets):
@@ -2869,6 +2907,7 @@ class CSwapGate(ComplexGate):
         _CSwap = CSwapGate(alias=None)
         _CSwap.cargs = copy.deepcopy(self.cargs)
         _CSwap.targs = copy.deepcopy(self.targs)
+        gate_build_name(_CSwap, None)
         return _CSwap
 
     def build_gate(self):

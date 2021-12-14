@@ -1,30 +1,29 @@
 import numpy as np
 from typing import *
 
-from ..disjoint_set import DisjointSet
+from QuICT.simulation.utils import DisjointSet
 
-from .._simulation import BasicGPUSimulator
+from QuICT.simulation import BasicSimulator
 
 from QuICT.core import *
-# import QuICT.ops.linalg.unitary_calculation as unitary_calculation
 import QuICT.ops.linalg.cpu_calculator as CPUCalculator
 
 unitary_calculation = CPUCalculator
 
-# from QuICT.ops.linalg.unitary_calculation import *
 
 # TODO: Check platform features by QuICT.utility.xxx
 GPU_AVAILABLE = False
 GPU_OUT = False
 
 
-class UnitarySimulator(BasicGPUSimulator):
+class UnitarySimulator(BasicSimulator):
     """
     Algorithms to the unitary matrix of a Circuit.
     """
+    def __init__(self, precision=np.complex64):
+        self._precision = precision
 
-    @staticmethod
-    def run(circuit: Circuit) -> np.ndarray:
+    def run(self, circuit) -> np.ndarray:
         """
         Get the unitary matrix of circuit
 
@@ -37,12 +36,11 @@ class UnitarySimulator(BasicGPUSimulator):
 
         qubit = circuit.circuit_width()
         if len(circuit.gates) == 0:
-            return np.identity(1 << qubit, dtype=np.complex64)
-        ordering, small_gates = BasicGPUSimulator.unitary_pretreatment(circuit)
-        print(ordering)
+            return np.identity(1 << qubit, dtype=self._precision)
+        ordering, small_gates = BasicSimulator.unitary_pretreatment(circuit)
         u_mat, u_args = UnitarySimulator.merge_unitary_by_ordering(small_gates, ordering)
         result_mat, _ = UnitarySimulator.merge_two_unitary(
-            np.identity(1 << qubit, dtype=np.complex64),
+            np.identity(1 << qubit, dtype=self._precision),
             [i for i in range(qubit)],
             u_mat,
             u_args

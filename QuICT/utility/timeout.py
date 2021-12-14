@@ -50,4 +50,5 @@ def timeout():
                 return new_thread.result
 
         return wraps
+
     return decorator

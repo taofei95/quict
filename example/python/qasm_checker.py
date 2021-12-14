@@ -5,7 +5,7 @@
 # @File    : qasm_checker.py
 
 from QuICT.tools.interface import OPENQASMInterface
-from QuICT.qcda.simulation.statevector_simulator import ConstantStateVectorSimulator
+from QuICT.simulation import ConstantStateVectorSimulator
 from QuICT.core import *
 
 # with open("../qasm/test_2.qasm") as ifile:
@@ -19,10 +19,8 @@ if qasm.valid_circuit:
     circuit = qasm.circuit
     circuit.print_information()
 
-    simulator = ConstantStateVectorSimulator(
-        circuit=circuit
-    )
-    state = simulator.run()
+    simulator = ConstantStateVectorSimulator()
+    state = simulator.run(circuit)
 
     print(state)
 
@@ -48,9 +46,7 @@ Ryy(0) | circuit([0, 1])
 
 circuit.print_information()
 
-simulator = ConstantStateVectorSimulator(
-    circuit=circuit
-)
-state = simulator.run()
+simulator = ConstantStateVectorSimulator()
+state = simulator.run(circuit)
 
 print(state)

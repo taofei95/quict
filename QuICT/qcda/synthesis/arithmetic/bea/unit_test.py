@@ -1,9 +1,14 @@
 import pytest
 
 from QuICT.core import Circuit, X, Measure
-from QuICT.qcda.synthesis.arithmetic.bea import (BEAAdder, BEAAdderWired, 
-                                                BEAReverseAdderWired, BEAAdderMod, 
-                                                BEAMulMod, BEACUa)
+from QuICT.qcda.synthesis.arithmetic.bea import (
+    BEAAdder,
+    BEAAdderWired,
+    BEAReverseAdderWired,
+    BEAAdderMod,
+    BEAMulMod,
+    BEACUa
+)
 
 
 def set_qureg(qreg, N):

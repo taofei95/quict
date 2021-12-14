@@ -10,10 +10,8 @@ class DataSwitcher:
         proxy (Proxy): The NCCL Communicator.
         qubits (int): The number of qubits.
     """
-    def __init__(self, proxy, qubits: int):
+    def __init__(self, proxy):
         self._proxy = proxy
-        self._qubits = qubits
-        self._based_idx = np.arange(1 << qubits, dtype=np.int64)
         self._id = proxy.dev_id
 
     def _switch(self, vector, destination: int):
@@ -86,7 +84,7 @@ class DataSwitcher:
             destination (int): The communicator which switch the data with us.
             condition (dict[index(int): 0/1]): Describe the indexes of the data will be switched.
         """
-        target_idx = self._based_idx
+        target_idx = np.arange(vector.size, dtype=np.int64)
         for idx, _0_1 in condition.items():
             if isinstance(target_idx, tuple):
                 target_idx = target_idx[0]
