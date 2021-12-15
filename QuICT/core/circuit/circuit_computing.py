@@ -147,3 +147,29 @@ def inner_matrix_product_to_circuit(circuit, gate) -> np.ndarray:
                 continue
             new_values[i][j] = matrix[nowi][nowj]
     return new_values
+
+
+def inner_supremacy_append(circuit, repeat, pattern):
+    from QuICT.core.layout import SupremacyLayout
+    from QuICT.core import H, SX, SY, SW, FSim, Measure
+
+    single_qubit_gates = [SX, SY, SW]
+
+    qubits = int(circuit.circuit_width())
+    supremacy_layout = SupremacyLayout(qubits)
+
+    H | circuit
+
+    for i in range(repeat * len(pattern)):
+        for q in range(qubits):
+            single_qubit_gates[np.random.randint(0, 3)] | circuit(q)
+
+        current_pattern = pattern[i % (len(pattern))]
+        if current_pattern not in "ABCD":
+            raise KeyError(f"Unsupported pattern {pattern[i]}, please use one of 'A', 'B', 'C', 'D'.")
+
+        edges = supremacy_layout.get_edges_by_pattern(current_pattern)
+        for e in edges:
+            FSim([np.pi / 2, np.pi / 6]) | circuit([int(e[0]), int(e[1])])
+
+    Measure | circuit

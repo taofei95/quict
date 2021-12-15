@@ -124,7 +124,8 @@ class Simulator:
         else:
             for _ in range(self._shots):
                 _ = self._simulator.run(circuit, use_previous)
+                final_state = self._simulator.sample()
 
-                result.record(circuit.qubits)
+                result.record(final_state, len(circuit.qubits))
 
         return result.dumps()

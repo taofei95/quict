@@ -41,25 +41,21 @@ class Result:
 
         return output_path
 
-    def record(self, result):
+    def record(self, result: int, qubits: int = None):
         """ Record circuit's result
 
         Args:
-            result (dict or [Qubits]): The qubits after the simulator run or the result dict from remote simulator.
+            result (dict or int): The final state of circuit or the result dict from remote simulator.
 
         Raises:
             TypeError: Wrong type input.
         """
         if isinstance(result, dict):
             self.counts = result
-        elif isinstance(result, list):
-            result_idx = 0
-            for idx, qubit in enumerate(result):
-                if qubit.measured:
-                    result_idx += 1 << idx
-
-            bit_idx = "{0:0b}".format(result_idx)
-            bit_idx = bit_idx.zfill(len(result))
+        elif isinstance(result, int):
+            bit_idx = "{0:0b}".format(result)
+            if qubits:
+                bit_idx = bit_idx.zfill(qubits)
             self.counts[bit_idx] += 1
         else:
             raise TypeError("Only recore qubits' state and result from remote simulator.")

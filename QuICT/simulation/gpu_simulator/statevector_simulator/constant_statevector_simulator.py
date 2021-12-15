@@ -338,3 +338,18 @@ class ConstantStateVectorSimulator(BasicGPUSimulator):
         # unsupported quantum gates
         else:
             raise KeyError(f"Unsupported Gate: {gate_type}")
+
+    def sample(self):
+        assert (self._circuit is not None)
+        temp_measure_circuit = Circuit(self._qubits)
+        for idx, qubit in enumerate(self._circuit.qubits):
+            if qubit.measured == -1:
+                Measure | temp_measure_circuit(idx)
+
+        if len(temp_measure_circuit.gates) != 0:
+            self.run(temp_measure_circuit, use_previous=True)
+            measured_qubits = int(temp_measure_circuit.qubits)
+        else:
+            measured_qubits = int(self._circuit.qubits)
+
+        return measured_qubits
