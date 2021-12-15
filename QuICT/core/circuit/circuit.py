@@ -32,8 +32,6 @@ class Circuit(object):
 
     Private Attributes:
         __idmap(dictionary): the map from qubit's id to its index in the circuit
-        __queue_gates(list<BasicGate>): the gates haven't be flushed
-
     """
 
     @property
@@ -42,18 +40,7 @@ class Circuit(object):
 
     @id.setter
     def id(self, id):
-        if not self.const_lock:
-            self.__id = id
-        else:
-            raise ConstException(self)
-
-    @property
-    def const_lock(self) -> bool:
-        return self.__const_lock
-
-    @const_lock.setter
-    def const_lock(self, const_lock):
-        self.__const_lock = const_lock
+        self.__id = id
 
     @property
     def name(self) -> int:
@@ -61,10 +48,7 @@ class Circuit(object):
 
     @name.setter
     def name(self, name):
-        if not self.const_lock:
-            self.__name = name
-        else:
-            raise ConstException(self)
+        self.__name = name
 
     @property
     def qubits(self) -> Qureg:
@@ -72,10 +56,7 @@ class Circuit(object):
 
     @qubits.setter
     def qubits(self, qubits):
-        if not self.const_lock:
-            self.__qubits = qubits
-        else:
-            raise ConstException(self)
+        self.__qubits = qubits
 
     @property
     def gates(self) -> list:
@@ -83,10 +64,7 @@ class Circuit(object):
 
     @gates.setter
     def gates(self, gates):
-        if not self.const_lock:
-            self.__gates = gates
-        else:
-            raise ConstException(self)
+        self.__gates = gates
 
     @property
     def topology(self) -> list:
@@ -94,10 +72,7 @@ class Circuit(object):
 
     @topology.setter
     def topology(self, topology):
-        if not self.const_lock:
-            self.__topology = topology
-        else:
-            raise ConstException(self)
+        self.__topology = topology
 
     @property
     def fidelity(self) -> float:
@@ -108,48 +83,38 @@ class Circuit(object):
         if fidelity is None:
             self.__fidelity = None
             return
+
         if not isinstance(fidelity, float) or fidelity < 0 or fidelity > 1.0:
             raise Exception("fidelity should be in [0, 1]")
-        if not self.const_lock:
-            self.__fidelity = fidelity
-        else:
-            raise ConstException(self)
+
+        self.__fidelity = fidelity
 
     # life cycle
-    def __init__(self, wires):
+    def __init__(self, wires, fidelity: float = None):
         """ generator a circuit
 
         Args:
             wires(int): the number of qubits in the circuit
         """
-        self.const_lock = False
         global circuit_id
         self.id = circuit_id
         self.name = "circuit" + str(self.id)
         circuit_id = circuit_id + 1
         self.__idmap = {}
-        self.qubits = Qureg()
-        for idx in range(wires):
-            qubit = Qubit(self)
-            self.qubits.append(qubit)
+        self.qubits = Qureg(wires)
+        for idx, qubit in enumerate(self.qubits):
             self.__idmap[qubit.id] = idx
         self.gates = []
-        self.__queue_gates = []
         self.topology = []
-        self.fidelity = None
+        self.fidelity = fidelity
 
     def __del__(self):
-        """ release the memory
-
-        """
-        for qubit in self.qubits:
-            qubit.qState_clear()
-        self.const_lock = False
+        """ release the memory """
         self.gates = None
         self.__queue_gates = None
         self.qubits = None
         self.topology = None
-
+ 
     # Attributes of the circuit
     def circuit_width(self):
         """ the number of qubits in circuit
@@ -206,6 +171,7 @@ class Circuit(object):
                 count += 1
         return count
 
+    # TODO: more effecient way
     def circuit_depth(self, gateTypes=None):
         """ the depth of the circuit for some gate.
 
@@ -264,37 +230,13 @@ class Circuit(object):
             indexes: the indexes passed in, it can have follow form:
                 1) int
                 2) list<int>
-                3) tuple<int>
         Returns:
             Qureg: the qureg correspond to the indexes
         Exceptions:
             IndexDuplicateException: the range of indexes is error.
             TypeException: the type of indexes is error.
         """
-        # int
-        if isinstance(indexes, int):
-            if indexes < 0 or indexes >= len(self.qubits):
-                raise IndexLimitException(len(self.qubits), indexes)
-            return Qureg(self.qubits[indexes])
-
-        # tuple
-        if isinstance(indexes, tuple):
-            indexes = list(indexes)
-
-        # list
-        if isinstance(indexes, list):
-            if len(indexes) != len(set(indexes)):
-                raise IndexDuplicateException(indexes)
-            qureg = Qureg()
-            for element in indexes:
-                if not isinstance(element, int):
-                    raise TypeException("int", element)
-                if element < 0 or element >= len(self.qubits):
-                    raise IndexLimitException(len(self.qubits), element)
-                qureg.append(self.qubits[element])
-            return qureg
-
-        raise TypeException("int or list or tuple", indexes)
+        return self.qubits(indexes)
 
     def __getitem__(self, item):
         """ to fit the slice operator, overloaded this function.
@@ -509,83 +451,6 @@ class Circuit(object):
             raise TypeException("tuple<qureg(len = 1)/qubit/int> or list<tuple<qureg(len = 1)/qubit/int>>", topology)
         self.topology.append((item1, item2))
 
-    # exec method
-    def exec(self):
-        """ calculate the gates applied to the circuit, change the qStates' values in the circuit
-
-        It may cost a lot of time, the computational process is coded by
-        C++ with intel tbb parallel library
-
-        """
-        for gate in self.__queue_gates:
-            gate.exec(self)
-        self.__queue_gates = []
-
-    def reset(self):
-        """ reset all qubits in the circuit with gates unchanged
-
-        """
-        for qubit in self.qubits:
-            qubit.qState_clear()
-        self.__queue_gates = copy.deepcopy(self.gates)
-
-    def clear(self):
-        """ clear the circuit
-
-        """
-        self.reset()
-        self.gates = []
-        self.__queue_gates = []
-
-    def set_exec_gates(self, gates):
-        """ set circuit's gates
-
-        Args:
-            gates(list<BasicGate>)
-        """
-        self.gates = gates.copy()
-        self.__queue_gates = gates.copy()
-
-    # set initial state
-    def assign_initial_random(self):
-        """ remove all gates and set all qubits into a qState with random amplitude
-
-        """
-        self.clear()
-        self.qubits.force_assign_random()
-
-    def assign_initial_zeros(self):
-        """ remove all gates and set all qubits into a qState with state 0
-
-        """
-        self.clear()
-        self.qubits.force_assign_zeros()
-
-    def force_copy(self, other, force_copy=None):
-        """ remove all gates and copy another circuits' qubits state to the qureg in this circuit
-
-        Args:
-            other(Circuit): the copy goal
-            force_copy: the indexes of qureg to be pasted in the circuit,
-                        if want cover whole circuit, leave it to be None
-        :return:
-        """
-        self.clear()
-        if force_copy is None:
-            force_copy = [i for i in range(len(self.qubits))]
-        self.qubits.force_copy(other.qubits[0].qState, force_copy)
-
-    def exec_release(self):
-        """ calculate the gates applied to the circuit and remove the gates in the circuits
-
-        when call the function "exec", the gates in the list "self.gates" won't be removed because
-        the integrity of the information of circuit should be ensured.
-        But sometimes, user may release the memory by removing them.
-
-        """
-        self.exec()
-        self.gates = []
-
     # display information of the circuit
     def print_information(self):
         print("-------------------")
@@ -694,4 +559,5 @@ class Circuit(object):
             repeat(int): the number of two-qubit gates' sequence
             pattern(str): indicate the two-qubit gates' sequence
         """
-        inner_supremacy_append(self, repeat, pattern)
+        # inner_supremacy_append(self, repeat, pattern)
+        pass
