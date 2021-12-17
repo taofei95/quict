@@ -25,7 +25,8 @@ namespace QuICT {
             uint64_t q_state_bit_num,
             const Gate<Precision> &gate,
             Precision *real,
-            Precision *imag
+            Precision *imag,
+            uint32_t omp_thread_num
     ) {
         if constexpr (std::is_same_v<Precision, float>) { // float
             throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__) + ": "
@@ -37,7 +38,7 @@ namespace QuICT {
                 auto cc = gate.sqrt2_inv.real();
                 __m256d ymm0 = _mm256_broadcast_sd(&cc);
 
-#pragma omp parallel for num_threads(DEFAULT_NUM_THREADS) schedule(dynamic, omp_chunk_size(q_state_bit_num))
+#pragma omp parallel for num_threads(omp_thread_num) schedule(dynamic, omp_chunk_size(q_state_bit_num))
                 for (uint64_t task_id = 0; task_id < task_num; task_id += batch_size) {
                     auto ind_0 = index(task_id, q_state_bit_num, gate.targ_);
 
@@ -74,7 +75,7 @@ namespace QuICT {
                 auto cc = gate.sqrt2_inv.real();
                 __m256d ymm0 = _mm256_broadcast_sd(&cc);
 
-#pragma omp parallel for num_threads(DEFAULT_NUM_THREADS) schedule(dynamic, omp_chunk_size(q_state_bit_num))
+#pragma omp parallel for num_threads(omp_thread_num) schedule(dynamic, omp_chunk_size(q_state_bit_num))
                 for (uint64_t task_id = 0; task_id < task_num; task_id += batch_size) {
                     auto ind_0 = index(task_id, q_state_bit_num, gate.targ_);
 
@@ -121,7 +122,7 @@ namespace QuICT {
                 auto cc = gate.sqrt2_inv.real();
                 __m256d ymm0 = _mm256_broadcast_sd(&cc);           // constant array
 
-#pragma omp parallel for num_threads(DEFAULT_NUM_THREADS) schedule(dynamic, omp_chunk_size(q_state_bit_num))
+#pragma omp parallel for num_threads(omp_thread_num) schedule(dynamic, omp_chunk_size(q_state_bit_num))
                 for (uint64_t task_id = 0; task_id < task_num; task_id += batch_size) {
                     auto ind_0 = index(task_id, q_state_bit_num, gate.targ_);
 

@@ -25,7 +25,8 @@ namespace QuICT {
             uint64_t q_state_bit_num,
             const Gate<Precision> &gate,
             Precision *real,
-            Precision *imag
+            Precision *imag,
+            uint32_t omp_thread_num
     ) {
         if constexpr(std::is_same_v<Precision, float>) {
             throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__) + ": "
@@ -35,7 +36,7 @@ namespace QuICT {
             if (gate.targ_ == q_state_bit_num - 1) {
                 constexpr uint64_t batch_size = 4;
 
-#pragma omp parallel for num_threads(DEFAULT_NUM_THREADS) schedule(dynamic, omp_chunk_size(q_state_bit_num))
+#pragma omp parallel for num_threads(omp_thread_num) schedule(dynamic, omp_chunk_size(q_state_bit_num))
                 for (uint64_t ind = 0; ind < (1ULL << q_state_bit_num); ind += batch_size) {
                     __m256d ymm1 = _mm256_loadu_pd(&real[ind]);
                     __m256d ymm2 = _mm256_loadu_pd(&imag[ind]);
@@ -47,7 +48,7 @@ namespace QuICT {
                 }
             } else if (gate.targ_ == q_state_bit_num - 2) {
                 constexpr uint64_t batch_size = 4;
-#pragma omp parallel for num_threads(DEFAULT_NUM_THREADS) schedule(dynamic, omp_chunk_size(q_state_bit_num))
+#pragma omp parallel for num_threads(omp_thread_num) schedule(dynamic, omp_chunk_size(q_state_bit_num))
                 for (uint64_t ind = 0; ind < (1ULL << q_state_bit_num); ind += batch_size) {
                     __m256d ymm1 = _mm256_loadu_pd(&real[ind]);
                     __m256d ymm2 = _mm256_loadu_pd(&imag[ind]);
@@ -59,7 +60,7 @@ namespace QuICT {
                 }
             } else {
                 constexpr uint64_t batch_size = 4;
-#pragma omp parallel for num_threads(DEFAULT_NUM_THREADS) schedule(dynamic, omp_chunk_size(q_state_bit_num))
+#pragma omp parallel for num_threads(omp_thread_num) schedule(dynamic, omp_chunk_size(q_state_bit_num))
                 for (uint64_t task_id = 0; task_id < task_num; task_id += batch_size) {
                     auto ind_0 = index(task_id, q_state_bit_num, gate.targ_);
                     __m256d ymm1 = _mm256_loadu_pd(&real[ind_0[0]]);

@@ -25,7 +25,8 @@ namespace QuICT {
             uint64_t q_state_bit_num,
             const Gate<Precision> &gate,
             Precision *real,
-            Precision *imag
+            Precision *imag,
+            uint32_t omp_thread_num
     ) {
         if constexpr(std::is_same_v<Precision, float>) {
             throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__) + ": "
@@ -59,7 +60,7 @@ namespace QuICT {
 
                     constexpr uint64_t batch_size = 2;
 
-#pragma omp parallel for num_threads(DEFAULT_NUM_THREADS) schedule(dynamic, omp_chunk_size(q_state_bit_num))
+#pragma omp parallel for num_threads(omp_thread_num) schedule(dynamic, omp_chunk_size(q_state_bit_num))
                     for (uint64_t task_id = 0; task_id < task_num; task_id += batch_size) {
                         __m256d ymm4, ymm5, ymm6, ymm7, ymm8, ymm9;
                         auto ind0 = index0(task_id, q_state_bit_num, qubits, qubits_sorted);
@@ -104,7 +105,7 @@ namespace QuICT {
                                           gate.mat_imag_[2], gate.mat_imag_[3]); // m2 m3 m2 m3, imag
                     constexpr uint64_t batch_size = 2;
 
-#pragma omp parallel for num_threads(DEFAULT_NUM_THREADS) schedule(dynamic, omp_chunk_size(q_state_bit_num))
+#pragma omp parallel for num_threads(omp_thread_num) schedule(dynamic, omp_chunk_size(q_state_bit_num))
                     for (uint64_t task_id = 0; task_id < task_num; task_id += batch_size) {
                         __m256d ymm4, ymm5, ymm6, ymm7, ymm8, ymm9, ymm10, ymm11;
                         auto inds = index(task_id, q_state_bit_num, qubits, qubits_sorted);
@@ -154,7 +155,7 @@ namespace QuICT {
                 __m256d ymm2 = _mm256_loadu2_m128d(&gate.mat_imag_[0], &gate.mat_imag_[0]); // m0 m1 m0 m1, imag
                 __m256d ymm3 = _mm256_loadu2_m128d(&gate.mat_imag_[2], &gate.mat_imag_[2]); // m2 m3 m2 m3, imag
 
-#pragma omp parallel for num_threads(DEFAULT_NUM_THREADS) schedule(dynamic, omp_chunk_size(q_state_bit_num))
+#pragma omp parallel for num_threads(omp_thread_num) schedule(dynamic, omp_chunk_size(q_state_bit_num))
                 for (uint64_t task_id = 0; task_id < task_num; task_id += batch_size) {
                     __m256d ymm4, ymm5, ymm6, ymm7, ymm8, ymm9;
                     auto inds = index(task_id, q_state_bit_num, qubits, qubits_sorted);
@@ -193,7 +194,7 @@ namespace QuICT {
                 __m256d ymm2 = _mm256_loadu2_m128d(&gate.mat_imag_[0], &gate.mat_imag_[0]); // m0 m1 m0 m1, imag
                 __m256d ymm3 = _mm256_loadu2_m128d(&gate.mat_imag_[2], &gate.mat_imag_[2]); // m2 m3 m2 m3, imag
 
-#pragma omp parallel for num_threads(DEFAULT_NUM_THREADS) schedule(dynamic, omp_chunk_size(q_state_bit_num))
+#pragma omp parallel for num_threads(omp_thread_num) schedule(dynamic, omp_chunk_size(q_state_bit_num))
                 for (uint64_t task_id = 0; task_id < task_num; task_id += batch_size) {
                     auto inds = index(task_id, q_state_bit_num, qubits, qubits_sorted);
                     __m256d ymm4 = _mm256_loadu2_m128d(&real[inds[3]], &real[inds[2]]); // v02 v12 v03 v13, real
