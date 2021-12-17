@@ -31,39 +31,7 @@ class GateDescription:
         pass
 
 
-class CircuitSimulator:
-    """An interface used for type hints. This class is actually implemented in C++ side.
-    """
-
-    def __init__(self, qubit_num: int):
-        pass
-
-    def name(self) -> str:
-        """
-
-        Returns
-        -------
-        The name of circuit simulator.
-        """
-        pass
-
-    def run(self, gate_desc_vec: List[GateDescription]) -> np.ndarray:
-        """Run simulation by gate description sequence.
-
-        Parameters
-        ----------
-        gate_desc_vec:
-            a list of GateDescription
-
-        Returns
-        -------
-        A complex numpy array representing the amplitude vector.
-        """
-        pass
-
-
 sim_back_bind.GateDescription: GateDescription.__class__
-sim_back_bind.CircuitSimulator: CircuitSimulator.__class__
 
 special_x = (GATE_ID["X"],)
 special_h = (GATE_ID["H"],)
@@ -194,24 +162,41 @@ def gate_to_desc(gate: BasicGate) -> List[GateDescription]:
         NotImplementedError(f"No implementation for {gate.name}")
 
 
-def run_simulation(circuit: Union[Circuit, CompositeGate]) -> np.ndarray:
-    """Run amplitude simulation for a circuit.
-
-    Parameters
-    ----------
-    circuit:
-        Quantum circuit for simulation.
-
-    Returns
-    -------
-    A complex numpy array of simulated amplitude vector.
+class CircuitSimulator:
+    """An interface used for type hints. This class is actually implemented in C++ side.
     """
-    warnings.warn(
-        message="Attention! You are using a working-in-process version of circuit simulator!",
-        category=Warning,
-        stacklevel=1)
-    circuit_simulator: CircuitSimulator = sim_back_bind.CircuitSimulator(circuit.circuit_width())
-    gate_desc_vec: List[GateDescription] = []
-    for gate in circuit.gates:
-        gate_desc_vec.extend(gate_to_desc(gate))
-    return circuit_simulator.run(gate_desc_vec)
+
+    def __init__(self, qubit_num: int):
+        self._instance = sim_back_bind.CircuitSimulator(qubit_num)
+
+    def name(self) -> str:
+        """
+
+        Returns
+        -------
+        The name of circuit simulator.
+        """
+        pass
+
+    def run(self, circuit: Circuit, keep_state: bool = False) -> np.ndarray:
+        """Run simulation by gate description sequence.
+
+        Parameters
+        ----------
+        circuit:
+            circuit to be simulated
+        keep_state:
+            start simulation on previous result
+
+        Returns
+        -------
+        A complex numpy array representing the amplitude vector.
+        """
+        warnings.warn(
+            message="Attention! You are using a working-in-process version of circuit simulator!",
+            category=Warning,
+            stacklevel=1)
+        gate_desc_vec: List[GateDescription] = []
+        for gate in circuit.gates:
+            gate_desc_vec.extend(gate_to_desc(gate))
+        return self._instance.run(gate_desc_vec, keep_state)

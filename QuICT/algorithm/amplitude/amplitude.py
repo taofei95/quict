@@ -7,7 +7,7 @@
 from QuICT.algorithm import Algorithm
 from QuICT import *
 from QuICT.backends import systemCdll
-from QuICT.simulation.CPU_simulator import run_simulation
+from QuICT.simulation.CPU_simulator import CircuitSimulator
 import numpy as np
 from ctypes import c_int
 
@@ -88,4 +88,4 @@ class Amplitude(Algorithm):
             values = np.ctypeslib.as_array(ndpointer, shape=(length,))
             return values.tolist()
         else:
-            return run_simulation(circuit)
+            return CircuitSimulator(circuit.circuit_width()).run(circuit)

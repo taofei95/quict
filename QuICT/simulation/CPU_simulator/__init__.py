@@ -1,1 +1,1 @@
-from .cpu import run_simulation
+from .cpu import CircuitSimulator

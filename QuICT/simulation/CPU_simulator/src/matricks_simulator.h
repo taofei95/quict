@@ -23,7 +23,7 @@ namespace QuICT {
     class MaTricksSimulator {
     protected:
         std::string name_;
-        const Details::SysConfig sysconfig_;
+        SysConf sysconfig_;
         std::default_random_engine random_gen;
         std::uniform_real_distribution<double> random_dist;
 
@@ -80,7 +80,8 @@ namespace QuICT {
                 uint64_t q_state_bit_num,
                 const Gate<N, Precision> &gate,
                 Precision *real,
-                Precision *imag
+                Precision *imag,
+                uint32_t omp_thread_num
         );
 
         template<template<typename> class Gate>
@@ -88,7 +89,8 @@ namespace QuICT {
                 uint64_t q_state_bit_num,
                 const Gate<Precision> &gate,
                 Precision *real,
-                Precision *imag
+                Precision *imag,
+                uint32_t omp_thread_num
         );
 
         template<uint64_t N, template<uint64_t, typename> class Gate>
@@ -96,7 +98,8 @@ namespace QuICT {
                 uint64_t q_state_bit_num,
                 const Gate<N, Precision> &gate,
                 Precision *real,
-                Precision *imag
+                Precision *imag,
+                uint32_t omp_thread_num
         );
 
         template<template<typename> class Gate>
@@ -104,7 +107,8 @@ namespace QuICT {
                 uint64_t q_state_bit_num,
                 const Gate<Precision> &gate,
                 Precision *real,
-                Precision *imag
+                Precision *imag,
+                uint32_t omp_thread_num
         );
 
         template<template<typename> class Gate>
@@ -112,7 +116,8 @@ namespace QuICT {
                 uint64_t q_state_bit_num,
                 const Gate<Precision> &gate,
                 Precision *real,
-                Precision *imag
+                Precision *imag,
+                uint32_t omp_thread_num
         );
 
         template<template<typename> class Gate>
@@ -120,7 +125,8 @@ namespace QuICT {
                 uint64_t q_state_bit_num,
                 const Gate<Precision> &gate,
                 Precision *real,
-                Precision *imag
+                Precision *imag,
+                uint32_t omp_thread_num
         );
 
         inline void apply_measure_gate(
@@ -196,22 +202,22 @@ namespace QuICT {
             switch (gate_category) {
                 case gate_category::special_x: {
                     auto gate = XGate<Precision>(gate_desc.affect_args_[0]);
-                    apply_x_gate(q_state_bit_num, gate, real, imag);
+                    apply_x_gate(q_state_bit_num, gate, real, imag, sysconfig_.omp_num_thread_);
                     break;
                 }
                 case gate_category::special_h: {
                     auto gate = HGate<Precision>(gate_desc.affect_args_[0]);
-                    apply_h_gate(q_state_bit_num, gate, real, imag);
+                    apply_h_gate(q_state_bit_num, gate, real, imag, sysconfig_.omp_num_thread_);
                     break;
                 }
                 case gate_category::diag_1: {
                     auto diag_1_gate = DiagonalGateN<1, Precision>(gate_desc.affect_args_[0], gate_desc.data_ptr_);
-                    apply_diag_n_gate(q_state_bit_num, diag_1_gate, real, imag);
+                    apply_diag_n_gate(q_state_bit_num, diag_1_gate, real, imag, sysconfig_.omp_num_thread_);
                     break;
                 }
                 case gate_category::diag_2: {
                     auto diag_2_gate = DiagonalGateN<2, Precision>(gate_desc.affect_args_, gate_desc.data_ptr_);
-                    apply_diag_n_gate(q_state_bit_num, diag_2_gate, real, imag);
+                    apply_diag_n_gate(q_state_bit_num, diag_2_gate, real, imag, sysconfig_.omp_num_thread_);
                     break;
                 }
                 case gate_category::ctrl_diag: {
@@ -220,17 +226,17 @@ namespace QuICT {
                             gate_desc.affect_args_[1],
                             gate_desc.data_ptr_
                     );
-                    apply_ctrl_diag_gate(q_state_bit_num, ctrl_diag_gate, real, imag);
+                    apply_ctrl_diag_gate(q_state_bit_num, ctrl_diag_gate, real, imag, sysconfig_.omp_num_thread_);
                     break;
                 }
                 case gate_category::unitary_1: {
                     auto unitary_1_gate = UnitaryGateN<1, Precision>(gate_desc.affect_args_[0], gate_desc.data_ptr_);
-                    apply_unitary_n_gate(q_state_bit_num, unitary_1_gate, real, imag);
+                    apply_unitary_n_gate(q_state_bit_num, unitary_1_gate, real, imag, sysconfig_.omp_num_thread_);
                     break;
                 }
                 case gate_category::unitary_2: {
                     auto unitary_2_gate = UnitaryGateN<2, Precision>(gate_desc.affect_args_, gate_desc.data_ptr_);
-                    apply_unitary_n_gate(q_state_bit_num, unitary_2_gate, real, imag);
+                    apply_unitary_n_gate(q_state_bit_num, unitary_2_gate, real, imag, sysconfig_.omp_num_thread_);
                     break;
                 }
                 case gate_category::ctrl_unitary: {
@@ -239,7 +245,7 @@ namespace QuICT {
                             gate_desc.affect_args_[1],
                             gate_desc.data_ptr_
                     );
-                    apply_ctrl_unitary_gate(q_state_bit_num, ctrl_unitary_gate, real, imag);
+                    apply_ctrl_unitary_gate(q_state_bit_num, ctrl_unitary_gate, real, imag, sysconfig_.omp_num_thread_);
                     break;
                 }
                 case gate_category::measure: {

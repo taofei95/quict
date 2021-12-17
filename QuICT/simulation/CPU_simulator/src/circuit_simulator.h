@@ -31,34 +31,37 @@ namespace QuICT {
                 name_ += " [float, ";
             }
             name_ += std::to_string(qubit_num) + " bit(s)]";
-
-            // Initialize state vector
-            uint64_t len = 1LL << qubit_num;
-            real_ = new Precision[len];
-            imag_ = new Precision[len];
-            std::fill(real_, real_ + len, 0);
-            std::fill(imag_, imag_ + len, 0);
-            real_[0] = 1.0;
         }
 
         const std::string &name() {
             return name_;
         }
 
-        inline std::complex<Precision> *run(const std::vector<GateDescription<Precision>> &gate_desc_vec);
+        inline std::complex<Precision> *
+        run(const std::vector<GateDescription<Precision>> &gate_desc_vec, bool keep_state);
 
     protected:
         std::string name_;
         uint64_t qubit_num_;
-        Precision *real_, *imag_;
+        Precision *real_ = nullptr, *imag_ = nullptr;
         inline static TinySimulator<Precision> tiny_sim_;
         inline static MaTricksSimulator<Precision> matricks_sim_;
     };
 
     template<typename Precision>
     std::complex<Precision> *CircuitSimulator<Precision>::run(
-            const std::vector<GateDescription<Precision>> &gate_desc_vec
+            const std::vector<GateDescription<Precision>> &gate_desc_vec,
+            bool keep_state
     ) {
+        if (!keep_state || (real_ == nullptr && imag_ == nullptr)) {
+            // Initialize state vector
+            uint64_t len = 1LL << qubit_num_;
+            real_ = new Precision[len];
+            imag_ = new Precision[len];
+            std::fill(real_, real_ + len, 0);
+            std::fill(imag_, imag_ + len, 0);
+            real_[0] = 1.0;
+        }
         if (qubit_num_ > 4) { // Can use matricks simulator
             for (const auto &gate_desc: gate_desc_vec) {
                 matricks_sim_.apply_gate(qubit_num_, gate_desc, real_, imag_);

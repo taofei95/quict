@@ -13,10 +13,11 @@
 #include <vector>
 #include <cassert>
 #include <fstream>
+#include <thread>
 #include <immintrin.h>
 #include <omp.h>
 
-#define DEFAULT_NUM_THREADS 8
+//#define DEFAULT_NUM_THREADS 8
 
 // v1 * v2 == (v1r * v2r - v1i * v2i) + (v1i * v2r + v1r * v2i)*J
 #define COMPLEX_YMM_MUL(v1r, v1i, v2r, v2i, res_r, res_i) \
@@ -235,22 +236,13 @@ namespace QuICT {
     };
 
     //* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-    // Helper class to detect system config
+    // Helper to detect system config
     //* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
-    namespace Details {
-        class SysConfig {
-        public:
-            explicit SysConfig() {
-                // TODO: automatically set num_thread_
-            }
-
-            uint32_t omp_num_thread_ = 12;
-            uint64_t omp_threshold_ = 10;
-        };
-    }
-
-//    extern Detail::SysConfig sysconfig;
+    struct SysConf {
+        uint32_t omp_num_thread_ = std::thread::hardware_concurrency();
+        uint32_t omp_threshold_ = 10;
+    };
 
     //* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
     // Helper functions to create indices array

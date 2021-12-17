@@ -26,8 +26,8 @@ namespace QuICT {
         CircuitSimulatorBind(uint64_t qubit_num) : CircuitSimulator<double>(qubit_num) {}
 
         inline py::array_t<std::complex<double>>
-        run_numpy(const std::vector<GateDescription<double>> &gate_desc_vec) {
-            std::complex<double> *raw_ptr = run(gate_desc_vec);
+        run_numpy(const std::vector<GateDescription<double>> &gate_desc_vec, bool keep_state) {
+            std::complex<double> *raw_ptr = run(gate_desc_vec, keep_state);
 
             py::capsule auto_delete_wrapper(raw_ptr, [](void *ptr) {
                 auto data_ptr = reinterpret_cast<std::complex<double> *>(ptr);
