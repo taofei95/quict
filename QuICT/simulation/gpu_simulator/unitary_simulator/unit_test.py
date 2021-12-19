@@ -10,7 +10,7 @@ import numpy as np
 
 from QuICT.algorithm import SyntheticalUnitary
 from QuICT.core import *
-from QuICT.simulation.unitary_simulator import *
+from QuICT.simulation.gpu_simulator.unitary_simulator import *
 
 from time import time
 
@@ -23,7 +23,6 @@ def test_merge_two_unitary_list():
     circuit.random_append(gate_number, typeList=[GATE_ID["CX"], GATE_ID["X"]])
     circuit_unitary = SyntheticalUnitary.run(circuit)
 
-    # gate_now = circuit.gates[0]
     mat_now = circuit.gates[0].compute_matrix
     args_now = circuit.gates[0].affectArgs
     for gate in circuit.gates[1:]:
@@ -45,14 +44,14 @@ def test_unitary_generate():
     gate_number = 100
     circuit = Circuit(qubit)
     circuit.random_append(gate_number)
-    # CX | circuit
-    # X | circuit
+
     start_time = time()
     circuit_unitary = SyntheticalUnitary.run(circuit)
     end_time = time()
     duration_1 = end_time - start_time
     start_time = time()
-    result_mat = UnitarySimulator.run(circuit)
+    sim = UnitarySimulator(circuit)
+    result_mat = sim.run()
     end_time = time()
     duration_2 = end_time - start_time
     print(f"\nOld algo time: {duration_1:.4f} s, current algo time: {duration_2:.4f} s")

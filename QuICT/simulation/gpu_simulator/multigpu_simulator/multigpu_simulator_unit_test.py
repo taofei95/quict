@@ -29,12 +29,11 @@ def worker(ndev, uid, dev_id):
 
     simulator = MultiStateVectorSimulator(
         proxy=proxy,
-        circuit=CIRCUIT,
-        precision=np.complex128,
+        precision="double",
         gpu_device_id=dev_id,
         sync=True
     )
-    state = simulator.run()
+    state = simulator.run(CIRCUIT)
 
     return state.get()
 

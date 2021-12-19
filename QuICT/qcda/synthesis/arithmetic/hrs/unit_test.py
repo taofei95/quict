@@ -36,6 +36,7 @@ def ex_gcd(a, b, arr):
     arr[1] = t - int(a / b) * arr[1]
     return g
 
+
 def test_HRSAdder():
     for a in range(0, 20):
         for b in range(0, 20):
@@ -65,7 +66,7 @@ def test_HRSAdderMod():
                 g_q = circuit(list(range(n, 2 * n - 1)))
                 indicator = circuit(2 * n - 1)
                 set_qureg(b_q, b)
-                composite_gate = HRSAdderMod.execute(n, a, N) 
+                composite_gate = HRSAdderMod.execute(n, a, N)
                 composite_gate | (b_q, g_q, indicator)
                 Measure | circuit
                 circuit.exec()
@@ -73,6 +74,7 @@ def test_HRSAdderMod():
                 if int(b_q) != (a + b) % (N):
                     assert 0
     assert 1
+
 
 def test_HRSMulMod():
     arr = [0, 0]
@@ -97,7 +99,5 @@ def test_HRSMulMod():
     assert 1
 
 
-
 if __name__ == "__main__":
     pytest.main(["./unit_test.py"])
-    
