@@ -24,7 +24,7 @@ namespace QuICT {
 #pragma ide diagnostic ignored "openmp-use-default-none"
 
     template<typename Precision>
-    void  MaTricksSimulator<Precision>::apply_measure_gate(
+    int MaTricksSimulator<Precision>::apply_measure_gate(
             uint64_t q_state_bit_num,
             const MeasureGate &gate,
             Precision *real,
@@ -33,6 +33,7 @@ namespace QuICT {
         if constexpr(std::is_same_v<Precision, float>) {
             throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__) + ": "
             + "Not Implemented " + __func__);
+            return 0;
         } else if constexpr(std::is_same_v<Precision, double>) {
             if(gate.targ_ == q_state_bit_num - 1)
             {
@@ -72,6 +73,7 @@ namespace QuICT {
                     _mm256_storeu_pd(&real[i], ymm1);
                     _mm256_storeu_pd(&imag[i], ymm2);
                 }
+                return chosen;
             }
             else if(gate.targ_ == q_state_bit_num - 2)
             {
@@ -111,6 +113,8 @@ namespace QuICT {
                     _mm256_storeu_pd(&real[i], ymm1);
                     _mm256_storeu_pd(&imag[i], ymm2);
                 }
+
+                return chosen;
             }
             else
             {
@@ -159,6 +163,7 @@ namespace QuICT {
                     _mm256_storeu_pd(&real[ind[chosen^1]], zero);
                     _mm256_storeu_pd(&imag[ind[chosen^1]], zero);
                 }
+                return chosen;
             }
         }
     }

@@ -123,7 +123,7 @@ namespace QuICT {
                 Precision *imag
         );
 
-        inline void apply_measure_gate(
+        inline int apply_measure_gate(
                 uint64_t q_state_bit_num,
                 const MeasureGate &gate,
                 Precision *real,

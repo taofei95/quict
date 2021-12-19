@@ -112,7 +112,7 @@ namespace QuICT {
                 Precision *imag
         );
 
-        inline void apply_measure_gate(
+        inline int apply_measure_gate(
                 uint64_t q_state_bit_num,
                 const MeasureGate &gate,
                 Precision *real,
@@ -413,7 +413,7 @@ namespace QuICT {
     }
 
     template<typename Precision>
-    inline void TinySimulator<Precision>::apply_measure_gate(
+    inline int TinySimulator<Precision>::apply_measure_gate(
             uint64_t q_state_bit_num,
             const MeasureGate &gate,
             Precision *real,
@@ -437,6 +437,7 @@ namespace QuICT {
             real[inds[chosen^1]] = 0;
             imag[inds[chosen^1]] = 0;
         }
+        return chosen;
     }
 }
 
