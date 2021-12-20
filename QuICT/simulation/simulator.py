@@ -3,6 +3,7 @@
 # @TIME    : 2021/4/27 2:02 下午
 # @Author  : Han Yu
 # @File    : _simulator
+import time
 
 from QuICT.core import *
 from QuICT.simulation import (
@@ -106,7 +107,13 @@ class Simulator:
             **self._options
         )
 
-    def run(self, circuit: Circuit, use_previous: bool = False):
+    def run(
+        self,
+        circuit: Circuit,
+        use_previous: bool = False,
+        circuit_out: bool = False,
+        statevector_out: bool = False
+    ):
         """ start simulator with given circuit
 
         Args:
@@ -117,14 +124,23 @@ class Simulator:
             [array]: The state vector.
         """
         result = Result(f"{self._device}-{self._backend}", self._shots, self._options)
+        if circuit_out:
+            result.record_circuit(circuit)
 
         if self._device in Simulator.__DEVICE[2:]:
             res = self._simulator.run(circuit, use_previous)
             result.record(res["counts"])
         else:
-            for _ in range(self._shots):
-                _ = self._simulator.run(circuit, use_previous)
+            for shot in range(self._shots):
+                s_time = time.time()
+                state = self._simulator.run(circuit, use_previous)
+                e_time = time.time()
+                result.record_time(e_time - s_time)
+
                 final_state = self._simulator.sample()
+
+                if statevector_out:
+                    result.record_sv(state, shot)
 
                 result.record(final_state, len(circuit.qubits))
 
