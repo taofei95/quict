@@ -137,10 +137,10 @@ class Simulator:
                 e_time = time.time()
                 result.record_time(e_time - s_time)
 
-                final_state = self._simulator.sample()
-
                 if statevector_out:
                     result.record_sv(state, shot)
+
+                final_state = self._simulator.sample()
 
                 result.record(final_state, len(circuit.qubits))
 
