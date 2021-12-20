@@ -1,6 +1,7 @@
 from collections import defaultdict
 import os
 import uuid
+import numpy as np
 
 
 # TODO: Add circuit and state vector output. Add spending time
@@ -23,6 +24,7 @@ class Result:
         self.shots = shots
         self.options = options
         self.counts = defaultdict(int)
+        self._spending_time = 0
         self.output_path = self._prepare_output_file()
 
     def _generate_uuid(self):
@@ -34,7 +36,7 @@ class Result:
     def _prepare_output_file(self):
         """ Prepare output path. """
         curr_path = os.getcwd()
-        output_path = os.path.join(curr_path, "output")
+        output_path = os.path.join(curr_path, "output", self.id)
 
         if not os.path.exists(output_path):
             os.makedirs(output_path)
@@ -60,9 +62,24 @@ class Result:
         else:
             raise TypeError("Only recore qubits' state and result from remote simulator.")
 
+    def record_time(self, spending_time: float):
+        self._spending_time += spending_time / self.shots
+
+    def record_circuit(self, circuit):
+        """ dump the circuit. """
+        with open(f"{self.output_path}/circuit.qasm", "w") as of:
+            of.write(circuit.qasm())
+
+    def record_sv(self, state, shot):
+        """ dump the circuit. """
+        if type(state) is not np.ndarray:
+            state = state.get()
+
+        np.savetxt(f"{self.output_path}/state_{shot}.txt", state)
+
     def dumps(self):
         """ dump the result. """
-        with open(f"{self.output_path}/{self.id}.log", "w") as of:
+        with open(f"{self.output_path}/result.log", "w") as of:
             of.write(str(self.__dict__))
 
         return self.__dict__

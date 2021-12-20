@@ -35,12 +35,13 @@ class Optimizer:
         self._cache_clear()
 
         for gate in gates:
-            if gate.is_special():   # Do not optimized any special quantum gates
-                self._opt_gates.append(gate)
-                continue
-
             # The qubit indexes of the gate
             qubit_idxes = gate.cargs + gate.targs
+
+            if gate.is_special():   # Do not optimized any special quantum gates
+                self._1qubit_gates_clean(qubit_idxes)
+                self._opt_gates.append(gate)
+                continue
 
             if len(qubit_idxes) == 1:       # 1-qubit gate
                 self._gates_by_qubit[gate.targ].append(gate)
@@ -57,12 +58,14 @@ class Optimizer:
                 for idx in qubit_idxes:
                     del self._gates_by_qubit[idx]
             else:   # TODO: not support the gates with more than 2 qubits
+                self._1qubit_gates_clean(qubit_idxes)
                 self._opt_gates.append(gate)
                 continue
 
         # Merge the rest 1-qubit gates into a Unitary gate.
         for _, gates in self._gates_by_qubit.items():
-            self.single_gates_combined(gates)
+            if gates:
+                self.single_gates_combined(gates)
 
         return self._opt_gates
 
@@ -71,6 +74,12 @@ class Optimizer:
         self._opt_gates = []
         self._gates_by_qubit = defaultdict(list)
         self._two_qubits_opt_gates_idxes_dict = {}
+
+    def _1qubit_gates_clean(self, args):
+        for arg in args:
+            if self._gates_by_qubit[arg]:
+                self.single_gates_combined(self._gates_by_qubit[arg])
+                del self._gates_by_qubit[arg]
 
     def single_gates_combined(self, gates, matrix_only: bool = False):
         """ The optimized algorithm for 1-qubit gates with same qubit.
