@@ -4,11 +4,10 @@
 # @Author  : Han Yu
 # @File    : _qubit.py
 
+import random
 
 from QuICT.core.exception import *
-
-# global qubit id count
-qubit_id = 0
+from QuICT.core.id_generator import unique_id_generator
 
 
 class Qubit(object):
@@ -32,10 +31,6 @@ class Qubit(object):
     def id(self):
         return self.__id
 
-    @id.setter
-    def id(self, id):
-        self.__id = id
-
     @property
     def measured(self) -> int:
         return self.__measured
@@ -52,17 +47,15 @@ class Qubit(object):
     def prob(self, prob):
         self.__prob = prob
 
-    def __init__(self):
+    def __init__(self, prob: float = None):
         """ initial a qubit with a circuit
 
         Args:
             circuit(Circuit): the circuit the qubit attaches to
         """
-        global qubit_id
-        self.__id = qubit_id
-        qubit_id = qubit_id + 1
+        self.__id = unique_id_generator()
         self.__measured = -1
-        self.__prob = 0.0
+        self.__prob = random.random() if prob is None else prob
 
     def __str__(self):
         """ string describe of the qubit
@@ -70,7 +63,7 @@ class Qubit(object):
         Returns:
             str: a simple describe
         """
-        return f"circuit:{self.circuit} id:{self.id}"
+        return f"qubit id:{self.id}"
 
     def __int__(self):
         """ int value of the qubit(measure result)
@@ -106,9 +99,9 @@ class Qureg(list):
     Qureg is a list of Qubits, which is a subClass of list.
 
     Attributes:
-        qubits([Qubits): the circuit this qureg belonged to.
+        qubits([Qubits]): the list of qubits.
     """
-    def __init__(self, qubits, circuit_name: str = None):
+    def __init__(self, qubits):
         """ initial a qureg with qubit(s)
 
         Args:
@@ -118,7 +111,6 @@ class Qureg(list):
             circuit_name (str): the circuit's name which this qureg belong to.
         """
         super().__init__()
-        self.circuit = circuit_name
 
         if isinstance(qubits, int):
             for _ in range(qubits):
@@ -194,7 +186,10 @@ class Qureg(list):
         Returns:
             str: the value of the qureg
         """
-        return "{0:0b}".format(self.__int__())
+        bit_idx = "{0:0b}".format(self.__int__())
+        bit_idx.zfill(len(self))
+
+        return bit_idx
 
     def __add__(self, other):
         """ to fit the add operator, overloaded this function.
@@ -209,4 +204,5 @@ class Qureg(list):
         if not isinstance(other, Qureg):
             raise Exception("type error!")
         qureg_list = super().__add__(other)
+
         return Qureg(qureg_list)
