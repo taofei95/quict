@@ -316,7 +316,7 @@ class Circuit(object):
     def __or__(self, targets):
         """deal the operator '|'
 
-        Use the syntax "circuit | circuit" or "circuit | qureg" or "circuit | qubit"
+        Use the syntax "circuit | circuit"
         to add the gate of circuit into the circuit/qureg/qubit
 
         Note that the order of qubits is that control bits first
@@ -325,15 +325,20 @@ class Circuit(object):
         Args:
             targets: the targets the gate acts on, it can have following form,
                 1) Circuit
-                2) qureg
-                3) tuple<qubit, qureg>
-                4) list<qubit, qureg>
         Raise:
             TypeException: the type of other is wrong
         """
-        from ..gate import CompositeGate
-        gates = CompositeGate(self.gates)
-        gates | targets
+        if not isinstance(targets, Circuit):
+            raise TypeError(f"Only support circuit | circuit.")
+
+        if self.qubits != targets.qubits:
+            diff_qubits = self.qubits.diff(targets.qubits)
+            for idx, dq in enumerate(diff_qubits):
+                targets._idmap[dq.id] = len(targets.qubits) + idx
+
+            targets.qubits = targets.qubits + diff_qubits
+
+        targets.extend(self.gates)
 
     def append(self, gate, qureg: Qureg = None):
         """ add a gate to the circuit
@@ -358,8 +363,8 @@ class Circuit(object):
             qureg(Qureg/list<Qubit>)
         """
         self.gates.append(gate)
-        gate.cargs = [self.__idmap[qureg[idx].id] for idx in range(gate.controls)]
-        gate.targs = [self.__idmap[qureg[idx].id] for idx in range(gate.controls, gate.controls + gate.targets)]
+        gate.cargs = [self._idmap[qureg[idx].id] for idx in range(gate.controls)]
+        gate.targs = [self._idmap[qureg[idx].id] for idx in range(gate.controls, gate.controls + gate.targets)]
 
     def extend(self, gates):
         """ add gates to the circuit
@@ -511,6 +516,17 @@ class Circuit(object):
                 pargs = None
             get_gate(gate_type, affect_args, pargs) | [self[i] for i in affect_args]
 
+    def append_supremacy(self, repeat: int = 1, pattern: str = "ABCDCDAB"):
+        """
+        Add a supremacy circuit to the circuit
+
+        Args:
+            repeat(int): the number of two-qubit gates' sequence
+            pattern(str): indicate the two-qubit gates' sequence
+        """
+        # inner_supremacy_append(self, repeat, pattern)
+        pass
+
     def matrix_product_to_circuit(self, gate) -> np.ndarray:
         """ extend a gate's matrix in the all circuit unitary linear space
 
@@ -561,14 +577,3 @@ class Circuit(object):
                 new_values[i][j] = matrix[nowi][nowj]
 
         return new_values
-
-    def append_supremacy(self, repeat: int = 1, pattern: str = "ABCDCDAB"):
-        """
-        Add a supremacy circuit to the circuit
-
-        Args:
-            repeat(int): the number of two-qubit gates' sequence
-            pattern(str): indicate the two-qubit gates' sequence
-        """
-        # inner_supremacy_append(self, repeat, pattern)
-        pass

@@ -7,7 +7,7 @@
 import random
 
 from QuICT.core.exception import *
-from QuICT.core.id_generator import unique_id_generator
+from QuICT.core.utils import unique_id_generator
 
 
 class Qubit(object):
@@ -206,3 +206,21 @@ class Qureg(list):
         qureg_list = super().__add__(other)
 
         return Qureg(qureg_list)
+
+    def __eq__(self, other):
+        current_qubit_ids = [qubit.id for qubit in self]
+        for qubit in other:
+            if qubit.id not in current_qubit_ids:
+                return False
+        
+        return True
+
+    def diff(self, other):
+        others_qubit_ids = [qubit.id for qubit in other]
+        diff_qubit = []
+
+        for qubit in self:
+            if qubit.id not in others_qubit_ids:
+                diff_qubit.append(qubit)
+
+        return diff_qubit
