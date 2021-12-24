@@ -8,56 +8,42 @@ from QuICT.core.circuit.circuit_computing import inner_random_append
 
 from .gate import *
 from ..circuit import Circuit
-from ..qubit import Qubit
+from ..qubit import Qureg
 
 
-class CompositeGate(list):
-    """ Implement a list of gate
+class CompositeGate:
+    """ Implement a group of gate
 
     Attributes:
-        gates:(list<BasicGate>): CompositeGate itself
-
+        Qureg (Qureg): the related qubits
+        gates (list<BasicGate>): gates within this composite gate
     """
-
     @property
     def gates(self):
-        return self
+        return self.gates
 
     def __enter__(self):
-        GATE_SET_LIST.append(self)
         return self
 
     def __exit__(self, exc_type, exc_value, traceback):
-        global GATE_SET_LIST
-        GATE_SET_LIST.remove(self)
+        pass
 
-    def __init__(self, gates=None, with_copy=True):
+    def __init__(self, qureg: Qureg, gates: list = None, with_copy: bool = True):
         """ initial a CompositeGate with gate(s)
 
         Args:
-            qubits: the qubits which make up the qureg, it can have below form,
-                1) Circuit
-                2) BasicGate
-                3) CompositeGate
-                4) tuple/list<BasicGate>
+            qubits [BasicGate]: the qubits which make up the qureg, it can have below form,
         """
-        super().__init__()
-        if gates is None:
-            return
-        if isinstance(gates, BasicGate):
-            if with_copy:
-                self.append(gates.copy())
-            else:
-                self.append(gates)
-        else:
-            if isinstance(gates, Circuit):
-                gates = gates.gates
-            gates = list(gates)
-            for gate in gates:
-                if with_copy:
-                    self.append(gate.copy())
-                else:
-                    self.append(gate)
+        assert isinstance(qureg, Qureg)
+        self._qubits = qureg
+        self._gates = gates
+        self._is_copy = with_copy
+
+        if gates is not None:
+            self.gate_check()        
+
+    def gate_check(self):
+        pass
 
     # Attributes of the circuit
     def circuit_width(self):

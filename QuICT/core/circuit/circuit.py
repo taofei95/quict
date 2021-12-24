@@ -127,6 +127,8 @@ class Circuit(object):
             self._idmap[qubit.id] = idx
         self._gates = []
 
+        self._pointer = -1
+
     def __del__(self):
         """ release the memory """
         self.gates = None
@@ -281,7 +283,7 @@ class Circuit(object):
                 string += gate.qasm()
         return string
 
-    def __call__(self, indexes: object) -> Qureg:
+    def __call__(self, indexes: object):
         """ get a smaller qureg from this circuit
 
         Args:
@@ -294,7 +296,17 @@ class Circuit(object):
             IndexDuplicateException: the range of indexes is error.
             TypeException: the type of indexes is error.
         """
-        return self.qubits(indexes)
+        if isinstance(indexes, int):
+            assert indexes >= 0 and indexes < self.circuit_width()
+        elif isinstance(indexes, list):
+            for idx in indexes:
+                assert idx >= 0 and idx < self.circuit_width()
+        else:
+            raise TypeError("only accept int/list[int]")
+
+        self._pointer = indexes
+
+        return self
 
     def __getitem__(self, item):
         """ to fit the slice operator, overloaded this function.
@@ -313,6 +325,7 @@ class Circuit(object):
             qureg_list = self.qubits[item]
             return qureg_list
 
+    # TODO: bug fixed
     def __or__(self, targets):
         """deal the operator '|'
 
@@ -340,18 +353,28 @@ class Circuit(object):
 
         targets.extend(self.gates)
 
-    def append(self, gate, qureg: Qureg = None):
+    def append(self, gate):
         """ add a gate to the circuit
 
         Args:
             gate(BasicGate): the gate to be added to the circuit
-            qureg(Qureg/Qubit/None): the Qureg/Qubit gate added to.
-                                    if Qureg is None, use the targs and cargs in gate
+
         """
-        if qureg is None:
-            qureg = gate.qubits
-            if qureg is None:
-                raise KeyError("Must assign the gate's qubit")
+        if self._pointer != -1:
+            qureg = self.qubits[self._pointer]
+            self._pointer = -1
+        elif isinstance(gate.assigned_qubits, Qureg):
+            qureg = gate.assigned_qubits
+        else:
+            gate_ctargs = gate.cargs + gate.targs
+            if not gate_ctargs:
+                if not gate.is_single():
+                    raise KeyError(f"{gate.type} need assign qubits to add into circuit.")
+
+                self._add_gate_to_all_qubits(gate) 
+                return               
+
+            qureg = gate_ctargs
 
         self._add_gate(gate, qureg)
 
@@ -363,8 +386,20 @@ class Circuit(object):
             qureg(Qureg/list<Qubit>)
         """
         self.gates.append(gate)
-        gate.cargs = [self._idmap[qureg[idx].id] for idx in range(gate.controls)]
-        gate.targs = [self._idmap[qureg[idx].id] for idx in range(gate.controls, gate.controls + gate.targets)]
+
+        if isinstance(qureg[0], int):
+            gate.assigned_qubits = self.qubits([qureg])
+        else:
+            gate.cargs = [self._idmap[qureg[idx].id] for idx in range(gate.controls)]
+            gate.targs = [self._idmap[qureg[idx].id] for idx in range(gate.controls, gate.controls + gate.targets)]
+
+    def _add_gate_to_all_qubits(self, gate):
+        for idx in range(self.circuit_width()):
+            new_gate = gate.copy()
+            new_gate.targs = [idx]
+            new_gate.assigned_qubits = self.qubits(idx)
+
+            self.gates.append(new_gate)
 
     def extend(self, gates):
         """ add gates to the circuit

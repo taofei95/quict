@@ -6,10 +6,10 @@
 import numpy as np
 import copy
 
-from QuICT.core import Circuit, Qureg
+from QuICT.core import Circuit, Qureg, Qubit
 from QuICT.core.utils import GateType, SPECIAL_GATE_SET, DIAGONAL_GATE_SET
 
-# TODO: gate name refactoring
+
 class BasicGate(object):
     """ the abstract SuperClass of all basic quantum gates
 
@@ -126,25 +126,25 @@ class BasicGate(object):
     def type(self):
         return self._type
 
-    # life cycle
     def __init__(self, controls, targets, params, type):
         self._matrix = None
 
         self._controls = controls
         self._targets = targets
         self._params = params
-        self._cargs = []
-        self._targs = []
-        self._pargs = []
+        self._cargs = []    # list of int
+        self._targs = []    # list of int
+        self._pargs = []    # list of float/..
 
         self._type = type
         self._qasm_name = str(type.name)
         self._name = str(type)
 
+        self.assigned_qubits = []   # list of qubits
+
     def __str__(self):
         return self._type.value
 
-    # TODO: refactoring
     def __or__(self, targets):
         """deal the operator '|'
 
@@ -165,24 +165,21 @@ class BasicGate(object):
             targets: the targets the gate acts on, it can have following form,
                 1) Circuit
                 2) qureg
-            name(string): the name of the gate
+                3) qubit
         Raise:
             TypeException: the type of other is wrong
         """
         if isinstance(targets, Circuit):
-            qureg = targets.qubits
+            targets.append(self.copy())
         elif isinstance(targets, Qureg):
-            qureg = targets
+            self.assigned_qubits = targets
+        elif isinstance(targets, Qubit):
+            assert self.is_single()
+
+            self.assigned_qubits = Qureg([targets])
         else:
-            raise TypeError("qubit or tuple<qubit, qureg> or qureg or list<qubit, qureg> or circuit", targets)
+            raise TypeError("qubit or qureg or circuit", targets)
 
-        gate = self.copy()
-        circuit = qureg.circuit
-        circuit.append(gate, qureg)
-
-        return self
-
-    #TODO: refactoring
     def __and__(self, targets):
         """deal the operator '&'
 
@@ -199,19 +196,21 @@ class BasicGate(object):
         Args:
             targets: the targets the gate acts on, it can have following form,
                 1) int
-                2) tuple<qubit, qureg>
-                3) list<qubit, qureg>
+                2) list<int>
             name(string): the name of the gate
         Raise:
             TypeException: the type of other is wrong
         """
-        try:
-            if isinstance(targets, int):
-                targets = [targets]
-            else:
-                targets = list(targets)
-            self.affectArgs = targets
-        except Exception:
+        if isinstance(targets, int):
+            assert self.is_single()
+
+            self.targs = [targets]
+        elif isinstance(targets, list):
+            assert len(targets) == self.controls + self.targets
+
+            self.cargs = targets[:self.controls]
+            self.targs = targets[self.controls:self.controls + self.targets]
+        else:
             raise TypeError("int or tuple<int> or list<int>", targets)
 
         return self.copy()
@@ -272,7 +271,7 @@ class BasicGate(object):
 
         return gate_info
 
-    def qasm(self):     # TODO: mv it with qasm builder
+    def qasm(self):
         """ generator OpenQASM string for the gate
 
         Return:
@@ -382,7 +381,7 @@ class BasicGate(object):
         """
         return self.type in DIAGONAL_GATE_SET
 
-    def is_special(self) -> bool:   # TODO: build special gate set
+    def is_special(self) -> bool:
         """ judge whether gate's is special gate, which is one of
         [Measure, Reset, Barrier, Perm, Unitary]
 
@@ -391,7 +390,7 @@ class BasicGate(object):
         """
         return self.type in SPECIAL_GATE_SET
 
-    def copy(self, name=None):
+    def copy(self):
         """ return a copy of this gate
 
         Args:
@@ -408,6 +407,7 @@ class BasicGate(object):
         gate.pargs = copy.deepcopy(self.pargs)
         gate.targs = copy.deepcopy(self.targs)
         gate.cargs = copy.deepcopy(self.cargs)
+        gate.assigned_qubits = copy.deepcopy(self.assigned_qubits)
         gate.params = self.params
 
         return gate
