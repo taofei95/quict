@@ -86,7 +86,7 @@ def order_finding(a, N):
         logging.info(f'order_finding succeed: r = {r} is the order of a = {a}')
         return r
     else:
-        logging.info(f'order_finding failed: r = {r} is the order of a = {a}')
+        logging.info(f'order_finding failed: r = {r} is not the order of a = {a}')
         return 0
 
 
