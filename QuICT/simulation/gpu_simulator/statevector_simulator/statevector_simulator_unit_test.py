@@ -10,7 +10,7 @@ import numpy as np
 
 from QuICT.core import *
 from QuICT.algorithm import Amplitude
-from QuICT.simulation import ConstantStateVectorSimulator
+from QuICT.simulation.gpu_simulator import ConstantStateVectorSimulator
 
 
 @pytest.mark.skipif(os.environ.get("test_with_gpu", False), reason="Required GPU support")

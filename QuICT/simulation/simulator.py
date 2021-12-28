@@ -6,13 +6,12 @@
 import time
 
 from QuICT.core import *
-from QuICT.simulation import (
+from QuICT.simulation.gpu_simulator import (
     ConstantStateVectorSimulator,
     MultiStateVectorSimulator,
-    UnitarySimulator,
-    QuantumLeafSimulator,
-    QiskitSimulator
+    UnitarySimulator
 )
+from QuICT.simulation.remote_simulator import QuantumLeafSimulator, QiskitSimulator
 from QuICT.simulation.utils import option_validation, Result
 
 
