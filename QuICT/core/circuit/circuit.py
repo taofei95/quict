@@ -385,13 +385,15 @@ class Circuit(object):
             gate(BasicGate)
             qureg(Qureg/list<Qubit>)
         """
-        self.gates.append(gate)
-
         if isinstance(qureg[0], int):
-            gate.assigned_qubits = self.qubits([qureg])
+            qureg = self.qubits(qureg)
+            gate.assigned_qubits = qureg
         else:
             gate.cargs = [self._idmap[qureg[idx].id] for idx in range(gate.controls)]
             gate.targs = [self._idmap[qureg[idx].id] for idx in range(gate.controls, gate.controls + gate.targets)]
+
+        gate.update_name(qureg(0).id, len(self.gates))
+        self.gates.append(gate)
 
     def _add_gate_to_all_qubits(self, gate):
         for idx in range(self.circuit_width()):

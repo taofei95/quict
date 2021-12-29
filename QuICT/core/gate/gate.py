@@ -145,6 +145,7 @@ class BasicGate(object):
     def __str__(self):
         return self._type.value
 
+    # TODO: either add itself to circuit or assign qubits
     def __or__(self, targets):
         """deal the operator '|'
 
@@ -173,10 +174,12 @@ class BasicGate(object):
             targets.append(self.copy())
         elif isinstance(targets, Qureg):
             self.assigned_qubits = targets
+            self.update_name(targets(0).id)
         elif isinstance(targets, Qubit):
             assert self.is_single()
 
             self.assigned_qubits = Qureg([targets])
+            self.update_name(targets.id)
         else:
             raise TypeError("qubit or qureg or circuit", targets)
 
@@ -215,7 +218,8 @@ class BasicGate(object):
 
         return self.copy()
 
-    def __call__(self, params=None, name=None):
+    # TODO: no parameters gate here, otherwise override
+    def __call__(self):
         """ give parameters for the gate
 
         give parameters by "()".
@@ -235,29 +239,29 @@ class BasicGate(object):
         Returns:
             BasicGate: the gate after filled by parameters
         """
-        self.pargs = []
-        if self.params > 0:
-            try:
-                params = list(params)
-                for element in params:
-                    if not self.permit_element(element):
-                        raise TypeError("int/float/complex or list<int/float/complex> "
-                                        "or tuple<int/float/complex>", params)
-                    self.pargs.append(element)
-            except Exception:
-                raise TypeError("int/float/complex or list<int/float/complex> "
-                                "or tuple<int/float/complex>", params)
-
-        if name is not None:
-            self._name = str(name)
-
-        return self
+        pass
 
     def __eq__(self, other):
         if isinstance(other, BasicGate):
             if other.name == self.name:
                 return True
         return False
+
+    def update_name(self, qubit_id: str, circuit_idx: int = None):
+        name_parts = self.name.split('-')
+
+        if len(name_parts) == 1:
+            name_parts.append(qubit_id)
+        else:
+            name_parts[1] = qubit_id
+
+        if circuit_idx:
+            if len(name_parts) == 3:
+                name_parts[3] = str(circuit_idx)
+            else:
+                name_parts.append(str(circuit_idx))
+
+        self.name = '-'.join(name_parts)
 
     # get information of gate
     def gate_info(self):
@@ -650,6 +654,11 @@ class U1Gate(BasicGate):
         self.pargs = [np.pi / 2]
         self.build_matrix()
 
+    def __call__(self, alpha):
+        if not self.permit_element(alpha):
+            raise TypeError("int/float/complex", alpha)
+        self.pargs[0] = alpha
+
     def build_matrix(self):
         self.matrix = np.array([
             [1, 0],
@@ -676,6 +685,15 @@ class U2Gate(BasicGate):
 
         self.pargs = [np.pi / 2, np.pi / 2]
         self.build_matrix()
+
+    def __call__(self, alpha, beta):
+        if not self.permit_element(alpha):
+            raise TypeError("int/float/complex", alpha)
+        self.pargs[0] = alpha
+
+        if not self.permit_element(beta):
+            raise TypeError("int/float/complex", beta)
+        self.pargs[1] = beta
 
     def build_matrix(self):
         sqrt2 = 1 / np.sqrt(2)
@@ -706,6 +724,19 @@ class U3Gate(BasicGate):
         self.pargs = [0, 0, np.pi / 2]
         self.build_matrix()
 
+    def __call__(self, alpha, beta, gamma):
+        if not self.permit_element(alpha):
+            raise TypeError("int/float/complex", alpha)
+        self.pargs[0] = alpha
+
+        if not self.permit_element(beta):
+            raise TypeError("int/float/complex", beta)
+        self.pargs[1] = beta
+        
+        if not self.permit_element(gamma):
+            raise TypeError("int/float/complex", gamma)
+        self.pargs[2] = gamma
+
     def build_matrix(self):
         self.matrix = np.array([
             [np.cos(self.pargs[0] / 2),
@@ -733,6 +764,11 @@ class RxGate(BasicGate):
         )
         self.pargs = [np.pi / 2]
         self.build_matrix()
+
+    def __call__(self, alpha):
+        if not self.permit_element(alpha):
+            raise TypeError("int/float/complex", alpha)
+        self.pargs[0] = alpha
 
     def build_matrix(self):
         self.matrix = np.array([
@@ -762,6 +798,11 @@ class RyGate(BasicGate):
         self.pargs = [np.pi / 2]
         self.build_matrix()
 
+    def __call__(self, alpha):
+        if not self.permit_element(alpha):
+            raise TypeError("int/float/complex", alpha)
+        self.pargs[0] = alpha
+
     def build_matrix(self):
         self.matirx = np.array([
             [np.cos(self.pargs[0] / 2), -np.sin(self.pargs[0] / 2)],
@@ -788,6 +829,11 @@ class RzGate(BasicGate):
 
         self.pargs = [np.pi / 2]
         self.build_matrix()
+
+    def __call__(self, alpha):
+        if not self.permit_element(alpha):
+            raise TypeError("int/float/complex", alpha)
+        self.pargs[0] = alpha
 
     def build_matrix(self):
         self.matirx = np.array([
@@ -871,6 +917,11 @@ class PhaseGate(BasicGate):
 
         self.pargs = [0]
         self.build_matrix()
+
+    def __call__(self, alpha):
+        if not self.permit_element(alpha):
+            raise TypeError("int/float/complex", alpha)
+        self.pargs[0] = alpha
 
     def build_matrix(self):
         self.matrix = np.array([
@@ -980,6 +1031,11 @@ class CRzGate(BasicGate):
         self.pargs = [np.pi / 2]
         self.build_matrix()
 
+    def __call__(self, alpha):
+        if not self.permit_element(alpha):
+            raise TypeError("int/float/complex", alpha)
+        self.pargs[0] = alpha
+
     def build_matrix(self):
         self.matrix = np.array([
             [1, 0, 0, 0],
@@ -1008,6 +1064,11 @@ class CU1Gate(BasicGate):
 
         self.pargs = [np.pi / 2]
         self.build_matrix()
+
+    def __call__(self, alpha):
+        if not self.permit_element(alpha):
+            raise TypeError("int/float/complex", alpha)
+        self.pargs[0] = alpha
 
     def build_matrix(self):
         self.matrix = np.array([
@@ -1038,6 +1099,19 @@ class CU3Gate(BasicGate):
         self.pargs = [np.pi / 2, 0, 0]
         self.build_matrix()
 
+    def __call__(self, alpha, beta, gamma):
+        if not self.permit_element(alpha):
+            raise TypeError("int/float/complex", alpha)
+        self.pargs[0] = alpha
+
+        if not self.permit_element(beta):
+            raise TypeError("int/float/complex", beta)
+        self.pargs[1] = beta
+        
+        if not self.permit_element(gamma):
+            raise TypeError("int/float/complex", gamma)
+        self.pargs[2] = gamma
+
     def build_matrix(self):
         self.matrix = np.array([
             [1, 0, 0, 0],
@@ -1067,6 +1141,15 @@ class FSimGate(BasicGate):
 
         self.pargs = [np.pi / 2, 0]
         self.build_matrix()
+
+    def __call__(self, alpha, beta):
+        if not self.permit_element(alpha):
+            raise TypeError("int/float/complex", alpha)
+        self.pargs[0] = alpha
+
+        if not self.permit_element(beta):
+            raise TypeError("int/float/complex", beta)
+        self.pargs[1] = beta
 
     def build_matrix(self):
         costh = np.cos(self.pargs[0])
@@ -1101,6 +1184,11 @@ class RxxGate(BasicGate):
         self.pargs = [0]
         self.build_matrix()
 
+    def __call__(self, alpha):
+        if not self.permit_element(alpha):
+            raise TypeError("int/float/complex", alpha)
+        self.pargs[0] = alpha
+
     def build_matrix(self):
         costh = np.cos(self.parg / 2)
         sinth = np.sin(self.parg / 2)
@@ -1133,6 +1221,11 @@ class RyyGate(BasicGate):
         self.pargs = [np.pi / 2]
         self.build_matrix()
 
+    def __call__(self, alpha):
+        if not self.permit_element(alpha):
+            raise TypeError("int/float/complex", alpha)
+        self.pargs[0] = alpha
+
     def build_matrix(self):
         costh = np.cos(self.parg / 2)
         sinth = np.sin(self.parg / 2)
@@ -1164,6 +1257,11 @@ class RzzGate(BasicGate):
 
         self.pargs = [np.pi / 2]
         self.build_matrix()
+
+    def __call__(self, alpha):
+        if not self.permit_element(alpha):
+            raise TypeError("int/float/complex", alpha)
+        self.pargs[0] = alpha
 
     def build_matrix(self):
         expth = np.exp(0.5j * self.parg)
@@ -1944,6 +2042,11 @@ class CCRzGate(ComplexGate):
 
         self.pargs = [0]
         self.build_matrix()
+
+    def __call__(self, alpha):
+        if not self.permit_element(alpha):
+            raise TypeError("int/float/complex", alpha)
+        self.pargs[0] = alpha
 
     def build_matrix(self):
         self.matrix = np.array([

@@ -29,23 +29,23 @@ class Qubit(object):
 
     @property
     def id(self):
-        return self.__id
+        return self._id
 
     @property
     def measured(self) -> int:
-        return self.__measured
+        return self._measured
 
     @measured.setter
     def measured(self, measured):
-        self.__measured = measured
+        self._measured = measured
 
     @property
     def prob(self) -> float:
-        return self.__prob
+        return self._prob
 
     @prob.setter
     def prob(self, prob):
-        self.__prob = prob
+        self._prob = prob
 
     def __init__(self, prob: float = None):
         """ initial a qubit with a circuit
@@ -53,9 +53,9 @@ class Qubit(object):
         Args:
             circuit(Circuit): the circuit the qubit attaches to
         """
-        self.__id = unique_id_generator()
-        self.__measured = -1
-        self.__prob = random.random() if prob is None else prob
+        self._id = unique_id_generator()
+        self._measured = -1
+        self._prob = random.random() if prob is None else prob
 
     def __str__(self):
         """ string describe of the qubit
