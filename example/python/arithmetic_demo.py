@@ -12,6 +12,7 @@ def set_qureg(qreg, N):
             X | qreg[n - 1 - i]
         N = N // 2
 
+
 def ex_gcd(a, b, arr):
     """
     Implementation of Extended Euclidean algorithm
@@ -33,6 +34,7 @@ def ex_gcd(a, b, arr):
     arr[1] = t - int(a / b) * arr[1]
     return g
 
+
 def HRSAdder_demonstration():
     print('HRSAdder demonstration: a(quantum) + b(classical)')
     a = int(input('\tinput quantum number a: '))
@@ -52,6 +54,7 @@ def HRSAdder_demonstration():
 
     print("\t%d + %d = %d" % (a, b, int(a_q)))
 
+
 def HRSAdderMod_demonstration():
     print('HRSAdderMod demonstration: a(quantum) + b(classical) mod N(classical)')
     a = int(input('\tinput quantum number a: '))
@@ -66,15 +69,16 @@ def HRSAdderMod_demonstration():
     set_qureg(a_q, a)
     composite_gate = HRSAdderMod.execute(n, b, N)
     composite_gate | (a_q, g_q, indicator)
-    Measure | circuit
+    Measure | a_q
     
     circuit.draw('matp','HRSAdderMod_circuit.jpg')
     circuit.exec()
 
     print("\t%d + %d (mod %d) = %d" % (a, b, N, int(a_q)))
 
-def HRSMulMod():
-    print('HRSMulMod demonstration: a(classical)*x(quantum) mod N(classical), gcd(a,N) = 1')
+
+def HRSMulMod_demonstration():
+    print('HRSMulMod demonstration: For gcd(a,N) = 1, a(classical)*x(quantum) mod N(classical)')
     a = int(input('\tinput classical number a: '))
     x = int(input('\tinput quantum number x: '))
     N = int(input('\tinput classical modulo N: '))
@@ -92,8 +96,13 @@ def HRSMulMod():
     set_qureg(x_q, x)
     HRSMulMod.execute(n, a, N) | (x_q, ancilla, indicator)
     Measure | circuit
-    circuit.exec()
     
+    #circuit.draw('matp','HRSMulMod_circuit.jpg') #the image too large
+    circuit.exec()
+
+    print("\t%d * %d (mod %d) = %d" % (a, x, N, int(x_q)))
+
+
 '''
 a = int(input('\tinput a: '))
 x = int(input('\tinput b: '))
@@ -112,5 +121,6 @@ circuit.exec()
 
 print(int(x_q))
 '''
-HRSAdder_demonstration()
-HRSAdderMod_demonstration()
+#HRSAdder_demonstration()
+#HRSAdderMod_demonstration()
+HRSMulMod_demonstration()
