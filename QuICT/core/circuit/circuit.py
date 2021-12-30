@@ -3,14 +3,16 @@
 # @TIME    : 2020/2/10 9:41
 # @Author  : Han Yu
 # @File    : _circuit.py
-
-import copy
+import numpy as np
 
 from QuICT.core.exception import TypeException
 from QuICT.core.qubit import Qubit, Qureg
-from QuICT.core.layout import Layout
+from QuICT.core.layout import Layout, SupremacyLayout
+from QuICT.core import GateType, get_gate, get_n_args, SUPREMACY_GATE_SET
+from QuICT.core.gate import H, FSim, Measure
 
-from .circuit_computing import *
+from .circuit_computing import getRandomList, CircuitInformation
+
 
 # global circuit id count
 circuit_id = 0
@@ -65,7 +67,7 @@ class Circuit(object):
     @property
     def topology(self) -> list:
         return self._topology
-    
+
     @topology.setter
     def topology(self, topology: Layout):
         if topology is None:
@@ -135,9 +137,9 @@ class Circuit(object):
         self.qubits = None
         self.topology = None
         self.fidelity = None
- 
+
     # Attributes of the circuit
-    def circuit_width(self):
+    def width(self):
         """ the number of qubits in circuit
 
         Returns:
@@ -145,7 +147,7 @@ class Circuit(object):
         """
         return len(self.qubits)
 
-    def circuit_size(self):
+    def size(self):
         """ the size of the circuit
 
         Returns:
@@ -153,31 +155,23 @@ class Circuit(object):
         """
         return len(self.gates)
 
-    def circuit_count_2qubit(self):
+    def count_2qubit_gate(self):
         """ the number of the two qubit gates in the circuit
 
         Returns:
             int: the number of the two qubit gates in the circuit
         """
-        count = 0
-        for gate in self.gates:
-            if gate.controls + gate.targets == 2:
-                count += 1
-        return count
+        return CircuitInformation.count_2qubit_gate(self.gates)
 
-    def circuit_count_1qubit(self):
+    def count_1qubit_gate(self):
         """ the number of the one qubit gates in the circuit
 
         Returns:
             int: the number of the one qubit gates in the circuit
         """
-        count = 0
-        for gate in self.gates:
-            if gate.controls + gate.targets == 1:
-                count += 1
-        return count
+        return CircuitInformation.count_1qubit_gate(self.gates)
 
-    def circuit_count_gateType(self, gateType):
+    def count_gate_by_gatetype(self, gate_type):
         """ the number of the gates which are some type in the circuit
 
         Args:
@@ -186,42 +180,24 @@ class Circuit(object):
         Returns:
             int: the number of the gates which are some type in the circuit
         """
-        count = 0
-        for gate in self.gates:
-            if gate.type == gateType:
-                count += 1
-        return count
+        return CircuitInformation.count_gate_by_gatetype(self.gates, gate_type)
 
-    def circuit_depth(self, gateTypes=None):
-        """ the depth of the circuit for some gate.
-
-        Args:
-            gateTypes(list<GateType>):
-                the types to be count into depth calculate
-                if count all type of gates, leave it being None.
+    def depth(self):
+        """ the depth of the circuit.
 
         Returns:
             int: the depth of the circuit
         """
-        layers = []
-        for gate in self.gates:
-            if gateTypes is None or gate.type in gateTypes:
-                now = set(gate.cargs) | set(gate.targs)
-                for i in range(len(layers) - 1, -2, -1):
-                    if i == -1 or len(now & layers[i]) > 0:
-                        if i + 1 == len(layers):
-                            layers.append(set())
-                        layers[i + 1] |= now
-        return len(layers)
+        return CircuitInformation.depth(self.gates)
 
-    def circuit_information(self) -> dict:
+    def __str__(self):
         circuit_info = {
             "name": self.name,
-            "width": self.circuit_width(),
-            "size": self.circuit_size(),
-            "depth": self.circuit_depth(),
-            "1-qubit gates": self.circuit_count_1qubit(),
-            "2-qubit gates": self.circuit_count_2qubit()
+            "width": self.width(),
+            "size": self.size(),
+            "depth": self.depth(),
+            "1-qubit gates": self.count_1qubit_gate(),
+            "2-qubit gates": self.count_2qubit_gate()
         }
 
         return circuit_info
@@ -261,27 +237,18 @@ class Circuit(object):
         Returns:
             str: OpenQASM 2.0 describe or "error" when there are some gates cannot be resolved
         """
-        string = 'OPENQASM 2.0;\ninclude "qelib1.inc";\n'
+        cbits = self.circuit_count_gateType(GateType.measure)
+        qasm_string = CircuitInformation.qasm_header(len(self.qubits), cbits)
+
         cbits = 0
         for gate in self.gates:
             if gate.qasm_name == "measure":
-                cbits += 1
-        string += f"qreg q[{self.circuit_width()}];\n"
-        if cbits != 0:
-            string += f"creg c[{cbits}];\n"
-        cbits = 0
-        for gate in self.gates:
-            if gate.qasm_name == "measure":
-                string += f"measure q[{gate.targ}] -> c[{cbits}];\n"
+                qasm_string += f"measure q[{gate.targ}] -> c[{cbits}];\n"
                 cbits += 1
             else:
-                qasm = gate.qasm()
-                if qasm == "error":
-                    print("the circuit cannot be transformed to a valid describe in OpenQASM 2.0")
-                    gate.print_info()
-                    return "error"
-                string += gate.qasm()
-        return string
+                qasm_string += gate.qasm()
+
+        return qasm_string
 
     def __call__(self, indexes: object):
         """ get a smaller qureg from this circuit
@@ -342,7 +309,7 @@ class Circuit(object):
             TypeException: the type of other is wrong
         """
         if not isinstance(targets, Circuit):
-            raise TypeError(f"Only support circuit | circuit.")
+            raise TypeError("Only support circuit | circuit.")
 
         if self.qubits != targets.qubits:
             diff_qubits = self.qubits.diff(targets.qubits)
@@ -371,8 +338,8 @@ class Circuit(object):
                 if not gate.is_single():
                     raise KeyError(f"{gate.type} need assign qubits to add into circuit.")
 
-                self._add_gate_to_all_qubits(gate) 
-                return               
+                self._add_gate_to_all_qubits(gate)
+                return
 
             qureg = gate_ctargs
 
@@ -418,7 +385,7 @@ class Circuit(object):
 
         Args:
             targets(int/list<int>/tuple<int>/slice): target qubits indexes.
-            start(int/string): the start gate's index, default 0
+            start(int/qasm_string): the start gate's index, default 0
             max_size(int): max size of the sub circuit, default -1 without limit
             local(bool): whether the slice will stop when meeting an non-commutative gate, default False
             remove(bool): whether deleting the slice gates from origin circuit, default False
@@ -528,29 +495,32 @@ class Circuit(object):
             rand_size(int): the number of the gate added to the circuit
             typeList(list<GateType>): the type of gate, default contains CX、ID、Rz、CY、CRz、CH
         """
-        self._random_append(self, rand_size, typeList)
+        self._random_append(rand_size, typeList)
 
-    # TODO: bug fixed
-    def _random_append(self, rand_size=10, typeList=None):
-        from QuICT.core import GATE_ID, get_gate, get_n_args
+    # TODO: get_n_args, and get_gate fixed
+    def _random_append(self, rand_size, typeList):
         if typeList is None:
             typeList = [
-                GATE_ID["Rx"], GATE_ID["Ry"], GATE_ID["Rz"], GATE_ID["CX"],
-                GATE_ID["CY"], GATE_ID["CRz"], GATE_ID["CH"], GATE_ID["CZ"],
-                GATE_ID["Rxx"], GATE_ID["Ryy"], GATE_ID["Rzz"], GATE_ID["FSim"]
+                GateType.rx, GateType.ry, GateType.rz,
+                GateType.cx, GateType.cy, GateType.crz,
+                GateType.ch, GateType.cz, GateType.Rxx,
+                GateType.Ryy, GateType.Rzz, GateType.fsim
             ]
-        n_qubit = self.circuit_width()
+
+        n_qubit = self.width()
         for _ in range(rand_size):
-            rand_type = random.randrange(0, len(typeList))
+            rand_type = np.random.randint(0, len(typeList))
             gate_type = typeList[rand_type]
             n_pargs, n_targs, n_cargs = get_n_args(gate_type)
             n_affect_args = n_targs + n_cargs
-            affect_args = _getRandomList(n_affect_args, n_qubit)
+            affect_args = getRandomList(n_affect_args, n_qubit)
             pargs = []
             for _ in range(n_pargs):
-                pargs.append(random.uniform(0, 2 * np.pi))
+                pargs.append(np.random.uniform(0, 2 * np.pi))
+
             if n_pargs == 0:
                 pargs = None
+
             get_gate(gate_type, affect_args, pargs) | [self[i] for i in affect_args]
 
     def append_supremacy(self, repeat: int = 1, pattern: str = "ABCDCDAB"):
@@ -561,8 +531,30 @@ class Circuit(object):
             repeat(int): the number of two-qubit gates' sequence
             pattern(str): indicate the two-qubit gates' sequence
         """
-        # inner_supremacy_append(self, repeat, pattern)
-        pass
+        self._supremacy_append(repeat, pattern)
+
+    # TODO: bug fixed
+    def _supremacy_append(self, repeat, pattern):
+        qubits = len(self.qubits)
+        supremacy_layout = SupremacyLayout(qubits)
+
+        self._add_gate_to_all_qubits(H)
+
+        for i in range(repeat * len(pattern)):
+            for q in range(qubits):
+                gate_type = SUPREMACY_GATE_SET[np.random.randint(0, 3)]
+
+                get_gate(gate_type) | self.circuit(q)
+
+            current_pattern = pattern[i % (len(pattern))]
+            if current_pattern not in "ABCD":
+                raise KeyError(f"Unsupported pattern {pattern[i]}, please use one of 'A', 'B', 'C', 'D'.")
+
+            edges = supremacy_layout.get_edges_by_pattern(current_pattern)
+            for e in edges:
+                FSim([np.pi / 2, np.pi / 6]) | self([int(e[0]), int(e[1])])
+
+        self._add_gate_to_all_qubits(Measure)
 
     def matrix_product_to_circuit(self, gate) -> np.ndarray:
         """ extend a gate's matrix in the all circuit unitary linear space

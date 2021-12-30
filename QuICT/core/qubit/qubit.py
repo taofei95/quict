@@ -140,10 +140,10 @@ class Qureg(list):
             IndexDuplicateException: the range of indexes is error.
             TypeException: the type of indexes is error.
         """
-        if isinstance(indexes, int):    # int
+        if isinstance(indexes, int):        # int
             if indexes < 0 or indexes >= len(self):
                 raise IndexLimitException(len(self), indexes)
-        elif isinstance(indexes, list): # list
+        elif isinstance(indexes, list):     # list
             if len(indexes) != len(set(indexes)):
                 raise IndexDuplicateException(indexes)
 
@@ -212,7 +212,7 @@ class Qureg(list):
         for qubit in other:
             if qubit.id not in current_qubit_ids:
                 return False
-        
+
         return True
 
     def diff(self, other):

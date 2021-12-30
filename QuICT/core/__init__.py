@@ -17,3 +17,4 @@ from .exception import *
 from .gate import *
 from .layout import *
 from .qubit import *
+from .utils import *

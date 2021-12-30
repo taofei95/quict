@@ -45,7 +45,7 @@ class GateType(Enum):
     cswap = "cswap gate"
     ccx = "Toffoli gate"
     CCRz = "CCRz gate"
-    
+
     # Special gate below
     measure = "Measure gate"
     reset = "Reset gate"
@@ -61,7 +61,7 @@ class GateType(Enum):
     control_perm_mul = "Control-Perm-Mul gate"
     perm_fx = "Perm-Fx gate"
     shor_init = "Shor Initial gate"
-    
+
     # Composite gate
     qft = "QFT gate"
     iqft = "IQFT gate"
@@ -100,4 +100,10 @@ DIAGONAL_GATE_SET = [
     GateType.cu1,
     GateType.Rzz,
     GateType.CCRz
+]
+
+SUPREMACY_GATE_SET = [
+    GateType.sx,
+    GateType.sy,
+    GateType.sw
 ]
