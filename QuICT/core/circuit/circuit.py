@@ -33,7 +33,7 @@ class Circuit(object):
         fidelity(float): the fidelity of the circuit
 
     Private Attributes:
-        __idmap(dictionary): the map from qubit's id to its index in the circuit
+        _idmap(dictionary): the map from qubit's id to its index in the circuit
     """
 
     @property
@@ -77,7 +77,7 @@ class Circuit(object):
         if not isinstance(topology, Layout):
             raise TypeError("Only support Layout as circuit topology.")
 
-        if topology.qubit_number != self.circuit_width():
+        if topology.qubit_number != self.width():
             raise ValueError(f"The qubit number is not mapping. {topology.qubit_number}")
 
     @property
@@ -237,18 +237,10 @@ class Circuit(object):
         Returns:
             str: OpenQASM 2.0 describe or "error" when there are some gates cannot be resolved
         """
-        cbits = self.circuit_count_gateType(GateType.measure)
-        qasm_string = CircuitInformation.qasm_header(len(self.qubits), cbits)
+        qreg = len(self.qubits)
+        creg = self.circuit_count_gateType(GateType.measure)
 
-        cbits = 0
-        for gate in self.gates:
-            if gate.qasm_name == "measure":
-                qasm_string += f"measure q[{gate.targ}] -> c[{cbits}];\n"
-                cbits += 1
-            else:
-                qasm_string += gate.qasm()
-
-        return qasm_string
+        return CircuitInformation.qasm(qreg, creg, self.gates)
 
     def __call__(self, indexes: object):
         """ get a smaller qureg from this circuit
@@ -379,87 +371,68 @@ class Circuit(object):
         for gate in gates:
             self.append(gate)
 
-    # TODO: optimize
-    def sub_circuit(self, targets, start=0, max_size=-1, local=False, remove=False):
+    def sub_circuit(
+        self,
+        targets,
+        start: int = 0,
+        max_size: int = -1,
+        remove: bool = False
+    ):
         """ get a sub circuit
 
         Args:
-            targets(int/list<int>/tuple<int>/slice): target qubits indexes.
-            start(int/qasm_string): the start gate's index, default 0
+            targets(int/list<int>/tuple<int>/Qureg): target qubits indexes.
+            start(int): the start gate's index, default 0
             max_size(int): max size of the sub circuit, default -1 without limit
-            local(bool): whether the slice will stop when meeting an non-commutative gate, default False
             remove(bool): whether deleting the slice gates from origin circuit, default False
         Return:
             Circuit: the sub circuit
-
         """
-        circuit_size = self.circuit_size()
-        circuit_width = self.circuit_width()
-        if isinstance(targets, slice):
-            targets = [i for i in range(circuit_width)][targets]
-        targets = list(targets)
+        if isinstance(targets, Qureg):
+            targets = [self.index_for_qubit(qubit) for qubit in targets]
+        else:
+            try:
+                targets = list(targets)
+            except Exception as e:
+                raise TypeError(f"targets should be Qureg or listable object. {e}")
+
         # the mapping from circuit's index to sub-circuit's index
+        circuit_width = self.width()
         targets_mapping = [0] * circuit_width
-        index = 0
-        for target in targets:
+        for idx, target in enumerate(targets):
             if target < 0 or target >= circuit_width:
                 raise Exception('list index out of range')
-            targets_mapping[target] = index
-            index += 1
+            targets_mapping[target] = idx
 
-        circuit = Circuit(len(targets))
+        # build sub_circuit
+        sub_circuit = Circuit(len(targets))
         set_targets = set(targets)
-        new_gates = []
-        compare_gates = []
+        targets_gates = self.gates_for_qubit(targets)
+        sub_gates = []
 
-        if isinstance(start, str):
-            count = 0
-            for gate in self.gates:
-                if gate.name == start:
-                    break
-                count += 1
-            start = count
-        if remove:
-            for gate_index in range(start):
-                new_gates.append(self.gates[gate_index])
-        for gate_index in range(start, circuit_size):
-            gate = self.gates[gate_index]
-            affectArgs = gate.affectArgs
-            set_affectArgs = set(affectArgs)
-            # if gate acts on given qubits
-            if set_affectArgs <= set_targets:
-                compare_gates.append(gate)
-                targ = []
-                for args in affectArgs:
-                    targ.append(targets[args])
-                gate | circuit(targ)
-                max_size -= 1
-            elif len(set_affectArgs.intersection(set_targets)) == 0:
-                new_gates.append(gate)
-            else:
-                if not local:
-                    new_gates.append(gate)
-                else:
-                    commutative = True
-                    for goal in compare_gates:
-                        if not gate.commutative(goal):
-                            commutative = False
-                            break
-                    if commutative:
-                        new_gates.append(gate)
-                    else:
-                        break
-            if max_size == 0:
-                if remove:
-                    for index in range(gate_index + 1, circuit_size):
-                        new_gates.append(self.gates[index])
+        for gate_index in range(start, len(targets_gates)):
+            gate = targets_gates[gate_index]
+            assigned_qubits = set(gate.assigned_qubits)
+            if assigned_qubits & set_targets == assigned_qubits:
+                sub_gates.append(gate)
+
+            if remove:
+                self.gates.remove(gate)
+
+            if len(sub_gates) >= max_size and max_size != -1:
                 break
+        
         if remove:
-            for qubit in self.qubits:
-                qubit.qState_clear()
-            self.set_exec_gates(new_gates)
+            self._update_gate_index()
 
-        return circuit
+        return sub_circuit
+
+    def _update_gate_index(self):
+        for index, gate in enumerate(self.gates):
+            gate_type, gate_qb, gate_idx = gate.name.split('-')
+
+            if int(gate_idx) != index: 
+                gate.name = '-'.join([gate_type, gate_qb, index])
 
     def index_for_qubit(self, qubit, ancilla=None) -> int:
         """ find the index of qubit in this circuit
@@ -468,7 +441,7 @@ class Circuit(object):
 
         Args:
             qubit(Qubit): the qubit need to be indexed.
-            ancilla(list<Qubit>): the ancillary qubit
+            ancilla(Qureg): the ancillary qubit
 
         Returns:
             int: the index of the qubit.
@@ -478,15 +451,35 @@ class Circuit(object):
         """
         if not isinstance(qubit, Qubit):
             raise TypeException("Qubit", now=qubit)
+
+        if qubit.id not in self._idmap.keys():
+            raise Exception("the qubit is not in the circuit or it is an ancillary qubit.")
+
         if ancilla is None:
-            ancilla = []
+            return self._idmap[qubit.id]
+
+        if not isinstance(ancilla, Qureg):
+            raise TypeException("Qureg", now=ancilla)
+
         enterspace = 0
-        for i in range(len(self.qubits)):
-            if i in ancilla:
+        for q in self.qubits:
+            if q not in ancilla:
                 enterspace += 1
-            elif self.qubits[i].id == qubit.id:
-                return i - enterspace
-        raise Exception("the qubit is not in the circuit or it is an ancillary qubit.")
+            elif q.id == qubit.id:
+                return enterspace
+
+    def gates_for_qubit(self, qubits: list) -> list:
+        if isinstance(qubits, Qureg):
+            qubits = [self.index_for_qubit(qubit) for qubit in qubits]
+
+        set_qubits = set(qubits)
+        q_gates = []
+        for gate in self.gates:        
+            ctargs = set(gate.cargs + gate.targs)
+            if set_qubits & ctargs:
+                q_gates.append(gate)
+
+        return q_gates
 
     def random_append(self, rand_size=10, typeList=None):
         """ add some random gate to the circuit

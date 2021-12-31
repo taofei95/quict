@@ -63,7 +63,7 @@ class Qubit(object):
         Returns:
             str: a simple describe
         """
-        return f"qubit id:{self.id}"
+        return f"qubit id: {self.id}"
 
     def __int__(self):
         """ int value of the qubit(measure result)

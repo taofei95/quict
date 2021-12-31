@@ -102,6 +102,7 @@ DIAGONAL_GATE_SET = [
     GateType.CCRz
 ]
 
+
 SUPREMACY_GATE_SET = [
     GateType.sx,
     GateType.sy,

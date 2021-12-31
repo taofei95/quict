@@ -284,6 +284,9 @@ class BasicGate(object):
         Return:
             string: the OpenQASM 2.0 describe of the gate
         """
+        if self.type in SPECIAL_GATE_SET[4:]:
+            raise KeyError(f"The gate do not support qasm, {self.type}")
+
         qasm_string = self.qasm_name
         if self.params > 0:
             params = [str(parg) for parg in self.pargs]
@@ -345,7 +348,6 @@ class BasicGate(object):
 
         return True
 
-    # gate information
     def is_single(self) -> bool:
         """ judge whether gate is a one qubit gate(excluding special gate like measure, reset, custom and so on)
 

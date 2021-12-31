@@ -27,14 +27,13 @@ class CompositeGate:
     def __exit__(self, exc_type, exc_value, traceback):
         pass
 
-    def __init__(self, qureg: Qureg, gates: list = None, with_copy: bool = True):
+    # TODO: allow no qureg
+    def __init__(self, gates: list = None, with_copy: bool = True):
         """ initial a CompositeGate with gate(s)
 
         Args:
             qubits [BasicGate]: the qubits which make up the qureg, it can have below form,
         """
-        assert isinstance(qureg, Qureg)
-        self._qubits = qureg
         self._gates = gates if gates else []
         self._is_copy = with_copy
 
@@ -93,28 +92,32 @@ class CompositeGate:
             int: the depth of the circuit
         """
         return CircuitInformation.depth(self.gates)
+    
+    def gate_info(self):
+        cgate_info = {
+            "width": self.width(),
+            "size": self.size(),
+            "depth": self.depth(),
+            "1-qubit gates": self.count_1qubit_gate(),
+            "2-qubit gates": self.count_2qubit_gate(),
+            "gates detail": {} 
+        }
 
-    def qasm(self, gate_output_only: bool = True):
+        for gate in self.gates:
+            cgate_info["gates detail"][gate.name] = gate.gate_info
+
+        return cgate_info
+
+    def qasm(self):
         """ get OpenQASM 2.0 describe for the composite gate
 
         Returns:
             str: OpenQASM 2.0 describe
         """
-        if gate_output_only:
-            cbits = self.count_gate_by_gatetype(GateType.measure)
-            qasm_string = CircuitInformation.qasm_header(self.width(), cbits)
-        else:
-            qasm_string = ""
+        qreg = self.width(),
+        creg = self.count_gate_by_gatetype(GateType.measure)
 
-        cbits = 0
-        for gate in self.gates:
-            if gate.qasm_name == "measure":
-                qasm_string += f"measure q[{gate.targ}] -> c[{cbits}];\n"
-                cbits += 1
-            else:
-                qasm_string += gate.qasm()
-
-        return qasm_string
+        return CircuitInformation.qasm(qreg, creg, self.gates)
 
     def __or__(self, targets):
         """deal the operator '|'
@@ -133,8 +136,7 @@ class CompositeGate:
         """
         assert isinstance(targets, Circuit)
 
-        for gate in self._gates:
-            targets.append(gate)
+        targets.extend(self.gates)
 
     def __xor__(self, targets):
         """deal the operator '^'
@@ -153,9 +155,10 @@ class CompositeGate:
         """
         assert isinstance(targets, Circuit)
 
-        for gate in self.inverse():
-            targets.append(gate)
+        self.inverse()
+        targets.extend(self.gates)
 
+    # TODO: return gate or qubit ?
     def __getitem__(self, item):
         """ to fit the slice operator, overloaded this function.
 
@@ -167,29 +170,6 @@ class CompositeGate:
             Qubit/Qureg: the result or slice
         """
         return self._gates[item]
-
-    def __add__(self, other):
-        """ to fit the add operator, overloaded this function.
-
-        get a smaller qureg/qubit from this qureg
-
-        Args:
-            other(Qureg): qureg to be added.
-        Return:
-            Qureg: the result or slice
-        """
-        if not isinstance(other, Qureg):
-            raise Exception("type error!")
-        gate_list = super().__add__(other)
-        return CompositeGate(gate_list)
-
-    # TODO: imply in circuit count info.
-    def print_information(self):
-        print("-------------------")
-        print(f"number of bits:{self.circuit_width()}")
-        for gate in self:
-            gate.print_info()
-        print("-------------------")
 
     def inverse(self):
         """ the inverse of CompositeGate

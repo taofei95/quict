@@ -61,9 +61,17 @@ class CircuitInformation:
         return len(layers)
 
     @staticmethod
-    def qasm_header(qreg, creg):
-        header = 'OPENQASM 2.0;\ninclude "qelib1.inc";\n'
-        header += f"qreg q[{qreg}];\n"
-        header += f"creg c[{creg}];\n"
+    def qasm(qreg, creg, gates):
+        qasm_string = 'OPENQASM 2.0;\ninclude "qelib1.inc";\n'
+        qasm_string += f"qreg q[{qreg}];\n"
+        qasm_string += f"creg c[{creg}];\n"
 
-        return header
+        cbits = 0
+        for gate in gates:
+            if gate.qasm_name == "measure":
+                qasm_string += f"measure q[{gate.targ}] -> c[{cbits}];\n"
+                cbits += 1
+            else:
+                qasm_string += gate.qasm()
+
+        return qasm_string
