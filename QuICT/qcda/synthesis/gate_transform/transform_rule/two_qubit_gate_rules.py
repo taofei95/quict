@@ -53,6 +53,7 @@ def _cx2crz_rule(gate):
     targs = gate.affectArgs
     compositeGate = CompositeGate()
     with compositeGate:
+        Phase(math.pi / 4) & targs[0]
         Rz(math.pi / 2) & targs[0]
         H & targs[1]
         CRz(math.pi) & targs
@@ -74,8 +75,8 @@ def _cx2rxx_rule(gate):
     targs = gate.affectArgs
     compositeGate = CompositeGate()
     with compositeGate:
-        Ry(math.pi / 2) & targs[0]
         Phase(7 * math.pi / 4) & targs[0]
+        Ry(math.pi / 2) & targs[0]
         Rx(-math.pi / 2) & targs[0]
         Rx(-math.pi / 2) & targs[1]
         Rxx(math.pi / 2) & targs
@@ -87,7 +88,7 @@ def _cx2ryy_rule(gate):
     targs = gate.affectArgs
     compositeGate = CompositeGate()
     with compositeGate:
-        Phase(7 * math.pi / 4) & targs[0]
+        Phase(3 * math.pi / 4) & targs[0]
         Ry(math.pi / 2) & targs[0]
         Rz(math.pi / 2) & targs[0]
         Rz(math.pi / 2) & targs[1]
@@ -104,8 +105,8 @@ def _cx2rzz_rule(gate):
     targs = gate.affectArgs
     compositeGate = CompositeGate()
     with compositeGate:
-        Ry(math.pi / 2) & targs[0]
         Phase(7 * math.pi / 4) & targs[0]
+        Ry(math.pi / 2) & targs[0]
         Rx(-math.pi / 2) & targs[0]
         Rx(-math.pi / 2) & targs[1]
         H & targs[0]
@@ -158,6 +159,7 @@ def _cy2crz_rule(gate):
     targs = gate.affectArgs
     compositeGate = CompositeGate()
     with compositeGate:
+        Phase(math.pi / 4) & targs[0]
         Rz(math.pi / 2) & targs[0]
         S_dagger & targs[1]
         H & targs[1]
@@ -198,7 +200,7 @@ def _cy2ryy_rule(gate):
     targs = gate.affectArgs
     compositeGate = CompositeGate()
     with compositeGate:
-        Phase(7 * math.pi / 4) & targs[0]
+        Phase(3 * math.pi / 4) & targs[0]
         Ry(math.pi / 2) & targs[0]
         Rz(math.pi / 2) & targs[0]
         Ryy(math.pi / 2) & targs
@@ -215,7 +217,6 @@ def _cy2rzz_rule(gate):
     compositeGate = CompositeGate()
     with compositeGate:
         Ry(math.pi / 2) & targs[0]
-        Phase(7 * math.pi / 4) & targs[0]
         Rx(-math.pi / 2) & targs[0]
         H & targs[0]
         Rx(math.pi / 2) & targs[1]
@@ -268,6 +269,7 @@ def _cz2crz_rule(gate):
     targs = gate.affectArgs
     compositeGate = CompositeGate()
     with compositeGate:
+        Phase(math.pi / 4) & targs[0]
         Rz(math.pi / 2) & targs[0]
         CRz(math.pi) & targs
     return compositeGate
@@ -285,9 +287,9 @@ def _cz2rxx_rule(gate):
     targs = gate.affectArgs
     compositeGate = CompositeGate()
     with compositeGate:
+        Phase(7 * math.pi / 4) & targs[0]
         H & targs[1]
         Ry(math.pi / 2) & targs[0]
-        Phase(7 * math.pi / 4) & targs[0]
         Rx(-math.pi / 2) & targs[0]
         Rx(-math.pi / 2) & targs[1]
         Rxx(math.pi / 2) & targs
@@ -300,7 +302,7 @@ def _cz2ryy_rule(gate):
     targs = gate.affectArgs
     compositeGate = CompositeGate()
     with compositeGate:
-        Phase(7 * math.pi / 4) & targs[0]
+        Phase(math.pi / 4) & targs[0]
         Ry(math.pi / 2) & targs[0]
         Rz(math.pi / 2) & targs[0]
         Rz(-math.pi / 2) & targs[1]
@@ -355,6 +357,7 @@ def _crz2cy_rule(gate):
     targs = gate.affectArgs
     compositeGate = CompositeGate()
     with compositeGate:
+        Phase(math.pi / 4) & targs[0]
         Rz((theta + math.pi) / 2) & targs[1]
         CY & targs
         Rz(-theta / 2) & targs[1]
@@ -382,6 +385,7 @@ def _crz2ch_rule(gate):
     targs = gate.affectArgs
     compositeGate = CompositeGate()
     with compositeGate:
+        Phase(math.pi / 8) & targs[0]
         Rz(theta / 2 + math.pi / 4) & targs[1]
         Rx(math.pi / 2) & targs[1]
         CH & targs
@@ -411,8 +415,8 @@ def _crz2rxx_rule(gate):
     targs = gate.affectArgs
     compositeGate = CompositeGate()
     with compositeGate:
+        Phase(3 * math.pi / 2) & targs[0]
         Ry(math.pi / 2) & targs[0]
-        Phase(7 * math.pi / 2) & targs[0]
         Rx(-math.pi / 2) & targs[0]
         U1(theta / 2) & targs[1]
         Rx(-math.pi / 2) & targs[1]
@@ -430,9 +434,9 @@ def _crz2ryy_rule(gate):
     targs = gate.affectArgs
     compositeGate = CompositeGate()
     with compositeGate:
+        Phase(math.pi) & targs[0]
         Rz(theta / 2 + math.pi / 2) & targs[1]
         Ry(math.pi / 2) & targs[0]
-        Phase(7 * math.pi / 2) & targs[0]
         Rz(math.pi / 2) & targs[0]
         Ryy(math.pi / 2) & targs
         Ry(-math.pi / 2) & targs[0]
@@ -455,7 +459,6 @@ def _crz2rzz_rule(gate):
         Rz(theta / 2 + math.pi / 2) & targs[1]
         Rx(math.pi / 2) & targs[1]
         Ry(math.pi / 2) & targs[0]
-        Phase(7 * math.pi / 2) & targs[0]
         Rx(-math.pi / 2) & targs[0]
         H & targs[0]
         Rzz(math.pi / 2) & targs
@@ -512,6 +515,7 @@ def _ch2crz_rule(gate):
     targs = gate.affectArgs
     compositeGate = CompositeGate()
     with compositeGate:
+        Phase(math.pi / 4) & targs[0]
         Rz(math.pi / 2) & targs[0]
         S & targs[1]
         Rx(math.pi / 4) & targs[1]
@@ -537,7 +541,7 @@ def _ch2rxx_rule(gate):
     targs = gate.affectArgs
     compositeGate = CompositeGate()
     with compositeGate:
-        Phase(7 * math.pi / 4) & targs[0]
+        Phase(13 * math.pi / 8) & targs[0]
         Ry(math.pi / 2) & targs[0]
         Rx(-math.pi / 2) & targs[0]
         Rx(-math.pi) & targs[1]
@@ -553,9 +557,9 @@ def _ch2ryy_rule(gate):
     targs = gate.affectArgs
     compositeGate = CompositeGate()
     with compositeGate:
+        Phase(math.pi / 2) & targs[0]
         Rx(-math.pi / 2) & targs[1]
         Rz(math.pi / 4) & targs[1]
-        Phase(7 * math.pi / 4) & targs[0]
         Ry(math.pi / 2) & targs[0]
         Rz(math.pi / 2) & targs[0]
         Ryy(math.pi / 2) & targs
@@ -571,7 +575,7 @@ def _ch2rzz_rule(gate):
     targs = gate.affectArgs
     compositeGate = CompositeGate()
     with compositeGate:
-        Phase(7 * math.pi / 4) & targs[0]
+        Phase(3 * math.pi / 2) & targs[0]
         Ry(math.pi / 2) & targs[0]
         Rx(-math.pi / 2) & targs[0]
         H & targs[0]
@@ -656,6 +660,7 @@ def _rxx2crz_rule(gate):
     targs = gate.affectArgs
     compositeGate = CompositeGate()
     with compositeGate:
+        Phase(math.pi / 2) & targs[0]
         H & targs[0]
         Rz(math.pi) & targs[0]
         CRz(math.pi) & targs
@@ -782,6 +787,7 @@ def _ryy2crz_rule(gate):
     targs = gate.affectArgs
     compositeGate = CompositeGate()
     with compositeGate:
+        Phase(math.pi / 2) & targs[0]
         Rx(math.pi / 2) & targs[0]
         Rx(math.pi / 2) & targs[1]
         H & targs[1]
@@ -915,6 +921,7 @@ def _rzz2crz_rule(gate):
     targs = gate.affectArgs
     compositeGate = CompositeGate()
     with compositeGate:
+        Phase(math.pi / 2) & targs[0]
         H & targs[1]
         Rz(math.pi) & targs[0]
         CRz(math.pi) & targs
@@ -978,6 +985,7 @@ def _fsim2cx_rule(gate):
     targs = gate.affectArgs
     compositeGate = CompositeGate()
     with compositeGate:
+        Phase(-fai / 4) & targs[0]
         CX & targs
         H & targs[0]
         CX & (targs[1], targs[0])
@@ -1000,6 +1008,7 @@ def _fsim2cy_rule(gate):
     targs = gate.affectArgs
     compositeGate = CompositeGate()
     with compositeGate:
+        Phase(-fai / 4 - math.pi / 4) & targs[0]
         S & targs[1]
         CY & targs
         H & targs[0]
@@ -1025,6 +1034,7 @@ def _fsim2cz_rule(gate):
     targs = gate.affectArgs
     compositeGate = CompositeGate()
     with compositeGate:
+        Phase(-fai / 4) & targs[0]
         H & targs[1]
         CZ & targs
         H & targs[1]
@@ -1049,6 +1059,7 @@ def _fsim2ch_rule(gate):
     targs = gate.affectArgs
     compositeGate = CompositeGate()
     with compositeGate:
+        Phase(-fai / 4) & targs[0]
         T & targs[1]
         Rx(math.pi / 2) & targs[1]
         CH & targs
@@ -1080,6 +1091,7 @@ def _fsim2crz_rule(gate):
     targs = gate.affectArgs
     compositeGate = CompositeGate()
     with compositeGate:
+        Phase(-fai / 4 - math.pi / 2) & targs[0]
         Rz(math.pi / 2) & targs[0]
         H & targs[1]
         CRz(math.pi) & targs
@@ -1110,13 +1122,13 @@ def _fsim2rxx_rule(gate):
     targs = gate.affectArgs
     compositeGate = CompositeGate()
     with compositeGate:
+        Phase(-fai / 2 - math.pi / 2) & targs[0]
         Rxx(theta) & targs
         Rx(math.pi / 2) & targs[0]
         Rx(math.pi / 2) & targs[1]
         H & targs[0]
         H & targs[1]
         Rxx(theta) & targs
-        Phase(7 * math.pi / 2) & targs[0]
         H & targs[0]
         Rx(-math.pi) & targs[0]
         Rz(-math.pi / 2) & targs[0]
@@ -1139,6 +1151,7 @@ def _fsim2ryy_rule(gate):
     targs = gate.affectArgs
     compositeGate = CompositeGate()
     with compositeGate:
+        Phase(-fai / 4 + math.pi / 2) & targs[0]
         H & targs[0]
         H & targs[1]
         Rx(-math.pi / 2) & targs[0]
@@ -1151,7 +1164,6 @@ def _fsim2ryy_rule(gate):
         Ryy(theta) & targs
         Rz(math.pi / 2 + -fai / 2) & targs[1]
         Ry(math.pi / 2) & targs[0]
-        Phase(7 * math.pi / 2) & targs[0]
         Rz(math.pi / 2) & targs[0]
         Ryy(math.pi / 2) & targs
         Ry(-math.pi / 2) & targs[0]
@@ -1173,6 +1185,7 @@ def _fsim2rzz_rule(gate):
     targs = gate.affectArgs
     compositeGate = CompositeGate()
     with compositeGate:
+        Phase(-fai / 2 - math.pi / 2) & targs[0]
         H & targs[0]
         H & targs[1]
         Rzz(theta) & targs
@@ -1181,7 +1194,6 @@ def _fsim2rzz_rule(gate):
         Rx(math.pi / 2) & targs[0]
         Rx(math.pi / 2) & targs[1]
         Rzz(theta) & targs
-        Phase(7 * math.pi / 2) & targs[0]
         Rx(-math.pi) & targs[0]
         Rz(-math.pi / 2) & targs[0]
         H & targs[0]
