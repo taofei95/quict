@@ -48,13 +48,20 @@ class GateTransform(Synthesis):
         for gate in compositeGateStep1:
             if gate.targets + gate.controls == 2:
                 targs = gate.affectArgs
-                compositeGateStep2.extend(instruction_set.SU2_rule.transform(Unitary(unitaries[targs[0]]) & targs[0]))
-                compositeGateStep2.extend(instruction_set.SU2_rule.transform(Unitary(unitaries[targs[1]]) & targs[1]))
-                unitaries[targs[0]] = np.identity(2, dtype=np.complex128)
-                unitaries[targs[1]] = np.identity(2, dtype=np.complex128)
+                for targ in targs:
+                    gates_transformed = instruction_set.SU2_rule.transform(Unitary(unitaries[targ]) & targ)
+                    phase = np.log(np.dot(unitaries[targ], np.linalg.inv(gates_transformed.matrix(local=True)))[0][0]) / 1j
+                    if not np.isclose(np.mod(float(phase), 2 * np.pi), 0):
+                        gates_transformed.append(Phase(phase) & targ)
+                    compositeGateStep2.extend(gates_transformed)
+                    unitaries[targ] = np.identity(2, dtype=np.complex128)
                 compositeGateStep2.append(gate)
             else:
                 unitaries[gate.targ] = np.dot(gate.matrix, unitaries[gate.targ])
         for i in range(circuit.circuit_width()):
-            compositeGateStep2.extend(instruction_set.SU2_rule.transform(Unitary(unitaries[i]) & i))
+            gates_transformed = instruction_set.SU2_rule.transform(Unitary(unitaries[i]) & i)
+            phase = np.log(np.dot(unitaries[i], np.linalg.inv(gates_transformed.matrix(local=True)))[0][0]) / 1j
+            if not np.isclose(np.mod(float(phase), 2 * np.pi), 0):
+                gates_transformed.append(Phase(phase) & i)
+            compositeGateStep2.extend(gates_transformed)
         return compositeGateStep2
