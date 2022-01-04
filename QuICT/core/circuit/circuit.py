@@ -8,10 +8,10 @@ import numpy as np
 from QuICT.core.exception import TypeException
 from QuICT.core.qubit import Qubit, Qureg
 from QuICT.core.layout import Layout, SupremacyLayout
-from QuICT.core import GateType, get_gate, get_n_args, SUPREMACY_GATE_SET
-from QuICT.core.gate import H, FSim, Measure
+from QuICT.core import GateType, build_gate, build_random_gate
+from QuICT.core.gate import H, Measure
 
-from .circuit_computing import getRandomList, CircuitInformation
+from .circuit_computing import CircuitInformation
 
 
 # global circuit id count
@@ -80,6 +80,8 @@ class Circuit(object):
         if topology.qubit_number != self.width():
             raise ValueError(f"The qubit number is not mapping. {topology.qubit_number}")
 
+        self._topology = topology
+
     @property
     def fidelity(self) -> float:
         return self._fidelity
@@ -127,9 +129,19 @@ class Circuit(object):
         self._idmap = {}
         for idx, qubit in enumerate(self.qubits):
             self._idmap[qubit.id] = idx
-        self._gates = []
 
+        self._gates = []
         self._pointer = -1
+
+    def _qubit_update(self, qubits, is_append: bool = False):
+        if not is_append:
+            self._qubits = qubits
+            self._idmap = {}
+        else:
+            self._qubits = self._qubits + qubits
+
+        for idx, qubit in enumerate(self.qubits):
+            self._idmap[qubit.id] = idx
 
     def __del__(self):
         """ release the memory """
@@ -421,7 +433,7 @@ class Circuit(object):
 
             if len(sub_gates) >= max_size and max_size != -1:
                 break
-        
+
         if remove:
             self._update_gate_index()
 
@@ -431,7 +443,7 @@ class Circuit(object):
         for index, gate in enumerate(self.gates):
             gate_type, gate_qb, gate_idx = gate.name.split('-')
 
-            if int(gate_idx) != index: 
+            if int(gate_idx) != index:
                 gate.name = '-'.join([gate_type, gate_qb, index])
 
     def index_for_qubit(self, qubit, ancilla=None) -> int:
@@ -474,26 +486,27 @@ class Circuit(object):
 
         set_qubits = set(qubits)
         q_gates = []
-        for gate in self.gates:        
+        for gate in self.gates:
             ctargs = set(gate.cargs + gate.targs)
             if set_qubits & ctargs:
                 q_gates.append(gate)
 
         return q_gates
 
-    def random_append(self, rand_size=10, typeList=None):
+    def random_append(
+        self,
+        rand_size: int = 10,
+        typelist: list = None,
+        random_params: bool = False
+    ):
         """ add some random gate to the circuit
 
         Args:
             rand_size(int): the number of the gate added to the circuit
-            typeList(list<GateType>): the type of gate, default contains CX、ID、Rz、CY、CRz、CH
+            typelist(list<GateType>): the type of gate, default contains CX、ID、Rz、CY、CRz、CH
         """
-        self._random_append(rand_size, typeList)
-
-    # TODO: get_n_args, and get_gate fixed
-    def _random_append(self, rand_size, typeList):
-        if typeList is None:
-            typeList = [
+        if typelist is None:
+            typelist = [
                 GateType.rx, GateType.ry, GateType.rz,
                 GateType.cx, GateType.cy, GateType.crz,
                 GateType.ch, GateType.cz, GateType.Rxx,
@@ -502,19 +515,9 @@ class Circuit(object):
 
         n_qubit = self.width()
         for _ in range(rand_size):
-            rand_type = np.random.randint(0, len(typeList))
-            gate_type = typeList[rand_type]
-            n_pargs, n_targs, n_cargs = get_n_args(gate_type)
-            n_affect_args = n_targs + n_cargs
-            affect_args = getRandomList(n_affect_args, n_qubit)
-            pargs = []
-            for _ in range(n_pargs):
-                pargs.append(np.random.uniform(0, 2 * np.pi))
-
-            if n_pargs == 0:
-                pargs = None
-
-            get_gate(gate_type, affect_args, pargs) | [self[i] for i in affect_args]
+            rand_type = np.random.randint(0, len(typelist))
+            gate_type = typelist[rand_type]
+            self.append(build_random_gate(gate_type, n_qubit, random_params))
 
     def append_supremacy(self, repeat: int = 1, pattern: str = "ABCDCDAB"):
         """
@@ -524,20 +527,16 @@ class Circuit(object):
             repeat(int): the number of two-qubit gates' sequence
             pattern(str): indicate the two-qubit gates' sequence
         """
-        self._supremacy_append(repeat, pattern)
-
-    # TODO: bug fixed
-    def _supremacy_append(self, repeat, pattern):
         qubits = len(self.qubits)
         supremacy_layout = SupremacyLayout(qubits)
+        supremacy_typelist = [GateType.sx, GateType.sy, GateType.sw]
 
         self._add_gate_to_all_qubits(H)
 
         for i in range(repeat * len(pattern)):
             for q in range(qubits):
-                gate_type = SUPREMACY_GATE_SET[np.random.randint(0, 3)]
-
-                get_gate(gate_type) | self.circuit(q)
+                gate_type = supremacy_typelist[np.random.randint(0, 3)]
+                self.append(build_gate(gate_type, q))
 
             current_pattern = pattern[i % (len(pattern))]
             if current_pattern not in "ABCD":
@@ -545,7 +544,11 @@ class Circuit(object):
 
             edges = supremacy_layout.get_edges_by_pattern(current_pattern)
             for e in edges:
-                FSim([np.pi / 2, np.pi / 6]) | self([int(e[0]), int(e[1])])
+                gate_params = [np.pi / 2, np.pi / 6]
+                gate_args = [int(e[0]), int(e[1])]
+                fgate = build_gate(GateType.fsim, gate_args, gate_params)
+
+                self.append(fgate)
 
         self._add_gate_to_all_qubits(Measure)
 

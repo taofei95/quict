@@ -108,7 +108,6 @@ class Qureg(list):
             qubits: the qubits which make up the qureg, it can have below form,
                 1) int
                 2) [qubits/quregs]
-            circuit_name (str): the circuit's name which this qureg belong to.
         """
         super().__init__()
 

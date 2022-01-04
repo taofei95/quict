@@ -6,20 +6,27 @@
 from QuICT.core.circuit import Circuit, CircuitInformation
 from QuICT.core.utils import GateType
 
-from .gate import *
-from ..qubit import Qureg
+from QuICT.core.gate import *
+from QuICT.core.qubit import Qureg
+
+
+# global composite gate id count
+cgate_id = 0
 
 
 class CompositeGate:
     """ Implement a group of gate
 
     Attributes:
-        Qureg (Qureg): the related qubits
         gates (list<BasicGate>): gates within this composite gate
     """
     @property
     def gates(self):
-        return self.gates
+        return self._gates
+
+    @property
+    def name(self):
+        return self._name
 
     def __enter__(self):
         return self
@@ -27,15 +34,110 @@ class CompositeGate:
     def __exit__(self, exc_type, exc_value, traceback):
         pass
 
-    # TODO: allow no qureg
-    def __init__(self, gates: list = None, with_copy: bool = True):
+    def __init__(self, wires: int, name: str = None, gates: list = None, with_copy: bool = True):
         """ initial a CompositeGate with gate(s)
 
         Args:
             qubits [BasicGate]: the qubits which make up the qureg, it can have below form,
         """
-        self._gates = gates if gates else []
+        global cgate_id
+        self._id = cgate_id
+        cgate_id += 1
+
+        self._name = name if name else f"composite_gate_{self._id}"
+        self._qubits = wires
         self._is_copy = with_copy
+        self._gates = []
+        self._pointer = -1
+
+        if gates:
+            self.extend(gates)
+
+    def __or__(self, targets):
+        """ deal the operator '|'
+
+        Use the syntax "gateSet | circuit"
+        to add the gate of gateSet into the circuit
+
+        Note that the order of qubits is that control bits first
+        and target bits followed.
+
+        Args:
+            targets: the targets the gate acts on, it can have following form,
+                1) Circuit
+        Raise:
+            TypeException: the type of other is wrong
+        """
+        assert isinstance(targets, Circuit)
+
+        targets.extend(self.gates)
+
+    def __xor__(self, targets):
+        """deal the operator '^'
+
+        Use the syntax "gateSet ^ circuit"
+        to add the gate of gateSet's inverse into the circuit
+
+        Note that the order of qubits is that control bits first
+        and target bits followed.
+
+        Args:
+            targets: the targets the gate acts on, it can have following form,
+                1) Circuit
+        Raise:
+            TypeException: the type of other is wrong
+        """
+        assert isinstance(targets, Circuit)
+
+        self.inverse()
+        targets.extend(self.gates)
+
+    def __getitem__(self, item):
+        """ get gates from this composite gate
+
+        Args:
+            item(int/slice): slice passed in.
+
+        Return:
+            [BasicGates]: the gates
+        """
+        return self._gates[item]
+
+    def __call__(self, indexes: object):
+        if isinstance(indexes, int):
+            assert indexes >= 0 and indexes < self._qubits
+        elif isinstance(indexes, list):
+            for idx in indexes:
+                assert idx >= 0 and idx < self._qubits
+        else:
+            raise TypeError("only accept int/list[int]")
+
+        self._pointer = indexes
+        return self
+
+    def extend(self, gates: list):
+        for gate in gates:
+            self.append(gate)
+
+    def append(self, gate):
+        if self._pointer != -1:
+            qubit_index = list(self._pointer)
+            gate.cargs = qubit_index[:gate.controls]
+            gate.targs = qubit_index[gate.controls:]
+
+            self._pointer = -1
+        else:
+            qubit_index = gate.cargs + gate.targs
+            if not qubit_index:
+                raise KeyError(f"{gate.type} need qubit indexes to add into Composite Gate.")
+
+            for idx in qubit_index:
+                assert idx >= 0 and idx < self._qubits
+
+        if self._is_copy:
+            self._gates.append(gate.copy())
+        else:
+            self._gates.append(gate)
 
     def width(self):
         """ the number of qubits applied by gates
@@ -43,7 +145,7 @@ class CompositeGate:
         Returns:
             int: the number of qubits applied by gates
         """
-        return len(self._qubits)
+        return self._qubits
 
     def size(self):
         """ the size of the gates
@@ -92,7 +194,7 @@ class CompositeGate:
             int: the depth of the circuit
         """
         return CircuitInformation.depth(self.gates)
-    
+
     def gate_info(self):
         cgate_info = {
             "width": self.width(),
@@ -100,7 +202,7 @@ class CompositeGate:
             "depth": self.depth(),
             "1-qubit gates": self.count_1qubit_gate(),
             "2-qubit gates": self.count_2qubit_gate(),
-            "gates detail": {} 
+            "gates detail": {}
         }
 
         for gate in self.gates:
@@ -118,58 +220,6 @@ class CompositeGate:
         creg = self.count_gate_by_gatetype(GateType.measure)
 
         return CircuitInformation.qasm(qreg, creg, self.gates)
-
-    def __or__(self, targets):
-        """deal the operator '|'
-
-        Use the syntax "gateSet | circuit"
-        to add the gate of gateSet into the circuit
-
-        Note that the order of qubits is that control bits first
-        and target bits followed.
-
-        Args:
-            targets: the targets the gate acts on, it can have following form,
-                1) Circuit
-        Raise:
-            TypeException: the type of other is wrong
-        """
-        assert isinstance(targets, Circuit)
-
-        targets.extend(self.gates)
-
-    def __xor__(self, targets):
-        """deal the operator '^'
-
-        Use the syntax "gateSet ^ circuit"
-        to add the gate of gateSet's inverse into the circuit
-
-        Note that the order of qubits is that control bits first
-        and target bits followed.
-
-        Args:
-            targets: the targets the gate acts on, it can have following form,
-                1) Circuit
-        Raise:
-            TypeException: the type of other is wrong
-        """
-        assert isinstance(targets, Circuit)
-
-        self.inverse()
-        targets.extend(self.gates)
-
-    # TODO: return gate or qubit ?
-    def __getitem__(self, item):
-        """ to fit the slice operator, overloaded this function.
-
-        get a smaller qureg/qubit from this qureg
-
-        Args:
-            item(int/slice): slice passed in.
-        Return:
-            Qubit/Qureg: the result or slice
-        """
-        return self._gates[item]
 
     def inverse(self):
         """ the inverse of CompositeGate
@@ -250,7 +300,6 @@ class CompositeGate:
 
         return result
 
-    # TODO: refactoring later
     def equal(self, target, ignore_phase=True, eps=1e-7):
         """
 
@@ -281,18 +330,16 @@ class CompositeGate:
 
         return np.allclose(self_matrix, target_matrix, rtol=eps, atol=eps)
 
-    def remapping(self, mapping):
+    def mapping(self, qureg: Qureg):
         """ remapping the gates' affectArgs
 
         Args:
-            mapping(list): the mapping function
-
-        Returns:
-
+            qureg(Qureg): the related qubits
         """
-        for gate in self._gates:
-            affectArgs = []
-            for arg in gate.assigned_qubits:
-                affectArgs.append(mapping[arg])
+        assert isinstance(qureg, Qureg) and len(qureg) == self._qubits
 
-            gate.assigned_qubits = affectArgs
+        for gate in self._gates:
+            args_index = gate.cargs + gate.targs
+            target_qureg = qureg(args_index)
+            gate.assigned_qubits = target_qureg
+            gate.update_name = target_qureg(0).id[-6:]

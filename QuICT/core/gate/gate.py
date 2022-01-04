@@ -6,14 +6,14 @@
 import numpy as np
 import copy
 
-from QuICT.core import Circuit, Qureg, Qubit
+from QuICT.core import Circuit, Qureg, Qubit, CompositeGate
 from QuICT.core.utils import GateType, SPECIAL_GATE_SET, DIAGONAL_GATE_SET
 
 
 class BasicGate(object):
-    """ the abstract SuperClass of all basic quantum gates
+    """ the abstract SuperClass of all basic quantum cgate
 
-    All basic quantum gates described in the framework have
+    All basic quantum cgate described in the framework have
     some common attributes and some common functions
     which defined in this class
 
@@ -34,8 +34,8 @@ class BasicGate(object):
         qasm_name(str, read only): gate's name in the OpenQASM 2.0
         type(GateType, read only): gate's type described by GateType
 
-        matrix(np.array): the unitary matrix of the quantum gates act on targets
-        computer_matrix(np.array): the unitary matrix of the quantum gates act on controls and targets
+        matrix(np.array): the unitary matrix of the quantum cgate act on targets
+        computer_matrix(np.array): the unitary matrix of the quantum cgate act on controls and targets
     """
     @property
     def name(self) -> str:
@@ -148,11 +148,10 @@ class BasicGate(object):
     def __str__(self):
         return self._type.value
 
-    # TODO: either add itself to circuit or assign qubits
     def __or__(self, targets):
         """deal the operator '|'
 
-        Use the syntax "gate | circuit" or "gate | qureg" or "gate | qubit"
+        Use the syntax "gate | circuit" or "gate | Composite Gate"
         to add the gate into the circuit
         When a one qubit gate act on a qureg or a circuit, it means Adding
         the gate on all the qubit of the qureg or circuit
@@ -160,7 +159,7 @@ class BasicGate(object):
 
         X       | circuit
         CX      | circuit([0, 1])
-        Measure | qureg
+        Measure | CompositeGate
 
         Note that the order of qubits is that control bits first
         and target bits followed.
@@ -168,23 +167,14 @@ class BasicGate(object):
         Args:
             targets: the targets the gate acts on, it can have following form,
                 1) Circuit
-                2) qureg
-                3) qubit
+                2) CompositeGate
         Raise:
             TypeException: the type of other is wrong
         """
-        if isinstance(targets, Circuit):
-            targets.append(self.copy())
-        elif isinstance(targets, Qureg):
-            self.assigned_qubits = targets
-            self.update_name(targets(0).id)
-        elif isinstance(targets, Qubit):
-            assert self.is_single()
-
-            self.assigned_qubits = Qureg([targets])
-            self.update_name(targets.id)
-        else:
+        if not isinstance(targets, Circuit) or not isinstance(targets, CompositeGate):
             raise TypeError("qubit or qureg or circuit", targets)
+
+        targets.append(self)
 
     def __and__(self, targets):
         """deal the operator '&'
@@ -194,7 +184,7 @@ class BasicGate(object):
 
         X       & 1
         CX      & [0, 1]
-        Measure & 2
+        Measure & Qureg/Qubit
 
         Note that the order of qubits is that control bits first
         and target bits followed.
@@ -216,14 +206,19 @@ class BasicGate(object):
 
             self.cargs = targets[:self.controls]
             self.targs = targets[self.controls:self.controls + self.targets]
+        elif isinstance(targets, Qureg):
+            self.assigned_qubits = targets
+            self.update_name(targets(0).id)
+        elif isinstance(targets, Qubit):
+            assert self.is_single()
+
+            self.assigned_qubits = Qureg([targets])
+            self.update_name(targets.id)
         else:
-            raise TypeError("int or tuple<int> or list<int>", targets)
+            raise TypeError("int or list<int> or Qureg/Qubit", targets)
 
-        return self.copy()
-
-    # TODO: no parameters gate here, otherwise override
     def __call__(self):
-        """ give parameters for the gate
+        """ give parameters for the gate.
 
         give parameters by "()".
         Some Examples are like this:
@@ -373,7 +368,13 @@ class BasicGate(object):
         Returns:
             bool: True if gate's matrix is diagonal
         """
-        return self.type in DIAGONAL_GATE_SET
+        return (
+            self.type in DIAGONAL_GATE_SET or
+            (self.type == GateType.unitary and self._is_diagonal)
+        )
+
+    def _is_diagonal(self) -> bool:
+        return np.allclose(np.diag(np.diag(self.matrix)), self.matrix)
 
     def is_special(self) -> bool:
         """ judge whether gate's is special gate, which is one of
@@ -402,7 +403,9 @@ class BasicGate(object):
         gate.targs = copy.deepcopy(self.targs)
         gate.cargs = copy.deepcopy(self.cargs)
         gate.assigned_qubits = copy.deepcopy(self.assigned_qubits)
-        gate.params = self.params
+
+        if gate.assigned_qubits:
+            self.update_name(gate.assigned_qubits[0].id[-6:])
 
         return gate
 
@@ -1953,33 +1956,6 @@ class ShorInitialGate(BasicGate):
 ShorInitial = ShorInitialGate()
 
 
-# TODO: refactoring complex gate
-class ComplexGate(BasicGate):
-    """ the abstract SuperClass of all complex quantum gates
-
-    These quantum gates are generally too complex to act on reality quantum
-    hardware directly. The class is devoted to give some reasonable synthetize
-    of the gates so that user can use these gates as basic gates but get a
-    series one-qubit and two-qubit gates in final.
-
-    All complex quantum gates described in the framework have
-    some common attributes and some common functions
-    which defined in this class.
-
-    Note that the ComplexGate extends the BasicGate
-
-    Note that all subClass must overload the function "build_gate"
-    """
-
-    def build_gate(self):
-        """ generate BasicGate, affectArgs
-
-        Returns:
-            CompositeGate: synthetize result
-        """
-        pass
-
-
 class CCXGate(BasicGate):
     """ Toffoli gate
 
@@ -2007,34 +1983,32 @@ class CCXGate(BasicGate):
         ], dtype=np.complex128)
 
     def build_gate(self):
-        from .composite_gate import CompositeGate
-        qureg = self.affectArgs
-        gates = CompositeGate()
+        cgate = CompositeGate(self.controls + self.targets)
 
-        with gates:
-            H & qureg[2]
-            CX & (qureg[2], qureg[1])
-            T_dagger & qureg[1]
-            CX & (qureg[0], qureg[1])
-            T & qureg[1]
-            CX & (qureg[2], qureg[1])
-            T_dagger & qureg[1]
-            CX & (qureg[0], qureg[1])
-            T & qureg[1]
-            CX & (qureg[0], qureg[2])
-            T_dagger & qureg[2]
-            CX & (qureg[0], qureg[2])
-            T & qureg[0]
-            T & qureg[2]
-            H & qureg[2]
+        with cgate:
+            H | cgate(2)
+            CX | cgate([2, 1])
+            T_dagger | cgate(1)
+            CX | cgate(0, 1)
+            T | cgate(1)
+            CX | cgate([2, 1])
+            T_dagger | cgate(1)
+            CX | cgate([0, 1])
+            T | cgate(1)
+            CX | cgate([0, 2])
+            T_dagger | cgate(2)
+            CX | cgate([0, 2])
+            T | cgate(0)
+            T | cgate(2)
+            H | cgate(2)
 
-        return gates
+        return cgate
 
 
 CCX = CCXGate()
 
 
-class CCRzGate(ComplexGate):
+class CCRzGate(BasicGate):
     """ controlled-Rz gate with two control bits """
     def __init__(self):
         super().__init__(
@@ -2050,7 +2024,10 @@ class CCRzGate(ComplexGate):
     def __call__(self, alpha):
         if not self.permit_element(alpha):
             raise TypeError("int/float/complex", alpha)
+
         self.pargs[0] = alpha
+        self.build_matrix()
+        return self
 
     def build_matrix(self):
         self.matrix = np.array([
@@ -2069,23 +2046,22 @@ class CCRzGate(ComplexGate):
         self.build_matrix()
 
     def build_gate(self):
-        from .composite_gate import CompositeGate
-        qureg = self.affectArgs
-        gates = CompositeGate()
+        cgate = CompositeGate(self.controls + self.targets)
 
-        with gates:
-            CRz(self.parg / 2) & (qureg[1], qureg[2])
-            CX & (qureg[0], qureg[1])
-            CRz(-self.parg / 2) & (qureg[1], qureg[2])
-            CX & (qureg[0], qureg[1])
-            CRz(self.parg / 2) & (qureg[0], qureg[2])
-        return gates
+        with cgate:
+            CRz(self.parg / 2) | cgate([1, 2])
+            CX | cgate([0, 1])
+            CRz(-self.parg / 2) | cgate([1, 2])
+            CX | cgate([0, 1])
+            CRz(self.parg / 2) | cgate([0, 2])
+
+        return cgate
 
 
 CCRz = CCRzGate()
 
 
-class QFTGate(ComplexGate):
+class QFTGate(BasicGate):
     """ QFT gate """
     @property
     def matrix(self) -> np.ndarray:
@@ -2123,23 +2099,21 @@ class QFTGate(ComplexGate):
         return _IQFT
 
     def build_gate(self, targets):
-        from .composite_gate import CompositeGate
-        self.targets = targets
-        qureg = [i for i in range(targets)]
-        gates = CompositeGate()
+        cgate = CompositeGate(targets)
 
-        with gates:
-            for i in range(self.targets):
-                H & qureg[i]
-                for j in range(i + 1, self.targets):
-                    CRz(2 * np.pi / (1 << j - i + 1)) & (qureg[j], qureg[i])
-        return gates
+        with cgate:
+            for i in range(targets):
+                H | cgate(i)
+                for j in range(i + 1, targets):
+                    CRz(2 * np.pi / (1 << j - i + 1)) | cgate([j, i])
+
+        return cgate
 
 
 QFT = QFTGate()
 
 
-class IQFTGate(ComplexGate):
+class IQFTGate(BasicGate):
     """ IQFT gate """
 
     @property
@@ -2178,23 +2152,21 @@ class IQFTGate(ComplexGate):
         return _QFT
 
     def build_gate(self, targets):
-        from .composite_gate import CompositeGate
-        self.targets = targets
-        qureg = [i for i in range(targets)]
-        gates = CompositeGate()
+        cgate = CompositeGate(targets)
 
-        with gates:
-            for i in range(self.targets - 1, -1, -1):
-                for j in range(self.targets - 1, i, -1):
-                    CRz(-2 * np.pi / (1 << j - i + 1)) & (qureg[j], qureg[i])
-                H & qureg[i]
-        return gates
+        with cgate:
+            for i in range(targets - 1, -1, -1):
+                for j in range(targets - 1, i, -1):
+                    CRz(-2 * np.pi / (1 << j - i + 1)) | cgate([j, i])
+                H | cgate(i)
+
+        return cgate
 
 
 IQFT = IQFTGate()
 
 
-class CSwapGate(ComplexGate):
+class CSwapGate(BasicGate):
     """ Fredkin gate
 
     When using this gate, it will be showed as a whole gate
@@ -2220,29 +2192,28 @@ class CSwapGate(ComplexGate):
         ], dtype=np.complex128)
 
     def build_gate(self):
-        from .composite_gate import CompositeGate
-        qureg = self.affectArgs
-        gates = CompositeGate()
+        cgate = CompositeGate(self.controls + self.targets)
 
-        with gates:
-            CX & (qureg[2], qureg[1])
-            H & qureg[2]
-            CX & (qureg[2], qureg[1])
-            T_dagger & qureg[1]
-            CX & (qureg[0], qureg[1])
-            T & qureg[1]
-            CX & (qureg[2], qureg[1])
-            T_dagger & qureg[1]
-            CX & (qureg[0], qureg[1])
-            T & qureg[1]
-            CX & (qureg[0], qureg[2])
-            T_dagger & qureg[2]
-            CX & (qureg[0], qureg[2])
-            T & qureg[0]
-            T & qureg[2]
-            H & qureg[2]
-            CX & (qureg[2], qureg[1])
-        return gates
+        with cgate:
+            CX | cgate([2, 1])
+            H | cgate(2)
+            CX | cgate([2, 1])
+            T_dagger | cgate(1)
+            CX | cgate([0, 1])
+            T | cgate(1)
+            CX | cgate([2, 1])
+            T_dagger | cgate(1)
+            CX | cgate([0, 1])
+            T | cgate(1)
+            CX | cgate([0, 2])
+            T_dagger | cgate(2)
+            CX | cgate([0, 2])
+            T | cgate(0)
+            T | cgate(2)
+            H | cgate(2)
+            CX | cgate([2, 1])
+
+        return cgate
 
 
 CSwap = CSwapGate()
