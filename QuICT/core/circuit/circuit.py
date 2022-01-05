@@ -5,13 +5,10 @@
 # @File    : _circuit.py
 import numpy as np
 
-from QuICT.core.exception import TypeException
 from QuICT.core.qubit import Qubit, Qureg
+from QuICT.core.exception import TypeException
 from QuICT.core.layout import Layout, SupremacyLayout
-from QuICT.core import GateType, build_gate, build_random_gate
-from QuICT.core.gate import H, Measure
-
-from .circuit_computing import CircuitInformation
+from QuICT.core.utils import GateType, build_random_gate, build_gate, CircuitInformation
 
 
 # global circuit id count
@@ -268,10 +265,10 @@ class Circuit(object):
             TypeException: the type of indexes is error.
         """
         if isinstance(indexes, int):
-            assert indexes >= 0 and indexes < self.circuit_width()
+            assert indexes >= 0 and indexes < self.width()
         elif isinstance(indexes, list):
             for idx in indexes:
-                assert idx >= 0 and idx < self.circuit_width()
+                assert idx >= 0 and idx < self.width()
         else:
             raise TypeError("only accept int/list[int]")
 
@@ -531,7 +528,8 @@ class Circuit(object):
         supremacy_layout = SupremacyLayout(qubits)
         supremacy_typelist = [GateType.sx, GateType.sy, GateType.sw]
 
-        self._add_gate_to_all_qubits(H)
+        hgate = build_gate(GateType.h, 0)
+        self._add_gate_to_all_qubits(hgate)
 
         for i in range(repeat * len(pattern)):
             for q in range(qubits):
@@ -550,7 +548,8 @@ class Circuit(object):
 
                 self.append(fgate)
 
-        self._add_gate_to_all_qubits(Measure)
+        mgate = build_gate(GateType.measure, 0)
+        self._add_gate_to_all_qubits(mgate)
 
     def matrix_product_to_circuit(self, gate) -> np.ndarray:
         """ extend a gate's matrix in the all circuit unitary linear space

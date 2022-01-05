@@ -4,6 +4,5 @@
 # @Author  : Han Yu
 # @File    : __init__.py
 
-from .composite_gate import *
 from .gate import *
-from .gate_builder import *
+from .composite_gate import CompositeGate

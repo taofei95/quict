@@ -5,8 +5,8 @@
 # @File    : _gateBuilder.py
 import numpy as np
 
-from .gate import *
-from QuICT.core import Qureg, Qubit
+from QuICT.core.qubit import Qubit, Qureg
+from QuICT.core.gate import *
 from QuICT.core.utils import GateType
 
 

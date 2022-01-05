@@ -6,7 +6,7 @@
 import numpy as np
 import copy
 
-from QuICT.core import Circuit, Qureg, Qubit, CompositeGate
+from QuICT.core.qubit import Qureg, Qubit
 from QuICT.core.utils import GateType, SPECIAL_GATE_SET, DIAGONAL_GATE_SET
 
 
@@ -171,10 +171,10 @@ class BasicGate(object):
         Raise:
             TypeException: the type of other is wrong
         """
-        if not isinstance(targets, Circuit) or not isinstance(targets, CompositeGate):
-            raise TypeError("qubit or qureg or circuit", targets)
-
-        targets.append(self)
+        try:
+            targets.append(self)
+        except Exception as e:
+            raise TypeError("composite gate or circuit", targets)
 
     def __and__(self, targets):
         """deal the operator '&'
@@ -1556,7 +1556,7 @@ class ControlPermMulDetailGate(BasicGate):
 ControlPermMulDetail = ControlPermMulDetailGate()
 
 
-class PermShiftGate(PermGate):
+class PermShiftGate(BasicGate):
     """ act an increase or subtract operate with modulus.
 
     This Class is the subClass of PermGate.
@@ -1614,7 +1614,7 @@ class PermShiftGate(PermGate):
 PermShift = PermShiftGate()
 
 
-class ControlPermShiftGate(PermGate):
+class ControlPermShiftGate(BasicGate):
     """ Controlled-PermShiftGate
 
     PermShiftGate with a control bit
@@ -1671,7 +1671,7 @@ class ControlPermShiftGate(PermGate):
 ControlPermShift = ControlPermShiftGate()
 
 
-class PermMulGate(PermGate):
+class PermMulGate(BasicGate):
     """ act an multiply operate with modulus.
 
     This Class is the subClass of PermGate.
@@ -1732,7 +1732,7 @@ class PermMulGate(PermGate):
 PermMul = PermMulGate()
 
 
-class ControlPermMulGate(PermGate):
+class ControlPermMulGate(BasicGate):
     """ a controlled-PermMul Gate """
     def __init__(self):
         super().__init__(
@@ -1791,7 +1791,7 @@ class ControlPermMulGate(PermGate):
 ControlPermMul = ControlPermMulGate()
 
 
-class PermFxGate(PermGate):
+class PermFxGate(BasicGate):
     """ act an Fx oracle on a qureg
 
     This Class is the subClass of PermGate.
@@ -1983,8 +1983,9 @@ class CCXGate(BasicGate):
         ], dtype=np.complex128)
 
     def build_gate(self):
-        cgate = CompositeGate(self.controls + self.targets)
+        from QuICT.core.gate import CompositeGate
 
+        cgate = CompositeGate(self.controls + self.targets)
         with cgate:
             H | cgate(2)
             CX | cgate([2, 1])
@@ -2046,8 +2047,9 @@ class CCRzGate(BasicGate):
         self.build_matrix()
 
     def build_gate(self):
-        cgate = CompositeGate(self.controls + self.targets)
+        from QuICT.core.gate import CompositeGate
 
+        cgate = CompositeGate(self.controls + self.targets)
         with cgate:
             CRz(self.parg / 2) | cgate([1, 2])
             CX | cgate([0, 1])
@@ -2099,8 +2101,9 @@ class QFTGate(BasicGate):
         return _IQFT
 
     def build_gate(self, targets):
-        cgate = CompositeGate(targets)
+        from QuICT.core.gate import CompositeGate
 
+        cgate = CompositeGate(targets)
         with cgate:
             for i in range(targets):
                 H | cgate(i)
@@ -2152,8 +2155,9 @@ class IQFTGate(BasicGate):
         return _QFT
 
     def build_gate(self, targets):
-        cgate = CompositeGate(targets)
+        from QuICT.core.gate import CompositeGate
 
+        cgate = CompositeGate(targets)
         with cgate:
             for i in range(targets - 1, -1, -1):
                 for j in range(targets - 1, i, -1):
@@ -2192,8 +2196,9 @@ class CSwapGate(BasicGate):
         ], dtype=np.complex128)
 
     def build_gate(self):
-        cgate = CompositeGate(self.controls + self.targets)
+        from QuICT.core.gate import CompositeGate
 
+        cgate = CompositeGate(self.controls + self.targets)
         with cgate:
             CX | cgate([2, 1])
             H | cgate(2)

@@ -3,10 +3,9 @@
 # @TIME    : 2021/3/24 9:36 下午
 # @Author  : Han Yu
 # @File    : composite_gate
-from QuICT.core.circuit import Circuit, CircuitInformation
-from QuICT.core.utils import GateType
+import numpy as np
 
-from QuICT.core.gate import *
+from QuICT.core.utils import GateType, CircuitInformation
 from QuICT.core.qubit import Qureg
 
 
@@ -53,6 +52,14 @@ class CompositeGate:
         if gates:
             self.extend(gates)
 
+    def __and__(self, targets):
+        """ assign qubits or indexes for given gates
+
+        Args:
+            targets ([int/qubit/list[int]/qureg]): qubit describe
+        """
+        pass
+
     def __or__(self, targets):
         """ deal the operator '|'
 
@@ -68,9 +75,10 @@ class CompositeGate:
         Raise:
             TypeException: the type of other is wrong
         """
-        assert isinstance(targets, Circuit)
-
-        targets.extend(self.gates)
+        try:
+            targets.extend(self.gates)
+        except Exception as e:
+            raise TypeError(f"Only support circuit for gateSet | circuit. {e}")
 
     def __xor__(self, targets):
         """deal the operator '^'
@@ -87,10 +95,11 @@ class CompositeGate:
         Raise:
             TypeException: the type of other is wrong
         """
-        assert isinstance(targets, Circuit)
-
         self.inverse()
-        targets.extend(self.gates)
+        try:
+            targets.extend(self.gates)
+        except Exception as e:
+            raise TypeError(f"Only support circuit for gateSet ^ circuit. {e}")
 
     def __getitem__(self, item):
         """ get gates from this composite gate
@@ -105,12 +114,10 @@ class CompositeGate:
 
     def __call__(self, indexes: object):
         if isinstance(indexes, int):
-            assert indexes >= 0 and indexes < self._qubits
-        elif isinstance(indexes, list):
-            for idx in indexes:
-                assert idx >= 0 and idx < self._qubits
-        else:
-            raise TypeError("only accept int/list[int]")
+            indexes = [indexes]
+
+        for idx in indexes:
+            assert idx >= 0 and idx < self._qubits
 
         self._pointer = indexes
         return self
@@ -342,4 +349,4 @@ class CompositeGate:
             args_index = gate.cargs + gate.targs
             target_qureg = qureg(args_index)
             gate.assigned_qubits = target_qureg
-            gate.update_name = target_qureg(0).id[-6:]
+            gate.update_name(target_qureg[0].id[-6:])
