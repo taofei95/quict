@@ -6,3 +6,4 @@
 
 from .gate import *
 from .composite_gate import CompositeGate
+from .gate_builder import build_gate, build_random_gate

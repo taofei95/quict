@@ -8,7 +8,8 @@ import numpy as np
 from QuICT.core.qubit import Qubit, Qureg
 from QuICT.core.exception import TypeException
 from QuICT.core.layout import Layout, SupremacyLayout
-from QuICT.core.utils import GateType, build_random_gate, build_gate, CircuitInformation
+from QuICT.core.gate import build_random_gate, build_gate
+from QuICT.core.utils import GateType, CircuitInformation
 
 
 # global circuit id count
@@ -247,7 +248,7 @@ class Circuit(object):
             str: OpenQASM 2.0 describe or "error" when there are some gates cannot be resolved
         """
         qreg = len(self.qubits)
-        creg = self.circuit_count_gateType(GateType.measure)
+        creg = self.count_gate_by_gatetype(GateType.measure)
 
         return CircuitInformation.qasm(qreg, creg, self.gates)
 
@@ -321,20 +322,25 @@ class Circuit(object):
 
         targets.extend(self.gates)
 
-    def append(self, gate):
+    def append(self, gate, is_extend: bool = False):
         """ add a gate to the circuit
 
         Args:
             gate(BasicGate): the gate to be added to the circuit
 
         """
+        gate_ctargs = gate.cargs + gate.targs
+        args_num = gate.controls + gate.targets
         if self._pointer != -1:
-            qureg = self.qubits[self._pointer]
-            self._pointer = -1
+            qureg = self.qubits(self._pointer)
+            if len(qureg) > args_num:
+                qureg = qureg(gate_ctargs)
+
+            if not is_extend:
+                self._pointer = -1
         elif isinstance(gate.assigned_qubits, Qureg):
             qureg = gate.assigned_qubits
         else:
-            gate_ctargs = gate.cargs + gate.targs
             if not gate_ctargs:
                 if not gate.is_single():
                     raise KeyError(f"{gate.type} need assign qubits to add into circuit.")
@@ -360,11 +366,11 @@ class Circuit(object):
             gate.cargs = [self._idmap[qureg[idx].id] for idx in range(gate.controls)]
             gate.targs = [self._idmap[qureg[idx].id] for idx in range(gate.controls, gate.controls + gate.targets)]
 
-        gate.update_name(qureg(0).id, len(self.gates))
+        gate.update_name(qureg[0].id, len(self.gates))
         self.gates.append(gate)
 
     def _add_gate_to_all_qubits(self, gate):
-        for idx in range(self.circuit_width()):
+        for idx in range(self.width()):
             new_gate = gate.copy()
             new_gate.targs = [idx]
             new_gate.assigned_qubits = self.qubits(idx)
@@ -378,7 +384,9 @@ class Circuit(object):
             gates(list<BasicGate>): the gate to be added to the circuit
         """
         for gate in gates:
-            self.append(gate)
+            self.append(gate, is_extend=True)
+
+        self._pointer = -1
 
     def sub_circuit(
         self,

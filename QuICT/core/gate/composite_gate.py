@@ -6,7 +6,7 @@
 import numpy as np
 
 from QuICT.core.utils import GateType, CircuitInformation
-from QuICT.core.qubit import Qureg
+from QuICT.core.qubit import Qureg, Qubit
 
 
 # global composite gate id count
@@ -58,7 +58,14 @@ class CompositeGate:
         Args:
             targets ([int/qubit/list[int]/qureg]): qubit describe
         """
-        pass
+        if isinstance(targets, int):
+            targets = [targets]
+
+        if isinstance(targets, Qubit):
+            targets = Qureg(targets)
+        
+        assert len(targets) == self._qubits
+        self._mapping(targets)                
 
     def __or__(self, targets):
         """ deal the operator '|'
@@ -337,16 +344,18 @@ class CompositeGate:
 
         return np.allclose(self_matrix, target_matrix, rtol=eps, atol=eps)
 
-    def mapping(self, qureg: Qureg):
+    def _mapping(self, targets: Qureg):
         """ remapping the gates' affectArgs
 
         Args:
-            qureg(Qureg): the related qubits
+            targets(Qureg/List): the related qubits
         """
-        assert isinstance(qureg, Qureg) and len(qureg) == self._qubits
-
         for gate in self._gates:
             args_index = gate.cargs + gate.targs
-            target_qureg = qureg(args_index)
-            gate.assigned_qubits = target_qureg
-            gate.update_name(target_qureg[0].id[-6:])
+            if isinstance(targets, Qureg):
+                target_qureg = targets(args_index)
+                gate.assigned_qubits = target_qureg
+                gate.update_name(target_qureg[0].id )
+            else:
+                gate.cargs = [targets[carg] for carg in gate.cargs]
+                gate.targs = [targets[targ] for targ in gate.targs]
