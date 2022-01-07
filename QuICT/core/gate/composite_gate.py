@@ -5,8 +5,8 @@
 # @File    : composite_gate
 import numpy as np
 
-from QuICT.core.utils import GateType, CircuitInformation
 from QuICT.core.qubit import Qureg, Qubit
+from QuICT.core.utils import GateType, CircuitInformation
 
 
 # global composite gate id count
@@ -70,7 +70,7 @@ class CompositeGate:
     def __or__(self, targets):
         """ deal the operator '|'
 
-        Use the syntax "gateSet | circuit"
+        Use the syntax "gateSet | circuit", "gateSet | gateSet"
         to add the gate of gateSet into the circuit
 
         Note that the order of qubits is that control bits first
@@ -79,18 +79,19 @@ class CompositeGate:
         Args:
             targets: the targets the gate acts on, it can have following form,
                 1) Circuit
+                2) CompositeGate
         Raise:
             TypeException: the type of other is wrong
         """
         try:
             targets.extend(self.gates)
         except Exception as e:
-            raise TypeError(f"Only support circuit for gateSet | circuit. {e}")
+            raise TypeError(f"Only support circuit and composite gate. {e}")
 
     def __xor__(self, targets):
         """deal the operator '^'
 
-        Use the syntax "gateSet ^ circuit"
+        Use the syntax "gateSet ^ circuit", "gateSet ^ gateSet"
         to add the gate of gateSet's inverse into the circuit
 
         Note that the order of qubits is that control bits first
@@ -131,15 +132,25 @@ class CompositeGate:
 
     def extend(self, gates: list):
         for gate in gates:
-            self.append(gate)
+            self.append(gate, is_extend=True)
 
-    def append(self, gate):
+        self._pointer = -1
+
+    def append(self, gate, is_extend: bool = False):
+        if self._is_copy:
+            gate = gate.copy()
+
         if self._pointer != -1:
             qubit_index = list(self._pointer)
-            gate.cargs = qubit_index[:gate.controls]
-            gate.targs = qubit_index[gate.controls:]
+            if len(qubit_index) > gate.controls + gate.targets:
+                gate.cargs = [qubit_index[carg] for carg in gate.cargs]
+                gate.targs = [qubit_index[targ] for targ in gate.targs]
+            else:
+                gate.cargs = qubit_index[:gate.controls]
+                gate.targs = qubit_index[gate.controls:]
 
-            self._pointer = -1
+            if not is_extend:
+                self._pointer = -1
         else:
             qubit_index = gate.cargs + gate.targs
             if not qubit_index:
@@ -148,10 +159,7 @@ class CompositeGate:
             for idx in qubit_index:
                 assert idx >= 0 and idx < self._qubits
 
-        if self._is_copy:
-            self._gates.append(gate.copy())
-        else:
-            self._gates.append(gate)
+        self._gates.append(gate)
 
     def width(self):
         """ the number of qubits applied by gates

@@ -199,25 +199,29 @@ class BasicGate(object):
         Raise:
             TypeException: the type of other is wrong
         """
+        _gate = self.copy()
+
         if isinstance(targets, int):
-            assert self.is_single()
+            assert _gate.is_single()
 
-            self.targs = [targets]
+            _gate.targs = [targets]
         elif isinstance(targets, list):
-            assert len(targets) == self.controls + self.targets
+            assert len(targets) == _gate.controls + _gate.targets
 
-            self.cargs = targets[:self.controls]
-            self.targs = targets[self.controls:self.controls + self.targets]
+            _gate.cargs = targets[:_gate.controls]
+            _gate.targs = targets[_gate.controls:]
         elif isinstance(targets, Qureg):
-            self.assigned_qubits = targets
-            self.update_name(targets(0).id)
+            _gate.assigned_qubits = targets
+            _gate.update_name(targets(0).id)
         elif isinstance(targets, Qubit):
-            assert self.is_single()
+            assert _gate.is_single()
 
-            self.assigned_qubits = Qureg([targets])
-            self.update_name(targets.id)
+            _gate.assigned_qubits = Qureg([targets])
+            _gate.update_name(targets.id)
         else:
             raise TypeError("int or list<int> or Qureg/Qubit", targets)
+
+        return _gate
 
     def __call__(self):
         """ give parameters for the gate.
@@ -256,7 +260,7 @@ class BasicGate(object):
         else:
             name_parts[1] = qubit_id
 
-        if circuit_idx:
+        if circuit_idx is not None:
             if len(name_parts) == 3:
                 name_parts[2] = str(circuit_idx)
             else:

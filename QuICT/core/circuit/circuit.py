@@ -294,7 +294,6 @@ class Circuit(object):
             qureg_list = self.qubits[item]
             return qureg_list
 
-    # TODO: bug fixed
     def __or__(self, targets):
         """deal the operator '|'
 
@@ -313,13 +312,6 @@ class Circuit(object):
         if not isinstance(targets, Circuit):
             raise TypeError("Only support circuit | circuit.")
 
-        if self.qubits != targets.qubits:
-            diff_qubits = self.qubits.diff(targets.qubits)
-            for idx, dq in enumerate(diff_qubits):
-                targets._idmap[dq.id] = len(targets.qubits) + idx
-
-            targets.qubits = targets.qubits + diff_qubits
-
         targets.extend(self.gates)
 
     def append(self, gate, is_extend: bool = False):
@@ -327,10 +319,10 @@ class Circuit(object):
 
         Args:
             gate(BasicGate): the gate to be added to the circuit
-
         """
         gate_ctargs = gate.cargs + gate.targs
         args_num = gate.controls + gate.targets
+
         if self._pointer != -1:
             qureg = self.qubits(self._pointer)
             if len(qureg) > args_num:
@@ -338,17 +330,16 @@ class Circuit(object):
 
             if not is_extend:
                 self._pointer = -1
+        elif gate_ctargs:
+            qureg = gate_ctargs
         elif isinstance(gate.assigned_qubits, Qureg):
             qureg = gate.assigned_qubits
         else:
-            if not gate_ctargs:
-                if not gate.is_single():
-                    raise KeyError(f"{gate.type} need assign qubits to add into circuit.")
+            if not gate.is_single():
+                raise KeyError(f"{gate.type} need assign qubits to add into circuit.")
 
-                self._add_gate_to_all_qubits(gate)
-                return
-
-            qureg = gate_ctargs
+            self._add_gate_to_all_qubits(gate)
+            return
 
         self._add_gate(gate, qureg)
 
@@ -359,6 +350,8 @@ class Circuit(object):
             gate(BasicGate)
             qureg(Qureg/list<Qubit>)
         """
+        gate = gate.copy()
+
         if isinstance(qureg[0], int):
             qureg = self.qubits(qureg)
             gate.assigned_qubits = qureg
@@ -375,6 +368,7 @@ class Circuit(object):
             new_gate.targs = [idx]
             new_gate.assigned_qubits = self.qubits(idx)
 
+            new_gate.update_name(self.qubits[idx].id, len(self.gates))
             self.gates.append(new_gate)
 
     def extend(self, gates):
@@ -398,7 +392,7 @@ class Circuit(object):
         """ get a sub circuit
 
         Args:
-            targets(int/list<int>/tuple<int>/Qureg): target qubits indexes.
+            targets(int/list<int>/Qureg): target qubits indexes.
             start(int): the start gate's index, default 0
             max_size(int): max size of the sub circuit, default -1 without limit
             remove(bool): whether deleting the slice gates from origin circuit, default False
@@ -407,11 +401,8 @@ class Circuit(object):
         """
         if isinstance(targets, Qureg):
             targets = [self.index_for_qubit(qubit) for qubit in targets]
-        else:
-            try:
-                targets = list(targets)
-            except Exception as e:
-                raise TypeError(f"targets should be Qureg or listable object. {e}")
+        elif isinstance(targets, int):
+            targets = [targets]
 
         # the mapping from circuit's index to sub-circuit's index
         circuit_width = self.width()
@@ -429,12 +420,15 @@ class Circuit(object):
 
         for gate_index in range(start, len(targets_gates)):
             gate = targets_gates[gate_index]
-            assigned_qubits = set(gate.assigned_qubits)
-            if assigned_qubits & set_targets == assigned_qubits:
-                sub_gates.append(gate)
+            gate_args = set(gate.cargs + gate.targs)
+            if gate_args & set_targets == gate_args:
+                _gate = gate.copy()
+                _gate.targs = [targets_mapping[targ] for targ in _gate.targs]
+                _gate.cargs = [targets_mapping[carg] for carg in _gate.cargs]
+                sub_gates.append(_gate)
 
-            if remove:
-                self.gates.remove(gate)
+                if remove:
+                    self.gates.remove(gate)
 
             if len(sub_gates) >= max_size and max_size != -1:
                 break
@@ -442,6 +436,7 @@ class Circuit(object):
         if remove:
             self._update_gate_index()
 
+        sub_circuit.extend(sub_gates)
         return sub_circuit
 
     def _update_gate_index(self):
@@ -449,7 +444,7 @@ class Circuit(object):
             gate_type, gate_qb, gate_idx = gate.name.split('-')
 
             if int(gate_idx) != index:
-                gate.name = '-'.join([gate_type, gate_qb, index])
+                gate.name = '-'.join([gate_type, gate_qb, str(index)])
 
     def index_for_qubit(self, qubit, ancilla=None) -> int:
         """ find the index of qubit in this circuit
@@ -485,7 +480,7 @@ class Circuit(object):
             elif q.id == qubit.id:
                 return enterspace
 
-    def gates_for_qubit(self, qubits: list) -> list:
+    def gates_for_qubit(self, qubits: Qureg) -> list:
         if isinstance(qubits, Qureg):
             qubits = [self.index_for_qubit(qubit) for qubit in qubits]
 
@@ -524,7 +519,7 @@ class Circuit(object):
             gate_type = typelist[rand_type]
             self.append(build_random_gate(gate_type, n_qubit, random_params))
 
-    def append_supremacy(self, repeat: int = 1, pattern: str = "ABCDCDAB"):
+    def supremacy_append(self, repeat: int = 1, pattern: str = "ABCDCDAB"):
         """
         Add a supremacy circuit to the circuit
 
@@ -532,12 +527,13 @@ class Circuit(object):
             repeat(int): the number of two-qubit gates' sequence
             pattern(str): indicate the two-qubit gates' sequence
         """
+        from QuICT.core.gate import H, Measure
+
         qubits = len(self.qubits)
         supremacy_layout = SupremacyLayout(qubits)
         supremacy_typelist = [GateType.sx, GateType.sy, GateType.sw]
 
-        hgate = build_gate(GateType.h, 0)
-        self._add_gate_to_all_qubits(hgate)
+        self._add_gate_to_all_qubits(H)
 
         for i in range(repeat * len(pattern)):
             for q in range(qubits):
@@ -556,8 +552,7 @@ class Circuit(object):
 
                 self.append(fgate)
 
-        mgate = build_gate(GateType.measure, 0)
-        self._add_gate_to_all_qubits(mgate)
+        self._add_gate_to_all_qubits(Measure)
 
     def matrix_product_to_circuit(self, gate) -> np.ndarray:
         """ extend a gate's matrix in the all circuit unitary linear space

@@ -4,6 +4,7 @@
 # @Author  : Han Yu
 # @File    : _gateBuilder.py
 import numpy as np
+import random
 
 from QuICT.core.qubit import Qubit, Qureg
 from QuICT.core.gate import *
@@ -73,7 +74,7 @@ def build_gate(
     if isinstance(qubits, Qubit):
         qubits = Qureg(qubits)
     elif isinstance(qubits, int):
-        qubits = list(qubits)
+        qubits = [qubits]
     assert len(qubits) == args_number
 
     if isinstance(qubits, Qureg):
@@ -95,7 +96,7 @@ def build_random_gate(
 ):
     gate = GATE_TYPE_TO_CLASS[gate_type]()
     args_number = gate.controls + gate.targets
-    choiced_qubits = np.random.choice(range(qubits), args_number, replace=False)
+    choiced_qubits = random.sample(range(qubits), args_number)
     gate.cargs = choiced_qubits[:gate.controls]
     gate.targs = choiced_qubits[gate.controls:]
 
