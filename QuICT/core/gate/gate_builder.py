@@ -100,7 +100,7 @@ def build_random_gate(
     gate.cargs = choiced_qubits[:gate.controls]
     gate.targs = choiced_qubits[gate.controls:]
 
-    if random_params:
+    if random_params and gate.params:
         gate.pargs = np.random.uniform(0, 2 * np.pi, gate.params)
 
     return gate

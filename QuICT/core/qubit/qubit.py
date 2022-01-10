@@ -233,4 +233,4 @@ class Qureg(list):
             if qubit.id not in others_qubit_ids:
                 diff_qubit.append(qubit)
 
-        return diff_qubit
+        return Qureg(diff_qubit)

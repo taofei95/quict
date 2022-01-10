@@ -205,14 +205,14 @@ class BasicGate(object):
             assert _gate.is_single()
 
             _gate.targs = [targets]
+        elif isinstance(targets, Qureg):
+            _gate.assigned_qubits = targets
+            _gate.update_name(targets[0].id)
         elif isinstance(targets, list):
             assert len(targets) == _gate.controls + _gate.targets
 
             _gate.cargs = targets[:_gate.controls]
             _gate.targs = targets[_gate.controls:]
-        elif isinstance(targets, Qureg):
-            _gate.assigned_qubits = targets
-            _gate.update_name(targets(0).id)
         elif isinstance(targets, Qubit):
             assert _gate.is_single()
 
