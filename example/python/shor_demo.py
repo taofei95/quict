@@ -8,13 +8,13 @@ from QuICT.algorithm import (
     BEAShorFactor,
     HRSShorFactor
 )
-import datetime
 
 N = int(input("Input the number to be factored: "))
 
-starttime = datetime.datetime.now()
-#long running
-a = BEAShorFactor.run(N)
-endtime = datetime.datetime.now()
-print("the found factor is", a)
-print("the total running time is",  (endtime - starttime).seconds)
+a = BEAShorFactor.run(N,5,'demo')
+
+print("BEAShor found factor", a)
+
+#a = HRSShorFactor.run(N,5,'demo')
+
+#print("HRSShor found factor", a)
