@@ -108,7 +108,7 @@ class Qureg(list):
     Attributes:
         qubits([Qubits]): the list of qubits.
     """
-    def __init__(self, qubits):
+    def __init__(self, qubits = None):
         """ initial a qureg with qubit(s)
 
         Args:
@@ -118,6 +118,8 @@ class Qureg(list):
                 3) [qubits/quregs]
         """
         super().__init__()
+        if qubits is None:
+            return
 
         if isinstance(qubits, int):
             for _ in range(qubits):
@@ -165,6 +167,36 @@ class Qureg(list):
             cqureg.append(self[element])
 
         return Qureg(cqureg)
+    
+    def __getitem__(self, item):
+        """ to fit the slice operator, overloaded this function.
+
+        get a smaller qureg/qubit from this qureg
+
+        Args:
+            item(int/slice): slice passed in.
+        Return:
+            Qubit/Qureg: the result or slice
+        """
+        if isinstance(item, int):
+            return super().__getitem__(item)
+
+        qureg = Qureg()
+        if isinstance(item, slice):
+            qureg_list = super().__getitem__(item)
+            for qubit in qureg_list:
+                qureg.append(qubit)
+        elif isinstance(item, list) or isinstance(item, tuple):
+            for idx in item:
+                assert isinstance(idx, int)
+                if idx < 0 or idx > len(self):
+                    raise IndexLimitException(len(self), idx)
+
+                qureg.append(self[idx])
+        else:
+            raise TypeException("int/list[int]/slice", item)
+
+        return qureg
 
     def __int__(self):
         """ the value of the register

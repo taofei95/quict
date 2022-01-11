@@ -60,6 +60,11 @@ class BasicGate(object):
     @property
     def controls(self) -> int:
         return self._controls
+    
+    @controls.setter
+    def controls(self, controls: int):
+        assert isinstance(controls, int)
+        self._controls = controls
 
     @property
     def cargs(self):
@@ -75,6 +80,11 @@ class BasicGate(object):
     @property
     def targets(self) -> int:
         return self._targets
+
+    @targets.setter
+    def targets(self, targets: int):
+        assert isinstance(targets, int)
+        self._targets = targets    
 
     @property
     def targs(self):
@@ -269,16 +279,18 @@ class BasicGate(object):
         self.name = '-'.join(name_parts)
 
     # get information of gate
-    def gate_info(self):
+    def __str__(self):
         """ get gate information """
         gate_info = {
             "name": self.name,
-            "control_bit": {self.cargs},
-            "target_bit": {self.targs},
-            "parameters": {self.pargs}
+            "controls": self.controls,
+            "control_bit": self.cargs,
+            "targets": self.targets,
+            "target_bit": self.targs,
+            "parameters": self.pargs
         }
 
-        return gate_info
+        return str(gate_info)
 
     def qasm(self):
         """ generator OpenQASM string for the gate
@@ -377,7 +389,7 @@ class BasicGate(object):
         """
         return (
             self.type in DIAGONAL_GATE_SET or
-            (self.type == GateType.unitary and self._is_diagonal)
+            (self.type == GateType.unitary and self._is_diagonal())
         )
 
     def _is_diagonal(self) -> bool:
@@ -1888,17 +1900,19 @@ class UnitaryGate(BasicGate):
         Returns:
             UnitaryGateGate: the gate after filled by parameters
         """
+        _u = UnitaryGate()
+
         if isinstance(params, np.ndarray):
             matrix_size = params.size
             length, width = params.shape[0], params.shape[1]
 
-            self.matrix = params.astype(np.complex128)
+            _u.matrix = params.astype(np.complex128)
         elif isinstance(params, list):
             matrix_size = len(params)
             length = int(round(np.sqrt(matrix_size)))
             width = matrix_size / length
 
-            self.matrix = np.array(params, dtype=np.complex128).reshape(length, width)
+            _u.matrix = np.array(params, dtype=np.complex128).reshape(length, width)
         else:
             raise TypeError("list or np.ndarray", params)
 
@@ -1912,8 +1926,9 @@ class UnitaryGate(BasicGate):
         if (1 << n) != length:
             raise Exception("the length of list should be the square of power(2, n)")
 
-        self.targets = n
-        return self
+        _u.targets = n
+
+        return _u
 
     def copy(self, name=None):
         gate = super().copy(name)

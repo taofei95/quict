@@ -124,9 +124,7 @@ class Circuit(object):
         else:
             raise TypeException("int/list<Qubits/Qureg>/Qureg/Qubit", wires)
 
-        self._idmap = {}
-        for idx, qubit in enumerate(self.qubits):
-            self._idmap[qubit.id] = idx
+        self._update_idmap()
 
         self._gates = []
         self._pointer = -1
@@ -210,7 +208,7 @@ class Circuit(object):
             "2-qubit gates": self.count_2qubit_gate()
         }
 
-        return circuit_info
+        return str(circuit_info)
 
     def draw(self, method='matp', filename=None):
         """ draw the photo of circuit in the run directory
@@ -274,7 +272,6 @@ class Circuit(object):
             raise TypeError("only accept int/list[int]")
 
         self._pointer = indexes
-
         return self
 
     def __getitem__(self, item):
@@ -287,12 +284,7 @@ class Circuit(object):
         Return:
             Qubit/Qureg: the result or slice
         """
-
-        if isinstance(item, int):
-            return self.qubits[item]
-        elif isinstance(item, slice):
-            qureg_list = self.qubits[item]
-            return qureg_list
+        return self.qubits[item]
 
     def __or__(self, targets):
         """deal the operator '|'
@@ -604,3 +596,31 @@ class Circuit(object):
                 new_values[i][j] = matrix[nowi][nowj]
 
         return new_values
+
+    def remapping(self, qureg: Qureg, mapping: list, circuit_update: bool = False):
+        if not isinstance(qureg, Qureg):
+            raise TypeException("Qureg Only.", qureg)
+
+        if len(qureg) != len(mapping):
+            raise ValueError(f"the length of mapping {len(mapping)} must equal to the qubits' number {len(qureg)}.")
+
+        current_index = []
+        for qubit in qureg:
+            current_index.append(self.index_for_qubit(qubit))
+
+        remapping_index = [current_index[m] for m in mapping]
+        remapping_qureg = Qureg()
+        for idx in remapping_index:
+            remapping_qureg.append(self.qubits[idx])
+
+        if circuit_update:
+            for index, q_idx in enumerate(current_index):
+                self.qubits[q_idx] = remapping_qureg[index]
+            self._update_idmap()
+
+        qureg[:] = remapping_qureg
+
+    def _update_idmap(self):
+        self._idmap = {}
+        for idx, qubit in enumerate(self.qubits):
+            self._idmap[qubit.id] = idx

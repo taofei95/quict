@@ -7,7 +7,7 @@ import numpy as np
 
 from QuICT.core.qubit import Qureg, Qubit
 from QuICT.core.utils import GateType, CircuitInformation
-
+from QuICT.ops.linalg.cpu_calculator import tensor, dot, MatrixTensorI
 
 # global composite gate id count
 cgate_id = 0
@@ -217,7 +217,7 @@ class CompositeGate:
         """
         return CircuitInformation.depth(self.gates)
 
-    def gate_info(self):
+    def __str__(self):
         cgate_info = {
             "width": self.width(),
             "size": self.size(),
@@ -228,9 +228,9 @@ class CompositeGate:
         }
 
         for gate in self.gates:
-            cgate_info["gates detail"][gate.name] = gate.gate_info
+            cgate_info["gates detail"][gate.name] = str(gate)
 
-        return cgate_info
+        return str(cgate_info)
 
     def qasm(self):
         """ get OpenQASM 2.0 describe for the composite gate
@@ -252,8 +252,7 @@ class CompositeGate:
         for gate in self._gates:
             gate.inverse()
 
-    # TODO: refactoring later
-    def matrix(self, local=False):
+    def matrix(self):
         """ matrix of these gates
 
         Args:
@@ -262,63 +261,29 @@ class CompositeGate:
         Returns:
             np.ndarray: the matrix of the gates
         """
-        min_qubit = -1
-        max_qubit = -1
+        tensor_based = np.eye(1 << (self._qubits - 1), dtype=np.complex128)
+        result = np.eye(1 << self._qubits, dtype=np.complex128)
         for gate in self.gates:
-            for arg in gate.affectArgs:
-                if min_qubit == -1:
-                    min_qubit = arg
+            if gate.is_single():
+                result = dot(result, tensor(gate.matrix, tensor_based))
+            else:
+                args = gate.cargs + gate.targs
+                if len(args) == self._qubits:
+                    result = dot(result, gate.matrix)
+                    continue
+
+                min_args, max_args = min(args), max(args)
+                in_args = max_args - min_args - (len(args) - 1)
+                out_args = self._qubits - in_args - 2
+                
+                if not in_args:
+                    gate_matrix = tensor(gate.matrix, np.eye(1 << out_args, dtype=np.complex128))
+                elif not out_args:
+                    gate_matrix = tensor(gate.matrix, np.eye(1 << in_args, dtype=np.complex128))
                 else:
-                    min_qubit = min(min_qubit, arg)
-                if max_qubit == -1:
-                    max_qubit = arg
-                else:
-                    max_qubit = max(max_qubit, arg)
+                    gate_matrix =  MatrixTensorI(gate.matrix, in_args, out_args)
 
-        if min_qubit == -1:
-            return np.eye(2, dtype=np.complex128)
-
-        if local:
-            q_len = max_qubit - min_qubit + 1
-        else:
-            q_len = max_qubit + 1
-
-        n = 1 << q_len
-        result = np.eye(n, dtype=np.complex128)
-        for gate in self.gates:
-            new_values = np.zeros((n, n), dtype=np.complex128)
-            targs = gate.affectArgs
-            for i in range(len(targs)):
-                targs[i] -= min_qubit
-
-            xor = (1 << q_len) - 1
-            if not isinstance(targs, list):
-                raise Exception("unknown error")
-
-            matrix = gate.compute_matrix.reshape(1 << len(targs), 1 << len(targs))
-            datas = np.zeros(n, dtype=int)
-            for i in range(n):
-                nowi = 0
-                for kk in range(len(targs)):
-                    k = q_len - 1 - targs[kk]
-                    if (1 << k) & i != 0:
-                        nowi += (1 << (len(targs) - 1 - kk))
-
-                datas[i] = nowi
-
-            for i in targs:
-                xor = xor ^ (1 << (q_len - 1 - i))
-
-            for i in range(n):
-                nowi = datas[i]
-                for j in range(n):
-                    nowj = datas[j]
-                    if (i & xor) != (j & xor):
-                        continue
-
-                    new_values[i][j] = matrix[nowi, nowj]
-
-            result = np.dot(new_values, result)
+                result = dot(result, gate_matrix)
 
         return result
 

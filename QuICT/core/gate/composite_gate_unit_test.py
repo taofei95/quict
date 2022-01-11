@@ -3,76 +3,71 @@
 # @TIME    : 2021/3/28 12:03 上午
 # @Author  : Han Yu
 # @File    : composite_gate_unit_test
+import unittest
 
-import pytest
-
-from QuICT.algorithm import SyntheticalUnitary
-from QuICT.core import *
-
-
-def test_gateSet_attributes():
-    # circuit
-    circuit = Circuit(5)
-    circuit.random_append()
-    H | circuit
-    X | circuit
-    gateSet = CompositeGate(circuit)
-    assert len(gateSet.gates) == circuit.circuit_size()
-    assert gateSet.circuit_width() == 5
-    assert gateSet.circuit_count_1qubit() + gateSet.circuit_count_2qubit() == circuit.circuit_size()
-    assert gateSet.qasm() == circuit.qasm()
-
-    # BasicGate
-    _X = X.copy()
-    _X.targs = [0]
-    gateSet = CompositeGate(_X)
-    assert len(gateSet.gates) == 1
-    assert gateSet.circuit_width() == 1
-
-    # CompositeGate
-    gateSet = CompositeGate(gateSet)
-    assert len(gateSet.gates) == 1
-    assert gateSet.circuit_width() == 1
-
-    # list<BasicGate>
-    _Y = Y.copy()
-    _Y.targs = [0]
-    gateSet = CompositeGate([_X, _Y])
-    assert len(gateSet) == 2
-    gateSet = CompositeGate((_X, _Y))
-    assert len(gateSet) == 2
-
-    gateSet.remapping([i for i in range(5 - 1, -1, -1)])
-    gateSet.print_information()
+from QuICT.core import Circuit
+from QuICT.core.gate import *
 
 
-def test_gate_matrix():
-    circuit = Circuit(5)
-    circuit.random_append()
-    gateSet = CompositeGate(circuit)
-    assert np.all(gateSet.matrix() == SyntheticalUnitary.run(circuit))
+class TestCompositeGate(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        print("The Composite Gate unit test start!")
+        cls.qubits = 5
+        cls.based_composite_gate = CompositeGate(cls.qubits)
 
-    circuit2 = Circuit(6)
-    gateSet | circuit2[1:]
-    gateSet = CompositeGate(circuit2)
-    assert np.all(gateSet.matrix(local=True) == SyntheticalUnitary.run(circuit))
+    @classmethod
+    def tearDownClass(cls) -> None:
+        print("The Composite Gate unit test finished!")
+        del cls.based_composite_gate
+        
+    def _gate_attr_test(self, cgate):
+        return (
+            cgate.size() == 5 and
+            cgate.count_1qubit_gate() == 2 and
+            cgate.count_2qubit_gate() == 2 and
+            cgate.depth() == 3
+        )
 
+    def test_compositegate_build(self):
+        # Composite Gate Initial
+        cgate = TestCompositeGate.based_composite_gate
+        assert cgate.width() == TestCompositeGate.qubits
 
-def test_add_gate():
-    gateSet = CompositeGate()
-    with gateSet:
-        CX & (0, 1)
-        H & 1
-    circuit = Circuit(2)
-    CX | circuit
-    H | circuit(1)
-    # Phase(0.2, name = "XX") | circuit[0]
-    # U3((0.1, 0.2, 0.3), name = "YY") | circuit[0]
+        H | cgate(1)
+        U1(0) | cgate(2)
+        CX | cgate([3, 4])
+        CU3(1, 0, 0) | cgate([0, 4])
+        CCRz(1) | cgate([0, 1, 2])
+        assert self._gate_attr_test(cgate)
 
-    # assert np.all(SyntheticalUnitary.run(circuit) == gateSet.matrix())
-    assert gateSet.equal(circuit, ignore_phase=True)
+    def test_compositegate_matrix(self):
+        test_gate = CompositeGate(3)
+        H | test_gate(0)
+        H | test_gate(1)
+        H | test_gate(2)
+        CX | test_gate([0, 1])
+        CX | test_gate([0, 2])
+        CCRz | test_gate([0, 1, 2])
+
+        matrix = test_gate.matrix()
+        assert matrix.shape == (1 << 3, 1 << 3)
+
+    def test_compositegate_operation(self):
+        # composite gate | composite gate
+        ncgate = CompositeGate(TestCompositeGate.qubits)
+        TestCompositeGate.based_composite_gate | ncgate
+        assert self._gate_attr_test(ncgate)
+
+        # composite gate ^ composite gate
+        TestCompositeGate.based_composite_gate ^ ncgate
+        assert ncgate.size() == 10
+
+        # composite gate | circuit
+        cir = Circuit(5)
+        ncgate | cir
+        assert cir.size() == 10
 
 
 if __name__ == "__main__":
-    # pytest.main(["./_unit_test.py", "./circuit_unit_test.py", "./gate_unit_test.py", "./qubit_unit_test.py"])
-    pytest.main(["./composite_gate_unit_test.py"])
+    unittest.main()
