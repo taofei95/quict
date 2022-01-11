@@ -178,7 +178,7 @@ class BEAShorFactor(Algorithm):
             msg = f'Quantumly determine the order of the randomly chosen a = {a}'
             if demo == 'demo': print(msg)
             else: logging.info(msg)
-            r = order_finding(a, N, eps, demo)
+            r = order_finding(a, N, demo, eps)
             if r == 0:
                 msg = f'Shor failed: did not find the order of a = {a}'
                 if demo == 'demo': print(msg)
