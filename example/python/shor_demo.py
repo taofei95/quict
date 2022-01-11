@@ -1,19 +1,16 @@
 #!/usr/bin/env python
 # -*- coding:utf8 -*-
-# @TIME    : 2020/11/5 9:58
-# @Author  : Han Yu
-# @File    : unit_test.py
+# @TIME    : 2022/1/2 9:58
+# @Author  : Zhu Qinlin
+# @File    : shor_demo.py
 
-from QuICT.algorithm import (
-    BEAShorFactor,
-    HRSShorFactor
-)
+from QuICT.algorithm import HRSShorFactor
 
 N = int(input("Input the number to be factored: "))
 
-a = BEAShorFactor.run(N,5,'demo')
+a = HRSShorFactor.run(N,5,'demo')
 
-print("BEAShor found factor", a)
+print("HRSShor found factor", a)
 
 #a = HRSShorFactor.run(N,5,'demo')
 

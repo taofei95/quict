@@ -98,26 +98,36 @@ def order_finding(a:int, N: int, demo = None, eps: float = 1/10,):
             den2 = den1
             den1 = den
     r = den1
-    if pow(a, r, N) == 1:
-        msg = f'\torder_finding succeed: r = {r} is the order of a = {a}'
-        if demo == 'demo': print(msg)
-        else: logging.info(msg)
-        return r
-    else:
-        msg = f'\torder_finding failed: r = {r} is not the order of a = {a}'
-        if demo == 'demo': print(msg)
-        else: logging.info(msg)
-        return 0
+    return r
 
 class HRS_order_finding(Algorithm):
     '''
-    The (2n+2)-qubit circuit used in the order_finding algorithm is designed by \
-    THOMAS HANER, MARTIN ROETTELER, and KRYSTA M. SVORE \
-    in "Factoring using 2n+2 qubits with Toffoli based modular multiplication\
+    Run order_finding twice and take the lcm of the two result 
+    to guaruntee a higher possibility to get the correct order,
+    as suggested in QCQI 5.3.1
     '''
     @staticmethod
-    def run(a: int, N: int, demo:str = None):
-        return order_finding(a, N, demo)
+    def run(a: int, N: int, demo:str = None, eps: float = 1/10):
+        r1 = order_finding(a, N, demo, eps)
+        r2 = order_finding(a, N, demo, eps)
+        flag1 = (pow(a, r1, N) == 1 and r1!= 0)
+        flag2 = (pow(a, r2, N) == 1 and r2!= 0)
+        if flag1 and flag2:
+            r = min(r1, r2)
+        elif not flag1 and not flag2:
+            r = int(np.lcm(r1,r2))
+        else:
+            r = int(flag1)*r1 + int(flag2)*r2
+            
+        if (pow(a,r,N)==1 and r!=0): 
+            msg = f'\torder_finding found candidate order: r = {r} of a = {a}'
+        else:  
+            r = 0
+            msg = f'\torder_finding failed'
+        if demo == 'demo': print(msg)
+        else: logging.info(msg)
+
+        return r
 
 class HRSShorFactor(Algorithm):
     """
@@ -178,7 +188,7 @@ class HRSShorFactor(Algorithm):
             msg = f'Quantumly determine the order of the randomly chosen a = {a}'
             if demo == 'demo': print(msg)
             else: logging.info(msg)
-            r = order_finding(a, N, eps, demo)
+            r = HRS_order_finding.run(a, N, demo, eps)
             if r == 0:
                 msg = f'Shor failed: did not find the order of a = {a}'
                 if demo == 'demo': print(msg)
