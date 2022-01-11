@@ -22,7 +22,7 @@ from QuICT.algorithm import Algorithm
 from .utility import *
 
 
-def order_finding(a, N):
+def order_finding(a, N, simulator=None):
     """
     Quantum algorithm to compute the order of a (mod N), when gcd(a,N)=1.
     """
@@ -47,21 +47,11 @@ def order_finding(a, N):
         H | trickbit
 
         Measure | trickbit
-        #original
-        # circuit.exec()
 
-        #gpu vec(with problem)
-        from QuICT.simulation import ConstantStateVectorSimulator
-        simulator = ConstantStateVectorSimulator(
-            precision="double",
-            gpu_device_id=0,
-            sync=True
-        )
-        state = simulator.run(circuit)
-
-        #Amp
-        # from QuICT.algorithm import Amplitude
-        # state = Amplitude.run(circuit)
+        if simulator==None:
+            circuit.exec()
+        else:
+            state = simulator.run(circuit)
 
         logging.info(f'the {k}th trickbit measured to be {int(trickbit)}')
         trickbit_store[k] = int(trickbit)
@@ -112,7 +102,7 @@ class BEAShorFactor(Algorithm):
     in "Factoring using 2n+2 qubits with Toffoli based modular multiplication\
     '''
     @staticmethod
-    def run(N):
+    def run(N, simulator=None):
         # check if input is prime (using MillerRabin in klog(N), k is the number of rounds to run MillerRabin)
         assert (not miller_rabin(N)), 'N is prime'
 
@@ -153,7 +143,7 @@ class BEAShorFactor(Algorithm):
             rd += 1
             # 4. Use quantum order-finding algorithm to find the order of a
             logging.info(f'Quantumly determine the order of the randomly chosen a = {a}')
-            r = order_finding(a, N)
+            r = order_finding(a, N, simulator)
             if r == 0:
                 logging.info(f'Shor failed: did not found the order of a = {a}')
             else:

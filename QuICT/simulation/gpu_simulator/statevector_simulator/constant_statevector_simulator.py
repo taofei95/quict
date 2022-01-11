@@ -336,7 +336,6 @@ class ConstantStateVectorSimulator(BasicGPUSimulator):
                 )
                 self.vector = aux
         elif gate_type == GATE_ID["QFT"] or gate_type == GATE_ID["IQFT"]:
-            print(gate.name)
             aux = cp.zeros_like(self._vector)
             matrix = self.get_gate_matrix(gate)
             self._algorithm.matrix_dot_vector(
