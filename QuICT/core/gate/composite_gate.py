@@ -6,7 +6,7 @@
 import numpy as np
 
 from QuICT.core.qubit import Qureg, Qubit
-from QuICT.core.utils import GateType, CircuitInformation
+from QuICT.core.utils import GateType, CircuitInformation, matrix_product_to_circuit
 from QuICT.ops.linalg.cpu_calculator import tensor, dot, MatrixTensorI
 
 # global composite gate id count
@@ -63,9 +63,9 @@ class CompositeGate:
 
         if isinstance(targets, Qubit):
             targets = Qureg(targets)
-        
+
         assert len(targets) == self._qubits
-        self._mapping(targets)                
+        self._mapping(targets)
 
     def __or__(self, targets):
         """ deal the operator '|'
@@ -261,31 +261,14 @@ class CompositeGate:
         Returns:
             np.ndarray: the matrix of the gates
         """
-        tensor_based = np.eye(1 << (self._qubits - 1), dtype=np.complex128)
-        result = np.eye(1 << self._qubits, dtype=np.complex128)
+        matrix = np.eye(1 << self._qubits)
         for gate in self.gates:
-            if gate.is_single():
-                result = dot(result, tensor(gate.matrix, tensor_based))
-            else:
-                args = gate.cargs + gate.targs
-                if len(args) == self._qubits:
-                    result = dot(result, gate.matrix)
-                    continue
+            if gate.is_special():
+                raise TypeError(f"Cannot combined the gate matrix with special gate {gate.type}")
 
-                min_args, max_args = min(args), max(args)
-                in_args = max_args - min_args - (len(args) - 1)
-                out_args = self._qubits - in_args - 2
-                
-                if not in_args:
-                    gate_matrix = tensor(gate.matrix, np.eye(1 << out_args, dtype=np.complex128))
-                elif not out_args:
-                    gate_matrix = tensor(gate.matrix, np.eye(1 << in_args, dtype=np.complex128))
-                else:
-                    gate_matrix =  MatrixTensorI(gate.matrix, in_args, out_args)
+            matrix = np.matmul(matrix_product_to_circuit(self._qubits, gate), matrix)
 
-                result = dot(result, gate_matrix)
-
-        return result
+        return matrix
 
     def equal(self, target, ignore_phase=True, eps=1e-7):
         """
@@ -328,7 +311,7 @@ class CompositeGate:
             if isinstance(targets, Qureg):
                 target_qureg = targets(args_index)
                 gate.assigned_qubits = target_qureg
-                gate.update_name(target_qureg[0].id )
+                gate.update_name(target_qureg[0].id)
             else:
                 gate.cargs = [targets[carg] for carg in gate.cargs]
                 gate.targs = [targets[targ] for targ in gate.targs]

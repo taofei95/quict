@@ -20,7 +20,7 @@ class TestCompositeGate(unittest.TestCase):
     def tearDownClass(cls) -> None:
         print("The Composite Gate unit test finished!")
         del cls.based_composite_gate
-        
+
     def _gate_attr_test(self, cgate):
         return (
             cgate.size() == 5 and

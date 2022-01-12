@@ -60,7 +60,7 @@ class BasicGate(object):
     @property
     def controls(self) -> int:
         return self._controls
-    
+
     @controls.setter
     def controls(self, controls: int):
         assert isinstance(controls, int)
@@ -84,7 +84,7 @@ class BasicGate(object):
     @targets.setter
     def targets(self, targets: int):
         assert isinstance(targets, int)
-        self._targets = targets    
+        self._targets = targets
 
     @property
     def targs(self):
@@ -116,7 +116,7 @@ class BasicGate(object):
         else:
             self._pargs = [pargs]
 
-        assert len(self._pargs) == self.params        
+        assert len(self._pargs) == self.params
 
     @property
     def parg(self):
@@ -157,9 +157,6 @@ class BasicGate(object):
 
         self.assigned_qubits = []   # list of qubits
 
-    def __str__(self):
-        return self._type.value
-
     def __or__(self, targets):
         """deal the operator '|'
 
@@ -185,7 +182,7 @@ class BasicGate(object):
         """
         try:
             targets.append(self)
-        except Exception as e:
+        except Exception:
             raise TypeError("composite gate or circuit", targets)
 
     def __and__(self, targets):
@@ -278,7 +275,6 @@ class BasicGate(object):
 
         self.name = '-'.join(name_parts)
 
-    # get information of gate
     def __str__(self):
         """ get gate information """
         gate_info = {
@@ -690,6 +686,7 @@ class U1Gate(BasicGate):
 
         return _U1
 
+
 U1 = U1Gate()
 
 
@@ -802,7 +799,7 @@ class RxGate(BasicGate):
     def inverse(self):
         _Rx = self.copy()
         _Rx.pargs = [-self.pargs[0]]
- 
+
         return _Rx
 
 
@@ -1283,6 +1280,7 @@ class RyyGate(BasicGate):
         _Ryy.pargs = [-self.parg]
 
         return _Ryy
+
 
 Ryy = RyyGate()
 

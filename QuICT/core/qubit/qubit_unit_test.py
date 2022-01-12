@@ -35,7 +35,7 @@ def test_qureg_call():
 
     cqureg = qureg(idx)
     for cq in cqureg:
-        assert cq.id in squbit_ids    
+        assert cq.id in squbit_ids
 
 
 def test_qureg_int():
@@ -56,7 +56,7 @@ def test_qureg_operation():
 
     # equal
     assert q1 == q1
-    assert not q1 == q2    
+    assert not q1 == q2
 
     # diff
     diff_q = q1.diff(q2)

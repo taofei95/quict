@@ -9,7 +9,7 @@ from QuICT.core.qubit import Qubit, Qureg
 from QuICT.core.exception import TypeException
 from QuICT.core.layout import Layout, SupremacyLayout
 from QuICT.core.gate import build_random_gate, build_gate
-from QuICT.core.utils import GateType, CircuitInformation
+from QuICT.core.utils import GateType, CircuitInformation, matrix_product_to_circuit
 
 
 # global circuit id count
@@ -553,49 +553,8 @@ class Circuit(object):
 
         Args:
             gate(BasicGate): the gate to be extended.
-
         """
-        return self._inner_matrix_product_to_circuit(self, gate)
-
-    def _inner_matrix_product_to_circuit(self, gate) -> np.ndarray:
-        q_len = len(self.qubits)
-        n = 1 << len(self.qubits)
-
-        new_values = np.zeros((n, n), dtype=np.complex128)
-        targs = gate.targs
-        cargs = gate.cargs
-        if not isinstance(targs, list):
-            targs = [targs]
-        if not isinstance(cargs, list):
-            cargs = [cargs]
-        targs = np.append(
-            np.array(cargs, dtype=int).ravel(),
-            np.array(targs, dtype=int).ravel()
-        )
-        targs = targs.tolist()
-        xor = (1 << q_len) - 1
-        if not isinstance(targs, list):
-            raise Exception("unknown error")
-        matrix = gate.compute_matrix.reshape(1 << len(targs), 1 << len(targs))
-        datas = np.zeros(n, dtype=int)
-        for i in range(n):
-            nowi = 0
-            for kk in range(len(targs)):
-                k = q_len - 1 - targs[kk]
-                if (1 << k) & i != 0:
-                    nowi += (1 << (len(targs) - 1 - kk))
-            datas[i] = nowi
-        for i in targs:
-            xor = xor ^ (1 << (q_len - 1 - i))
-        for i in range(n):
-            nowi = datas[i]
-            for j in range(n):
-                nowj = datas[j]
-                if (i & xor) != (j & xor):
-                    continue
-                new_values[i][j] = matrix[nowi][nowj]
-
-        return new_values
+        return matrix_product_to_circuit(len(self.qubits), gate)
 
     def remapping(self, qureg: Qureg, mapping: list, circuit_update: bool = False):
         if not isinstance(qureg, Qureg):

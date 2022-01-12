@@ -21,13 +21,13 @@ def test_build_gate():
         gate_type = typelist_1qubit[random.randint(0, len(typelist_1qubit) - 1)]
         q1 = Qureg(1)
         params = [random.random()]
-        g1 = build_gate(gate_type, q1, params)        
+        g1 = build_gate(gate_type, q1, params)
         assert g1.type == gate_type and g1.assigned_qubits == q1
 
         # build 2qubits gate
         gate_type = typelist_2qubit[random.randint(0, len(typelist_2qubit) - 1)]
         q2 = Qureg(2)
-        g2 = build_gate(gate_type, q2)        
+        g2 = build_gate(gate_type, q2)
         assert g2.type == gate_type and g2.assigned_qubits == q2
 
 

@@ -37,11 +37,11 @@ class TestCircuit(unittest.TestCase):
 
     def test_sub_circuit(self):
         cir = TestCircuit.based_circuit
-        sub_cir_without_remove = cir.sub_circuit([0, 1, 2], remove = False)
+        sub_cir_without_remove = cir.sub_circuit([0, 1, 2], remove=False)
         assert cir.size() == 74
         assert sub_cir_without_remove.width() == 3
-        
-        sub_cir_with_remove = cir.sub_circuit([0, 3], remove = True)
+
+        sub_cir_with_remove = cir.sub_circuit([0, 3], remove=True)
         assert cir.size() + sub_cir_with_remove.size() == 74
 
     def test_circuit_operation(self):
@@ -59,13 +59,20 @@ class TestCircuit(unittest.TestCase):
         # Add gate by circuit call
         CRz | special_cir([1, 4])
         assert special_cir.gates[-1].targs == [4]
-        
+
+    def test_circuit_matrix_product(self):
+        cir = TestCircuit.based_circuit
+        mp_gate = CZ & [1, 3]
+        mp_data = cir.matrix_product_to_circuit(mp_gate)
+
+        assert mp_data.shape == (1 << 5, 1 << 5)
+
     def test_circuit_remapping(self):
         cir = TestCircuit.based_circuit
         q1 = cir[1:4]
         assert q1[0] == cir[1]
 
-        cir.remapping(q1, [2,1,0])
+        cir.remapping(q1, [2, 1, 0])
         assert q1[0] == cir[3]
 
         q2 = cir[0, 1, 4]

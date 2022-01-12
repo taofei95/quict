@@ -108,7 +108,7 @@ class Qureg(list):
     Attributes:
         qubits([Qubits]): the list of qubits.
     """
-    def __init__(self, qubits = None):
+    def __init__(self, qubits=None):
         """ initial a qureg with qubit(s)
 
         Args:
@@ -167,7 +167,7 @@ class Qureg(list):
             cqureg.append(self[element])
 
         return Qureg(cqureg)
-    
+
     def __getitem__(self, item):
         """ to fit the slice operator, overloaded this function.
 

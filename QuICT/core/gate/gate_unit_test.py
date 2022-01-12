@@ -16,7 +16,7 @@ def test_gate_build():
     h1 = HGate()
     h1 | cir(1)         # 1
     H | cir             # 11
-    
+
     # single qubit gate with param
     my_u1 = U1Gate([1])
     my_u1 | cir(2)      # 12
@@ -29,7 +29,7 @@ def test_gate_build():
 
     # two qubit gate with param
     CU3(1, 0, 0) | cir([5, 6])  # 16
-    
+
     # complexed gate
     CCRz(1) | cir([7, 8, 9])    # 17
     cg_ccrz = CCRz.build_gate()
@@ -57,10 +57,10 @@ def test_gate_attribute():
 
     # test control single
     assert CRz.is_control_single() and not H.is_control_single()
-    
+
     # test diagonal gate
     assert S.is_diagonal() and not H.is_diagonal()
-    
+
     # test unitary gate diagonal
     dmatrix = np.array([
         [1, 0, 0, 0],
@@ -72,7 +72,7 @@ def test_gate_attribute():
         [1 / np.sqrt(2), 1 / np.sqrt(2)],
         [1 / np.sqrt(2), -1 / np.sqrt(2)]
     ], dtype=np.complex128)
-    
+
     dunitary = Unitary(dmatrix)
     bunitary = Unitary(bmatrix)
     assert dunitary.is_diagonal() and not bunitary.is_diagonal()
