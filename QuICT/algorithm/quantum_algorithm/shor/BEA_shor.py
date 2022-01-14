@@ -37,7 +37,7 @@ def order_finding(a:int, N: int, demo = None, eps: float = 1/10,):
     # ancilla = circuit([i for i in range(n+1)])
     x_reg = circuit([i for i in range(n + 1, 2 * n + 1)])
     trickbit = circuit(2 * n + 1)
-    # qreg_low= circuit(2 * n + 2)
+    qreg_low= circuit(2 * n + 2)
     X | x_reg[n - 1]
     for k in range(t):
         H | trickbit
@@ -49,7 +49,9 @@ def order_finding(a:int, N: int, demo = None, eps: float = 1/10,):
         H | trickbit
 
         Measure | trickbit
+        # Measure | qreg_low
         circuit.exec()
+        # assert int(qreg_low)==0
         msg = f'\tthe {k}th trickbit measured to be {int(trickbit)}'
         if demo == 'demo': print(msg)
         else: logging.info(msg)
