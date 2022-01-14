@@ -24,6 +24,7 @@ class TestCircuit(unittest.TestCase):
 
     def test_circuit_build(self):
         cir = TestCircuit.based_circuit
+        qureg = cir.qubits
         cir.random_append()
 
         # append supremacy circuit
@@ -33,16 +34,20 @@ class TestCircuit(unittest.TestCase):
         qft_gate = QFT.build_gate(3)
         qft_gate | cir([0, 1, 3])
 
+        # append gate by qubits/qureg
+        S | cir(qureg[0])
+        CX | cir(qureg[1, 3])
+
         assert 1
 
     def test_sub_circuit(self):
         cir = TestCircuit.based_circuit
         sub_cir_without_remove = cir.sub_circuit([0, 1, 2], remove=False)
-        assert cir.size() == 74
+        assert cir.size() == 76
         assert sub_cir_without_remove.width() == 3
 
         sub_cir_with_remove = cir.sub_circuit([0, 3], remove=True)
-        assert cir.size() + sub_cir_with_remove.size() == 74
+        assert cir.size() + sub_cir_with_remove.size() == 76
 
     def test_circuit_operation(self):
         # append single qubit gate to all qubits
@@ -52,8 +57,7 @@ class TestCircuit(unittest.TestCase):
 
         # Add gate by qubits
         target_q = special_cir[3]
-        my_s = S & target_q
-        my_s | special_cir
+        S | special_cir(target_q)
         assert special_cir.gates[-1].targs == [3]
 
         # Add gate by circuit call

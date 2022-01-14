@@ -6,7 +6,7 @@
 import pytest
 import random
 
-from QuICT.core import Circuit, Qureg, Qubit
+from QuICT.core import Qureg
 
 
 def test_qubit_attr():

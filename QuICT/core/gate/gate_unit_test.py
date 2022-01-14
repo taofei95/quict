@@ -8,6 +8,7 @@ import pytest
 
 from QuICT.core import Circuit, Qureg
 from QuICT.core.gate import *
+from QuICT.core.utils import GateType
 
 
 def test_gate_build():
@@ -40,15 +41,13 @@ def test_gate_build():
 
 def test_gate_name():
     my_gate = PhaseGate()
-    assert len(my_gate.name.split('-')) == 1
+    assert my_gate.name.split('-')[0] == str(GateType.phase)
 
     q = Qureg(1)
-    g2 = my_gate & q
-    assert len(g2.name.split('-')) == 2
 
     cir = Circuit(q)
-    g2 | cir
-    assert len(cir.gates[0].name.split('-')) == 3
+    my_gate | cir(0)
+    assert cir.gates[0].name.split('-')[2] == str(0)
 
 
 def test_gate_attribute():

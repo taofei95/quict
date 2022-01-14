@@ -7,10 +7,11 @@ import numpy as np
 
 from QuICT.core.qubit import Qureg, Qubit
 from QuICT.core.utils import GateType, CircuitInformation, matrix_product_to_circuit
-from QuICT.ops.linalg.cpu_calculator import tensor, dot, MatrixTensorI
+
 
 # global composite gate id count
 cgate_id = 0
+CGATE_LIST = []
 
 
 class CompositeGate:
@@ -28,12 +29,18 @@ class CompositeGate:
         return self._name
 
     def __enter__(self):
+        global CGATE_LIST
+        CGATE_LIST.append(self)
+
         return self
 
     def __exit__(self, exc_type, exc_value, traceback):
-        pass
+        global CGATE_LIST
+        CGATE_LIST.remove(self)
 
-    def __init__(self, wires: int, name: str = None, gates: list = None, with_copy: bool = True):
+        return True
+
+    def __init__(self, wires: int, name: str = None, gates: list = None):
         """ initial a CompositeGate with gate(s)
 
         Args:
@@ -45,7 +52,6 @@ class CompositeGate:
 
         self._name = name if name else f"composite_gate_{self._id}"
         self._qubits = wires
-        self._is_copy = with_copy
         self._gates = []
         self._pointer = -1
 
@@ -120,7 +126,7 @@ class CompositeGate:
         """
         return self._gates[item]
 
-    def __call__(self, indexes: object):
+    def __call__(self, indexes: list):
         if isinstance(indexes, int):
             indexes = [indexes]
 
@@ -137,8 +143,7 @@ class CompositeGate:
         self._pointer = -1
 
     def append(self, gate, is_extend: bool = False):
-        if self._is_copy:
-            gate = gate.copy()
+        gate = gate.copy()
 
         if self._pointer != -1:
             qubit_index = list(self._pointer)
@@ -238,7 +243,7 @@ class CompositeGate:
         Returns:
             str: OpenQASM 2.0 describe
         """
-        qreg = self.width(),
+        qreg = self.width()
         creg = self.count_gate_by_gatetype(GateType.measure)
 
         return CircuitInformation.qasm(qreg, creg, self.gates)
@@ -249,8 +254,7 @@ class CompositeGate:
         Returns:
             CompositeGate: the inverse of the gateSet
         """
-        for gate in self._gates:
-            gate.inverse()
+        self._gates = [gate.inverse() for gate in self._gates]
 
     def matrix(self):
         """ matrix of these gates
@@ -270,8 +274,8 @@ class CompositeGate:
 
         return matrix
 
-    def equal(self, target, ignore_phase=True, eps=1e-7):
-        """
+    def equal(self, target, ignore_phase=True, eps=1e-7):   # TODO: refactoring
+        """ whether is equally with target or not.
 
         Args:
             target(gateSet/BasicGate/Circuit): the target

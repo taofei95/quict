@@ -6,19 +6,19 @@
 import numpy as np
 import copy
 
-from QuICT.core.qubit import Qureg, Qubit
+from QuICT.core.gate.composite_gate import CGATE_LIST
 from QuICT.core.utils import GateType, SPECIAL_GATE_SET, DIAGONAL_GATE_SET
 
 
 class BasicGate(object):
-    """ the abstract SuperClass of all basic quantum cgate
+    """ the abstract SuperClass of all basic quantum gate
 
-    All basic quantum cgate described in the framework have
+    All basic quantum gate described in the framework have
     some common attributes and some common functions
     which defined in this class
 
     Attributes:
-        name(str): the unique name of the gate
+        name(str): the name of the gate
         controls(int): the number of the control bits of the gate
         cargs(list<int>): the list of the index of control bits in the circuit
         carg(int, read only): the first object of cargs
@@ -34,8 +34,7 @@ class BasicGate(object):
         qasm_name(str, read only): gate's name in the OpenQASM 2.0
         type(GateType, read only): gate's type described by GateType
 
-        matrix(np.array): the unitary matrix of the quantum cgate act on targets
-        computer_matrix(np.array): the unitary matrix of the quantum cgate act on controls and targets
+        matrix(np.array): the unitary matrix of the quantum gate act on targets
     """
     @property
     def name(self) -> str:
@@ -52,6 +51,10 @@ class BasicGate(object):
     @matrix.setter
     def matrix(self, matrix) -> np.ndarray:
         self._matrix = matrix
+
+    @property
+    def target_matrix(self) -> np.ndarray:
+        return self._matrix
 
     @property
     def type(self):
@@ -153,7 +156,7 @@ class BasicGate(object):
         assert isinstance(type, GateType)
         self._type = type
         self._qasm_name = str(type.name)
-        self._name = str(type)
+        self._name = "-".join([str(type), "", ""])
 
         self.assigned_qubits = []   # list of qubits
 
@@ -161,9 +164,7 @@ class BasicGate(object):
         """deal the operator '|'
 
         Use the syntax "gate | circuit" or "gate | Composite Gate"
-        to add the gate into the circuit
-        When a one qubit gate act on a qureg or a circuit, it means Adding
-        the gate on all the qubit of the qureg or circuit
+        to add the gate into the circuit or composite gate
         Some Examples are like this:
 
         X       | circuit
@@ -177,6 +178,7 @@ class BasicGate(object):
             targets: the targets the gate acts on, it can have following form,
                 1) Circuit
                 2) CompositeGate
+
         Raise:
             TypeException: the type of other is wrong
         """
@@ -188,12 +190,12 @@ class BasicGate(object):
     def __and__(self, targets):
         """deal the operator '&'
 
-        Use the syntax "gate & int" or "gate & list<int>" to add the parameter into the circuit
-        Some Examples are like this:
+        Use the syntax "gate & int" or "gate & list<int>" to set gate's attribute.
+        Special uses when in composite gate's context.
 
+        Some Examples are like this:
         X       & 1
         CX      & [0, 1]
-        Measure & Qureg/Qubit
 
         Note that the order of qubits is that control bits first
         and target bits followed.
@@ -202,9 +204,9 @@ class BasicGate(object):
             targets: the targets the gate acts on, it can have following form,
                 1) int
                 2) list<int>
-            name(string): the name of the gate
+
         Raise:
-            TypeException: the type of other is wrong
+            TypeError: the type of targets is wrong
         """
         _gate = self.copy()
 
@@ -212,23 +214,18 @@ class BasicGate(object):
             assert _gate.is_single()
 
             _gate.targs = [targets]
-        elif isinstance(targets, Qureg):
-            _gate.assigned_qubits = targets
-            _gate.update_name(targets[0].id)
         elif isinstance(targets, list):
             assert len(targets) == _gate.controls + _gate.targets
 
             _gate.cargs = targets[:_gate.controls]
             _gate.targs = targets[_gate.controls:]
-        elif isinstance(targets, Qubit):
-            assert _gate.is_single()
-
-            _gate.assigned_qubits = Qureg([targets])
-            _gate.update_name(targets.id)
         else:
-            raise TypeError("int or list<int> or Qureg/Qubit", targets)
+            raise TypeError("int or list<int>", targets)
 
-        return _gate
+        if CGATE_LIST:
+            CGATE_LIST[-1].append(_gate)
+        else:
+            return _gate
 
     def __call__(self):
         """ give parameters for the gate.
@@ -256,22 +253,16 @@ class BasicGate(object):
         if isinstance(other, BasicGate):
             if other.name == self.name:
                 return True
+
         return False
 
     def update_name(self, qubit_id: str, circuit_idx: int = None):
-        name_parts = self.name.split('-')
         qubit_id = qubit_id[:6]
-
-        if len(name_parts) == 1:
-            name_parts.append(qubit_id)
-        else:
-            name_parts[1] = qubit_id
+        name_parts = self.name.split('-')
+        name_parts[1] = qubit_id
 
         if circuit_idx is not None:
-            if len(name_parts) == 3:
-                name_parts[2] = str(circuit_idx)
-            else:
-                name_parts.append(str(circuit_idx))
+            name_parts[2] = str(circuit_idx)
 
         self.name = '-'.join(name_parts)
 
@@ -318,7 +309,7 @@ class BasicGate(object):
         """
         return self.copy()
 
-    def commutative(self, goal, eps=1e-7):  # TODO: refactoring
+    def commutative(self, goal, eps=1e-7):
         """ decide whether gate is commutative with another gate
 
         note when the gate is special gates like Unitary, Permutation, Measure and so on, return False.
@@ -326,19 +317,22 @@ class BasicGate(object):
         Args:
             goal(BasicGate): the target gate
             eps(float): the precision of comparision
+
         Return:
             bool: True if commutative
         """
         if self.is_special() or goal.is_special():
             return False
+
         if self.targets > 1 or goal.targets > 1:
             return False
 
-        A = np.array(self.matrix).reshape(2, 2)
-        B = np.array(goal.matrix).reshape(2, 2)
-        if np.allclose(A, np.identity(2), rtol=eps, atol=eps):
-            return True
-        if np.allclose(B, np.identity(2), rtol=eps, atol=eps):
+        A = self.target_matrix
+        B = goal.target_matrix
+        if (
+            np.allclose(A, np.identity(2), rtol=eps, atol=eps) or
+            np.allclose(B, np.identity(2), rtol=eps, atol=eps)
+        ):
             return True
 
         set_controls = set(self.cargs)
@@ -349,9 +343,11 @@ class BasicGate(object):
         commutative_set = set_controls.intersection(set_goal_targets)
         if len(commutative_set) > 0 and not goal.is_diagonal():
             return False
+
         commutative_set = set_goal_controls.intersection(set_targets)
         if len(commutative_set) > 0 and not self.is_diagonal():
             return False
+
         commutative_set = set_goal_targets.intersection(set_targets)
         if len(commutative_set) > 0 and not np.allclose(A.dot(B), B.dot(A), rtol=1.0e-13, atol=1.0e-13):
             return False
@@ -377,9 +373,6 @@ class BasicGate(object):
     def is_diagonal(self) -> bool:
         """ judge whether gate's matrix is diagonal
 
-        Raise:
-            gate must be basic one qubit gate or two qubit gate
-
         Returns:
             bool: True if gate's matrix is diagonal
         """
@@ -393,7 +386,7 @@ class BasicGate(object):
 
     def is_special(self) -> bool:
         """ judge whether gate's is special gate, which is one of
-        [Measure, Reset, Barrier, Perm, Unitary]
+        [Measure, Reset, Barrier, Perm, Unitary, ...]
 
         Returns:
             bool: True if gate's matrix is special
@@ -403,12 +396,6 @@ class BasicGate(object):
     def copy(self):
         """ return a copy of this gate
 
-        Args:
-            name(string): the name of new gate.
-                if name is None and self.name is not None
-                new gate's name will be self.name, and
-                self.name will be None.
-
         Returns:
             gate(BasicGate): a copy of this gate
         """
@@ -417,10 +404,10 @@ class BasicGate(object):
         gate.pargs = copy.deepcopy(self.pargs)
         gate.targs = copy.deepcopy(self.targs)
         gate.cargs = copy.deepcopy(self.cargs)
-        gate.assigned_qubits = copy.deepcopy(self.assigned_qubits)
 
-        if gate.assigned_qubits:
-            self.update_name(gate.assigned_qubits[0].id)
+        if self.assigned_qubits:
+            gate.assigned_qubits = copy.deepcopy(self.assigned_qubits)
+            gate.update_name(gate.assigned_qubits[0].id)
 
         return gate
 
@@ -511,6 +498,7 @@ class XGate(BasicGate):
             params=0,
             type=GateType.x
         )
+
         self.matrix = np.array([
             [0, 1],
             [1, 0]
@@ -740,6 +728,7 @@ class U3Gate(BasicGate):
             params=3,
             type=GateType.u3
         )
+
         self.pargs = params
 
     def __call__(self, alpha, beta, gamma):
@@ -779,6 +768,7 @@ class RxGate(BasicGate):
             params=1,
             type=GateType.rx
         )
+
         self.pargs = params
 
     def __call__(self, alpha):
@@ -790,10 +780,8 @@ class RxGate(BasicGate):
     @property
     def matrix(self):
         return np.array([
-            [np.cos(self.parg / 2),
-             1j * -np.sin(self.parg / 2)],
-            [1j * -np.sin(self.parg / 2),
-             np.cos(self.parg / 2)]
+            [np.cos(self.parg / 2), 1j * -np.sin(self.parg / 2)],
+            [1j * -np.sin(self.parg / 2), np.cos(self.parg / 2)]
         ], dtype=np.complex128)
 
     def inverse(self):
@@ -815,6 +803,7 @@ class RyGate(BasicGate):
             params=1,
             type=GateType.ry
         )
+
         self.pargs = params
 
     def __call__(self, alpha):
@@ -884,6 +873,7 @@ class TGate(BasicGate):
             params=0,
             type=GateType.t
         )
+
         self.matrix = np.array([
             [1, 0],
             [0, 1 / np.sqrt(2) + 1j * 1 / np.sqrt(2)]
@@ -910,6 +900,7 @@ class TDaggerGate(BasicGate):
             params=0,
             type=GateType.tdg
         )
+
         self.matrix = np.array([
             [1, 0],
             [0, 1 / np.sqrt(2) + 1j * -1 / np.sqrt(2)]
@@ -979,6 +970,15 @@ class CZGate(BasicGate):
             [0, 0, 0, -1]
         ], dtype=np.complex128)
 
+        self._target_matrix = np.array([
+            [1, 0],
+            [0, -1]
+        ], dtype=np.complex128)
+
+    @property
+    def target_matrix(self):
+        return self._target_matrix
+
 
 CZ = CZGate()
 
@@ -999,6 +999,15 @@ class CXGate(BasicGate):
             [0, 0, 0, 1],
             [0, 0, 1, 0]
         ], dtype=np.complex128)
+
+        self._target_matrix = np.array([
+            [0, 1],
+            [1, 0]
+        ], dtype=np.complex128)
+
+    @property
+    def target_matrix(self):
+        return self._target_matrix
 
 
 CX = CXGate()
@@ -1021,6 +1030,15 @@ class CYGate(BasicGate):
             [0, 0, 1j, 0]
         ], dtype=np.complex128)
 
+        self._target_matrix = np.array([
+            [0, -1j],
+            [1j, 0]
+        ], dtype=np.complex128)
+
+    @property
+    def target_matrix(self):
+        return self._target_matrix
+
 
 CY = CYGate()
 
@@ -1041,6 +1059,15 @@ class CHGate(BasicGate):
             [0, 0, 1 / np.sqrt(2), 1 / np.sqrt(2)],
             [0, 0, 1 / np.sqrt(2), -1 / np.sqrt(2)]
         ], dtype=np.complex128)
+
+        self._target_matrix = np.array([
+            [1 / np.sqrt(2), 1 / np.sqrt(2)],
+            [1 / np.sqrt(2), -1 / np.sqrt(2)]
+        ], dtype=np.complex128)
+
+    @property
+    def target_matrix(self):
+        return self._target_matrix
 
 
 CH = CHGate()
@@ -1072,6 +1099,13 @@ class CRzGate(BasicGate):
             [0, 1, 0, 0],
             [0, 0, np.exp(-self.parg / 2 * 1j), 0],
             [0, 0, 0, np.exp(self.parg / 2 * 1j)]
+        ], dtype=np.complex128)
+
+    @property
+    def target_matrix(self) -> np.ndarray:
+        return np.array([
+            [np.exp(-self.parg / 2 * 1j), 0],
+            [0, np.exp(self.parg / 2 * 1j)]
         ], dtype=np.complex128)
 
     def inverse(self):
@@ -1109,6 +1143,13 @@ class CU1Gate(BasicGate):
             [0, 1, 0, 0],
             [0, 0, 1, 0],
             [0, 0, 0, np.exp(1j * self.pargs[0])]
+        ], dtype=np.complex128)
+
+    @property
+    def target_matrix(self) -> np.ndarray:
+        return np.array([
+            [1, 0],
+            [0, np.exp(1j * self.pargs[0])]
         ], dtype=np.complex128)
 
     def inverse(self):
@@ -1149,6 +1190,14 @@ class CU3Gate(BasicGate):
             [0, 1, 0, 0],
             [0, 0, np.cos(self.pargs[0] / 2), -np.exp(1j * self.pargs[2]) * np.sin(self.pargs[0] / 2)],
             [0, 0, np.exp(1j * self.pargs[1]) * np.sin(self.pargs[0] / 2),
+             np.exp(1j * (self.pargs[1] + self.pargs[2])) * np.cos(self.pargs[0] / 2)]
+        ], dtype=np.complex128)
+
+    @property
+    def target_matrix(self) -> np.ndarray:
+        return np.array([
+            [np.cos(self.pargs[0] / 2), -np.exp(1j * self.pargs[2]) * np.sin(self.pargs[0] / 2)],
+            [np.exp(1j * self.pargs[1]) * np.sin(self.pargs[0] / 2),
              np.exp(1j * (self.pargs[1] + self.pargs[2])) * np.cos(self.pargs[0] / 2)]
         ], dtype=np.complex128)
 
@@ -1426,8 +1475,6 @@ class PermGate(BasicGate):
     It can change an n-qubit qureg's amplitude by permutaion,
     the parameter is a 2^n list describes the permutation.
     """
-
-    # life cycle
     def __init__(self):
         super().__init__(
             controls=0,
@@ -1436,60 +1483,39 @@ class PermGate(BasicGate):
             type=GateType.perm
         )
 
-    def __call__(self, params=None, name=None):
+    def __call__(self, targets: int, params: list):
         """ pass permutation to the gate
 
         the length of permutaion must be 2^n,
         by which we can calculate the number of targets
 
         Args:
-            params(list/tuple): the permutation parameters
+            params(list): the permutation parameters
 
         Returns:
             PermGate: the gate after filled by parameters
         """
-        self.name = name
+        if not isinstance(params, list) or not isinstance(targets, int):
+            raise TypeError(f"targets must be int not {type(targets)}, and params must be list not {type(params)}")
+
+        self.targets = targets
+        self.params = targets
         self.pargs = []
-        if not isinstance(params, list) or not isinstance(params, tuple):
-            raise TypeError("list or tuple", params)
-        if isinstance(params, tuple):
-            params = list(params)
-        length = len(params)
-        if length == 0:
-            raise Exception("list or tuple shouldn't be empty")
-        n = int(round(np.log2(length)))
-        if (1 << n) != length:
-            raise Exception("the length of list or tuple should be the power of 2")
-        self.params = length
-        self.targets = n
+
+        assert len(params) == targets, "the length of params must equal to targets"
         for idx in params:
-            if not isinstance(idx, int) or idx < 0 or idx >= self.params:
-                raise Exception("the element in the list/tuple should be integer")
+            if not isinstance(idx, int) or idx < 0 or idx >= self.targets:
+                raise Exception("the element in the list should be integer")
+
             if idx in self.pargs:
-                raise Exception("the list/tuple should be a permutation for [0, 2^n) without repeat")
+                raise Exception("the list should be a permutation for [0, n) without repeat")
+
             self.pargs.append(idx)
+
         return self
 
-    @property
-    def matrix(self) -> np.ndarray:
-        matrix = np.array([], dtype=np.complex128)
-        for i in range(self.params):
-            for j in range(self.params):
-                if self.pargs[i] == j:
-                    matrix = np.append(matrix, 1)
-                else:
-                    matrix = np.append(matrix, 0)
-        matrix = matrix.reshape(self.params, self.params)
-        return matrix
-
     def inverse(self):
-        matrix = [0] * self.params
-        i = 0
-        for parg in self.pargs:
-            matrix[parg] = i
-            i += 1
-        self.pargs = matrix
-        self.params = self.params
+        self.pargs = [self.targets - 1 - p for p in self.pargs]
 
 
 Perm = PermGate()
@@ -1508,32 +1534,23 @@ class ControlPermMulDetailGate(BasicGate):
             type=GateType.control_perm_detail
         )
 
-    def __call__(self, params=None, name=None):
+    def __call__(self, a: int, N: int):
         """ pass parameters to the gate
 
-        give parameters (a, N) to the gate
+        give parameters a, N to the gate
 
         Args:
-            params(list/tuple): the oracle's parameters a and N
+            a (int): the integer between 2 and N - 1
+            N (int): a positive integer
 
         Returns:
             ControlPermMulDetailGate: the gate after filled by parameters
         """
-        self.name = name
-        self.pargs = []
-        if not isinstance(params, list) or not isinstance(params, tuple):
-            raise TypeError("list or tuple", params)
-        if isinstance(params, tuple):
-            params = list(params)
-        length = len(params)
-        if length != 2:
-            raise Exception("the list or tuple passed in should contain two values")
-        a = params[0]
-        N = params[1]
         n = int(np.ceil(np.log2(N)))
         self.params = 2
         self.targets = n
         self.pargs = [a, N]
+
         return self
 
     @property
@@ -1552,29 +1569,22 @@ class ControlPermMulDetailGate(BasicGate):
                     pargs.append(idx)
                 else:
                     pargs.append(((idxx * a % N) << 1) + controlxx)
+
         for i in range(1 << (self.targets + self.controls)):
             for j in range(1 << (self.targets + self.controls)):
                 if pargs[i] == j:
                     matrix = np.append(matrix, 1)
                 else:
                     matrix = np.append(matrix, 0)
+
         matrix = matrix.reshape(1 << (self.targets + self.controls), 1 << (self.targets + self.controls))
         return matrix
 
     def inverse(self):
-        def EX_GCD(a, b, arr):
-            if b == 0:
-                arr[0] = 1
-                arr[1] = 0
-                return a
-            g = EX_GCD(b, a % b, arr)
-            t = arr[0]
-            arr[0] = arr[1]
-            arr[1] = t - int(a / b) * arr[1]
-            return g
+        from QuICT.algorithm.quantum_algorithm.shor.utility import ex_gcd
 
         gcd_arr = [0, 1]
-        EX_GCD(self.pargs[0], self.pargs[1], gcd_arr)
+        ex_gcd(self.pargs[0], self.pargs[1], gcd_arr)
         n_inverse = (gcd_arr[0] % self.pargs[1] + self.pargs[1]) % self.pargs[1]
 
         self.pargs = [n_inverse, self.pargs[1]]
@@ -1599,7 +1609,7 @@ class PermShiftGate(BasicGate):
             type=GateType.perm_shift
         )
 
-    def __call__(self, params=None, N=None, name=None):
+    def __call__(self, params: int, N: int):
         """ pass parameters to the gate
 
         give parameters (params, N) to the gate
@@ -1611,16 +1621,12 @@ class PermShiftGate(BasicGate):
         Returns:
             PermShiftGate: the gate after filled by parameters
         """
-        self.name = name
-        if not isinstance(params, int):
-            raise TypeError("int", params)
-        if N is None:
-            raise Exception("PermShift need two parameters")
-        if not isinstance(N, int):
-            raise TypeError("int", N)
+        if not isinstance(params, int) or not isinstance(N, int):
+            raise TypeError(f"params and N must be int. {type(N)}, {type(params)}")
 
         if N <= 0:
             raise Exception("the modulus should be integer")
+
         n = int(round(np.log2(N)))
         self.params = N
         self.targets = n
@@ -1635,6 +1641,7 @@ class PermShiftGate(BasicGate):
                     self.pargs.append(idx)
                 else:
                     self.pargs.append(((((idxx + params) % N + N) % N) << 1) + controlxx)
+
         return self
 
 
@@ -1656,7 +1663,7 @@ class ControlPermShiftGate(BasicGate):
             type=GateType.control_perm_shift
         )
 
-    def __call__(self, params=None, N=None, name=None):
+    def __call__(self, params=None, N=None):
         """ pass parameters to the gate
 
         give parameters (params, N) to the gate
@@ -1668,7 +1675,6 @@ class ControlPermShiftGate(BasicGate):
         Returns:
             PermShiftGate: the gate after filled by parameters
         """
-        self.name = name
         if not isinstance(params, int):
             raise TypeError("int", params)
         if N is None:
@@ -1714,7 +1720,7 @@ class PermMulGate(BasicGate):
             type=GateType.perm_mul
         )
 
-    def __call__(self, params=None, N=None, name=None):
+    def __call__(self, params: int, N: int):
         """ pass parameters to the gate
 
         give parameters (params, N) to the gate
@@ -1726,17 +1732,10 @@ class PermMulGate(BasicGate):
         Returns:
             PermMulGate: the gate after filled by parameters
         """
-        self.name = name
-        if not isinstance(params, int):
-            raise TypeError("int", params)
-        if N is None:
-            raise Exception("PermMul need two parameters")
-        if not isinstance(N, int):
-            raise TypeError("int", N)
-        if N <= 0:
-            raise Exception("the modulus should be integer")
-        if params <= 0:
-            raise Exception("the params should be integer")
+        if not isinstance(params, int) or not isinstance(N, int):
+            raise TypeError(f"Input must be int. {type(params)}, {type(N)}")
+
+        assert (N > 0 and params > 0), "Input must be positive integer."
 
         if np.gcd(params, N) != 1:
             raise Exception(f"params and N should be co-prime, but {params} and {N} are not.")
@@ -1746,13 +1745,16 @@ class PermMulGate(BasicGate):
         n = int(round(np.log2(N)))
         if (1 << n) < N:
             n = n + 1
+
         self.params = N
         self.targets = n
         self.pargs = []
         for idx in range(N):
             self.pargs.append(idx * params % N)
+
         for idx in range(N, 1 << n):
             self.pargs.append(idx)
+
         return self
 
 
@@ -1769,7 +1771,7 @@ class ControlPermMulGate(BasicGate):
             type=GateType.control_perm_mul
         )
 
-    def __call__(self, params=None, N=None, name=None):
+    def __call__(self, params: int, N: int):
         """ pass parameters to the gate
 
         give parameters (params, N) to the gate
@@ -1781,17 +1783,10 @@ class ControlPermMulGate(BasicGate):
         Returns:
             ControlPermMulGate: the gate after filled by parameters
         """
-        self.name = name
-        if not isinstance(params, int):
-            raise TypeError("int", params)
-        if N is None:
-            raise Exception("PermMul need two parameters")
-        if not isinstance(N, int):
-            raise TypeError("int", N)
-        if N <= 0:
-            raise Exception("the modulus should be integer")
-        if params <= 0:
-            raise Exception("the params should be integer")
+        if not isinstance(params, int) or not isinstance(N, int):
+            raise TypeError(f"Input must be int. {type(params)}, {type(N)}")
+
+        assert (N > 0 and params > 0), "Input must be positive integer."
 
         if np.gcd(params, N) != 1:
             raise Exception(f"params and N should be co-prime, but {params} and {N} are not.")
@@ -1812,6 +1807,7 @@ class ControlPermMulGate(BasicGate):
                     self.pargs.append(idx)
                 else:
                     self.pargs.append(((idxx * params % N) << 1) + controlxx)
+
         return self
 
 
@@ -1834,39 +1830,38 @@ class PermFxGate(BasicGate):
             type=GateType.perm_fx
         )
 
-    def __call__(self, params=None, name=None):
+    def __call__(self, n: int, params: list):
         """ pass Fx to the gate
 
         Fx should be a 2^n list that represent a boolean function
         {0, 1}^n -> {0, 1}
 
         Args:
-            params(list):contain 2^n values which are 0 or 1
+            N (int): the number of targets
+            params (list[int]): the list of index, and the index represent which should be 1.
 
         Returns:
             PermFxGate: the gate after filled by parameters
         """
-        self.name = name
         if not isinstance(params, list):
             raise TypeError("list", params)
-        n = int(round(np.log2(len(params))))
-        if len(params) != 1 << n:
-            raise Exception("the length of params should be the power of 2")
+
         N = 1 << n
-        for i in range(N):
-            if params[i] != 0 and params[i] != 1:
-                raise Exception("the range of params should be {0, 1}")
+        if len(params) > N:
+            raise Exception("the length of params should be less than N")
 
         self.params = 1 << (n + 1)
         self.targets = n + 1
         self.pargs = []
+        for idx in params:
+            if idx < 0 or idx >= N:
+                raise Exception("the range of 1's index should be [0, 1)")
 
-        N_2 = N << 1
-        for idx in range(N_2):
-            if params[idx >> 1] == 1:
+            if idx >> 1 == 1:
                 self.pargs.append(idx ^ 1)
             else:
                 self.pargs.append(idx)
+
         return self
 
 
@@ -1888,7 +1883,7 @@ class UnitaryGate(BasicGate):
             type=GateType.unitary
         )
 
-    def __call__(self, params=None):
+    def __call__(self, params: np.array):
         """ pass the unitary matrix
 
         Args:
@@ -1900,47 +1895,44 @@ class UnitaryGate(BasicGate):
         """
         _u = UnitaryGate()
 
-        if isinstance(params, np.ndarray):
-            matrix_size = params.size
-            length, width = params.shape[0], params.shape[1]
+        if isinstance(params, list):
+            params = np.array(params, dtype=np.complex128)
 
-            _u.matrix = params.astype(np.complex128)
-        elif isinstance(params, list):
-            matrix_size = len(params)
-            length = int(round(np.sqrt(matrix_size)))
-            width = matrix_size / length
-
-            _u.matrix = np.array(params, dtype=np.complex128).reshape(length, width)
-        else:
-            raise TypeError("list or np.ndarray", params)
-
+        matrix_size = params.size
         if matrix_size == 0:
             raise Exception("the list or tuple passed in shouldn't be empty")
 
+        length, width = params.shape
         if length != width:
-            raise Exception("the shape of unitary matrix should be square.")
+            N = int(np.log2(matrix_size))
+            assert N ^ 2 == matrix_size, "the shape of unitary matrix should be square."
 
-        n = int(round(np.log2(length)))
-        if (1 << n) != length:
+            params = params.reshape(N, N)
+
+        n = int(np.log2(params.shape[0]))
+        if (1 << n) != params.shape[0]:
             raise Exception("the length of list should be the square of power(2, n)")
 
         _u.targets = n
-
+        _u.matrix = params.astype(np.complex128)
         return _u
 
-    def copy(self, name=None):
-        gate = super().copy(name)
+    def copy(self):
+        gate = super().copy()
         gate.matrix = self.matrix
 
         return gate
 
     def inverse(self):
+        _U = super().copy()
         inverse_matrix = np.array(
             np.mat(self._matrix).reshape(1 << self.targets, 1 << self.targets).H.reshape(1, -1),
             dtype=np.complex128
         )
+        _U.matrix = inverse_matrix
+        _U.targets = self.targets
 
-        self.matrix = inverse_matrix
+        return _U
 
 
 Unitary = UnitaryGate()
@@ -2012,26 +2004,31 @@ class CCXGate(BasicGate):
             [0, 0, 0, 0, 0, 0, 1, 0]
         ], dtype=np.complex128)
 
+        self._target_matrix = np.array([
+            [0, 1],
+            [1, 0]
+        ], dtype=np.complex128)
+
     def build_gate(self):
         from QuICT.core.gate import CompositeGate
 
         cgate = CompositeGate(self.controls + self.targets)
         with cgate:
-            H | cgate(2)
-            CX | cgate([2, 1])
-            T_dagger | cgate(1)
-            CX | cgate(0, 1)
-            T | cgate(1)
-            CX | cgate([2, 1])
-            T_dagger | cgate(1)
-            CX | cgate([0, 1])
-            T | cgate(1)
-            CX | cgate([0, 2])
-            T_dagger | cgate(2)
-            CX | cgate([0, 2])
-            T | cgate(0)
-            T | cgate(2)
-            H | cgate(2)
+            H & 2
+            CX & [2, 1]
+            T_dagger & 1
+            CX & [0, 1]
+            T & 1
+            CX & [2, 1]
+            T_dagger & 1
+            CX & [0, 1]
+            T & 1
+            CX & [0, 2]
+            T_dagger & 2
+            CX & [0, 2]
+            T & 0
+            T & 2
+            H & 2
 
         return cgate
 
@@ -2070,6 +2067,13 @@ class CCRzGate(BasicGate):
             [0, 0, 0, 0, 0, 0, 0, np.exp(self.parg / 2 * 1j)]
         ], dtype=np.complex128)
 
+    @property
+    def target_matrix(self) -> np.ndarray:
+        return np.array([
+            [np.exp(-self.parg / 2 * 1j), 0],
+            [0, np.exp(self.parg / 2 * 1j)]
+        ], dtype=np.complex128)
+
     def inverse(self):
         _CCRz = self.copy()
         _CCRz.pargs = -self.parg
@@ -2081,11 +2085,11 @@ class CCRzGate(BasicGate):
 
         cgate = CompositeGate(self.controls + self.targets)
         with cgate:
-            CRz(self.parg / 2) | cgate([1, 2])
-            CX | cgate([0, 1])
-            CRz(-self.parg / 2) | cgate([1, 2])
-            CX | cgate([0, 1])
-            CRz(self.parg / 2) | cgate([0, 2])
+            CRz(self.parg / 2) & [1, 2]
+            CX & [0, 1]
+            CRz(-self.parg / 2) & [1, 2]
+            CX & [0, 1]
+            CRz(self.parg / 2) & [0, 2]
 
         return cgate
 
@@ -2136,9 +2140,9 @@ class QFTGate(BasicGate):
         cgate = CompositeGate(targets)
         with cgate:
             for i in range(targets):
-                H | cgate(i)
+                H & i
                 for j in range(i + 1, targets):
-                    CRz(2 * np.pi / (1 << j - i + 1)) | cgate([j, i])
+                    CRz(2 * np.pi / (1 << j - i + 1)) & [j, i]
 
         return cgate
 
@@ -2191,8 +2195,8 @@ class IQFTGate(BasicGate):
         with cgate:
             for i in range(targets - 1, -1, -1):
                 for j in range(targets - 1, i, -1):
-                    CRz(-2 * np.pi / (1 << j - i + 1)) | cgate([j, i])
-                H | cgate(i)
+                    CRz(-2 * np.pi / (1 << j - i + 1)) & [j, i]
+                H & i
 
         return cgate
 
@@ -2225,28 +2229,39 @@ class CSwapGate(BasicGate):
             [0, 0, 0, 0, 0, 0, 0, 1]
         ], dtype=np.complex128)
 
+        self._target_matrix = np.array([
+            [1, 0, 0, 0],
+            [0, 0, 1, 0],
+            [0, 1, 0, 0],
+            [0, 0, 0, 1]
+        ], dtype=np.complex128)
+
+    @property
+    def target_matrix(self) -> np.ndarray:
+        return self._target_matrix
+
     def build_gate(self):
         from QuICT.core.gate import CompositeGate
 
         cgate = CompositeGate(self.controls + self.targets)
         with cgate:
-            CX | cgate([2, 1])
-            H | cgate(2)
-            CX | cgate([2, 1])
-            T_dagger | cgate(1)
-            CX | cgate([0, 1])
-            T | cgate(1)
-            CX | cgate([2, 1])
-            T_dagger | cgate(1)
-            CX | cgate([0, 1])
-            T | cgate(1)
-            CX | cgate([0, 2])
-            T_dagger | cgate(2)
-            CX | cgate([0, 2])
-            T | cgate(0)
-            T | cgate(2)
-            H | cgate(2)
-            CX | cgate([2, 1])
+            CX & [2, 1]
+            H & 2
+            CX & [2, 1]
+            T_dagger & 1
+            CX & [0, 1]
+            T & 1
+            CX & [2, 1]
+            T_dagger & 1
+            CX & [0, 1]
+            T & 1
+            CX & [0, 2]
+            T_dagger & 2
+            CX & [0, 2]
+            T & 0
+            T & 2
+            H & 2
+            CX & [2, 1]
 
         return cgate
 

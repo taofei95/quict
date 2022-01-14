@@ -3,18 +3,10 @@
 # @TIME    : 2020/2/10 8:44
 # @Author  : Han Yu
 # @File    : _qubit.py
-import uuid
 import random
 
 from QuICT.core.exception import *
-
-
-def unique_id_generator():
-    """ Generate unique ID for result. """
-    u_id = uuid.uuid1()
-    u_id = str(u_id).replace("-", "")
-
-    return u_id
+from QuICT.core.utils import unique_id_generator
 
 
 class Qubit(object):
@@ -54,7 +46,7 @@ class Qubit(object):
     def prob(self, prob):
         self._prob = prob
 
-    def __init__(self, prob: float = None):
+    def __init__(self, prob: float = random.random()):
         """ initial a qubit with a circuit
 
         Args:
@@ -62,7 +54,7 @@ class Qubit(object):
         """
         self._id = unique_id_generator()
         self._measured = -1
-        self._prob = random.random() if prob is None else prob
+        self._prob = prob
 
     def __str__(self):
         """ string describe of the qubit
@@ -83,6 +75,7 @@ class Qubit(object):
         """
         if self.measured == -1:
             raise Exception(f"The qubit {self.id} has not be measured")
+
         return self.measured
 
     def __bool__(self):
@@ -96,8 +89,8 @@ class Qubit(object):
         """
         if self.measured == -1:
             raise Exception(f"The qubit {self.id} has not be measured")
-        else:
-            return bool(self.measured)
+
+        return bool(self.measured)
 
 
 class Qureg(list):
@@ -151,22 +144,10 @@ class Qureg(list):
             IndexDuplicateException: the range of indexes is error.
             TypeException: the type of indexes is error.
         """
-        if isinstance(indexes, int):        # int
-            indexes = [indexes]
+        if isinstance(indexes, int):
+            return Qureg(self[indexes])
 
-        if len(indexes) != len(set(indexes)):
-            raise IndexDuplicateException(indexes)
-
-        cqureg = []
-        for element in indexes:
-            if not isinstance(element, int):
-                raise TypeException("int", element)
-            if element < 0 or element >= len(self):
-                raise IndexLimitException(len(self), element)
-
-            cqureg.append(self[element])
-
-        return Qureg(cqureg)
+        return self[indexes]
 
     def __getitem__(self, item):
         """ to fit the slice operator, overloaded this function.
@@ -222,7 +203,7 @@ class Qureg(list):
         return value
 
     def __str__(self):
-        """ a simple describe
+        """ the string of the value of the register
 
         Returns:
             str: the value of the qureg
@@ -233,12 +214,11 @@ class Qureg(list):
         return bit_idx
 
     def __add__(self, other):
-        """ to fit the add operator, overloaded this function.
-
-        get a smaller qureg/qubit from this qureg
+        """ get a combined qureg with this qureg and other qureg
 
         Args:
             other(Qureg): qureg to be added.
+
         Return:
             Qureg: the result or slice
         """
@@ -248,6 +228,13 @@ class Qureg(list):
         return super().__add__(other)
 
     def __eq__(self, other):
+        """
+        check two qureg is same or not. Iff all qubits in two qureg are same will
+        return True; otherwise, return False.
+
+        Args:
+            other(Qureg): qureg to be checked.
+        """
         assert len(other) == len(self) and isinstance(other, Qureg)
         current_qubit_ids = [qubit.id for qubit in self]
 
@@ -258,6 +245,14 @@ class Qureg(list):
         return True
 
     def diff(self, other):
+        """ return different qubits between two quregs
+
+        Args:
+            other (Qureg): The compare qureg
+
+        Returns:
+            Qureg: The qureg with different qubits
+        """
         others_qubit_ids = [qubit.id for qubit in other]
         diff_qubit = []
 

@@ -120,7 +120,7 @@ class Circuit(object):
         elif isinstance(wires, Qureg):
             self._qubits = wires
         elif isinstance(wires, Qubit):
-            self._qubits = Qureg([Qubit])
+            self._qubits = Qureg([wires])
         else:
             raise TypeException("int/list<Qubits/Qureg>/Qureg/Qubit", wires)
 
@@ -257,6 +257,8 @@ class Circuit(object):
             indexes: the indexes passed in, it can have follow form:
                 1) int
                 2) list<int>
+                3) Qubit
+                4) Qureg
         Returns:
             Qureg: the qureg correspond to the indexes
         Exceptions:
@@ -265,9 +267,13 @@ class Circuit(object):
         """
         if isinstance(indexes, int):
             assert indexes >= 0 and indexes < self.width()
+        elif isinstance(indexes, Qureg):
+            indexes = [self.index_for_qubit(q) for q in indexes]
         elif isinstance(indexes, list):
             for idx in indexes:
                 assert idx >= 0 and idx < self.width()
+        elif isinstance(indexes, Qubit):
+            indexes = self.index_for_qubit(indexes)
         else:
             raise TypeError("only accept int/list[int]")
 
@@ -286,7 +292,7 @@ class Circuit(object):
         """
         return self.qubits[item]
 
-    def __or__(self, targets):
+    def __or__(self, targets):      # TODO: fix it
         """deal the operator '|'
 
         Use the syntax "circuit | circuit"
