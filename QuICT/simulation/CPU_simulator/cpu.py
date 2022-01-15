@@ -5,7 +5,7 @@ from QuICT.core import *
 import warnings
 import os
 import importlib.util
-from typing import List, Union, Iterable
+from typing import List, Union, Iterable, Tuple
 import numpy as np
 
 cur_path = os.path.dirname(os.path.abspath(__file__))
@@ -178,7 +178,7 @@ class CircuitSimulator:
         """
         pass
 
-    def run(self, circuit: Circuit, keep_state: bool = False) -> np.ndarray:
+    def run(self, circuit: Circuit, keep_state: bool = False) -> Tuple[np.ndarray, List[int]]:
         """Run simulation by gate description sequence.
 
         Parameters
@@ -190,7 +190,7 @@ class CircuitSimulator:
 
         Returns
         -------
-        A complex numpy array representing the amplitude vector.
+        A tuple with a complex numpy array representing the amplitude vector and measure results.
         """
         warnings.warn(
             message="Attention! You are using a working-in-process version of circuit simulator!",

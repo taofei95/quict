@@ -52,7 +52,8 @@ namespace QuICT {
                 uint64_t q_state_bit_num,
                 const GateDescription<Precision> &gate_desc,
                 Precision *real,
-                Precision *imag
+                Precision *imag,
+                std::vector<int> &measure_res
         );
 
         inline void run(
@@ -192,7 +193,8 @@ namespace QuICT {
             uint64_t q_state_bit_num,
             const GateDescription<Precision> &gate_desc,
             Precision *real,
-            Precision *imag
+            Precision *imag,
+            std::vector<int> &measure_res
     ) {
         auto search = dispatcher.find(gate_desc.gate_name_);
         if (search == dispatcher.end()) {
@@ -250,7 +252,8 @@ namespace QuICT {
                 }
                 case gate_category::measure: {
                     auto measure_gate = MeasureGate(gate_desc.affect_args_[0]);
-                    apply_measure_gate(q_state_bit_num, measure_gate, real, imag);
+                    int res = apply_measure_gate(q_state_bit_num, measure_gate, real, imag);
+                    measure_res.push_back(res);
                     break;
                 }
                 default: {

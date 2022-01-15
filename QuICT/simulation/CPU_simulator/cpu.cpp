@@ -11,6 +11,7 @@
 #include <vector>
 #include <complex>
 #include <cstdint>
+#include <tuple>
 #include "./src/utility.h"
 #include "./src/circuit_simulator.h"
 
@@ -25,21 +26,26 @@ namespace QuICT {
     public:
         CircuitSimulatorBind(uint64_t qubit_num) : CircuitSimulator<double>(qubit_num) {}
 
-        inline py::array_t<std::complex<double>>
-        run_numpy(const std::vector<GateDescription<double>> &gate_desc_vec, bool keep_state) {
-            std::complex<double> *raw_ptr = run(gate_desc_vec, keep_state);
+        inline std::tuple<py::array_t<std::complex<double>>, std::vector<int>>
+        run_numpy(
+                const std::vector<GateDescription<double>> &gate_desc_vec,
+                bool keep_state
+        ) {
+            std::vector<int> measure_res;
+            std::complex<double> *raw_ptr = run(gate_desc_vec, measure_res, keep_state);
 
             py::capsule auto_delete_wrapper(raw_ptr, [](void *ptr) {
                 auto data_ptr = reinterpret_cast<std::complex<double> *>(ptr);
                 delete[] data_ptr;
             });
 
-            return py::array_t<std::complex<double>>(
+            auto amplitude = py::array_t<std::complex<double>>(
                     {1ULL << this->qubit_num_}, // shape
                     {sizeof(std::complex<double>)}, // stride
                     raw_ptr, // data pointer
                     auto_delete_wrapper // numpy array reference this parent
             );
+            return std::make_tuple(amplitude, measure_res);
         }
     };
 }

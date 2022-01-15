@@ -38,7 +38,11 @@ namespace QuICT {
         }
 
         inline std::complex<Precision> *
-        run(const std::vector<GateDescription<Precision>> &gate_desc_vec, bool keep_state);
+        run(
+                const std::vector<GateDescription<Precision>> &gate_desc_vec,
+                std::vector<int> &measure_res,
+                bool keep_state
+        );
 
     protected:
         std::string name_;
@@ -51,6 +55,7 @@ namespace QuICT {
     template<typename Precision>
     std::complex<Precision> *CircuitSimulator<Precision>::run(
             const std::vector<GateDescription<Precision>> &gate_desc_vec,
+            std::vector<int> &measure_res,
             bool keep_state
     ) {
         if (!keep_state || (real_ == nullptr && imag_ == nullptr)) {
@@ -64,11 +69,11 @@ namespace QuICT {
         }
         if (qubit_num_ > 4) { // Can use matricks simulator
             for (const auto &gate_desc: gate_desc_vec) {
-                matricks_sim_.apply_gate(qubit_num_, gate_desc, real_, imag_);
+                matricks_sim_.apply_gate(qubit_num_, gate_desc, real_, imag_, measure_res);
             }
         } else { // Only can use plain simulator
             for (const auto &gate_desc: gate_desc_vec) {
-                tiny_sim_.apply_gate(qubit_num_, gate_desc, real_, imag_);
+                tiny_sim_.apply_gate(qubit_num_, gate_desc, real_, imag_, measure_res);
             }
         }
         auto res = new std::complex<Precision>[1 << qubit_num_];
