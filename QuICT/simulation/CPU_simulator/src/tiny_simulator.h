@@ -8,6 +8,8 @@
 #include <vector>
 #include <complex>
 #include <string>
+#include <random>
+#include <chrono>
 
 #include "utility.h"
 #include "gate.h"
@@ -18,6 +20,9 @@ namespace QuICT {
     class TinySimulator {
     protected:
         std::string name_;
+        std::default_random_engine random_gen;
+        std::uniform_real_distribution<double> random_dist;
+
     public:
         TinySimulator() {
             using namespace std;
@@ -30,6 +35,9 @@ namespace QuICT {
             } else if (std::is_same_v<Precision, float>) {
                 name_ += " [float]";
             }
+
+            random_gen.seed(std::chrono::system_clock::now().time_since_epoch().count());
+            random_dist =  std::uniform_real_distribution<double>(0.0,1.0);
         }
 
         inline const std::string &name() {
@@ -104,7 +112,7 @@ namespace QuICT {
                 Precision *imag
         );
 
-        inline void apply_measure_gate(
+        inline int apply_measure_gate(
                 uint64_t q_state_bit_num,
                 const MeasureGate &gate,
                 Precision *real,
@@ -205,8 +213,8 @@ namespace QuICT {
                     break;
                 }
                 case gate_category::measure: {
-                    throw std::runtime_error(
-                            std::string(__func__) + ": " + "Not implemented gate - " + gate_desc.gate_name_);
+                    auto measure_gate = MeasureGate(gate_desc.affect_args_[0]);
+                    apply_measure_gate(q_state_bit_num, measure_gate, real, imag);
                     break;
                 }
                 default: {
@@ -402,6 +410,34 @@ namespace QuICT {
             std::swap(real[inds[0]], real[inds[1]]);
             std::swap(imag[inds[0]], imag[inds[1]]);
         }
+    }
+
+    template<typename Precision>
+    inline int TinySimulator<Precision>::apply_measure_gate(
+            uint64_t q_state_bit_num,
+            const MeasureGate &gate,
+            Precision *real,
+            Precision *imag
+    ) {
+        uint64_t task_num = 1ULL << (q_state_bit_num - 1);
+        Precision amp_sum = 0;
+        for (uint64_t task_id = 0; task_id < task_num; task_id += 1) {
+            auto inds = index(task_id, q_state_bit_num, gate.targ_);
+            Precision amp = real[inds[0]] * real[inds[0]] + imag[inds[0]] * imag[inds[0]];
+            amp_sum += amp;
+        }
+
+        int chosen = random_dist(random_gen) > amp_sum;
+        Precision coef = chosen ? sqrt(1 - amp_sum) : sqrt(amp_sum);
+
+        for (uint64_t task_id = 0; task_id < task_num; task_id += 1) {
+            auto inds = index(task_id, q_state_bit_num, gate.targ_);
+            real[inds[chosen]] /= coef;
+            imag[inds[chosen]] /= coef;
+            real[inds[chosen^1]] = 0;
+            imag[inds[chosen^1]] = 0;
+        }
+        return chosen;
     }
 }
 

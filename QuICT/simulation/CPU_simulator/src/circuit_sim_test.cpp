@@ -41,3 +41,7 @@ TEST(CircuitTest, QFTTest) {
     test_circuit_simulator("./test_data/qft.txt");
 }
 
+TEST(CircuitTest, MeasureTest) {
+    test_circuit_simulator("./test_data/measure.txt",
+                           1e-2, true, true, 10000);
+}

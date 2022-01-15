@@ -28,7 +28,7 @@ void get_compare_data(
         uint64_t &qubit_num,
         std::complex<Precision> **expect_state,
         std::vector<QuICT::GateDescription<Precision>> &gate_desc_vec,
-        bool if_compare_data = true
+        bool have_compare_data = true
 ) {
     using namespace std;
 
@@ -156,7 +156,7 @@ void get_compare_data(
     }
 
     *expect_state = nullptr;
-    if(if_compare_data)
+    if(have_compare_data)
     {
         *expect_state = new std::complex<Precision>[1ULL << qubit_num];
 
@@ -178,7 +178,9 @@ void test_stateless_simulator(
         _str_T data_name,
         _sim_T<Precision> &simulator,
         double eps = 1e-6,
-        bool if_compare_data = true
+        bool have_compare_data = true,
+        bool have_measure_gate = false,
+        int n_run = 1
 ) {
     using namespace std;
 
@@ -188,15 +190,35 @@ void test_stateless_simulator(
     std::vector<QuICT::GateDescription<Precision>> gate_desc_vec;
     complex<Precision> *expect_state;
 
-    get_compare_data(data_name, qubit_num, &expect_state, gate_desc_vec, if_compare_data);
+    get_compare_data(data_name, qubit_num, &expect_state, gate_desc_vec, have_compare_data);
 
-    auto start = std::chrono::system_clock::now();
-    std::complex<Precision> *state = simulator.run(qubit_num, gate_desc_vec);
-    auto end = std::chrono::system_clock::now();
-    std::chrono::duration<double> diff = end - start;
-    std::cout << "Simulation costs " << diff.count() << " s\n";
+    std::complex<Precision> *state;
+    if(have_measure_gate)
+    {
+        state = new complex<Precision>[1 << qubit_num];
+        fill(state, state + (1 << qubit_num), 0);
+        for(int _ = 0; _ < n_run; _++)
+        {
+            std::complex<Precision> *cur = simulator.run(qubit_num, gate_desc_vec);
+            for(uint64_t i = 0; i < (1 << qubit_num); i++) state[i] += cur[i];
+            delete[] cur;
+        }
+        for(uint64_t i = 0; i < (1 << qubit_num); i++)
+        {
+            state[i] /= n_run;
+//            cout << state[i] << endl;
+        }
+    }
+    else
+    {
+        auto start = std::chrono::system_clock::now();
+        state = simulator.run(qubit_num, gate_desc_vec);
+        auto end = std::chrono::system_clock::now();
+        std::chrono::duration<double> diff = end - start;
+        std::cout << "Simulation costs " << diff.count() << " s\n";
+    }
 
-    if (if_compare_data) {
+    if (have_compare_data) {
         for (uint64_t i = 0; i < (1ULL << qubit_num); ++i) {
             ASSERT_NEAR(state[i].real(), expect_state[i].real(), eps) << "i = " << i;
             ASSERT_NEAR(state[i].imag(), expect_state[i].imag(), eps) << "i = " << i;
@@ -217,29 +239,60 @@ template<
 >
 void test_circuit_simulator(
         _str_T data_name,
-        double eps = 1e-6
+        double eps = 1e-6,
+        bool have_compare_data = true,
+        bool have_measure_gate = false,
+        int n_run = 1
 ) {
     using namespace std;
 
     uint64_t qubit_num;
     std::vector<QuICT::GateDescription<Precision>> gate_desc_vec;
     complex<Precision> *expect_state;
-    get_compare_data(data_name, qubit_num, &expect_state, gate_desc_vec);
+    get_compare_data(data_name, qubit_num, &expect_state, gate_desc_vec, have_compare_data);
 
     auto simulator = QuICT::CircuitSimulator<Precision>(qubit_num);
     cout << simulator.name() << " " << "Testing by " << data_name << endl;
 
-    auto start = std::chrono::system_clock::now();
-    std::complex<Precision> *state = simulator.run(gate_desc_vec);
-    auto end = std::chrono::system_clock::now();
-    std::chrono::duration<double> diff = end - start;
-    std::cout << "Simulation costs " << diff.count() << " s\n";
-
-
-    for (uint64_t i = 0; i < (1ULL << qubit_num); ++i) {
-        ASSERT_NEAR(state[i].real(), expect_state[i].real(), eps) << "i = " << i;
-        ASSERT_NEAR(state[i].imag(), expect_state[i].imag(), eps) << "i = " << i;
+    std::complex<Precision> *state;
+    if(have_measure_gate)
+    {
+        state = new complex<Precision>[1 << qubit_num];
+        fill(state, state + (1 << qubit_num), 0);
+        for(int _ = 0; _ < n_run; _++)
+        {
+            // FIXME: it seems that CircuitSimulator outputs wrong state values if run multiple times
+            auto sim_ = QuICT::CircuitSimulator<Precision>(qubit_num);
+            std::complex<Precision> *cur = sim_.run(gate_desc_vec);
+            for(uint64_t i = 0; i < (1 << qubit_num); i++) state[i] += cur[i];
+            delete[] cur;
+        }
+        for(uint64_t i = 0; i < (1 << qubit_num); i++)
+        {
+            state[i] /= n_run;
+//            cout << state[i] << endl;
+        }
     }
+    else
+    {
+        auto start = std::chrono::system_clock::now();
+        state = simulator.run(gate_desc_vec);
+        auto end = std::chrono::system_clock::now();
+        std::chrono::duration<double> diff = end - start;
+        std::cout << "Simulation costs " << diff.count() << " s\n";
+    }
+
+    if (have_compare_data) {
+        for (uint64_t i = 0; i < (1ULL << qubit_num); ++i) {
+            ASSERT_NEAR(state[i].real(), expect_state[i].real(), eps) << "i = " << i;
+            ASSERT_NEAR(state[i].imag(), expect_state[i].imag(), eps) << "i = " << i;
+        }
+    } else {
+        for (uint64_t i = 0; i < (1ULL << qubit_num); ++i) {
+            cout << i << ":\t" << state[i] << endl;
+        }
+    }
+
     delete[] state;
     delete[] expect_state;
 }
