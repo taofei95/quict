@@ -33,7 +33,6 @@ def ex_gcd(a, b, coff):
     coff[1] = t - a // b * coff[1]
     return r
 
-<<<<<<< HEAD
 '''
 def test_DraperAdder():
     for a in range(0, 20):
@@ -53,27 +52,6 @@ def test_DraperAdder():
                 print("{0}+{1}={2}".format(str(a), str(b), str(bb)))
                 assert 0
     assert 1
-=======
-# TODO: fix drapper adder
-# def test_DraperAdder():
-#     for a in range(0, 20):
-#         for b in range(0, 20):
-#             n = max(len(bin(a)) - 2, len(bin(b)) - 2)
-#             circuit = Circuit(n * 2)
-#             qreg_a = circuit(list(range(n)))
-#             qreg_b = circuit(list(range(n, n * 2)))
-#             set_qureg(qreg_a, a)
-#             set_qureg(qreg_b, b)
-#             BEAAdder.execute(n) | circuit
-#             Measure | circuit
-#             circuit.exec()
-#             # aa = int(qreg_a)
-#             bb = int(qreg_b)
-#             if bb != (a + b) % (2 ** n):
-#                 print("{0}+{1}={2}".format(str(a), str(b), str(bb)))
-#                 assert 0
-#     assert 1
->>>>>>> 1a462b4797309543b767413f7f9b1f6862f314b9
 
 
 def test_FourierAdderWired():
@@ -178,15 +156,9 @@ def test_BEACUa():
                     circuit.exec()
                     bb = int(qreg_b)
                     xx = int(qreg_x)
-<<<<<<< HEAD
                     cc = int(qreg_c)
                     low = int(qreg_low)
                     print("b = {0}, x = {1} , c = {2}, low = {3}".format(str(bb), str(xx), str(cc), str(low)))
-=======
-                    # bb = int(qreg_b)
-                    print("{0}*{1} mod {2}={3}".format(str(a),
-                          str(x), str(N), str(xx)))
->>>>>>> 1a462b4797309543b767413f7f9b1f6862f314b9
                     if c == 0:
                         assert (bb == 0) and (xx == x) and (cc == c) and (low == 0)
                     else:
