@@ -8,6 +8,9 @@ import numpy as np
 
 from QuICT import *
 from QuICT.qcda.synthesis.mct import MCTLinearOneDirtyAux
+from QuICT.algorithm import amplitude
+
+from quict.QuICT.algorithm.amplitude.amplitude import Amplitude
 
 
 class Grover:
@@ -51,6 +54,7 @@ class Grover:
             X | index_q
             # control phase shift end
             H | index_q
+        Amplitude.run(circuit)
         Measure | index_q
         circuit.exec()
         return int(index_q)
