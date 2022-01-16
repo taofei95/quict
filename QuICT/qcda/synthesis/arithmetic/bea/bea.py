@@ -517,7 +517,7 @@ class BEACUa(Synthesis):
             c(Qureg):    the qureg stores c,        length is 1,
             low(Qureg):  the clean ancillary qubit, length is 1,
 
-        Circuit for Shor’s algorithm using 2n+3 qubits
+        Circuit for Shor's algorithm using 2n+3 qubits
         http://arxiv.org/abs/quant-ph/0205095v3
         """
 

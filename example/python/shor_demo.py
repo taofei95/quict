@@ -4,14 +4,12 @@
 # @Author  : Zhu Qinlin
 # @File    : shor_demo.py
 
-from QuICT.algorithm import HRSShorFactor
+from QuICT.algorithm import HRSShorFactor, BEAShorFactor
 
-N = int(input("Input the number to be factored: "))
-
+N = int(input("[HRS]Input the number to be factored: "))
 a = HRSShorFactor.run(N,5,'demo')
-
 print("HRSShor found factor", a)
 
-#a = HRSShorFactor.run(N,5,'demo')
-
-#print("HRSShor found factor", a)
+N = int(input("[BEA]Input the number to be factored: "))
+a = BEAShorFactor.run(N,5,'demo')
+print("BEAShor found factor", a)
