@@ -1094,7 +1094,7 @@ class CRzGate(BasicGate):
 
     @property
     def matrix(self):
-        self.matrix = np.array([
+        return np.array([
             [1, 0, 0, 0],
             [0, 1, 0, 0],
             [0, 0, np.exp(-self.parg / 2 * 1j), 0],
