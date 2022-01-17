@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 # -*- coding:utf8 -*-
-# @TIME    : 2021/3/24 9:36 下午
-# @Author  : Han Yu
-# @File    : composite_gate
+# @TIME    : 2022/1/14 9:36 下午
+# @Author  : Han Yu, Li Kaiqi
+# @File    : composite_gate.py
 import numpy as np
 
 from QuICT.core.qubit import Qureg, Qubit

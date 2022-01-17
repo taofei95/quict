@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding:utf8 -*-
-# @TIME    : 2021/3/28 12:03 上午
-# @Author  : Han Yu
+# @TIME    : 2022/1/18 12:03 上午
+# @Author  : Li Kaiqi
 # @File    : composite_gate_unit_test
 import unittest
 

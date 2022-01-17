@@ -1,7 +1,12 @@
+#!/usr/bin/env python
+# -*- coding:utf8 -*-
+# @TIME    : 2022/1/17 9:04
+# @Author  : Li Kaiqi
+# @File    : gate_builder_unit_test.py
 import pytest
 import random
 
-from QuICT.core import Qureg, Qubit
+from QuICT.core import Qureg
 from QuICT.core.gate import build_gate, build_random_gate
 from QuICT.core.utils import GateType
 

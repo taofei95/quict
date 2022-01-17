@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding:utf8 -*-
-# @TIME    : 2020/11/23 4:30
-# @Author  : Han Yu
+# @TIME    : 2022/1/23 4:30
+# @Author  : Li Kaiqi
 # @File    : model_unit_test.py
 import numpy as np
 import pytest

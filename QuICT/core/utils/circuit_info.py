@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding:utf8 -*-
-# @TIME    : 2020/12/11 10:31
-# @Author  : Han Yu
+# @TIME    : 2022/1/15 10:31
+# @Author  : Han Yu, Li Kaiqi
 # @File    : _circuit_computing.py
 
 import random

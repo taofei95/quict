@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding:utf8 -*-
-# @TIME    : 2020/12/11 10:54
-# @Author  : Han Yu
+# @TIME    : 2022/1/14 10:54
+# @Author  : Han Yu, Li Kaiqi
 # @File    : _gateBuilder.py
 import numpy as np
 import random

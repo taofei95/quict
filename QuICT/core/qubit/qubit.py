@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 # -*- coding:utf8 -*-
-# @TIME    : 2020/2/10 8:44
-# @Author  : Han Yu
-# @File    : _qubit.py
+# @TIME    : 2022/1/17 8:44
+# @Author  : Han Yu, Li Kaiqi
+# @File    : qubit.py
 import random
 
 from QuICT.core.exception import *
@@ -225,7 +225,10 @@ class Qureg(list):
         if not isinstance(other, Qureg):
             raise TypeError("Qureg only can add another qureg.")
 
-        return super().__add__(other)
+        for q in other:
+            self.append(q)
+
+        return self
 
     def __eq__(self, other):
         """
@@ -235,9 +238,11 @@ class Qureg(list):
         Args:
             other(Qureg): qureg to be checked.
         """
-        assert len(other) == len(self) and isinstance(other, Qureg)
-        current_qubit_ids = [qubit.id for qubit in self]
+        assert isinstance(other, Qureg)
+        if not len(other) == len(self):
+            return False
 
+        current_qubit_ids = [qubit.id for qubit in self]
         for qubit in other:
             if qubit.id not in current_qubit_ids:
                 return False
@@ -253,11 +258,11 @@ class Qureg(list):
         Returns:
             Qureg: The qureg with different qubits
         """
-        others_qubit_ids = [qubit.id for qubit in other]
+        qubit_ids = [qubit.id for qubit in self]
         diff_qubit = []
 
-        for qubit in self:
-            if qubit.id not in others_qubit_ids:
+        for qubit in other:
+            if qubit.id not in qubit_ids:
                 diff_qubit.append(qubit)
 
         return Qureg(diff_qubit)

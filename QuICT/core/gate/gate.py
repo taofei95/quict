@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 # -*- coding:utf8 -*-
-# @TIME    : 2020/2/10 9:04
-# @Author  : Han Yu
-# @File    : _gate.py
+# @TIME    : 2022/1/17 9:04
+# @Author  : Han Yu, Li Kaiqi
+# @File    : gate.py
 import numpy as np
 import copy
 
@@ -1486,8 +1486,7 @@ class PermGate(BasicGate):
     def __call__(self, targets: int, params: list):
         """ pass permutation to the gate
 
-        the length of permutaion must be 2^n,
-        by which we can calculate the number of targets
+        the length of permutaion must be n, and should be a permutation for [0, n) without repeat
 
         Args:
             params(list): the permutation parameters

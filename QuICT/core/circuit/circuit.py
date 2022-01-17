@@ -1,14 +1,14 @@
 #!/usr/bin/env python
 # -*- coding:utf8 -*-
-# @TIME    : 2020/2/10 9:41
-# @Author  : Han Yu
-# @File    : _circuit.py
+# @TIME    : 2022/1/17 9:41
+# @Author  : Han Yu, Kaiqi Li
+# @File    : circuit.py
 import numpy as np
 
 from QuICT.core.qubit import Qubit, Qureg
 from QuICT.core.exception import TypeException
 from QuICT.core.layout import Layout, SupremacyLayout
-from QuICT.core.gate import build_random_gate, build_gate
+from QuICT.core.gate import H, Measure, build_random_gate, build_gate
 from QuICT.core.utils import GateType, CircuitInformation, matrix_product_to_circuit
 
 
@@ -51,7 +51,7 @@ class Circuit(object):
         return self._qubits
 
     @qubits.setter
-    def qubits(self, qubits):
+    def qubits(self, qubits: Qureg):
         self._qubits = qubits
 
     @property
@@ -114,28 +114,18 @@ class Circuit(object):
         self._name = "circuit_" + str(self.id) if name is None else name
         self._topology = topology
         self._fidelity = fidelity
-
-        if isinstance(wires, int) or isinstance(wires, list):
-            self._qubits = Qureg(wires)
-        elif isinstance(wires, Qureg):
-            self._qubits = wires
-        elif isinstance(wires, Qubit):
-            self._qubits = Qureg([wires])
-        else:
-            raise TypeException("int/list<Qubits/Qureg>/Qureg/Qubit", wires)
-
-        self._update_idmap()
-
         self._gates = []
         self._pointer = -1
 
-    def _qubit_update(self, qubits, is_append: bool = False):
-        if not is_append:
-            self._qubits = qubits
-            self._idmap = {}
+        if isinstance(wires, Qureg):
+            self._qubits = wires
         else:
-            self._qubits = self._qubits + qubits
+            self._qubits = Qureg(wires)
 
+        self._update_idmap()
+
+    def _update_idmap(self):
+        self._idmap = {}
         for idx, qubit in enumerate(self.qubits):
             self._idmap[qubit.id] = idx
 
@@ -146,7 +136,6 @@ class Circuit(object):
         self.topology = None
         self.fidelity = None
 
-    # Attributes of the circuit
     def width(self):
         """ the number of qubits in circuit
 
@@ -221,22 +210,24 @@ class Circuit(object):
                 command : command
                 tex : tex source
         """
+        from QuICT.tools.drawer import PhotoDrawer, TextDrawing
+
         if method == 'matp':
-            from QuICT.tools.drawer import PhotoDrawer
             if filename is None:
                 filename = str(self.id) + '.jpg'
             elif '.' not in filename:
                 filename += '.jpg'
+
             photoDrawer = PhotoDrawer()
             photoDrawer.run(self, filename)
         elif method == 'command':
-            from QuICT.tools.drawer import TextDrawing
             textDrawing = TextDrawing([i for i in range(len(self.qubits))], self.gates)
             if filename is None:
                 print(textDrawing.single_string())
                 return
             elif '.' not in filename:
                 filename += '.txt'
+
             textDrawing.dump(filename)
 
     def qasm(self):
@@ -275,7 +266,7 @@ class Circuit(object):
         elif isinstance(indexes, Qubit):
             indexes = self.index_for_qubit(indexes)
         else:
-            raise TypeError("only accept int/list[int]")
+            raise TypeError("only accept int/list[int]/Qubit/Qureg")
 
         self._pointer = indexes
         return self
@@ -292,7 +283,7 @@ class Circuit(object):
         """
         return self.qubits[item]
 
-    def __or__(self, targets):      # TODO: fix it
+    def __or__(self, targets):
         """deal the operator '|'
 
         Use the syntax "circuit | circuit"
@@ -310,7 +301,21 @@ class Circuit(object):
         if not isinstance(targets, Circuit):
             raise TypeError("Only support circuit | circuit.")
 
+        if not self.qubits == targets.qubits:
+            diff_qubits = targets.qubits.diff(self.qubits)
+            targets.append_qubit(diff_qubits, is_append=True)        
+
         targets.extend(self.gates)
+
+    def append_qubit(self, qubits, is_append: bool = False):
+        if not is_append:
+            self._qubits = qubits
+            self._idmap = {}
+        else:
+            self._qubits = self._qubits + qubits
+
+        for idx, qubit in enumerate(self.qubits):
+            self._idmap[qubit.id] = idx
 
     def append(self, gate, is_extend: bool = False):
         """ add a gate to the circuit
@@ -525,8 +530,6 @@ class Circuit(object):
             repeat(int): the number of two-qubit gates' sequence
             pattern(str): indicate the two-qubit gates' sequence
         """
-        from QuICT.core.gate import H, Measure
-
         qubits = len(self.qubits)
         supremacy_layout = SupremacyLayout(qubits)
         supremacy_typelist = [GateType.sx, GateType.sy, GateType.sw]
@@ -584,8 +587,3 @@ class Circuit(object):
             self._update_idmap()
 
         qureg[:] = remapping_qureg
-
-    def _update_idmap(self):
-        self._idmap = {}
-        for idx, qubit in enumerate(self.qubits):
-            self._idmap[qubit.id] = idx
