@@ -1,11 +1,12 @@
 import os
+from telnetlib import GA
 import yaml
 from enum import Enum
 
-from QuICT.core import GATE_ID
+from QuICT.core.utils import GateType
 
 
-class GateType(Enum):
+class GateGroup(Enum):
     matrix_1arg = "2x2Matrix"
     matrix_2arg = "4x4Matrix"
     diagonal_1arg = "2x2Diagonal"
@@ -24,27 +25,27 @@ class GateType(Enum):
 
 
 GATE_TYPE_to_ID = {
-    GateType.matrix_1arg: [
-        GATE_ID["H"], GATE_ID["SX"], GATE_ID["SY"], GATE_ID["SW"],
-        GATE_ID["U2"], GATE_ID["U3"], GATE_ID["RX"], GATE_ID["RY"]
+    GateGroup.matrix_1arg: [
+        GateType.h, GateType.sx, GateType.sy, GateType.sw,
+        GateType.u2, GateType.u3, GateType.rx, GateType.ry
     ],
-    GateType.matrix_2arg: [GATE_ID["CH"], GATE_ID["CU3"]],
-    GateType.diagonal_1arg: [GATE_ID["RZ"], GATE_ID["Phase"]],
-    GateType.diagonal_2arg: [GATE_ID["RZZ"]],
-    GateType.swap_1arg: [GATE_ID["X"]],
-    GateType.swap_2arg: [GATE_ID["Swap"]],
-    GateType.swap_3arg: [GATE_ID["CSwap"]],
-    GateType.reverse_1arg: [GATE_ID["Y"]],
-    GateType.reverse_2arg: [GATE_ID["CX"], GATE_ID["CY"]],
-    GateType.reverse_3arg: [GATE_ID["CCX"]],
-    GateType.control_1arg: [
-        GATE_ID["Z"], GATE_ID["U1"], GATE_ID["T"],
-        GATE_ID["T_dagger"], GATE_ID["S"], GATE_ID["S_dagger"]
+    GateGroup.matrix_2arg: [GateType.ch, GateType.cu3],
+    GateGroup.diagonal_1arg: [GateType.rz, GateType.phase],
+    GateGroup.diagonal_2arg: [GateType.Rzz],
+    GateGroup.swap_1arg: [GateType.x],
+    GateGroup.swap_2arg: [GateType.swap],
+    GateGroup.swap_3arg: [GateType.cswap],
+    GateGroup.reverse_1arg: [GateType.y],
+    GateGroup.reverse_2arg: [GateType.cx, GateType.cy],
+    GateGroup.reverse_3arg: [GateType.ccx],
+    GateGroup.control_1arg: [
+        GateType.z, GateType.u1, GateType.t,
+        GateType.tdg, GateType.s, GateType.sdg
     ],
-    GateType.control_2arg: [GATE_ID["CZ"], GATE_ID["CU1"]],
-    GateType.control_3arg: [GATE_ID["CCRz"]],
-    GateType.complexMIP_2arg: [GATE_ID["FSim"]],
-    GateType.complexIPIP_2arg: [GATE_ID["RXX"], GATE_ID["RYY"]]
+    GateGroup.control_2arg: [GateType.cz, GateType.cu1],
+    GateGroup.control_3arg: [GateType.CCRz],
+    GateGroup.complexMIP_2arg: [GateType.fsim],
+    GateGroup.complexIPIP_2arg: [GateType.Rxx, GateType.Ryy]
 }
 
 

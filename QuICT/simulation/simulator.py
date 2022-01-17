@@ -5,7 +5,7 @@
 # @File    : _simulator
 import time
 
-from QuICT.core import *
+from QuICT.core import Circuit
 from QuICT.simulation.gpu_simulator import (
     ConstantStateVectorSimulator,
     MultiStateVectorSimulator,
