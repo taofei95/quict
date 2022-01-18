@@ -401,6 +401,12 @@ class BasicGate(object):
         """
         class_name = str(self.__class__.__name__)
         gate = globals()[class_name]()
+
+        if gate.type in SPECIAL_GATE_SET:
+            gate.controls = self.controls
+            gate.targets = self.targets
+            gate.params = self.params
+
         gate.pargs = copy.deepcopy(self.pargs)
         gate.targs = copy.deepcopy(self.targs)
         gate.cargs = copy.deepcopy(self.cargs)
@@ -1497,24 +1503,27 @@ class PermGate(BasicGate):
         if not isinstance(params, list) or not isinstance(targets, int):
             raise TypeError(f"targets must be int not {type(targets)}, and params must be list not {type(params)}")
 
-        self.targets = targets
-        self.params = targets
-        self.pargs = []
-
         assert len(params) == targets, "the length of params must equal to targets"
+
+        _gate = self.copy()
+        _gate.targets = targets
+        _gate.params = targets
         for idx in params:
-            if not isinstance(idx, int) or idx < 0 or idx >= self.targets:
+            if not isinstance(idx, int) or idx < 0 or idx >= _gate.targets:
                 raise Exception("the element in the list should be integer")
 
-            if idx in self.pargs:
+            if idx in _gate.pargs:
                 raise Exception("the list should be a permutation for [0, n) without repeat")
 
-            self.pargs.append(idx)
+            _gate.pargs.append(idx)
 
-        return self
+        return _gate
 
     def inverse(self):
-        self.pargs = [self.targets - 1 - p for p in self.pargs]
+        _gate = self.copy()
+        _gate.pargs = [self.targets - 1 - p for p in self.pargs]
+
+        return _gate
 
 
 Perm = PermGate()
@@ -1545,39 +1554,23 @@ class ControlPermMulDetailGate(BasicGate):
         Returns:
             ControlPermMulDetailGate: the gate after filled by parameters
         """
+        if not isinstance(a, int) or not isinstance(N, int):
+            raise TypeError("a and N must be integer.")
+
+        _gate = self.copy()
         n = int(np.ceil(np.log2(N)))
-        self.params = 2
-        self.targets = n
-        self.pargs = [a, N]
 
-        return self
-
-    @property
-    def matrix(self) -> np.ndarray:
-        matrix = np.array([], dtype=np.complex128)
-        a = self.pargs[0]
-        N = self.pargs[1]
-        pargs = []
-        for idx in range(1 << (self.targets + self.controls)):
-            idxx = idx // 2
-            controlxx = idx % 2
+        _gate.targets = n
+        _gate.params = 1 << (n + 1)
+        for idx in range(1 << (_gate.targets + _gate.controls)):
+            idxx, controlxx = idx // 2, idx % 2
             if controlxx == 0:
-                pargs.append(idx)
+                _gate.pargs.append(idx)
             else:
-                if idxx >= N:
-                    pargs.append(idx)
-                else:
-                    pargs.append(((idxx * a % N) << 1) + controlxx)
+                t_idx = idx if idxx >= N else ((idxx * a % N) << 1) + controlxx
+                _gate.pargs.append(t_idx)
 
-        for i in range(1 << (self.targets + self.controls)):
-            for j in range(1 << (self.targets + self.controls)):
-                if pargs[i] == j:
-                    matrix = np.append(matrix, 1)
-                else:
-                    matrix = np.append(matrix, 0)
-
-        matrix = matrix.reshape(1 << (self.targets + self.controls), 1 << (self.targets + self.controls))
-        return matrix
+        return _gate
 
     def inverse(self):
         from QuICT.algorithm.quantum_algorithm.shor.utility import ex_gcd
@@ -1586,7 +1579,7 @@ class ControlPermMulDetailGate(BasicGate):
         ex_gcd(self.pargs[0], self.pargs[1], gcd_arr)
         n_inverse = (gcd_arr[0] % self.pargs[1] + self.pargs[1]) % self.pargs[1]
 
-        self.pargs = [n_inverse, self.pargs[1]]
+        return self(n_inverse, self.pargs[1])
 
 
 ControlPermMulDetail = ControlPermMulDetailGate()
@@ -1608,40 +1601,37 @@ class PermShiftGate(BasicGate):
             type=GateType.perm_shift
         )
 
-    def __call__(self, params: int, N: int):
+    def __call__(self, a: int, N: int):
         """ pass parameters to the gate
 
         give parameters (params, N) to the gate
 
         Args:
-            params(int): the number (can be negative) the qureg increase
+            a(int): the number (can be negative) the qureg increase
             N(int): the modulus
 
         Returns:
             PermShiftGate: the gate after filled by parameters
         """
-        if not isinstance(params, int) or not isinstance(N, int):
-            raise TypeError(f"params and N must be int. {type(N)}, {type(params)}")
+        if not isinstance(a, int) or not isinstance(N, int):
+            raise TypeError(f"params and N must be int. {type(N)}, {type(a)}")
 
         if N <= 0:
             raise Exception("the modulus should be integer")
 
+        _gate = self.copy()
         n = int(round(np.log2(N)))
-        self.params = N
-        self.targets = n
-        self.pargs = []
-        for idx in range(1 << self.targets):
-            idxx = idx // 2
-            controlxx = idx % 2
+        _gate.params = N
+        _gate.targets = n
+        for idx in range(1 << _gate.targets):
+            idxx, controlxx = idx // 2, idx % 2
             if controlxx == 0:
-                self.pargs.append(idx)
+                _gate.pargs.append(idx)
             else:
-                if idxx < N:
-                    self.pargs.append(idx)
-                else:
-                    self.pargs.append(((((idxx + params) % N + N) % N) << 1) + controlxx)
+                t_idx = idx if idxx < N else ((((idxx + a) % N + N) % N) << 1) + controlxx
+                _gate.pargs.append(t_idx)
 
-        return self
+        return _gate
 
 
 PermShift = PermShiftGate()
@@ -1662,7 +1652,7 @@ class ControlPermShiftGate(BasicGate):
             type=GateType.control_perm_shift
         )
 
-    def __call__(self, params=None, N=None):
+    def __call__(self, a: int, N: int):
         """ pass parameters to the gate
 
         give parameters (params, N) to the gate
@@ -1674,30 +1664,26 @@ class ControlPermShiftGate(BasicGate):
         Returns:
             PermShiftGate: the gate after filled by parameters
         """
-        if not isinstance(params, int):
-            raise TypeError("int", params)
-        if N is None:
-            raise Exception("ControlPermShift need two parameters")
-        if not isinstance(N, int):
-            raise TypeError("int", N)
+        if not isinstance(a, int) or not isinstance(N, int):
+            raise TypeError(f"params and N must be int. {type(N)}, {type(a)}")
 
         if N <= 0:
             raise Exception("the modulus should be integer")
+        
+        _gate = self.copy()
         n = int(np.ceil(np.log2(N)))
-        self.params = N
-        self.targets = n + 1
-        self.pargs = []
-        for idx in range(1 << self.targets):
+        _gate.params = N
+        _gate.targets = n
+        for idx in range(1 << (_gate.targets + _gate.controls)):
             idxx = idx // 2
             controlxx = idx % 2
             if controlxx == 0:
-                self.pargs.append(idx)
+                _gate.pargs.append(idx)
             else:
-                if idxx < N:
-                    self.pargs.append(idx)
-                else:
-                    self.pargs.append(((((idxx + params) % N + N) % N) << 1) + controlxx)
-        return self
+                t_idx = idx if idxx < N else ((((idxx + a) % N + N) % N) << 1) + controlxx
+                _gate.pargs.append(t_idx)
+
+        return _gate
 
 
 ControlPermShift = ControlPermShiftGate()
@@ -1719,42 +1705,41 @@ class PermMulGate(BasicGate):
             type=GateType.perm_mul
         )
 
-    def __call__(self, params: int, N: int):
+    def __call__(self, a: int, N: int):
         """ pass parameters to the gate
 
-        give parameters (params, N) to the gate
+        give parameters (a, N) to the gate
 
         Args:
-            params(int): the number (can be negative) the qureg increase
+            a(int): the number (can be negative) the qureg increase
             N(int): the modulus
 
         Returns:
             PermMulGate: the gate after filled by parameters
         """
-        if not isinstance(params, int) or not isinstance(N, int):
-            raise TypeError(f"Input must be int. {type(params)}, {type(N)}")
+        if not isinstance(a, int) or not isinstance(N, int):
+            raise TypeError(f"Input must be int. {type(a)}, {type(N)}")
 
-        assert (N > 0 and params > 0), "Input must be positive integer."
+        assert (N > 0 and a > 0), "Input must be positive integer."
 
-        if np.gcd(params, N) != 1:
-            raise Exception(f"params and N should be co-prime, but {params} and {N} are not.")
+        if np.gcd(a, N) != 1:
+            raise Exception(f"params and N should be co-prime, but {a} and {N} are not.")
 
-        params = params % N
-
+        a = a % N
         n = int(round(np.log2(N)))
         if (1 << n) < N:
             n = n + 1
 
-        self.params = N
-        self.targets = n
-        self.pargs = []
+        _gate = self.copy()
+        _gate.params = N
+        _gate.targets = n
         for idx in range(N):
-            self.pargs.append(idx * params % N)
+            _gate.pargs.append(idx * a % N)
 
         for idx in range(N, 1 << n):
-            self.pargs.append(idx)
+            _gate.pargs.append(idx)
 
-        return self
+        return _gate
 
 
 PermMul = PermMulGate()
@@ -1764,50 +1749,47 @@ class ControlPermMulGate(BasicGate):
     """ a controlled-PermMul Gate """
     def __init__(self):
         super().__init__(
-            controls=0,
+            controls=1,
             targets=0,
             params=0,
             type=GateType.control_perm_mul
         )
 
-    def __call__(self, params: int, N: int):
+    def __call__(self, a: int, N: int):
         """ pass parameters to the gate
 
-        give parameters (params, N) to the gate
+        give parameters (a, N) to the gate
 
         Args:
-            params(int): the number (can be negative) the qureg increase
+            a(int): the number (can be negative) the qureg increase
             N(int): the modulus
 
         Returns:
             ControlPermMulGate: the gate after filled by parameters
         """
-        if not isinstance(params, int) or not isinstance(N, int):
-            raise TypeError(f"Input must be int. {type(params)}, {type(N)}")
+        if not isinstance(a, int) or not isinstance(N, int):
+            raise TypeError(f"Input must be int. {type(a)}, {type(N)}")
 
-        assert (N > 0 and params > 0), "Input must be positive integer."
+        assert (N > 0 and a > 0), "Input must be positive integer."
 
-        if np.gcd(params, N) != 1:
-            raise Exception(f"params and N should be co-prime, but {params} and {N} are not.")
+        if np.gcd(a, N) != 1:
+            raise Exception(f"params and N should be co-prime, but {a} and {N} are not.")
 
-        params = params % N
-
+        a = a % N
         n = int(np.ceil(np.log2(N)))
-        self.params = N
-        self.targets = n + 1
-        self.pargs = []
-        for idx in range(1 << self.targets):
-            idxx = idx // 2
-            controlxx = idx % 2
-            if controlxx == 0:
-                self.pargs.append(idx)
-            else:
-                if idxx >= N:
-                    self.pargs.append(idx)
-                else:
-                    self.pargs.append(((idxx * params % N) << 1) + controlxx)
 
-        return self
+        _gate = self.copy()
+        _gate.params = N
+        _gate.targets = n 
+        for idx in range(1 << (_gate.targets + _gate.controls)):
+            idxx, controlxx = idx // 2, idx % 2
+            if controlxx == 0:
+                _gate.pargs.append(idx)
+            else:
+                t_idx = idx if idxx >= N else ((idxx * a % N) << 1) + controlxx
+                _gate.pargs.append(t_idx)
+
+        return _gate
 
 
 ControlPermMul = ControlPermMulGate()
@@ -1836,32 +1818,32 @@ class PermFxGate(BasicGate):
         {0, 1}^n -> {0, 1}
 
         Args:
-            N (int): the number of targets
+            n (int): the number of targets
             params (list[int]): the list of index, and the index represent which should be 1.
 
         Returns:
             PermFxGate: the gate after filled by parameters
         """
-        if not isinstance(params, list):
-            raise TypeError("list", params)
+        if not isinstance(params, list) or not isinstance(n, int):
+            raise TypeError(f"n must be int {type(n)}, params must be list {type(params)}")
 
         N = 1 << n
         if len(params) > N:
             raise Exception("the length of params should be less than N")
 
-        self.params = 1 << (n + 1)
-        self.targets = n + 1
-        self.pargs = []
+        _gate = self.copy()
+        _gate.params = len(params)
+        _gate.targets = n + 1
         for idx in params:
             if idx < 0 or idx >= N:
                 raise Exception("the range of 1's index should be [0, 1)")
 
             if idx >> 1 == 1:
-                self.pargs.append(idx ^ 1)
+                _gate.pargs.append(idx ^ 1)
             else:
-                self.pargs.append(idx)
+                _gate.pargs.append(idx)
 
-        return self
+        return _gate
 
 
 PermFx = PermFxGate()

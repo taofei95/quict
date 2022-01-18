@@ -272,23 +272,29 @@ class ConstantStateVectorSimulator(BasicGPUSimulator):
         # [Barrier]
         elif gate_type == GateType.barrier:
             pass
-        # TODO: only working with the Perm gate
         elif (
             gate_type == GateType.perm
-            # gate_type == GATE_ID["ControlPermMulDetail"] or
             # gate_type == GATE_ID["PermShift"] or
             # gate_type == GATE_ID["ControlPermShift"] or
             # gate_type == GATE_ID["PermMul"] or
             # gate_type == GATE_ID["ControlPermMul"] or
             # gate_type == GATE_ID["PermFx"]
         ):
-            if gate.targets >= 12:
-                pass
-            else:
-                self._algorithm.PermGate_Apply(
-                    gate.pargs,
-                    *default_parameters
-                )
+            self._algorithm.VectorPermutation(
+                self._vector,
+                np.array(gate.pargs, dtype=np.int32),
+                changeInput=True,
+                gpu_out=False,
+                sync=self._sync
+            )
+        elif gate_type == GateType.control_perm_detail:
+            self._algorithm.simple_vp(
+                self._vector,
+                np.array(gate.pargs, dtype=np.int32),
+                changeInput=True,
+                gpu_out=False,
+                sync=self._sync
+            )
         # [Unitary]
         elif gate_type == GateType.unitary:
             qubit_idxes = gate.cargs + gate.targs

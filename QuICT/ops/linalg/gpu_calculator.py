@@ -506,3 +506,75 @@ def matrix_dot_vector(
 
     if sync:
         cp.cuda.Device().synchronize()
+
+
+simplevp_single_kernel = cp.RawKernel(r'''
+    #include <cupy/complex.cuh>
+    extern "C" __global__
+    void simple_vp_single(const complex<float>* x, complex<float>* y, int* mapping) {
+        int tid = blockDim.x * blockIdx.x + threadIdx.x;
+        int xid = mapping[tid]
+        y[tid] = x[xid];
+    }
+    ''', 'simple_vp_single')
+
+
+simplecp_double_kernel = cp.RawKernel(r'''
+    #include <cupy/complex.cuh>
+    extern "C" __global__
+    void simple_vp_double(const complex<double>* x, complex<double>* y, int* mapping) {
+        int tid = blockDim.x * blockIdx.x + threadIdx.x;
+        int xid = mapping[tid];
+        y[tid] = x[xid];
+    }
+    ''', 'simple_vp_double')
+
+
+def simple_vp(A, mapping, changeInput: bool = False, gpu_out: bool = True, sync: bool = True):
+    """ permutaion A with mapping, inplace
+
+    Args:
+        A(np.array<np.complex>): the vector A.
+        mapping(np.array<int>): the mapping.
+        changeInput(bool): whether changes in A.
+        gpu_out(bool): return result from GPU.
+
+    Returns:
+        np.array<np.complex>: the result of Permutation
+    """
+    row_a, n = A.shape[0], mapping.shape[0]
+    if row_a != n:
+        raise IndexError("Indices do not match!")
+
+    if mapping.dtype == np.int64:
+        mapping = mapping.astype(np.int32)
+
+    # data in GPU
+    gpu_A = cp.array(A) if type(A) is np.ndarray else A
+    gpu_mapping = cp.array(mapping)
+    gpu_result = cp.empty_like(gpu_A)
+    core_number = gpu_result.size
+
+    if A.dtype == np.complex64:
+        simplevp_single_kernel(
+            (math.ceil(core_number / 1024),),
+            (min(1024, core_number),),
+            (gpu_A, gpu_result, gpu_mapping)
+        )
+    else:
+        simplecp_double_kernel(
+            (math.ceil(core_number / 1024),),
+            (min(1024, core_number),),
+            (gpu_A, gpu_result, gpu_mapping)
+        )
+
+    if changeInput:
+        A[:] = gpu_result.get() if type(A) is np.ndarray else gpu_result
+
+    if sync:
+        cp.cuda.Device().synchronize()
+
+    if gpu_out:
+        return gpu_result.get()
+
+    return gpu_result
