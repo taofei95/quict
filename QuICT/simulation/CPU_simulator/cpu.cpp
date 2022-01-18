@@ -24,15 +24,16 @@ namespace QuICT {
      * */
     class CircuitSimulatorBind : public CircuitSimulator<double> {
     public:
-        CircuitSimulatorBind(uint64_t qubit_num) : CircuitSimulator<double>(qubit_num) {}
+        CircuitSimulatorBind() : CircuitSimulator<double>() {}
 
         inline std::tuple<py::array_t<std::complex<double>>, std::vector<int>>
         run_numpy(
+                uint64_t qubit_num,
                 const std::vector<GateDescription<double>> &gate_desc_vec,
                 bool keep_state
         ) {
             std::vector<int> measure_res;
-            std::complex<double> *raw_ptr = run(gate_desc_vec, measure_res, keep_state);
+            std::complex<double> *raw_ptr = run(qubit_num, gate_desc_vec, measure_res, keep_state);
 
             py::capsule auto_delete_wrapper(raw_ptr, [](void *ptr) {
                 auto data_ptr = reinterpret_cast<std::complex<double> *>(ptr);
@@ -61,7 +62,7 @@ PYBIND11_MODULE(sim_back_bind, m) {
             .def_readwrite("dataPtr", &desc_class::data_ptr_);
     // Export CircuitSimulator interface using wrapper class.
     py::class_<sim_class>(m, "CircuitSimulator")
-            .def(py::init<uint64_t>())
+            .def(py::init<>())
             .def("name", &sim_class::name)
             .def("run", &sim_class::run_numpy);
 }

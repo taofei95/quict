@@ -166,8 +166,8 @@ class CircuitSimulator:
     """An interface used for type hints. This class is actually implemented in C++ side.
     """
 
-    def __init__(self, qubit_num: int):
-        self._instance = sim_back_bind.CircuitSimulator(qubit_num)
+    def __init__(self):
+        self._instance = sim_back_bind.CircuitSimulator()
 
     def name(self) -> str:
         """
@@ -176,21 +176,17 @@ class CircuitSimulator:
         -------
         The name of circuit simulator.
         """
-        pass
+        return self._instance.name()
 
-    def run(self, circuit: Circuit, keep_state: bool = False) -> Tuple[np.ndarray, List[int]]:
-        """Run simulation by gate description sequence.
+    def _run_and_sample(self, circuit: Circuit, keep_state: bool = False):
+        """Run simulation by gate description sequence and return measure gate results.
 
         Parameters
         ----------
         circuit:
-            circuit to be simulated
+            quantum circuit to be simulated
         keep_state:
             start simulation on previous result
-
-        Returns
-        -------
-        A tuple with a complex numpy array representing the amplitude vector and measure results.
         """
         warnings.warn(
             message="Attention! You are using a working-in-process version of circuit simulator!",
@@ -199,4 +195,12 @@ class CircuitSimulator:
         gate_desc_vec: List[GateDescription] = []
         for gate in circuit.gates:
             gate_desc_vec.extend(gate_to_desc(gate))
-        return self._instance.run(gate_desc_vec, keep_state)
+        self._amplitude, self._measure_results = \
+            self._instance.run(circuit.circuit_width(), gate_desc_vec, keep_state)
+
+    def run(self, circuit: Circuit, keep_state: bool = False) -> np.ndarray:
+        self._run_and_sample(circuit, keep_state)
+        return self._amplitude
+
+    def sample(self) -> List[int]:
+        return self._measure_results

@@ -19,7 +19,7 @@ class Amplitude(Algorithm):
     """
 
     @classmethod
-    def run(cls, circuit: Circuit) -> Tuple[np.ndarray, List[int]]:
+    def run(cls, circuit: Circuit) -> np.ndarray:
         """
         Args
         -----------
@@ -30,4 +30,4 @@ class Amplitude(Algorithm):
         -------------
         A tuple with a complex numpy array representing the amplitude vector and measure results.
         """
-        return CircuitSimulator(circuit.circuit_width()).run(circuit)
+        return CircuitSimulator().run(circuit)

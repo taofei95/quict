@@ -19,18 +19,17 @@ namespace QuICT {
     template<typename Precision>
     class CircuitSimulator {
     public:
-        explicit CircuitSimulator(uint64_t qubit_num) : qubit_num_(qubit_num) {
+        explicit CircuitSimulator() {
             // Build name
             using namespace std;
             static_assert(is_same_v<Precision, double> || is_same_v<Precision, float>,
                           "MaTricksSimulator only supports double/float precision.");
             name_ = "CircuitSimulator";
             if constexpr(std::is_same_v<Precision, double>) {
-                name_ += "[double, ";
+                name_ += "[double]";
             } else if (std::is_same_v<Precision, float>) {
-                name_ += " [float, ";
+                name_ += " [float]";
             }
-            name_ += std::to_string(qubit_num) + " bit(s)]";
         }
 
         const std::string &name() {
@@ -39,6 +38,7 @@ namespace QuICT {
 
         inline std::complex<Precision> *
         run(
+                uint64_t qubit_num,
                 const std::vector<GateDescription<Precision>> &gate_desc_vec,
                 std::vector<int> &measure_res,
                 bool keep_state
@@ -54,10 +54,12 @@ namespace QuICT {
 
     template<typename Precision>
     std::complex<Precision> *CircuitSimulator<Precision>::run(
+            uint64_t qubit_num,
             const std::vector<GateDescription<Precision>> &gate_desc_vec,
             std::vector<int> &measure_res,
             bool keep_state
     ) {
+        this->qubit_num_ = qubit_num;
         if (!keep_state || (real_ == nullptr && imag_ == nullptr)) {
             // Initialize state vector
             uint64_t len = 1LL << qubit_num_;
