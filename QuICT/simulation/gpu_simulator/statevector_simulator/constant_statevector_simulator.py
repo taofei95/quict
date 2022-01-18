@@ -272,29 +272,43 @@ class ConstantStateVectorSimulator(BasicGPUSimulator):
         # [Barrier]
         elif gate_type == GateType.barrier:
             pass
-        elif (
-            gate_type == GateType.perm
-            # gate_type == GATE_ID["PermShift"] or
-            # gate_type == GATE_ID["ControlPermShift"] or
-            # gate_type == GATE_ID["PermMul"] or
-            # gate_type == GATE_ID["ControlPermMul"] or
-            # gate_type == GATE_ID["PermFx"]
-        ):
+        elif gate_type == GateType.perm:
+            args = gate.cargs + gate.targs
+            if len(args) == self._qubits:
+                mapping = np.array(gate.pargs, dtype=np.int32)
+            else:
+                mapping = np.arange(self._qubits, dtype=np.int32)
+                for idx, parg in enumerate(gate.pargs):
+                    mapping[args[idx]] = args[parg]
+
             self._algorithm.VectorPermutation(
                 self._vector,
-                np.array(gate.pargs, dtype=np.int32),
+                mapping,
                 changeInput=True,
                 gpu_out=False,
                 sync=self._sync
             )
-        elif gate_type == GateType.control_perm_detail:
-            self._algorithm.simple_vp(
-                self._vector,
-                np.array(gate.pargs, dtype=np.int32),
-                changeInput=True,
-                gpu_out=False,
-                sync=self._sync
-            )
+        elif gate_type in GATE_TYPE_to_ID[GateGroup.perm_gate]:
+            args = gate.cargs + gate.targs
+            if len(args) == self._qubits:
+                self._algorithm.simple_vp(
+                    self._vector,
+                    np.array(gate.pargs, dtype=np.int32),
+                    changeInput=True,
+                    gpu_out=False,
+                    sync=self._sync
+                )
+            else:
+                self._algorithm.qubit_vp(
+                    self._vector,
+                    np.array(args, dtype=np.int32),
+                    np.array(gate.pargs, dtype=np.int32),
+                    changeInput=True,
+                    gpu_out=False,
+                    sync=self._sync
+                )
+        elif gate_type == GateType.perm_fx:
+            pass
         # [Unitary]
         elif gate_type == GateType.unitary:
             qubit_idxes = gate.cargs + gate.targs
