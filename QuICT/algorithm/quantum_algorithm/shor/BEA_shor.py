@@ -20,6 +20,7 @@ from QuICT.core import *
 from QuICT.qcda.synthesis.arithmetic.bea import *
 from QuICT.algorithm import Algorithm
 from .utility import *
+from QuICT.algorithm import Amplitude
 
 
 def order_finding(a:int, N: int, demo = None, eps: float = 1/10,):

@@ -13,6 +13,7 @@ by THOMAS HANER, MARTIN ROETTELER, and KRYSTA M. SVORE in \
 from QuICT.core import *
 from QuICT.qcda.synthesis.arithmetic.hrs import *
 from QuICT.algorithm import Algorithm
+from QuICT.algorithm import Amplitude
 
 import random
 import logging

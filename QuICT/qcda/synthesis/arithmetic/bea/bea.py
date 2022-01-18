@@ -1,7 +1,26 @@
+from QuICT.core.gate.gate import CSwap
 import numpy as np
 
 from QuICT.core import CompositeGate, CX, CCX, X, QFT, IQFT, CRz, Rz
 from ..._synthesis import Synthesis
+
+
+def ex_gcd(a, b, arr):
+    if b == 0:
+        arr[0] = 1
+        arr[1] = 0
+        return a
+    g = ex_gcd(b, a % b, arr)
+    t = arr[0]
+    arr[0] = arr[1]
+    arr[1] = t - int(a / b) * arr[1]
+    return g
+
+
+def mod_reverse(a, n):
+    arr = [0, 1]
+    ex_gcd(a, n, arr)
+    return (arr[0] % n + n) % n
 
 
 def draper_adder(gate_set, a, b):
@@ -171,7 +190,8 @@ def cc_fourier_adder_mod(gate_set, a, N, phib, c, low, dualControlled=True):
         CX & (phib[0], low[0])
         QFT(len(phib)) & phib
     cc_fourier_adder_wired(gate_set, N, phib, low, dualControlled=False)
-    cc_fourier_adder_wired_reversed(gate_set, a, phib, c, dualControlled=dualControlled)
+    cc_fourier_adder_wired_reversed(
+        gate_set, a, phib, c, dualControlled=dualControlled)
     with gate_set:
         IQFT(len(phib)) & phib
         X & phib[0]
@@ -233,7 +253,8 @@ def c_fourier_mult_mod(gate_set, a, N, x, phib, c, low):
     n = len(phib) - 1
     p = 1
     for i in range(n - 1, -1, -1):
-        cc_fourier_adder_mod(gate_set, p * a % N, N, phib, (c[0], x[i]), low)  # p * a % N
+        cc_fourier_adder_mod(gate_set, p * a % N, N, phib,
+                             (c[0], x[i]), low)  # p * a % N
         p = p * 2
 
 
@@ -343,7 +364,8 @@ class CCBEAAdderWired(Synthesis):
         qreg_c = list(range(n + 1, n + 3))
         with gate_set:
             QFT(len(qreg_b)) & qreg_b
-            cc_fourier_adder_wired(gate_set, a, qreg_b, qreg_c, dualControlled=True)
+            cc_fourier_adder_wired(gate_set, a, qreg_b,
+                                   qreg_c, dualControlled=True)
             IQFT(len(qreg_b)) & qreg_b
         return gate_set
 
@@ -364,7 +386,8 @@ class CCBEAReverseAdderWired(Synthesis):
         qreg_c = list(range(n + 1, n + 3))
         with gate_set:
             QFT(len(qreg_b)) & qreg_b
-            cc_fourier_adder_wired_reversed(gate_set, a, qreg_b, qreg_c, dualControlled=True)
+            cc_fourier_adder_wired_reversed(
+                gate_set, a, qreg_b, qreg_c, dualControlled=True)
             IQFT(len(qreg_b)) & qreg_b
         return gate_set
 
@@ -461,7 +484,8 @@ class CBEAMulMod(Synthesis):
         qreg_low = [2 * n + 2]
         with gate_set:
             QFT(len(qreg_b)) & qreg_b
-            c_fourier_mult_mod(gate_set, a, N, qreg_x, qreg_b, qreg_c, qreg_low)
+            c_fourier_mult_mod(gate_set, a, N, qreg_x,
+                               qreg_b, qreg_c, qreg_low)
             IQFT(len(qreg_b)) & qreg_b
         return gate_set
 
@@ -484,7 +508,7 @@ class BEAMulMod(Synthesis):
             x(Qureg):    the qureg stores x,        length is n,
             low(Qureg):  the clean ancillary qubit, length is 1,
 
-        Circuit for Shor’s algorithm using 2n+3 qubits
+        Circuit for Shor's algorithm using 2n+3 qubits
         http://arxiv.org/abs/quant-ph/0205095v3
         """
 
@@ -530,15 +554,12 @@ class BEACUa(Synthesis):
         with gate_set:
             gate_set: CompositeGate
             c_mult_mod(gate_set, a, N, qreg_x, qreg_b, qreg_c, qreg_low)
-            idx_start = 0
-            idx_end = len(gate_set.gates)
             for i in range(n):  # n bits swapped, b[0] always 0
-                # controlledSwap | (c,x[i],b[i+1])
-                CX & (qreg_b[i + 1], qreg_x[i])
-                CCX & (qreg_c[0], qreg_x[i], qreg_b[i + 1])
-                CX & (qreg_b[i + 1], qreg_x[i])
-            # Reversec_mult_mod(a_inv,N,x,b,c,low)
-            for index in range(idx_end - 1, idx_start - 1, -1):
-                gate_set.gates.append(gate_set.gates[index].inverse())
+                CSwap & (qreg_c[0],qreg_x[i],qreg_b[i+1])
+                # CX & (qreg_b[i + 1], qreg_x[i])
+                # CCX & (qreg_c[0], qreg_x[i], qreg_b[i + 1])
+                # CX & (qreg_b[i + 1], qreg_x[i])
+            # Reverse c_mult_mod(a_inv,N,x,b,c,low)
+            c_mult_mod(gate_set, N-mod_reverse(a,N), N, qreg_x, qreg_b, qreg_c, qreg_low)
 
         return gate_set
