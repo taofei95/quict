@@ -55,7 +55,7 @@ def fourier_adder_wired(gate_set, a, phib):
         a(int):      unsigned integer, low n bits used
         phib(Qureg): the qureg stores Φ(b), length is n+1
 
-    Circuit for Shor’s algorithm using 2n+3 qubits
+    Circuit for Shor's algorithm using 2n+3 qubits
     http://arxiv.org/abs/quant-ph/0205095v3
     """
     n = len(phib) - 1
@@ -78,7 +78,7 @@ def fourier_adder_wired_reversed(gate_set, a, phib):
         a(int):      unsigned integer, low n bits used
         phib(Qureg): the qureg stores Φ(b), length is n+1
 
-    Circuit for Shor’s algorithm using 2n+3 qubits
+    Circuit for Shor's algorithm using 2n+3 qubits
     http://arxiv.org/abs/quant-ph/0205095v3
     """
     n = len(phib) - 1
@@ -103,7 +103,7 @@ def cc_fourier_adder_wired(gate_set, a, phib, c, dualControlled):
         c(Qureg):    the control qubits,    length is 2 or 1, see dualControlled
         dualControlled(bool): if True, c[0] will be used; else c[0:2] will be used
 
-    Circuit for Shor’s algorithm using 2n+3 qubits
+    Circuit for Shor's algorithm using 2n+3 qubits
     http://arxiv.org/abs/quant-ph/0205095v3
     """
     if type(c) == int:
@@ -140,7 +140,7 @@ def cc_fourier_adder_wired_reversed(gate_set, a, phib, c, dualControlled):
         c(Qureg):    the control qubits,    length is 2 or 1, see dualControlled
         dualControlled(bool): default True. if True, c[0] will be used; else c[0:1] will be used
 
-    Circuit for Shor’s algorithm using 2n+3 qubits
+    Circuit for Shor's algorithm using 2n+3 qubits
     http://arxiv.org/abs/quant-ph/0205095v3
     """
     if type(c) == int:
@@ -180,7 +180,7 @@ def cc_fourier_adder_mod(gate_set, a, N, phib, c, low, dualControlled=True):
         low(Qureg):  the clean ancillary qubit, length is 1,
         dualControlled(bool): if True, c[0] will be used; else c[0:1] will be used
 
-    Circuit for Shor’s algorithm using 2n+3 qubits
+    Circuit for Shor's algorithm using 2n+3 qubits
     http://arxiv.org/abs/quant-ph/0205095v3
     """
     cc_fourier_adder_wired(gate_set, a, phib, c, dualControlled=dualControlled)
@@ -213,7 +213,7 @@ def fourier_adder_mod(gate_set, a, N, phib, low):
         phib(Qureg): the qureg stores b,        length is n+1,
         low(Qureg):  the clean ancillary qubit, length is 1,
 
-    Circuit for Shor’s algorithm using 2n+3 qubits
+    Circuit for Shor's algorithm using 2n+3 qubits
     http://arxiv.org/abs/quant-ph/0205095v3
     """
     fourier_adder_wired(gate_set, a, phib)
@@ -246,7 +246,7 @@ def c_fourier_mult_mod(gate_set, a, N, x, phib, c, low):
         c(int):      the control qubits,        length is 1,
         low(int):    the clean ancillary qubit, length is 1,
 
-    Circuit for Shor’s algorithm using 2n+3 qubits
+    Circuit for Shor's algorithm using 2n+3 qubits
     http://arxiv.org/abs/quant-ph/0205095v3
     """
 
@@ -270,7 +270,7 @@ def fourier_mult_mod(gate_set, a, N, x, phib, low):
         phib(Qureg): the qureg stores b,        length is n+1,
         low(Qureg):  the clean ancillary qubit, length is 1,
 
-    Circuit for Shor’s algorithm using 2n+3 qubits
+    Circuit for Shor's algorithm using 2n+3 qubits
     http://arxiv.org/abs/quant-ph/0205095v3
     """
 
@@ -409,7 +409,7 @@ class CCBEAAdderMod(Synthesis):
             c(Qureg):    the control qubits,        length is 2,
             low(Qureg):  the clean ancillary qubit, length is 1,
 
-        Circuit for Shor’s algorithm using 2n+3 qubits
+        Circuit for Shor's algorithm using 2n+3 qubits
         http://arxiv.org/abs/quant-ph/0205095v3
         """
 
@@ -441,7 +441,7 @@ class BEAAdderMod(Synthesis):
             phib(Qureg): the qureg stores b,        length is n+1,
             low(Qureg):  the clean ancillary qubit, length is 1,
 
-        Circuit for Shor’s algorithm using 2n+3 qubits
+        Circuit for Shor's algorithm using 2n+3 qubits
         http://arxiv.org/abs/quant-ph/0205095v3
         """
 
@@ -473,7 +473,7 @@ class CBEAMulMod(Synthesis):
             c(Qureg):    the control qubits,        length is 1,
             low(Qureg):  the clean ancillary qubit, length is 1,
 
-        Circuit for Shor’s algorithm using 2n+3 qubits
+        Circuit for Shor's algorithm using 2n+3 qubits
         http://arxiv.org/abs/quant-ph/0205095v3
         """
 

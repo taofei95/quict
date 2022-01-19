@@ -35,7 +35,7 @@ def order_finding(a:int, N: int, demo = None, eps: float = 1/10,):
     else: logging.info(msg)
     trickbit_store = [0] * t
     circuit = Circuit(2 * n + 3)
-    # ancilla = circuit([i for i in range(n+1)])
+    b_reg = circuit([i for i in range(n+1)])
     x_reg = circuit([i for i in range(n + 1, 2 * n + 1)])
     trickbit = circuit(2 * n + 1)
     qreg_low= circuit(2 * n + 2)
@@ -49,10 +49,12 @@ def order_finding(a:int, N: int, demo = None, eps: float = 1/10,):
                 Rz(-pi / (1 << (k - i))) | trickbit
         H | trickbit
 
+        Measure | b_reg
         Measure | trickbit
-        # Measure | qreg_low
+        Measure | qreg_low
         circuit.exec()
-        # assert int(qreg_low)==0
+        assert int(qreg_low)==0
+        assert int(b_reg)==0
         msg = f'\tthe {k}th trickbit measured to be {int(trickbit)}'
         if demo == 'demo': print(msg)
         else: logging.info(msg)
@@ -100,26 +102,36 @@ def order_finding(a:int, N: int, demo = None, eps: float = 1/10,):
             den2 = den1
             den1 = den
     r = den1
-    if pow(a, r, N) == 1:
-        msg = f'\torder_finding succeed: r = {r} is the order of a = {a}'
-        if demo == 'demo': print(msg)
-        else: logging.info(msg)
-        return r
-    else:
-        msg = f'\torder_finding failed: r = {r} is not the order of a = {a}'
-        if demo == 'demo': print(msg)
-        else: logging.info(msg)
-        return 0
+    return r
 
 class BEA_order_finding(Algorithm):
     '''
-    The (2n+2)-qubit circuit used in the order_finding algorithm is designed by \
-    THOMAS HANER, MARTIN ROETTELER, and KRYSTA M. SVORE \
-    in "Factoring using 2n+2 qubits with Toffoli based modular multiplication\
+    Run order_finding twice and take the lcm of the two result 
+    to guaruntee a higher possibility to get the correct order,
+    as suggested in QCQI 5.3.1
     '''
     @staticmethod
-    def run(a: int, N: int, demo:str = None):
-        return order_finding(a, N, demo)
+    def run(a: int, N: int, demo:str = None, eps: float = 1/10):
+        r1 = order_finding(a, N, demo, eps)
+        r2 = order_finding(a, N, demo, eps)
+        flag1 = (pow(a, r1, N) == 1 and r1!= 0)
+        flag2 = (pow(a, r2, N) == 1 and r2!= 0)
+        if flag1 and flag2:
+            r = min(r1, r2)
+        elif not flag1 and not flag2:
+            r = int(np.lcm(r1,r2))
+        else:
+            r = int(flag1)*r1 + int(flag2)*r2
+            
+        if (pow(a,r,N)==1 and r!=0): 
+            msg = f'\torder_finding found candidate order: r = {r} of a = {a}'
+        else:  
+            r = 0
+            msg = f'\torder_finding failed'
+        if demo == 'demo': print(msg)
+        else: logging.info(msg)
+
+        return r
 
 class BEAShorFactor(Algorithm):
     '''

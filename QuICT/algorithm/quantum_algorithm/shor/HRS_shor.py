@@ -78,7 +78,6 @@ def order_finding(a:int, N: int, demo = None, eps: float = 1/10,):
     if demo == 'demo': print(msg)
     else: logging.info(msg)
     num1 = CFE[0]
-    num1 = CFE[0]
     den1 = 1
     num2 = 1
     den2 = 0

@@ -163,7 +163,6 @@ def test_BEACUa():
                         assert (bb == 0) and (xx == x) and (cc == c) and (low == 0)
                     else:
                         assert (bb == 0) and (xx == (a * x) % N) and (cc == c) and (low == 0)
-                    # assert bb == 0
 
 
 if __name__ == "__main__":
