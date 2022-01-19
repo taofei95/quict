@@ -52,7 +52,7 @@ def test_DraperAdder():
                 print("{0}+{1}={2}".format(str(a), str(b), str(bb)))
                 assert 0
     assert 1
-
+'''
 
 def test_FourierAdderWired():
     for a in range(0, 20):
@@ -126,7 +126,7 @@ def test_BEAMulMod():
                 bb = int(qreg_b)
                 # print("0 + {0}*{1} mod {2}={3}".format(str(a), str(x), str(N), str(bb)))
                 assert bb == (0 + a * x) % N
-'''
+
 
 def test_BEACUa():
     n = 4
@@ -167,3 +167,4 @@ def test_BEACUa():
 
 if __name__ == "__main__":
     pytest.main(["./unit_test.py"])
+    
