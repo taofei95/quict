@@ -8,7 +8,10 @@ import importlib
 
 
 DEVICE_LIST = ["CPU", "GPU"]
-BASED_LINALG = ["dot", "tensor", "MatrixTensorI", "MatrixPermutation", "VectorPermutation", "matrix_dot_vector", "simple_vp"]
+BASED_LINALG = [
+    "dot", "tensor", "MatrixTensorI", "MatrixPermutation", "VectorPermutation",
+    "matrix_dot_vector", "simple_vp", "qubit_vp"
+]
 
 
 class LinAlgLoader:

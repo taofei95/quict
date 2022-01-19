@@ -303,7 +303,7 @@ class Circuit(object):
 
         if not self.qubits == targets.qubits:
             diff_qubits = targets.qubits.diff(self.qubits)
-            targets.append_qubit(diff_qubits, is_append=True)        
+            targets.append_qubit(diff_qubits, is_append=True)
 
         targets.extend(self.gates)
 

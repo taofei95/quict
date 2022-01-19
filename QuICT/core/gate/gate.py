@@ -1621,7 +1621,7 @@ class PermShiftGate(BasicGate):
 
         _gate = self.copy()
         n = int(round(np.log2(N)))
-        _gate.params = N
+        _gate.params = 1 << n
         _gate.targets = n
         for idx in range(1 << _gate.targets):
             idxx, controlxx = idx // 2, idx % 2
@@ -1669,10 +1669,10 @@ class ControlPermShiftGate(BasicGate):
 
         if N <= 0:
             raise Exception("the modulus should be integer")
-        
+
         _gate = self.copy()
         n = int(np.ceil(np.log2(N)))
-        _gate.params = N
+        _gate.params = 1 << (n + 1)
         _gate.targets = n
         for idx in range(1 << (_gate.targets + _gate.controls)):
             idxx = idx // 2
@@ -1731,7 +1731,7 @@ class PermMulGate(BasicGate):
             n = n + 1
 
         _gate = self.copy()
-        _gate.params = N
+        _gate.params = 1 << n
         _gate.targets = n
         for idx in range(N):
             _gate.pargs.append(idx * a % N)
@@ -1779,8 +1779,8 @@ class ControlPermMulGate(BasicGate):
         n = int(np.ceil(np.log2(N)))
 
         _gate = self.copy()
-        _gate.params = N
-        _gate.targets = n 
+        _gate.params = 1 << (n + 1)
+        _gate.targets = n
         for idx in range(1 << (_gate.targets + _gate.controls)):
             idxx, controlxx = idx // 2, idx % 2
             if controlxx == 0:
@@ -1828,17 +1828,15 @@ class PermFxGate(BasicGate):
             raise TypeError(f"n must be int {type(n)}, params must be list {type(params)}")
 
         N = 1 << n
-        if len(params) > N:
-            raise Exception("the length of params should be less than N")
+        for p in params:
+            if p >= N:
+                raise Exception("the params should be less than N")
 
         _gate = self.copy()
-        _gate.params = len(params)
+        _gate.params = 1 << (n + 1)
         _gate.targets = n + 1
-        for idx in params:
-            if idx < 0 or idx >= N:
-                raise Exception("the range of 1's index should be [0, 1)")
-
-            if idx >> 1 == 1:
+        for idx in range(1 << _gate.targets):
+            if idx >> 1 in params:
                 _gate.pargs.append(idx ^ 1)
             else:
                 _gate.pargs.append(idx)

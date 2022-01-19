@@ -26,7 +26,7 @@ def test_constant_statevectorsimulator():
         gpu_device_id=0,
         sync=True
     )
-    state = simulator.run(circuit)
+    _ = simulator.run(circuit)
 
     assert 1
 

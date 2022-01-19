@@ -589,10 +589,33 @@ def simple_vp(
 qubit_vp_single_kernel = cp.RawKernel(r'''
     #include <cupy/complex.cuh>
     extern "C" __global__
-    void complex_vp_single(const complex<float>* x, complex<float>* y, int* mapping) {
+    void qubit_vp_single(
+        const complex<float>* x,
+        complex<float>* y,
+        int* qargs,
+        int* mapping,
+        const int n,
+        const int N
+    ) {
         int tid = blockDim.x * blockIdx.x + threadIdx.x;
-        int xid = mapping[tid]
-        y[tid] = x[xid];
+
+        for (int i = 0; i < n; i++){
+            int block_swap_idx = mapping[i];
+            int ori_idx=0, swap_idx=0;
+            for (int j = 0; j < N; j++){
+                int label = N - 1 - j;
+                if (qargs[j] < 0){
+                    int temp_tvalue = (tid & (1 << (-qargs[j] - 1))) << (label - (-qargs[j] - 1));
+                    ori_idx += temp_tvalue;
+                    swap_idx += temp_tvalue;
+                }else{
+                    ori_idx += (i & (1 << qargs[j])) << (label - qargs[j]);
+                    swap_idx += (block_swap_idx & (1 << qargs[j])) << (label - qargs[j]);
+                }
+            }
+
+            y[ori_idx] = x[swap_idx];
+        }
     }
     ''', 'qubit_vp_single')
 
@@ -600,18 +623,32 @@ qubit_vp_single_kernel = cp.RawKernel(r'''
 qubit_vp_double_kernel = cp.RawKernel(r'''
     #include <cupy/complex.cuh>
     extern "C" __global__
-    void complex_vp_double(
+    void qubit_vp_double(
         const complex<double>* x,
         complex<double>* y,
         int* qargs,
         int* mapping,
-        int n
+        const int n,
+        const int N
     ) {
         int tid = blockDim.x * blockIdx.x + threadIdx.x;
-        int xid = 0;
-        
-        int temp[1 << n];
-        y[tid] = x[xid];
+
+        for (int i = 0; i < n; i++){
+            int block_swap_idx = mapping[i];
+            int ori_idx=0, swap_idx=0;
+            for (int j = 0; j < N; j++){
+                int label = N - 1 - j;
+                if (qargs[j] < 0){
+                    int temp_tvalue = (tid & (1 << (-qargs[j] - 1))) << (label - (-qargs[j] - 1));
+                    ori_idx += temp_tvalue;
+                    swap_idx += temp_tvalue;
+                }else{
+                    ori_idx += (i & (1 << qargs[j])) << (label - qargs[j]);
+                    swap_idx += (block_swap_idx & (1 << qargs[j])) << (label - qargs[j]);
+                }
+            }
+            y[ori_idx] = x[swap_idx];
+        }
     }
     ''', 'qubit_vp_double')
 
@@ -636,6 +673,7 @@ def qubit_vp(
     Returns:
         np.array<np.complex>: the result of Permutation
     """
+    N = int(np.log2(A.size))
     qubits, n = len(qargs), mapping.shape[0]
     if 1 << qubits != n:
         raise IndexError("Indices do not match!")
@@ -646,26 +684,29 @@ def qubit_vp(
     if qargs.dtype == np.int64:
         qargs = qargs.astype(np.int32)
 
+    qargs = _qargs_fill(qargs, N)
+
     # data in GPU
     gpu_A = cp.array(A) if type(A) is np.ndarray else A
     gpu_result = cp.empty_like(gpu_A)
 
     gpu_mapping = cp.array(mapping)
     gpu_qargs = cp.array(qargs)
-    gpu_qubits = cp.int32(qubits)
+    gpu_n = cp.int32(n)
+    gpu_N = cp.int32(N)
     core_number = gpu_result.size // gpu_mapping.size
 
     if A.dtype == np.complex64:
-        simplevp_single_kernel(
+        qubit_vp_single_kernel(
             (math.ceil(core_number / 1024),),
             (min(1024, core_number),),
-            (gpu_A, gpu_result, gpu_qargs, gpu_mapping, gpu_qubits)
+            (gpu_A, gpu_result, gpu_qargs, gpu_mapping, gpu_n, gpu_N)
         )
     else:
-        simplecp_double_kernel(
+        qubit_vp_double_kernel(
             (math.ceil(core_number / 1024),),
             (min(1024, core_number),),
-            (gpu_A, gpu_result, gpu_qargs, gpu_mapping, gpu_qubits)
+            (gpu_A, gpu_result, gpu_qargs, gpu_mapping, gpu_n, gpu_N)
         )
 
     if changeInput:
@@ -679,3 +720,16 @@ def qubit_vp(
 
     return gpu_result
 
+
+def _qargs_fill(qargs, qubits):
+    result = np.zeros(qubits, dtype=np.int32)
+
+    count = -(qubits - len(qargs))
+    for i in range(qubits):
+        if i not in qargs:
+            result[i] = count
+            count += 1
+        else:
+            result[i] = len(qargs) - 1 - np.argwhere(qargs == i)
+
+    return result

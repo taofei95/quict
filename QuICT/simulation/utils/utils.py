@@ -49,7 +49,7 @@ GATE_TYPE_to_ID = {
     GateGroup.complexIPIP_2arg: [GateType.Rxx, GateType.Ryy],
     GateGroup.perm_gate: [
         GateType.control_perm_detail, GateType.perm_shift, GateType.perm_mul,
-        GateType.control_perm_shift, GateType.control_perm_mul
+        GateType.control_perm_shift, GateType.control_perm_mul, GateType.perm_fx
     ]
 }
 

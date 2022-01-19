@@ -307,8 +307,6 @@ class ConstantStateVectorSimulator(BasicGPUSimulator):
                     gpu_out=False,
                     sync=self._sync
                 )
-        elif gate_type == GateType.perm_fx:
-            pass
         # [Unitary]
         elif gate_type == GateType.unitary:
             qubit_idxes = gate.cargs + gate.targs
