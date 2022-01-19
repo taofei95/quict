@@ -1088,8 +1088,8 @@ class TextDrawing:
         box_label = gate.qasm_name
 
         if isinstance(gate, MeasureGate):
-            gate = MeasureFrom()
-            layer.set_qubit(gate.targs[0], gate)
+            mgate = MeasureFrom()
+            layer.set_qubit(gate.targs[0], mgate)
         elif isinstance(gate, BarrierGate):
             for qubit in gate.targs:
                 if qubit in self.targs:
