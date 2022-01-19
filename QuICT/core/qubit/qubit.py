@@ -53,7 +53,7 @@ class Qubit(object):
             circuit(Circuit): the circuit the qubit attaches to
         """
         self._id = unique_id_generator()
-        self._measured = -1
+        self._measured = None
         self._prob = prob
 
     def __str__(self):
@@ -73,7 +73,7 @@ class Qubit(object):
         Raises:
             The qubit has not be measured.
         """
-        if self.measured == -1:
+        if self.measured is None:
             raise Exception(f"The qubit {self.id} has not be measured")
 
         return self.measured
@@ -87,10 +87,7 @@ class Qubit(object):
         Raises:
             The qubit has not be measured.
         """
-        if self.measured == -1:
-            raise Exception(f"The qubit {self.id} has not be measured")
-
-        return bool(self.measured)
+        return bool(int(self))
 
 
 class Qureg(list):
@@ -193,7 +190,7 @@ class Qureg(list):
         """
         value = 0
         for qubit in self:
-            if qubit.measured == -1:
+            if qubit.measured is None:
                 raise Exception(f"The qubit {qubit.id} has not be measured")
 
             value <<= 1
