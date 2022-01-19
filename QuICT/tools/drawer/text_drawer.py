@@ -17,8 +17,10 @@ A module for drawing circuits in ascii art or some other text representation
 import sys
 from shutil import get_terminal_size
 from warnings import warn
+import numpy as np
 
-from QuICT.core import *
+from QuICT.core.gate import *
+
 
 MAX_FRAC = 16
 N, D = np.meshgrid(np.arange(1, MAX_FRAC + 1), np.arange(1, MAX_FRAC + 1))
