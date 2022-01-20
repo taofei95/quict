@@ -20,6 +20,7 @@ _build
 cmake-build*/
 /QuICT/simulation/CPU_simulator/src/test_data/
 /QuICT/simulation/CPU_simulator/src/perf_data/
+callgrind.out*
 *qubit_cnot.json
 *qubit_cnot.inf
 *qubit_cnot_depth.inf
