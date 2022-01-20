@@ -4,6 +4,7 @@
 # @Author  : Kaiqi Li
 # @File    : proxy_simulator
 
+from collections import defaultdict
 import numpy as np
 import cupy as cp
 
@@ -50,8 +51,8 @@ class MultiStateVectorSimulator(BasicGPUSimulator):
         # Get qubits and limitation
         self.total_qubits = int(circuit.circuit_width())
         self.qubits = int(self.total_qubits - np.log2(self.proxy.ndevs))
-
         self._gates = circuit.gates
+        self._measure_result = defaultdict(list)
 
         # Initial GateMatrix
         self._gate_matrix_prepare()
@@ -76,7 +77,12 @@ class MultiStateVectorSimulator(BasicGPUSimulator):
             if self.proxy.dev_id == 0:
                 self._vector.put(0, self._precision(1))
 
-    def run(self, circuit: Circuit, use_previous: bool = False) -> np.ndarray:
+    def run(
+        self,
+        circuit: Circuit,
+        use_previous: bool = False,
+        record_measured: bool = False
+    ) -> np.ndarray:
         """ start simulator with given circuit
 
         Args:
@@ -92,7 +98,10 @@ class MultiStateVectorSimulator(BasicGPUSimulator):
             for gate in self._gates:
                 self.apply_gate(gate)
 
-        return self.vector
+        if record_measured:
+            return self.vector, self._measure_result
+        else:
+            return self.vector
 
     def apply_gate(self, gate):
         """ Depending on the given quantum gate, apply the target algorithm to calculate the state vector.
@@ -704,8 +713,9 @@ class MultiStateVectorSimulator(BasicGPUSimulator):
         # [Measure]
         elif gate_type == GATE_ID["Measure"]:
             index = self.total_qubits - 1 - gate.targ
-
-            self.circuit.qubits[gate.targ].measured = self._measure_operation(index)
+            result = self._measure_operation(index)
+            self.circuit.qubits[gate.targ].measured = result
+            self._measure_result[index].append(result)
         # [Reset]
         elif gate_type == GATE_ID["Reset"]:
             index = self.total_qubits - 1 - gate.targ
