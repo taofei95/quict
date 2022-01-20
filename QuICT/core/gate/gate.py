@@ -2720,6 +2720,7 @@ class QFTGate(ComplexGate):
             QFTGate: the QFTGate after filled by target number
         """
         self.targets = params
+        self.affectArgs = [i for i in range(params)]
         self.__temp_name = name
         return self
 

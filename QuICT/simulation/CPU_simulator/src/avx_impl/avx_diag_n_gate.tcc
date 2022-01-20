@@ -205,7 +205,7 @@ namespace QuICT {
                         }
                     }
                 }
-            } else {
+            } else { // N == 1
                 uint64_t task_num = 1ULL << (q_state_bit_num - 1);
                 if (gate.targ_ == q_state_bit_num - 1) {
                     __m256d ymm0 = _mm256_loadu2_m128d(gate.diagonal_real_, gate.diagonal_real_); // d_r

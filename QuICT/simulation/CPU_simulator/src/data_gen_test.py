@@ -63,7 +63,7 @@ def out_circuit_to_file(qubit_num: int, f_name: str, circuit: Circuit, result=No
         print("__TERM__", file=f)
 
         if result is None:
-            res = Amplitude.run(circuit)
+            res = Amplitude.run(circuit, None, True)
         else:
             res = result
 
@@ -113,12 +113,13 @@ def measure_test():
         circuit = Circuit(qubit_num)
         for gate, targ in gates:
             gate | circuit(targ)
-        res += Amplitude.run(circuit)
+        res += Amplitude.run(circuit, None, True)
 
     out_circuit_to_file(qubit_num,
                         "./test_data/measure.txt",
                         circuit,
                         result=res / n_run)
+
 
 def main():
     qubit_num = 18
