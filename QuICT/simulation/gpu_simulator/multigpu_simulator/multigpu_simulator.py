@@ -726,28 +726,14 @@ class MultiStateVectorSimulator(BasicGPUSimulator):
         # [Barrier]
         elif gate_type == GateType.barrier:
             pass
-        # [Perm]
+        # [Perm] TODO: for uncertained qubits gate not support yet
         elif (
-            gate_type == GateType.perm
-            # gate_type == GATE_ID["ControlPermMulDetail"] or
-            # gate_type == GATE_ID["PermShift"] or
-            # gate_type == GATE_ID["ControlPermShift"] or
-            # gate_type == GATE_ID["PermMul"] or
-            # gate_type == GATE_ID["ControlPermMul"] or
-            # gate_type == GATE_ID["PermFx"]
+            gate_type == GateType.perm or
+            gate_type in GateGroup.perm_gate
         ):
-            if gate.targets >= 5:
-                pass
-            else:
-                indexes = gate.pargs
-                swaped_pargs = self._perm_operation(indexes)
-                self._algorithm.PermGate_Apply(
-                    swaped_pargs,
-                    *default_parameters
-                )
-        # [Unitary]
+            pass
+        # [Unitary] TODO: Currently only support the 1-, 2-qubits unitary quantum gates
         elif gate_type == GateType.unitary:
-            # TODO: Currently only support the 1-, 2-qubits unitary quantum gates
             qubit_idxes = gate.cargs + gate.targs
             if len(qubit_idxes) == 1:   # 1-qubit unitary gate
                 if gate.is_diagonal():    # diagonal gate
@@ -778,9 +764,8 @@ class MultiStateVectorSimulator(BasicGPUSimulator):
                 raise ValueError(
                     "do not support the unitary gate with more than 2 qubits, please use gate decomposition first."
                 )
-        # [ShorInitial]
+        # [ShorInitial] TODO: Currently only support the 1-, 2-qubits unitary quantum gates
         elif gate_type == GateType.shor_init:
-            # TODO: Not applied yet.
             pass
         # unsupported quantum gates
         else:
