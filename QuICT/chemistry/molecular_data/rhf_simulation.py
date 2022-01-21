@@ -19,10 +19,10 @@ def rhf_simulation(n_atoms, distance, data_dir=None):
     if data_dir == None:
         data_dir = DATA_DIR
     data_dir += "/hydrogen_chains"
-    data_dir += "/h_" + n_atoms + "_sto-3g"
-    data_dir += "/bond_distance_" + distance
-    molfile = data_dir + "/H" + n_atoms
-    molfile += "_sto-3g_singlet_linear_r-" + distance
+    data_dir += "/h_" + str(n_atoms) + "_sto-3g"
+    data_dir += "/bond_distance_" + str(distance)
+    molfile = data_dir + "/H" + str(n_atoms)
+    molfile += "_sto-3g_singlet_linear_r-" + str(distance)
     moldata = MolecularData(molfile)
 
     S = np.load(data_dir + "/overlap.npy")
@@ -35,6 +35,6 @@ def rhf_simulation(n_atoms, distance, data_dir=None):
     molecular_hamiltonian = generate_hamiltonian(moldata.nuclear_repulsion, obi, tbi)
 
     rhf_objective = RHFObjective(molecular_hamiltonian, moldata.n_electrons)
-    result = rhf_objective.minimization()
+    result = rhf_objective.minimization() 
     
     return rhf_objective, moldata, result, obi, tbi

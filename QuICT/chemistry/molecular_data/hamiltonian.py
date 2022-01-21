@@ -4,7 +4,7 @@
 # @Author  : Xiaoquan Xu
 # @File    : moleculardata.py
 
-import itertools
+import itertools as it
 import numpy as np
 from numpy import einsum
 
@@ -28,7 +28,7 @@ def tbi_basis_rotation(tbi, R):
     Change the basis of a two-body integrals matrix
 
     Args:
-        obi(Ndarray: n*n*n*n): two-body integrals of i^ j^ s t
+        tbi(Ndarray: n*n*n*n): two-body integrals of i^ j^ s t
         R(Ndarray: n*n): rotation matrix
 
     Returns:
@@ -43,64 +43,13 @@ class Hamiltonian:
         self.tbi = tbi
 
     def get_fermion_operator(self):
-        fermion_operator = FermionOperator(0)
-        for term in self:
-            fermion_operator += FermionOperator(term, self[term])
+        n_qubits = self.obi.shape[0]
+        fermion_operator = FermionOperator([], self.const)
+        for index in it.product(range(n_qubits), repeat=2):
+            fermion_operator += FermionOperator(list(zip(index, (1,0))), self.obi[index])
+        for index in it.product(range(n_qubits), repeat=4):
+            fermion_operator += FermionOperator(list(zip(index, (1,1,0,0))), self.tbi[index])
         return fermion_operator
-
-# The next three functions are still to be completed
-
-    def __iter__(self):
-
-        def sort_key(key):
-            """This determines how the keys to n_body_tensors
-            should be sorted."""
-            # Interpret key as an integer written in binary
-            if key == ():
-                return 0, 0
-            else:
-                key_int = int(''.join(map(str, key)))
-                return len(key), key_int
-
-        for key in sorted(self.n_body_tensors.keys(), key=sort_key):
-            if key == ():
-                yield ()
-            else:
-                n_body_tensor = self.n_body_tensors[key]
-                for index in itertools.product(range(self.n_qubits),
-                                               repeat=len(key)):
-                    if n_body_tensor[index]:
-                        yield tuple(zip(index, key))
-    
-    def __getitem__(self, args):
-        """Look up matrix element.
-
-        Args:
-            args: Tuples indicating which coefficient to get. For instance,
-                `my_tensor[(6, 1), (8, 1), (2, 0)]`
-                returns
-                `my_tensor.n_body_tensors[1, 1, 0][6, 8, 2]`
-        """
-        if len(args) == 0:
-            return self.n_body_tensors[()]
-        else:
-            index = tuple([operator[0] for operator in args])
-            key = tuple([operator[1] for operator in args])
-            return self.n_body_tensors[key][index]
-
-    def __setitem__(self, args, value):
-        """Set matrix element.
-
-        Args:
-            args: Tuples indicating which coefficient to set.
-        """
-        if len(args) == 0:
-            self.n_body_tensors[()] = value
-        else:
-            key = tuple([operator[1] for operator in args])
-            index = tuple([operator[0] for operator in args])
-            self.n_body_tensors[key][index] = value
-
 
 def generate_hamiltonian(const, obi, tbi, EQ_TOLERANCE=1.0E-12):
     """
@@ -116,6 +65,7 @@ def generate_hamiltonian(const, obi, tbi, EQ_TOLERANCE=1.0E-12):
         for q in range(n):
             new_obi[2*p, 2*q] = obi[p, q]
             new_obi[2*p+1, 2*q+1] = obi[p, q]
+
     for p in range(n):
         for q in range(n):        
             for r in range(n):
