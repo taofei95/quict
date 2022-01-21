@@ -4,6 +4,7 @@
 # @Author  : Kaiqi Li
 # @File    : constant_statevecto_simulator
 
+from collections import defaultdict
 import numpy as np
 import cupy as cp
 
@@ -47,6 +48,7 @@ class ConstantStateVectorSimulator(BasicGPUSimulator):
         """ Initial the qubits, quantum gates and state vector by given quantum circuit. """
         self._circuit = circuit
         self._qubits = int(circuit.width())
+        self._measure_result = defaultdict(list)
 
         if self._optimize:
             self._gates = self._optimizor.optimize(circuit.gates)
@@ -74,13 +76,18 @@ class ConstantStateVectorSimulator(BasicGPUSimulator):
             self._vector = cp.zeros(vector_size, dtype=self._precision)
             self._vector.put(0, self._precision(1))
 
-    def run(self, circuit: Circuit, use_previous: bool = False) -> np.ndarray:
+    def run(
+        self,
+        circuit: Circuit,
+        use_previous: bool = False,
+        record_measured: bool = False
+    ) -> np.ndarray:
         """ start simulator with given circuit
 
         Args:
             circuit (Circuit): The quantum circuits.
             use_previous (bool, optional): Using the previous state vector. Defaults to False.
-
+            record_measured (bool, optional): Record measured result within circuit or not.
         Returns:
             [array]: The state vector.
         """
@@ -90,7 +97,10 @@ class ConstantStateVectorSimulator(BasicGPUSimulator):
             for gate in self._gates:
                 self.apply_gate(gate)
 
-        return self.vector
+        if record_measured:
+            return self.vector, self._measure_result
+        else:
+            return self.vector
 
     def apply_gate(self, gate):
         """ Depending on the given quantum gate, apply the target algorithm to calculate the state vector.
@@ -262,6 +272,7 @@ class ConstantStateVectorSimulator(BasicGPUSimulator):
                 *default_parameters
             )
             self.circuit.qubits[gate.targ].measured = result
+            self._measure_result[index].append(result)
         # [Reset]
         elif gate_type == GateType.reset:
             index = self._qubits - 1 - gate.targ
@@ -361,14 +372,9 @@ class ConstantStateVectorSimulator(BasicGPUSimulator):
     def sample(self):
         assert (self._circuit is not None)
         temp_measure_circuit = Circuit(self._qubits)
-        for idx, qubit in enumerate(self._circuit.qubits):
-            if qubit.measured == -1:
-                Measure | temp_measure_circuit(idx)
+        Measure | temp_measure_circuit
 
-        if len(temp_measure_circuit.gates) != 0:
-            self.run(temp_measure_circuit, use_previous=True)
-            measured_qubits = int(temp_measure_circuit.qubits)
-        else:
-            measured_qubits = int(self._circuit.qubits)
+        self.run(temp_measure_circuit, use_previous=True)
+        measured_qubits = int(temp_measure_circuit.qubits)
 
         return measured_qubits
