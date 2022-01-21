@@ -6,7 +6,7 @@
 
 import numpy as np
 
-from .._algorithm import Algorithm
+from QuICT.algorithm import Algorithm
 from QuICT.core import Circuit
 
 

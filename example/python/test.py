@@ -3,10 +3,13 @@
 # @TIME    : 2021/1/3 2:22 下午
 # @Author  : Han Yu
 # @File    : test.py
+import numpy as np
 
-from QuICT import *
+from QuICT.core import Circuit
+from QuICT.core.gate import U3
 from QuICT.algorithm import SyntheticalUnitary
 from QuICT.qcda.synthesis import UniformlyUnitary
+
 
 circuit = Circuit(4)
 unitary1 = U3([0, 0, 0]).matrix

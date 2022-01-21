@@ -4,11 +4,13 @@
 # @Author  : Han Yu
 # @File    : Deutsch_Jozsa.py
 
-from QuICT.core import Circuit, H, X, Measure, PermFx
+from QuICT.core import Circuit
+from QuICT.core.gate import H, X, Measure, PermFx
+from QuICT.simulation.gpu_simulator import ConstantStateVectorSimulator
 
 
-def deutsch_jozsa_main_oracle(f, qreg, ancilla):
-    PermFx(f) | (qreg, ancilla)
+def deutsch_jozsa_main_oracle(f, n, circuit):
+    PermFx(n, f) | circuit
 
 
 def run_deutsch_jozsa(f, n, oracle):
@@ -23,16 +25,16 @@ def run_deutsch_jozsa(f, n, oracle):
     circuit = Circuit(n + 1)
 
     # start the eng and allocate qubits
-    qreg = circuit([i for i in range(n)])
-    ancilla = circuit(n)
+    qreg = circuit[[i for i in range(n)]]
+    ancilla = circuit[n]
 
     # Start with qreg in equal superposition and ancilla in |->
-    H | qreg
-    X | ancilla
-    H | ancilla
+    H | circuit(qreg)
+    X | circuit(ancilla)
+    H | circuit(ancilla)
 
     # Apply oracle U_f which flips the phase of every state |x> with f(x) = 1
-    oracle(f, qreg, ancilla)
+    oracle(f, n, circuit)
 
     # Apply H
     H | qreg
@@ -40,7 +42,8 @@ def run_deutsch_jozsa(f, n, oracle):
     Measure | qreg
     Measure | ancilla
 
-    circuit.exec()
+    simulator = ConstantStateVectorSimulator()
+    _ = simulator.run(circuit)
 
     y = int(qreg)
 
@@ -52,5 +55,5 @@ def run_deutsch_jozsa(f, n, oracle):
 
 if __name__ == '__main__':
     test_number = 5
-    test = [0, 1] * 2 ** (test_number - 1)
+    test = [i for i in range(1, 2 ** test_number, 2)]
     run_deutsch_jozsa(test, test_number, deutsch_jozsa_main_oracle)
