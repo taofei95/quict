@@ -50,6 +50,11 @@ class Hamiltonian:
         for index in it.product(range(n_qubits), repeat=4):
             fermion_operator += FermionOperator(list(zip(index, (1,1,0,0))), self.tbi[index])
         return fermion_operator
+    
+    def expectation(self, other):
+        expectation = self.const * other.const
+        expectation += np.sum(self.obi * other.obi)
+        expectation += np.sum(self.tbi * other.tbi)
 
 def generate_hamiltonian(const, obi, tbi, EQ_TOLERANCE=1.0E-12):
     """
