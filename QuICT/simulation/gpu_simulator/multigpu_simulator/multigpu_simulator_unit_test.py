@@ -14,7 +14,7 @@ from cupy.cuda import nccl
 from QuICT.core import *
 from QuICT.algorithm import Amplitude
 from QuICT.utility import Proxy
-from QuICT.simulation import MultiStateVectorSimulator
+from QuICT.simulation.gpu_simulator import MultiStateVectorSimulator
 
 
 q = 5

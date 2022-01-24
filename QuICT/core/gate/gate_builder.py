@@ -1,273 +1,106 @@
 #!/usr/bin/env python
 # -*- coding:utf8 -*-
-# @TIME    : 2020/12/11 10:54
-# @Author  : Han Yu
+# @TIME    : 2022/1/14 10:54
+# @Author  : Han Yu, Li Kaiqi
 # @File    : _gateBuilder.py
+import numpy as np
+import random
+
+from QuICT.core.qubit import Qubit, Qureg
+from QuICT.core.gate import *
+from QuICT.core.utils import GateType
+
+
+GATE_TYPE_TO_CLASS = {
+    GateType.h: HGate,
+    GateType.s: SGate,
+    GateType.sdg: SDaggerGate,
+    GateType.x: XGate,
+    GateType.y: YGate,
+    GateType.z: ZGate,
+    GateType.sx: SXGate,
+    GateType.sy: SYGate,
+    GateType.sw: SWGate,
+    GateType.id: IDGate,
+    GateType.u1: U1Gate,
+    GateType.u2: U2Gate,
+    GateType.u3: U3Gate,
+    GateType.rx: RxGate,
+    GateType.ry: RyGate,
+    GateType.rz: RzGate,
+    GateType.t: TGate,
+    GateType.tdg: TDaggerGate,
+    GateType.phase: PhaseGate,
+    GateType.cz: CZGate,
+    GateType.cx: CXGate,
+    GateType.cy: CYGate,
+    GateType.ch: CHGate,
+    GateType.crz: CRzGate,
+    GateType.cu1: CU1Gate,
+    GateType.cu3: CU3Gate,
+    GateType.fsim: FSimGate,
+    GateType.Rxx: RxxGate,
+    GateType.Ryy: RyyGate,
+    GateType.Rzz: RzzGate,
+    GateType.swap: SwapGate,
+    GateType.cswap: CSwapGate,
+    GateType.ccx: CCXGate,
+    GateType.CCRz: CCRzGate,
+    GateType.measure: MeasureGate,
+    GateType.reset: ResetGate,
+    GateType.barrier: BarrierGate,
+    GateType.unitary: UnitaryGate,
+    GateType.perm: PermGate,
+    GateType.control_perm_detail: ControlPermMulDetailGate,
+    GateType.perm_shift: PermShiftGate,
+    GateType.control_perm_shift: ControlPermShiftGate,
+    GateType.perm_mul: PermMulGate,
+    GateType.control_perm_mul: ControlPermMulGate,
+    GateType.perm_fx: PermFxGate,
+    GateType.shor_init: ShorInitialGate,
+    GateType.qft: QFTGate,
+    GateType.iqft: IQFTGate
+}
+
+
+def build_gate(
+    gate_type: GateType,
+    qubits: list,
+    params: list = None
+):
+    gate = GATE_TYPE_TO_CLASS[gate_type]()
+    args_number = gate.controls + gate.targets
+
+    if isinstance(qubits, Qubit):
+        qubits = Qureg(qubits)
+    elif isinstance(qubits, int):
+        qubits = [qubits]
+    assert len(qubits) == args_number
+
+    if isinstance(qubits, Qureg):
+        gate.assigned_qubits = qubits
+    else:
+        gate.cargs = qubits[:gate.controls]
+        gate.targs = qubits[gate.controls:]
+
+    if params:
+        gate.pargs = params
+
+    return gate
+
+
+def build_random_gate(
+    gate_type: GateType,
+    qubits: int,
+    random_params: bool = False
+):
+    gate = GATE_TYPE_TO_CLASS[gate_type]()
+    args_number = gate.controls + gate.targets
+    choiced_qubits = random.sample(range(qubits), args_number)
+    gate.cargs = choiced_qubits[:gate.controls]
+    gate.targs = choiced_qubits[gate.controls:]
+
+    if random_params and gate.params:
+        gate.pargs = [np.random.uniform(0, 2 * np.pi, gate.params) for _ in range(gate.params)]
 
-from deprecated import deprecated
-
-from QuICT.core.circuit import Circuit
-
-from .gate import *
-
-
-class GateBuilderModel(object):
-    """ A model that help users get gate without circuit
-
-    The model is designed to help users get some gates independent of the circuit
-    Because there is no clear API to setting a gate's control bit indexes and
-    target bit indexes without circuit or qureg.
-
-    Users should set the gateType of the GateBuilder, than set necessary parameters
-    (Targs, Cargs, Pargs). After that, user can get a gate from GateBuilder.
-
-    """
-
-    def __init__(self):
-        self.gateType = GATE_ID["Error"]
-        self.pargs = []
-        self.cargs = []
-        self.targs = []
-
-    def setGateType(self, type):
-        """ pass the gateType for the builder
-
-        Args:
-            type(int): the type passed in
-        """
-
-        self.gateType = type
-
-    def setTargs(self, targs):
-        """ pass the target bits' indexes of the gate
-
-        The targets should be passed.
-
-        Args:
-            targs(list/int/float/complex): the target bits' indexes the gate act on.
-        """
-
-        if isinstance(targs, list):
-            self.targs = targs
-        else:
-            self.targs = [targs]
-
-    def setCargs(self, cargs):
-        """ pass the control bits' indexes of the gate
-
-        if the gate don't need the control bits, needn't to call this function.
-
-        Args:
-            cargs(list/int/float/complex): the control bits' indexes the gate act on.
-        """
-        if isinstance(cargs, list):
-            self.cargs = cargs
-        else:
-            self.cargs = [cargs]
-
-    def setPargs(self, pargs):
-        """ pass the parameters of the gate
-
-        if the gate don't need the parameters, needn't to call this function.
-
-        Args:
-            pargs(list/int/float/complex): the parameters filled in the gate
-        """
-
-        if isinstance(pargs, list):
-            self.pargs = pargs
-        else:
-            self.pargs = [pargs]
-
-    def setArgs(self, args):
-        """ pass the bits' indexed of the gate by one time
-
-        The control bits' indexed first, and followed the targets bits' indexed.
-
-        Args:
-            args(list/int/float/complex): the act bits' indexes of the gate
-        """
-
-        if isinstance(args, list):
-            if self.getCargsNumber() > 0:
-                self.setCargs(args[0:self.getCargsNumber()])
-            if self.getTargsNumber() > 0:
-                self.setTargs(args[self.getCargsNumber():])
-        else:
-            self.setTargs([args])
-
-    def getCargsNumber(self):
-        """ get the number of cargs of the gate
-
-        once the gateType is set, the function is valid.
-
-        Return:
-            int: the number of cargs
-        """
-        gate = self._inner_generate_gate()
-        return gate.controls
-
-    def getTargsNumber(self):
-        """ get the number of targs of the gate
-
-        once the gateType is set, the function is valid.
-
-        Return:
-            int: the number of targs
-        """
-
-        gate = self._inner_generate_gate()
-        return gate.targets
-
-    def getParamsNumber(self):
-        """ get the number of pargs of the gate
-
-        once the gateType is set, the function is valid.
-
-        Return:
-            int: the number of pargs
-        """
-
-        gate = self._inner_generate_gate()
-        return gate.params
-
-    @deprecated(reason="replaced with get_gate method")
-    def getGate(self):
-        """ get the gate
-
-        once the parameters are set, the function is valid.
-
-        Return:
-            BasicGate: the gate with parameters set in the builder
-        """
-        gate = self._inner_generate_gate().copy()
-        return self._inner_complete_gate(gate)
-
-    def _inner_generate_gate(self):
-        """ private tool function
-
-        get an initial gate by the gateType set for builder
-
-        Return:
-            BasicGate: the initial gate
-        """
-        return GATE_STANDARD_NAME_OF[self.gateType]()
-
-    def _inner_complete_gate(self, gate: BasicGate):
-        """ private tool function
-
-        filled the initial gate by the parameters set for builder
-
-        Return:
-            BasicGate: the gate with parameters set in the builder
-        """
-        if self.gateType == GATE_ID["Perm"]:
-            gate = gate(self.pargs)
-        elif self.gateType == GATE_ID["Unitary"]:
-            gate = gate(self.pargs)
-        if gate.targets != 0:
-            if len(self.targs) == gate.targets:
-                gate.targs = copy.deepcopy(self.targs)
-            else:
-                raise Exception("the number of targs is wrong")
-
-        if gate.controls != 0:
-            if len(self.cargs) == gate.controls:
-                gate.cargs = copy.deepcopy(self.cargs)
-            else:
-                raise Exception("the number of cargs is wrong")
-        if gate.params != 0 and self.gateType != GATE_ID['Perm']:
-            if len(self.pargs) == gate.params:
-                gate.pargs = copy.deepcopy(self.pargs)
-            else:
-                raise Exception("the number of pargs is wrong")
-
-        return gate
-
-    @staticmethod
-    @deprecated(reason="replaced with BasicGate::__or__ method")
-    def apply_gates(gate: BasicGate, circuit: Circuit):
-        """ act a gate on some circuit.
-
-        Args:
-            gate(BasicGate): the gate which is to be act on the circuit.
-            circuit(Circuit): the circuit which the gate acted on.
-        """
-
-        qubits = Qureg()
-        for control in gate.cargs:
-            qubits.append(circuit[control])
-        for target in gate.targs:
-            qubits.append(circuit[target])
-        circuit.append(gate, qubits)
-
-    @staticmethod
-    @deprecated(reason="replaced with BasicGate::__and__ method")
-    def reflect_gates(gates: list):
-        """ build the inverse of a series of gates.
-
-        Args:
-            gates(list<BasicGate>): the gate list whose inverse is need to be gotten.
-
-        Return:
-            list<BasicGate>: the inverse of the gate list.
-        """
-
-        reflect = []
-        l_g = len(gates)
-        for index in range(l_g - 1, -1, -1):
-            reflect.append(gates[index].inverse())
-        return reflect
-
-    @staticmethod
-    @deprecated(reason="replaced with BasicGate::__and__ and BasicGate::__or__ method")
-    def reflect_apply_gates(gates: list, circuit: Circuit):
-        """ act the inverse of a series of gates on some circuit.
-
-        Args:
-            gates(list<BasicGate>): the gate list whose inverse is need to be gotten.
-            circuit(Circuit): the circuit which the inverse acted on.
-        """
-
-        l_g = len(gates)
-        for index in range(l_g - 1, -1, -1):
-            gate = gates[index].inverse()
-            qubits = Qureg()
-            for control in gate.cargs:
-                qubits.append(circuit[control])
-            for target in gate.targs:
-                qubits.append(circuit[target])
-            circuit.append(gate, qubits)
-
-
-GateBuilder = GateBuilderModel()
-
-
-def get_n_args(gate_type: int):
-    """get arg number.
-
-    Args:
-        gate_type (int): [description]
-
-    Returns:
-        tuple: (n_pargs, n_targs, n_cargs)
-    """
-    tmp_gate = GATE_STANDARD_NAME_OF[gate_type]()
-    return (tmp_gate.params, tmp_gate.targets, tmp_gate.controls)
-
-
-def get_gate(gate_type: int, affect_args: list, pargs: list = None):
-    """get a gate with specified arguments.
-
-    Args:
-        gate_type (int): [description]
-        affect_args (list): [description]
-        pargs (list): [description]
-
-    Returns:
-        [type]: [description]
-    """
-    gate = GATE_INSTANCE_OF[gate_type](params=pargs)
-    if len(affect_args) > 0:
-        gate & affect_args
     return gate

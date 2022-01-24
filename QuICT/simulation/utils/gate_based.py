@@ -7,8 +7,7 @@
 import numpy as np
 import cupy as cp
 
-
-_GATES_EXCEPT = ["MeasureGate", "ResetGate", "PermFxGate", "PermGate"]
+from QuICT.core.utils import SPECIAL_GATE_SET, GateType
 
 
 class GateMatrixs:
@@ -38,20 +37,19 @@ class GateMatrixs:
         Args:
             gate(Gate): the gate in circuit.
         """
-        gate_name = gate.name.split("_")[0]
-        if gate_name in _GATES_EXCEPT:
+        if gate.type in SPECIAL_GATE_SET and gate.type != GateType.unitary:
             return
 
-        param_num = gate.params
-        if gate.params != 0:
-            for i in range(param_num):
-                gate_name += f"_{gate.pargs[i]}"
-
-        if gate_name == "UnitaryGate":
+        gate_name = str(gate.type)
+        if gate.type == GateType.unitary:
             gate_name = gate.name
 
+        param_num = gate.params
+        for i in range(param_num):
+            gate_name += f"_{gate.pargs[i]}"
+
         if gate_name not in self.gate_matrixs.keys():
-            matrix = gate.compute_matrix
+            matrix = gate.matrix
             self._build_matrix_gate(gate_name, matrix)
 
     def _build_matrix_gate(self, gate_name, matrix):
@@ -80,17 +78,16 @@ class GateMatrixs:
         Args:
             gate(Gate): the gate in circuit.
         """
-        gate_name = gate.name.split("_")[0]
-        param_num = gate.params
-        if param_num != 0:
+        if gate.type in SPECIAL_GATE_SET and gate.type != GateType.unitary:
+            raise KeyError(f"Wrong gate here. {gate.name}")
+
+        if gate.type == GateType.unitary:
+            gate_name = gate.name
+        else:
+            gate_name = str(gate.type)
+            param_num = gate.params
             for i in range(param_num):
                 gate_name += f"_{gate.pargs[i]}"
-
-        if gate_name in _GATES_EXCEPT:
-            raise KeyError(f"Wrong gate here. {gate_name}")
-
-        if gate_name == "UnitaryGate":
-            gate_name = gate.name
 
         start, itvl = self.gate_matrixs[gate_name]
 

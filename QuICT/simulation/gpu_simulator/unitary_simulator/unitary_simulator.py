@@ -5,7 +5,7 @@ from QuICT.simulation.utils import DisjointSet
 
 from QuICT.simulation import BasicSimulator
 
-from QuICT.core import *
+from QuICT.core.gate import *
 import QuICT.ops.linalg.cpu_calculator as CPUCalculator
 
 unitary_calculation = CPUCalculator

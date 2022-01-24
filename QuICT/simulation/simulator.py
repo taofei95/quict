@@ -5,14 +5,13 @@
 # @File    : _simulator
 import time
 
-from QuICT.core import *
-from QuICT.simulation import (
+from QuICT.core import Circuit
+from QuICT.simulation.gpu_simulator import (
     ConstantStateVectorSimulator,
     MultiStateVectorSimulator,
-    UnitarySimulator,
-    QuantumLeafSimulator,
-    QiskitSimulator
+    UnitarySimulator
 )
+from QuICT.simulation.remote_simulator import QuantumLeafSimulator, QiskitSimulator
 from QuICT.simulation.utils import option_validation, Result
 
 
@@ -141,7 +140,6 @@ class Simulator:
                     result.record_sv(state, shot)
 
                 final_state = self._simulator.sample()
-
                 result.record(final_state, len(circuit.qubits))
 
         return result.dumps()

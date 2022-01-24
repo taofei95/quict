@@ -8,9 +8,9 @@ import cupy as cp
 import numpy as np
 from functools import lru_cache
 
-from QuICT.core import *
+from QuICT.core import Circuit
+from QuICT.core.gate import *
 from QuICT.ops.linalg.gpu_calculator import dot, MatrixPermutation
-from QuICT.simulation.utils import GateMatrixs
 
 
 # tool function
@@ -89,9 +89,9 @@ class BasicSimulator(object):
             CompositeGate: the gates after pretreatment
         """
         gates = CompositeGate()
-        circuit_width = circuit.circuit_width()
+        circuit_width = circuit.width()
         gateSet = [np.identity(2, dtype=np.complex64) for _ in range(circuit_width)]
-        tangle = [i for i in range(circuit.circuit_width())]
+        tangle = [i for i in range(circuit.width())]
         for gate in circuit.gates:
             if gate.targets + gate.controls >= 3:
                 raise Exception("only support 2-qubit gates and 1-qubit gates.")
