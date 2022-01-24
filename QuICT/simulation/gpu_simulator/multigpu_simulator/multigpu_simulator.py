@@ -404,7 +404,7 @@ class MultiStateVectorSimulator(BasicGPUSimulator):
                 else:
                     self._algorithm.Controlled_Multiply_targ(
                         t_indexes[0],
-                        gate.compute_matrix[3, 3],
+                        gate.matrix[3, 3],
                         *default_parameters
                     )
 

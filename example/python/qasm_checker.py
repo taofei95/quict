@@ -8,12 +8,9 @@ from QuICT.tools.interface import OPENQASMInterface
 from QuICT.simulation.gpu_simulator import ConstantStateVectorSimulator
 from QuICT.core import *
 
-# with open("../qasm/test_2.qasm") as ifile:
-#     data = ifile.read()
 
-# qasm = OPENQASMInterface.load_data(data=data)
 # load qasm
-qasm = OPENQASMInterface.load_file("../qasm/test_2.qasm")
+qasm = OPENQASMInterface.load_file("../qasm/test.qasm")
 if qasm.valid_circuit:
     # generate circuit
     circuit = qasm.circuit

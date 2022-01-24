@@ -169,7 +169,7 @@ class ConstantStateVectorSimulator(BasicGPUSimulator):
         elif gate_type in GATE_TYPE_to_ID[GateGroup.control_2arg]:
             t_index = self._qubits - 1 - gate.targ
             c_index = self._qubits - 1 - gate.carg
-            val = gate.compute_matrix[3, 3]
+            val = gate.matrix[3, 3]
             self._algorithm.Controlled_Product_ctargs(
                 c_index,
                 t_index,

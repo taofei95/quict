@@ -295,7 +295,7 @@ class BasicGate(object):
 
             qasm_string += params_string
 
-        ctargs = [str(ctarg) for ctarg in self.cargs + self.targs]
+        ctargs = [f"q[{ctarg}]" for ctarg in self.cargs + self.targs]
         ctargs_string = " " + ', '.join(ctargs) + ";\n"
         qasm_string += ctargs_string
 
