@@ -16,7 +16,8 @@ from math import pi
 import numpy as np
 from fractions import Fraction
 
-from QuICT.core import *
+from QuICT.core import Circuit
+from QuICT.core.gate import *
 from QuICT.qcda.synthesis.arithmetic.bea import *
 from QuICT.algorithm import Algorithm
 from .utility import *

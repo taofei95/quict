@@ -6,7 +6,8 @@
 
 import numpy as np
 
-from QuICT import *
+from QuICT.core import Circuit
+from QuICT.core.gate import *
 from QuICT.qcda.synthesis.mct import MCTLinearOneDirtyAux
 from QuICT.algorithm import amplitude
 
