@@ -71,7 +71,9 @@ class CompositeGate:
         if isinstance(targets, Qubit):
             targets = Qureg(targets)
 
-        assert len(targets) == self._max_qubit
+        if len(targets) != self._max_qubit:
+            raise ValueError("The number of assigned qubits or indexes must be equal to gate's width.")
+
         self._mapping(targets)
 
     def __or__(self, targets):
@@ -133,8 +135,8 @@ class CompositeGate:
 
         for idx in indexes:
             assert idx >= 0 and isinstance(idx, int)
-            if idx > self._max_qubit:
-                self._max_qubit = idx
+            if idx >= self._max_qubit:
+                self._max_qubit = idx + 1
 
         self._pointer = indexes
         return self
@@ -169,8 +171,8 @@ class CompositeGate:
 
             for idx in qubit_index:
                 assert idx >= 0
-                if idx > self._max_qubit:
-                    self._max_qubit = idx
+                if idx >= self._max_qubit:
+                    self._max_qubit = idx + 1
 
         self._gates.append(gate)
 
@@ -273,12 +275,12 @@ class CompositeGate:
         Returns:
             np.ndarray: the matrix of the gates
         """
-        matrix = np.eye(1 << self._qubits)
+        matrix = np.eye(1 << self._max_qubit)
         for gate in self.gates:
             if gate.is_special():
                 raise TypeError(f"Cannot combined the gate matrix with special gate {gate.type}")
 
-            matrix = np.matmul(matrix_product_to_circuit(self._qubits, gate), matrix)
+            matrix = np.matmul(matrix_product_to_circuit(self._max_qubit, gate), matrix)
 
         return matrix
 

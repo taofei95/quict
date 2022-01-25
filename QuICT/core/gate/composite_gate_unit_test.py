@@ -14,12 +14,10 @@ class TestCompositeGate(unittest.TestCase):
     def setUpClass(cls):
         print("The Composite Gate unit test start!")
         cls.qubits = 5
-        cls.based_composite_gate = CompositeGate(cls.qubits)
 
     @classmethod
     def tearDownClass(cls) -> None:
         print("The Composite Gate unit test finished!")
-        del cls.based_composite_gate
 
     def _gate_attr_test(self, cgate):
         return (
@@ -29,17 +27,18 @@ class TestCompositeGate(unittest.TestCase):
             cgate.depth() == 3
         )
 
-    def test_compositegate_build(self):
-        # Composite Gate Initial
-        cgate = TestCompositeGate.based_composite_gate
-        assert cgate.width() == TestCompositeGate.qubits
-
+    def _build_compositegate(self):
+        cgate = CompositeGate()
         H | cgate(1)
         U1(0) | cgate(2)
         CX | cgate([3, 4])
         CU3(1, 0, 0) | cgate([0, 4])
         CCRz(1) | cgate([0, 1, 2])
-        assert self._gate_attr_test(cgate)
+
+        return cgate
+
+    def test_compositegate_build(self):
+        assert self._gate_attr_test(self._build_compositegate())
 
     def test_compositegate_matrix(self):
         test_gate = CompositeGate(3)
@@ -56,11 +55,11 @@ class TestCompositeGate(unittest.TestCase):
     def test_compositegate_operation(self):
         # composite gate | composite gate
         ncgate = CompositeGate(TestCompositeGate.qubits)
-        TestCompositeGate.based_composite_gate | ncgate
+        self._build_compositegate() | ncgate
         assert self._gate_attr_test(ncgate)
 
         # composite gate ^ composite gate
-        TestCompositeGate.based_composite_gate ^ ncgate
+        self._build_compositegate() ^ ncgate
         assert ncgate.size() == 10
 
         # composite gate | circuit
