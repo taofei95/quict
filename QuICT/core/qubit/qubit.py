@@ -219,11 +219,13 @@ class Qureg(list):
         Return:
             Qureg: the result or slice
         """
-        if not isinstance(other, Qureg):
-            raise TypeError("Qureg only can add another qureg.")
-
-        for q in other:
-            self.append(q)
+        if isinstance(other, Qubit):
+            self.append(other)
+        elif isinstance(other, Qureg):
+            for q in other:
+                self.append(q)
+        else:
+            raise TypeError("Qureg only can be added with qureg/qubit.")
 
         return self
 

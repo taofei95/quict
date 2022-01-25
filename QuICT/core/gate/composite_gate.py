@@ -40,19 +40,20 @@ class CompositeGate:
 
         return True
 
-    def __init__(self, wires: int, name: str = None, gates: list = None):
+    def __init__(self, name: str = None, gates: list = None):
         """ initial a CompositeGate with gate(s)
 
         Args:
-            qubits [BasicGate]: the qubits which make up the qureg, it can have below form,
+            name [str]: the name of composite gate
+            gates List[BasicGate]: The gates are added into this composite gate
         """
         global cgate_id
         self._id = cgate_id
         cgate_id += 1
 
         self._name = name if name else f"composite_gate_{self._id}"
-        self._qubits = wires
         self._gates = []
+        self._max_qubit = 0
         self._pointer = -1
 
         if gates:
@@ -70,7 +71,7 @@ class CompositeGate:
         if isinstance(targets, Qubit):
             targets = Qureg(targets)
 
-        assert len(targets) == self._qubits
+        assert len(targets) == self._max_qubit
         self._mapping(targets)
 
     def __or__(self, targets):
@@ -131,7 +132,9 @@ class CompositeGate:
             indexes = [indexes]
 
         for idx in indexes:
-            assert idx >= 0 and idx < self._qubits
+            assert idx >= 0 and isinstance(idx, int)
+            if idx > self._max_qubit:
+                self._max_qubit = idx
 
         self._pointer = indexes
         return self
@@ -146,13 +149,16 @@ class CompositeGate:
         gate = gate.copy()
 
         if self._pointer != -1:
-            qubit_index = list(self._pointer)
-            if len(qubit_index) > gate.controls + gate.targets:
+            qubit_index = self._pointer[:]
+            gate_args = gate.controls + gate.targets
+            if len(self._pointer) > gate_args:
                 gate.cargs = [qubit_index[carg] for carg in gate.cargs]
                 gate.targs = [qubit_index[targ] for targ in gate.targs]
-            else:
+            elif len(self._pointer) == gate_args:
                 gate.cargs = qubit_index[:gate.controls]
                 gate.targs = qubit_index[gate.controls:]
+            else:
+                raise KeyError(f"{gate.type} need {gate_args} indexes, but given {len(self._pointer)}")
 
             if not is_extend:
                 self._pointer = -1
@@ -162,7 +168,9 @@ class CompositeGate:
                 raise KeyError(f"{gate.type} need qubit indexes to add into Composite Gate.")
 
             for idx in qubit_index:
-                assert idx >= 0 and idx < self._qubits
+                assert idx >= 0
+                if idx > self._max_qubit:
+                    self._max_qubit = idx
 
         self._gates.append(gate)
 
@@ -172,7 +180,7 @@ class CompositeGate:
         Returns:
             int: the number of qubits applied by gates
         """
-        return self._qubits
+        return self._max_qubit
 
     def size(self):
         """ the size of the gates
