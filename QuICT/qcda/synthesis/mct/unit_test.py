@@ -6,6 +6,7 @@
 
 import pytest
 from QuICT.core import *
+from QuICT.core.gate import *
 from QuICT.qcda.synthesis.mct import MCTOneAux, MCTLinearHalfDirtyAux, MCTLinearOneDirtyAux
 from QuICT.algorithm import SyntheticalUnitary
 

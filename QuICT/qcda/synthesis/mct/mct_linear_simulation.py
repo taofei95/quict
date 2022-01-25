@@ -6,6 +6,7 @@
 
 from .._synthesis import Synthesis
 from QuICT.core import *
+from QuICT.core.gate import *
 
 
 def half_dirty_aux(n, m, controls, auxs, target):

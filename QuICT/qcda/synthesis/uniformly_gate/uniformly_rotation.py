@@ -8,7 +8,8 @@ from typing import *
 import numpy as np
 
 from .._synthesis import Synthesis
-from QuICT.core import GATE_ID, GateBuilder, CompositeGate
+from QuICT.core import Qureg
+from QuICT.core.gate import GateType, build_gate, CompositeGate
 
 
 def uniformlyRotation(
@@ -45,16 +46,17 @@ def inner_uniformly_rotation(
         is_left_cnot: bool = False
 ) -> CompositeGate:
     if low + 1 == high:
-        GateBuilder.setGateType(gate_type)
-        GateBuilder.setTargs(mapping[low])
-        GateBuilder.setPargs(float(z[0]))
-        return CompositeGate(GateBuilder.getGate())
+        gateA = build_gate(gate_type, mapping[low], float(z[0]))
+        gates = CompositeGate()
+        gates.append(gateA)
+        return gates
     length = len(z) // 2
-    GateBuilder.setGateType(GATE_ID["CX"])
-    GateBuilder.setTargs(mapping[high - 1])
-    GateBuilder.setCargs(mapping[low])
-    gateA = GateBuilder.getGate()
-    gateB = GateBuilder.getGate()
+    # GateBuilder.setGateType(GATE_ID["CX"])
+    # GateBuilder.setTargs(mapping[high - 1])
+    # GateBuilder.setCargs(mapping[low])
+    q = Qureg([mapping[low], mapping[high - 1]])
+    gateA = build_gate(GateType.cx, q)
+    gateB = build_gate(GateType.cx, q)
     Rxp = []
     Rxn = []
     for i in range(length):
@@ -102,7 +104,7 @@ class UniformlyRy(Synthesis):
             mapping = [i for i in range(n)]
         if 1 << (n - 1) != len(pargs):
             raise Exception("the number of parameters unmatched.")
-        return uniformlyRotation(0, n, pargs, GATE_ID['Ry'], mapping)
+        return uniformlyRotation(0, n, pargs, GateType.ry, mapping)
 
 
 class UniformlyRz(Synthesis):
@@ -124,4 +126,4 @@ class UniformlyRz(Synthesis):
             mapping = [i for i in range(n)]
         if 1 << (n - 1) != len(pargs):
             raise Exception("the number of parameters unmatched.")
-        return uniformlyRotation(0, n, pargs, GATE_ID['Rz'], mapping)
+        return uniformlyRotation(0, n, pargs, GateType.rz, mapping)

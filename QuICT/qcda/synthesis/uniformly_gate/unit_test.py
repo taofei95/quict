@@ -11,6 +11,7 @@ import numpy as np
 
 from QuICT.algorithm import SyntheticalUnitary
 from QuICT.core import *
+from QuICT.core.gate import *
 from QuICT.qcda.synthesis import UniformlyRy, UniformlyRz, UniformlyUnitary
 
 
@@ -30,7 +31,7 @@ def test_uniform_ry():
             unitary = SyntheticalUnitary.run(circuit)
             for j in range(1 << (i - 1)):
                 unitary_slice = unitary[2 * j:2 * (j + 1), 2 * j:2 * (j + 1)]
-                circuit.print_information()
+                print(circuit)
                 assert not np.any(abs(unitary_slice - Ry(angles[j]).matrix.reshape(2, 2)) > 1e-10)
 
 
@@ -67,4 +68,3 @@ def test_uniform_unitary():
 
 if __name__ == "__main__":
     pytest.main(["./unit_test.py"])
-    # test_uniform_unitary()

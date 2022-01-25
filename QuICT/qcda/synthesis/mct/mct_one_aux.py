@@ -6,6 +6,7 @@
 
 from .._synthesis import Synthesis
 from QuICT.core import *
+from QuICT.core.gate import *
 from .mct_linear_simulation import MCTLinearHalfDirtyAux
 
 
