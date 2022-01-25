@@ -271,7 +271,7 @@ class ConstantStateVectorSimulator(BasicGPUSimulator):
                 index,
                 *default_parameters
             )
-            self.circuit.qubits[gate.targ].measured = result
+            self.circuit.qubits[gate.targ].measured = int(result)
             self._measure_result[index].append(result)
         # [Reset]
         elif gate_type == GateType.reset:

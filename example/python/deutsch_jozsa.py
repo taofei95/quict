@@ -9,11 +9,7 @@ from QuICT.core.gate import H, X, Measure, PermFx
 from QuICT.simulation.gpu_simulator import ConstantStateVectorSimulator
 
 
-def deutsch_jozsa_main_oracle(f, n, circuit):
-    PermFx(n, f) | circuit
-
-
-def run_deutsch_jozsa(f, n, oracle):
+def run_deutsch_jozsa(n, oracle):
     """ an oracle, use Deutsch_Jozsa to decide whether f is balanced
 
     f(list): the function to be decided
@@ -29,18 +25,17 @@ def run_deutsch_jozsa(f, n, oracle):
     ancilla = circuit[n]
 
     # Start with qreg in equal superposition and ancilla in |->
-    H | circuit(qreg)
     X | circuit(ancilla)
-    H | circuit(ancilla)
+    H | circuit
 
     # Apply oracle U_f which flips the phase of every state |x> with f(x) = 1
-    oracle(f, n, circuit)
+    oracle | circuit
 
     # Apply H
-    H | qreg
+    for q in qreg:
+        H | circuit(q)
     # Measure
-    Measure | qreg
-    Measure | ancilla
+    Measure | circuit
 
     simulator = ConstantStateVectorSimulator()
     _ = simulator.run(circuit)
@@ -56,4 +51,5 @@ def run_deutsch_jozsa(f, n, oracle):
 if __name__ == '__main__':
     test_number = 5
     test = [i for i in range(1, 2 ** test_number, 2)]
-    run_deutsch_jozsa(test, test_number, deutsch_jozsa_main_oracle)
+    oracle = PermFx(test_number, test)
+    run_deutsch_jozsa(test_number, oracle)
