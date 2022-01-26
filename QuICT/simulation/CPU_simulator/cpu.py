@@ -1,4 +1,3 @@
-from ctypes import cdll
 import os
 from QuICT.core import *
 
@@ -31,7 +30,7 @@ class GateDescription:
         pass
 
 
-sim_back_bind.GateDescription: GateDescription.__class__
+# sim_back_bind.GateDescription: GateDescription.__class__
 
 special_x = (GATE_ID["X"],)
 special_h = (GATE_ID["H"],)
@@ -178,7 +177,7 @@ class CircuitSimulator:
         """
         return self._instance.name()
 
-    def _run_and_sample(self, circuit: Circuit, keep_state: bool = False):
+    def _run(self, circuit: Circuit, keep_state: bool = False) -> Tuple[np.ndarray, List[int]]:
         """Run simulation by gate description sequence and return measure gate results.
 
         Parameters
@@ -195,12 +194,29 @@ class CircuitSimulator:
         gate_desc_vec: List[GateDescription] = []
         for gate in circuit.gates:
             gate_desc_vec.extend(gate_to_desc(gate))
-        self._amplitude, self._measure_results = \
-            self._instance.run(circuit.circuit_width(), gate_desc_vec, keep_state)
+        return self._instance.run(circuit.circuit_width(), gate_desc_vec, keep_state)
 
     def run(self, circuit: Circuit, keep_state: bool = False) -> np.ndarray:
-        self._run_and_sample(circuit, keep_state)
-        return self._amplitude
+        """Run simulation by gate description sequence and return measure gate results.
 
-    def sample(self) -> List[int]:
-        return self._measure_results
+        Parameters
+        ----------
+        circuit:
+            quantum circuit to be simulated
+        keep_state:
+            start simulation on previous result
+        """
+        amplitude, _ = self._run(circuit, keep_state)
+        return amplitude
+
+    def sample(self, circuit: Circuit) -> List[int]:
+        """Appending measure gates to end of circuit if not presented then
+        apply measurement. Before calling this method, one should call `run`
+        method first.
+
+        Parameters
+        ----------
+        circuit:
+            quantum circuit to be simulated
+        """
+        return self._instance.sample(circuit.circuit_width())

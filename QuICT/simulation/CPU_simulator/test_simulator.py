@@ -29,14 +29,18 @@ def test_complex_gate():
 
 
 def test_measure_gate():
-    for qubit_num in range(2, 20):
+    qubit_num = 4
+    measure_res_acc = [0 for _ in range(qubit_num)]
+    for _ in range(30):
         circuit = Circuit(qubit_num)
-        circuit.random_append(20)
-        Measure | circuit
-        print()
-        print(circuit.gates)
+        H | circuit
         simulator = CircuitSimulator()
         res = simulator.run(circuit)
-        measure = simulator.sample()
-        print()
-        print(measure)
+        measure_res = simulator.sample(circuit)
+        # print()
+        # print(res)
+        # print(measure_res)
+        for i in range(qubit_num):
+            measure_res_acc[i] += measure_res[i]
+    print()
+    print(measure_res_acc)
