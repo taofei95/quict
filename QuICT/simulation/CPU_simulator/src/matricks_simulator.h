@@ -177,9 +177,7 @@ namespace QuICT {
     template<typename Precision>
     void MaTricksSimulator<Precision>::run(
             uint64_t q_state_bit_num,
-            const std::vector<GateDescription<Precision>>
-
-            &gate_desc_vec,
+            const std::vector<GateDescription<Precision>> &gate_desc_vec,
             Precision *real,
             Precision *imag
     ) {

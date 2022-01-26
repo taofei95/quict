@@ -196,7 +196,9 @@ void test_stateless_simulator(
         state = new complex<Precision>[1 << qubit_num];
         fill(state, state + (1 << qubit_num), 0);
         for (int _ = 0; _ < n_run; _++) {
-            std::complex<Precision> *cur = simulator.run(qubit_num, gate_desc_vec);
+            std::vector<int> measure_res;
+            bool keep_state = false;
+            std::complex<Precision> *cur = simulator.run(qubit_num, gate_desc_vec, measure_res, keep_state);
             for (uint64_t i = 0; i < (1 << qubit_num); i++) state[i] += cur[i];
             delete[] cur;
         }
@@ -205,8 +207,10 @@ void test_stateless_simulator(
 //            cout << state[i] << endl;
         }
     } else {
+        std::vector<int> measure_res;
+        bool keep_state = false;
         auto start = std::chrono::system_clock::now();
-        state = simulator.run(qubit_num, gate_desc_vec);
+        state = simulator.run(qubit_num, gate_desc_vec, measure_res, keep_state);
         auto end = std::chrono::system_clock::now();
         std::chrono::duration<double> diff = end - start;
         std::cout << "Simulation costs " << diff.count() << " s\n";
