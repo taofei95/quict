@@ -6,10 +6,12 @@
 
 import random
 from ctypes import c_int
+from typing import no_type_check_decorator
 
 import numpy as np
 
 from QuICT.backends.systemcdll import systemCdll
+from QuICT.core import *
 
 
 def _getRandomList(count, upper_bound):
@@ -89,33 +91,25 @@ def inner_partial_prob(circuit, indexes):
 
 
 def inner_random_append(circuit, rand_size=10, typeList=None):
-    from QuICT.core import GATE_ID, GateBuilder
+    from QuICT.core import GATE_ID, get_gate, get_n_args
     if typeList is None:
         typeList = [GATE_ID["Rx"], GATE_ID["Ry"], GATE_ID["Rz"],
                     GATE_ID["CX"], GATE_ID["CY"], GATE_ID["CRz"], GATE_ID["CH"], GATE_ID["CZ"],
                     GATE_ID["Rxx"], GATE_ID["Ryy"], GATE_ID["Rzz"], GATE_ID["FSim"]
                     ]
-    qubit = circuit.circuit_width()
+    n_qubit = circuit.circuit_width()
     for _ in range(rand_size):
         rand_type = random.randrange(0, len(typeList))
-        GateBuilder.setGateType(typeList[rand_type])
-
-        targs = GateBuilder.getTargsNumber()
-        cargs = GateBuilder.getCargsNumber()
-        pargs = GateBuilder.getParamsNumber()
-
-        tclist = _getRandomList(targs + cargs, qubit)
-        if targs != 0:
-            GateBuilder.setTargs(tclist[:targs])
-        if cargs != 0:
-            GateBuilder.setCargs(tclist[targs:])
-        if pargs != 0:
-            params = []
-            for _ in range(pargs):
-                params.append(random.uniform(0, 2 * np.pi))
-            GateBuilder.setPargs(params)
-        gate = GateBuilder.getGate()
-        circuit.append(gate)
+        gate_type = typeList[rand_type]
+        n_pargs, n_targs, n_cargs = get_n_args(gate_type)
+        n_affect_args = n_targs + n_cargs
+        affect_args = _getRandomList(n_affect_args, n_qubit)
+        pargs = []
+        for _ in range(n_pargs):
+            pargs.append(random.uniform(0, 2 * np.pi))
+        if n_pargs == 0:
+            pargs = None
+        get_gate(gate_type, affect_args, pargs) | [circuit[i] for i in affect_args]
 
 
 def inner_matrix_product_to_circuit(circuit, gate) -> np.ndarray:

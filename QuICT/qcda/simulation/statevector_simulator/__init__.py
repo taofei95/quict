@@ -1,1 +1,0 @@
-from .constant_statevecto_simulator import ConstantStateVectorSimulator

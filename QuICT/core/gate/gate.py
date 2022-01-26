@@ -8,9 +8,8 @@ import copy
 import functools
 import string
 
-# from QuICT.core.gate.gate_builder import GateBuilder
-# from QuICT.core.gate.composite_gate import CompositeGate
 from QuICT.core.qubit import Qureg
+
 from .exec_operator import *
 
 # global gate order count
@@ -29,12 +28,14 @@ def _add_alias(alias, standard_name):
                 GATE_ID[nm] = GATE_ID[standard_name]
 
 
-GATE_CLASS_BY_ID = {-1: "Error"}
+GATE_STANDARD_NAME_OF = {-1: "Error"}
 # Get standard gate name by gate id.
-
+GATE_INSTANCE_OF = {}
+# Get instance for calling __call__ method, by gate id.
 
 GATE_ID = {"Error": -1}
 # Get gate id by gate name. You may use any one of the aliases of this gate.
+
 
 GATE_ID_CNT = 0
 # Gate number counter.
@@ -48,11 +49,12 @@ GATE_SET_LIST = []
 # add gate into list environment
 
 def gate_implementation(cls):
-    global GATE_CLASS_BY_ID
+    global GATE_STANDARD_NAME_OF
     global GATE_ID
     global GATE_ID_CNT
 
-    GATE_CLASS_BY_ID[GATE_ID_CNT] = cls
+    GATE_STANDARD_NAME_OF[GATE_ID_CNT] = cls
+    GATE_INSTANCE_OF[GATE_ID_CNT] = cls()
     GATE_ID[cls.__name__] = GATE_ID_CNT
     GATE_ID_CNT += 1
 
@@ -204,6 +206,14 @@ class BasicGate(object):
         return self.targs[0]
 
     @property
+    def diagonal(self) -> bool:
+        return self.__is_diagonal
+
+    @diagonal.setter
+    def diagonal(self, is_diag: bool):
+        self.__is_diagonal = is_diag
+
+    @property
     def qasm_name(self):
         return self.__qasm_name
 
@@ -255,6 +265,7 @@ class BasicGate(object):
         self.__qasm_name = 'error'
         self.__name = None
         self.__temp_name = None
+        self.__is_diagonal = False
         _add_alias(alias=alias, standard_name=self.__class__.__name__)
 
     # gate behavior
@@ -332,7 +343,8 @@ class BasicGate(object):
             raise TypeException("int or tuple<int> or list<int>", targets)
         if len(GATE_SET_LIST):
             GATE_SET_LIST[-1].append(self.copy())
-        return self
+            return self
+        return self.copy()
 
     def __call__(self, params=None, name=None):
         """ give parameters for the gate
@@ -501,25 +513,11 @@ class BasicGate(object):
         Returns:
             bool: True if gate's matrix is diagonal
         """
-        if not self.is_single() and not self.is_control_single() and not self.type() == GATE_ID['Swap']:
-            raise Exception("only consider one qubit and two qubits")
-        if self.is_single():
-            matrix = self.matrix
-            if abs(matrix[0, 1]) < 1e-10 and abs(matrix[1, 0]) < 1e-10:
-                return True
-            else:
-                return False
-        elif self.is_control_single():
-            matrix = self.matrix
-            if abs(matrix[0, 1]) < 1e-10 and abs(matrix[1, 0]) < 1e-10:
-                return True
-            else:
-                return False
-        else:
-            return False
+        return self.__is_diagonal
 
     def is_special(self) -> bool:
-        """ judge whether gate's is special gate
+        """ judge whether gate's is special gate, which is one of
+        [Measure, Reset, Barrier, Perm, Unitary]
 
         Returns:
             bool: True if gate's matrix is special
@@ -527,6 +525,8 @@ class BasicGate(object):
         if self.type() == GATE_ID["Unitary"]:
             return True
         if self.type() == GATE_ID["Perm"]:
+            return True
+        if self.type() == GATE_ID["Reset"]:
             return True
         if self.type() == GATE_ID["Measure"]:
             return True
@@ -645,9 +645,10 @@ class SGate(BasicGate):
         self.targets = 1
         self.params = 0
         self.qasm_name = "s"
+        self.diagonal = True
 
     def __str__(self):
-        return "Phase gate"
+        return "S gate"
 
     def inverse(self):
         _S_dagger = SDaggerGate(alias=None)
@@ -678,6 +679,7 @@ class SDaggerGate(BasicGate):
         self.targets = 1
         self.params = 0
         self.qasm_name = "sdg"
+        self.diagonal = True
 
     def __str__(self):
         return "The conjugate transpose of Phase gate"
@@ -1133,6 +1135,7 @@ class RzGate(BasicGate):
         self.params = 1
         self.pargs = [np.pi / 2]
         self.qasm_name = "rz"
+        self.diagonal = True
 
     @property
     def matrix(self) -> np.ndarray:
@@ -1243,6 +1246,7 @@ class PhaseGate(BasicGate):
         self.params = 1
         self.pargs = [0]
         self.qasm_name = "phase"
+        self.diagonal = True
 
     def __str__(self):
         return "Phase gate"
@@ -1726,6 +1730,7 @@ class RzzGate(BasicGate):
         self.params = 1
         self.pargs = [np.pi / 2]
         self.qasm_name = "Rzz"
+        self.diagonal = True
 
     @property
     def matrix(self) -> np.ndarray:
@@ -1782,7 +1787,7 @@ class MeasureGate(BasicGate):
         exec_measure(self, circuit)
 
 
-Measure = MeasureGate(["Measure", "measure"])
+Measure = MeasureGate(["Measure"])
 
 
 class ResetGate(BasicGate):
@@ -2363,16 +2368,16 @@ class PermFxGate(PermGate):
                 self.pargs.append(idx)
         return self
 
-    @property
-    def matrix(self) -> np.ndarray:
-        matrix = np.array([], dtype=np.complex128)
-        for i in range(self.params):
-            for j in range(self.params):
-                if self.pargs[i] == j:
-                    np.append(matrix, 1)
-                else:
-                    np.append(matrix, 0)
-        return matrix
+    # @property
+    # def matrix(self) -> np.ndarray:
+    #     matrix = np.array([], dtype=np.complex128)
+    #     for i in range(self.params):
+    #         for j in range(self.params):
+    #             if self.pargs[i] == j:
+    #                 np.append(matrix, 1)
+    #             else:
+    #                 np.append(matrix, 0)
+    #     return matrix
 
 
 PermFx = PermFxGate(["PermFx"])
@@ -2471,7 +2476,7 @@ Unitary = UnitaryGate(["Unitary"])
 class ShorInitialGate(BasicGate):
     """ a oracle gate to preparation the initial state before IQFT in Shor algorithm
 
-    CPU_simulator will preparation the initial state by classical operator
+    backends will preparation the initial state by classical operator
     with a fixed measure result of second register.
 
     """
@@ -2540,10 +2545,12 @@ class ComplexGate(BasicGate):
         Returns:
             CompositeGate: synthetize result
         """
+        from .composite_gate import CompositeGate
         affectArgs = self.affectArgs
-        GateBuilder.setGateType(GATE_ID["X"])
-        GateBuilder.setTargs(len(affectArgs) - 1)
-        return CompositeGate(GateBuilder.getGate())
+        gate = GATE_INSTANCE_OF[GATE_ID["X"]]()
+        gate: BasicGate
+        gate.targs = [len(affectArgs) - 1]
+        return CompositeGate(gate)
 
     def exec(self, circuit):
         gateSet = self.build_gate()
@@ -2720,7 +2727,6 @@ class QFTGate(ComplexGate):
             QFTGate: the QFTGate after filled by target number
         """
         self.targets = params
-        self.affectArgs = [i for i in range(params)]
         self.__temp_name = name
         return self
 
@@ -2733,9 +2739,10 @@ class QFTGate(ComplexGate):
         _IQFT.targets = self.targets
         return _IQFT
 
-    def build_gate(self):
+    def build_gate(self, targets):
         from .composite_gate import CompositeGate
-        qureg = self.affectArgs
+        self.targets = targets
+        qureg = [i for i in range(targets)]
         gates = CompositeGate()
 
         with gates:
@@ -2744,6 +2751,11 @@ class QFTGate(ComplexGate):
                 for j in range(i + 1, self.targets):
                     CRz(2 * np.pi / (1 << j - i + 1)) & (qureg[j], qureg[i])
         return gates
+
+    def exec(self, circuit):
+        gateSet = self.build_gate(self.targets)
+        for gate in gateSet:
+            gate.exec(circuit)
 
 
 QFT = QFTGate(["QFT", "qft"])
@@ -2794,9 +2806,10 @@ class IQFTGate(ComplexGate):
         _QFT.targets = self.targets
         return _QFT
 
-    def build_gate(self):
+    def build_gate(self, targets):
         from .composite_gate import CompositeGate
-        qureg = self.affectArgs
+        self.targets = targets
+        qureg = [i for i in range(targets)]
         gates = CompositeGate()
 
         with gates:
@@ -2805,6 +2818,11 @@ class IQFTGate(ComplexGate):
                     CRz(-2 * np.pi / (1 << j - i + 1)) & (qureg[j], qureg[i])
                 H & qureg[i]
         return gates
+
+    def exec(self, circuit):
+        gateSet = self.build_gate(self.targets)
+        for gate in gateSet:
+            gate.exec(circuit)
 
 
 IQFT = IQFTGate(["IQFT", "iqft"])

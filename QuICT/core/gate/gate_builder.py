@@ -4,8 +4,11 @@
 # @Author  : Han Yu
 # @File    : _gateBuilder.py
 
-from .gate import *
+from deprecated import deprecated
+
 from QuICT.core.circuit import Circuit
+
+from .gate import *
 
 
 class GateBuilderModel(object):
@@ -128,6 +131,7 @@ class GateBuilderModel(object):
         gate = self._inner_generate_gate()
         return gate.params
 
+    @deprecated(reason="replaced with get_gate method")
     def getGate(self):
         """ get the gate
 
@@ -182,6 +186,7 @@ class GateBuilderModel(object):
         return gate
 
     @staticmethod
+    @deprecated(reason="replaced with BasicGate::__or__ method")
     def apply_gates(gate: BasicGate, circuit: Circuit):
         """ act a gate on some circuit.
 
@@ -198,6 +203,7 @@ class GateBuilderModel(object):
         circuit.append(gate, qubits)
 
     @staticmethod
+    @deprecated(reason="replaced with BasicGate::__and__ method")
     def reflect_gates(gates: list):
         """ build the inverse of a series of gates.
 
@@ -215,6 +221,7 @@ class GateBuilderModel(object):
         return reflect
 
     @staticmethod
+    @deprecated(reason="replaced with BasicGate::__and__ and BasicGate::__or__ method")
     def reflect_apply_gates(gates: list, circuit: Circuit):
         """ act the inverse of a series of gates on some circuit.
 
@@ -235,3 +242,33 @@ class GateBuilderModel(object):
 
 
 GateBuilder = GateBuilderModel()
+
+
+def get_n_args(gate_type: int):
+    """get arg number.
+
+    Args:
+        gate_type (int): [description]
+
+    Returns:
+        tuple: (n_pargs, n_targs, n_cargs)
+    """
+    tmp_gate = GATE_STANDARD_NAME_OF[gate_type]()
+    return (tmp_gate.params, tmp_gate.targets, tmp_gate.controls)
+
+
+def get_gate(gate_type: int, affect_args: list, pargs: list = None):
+    """get a gate with specified arguments.
+
+    Args:
+        gate_type (int): [description]
+        affect_args (list): [description]
+        pargs (list): [description]
+
+    Returns:
+        [type]: [description]
+    """
+    gate = GATE_INSTANCE_OF[gate_type](params=pargs)
+    if len(affect_args) > 0:
+        gate & affect_args
+    return gate

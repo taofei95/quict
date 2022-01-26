@@ -1,16 +1,14 @@
+#!/usr/bin/env python
+# -*- coding:utf8 -*-
+# @TIME    : 2021/6/9 下午5:35
+# @Author  : Kaiqi Li
+# @File    : gate_based
+
 import numpy as np
 import cupy as cp
 
-from QuICT.core.gate.gate import *
 
-
-# Static gate matrix
-STATIC_GATE_NAMES = [
-    "HGate", "SGate", "SDaggerGate",
-    "XGate", "YGate", "ZGate",
-    "SXGate", "SYGate", "SWGate",
-    "IDGate", "U1Gate", "U2Gate", "U3Gate"
-]
+_GATES_EXCEPT = ["MeasureGate", "ResetGate", "PermFxGate", "PermGate"]
 
 
 class GateMatrixs:
@@ -19,12 +17,12 @@ class GateMatrixs:
 
     Args:
         precision(Union[np.complex64, np.complex128]): The precision of the gates.
-        device(int): The GPU device ID.
+        gpu_device_id(int): The GPU device ID.
     """
-    def __init__(self, precision, device: int = 0):
+    def __init__(self, precision, gpu_device_id: int = 0):
         self.gate_matrixs = {}
         self.precision = precision
-        self.device = device
+        self.device_id = gpu_device_id
         self.matrix_idx = []
         self.matrix_len = 0
 
@@ -41,13 +39,19 @@ class GateMatrixs:
             gate(Gate): the gate in circuit.
         """
         gate_name = gate.name.split("_")[0]
-        if gate_name not in STATIC_GATE_NAMES:
-            gate_name = f"{gate_name}_{gate.parg}"
-            matrix = gate.compute_matrix
-        else:
-            matrix = gate.matrix
-        
+        if gate_name in _GATES_EXCEPT:
+            return
+
+        param_num = gate.params
+        if gate.params != 0:
+            for i in range(param_num):
+                gate_name += f"_{gate.pargs[i]}"
+
+        if gate_name == "UnitaryGate":
+            gate_name = gate.name
+
         if gate_name not in self.gate_matrixs.keys():
+            matrix = gate.compute_matrix
             self._build_matrix_gate(gate_name, matrix)
 
     def _build_matrix_gate(self, gate_name, matrix):
@@ -64,23 +68,30 @@ class GateMatrixs:
         start = 0
 
         for matrix in self.matrix_idx:
-            self.final_matrix[start:start+matrix.size] = matrix.ravel()[:]
+            self.final_matrix[start:start + matrix.size] = matrix.ravel()[:]
             start += matrix.size
 
-        with cp.cuda.Device(self.device):
+        with cp.cuda.Device(self.device_id):
             self.final_matrix = cp.array(self.final_matrix)
 
     def target_matrix(self, gate):
-        """ 
+        """
         Find the compute matrix of the given gate.
         Args:
             gate(Gate): the gate in circuit.
         """
         gate_name = gate.name.split("_")[0]
-        if gate_name not in STATIC_GATE_NAMES:
-            gate_name = f"{gate_name}_{gate.parg}"
+        param_num = gate.params
+        if param_num != 0:
+            for i in range(param_num):
+                gate_name += f"_{gate.pargs[i]}"
+
+        if gate_name in _GATES_EXCEPT:
+            raise KeyError(f"Wrong gate here. {gate_name}")
+
+        if gate_name == "UnitaryGate":
+            gate_name = gate.name
 
         start, itvl = self.gate_matrixs[gate_name]
 
-        return self.final_matrix[start:start+itvl]
-
+        return self.final_matrix[start:start + itvl]
