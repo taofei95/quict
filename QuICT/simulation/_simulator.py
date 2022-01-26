@@ -110,12 +110,12 @@ class BasicSimulator(object):
                     gateSet[tangle[target]] = gateSet[target]
             # 2-qubit gate
             else:
-                affectArgs = gate.affectArgs
+                affectArgs = gate.cargs + gate.targs
                 target1, target2 = affectArgs[0], affectArgs[1]
                 if target1 < target2:
-                    matrix = gate.compute_matrix
+                    matrix = gate.matrix
                 else:
-                    matrix = MatrixPermutation(gate.compute_matrix, np.array([1, 0]))
+                    matrix = MatrixPermutation(gate.matrix, np.array([1, 0]))
 
                 if tangle[target1] == target2:
                     gateSet[target1] = dot(matrix, gateSet[target1])
@@ -192,9 +192,10 @@ class BasicSimulator(object):
     @staticmethod
     def unitary_pretreatment(circuit):
         small_gates = BasicSimulator.pretreatment(circuit)
+        print(small_gates)
         gates = []
-        for gate in small_gates:
-            gates.append(gate.affectArgs.copy())
+        for gate in small_gates.gates:
+            gates.append(gate.cargs[:] + gate.targs[:])
         # gates as input
         f, pre = BasicSimulator.unitary_merge_layer(gates)
 

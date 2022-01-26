@@ -2,26 +2,26 @@ import numpy as np
 from typing import *
 
 from QuICT.simulation.utils import DisjointSet
-
 from QuICT.simulation import BasicSimulator
 
 from QuICT.core.gate import *
 import QuICT.ops.linalg.cpu_calculator as CPUCalculator
+import QuICT.ops.linalg.cpu_calculator as GPUCalculator
 
 unitary_calculation = CPUCalculator
-
-
-# TODO: Check platform features by QuICT.utility.xxx
-GPU_AVAILABLE = False
-GPU_OUT = False
 
 
 class UnitarySimulator(BasicSimulator):
     """
     Algorithms to the unitary matrix of a Circuit.
     """
-    def __init__(self, precision=np.complex64):
-        self._precision = precision
+    def __init__(
+        self,
+        device: str = "CPU",
+        precision: str = "double"
+    ):
+        self._computer = CPUCalculator if device == "CPU" else GPUCalculator
+        self._precision = np.complex128 if precision == "double" else np.complex64
 
     def run(self, circuit) -> np.ndarray:
         """
@@ -34,9 +34,10 @@ class UnitarySimulator(BasicSimulator):
             np.ndarray: The unitary matrix of input circuit.
         """
 
-        qubit = circuit.circuit_width()
+        qubit = circuit.width()
         if len(circuit.gates) == 0:
             return np.identity(1 << qubit, dtype=self._precision)
+
         ordering, small_gates = BasicSimulator.unitary_pretreatment(circuit)
         u_mat, u_args = UnitarySimulator.merge_unitary_by_ordering(small_gates, ordering)
         result_mat, _ = UnitarySimulator.merge_two_unitary(
@@ -46,7 +47,7 @@ class UnitarySimulator(BasicSimulator):
             u_args
         )
 
-        return result_mat.get() if GPU_AVAILABLE else result_mat
+        return result_mat
 
     @staticmethod
     def merge_two_unitary(
@@ -129,13 +130,13 @@ class UnitarySimulator(BasicSimulator):
         """
 
         print(ordering)
-        len_gate = len(gates)
+        len_gate = gates.size()
 
         d_set = DisjointSet(len_gate)
-        if len(ordering) + 1 != len(gates):
+        if len(ordering) + 1 != len_gate:
             raise IndexError("Length not match!")
         matrices = [gates[i].matrix for i in range(len_gate)]
-        mat_args = [gates[i].affectArgs for i in range(len_gate)]
+        mat_args = [gates[i].cargs + gates[i].targs for i in range(len_gate)]
         x = 0
         for order in ordering:
             order_left = d_set.find(order)
