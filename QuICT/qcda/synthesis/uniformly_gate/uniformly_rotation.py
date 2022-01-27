@@ -8,7 +8,6 @@ from typing import *
 import numpy as np
 
 from .._synthesis import Synthesis
-from QuICT.core import Qureg
 from QuICT.core.gate import GateType, build_gate, CompositeGate
 
 
