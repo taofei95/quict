@@ -6,11 +6,12 @@
 import time
 
 from QuICT.core import Circuit
+# from QuICT.simulation.CPU_simulator import CircuitSimulator
 from QuICT.simulation.gpu_simulator import (
     ConstantStateVectorSimulator,
-    MultiStateVectorSimulator,
-    UnitarySimulator
+    MultiStateVectorSimulator
 )
+from QuICT.simulation.unitary_simulator import UnitarySimulator
 from QuICT.simulation.remote_simulator import QuantumLeafSimulator, QiskitSimulator
 from QuICT.simulation.utils import option_validation, Result
 
@@ -26,6 +27,10 @@ class Simulator:
     """
 
     __DEVICE = ["CPU", "GPU", "qiskit", "qcompute"]
+    __CPU_BACKEND_MAPPING = {
+        "unitary": UnitarySimulator,
+        "statevector": None     # CircuitSimulator
+    }
     __GPU_BACKEND_MAPPING = {
         "unitary": UnitarySimulator,
         "statevector": ConstantStateVectorSimulator,
@@ -77,12 +82,13 @@ class Simulator:
         Raises:
             ValueError: Unsupportted backend
         """
-        if self._backend == "statevector":
-            pass
-        else:
+        if self._backend not in Simulator.__CPU_BACKEND_MAPPING.keys():
             raise ValueError(
-                f"Unsupportted backend {self._backend} in cpu simulator, please using statevector."
+                f"Unsupportted backend {self._backend} in cpu simulator, "
+                f"please select one of [unitary, statevector, multiGPU]."
             )
+
+        self._simulator = Simulator.__CPU_BACKEND_MAPPING[self._backend](**self._options)
 
     def _load_gpu_simulator(self):
         """ Initial GPU simulator.
