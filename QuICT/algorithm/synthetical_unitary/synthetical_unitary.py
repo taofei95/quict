@@ -20,7 +20,7 @@ class SyntheticalUnitary(Algorithm):
             circuit(Circuit)
             showSU(bool): whether return an SU unitary
         """
-        matrix = np.eye(1 << len(circuit.qubits))
+        matrix = np.eye(1 << len(circuit.qubits), dtype=np.complex128)
         for gate in circuit.gates:
             if gate.controls + gate.targets == 0:
                 continue
@@ -33,5 +33,4 @@ class SyntheticalUnitary(Algorithm):
             det = np.power(det, 1 / n)
             matrix[:] /= det
 
-        matrix = matrix
-        return np.array(matrix)
+        return matrix
