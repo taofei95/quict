@@ -1,4 +1,8 @@
 # noinspection PyUnresolvedReferences
+import sys
+sys.path.append('/mnt/d/ICT/QuICT')
+
+import numpy as np
 from scipy.linalg import cossin
 from scipy.linalg import block_diag
 from QuICT.core import *

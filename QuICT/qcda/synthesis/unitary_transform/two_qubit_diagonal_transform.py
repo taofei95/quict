@@ -5,7 +5,7 @@ which is specially designed for the optimization of unitary transform.
 
 import numpy as np
 
-from QuICT.core import CompositeGate, CX, Rx, Rz, Unitary
+from QuICT.core.gate import CompositeGate, CX, Rx, Rz, Unitary
 from .two_qubit_transform import CartanKAKDecomposition
 from .._synthesis import Synthesis
 

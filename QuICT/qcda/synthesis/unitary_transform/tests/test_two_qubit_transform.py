@@ -1,6 +1,10 @@
+import sys
+sys.path.append('/mnt/d/ICT/QuICT')
+
 import numpy as np
 
-from QuICT.core import Circuit, Ry, Rz, CX
+from QuICT.core import Circuit
+from QuICT.core.gate import Ry, Rz, CX
 from QuICT.algorithm.synthetical_unitary import SyntheticalUnitary
 from QuICT.qcda.synthesis.unitary_transform.two_qubit_transform import CartanKAKDecomposition, TwoQubitTransform
 from QuICT.qcda.synthesis.unitary_transform.two_qubit_diagonal_transform import TwoQubitDiagonalTransform
@@ -88,10 +92,3 @@ def test_two_qubit_diagonal_transform():
         Ucir = SyntheticalUnitary.run(circuit)
         phase = U.dot(np.linalg.inv(Ucir))
         assert np.allclose(phase, phase[0, 0] * np.eye(4))
-
-
-if __name__ == '__main__':
-    test_tensor_decompose()
-    test_CKD()
-    test_two_bit_transform()
-    test_two_qubit_diagonal_transform()

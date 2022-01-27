@@ -55,12 +55,12 @@ def test_MCT_Linear_Simulation_Half():
                                     if abs(abs(unitary[j, k])) > 1e-30:
                                         print(i, m, j, k, unitary[j, k])
                                         print(unitary)
-                                        circuit.print_information()
+                                        print(circuit)
                                         assert 0
                                 else:
                                     if abs(abs(unitary[j, k] - 1)) > 1e-30:
                                         print(i, j, k, unitary[j, k])
-                                        circuit.print_information()
+                                        print(circuit)
                                         assert 0
                             else:
                                 if jj != kk:
@@ -70,7 +70,7 @@ def test_MCT_Linear_Simulation_Half():
                                 else:
                                     if abs(abs(unitary[j, k] - 1)) > 1e-30:
                                         print(i, m, j, k, unitary[j, k])
-                                        circuit.print_information()
+                                        print(circuit)
                                         print(unitary)
                                         assert 0
     assert 1
@@ -110,7 +110,7 @@ def test_MCT_Linear_Simulation_One_unitary():
         MCTLinearOneDirtyAux.execute(n) | (controls, target, aux)
         # assert 0
         unitary = SyntheticalUnitary.run(circuit)
-        circuit.print_information()
+        print(circuit)
         N = 1 << (n - 1)
         for i in range(N):
             for j in range(N):
@@ -158,7 +158,7 @@ def test_MCT():
         MCTOneAux.execute(i) | circuit
         # assert 0
         unitary = SyntheticalUnitary.run(circuit)
-        circuit.print_information()
+        print(circuit)
         for j in range(1 << i):
             flagj = True
             for l in range(2, i):

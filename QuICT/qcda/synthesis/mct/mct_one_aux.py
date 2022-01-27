@@ -88,4 +88,6 @@ class MCTOneAux(Synthesis):
         Return:
             CompositeGate: the result of Decomposition
         """
-        return CompositeGate(solve(n - 1).gates)
+        gates = CompositeGate()
+        gates.extend(solve(n - 1).gates)
+        return gates

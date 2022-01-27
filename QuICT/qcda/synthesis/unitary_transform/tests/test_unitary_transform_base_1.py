@@ -1,7 +1,12 @@
+import sys
+sys.path.append('/mnt/d/ICT/QuICT')
+
 from typing import *
+import numpy as np
 from scipy.stats import unitary_group
 from QuICT.qcda.synthesis.unitary_transform import UnitaryTransform
 from QuICT.core import *
+from QuICT.core.gate import BasicGate
 
 
 def check_args(gates: Sequence[BasicGate]):

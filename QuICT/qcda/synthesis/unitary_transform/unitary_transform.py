@@ -3,6 +3,7 @@ import numpy as np
 
 from scipy.linalg import cossin
 from QuICT.core import *
+from QuICT.core.gate import *
 
 from .two_qubit_transform import TwoQubitTransform
 from .two_qubit_diagonal_transform import TwoQubitDiagonalTransform
@@ -29,11 +30,12 @@ def inner_utrans_build_gate(
     _kak = TwoQubitDiagonalTransform if keep_left_diagonal else TwoQubitTransform
 
     if qubit_num == 1:
-        GateBuilder.setGateType(GATE_ID["Unitary"])
+        # GateBuilder.setGateType(GATE_ID["Unitary"])
         parg = np.reshape(mat, -1).tolist()
-        GateBuilder.setPargs(parg)
-        GateBuilder.setTargs([0])
-        u = GateBuilder.getGate()
+        # GateBuilder.setPargs(parg)
+        # GateBuilder.setTargs([0])
+        # u = GateBuilder.getGate()
+        u = build_gate(GateType.unitary, [0], parg)
         _ret = CompositeGate(gates=[u])
         return _ret, 1.0 + 0.0j
     elif qubit_num == 2 and recursive_basis == 2:
@@ -93,14 +95,14 @@ def inner_utrans_build_gate(
     u2: np.ndarray = u[1]
 
     if use_cz_ry:
-        reversed_ry.pop()  # CZ on (0,1)
+        reversed_ry.gates.pop()  # CZ on (0,1)
         # This CZ affects 1/4 last columns of the matrix of U, or 1/2 last columns of u2.
         _u_size = u2.shape[0]
         for i in range(_u_size // 2, _u_size):
             u2[:, i] = -u2[:, i]
 
         if qubit_num > 2:
-            reversed_ry.pop()  # CZ on (0, qubit_num - 1)
+            reversed_ry.gates.pop()  # CZ on (0, qubit_num - 1)
             # For similar reasons, this CZ only affect 2 parts of matrix of U.
             for i in range(_u_size - _u_size // 4, _u_size):
                 u1[:, i] = - u1[:, i]
@@ -125,7 +127,7 @@ def inner_utrans_build_gate(
     v2_dagger = v_dagger[1]
 
     if recursive_basis == 2:
-        forwarded_d_gate: BasicGate = u_gates.pop(0)
+        forwarded_d_gate: BasicGate = u_gates.gates.pop(0)
         forwarded_mat = forwarded_d_gate.matrix
         for i in range(0, mat_size // 2, 4):
             for k in range(4):

@@ -86,7 +86,7 @@ class MCTLinearHalfDirtyAux(Synthesis):
         Implement a m-bit toffoli gate in a qureg with n qubit with linear complexity.
 
         If n ≥ 5 and m ∈ {3, . . . , ⌈n/2⌉} then (m+1)-Toffoli gate can be simulated
-        by a network consisting of 4(m − 2) toffoli gates
+        by a network consisting of 4(m - 2) toffoli gates
 
         Returns:
             CompositeGate
