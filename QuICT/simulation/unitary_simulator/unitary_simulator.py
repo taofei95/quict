@@ -19,7 +19,6 @@ class UnitarySimulator():
         precision: str = "double"
     ):
         self._computer = CPUCalculator if device == "CPU" else GPUCalculator
-        print(self._computer)
         self._precision = np.complex128 if precision == "double" else np.complex64
 
     def pretreatment(self, circuit):
@@ -46,11 +45,15 @@ class UnitarySimulator():
                     gateSet[target] = self._computer.dot(gate.matrix, gateSet[target])
                 else:
                     if tangle[target] < target:
-                        gateSet[target] = self._computer.dot(np.kron(np.identity(2, dtype=self._precision), gate.matrix),
-                                              gateSet[target])
+                        gateSet[target] = self._computer.dot(
+                            np.kron(np.identity(2, dtype=self._precision), gate.matrix),
+                            gateSet[target]
+                        )
                     else:
-                        gateSet[target] = self._computer.dot(np.kron(gate.matrix, np.identity(2, dtype=self._precision)),
-                                              gateSet[target])
+                        gateSet[target] = self._computer.dot(
+                            np.kron(gate.matrix, np.identity(2, dtype=self._precision)),
+                            gateSet[target]
+                        )
                     gateSet[tangle[target]] = gateSet[target]
 
             # 2-qubit gate
@@ -124,7 +127,7 @@ class UnitarySimulator():
         gates = []
         for gate in small_gates.gates:
             gates.append(gate.cargs[:] + gate.targs[:])
-        
+
         # gates as input
         f, pre = self.unitary_merge_layer(gates)
         order = []
@@ -141,7 +144,7 @@ class UnitarySimulator():
         pre_search(0, len(gates) - 1)
         order.reverse()
         return order, small_gates
-    
+
     def vector_pretreatment(self, circuit):
         small_gates = self.pretreatment(circuit)
         gates = []
@@ -335,7 +338,7 @@ class UnitarySimulator():
                 matrices[order_right],
                 mat_args[order_right],
             )
-        
+
         res_mat = matrices[x]
         res_arg = mat_args[x]
         return res_mat, res_arg

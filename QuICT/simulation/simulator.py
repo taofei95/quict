@@ -27,15 +27,7 @@ class Simulator:
     """
 
     __DEVICE = ["CPU", "GPU", "qiskit", "qcompute"]
-    __CPU_BACKEND_MAPPING = {
-        "unitary": UnitarySimulator,
-        "statevector": None     # CircuitSimulator
-    }
-    __GPU_BACKEND_MAPPING = {
-        "unitary": UnitarySimulator,
-        "statevector": ConstantStateVectorSimulator,
-        "multiGPU": MultiStateVectorSimulator
-    }
+    __BACKEND = ["unitary", "statevector", "multiGPU"]
     __REMOTE_BACKEND_MAPPING = {
         "qiskit": QiskitSimulator,
         "qcompute": QuantumLeafSimulator
@@ -62,12 +54,15 @@ class Simulator:
         # validated the optional parameters
         self._options = self._validate_options(options=options)
 
-        if device == "CPU":
-            self._load_cpu_simulator()
-        elif device == "GPU":
-            self._load_gpu_simulator()
-        else:
+        if device in Simulator.__REMOTE_BACKEND_MAPPING.keys():
             self._load_remote_simulator()
+
+        if backend not in Simulator.__BACKEND:
+            raise ValueError(
+                f"Unsupportted backend {backend}, please select one of {Simulator.__BACKEND}."
+            )
+        else:
+            self._load_simulator()
 
     @option_validation()
     def _validate_options(self, options, default_options=None):
@@ -76,33 +71,20 @@ class Simulator:
 
         return default_options
 
-    def _load_cpu_simulator(self):
-        """ Initial CPU simulator.
-
-        Raises:
-            ValueError: Unsupportted backend
-        """
-        if self._backend not in Simulator.__CPU_BACKEND_MAPPING.keys():
-            raise ValueError(
-                f"Unsupportted backend {self._backend} in cpu simulator, "
-                f"please select one of [unitary, statevector, multiGPU]."
-            )
-
-        self._simulator = Simulator.__CPU_BACKEND_MAPPING[self._backend](**self._options)
-
-    def _load_gpu_simulator(self):
+    def _load_simulator(self):
         """ Initial GPU simulator.
 
         Raises:
             ValueError: Unsupportted backend
         """
-        if self._backend not in Simulator.__GPU_BACKEND_MAPPING.keys():
-            raise ValueError(
-                f"Unsupportted backend {self._backend} in gpu simulator, "
-                f"please select one of [unitary, statevector, multiGPU]."
-            )
-
-        self._simulator = Simulator.__GPU_BACKEND_MAPPING[self._backend](**self._options)
+        if self._backend == "unitary":
+            self._simulator = UnitarySimulator(device=self._device, **self._options)
+        elif self._backend == "statevector":
+            self._simulator = ConstantStateVectorSimulator(**self._options) \
+                if self._device == "GPU" else None  # CircuitSimulator
+        elif self._backend == "multiGPU":
+            assert self._device == "GPU"
+            self._simulator = MultiStateVectorSimulator(**self._options)
 
     def _load_remote_simulator(self):
         """ Initial Remote simulator. """
