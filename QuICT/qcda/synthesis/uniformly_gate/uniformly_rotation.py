@@ -45,7 +45,7 @@ def inner_uniformly_rotation(
         is_left_cnot: bool = False
 ) -> CompositeGate:
     if low + 1 == high:
-        gateA = build_gate(gate_type, mapping[low], float(z[0]))
+        gateA = build_gate(gate_type, mapping[low], [float(z[0])])
         gates = CompositeGate()
         gates.append(gateA)
         return gates
