@@ -51,12 +51,8 @@ def inner_uniformly_rotation(
         gates.append(gateA)
         return gates
     length = len(z) // 2
-    # GateBuilder.setGateType(GATE_ID["CX"])
-    # GateBuilder.setTargs(mapping[high - 1])
-    # GateBuilder.setCargs(mapping[low])
-    q = Qureg([mapping[low], mapping[high - 1]])
-    gateA = build_gate(GateType.cx, q)
-    gateB = build_gate(GateType.cx, q)
+    gateA = build_gate(GateType.cx, [mapping[low], mapping[high - 1]])
+    gateB = build_gate(GateType.cx, [mapping[low], mapping[high - 1]])
     Rxp = []
     Rxn = []
     for i in range(length):
