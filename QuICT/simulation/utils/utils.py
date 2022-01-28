@@ -92,7 +92,7 @@ def option_validation():
         def wraps(self, **kwargs):
             device = self._device
             backend = self._backend
-            if device == "GPU":
+            if device in ["GPU", "CPU"]:
                 default_options = _DEFAULT_CONFIG[device][backend]
             else:
                 default_options = _DEFAULT_CONFIG[device]

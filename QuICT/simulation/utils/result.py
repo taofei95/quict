@@ -15,17 +15,19 @@ class Result:
     """
     def __init__(
         self,
-        mode: str,
+        device: str,
+        backend: str,
         shots: int,
         options: dict
     ):
         self.id = self._generate_uuid()
-        self.mode = mode
+        self.device = device
+        self.backend = backend
         self.shots = shots
         self.options = options
-        self.counts = defaultdict(int)
-        self._spending_time = 0
+        self.spending_time = 0
         self.output_path = self._prepare_output_file()
+        self.counts = defaultdict(int)
 
     def _generate_uuid(self):
         """ Generate unique ID for result. """
@@ -43,7 +45,7 @@ class Result:
 
         return output_path
 
-    def record(self, result: int, qubits: int = None):
+    def record(self, result, spending_time=None, qubits: int = None):
         """ Record circuit's result
 
         Args:
@@ -52,18 +54,18 @@ class Result:
         Raises:
             TypeError: Wrong type input.
         """
-        if isinstance(result, dict):
+        if self.device in ["qiskit", "qcompute"]:
             self.counts = result
-        elif isinstance(result, int):
+        elif self.backend == "unitary":
+            self.unitary_matrix = result
+        else:
             bit_idx = "{0:0b}".format(result)
             if qubits:
                 bit_idx = bit_idx.zfill(qubits)
             self.counts[bit_idx] += 1
-        else:
-            raise TypeError("Only recore qubits' state and result from remote simulator.")
 
-    def record_time(self, spending_time: float):
-        self._spending_time += spending_time / self.shots
+        if spending_time is not None:
+            self.spending_time += spending_time / self.shots
 
     def record_circuit(self, circuit):
         """ dump the circuit. """
@@ -72,7 +74,7 @@ class Result:
 
     def record_sv(self, state, shot):
         """ dump the circuit. """
-        if type(state) is not np.ndarray:
+        if self.device == "GPU":
             state = state.get()
 
         np.savetxt(f"{self.output_path}/state_{shot}.txt", state)

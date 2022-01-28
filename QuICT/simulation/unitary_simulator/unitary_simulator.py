@@ -123,13 +123,12 @@ class UnitarySimulator():
 
     def unitary_pretreatment(self, circuit):
         small_gates = self.pretreatment(circuit)
-        print(small_gates)
         gates = []
         for gate in small_gates.gates:
             gates.append(gate.cargs[:] + gate.targs[:])
 
         # gates as input
-        f, pre = self.unitary_merge_layer(gates)
+        _, pre = self.unitary_merge_layer(gates)
         order = []
 
         def pre_search(left, right):
@@ -214,7 +213,7 @@ class UnitarySimulator():
 
         return f, pre
 
-    def run(self, circuit) -> np.ndarray:
+    def run(self, circuit, use_previous: bool = False) -> np.ndarray:
         """
         Get the unitary matrix of circuit
 

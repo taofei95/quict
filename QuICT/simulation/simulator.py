@@ -56,13 +56,13 @@ class Simulator:
 
         if device in Simulator.__REMOTE_BACKEND_MAPPING.keys():
             self._load_remote_simulator()
-
-        if backend not in Simulator.__BACKEND:
-            raise ValueError(
-                f"Unsupportted backend {backend}, please select one of {Simulator.__BACKEND}."
-            )
         else:
-            self._load_simulator()
+            if backend not in Simulator.__BACKEND:
+                raise ValueError(
+                    f"Unsupportted backend {backend}, please select one of {Simulator.__BACKEND}."
+                )
+            else:
+                self._load_simulator()
 
     @option_validation()
     def _validate_options(self, options, default_options=None):
@@ -110,7 +110,7 @@ class Simulator:
         Yields:
             [array]: The state vector.
         """
-        result = Result(f"{self._device}-{self._backend}", self._shots, self._options)
+        result = Result(self._device, self._backend, self._shots, self._options)
         if circuit_out:
             result.record_circuit(circuit)
 
@@ -122,12 +122,11 @@ class Simulator:
                 s_time = time.time()
                 state = self._simulator.run(circuit, use_previous)
                 e_time = time.time()
-                result.record_time(e_time - s_time)
 
-                if statevector_out:
+                if statevector_out and self._backend == "statevector":
                     result.record_sv(state, shot)
 
-                final_state = self._simulator.sample()
-                result.record(final_state, len(circuit.qubits))
+                final_state = state if self._backend == "unitary" else self._simulator.sample()
+                result.record(final_state, e_time - s_time, len(circuit.qubits))
 
         return result.dumps()
