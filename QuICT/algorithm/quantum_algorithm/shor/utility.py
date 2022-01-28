@@ -85,6 +85,10 @@ def continued_fraction_expansion(n, d):
 
 
 def miller_rabin(num):
+    '''random prime test
+        return True, num is a prime whp
+        return False, num is a composite
+    '''
     Test = [2, 3, 5, 7, 11, 13, 17, 19, 23, 29]
     if num == 1:
         return False
