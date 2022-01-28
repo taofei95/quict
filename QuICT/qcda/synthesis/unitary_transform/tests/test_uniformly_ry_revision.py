@@ -1,5 +1,5 @@
-# import sys
-# sys.path.append('/mnt/e/ICT/QuICT')
+import sys
+sys.path.append('/mnt/d/ICT/QuICT')
 
 import random
 
@@ -7,6 +7,7 @@ import numpy as np
 
 from QuICT.algorithm import SyntheticalUnitary
 from QuICT.core import *
+from QuICT.core.gate import Ry
 from QuICT.qcda.synthesis.unitary_transform.uniformly_ry_revision import UniformlyRyRevision
 
 

@@ -184,8 +184,8 @@ class BasicGate(object):
         """
         try:
             targets.append(self)
-        except Exception:
-            raise TypeError("composite gate or circuit", targets)
+        except Exception as e:
+            raise TypeError(f"Failure to append gate {self.name} to targets, due to {e}")
 
     def __and__(self, targets):
         """deal the operator '&'
@@ -295,7 +295,7 @@ class BasicGate(object):
 
             qasm_string += params_string
 
-        ctargs = [str(ctarg) for ctarg in self.cargs + self.targs]
+        ctargs = [f"q[{ctarg}]" for ctarg in self.cargs + self.targs]
         ctargs_string = " " + ', '.join(ctargs) + ";\n"
         qasm_string += ctargs_string
 

@@ -6,6 +6,7 @@ from ..uniformly_gate import UniformlyRz
 from .utility import *
 
 from QuICT.core import *
+from QuICT.core.gate import *
 
 
 def __i_tensor_unitary(

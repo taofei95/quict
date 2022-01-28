@@ -6,6 +6,7 @@
 
 from .._synthesis import Synthesis
 from QuICT.core import *
+from QuICT.core.gate import *
 from .mct_linear_simulation import MCTLinearHalfDirtyAux
 
 
@@ -43,10 +44,10 @@ def solve(n):
     """
     qubit_list = Circuit(n + 1)
     if n == 3:
-        CCX | qubit_list[:3]
+        CCX | Qureg(qubit_list[:3])
         return qubit_list
     elif n == 2:
-        CX | qubit_list[:2]
+        CX | Qureg(qubit_list[:2])
         return qubit_list
     if n % 2 == 1:
         k1 = n // 2 + 1
@@ -87,4 +88,6 @@ class MCTOneAux(Synthesis):
         Return:
             CompositeGate: the result of Decomposition
         """
-        return CompositeGate(solve(n - 1).gates)
+        gates = CompositeGate()
+        gates.extend(solve(n - 1).gates)
+        return gates

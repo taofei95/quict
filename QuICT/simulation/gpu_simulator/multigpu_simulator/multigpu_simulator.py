@@ -4,6 +4,7 @@
 # @Author  : Kaiqi Li
 # @File    : proxy_simulator
 import random
+from collections import defaultdict
 import numpy as np
 import cupy as cp
 
@@ -52,8 +53,8 @@ class MultiStateVectorSimulator(BasicGPUSimulator):
         # Get qubits and limitation
         self.total_qubits = int(circuit.width())
         self.qubits = int(self.total_qubits - np.log2(self.proxy.ndevs))
-
         self._gates = circuit.gates
+        self._measure_result = defaultdict(list)
 
         # Initial GateMatrix
         self._gate_matrix_prepare()
@@ -78,7 +79,12 @@ class MultiStateVectorSimulator(BasicGPUSimulator):
             if self.proxy.dev_id == 0:
                 self._vector.put(0, self._precision(1))
 
-    def run(self, circuit: Circuit, use_previous: bool = False) -> np.ndarray:
+    def run(
+        self,
+        circuit: Circuit,
+        use_previous: bool = False,
+        record_measured: bool = False
+    ) -> np.ndarray:
         """ start simulator with given circuit
 
         Args:
@@ -94,7 +100,10 @@ class MultiStateVectorSimulator(BasicGPUSimulator):
             for gate in self._gates:
                 self.apply_gate(gate)
 
-        return self.vector
+        if record_measured:
+            return self.vector, self._measure_result
+        else:
+            return self.vector
 
     def apply_gate(self, gate):
         """ Depending on the given quantum gate, apply the target algorithm to calculate the state vector.
@@ -395,7 +404,7 @@ class MultiStateVectorSimulator(BasicGPUSimulator):
                 else:
                     self._algorithm.Controlled_Multiply_targ(
                         t_indexes[0],
-                        gate.compute_matrix[3, 3],
+                        gate.matrix[3, 3],
                         *default_parameters
                     )
 
@@ -706,8 +715,9 @@ class MultiStateVectorSimulator(BasicGPUSimulator):
         # [Measure]
         elif gate_type == GateType.measure:
             index = self.total_qubits - 1 - gate.targ
-
-            self.circuit.qubits[gate.targ].measured = self._measure_operation(index)
+            result = self._measure_operation(index)
+            self.circuit.qubits[gate.targ].measured = result
+            self._measure_result[index].append(result)
         # [Reset]
         elif gate_type == GateType.reset:
             index = self.total_qubits - 1 - gate.targ
@@ -716,28 +726,14 @@ class MultiStateVectorSimulator(BasicGPUSimulator):
         # [Barrier]
         elif gate_type == GateType.barrier:
             pass
-        # [Perm]
+        # [Perm] TODO: for uncertained qubits gate not support yet
         elif (
-            gate_type == GateType.perm
-            # gate_type == GATE_ID["ControlPermMulDetail"] or
-            # gate_type == GATE_ID["PermShift"] or
-            # gate_type == GATE_ID["ControlPermShift"] or
-            # gate_type == GATE_ID["PermMul"] or
-            # gate_type == GATE_ID["ControlPermMul"] or
-            # gate_type == GATE_ID["PermFx"]
+            gate_type == GateType.perm or
+            gate_type in GateGroup.perm_gate
         ):
-            if gate.targets >= 5:
-                pass
-            else:
-                indexes = gate.pargs
-                swaped_pargs = self._perm_operation(indexes)
-                self._algorithm.PermGate_Apply(
-                    swaped_pargs,
-                    *default_parameters
-                )
-        # [Unitary]
+            pass
+        # [Unitary] TODO: Currently only support the 1-, 2-qubits unitary quantum gates
         elif gate_type == GateType.unitary:
-            # TODO: Currently only support the 1-, 2-qubits unitary quantum gates
             qubit_idxes = gate.cargs + gate.targs
             if len(qubit_idxes) == 1:   # 1-qubit unitary gate
                 if gate.is_diagonal():    # diagonal gate
@@ -768,9 +764,8 @@ class MultiStateVectorSimulator(BasicGPUSimulator):
                 raise ValueError(
                     "do not support the unitary gate with more than 2 qubits, please use gate decomposition first."
                 )
-        # [ShorInitial]
+        # [ShorInitial] TODO: Currently only support the 1-, 2-qubits unitary quantum gates
         elif gate_type == GateType.shor_init:
-            # TODO: Not applied yet.
             pass
         # unsupported quantum gates
         else:

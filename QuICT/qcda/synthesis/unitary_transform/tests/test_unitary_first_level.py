@@ -1,4 +1,8 @@
 # noinspection PyUnresolvedReferences
+import sys
+sys.path.append('/mnt/d/ICT/QuICT')
+
+import numpy as np
 from scipy.linalg import cossin
 from scipy.stats import unitary_group
 from QuICT.qcda.synthesis.uniformly_gate import UniformlyRy

@@ -4,10 +4,8 @@
 # @Author  : Han Yu
 # @File    : circuit_draw
 
-from QuICT.core import *
+from QuICT.core import Circuit
 
-if __name__ == "__main__":
-    circuit = Circuit(5)
-    circuit.random_append(50)
-    circuit.draw()
-    circuit.draw(method='command')
+circuit = Circuit(5)
+circuit.random_append(50)
+circuit.draw()

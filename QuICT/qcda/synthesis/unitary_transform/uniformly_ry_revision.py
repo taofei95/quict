@@ -6,7 +6,7 @@ the optimization of unitary transform
 from typing import *
 import numpy as np
 
-from QuICT.core import CompositeGate, CX, CZ, Ry
+from QuICT.core.gate import CompositeGate, CX, CZ, Ry
 from .._synthesis import Synthesis
 
 
