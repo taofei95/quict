@@ -1,7 +1,4 @@
 # noinspection PyUnresolvedReferences
-import sys
-sys.path.append('/mnt/d/ICT/QuICT')
-
 import numpy as np
 from QuICT.qcda.synthesis.uniformly_gate import UniformlyRz
 from QuICT.core import *

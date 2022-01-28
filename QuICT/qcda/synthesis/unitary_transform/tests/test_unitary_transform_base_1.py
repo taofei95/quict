@@ -1,6 +1,3 @@
-import sys
-sys.path.append('/mnt/d/ICT/QuICT')
-
 from typing import *
 import numpy as np
 from scipy.stats import unitary_group

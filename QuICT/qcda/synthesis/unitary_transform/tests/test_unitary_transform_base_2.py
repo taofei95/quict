@@ -1,6 +1,3 @@
-import sys
-sys.path.append('/mnt/d/ICT/QuICT')
-
 import numpy as np
 from scipy.stats import unitary_group
 from QuICT.qcda.synthesis.unitary_transform import UnitaryTransform
