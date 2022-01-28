@@ -10,10 +10,10 @@ by THOMAS HANER, MARTIN ROETTELER, and KRYSTA M. SVORE in \
 "Factoring using 2n+2 qubits with Toffoli based modular multiplication"
 '''
 
-from QuICT.core import *
+from QuICT.core import Circuit
+from QuICT.core.gate import *
 from QuICT.qcda.synthesis.arithmetic.hrs import *
 from QuICT.algorithm import Algorithm
-from QuICT.algorithm import Amplitude
 
 import random
 import logging

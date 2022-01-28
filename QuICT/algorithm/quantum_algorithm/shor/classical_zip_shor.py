@@ -10,7 +10,8 @@ import random
 import numpy as np
 
 from QuICT.algorithm import Algorithm
-from QuICT.core import *
+from QuICT.core import Circuit
+from QuICT.core.gate import *
 from .utility import *
 
 
