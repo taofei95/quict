@@ -9,7 +9,7 @@ from QuICT.core import *
 from QuICT.core.gate import *
 
 
-def half_dirty_aux(gates, n, m, controls, auxs, target):
+def half_dirty_aux(gates, n, m, controls:list, auxs:list, target:int):
     """
 
     Args:
@@ -20,29 +20,29 @@ def half_dirty_aux(gates, n, m, controls, auxs, target):
         the circuit which describe the decomposition result
     """
     with gates:
-        circuit = controls + auxs + target
+        circuit = controls + auxs + [target]
         if m == 1:
-            CX & [0, n - 1]
+            CX & [circuit[0], circuit[n - 1]]
         elif m == 2:
-            CCX & [0, 1, n - 1]
+            CCX & [circuit[0], circuit[1], circuit[n - 1]]
         else:
             for i in range(m, 2, -1):
-                CCX & [i - 1, n - 1 - (m - i + 1), n - 1 - (m - i)]
-            CCX & [0, 1, n - m + 1]
+                CCX & [circuit[i - 1], circuit[n - 1 - (m - i + 1)], circuit[n - 1 - (m - i)]]
+            CCX & [circuit[0], circuit[1], circuit[n - m + 1]]
             for i in range(3, m + 1):
-                CCX & [i - 1, n - 1 - (m - i + 1), n - 1 - (m - i)]
+                CCX & [circuit[i - 1], circuit[n - 1 - (m - i + 1)], circuit[n - 1 - (m - i)]]
 
             for i in range(m - 1, 2, -1):
-                CCX & [i - 1, n - 1 - (m - i + 1), n - 1 - (m - i)]
-            CCX & [0, 1, n - m + 1]
+                CCX & [circuit[i - 1], circuit[n - 1 - (m - i + 1)], circuit[n - 1 - (m - i)]]
+            CCX & [circuit[0], circuit[1], circuit[n - m + 1]]
             for i in range(3, m):
-                CCX & [i - 1, n - 1 - (m - i + 1), n - 1 - (m - i)]
+                CCX & [circuit[i - 1], circuit[n - 1 - (m - i + 1)], circuit[n - 1 - (m - i)]]
 
 
-def one_dirty_aux(gates, controls, target, aux):
+def one_dirty_aux(gates, controls:list, target:int, aux:int):
     with gates:
         n = len(controls) + 2
-        _ = controls + aux + target
+        # _ = controls + aux + target
         if n == 5:
             CCX & [controls[0], controls[1], aux]
             CCX & [controls[2], aux, target]
@@ -59,9 +59,9 @@ def one_dirty_aux(gates, controls, target, aux):
         m1 = n // 2
         m2 = n - m1 - 1
         control1 = controls[0: m1]
-        auxs1 = controls[m1: n - 2] + target
+        auxs1 = controls[m1: n - 2] + [target]
         target1 = aux
-        control2 = controls[m1: n - 2] + aux
+        control2 = controls[m1: n - 2] + [aux]
         auxs2 = controls[0: m1]
         target2 = target
 
@@ -98,15 +98,13 @@ class MCTLinearHalfDirtyAux(Synthesis):
         if m < 1:
             raise Exception("there must be at least one control bit")
 
-        circuit = Circuit(n)
-        controls = circuit[[i for i in range(m)]]
-        auxs = circuit[[i for i in range(m, n - 1)]]
-        target = circuit[n - 1]
-
-        half_dirty_aux(n, m, controls, auxs, target)
+        controls = [i for i in range(m)]
+        auxs = [i for i in range(m, n - 1)]
+        target = n - 1
 
         gates = CompositeGate()
-        gates.extend(circuit.gates)
+        with gates:
+            half_dirty_aux(gates, n, m, controls, auxs, target)
         return gates
 
 
@@ -128,10 +126,9 @@ class MCTLinearOneDirtyAux(Synthesis):
         if n < 3:
             raise Exception("there must be at least one control bit")
 
-        circuit = Circuit(n)
         controls = [i for i in range(n - 2)]
-        target = [n - 2]
-        aux = [n - 1]       # this is a dirty ancilla
+        target = n - 2
+        aux = n - 1      # this is a dirty ancilla
 
         gates = CompositeGate()
         with gates:
