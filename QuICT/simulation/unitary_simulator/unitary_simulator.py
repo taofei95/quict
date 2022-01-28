@@ -230,7 +230,6 @@ class UnitarySimulator():
             return np.identity(1 << qubit, dtype=self._precision)
 
         ordering, small_gates = self.unitary_pretreatment(circuit)
-        print(ordering)
         u_mat, u_args = self.merge_unitary_by_ordering(small_gates, ordering)
         result_mat, _ = self.merge_two_unitary(
             np.identity(1 << qubit, dtype=self._precision),

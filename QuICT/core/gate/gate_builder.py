@@ -69,8 +69,11 @@ def build_gate(
     params: list = None
 ):
     gate = GATE_TYPE_TO_CLASS[gate_type]()
-    args_number = gate.controls + gate.targets
+    if params is not None:
+        params = params if isinstance(params, list) else [params]
+        gate = gate(*params)
 
+    args_number = gate.controls + gate.targets
     if isinstance(qubits, Qubit):
         qubits = Qureg(qubits)
     elif isinstance(qubits, int):
@@ -82,9 +85,6 @@ def build_gate(
     else:
         gate.cargs = qubits[:gate.controls]
         gate.targs = qubits[gate.controls:]
-
-    if params:
-        gate.pargs = params
 
     return gate
 

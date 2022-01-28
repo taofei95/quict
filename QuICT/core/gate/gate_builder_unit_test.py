@@ -6,7 +6,7 @@
 import pytest
 import random
 
-from QuICT.core import Qureg
+from QuICT.core import Qureg, Qubit
 from QuICT.core.gate import build_gate, build_random_gate
 from QuICT.core.utils import GateType
 
@@ -34,6 +34,27 @@ def test_build_gate():
         q2 = Qureg(2)
         g2 = build_gate(gate_type, q2)
         assert g2.type == gate_type and g2.assigned_qubits == q2
+        
+        # build 2qubits gate with params
+        gate_type = GateType.cu3
+        q3 = Qureg(2)
+        params = [1, 1, 1]
+        g3 = build_gate(gate_type, q3, params)
+        assert g3.pargs == params and g3.assigned_qubits == q3
+        
+        # build unitary gate
+        from scipy.stats import unitary_group
+
+        gate_type = GateType.unitary
+        matrix = unitary_group.rvs(2 ** 3)
+        g4 = build_gate(gate_type, [1, 2, 3], matrix)
+        assert g4.matrix.shape == (8, 8)
+
+        # build special gate
+        gate_type = GateType.measure
+        q5 = Qubit()
+        g5 = build_gate(gate_type, q5)
+        assert g5.assigned_qubits[0] == q5
 
 
 def test_build_random_gate():
