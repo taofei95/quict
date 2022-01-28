@@ -6,7 +6,8 @@ from qiskit import IBMQ
 from qiskit import QuantumCircuit
 from qiskit import transpile
 
-from QuICT.core import *
+from QuICT.core import Circuit
+from QuICT.core.gate import *
 from QuICT.simulation.remote_simulator import RemoteSimulator
 
 
@@ -76,7 +77,7 @@ class QuantumLeafSimulator(RemoteSimulator):
         if use_previous:
             qubits = self._env.Q
         else:
-            qubits = self._env.Q.createList(circuit.circuit_width())
+            qubits = self._env.Q.createList(circuit.width())
 
         gates = circuit.gates
         for gate in gates:

@@ -1,4 +1,3 @@
 from ._gpu_simulation import BasicGPUSimulator
 from .multigpu_simulator import MultiStateVectorSimulator
 from .statevector_simulator import ConstantStateVectorSimulator
-from .unitary_simulator import UnitarySimulator

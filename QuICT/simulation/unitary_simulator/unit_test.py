@@ -9,8 +9,10 @@ import pytest
 import numpy as np
 
 from QuICT.algorithm import SyntheticalUnitary
-from QuICT.core import *
-from QuICT.simulation.gpu_simulator.unitary_simulator import *
+from QuICT.core import Circuit
+from QuICT.core.gate import *
+from QuICT.core.utils import GateType
+from QuICT.simulation.unitary_simulator import UnitarySimulator
 
 from time import time
 
@@ -20,21 +22,28 @@ def test_merge_two_unitary_list():
     qubit = 10
     gate_number = 100
     circuit = Circuit(qubit)
-    circuit.random_append(gate_number, typeList=[GATE_ID["CX"], GATE_ID["X"]])
+    circuit.random_append(gate_number, typelist=[GateType.cx, GateType.x])
     circuit_unitary = SyntheticalUnitary.run(circuit)
+    unitary_simulator = UnitarySimulator()
 
-    mat_now = circuit.gates[0].compute_matrix
-    args_now = circuit.gates[0].affectArgs
+    mat_now = circuit.gates[0].matrix
+    args_now = circuit.gates[0].cargs + circuit.gates[0].targs
     for gate in circuit.gates[1:]:
         gate: BasicGate
-        mat_now, args_now = UnitarySimulator.merge_two_unitary(mat_now, args_now, gate.compute_matrix, gate.affectArgs)
+        mat_now, args_now = unitary_simulator.merge_two_unitary(
+            mat_now,
+            args_now,
+            gate.matrix,
+            gate.cargs + gate.targs
+        )
 
-    mat_now, _ = UnitarySimulator.merge_two_unitary(
-        np.identity(1 << qubit, dtype=np.complex64),
+    mat_now, _ = unitary_simulator.merge_two_unitary(
+        np.identity(1 << qubit, dtype=np.complex128),
         [i for i in range(qubit)],
         mat_now,
         args_now
     )
+
     assert np.allclose(circuit_unitary, mat_now)
 
 
@@ -50,8 +59,8 @@ def test_unitary_generate():
     end_time = time()
     duration_1 = end_time - start_time
     start_time = time()
-    sim = UnitarySimulator(circuit)
-    result_mat = sim.run()
+    sim = UnitarySimulator()
+    result_mat = sim.run(circuit)
     end_time = time()
     duration_2 = end_time - start_time
     print(f"\nOld algo time: {duration_1:.4f} s, current algo time: {duration_2:.4f} s")

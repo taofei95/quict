@@ -39,7 +39,7 @@ class TestCircuit(unittest.TestCase):
         CX | cir(qureg[1, 3])
 
         assert 1
-    
+
     def test_circuit_call(self):
         cir = Circuit(TestCircuit.qubits)
         qureg = cir.qubits

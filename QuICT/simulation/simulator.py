@@ -6,11 +6,12 @@
 import time
 
 from QuICT.core import Circuit
+# from QuICT.simulation.CPU_simulator import CircuitSimulator
 from QuICT.simulation.gpu_simulator import (
     ConstantStateVectorSimulator,
-    MultiStateVectorSimulator,
-    UnitarySimulator
+    MultiStateVectorSimulator
 )
+from QuICT.simulation.unitary_simulator import UnitarySimulator
 from QuICT.simulation.remote_simulator import QuantumLeafSimulator, QiskitSimulator
 from QuICT.simulation.utils import option_validation, Result
 
@@ -26,11 +27,7 @@ class Simulator:
     """
 
     __DEVICE = ["CPU", "GPU", "qiskit", "qcompute"]
-    __GPU_BACKEND_MAPPING = {
-        "unitary": UnitarySimulator,
-        "statevector": ConstantStateVectorSimulator,
-        "multiGPU": MultiStateVectorSimulator
-    }
+    __BACKEND = ["unitary", "statevector", "multiGPU"]
     __REMOTE_BACKEND_MAPPING = {
         "qiskit": QiskitSimulator,
         "qcompute": QuantumLeafSimulator
@@ -57,12 +54,15 @@ class Simulator:
         # validated the optional parameters
         self._options = self._validate_options(options=options)
 
-        if device == "CPU":
-            self._load_cpu_simulator()
-        elif device == "GPU":
-            self._load_gpu_simulator()
-        else:
+        if device in Simulator.__REMOTE_BACKEND_MAPPING.keys():
             self._load_remote_simulator()
+        else:
+            if backend not in Simulator.__BACKEND:
+                raise ValueError(
+                    f"Unsupportted backend {backend}, please select one of {Simulator.__BACKEND}."
+                )
+            else:
+                self._load_simulator()
 
     @option_validation()
     def _validate_options(self, options, default_options=None):
@@ -71,32 +71,20 @@ class Simulator:
 
         return default_options
 
-    def _load_cpu_simulator(self):
-        """ Initial CPU simulator.
-
-        Raises:
-            ValueError: Unsupportted backend
-        """
-        if self._backend == "statevector":
-            pass
-        else:
-            raise ValueError(
-                f"Unsupportted backend {self._backend} in cpu simulator, please using statevector."
-            )
-
-    def _load_gpu_simulator(self):
+    def _load_simulator(self):
         """ Initial GPU simulator.
 
         Raises:
             ValueError: Unsupportted backend
         """
-        if self._backend not in Simulator.__GPU_BACKEND_MAPPING.keys():
-            raise ValueError(
-                f"Unsupportted backend {self._backend} in gpu simulator, "
-                f"please select one of [unitary, statevector, multiGPU]."
-            )
-
-        self._simulator = Simulator.__GPU_BACKEND_MAPPING[self._backend](**self._options)
+        if self._backend == "unitary":
+            self._simulator = UnitarySimulator(device=self._device, **self._options)
+        elif self._backend == "statevector":
+            self._simulator = ConstantStateVectorSimulator(**self._options) \
+                if self._device == "GPU" else None  # CircuitSimulator
+        elif self._backend == "multiGPU":
+            assert self._device == "GPU"
+            self._simulator = MultiStateVectorSimulator(**self._options)
 
     def _load_remote_simulator(self):
         """ Initial Remote simulator. """
@@ -122,7 +110,7 @@ class Simulator:
         Yields:
             [array]: The state vector.
         """
-        result = Result(f"{self._device}-{self._backend}", self._shots, self._options)
+        result = Result(self._device, self._backend, self._shots, self._options)
         if circuit_out:
             result.record_circuit(circuit)
 
@@ -134,12 +122,11 @@ class Simulator:
                 s_time = time.time()
                 state = self._simulator.run(circuit, use_previous)
                 e_time = time.time()
-                result.record_time(e_time - s_time)
 
-                if statevector_out:
+                if statevector_out and self._backend == "statevector":
                     result.record_sv(state, shot)
 
-                final_state = self._simulator.sample()
-                result.record(final_state, len(circuit.qubits))
+                final_state = state if self._backend == "unitary" else self._simulator.sample()
+                result.record(final_state, e_time - s_time, len(circuit.qubits))
 
         return result.dumps()
