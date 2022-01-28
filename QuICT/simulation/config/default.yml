@@ -1,4 +1,7 @@
 # CPU simulator
+CPU:
+  unitary:
+    precision: double
 
 # GPU simulator
 GPU:
