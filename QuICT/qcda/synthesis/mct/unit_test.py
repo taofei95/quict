@@ -82,9 +82,9 @@ def test_MCT_Linear_Simulation_One_functional():
     for n in range(6, max_qubit):
         for control_bits in range(0, 2 ** (n - 2)):
             circuit = Circuit(n)
-            aux = circuit[[0]]
+            aux = circuit[0]
             controls = circuit[[i for i in range(1, n - 1)]]
-            target = circuit[[n - 1]]
+            target = circuit[n - 1]
             Set(controls, control_bits)
             print("%d bits control = %d" % (n - 2, control_bits))
             MCTLinearOneDirtyAux.execute(n) | [controls, target, aux]
@@ -106,9 +106,9 @@ def test_MCT_Linear_Simulation_One_unitary():
     max_qubit = 11
     for n in range(6, max_qubit):
         circuit = Circuit(n)
-        aux = circuit(0)
-        controls = circuit([i for i in range(1, n - 1)])
-        target = circuit(n - 1)
+        aux = circuit[0]
+        controls = circuit[[i for i in range(1, n - 1)]]
+        target = circuit[n - 1]
         MCTLinearOneDirtyAux.execute(n) | [controls, target, aux]
         # assert 0
         unitary = SyntheticalUnitary.run(circuit)

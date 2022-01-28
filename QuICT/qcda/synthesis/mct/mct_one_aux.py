@@ -44,10 +44,10 @@ def solve(n):
     """
     qubit_list = Circuit(n + 1)
     if n == 3:
-        CCX | qubit_list[:3]
+        CCX | Qureg(qubit_list[:3])
         return qubit_list
     elif n == 2:
-        CX | qubit_list[:2]
+        CX | Qureg(qubit_list[:2])
         return qubit_list
     if n % 2 == 1:
         k1 = n // 2 + 1
