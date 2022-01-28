@@ -7,7 +7,8 @@
 import numpy as np
 from scipy.optimize import minimize
 
-from QuICT import *
+from QuICT.core import Circuit
+from QuICT.core.gate import *
 from QuICT.qcda.synthesis.initial_state_preparation import InitialStatePreparation
 from QuICT.qcda.synthesis.mct import MCTOneAux
 
