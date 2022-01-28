@@ -9,6 +9,7 @@ from QuICT.core import *
 from QuICT.core.gate import *
 from QuICT.qcda.synthesis.mct import MCTOneAux, MCTLinearHalfDirtyAux, MCTLinearOneDirtyAux
 from QuICT.algorithm import SyntheticalUnitary
+# from QuICT.simulation import Simulator
 
 
 def Set(qreg, N):
@@ -81,13 +82,14 @@ def test_MCT_Linear_Simulation_One_functional():
     for n in range(6, max_qubit):
         for control_bits in range(0, 2 ** (n - 2)):
             circuit = Circuit(n)
-            aux = circuit(0)
-            controls = circuit([i for i in range(1, n - 1)])
-            target = circuit(n - 1)
+            aux = circuit[[0]]
+            controls = circuit[[i for i in range(1, n - 1)]]
+            target = circuit[[n - 1]]
             Set(controls, control_bits)
             print("%d bits control = %d" % (n - 2, control_bits))
-            MCTLinearOneDirtyAux.execute(n) | (controls, target, aux)
+            MCTLinearOneDirtyAux.execute(n) | [controls, target, aux]
             Measure | circuit
+            # Simulator.run(circuit)
             circuit.exec()
             if (
                 (control_bits == 2 ** (n - 2) - 1 and int(target) == 0) or
@@ -107,7 +109,7 @@ def test_MCT_Linear_Simulation_One_unitary():
         aux = circuit(0)
         controls = circuit([i for i in range(1, n - 1)])
         target = circuit(n - 1)
-        MCTLinearOneDirtyAux.execute(n) | (controls, target, aux)
+        MCTLinearOneDirtyAux.execute(n) | [controls, target, aux]
         # assert 0
         unitary = SyntheticalUnitary.run(circuit)
         print(circuit)

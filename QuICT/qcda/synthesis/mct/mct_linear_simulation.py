@@ -42,16 +42,16 @@ def one_dirty_aux(controls, target, aux):
     n = len(controls) + 2
     _ = controls + aux + target
     if n == 5:
-        CCX | (controls[0], controls[1], aux)
-        CCX | (controls[2], aux, target)
-        CCX | (controls[0], controls[1], aux)
-        CCX | (controls[2], aux, target)
+        CCX | [controls[0], controls[1], aux]
+        CCX | [controls[2], aux, target]
+        CCX | [controls[0], controls[1], aux]
+        CCX | [controls[2], aux, target]
         return
     if n == 4:
-        CCX | (controls[0], controls[1], target)
+        CCX | [controls[0], controls[1], target]
         return
     if n == 3:
-        CX | (controls, target)
+        CX | [controls, target]
         return
     # n > 5
     m1 = n // 2
@@ -66,9 +66,9 @@ def one_dirty_aux(controls, target, aux):
     # half_dirty_aux(n, m1, control1, auxs1, target1)
     if m2 == 2:  # n == 6
         half_dirty_aux(n, m1, control1, auxs1, target1)
-        CCX | (control2[0], control2[1], target2)
+        CCX | [control2[0], control2[1], target2]
         half_dirty_aux(n, m1, control1, auxs1, target1)
-        CCX | (control2[0], control2[1], target2)
+        CCX | [control2[0], control2[1], target2]
     else:
         half_dirty_aux(n, m1, control1, auxs1, target1)
         half_dirty_aux(n, m2, control2, auxs2, target2)
@@ -97,9 +97,9 @@ class MCTLinearHalfDirtyAux(Synthesis):
             raise Exception("there must be at least one control bit")
 
         circuit = Circuit(n)
-        controls = circuit([i for i in range(m)])
-        auxs = circuit([i for i in range(m, n - 1)])
-        target = circuit(n - 1)
+        controls = circuit[[i for i in range(m)]]
+        auxs = circuit[[i for i in range(m, n - 1)]]
+        target = circuit[[n - 1]]
 
         half_dirty_aux(n, m, controls, auxs, target)
 
@@ -125,9 +125,9 @@ class MCTLinearOneDirtyAux(Synthesis):
             raise Exception("there must be at least one control bit")
 
         circuit = Circuit(n)
-        controls = circuit([i for i in range(n - 2)])
-        target = circuit(n - 2)
-        aux = circuit(n - 1)       # this is a dirty ancilla
+        controls = circuit[[i for i in range(n - 2)]]
+        target = circuit[[n - 2]]
+        aux = circuit[[n - 1]]       # this is a dirty ancilla
 
         one_dirty_aux(controls, target, aux)
 
