@@ -9,7 +9,7 @@ import numpy as np
 from .._synthesis import Synthesis
 from .special_set import *
 
-from QuICT.core import *
+from QuICT.core.gate import *
 
 
 class GateTransform(Synthesis):
@@ -36,7 +36,7 @@ class GateTransform(Synthesis):
         for gate in compositeGate:
             if gate.targets + gate.controls > 2:
                 raise Exception("gate_transform only support 2-qubit and 1-qubit gate now.")
-            if gate.type() != instruction_set.two_qubit_gate and gate.targets + gate.controls == 2:
+            if gate.type != instruction_set.two_qubit_gate and gate.targets + gate.controls == 2:
                 rule = instruction_set.select_transform_rule(gate)
                 compositeGateStep1.extend(rule.transform(gate))
             else:

@@ -9,5 +9,5 @@
 from .uniformly_gate import *
 from .unitary_transform import *
 # from .initial_state_preparation import *
-# from .gate_transform import *
+from .gate_transform import *
 # from .gate_decomposition import *
