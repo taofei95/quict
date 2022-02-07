@@ -65,7 +65,7 @@ def _cx2fsim_rule(gate):
     compositeGate = CompositeGate()
     with compositeGate:
         H & targs[1]
-        FSim([0, math.pi]) & targs
+        FSim(0, math.pi) & targs
         H & targs[1]
     return compositeGate
 Cx2FsimRule = TransformRule(_cx2fsim_rule, CX, FSim)
@@ -174,7 +174,7 @@ def _cy2fsim_rule(gate):
     with compositeGate:
         S_dagger & targs[1]
         H & targs[1]
-        FSim([0, math.pi]) & targs
+        FSim(0, math.pi) & targs
         H & targs[1]
         S & targs[1]
     return compositeGate
@@ -278,7 +278,7 @@ def _cz2fsim_rule(gate):
     targs = gate.cargs + gate.targs
     compositeGate = CompositeGate()
     with compositeGate:
-        FSim([0, math.pi]) & targs
+        FSim(0, math.pi) & targs
     return compositeGate
 Cz2FsimRule = TransformRule(_cz2fsim_rule, CZ, FSim)
 
@@ -402,9 +402,9 @@ def _crz2fsim_rule(gate):
     with compositeGate:
         Rz(theta / 2) & targs[1]
         H & targs[1]
-        FSim([0, np.pi]) & targs
+        FSim(0, np.pi) & targs
         Rx(-theta / 2) & targs[1]
-        FSim([0, np.pi]) & targs
+        FSim(0, np.pi) & targs
         H & targs[1]
     return compositeGate
 Crz2FsimRule = TransformRule(_crz2fsim_rule, CRz, FSim)
@@ -530,7 +530,7 @@ def _ch2fsim_rule(gate):
     with compositeGate:
         S & targs[1]
         Rx(math.pi / 4) & targs[1]
-        FSim([0, math.pi]) & targs
+        FSim(0, math.pi) & targs
         Rx(-math.pi / 4) & targs[1]
         S_dagger & targs[1]
     return compositeGate
@@ -675,9 +675,9 @@ def _rxx2fsim_rule(gate):
     compositeGate = CompositeGate()
     with compositeGate:
         H & targs[0]
-        FSim([0, math.pi]) & targs
+        FSim(0, math.pi) & targs
         Rx(theta) & targs[1]
-        FSim([0, math.pi]) & targs
+        FSim(0, math.pi) & targs
         H & targs[0]
     return compositeGate
 Rxx2FsimRule = TransformRule(_rxx2fsim_rule, Rxx, FSim)
@@ -808,9 +808,9 @@ def _ryy2fsim_rule(gate):
         Rx(np.pi / 2) & targs[0]
         Rx(np.pi / 2) & targs[1]
         H & targs[1]
-        FSim([0, math.pi]) & targs
+        FSim(0, math.pi) & targs
         Rx(theta) & targs[1]
-        FSim([0, math.pi]) & targs
+        FSim(0, math.pi) & targs
         H & targs[1]
         Rx(-np.pi / 2) & targs[0]
         Rx(-np.pi / 2) & targs[1]
@@ -936,9 +936,9 @@ def _rzz2fsim_rule(gate):
     compositeGate = CompositeGate()
     with compositeGate:
         H & targs[1]
-        FSim([0, math.pi]) & targs
+        FSim(0, math.pi) & targs
         Rx(theta) & targs[1]
-        FSim([0, math.pi]) & targs
+        FSim(0, math.pi) & targs
         H & targs[1]
     return compositeGate
 Rzz2FsimRule = TransformRule(_rzz2fsim_rule, Rzz, FSim)
@@ -987,9 +987,9 @@ def _fsim2cx_rule(gate):
         Phase(-fai / 4) & targs[0]
         CX & targs
         H & targs[0]
-        CX & (targs[1], targs[0])
+        CX & [targs[1], targs[0]]
         Rz(-theta) & targs[0]
-        CX & (targs[1], targs[0])
+        CX & [targs[1], targs[0]]
         Rz(theta) & targs[0]
         H & targs[0]
         CX & targs
@@ -1012,9 +1012,9 @@ def _fsim2cy_rule(gate):
         CY & targs
         H & targs[0]
         S & targs[0]
-        CY & (targs[1], targs[0])
+        CY & [targs[1], targs[0]]
         Rz(-theta) & targs[0]
-        CY & (targs[1], targs[0])
+        CY & [targs[1], targs[0]]
         Rz(theta - math.pi / 2) & targs[0]
         H & targs[0]
         CY & targs
@@ -1037,9 +1037,9 @@ def _fsim2cz_rule(gate):
         H & targs[1]
         CZ & targs
         H & targs[1]
-        CZ & (targs[1], targs[0])
+        CZ & [targs[1], targs[0]]
         Rx(-theta) & targs[0]
-        CZ & (targs[1], targs[0])
+        CZ & [targs[1], targs[0]]
         Rx(theta) & targs[0]
         H & targs[1]
         CZ & targs
@@ -1066,9 +1066,9 @@ def _fsim2ch_rule(gate):
         T_dagger & targs[1]
         Rx(-math.pi / 4) & targs[0]
         S_dagger & targs[0]
-        CH & (targs[1], targs[0])
+        CH & [targs[1], targs[0]]
         Ry(theta) & targs[0]     
-        CH & (targs[1], targs[0])
+        CH & [targs[1], targs[0]]
         S & targs[0]       
         Rx(theta + math.pi / 4) & targs[0]
         T & targs[1]
@@ -1096,10 +1096,10 @@ def _fsim2crz_rule(gate):
         CRz(math.pi) & targs
         H & targs[1]
         Rz(math.pi / 2) & targs[1]
-        CRz(math.pi) & (targs[1], targs[0])
+        CRz(math.pi) & [targs[1], targs[0]]
         Rz(math.pi / 2) & targs[1]
         Rx(-theta) & targs[0]
-        CRz(math.pi) & (targs[1], targs[0])
+        CRz(math.pi) & [targs[1], targs[0]]
         Rx(theta) & targs[0]
         Rz(math.pi / 2) & targs[0]
         H & targs[1]
