@@ -4,7 +4,6 @@ import uuid
 import numpy as np
 
 
-# TODO: Add circuit and state vector output. Add spending time
 class Result:
     """ Data structure class for simulator result
 

@@ -295,9 +295,19 @@ class CompositeGate:
         Returns:
             bool: whether the gateSet is equal with the targets
         """
-        target = CompositeGate(target, with_copy=True)
         self_matrix = self.matrix()
-        target_matrix = target.matrix()
+        if isinstance(target, CompositeGate):
+            target_matrix = target.matrix()
+        else:
+            try:
+                target_matrix = target.matrix
+            except:
+                temp_cg = CompositeGate()
+                for gate in target.gates:
+                    gate | temp_cg
+
+                target_matrix = temp_cg.matrix()
+
         if ignore_phase:
             shape = self_matrix.shape
             rotate = 0
@@ -306,10 +316,13 @@ class CompositeGate:
                     if abs(self_matrix[i, j]) > eps:
                         rotate = target_matrix[i, j] / self_matrix[i, j]
                         break
+
                 if rotate != 0:
                     break
+
             if rotate == 0 or abs(abs(rotate) - 1) > eps:
                 return False
+
             self_matrix = self_matrix * np.full(shape, rotate)
 
         return np.allclose(self_matrix, target_matrix, rtol=eps, atol=eps)
