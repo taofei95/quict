@@ -6,13 +6,6 @@ Algorithm
 
    QuICT.algorithm
 
-Backends
-=========================
-
-.. toctree::
-   :maxdepth: 4
-
-   QuICT.backends
 
 Core
 =========================

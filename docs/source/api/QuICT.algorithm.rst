@@ -1,37 +1,5 @@
-SuperClass Algorithm
-==========================================
 
-.. autoclass:: QuICT.algorithm.Algorithm
-   :members:
-   :undoc-members:
-   :show-inheritance:
-   :private-members:
-   :inherited-members:
-
-Simulator
-===========================
-
-QuICT.algorithm.Amplitude
---------------------------------------------------------------------------------
-
-.. autoclass:: QuICT.algorithm.Amplitude
-   :members:
-   :undoc-members:
-   :show-inheritance:
-   :private-members:
-   :inherited-members:
-
-QuICT.algorithm.SyntheticalUnitary
---------------------------------------------------------------------------------
-
-.. autoclass:: QuICT.algorithm.SyntheticalUnitary
-   :members:
-   :undoc-members:
-   :show-inheritance:
-   :private-members:
-   :inherited-members:
-
-Other Algorithm
+Quantum Algorithm
 ============================
 
 QuICT.algorithm.shor
@@ -41,29 +9,21 @@ QuICT.algorithm.shor
    :members:
    :undoc-members:
    :show-inheritance:
-   :private-members:
-   :inherited-members:
 
 .. autoclass:: QuICT.algorithm.ClassicalZipShorFactor
    :members:
    :undoc-members:
    :show-inheritance:
-   :private-members:
-   :inherited-members:
 
 .. autoclass:: QuICT.algorithm.ShorFactor
    :members:
    :undoc-members:
    :show-inheritance:
-   :private-members:
-   :inherited-members:
 
 .. autoclass:: QuICT.algorithm.ZipShorFactor
    :members:
    :undoc-members:
    :show-inheritance:
-   :private-members:
-   :inherited-members:
 
 QuICT.algorithm.grover
 --------------------------------------------------------------------------------
@@ -72,8 +32,14 @@ QuICT.algorithm.grover
    :members:
    :undoc-members:
    :show-inheritance:
-   :private-members:
-   :inherited-members:
+
+QuICT.algorithm.SyntheticalUnitary
+--------------------------------------------------------------------------------
+
+.. autoclass:: QuICT.algorithm.SyntheticalUnitary
+   :members:
+   :undoc-members:
+   :show-inheritance:
 
 QuICT.algorithm.weight_decision
 --------------------------------------------------------------------------------
@@ -82,5 +48,3 @@ QuICT.algorithm.weight_decision
    :members:
    :undoc-members:
    :show-inheritance:
-   :private-members:
-   :inherited-members:

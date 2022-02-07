@@ -27,8 +27,8 @@ sys.path.insert(0, os.path.abspath("../.."))
 os.environ["APIDOC_GEN"] = os.environ.get("APIDOC_GEN", "True")
 
 project = "QuICT"
-copyright = "2021, hanyu"
-author = "hanyu"
+copyright = "2022, QuICT"
+author = "QuICT"
 
 # The full version, including alpha/beta/rc tags
 release = "1.0"
