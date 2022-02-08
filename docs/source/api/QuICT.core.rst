@@ -3,18 +3,14 @@ Qubit
 
 .. automodule:: QuICT.core.qubit.qubit
   :members:
+  :undoc-members:
   :show-inheritance:
-  :private-members:
-  :inherited-members:
 
 
 Gate
 -------------------
-.. automodule:: QuICT.core.gate.gate
+.. automodule:: QuICT.core.gate.gate.BasicGate
   :members:
-  :show-inheritance:
-  :private-members:
-  :inherited-members:
 
 .. automodule:: QuICT.core.gate.composite_gate
   :members:

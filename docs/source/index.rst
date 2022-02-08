@@ -126,4 +126,4 @@ Contents
    :maxdepth: 2
    :caption: API-Documents
 
-   api/QuICT.rst
+   apidoc/QuICT.rst

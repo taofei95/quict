@@ -22,7 +22,7 @@ import sys
 
 from recommonmark.parser import CommonMarkParser
 
-sys.path.insert(0, os.path.abspath("../.."))
+sys.path.insert(0, os.path.abspath("../../QuICT"))
 
 os.environ["APIDOC_GEN"] = os.environ.get("APIDOC_GEN", "True")
 
