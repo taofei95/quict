@@ -54,7 +54,7 @@ class BasicGate(object):
 
     @property
     def target_matrix(self) -> np.ndarray:
-        return self._matrix
+        return self.matrix
 
     @property
     def type(self):

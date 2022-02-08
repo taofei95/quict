@@ -280,7 +280,7 @@ class CommutativeOptimization(Optimization):
                     ):
                         combined = True
                         nodes[prev].gate = cls.combine(prev_gate, gate)
-                        mat = nodes[prev].gate.matrix
+                        mat = nodes[prev].gate.target_matrix
                         if (
                             nodes[prev].gate.type == GateType.id or
                             np.allclose(mat, mat[0, 0] * np.eye(2 ** nodes[prev].gate.targets))
