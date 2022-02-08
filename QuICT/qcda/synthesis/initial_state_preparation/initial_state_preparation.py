@@ -12,6 +12,7 @@ import os
 
 from .._synthesis import Synthesis
 from QuICT.core import *
+from QuICT.core.gate import CompositeGate
 from QuICT.qcda.synthesis import UniformlyRy, UniformlyUnitary
 
 # the allowed eps
@@ -76,16 +77,16 @@ class InitialStatePreparation(Synthesis):
             pargs = []
             for element in other:
                 if not permit_element(element):
-                    raise TypeException("int or float or complex", element)
+                    raise TypeError("int or float or complex", element)
                 pargs.append(element)
         elif isinstance(other, tuple):
             pargs = []
             for element in other:
                 if not permit_element(element):
-                    raise TypeException("int or float or complex", element)
+                    raise TypeError("int or float or complex", element)
                 pargs.append(element)
         else:
-            raise TypeException("int/float/complex or list<int/float/complex> or tuple<int/float/complex>", other)
+            raise TypeError("int/float/complex or list<int/float/complex> or tuple<int/float/complex>", other)
 
         N = len(pargs)
         n = int(np.ceil(np.log2(N)))
