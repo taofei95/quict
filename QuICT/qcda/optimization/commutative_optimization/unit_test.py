@@ -5,6 +5,7 @@ import numpy as np
 
 from QuICT.algorithm import SyntheticalUnitary
 from QuICT.core import *
+from QuICT.core.gate import *
 from QuICT.qcda.optimization.commutative_optimization import CommutativeOptimization
 
 
@@ -29,7 +30,7 @@ def test_parameterize():
         phase_angle += phase
     with gates_para:
         Phase(phase_angle) & 0
-    gates_para.print_information()
+    print(gates_para)
     assert np.allclose(gates.matrix(), gates_para.matrix())
 
 
@@ -58,7 +59,7 @@ def test_deparameterize():
         phase_angle += phase
     with gates_depara:
         Phase(phase_angle) & 0
-    gates_depara.print_information()
+    print(gates_depara)
     assert np.allclose(gates.matrix(), gates_depara.matrix())
 
 
@@ -69,35 +70,35 @@ def test_combine():
     gates = CompositeGate()
     with gates:
         gate & gate.targs
-    gates.print_information()
+    print(gates)
 
 
 # Be aware that too many types at the same time may not benefit to the test,
 # unless the size of the random circuit is also large.
-typelist = [GATE_ID['Rx'], GATE_ID['Ry'], GATE_ID['Rz'],
-            GATE_ID['X'], GATE_ID['Y'], GATE_ID['Z'],
-            GATE_ID['S'], GATE_ID['T'], GATE_ID['H'],
-            GATE_ID['CX'], GATE_ID['CRz'], GATE_ID['FSim']]
-typelist = [GATE_ID['Rx'], GATE_ID['Ry'], GATE_ID['Rz'], GATE_ID['X'], GATE_ID['Y'], GATE_ID['Z'], GATE_ID['CX']]
-# typelist = [GATE_ID['Rx'], GATE_ID['Ry'], GATE_ID['Rz']]
-# typelist = [GATE_ID['X'], GATE_ID['Y'], GATE_ID['Z']]
-# typelist = [GATE_ID['CX'], GATE_ID['CRz'], GATE_ID['FSim']]
-# typelist = [GATE_ID['U2'], GATE_ID['U3'], GATE_ID['CU3']]
+typelist = [GateType.rx, GateType.ry, GateType.rz,
+            GateType.x, GateType.y, GateType.z,
+            GateType.s, GateType.t, GateType.h,
+            GateType.cx, GateType.crz, GateType.fsim]
+typelist = [GateType.rx, GateType.ry, GateType.rz, GateType.x, GateType.y, GateType.z, GateType.cx]
+# typelist = [GateType.rx, GateType.ry, GateType.rz]
+# typelist = [GateType.x, GateType.y, GateType.z]
+# typelist = [GateType.cx, GateType.crz, GateType.fsim]
+# typelist = [GateType.u2, GateType.u3, GateType.cu3]
 
 
 def test():
     for _ in range(100):
         n = 5
         circuit = Circuit(n)
-        circuit.random_append(rand_size=100, typeList=typelist)
-        # circuit.print_information()
+        circuit.random_append(rand_size=100, typelist=typelist)
+        # print(circuit)
         # circuit.draw()
 
         gates = CommutativeOptimization.execute(circuit)
         circuit_opt = Circuit(n)
-        circuit_opt.set_exec_gates(gates)
+        gates | circuit_opt
 
-        # circuit_opt.print_information()
+        # print(circuit_opt)
         # circuit_opt.draw()
 
         original = SyntheticalUnitary.run(circuit)
