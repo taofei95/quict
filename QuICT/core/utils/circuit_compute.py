@@ -1,8 +1,8 @@
 import numpy as np
 
 
-def matrix_product_to_circuit(qubits, gate) -> np.ndarray:
-    n = 1 << qubits
+def matrix_product_to_circuit(gate, max_q, min_q: int = 0):
+    n = 1 << (max_q - min_q)
     xor = n - 1
     new_values = np.zeros((n, n), dtype=np.complex128)
 
@@ -11,15 +11,16 @@ def matrix_product_to_circuit(qubits, gate) -> np.ndarray:
     datas = np.zeros(n, dtype=int)
     for i in range(n):
         nowi = 0
-        for kk in range(len(targs)):
-            k = qubits - 1 - targs[kk]
+        for t_idx, targ in enumerate(targs):
+            assert targ >= min_q and targ < max_q
+            k = (max_q - min_q) - 1 - (targ - min_q)
             if (1 << k) & i != 0:
-                nowi += (1 << (len(targs) - 1 - kk))
+                nowi += (1 << (len(targs) - 1 - t_idx))
 
         datas[i] = nowi
 
     for i in targs:
-        xor = xor ^ (1 << (qubits - 1 - i))
+        xor = xor ^ (1 << (max_q - 1 - i))
 
     for i in range(n):
         nowi = datas[i]
