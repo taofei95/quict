@@ -4,7 +4,7 @@
 # @Author  : Han Yu
 # @File    : __init__.py
 
-# from .cnot_ancillae import CnotAncillae
+from .cnot_ancillae import CnotAncillae
 from .commutative_optimization import CommutativeOptimization
 # from .cnot_template import CnotForceBfs, CnotForceDepthBfs, CnotLocalForceBfs, CnotLocalForceDepthBfs, CnotStoreForceBfs
 # from .cnot_without_ancillae import CnotWithoutAncillae
