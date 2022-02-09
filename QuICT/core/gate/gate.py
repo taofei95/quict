@@ -1988,6 +1988,10 @@ class CCXGate(BasicGate):
             [1, 0]
         ], dtype=np.complex128)
 
+    @property
+    def target_matrix(self) -> np.ndarray:
+        return self._target_matrix
+
     def build_gate(self):
         from QuICT.core.gate import CompositeGate
 

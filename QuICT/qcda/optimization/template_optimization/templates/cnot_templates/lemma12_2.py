@@ -5,6 +5,7 @@
 # @File    : lemma12_2.py
 
 from QuICT.core import *
+from QuICT.core.gate import *
 
 
 def lemma12_2():

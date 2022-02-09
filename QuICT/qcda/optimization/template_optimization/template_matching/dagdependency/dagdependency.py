@@ -379,7 +379,7 @@ def _does_commute(node1, node2):
                 return False
         if node1.targs[0] in node2.targs:
             # Now the matrix must commute
-            return _matrix_commute(node1.gate.matrix, node2.gate.matrix)
+            return _matrix_commute(node1.gate.target_matrix, node2.gate.target_matrix)
 
     # Double controlled gates
     # TODO: More precise judgment needed, here only the CX gate and CCX gate
