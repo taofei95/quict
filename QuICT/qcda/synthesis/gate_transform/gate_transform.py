@@ -59,7 +59,7 @@ class GateTransform(Synthesis):
                     if gates_transformed.width() == 0:
                         local_matrix = np.eye(2)
                     else:
-                        local_matrix = gates_transformed.matrix()[0:2, 0:2]
+                        local_matrix = gates_transformed.matrix(local=True)
                     phase = np.log(np.dot(unitaries[targ], np.linalg.inv(local_matrix))[0][0]) / 1j
                     if not np.isclose(np.mod(float(phase), 2 * np.pi), 0):
                         gates_transformed.append(Phase(phase) & targ)
@@ -73,7 +73,7 @@ class GateTransform(Synthesis):
             if gates_transformed.width() == 0:
                 local_matrix = np.eye(2)
             else:
-                local_matrix = gates_transformed.matrix()[0:2, 0:2]
+                local_matrix = gates_transformed.matrix(local=True)
             phase = np.log(np.dot(unitaries[i], np.linalg.inv(local_matrix))[0][0]) / 1j
             if not np.isclose(np.mod(float(phase), 2 * np.pi), 0):
                 gates_transformed.append(Phase(phase) & i)

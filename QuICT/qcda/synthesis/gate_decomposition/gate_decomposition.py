@@ -61,9 +61,6 @@ class GateDecomposition(Synthesis):
             if isinstance(gate, UnitaryGate):
                 gate_decomposed, _ = UnitaryTransform.execute(gate.matrix, mapping=gate.targs)
                 gates.extend(gate_decomposed)
-            # Be aware of the order here, since ComplexGate is inherited from BasicGate
-            # elif isinstance(gate, ComplexGate):
-            #     gates.extend(gate.build_gate())
             elif isinstance(gate, BasicGate):
                 print(gate)
                 try:

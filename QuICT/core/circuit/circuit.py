@@ -557,7 +557,7 @@ class Circuit(object):
         Args:
             gate(BasicGate): the gate to be extended.
         """
-        return matrix_product_to_circuit(len(self.qubits), gate)
+        return matrix_product_to_circuit(gate, len(self.qubits))
 
     def remapping(self, qureg: Qureg, mapping: list, circuit_update: bool = False):
         if not isinstance(qureg, Qureg):
