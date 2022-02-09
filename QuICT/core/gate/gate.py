@@ -54,7 +54,7 @@ class BasicGate(object):
 
     @property
     def target_matrix(self) -> np.ndarray:
-        return self._matrix
+        return self.matrix
 
     @property
     def type(self):
@@ -1991,7 +1991,7 @@ class CCXGate(BasicGate):
     def build_gate(self):
         from QuICT.core.gate import CompositeGate
 
-        cgate = CompositeGate(self.controls + self.targets)
+        cgate = CompositeGate()
         with cgate:
             H & 2
             CX & [2, 1]
@@ -2008,6 +2008,10 @@ class CCXGate(BasicGate):
             T & 0
             T & 2
             H & 2
+
+        args = self.cargs + self.targs
+        if len(args) == self.controls + self.targets:
+            cgate & args
 
         return cgate
 
@@ -2062,13 +2066,17 @@ class CCRzGate(BasicGate):
     def build_gate(self):
         from QuICT.core.gate import CompositeGate
 
-        cgate = CompositeGate(self.controls + self.targets)
+        cgate = CompositeGate()
         with cgate:
             CRz(self.parg / 2) & [1, 2]
             CX & [0, 1]
             CRz(-self.parg / 2) & [1, 2]
             CX & [0, 1]
             CRz(self.parg / 2) & [0, 2]
+
+        args = self.cargs + self.targs
+        if len(args) == self.controls + self.targets:
+            cgate & args
 
         return cgate
 
@@ -2081,31 +2089,28 @@ class QFTGate(BasicGate):
     @property
     def matrix(self) -> np.ndarray:
         if self._matrix is None:
-            gateSet = self.build_gate()
-            self._matrix = gateSet.matrix()
+            cgate = self.build_gate()
+            self._matrix = cgate.matrix()
         return self._matrix
 
-    def __init__(self):
+    def __init__(self, targets: int = 3):
         super().__init__(
             controls=0,
-            targets=3,
+            targets=targets,
             params=0,
             type=GateType.qft
         )
 
-    def __call__(self, params=None, name=None):
+    def __call__(self, targets: int):
         """ pass the unitary matrix
 
         Args:
-            params(int): point out the number of bits of the gate
-
+            targets(int): point out the number of bits of the gate
 
         Returns:
             QFTGate: the QFTGate after filled by target number
         """
-        self.targets = params
-        self.name = name
-        return self
+        return QFTGate(targets)
 
     def inverse(self):
         _IQFT = IQFTGate()
@@ -2113,15 +2118,22 @@ class QFTGate(BasicGate):
         _IQFT.targets = self.targets
         return _IQFT
 
-    def build_gate(self, targets):
+    def build_gate(self, targets: int = 0):
         from QuICT.core.gate import CompositeGate
 
-        cgate = CompositeGate(targets)
+        if targets == 0:
+            targets = self.targets
+
+        cgate = CompositeGate()
         with cgate:
             for i in range(targets):
                 H & i
                 for j in range(i + 1, targets):
                     CRz(2 * np.pi / (1 << j - i + 1)) & [j, i]
+
+        args = self.cargs + self.targs
+        if len(args) == targets:
+            cgate & args
 
         return cgate
 
@@ -2129,25 +2141,9 @@ class QFTGate(BasicGate):
 QFT = QFTGate()
 
 
-class IQFTGate(BasicGate):
+class IQFTGate(QFTGate):
     """ IQFT gate """
-
-    @property
-    def matrix(self) -> np.ndarray:
-        if self._matrix is None:
-            gateSet = self.build_gate()
-            self._matrix = gateSet.matrix()
-        return self._matrix
-
-    def __init__(self):
-        super().__init__(
-            controls=0,
-            targets=3,
-            params=0,
-            type=GateType.iqft
-        )
-
-    def __call__(self, params=None, name=None):
+    def __call__(self, targets: int):
         """ pass the unitary matrix
 
         Args:
@@ -2157,9 +2153,7 @@ class IQFTGate(BasicGate):
         Returns:
             IQFTGate: the IQFTGate after filled by target number
         """
-        self.targets = params
-        self.name = name
-        return self
+        return IQFTGate(targets)
 
     def inverse(self):
         _QFT = QFTGate()
@@ -2167,15 +2161,22 @@ class IQFTGate(BasicGate):
         _QFT.targets = self.targets
         return _QFT
 
-    def build_gate(self, targets):
+    def build_gate(self, targets: int = 0):
         from QuICT.core.gate import CompositeGate
 
-        cgate = CompositeGate(targets)
+        if targets == 0:
+            targets = self.targets
+
+        cgate = CompositeGate()
         with cgate:
             for i in range(targets - 1, -1, -1):
                 for j in range(targets - 1, i, -1):
                     CRz(-2 * np.pi / (1 << j - i + 1)) & [j, i]
                 H & i
+
+        args = self.cargs + self.targs
+        if len(args) == targets:
+            cgate & args
 
         return cgate
 
@@ -2222,7 +2223,7 @@ class CSwapGate(BasicGate):
     def build_gate(self):
         from QuICT.core.gate import CompositeGate
 
-        cgate = CompositeGate(self.controls + self.targets)
+        cgate = CompositeGate()
         with cgate:
             CX & [2, 1]
             H & 2
@@ -2241,6 +2242,10 @@ class CSwapGate(BasicGate):
             T & 2
             H & 2
             CX & [2, 1]
+
+        args = self.cargs + self.targs
+        if len(args) == self.controls + self.targets:
+            cgate & args
 
         return cgate
 

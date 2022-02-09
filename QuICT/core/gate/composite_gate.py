@@ -53,6 +53,7 @@ class CompositeGate:
 
         self._name = name if name else f"composite_gate_{self._id}"
         self._gates = []
+        self._min_qubit = np.inf
         self._max_qubit = 0
         self._pointer = -1
 
@@ -75,6 +76,8 @@ class CompositeGate:
             raise ValueError("The number of assigned qubits or indexes must be equal to gate's width.")
 
         self._mapping(targets)
+        if CGATE_LIST:
+            CGATE_LIST[-1].extend(self.gates)
 
     def __or__(self, targets):
         """ deal the operator '|'
@@ -133,13 +136,34 @@ class CompositeGate:
         if isinstance(indexes, int):
             indexes = [indexes]
 
+        self._update_qubit_limit(indexes)
+        self._pointer = indexes
+        return self
+
+    def _mapping(self, targets: Qureg):
+        """ remapping the gates' affectArgs
+
+        Args:
+            targets(Qureg/List): the related qubits
+        """
+        for gate in self._gates:
+            args_index = gate.cargs + gate.targs
+            if isinstance(targets, Qureg):
+                target_qureg = targets(args_index)
+                gate.assigned_qubits = target_qureg
+                gate.update_name(target_qureg[0].id)
+            else:
+                gate.cargs = [targets[carg] for carg in gate.cargs]
+                gate.targs = [targets[targ] for targ in gate.targs]
+
+    def _update_qubit_limit(self, indexes: list):
         for idx in indexes:
             assert idx >= 0 and isinstance(idx, int)
             if idx >= self._max_qubit:
                 self._max_qubit = idx + 1
 
-        self._pointer = indexes
-        return self
+            if idx < self._min_qubit:
+                self._min_qubit = idx
 
     def extend(self, gates: list):
         for gate in gates:
@@ -169,10 +193,7 @@ class CompositeGate:
             if not qubit_index:
                 raise KeyError(f"{gate.type} need qubit indexes to add into Composite Gate.")
 
-            for idx in qubit_index:
-                assert idx >= 0
-                if idx >= self._max_qubit:
-                    self._max_qubit = idx + 1
+            self._update_qubit_limit(qubit_index)
 
         self._gates.append(gate)
 
@@ -266,7 +287,7 @@ class CompositeGate:
         """
         self._gates = [gate.inverse() for gate in self._gates]
 
-    def matrix(self):
+    def matrix(self, local: bool = False):
         """ matrix of these gates
 
         Args:
@@ -275,16 +296,24 @@ class CompositeGate:
         Returns:
             np.ndarray: the matrix of the gates
         """
-        matrix = np.eye(1 << self._max_qubit)
+        if not self._gates:
+            return None
+
+        if local and isinstance(self._min_qubit, int):
+            min_value = self._min_qubit
+        else:
+            min_value = 0
+
+        matrix = np.eye(1 << (self._max_qubit - min_value))
         for gate in self.gates:
             if gate.is_special() and gate.type != GateType.unitary:
                 raise TypeError(f"Cannot combined the gate matrix with special gate {gate.type}")
 
-            matrix = np.matmul(matrix_product_to_circuit(self._max_qubit, gate), matrix)
+            matrix = np.matmul(matrix_product_to_circuit(gate, self._max_qubit, min_value), matrix)
 
         return matrix
 
-    def equal(self, target, ignore_phase=True, eps=1e-7):   # TODO: refactoring
+    def equal(self, target, ignore_phase=True, eps=1e-7):
         """ whether is equally with target or not.
 
         Args:
@@ -326,19 +355,3 @@ class CompositeGate:
             self_matrix = self_matrix * np.full(shape, rotate)
 
         return np.allclose(self_matrix, target_matrix, rtol=eps, atol=eps)
-
-    def _mapping(self, targets: Qureg):
-        """ remapping the gates' affectArgs
-
-        Args:
-            targets(Qureg/List): the related qubits
-        """
-        for gate in self._gates:
-            args_index = gate.cargs + gate.targs
-            if isinstance(targets, Qureg):
-                target_qureg = targets(args_index)
-                gate.assigned_qubits = target_qureg
-                gate.update_name(target_qureg[0].id)
-            else:
-                gate.cargs = [targets[carg] for carg in gate.cargs]
-                gate.targs = [targets[targ] for targ in gate.targs]
