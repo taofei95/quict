@@ -63,7 +63,7 @@ class Circuit(object):
         self._gates = gates
 
     @property
-    def topology(self) -> list:
+    def topology(self) -> Layout:
         return self._topology
 
     @topology.setter
