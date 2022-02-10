@@ -8,6 +8,7 @@ from QuICT.core.gate import *
 from QuICT.simulation.gpu_simulator import ConstantStateVectorSimulator
 
 
+# Build quantum circuit
 circuit = Circuit(3)
 
 X        | circuit(0)
@@ -40,12 +41,12 @@ X        | circuit(1)
 H        | circuit(2)
 H        | circuit(1)
 
+# Simulate the quantum circuit by state vector simulator
 simulator = ConstantStateVectorSimulator(
     precision="double",
     optimize=False,
     gpu_device_id=0,
     sync=True
 )
-
 amplitude = simulator.run(circuit=circuit)
 print(amplitude)
