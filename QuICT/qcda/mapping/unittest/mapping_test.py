@@ -20,7 +20,7 @@ def test_mapping():
     gates: List[BasicGate] = transformed_circuit.gates
     for g in gates:
         if g.is_single() is not True:
-            if g.type() == GATE_ID["Swap"]:
+            if g.type == GateType.swap:
                 assert(coupling_graph.is_adjacent(g.targs[0], g.targs[1]))
             else:
                 assert(coupling_graph.is_adjacent(g.targ, g.carg))

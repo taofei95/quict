@@ -6,6 +6,7 @@ from typing import List, Tuple, Iterable
 import matplotlib.pyplot as plt
 import networkx as nx
 
+from QuICT.core import Circuit
 from QuICT.core.gate.gate import *
 from .utility import Mode
 
@@ -140,7 +141,7 @@ class DAG(object):
             if gate.controls + gate.targets == 1:
                 self._add_edge_in_dag(gate.targ)
             elif gate.controls + gate.targets == 2:
-                if gate.type() == GATE_ID['Swap']:
+                if gate.type == GateType.swap:
                     self._add_edge_in_dag(gate.targs[0])
                     self._add_edge_in_dag(gate.targs[1])
                 else:
@@ -180,7 +181,7 @@ class DAG(object):
                     self._inverse_index[self._num_of_two_qubit_gate] = self._num_of_gate
                     self._add_node_in_compact_dag(gate)
                     self._dag.add_node(self._num_of_gate, gate=gate, depth=self._gate_depth(gate))
-                    if gate.type() == GATE_ID['Swap']:
+                    if gate.type == GateType.swap:
                         self._add_edge_in_dag(gate.targs[0])
                         self._add_edge_in_dag(gate.targs[1])
                     else:
@@ -200,7 +201,7 @@ class DAG(object):
         """
         Add the node's information, including its successors ,precessors and node's qubits, to the compact matrix
         """
-        if gate.type() == GATE_ID['Swap']:
+        if gate.type == GateType.swap:
             qubits = (gate.targs[0], gate.targs[1])
         else:
             qubits = (gate.carg, gate.targ)
@@ -237,7 +238,7 @@ class DAG(object):
         """
         if index != -1:
             gate = self._dag.nodes[self._inverse_index[index]]['gate']
-            if gate.type() == GATE_ID['Swap']:
+            if gate.type == GateType.swap:
                 qubits = (gate.targs[0], gate.targs[1])
             else:
                 qubits = (gate.carg, gate.targ)
@@ -255,7 +256,7 @@ class DAG(object):
         """
         Indicate wether the gate share the same qubits with its preceeding gate
         """
-        if gate.type() == GATE_ID['Swap']:
+        if gate.type == GateType.swap:
             qubits = (gate.targs[0], gate.targs[1])
         else:
             qubits = (gate.carg, gate.targ)

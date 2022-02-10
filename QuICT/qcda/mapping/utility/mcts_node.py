@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from collections import deque
+from typing import Tuple
 
 from QuICT.core.exception import *
 from QuICT.core.gate.gate import *
@@ -524,7 +525,7 @@ class MCTSNode:
         """
         Indicate whether the gate is a swap gate
         """
-        return self.circuit_dag[gate_in_dag]['gate'].type() == GATE_ID['Swap']
+        return self.circuit_dag[gate_in_dag]['gate'].type == GateType.swap
 
     def _get_gate_control(self, gate_in_dag: int, index: int = 0) -> int:
         """

@@ -3,6 +3,7 @@ from typing import Set
 
 from .mcts_core import MCTSTreeWrapper
 from QuICT.core import *
+from QuICT.core.gate import GateType
 from QuICT.qcda.mapping.utility import *
 
 
@@ -21,7 +22,7 @@ class MCTS(object):
             target = cur_mapping[gate.targ]
             cur_gate.cargs = int(control)
             cur_gate.targs = int(target)
-        elif cur_gate.type() == GATE_ID['Swap']:
+        elif cur_gate.type == GateType.swap:
             target_0 = cur_mapping[gate.targs[0]]
             target_1 = cur_mapping[gate.targs[1]]
             cur_gate.targs = [int(target_0), int(target_1)]
@@ -251,7 +252,7 @@ class MCTS(object):
         """
         if gate.is_control_single():
             return [gate.targ, gate.carg]
-        elif gate.type() == GATE_ID['Swap']:
+        elif gate.type == GateType.swap:
             return gate.targs
         else:
             raise Exception("The gate type %d is not supported" % (gate.type()))

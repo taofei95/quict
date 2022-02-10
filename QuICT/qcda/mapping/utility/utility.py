@@ -8,6 +8,7 @@ from QuICT.core.exception import *
 from QuICT.core.gate.gate import *
 from .coupling_graph import CouplingGraph
 from .exception import *
+from .dag import DAG
 
 
 def is_two_qubit_gate_equal(s1: List[int], s2: List[int]) -> bool:
@@ -60,7 +61,7 @@ class EdgeProb:
         """
         return the distance between the control qubit and target qubit of the given gate  on the physical device
         """
-        if self._circuit[gate]['gate'].type() == GATE_ID['Swap']:
+        if self._circuit[gate]['gate'].type == GateType.swap:
             qubits = self._circuit[gate]['gate'].targs
         else:
             qubits = [self._circuit[gate]['gate'].carg, self._circuit[gate]['gate'].targ]
