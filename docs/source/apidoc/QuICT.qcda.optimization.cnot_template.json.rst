@@ -19,11 +19,3 @@ QuICT.qcda.optimization.cnot\_template.json.cnot\_depth\_bfs module
    :members:
    :undoc-members:
    :show-inheritance:
-
-Module contents
----------------
-
-.. automodule:: QuICT.qcda.optimization.cnot_template.json
-   :members:
-   :undoc-members:
-   :show-inheritance:

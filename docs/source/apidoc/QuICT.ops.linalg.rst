@@ -19,19 +19,3 @@ QuICT.ops.linalg.gpu\_calculator module
    :members:
    :undoc-members:
    :show-inheritance:
-
-QuICT.ops.linalg.linalg\_unit\_test module
-------------------------------------------
-
-.. automodule:: QuICT.ops.linalg.linalg_unit_test
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-Module contents
----------------
-
-.. automodule:: QuICT.ops.linalg
-   :members:
-   :undoc-members:
-   :show-inheritance:

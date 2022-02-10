@@ -11,19 +11,3 @@ QuICT.qcda.synthesis.arithmetic.tmvh.tmvh module
    :members:
    :undoc-members:
    :show-inheritance:
-
-QuICT.qcda.synthesis.arithmetic.tmvh.unit\_test module
-------------------------------------------------------
-
-.. automodule:: QuICT.qcda.synthesis.arithmetic.tmvh.unit_test
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-Module contents
----------------
-
-.. automodule:: QuICT.qcda.synthesis.arithmetic.tmvh
-   :members:
-   :undoc-members:
-   :show-inheritance:

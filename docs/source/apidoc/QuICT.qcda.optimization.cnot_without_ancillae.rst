@@ -1,14 +1,6 @@
 QuICT.qcda.optimization.cnot\_without\_ancillae package
 =======================================================
 
-Subpackages
------------
-
-.. toctree::
-   :maxdepth: 4
-
-   QuICT.qcda.optimization.cnot_without_ancillae.tests
-
 Submodules
 ----------
 
@@ -48,14 +40,6 @@ QuICT.qcda.optimization.cnot\_without\_ancillae.utility module
 --------------------------------------------------------------
 
 .. automodule:: QuICT.qcda.optimization.cnot_without_ancillae.utility
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-Module contents
----------------
-
-.. automodule:: QuICT.qcda.optimization.cnot_without_ancillae
    :members:
    :undoc-members:
    :show-inheritance:

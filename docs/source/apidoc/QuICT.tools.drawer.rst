@@ -35,11 +35,3 @@ QuICT.tools.drawer.tikz\_drawer module
    :members:
    :undoc-members:
    :show-inheritance:
-
-Module contents
----------------
-
-.. automodule:: QuICT.tools.drawer
-   :members:
-   :undoc-members:
-   :show-inheritance:

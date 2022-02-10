@@ -13,11 +13,3 @@ Subpackages
    QuICT.core.layout
    QuICT.core.qubit
    QuICT.core.utils
-
-Module contents
----------------
-
-.. automodule:: QuICT.core
-   :members:
-   :undoc-members:
-   :show-inheritance:

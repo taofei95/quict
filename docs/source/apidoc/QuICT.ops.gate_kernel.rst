@@ -19,11 +19,3 @@ QuICT.ops.gate\_kernel.multigpu\_gate\_func module
    :members:
    :undoc-members:
    :show-inheritance:
-
-Module contents
----------------
-
-.. automodule:: QuICT.ops.gate_kernel
-   :members:
-   :undoc-members:
-   :show-inheritance:

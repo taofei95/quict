@@ -28,19 +28,3 @@ QuICT.qcda.synthesis.gate\_transform.instruction\_set module
    :members:
    :undoc-members:
    :show-inheritance:
-
-QuICT.qcda.synthesis.gate\_transform.unit\_test module
-------------------------------------------------------
-
-.. automodule:: QuICT.qcda.synthesis.gate_transform.unit_test
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-Module contents
----------------
-
-.. automodule:: QuICT.qcda.synthesis.gate_transform
-   :members:
-   :undoc-members:
-   :show-inheritance:

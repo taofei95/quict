@@ -19,11 +19,3 @@ QuICT.tools.interface.qasm\_interface module
    :members:
    :undoc-members:
    :show-inheritance:
-
-Module contents
----------------
-
-.. automodule:: QuICT.tools.interface
-   :members:
-   :undoc-members:
-   :show-inheritance:

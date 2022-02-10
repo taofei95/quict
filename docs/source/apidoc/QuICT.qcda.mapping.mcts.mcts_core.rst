@@ -27,11 +27,3 @@ QuICT.qcda.mapping.mcts.mcts\_core.setup module
    :members:
    :undoc-members:
    :show-inheritance:
-
-Module contents
----------------
-
-.. automodule:: QuICT.qcda.mapping.mcts.mcts_core
-   :members:
-   :undoc-members:
-   :show-inheritance:

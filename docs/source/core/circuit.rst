@@ -14,9 +14,12 @@ How to Build the Circuit in QuICT
 The Circuit provides the append and extend to add gates into the quantum circuit; meanwhile, we can using the operation or(|) to
 add gate into the quantum circuit.
 
+
 .. code-block:: python
+
     from QuICT.core import Circuit
     from QuICT.core.gate import *
+
 
     # Build a circuit with qubits 5
     circuit = Circuit(5)
@@ -33,13 +36,15 @@ add gate into the quantum circuit.
     circuit.random_append(rand_size=10)
     circuit.supremacy_append(repeat=4, pattern="ABCDCDAB")
 
+
 How to Visualize the Circuit in QuICT
 -------------------------------------
 There are two ways to visualize the quantum circuit in QuICT, one is translate the Circuit with the OpenQASM style, the other one is
 draw the graph describe the quantum circuit. By the way, not all quantum gates in QuICT are supportted by OpenQASM.
 
+
 .. code-block:: python
-    # circuit from above
+    
     # qasm
     circuit.qasm()
 

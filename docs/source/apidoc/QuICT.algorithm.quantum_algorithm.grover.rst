@@ -27,19 +27,3 @@ QuICT.algorithm.quantum\_algorithm.grover.search\_with\_prior\_knowledge module
    :members:
    :undoc-members:
    :show-inheritance:
-
-QuICT.algorithm.quantum\_algorithm.grover.unit\_test module
------------------------------------------------------------
-
-.. automodule:: QuICT.algorithm.quantum_algorithm.grover.unit_test
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-Module contents
----------------
-
-.. automodule:: QuICT.algorithm.quantum_algorithm.grover
-   :members:
-   :undoc-members:
-   :show-inheritance:

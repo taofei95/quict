@@ -1,12 +1,12 @@
 Qubit
-======
+=====
 The bit is the fundamental concept of classical computation and classical information. The Quantum Computation is build 
 upon a similar concept, the quantum bit (qubit).
 
 The qubit also have a state for quantum computation; unlike classical bit, the state can be the combinations of 0 and 1, which
 often called superpositions:
 
-| /mu > = /alpha |0> + /beta |1>
+:math:`|\mu \rangle \rightarrow \alpha |0 \rangle + \beta |1 \rangle`
 
 In QuICT, we use a data structure Qubit to represent the concept of qubit in Quantum Computation, and for qubit's state, use the
 vector in two-dimensional complex vector space.
@@ -26,7 +26,7 @@ The Qureg also allows different initial ways:
     - [Qubit/Qureg]: build a list with the given qubits/quregs.
 
 Example
-=======
+-------
 
 .. code-block:: python
 

@@ -20,14 +20,6 @@ QuICT.qcda.mapping.utility.dag module
    :undoc-members:
    :show-inheritance:
 
-QuICT.qcda.mapping.utility.exception module
--------------------------------------------
-
-.. automodule:: QuICT.qcda.mapping.utility.exception
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
 QuICT.qcda.mapping.utility.experience\_pool module
 --------------------------------------------------
 
@@ -64,14 +56,6 @@ QuICT.qcda.mapping.utility.utility module
 -----------------------------------------
 
 .. automodule:: QuICT.qcda.mapping.utility.utility
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-Module contents
----------------
-
-.. automodule:: QuICT.qcda.mapping.utility
    :members:
    :undoc-members:
    :show-inheritance:

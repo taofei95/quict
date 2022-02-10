@@ -46,11 +46,3 @@ QuICT.qcda.synthesis.arithmetic.multiply module
    :members:
    :undoc-members:
    :show-inheritance:
-
-Module contents
----------------
-
-.. automodule:: QuICT.qcda.synthesis.arithmetic
-   :members:
-   :undoc-members:
-   :show-inheritance:

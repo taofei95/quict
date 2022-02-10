@@ -51,11 +51,3 @@ QuICT.qcda.synthesis.unitary\_transform.utility module
    :members:
    :undoc-members:
    :show-inheritance:
-
-Module contents
----------------
-
-.. automodule:: QuICT.qcda.synthesis.unitary_transform
-   :members:
-   :undoc-members:
-   :show-inheritance:

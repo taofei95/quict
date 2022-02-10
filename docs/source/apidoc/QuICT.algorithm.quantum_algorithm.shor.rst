@@ -44,22 +44,6 @@ QuICT.algorithm.quantum\_algorithm.shor.shor module
    :undoc-members:
    :show-inheritance:
 
-QuICT.algorithm.quantum\_algorithm.shor.unit\_test module
----------------------------------------------------------
-
-.. automodule:: QuICT.algorithm.quantum_algorithm.shor.unit_test
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-QuICT.algorithm.quantum\_algorithm.shor.utility module
-------------------------------------------------------
-
-.. automodule:: QuICT.algorithm.quantum_algorithm.shor.utility
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
 QuICT.algorithm.quantum\_algorithm.shor.zip\_shor module
 --------------------------------------------------------
 
@@ -68,10 +52,10 @@ QuICT.algorithm.quantum\_algorithm.shor.zip\_shor module
    :undoc-members:
    :show-inheritance:
 
-Module contents
----------------
+QuICT.algorithm.quantum\_algorithm.shor.utility module
+------------------------------------------------------
 
-.. automodule:: QuICT.algorithm.quantum_algorithm.shor
+.. automodule:: QuICT.algorithm.quantum_algorithm.shor.utility
    :members:
    :undoc-members:
    :show-inheritance:

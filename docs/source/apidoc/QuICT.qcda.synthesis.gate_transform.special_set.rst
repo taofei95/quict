@@ -35,11 +35,3 @@ QuICT.qcda.synthesis.gate\_transform.special\_set.ustc\_set module
    :members:
    :undoc-members:
    :show-inheritance:
-
-Module contents
----------------
-
-.. automodule:: QuICT.qcda.synthesis.gate_transform.special_set
-   :members:
-   :undoc-members:
-   :show-inheritance:

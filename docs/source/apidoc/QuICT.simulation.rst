@@ -23,19 +23,3 @@ QuICT.simulation.simulator module
    :members:
    :undoc-members:
    :show-inheritance:
-
-QuICT.simulation.unit\_test module
-----------------------------------
-
-.. automodule:: QuICT.simulation.unit_test
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-Module contents
----------------
-
-.. automodule:: QuICT.simulation
-   :members:
-   :undoc-members:
-   :show-inheritance:

@@ -59,19 +59,3 @@ QuICT.qcda.optimization.cnot\_template.cnot\_store\_force\_depth module
    :members:
    :undoc-members:
    :show-inheritance:
-
-QuICT.qcda.optimization.cnot\_template.unit\_test module
---------------------------------------------------------
-
-.. automodule:: QuICT.qcda.optimization.cnot_template.unit_test
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-Module contents
----------------
-
-.. automodule:: QuICT.qcda.optimization.cnot_template
-   :members:
-   :undoc-members:
-   :show-inheritance:

@@ -19,27 +19,3 @@ QuICT.ops.utils.calculation\_layer module
    :members:
    :undoc-members:
    :show-inheritance:
-
-QuICT.ops.utils.clayer\_unit\_test module
------------------------------------------
-
-.. automodule:: QuICT.ops.utils.clayer_unit_test
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-QuICT.ops.utils.utils module
-----------------------------
-
-.. automodule:: QuICT.ops.utils.utils
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-Module contents
----------------
-
-.. automodule:: QuICT.ops.utils
-   :members:
-   :undoc-members:
-   :show-inheritance:

@@ -41,7 +41,7 @@ the gate or inverse gate, and uses and(&) to remapping the control qubits. The m
     - qasm: return the OpenQASM 2.0 describe for the composite gate
 
 Example
-=======
+-------
 
 .. code-block:: python
 

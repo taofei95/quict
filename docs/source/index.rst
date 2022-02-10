@@ -21,7 +21,7 @@ divide in several parts:
 
 - Algorithm Library: it provides classical quantum algorithm(Shor, Grover and so on)
 
-- QCDA(Quantum Circuit Design Automation): it provide the data struction of quantum circuit, compiling process(including synthesis, optimization and mapping) and classical simulation.     # TODO: given one lines to describe QCDA.
+- QCDA(Quantum Circuit Design Automation): it combines Synthesis, Optimization and Mapping into a one-stop process to compile a quantum logic circuit to a quantum physical circuit that could be executed on a quantum computer with given InstructionSet and Layout.
 
 - Simulation: it provides the different simulator to simulate the execution of quantum circuit in quantum machine.
 
@@ -69,7 +69,7 @@ Contents
 ----------
 
 .. toctree::
-    :maxdepth: 2
+    :maxdepth: 1
     :caption: Installaion
 
     install/package.rst
@@ -79,14 +79,12 @@ Contents
     :maxdepth: 1
     :caption: Algorithm
 
-    algorithm/quantum_algorithm/grover.rst
-    algorithm/quantum_algorithm/shor.rst
-    algorithm/quantum_algorithm/hhl.rst
+    algorithm/quantum_algorithm.rst
     algorithm/synthetical_unitary.rst
     algorithm/weight_decision.rst
 
 .. toctree::
-    :maxdepth: 2
+    :maxdepth: 1
     :caption: Core
 
     core/qubit.rst
@@ -98,25 +96,18 @@ Contents
     :caption: Quantum Circuit Design Automation
 
     workflow/QCDA.rst
-    workflow/synthesis/gate_decomposition.rst
-    workflow/synthesis/gate_transform.rst
-    workflow/synthesis/unitary_transform.rst
-    workflow/synthesis/arithmetic_circuit.rst
-    workflow/optimization/commutative_optimization.rst
-    workflow/optimization/cnot_without_ancillae.rst
-    workflow/optimization/template_optimization.rst
+    workflow/synthesis/synthesis.rst
+    workflow/optimization/optimization.rst
     workflow/mapping/1D-mapping.rst
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
    :caption: Simulation
 
-   simulator/unitary.rst
-   simulator/statevector.rst
-   simulator/multi-device.rst
+   simulator/simulator.rst
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
    :caption: Toolkit
 
    toolkit/drawer.rst

@@ -14,11 +14,3 @@ Subpackages
    QuICT.qcda.optimization.template_optimization
    QuICT.qcda.optimization.topological_cnot
    QuICT.qcda.optimization.topological_cnot_rz
-
-Module contents
----------------
-
-.. automodule:: QuICT.qcda.optimization
-   :members:
-   :undoc-members:
-   :show-inheritance:

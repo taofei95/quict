@@ -19,19 +19,3 @@ QuICT.qcda.synthesis.initial\_state\_preparation.initial\_state\_preparation\_cd
    :members:
    :undoc-members:
    :show-inheritance:
-
-QuICT.qcda.synthesis.initial\_state\_preparation.unit\_test module
-------------------------------------------------------------------
-
-.. automodule:: QuICT.qcda.synthesis.initial_state_preparation.unit_test
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-Module contents
----------------
-
-.. automodule:: QuICT.qcda.synthesis.initial_state_preparation
-   :members:
-   :undoc-members:
-   :show-inheritance:

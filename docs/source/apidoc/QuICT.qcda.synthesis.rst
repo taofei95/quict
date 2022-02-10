@@ -14,11 +14,3 @@ Subpackages
    QuICT.qcda.synthesis.mct
    QuICT.qcda.synthesis.uniformly_gate
    QuICT.qcda.synthesis.unitary_transform
-
-Module contents
----------------
-
-.. automodule:: QuICT.qcda.synthesis
-   :members:
-   :undoc-members:
-   :show-inheritance:

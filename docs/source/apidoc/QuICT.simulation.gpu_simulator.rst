@@ -9,11 +9,3 @@ Subpackages
 
    QuICT.simulation.gpu_simulator.multigpu_simulator
    QuICT.simulation.gpu_simulator.statevector_simulator
-
-Module contents
----------------
-
-.. automodule:: QuICT.simulation.gpu_simulator
-   :members:
-   :undoc-members:
-   :show-inheritance:

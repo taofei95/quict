@@ -10,11 +10,3 @@ Subpackages
    QuICT.algorithm.quantum_algorithm
    QuICT.algorithm.synthetical_unitary
    QuICT.algorithm.weight_decision
-
-Module contents
----------------
-
-.. automodule:: QuICT.algorithm
-   :members:
-   :undoc-members:
-   :show-inheritance:

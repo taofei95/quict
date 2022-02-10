@@ -19,19 +19,3 @@ QuICT.qcda.synthesis.uniformly\_gate.uniformly\_unitary module
    :members:
    :undoc-members:
    :show-inheritance:
-
-QuICT.qcda.synthesis.uniformly\_gate.unit\_test module
-------------------------------------------------------
-
-.. automodule:: QuICT.qcda.synthesis.uniformly_gate.unit_test
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-Module contents
----------------
-
-.. automodule:: QuICT.qcda.synthesis.uniformly_gate
-   :members:
-   :undoc-members:
-   :show-inheritance:
