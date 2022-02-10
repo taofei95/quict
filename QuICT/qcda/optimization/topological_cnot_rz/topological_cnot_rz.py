@@ -7,6 +7,7 @@
 from .._optimization import Optimization
 from QuICT.qcda.optimization import TopologicalCnot
 from QuICT.core import *
+from QuICT.core.gate import build_gate, CompositeGate, GateType
 
 # topological matrix
 TOPO = [[]]
@@ -51,13 +52,13 @@ def read(circuit):
 
     global TOPO, READ_CNOT, N
     waitDeal = set()
-    N = circuit.circuit_width()
-    if len(circuit.topology) == 0:
+    N = circuit.width()
+    if circuit.topology is None or len(circuit.topology.edge_list) == 0:
         TOPO = [[True] * N] * N
     else:
         TOPO = [[False] * N] * N
-        for topology in circuit.topology:
-            TOPO[topology[0]][topology[1]] = TOPO[topology[1]][topology[0]] = True
+        for topology in circuit.topology.edge_list:
+            TOPO[topology.u][topology.v] = TOPO[topology.v][topology.u] = True
     delete_dfs.topo_forward_map = [0] * N
     delete_dfs.topo_backward_map = [0] * N
     delete_dfs.delete_vis = [0] * N
@@ -79,10 +80,10 @@ def read(circuit):
 
     for i in range(len(circuit.gates)):
         gate = circuit.gates[i]
-        if gate.type() == GATE_ID["CX"]:
+        if gate.type == GateType.cx:
             READ_CNOT[topo_forward_map[gate.targ]] ^= \
                 READ_CNOT[topo_forward_map[gate.carg]]
-        elif gate.type() == GATE_ID["Rz"]:
+        elif gate.type == GateType.rz:
             index = cnot_index.setdefault(READ_CNOT[topo_forward_map[gate.targ]], 0)
             if index != 0:
                 th[index - 1] += gate.parg
@@ -125,7 +126,6 @@ def solve(input, th, waitDeal, undirected_topology):
         gsxy = []
         needDeal = []
         if len(waitDeal) > 0:
-            GateBuilder.setGateType(GATE_ID["Rz"])
             for it in waitDeal:
                 val = input[it]
                 for i in range(N - 1, -1, -1):
@@ -137,9 +137,7 @@ def solve(input, th, waitDeal, undirected_topology):
 
                 if val > 0:
                     gsxy.append(input[it])
-                    GateBuilder.setTargs(total)
-                    GateBuilder.setPargs(th[it])
-                    gate = GateBuilder.getGate()
+                    gate = build_gate(GateType.rz, total, th[it])
                     gates.append(gate)
                     needDeal.append(it)
                     total += 1
@@ -208,7 +206,7 @@ def solve(input, th, waitDeal, undirected_topology):
 
         print(gsxy, TOPO)
         for gate in gates:
-            gate.print_info()
+            print(gate)
 
         gsxy_gate = TopologicalCnot.execute(cnot_struct=gsxy, topology=undirected_topology).gates
         gsxy_gate.reverse()
@@ -218,7 +216,7 @@ def solve(input, th, waitDeal, undirected_topology):
         length = len(gates)
         for j in range(length - 1, -1, -1):
             ans.append(gates[j])
-            if gates[j].type() == GATE_ID["CX"]:
+            if gates[j].type == GateType.cx:
                 stateChange[gates[j].targ] ^= stateChange[gates[j].carg]
 
     return ans
@@ -241,69 +239,54 @@ class TopologicalCnotRz(Optimization):
         global TOPO
         topo_backward_map, input, th, waitDeal = read(circuit)
 
-        if len(circuit.topology) == 0:
+        if circuit.topology is None or len(circuit.topology.edge_list) == 0:
             undirected_topology = None
         else:
             undirected_topology = []
-            for topology in circuit.topology:
-                undirected_topology.append(topology)
-                undirected_topology.append((topology[1], topology[0]))
+            for topology in circuit.topology.edge_list:
+                undirected_topology.append((topology.u, topology.v))
+                undirected_topology.append((topology.v, topology.u))
 
         ans = solve(input, th, waitDeal, undirected_topology)
 
-        if len(circuit.topology) == 0:
+        if circuit.topology is None or len(circuit.topology.edge_list) == 0:
             topo = [[True] * N] * N
         else:
             topo = [[False] * N] * N
-            for topology in circuit.topology:
-                topo[topology[0]][topology[1]] = True
+            for topology in circuit.topology.edge_list:
+                topo[topology.u][topology.v] = True
 
         output = CompositeGate()
         total = 0
         for item in ans:
-            if item.type() == GATE_ID["Rz"] or topo[topo_backward_map[item.carg]][topo_backward_map[item.targ]]:
+            if item.type == GateType.rz or topo[topo_backward_map[item.carg]][topo_backward_map[item.targ]]:
                 total += 1
             else:
                 total += 5
         for item in ans:
-            if item.type() == GATE_ID["CX"]:
-                GateBuilder.setGateType(GATE_ID["CX"])
+            if item.type == GateType.cx:
                 c = topo_backward_map[item.carg]
                 t = topo_backward_map[item.targ]
                 if topo[c][t]:
-                    GateBuilder.setCargs(c)
-                    GateBuilder.setTargs(t)
-                    gate = GateBuilder.getGate()
+                    gate = build_gate(GateType.cx, [c, t])
                     output.append(gate)
                 else:
-                    GateBuilder.setGateType(GATE_ID["H"])
-                    GateBuilder.setTargs(c)
-                    gate = GateBuilder.getGate()
+                    gate = build_gate(GateType.h, c)
                     output.append(gate)
-                    GateBuilder.setTargs(t)
-                    gate = GateBuilder.getGate()
+                    gate = build_gate(GateType.h, t)
                     output.append(gate)
 
-                    GateBuilder.setGateType(GATE_ID["CX"])
-                    GateBuilder.setCargs(t)
-                    GateBuilder.setTargs(c)
-                    gate = GateBuilder.getGate()
+                    gate = build_gate(GateType.cx, [t, c])
                     output.append(gate)
 
-                    GateBuilder.setGateType(GATE_ID["H"])
-                    GateBuilder.setTargs(c)
-                    gate = GateBuilder.getGate()
+                    gate = build_gate(GateType.h, c)
                     output.append(gate)
-                    GateBuilder.setTargs(t)
-                    gate = GateBuilder.getGate()
+                    gate = build_gate(GateType.h, t)
                     output.append(gate)
             else:
-                GateBuilder.setGateType(GATE_ID["Rz"])
-                GateBuilder.setPargs(item.pargs)
-                GateBuilder.setTargs(topo_backward_map[item.targ])
-                gate = GateBuilder.getGate()
+                gate = build_gate(GateType.rz, topo_backward_map[item.targ], item.pargs)
                 output.append(gate)
         # return output
         new_circuit = Circuit(len(circuit.qubits))
-        new_circuit.set_exec_gates(output)
+        new_circuit.extend(output)
         return new_circuit

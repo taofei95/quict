@@ -234,7 +234,7 @@ def read(circuit, cnot_struct, topology):
     global TOPO, READ_CNOT, N
     if circuit is not None:
         N = circuit.width()
-        if len(circuit.topology.edge_list) == 0:
+        if circuit.topology is None or len(circuit.topology.edge_list) == 0:
             TOPO = [[True] * N] * N
         else:
             TOPO = [[False] * N] * N
@@ -404,13 +404,12 @@ class TopologicalCnot(Optimization):
             topology(list<tuple<int, int>>): topology of circuit
         """
         global TOPO, N
-        # GateBuilder.setGateType(GATE_ID["CX"])
         steiner_tree, topo_backward_map = read(circuit, cnot_struct, topology)
         ans = solve(steiner_tree)
 
         if circuit is not None:
             N = circuit.width()
-            if len(circuit.topology.edge_list) == 0:
+            if circuit.topology is None or len(circuit.topology.edge_list) == 0:
                 topo = [[True] * N] * N
             else:
                 topo = [[False] * N] * N
