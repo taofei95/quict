@@ -28,7 +28,7 @@ class DAG(object):
                 raise Exception("The mode is not supported")
         else:
             self._dag = nx.MultiDiGraph()
-        self._width = circuit.circuit_width()
+        self._width = circuit.width()
         self._front_layer = None
 
     def __getitem__(self, index):
@@ -131,9 +131,9 @@ class DAG(object):
         Transform the whole circuit into a directed acyclic graph
         """
         self._num_of_gate = 0
-        self._qubit_mask = np.zeros(circuit.circuit_width(), dtype=np.int32) - 1
-        self._initial_qubit_mask = np.zeros(circuit.circuit_width(), dtype=np.int32) - 1
-        self._depth = np.zeros(circuit.circuit_size(), dtype=np.int32)
+        self._qubit_mask = np.zeros(circuit.width(), dtype=np.int32) - 1
+        self._initial_qubit_mask = np.zeros(circuit.width(), dtype=np.int32) - 1
+        self._depth = np.zeros(circuit.size(), dtype=np.int32)
 
         self._dag = nx.MultiDiGraph()
         for gate in circuit.gates:
@@ -158,19 +158,19 @@ class DAG(object):
         self._num_of_gate = 0
         self._num_of_two_qubit_gate = 0
 
-        self._qubit_mask = np.zeros(circuit.circuit_width(), dtype=np.int32) - 1
-        self._initial_qubit_mask = np.zeros(circuit.circuit_width(), dtype=np.int32) - 1
-        self._depth = np.zeros(circuit.circuit_size(), dtype=np.int32)
+        self._qubit_mask = np.zeros(circuit.width(), dtype=np.int32) - 1
+        self._initial_qubit_mask = np.zeros(circuit.width(), dtype=np.int32) - 1
+        self._depth = np.zeros(circuit.size(), dtype=np.int32)
         self._dag = nx.DiGraph()
 
         # Compact representation of DAG
-        self._successors = np.zeros(shape=(circuit.circuit_count_2qubit(), 2), dtype=np.int32) - 1
-        self._precessors = np.zeros(shape=(circuit.circuit_count_2qubit(), 2), dtype=np.int32) - 1
-        self._node_qubits = np.zeros(shape=(circuit.circuit_count_2qubit(), 2), dtype=np.int32) - 1
+        self._successors = np.zeros(shape=(circuit.count_2qubit_gate(), 2), dtype=np.int32) - 1
+        self._precessors = np.zeros(shape=(circuit.count_2qubit_gate(), 2), dtype=np.int32) - 1
+        self._node_qubits = np.zeros(shape=(circuit.count_2qubit_gate(), 2), dtype=np.int32) - 1
 
         # Index and inverse index of gates from DAG to compact DAG
-        self._index = np.zeros(circuit.circuit_size(), dtype=np.int32) - 1
-        self._inverse_index = np.zeros(circuit.circuit_count_2qubit(), dtype=np.int32) - 1
+        self._index = np.zeros(circuit.size(), dtype=np.int32) - 1
+        self._inverse_index = np.zeros(circuit.count_2qubit_gate(), dtype=np.int32) - 1
 
         for gate in circuit.gates:
             if gate.is_single():

@@ -148,7 +148,7 @@ class MCTS(object):
         qubit_mask_ = [self._circuit_dag.index[i] if i != -1 else -1 for i in qubit_mask]
         # print(front_layer_)
         # print(qubit_mask_)
-        self._mcts_wrapper.load_data(num_of_logical_qubits=logical_circuit.circuit_width(),
+        self._mcts_wrapper.load_data(num_of_logical_qubits=logical_circuit.width(),
                                      num_of_gates=self._circuit_dag.size,
                                      circuit=self._circuit_dag.node_qubits,
                                      dependency_graph=self._circuit_dag.compact_dag,
