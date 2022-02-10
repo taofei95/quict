@@ -7,10 +7,9 @@
 import os
 import numpy as np
 import scipy as sp
-from QuICT.chemistry.molecular_data import molecular_data
 from QuICT.chemistry.molecular_data import RHFObjective
 
-from QuICT.chemistry.molecular_data.hamiltonian import *
+from QuICT.chemistry.molecular_data.parametertensor import *
 from QuICT.chemistry.molecular_data.molecular_data import MolecularData
 
 DATA_DIR = os.path.dirname(os.path.abspath(__file__)) + '/molecular_data'

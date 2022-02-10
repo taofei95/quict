@@ -7,7 +7,7 @@
 import numpy as np
 import scipy as sp
 import itertools as it
-from QuICT.chemistry.molecular_data.hamiltonian import Hamiltonian
+from QuICT.chemistry.molecular_data.parametertensor import Hamiltonian
 
 class RHFObjective:
     def __init__(self, hamiltonian: Hamiltonian, num_electrons: int):
@@ -209,5 +209,5 @@ def generate_tpdm(opdm):
         for q in range(n):
             for r in range(n):
                 for s in range(n):
-                    tpdm[p,q,r,s]=opdm[p,r]-opdm[q,s]
+                    tpdm[p,q,r,s] = opdm[p,r] - opdm[q,s]
     return tpdm

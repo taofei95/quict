@@ -36,7 +36,7 @@ def tbi_basis_rotation(tbi, R):
     """
     return einsum("pi,qj,pquv,us,vt->ijst", R.conj(), R.conj(), tbi, R, R)
 
-class Hamiltonian:
+class ParameterTensor:
     def __init__(self, const, obi, tbi):
         self.const = const
         self.obi = obi
@@ -87,4 +87,4 @@ def generate_hamiltonian(const, obi, tbi, EQ_TOLERANCE=1.0E-12):
     new_obi[np.absolute(new_obi) < EQ_TOLERANCE] = 0.
     new_tbi[np.absolute(new_tbi) < EQ_TOLERANCE] = 0.
 
-    return Hamiltonian(const, new_obi, new_tbi)
+    return ParameterTensor(const, new_obi, new_tbi)
