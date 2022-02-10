@@ -1,7 +1,6 @@
-from QuICT.core.gate.gate import CSwap
 import numpy as np
 
-from QuICT.core import CompositeGate, CX, CCX, X, QFT, IQFT, CRz, Rz
+from QuICT.core.gate import CompositeGate, CX, CCX, CSwap, X, QFT, IQFT, CRz, Rz
 from ..._synthesis import Synthesis
 
 

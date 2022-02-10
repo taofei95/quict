@@ -6,7 +6,8 @@
 
 from numpy import gcd
 
-from QuICT.core import Circuit, CompositeGate, X, CX, CCX, Swap
+from QuICT.core import Circuit
+from QuICT.core.gate import CompositeGate, X, CX, CCX, Swap
 from ..._synthesis import Synthesis
 
 
@@ -404,7 +405,7 @@ class VBEAdder(Synthesis):
 
         PlainAdder(qubit_a, qubit_b, qubit_c, qubit_overflow)
 
-        return CompositeGate(circuit.gates)
+        return CompositeGate(gates=circuit.gates)
 
 
 class VBEAdderMod(Synthesis):
@@ -438,7 +439,7 @@ class VBEAdderMod(Synthesis):
         AdderMod(N, qubit_a, qubit_b, qubit_c,
                  qubit_overflow, qubit_N, qubit_t)
 
-        return CompositeGate(circuit.gates)
+        return CompositeGate(gates=circuit.gates)
 
 
 class VBEMulAddMod(Synthesis):
@@ -475,7 +476,7 @@ class VBEMulAddMod(Synthesis):
         MulAddMod(a, N, qubit_x, qubit_a, qubit_b, qubit_c,
                   qubit_overflow, qubit_N, qubit_t)
 
-        return CompositeGate(circuit.gates)
+        return CompositeGate(gates=circuit.gates)
 
 
 class VBEExpMod(Synthesis):
@@ -509,4 +510,4 @@ class VBEExpMod(Synthesis):
         X | qubit_r[n - 1]
         ExpMod(a, N, qubit_x, qubit_r, qubit_a,
                qubit_b, qubit_c, overflow, qubit_N, t)
-        return CompositeGate(circuit.gates)
+        return CompositeGate(gates=circuit.gates)
