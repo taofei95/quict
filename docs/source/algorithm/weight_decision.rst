@@ -8,6 +8,7 @@ Boolean function which distinguishes whether the Hamming weight of the length-n 
 it is l.
 
 The algorithm design is based on `Exact quantum query complexity of weight decision problems via Chebyshev polynomials`__
+
 .. __: https://arxiv.org/abs/1801.05717
 
 How to use weight decision in QuICT
@@ -30,7 +31,7 @@ How to use weight decision in QuICT
     # Using WeightDecision algorithm to get weight
     flag = False
     oracle = PermFx(int(np.ceil(np.log2(T + 2))), [1, 2])
-    for _ in range(5)
+    for _ in range(5):
         ans = WeightDecision.run(T, k, l, oracle)
         if final == ans:
             flag = True

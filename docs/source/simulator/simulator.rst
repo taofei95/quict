@@ -4,7 +4,9 @@ How to validate the correctness of the quantum algorithm is one of the most impo
 Using classical machine to simulate the quantum circuit is a way to validate the quantum algorithm. In QuICT, the Simulator
 is used to simulate the qubits' state during runing in the quantum circuit.
 
-## graph here (simulator support status [cpu, gpu])
+.. figure:: ./simulator_mode.png
+   :width: 500px
+   :align: center
 
 The simulator will return a data structure which stores the informations about the simulation of quantum circuit
     - device: the hardware
