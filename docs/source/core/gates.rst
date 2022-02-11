@@ -67,8 +67,8 @@ Example
 
     # composite gate information
     assert cg1.width() == 5
-    assert cg1.depth() == 5
-    assert cg1.size() == 5
+    assert cg1.depth() == 7
+    assert cg1.size() == 9
 
     # using context to build composite gate
     with CompositeGate() as cg_context:

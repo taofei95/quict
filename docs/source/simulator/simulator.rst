@@ -14,8 +14,6 @@ The simulator will return a data structure which stores the informations about t
     - time: spending times
     - counts: the dict of the measure results for each simulation
 
-sumlator interface here
-
 .. toctree::
    :maxdepth: 1
 
