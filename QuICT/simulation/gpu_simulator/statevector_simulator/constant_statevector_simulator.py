@@ -365,15 +365,15 @@ class ConstantStateVectorSimulator(BasicGPUSimulator):
                     self._sync
                 )
                 self.vector = aux
-        elif gate_type == GATE_ID["QFT"] or gate_type == GATE_ID["IQFT"]:
+        elif gate_type == GateType.qft or gate_type == GateType.iqft:
             aux = cp.zeros_like(self._vector)
-            matrix = self.get_gate_matrix(gate)
+            matrix = cp.array(gate.matrix)
             self._algorithm.matrix_dot_vector(
                 matrix,
                 gate.controls + gate.targets,
                 self._vector,
                 self._qubits,
-                gate.affectArgs,
+                gate.cargs + gate.targs,
                 aux,
                 self._sync
             )

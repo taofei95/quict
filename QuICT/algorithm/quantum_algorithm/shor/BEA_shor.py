@@ -55,7 +55,7 @@ def order_finding(a:int, N: int, demo = None, eps: float = 1/10,):
         Measure | trickbit
         Measure | qreg_low
         simulator.run(circuit)
-        assert int(qreg_low)==0
+        assert int(qreg_low.qubits)==0
         assert int(b_reg)==0
         msg = f'\tthe {k}th trickbit measured to be {int(trickbit)}'
         if demo == 'demo': print(msg)
