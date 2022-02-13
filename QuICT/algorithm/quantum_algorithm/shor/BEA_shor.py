@@ -21,12 +21,14 @@ from QuICT.core.gate import *
 from QuICT.qcda.synthesis.arithmetic.bea import *
 from QuICT.algorithm import Algorithm
 from .utility import *
+from QuICT.simulation.gpu_simulator import ConstantStateVectorSimulator
 
 
 def order_finding(a:int, N: int, demo = None, eps: float = 1/10,):
     """
     Quantum algorithm to compute the order of a (mod N), when gcd(a,N)=1.
     """
+    simulator = ConstantStateVectorSimulator()
     # phase estimation procedure
     n = int(np.ceil(np.log2(N)))
     t = int(2 * n + 1 + np.ceil(np.log(2 + 1/(2*eps))))
@@ -39,7 +41,7 @@ def order_finding(a:int, N: int, demo = None, eps: float = 1/10,):
     x_reg = circuit([i for i in range(n + 1, 2 * n + 1)])
     trickbit = circuit(2 * n + 1)
     qreg_low= circuit(2 * n + 2)
-    X | x_reg[n - 1]
+    X | x_reg(n - 1)
     for k in range(t):
         H | trickbit
         gate_pow = pow(a, 1 << (t - 1 - k), N)
@@ -52,7 +54,7 @@ def order_finding(a:int, N: int, demo = None, eps: float = 1/10,):
         Measure | b_reg
         Measure | trickbit
         Measure | qreg_low
-        circuit.exec()
+        simulator.run(circuit)
         assert int(qreg_low)==0
         assert int(b_reg)==0
         msg = f'\tthe {k}th trickbit measured to be {int(trickbit)}'
