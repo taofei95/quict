@@ -2056,7 +2056,6 @@ class CCRzGate(BasicGate):
     def inverse(self):
         _CCRz = self.copy()
         _CCRz.pargs = -self.parg
-
         return _CCRz
 
     def build_gate(self):
@@ -2081,7 +2080,7 @@ class QFTGate(BasicGate):
     @property
     def matrix(self) -> np.ndarray:
         if self._matrix is None:
-            gateSet = self.build_gate()
+            gateSet = self.build_gate(self.targets) #this should conflict with quantum_algorithm branch. Keep this or gpu simulator cannot work on bea shor
             self._matrix = gateSet.matrix()
         return self._matrix
 
@@ -2111,6 +2110,7 @@ class QFTGate(BasicGate):
         _IQFT = IQFTGate()
         _IQFT.targs = copy.deepcopy(self.targs)
         _IQFT.targets = self.targets
+        gate_build_name(_IQFT, None)
         return _IQFT
 
     def build_gate(self, targets):
@@ -2135,7 +2135,7 @@ class IQFTGate(BasicGate):
     @property
     def matrix(self) -> np.ndarray:
         if self._matrix is None:
-            gateSet = self.build_gate()
+            gateSet = self.build_gate(self.targets) #this should conflict with quantum_algorithm branch. Keep this or gpu simulator cannot work on bea shor
             self._matrix = gateSet.matrix()
         return self._matrix
 
@@ -2165,6 +2165,7 @@ class IQFTGate(BasicGate):
         _QFT = QFTGate()
         _QFT.targs = copy.deepcopy(self.targs)
         _QFT.targets = self.targets
+        gate_build_name(_QFT, None)
         return _QFT
 
     def build_gate(self, targets):

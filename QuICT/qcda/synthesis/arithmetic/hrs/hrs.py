@@ -234,7 +234,7 @@ def c_incrementer(gate_set, control, v, g_aug):
     """
     1-controlled incremente v by 1, with borrowed qubits g.
 
-    Constructed by attaching the control qubit to the little-end of v,
+    Constructed by attaching the control qubit to the little-end of v, 
     and apply an (n+1)-bit incrementer() to it.
 
     Args:
@@ -296,7 +296,7 @@ def c_adder_rec(gate_set, control, x, c_bitwise, ancilla, ancilla_g):
         control(Qubit): 1 qubit.
         x(Qureg): n qubits.
         ancilla(Qubit): 1 qubit.
-        ancilla_g(Qubit): 1 qubit,
+        ancilla_g(Qubit): 1 qubit, 
             might be used as borrowed qubit in c_incrementer
             when x_H and x_L are of the same length.
         c_bitwise(char array): n bits '0'-'1' array, representing binary int c.
@@ -781,7 +781,7 @@ class HRSAdderMod(Synthesis):
         if n <= 2:
             raise Exception(
                 "The numbers should be more than 2-length to use HRS circuits.")
-
+        
         gate_set = CompositeGate()
         qubit_b = list(range(n))
         g = list(range(n, 2 * n - 1))
@@ -815,7 +815,7 @@ class HRSMulMod(Synthesis):
         if n <= 2:
             raise Exception(
                 "The numbers should be more than 2-length to use HRS circuits.")
-
+        
         gate_set = CompositeGate()
         qubit_x = list(range(n))
         ancilla = list(range(n, 2 * n))
@@ -846,10 +846,11 @@ class CHRSMulMod(Synthesis):
         Note that this circuit works only when n > 2.
         So for smaller numbers we use another design.
         """
+        
         if n <= 2:
             raise Exception(
                 "The numbers should be more than 2-length to use HRS circuits.")
-
+        
         gate_set = CompositeGate()
         qubit_x = list(range(n))
         ancilla = list(range(n, 2 * n))

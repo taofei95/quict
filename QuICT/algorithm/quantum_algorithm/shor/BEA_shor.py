@@ -24,7 +24,11 @@ from .utility import *
 from QuICT.simulation.gpu_simulator import ConstantStateVectorSimulator
 
 
+<<<<<<< HEAD
 def order_finding(a:int, N: int, demo = None, eps: float = 1/10,):
+=======
+def order_finding(a, N, simulator=None):
+>>>>>>> alg_simulator
     """
     Quantum algorithm to compute the order of a (mod N), when gcd(a,N)=1.
     """
@@ -53,6 +57,7 @@ def order_finding(a:int, N: int, demo = None, eps: float = 1/10,):
 
         Measure | b_reg
         Measure | trickbit
+<<<<<<< HEAD
         Measure | qreg_low
         simulator.run(circuit)
         assert int(qreg_low)==0
@@ -60,6 +65,15 @@ def order_finding(a:int, N: int, demo = None, eps: float = 1/10,):
         msg = f'\tthe {k}th trickbit measured to be {int(trickbit)}'
         if demo == 'demo': print(msg)
         else: logging.info(msg)
+=======
+
+        if simulator==None:
+            circuit.exec()
+        else:
+            state = simulator.run(circuit)
+
+        logging.info(f'the {k}th trickbit measured to be {int(trickbit)}')
+>>>>>>> alg_simulator
         trickbit_store[k] = int(trickbit)
         if trickbit_store[k] == 1:
             X | trickbit
@@ -142,7 +156,11 @@ class BEAShorFactor(Algorithm):
     in "Factoring using 2n+2 qubits with Toffoli based modular multiplication\
     '''
     @staticmethod
+<<<<<<< HEAD
     def run(N: int, max_rd: int,  demo:str = None, eps: float = 1/10,):
+=======
+    def run(N, simulator=None):
+>>>>>>> alg_simulator
         # check if input is prime (using MillerRabin in klog(N), k is the number of rounds to run MillerRabin)
         if (miller_rabin(N)):
             msg = f'N does not pass miller rabin test, may be a prime number'
@@ -192,10 +210,15 @@ class BEAShorFactor(Algorithm):
             else: logging.info(msg)
             rd += 1
             # 4. Use quantum order-finding algorithm to find the order of a
+<<<<<<< HEAD
             msg = f'Quantumly determine the order of the randomly chosen a = {a}'
             if demo == 'demo': print(msg)
             else: logging.info(msg)
             r = order_finding(a, N, demo, eps)
+=======
+            logging.info(f'Quantumly determine the order of the randomly chosen a = {a}')
+            r = order_finding(a, N, simulator)
+>>>>>>> alg_simulator
             if r == 0:
                 msg = f'Shor failed: did not find the order of a = {a}'
                 if demo == 'demo': print(msg)

@@ -365,6 +365,19 @@ class ConstantStateVectorSimulator(BasicGPUSimulator):
                     self._sync
                 )
                 self.vector = aux
+        elif gate_type == GATE_ID["QFT"] or gate_type == GATE_ID["IQFT"]:
+            aux = cp.zeros_like(self._vector)
+            matrix = self.get_gate_matrix(gate)
+            self._algorithm.matrix_dot_vector(
+                matrix,
+                gate.controls + gate.targets,
+                self._vector,
+                self._qubits,
+                gate.affectArgs,
+                aux,
+                self._sync
+            )
+            self.vector = aux
         # unsupported quantum gates
         else:
             raise KeyError(f"Unsupported Gate: {gate_type}")
