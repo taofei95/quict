@@ -1,7 +1,20 @@
 import numpy as np
 
 
-def matrix_product_to_circuit(gate, max_q, min_q: int = 0):
+CGATE_LIST = []
+
+
+def matrix_product_to_circuit(gate, max_q: int, min_q: int = 0):
+    """ Expand gate matrix with the number of qubits
+
+    Args:
+        gate (BasicGate): The quantum gate
+        max_q (int): The qubits' number
+        min_q (int, optional): The minimum qubit's number. Defaults to 0.
+
+    Returns:
+        np.array: the expanded gate's 2-D matrix
+    """
     n = 1 << (max_q - min_q)
     xor = n - 1
     new_values = np.zeros((n, n), dtype=np.complex128)
