@@ -101,5 +101,4 @@ def test_BEAShorFactor_on_ConstantStateVectorSimulator():
 
 
 if __name__ == '__main__':
-    # pytest.main(["./unit_test.py"])
-    test_BEAShorFactor()
+    pytest.main(["./unit_test.py"])

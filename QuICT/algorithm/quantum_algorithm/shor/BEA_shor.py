@@ -36,34 +36,34 @@ def order_finding(a:int, N: int, demo = None, eps: float = 1/10,):
     if demo == 'demo': print(msg)
     else: logging.info(msg)
     trickbit_store = [0] * t
+
     circuit = Circuit(2 * n + 3)
-    b_reg = circuit([i for i in range(n+1)])
-    x_reg = circuit([i for i in range(n + 1, 2 * n + 1)])
-    trickbit = circuit(2 * n + 1)
-    qreg_low= circuit(2 * n + 2)
-    X | x_reg(n - 1)
+    b_reg = [i for i in range(n+1)]
+    x_reg = [i for i in range(n + 1, 2 * n + 1)]
+    trickbit = [2 * n + 1]
+    qreg_low= [2 * n + 2]
+    X | circuit(x_reg[n - 1])
     for k in range(t):
-        H | trickbit
+        H | circuit(trickbit)
         gate_pow = pow(a, 1 << (t - 1 - k), N)
         BEACUa.execute(n, gate_pow, N) | circuit
         for i in range(k):
             if trickbit_store[i]:
-                Rz(-pi / (1 << (k - i))) | trickbit
-        H | trickbit
+                Rz(-pi / (1 << (k - i))) | circuit(trickbit)
+        H | circuit(trickbit)
 
-        Measure | b_reg
-        Measure | trickbit
-        Measure | qreg_low
+        for idx in (b_reg+trickbit+qreg_low): Measure | circuit(idx)
         simulator.run(circuit)
-        assert int(qreg_low.qubits)==0
-        assert int(b_reg)==0
-        msg = f'\tthe {k}th trickbit measured to be {int(trickbit)}'
+        assert int(circuit[qreg_low])==0
+        assert int(circuit[b_reg])==0
+        msg = f'\tthe {k}th trickbit measured to be {int(circuit[trickbit])}'
         if demo == 'demo': print(msg)
         else: logging.info(msg)
-        trickbit_store[k] = int(trickbit)
+        trickbit_store[k] = int(circuit[trickbit])
         if trickbit_store[k] == 1:
-            X | trickbit
-    Measure | x_reg
+            X | circuit(trickbit)
+    for idx in x_reg: Measure | circuit(idx)
+
     trickbit_store.reverse()
     msg = f'\tphi~ (approximately s/r) in binary form is {trickbit_store}'
     if demo == 'demo': print(msg)
