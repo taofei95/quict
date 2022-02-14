@@ -8,7 +8,6 @@ from QuICT.core.exception import *
 from QuICT.core.gate.gate import *
 from .coupling_graph import CouplingGraph
 from .exception import *
-from .dag import DAG
 
 
 def is_two_qubit_gate_equal(s1: List[int], s2: List[int]) -> bool:

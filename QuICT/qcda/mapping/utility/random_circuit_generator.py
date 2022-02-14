@@ -29,9 +29,6 @@ class RandomCircuitGenerator(object):
         res_circuit = Circuit(wires=num_of_qubits)
         for _ in range(circuit_size):
             qubits = self._generate_two_qubit_gate(pre_gate_qubits, num_of_qubits)
-            # GateBuilder.setGateType(GATE_ID['cx'])
-            # GateBuilder.setCargs(int(qubits[0]))
-            # GateBuilder.setTargs(int(qubits[1]))
             gate = build_gate(GateType.cx, [int(qubits[0]), int(qubits[1])])
             res_circuit.append(gate)
             pre_gate_qubits = qubits
