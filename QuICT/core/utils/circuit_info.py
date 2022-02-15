@@ -4,24 +4,6 @@
 # @Author  : Han Yu, Li Kaiqi
 # @File    : _circuit_computing.py
 
-import random
-
-
-def getRandomList(count, upper_bound):
-    """ get `count` number from 0, 1, ..., `upper_bound - 1` randomly.
-
-    Args:
-        count(int)
-        upper_bound(int)
-    Returns:
-        list<int>: the list of l random numbers
-    """
-    _rand = [i for i in range(upper_bound)]
-    for i in range(upper_bound - 1, 0, -1):
-        do_get = random.randint(0, i)
-        _rand[do_get], _rand[i] = _rand[i], _rand[do_get]
-    return _rand[:count]
-
 
 class CircuitInformation:
     @staticmethod

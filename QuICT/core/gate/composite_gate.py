@@ -6,12 +6,12 @@
 import numpy as np
 
 from QuICT.core.qubit import Qureg, Qubit
-from QuICT.core.utils import GateType, CircuitInformation, matrix_product_to_circuit
+from QuICT.core.gate.gate import BasicGate
+from QuICT.core.utils import GateType, CircuitInformation, matrix_product_to_circuit, CGATE_LIST
 
 
 # global composite gate id count
 cgate_id = 0
-CGATE_LIST = []
 
 
 class CompositeGate:
@@ -327,15 +327,14 @@ class CompositeGate:
         self_matrix = self.matrix()
         if isinstance(target, CompositeGate):
             target_matrix = target.matrix()
+        elif isinstance(target, BasicGate):
+            target_matrix = target.matrix
         else:
-            try:
-                target_matrix = target.matrix
-            except:
-                temp_cg = CompositeGate()
-                for gate in target.gates:
-                    gate | temp_cg
+            temp_cg = CompositeGate()
+            for gate in target.gates:
+                gate | temp_cg
 
-                target_matrix = temp_cg.matrix()
+            target_matrix = temp_cg.matrix()
 
         if ignore_phase:
             shape = self_matrix.shape

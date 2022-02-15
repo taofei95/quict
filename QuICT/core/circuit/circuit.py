@@ -63,7 +63,7 @@ class Circuit(object):
         self._gates = gates
 
     @property
-    def topology(self) -> list:
+    def topology(self) -> Layout:
         return self._topology
 
     @topology.setter
@@ -253,8 +253,7 @@ class Circuit(object):
         Returns:
             Qureg: the qureg correspond to the indexes
         Exceptions:
-            IndexDuplicateException: the range of indexes is error.
-            TypeException: the type of indexes is error.
+            TypeError: the type of indexes is error.
         """
         if isinstance(indexes, int) or type(indexes) is list:
             indexes = self.qubits(indexes)
@@ -293,18 +292,24 @@ class Circuit(object):
             targets: the targets the gate acts on, it can have following form,
                 1) Circuit
         Raise:
-            TypeException: the type of other is wrong
+            TypeError: the type of targets is wrong
         """
         if not isinstance(targets, Circuit):
             raise TypeError("Only support circuit | circuit.")
 
         if not self.qubits == targets.qubits:
             diff_qubits = targets.qubits.diff(self.qubits)
-            targets.append_qubit(diff_qubits, is_append=True)
+            targets.update_qubit(diff_qubits, is_append=True)
 
         targets.extend(self.gates)
 
-    def append_qubit(self, qubits, is_append: bool = False):
+    def update_qubit(self, qubits: Qureg, is_append: bool = False):
+        """ Update the qubits in circuit.
+
+        Args:
+            qubits (Qureg): The new qubits.
+            is_append (bool, optional): whether add qubits or replace qubits. Defaults to False, add qubits.
+        """
         if not is_append:
             self._qubits = qubits
             self._idmap = {}
@@ -459,7 +464,7 @@ class Circuit(object):
             Exception: the qubit is not in the circuit
         """
         if not isinstance(qubit, Qubit):
-            raise TypeException("Qubit", now=qubit)
+            raise TypeError(f"Only support qubit here, not {type(qubit)}.")
 
         if qubit.id not in self._idmap.keys():
             raise Exception("the qubit is not in the circuit or it is an ancillary qubit.")
@@ -468,18 +473,31 @@ class Circuit(object):
             return self._idmap[qubit.id]
 
         if not isinstance(ancilla, Qureg):
-            raise TypeException("Qureg", now=ancilla)
+            raise TypeError(f"Ancilla must be a Qureg here, not {type(ancilla)}.")
 
         enterspace = 0
         for q in self.qubits:
             if q not in ancilla:
                 enterspace += 1
-            elif q.id == qubit.id:
+
+            if q.id == qubit.id:
                 return enterspace
 
     def gates_for_qubit(self, qubits: Qureg) -> list:
+        """ Return the gates for given qubits
+
+        Args:
+            qubits (Qureg/Qubit): The target qubits.
+
+        Returns:
+            list: The list of gates
+        """
         if isinstance(qubits, Qureg):
             qubits = [self.index_for_qubit(qubit) for qubit in qubits]
+        elif isinstance(qubits, Qubit):
+            qubits = [self.index_for_qubit(qubits)]
+        else:
+            raise TypeError(f"Only supports use Qubit/Qureg to find the gates. {type(qubits)}")
 
         set_qubits = set(qubits)
         q_gates = []
@@ -500,7 +518,8 @@ class Circuit(object):
 
         Args:
             rand_size(int): the number of the gate added to the circuit
-            typelist(list<GateType>): the type of gate, default contains CX、ID、Rz、CY、CRz、CH
+            typelist(list<GateType>): the type of gate, default contains
+                Rx, Ry, Rz, Cx, Cy, Cz, CRz, Ch, Rxx, Ryy, Rzz and FSim
         """
         if typelist is None:
             typelist = [
@@ -557,27 +576,27 @@ class Circuit(object):
         Args:
             gate(BasicGate): the gate to be extended.
         """
-        return matrix_product_to_circuit(len(self.qubits), gate)
+        return matrix_product_to_circuit(gate, len(self.qubits))
 
     def remapping(self, qureg: Qureg, mapping: list, circuit_update: bool = False):
+        """ Realignment the qubits by the given mapping.
+
+        Args:
+            qureg (Qureg): The qubits which need to permutate.
+            mapping (list): The order of permutation.
+            circuit_update (bool, optional): whether rearrange the qubits in circuit. Defaults to False.
+        """
         if not isinstance(qureg, Qureg):
             raise TypeException("Qureg Only.", qureg)
 
         if len(qureg) != len(mapping):
             raise ValueError(f"the length of mapping {len(mapping)} must equal to the qubits' number {len(qureg)}.")
 
-        current_index = []
-        for qubit in qureg:
-            current_index.append(self.index_for_qubit(qubit))
-
+        current_index = [self.index_for_qubit(qubit) for qubit in qureg]
         remapping_index = [current_index[m] for m in mapping]
-        remapping_qureg = Qureg()
-        for idx in remapping_index:
-            remapping_qureg.append(self.qubits[idx])
+        remapping_qureg = self.qubits[remapping_index]
 
         if circuit_update:
-            for index, q_idx in enumerate(current_index):
-                self.qubits[q_idx] = remapping_qureg[index]
-            self._update_idmap()
+            self.update_qubit(remapping_qureg, is_append=False)
 
         qureg[:] = remapping_qureg

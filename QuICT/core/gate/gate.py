@@ -6,8 +6,7 @@
 import numpy as np
 import copy
 
-from QuICT.core.gate.composite_gate import CGATE_LIST
-from QuICT.core.utils import GateType, SPECIAL_GATE_SET, DIAGONAL_GATE_SET
+from QuICT.core.utils import GateType, SPECIAL_GATE_SET, DIAGONAL_GATE_SET, CGATE_LIST
 
 
 class BasicGate(object):
@@ -250,13 +249,19 @@ class BasicGate(object):
         return self.copy()
 
     def __eq__(self, other):
-        if isinstance(other, BasicGate):
-            if other.name == self.name:
-                return True
+        assert isinstance(other, BasicGate)
+        if np.allclose(self.matrix, other.matrix):
+            return True
 
         return False
 
     def update_name(self, qubit_id: str, circuit_idx: int = None):
+        """ Updated gate's name with the given information
+
+        Args:
+            qubit_id (str): The qubit's unique ID.
+            circuit_idx (int, optional): The gate's order index in the circuit. Defaults to None.
+        """
         qubit_id = qubit_id[:6]
         name_parts = self.name.split('-')
         name_parts[1] = qubit_id
@@ -662,6 +667,17 @@ class U1Gate(BasicGate):
         self.pargs = params
 
     def __call__(self, alpha):
+        """ Set parameters for the gate.
+
+        Args:
+            alpha (int/float/complex): The parameter for gate
+
+        Raises:
+            TypeError: param not one of int/float/complex
+
+        Returns:
+            BasicGate: The gate with parameters
+        """
         if not self.permit_element(alpha):
             raise TypeError("int/float/complex", alpha)
 
@@ -697,6 +713,18 @@ class U2Gate(BasicGate):
         self.pargs = params
 
     def __call__(self, alpha, beta):
+        """ Set parameters for the gate.
+
+        Args:
+            alpha (int/float/complex): The parameter for gate
+            beta (int/float/complex): The parameter for gate
+
+        Raises:
+            TypeError: param not one of int/float/complex
+
+        Returns:
+            BasicGate: The gate with parameters
+        """
         params = [alpha, beta]
 
         for param in params:
@@ -738,6 +766,19 @@ class U3Gate(BasicGate):
         self.pargs = params
 
     def __call__(self, alpha, beta, gamma):
+        """ Set parameters for the gate.
+
+        Args:
+            alpha (int/float/complex): The parameter for gate
+            beta (int/float/complex): The parameter for gate
+            gamma (int/float/complex): The parameter for gate
+
+        Raises:
+            TypeError: param not one of int/float/complex
+
+        Returns:
+            BasicGate: The gate with parameters
+        """
         params = [alpha, beta, gamma]
 
         for param in params:
@@ -1987,6 +2028,10 @@ class CCXGate(BasicGate):
             [0, 1],
             [1, 0]
         ], dtype=np.complex128)
+
+    @property
+    def target_matrix(self) -> np.ndarray:
+        return self._target_matrix
 
     def build_gate(self):
         from QuICT.core.gate import CompositeGate
