@@ -1,7 +1,8 @@
 from collections import defaultdict
 import os
-import uuid
 import numpy as np
+
+from QuICT.core.utils import unique_id_generator
 
 
 class Result:
@@ -19,20 +20,16 @@ class Result:
         shots: int,
         options: dict
     ):
-        self.id = self._generate_uuid()
+        self.id = unique_id_generator()
         self.device = device
         self.backend = backend
         self.shots = shots
         self.options = options
         self.spending_time = 0
-        self.output_path = self._prepare_output_file()
         self.counts = defaultdict(int)
 
-    def _generate_uuid(self):
-        """ Generate unique ID for result. """
-        u_id = uuid.uuid1()
-        u_id = str(u_id).replace("-", "")
-        return u_id
+        # prepare output path
+        self.output_path = self._prepare_output_file()
 
     def _prepare_output_file(self):
         """ Prepare output path. """
@@ -44,20 +41,18 @@ class Result:
 
         return output_path
 
-    def record(self, result, spending_time=None, qubits: int = None):
+    def record(self, result, spending_time: float = None, qubits: int = None):
         """ Record circuit's result
 
         Args:
-            result (dict or int): The final state of circuit or the result dict from remote simulator.
+            result (int or np.array): The measured result from StateVectorSimulator or matrix from Unitary Simulator.
 
         Raises:
             TypeError: Wrong type input.
         """
-        if self.device in ["qiskit", "qcompute"]:
-            self.counts = result
-        elif self.backend == "unitary":
+        if self.backend == "unitary":
             self.unitary_matrix = result
-        else:
+        elif self.backend == "statevector":
             bit_idx = "{0:0b}".format(result)
             if qubits:
                 bit_idx = bit_idx.zfill(qubits)
@@ -73,7 +68,7 @@ class Result:
 
     def record_sv(self, state, shot):
         """ dump the circuit. """
-        if self.device == "GPU":
+        if self.device == "GPU" and self.backend == "statevector":
             state = state.get()
 
         np.savetxt(f"{self.output_path}/state_{shot}.txt", state)
