@@ -17,10 +17,10 @@ class Encoder:
     Attributes:
         n_orbitals_default(integer): the default number of orbitals
     """
-    n_orbitals_default = 10
+    def __init__(self, n_orbitals_default = 10):
+        self.n_orbitals_default = n_orbitals_default
 
-    @classmethod
-    def encoder(cls, fermion_operator, n_orbitals = -1):
+    def encoder(self, fermion_operator, n_orbitals = -1):
         """
         Encoders transform ladder operators to Qubit Operators.
 
@@ -32,17 +32,16 @@ class Encoder:
             QubitOperator: The corresponding operators on qubits
         """
         if n_orbitals == -1:
-            n_orbitals = Encoder.n_orbitals_default
+            n_orbitals = self.n_orbitals_default
         ans = QubitOperator(0)
         for mono_f in fermion_operator.operators:
             mono_q = QubitOperator([], mono_f[1])
             for operator in mono_f[0]:
-                mono_q *= cls.encoder_single(operator[0], operator[1], n_orbitals)
+                mono_q *= self.encoder_single(operator[0], operator[1], n_orbitals)
             ans += mono_q
         return ans
     
-    @classmethod
-    def encoder_single(cls, target, kind, n_orbitals):
+    def encoder_single(self, target, kind, n_orbitals):
         """
         Encode a single ladder operator (To be overrided).
 
@@ -81,9 +80,8 @@ def trans_11(target):
 class JordanWigner(Encoder):
     """
     Implement the Jordan-Wigner encoding method.
-    """         
-    @classmethod
-    def encoder_single(cls, target, kind, n_orbitals):
+    """
+    def encoder_single(self, target, kind, n_orbitals):
         Zlist = [(i,3) for i in range(target)]
         ans = QubitOperator(Zlist)
         if kind == 0:               #annihilation
@@ -96,8 +94,7 @@ class Parity(Encoder):
     """
     Implement the parity encoding method.
     """
-    @classmethod
-    def encoder_single(cls, target, kind, n_orbitals):
+    def encoder_single(self, target, kind, n_orbitals):
         Xlist = [(i,1) for i in range(target + 1, n_orbitals)]
         ans = QubitOperator(Xlist)
         if kind == 0:               #annihilation
@@ -152,8 +149,7 @@ class BravyiKitaev(Encoder):
     """
     Implement the Bravyi-Kitaev encoding method
     """
-    @classmethod
-    def encoder_single(cls, target, kind, n_orbitals):
+    def encoder_single(self, target, kind, n_orbitals):
         Xlist = [(i,1) for i in flip(target, n_orbitals)]
         ans = QubitOperator(Xlist, 0.5)
         Zlist1 = [(i,3) for i in sumup(target - 1)]
