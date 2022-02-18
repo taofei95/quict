@@ -2,15 +2,16 @@
 # -*- coding:utf8 -*-
 # @TIME    : 2022/1/11 15:36
 # @Author  : Xiaoquan Xu
-# @File    : RHFObjective.py
+# @File    : rhf_objective.py
 
 import numpy as np
-import scipy as sp
+import scipy.optimize as spopt
+import scipy.linalg as splin
 import itertools as it
-from QuICT.chemistry.molecular_data.parametertensor import Hamiltonian
+from QuICT.chemistry.molecular_data.parametertensor import ParameterTensor
 
 class RHFObjective:
-    def __init__(self, hamiltonian: Hamiltonian, num_electrons: int):
+    def __init__(self, hamiltonian: ParameterTensor, num_electrons: int):
         self.hamiltonian = hamiltonian
         self.fermion_hamiltonian = hamiltonian.get_fermion_operator()
         self.num_qubits = hamiltonian.obi.shape[0]
@@ -27,11 +28,11 @@ class RHFObjective:
         Args:
             opdm: The alpha-alpha block of the RDM
         """
-        opdm = np.zeros((self.num_qubits, self.num_qubits), dtype=complex)
+        opdm = np.zeros((self.num_qubits, self.num_qubits), dtype=np.complex128)
         opdm[::2, ::2] = opdm_aa
         opdm[1::2, 1::2] = opdm_aa
         tpdm = generate_tpdm(opdm)
-        rdms = Hamiltonian(1, opdm, tpdm)
+        rdms = ParameterTensor(1, opdm, tpdm)
         return rdms.expectation(self.hamiltonian).real
 
     def global_gradient_opdm(self, params: np.ndarray, alpha_opdm: np.ndarray):
@@ -132,13 +133,12 @@ class RHFObjective:
 
         def unitary(params):
             kappa = rhf_params_to_matrix(params, self.occ, self.virt)
-            return sp.linalg.expm(kappa)
+            return splin.expm(kappa)
             
         def energy(params):
             u = unitary(params)
             final_opdm_aa = u @ initial_opdm @ np.conjugate(u).T
-            tenergy = self.energy_from_opdm(final_opdm_aa)
-            return tenergy
+            return self.energy_from_opdm(final_opdm_aa)
 
         def gradient(params):
             u = unitary(params)
@@ -148,7 +148,7 @@ class RHFObjective:
 
         init_guess = np.zeros(self.nocc * self.nvirt)
 
-        return sp.optimize.minimize(energy,
+        return spopt.minimize(energy,
                                     init_guess,
                                     jac=gradient,
                                     method=method,
@@ -205,9 +205,10 @@ def rhf_params_to_matrix(parameters, occ, virt):
 def generate_tpdm(opdm):
     n=opdm.shape[0]
     tpdm = np.zeros((n, n, n, n), dtype=complex)
-    for p in range(n):
-        for q in range(n):
-            for r in range(n):
-                for s in range(n):
-                    tpdm[p,q,r,s] = opdm[p,r] - opdm[q,s]
-    return tpdm
+    for a in range(n):
+        for b in range(n):
+            for c in range(n):
+                for d in range(n):
+                    tpdm[a,b,c,d] = opdm[a,d] * opdm[b,c] - opdm[a,c] * opdm[b,d]\
+                        - opdm[b,d] * opdm[a,c] + opdm[b,c] * opdm[a,d]
+    return tpdm / 2.

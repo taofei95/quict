@@ -17,7 +17,6 @@ def get_from_file(item, molfile, set_type = None):
         data = molfile[item][...]
         if data.dtype.num == 0:
             data = None
-            print("False " + item)
         elif set_type != None:
             data = data.astype(set_type)
     except Exception:
@@ -57,12 +56,6 @@ class MolecularData:
 
     def get_integrals(self):
         return self.one_body_integrals, self.two_body_integrals
-    
-    def get_molecular_hamiltonian(self, occupied_indices=None, active_indices=None):
-        pass
-
-    def get_molecular_rdm(self, use_fci=False):
-        pass
 
     def save(self):
         with h5py.File("save_"+self.molfile, "w") as f:

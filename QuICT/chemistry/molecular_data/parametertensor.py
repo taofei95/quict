@@ -2,7 +2,7 @@
 # -*- coding:utf8 -*-
 # @TIME    : 2021/9/12 12:09
 # @Author  : Xiaoquan Xu
-# @File    : moleculardata.py
+# @File    : parametertensor.py
 
 import itertools as it
 import numpy as np
@@ -55,6 +55,7 @@ class ParameterTensor:
         expectation = self.const * other.const
         expectation += np.sum(self.obi * other.obi)
         expectation += np.sum(self.tbi * other.tbi)
+        return expectation
 
 def generate_hamiltonian(const, obi, tbi, EQ_TOLERANCE=1.0E-12):
     """
