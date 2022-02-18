@@ -50,9 +50,7 @@ class Result:
         Raises:
             TypeError: Wrong type input.
         """
-        if self.backend == "unitary":
-            self.unitary_matrix = result
-        elif self.backend == "statevector":
+        if isinstance(result, int):
             bit_idx = "{0:0b}".format(result)
             if qubits:
                 bit_idx = bit_idx.zfill(qubits)

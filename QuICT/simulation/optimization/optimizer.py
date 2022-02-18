@@ -46,7 +46,6 @@ class Optimizer:
             if len(qubit_idxes) == 1:       # 1-qubit gate
                 self._gates_by_qubit[gate.targ].append(gate)
             elif len(qubit_idxes) == 2:     # 2-qubits gate
-                
                 self.two_qubits_gates_combined(
                     gate
                 )
@@ -70,7 +69,7 @@ class Optimizer:
         self._opt_gates = []
         self._gates_by_qubit = defaultdict(list)
         self._two_qubits_opt_gates_idxes_dict = {}
-        
+
     def _is_diagonal_matrix(self, matrix):
         return np.allclose(np.diag(np.diag(matrix)), matrix)
 
@@ -143,7 +142,7 @@ class Optimizer:
         if reverse:
             MatrixPermutation(opt_gate_matrix, np.array([1, 0]), changeInput=True)
 
-        # Combined the 
+        # Combined the two-qubits gates
         if gate_idx_bit in self._two_qubits_opt_gates_idxes_dict.keys():
             pre_gate = self._opt_gates[self._two_qubits_opt_gates_idxes_dict[gate_idx_bit]]
             if pre_gate.is_diagonal() and self._is_diagonal_matrix(opt_gate_matrix):

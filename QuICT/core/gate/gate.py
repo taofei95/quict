@@ -233,7 +233,7 @@ class BasicGate(object):
 
         Rz(np.pi / 2)           | qubit
         U3(np.pi / 2, 0, 0)     | qubit
-        
+
         *Important*: There is no parameters for current quantum gate.
 
         Returns:

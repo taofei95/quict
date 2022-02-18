@@ -117,10 +117,10 @@ class Simulator:
                 state = self._simulator.run(circuit, use_previous)
                 e_time = time.time()
 
-                if statevector_out and self._backend != "unitary":
+                if statevector_out:
                     result.record_sv(state, shot)
 
-                if self._backend == "statevector":
+                if self._backend != "multiGPU":
                     state = self._simulator.sample()
 
                 result.record(state, e_time - s_time, len(circuit.qubits))

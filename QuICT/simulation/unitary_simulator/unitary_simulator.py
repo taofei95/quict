@@ -1,25 +1,29 @@
-import numpy as np
 from typing import *
+import numpy as np
+import cupy as cp
 
 from QuICT.core.gate import BasicGate, CompositeGate
+from QuICT.simulation.optimization import Optimizer
 from QuICT.simulation.utils import DisjointSet, dp, build_unitary_gate
 import QuICT.ops.linalg.cpu_calculator as CPUCalculator
 import QuICT.ops.linalg.gpu_calculator as GPUCalculator
-
-unitary_calculation = CPUCalculator
+from QuICT.ops.gate_kernel import MeasureGate_Apply
 
 
 class UnitarySimulator():
     """
-    Algorithms to the unitary matrix of a Circuit.
+    Algorithms to calculate the unitary matrix of a Circuit, and simulate the quantum circuit.
     """
     def __init__(
         self,
         device: str = "CPU",
         precision: str = "double"
     ):
-        self._computer = CPUCalculator if device == "CPU" else GPUCalculator
+        self._device = device
         self._precision = np.complex128 if precision == "double" else np.complex64
+        self._computer = CPUCalculator if device == "CPU" else GPUCalculator
+        self._optimizer = Optimizer()
+        self._vector = None
 
     def pretreatment(self, circuit):
         """
@@ -213,32 +217,6 @@ class UnitarySimulator():
 
         return f, pre
 
-    def run(self, circuit, use_previous: bool = False) -> np.ndarray:
-        """
-        Get the unitary matrix of circuit
-
-        Args:
-            circuit (Circuit): Input circuit to be simulated.
-
-        Returns:
-            np.ndarray: The unitary matrix of input circuit.
-        """
-
-        qubit = circuit.width()
-        if len(circuit.gates) == 0:
-            return np.identity(1 << qubit, dtype=self._precision)
-
-        ordering, small_gates = self.unitary_pretreatment(circuit)
-        u_mat, u_args = self.merge_unitary_by_ordering(small_gates, ordering)
-        result_mat, _ = self.merge_two_unitary(
-            np.identity(1 << qubit, dtype=self._precision),
-            [i for i in range(qubit)],
-            u_mat,
-            u_args
-        )
-
-        return result_mat
-
     def merge_two_unitary(
             self,
             mat_a_: np.ndarray,
@@ -248,7 +226,6 @@ class UnitarySimulator():
     ) -> Tuple[np.ndarray, List[int]]:
         """
         Combine 2 gates into a new unitary gate.
-
 
         Returns:
             matrix, affectArgs
@@ -340,3 +317,85 @@ class UnitarySimulator():
         res_mat = matrices[x]
         res_arg = mat_args[x]
         return res_mat, res_arg
+
+    def run(self, circuit, use_previous: bool = False) -> np.ndarray:
+        qubit = circuit.width()
+        if not (use_previous and self._vector is not None):
+            self._initial_vector_state(qubit)
+
+        if len(circuit.gates) == 0:
+            return self._vector
+
+        # Step 1: Generate the unitary matrix of the given circuit
+        unitary_matrix = self.get_unitary_matrix(circuit)
+
+        # Step 2: Simulation with the unitary matrix and qubit's state vector
+        self._run(unitary_matrix, qubit)
+
+        # Step 3: return the state vector after simulation
+        return self._vector
+
+    def _initial_vector_state(self, qubit):
+        if self._device == "CPU":
+            self._vector = np.zeros(1 << qubit, dtype=self._precision)
+            self._vector[0] = self._precision(1)
+        else:
+            self._vector = cp.zeros(1 << qubit, dtype=self._precision)
+            self._vector.put(0, self._precision(1))
+
+    def get_unitary_matrix(self, circuit) -> np.ndarray:
+        """
+        Get the unitary matrix of circuit
+
+        Args:
+            circuit (Circuit): Input circuit to be simulated.
+
+        Returns:
+            np.ndarray: The unitary matrix of input circuit.
+        """
+        qubit = circuit.width()
+        ordering, small_gates = self.unitary_pretreatment(circuit)
+        u_mat, u_args = self.merge_unitary_by_ordering(small_gates, ordering)
+        result_mat, _ = self.merge_two_unitary(
+            np.identity(1 << qubit, dtype=self._precision),
+            [i for i in range(qubit)],
+            u_mat,
+            u_args
+        )
+
+        return result_mat
+
+    def _run(self, matrix, qubit):
+        if self._device == "CPU":
+            aux = np.zeros_like(self._vector)
+        else:
+            aux = cp.zeros_like(self._vector)
+            matrix = cp.array(matrix)
+
+        self._computer.matrix_dot_vector(
+            matrix,
+            qubit,
+            self._vector,
+            qubit,
+            list(range(qubit)),
+            aux
+        )
+        self._vector = aux
+
+    def sample(self):
+        qubits = int(np.log2(self._vector.size))
+        result = 0
+        for i in range(qubits - 1, -1, -1):
+            result += self._measure(qubits, i) << i
+
+        return result
+
+    def _measure(self, total_qubits, qubit):
+        # TODO: add measure operator in CPU
+        result = MeasureGate_Apply(
+            qubit,
+            self._vector,
+            total_qubits
+        )
+
+        return int(result)
