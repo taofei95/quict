@@ -23,11 +23,6 @@ def rhf_classical_simulation(n_atoms, distance, data_dir=None):
     molfile = data_dir + "/H" + str(n_atoms)
     molfile += "_sto-3g_singlet_linear_r-" + str(distance)
     moldata = MolecularData(molfile)
-    assert moldata.n_orbitals == 6
-    assert moldata.n_electrons == 6
-    assert moldata.nuclear_repulsion == 3.5414167175607694
-    assert moldata.one_body_integrals == None
-    assert moldata.two_body_integrals == None
 
     S = np.load(data_dir + "/overlap.npy")
     Hcore = np.load(data_dir + "/h_core.npy")
@@ -49,9 +44,10 @@ def rhf_classical_simulation(n_atoms, distance, data_dir=None):
     return rhf_objective, moldata, result, obi, tbi
 
 # def test():
-rhf_objective, moldata, result, obi, tbi = rhf_classical_simulation(6, 1.3)
-assert moldata.n_orbitals == 6
-assert moldata.n_electrons == 6
-assert moldata.nuclear_repulsion == 3.5414167175607694
-assert moldata.one_body_integrals == None
-assert moldata.two_body_integrals == None
+# rhf_objective, moldata, result, obi, tbi = rhf_classical_simulation(6, 1.3)
+# assert moldata.n_orbitals == 6
+# assert moldata.n_electrons == 6
+# assert moldata.one_body_integrals == None
+# assert moldata.two_body_integrals == None
+rhf_objective, moldata, result, obi, tbi = rhf_classical_simulation(3, 2.5)
+

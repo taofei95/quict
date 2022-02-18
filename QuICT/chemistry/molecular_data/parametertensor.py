@@ -76,8 +76,8 @@ class ParameterTensor:
 
 def generate_hamiltonian(const, obi, tbi, EQ_TOLERANCE=1.0E-12):
     """
-        Double the dimension of obi and tbi,
-        then generate an interaction operator as Hamiltonian
+    Double the dimension of obi and tbi,
+    then generate an interaction operator as Hamiltonian
     """
     n = obi.shape[0]
     n_qubits = 2 * n

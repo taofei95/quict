@@ -11,11 +11,23 @@ import itertools as it
 from QuICT.chemistry.molecular_data.parametertensor import ParameterTensor
 
 class RHFObjective:
+    """
+    The objective for Restricted Hartree-Fock.
+
+    Attributes:
+        hamiltonian(ParameterTensor)
+        fermion_hamiltonian(FermionOperator)
+        num_orbitals(int): number of spacial orbitals
+        num_electrons(int)
+        nocc(int): number of occupied orbitals
+        nvirt(int): number of virtual orbitals
+        occ(list): list of positions of occupied orbitals
+        virt(list): list of positions of virtual orbitals
+    """
     def __init__(self, hamiltonian: ParameterTensor, num_electrons: int):
         self.hamiltonian = hamiltonian
         self.fermion_hamiltonian = hamiltonian.get_fermion_operator()
-        self.num_qubits = hamiltonian.obi.shape[0]
-        self.num_orbitals = self.num_qubits // 2
+        self.num_orbitals = hamiltonian.obi.shape[0] // 2
         self.num_electrons = num_electrons
         self.nocc = self.num_electrons // 2
         self.nvirt = self.num_orbitals - self.nocc
@@ -23,35 +35,43 @@ class RHFObjective:
         self.virt = list(range(self.nocc, self.num_orbitals))
 
     def energy_from_opdm(self, opdm_aa: np.ndarray) -> float:
-        """Return the energy.
+        """
+        According to the opdm(One Particle Density Matrix) parameters,
+        generate the tpdm(Two Particles Density Matrix) through Restricted Hartree-Fock conditions
+        and calculate the energy by multiplying with the Hamitonian.
 
         Args:
-            opdm: The alpha-alpha block of the RDM
-        """
-        opdm = np.zeros((self.num_qubits, self.num_qubits), dtype=np.complex128)
-        opdm[::2, ::2] = opdm_aa
-        opdm[1::2, 1::2] = opdm_aa
-        tpdm = generate_tpdm(opdm)
-        rdms = ParameterTensor(1, opdm, tpdm)
-        return rdms.expectation(self.hamiltonian).real
+            opdm_aa: The alpha-alpha block of the RDM
 
-    def global_gradient_opdm(self, params: np.ndarray, alpha_opdm: np.ndarray):
-        opdm = np.zeros((self.num_qubits, self.num_qubits), dtype=np.complex128)
-        opdm[::2, ::2] = alpha_opdm
-        opdm[1::2, 1::2] = alpha_opdm
-        tpdm = generate_tpdm(opdm)
+        Returns:
+            energy(double)
+        """
+        opdm = _generate_opdm(opdm_aa)
+        tpdm = _generate_tpdm(opdm)
+        rdms = ParameterTensor(1, opdm, tpdm)
+        return self.hamiltonian.expectation(rdms).real
+
+    def global_gradient_opdm(self, params: np.ndarray, opdm_aa: np.ndarray):
+        """
+        Generate the gradient
+
+        Args:
+            params: The pra
+            opdm_aa: The alpha-alpha block of the RDM
+        """
+        opdm = _generate_opdm(opdm_aa)
+        tpdm = _generate_tpdm(opdm)
 
         # now go through and generate all the necessary Z, Y, Y_kl matrices
         kappa_matrix = rhf_params_to_matrix(params, self.occ, self.virt)
         kappa_matrix_full = np.kron(kappa_matrix, np.eye(2))
-        w_full, v_full = np.linalg.eigh(
-            -1j * kappa_matrix_full)  # so that kappa = i U lambda U^
+        w_full, v_full = np.linalg.eigh(-1j * kappa_matrix_full)  # so that kappa = i U lambda U^
         eigs_scaled_full = get_matrix_of_eigs(w_full)
 
         grad = np.zeros(self.nocc * self.nvirt, dtype=np.complex128)
-        kdelta = np.eye(self.num_qubits)
+        kdelta = np.eye(self.hamiltonian.obi.shape[0])
 
-        # NOW GENERATE ALL TERMS ASSOCIATED WITH THE GRADIENT!!!!!!
+        # NOW GENERATE ALL TERMS ASSOCIATED WITH THE GRADIENT
         for p in range(self.nocc * self.nvirt):
             grad_params = np.zeros_like(params)
             grad_params[p] = 1
@@ -155,11 +175,8 @@ class RHFObjective:
                                     options={'disp': verbose})
 
 def get_matrix_of_eigs(w: np.ndarray) -> np.ndarray:
-    r"""Transform the eigenvalues for getting the gradient.
-
-    .. math:
-        f(w) \rightarrow
-        \frac{e^{i (\lambda_{i} - \lambda_{j})}}{i (\lambda_{i} - \lambda_{j})}
+    """
+    Transform the eigenvalues for getting the gradient.
 
     Args:
         w: eigenvalues of C-matrix
@@ -178,7 +195,8 @@ def get_matrix_of_eigs(w: np.ndarray) -> np.ndarray:
     return transform_eigs
 
 def rhf_params_to_matrix(parameters, occ, virt):
-    """Assemble variational parameters into a anti-Hermitian matrix.
+    """
+    Assemble variational parameters into a anti-Hermitian matrix.
 
     Args:
         parameters: list of length n_virt * n_occ
@@ -202,7 +220,13 @@ def rhf_params_to_matrix(parameters, occ, virt):
         kappa[o, v] = -parameters[idx].real
     return kappa
 
-def generate_tpdm(opdm):
+def _generate_opdm(opdm_aa):
+    opdm = np.zeros((opdm_aa.shape[0]*2, opdm_aa.shape[1]*2), dtype=np.complex128)
+    opdm[::2, ::2] = opdm_aa
+    opdm[1::2, 1::2] = opdm_aa
+    return opdm
+
+def _generate_tpdm(opdm):
     n=opdm.shape[0]
     tpdm = np.zeros((n, n, n, n), dtype=complex)
     for a in range(n):
