@@ -37,18 +37,18 @@ def tbi_basis_rotation(tbi, R):
     return einsum("pi,qj,pquv,us,vt->ijst", R.conj(), R.conj(), tbi, R, R)
 
 class ParameterTensor:
-    def __init__(self, const, obi, tbi):
-        """
-        Class for the parameters or Hamiltonian
+    """
+    Class for the parameters or Hamiltonian
 
-        Attributes:
-            const(complex): For a parameter tensor, it should be set to 1
-                for multiplying with a Hamitonian 
-            obi(n*n ndarray): Represent the coefficients of terms of the form
-                a^\dagger_i a_j, i.e. (1,0)
-            tbi(n*n*n*n ndarray): Represent the coefficients of terms of the form
-                a^\dagger_i a^\dagger_j a_k a_l, i.e. (1,1,0,0)
-        """
+    Attributes:
+        const(complex): For a parameter tensor, it should be set to 1
+            for multiplying with a Hamitonian 
+        obi(n*n ndarray): Represent the coefficients of terms of the form
+            a^\dagger_i a_j, i.e. (1,0)
+        tbi(n*n*n*n ndarray): Represent the coefficients of terms of the form
+            a^\dagger_i a^\dagger_j a_k a_l, i.e. (1,1,0,0)
+    """
+    def __init__(self, const, obi, tbi):
         self.const = const
         self.obi = obi
         self.tbi = tbi
