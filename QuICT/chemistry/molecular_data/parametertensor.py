@@ -38,11 +38,25 @@ def tbi_basis_rotation(tbi, R):
 
 class ParameterTensor:
     def __init__(self, const, obi, tbi):
+        """
+        Class for the parameters or Hamiltonian
+
+        Attributes:
+            const(complex): For a parameter tensor, it should be set to 1
+                for multiplying with a Hamitonian 
+            obi(n*n ndarray): Represent the coefficients of terms of the form
+                a^\dagger_i a_j, i.e. (1,0)
+            tbi(n*n*n*n ndarray): Represent the coefficients of terms of the form
+                a^\dagger_i a^\dagger_j a_k a_l, i.e. (1,1,0,0)
+        """
         self.const = const
         self.obi = obi
         self.tbi = tbi
 
     def get_fermion_operator(self):
+        """
+        Transform a Hamiltonian into a fermion-operator polymonial
+        """
         n_qubits = self.obi.shape[0]
         fermion_operator = FermionOperator([], self.const)
         for index in it.product(range(n_qubits), repeat=2):
@@ -52,6 +66,9 @@ class ParameterTensor:
         return fermion_operator
     
     def expectation(self, other):
+        """
+        Multiply coefficient matrix with hamitonian
+        """
         expectation = self.const * other.const
         expectation += np.sum(self.obi * other.obi)
         expectation += np.sum(self.tbi * other.tbi)
