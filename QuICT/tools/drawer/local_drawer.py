@@ -12,7 +12,7 @@ import numpy as np
 from matplotlib import patches
 from matplotlib import pyplot as plt
 
-from QuICT.core import *
+from QuICT.core.gate import *
 
 from .ibmq_style import DefaultStyle
 
@@ -622,7 +622,7 @@ class PhotoDrawer(object):
 
     def run(self, circuit, filename=None, show_depth=False):
         global cir_len
-        cir_len = circuit.circuit_width()
+        cir_len = circuit.width()
         name_dict = collections.OrderedDict()
         now = {
             'max_x': 0,
@@ -650,7 +650,7 @@ class PhotoDrawer(object):
             layer_width = 1
 
             for gate in layer.gates:
-                if gate.type() == GATE_ID["Perm"] or gate.type() == GATE_ID["Unitary"]:
+                if gate.type == GateType.perm or gate.type == GateType.unitary:
                     continue
                 elif gate.params > 1:
                     param = self.get_parameter_str(gate.pargs)
@@ -687,14 +687,14 @@ class PhotoDrawer(object):
                 if gate.params > 0:
                     param = self.get_parameter_str(gate.pargs)
 
-                if gate.type() == GATE_ID["Perm"]:
+                if gate.type == GateType.perm:
                     name = str(gate)
                     for coor in coord:
                         self.draw_gate(coor, name, '')
                     self.draw_line(bottom, top, lc=self.style.dispcol[name])
-                elif gate.type() == GATE_ID["Measure"]:
+                elif gate.type == GateType.measure:
                     self.draw_measure(coord[0])
-                elif gate.type() == GATE_ID["Barrier"]:
+                elif gate.type == GateType.barrier:
                     self.draw_gate(coord[0], gate.qasm_name)
                 elif len(coord) == 1:
                     name = gate.qasm_name
@@ -704,7 +704,7 @@ class PhotoDrawer(object):
                     else:
                         self.draw_gate(coord[0], name, '')
                 elif len(coord) == 2:
-                    if gate.type() == GATE_ID["CX"]:
+                    if gate.type == GateType.cx:
                         if self.style.dispcol['cx'] != '#ffffff':
                             add_width = self.style.colored_add_width
                         else:
@@ -714,7 +714,7 @@ class PhotoDrawer(object):
                         self.draw_tgt_qubit(coord[1], fc=self.style.dispcol['cx'], ec=self.style.dispcol['cx'],
                                             ac=self.style.dispcol['target'], add_width=add_width)
                         self.draw_line(coord[0], coord[1], lc=self.style.dispcol['cx'])
-                    elif gate.type() == GATE_ID["Swap"]:
+                    elif gate.type == GateType.swap:
                         self.draw_swap(coord[0])
                         self.draw_swap(coord[1])
                         self.draw_line(bottom, top, lc=self.style.dispcol['swap'])
@@ -745,7 +745,7 @@ class PhotoDrawer(object):
                                                   gt=self.style.gt, sc=self.style.sc,
                                                   text=gate.qasm_name, subtext=subtext)
                 elif len(coord) == 3:
-                    if gate.type() == GATE_ID["CCX"]:
+                    if gate.type == GateType.ccx:
                         self.draw_ctrl_qubit(coord[0], fc=self.style.dispcol['multi'],
                                              ec=self.style.dispcol['multi'])
                         self.draw_ctrl_qubit(coord[1], fc=self.style.dispcol['multi'],
@@ -760,7 +760,7 @@ class PhotoDrawer(object):
                                                 ac=self.style.dispcol['multi'])
                         # add qubit-qubit wiring
                         self.draw_line(bottom, top, lc=self.style.dispcol['multi'])
-                    elif gate.type() == GATE_ID["CSwap"]:
+                    elif gate.type == GateType.cswap:
                         self.draw_ctrl_qubit(coord[0], fc=self.style.dispcol['multi'],
                                              ec=self.style.dispcol['multi'])
                         self.draw_swap(coord[1])

@@ -3,15 +3,13 @@
 # @TIME    : 2021/1/12 11:20 上午
 # @Author  : Han Yu
 # @File    : Perm.py
-
-import numpy as np
-
-from QuICT import *
-from QuICT.algorithm import *
+from QuICT.core import Circuit
+from QuICT.core.gate import *
+from QuICT.simulation.gpu_simulator import ConstantStateVectorSimulator
 
 circuit = Circuit(4)
-circuit.assign_initial_zeros()
-PermFx([1, 0, 0, 0]) | circuit
-print(PermFx.pargs)
-amplitude = Amplitude.run(circuit)
+PermFx(2, [0]) | circuit([0, 1, 2])
+
+simulator = ConstantStateVectorSimulator()
+amplitude = simulator.run(circuit)
 print(amplitude)

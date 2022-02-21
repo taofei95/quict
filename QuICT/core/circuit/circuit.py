@@ -1,15 +1,16 @@
 #!/usr/bin/env python
 # -*- coding:utf8 -*-
-# @TIME    : 2020/2/10 9:41
-# @Author  : Han Yu
-# @File    : _circuit.py
+# @TIME    : 2022/1/17 9:41
+# @Author  : Han Yu, Kaiqi Li
+# @File    : circuit.py
+import numpy as np
 
-import copy
-
-from QuICT.core.exception import ConstException, IndexDuplicateException, IndexLimitException, TypeException
 from QuICT.core.qubit import Qubit, Qureg
+from QuICT.core.exception import TypeException
+from QuICT.core.layout import Layout, SupremacyLayout
+from QuICT.core.gate import H, Measure, build_random_gate, build_gate
+from QuICT.core.utils import GateType, CircuitInformation, matrix_product_to_circuit
 
-from .circuit_computing import *
 
 # global circuit id count
 circuit_id = 0
@@ -22,7 +23,6 @@ class Circuit(object):
 
     Attributes:
         id(int): the unique identity code of a circuit, which is generated globally.
-        const_lock(bool): a simple lock that ensures the circuit does not change when running some algorithm.
         name(str): the name of the circuit
         qubits(Qureg): the qureg formed by all qubits of the circuit
         gates(list<BasicGate>): all gates attached to the circuit
@@ -31,127 +31,112 @@ class Circuit(object):
         fidelity(float): the fidelity of the circuit
 
     Private Attributes:
-        __idmap(dictionary): the map from qubit's id to its index in the circuit
-        __queue_gates(list<BasicGate>): the gates haven't be flushed
-
+        _idmap(dictionary): the map from qubit's id to its index in the circuit
     """
 
     @property
     def id(self) -> int:
-        return self.__id
-
-    @id.setter
-    def id(self, id):
-        if not self.const_lock:
-            self.__id = id
-        else:
-            raise ConstException(self)
-
-    @property
-    def const_lock(self) -> bool:
-        return self.__const_lock
-
-    @const_lock.setter
-    def const_lock(self, const_lock):
-        self.__const_lock = const_lock
+        return self._id
 
     @property
     def name(self) -> int:
-        return self.__name
+        return self._name
 
     @name.setter
     def name(self, name):
-        if not self.const_lock:
-            self.__name = name
-        else:
-            raise ConstException(self)
+        self._name = name
 
     @property
     def qubits(self) -> Qureg:
-        return self.__qubits
+        return self._qubits
 
     @qubits.setter
-    def qubits(self, qubits):
-        if not self.const_lock:
-            self.__qubits = qubits
-        else:
-            raise ConstException(self)
+    def qubits(self, qubits: Qureg):
+        self._qubits = qubits
 
     @property
     def gates(self) -> list:
-        return self.__gates
+        return self._gates
 
     @gates.setter
     def gates(self, gates):
-        if not self.const_lock:
-            self.__gates = gates
-        else:
-            raise ConstException(self)
+        self._gates = gates
 
     @property
-    def topology(self) -> list:
-        return self.__topology
+    def topology(self) -> Layout:
+        return self._topology
 
     @topology.setter
-    def topology(self, topology):
-        if not self.const_lock:
-            self.__topology = topology
-        else:
-            raise ConstException(self)
+    def topology(self, topology: Layout):
+        if topology is None:
+            self._topology = None
+            return
+
+        if not isinstance(topology, Layout):
+            raise TypeError("Only support Layout as circuit topology.")
+
+        if topology.qubit_number != self.width():
+            raise ValueError(f"The qubit number is not mapping. {topology.qubit_number}")
+
+        self._topology = topology
 
     @property
     def fidelity(self) -> float:
-        return self.__fidelity
+        return self._fidelity
 
     @fidelity.setter
     def fidelity(self, fidelity):
         if fidelity is None:
-            self.__fidelity = None
+            self._fidelity = None
             return
+
         if not isinstance(fidelity, float) or fidelity < 0 or fidelity > 1.0:
             raise Exception("fidelity should be in [0, 1]")
-        if not self.const_lock:
-            self.__fidelity = fidelity
-        else:
-            raise ConstException(self)
 
-    # life cycle
-    def __init__(self, wires):
-        """ generator a circuit
+        self._fidelity = fidelity
+
+    def __init__(
+        self,
+        wires,
+        name: str = None,
+        topology: Layout = None,
+        fidelity: float = None
+    ):
+        """
+        generator a circuit
 
         Args:
-            wires(int): the number of qubits in the circuit
+            wires(int/qureg/[qubit]): the number of qubits in the circuit
         """
-        self.const_lock = False
         global circuit_id
-        self.id = circuit_id
-        self.name = "circuit" + str(self.id)
+        self._id = circuit_id
         circuit_id = circuit_id + 1
-        self.__idmap = {}
-        self.qubits = Qureg()
-        for idx in range(wires):
-            qubit = Qubit(self)
-            self.qubits.append(qubit)
-            self.__idmap[qubit.id] = idx
-        self.gates = []
-        self.__queue_gates = []
-        self.topology = []
-        self.fidelity = None
+        self._name = "circuit_" + str(self.id) if name is None else name
+        self._topology = topology
+        self._fidelity = fidelity
+        self._gates = []
+        self._pointer = None
+
+        if isinstance(wires, Qureg):
+            self._qubits = wires
+        else:
+            self._qubits = Qureg(wires)
+
+        self._update_idmap()
+
+    def _update_idmap(self):
+        self._idmap = {}
+        for idx, qubit in enumerate(self.qubits):
+            self._idmap[qubit.id] = idx
 
     def __del__(self):
-        """ release the memory
-
-        """
-        for qubit in self.qubits:
-            qubit.qState_clear()
-        self.const_lock = False
+        """ release the memory """
         self.gates = None
-        self.__queue_gates = None
         self.qubits = None
         self.topology = None
+        self.fidelity = None
 
-    # Attributes of the circuit
-    def circuit_width(self):
+    def width(self):
         """ the number of qubits in circuit
 
         Returns:
@@ -159,7 +144,7 @@ class Circuit(object):
         """
         return len(self.qubits)
 
-    def circuit_size(self):
+    def size(self):
         """ the size of the circuit
 
         Returns:
@@ -167,31 +152,23 @@ class Circuit(object):
         """
         return len(self.gates)
 
-    def circuit_count_2qubit(self):
+    def count_2qubit_gate(self):
         """ the number of the two qubit gates in the circuit
 
         Returns:
             int: the number of the two qubit gates in the circuit
         """
-        count = 0
-        for gate in self.gates:
-            if gate.controls + gate.targets == 2:
-                count += 1
-        return count
+        return CircuitInformation.count_2qubit_gate(self.gates)
 
-    def circuit_count_1qubit(self):
+    def count_1qubit_gate(self):
         """ the number of the one qubit gates in the circuit
 
         Returns:
             int: the number of the one qubit gates in the circuit
         """
-        count = 0
-        for gate in self.gates:
-            if gate.controls + gate.targets == 1:
-                count += 1
-        return count
+        return CircuitInformation.count_1qubit_gate(self.gates)
 
-    def circuit_count_gateType(self, gateType):
+    def count_gate_by_gatetype(self, gate_type):
         """ the number of the gates which are some type in the circuit
 
         Args:
@@ -200,399 +177,27 @@ class Circuit(object):
         Returns:
             int: the number of the gates which are some type in the circuit
         """
-        count = 0
-        for gate in self.gates:
-            if gate.type == gateType:
-                count += 1
-        return count
+        return CircuitInformation.count_gate_by_gatetype(self.gates, gate_type)
 
-    def circuit_depth(self, gateTypes=None):
-        """ the depth of the circuit for some gate.
-
-        Args:
-            gateTypes(list<GateType>):
-                the types to be count into depth calculate
-                if count all type of gates, leave it being None.
+    def depth(self):
+        """ the depth of the circuit.
 
         Returns:
             int: the depth of the circuit
         """
-        layers = []
-        for gate in self.gates:
-            if gateTypes is None or gate.type in gateTypes:
-                now = set(gate.cargs) | set(gate.targs)
-                for i in range(len(layers) - 1, -2, -1):
-                    if i == -1 or len(now & layers[i]) > 0:
-                        if i + 1 == len(layers):
-                            layers.append(set())
-                        layers[i + 1] |= now
-        return len(layers)
+        return CircuitInformation.depth(self.gates)
 
-    def qasm(self):
-        """ get OpenQASM 2.0 describe for the circuit
+    def __str__(self):
+        circuit_info = {
+            "name": self.name,
+            "width": self.width(),
+            "size": self.size(),
+            "depth": self.depth(),
+            "1-qubit gates": self.count_1qubit_gate(),
+            "2-qubit gates": self.count_2qubit_gate()
+        }
 
-        Returns:
-            str: OpenQASM 2.0 describe or "error" when there are some gates cannot be resolved
-        """
-        string = 'OPENQASM 2.0;\ninclude "qelib1.inc";\n'
-        cbits = 0
-        for gate in self.gates:
-            if gate.qasm_name == "measure":
-                cbits += 1
-        string += f"qreg q[{self.circuit_width()}];\n"
-        if cbits != 0:
-            string += f"creg c[{cbits}];\n"
-        cbits = 0
-        for gate in self.gates:
-            if gate.qasm_name == "measure":
-                string += f"measure q[{gate.targ}] -> c[{cbits}];\n"
-                cbits += 1
-            else:
-                qasm = gate.qasm()
-                if qasm == "error":
-                    print("the circuit cannot be transformed to a valid describe in OpenQASM 2.0")
-                    gate.print_info()
-                    return "error"
-                string += gate.qasm()
-        return string
-
-    # slice method of circuit
-    def __call__(self, indexes: object) -> Qureg:
-        """ get a smaller qureg from this circuit
-
-        Args:
-            indexes: the indexes passed in, it can have follow form:
-                1) int
-                2) list<int>
-                3) tuple<int>
-        Returns:
-            Qureg: the qureg correspond to the indexes
-        Exceptions:
-            IndexDuplicateException: the range of indexes is error.
-            TypeException: the type of indexes is error.
-        """
-        # int
-        if isinstance(indexes, int):
-            if indexes < 0 or indexes >= len(self.qubits):
-                raise IndexLimitException(len(self.qubits), indexes)
-            return Qureg(self.qubits[indexes])
-
-        # tuple
-        if isinstance(indexes, tuple):
-            indexes = list(indexes)
-
-        # list
-        if isinstance(indexes, list):
-            if len(indexes) != len(set(indexes)):
-                raise IndexDuplicateException(indexes)
-            qureg = Qureg()
-            for element in indexes:
-                if not isinstance(element, int):
-                    raise TypeException("int", element)
-                if element < 0 or element >= len(self.qubits):
-                    raise IndexLimitException(len(self.qubits), element)
-                qureg.append(self.qubits[element])
-            return qureg
-
-        raise TypeException("int or list or tuple", indexes)
-
-    def __getitem__(self, item):
-        """ to fit the slice operator, overloaded this function.
-
-        get a smaller qureg/qubit from this circuit
-
-        Args:
-            item(int/slice): slice passed in.
-        Return:
-            Qubit/Qureg: the result or slice
-        """
-
-        if isinstance(item, int):
-            return self.qubits[item]
-        elif isinstance(item, slice):
-            qureg_list = self.qubits[item]
-            return qureg_list
-
-    def __or__(self, targets):
-        """deal the operator '|'
-
-        Use the syntax "circuit | circuit" or "circuit | qureg" or "circuit | qubit"
-        to add the gate of circuit into the circuit/qureg/qubit
-
-        Note that the order of qubits is that control bits first
-        and target bits followed.
-
-        Args:
-            targets: the targets the gate acts on, it can have following form,
-                1) Circuit
-                2) qureg
-                3) tuple<qubit, qureg>
-                4) list<qubit, qureg>
-        Raise:
-            TypeException: the type of other is wrong
-        """
-        from ..gate import CompositeGate
-        gates = CompositeGate(self.gates)
-        gates | targets
-
-    # append gate methods
-    def append(self, gate, qureg=None):
-        """ add a gate to the circuit
-
-        Args:
-            gate(BasicGate): the gate to be added to the circuit
-            qureg(Qureg/Qubit/None): the Qureg/Qubit gate added to.
-                                    if Qureg is None, use the targs and cargs in gate
-        """
-        if qureg is None:
-            qureg_list = [] if gate.controls == 0 else copy.deepcopy(gate.cargs)
-            qureg_list.extend(gate.targs)
-            qureg = self(qureg_list)
-        self._add_gate(gate, qureg)
-
-    def extend(self, gates):
-        """ add gates to the circuit
-
-        Args:
-            gates(list<BasicGate>): the gate to be added to the circuit
-        """
-        for gate in gates:
-            self.append(gate)
-
-    def sub_circuit(self, targets, start=0, max_size=-1, local=False, remove=False):
-        """ get a sub circuit
-
-        Args:
-            targets(int/list<int>/tuple<int>/slice): target qubits indexes.
-            start(int/string): the start gate's index, default 0
-            max_size(int): max size of the sub circuit, default -1 without limit
-            local(bool): whether the slice will stop when meeting an non-commutative gate, default False
-            remove(bool): whether deleting the slice gates from origin circuit, default False
-        Return:
-            Circuit: the sub circuit
-
-        """
-        circuit_size = self.circuit_size()
-        circuit_width = self.circuit_width()
-        if isinstance(targets, slice):
-            targets = [i for i in range(circuit_width)][targets]
-        targets = list(targets)
-        # the mapping from circuit's index to sub-circuit's index
-        targets_mapping = [0] * circuit_width
-        index = 0
-        for target in targets:
-            if target < 0 or target >= circuit_width:
-                raise Exception('list index out of range')
-            targets_mapping[target] = index
-            index += 1
-
-        circuit = Circuit(len(targets))
-        set_targets = set(targets)
-        new_gates = []
-        compare_gates = []
-
-        if isinstance(start, str):
-            count = 0
-            for gate in self.gates:
-                if gate.name == start:
-                    break
-                count += 1
-            start = count
-        if remove:
-            for gate_index in range(start):
-                new_gates.append(self.gates[gate_index])
-        for gate_index in range(start, circuit_size):
-            gate = self.gates[gate_index]
-            affectArgs = gate.affectArgs
-            set_affectArgs = set(affectArgs)
-            # if gate acts on given qubits
-            if set_affectArgs <= set_targets:
-                compare_gates.append(gate)
-                targ = []
-                for args in affectArgs:
-                    targ.append(targets[args])
-                gate | circuit(targ)
-                max_size -= 1
-            elif len(set_affectArgs.intersection(set_targets)) == 0:
-                new_gates.append(gate)
-            else:
-                if not local:
-                    new_gates.append(gate)
-                else:
-                    commutative = True
-                    for goal in compare_gates:
-                        if not gate.commutative(goal):
-                            commutative = False
-                            break
-                    if commutative:
-                        new_gates.append(gate)
-                    else:
-                        break
-            if max_size == 0:
-                if remove:
-                    for index in range(gate_index + 1, circuit_size):
-                        new_gates.append(self.gates[index])
-                break
-        if remove:
-            for qubit in self.qubits:
-                qubit.qState_clear()
-            self.set_exec_gates(new_gates)
-
-        return circuit
-
-    def _add_gate(self, gate, qureg):
-        """ add a gate into some qureg
-
-        Args:
-            gate(BasicGate)
-            qureg(Qureg/list<Qubit>)
-        """
-        self.gates.append(gate)
-        self.__queue_gates.append(gate)
-        gate.cargs = [self.__idmap[qureg[idx].id] for idx in range(gate.controls)]
-        gate.targs = [self.__idmap[qureg[idx].id] for idx in range(gate.controls, gate.controls + gate.targets)]
-
-    # add topology methods
-    def add_topology(self, topology):
-        """ public API to add directed edges in topology to the circuit
-
-        Args:
-            topology(list<tuple<qureg/qubit/int>>): a list of directed edges
-        """
-        if isinstance(topology, list):
-            for item in topology:
-                self._inner_add_topology(item)
-        else:
-            self._inner_add_topology(topology)
-
-    def add_topology_complete(self, qureg: Qureg):
-        """ add directed edges to make subgraph formed by qureg passed in fully connected
-
-        Args:
-            qureg(Qureg): the qureg to be fully connected in topology
-        """
-        ids = []
-        for qubit in qureg:
-            ids.append(self.__idmap[qubit.id])
-        for i in range(len(ids)):
-            for j in range(i + 1, len(ids)):
-                self._inner_add_topology((i, j))
-
-    def _inner_add_topology(self, topology):
-        """ add a directed edge in topology to the circuit
-
-        Args:
-            topology(tuple<qureg/qubit/int>): the two qubits with is connected directly
-
-        Raises:
-            TypeException:
-        """
-        if not isinstance(topology, tuple):
-            raise TypeException("tuple<qureg(len = 1)/qubit/int> or list<tuple<qureg(len = 1)/qubit/int>>", topology)
-        if len(topology) != 2:
-            raise Exception("there should be two element")
-        item1 = topology[0]
-        item2 = topology[1]
-        if isinstance(item1, Qureg):
-            if len(item1) != 1:
-                item1 = item1[0]
-        if isinstance(item1, Qubit):
-            item1 = self.__idmap[item1]
-        if not isinstance(item1, int):
-            raise TypeException("tuple<qureg(len = 1)/qubit/int> or list<tuple<qureg(len = 1)/qubit/int>>", topology)
-        if isinstance(item2, Qureg):
-            if len(item2) != 1:
-                item2 = item2[0]
-        if isinstance(item2, Qubit):
-            item2 = self.__idmap[item2]
-        if not isinstance(item2, int):
-            raise TypeException("tuple<qureg(len = 1)/qubit/int> or list<tuple<qureg(len = 1)/qubit/int>>", topology)
-        self.topology.append((item1, item2))
-
-    # exec method
-    def exec(self):
-        """ calculate the gates applied to the circuit, change the qStates' values in the circuit
-
-        It may cost a lot of time, the computational process is coded by
-        C++ with intel tbb parallel library
-
-        """
-        for gate in self.__queue_gates:
-            gate.exec(self)
-        self.__queue_gates = []
-
-    def reset(self):
-        """ reset all qubits in the circuit with gates unchanged
-
-        """
-        for qubit in self.qubits:
-            qubit.qState_clear()
-        self.__queue_gates = copy.deepcopy(self.gates)
-
-    def clear(self):
-        """ clear the circuit
-
-        """
-        self.reset()
-        self.gates = []
-        self.__queue_gates = []
-
-    def set_exec_gates(self, gates):
-        """ set circuit's gates
-
-        Args:
-            gates(list<BasicGate>)
-        """
-        self.gates = gates.copy()
-        self.__queue_gates = gates.copy()
-
-    # set initial state
-    def assign_initial_random(self):
-        """ remove all gates and set all qubits into a qState with random amplitude
-
-        """
-        self.clear()
-        self.qubits.force_assign_random()
-
-    def assign_initial_zeros(self):
-        """ remove all gates and set all qubits into a qState with state 0
-
-        """
-        self.clear()
-        self.qubits.force_assign_zeros()
-
-    def force_copy(self, other, force_copy=None):
-        """ remove all gates and copy another circuits' qubits state to the qureg in this circuit
-
-        Args:
-            other(Circuit): the copy goal
-            force_copy: the indexes of qureg to be pasted in the circuit,
-                        if want cover whole circuit, leave it to be None
-        :return:
-        """
-        self.clear()
-        if force_copy is None:
-            force_copy = [i for i in range(len(self.qubits))]
-        self.qubits.force_copy(other.qubits[0].qState, force_copy)
-
-    def exec_release(self):
-        """ calculate the gates applied to the circuit and remove the gates in the circuits
-
-        when call the function "exec", the gates in the list "self.gates" won't be removed because
-        the integrity of the information of circuit should be ensured.
-        But sometimes, user may release the memory by removing them.
-
-        """
-        self.exec()
-        self.gates = []
-
-    # display information of the circuit
-    def print_information(self):
-        print("-------------------")
-        print(f"number of bits:{self.circuit_width()}")
-        for gate in self.gates:
-            gate.print_info()
-        print("-------------------")
+        return str(circuit_info)
 
     def draw(self, method='matp', filename=None):
         """ draw the photo of circuit in the run directory
@@ -605,39 +210,243 @@ class Circuit(object):
                 command : command
                 tex : tex source
         """
+        from QuICT.tools.drawer import PhotoDrawer, TextDrawing
+
         if method == 'matp':
-            from QuICT.tools.drawer import PhotoDrawer
             if filename is None:
                 filename = str(self.id) + '.jpg'
             elif '.' not in filename:
                 filename += '.jpg'
+
             photoDrawer = PhotoDrawer()
             photoDrawer.run(self, filename)
         elif method == 'command':
-            from QuICT.tools.drawer import TextDrawing
             textDrawing = TextDrawing([i for i in range(len(self.qubits))], self.gates)
             if filename is None:
                 print(textDrawing.single_string())
                 return
             elif '.' not in filename:
                 filename += '.txt'
+
             textDrawing.dump(filename)
 
-    # computation method of the circuit
-    def partial_prob(self, indexes):
-        """ calculate the probabilities of the measure result of partial qureg in circuit
-
-        Note that the function "flush" will be called before calculating
-        this function is a cheat function, which do not change the state of the qureg.
-
-        Args:
-            indexes(list<int>): the indexes of the partial qureg.
+    def qasm(self):
+        """ get OpenQASM 2.0 describe for the circuit
 
         Returns:
-            list<float>: the probabilities of the measure result, the memory mode is LittleEndian.
-
+            str: OpenQASM 2.0 describe or "error" when there are some gates cannot be resolved
         """
-        return inner_partial_prob(self, indexes)
+        qreg = len(self.qubits)
+        creg = self.count_gate_by_gatetype(GateType.measure)
+
+        return CircuitInformation.qasm(qreg, creg, self.gates)
+
+    def __call__(self, indexes: object):
+        """ get a smaller qureg from this circuit
+
+        Args:
+            indexes: the indexes passed in, it can have follow form:
+                1) int
+                2) list<int>
+                3) Qubit
+                4) Qureg
+        Returns:
+            Qureg: the qureg correspond to the indexes
+        Exceptions:
+            TypeError: the type of indexes is error.
+        """
+        if isinstance(indexes, int) or type(indexes) is list:
+            indexes = self.qubits(indexes)
+
+        if isinstance(indexes, Qubit):
+            indexes = Qureg(indexes)
+
+        if not isinstance(indexes, Qureg):
+            raise TypeError("only accept int/list[int]/Qubit/Qureg")
+
+        self._pointer = indexes
+        return self
+
+    def __getitem__(self, item):
+        """ to fit the slice operator, overloaded this function.
+
+        get a smaller qureg/qubit from this circuit
+
+        Args:
+            item(int/slice): slice passed in.
+        Return:
+            Qubit/Qureg: the result or slice
+        """
+        return self.qubits[item]
+
+    def __or__(self, targets):
+        """deal the operator '|'
+
+        Use the syntax "circuit | circuit"
+        to add the gate of circuit into the circuit/qureg/qubit
+
+        Note that the order of qubits is that control bits first
+        and target bits followed.
+
+        Args:
+            targets: the targets the gate acts on, it can have following form,
+                1) Circuit
+        Raise:
+            TypeError: the type of targets is wrong
+        """
+        if not isinstance(targets, Circuit):
+            raise TypeError("Only support circuit | circuit.")
+
+        if not self.qubits == targets.qubits:
+            diff_qubits = targets.qubits.diff(self.qubits)
+            targets.update_qubit(diff_qubits, is_append=True)
+
+        targets.extend(self.gates)
+
+    def update_qubit(self, qubits: Qureg, is_append: bool = False):
+        """ Update the qubits in circuit.
+
+        Args:
+            qubits (Qureg): The new qubits.
+            is_append (bool, optional): whether add qubits or replace qubits. Defaults to False, add qubits.
+        """
+        if not is_append:
+            self._qubits = qubits
+            self._idmap = {}
+        else:
+            self._qubits = self._qubits + qubits
+
+        for idx, qubit in enumerate(self.qubits):
+            self._idmap[qubit.id] = idx
+
+    def append(self, gate, is_extend: bool = False):
+        """ add a gate to the circuit
+
+        Args:
+            gate(BasicGate): the gate to be added to the circuit
+        """
+        gate_ctargs = gate.cargs + gate.targs
+        args_num = gate.controls + gate.targets
+
+        if self._pointer:
+            qureg = self._pointer[:]
+            if len(qureg) > args_num:
+                qureg = self._pointer[gate_ctargs]
+
+            if not is_extend:
+                self._pointer = None
+        else:
+            if not gate_ctargs and not gate.assigned_qubits:
+                if gate.is_single():
+                    self._add_gate_to_all_qubits(gate)
+                    return
+                elif self.width() == args_num:
+                    qureg = self.qubits
+                else:
+                    raise KeyError(f"{gate.type} need assign qubits to add into circuit.")
+            else:
+                qureg = self.qubits[gate_ctargs] if gate_ctargs else gate.assigned_qubits
+
+        self._add_gate(gate, qureg)
+
+    def _add_gate(self, gate, qureg: Qureg):
+        """ add a gate into some qureg
+
+        Args:
+            gate(BasicGate)
+            qureg(Qureg)
+        """
+        gate = gate.copy()
+        gate.cargs = [self._idmap[qureg[idx].id] for idx in range(gate.controls)]
+        gate.targs = [self._idmap[qureg[idx].id] for idx in range(gate.controls, gate.controls + gate.targets)]
+        gate.assigned_qubits = qureg
+        gate.update_name(qureg[0].id, len(self.gates))
+
+        self.gates.append(gate)
+
+    def _add_gate_to_all_qubits(self, gate):
+        for idx in range(self.width()):
+            new_gate = gate.copy()
+            new_gate.targs = [idx]
+            new_gate.assigned_qubits = self.qubits(idx)
+
+            new_gate.update_name(self.qubits[idx].id, len(self.gates))
+            self.gates.append(new_gate)
+
+    def extend(self, gates):
+        """ add gates to the circuit
+
+        Args:
+            gates(list<BasicGate>): the gate to be added to the circuit
+        """
+        for gate in gates:
+            self.append(gate, is_extend=True)
+
+        self._pointer = None
+
+    def sub_circuit(
+        self,
+        targets,
+        start: int = 0,
+        max_size: int = -1,
+        remove: bool = False
+    ):
+        """ get a sub circuit
+
+        Args:
+            targets(int/list<int>/Qureg): target qubits indexes.
+            start(int): the start gate's index, default 0
+            max_size(int): max size of the sub circuit, default -1 without limit
+            remove(bool): whether deleting the slice gates from origin circuit, default False
+        Return:
+            Circuit: the sub circuit
+        """
+        if isinstance(targets, Qureg):
+            targets = [self.index_for_qubit(qubit) for qubit in targets]
+        elif isinstance(targets, int):
+            targets = [targets]
+
+        # the mapping from circuit's index to sub-circuit's index
+        circuit_width = self.width()
+        targets_mapping = [0] * circuit_width
+        for idx, target in enumerate(targets):
+            if target < 0 or target >= circuit_width:
+                raise Exception('list index out of range')
+            targets_mapping[target] = idx
+
+        # build sub_circuit
+        sub_circuit = Circuit(len(targets))
+        set_targets = set(targets)
+        targets_gates = self.gates_for_qubit(targets)
+        sub_gates = []
+
+        for gate_index in range(start, len(targets_gates)):
+            gate = targets_gates[gate_index]
+            gate_args = set(gate.cargs + gate.targs)
+            if gate_args & set_targets == gate_args:
+                _gate = gate.copy()
+                _gate.targs = [targets_mapping[targ] for targ in _gate.targs]
+                _gate.cargs = [targets_mapping[carg] for carg in _gate.cargs]
+                sub_gates.append(_gate)
+
+                if remove:
+                    self.gates.remove(gate)
+
+            if len(sub_gates) >= max_size and max_size != -1:
+                break
+
+        if remove:
+            self._update_gate_index()
+
+        sub_circuit.extend(sub_gates)
+        return sub_circuit
+
+    def _update_gate_index(self):
+        for index, gate in enumerate(self.gates):
+            gate_type, gate_qb, gate_idx = gate.name.split('-')
+
+            if int(gate_idx) != index:
+                gate.name = '-'.join([gate_type, gate_qb, str(index)])
 
     def index_for_qubit(self, qubit, ancilla=None) -> int:
         """ find the index of qubit in this circuit
@@ -646,7 +455,7 @@ class Circuit(object):
 
         Args:
             qubit(Qubit): the qubit need to be indexed.
-            ancilla(list<Qubit>): the ancillary qubit
+            ancilla(Qureg): the ancillary qubit
 
         Returns:
             int: the index of the qubit.
@@ -655,25 +464,109 @@ class Circuit(object):
             Exception: the qubit is not in the circuit
         """
         if not isinstance(qubit, Qubit):
-            raise TypeException("Qubit", now=qubit)
-        if ancilla is None:
-            ancilla = []
-        enterspace = 0
-        for i in range(len(self.qubits)):
-            if i in ancilla:
-                enterspace += 1
-            elif self.qubits[i].id == qubit.id:
-                return i - enterspace
-        raise Exception("the qubit is not in the circuit or it is an ancillary qubit.")
+            raise TypeError(f"Only support qubit here, not {type(qubit)}.")
 
-    def random_append(self, rand_size=10, typeList=None):
+        if qubit.id not in self._idmap.keys():
+            raise Exception("the qubit is not in the circuit or it is an ancillary qubit.")
+
+        if ancilla is None:
+            return self._idmap[qubit.id]
+
+        if not isinstance(ancilla, Qureg):
+            raise TypeError(f"Ancilla must be a Qureg here, not {type(ancilla)}.")
+
+        enterspace = 0
+        for q in self.qubits:
+            if q not in ancilla:
+                enterspace += 1
+
+            if q.id == qubit.id:
+                return enterspace
+
+    def gates_for_qubit(self, qubits: Qureg) -> list:
+        """ Return the gates for given qubits
+
+        Args:
+            qubits (Qureg/Qubit): The target qubits.
+
+        Returns:
+            list: The list of gates
+        """
+        if isinstance(qubits, Qureg):
+            qubits = [self.index_for_qubit(qubit) for qubit in qubits]
+        elif isinstance(qubits, Qubit):
+            qubits = [self.index_for_qubit(qubits)]
+        else:
+            raise TypeError(f"Only supports use Qubit/Qureg to find the gates. {type(qubits)}")
+
+        set_qubits = set(qubits)
+        q_gates = []
+        for gate in self.gates:
+            ctargs = set(gate.cargs + gate.targs)
+            if set_qubits & ctargs:
+                q_gates.append(gate)
+
+        return q_gates
+
+    def random_append(
+        self,
+        rand_size: int = 10,
+        typelist: list = None,
+        random_params: bool = False
+    ):
         """ add some random gate to the circuit
 
         Args:
             rand_size(int): the number of the gate added to the circuit
-            typeList(list<GateType>): the type of gate, default contains CX、ID、Rz、CY、CRz、CH
+            typelist(list<GateType>): the type of gate, default contains
+                Rx, Ry, Rz, Cx, Cy, Cz, CRz, Ch, Rxx, Ryy, Rzz and FSim
         """
-        inner_random_append(self, rand_size, typeList)
+        if typelist is None:
+            typelist = [
+                GateType.rx, GateType.ry, GateType.rz,
+                GateType.cx, GateType.cy, GateType.crz,
+                GateType.ch, GateType.cz, GateType.Rxx,
+                GateType.Ryy, GateType.Rzz, GateType.fsim
+            ]
+
+        n_qubit = self.width()
+        for _ in range(rand_size):
+            rand_type = np.random.randint(0, len(typelist))
+            gate_type = typelist[rand_type]
+            self.append(build_random_gate(gate_type, n_qubit, random_params))
+
+    def supremacy_append(self, repeat: int = 1, pattern: str = "ABCDCDAB"):
+        """
+        Add a supremacy circuit to the circuit
+
+        Args:
+            repeat(int): the number of two-qubit gates' sequence
+            pattern(str): indicate the two-qubit gates' sequence
+        """
+        qubits = len(self.qubits)
+        supremacy_layout = SupremacyLayout(qubits)
+        supremacy_typelist = [GateType.sx, GateType.sy, GateType.sw]
+
+        self._add_gate_to_all_qubits(H)
+
+        for i in range(repeat * len(pattern)):
+            for q in range(qubits):
+                gate_type = supremacy_typelist[np.random.randint(0, 3)]
+                self.append(build_gate(gate_type, q))
+
+            current_pattern = pattern[i % (len(pattern))]
+            if current_pattern not in "ABCD":
+                raise KeyError(f"Unsupported pattern {pattern[i]}, please use one of 'A', 'B', 'C', 'D'.")
+
+            edges = supremacy_layout.get_edges_by_pattern(current_pattern)
+            for e in edges:
+                gate_params = [np.pi / 2, np.pi / 6]
+                gate_args = [int(e[0]), int(e[1])]
+                fgate = build_gate(GateType.fsim, gate_args, gate_params)
+
+                self.append(fgate)
+
+        self._add_gate_to_all_qubits(Measure)
 
     def matrix_product_to_circuit(self, gate) -> np.ndarray:
         """ extend a gate's matrix in the all circuit unitary linear space
@@ -682,6 +575,28 @@ class Circuit(object):
 
         Args:
             gate(BasicGate): the gate to be extended.
-
         """
-        return inner_matrix_product_to_circuit(self, gate)
+        return matrix_product_to_circuit(gate, len(self.qubits))
+
+    def remapping(self, qureg: Qureg, mapping: list, circuit_update: bool = False):
+        """ Realignment the qubits by the given mapping.
+
+        Args:
+            qureg (Qureg): The qubits which need to permutate.
+            mapping (list): The order of permutation.
+            circuit_update (bool, optional): whether rearrange the qubits in circuit. Defaults to False.
+        """
+        if not isinstance(qureg, Qureg):
+            raise TypeException("Qureg Only.", qureg)
+
+        if len(qureg) != len(mapping):
+            raise ValueError(f"the length of mapping {len(mapping)} must equal to the qubits' number {len(qureg)}.")
+
+        current_index = [self.index_for_qubit(qubit) for qubit in qureg]
+        remapping_index = [current_index[m] for m in mapping]
+        remapping_qureg = self.qubits[remapping_index]
+
+        if circuit_update:
+            self.update_qubit(remapping_qureg, is_append=False)
+
+        qureg[:] = remapping_qureg

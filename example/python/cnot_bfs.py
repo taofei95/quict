@@ -3,10 +3,8 @@
 # @TIME    : 2021/1/11 12:26 下午
 # @Author  : Han Yu
 # @File    : cnot_bfs.py
-
 import json
-
-from QuICT import *
+import numpy as np
 
 
 def count(nn):

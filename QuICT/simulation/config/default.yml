@@ -1,0 +1,26 @@
+# CPU simulator
+CPU:
+  unitary:
+    precision: double
+
+# GPU simulator
+GPU:
+  unitary:
+    precision: double
+
+  statevector:
+    precision: double
+    gpu_device_id: 0
+    sync: True
+    optimize: False
+
+  multiGPU:
+    ndev: 1
+    precision: double
+    sync: True
+
+qiskit:
+  token: 1
+
+qcompute:
+  token: 1
