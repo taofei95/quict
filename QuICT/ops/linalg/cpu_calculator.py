@@ -3,7 +3,7 @@
 # @TIME    : 2021/5/20 上午10:37
 # @Author  : Kaiqi Li
 # @File    : cpu_calculator
-
+import random
 from numba import njit, prange
 import numpy as np
 
@@ -126,3 +126,52 @@ def dot(A, B):
 @njit()
 def multiply(A, B):
     return np.multiply(A, B)
+
+
+def matrix_dot_vector(
+    mat,
+    mat_bit,
+    vec,
+    vec_bit,
+    affect_args,
+    aux
+):
+    repeat = 1 << (vec_bit - mat_bit)
+    arg_len = 1 << mat_bit
+    sorted_args = affect_args.copy()
+    sorted_args.sort()
+    for i in range(repeat):
+        for sarg_idx in range(mat_bit):
+            less = i & ((1 << sorted_args[sarg_idx]) - 1)
+            i = i >> sorted_args[sarg_idx] << (sorted_args[sarg_idx] + 1) + less
+
+        indexes = [i] * arg_len
+        for i in range(1, arg_len, 1):
+            for j in range(mat_bit):
+                if i & (1 << j):
+                    indexes[i] += 1 << affect_args[j]
+
+        aux[indexes] = dot(mat, vec[indexes])
+
+
+def measure_gate_apply(
+    index: int,
+    vec: np.array,
+    *args
+):
+    target_index = 1 << index
+    vec_idx_0 = [idx for idx in range(len(vec)) if not idx & target_index]
+    vec_idx_1 = [idx for idx in range(len(vec)) if idx & target_index]
+    prob = np.sum(np.square(np.abs(vec[vec_idx_1])))
+
+    _1 = random.random() > prob
+    if _1:
+        alpha = np.float64(1 / np.sqrt(1 - prob))
+        vec[vec_idx_0] = np.complex128(0)
+        vec[vec_idx_1] = vec[vec_idx_1] * alpha
+    else:
+        alpha = np.float64(1 / np.sqrt(prob))
+        vec[vec_idx_0] = vec[vec_idx_0] * alpha
+        vec[vec_idx_1] = np.complex128(0)
+
+    return _1

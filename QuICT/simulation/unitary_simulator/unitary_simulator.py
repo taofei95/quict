@@ -391,11 +391,16 @@ class UnitarySimulator():
         return result
 
     def _measure(self, total_qubits, qubit):
-        # TODO: add measure operator in CPU
-        result = MeasureGate_Apply(
-            qubit,
-            self._vector,
-            total_qubits
-        )
+        if self._device == "CPU":
+            result = self._computer.measure_gate_apply(
+                qubit,
+                self._vector
+            )
+        else:
+            result = MeasureGate_Apply(
+                qubit,
+                self._vector,
+                total_qubits
+            )
 
         return int(result)
