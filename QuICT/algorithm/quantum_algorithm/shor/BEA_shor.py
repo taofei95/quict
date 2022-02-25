@@ -5,9 +5,8 @@
 # @File    : HRS_shor.py
 
 '''
-The (2n+2)-qubit circuit used in the Shor algorithm is designed by \
-THOMAS HANER, MARTIN ROETTELER, and KRYSTA M. SVORE \
-in "Factoring using 2n+2 qubits with Toffoli based modular multiplication\
+The (2n+3)-qubit circuit used in the Shor algorithm is designed by \
+St´ephane Beauregard in "Circuit for Shor’s algorithm using 2n+3 qubits"\
 '''
 
 import random
