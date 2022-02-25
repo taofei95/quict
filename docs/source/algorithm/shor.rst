@@ -7,16 +7,20 @@ existence suggests a serious threat to cryptography system based on
 computational security of integer factorization, such as the widely used
 RSA system.
 
-The most costly component in Shor's circuit is the module for exponentiation, 
-which is exquisitely designed to save resources. The detailed design can be found
-in docs for arithmetic circuits.
 
 Shor's algorithm is related with another problem called *period
 finding*. Detailed explanation can be found in other sources [1]_ [2]_
-and thus skipped. Notice that two implementations of Shor's algorithm is
+and thus skipped. 
+
+
+The most costly component in Shor's circuit is the module for exponentiation, 
+which is exquisitely designed to save resources. The detailed design can be found
+in docs for arithmetic circuits. And the two implementations of Shor's algorithm is
 given in ``BEA_shor`` and ``HRS_shor``. The only difference is in the
 :math:`controlled-U_a` circuit part. The former one is smaller in
 circuit depth while the latter is smaller in circuit width.
+
+The cost for 
 
 BEA Shor
 --------

@@ -7,3 +7,4 @@ Quantum Algorithm
    shor.rst
    hhl.rst
    grover.rst
+   arithmetic_circuit.rst
