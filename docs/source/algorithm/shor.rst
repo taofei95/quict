@@ -7,6 +7,10 @@ existence suggests a serious threat to cryptography system based on
 computational security of integer factorization, such as the widely used
 RSA system.
 
+The most costly component in Shor's circuit is the module for exponentiation, 
+which is exquisitely designed to save resources. The detailed design can be found
+in docs for arithmetic circuits.
+
 Shor's algorithm is related with another problem called *period
 finding*. Detailed explanation can be found in other sources [1]_ [2]_
 and thus skipped. Notice that two implementations of Shor's algorithm is
@@ -30,7 +34,7 @@ THOMAS HANER, MARTIN ROETTELER, and KRYSTA M. SVORE in
 Example
 -------
 
-Following is a demonstration of ``BEA_shor``. More examples can be found
+Following is a demonstration of how to use ``BEA_shor``. More examples can be found
 in ``quict/example/python/``, such as ``BEA_demo.py``, ``HRS_demo.py``
 and ``order_finding_demo.py``.
 
