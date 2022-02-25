@@ -1,9 +1,8 @@
 Gates
 =====
-The quantum gate is designed to operate the qubit's state, it usually be represent as the
-2-dimensional matrix in the Quantum Computation.
+The quantum gate is designed to operate the qubit's state, it is usually be represented as the 2-dimensional matrix in Quantum Computation.
 
-In QuICT, we use the class BasicGate to achieve the quantum gates, including single/multi qubit gates and parameters/non-parameters gates.
+In QuICT, we use the class BasicGate to achieve the quantum gates, including single/multi-qubits gates and parameters/non-parameters gates.
 For each quantum gate in QuICT, it has those properties:
     - name: the name of the gate
     - controls: the control qubits
@@ -24,8 +23,8 @@ Composite Gate
 ==============
 The CompositeGate is the combination of the quantum gates.
 
-The CompositeGate is a class in QuICT, which store the list of quantum gates. It uses or(|) and xor(^) to append 
-the gate or inverse gate, and uses and(&) to remapping the control qubits. The main attributes of CompositeGate is
+The CompositeGate is a class in QuICT, which stores the list of quantum gates. It uses or(|) and xor(^) to append 
+the gate or inverse gate, and uses and(&) to remap the control qubits. The main attribute of CompositeGate are
     - append: add gate, can use operation or(|)
     - extend: add list of gates
     - information: the based information about current composite gate.

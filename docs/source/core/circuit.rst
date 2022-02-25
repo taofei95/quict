@@ -2,17 +2,17 @@ Circuit
 =======
 Analogous to the way a classical computer is built from an electrical circuit containing wires and logic gates,
 a quantum computer is built from a quantum circuit containing wires and elementary quantum gates to carry around
-and manipulate the quantum information. [Quantum Computation and Quantum Information]
+and manipulate the quantum information.
 
 In QuICT, the quantum circuit is the most important unit, it supports the Quantum Algorithm design and the simulator running.
 The Circuit is a class in QuICT, and it uses the qubits and gates to represent the quantum circuit's wires and quantum gates.
-In Circuit, it assigns the quantum gates with its wires, and it allows append random gates and the Supremace circuit. The Circuit
+In Circuit, it assigns the quantum gates with its wires, and it allows append random gates and the Supremacy circuit. The Circuit
 also provides the tools to draw the quantum circuit and translate itself into the OpenQASM file.
 
 How to Build the Circuit in QuICT
 ---------------------------------
-The Circuit provides the append and extend to add gates into the quantum circuit; meanwhile, we can using the operation or(|) to
-add gate into the quantum circuit.
+The Circuit provides multiply ways to add gates into the quantum circuit; In QuICT, we can use the operation or(|) to
+add gate into the quantum circuit; meanwhile, we can use circuit.append(gate) or circuit.extend(gates) to add gate.
 
 
 .. code-block:: python
@@ -39,8 +39,8 @@ add gate into the quantum circuit.
 
 How to Visualize the Circuit in QuICT
 -------------------------------------
-There are two ways to visualize the quantum circuit in QuICT, one is translate the Circuit with the OpenQASM style, the other one is
-draw the graph describe the quantum circuit. By the way, not all quantum gates in QuICT are supportted by OpenQASM.
+There are two ways to visualize the quantum circuit in QuICT, one is to translate the Circuit with the OpenQASM style, the other one is
+to draw the graph describing the quantum circuit. By the way, not all quantum gates in QuICT are supported by OpenQASM.
 
 
 .. code-block:: python

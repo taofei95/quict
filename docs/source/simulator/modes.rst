@@ -1,7 +1,7 @@
 State-Vector Simulator
 ======================
 The state-vector simulator holds the qubits' states during running the quantum circuit. After running
-through the given quantum circuit, it returns the final qubits' states.
+through the given quantum circuit, it returns the measurement of the quantum circuit.
 
 Example
 >>>>>>>
@@ -53,9 +53,10 @@ Example
 
 Unitary Simulator
 ======================
-The unitary simulator is used to generate the unitary matrix of the given quantum circuit. Not like the other
-classical simulator, the unitary simulator do not care about the qubits' states, it only returns the unitary matrix
-of the quantum algorithm.
+The unitary simulator is split into two steps to simulate the quantum circuit. First, it calculates
+the unitary matrix of the given quantum circuit. After that, the unitary simulator uses the linear
+operation to calculate the qubits' state vector dot with the unitary matrix and uses measure operation
+to generate the final qubits' state.
 
 Example
 >>>>>>>
@@ -66,92 +67,54 @@ Example
     unitary_simulator = Simulator(
         device="CPU",
         backend="unitary",
-        shots=1
+        shots=10
     )
     result = unitary_simulator.run(circuit)    # get simulation's result
 
 .. parsed-literal::
 
-    {'id': '440329748b0b11ec80d963c17826bae3',
+    {'id': '9cc0e0b0960f11eca0429bf5d59c4d03',
      'device': 'CPU',
      'backend': 'unitary',
-     'shots': 1,
+     'shots': 10,
      'options': {'precision': 'double'},
-     'spending_time': 3.682887315750122,
-     'output_path': '/home/likaiqi/Workplace/test/QuICT/example/demo/output/440329748b0b11ec80d963c17826bae3',
-     'counts': defaultdict(int, {}),
-     'unitary_matrix': array([[-6.07232039e-17+2.87850229e-17j,  8.88063244e-17-1.55236501e-17j,
-              1.76776695e-01+1.76776695e-01j, ...,
-              7.13834983e-17+9.42059954e-17j, -1.76776695e-01+1.76776695e-01j,
-             -1.76776695e-01+1.76776695e-01j],
-            [ 7.43843391e-17-4.25606797e-17j,  9.71523969e-17-3.44101078e-17j,
-             -1.76776695e-01-1.76776695e-01j, ...,
-             -7.56947743e-17-5.53745984e-17j, -1.76776695e-01+1.76776695e-01j,
-              1.76776695e-01-1.76776695e-01j],
-            [ 1.76776695e-01-1.76776695e-01j,  1.76776695e-01-1.76776695e-01j,
-              6.67745909e-17+7.27432107e-18j, ...,
-             -1.76776695e-01-1.76776695e-01j,  9.50988899e-17-3.51585673e-17j,
-             -4.68753295e-17+1.20031377e-17j],
-            ...,
-            [ 4.40522111e-17-3.92478329e-18j, -4.15901801e-17+1.27601331e-18j,
-             -1.76776695e-01-1.76776695e-01j, ...,
-              4.07748908e-17-2.12508660e-17j, -1.76776695e-01+1.76776695e-01j,
-             -1.76776695e-01+1.76776695e-01j],
-            [ 1.76776695e-01-1.76776695e-01j, -1.76776695e-01+1.76776695e-01j,
-             -2.14497404e-17-1.36656436e-17j, ...,
-              1.76776695e-01+1.76776695e-01j,  5.54468159e-17+1.99827349e-17j,
-              7.01963462e-17-1.29716533e-18j],
-            [ 1.76776695e-01-1.76776695e-01j,  1.76776695e-01-1.76776695e-01j,
-             -2.25892009e-17-9.82634769e-18j, ...,
-              1.76776695e-01+1.76776695e-01j, -6.80407082e-17-7.37645205e-18j,
-              1.80014454e-17+2.29079844e-17j]])}
+     'spending_time': 0.39297690391540524,
+     'counts': defaultdict(int,
+                 {'10110': 1,
+                 '10100': 1,
+                 '01111': 1,
+                 '00111': 1,
+                 '01001': 2,
+                 '10111': 1,
+                 '10000': 1,
+                 '01100': 1,
+                 '01000': 1}),
+     'output_path': '/home/likaiqi/Workplace/test/QuICT/example/demo/output/9cc0e0b0960f11eca0429bf5d59c4d03'}
 
 
 Multi-GPU State-Vector Simulator
 ================================
-During the incresment of the qubits, the required memory of simulation is exponential increasing. The Multi-GPU State-Vector simulator
-is designed to use multi-gpus in one machine to simulate the running of the quantum circuit; therefore, the simulator can be faster and more extensive.
+During the increment of the qubits, the required memory of simulation is exponentially increasing. The Multi-GPU State-Vector simulator
+is designed to use multi-GPUs in one machine to simulate the running of the quantum circuit; therefore, the simulator can be faster and more extensive.
 
 Example
 >>>>>>>
 
 .. code:: python
 
-    from concurrent.futures import ProcessPoolExecutor, as_completed
-    from cupy.cuda import nccl
+    # Initial multi-GPU simulator
+    multi_simulator = Simulator(
+        device="GPU",
+        backend="multiGPU",
+        shots=10,
+        ndev=2
+    )
+    result = multi_simulator.run(circuit)    # get simulation's result
 
-    from QuICT.utility import Proxy
-    from QuICT.simulation.gpu_simulator import MultiStateVectorSimulator
-
-    def worker_thread(ndev, uid, dev_id):
-        # Using multi-GPU simulator
-        proxy = Proxy(ndevs=ndev, uid=uid, dev_id=dev_id)
-        simulator = MultiStateVectorSimulator(
-            proxy=proxy,
-            precision="double",
-            gpu_device_id=dev_id,
-            sync=True
-        )
-        state = simulator.run(cir)
-
-        return state
-
-    if __name__ == "__main__":
-        ndev = 2    # Device number
-        uid = nccl.get_unique_id()    # generate nccl id for Proxy connection
-        with ProcessPoolExecutor(max_workers=ndev) as executor:
-            tasks = [
-                executor.submit(worker_thread, ndev, uid, dev_id) for dev_id in range(ndev)
-            ]
-
-        # Collect result from each device
-        results = []
-        for t in as_completed(tasks):
-            results.append(t.result())
 
 Remote Simulator
 ================
-Currently the QuICT supports to simulate with the simulator from other platform (Qiskit and QCompute).
+Currently, the QuICT supports to simulate with the simulator from other platforms (Qiskit and QCompute).
 
 Example
 >>>>>>>

@@ -1,9 +1,9 @@
 Weight Decision
 ===================
 
-The weight decision problem, which requires to determine the Hamming weight of a given
+The weight decision problem, which requires determining the Hamming weight of a given
 binary string, is a natural and important problem, with applications in cryptanalysis,
-coding theory, fault-tolerant circuit design and so on. In this work, we consider a partial 
+coding theory, fault-tolerant circuit design, and so on. In this work, we consider a partial 
 Boolean function which distinguishes whether the Hamming weight of the length-n input is k or 
 it is l.
 

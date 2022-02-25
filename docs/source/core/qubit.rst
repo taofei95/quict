@@ -1,28 +1,28 @@
 Qubit
 =====
-The bit is the fundamental concept of classical computation and classical information. The Quantum Computation is build 
+The bit is the fundamental concept of classical computation and classical information. The Quantum Computation is built 
 upon a similar concept, the quantum bit (qubit).
 
 The qubit also have a state for quantum computation; unlike classical bit, the state can be the combinations of 0 and 1, which
-often called superpositions:
+are called superpositions:
 
 :math:`|\mu \rangle \rightarrow \alpha |0 \rangle + \beta |1 \rangle`
 
-In QuICT, we use a data structure Qubit to represent the concept of qubit in Quantum Computation, and for qubit's state, use the
-vector in two-dimensional complex vector space.
+In QuICT, we use a data structure Qubit to represent the concept of the qubit in Quantum Computation, and for qubit's state,
+use the vector in two-dimensional complex vector space.
 
 The Qubit has two properties:
     - id: the unique ID to distinguish each qubit.
-    - measured: store the measure result of the Qubit after apply the measure gate.
+    - measured: store the measurement result of the Qubit after applying the measure gate.
 
 Qureg
 =====
-The Qureg (Qubit registry) is a data structure in QuICT, which store a list of Qubits.
+The Qureg (Qubit registry) is a data structure in QuICT, which stores a list of Qubits. The Qureg inherits the class List of python,
+so that it can be treated as the python list.
 
-The Qureg inherits the class List of python, so that it can be treated as python list. 
 The Qureg also allows different initial ways:
     - n(int): build a list of new qubits with given length n.
-    - Qubit: build a list with given qubit.
+    - Qubit: build a list with a given qubit.
     - [Qubit/Qureg]: build a list with the given qubits/quregs.
 
 Example
