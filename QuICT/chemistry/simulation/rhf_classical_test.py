@@ -43,18 +43,19 @@ def rhf_classical_simulation(n_atoms, distance, data_dir=None):
     
     return rhf_objective, moldata, result, obi, tbi
 
-rhf_objective, moldata, result, obi, tbi = rhf_classical_simulation(6, 1.3)
-assert moldata.n_orbitals == 6
-assert moldata.n_electrons == 6
-assert moldata.one_body_integrals == None
-assert moldata.two_body_integrals == None
+if __name__ == "__main__":
+    rhf_objective, moldata, result, obi, tbi = rhf_classical_simulation(6, 1.3)
+    assert moldata.n_orbitals == 6
+    assert moldata.n_electrons == 6
+    assert moldata.one_body_integrals == None
+    assert moldata.two_body_integrals == None
 
-assert result['fun'] == -2.924060484972225
-assert result['success'] == True
-assert result['nit'] == 7
+    assert result['fun'] == -2.924060484972225
+    assert result['success'] == True
+    assert result['nit'] == 7
 
-rhf_objective, moldata, result, obi, tbi = rhf_classical_simulation(3, 2.5)
-# actually H_3 is H_3_plus
-assert result['fun'] == -0.8062049864970052
-assert result['success'] == True
-assert result['nit'] == 2
+    rhf_objective, moldata, result, obi, tbi = rhf_classical_simulation(3, 2.5)
+    # actually H_3 is H_3_plus
+    assert result['fun'] == -0.8062049864970052
+    assert result['success'] == True
+    assert result['nit'] == 2
