@@ -51,6 +51,7 @@ tensor_single_kernel = cp.RawKernel(r'''
         out[out_id] = x[x_id] * y[y_id];
     }
     ''', 'tensorsingle')
+tensor_single_kernel.compile()
 
 
 tensor_double_kernel = cp.RawKernel(r'''
@@ -65,6 +66,7 @@ tensor_double_kernel = cp.RawKernel(r'''
         out[out_id] = x[x_id] * y[y_id];
     }
     ''', 'tensordouble')
+tensor_double_kernel.compile()
 
 
 def tensor(A, B, gpu_out: bool = True, sync: bool = True):
@@ -131,6 +133,7 @@ matrixt_single_kernel = cp.RawKernel(r'''
         out[x_id*(cx*n*m) + y_id] = A[out_xid*cx + out_yid];
     }
     ''', 'matrix_tensorI_single')
+matrixt_single_kernel.compile()
 
 
 matrixt_double_kernel = cp.RawKernel(r'''
@@ -145,6 +148,7 @@ matrixt_double_kernel = cp.RawKernel(r'''
         out[x_id*(cx*n*m) + y_id] = A[out_xid*cx + out_yid];
     }
     ''', 'matrix_tensorI_double')
+matrixt_double_kernel.compile()
 
 
 def MatrixTensorI(A, n, m, gpu_out: bool = True, sync: bool = True):
@@ -207,6 +211,7 @@ vectorp_single_kernel = cp.RawKernel(r'''
         y[tid] = x[xid];
     }
     ''', 'vector_single_permutation')
+vectorp_single_kernel.compile()
 
 
 vectorp_double_kernel = cp.RawKernel(r'''
@@ -227,6 +232,7 @@ vectorp_double_kernel = cp.RawKernel(r'''
         y[tid] = x[xid];
     }
     ''', 'vector_double_permutation')
+vectorp_double_kernel.compile()
 
 
 def VectorPermutation(A, mapping, changeInput: bool = False, gpu_out: bool = True, sync: bool = True):
@@ -302,6 +308,7 @@ matrixp_single_kernel = cp.RawKernel(r'''
         y[tid] = x[rtemp*len + ctemp];
     }
     ''', 'matrix_single_permutation')
+matrixp_single_kernel.compile()
 
 
 matrixp_double_kernel = cp.RawKernel(r'''
@@ -327,6 +334,7 @@ matrixp_double_kernel = cp.RawKernel(r'''
         y[tid] = x[rtemp*len + ctemp];
     }
     ''', 'matrix_double_permutation')
+matrixp_double_kernel.compile()
 
 
 def MatrixPermutation(A, mapping, changeInput: bool = False, gpu_out: bool = True, sync: bool = True):
@@ -418,6 +426,7 @@ matrix_dot_vector_single_kernel = cp.RawKernel(r'''
 
     }
     ''', 'matrix_dot_vector_single')
+matrix_dot_vector_single_kernel.compile()
 
 
 matrix_dot_vector_double_kernel = cp.RawKernel(r'''
@@ -462,6 +471,7 @@ matrix_dot_vector_double_kernel = cp.RawKernel(r'''
 
     }
     ''', 'matrix_dot_vector_double')
+matrix_dot_vector_double_kernel.compile()
 
 
 def matrix_dot_vector(
@@ -513,10 +523,11 @@ simplevp_single_kernel = cp.RawKernel(r'''
     extern "C" __global__
     void simple_vp_single(const complex<float>* x, complex<float>* y, int* mapping) {
         int tid = blockDim.x * blockIdx.x + threadIdx.x;
-        int xid = mapping[tid]
+        int xid = mapping[tid];
         y[tid] = x[xid];
     }
     ''', 'simple_vp_single')
+simplevp_single_kernel.compile()
 
 
 simplecp_double_kernel = cp.RawKernel(r'''
@@ -528,6 +539,7 @@ simplecp_double_kernel = cp.RawKernel(r'''
         y[tid] = x[xid];
     }
     ''', 'simple_vp_double')
+simplecp_double_kernel.compile()
 
 
 def simple_vp(
@@ -618,6 +630,7 @@ qubit_vp_single_kernel = cp.RawKernel(r'''
         }
     }
     ''', 'qubit_vp_single')
+qubit_vp_single_kernel.compile()
 
 
 qubit_vp_double_kernel = cp.RawKernel(r'''
@@ -651,6 +664,7 @@ qubit_vp_double_kernel = cp.RawKernel(r'''
         }
     }
     ''', 'qubit_vp_double')
+qubit_vp_double_kernel.compile()
 
 
 def qubit_vp(

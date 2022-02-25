@@ -1,16 +1,17 @@
-#!/usr/bin/env python
-# -*- coding:utf8 -*-
-# @TIME    : 2021/5/20 上午10:37
-# @Author  : Kaiqi Li
-# @File    : cpu_calculator
 import random
-from numba import njit, prange
 import numpy as np
+
+from numba.pycc import CC
+from numba.types import bool_
 
 from QuICT.ops.utils import mapping_augment
 
 
-@njit(parallel=True, nogil=True)
+cc = CC("linalg")
+
+
+@cc.export('matrixtensorf', 'c8[:, :](c8[:, :], i4, i4)')
+@cc.export('matrixtensord', 'c16[:, :](c16[:, :], i4, i4)')
 def MatrixTensorI(A, n, m):
     """ tensor I^n and A and I^m
 
@@ -26,8 +27,8 @@ def MatrixTensorI(A, n, m):
     row_a, col_a = A.shape
     MatrixTensor = np.zeros((n * m * row_a, n * m * col_a), dtype=A.dtype)
 
-    for i in prange(row_a):
-        for j in prange(col_a):
+    for i in range(row_a):
+        for j in range(col_a):
             temp_M = A[i, j] * i_m
             for k in range(n):
                 start_row_idx = k * m * row_a + i * m
@@ -37,7 +38,8 @@ def MatrixTensorI(A, n, m):
     return MatrixTensor
 
 
-@njit(parallel=True, nogil=True)
+@cc.export('matrixpermf', 'c8[:, :](c8[:, :], i4[:], bool_)')
+@cc.export('matrixpermd', 'c16[:, :](c16[:, :], i4[:], bool_)')
 def MatrixPermutation(A: np.ndarray, mapping: np.ndarray, changeInput: bool = False) -> np.ndarray:
     """ permute A with mapping, inplace
 
@@ -56,7 +58,7 @@ def MatrixPermutation(A: np.ndarray, mapping: np.ndarray, changeInput: bool = Fa
     # They are just too spare in memory. Elements in the same column
     # are distributed with a gap as matrix row length.
     perm_mat = A[idx_mapping, :]
-    for i in prange(idx_mapping.shape[0]):
+    for i in range(idx_mapping.shape[0]):
         perm_mat[i] = perm_mat[i][idx_mapping]
 
     if changeInput:
@@ -65,7 +67,8 @@ def MatrixPermutation(A: np.ndarray, mapping: np.ndarray, changeInput: bool = Fa
     return perm_mat
 
 
-@njit()
+@cc.export('vectorpermf', 'c8[:](c8[:], i4[:], bool_)')
+@cc.export('vectorpermd', 'c16[:](c16[:], i4[:], bool_)')
 def VectorPermutation(A: np.ndarray, mapping: np.ndarray, changeInput: bool = False):
     """ permutaion A with mapping, changeInput
 
@@ -87,7 +90,8 @@ def VectorPermutation(A: np.ndarray, mapping: np.ndarray, changeInput: bool = Fa
     return A[switched_idx]
 
 
-@njit(parallel=True, nogil=True)
+@cc.export('tensorf', 'c8[:, :](c8[:, :], c8[:, :])')
+@cc.export('tensord', 'c16[:, :](c16[:, :], c16[:, :])')
 def tensor(A, B):
     """ tensor A and B
 
@@ -100,16 +104,17 @@ def tensor(A, B):
     """
     row_a, col_a = A.shape
     row_b, col_b = B.shape
-    tensor_data = np.empty((row_a * row_b, col_a * col_b), dtype=np.complex_)
+    tensor_data = np.empty((row_a * row_b, col_a * col_b), dtype=A.dtype)
 
-    for r in prange(row_a):
-        for c in prange(col_a):
+    for r in range(row_a):
+        for c in range(col_a):
             tensor_data[r * row_b:(r + 1) * row_b, c * col_b:(c + 1) * col_b] = A[r, c] * B
 
     return tensor_data
 
 
-@njit()
+@cc.export('dotf', 'c8[:, :](c8[:, :], c8[:, :])')
+@cc.export('dotd', 'c16[:, :](c16[:, :], c16[:, :])')
 def dot(A, B):
     """ dot matrix A and matrix B
 
@@ -123,24 +128,26 @@ def dot(A, B):
     return np.dot(A, B)
 
 
-@njit()
+@cc.export('multiplyf', 'c8[:, :](c8[:, :], c8[:, :])')
+@cc.export('multiplyd', 'c16[:, :](c16[:, :], c16[:, :])')
 def multiply(A, B):
     return np.multiply(A, B)
 
 
-@njit()
+@cc.export('matdotvecf', 'c8[:](c8[:, :], i4, c8[:], i4, i4[:])')
+@cc.export('matdotvecd', 'c16[:](c16[:, :], i4, c16[:], i4, i4[:])')
 def matrix_dot_vector(
     mat,
     mat_bit,
     vec,
     vec_bit,
-    affect_args,
-    aux
+    affect_args
 ):
     repeat = 1 << (vec_bit - mat_bit)
     arg_len = 1 << mat_bit
     sorted_args = affect_args.copy()
-    sorted_args = np.sort(sorted_args)
+    sorted_args.sort()
+    aux = np.zeros_like(vec)
     for i in range(repeat):
         for sarg_idx in range(mat_bit):
             less = i & ((1 << sorted_args[sarg_idx]) - 1)
@@ -152,10 +159,13 @@ def matrix_dot_vector(
                 if i & (1 << j):
                     indexes[i] += 1 << affect_args[j]
 
-        aux[indexes] = dot(mat, vec[indexes])
+        aux[indexes] = np.dot(mat, vec[indexes])
+
+    return aux
 
 
-@njit()
+@cc.export('measuref', 'bool_(i4, c8[:])')
+@cc.export('measured', 'bool_(i4, c16[:])')
 def measure_gate_apply(
     index: int,
     vec: np.array
@@ -178,3 +188,7 @@ def measure_gate_apply(
         vec[vec_idx_1] = np.complex128(0)
 
     return _1
+
+
+if __name__=="__main__":
+    cc.compile()
