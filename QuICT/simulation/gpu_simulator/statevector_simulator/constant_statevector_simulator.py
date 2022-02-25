@@ -360,7 +360,7 @@ class ConstantStateVectorSimulator(BasicGPUSimulator):
                     gate.controls + gate.targets,
                     self._vector,
                     self._qubits,
-                    gate.affectArgs,
+                    gate.cargs + gate.targs,
                     aux,
                     self._sync
                 )

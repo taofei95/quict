@@ -471,7 +471,7 @@ def matrix_dot_vector(
     vec_bit,
     affect_args,
     auxiliary_vec,
-    sync
+    sync: bool = True
 ):
     mat_length = 1 << mat_bit
 

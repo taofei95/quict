@@ -35,10 +35,7 @@ class BasicGPUSimulator(object):
     def _gate_matrix_prepare(self):
         # Pretreatment gate matrixs optimizer
         self.gateM_optimizer = GateMatrixs(self._precision, self._device_id)
-        for gate in self._gates:
-            self.gateM_optimizer.build(gate)
-
-        self.gateM_optimizer.concentrate_gate_matrixs()
+        self.gateM_optimizer.build(self._gates)
 
     @property
     def circuit(self):
@@ -64,4 +61,4 @@ class BasicGPUSimulator(object):
         pass
 
     def get_gate_matrix(self, gate):
-        return self.gateM_optimizer.target_matrix(gate)
+        return self.gateM_optimizer.get_target_matrix(gate)
