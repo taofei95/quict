@@ -14,7 +14,7 @@ def build_unitary_gate(compositeGate, unitary, targets: list):
         targets = [targets]
 
     targets.sort()
-    ugate = Unitary(unitary).copy()
+    ugate = Unitary(unitary)
     ugate.targs = targets
     compositeGate.append(ugate)
 

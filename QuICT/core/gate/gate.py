@@ -6,8 +6,7 @@
 import numpy as np
 import copy
 
-from QuICT.core.gate.composite_gate import CGATE_LIST
-from QuICT.core.utils import GateType, SPECIAL_GATE_SET, DIAGONAL_GATE_SET
+from QuICT.core.utils import GateType, SPECIAL_GATE_SET, DIAGONAL_GATE_SET, CGATE_LIST
 
 
 class BasicGate(object):
@@ -228,21 +227,14 @@ class BasicGate(object):
             return _gate
 
     def __call__(self):
-        """ give parameters for the gate.
+        """ give parameters for the gate, and give parameters by "()", and parameters should be one of int/float/complex
 
-        give parameters by "()".
         Some Examples are like this:
 
         Rz(np.pi / 2)           | qubit
         U3(np.pi / 2, 0, 0)     | qubit
 
-        Args:
-            params: give parameters for the gate, it can have following form,
-                1) int/float/complex
-                2) list<int/float/complex>
-                3) tuple<int/float/complex>
-        Raise:
-            TypeException: the type of params is wrong
+        *Important*: There is no parameters for current quantum gate.
 
         Returns:
             BasicGate: the gate after filled by parameters
@@ -250,13 +242,19 @@ class BasicGate(object):
         return self.copy()
 
     def __eq__(self, other):
-        if isinstance(other, BasicGate):
-            if other.name == self.name:
-                return True
+        assert isinstance(other, BasicGate)
+        if np.allclose(self.matrix, other.matrix):
+            return True
 
         return False
 
     def update_name(self, qubit_id: str, circuit_idx: int = None):
+        """ Updated gate's name with the given information
+
+        Args:
+            qubit_id (str): The qubit's unique ID.
+            circuit_idx (int, optional): The gate's order index in the circuit. Defaults to None.
+        """
         qubit_id = qubit_id[:6]
         name_parts = self.name.split('-')
         name_parts[1] = qubit_id
@@ -662,6 +660,17 @@ class U1Gate(BasicGate):
         self.pargs = params
 
     def __call__(self, alpha):
+        """ Set parameters for the gate.
+
+        Args:
+            alpha (int/float/complex): The parameter for gate
+
+        Raises:
+            TypeError: param not one of int/float/complex
+
+        Returns:
+            BasicGate: The gate with parameters
+        """
         if not self.permit_element(alpha):
             raise TypeError("int/float/complex", alpha)
 
@@ -697,6 +706,18 @@ class U2Gate(BasicGate):
         self.pargs = params
 
     def __call__(self, alpha, beta):
+        """ Set parameters for the gate.
+
+        Args:
+            alpha (int/float/complex): The parameter for gate
+            beta (int/float/complex): The parameter for gate
+
+        Raises:
+            TypeError: param not one of int/float/complex
+
+        Returns:
+            BasicGate: The gate with parameters
+        """
         params = [alpha, beta]
 
         for param in params:
@@ -738,6 +759,19 @@ class U3Gate(BasicGate):
         self.pargs = params
 
     def __call__(self, alpha, beta, gamma):
+        """ Set parameters for the gate.
+
+        Args:
+            alpha (int/float/complex): The parameter for gate
+            beta (int/float/complex): The parameter for gate
+            gamma (int/float/complex): The parameter for gate
+
+        Raises:
+            TypeError: param not one of int/float/complex
+
+        Returns:
+            BasicGate: The gate with parameters
+        """
         params = [alpha, beta, gamma]
 
         for param in params:
@@ -778,6 +812,17 @@ class RxGate(BasicGate):
         self.pargs = params
 
     def __call__(self, alpha):
+        """ Set parameters for the gate.
+
+        Args:
+            alpha (int/float/complex): The parameter for gate
+
+        Raises:
+            TypeError: param not one of int/float/complex
+
+        Returns:
+            BasicGate: The gate with parameters
+        """
         if not self.permit_element(alpha):
             raise TypeError("int/float/complex", alpha)
 
@@ -813,6 +858,17 @@ class RyGate(BasicGate):
         self.pargs = params
 
     def __call__(self, alpha):
+        """ Set parameters for the gate.
+
+        Args:
+            alpha (int/float/complex): The parameter for gate
+
+        Raises:
+            TypeError: param not one of int/float/complex
+
+        Returns:
+            BasicGate: The gate with parameters
+        """
         if not self.permit_element(alpha):
             raise TypeError("int/float/complex", alpha)
 
@@ -848,6 +904,17 @@ class RzGate(BasicGate):
         self.pargs = params
 
     def __call__(self, alpha):
+        """ Set parameters for the gate.
+
+        Args:
+            alpha (int/float/complex): The parameter for gate
+
+        Raises:
+            TypeError: param not one of int/float/complex
+
+        Returns:
+            BasicGate: The gate with parameters
+        """
         if not self.permit_element(alpha):
             raise TypeError("int/float/complex", alpha)
 
@@ -937,6 +1004,17 @@ class PhaseGate(BasicGate):
         self.pargs = params
 
     def __call__(self, alpha):
+        """ Set parameters for the gate.
+
+        Args:
+            alpha (int/float/complex): The parameter for gate
+
+        Raises:
+            TypeError: param not one of int/float/complex
+
+        Returns:
+            BasicGate: The gate with parameters
+        """
         if not self.permit_element(alpha):
             raise TypeError("int/float/complex", alpha)
 
@@ -1093,6 +1171,17 @@ class CRzGate(BasicGate):
         self.pargs = params
 
     def __call__(self, alpha):
+        """ Set parameters for the gate.
+
+        Args:
+            alpha (int/float/complex): The parameter for gate
+
+        Raises:
+            TypeError: param not one of int/float/complex
+
+        Returns:
+            BasicGate: The gate with parameters
+        """
         if not self.permit_element(alpha):
             raise TypeError("int/float/complex", alpha)
 
@@ -1137,6 +1226,17 @@ class CU1Gate(BasicGate):
         self.pargs = params
 
     def __call__(self, alpha):
+        """ Set parameters for the gate.
+
+        Args:
+            alpha (int/float/complex): The parameter for gate
+
+        Raises:
+            TypeError: param not one of int/float/complex
+
+        Returns:
+            BasicGate: The gate with parameters
+        """
         if not self.permit_element(alpha):
             raise TypeError("int/float/complex", alpha)
 
@@ -1181,6 +1281,19 @@ class CU3Gate(BasicGate):
         self.pargs = params
 
     def __call__(self, alpha, beta, gamma):
+        """ Set parameters for the gate.
+
+        Args:
+            alpha (int/float/complex): The parameter for gate
+            beta (int/float/complex): The parameter for gate
+            gamma (int/float/complex): The parameter for gate
+
+        Raises:
+            TypeError: param not one of int/float/complex
+
+        Returns:
+            BasicGate: The gate with parameters
+        """
         params = [alpha, beta, gamma]
 
         for param in params:
@@ -1230,6 +1343,18 @@ class FSimGate(BasicGate):
         self.pargs = params
 
     def __call__(self, alpha, beta):
+        """ Set parameters for the gate.
+
+        Args:
+            alpha (int/float/complex): The parameter for gate
+            beta (int/float/complex): The parameter for gate
+
+        Raises:
+            TypeError: param not one of int/float/complex
+
+        Returns:
+            BasicGate: The gate with parameters
+        """
         params = [alpha, beta]
         for param in params:
             if not self.permit_element(param):
@@ -1273,6 +1398,17 @@ class RxxGate(BasicGate):
         self.pargs = params
 
     def __call__(self, alpha):
+        """ Set parameters for the gate.
+
+        Args:
+            alpha (int/float/complex): The parameter for gate
+
+        Raises:
+            TypeError: param not one of int/float/complex
+
+        Returns:
+            BasicGate: The gate with parameters
+        """
         if not self.permit_element(alpha):
             raise TypeError("int/float/complex", alpha)
 
@@ -1313,6 +1449,17 @@ class RyyGate(BasicGate):
         self.pargs = params
 
     def __call__(self, alpha):
+        """ Set parameters for the gate.
+
+        Args:
+            alpha (int/float/complex): The parameter for gate
+
+        Raises:
+            TypeError: param not one of int/float/complex
+
+        Returns:
+            BasicGate: The gate with parameters
+        """
         if not self.permit_element(alpha):
             raise TypeError("int/float/complex", alpha)
 
@@ -1353,6 +1500,17 @@ class RzzGate(BasicGate):
         self.pargs = params
 
     def __call__(self, alpha):
+        """ Set parameters for the gate.
+
+        Args:
+            alpha (int/float/complex): The parameter for gate
+
+        Raises:
+            TypeError: param not one of int/float/complex
+
+        Returns:
+            BasicGate: The gate with parameters
+        """
         if not self.permit_element(alpha):
             raise TypeError("int/float/complex", alpha)
 
@@ -1495,6 +1653,7 @@ class PermGate(BasicGate):
         the length of permutaion must be n, and should be a permutation for [0, n) without repeat
 
         Args:
+            targets(int): the number of qubits
             params(list): the permutation parameters
 
         Returns:
@@ -1658,7 +1817,7 @@ class ControlPermShiftGate(BasicGate):
         give parameters (params, N) to the gate
 
         Args:
-            params(int): the number (can be negative) the qureg increase
+            a(int): the number (can be negative) the qureg increase
             N(int): the modulus
 
         Returns:
@@ -1813,9 +1972,6 @@ class PermFxGate(BasicGate):
 
     def __call__(self, n: int, params: list):
         """ pass Fx to the gate
-
-        Fx should be a 2^n list that represent a boolean function
-        {0, 1}^n -> {0, 1}
 
         Args:
             n (int): the number of targets
@@ -2036,6 +2192,17 @@ class CCRzGate(BasicGate):
         self.pargs = params
 
     def __call__(self, alpha):
+        """ Set parameters for the gate.
+
+        Args:
+            alpha (int/float/complex): The parameter for gate
+
+        Raises:
+            TypeError: param not one of int/float/complex
+
+        Returns:
+            BasicGate: The gate with parameters
+        """
         if not self.permit_element(alpha):
             raise TypeError("int/float/complex", alpha)
 
@@ -2150,8 +2317,7 @@ class IQFTGate(QFTGate):
         """ pass the unitary matrix
 
         Args:
-            params(int): point out the number of bits of the gate
-
+            targets(int): point out the number of bits of the gate
 
         Returns:
             IQFTGate: the IQFTGate after filled by target number

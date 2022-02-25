@@ -68,6 +68,16 @@ def build_gate(
     qubits: list,
     params: list = None
 ):
+    """ Build a quantum gate with given parameter
+
+    Args:
+        gate_type (GateType): The gate type
+        qubits (int/list/Qubit/Qureg): The qubit or qubit index of the gate.
+        params (list, optional): The gate's parameters. Defaults to None.
+
+    Returns:
+        BasicGate: The quantum gate
+    """
     gate = GATE_TYPE_TO_CLASS[gate_type]()
     if params is not None:
         params = params if isinstance(params, list) else [params]
@@ -94,6 +104,16 @@ def build_random_gate(
     qubits: int,
     random_params: bool = False
 ):
+    """ Build a quantum gate with random qubit and parameter.
+
+    Args:
+        gate_type (GateType): The gate type
+        qubits (int): the number of qubits
+        random_params (bool, optional): whether random parameter or use default parameter. Defaults to False.
+
+    Returns:
+        BasicGate: The quantum gate
+    """
     gate = GATE_TYPE_TO_CLASS[gate_type]()
     args_number = gate.controls + gate.targets
     choiced_qubits = random.sample(range(qubits), args_number)

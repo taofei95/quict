@@ -44,7 +44,7 @@ class ConstantStateVectorSimulator(BasicGPUSimulator):
         # Initial simulator with limit_qubits
         self._algorithm = LinAlgLoader(device="GPU", enable_gate_kernel=True, enable_multigpu_gate_kernel=False)
 
-    def _initial_circuit(self, circuit, use_previous):
+    def _initial_circuit(self, circuit: Circuit, use_previous: bool):
         """ Initial the qubits, quantum gates and state vector by given quantum circuit. """
         self._circuit = circuit
         self._qubits = int(circuit.width())
@@ -360,7 +360,7 @@ class ConstantStateVectorSimulator(BasicGPUSimulator):
                     gate.controls + gate.targets,
                     self._vector,
                     self._qubits,
-                    gate.affectArgs,
+                    gate.cargs + gate.targs,
                     aux,
                     self._sync
                 )

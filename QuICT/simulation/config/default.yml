@@ -11,14 +11,13 @@ GPU:
   statevector:
     precision: double
     gpu_device_id: 0
-    sync: False
+    sync: True
     optimize: False
 
   multiGPU:
+    ndev: 1
     precision: double
-    gpu_device_id: 0
-    sync: False
-    proxy: 1
+    sync: True
 
 qiskit:
   token: 1
