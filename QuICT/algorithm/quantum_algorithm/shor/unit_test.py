@@ -53,20 +53,20 @@ from QuICT.algorithm.quantum_algorithm import (
 #         a, _, _, _, _ = ClassicalZipShorFactor.run(number)
 #         assert number % a == 0
 
-
-def test_BEAShorFactor():
-    number_list = [
-        4, 6, 8, 9, 10,
-        12, 14, 15, 16, 18, 20,
-        21, 22, 24, 25, 26, 27,
-        30, 32, 33, 34, 35, 36,
-        # 45, 51, 55, 57, 95, 85,
-    ]
-    for number in number_list:
-        print('-------------------FACTORING %d-------------------------' % number)
-        a = BEAShorFactor.run(number,10)
-        print(a)
-        assert number % a == 0
+#TODO: test when Unitary Simulator satisfies n-qubit(n>2) gate (e.g. CSwap)
+# def test_BEAShorFactor():
+#     number_list = [
+#         4, 6, 8, 9, 10,
+#         12, 14, 15, 16, 18, 20,
+#         21, 22, 24, 25, 26, 27,
+#         30, 32, 33, 34, 35, 36,
+#         # 45, 51, 55, 57, 95, 85,
+#     ]
+#     for number in number_list:
+#         print('-------------------FACTORING %d-------------------------' % number)
+#         a = BEAShorFactor.run(N=number, max_rd=10)
+#         print(a)
+#         assert number % a == 0
 
 
 # def test_HRSShorFactor():
@@ -83,7 +83,7 @@ def test_BEAShorFactor():
 #         assert number % a == 0
 
 def test_BEAShorFactor_on_ConstantStateVectorSimulator():
-    from QuICT.simulation import ConstantStateVectorSimulator
+    from QuICT.simulation.gpu_simulator import ConstantStateVectorSimulator
     simulator = ConstantStateVectorSimulator(
         precision="double",
         gpu_device_id=0,
@@ -96,7 +96,7 @@ def test_BEAShorFactor_on_ConstantStateVectorSimulator():
     ]
     for number in number_list:
         print('-------------------FACTORING %d-------------------------' % number)
-        a = BEAShorFactor.run(number, simulator)
+        a = BEAShorFactor.run(N=number, max_rd=10, simulator=simulator)
         assert number % a == 0
 
 
