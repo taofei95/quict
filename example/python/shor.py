@@ -5,10 +5,11 @@
 # @File    : Shor.py.py
 
 import random
-from QuICT import *
 from math import log, ceil, gcd, pi
 from fractions import Fraction
-from QuICT.algorithm import Amplitude
+
+from QuICT.core import Circuit
+from QuICT.core.gate import *
 
 
 def run_shor(N, t=None):

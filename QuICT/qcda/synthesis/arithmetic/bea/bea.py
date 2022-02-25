@@ -87,7 +87,7 @@ def cc_fourier_adder_wired(gate_set, a, phib, c, dualControlled):
     Circuit for Shor’s algorithm using 2n+3 qubits
     http://arxiv.org/abs/quant-ph/0205095v3
     """
-    if type(c)==int:
+    if type(c) == int:
         c = [c]
     n = len(phib) - 1
     a = a & ~(1 << n)  # clear (n+1)-th bit to zero
@@ -124,7 +124,7 @@ def cc_fourier_adder_wired_reversed(gate_set, a, phib, c, dualControlled):
     Circuit for Shor’s algorithm using 2n+3 qubits
     http://arxiv.org/abs/quant-ph/0205095v3
     """
-    if type(c)==int:
+    if type(c) == int:
         c = [c]
     n = len(phib) - 1
     a = a & ~(1 << n)  # clear (n+1)-th bit to zero
@@ -182,7 +182,7 @@ def cc_fourier_adder_mod(gate_set, a, N, phib, c, low, dualControlled=True):
 
 
 def fourier_adder_mod(gate_set, a, N, phib, low):
-    """ use fourier_adder_wired/cc_fourier_adder_wired 
+    """ use fourier_adder_wired/cc_fourier_adder_wired
     to calculate (a+b)%N in Fourier space. no control bits.
 
     (phib=Φ(b),low) -> (phib'=Φ((a+b)%N),low)
@@ -404,7 +404,7 @@ class CCBEAAdderMod(Synthesis):
 class BEAAdderMod(Synthesis):
     @staticmethod
     def execute(n, a, N):
-        """ use fourier_adder_wired/cc_fourier_adder_wired 
+        """ use fourier_adder_wired/cc_fourier_adder_wired
         to calculate (a+b)%N in Fourier space. No cotrol bits
 
         (phib=Φ(b),low) -> (phib'=Φ((a+b)%N),low)
@@ -453,7 +453,7 @@ class CBEAMulMod(Synthesis):
         Circuit for Shor’s algorithm using 2n+3 qubits
         http://arxiv.org/abs/quant-ph/0205095v3
         """
-        
+
         gate_set = CompositeGate()
         qreg_b = list(range(n + 1))
         qreg_x = list(range(n + 1, 2 * n + 1))
@@ -487,7 +487,7 @@ class BEAMulMod(Synthesis):
         Circuit for Shor’s algorithm using 2n+3 qubits
         http://arxiv.org/abs/quant-ph/0205095v3
         """
-        
+
         gate_set = CompositeGate()
         qreg_b = list(range(n + 1))
         qreg_x = list(range(n + 1, 2 * n + 1))
@@ -520,7 +520,7 @@ class BEACUa(Synthesis):
         Circuit for Shor’s algorithm using 2n+3 qubits
         http://arxiv.org/abs/quant-ph/0205095v3
         """
-        
+
         gate_set = CompositeGate()
         qreg_b = list(range(n + 1))
         qreg_x = list(range(n + 1, 2 * n + 1))
@@ -528,7 +528,7 @@ class BEACUa(Synthesis):
         qreg_low = [2 * n + 2]
 
         with gate_set:
-            gate_set:CompositeGate
+            gate_set: CompositeGate
             c_mult_mod(gate_set, a, N, qreg_x, qreg_b, qreg_c, qreg_low)
             idx_start = 0
             idx_end = len(gate_set.gates)
@@ -540,5 +540,5 @@ class BEACUa(Synthesis):
             # Reversec_mult_mod(a_inv,N,x,b,c,low)
             for index in range(idx_end - 1, idx_start - 1, -1):
                 gate_set.gates.append(gate_set.gates[index].inverse())
-            
+
         return gate_set

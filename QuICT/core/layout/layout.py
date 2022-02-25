@@ -79,6 +79,9 @@ class Layout:
         self._name = name
         self._edge_list = []
 
+    def __str__(self):
+        return f"{self._name}\n{self._qubit_number}\n{self._edge_list}"
+
     def out_edges(self, begin_point) -> list:
         """ edges begin from begin_point
 

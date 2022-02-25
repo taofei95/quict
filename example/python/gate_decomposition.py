@@ -2,8 +2,10 @@
 import numpy as np
 from scipy.stats import unitary_group
 
-from QuICT.core import *
+from QuICT.core import Circuit
+from QuICT.core.gate import *
 from QuICT.qcda.synthesis.gate_decomposition import GateDecomposition
+
 
 if __name__ == "__main__":
     circuit = Circuit(3)

@@ -4,7 +4,8 @@
 # @Author  : Han Yu
 # @File    : gate_transform
 
-from QuICT.core import *
+from QuICT.core import Circuit
+from QuICT.core.gate import *
 from QuICT.qcda.synthesis.gate_transform import *
 
 if __name__ == "__main__":

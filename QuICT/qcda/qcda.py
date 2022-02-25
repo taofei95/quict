@@ -179,6 +179,7 @@ class QCDA(object):
             self.process.extend(self.default_mapping(layout))
 
         gates = self.__custom_compile(gates)
+        self.process = []
 
         return gates
 

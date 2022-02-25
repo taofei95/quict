@@ -366,7 +366,7 @@ setup(
     package_dir={"QuICT": f"{prj_root_relative}/QuICT/"},
     ext_modules=[
         CMakeExtension("QuICT.utility.graph_structure.", f"{prj_root}/QuICT/utility/graph_structure"),
-        CMakeExtension("QuICT.backends.", f"{prj_root}/QuICT/backends"),
+        # CMakeExtension("QuICT.backends.", f"{prj_root}/QuICT/backends"),
         CMakeExtension("QuICT.qcda.synthesis.initial_state_preparation.",
                        f"{prj_root}/QuICT/qcda/synthesis/initial_state_preparation/"),
         CythonExtension(

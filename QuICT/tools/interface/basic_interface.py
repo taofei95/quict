@@ -4,7 +4,7 @@
 # @Author  : Han Yu
 # @File    : _basicInterface.py
 
-from QuICT.core import *
+from QuICT.core import Circuit
 
 
 class BasicInterface(object):
