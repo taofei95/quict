@@ -20,7 +20,17 @@ given in ``BEA_shor`` and ``HRS_shor``. The only difference is in the
 :math:`controlled-U_a` circuit part. The former one is smaller in
 circuit depth while the latter is smaller in circuit width.
 
-The cost for 
+The required resources in the two implementations are shown in table
+
+Required Resources 
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+.. csv-table::
+ :header: "Circuit", "Qubit", "Size"
+ :widths: 15, 10, 10
+
+ BEA_shor,         :math:`2n+3`,     ":math:`21n^4`"
+ HRS_shor,        :math:`2n+2`,     ":math:`100n^3\log{n}`"
 
 BEA Shor
 --------
@@ -38,119 +48,36 @@ THOMAS HANER, MARTIN ROETTELER, and KRYSTA M. SVORE in
 Example
 -------
 
-Following is a demonstration of how to use ``BEA_shor``. More examples can be found
-in ``quict/example/python/``, such as ``BEA_demo.py``, ``HRS_demo.py``
-and ``order_finding_demo.py``.
+Following is a demonstration of how to use ``BEA_shor`` and the submodule ``order_finding``.
 
 .. code:: python
 
-   from QuICT.core import Circuit, X, Measure
-   from QuICT.qcda.synthesis.arithmetic.bea import *
+    from QuICT.algorithm import HRSShorFactor, BEAShorFactor
 
+    N = int(input("[HRS]Input the number to be factored: "))
+    a = HRSShorFactor.run(N,5,'demo')
+    print("HRSShor found factor", a)
 
-   def set_qureg(qreg, N):
-       """
-       Set the qreg as N, using X gates on specific qubits
-       """
-       n = len(qreg)
-       for i in range(n):
-           if N % 2 == 1:
-               X | qreg[n - 1 - i]
-           N = N // 2
+    N = int(input("[BEA]Input the number to be factored: "))
+    a = BEAShorFactor.run(N,5,'demo')
+    print("BEAShor found factor", a)
 
+.. code:: python
 
-   def ex_gcd(a, b, arr):
-       """
-       Implementation of Extended Euclidean algorithm
+    from QuICT.algorithm import HRS_order_finding, BEA_order_finding
 
-       Args:
-           a(int): the parameter a
-           b(int): the parameter b
-           arr(list): store the solution of ax + by = gcd(a, b) in arr, length is 2
+    # N = int(input("Input the modulo N: "))
+    # a = int(input("Input the element wanting the order: "))
 
-       """
+    print('HRS order finding')
+    order = HRS_order_finding.run(3,11,'demo')
+    if order != 0:
+        print("HRS_order_finding found order", order)
 
-       if b == 0:
-           arr[0] = 1
-           arr[1] = 0
-           return a
-       g = ex_gcd(b, a % b, arr)
-       t = arr[0]
-       arr[0] = arr[1]
-       arr[1] = t - int(a / b) * arr[1]
-       return g
-
-
-   def BEAAdder_demonstration():
-       print('BEAAdder demonstration: a(quantum) + b(classical)')
-       a = int(input('\tinput quantum number a: '))
-       b = int(input('\tinput classical number b: '))
-       n = int(input('\tinput quantum number length n: '))
-
-       circuit = Circuit(n + 1)
-       qreg_b = circuit(list(range(n + 1)))
-       set_qureg(qreg_b, a)
-       BEAAdderWired.execute(n, b) | circuit
-       Measure | qreg_b
-
-       circuit.draw('matp', 'BEAAdder_circuit.jpg')
-       circuit.exec()
-
-       print("\t%d + %d = %d" % (a, b, int(qreg_b)))
-
-
-   def BEAAdderMod_demonstration():
-       print('BEAAdderMod demonstration: a(quantum) + b(classical) mod N(classical)')
-       a = int(input('\tinput quantum number a: '))
-       b = int(input('\tinput classical number b: '))
-       N = int(input('\tinput classical modulo N: '))
-
-       if a >= N or b >= N:
-           print('\ta >= N or b >= N not allowed')
-           return 0
-
-       n = len(bin(N)) - 2
-       circuit = Circuit(n + 2)
-       qreg_b = circuit(list(range(n + 1)))
-       set_qureg(qreg_b, a)
-       BEAAdderMod.execute(n, b, N) | circuit
-       Measure | circuit
-       circuit.exec()
-       bb = int(qreg_b)
-       low = int(circuit(n + 1))
-
-       print("\t%d + %d (mod %d) = %d" % (a, b, N, bb))
-
-
-   def BEAMulMod_demonstration():
-       print('BEAMulMod demonstration: For gcd(a,N) = 1, a(classical)*x(quantum) mod N(classical)')
-       a = int(input('\tinput classical number a: '))
-       x = int(input('\tinput quantum number x: '))
-       N = int(input('\tinput classical modulo N: '))
-
-       arr = [0, 0]
-       if ex_gcd(N, a, arr) != 1:
-           print('\tgcd(a,N) != 1')
-           return 0
-
-       n = len(bin(N)) - 2
-       circuit = Circuit(2 * n + 2)
-       qreg_b = circuit(list(range(n + 1)))
-       qreg_x = circuit(list(range(n + 1, 2 * n + 1)))
-       set_qureg(qreg_b, 0)
-       set_qureg(qreg_x, x)
-       BEAMulMod.execute(n, a, N) | circuit
-       Measure | circuit
-
-       # circuit.draw('matp','BEAMulMod_circuit.jpg') #the image too large
-       circuit.exec()
-
-       print("\t%d * %d (mod %d) = %d" % (a, x, N, int(qreg_b)))
-
-
-   BEAAdder_demonstration()
-   BEAAdderMod_demonstration()
-   BEAMulMod_demonstration()
+    print('BEA order finding')
+    order = BEA_order_finding.run(3,11,'demo')
+    if order != 0:
+        print("BEA_order_finding found order", order)
 
 .. [1]
    Nielsen, M. A., & Chuang, I. L. (2019). *Quantum computation and
