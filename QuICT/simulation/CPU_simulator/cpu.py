@@ -177,7 +177,18 @@ class CircuitSimulator:
         """
         return self._instance.name()
 
-    def _run(self, circuit: Circuit, keep_state: bool = False) -> Tuple[np.ndarray, List[int]]:
+    @classmethod
+    def _map_measure(cls, circuit: Circuit, measure_raw: List[int]) -> List[List[int]]:
+        mid_map = []
+        for gate in circuit.gates:
+            if gate.type() == GATE_ID["Measure"]:
+                mid_map.append(gate.targ)
+        measure: List[List[int]] = [[] for _ in range(circuit.circuit_width())]
+        for idx, elem in enum(mid_map):
+            measure[elem].append(measure_raw[idx])
+        return measure
+
+    def _run(self, circuit: Circuit, keep_state: bool = False) -> Tuple[np.ndarray, List[List[int]]]:
         """Run simulation by gate description sequence and return measure gate results.
 
         Parameters
@@ -194,9 +205,12 @@ class CircuitSimulator:
         gate_desc_vec: List[GateDescription] = []
         for gate in circuit.gates:
             gate_desc_vec.extend(gate_to_desc(gate))
-        return self._instance.run(circuit.circuit_width(), gate_desc_vec, keep_state)
+        amplitude, measure_raw = self._instance.run(circuit.circuit_width(), gate_desc_vec, keep_state)
+        measure = self._map_measure(circuit, measure_raw)
+        return amplitude, measure
 
-    def run(self, circuit: Circuit, keep_state: bool = False) -> np.ndarray:
+    def run(self, circuit: Circuit, keep_state: bool = False, output_measure_res: bool = False) \
+            -> Union[np.ndarray, Tuple[np.ndarray, List[List[int]]]]:
         """Run simulation by gate description sequence and return measure gate results.
 
         Parameters
@@ -206,10 +220,13 @@ class CircuitSimulator:
         keep_state:
             start simulation on previous result
         """
-        amplitude, _ = self._run(circuit, keep_state)
-        return amplitude
+        amplitude, measure = self._run(circuit, keep_state)
+        if output_measure_res:
+            return amplitude, measure
+        else:
+            return amplitude
 
-    def sample(self, circuit: Circuit) -> List[int]:
+    def sample(self, circuit: Circuit) -> List[List[int]]:
         """Appending measure gates to end of circuit if not presented then
         apply measurement. Before calling this method, one should call `run`
         method first.
@@ -219,4 +236,5 @@ class CircuitSimulator:
         circuit:
             quantum circuit to be simulated
         """
-        return self._instance.sample(circuit.circuit_width())
+        measure_raw = self._instance.sample(circuit.circuit_width())
+        return self._map_measure(circuit, measure_raw)
