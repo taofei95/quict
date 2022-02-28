@@ -1,7 +1,7 @@
 import numpy as np
 from typing import *
 from QuICT.core import *
-from QuICT.core.gate import CompositeGate
+from QuICT.core.gate import build_gate, BasicGate, CompositeGate, GateType
 
 from .utility import *
 from .graph import *
@@ -38,8 +38,7 @@ class CnotWithoutAncillae:
         parallel_elimination.reverse()
         for level in parallel_elimination:
             for c, t in level:
-                _cx: CXGate = CX.copy()
-                _cx.affectArgs = [c, t]
+                _cx = build_gate(GateType.cx, [c, t])
                 composite_gate.append(_cx)
         return composite_gate
 

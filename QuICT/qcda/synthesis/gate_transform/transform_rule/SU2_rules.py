@@ -10,11 +10,12 @@ the file describe TransformRule the decomposite SU(2) into instruction set.
 
 """
 
+import random
 import numpy as np
 from numpy import arccos, linalg
 from scipy.stats import ortho_group
 
-from QuICT.core import *
+from QuICT.core.gate import *
 
 from .transform_rule import TransformRule
 

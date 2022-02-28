@@ -24,7 +24,7 @@ def test_rules_transform():
         for j in range(len(gateList)):
             if i != j:
                 rule = _generate_default_rule(gateList[i], gateList[j])
-                assert rule.check_equal()
+                assert rule.check_equal(ignore_phase=False)
 
 
 if __name__ == "__main__":

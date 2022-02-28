@@ -7,7 +7,8 @@
 import pytest
 
 from QuICT.algorithm.quantum_algorithm.grover import Grover, PartialGrover, GroverWithPriorKnowledge
-from QuICT.core import *
+from QuICT.core import Circuit
+from QuICT.core.gate import *
 
 
 def main_oracle(f, qreg, ancilla):

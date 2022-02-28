@@ -7,7 +7,8 @@
 import pytest
 from numpy import log2, floor, gcd
 
-from QuICT.core import *
+from QuICT.core import Circuit
+from QuICT.core.gate import X, Measure
 from QuICT.qcda.synthesis.arithmetic.vbe import *
 
 

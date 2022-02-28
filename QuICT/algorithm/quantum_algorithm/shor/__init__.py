@@ -8,5 +8,5 @@ from .classical_shor import ClassicalShorFactor
 from .classical_zip_shor import ClassicalZipShorFactor
 from .shor import ShorFactor
 from .zip_shor import ZipShorFactor
-from .HRS_shor import HRSShorFactor
-from .BEA_shor import BEAShorFactor
+from .HRS_shor import HRS_order_finding, HRSShorFactor
+from .BEA_shor import BEA_order_finding, BEAShorFactor

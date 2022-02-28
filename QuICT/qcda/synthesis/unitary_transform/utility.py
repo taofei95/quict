@@ -2,6 +2,7 @@ from typing import *
 import numpy as np
 
 from QuICT.core import *
+from QuICT.core.gate import *
 
 
 def add_factor_shift_into_phase(gates: CompositeGate, shift: complex) -> CompositeGate:

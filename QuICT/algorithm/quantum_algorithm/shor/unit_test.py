@@ -60,11 +60,11 @@ def test_BEAShorFactor():
         12, 14, 15, 16, 18, 20,
         21, 22, 24, 25, 26, 27,
         30, 32, 33, 34, 35, 36,
-        45, 51, 55, 57, 95, 85,
+        # 45, 51, 55, 57, 95, 85,
     ]
     for number in number_list:
         print('-------------------FACTORING %d-------------------------' % number)
-        a = BEAShorFactor.run(number)
+        a = BEAShorFactor.run(number,10)
         print(a)
         assert number % a == 0
 
@@ -75,11 +75,11 @@ def test_HRSShorFactor():
         12, 14, 15, 16, 18, 20,
         21, 22, 24, 25, 26, 27,
         30, 32, 33, 34, 35, 36,
-        45, 51, 55, 57, 95, 85,
+        # 45, 51, 55, 57, 95, 85,
     ]
     for number in number_list:
         print('-------------------FACTORING %d-------------------------' % number)
-        a = HRSShorFactor.run(number)
+        a = HRSShorFactor.run(number,10)
         assert number % a == 0
 
 

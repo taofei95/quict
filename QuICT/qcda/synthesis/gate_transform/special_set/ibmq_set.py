@@ -7,7 +7,7 @@
 from .. import InstructionSet
 from ..transform_rule import IbmqRule
 
-from QuICT.core import *
+from QuICT.core.gate import *
 
 IBMQSet = InstructionSet([CX, Rz, SX, X])
 IBMQSet.register_SU2_rule(IbmqRule)
