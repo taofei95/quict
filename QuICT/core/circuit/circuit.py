@@ -417,7 +417,7 @@ class Circuit(object):
         # build sub_circuit
         sub_circuit = Circuit(len(targets))
         set_targets = set(targets)
-        targets_gates = self.gates_for_qubit(targets)
+        targets_gates = self.gates_for_qubit(self.qubits(targets))
         sub_gates = []
 
         for gate_index in range(start, len(targets_gates)):
