@@ -1,4 +1,4 @@
-The Design Philosophy of QuICT
+Introduction to QuICT and Get Start
 -----------------------------------------------------------------------
 QuICT platform is a tool to design, compile and simulate quantum computer.
 In QuICT's Design Philosophy, the compiling and simulation of the quantum circuit
@@ -77,19 +77,19 @@ Contents
 
 .. toctree::
     :maxdepth: 1
-    :caption: Algorithm
-
-    algorithm/quantum_algorithm.rst
-    algorithm/synthetical_unitary.rst
-    algorithm/weight_decision.rst
-
-.. toctree::
-    :maxdepth: 1
     :caption: Core
 
     core/qubit.rst
     core/gates.rst
     core/circuit.rst
+
+.. toctree::
+    :maxdepth: 1
+    :caption: Algorithm
+
+    algorithm/quantum_algorithm.rst
+    algorithm/synthetical_unitary.rst
+    algorithm/weight_decision.rst
 
 .. toctree::
     :maxdepth: 2
