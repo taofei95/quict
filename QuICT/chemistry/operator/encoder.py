@@ -15,24 +15,22 @@ class Encoder:
     Superclass of encoding methods.
 
     Attributes:
-        n_orbitals_default(integer): the default number of orbitals
+        n_orbitals(integer): the number of orbitals
     """
-    def __init__(self, n_orbitals_default = 10):
-        self.n_orbitals_default = n_orbitals_default
+    def __init__(self, n_orbitals):
+        self.n_orbitals = n_orbitals
 
-    def encoder(self, fermion_operator, n_orbitals = -1):
+    def encoder(self, fermion_operator):
         """
         Encoders transform ladder operators to Qubit Operators.
 
         Args:
             fermion_operator(FermionOperator): FermionOperator to be transformed
-            n_orbitals(integer): the number of all the orbitals
 
         Returns:
             QubitOperator: The corresponding operators on qubits
         """
-        if n_orbitals == -1:
-            n_orbitals = self.n_orbitals_default
+        n_orbitals = self.n_orbitals
         ans = QubitOperator(0)
         for mono_f in fermion_operator.operators:
             mono_q = QubitOperator([], mono_f[1])
@@ -81,6 +79,9 @@ class JordanWigner(Encoder):
     """
     Implement the Jordan-Wigner encoding method.
     """
+    def __init__(self, n_orbitals=None):
+        super().__init__(n_orbitals)
+
     def encoder_single(self, target, kind, n_orbitals):
         Zlist = [(i,3) for i in range(target)]
         ans = QubitOperator(Zlist)
