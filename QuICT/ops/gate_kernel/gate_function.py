@@ -1499,14 +1499,14 @@ prop_add = cp.ElementwiseKernel(
     'prop_add')
 
 
-MeasureGate_prop_kernel = cp.ReductionKernel(
+MeasureGate_prop = cp.ReductionKernel(
     'T x',
     'T y',
     'x',
     'a + b',
     'y = abs(a)',
     '0',
-    'MeasureGate_prop_kernel')
+    'MeasureGate_prop')
 
 
 MeasureGate0_single_kernel = cp.RawKernel(r'''
@@ -1583,7 +1583,7 @@ ResetGate1_single_kernel = cp.RawKernel(r'''
         int label = blockDim.x * blockIdx.x + threadIdx.x;
         int _0 = (label & ((1 << index) - 1))
                 + (label >> index << (index + 1));
-        int _1 = _0 + (1 << index)
+        int _1 = _0 + (1 << index);
 
         vec[_0] = vec[_1];
         vec[_1] = complex<float>(0, 0);
@@ -1698,7 +1698,7 @@ def MeasureGate_Apply(index, vec, vec_bit, sync: bool = False, multigpu_prob=Non
     """
     if not multigpu_prob:
         prob = prop_add(vec, vec, 1 << index)
-        prob = MeasureGate_prop_kernel(prob, axis=0).real
+        prob = MeasureGate_prop(prob, axis=0).real
         prob = prob.get()
     else:
         prob = multigpu_prob
@@ -1752,7 +1752,7 @@ def ResetGate_Apply(index, vec, vec_bit, sync: bool = False, multigpu_prob=None)
     """
     if not multigpu_prob:
         prob = prop_add(vec, vec, 1 << index)
-        prob = MeasureGate_prop_kernel(prob, axis=0).real
+        prob = MeasureGate_prop(prob, axis=0).real
         prob = prob.get()
     else:
         prob = multigpu_prob
@@ -1840,3 +1840,9 @@ def PermFxGate_Apply(indexes, blocks, vec, vec_bit, sync: bool = False):
                 (thread_per_block,),
                 (start_idx, half_block_size, vec)
             )
+
+
+kernel_funcs = list(locals().keys())
+for name in kernel_funcs:
+    if name.endswith("kernel") or name.endswith("single") or name.endswith("double"):
+        locals()[name].compile()
