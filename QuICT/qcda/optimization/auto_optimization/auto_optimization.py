@@ -1,5 +1,6 @@
 import numpy as np
 from typing import List
+import inspect
 
 from QuICT.core import *
 from QuICT.qcda.optimization._optimization import Optimization
@@ -29,23 +30,31 @@ class AutoOptimization(Optimization):
 
     @classmethod
     def reduce_hadamard_gates(cls, gates: DAG):
-        print(__name__, 'not implemented yet')
+        """
+        how to design a template? a template need to have:
+        1. a circuit equation
+        2. a replacing method
+        """
+        pass
 
     @classmethod
     def cancel_single_qubit_gates(cls, gates: DAG):
-        print(__name__, 'not implemented yet')
+        """
+        1. iterate over all single qubit gate
+        2. starting from a single qubit gate, search for commuting patterns
+        """
 
     @classmethod
     def cancel_two_qubit_gates(cls, gates: DAG):
-        print(__name__, 'not implemented yet')
+        print(inspect.currentframe(), 'not implemented yet')
 
     @classmethod
     def merge_rotations(cls, gates: DAG):
-        print(__name__, 'not implemented yet')
+        print(inspect.currentframe(), 'not implemented yet')
 
     @classmethod
     def float_rotations(cls, gates: DAG):
-        print(__name__, 'not implemented yet')
+        print(inspect.currentframe(), 'not implemented yet')
 
     @classmethod
     def _execute(cls, gates, routine: List[int]):
