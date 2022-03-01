@@ -209,8 +209,19 @@ class Qureg(list):
         bit_idx.zfill(len(self))
 
         return bit_idx
-
+    
     def __add__(self, other):
+        """ get a combined qureg with this qureg and other qureg
+
+        Args:
+            other(Qureg): qureg to be added.
+
+        Return:
+            Qureg: the result or slice
+        """
+        return Qureg([self, other])
+
+    def __iadd__(self, other):
         """ get a combined qureg with this qureg and other qureg
 
         Args:

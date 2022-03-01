@@ -13,7 +13,7 @@ from cupy.cuda import nccl
 from QuICT.core import Circuit
 from QuICT.core.gate import *
 from QuICT.utility import Proxy
-from QuICT.simulation.gpu_simulator import MultiStateVectorSimulator
+from QuICT.simulation.gpu_simulator import MultiDeviceSimulatorLauncher
 
 
 q = 5
@@ -23,33 +23,12 @@ QFT.build_gate(q) | CIRCUIT
 QFT.build_gate(q) | CIRCUIT
 
 
-def worker(ndev, uid, dev_id):
-    proxy = Proxy(ndevs=ndev, uid=uid, dev_id=dev_id)
-
-    simulator = MultiStateVectorSimulator(
-        proxy=proxy,
-        precision="double",
-        gpu_device_id=dev_id,
-        sync=True
-    )
-    state = simulator.run(CIRCUIT)
-
-    return state.get()
-
-
 @unittest.skipUnless(os.environ.get("test_with_gpu", False), "require GPU")
 class TestMultiSVSimulator(unittest.TestCase):
     def test_simulator(self):
         ndev = 2
-        uid = nccl.get_unique_id()
-        with ProcessPoolExecutor(max_workers=ndev) as executor:
-            tasks = [
-                executor.submit(worker, ndev, uid, dev_id) for dev_id in range(ndev)
-            ]
-
-        results = []
-        for t in as_completed(tasks):
-            results.append(t.result())
+        md_sim = MultiDeviceSimulatorLauncher(ndev=ndev)
+        _ = md_sim.run(circuit=CIRCUIT)
 
         assert 1
 

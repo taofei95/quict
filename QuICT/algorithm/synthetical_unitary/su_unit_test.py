@@ -3,15 +3,12 @@
 # @TIME    : 2020/11/5 10:43
 # @Author  : Han Yu
 # @File    : unit_test.py
-
-import pytest
 import random
-
 import numpy as np
 
 from QuICT.core import Circuit
 from QuICT.core.gate import *
-from .._algorithm import SyntheticalUnitary
+from QuICT.algorithm.synthetical_unitary import SyntheticalUnitary
 
 
 SINGLE_GATE = [X, H, S, S_dagger, X, Y, Z, ID, U1, U2, U3, Rx, Ry, Rz, T, T_dagger]
@@ -47,7 +44,3 @@ def test_single():
             print(unitary, gen_g.matrix, gen_g.inverse().matrix, gen_g)
             assert 0
     assert 1
-
-
-if __name__ == '__main__':
-    pytest.main(["./unit_test.py"])

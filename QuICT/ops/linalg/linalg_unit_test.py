@@ -97,10 +97,10 @@ class TestGPULinalg(unittest.TestCase):
         vec = cp.zeros((1 << qubit_num, ), dtype=np.complex64)
         vec.put(0, np.complex64(1))
 
-        small_gates = UnitarySimulator.pretreatment(circuit)
+        small_gates = UnitarySimulator().pretreatment(circuit)
         for gate in small_gates:
             GPUCalculator.matrix_dot_vector(
-                gate.compute_matrix,
+                gate.matrix,
                 gate.targets + gate.controls,
                 vec,
                 qubit_num,
