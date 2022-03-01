@@ -77,7 +77,7 @@ class FermionOperator(PolynomialOperator):
         self.operators = [[operators, coefficient]]
 
     @classmethod
-    def getPolynomial(cls, monomial=None, coefficient=1.):
+    def get_polynomial(cls, monomial=None, coefficient=1.):
         '''
         Construct an instance of the same class(i.e. FermionOperator) using the arguments.
 

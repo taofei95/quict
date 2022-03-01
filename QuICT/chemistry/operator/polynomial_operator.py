@@ -53,7 +53,7 @@ class PolynomialOperator(object):
         self.operators=[[variables,coefficient]]
     
     @classmethod
-    def getPolynomial(cls, monomial=None, coefficient=1.):
+    def get_polynomial(cls, monomial=None, coefficient=1.):
         '''
         Construct an instance of the same class using the arguments.
         To be overrided.
@@ -102,7 +102,7 @@ class PolynomialOperator(object):
         Returns:
             PolynomialOperator: self + other
         """
-        ans = self.getPolynomial(0)
+        ans = self.get_polynomial(0)
         A = self.operators
         B = other.operators
         ia = ib = 0
@@ -144,7 +144,7 @@ class PolynomialOperator(object):
         Returns:
             PolynomialOperator: self * other
         """
-        ans = self.getPolynomial(0)
+        ans = self.get_polynomial(0)
         if not isinstance(other, PolynomialOperator):
             ans.operators = [[copy.deepcopy(mono[0]), mono[1] * other] for mono in self.operators]
             return ans
@@ -152,7 +152,7 @@ class PolynomialOperator(object):
         B = other.operators
         for mono_A in A:
             for mono_B in B:
-                ans += self.getPolynomial(mono_A[0] + mono_B[0], mono_A[1] * mono_B[1])
+                ans += self.get_polynomial(mono_A[0] + mono_B[0], mono_A[1] * mono_B[1])
         return ans
 
     def __imul__(self, other):
