@@ -1,5 +1,5 @@
 from random import randint
-from typing import Iterator
+from typing import Iterator, Tuple, List
 from collections import Iterable, deque
 import inspect
 
@@ -14,68 +14,41 @@ class DAG(Iterable):
 
     DONE converter between netlist and DAG
     DONE topological sort
-    TODO sub circuit enumeration
-    TODO weak ref needed
-    TODO need to distinguish interfaces of a multi qubit gate
+    DONE sub circuit enumeration
+    TODO weak ref needed?
+    DONE need to distinguish interfaces of a multi qubit gate
     """
 
     class Node:
         """
         DAG node class.
         """
-        __slots__ = ['gate', 'predecessors', 'successors', 'flag']
 
-        def __init__(self, gate_: BasicGate = None):
+        __slots__ = ['gate', 'predecessors', 'successors', 'flag', 'qubit_id', 'size']
+
+        def __init__(self, gate_: BasicGate = None, qubit_=0):
             """
             Args:
                 gate_(BasicGate): Gate represented by this node
+                qubit_(int): the actual qubit the gate sits on (used only when `gate_` is None)
             """
+            # TODO do we need to copy gate?
             self.gate = gate_
-            self.predecessors = {}
-            self.successors = {}
+            self.qubit_id = {qubit_: i for i, qubit_ in gate_.affectArgs} if gate_ else {qubit_: 0}
+            self.size = len(self.qubit_id)
+            self.predecessors: List[Tuple[DAG.Node, int]] = [(None, 0)] * self.size
+            self.successors: List[Tuple[DAG.Node, int]] = [(None, 0)] * self.size
             self.flag = 0
 
-        def __del__(self):
-            """
-            For debug use
-            """
-            print(f'in {inspect.currentframe()}: {self.gate.qasm_name} deconstructed')
+        def add_forward_edge(self, qubit_, node):
+            u_id = self.qubit_id[qubit_]
+            v_id = node.qubit_id[qubit_]
+            self.successors[u_id] = (node, v_id)
+            self.predecessors[v_id] = (self, v_id)
 
-        def check_equivalence(self, other, flag=0):
-            """
-            Check if the whole circuit starting from `self` equals a partial circuit starting
-            from `other` (only consider gate types)
-
-            Args:
-                other(Node): The node in another DAG corresponding to self
-                flag(int): Set the field `flag` of nodes in the other circuit to this value if check successful
-
-            Returns:
-                dict[int, DAG.Node]: Return None if not equal. Otherwise return node-to-node
-                mapping from this circuit's nodes (id) to the other circuit's nodes
-            """
-
-            if other.gate.qasm_name != self.gate.qasm_name:
-                return False
-            visited_node = {id(self): other}
-            queue = deque([(self, other)])
-            while len(queue) > 0:
-                u, v = queue.popleft()
-                for neighbors in ['predecessors', 'successors']:
-                    for qu, qv in zip(u.gate.affectArgs, v.gate.affectArgs):
-                        if qu in getattr(u, neighbors):
-                            u_nxt = getattr(u, neighbors)[qu]
-                            if u_nxt.gate and id(u_nxt) not in visited_node:
-                                if qv not in getattr(v, neighbors):
-                                    return None
-                                v_nxt = getattr(v, neighbors)[qv]
-                                if u_nxt.gate.qasm_name != v_nxt.gate.qasm_name:
-                                    return None
-                                visited_node[id(u_nxt)] = v_nxt
-                                queue.append((u_nxt, v_nxt))
-            for v in visited_node.values():
-                v.flag = flag
-            return visited_node
+        def connect(self, forward_qubit, backward_qubit, node):
+            self.successors[forward_qubit] = (node, backward_qubit)
+            node.predecessors[backward_qubit] = (self, forward_qubit)
 
     def __init__(self, gates: CompositeGate):
         """
@@ -83,20 +56,22 @@ class DAG(Iterable):
             gates(CompositeGate): Circuit represented by this DAG
         """
 
-        # TODO how to get number of qubits
-        self._start_nodes = [self.Node() for _ in range(gates.circuit_width())]
+        self.size = gates.circuit_width()
+        self.start_nodes = [self.Node(qubit_=i) for i in range(self.size)]
+        self.end_nodes = [self.Node(qubit_=i) for i in range(self.size)]
         self._build_graph(gates)
 
     def _build_graph(self, gates: CompositeGate):
+        cur_nodes = self.start_nodes.copy()
         for gate_ in gates:
             gate_: BasicGate
             node = self.Node(gate_)
-            cur_nodes = self._start_nodes.copy()
-
             for qubit_ in gate_.affectArgs:
-                cur_nodes[qubit_].successors[qubit_] = node
-                node.predecessors[qubit_] = cur_nodes[qubit_]
+                cur_nodes[qubit_].add_forward_edge(qubit_, node)
                 cur_nodes[qubit_] = node
+
+        for qubit_ in range(self.size):
+            cur_nodes[qubit_].add_forward_edge(qubit_, self.end_nodes[qubit_])
 
     def get_circuit(self):
         """
@@ -105,7 +80,16 @@ class DAG(Iterable):
         Returns:
             CompositeGate: Circuit equivalent to this DAG
         """
-        return CompositeGate(list(self))
+
+        circ = Circuit(self.size)
+        mapping = {(id(node), 0): qubit_ for qubit_, node in enumerate(self.start_nodes)}
+        for node in self.topological_sort():
+            for qubit_ in range(node.size):
+                pred, qubit2 = node.predecessors[qubit_]
+                mapping[(id(node), qubit_)] = mapping[(id(pred), qubit2)]
+
+            node.gate | circ([mapping[(id(node), qubit_)] for qubit_ in range(node.size)])
+        return CompositeGate(circ)
 
     def topological_sort(self):
         """
@@ -114,36 +98,21 @@ class DAG(Iterable):
         Returns:
             Iterator[DAG.Node]: gates in topological order
         """
+
         edge_count = {}
-        queue = deque(self._start_nodes)
+        queue = deque(self.start_nodes)
         while len(queue) > 0:
             cur = queue.popleft()
             if cur.gate:
                 yield cur
-
-            for nxt in cur.successors:
+            for nxt, _ in cur.successors:
+                if nxt is None:
+                    continue
                 if id(nxt) not in edge_count:
-                    edge_count[id(nxt)] = len(nxt.predecessors)
+                    edge_count[id(nxt)] = nxt.size
                 edge_count[id(nxt)] -= 1
                 if edge_count[id(nxt)] == 0:
                     queue.append(nxt)
-
-    def match_sub_circuit(self, pattern_node):
-        """
-        Iterate over every non-overlap sub-circuit in this DAG that are equivalent to the pattern.
-        Do not modify the DAG during the iteration.
-
-        TODO complete docstring
-        """
-        rand_flag = randint(0, 0xffffffff)
-        for node in self.topological_sort():
-            if node.flag != rand_flag:
-                visited_node = pattern_node.check_equivalence(node, flag=rand_flag)
-                if visited_node:
-                    yield visited_node
-
-    def replace_sub_circuit(self):
-        pass
 
     def __iter__(self):
         """
@@ -152,5 +121,10 @@ class DAG(Iterable):
         Returns:
             Iterator[BasicGate]: gates in topological order
         """
+
         for node in self.topological_sort():
             yield node.gate
+
+    def copy(self):
+        # TODO faster implementation of copy()
+        return DAG(self.get_circuit())
