@@ -34,6 +34,7 @@ def order_finding(a:int, N: int, demo = None, eps: float = 1/10,):
     if demo == 'demo': print(msg)
     else: logging.info(msg)
     trickbit_store = [0] * t
+
     circuit = Circuit(2 * n + 2)
     x_reg = circuit([i for i in range(n)])
     # ancilla = circuit([i for i in range(n,2*n)])
@@ -58,6 +59,7 @@ def order_finding(a:int, N: int, demo = None, eps: float = 1/10,):
         if trickbit_store[k] == 1:
             X | trickbit
     Measure | x_reg
+    
     trickbit_store.reverse()
     msg = f'\tphi~ (approximately s/r) in binary form is {trickbit_store}'
     if demo == 'demo': print(msg)
