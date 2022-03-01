@@ -31,7 +31,7 @@ class Encoder:
             QubitOperator: The corresponding operators on qubits
         """
         n_orbitals = self.n_orbitals
-        ans = QubitOperator(0)
+        ans = QubitOperator()
         for mono_f in fermion_operator.operators:
             mono_q = QubitOperator([], mono_f[1])
             for operator in mono_f[0]:

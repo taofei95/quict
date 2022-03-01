@@ -31,25 +31,25 @@ class PolynomialOperator(object):
     def __init__(self, monomial=None, coefficient=1.):
         """
         Create a monomial of operators with the two given formats.
+        PolynomialOperator() means zero operator, recognized by 'monomial == None'
+        QubitOperator('X1') or FermionOperator('1^') or PolynomialOperator([(1,1)]) implies the coefficient is 1
+        PolynomialOperator(0) or replacing 0 with some other constant is illegal
 
         Args:
             monomial(list/str): Operator monomial in list/string format
             coefficient(int/float/complex): Coefficient of the monomial
         """
-        # If monomial is None or [], it means identity operator.(not the zero operator)
-        # If monomial is 0, it means the zero operator
-        if monomial == 0 or coefficient == 0:
+        if monomial == None or coefficient == 0:       # zero operator
             self.operators = []
             return
-        if monomial == None or monomial == []:
-            self.operators = [[[], coefficient]]
-            return
-        variables = []
         if isinstance(monomial, list):
             variables = copy.deepcopy(monomial)
         elif isinstance(monomial, str):
+            variables = []
             for var in monomial.split():
                 variables.append(self.analyze_single(var))
+        else:
+            raise Exception("Illegal type of monomial.")
         self.operators=[[variables,coefficient]]
     
     @classmethod
@@ -62,7 +62,7 @@ class PolynomialOperator(object):
             monomial(list/str): Operator monomial in list/string format
             coefficient(int/float/complex): Coefficient of the monomial
         '''
-        raise Exception("Construction of PolynomialOperator is prohibited")
+        raise Exception("Construction of PolynomialOperator is prohibited.")
 
     @classmethod
     def analyze_single(cls, single_operator):
@@ -102,7 +102,7 @@ class PolynomialOperator(object):
         Returns:
             PolynomialOperator: self + other
         """
-        ans = self.get_polynomial(0)
+        ans = self.get_polynomial()
         A = self.operators
         B = other.operators
         ia = ib = 0
@@ -144,7 +144,7 @@ class PolynomialOperator(object):
         Returns:
             PolynomialOperator: self * other
         """
-        ans = self.get_polynomial(0)
+        ans = self.get_polynomial()
         if not isinstance(other, PolynomialOperator):
             ans.operators = [[copy.deepcopy(mono[0]), mono[1] * other] for mono in self.operators]
             return ans

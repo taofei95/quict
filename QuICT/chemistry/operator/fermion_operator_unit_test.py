@@ -9,7 +9,7 @@ import pytest
 
 def test_construction():
     f_a = FermionOperator("1^ 4^ 3 2 2^ 5 4 2 5^ 2 4^", -1.2)
-    assert f_a == FermionOperator(0)
+    assert f_a == FermionOperator()
     f_a = FermionOperator("1^ 4^ 3 2 2^ 5 4 2 5^ 2^ 4^", -1.2)
     f_A = FermionOperator([(4,1), (3,0), (2,0), (5,0), (1,1), (2,1), (5,1)], 1.2)
     assert f_a == f_A
@@ -32,11 +32,11 @@ def test_operation():
     assert f_c == f_C
 
     f_c = FermionOperator([(2,0), (3,1), (1,0)], 0.5)
-    assert f_a * f_c == FermionOperator(0)
+    assert f_a * f_c == FermionOperator()
     assert f_c * f_a == FermionOperator('1^ 1 2 3^ 8', -0.1) + FermionOperator('2 3^ 8', 0.1)
 
     f_c = FermionOperator([(2,1), (8,1), (1,0)], 5)
-    assert f_a * f_b == FermionOperator(0)
+    assert f_a * f_b == FermionOperator()
     assert f_a * f_c * f_b == FermionOperator('1^ 8 2^', 0.4)
 
 if __name__ == "__main__":

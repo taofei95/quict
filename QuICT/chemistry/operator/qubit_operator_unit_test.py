@@ -11,7 +11,7 @@ def test_construction():
     f_a = QubitOperator("X1 Y4 Z13 X2 Y1", -1.2)
     f_A = QubitOperator([(1,2), (4,2), (2,1), (13,3), (1,1)], 1.2)
     f_b = QubitOperator("Z1 Y4 Z13 X2", 1.2j)
-    assert f_a == f_A and f_a + f_b == QubitOperator(0)
+    assert f_a == f_A and f_a + f_b == QubitOperator()
 
     f_a = QubitOperator("X1 X1 Y1 Z1 Y1 Z1 X1 Y1")
     assert f_a == -1j * QubitOperator("Z1")
