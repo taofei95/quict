@@ -18,5 +18,5 @@ if __name__ == "__main__":
 
     gates_decomposed = GateDecomposition.execute(circuit)
     circuit_decomposed = Circuit(3)
-    circuit_decomposed.set_exec_gates(gates_decomposed)
+    circuit_decomposed.extend(gates_decomposed.gates)
     circuit_decomposed.draw()

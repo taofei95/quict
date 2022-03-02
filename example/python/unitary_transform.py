@@ -10,5 +10,5 @@ if __name__ == '__main__':
     compositeGate, _ = UnitaryTransform.execute(U)
 
     circuit = Circuit(3)
-    circuit.set_exec_gates(compositeGate)
+    circuit.extend(compositeGate.gates)
     circuit.draw()

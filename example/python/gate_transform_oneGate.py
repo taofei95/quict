@@ -12,6 +12,6 @@ if __name__ == "__main__":
     circuit = Circuit(2)
     CX | circuit
     circuit.draw()
-    compositeGate = GateTransform(circuit, GoogleSet)
-    circuit.set_exec_gates(compositeGate)
+    compositeGate = GateTransform.execute(circuit, GoogleSet)
+    circuit.extend(compositeGate.gates)
     circuit.draw()
