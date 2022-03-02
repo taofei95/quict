@@ -13,10 +13,10 @@ typelist = [
 
 if __name__ == '__main__':
     circuit = Circuit(5)
-    circuit.random_append(rand_size=100, typeList=typelist)
+    circuit.random_append(rand_size=100, typelist=typelist)
     circuit.draw()
 
     gates = CommutativeOptimization.execute(circuit)
     circuit_opt = Circuit(5)
-    circuit_opt.set_exec_gates(gates)
+    circuit_opt.extend(gates)
     circuit_opt.draw()
