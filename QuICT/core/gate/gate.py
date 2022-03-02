@@ -6,7 +6,8 @@
 import numpy as np
 import copy
 
-from QuICT.core.utils import GateType, SPECIAL_GATE_SET, DIAGONAL_GATE_SET, CGATE_LIST
+from QuICT.core.utils import GateType, SPECIAL_GATE_SET, DIAGONAL_GATE_SET,\
+                             PAULI_GATE_SET, CLIFFORD_GATE_SET, CGATE_LIST
 
 
 class BasicGate(object):
@@ -368,6 +369,14 @@ class BasicGate(object):
         """
         return self.controls == 1 and self.targets == 1
 
+    def is_clifford(self) -> bool:
+        """ judge whether gate's matrix is a Clifford gate
+
+        Returns:
+            bool: True if gate's matrix is a Clifford gate
+        """
+        return self.type in CLIFFORD_GATE_SET
+
     def is_diagonal(self) -> bool:
         """ judge whether gate's matrix is diagonal
 
@@ -381,6 +390,14 @@ class BasicGate(object):
 
     def _is_diagonal(self) -> bool:
         return np.allclose(np.diag(np.diag(self.matrix)), self.matrix)
+
+    def is_pauli(self) -> bool:
+        """ judge whether gate's matrix is a Pauli gate
+
+        Returns:
+            bool: True if gate's matrix is a Pauli gate
+        """
+        return self.type in PAULI_GATE_SET
 
     def is_special(self) -> bool:
         """ judge whether gate's is special gate, which is one of

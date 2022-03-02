@@ -99,3 +99,20 @@ SUPREMACY_GATE_SET = [
     GateType.sy,
     GateType.sw
 ]
+
+
+PAULI_GATE_SET = [
+    GateType.x,
+    GateType.y,
+    GateType.z
+]
+
+
+CLIFFORD_GATE_SET = [
+    GateType.x,
+    GateType.y,
+    GateType.z,
+    GateType.h,
+    GateType.s,
+    GateType.cx
+]
