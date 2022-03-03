@@ -8,8 +8,8 @@ import random
 
 import numpy as np
 
-from QuICT.core import BasicGate, GATE_CLASS_BY_ID
-
+from QuICT.core.gate import BasicGate
+from QuICT.core.gate.gate_builder import GATE_TYPE_TO_CLASS
 
 class TransformRule(object):
     """ a class describe a transform rule
@@ -43,7 +43,7 @@ class TransformRule(object):
     @source.setter
     def source(self, source):
         if isinstance(source, BasicGate):
-            source = source.type()
+            source = source.type
         self.__source = source
 
     @property
@@ -55,7 +55,7 @@ class TransformRule(object):
     @target.setter
     def target(self, target):
         if isinstance(target, BasicGate):
-            target = target.type()
+            target = target.type
         self.__target = target
 
     def __init__(self, funtion, source=None, target=None):
@@ -82,8 +82,10 @@ class TransformRule(object):
         """
         if not self.source:
             raise Exception("it is used for two qubit rules.")
-        gate = GATE_CLASS_BY_ID[self.source]().copy()
-        gate.affectArgs = [i for i in range(gate.targets + gate.controls)]
+        gate = GATE_TYPE_TO_CLASS[self.source]().copy()
+        # gate.affectArgs = [i for i in range(gate.targets + gate.controls)]
+        gate.cargs = [i for i in range(gate.controls)]
+        gate.targs = [i for i in range(gate.controls, gate.controls + gate.targets)]
         gate.pargs = [random.random() * 2 * np.pi for _ in range(gate.params)]
         compositeGate = self.transform(gate)
         return compositeGate.equal(gate, ignore_phase=ignore_phase, eps=eps)

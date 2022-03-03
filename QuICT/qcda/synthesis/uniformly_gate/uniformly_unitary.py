@@ -8,7 +8,7 @@ import numpy as np
 
 from . import UniformlyRz
 from .._synthesis import Synthesis
-from QuICT.core import GateBuilder, GATE_ID, CompositeGate, H, Rz, U3
+from QuICT.core.gate import build_gate, GateType, CompositeGate, H, Rz, U3
 
 
 def gates_from_unitary(unitary, target):
@@ -125,12 +125,12 @@ def uniformlyUnitarySolve(low, high, unitary, mapping):
         the synthesis result
     """
     if low + 1 == high:
-        return CompositeGate(gates_from_unitary(unitary[0], low))
+        gateA = gates_from_unitary(unitary[0], low)
+        gates = CompositeGate()
+        gates.append(gateA)
+        return gates
     length = len(unitary) // 2
-    GateBuilder.setGateType(GATE_ID["CX"])
-    GateBuilder.setTargs(mapping[high - 1])
-    GateBuilder.setCargs(mapping[low])
-    gateA = GateBuilder.getGate()
+    gateA = build_gate(GateType.cx, [mapping[low], mapping[high - 1]])
     Rxv = []
     Rxu = []
     angle_list = [0] * 2 * length

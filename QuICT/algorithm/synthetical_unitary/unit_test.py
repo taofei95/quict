@@ -9,8 +9,9 @@ import random
 
 import numpy as np
 
-from QuICT import *
-from QuICT.algorithm import SyntheticalUnitary
+from QuICT.core import Circuit
+from QuICT.core.gate import *
+from .._algorithm import SyntheticalUnitary
 
 
 SINGLE_GATE = [X, H, S, S_dagger, X, Y, Z, ID, U1, U2, U3, Rx, Ry, Rz, T, T_dagger]

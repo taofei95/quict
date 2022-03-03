@@ -1,4 +1,5 @@
 # noinspection PyUnresolvedReferences
+import numpy as np
 from QuICT.qcda.synthesis.uniformly_gate import UniformlyRz
 from QuICT.core import *
 

@@ -5,10 +5,12 @@
 # @File    : gate_based
 
 import numpy as np
-import cupy as cp
+try:
+    import cupy as cp
+except ImportError:
+    cupy = None
 
-
-_GATES_EXCEPT = ["MeasureGate", "ResetGate", "PermFxGate", "PermGate"]
+from QuICT.core.utils import SPECIAL_GATE_SET, GateType
 
 
 class GateMatrixs:
@@ -25,34 +27,39 @@ class GateMatrixs:
         self.device_id = gpu_device_id
         self.matrix_idx = []
         self.matrix_len = 0
+        self._unitary_idx = 0
 
     @property
     def matrix(self):
         """ Return the matrix with all gates' compute matrix. """
         return self.final_matrix
 
-    def build(self, gate):
-        """
-        Add gate into GateMatrixs, if the gate is the new one.
-
-        Args:
-            gate(Gate): the gate in circuit.
-        """
-        gate_name = gate.name.split("_")[0]
-        if gate_name in _GATES_EXCEPT:
-            return
-
-        param_num = gate.params
-        if gate.params != 0:
-            for i in range(param_num):
-                gate_name += f"_{gate.pargs[i]}"
-
-        if gate_name == "UnitaryGate":
+    def _get_gate_name(self, gate):
+        if gate.type == GateType.unitary:
             gate_name = gate.name
+        else:
+            gate_name = str(gate.type)
 
-        if gate_name not in self.gate_matrixs.keys():
-            matrix = gate.compute_matrix
-            self._build_matrix_gate(gate_name, matrix)
+        for parg in gate.pargs:
+            gate_name += f"_{parg}"
+
+        return gate_name
+
+    def build(self, gates):
+        for gate in gates:
+            if gate.type in SPECIAL_GATE_SET and gate.type != GateType.unitary:
+                continue
+
+            if gate.type == GateType.unitary:
+                gate.name = gate.name + f"_{self._unitary_idx}"
+                self._unitary_idx += 1
+
+            gate_name = self._get_gate_name(gate)
+            if gate_name not in self.gate_matrixs.keys():
+                matrix = gate.matrix
+                self._build_matrix_gate(gate_name, matrix)
+
+        self._concentrate_gate_matrixs()
 
     def _build_matrix_gate(self, gate_name, matrix):
         """ Add gate. """
@@ -62,7 +69,7 @@ class GateMatrixs:
             matrix = matrix.astype(self.precision)
         self.matrix_idx.append(matrix)
 
-    def concentrate_gate_matrixs(self):
+    def _concentrate_gate_matrixs(self):
         """ Combined all gates' computer matrix in one large matrix."""
         self.final_matrix = np.empty(self.matrix_len, dtype=self.precision)
         start = 0
@@ -74,24 +81,17 @@ class GateMatrixs:
         with cp.cuda.Device(self.device_id):
             self.final_matrix = cp.array(self.final_matrix)
 
-    def target_matrix(self, gate):
+    def get_target_matrix(self, gate):
         """
         Find the compute matrix of the given gate.
+
         Args:
             gate(Gate): the gate in circuit.
         """
-        gate_name = gate.name.split("_")[0]
-        param_num = gate.params
-        if param_num != 0:
-            for i in range(param_num):
-                gate_name += f"_{gate.pargs[i]}"
+        if gate.type in SPECIAL_GATE_SET and gate.type != GateType.unitary:
+            raise KeyError(f"Wrong gate here. {gate.name}")
 
-        if gate_name in _GATES_EXCEPT:
-            raise KeyError(f"Wrong gate here. {gate_name}")
-
-        if gate_name == "UnitaryGate":
-            gate_name = gate.name
-
+        gate_name = self._get_gate_name(gate)
         start, itvl = self.gate_matrixs[gate_name]
 
         return self.final_matrix[start:start + itvl]

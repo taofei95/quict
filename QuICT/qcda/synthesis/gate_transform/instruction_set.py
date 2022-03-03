@@ -4,7 +4,8 @@
 # @Author  : Han Yu
 # @File    : instruction_set.py
 
-from QuICT.core import BasicGate, GATE_ID, GATE_CLASS_BY_ID
+from QuICT.core.gate import BasicGate, GateType
+from QuICT.core.gate.gate_builder import GATE_TYPE_TO_CLASS
 from .transform_rule import TransformRule
 from .transform_rule.two_qubit_gate_rules import *
 from .transform_rule.SU2_rules import *
@@ -37,11 +38,11 @@ def _generate_default_rule(source, target):
         TransformRule: a valid rule.
     """
     if isinstance(source, BasicGate):
-        source = source.type()
+        source = source.type
     if isinstance(target, BasicGate):
-        target = target.type()
-    source = _capitalize_name_of_gate(GATE_CLASS_BY_ID[source].__name__)
-    target = _capitalize_name_of_gate(GATE_CLASS_BY_ID[target].__name__)
+        target = target.type
+    source = _capitalize_name_of_gate(GATE_TYPE_TO_CLASS[source].__name__)
+    target = _capitalize_name_of_gate(GATE_TYPE_TO_CLASS[target].__name__)
     rule_name = f"{source}2{target}Rule"
     return eval(rule_name)
 
@@ -73,7 +74,7 @@ class InstructionSet(object):
             two_qubit_gate(int/BasicGate):
         """
         if isinstance(two_qubit_gate, BasicGate):
-            two_qubit_gate = two_qubit_gate.type()
+            two_qubit_gate = two_qubit_gate.type
         self.__two_qubit_gate = two_qubit_gate
 
     @property
@@ -92,7 +93,7 @@ class InstructionSet(object):
         one_qubit_gates_list = []
         for element in one_qubit_gates:
             if isinstance(element, BasicGate):
-                one_qubit_gates_list.append(element.type())
+                one_qubit_gates_list.append(element.type)
             else:
                 one_qubit_gates_list.append(element)
         self.__one_qubit_gates = one_qubit_gates_list
@@ -106,11 +107,11 @@ class InstructionSet(object):
         """
         if self.__SU2_rule:
             return self.__SU2_rule
-        if set(self.one_qubit_gates).issubset((GATE_ID["Rz"], GATE_ID["Ry"])):
+        if set(self.one_qubit_gates).issubset((GateType.rz, GateType.ry)):
             return ZyzRule
-        if set(self.one_qubit_gates).issubset((GATE_ID["Rx"], GATE_ID["Ry"])):
+        if set(self.one_qubit_gates).issubset((GateType.rx, GateType.ry)):
             return XyxRule
-        if set(self.one_qubit_gates).issubset((GATE_ID["Rz"], GATE_ID["SX"], GATE_ID["X"])):
+        if set(self.one_qubit_gates).issubset((GateType.rz, GateType.sx, GateType.x)):
             return IbmqRule
         raise Exception("please register the SU2 decomposition rule.")
 
@@ -144,7 +145,7 @@ class InstructionSet(object):
             TransformRule: the transform rules
         """
         if isinstance(source, BasicGate):
-            source = source.type()
+            source = source.type
         if source in self.rule_map:
             return self.rule_map[source]
         rule = _generate_default_rule(source, self.two_qubit_gate)

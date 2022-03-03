@@ -6,7 +6,10 @@
 
 import math
 import numpy as np
-import cupy as cp
+try:
+    import cupy as cp
+except ImportError:
+    cupy = None
 
 from QuICT.ops.utils.utils import htod
 
@@ -471,7 +474,7 @@ def matrix_dot_vector(
     vec_bit,
     affect_args,
     auxiliary_vec,
-    sync
+    sync: bool = True
 ):
     mat_length = 1 << mat_bit
 
@@ -506,3 +509,230 @@ def matrix_dot_vector(
 
     if sync:
         cp.cuda.Device().synchronize()
+
+
+simplevp_single_kernel = cp.RawKernel(r'''
+    #include <cupy/complex.cuh>
+    extern "C" __global__
+    void simple_vp_single(const complex<float>* x, complex<float>* y, int* mapping) {
+        int tid = blockDim.x * blockIdx.x + threadIdx.x;
+        int xid = mapping[tid]
+        y[tid] = x[xid];
+    }
+    ''', 'simple_vp_single')
+
+
+simplecp_double_kernel = cp.RawKernel(r'''
+    #include <cupy/complex.cuh>
+    extern "C" __global__
+    void simple_vp_double(const complex<double>* x, complex<double>* y, int* mapping) {
+        int tid = blockDim.x * blockIdx.x + threadIdx.x;
+        int xid = mapping[tid];
+        y[tid] = x[xid];
+    }
+    ''', 'simple_vp_double')
+
+
+def simple_vp(
+    A,
+    mapping,
+    changeInput: bool = False,
+    gpu_out: bool = True,
+    sync: bool = True
+):
+    """ permutaion A with mapping, inplace
+
+    Args:
+        A(np.array<np.complex>): the vector A.
+        mapping(np.array<int>): the mapping.
+        changeInput(bool): whether changes in A.
+        gpu_out(bool): return result from GPU.
+
+    Returns:
+        np.array<np.complex>: the result of Permutation
+    """
+    row_a, n = A.shape[0], mapping.shape[0]
+    if row_a != n:
+        raise IndexError("Indices do not match!")
+
+    if mapping.dtype == np.int64:
+        mapping = mapping.astype(np.int32)
+
+    # data in GPU
+    gpu_A = cp.array(A) if type(A) is np.ndarray else A
+    gpu_mapping = cp.array(mapping)
+    gpu_result = cp.empty_like(gpu_A)
+    core_number = gpu_result.size
+
+    if A.dtype == np.complex64:
+        simplevp_single_kernel(
+            (math.ceil(core_number / 1024),),
+            (min(1024, core_number),),
+            (gpu_A, gpu_result, gpu_mapping)
+        )
+    else:
+        simplecp_double_kernel(
+            (math.ceil(core_number / 1024),),
+            (min(1024, core_number),),
+            (gpu_A, gpu_result, gpu_mapping)
+        )
+
+    if changeInput:
+        A[:] = gpu_result.get() if type(A) is np.ndarray else gpu_result
+
+    if sync:
+        cp.cuda.Device().synchronize()
+
+    if gpu_out:
+        return gpu_result.get()
+
+    return gpu_result
+
+
+qubit_vp_single_kernel = cp.RawKernel(r'''
+    #include <cupy/complex.cuh>
+    extern "C" __global__
+    void qubit_vp_single(
+        const complex<float>* x,
+        complex<float>* y,
+        int* qargs,
+        int* mapping,
+        const int n,
+        const int N
+    ) {
+        int tid = blockDim.x * blockIdx.x + threadIdx.x;
+
+        for (int i = 0; i < n; i++){
+            int block_swap_idx = mapping[i];
+            int ori_idx=0, swap_idx=0;
+            for (int j = 0; j < N; j++){
+                int label = N - 1 - j;
+                if (qargs[j] < 0){
+                    int temp_tvalue = (tid & (1 << (-qargs[j] - 1))) << (label - (-qargs[j] - 1));
+                    ori_idx += temp_tvalue;
+                    swap_idx += temp_tvalue;
+                }else{
+                    ori_idx += (i & (1 << qargs[j])) << (label - qargs[j]);
+                    swap_idx += (block_swap_idx & (1 << qargs[j])) << (label - qargs[j]);
+                }
+            }
+
+            y[ori_idx] = x[swap_idx];
+        }
+    }
+    ''', 'qubit_vp_single')
+
+
+qubit_vp_double_kernel = cp.RawKernel(r'''
+    #include <cupy/complex.cuh>
+    extern "C" __global__
+    void qubit_vp_double(
+        const complex<double>* x,
+        complex<double>* y,
+        int* qargs,
+        int* mapping,
+        const int n,
+        const int N
+    ) {
+        int tid = blockDim.x * blockIdx.x + threadIdx.x;
+
+        for (int i = 0; i < n; i++){
+            int block_swap_idx = mapping[i];
+            int ori_idx=0, swap_idx=0;
+            for (int j = 0; j < N; j++){
+                int label = N - 1 - j;
+                if (qargs[j] < 0){
+                    int temp_tvalue = (tid & (1 << (-qargs[j] - 1))) << (label - (-qargs[j] - 1));
+                    ori_idx += temp_tvalue;
+                    swap_idx += temp_tvalue;
+                }else{
+                    ori_idx += (i & (1 << qargs[j])) << (label - qargs[j]);
+                    swap_idx += (block_swap_idx & (1 << qargs[j])) << (label - qargs[j]);
+                }
+            }
+            y[ori_idx] = x[swap_idx];
+        }
+    }
+    ''', 'qubit_vp_double')
+
+
+def qubit_vp(
+    A,
+    qargs,
+    mapping,
+    changeInput: bool = False,
+    gpu_out: bool = True,
+    sync: bool = True
+):
+    """ permutaion A with mapping by given qubits index, inplace
+
+    Args:
+        A(np.array<np.complex>): the vector A.
+        qargs (np.array<int>): the target qubits' index
+        mapping(np.array<int>): the mapping.
+        changeInput(bool): whether changes in A.
+        gpu_out(bool): return result from GPU.
+
+    Returns:
+        np.array<np.complex>: the result of Permutation
+    """
+    N = int(np.log2(A.size))
+    qubits, n = len(qargs), mapping.shape[0]
+    if 1 << qubits != n:
+        raise IndexError("Indices do not match!")
+
+    if mapping.dtype == np.int64:
+        mapping = mapping.astype(np.int32)
+
+    if qargs.dtype == np.int64:
+        qargs = qargs.astype(np.int32)
+
+    qargs = _qargs_fill(qargs, N)
+
+    # data in GPU
+    gpu_A = cp.array(A) if type(A) is np.ndarray else A
+    gpu_result = cp.empty_like(gpu_A)
+
+    gpu_mapping = cp.array(mapping)
+    gpu_qargs = cp.array(qargs)
+    gpu_n = cp.int32(n)
+    gpu_N = cp.int32(N)
+    core_number = gpu_result.size // gpu_mapping.size
+
+    if A.dtype == np.complex64:
+        qubit_vp_single_kernel(
+            (math.ceil(core_number / 1024),),
+            (min(1024, core_number),),
+            (gpu_A, gpu_result, gpu_qargs, gpu_mapping, gpu_n, gpu_N)
+        )
+    else:
+        qubit_vp_double_kernel(
+            (math.ceil(core_number / 1024),),
+            (min(1024, core_number),),
+            (gpu_A, gpu_result, gpu_qargs, gpu_mapping, gpu_n, gpu_N)
+        )
+
+    if changeInput:
+        A[:] = gpu_result.get() if type(A) is np.ndarray else gpu_result
+
+    if sync:
+        cp.cuda.Device().synchronize()
+
+    if gpu_out:
+        return gpu_result.get()
+
+    return gpu_result
+
+
+def _qargs_fill(qargs, qubits):
+    result = np.zeros(qubits, dtype=np.int32)
+
+    count = -(qubits - len(qargs))
+    for i in range(qubits):
+        if i not in qargs:
+            result[i] = count
+            count += 1
+        else:
+            result[i] = len(qargs) - 1 - np.argwhere(qargs == i)
+
+    return result

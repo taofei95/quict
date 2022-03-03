@@ -1,7 +1,7 @@
 import numpy as np
 
-from QuICT.core import *
-from QuICT.algorithm import Amplitude
+from QuICT.core.gate import *
+from QuICT.core.circuit import Circuit
 from QuICT.simulation.CPU_simulator import CircuitSimulator
 
 
@@ -9,7 +9,7 @@ def test_sim():
     for qubit_num in range(2, 20):
         circuit = Circuit(qubit_num)
         circuit.random_append(20)
-        res = Amplitude.run(circuit)  # New simulator would be used by default.
+        res = CircuitSimulator().run(circuit)  # New simulator would be used by default.
         # expected = Amplitude.run(circuit, ancilla=None, use_old_simulator=True)
         # flag = np.allclose(res, expected)
         # assert flag
@@ -19,10 +19,10 @@ def test_sim():
 def test_complex_gate():
     for qubit_num in range(3, 20):
         circuit = Circuit(qubit_num)
-        QFT | circuit
-        CCX | circuit
-        CCRz(0.1) | circuit
-        res = Amplitude.run(circuit)  # New simulator would be used by default.
+        QFT(qubit_num) | circuit
+        CCX | circuit([0, 1, 2])
+        CCRz(0.1) | circuit([0, 1, 2])
+        res = CircuitSimulator().run(circuit)  # New simulator would be used by default.
         # expected = Amplitude.run(circuit, ancilla=None, use_old_simulator=True)
         # flag = np.allclose(res, expected)
         # assert flag
@@ -41,6 +41,6 @@ def test_measure_gate():
         # print(res)
         # print(measure_res)
         for i in range(qubit_num):
-            measure_res_acc[i] += measure_res[i]
+            measure_res_acc[i] += measure_res[i][0]
     print()
     print(measure_res_acc)

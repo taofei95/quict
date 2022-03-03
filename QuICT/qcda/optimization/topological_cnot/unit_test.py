@@ -10,6 +10,8 @@ import random
 import numpy as np
 
 from QuICT.core import *
+from QuICT.core.gate import CX, GateType
+from QuICT.core.layout import Layout
 from QuICT.qcda.optimization import TopologicalCnot
 
 
@@ -49,7 +51,7 @@ def generate_matrix(gates, n):
     lg = len(gates)
     while i < lg:
         gate = gates[i]
-        if gate.type() == GATE_ID["H"]:
+        if gate.type == GateType.h:
             gate = gates[i + 2]
             i += 4
             matrix[gate.carg, :] = matrix[gate.carg, :] ^ matrix[gate.targ, :]
@@ -80,7 +82,7 @@ def check_equiv(circuit1, circuit2):
     Returns:
         bool: True if equiv
     """
-    n = circuit1.circuit_width()
+    n = circuit1.width()
     matrix1 = generate_matrix(circuit1.gates, n)
     matrix2 = generate_matrix(circuit2.gates if isinstance(circuit2, Circuit) else circuit2, n)
 
@@ -90,21 +92,22 @@ def check_equiv(circuit1, circuit2):
 def test_1():
     for _ in range(20):
         for i in range(2, 10):
-            circuit = Circuit(i)
-            for _ in range(i * 100):
-                CX | circuit(_getRandomList(2))
+            layout = Layout(i)
             topo = _getAllRandomList(i)
             for j in range(len(topo) - 1):
-                circuit.add_topology((topo[j], topo[j + 1]))
+                layout.add_edge(topo[j], topo[j + 1])
             for _ in range(i // 10):
-                circuit.add_topology(_getRandomList(2))
+                layout.add_edge(_getRandomList(2))
+            circuit = Circuit(i, topology=layout)
+            for _ in range(i * 100):
+                CX | circuit(list(_getRandomList(2)))
             new_circuit = TopologicalCnot.execute(circuit)
             if not check_equiv(circuit, new_circuit):
                 assert 0
 
             circuit = Circuit(i)
             for _ in range(i * 100):
-                CX | circuit(_getRandomList(2))
+                CX | circuit(list(_getRandomList(2)))
             topo = _getAllRandomList(i)
             topology = []
             for j in range(len(topo) - 1):

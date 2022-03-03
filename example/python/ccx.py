@@ -4,9 +4,10 @@
 # @Author  : Han Yu
 # @File    : CCX_Dec.py
 
-from QuICT.core import *
-from QuICT.algorithm import SyntheticalUnitary, Amplitude
-import code
+from QuICT.core import Circuit
+from QuICT.core.gate import *
+from QuICT.algorithm import SyntheticalUnitary
+
 
 circuit = Circuit(3)
 
@@ -25,9 +26,6 @@ CX          | circuit([0, 2])
 T           | circuit(0)
 T           | circuit(2)
 H           | circuit(2)
-circuit.draw()
 
 unitary = SyntheticalUnitary.run(circuit, showSU=False)
-# print(unitary)
-
-code.interact(banner="", local=locals())
+print(unitary)

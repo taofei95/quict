@@ -1,11 +1,14 @@
 import os
-from QuICT.core import *
+from QuICT.core.gate import BasicGate
+from QuICT.core.circuit import Circuit
+from QuICT.core.utils import GateType
 
 import warnings
 import os
 import importlib.util
 from typing import List, Union, Iterable, Tuple
 import numpy as np
+from copy import deepcopy
 
 cur_path = os.path.dirname(os.path.abspath(__file__))
 
@@ -22,6 +25,12 @@ sim_back_bind = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(sim_back_bind)
 
 
+def get_gate_qubit_pos(gate: BasicGate) -> List[int]:
+    args = deepcopy(gate.cargs)
+    args.extend(deepcopy(gate.targs))
+    return args
+
+
 class GateDescription:
     """An interface used for type hints. This class is actually implemented in C++ side.
     """
@@ -32,56 +41,56 @@ class GateDescription:
 
 # sim_back_bind.GateDescription: GateDescription.__class__
 
-special_x = (GATE_ID["X"],)
-special_h = (GATE_ID["H"],)
+special_x = (GateType.x,)
+special_h = (GateType.h,)
 diag_1 = (
-    GATE_ID["S"],
-    GATE_ID["S_dagger"],
-    GATE_ID["Z"],
-    GATE_ID["ID"],
-    GATE_ID["U1"],
-    GATE_ID["Rz"],
-    GATE_ID["T"],
-    GATE_ID["T_dagger"],
-    GATE_ID["Phase"],  # TODO: optimize this with special_phase
+    GateType.s,
+    GateType.sdg,
+    GateType.z,
+    GateType.id,
+    GateType.u1,
+    GateType.rz,
+    GateType.t,
+    GateType.tdg,
+    GateType.phase,  # TODO: optimize this with special_phase
 )
 
 unitary_1 = (
-    GATE_ID["Y"],
-    GATE_ID["SX"],
-    GATE_ID["SY"],
-    GATE_ID["SW"],
-    GATE_ID["U2"],
-    GATE_ID["U3"],
-    GATE_ID["Rx"],
-    GATE_ID["Ry"],
+    GateType.y,
+    GateType.sx,
+    GateType.sy,
+    GateType.sw,
+    GateType.u2,
+    GateType.u3,
+    GateType.rx,
+    GateType.ry,
 )
 
 diag_2 = (
-    GATE_ID["Rzz"],
+    GateType.Rzz,
 )
 
 unitary_2 = (
-    GATE_ID["FSim"],
-    GATE_ID["Rxx"],
-    GATE_ID["Ryy"],
-    GATE_ID["Swap"],  # Maybe this could be optimized
+    GateType.fsim,
+    GateType.Rxx,
+    GateType.Ryy,
+    GateType.swap,  # Maybe this could be optimized
 )
 
 ctrl_diag = (
-    GATE_ID["CZ"],
-    GATE_ID["CRZ"],
-    GATE_ID["CU1"],
+    GateType.cz,
+    GateType.crz,
+    GateType.cu1,
 )
 
 ctrl_unitary = (
-    GATE_ID["CX"],  # TODO: Optimize this with special_cx
-    GATE_ID["CY"],
-    GATE_ID["CH"],
-    GATE_ID["CU3"],
+    GateType.cx,  # TODO: Optimize this with special_cx
+    GateType.cy,
+    GateType.ch,
+    GateType.cu3,
 )
 
-measure_gate = tuple([GATE_ID["measure"]])
+measure_gate = (GateType.measure,)
 
 
 def gate_to_desc(gate: BasicGate) -> List[GateDescription]:
@@ -96,62 +105,62 @@ def gate_to_desc(gate: BasicGate) -> List[GateDescription]:
     -------
     Simple GateDescription for input gate.
     """
-    gate_type = gate.type()
+    gate_type = gate.type
     if gate_type in special_x:
         return [sim_back_bind.GateDescription(
             "special_x",
-            list(gate.affectArgs),
+            list(get_gate_qubit_pos(gate)),
             list([])
         )]
     elif gate_type in special_h:
         return [sim_back_bind.GateDescription(
             "special_h",
-            list(gate.affectArgs),
+            list(get_gate_qubit_pos(gate)),
             list([])
         )]
     elif gate_type in diag_1:
         return [sim_back_bind.GateDescription(
             "diag_1",
-            list(gate.affectArgs),
-            list(np.diag(gate.compute_matrix))
+            list(get_gate_qubit_pos(gate)),
+            list(np.diag(gate.matrix))
         )]
     elif gate_type in diag_2:
         return [sim_back_bind.GateDescription(
             "diag_2",
-            list(gate.affectArgs),
-            list(np.diag(gate.compute_matrix))
+            list(get_gate_qubit_pos(gate)),
+            list(np.diag(gate.matrix))
         )]
     elif gate_type in unitary_1:
         return [sim_back_bind.GateDescription(
             "unitary_1",
-            list(gate.affectArgs),
-            list(gate.compute_matrix.flatten())
+            list(get_gate_qubit_pos(gate)),
+            list(gate.matrix.flatten())
         )]
     elif gate_type in unitary_2:
         return [sim_back_bind.GateDescription(
             "unitary_2",
-            list(gate.affectArgs),
-            list(gate.compute_matrix.flatten())
+            list(get_gate_qubit_pos(gate)),
+            list(gate.matrix.flatten())
         )]
     elif gate_type in ctrl_diag:
         return [sim_back_bind.GateDescription(
             "ctrl_diag",
-            list(gate.affectArgs),
-            list(np.diag(gate.compute_matrix)[2:].copy())
+            list(get_gate_qubit_pos(gate)),
+            list(np.diag(gate.matrix)[2:].copy())
         )]
     elif gate_type in ctrl_unitary:
         return [sim_back_bind.GateDescription(
             "ctrl_unitary",
-            list(gate.affectArgs),
-            list(gate.compute_matrix[2:, 2:].copy().flatten())
+            list(get_gate_qubit_pos(gate)),
+            list(gate.matrix[2:, 2:].copy().flatten())
         )]
     elif gate_type in measure_gate:
         return [sim_back_bind.GateDescription(
             "measure",
-            list(gate.affectArgs),
+            list(get_gate_qubit_pos(gate)),
             list([])
         )]
-    elif isinstance(gate, ComplexGate):
+    elif hasattr(gate, "build_gate"):
         # Try build gate to simpler gates
         result = []
         for simple_gate in gate.build_gate():
@@ -181,10 +190,10 @@ class CircuitSimulator:
     def _map_measure(cls, circuit: Circuit, measure_raw: List[int]) -> List[List[int]]:
         mid_map = []
         for gate in circuit.gates:
-            if gate.type() == GATE_ID["Measure"]:
+            if gate.type == GateType.measure:
                 mid_map.append(gate.targ)
-        measure: List[List[int]] = [[] for _ in range(circuit.circuit_width())]
-        for idx, elem in enum(mid_map):
+        measure: List[List[int]] = [[] for _ in range(circuit.width())]
+        for idx, elem in enumerate(mid_map):
             measure[elem].append(measure_raw[idx])
         return measure
 
@@ -205,7 +214,7 @@ class CircuitSimulator:
         gate_desc_vec: List[GateDescription] = []
         for gate in circuit.gates:
             gate_desc_vec.extend(gate_to_desc(gate))
-        amplitude, measure_raw = self._instance.run(circuit.circuit_width(), gate_desc_vec, keep_state)
+        amplitude, measure_raw = self._instance.run(circuit.width(), gate_desc_vec, keep_state)
         measure = self._map_measure(circuit, measure_raw)
         return amplitude, measure
 
@@ -236,5 +245,5 @@ class CircuitSimulator:
         circuit:
             quantum circuit to be simulated
         """
-        measure_raw = self._instance.sample(circuit.circuit_width())
-        return self._map_measure(circuit, measure_raw)
+        measure_raw = self._instance.sample(circuit.width())
+        return [[x] for x in measure_raw]

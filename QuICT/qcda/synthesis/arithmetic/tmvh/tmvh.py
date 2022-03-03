@@ -4,8 +4,9 @@
 # @Author  : Zhu Qinlin
 # @File    : tmvh.py
 
-from QuICT.core import CX, CCX, CompositeGate, X
+from QuICT.core.gate import CX, CCX, CompositeGate, X
 from ..._synthesis import Synthesis
+
 
 def peres_gate(gate_set, a, b, c):
     """
@@ -126,6 +127,7 @@ def subtraction_overflow(gate_set, a, b, overflow):
             X & b[i]
         X & overflow
 
+
 def ctrl_add_overflow_ancilla(gate_set, ctrl, a, b, overflow, ancilla):
     """
     (c,a,b,of,ancilla) -> (c,a,b+c*a,of',ancilla)
@@ -133,11 +135,11 @@ def ctrl_add_overflow_ancilla(gate_set, ctrl, a, b, overflow, ancilla):
     n = len(a)
     with gate_set:
         if n == 1:
-            #CCX | (a[0],b[0],overflow)
-            CCX & (a[0],b[0],ancilla)
-            CCX & (ancilla,ctrl,overflow)
-            CCX & (a[0],b[0],ancilla)
-            CX  & (a[0],b[0])
+            # CCX | (a[0],b[0],overflow)
+            CCX & (a[0], b[0], ancilla)
+            CCX & (ancilla, ctrl, overflow)
+            CCX & (a[0], b[0], ancilla)
+            CX  & (a[0], b[0])
             return
 
         # step 1
@@ -209,16 +211,30 @@ def mult(gate_set, a, b, p, ancilla):
     n = len(a)
     with gate_set:
         if n == 1:
-            CCX & (a[0],b[0],p[1])
+            CCX & (a[0], b[0], p[1])
             return
 
-        #step 1
+        # step 1
         for i in range(n):
-            CCX & (b[n-1], a[n-1-i], p[2*n-1-i])
-        #step 2
-        for i in range(n-2):
-            ctrl_add_overflow_ancilla(gate_set, b[n-2-i],a,p[n-1-i:2*n-1-i],p[n-2-i],p[n-3-i])
-        ctrl_add_overflow_ancilla(gate_set, b[0],a,p[1:n+1],p[0],ancilla)
+            CCX & (b[n - 1], a[n - 1 - i], p[2 * n - 1 - i])
+        # step 2
+        for i in range(n - 2):
+            ctrl_add_overflow_ancilla(
+                gate_set,
+                b[n - 2 - i],
+                a,
+                p[n - 1 - i:2 * n - 1 - i],
+                p[n - 2 - i],
+                p[n - 3 - i]
+            )
+        ctrl_add_overflow_ancilla(
+            gate_set,
+            b[0],
+            a,
+            p[1:n + 1],
+            p[0],
+            ancilla
+        )
 
 
 def division(gate_set, a, b, r, ancilla):
@@ -250,16 +266,16 @@ class RippleCarryAdder(Synthesis):
     (a,b) -> (a,b'=a+b)
     Args:
         n(int): the bit number of a and b
-    
+
     Quregs:
         a_q(Qureg): the qureg stores a, n qubits.
-        b_q(Qureg): the qureg stores b, and stores the sum 
+        b_q(Qureg): the qureg stores b, and stores the sum
                     after computation, n qubits.
     reference: HIMANSHU THAPLIYAL and NAGARAJAN RANGANATHAN -
     Design of Efficient Reversible Logic Based Binary and BCD adder Circuits
     https://arxiv.org/abs/1712.02630v1
     """
-    
+
     @staticmethod
     def execute(n):
         """
@@ -267,7 +283,7 @@ class RippleCarryAdder(Synthesis):
         """
         gate_set = CompositeGate()
         a_q = list(range(n))
-        b_q = list(range(n, 2*n))
+        b_q = list(range(n, 2 * n))
 
         adder(gate_set, a_q, b_q)
         return gate_set
@@ -285,7 +301,7 @@ class Multiplication(Synthesis):
         b_q(Qureg): the qureg stores b, n qubits.
         p_q(Qureg): the qureg stores the product, 2n qubits.
         ancilla(Qubit): the clean ancilla qubit, 1 qubit.
-    
+
     reference: Edgard Mu˜noz-Coreas, Himanshu Thapliya -
     T-count Optimized Design of Quantum Integer Multiplication
     https://arxiv.org/abs/1706.05113v1
@@ -301,10 +317,11 @@ class Multiplication(Synthesis):
         b_q = list(range(n, 2 * n))
         p_q = list(range(2 * n, 4 * n))
         ancilla = 4 * n
-        
+
         mult(gate_set, a_q, b_q, p_q, ancilla)
 
         return gate_set
+
 
 class RestoringDivision(Synthesis):
     """

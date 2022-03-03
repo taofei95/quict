@@ -1,12 +1,14 @@
 #!/usr/bin/env python
 # -*- coding:utf8 -*-
-# @TIME    : 2020/3/6 10:04 下午
-# @Author  : Han Yu
+# @TIME    : 2022/1/16 10:04 下午
+# @Author  : Han Yu, Kaiqi Li
 # @File    : CCX_Dec.py
+from QuICT.core import Circuit
+from QuICT.core.gate import *
+from QuICT.simulation.gpu_simulator import ConstantStateVectorSimulator
 
-from QuICT.core import *
-from QuICT.algorithm import Amplitude
 
+# Build quantum circuit
 circuit = Circuit(3)
 
 X        | circuit(0)
@@ -39,5 +41,12 @@ X        | circuit(1)
 H        | circuit(2)
 H        | circuit(1)
 
-amplitude = Amplitude.run(circuit)
+# Simulate the quantum circuit by state vector simulator
+simulator = ConstantStateVectorSimulator(
+    precision="double",
+    optimize=False,
+    gpu_device_id=0,
+    sync=True
+)
+amplitude = simulator.run(circuit=circuit)
 print(amplitude)

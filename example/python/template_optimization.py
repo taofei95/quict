@@ -1,5 +1,4 @@
-
-from QuICT.core import *
+from QuICT.core import Circuit
 from QuICT.qcda.optimization.template_optimization.templates import (template_nct_2a_1,
                                                                      template_nct_2a_2,
                                                                      template_nct_2a_3)

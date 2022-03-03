@@ -1,91 +1,98 @@
 #!/usr/bin/env python
 # -*- coding:utf8 -*-
-# @TIME    : 2020/12/16 1:20 下午
-# @Author  : Han Yu
+# @TIME    : 2022/1/17 1:20 下午
+# @Author  : Li Kaiqi
 # @File    : circuit_unit_test.py
 
-import random
+import unittest
 
-import pytest
-
-from QuICT import *
-from QuICT.algorithm import Amplitude
-from .circuit import Circuit
+from QuICT.core import Circuit
+from QuICT.core.gate import *
 
 
-def getRandomList(count, upper_bound):
-    _rand = [i for i in range(upper_bound)]
-    for i in range(upper_bound - 1, 0, -1):
-        do_get = random.randint(0, i)
-        _rand[do_get], _rand[i] = _rand[i], _rand[do_get]
-    return _rand[:count]
+class TestCircuit(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        print("The Circuit unit test start!")
+        cls.qubits = 5
+        cls.based_circuit = Circuit(cls.qubits)
 
+    @classmethod
+    def tearDownClass(cls) -> None:
+        print("The Circuit unit test finished!")
+        del cls.based_circuit
 
-def test_pratial_prob_whole():
-    for n in range(1, 10):
-        circuit = Circuit(n)
-        circuit.assign_initial_random()
+    def test_circuit_build(self):
+        cir = TestCircuit.based_circuit
+        qureg = cir.qubits
+        cir.random_append()
 
-        order = getRandomList(n, n)
-        reverse_order = [i for i in range(n)]
-        for i in range(len(order)):
-            reverse_order[order[i]] = i
-        # order = [i for i in range(n)]
-        prob = circuit.partial_prob(order)
-        amplitude = Amplitude.run(circuit)
-        for position in range(1 << n):
-            prob_position = 0
-            for bit in range(n):
-                if (1 << (n - bit - 1)) & position != 0:
-                    prob_position += 1 << (n - reverse_order[bit] - 1)
-            if abs(abs(prob[prob_position]) - abs(amplitude[position]) * abs(amplitude[position])) > 1e-6:
-                assert 0
+        # append supremacy circuit
+        cir.supremacy_append()
 
+        # append composite gate
+        qft_gate = QFT.build_gate(3)
+        qft_gate | cir([0, 1, 3])
 
-def test_pratial_prob_part():
-    n = 10
-    circuit = Circuit(n)
-    circuit[0:2].force_assign_random()
-    circuit[2:3].force_assign_random()
-    circuit[3:7].force_assign_random()
-    circuit[7:10].force_assign_random()
-    order = [i for i in range(n)]
-    reverse_order = [i for i in range(n)]
-    for i in range(len(order)):
-        reverse_order[order[i]] = i
-    prob = circuit.partial_prob(order)
-    amplitude = Amplitude.run(circuit)
-    for position in range(1 << n):
-        prob_position = 0
-        for bit in range(n):
-            if (1 << (n - bit - 1)) & position != 0:
-                prob_position += 1 << (n - reverse_order[bit] - 1)
-        if abs(abs(prob[prob_position]) - abs(amplitude[position]) * abs(amplitude[position])) > 1e-6:
-            assert 0
+        # append gate by qubits/qureg
+        S | cir(qureg[0])
+        CX | cir(qureg[1, 3])
 
+        assert 1
 
-def test_sub_circuit():
-    circuit = Circuit(5)
-    CX | circuit([0, 1])
-    CX(name="AA") | circuit([1, 2])
-    CX | circuit([2, 3])
-    circuit.sub_circuit(slice(4), start="AA", max_size=1, remove=True).print_information()
-    circuit.print_information()
-    new_circuit = Circuit(6)
-    circuit | new_circuit
-    new_circuit.print_information()
-    assert 1
+    def test_circuit_call(self):
+        cir = Circuit(TestCircuit.qubits)
+        qureg = cir.qubits
+        H | cir(1)
+        CX | cir([1, 3])
+        X | cir(qureg[1])
+        CX | cir(qureg([1, 3]))
 
+        assert 1
 
-def test_sub_circuit_local():
-    circuit = Circuit(5)
-    CX | circuit([0, 1])
-    CX | circuit([2, 1])
-    CX | circuit([1, 0])
-    circuit.sub_circuit(slice(2), local=True, remove=True).print_information()
-    circuit.print_information()
-    assert 1
+    def test_sub_circuit(self):
+        cir = TestCircuit.based_circuit
+        sub_cir_without_remove = cir.sub_circuit([0, 1, 2], remove=False)
+        assert cir.size() == 76
+        assert sub_cir_without_remove.width() == 3
+
+        sub_cir_with_remove = cir.sub_circuit([0, 3], remove=True)
+        assert cir.size() + sub_cir_with_remove.size() == 76
+
+    def test_circuit_operation(self):
+        # append single qubit gate to all qubits
+        special_cir = Circuit(TestCircuit.qubits)
+        H | special_cir     # 5
+        assert special_cir.size() == 5
+
+        # Add gate by qubits
+        target_q = special_cir[3]
+        S | special_cir(target_q)
+        assert special_cir.gates[-1].targs == [3]
+
+        # Add gate by circuit call
+        CRz | special_cir([1, 4])
+        assert special_cir.gates[-1].targs == [4]
+
+    def test_circuit_matrix_product(self):
+        cir = TestCircuit.based_circuit
+        mp_gate = CZ & [1, 3]
+        mp_data = cir.matrix_product_to_circuit(mp_gate)
+
+        assert mp_data.shape == (1 << 5, 1 << 5)
+
+    def test_circuit_remapping(self):
+        cir = TestCircuit.based_circuit
+        q1 = cir[1:4]
+        assert q1[0] == cir[1]
+
+        cir.remapping(q1, [2, 1, 0])
+        assert q1[0] == cir[3]
+
+        q2 = cir[0, 1, 4]
+        cir.remapping(q2, [0, 2, 1], circuit_update=True)
+        assert q2[0] == cir[0]
 
 
 if __name__ == "__main__":
-    pytest.main(["./circuit_unit_test.py"])
+    unittest.main()

@@ -5,7 +5,10 @@
 # @File    : utils
 
 import numpy as np
-import cupy as cp
+try:
+    import cupy as cp
+except ImportError:
+    cupy = None
 from numba import njit
 
 

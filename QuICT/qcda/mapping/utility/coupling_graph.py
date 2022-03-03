@@ -86,9 +86,7 @@ class CouplingGraph(object):
     def get_swap_gate(self, idx: int) -> SwapGate:
         """
         """
-        GateBuilder.setGateType(GATE_ID['Swap'])
-        GateBuilder.setTargs([int(self._edges[idx][0]), int(self._edges[idx][1])])
-        return GateBuilder.getGate()
+        return build_gate(GateType.swap, [int(self._edges[idx][0]), int(self._edges[idx][1])])
 
     def get_path(self, source: int, target: int):
         path = reconstruct_path(source, target, self._predecesors)
