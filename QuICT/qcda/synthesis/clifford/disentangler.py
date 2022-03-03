@@ -58,7 +58,7 @@ class PauliOperator(object):
         self._phase = phase
 
     @property
-    def gates(self):
+    def gates(self) -> CompositeGate:
         """
         The CompositeGate corresponding to the PauliOperator
 
@@ -75,7 +75,7 @@ class PauliOperator(object):
         return gates
 
     @property
-    def width(self):
+    def width(self) -> int:
         return len(self.operator)
 
     def conjugate_act(self, gate: BasicGate):
@@ -112,7 +112,6 @@ class PauliOperator(object):
                 # CX I0 Z1 CX = Z0 Z1
                 if self.operator[gate.targ] == GateType.z:
                     self.operator[gate.carg] = GateType.z
-                    self.operator[gate.targ] = GateType.z
                     return
             if self.operator[gate.carg] == GateType.x:
                 # CX X0 I1 CX = X0 X1
