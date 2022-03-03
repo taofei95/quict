@@ -6,8 +6,7 @@
 import time
 
 from QuICT.core import Circuit
-
-# from QuICT.simulation.CPU_simulator import CircuitSimulator
+from QuICT.simulation.cpu_simulator import CircuitSimulator
 try:
     from QuICT.simulation.gpu_simulator import (
         ConstantStateVectorSimulator,

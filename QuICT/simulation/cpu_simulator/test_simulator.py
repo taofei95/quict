@@ -2,7 +2,7 @@ import numpy as np
 
 from QuICT.core.gate import *
 from QuICT.core.circuit import Circuit
-from QuICT.simulation.CPU_simulator import CircuitSimulator
+from QuICT.simulation.cpu_simulator import CircuitSimulator
 
 
 def test_sim():
@@ -42,5 +42,4 @@ def test_measure_gate():
         # print(measure_res)
         for i in range(qubit_num):
             measure_res_acc[i] += measure_res[i][0]
-    print()
     print(measure_res_acc)
