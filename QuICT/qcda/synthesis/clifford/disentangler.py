@@ -81,6 +81,8 @@ class PauliOperator(object):
     def conjugate_act(self, gate: BasicGate):
         """
         Compute the PauliOperator after conjugate action of a clifford gate
+        Be aware that the conjugate action means U P U^-1, where U is the clifford gate
+        and P is the PauliOperator. It is important for S gate.
 
         Args:
             gate(BasicGate): the clifford gate to be acted on the PauliOperator
@@ -95,18 +97,160 @@ class PauliOperator(object):
 
         if gate.type == GateType.cx:
             assert not out_of_range(gate)
-        elif gate.type == GateType.h:
+            if self.operator[gate.carg] == GateType.id:
+                # CX I0 I1 CX = I0 I1
+                if self.operator[gate.targ] == GateType.id:
+                    return
+                # CX I0 X1 CX = I0 X1
+                if self.operator[gate.targ] == GateType.x:
+                    return
+                # CX I0 Y1 CX = Z0 Y1
+                if self.operator[gate.targ] == GateType.y:
+                    self.operator[gate.carg] = GateType.z
+                    self.operator[gate.targ] = GateType.y
+                    return
+                # CX I0 Z1 CX = Z0 Z1
+                if self.operator[gate.targ] == GateType.z:
+                    self.operator[gate.carg] = GateType.z
+                    self.operator[gate.targ] = GateType.z
+                    return
+            if self.operator[gate.carg] == GateType.x:
+                # CX X0 I1 CX = X0 X1
+                if self.operator[gate.targ] == GateType.id:
+                    self.operator[gate.targ] = GateType.x
+                    return
+                # CX X0 X1 CX = X0 I1
+                if self.operator[gate.targ] == GateType.x:
+                    self.operator[gate.targ] = GateType.id
+                    return
+                # CX X0 Y1 CX = Y0 Z1
+                if self.operator[gate.targ] == GateType.y:
+                    self.operator[gate.carg] = GateType.y
+                    self.operator[gate.targ] = GateType.z
+                    return
+                # CX X0 Z1 CX = -Y0 Y1
+                if self.operator[gate.targ] == GateType.z:
+                    self.operator[gate.carg] = GateType.y
+                    self.operator[gate.targ] = GateType.y
+                    self.phase *= -1
+                    return
+            if self.operator[gate.carg] == GateType.y:
+                # CX Y0 I1 CX = Y0 X1
+                if self.operator[gate.targ] == GateType.id:
+                    self.operator[gate.targ] = GateType.x
+                    return
+                # CX Y0 X1 CX = Y0 I1
+                if self.operator[gate.targ] == GateType.x:
+                    self.operator[gate.targ] = GateType.id
+                    return
+                # CX Y0 Y1 CX = -X0 Z1
+                if self.operator[gate.targ] == GateType.y:
+                    self.operator[gate.carg] = GateType.x
+                    self.operator[gate.targ] = GateType.z
+                    self.phase *= -1
+                    return
+                # CX Y0 Z1 CX = X0 Y1
+                if self.operator[gate.targ] == GateType.z:
+                    self.operator[gate.carg] = GateType.x
+                    self.operator[gate.targ] = GateType.y
+                    return
+            if self.operator[gate.carg] == GateType.z:
+                # CX Z0 I1 CX = Z0 I1
+                if self.operator[gate.targ] == GateType.id:
+                    return
+                # CX Z0 X1 CX = Z0 X1
+                if self.operator[gate.targ] == GateType.x:
+                    return
+                # CX Z0 Y1 CX = I0 Y1
+                if self.operator[gate.targ] == GateType.y:
+                    self.operator[gate.carg] = GateType.id
+                    return
+                # CX Z0 Z1 CX = I0 Z1
+                if self.operator[gate.targ] == GateType.z:
+                    self.operator[gate.carg] = GateType.id
+                    return
+        if gate.type == GateType.h:
             assert not out_of_range(gate)
-        elif gate.type == GateType.s:
+            # H I H = I
+            if self.operator[gate.targ] == GateType.id:
+                return
+            # H X H = Z
+            if self.operator[gate.targ] == GateType.x:
+                self.operator[gate.targ] = GateType.z
+                return
+            # H Y H = -Y
+            if self.operator[gate.targ] == GateType.y:
+                self.phase *= -1
+                return
+            # H Z H = Z
+            if self.operator[gate.targ] == GateType.z:
+                self.operator[gate.targ] = GateType.x
+                return
+        if gate.type == GateType.s:
             assert not out_of_range(gate)
-        elif gate.type == GateType.x:
+            # S I Sdg = I
+            if self.operator[gate.targ] == GateType.id:
+                return
+            # S X Sdg = Y
+            if self.operator[gate.targ] == GateType.x:
+                self.operator[gate.targ] = GateType.y
+                return
+            # S Y Sdg = -X
+            if self.operator[gate.targ] == GateType.y:
+                self.operator[gate.targ] = GateType.x
+                self.phase *= -1
+                return
+            # S Z Sdg = Z
+            if self.operator[gate.targ] == GateType.z:
+                return
+        if gate.type == GateType.x:
             assert not out_of_range(gate)
-        elif gate.type == GateType.y:
+            # X I X = I
+            if self.operator[gate.targ] == GateType.id:
+                return
+            # X X X = X
+            if self.operator[gate.targ] == GateType.x:
+                return
+            # X Y X = -Y
+            if self.operator[gate.targ] == GateType.y:
+                self.phase *= -1
+                return
+            # X Z X = -Z
+            if self.operator[gate.targ] == GateType.z:
+                self.phase *= -1
+                return
+        if gate.type == GateType.y:
             assert not out_of_range(gate)
-        elif gate.type == GateType.z:
+            # Y I Y = I
+            if self.operator[gate.targ] == GateType.id:
+                return
+            # Y X Y = -X
+            if self.operator[gate.targ] == GateType.x:
+                self.phase *= -1
+                return
+            # Y Y Y = Y
+            if self.operator[gate.targ] == GateType.y:
+                return
+            # Y Z Y = -Z
+            if self.operator[gate.targ] == GateType.z:
+                self.phase *= -1
+                return
+        if gate.type == GateType.z:
             assert not out_of_range(gate)
-        else:
-            raise ValueError("Only conjugate action of Clifford gates here.")
+            # Z I Z = I
+            if self.operator[gate.targ] == GateType.id:
+                return
+            # Z X Z = -X
+            if self.operator[gate.targ] == GateType.x:
+                self.phase *= -1
+                return
+            # Z Y Z = -Y
+            if self.operator[gate.targ] == GateType.y:
+                self.phase *= -1
+                return
+            # Z Z Z = Z
+            if self.operator[gate.targ] == GateType.z:
+                return
 
 
 class PauliDisentangler(object):
