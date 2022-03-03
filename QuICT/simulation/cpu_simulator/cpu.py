@@ -1,8 +1,3 @@
-import os
-from QuICT.core.gate import BasicGate
-from QuICT.core.circuit import Circuit
-from QuICT.core.utils import GateType
-
 import warnings
 import os
 import importlib.util
@@ -10,13 +5,16 @@ from typing import List, Union, Iterable, Tuple
 import numpy as np
 from copy import deepcopy
 
+from QuICT.core import Circuit
+from QuICT.core.gate import BasicGate, GateType
+
+
 cur_path = os.path.dirname(os.path.abspath(__file__))
 
 mod_name = "sim_back_bind"
 mod_path = "sim_back_bind"
 
 for file in os.listdir(cur_path):
-    # print(file)
     if file.startswith(mod_path):
         mod_path = os.path.join(cur_path, file)
 
@@ -192,9 +190,11 @@ class CircuitSimulator:
         for gate in circuit.gates:
             if gate.type == GateType.measure:
                 mid_map.append(gate.targ)
+
         measure: List[List[int]] = [[] for _ in range(circuit.width())]
         for idx, elem in enumerate(mid_map):
             measure[elem].append(measure_raw[idx])
+
         return measure
 
     def _run(self, circuit: Circuit, keep_state: bool = False) -> Tuple[np.ndarray, List[List[int]]]:
@@ -210,12 +210,15 @@ class CircuitSimulator:
         warnings.warn(
             message="Attention! You are using a working-in-process version of circuit simulator!",
             category=Warning,
-            stacklevel=1)
+            stacklevel=1
+        )
         gate_desc_vec: List[GateDescription] = []
         for gate in circuit.gates:
             gate_desc_vec.extend(gate_to_desc(gate))
+
         amplitude, measure_raw = self._instance.run(circuit.width(), gate_desc_vec, keep_state)
         measure = self._map_measure(circuit, measure_raw)
+
         return amplitude, measure
 
     def run(self, circuit: Circuit, keep_state: bool = False, output_measure_res: bool = False) \
@@ -230,12 +233,14 @@ class CircuitSimulator:
             start simulation on previous result
         """
         amplitude, measure = self._run(circuit, keep_state)
+        self._circuit = circuit
+
         if output_measure_res:
             return amplitude, measure
         else:
             return amplitude
 
-    def sample(self, circuit: Circuit) -> List[List[int]]:
+    def sample(self, circuit: Circuit = None) -> List[List[int]]:
         """Appending measure gates to end of circuit if not presented then
         apply measurement. Before calling this method, one should call `run`
         method first.
@@ -245,5 +250,13 @@ class CircuitSimulator:
         circuit:
             quantum circuit to be simulated
         """
+        if circuit is None:
+            circuit = self._circuit
+
         measure_raw = self._instance.sample(circuit.width())
-        return [[x] for x in measure_raw]
+        value = 0
+        for x in measure_raw:
+            value <<= 1
+            value += x
+
+        return value

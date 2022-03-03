@@ -74,7 +74,7 @@ class Simulator:
             simulator = UnitarySimulator(device=self._device, **self._options)
         elif self._backend == "statevector":
             simulator = ConstantStateVectorSimulator(**self._options) \
-                if self._device == "GPU" else None  # CircuitSimulator
+                if self._device == "GPU" else CircuitSimulator()
         elif self._backend == "multiGPU":
             assert self._device == "GPU"
             simulator = MultiDeviceSimulatorLauncher(**self._options)
