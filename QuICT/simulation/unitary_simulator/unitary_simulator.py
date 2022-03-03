@@ -1,23 +1,9 @@
 from typing import *
 import numpy as np
 
-try:
-    import cupy as cp
-except ImportError:
-    cupy = None
-
 from QuICT.core.gate import BasicGate, CompositeGate
-from QuICT.simulation.optimization import Optimizer
 from QuICT.simulation.utils import DisjointSet, dp, build_unitary_gate
 import QuICT.ops.linalg.cpu_calculator as CPUCalculator
-try:
-    import QuICT.ops.linalg.gpu_calculator as GPUCalculator
-except Exception:
-    GPUCalculator = None
-try:
-    from QuICT.ops.gate_kernel import MeasureGate_Apply
-except Exception:
-    MeasureGate_Apply = None
 
 
 class UnitarySimulator():
@@ -32,9 +18,14 @@ class UnitarySimulator():
     ):
         self._device = device
         self._precision = np.complex128 if precision == "double" else np.complex64
-        self._computer = CPUCalculator if device == "CPU" else GPUCalculator
-        self._optimizer = Optimizer()
         self._vector = None
+        
+        if device == "CPU":
+            self._computer = CPUCalculator
+        else:
+            import QuICT.ops.linalg.gpu_calculator as GPUCalculator
+
+            self._computer = GPUCalculator
 
     def pretreatment(self, circuit):
         """
@@ -351,6 +342,8 @@ class UnitarySimulator():
             self._vector = np.zeros(1 << qubit, dtype=self._precision)
             self._vector[0] = self._precision(1)
         else:
+            import cupy as cp
+
             self._vector = cp.zeros(1 << qubit, dtype=self._precision)
             self._vector.put(0, self._precision(1))
 
@@ -380,6 +373,8 @@ class UnitarySimulator():
         if self._device == "CPU":
             aux = np.zeros_like(self._vector)
         else:
+            import cupy as cp
+
             aux = cp.zeros_like(self._vector)
             matrix = cp.array(matrix)
 
@@ -408,6 +403,8 @@ class UnitarySimulator():
                 self._vector
             )
         else:
+            from QuICT.ops.gate_kernel import MeasureGate_Apply
+
             result = MeasureGate_Apply(
                 qubit,
                 self._vector,

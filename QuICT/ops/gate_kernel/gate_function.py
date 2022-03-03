@@ -1,7 +1,4 @@
-try:
-    import cupy as cp
-except ImportError:
-    cupy = None
+import cupy as cp
 import numpy as np
 import random
 

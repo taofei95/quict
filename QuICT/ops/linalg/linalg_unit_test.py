@@ -9,8 +9,6 @@ import unittest
 import numpy as np
 
 import QuICT.ops.linalg.cpu_calculator as CPUCalculator
-import QuICT.ops.linalg.gpu_calculator as GPUCalculator
-
 from QuICT.core import Circuit
 from QuICT.core.gate import *
 from QuICT.simulation.unitary_simulator import UnitarySimulator
@@ -18,6 +16,7 @@ from QuICT.simulation.unitary_simulator import UnitarySimulator
 
 if os.environ.get("test_with_gpu"):
     import cupy as cp
+    import QuICT.ops.linalg.gpu_calculator as GPUCalculator
 
 
 @unittest.skipUnless(os.environ.get("test_with_gpu", False), "require GPU")

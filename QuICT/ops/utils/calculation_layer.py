@@ -5,17 +5,10 @@
 # @File    : calculation_layer
 
 import weakref
-
-try:
-    import cupy as cp
-except ImportError:
-    cupy = None
+import cupy as cp
 import numpy as np
 
-try:
-    import QuICT.ops.linalg.gpu_calculator as GPUCalculator
-except Exception:
-    GPUCalculator = None
+import QuICT.ops.linalg.gpu_calculator as GPUCalculator
 
 
 class CalculationLayer:
