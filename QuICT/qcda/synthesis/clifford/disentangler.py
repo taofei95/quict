@@ -11,22 +11,51 @@ class PauliOperator(object):
     In this class, we use a list of int to represent the operator, where the GateTypes stand
     for the gates. 
     """
-    def __init__(self, operator=None):
+    def __init__(self, operator=None, phase=1+0j):
         """
         Construct a PauliOperator with a list of int(GateType)
 
         Args:
             operator(list, optional): the list of int(GateType) representing the PauliOperator
+            phase(complex, optional): the global phase of the PauliOperator, ±1 or ±i
         """
         if operator is None:
-            self.operator = []
+            self._operator = []
         else:
             if not isinstance(operator, list):
                 raise TypeError("operator must be list of int(GateType).")
             for gatetype in operator:
                 if gatetype != GateType.id and gatetype not in PAULI_GATE_SET:
                     raise ValueError("operator must contain Pauli gates only.")
-            self.operator = operator
+            self._operator = operator
+        phase_list = [1+0j, 1j, -1+0j, -1j]
+        if phase not in phase_list:
+            raise ValueError("phase must be ±1 or ±i")
+        self._phase = phase
+
+    @property
+    def operator(self) -> list:
+        return self._operator
+
+    @operator.setter
+    def operator(self, operator : list):
+        if not isinstance(operator, list):
+            raise TypeError("operator must be list of int(GateType).")
+        for gatetype in operator:
+            if gatetype != GateType.id and gatetype not in PAULI_GATE_SET:
+                raise ValueError("operator must contain Pauli gates only.")
+        self._operator = operator
+
+    @property
+    def phase(self) -> complex:
+        return self._phase
+
+    @phase.setter
+    def phase(self, phase: complex):
+        phase_list = [1+0j, 1j, -1+0j, -1j]
+        if phase not in phase_list:
+            raise ValueError("phase must be ±1 or ±i")
+        self._phase = phase
 
     @property
     def gates(self):
@@ -45,6 +74,10 @@ class PauliOperator(object):
                 gates.append(gate)
         return gates
 
+    @property
+    def width(self):
+        return len(self.operator)
+
     def conjugate_act(self, gate: BasicGate):
         """
         Compute the PauliOperator after conjugate action of a clifford gate
@@ -53,7 +86,27 @@ class PauliOperator(object):
             gate(BasicGate): the clifford gate to be acted on the PauliOperator
         """
         if not gate.is_clifford(): 
-            raise TypeError("Only conjugate action of Clifford gates here.")
+            raise ValueError("Only conjugate action of Clifford gates here.")
+
+        def out_of_range(gate):
+            targs = gate.cargs + gate.targs
+            for targ in targs:
+                assert targ < self.width, ValueError("target of the gate out of range")
+
+        if gate.type == GateType.cx:
+            assert not out_of_range(gate)
+        elif gate.type == GateType.h:
+            assert not out_of_range(gate)
+        elif gate.type == GateType.s:
+            assert not out_of_range(gate)
+        elif gate.type == GateType.x:
+            assert not out_of_range(gate)
+        elif gate.type == GateType.y:
+            assert not out_of_range(gate)
+        elif gate.type == GateType.z:
+            assert not out_of_range(gate)
+        else:
+            raise ValueError("Only conjugate action of Clifford gates here.")
 
 
 class PauliDisentangler(object):
