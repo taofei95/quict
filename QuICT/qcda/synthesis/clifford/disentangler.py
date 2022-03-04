@@ -67,11 +67,8 @@ class PauliOperator(object):
         """
         gates = CompositeGate()
         for qubit, gatetype in enumerate(self.operator):
-            if gatetype == GateType.id:
-                continue
-            else:
-                gate = build_gate(gatetype, qubit)
-                gates.append(gate)
+            gate = build_gate(gatetype, qubit)
+            gates.append(gate)
         return gates
 
     @property
