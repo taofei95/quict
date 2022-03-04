@@ -1,14 +1,14 @@
-import pytest
+import pytest, random
 
 import numpy as np
 
 from QuICT.core.gate import build_gate, CompositeGate, GateType
 from QuICT.qcda.synthesis.clifford.disentangler import PauliOperator
 
-def test_conjugate_action():
-    pauli_list = [GateType.id, GateType.x, GateType.y, GateType.z]
-    clifford_single = [GateType.h, GateType.s, GateType.x, GateType.y, GateType.z]
+pauli_list = [GateType.id, GateType.x, GateType.y, GateType.z]
+clifford_single = [GateType.h, GateType.s, GateType.x, GateType.y, GateType.z]
 
+def test_conjugate_action():
     # test clifford_single
     for pauli in pauli_list:
         for clifford in clifford_single:
@@ -47,6 +47,20 @@ def test_conjugate_action():
                 pauli_gate_1 & 1
                 cx_gate & [0, 1]
             assert np.allclose(p.gates.matrix() * p.phase, gates.matrix())
+
+def test_commutative():
+    for n in range(1, 5):
+        for _ in range(100):
+            p_op = []
+            q_op = []
+            for _ in range(n):
+                p_op.append(random.choice(pauli_list))
+                q_op.append(random.choice(pauli_list))        
+            p = PauliOperator(p_op)
+            q = PauliOperator(q_op)
+            commute = p.commute(q)
+            assert commute == np.allclose(np.dot(p.gates.matrix(), q.gates.matrix()),
+                                        np.dot(q.gates.matrix(), p.gates.matrix()))
 
 
 if __name__ == '__main__':

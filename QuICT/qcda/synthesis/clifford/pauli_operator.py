@@ -38,7 +38,7 @@ class PauliOperator(object):
         return self._operator
 
     @operator.setter
-    def operator(self, operator : list):
+    def operator(self, operator: list):
         if not isinstance(operator, list):
             raise TypeError("operator must be list of int(GateType).")
         for gatetype in operator:
@@ -74,6 +74,30 @@ class PauliOperator(object):
     @property
     def width(self) -> int:
         return len(self.operator)
+
+    def commute(self, other):
+        """
+        Decide whether two PauliOperators commute or anti-commute
+
+        Args:
+            other(PauliOperator): PauliOperator to be checked with self
+        
+        Returns:
+            boolean: True for commutative or False for anti-commutative
+        """
+        assert isinstance(other, PauliOperator),\
+            TypeError("commute() only checks commutativity between PauliOperators.")
+        assert self.width == other.width,\
+            ValueError("PauliOperators to be checked must have the same width.")
+
+        res = True
+        for qubit in range(self.width):
+            if self.operator[qubit] == GateType.id or other.operator[qubit] == GateType.id\
+               or self.operator[qubit] == other.operator[qubit]:
+                continue
+            else:
+                res = not res
+        return res
 
     def conjugate_act(self, gate: BasicGate):
         """
@@ -248,13 +272,20 @@ class PauliOperator(object):
             if self.operator[gate.targ] == GateType.z:
                 return
 
+    @staticmethod
+    def disentangler(pauli_x, pauli_z):
+        """
+        For anti-commuting n-qubit Pauli operators O and O', there exists a Clifford circuit L∈C_n
+        such that L^(-1) O L = X_1, L^(-1) O' L = Z_1.
+        L is referred to as a disentangler for the pair (O, O').
 
-class PauliDisentangler(object):
-    """
-    For anti-commuting n-qubit Pauli operators O and O', there exists a Clifford circuit L∈C_n
-    such that L^(-1) O L = X_1, L^(-1) O' L = Z_1.
-    L is referred to as a disentangler for the pair (O, O').
+        Args:
+            pauli_x(PauliOperator): the PauliOperator to be transformed to X_1
+            pauli_z(PauliOperator): the PauliOperator to be transformed to Z_1
 
-    Reference:
-        https://arxiv.org/abs/2105.02291
-    """
+        Returns:
+            CompositeGate: the disentangler
+
+        Reference:
+            https://arxiv.org/abs/2105.02291
+        """
