@@ -202,7 +202,7 @@ class PauliOperator(object):
             if self.operator[gate.targ] == GateType.y:
                 self.phase *= -1
                 return
-            # H Z H = Z
+            # H Z H = X
             if self.operator[gate.targ] == GateType.z:
                 self.operator[gate.targ] = GateType.x
                 return
@@ -289,3 +289,14 @@ class PauliOperator(object):
         Reference:
             https://arxiv.org/abs/2105.02291
         """
+        assert isinstance(pauli_x, PauliOperator) and isinstance(pauli_z, PauliOperator),\
+            TypeError("disentangler only defined for PauliOperator pairs")
+        assert pauli_x.width == pauli_z.width,\
+            ValueError('two PauliOperators must be of the same width')
+        assert not pauli_x.commute(pauli_z),\
+            ValueError('anti-commutative pairs needed for computing disentangler')
+        # Transform the pauli_x and pauli_z to 'standard' forms.
+        standardizer = CompositeGate()
+        for qubit in range(pauli_x.width):
+            pass
+        # Construct the disentangler of 'standard' pairs with the algorithm given in reference.

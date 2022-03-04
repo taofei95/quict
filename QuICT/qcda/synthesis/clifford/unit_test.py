@@ -3,7 +3,7 @@ import pytest, random
 import numpy as np
 
 from QuICT.core.gate import build_gate, CompositeGate, GateType
-from QuICT.qcda.synthesis.clifford.disentangler import PauliOperator
+from QuICT.qcda.synthesis.clifford.pauli_operator import PauliOperator
 
 pauli_list = [GateType.id, GateType.x, GateType.y, GateType.z]
 clifford_single = [GateType.h, GateType.s, GateType.x, GateType.y, GateType.z]
@@ -61,6 +61,31 @@ def test_commutative():
             commute = p.commute(q)
             assert commute == np.allclose(np.dot(p.gates.matrix(), q.gates.matrix()),
                                         np.dot(q.gates.matrix(), p.gates.matrix()))
+
+def test_standardizer_generator():
+    standard_list = [
+        [GateType.x, GateType.z],
+        [GateType.x, GateType.x],
+        [GateType.x, GateType.id],
+        [GateType.id, GateType.z],
+        [GateType.id, GateType.id]
+    ]
+    for x in pauli_list:
+        for z in pauli_list:
+            if [x, z] in standard_list:
+                continue
+            else:
+                for c in clifford_single:
+                    clifford = build_gate(c, 0)
+                    px = PauliOperator([x])
+                    pz = PauliOperator([z])
+                    print(px.operator, pz.operator)
+                    px.conjugate_act(clifford)
+                    pz.conjugate_act(clifford)
+                    # if [px.operator[0], pz.operator[0]] in standard_list:
+                    print(c, px.operator, px.phase, pz.operator, pz.phase)
+                    print()
+                print()
 
 
 if __name__ == '__main__':
