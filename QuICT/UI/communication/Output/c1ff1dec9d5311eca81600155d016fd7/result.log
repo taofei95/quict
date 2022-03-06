@@ -1,0 +1,1 @@
+{'id': 'c1ff1dec9d5311eca81600155d016fd7', 'device': 'CPU', 'backend': 'unitary', 'shots': 1, 'options': {'precision': 'double'}, 'spending_time': 3.1764540672302246, 'counts': defaultdict(<class 'int'>, {'01111': 1}), 'output_path': '/mnt/d/work/kaiqi/vp-qcda/quict/QuICT/UI/communication/output/c1ff1dec9d5311eca81600155d016fd7'}

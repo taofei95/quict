@@ -24,3 +24,6 @@ QuICT/qcda/simulation/backends/*.txt
 *qubit_cnot_depth.inf
 cmake-build*/
 QuICT/qcda/simulation/backends/*.txt
+QuICT/UI/communication/dist
+QuICT/UI/communication/node_modules
+QuICT/UI/communication/temp
