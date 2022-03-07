@@ -260,11 +260,11 @@ class CompositeGate:
             "depth": self.depth(),
             "1-qubit gates": self.count_1qubit_gate(),
             "2-qubit gates": self.count_2qubit_gate(),
-            "gates detail": {}
+            "gates detail": []
         }
 
         for gate in self.gates:
-            cgate_info["gates detail"][gate.name] = str(gate)
+            cgate_info["gates detail"].append(str(gate))
 
         return str(cgate_info)
 
