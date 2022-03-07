@@ -10,7 +10,7 @@ class PhasePolynomial:
     X, CX and Rz gates.
 
     DONE circuit -> phase poly
-    TODO phase ploy -> circuit
+    DONE phase ploy -> circuit
     DONE maybe use DAG?
     """
     def __init__(self, gates):
@@ -24,6 +24,7 @@ class PhasePolynomial:
 
         self.phases = {}
         self.gates = []
+        self.size = gates.circuit_width()
         self._build_poly(gates)
 
     def _build_poly(self, gates):
@@ -56,8 +57,23 @@ class PhasePolynomial:
         """
         max_monomial = max(self.phases.keys())
         used_monomials = set()
-        circuit_ = []
+        circ = Circuit(self.size)
         for qubit_ in range(int(np.ceil(np.log2(max_monomial)))):
             if (1 << qubit_) in self.phases:
-                print(__name__, 'not finished yet')
-                break
+                Rz(self.phases[1 << qubit_]) | circ(qubit_)
+
+        monomials = {}
+        visited = {}
+        for gate_ in self.gates:
+            gate_: BasicGate
+            if gate_.qasm_name == 'cx':
+                monomials[gate_.targ] = monomials[gate_.targ] ^ monomials[gate_.carg]
+            elif gate_.qasm_name == 'x':
+                monomials[gate_.targ] = monomials[gate_.targ] ^ 1
+
+            type(gate_)() | circ(list(gate_.affectArgs))
+            cur = monomials[gate_.targ]
+            if cur in self.phases and cur not in visited:
+                Rz(self.phases[cur]) | circ(gate_.targ)
+
+        return CompositeGate(circ)
