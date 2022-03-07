@@ -240,6 +240,23 @@ class PauliOperator(object):
             # S Z Sdg = Z
             if self.operator[gate.targ] == GateType.z:
                 return
+        if gate.type == GateType.sdg:
+            assert not out_of_range(gate)
+            # Sdg I S = I
+            if self.operator[gate.targ] == GateType.id:
+                return
+            # Sdg X S = -Y
+            if self.operator[gate.targ] == GateType.x:
+                self.operator[gate.targ] = GateType.y
+                self.phase *= -1
+                return
+            # Sdg Y S = X
+            if self.operator[gate.targ] == GateType.y:
+                self.operator[gate.targ] = GateType.x
+                return
+            # Sdg Z S = Z
+            if self.operator[gate.targ] == GateType.z:
+                return
         if gate.type == GateType.x:
             assert not out_of_range(gate)
             # X I X = I

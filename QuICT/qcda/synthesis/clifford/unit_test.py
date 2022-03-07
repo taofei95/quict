@@ -6,7 +6,7 @@ from QuICT.core.gate import build_gate, CompositeGate, GateType
 from QuICT.qcda.synthesis.clifford.pauli_operator import PauliOperator
 
 pauli_list = [GateType.id, GateType.x, GateType.y, GateType.z]
-clifford_single = [GateType.h, GateType.s, GateType.x, GateType.y, GateType.z]
+clifford_single = [GateType.h, GateType.s, GateType.sdg, GateType.x, GateType.y, GateType.z]
 
 def test_conjugate_action():
     # test clifford_single
@@ -18,19 +18,25 @@ def test_conjugate_action():
 
             pauli_gate = build_gate(pauli, 0)
             gates = CompositeGate()
-            if clifford != GateType.s:
-                with gates:
-                    clifford_gate & 0
-                    pauli_gate & 0
-                    clifford_gate & 0
-            else:
+            if clifford == GateType.s:
                 clifford_inverse_gate = build_gate(GateType.sdg, 0)
                 with gates:
                     clifford_inverse_gate & 0
                     pauli_gate & 0
                     clifford_gate & 0
+            elif clifford == GateType.sdg:
+                clifford_inverse_gate = build_gate(GateType.s, 0)
+                with gates:
+                    clifford_inverse_gate & 0
+                    pauli_gate & 0
+                    clifford_gate & 0
+            else:
+                with gates:
+                    clifford_gate & 0
+                    pauli_gate & 0
+                    clifford_gate & 0
             assert np.allclose(p.gates.matrix() * p.phase, gates.matrix())
-    
+
     # test cx
     for pauli_0 in pauli_list:
         for pauli_1 in pauli_list:

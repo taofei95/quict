@@ -114,5 +114,6 @@ CLIFFORD_GATE_SET = [
     GateType.z,
     GateType.h,
     GateType.s,
+    GateType.sdg,
     GateType.cx
 ]
