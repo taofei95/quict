@@ -108,7 +108,7 @@ class PauliOperator(object):
         Args:
             gate(BasicGate): the clifford gate to be acted on the PauliOperator
         """
-        if not gate.is_clifford(): 
+        if not gate.is_clifford() and gate.type != GateType.id: 
             raise ValueError("Only conjugate action of Clifford gates here.")
 
         def out_of_range(gate):
@@ -295,8 +295,119 @@ class PauliOperator(object):
             ValueError('two PauliOperators must be of the same width')
         assert not pauli_x.commute(pauli_z),\
             ValueError('anti-commutative pairs needed for computing disentangler')
-        # Transform the pauli_x and pauli_z to 'standard' forms.
+
+        # Record the qubits in the 5 cases of the standard forms
+        XZ = []
+        XX = []
+        XI = []
+        IZ = []
+        II = []
+
+        def standardize(gate_type, qubit):
+            gate = build_gate(gate_type, qubit)
+            pauli_x.conjugate_act(gate)
+            pauli_z.conjugate_act(gate)
+            standardizer.append(gate)
+
+        # Transform the pauli_x and pauli_z to 'standard' forms
         standardizer = CompositeGate()
         for qubit in range(pauli_x.width):
-            pass
-        # Construct the disentangler of 'standard' pairs with the algorithm given in reference.
+            if pauli_x.operator[qubit] == GateType.id:
+                # II
+                if pauli_z.operator[qubit] == GateType.id:
+                    II.append(qubit)
+                    continue
+                # IX
+                if pauli_z.operator[qubit] == GateType.x:
+                    standardize(GateType.h, qubit)
+                    IZ.append(qubit)
+                    continue
+                # IY
+                if pauli_z.operator[qubit] == GateType.y:
+                    standardize(GateType.s, qubit)
+                    standardize(GateType.h, qubit)
+                    IZ.append(qubit)
+                    continue
+                # IZ
+                if pauli_z.operator[qubit] == GateType.z:
+                    IZ.append(qubit)
+                    continue
+            if pauli_x.operator[qubit] == GateType.x:
+                # XI
+                if pauli_z.operator[qubit] == GateType.id:
+                    XI.append(qubit)
+                    continue
+                # XX
+                if pauli_z.operator[qubit] == GateType.x:
+                    XX.append(qubit)
+                    continue
+                # XY
+                if pauli_z.operator[qubit] == GateType.y:
+                    standardize(GateType.h, qubit)
+                    standardize(GateType.s, qubit)
+                    standardize(GateType.h, qubit)
+                    XZ.append(qubit)
+                    continue
+                # XZ
+                if pauli_z.operator[qubit] == GateType.z:
+                    XZ.append(qubit)
+                    continue
+            if pauli_x.operator[qubit] == GateType.y:
+                # YI
+                if pauli_z.operator[qubit] == GateType.id:
+                    standardize(GateType.s, qubit)
+                    XI.append(qubit)
+                    continue
+                # YX
+                if pauli_z.operator[qubit] == GateType.x:
+                    standardize(GateType.h, qubit)
+                    standardize(GateType.s, qubit)
+                    XZ.append(qubit)
+                    continue
+                # YY
+                if pauli_z.operator[qubit] == GateType.y:
+                    standardize(GateType.s, qubit)
+                    XX.append(qubit)
+                    continue
+                # YZ
+                if pauli_z.operator[qubit] == GateType.z:
+                    standardize(GateType.s, qubit)
+                    XZ.append(qubit)
+                    continue
+            if pauli_x.operator[qubit] == GateType.z:
+                # ZI
+                if pauli_z.operator[qubit] == GateType.id:
+                    standardize(GateType.h, qubit)
+                    XI.append(qubit)
+                    continue
+                # ZX
+                if pauli_z.operator[qubit] == GateType.x:
+                    standardize(GateType.h, qubit)
+                    XZ.append(qubit)
+                    continue
+                # ZY
+                if pauli_z.operator[qubit] == GateType.y:
+                    standardize(GateType.s, qubit)
+                    standardize(GateType.h, qubit)
+                    XZ.append(qubit)
+                    continue
+                # ZZ
+                if pauli_z.operator[qubit] == GateType.z:
+                    standardize(GateType.h, qubit)
+                    XX.append(qubit)
+                    continue
+
+        # Some tests for standardizer
+        assert len(XZ + XX + XI + IZ + II) == pauli_x.width
+        for qubit in XZ:
+            assert pauli_x.operator[qubit] == GateType.x and pauli_z.operator[qubit] == GateType.z
+        for qubit in XX:
+            assert pauli_x.operator[qubit] == GateType.x and pauli_z.operator[qubit] == GateType.x
+        for qubit in XI:
+            assert pauli_x.operator[qubit] == GateType.x and pauli_z.operator[qubit] == GateType.id
+        for qubit in IZ:
+            assert pauli_x.operator[qubit] == GateType.id and pauli_z.operator[qubit] == GateType.z
+        for qubit in II:
+            assert pauli_x.operator[qubit] == GateType.id and pauli_z.operator[qubit] == GateType.id
+
+        # Construct the disentangler of 'standard' pairs with the algorithm given in reference

@@ -72,20 +72,37 @@ def test_standardizer_generator():
     ]
     for x in pauli_list:
         for z in pauli_list:
-            if [x, z] in standard_list:
-                continue
-            else:
-                for c in clifford_single:
-                    clifford = build_gate(c, 0)
+            for c1 in [GateType.id] + clifford_single:
+                for c2 in [GateType.id] + clifford_single:
+                    found = False
+                    clifford_1 = build_gate(c1, 0)
+                    clifford_2 = build_gate(c2, 0)
                     px = PauliOperator([x])
                     pz = PauliOperator([z])
-                    print(px.operator, pz.operator)
-                    px.conjugate_act(clifford)
-                    pz.conjugate_act(clifford)
-                    # if [px.operator[0], pz.operator[0]] in standard_list:
-                    print(c, px.operator, px.phase, pz.operator, pz.phase)
-                    print()
-                print()
+                    if c1 == GateType.id and c2 == GateType.id:
+                        print(px.operator, pz.operator)
+                    px.conjugate_act(clifford_1)
+                    pz.conjugate_act(clifford_1)
+                    px.conjugate_act(clifford_2)
+                    pz.conjugate_act(clifford_2)
+                    if [px.operator[0], pz.operator[0]] in standard_list:
+                        print(c1, c2, px.operator, px.phase, pz.operator, pz.phase)
+                        found = True
+                        break
+                if found is True:
+                    break
+            print()
+
+def test_disentangler():
+    x_op = [GateType.x]
+    z_op = [GateType.z]
+    for x in pauli_list:
+        for z in pauli_list:
+            x_op.append(x)
+            z_op.append(z)
+    pauli_x = PauliOperator(x_op)
+    pauli_z = PauliOperator(z_op)
+    PauliOperator.disentangler(pauli_x, pauli_z)
 
 
 if __name__ == '__main__':
