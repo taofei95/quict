@@ -2,7 +2,9 @@
 Compute the disentangler of Pauli operators (O, O')
 """
 
-from QuICT.core.gate import build_gate, BasicGate, CompositeGate, GateType, PAULI_GATE_SET
+import copy
+
+from QuICT.core.gate import build_gate, BasicGate, CompositeGate, GateType, PAULI_GATE_SET, CX, H, Swap
 
 class PauliOperator(object):
     """
@@ -32,6 +34,21 @@ class PauliOperator(object):
         if phase not in phase_list:
             raise ValueError("phase must be ±1 or ±i")
         self._phase = phase
+
+    def __str__(self):
+        string = ''
+        for i in range(len(self.operator)):
+            if self.operator[i] == GateType.id:
+                string += 'I'
+            elif self.operator[i] == GateType.x:
+                string += 'X'
+            elif self.operator[i] == GateType.y:
+                string += 'Y'
+            elif self.operator[i] == GateType.z:
+                string += 'Z'
+            else:
+                raise ValueError('Invalid GateType')
+        return string + ', {}'.format(self.phase)
 
     @property
     def operator(self) -> list:
@@ -296,6 +313,9 @@ class PauliOperator(object):
         assert not pauli_x.commute(pauli_z),\
             ValueError('anti-commutative pairs needed for computing disentangler')
 
+        pauli_x = copy.deepcopy(pauli_x)
+        pauli_z = copy.deepcopy(pauli_z)
+
         # Record the qubits in the 5 cases of the standard forms
         XZ = []
         XX = []
@@ -411,3 +431,28 @@ class PauliOperator(object):
             assert pauli_x.operator[qubit] == GateType.id and pauli_z.operator[qubit] == GateType.id
 
         # Construct the disentangler of 'standard' pairs with the algorithm given in reference
+        disentangler = CompositeGate()
+        with disentangler:
+            if 0 not in XZ:
+                Swap & [0, XZ[0]]
+            for j in XI:
+                CX & [0, j]
+            for j in IZ:
+                CX & [j, 0]
+            if len(XX) > 0:
+                i = XX[0]
+                for j in XX[1:]:
+                    CX & [i, j]
+                CX & [0, i]
+                H & i
+                CX & [i, 0]
+            # Anti-commutation gives that len(XZ) is odd
+            for k in range((len(XZ) - 1) // 2):
+                i = 2 * k + 1
+                j = 2 * k + 2
+                CX & [XZ[j], XZ[i]]
+                CX & [XZ[i], 0]
+                CX & [0, XZ[j]]
+
+        standardizer.extend(disentangler.gates)
+        return standardizer
