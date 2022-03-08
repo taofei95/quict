@@ -173,6 +173,7 @@ class CircuitSimulator:
     """
 
     def __init__(self):
+        self._circuit = None
         self._instance = sim_back_bind.CircuitSimulator()
 
     def name(self) -> str:
@@ -240,7 +241,7 @@ class CircuitSimulator:
         else:
             return amplitude
 
-    def sample(self, circuit: Circuit = None) -> List[List[int]]:
+    def sample(self, circuit: Circuit = None) -> int:
         """Appending measure gates to end of circuit if not presented then
         apply measurement. Before calling this method, one should call `run`
         method first.
