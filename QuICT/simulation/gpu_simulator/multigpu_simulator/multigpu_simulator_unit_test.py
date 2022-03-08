@@ -8,12 +8,14 @@ import os
 import unittest
 from concurrent.futures import ProcessPoolExecutor, as_completed
 
-from cupy.cuda import nccl
-
 from QuICT.core import Circuit
 from QuICT.core.gate import *
-from QuICT.utility import Proxy
-from QuICT.simulation.gpu_simulator import MultiStateVectorSimulator
+
+
+if os.environ.get("test_with_gpu"):
+    from cupy.cuda import nccl
+    from QuICT.utility import Proxy
+    from QuICT.simulation.gpu_simulator import MultiStateVectorSimulator
 
 
 q = 5

@@ -25,6 +25,7 @@ class CalculationLayer:
 
             result = CL.dot(gpu_A, gpu_B, gpu_out=True)
     """
+
     def __init__(self, gpu_device: int = 0, memory_limit: int = None):
         if gpu_device != cp.cuda.runtime.getDevice() and gpu_device < cp.cuda.runtime.getDeviceCount():
             dev = cp.cuda.Device(gpu_device)
@@ -71,7 +72,7 @@ class CalculationLayer:
 
             return weak_r
 
-        raise("The given value has been added in the GPU.")
+        raise ("The given value has been added in the GPU.")
 
     def dtoh(self, target):
         """ mv target from GPU device into host. """
@@ -81,7 +82,7 @@ class CalculationLayer:
         if type(target) is weakref.ref:
             return target().get()
 
-        raise("The given value not in GPU.")
+        raise ("The given value not in GPU.")
 
     def _var_normalized(self, target):
         if type(target) is weakref.ref:
@@ -156,12 +157,12 @@ class CalculationLayer:
         return self._result_normalized(result, gpu_out)
 
     def VectorPermutation(
-        self,
-        A,
-        mapping,
-        changeInput: bool = False,
-        gpu_out: bool = True,
-        sync: bool = True
+            self,
+            A,
+            mapping,
+            changeInput: bool = False,
+            gpu_out: bool = True,
+            sync: bool = True
     ):
         """ permutaion A with mapping, inplace
 
@@ -181,12 +182,12 @@ class CalculationLayer:
         return self._result_normalized(result, gpu_out)
 
     def MatrixPermutation(
-        self,
-        A,
-        mapping,
-        changeInput: bool = False,
-        gpu_out: bool = True,
-        sync: bool = True
+            self,
+            A,
+            mapping,
+            changeInput: bool = False,
+            gpu_out: bool = True,
+            sync: bool = True
     ):
         """ permute mat with mapping, inplace
 
