@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 # -*- coding:utf8 -*-
 # @TIME    : 2020/12/29 15:28
-# @Author  : Zhu Qinlin
-# @File    : HRS_shor.py
+# @Author  : Peng Sirui
+# @File    : BEA_shor.py
 
 '''
 The (2n+3)-qubit circuit used in the Shor algorithm is designed by \
@@ -20,6 +20,7 @@ from QuICT.core.gate import *
 from QuICT.qcda.synthesis.arithmetic.bea import *
 from QuICT.algorithm import Algorithm
 from .utility import *
+
 from QuICT.simulation.gpu_simulator import ConstantStateVectorSimulator
 from QuICT.simulation.unitary_simulator import UnitarySimulator
 from QuICT.simulation import Simulator
@@ -105,16 +106,16 @@ def order_finding(a:int, N: int, demo = None, eps: float = 1/10, simulator: Simu
     r = den1
     return r
 
-class BEA_order_finding(Algorithm):
+class BEA_order_finding_twice(Algorithm):
     '''
     Run order_finding twice and take the lcm of the two result 
     to guaruntee a higher possibility to get the correct order,
     as suggested in QCQI 5.3.1
     '''
     @staticmethod
-    def run(a: int, N: int, demo:str = None, eps: float = 1/10):
-        r1 = order_finding(a, N, demo, eps)
-        r2 = order_finding(a, N, demo, eps)
+    def run(a: int, N: int, demo:str = None, eps: float = 1/10, simulator: Simulator = UnitarySimulator()):
+        r1 = order_finding(a, N, demo, eps, simulator)
+        r2 = order_finding(a, N, demo, eps, simulator)
         flag1 = (pow(a, r1, N) == 1 and r1!= 0)
         flag2 = (pow(a, r2, N) == 1 and r2!= 0)
         if flag1 and flag2:
@@ -193,7 +194,7 @@ class BEAShorFactor(Algorithm):
             msg = f'Quantumly determine the order of the randomly chosen a = {a}'
             if demo == 'demo': print(msg)
             else: logging.info(msg)
-            r = order_finding(a, N, demo, eps, simulator)
+            r = BEA_order_finding_twice.run(a, N, demo, eps, simulator)
             if r == 0:
                 msg = f'Shor failed: did not find the order of a = {a}'
                 if demo == 'demo': print(msg)
