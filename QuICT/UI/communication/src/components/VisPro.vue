@@ -549,7 +549,7 @@ export default {
         content: this.ProgramText,
       });
     },
-    RunQCDA(opSwitch, mapSwitch) { // 通知后端运行qasm
+    RunQCDA(opSwitch, mapSwitch, setting) { // 通知后端运行qasm
       this.socket.emit("qasm_run", {
         uuid: this.uuid,
         content: this.ProgramText,
@@ -557,6 +557,7 @@ export default {
         mapping: mapSwitch,
         topology: this.topology,
         set: this.all_sets[this.current_set],
+        setting:setting,
       });
     },
     LoadQCDA(file) { // 通知后端加载qasm

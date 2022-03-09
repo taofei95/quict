@@ -126,9 +126,13 @@
     </el-dialog>
 
     <el-col :span="3">
-          <el-checkbox v-model="opSwitch" style="line-hight: 20px">Optimize</el-checkbox>
+      <el-checkbox v-model="opSwitch" style="line-hight: 20px"
+        >Optimize</el-checkbox
+      >
 
-          <el-checkbox v-model="mapSwitch" style="line-hight: 20px">Mapping</el-checkbox>
+      <el-checkbox v-model="mapSwitch" style="line-hight: 20px"
+        >Mapping</el-checkbox
+      >
     </el-col>
 
     <el-col :span="3">
@@ -147,8 +151,33 @@
       :before-close="handleBeClose"
     >
       <div>
+        <span>Device</span>
         <el-radio v-model="dialogBe" label="CPU">CPU</el-radio>
         <el-radio v-model="dialogBe" label="GPU">GPU</el-radio>
+        <el-radio v-model="dialogBe" label="qiskit">qiskit</el-radio>
+        <el-radio v-model="dialogBe" label="qcompute">qcompute</el-radio>
+      </div>
+      <div>
+        
+        <el-select placeholder="Backend" v-if="dialogBe == 'CPU'" v-model="dialogBe_Backend">
+          <span>Backend</span>
+          <el-option key="unitary" label="unitary" value="unitary">
+          </el-option>
+        </el-select>
+        <el-select
+          v-model="dialogBe_Backend"
+          placeholder="Backend"
+          v-if="dialogBe == 'GPU'"
+        >
+        <span>Backend</span>
+          <el-option
+            v-for="item in dialogBe_Backend_options"
+            :key="item.value"
+            :label="item.label"
+            :value="item.value"
+          >
+          </el-option>
+        </el-select>
       </div>
       <template #footer>
         <span class="dialog-footer">
@@ -175,21 +204,42 @@
       width="30%"
       :before-close="handleSeClose"
     >
-
       <div>
-          <el-input
-            v-model="dialogSeShots"
-            label="n="
-          ></el-input>
-          <div v-if="precision_need_show">
-          <span
-            
-            style="display: block; text-align: center"
-            >Precision</span
+         <span style="display: block; text-align: center">Shots</span>
+        <el-input v-model="dialogSeShots" label="n="></el-input>
+        <div v-if="dialogBe == 'CPU' || dialogBe == 'GPU'">
+          <span style="display: block; text-align: center">Precision</span>
+          <el-radio v-model="dialogSe_Precision" label="single"
+            >single</el-radio
           >
-        <el-radio v-model="dialogSe" label="single">single</el-radio>
-        <el-radio v-model="dialogSe" label="double">double</el-radio>
-          </div>
+          <el-radio v-model="dialogSe_Precision" label="double"
+            >double</el-radio
+          >
+        </div>
+        <div v-if="dialogBe == 'GPU' && dialogBe_Backend == 'statevector'">
+          <span style="display: block; text-align: center" id="GPU_device_ID">GPU device ID</span>
+          <el-input v-model="dialogSe_GPU_device_id" label="GPU_device_ID"
+            >0</el-input
+          >
+          <el-checkbox v-model="dialogSe_sync" style="line-hight: 20px"
+            >Sync</el-checkbox
+          >
+          <el-checkbox v-model="dialogSe_optimize" style="line-hight: 20px"
+            >Optimize</el-checkbox
+          >
+        </div>
+        <div v-if="dialogBe == 'GPU' && dialogBe_Backend == 'multiGPU'">
+          <el-input v-model="dialogSe_ndev" label="NDEV"
+            >0</el-input
+          >
+          <el-checkbox v-model="dialogSe_sync" style="line-hight: 20px"
+            >Sync</el-checkbox
+          >
+        </div>
+        <div v-if="dialogBe == 'qiskit' || dialogBe == 'qcompute'">
+          <span style="display: block; text-align: center" id="Token">Token</span>
+          <el-input v-model="dialogSeToken" label="Token"></el-input>
+        </div>
       </div>
       <template #footer>
         <span class="dialog-footer">
@@ -200,7 +250,7 @@
         </span>
       </template>
     </el-dialog>
-    
+
     <el-col
       :span="6"
       style="
@@ -271,7 +321,7 @@ export default {
       dialogBeVisible: false,
       dialogSeVisible: false,
       dialogCmd: 0,
-      dialogBe: undefined,
+      dialogBe: `CPU`,
       opSwitch: false,
       mapSwitch: false,
       customerSet: [],
@@ -282,9 +332,20 @@ export default {
       qbit: [],
       topologyZone: undefined,
       dialogTpNodeCount: 0,
-      dialogSeShots: 0,
-      dialogSe: 'single',
+      dialogSeShots: 1,
+      dialogSe_Precision: "single",
       precision_need_show: false,
+      dialogBe_Backend: `unitary`,
+      dialogBe_Backend_options: [
+        { value: `unitary`, label: `unitary` },
+        { value: `statevector`, label: `statevector` },
+        { value: `multiGPU`, label: `multiGPU` },
+      ],
+      dialogSe_GPU_device_id:0,
+      dialogSe_sync:true,
+      dialogSe_optimize:false,
+      dialogSe_ndev:1,
+      dialogSeToken:1,
     };
   },
   methods: {
@@ -590,7 +651,40 @@ export default {
     },
     runQCDA() {
       // 通知外层运行当前qasm
-      this.$emit("RunQCDA", this.opSwitch, this.mapSwitch);
+      let setting = {};
+      setting.device=this.dialogBe;
+      setting.shots=this.dialogSeShots;
+      switch(setting.device)
+      {
+        case 'CPU':
+          setting.backend='unitary';
+          setting.precision=this.dialogSe_Precision;
+          break;
+        case 'GPU':
+          setting.backend=this.dialogBe_Backend;
+          setting.precision=this.dialogSe_Precision;
+          switch(this.dialogBe_Backend){
+            case 'unitary':
+              break;
+            case 'statevector':
+              setting.gpu_device_id=this.dialogSe_GPU_device_id;
+              setting.sync=this.dialogSe_sync;
+              setting.optimize=this.dialogSe_optimize;
+              break;
+            case 'multiGPU':
+              setting.ndev=this.dialogSe_ndev;
+              setting.sync=this.dialogSe_sync;
+              break;
+          }
+          break;
+        case 'qiskit':
+          setting.token=this.dialogSeToken;
+          break;
+        case 'qcompute':
+          setting.token=this.dialogSeToken;
+          break;
+      }
+      this.$emit("RunQCDA", this.opSwitch, this.mapSwitch, setting);
     },
     loadQCDA(file) {
       // 通知外层已载入qasm

@@ -257,6 +257,7 @@ def run_file(content):
     mapping = content['mapping']
     topology = content['topology']
     set = content['set']
+    setting = content['setting']
     logger.info(f"run content {content}")
     try:
 
@@ -318,8 +319,8 @@ def run_file(content):
         #     zip(index, state_r, state_i, state_amp, state_ang))}, namespace="/api/pty")
         # emit(
         #     'info', {'uuid': uid, 'info': f"Run circuit finished."}, namespace="/api/pty")
-
-        simulation = Simulator(device='CPU', backend='unitary', shots=1)
+        # device=setting['device'], backend=setting['backend'], shots=setting['shots'],
+        simulation = Simulator(**setting)
         result = simulation.run(circuit)
 
         emit(
