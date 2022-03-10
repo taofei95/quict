@@ -44,7 +44,6 @@ class PartialGrover:
         """
         if simulator is None:
             simulator = ConstantStateVectorSimulator()
-        assert len(f) == (1 << n)
         K = 1 << k
         N = 1 << n
         eps = 1 / K  # can use other epsilon
@@ -72,12 +71,12 @@ class PartialGrover:
             # global inversion about average
             for idx in qreg: H | circuit(idx)
             for idx in qreg: X | circuit(idx)
-            H | circuit(qreg(n - 1))
+            H | circuit(qreg[n - 1])
             #MCTLinearOneDirtyAux.execute(
             #    n + 1) | (qreg([j for j in range(0, n - 1)]), qreg(n - 1), dirty)
             MCTLinearOneDirtyAux.execute(
                 n + 1) | circuit(qreg + [dirty]) 
-            H | circuit(qreg(n - 1))
+            H | circuit(qreg[n - 1])
             for idx in qreg: X | circuit(idx)
             for idx in qreg: H | circuit(idx)
         # step 2
@@ -90,26 +89,26 @@ class PartialGrover:
             local_qreg = [j for j in range(k, k + local_n)]
             for idx in local_qreg: H | circuit(idx)
             for idx in local_qreg: X | circuit(idx)
-            H | circuit(local_qreg(local_n - 1))
+            H | circuit(local_qreg[local_n - 1])
             #MCTLinearOneDirtyAux.execute(
             #    local_n + 1) | (local_qreg([j for j in range(0, local_n - 1)]), local_qreg(local_n - 1), dirty)
             MCTLinearOneDirtyAux.execute(
                 local_n + 1) | circuit(local_qreg + [dirty])
-            H | circuit(local_qreg(local_n - 1))
+            H | circuit(local_qreg[local_n - 1])
             for idx in local_qreg: X | circuit(idx)
             for idx in local_qreg: H | circuit(idx)
         # step 3
         oracle | circuit(qreg + [ctarget])
         # controlled inversion about average
         CH | circuit(qreg + [ctarget])
-        CH | circuit(qreg(n - 1) + [ctarget])
-        CH | circuit(qreg(n - 1) + [ctarget])
+        CH | circuit(qreg[n - 1] + [ctarget])
+        CH | circuit(qreg[n - 1] + [ctarget])
+        #MCTLinearOneDirtyAux.execute(
+        #    n + 2) | (cqreg([j for j in range(0, n)]), qreg(n - 1), ancilla)
         MCTLinearOneDirtyAux.execute(
-            n + 2) | (cqreg([j for j in range(0, n)]), qreg(n - 1), ancilla)
-        MCTLinearOneDirtyAux.execute(
-            n + 2) | circuit(cqreg[0:n] + qreg(n - 1) + [ancilla])
-        CH | circuit(qreg(n - 1) + [ctarget])
-        CH | circuit(qreg(n - 1) + [ctarget])
+            n + 2) | circuit(cqreg[0:n] + qreg[n - 1] + [ancilla])
+        CH | circuit(qreg[n - 1] + [ctarget])
+        CH | circuit(qreg[n - 1] + [ctarget])
         CH | circuit(qreg + [ctarget])
         # Measure
         for idx in qreg : Measure | circuit(idx)
