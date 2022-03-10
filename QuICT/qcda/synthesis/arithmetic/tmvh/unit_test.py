@@ -6,7 +6,8 @@
 
 import pytest
 
-from QuICT.core import Circuit, X, Measure
+from QuICT.core import Circuit
+from QuICT.core.gate import X, Measure
 from QuICT.qcda.synthesis.arithmetic.tmvh import *
 
 

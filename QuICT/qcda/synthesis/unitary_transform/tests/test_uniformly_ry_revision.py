@@ -1,6 +1,3 @@
-import sys
-sys.path.append('/mnt/d/ICT/QuICT')
-
 import random
 
 import numpy as np

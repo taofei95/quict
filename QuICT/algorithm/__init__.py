@@ -5,6 +5,6 @@
 # @File    : __init__.py.py
 
 from ._algorithm import Algorithm
-# from .quantum_algorithm import *
+from .quantum_algorithm import *
 from .synthetical_unitary import SyntheticalUnitary
-# from .weight_decision import WeightDecision
+from .weight_decision import WeightDecision

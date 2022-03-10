@@ -12,6 +12,7 @@ from .._optimization import Optimization
 from .cnot_force_depth import CnotForceDepthBfs
 from .cnot_store_force_depth import CnotStoreForceDepthBfs
 from QuICT.core import *
+from QuICT.core.gate import CX, GateType
 
 
 def circuit_depth(gates):
@@ -118,7 +119,7 @@ def traver_with_fix_qubits(gates: list, fix: set, store):
     output = []
     local_list = []
     for gate in gates:
-        if gate.type() == GATE_ID["CX"]:
+        if gate.type == GateType.cx:
             fix_in = int(gate.carg in fix) + int(gate.targ in fix)
             if fix_in == 2:
                 local_list.append(gate)
@@ -220,4 +221,4 @@ class CnotLocalForceDepthBfs(Optimization):
             Circuit: output circuit
         """
         gates = circuit.gates
-        return solve(gates, circuit.circuit_width(), store)
+        return solve(gates, circuit.width(), store)

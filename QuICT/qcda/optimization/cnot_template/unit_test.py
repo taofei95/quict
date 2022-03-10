@@ -7,9 +7,11 @@
 import random
 
 import numpy as np
+import pytest
 
 from QuICT.algorithm import SyntheticalUnitary
 from QuICT.core import *
+from QuICT.core.gate import CX, S, T, X, Z
 from QuICT.qcda.optimization import CnotForceBfs, CnotForceDepthBfs, CnotLocalForceBfs, CnotLocalForceDepthBfs
 
 
@@ -44,8 +46,8 @@ def check_equiv(circuit1, circuit2):
     Returns:
         bool: True if equiv
     """
-    n = circuit1.circuit_width()
-    if circuit2.circuit_width() != n:
+    n = circuit1.width()
+    if circuit2.width() != n:
         return False
     matrix1 = generate_matrix(circuit1, n)
     matrix2 = generate_matrix(circuit2, n)
@@ -56,9 +58,9 @@ def check_equiv(circuit1, circuit2):
 def test_1():
     for i in range(5, 6):
         circuit = Circuit(i)
-        for _ in range(10000):
+        for _ in range(10):
             cx = _getRandomList(i)
-            CX | circuit(cx)
+            CX | circuit(list(cx))
         new_circuit = CnotForceBfs.execute(circuit)
         if not check_equiv(circuit, new_circuit):
             assert 0
@@ -67,18 +69,18 @@ def test_1():
 def test_2():
     for i in range(5, 6):
         circuit = Circuit(i)
-        for _ in range(1000):
+        for _ in range(10):
             cx = _getRandomList(i)
             Z | circuit(random.randrange(i))
             S | circuit(random.randrange(i))
             T | circuit(random.randrange(i))
             X | circuit(random.randrange(i))
-            CX | circuit(cx)
+            CX | circuit(list(cx))
         new_circuit_gates = CnotLocalForceBfs.execute(circuit, True)
         new_circuit = Circuit(i)
-        new_circuit.set_exec_gates(new_circuit_gates)
-        circuit.print_information()
-        new_circuit.print_information()
+        new_circuit.extend(new_circuit_gates)
+        print(circuit)
+        print(new_circuit)
         syn1 = SyntheticalUnitary.run(circuit)
         syn2 = SyntheticalUnitary.run(new_circuit)
         assert not np.any(np.abs(syn1 - syn2) > 1e-7)
@@ -88,12 +90,12 @@ def test_3():
     for _ in range(1):
         for i in range(6, 7):
             circuit = Circuit(i)
-            for _ in range(100):
+            for _ in range(10):
                 cx = _getRandomList(i)
-                CX | circuit(cx)
+                CX | circuit(list(cx))
             new_circuit_gates = CnotLocalForceBfs.execute(circuit, True)
             new_circuit = Circuit(i)
-            new_circuit.set_exec_gates(new_circuit_gates)
+            new_circuit.extend(new_circuit_gates)
             if not check_equiv(circuit, new_circuit):
                 assert 0
 
@@ -101,9 +103,9 @@ def test_3():
 def test_4():
     for i in range(2, 4):
         circuit = Circuit(i)
-        for _ in range(10000):
+        for _ in range(10):
             cx = _getRandomList(i)
-            CX | circuit(cx)
+            CX | circuit(list(cx))
         new_circuit = CnotForceDepthBfs.execute(circuit)
         if not check_equiv(circuit, new_circuit):
             assert 0
@@ -112,16 +114,15 @@ def test_4():
 def test_5():
     for i in range(5, 6):
         circuit = Circuit(i)
-        for _ in range(10000):
+        for _ in range(10):
             cx = _getRandomList(i)
-            CX | circuit(cx)
+            CX | circuit(list(cx))
         new_circuit_gates = CnotLocalForceDepthBfs.execute(circuit, True)
         new_circuit = Circuit(i)
-        new_circuit.set_exec_gates(new_circuit_gates)
+        new_circuit.extend(new_circuit_gates)
         if not check_equiv(circuit, new_circuit):
             assert 0
 
 
 if __name__ == '__main__':
-    # pytest.main(["./unit_test.py"])
-    test_5()
+    pytest.main(["./unit_test.py"])

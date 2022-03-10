@@ -7,7 +7,16 @@ import random
 from numba import njit, prange
 import numpy as np
 
-from QuICT.ops.utils import mapping_augment
+
+@njit(nogil=True)
+def mapping_augment(mapping: np.ndarray) -> np.ndarray:
+    n = len(mapping)
+    p2n = 1 << n
+    res = np.zeros(shape=p2n, dtype=np.int64)
+    for i in range(p2n):
+        for k in range(n):
+            res[i] |= ((i >> (n - 1 - mapping[k])) & 1) << (n - 1 - k)
+    return res
 
 
 @njit(parallel=True, nogil=True)

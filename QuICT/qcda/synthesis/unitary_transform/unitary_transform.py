@@ -35,7 +35,7 @@ def inner_utrans_build_gate(
         # GateBuilder.setPargs(parg)
         # GateBuilder.setTargs([0])
         # u = GateBuilder.getGate()
-        u = build_gate(GateType.unitary, [0], parg)
+        u = build_gate(GateType.unitary, [0], mat)
         _ret = CompositeGate(gates=[u])
         return _ret, 1.0 + 0.0j
     elif qubit_num == 2 and recursive_basis == 2:
@@ -201,7 +201,7 @@ class UnitaryTransform(Synthesis):
             mapping = [i for i in range(qubit_num)]
         mapping = list(mapping)
 
-        gates.remapping(mapping)
+        gates & mapping
         if recursive_basis == 2 and include_phase_gate:
             gates = add_factor_shift_into_phase(gates, shift)
         if include_phase_gate:

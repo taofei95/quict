@@ -1,7 +1,4 @@
 # noinspection PyUnresolvedReferences
-import sys
-sys.path.append('/mnt/d/ICT/QuICT')
-
 import numpy as np
 from scipy.linalg import block_diag
 from scipy.stats import unitary_group
