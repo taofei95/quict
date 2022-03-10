@@ -100,17 +100,17 @@ class PartialGrover:
         # step 3
         oracle | circuit(qreg + [ctarget])
         # controlled inversion about average
-        CH | circuit(qreg + [ctarget])
-        CH | circuit(qreg[n - 1] + [ctarget])
-        CH | circuit(qreg[n - 1] + [ctarget])
+        CH | circuit([qreg[n - 1]] + [ctarget])
+        CX | circuit([qreg[n - 1]] + [ctarget])
+        CH | circuit([qreg[n - 1]] + [ctarget])
         #MCTLinearOneDirtyAux.execute(
         #    n + 2) | (cqreg([j for j in range(0, n)]), qreg(n - 1), ancilla)
         MCTLinearOneDirtyAux.execute(
-            n + 2) | circuit(cqreg[0:n] + qreg[n - 1] + [ancilla])
-        CH | circuit(qreg[n - 1] + [ctarget])
-        CH | circuit(qreg[n - 1] + [ctarget])
-        CH | circuit(qreg + [ctarget])
+            n + 2) | circuit(cqreg[0:n] + [qreg[n - 1]] + [ancilla])
+        CH | circuit([qreg[n - 1]] + [ctarget])
+        CX | circuit([qreg[n - 1]] + [ctarget])
+        CH | circuit([qreg[n - 1]] + [ctarget])
         # Measure
         for idx in qreg : Measure | circuit(idx)
         simulator.run(circuit)
-        return int(circuit(qreg))
+        return int(circuit[qreg])
