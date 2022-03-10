@@ -7,10 +7,6 @@
 import pytest
 
 from QuICT.algorithm.quantum_algorithm import (
-    ClassicalShorFactor,
-    ClassicalZipShorFactor,
-    ShorFactor,
-    ZipShorFactor,
     BEAShorFactor,
     HRSShorFactor
 )
