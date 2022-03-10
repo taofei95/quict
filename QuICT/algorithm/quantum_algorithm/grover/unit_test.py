@@ -61,20 +61,5 @@ def test_grover():
 #     assert 1
 
 
-# def test_grover_with_prior_knowledge():
-#     for test_number in range(3, 5):
-#         for i in range(2, 8):
-#             for T in range(1, 4):
-#                 test = [0] * (1 << test_number)
-#                 test[i] = 1
-#                 prob = [1 / 4, 0, 1 / 4, 1 / 4, 0, 1 / 4, 0, 0]
-#                 for j in range(8, 1 << test_number):
-#                     prob.append(0)
-#                 p = np.array(prob)
-#                 p /= p.sum()
-#                 GroverWithPriorKnowledge.run(
-#                     test, 2**test_number, p, T, main_oracle)
-
-
 if __name__ == '__main__':
     pytest.main(["./unit_test.py"])
