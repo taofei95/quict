@@ -31,7 +31,7 @@ class PartialGrover:
     https://arxiv.org/abs/quant-ph/0407122
     """
     @staticmethod
-    def run(n, k, oracle, simulator=None, demo_mode=False):
+    def run(n, k, oracle, simulator=None):
         """ partial grover search with one target
 
         Args:
