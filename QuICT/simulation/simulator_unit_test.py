@@ -26,20 +26,20 @@ class TestGPUSimulator(unittest.TestCase):
     def test_gpu_statevector(self):
         circuit = Circuit(10)
         circuit.random_append(100)
-        
+
         sv_sim = Simulator(
             device="GPU",
             backend="statevector"
         )
-        
+
         _ = sv_sim.run(circuit, circuit_out=False, statevector_out=False)
 
         assert 1
-        
+
     def test_multigpu_simulator(self):
         circuit = Circuit(10)
         circuit.random_append(100)
-        
+
         multi_sim = Simulator(
             device="GPU",
             backend="multiGPU",

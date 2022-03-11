@@ -27,7 +27,7 @@ def merge_qubit(qubit_a, qubit_b):
     return qureg
 
 
-def solve(gates:CompositeGate, n):
+def solve(gates: CompositeGate, n):
     """ Decomposition of n-qubit Toffoli gates with one ancillary qubit and linear circuit complexity
 
     Args:

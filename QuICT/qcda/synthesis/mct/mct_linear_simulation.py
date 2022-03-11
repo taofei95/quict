@@ -9,7 +9,7 @@ from QuICT.core import *
 from QuICT.core.gate import *
 
 
-def half_dirty_aux(gates, n, m, controls:list, auxs:list, target:int):
+def half_dirty_aux(gates, n, m, controls: list, auxs: list, target: int):
     """
 
     Args:
@@ -39,7 +39,7 @@ def half_dirty_aux(gates, n, m, controls:list, auxs:list, target:int):
                 CCX & [circuit[i - 1], circuit[n - 1 - (m - i + 1)], circuit[n - 1 - (m - i)]]
 
 
-def one_dirty_aux(gates, controls:list, target:int, aux:int):
+def one_dirty_aux(gates, controls: list, target: int, aux: int):
     with gates:
         n = len(controls) + 2
         # _ = controls + aux + target

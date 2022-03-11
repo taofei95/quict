@@ -246,7 +246,7 @@ class BasicGate(object):
         if (
             self.type != other.type or
             (self.cargs + self.targs) != (other.cargs + other.targs) or
-            not np.allclose(self.matrix, other.matrix) 
+            not np.allclose(self.matrix, other.matrix)
         ):
             return False
 

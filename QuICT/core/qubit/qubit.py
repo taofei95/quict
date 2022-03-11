@@ -209,7 +209,7 @@ class Qureg(list):
         bit_idx.zfill(len(self))
 
         return bit_idx
-    
+
     def __add__(self, other):
         """ get a combined qureg with this qureg and other qureg
 
