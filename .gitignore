@@ -27,3 +27,4 @@ QuICT/qcda/simulation/backends/*.txt
 QuICT/UI/communication/dist
 QuICT/UI/communication/node_modules
 QuICT/UI/communication/temp
+QuICT/UI/communication/Output
