@@ -50,15 +50,10 @@ class PartialGrover:
         r1, r2 = calculate_r1_r2_one_target(N, K, eps)
 
         circuit = Circuit(n + 3)
-        #qreg = circuit([i for i in range(n)])
         qreg = list(range(n))
-        #ancilla = circuit(n)
         ancilla = n
-        #dirty = circuit(n + 1)
         dirty = n + 1
-        #ctarget = circuit(n + 2)
         ctarget = n + 2
-        #cqreg = circuit([n + 2] + [i for i in range(n)])
         cqreg = [n + 2] + [i for i in range(n)]
         # step 1
         for idx in qreg: H | circuit(idx)
@@ -66,14 +61,11 @@ class PartialGrover:
         H | circuit(ancilla)
         for i in range(r1):
             # global inversion about target            
-            #oracle(f, qreg, ancilla)
             oracle | circuit(qreg+ [ancilla])
             # global inversion about average
             for idx in qreg: H | circuit(idx)
             for idx in qreg: X | circuit(idx)
             H | circuit(qreg[n - 1])
-            #MCTLinearOneDirtyAux.execute(
-            #    n + 1) | (qreg([j for j in range(0, n - 1)]), qreg(n - 1), dirty)
             MCTLinearOneDirtyAux.execute(
                 n + 1) | circuit(qreg + [dirty]) 
             H | circuit(qreg[n - 1])
@@ -85,13 +77,10 @@ class PartialGrover:
             oracle | circuit(qreg+ [ancilla])
             # local inversion about average
             local_n = n - k
-            #local_qreg = qreg([j for j in range(k, k + local_n)])
             local_qreg = [j for j in range(k, k + local_n)]
             for idx in local_qreg: H | circuit(idx)
             for idx in local_qreg: X | circuit(idx)
             H | circuit(local_qreg[local_n - 1])
-            #MCTLinearOneDirtyAux.execute(
-            #    local_n + 1) | (local_qreg([j for j in range(0, local_n - 1)]), local_qreg(local_n - 1), dirty)
             MCTLinearOneDirtyAux.execute(
                 local_n + 1) | circuit(local_qreg + [dirty])
             H | circuit(local_qreg[local_n - 1])
@@ -100,17 +89,15 @@ class PartialGrover:
         # step 3
         oracle | circuit(qreg + [ctarget])
         # controlled inversion about average
-        CH | circuit(qreg + [ctarget])
-        CH | circuit(qreg[n - 1] + [ctarget])
-        CH | circuit(qreg[n - 1] + [ctarget])
-        #MCTLinearOneDirtyAux.execute(
-        #    n + 2) | (cqreg([j for j in range(0, n)]), qreg(n - 1), ancilla)
+        CH | circuit([qreg[n - 1]] + [ctarget])
+        CH | circuit([qreg[n - 1]] + [ctarget])
+        CH | circuit([qreg[n - 1]] + [ctarget])
         MCTLinearOneDirtyAux.execute(
-            n + 2) | circuit(cqreg[0:n] + qreg[n - 1] + [ancilla])
-        CH | circuit(qreg[n - 1] + [ctarget])
-        CH | circuit(qreg[n - 1] + [ctarget])
-        CH | circuit(qreg + [ctarget])
+            n + 2) | circuit(cqreg[0:n] + [qreg[n - 1]] + [ancilla])
+        CH | circuit([qreg[n - 1]] + [ctarget])
+        CH | circuit([qreg[n - 1]] + [ctarget])
+        CH | circuit([qreg[n - 1]] + [ctarget])
         # Measure
         for idx in qreg : Measure | circuit(idx)
         simulator.run(circuit)
-        return int(circuit(qreg))
+        return int(circuit[qreg])
