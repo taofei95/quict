@@ -20,7 +20,7 @@ def create_simulator():
     return ConstantStateVectorSimulator()
 
 
-def test_grover():
+def test_grover_on_ConstantStateVectorSimulator():
     for n in range(3, 9):
         error = 0
         N = 2**n
@@ -39,7 +39,7 @@ def test_grover():
     assert 1
 
 
-def test_partial_grover():
+def test_partial_grover_on_ConstantStateVectorSimulator():
     k = 3
     for n in range(5, 9):
         print("run with n = ", n)

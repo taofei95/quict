@@ -55,7 +55,7 @@ def order_finding(a:int, N: int, demo = None, eps: float = 1/10, simulator: Simu
         H | circuit(trickbit)
 
         Measure | circuit(trickbit)
-        simulator.run(circuit)  #circuit.exec()
+        simulator.run(circuit)
         msg = f'\tthe {k}th trickbit measured to be {int(circuit[trickbit])}'
         if demo == 'demo': print(msg)
         else: logging.info(msg)

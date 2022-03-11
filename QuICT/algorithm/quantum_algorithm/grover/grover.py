@@ -4,7 +4,6 @@
 # @Author  : Zhu Qinlin
 # @File    : standard_grover.py
 
-from QuICT.core.qubit.qubit import Qureg
 import numpy as np
 
 from QuICT.core import Circuit
