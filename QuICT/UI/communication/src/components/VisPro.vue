@@ -68,7 +68,7 @@
               style="background: transparent !important; border: 0px solid"
             >
               <el-tab-pane label="Table">
-                <el-row style="height: 40px" v-if="OutputContent.length > 0">
+                <el-row style="height: 40px" v-if="Object.keys(OutputContent).length > 0">
                   <el-col :span="4"></el-col>
                   <el-col :span="6"><b>State</b></el-col>
                   <el-col :span="4"></el-col>
@@ -78,19 +78,20 @@
 
                 <el-row
                   style="height: 40px"
-                  v-for="result in OutputContent"
-                  :key="result"
+                  v-for="[k,v] in Object.entries(OutputContent)"
+                  :key="k"
                 >
                   <el-col :span="4"></el-col>
-                  <el-col :span="6">{{ result[0] }}</el-col>
+                  <el-col :span="6">{{ k }}</el-col>
                   <el-col :span="4"></el-col>
-                  <el-col :span="6" v-if="result[2].startsWith('-')"
+                  <el-col :span="6">{{ v }}</el-col>
+                  <!-- <el-col :span="6" v-if="result[2].startsWith('-')"
                     >{{ result[1]
                     }}{{ result[2].replace("-", " - ") }} j</el-col
                   >
                   <el-col :span="6" v-else
                     >{{ result[1] }} + {{ result[2] }} j</el-col
-                  >
+                  > -->
                   <el-col :span="4"></el-col>
                 </el-row>
               </el-tab-pane>
@@ -181,7 +182,7 @@ export default {
       customer_set: [],
       topology: [],
       qbit: [],
-      OutputContent: [],
+      OutputContent: {},
       StatusContent: "Create a circuit and run.",
       ExpandResult: false,
     };
@@ -590,19 +591,22 @@ export default {
     },
     DrawHistogram(result) { // 绘制Amplitude图
       console.log("DrawHistogram", result);
-      let width = result.length * 30 + 100;
+
+      let width = Object.entries(result).length * 30 + 100;
       let height = 350;
       let histogram_zone = d3.select("#histogram");
       histogram_zone.selectAll("*").remove();
-      let chart = this.BarChart(result, {
+      let chart = this.BarChart(Object.entries(result), {
         x: (d) => d[0],
-        y: (d) => d[3],
+        y: (d) => d[1],
         title: (d) => {
-          return `Amplitude:${d3.format(".3f")(d[3])}\nPhase angle:${d[4]}`;
+          // return `Amplitude:${d3.format(".3f")(d[3])}\nPhase angle:${d[4]}`;
+          return `${d[0]}\nCounts:${d[1]}`;
         },
-        xDomain: d3.map(result, (d) => d[0]), // sort by descending frequency
-        yFormat: ".3f",
-        yLabel: "Amplitude",
+        xDomain: d3.map(Object.entries(result), (d) => d[0]), // sort by descending frequency
+        yFormat: "d",//".3f",
+        // yLabel: "Amplitude",
+        yLabel: "nCounts",
         width: width,
         height: height,
         color: "steelblue",
@@ -758,8 +762,8 @@ export default {
       if (!content.uuid == this.uuid) {
         return;
       }
-      this.OutputContent = content.run_result;
-      this.DrawHistogram(content.run_result);
+      this.OutputContent = content.run_result.counts;
+      this.DrawHistogram(content.run_result.counts);
     });
 
     this.socket.on("all_sets", (content) => { // 收到后端instruction Set 列表， 更新前端相关显示

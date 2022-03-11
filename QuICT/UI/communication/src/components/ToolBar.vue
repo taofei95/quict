@@ -653,7 +653,7 @@ export default {
       // 通知外层运行当前qasm
       let setting = {};
       setting.device=this.dialogBe;
-      setting.shots=this.dialogSeShots;
+      setting.shots=Number(this.dialogSeShots);
       switch(setting.device)
       {
         case 'CPU':
@@ -667,21 +667,21 @@ export default {
             case 'unitary':
               break;
             case 'statevector':
-              setting.gpu_device_id=this.dialogSe_GPU_device_id;
+              setting.gpu_device_id=Number(this.dialogSe_GPU_device_id);
               setting.sync=this.dialogSe_sync;
               setting.optimize=this.dialogSe_optimize;
               break;
             case 'multiGPU':
-              setting.ndev=this.dialogSe_ndev;
+              setting.ndev=Number(this.dialogSe_ndev);
               setting.sync=this.dialogSe_sync;
               break;
           }
           break;
         case 'qiskit':
-          setting.token=this.dialogSeToken;
+          setting.token=Number(this.dialogSeToken);
           break;
         case 'qcompute':
-          setting.token=this.dialogSeToken;
+          setting.token=Number(this.dialogSeToken);
           break;
       }
       this.$emit("RunQCDA", this.opSwitch, this.mapSwitch, setting);

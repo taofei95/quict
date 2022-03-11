@@ -322,9 +322,9 @@ def run_file(content):
         # device=setting['device'], backend=setting['backend'], shots=setting['shots'],
         simulation = Simulator(**setting)
         result = simulation.run(circuit)
-
         emit(
-            'info', {'uuid': uid, 'info': f"Run circuit finished. {result}"}, namespace="/api/pty")
+            'info', {'uuid': uid, 'info': f"Run circuit finished."}, namespace="/api/pty")
+        emit('run_result', {'uuid': uid, 'run_result': result}, namespace="/api/pty")
     except Exception as e:
         import traceback
         logger.warning(f"Run circuit error: {e}, {traceback.format_exc()}")
