@@ -34,6 +34,7 @@ def ex_gcd(a, b, coff):
     coff[1] = t - a // b * coff[1]
     return r
 
+
 '''
 def test_DraperAdder():
     for a in range(0, 20):
@@ -54,6 +55,7 @@ def test_DraperAdder():
                 assert 0
     assert 1
 '''
+
 
 def test_FourierAdderWired():
     for a in range(0, 20):
@@ -148,7 +150,7 @@ def test_BEACUa():
                     qreg_b = circuit(list(range(n + 1)))
                     qreg_x = circuit(list(range(n + 1, 2 * n + 1)))
                     qreg_c = circuit(2 * n + 1)
-                    qreg_low = circuit(2*n + 2)
+                    qreg_low = circuit(2 * n + 2)
                     set_qureg(qreg_c, c)
                     set_qureg(qreg_b, 0)
                     set_qureg(qreg_x, x)
@@ -168,4 +170,3 @@ def test_BEACUa():
 
 if __name__ == "__main__":
     pytest.main(["./unit_test.py"])
-    

@@ -23,8 +23,10 @@ def Set(gates, qreg, N):
                 X & qreg[n - 1 - i]
             N = N // 2
 
+
 def create_simulator():
     return ConstantStateVectorSimulator()
+
 
 def test_MCT_Linear_Simulation_Half():
     max_qubit = 11
@@ -88,8 +90,8 @@ def test_MCT_Linear_Simulation_One_functional():
             circuit = Circuit(n)
             aux_idx = [0]
             controls_idx = [i for i in range(1, n - 1)]
-            target_idx = [n-1]
-            aux = circuit[aux_idx]
+            target_idx = [n - 1]
+            # aux = circuit[aux_idx]
             controls = circuit[controls_idx]
             target = circuit[target_idx]
             gates = CompositeGate()
@@ -97,7 +99,7 @@ def test_MCT_Linear_Simulation_One_functional():
             gates | circuit
             print("%d bits control = %d" % (n - 2, control_bits))
             gates = MCTLinearOneDirtyAux.execute(n)
-            gates | circuit(controls_idx+target_idx+aux_idx)
+            gates | circuit(controls_idx + target_idx + aux_idx)
             Measure | circuit
             simulator.run(circuit)
             if (
@@ -117,12 +119,12 @@ def test_MCT_Linear_Simulation_One_unitary():
         circuit = Circuit(n)
         aux_idx = [0]
         controls_idx = [i for i in range(1, n - 1)]
-        target_idx = [n-1]
-        aux = circuit[aux_idx]
-        controls = circuit[controls_idx]
-        target = circuit[target_idx]
+        target_idx = [n - 1]
+        # aux = circuit[aux_idx]
+        # controls = circuit[controls_idx]
+        # target = circuit[target_idx]
         gates = MCTLinearOneDirtyAux.execute(n)
-        gates | circuit(controls_idx+target_idx+aux_idx)
+        gates | circuit(controls_idx + target_idx + aux_idx)
         # assert 0
         unitary = SyntheticalUnitary.run(circuit)
         print(circuit)

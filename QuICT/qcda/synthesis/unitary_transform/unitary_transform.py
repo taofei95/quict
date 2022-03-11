@@ -31,7 +31,7 @@ def inner_utrans_build_gate(
 
     if qubit_num == 1:
         # GateBuilder.setGateType(GATE_ID["Unitary"])
-        parg = np.reshape(mat, -1).tolist()
+        # parg = np.reshape(mat, -1).tolist()
         # GateBuilder.setPargs(parg)
         # GateBuilder.setTargs([0])
         # u = GateBuilder.getGate()

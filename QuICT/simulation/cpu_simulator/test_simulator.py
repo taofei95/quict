@@ -9,7 +9,7 @@ def test_sim():
     for qubit_num in range(2, 20):
         circuit = Circuit(qubit_num)
         circuit.random_append(20)
-        res = CircuitSimulator().run(circuit)  # New simulator would be used by default.
+        _ = CircuitSimulator().run(circuit)  # New simulator would be used by default.
         # expected = Amplitude.run(circuit, ancilla=None, use_old_simulator=True)
         # flag = np.allclose(res, expected)
         # assert flag
@@ -22,7 +22,7 @@ def test_complex_gate():
         QFT(qubit_num) | circuit
         CCX | circuit([0, 1, 2])
         CCRz(0.1) | circuit([0, 1, 2])
-        res = CircuitSimulator().run(circuit)  # New simulator would be used by default.
+        _ = CircuitSimulator().run(circuit)  # New simulator would be used by default.
         # expected = Amplitude.run(circuit, ancilla=None, use_old_simulator=True)
         # flag = np.allclose(res, expected)
         # assert flag
@@ -35,9 +35,7 @@ def test_measure_gate():
         circuit = Circuit(qubit_num)
         H | circuit
         simulator = CircuitSimulator()
-        res = simulator.run(circuit)
+        _ = simulator.run(circuit)
         measure_res = simulator.sample(circuit)
-        # print()
-        # print(res)
+
         print(measure_res)
-    # print(measure_res_acc)

@@ -8,7 +8,7 @@ from QuICT.qcda.optimization.commutative_optimization import CommutativeOptimiza
 # unless the size of the random circuit is also large.
 typelist = [
     GateType.rx, GateType.ry, GateType.rz, GateType.x,
-    GateType.y, GateType.z, GateType.cx    
+    GateType.y, GateType.z, GateType.cx
 ]
 
 if __name__ == '__main__':

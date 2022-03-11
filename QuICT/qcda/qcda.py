@@ -205,7 +205,7 @@ class QCDA(object):
                 circuit = Circuit(gates.width())
                 circuit.extend(gates.gates)
                 gates = circuit
-                
+
             print('Processing {}'.format(operation.__name__))
             gates = operation.execute(gates, *args, **kwargs)
             print('Process {} finished'.format(operation.__name__))

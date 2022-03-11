@@ -23,9 +23,7 @@ def test_unitary_generate():
     circuit_unitary = SyntheticalUnitary.run(circuit)
     sim = UnitarySimulator()
     result_mat = sim.get_unitary_matrix(circuit)
-
     assert np.allclose(circuit_unitary, result_mat)
 
-    result = sim.run(circuit)
-
+    _ = sim.run(circuit)
     assert 1
