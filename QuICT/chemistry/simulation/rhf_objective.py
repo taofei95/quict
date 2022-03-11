@@ -4,11 +4,14 @@
 # @Author  : Xiaoquan Xu
 # @File    : rhf_objective.py
 
+import itertools as it
+
 import numpy as np
 import scipy.optimize as spopt
 import scipy.linalg as splin
-import itertools as it
+
 from QuICT.chemistry.simulation.parametertensor import ParameterTensor
+
 
 class RHFObjective:
     """
@@ -144,7 +147,7 @@ class RHFObjective:
             Scipy optimize result
         """
 
-        state=[]
+        state = []
         for _ in range(self.num_orbitals):
             if _ < self.nocc:
                 state += [1]
@@ -155,7 +158,7 @@ class RHFObjective:
         def unitary(params):
             kappa = rhf_params_to_matrix(params, self.occ, self.virt)
             return splin.expm(kappa)
-            
+
         def energy(params):
             u = unitary(params)
             final_opdm_aa = u @ initial_opdm @ np.conjugate(u).T
@@ -166,14 +169,14 @@ class RHFObjective:
             final_opdm_aa = u @ initial_opdm @ np.conjugate(u).T
             return self.global_gradient_opdm(params, final_opdm_aa).real
 
-
         init_guess = np.zeros(self.nocc * self.nvirt)
 
         return spopt.minimize(energy,
-                                    init_guess,
-                                    jac=gradient,
-                                    method=method,
-                                    options={'disp': verbose})
+                              init_guess,
+                              jac=gradient,
+                              method=method,
+                              options={'disp': verbose})
+
 
 def get_matrix_of_eigs(w: np.ndarray) -> np.ndarray:
     """
@@ -195,6 +198,7 @@ def get_matrix_of_eigs(w: np.ndarray) -> np.ndarray:
                                                                   (w[i] - w[j]))
     return transform_eigs
 
+
 def rhf_params_to_matrix(parameters, occ, virt):
     """
     Assemble variational parameters into a anti-Hermitian matrix.
@@ -204,12 +208,11 @@ def rhf_params_to_matrix(parameters, occ, virt):
 
     Returns:
         A matrix kappa of size (n_occ + n_virt) * (n_occ + n_virt)
-    
+
     If i and j both in occ or virt, K[i][j]=0
     If i in virt and j in occ, K[i][j]=parameters[]
     If i in occ and j in virt, K[i][j]=-parameters[]
     """
-
     # parameters must be real
     for p in parameters:
         if p.imag != 0:
@@ -221,19 +224,21 @@ def rhf_params_to_matrix(parameters, occ, virt):
         kappa[o, v] = -parameters[idx].real
     return kappa
 
+
 def _generate_opdm(opdm_aa):
-    opdm = np.zeros((opdm_aa.shape[0]*2, opdm_aa.shape[1]*2), dtype=np.complex128)
+    opdm = np.zeros((opdm_aa.shape[0] * 2, opdm_aa.shape[1] * 2), dtype=np.complex128)
     opdm[::2, ::2] = opdm_aa
     opdm[1::2, 1::2] = opdm_aa
     return opdm
 
+
 def _generate_tpdm(opdm):
-    n=opdm.shape[0]
+    n = opdm.shape[0]
     tpdm = np.zeros((n, n, n, n), dtype=complex)
     for a in range(n):
         for b in range(n):
             for c in range(n):
                 for d in range(n):
-                    tpdm[a,b,c,d] = opdm[a,d] * opdm[b,c] - opdm[a,c] * opdm[b,d]\
-                        - opdm[b,d] * opdm[a,c] + opdm[b,c] * opdm[a,d]
+                    tpdm[a, b, c, d] = opdm[a, d] * opdm[b, c] - opdm[a, c] * opdm[b, d]\
+                        - opdm[b, d] * opdm[a, c] + opdm[b, c] * opdm[a, d]
     return tpdm / 2.

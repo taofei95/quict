@@ -3,7 +3,7 @@
 # @TIME    : 2021/08/13 14:30
 # @Author  : Xiaoquan Xu
 # @File    : polynomial_operator.py
- 
+
 """
 A PolynomialOperator of symbolic operators.
 The superClass of FermionOperator and QubitOperator.
@@ -11,8 +11,9 @@ The superClass of FermionOperator and QubitOperator.
 
 import copy
 
+
 class PolynomialOperator(object):
-    """    
+    """
     A polynomial of symbolic operators.
     The superClass of FermionOperator and QubitOperator.
 
@@ -20,7 +21,7 @@ class PolynomialOperator(object):
     The first parameter in a binary tuple represents the target, while the second one represents the type.
     Two monomials can be merged if and only if their list formats only differ in the coefficient.
     The standardlization for a monomial should be accomplished in __init__ according to specific rules.
-    
+
     For example, list
     [[[(i, 1), (j, 1), (k, 0), (l, 0)], 1.2], [[(k, 1), (l, 1), (i, 0), (j, 0)], -1.2], ...]
     stands for '1.2 a_i^(1) a_j^(1) a_k^(0) a_l^(0) - 1.2 a_k^(1) a_l^(1) a_i^(0) a_j^(0) + ...',
@@ -39,7 +40,7 @@ class PolynomialOperator(object):
             monomial(list/str): Operator monomial in list/string format
             coefficient(int/float/complex): Coefficient of the monomial
         """
-        if monomial == None or coefficient == 0:       # zero operator
+        if monomial is None or coefficient == 0:       # zero operator
             self.operators = []
             return
         if isinstance(monomial, list):
@@ -50,8 +51,8 @@ class PolynomialOperator(object):
                 variables.append(self.analyze_single(var))
         else:
             raise Exception("Illegal type of monomial.")
-        self.operators=[[variables,coefficient]]
-    
+        self.operators = [[variables, coefficient]]
+
     @classmethod
     def get_polynomial(cls, monomial=None, coefficient=1.):
         '''
@@ -109,10 +110,10 @@ class PolynomialOperator(object):
         while ia < len(A) and ib < len(B):
             if A[ia][0] == B[ib][0]:
                 if A[ia][1] + B[ib][1] != 0:
-                    ans.operators += [[copy.deepcopy(A[ia][0]),A[ia][1]+B[ib][1]]]
+                    ans.operators += [[copy.deepcopy(A[ia][0]), A[ia][1] + B[ib][1]]]
                 ia += 1
                 ib += 1
-            elif A[ia][0]<B[ib][0]:
+            elif A[ia][0] < B[ib][0]:
                 ans.operators += [copy.deepcopy(A[ia])]
                 ia += 1
             else:
@@ -174,7 +175,7 @@ class PolynomialOperator(object):
         if not isinstance(other, PolynomialOperator):
             return self * other
         return other * self
-    
+
     def __sub__(self, other):
         """
         Substraction of two operators.
@@ -204,13 +205,13 @@ class PolynomialOperator(object):
         Returns:
             PolynomialOperator: self / other
         """
-        return self * (1./other)
+        return self * (1. / other)
 
     def __itruediv__(self, other):
         """
         Implement the '/=' operation.
         """
-        self *= (1./other)
+        self *= (1. / other)
         return self
 
     def __eq__(self, other) -> bool:
@@ -220,7 +221,7 @@ class PolynomialOperator(object):
 
         Args:
             other(PolynomialOperator): Operator to be judged
-        
+
         Returns:
             bool: whether two opperator polynomials are the same
         """
