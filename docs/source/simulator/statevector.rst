@@ -1,2 +1,0 @@
-Statevector Simulator
-=====================
