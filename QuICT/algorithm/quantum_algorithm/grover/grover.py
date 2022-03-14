@@ -50,11 +50,12 @@ class Grover:
         circuit = Circuit(n + 1)
         index_q:list = list(range(n))
         result_q:int = n
-        N = 2**n
+        N = 2 ** n
         theta = 2 * np.arccos(np.sqrt(1 - 1 / N))
         T = round(np.arccos(np.sqrt(1 / N)) / theta)
         my_print(
-            f"[init] theta = {theta:.4f}, Grover iteration count = {T}", demo_mode)
+            f"[init] theta = {theta:.4f}, Grover iteration count = {T}", demo_mode
+        )
         phase_size = 0
         oracle_size = 0
 
@@ -75,23 +76,13 @@ class Grover:
             # control phase shift
             for idx in index_q: X | circuit(idx)
             H | circuit(index_q[n - 1])
-
-            # yet_gates = CompositeGate()
-            # with yet_gates:
-            #     yet_circuit = [j for j in range(0, n - 1)] + [index_q[n - 1]] + [result_q]
-            #     yet_n = n + 1
-            #     yet_controls = [i for i in range(yet_n - 2)]
-            #     yet_target = yet_n - 2
-            #     yet_aux = yet_n - 1      # this is a dirty ancilla
-            #     one_dirty_aux(yet_gates, yet_controls, yet_target, yet_aux)
-            # yet_gates | circuit
-            MCTLinearOneDirtyAux.execute(n+1) | circuit
+            MCTLinearOneDirtyAux.execute(n + 1) | circuit
 
             H | circuit(index_q[n - 1])
             for idx in index_q: X | circuit(idx)
             # control phase shift end
             for idx in index_q: H | circuit(idx)
-            if demo_mode and i==0:
+            if demo_mode and i == 0:
                 phase_size = circuit.circuit_size() - tmp
             if demo_mode:
                 amp = simulator.run(circuit)
@@ -100,10 +91,11 @@ class Grover:
                 my_print(
                     f"[{i+1:3}-th Grover iteration] "
                     +f"degree from target state: {d:.3f} "
-                    +f"success rate:{(np.real(amp[kwargs['target']])**2)*100:.1f}%", demo_mode)
+                    +f"success rate:{(np.real(amp[kwargs['target']])**2) * 100:.1f}%", demo_mode
+                )
         amp = simulator.run(circuit)
         if demo_mode:
-            amp = np.array(amp[::2])*np.sqrt(2)
+            amp = np.array(amp[::2]) * np.sqrt(2)
         for idx in index_q: Measure | circuit(idx)
         simulator.run(circuit)
         my_print(f"circuit width          = {circuit.width():4}", demo_mode)

@@ -49,8 +49,6 @@ def test_partial_grover_on_ConstantStateVectorSimulator():
             f = [target]
             result = PartialGrover.run(n, k, main_oracle(n,f))
             if (target >> (n - k)) != (result >> (n - k)):
-                # print("[%10s]targetBlock = %s, foundBlock = %s" %
-                #       (bin(target), bin(target >> (n-k)), bin(result >> (n-k))))
                 error += 1
         error_rate = error / N
         print("for n = %d, %d errors in %d tests, error rate = %f" %
