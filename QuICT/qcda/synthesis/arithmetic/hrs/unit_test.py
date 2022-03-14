@@ -1,7 +1,7 @@
 import pytest
 
 from QuICT.core import Circuit
-from QuICT.core.gate import X, Measure
+from QuICT.core.gate import *
 from QuICT.qcda.synthesis.arithmetic.hrs import HRSAdder, HRSAdderMod, HRSMulMod
 
 

@@ -2231,7 +2231,6 @@ class CCRzGate(BasicGate):
     def inverse(self):
         _CCRz = self.copy()
         _CCRz.pargs = -self.parg
-
         return _CCRz
 
     def build_gate(self):
