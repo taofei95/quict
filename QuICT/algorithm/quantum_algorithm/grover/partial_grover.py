@@ -12,6 +12,7 @@ from QuICT.qcda.synthesis.mct import MCTLinearOneDirtyAux
 
 from QuICT.simulation.gpu_simulator import ConstantStateVectorSimulator
 
+
 def calculate_r1_r2_one_target(N, K, eps):
     r1 = np.sqrt(N) * np.pi * 0.25 * (1 - eps)
     r1 = round(r1)
@@ -60,21 +61,20 @@ class PartialGrover:
         X | circuit(ancilla)
         H | circuit(ancilla)
         for i in range(r1):
-            # global inversion about target            
-            oracle | circuit(qreg+ [ancilla])
+            # global inversion about target
+            oracle | circuit(qreg + [ancilla])
             # global inversion about average
             for idx in qreg: H | circuit(idx)
             for idx in qreg: X | circuit(idx)
             H | circuit(qreg[n - 1])
-            MCTLinearOneDirtyAux.execute(
-                n + 1) | circuit(qreg + [dirty]) 
+            MCTLinearOneDirtyAux.execute(n + 1) | circuit(qreg + [dirty])
             H | circuit(qreg[n - 1])
             for idx in qreg: X | circuit(idx)
             for idx in qreg: H | circuit(idx)
         # step 2
         for i in range(r2):
             # global inversion about target
-            oracle | circuit(qreg+ [ancilla])
+            oracle | circuit(qreg + [ancilla])
             # local inversion about average
             local_n = n - k
             local_qreg = [j for j in range(k, k + local_n)]
@@ -98,6 +98,6 @@ class PartialGrover:
         CH | circuit([qreg[n - 1]] + [ctarget])
         CH | circuit([qreg[n - 1]] + [ctarget])
         # Measure
-        for idx in qreg : Measure | circuit(idx)
+        for idx in qreg: Measure | circuit(idx)
         simulator.run(circuit)
         return int(circuit[qreg])

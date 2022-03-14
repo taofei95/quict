@@ -29,6 +29,7 @@ def test_BEAShorFactor_on_ConstantStateVectorSimulator():
         a = BEAShorFactor.run(N=number, max_rd=10, simulator=simulator)
         assert number % a == 0
 
+
 def test_HRSShorFactor_on_ConstantStateVectorSimulator():
     from QuICT.simulation.gpu_simulator import ConstantStateVectorSimulator
     simulator = ConstantStateVectorSimulator(
@@ -45,6 +46,7 @@ def test_HRSShorFactor_on_ConstantStateVectorSimulator():
         print('-------------------FACTORING %d-------------------------' % number)
         a = HRSShorFactor.run(N=number, max_rd=10, simulator=simulator)
         assert number % a == 0
+
 
 if __name__ == '__main__':
     pytest.main(["./unit_test.py"])

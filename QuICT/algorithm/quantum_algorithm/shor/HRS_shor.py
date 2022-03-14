@@ -27,13 +27,13 @@ from QuICT.simulation.unitary_simulator import UnitarySimulator
 from QuICT.simulation import Simulator
 
 
-def order_finding(a:int, N: int, demo = None, eps: float = 1/10, simulator: Simulator = UnitarySimulator()):
+def order_finding(a: int, N: int, demo=None, eps: float = 1 / 10, simulator: Simulator = UnitarySimulator()):
     """
     Quantum algorithm to compute the order of a (mod N), when gcd(a,N)=1.
     """
     # phase estimation procedure
     n = int(np.ceil(np.log2(N)))
-    t = int(2 * n + 1 + np.ceil(np.log(2 + 1/(2*eps))))
+    t = int(2 * n + 1 + np.ceil(np.log(2 + 1 / (2 * eps))))
     msg = f'\torder_finding begin: circuit: L = {n} t = {t}'
     if demo == 'demo': print(msg)
     else: logging.info(msg)
@@ -63,7 +63,7 @@ def order_finding(a:int, N: int, demo = None, eps: float = 1/10, simulator: Simu
         if trickbit_store[k] == 1:
             X | circuit(trickbit)
     for idx in x_reg: Measure | circuit(idx)
-    
+
     trickbit_store.reverse()
     msg = f'\tphi~ (approximately s/r) in binary form is {trickbit_store}'
     if demo == 'demo': print(msg)
@@ -106,34 +106,36 @@ def order_finding(a:int, N: int, demo = None, eps: float = 1/10, simulator: Simu
     r = den1
     return r
 
+
 class HRS_order_finding_twice(Algorithm):
     '''
-    Run order_finding twice and take the lcm of the two result 
+    Run order_finding twice and take the lcm of the two result
     to guaruntee a higher possibility to get the correct order,
     as suggested in QCQI 5.3.1
     '''
     @staticmethod
-    def run(a: int, N: int, demo:str = None, eps: float = 1/10, simulator: Simulator = UnitarySimulator()):
+    def run(a: int, N: int, demo: str = None, eps: float = 1 / 10, simulator: Simulator = UnitarySimulator()):
         r1 = order_finding(a, N, demo, eps, simulator)
         r2 = order_finding(a, N, demo, eps, simulator)
-        flag1 = (pow(a, r1, N) == 1 and r1!= 0)
-        flag2 = (pow(a, r2, N) == 1 and r2!= 0)
+        flag1 = (pow(a, r1, N) == 1 and r1 != 0)
+        flag2 = (pow(a, r2, N) == 1 and r2 != 0)
         if flag1 and flag2:
             r = min(r1, r2)
         elif not flag1 and not flag2:
-            r = int(np.lcm(r1,r2))
+            r = int(np.lcm(r1, r2))
         else:
-            r = int(flag1)*r1 + int(flag2)*r2
-            
-        if (pow(a,r,N)==1 and r!=0): 
+            r = int(flag1) * r1 + int(flag2) * r2
+
+        if (pow(a, r, N) == 1 and r != 0):
             msg = f'\torder_finding found candidate order: r = {r} of a = {a}'
-        else:  
+        else:
             r = 0
-            msg = f'\torder_finding failed'
+            msg = '\torder_finding failed'
         if demo == 'demo': print(msg)
         else: logging.info(msg)
 
         return r
+
 
 class HRSShorFactor(Algorithm):
     """
@@ -141,10 +143,10 @@ class HRSShorFactor(Algorithm):
     in "Factoring using 2n+2 qubits with Toffoli based modular multiplication"
     """
     @staticmethod
-    def run(N: int, max_rd: int,  demo:str = None, eps: float = 1/10, simulator: Simulator = UnitarySimulator()):
+    def run(N: int, max_rd: int, demo: str = None, eps: float = 1 / 10, simulator: Simulator = UnitarySimulator()):
         # check if input is prime (using MillerRabin in klog(N), k is the number of rounds to run MillerRabin)
         if (miller_rabin(N)):
-            msg = f'N does not pass miller rabin test, may be a prime number'
+            msg = 'N does not pass miller rabin test, may be a prime number'
             if demo == 'demo': print(msg)
             else: logging.info(msg)
             return 0

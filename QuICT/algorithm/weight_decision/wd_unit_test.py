@@ -33,7 +33,7 @@ def test_1():
         for i in range(final, 1 << int(np.ceil(np.log2(T + 2)))):
             f.append(0)
 
-        np.random.shuffle(f[:T])        
+        np.random.shuffle(f[:T])
         idx = [i for i in range(len(f)) if f[i] == 1]
         flag = False
         perm_gate = PermFx(int(np.ceil(np.log2(T + 2))), idx)

@@ -47,7 +47,7 @@ def test_partial_grover_on_ConstantStateVectorSimulator():
         N = 2**n
         for target in range(0, N):
             f = [target]
-            result = PartialGrover.run(n, k, main_oracle(n,f))
+            result = PartialGrover.run(n, k, main_oracle(n, f))
             if (target >> (n - k)) != (result >> (n - k)):
                 error += 1
         error_rate = error / N

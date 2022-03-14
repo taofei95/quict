@@ -44,6 +44,7 @@ def ex_gcd(a, b, coff):
     coff[1] = t - a // b * coff[1]
     return r
 
+
 def test_DraperAdder():
     for a in range(0, 20):
         for b in range(0, 20):
@@ -157,7 +158,7 @@ def test_BEACUa():
                     qreg_b = list(range(n + 1))
                     qreg_x = list(range(n + 1, 2 * n + 1))
                     qreg_c = [2 * n + 1]
-                    qreg_low = [2*n + 2]
+                    qreg_low = [2 * n + 2]
                     set_qureg(qreg_c, c) | circuit
                     set_qureg(qreg_b, 0) | circuit
                     set_qureg(qreg_x, x) | circuit
