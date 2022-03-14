@@ -62,7 +62,6 @@ class GateDecomposition(Synthesis):
                 gate_decomposed, _ = UnitaryTransform.execute(gate.matrix, mapping=gate.targs)
                 gates.extend(gate_decomposed)
             elif isinstance(gate, BasicGate):
-                print(gate)
                 try:
                     gates.extend(gate.build_gate())
                 except:
