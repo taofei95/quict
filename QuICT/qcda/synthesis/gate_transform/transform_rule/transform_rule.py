@@ -11,6 +11,7 @@ import numpy as np
 from QuICT.core.gate import BasicGate
 from QuICT.core.gate.gate_builder import GATE_TYPE_TO_CLASS
 
+
 class TransformRule(object):
     """ a class describe a transform rule
 

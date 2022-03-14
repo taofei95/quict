@@ -6,10 +6,11 @@
 
 import h5py
 
-def get_from_file(item, molfile, set_type = None):
+
+def get_from_file(item, molfile, set_type=None):
     """
     Args:
-        item(str): the name of the target dataset 
+        item(str): the name of the target dataset
         molfile(dict): the read pointer of the molecular file
         set_type(str): the target type of data
     """
@@ -17,12 +18,13 @@ def get_from_file(item, molfile, set_type = None):
         data = molfile[item][...]
         if data.dtype.num == 0:
             data = None
-        elif set_type != None:
+        elif set_type is not None:
             data = data.astype(set_type)
     except Exception:
         data = None
         print("!! no " + item)
     return data
+
 
 class MolecularData:
     """
@@ -46,7 +48,7 @@ class MolecularData:
             self.molfile = molfile + ".hdf5"
         else:
             self.molfile = molfile
-        
+
         with h5py.File(self.molfile, "r") as f:
             self.n_orbitals = get_from_file("n_orbitals", f, 'int')
             self.n_electrons = get_from_file("n_electrons", f, 'int')
@@ -58,10 +60,9 @@ class MolecularData:
         return self.one_body_integrals, self.two_body_integrals
 
     def save(self):
-        with h5py.File("save_"+self.molfile, "w") as f:
+        with h5py.File("save_" + self.molfile, "w") as f:
             f.create_dataset("n_orbitals", data=str(self.n_orbitals))
             f.create_dataset("n_electrons", data=str(self.n_electrons))
             f.create_dataset("nuclear_repulsion", data=str(self.nuclear_repulsion))
             f.create_dataset("one_body_integrals", data=str(self.one_body_integrals))
             f.create_dataset("two_body_integrals", data=str(self.two_body_integrals))
-

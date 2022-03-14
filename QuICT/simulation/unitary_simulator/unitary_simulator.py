@@ -19,7 +19,7 @@ class UnitarySimulator():
         self._device = device
         self._precision = np.complex128 if precision == "double" else np.complex64
         self._vector = None
-        
+
         if device == "CPU":
             self._computer = CPUCalculator
         else:

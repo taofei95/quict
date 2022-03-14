@@ -1,9 +1,11 @@
 import numpy as np
 
-from .._algorithm import Algorithm
-from QuICT import *
+from QuICT.algorithm import Algorithm
+from QuICT.core import Circuit
+from QuICT.core.gate import X, H, Measure
 from QuICT.qcda.synthesis.initial_state_preparation import InitialStatePreparation
 from QuICT.qcda.synthesis.mct import MCTOneAux
+from QuICT.simulation.gpu_simulator import ConstantStateVectorSimulator
 
 
 def weight_decison_para(n, k, l):
@@ -19,71 +21,9 @@ def weight_decison_para(n, k, l):
                 return d, gamma, a, b
 
 
-def run_weight_decision(f, n, k, l, oracle):
-    """ decide function f by k-l algorithm by custom oracle
-    https://arxiv.org/abs/1801.05717
-
-    Args:
-        f(list<int>): the function to be decided
-        n(int): the length of function
-        k(int): the smaller weight
-        l(int): the bigger weight
-        oracle(function): the oracle
-    Returns:
-        int: the ans, k or l
-    """
-
-    num = int(np.ceil(np.log2(n + 2))) + 2
-    # Determine number of qreg
-    circuit = Circuit(num)
-    d, gamma, a, b = weight_decison_para(n, k, l)
-    # start the eng and allocate qubits
-    qreg = circuit([i for i in range(num - 2)])
-
-    ancilla = circuit(num - 2)
-    # Start with qreg in equal superposition and ancilla in |->
-    N = np.power(2, num - 2)
-    value = [0 for _ in range(N)]
-    for i in range(n):
-        value[i] = 1 / np.sqrt(n + a ** 2 + b ** 2)
-    value[N - 2] = a / np.sqrt(n + a ** 2 + b ** 2)
-    value[N - 1] = b / np.sqrt(n + a ** 2 + b ** 2)
-    # Apply oracle U_f which flips the phase of every state |x> with f(x) = 1
-    InitialStatePreparation.execute(value) | qreg
-    X | ancilla
-    H | ancilla
-
-    for i in range(d - 1):
-        oracle(f, qreg, ancilla)
-        MCTOneAux.execute(num) | circuit
-
-        InitialStatePreparation.execute(value) ^ qreg
-        X | qreg
-        MCTOneAux.execute(num) | circuit
-        X | qreg
-        InitialStatePreparation.execute(value) | qreg
-
-    # Apply H,X to recover ancilla
-    H | ancilla
-    X | ancilla
-    oracle(f, qreg, ancilla)
-    MCTOneAux.execute(num) | circuit
-    # Measure
-    Measure | qreg
-    Measure | ancilla
-
-    circuit.exec()
-
-    _ = int(qreg)
-    if int(ancilla) == gamma % 2:
-        return k
-    else:
-        return l
-
-
 class WeightDecision(Algorithm):
     @classmethod
-    def run(cls, f, n, k, l, oracle):
+    def run(cls, n, k, l, oracle):
         """ decide function f by k-l algorithm by custom oracle
         https://arxiv.org/abs/1801.05717
 
@@ -92,8 +32,61 @@ class WeightDecision(Algorithm):
             n(int): the length of function
             k(int): the smaller weight
             l(int): the bigger weight
-            oracle(function): the oracle
+            oracle(Gate/CompositeGate): the oracle
         Returns:
             int: the ans, k or l
         """
-        return run_weight_decision(f, n, k, l, oracle)
+        num = int(np.ceil(np.log2(n + 2))) + 2
+
+        # Determine number of qreg
+        circuit = Circuit(num)
+        d, gamma, a, b = weight_decison_para(n, k, l)
+
+        # start the eng and allocate qubits
+        qreg = circuit[[i for i in range(num - 2)]]
+        ancilla = circuit[num - 2]
+
+        # Start with qreg in equal superposition and ancilla in |->
+        N = np.power(2, num - 2)
+        value = [0 for _ in range(N)]
+        for i in range(n):
+            value[i] = 1 / np.sqrt(n + a ** 2 + b ** 2)
+
+        value[N - 2] = a / np.sqrt(n + a ** 2 + b ** 2)
+        value[N - 1] = b / np.sqrt(n + a ** 2 + b ** 2)
+
+        # Apply oracle U_f which flips the phase of every state |x> with f(x) = 1
+        InitialStatePreparation.execute(value) | circuit(qreg)
+        X | circuit(ancilla)
+        H | circuit(ancilla)
+
+        for i in range(d - 1):
+            oracle | circuit([i for i in range(num - 1)])
+            MCTOneAux.execute(num) | circuit
+            InitialStatePreparation.execute(value) ^ circuit(qreg)
+            for q in qreg:
+                X | circuit(q)
+
+            MCTOneAux.execute(num) | circuit
+            for q in qreg:
+                X | circuit(q)
+
+            InitialStatePreparation.execute(value) | circuit(qreg)
+
+        # Apply H,X to recover ancilla
+        H | circuit(ancilla)
+        X | circuit(ancilla)
+        oracle | circuit(list(range(num - 1)))
+        MCTOneAux.execute(num) | circuit
+
+        # Measure
+        for i in range(num - 1):
+            Measure | circuit(i)
+
+        simulator = ConstantStateVectorSimulator()
+        _ = simulator.run(circuit)
+
+        if int(ancilla) == gamma % 2:
+            return k
+        else:
+            return l

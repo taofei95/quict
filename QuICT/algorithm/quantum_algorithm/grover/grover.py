@@ -24,9 +24,9 @@ def my_print(msg, demo_mode):
 def degree_counterclockwise(v1: np.ndarray, v2: np.ndarray):
     """from v1 to v2
     """
-    d = np.real(np.arccos(sum(v1*v2)/np.sqrt(sum(v1*v1)*sum(v2*v2))))
-    if d > 0.5*np.pi:
-        d = np.pi-d
+    d = np.real(np.arccos(sum(v1 * v2) / np.sqrt(sum(v1 * v1) * sum(v2 * v2))))
+    if d > 0.5 * np.pi:
+        d = np.pi - d
     return d
 
 
@@ -48,8 +48,8 @@ class Grover:
         if simulator is None:
             simulator = ConstantStateVectorSimulator()
         circuit = Circuit(n + 1)
-        index_q:list = list(range(n))
-        result_q:int = n
+        index_q: list = list(range(n))
+        result_q: int = n
         N = 2 ** n
         theta = 2 * np.arccos(np.sqrt(1 - 1 / N))
         T = round(np.arccos(np.sqrt(1 / N)) / theta)
@@ -66,10 +66,10 @@ class Grover:
         H | circuit(result_q)
         for i in range(T):
             # Grover iteration
-            if demo_mode and i==0:
+            if demo_mode and i == 0:
                 tmp = circuit.size()
             oracle | circuit
-            if demo_mode and i==0:
+            if demo_mode and i == 0:
                 oracle_size = circuit.size() - tmp
                 tmp = circuit.size()
             for idx in index_q: H | circuit(idx)
@@ -86,12 +86,12 @@ class Grover:
                 phase_size = circuit.circuit_size() - tmp
             if demo_mode:
                 amp = simulator.run(circuit)
-                amp = np.array(amp[::2])*np.sqrt(2)
+                amp = np.array(amp[::2]) * np.sqrt(2)
                 d = degree_counterclockwise(amp, kwargs["beta"])
                 my_print(
                     f"[{i+1:3}-th Grover iteration] "
-                    +f"degree from target state: {d:.3f} "
-                    +f"success rate:{(np.real(amp[kwargs['target']])**2) * 100:.1f}%", demo_mode
+                    + f"degree from target state: {d:.3f} "
+                    + f"success rate:{(np.real(amp[kwargs['target']])**2) * 100:.1f}%", demo_mode
                 )
         amp = simulator.run(circuit)
         if demo_mode:
