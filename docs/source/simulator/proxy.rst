@@ -1,2 +1,0 @@
-Multi-GPU Statevector Simulator
-===============================
