@@ -2,6 +2,7 @@ import random
 import numpy as np
 
 from QuICT.core import *
+from QuICT.core.gate import BasicGate, GateType
 
 from ..cnot_without_ancillae import CnotWithoutAncillae
 from ..block_ldu_decompose import BlockLDUDecompose
@@ -172,7 +173,7 @@ def test_cnot_without_ancillae():
     for _rnd in range(rnd):
         n = random.randint(2, 200)
         circuit1 = Circuit(n)
-        circuit1.random_append(30 * n, typeList=[GATE_ID["CX"]])
+        circuit1.random_append(30 * n, typelist=[GateType.cx])
         gates = CnotWithoutAncillae.run(circuit1)
         test_mat1 = np.eye(n, dtype=bool)
         test_mat2 = np.eye(n, dtype=bool)
@@ -196,7 +197,7 @@ def test_cnot_without_ancillae():
 #         _up = 10
 #         for _ in range(_up):
 #             circuit1 = Circuit(qubit_num)
-#             circuit1.random_append(30 * qubit_num, typeList=[GATE_ID["CX"]])
+#             circuit1.random_append(30 * qubit_num, typelist=[GATE_ID["CX"]])
 #             gates = CnotWithoutAncillae.run(circuit1)
 #             depth = gates.circuit_depth()
 #             factor = depth / qubit_num

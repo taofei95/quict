@@ -5,7 +5,10 @@
 # @File    : gate_based
 
 import numpy as np
-import cupy as cp
+try:
+    import cupy as cp
+except ImportError:
+    cupy = None
 
 from QuICT.core.utils import SPECIAL_GATE_SET, GateType
 

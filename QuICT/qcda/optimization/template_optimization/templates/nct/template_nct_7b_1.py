@@ -25,6 +25,7 @@ Template 7b_1:
 """
 
 from QuICT.core import *    # pylint: disable=unused-wildcard-import
+from QuICT.core.gate import *
 
 
 def template_nct_7b_1():

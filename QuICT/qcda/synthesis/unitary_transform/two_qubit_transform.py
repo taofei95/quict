@@ -4,7 +4,7 @@ Decomposition of SU(4) with Cartan KAK Decomposition
 
 import numpy as np
 
-from QuICT.core import CompositeGate, CX, Ry, Rz, Unitary
+from QuICT.core.gate import CompositeGate, CX, Ry, Rz, Unitary
 from .._synthesis import Synthesis
 
 # Magic basis

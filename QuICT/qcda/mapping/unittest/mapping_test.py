@@ -20,7 +20,7 @@ def test_mapping():
     gates: List[BasicGate] = transformed_circuit.gates
     for g in gates:
         if g.is_single() is not True:
-            if g.type() == GATE_ID["Swap"]:
+            if g.type == GateType.swap:
                 assert(coupling_graph.is_adjacent(g.targs[0], g.targs[1]))
             else:
                 assert(coupling_graph.is_adjacent(g.targ, g.carg))
@@ -30,14 +30,14 @@ def test_mapping():
 #     qasm = OPENQASMInterface.load_circuit(transformed_circuit)
 #     qasm.output_qasm(f"{dir}/output_circuit.qasm")
 #     print("The original circuit size is {}. After mapping, its size is {}."
-#           .format(qc.circuit_size(), transformed_circuit.circuit_size()))
+#           .format(qc.size(), transformed_circuit.size()))
 #     CouplingGraph(coupling_graph=layout).draw(file_path=f"{dir}/coupling_graph.jpg")
 #     qc.draw(method="matp", filename=f"{dir}/original_circuit.jpg")
 #     Check if the number of single qubit gates and two qubit gates(except SWAP gates) remains the same
 #     transformed_circuit.draw(method="matp",
 #                              filename=f"{dir}/transformed_circuit.jpg")
-#     print([qc.circuit_count_1qubit(), transformed_circuit.circuit_count_1qubit()] )
-#     print([qc.circuit_count_2qubit(), transformed_circuit.circuit_count_2qubit()] )
+#     print([qc.count_1qubit_gate(), transformed_circuit.count_1qubit_gate()] )
+#     print([qc.count_2qubit_gate(), transformed_circuit.count_2qubit_gate()] )
 
 
 if __name__ == "__main__":

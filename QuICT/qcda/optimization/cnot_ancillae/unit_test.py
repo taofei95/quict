@@ -9,6 +9,7 @@ import pytest
 import random
 
 from QuICT.core import *
+from QuICT.core.gate import CX
 from QuICT.qcda.optimization import CnotAncillae
 
 
@@ -35,7 +36,7 @@ def generate_matrix(circuit, n):
 
 
 def generate_matrix_with_ancillary(circuit, n):
-    circuit_length = circuit.circuit_width()
+    circuit_length = circuit.width()
     matrix = np.identity(circuit_length, dtype=bool)
     for gate in circuit.gates:
         matrix[gate.targ, :] = matrix[gate.targ, :] ^ matrix[gate.carg, :]
@@ -57,7 +58,7 @@ def check_equiv(circuit1, circuit2):
     Returns:
         bool: True if equiv
     """
-    n = circuit1.circuit_width()
+    n = circuit1.width()
     matrix1 = generate_matrix(circuit1, n)
     matrix2 = generate_matrix_with_ancillary(circuit2, n)
     # circuit2.print_information()
@@ -69,7 +70,7 @@ def check_equiv(circuit1, circuit2):
     return not np.any(matrix1 ^ matrix2)
 
 
-def test_1():
+def test():
     for n in range(4, 100):
         for s in range(1, int(np.floor(n / np.log2(n) / np.log2(n)))):
             circuit = Circuit(n)
@@ -77,10 +78,6 @@ def test_1():
                 CX | circuit([i, i + 1])
             new_circuit = CnotAncillae.execute(circuit, size=s)
             assert check_equiv(circuit, new_circuit)
-
-
-def test_2():
-    assert 1
 
 
 if __name__ == '__main__':

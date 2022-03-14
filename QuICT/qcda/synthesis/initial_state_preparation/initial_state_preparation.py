@@ -12,6 +12,8 @@ import os
 
 from .._synthesis import Synthesis
 from QuICT.core import *
+from QuICT.core.exception import TypeException
+from QuICT.core.gate import CompositeGate
 from QuICT.qcda.synthesis import UniformlyRy, UniformlyUnitary
 
 # the allowed eps

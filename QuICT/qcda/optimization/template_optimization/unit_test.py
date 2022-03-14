@@ -11,6 +11,7 @@ import random
 import numpy as np
 
 from QuICT.core import *
+from QuICT.core.gate import *
 from QuICT.algorithm import *
 from QuICT.qcda.optimization.template_optimization.templates import *
 from QuICT.qcda.optimization.template_optimization import TemplateOptimization
@@ -43,7 +44,7 @@ def mat_from_circuit(circuit):
 
 
 def equiv(circuit1, circuit2):
-    if circuit1.circuit_width() != circuit2.circuit_width():
+    if circuit1.width() != circuit2.width():
         return False
     # mat1 = mat_from_circuit(circuit1)
     # mat2 = mat_from_circuit(circuit2)
@@ -78,7 +79,7 @@ def test_can_run():
 
     for i in range(3, 4):
         circuit = Circuit(i)
-        circuit.random_append(100, typeList=[GATE_ID["X"], GATE_ID["CX"], GATE_ID["CCX"]])
+        circuit.random_append(100, typelist=[GateType.x, GateType.cx, GateType.ccx])
         # indexes = _getRandomList(3, len(names))
 
         templates = []
