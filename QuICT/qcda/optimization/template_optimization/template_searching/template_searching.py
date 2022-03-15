@@ -15,6 +15,7 @@
 from QuICT.core.gate import *
 from QuICT.core.circuit import Circuit
 from QuICT.algorithm import SyntheticalUnitary
+from collections import Counter
 import time
 
 class TemplateSearching:
@@ -59,10 +60,9 @@ class TemplateSearching:
             return True
         return False
 
-    def graph_isomorphism(self, graph_a, graph_b, single_list_a, single_list_b):
+    def graph_isomorphism(self, inform_list_a, inform_list_b, status_list_a, status_list_b):
 
         # check if an ordered-list graph is not isomorphism with the other
-        # first only check cnot circuit
         flag_all_mapping = True
         for vertex_a in range(self.qubit_num):
             if self.mapping[vertex_a] == -1:
@@ -73,24 +73,25 @@ class TemplateSearching:
             flag_check_graph = True
             for i in range(self.qubit_num):
                 j = self.mapping[i]
-                if len(graph_a[i]) == len(graph_b[j]) and len(single_list_a[i]) == len(single_list_b[j]):
-                    for k in range(len(graph_a[i])):
+                if len(inform_list_a[i]) == len(inform_list_b[j]) and len(status_list_a[i]) == len(status_list_b[j]):
+                    for k in range(len(inform_list_a[i])):
                         if not flag_check_graph:
                             break
-                        check_a = graph_a[i][k]
-                        check_b = graph_b[j][k]
-                        flag_check_graph = flag_check_graph & (self.mapping[check_a] == check_b)
-                    for k in range(len(single_list_a[i])):
-                        if not flag_check_graph:
-                            break
-                        check_a = single_list_a[i][k]
-                        check_b = single_list_b[j][k]
-                        if len(check_a) == len(check_b):
-                            for p in range(len(check_a)):
-                                flag_check_graph = flag_check_graph & (self.mapping[check_a[p].targ] == check_b[p].targ)
-                                flag_check_graph = flag_check_graph & (check_a[p].type == check_b[p].type)
-                        else:
+                        if status_list_a[i][k] != status_list_b[j][k]:
                             flag_check_graph = False
+                        else:
+                            if status_list_a[i][k] == 'S':
+                                flag_check_graph = flag_check_graph & (Counter(inform_list_a[i][k]) == Counter(inform_list_b[j][k]))
+                            else:
+                                mapping_list_a = Counter(inform_list_a[i][k])
+                                mapping_list_b = Counter(inform_list_b[j][k])
+                                if len(mapping_list_a) == len(mapping_list_b):
+                                    for p in mapping_list_a:
+                                        q = self.mapping[p]
+                                        flag_check_graph = flag_check_graph & (mapping_list_a[p] == mapping_list_b[q])
+                                else:
+                                    flag_check_graph = False
+                                    break
                 else:
                     flag_check_graph = False
                     break
@@ -99,36 +100,21 @@ class TemplateSearching:
             flag_check_graph = False
             for i in range(self.qubit_num):
                 if not self.mapped[i]:
-                    if len(graph_a[vertex_a]) == len(graph_b[i]):
+                    if len(inform_list_a[vertex_a]) == len(inform_list_b[i]) and len(status_list_a[vertex_a]) == len(status_list_b[i]):
                         flag_check_list = True
                         self.mapped[i] = True
                         self.mapping[vertex_a] = i
-                        temp_mapped = []
-                        temp_mapping = []
-                        for j in range(len(graph_a[vertex_a])):
-                            check_a = graph_a[vertex_a][j]
-                            check_b = graph_b[i][j]
-                            temp_mapping.append(self.mapping[check_a])
-                            temp_mapped.append(self.mapped[check_b])
-                            if self.mapping[check_a] != -1 and self.mapping[check_a] != check_b:
-                                flag_check_list = False
-                            else:
-                                self.mapping[check_a] = check_b
-                                self.mapped[check_b] = True
-
+                        for j in range(len(status_list_a[vertex_a])):
+                            check_a = status_list_a[vertex_a][j]
+                            check_b = status_list_b[i][j]
+                            flag_check_list = flag_check_list & (check_a == check_b)
                         if flag_check_list:
-                            flag_check_graph = flag_check_graph or self.graph_isomorphism(graph_a, graph_b, single_list_a, single_list_b)
+                            flag_check_graph = flag_check_graph or self.graph_isomorphism(inform_list_a, inform_list_b, status_list_a, status_list_b)
                             if flag_check_graph:
                                 break
-
                         if not flag_check_graph:
                             self.mapped[i] = False
                             self.mapping[vertex_a] = -1
-                            for j in range(len(graph_a[vertex_a])):
-                                check_a = graph_a[vertex_a][j]
-                                check_b = graph_b[i][j]
-                                self.mapping[check_a] = temp_mapping[j]
-                                self.mapped[check_b] = temp_mapped[j]
 
             return flag_check_graph
 
@@ -136,97 +122,110 @@ class TemplateSearching:
 
         # check if a circuit is not isomorphism with the other
         # first only check cnot circuit
-        cnot_graph_a = []
-        single_list_a = []
-        cnot_graph_b = []
-        single_list_b = []
+        inform_list_a = []
+        status_list_a = []
+        inform_list_b = []
+        status_list_b = []
         for i in range(self.qubit_num):
-            cnot_graph_a.append([])
-            single_list_a.append([])
-            cnot_graph_b.append([])
-            single_list_b.append([])
+            inform_list_a.append([])
+            status_list_a.append([])
+            inform_list_b.append([])
+            status_list_b.append([])
 
-        temp_list = []
+        temp_inform_list = []
         for i in range(self.qubit_num):
-            temp_list.append([])
+            temp_inform_list.append([])
         for gate_a in circuit_a.gates:
             if gate_a.is_control_single():
-                cnot_graph_a[gate_a.carg].append(gate_a.targ)
-                single_list_a[gate_a.carg].append(temp_list[gate_a.carg])
-                temp_list[gate_a.carg] = []
+                temp_gate_c = gate_a.carg
+                temp_gate_t = gate_a.targ
+                if status_list_a[temp_gate_c] == []:
+                    status_list_a[temp_gate_c].append('C')
+                    temp_inform_list[temp_gate_c].append(temp_gate_t)
+                else:
+                    if status_list_a[temp_gate_c][-1] == 'C':
+                        temp_inform_list[temp_gate_c].append(temp_gate_t)
+                    else:
+                        inform_list_a[temp_gate_c].append(temp_inform_list[temp_gate_c])
+                        status_list_a[temp_gate_c].append('C')
+                        temp_inform_list[temp_gate_c] = [temp_gate_t]
             else:
-                temp_list[gate_a.targ].append(gate_a)
-        for i in range(self.qubit_num):
-            if temp_list[i] != []:
-                single_list_a[i].append(temp_list[i])
+                temp_gate = gate_a.targ
+                if status_list_a[temp_gate] == []:
+                    status_list_a[temp_gate].append('S')
+                    if gate_a.type == GateType.h:
+                        temp_inform_list[temp_gate].append(1)
+                    else:
+                        temp_inform_list[temp_gate].append(2)
+                else:
+                    if status_list_a[temp_gate][-1] == 'S':
+                        if gate_a.type == GateType.h:
+                            temp_inform_list[temp_gate].append(1)
+                        else:
+                            temp_inform_list[temp_gate].append(2)
+                    else:
+                        inform_list_a[temp_gate].append(temp_inform_list[temp_gate])
+                        status_list_a[temp_gate].append('S')
+                        if gate_a.type == GateType.h:
+                            temp_inform_list[temp_gate] = [1]
+                        else:
+                            temp_inform_list[temp_gate] = [2]
 
-        temp_list = []
         for i in range(self.qubit_num):
-            temp_list.append([])
+            if temp_inform_list[i] != []:
+                inform_list_a[i].append(temp_inform_list[i])
+
+        temp_inform_list = []
+        for i in range(self.qubit_num):
+            temp_inform_list.append([])
         for gate_b in circuit_b.gates:
             if gate_b.is_control_single():
-                cnot_graph_b[gate_b.carg].append(gate_b.targ)
-                single_list_b[gate_b.carg].append(temp_list[gate_b.carg])
-                temp_list[gate_b.carg] = []
+                temp_gate_c = gate_b.carg
+                temp_gate_t = gate_b.targ
+                if status_list_b[temp_gate_c] == []:
+                    status_list_b[temp_gate_c].append('C')
+                    temp_inform_list[temp_gate_c].append(temp_gate_t)
+                else:
+                    if status_list_b[temp_gate_c][-1] == 'C':
+                        temp_inform_list[temp_gate_c].append(temp_gate_t)
+                    else:
+                        inform_list_b[temp_gate_c].append(temp_inform_list[temp_gate_c])
+                        status_list_b[temp_gate_c].append('C')
+                        temp_inform_list[temp_gate_c] = [temp_gate_t]
             else:
-                temp_list[gate_b.targ].append(gate_b)
+                temp_gate = gate_b.targ
+                if status_list_b[temp_gate] == []:
+                    status_list_b[temp_gate].append('S')
+                    if gate_b.type == GateType.h:
+                        temp_inform_list[temp_gate].append(1)
+                    else:
+                        temp_inform_list[temp_gate].append(2)
+                else:
+                    if status_list_b[temp_gate][-1] == 'S':
+                        if gate_b.type == GateType.h:
+                            temp_inform_list[temp_gate].append(1)
+                        else:
+                            temp_inform_list[temp_gate].append(2)
+                    else:
+                        inform_list_b[temp_gate].append(temp_inform_list[temp_gate])
+                        status_list_b[temp_gate].append('S')
+                        if gate_b.type == GateType.h:
+                            temp_inform_list[temp_gate] = [1]
+                        else:
+                            temp_inform_list[temp_gate] = [2]
+
         for i in range(self.qubit_num):
-            if temp_list[i] != []:
-                single_list_b[i].append(temp_list[i])
+            if temp_inform_list[i] != []:
+                inform_list_b[i].append(temp_inform_list[i])
 
         self.mapping = []
         self.mapped = []
         for i in range(self.qubit_num):
             self.mapping.append(-1)
             self.mapped.append(False)
-        flag_carg_graph = self.graph_isomorphism(cnot_graph_a, cnot_graph_b, single_list_a, single_list_b)
+        flag_carg_graph = self.graph_isomorphism(inform_list_a, inform_list_b, status_list_a, status_list_b)
 
-        cnot_graph_a = []
-        single_list_a = []
-        cnot_graph_b = []
-        single_list_b = []
-        for i in range(self.qubit_num):
-            cnot_graph_a.append([])
-            single_list_a.append([])
-            cnot_graph_b.append([])
-            single_list_b.append([])
-
-        temp_list = []
-        for i in range(self.qubit_num):
-            temp_list.append([])
-        for gate_a in circuit_a.gates:
-            if gate_a.is_control_single():
-                cnot_graph_a[gate_a.targ].append(gate_a.carg)
-                single_list_a[gate_a.targ].append(temp_list[gate_a.targ])
-                temp_list[gate_a.targ] = []
-            else:
-                temp_list[gate_a.targ].append(gate_a)
-        for i in range(self.qubit_num):
-            if temp_list[i] != []:
-                single_list_a[i].append(temp_list[i])
-
-        temp_list = []
-        for i in range(self.qubit_num):
-            temp_list.append([])
-        for gate_b in circuit_b.gates:
-            if gate_b.is_control_single():
-                cnot_graph_b[gate_b.targ].append(gate_b.carg)
-                single_list_b[gate_b.targ].append(temp_list[gate_b.targ])
-                temp_list[gate_b.targ] = []
-            else:
-                temp_list[gate_b.targ].append(gate_b)
-        for i in range(self.qubit_num):
-            if temp_list[i] != []:
-                single_list_b[i].append(temp_list[i])
-
-        self.mapping = []
-        self.mapped = []
-        for i in range(self.qubit_num):
-            self.mapping.append(-1)
-            self.mapped.append(False)
-        flag_targ_graph = self.graph_isomorphism(cnot_graph_a, cnot_graph_b, single_list_a, single_list_b)
-
-        return not (flag_targ_graph and flag_carg_graph)
+        return not flag_carg_graph
 
     def check_list_not_isomorphism(self, temp_circuit):
 
@@ -289,19 +288,19 @@ class TemplateSearching:
         self.search(0, circuit_temp)
         len_list = len(self.template_list)
         relationship_iso = [-1] * len_list
-        for i in range(len(self.template_list)):
+        for i in range(len_list):
             if relationship_iso[i] == -1:
                 relationship_iso[i] = i
-                for j in range(len(self.template_list)):
+                for j in range(len_list):
                     if relationship_iso[j] == -1 and not self.check_circuit_not_isomorphism(self.template_list[i][0], self.template_list[j][0]):
-                            self.template_list[i][1] = self.template_list[i][1] & self.template_list[j][1]
-                            relationship_iso[j] = i
-                            self.template_list[j][1] = False
+                        self.template_list[i][1] = self.template_list[i][1] and self.template_list[j][1]
+                        relationship_iso[j] = i
+                        self.template_list[j][1] = False
         return self.template_list
 
 
 print(time.perf_counter())
-program = TemplateSearching(3, 4, 4)
+program = TemplateSearching(3, 8, 4)
 list_circuit = program.run_template_searching()
 print(time.perf_counter())
 label = 1
