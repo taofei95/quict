@@ -285,7 +285,11 @@ class CompositeGate:
         Returns:
             CompositeGate: the inverse of the gateSet
         """
-        self._gates = [gate.inverse() for gate in self._gates[::-1]]
+        inverse_cgate = CompositeGate()
+        inverse_gates = [gate.inverse() for gate in self._gates[::-1]]
+        inverse_cgate.extend(inverse_gates)
+
+        return inverse_cgate
 
     def matrix(self, local: bool = False):
         """ matrix of these gates

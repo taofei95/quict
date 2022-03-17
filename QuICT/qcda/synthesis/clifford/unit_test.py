@@ -2,8 +2,11 @@ import pytest, random
 
 import numpy as np
 
+from QuICT.core import Circuit
 from QuICT.core.gate import build_gate, CompositeGate, GateType
 from QuICT.qcda.synthesis.clifford.pauli_operator import PauliOperator
+from QuICT.qcda.synthesis.clifford.clifford_synthesizer import CliffordUnidirectionalSynthesizer,\
+                                                               CliffordBidirectionalSynthesizer
 
 pauli_list = [GateType.id, GateType.x, GateType.y, GateType.z]
 clifford_single = [GateType.h, GateType.s, GateType.sdg, GateType.x, GateType.y, GateType.z]
@@ -154,6 +157,29 @@ def test_disentangler_random():
                     assert pauli_x.operator[i] == GateType.x and pauli_z.operator[i] == GateType.z
                 else:
                     assert pauli_x.operator[i] == GateType.id and pauli_z.operator[i] == GateType.id
+
+def test_disentangle_one_qubit():
+    clifford = clifford_single + [GateType.cx]
+    for n in range(2, 10):
+        for _ in range(100):
+            circuit = Circuit(n)
+            circuit.random_append(10 * n, clifford)
+            gates = CompositeGate(gates=circuit.gates)
+            target = random.randint(0, n - 1)
+            disentangler = CliffordUnidirectionalSynthesizer.disentangle_one_qubit(gates, n, target)
+            gates_next = gates.inverse()
+            gates_next.extend(disentangler.gates)
+            
+            x_op = [GateType.id for _ in range(n)]
+            z_op = [GateType.id for _ in range(n)]
+            x_op[target] = GateType.x
+            z_op[target] = GateType.z
+            pauli_x = PauliOperator(x_op)
+            pauli_z = PauliOperator(z_op)
+            for gate in gates_next:
+                pauli_x.conjugate_act(gate)
+                pauli_z.conjugate_act(gate)
+            assert pauli_x.operator == x_op and pauli_z.operator == z_op
 
 
 if __name__ == '__main__':

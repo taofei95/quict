@@ -30,7 +30,7 @@ class PauliOperator(object):
                 if gatetype != GateType.id and gatetype not in PAULI_GATE_SET:
                     raise ValueError("operator must contain Pauli gates only.")
             self._operator = operator
-        phase_list = [1+0j, 1j, -1+0j, -1j]
+        phase_list = [1 + 0j, 0 + 1j, -1 + 0j, 0 - 1j]
         if phase not in phase_list:
             raise ValueError("phase must be ±1 or ±i")
         self._phase = phase
@@ -69,7 +69,7 @@ class PauliOperator(object):
 
     @phase.setter
     def phase(self, phase: complex):
-        phase_list = [1+0j, 1j, -1+0j, -1j]
+        phase_list = [1 + 0j, 0 + 1j, -1 + 0j, 0 - 1j]
         if phase not in phase_list:
             raise ValueError("phase must be ±1 or ±i")
         self._phase = phase
@@ -119,7 +119,7 @@ class PauliOperator(object):
     def conjugate_act(self, gate: BasicGate):
         """
         Compute the PauliOperator after conjugate action of a clifford gate
-        Be aware that the conjugate action means U P U^-1, where U is the clifford gate
+        Be aware that the conjugate action means U^-1 P U, where U is the clifford gate
         and P is the PauliOperator. It is important for S gate.
 
         Args:
@@ -225,36 +225,36 @@ class PauliOperator(object):
                 return
         if gate.type == GateType.s:
             assert not out_of_range(gate)
-            # S I Sdg = I
+            # Sdg I S = I
             if self.operator[gate.targ] == GateType.id:
                 return
-            # S X Sdg = Y
+            # Sdg X S = Y
             if self.operator[gate.targ] == GateType.x:
                 self.operator[gate.targ] = GateType.y
                 return
-            # S Y Sdg = -X
+            # Sdg Y S = -X
             if self.operator[gate.targ] == GateType.y:
                 self.operator[gate.targ] = GateType.x
                 self.phase *= -1
                 return
-            # S Z Sdg = Z
+            # Sdg Z S = Z
             if self.operator[gate.targ] == GateType.z:
                 return
         if gate.type == GateType.sdg:
             assert not out_of_range(gate)
-            # Sdg I S = I
+            # S I Sdg = I
             if self.operator[gate.targ] == GateType.id:
                 return
-            # Sdg X S = -Y
+            # S X Sdgg = -Y
             if self.operator[gate.targ] == GateType.x:
                 self.operator[gate.targ] = GateType.y
                 self.phase *= -1
                 return
-            # Sdg Y S = X
+            # S Y Sdg = X
             if self.operator[gate.targ] == GateType.y:
                 self.operator[gate.targ] = GateType.x
                 return
-            # Sdg Z S = Z
+            # S Z Sdg = Z
             if self.operator[gate.targ] == GateType.z:
                 return
         if gate.type == GateType.x:
@@ -314,8 +314,8 @@ class PauliOperator(object):
         L is referred to as a disentangler for the pair (O, O').
 
         Args:
-            pauli_x(PauliOperator): the PauliOperator to be transformed to X_1
-            pauli_z(PauliOperator): the PauliOperator to be transformed to Z_1
+            pauli_x(PauliOperator): the PauliOperator to be transformed to X_j
+            pauli_z(PauliOperator): the PauliOperator to be transformed to Z_j
             target(int, optional): the j in the X_j, Z_j to be transformed to
 
         Returns:
