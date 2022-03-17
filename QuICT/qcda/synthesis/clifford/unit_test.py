@@ -99,6 +99,17 @@ def test_standardizer_generator():
                     break
             print()
 
+def test_swap():
+    for pauli_0 in pauli_list:
+        for pauli_1 in pauli_list:
+            p = PauliOperator([pauli_0, pauli_1])
+            cx_gate = build_gate(GateType.cx, [0, 1])
+            p.conjugate_act(cx_gate)
+            p.conjugate_act(cx_gate & [1, 0])
+            p.conjugate_act(cx_gate)
+            assert p.operator[0] == pauli_1 and p.operator[1] == pauli_0
+
+
 def test_disentangler_fixed():
     x_op = [GateType.x]
     z_op = [GateType.z]
@@ -108,20 +119,22 @@ def test_disentangler_fixed():
             z_op.append(z)
     pauli_x = PauliOperator(x_op)
     pauli_z = PauliOperator(z_op)
-    disentangler = PauliOperator.disentangler(pauli_x, pauli_z)
+    target = random.randint(0, 16)
+    disentangler = PauliOperator.disentangler(pauli_x, pauli_z, target)
     for gate in disentangler:
         pauli_x.conjugate_act(gate)
         pauli_z.conjugate_act(gate)
-    assert pauli_x.operator[0] == GateType.x and pauli_z.operator[0] == GateType.z
-    for i in range(1, pauli_x.width):
-        assert pauli_x.operator[i] == GateType.id and pauli_z.operator[i] == GateType.id
+    for i in range(pauli_x.width):
+        if i == target:
+            assert pauli_x.operator[i] == GateType.x and pauli_z.operator[i] == GateType.z
+        else:
+            assert pauli_x.operator[i] == GateType.id and pauli_z.operator[i] == GateType.id
 
 def test_disentangler_random():
     for n in range(1, 50):
         for _ in range(100):
-            # Skip the Swap
-            x_op = [GateType.x]
-            z_op = [GateType.z]
+            x_op = []
+            z_op = []
             for _ in range(n):
                 x_op.append(random.choice(pauli_list))
                 z_op.append(random.choice(pauli_list))
@@ -129,15 +142,18 @@ def test_disentangler_random():
             pauli_z = PauliOperator(z_op)
             # Keep the anti-commutation
             if pauli_x.commute(pauli_z):
-                pauli_x.operator.append(GateType.z)
-                pauli_z.operator.append(GateType.x)
-            disentangler = PauliOperator.disentangler(pauli_x, pauli_z)
+                pauli_x.operator.append(GateType.x)
+                pauli_z.operator.append(GateType.z)
+            target = random.randint(0, n - 1)
+            disentangler = PauliOperator.disentangler(pauli_x, pauli_z, target)
             for gate in disentangler:
                 pauli_x.conjugate_act(gate)
                 pauli_z.conjugate_act(gate)
-            assert pauli_x.operator[0] == GateType.x and pauli_z.operator[0] == GateType.z
-            for i in range(1, pauli_x.width):
-                assert pauli_x.operator[i] == GateType.id and pauli_z.operator[i] == GateType.id
+            for i in range(pauli_x.width):
+                if i == target:
+                    assert pauli_x.operator[i] == GateType.x and pauli_z.operator[i] == GateType.z
+                else:
+                    assert pauli_x.operator[i] == GateType.id and pauli_z.operator[i] == GateType.id
 
 
 if __name__ == '__main__':

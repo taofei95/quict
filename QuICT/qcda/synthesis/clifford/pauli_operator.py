@@ -307,18 +307,19 @@ class PauliOperator(object):
                 return
 
     @staticmethod
-    def disentangler(pauli_x, pauli_z):
+    def disentangler(pauli_x, pauli_z, target=0) -> CompositeGate:
         """
         For anti-commuting n-qubit Pauli operators O and O', there exists a Clifford circuit L∈C_n
-        such that L^(-1) O L = X_1, L^(-1) O' L = Z_1.
+        such that L^(-1) O L = X_j, L^(-1) O' L = Z_j.
         L is referred to as a disentangler for the pair (O, O').
 
         Args:
             pauli_x(PauliOperator): the PauliOperator to be transformed to X_1
             pauli_z(PauliOperator): the PauliOperator to be transformed to Z_1
+            target(int, optional): the j in the X_j, Z_j to be transformed to
 
         Returns:
-            CompositeGate: the disentangler
+            CompositeGate: the disentangler for the pair (O, O')
 
         Reference:
             https://arxiv.org/abs/2105.02291
@@ -329,6 +330,8 @@ class PauliOperator(object):
             ValueError('two PauliOperators must be of the same width')
         assert not pauli_x.commute(pauli_z),\
             ValueError('anti-commutative pairs needed for computing disentangler')
+        assert isinstance(target, int) and 0 <= target and target < pauli_x.width,\
+            ValueError('the target must be integer in the width of the PauliOperators')
 
         pauli_x = copy.deepcopy(pauli_x)
         pauli_z = copy.deepcopy(pauli_z)
@@ -450,26 +453,35 @@ class PauliOperator(object):
         # Construct the disentangler of 'standard' pairs with the algorithm given in reference
         disentangler = CompositeGate()
         with disentangler:
-            if 0 not in XZ:
-                Swap & [0, XZ[0]]
+            for subset in [XZ, XX, XI, IZ, II]:
+                if target in subset:
+                    if subset is not XZ:
+                        # Swap & [target, XZ[0]]
+                        CX & [target, XZ[0]]
+                        CX & [XZ[0], target]
+                        CX & [target, XZ[0]]
+                    if XZ[0] != target:
+                        subset.remove(target)
+                        subset.append(XZ[0])
+                        XZ[0] = target
             for j in XI:
-                CX & [0, j]
+                CX & [target, j]
             for j in IZ:
-                CX & [j, 0]
+                CX & [j, target]
             if len(XX) > 0:
                 i = XX[0]
                 for j in XX[1:]:
                     CX & [i, j]
-                CX & [0, i]
+                CX & [target, i]
                 H & i
-                CX & [i, 0]
+                CX & [i, target]
             # Anti-commutation gives that len(XZ) is odd
             for k in range((len(XZ) - 1) // 2):
                 i = 2 * k + 1
                 j = 2 * k + 2
                 CX & [XZ[j], XZ[i]]
-                CX & [XZ[i], 0]
-                CX & [0, XZ[j]]
+                CX & [XZ[i], target]
+                CX & [target, XZ[j]]
 
         standardizer.extend(disentangler.gates)
         return standardizer
