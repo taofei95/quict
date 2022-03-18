@@ -2,7 +2,7 @@
 Compute the disentangler of Pauli operators (O, O')
 """
 
-import copy, random
+import copy, random, itertools
 
 from QuICT.core.gate import build_gate, BasicGate, CompositeGate, GateType, PAULI_GATE_SET, CX, H, Swap
 
@@ -95,19 +95,34 @@ class PauliOperator(object):
     @staticmethod
     def random(width: int):
         """
-        Give a random PauliOperator with width n
+        Give a random PauliOperator with given width
 
         Args:
             width(int): the width of the PauliOperator
 
         Returns:
-            PauliOperator: a random PauliOperator with width n
+            PauliOperator: a random PauliOperator with given width
         """
         pauli_list = [GateType.id, GateType.x, GateType.y, GateType.z]
         operator = []
         for _ in range(width):
             operator.append(random.choice(pauli_list))
         return PauliOperator(operator)
+
+    @staticmethod
+    def iterator(width: int):
+        """
+        Yield all the PauliOperators with given width
+
+        Args:
+            width(int): the width of the PauliOperator
+
+        Yields:
+            PauliOperator: PauliOperator with given width
+        """
+        pauli_list = [GateType.id, GateType.x, GateType.y, GateType.z]
+        for operator in itertools.product(pauli_list, repeat=width):
+            yield PauliOperator(list(operator))
 
     def commute(self, other):
         """

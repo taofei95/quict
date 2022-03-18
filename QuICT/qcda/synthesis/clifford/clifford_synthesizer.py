@@ -2,7 +2,7 @@
 Synthesize a Clifford circuit unidirectionally or bidirectionally
 """
 
-import random
+import copy, random
 
 import numpy as np
 
@@ -72,7 +72,7 @@ class CliffordUnidirectionalSynthesizer(Synthesis):
         return gates_syn
 
     @staticmethod
-    def disentangle_one_qubit(gates: CompositeGate, width: int, target: int) -> CompositeGate:
+    def disentangle_one_qubit(gates: CompositeGate, width: int, target: int):
         """
         Disentangle the target qubit from gates, i.e. for CompositeGate C, give the CompositeGate L
         such that L^-1 C acts trivially on the target qubit.
@@ -110,17 +110,86 @@ class CliffordBidirectionalSynthesizer(Synthesis):
         https://arxiv.org/abs/2105.02291
     """
     @classmethod
-    def execute(cls, gates: CompositeGate):
+    def execute(cls, gates: CompositeGate, qubit_strategy='greedy', pauli_strategy='random'):
         """
         Args:
             gates(Circuit/CompositeGate): the Clifford Circuit/CompositeGate to be synthesized
+            qubit_strategy(str, optional): strategy of choosing qubit for each step
+            pauli_strategy(str, optional): strategy of choosing PauliOperator for each step
 
         Returns:
             CompositeGate: the synthesized Clifford CompositeGate
         """
+        width = gates.width()
         if isinstance(gates, Circuit):
             gates = CompositeGate(gates=gates.gates)
         assert isinstance(gates, CompositeGate),\
             TypeError('Invalid input(Circuit/CompositeGate)')
         for gate in gates.gates:
             assert gate.is_clifford(), TypeError('Only Clifford gates here')
+        assert qubit_strategy in ['greedy', 'random'],\
+            ValueError('strategy of choosing qubit could only be "greedy" or "random"')
+        assert pauli_strategy in ['greedy', 'random'],\
+            ValueError('strategy of choosing PauliOperator could only be "greedy" or "random"')
+
+        def random_anti_commutative_pauli_pair(width):
+            p1 = PauliOperator.random(width)
+            while True:
+                p2 = PauliOperator.random(width)
+                if not p1.commute(p2):
+                    break
+            return p1, p2
+
+        def gates_next(gates: CompositeGate, left: CompositeGate, right: CompositeGate):
+            gates_next = left.inverse()
+            gates_next.extend(gates)
+            gates_next.extend(right.inverse())
+            return gates_next
+
+        gates_left = CompositeGate()
+        gates_right = CompositeGate()
+        not_disentangled = list(range(width))
+        if qubit_strategy == 'greedy':
+            pass
+        if qubit_strategy == 'random':
+            while not_disentangled:
+                qubit = random.choice(not_disentangled)
+                if pauli_strategy == 'greedy':
+                    pass
+                if pauli_strategy == 'random':
+                    p1, p2 = random_anti_commutative_pauli_pair(width)
+                    left, right = cls.disentangle_one_qubit(gates, qubit, p1, p2)
+                    gates_left.extend(left)
+                    gates_right.left_append(right)
+                    gates = gates_next(gates, left, right)
+                    not_disentangled.remove(qubit)
+
+        gates_left.extend(gates_right)
+        return gates_left
+
+    @staticmethod
+    def disentangle_one_qubit(gates: CompositeGate, target: int, p1: PauliOperator, p2: PauliOperator):
+        """
+        Disentangle the target qubit from gates, i.e. for CompositeGate C, give the CompositeGate L
+        such that L^-1 C acts trivially on the target qubit.
+
+        Args:
+            gates(CompositeGate): the CompositeGate to be disentangled
+            width(int): the width of the operators
+            target(int): the target qubit to be disentangled from gates
+            p1(PauliOperator): PauliOperator P
+            p2(PauliOperator): PauliOperator P'
+
+        Returns:
+            CompositeGate, CompositeGate: the left and right disentangler
+        """
+        # Using the notation in the paper
+        o1 = copy.deepcopy(p1)
+        o2 = copy.deepcopy(p2)
+
+        # Compute C X_j C^-1 and C Z_j C^-1
+        for gate in gates.inverse():
+            o1.conjugate_act(gate)
+            o2.conjugate_act(gate)
+
+        return PauliOperator.disentangler(o1, o2, target), PauliOperator.disentangler(p1, p2, target)
