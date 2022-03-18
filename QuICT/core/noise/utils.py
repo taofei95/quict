@@ -1,9 +1,11 @@
 import numpy as np
 
+from QuICT.ops.linalg.cpu_calculator import dot
 
-def is_kraus_ops(kraus: list, based=None) -> bool:
+
+def is_kraus_ops(kraus: list) -> bool:
     row, col = kraus[0].shape
-    n = int(np.log2(row)) if based is None else based
+    n = int(np.log2(row))
     if not row == col or not row == 2 ** n:
         return False
 
@@ -11,7 +13,7 @@ def is_kraus_ops(kraus: list, based=None) -> bool:
         if not kmat.shape == (row, col):
             return False
 
-    kk = sum(np.transpose(k).conjugate().dot(k) for k in kraus)
+    kk = sum(dot(np.transpose(k).conjugate(), (k)) for k in kraus)
     if not np.allclose(kk, np.identity(row, dtype=kraus.dtype)):
         return False
 
