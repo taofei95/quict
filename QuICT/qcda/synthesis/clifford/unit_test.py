@@ -138,13 +138,8 @@ def test_disentangler_fixed():
 def test_disentangler_random():
     for n in range(1, 50):
         for _ in range(100):
-            x_op = []
-            z_op = []
-            for _ in range(n):
-                x_op.append(random.choice(pauli_list))
-                z_op.append(random.choice(pauli_list))
-            pauli_x = PauliOperator(x_op)
-            pauli_z = PauliOperator(z_op)
+            pauli_x = PauliOperator.random(n)
+            pauli_z = PauliOperator.random(n)
             # Keep the anti-commutation
             if pauli_x.commute(pauli_z):
                 pauli_x.operator.append(GateType.x)
