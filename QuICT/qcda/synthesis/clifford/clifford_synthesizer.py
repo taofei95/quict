@@ -149,7 +149,11 @@ class CliffordBidirectionalSynthesizer(Synthesis):
                 if pauli_strategy == 'greedy':
                     pass
                 if pauli_strategy == 'random':
-                    p1, p2 = PauliOperator.random_anti_commutative_pair(width)
+                    p1, p2 = PauliOperator.random_anti_commutative_pair(len(not_disentangled))
+                    for i in range(width):
+                        if i not in not_disentangled:
+                            p1.operator.insert(i, GateType.id)
+                            p2.operator.insert(i, GateType.id)
                     left, right = cls.disentangle_one_qubit(gates, qubit, p1, p2)
                     gates_left.extend(left)
                     gates_right.left_extend(right.inverse())

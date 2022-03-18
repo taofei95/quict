@@ -111,7 +111,11 @@ class PauliOperator(object):
 
     @staticmethod
     def random_anti_commutative_pair(width):
-        p1 = PauliOperator.random(width)
+        op_id = [GateType.id for _ in range(width)]
+        while True:
+            p1 = PauliOperator.random(width)
+            if p1.operator != op_id:
+                break
         while True:
             p2 = PauliOperator.random(width)
             if not p1.commute(p2):

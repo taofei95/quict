@@ -137,7 +137,7 @@ def test_disentangler_fixed():
 
 def test_disentangler_random():
     for n in range(1, 50):
-        for _ in range(1):
+        for _ in range(100):
             pauli_x = PauliOperator.random(n)
             pauli_z = PauliOperator.random(n)
             # Keep the anti-commutation
@@ -158,7 +158,7 @@ def test_disentangler_random():
 
 def test_uni_disentangle_one_qubit():
     for n in range(2, 10):
-        for _ in range(1):
+        for _ in range(100):
             circuit = Circuit(n)
             circuit.random_append(10 * n, clifford)
             gates = CompositeGate(gates=circuit.gates)
@@ -181,7 +181,7 @@ def test_uni_disentangle_one_qubit():
 
 def test_unidirectional():
     for n in range(2, 6):
-        for _ in range(1):
+        for _ in range(100):
             circuit = Circuit(n)
             circuit.random_append(10 * n, clifford)
             gates = CompositeGate(gates=circuit.gates)
@@ -218,8 +218,8 @@ def test_bi_disentangle_one_qubit():
             assert pauli_x.operator == x_op and pauli_z.operator == z_op
 
 def test_bidirectional():
-    for n in range(2, 3):
-        for _ in range(1):
+    for n in range(2, 6):
+        for _ in range(100):
             circuit = Circuit(n)
             circuit.random_append(10 * n, clifford)
             gates = CompositeGate(gates=circuit.gates)
