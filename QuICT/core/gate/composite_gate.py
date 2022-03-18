@@ -171,7 +171,7 @@ class CompositeGate:
 
         self._pointer = -1
 
-    def append(self, gate, is_extend: bool = False):
+    def append(self, gate, is_extend: bool = False, insert_idx: int = -1):
         gate = gate.copy()
 
         if self._pointer != -1:
@@ -195,7 +195,19 @@ class CompositeGate:
 
             self._update_qubit_limit(qubit_index)
 
-        self._gates.append(gate)
+        if insert_idx == -1:
+            self._gates.append(gate)
+        else:
+            self._gates.insert(insert_idx, gate)
+
+    def left_append(self, gate):
+        self.append(gate, insert_idx = 0)
+
+    def left_extend(self, gates: list):
+        for idx, gate in enumerate(gates):
+            self.append(gate, is_extend = True, insert_idx = idx)
+
+        self._pointer = -1
 
     def width(self):
         """ the number of qubits applied by gates
