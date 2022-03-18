@@ -110,6 +110,15 @@ class PauliOperator(object):
         return PauliOperator(operator)
 
     @staticmethod
+    def random_anti_commutative_pair(width):
+        p1 = PauliOperator.random(width)
+        while True:
+            p2 = PauliOperator.random(width)
+            if not p1.commute(p2):
+                break
+        return p1, p2
+
+    @staticmethod
     def iterator(width: int):
         """
         Yield all the PauliOperators with given width

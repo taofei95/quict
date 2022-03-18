@@ -487,6 +487,14 @@ class SGate(BasicGate):
             [0, 1j]
         ], dtype=np.complex128)
 
+    def inverse(self):
+        """ change it be sdg gate"""
+        _Sdagger = SDaggerGate()
+        _Sdagger.targs = copy.deepcopy(self.targs)
+        _Sdagger.assigned_qubits = copy.deepcopy(self.assigned_qubits)
+
+        return _Sdagger
+
 
 S = SGate()
 
@@ -505,6 +513,14 @@ class SDaggerGate(BasicGate):
             [1, 0],
             [0, -1j]
         ], dtype=np.complex128)
+
+    def inverse(self):
+        """ change it to be s gate """
+        _Sgate = SGate()
+        _Sgate.targs = copy.deepcopy(self.targs)
+        _Sgate.assigned_qubits = copy.deepcopy(self.assigned_qubits)
+
+        return _Sgate
 
 
 S_dagger = SDaggerGate()

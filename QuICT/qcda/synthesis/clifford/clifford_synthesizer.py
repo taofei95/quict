@@ -132,18 +132,10 @@ class CliffordBidirectionalSynthesizer(Synthesis):
         assert pauli_strategy in ['greedy', 'random'],\
             ValueError('strategy of choosing PauliOperator could only be "greedy" or "random"')
 
-        def random_anti_commutative_pauli_pair(width):
-            p1 = PauliOperator.random(width)
-            while True:
-                p2 = PauliOperator.random(width)
-                if not p1.commute(p2):
-                    break
-            return p1, p2
-
         def gates_next(gates: CompositeGate, left: CompositeGate, right: CompositeGate):
             gates_next = left.inverse()
             gates_next.extend(gates)
-            gates_next.extend(right.inverse())
+            gates_next.extend(right)
             return gates_next
 
         gates_left = CompositeGate()
@@ -157,10 +149,10 @@ class CliffordBidirectionalSynthesizer(Synthesis):
                 if pauli_strategy == 'greedy':
                     pass
                 if pauli_strategy == 'random':
-                    p1, p2 = random_anti_commutative_pauli_pair(width)
+                    p1, p2 = PauliOperator.random_anti_commutative_pair(width)
                     left, right = cls.disentangle_one_qubit(gates, qubit, p1, p2)
                     gates_left.extend(left)
-                    gates_right.left_append(right)
+                    gates_right.left_extend(right.inverse())
                     gates = gates_next(gates, left, right)
                     not_disentangled.remove(qubit)
 
@@ -170,12 +162,11 @@ class CliffordBidirectionalSynthesizer(Synthesis):
     @staticmethod
     def disentangle_one_qubit(gates: CompositeGate, target: int, p1: PauliOperator, p2: PauliOperator):
         """
-        Disentangle the target qubit from gates, i.e. for CompositeGate C, give the CompositeGate L
-        such that L^-1 C acts trivially on the target qubit.
+        Disentangle the target qubit from gates, i.e. for CompositeGate C, give the CompositeGate L, R
+        such that L^-1 C R^-1 acts trivially on the target qubit.
 
         Args:
             gates(CompositeGate): the CompositeGate to be disentangled
-            width(int): the width of the operators
             target(int): the target qubit to be disentangled from gates
             p1(PauliOperator): PauliOperator P
             p2(PauliOperator): PauliOperator P'
@@ -187,7 +178,7 @@ class CliffordBidirectionalSynthesizer(Synthesis):
         o1 = copy.deepcopy(p1)
         o2 = copy.deepcopy(p2)
 
-        # Compute C X_j C^-1 and C Z_j C^-1
+        # Compute C P C^-1 and C P' C^-1
         for gate in gates.inverse():
             o1.conjugate_act(gate)
             o2.conjugate_act(gate)
