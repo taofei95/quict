@@ -483,5 +483,20 @@ class PauliOperator(object):
                 CX & [XZ[i], target]
                 CX & [target, XZ[j]]
 
-        standardizer.extend(disentangler.gates)
+        standardizer.extend(disentangler)
+
+        # Add the last Pauli gate for the phase correction
+        for gate in disentangler:
+            pauli_x.conjugate_act(gate)
+            pauli_z.conjugate_act(gate)
+        if pauli_x.phase == 1 and pauli_z.phase == -1:
+            gate = build_gate(GateType.x, target)
+            standardizer.append(gate)
+        if pauli_x.phase == -1 and pauli_z.phase == -1:
+            gate = build_gate(GateType.y, target)
+            standardizer.append(gate)
+        if pauli_x.phase == -1 and pauli_z.phase == 1:
+            gate = build_gate(GateType.z, target)
+            standardizer.append(gate)
+
         return standardizer

@@ -4,6 +4,8 @@ Synthesize a Clifford circuit unidirectionally or bidirectionally
 
 import random
 
+import numpy as np
+
 from QuICT.core import Circuit
 from QuICT.core.gate import CompositeGate
 from QuICT.core.utils.gate_type import GateType
@@ -38,15 +40,36 @@ class CliffordUnidirectionalSynthesizer(Synthesis):
         assert strategy in ['greedy', 'random'],\
             ValueError('strategy of choosing qubit could only be "greedy" or "random"')
 
+        def gates_next(gates: CompositeGate, disentangler: CompositeGate):
+            gates_next = disentangler.inverse()
+            gates_next.extend(gates)
+            return gates_next
+
         gates_syn = CompositeGate()
         not_disentangled = list(range(width))
         if strategy == 'greedy':
-            while not not_disentangled:
+            while not_disentangled:
+                cnot_min = np.inf
+                disentangler_min = None
+                qubit_min = None
                 for qubit in not_disentangled:
-                    pass
+                    disentangler = cls.disentangle_one_qubit(gates, width, qubit)
+                    if disentangler.count_2qubit_gate() < cnot_min:
+                        cnot_min = disentangler.count_2qubit_gate()
+                        disentangler_min = disentangler
+                        qubit_min = qubit
+                gates_syn.extend(disentangler_min)
+                gates = gates_next(gates, disentangler_min)
+                not_disentangled.remove(qubit_min)
         if strategy == 'random':
-            while not not_disentangled:
+            while not_disentangled:
                 qubit = random.choice(not_disentangled)
+                disentangler = cls.disentangle_one_qubit(gates, width, qubit)
+                gates_syn.extend(disentangler)
+                gates = gates_next(gates, disentangler)
+                not_disentangled.remove(qubit)
+
+        return gates_syn
 
     @staticmethod
     def disentangle_one_qubit(gates: CompositeGate, width: int, target: int) -> CompositeGate:

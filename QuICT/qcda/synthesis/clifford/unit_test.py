@@ -10,6 +10,7 @@ from QuICT.qcda.synthesis.clifford.clifford_synthesizer import CliffordUnidirect
 
 pauli_list = [GateType.id, GateType.x, GateType.y, GateType.z]
 clifford_single = [GateType.h, GateType.s, GateType.sdg, GateType.x, GateType.y, GateType.z]
+clifford = clifford_single + [GateType.cx]
 
 def test_conjugate_action():
     # test clifford_single
@@ -69,7 +70,7 @@ def test_commutative():
             q = PauliOperator(q_op)
             commute = p.commute(q)
             assert commute == np.allclose(np.dot(p.gates.matrix(), q.gates.matrix()),
-                                        np.dot(q.gates.matrix(), p.gates.matrix()))
+                                          np.dot(q.gates.matrix(), p.gates.matrix()))
 
 def test_standardizer_generator():
     standard_list = [
@@ -127,6 +128,7 @@ def test_disentangler_fixed():
     for gate in disentangler:
         pauli_x.conjugate_act(gate)
         pauli_z.conjugate_act(gate)
+    assert pauli_x.phase == 1 and pauli_z.phase == 1
     for i in range(pauli_x.width):
         if i == target:
             assert pauli_x.operator[i] == GateType.x and pauli_z.operator[i] == GateType.z
@@ -152,6 +154,7 @@ def test_disentangler_random():
             for gate in disentangler:
                 pauli_x.conjugate_act(gate)
                 pauli_z.conjugate_act(gate)
+            assert pauli_x.phase == 1 and pauli_z.phase == 1
             for i in range(pauli_x.width):
                 if i == target:
                     assert pauli_x.operator[i] == GateType.x and pauli_z.operator[i] == GateType.z
@@ -159,7 +162,6 @@ def test_disentangler_random():
                     assert pauli_x.operator[i] == GateType.id and pauli_z.operator[i] == GateType.id
 
 def test_disentangle_one_qubit():
-    clifford = clifford_single + [GateType.cx]
     for n in range(2, 10):
         for _ in range(100):
             circuit = Circuit(n)
@@ -168,7 +170,7 @@ def test_disentangle_one_qubit():
             target = random.randint(0, n - 1)
             disentangler = CliffordUnidirectionalSynthesizer.disentangle_one_qubit(gates, n, target)
             gates_next = gates.inverse()
-            gates_next.extend(disentangler.gates)
+            gates_next.extend(disentangler)
             
             x_op = [GateType.id for _ in range(n)]
             z_op = [GateType.id for _ in range(n)]
@@ -179,7 +181,21 @@ def test_disentangle_one_qubit():
             for gate in gates_next:
                 pauli_x.conjugate_act(gate)
                 pauli_z.conjugate_act(gate)
+            assert pauli_x.phase == 1 and pauli_z.phase == 1
             assert pauli_x.operator == x_op and pauli_z.operator == z_op
+
+def test_unidirectional():
+    for n in range(2, 6):
+        for _ in range(100):
+            circuit = Circuit(n)
+            circuit.random_append(10 * n, clifford)
+            gates = CompositeGate(gates=circuit.gates)
+            gates_syn = CliffordUnidirectionalSynthesizer.execute(circuit, strategy='greedy')
+            # gates_syn = CliffordUnidirectionalSynthesizer.execute(circuit, strategy='random')
+            gates_remain = gates.inverse()
+            gates_remain.extend(gates_syn)
+            # np.set_printoptions(precision=3, suppress=True)
+            assert np.allclose(gates_remain.matrix(), gates_remain.matrix()[0][0] * np.eye(2 ** n))
 
 
 if __name__ == '__main__':
