@@ -4,6 +4,7 @@ Optimize Clifford circuits with template matching and symbolic peephole optimiza
 
 from QuICT.qcda.optimization._optimization import Optimization
 
+
 class CliffordOptimization(Optimization):
     """
     Implement the Clifford circuit optimization process described in Reference, which

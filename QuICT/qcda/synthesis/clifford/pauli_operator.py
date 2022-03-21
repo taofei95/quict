@@ -2,18 +2,21 @@
 Compute the disentangler of Pauli operators (O, O')
 """
 
-import copy, random, itertools
+import copy
+import random
+import itertools
 
 from QuICT.core.gate import build_gate, BasicGate, CompositeGate, GateType, PAULI_GATE_SET, CX, H, Swap
+
 
 class PauliOperator(object):
     """
     Pauli operator is a list of (I, X, Y, Z) with length n, which operates on n qubits.
 
     In this class, we use a list of int to represent the operator, where the GateTypes stand
-    for the gates. 
+    for the gates.
     """
-    def __init__(self, operator=None, phase=1+0j):
+    def __init__(self, operator=None, phase=1 + 0j):
         """
         Construct a PauliOperator with a list of int(GateType)
 
@@ -112,10 +115,12 @@ class PauliOperator(object):
     @staticmethod
     def random_anti_commutative_pair(width):
         op_id = [GateType.id for _ in range(width)]
+        # Avoid p1 = identity
         while True:
             p1 = PauliOperator.random(width)
             if p1.operator != op_id:
                 break
+        # Expectation = 2
         while True:
             p2 = PauliOperator.random(width)
             if not p1.commute(p2):
@@ -143,7 +148,7 @@ class PauliOperator(object):
 
         Args:
             other(PauliOperator): PauliOperator to be checked with self
-        
+
         Returns:
             boolean: True for commutative or False for anti-commutative
         """
@@ -170,7 +175,7 @@ class PauliOperator(object):
         Args:
             gate(BasicGate): the clifford gate to be acted on the PauliOperator
         """
-        if not gate.is_clifford() and gate.type != GateType.id: 
+        if not gate.is_clifford() and gate.type != GateType.id:
             raise ValueError("Only conjugate action of Clifford gates here.")
 
         def out_of_range(gate):

@@ -2,7 +2,8 @@
 Synthesize a Clifford circuit unidirectionally or bidirectionally
 """
 
-import copy, random
+import copy
+import random
 
 import numpy as np
 
@@ -11,6 +12,7 @@ from QuICT.core.gate import CompositeGate
 from QuICT.core.utils.gate_type import GateType
 from QuICT.qcda.synthesis._synthesis import Synthesis
 from QuICT.qcda.synthesis.clifford import PauliOperator
+
 
 class CliffordUnidirectionalSynthesizer(Synthesis):
     """
@@ -100,6 +102,7 @@ class CliffordUnidirectionalSynthesizer(Synthesis):
 
         return PauliOperator.disentangler(pauli_x, pauli_z, target)
 
+
 class CliffordBidirectionalSynthesizer(Synthesis):
     """
     Construct L_1,…,L_n,R_1,…,R_n such that C = L_1…L_j C_j R_j…R_1,  where C_j acts trivially
@@ -132,6 +135,13 @@ class CliffordBidirectionalSynthesizer(Synthesis):
         assert pauli_strategy in ['greedy', 'random'],\
             ValueError('strategy of choosing PauliOperator could only be "greedy" or "random"')
 
+        def insert_identity(p1: PauliOperator, p2: PauliOperator, width: int, not_disentangled: list):
+            # Operators on the disentangled qubits must be I
+            for i in range(width):
+                if i not in not_disentangled:
+                    p1.operator.insert(i, GateType.id)
+                    p2.operator.insert(i, GateType.id)
+
         def gates_next(gates: CompositeGate, left: CompositeGate, right: CompositeGate):
             gates_next = left.inverse()
             gates_next.extend(gates)
@@ -150,10 +160,7 @@ class CliffordBidirectionalSynthesizer(Synthesis):
                     pass
                 if pauli_strategy == 'random':
                     p1, p2 = PauliOperator.random_anti_commutative_pair(len(not_disentangled))
-                    for i in range(width):
-                        if i not in not_disentangled:
-                            p1.operator.insert(i, GateType.id)
-                            p2.operator.insert(i, GateType.id)
+                    insert_identity(p1, p2, width, not_disentangled)
                     left, right = cls.disentangle_one_qubit(gates, qubit, p1, p2)
                     gates_left.extend(left)
                     gates_right.left_extend(right.inverse())
