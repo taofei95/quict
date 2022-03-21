@@ -1,4 +1,4 @@
-from typing import Dict, Tuple
+from typing import Dict, Tuple, List
 from collections import deque
 
 from QuICT.core import *
@@ -36,13 +36,11 @@ class OptimizationTemplate:
             # place s_node after r_node
             r_node.connect(r_qubit, s_qubit, s_node)
 
-        for each in mapping.values():
-            del each
-
-    def compare(self, other: Tuple[DAG.Node, int]):
+    def compare(self, other: Tuple[DAG.Node, int], flag_enabled=False):
         o_node, o_qubit = other
         t_node, t_qubit = self.template.start_nodes[self.anchor].successors[0]
-        if o_node.gate.qasm_name != t_node.gate.qasm_name or o_qubit != t_qubit or o_node.flag:
+        if o_node.gate.qasm_name != t_node.gate.qasm_name or o_qubit != t_qubit or \
+                (o_node.flag and flag_enabled):
             return None
 
         mapping = {id(t_node): o_node}
@@ -58,25 +56,26 @@ class OptimizationTemplate:
 
                     v_nxt, v_qubit = getattr(v, neighbors)[qubit_]
                     assert v_nxt, "v_nxt == None should not happen"
-                    if not v_nxt.gate or u_qubit != v_qubit or v_nxt.flag or \
+                    if not v_nxt.gate or u_qubit != v_qubit or \
+                            (v_nxt.flag and flag_enabled) or \
                             u_nxt.gate.qasm_name != v_nxt.gate.qasm_name:
                         return None
 
                     mapping[id(u_nxt)] = v_nxt
                     queue.append((id(u_nxt), v_nxt))
 
-        for each in mapping.values():
-            each.flag = 1
+        if flag_enabled:
+            for each in mapping.values():
+                each.flag = DAG.Node.FLAG_VISITED
         return mapping
 
     def replace_all(self, dag: DAG):
-        for node in dag.topological_sort():
-            node.flag = 0
+        dag.reset_flag()
 
         matched = []
         for node in dag.topological_sort():
             for qubit_ in range(node.size):
-                mapping = self.compare((node, qubit_))
+                mapping = self.compare((node, qubit_), flag_enabled=True)
                 if not mapping:
                     continue
                 matched.append(mapping)
@@ -85,3 +84,25 @@ class OptimizationTemplate:
             self.replace(mapping)
 
         return len(matched)
+
+
+def generate_hadamard_gate_templates() -> List[OptimizationTemplate]:
+    return []
+
+
+def generate_single_qubit_gate_templates() -> List[OptimizationTemplate]:
+    return []
+
+
+def generate_cnot_targ_templates() -> List[OptimizationTemplate]:
+    return []
+
+
+def generate_cnot_ctrl_templates() -> List[OptimizationTemplate]:
+    return []
+
+
+hadamard_templates = generate_hadamard_gate_templates()
+single_qubit_gate_templates = generate_single_qubit_gate_templates()
+cnot_targ_template = generate_cnot_targ_templates()
+cnot_ctrl_template = generate_cnot_ctrl_templates()

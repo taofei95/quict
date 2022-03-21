@@ -56,14 +56,13 @@ class PhasePolynomial:
             CompositeGate: Circuit equivalent to this polynomial
         """
         max_monomial = max(self.phases.keys())
-        used_monomials = set()
         circ = Circuit(self.size)
         for qubit_ in range(int(np.ceil(np.log2(max_monomial)))):
             if (1 << qubit_) in self.phases:
                 Rz(self.phases[1 << qubit_]) | circ(qubit_)
 
         monomials = {}
-        visited = {}
+        visited = set()
         for gate_ in self.gates:
             gate_: BasicGate
             if gate_.qasm_name == 'cx':
@@ -75,5 +74,6 @@ class PhasePolynomial:
             cur = monomials[gate_.targ]
             if cur in self.phases and cur not in visited:
                 Rz(self.phases[cur]) | circ(gate_.targ)
+                visited.add(cur)
 
         return CompositeGate(circ)
