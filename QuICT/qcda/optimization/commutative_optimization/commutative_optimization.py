@@ -5,21 +5,21 @@ the commutative relation between gates in consideration.
 
 import numpy as np
 
-from QuICT.core import *
+from QuICT.core.gate import *
 from QuICT.qcda.optimization._optimization import Optimization
 
 # Categories of combination
 elimination = [
-    GATE_ID['H'], GATE_ID['X'], GATE_ID['Y'], GATE_ID['Z'], GATE_ID['CX'],
-    GATE_ID['CY'], GATE_ID['CZ'], GATE_ID['CH'], GATE_ID['CCX'], GATE_ID['Swap']
+    GateType.h, GateType.x, GateType.y, GateType.z, GateType.cx,
+    GateType.cy, GateType.cz, GateType.ch, GateType.ccx, GateType.swap
 ]
 addition = [
-    GATE_ID['U1'], GATE_ID['Rx'], GATE_ID['Ry'], GATE_ID['Rz'], GATE_ID['Phase'],
-    GATE_ID['CRz'], GATE_ID['CU1'], GATE_ID['FSim'], GATE_ID['Rxx'], GATE_ID['Ryy'], GATE_ID['Rzz']
+    GateType.u1, GateType.rx, GateType.ry, GateType.rz, GateType.phase,
+    GateType.crz, GateType.cu1, GateType.fsim, GateType.Rxx, GateType.Ryy, GateType.Rzz
 ]
-multiplication = [GATE_ID['Unitary']]
-other = [GATE_ID['SX'], GATE_ID['SY'], GATE_ID['S'], GATE_ID['S_dagger'], GATE_ID['T'], GATE_ID['T_dagger']]
-not_calculated = [GATE_ID['SW'], GATE_ID['U2'], GATE_ID['U3'], GATE_ID['CU3']]
+multiplication = [GateType.unitary]
+other = [GateType.sx, GateType.sy, GateType.s, GateType.sdg, GateType.t, GateType.tdg]
+not_calculated = [GateType.sw, GateType.u2, GateType.u3, GateType.cu3]
 
 
 class Node(object):
@@ -62,23 +62,23 @@ class CommutativeOptimization(Optimization):
                 version with the phase angle derived in the process will be returned.
                 Otherwise, the `gate` itself with phase angle 0 will be returned.
         """
-        if gate.type() == GATE_ID['X']:
+        if gate.type == GateType.x:
             return Rx(np.pi).copy() & gate.targ, np.pi / 2
-        if gate.type() == GATE_ID['SX']:
+        if gate.type == GateType.sx:
             return Rx(np.pi / 2).copy() & gate.targ, 0
-        if gate.type() == GATE_ID['Y']:
+        if gate.type == GateType.y:
             return Ry(np.pi).copy() & gate.targ, np.pi / 2
-        if gate.type() == GATE_ID['SY']:
+        if gate.type == GateType.sy:
             return Ry(np.pi / 2).copy() & gate.targ, 0
-        if gate.type() == GATE_ID['Z']:
+        if gate.type == GateType.z:
             return Rz(np.pi).copy() & gate.targ, np.pi / 2
-        if gate.type() == GATE_ID['S']:
+        if gate.type == GateType.s:
             return Rz(np.pi / 2).copy() & gate.targ, np.pi / 4
-        if gate.type() == GATE_ID['S_dagger']:
+        if gate.type == GateType.sdg:
             return Rz(-np.pi / 2).copy() & gate.targ, -np.pi / 4
-        if gate.type() == GATE_ID['T']:
+        if gate.type == GateType.t:
             return Rz(np.pi / 4).copy() & gate.targ, np.pi / 8
-        if gate.type() == GATE_ID['T_dagger']:
+        if gate.type == GateType.tdg:
             return Rz(-np.pi / 4).copy() & gate.targ, -np.pi / 8
         return gate, 0
 
@@ -101,7 +101,7 @@ class CommutativeOptimization(Optimization):
                 angle 0 will be returned.
         """
         # Rx
-        if gate.type() == GATE_ID['Rx']:
+        if gate.type == GateType.rx:
             # X
             if np.isclose(np.mod(gate.parg, 2 * np.pi), np.pi):
                 if np.isclose(np.mod(gate.parg, 4 * np.pi), np.pi):
@@ -115,7 +115,7 @@ class CommutativeOptimization(Optimization):
                 if np.isclose(np.mod(gate.parg, 4 * np.pi), 5 * np.pi / 2):
                     return SX.copy() & gate.targ, np.pi
         # Ry
-        if gate.type() == GATE_ID['Ry']:
+        if gate.type == GateType.ry:
             # Y
             if np.isclose(np.mod(gate.parg, 2 * np.pi), np.pi):
                 if np.isclose(np.mod(gate.parg, 4 * np.pi), np.pi):
@@ -129,7 +129,7 @@ class CommutativeOptimization(Optimization):
                 if np.isclose(np.mod(gate.parg, 4 * np.pi), 5 * np.pi / 2):
                     return SY.copy() & gate.targ, np.pi
         # Rz
-        if gate.type() == GATE_ID['Rz']:
+        if gate.type == GateType.rz:
             # Z
             if np.isclose(np.mod(gate.parg, 2 * np.pi), np.pi):
                 if np.isclose(np.mod(gate.parg, 4 * np.pi), np.pi):
@@ -188,30 +188,30 @@ class CommutativeOptimization(Optimization):
             ValueError: If the input gates are not operating on the same qubits in the same way
                 or could not be combined directly to a gate with the same type.
         """
-        assert gate_x.type() == gate_y.type(),\
+        assert gate_x.type == gate_y.type,\
             TypeError('Gates to be combined are not of the same type.')
         assert gate_x.cargs == gate_y.cargs and gate_x.targs == gate_y.targs,\
             ValueError('Gates to be combined are not operated on the same qubits in the same way.')
 
-        if gate_x.type() in elimination:
+        if gate_x.type in elimination:
             # IDGates operating on all qubits are the same
             return ID.copy() & gate_x.targ
 
-        if gate_x.type() in addition:
+        if gate_x.type in addition:
             gate = gate_x.copy()
             for id_para in range(gate_x.params):
-                if gate_x.type() in [GATE_ID['U1'], GATE_ID['CU1'], GATE_ID['FSim']]:
+                if gate_x.type in [GateType.u1, GateType.cu1, GateType.fsim]:
                     gate.pargs[id_para] = np.mod(gate_x.pargs[id_para] + gate_y.pargs[id_para], 2 * np.pi)
                 else:
                     gate.pargs[id_para] = np.mod(gate_x.pargs[id_para] + gate_y.pargs[id_para], 4 * np.pi)
             return gate
 
-        if gate_x.type() in multiplication:
+        if gate_x.type in multiplication:
             gate = gate_x.copy()
             gate.matrix = gate_y.matrix.dot(gate_x.matrix)
             return gate
 
-        if gate_x.type() in other or gate_x.type() in not_calculated:
+        if gate_x.type in other or gate_x.type in not_calculated:
             raise ValueError('Gates to be combined could not be combined directly to a gate with the same type.')
 
         raise TypeError('Gate {} of unknown type encountered'.format(gate_x.name))
@@ -237,7 +237,7 @@ class CommutativeOptimization(Optimization):
         Returns:
             CompositeGate: The CompositeGate after optimization
         """
-        gates = CompositeGate(gates)
+        gates = CompositeGate(gates=gates.gates)
         nodes: list[Node] = []
         phase_angle = 0
 
@@ -245,11 +245,11 @@ class CommutativeOptimization(Optimization):
         for gate in gates:
             gate: BasicGate
             # IDGate
-            if gate.type() == GATE_ID['ID']:
+            if gate.type == GateType.id:
                 continue
 
             # PhaseGate
-            if gate.type() == GATE_ID['Phase']:
+            if gate.type == GateType.phase:
                 phase_angle += gate.parg
                 continue
 
@@ -273,16 +273,16 @@ class CommutativeOptimization(Optimization):
                     prev_gate = prev_node.gate
                     # Combination of prev_gate and gate if same type
                     if (
-                        prev_gate.type() == gate.type() and
+                        prev_gate.type == gate.type and
                         prev_gate.cargs == gate.cargs and
                         prev_gate.targs == gate.targs and
-                        not gate.type() in not_calculated
+                        not (gate.type in not_calculated)
                     ):
                         combined = True
                         nodes[prev].gate = cls.combine(prev_gate, gate)
-                        mat = nodes[prev].gate.matrix
+                        mat = nodes[prev].gate.target_matrix
                         if (
-                            nodes[prev].gate.type() == GATE_ID['ID'] or
+                            nodes[prev].gate.type == GateType.id or
                             np.allclose(mat, mat[0, 0] * np.eye(2 ** nodes[prev].gate.targets))
                         ):
                             nodes[prev].identity = True
@@ -299,7 +299,7 @@ class CommutativeOptimization(Optimization):
 
         gates_opt = CompositeGate()
         for node in nodes:
-            if node.identity or node.gate.type() == GATE_ID['Phase']:
+            if node.identity or node.gate.type == GateType.phase:
                 phase_angle += -1j * np.log(node.gate.matrix[0, 0])
             else:
                 gates_opt.append(node.gate)

@@ -2,8 +2,10 @@
 import numpy as np
 from scipy.stats import unitary_group
 
-from QuICT.core import *
+from QuICT.core import Circuit
+from QuICT.core.gate import *
 from QuICT.qcda.synthesis.gate_decomposition import GateDecomposition
+
 
 if __name__ == "__main__":
     circuit = Circuit(3)
@@ -16,5 +18,5 @@ if __name__ == "__main__":
 
     gates_decomposed = GateDecomposition.execute(circuit)
     circuit_decomposed = Circuit(3)
-    circuit_decomposed.set_exec_gates(gates_decomposed)
+    circuit_decomposed.extend(gates_decomposed)
     circuit_decomposed.draw()

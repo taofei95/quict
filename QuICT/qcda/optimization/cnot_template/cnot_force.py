@@ -8,6 +8,7 @@ import numpy as np
 
 from .._optimization import Optimization
 from QuICT.core import *
+from QuICT.core.gate import CX, GateType
 
 
 class path(object):
@@ -60,13 +61,13 @@ def solve(input: Circuit):
         Circuit: optimal circuit
 
     """
-    n = input.circuit_width()
+    n = input.width()
     circuit = Circuit(n)
     input_matrix = np.identity(n, dtype=bool)
     now = 0
     goal = 0
     for gate in input.gates:
-        if gate.type() != GATE_ID["CX"]:
+        if gate.type != GateType.cx:
             raise Exception("the circuit should only contain CX gate")
         input_matrix[gate.targ, :] = input_matrix[gate.targ, :] ^ input_matrix[gate.carg, :]
     for i in range(n):
@@ -98,7 +99,7 @@ def solve(input: Circuit):
                                 paths.append(pre[new_state].CX_tuple)
                                 new_state = pre[new_state].father_node
                             for index in range(len(paths) - 1, -1, -1):
-                                CX | circuit(paths[index])
+                                CX | circuit(list(paths[index]))
 
                             return circuit
                         queue.append(new_state)

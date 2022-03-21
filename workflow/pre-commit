@@ -30,17 +30,19 @@ fi
 
 print_segment;
 
-UT_path="";
+$(> .git/temp)
 for file in $files; do
   if [ ${file%%/*} == "QuICT" ]; then
     mv_left_slash=(${file#*/});
     mv_right_slash=(${mv_left_slash%%/*});
 
-    UT_path+="QuICT/$mv_right_slash ";
+    echo -n "QuICT/${mv_right_slash} " >> .git/temp
   fi
 done
 
-if [ ${UT_path} != "" ]; then
+UT_path=$(cat .git/temp)
+
+if [ "$UT_path" ]; then
   print_cyan "[Start Running Code Unit Test Check]"
   python3 -m pytest $UT_path --ignore=QuICT/utility;
 else

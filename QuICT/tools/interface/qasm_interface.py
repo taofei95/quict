@@ -8,7 +8,9 @@ import os
 from collections import OrderedDict
 from configparser import ConfigParser
 
-from QuICT.core import *
+from QuICT.core import Circuit
+from QuICT.core.gate import *
+from QuICT.core.utils import GateType
 from QuICT.core.exception import QasmInputException
 from QuICT.lib import Qasm
 
@@ -37,34 +39,35 @@ class qasm_creg(object):
 
 class OPENQASMInterface(BasicInterface):
     # qasm mapping to QuICT
-    standard_extension = {"u1": GATE_ID["U1"],
-                          "u2": GATE_ID["U2"],
-                          "u3": GATE_ID["U3"],
-                          "U": GATE_ID["U3"],
-                          "x": GATE_ID["X"],
-                          "y": GATE_ID["Y"],
-                          "z": GATE_ID["Z"],
-                          "t": GATE_ID["T"],
-                          "tdg": GATE_ID["T_dagger"],
-                          "s": GATE_ID["S"],
-                          "sdg": GATE_ID["S_dagger"],
-                          "swap": GATE_ID["Swap"],
-                          "rx": GATE_ID["Rx"],
-                          "ry": GATE_ID["Ry"],
-                          "rz": GATE_ID["Rz"],
-                          "id": GATE_ID["ID"],
-                          "h": GATE_ID["H"],
-                          "cx": GATE_ID["CX"],
-                          "ccx": GATE_ID["CCX"],
-                          "cy": GATE_ID["CY"],
-                          "cz": GATE_ID["CZ"],
-                          "ch": GATE_ID["CH"],
-                          "crz": GATE_ID["CRz"],
-                          "rzz": GATE_ID["RZZ"],
-                          "cu1": GATE_ID["CU1"],
-                          "cu3": GATE_ID["CU3"],
-                          "cswap": GATE_ID["Fredkin"]
-                          }
+    standard_extension = {
+        "u1": GateType.u1,
+        "u2": GateType.u2,
+        "u3": GateType.u3,
+        "U": GateType.u3,
+        "x": GateType.x,
+        "y": GateType.y,
+        "z": GateType.z,
+        "t": GateType.t,
+        "tdg": GateType.tdg,
+        "s": GateType.s,
+        "sdg": GateType.sdg,
+        "swap": GateType.swap,
+        "rx": GateType.rx,
+        "ry": GateType.ry,
+        "rz": GateType.rz,
+        "id": GateType.id,
+        "h": GateType.h,
+        "cx": GateType.cx,
+        "ccx": GateType.ccx,
+        "cy": GateType.cy,
+        "cz": GateType.cz,
+        "ch": GateType.ch,
+        "crz": GateType.crz,
+        "rzz": GateType.Rzz,
+        "cu1": GateType.cu1,
+        "cu3": GateType.cu3,
+        "cswap": GateType.cswap
+    }
 
     token = None
 
@@ -112,7 +115,7 @@ class OPENQASMInterface(BasicInterface):
         self.analyse_node(node)
         if self.valid_circuit:
             self.circuit = Circuit(self.qbits)
-            self.circuit.set_exec_gates(self.circuit_gates)
+            self.circuit.extend(self.circuit_gates)
 
     def analyse_code_from_circuit(self):
         self.valid_qasm = True
@@ -179,36 +182,38 @@ class OPENQASMInterface(BasicInterface):
             with open(filename + '.qasm', 'w+') as file:
                 file.write(self.qasm)
             code = """
-from qiskit import QuantumCircuit
-from qiskit import IBMQ, execute
-from qiskit.providers.ibmq import least_busy
-IBMQ.save_account('{}', overwrite=True)
-circ = QuantumCircuit.from_qasm_file("{}.qasm")
-provider = IBMQ.load_account()
-least_busy_device = least_busy(
-provider.backends(simulator=False,
-    filters=lambda x: x.configuration().n_qubits > 4))
-job = execute(circ, least_busy_device, shots={})
-result = job.result()
-print(result.get_counts(circ))
-""".format(self.token, filename, shots)
+                    from qiskit import QuantumCircuit
+                    from qiskit import IBMQ, execute
+                    from qiskit.providers.ibmq import least_busy
+                    IBMQ.save_account('{}', overwrite=True)
+                    circ = QuantumCircuit.from_qasm_file("{}.qasm")
+                    provider = IBMQ.load_account()
+                    least_busy_device = least_busy(
+                    provider.backends(simulator=False,
+                        filters=lambda x: x.configuration().n_qubits > 4))
+                    job = execute(circ, least_busy_device, shots={})
+                    result = job.result()
+                    print(result.get_counts(circ))
+                """.format(self.token, filename, shots)
+
             with open(filename + '.py', 'w+') as file:
                 file.write(code)
         else:
             code = """
-from qiskit import QuantumCircuit
-from qiskit import IBMQ, execute
-from qiskit.providers.ibmq import least_busy
-IBMQ.save_account('{}')
-circ = QuantumCircuit.from_qasm_str({})
-provider = IBMQ.load_account()
-least_busy_device = least_busy(
-provider.backends(simulator=False,
-    filters=lambda x: x.configuration().n_qubits > 4))
-job = execute(circ, least_busy_device, shots={})
-result = job.result()
-print(result.get_counts(circ))
-""".format(self.token, '"""' + self.qasm + '"""', shots)
+                from qiskit import QuantumCircuit
+                from qiskit import IBMQ, execute
+                from qiskit.providers.ibmq import least_busy
+                IBMQ.save_account('{}')
+                circ = QuantumCircuit.from_qasm_str({})
+                provider = IBMQ.load_account()
+                least_busy_device = least_busy(
+                provider.backends(simulator=False,
+                    filters=lambda x: x.configuration().n_qubits > 4))
+                job = execute(circ, least_busy_device, shots={})
+                result = job.result()
+                print(result.get_counts(circ))
+            """.format(self.token, '"""' + self.qasm + '"""', shots)
+
             with open(filename + '.py', 'w+') as file:
                 file.write(code)
 
@@ -320,20 +325,16 @@ print(result.get_counts(circ))
             raise QasmInputException("the number of bits unmatched:", node.line, node.file)
 
         maxidx = max([len(id0), len(id1)])
-        GateBuilder.setGateType(GATE_ID["CX"])
         for idx in range(maxidx):
             if len(id0) > 1 and len(id1) > 1:
-                GateBuilder.setCargs(id0[idx])
-                GateBuilder.setTargs(id1[idx])
-                self.circuit_gates.append(GateBuilder.getGate())
+                qubit_idxes = [id0[idx], id1[idx]]
             elif len(id0) > 1:
-                GateBuilder.setCargs(id0[idx])
-                GateBuilder.setTargs(id1[0])
-                self.circuit_gates.append(GateBuilder.getGate())
+                qubit_idxes = [id0[idx], id1[0]]
             else:
-                GateBuilder.setCargs(id0[0])
-                GateBuilder.setTargs(id1[idx])
-                self.circuit_gates.append(GateBuilder.getGate())
+                qubit_idxes = [id0[0], id1[idx]]
+
+            cx_gate = build_gate(GateType.cx, qubit_idxes)
+            self.circuit_gates.append(cx_gate)
 
     def analyse_measure(self, node):
         id0 = self.get_analyse_id(node.children[0])
@@ -341,17 +342,15 @@ print(result.get_counts(circ))
         if len(id0) != len(id1):
             raise QasmInputException("the number of bits of registers unmatched:", node.line, node.file)
 
-        GateBuilder.setGateType(GATE_ID["Measure"])
         for idx, _ in zip(id0, id1):
-            GateBuilder.setTargs(idx)
-            self.circuit_gates.append(GateBuilder.getGate())
+            m_gate = build_gate(GateType.measure, [idx])
+            self.circuit_gates.append(m_gate)
 
     def analyse_reset(self, node):
         id0 = self.get_analyse_id(node.children[0])
-        GateBuilder.setGateType(GATE_ID["Reset"])
         for i, _ in enumerate(id0):
-            GateBuilder.setTargs(id0[i])
-            self.circuit_gates.append(GateBuilder.getGate())
+            r_gate = build_gate(GateType.reset, [id0[i]])
+            self.circuit_gates.append(r_gate)
 
     def analyse_if(self, node):
         print("if op is not supported:{}", node.type)
@@ -365,27 +364,8 @@ print(result.get_counts(circ))
             pargs = [self.arg_stack[-1][s].sym(self.arg_stack[:-1]) for s in gargs]
             targs = [self.bit_stack[-1][s] for s in gbits]
             type = self.standard_extension[name]
-            GateBuilder.setGateType(type)
-            GateBuilder.setPargs(pargs)
-            GateBuilder.setArgs(targs)
-            self.circuit_gates.append(GateBuilder.getGate())
-        elif name in self.extern_extension:
-            """
-            pargs = [self.arg_stack[-1][s].sym(self.arg_stack[:-1]) for s in gargs]
-            targs = [self.bit_stack[-1][s] for s in gbits]
-            ExtensionGateBuilder.setGateType(self.extern_extension[name])
-            ExtensionGateBuilder.setPargs(pargs)
-            ExtensionGateBuilder.setTargs(targs)
-            self.circuit_gates.extend(ExtensionGateBuilder.getGate())
-            """
-            pargs = [self.arg_stack[-1][s].sym(self.arg_stack[:-1]) for s in gargs]
-            targs = [self.bit_stack[-1][s] for s in gbits]
-            gate_class = EXTENSION_GATE_REGISTER[self.extern_extension[name]]
-            gate = gate_class().copy()
-            gate.pargs = pargs
-            gate.targs = targs
-            self.circuit_gates.extend(gate.build_gate())
-            # raise Exception("unsupported gate")
+            gate = build_gate(type, targs, pargs)
+            self.circuit_gates.append(gate)
         else:
             body = self.gates[name]['body']
             for child in body.children:

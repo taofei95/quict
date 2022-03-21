@@ -11,6 +11,8 @@ import numpy as np
 
 from QuICT.algorithm import SyntheticalUnitary
 from QuICT.core import *
+from QuICT.core.gate import CX, Rz
+from QuICT.core.layout import Layout
 from QuICT.qcda.optimization import TopologicalCnotRz
 
 
@@ -67,16 +69,17 @@ def check_equiv(circuit1, circuit2):
 def test_1():
     for _ in range(1):
         for i in range(2, 6):
-            circuit = Circuit(i)
-            for j in range(i * 8):
-                CX | circuit(_getRandomList(2))
-                if j % 10 == 0:
-                    Rz(random.random() * np.pi) | circuit(random.randrange(0, i))
+            layout = Layout(i)
             topo = _getAllRandomList(i)
             for j in range(len(topo) - 1):
-                circuit.add_topology((topo[j], topo[j + 1]))
+                layout.add_edge(topo[j], topo[j + 1])
             for _ in range(i // 10):
-                circuit.add_topology(_getRandomList(2))
+                layout.add_edge(_getRandomList(2))
+            circuit = Circuit(i, topology=layout)
+            for j in range(i * 8):
+                CX | circuit(list(_getRandomList(2)))
+                if j % 10 == 0:
+                    Rz(random.random() * np.pi) | circuit(random.randrange(0, i))
             new_circuit = TopologicalCnotRz.execute(circuit)
             if not check_equiv(circuit, new_circuit):
                 assert 0
@@ -84,10 +87,10 @@ def test_1():
 
 def test_2():
     circuit = Circuit(2)
-    CX | circuit((0, 1))
+    CX | circuit([0, 1])
     Rz(np.pi / 4) | circuit(1)
     new_circuit = TopologicalCnotRz.execute(circuit)
-    new_circuit.print_information()
+    print(new_circuit)
     if not check_equiv(circuit, new_circuit):
         assert 0
 

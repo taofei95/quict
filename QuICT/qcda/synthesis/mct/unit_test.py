@@ -6,19 +6,26 @@
 
 import pytest
 from QuICT.core import *
+from QuICT.core.gate import *
 from QuICT.qcda.synthesis.mct import MCTOneAux, MCTLinearHalfDirtyAux, MCTLinearOneDirtyAux
 from QuICT.algorithm import SyntheticalUnitary
+from QuICT.simulation.gpu_simulator import ConstantStateVectorSimulator
 
 
-def Set(qreg, N):
+def Set(gates, qreg, N):
     """
     Set the qreg as N, using X gates on specific qubits
     """
-    n = len(qreg)
-    for i in range(n):
-        if N % 2 == 1:
-            X | qreg[n - 1 - i]
-        N = N // 2
+    with gates:
+        n = len(qreg)
+        for i in range(n):
+            if N % 2 == 1:
+                X & qreg[n - 1 - i]
+            N = N // 2
+
+
+def create_simulator():
+    return ConstantStateVectorSimulator()
 
 
 def test_MCT_Linear_Simulation_Half():
@@ -54,12 +61,12 @@ def test_MCT_Linear_Simulation_Half():
                                     if abs(abs(unitary[j, k])) > 1e-30:
                                         print(i, m, j, k, unitary[j, k])
                                         print(unitary)
-                                        circuit.print_information()
+                                        print(circuit)
                                         assert 0
                                 else:
                                     if abs(abs(unitary[j, k] - 1)) > 1e-30:
                                         print(i, j, k, unitary[j, k])
-                                        circuit.print_information()
+                                        print(circuit)
                                         assert 0
                             else:
                                 if jj != kk:
@@ -69,7 +76,7 @@ def test_MCT_Linear_Simulation_Half():
                                 else:
                                     if abs(abs(unitary[j, k] - 1)) > 1e-30:
                                         print(i, m, j, k, unitary[j, k])
-                                        circuit.print_information()
+                                        print(circuit)
                                         print(unitary)
                                         assert 0
     assert 1
@@ -77,21 +84,28 @@ def test_MCT_Linear_Simulation_Half():
 
 def test_MCT_Linear_Simulation_One_functional():
     max_qubit = 11
+    simulator = create_simulator()
     for n in range(6, max_qubit):
         for control_bits in range(0, 2 ** (n - 2)):
             circuit = Circuit(n)
-            aux = circuit(0)
-            controls = circuit([i for i in range(1, n - 1)])
-            target = circuit(n - 1)
-            Set(controls, control_bits)
+            aux_idx = [0]
+            controls_idx = [i for i in range(1, n - 1)]
+            target_idx = [n - 1]
+            # aux = circuit[aux_idx]
+            controls = circuit[controls_idx]
+            target = circuit[target_idx]
+            gates = CompositeGate()
+            Set(gates, controls_idx, control_bits)
+            gates | circuit
             print("%d bits control = %d" % (n - 2, control_bits))
-            MCTLinearOneDirtyAux.execute(n) | (controls, target, aux)
+            gates = MCTLinearOneDirtyAux.execute(n)
+            gates | circuit(controls_idx + target_idx + aux_idx)
             Measure | circuit
-            circuit.exec()
+            simulator.run(circuit)
             if (
                 (control_bits == 2 ** (n - 2) - 1 and int(target) == 0) or
                 (control_bits != 2 ** (n - 2) - 1 and int(target) == 1) or
-                (int(aux) != 0) or
+                # (int(aux) != 0) or
                 (int(controls) != control_bits)
             ):
                 print("when control bits are %d, the targe is %d" % (control_bits, int(target)))
@@ -103,13 +117,17 @@ def test_MCT_Linear_Simulation_One_unitary():
     max_qubit = 11
     for n in range(6, max_qubit):
         circuit = Circuit(n)
-        aux = circuit(0)
-        controls = circuit([i for i in range(1, n - 1)])
-        target = circuit(n - 1)
-        MCTLinearOneDirtyAux.execute(n) | (controls, target, aux)
+        aux_idx = [0]
+        controls_idx = [i for i in range(1, n - 1)]
+        target_idx = [n - 1]
+        # aux = circuit[aux_idx]
+        # controls = circuit[controls_idx]
+        # target = circuit[target_idx]
+        gates = MCTLinearOneDirtyAux.execute(n)
+        gates | circuit(controls_idx + target_idx + aux_idx)
         # assert 0
         unitary = SyntheticalUnitary.run(circuit)
-        circuit.print_information()
+        print(circuit)
         N = 1 << (n - 1)
         for i in range(N):
             for j in range(N):
@@ -157,7 +175,7 @@ def test_MCT():
         MCTOneAux.execute(i) | circuit
         # assert 0
         unitary = SyntheticalUnitary.run(circuit)
-        circuit.print_information()
+        print(circuit)
         for j in range(1 << i):
             flagj = True
             for l in range(2, i):

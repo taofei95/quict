@@ -6,12 +6,15 @@
 
 import numpy as np
 
-from QuICT import *
-from QuICT.algorithm import *
+from QuICT.core import Circuit
+from QuICT.core.gate import H, Rzz
+from QuICT.simulation.gpu_simulator import ConstantStateVectorSimulator
+
 
 circuit = Circuit(3)
-X | circuit(1)
-PermFx([0, 0, 1, 0]) | circuit
-print(PermFx.pargs)
-amplitude = Amplitude.run(circuit)
+H | circuit
+Rzz(np.pi / 2) | circuit([0, 1])
+
+simulator = ConstantStateVectorSimulator()
+amplitude = simulator.run(circuit)
 print(amplitude)

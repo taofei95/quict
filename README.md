@@ -23,36 +23,31 @@ setuptools, numpy and scipy in following commands.
 To install dependencies on Ubuntu:
 
 ```
-sudo apt install build-essential libtbb2 libtbb-dev \ 
+sudo apt install build-essential libtbb2 libtbb-dev clang llvm \
   python3 python3-setuptools python3-numpy python3-scipy
 ```
 
 > Or just install `sudo apt install build-essential libtbb2 libtbb-dev`
 > if you handle python parts in another way.
 
-To install dependencies on Fedora:
-
-```
-sudo dnf install make gcc gcc-c++ kernel-devel linux-headers tbb tbb-devel \
-  python3 python3-setuptools python3-numpy python3-scipy
-```
-
-> Or just `sudo dnf install make gcc gcc-c++ kernel-devel linux-headers tbb tbb-devel` 
-> if you handle python parts in another way.
-
 > Our helper scripts would use `command`, `uname`, `grep` and `sed`. Install them if they are not equipped.
 
 ### Build & Install QuICT
 
+**Remove old version before install a new one!**
+
 Following commands would build QuICT and install it system-wide.
 You might need "sudo" privileges to install QuICT into system python package path.
 
+> Due to a gcc issue, current version has to be built with clang++ and llvm.
+> In future versions, gcc will be supported
+
 ```
-./build.sh && ./install.sh
+export CC=clang && export CXX=clang++ && ./build.sh && ./install.sh
 ```
 
 If you want to install QuICT without root access, try
 
 ```
-./build.sh && ./install.sh --user
+export CC=clang && export CXX=clang++ && ./build.sh && ./install.sh --user
 ```
