@@ -147,43 +147,62 @@ class CliffordBidirectionalSynthesizer(Synthesis):
             gates_next.extend(right)
             return gates_next
 
+        def minimum_over_pauli(gates: CompositeGate, width: int, qubit: int, not_disentangled: list):
+            if pauli_strategy == 'greedy':
+                cnot_min = np.inf
+                left_min = None
+                right_min = None
+                for p1 in PauliOperator.iterator(len(not_disentangled)):
+                    insert_identity(p1, width, not_disentangled)
+                    for p2 in PauliOperator.iterator(len(not_disentangled)):
+                        insert_identity(p2, width, not_disentangled)
+                        # Only anti-commutative pairs
+                        if p1.commute(p2):
+                            continue
+                        left, right = cls.disentangle_one_qubit(gates, qubit, p1, p2)
+                        if left.count_2qubit_gate() + right.count_2qubit_gate() < cnot_min:
+                            cnot_min = left.count_2qubit_gate() + right.count_2qubit_gate()
+                            left_min = left
+                            right_min = right
+                return cnot_min, left_min, right_min
+            if pauli_strategy == 'random':
+                p1, p2 = PauliOperator.random_anti_commutative_pair(len(not_disentangled))
+                insert_identity(p1, width, not_disentangled)
+                insert_identity(p2, width, not_disentangled)
+                left, right = cls.disentangle_one_qubit(gates, qubit, p1, p2)
+                cnot_cnt = left.count_2qubit_gate() + right.count_2qubit_gate()
+                return cnot_cnt, left, right
+
         gates_left = CompositeGate()
         gates_right = CompositeGate()
         not_disentangled = list(range(width))
+
         if qubit_strategy == 'greedy':
-            pass
+            while not_disentangled:
+                cnot_min = np.inf
+                left_min = None
+                right_min = None
+                qubit_min = None
+                for qubit in not_disentangled:
+                    cnot_cnt, left, right = minimum_over_pauli(gates, width, qubit, not_disentangled)
+                    if cnot_cnt < cnot_min:
+                        cnot_min = cnot_cnt
+                        left_min = left
+                        right_min = right
+                        qubit_min = qubit
+                gates_left.extend(left_min)
+                gates_right.left_extend(right_min.inverse())
+                gates = gates_next(gates, left_min, right_min)
+                not_disentangled.remove(qubit_min)
+
         if qubit_strategy == 'random':
             while not_disentangled:
                 qubit = random.choice(not_disentangled)
-                if pauli_strategy == 'greedy':
-                    cnot_min = np.inf
-                    left_min = None
-                    right_min = None
-                    for p1 in PauliOperator.iterator(len(not_disentangled)):
-                        insert_identity(p1, width, not_disentangled)
-                        for p2 in PauliOperator.iterator(len(not_disentangled)):
-                            insert_identity(p2, width, not_disentangled)
-                            # Only anti-commutative pairs
-                            if p1.commute(p2):
-                                continue
-                            left, right = cls.disentangle_one_qubit(gates, qubit, p1, p2)
-                            if left.count_2qubit_gate() + right.count_2qubit_gate() < cnot_min:
-                                cnot_min = left.count_2qubit_gate() + right.count_2qubit_gate()
-                                left_min = left
-                                right_min = right
-                    gates_left.extend(left_min)
-                    gates_right.left_extend(right_min.inverse())
-                    gates = gates_next(gates, left_min, right_min)
-                    not_disentangled.remove(qubit)
-                if pauli_strategy == 'random':
-                    p1, p2 = PauliOperator.random_anti_commutative_pair(len(not_disentangled))
-                    insert_identity(p1, width, not_disentangled)
-                    insert_identity(p2, width, not_disentangled)
-                    left, right = cls.disentangle_one_qubit(gates, qubit, p1, p2)
-                    gates_left.extend(left)
-                    gates_right.left_extend(right.inverse())
-                    gates = gates_next(gates, left, right)
-                    not_disentangled.remove(qubit)
+                _, left, right = minimum_over_pauli(gates, width, qubit, not_disentangled)
+                gates_left.extend(left)
+                gates_right.left_extend(right.inverse())
+                gates = gates_next(gates, left, right)
+                not_disentangled.remove(qubit)
 
         gates_left.extend(gates_right)
         return gates_left
