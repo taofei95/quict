@@ -9,6 +9,7 @@ from QuICT.qcda.synthesis.clifford.pauli_operator import PauliOperator
 from QuICT.qcda.synthesis.clifford.clifford_synthesizer import CliffordUnidirectionalSynthesizer,\
     CliffordBidirectionalSynthesizer
 
+repeat = 1
 pauli_list = [GateType.id, GateType.x, GateType.y, GateType.z]
 clifford_single = [GateType.h, GateType.s, GateType.sdg, GateType.x, GateType.y, GateType.z]
 clifford = clifford_single + [GateType.cx]
@@ -63,7 +64,7 @@ def test_conjugate_action():
 
 def test_commutative():
     for n in range(1, 5):
-        for _ in range(100):
+        for _ in range(repeat):
             p = PauliOperator.random(n)
             q = PauliOperator.random(n)
             commute = p.commute(q)
@@ -138,7 +139,7 @@ def test_disentangler_fixed():
 
 def test_disentangler_random():
     for n in range(1, 50):
-        for _ in range(100):
+        for _ in range(repeat):
             pauli_x, pauli_z = PauliOperator.random_anti_commutative_pair(n)
             target = random.randint(0, n - 1)
             disentangler = PauliOperator.disentangler(pauli_x, pauli_z, target)
@@ -155,7 +156,7 @@ def test_disentangler_random():
 
 def test_uni_disentangle_one_qubit():
     for n in range(2, 10):
-        for _ in range(100):
+        for _ in range(repeat):
             circuit = Circuit(n)
             circuit.random_append(10 * n, clifford)
             gates = CompositeGate(gates=circuit.gates)
@@ -179,7 +180,7 @@ def test_uni_disentangle_one_qubit():
 
 def test_unidirectional():
     for n in range(2, 6):
-        for _ in range(100):
+        for _ in range(repeat):
             circuit = Circuit(n)
             circuit.random_append(10 * n, clifford)
             gates = CompositeGate(gates=circuit.gates)
@@ -193,7 +194,7 @@ def test_unidirectional():
 
 def test_bi_disentangle_one_qubit():
     for n in range(2, 10):
-        for _ in range(100):
+        for _ in range(repeat):
             circuit = Circuit(n)
             circuit.random_append(10 * n, clifford)
             gates = CompositeGate(gates=circuit.gates)
@@ -218,12 +219,14 @@ def test_bi_disentangle_one_qubit():
 
 
 def test_bidirectional():
-    for n in range(2, 6):
+    for n in range(2, 4):
         for _ in range(100):
             circuit = Circuit(n)
             circuit.random_append(10 * n, clifford)
             gates = CompositeGate(gates=circuit.gates)
-            gates_syn = CliffordBidirectionalSynthesizer.execute(circuit, qubit_strategy='random')
+            gates_syn = CliffordBidirectionalSynthesizer.execute(circuit,
+                                                                 qubit_strategy='random',
+                                                                 pauli_strategy='greedy')
             gates_remain = gates.inverse()
             gates_remain.extend(gates_syn)
             # np.set_printoptions(precision=3, suppress=True)
