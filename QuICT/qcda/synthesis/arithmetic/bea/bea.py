@@ -554,7 +554,7 @@ class BEACUa(Synthesis):
             gate_set: CompositeGate
             c_mult_mod(gate_set, a, N, qreg_x, qreg_b, qreg_c, qreg_low)
             for i in range(n):  # n bits swapped, b[0] always 0
-                CSwap & (qreg_c[0], qreg_x[i], qreg_b[i + 1])
+                CSwap & [qreg_c[0], qreg_x[i], qreg_b[i + 1]]
                 # CX & (qreg_b[i + 1], qreg_x[i])
                 # CCX & (qreg_c[0], qreg_x[i], qreg_b[i + 1])
                 # CX & (qreg_b[i + 1], qreg_x[i])
