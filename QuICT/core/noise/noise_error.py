@@ -1,10 +1,20 @@
+from enum import Enum
 from itertools import product
+import math
 import numpy as np
 from typing import List, Tuple
 
 from QuICT.ops.linalg.cpu_calculator import tensor, dot
 from QuICT.core.gate import ID, X, Y, Z
 from .utils import is_kraus_ops
+
+
+class NoiseChannel(Enum):
+    kraus = "Kraus Channel"
+    unitary = "Unitary Channel"
+    pauil = "Pauil Channel"
+    depolarizing = "Depolarizing Channel"
+    damping = "Damping Channel"
 
 
 class QuantumNoiseError:
@@ -18,9 +28,14 @@ class QuantumNoiseError:
         self.operators = ops
         self.conj_ops = self.conj_trans()
         self.qubits = int(np.log2(ops[0].shape[0]))
+        self.type = NoiseChannel.kraus
 
     def __str__(self):
-        pass
+        ne_str = f"{self.type.value} with {self.qubits} qubits.\n"
+        for i, km in enumerate(self.operators):
+            ne_str += f"Kraus_{i}: {km}\n"
+
+        return ne_str
 
     def conj_trans(self):
         return [np.transpose(k).conjugate() for k in self.operators]
@@ -50,15 +65,16 @@ class KrausError(QuantumNoiseError):
 
 
 class UnitaryError(QuantumNoiseError):
-    def __init__(self, unitaries: List[Tuple(np.ndarray, float)]):
+    def __init__(self, unitaries: List[Tuple[np.ndarray, float]]):
         if isinstance(unitaries, (tuple, list)) and not isinstance(unitaries[0], tuple):
             raise TypeError("Wrong input for Unitary Error.")
 
         if sum([prob for _, prob in unitaries]) != 1:
-            raise KeyError("The sum of probability of unitary matrix should be 1.")        
+            raise KeyError("The sum of probability of unitary matrix should be 1.")
 
         ops = [np.sqrt(prob) * mat for mat, prob in unitaries]
         super().__init__(ops)
+        self.type = NoiseChannel.unitary
 
 
 class PauilError(QuantumNoiseError):
@@ -77,13 +93,13 @@ class PauilError(QuantumNoiseError):
         'z': Z.matrix
     }
 
-    def __init__(self, ops: List[Tuple(str, float)]):
+    def __init__(self, ops: List[Tuple[str, float]], num_qubits: int = 1):
         if not isinstance(ops, (list, tuple)):
             raise TypeError("Wrong input for Pauil Error.")
 
         total_prob = 0
         for op, prob in ops:
-            if prob < 0 or prob > 1:
+            if prob < 0 or prob > 1 or (len(op) != num_qubits and num_qubits > 1):
                 raise KeyError("Pauil Error get wrong input.")
 
             for g in op:
@@ -92,13 +108,23 @@ class PauilError(QuantumNoiseError):
 
             total_prob += prob
 
-        if total_prob != 1:
+        if not math.isclose(total_prob, 1, rel_tol=1e-6):
             raise KeyError("Pauil Error get wrong input.")
 
-        self.operators, self.qubits = self._create_kraus_ops(ops)
+        self._ops = ops
+        self.qubits = num_qubits
+        self.operators = self._create_kraus_ops(ops, num_qubits)
         self.conj_ops = self.conj_trans()
+        self.type = NoiseChannel.pauil
 
-    def _create_kraus_ops(self, pauil_ops):
+    def __str__(self):
+        pn_str = f"{self.type.value} with {self.qubits} qubits.\n"
+        for gate_str, prob in self._ops:
+            pn_str += f"[{gate_str}, {prob}] "
+
+        return pn_str
+
+    def _create_kraus_ops(self, pauil_ops, num_qubits):
         num_qubit = len(pauil_ops[0][0])
         kraus_ops = []
 
@@ -108,11 +134,14 @@ class PauilError(QuantumNoiseError):
 
             based_matrix = self._BASED_GATE_MATRIX[pauil_op[0]]
             for g in pauil_op[1:]:
-                based_matrix = tensor(based_matrix, self._BASED_GATE_MATRIX[g])
+                if num_qubits > 1:
+                    based_matrix = tensor(based_matrix, self._BASED_GATE_MATRIX[g])
+                else:
+                    based_matrix = dot(based_matrix, self._BASED_GATE_MATRIX[g])
 
-            kraus_ops.append(prob * based_matrix)
+            kraus_ops.append(np.sqrt(prob) * based_matrix)
 
-        return kraus_ops, num_qubit
+        return kraus_ops
 
 
 class BitflipError(PauilError):
@@ -154,6 +183,7 @@ class DepolarizingError(PauilError):
         ops = [''.join(i) for i in product(self._BASED_GATE_MATRIX.keys(), repeat=num_qubits)]
 
         super().__init__(list(zip(ops, probs)))
+        self.type = NoiseChannel.depolarizing
 
 
 class DampingError(QuantumNoiseError):
@@ -171,23 +201,39 @@ class DampingError(QuantumNoiseError):
     Args:
         QuantumNoiseError (_type_): _description_
     """
-    def __init__(self, amplitude_prob: float, phase_prob: float, mixed_state_prob: float = 0.0):
-        assert amplitude_prob >= 0 and amplitude_prob <= 1, f"Amplitude prob must between 0 and 1, not {amplitude_prob}."
+    def __init__(self, amplitude_prob: float, phase_prob: float, stable_state_prob: float = 0.0):
+        assert amplitude_prob >= 0 and amplitude_prob <= 1, \
+            f"Amplitude prob must between 0 and 1, not {amplitude_prob}."
         assert phase_prob >= 0 and phase_prob <= 1, f"Phase prob must between 0 and 1, not {phase_prob}."
-        assert mixed_state_prob >= 0 and mixed_state_prob <= 1, f"state prob must between 0 and 1, not {mixed_state_prob}."
+        assert stable_state_prob >= 0 and stable_state_prob <= 1, \
+            f"state prob must between 0 and 1, not {stable_state_prob}."
 
         if amplitude_prob + phase_prob > 1:
             raise KeyError("Invalid amplitude and phase damping prob, the sum cannot greater than 1.")
 
         self.amplitude_prob = amplitude_prob
         self.phase_prob = phase_prob
-        self.mixed_state_prob = mixed_state_prob
+        self.stable_state_prob = stable_state_prob
 
         ops = self._create_kraus_ops()
         super().__init__(ops)
+        self.type = NoiseChannel.damping
+
+    def __str__(self):
+        damp_noise = f"{self.type.value} with 1 qubit\n"
+        if self.amplitude_prob != 0:
+            damp_noise += f"amplitude damping prob: {self.amplitude_prob} "
+
+        if self.phase_prob != 0:
+            damp_noise += f"phase damping prob: {self.phase_prob} "
+
+        if self.stable_state_prob != 0:
+            damp_noise += f"prob of stable state: {self.stable_state_prob}"
+
+        return damp_noise
 
     def _create_kraus_ops(self):
-        m0, m1 = np.sqrt(1 - self.mixed_state_prob), np.sqrt(self.mixed_state_prob)
+        m0, m1 = np.sqrt(1 - self.stable_state_prob), np.sqrt(self.stable_state_prob)
         sqrt_amp, sqrt_phase = np.sqrt(self.amplitude_prob), np.sqrt(self.phase_prob)
         sqrt_ap = np.sqrt(1 - self.amplitude_prob - self.phase_prob)
 
@@ -201,4 +247,4 @@ class DampingError(QuantumNoiseError):
 
         probs = [a * b for a, b in product([m0, m1], [1, sqrt_amp, sqrt_phase])]
         non_zero_idxes = [idx for idx, prob in enumerate(probs) if prob != 0]
-        return kraus[non_zero_idxes]
+        return [kraus[nzi] for nzi in non_zero_idxes]

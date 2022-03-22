@@ -1,5 +1,3 @@
-from ctypes import Union
-import numpy as np
 from typing import Union, List
 from collections import defaultdict
 
@@ -10,13 +8,22 @@ from QuICT.core.gate import GateType, GATE_TYPE_TO_CLASS
 class NoiseModel:
     def __init__(self, name: str = "Noise Model", basic_gates: List = GateType.__members__.keys()):
         self._name = name
-        self._basic_gates = basic_gates
+        self._basic_gates = list(basic_gates)
         self._instruction = defaultdict(list)
         self._all_qubits_error_gates = []
         self._specified_error_gates = []
 
     def __str__(self):
-        pass
+        nm_str = f"{self._name}:\nBasic Gates: {self._basic_gates}\nNoise Errors:\n"
+        if self._all_qubits_error_gates:
+            nm_str += f"Gates with all qubits: {set(self._all_qubits_error_gates)}\n"
+
+        if self._specified_error_gates:
+            nm_str += "Gates with specified qubits:"
+            for _, q, g in self._instruction["specific"]:
+                nm_str += f"[qubits: {q}, gates: {g}] "
+
+        return nm_str
 
     def _qubits_normalize(self, qubits: Union[int, List[int]]):
         if isinstance(qubits, int):
@@ -26,12 +33,12 @@ class NoiseModel:
 
         for q in qubits:
             if q < 0 or not isinstance(q, int):
-                raise KeyError("The qubits must be positive integer.")        
+                raise KeyError("The qubits must be positive integer.")
 
     def _gates_normalize(self, noise: QuantumNoiseError, gates: Union[str, List[str]]):
         assert isinstance(noise, QuantumNoiseError), "Unsupportted noise error here."
         if not gates:
-            raise KeyError(f"Must specified quantum gates for noise model.")
+            raise KeyError("Must specified quantum gates for noise model.")
 
         if isinstance(gates, str):
             gates = [gates]
@@ -44,7 +51,10 @@ class NoiseModel:
 
             gate = GATE_TYPE_TO_CLASS[GateType.__members__[g]]()
             if gate.controls + gate.targets != noise.qubits:
-                raise KeyError(f"Un-matched qubits number between gate {gate.controls + gate.targets} with noise error {noise.qubits}.")
+                raise KeyError(
+                    f"Un-matched qubits number between gate {gate.controls + gate.targets}" +
+                    f"with noise error {noise.qubits}."
+                )
 
     def add(self, noise: QuantumNoiseError, gates: Union[str, List[str]], qubits: Union[int, List[int]] = None):
         if qubits is None:
@@ -74,8 +84,8 @@ class NoiseModel:
         if not noise_list:
             return []
 
+        based_noise = noise_list[0]
         if len(noise_list) > 1:
-            based_noise = noise_list[0]
             for n in noise_list[1:]:
                 based_noise = based_noise.compose(n)
 
@@ -95,7 +105,11 @@ class NoiseModel:
         gate_idx = gate.cargs + gate.targs
         noise_list = []
         for noise, qubit, gate_list in self._instruction["specific"]:
-            qubit_intersection = set(qubit) & set(gate_idx)
+            if isinstance(qubit, int):
+                qubit_intersection = qubit in gate_idx
+            else:
+                qubit_intersection = set(qubit) & set(gate_idx)
+
             if gate_str in gate_list and qubit_intersection:
                 noise_list.append(noise)
 

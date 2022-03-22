@@ -14,7 +14,7 @@ def is_kraus_ops(kraus: list) -> bool:
             return False
 
     kk = sum(dot(np.transpose(k).conjugate(), (k)) for k in kraus)
-    if not np.allclose(kk, np.identity(row, dtype=kraus.dtype)):
+    if not np.allclose(kk, np.identity(row, dtype=kraus[0].dtype)):
         return False
 
     return True
