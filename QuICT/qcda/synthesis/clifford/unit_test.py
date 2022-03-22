@@ -228,7 +228,8 @@ def test_bidirectional():
                                                                  pauli_strategy='random',
                                                                  shots=10,
                                                                  multiprocess=False,
-                                                                 process=12)
+                                                                 process=12,
+                                                                 chunksize=64)
             gates_remain = gates.inverse()
             gates_remain.extend(gates_syn)
             # np.set_printoptions(precision=3, suppress=True)
