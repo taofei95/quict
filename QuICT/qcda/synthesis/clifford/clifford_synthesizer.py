@@ -113,12 +113,13 @@ class CliffordBidirectionalSynthesizer(Synthesis):
         https://arxiv.org/abs/2105.02291
     """
     @classmethod
-    def execute(cls, gates: CompositeGate, qubit_strategy='greedy', pauli_strategy='random'):
+    def execute(cls, gates: CompositeGate, qubit_strategy='greedy', pauli_strategy='random', shots=1):
         """
         Args:
             gates(Circuit/CompositeGate): the Clifford Circuit/CompositeGate to be synthesized
             qubit_strategy(str, optional): strategy of choosing qubit for each step
             pauli_strategy(str, optional): strategy of choosing PauliOperator for each step
+            shots(int, optional): if pauli_strategy is random, shots of random
 
         Returns:
             CompositeGate: the synthesized Clifford CompositeGate
@@ -132,8 +133,8 @@ class CliffordBidirectionalSynthesizer(Synthesis):
             assert gate.is_clifford(), TypeError('Only Clifford gates here')
         assert qubit_strategy in ['greedy', 'random'],\
             ValueError('strategy of choosing qubit could only be "greedy" or "random"')
-        assert pauli_strategy in ['greedy', 'random'],\
-            ValueError('strategy of choosing PauliOperator could only be "greedy" or "random"')
+        assert pauli_strategy in ['brute_force', 'random'],\
+            ValueError('strategy of choosing PauliOperator could only be "brute_force" or "random"')
 
         def insert_identity(p: PauliOperator, width: int, not_disentangled: list):
             # Operators on the disentangled qubits must be I
@@ -148,10 +149,10 @@ class CliffordBidirectionalSynthesizer(Synthesis):
             return gates_next
 
         def minimum_over_pauli(gates: CompositeGate, width: int, qubit: int, not_disentangled: list):
-            if pauli_strategy == 'greedy':
-                cnot_min = np.inf
-                left_min = None
-                right_min = None
+            cnot_min = np.inf
+            left_min = None
+            right_min = None
+            if pauli_strategy == 'brute_force':
                 for p1 in PauliOperator.iterator(len(not_disentangled)):
                     insert_identity(p1, width, not_disentangled)
                     for p2 in PauliOperator.iterator(len(not_disentangled)):
@@ -166,12 +167,16 @@ class CliffordBidirectionalSynthesizer(Synthesis):
                             right_min = right
                 return cnot_min, left_min, right_min
             if pauli_strategy == 'random':
-                p1, p2 = PauliOperator.random_anti_commutative_pair(len(not_disentangled))
-                insert_identity(p1, width, not_disentangled)
-                insert_identity(p2, width, not_disentangled)
-                left, right = cls.disentangle_one_qubit(gates, qubit, p1, p2)
-                cnot_cnt = left.count_2qubit_gate() + right.count_2qubit_gate()
-                return cnot_cnt, left, right
+                for _ in range(shots):
+                    p1, p2 = PauliOperator.random_anti_commutative_pair(len(not_disentangled))
+                    insert_identity(p1, width, not_disentangled)
+                    insert_identity(p2, width, not_disentangled)
+                    left, right = cls.disentangle_one_qubit(gates, qubit, p1, p2)
+                    if left.count_2qubit_gate() + right.count_2qubit_gate() < cnot_min:
+                        cnot_min = left.count_2qubit_gate() + right.count_2qubit_gate()
+                        left_min = left
+                        right_min = right
+                return cnot_min, left_min, right_min
 
         gates_left = CompositeGate()
         gates_right = CompositeGate()
