@@ -4,6 +4,7 @@ Synthesize a Clifford circuit unidirectionally or bidirectionally
 
 import copy
 import random
+import multiprocessing as mp
 
 import numpy as np
 
@@ -113,13 +114,16 @@ class CliffordBidirectionalSynthesizer(Synthesis):
         https://arxiv.org/abs/2105.02291
     """
     @classmethod
-    def execute(cls, gates: CompositeGate, qubit_strategy='greedy', pauli_strategy='random', shots=1):
+    def execute(cls, gates: CompositeGate, qubit_strategy='greedy', pauli_strategy='random',
+                shots=1, multiprocess=False, process=4):
         """
         Args:
             gates(Circuit/CompositeGate): the Clifford Circuit/CompositeGate to be synthesized
             qubit_strategy(str, optional): strategy of choosing qubit for each step
             pauli_strategy(str, optional): strategy of choosing PauliOperator for each step
             shots(int, optional): if pauli_strategy is random, shots of random
+            multiprocess(bool, optional): whether to use the multiprocessing accelaration
+            process(int, optional): the number of processes in a pool
 
         Returns:
             CompositeGate: the synthesized Clifford CompositeGate
@@ -160,22 +164,44 @@ class CliffordBidirectionalSynthesizer(Synthesis):
                         # Only anti-commutative pairs
                         if p1.commute(p2):
                             continue
-                        left, right = cls.disentangle_one_qubit(gates, qubit, p1, p2)
-                        if left.count_2qubit_gate() + right.count_2qubit_gate() < cnot_min:
-                            cnot_min = left.count_2qubit_gate() + right.count_2qubit_gate()
-                            left_min = left
-                            right_min = right
+                        if multiprocess:
+                            pool = mp.Pool(process)
+                            result = pool.apply_async(cls.disentangle_one_qubit, [gates, qubit, p1, p2])
+                            left, right = result.get()
+                            if left.count_2qubit_gate() + right.count_2qubit_gate() < cnot_min:
+                                cnot_min = left.count_2qubit_gate() + right.count_2qubit_gate()
+                                left_min = left
+                                right_min = right
+                            pool.close()
+                            pool.join()
+                        else:
+                            left, right = cls.disentangle_one_qubit(gates, qubit, p1, p2)
+                            if left.count_2qubit_gate() + right.count_2qubit_gate() < cnot_min:
+                                cnot_min = left.count_2qubit_gate() + right.count_2qubit_gate()
+                                left_min = left
+                                right_min = right
                 return cnot_min, left_min, right_min
             if pauli_strategy == 'random':
                 for _ in range(shots):
                     p1, p2 = PauliOperator.random_anti_commutative_pair(len(not_disentangled))
                     insert_identity(p1, width, not_disentangled)
                     insert_identity(p2, width, not_disentangled)
-                    left, right = cls.disentangle_one_qubit(gates, qubit, p1, p2)
-                    if left.count_2qubit_gate() + right.count_2qubit_gate() < cnot_min:
-                        cnot_min = left.count_2qubit_gate() + right.count_2qubit_gate()
-                        left_min = left
-                        right_min = right
+                    if multiprocess:
+                        pool = mp.Pool(process)
+                        result = pool.apply_async(cls.disentangle_one_qubit, [gates, qubit, p1, p2])
+                        left, right = result.get()
+                        if left.count_2qubit_gate() + right.count_2qubit_gate() < cnot_min:
+                            cnot_min = left.count_2qubit_gate() + right.count_2qubit_gate()
+                            left_min = left
+                            right_min = right
+                        pool.close()
+                        pool.join()
+                    else:
+                        left, right = cls.disentangle_one_qubit(gates, qubit, p1, p2)
+                        if left.count_2qubit_gate() + right.count_2qubit_gate() < cnot_min:
+                            cnot_min = left.count_2qubit_gate() + right.count_2qubit_gate()
+                            left_min = left
+                            right_min = right
                 return cnot_min, left_min, right_min
 
         gates_left = CompositeGate()

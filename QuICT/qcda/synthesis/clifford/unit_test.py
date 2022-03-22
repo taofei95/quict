@@ -225,7 +225,10 @@ def test_bidirectional():
             gates = CompositeGate(gates=circuit.gates)
             gates_syn = CliffordBidirectionalSynthesizer.execute(circuit,
                                                                  qubit_strategy='greedy',
-                                                                 pauli_strategy='random', shots=10)
+                                                                 pauli_strategy='random',
+                                                                 shots=10,
+                                                                 multiprocess=False,
+                                                                 process=12)
             gates_remain = gates.inverse()
             gates_remain.extend(gates_syn)
             # np.set_printoptions(precision=3, suppress=True)
