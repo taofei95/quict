@@ -64,6 +64,9 @@ class UnitaryError(QuantumNoiseError):
 class PauilError(QuantumNoiseError):
     """ Pauil Error; Including Bit Flip and Phase Flip
 
+    Example:
+        PauilError([('i', 0.3), ('x', 0.7)])
+
     Args:
         QuantumNoiseError (_type_): _description_
     """
