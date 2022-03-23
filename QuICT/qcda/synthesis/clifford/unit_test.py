@@ -9,7 +9,6 @@ from QuICT.qcda.utility import PauliOperator
 from QuICT.qcda.synthesis.clifford.clifford_synthesizer import CliffordUnidirectionalSynthesizer,\
     CliffordBidirectionalSynthesizer
 
-pauli_list = [GateType.id, GateType.x, GateType.y, GateType.z]
 clifford_single = [GateType.h, GateType.s, GateType.sdg, GateType.x, GateType.y, GateType.z]
 clifford = clifford_single + [GateType.cx]
 

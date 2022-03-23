@@ -77,17 +77,21 @@ class PauliOperator(object):
             raise ValueError("phase must be ±1 or ±i")
         self._phase = phase
 
-    @property
-    def gates(self) -> CompositeGate:
+    def gates(self, keep_id=False) -> CompositeGate:
         """
         The CompositeGate corresponding to the PauliOperator
+
+        Args:
+            keep_id(bool, optional): whether to keep the IDgate in the CompositeGate
 
         Returns:
             CompositeGate: The CompositeGate corresponding to the PauliOperator
         """
         gates = CompositeGate()
-        for qubit, gatetype in enumerate(self.operator):
-            gate = build_gate(gatetype, qubit)
+        for qubit, gate_type in enumerate(self.operator):
+            if not keep_id and gate_type == GateType.id:
+                continue
+            gate = build_gate(gate_type, qubit)
             gates.append(gate)
         return gates
 
@@ -179,8 +183,9 @@ class PauliOperator(object):
         assert self.width == other.width,\
             ValueError("PauliOperators to be combined must have the same width.")
 
-        for qubit in range(self.width):
-            self.combine_one_gate(other.operator[qubit], qubit)
+        self.phase *= other.phase
+        for qubit, gate_type in enumerate(other.operator):
+            self.combine_one_gate(gate_type, qubit)
 
     def combine_one_gate(self, gate_type: GateType, qubit: int):
         """

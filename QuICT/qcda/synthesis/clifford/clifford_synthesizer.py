@@ -89,12 +89,10 @@ class CliffordUnidirectionalSynthesizer(Synthesis):
             CompositeGate: the disentangler
         """
         # Create X_j, Z_j
-        x_op = [GateType.id for _ in range(width)]
-        z_op = [GateType.id for _ in range(width)]
-        x_op[target] = GateType.x
-        z_op[target] = GateType.z
-        pauli_x = PauliOperator(x_op)
-        pauli_z = PauliOperator(z_op)
+        pauli_x = PauliOperator([GateType.id for _ in range(width)])
+        pauli_z = PauliOperator([GateType.id for _ in range(width)])
+        pauli_x.operator[target] = GateType.x
+        pauli_z.operator[target] = GateType.z
 
         # Compute C X_j C^-1 and C Z_j C^-1
         for gate in gates.inverse():
