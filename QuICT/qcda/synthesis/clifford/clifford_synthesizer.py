@@ -12,7 +12,7 @@ from QuICT.core import Circuit
 from QuICT.core.gate import CompositeGate
 from QuICT.core.utils.gate_type import GateType
 from QuICT.qcda.synthesis._synthesis import Synthesis
-from QuICT.qcda.synthesis.clifford import PauliOperator
+from QuICT.qcda.utility import PauliOperator
 
 
 class CliffordUnidirectionalSynthesizer(Synthesis):
@@ -124,7 +124,7 @@ class CliffordBidirectionalSynthesizer(Synthesis):
             shots(int, optional): if pauli_strategy is random, shots of random
             multiprocess(bool, optional): whether to use the multiprocessing accelaration
             process(int, optional): the number of processes in a pool
-            chucksize(int, optional): iteration dealt with in a process
+            chunksize(int, optional): iteration dealt with in a process
 
         Returns:
             CompositeGate: the synthesized Clifford CompositeGate

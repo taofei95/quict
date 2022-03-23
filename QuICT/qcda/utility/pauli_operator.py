@@ -6,7 +6,7 @@ import copy
 import random
 import itertools
 
-from QuICT.core.gate import build_gate, BasicGate, CompositeGate, GateType, PAULI_GATE_SET, CX, H, Swap
+from QuICT.core.gate import build_gate, BasicGate, CompositeGate, GateType, PAULI_GATE_SET, CX, H
 
 
 class PauliOperator(object):
