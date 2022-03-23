@@ -97,7 +97,7 @@ def VectorPermutation(A: np.ndarray, mapping: np.ndarray, changeInput: bool = Fa
 
 
 @njit(parallel=True, nogil=True)
-def tensor(A, B):
+def tensor(A: np.ndarray, B: np.ndarray):
     """ tensor A and B
 
     Args:
@@ -109,7 +109,7 @@ def tensor(A, B):
     """
     row_a, col_a = A.shape
     row_b, col_b = B.shape
-    tensor_data = np.empty((row_a * row_b, col_a * col_b), dtype=np.complex_)
+    tensor_data = np.empty((row_a * row_b, col_a * col_b), dtype=A.dtype)
 
     for r in prange(row_a):
         for c in prange(col_a):

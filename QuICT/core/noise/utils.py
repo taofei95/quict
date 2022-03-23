@@ -1,3 +1,4 @@
+from enum import Enum
 import numpy as np
 
 from QuICT.ops.linalg.cpu_calculator import dot
@@ -18,3 +19,12 @@ def is_kraus_ops(kraus: list) -> bool:
         return False
 
     return True
+
+
+class NoiseChannel(Enum):
+    kraus = "Kraus Channel"
+    unitary = "Unitary Channel"
+    pauil = "Pauil Channel"
+    depolarizing = "Depolarizing Channel"
+    damping = "Damping Channel"
+    readout = "Readout Channel"

@@ -1,4 +1,3 @@
-from enum import Enum
 from itertools import product
 import math
 import numpy as np
@@ -6,15 +5,7 @@ from typing import List, Tuple
 
 from QuICT.ops.linalg.cpu_calculator import tensor, dot
 from QuICT.core.gate import ID, X, Y, Z
-from .utils import is_kraus_ops
-
-
-class NoiseChannel(Enum):
-    kraus = "Kraus Channel"
-    unitary = "Unitary Channel"
-    pauil = "Pauil Channel"
-    depolarizing = "Depolarizing Channel"
-    damping = "Damping Channel"
+from .utils import is_kraus_ops, NoiseChannel
 
 
 class QuantumNoiseError:
