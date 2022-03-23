@@ -11,6 +11,18 @@ clifford_single = [GateType.h, GateType.s, GateType.sdg, GateType.x, GateType.y,
 clifford = clifford_single + [GateType.cx]
 
 
+def test_combine():
+    for n in range(1, 6):
+        for _ in range(100):
+            p1 = PauliOperator.random(n)
+            p2 = PauliOperator.random(n)
+            gates = p1.gates
+            gates.extend(p2.gates)
+            p1.combine(p2)
+            gates_com = p1.gates
+            assert np.allclose(gates.matrix(), p1.phase * gates_com.matrix())
+
+
 def test_conjugate_action():
     # test clifford_single
     for pauli in pauli_list:
@@ -135,7 +147,7 @@ def test_disentangler_fixed():
 
 def test_disentangler_random():
     for n in range(1, 10):
-        for _ in range(10):
+        for _ in range(100):
             pauli_x, pauli_z = PauliOperator.random_anti_commutative_pair(n)
             target = random.randint(0, n - 1)
             disentangler = PauliOperator.disentangler(pauli_x, pauli_z, target)

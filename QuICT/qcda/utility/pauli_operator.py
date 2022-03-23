@@ -166,6 +166,107 @@ class PauliOperator(object):
                 res = not res
         return res
 
+    def combine(self, other):
+        """
+        Compute the PauliOperator after combined with a PauliOperator from the right side.
+        Be aware of the order, which would affect the global phase.
+
+        Args:
+            other(PauliOperator): the PauliOperator to be combined
+        """
+        assert isinstance(other, PauliOperator),\
+            TypeError("combine() only combines PauliOperators.")
+        assert self.width == other.width,\
+            ValueError("PauliOperators to be combined must have the same width.")
+
+        for qubit in range(self.width):
+            self.combine_one_gate(other.operator[qubit], qubit)
+
+    def combine_one_gate(self, gate_type: GateType, qubit: int):
+        """
+        Compute the PauliOperator after combined with a Pauli gate from the right side.
+        Be aware of the order, which would affect the global phase.
+
+        Args:
+            gate_type(GateType): type of the Pauli gate to be combined
+            qubit(int): qubit that the Pauli gate acts on
+        """
+        assert gate_type in PAULI_GATE_SET or gate_type == GateType.id,\
+            ValueError('gate to be combined must be a pauli gate')
+        assert isinstance(qubit, int) and qubit >= 0 and qubit < self.width,\
+            ValueError('qubit out of range')
+
+        if self.operator[qubit] == GateType.id:
+            # I I = I
+            if gate_type == GateType.id:
+                return
+            # I X = X
+            if gate_type == GateType.x:
+                self.operator[qubit] = GateType.x
+                return
+            # I Y = Y
+            if gate_type == GateType.y:
+                self.operator[qubit] = GateType.y
+                return
+            # I Z = Z
+            if gate_type == GateType.z:
+                self.operator[qubit] = GateType.z
+                return
+        if self.operator[qubit] == GateType.x:
+            # X I = X
+            if gate_type == GateType.id:
+                return
+            # X X = I
+            if gate_type == GateType.x:
+                self.operator[qubit] = GateType.id
+                return
+            # X Y = -iZ
+            if gate_type == GateType.y:
+                self.operator[qubit] = GateType.z
+                self.phase *= -1j
+                return
+            # X Z = iY
+            if gate_type == GateType.z:
+                self.operator[qubit] = GateType.y
+                self.phase *= 1j
+                return
+        if self.operator[qubit] == GateType.y:
+            # Y I = Y
+            if gate_type == GateType.id:
+                return
+            # Y X = iZ
+            if gate_type == GateType.x:
+                self.operator[qubit] = GateType.z
+                self.phase *= 1j
+                return
+            # Y Y = I
+            if gate_type == GateType.y:
+                self.operator[qubit] = GateType.id
+                return
+            # Y Z = -iX
+            if gate_type == GateType.z:
+                self.operator[qubit] = GateType.x
+                self.phase *= -1j
+                return
+        if self.operator[qubit] == GateType.z:
+            # Z I = Z
+            if gate_type == GateType.id:
+                return
+            # Z X = -iY
+            if gate_type == GateType.x:
+                self.operator[qubit] = GateType.y
+                self.phase *= -1j
+                return
+            # Z Y = iX
+            if gate_type == GateType.y:
+                self.operator[qubit] = GateType.x
+                self.phase *= 1j
+                return
+            # Z Z = I
+            if gate_type == GateType.z:
+                self.operator[qubit] = GateType.id
+                return
+
     def conjugate_act(self, gate: BasicGate):
         """
         Compute the PauliOperator after conjugate action of a clifford gate
@@ -175,8 +276,8 @@ class PauliOperator(object):
         Args:
             gate(BasicGate): the clifford gate to be acted on the PauliOperator
         """
-        if not gate.is_clifford() and gate.type != GateType.id:
-            raise ValueError("Only conjugate action of Clifford gates here.")
+        assert gate.is_clifford() or gate.type == GateType.id,\
+            ValueError("Only conjugate action of Clifford gates here.")
 
         def out_of_range(gate):
             targs = gate.cargs + gate.targs
