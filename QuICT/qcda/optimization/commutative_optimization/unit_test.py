@@ -96,7 +96,7 @@ def test():
 
         gates = CommutativeOptimization.execute(circuit)
         circuit_opt = Circuit(n)
-        gates | circuit_opt
+        circuit_opt.extend(gates)
 
         # print(circuit_opt)
         # circuit_opt.draw()

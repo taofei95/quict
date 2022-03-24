@@ -52,11 +52,11 @@ class CliffordOptimization(Optimization):
             if gate.is_pauli():
                 pauli.combine_one_gate(gate.type, gate.targ)
                 continue
-            if gate.type == GateType.cx or gate.type == GateType.h or gate.type == GateType.sdg:
+            if gate.type == GateType.cx or gate.type == GateType.h or gate.type == GateType.s:
                 pauli.conjugate_act(gate)
                 compute.append(gate.copy())
                 continue
-            if gate.type == GateType.s:
+            if gate.type == GateType.sdg:
                 pauli.combine_one_gate(GateType.z, gate.targ)
                 pauli.conjugate_act(gate.inverse())
                 compute.append(gate.inverse())
