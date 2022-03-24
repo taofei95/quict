@@ -5,6 +5,7 @@ import inspect
 from QuICT.core import *
 from QuICT.qcda.optimization._optimization import Optimization
 from dag import DAG
+from phase_poly import PhasePolynomial
 from template import *
 
 
@@ -121,7 +122,20 @@ class AutoOptimization(Optimization):
 
     @classmethod
     def merge_rotations(cls, gates: DAG):
-        print(inspect.currentframe(), 'not implemented yet')
+        # TODO S, Sdg, T, Tdg can be included
+        gate_set = {'rz', 'cx', 'x'}
+        for prev_node, succ_node in list(gates.enumerate_sub_circuit(gate_set)):
+            phase_poly = PhasePolynomial(DAG.create_sub_circuit(prev_node, succ_node))
+            replacement = DAG(phase_poly.get_circuit())
+
+            mapping = {}
+            for qubit_ in gates.size:
+                if not prev_node[qubit_] or not succ_node[qubit_]:
+                    continue
+                mapping[id(replacement.start_nodes[qubit_])] = prev_node[qubit_]
+                mapping[id(replacement.end_nodes[qubit_])] = succ_node[qubit_]
+
+            DAG.replace_circuit(mapping, replacement)
 
     @classmethod
     def float_rotations(cls, gates: DAG):

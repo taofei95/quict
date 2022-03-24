@@ -53,7 +53,7 @@ class PhasePolynomial:
         Generate a circuit of minimum size that implements the phase polynomial
 
         Returns:
-            CompositeGate: Circuit equivalent to this polynomial
+            Circuit: Circuit equivalent to this polynomial
         """
         max_monomial = max(self.phases.keys())
         circ = Circuit(self.size)
@@ -76,4 +76,4 @@ class PhasePolynomial:
                 Rz(self.phases[cur]) | circ(gate_.targ)
                 visited.add(cur)
 
-        return CompositeGate(circ)
+        return circ

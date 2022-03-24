@@ -1,5 +1,5 @@
 from random import randint
-from typing import Iterator, Tuple, List, Set
+from typing import Iterator, Tuple, List, Set, Dict
 from collections import Iterable, deque
 import inspect
 
@@ -66,10 +66,10 @@ class DAG(Iterable):
                 elif n_node:
                     n_node.successors[qubit_] = (None, 0)
 
-    def __init__(self, gates: CompositeGate):
+    def __init__(self, gates: Circuit):
         """
         Args:
-            gates(CompositeGate): Circuit represented by this DAG
+            gates(Circuit): Circuit represented by this DAG
         """
 
         self.size = gates.circuit_width()
@@ -85,7 +85,7 @@ class DAG(Iterable):
         """
         return self.size
 
-    def _build_graph(self, gates: CompositeGate):
+    def _build_graph(self, gates: Circuit):
         cur_nodes = self.start_nodes.copy()
         for gate_ in gates:
             gate_: BasicGate
@@ -102,7 +102,7 @@ class DAG(Iterable):
         Generate circuit net list from this DAG.
 
         Returns:
-            CompositeGate: Circuit equivalent to this DAG
+            Circuit: Circuit equivalent to this DAG
         """
 
         circ = Circuit(self.size)
@@ -113,7 +113,7 @@ class DAG(Iterable):
                 mapping[(id(node), qubit_)] = mapping[(id(pred), qubit2)]
 
             node.gate | circ([mapping[(id(node), qubit_)] for qubit_ in range(node.size)])
-        return CompositeGate(circ)
+        return Circuit(circ)
 
     def topological_sort(self):
         """
@@ -188,6 +188,79 @@ class DAG(Iterable):
             if node_.flag != node_.FLAG_VISITED and node_.gate.qasm_name in gate_set:
                 yield self._search_sub_circuit(node_, gate_set, self.size)
 
+    def compare_circuit(self, other: Node, anchor_qubit: int, flag_enabled: bool = False):
+        o_node, o_qubit = other
+        t_node, t_qubit = self.start_nodes[anchor_qubit].successors[0]
+        if o_node.gate.qasm_name != t_node.gate.qasm_name or o_qubit != t_qubit or \
+                (o_node.flag and flag_enabled):
+            return None
+
+        mapping = {id(t_node): o_node}
+        queue = deque([(t_node, o_node)])
+        while len(queue) > 0:
+            u, v = queue.popleft()
+            for neighbors in ['predecessors', 'successors']:
+                for qubit_ in range(u.size):
+                    u_nxt, u_qubit = getattr(u, neighbors)[qubit_]
+                    assert u_nxt, "u_nxt == None should not happen"
+                    if not u_nxt.gate or id(u_nxt) in mapping:
+                        continue
+
+                    v_nxt, v_qubit = getattr(v, neighbors)[qubit_]
+                    assert v_nxt, "v_nxt == None should not happen"
+                    if not v_nxt.gate or u_qubit != v_qubit or \
+                            (v_nxt.flag and flag_enabled) or \
+                            u_nxt.gate.qasm_name != v_nxt.gate.qasm_name:
+                        return None
+
+                    mapping[id(u_nxt)] = v_nxt
+                    queue.append((id(u_nxt), v_nxt))
+
+        if flag_enabled:
+            for each in mapping.values():
+                each.flag = DAG.Node.FLAG_VISITED
+        return mapping
+
+    @staticmethod
+    def replace_circuit(mapping: Dict[int, Tuple[Node, int]], replacement):
+        replacement: DAG
+        for qubit_ in range(replacement.size):
+            # first node on qubit_ in replacement circuit
+            r_node, r_qubit = replacement.start_nodes[qubit_].successors[0]
+            # node previous to the node corresponding to t_node in original circuit
+            if id(replacement.start_nodes[qubit_]) not in mapping:
+                continue
+            p_node, p_qubit = mapping[id(replacement.start_nodes[qubit_])]
+            # place r_node after p_node
+            p_node.connect(p_qubit, r_qubit, r_node)
+
+        for qubit_ in range(replacement.size):
+            # last node on qubit_ in replacement circuit
+            r_node, r_qubit = replacement.end_nodes[qubit_].predecessors[0]
+            # node successive to the node corresponding to t_node in original circuit
+            if id(replacement.end_nodes[qubit_]) not in mapping:
+                continue
+            s_node, s_qubit = mapping[id(replacement.end_nodes[qubit_])]
+            # place s_node after r_node
+            r_node.connect(r_qubit, s_qubit, s_node)
+
+    @staticmethod
+    def create_sub_circuit(prev_node: List[Tuple[Node, int]], succ_node: List[Tuple[Node, int]]):
+        circ = Circuit(len(prev_node))
+        dag = DAG(circ)
+        for qubit_ in range(dag.size):
+            if not prev_node[qubit_] or not succ_node[qubit_]:
+                continue
+
+            p_node, p_qubit = prev_node[qubit_]
+            n_node, n_qubit = p_node.successors[p_qubit]
+            dag.start_nodes[qubit_].connect(0, n_qubit, n_node)
+
+            p_node, p_qubit = succ_node[qubit_]
+            n_node, n_qubit = p_node.predecessors[p_qubit]
+            n_node.connect(n_qubit, 0, dag.end_nodes[qubit_])
+        return dag
+
     def __iter__(self):
         """
         Iterate over gates in this DAG in topological order
@@ -202,3 +275,4 @@ class DAG(Iterable):
     def copy(self):
         # TODO faster implementation of copy()
         return DAG(self.get_circuit())
+
