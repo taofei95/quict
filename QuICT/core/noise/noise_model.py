@@ -108,7 +108,7 @@ class NoiseModel:
             if isinstance(qubit, int):
                 qubit_intersection = qubit in gate_idx
             else:
-                qubit_intersection = set(qubit) & set(gate_idx)
+                qubit_intersection = (set(qubit) & set(gate_idx)) == set(qubit)
 
             if gate_str in gate_list and qubit_intersection:
                 noise_list.append(noise)
