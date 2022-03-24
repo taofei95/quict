@@ -1,8 +1,8 @@
 import numpy as np
 import random
-from ..block_ldu_decompose import BlockLDUDecompose
-from ..utility import *
-from .utility import *
+from QuICT.qcda.optimization.cnot_without_ancillae.block_ldu_decompose import BlockLDUDecompose
+from QuICT.qcda.optimization.cnot_without_ancillae.utility import *
+from QuICT.unit_test.qcda.optimization.cnot_without_ancillae_tests.utility import *
 
 
 def test_f2_half_gaussian_elimination():

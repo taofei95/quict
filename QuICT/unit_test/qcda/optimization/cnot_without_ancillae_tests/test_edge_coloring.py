@@ -1,7 +1,7 @@
 import random
 
-from .utility import get_bipartite
-from ..edge_coloring import *
+from QuICT.qcda.optimization.cnot_without_ancillae import EdgeColoring
+from QuICT.unit_test.qcda.optimization.cnot_without_ancillae_tests.utility import get_bipartite
 
 
 def test_edge_coloring_for_regular():
