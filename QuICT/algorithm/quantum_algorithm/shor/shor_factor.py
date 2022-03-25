@@ -12,13 +12,18 @@ from .utility import *
 
 from QuICT.simulation.cpu_simulator import CircuitSimulator
 from QuICT.simulation import Simulator
-from QuICT.algorithm.quantum_algorithm import BEA_zip_run, HRS_zip_run, BEA_circuit, HRS_circuit
+from .HRS_zip import HRS_order_finding_twice
+from .BEA_zip import BEA_order_finding_twice
+from .HRS_zip import order_finding as HRS_zip_run
+from .BEA_zip import order_finding as BEA_zip_run
+from .BEA import construct_circuit as BEA_circuit
+from .BEA import order_finding as BEA_run
 class ShorFactor:
 
     allowed_modes = {"BEA", "HRS", "BEA_zip", "HRS_zip"}
     run_method_of_mode = {"BEA":None, "HRS":None, "BEA_zip":BEA_zip_run, "HRS_zip":HRS_zip_run}
     #TODO: circuit_method_of_mode["BEA"]/["HRS"], without one-bit trick
-    circuit_method_of_mode = {"BEA":BEA_circuit, "HRS":HRS_circuit, "BEA_zip":None, "HRS_zip":None}
+    circuit_method_of_mode = {"BEA":BEA_circuit, "HRS":None, "BEA_zip":None, "HRS_zip":None}
 
     def __init__(self, mode: str, N: int, eps: float = 1 / 10, max_rd: int = 2) -> None:
         if mode not in ShorFactor.allowed_modes:
@@ -73,7 +78,7 @@ class ShorFactor:
             logging.info(f'Quantumly determine the order of the randomly chosen a = {a}')
             # check if any input circuit. if no, run according to `mode`; else run the input circuit
             if circuit == None:
-                r = ShorFactor.run_method_of_mode[self.mode]() #TODO: add run() params
+                r = ShorFactor.run_method_of_mode[self.mode](a=a,N=self.N,simulator=simulator)
             else:
                 simulator.run(circuit) # TODO: run the circuit with fresh start
                 phi = int(circuit[indices])<<len(indices) # TODO: break to see if it is ~phi
