@@ -1,18 +1,8 @@
-#!/usr/bin/env python
-# -*- coding:utf8 -*-
-# @TIME    : 2020/11/5 9:58
-# @Author  : Han Yu
-# @File    : unit_test.py
-
 import pytest
 
-from QuICT.algorithm.quantum_algorithm import (
-    BEAShorFactor,
-    HRSShorFactor
-)
+from QuICT.algorithm.quantum_algorithm import ShorFactor, BEA_order_finding, HRS_order_finding
 
-
-def test_BEAShorFactor_on_ConstantStateVectorSimulator():
+def test_ShorFactor_on_ConstantStateVectorSimulator():
     from QuICT.simulation.gpu_simulator import ConstantStateVectorSimulator
     simulator = ConstantStateVectorSimulator(
         precision="double",

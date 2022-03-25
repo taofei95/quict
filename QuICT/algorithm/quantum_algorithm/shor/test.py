@@ -1,18 +1,8 @@
-#!/usr/bin/env python
-# -*- coding:utf8 -*-
-# @TIME    : 2020/11/5 9:58
-# @Author  : Han Yu
-# @File    : unit_test.py
-
-import pytest
-
 from QuICT.algorithm.quantum_algorithm import (
-    BEAShorFactor,
-    HRSShorFactor
+    ShorFactor
 )
 
-
-def test_BEAShorFactor():
+def test_ShorFactor_BEA():
     from QuICT.simulation.cpu_simulator import CircuitSimulator
     simulator = CircuitSimulator()
     number_list = [
@@ -22,8 +12,7 @@ def test_BEAShorFactor():
     ]
     for number in number_list:
         print('-------------------FACTORING %d-------------------------' % number)
-        a = BEAShorFactor.run(N=number, max_rd=10, simulator=simulator)
+        a = ShorFactor(mode="BEA",N=number).run(simulator=simulator)
         assert number % a == 0
 
-
-test_BEAShorFactor()
+test_ShorFactor_BEA()
