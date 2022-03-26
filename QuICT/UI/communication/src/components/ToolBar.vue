@@ -1,13 +1,7 @@
 <template>
   <el-row justify="end" style="line-hight: 40px">
-    <el-col :span="3">
-      <el-button
-        size="small"
-        type="primary"
-        @click="dialogCmdVisible = true"
-        style="font-family: 'Segoe UI Symbol'"
-        >Instruction Set ⏷</el-button
-      >
+    <el-col :span="12">
+      <span> </span>
     </el-col>
     <el-dialog
       title="Instruction Set"
@@ -70,11 +64,6 @@
       </template>
     </el-dialog>
 
-    <el-col :span="3">
-      <el-button size="small" type="primary" @click="showTopologyEdit"
-        ><img src="/assets/topology.2x.png" />Topology</el-button
-      >
-    </el-col>
     <el-dialog
       title="Topology"
       v-model="dialogTpVisible"
@@ -125,25 +114,6 @@
       </template>
     </el-dialog>
 
-    <el-col :span="3">
-      <el-checkbox v-model="opSwitch" style="line-hight: 20px"
-        >Optimize</el-checkbox
-      >
-
-      <el-checkbox v-model="mapSwitch" style="line-hight: 20px"
-        >Mapping</el-checkbox
-      >
-    </el-col>
-
-    <el-col :span="3">
-      <el-button
-        size="small"
-        type="primary"
-        @click="dialogBeVisible = true"
-        style="font-family: 'Segoe UI Symbol'"
-        >Backend ⏷</el-button
-      >
-    </el-col>
     <el-dialog
       title="Backend"
       v-model="dialogBeVisible"
@@ -158,18 +128,20 @@
         <el-radio v-model="dialogBe" label="qcompute">qcompute</el-radio>
       </div>
       <div>
-        
-        <el-select placeholder="Backend" v-if="dialogBe == 'CPU'" v-model="dialogBe_Backend">
+        <el-select
+          placeholder="Backend"
+          v-if="dialogBe == 'CPU'"
+          v-model="dialogBe_Backend"
+        >
           <span>Backend</span>
-          <el-option key="unitary" label="unitary" value="unitary">
-          </el-option>
+          <el-option key="unitary" label="unitary" value="unitary"> </el-option>
         </el-select>
         <el-select
           v-model="dialogBe_Backend"
           placeholder="Backend"
           v-if="dialogBe == 'GPU'"
         >
-        <span>Backend</span>
+          <span>Backend</span>
           <el-option
             v-for="item in dialogBe_Backend_options"
             :key="item.value"
@@ -189,15 +161,6 @@
       </template>
     </el-dialog>
 
-    <el-col :span="3">
-      <el-button
-        size="small"
-        type="primary"
-        @click="dialogSeVisible = true"
-        style="font-family: 'Segoe UI Symbol'"
-        > Setting</el-button
-      >
-    </el-col>
     <el-dialog
       title="Setting"
       v-model="dialogSeVisible"
@@ -205,7 +168,7 @@
       :before-close="handleSeClose"
     >
       <div>
-         <span style="display: block; text-align: center">Shots</span>
+        <span style="display: block; text-align: center">Shots</span>
         <el-input v-model="dialogSeShots" label="n="></el-input>
         <div v-if="dialogBe == 'CPU' || dialogBe == 'GPU'">
           <span style="display: block; text-align: center">Precision</span>
@@ -217,7 +180,9 @@
           >
         </div>
         <div v-if="dialogBe == 'GPU' && dialogBe_Backend == 'statevector'">
-          <span style="display: block; text-align: center" id="GPU_device_ID">GPU device ID</span>
+          <span style="display: block; text-align: center" id="GPU_device_ID"
+            >GPU device ID</span
+          >
           <el-input v-model="dialogSe_GPU_device_id" label="GPU_device_ID"
             >0</el-input
           >
@@ -229,15 +194,15 @@
           >
         </div>
         <div v-if="dialogBe == 'GPU' && dialogBe_Backend == 'multiGPU'">
-          <el-input v-model="dialogSe_ndev" label="NDEV"
-            >0</el-input
-          >
+          <el-input v-model="dialogSe_ndev" label="NDEV">0</el-input>
           <el-checkbox v-model="dialogSe_sync" style="line-hight: 20px"
             >Sync</el-checkbox
           >
         </div>
         <div v-if="dialogBe == 'qiskit' || dialogBe == 'qcompute'">
-          <span style="display: block; text-align: center" id="Token">Token</span>
+          <span style="display: block; text-align: center" id="Token"
+            >Token</span
+          >
           <el-input v-model="dialogSeToken" label="Token"></el-input>
         </div>
       </div>
@@ -252,13 +217,67 @@
     </el-dialog>
 
     <el-col
-      :span="6"
+      :span="12"
       style="
         display: inline-flex;
         justify-content: flex-end;
         align-items: center;
       "
     >
+      <el-button
+        size="small"
+        type="primary"
+        @click="dialogCmdVisible = true"
+        style="
+          margin: 0px 10px;
+          font-family: 'Segoe UI Symbol';
+          background: transparent !important;
+        "
+        >Instruction Set ⏷</el-button
+      >
+      <el-button
+        size="small"
+        @click="showTopologyEdit"
+        style="margin: 0px 20px 0px 10px; background: transparent !important"
+        type="primary"
+        ><img
+          src="/assets/topology.2x.png"
+          style="height: 10px"
+        />Topology</el-button
+      >
+      <el-checkbox v-model="opSwitch" style="line-hight: 10px" size="small"
+        >Optimize</el-checkbox
+      >
+
+      <el-checkbox v-model="mapSwitch" style="line-hight: 10px" size="small"
+        >Mapping</el-checkbox
+      >
+      <span style="color: #409eff; font-size: large; margin: 0px 0px 0px 10px"
+        >|</span
+      >
+      <el-button
+        size="small"
+        type="primary"
+        @click="dialogBeVisible = true"
+        style="
+          margin: 0px 10px;
+          font-family: 'Segoe UI Symbol';
+          background: transparent !important;
+        "
+        >Backend ⏷</el-button
+      >
+      <el-button
+        size="small"
+        type="primary"
+        @click="dialogSeVisible = true"
+        style="
+          margin: 0px 10px;
+          font-family: 'Segoe UI Symbol';
+          background: transparent !important;
+        "
+        > Setting</el-button
+      >
+      <span style="color: #409eff; font-size: large">|</span>
       <el-upload
         class="upload-demo"
         :action="uploadBackend"
@@ -269,7 +288,8 @@
         <el-button
           size="small"
           type="primary"
-          style="font-family: 'Segoe UI Symbol'"
+          plain
+          style="margin: 0px 10px; font-family: 'Segoe UI Symbol'"
           > LOAD</el-button
         >
       </el-upload>
@@ -277,8 +297,9 @@
       <el-button
         size="small"
         type="primary"
+        plain
         @click="saveQCDA"
-        style="font-family: 'Segoe UI Symbol'"
+        style="margin: 0px 10px; font-family: 'Segoe UI Symbol'"
         > SAVE</el-button
       >
 
@@ -286,7 +307,7 @@
         size="small"
         type="primary"
         @click="runQCDA"
-        style="margin-right: 15px; font-family: 'Segoe UI Symbol'"
+        style="margin: 0px 10px; font-family: 'Segoe UI Symbol'"
       >
          RUN</el-button
       >
@@ -341,11 +362,11 @@ export default {
         { value: `statevector`, label: `statevector` },
         { value: `multiGPU`, label: `multiGPU` },
       ],
-      dialogSe_GPU_device_id:0,
-      dialogSe_sync:true,
-      dialogSe_optimize:false,
-      dialogSe_ndev:1,
-      dialogSeToken:1,
+      dialogSe_GPU_device_id: 0,
+      dialogSe_sync: true,
+      dialogSe_optimize: false,
+      dialogSe_ndev: 1,
+      dialogSeToken: 1,
     };
   },
   methods: {
@@ -652,36 +673,35 @@ export default {
     runQCDA() {
       // 通知外层运行当前qasm
       let setting = {};
-      setting.device=this.dialogBe;
-      setting.shots=Number(this.dialogSeShots);
-      switch(setting.device)
-      {
-        case 'CPU':
-          setting.backend='unitary';
-          setting.precision=this.dialogSe_Precision;
+      setting.device = this.dialogBe;
+      setting.shots = Number(this.dialogSeShots);
+      switch (setting.device) {
+        case "CPU":
+          setting.backend = "unitary";
+          setting.precision = this.dialogSe_Precision;
           break;
-        case 'GPU':
-          setting.backend=this.dialogBe_Backend;
-          setting.precision=this.dialogSe_Precision;
-          switch(this.dialogBe_Backend){
-            case 'unitary':
+        case "GPU":
+          setting.backend = this.dialogBe_Backend;
+          setting.precision = this.dialogSe_Precision;
+          switch (this.dialogBe_Backend) {
+            case "unitary":
               break;
-            case 'statevector':
-              setting.gpu_device_id=Number(this.dialogSe_GPU_device_id);
-              setting.sync=this.dialogSe_sync;
-              setting.optimize=this.dialogSe_optimize;
+            case "statevector":
+              setting.gpu_device_id = Number(this.dialogSe_GPU_device_id);
+              setting.sync = this.dialogSe_sync;
+              setting.optimize = this.dialogSe_optimize;
               break;
-            case 'multiGPU':
-              setting.ndev=Number(this.dialogSe_ndev);
-              setting.sync=this.dialogSe_sync;
+            case "multiGPU":
+              setting.ndev = Number(this.dialogSe_ndev);
+              setting.sync = this.dialogSe_sync;
               break;
           }
           break;
-        case 'qiskit':
-          setting.token=Number(this.dialogSeToken);
+        case "qiskit":
+          setting.token = Number(this.dialogSeToken);
           break;
-        case 'qcompute':
-          setting.token=Number(this.dialogSeToken);
+        case "qcompute":
+          setting.token = Number(this.dialogSeToken);
           break;
       }
       this.$emit("RunQCDA", this.opSwitch, this.mapSwitch, setting);

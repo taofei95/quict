@@ -68,7 +68,10 @@
               style="background: transparent !important; border: 0px solid"
             >
               <el-tab-pane label="Table">
-                <el-row style="height: 40px" v-if="Object.keys(OutputContent).length > 0">
+                <el-row
+                  style="height: 40px"
+                  v-if="Object.keys(OutputContent).length > 0"
+                >
                   <el-col :span="4"></el-col>
                   <el-col :span="6"><b>State</b></el-col>
                   <el-col :span="4"></el-col>
@@ -78,7 +81,7 @@
 
                 <el-row
                   style="height: 40px"
-                  v-for="[k,v] in Object.entries(OutputContent)"
+                  v-for="[k, v] in Object.entries(OutputContent)"
                   :key="k"
                 >
                   <el-col :span="4"></el-col>
@@ -108,6 +111,22 @@
           >
           </ProgramZone>
         </el-aside>
+        <el-dialog
+          title="Login"
+          v-model="dialogLogin"
+          width="30%"
+          :close-on-click-modal="false"
+          :close-on-press-escape="false"
+          :show-close="false"
+        >
+          <label>USER<el-input v-model="user"></el-input></label>
+          <label>PASSWORD<el-input v-model="psw" type="password" show-password></el-input></label>
+          <template #footer>
+            <span class="dialog-footer">
+              <el-button type="primary" @click="login()">OK</el-button>
+            </span>
+          </template>
+        </el-dialog>
       </el-container>
     </el-container>
   </el-container>
@@ -160,6 +179,9 @@ export default {
   data: function () {
     return {
       ProgramText: "hello",
+      dialogLogin: false,
+      user: "",
+      psw: "",
       VisContent: {
         gateSet: [
           // { name: "H", controls: 0, targets: 1, pargs: [], qasm_name:"h" },
@@ -193,13 +215,15 @@ export default {
     ToolBar,
   },
   methods: {
-    ProgramUpdate(ProgramText) { // 通知后端qasm更新
+    ProgramUpdate(ProgramText) {
+      // 通知后端qasm更新
       this.socket.emit("programe_update", {
         uuid: this.uuid,
         content: ProgramText,
       });
     },
-    GroupGates(Gates) { // 把gate按x轴分组
+    GroupGates(Gates) {
+      // 把gate按x轴分组
       let groupGates = [];
       Gates.forEach((gate) => {
         while (gate.posX >= groupGates.length) {
@@ -210,7 +234,8 @@ export default {
 
       return groupGates;
     },
-    ListGates(groupGates) { // 把gate组转换成1维数组
+    ListGates(groupGates) {
+      // 把gate组转换成1维数组
       let listGates = [];
       let index = 0;
       for (let i = 0; i < groupGates.length; i++) {
@@ -226,7 +251,8 @@ export default {
       }
       return listGates;
     },
-    insert2Group(groupGates, posX, gate) { // 插入当前gate到指定x坐标
+    insert2Group(groupGates, posX, gate) {
+      // 插入当前gate到指定x坐标
       console.log("groupGates before", groupGates);
       while (posX >= groupGates.length) {
         groupGates.push([]);
@@ -250,7 +276,8 @@ export default {
       group.push(gate);
       console.log("groupGates after", groupGates);
     },
-    append2Group(groupGates, posX, gate) { // 将当前gate加入到列表末尾
+    append2Group(groupGates, posX, gate) {
+      // 将当前gate加入到列表末尾
       console.log("groupGates before", groupGates);
       while (posX >= groupGates.length) {
         groupGates.push([]);
@@ -268,7 +295,8 @@ export default {
       group.push(gate);
       console.log("groupGates after", groupGates);
     },
-    checkConflict(gate, joinGate) { // 检查当前gate是否可以插入当前x坐标
+    checkConflict(gate, joinGate) {
+      // 检查当前gate是否可以插入当前x坐标
       let conflicted = false;
       let min = gate.q;
       let max = 0;
@@ -294,11 +322,13 @@ export default {
       });
       return conflicted;
     },
-    VisUpdate(VisAction) { // 更新gate列表
+    VisUpdate(VisAction) {
+      // 更新gate列表
       // this.ProgramText = VisContent;
       console.log(VisAction);
 
-      if (VisAction.type == "gates add") { // 新加gate
+      if (VisAction.type == "gates add") {
+        // 新加gate
         let posX = VisAction.x;
 
         if (posX < 0) {
@@ -347,14 +377,16 @@ export default {
 
         this.$refs.visVue.vis_change();
       }
-      if (VisAction.type == "gates remove") { // 删除gate
+      if (VisAction.type == "gates remove") {
+        // 删除gate
         this.VisContent.gates.splice(VisAction.index, 1);
         for (let i = 0; i < this.VisContent.gates.length; i++) {
           this.VisContent.gates[i].index = i;
         }
         this.$refs.visVue.vis_change();
       }
-      if (VisAction.type == "gates edit") { // 编辑gate
+      if (VisAction.type == "gates edit") {
+        // 编辑gate
         let min = this.VisContent.q.length;
         VisAction.gate.targets.forEach((element) => {
           if (element < min) {
@@ -374,7 +406,8 @@ export default {
 
         this.$refs.visVue.vis_change();
       }
-      if (VisAction.type == "gates move") { // 移动gate
+      if (VisAction.type == "gates move") {
+        // 移动gate
         let posX = VisAction.x;
 
         if (posX < 0) {
@@ -429,21 +462,25 @@ export default {
 
         this.$refs.visVue.vis_change();
       }
-      if (VisAction.type == "q add") { // 新加qbit
+      if (VisAction.type == "q add") {
+        // 新加qbit
         this.Q_Add();
         this.$refs.visVue.vis_change();
       }
-      if (VisAction.type == "q remove") { // 删除qbit
+      if (VisAction.type == "q remove") {
+        // 删除qbit
         this.Q_Remove(VisAction.index);
         this.$refs.visVue.vis_change();
       }
       this.qbit = this.VisContent.q;
       this.ProgramText = this.GenQASM();
     },
-    Q_Add() { // 新加qbit
+    Q_Add() {
+      // 新加qbit
       this.VisContent.q.push(this.VisContent.q.length);
     },
-    Q_Remove(idx) { // 删除qbit
+    Q_Remove(idx) {
+      // 删除qbit
       for (let i = this.VisContent.gates.length - 1; i >= 0; i--) {
         let touched_q = false;
         if (this.VisContent.gates[i].q == idx) {
@@ -479,7 +516,8 @@ export default {
       }
       this.VisContent.q.pop();
     },
-    GenQASM() { // 从gate列表生成qasm
+    GenQASM() {
+      // 从gate列表生成qasm
       let qasm_string = 'OPENQASM 2.0;\ninclude "qelib1.inc";\n';
       let cbits = 0;
       this.VisContent.gates.forEach((gate) => {
@@ -511,7 +549,8 @@ export default {
       });
       return qasm_string;
     },
-    qasm(gate) { // 从gate生成qasm片段
+    qasm(gate) {
+      // 从gate生成qasm片段
       let qasm_string = gate.qasm_name;
       if (gate.pargs.length > 0) {
         qasm_string += "(";
@@ -544,13 +583,15 @@ export default {
       qasm_string += ";\n";
       return qasm_string;
     },
-    SaveQCDA() { // 通知后端保存qasm
+    SaveQCDA() {
+      // 通知后端保存qasm
       this.socket.emit("qasm_save", {
         uuid: this.uuid,
         content: this.ProgramText,
       });
     },
-    RunQCDA(opSwitch, mapSwitch, setting) { // 通知后端运行qasm
+    RunQCDA(opSwitch, mapSwitch, setting) {
+      // 通知后端运行qasm
       this.socket.emit("qasm_run", {
         uuid: this.uuid,
         content: this.ProgramText,
@@ -558,10 +599,11 @@ export default {
         mapping: mapSwitch,
         topology: this.topology,
         set: this.all_sets[this.current_set],
-        setting:setting,
+        setting: setting,
       });
     },
-    LoadQCDA(file) { // 通知后端加载qasm
+    LoadQCDA(file) {
+      // 通知后端加载qasm
       console.log(file);
       let reader = new FileReader();
       reader.readAsText(file, "UTF-8");
@@ -579,17 +621,20 @@ export default {
         console.error(evt);
       };
     },
-    ResultSmall() { // 切换运行结果显示到小窗口
+    ResultSmall() {
+      // 切换运行结果显示到小窗口
       this.ExpandResult = false;
       d3.select(".output-block").style("height", "20vh");
       d3.select(".vis-block").style("height", "calc(100vh - 20vh - 150px)");
     },
-    ResultLarge() { // 切换运行结果显示到大窗口
+    ResultLarge() {
+      // 切换运行结果显示到大窗口
       this.ExpandResult = true;
       d3.select(".vis-block").style("height", "calc(100vh - 60vh - 150px)");
       d3.select(".output-block").style("height", "60vh");
     },
-    DrawHistogram(result) { // 绘制Amplitude图
+    DrawHistogram(result) {
+      // 绘制Amplitude图
       console.log("DrawHistogram", result);
 
       let width = Object.entries(result).length * 30 + 100;
@@ -604,7 +649,7 @@ export default {
           return `${d[0]}\nCounts:${d[1]}`;
         },
         xDomain: d3.map(Object.entries(result), (d) => d[0]), // sort by descending frequency
-        yFormat: "d",//".3f",
+        yFormat: "d", //".3f",
         // yLabel: "Amplitude",
         yLabel: "nCounts",
         width: width,
@@ -713,20 +758,23 @@ export default {
 
       return svg.node();
     },
-    ChangeSet(newSet) { // 切换instructionSet
+    ChangeSet(newSet) {
+      // 切换instructionSet
       console.log(`set changed: ${newSet}`);
       this.current_set = newSet;
       this.VisContent.gateSet = this.all_sets[this.current_set]["gates"];
       this.$refs.visVue.vis_change();
     },
-    UpdateCustomerSet(customerSet) { // 更新customerSet
+    UpdateCustomerSet(customerSet) {
+      // 更新customerSet
       console.log(`customer Set changed: ${customerSet}`);
       let customer_set = { name: "CustomerSet", gates: customerSet };
       this.customer_set = customerSet;
       this.all_sets.pop();
       this.all_sets.push(customer_set);
     },
-    UpdataTopology(topology, qbit) { // 更新topology
+    UpdataTopology(topology, qbit) {
+      // 更新topology
       this.topology = topology;
       while (this.VisContent.q.length < qbit.length) {
         this.Q_Add();
@@ -738,10 +786,45 @@ export default {
       this.$refs.visVue.vis_change();
       this.ProgramText = this.GenQASM();
     },
+    login() {
+      this.socket.emit("login", {
+        uuid: this.uuid,
+        content: {
+          user: this.user,
+          psw: this.psw,
+        },
+      });
+    },
+    testLogin() {
+      this.socket.emit("testLogin", {
+        uuid: this.uuid,
+        content: {},
+      });
+    },
   },
   mounted: function () {
-    this.socket.emit("get_gate_set", { uuid: this.uuid });
-    this.socket.on("qasm_load", (content) => { // 收到后端处理好的qasm，显示到前端qasm编辑区域
+    this.socket.emit("testLogin", { uuid: this.uuid });
+    this.socket.on("login_success", (content) => {
+      // 收到后端处理好的qasm，显示到前端qasm编辑区域
+      console.log(content);
+      if (!content.uuid == this.uuid) {
+        return;
+      }
+      this.dialogLogin = false;
+      this.socket.emit("get_gate_set", { uuid: this.uuid });
+    });
+
+    this.socket.on("need_login", (content) => {
+      // 收到后端处理好的qasm，显示到前端qasm编辑区域
+      console.log(content);
+      if (!content.uuid == this.uuid) {
+        return;
+      }
+      this.dialogLogin = true;
+    });
+
+    this.socket.on("qasm_load", (content) => {
+      // 收到后端处理好的qasm，显示到前端qasm编辑区域
       console.log(content);
       if (!content.uuid == this.uuid) {
         return;
@@ -749,7 +832,8 @@ export default {
       this.ProgramText = content.qasm;
     });
 
-    this.socket.on("download_uri", (content) => { // 收到后端qasm文件，在前端开始下载
+    this.socket.on("download_uri", (content) => {
+      // 收到后端qasm文件，在前端开始下载
       console.log(content);
       if (!content.uuid == this.uuid) {
         return;
@@ -757,7 +841,8 @@ export default {
       window.location.href += `${this.background}/${content.download_uri}`;
     });
 
-    this.socket.on("run_result", (content) => { // 收到后端运行qasm结果， 在前端展示
+    this.socket.on("run_result", (content) => {
+      // 收到后端运行qasm结果， 在前端展示
       console.log(content);
       if (!content.uuid == this.uuid) {
         return;
@@ -766,7 +851,8 @@ export default {
       this.DrawHistogram(content.run_result.counts);
     });
 
-    this.socket.on("all_sets", (content) => { // 收到后端instruction Set 列表， 更新前端相关显示
+    this.socket.on("all_sets", (content) => {
+      // 收到后端instruction Set 列表， 更新前端相关显示
       console.log(content);
       if (!content.uuid == this.uuid) {
         return;
@@ -778,7 +864,8 @@ export default {
       this.all_sets.push(customer_set);
       this.$refs.visVue.vis_change();
     });
-    this.socket.on("info", (content) => { // 收到后端信息， 在前端显示
+    this.socket.on("info", (content) => {
+      // 收到后端信息， 在前端显示
       console.log(content);
       if (!content.uuid == this.uuid) {
         return;
@@ -787,7 +874,8 @@ export default {
       this.$refs.visVue.vis_change();
     });
 
-    this.socket.on("gates_update", (content) => { // 收到后端qasm对应gate列表，在前端显示
+    this.socket.on("gates_update", (content) => {
+      // 收到后端qasm对应gate列表，在前端显示
       console.log(content);
       if (!content.uuid == this.uuid) {
         return;
@@ -827,7 +915,7 @@ export default {
 
       this.$refs.visVue.vis_change();
     });
-    this.qbit = this.VisContent.q;
+    // this.qbit = this.VisContent.q;
   },
 };
 </script>

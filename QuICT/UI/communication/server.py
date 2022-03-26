@@ -92,25 +92,25 @@ def authenticated_only(f):
     return wrapped
 
 
-@app.route('/login', methods=['GET', 'POST'])
-def login():
-    if request.method == 'GET':
-        return '''
-               <form action='login' method='POST'>
-                <input type='text' name='email' id='email' placeholder='email'/>
-                <input type='password' name='password' id='password' placeholder='password'/>
-                <input type='submit' name='submit'/>
-               </form>
-               '''
+# @app.route('/login', methods=['GET', 'POST'])
+# def login():
+#     if request.method == 'GET':
+#         return '''
+#                <form action='login' method='POST'>
+#                 <input type='text' name='email' id='email' placeholder='email'/>
+#                 <input type='password' name='password' id='password' placeholder='password'/>
+#                 <input type='submit' name='submit'/>
+#                </form>
+#                '''
 
-    email = request.form['email']
-    if request.form['password'] == users[email]['password']:
-        user = User()
-        user.id = email
-        flask_login.login_user(user)
-        return redirect(url_for('index'))
+#     email = request.form['email']
+#     if request.form['password'] == users[email]['password']:
+#         user = User()
+#         user.id = email
+#         flask_login.login_user(user)
+#         return redirect(url_for('index'))
 
-    return 'Bad login'
+#     return 'Bad login'
 
 
 @app.route('/logout')
@@ -121,13 +121,13 @@ def logout():
 
 @login_manager.unauthorized_handler
 def unauthorized_handler():
-    return redirect(url_for('login'))
+    return redirect(url_for('index'))
 
 
 # WEB BASIC PART
 
 @app.route("/")
-@login_required
+# @login_required
 def index():
     return send_file("./dist/index.html")
 
@@ -139,7 +139,7 @@ def root_folder(path: str):
 
 
 @app.route("/assets/<path:path>")
-@login_required
+# @login_required
 def assets_files(path: str):
     return send_from_directory("./dist/assets", path)
 
@@ -163,6 +163,28 @@ def connect():
     """new client connected"""
     pass
 
+# Login PART
+
+@socketio.on("login", namespace="/api/pty")
+def login(content):
+    uid = content['uuid']
+    content = content['content']
+    usr = content['user']
+    psw = content['psw']
+    if psw == users[usr]['password']:
+        user = User()
+        user.id = usr
+        flask_login.login_user(user)
+        emit('login_success', {'uuid': uid,}, namespace="/api/pty")
+    
+@socketio.on("testLogin", namespace="/api/pty")
+def testLogin(content):
+    uid = content['uuid']
+
+    if flask_login.current_user is not None and flask_login.current_user.is_authenticated:
+        emit('login_success', {'uuid': uid,}, namespace="/api/pty")
+    else:
+        emit('need_login', {'uuid': uid,}, namespace="/api/pty")
 
 # QCDA PART
 

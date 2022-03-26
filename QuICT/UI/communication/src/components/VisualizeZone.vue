@@ -99,8 +99,9 @@ export default {
       this.drawZone = d3
         .select("#drawZone")
         .append("svg")
-        .attr("width", `${width}px`)
-        .attr("height", `${height}px`)
+        .attr("width", `${width*1.25}px`)
+        .attr("height", `${height*1.25}px`)
+        .attr("viewBox", "0,0," + width + "," + height)
         .attr("background", "blue")
         .append("g")
         .style("transform", () => {
