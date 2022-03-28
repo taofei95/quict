@@ -63,3 +63,16 @@ class CliffordOptimization(Optimization):
                 continue
 
         return compute, pauli
+
+    @staticmethod
+    def symbolic_peephole_optimization(gates: CompositeGate):
+        """
+        By decoupling CNOT gates with projectors and symbolic Pauli gates, optimization
+        rules of 1-qubit gates could be used to optimize Clifford circuits.
+        Symbolic Pauli gate gives another expression for controlled Pauli gates.
+
+        By definition, a controlled-U gate CU means:
+            if the control qubit is |0>, do nothing;
+            if the control qubit is |1>, apply U to the target qubit.
+        In general, CU = ∑_v |v><v| ⊗ U^v, where U^v is called a symbolic gate.
+        """
