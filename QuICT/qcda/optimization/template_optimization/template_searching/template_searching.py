@@ -118,10 +118,26 @@ class TemplateSearching:
 
             return flag_check_graph
 
+    def commutative_processing(self, temp_circuit):
+        for i in range(len(temp_circuit.gates) - 1):
+            gate_a = temp_circuit.gates[i]
+            gate_b = temp_circuit.gates[i+1]
+            if gate_a.commutative(gate_b):
+                if gate_a.is_control_single() and not gate_b.is_control_single():
+                    temp_circuit.gates[i] = gate_b
+                    temp_circuit.gates[i+1] = gate_a
+                    temp_circuit = self.commutative_processing(temp_circuit)
+        return temp_circuit
+
     def check_circuit_not_isomorphism(self, circuit_a, circuit_b):
 
         # check if a circuit is not isomorphism with the other
         # first only check cnot circuit
+
+        # commutative processing
+        circuit_a = self.commutative_processing(circuit_a)
+        circuit_b = self.commutative_processing(circuit_b)
+
         inform_list_a = []
         status_list_a = []
         inform_list_b = []
@@ -227,13 +243,14 @@ class TemplateSearching:
 
         return not flag_carg_graph
 
-    def check_list_not_isomorphism(self, temp_circuit):
+#    def check_list_not_isomorphism(self, temp_circuit):
 
         # check if the circuit is not isomorphism with every template in the list
-        no_isomorphism = True
-        for template in self.template_list:
-            no_isomorphism = no_isomorphism & self.check_circuit_not_isomorphism(temp_circuit, template)
-        return no_isomorphism
+
+#        no_isomorphism = True
+#        for template in self.template_list:
+#            no_isomorphism = no_isomorphism & self.check_circuit_not_isomorphism(temp_circuit, template)
+#        return no_isomorphism
 
     def search(self, temp_gate_num, temp_circuit):
 
@@ -296,11 +313,14 @@ class TemplateSearching:
                         self.template_list[i][1] = self.template_list[i][1] and self.template_list[j][1]
                         relationship_iso[j] = i
                         self.template_list[j][1] = False
+        # for i in range(len_list):
+        #     if relationship_iso[i] == i:
+        #         print(self.template_list[i][0].draw('matp', str(i)))
+        #         print((self.commutative_processing(self.template_list[i][0])).draw('matp', str(100+i)))
         return self.template_list
 
-
 print(time.perf_counter())
-program = TemplateSearching(3, 8, 4)
+program = TemplateSearching(3, 4, 4)
 list_circuit = program.run_template_searching()
 print(time.perf_counter())
 label = 1
