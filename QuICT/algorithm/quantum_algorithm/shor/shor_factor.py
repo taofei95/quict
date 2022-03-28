@@ -12,7 +12,7 @@ from .utility import *
 
 from QuICT.simulation.cpu_simulator import CircuitSimulator
 from QuICT.simulation import Simulator
-from QuICT.algorithm.quantum_algorithm import BEA_zip_run, HRS_zip_run, BEA_circuit, HRS_circuit
+from QuICT.algorithm.quantum_algorithm.shor import BEA_zip_run, BEA_circuit, HRS_zip_run, HRS_circuit
 class ShorFactor:
 
     allowed_modes = {"BEA", "HRS", "BEA_zip", "HRS_zip"}
