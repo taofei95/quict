@@ -32,9 +32,8 @@ class CliffordOptimization(Optimization):
     @staticmethod
     def partition(gates: CompositeGate):
         """
-        Partition the CompositeGate into compute and Pauli stages, where
-        compute stage contains only CX, H, S, Sdg gates and
-        Pauli stage contains only Pauli gates.
+        Partition the CompositeGate into compute and Pauli stages, where compute stage contains
+        only CX, H, S, Sdg gates and Pauli stage contains only Pauli gates.
 
         Args:
             gates(CompositeGate): Clifford CompositeGate
@@ -65,14 +64,37 @@ class CliffordOptimization(Optimization):
         return compute, pauli
 
     @staticmethod
-    def symbolic_peephole_optimization(gates: CompositeGate):
+    def symbolic_peephole_optimization(gates: CompositeGate, control_set: list):
         """
-        By decoupling CNOT gates with projectors and symbolic Pauli gates, optimization
-        rules of 1-qubit gates could be used to optimize Clifford circuits.
         Symbolic Pauli gate gives another expression for controlled Pauli gates.
-
         By definition, a controlled-U gate CU means:
             if the control qubit is |0>, do nothing;
             if the control qubit is |1>, apply U to the target qubit.
         In general, CU = ∑_v |v><v| ⊗ U^v, where U^v is called a symbolic gate.
+
+        Here we focus only on symbolic Pauli gates and symbolic phase.
+        By decoupling CNOT gates with projectors and symbolic Pauli gates, optimization
+        rules of 1-qubit gates could be used to optimize Clifford circuits.
+
+        Args:
+            gates(CompositeGate): CompositeGate with CX, H, S gates only, to be optimized
+            control_set(list): list of qubit, CX coupling control_set and the complement would be decoupled
+
+        Returns:
+            CompositeGate: CompositeGate after optimization
         """
+        for gate in gates:
+            assert gate.type in [GateType.cx, GateType.h, GateType.s],\
+                ValueError('Only CX, H, S gates are allowed in this optimization')
+
+        def HS_optimize(gates: CompositeGate):
+            """
+            For CompositeGate with CX, H, S only, optimize the single qubit gates trivially
+            """
+            gates_push = CompositeGate()
+            H_stack = [[] for _ in gates.width()]
+            S_stack = [[] for _ in gates.width()]
+            for gate in gates:
+                pass
+            return gates_push
+
