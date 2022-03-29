@@ -92,9 +92,40 @@ class CliffordOptimization(Optimization):
             For CompositeGate with CX, H, S only, optimize the single qubit gates trivially
             """
             gates_push = CompositeGate()
-            H_stack = [[] for _ in gates.width()]
-            S_stack = [[] for _ in gates.width()]
+            H_stack = [[] for _ in range(gates.width())]
+            S_stack = [[] for _ in range(gates.width())]
             for gate in gates:
-                pass
+                if gate.type == GateType.h:
+                    if S_stack[gate.targ]:
+                        gates_push.extend(S_stack[gate.targ])
+                        S_stack[gate.targ] = []
+                    H_stack[gate.targ].append(gate)
+                    if len(H_stack[gate.targ]) == 2:
+                        H_stack[gate.targ] = []
+                if gate.type == GateType.s:
+                    if H_stack[gate.targ]:
+                        gates_push.extend(H_stack[gate.targ])
+                        H_stack[gate.targ] = []
+                    S_stack[gate.targ].append(gate)
+                    if len(S_stack[gate.targ]) == 4:
+                        S_stack[gate.targ] = []
+                # S gates on CX.carg commutes with CX
+                if gate.type == GateType.cx:
+                    if H_stack[gate.carg]:
+                        gates_push.extend(H_stack[gate.carg])
+                        H_stack[gate.carg] = []
+                    if H_stack[gate.targ]:
+                        gates_push.extend(H_stack[gate.targ])
+                        H_stack[gate.targ] = []
+                    if S_stack[gate.targ]:
+                        gates_push.extend(S_stack[gate.targ])
+                        S_stack[gate.targ] = []
+                    gates_push.append(gate)
+            for qubit in range(gates.width()):
+                gates_push.extend(H_stack[qubit])
+                gates_push.extend(S_stack[qubit])
             return gates_push
+
+        gates = HS_optimize(gates)
+        return gates
 
