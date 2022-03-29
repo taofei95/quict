@@ -1,14 +1,12 @@
-import pytest
+from QuICT.algorithm.quantum_algorithm import (
+    ShorFactor
+)
+import logging
+logging.root.setLevel(logging.INFO)
 
-from QuICT.algorithm.quantum_algorithm import ShorFactor, BEA_order_finding, HRS_order_finding
-
-def test_ShorFactor_on_ConstantStateVectorSimulator():
+def _test_ShorFactor_run(mode: str):
     from QuICT.simulation.gpu_simulator import ConstantStateVectorSimulator
-    simulator = ConstantStateVectorSimulator(
-        precision="double",
-        gpu_device_id=0,
-        sync=True
-    )
+    simulator = ConstantStateVectorSimulator()
     number_list = [
         4, 6, 8, 9, 10,
         12, 14, 15, 16, 18, 20,
@@ -16,27 +14,17 @@ def test_ShorFactor_on_ConstantStateVectorSimulator():
     ]
     for number in number_list:
         print('-------------------FACTORING %d-------------------------' % number)
-        a = BEAShorFactor.run(N=number, max_rd=10, simulator=simulator)
+        a = ShorFactor(mode=mode,N=number).run(simulator=simulator)
         assert number % a == 0
 
+def test_ShorFactor_BEA():
+    _test_ShorFactor_run("BEA")
 
-def test_HRSShorFactor_on_ConstantStateVectorSimulator():
-    from QuICT.simulation.gpu_simulator import ConstantStateVectorSimulator
-    simulator = ConstantStateVectorSimulator(
-        precision="double",
-        gpu_device_id=0,
-        sync=True
-    )
-    number_list = [
-        4, 6, 8, 9, 10,
-        12, 14, 15, 16, 18, 20,
-        21, 22, 24, 25, 26, 27,
-    ]
-    for number in number_list:
-        print('-------------------FACTORING %d-------------------------' % number)
-        a = HRSShorFactor.run(N=number, max_rd=10, simulator=simulator)
-        assert number % a == 0
+def test_ShorFactor_BEA_zip():
+    _test_ShorFactor_run("BEA_zip")
 
+# def test_ShorFactor_HRS():
+#     _test_ShorFactor_run("HRS")
 
-if __name__ == '__main__':
-    pytest.main(["./unit_test.py"])
+# def test_ShorFactor_HRS_zip():
+#     _test_ShorFactor_run("HRS_zip")

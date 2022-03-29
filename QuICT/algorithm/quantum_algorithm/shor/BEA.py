@@ -41,7 +41,7 @@ def construct_circuit(a: int, N: int, eps: float = 1 / 10):
     IQFT.build_gate(len(trickbits)) | circuit(trickbits)
     for idx in (b_reg + trickbits + qreg_low):
         Measure | circuit(idx)
-    return circuit, trickbits
+    return circuit, trickbits[::-1] # for int(circuit[trickbits]) convenience
 
 
 def order_finding(a: int, N: int, eps: float = 1 / 10, simulator: Simulator = CircuitSimulator()):
@@ -50,31 +50,31 @@ def order_finding(a: int, N: int, eps: float = 1 / 10, simulator: Simulator = Ci
     t = len(trickbits)
  
     # continued fraction procedure
-    raw_phi = bin(int(circuit[trickbits]))[2:]
-    raw_phi = '0b' + raw_phi[::-1] + '0'*(t-len(raw_phi))
-    phi_ =  eval(raw_phi) / (1 << t)
+    phi_ =  int(circuit[trickbits]) / (1 << t)
     logging.info(f'\tphi~ (approximately s/r) in decimal form is {phi_}')
     r = Fraction(phi_).limit_denominator(N - 1).denominator
     logging.info(f'\tclose fraction form: {Fraction(phi_).limit_denominator(N - 1)}')
     return r
 
+MAX_ROUND = 3
+
 def reinforced_order_finding(a: int, N: int, eps: float = 1 / 10, simulator: Simulator = CircuitSimulator()):
     circuit, trickbits = construct_circuit(a, N, eps)
     t = len(trickbits)
-    # continued fraction procedure (repetition 1)
-    amp = simulator.run(circuit)
-    raw_phi = bin(int(circuit[trickbits]))[2:]
-    raw_phi = '0b' + raw_phi[::-1] + '0'*(t-len(raw_phi))
-    phi_ =  eval(raw_phi) / (1 << t)
-    logging.info(f'\tclose fraction form (repetition 1): {Fraction(phi_).limit_denominator(N - 1)}')
-    r1 = Fraction(phi_).limit_denominator(N - 1).denominator
-    # continued fraction procedure (repetition 1)
-    amp = simulator.run(circuit)
-    raw_phi = bin(int(circuit[trickbits]))[2:]
-    raw_phi = '0b' + raw_phi[::-1] + '0'*(t-len(raw_phi))
-    phi_ =  eval(raw_phi) / (1 << t)
-    logging.info(f'\tclose fraction form (repetition 2): {Fraction(phi_).limit_denominator(N - 1)}')
-    r2 = Fraction(phi_).limit_denominator(N - 1).denominator
-
-    r = r1*r2//gcd(r1,r2)
-    return r
+    # continued fraction procedure (repetition)
+    r_list = []
+    i = 0
+    while i < MAX_ROUND:
+        i += 1
+        amp = simulator.run(circuit)
+        phi_ =  int(circuit[trickbits]) / (1 << t)
+        logging.info(f'\tclose fraction form (repetition {i}): {Fraction(phi_).limit_denominator(N - 1)}')
+        r = Fraction(phi_).limit_denominator(N - 1).denominator
+        if r!=0 and (a**r)%N==1:
+            logging.info(f'\tsuccess!')
+            r_list.append(r)
+        if len(r_list)>1:
+            break
+    if len(r_list) == 0:
+        return 0
+    return min(r_list)

@@ -19,6 +19,23 @@ from .utility import *
 from QuICT.simulation.cpu_simulator import CircuitSimulator
 from QuICT.simulation import Simulator
 
+MAX_ROUND = 5
+
+def reinforced_order_finding(a: int, N: int, eps: float = 1 / 10, simulator: Simulator = CircuitSimulator()):
+    r_list = []
+    i = 0
+    while i < MAX_ROUND:
+        i += 1
+        r = order_finding(a,N,eps,simulator)
+        if r!=0 and (a**r)%N==1:
+            logging.info(f'\tsuccess!')
+            r_list.append(r)
+        if len(r_list)>1:
+            break
+    if len(r_list) == 0:
+        return 0
+    return min(r_list)
+
 def order_finding(a: int, N: int, eps: float = 1 / 10, simulator: Simulator = CircuitSimulator()):
     """
     The (2n+3)-qubit circuit used in the Shor algorithm is designed by \
@@ -72,7 +89,7 @@ def order_finding(a: int, N: int, eps: float = 1 / 10, simulator: Simulator = Ci
         logging.info('\torder_finding failed: phi~ = 0')
         return 0
     (num, den) = (Fraction(phi_).numerator, Fraction(phi_).denominator)
-    CFE = continued_fraction_expansion(num, den) #TODO: using Fraction.limit_denominator
+    CFE = continued_fraction_expansion(num, den)
     logging.info(f'\tContinued fraction expansion of phi~ is {CFE}')
     num1, den1, num2, den2 = CFE[0], 1, 1, 0
     logging.info(f'\tthe 0th convergence is {num1}/{den1}')

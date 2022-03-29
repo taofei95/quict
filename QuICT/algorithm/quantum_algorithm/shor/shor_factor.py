@@ -12,12 +12,11 @@ from .utility import *
 
 from QuICT.simulation.cpu_simulator import CircuitSimulator
 from QuICT.simulation import Simulator
-from QuICT.algorithm.quantum_algorithm.shor import BEA_zip_run, BEA_circuit, HRS_zip_run, HRS_circuit
+from QuICT.algorithm.quantum_algorithm.shor import BEA_zip_run, BEA_circuit, HRS_zip_run, HRS_circuit, BEA_run, HRS_run
 class ShorFactor:
 
     allowed_modes = {"BEA", "HRS", "BEA_zip", "HRS_zip"}
-    run_method_of_mode = {"BEA":None, "HRS":None, "BEA_zip":BEA_zip_run, "HRS_zip":HRS_zip_run}
-    #TODO: circuit_method_of_mode["BEA"]/["HRS"], without one-bit trick
+    run_method_of_mode = {"BEA":BEA_run, "HRS":HRS_run, "BEA_zip":BEA_zip_run, "HRS_zip":HRS_zip_run}
     circuit_method_of_mode = {"BEA":BEA_circuit, "HRS":HRS_circuit, "BEA_zip":None, "HRS_zip":None}
 
     def __init__(self, mode: str, N: int, eps: float = 1 / 10, max_rd: int = 2) -> None:
@@ -28,7 +27,7 @@ class ShorFactor:
         self.eps = eps
         self.max_rd = max_rd
 
-    def circuit(self) -> Tuple[Circuit, List[int]]:
+    def circuit(self, a) -> Tuple[Circuit, List[int]]:
         """construct the quantum part of Shor algorithm, i.e. order finding circuit
 
         Returns:
@@ -37,7 +36,7 @@ class ShorFactor:
         """
         if ShorFactor.circuit_method_of_mode[self.mode] == None:
             raise ValueError(f"{self.mode} mode has no circuit() method.")
-        return ShorFactor.circuit_method_of_mode[self.mode]() #TODO: add construction params
+        return ShorFactor.circuit_method_of_mode[self.mode](a, self.N, self.eps)
 
     def run(self, circuit: Circuit = None, indices: List[int] = None, simulator: Simulator = CircuitSimulator()) -> int:
         # check if input is prime (using MillerRabin in klog(N), k is the number of rounds to run MillerRabin)
@@ -73,11 +72,11 @@ class ShorFactor:
             logging.info(f'Quantumly determine the order of the randomly chosen a = {a}')
             # check if any input circuit. if no, run according to `mode`; else run the input circuit
             if circuit == None:
-                r = ShorFactor.run_method_of_mode[self.mode]() #TODO: add run() params
+                r = ShorFactor.run_method_of_mode[self.mode](a, self.N, self.eps, simulator)
             else:
-                simulator.run(circuit) # TODO: run the circuit with fresh start
-                phi = int(circuit[indices])<<len(indices) # TODO: break to see if it is ~phi
-                r = Fraction(phi).limit_denominator(self.N - 1).denominator # TODO: break to see if it works
+                simulator.run(circuit)
+                phi = int(circuit[indices])<<len(indices)
+                r = Fraction(phi).limit_denominator(self.N - 1).denominator
 
             if r == 0: # no order found
                 logging.info(f'Shor failed: did not find the order of a = {a}')
