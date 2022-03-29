@@ -19,6 +19,23 @@ from .utility import *
 from QuICT.simulation.cpu_simulator import CircuitSimulator
 from QuICT.simulation import Simulator
 
+MAX_ROUND = 5
+
+def reinforced_order_finding(a: int, N: int, eps: float = 1 / 10, simulator: Simulator = CircuitSimulator()):
+    r_list = []
+    i = 0
+    while i < MAX_ROUND:
+        i += 1
+        r = order_finding(a,N,eps,simulator)
+        if r!=0 and (a**r)%N==1:
+            logging.info(f'\tsuccess!')
+            r_list.append(r)
+        if len(r_list)>1:
+            break
+    if len(r_list) == 0:
+        return 0
+    return min(r_list)
+
 def order_finding(a: int, N: int, eps: float = 1 / 10, simulator: Simulator = CircuitSimulator()):
     """
     The (2n+3)-qubit circuit used in the Shor algorithm is designed by \
@@ -27,18 +44,23 @@ def order_finding(a: int, N: int, eps: float = 1 / 10, simulator: Simulator = Ci
     Quantum algorithm to compute the order of a (mod N), when gcd(a,N)=1.
     """
     # phase estimation procedure
-    n = int(np.ceil(np.log2(N)))
+    n = int(np.ceil(np.log2(N + 1)))
     t = int(2 * n + 1 + np.ceil(np.log(2 + 1 / (2 * eps))))
     logging.info(f'\torder_finding begin: circuit: n = {n} t = {t}')
     trickbit_store = [0] * t
 
-    circuit = Circuit(2 * n + 3)
     b_reg = [i for i in range(n + 1)]
     x_reg = [i for i in range(n + 1, 2 * n + 1)]
     trickbit = [2 * n + 1]
     qreg_low = [2 * n + 2]
+    # subcircuit: init \ket{1}\ket{0}
+    circuit = Circuit(2 * n + 3)
     X | circuit(x_reg[n - 1])
+    simulator.run(circuit)
+
     for k in range(t):
+        # subcircuit
+        circuit = Circuit(2 * n + 3)
         H | circuit(trickbit)
         gate_pow = pow(a, 1 << (t - 1 - k), N)
         BEACUa.execute(n, gate_pow, N) | circuit
@@ -46,19 +68,20 @@ def order_finding(a: int, N: int, eps: float = 1 / 10, simulator: Simulator = Ci
             if trickbit_store[i]:
                 Rz(-pi / (1 << (k - i))) | circuit(trickbit)
         H | circuit(trickbit)
-
         for idx in (b_reg + trickbit + qreg_low): Measure | circuit(idx)
-        simulator.run(circuit)
+        simulator.run(circuit, use_previous=True)
+        # subcircuit: semi-classical QFT
         assert int(circuit[qreg_low]) == 0 and int(circuit[b_reg]) == 0
         logging.info(f'\tthe {k}th trickbit measured to be {int(circuit[trickbit])}')
         trickbit_store[k] = int(circuit[trickbit])
         if trickbit_store[k] == 1:
+            circuit = Circuit(2 * n + 3)
             X | circuit(trickbit)
-    for idx in x_reg: Measure | circuit(idx)
+            simulator.run(circuit, use_previous=True)
 
+    # for idx in x_reg: Measure | circuit(idx)
     trickbit_store.reverse()
     logging.info(f'\tphi~ (approximately s/r) in binary form is {trickbit_store}')
-    
     # continued fraction procedure
     phi_ = sum([(trickbit_store[i] * 1. / (1 << (i + 1))) for i in range(t)])
     logging.info(f'\tphi~ (approximately s/r) in decimal form is {phi_}')
@@ -66,7 +89,7 @@ def order_finding(a: int, N: int, eps: float = 1 / 10, simulator: Simulator = Ci
         logging.info('\torder_finding failed: phi~ = 0')
         return 0
     (num, den) = (Fraction(phi_).numerator, Fraction(phi_).denominator)
-    CFE = continued_fraction_expansion(num, den) #TODO: using Fraction.limit_denominator
+    CFE = continued_fraction_expansion(num, den)
     logging.info(f'\tContinued fraction expansion of phi~ is {CFE}')
     num1, den1, num2, den2 = CFE[0], 1, 1, 0
     logging.info(f'\tthe 0th convergence is {num1}/{den1}')
