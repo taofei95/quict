@@ -1,4 +1,5 @@
 import pytest
+import random
 
 import numpy as np
 
@@ -34,7 +35,8 @@ def test_peephole():
             circuit.random_append(10 * n, clifford)
             gates = CompositeGate(gates=circuit.gates)
             compute, pauli = CliffordOptimization.partition(gates)
-            meow = CliffordOptimization.symbolic_peephole_optimization(compute, [])
+            control_set = random.sample(list(range(n)), 2)
+            meow = CliffordOptimization.symbolic_peephole_optimization(compute, control_set)
             meow.extend(pauli.gates())
             np.set_printoptions(precision=3, suppress=True)
             assert np.allclose(gates.matrix(), pauli.phase * meow.matrix())

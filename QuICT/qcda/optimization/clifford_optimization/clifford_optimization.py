@@ -2,7 +2,7 @@
 Optimize Clifford circuits with template matching and symbolic peephole optimization
 """
 
-from QuICT.core.gate import CompositeGate, GateType
+from QuICT.core.gate import CompositeGate, GateType, H, CX
 from QuICT.qcda.optimization._optimization import Optimization
 from QuICT.qcda.utility import PauliOperator
 
@@ -126,6 +126,28 @@ class CliffordOptimization(Optimization):
                 gates_push.extend(S_stack[qubit])
             return gates_push
 
+        def CX_reverse(gates: CompositeGate, control_set: list):
+            """
+            For CX in the CompositeGate, if its target qubit is in the control_set while its control qubit
+            is not, the control and target qubit will be reversed by adding H gates.
+            """
+            gates_reverse = CompositeGate()
+            for gate in gates:
+                if gate.type == GateType.cx and gate.carg not in control_set and gate.targ in control_set:
+                    with gates_reverse:
+                        H & gate.carg
+                        H & gate.targ
+                        CX & [gate.targ, gate.carg]
+                        H & gate.carg
+                        H & gate.targ
+                else:
+                    gates_reverse.append(gate)
+
+            return gates_reverse
+
         gates = HS_optimize(gates)
+        gates = CX_reverse(gates, control_set)
+        gates = HS_optimize(gates)
+        
         return gates
 
