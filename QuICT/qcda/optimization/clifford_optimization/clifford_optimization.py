@@ -87,46 +87,71 @@ class CliffordOptimization(Optimization):
             assert gate.type in [GateType.cx, GateType.h, GateType.s],\
                 ValueError('Only CX, H, S gates are allowed in this optimization')
 
-        def HS_optimize(gates: CompositeGate):
+        def reorder(gates: CompositeGate):
             """
-            For CompositeGate with CX, H, S only, optimize the single qubit gates trivially
+            For CompositeGate with CX, H, S only, reorder and optimize the gates trivially
             """
+            width = gates.width()
             gates_push = CompositeGate()
-            H_stack = [[] for _ in range(gates.width())]
-            S_stack = [[] for _ in range(gates.width())]
+            CX_stack = [[[] for _ in range(width)] for _ in range(width)]
+            H_stack = [[] for _ in range(width)]
+            S_stack = [[] for _ in range(width)]
             for gate in gates:
                 if gate.type == GateType.h:
-                    if S_stack[gate.targ]:
-                        gates_push.extend(S_stack[gate.targ])
-                        S_stack[gate.targ] = []
+                    # CX
+                    for qubit in range(width):
+                        gates_push.extend(CX_stack[qubit][gate.targ])
+                        gates_push.extend(CX_stack[gate.targ][qubit])
+                        CX_stack[qubit][gate.targ] = []
+                        CX_stack[gate.targ][qubit] = []
+                    # H
                     H_stack[gate.targ].append(gate)
                     if len(H_stack[gate.targ]) == 2:
                         H_stack[gate.targ] = []
+                    # S
+                    gates_push.extend(S_stack[gate.targ])
+                    S_stack[gate.targ] = []
                 if gate.type == GateType.s:
-                    if H_stack[gate.targ]:
-                        gates_push.extend(H_stack[gate.targ])
-                        H_stack[gate.targ] = []
+                    # CX
+                    # S gates on CX.carg commutes with CX
+                    for qubit in range(width):
+                        gates_push.extend(CX_stack[qubit][gate.targ])
+                        CX_stack[qubit][gate.targ] = []
+                    # H
+                    gates_push.extend(H_stack[gate.targ])
+                    H_stack[gate.targ] = []
+                    # S
                     S_stack[gate.targ].append(gate)
                     if len(S_stack[gate.targ]) == 4:
                         S_stack[gate.targ] = []
-                # S gates on CX.carg commutes with CX
                 if gate.type == GateType.cx:
-                    if H_stack[gate.carg]:
-                        gates_push.extend(H_stack[gate.carg])
-                        H_stack[gate.carg] = []
-                    if H_stack[gate.targ]:
-                        gates_push.extend(H_stack[gate.targ])
-                        H_stack[gate.targ] = []
-                    if S_stack[gate.targ]:
-                        gates_push.extend(S_stack[gate.targ])
-                        S_stack[gate.targ] = []
-                    gates_push.append(gate)
-            for qubit in range(gates.width()):
+                    # CX
+                    CX_stack[gate.carg][gate.targ].append(gate)
+                    if len(CX_stack[gate.carg][gate.targ]) == 2:
+                        CX_stack[gate.carg][gate.targ] = []
+                    else:
+                        for qubit in range(width):
+                            gates_push.extend(CX_stack[qubit][gate.carg])
+                            gates_push.extend(CX_stack[gate.targ][qubit])
+                            CX_stack[qubit][gate.carg] = []
+                            CX_stack[gate.targ][qubit] = []
+                    # H
+                    gates_push.extend(H_stack[gate.carg])
+                    H_stack[gate.carg] = []
+                    gates_push.extend(H_stack[gate.targ])
+                    H_stack[gate.targ] = []
+                    # S
+                    # S gates on CX.carg commutes with CX
+                    gates_push.extend(S_stack[gate.targ])
+                    S_stack[gate.targ] = []
+            for qubit in range(width):
+                for targ in range(width):
+                    gates_push.extend(CX_stack[qubit][targ])
                 gates_push.extend(H_stack[qubit])
                 gates_push.extend(S_stack[qubit])
             return gates_push
 
-        def CX_reverse(gates: CompositeGate, control_set: list):
+        def cx_reverse(gates: CompositeGate, control_set: list):
             """
             For CX in the CompositeGate, if its target qubit is in the control_set while its control qubit
             is not, the control and target qubit will be reversed by adding H gates.
@@ -145,9 +170,8 @@ class CliffordOptimization(Optimization):
 
             return gates_reverse
 
-        gates = HS_optimize(gates)
-        gates = CX_reverse(gates, control_set)
-        gates = HS_optimize(gates)
-        
-        return gates
+        gates = reorder(gates)
+        gates = cx_reverse(gates, control_set)
+        gates = reorder(gates)
 
+        return gates

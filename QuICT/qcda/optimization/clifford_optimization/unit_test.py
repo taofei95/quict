@@ -32,14 +32,12 @@ def test_peephole():
     for n in range(2, 6):
         for _ in range(100):
             circuit = Circuit(n)
-            circuit.random_append(10 * n, clifford)
+            circuit.random_append(10 * n, compute_stage)
             gates = CompositeGate(gates=circuit.gates)
-            compute, pauli = CliffordOptimization.partition(gates)
             control_set = random.sample(list(range(n)), 2)
-            meow = CliffordOptimization.symbolic_peephole_optimization(compute, control_set)
-            meow.extend(pauli.gates())
+            meow = CliffordOptimization.symbolic_peephole_optimization(gates, control_set)
             np.set_printoptions(precision=3, suppress=True)
-            assert np.allclose(gates.matrix(), pauli.phase * meow.matrix())
+            assert np.allclose(gates.matrix(), meow.matrix())
 
 
 if __name__ == '__main__':
