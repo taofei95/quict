@@ -9,12 +9,6 @@ from QuICT.core.gate import *
 from QuICT.qcda.optimization.commutative_optimization import CommutativeOptimization
 
 
-def test_commute():
-    a = CX & [0, 1]
-    b = CX & [1, 0]
-    print(a.commutative(b))
-
-
 def test_parameterize():
     gates = CompositeGate()
     with gates:

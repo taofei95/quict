@@ -63,23 +63,23 @@ class CommutativeOptimization(Optimization):
                 Otherwise, the `gate` itself with phase angle 0 will be returned.
         """
         if gate.type == GateType.x:
-            return Rx(np.pi).copy() & gate.targ, np.pi / 2
+            return Rx(np.pi) & gate.targ, np.pi / 2
         if gate.type == GateType.sx:
-            return Rx(np.pi / 2).copy() & gate.targ, 0
+            return Rx(np.pi / 2) & gate.targ, 0
         if gate.type == GateType.y:
-            return Ry(np.pi).copy() & gate.targ, np.pi / 2
+            return Ry(np.pi) & gate.targ, np.pi / 2
         if gate.type == GateType.sy:
-            return Ry(np.pi / 2).copy() & gate.targ, 0
+            return Ry(np.pi / 2) & gate.targ, 0
         if gate.type == GateType.z:
-            return Rz(np.pi).copy() & gate.targ, np.pi / 2
+            return Rz(np.pi) & gate.targ, np.pi / 2
         if gate.type == GateType.s:
-            return Rz(np.pi / 2).copy() & gate.targ, np.pi / 4
+            return Rz(np.pi / 2) & gate.targ, np.pi / 4
         if gate.type == GateType.sdg:
-            return Rz(-np.pi / 2).copy() & gate.targ, -np.pi / 4
+            return Rz(-np.pi / 2) & gate.targ, -np.pi / 4
         if gate.type == GateType.t:
-            return Rz(np.pi / 4).copy() & gate.targ, np.pi / 8
+            return Rz(np.pi / 4) & gate.targ, np.pi / 8
         if gate.type == GateType.tdg:
-            return Rz(-np.pi / 4).copy() & gate.targ, -np.pi / 8
+            return Rz(-np.pi / 4) & gate.targ, -np.pi / 8
         return gate, 0
 
     @staticmethod
@@ -105,61 +105,61 @@ class CommutativeOptimization(Optimization):
             # X
             if np.isclose(np.mod(gate.parg, 2 * np.pi), np.pi):
                 if np.isclose(np.mod(gate.parg, 4 * np.pi), np.pi):
-                    return X.copy() & gate.targ, -np.pi / 2
+                    return X & gate.targ, -np.pi / 2
                 if np.isclose(np.mod(gate.parg, 4 * np.pi), 3 * np.pi):
-                    return X.copy() & gate.targ, np.pi / 2
+                    return X & gate.targ, np.pi / 2
             # SX
             if np.isclose(np.mod(gate.parg, 2 * np.pi), np.pi / 2):
                 if np.isclose(np.mod(gate.parg, 4 * np.pi), np.pi / 2):
-                    return SX.copy() & gate.targ, 0
+                    return SX & gate.targ, 0
                 if np.isclose(np.mod(gate.parg, 4 * np.pi), 5 * np.pi / 2):
-                    return SX.copy() & gate.targ, np.pi
+                    return SX & gate.targ, np.pi
         # Ry
         if gate.type == GateType.ry:
             # Y
             if np.isclose(np.mod(gate.parg, 2 * np.pi), np.pi):
                 if np.isclose(np.mod(gate.parg, 4 * np.pi), np.pi):
-                    return Y.copy() & gate.targ, -np.pi / 2
+                    return Y & gate.targ, -np.pi / 2
                 if np.isclose(np.mod(gate.parg, 4 * np.pi), 3 * np.pi):
-                    return Y.copy() & gate.targ, np.pi / 2
+                    return Y & gate.targ, np.pi / 2
             # SY
             if np.isclose(np.mod(gate.parg, 2 * np.pi), np.pi / 2):
                 if np.isclose(np.mod(gate.parg, 4 * np.pi), np.pi / 2):
-                    return SY.copy() & gate.targ, 0
+                    return SY & gate.targ, 0
                 if np.isclose(np.mod(gate.parg, 4 * np.pi), 5 * np.pi / 2):
-                    return SY.copy() & gate.targ, np.pi
+                    return SY & gate.targ, np.pi
         # Rz
         if gate.type == GateType.rz:
             # Z
             if np.isclose(np.mod(gate.parg, 2 * np.pi), np.pi):
                 if np.isclose(np.mod(gate.parg, 4 * np.pi), np.pi):
-                    return Z.copy() & gate.targ, -np.pi / 2
+                    return Z & gate.targ, -np.pi / 2
                 if np.isclose(np.mod(gate.parg, 4 * np.pi), 3 * np.pi):
-                    return Z.copy() & gate.targ, np.pi / 2
+                    return Z & gate.targ, np.pi / 2
             # S
             if np.isclose(np.mod(gate.parg, 2 * np.pi), np.pi / 2):
                 if np.isclose(np.mod(gate.parg, 4 * np.pi), np.pi / 2):
-                    return S.copy() & gate.targ, -np.pi / 4
+                    return S & gate.targ, -np.pi / 4
                 if np.isclose(np.mod(gate.parg, 4 * np.pi), 5 * np.pi / 2):
-                    return S.copy() & gate.targ, 3 * np.pi / 4
+                    return S & gate.targ, 3 * np.pi / 4
             # S_dagger
             if np.isclose(np.mod(gate.parg, 2 * np.pi), 3 * np.pi / 2):
                 if np.isclose(np.mod(gate.parg, 4 * np.pi), 3 * np.pi / 2):
-                    return S_dagger.copy() & gate.targ, np.pi / 4
+                    return S_dagger & gate.targ, np.pi / 4
                 if np.isclose(np.mod(gate.parg, 4 * np.pi), 7 * np.pi / 2):
-                    return S_dagger.copy() & gate.targ, -3 * np.pi / 4
+                    return S_dagger & gate.targ, -3 * np.pi / 4
             # T
             if np.isclose(np.mod(gate.parg, 2 * np.pi), np.pi / 4):
                 if np.isclose(np.mod(gate.parg, 4 * np.pi), np.pi / 4):
-                    return T.copy() & gate.targ, -np.pi / 8
+                    return T & gate.targ, -np.pi / 8
                 if np.isclose(np.mod(gate.parg, 4 * np.pi), 9 * np.pi / 4):
-                    return T.copy() & gate.targ, 7 * np.pi / 8
+                    return T & gate.targ, 7 * np.pi / 8
             # T_dagger
             if np.isclose(np.mod(gate.parg, 2 * np.pi), 7 * np.pi / 4):
                 if np.isclose(np.mod(gate.parg, 4 * np.pi), 7 * np.pi / 4):
-                    return T_dagger.copy() & gate.targ, np.pi / 8
+                    return T_dagger & gate.targ, np.pi / 8
                 if np.isclose(np.mod(gate.parg, 4 * np.pi), 15 * np.pi / 4):
-                    return T_dagger.copy() & gate.targ, -7 * np.pi / 8
+                    return T_dagger & gate.targ, -7 * np.pi / 8
         # Other
         return gate, 0
 
