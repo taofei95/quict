@@ -4,7 +4,7 @@ import random
 import numpy as np
 
 from QuICT.core import Circuit
-from QuICT.core.gate import CompositeGate
+from QuICT.core.gate import CompositeGate, Rz, H, SX
 from QuICT.core.gate import GateType
 from QuICT.qcda.optimization.clifford_optimization import CliffordOptimization
 
@@ -30,7 +30,7 @@ def test_partition():
 
 def test_peephole():
     for n in range(2, 6):
-        for _ in range(1):
+        for _ in range(100):
             circuit = Circuit(n)
             circuit.random_append(10 * n, compute_stage)
             gates = CompositeGate(gates=circuit.gates)

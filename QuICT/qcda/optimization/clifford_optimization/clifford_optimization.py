@@ -122,7 +122,6 @@ class CliffordOptimization(Optimization):
                         H & gate.targ
                 else:
                     gates_reverse.append(gate)
-
             return gates_reverse
 
         gates = CommutativeOptimization.execute(gates, deparameterization=True)
