@@ -3,6 +3,7 @@ Optimize Clifford circuits with template matching and symbolic peephole optimiza
 """
 
 from QuICT.core.gate import CompositeGate, GateType, H, CX
+from QuICT.qcda.optimization import CommutativeOptimization
 from QuICT.qcda.optimization._optimization import Optimization
 from QuICT.qcda.utility import PauliOperator
 
@@ -63,8 +64,8 @@ class CliffordOptimization(Optimization):
 
         return compute, pauli
 
-    @staticmethod
-    def symbolic_peephole_optimization(gates: CompositeGate, control_set: list):
+    @classmethod
+    def symbolic_peephole_optimization(cls, gates: CompositeGate, control_set: list):
         """
         Symbolic Pauli gate gives another expression for controlled Pauli gates.
         By definition, a controlled-U gate CU means:
@@ -89,67 +90,21 @@ class CliffordOptimization(Optimization):
 
         def reorder(gates: CompositeGate):
             """
-            For CompositeGate with CX, H, S only, reorder and optimize the gates trivially
+            For CompositeGate with CX, H, S only, reorder gates so that S appears as late as possible
             """
             width = gates.width()
-            gates_push = CompositeGate()
-            CX_stack = [[[] for _ in range(width)] for _ in range(width)]
-            H_stack = [[] for _ in range(width)]
+            gates_reorder = CompositeGate()
             S_stack = [[] for _ in range(width)]
             for gate in gates:
-                if gate.type == GateType.h:
-                    # CX
-                    for qubit in range(width):
-                        gates_push.extend(CX_stack[qubit][gate.targ])
-                        gates_push.extend(CX_stack[gate.targ][qubit])
-                        CX_stack[qubit][gate.targ] = []
-                        CX_stack[gate.targ][qubit] = []
-                    # H
-                    H_stack[gate.targ].append(gate)
-                    if len(H_stack[gate.targ]) == 2:
-                        H_stack[gate.targ] = []
-                    # S
-                    gates_push.extend(S_stack[gate.targ])
-                    S_stack[gate.targ] = []
                 if gate.type == GateType.s:
-                    # CX
-                    # S gates on CX.carg commutes with CX
-                    for qubit in range(width):
-                        gates_push.extend(CX_stack[qubit][gate.targ])
-                        CX_stack[qubit][gate.targ] = []
-                    # H
-                    gates_push.extend(H_stack[gate.targ])
-                    H_stack[gate.targ] = []
-                    # S
                     S_stack[gate.targ].append(gate)
-                    if len(S_stack[gate.targ]) == 4:
-                        S_stack[gate.targ] = []
-                if gate.type == GateType.cx:
-                    # CX
-                    CX_stack[gate.carg][gate.targ].append(gate)
-                    if len(CX_stack[gate.carg][gate.targ]) == 2:
-                        CX_stack[gate.carg][gate.targ] = []
-                    else:
-                        for qubit in range(width):
-                            gates_push.extend(CX_stack[qubit][gate.carg])
-                            gates_push.extend(CX_stack[gate.targ][qubit])
-                            CX_stack[qubit][gate.carg] = []
-                            CX_stack[gate.targ][qubit] = []
-                    # H
-                    gates_push.extend(H_stack[gate.carg])
-                    H_stack[gate.carg] = []
-                    gates_push.extend(H_stack[gate.targ])
-                    H_stack[gate.targ] = []
-                    # S
-                    # S gates on CX.carg commutes with CX
-                    gates_push.extend(S_stack[gate.targ])
+                else:
+                    gates_reorder.extend(S_stack[gate.targ])
+                    gates_reorder.append(gate)
                     S_stack[gate.targ] = []
             for qubit in range(width):
-                for targ in range(width):
-                    gates_push.extend(CX_stack[qubit][targ])
-                gates_push.extend(H_stack[qubit])
-                gates_push.extend(S_stack[qubit])
-            return gates_push
+                gates_reorder.extend(S_stack[qubit])
+            return gates_reorder
 
         def cx_reverse(gates: CompositeGate, control_set: list):
             """
@@ -170,6 +125,7 @@ class CliffordOptimization(Optimization):
 
             return gates_reverse
 
+        gates = CommutativeOptimization.execute(gates, deparameterization=True)
         gates = reorder(gates)
         gates = cx_reverse(gates, control_set)
         gates = reorder(gates)

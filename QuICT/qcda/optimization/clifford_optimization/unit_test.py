@@ -30,7 +30,7 @@ def test_partition():
 
 def test_peephole():
     for n in range(2, 6):
-        for _ in range(100):
+        for _ in range(1):
             circuit = Circuit(n)
             circuit.random_append(10 * n, compute_stage)
             gates = CompositeGate(gates=circuit.gates)
