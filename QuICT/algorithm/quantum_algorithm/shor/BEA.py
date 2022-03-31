@@ -20,6 +20,7 @@ from .utility import *
 from QuICT.simulation.cpu_simulator import CircuitSimulator
 from QuICT.simulation import Simulator
 
+
 def construct_circuit(a: int, N: int, eps: float = 1 / 10):
     # phase estimation procedure
     n = int(np.ceil(np.log2(N + 1)))
@@ -48,7 +49,7 @@ def order_finding(a: int, N: int, eps: float = 1 / 10, simulator: Simulator = Ci
     circuit, trickbits = construct_circuit(a, N, eps)
     amp = simulator.run(circuit)
     t = len(trickbits)
- 
+
     # continued fraction procedure
     phi_ =  int(circuit[trickbits]) / (1 << t)
     logging.info(f'\tphi~ (approximately s/r) in decimal form is {phi_}')

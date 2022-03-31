@@ -13,12 +13,16 @@ from .utility import *
 from QuICT.simulation.cpu_simulator import CircuitSimulator
 from QuICT.simulation import Simulator
 from QuICT.algorithm.quantum_algorithm.shor import BEA_zip_run, BEA_circuit, HRS_zip_run, HRS_circuit, BEA_run, HRS_run
+
+
 class ShorFactor:
 
+    # allow -> _ALLOW
     allowed_modes = {"BEA", "HRS", "BEA_zip", "HRS_zip"}
     run_method_of_mode = {"BEA":BEA_run, "HRS":HRS_run, "BEA_zip":BEA_zip_run, "HRS_zip":HRS_zip_run}
     circuit_method_of_mode = {"BEA":BEA_circuit, "HRS":HRS_circuit, "BEA_zip":None, "HRS_zip":None}
 
+    # add a, N here
     def __init__(self, mode: str, N: int, eps: float = 1 / 10, max_rd: int = 2) -> None:
         if mode not in ShorFactor.allowed_modes:
             raise ValueError(f"{mode} mode is not valid. Consider {ShorFactor.allowed_modes}")
@@ -79,7 +83,7 @@ class ShorFactor:
                 r = Fraction(phi).limit_denominator(self.N - 1).denominator
 
             if r == 0: # no order found
-                logging.info(f'Shor failed: did not find the order of a = {a}')
+                logging.info(f'Shor failed: did not find the order of a = {a}')     # add mode info here
             elif r % 2 == 1: # odd order
                 logging.info(f'Shor failed: found odd order r = {r} of a = {a}')
             else: # N | h^2 - 1, h = a^(r/2)
