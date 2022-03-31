@@ -43,7 +43,7 @@ def test_random_build():
 
 
 def test_load():
-    layout = Layout.load_file(os.path.dirname(os.path.abspath(__file__)) + "/../../../example/layout/ibmqx2.layout")
+    layout = Layout.load_file(os.path.dirname(os.path.abspath(__file__)) + "/../../example/layout/ibmqx2.layout")
     assert layout.name == 'ibmqx2'
     assert layout.qubit_number == 5
     assert len(layout.edge_list) == 6

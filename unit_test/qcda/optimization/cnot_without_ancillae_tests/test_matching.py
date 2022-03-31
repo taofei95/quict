@@ -1,7 +1,7 @@
 import random
 
 from .utility import get_bipartite
-from ..edge_coloring import *
+from QuICT.qcda.optimization.cnot_without_ancillae import *
 
 
 def test_matching_keep_origin():

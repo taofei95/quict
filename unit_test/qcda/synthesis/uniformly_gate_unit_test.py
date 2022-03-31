@@ -23,8 +23,8 @@ def generate_unitary():
 
 
 def test_uniform_ry():
-    for _ in range(50):
-        for i in range(1, 8):
+    for _ in range(10):
+        for i in range(1, 6):
             circuit = Circuit(i)
             angles = [random.random() for _ in range(1 << (i - 1))]
             UniformlyRy.execute(angles) | circuit
@@ -35,8 +35,8 @@ def test_uniform_ry():
 
 
 def test_uniform_rz():
-    for _ in range(50):
-        for i in range(1, 8):
+    for _ in range(10):
+        for i in range(1, 6):
             circuit = Circuit(i)
             angles = [random.random() for _ in range(1 << (i - 1))]
             UniformlyRz.execute(angles) | circuit
@@ -48,7 +48,7 @@ def test_uniform_rz():
 
 def test_uniform_unitary():
     for _ in range(10):
-        for i in range(1, 8):
+        for i in range(1, 6):
             circuit = Circuit(i)
             unitaries = [generate_unitary() for _ in range(1 << (i - 1))]
             UniformlyUnitary.execute(unitaries) | circuit
