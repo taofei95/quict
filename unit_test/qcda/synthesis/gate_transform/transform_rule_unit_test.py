@@ -19,7 +19,7 @@ def test_SU2():
 
 def test_rules_transform():
     gateList = [CX, CY, CZ, CH, CRz, Rxx, Ryy, Rzz, FSim]
-    from ..instruction_set import _generate_default_rule
+    from QuICT.qcda.synthesis.gate_transform.instruction_set import _generate_default_rule
     for i in range(len(gateList)):
         for j in range(len(gateList)):
             if i != j:

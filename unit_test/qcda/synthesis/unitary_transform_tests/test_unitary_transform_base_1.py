@@ -15,7 +15,7 @@ def check_args(gates: Sequence[BasicGate]):
 
 
 def test_unitary_transform_base_1():
-    rnd = 50
+    rnd = 10
     for _ in range(rnd):
         qubit_num = np.random.randint(1, 7)
         mat1 = unitary_group.rvs(1 << qubit_num)

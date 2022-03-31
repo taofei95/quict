@@ -76,7 +76,7 @@ def test_2():
             T | circuit(random.randrange(i))
             X | circuit(random.randrange(i))
             CX | circuit(list(cx))
-        new_circuit_gates = CnotLocalForceBfs.execute(circuit, True)
+        new_circuit_gates = CnotLocalForceBfs.execute(circuit, False)
         new_circuit = Circuit(i)
         new_circuit.extend(new_circuit_gates)
         print(circuit)
@@ -93,7 +93,7 @@ def test_3():
             for _ in range(10):
                 cx = _getRandomList(i)
                 CX | circuit(list(cx))
-            new_circuit_gates = CnotLocalForceBfs.execute(circuit, True)
+            new_circuit_gates = CnotLocalForceBfs.execute(circuit, False)
             new_circuit = Circuit(i)
             new_circuit.extend(new_circuit_gates)
             if not check_equiv(circuit, new_circuit):
@@ -117,7 +117,7 @@ def test_5():
         for _ in range(10):
             cx = _getRandomList(i)
             CX | circuit(list(cx))
-        new_circuit_gates = CnotLocalForceDepthBfs.execute(circuit, True)
+        new_circuit_gates = CnotLocalForceDepthBfs.execute(circuit, False)
         new_circuit = Circuit(i)
         new_circuit.extend(new_circuit_gates)
         if not check_equiv(circuit, new_circuit):

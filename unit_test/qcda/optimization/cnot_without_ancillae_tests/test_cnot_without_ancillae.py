@@ -4,11 +4,12 @@ import numpy as np
 from QuICT.core import *
 from QuICT.core.gate import BasicGate, GateType
 
-from ..cnot_without_ancillae import CnotWithoutAncillae
-from ..block_ldu_decompose import BlockLDUDecompose
+from QuICT.qcda.optimization.cnot_without_ancillae import CnotWithoutAncillae
+from QuICT.qcda.optimization.cnot_without_ancillae.block_ldu_decompose import BlockLDUDecompose
 
 from .utility import *
-from ..utility import *
+from QuICT.utility import *
+from QuICT.qcda.optimization.cnot_without_ancillae.utility import *
 
 
 def test_remapping_run():
