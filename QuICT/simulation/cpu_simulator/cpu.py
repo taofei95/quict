@@ -196,6 +196,7 @@ class CircuitSimulator:
         measure: List[List[int]] = [[] for _ in range(circuit.width())]
         for idx, elem in enumerate(mid_map):
             measure[elem].append(measure_raw[idx])
+            circuit.qubits[elem].measured = measure_raw[idx]
 
         return measure
 
