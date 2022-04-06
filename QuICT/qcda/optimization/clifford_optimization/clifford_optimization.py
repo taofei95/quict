@@ -2,6 +2,8 @@
 Optimize Clifford circuits with template matching and symbolic peephole optimization
 """
 
+import random
+
 from QuICT.core.gate import CompositeGate, GateType, H, CX
 from QuICT.qcda.optimization import CommutativeOptimization
 from QuICT.qcda.optimization._optimization import Optimization
@@ -21,7 +23,7 @@ class CliffordOptimization(Optimization):
         https://arxiv.org/abs/2105.02291
     """
     @classmethod
-    def execute(cls, gates: CompositeGate):
+    def execute(cls, gates: CompositeGate, control_set=None):
         """
         Args:
             gates(Circuit/CompositeGate): the Clifford Circuit/CompositeGate to be optimized
@@ -29,22 +31,85 @@ class CliffordOptimization(Optimization):
         Returns:
             CompositeGate: the Clifford CompositeGate after optimization
         """
+        width = gates.width()
+        for gate in gates:
+            assert gate.is_clifford(), ValueError('Only Clifford CompositeGate')
+        assert control_set is None or isinstance(control_set, list),\
+            TypeError('control_set must be list of qubit')
+        if control_set is None:
+            control_set = random.sample(list(range(width)), 2)
+
+        compute, global_pauli = cls.partition(gates, width)
+
+        def reorder(gates: CompositeGate):
+            """
+            For CompositeGate with CX, H, S only, reorder gates so that S appears as late as possible
+            """
+            for gate in gates:
+                assert gate.type in [GateType.cx, GateType.h, GateType.s],\
+                    ValueError('Only CX, H, S gates are allowed in reorder')
+            width = gates.width()
+            gates_reorder = CompositeGate()
+            S_stack = [[] for _ in range(width)]
+            for gate in gates:
+                if gate.type == GateType.s:
+                    S_stack[gate.targ].append(gate)
+                else:
+                    gates_reorder.extend(S_stack[gate.targ])
+                    gates_reorder.append(gate)
+                    S_stack[gate.targ] = []
+            for qubit in range(width):
+                gates_reorder.extend(S_stack[qubit])
+            return gates_reorder
+
+        def cx_reverse(gates: CompositeGate, control_set: list):
+            """
+            For CX in the CompositeGate, if its target qubit is in the control_set while its control qubit
+            is not, the control and target qubit will be reversed by adding H gates.
+            """
+            gates_reverse = CompositeGate()
+            for gate in gates:
+                if gate.type == GateType.cx and gate.carg not in control_set and gate.targ in control_set:
+                    with gates_reverse:
+                        H & gate.carg
+                        H & gate.targ
+                        CX & [gate.targ, gate.carg]
+                        H & gate.carg
+                        H & gate.targ
+                else:
+                    gates_reverse.append(gate)
+            return gates_reverse
+
+        # TODO: More optimization to be added here
+        compute = CommutativeOptimization.execute(compute, deparameterization=True)
+        compute, pauli = cls.partition(compute, width)
+        global_pauli = pauli.combine(global_pauli)
+        compute = cx_reverse(compute, control_set)
+        compute = CommutativeOptimization.execute(compute, deparameterization=True)
+        compute, pauli = cls.partition(compute, width)
+        global_pauli = pauli.combine(global_pauli)
+        compute = reorder(compute)
+
+        compute.extend(global_pauli.gates(keep_phase=True))
+        return compute
 
     @staticmethod
-    def partition(gates: CompositeGate):
+    def partition(gates: CompositeGate, width=None):
         """
         Partition the CompositeGate into compute and Pauli stages, where compute stage contains
         only CX, H, S, Sdg gates and Pauli stage contains only Pauli gates.
 
         Args:
             gates(CompositeGate): Clifford CompositeGate
+            width(int, optional): width of the CompositeGate
 
         Returns:
             CompositeGate, PauliOperator: compute stage and Pauli stage
         """
         for gate in gates:
             assert gate.is_clifford(), ValueError('Only Clifford CompositeGate')
-        width = gates.width()
+        if width is None:
+            width = gates.width()
         pauli = PauliOperator([GateType.id for _ in range(width)])
 
         compute = CompositeGate()
@@ -88,45 +153,5 @@ class CliffordOptimization(Optimization):
             assert gate.type in [GateType.cx, GateType.h, GateType.s],\
                 ValueError('Only CX, H, S gates are allowed in this optimization')
 
-        def reorder(gates: CompositeGate):
-            """
-            For CompositeGate with CX, H, S only, reorder gates so that S appears as late as possible
-            """
-            width = gates.width()
-            gates_reorder = CompositeGate()
-            S_stack = [[] for _ in range(width)]
-            for gate in gates:
-                if gate.type == GateType.s:
-                    S_stack[gate.targ].append(gate)
-                else:
-                    gates_reorder.extend(S_stack[gate.targ])
-                    gates_reorder.append(gate)
-                    S_stack[gate.targ] = []
-            for qubit in range(width):
-                gates_reorder.extend(S_stack[qubit])
-            return gates_reorder
-
-        def cx_reverse(gates: CompositeGate, control_set: list):
-            """
-            For CX in the CompositeGate, if its target qubit is in the control_set while its control qubit
-            is not, the control and target qubit will be reversed by adding H gates.
-            """
-            gates_reverse = CompositeGate()
-            for gate in gates:
-                if gate.type == GateType.cx and gate.carg not in control_set and gate.targ in control_set:
-                    with gates_reverse:
-                        H & gate.carg
-                        H & gate.targ
-                        CX & [gate.targ, gate.carg]
-                        H & gate.carg
-                        H & gate.targ
-                else:
-                    gates_reverse.append(gate)
-            return gates_reverse
-
-        gates = CommutativeOptimization.execute(gates, deparameterization=True)
-        gates = reorder(gates)
-        gates = cx_reverse(gates, control_set)
-        gates = reorder(gates)
-
-        return gates
+        gates_opt = CompositeGate()
+        return gates_opt

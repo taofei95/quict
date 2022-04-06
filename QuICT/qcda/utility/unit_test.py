@@ -17,7 +17,7 @@ def test_combine():
             p2 = PauliOperator.random(n)
             gates = p1.gates(keep_id=True)
             gates.extend(p2.gates(keep_id=True))
-            p1.combine(p2)
+            p1 = p1.combine(p2)
             assert np.allclose(gates.matrix(), p1.phase * p1.gates(keep_id=True).matrix())
 
 

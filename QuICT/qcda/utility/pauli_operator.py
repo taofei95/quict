@@ -6,6 +6,8 @@ import copy
 import random
 import itertools
 
+import numpy as np
+
 from QuICT.core.gate import build_gate, BasicGate, CompositeGate, GateType, PAULI_GATE_SET, CX, H
 
 
@@ -73,7 +75,7 @@ class PauliOperator(object):
         assert phase in phase_list, ValueError("phase must be ±1 or ±i")
         self._phase = phase
 
-    def gates(self, keep_id=False) -> CompositeGate:
+    def gates(self, keep_id=False, keep_phase=False) -> CompositeGate:
         """
         The CompositeGate corresponding to the PauliOperator
 
@@ -88,6 +90,10 @@ class PauliOperator(object):
             if not keep_id and gate_type == GateType.id:
                 continue
             gate = build_gate(gate_type, qubit)
+            gates.append(gate)
+        if keep_phase and not np.isclose(self.phase, 1 + 0j):
+            phase = -1j * np.log(self.phase)
+            gate = build_gate(GateType.phase, 0, phase.real)
             gates.append(gate)
         return gates
 
@@ -173,6 +179,9 @@ class PauliOperator(object):
 
         Args:
             other(PauliOperator): the PauliOperator to be combined
+
+        Returns:
+            PauliOperator: the combined PauliOperator
         """
         assert isinstance(other, PauliOperator),\
             TypeError("combine() only combines PauliOperators.")
@@ -182,6 +191,7 @@ class PauliOperator(object):
         self.phase *= other.phase
         for qubit, gate_type in enumerate(other.operator):
             self.combine_one_gate(gate_type, qubit)
+        return self
 
     def combine_one_gate(self, gate_type: GateType, qubit: int):
         """

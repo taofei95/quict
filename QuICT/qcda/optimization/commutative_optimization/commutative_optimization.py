@@ -362,7 +362,7 @@ class CommutativeOptimization(Optimization):
             else:
                 gates_opt.append(node.gate)
 
-        phase_angle = np.mod(float(phase_angle), 2 * np.pi)
+        phase_angle = np.mod(phase_angle.real, 2 * np.pi)
         if not np.isclose(phase_angle, 0) and not np.isclose(phase_angle, 2 * np.pi):
             with gates_opt:
                 Phase(phase_angle) & 0
