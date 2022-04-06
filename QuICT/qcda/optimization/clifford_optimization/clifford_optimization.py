@@ -27,6 +27,7 @@ class CliffordOptimization(Optimization):
         """
         Args:
             gates(Circuit/CompositeGate): the Clifford Circuit/CompositeGate to be optimized
+            control_set(list): list of qubit, CX coupling control_set and the complement would be decoupled
 
         Returns:
             CompositeGate: the Clifford CompositeGate after optimization
@@ -90,6 +91,7 @@ class CliffordOptimization(Optimization):
         global_pauli = pauli.combine(global_pauli)
         compute = reorder(compute)
 
+        compute = cls.symbolic_peephole_optimization(compute, control_set)
         compute.extend(global_pauli.gates(keep_phase=True))
         return compute
 
@@ -153,5 +155,31 @@ class CliffordOptimization(Optimization):
             assert gate.type in [GateType.cx, GateType.h, GateType.s],\
                 ValueError('Only CX, H, S gates are allowed in this optimization')
 
+        def local_symbolic_optimization(gates: CompositeGate, control: int):
+            """
+            Inner method for symbolic peephole optimization
+            """
+            return gates
+
         gates_opt = CompositeGate()
+        current = CompositeGate()
+        control = None
+        for gate in gates:
+            if current.size() != 0:
+                if ((gate.type != GateType.cx and gate.targ != control) or
+                   (gate.type == GateType.cx and (gate.carg == control or gate.carg not in control_set))):
+                    current.append(gate)
+                else:
+                    gates_opt.extend(local_symbolic_optimization(current, control))
+                    current = CompositeGate()
+            if current.size() == 0:
+                if (gate.type != GateType.cx or
+                   (gate.type == GateType.cx and gate.carg not in control_set)):
+                    gates_opt.append(gate)
+                else:
+                    current.append(gate)
+                    control = gate.carg
+
+        if current.size() != 0:
+            gates_opt.extend(local_symbolic_optimization(current, control))
         return gates_opt
