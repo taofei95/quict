@@ -9,6 +9,7 @@ import numpy as np
 from QuICT.core.gate import CompositeGate, GateType, H, CX, CY, CZ, X, S, Z, S_dagger
 from QuICT.qcda.optimization import CommutativeOptimization
 from QuICT.qcda.optimization._optimization import Optimization
+from QuICT.qcda.synthesis.gate_transform.transform_rule import Cy2CxRule, Cz2CxRule
 from QuICT.qcda.utility import PauliOperator
 
 
@@ -83,17 +84,24 @@ class CliffordOptimization(Optimization):
                     gates_reverse.append(gate)
             return gates_reverse
 
-        # TODO: More optimization to be added here
-        compute = CommutativeOptimization.execute(compute, deparameterization=True)
-        compute, pauli = cls.partition(compute, width)
-        global_pauli = pauli.combine(global_pauli)
-        compute = cx_reverse(compute, control_set)
-        compute = CommutativeOptimization.execute(compute, deparameterization=True)
-        compute, pauli = cls.partition(compute, width)
-        global_pauli = pauli.combine(global_pauli)
-        compute = reorder(compute)
+        def circular_optimization(gates: CompositeGate, width: int, global_pauli: PauliOperator):
+            # TODO: More optimization to be added here
+            while True:
+                gates_opt = CommutativeOptimization.execute(gates, deparameterization=True)
+                compute, pauli = cls.partition(gates_opt, width)
+                global_pauli = pauli.combine(global_pauli)
+                if compute.size() == gates.size() and gates_opt.size() == gates.size():
+                    break
+                gates = compute
+            return compute, global_pauli
 
+        compute, global_pauli = circular_optimization(compute, width, global_pauli)
+        compute = cx_reverse(compute, control_set)
+        compute, global_pauli = circular_optimization(compute, width, global_pauli)
+        compute = reorder(compute)
         compute = cls.symbolic_peephole_optimization(compute, control_set)
+        compute, global_pauli = circular_optimization(compute, width, global_pauli)
+
         compute.extend(global_pauli.gates(keep_phase=True))
         return compute
 
@@ -186,9 +194,9 @@ class CliffordOptimization(Optimization):
                 if pauli.operator[qubit] == GateType.x:
                     compute.append(CX & [control, qubit])
                 if pauli.operator[qubit] == GateType.y:
-                    compute.append(CY & [control, qubit])
+                    compute.extend(Cy2CxRule.transform(CY & [control, qubit]))
                 if pauli.operator[qubit] == GateType.z:
-                    compute.append(CZ & [control, qubit])
+                    compute.extend(Cz2CxRule.transform(CZ & [control, qubit]))
             # restore the symbolic phase
             if np.isclose(pauli.phase, 1j):
                 compute.append(S & control)

@@ -268,7 +268,7 @@ class CommutativeOptimization(Optimization):
         raise TypeError('Gate {} of unknown type encountered'.format(gate_x.name))
 
     @classmethod
-    def execute(cls, gates, parameterization=True, deparameterization=False):
+    def execute(cls, gates, parameterization=True, deparameterization=False) -> CompositeGate:
         """
         Optimize the given Circuit/CompositeGate by merging the adjacent gates with
         the commutative relation between gates in consideration.
