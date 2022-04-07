@@ -2,6 +2,7 @@
 Optimize Clifford circuits with template matching and symbolic peephole optimization
 """
 
+import itertools
 import random
 
 import numpy as np
@@ -26,11 +27,12 @@ class CliffordOptimization(Optimization):
         https://arxiv.org/abs/2105.02291
     """
     @classmethod
-    def execute(cls, gates: CompositeGate, control_set=None):
+    def execute(cls, gates: CompositeGate, control_sets=None):
         """
         Args:
             gates(Circuit/CompositeGate): the Clifford Circuit/CompositeGate to be optimized
-            control_set(list): list of qubit, CX coupling control_set and the complement would be decoupled
+            control_sets(list, optional): containing several control_set, which is list of qubit,
+                                          CX coupling control_set and the complement would be decoupled
 
         Returns:
             CompositeGate: the Clifford CompositeGate after optimization
@@ -38,10 +40,10 @@ class CliffordOptimization(Optimization):
         width = gates.width()
         for gate in gates:
             assert gate.is_clifford(), ValueError('Only Clifford CompositeGate')
-        assert control_set is None or isinstance(control_set, list),\
+        assert control_sets is None or isinstance(control_sets, list),\
             TypeError('control_set must be list of qubit')
-        if control_set is None:
-            control_set = random.sample(list(range(width)), 2)
+        if control_sets is None:
+            control_sets = list(itertools.combinations(range(width), 2))
 
         compute, global_pauli = cls.partition(gates, width)
 
@@ -95,12 +97,18 @@ class CliffordOptimization(Optimization):
                 gates = compute
             return compute, global_pauli
 
-        compute, global_pauli = circular_optimization(compute, width, global_pauli)
-        compute = cx_reverse(compute, control_set)
-        compute, global_pauli = circular_optimization(compute, width, global_pauli)
-        compute = reorder(compute)
-        compute = cls.symbolic_peephole_optimization(compute, control_set)
-        compute, global_pauli = circular_optimization(compute, width, global_pauli)
+        size = compute.size()
+        while True:
+            control_set = list(random.choice(control_sets))
+            compute, global_pauli = circular_optimization(compute, width, global_pauli)
+            compute = cx_reverse(compute, control_set)
+            compute, global_pauli = circular_optimization(compute, width, global_pauli)
+            compute = reorder(compute)
+            compute = cls.symbolic_peephole_optimization(compute, control_set)
+            compute, global_pauli = circular_optimization(compute, width, global_pauli)
+            if compute.size() == size:
+                break
+            size = compute.size()
 
         compute.extend(global_pauli.gates(keep_phase=True))
         return compute

@@ -1,5 +1,4 @@
 import pytest
-import random
 
 import numpy as np
 
@@ -15,9 +14,9 @@ compute_stage = [GateType.cx, GateType.h, GateType.s]
 
 def test_partition():
     for n in range(2, 6):
-        for _ in range(100):
+        for _ in range(10):
             circuit = Circuit(n)
-            circuit.random_append(10 * n, clifford)
+            circuit.random_append(20 * n, clifford)
             gates = CompositeGate(gates=circuit.gates)
             compute, pauli = CliffordOptimization.partition(gates)
             for gate in compute:
@@ -29,12 +28,11 @@ def test_partition():
 
 def test():
     for n in range(2, 6):
-        for _ in range(100):
+        for _ in range(10):
             circuit = Circuit(n)
-            circuit.random_append(10 * n, clifford)
+            circuit.random_append(20 * n, clifford)
             gates = CompositeGate(gates=circuit.gates)
-            control_set = random.sample(list(range(n)), 2)
-            gates_opt = CliffordOptimization.execute(gates, control_set)
+            gates_opt = CliffordOptimization.execute(gates)
             # np.set_printoptions(precision=3, suppress=True)
             assert np.allclose(gates.matrix(), gates_opt.matrix())
 
