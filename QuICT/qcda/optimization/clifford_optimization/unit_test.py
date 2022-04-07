@@ -4,8 +4,7 @@ import random
 import numpy as np
 
 from QuICT.core import Circuit
-from QuICT.core.gate import CompositeGate, Rz, H, SX
-from QuICT.core.gate import GateType
+from QuICT.core.gate import CompositeGate, GateType
 from QuICT.qcda.optimization.clifford_optimization import CliffordOptimization
 
 pauli_list = [GateType.id, GateType.x, GateType.y, GateType.z]

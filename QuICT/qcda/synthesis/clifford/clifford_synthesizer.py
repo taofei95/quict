@@ -9,8 +9,7 @@ import multiprocessing as mp
 import numpy as np
 
 from QuICT.core import Circuit
-from QuICT.core.gate import CompositeGate
-from QuICT.core.utils.gate_type import GateType
+from QuICT.core.gate import CompositeGate, GateType
 from QuICT.qcda.synthesis._synthesis import Synthesis
 from QuICT.qcda.utility import PauliOperator
 

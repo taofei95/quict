@@ -4,7 +4,9 @@ Optimize Clifford circuits with template matching and symbolic peephole optimiza
 
 import random
 
-from QuICT.core.gate import CompositeGate, GateType, H, CX
+import numpy as np
+
+from QuICT.core.gate import CompositeGate, GateType, H, CX, CY, CZ, X, S, Z, S_dagger
 from QuICT.qcda.optimization import CommutativeOptimization
 from QuICT.qcda.optimization._optimization import Optimization
 from QuICT.qcda.utility import PauliOperator
@@ -145,7 +147,8 @@ class CliffordOptimization(Optimization):
         rules of 1-qubit gates could be used to optimize Clifford circuits.
 
         Args:
-            gates(CompositeGate): CompositeGate with CX, H, S gates only, to be optimized
+            gates(CompositeGate): CompositeGate with CX, H, S gates only where the CX coupling control_set
+                and the complement must have the control qubit in control_set
             control_set(list): list of qubit, CX coupling control_set and the complement would be decoupled
 
         Returns:
@@ -154,12 +157,47 @@ class CliffordOptimization(Optimization):
         for gate in gates:
             assert gate.type in [GateType.cx, GateType.h, GateType.s],\
                 ValueError('Only CX, H, S gates are allowed in this optimization')
+            if gate.type == GateType.cx:
+                assert not (gate.carg not in control_set and gate.targ in control_set),\
+                    ValueError('Coupling CX must have the control qubit in control_set')
 
         def local_symbolic_optimization(gates: CompositeGate, control: int):
             """
             Inner method for symbolic peephole optimization
             """
-            return gates
+            for gate in gates:
+                assert gate.targ != control, ValueError('control qubit should not be targeted')
+
+            symbolic_gates = CompositeGate()
+            for gate in gates:
+                # symbolize coupling cx
+                if gate.type == GateType.cx and gate.carg == control:
+                    symbolic_gates.append(X & gate.targ)
+                else:
+                    symbolic_gates.append(gate)
+
+            # pauli here is symbolic pauli, including symbolic phase
+            compute, pauli = cls.partition(symbolic_gates)
+            # restore the symbolic pauli
+            for qubit in range(pauli.width):
+                if qubit == control:
+                    assert pauli.operator[qubit] == GateType.id
+                    continue
+                if pauli.operator[qubit] == GateType.x:
+                    compute.append(CX & [control, qubit])
+                if pauli.operator[qubit] == GateType.y:
+                    compute.append(CY & [control, qubit])
+                if pauli.operator[qubit] == GateType.z:
+                    compute.append(CZ & [control, qubit])
+            # restore the symbolic phase
+            if np.isclose(pauli.phase, 1j):
+                compute.append(S & control)
+            if np.isclose(pauli.phase, -1):
+                compute.append(Z & control)
+            if np.isclose(pauli.phase, -1j):
+                compute.append(S_dagger & control)
+
+            return compute
 
         gates_opt = CompositeGate()
         current = CompositeGate()
