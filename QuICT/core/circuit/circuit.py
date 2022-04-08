@@ -10,12 +10,13 @@ from QuICT.core.qubit import Qubit, Qureg
 from QuICT.core.exception import TypeException
 from QuICT.core.layout import Layout, SupremacyLayout
 from QuICT.core.gate import BasicGate, H, Measure, build_random_gate, build_gate
+from QuICT.core.noise import NoiseGate
 from QuICT.core.utils import (
     GateType,
     CircuitInformation,
     matrix_product_to_circuit
 )
-from .circuit_extend import Trigger, NoiseGate
+from .circuit_extend import Trigger
 
 
 # global circuit id count
@@ -324,6 +325,11 @@ class Circuit(object):
 
         for idx, qubit in enumerate(self.qubits):
             self._idmap[qubit.id] = idx
+
+    def replace_gate(self, idx: int, gate: Union[BasicGate, NoiseGate]):
+        assert idx >= 0 and idx < len(self._gates), "The index of replaced gate is wrong."
+        assert isinstance(gate, (BasicGate, NoiseGate)), "The replaced gate must be a quantum gate or noised gate."
+        self._gates[idx] = gate
 
     def extend(self, gates):
         """ add gates to the circuit

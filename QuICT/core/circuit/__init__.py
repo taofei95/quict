@@ -5,4 +5,4 @@
 # @File    : __init__.py
 
 from .circuit import Circuit
-from .circuit_extend import Trigger, NoiseGate
+from .circuit_extend import Trigger

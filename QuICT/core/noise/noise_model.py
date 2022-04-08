@@ -2,7 +2,8 @@ from typing import Union, List
 from collections import defaultdict
 
 from QuICT.core.noise import QuantumNoiseError
-from QuICT.core.gate import GateType, GATE_TYPE_TO_CLASS
+from QuICT.core.gate import BasicGate, GateType, GATE_TYPE_TO_CLASS
+from .noise_gate import NoiseGate
 
 
 class NoiseModel:
@@ -72,24 +73,32 @@ class NoiseModel:
         self._instruction["all-qubits"].append((noise, gates))
         self._all_qubits_error_gates += gates if isinstance(gates, list) else [gates]
 
-    def apply_to_gate(self, gate):
-        gate_str = gate.type.name
-        noise_list = []
-        if gate_str in self._all_qubits_error_gates:
-            noise_list += self._kraus_matrix_for_all_qubits(gate)
+    def circuit_apply(self, circuit):
+        cir_gates = circuit.gates[:]
+        for idx, gate in enumerate(cir_gates):
+            if not isinstance(gate, BasicGate):
+                continue
 
-        if gate_str in self._specified_error_gates:
-            noise_list += self._kraus_matrix_for_specified_qubits(gate)
+            gate_str = gate.type.name
+            noise_list = []
+            if gate_str in self._all_qubits_error_gates:
+                noise_list += self._kraus_matrix_for_all_qubits(gate)
 
-        if not noise_list:
-            return []
+            if gate_str in self._specified_error_gates:
+                noise_list += self._kraus_matrix_for_specified_qubits(gate)
 
-        based_noise = noise_list[0]
-        if len(noise_list) > 1:
-            for n in noise_list[1:]:
-                based_noise = based_noise.compose(n)
+            if not noise_list:
+                continue
 
-        return based_noise.apply_to_gate(gate.matrix)
+            based_noise = noise_list[0]
+            if len(noise_list) > 1:
+                for n in noise_list[1:]:
+                    based_noise = based_noise.compose(n)
+
+            noise_gate = NoiseGate(gate, based_noise)
+            circuit.replace_gate(idx, noise_gate)
+
+        return circuit
 
     def _kraus_matrix_for_all_qubits(self, gate):
         gate_str = gate.type.name
