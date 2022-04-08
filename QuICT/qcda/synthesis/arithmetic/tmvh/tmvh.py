@@ -4,7 +4,7 @@
 # @Author  : Zhu Qinlin
 # @File    : tmvh.py
 
-from QuICT.core import CX, CCX, CompositeGate, X
+from QuICT.core.gate import CX, CCX, CompositeGate, X
 from ..._synthesis import Synthesis
 
 

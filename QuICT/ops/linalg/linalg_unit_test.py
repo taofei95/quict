@@ -7,14 +7,16 @@
 import os
 import unittest
 import numpy as np
-import cupy as cp
 
 import QuICT.ops.linalg.cpu_calculator as CPUCalculator
-import QuICT.ops.linalg.gpu_calculator as GPUCalculator
-
 from QuICT.core import Circuit
 from QuICT.core.gate import *
 from QuICT.simulation.unitary_simulator import UnitarySimulator
+
+
+if os.environ.get("test_with_gpu"):
+    import cupy as cp
+    import QuICT.ops.linalg.gpu_calculator as GPUCalculator
 
 
 @unittest.skipUnless(os.environ.get("test_with_gpu", False), "require GPU")
@@ -97,10 +99,10 @@ class TestGPULinalg(unittest.TestCase):
         vec = cp.zeros((1 << qubit_num, ), dtype=np.complex64)
         vec.put(0, np.complex64(1))
 
-        small_gates = UnitarySimulator.pretreatment(circuit)
+        small_gates = UnitarySimulator().pretreatment(circuit)
         for gate in small_gates:
             GPUCalculator.matrix_dot_vector(
-                gate.compute_matrix,
+                gate.matrix,
                 gate.targets + gate.controls,
                 vec,
                 qubit_num,

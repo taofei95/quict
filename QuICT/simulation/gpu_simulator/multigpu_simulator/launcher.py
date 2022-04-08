@@ -1,8 +1,13 @@
+import multiprocessing as mp
 from concurrent.futures import ProcessPoolExecutor, as_completed
 from cupy.cuda import nccl
 
 from QuICT.utility import Proxy
 from .multigpu_simulator import MultiStateVectorSimulator
+
+
+if mp.get_start_method(allow_none=True) != "spawn":
+    mp.set_start_method("spawn", force=True)
 
 
 def worker(ndev, uid, dev_id, precision, sync, circuit):

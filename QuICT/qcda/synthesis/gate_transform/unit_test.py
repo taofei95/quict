@@ -16,7 +16,7 @@ def test_google():
         circuit = Circuit(i)
         circuit.random_append(100)
         compositeGate = GateTransform.execute(circuit, GoogleSet)
-        B = CompositeGate(circuit, with_copy=False)
+        B = CompositeGate(gates=circuit.gates)
         assert compositeGate.equal(B)
 
 
@@ -25,7 +25,7 @@ def test_ustc():
         circuit = Circuit(i)
         circuit.random_append(100)
         compositeGate = GateTransform.execute(circuit)
-        B = CompositeGate(circuit, with_copy=False)
+        B = CompositeGate(gates=circuit.gates)
         assert compositeGate.equal(B)
 
 
@@ -34,7 +34,7 @@ def test_ibmq():
         circuit = Circuit(i)
         circuit.random_append(100)
         compositeGate = GateTransform.execute(circuit, IBMQSet)
-        B = CompositeGate(circuit, with_copy=False)
+        B = CompositeGate(gates=circuit.gates)
         assert compositeGate.equal(B)
 
 
@@ -43,7 +43,7 @@ def test_ionq():
         circuit = Circuit(i)
         circuit.random_append(100)
         compositeGate = GateTransform.execute(circuit, IonQSet)
-        B = CompositeGate(circuit, with_copy=False)
+        B = CompositeGate(gates=circuit.gates)
         assert compositeGate.equal(B)
 
 
@@ -53,7 +53,7 @@ def test_buildZyz():
         circuit = Circuit(i)
         circuit.random_append(100)
         compositeGate = GateTransform.execute(circuit, buildSet)
-        B = CompositeGate(circuit, with_copy=False)
+        B = CompositeGate(gates=circuit.gates)
         assert compositeGate.equal(B)
 
 
@@ -65,7 +65,7 @@ def test_buildZyzWithRegister():
         circuit = Circuit(i)
         circuit.random_append(100)
         compositeGate = GateTransform.execute(circuit, buildSet)
-        B = CompositeGate(circuit, with_copy=False)
+        B = CompositeGate(gates=circuit.gates)
         assert compositeGate.equal(B)
 
 

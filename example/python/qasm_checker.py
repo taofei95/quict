@@ -6,7 +6,6 @@
 
 from QuICT.tools.interface import OPENQASMInterface
 from QuICT.simulation.gpu_simulator import ConstantStateVectorSimulator
-from QuICT.core import *
 
 
 # load qasm
@@ -17,9 +16,7 @@ if qasm.valid_circuit:
     print(circuit.qasm())
 
     simulator = ConstantStateVectorSimulator()
-    state = simulator.run(circuit)
-
-    print(state)
+    _ = simulator.run(circuit)
 
     new_qasm = OPENQASMInterface.load_circuit(circuit)
     new_qasm.output_qasm("test.qasm")

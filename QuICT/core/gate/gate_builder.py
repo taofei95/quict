@@ -2,7 +2,8 @@
 # -*- coding:utf8 -*-
 # @TIME    : 2022/1/14 10:54
 # @Author  : Han Yu, Li Kaiqi
-# @File    : _gateBuilder.py
+# @File    : gate_builder.py
+
 import numpy as np
 import random
 

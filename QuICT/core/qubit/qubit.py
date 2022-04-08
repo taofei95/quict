@@ -219,6 +219,17 @@ class Qureg(list):
         Return:
             Qureg: the result or slice
         """
+        return Qureg([self, other])
+
+    def __iadd__(self, other):
+        """ get a combined qureg with this qureg and other qureg
+
+        Args:
+            other(Qureg): qureg to be added.
+
+        Return:
+            Qureg: the result or slice
+        """
         if isinstance(other, Qubit):
             self.append(other)
         elif isinstance(other, Qureg):

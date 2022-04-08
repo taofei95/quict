@@ -1,3 +1,4 @@
+import numpy as np
 from scipy.stats import unitary_group
 from QuICT.qcda.synthesis.unitary_transform import UnitaryTransform
 from QuICT.core import *

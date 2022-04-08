@@ -12,6 +12,7 @@ from .._optimization import Optimization
 from .cnot_force import CnotForceBfs
 from .cnot_store_force import CnotStoreForceBfs
 from QuICT.core import *
+from QuICT.core.gate import CX, GateType
 
 
 def _matrix_product_to_bigger(space, gate) -> np.ndarray:
@@ -38,7 +39,7 @@ def _matrix_product_to_bigger(space, gate) -> np.ndarray:
                 targs.append(i)
                 break
 
-    matrix = gate.compute_matrix.reshape(1 << len(targs), 1 << len(targs))
+    matrix = gate.matrix.reshape(1 << len(targs), 1 << len(targs))
     datas = np.zeros(n, dtype=int)
     for i in range(n):
         nowi = 0
@@ -98,7 +99,7 @@ def traver_with_fix_qubits(gates: list, fix: set, store):
     output = []
     local_list = []
     for gate in gates:
-        if gate.type() == GATE_ID["CX"]:
+        if gate.type == GateType.cx:
             fix_in = int(gate.carg in fix) + int(gate.targ in fix)
             if fix_in == 2:
                 local_list.append(gate)
@@ -199,4 +200,4 @@ class CnotLocalForceBfs(Optimization):
             Circuit: output circuit
         """
         gates = circuit.gates
-        return solve(gates, circuit.circuit_width(), store)
+        return solve(gates, circuit.width(), store)

@@ -82,7 +82,7 @@ class TestCircuit(unittest.TestCase):
         assert mp_data.shape == (1 << 5, 1 << 5)
 
     def test_circuit_remapping(self):
-        cir = TestCircuit.based_circuit
+        cir = Circuit(TestCircuit.qubits)
         q1 = cir[1:4]
         assert q1[0] == cir[1]
 

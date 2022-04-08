@@ -7,7 +7,7 @@
 from .. import InstructionSet
 from ..transform_rule import XyxRule
 
-from QuICT.core import *
+from QuICT.core.gate import *
 
 IonQSet = InstructionSet([Rxx, Rx, Ry, Rz])
 IonQSet.register_SU2_rule(XyxRule)

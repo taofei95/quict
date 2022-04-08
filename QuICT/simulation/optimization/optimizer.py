@@ -76,7 +76,7 @@ class Optimizer:
     def _1qubit_gates_clean(self, args):
         for arg in args:
             if self._gates_by_qubit[arg]:
-                self.single_gates_combined(self._gates_by_qubit[arg])
+                self.single_gates_combined(arg)
                 del self._gates_by_qubit[arg]
 
     def _gate_combined(self, qubit_idxes: list):

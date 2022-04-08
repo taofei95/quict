@@ -6,13 +6,8 @@
 import time
 
 from QuICT.core import Circuit
-# from QuICT.simulation.CPU_simulator import CircuitSimulator
-from QuICT.simulation.gpu_simulator import (
-    ConstantStateVectorSimulator,
-    MultiDeviceSimulatorLauncher
-)
+from QuICT.simulation.cpu_simulator import CircuitSimulator
 from QuICT.simulation.unitary_simulator import UnitarySimulator
-from QuICT.simulation.remote_simulator import QuantumLeafSimulator, QiskitSimulator
 from QuICT.simulation.utils import option_validation, Result
 
 
@@ -28,17 +23,13 @@ class Simulator:
 
     __DEVICE = ["CPU", "GPU", "qiskit", "qcompute"]
     __BACKEND = ["unitary", "statevector", "multiGPU"]
-    __REMOTE_BACKEND_MAPPING = {
-        "qiskit": QiskitSimulator,
-        "qcompute": QuantumLeafSimulator
-    }
 
     def __init__(
-        self,
-        device: str,
-        backend: str,
-        shots: int = 1,
-        **options
+            self,
+            device: str,
+            backend: str,
+            shots: int = 1,
+            **options
     ):
         assert (shots >= 1)
         self._device = device
@@ -63,14 +54,20 @@ class Simulator:
 
     def _load_simulator(self):
         """ Initial simulator. """
-        if self._device in Simulator.__REMOTE_BACKEND_MAPPING.keys():
+        if self._device in Simulator.__DEVICE[-2:]:
             return self._load_remote_simulator()
+
+        if self._device == "GPU":
+            from QuICT.simulation.gpu_simulator import (
+                ConstantStateVectorSimulator,
+                MultiDeviceSimulatorLauncher
+            )
 
         if self._backend == "unitary":
             simulator = UnitarySimulator(device=self._device, **self._options)
         elif self._backend == "statevector":
             simulator = ConstantStateVectorSimulator(**self._options) \
-                if self._device == "GPU" else None  # CircuitSimulator
+                if self._device == "GPU" else CircuitSimulator()
         elif self._backend == "multiGPU":
             assert self._device == "GPU"
             simulator = MultiDeviceSimulatorLauncher(**self._options)
@@ -83,18 +80,25 @@ class Simulator:
 
     def _load_remote_simulator(self):
         """ Initial Remote simulator. """
-        return Simulator.__REMOTE_BACKEND_MAPPING[self._device](
-            backend=self._backend,
-            shots=self._shots,
-            **self._options
-        )
+        from QuICT.simulation.remote_simulator import QuantumLeafSimulator, QiskitSimulator
+
+        if self._device == "qiskit":
+            simulator = QiskitSimulator(backend=self._backend, shots=self._shots, **self._options)
+        elif self._device == "qcompute":
+            simulator = QuantumLeafSimulator(backend=self._backend, shots=self._shots, **self._options)
+        else:
+            raise ValueError(
+                f"Unsupportted remote device {self._device}, please select one of [qiskit, qcompute]."
+            )
+
+        return simulator
 
     def run(
-        self,
-        circuit: Circuit,
-        use_previous: bool = False,
-        circuit_out: bool = False,
-        statevector_out: bool = False
+            self,
+            circuit: Circuit,
+            use_previous: bool = False,
+            circuit_out: bool = False,
+            statevector_out: bool = False
     ):
         """ start simulator with given circuit
 

@@ -60,7 +60,7 @@ def test_qureg_operation():
 
     # diff
     diff_q = q1.diff(q2)
-    assert diff_q == q1
+    assert diff_q == q2
 
 
 if __name__ == "__main__":
