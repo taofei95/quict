@@ -8,8 +8,8 @@ from collections import defaultdict
 import numpy as np
 import cupy as cp
 
-from QuICT.core import Circuit
-from QuICT.core.gate import Measure
+from QuICT.core import Circuit, Trigger
+from QuICT.core.gate import Measure, BasicGate
 from QuICT.core.utils import GateType
 from QuICT.ops.utils import LinAlgLoader
 from QuICT.simulation.gpu_simulator import BasicGPUSimulator
@@ -94,15 +94,21 @@ class ConstantStateVectorSimulator(BasicGPUSimulator):
         self._initial_circuit(circuit, use_previous)
 
         with cp.cuda.Device(self._device_id):
-            for gate in self._gates:
-                self.apply_gate(gate)
+            self._exec(self._gates)
 
         if record_measured:
             return self.vector, self._measure_result
         else:
             return self.vector
 
-    def apply_gate(self, gate):
+    def _exec(self, gates: list):
+        for gate in gates:
+            if isinstance(gate, BasicGate):
+                self.apply_gate(gate)
+            elif isinstance(gate, Trigger):
+                self.apply_trigger(gate)
+
+    def apply_gate(self, gate: BasicGate):
         """ Depending on the given quantum gate, apply the target algorithm to calculate the state vector.
 
         Args:
@@ -283,6 +289,7 @@ class ConstantStateVectorSimulator(BasicGPUSimulator):
         # [Barrier]
         elif gate_type == GateType.barrier:
             pass
+        # [permutation]
         elif gate_type == GateType.perm:
             args = gate.cargs + gate.targs
             if len(args) == self._qubits:
@@ -299,6 +306,7 @@ class ConstantStateVectorSimulator(BasicGPUSimulator):
                 gpu_out=False,
                 sync=self._sync
             )
+        # [special perm gate]
         elif gate_type in GATE_TYPE_to_ID[GateGroup.perm_gate]:
             args = gate.cargs + gate.targs
             if len(args) == self._qubits:
@@ -381,6 +389,25 @@ class ConstantStateVectorSimulator(BasicGPUSimulator):
         # unsupported quantum gates
         else:
             raise KeyError(f"Unsupported Gate: {gate_type}")
+
+    def apply_trigger(self, op: Trigger):
+        sorted_targs = sorted(op.targs, reverse=True)
+        state = 0
+        for targ in sorted_targs:
+            index = self._qubits - 1 - targ
+            result = self._algorithm.MeasureGate_Apply(
+                index,
+                self._vector,
+                self._qubits,
+                self._sync
+            )
+            state <<= 1
+            state += int(result)
+
+        cgate = op.mapping(state)
+        if cgate is not None:
+            self.gateM_optimizer.build(cgate.gates)
+            self._exec(cgate)
 
     def sample(self):
         assert (self._circuit is not None)

@@ -9,6 +9,27 @@ from .utils import is_kraus_ops, NoiseChannel
 
 
 class QuantumNoiseError:
+    @property
+    def kraus_operators(self):
+        return self._operators
+
+    @property
+    def kraus_operators_ctranspose(self):
+        return self._conj_ops
+
+    @property
+    def type(self):
+        return self._type
+
+    @type.setter
+    def type(self, channel: NoiseChannel):
+        assert isinstance(channel, NoiseChannel)
+        self._type = channel
+
+    @property
+    def qubits(self):
+        return self._qubits
+
     def __init__(self, ops: list):
         if not isinstance(ops, (tuple, list)):
             raise TypeError("Wrong input for Noise Error.")
@@ -16,35 +37,37 @@ class QuantumNoiseError:
         if not is_kraus_ops(ops):
             raise KeyError("There is not a Kraus operator.")
 
-        self.operators = ops
-        self.conj_ops = self.conj_trans()
-        self.qubits = int(np.log2(ops[0].shape[0]))
-        self.type = NoiseChannel.kraus
+        self._operators = ops
+        self._conj_ops = self.conj_trans()
+        self._qubits = int(np.log2(ops[0].shape[0]))
+        self._type = NoiseChannel.kraus
 
     def __str__(self):
         ne_str = f"{self.type.value} with {self.qubits} qubits.\n"
-        for i, km in enumerate(self.operators):
+        for i, km in enumerate(self.kraus_operators):
             ne_str += f"Kraus_{i}: {km}\n"
 
         return ne_str
 
     def conj_trans(self):
-        return [np.transpose(k).conjugate() for k in self.operators]
+        return [np.transpose(k).conjugate() for k in self.kraus_operators]
 
     def compose(self, other):
         assert other.qubits == self.qubits
 
-        ops = [dot(so, oo) for oo in other.operators for so in self.operators]
+        ops = [dot(so, oo) for oo in other.kraus_operators for so in self.kraus_operators]
         return KrausError(ops)
 
     def tensor(self, other):
         assert other.qubits == self.qubits
 
-        ops = [tensor(so, oo) for oo in other.operators for so in self.operators]
+        ops = [tensor(so, oo) for oo in other.kraus_operators for so in self.kraus_operators]
         return KrausError(ops)
 
-    def apply_to_gate(self, gate):
-        return [ops.dot(gate.matrix) for ops in self.operators]
+    def apply_to_gate(self, matrix: np.ndarray):
+        assert matrix.shape == (2 ** self._qubits, 2 ** self._qubits)
+
+        return [ops.dot(matrix) for ops in self.kraus_operators]
 
 
 class KrausError(QuantumNoiseError):
@@ -102,20 +125,18 @@ class PauilError(QuantumNoiseError):
         if not math.isclose(total_prob, 1, rel_tol=1e-6):
             raise KeyError("Pauil Error get wrong input.")
 
-        self._ops = ops
-        self.qubits = num_qubits
-        self.operators = self._create_kraus_ops(ops, num_qubits)
-        self.conj_ops = self.conj_trans()
+        super().__init__(self._create_kraus_ops(ops, num_qubits))
+        self.pauil_ops = ops
         self.type = NoiseChannel.pauil
 
     def __str__(self):
         pn_str = f"{self.type.value} with {self.qubits} qubits.\n"
-        for gate_str, prob in self._ops:
+        for gate_str, prob in self.pauil_ops:
             pn_str += f"[{gate_str}, {prob}] "
 
         return pn_str
 
-    def _create_kraus_ops(self, pauil_ops, num_qubits):
+    def _create_kraus_ops(self, pauil_ops, num_qubits) -> list:
         num_qubit = len(pauil_ops[0][0])
         kraus_ops = []
 
@@ -138,7 +159,7 @@ class PauilError(QuantumNoiseError):
 class BitflipError(PauilError):
     def __init__(self, prob: float):
         assert prob >= 0 and prob <= 1, "Wrong input for Bitflip Error."
-        ops = [('i', prob), ('x', 1 - prob)]
+        ops = [('i', 1 - prob), ('x', prob)]
 
         super().__init__(ops)
 
@@ -146,7 +167,7 @@ class BitflipError(PauilError):
 class PhaseflipError(PauilError):
     def __init__(self, prob: float):
         assert prob >= 0 and prob <= 1, "Wrong input for Phaseflip Error."
-        ops = [('i', prob), ('z', 1 - prob)]
+        ops = [('i', 1 - prob), ('z', prob)]
 
         super().__init__(ops)
 
@@ -154,7 +175,7 @@ class PhaseflipError(PauilError):
 class PhaseBitflipError(PauilError):
     def __init__(self, prob: float):
         assert prob >= 0 and prob <= 1, "Wrong input for PhaseBitflip Error."
-        ops = [('i', prob), ('y', 1 - prob)]
+        ops = [('i', 1 - prob), ('y', prob)]
 
         super().__init__(ops)
 
@@ -206,8 +227,7 @@ class DampingError(QuantumNoiseError):
         self.phase_prob = phase_prob
         self.stable_state_prob = stable_state_prob
 
-        ops = self._create_kraus_ops()
-        super().__init__(ops)
+        super().__init__(self._create_kraus_ops())
         self.type = NoiseChannel.damping
 
     def __str__(self):

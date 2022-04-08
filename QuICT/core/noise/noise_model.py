@@ -89,7 +89,7 @@ class NoiseModel:
             for n in noise_list[1:]:
                 based_noise = based_noise.compose(n)
 
-        return based_noise.apply_to_gate(gate)
+        return based_noise.apply_to_gate(gate.matrix)
 
     def _kraus_matrix_for_all_qubits(self, gate):
         gate_str = gate.type.name

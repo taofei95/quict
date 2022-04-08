@@ -3,13 +3,19 @@
 # @TIME    : 2022/1/17 9:41
 # @Author  : Han Yu, Kaiqi Li
 # @File    : circuit.py
+from typing import Union
 import numpy as np
 
 from QuICT.core.qubit import Qubit, Qureg
 from QuICT.core.exception import TypeException
 from QuICT.core.layout import Layout, SupremacyLayout
-from QuICT.core.gate import H, Measure, build_random_gate, build_gate
-from QuICT.core.utils import GateType, CircuitInformation, matrix_product_to_circuit
+from QuICT.core.gate import BasicGate, H, Measure, build_random_gate, build_gate
+from QuICT.core.utils import (
+    GateType,
+    CircuitInformation,
+    matrix_product_to_circuit
+)
+from .circuit_extend import Trigger, NoiseGate
 
 
 # global circuit id count
@@ -319,43 +325,54 @@ class Circuit(object):
         for idx, qubit in enumerate(self.qubits):
             self._idmap[qubit.id] = idx
 
-    def append(self, gate, is_extend: bool = False):
-        """ add a gate to the circuit
+    def extend(self, gates):
+        """ add gates to the circuit
 
         Args:
-            gate(BasicGate): the gate to be added to the circuit
+            gates(list<BasicGate>): the gate to be added to the circuit
         """
-        gate_ctargs = gate.cargs + gate.targs
-        args_num = gate.controls + gate.targets
+        for gate in gates:
+            self.append(gate, is_extend=True)
 
-        if self._pointer:
-            qureg = self._pointer[:]
-            if len(qureg) > args_num:
-                qureg = self._pointer[gate_ctargs]
+        self._pointer = None
 
-            if not is_extend:
-                self._pointer = None
+    def append(self, op: Union[BasicGate, Trigger, NoiseGate], is_extend: bool = False):
+        qureg = self._pointer[:] if self._pointer else None
+        if not is_extend:
+            self._pointer = None
+
+        if isinstance(op, Trigger):
+            self._add_trigger(op, qureg)
+        elif isinstance(op, (BasicGate, NoiseGate)):
+            self._add_gate(op, qureg)
         else:
-            if not gate_ctargs and not gate.assigned_qubits:
-                if gate.is_single():
-                    self._add_gate_to_all_qubits(gate)
-                    return
-                elif self.width() == args_num:
-                    qureg = self.qubits
-                else:
-                    raise KeyError(f"{gate.type} need assign qubits to add into circuit.")
-            else:
-                qureg = self.qubits[gate_ctargs] if gate_ctargs else gate.assigned_qubits
+            raise TypeError(f"Circuit can append a Trigger/BasicGate/NoiseGate, not {type(op)}.")
 
-        self._add_gate(gate, qureg)
-
-    def _add_gate(self, gate, qureg: Qureg):
+    def _add_gate(self, gate: BasicGate, qureg: Qureg):
         """ add a gate into some qureg
 
         Args:
             gate(BasicGate)
             qureg(Qureg)
         """
+        args_num = gate.controls + gate.targets
+        gate_ctargs = gate.cargs + gate.targs
+        is_assigned = gate.assigned_qubits or gate_ctargs
+        if not qureg:
+            if not is_assigned:
+                if gate.is_single():
+                    self._add_gate_to_all_qubits(gate)
+                    return
+                elif args_num == self.width():
+                    qureg = self.qubits
+                else:
+                    raise KeyError(f"{gate.type} need assign qubits to add into circuit.")
+            else:
+                qureg = self.qubits[gate_ctargs] if gate_ctargs else gate.assigned_qubits
+
+        if len(qureg) > args_num:
+            qureg = qureg[gate_ctargs]
+
         gate = gate.copy()
         gate.cargs = [self._idmap[qureg[idx].id] for idx in range(gate.controls)]
         gate.targs = [self._idmap[qureg[idx].id] for idx in range(gate.controls, gate.controls + gate.targets)]
@@ -369,20 +386,22 @@ class Circuit(object):
             new_gate = gate.copy()
             new_gate.targs = [idx]
             new_gate.assigned_qubits = self.qubits(idx)
-
             new_gate.update_name(self.qubits[idx].id, len(self.gates))
+
             self.gates.append(new_gate)
 
-    def extend(self, gates):
-        """ add gates to the circuit
+    def _add_trigger(self, op: Trigger, qureg: Qureg):
+        if qureg:
+            assert len(qureg) == op.targets
+            op.targs = [self._idmap[qureg[idx].id] for idx in range(op.targets)]
+        else:
+            if not op.targs:
+                raise KeyError("Trigger need assign qubits to add into circuit.")
 
-        Args:
-            gates(list<BasicGate>): the gate to be added to the circuit
-        """
-        for gate in gates:
-            self.append(gate, is_extend=True)
+            for targ in op.targs:
+                assert targ < self.width(), "The trigger's target exceed the width of the circuit."
 
-        self._pointer = None
+        self.gates.append(op)
 
     def sub_circuit(
         self,
