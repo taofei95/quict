@@ -7,6 +7,7 @@ import random
 
 import numpy as np
 
+from QuICT.core import Circuit
 from QuICT.core.gate import CompositeGate, GateType, H, CX, CY, CZ, X, S, Z, S_dagger
 from QuICT.qcda.optimization._optimization import Optimization
 from QuICT.qcda.synthesis.gate_transform.transform_rule import Cy2CxRule, Cz2CxRule
@@ -37,6 +38,10 @@ class SymbolicCliffordOptimization(Optimization):
             CompositeGate: the Clifford CompositeGate after optimization
         """
         width = gates.width()
+        if isinstance(gates, Circuit):
+            gates = CompositeGate(gates=gates.gates)
+        assert isinstance(gates, CompositeGate),\
+            TypeError('Invalid input(Circuit/CompositeGate)')
         for gate in gates:
             assert gate.is_clifford(), ValueError('Only Clifford CompositeGate')
         assert control_sets is None or isinstance(control_sets, list),\
