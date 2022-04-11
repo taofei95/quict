@@ -391,9 +391,8 @@ class ConstantStateVectorSimulator(BasicGPUSimulator):
             raise KeyError(f"Unsupported Gate: {gate_type}")
 
     def apply_trigger(self, op: Trigger):
-        sorted_targs = sorted(op.targs, reverse=True)
         state = 0
-        for targ in sorted_targs:
+        for targ in op.targs:
             index = self._qubits - 1 - targ
             result = self._algorithm.MeasureGate_Apply(
                 index,
@@ -401,6 +400,7 @@ class ConstantStateVectorSimulator(BasicGPUSimulator):
                 self._qubits,
                 self._sync
             )
+            self.circuit.qubits[targ].measured = int(result)
             state <<= 1
             state += int(result)
 
