@@ -4,7 +4,7 @@ import numpy as np
 
 from QuICT.core import Circuit
 from QuICT.core.gate import CompositeGate, GateType
-from QuICT.qcda.optimization.clifford_optimization import CliffordOptimization
+from QuICT.qcda.optimization.symbolic_clifford_optimization import SymbolicCliffordOptimization
 
 pauli_list = [GateType.id, GateType.x, GateType.y, GateType.z]
 clifford_single = [GateType.h, GateType.s, GateType.sdg, GateType.x, GateType.y, GateType.z]
@@ -18,7 +18,7 @@ def test_partition():
             circuit = Circuit(n)
             circuit.random_append(20 * n, clifford)
             gates = CompositeGate(gates=circuit.gates)
-            compute, pauli = CliffordOptimization.partition(gates)
+            compute, pauli = SymbolicCliffordOptimization.partition(gates)
             for gate in compute:
                 assert gate.type in compute_stage
             compute.extend(pauli.gates())
@@ -32,7 +32,7 @@ def test():
             circuit = Circuit(n)
             circuit.random_append(20 * n, clifford)
             gates = CompositeGate(gates=circuit.gates)
-            gates_opt = CliffordOptimization.execute(gates)
+            gates_opt = SymbolicCliffordOptimization.execute(gates)
             # np.set_printoptions(precision=3, suppress=True)
             assert np.allclose(gates.matrix(), gates_opt.matrix())
 

@@ -14,7 +14,7 @@ from QuICT.qcda.synthesis.gate_transform.transform_rule import Cy2CxRule, Cz2CxR
 from QuICT.qcda.utility import PauliOperator
 
 
-class CliffordOptimization(Optimization):
+class SymbolicCliffordOptimization(Optimization):
     """
     Implement the Clifford circuit optimization process described in Reference, which
     consists of the following 4 steps:
