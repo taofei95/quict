@@ -5,8 +5,8 @@ from typing import List, Union, Iterable, Tuple
 import numpy as np
 from copy import deepcopy
 
-from QuICT.core import Circuit
-from QuICT.core.gate import BasicGate, GateType
+from QuICT.core import Circuit, Trigger
+from QuICT.core.gate import BasicGate, Measure, GateType
 
 
 cur_path = os.path.dirname(os.path.abspath(__file__))
@@ -190,7 +190,7 @@ class CircuitSimulator:
     def _map_measure(cls, circuit: Circuit, measure_raw: List[int]) -> List[List[int]]:
         mid_map = []
         for gate in circuit.gates:
-            if gate.type == GateType.measure:
+            if isinstance(gate, BasicGate) and gate.type == GateType.measure:
                 mid_map.append(gate.targ)
 
         measure: List[List[int]] = [[] for _ in range(circuit.width())]
@@ -215,9 +215,27 @@ class CircuitSimulator:
             category=Warning,
             stacklevel=1
         )
+        qubits = circuit.width()
+        gate_set = deepcopy(circuit.gates)
         gate_desc_vec: List[GateDescription] = []
-        for gate in circuit.gates:
-            gate_desc_vec.extend(gate_to_desc(gate))
+        while gate_set:
+            gate = gate_set.pop(0)
+            if isinstance(gate, Trigger):
+                for targ in gate.targs:
+                    mgate = Measure & targ
+                    gate_desc_vec.extend(gate_to_desc(mgate))
+
+                _, measure_raw = self._instance.run(qubits, gate_desc_vec, keep_state)
+                gate_desc_vec = []
+                measured_state, keep_state = 0, True
+                for mstate in measure_raw:
+                    measured_state << 1
+                    measured_state += mstate
+
+                cgate = gate.mapping(measured_state)
+                gate_set = deepcopy(cgate.gates) + gate_set
+            else:
+                gate_desc_vec.extend(gate_to_desc(gate))
 
         amplitude, measure_raw = self._instance.run(circuit.width(), gate_desc_vec, keep_state)
         measure = self._map_measure(circuit, measure_raw)
