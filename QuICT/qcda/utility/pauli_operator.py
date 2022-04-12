@@ -101,6 +101,18 @@ class PauliOperator(object):
     def width(self) -> int:
         return len(self.operator)
 
+    @property
+    def support(self) -> list:
+        support = []
+        for qubit, operator in enumerate(self.operator):
+            if operator != GateType.id:
+                support.append(qubit)
+        return support
+
+    @property
+    def hamming_weight(self) -> int:
+        return len(self.support)
+
     @staticmethod
     def random(width: int):
         """
@@ -407,7 +419,7 @@ class PauliOperator(object):
             # S I Sdg = I
             if self.operator[gate.targ] == GateType.id:
                 return
-            # S X Sdgg = -Y
+            # S X Sdg = -Y
             if self.operator[gate.targ] == GateType.x:
                 self.operator[gate.targ] = GateType.y
                 self.phase *= -1

@@ -199,6 +199,11 @@ class SymbolicCliffordOptimization(Optimization):
 
             # pauli here is symbolic pauli, including symbolic phase
             compute, pauli = cls.partition(symbolic_gates)
+
+            # such partition may cause negative optimization, if so, return the original gates
+            if gates.count_2qubit_gate() < compute.count_2qubit_gate() + pauli.hamming_weight:
+                return gates
+
             # restore the symbolic pauli
             for qubit in range(pauli.width):
                 if qubit == control:
