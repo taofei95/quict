@@ -62,14 +62,38 @@ def order_finding(a: int, N: int, eps: float = 1 / 10, simulator: Simulator = Ci
         # subcircuit
         circuit = Circuit(2 * n + 3)
         H | circuit(trickbit)
+        amp = simulator.run(circuit, use_previous=True)
         gate_pow = pow(a, 1 << (t - 1 - k), N)
-        BEACUa.execute(n, gate_pow, N) | circuit
+        # BEACUa.execute(n, gate_pow, N) | circuit
+        ## BEACUa start
+        from QuICT.qcda.synthesis.arithmetic.bea.bea import c_mult_mod
+        ### mult_mod
+        circuit = Circuit(2 * n + 3)
+        cgate = CompositeGate()
+        c_mult_mod(cgate, a, N, x_reg, b_reg, trickbit, qreg_low)
+        cgate | circuit
+        amp = simulator.run(circuit, use_previous=True)
+        ### swap
+        circuit = Circuit(2 * n + 3)
+        for i in range(n):  # n bits swapped, b[0] always 0
+            CSwap | circuit([trickbit[0], x_reg[i], b_reg[i + 1]])
+        amp = simulator.run(circuit, use_previous=True)
+        ### reverse_mult_mod
+        circuit = Circuit(2 * n + 3)
+        cgate = CompositeGate()
+        c_mult_mod(cgate, N - mod_reverse(a, N), N, x_reg, b_reg, trickbit, qreg_low)
+        cgate | circuit
+        amp = simulator.run(circuit, use_previous=True)
+        ## BEACUa end
+        circuit = Circuit(2 * n + 3)
         for i in range(k):
             if trickbit_store[i]:
-                Rz(-pi / (1 << (k - i))) | circuit(trickbit)
+                Rz(-pi / (1 << (k - i))) | circuit(trickbit) #TODO: check if it should be append this way
         H | circuit(trickbit)
+        amp = simulator.run(circuit, use_previous=True)
+        circuit = Circuit(2 * n + 3)
         for idx in (b_reg + trickbit + qreg_low): Measure | circuit(idx)
-        simulator.run(circuit, use_previous=True)
+        amp = simulator.run(circuit, use_previous=True)
         # subcircuit: semi-classical QFT
         assert int(circuit[qreg_low]) == 0 and int(circuit[b_reg]) == 0
         logging.info(f'\tthe {k}th trickbit measured to be {int(circuit[trickbit])}')
@@ -116,8 +140,8 @@ class BEA_order_finding_twice(Algorithm):
     '''
     @staticmethod
     def run(a: int, N: int, demo: str = None, eps: float = 1 / 10, simulator: Simulator = CircuitSimulator()):
-        r1 = order_finding(a, N, demo, eps, simulator)
-        r2 = order_finding(a, N, demo, eps, simulator)
+        r1 = order_finding(a, N, eps, simulator)
+        r2 = order_finding(a, N, eps, simulator)
         flag1 = (pow(a, r1, N) == 1 and r1 != 0)
         flag2 = (pow(a, r2, N) == 1 and r2 != 0)
         if flag1 and flag2:

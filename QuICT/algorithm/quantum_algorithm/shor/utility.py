@@ -16,7 +16,9 @@ def ex_gcd(a, b, arr):
 
 def mod_reverse(a, n):
     arr = [0, 1]
-    ex_gcd(a, n, arr)
+    g = ex_gcd(a, n, arr)
+    if g!=1:
+        raise ValueError(f"imput {a} and {n} does not coprime")
     return (arr[0] % n + n) % n
 
 
