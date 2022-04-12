@@ -1,6 +1,6 @@
 import random
 import logging
-from math import pi
+from math import pi, gcd
 import numpy as np
 from fractions import Fraction
 from typing import List, Tuple
@@ -31,13 +31,16 @@ class ShorFactor:
         self.eps = eps
         self.max_rd = max_rd
 
-    def circuit(self, a) -> Tuple[Circuit, List[int]]:
+    def circuit(self) -> Tuple[Circuit, List[int]]:
         """construct the quantum part of Shor algorithm, i.e. order finding circuit
 
         Returns:
             Circuit: order finding circuit that can be passed to ShorFactor::run method
             List[int]: the indices to be measured to get ~phi
         """
+        a = self.N
+        while gcd(a, self.N)!=1:
+            a = random.randrange(0,self.N)
         if ShorFactor.circuit_method_of_mode[self.mode] == None:
             raise ValueError(f"{self.mode} mode has no circuit() method.")
         return ShorFactor.circuit_method_of_mode[self.mode](a, self.N, self.eps)

@@ -32,7 +32,7 @@ def test_ShorFactor_run():
         for number in number_list:
             print('-------------------FACTORING %d-------------------------' % number)
             a = ShorFactor(mode=mode,N=number).run(simulator=simulator)
-            if a == 0 or number % a == 0:
+            if a == 0 or number % a != 0:
                 failure += 1
         print(f"success rate: {1-failure/len(number_list):.3f}")
 
@@ -44,10 +44,10 @@ def test_ShorFactor_circuit():
             print('-------------------FACTORING %d-------------------------' % number)
             circuit, indices = ShorFactor(mode=mode,N=number).circuit()
             a = ShorFactor(mode=mode,N=number).run(circuit=circuit, indices=indices ,simulator=simulator)
-            if a == 0 or number % a == 0:
+            if a == 0 or number % a != 0:
                 failure += 1
         print(f"success rate: {1-failure/len(number_list):.3f}")
 
 # # logging.root.setLevel(logging.INFO)
 # test_OrderFinding_HRS()
-# test_ShorFactor_run()
+# test_ShorFactor_circuit()
