@@ -8,8 +8,6 @@ import math
 import numpy as np
 import cupy as cp
 
-from QuICT.ops.utils.utils import htod
-
 
 def dot(A, B, gpu_out: bool = True, sync: bool = True):
     """ dot matrix A and matrix B
@@ -488,8 +486,8 @@ def matrix_dot_vector(
     mat = cp.array(mat, dtype=vec.dtype)
     mat_bit = np.int32(mat_bit)
     mat_length = np.int64(mat_length)
-    affect_args = htod(np.array(affect_args, dtype=np.int32))
-    affect_args_sorts = htod(np.array(affect_args_sorts, dtype=np.int32))
+    affect_args = cp.array(affect_args, dtype=np.int32)
+    affect_args_sorts = cp.array(affect_args_sorts, dtype=np.int32)
 
     if vec.dtype == np.complex64:
         matrix_dot_vector_single_kernel(

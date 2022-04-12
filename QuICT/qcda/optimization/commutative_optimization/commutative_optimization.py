@@ -330,7 +330,7 @@ class CommutativeOptimization(Optimization):
                         prev_gate.type == gate.type and
                         prev_gate.cargs == gate.cargs and
                         prev_gate.targs == gate.targs and
-                        not gate.type in not_calculated
+                        not (gate.type in not_calculated)
                     ):
                         combined = True
                         nodes[prev].gate = cls.combine(prev_gate, gate)

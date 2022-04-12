@@ -30,11 +30,6 @@ def inner_utrans_build_gate(
     _kak = TwoQubitDiagonalTransform if keep_left_diagonal else TwoQubitTransform
 
     if qubit_num == 1:
-        # GateBuilder.setGateType(GATE_ID["Unitary"])
-        parg = np.reshape(mat, -1).tolist()
-        # GateBuilder.setPargs(parg)
-        # GateBuilder.setTargs([0])
-        # u = GateBuilder.getGate()
         u = build_gate(GateType.unitary, [0], mat)
         _ret = CompositeGate(gates=[u])
         return _ret, 1.0 + 0.0j

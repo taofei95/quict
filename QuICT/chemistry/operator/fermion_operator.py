@@ -5,22 +5,23 @@
 # @File    : fermion_operator.py
 
 """
-A fermion operator is a polynomial of anti-commutative creation-annihilation operators, 
-which is a useful representation for states and Hamiltonians by second quantization. 
+A fermion operator is a polynomial of anti-commutative creation-annihilation operators,
+which is a useful representation for states and Hamiltonians by second quantization.
 """
 
 from QuICT.chemistry.operator.polynomial_operator import PolynomialOperator
 
+
 class FermionOperator(PolynomialOperator):
     """
-    A fermion operator is a polynomial of anti-commutative creation-annihilation operators, 
-    which is a useful representation for states and Hamiltonians by second quantization. 
+    A fermion operator is a polynomial of anti-commutative creation-annihilation operators,
+    which is a useful representation for states and Hamiltonians by second quantization.
 
     Due to the anti-commutation relation, the polynomial is in fact a multilinear function of
     the ladder operators. In this class, the operator could be represented as below.
     For example, list
     [[[(i, 1), (j, 1), (k, 0), (l, 0)], 1.2], [[(k, 1), (l, 1), (i, 0), (j, 0)], -1.2], ...]
-    stands for (1.2 a_i^\dagger a_j^\dagger a_k a_l - 1.2 a_k^\dagger a_l^\dagger a_i a_j + ...),
+    stands for (1.2 a_i^dagger a_j^dagger a_k a_l - 1.2 a_k^dagger a_l^dagger a_i a_j + ...),
     which could also be parsed as string '1.2 * i^ j^ k l - 1.2 * k^ l^ i j + ...'.
 
     In the following descriptions, the above list is called list format,
@@ -34,7 +35,7 @@ class FermionOperator(PolynomialOperator):
             monomial(list/str): Operator monomial in list/string format
             coefficient(int/float/complex): Coefficient of the monomial
         """
-        super().__init__(monomial,coefficient)
+        super().__init__(monomial, coefficient)
         if self.operators == []:
             return
         variables = self.operators[0][0]
@@ -42,37 +43,38 @@ class FermionOperator(PolynomialOperator):
 
         # The variables in a monomial should be in ascending order.
         # Anti-commutation relation for operators on different targets.
-        for i in range(l-1, 0, -1):
+        for i in range(l - 1, 0, -1):
             fl = False
             for j in range(i):
-                if variables[j][0] > variables[j+1][0]:
-                    variables[j], variables[j+1] = variables[j+1], variables[j]
+                if variables[j][0] > variables[j + 1][0]:
+                    variables[j], variables[j + 1] = variables[j + 1], variables[j]
                     coefficient *= -1
                     fl = True
             if not fl:
                 break
 
         # Adjacent identical operators lead to zero operator.
-        if any([variables[i] == variables[i+1] for i in range(l - 1)]):
+        if any([variables[i] == variables[i + 1] for i in range(l - 1)]):
             self.operators = []
             return
 
         # Anti-commutation relation for operators on identical targets.
         operators = []
         for i in range(l):
-            if i == 0 or variables[i][0] != variables[i-1][0]:
+            if i == 0 or variables[i][0] != variables[i - 1][0]:
                 k = l
-                for j in range(i+1, l):
+                for j in range(i + 1, l):
                     if variables[j][0] != variables[i][0]:
                         k = j
                         break
                 if (k - i) % 2 == 1:
                     operators += [variables[i]]
                 elif variables[i][1] == 1:
-                    operators += [variables[i], variables[i+1]]
+                    operators += [variables[i], variables[i + 1]]
                 else:
-                    self.operators = [[operators, coefficient], [operators + [variables[i+1], variables[i]], -coefficient]]
-                    self *= FermionOperator(variables[k:]) # mul promises the ascending order
+                    self.operators = [[operators, coefficient],
+                                      [operators + [variables[i + 1], variables[i]], -coefficient]]
+                    self *= FermionOperator(variables[k:])  # mul promises the ascending order
                     return
         self.operators = [[operators, coefficient]]
 
@@ -91,7 +93,7 @@ class FermionOperator(PolynomialOperator):
         """
         Transform a string format of a single operator to a tuple.
         For example,
-        '231' -> (231,0); '426^' -> (426,1) 
+        '231' -> (231,0); '426^' -> (426,1)
 
         Args:
             single_operator(str): string format
@@ -117,4 +119,4 @@ class FermionOperator(PolynomialOperator):
         Returns:
             string: the corresponding string format
         """
-        return str(single_operator[0])+('^ ' if single_operator[1] else ' ')
+        return str(single_operator[0]) + ('^ ' if single_operator[1] else ' ')

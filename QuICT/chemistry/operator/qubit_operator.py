@@ -5,16 +5,17 @@
 # @File    : qubit_operator.py
 
 """
-A Qubit operator is a polynomial of Pauli matrices {X, Y, Z} = {sigma_1, sigma_2, sigma_3}, 
-which is a useful representation for circuits by second quantization. 
+A Qubit operator is a polynomial of Pauli matrices {X, Y, Z} = {sigma_1, sigma_2, sigma_3},
+which is a useful representation for circuits by second quantization.
 """
 
 from QuICT.chemistry.operator.polynomial_operator import PolynomialOperator
 
+
 class QubitOperator(PolynomialOperator):
-    """    
-    A Qubit operator is a polynomial of Pauli matrices {X, Y, Z} = {sigma_1, sigma_2, sigma_3}, 
-    which is a useful representation for circuits by second quantization. 
+    """
+    A Qubit operator is a polynomial of Pauli matrices {X, Y, Z} = {sigma_1, sigma_2, sigma_3},
+    which is a useful representation for circuits by second quantization.
 
     In this class, the operator could be represented as below.
     For example, list
@@ -32,7 +33,7 @@ class QubitOperator(PolynomialOperator):
             monomial(list/str): Operator monomial in list/string format
             coefficient(int/float/complex): Coefficient of the monomial
         """
-        super().__init__(monomial,coefficient)
+        super().__init__(monomial, coefficient)
         if self.operators == []:
             return
         variables = self.operators[0][0]
@@ -44,11 +45,11 @@ class QubitOperator(PolynomialOperator):
 
         # The variables in a monomial should be in ascending order.
         # Commutation relation for operators on different targets.
-        for i in range(l-1, 0, -1):
+        for i in range(l - 1, 0, -1):
             fl = False
             for j in range(i):
-                if variables[j][0] > variables[j+1][0]:
-                    variables[j], variables[j+1] = variables[j+1], variables[j]
+                if variables[j][0] > variables[j + 1][0]:
+                    variables[j], variables[j + 1] = variables[j + 1], variables[j]
                     fl = True
             if not fl:
                 break
@@ -56,7 +57,7 @@ class QubitOperator(PolynomialOperator):
         # Commutation relation for operators on identical targets.
         operators = []
         for i in range(l):
-            if i == 0 or variables[i][0] != variables[i-1][0]:
+            if i == 0 or variables[i][0] != variables[i - 1][0]:
                 cur = variables[i][1]
                 j = i + 1
                 while j < l and variables[j][0] == variables[i][0]:
@@ -103,7 +104,7 @@ class QubitOperator(PolynomialOperator):
         elif single_operator[0] == 'Z':
             return (int(single_operator[1:]), 3)
         else:
-            raise Exception("The string format is not recognized: "+single_operator)
+            raise Exception("The string format is not recognized: " + single_operator)
 
     @classmethod
     def parse_single(cls, single_operator):

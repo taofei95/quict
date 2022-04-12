@@ -244,10 +244,14 @@ class BasicGate(object):
 
     def __eq__(self, other):
         assert isinstance(other, BasicGate)
-        if np.allclose(self.matrix, other.matrix):
-            return True
+        if (
+            self.type != other.type or
+            (self.cargs + self.targs) != (other.cargs + other.targs) or
+            not np.allclose(self.matrix, other.matrix)
+        ):
+            return False
 
-        return False
+        return True
 
     def update_name(self, qubit_id: str, circuit_idx: int = None):
         """ Updated gate's name with the given information
@@ -2264,7 +2268,6 @@ class CCRzGate(BasicGate):
     def inverse(self):
         _CCRz = self.copy()
         _CCRz.pargs = -self.parg
-
         return _CCRz
 
     def build_gate(self):
