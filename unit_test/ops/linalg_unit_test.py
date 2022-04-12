@@ -141,7 +141,7 @@ class TestCPULinalg(unittest.TestCase):
 
         cpu_result = CPUCalculator.tensor(TestCPULinalg.matrix_A, TestCPULinalg.matrix_B)
         self.assertTrue((np_result == cpu_result).all())
-    
+
     def test_multiply_cpu(self):
         np_result = np.multiply(TestCPULinalg.matrix_A, TestCPULinalg.matrix_B)
         cpu_result = CPUCalculator.multiply(TestCPULinalg.matrix_A, TestCPULinalg.matrix_B)
