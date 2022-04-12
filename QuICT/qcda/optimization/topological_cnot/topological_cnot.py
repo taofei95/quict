@@ -9,6 +9,7 @@ from queue import Queue
 
 from .._optimization import Optimization
 from QuICT.core import *
+from QuICT.core.gate import build_gate, CompositeGate, GateType
 
 TOPO = [[]]
 
@@ -167,17 +168,13 @@ class Steiner_Tree(object):
         """
         for son in self.sons[now]:
             if self.ST[son] == 0:
-                GateBuilder.setCargs(now)
-                GateBuilder.setTargs(son)
                 gauss_elimination[son] ^= gauss_elimination[now]
-                gate = GateBuilder.getGate()
+                gate = build_gate(GateType.cx, [now, son])
                 GATES.append(gate)
             self._elimination_below_dfs(son, gauss_elimination)
         if now != self.root:
-            GateBuilder.setCargs(self.father[now])
-            GateBuilder.setTargs(now)
-            gate = GateBuilder.getGate()
             gauss_elimination[now] ^= gauss_elimination[self.father[now]]
+            gate = build_gate(GateType.cx, [self.father[now], now])
             GATES.append(gate)
 
     def elimination_above(self, gauss_elimination: list):
@@ -187,10 +184,8 @@ class Steiner_Tree(object):
     def _elimination_above_preorder(self, now, gauss_elimination: list):
         for son in self.sons[now]:
             if self.ST[son] == 0:
-                GateBuilder.setCargs(son)
-                GateBuilder.setTargs(now)
-                gate = GateBuilder.getGate()
                 gauss_elimination[now] ^= gauss_elimination[son]
+                gate = build_gate(GateType.cx, [son, now])
                 GATES.append(gate)
 
         for son in self.sons[now]:
@@ -200,10 +195,8 @@ class Steiner_Tree(object):
         for son in self.sons[now]:
             self._elimination_above_postorder(son, gauss_elimination)
         if now != self.root:
-            GateBuilder.setTargs(self.father[now])
-            GateBuilder.setCargs(now)
             gauss_elimination[self.father[now]] ^= gauss_elimination[now]
-            gate = GateBuilder.getGate()
+            gate = build_gate(GateType.cx, [now, self.father[now]])
             GATES.append(gate)
 
 
@@ -240,13 +233,13 @@ def read(circuit, cnot_struct, topology):
 
     global TOPO, READ_CNOT, N
     if circuit is not None:
-        N = circuit.circuit_width()
-        if len(circuit.topology) == 0:
+        N = circuit.width()
+        if circuit.topology is None or len(circuit.topology.edge_list) == 0:
             TOPO = [[True] * N] * N
         else:
             TOPO = [[False] * N] * N
-            for topology in circuit.topology:
-                TOPO[topology[0]][topology[1]] = TOPO[topology[1]][topology[0]] = True
+            for topology in circuit.topology.edge_list:
+                TOPO[topology.u][topology.v] = TOPO[topology.v][topology.u] = True
     else:
         N = len(cnot_struct)
         if topology is None or len(topology) == 0:
@@ -275,7 +268,7 @@ def read(circuit, cnot_struct, topology):
 
         for i in range(len(circuit.gates)):
             gate = circuit.gates[i]
-            if gate.type() == GATE_ID["CX"]:
+            if gate.type == GateType.cx:
                 READ_CNOT[topo_forward_map[gate.targ]] ^= \
                     READ_CNOT[topo_forward_map[gate.carg]]
 
@@ -333,10 +326,8 @@ def solve(ST_tree):
             u = pre[u]
 
         for j in range(len(paths) - 2, -1, -1):
-            GateBuilder.setCargs(paths[j + 1])
-            GateBuilder.setTargs(paths[j])
             gauss_elimination[paths[j]] ^= gauss_elimination[paths[j + 1]]
-            gate = GateBuilder.getGate()
+            gate = build_gate(GateType.cx, [paths[j + 1], paths[j]])
             GATES.append(gate)
 
         # elimination below rows
@@ -413,18 +404,17 @@ class TopologicalCnot(Optimization):
             topology(list<tuple<int, int>>): topology of circuit
         """
         global TOPO, N
-        GateBuilder.setGateType(GATE_ID["CX"])
         steiner_tree, topo_backward_map = read(circuit, cnot_struct, topology)
         ans = solve(steiner_tree)
 
         if circuit is not None:
-            N = circuit.circuit_width()
-            if len(circuit.topology) == 0:
+            N = circuit.width()
+            if circuit.topology is None or len(circuit.topology.edge_list) == 0:
                 topo = [[True] * N] * N
             else:
                 topo = [[False] * N] * N
-                for topology in circuit.topology:
-                    topo[topology[0]][topology[1]] = True
+                for topology in circuit.topology.edge_list:
+                    topo[topology.u][topology.v] = True
         else:
             N = len(cnot_struct)
             if topology is None or len(topology) == 0:
@@ -439,34 +429,22 @@ class TopologicalCnot(Optimization):
             c = topo_backward_map[item.carg]
             t = topo_backward_map[item.targ]
             if topo[c][t]:
-                GateBuilder.setGateType(GATE_ID["CX"])
-                GateBuilder.setCargs(c)
-                GateBuilder.setTargs(t)
-                gate = GateBuilder.getGate()
+                gate = build_gate(GateType.cx, [c, t])
                 output.append(gate)
             else:
-                GateBuilder.setGateType(GATE_ID["H"])
-                GateBuilder.setTargs(c)
-                gate = GateBuilder.getGate()
+                gate = build_gate(GateType.h, c)
                 output.append(gate)
-                GateBuilder.setTargs(t)
-                gate = GateBuilder.getGate()
+                gate = build_gate(GateType.h, t)
                 output.append(gate)
 
-                GateBuilder.setGateType(GATE_ID["CX"])
-                GateBuilder.setCargs(t)
-                GateBuilder.setTargs(c)
-                gate = GateBuilder.getGate()
+                gate = build_gate(GateType.cx, [t, c])
                 output.append(gate)
 
-                GateBuilder.setGateType(GATE_ID["H"])
-                GateBuilder.setTargs(c)
-                gate = GateBuilder.getGate()
+                gate = build_gate(GateType.h, c)
                 output.append(gate)
-                GateBuilder.setTargs(t)
-                gate = GateBuilder.getGate()
+                gate = build_gate(GateType.h, t)
                 output.append(gate)
         # return output
         new_circuit = Circuit(N)
-        new_circuit.set_exec_gates(output)
+        new_circuit.extend(output)
         return new_circuit

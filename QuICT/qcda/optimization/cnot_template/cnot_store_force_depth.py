@@ -6,8 +6,11 @@
 
 import os
 
+import numpy as np
+
 from .._optimization import Optimization
 from QuICT.core import *
+from QuICT.core.gate import CX, GateType
 
 
 class CnotStoreForceDepthBfs(Optimization):
@@ -25,12 +28,12 @@ class CnotStoreForceDepthBfs(Optimization):
             Circuit: optimal circuit
 
         """
-        n = input.circuit_width()
+        n = input.width()
         if n > 5:
             raise Exception("the qubits number should be smaller than or equal to 5.")
-        path = f"{os.path.dirname(os.path.abspath(__file__))}{os.path.sep}json{os.path.sep}{n}qubit_cnot_depth.inf"
+        path = f"{os.path.dirname(os.path.abspath(__file__))}{os.path.sep}bfs{os.path.sep}{n}qubit_cnot_depth.inf"
         if not os.path.exists(path):
-            from .json.cnot_depth_bfs import generate_json
+            from .bfs.cnot_depth_bfs import generate_json
             generate_json(n)
         with open(path, "r") as f:
             loadnow = f.readline()
@@ -39,7 +42,7 @@ class CnotStoreForceDepthBfs(Optimization):
         input_matrix = np.identity(n, dtype=bool)
         goal = 0
         for gate in input.gates:
-            if gate.type() != GATE_ID["CX"]:
+            if gate.type != GateType.cx:
                 raise Exception("the circuit should only contain CX gate")
             input_matrix[gate.targ, :] = input_matrix[gate.targ, :] ^ input_matrix[gate.carg, :]
         for i in range(n):
@@ -57,7 +60,7 @@ class CnotStoreForceDepthBfs(Optimization):
         ans = []
         for tuple_encode in tuples_encode:
             if len(tuple_encode) > 0:
-                ans.append((int(tuple_encode) // 5, int(tuple_encode) % 5))
+                ans.append([int(tuple_encode) // 5, int(tuple_encode) % 5])
         for plist in ans:
             CX | circuit(plist)
         return circuit

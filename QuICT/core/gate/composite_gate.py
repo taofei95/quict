@@ -260,11 +260,11 @@ class CompositeGate:
             "depth": self.depth(),
             "1-qubit gates": self.count_1qubit_gate(),
             "2-qubit gates": self.count_2qubit_gate(),
-            "gates detail": {}
+            "gates detail": []
         }
 
         for gate in self.gates:
-            cgate_info["gates detail"][gate.name] = str(gate)
+            cgate_info["gates detail"].append(str(gate))
 
         return str(cgate_info)
 
@@ -285,7 +285,7 @@ class CompositeGate:
         Returns:
             CompositeGate: the inverse of the gateSet
         """
-        self._gates = [gate.inverse() for gate in self._gates]
+        self._gates = [gate.inverse() for gate in self._gates[::-1]]
 
     def matrix(self, local: bool = False):
         """ matrix of these gates

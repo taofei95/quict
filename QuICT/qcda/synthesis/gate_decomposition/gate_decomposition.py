@@ -4,7 +4,8 @@ Decompose gates except for BasicGates in a CompositeGate or a Circuit
 
 import numpy as np
 
-from QuICT.core import BasicGate, Circuit, ComplexGate, CompositeGate, UnitaryGate
+from QuICT.core import Circuit
+from QuICT.core.gate import BasicGate, CompositeGate, UnitaryGate
 from QuICT.qcda.synthesis.unitary_transform import UnitaryTransform
 from QuICT.tools.interface import OPENQASMInterface
 from .._synthesis import Synthesis
@@ -35,7 +36,6 @@ class GateDecomposition(Synthesis):
         # Load the objective as raw_gates
         if isinstance(objective, np.ndarray):
             raw_gates, _ = UnitaryTransform.execute(objective)
-            # No ComplexGates needed to be checked in this case
             return raw_gates
 
         if isinstance(objective, str):
@@ -43,15 +43,15 @@ class GateDecomposition(Synthesis):
             if qasm.valid_circuit:
                 # FIXME: no circuit here
                 circuit = qasm.circuit
-                raw_gates = CompositeGate(circuit)
+                raw_gates = CompositeGate(gates=circuit.gates)
             else:
                 raise ValueError("Invalid qasm file!")
 
         if isinstance(objective, Circuit):
-            raw_gates = CompositeGate(objective)
+            raw_gates = CompositeGate(gates=objective.gates)
 
         if isinstance(objective, CompositeGate):
-            raw_gates = CompositeGate(objective)
+            raw_gates = CompositeGate(gates=objective.gates)
 
         assert isinstance(raw_gates, CompositeGate), TypeError('Invalid objective!')
 
@@ -59,13 +59,13 @@ class GateDecomposition(Synthesis):
         gates = CompositeGate()
         for gate in raw_gates:
             if isinstance(gate, UnitaryGate):
-                gate_decomposed, _ = UnitaryTransform.execute(gate.compute_matrix, mapping=gate.targs)
+                gate_decomposed, _ = UnitaryTransform.execute(gate.matrix, mapping=gate.targs)
                 gates.extend(gate_decomposed)
-            # Be aware of the order here, since ComplexGate is inherited from BasicGate
-            elif isinstance(gate, ComplexGate):
-                gates.extend(gate.build_gate())
             elif isinstance(gate, BasicGate):
-                gates.append(gate)
+                try:
+                    gates.extend(gate.build_gate())
+                except:
+                    gates.append(gate)
             else:
                 raise ValueError('Unknown gate encountered')
 

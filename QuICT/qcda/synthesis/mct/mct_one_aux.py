@@ -6,26 +6,20 @@
 
 from .._synthesis import Synthesis
 from QuICT.core import *
-from .mct_linear_simulation import MCTLinearHalfDirtyAux
+from QuICT.core.gate import *
+from .mct_linear_simulation import MCTLinearHalfDirtyAux, half_dirty_aux
 
 
 def merge_qubit(qubit_a, qubit_b):
-    """ merge two qureg into one in order
-
-    Args:
-        qubit_a(Qubit/Qureg): the first part of new qureg
-        qubit_b(Qubit/Qureg): the second part of new qureg
-
-    Returns:
-        Qureg: the qureg merged by qubit_a and qubit_b
+    """ merge two list into one in order
     """
     qureg = []
-    if isinstance(qubit_a, Qubit):
+    if not isinstance(qubit_a, list) and not isinstance(qubit_a, tuple):
         qureg.append(qubit_a)
     else:
         for qubit in qubit_a:
             qureg.append(qubit)
-    if isinstance(qubit_b, Qubit):
+    if not isinstance(qubit_b, list) and not isinstance(qubit_b, tuple):
         qureg.append(qubit_b)
     else:
         for qubit in qubit_b:
@@ -33,45 +27,61 @@ def merge_qubit(qubit_a, qubit_b):
     return qureg
 
 
-def solve(n):
+def solve(gates: CompositeGate, n):
     """ Decomposition of n-qubit Toffoli gates with one ancillary qubit and linear circuit complexity
 
     Args:
+        gates(CompositeGate):
         n(int): the bit of toffoli gate
-    Returns:
-        the circuit which describe the decomposition result
     """
-    qubit_list = Circuit(n + 1)
-    if n == 3:
-        CCX | qubit_list[:3]
-        return qubit_list
-    elif n == 2:
-        CX | qubit_list[:2]
-        return qubit_list
-    if n % 2 == 1:
-        k1 = n // 2 + 1
-    else:
-        k1 = n // 2
-    k2 = n // 2 - 1
+    qubit_list = [i for i in range(n + 1)]
+    with gates:
+        if n == 3:
+            CCX & qubit_list[:3]
+            return
+        elif n == 2:
+            CX & qubit_list[:2]
+            return
+        if n % 2 == 1:
+            k1 = n // 2 + 1
+        else:
+            k1 = n // 2
+        k2 = n // 2 - 1
 
-    MCTLinearHalfDirtyAux.execute(k1, n + 1) | qubit_list
-    H | qubit_list[-2]
-    S | qubit_list[-1]
-    MCTLinearHalfDirtyAux.execute(k2 + 1, n + 1) | merge_qubit(
-        merge_qubit(qubit_list[k1:k1 + k2 + 1], qubit_list[:k1]),
-        qubit_list[-1]
-    )
-    S_dagger | qubit_list[-1]
-    MCTLinearHalfDirtyAux.execute(k1, n + 1) | qubit_list
-    S | qubit_list[-1]
-    MCTLinearHalfDirtyAux.execute(k2 + 1, n + 1) | merge_qubit(
-        merge_qubit(qubit_list[k1:k1 + k2 + 1], qubit_list[:k1]),
-        qubit_list[-1]
-    )
-    H | qubit_list[-2]
-    S_dagger | qubit_list[-1]
+        yet_another_qubit_list = merge_qubit(
+            merge_qubit(qubit_list[k1:k1 + k2 + 1], qubit_list[:k1]),
+            qubit_list[-1]
+        )
+        yet_m = k2 + 1
+        yet_n = n + 1
+        if yet_m > (yet_n // 2) + (1 if yet_n % 2 == 1 else 0):
+            raise Exception("control bit cannot above ceil(n/2)")
+        if yet_m < 1:
+            raise Exception("there must be at least one control bit")
+        yet_controls = [yet_another_qubit_list[i] for i in range(yet_m)]
+        yet_auxs = [yet_another_qubit_list[i] for i in range(yet_m, yet_n - 1)]
+        yet_target = yet_n - 1
 
-    return qubit_list
+        MCTLinearHalfDirtyAux.execute(k1, n + 1) | gates
+        H & qubit_list[-2]
+        S & qubit_list[-1]
+
+        yet_gates = CompositeGate()
+        with yet_gates:
+            half_dirty_aux(yet_gates, yet_n, yet_m, yet_controls, yet_auxs, yet_target)
+        yet_gates | gates
+
+        S_dagger & qubit_list[-1]
+        MCTLinearHalfDirtyAux.execute(k1, n + 1) | gates
+        S & qubit_list[-1]
+
+        yet_gates = CompositeGate()
+        with yet_gates:
+            half_dirty_aux(yet_gates, yet_n, yet_m, yet_controls, yet_auxs, yet_target)
+        yet_gates | gates
+
+        H & qubit_list[-2]
+        S_dagger & qubit_list[-1]
 
 
 class MCTOneAux(Synthesis):
@@ -87,4 +97,7 @@ class MCTOneAux(Synthesis):
         Return:
             CompositeGate: the result of Decomposition
         """
-        return CompositeGate(solve(n - 1).gates)
+        gates = CompositeGate()
+        with gates:
+            solve(gates, n - 1)
+        return gates
