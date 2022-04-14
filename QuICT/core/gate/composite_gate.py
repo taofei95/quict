@@ -309,7 +309,9 @@ class CompositeGate:
             if gate.is_special() and gate.type != GateType.unitary:
                 raise TypeError(f"Cannot combined the gate matrix with special gate {gate.type}")
 
-            matrix = np.matmul(matrix_product_to_circuit(gate, self._max_qubit, min_value), matrix)
+            matrix = np.matmul(matrix_product_to_circuit(
+                gate.matrix, gate.cargs + gate.targs, self._max_qubit, min_value
+            ), matrix)
 
         return matrix
 

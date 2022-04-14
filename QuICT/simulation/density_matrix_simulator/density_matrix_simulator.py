@@ -15,6 +15,8 @@ import QuICT.core.utils
 from QuICT.core.gate import Measure, BasicGate
 from QuICT.core.utils import GateType
 
+# TODO: Remove unused import
+
 class DensityMatrixSimulation:
 
     def __init__(
@@ -33,6 +35,7 @@ class DensityMatrixSimulation:
 
 
     def create_init_density_matrix(self, n):
+        # TODO: Generate density matrix depending on device, follow the _initial_vector_state in UnitarySimulator
         self.density_matrix = np.zeros((2 ** n, 2 ** n), dtype = self._precision)
         self.density_matrix[0,0] = 1
 
@@ -51,25 +54,32 @@ class DensityMatrixSimulation:
         return True
 
     def measure(self, gate_list, qubits):
-        
+        # TODO: us np.array(matrix, dtype) to generate P0, generate P1 in condition "else"
         P0 = np.mat([[1, 0], [0, 0]]) + "target qubits"
         P1 = np.mat([[0, 0], [0, 1]])
+        # TODO: Using matrix_product_to_circuit; from QuICT.core.utils import matrix_product_to_circuit
         mea_0 = mea_circuit.matrix_product_to_circuit(P0)
+        # TODO: no matmul in computer currently, use np.matmul
+        # TODO: matrix == self.density_matrix
         prob_0 = self._computer.matmul(mea_0, matrix).trace()
         _0_1 = random() < prob_0
         if _0_1:
+            # TODO: n = qubits
             U = self._computer.matmul(mea_0, np.eye(2**n) / np.sqrt(prob_0))
+            # TODO: use self._computer.dot here
             matrix = U.dot(matrix).dot(U.conj().T)
         else:
             mea_1 = mea_circuit.matrix_product_to_circuit(P1)
             U = np.matmul(mea_1, np.eye(2**n)/np.sqrt(1 - prob_0))
             matrix = U.dot(matrix).dot(U.conj().T)
 
+        # TODO: return _0_1, to change qubit in density_matrix_simu function; due to no circuit here.
         mea_circuit.qubits[gate.targ].measured = int(_0_1)
 
-
+    # TODO: Rename to run
     def density_matrix_simu(self, circuit:Circuit, n, density_matrix: np.ndarray = None):
         if(density_matrix == None or self.check_matrix(density_matrix) == False):
+            # TODO: no return here
             density_matrix = self.create_init_density_matrix(n)
         else:
             self.density_matrix = density_matrix
@@ -84,9 +94,14 @@ class DensityMatrixSimulation:
         circuit_matrix = UnitarySimulator.get_unitary_matrix(circuit)
         
         # step ops
-        self.density_matrix = self._computer.dot(self._computer.dot(circuit_matrix, density_matrix), circuit_matrix.conj().T)
+        # TODO: using self.density_matrix
+        self.density_matrix = self._computer.dot(
+            self._computer.dot(circuit_matrix, density_matrix),
+            circuit_matrix.conj().T
+        )
 
         # [measure gate] exist
+        # TODO: add if measure_gate_list: do Measure and change circuit.qubits.measured
         self._measure(measure_gate_list, circuit.width())
 
         return density_matrix

@@ -601,7 +601,7 @@ class Circuit(object):
         Args:
             gate(BasicGate): the gate to be extended.
         """
-        return matrix_product_to_circuit(gate, len(self.qubits))
+        return matrix_product_to_circuit(gate.matrix, gate.cargs + gate.targs, len(self.qubits))
 
     def remapping(self, qureg: Qureg, mapping: list, circuit_update: bool = False):
         """ Realignment the qubits by the given mapping.
