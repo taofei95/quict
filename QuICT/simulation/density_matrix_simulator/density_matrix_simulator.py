@@ -34,10 +34,17 @@ class DensityMatrixSimulation:
             self._computer = GPUCalculator
 
 
-    def create_init_density_matrix(self, n):
+    def _init_density_matrix(self, qubit):
         # TODO: Generate density matrix depending on device, follow the _initial_vector_state in UnitarySimulator
-        self.density_matrix = np.zeros((2 ** n, 2 ** n), dtype = self._precision)
-        self.density_matrix[0,0] = 1
+        if self._device == "CPU":
+            self._density_matrix = np.zeros((1 << qubit, 1 << qubit), dtype = self._precision)
+            self._density_matrix[0,0] = self._precision(1)
+        else:
+            import cupy as cp
+            
+            self._density_matrix = cp.zeros((1 << qubit, 1 << qubit), dtype = self._precision) + w11
+            self._density_matrix.put((0, 0), self._precision(1))
+            # ?
 
     def check_matrix(matrix):
         if(matrix.T.conjugate() != matrix): 
@@ -53,7 +60,7 @@ class DensityMatrixSimulation:
 
         return True
 
-    def measure(self, gate_list, qubits):
+    def _measure(self, gate_list, qubits):
         # TODO: us np.array(matrix, dtype) to generate P0, generate P1 in condition "else"
         P0 = np.mat([[1, 0], [0, 0]]) + "target qubits"
         P1 = np.mat([[0, 0], [0, 1]])
@@ -77,12 +84,13 @@ class DensityMatrixSimulation:
         mea_circuit.qubits[gate.targ].measured = int(_0_1)
 
     # TODO: Rename to run
-    def density_matrix_simu(self, circuit:Circuit, n, density_matrix: np.ndarray = None):
+    def density_matrix_simu(self, circuit:Circuit, qubit, density_matrix: np.ndarray = None):
         if(density_matrix == None or self.check_matrix(density_matrix) == False):
             # TODO: no return here
-            density_matrix = self.create_init_density_matrix(n)
+            # density_matrix = self._density_matrix
+            self._init_density_matrix(self, qubit)
         else:
-            self.density_matrix = density_matrix
+            self._density_matrix = density_matrix
         
         # Assume no measure gate in circuit middle, measure gate only appear last
         # circuit.gates [non-measure gates] [measure gate]
@@ -95,8 +103,8 @@ class DensityMatrixSimulation:
         
         # step ops
         # TODO: using self.density_matrix
-        self.density_matrix = self._computer.dot(
-            self._computer.dot(circuit_matrix, density_matrix),
+        self._density_matrix = self._computer.dot(
+            self._computer.dot(circuit_matrix, self._density_matrix),
             circuit_matrix.conj().T
         )
 
