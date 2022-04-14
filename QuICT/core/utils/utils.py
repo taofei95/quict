@@ -43,3 +43,26 @@ def matrix_product_to_circuit(gate, max_q: int, min_q: int = 0):
                 new_values[i][j] = matrix[nowi][nowj]
 
     return new_values
+
+
+def perm_decomposition(permutation: list):
+    n = len(permutation)
+    assert sum(permutation) == n * (n - 1) / 2, f"{sum(permutation)}, {n * (n + 1) / 2}"
+
+    sorted_idx, swap_pairs = [], []
+    idx = 0
+    while idx < n:
+        if idx in sorted_idx:
+            idx += 1
+            continue
+
+        target = permutation[idx]
+        if target != idx:
+            swap_pairs.append([idx, target])
+            sorted_idx.append(target)
+            permutation[idx], permutation[target] = permutation[target], permutation[idx]
+        else:
+            idx += 1
+
+    return swap_pairs
+    

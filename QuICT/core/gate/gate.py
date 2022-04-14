@@ -6,7 +6,10 @@
 import numpy as np
 import copy
 
-from QuICT.core.utils import GateType, SPECIAL_GATE_SET, DIAGONAL_GATE_SET, CGATE_LIST
+from QuICT.core.utils import (
+    GateType, SPECIAL_GATE_SET, DIAGONAL_GATE_SET, CGATE_LIST,
+    perm_decomposition
+)
 
 
 class BasicGate(object):
@@ -1654,7 +1657,7 @@ class PermGate(BasicGate):
     def __call__(self, targets: int, params: list):
         """ pass permutation to the gate
 
-        the length of permutaion must be n, and should be a permutation for [0, n) without repeat
+        the length of params must be n, and should be a permutation for [0, n) without repeat
 
         Args:
             targets(int): the number of qubits
@@ -1687,6 +1690,21 @@ class PermGate(BasicGate):
         _gate.pargs = [self.targets - 1 - p for p in self.pargs]
 
         return _gate
+
+    def build_gate(self, params: list, targs: list = None):
+        from QuICT.core.gate import CompositeGate
+
+        swap_args: list[list[int]] = perm_decomposition(params)
+        cgate = CompositeGate()
+        with cgate:
+            for swap_arg in swap_args:
+                Swap & swap_arg
+
+        if targs is not None:
+            assert len(targs) == len(params)
+            cgate & targs
+
+        return cgate
 
 
 Perm = PermGate()

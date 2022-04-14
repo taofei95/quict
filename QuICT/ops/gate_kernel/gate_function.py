@@ -1696,7 +1696,7 @@ def MeasureGate_Apply(index, vec, vec_bit, sync: bool = False, multigpu_prob=Non
     """
     Measure Gate Measure.
     """
-    if not multigpu_prob:
+    if multigpu_prob is None:
         prob = prop_add(vec, vec, 1 << index)
         prob = MeasureGate_prop_kernel(prob, axis=0).real
         prob = prob.get()
