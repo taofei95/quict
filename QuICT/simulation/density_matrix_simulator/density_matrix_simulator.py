@@ -5,7 +5,7 @@ from QuICT.core.circuit.circuit import Circuit
 from QuICT.simulation.unitary_simulator import UnitarySimulator
 from QuICT.core.utils import GateType, matrix_product_to_circuit
 import QuICT.ops.linalg.cpu_calculator as CPUCalculator
-
+from QuICT.core.circuit.circuit_extend import Trigger
 
 class DensityMatrixSimulation:
 
@@ -48,23 +48,20 @@ class DensityMatrixSimulation:
 
         return True
 
-    # TODO: not gate_list, only one measure gate here
-    def _measure(self, gate_list, qubits):
+    def _measure(self, gate, qubits):
         P0 = np.array([[1, 0], [0, 0]], dtype = self._precision)
 
         # TODO: matrix_product_to_circuit need two input: gate_matrix [P0] and gate.targs [gate.targs]
-        mea_0 = matrix_product_to_circuit(P0)
-        # TODO: no self here, use np.matmul
-        prob_0 = self.np.matmul(mea_0, self._density_matrix).trace()
+        mea_0 = matrix_product_to_circuit(P0, gate.targs)
+        prob_0 = np.matmul(mea_0, self._density_matrix).trace()
         _0_1 = random() < prob_0
         if _0_1:
-            # TODO: no self here, use np.matmul
-            U = self.np.matmul(mea_0, np.eye(1 << qubits) / np.sqrt(prob_0))
+            U = np.matmul(mea_0, np.eye(1 << qubits) / np.sqrt(prob_0))
             self._density_matrix = self._computer.dot(self._computer.dot(U, self._density_matrix), U.conj().T)
         else:
             P1 = np.array([[0, 0], [0, 1]], dtype = self._precision)
             # TODO: matrix_product_to_circuit need two input: gate_matrix [P0] and gate.targs [gate.targs]
-            mea_1 = matrix_product_to_circuit(P1)
+            mea_1 = matrix_product_to_circuit(P1, gate.targs)
             U = np.matmul(mea_1, np.eye(1 << qubits) / np.sqrt(1 - prob_0))
             self._density_matrix = self._computer.dot(self._computer.dot(U, self._density_matrix), U.conj().T)
 
@@ -94,8 +91,8 @@ class DensityMatrixSimulation:
         # [measure gate] exist
         # TODO: do loop about measure_gates, for each measure gate do self._measure(gate, circuit.width) andchange circuit.qubits.measured
         if measure_gate_list:
-            _0_1 = self._measure(measure_gate_list, circuit.width())
-            circuit.qubits[gate.targ].measured = int(_0_1)
-            # ?
+            for mea_gate in measure_gate_list:
+                _0_1 = self._measure(mea_gate, circuit.width())
+                circuit.qubits[gate.targ].measured = int(_0_1)
 
         return self._density_matrix
