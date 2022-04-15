@@ -21,6 +21,124 @@ class PauliOperator(object):
     pauli_list = [GateType.id, GateType.x, GateType.y, GateType.z]
     phase_list = [1 + 0j, 0 + 1j, -1 + 0j, 0 - 1j]
 
+    combine_rules = {
+        # I I = I
+        (GateType.id, GateType.id): (GateType.id, 1),
+        # I X = X
+        (GateType.id, GateType.x): (GateType.x, 1),
+        # I Y = Y
+        (GateType.id, GateType.y): (GateType.y, 1),
+        # I Z = Z
+        (GateType.id, GateType.z): (GateType.z, 1),
+        # X I = X
+        (GateType.x, GateType.id): (GateType.x, 1),
+        # X X = I
+        (GateType.x, GateType.x): (GateType.id, 1),
+        # X Y = -iZ
+        (GateType.x, GateType.y): (GateType.z, -1j),
+        # X Z = iY
+        (GateType.x, GateType.z): (GateType.y, 1j),
+        # Y I = Y
+        (GateType.y, GateType.id): (GateType.y, 1),
+        # Y X = iZ
+        (GateType.y, GateType.x): (GateType.z, 1j),
+        # Y Y = I
+        (GateType.y, GateType.y): (GateType.id, 1),
+        # Y Z = -iX
+        (GateType.y, GateType.z): (GateType.x, -1j),
+        # Z I = Z
+        (GateType.z, GateType.id): (GateType.z, 1),
+        # Z X = -iY
+        (GateType.z, GateType.x): (GateType.y, -1j),
+        # Z Y = iX
+        (GateType.z, GateType.y): (GateType.x, 1j),
+        # Z Z = I
+        (GateType.z, GateType.z): (GateType.id, 1),
+    }
+
+    conjugate_rules = {
+        # CX I0 I1 CX = I0 I1
+        (GateType.cx, GateType.id, GateType.id): (GateType.id, GateType.id, 1),
+        # CX I0 X1 CX = I0 X1
+        (GateType.cx, GateType.id, GateType.x): (GateType.id, GateType.x, 1),
+        # CX I0 Y1 CX = Z0 Y1
+        (GateType.cx, GateType.id, GateType.y): (GateType.z, GateType.y, 1),
+        # CX I0 Z1 CX = Z0 Z1
+        (GateType.cx, GateType.id, GateType.z): (GateType.z, GateType.z, 1),
+        # CX X0 I1 CX = X0 X1
+        (GateType.cx, GateType.x, GateType.id): (GateType.x, GateType.x, 1),
+        # CX X0 X1 CX = X0 I1
+        (GateType.cx, GateType.x, GateType.x): (GateType.x, GateType.id, 1),
+        # CX X0 Y1 CX = Y0 Z1
+        (GateType.cx, GateType.x, GateType.y): (GateType.y, GateType.z, 1),
+        # CX X0 Z1 CX = -Y0 Y1
+        (GateType.cx, GateType.x, GateType.z): (GateType.y, GateType.y, -1),
+        # CX Y0 I1 CX = Y0 X1
+        (GateType.cx, GateType.y, GateType.id): (GateType.y, GateType.x, 1),
+        # CX Y0 X1 CX = Y0 I1
+        (GateType.cx, GateType.y, GateType.x): (GateType.y, GateType.id, 1),
+        # CX Y0 Y1 CX = -X0 Z1
+        (GateType.cx, GateType.y, GateType.y): (GateType.x, GateType.z, -1),
+        # CX Y0 Z1 CX = X0 Y1
+        (GateType.cx, GateType.y, GateType.z): (GateType.x, GateType.y, 1),
+        # CX Z0 I1 CX = Z0 I1
+        (GateType.cx, GateType.z, GateType.id): (GateType.z, GateType.id, 1),
+        # CX Z0 X1 CX = Z0 X1
+        (GateType.cx, GateType.z, GateType.x): (GateType.z, GateType.x, 1),
+        # CX Z0 Y1 CX = I0 Y1
+        (GateType.cx, GateType.z, GateType.y): (GateType.id, GateType.y, 1),
+        # CX Z0 Z1 CX = I0 Z1
+        (GateType.cx, GateType.z, GateType.z): (GateType.id, GateType.z, 1),
+        # H I H = I
+        (GateType.h, GateType.id): (GateType.id, 1),
+        # H X H = Z
+        (GateType.h, GateType.x): (GateType.z, 1),
+        # H Y H = -Y
+        (GateType.h, GateType.y): (GateType.y, -1),
+        # H Z H = X
+        (GateType.h, GateType.z): (GateType.x, 1),
+        # Sdg I S = I
+        (GateType.s, GateType.id): (GateType.id, 1),
+        # Sdg X S = Y
+        (GateType.s, GateType.x): (GateType.y, 1),
+        # Sdg Y S = -X
+        (GateType.s, GateType.y): (GateType.x, -1),
+        # Sdg Z S = Z
+        (GateType.s, GateType.z): (GateType.z, 1),
+        # S I Sdg = I
+        (GateType.sdg, GateType.id): (GateType.id, 1),
+        # S X Sdg = -Y
+        (GateType.sdg, GateType.x): (GateType.y, -1),
+        # S Y Sdg = X
+        (GateType.sdg, GateType.y): (GateType.x, 1),
+        # S Z Sdg = Z
+        (GateType.sdg, GateType.z): (GateType.z, 1),
+        # X I X = I
+        (GateType.x, GateType.id): (GateType.id, 1),
+        # X X X = X
+        (GateType.x, GateType.x): (GateType.x, 1),
+        # X Y X = -Y
+        (GateType.x, GateType.y): (GateType.y, -1),
+        # X Z X = -Z
+        (GateType.x, GateType.z): (GateType.z, -1),
+        # Y I Y = I
+        (GateType.y, GateType.id): (GateType.id, 1),
+        # Y X Y = -X
+        (GateType.y, GateType.x): (GateType.x, -1),
+        # Y Y Y = Y
+        (GateType.y, GateType.y): (GateType.y, 1),
+        # Y Z Y = -Z
+        (GateType.y, GateType.z): (GateType.z, -1),
+        # Z I Z = I
+        (GateType.z, GateType.id): (GateType.id, 1),
+        # Z X Z = -X
+        (GateType.z, GateType.x): (GateType.x, -1),
+        # Z Y Z = -Y
+        (GateType.z, GateType.y): (GateType.y, -1),
+        # Z Z Z = Z
+        (GateType.z, GateType.z): (GateType.z, 1),
+    }
+
     def __init__(self, operator=None, phase=1 + 0j):
         """
         Construct a PauliOperator with a list of GateType
@@ -218,48 +336,8 @@ class PauliOperator(object):
         assert isinstance(qubit, int) and qubit >= 0 and qubit < self.width,\
             ValueError('qubit out of range')
 
-        if gate_type == GateType.id:
-            return
-        if self.operator[qubit] == GateType.id:
-            self.operator[qubit] = gate_type
-            return
-        # X X = Y Y = Z Z = I
-        if gate_type == self.operator[qubit]:
-            self.operator[qubit] = GateType.id
-            return
-        if self.operator[qubit] == GateType.x:
-            # X Y = -iZ
-            if gate_type == GateType.y:
-                self.operator[qubit] = GateType.z
-                self.phase *= -1j
-                return
-            # X Z = iY
-            if gate_type == GateType.z:
-                self.operator[qubit] = GateType.y
-                self.phase *= 1j
-                return
-        if self.operator[qubit] == GateType.y:
-            # Y X = iZ
-            if gate_type == GateType.x:
-                self.operator[qubit] = GateType.z
-                self.phase *= 1j
-                return
-            # Y Z = -iX
-            if gate_type == GateType.z:
-                self.operator[qubit] = GateType.x
-                self.phase *= -1j
-                return
-        if self.operator[qubit] == GateType.z:
-            # Z X = -iY
-            if gate_type == GateType.x:
-                self.operator[qubit] = GateType.y
-                self.phase *= -1j
-                return
-            # Z Y = iX
-            if gate_type == GateType.y:
-                self.operator[qubit] = GateType.x
-                self.phase *= 1j
-                return
+        self.operator[qubit], phase = PauliOperator.combine_rules[self.operator[qubit], gate_type]
+        self.phase *= phase
 
     def conjugate_act(self, gate: BasicGate):
         """
@@ -275,158 +353,12 @@ class PauliOperator(object):
         for targ in gate.cargs + gate.targs:
             assert targ < self.width, ValueError("target of the gate out of range")
 
-        # CX = CX01
         if gate.type == GateType.cx:
-            if self.operator[gate.carg] == GateType.id:
-                # CX I0 I1 CX = I0 I1
-                if self.operator[gate.targ] == GateType.id:
-                    return
-                # CX I0 X1 CX = I0 X1
-                if self.operator[gate.targ] == GateType.x:
-                    return
-                # CX I0 Y1 CX = Z0 Y1
-                if self.operator[gate.targ] == GateType.y:
-                    self.operator[gate.carg] = GateType.z
-                    self.operator[gate.targ] = GateType.y
-                    return
-                # CX I0 Z1 CX = Z0 Z1
-                if self.operator[gate.targ] == GateType.z:
-                    self.operator[gate.carg] = GateType.z
-                    return
-            if self.operator[gate.carg] == GateType.x:
-                # CX X0 I1 CX = X0 X1
-                if self.operator[gate.targ] == GateType.id:
-                    self.operator[gate.targ] = GateType.x
-                    return
-                # CX X0 X1 CX = X0 I1
-                if self.operator[gate.targ] == GateType.x:
-                    self.operator[gate.targ] = GateType.id
-                    return
-                # CX X0 Y1 CX = Y0 Z1
-                if self.operator[gate.targ] == GateType.y:
-                    self.operator[gate.carg] = GateType.y
-                    self.operator[gate.targ] = GateType.z
-                    return
-                # CX X0 Z1 CX = -Y0 Y1
-                if self.operator[gate.targ] == GateType.z:
-                    self.operator[gate.carg] = GateType.y
-                    self.operator[gate.targ] = GateType.y
-                    self.phase *= -1
-                    return
-            if self.operator[gate.carg] == GateType.y:
-                # CX Y0 I1 CX = Y0 X1
-                if self.operator[gate.targ] == GateType.id:
-                    self.operator[gate.targ] = GateType.x
-                    return
-                # CX Y0 X1 CX = Y0 I1
-                if self.operator[gate.targ] == GateType.x:
-                    self.operator[gate.targ] = GateType.id
-                    return
-                # CX Y0 Y1 CX = -X0 Z1
-                if self.operator[gate.targ] == GateType.y:
-                    self.operator[gate.carg] = GateType.x
-                    self.operator[gate.targ] = GateType.z
-                    self.phase *= -1
-                    return
-                # CX Y0 Z1 CX = X0 Y1
-                if self.operator[gate.targ] == GateType.z:
-                    self.operator[gate.carg] = GateType.x
-                    self.operator[gate.targ] = GateType.y
-                    return
-            if self.operator[gate.carg] == GateType.z:
-                # CX Z0 I1 CX = Z0 I1
-                if self.operator[gate.targ] == GateType.id:
-                    return
-                # CX Z0 X1 CX = Z0 X1
-                if self.operator[gate.targ] == GateType.x:
-                    return
-                # CX Z0 Y1 CX = I0 Y1
-                if self.operator[gate.targ] == GateType.y:
-                    self.operator[gate.carg] = GateType.id
-                    return
-                # CX Z0 Z1 CX = I0 Z1
-                if self.operator[gate.targ] == GateType.z:
-                    self.operator[gate.carg] = GateType.id
-                    return
-
-        # 1-qubit clifford
-        if self.operator[gate.targ] == GateType.id:
-            return
-        if gate.type == GateType.h:
-            # H X H = Z
-            if self.operator[gate.targ] == GateType.x:
-                self.operator[gate.targ] = GateType.z
-                return
-            # H Y H = -Y
-            if self.operator[gate.targ] == GateType.y:
-                self.phase *= -1
-                return
-            # H Z H = X
-            if self.operator[gate.targ] == GateType.z:
-                self.operator[gate.targ] = GateType.x
-                return
-        if gate.type == GateType.s:
-            # Sdg X S = Y
-            if self.operator[gate.targ] == GateType.x:
-                self.operator[gate.targ] = GateType.y
-                return
-            # Sdg Y S = -X
-            if self.operator[gate.targ] == GateType.y:
-                self.operator[gate.targ] = GateType.x
-                self.phase *= -1
-                return
-            # Sdg Z S = Z
-            if self.operator[gate.targ] == GateType.z:
-                return
-        if gate.type == GateType.sdg:
-            # S X Sdg = -Y
-            if self.operator[gate.targ] == GateType.x:
-                self.operator[gate.targ] = GateType.y
-                self.phase *= -1
-                return
-            # S Y Sdg = X
-            if self.operator[gate.targ] == GateType.y:
-                self.operator[gate.targ] = GateType.x
-                return
-            # S Z Sdg = Z
-            if self.operator[gate.targ] == GateType.z:
-                return
-        if gate.type == GateType.x:
-            # X X X = X
-            if self.operator[gate.targ] == GateType.x:
-                return
-            # X Y X = -Y
-            if self.operator[gate.targ] == GateType.y:
-                self.phase *= -1
-                return
-            # X Z X = -Z
-            if self.operator[gate.targ] == GateType.z:
-                self.phase *= -1
-                return
-        if gate.type == GateType.y:
-            # Y X Y = -X
-            if self.operator[gate.targ] == GateType.x:
-                self.phase *= -1
-                return
-            # Y Y Y = Y
-            if self.operator[gate.targ] == GateType.y:
-                return
-            # Y Z Y = -Z
-            if self.operator[gate.targ] == GateType.z:
-                self.phase *= -1
-                return
-        if gate.type == GateType.z:
-            # Z X Z = -X
-            if self.operator[gate.targ] == GateType.x:
-                self.phase *= -1
-                return
-            # Z Y Z = -Y
-            if self.operator[gate.targ] == GateType.y:
-                self.phase *= -1
-                return
-            # Z Z Z = Z
-            if self.operator[gate.targ] == GateType.z:
-                return
+            self.operator[gate.carg], self.operator[gate.targ], phase\
+                = PauliOperator.combine_rules[gate.type, self.operator[gate.carg], self.operator[gate.targ]]
+        else:
+            self.operator[gate.targ], phase = PauliOperator.combine_rules[gate.type, self.operator[gate.targ]]
+        self.phase *= phase
 
     @staticmethod
     def disentangler(pauli_x, pauli_z, target=0) -> CompositeGate:
