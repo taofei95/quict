@@ -139,6 +139,25 @@ class PauliOperator(object):
         (GateType.z, GateType.z): (GateType.z, 1),
     }
 
+    standardize_rules = {
+        (GateType.id, GateType.id): ([], 4),
+        (GateType.id, GateType.x): ([GateType.h], 3),
+        (GateType.id, GateType.y): ([GateType.s, GateType.h], 3),
+        (GateType.id, GateType.z): ([], 3),
+        (GateType.x, GateType.id): ([], 2),
+        (GateType.x, GateType.x): ([], 1),
+        (GateType.x, GateType.y): ([GateType.h, GateType.s, GateType.h], 0),
+        (GateType.x, GateType.z): ([], 0),
+        (GateType.y, GateType.id): ([GateType.s], 2),
+        (GateType.y, GateType.x): ([GateType.h, GateType.s], 0),
+        (GateType.y, GateType.y): ([GateType.s], 1),
+        (GateType.y, GateType.z): ([GateType.s], 0),
+        (GateType.z, GateType.id): ([GateType.h], 2),
+        (GateType.z, GateType.x): ([GateType.h], 0),
+        (GateType.z, GateType.y): ([GateType.s, GateType.h], 0),
+        (GateType.z, GateType.z): ([GateType.h], 1)
+    }
+
     def __init__(self, operator=None, phase=1 + 0j):
         """
         Construct a PauliOperator with a list of GateType
@@ -396,105 +415,23 @@ class PauliOperator(object):
         XI = []
         IZ = []
         II = []
-
-        def standardize(gate_type, qubit):
-            gate = build_gate(gate_type, qubit)
-            pauli_x.conjugate_act(gate)
-            pauli_z.conjugate_act(gate)
-            standardizer.append(gate)
+        standard_forms = [XZ, XX, XI, IZ, II]
 
         # Transform the pauli_x and pauli_z to 'standard' forms
         standardizer = CompositeGate()
         for qubit in range(pauli_x.width):
-            if pauli_x.operator[qubit] == GateType.id:
-                # II
-                if pauli_z.operator[qubit] == GateType.id:
-                    II.append(qubit)
-                    continue
-                # IX
-                if pauli_z.operator[qubit] == GateType.x:
-                    standardize(GateType.h, qubit)
-                    IZ.append(qubit)
-                    continue
-                # IY
-                if pauli_z.operator[qubit] == GateType.y:
-                    standardize(GateType.s, qubit)
-                    standardize(GateType.h, qubit)
-                    IZ.append(qubit)
-                    continue
-                # IZ
-                if pauli_z.operator[qubit] == GateType.z:
-                    IZ.append(qubit)
-                    continue
-            if pauli_x.operator[qubit] == GateType.x:
-                # XI
-                if pauli_z.operator[qubit] == GateType.id:
-                    XI.append(qubit)
-                    continue
-                # XX
-                if pauli_z.operator[qubit] == GateType.x:
-                    XX.append(qubit)
-                    continue
-                # XY
-                if pauli_z.operator[qubit] == GateType.y:
-                    standardize(GateType.h, qubit)
-                    standardize(GateType.s, qubit)
-                    standardize(GateType.h, qubit)
-                    XZ.append(qubit)
-                    continue
-                # XZ
-                if pauli_z.operator[qubit] == GateType.z:
-                    XZ.append(qubit)
-                    continue
-            if pauli_x.operator[qubit] == GateType.y:
-                # YI
-                if pauli_z.operator[qubit] == GateType.id:
-                    standardize(GateType.s, qubit)
-                    XI.append(qubit)
-                    continue
-                # YX
-                if pauli_z.operator[qubit] == GateType.x:
-                    standardize(GateType.h, qubit)
-                    standardize(GateType.s, qubit)
-                    XZ.append(qubit)
-                    continue
-                # YY
-                if pauli_z.operator[qubit] == GateType.y:
-                    standardize(GateType.s, qubit)
-                    XX.append(qubit)
-                    continue
-                # YZ
-                if pauli_z.operator[qubit] == GateType.z:
-                    standardize(GateType.s, qubit)
-                    XZ.append(qubit)
-                    continue
-            if pauli_x.operator[qubit] == GateType.z:
-                # ZI
-                if pauli_z.operator[qubit] == GateType.id:
-                    standardize(GateType.h, qubit)
-                    XI.append(qubit)
-                    continue
-                # ZX
-                if pauli_z.operator[qubit] == GateType.x:
-                    standardize(GateType.h, qubit)
-                    XZ.append(qubit)
-                    continue
-                # ZY
-                if pauli_z.operator[qubit] == GateType.y:
-                    standardize(GateType.s, qubit)
-                    standardize(GateType.h, qubit)
-                    XZ.append(qubit)
-                    continue
-                # ZZ
-                if pauli_z.operator[qubit] == GateType.z:
-                    standardize(GateType.h, qubit)
-                    XX.append(qubit)
-                    continue
+            gates, form = PauliOperator.standardize_rules[pauli_x.operator[qubit], pauli_z.operator[qubit]]
+            for gate_type in gates:
+                gate = build_gate(gate_type, qubit)
+                pauli_x.conjugate_act(gate)
+                pauli_z.conjugate_act(gate)
+                standardizer.append(gate)
+            standard_forms[form].append(qubit)
 
         # Construct the disentangler of 'standard' pairs with the algorithm given in reference
         disentangler = CompositeGate()
         with disentangler:
-            for subset in [XZ, XX, XI, IZ, II]:
+            for subset in standard_forms:
                 if target in subset:
                     if subset is not XZ:
                         # Swap & [target, XZ[0]]
