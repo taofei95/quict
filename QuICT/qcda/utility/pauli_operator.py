@@ -18,6 +18,9 @@ class PauliOperator(object):
     In this class, we use a list of GateType to represent the operator, where the GateTypes stand
     for the gates. Despite the operator, the phase is also recorded.
     """
+    pauli_list = [GateType.id, GateType.x, GateType.y, GateType.z]
+    phase_list = [1 + 0j, 0 + 1j, -1 + 0j, 0 - 1j]
+
     def __init__(self, operator=None, phase=1 + 0j):
         """
         Construct a PauliOperator with a list of GateType
@@ -34,8 +37,7 @@ class PauliOperator(object):
                 assert gate_type == GateType.id or gate_type in PAULI_GATE_SET,\
                     ValueError("operator must contain Pauli gates only.")
             self._operator = operator
-        phase_list = [1 + 0j, 0 + 1j, -1 + 0j, 0 - 1j]
-        assert phase in phase_list, ValueError("phase must be ±1 or ±i")
+        assert phase in PauliOperator.phase_list, ValueError("phase must be ±1 or ±i")
         self._phase = phase
 
     def __str__(self):
@@ -71,8 +73,7 @@ class PauliOperator(object):
 
     @phase.setter
     def phase(self, phase: complex):
-        phase_list = [1 + 0j, 0 + 1j, -1 + 0j, 0 - 1j]
-        assert phase in phase_list, ValueError("phase must be ±1 or ±i")
+        assert phase in PauliOperator.phase_list, ValueError("phase must be ±1 or ±i")
         self._phase = phase
 
     def gates(self, keep_id=False, keep_phase=False) -> CompositeGate:
@@ -124,10 +125,9 @@ class PauliOperator(object):
         Returns:
             PauliOperator: a random PauliOperator with given width
         """
-        pauli_list = [GateType.id, GateType.x, GateType.y, GateType.z]
         operator = []
         for _ in range(width):
-            operator.append(random.choice(pauli_list))
+            operator.append(random.choice(PauliOperator.pauli_list))
         return PauliOperator(operator)
 
     @staticmethod
@@ -156,8 +156,7 @@ class PauliOperator(object):
         Yields:
             PauliOperator: PauliOperator with given width
         """
-        pauli_list = [GateType.id, GateType.x, GateType.y, GateType.z]
-        for operator in itertools.product(pauli_list, repeat=width):
+        for operator in itertools.product(PauliOperator.pauli_list, repeat=width):
             yield PauliOperator(list(operator))
 
     def commute(self, other):
