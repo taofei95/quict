@@ -219,30 +219,16 @@ class PauliOperator(object):
         assert isinstance(qubit, int) and qubit >= 0 and qubit < self.width,\
             ValueError('qubit out of range')
 
+        if gate_type == GateType.id:
+            return
         if self.operator[qubit] == GateType.id:
-            # I I = I
-            if gate_type == GateType.id:
-                return
-            # I X = X
-            if gate_type == GateType.x:
-                self.operator[qubit] = GateType.x
-                return
-            # I Y = Y
-            if gate_type == GateType.y:
-                self.operator[qubit] = GateType.y
-                return
-            # I Z = Z
-            if gate_type == GateType.z:
-                self.operator[qubit] = GateType.z
-                return
+            self.operator[qubit] = gate_type
+            return
+        # X X = Y Y = Z Z = I
+        if gate_type == self.operator[qubit]:
+            self.operator[qubit] = GateType.id
+            return
         if self.operator[qubit] == GateType.x:
-            # X I = X
-            if gate_type == GateType.id:
-                return
-            # X X = I
-            if gate_type == GateType.x:
-                self.operator[qubit] = GateType.id
-                return
             # X Y = -iZ
             if gate_type == GateType.y:
                 self.operator[qubit] = GateType.z
@@ -254,17 +240,10 @@ class PauliOperator(object):
                 self.phase *= 1j
                 return
         if self.operator[qubit] == GateType.y:
-            # Y I = Y
-            if gate_type == GateType.id:
-                return
             # Y X = iZ
             if gate_type == GateType.x:
                 self.operator[qubit] = GateType.z
                 self.phase *= 1j
-                return
-            # Y Y = I
-            if gate_type == GateType.y:
-                self.operator[qubit] = GateType.id
                 return
             # Y Z = -iX
             if gate_type == GateType.z:
@@ -272,9 +251,6 @@ class PauliOperator(object):
                 self.phase *= -1j
                 return
         if self.operator[qubit] == GateType.z:
-            # Z I = Z
-            if gate_type == GateType.id:
-                return
             # Z X = -iY
             if gate_type == GateType.x:
                 self.operator[qubit] = GateType.y
@@ -284,10 +260,6 @@ class PauliOperator(object):
             if gate_type == GateType.y:
                 self.operator[qubit] = GateType.x
                 self.phase *= 1j
-                return
-            # Z Z = I
-            if gate_type == GateType.z:
-                self.operator[qubit] = GateType.id
                 return
 
     def conjugate_act(self, gate: BasicGate):
@@ -301,14 +273,11 @@ class PauliOperator(object):
         """
         assert gate.is_clifford() or gate.type == GateType.id,\
             ValueError("Only conjugate action of Clifford gates here.")
+        for targ in gate.cargs + gate.targs:
+            assert targ < self.width, ValueError("target of the gate out of range")
 
-        def out_of_range(gate):
-            targs = gate.cargs + gate.targs
-            for targ in targs:
-                assert targ < self.width, ValueError("target of the gate out of range")
-
+        # CX = CX01
         if gate.type == GateType.cx:
-            assert not out_of_range(gate)
             if self.operator[gate.carg] == GateType.id:
                 # CX I0 I1 CX = I0 I1
                 if self.operator[gate.targ] == GateType.id:
@@ -380,11 +349,11 @@ class PauliOperator(object):
                 if self.operator[gate.targ] == GateType.z:
                     self.operator[gate.carg] = GateType.id
                     return
+
+        # 1-qubit clifford
+        if self.operator[gate.targ] == GateType.id:
+            return
         if gate.type == GateType.h:
-            assert not out_of_range(gate)
-            # H I H = I
-            if self.operator[gate.targ] == GateType.id:
-                return
             # H X H = Z
             if self.operator[gate.targ] == GateType.x:
                 self.operator[gate.targ] = GateType.z
@@ -398,10 +367,6 @@ class PauliOperator(object):
                 self.operator[gate.targ] = GateType.x
                 return
         if gate.type == GateType.s:
-            assert not out_of_range(gate)
-            # Sdg I S = I
-            if self.operator[gate.targ] == GateType.id:
-                return
             # Sdg X S = Y
             if self.operator[gate.targ] == GateType.x:
                 self.operator[gate.targ] = GateType.y
@@ -415,10 +380,6 @@ class PauliOperator(object):
             if self.operator[gate.targ] == GateType.z:
                 return
         if gate.type == GateType.sdg:
-            assert not out_of_range(gate)
-            # S I Sdg = I
-            if self.operator[gate.targ] == GateType.id:
-                return
             # S X Sdg = -Y
             if self.operator[gate.targ] == GateType.x:
                 self.operator[gate.targ] = GateType.y
@@ -432,10 +393,6 @@ class PauliOperator(object):
             if self.operator[gate.targ] == GateType.z:
                 return
         if gate.type == GateType.x:
-            assert not out_of_range(gate)
-            # X I X = I
-            if self.operator[gate.targ] == GateType.id:
-                return
             # X X X = X
             if self.operator[gate.targ] == GateType.x:
                 return
@@ -448,10 +405,6 @@ class PauliOperator(object):
                 self.phase *= -1
                 return
         if gate.type == GateType.y:
-            assert not out_of_range(gate)
-            # Y I Y = I
-            if self.operator[gate.targ] == GateType.id:
-                return
             # Y X Y = -X
             if self.operator[gate.targ] == GateType.x:
                 self.phase *= -1
@@ -464,10 +417,6 @@ class PauliOperator(object):
                 self.phase *= -1
                 return
         if gate.type == GateType.z:
-            assert not out_of_range(gate)
-            # Z I Z = I
-            if self.operator[gate.targ] == GateType.id:
-                return
             # Z X Z = -X
             if self.operator[gate.targ] == GateType.x:
                 self.phase *= -1
@@ -610,19 +559,6 @@ class PauliOperator(object):
                     standardize(GateType.h, qubit)
                     XX.append(qubit)
                     continue
-
-        # Some tests for standardizer
-        assert len(XZ + XX + XI + IZ + II) == pauli_x.width
-        for qubit in XZ:
-            assert pauli_x.operator[qubit] == GateType.x and pauli_z.operator[qubit] == GateType.z
-        for qubit in XX:
-            assert pauli_x.operator[qubit] == GateType.x and pauli_z.operator[qubit] == GateType.x
-        for qubit in XI:
-            assert pauli_x.operator[qubit] == GateType.x and pauli_z.operator[qubit] == GateType.id
-        for qubit in IZ:
-            assert pauli_x.operator[qubit] == GateType.id and pauli_z.operator[qubit] == GateType.z
-        for qubit in II:
-            assert pauli_x.operator[qubit] == GateType.id and pauli_z.operator[qubit] == GateType.id
 
         # Construct the disentangler of 'standard' pairs with the algorithm given in reference
         disentangler = CompositeGate()

@@ -7,7 +7,7 @@ import numpy as np
 import copy
 
 from QuICT.core.utils import GateType, SPECIAL_GATE_SET, DIAGONAL_GATE_SET,\
-                             PAULI_GATE_SET, CLIFFORD_GATE_SET, CGATE_LIST
+    PAULI_GATE_SET, CLIFFORD_GATE_SET, CGATE_LIST
 
 
 class BasicGate(object):

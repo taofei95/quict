@@ -27,7 +27,7 @@ class CliffordUnidirectionalSynthesizer(Synthesis):
         """
         Args:
             gates(Circuit/CompositeGate): the Clifford Circuit/CompositeGate to be synthesized
-            strategy(str, optional): strategy of choosing qubit for each step
+            strategy(str, optional): strategy of choosing qubit for each step, in ['greedy', 'random']
 
         Returns:
             CompositeGate: the synthesized Clifford CompositeGate
@@ -116,8 +116,8 @@ class CliffordBidirectionalSynthesizer(Synthesis):
         """
         Args:
             gates(Circuit/CompositeGate): the Clifford Circuit/CompositeGate to be synthesized
-            qubit_strategy(str, optional): strategy of choosing qubit for each step
-            pauli_strategy(str, optional): strategy of choosing PauliOperator for each step
+            qubit_strategy(str, optional): strategy of choosing qubit for each step, in ['greedy', 'random']
+            pauli_strategy(str, optional): strategy of choosing PauliOperator for each step, in ['greedy', 'random']
             shots(int, optional): if pauli_strategy is random, shots of random
             multiprocess(bool, optional): whether to use the multiprocessing accelaration
             process(int, optional): the number of processes in a pool

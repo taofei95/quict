@@ -201,11 +201,11 @@ class CompositeGate:
             self._gates.insert(insert_idx, gate)
 
     def left_append(self, gate):
-        self.append(gate, insert_idx = 0)
+        self.append(gate, insert_idx=0)
 
     def left_extend(self, gates: list):
         for idx, gate in enumerate(gates):
-            self.append(gate, is_extend = True, insert_idx = idx)
+            self.append(gate, is_extend=True, insert_idx=idx)
 
         self._pointer = -1
 
