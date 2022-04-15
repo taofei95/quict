@@ -57,8 +57,14 @@ def test_gate_attribute():
     # test control single
     assert CRz.is_control_single() and not H.is_control_single()
 
+    # test Clifford gate
+    assert S.is_clifford() and not T.is_clifford()
+
     # test diagonal gate
     assert S.is_diagonal() and not H.is_diagonal()
+
+    # test Pauli gate
+    assert X.is_pauli() and not Rx.is_pauli()
 
     # test unitary gate diagonal
     dmatrix = np.array([

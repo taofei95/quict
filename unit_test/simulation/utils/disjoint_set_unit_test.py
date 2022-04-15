@@ -1,5 +1,6 @@
 from QuICT.simulation.utils.disjoint_set import DisjointSet
 
+
 def test_set():
     print()
     cnt = 5
