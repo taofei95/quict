@@ -2303,7 +2303,7 @@ class QFTGate(BasicGate):
             for i in range(targets):
                 H & i
                 for j in range(i + 1, targets):
-                    CRz(2 * np.pi / (1 << j - i + 1)) & [j, i]
+                    CU1(2 * np.pi / (1 << j - i + 1)) & [j, i]
 
         args = self.cargs + self.targs
         if len(args) == targets:
@@ -2344,7 +2344,7 @@ class IQFTGate(QFTGate):
         with cgate:
             for i in range(targets - 1, -1, -1):
                 for j in range(targets - 1, i, -1):
-                    CRz(-2 * np.pi / (1 << j - i + 1)) & [j, i]
+                    CU1(-2 * np.pi / (1 << j - i + 1)) & [j, i]
                 H & i
 
         args = self.cargs + self.targs
