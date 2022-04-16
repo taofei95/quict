@@ -39,7 +39,11 @@ def construct_circuit(a: int, N: int, eps: float = 1 / 10):
     for k in range(t):
         gate_pow = pow(a, 1 << (t-1-k), N) # CUa^{2^{t-1-k}}
         BEACUa.execute(n, gate_pow, N) | circuit(b_reg+x_reg+[trickbits[k]]+qreg_low)
+    for k in range(len(trickbits)//2):
+        Swap | circuit([trickbits[k],trickbits[len(trickbits)-1-k]])
     IQFT.build_gate(len(trickbits)) | circuit(trickbits)
+    for k in range(len(trickbits)//2):
+        Swap | circuit([trickbits[k],trickbits[len(trickbits)-1-k]])
     for idx in (b_reg + trickbits + qreg_low):
         Measure | circuit(idx)
     return circuit, trickbits[::-1] # for int(circuit[trickbits]) convenience

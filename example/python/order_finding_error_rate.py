@@ -20,7 +20,7 @@ def naive_order_finding(a, N):
 
 error = 0
 all = 0
-for method in [BEA_zip_run, BEA_run]:
+for method in [BEA_run]:
     for N in (7, 8, 9, 11, 12, 13):
         for a in range(2, N):
             ref_order = naive_order_finding(a, N)
