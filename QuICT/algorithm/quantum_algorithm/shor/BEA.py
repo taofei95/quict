@@ -11,6 +11,7 @@ import logging
 from math import gcd, pi
 import numpy as np
 from fractions import Fraction
+from functools import reduce
 
 from QuICT.core import Circuit
 from QuICT.core.gate import *
@@ -78,8 +79,7 @@ def reinforced_order_finding(a: int, N: int, eps: float = 1 / 10, simulator: Sim
         if r!=0 and (a**r)%N==1:
             logging.info(f'\tsuccess!')
             r_list.append(r)
-        if len(r_list)>1:
-            break
     if len(r_list) == 0:
         return 0
-    return min(r_list)
+    else:
+        return reduce(lambda x,y: (x*y)//gcd(x,y),r_list)
