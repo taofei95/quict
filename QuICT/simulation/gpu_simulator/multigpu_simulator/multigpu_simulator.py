@@ -509,8 +509,8 @@ class MultiStateVectorSimulator(BasicGPUSimulator):
                     indexes,
                     *default_parameters
                 )
-        # [ID]
-        elif gate_type == GateType.id:
+        # [ID, Barrier]
+        elif gate_type == GateType.id or gate_type == GateType.barrier:
             pass
         # [CCX]
         elif gate_type in GATE_TYPE_to_ID[GateGroup.reverse_3arg]:
@@ -723,16 +723,6 @@ class MultiStateVectorSimulator(BasicGPUSimulator):
             index = self.total_qubits - 1 - gate.targ
 
             self._reset_operation(index)
-        # [Barrier]
-        elif gate_type == GateType.barrier:
-            pass
-        # [Perm] TODO: for uncertained qubits gate not support yet
-        elif (
-            gate_type == GateType.perm or
-            gate_type in GateGroup.perm_gate
-        ):
-            pass
-        # [Unitary] TODO: Currently only support the 1-, 2-qubits unitary quantum gates
         elif gate_type == GateType.unitary:
             qubit_idxes = gate.cargs + gate.targs
             if len(qubit_idxes) == 1:   # 1-qubit unitary gate
@@ -760,7 +750,7 @@ class MultiStateVectorSimulator(BasicGPUSimulator):
                         indexes,
                         matrix
                     )
-            else:   # common unitary gate supported, but run slowly
+            else:
                 raise ValueError(
                     "do not support the unitary gate with more than 2 qubits, please use gate decomposition first."
                 )
@@ -1093,68 +1083,3 @@ class MultiStateVectorSimulator(BasicGPUSimulator):
                 *default_parameters,
                 multigpu_prob=prob
             )
-
-    def _perm_operation(self, indexes):
-        """ Temporary algorithm for the PermGate.
-
-        Args:
-            indexes ([int]): the parameter args in the PermGate
-
-        Returns:
-            [int]: the state indexes after permutation.
-        """
-        dev_num = self.proxy.ndevs
-        current_dev = self.proxy.dev_id
-        iter = len(indexes) // dev_num
-
-        ops, perm_indexes = perm_sort(indexes, dev_num)
-        for op in ops:
-            operation, sender, destination = op
-            if operation == "ALL":
-                if sender == current_dev:
-                    self._data_switcher.all_switch(
-                        self._vector,
-                        destination
-                    )
-            elif operation == "IDX":
-                if sender // iter == current_dev:
-                    ctargs = {}
-                    device_idx = sender % iter
-
-                    temp_iter, len_iter = iter, int(np.log2(iter))
-                    for c in range(len_iter):
-                        temp_iter //= 2
-                        if device_idx >= temp_iter:
-                            ctargs[len_iter - 1 - c] = 1
-                            device_idx -= temp_iter
-                        else:
-                            ctargs[len_iter - 1 - c] = 0
-
-                    self._data_switcher.ctargs_switch(
-                        self._vector,
-                        destination // iter,
-                        ctargs
-                    )
-                if destination // iter == current_dev:
-                    ctargs = {}
-                    device_idx = destination % iter
-
-                    temp_iter, len_iter = iter, int(np.log2(iter))
-                    for c in range(len_iter):
-                        temp_iter //= 2
-                        if device_idx >= temp_iter:
-                            ctargs[len_iter - 1 - c] = 1
-                            device_idx -= temp_iter
-                        else:
-                            ctargs[len_iter - 1 - c] = 0
-
-                    self._data_switcher.ctargs_switch(
-                        self._vector,
-                        sender // iter,
-                        ctargs
-                    )
-
-        swaped_indexes = perm_indexes[current_dev * iter:current_dev * iter + iter]
-        swaped_pargs = np.argsort(swaped_indexes)
-
-        return swaped_pargs
