@@ -8,9 +8,9 @@ import copy
 
 from QuICT.core.utils import (
     GateType, SPECIAL_GATE_SET, DIAGONAL_GATE_SET, CGATE_LIST,
+    PAULI_GATE_SET, CLIFFORD_GATE_SET,
     perm_decomposition
 )
-
 
 class BasicGate(object):
     """ the abstract SuperClass of all basic quantum gate
@@ -375,6 +375,14 @@ class BasicGate(object):
         """
         return self.controls == 1 and self.targets == 1
 
+    def is_clifford(self) -> bool:
+        """ judge whether gate's matrix is a Clifford gate
+
+        Returns:
+            bool: True if gate's matrix is a Clifford gate
+        """
+        return self.type in CLIFFORD_GATE_SET
+
     def is_diagonal(self) -> bool:
         """ judge whether gate's matrix is diagonal
 
@@ -388,6 +396,14 @@ class BasicGate(object):
 
     def _is_diagonal(self) -> bool:
         return np.allclose(np.diag(np.diag(self.matrix)), self.matrix)
+
+    def is_pauli(self) -> bool:
+        """ judge whether gate's matrix is a Pauli gate
+
+        Returns:
+            bool: True if gate's matrix is a Pauli gate
+        """
+        return self.type in PAULI_GATE_SET
 
     def is_special(self) -> bool:
         """ judge whether gate's is special gate, which is one of
@@ -477,6 +493,14 @@ class SGate(BasicGate):
             [0, 1j]
         ], dtype=np.complex128)
 
+    def inverse(self):
+        """ change it be sdg gate"""
+        _Sdagger = SDaggerGate()
+        _Sdagger.targs = copy.deepcopy(self.targs)
+        _Sdagger.assigned_qubits = copy.deepcopy(self.assigned_qubits)
+
+        return _Sdagger
+
 
 S = SGate()
 
@@ -495,6 +519,14 @@ class SDaggerGate(BasicGate):
             [1, 0],
             [0, -1j]
         ], dtype=np.complex128)
+
+    def inverse(self):
+        """ change it to be s gate """
+        _Sgate = SGate()
+        _Sgate.targs = copy.deepcopy(self.targs)
+        _Sgate.assigned_qubits = copy.deepcopy(self.assigned_qubits)
+
+        return _Sgate
 
 
 S_dagger = SDaggerGate()
