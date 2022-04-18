@@ -9,68 +9,30 @@ from QuICT.core.gate import *
 from QuICT.qcda.optimization.commutative_optimization import CommutativeOptimization
 
 
-def test_commute():
-    a = CX & [0, 1]
-    b = CX & [1, 0]
-    print(a.commutative(b))
-
-
 def test_parameterize():
-    gates = CompositeGate()
-    with gates:
-        X & 0
-        Y & 1
-        Z & 2
-        X & 0
-    phase_angle = 0
-    gates_para = CompositeGate()
-    for gate in gates:
+    test_list = [X, Y, Z, SX, SY, S, S_dagger, T, T_dagger]
+    for gate in test_list:
+        gate = gate & 0
         gate_para, phase = CommutativeOptimization.parameterize(gate)
-        gates_para.append(gate_para)
-        phase_angle += phase
-    with gates_para:
-        Phase(phase_angle) & 0
-    print(gates_para)
-    assert np.allclose(gates.matrix(), gates_para.matrix())
+        assert np.allclose(gate.matrix, np.exp(1j * phase) * gate_para.matrix)
 
 
 def test_deparameterize():
-    gates = CompositeGate()
-    with gates:
-        Rx(np.pi) & 0
-        Rx(-np.pi) & 1
-        Ry(np.pi) & 2
-        Ry(-np.pi) & 3
-        Rz(np.pi) & 4
-        Rz(-np.pi) & 5
-        Rz(np.pi / 2) & 0
-        Rz(-np.pi / 2) & 1
-        Rz(np.pi / 4) & 2
-        Rz(-np.pi / 4) & 3
-        Rx(np.pi / 2) & 0
-        Rx(5 * np.pi / 2) & 1
-        Ry(np.pi / 2) & 2
-        Ry(5 * np.pi / 2) & 3
-    phase_angle = 0
-    gates_depara = CompositeGate()
-    for gate in gates:
-        gate_depara, phase = CommutativeOptimization.deparameterize(gate)
-        gates_depara.append(gate_depara)
-        phase_angle += phase
-    with gates_depara:
-        Phase(phase_angle) & 0
-    print(gates_depara)
-    assert np.allclose(gates.matrix(), gates_depara.matrix())
-
-
-def test_combine():
-    gate_x = X & 0
-    gate_y = X & 0
-    gate = CommutativeOptimization.combine(gate_x, gate_y)
-    gates = CompositeGate()
-    with gates:
-        gate & gate.targs
-    print(gates)
+    # Rx
+    for k in range(8):
+        gate = Rx(k * np.pi / 2) & 0
+        gates_depara, phase = CommutativeOptimization.deparameterize(gate)
+        assert np.allclose(gate.matrix, np.exp(1j * phase) * gates_depara.matrix())
+    # Ry
+    for k in range(8):
+        gate = Ry(k * np.pi / 2) & 0
+        gates_depara, phase = CommutativeOptimization.deparameterize(gate)
+        assert np.allclose(gate.matrix, np.exp(1j * phase) * gates_depara.matrix())
+    # Rz
+    for k in range(16):
+        gate = Rz(k * np.pi / 4) & 0
+        gates_depara, phase = CommutativeOptimization.deparameterize(gate)
+        assert np.allclose(gate.matrix, np.exp(1j * phase) * gates_depara.matrix())
 
 
 # Be aware that too many types at the same time may not benefit to the test,
@@ -80,6 +42,7 @@ typelist = [GateType.rx, GateType.ry, GateType.rz,
             GateType.s, GateType.t, GateType.h,
             GateType.cx, GateType.crz, GateType.fsim]
 typelist = [GateType.rx, GateType.ry, GateType.rz, GateType.x, GateType.y, GateType.z, GateType.cx]
+typelist = [GateType.cx, GateType.h, GateType.s, GateType.t, GateType.x, GateType.y, GateType.z]
 # typelist = [GateType.rx, GateType.ry, GateType.rz]
 # typelist = [GateType.x, GateType.y, GateType.z]
 # typelist = [GateType.cx, GateType.crz, GateType.fsim]
@@ -94,9 +57,9 @@ def test():
         # print(circuit)
         # circuit.draw()
 
-        gates = CommutativeOptimization.execute(circuit)
+        gates = CommutativeOptimization.execute(circuit, deparameterization=True)
         circuit_opt = Circuit(n)
-        gates | circuit_opt
+        circuit_opt.extend(gates)
 
         # print(circuit_opt)
         # circuit_opt.draw()
