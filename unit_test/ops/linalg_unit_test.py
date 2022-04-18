@@ -91,7 +91,7 @@ class TestGPULinalg(unittest.TestCase):
         self.assertTrue((np_result == gpu_result).all())
 
     def test_matrix_dot_vector(self):
-        qubit_num = 20
+        qubit_num = 10
         circuit = Circuit(qubit_num)
         QFT.build_gate(qubit_num) | circuit
 
@@ -142,6 +142,12 @@ class TestCPULinalg(unittest.TestCase):
         cpu_result = CPUCalculator.tensor(TestCPULinalg.matrix_A, TestCPULinalg.matrix_B)
         self.assertTrue((np_result == cpu_result).all())
 
+    def test_multiply_cpu(self):
+        np_result = np.multiply(TestCPULinalg.matrix_A, TestCPULinalg.matrix_B)
+        cpu_result = CPUCalculator.multiply(TestCPULinalg.matrix_A, TestCPULinalg.matrix_B)
+
+        self.assertTrue(np.allclose(np_result, cpu_result, atol=1e-04))
+
     def test_MatrixTensorI_cpu(self):
         n, m = 2, 3
 
@@ -157,7 +163,7 @@ class TestCPULinalg(unittest.TestCase):
         np.random.shuffle(mapping)
 
         cpu_result = CPUCalculator.VectorPermutation(TestCPULinalg.vector, mapping)
-        self.assertTrue(np.sum(cpu_result) == np.sum(TestCPULinalg.vector))
+        self.assertTrue(np.isclose(np.sum(cpu_result), np.sum(TestCPULinalg.vector), atol=1e-04))
 
     def test_matrixpermutation_cpu(self):
         mapping = list(range(TestCPULinalg.seed))[::-1]

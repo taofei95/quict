@@ -1,7 +1,7 @@
 import cupy as cp
 import numpy as np
 
-from .gate_function import prop_add, MeasureGate_prop_kernel
+from .gate_function import prop_add, MeasureGate_prop
 
 
 __outward_functions = [
@@ -20,6 +20,7 @@ Simple_Multiply_single = cp.RawKernel(r'''
         vec[label] = vec[label]*val;
     }
     ''', 'SimpleMultiply')
+Simple_Multiply_single.compile()
 
 
 Simple_Multiply_double = cp.RawKernel(r'''
@@ -31,6 +32,7 @@ Simple_Multiply_double = cp.RawKernel(r'''
         vec[label] = vec[label]*val;
     }
     ''', 'SimpleMultiply')
+Simple_Multiply_double.compile()
 
 
 Float_Multiply_single = cp.RawKernel(r'''
@@ -42,6 +44,7 @@ Float_Multiply_single = cp.RawKernel(r'''
         vec[label] = vec[label] * value;
     }
     ''', 'FloatMultiply')
+Float_Multiply_single.compile()
 
 
 Float_Multiply_double = cp.RawKernel(r'''
@@ -53,6 +56,7 @@ Float_Multiply_double = cp.RawKernel(r'''
         vec[label] = vec[label] * value;
     }
     ''', 'FloatMultiply')
+Float_Multiply_double.compile()
 
 
 prob_0 = cp.ElementwiseKernel(
@@ -101,7 +105,7 @@ def Device_Prob_Calculator(index, vec, device_qubits, dev_id):
     else:
         prob = prop_add(vec, vec, 1 << index)
 
-    prob = MeasureGate_prop_kernel(prob, axis=0).real
+    prob = MeasureGate_prop(prob, axis=0).real
 
     return prob
 
