@@ -65,4 +65,3 @@ def perm_decomposition(permutation: list):
             idx += 1
 
     return swap_pairs
-    

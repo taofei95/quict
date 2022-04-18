@@ -12,6 +12,7 @@ from QuICT.core.utils import (
     perm_decomposition
 )
 
+
 class BasicGate(object):
     """ the abstract SuperClass of all basic quantum gate
 
