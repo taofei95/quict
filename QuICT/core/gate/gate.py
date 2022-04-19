@@ -1679,12 +1679,18 @@ class PermGate(BasicGate):
     It can change an n-qubit qureg's amplitude by permutaion,
     the parameter is a 2^n list describes the permutation.
     """
-    def __init__(self):
+    def __init__(
+        self,
+        controls: int = 0,
+        targets: int = 0,
+        params: int = 0,
+        type: GateType = GateType.perm
+    ):
         super().__init__(
-            controls=0,
-            targets=0,
-            params=0,
-            type=GateType.perm
+            controls=controls,
+            targets=targets,
+            params=params,
+            type=type
         )
 
     def __call__(self, targets: int, params: list):
@@ -1724,17 +1730,17 @@ class PermGate(BasicGate):
 
         return _gate
 
-    def build_gate(self, params: list, targs: list = None):
+    def build_gate(self, targs: list = None):
         from QuICT.core.gate import CompositeGate
 
-        swap_args: list[list[int]] = perm_decomposition(params)
+        swap_args: list[list[int]] = perm_decomposition(self.pargs)
         cgate = CompositeGate()
         with cgate:
             for swap_arg in swap_args:
                 Swap & swap_arg
 
         if targs is not None:
-            assert len(targs) == len(params)
+            assert len(targs) == self.targets + self.controls
             cgate & targs
 
         return cgate
@@ -1743,7 +1749,7 @@ class PermGate(BasicGate):
 Perm = PermGate()
 
 
-class ControlPermMulDetailGate(BasicGate):
+class ControlPermMulDetailGate(PermGate):
     """ controlled-Permutation gate
 
     This gate is used to implement oracle in the order-finding algorithm
@@ -1799,7 +1805,7 @@ class ControlPermMulDetailGate(BasicGate):
 ControlPermMulDetail = ControlPermMulDetailGate()
 
 
-class PermShiftGate(BasicGate):
+class PermShiftGate(PermGate):
     """ act an increase or subtract operate with modulus.
 
     This Class is the subClass of PermGate.
@@ -1851,7 +1857,7 @@ class PermShiftGate(BasicGate):
 PermShift = PermShiftGate()
 
 
-class ControlPermShiftGate(BasicGate):
+class ControlPermShiftGate(PermGate):
     """ Controlled-PermShiftGate
 
     PermShiftGate with a control bit
@@ -1903,7 +1909,7 @@ class ControlPermShiftGate(BasicGate):
 ControlPermShift = ControlPermShiftGate()
 
 
-class PermMulGate(BasicGate):
+class PermMulGate(PermGate):
     """ act an multiply operate with modulus.
 
     This Class is the subClass of PermGate.
@@ -1959,7 +1965,7 @@ class PermMulGate(BasicGate):
 PermMul = PermMulGate()
 
 
-class ControlPermMulGate(BasicGate):
+class ControlPermMulGate(PermGate):
     """ a controlled-PermMul Gate """
     def __init__(self):
         super().__init__(
@@ -2009,7 +2015,7 @@ class ControlPermMulGate(BasicGate):
 ControlPermMul = ControlPermMulGate()
 
 
-class PermFxGate(BasicGate):
+class PermFxGate(PermGate):
     """ act an Fx oracle on a qureg
 
     This Class is the subClass of PermGate.
