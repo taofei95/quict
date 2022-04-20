@@ -1,6 +1,7 @@
 import numpy as np
 
 from QuICT.core import Circuit
+from QuICT.core.gate import Phase
 from QuICT.qcda.synthesis.uniformly_gate import UniformlyRy, UniformlyRz
 from QuICT.qcda.synthesis.unitary_transform import UnitaryTransform
 from QuICT.quantum_state_preparation.utility import schmidt_decompose
@@ -30,21 +31,24 @@ class QuantumStatePreparation(object):
             ValueError('Quantum state should be an array with length 2^n')
 
         circuit = Circuit(num_qubits)
-        # If state_vector is real, no UniformlyRz will be needed.
-        if not np.allclose(state_vector.imag, 0):
-            omega = np.angle(state_vector)
-            for k in range(num_qubits):
-                alpha = np.zeros(1 << num_qubits - k - 1)
-                for j in range(1 << num_qubits - k - 1):
-                    alpha[j] = (np.sum(omega[(2 * j + 1) * (1 << k):(2 * j + 1) * (1 << k) + (1 << k)] -
-                                       omega[(2 * j) * (1 << k):(2 * j) * (1 << k) + (1 << k)])) / (1 << k)
-                UniformlyRz.execute(alpha) | circuit
-        # Now for the real state_vector
+        omega = np.angle(state_vector)
         state_vector = np.abs(state_vector)
-        for k in range(num_qubits):
-            alpha = np.zeros(1 << num_qubits - k - 1)
-            for j in range(1 << num_qubits - k - 1):
-                alpha[j] = 2 * np.arcsin(np.sqrt() / np.sqrt())
+        # Now for the non-negative real state_vector
+        denominator = np.linalg.norm(state_vector)
+        for k in range(num_qubits - 1, -1, -1):
+            numerator = np.linalg.norm(state_vector.reshape(1 << num_qubits - k, 1 << k), axis=1)
+            alpha = 2 * np.arcsin(numerator[1::2] / denominator)
+            UniformlyRy.execute(alpha) | circuit
+            denominator = numerator
+        # If state_vector is real and non-negative, no UniformlyRz will be needed.
+        if not np.allclose(omega, 0):
+            for k in range(num_qubits):
+                alpha = np.sum(omega.reshape(1 << num_qubits - k, 1 << k), axis=1)
+                alpha = (alpha[1::2] - alpha[0::2]) / (1 << k)
+                UniformlyRz.execute(alpha) | circuit
+            Phase(np.average(omega)) | circuit(0)
+
+        return circuit
 
     @classmethod
     def with_unitary_decomposition(cls, state_vector):
