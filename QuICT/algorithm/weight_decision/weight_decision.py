@@ -56,7 +56,6 @@ class WeightDecision(Algorithm):
         value[N - 1] = b / np.sqrt(n + a ** 2 + b ** 2)
 
         # Apply oracle U_f which flips the phase of every state |x> with f(x) = 1
-        print(value)
         QuantumStatePreparation.with_uniformly_gates(value) | circuit(qreg)
         X | circuit(ancilla)
         H | circuit(ancilla)
