@@ -325,9 +325,6 @@ print(f"Found packages: {packages}")
 # static file
 file_data = [
     ("QuICT/lib/qasm/libs", [f"{prj_root_relative}/QuICT/lib/qasm/libs/qelib1.inc"]),
-    # ("QuICT/qcda/synthesis/initial_state_preparation",
-    #  [f"{prj_root_relative}/QuICT/qcda/synthesis/initial_state_preparation/initial_state_preparation_cdll.so"],
-    #  ),
     # ("QuICT/qcda/mapping/mcts/mcts_core",
     #  [lib1]
     #  ),
@@ -366,8 +363,6 @@ setup(
     package_dir={"QuICT": f"{prj_root_relative}/QuICT/"},
     ext_modules=[
         CMakeExtension("QuICT.utility.graph_structure.", f"{prj_root}/QuICT/utility/graph_structure"),
-        CMakeExtension("QuICT.qcda.synthesis.initial_state_preparation.",
-                       f"{prj_root}/QuICT/qcda/synthesis/initial_state_preparation/"),
         CMakeExtension("QuICT.simulation.cpu_simulator.",
                        f"{prj_root}/QuICT/simulation/cpu_simulator/"),
         CythonExtension(
