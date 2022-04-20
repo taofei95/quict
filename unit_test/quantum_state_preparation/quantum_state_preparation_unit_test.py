@@ -16,3 +16,15 @@ def test_with_uniformly_gates():
             simulator = ConstantStateVectorSimulator()
             state = simulator.run(circuit)
             assert np.allclose(state_vector, state)
+
+
+def test_with_unitary_decomposition():
+    for n in range(2, 6):
+        for _ in range(100):
+            state_vector = unitary_group.rvs(1 << n)[0]
+            gates = QuantumStatePreparation.with_unitary_decomposition(state_vector)
+            circuit = Circuit(n)
+            circuit.extend(gates)
+            simulator = ConstantStateVectorSimulator()
+            state = simulator.run(circuit)
+            assert np.allclose(state_vector, state)
