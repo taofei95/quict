@@ -511,7 +511,7 @@ simplevp_single_kernel = cp.RawKernel(r'''
     extern "C" __global__
     void simple_vp_single(const complex<float>* x, complex<float>* y, int* mapping) {
         int tid = blockDim.x * blockIdx.x + threadIdx.x;
-        int xid = mapping[tid]
+        int xid = mapping[tid];
         y[tid] = x[xid];
     }
     ''', 'simple_vp_single')
@@ -731,3 +731,9 @@ def _qargs_fill(qargs, qubits):
             result[i] = len(qargs) - 1 - np.argwhere(qargs == i)
 
     return result
+
+
+kernel_funcs = list(locals().keys())
+for name in kernel_funcs:
+    if name.endswith("kernel"):
+        locals()[name].compile()
