@@ -306,6 +306,14 @@ class CommutativeOptimization(Optimization):
                 phase_angle += gate.parg
                 continue
 
+            # Remove such as Rot(0)
+            if np.allclose(
+                gate.matrix,
+                gate.matrix[0, 0] * np.eye(1 << gate.controls + gate.targets)
+                ):
+                phase_angle += np.angle(gate.matrix[0, 0])
+                continue
+
             # Preprocess: parameterization
             if parameterization:
                 gate, phase = cls.parameterize(gate)
@@ -334,10 +342,13 @@ class CommutativeOptimization(Optimization):
                     ):
                         combined = True
                         nodes[prev].gate = cls.combine(prev_gate, gate)
-                        mat = nodes[prev].gate.target_matrix
+                        mat = nodes[prev].gate.matrix
                         if (
                             nodes[prev].gate.type == GateType.id or
-                            np.allclose(mat, mat[0, 0] * np.eye(2 ** nodes[prev].gate.targets))
+                            np.allclose(
+                                mat,
+                                mat[0, 0] * np.eye(1 << nodes[prev].gate.controls + nodes[prev].gate.targets)
+                                )
                         ):
                             nodes[prev].identity = True
                         break
@@ -354,7 +365,7 @@ class CommutativeOptimization(Optimization):
         gates_opt = CompositeGate()
         for node in nodes:
             if node.identity or node.gate.type == GateType.phase:
-                phase_angle += -1j * np.log(node.gate.matrix[0, 0])
+                phase_angle += np.angle(node.gate.matrix[0, 0])
             elif deparameterization:
                 gates_depara, phase = cls.deparameterize(node.gate)
                 gates_opt.extend(gates_depara)

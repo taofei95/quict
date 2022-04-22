@@ -46,8 +46,12 @@ class TwoQubitDiagonalTransform(Synthesis):
         U = matrix.copy()
         U /= np.linalg.det(U) ** 0.25
         gUTT = U.T.dot(sy2).dot(U).dot(sy2).T
-        psi = np.arctan((gUTT[0, 0] + gUTT[1, 1] + gUTT[2, 2] + gUTT[3, 3]).imag /
-                        (gUTT[0, 0] - gUTT[1, 1] - gUTT[2, 2] + gUTT[3, 3]).real)
+        denominator = (gUTT[0, 0] - gUTT[1, 1] - gUTT[2, 2] + gUTT[3, 3]).real
+        if np.isclose(denominator, 0):
+            psi = 0
+        else:
+            numerator = (gUTT[0, 0] + gUTT[1, 1] + gUTT[2, 2] + gUTT[3, 3]).imag
+            psi = np.arctan(numerator / denominator)
 
         gates_Delta = CompositeGate()
         with gates_Delta:
