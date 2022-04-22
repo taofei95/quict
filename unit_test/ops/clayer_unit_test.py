@@ -7,7 +7,7 @@ if os.environ.get("test_with_gpu"):
     import cupy as cp
 
     import QuICT.ops.linalg.gpu_calculator as GPUCalculator
-    from QuICT.ops.utils import CalculationLayer
+    from QuICT.ops.utils.calculation_layer import CalculationLayer
 
 
 @unittest.skipUnless(os.environ.get("test_with_gpu", False), "require GPU")

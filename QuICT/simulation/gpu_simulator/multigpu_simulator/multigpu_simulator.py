@@ -525,6 +525,7 @@ class MultiStateVectorSimulator(BasicGPUSimulator):
             index = self.total_qubits - 1 - gate.targ
 
             self._reset_operation(index)
+        # [Unitary]
         elif gate_type == GateType.unitary:
             qubit_idxes = gate.cargs + gate.targs
             if len(qubit_idxes) == 1:   # 1-qubit unitary gate
@@ -552,9 +553,6 @@ class MultiStateVectorSimulator(BasicGPUSimulator):
                         indexes,
                         matrix
                     )
-        # [ShorInitial] TODO: Currently only support the 1-, 2-qubits unitary quantum gates
-        elif gate_type == GateType.shor_init:
-            pass
         # unsupported quantum gates
         else:
             raise KeyError("Unsupported Gate in multi-GPU version: {gate_type}.")
