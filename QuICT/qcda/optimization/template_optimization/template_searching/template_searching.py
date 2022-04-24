@@ -41,7 +41,7 @@ class TemplateSearching:
     def identity(self, temp_circuit):
         matrix = SyntheticalUnitary.run(temp_circuit, showSU=False)
         n = np.size(matrix, 0)
-        np.allclose(np.identity(n, dtype=np.complex128), matrix)
+        return np.allclose(np.identity(n, dtype=np.complex128), matrix)
 
     def check_minimum(self, temp_circuit):
         n = temp_circuit.size()
