@@ -1493,10 +1493,28 @@ def Controlled_Swap_tmore(t_indexes, c_index, vec, vec_bit, sync: bool = False):
 """
 Special Gates: MeasureGate, ResetGate and PermGate
 """
-prop_add = cp.ElementwiseKernel(
-    'T x, raw T y, int32 index', 'T z',
-    'z = (i & index) ? 0 : abs(x) * abs(x)',
-    'prop_add')
+prop_add_single_kernel = cp.RawKernel(r'''
+    #include <cupy/complex.cuh>
+    extern "C" __global__
+    void ProbAddSingle(const int index, complex<float>* vec, complex<float>* out) {
+        int label = blockDim.x * blockIdx.x + threadIdx.x;
+        int _1 = (label & ((1 << index) - 1))
+                + (label >> index << (index + 1));
+        out[label] = abs(vec[_1]) * abs(vec[_1]);
+    }
+    ''', 'ProbAddSingle')
+
+
+prop_add_double_kernel = cp.RawKernel(r'''
+    #include <cupy/complex.cuh>
+    extern "C" __global__
+    void ProbAddDouble(const int index, complex<double>* vec, complex<double>* out) {
+        int label = blockDim.x * blockIdx.x + threadIdx.x;
+        int _1 = (label & ((1 << index) - 1))
+                + (label >> index << (index + 1));
+        out[label] = abs(vec[_1]) * abs(vec[_1]);
+    }
+    ''', 'ProbAddDouble')
 
 
 MeasureGate_prop = cp.ReductionKernel(
@@ -1506,7 +1524,8 @@ MeasureGate_prop = cp.ReductionKernel(
     'a + b',
     'y = abs(a)',
     '0',
-    'MeasureGate_prop')
+    'MeasureGate_prop'
+)
 
 
 MeasureGate0_single_kernel = cp.RawKernel(r'''
@@ -1618,128 +1637,53 @@ ResetGate1_double_kernel = cp.RawKernel(r'''
     ''', 'ResetGate1Double')
 
 
-PermGate_single_kernel = cp.RawKernel(r'''
-    #include <cupy/complex.cuh>
-    extern "C" __global__
-    void PermGate(const int idx_len, int vec_bit, int* indexes, complex<float>* vec) {
-        int label = blockDim.x * blockIdx.x + threadIdx.x;
-
-        complex<float> temp[1 << 12];
-        int swap_idx=0, vec_idx=0;
-        for(int i = 0; i < idx_len; i++){
-            swap_idx = indexes[i];
-            if (swap_idx != i){
-                vec_idx = (i << vec_bit) + label;
-                temp[i] = vec[vec_idx];
-                if (swap_idx < i){
-                    vec[vec_idx] = temp[swap_idx];
-                }else{
-                    vec[vec_idx] = vec[(swap_idx << vec_bit) + label];
-                }
-            }
-        }
-    }
-    ''', 'PermGate')
-
-
-PermGate_double_kernel = cp.RawKernel(r'''
-    #include <cupy/complex.cuh>
-    extern "C" __global__
-    void PermGate(const int idx_len, int vec_bit, int* indexes, complex<double>* vec) {
-        int label = blockDim.x * blockIdx.x + threadIdx.x;
-
-        complex<double> temp[1 << 12];
-        int swap_idx=0, vec_idx=0;
-        for(int i = 0; i < idx_len; i++){
-            swap_idx = indexes[i];
-            if (swap_idx != i){
-                vec_idx = (i << vec_bit) + label;
-                temp[i] = vec[vec_idx];
-                if (swap_idx < i){
-                    vec[vec_idx] = temp[swap_idx];
-                }else{
-                    vec[vec_idx] = vec[(swap_idx << vec_bit) + label];
-                }
-            }
-        }
-    }
-    ''', 'PermGate')
-
-
-PermFxGate_single_kernel = cp.RawKernel(r'''
-    #include <cupy/complex.cuh>
-    extern "C" __global__
-    void PermFxGate(const int start_idx, const int interval, complex<float>* vec) {
-        int label = start_idx + blockDim.x * blockIdx.x + threadIdx.x;
-
-        complex<float> temp = vec[label];
-        vec[label] = vec[label + interval];
-        vec[label + interval] = temp;
-    }
-    ''', 'PermFxGate')
-
-
-PermFxGate_double_kernel = cp.RawKernel(r'''
-    #include <cupy/complex.cuh>
-    extern "C" __global__
-    void PermFxGate(const int start_idx, int interval, complex<double>* vec) {
-        int label = start_idx + blockDim.x * blockIdx.x + threadIdx.x;
-
-        complex<double> temp = vec[label];
-        vec[label] = vec[label + interval];
-        vec[label + interval] = temp;
-    }
-    ''', 'PermFxGate')
-
-
 def MeasureGate_Apply(index, vec, vec_bit, sync: bool = False, multigpu_prob=None):
     """
     Measure Gate Measure.
     """
-    if not multigpu_prob:
-        prob = prop_add(vec, vec, 1 << index)
-        prob = MeasureGate_prop(prob, axis=0).real
-        prob = prob.get()
-    else:
-        prob = multigpu_prob
-
-    _0 = random.random()
-    _1 = _0 > prob
-
+    # Kernel function preparation
     task_number = 1 << (vec_bit - 1)
     thread_per_block = min(256, task_number)
     block_num = task_number // thread_per_block
-
-    if not _1:
-        if vec.dtype == np.complex64:
-            alpha = np.float32(1 / np.sqrt(prob))
-            MeasureGate0_single_kernel(
-                (block_num, ),
-                (thread_per_block, ),
-                (index, alpha, vec)
-            )
-        else:
-            alpha = np.float64(1 / np.sqrt(prob))
-            MeasureGate0_double_kernel(
-                (block_num,),
-                (thread_per_block,),
-                (index, alpha, vec)
-            )
+    if vec.dtype == np.complex64:
+        kernel_functions = (prop_add_single_kernel, MeasureGate0_single_kernel, MeasureGate1_single_kernel)
+        float_type = np.float32
     else:
-        if vec.dtype == np.complex64:
-            alpha = np.float32(1 / np.sqrt(1 - prob))
-            MeasureGate1_single_kernel(
-                (block_num,),
-                (thread_per_block,),
-                (index, alpha, vec)
-            )
-        else:
-            alpha = np.float64(1 / np.sqrt(1 - prob))
-            MeasureGate1_double_kernel(
-                (block_num,),
-                (thread_per_block,),
-                (index, alpha, vec)
-            )
+        kernel_functions = (prop_add_double_kernel, MeasureGate0_double_kernel, MeasureGate1_double_kernel)
+        float_type = np.float64
+
+    # Calculate measured probability
+    if multigpu_prob:
+        prob = multigpu_prob
+    else:
+        out = cp.empty(task_number, dtype=np.complex128)
+        kernel_functions[0](
+            (block_num, ),
+            (thread_per_block, ),
+            (index, vec, out)
+        )
+
+        prob = MeasureGate_prop(out, axis=0).real
+        prob = prob.get()
+
+    # Apply to state vector
+    _0 = random.random()
+    _1 = _0 > prob
+    if not _1:
+        alpha = float_type(1 / np.sqrt(prob))
+        kernel_functions[1](
+            (block_num, ),
+            (thread_per_block, ),
+            (index, alpha, vec)
+        )
+    else:
+        alpha = float_type(1 / np.sqrt(1 - prob))
+        kernel_functions[2](
+            (block_num,),
+            (thread_per_block,),
+            (index, alpha, vec)
+        )
+
     if sync:
         cp.cuda.Device().synchronize()
 
@@ -1750,96 +1694,46 @@ def ResetGate_Apply(index, vec, vec_bit, sync: bool = False, multigpu_prob=None)
     """
     Measure Gate Measure.
     """
-    if not multigpu_prob:
-        prob = prop_add(vec, vec, 1 << index)
-        prob = MeasureGate_prop(prob, axis=0).real
-        prob = prob.get()
-    else:
-        prob = multigpu_prob
-
+    # Kernel function preparation
     task_number = 1 << (vec_bit - 1)
     thread_per_block = min(256, task_number)
     block_num = task_number // thread_per_block
-
-    alpha = np.float64(np.sqrt(prob))
-
-    if alpha < 1e-6:
-        if vec.dtype == np.complex64:
-            ResetGate1_single_kernel(
-                (block_num, ),
-                (thread_per_block,),
-                (index, alpha, vec)
-            )
-        else:
-            ResetGate1_double_kernel(
-                (block_num,),
-                (thread_per_block,),
-                (index, alpha, vec)
-            )
-    else:
-        if vec.dtype == np.complex64:
-            ResetGate0_single_kernel(
-                (block_num,),
-                (thread_per_block,),
-                (index, alpha, vec)
-            )
-        else:
-            ResetGate0_double_kernel(
-                (block_num,),
-                (thread_per_block,),
-                (index, alpha, vec)
-            )
-
-    if sync:
-        cp.cuda.Device().synchronize()
-
-
-def PermGate_Apply(indexes, vec, vec_bit, sync: bool = False):
-    len_indexes = len(indexes)
-    targets = np.int32(np.log2(len(indexes)))
-    indexes = cp.array(indexes, dtype=np.int32)
-
-    task_number = 1 << (vec_bit - targets)
-    thread_per_block = min(256, task_number)
-    block_num = task_number // thread_per_block
-
     if vec.dtype == np.complex64:
-        PermGate_single_kernel(
+        kernel_functions = (prop_add_single_kernel, ResetGate0_single_kernel, ResetGate1_single_kernel)
+    else:
+        kernel_functions = (prop_add_double_kernel, ResetGate0_double_kernel, ResetGate1_double_kernel)
+
+    # Calculate measured probability
+    if multigpu_prob:
+        prob = multigpu_prob
+    else:
+        out = cp.empty(task_number, dtype=np.complex128)
+        kernel_functions[0](
+            (block_num, ),
+            (thread_per_block, ),
+            (index, vec, out)
+        )
+
+        prob = MeasureGate_prop(out, axis=0).real
+        prob = prob.get()
+
+    # Apply to state vector
+    alpha = np.float64(np.sqrt(prob))
+    if alpha < 1e-6:
+        kernel_functions[2](
             (block_num, ),
             (thread_per_block,),
-            (len_indexes, vec_bit - targets, indexes, vec)
+            (index, alpha, vec)
         )
     else:
-        PermGate_double_kernel(
+        kernel_functions[1](
             (block_num,),
             (thread_per_block,),
-            (len_indexes, vec_bit - targets, indexes, vec)
+            (index, alpha, vec)
         )
 
     if sync:
         cp.cuda.Device().synchronize()
-
-
-def PermFxGate_Apply(indexes, blocks, vec, vec_bit, sync: bool = False):
-    half_block_size = 1 << (vec_bit - blocks - 1)
-    task_number = half_block_size
-    thread_per_block = min(256, task_number)
-    block_num = task_number // thread_per_block
-
-    for idx in indexes:
-        start_idx = idx * 2 * half_block_size
-        if vec.dtype == np.complex64:
-            PermFxGate_single_kernel(
-                (block_num, ),
-                (thread_per_block,),
-                (start_idx, half_block_size, vec)
-            )
-        else:
-            PermFxGate_double_kernel(
-                (block_num,),
-                (thread_per_block,),
-                (start_idx, half_block_size, vec)
-            )
 
 
 kernel_funcs = list(locals().keys())

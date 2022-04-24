@@ -3,7 +3,8 @@ import unittest
 import numpy as np
 import cupy as cp
 
-from QuICT.core import *
+from QuICT.core import Circuit
+from QuICT.core.gate import H, S
 from QuICT.simulation.utils import GateMatrixs
 
 
@@ -16,13 +17,10 @@ class TestGateMatrix(unittest.TestCase):
         S | circuit
 
         gate_matrix = GateMatrixs(np.complex128)
-        for gate in circuit.gates:
-            gate_matrix.build(gate)
-        gate_matrix.concentrate_gate_matrixs()
+        gate_matrix.build(circuit.gates)
+        gmatrix = gate_matrix.get_target_matrix(circuit.gates[0])
 
-        gate_matrix = gate_matrix.target_matrix(circuit.gates[0])
-
-        self.assertTrue(np.allclose(gate_matrix, circuit.gates[0].compute_matrix.ravel()))
+        self.assertTrue(np.allclose(gmatrix, circuit.gates[0].matrix.ravel()))
 
 
 if __name__ == "__main__":

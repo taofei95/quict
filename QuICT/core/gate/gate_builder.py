@@ -52,13 +52,7 @@ GATE_TYPE_TO_CLASS = {
     GateType.barrier: BarrierGate,
     GateType.unitary: UnitaryGate,
     GateType.perm: PermGate,
-    GateType.control_perm_detail: ControlPermMulDetailGate,
-    GateType.perm_shift: PermShiftGate,
-    GateType.control_perm_shift: ControlPermShiftGate,
-    GateType.perm_mul: PermMulGate,
-    GateType.control_perm_mul: ControlPermMulGate,
     GateType.perm_fx: PermFxGate,
-    GateType.shor_init: ShorInitialGate,
     GateType.qft: QFTGate,
     GateType.iqft: IQFTGate
 }

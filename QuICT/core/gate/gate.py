@@ -6,8 +6,11 @@
 import numpy as np
 import copy
 
-from QuICT.core.utils import GateType, SPECIAL_GATE_SET, DIAGONAL_GATE_SET,\
-    PAULI_GATE_SET, CLIFFORD_GATE_SET, CGATE_LIST
+from QuICT.core.utils import (
+    GateType, SPECIAL_GATE_SET, DIAGONAL_GATE_SET, CGATE_LIST,
+    PAULI_GATE_SET, CLIFFORD_GATE_SET,
+    perm_decomposition
+)
 
 
 class BasicGate(object):
@@ -1687,7 +1690,7 @@ class PermGate(BasicGate):
     def __call__(self, targets: int, params: list):
         """ pass permutation to the gate
 
-        the length of permutaion must be n, and should be a permutation for [0, n) without repeat
+        the length of params must be n, and should be a permutation for [0, n) without repeat
 
         Args:
             targets(int): the number of qubits
@@ -1721,274 +1724,23 @@ class PermGate(BasicGate):
 
         return _gate
 
+    def build_gate(self, targs: list = None):
+        from QuICT.core.gate import CompositeGate
+
+        swap_args: list[list[int]] = perm_decomposition(self.pargs[:])
+        cgate = CompositeGate()
+        with cgate:
+            for swap_arg in swap_args:
+                Swap & swap_arg
+
+        if targs is not None:
+            assert len(targs) == self.targets + self.controls
+            cgate & targs
+
+        return cgate
+
 
 Perm = PermGate()
-
-
-class ControlPermMulDetailGate(BasicGate):
-    """ controlled-Permutation gate
-
-    This gate is used to implement oracle in the order-finding algorithm
-    """
-    def __init__(self):
-        super().__init__(
-            controls=1,
-            targets=0,
-            params=0,
-            type=GateType.control_perm_detail
-        )
-
-    def __call__(self, a: int, N: int):
-        """ pass parameters to the gate
-
-        give parameters a, N to the gate
-
-        Args:
-            a (int): the integer between 2 and N - 1
-            N (int): a positive integer
-
-        Returns:
-            ControlPermMulDetailGate: the gate after filled by parameters
-        """
-        if not isinstance(a, int) or not isinstance(N, int):
-            raise TypeError("a and N must be integer.")
-
-        _gate = self.copy()
-        n = int(np.ceil(np.log2(N)))
-
-        _gate.targets = n
-        _gate.params = 1 << (n + 1)
-        for idx in range(1 << (_gate.targets + _gate.controls)):
-            idxx, controlxx = idx // 2, idx % 2
-            if controlxx == 0:
-                _gate.pargs.append(idx)
-            else:
-                t_idx = idx if idxx >= N else ((idxx * a % N) << 1) + controlxx
-                _gate.pargs.append(t_idx)
-
-        return _gate
-
-    def inverse(self):
-        from QuICT.algorithm.quantum_algorithm.shor.utility import ex_gcd
-
-        gcd_arr = [0, 1]
-        ex_gcd(self.pargs[0], self.pargs[1], gcd_arr)
-        n_inverse = (gcd_arr[0] % self.pargs[1] + self.pargs[1]) % self.pargs[1]
-
-        return self(n_inverse, self.pargs[1])
-
-
-ControlPermMulDetail = ControlPermMulDetailGate()
-
-
-class PermShiftGate(BasicGate):
-    """ act an increase or subtract operate with modulus.
-
-    This Class is the subClass of PermGate.
-    In fact, we calculate the permutation by the parameters.
-
-    """
-
-    def __init__(self):
-        super().__init__(
-            controls=0,
-            targets=0,
-            params=0,
-            type=GateType.perm_shift
-        )
-
-    def __call__(self, a: int, N: int):
-        """ pass parameters to the gate
-
-        give parameters (params, N) to the gate
-
-        Args:
-            a(int): the number (can be negative) the qureg increase
-            N(int): the modulus
-
-        Returns:
-            PermShiftGate: the gate after filled by parameters
-        """
-        if not isinstance(a, int) or not isinstance(N, int):
-            raise TypeError(f"params and N must be int. {type(N)}, {type(a)}")
-
-        if N <= 0:
-            raise Exception("the modulus should be integer")
-
-        _gate = self.copy()
-        n = int(round(np.log2(N)))
-        _gate.params = 1 << n
-        _gate.targets = n
-        for idx in range(1 << _gate.targets):
-            idxx, controlxx = idx // 2, idx % 2
-            if controlxx == 0:
-                _gate.pargs.append(idx)
-            else:
-                t_idx = idx if idxx < N else ((((idxx + a) % N + N) % N) << 1) + controlxx
-                _gate.pargs.append(t_idx)
-
-        return _gate
-
-
-PermShift = PermShiftGate()
-
-
-class ControlPermShiftGate(BasicGate):
-    """ Controlled-PermShiftGate
-
-    PermShiftGate with a control bit
-
-    """
-
-    def __init__(self):
-        super().__init__(
-            controls=1,
-            targets=0,
-            params=0,
-            type=GateType.control_perm_shift
-        )
-
-    def __call__(self, a: int, N: int):
-        """ pass parameters to the gate
-
-        give parameters (params, N) to the gate
-
-        Args:
-            a(int): the number (can be negative) the qureg increase
-            N(int): the modulus
-
-        Returns:
-            PermShiftGate: the gate after filled by parameters
-        """
-        if not isinstance(a, int) or not isinstance(N, int):
-            raise TypeError(f"params and N must be int. {type(N)}, {type(a)}")
-
-        if N <= 0:
-            raise Exception("the modulus should be integer")
-
-        _gate = self.copy()
-        n = int(np.ceil(np.log2(N)))
-        _gate.params = 1 << (n + 1)
-        _gate.targets = n
-        for idx in range(1 << (_gate.targets + _gate.controls)):
-            idxx = idx // 2
-            controlxx = idx % 2
-            if controlxx == 0:
-                _gate.pargs.append(idx)
-            else:
-                t_idx = idx if idxx < N else ((((idxx + a) % N + N) % N) << 1) + controlxx
-                _gate.pargs.append(t_idx)
-
-        return _gate
-
-
-ControlPermShift = ControlPermShiftGate()
-
-
-class PermMulGate(BasicGate):
-    """ act an multiply operate with modulus.
-
-    This Class is the subClass of PermGate.
-    In fact, we calculate the permutation by the parameters.
-
-    """
-
-    def __init__(self):
-        super().__init__(
-            controls=0,
-            targets=0,
-            params=0,
-            type=GateType.perm_mul
-        )
-
-    def __call__(self, a: int, N: int):
-        """ pass parameters to the gate
-
-        give parameters (a, N) to the gate
-
-        Args:
-            a(int): the number (can be negative) the qureg increase
-            N(int): the modulus
-
-        Returns:
-            PermMulGate: the gate after filled by parameters
-        """
-        if not isinstance(a, int) or not isinstance(N, int):
-            raise TypeError(f"Input must be int. {type(a)}, {type(N)}")
-
-        assert (N > 0 and a > 0), "Input must be positive integer."
-
-        if np.gcd(a, N) != 1:
-            raise Exception(f"params and N should be co-prime, but {a} and {N} are not.")
-
-        a = a % N
-        n = int(round(np.log2(N)))
-        if (1 << n) < N:
-            n = n + 1
-
-        _gate = self.copy()
-        _gate.params = 1 << n
-        _gate.targets = n
-        for idx in range(N):
-            _gate.pargs.append(idx * a % N)
-
-        for idx in range(N, 1 << n):
-            _gate.pargs.append(idx)
-
-        return _gate
-
-
-PermMul = PermMulGate()
-
-
-class ControlPermMulGate(BasicGate):
-    """ a controlled-PermMul Gate """
-    def __init__(self):
-        super().__init__(
-            controls=1,
-            targets=0,
-            params=0,
-            type=GateType.control_perm_mul
-        )
-
-    def __call__(self, a: int, N: int):
-        """ pass parameters to the gate
-
-        give parameters (a, N) to the gate
-
-        Args:
-            a(int): the number (can be negative) the qureg increase
-            N(int): the modulus
-
-        Returns:
-            ControlPermMulGate: the gate after filled by parameters
-        """
-        if not isinstance(a, int) or not isinstance(N, int):
-            raise TypeError(f"Input must be int. {type(a)}, {type(N)}")
-
-        assert (N > 0 and a > 0), "Input must be positive integer."
-
-        if np.gcd(a, N) != 1:
-            raise Exception(f"params and N should be co-prime, but {a} and {N} are not.")
-
-        a = a % N
-        n = int(np.ceil(np.log2(N)))
-
-        _gate = self.copy()
-        _gate.params = 1 << (n + 1)
-        _gate.targets = n
-        for idx in range(1 << (_gate.targets + _gate.controls)):
-            idxx, controlxx = idx // 2, idx % 2
-            if controlxx == 0:
-                _gate.pargs.append(idx)
-            else:
-                t_idx = idx if idxx >= N else ((idxx * a % N) << 1) + controlxx
-                _gate.pargs.append(t_idx)
-
-        return _gate
-
-
-ControlPermMul = ControlPermMulGate()
 
 
 class PermFxGate(BasicGate):
@@ -2108,46 +1860,6 @@ class UnitaryGate(BasicGate):
 
 
 Unitary = UnitaryGate()
-
-
-class ShorInitialGate(BasicGate):
-    """ a oracle gate to preparation the initial state before IQFT in Shor algorithm
-
-    backends will preparation the initial state by classical operator
-    with a fixed measure result of second register.
-    """
-    def __init__(self):
-        super().__init__(
-            controls=0,
-            targets=0,
-            params=0,
-            type=GateType.shor_init
-        )
-
-    def __call__(self, x: int, N: int, u: int):
-        """ pass the parameters
-
-        Args:
-            x (int): the base number
-            N (int): exponential
-            u (int[0/1]): the measure result of the second register
-
-        Returns:
-            ShorInitialGate: the gate after filled by parameters
-        """
-        params = [x, N, u]
-        for param in params:
-            if not self.permit_element(param):
-                raise TypeError("int/float/complex", param)
-
-        n = 2 * int(np.ceil(np.log2(N)))
-        self.targets = n
-        self.pargs = params
-
-        return self
-
-
-ShorInitial = ShorInitialGate()
 
 
 class CCXGate(BasicGate):
@@ -2336,7 +2048,7 @@ class QFTGate(BasicGate):
             for i in range(targets):
                 H & i
                 for j in range(i + 1, targets):
-                    CRz(2 * np.pi / (1 << j - i + 1)) & [j, i]
+                    CU1(2 * np.pi / (1 << j - i + 1)) & [j, i]
 
         args = self.cargs + self.targs
         if len(args) == targets:
@@ -2377,7 +2089,7 @@ class IQFTGate(QFTGate):
         with cgate:
             for i in range(targets - 1, -1, -1):
                 for j in range(targets - 1, i, -1):
-                    CRz(-2 * np.pi / (1 << j - i + 1)) & [j, i]
+                    CU1(-2 * np.pi / (1 << j - i + 1)) & [j, i]
                 H & i
 
         args = self.cargs + self.targs
