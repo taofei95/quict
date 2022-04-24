@@ -4,9 +4,13 @@ import inspect
 
 from QuICT.core import *
 from QuICT.qcda.optimization._optimization import Optimization
-from dag import DAG
-from phase_poly import PhasePolynomial
-from template import *
+from QuICT.algorithm import SyntheticalUnitary
+from .dag import DAG
+from .phase_poly import PhasePolynomial
+from .template import *
+
+
+DEBUG = False
 
 
 class AutoOptimization(Optimization):
@@ -63,7 +67,7 @@ class AutoOptimization(Optimization):
 
                 # if n_node is another rz, merge and erase the original node
                 if n_node.gate.qasm_name == node.gate.qasm_name:
-                    n_node.gate.parg += node.gate.parg
+                    n_node.gate.pargs = n_node.gate.parg + node.gate.parg
                     node.erase()
                     cnt += 1
                     break
@@ -86,6 +90,7 @@ class AutoOptimization(Optimization):
     @classmethod
     def cancel_two_qubit_gates(cls, gates: DAG):
         cnt = 0
+        reachable = gates.get_reachable_relation()
         for node in list(gates.topological_sort()):
             if node.flag == DAG.Node.FLAG_ERASED or node.gate.qasm_name != 'cx':
                 continue
@@ -100,42 +105,156 @@ class AutoOptimization(Optimization):
                     n_ctrl_node.erase()
                     node.erase()
                     cnt += 2
+                    break
 
                 mapping = None
                 for template in cnot_ctrl_template:
-                    mapping = mapping or template.compare(c_ctrl_node.successors[c_ctrl_qubit])
-                    if mapping:
+                    mapping = template.compare(c_ctrl_node.successors[c_ctrl_qubit])
+                    if mapping and all([((id(c_targ_node), c_targ_qubit), id(o))
+                                        not in reachable for o in mapping.values()]):
                         c_ctrl_node, c_ctrl_qubit = template.template.end_nodes[template.anchor].predecessors[0]
                         c_ctrl_node = mapping[id(c_ctrl_node)]
                         break
+                    else:
+                        mapping = None
                 if mapping:
                     continue
+
                 for template in cnot_targ_template:
-                    mapping = mapping or template.compare(c_targ_node.successors[c_targ_qubit])
-                    if mapping:
+                    mapping = template.compare(c_targ_node.successors[c_targ_qubit])
+                    if mapping and all([((id(c_ctrl_node), c_ctrl_node), id(o))
+                                        not in reachable for o in mapping.values()]):
                         c_targ_node, c_targ_qubit = template.template.end_nodes[template.anchor].predecessors[0]
                         c_targ_node = mapping[id(c_targ_node)]
                         break
+                    else:
+                        mapping = None
                 if not mapping:
                     break
         return cnt
 
     @classmethod
+    def enumerate_cnot_rz_circuit(cls, gates: DAG):
+        gates.set_qubit_loc()
+        gates.reset_flag()
+        for node in gates.topological_sort():
+            if node.flag == node.FLAG_VISITED or node.gate.qasm_name != 'cx':
+                continue
+
+            term_node_set = set()
+            visited_cnot = {}
+            anchors = {node.qubit_loc[0]: node, node.qubit_loc[1]: node}
+            anchor_queue = deque(anchors.keys())
+            while len(anchor_queue) > 0:
+                anchor_qubit = anchor_queue.popleft()
+                for neighbors in ['predecessors', 'successors']:
+                    c_node = anchors[anchor_qubit]
+                    while True:
+                        p_node, p_qubit = getattr(c_node, neighbors)[c_node.qubit_id[anchor_qubit]]
+                        if p_node.gate is None or p_node.gate.qasm_name not in ['cx', 'x', 'rz'] or \
+                                p_node.flag == p_node.FLAG_VISITED:
+                            term_node_set.add(id(p_node))
+                            break
+
+                        if p_node.gate.qasm_name == 'cx':
+                            visited_cnot[id(p_node)] = [p_node, 0b00]
+                            o_qubit = p_node.qubit_loc[p_qubit ^ 1]
+                            if o_qubit not in anchors:
+                                anchors[o_qubit] = p_node
+                                anchor_queue.append(o_qubit)
+                                visited_cnot[id(p_node)][1] |= 1 << (p_qubit ^ 1)
+
+                        c_node = p_node
+
+            cnot_queue = deque([node])
+            # print('one visit')
+            while len(cnot_queue) > 0:
+                anchor_node = cnot_queue.popleft()
+                for anchor_qubit in anchor_node.qubit_loc:
+                    for neighbors in ['predecessors', 'successors']:
+                        c_node = anchor_node
+                        while True:
+                            c_node.flag = c_node.FLAG_VISITED
+                            p_node, p_qubit = getattr(c_node, neighbors)[c_node.qubit_id[anchor_qubit]]
+                            if id(p_node) in term_node_set:
+                                break
+                            if p_node.gate.qasm_name == 'cx' and id(p_node) in visited_cnot:
+                                visited_cnot[id(p_node)][1] |= 1 << p_node.qubit_id[anchor_qubit]
+                                if visited_cnot[id(p_node)][1] == 0b11 and p_node.flag == p_node.FLAG_DEFAULT:
+                                    p_node.flag = p_node.FLAG_IN_QUE
+                                    cnot_queue.append(p_node)
+                                break
+                            if p_node.flag == p_node.FLAG_VISITED:
+                                break
+                            c_node = p_node
+
+            for list_ in visited_cnot.values():
+                if list_[1] != 0b11:
+                    term_node_set.add(id(list_[0]))
+
+            bound = {}
+            visited_node = set()
+            if DEBUG:
+                print('hello')
+            for neighbors in ['predecessors', 'successors']:
+                bound[neighbors]: List[Tuple[DAG.Node, int]] = [None] * gates.size
+                for anchor_qubit, anchor_node in anchors.items():
+                    if id(anchor_node) in term_node_set:
+                        continue
+                    c_node = anchors[anchor_qubit]
+                    while True:
+                        if DEBUG:
+                            if id(c_node) not in visited_node:
+                                print(c_node.gate.qasm_name, c_node.gate.affectArgs, c_node.gate.pargs)
+                        visited_node.add(id(c_node))
+                        p_node, _ = getattr(c_node, neighbors)[c_node.qubit_id[anchor_qubit]]
+                        if id(p_node) in term_node_set:
+                            bound[neighbors][anchor_qubit] = (c_node, c_node.qubit_id[anchor_qubit])
+                            break
+                        c_node = p_node
+            yield bound['predecessors'], bound['successors'], len(visited_node)
+
+    @classmethod
     def merge_rotations(cls, gates: DAG):
         # TODO S, Sdg, T, Tdg can be included
-        gate_set = {'rz', 'cx', 'x'}
-        for prev_node, succ_node in list(gates.enumerate_sub_circuit(gate_set)):
-            phase_poly = PhasePolynomial(DAG.create_sub_circuit(prev_node, succ_node))
-            replacement = DAG(phase_poly.get_circuit())
+        cnt = 0
+        # gate_set = {'rz', 'cx', 'x'}
+        for prev_node, succ_node, node_cnt in list(cls.enumerate_cnot_rz_circuit(gates)):
+            for qubit_ in range(gates.size):
+                if prev_node[qubit_] is not None:
+                    # TODO remove assert
+                    assert succ_node[qubit_] is not None, 'internal error'
+                    c_node, c_qubit = prev_node[qubit_]
+                    prev_node[qubit_] = c_node.predecessors[c_qubit]
+                    c_node, c_qubit = succ_node[qubit_]
+                    succ_node[qubit_] = c_node.successors[c_qubit]
+
+            sub_circ = DAG.copy_sub_circuit(prev_node, succ_node)
+            if DEBUG:
+                print('before', 'count', node_cnt)
+                sub_circ.get_circuit().draw(method='command')
+
+            phase_poly = PhasePolynomial(sub_circ)
+            circ = phase_poly.get_circuit()
+
+            if DEBUG:
+                print('after')
+                circ.draw(method='command')
+
+            assert circ.circuit_size() <= node_cnt, 'phase polynomial increases gate count'
+            cnt += node_cnt - circ.circuit_size()
+            replacement = DAG(circ)
 
             mapping = {}
-            for qubit_ in gates.size:
+            for qubit_ in range(gates.size):
                 if not prev_node[qubit_] or not succ_node[qubit_]:
                     continue
                 mapping[id(replacement.start_nodes[qubit_])] = prev_node[qubit_]
                 mapping[id(replacement.end_nodes[qubit_])] = succ_node[qubit_]
 
             DAG.replace_circuit(mapping, replacement)
+        # DONE calculate gate count delta
+        return cnt
 
     @classmethod
     def float_rotations(cls, gates: DAG):
@@ -143,11 +262,33 @@ class AutoOptimization(Optimization):
 
     @classmethod
     def _execute(cls, gates, routine: List[int]):
-        _gates = DAG(CompositeGate(gates))
-        cnt = 0
+        if DEBUG:
+            mat_0 = SyntheticalUnitary.run(gates)
+            draw_cnt = 0
+        _gates = DAG(gates)
+
+        draw_cnt = 0
+
         while True:
+            cnt = 0
             for step in routine:
                 cnt += getattr(cls, cls._optimize_sub_method[step])(_gates)
+
+                # _gates.get_circuit().draw(method='command')
+                # print('\noptim step', step, cnt)
+                # circ_optim = _gates.get_circuit()
+                # circ_optim.draw(filename=f'{draw_cnt}_{step}.jpg')
+                # draw_cnt += 1
+
+                if DEBUG:
+                    circ_optim = _gates.get_circuit()
+
+                    circ_optim.draw(filename=f'{draw_cnt}.jpg')
+
+                    mat_1 = SyntheticalUnitary.run(circ_optim)
+                    if not np.allclose(mat_0, mat_1):
+                        assert False
+
             if cnt == 0:
                 break
 
@@ -159,10 +300,10 @@ class AutoOptimization(Optimization):
         Heuristic optimization of circuits in Clifford + Rz.
 
         Args:
-              gates(Union[Circuit, CompositeGate]): Circuit to be optimized
+              gates(Circuit): Circuit to be optimized
               mode(str): Support 'light' and 'heavy' mode. See details in [1].
         Returns:
-            CompositeGate: The CompositeGate after optimization
+            Circuit: The CompositeGate after optimization
 
         [1] Nam, Yunseong, et al. "Automated optimization of large quantum
         circuits with continuous parameters." npj Quantum Information 4.1

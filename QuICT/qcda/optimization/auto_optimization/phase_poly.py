@@ -1,7 +1,7 @@
 from collections import Iterable
 
 from QuICT.core import *
-from dag import DAG
+from .dag import DAG
 
 
 class PhasePolynomial:
@@ -19,7 +19,7 @@ class PhasePolynomial:
         Controlled-X and Rz gates.
 
         Args:
-            gates(Union[CompositeGate, DAG]): Circuit represented by this polynomial
+            gates(DAG): Circuit represented by this polynomial
         """
 
         self.phases = {}
@@ -42,38 +42,47 @@ class PhasePolynomial:
                 monomials[gate_.targ] = monomials[gate_.targ] ^ 1
                 self.gates.append(gate_)
             elif gate_.qasm_name == 'rz':
-                sign = -2 * (monomials[gate_.targ] & 1) + 1
+                sign = -1 if monomials[gate_.targ] & 1 else 1
                 mono = (monomials[gate_.targ] >> 1)
                 self.phases[mono] = sign * gate_.parg + (self.phases[mono] if mono in self.phases else 0)
             else:
                 raise Exception("PhasePolynomial only accepts cx, x and rz gates.")
 
-    def get_circuit(self):
+    def get_circuit(self, epsilon=1e-10):
         """
-        Generate a circuit of minimum size that implements the phase polynomial
+        Generate a circuit of minimal size that implements the phase polynomial
 
         Returns:
             Circuit: Circuit equivalent to this polynomial
         """
-        max_monomial = max(self.phases.keys())
+        max_monomial = max(self.phases.keys()) if len(self.phases.keys()) > 0 else 1
         circ = Circuit(self.size)
-        for qubit_ in range(int(np.ceil(np.log2(max_monomial)))):
+        visited = set()
+        for qubit_ in range(int(np.ceil(np.log2(max_monomial))) + 1):
             if (1 << qubit_) in self.phases:
-                Rz(self.phases[1 << qubit_]) | circ(qubit_)
+                if abs(self.phases[1 << qubit_]) > epsilon:
+                    Rz(self.phases[1 << qubit_]) | circ(qubit_)
+                visited.add(1 << qubit_)
 
         monomials = {}
-        visited = set()
         for gate_ in self.gates:
             gate_: BasicGate
+            for qubit_ in gate_.affectArgs:
+                if qubit_ not in monomials:
+                    monomials[qubit_] = 1 << (qubit_ + 1)
+
             if gate_.qasm_name == 'cx':
                 monomials[gate_.targ] = monomials[gate_.targ] ^ monomials[gate_.carg]
             elif gate_.qasm_name == 'x':
                 monomials[gate_.targ] = monomials[gate_.targ] ^ 1
 
             type(gate_)() | circ(list(gate_.affectArgs))
-            cur = monomials[gate_.targ]
-            if cur in self.phases and cur not in visited:
-                Rz(self.phases[cur]) | circ(gate_.targ)
-                visited.add(cur)
+            cur_phase = monomials[gate_.targ] >> 1
+            cur_sign = -1 if (monomials[gate_.targ] & 1) else 1
+
+            if cur_phase in self.phases and cur_phase not in visited:
+                if abs(self.phases[cur_phase]) > epsilon:
+                    Rz(cur_sign * self.phases[cur_phase]) | circ(gate_.targ)
+                visited.add(cur_phase)
 
         return circ

@@ -41,7 +41,7 @@ class OptimizationTemplate:
     def replace(self, mapping: Dict[int, DAG.Node]):
         replacement = self.replacement.copy()
         new_mapping = {}
-        for qubit_ in replacement.size():
+        for qubit_ in range(replacement.size):
             t_node, t_qubit = self.template.start_nodes[qubit_].successors[0]
             p_node, p_qubit = mapping[id(t_node)].predecessors[t_qubit]
             r_node = replacement.start_nodes[qubit_]
@@ -58,11 +58,10 @@ class OptimizationTemplate:
 
         matched = []
         for node in dag.topological_sort():
-            for qubit_ in range(node.size):
-                mapping = self.compare((node, qubit_), flag_enabled=True)
-                if not mapping:
-                    continue
-                matched.append(mapping)
+            mapping = self.compare((node, -1), flag_enabled=True)
+            if not mapping:
+                continue
+            matched.append(mapping)
 
         for mapping in matched:
             self.replace(mapping)
@@ -73,17 +72,19 @@ class OptimizationTemplate:
 def get_circuit_from_list(n_qubit, gate_list):
     circ = Circuit(n_qubit)
     for Gate_, qubit_ in gate_list:
-        Gate_(qubit_) | circ
+        Gate_ | circ(qubit_)
     return circ
 
 
 def generate_hadamard_gate_templates() -> List[OptimizationTemplate]:
     tpl_list = [
+        [1, [[H, 0], [H, 0]], []],
         [1, [[H, 0], [S, 0], [H, 0]], [[S_dagger, 0], [H, 0], [S_dagger, 0]]],
         [1, [[H, 0], [S_dagger, 0], [H, 0]], [[S, 0], [H, 0], [S, 0]]],
-        [2, [[H, 0], [H, 1], [CX, (0, 1)], [H, 0], [H, 1]], [CX, (1, 0)]],
+        [2, [[H, 0], [H, 1], [CX, (0, 1)], [H, 0], [H, 1]], [[CX, (1, 0)]]],
         [2, [[H, 1], [S, 1], [CX, (0, 1)], [S_dagger, 1], [H, 1]], [[S_dagger, 1], [CX, (0, 1)], [S, 1]]],
         [2, [[H, 1], [S_dagger, 1], [CX, (0, 1)], [S, 1], [H, 1]], [[S, 1], [CX, (0, 1)], [S_dagger, 1]]],
+        [1, [[X, 0], [X, 0]], []]
     ]
 
     ret = []
@@ -98,7 +99,9 @@ def generate_single_qubit_gate_templates() -> List[OptimizationTemplate]:
     tpl_list = [
         [2, 1, [[H, 1], [CX, (0, 1)], [H, 1]]],
         [2, 1, [[CX, (0, 1)], [Rz(0), 1], [CX, (0, 1)]]],
-        [2, 0, [[CX, (0, 1)]]]
+        [2, 0, [[CX, (0, 1)]]],
+        [3, 0, [[CX, (1, 0)], [CX, (0, 2)], [CX, (1, 0)]]],
+        [1, 0, [[H, 0], [X, 0], [H, 0]]]
     ]
 
     ret = []
@@ -112,6 +115,7 @@ def generate_cnot_targ_templates() -> List[OptimizationTemplate]:
     tpl_list = [
         [2, 1, [[CX, (0, 1)]]],
         [2, 0, [[H, 0], [CX, (0, 1)], [H, 0]]],
+        [1, 0, [[X, 0]]]
     ]
 
     ret = []
