@@ -262,7 +262,7 @@ class CompositeGate:
         Returns:
             int: the depth of the circuit
         """
-        return CircuitInformation.depth(self.gates)
+        return CircuitInformation.depth(self.gates, self.width())
 
     def __str__(self):
         cgate_info = {
