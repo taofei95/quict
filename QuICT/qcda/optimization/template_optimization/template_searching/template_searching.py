@@ -19,8 +19,11 @@ from collections import Counter
 import time
 
 class TemplateSearching:
-# for clifford gates
-# search for S, CNOT, H gates
+
+    """
+    for clifford gates
+    search for S, CNOT, H gates
+    """
 
     def __init__(self, qubit_num, gate_num, gate_dep):
         self.qubit_num = qubit_num
@@ -28,9 +31,7 @@ class TemplateSearching:
         self.dep = gate_dep
         self.template_list = []
         self.temp_qubit_dep = [0] * qubit_num
-        self.target = []
-        for i in range(qubit_num):
-            self.target.append(i)
+        self.target = list(range(qubit_num))
 
     def copy_circuit(self, temp_circuit):
         new_circuit = Circuit(temp_circuit.width())
@@ -40,14 +41,7 @@ class TemplateSearching:
     def identity(self, temp_circuit):
         matrix = SyntheticalUnitary.run(temp_circuit, showSU=False)
         n = np.size(matrix, 0)
-        tot = 0
-        for i in range(n):
-            for j in range(n):
-                if i != j:
-                    tot += abs(matrix[i, j])
-                else:
-                    tot += abs(matrix[i, j]-1)
-        return abs(tot) < 1e-2
+        np.allclose(np.identity(n, dtype=np.complex128), matrix)
 
     def check_minimum(self, temp_circuit):
         n = temp_circuit.size()
@@ -138,15 +132,10 @@ class TemplateSearching:
         circuit_a = self.commutative_processing(circuit_a)
         circuit_b = self.commutative_processing(circuit_b)
 
-        inform_list_a = []
-        status_list_a = []
-        inform_list_b = []
-        status_list_b = []
-        for i in range(self.qubit_num):
-            inform_list_a.append([])
-            status_list_a.append([])
-            inform_list_b.append([])
-            status_list_b.append([])
+        inform_list_a = [[]] * self.qubit_num
+        inform_list_b = [[]] * self.qubit_num
+        status_list_a = [[]] * self.qubit_num
+        status_list_b = [[]] * self.qubit_num
 
         temp_inform_list = []
         for i in range(self.qubit_num):
@@ -243,22 +232,11 @@ class TemplateSearching:
 
         return not flag_carg_graph
 
-#    def check_list_not_isomorphism(self, temp_circuit):
-
-        # check if the circuit is not isomorphism with every template in the list
-
-#        no_isomorphism = True
-#        for template in self.template_list:
-#            no_isomorphism = no_isomorphism & self.check_circuit_not_isomorphism(temp_circuit, template)
-#        return no_isomorphism
-
     def search(self, temp_gate_num, temp_circuit):
 
         # check whether it is a template
         if 1 <= temp_gate_num <= self.gate_num:
             if self.identity(temp_circuit):
-                # if self.check_list_not_isomorphism(temp_circuit):
-                #     self.template_list.append(temp_circuit)
                 self.template_list.append([temp_circuit, self.check_minimum(temp_circuit)])
                 return
         if temp_gate_num == self.gate_num:
@@ -313,18 +291,4 @@ class TemplateSearching:
                         self.template_list[i][1] = self.template_list[i][1] and self.template_list[j][1]
                         relationship_iso[j] = i
                         self.template_list[j][1] = False
-        # for i in range(len_list):
-        #     if relationship_iso[i] == i:
-        #         print(self.template_list[i][0].draw('matp', str(i)))
-        #         print((self.commutative_processing(self.template_list[i][0])).draw('matp', str(100+i)))
         return self.template_list
-
-print(time.perf_counter())
-program = TemplateSearching(3, 4, 4)
-list_circuit = program.run_template_searching()
-print(time.perf_counter())
-label = 1
-for item_circuit in list_circuit:
-    if item_circuit[1]:
-        print(item_circuit[0].draw('matp', str(label)))
-        label += 1
