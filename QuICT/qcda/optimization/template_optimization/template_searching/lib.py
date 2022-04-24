@@ -102,11 +102,3 @@ class TemplateLib:
 
     def template_list(self):
         return self.template
-
-# if __name__ == '__main__':
-#    qubit_num, size, depth = eval(input('请输入参数（比特数，规模，深度）：'))
-#    template = TemplateLib(qubit_num, size, depth).template
-#    label = 1
-#    for item_circuit in template:
-#        print(item_circuit.draw('matp', str(label)))
-#        label += 1
