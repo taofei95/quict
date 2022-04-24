@@ -55,7 +55,7 @@ def test_CKD():
         Ucir = SyntheticalUnitary.run(circuit, showSU=True)
 
         assert np.allclose(matexp.dot(np.linalg.inv(Ucir)), np.eye(4)) \
-               or np.allclose(matexp.dot(np.linalg.inv(Ucir)), 1j * np.eye(4))
+            or np.allclose(matexp.dot(np.linalg.inv(Ucir)), 1j * np.eye(4))
 
 
 def test_two_bit_transform():

@@ -6,8 +6,8 @@ from QuICT.simulation.gpu_simulator import ConstantStateVectorSimulator
 
 
 def random_unit_vector(n):
-    real =  np.random.random(1 << n)
-    imag =  np.random.random(1 << n)
+    real = np.random.random(1 << n)
+    imag = np.random.random(1 << n)
     state_vector = (real + 1j * imag) / np.linalg.norm(real + 1j * imag)
     return state_vector
 

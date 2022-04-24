@@ -310,7 +310,7 @@ class CommutativeOptimization(Optimization):
             if np.allclose(
                 gate.matrix,
                 gate.matrix[0, 0] * np.eye(1 << gate.controls + gate.targets)
-                ):
+            ):
                 phase_angle += np.angle(gate.matrix[0, 0])
                 continue
 
@@ -348,7 +348,7 @@ class CommutativeOptimization(Optimization):
                             np.allclose(
                                 mat,
                                 mat[0, 0] * np.eye(1 << nodes[prev].gate.controls + nodes[prev].gate.targets)
-                                )
+                            )
                         ):
                             nodes[prev].identity = True
                         break

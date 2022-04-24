@@ -70,6 +70,7 @@ class QuantumStatePreparation(object):
         first_half = num_qubits // 2 if np.mod(num_qubits, 2) == 0 else (num_qubits - 1) // 2
         last_half = num_qubits - first_half
         state_vector = state_vector.reshape(1 << first_half, 1 << last_half)
+        # Schmidt decomposition
         U, d, V = np.linalg.svd(state_vector)
 
         gates = CompositeGate()
