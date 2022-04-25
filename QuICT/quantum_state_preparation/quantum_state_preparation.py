@@ -9,8 +9,36 @@ class QuantumStatePreparation(object):
     """
     For a given quantum state |psi>, create a CompositeGate C such that |psi> = C |0>
     """
-    @classmethod
-    def with_uniformly_gates(cls, state_vector):
+    def __init__(self, method='unitary_decomposition'):
+        """
+        Choose the method between reference [1] and [2], designing circuit of
+        quantum state preparation with uniformly gates and unitary decomposition respectively
+
+        Args:
+            method(str, optional): chosen method in ['uniformly_gates', 'unitary_decomposition']
+
+        Reference:
+            [1] https://arxiv.org/abs/quant-ph/0407010v1
+            [2] https://arxiv.org/abs/1003.5760
+        """
+        assert method in ['uniformly_gates', 'unitary_decomposition'],\
+            ValueError('Invalid quantum state preparation method')
+        self.method = method
+
+    def execute(self, state_vector):
+        """
+        Args:
+            state_vector(np.ndarray): the statevector to be prapared
+
+        Returns:
+            CompositeGate: the preparation CompositeGate
+        """
+        if self.method == 'uniformly_gates':
+            return self._with_uniformly_gates(state_vector)
+        if self.method == 'unitary_decomposition':
+            return self._with_unitary_decomposition(state_vector)
+
+    def _with_uniformly_gates(self, state_vector):
         """
         Quantum state preparation with uniformly gates
 
@@ -48,8 +76,7 @@ class QuantumStatePreparation(object):
 
         return gates
 
-    @classmethod
-    def with_unitary_decomposition(cls, state_vector):
+    def _with_unitary_decomposition(self, state_vector):
         """
         Quantum state preparation with unitary decomposition
 
@@ -75,7 +102,7 @@ class QuantumStatePreparation(object):
 
         gates = CompositeGate()
         # Phase 1
-        gates.extend(cls.with_uniformly_gates(d))
+        gates.extend(self._with_uniformly_gates(d))
         # Phase 2
         with gates:
             for i in range(first_half):
