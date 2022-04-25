@@ -4,6 +4,7 @@
 # @Author  : Han Yu
 # @File    : _algorithm.py
 
+
 class Algorithm(object):
     """ quantum algorithm which should run in the quantum hardware
 

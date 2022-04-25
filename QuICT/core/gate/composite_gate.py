@@ -115,9 +115,8 @@ class CompositeGate:
         Raise:
             TypeException: the type of other is wrong
         """
-        self.inverse()
         try:
-            targets.extend(self.gates)
+            targets.extend(self.inverse().gates)
         except Exception as e:
             raise TypeError(f"Only support circuit for gateSet ^ circuit. {e}")
 
@@ -263,7 +262,7 @@ class CompositeGate:
         Returns:
             int: the depth of the circuit
         """
-        return CircuitInformation.depth(self.gates)
+        return CircuitInformation.depth(self.gates, self.width())
 
     def __str__(self):
         cgate_info = {

@@ -185,7 +185,7 @@ class Circuit(object):
         Returns:
             int: the depth of the circuit
         """
-        return CircuitInformation.depth(self.gates)
+        return CircuitInformation.depth(self.gates, self.width())
 
     def __str__(self):
         circuit_info = {
