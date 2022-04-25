@@ -12,283 +12,102 @@
 
 # Modification Notice: Code revised for QuICT
 
-from QuICT.core.gate import *
-from QuICT.core.circuit import Circuit
-from QuICT.algorithm import SyntheticalUnitary
-from collections import Counter
-import time
+"""
+Given a template and a circuit: it applies template matching and substitutes
+all compatible maximal matches that reduces the size of the circuit.
 
-class TemplateSearching:
+**Reference:**
 
+[1] Iten, R., Moyard, R., Metger, T., Sutter, D. and Woerner, S., 2020.
+Exact and practical pattern matching for quantum circuit optimization.
+`arXiv:1909.05270 <https://arxiv.org/abs/1909.05270>`_
+"""
+
+from QuICT.core import *    # pylint: disable=unused-wildcard-import
+from QuICT.qcda.optimization._optimization import Optimization
+from .template_matching.dagdependency.circuit_to_dagdependency import circuit_to_dagdependency
+from .template_matching.dagdependency.dagdependency_to_circuit import dagdependency_to_circuit
+from .templates import template_nct_2a_1, template_nct_2a_2, template_nct_2a_3
+from .template_matching import (TemplateMatching, TemplateSubstitution, MaximalMatches)
+
+class TemplateOptimization(Optimization):
     """
-    for clifford gates
-    search for S, CNOT, H gates
+    Class for the template optimization pass.
     """
+    @classmethod
+    def execute(
+        cls,
+        circuit,
+        template_list=None,
+        heuristics_qubits_param=None,
+        heuristics_backward_param=None
+    ):
+        """
+        Args:
+            circuit(Circuit): circuit.
+            template_list (list[QuantumCircuit()]): list of the different template circuit to apply.
+            heuristics_backward_param (list[int]): [length, survivor] Those are the parameters for
+                applying heuristics on the backward part of the algorithm. This part of the
+                algorithm creates a tree of matching scenario. This tree grows exponentially. The
+                heuristics evaluates which scenarios have the longest match and keep only those.
+                The length is the interval in the tree for cutting it and surviror is the number
+                of scenarios that are kept. We advice to use l=3 and s=1 to have serious time
+                advantage. We remind that the heuristics implies losing a part of the maximal
+                matches. Check reference for more details.
+            heuristics_qubits_param (list[int]): [length] The heuristics for the qubit choice make
+                guesses from the dag dependency of the circuit in order to limit the number of
+                qubit configurations to explore. The length is the number of successors or not
+                predecessors that will be explored in the dag dependency of the circuit, each
+                qubits of the nodes are added to the set of authorized qubits. We advice to use
+                length=1. Check reference for more details.
 
-    def __init__(self, qubit_num, gate_num, gate_dep):
-        self.qubit_num = qubit_num
-        self.gate_num = gate_num
-        self.dep = gate_dep
-        self.template_list = []
-        self.temp_qubit_dep = [0] * qubit_num
-        self.target = list(range(qubit_num))
+        Returns:
+            Circuit: optimized circuit.
 
-    def copy_circuit(self, temp_circuit):
-        new_circuit = Circuit(temp_circuit.width())
-        new_circuit.extend(temp_circuit.gates)
-        return new_circuit
+        Raises:
+            TypeError: If the template has not the right form or
+             if the output circuit acts differently as the input circuit.
+        """
+        # If no template is given; the template are set as x-x, cx-cx, ccx-ccx.
+        if template_list is None:
+            template_list = [template_nct_2a_1(), template_nct_2a_2(), template_nct_2a_3()]
+        if heuristics_qubits_param is None:
+            heuristics_qubits_param = []
+        if heuristics_backward_param is None:
+            heuristics_backward_param = []
 
-    def identity(self, temp_circuit):
-        matrix = SyntheticalUnitary.run(temp_circuit, showSU=False)
-        n = np.size(matrix, 0)
-        return np.allclose(np.identity(n, dtype=np.complex128), matrix)
+        circuit_dag_dep = circuit_to_dagdependency(circuit)
 
-    def check_minimum(self, temp_circuit):
-        n = temp_circuit.size()
-        if self.identity(temp_circuit):
-            for i in range(n):
-                for j in range(1, n - i):
-                    new_circuit = self.copy_circuit(temp_circuit.sub_circuit(self.target, i, j))
-                    if self.identity(new_circuit):
-                        return False
-            return True
-        return False
+        for template in template_list:
+            if not isinstance(template, Circuit):
+                raise TypeError('A template is a Circuit().')
 
-    def graph_isomorphism(self, inform_list_a, inform_list_b, status_list_a, status_list_b):
+            template_dag_dep = circuit_to_dagdependency(template)
 
-        # check if an ordered-list graph is not isomorphism with the other
-        flag_all_mapping = True
-        for vertex_a in range(self.qubit_num):
-            if self.mapping[vertex_a] == -1:
-                flag_all_mapping = False
-                break
+            if template_dag_dep.num_qubits > circuit_dag_dep.num_qubits:
+                continue
 
-        if flag_all_mapping:
-            flag_check_graph = True
-            for i in range(self.qubit_num):
-                j = self.mapping[i]
-                if len(inform_list_a[i]) == len(inform_list_b[j]) and len(status_list_a[i]) == len(status_list_b[j]):
-                    for k in range(len(inform_list_a[i])):
-                        if not flag_check_graph:
-                            break
-                        if status_list_a[i][k] != status_list_b[j][k]:
-                            flag_check_graph = False
-                        else:
-                            if status_list_a[i][k] == 'S':
-                                flag_check_graph = flag_check_graph & (Counter(inform_list_a[i][k]) == Counter(inform_list_b[j][k]))
-                            else:
-                                mapping_list_a = Counter(inform_list_a[i][k])
-                                mapping_list_b = Counter(inform_list_b[j][k])
-                                if len(mapping_list_a) == len(mapping_list_b):
-                                    for p in mapping_list_a:
-                                        q = self.mapping[p]
-                                        flag_check_graph = flag_check_graph & (mapping_list_a[p] == mapping_list_b[q])
-                                else:
-                                    flag_check_graph = False
-                                    break
-                else:
-                    flag_check_graph = False
-                    break
-            return flag_check_graph
-        else:
-            flag_check_graph = False
-            for i in range(self.qubit_num):
-                if not self.mapped[i]:
-                    if len(inform_list_a[vertex_a]) == len(inform_list_b[i]) and len(status_list_a[vertex_a]) == len(status_list_b[i]):
-                        flag_check_list = True
-                        self.mapped[i] = True
-                        self.mapping[vertex_a] = i
-                        for j in range(len(status_list_a[vertex_a])):
-                            check_a = status_list_a[vertex_a][j]
-                            check_b = status_list_b[i][j]
-                            flag_check_list = flag_check_list & (check_a == check_b)
-                        if flag_check_list:
-                            flag_check_graph = flag_check_graph or self.graph_isomorphism(inform_list_a, inform_list_b, status_list_a, status_list_b)
-                            if flag_check_graph:
-                                break
-                        if not flag_check_graph:
-                            self.mapped[i] = False
-                            self.mapping[vertex_a] = -1
+            template_m = TemplateMatching(circuit_dag_dep,
+                                          template_dag_dep,
+                                          heuristics_qubits_param,
+                                          heuristics_backward_param)
 
-            return flag_check_graph
+            template_m.run_template_matching()
 
-    def commutative_processing(self, temp_circuit):
-        for i in range(len(temp_circuit.gates) - 1):
-            gate_a = temp_circuit.gates[i]
-            gate_b = temp_circuit.gates[i+1]
-            if gate_a.commutative(gate_b):
-                if gate_a.is_control_single() and not gate_b.is_control_single():
-                    temp_circuit.gates[i] = gate_b
-                    temp_circuit.gates[i+1] = gate_a
-                    temp_circuit = self.commutative_processing(temp_circuit)
-        return temp_circuit
+            matches = template_m.match_list
 
-    def check_circuit_not_isomorphism(self, circuit_a, circuit_b):
+            if matches:
+                maximal = MaximalMatches(matches)
+                maximal.run_maximal_matches()
+                max_matches = maximal.max_match_list
 
-        # check if a circuit is not isomorphism with the other
-        # first only check cnot circuit
+                substitution = TemplateSubstitution(max_matches,
+                                                    template_m.circuit_dag_dep,
+                                                    template_m.template_dag_dep)
+                substitution.run_dag_opt()
 
-        # commutative processing
-        circuit_a = self.commutative_processing(circuit_a)
-        circuit_b = self.commutative_processing(circuit_b)
-
-        inform_list_a = [[]] * self.qubit_num
-        inform_list_b = [[]] * self.qubit_num
-        status_list_a = [[]] * self.qubit_num
-        status_list_b = [[]] * self.qubit_num
-
-        temp_inform_list = []
-        for i in range(self.qubit_num):
-            temp_inform_list.append([])
-        for gate_a in circuit_a.gates:
-            if gate_a.is_control_single():
-                temp_gate_c = gate_a.carg
-                temp_gate_t = gate_a.targ
-                if status_list_a[temp_gate_c] == []:
-                    status_list_a[temp_gate_c].append('C')
-                    temp_inform_list[temp_gate_c].append(temp_gate_t)
-                else:
-                    if status_list_a[temp_gate_c][-1] == 'C':
-                        temp_inform_list[temp_gate_c].append(temp_gate_t)
-                    else:
-                        inform_list_a[temp_gate_c].append(temp_inform_list[temp_gate_c])
-                        status_list_a[temp_gate_c].append('C')
-                        temp_inform_list[temp_gate_c] = [temp_gate_t]
+                circuit_dag_dep = substitution.dag_dep_optimized
             else:
-                temp_gate = gate_a.targ
-                if status_list_a[temp_gate] == []:
-                    status_list_a[temp_gate].append('S')
-                    if gate_a.type == GateType.h:
-                        temp_inform_list[temp_gate].append(1)
-                    else:
-                        temp_inform_list[temp_gate].append(2)
-                else:
-                    if status_list_a[temp_gate][-1] == 'S':
-                        if gate_a.type == GateType.h:
-                            temp_inform_list[temp_gate].append(1)
-                        else:
-                            temp_inform_list[temp_gate].append(2)
-                    else:
-                        inform_list_a[temp_gate].append(temp_inform_list[temp_gate])
-                        status_list_a[temp_gate].append('S')
-                        if gate_a.type == GateType.h:
-                            temp_inform_list[temp_gate] = [1]
-                        else:
-                            temp_inform_list[temp_gate] = [2]
-
-        for i in range(self.qubit_num):
-            if temp_inform_list[i] != []:
-                inform_list_a[i].append(temp_inform_list[i])
-
-        temp_inform_list = []
-        for i in range(self.qubit_num):
-            temp_inform_list.append([])
-        for gate_b in circuit_b.gates:
-            if gate_b.is_control_single():
-                temp_gate_c = gate_b.carg
-                temp_gate_t = gate_b.targ
-                if status_list_b[temp_gate_c] == []:
-                    status_list_b[temp_gate_c].append('C')
-                    temp_inform_list[temp_gate_c].append(temp_gate_t)
-                else:
-                    if status_list_b[temp_gate_c][-1] == 'C':
-                        temp_inform_list[temp_gate_c].append(temp_gate_t)
-                    else:
-                        inform_list_b[temp_gate_c].append(temp_inform_list[temp_gate_c])
-                        status_list_b[temp_gate_c].append('C')
-                        temp_inform_list[temp_gate_c] = [temp_gate_t]
-            else:
-                temp_gate = gate_b.targ
-                if status_list_b[temp_gate] == []:
-                    status_list_b[temp_gate].append('S')
-                    if gate_b.type == GateType.h:
-                        temp_inform_list[temp_gate].append(1)
-                    else:
-                        temp_inform_list[temp_gate].append(2)
-                else:
-                    if status_list_b[temp_gate][-1] == 'S':
-                        if gate_b.type == GateType.h:
-                            temp_inform_list[temp_gate].append(1)
-                        else:
-                            temp_inform_list[temp_gate].append(2)
-                    else:
-                        inform_list_b[temp_gate].append(temp_inform_list[temp_gate])
-                        status_list_b[temp_gate].append('S')
-                        if gate_b.type == GateType.h:
-                            temp_inform_list[temp_gate] = [1]
-                        else:
-                            temp_inform_list[temp_gate] = [2]
-
-        for i in range(self.qubit_num):
-            if temp_inform_list[i] != []:
-                inform_list_b[i].append(temp_inform_list[i])
-
-        self.mapping = []
-        self.mapped = []
-        for i in range(self.qubit_num):
-            self.mapping.append(-1)
-            self.mapped.append(False)
-        flag_carg_graph = self.graph_isomorphism(inform_list_a, inform_list_b, status_list_a, status_list_b)
-
-        return not flag_carg_graph
-
-    def search(self, temp_gate_num, temp_circuit):
-
-        # check whether it is a template
-        if 1 <= temp_gate_num <= self.gate_num:
-            if self.identity(temp_circuit):
-                self.template_list.append([temp_circuit, self.check_minimum(temp_circuit)])
-                return
-        if temp_gate_num == self.gate_num:
-            return
-
-        #brute-force searching
-        #s gate
-        for s in range(0, self.qubit_num):
-            if self.temp_qubit_dep[s] + 1 <= self.dep:
-                new_circuit = self.copy_circuit(temp_circuit)
-                S | new_circuit(s)
-                self.temp_qubit_dep[s] += 1
-                self.search(temp_gate_num + 1, new_circuit)
-                self.temp_qubit_dep[s] -= 1
-
-        # hadamard gate
-        for h in range(0, self.qubit_num):
-            if self.temp_qubit_dep[h] + 1 <= self.dep:
-                new_circuit = self.copy_circuit(temp_circuit)
-                H | new_circuit(h)
-                self.temp_qubit_dep[h] += 1
-                self.search(temp_gate_num + 1, new_circuit)
-                self.temp_qubit_dep[h] -= 1
-
-        # cnot gate
-        for cnot_a in range(0, self.qubit_num):
-            for cnot_b in range(0, self.qubit_num):
-                if cnot_a != cnot_b:
-                    temp_max_dep = max(self.temp_qubit_dep[cnot_a], self.temp_qubit_dep[cnot_b]) + 1
-                    if temp_max_dep <= self.dep:
-                        new_circuit = self.copy_circuit(temp_circuit)
-                        CX | new_circuit([cnot_a, cnot_b])
-                        temp_dep_a = self.temp_qubit_dep[cnot_a]
-                        temp_dep_b = self.temp_qubit_dep[cnot_b]
-                        self.temp_qubit_dep[cnot_a] = temp_max_dep
-                        self.temp_qubit_dep[cnot_b] = temp_max_dep
-                        self.search(temp_gate_num + 1, new_circuit)
-                        self.temp_qubit_dep[cnot_a] = temp_dep_a
-                        self.temp_qubit_dep[cnot_b] = temp_dep_b
-        return
-
-    def run_template_searching(self):
-        circuit_temp = Circuit(self.qubit_num)
-        self.search(0, circuit_temp)
-        len_list = len(self.template_list)
-        relationship_iso = [-1] * len_list
-        for i in range(len_list):
-            if relationship_iso[i] == -1:
-                relationship_iso[i] = i
-                for j in range(len_list):
-                    if relationship_iso[j] == -1 and not self.check_circuit_not_isomorphism(self.template_list[i][0], self.template_list[j][0]):
-                        self.template_list[i][1] = self.template_list[i][1] and self.template_list[j][1]
-                        relationship_iso[j] = i
-                        self.template_list[j][1] = False
-        return self.template_list
+                continue
+        circuit = dagdependency_to_circuit(circuit_dag_dep)
+        return circuit
