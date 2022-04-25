@@ -91,14 +91,17 @@ CX | circuit([0, 1])
 CX | circuit([2, 0])
 template_list.append(circuit)
 
+
 class TemplateLib:
 
     def __init__(self, qubit_num, size, depth):
         self.template = []
 
         for circuit in template_list:
-            if circuit.width() <= qubit_num and circuit.size() <= size and circuit.depth() <= depth:
-                self.template.append(circuit)
+            if circuit.width() <= qubit_num:
+                if circuit.size() <= size:
+                    if circuit.depth() <= depth:
+                        self.template.append(circuit)
 
     def template_list(self):
         return self.template
