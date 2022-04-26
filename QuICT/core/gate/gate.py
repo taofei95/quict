@@ -1636,10 +1636,7 @@ Swap = SwapGate()
 
 
 class iSwapGate(BasicGate):
-    """ iSwap gate
-
-    ...
-    """
+    """ iSwap gate """
     def __init__(self):
         super().__init__(
             controls=0,
@@ -1680,7 +1677,7 @@ class SquareRootiSwapGate(BasicGate):
         ], dtype=np.complex128)
 
 
-iSwap = iSwapGate()
+sqiSwap = SquareRootiSwapGate()
 
 
 # PermGate class -- no qasm
@@ -2472,28 +2469,6 @@ class CSwapGate(BasicGate):
 
 
 CSwap = CSwapGate()
-
-
-class iSwapGate(BasicGate):
-    """ S gate """
-    def __init__(self):
-        super().__init__(
-            controls=0,
-            targets=1,
-            params=0,
-            type=GateType.s
-        )
-
-        self.matrix = np.array([
-            [1, 0],
-            [0, 1j]
-        ], dtype=np.complex128)
-
-
-S = SGate()
-
-
-
 
 
 class modified_Givens_rotation(BasicGate):
