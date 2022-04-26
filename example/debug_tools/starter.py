@@ -21,7 +21,7 @@ def formatted_qreg(s,qregs):
     return "".join(['|'+formatted_qreg_slice(s,qreg) for qreg in qregs])+"|"
 
 def amp2idx(amp, show_n=5, formatted=True, qregs=None, qreg_names=None):
-    """peek top-n probability result in `amp`
+    """peek top-n probability result in amp
 
     Args:
         amp (cupy.ndarray): amplitude
