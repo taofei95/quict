@@ -35,7 +35,7 @@ class GateType(Enum):
     swap = "Swap gate"
     cswap = "cswap gate"
     iswap = "iswap gate"
-    sriswap = "square root of iswap gate"
+    sqiswap = "square root of iswap gate"
     ccx = "Toffoli gate"
     CCRz = "CCRz gate"
 

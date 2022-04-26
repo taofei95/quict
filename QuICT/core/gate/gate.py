@@ -1666,7 +1666,7 @@ class SquareRootiSwapGate(BasicGate):
             controls=0,
             targets=2,
             params=0,
-            type=GateType.sriswap
+            type=GateType.sqiswap
         )
 
         self.matrix = np.array([
