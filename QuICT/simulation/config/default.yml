@@ -16,11 +16,6 @@ GPU:
     sync: True
     optimize: False
 
-  multiGPU:
-    ndev: 1
-    precision: double
-    sync: True
-
 qiskit:
   token: 1
 

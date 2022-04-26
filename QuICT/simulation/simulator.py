@@ -22,7 +22,7 @@ class Simulator:
     """
 
     __DEVICE = ["CPU", "GPU", "qiskit", "qcompute"]
-    __BACKEND = ["unitary", "statevector", "multiGPU"]
+    __BACKEND = ["unitary", "statevector"]
 
     def __init__(
             self,
@@ -43,7 +43,11 @@ class Simulator:
                 f"Unsupportted device {device}, please select one of {Simulator.__DEVICE}."
             )
 
-        self._simulator = self._load_simulator()
+        self._is_remote = self._device in Simulator.__DEVICE[-2:]
+        if self._is_remote:
+            self._simulator = self._load_remote_simulator()
+        else:
+            self._simulator = self._load_simulator()
 
     @option_validation()
     def _validate_options(self, options, default_options=None):
@@ -54,23 +58,14 @@ class Simulator:
 
     def _load_simulator(self):
         """ Initial simulator. """
-        if self._device in Simulator.__DEVICE[-2:]:
-            return self._load_remote_simulator()
-
         if self._device == "GPU":
-            from QuICT.simulation.gpu_simulator import (
-                ConstantStateVectorSimulator,
-                MultiDeviceSimulatorLauncher
-            )
+            from QuICT.simulation.gpu_simulator import ConstantStateVectorSimulator
 
         if self._backend == "unitary":
             simulator = UnitarySimulator(device=self._device, **self._options)
         elif self._backend == "statevector":
             simulator = ConstantStateVectorSimulator(**self._options) \
                 if self._device == "GPU" else CircuitSimulator()
-        elif self._backend == "multiGPU":
-            assert self._device == "GPU"
-            simulator = MultiDeviceSimulatorLauncher(**self._options)
         else:
             raise ValueError(
                 f"Unsupportted backend {self.backend}, please select one of {Simulator.__BACKEND}."
@@ -124,9 +119,6 @@ class Simulator:
                 if statevector_out:
                     result.record_sv(state, shot)
 
-                if self._backend != "multiGPU":
-                    state = self._simulator.sample()
-
-                result.record(state, e_time - s_time, len(circuit.qubits))
+                result.record(self._simulator.sample(), e_time - s_time, len(circuit.qubits))
 
         return result.dumps()
