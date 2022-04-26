@@ -1635,6 +1635,54 @@ class SwapGate(BasicGate):
 Swap = SwapGate()
 
 
+class iSwapGate(BasicGate):
+    """ iSwap gate
+
+    ...
+    """
+    def __init__(self):
+        super().__init__(
+            controls=0,
+            targets=2,
+            params=0,
+            type=GateType.iswap
+        )
+
+        self.matrix = np.array([
+            [1, 0, 0, 0],
+            [0, 0, 1j, 0],
+            [0, 1j, 0, 0],
+            [0, 0, 0, 1]
+        ], dtype=np.complex128)
+
+
+iSwap = iSwapGate()
+
+
+class SquareRootiSwapGate(BasicGate):
+    """ Square Root of iSwap gate
+
+    ...
+    """
+    def __init__(self):
+        super().__init__(
+            controls=0,
+            targets=2,
+            params=0,
+            type=GateType.sriswap
+        )
+
+        self.matrix = np.array([
+            [1, 0, 0, 0],
+            [0, 0, (1 + 1j) / np.sqrt(2), 0],
+            [0, (1 + 1j) / np.sqrt(2), 0, 0],
+            [0, 0, 0, 1]
+        ], dtype=np.complex128)
+
+
+iSwap = iSwapGate()
+
+
 # PermGate class -- no qasm
 class PermGate(BasicGate):
     """ Permutation gate
@@ -2424,3 +2472,84 @@ class CSwapGate(BasicGate):
 
 
 CSwap = CSwapGate()
+
+
+class iSwapGate(BasicGate):
+    """ S gate """
+    def __init__(self):
+        super().__init__(
+            controls=0,
+            targets=1,
+            params=0,
+            type=GateType.s
+        )
+
+        self.matrix = np.array([
+            [1, 0],
+            [0, 1j]
+        ], dtype=np.complex128)
+
+
+S = SGate()
+
+
+
+
+
+class modified_Givens_rotation(BasicGate):
+    """ modified_Givens_rotation gate """
+    @property
+    def matrix(self) -> np.ndarray:
+        if self._matrix is None:
+            cgate = self.build_gate()
+            self._matrix = cgate.matrix()
+        return self._matrix
+
+    def __init__(self, targets: int = 2):
+        super().__init__(
+            controls=0,
+            targets=targets,
+            params=1,
+            type= GateType.mgr
+            # ...
+        )
+
+    def __call__(self, targets: int):
+        """ pass the unitary matrix
+
+        Args:
+            targets(int): point out the number of bits of the gate
+
+        Returns:
+            modified_Givens_rotation: the modified_Givens_rotation after filled by target number
+        """
+        return modified_Givens_rotation(targets)
+
+    def inverse(self):
+        _IMGR = modified_Givens_rotation()
+        _IMGR.targs = copy.deepcopy(self.targs)
+        _IMGR.targets = self.targets
+        return _IMGR
+
+    def build_gate(self, targets: int = 0):
+        from QuICT.core.gate import CompositeGate
+
+        if targets == 0:
+            targets = self.targets
+
+        cgate = CompositeGate()
+        with cgate:
+            for i in range(targets):
+                ...
+                # H & i
+                # for j in range(i + 1, targets):
+                #     CRz(2 * np.pi / (1 << j - i + 1)) & [j, i]
+
+        args = self.cargs + self.targs
+        if len(args) == targets:
+            cgate & args
+
+        return cgate
+
+
+MGR = modified_Givens_rotation()

@@ -34,6 +34,8 @@ class GateType(Enum):
     Rzz = "Rzz gate"
     swap = "Swap gate"
     cswap = "cswap gate"
+    iswap = "iswap gate"
+    sriswap = "square root of iswap gate"
     ccx = "Toffoli gate"
     CCRz = "CCRz gate"
 
@@ -56,6 +58,7 @@ class GateType(Enum):
     # Composite gate
     qft = "QFT gate"
     iqft = "IQFT gate"
+    mgr = "Modified Givens Rotation gate"
 
 
 SPECIAL_GATE_SET = [
