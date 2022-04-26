@@ -7,20 +7,32 @@ from typing import List, Tuple
 
 from QuICT.core import Circuit
 from QuICT.core.gate import *
-from QuICT.qcda.synthesis.arithmetic.bea import *
 from .utility import *
 
 from QuICT.simulation.cpu_simulator import CircuitSimulator
 from QuICT.simulation import Simulator
-from QuICT.algorithm.quantum_algorithm.shor import BEA_zip_run, BEA_circuit, HRS_zip_run, HRS_circuit, BEA_run, HRS_run
 
+from .BEA_zip import order_finding as BEA_zip_run
+from .BEA import construct_circuit as BEA_circuit
+from .BEA import order_finding as BEA_run
+
+from .HRS_zip import order_finding as HRS_zip_run
+from .HRS import construct_circuit as HRS_circuit
+from .HRS import order_finding as HRS_run
 
 class ShorFactor:
 
-    # allow -> _ALLOW
-    allowed_modes = {"BEA", "HRS", "BEA_zip", "HRS_zip"}
-    run_method_of_mode = {"BEA":BEA_run, "HRS":HRS_run, "BEA_zip":BEA_zip_run, "HRS_zip":HRS_zip_run}
-    circuit_method_of_mode = {"BEA":BEA_circuit, "HRS":HRS_circuit, "BEA_zip":None, "HRS_zip":None}
+    _ALLOWED_MODES = {"BEA", "HRS", "BEA_zip", "HRS_zip"}
+    _RUN_METHOD_OF_MODE = {
+        "BEA":reinforced_order_finding_constructor(BEA_run), 
+        "HRS":reinforced_order_finding_constructor(HRS_run), 
+        "BEA_zip":reinforced_order_finding_constructor(BEA_zip_run), 
+        "HRS_zip":reinforced_order_finding_constructor(HRS_zip_run)}
+    _CIRCUIT_METHOD_OF_MODE = {
+        "BEA":BEA_circuit, 
+        "HRS":HRS_circuit, 
+        "BEA_zip":None, 
+        "HRS_zip":None}
 
     # add a, N here
     def __init__(self, mode: str, N: int, eps: float = 1 / 10, max_rd: int = 2) -> None:
@@ -45,7 +57,7 @@ class ShorFactor:
             raise ValueError(f"{self.mode} mode has no circuit() method.")
         return ShorFactor.circuit_method_of_mode[self.mode](a, self.N, self.eps)
 
-    def run(self, circuit: Circuit = None, indices: List[int] = None, simulator: Simulator = CircuitSimulator()) -> int:
+    def run(self, simulator: Simulator = CircuitSimulator(), circuit: Circuit = None, indices: List[int] = None) -> int:
         # check if input is prime (using MillerRabin in klog(N), k is the number of rounds to run MillerRabin)
         if miller_rabin(self.N):
             logging.info("N does not pass miller rabin test, may be a prime number")

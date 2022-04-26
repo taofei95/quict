@@ -369,7 +369,7 @@ def mul_mod_raw(gate_set, control, x, a, b, N, indicator):
             if len(control)==0:
                 adder_mod(gate_set, [x[n - 1 - i]], b, a_list[i], N, g, indicator)
             elif len(control)==1:
-                adder_mod(gate_set, [control, x[n - 1 - i]], b, a_list[i], N, g, indicator)
+                adder_mod(gate_set, control+[x[n - 1 - i]], b, a_list[i], N, g, indicator)
 
 def mul_mod_raw_reversed(gate_set, control, x, a, b, N, indicator):#TODO: this can be done classically with `mul_mod_raw`
     """
@@ -392,7 +392,7 @@ def mul_mod_raw_reversed(gate_set, control, x, a, b, N, indicator):#TODO: this c
             if len(control)==0:
                 adder_mod(gate_set, [x[i]], b, N - a_list[n - i - 1], N, g, indicator)
             elif len(control)==1:
-                adder_mod(gate_set, [control, x[i]], b, N - a_list[n - i - 1], N, g, indicator)
+                adder_mod(gate_set, control+[x[i]], b, N - a_list[n - i - 1], N, g, indicator)
             else:
                 raise ValueError()
 

@@ -20,21 +20,6 @@ from .utility import *
 from QuICT.simulation.cpu_simulator import CircuitSimulator
 from QuICT.simulation import Simulator
 
-MAX_ROUND = 3
-
-def reinforced_order_finding(a: int, N: int, eps: float = 1 / 10, simulator: Simulator = CircuitSimulator()):
-    r_list = []
-    i = 0
-    while i < MAX_ROUND:
-        i += 1
-        r = order_finding(a,N,eps,simulator)
-        if r!=0 and (a**r)%N==1:
-            logging.info(f'\tsuccess!')
-            r_list.append(r)
-    if len(r_list) == 0:
-        return 0
-    else:
-        return reduce(lambda x,y: (x*y)//gcd(x,y),r_list)
 
 def order_finding(a: int, N: int, eps: float = 1 / 10, simulator: Simulator = CircuitSimulator()):
     """
@@ -69,7 +54,7 @@ def order_finding(a: int, N: int, eps: float = 1 / 10, simulator: Simulator = Ci
         circuit = Circuit(2 * n + 3)
         for i in range(k):
             if trickbit_store[i]:
-                Rz(-pi / (1 << (k - i))) | circuit(trickbit) #TODO: check if it should be append this way
+                Rz(-pi / (1 << (k - i))) | circuit(trickbit)
         H | circuit(trickbit)
         amp = simulator.run(circuit, use_previous=True)
         circuit = Circuit(2 * n + 3)
@@ -96,31 +81,3 @@ def order_finding(a: int, N: int, eps: float = 1 / 10, simulator: Simulator = Ci
     frac = Fraction(phi_).limit_denominator(N)
     logging.info(f'\tContinued fraction expansion of phi~ is {frac}')
     return frac.denominator
-
-
-class BEA_order_finding_twice(Algorithm):
-    '''
-    Run order_finding twice and take the lcm of the two result
-    to guaruntee a higher possibility to get the correct order,
-    as suggested in QCQI 5.3.1
-    '''
-    @staticmethod
-    def run(a: int, N: int, demo: str = None, eps: float = 1 / 10, simulator: Simulator = CircuitSimulator()):
-        r1 = order_finding(a, N, eps, simulator)
-        r2 = order_finding(a, N, eps, simulator)
-        flag1 = (pow(a, r1, N) == 1 and r1 != 0)
-        flag2 = (pow(a, r2, N) == 1 and r2 != 0)
-        if flag1 and flag2:
-            r = min(r1, r2)
-        elif not flag1 and not flag2:
-            r = int(np.lcm(r1, r2))
-        else:
-            r = int(flag1) * r1 + int(flag2) * r2
-
-        if (pow(a, r, N) == 1 and r != 0):
-            msg = f'\torder_finding found candidate order: r = {r} of a = {a}'
-        else:
-            r = 0
-            msg = '\torder_finding failed'
-        logging.info(msg)
-        return r

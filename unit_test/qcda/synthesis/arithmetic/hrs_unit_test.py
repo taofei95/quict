@@ -2,7 +2,7 @@ import pytest
 
 from QuICT.core import Circuit
 from QuICT.core.gate import *
-from QuICT.qcda.synthesis.arithmetic.hrs import HRSAdder, HRSAdderMod, HRSMulMod
+from QuICT.qcda.synthesis.arithmetic.hrs import HRSAdder, HRSAdderMod, HRSMulMod, CHRSMulMod
 from QuICT.simulation.gpu_simulator import ConstantStateVectorSimulator
 from example.debug_tools.starter import set_qureg
 
@@ -91,6 +91,36 @@ def test_HRSMulMod():
                 if int(circuit[x_q]) != (a * x) % (N):
                     print("%d * %d mod %d = %d\n" % (a, x, N, int(x_q)))
                     assert 0
+    assert 1
+
+def test_CHRSMulMod():
+    sim = ConstantStateVectorSimulator()
+    for c in (1,0):
+        for N in range(4, 12):
+            n = len(bin(N)) - 2
+            for a in range(0, N):
+                arr = [0, 0]
+                if ex_gcd(N, a, arr) != 1:
+                    continue
+                for x in range(0, N):
+                    print(f"{a} * {x} mod {N} = ", end='')
+                    circuit = Circuit(2 * n + 2)
+                    x_q = list(range(n))
+                    ancilla = list(range(n, 2 * n))
+                    indicator = 2 * n
+                    control = 2*n+1
+                    set_qureg(x_q, x)       | circuit
+                    set_qureg([control], c) | circuit
+                    CHRSMulMod.execute(n, a, N) | circuit(x_q+ancilla+[indicator]+[control])
+                    Measure | circuit
+                    amp = sim.run(circuit)
+                    print(int(circuit[x_q]))
+                    if c==0 and int(circuit[x_q]) != x % (N):
+                        print("%d * %d mod %d = %d (c==0)\n" % (a, x, N, int(x_q)))
+                        assert 0
+                    if c==1 and int(circuit[x_q]) != (a * x) % (N):
+                        print("%d * %d mod %d = %d (c==1)\n" % (a, x, N, int(x_q)))
+                        assert 0
     assert 1
 
 
