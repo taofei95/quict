@@ -1,7 +1,7 @@
 from typing import *
 import numpy as np
 
-from QuICT.core.gate import BasicGate, CompositeGate
+from QuICT.core.gate import BasicGate, CompositeGate, GateType
 from QuICT.simulation.utils import DisjointSet, dp, build_unitary_gate
 import QuICT.ops.linalg.cpu_calculator as CPUCalculator
 
@@ -41,6 +41,9 @@ class UnitarySimulator():
         gates = CompositeGate()
 
         for gate in circuit.gates:
+            if gate.type == GateType.measure:
+                continue
+
             if gate.targets + gate.controls >= 3:
                 raise Exception("only support 2-qubit gates and 1-qubit gates.")
 

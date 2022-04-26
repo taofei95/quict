@@ -15,7 +15,7 @@ class DensityMatrixSimulation:
         precision: str = "double"
     ):
         self._device = device
-        self._precision = precision
+        self._precision = np.complex128 if precision == "double" else np.complex64
 
         if device == "CPU":
             self._computer = CPUCalculator
@@ -33,7 +33,7 @@ class DensityMatrixSimulation:
             self._density_matrix = cp.zeros((1 << qubits, 1 << qubits), dtype = self._precision)
             self._density_matrix.put((0, 0), self._precision(1))
 
-    def check_matrix(matrix):
+    def check_matrix(self, matrix):
         if(matrix.T.conjugate() != matrix): 
             return False
 
@@ -50,23 +50,24 @@ class DensityMatrixSimulation:
     def _measure(self, gate, qubits):
         P0 = np.array([[1, 0], [0, 0]], dtype = self._precision)
 
-        mea_0 = matrix_product_to_circuit(P0, gate.targs)
+        mea_0 = matrix_product_to_circuit(P0, gate.targs, qubits)
         prob_0 = np.matmul(mea_0, self._density_matrix).trace()
-        _0_1 = random() < prob_0
+        _0_1 = random.random() < prob_0
         if _0_1:
             U = np.matmul(mea_0, np.eye(1 << qubits) / np.sqrt(prob_0))
             self._density_matrix = self._computer.dot(self._computer.dot(U, self._density_matrix), U.conj().T)
         else:
             P1 = np.array([[0, 0], [0, 1]], dtype = self._precision)
-            mea_1 = matrix_product_to_circuit(P1, gate.targs)
+            mea_1 = matrix_product_to_circuit(P1, gate.targs, qubits)
             U = np.matmul(mea_1, np.eye(1 << qubits) / np.sqrt(1 - prob_0))
             self._density_matrix = self._computer.dot(self._computer.dot(U, self._density_matrix), U.conj().T)
 
         return _0_1
 
-    def run(self, circuit:Circuit, qubits, density_matrix: np.ndarray = None):
+    def run(self, circuit: Circuit, density_matrix: np.ndarray = None):
+        qubits = circuit.width()
         if (density_matrix == None or self.check_matrix(density_matrix) == False):
-            self._init_density_matrix(self, qubits)
+            self._init_density_matrix(qubits)
         else:
             self._density_matrix = density_matrix
 
@@ -75,9 +76,9 @@ class DensityMatrixSimulation:
         measure_gate_list = []
         for gate in circuit.gates:
             if gate.type == GateType.measure:
-                measure_gate_list.append(gate) 
-                circuit.gates.remove(gate)  
-        circuit_matrix = UnitarySimulator.get_unitary_matrix(circuit)
+                measure_gate_list.append(gate)
+
+        circuit_matrix = UnitarySimulator().get_unitary_matrix(circuit)
 
         # step ops
         self._density_matrix = self._computer.dot(
