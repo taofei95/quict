@@ -6,16 +6,22 @@
 
 import numpy as np
 
-from .._synthesis import Synthesis
-from .special_set import *
-
 from QuICT.core import Circuit
 from QuICT.core.gate import *
+from QuICT.qcda.synthesis.gate_transform.special_set import *
+from QuICT.qcda.utility import OutputAligner
 
 
-class GateTransform(Synthesis):
-    @classmethod
-    def execute(cls, circuit, instruction_set=USTCSet):
+class GateTransform(object):
+    def __init__(self, instruction_set=USTCSet):
+        """
+        Args:
+            instruction_set(InstructionSet): the goal instruction set
+        """
+        self.instruction_set = instruction_set
+
+    @OutputAligner()
+    def execute(self, circuit):
         """ equivalently transfrom circuit into goal instruction set
 
         The algorithm will try two possible path, and return a better result:
@@ -24,7 +30,6 @@ class GateTransform(Synthesis):
 
         Args:
             circuit(Circuit/CompositeGate): the circuit to be transformed
-            instruction_set(InstructionSet): the goal instruction set
 
         Returns:
             CompositeGate: the equivalent compositeGate with goal instruction set
@@ -42,8 +47,8 @@ class GateTransform(Synthesis):
         for gate in compositeGate:
             if gate.targets + gate.controls > 2:
                 raise Exception("gate_transform only support 2-qubit and 1-qubit gate now.")
-            if gate.type != instruction_set.two_qubit_gate and gate.targets + gate.controls == 2:
-                rule = instruction_set.select_transform_rule(gate)
+            if gate.type != self.instruction_set.two_qubit_gate and gate.targets + gate.controls == 2:
+                rule = self.instruction_set.select_transform_rule(gate)
                 compositeGateStep1.extend(rule.transform(gate))
             else:
                 compositeGateStep1.append(gate)
@@ -55,13 +60,14 @@ class GateTransform(Synthesis):
             if gate.targets + gate.controls == 2:
                 targs = gate.cargs + gate.targs
                 for targ in targs:
-                    gates_transformed = instruction_set.SU2_rule.transform(Unitary(unitaries[targ]) & targ)
+                    gates_transformed = self.instruction_set.SU2_rule.transform(Unitary(unitaries[targ]) & targ)
                     if gates_transformed.width() == 0:
                         local_matrix = np.eye(2)
                     else:
                         local_matrix = gates_transformed.matrix(local=True)
-                    phase = np.log(np.dot(unitaries[targ], np.linalg.inv(local_matrix))[0][0]) / 1j
-                    if not np.isclose(np.mod(float(phase), 2 * np.pi), 0):
+                    phase = np.angle(np.dot(unitaries[targ], np.linalg.inv(local_matrix))[0][0])
+                    if (not np.isclose(np.mod(phase, 2 * np.pi), 0) and
+                        not np.isclose(np.mod(phase, 2 * np.pi), 2 * np.pi)):
                         gates_transformed.append(Phase(phase) & targ)
                     compositeGateStep2.extend(gates_transformed)
                     unitaries[targ] = np.identity(2, dtype=np.complex128)
@@ -69,13 +75,14 @@ class GateTransform(Synthesis):
             else:
                 unitaries[gate.targ] = np.dot(gate.matrix, unitaries[gate.targ])
         for i in range(circuit.width()):
-            gates_transformed = instruction_set.SU2_rule.transform(Unitary(unitaries[i]) & i)
+            gates_transformed = self.instruction_set.SU2_rule.transform(Unitary(unitaries[i]) & i)
             if gates_transformed.width() == 0:
                 local_matrix = np.eye(2)
             else:
                 local_matrix = gates_transformed.matrix(local=True)
-            phase = np.log(np.dot(unitaries[i], np.linalg.inv(local_matrix))[0][0]) / 1j
-            if not np.isclose(np.mod(float(phase), 2 * np.pi), 0):
+            phase = np.angle(np.dot(unitaries[i], np.linalg.inv(local_matrix))[0][0])
+            if (not np.isclose(np.mod(phase, 2 * np.pi), 0) and
+                not np.isclose(np.mod(phase, 2 * np.pi), 2 * np.pi)):
                 gates_transformed.append(Phase(phase) & i)
             compositeGateStep2.extend(gates_transformed)
         return compositeGateStep2

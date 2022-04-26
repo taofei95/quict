@@ -1,4 +1,3 @@
-import pytest
 import random
 
 import numpy as np

@@ -4,8 +4,6 @@
 # @Author  : Han Yu
 # @File    : unit_test
 
-import pytest
-
 from QuICT.core import *
 from QuICT.qcda.synthesis.gate_transform import *
 
@@ -25,7 +23,3 @@ def test_rules_transform():
             if i != j:
                 rule = _generate_default_rule(gateList[i], gateList[j])
                 assert rule.check_equal(ignore_phase=False)
-
-
-if __name__ == "__main__":
-    pytest.main(["./unit_test.py"])

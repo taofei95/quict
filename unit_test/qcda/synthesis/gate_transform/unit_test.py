@@ -4,9 +4,6 @@
 # @Author  : Han Yu
 # @File    : unit_test
 
-
-import pytest
-
 from QuICT.core import *
 from QuICT.qcda.synthesis.gate_transform import *
 
@@ -19,36 +16,44 @@ def test_google():
     for i in range(2, MAX_ITER):
         circuit = Circuit(i)
         circuit.random_append(GATE_NUM)
-        compositeGate = GateTransform.execute(circuit, GoogleSet)
-        B = CompositeGate(gates=circuit.gates)
-        assert compositeGate.equal(B)
+        gates = CompositeGate(gates=circuit.gates)
+        GT = GateTransform(GoogleSet)
+        circuit_tran = GT.execute(circuit)
+        gates_tran = CompositeGate(gates=circuit_tran.gates)
+        assert gates.equal(gates_tran)
 
 
 def test_ustc():
     for i in range(2, MAX_ITER):
         circuit = Circuit(i)
         circuit.random_append(GATE_NUM)
-        compositeGate = GateTransform.execute(circuit)
-        B = CompositeGate(gates=circuit.gates)
-        assert compositeGate.equal(B)
+        gates = CompositeGate(gates=circuit.gates)
+        GT = GateTransform(USTCSet)
+        circuit_tran = GT.execute(circuit)
+        gates_tran = CompositeGate(gates=circuit_tran.gates)
+        assert gates.equal(gates_tran)
 
 
 def test_ibmq():
     for i in range(2, MAX_ITER):
         circuit = Circuit(i)
         circuit.random_append(GATE_NUM)
-        compositeGate = GateTransform.execute(circuit, IBMQSet)
-        B = CompositeGate(gates=circuit.gates)
-        assert compositeGate.equal(B)
+        gates = CompositeGate(gates=circuit.gates)
+        GT = GateTransform(IBMQSet)
+        circuit_tran = GT.execute(circuit)
+        gates_tran = CompositeGate(gates=circuit_tran.gates)
+        assert gates.equal(gates_tran)
 
 
 def test_ionq():
     for i in range(2, MAX_ITER):
         circuit = Circuit(i)
         circuit.random_append(GATE_NUM)
-        compositeGate = GateTransform.execute(circuit, IonQSet)
-        B = CompositeGate(gates=circuit.gates)
-        assert compositeGate.equal(B)
+        gates = CompositeGate(gates=circuit.gates)
+        GT = GateTransform(IonQSet)
+        circuit_tran = GT.execute(circuit)
+        gates_tran = CompositeGate(gates=circuit_tran.gates)
+        assert gates.equal(gates_tran)
 
 
 def test_buildZyz():
@@ -56,9 +61,11 @@ def test_buildZyz():
     for i in range(2, MAX_ITER):
         circuit = Circuit(i)
         circuit.random_append(GATE_NUM)
-        compositeGate = GateTransform.execute(circuit, buildSet)
-        B = CompositeGate(gates=circuit.gates)
-        assert compositeGate.equal(B)
+        gates = CompositeGate(gates=circuit.gates)
+        GT = GateTransform(buildSet)
+        circuit_tran = GT.execute(circuit)
+        gates_tran = CompositeGate(gates=circuit_tran.gates)
+        assert gates.equal(gates_tran)
 
 
 def test_buildZyzWithRegister():
@@ -68,10 +75,8 @@ def test_buildZyzWithRegister():
     for i in range(2, MAX_ITER):
         circuit = Circuit(i)
         circuit.random_append(GATE_NUM)
-        compositeGate = GateTransform.execute(circuit, buildSet)
-        B = CompositeGate(gates=circuit.gates)
-        assert compositeGate.equal(B)
-
-
-if __name__ == "__main__":
-    pytest.main(["./unit_test.py"])
+        gates = CompositeGate(gates=circuit.gates)
+        GT = GateTransform(buildSet)
+        circuit_tran = GT.execute(circuit)
+        gates_tran = CompositeGate(gates=circuit_tran.gates)
+        assert gates.equal(gates_tran)
