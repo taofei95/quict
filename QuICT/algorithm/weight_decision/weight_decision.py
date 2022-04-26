@@ -56,14 +56,16 @@ class WeightDecision(Algorithm):
         value[N - 1] = b / np.sqrt(n + a ** 2 + b ** 2)
 
         # Apply oracle U_f which flips the phase of every state |x> with f(x) = 1
-        QuantumStatePreparation.with_uniformly_gates(value) | circuit(qreg)
+        QSP = QuantumStatePreparation('uniformly_gates')
+        gates_preparation = QSP.execute(value)
+        gates_preparation | circuit(qreg)
         X | circuit(ancilla)
         H | circuit(ancilla)
 
         for i in range(d - 1):
             oracle | circuit([i for i in range(num - 1)])
             MCTOneAux.execute(num) | circuit
-            QuantumStatePreparation.with_uniformly_gates(value) ^ circuit(qreg)
+            gates_preparation ^ circuit(qreg)
             for q in qreg:
                 X | circuit(q)
 
@@ -71,7 +73,7 @@ class WeightDecision(Algorithm):
             for q in qreg:
                 X | circuit(q)
 
-            QuantumStatePreparation.with_uniformly_gates(value) | circuit(qreg)
+            gates_preparation | circuit(qreg)
 
         # Apply H,X to recover ancilla
         H | circuit(ancilla)
