@@ -36,8 +36,8 @@ class ShorFactor:
 
     # add a, N here
     def __init__(self, mode: str, N: int, eps: float = 1 / 10, max_rd: int = 2) -> None:
-        if mode not in ShorFactor.allowed_modes:
-            raise ValueError(f"{mode} mode is not valid. Consider {ShorFactor.allowed_modes}")
+        if mode not in ShorFactor._ALLOWED_MODES:
+            raise ValueError(f"{mode} mode is not valid. Consider {ShorFactor._ALLOWED_MODES}")
         self.mode = mode
         self.N = N
         self.eps = eps
@@ -53,9 +53,9 @@ class ShorFactor:
         a = self.N
         while gcd(a, self.N)!=1:
             a = random.randrange(0,self.N)
-        if ShorFactor.circuit_method_of_mode[self.mode] == None:
+        if ShorFactor._CIRCUIT_METHOD_OF_MODE[self.mode] == None:
             raise ValueError(f"{self.mode} mode has no circuit() method.")
-        return ShorFactor.circuit_method_of_mode[self.mode](a, self.N, self.eps)
+        return ShorFactor._CIRCUIT_METHOD_OF_MODE[self.mode](a, self.N, self.eps)
 
     def run(self, simulator: Simulator = CircuitSimulator(), circuit: Circuit = None, indices: List[int] = None) -> int:
         # check if input is prime (using MillerRabin in klog(N), k is the number of rounds to run MillerRabin)
@@ -91,7 +91,7 @@ class ShorFactor:
             logging.info(f'Quantumly determine the order of the randomly chosen a = {a}')
             # check if any input circuit. if no, run according to `mode`; else run the input circuit
             if circuit == None:
-                r = ShorFactor.run_method_of_mode[self.mode](a=a,N=self.N,simulator=simulator)
+                r = ShorFactor._RUN_METHOD_OF_MODE[self.mode](a=a,N=self.N,simulator=simulator)
             else:
                 simulator.run(circuit)
                 phi = int(circuit[indices])<<len(indices)
