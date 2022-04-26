@@ -330,7 +330,7 @@ class Circuit(object):
 
         if self._pointer:
             qureg = self._pointer[:]
-            if len(qureg) > args_num:
+            if len(qureg) > args_num or len(qureg) == len(gate_ctargs):
                 qureg = self._pointer[gate_ctargs]
 
             if not is_extend:
