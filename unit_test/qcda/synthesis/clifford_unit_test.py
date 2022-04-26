@@ -97,7 +97,3 @@ def test_bidirectional():
             gates_remain.extend(circ_syn.gates)
             # np.set_printoptions(precision=3, suppress=True)
             assert np.allclose(gates_remain.matrix(), gates_remain.matrix()[0][0] * np.eye(2 ** n))
-
-
-if __name__ == '__main__':
-    pytest.main(["./unit_test.py"])

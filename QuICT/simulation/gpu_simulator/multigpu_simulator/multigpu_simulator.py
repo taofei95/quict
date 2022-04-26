@@ -50,10 +50,11 @@ class MultiStateVectorSimulator(BasicGPUSimulator):
         """ Initial the qubits, quantum gates and state vector by given quantum circuit. """
         self._circuit = circuit
 
+        GD = GateDecomposition()
         # Get qubits and limitation
         self.total_qubits = int(circuit.width())
         self.qubits = int(self.total_qubits - np.log2(self.proxy.ndevs))
-        self._gates = GateDecomposition.execute(circuit).gates
+        self._gates = GD.execute(circuit).gates
         self._measure_result = defaultdict(list)
 
         # Initial GateMatrix
