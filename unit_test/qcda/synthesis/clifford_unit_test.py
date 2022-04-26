@@ -43,10 +43,11 @@ def test_unidirectional():
             circuit = Circuit(n)
             circuit.random_append(10 * n, clifford)
             gates = CompositeGate(gates=circuit.gates)
-            gates_syn = CliffordUnidirectionalSynthesizer.execute(circuit, strategy='greedy')
-            # gates_syn = CliffordUnidirectionalSynthesizer.execute(circuit, strategy='random')
+            CUS = CliffordUnidirectionalSynthesizer(strategy='greedy')
+            # CUS = CliffordUnidirectionalSynthesizer(strategy='random')
+            circ_syn = CUS.execute(circuit)
             gates_remain = gates.inverse()
-            gates_remain.extend(gates_syn)
+            gates_remain.extend(circ_syn.gates)
             # np.set_printoptions(precision=3, suppress=True)
             assert np.allclose(gates_remain.matrix(), gates_remain.matrix()[0][0] * np.eye(2 ** n))
 
@@ -83,15 +84,17 @@ def test_bidirectional():
             circuit = Circuit(n)
             circuit.random_append(10 * n, clifford)
             gates = CompositeGate(gates=circuit.gates)
-            gates_syn = CliffordBidirectionalSynthesizer.execute(circuit,
-                                                                 qubit_strategy='greedy',
-                                                                 pauli_strategy='random',
-                                                                 shots=10,
-                                                                 multiprocess=False,
-                                                                 process=12,
-                                                                 chunksize=64)
+            CBS = CliffordBidirectionalSynthesizer(
+                qubit_strategy='greedy',
+                pauli_strategy='random',
+                shots=10,
+                multiprocess=False,
+                process=12,
+                chunksize=64
+            )
+            circ_syn = CBS.execute(circuit)
             gates_remain = gates.inverse()
-            gates_remain.extend(gates_syn)
+            gates_remain.extend(circ_syn.gates)
             # np.set_printoptions(precision=3, suppress=True)
             assert np.allclose(gates_remain.matrix(), gates_remain.matrix()[0][0] * np.eye(2 ** n))
 

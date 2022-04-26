@@ -28,13 +28,14 @@ class OutputAligner(object):
         Returns:
             callable: func with whose output type aligned
         """
-        def align_func(input):
+        def align_func(object, input):
             """
             For QCDA execute functions, their input would be restricted to be one argument representing
             the input that would be synthesized, optimized or mapped, while other parameters needed in
             the function would be passed by the __init__ method.
 
             Args:
+                object(Object): the object that func belongs to
                 input: input of func, the following types are supported.
                     1. CompositeGate: the input is a CompositeGate
                     2. Circuit: the input is a Circuit
@@ -58,7 +59,7 @@ class OutputAligner(object):
             else:
                 raise TypeError('Invalid input type')
 
-            output = func(input)
+            output = func(object, input)
             if isinstance(output, self.output):
                 return output
             if self.output == CompositeGate:
