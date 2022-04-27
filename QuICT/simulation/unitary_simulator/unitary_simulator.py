@@ -374,22 +374,23 @@ class UnitarySimulator():
 
     def _run(self, matrix, qubit):
         if self._device == "CPU":
-            aux = np.zeros_like(self._vector)
+            default_parameters = (matrix, qubit, self._vector, qubit, list(range(qubit)))
+            self._vector = self._computer.matrix_dot_vector(*default_parameters)
         else:
             import cupy as cp
 
             aux = cp.zeros_like(self._vector)
             matrix = cp.array(matrix)
 
-        self._computer.matrix_dot_vector(
-            matrix,
-            qubit,
-            self._vector,
-            qubit,
-            list(range(qubit)),
-            aux
-        )
-        self._vector = aux
+            self._computer.matrix_dot_vector(
+                matrix,
+                qubit,
+                self._vector,
+                qubit,
+                list(range(qubit)),
+                aux
+            )
+            self._vector = aux
 
     def sample(self):
         qubits = int(np.log2(self._vector.size))

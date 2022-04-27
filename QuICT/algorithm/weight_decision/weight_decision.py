@@ -3,7 +3,7 @@ import numpy as np
 from QuICT.algorithm import Algorithm
 from QuICT.core import Circuit
 from QuICT.core.gate import X, H, Measure
-from QuICT.qcda.synthesis.initial_state_preparation import InitialStatePreparation
+from QuICT.quantum_state_preparation import QuantumStatePreparation
 from QuICT.qcda.synthesis.mct import MCTOneAux
 from QuICT.simulation.gpu_simulator import ConstantStateVectorSimulator
 
@@ -56,14 +56,14 @@ class WeightDecision(Algorithm):
         value[N - 1] = b / np.sqrt(n + a ** 2 + b ** 2)
 
         # Apply oracle U_f which flips the phase of every state |x> with f(x) = 1
-        InitialStatePreparation.execute(value) | circuit(qreg)
+        QuantumStatePreparation.with_uniformly_gates(value) | circuit(qreg)
         X | circuit(ancilla)
         H | circuit(ancilla)
 
         for i in range(d - 1):
             oracle | circuit([i for i in range(num - 1)])
             MCTOneAux.execute(num) | circuit
-            InitialStatePreparation.execute(value) ^ circuit(qreg)
+            QuantumStatePreparation.with_uniformly_gates(value) ^ circuit(qreg)
             for q in qreg:
                 X | circuit(q)
 
@@ -71,7 +71,7 @@ class WeightDecision(Algorithm):
             for q in qreg:
                 X | circuit(q)
 
-            InitialStatePreparation.execute(value) | circuit(qreg)
+            QuantumStatePreparation.with_uniformly_gates(value) | circuit(qreg)
 
         # Apply H,X to recover ancilla
         H | circuit(ancilla)
