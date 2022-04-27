@@ -22,5 +22,5 @@ if __name__ == '__main__':
         circuit = circuit_opt
     circuit_opt.draw(filename='1.jpg')
     t2 = time.perf_counter()
-    print(t2, t2-t1)
+    print(t2, t2 - t1)
     print(circuit_opt.size())
