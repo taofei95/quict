@@ -14,6 +14,7 @@ class ModeType(Enum):
 
 
 class MultiNodesController:
+    # Not support noise circuit
     def __init__(
         self,
         ndev: int,
