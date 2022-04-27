@@ -25,16 +25,16 @@ class DensityMatrixSimulation:
 
     def _init_density_matrix(self, qubits):
         if self._device == "CPU":
-            self._density_matrix = np.zeros((1 << qubits, 1 << qubits), dtype = self._precision)
-            self._density_matrix[0,0] = self._precision(1)
+            self._density_matrix = np.zeros((1 << qubits, 1 << qubits), dtype=self._precision)
+            self._density_matrix[0, 0] = self._precision(1)
         else:
             import cupy as cp
 
-            self._density_matrix = cp.zeros((1 << qubits, 1 << qubits), dtype = self._precision)
+            self._density_matrix = cp.zeros((1 << qubits, 1 << qubits), dtype=self._precision)
             self._density_matrix.put((0, 0), self._precision(1))
 
     def check_matrix(self, matrix):
-        if(matrix.T.conjugate() != matrix): 
+        if(matrix.T.conjugate() != matrix):
             return False
 
         eigenvalues = np.linalg.eig(matrix)[0]
@@ -48,7 +48,7 @@ class DensityMatrixSimulation:
         return True
 
     def _measure(self, gate, qubits):
-        P0 = np.array([[1, 0], [0, 0]], dtype = self._precision)
+        P0 = np.array([[1, 0], [0, 0]], dtype=self._precision)
 
         mea_0 = matrix_product_to_circuit(P0, gate.targs, qubits)
         prob_0 = np.matmul(mea_0, self._density_matrix).trace()
@@ -57,7 +57,7 @@ class DensityMatrixSimulation:
             U = np.matmul(mea_0, np.eye(1 << qubits) / np.sqrt(prob_0))
             self._density_matrix = self._computer.dot(self._computer.dot(U, self._density_matrix), U.conj().T)
         else:
-            P1 = np.array([[0, 0], [0, 1]], dtype = self._precision)
+            P1 = np.array([[0, 0], [0, 1]], dtype=self._precision)
             mea_1 = matrix_product_to_circuit(P1, gate.targs, qubits)
             U = np.matmul(mea_1, np.eye(1 << qubits) / np.sqrt(1 - prob_0))
             self._density_matrix = self._computer.dot(self._computer.dot(U, self._density_matrix), U.conj().T)
@@ -66,7 +66,7 @@ class DensityMatrixSimulation:
 
     def run(self, circuit: Circuit, density_matrix: np.ndarray = None):
         qubits = circuit.width()
-        if (density_matrix == None or self.check_matrix(density_matrix) == False):
+        if (density_matrix is None or not self.check_matrix(density_matrix)):
             self._init_density_matrix(qubits)
         else:
             self._density_matrix = density_matrix
