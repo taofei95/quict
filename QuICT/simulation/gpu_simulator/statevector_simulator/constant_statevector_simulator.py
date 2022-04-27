@@ -232,8 +232,8 @@ class ConstantStateVectorSimulator(BasicGPUSimulator):
                 t_indexes,
                 *default_parameters
             )
-        # [ID]
-        elif gate_type == GateType.id:
+        # [ID], [Barrier]
+        elif gate_type == GateType.id or gate_type == GateType.barrier:
             pass
         # [CCX]
         elif gate_type in GATE_TYPE_to_ID[GateGroup.reverse_3arg]:
@@ -280,9 +280,7 @@ class ConstantStateVectorSimulator(BasicGPUSimulator):
                 index,
                 *default_parameters
             )
-        # [Barrier]
-        elif gate_type == GateType.barrier:
-            pass
+        # [Perm]
         elif gate_type == GateType.perm:
             args = gate.cargs + gate.targs
             if len(args) == self._qubits:
@@ -299,25 +297,6 @@ class ConstantStateVectorSimulator(BasicGPUSimulator):
                 gpu_out=False,
                 sync=self._sync
             )
-        elif gate_type in GATE_TYPE_to_ID[GateGroup.perm_gate]:
-            args = gate.cargs + gate.targs
-            if len(args) == self._qubits:
-                self._algorithm.simple_vp(
-                    self._vector,
-                    np.array(gate.pargs, dtype=np.int32),
-                    changeInput=True,
-                    gpu_out=False,
-                    sync=self._sync
-                )
-            else:
-                self._algorithm.qubit_vp(
-                    self._vector,
-                    np.array(args, dtype=np.int32),
-                    np.array(gate.pargs, dtype=np.int32),
-                    changeInput=True,
-                    gpu_out=False,
-                    sync=self._sync
-                )
         # [Unitary]
         elif gate_type == GateType.unitary:
             qubit_idxes = gate.cargs + gate.targs
@@ -365,6 +344,20 @@ class ConstantStateVectorSimulator(BasicGPUSimulator):
                     self._sync
                 )
                 self.vector = aux
+        # [QFT] & [IQFT]
+        elif gate_type == GateType.qft or gate_type == GateType.iqft:
+            aux = cp.zeros_like(self._vector)
+            matrix = cp.array(gate.matrix)
+            self._algorithm.matrix_dot_vector(
+                matrix,
+                gate.controls + gate.targets,
+                self._vector,
+                self._qubits,
+                gate.cargs + gate.targs,
+                aux,
+                self._sync
+            )
+            self.vector = aux
         # unsupported quantum gates
         else:
             raise KeyError(f"Unsupported Gate: {gate_type}")

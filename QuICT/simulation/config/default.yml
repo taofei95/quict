@@ -2,6 +2,8 @@
 CPU:
   unitary:
     precision: double
+  statevector:
+    precision: double
 
 # GPU simulator
 GPU:

@@ -20,12 +20,14 @@ OS=$(uname -a)
 
 PYTHON3=$(command -v python3)
 
-echo "rm -rf $prj_build_dir"
-
-rm -rf "$prj_build_dir"
+[ -d $prj_build_dir ] && echo "rm -rf $prj_build_dir" && rm -rf "$prj_build_dir"
 
 egg_dir="$prj_root/QuICT.egg-info"
 
 [[ -d $egg_dir ]] && echo "rm -rf $egg_dir" && rm -rf $egg_dir
+
+echo "Remove all built .so files"
+
+find . -name "*.so" -type f -delete || exit 1
 
 print_magenta "Cleaned."

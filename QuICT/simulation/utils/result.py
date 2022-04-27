@@ -66,7 +66,7 @@ class Result:
 
     def record_sv(self, state, shot):
         """ dump the circuit. """
-        if self.device == "GPU" and self.backend == "statevector":
+        if self.device == "GPU" and self.backend != "multiGPU":
             state = state.get()
 
         np.savetxt(f"{self.output_path}/state_{shot}.txt", state)

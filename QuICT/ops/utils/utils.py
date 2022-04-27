@@ -5,41 +5,8 @@
 # @File    : utils
 
 import numpy as np
-import cupy as cp
+
 from numba import njit
-
-
-def htod(target):
-    """ mv target from host into GPU device. """
-    if type(target) is not cp.ndarray:
-        return cp.array(target)
-
-    raise ("The given value has been added in the GPU.")
-
-
-def dtoh(target):
-    """ mv target from GPU device into host. """
-    if type(target) is cp.ndarray:
-        return target.get()
-
-    raise ("The given value not in GPU.")
-
-
-def flush_memory():
-    """ Release unused memory in current GPU device. """
-    cp.get_default_memory_pool().free_all_blocks()
-    cp.get_default_pinned_memory_pool().free_all_blocks()
-
-
-@njit(nogil=True)
-def mapping_augment(mapping: np.ndarray) -> np.ndarray:
-    n = len(mapping)
-    p2n = 1 << n
-    res = np.zeros(shape=p2n, dtype=np.int64)
-    for i in range(p2n):
-        for k in range(n):
-            res[i] |= ((i >> (n - 1 - mapping[k])) & 1) << (n - 1 - k)
-    return res
 
 
 def perm_sort(indexes: np.ndarray, blocks: int):
@@ -72,3 +39,14 @@ def perm_sort(indexes: np.ndarray, blocks: int):
             perm_op.append(("IDX", i, j))
 
     return perm_op, indexes
+
+
+@njit(nogil=True)
+def mapping_augment(mapping: np.ndarray) -> np.ndarray:
+    n = len(mapping)
+    p2n = 1 << n
+    res = np.zeros(shape=p2n, dtype=np.int64)
+    for i in range(p2n):
+        for k in range(n):
+            res[i] |= ((i >> (n - 1 - mapping[k])) & 1) << (n - 1 - k)
+    return res
