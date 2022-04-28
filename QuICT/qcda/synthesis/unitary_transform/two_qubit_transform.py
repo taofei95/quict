@@ -4,7 +4,7 @@ Decomposition of SU(4) with Cartan KAK Decomposition
 
 import numpy as np
 
-from QuICT.core import CompositeGate, CX, Ry, Rz, Unitary
+from QuICT.core.gate import CompositeGate, CX, Ry, Rz, Unitary
 from .._synthesis import Synthesis
 
 # Magic basis
@@ -17,7 +17,7 @@ B = (1.0 / np.sqrt(2)) * np.array([[1, 1j, 0, 0],
 class CartanKAKDecomposition:
     """Cartan KAK Decomposition in SU(4)
 
-    ∀ U∈SU(4), ∃ KL0, KL1, KR0, KR1∈SU(2), a, b, c∈ℝ, s.t.
+    ∀ U in SU(4), ∃ KL0, KL1, KR0, KR1 in SU(2), a, b, c in R, s.t.
     U = (KL0⊗KL1).exp(i(a XX + b YY + c ZZ)).(KR0⊗KR1)
 
     Proof of this proposition in general cases is too 'mathematical' even for TCS
@@ -71,7 +71,7 @@ class CartanKAKDecomposition:
     @staticmethod
     def tensor_decompose(matrix):
         """
-        Decompose U∈SU(2)⊗SU(2) to U0, U1∈SU(2), s.t. U = U0⊗U1
+        Decompose U in SU(2)⊗SU(2) to U0, U1 in SU(2), s.t. U = U0⊗U1
 
         Args:
             matrix(np.array): Matrix to be decomposed
@@ -120,7 +120,7 @@ class CartanKAKDecomposition:
         M2.imag[abs(M2.imag) < eps] = 0.0
 
         # Since M2 is a symmetric unitary matrix, we can diagonalize its real and
-        # imaginary part simultaneously. That is, ∃ P∈SO(4), s.t. M2 = P.D.P^T,
+        # imaginary part simultaneously. That is, ∃ P in SO(4), s.t. M2 = P.D.P^T,
         # where D is diagonal with unit-magnitude elements.
         D, P = self.diagonalize_unitary_symmetric(M2)
 
@@ -151,7 +151,7 @@ class TwoQubitTransform(Synthesis):
     @classmethod
     def execute(cls, matrix, eps=1e-15):
         """
-        Decompose a matrix U∈SU(4) with Cartan KAK Decomposition to
+        Decompose a matrix U in SU(4) with Cartan KAK Decomposition to
         a circuit, which contains only 1-qubit gates and CNOT gates.
         The decomposition of Exp(i(a XX + b YY + c ZZ)) may vary a global phase.
 
@@ -175,10 +175,10 @@ class TwoQubitTransform(Synthesis):
         CKD = CartanKAKDecomposition(matrix, eps)
         CKD.decompose()
 
-        KL0 = CKD.KL0.dot(Rz(-np.pi / 2).matrix.reshape(2, 2))
+        KL0 = CKD.KL0.dot(Rz(-np.pi / 2).matrix)
         KL1 = CKD.KL1
         KR0 = CKD.KR0
-        KR1 = Rz(np.pi / 2).matrix.reshape(2, 2).dot(CKD.KR1)
+        KR1 = Rz(np.pi / 2).matrix.dot(CKD.KR1)
         gates = CompositeGate()
         with gates:
             Unitary(KR0) & 0

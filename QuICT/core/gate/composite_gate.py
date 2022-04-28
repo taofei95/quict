@@ -1,110 +1,246 @@
 #!/usr/bin/env python
 # -*- coding:utf8 -*-
-# @TIME    : 2021/3/24 9:36 下午
-# @Author  : Han Yu
-# @File    : composite_gate
+# @TIME    : 2022/1/14 9:36 下午
+# @Author  : Han Yu, Li Kaiqi
+# @File    : composite_gate.py
+import numpy as np
 
-from QuICT.core.circuit.circuit_computing import inner_random_append
-
-from .gate import *
-from ..circuit import Circuit
-from ..qubit import Qubit
+from QuICT.core.qubit import Qureg, Qubit
+from QuICT.core.gate.gate import BasicGate
+from QuICT.core.utils import GateType, CircuitInformation, matrix_product_to_circuit, CGATE_LIST
 
 
-class CompositeGate(list):
-    """ Implement a list of gate
+# global composite gate id count
+cgate_id = 0
+
+
+class CompositeGate:
+    """ Implement a group of gate
 
     Attributes:
-        gates:(list<BasicGate>): CompositeGate itself
-
+        gates (list<BasicGate>): gates within this composite gate
     """
-
     @property
     def gates(self):
-        return self
+        return self._gates
+
+    @property
+    def name(self):
+        return self._name
 
     def __enter__(self):
-        GATE_SET_LIST.append(self)
+        global CGATE_LIST
+        CGATE_LIST.append(self)
+
         return self
 
     def __exit__(self, exc_type, exc_value, traceback):
-        global GATE_SET_LIST
-        GATE_SET_LIST.remove(self)
+        global CGATE_LIST
+        CGATE_LIST.remove(self)
 
-    def __init__(self, gates=None, with_copy=True):
+        return True
+
+    def __init__(self, name: str = None, gates: list = None):
         """ initial a CompositeGate with gate(s)
 
         Args:
-            qubits: the qubits which make up the qureg, it can have below form,
-                1) Circuit
-                2) BasicGate
-                3) CompositeGate
-                4) tuple/list<BasicGate>
+            name [str]: the name of composite gate
+            gates List[BasicGate]: The gates are added into this composite gate
         """
-        super().__init__()
-        if gates is None:
-            return
-        if isinstance(gates, BasicGate):
-            if with_copy:
-                self.append(gates.copy())
-            else:
-                self.append(gates)
-        else:
-            if isinstance(gates, Circuit):
-                gates = gates.gates
-            gates = list(gates)
-            for gate in gates:
-                if with_copy:
-                    self.append(gate.copy())
-                else:
-                    self.append(gate)
+        global cgate_id
+        self._id = cgate_id
+        cgate_id += 1
 
-    # Attributes of the circuit
-    def circuit_width(self):
+        self._name = name if name else f"composite_gate_{self._id}"
+        self._gates = []
+        self._min_qubit = np.inf
+        self._max_qubit = 0
+        self._pointer = -1
+
+        if gates:
+            self.extend(gates)
+
+    def __and__(self, targets):
+        """ assign qubits or indexes for given gates
+
+        Args:
+            targets ([int/qubit/list[int]/qureg]): qubit describe
+        """
+        if isinstance(targets, int):
+            targets = [targets]
+
+        if isinstance(targets, Qubit):
+            targets = Qureg(targets)
+
+        if len(targets) != self._max_qubit:
+            raise ValueError("The number of assigned qubits or indexes must be equal to gate's width.")
+
+        self._mapping(targets)
+        if CGATE_LIST:
+            CGATE_LIST[-1].extend(self.gates)
+
+    def __or__(self, targets):
+        """ deal the operator '|'
+
+        Use the syntax "gateSet | circuit", "gateSet | gateSet"
+        to add the gate of gateSet into the circuit
+
+        Note that the order of qubits is that control bits first
+        and target bits followed.
+
+        Args:
+            targets: the targets the gate acts on, it can have following form,
+                1) Circuit
+                2) CompositeGate
+        Raise:
+            TypeException: the type of other is wrong
+        """
+        try:
+            targets.extend(self.gates)
+        except Exception as e:
+            raise TypeError(f"Only support circuit and composite gate. {e}")
+
+    def __xor__(self, targets):
+        """deal the operator '^'
+
+        Use the syntax "gateSet ^ circuit", "gateSet ^ gateSet"
+        to add the gate of gateSet's inverse into the circuit
+
+        Note that the order of qubits is that control bits first
+        and target bits followed.
+
+        Args:
+            targets: the targets the gate acts on, it can have following form,
+                1) Circuit
+        Raise:
+            TypeException: the type of other is wrong
+        """
+        try:
+            targets.extend(self.inverse().gates)
+        except Exception as e:
+            raise TypeError(f"Only support circuit for gateSet ^ circuit. {e}")
+
+    def __getitem__(self, item):
+        """ get gates from this composite gate
+
+        Args:
+            item(int/slice): slice passed in.
+
+        Return:
+            [BasicGates]: the gates
+        """
+        return self._gates[item]
+
+    def __call__(self, indexes: list):
+        if isinstance(indexes, int):
+            indexes = [indexes]
+
+        self._update_qubit_limit(indexes)
+        self._pointer = indexes
+        return self
+
+    def _mapping(self, targets: Qureg):
+        """ remapping the gates' affectArgs
+
+        Args:
+            targets(Qureg/List): the related qubits
+        """
+        for gate in self._gates:
+            args_index = gate.cargs + gate.targs
+            if isinstance(targets, Qureg):
+                target_qureg = targets(args_index)
+                gate.assigned_qubits = target_qureg
+                gate.update_name(target_qureg[0].id)
+            else:
+                gate.cargs = [targets[carg] for carg in gate.cargs]
+                gate.targs = [targets[targ] for targ in gate.targs]
+
+    def _update_qubit_limit(self, indexes: list):
+        for idx in indexes:
+            assert idx >= 0 and isinstance(idx, int)
+            if idx >= self._max_qubit:
+                self._max_qubit = idx + 1
+
+            if idx < self._min_qubit:
+                self._min_qubit = idx
+
+    def extend(self, gates: list):
+        for gate in gates:
+            self.append(gate, is_extend=True)
+
+        self._pointer = -1
+
+    def append(self, gate, is_extend: bool = False, insert_idx: int = -1):
+        gate = gate.copy()
+
+        if self._pointer != -1:
+            qubit_index = self._pointer[:]
+            gate_args = gate.controls + gate.targets
+            if len(self._pointer) > gate_args:
+                gate.cargs = [qubit_index[carg] for carg in gate.cargs]
+                gate.targs = [qubit_index[targ] for targ in gate.targs]
+            elif len(self._pointer) == gate_args:
+                gate.cargs = qubit_index[:gate.controls]
+                gate.targs = qubit_index[gate.controls:]
+            else:
+                raise KeyError(f"{gate.type} need {gate_args} indexes, but given {len(self._pointer)}")
+
+            if not is_extend:
+                self._pointer = -1
+        else:
+            qubit_index = gate.cargs + gate.targs
+            if not qubit_index:
+                raise KeyError(f"{gate.type} need qubit indexes to add into Composite Gate.")
+
+            self._update_qubit_limit(qubit_index)
+
+        if insert_idx == -1:
+            self._gates.append(gate)
+        else:
+            self._gates.insert(insert_idx, gate)
+
+    def left_append(self, gate):
+        self.append(gate, insert_idx=0)
+
+    def left_extend(self, gates: list):
+        for idx, gate in enumerate(gates):
+            self.append(gate, is_extend=True, insert_idx=idx)
+
+        self._pointer = -1
+
+    def width(self):
         """ the number of qubits applied by gates
 
         Returns:
             int: the number of qubits applied by gates
         """
-        qubits = set()
-        for gate in self:
-            for arg in gate.affectArgs:
-                qubits.add(arg)
-        return len(qubits)
+        return self._max_qubit
 
-    def circuit_size(self):
+    def size(self):
         """ the size of the gates
 
         Returns:
             int: the number of gates in gates
         """
-        return len(self)
+        return len(self._gates)
 
-    def circuit_count_2qubit(self):
+    def count_2qubit_gate(self):
         """ the number of the two qubit gates in the set
 
         Returns:
             int: the number of the two qubit gates in the set
         """
-        count = 0
-        for gate in self:
-            if gate.controls + gate.targets == 2:
-                count += 1
-        return count
+        return CircuitInformation.count_2qubit_gate(self.gates)
 
-    def circuit_count_1qubit(self):
+    def count_1qubit_gate(self):
         """ the number of the one qubit gates in the set
 
         Returns:
             int: the number of the one qubit gates in the set
         """
-        count = 0
-        for gate in self.gates:
-            if gate.controls + gate.targets == 1:
-                count += 1
-        return count
+        return CircuitInformation.count_1qubit_gate(self.gates)
 
-    def circuit_count_gateType(self, gateType):
+    def count_gate_by_gatetype(self, gate_type):
         """ the number of the gates which are some type in the set
 
         Args:
@@ -113,13 +249,9 @@ class CompositeGate(list):
         Returns:
             int: the number of the gates which are some type in the circuit
         """
-        count = 0
-        for gate in self:
-            if gate.type == gateType:
-                count += 1
-        return count
+        return CircuitInformation.count_gate_by_gatetype(self.gates, gate_type)
 
-    def circuit_depth(self, gateTypes=None):
+    def depth(self):
         """ the depth of the circuit for some gate.
 
         Args:
@@ -130,188 +262,33 @@ class CompositeGate(list):
         Returns:
             int: the depth of the circuit
         """
-        layers = []
-        for gate in self:
-            if gateTypes is None or gate.type in gateTypes:
-                now = set(gate.cargs) | set(gate.targs)
-                for i in range(len(layers) - 1, -2, -1):
-                    if i == -1 or len(now & layers[i]) > 0:
-                        if i + 1 == len(layers):
-                            layers.append(set())
-                        layers[i + 1] |= now
-        return len(layers)
+        return CircuitInformation.depth(self.gates, self.width())
+
+    def __str__(self):
+        cgate_info = {
+            "width": self.width(),
+            "size": self.size(),
+            "depth": self.depth(),
+            "1-qubit gates": self.count_1qubit_gate(),
+            "2-qubit gates": self.count_2qubit_gate(),
+            "gates detail": []
+        }
+
+        for gate in self.gates:
+            cgate_info["gates detail"].append(str(gate))
+
+        return str(cgate_info)
 
     def qasm(self):
-        """ get OpenQASM 2.0 describe for the circuit
+        """ get OpenQASM 2.0 describe for the composite gate
 
         Returns:
-            str: OpenQASM 2.0 describe or "error" when there are some gates cannot be resolved
+            str: OpenQASM 2.0 describe
         """
-        qasm_string = 'OPENQASM 2.0;\ninclude "qelib1.inc";\n'
-        cbits = 0
-        for gate in self.gates:
-            if gate.qasm_name == "measure":
-                cbits += 1
-        qasm_string += f"qreg q[{self.circuit_width()}];\n"
-        if cbits != 0:
-            qasm_string += f"creg c[{cbits}];\n"
-        cbits = 0
-        for gate in self.gates:
-            if gate.qasm_name == "measure":
-                qasm_string += f"measure q[{gate.targ}] -> c[{cbits}];\n"
-                cbits += 1
-            else:
-                qasm = gate.qasm()
-                if qasm == "error":
-                    print("the circuit cannot be transformed to a valid describe in OpenQASM 2.0")
-                    gate.print_info()
-                    return "error"
-                qasm_string += gate.qasm()
-        return qasm_string
+        qreg = self.width()
+        creg = self.count_gate_by_gatetype(GateType.measure)
 
-    def __or__(self, targets):
-        """deal the operator '|'
-
-        Use the syntax "gateSet | circuit" or "gateSet | qureg" or "gateSet | qubit"
-        to add the gate of gateSet into the circuit/qureg/qubit
-
-        Note that the order of qubits is that control bits first
-        and target bits followed.
-
-        Args:
-            targets: the targets the gate acts on, it can have following form,
-                1) Circuit
-                2) qureg
-                3) tuple<qubit, qureg>
-                4) list<qubit, qureg>
-        Raise:
-            TypeException: the type of other is wrong
-        """
-
-        if isinstance(targets, tuple):
-            targets = list(targets)
-        if isinstance(targets, list):
-            qureg = Qureg()
-            for item in targets:
-                if isinstance(item, Qubit):
-                    qureg.append(item)
-                elif isinstance(item, Qureg):
-                    qureg.extend(item)
-                else:
-                    raise TypeException("qubit or tuple<qubit, qureg> or qureg or list<qubit, qureg> or circuit",
-                                        targets)
-        elif isinstance(targets, Qureg):
-            qureg = targets
-        elif isinstance(targets, Circuit):
-            qureg = Qureg(targets.qubits)
-        else:
-            raise TypeException("qubit or tuple<qubit> or qureg or circuit", targets)
-
-        self.targets = len(qureg)
-
-        for gate in self:
-            qubits = []
-            for control in gate.cargs:
-                qubits.append(qureg[control])
-            for target in gate.targs:
-                qubits.append(qureg[target])
-            qureg.circuit.append(gate, qubits)
-
-    def __xor__(self, targets):
-        """deal the operator '^'
-
-        Use the syntax "gateSet ^ circuit" or "gateSet ^ qureg" or "gateSet ^ qubit"
-        to add the gate of gateSet's inverse into the circuit/qureg/qubit
-
-        Note that the order of qubits is that control bits first
-        and target bits followed.
-
-        Args:
-            targets: the targets the gate acts on, it can have following form,
-                1) Circuit
-                2) qureg
-                3) tuple<qubit, qureg>
-                4) list<qubit, qureg>
-        Raise:
-            TypeException: the type of other is wrong
-        """
-
-        if isinstance(targets, tuple):
-            targets = list(targets)
-        if isinstance(targets, list):
-            qureg = Qureg()
-            for item in targets:
-                if isinstance(item, Qubit):
-                    qureg.append(item)
-                elif isinstance(item, Qureg):
-                    qureg.extend(item)
-                else:
-                    raise TypeException("qubit or tuple<qubit, qureg> or qureg or list<qubit, qureg> or circuit",
-                                        targets)
-        elif isinstance(targets, Qureg):
-            qureg = targets
-        elif isinstance(targets, Circuit):
-            qureg = Qureg(targets.qubits)
-        else:
-            raise TypeException("qubit or tuple<qubit> or qureg or circuit", targets)
-
-        self.targets = len(qureg)
-
-        for gate in self.inverse():
-            qubits = []
-            for control in gate.cargs:
-                qubits.append(qureg[control])
-            for target in gate.targs:
-                qubits.append(qureg[target])
-            qureg.circuit.append(gate, qubits)
-
-    def __getitem__(self, item):
-        """ to fit the slice operator, overloaded this function.
-
-        get a smaller qureg/qubit from this qureg
-
-        Args:
-            item(int/slice): slice passed in.
-        Return:
-            Qubit/Qureg: the result or slice
-        """
-        if isinstance(item, int):
-            return super().__getitem__(item)
-        elif isinstance(item, slice):
-            gate_list = super().__getitem__(item)
-            return CompositeGate(gate_list)
-
-    def __add__(self, other):
-        """ to fit the add operator, overloaded this function.
-
-        get a smaller qureg/qubit from this qureg
-
-        Args:
-            other(Qureg): qureg to be added.
-        Return:
-            Qureg: the result or slice
-        """
-        if not isinstance(other, Qureg):
-            raise Exception("type error!")
-        gate_list = super().__add__(other)
-        return CompositeGate(gate_list)
-
-    # display information of the circuit
-    def print_information(self):
-        print("-------------------")
-        print(f"number of bits:{self.circuit_width()}")
-        for gate in self:
-            gate.print_info()
-        print("-------------------")
-
-    def random_append(self, rand_size=10, typeList=None):
-        """ add some random gate to the circuit
-
-        Args:
-            rand_size(int): the number of the gate added to the circuit
-            typeList(list<GateType>): the type of gate, default contains CX、ID、Rz、CY、CRz、CH
-        """
-        inner_random_append(self, rand_size, typeList)
+        return CircuitInformation.qasm(qreg, creg, self.gates)
 
     def inverse(self):
         """ the inverse of CompositeGate
@@ -319,13 +296,13 @@ class CompositeGate(list):
         Returns:
             CompositeGate: the inverse of the gateSet
         """
-        inverse = CompositeGate()
-        circuit_size = len(self)
-        for index in range(circuit_size - 1, -1, -1):
-            inverse.append(self[index].inverse())
-        return inverse
+        inverse_cgate = CompositeGate()
+        inverse_gates = [gate.inverse() for gate in self._gates[::-1]]
+        inverse_cgate.extend(inverse_gates)
 
-    def matrix(self, local=False):
+        return inverse_cgate
+
+    def matrix(self, local: bool = False):
         """ matrix of these gates
 
         Args:
@@ -334,61 +311,25 @@ class CompositeGate(list):
         Returns:
             np.ndarray: the matrix of the gates
         """
-        min_qubit = -1
-        max_qubit = -1
-        for gate in self:
-            for arg in gate.affectArgs:
-                if min_qubit == -1:
-                    min_qubit = arg
-                else:
-                    min_qubit = min(min_qubit, arg)
-                if max_qubit == -1:
-                    max_qubit = arg
-                else:
-                    max_qubit = max(max_qubit, arg)
-        if min_qubit == -1:
-            return np.eye(2, dtype=np.complex128)
+        if not self._gates:
+            return None
 
-        if local:
-            q_len = max_qubit - min_qubit + 1
+        if local and isinstance(self._min_qubit, int):
+            min_value = self._min_qubit
         else:
-            q_len = max_qubit + 1
+            min_value = 0
 
-        n = 1 << q_len
-
-        result = np.eye(n, dtype=np.complex128)
-
+        matrix = np.eye(1 << (self._max_qubit - min_value))
         for gate in self.gates:
-            new_values = np.zeros((n, n), dtype=np.complex128)
-            targs = gate.affectArgs
-            for i in range(len(targs)):
-                targs[i] -= min_qubit
-            xor = (1 << q_len) - 1
-            if not isinstance(targs, list):
-                raise Exception("unknown error")
-            matrix = gate.compute_matrix.reshape(1 << len(targs), 1 << len(targs))
-            datas = np.zeros(n, dtype=int)
-            for i in range(n):
-                nowi = 0
-                for kk in range(len(targs)):
-                    k = q_len - 1 - targs[kk]
-                    if (1 << k) & i != 0:
-                        nowi += (1 << (len(targs) - 1 - kk))
-                datas[i] = nowi
-            for i in targs:
-                xor = xor ^ (1 << (q_len - 1 - i))
-            for i in range(n):
-                nowi = datas[i]
-                for j in range(n):
-                    nowj = datas[j]
-                    if (i & xor) != (j & xor):
-                        continue
-                    new_values[i][j] = matrix[nowi, nowj]
-            result = np.dot(new_values, result)
-        return result
+            if gate.is_special() and gate.type != GateType.unitary:
+                raise TypeError(f"Cannot combined the gate matrix with special gate {gate.type}")
+
+            matrix = np.matmul(matrix_product_to_circuit(gate, self._max_qubit, min_value), matrix)
+
+        return matrix
 
     def equal(self, target, ignore_phase=True, eps=1e-7):
-        """
+        """ whether is equally with target or not.
 
         Args:
             target(gateSet/BasicGate/Circuit): the target
@@ -398,9 +339,18 @@ class CompositeGate(list):
         Returns:
             bool: whether the gateSet is equal with the targets
         """
-        target = CompositeGate(target, with_copy=True)
         self_matrix = self.matrix()
-        target_matrix = target.matrix()
+        if isinstance(target, CompositeGate):
+            target_matrix = target.matrix()
+        elif isinstance(target, BasicGate):
+            target_matrix = target.matrix
+        else:
+            temp_cg = CompositeGate()
+            for gate in target.gates:
+                gate | temp_cg
+
+            target_matrix = temp_cg.matrix()
+
         if ignore_phase:
             shape = self_matrix.shape
             rotate = 0
@@ -409,38 +359,13 @@ class CompositeGate(list):
                     if abs(self_matrix[i, j]) > eps:
                         rotate = target_matrix[i, j] / self_matrix[i, j]
                         break
+
                 if rotate != 0:
                     break
+
             if rotate == 0 or abs(abs(rotate) - 1) > eps:
                 return False
+
             self_matrix = self_matrix * np.full(shape, rotate)
+
         return np.allclose(self_matrix, target_matrix, rtol=eps, atol=eps)
-
-    def remapping(self, mapping):
-        """ remapping the gates' affectArgs
-
-        Args:
-            mapping(list): the mapping function
-
-        Returns:
-
-        """
-        size = self.circuit_size()
-        for i in range(size):
-            affectArgs = []
-            for arg in self[i].affectArgs:
-                affectArgs.append(mapping[arg])
-            self[i].affectArgs = affectArgs
-
-    def build_circuit(self):
-        """ build a circuit with composite gate
-
-        Returns:
-            Circuit: the circuit generated by the composite gate
-        """
-        qubits = 1
-        for gate in self:
-            qubits = max(qubits, max(gate.affectArgs))
-        circuit = Circuit(qubits)
-        circuit.set_exec_gates(self)
-        return circuit

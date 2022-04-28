@@ -4,7 +4,8 @@ Class for customizing the process of synthesis, optimization and mapping
 
 import numpy as np
 
-from QuICT.core import Circuit, CompositeGate
+from QuICT.core import Circuit
+from QuICT.core.gate import CompositeGate
 from QuICT.qcda.synthesis.unitary_transform import UnitaryTransform
 from QuICT.tools.interface import OPENQASMInterface
 from .synthesis._synthesis import Synthesis
@@ -81,15 +82,15 @@ class QCDA(object):
             if qasm.valid_circuit:
                 # FIXME: no circuit here
                 circuit = qasm.circuit
-                gates = CompositeGate(circuit)
+                gates = CompositeGate(gates=circuit.gates)
             else:
                 raise ValueError("Invalid qasm file!")
 
         if isinstance(objective, Circuit):
-            gates = CompositeGate(objective)
+            gates = CompositeGate(gates=objective.gates)
 
         if isinstance(objective, CompositeGate):
-            gates = CompositeGate(objective)
+            gates = CompositeGate(gates=objective.gates)
 
         assert isinstance(gates, CompositeGate), TypeError('Invalid objective!')
         return gates
@@ -179,6 +180,7 @@ class QCDA(object):
             self.process.extend(self.default_mapping(layout))
 
         gates = self.__custom_compile(gates)
+        self.process = []
 
         return gates
 
@@ -198,9 +200,12 @@ class QCDA(object):
         """
         for operation, args, kwargs in self.process:
             if isinstance(operation, Synthesis) or isinstance(operation, Optimization):
-                gates = CompositeGate(gates)
+                gates = CompositeGate(gates=gates.gates)
             if isinstance(operation, Mapping):
-                gates = gates.build_circuit()
+                circuit = Circuit(gates.width())
+                circuit.extend(gates.gates)
+                gates = circuit
+
             print('Processing {}'.format(operation.__name__))
             gates = operation.execute(gates, *args, **kwargs)
             print('Process {} finished'.format(operation.__name__))

@@ -5,7 +5,7 @@ which is specially designed for the optimization of unitary transform.
 
 import numpy as np
 
-from QuICT.core import CompositeGate, CX, Rx, Rz, Unitary
+from QuICT.core.gate import CompositeGate, CX, Rx, Rz, Unitary
 from .two_qubit_transform import CartanKAKDecomposition
 from .._synthesis import Synthesis
 
@@ -20,7 +20,7 @@ class TwoQubitDiagonalTransform(Synthesis):
     @classmethod
     def execute(cls, matrix, eps=1e-15):
         """
-        Decompose a matrix U∈SU(4) with Cartan KAK Decomposition. Unlike the
+        Decompose a matrix U in SU(4) with Cartan KAK Decomposition. Unlike the
         original version, now the result circuit has a two-qubit gate whose
         matrix is diagonal at the edge, which is useful in the optimization.
         The process is taken from [2] Proposition V.2 and Theorem VI.3,
@@ -46,8 +46,12 @@ class TwoQubitDiagonalTransform(Synthesis):
         U = matrix.copy()
         U /= np.linalg.det(U) ** 0.25
         gUTT = U.T.dot(sy2).dot(U).dot(sy2).T
-        psi = np.arctan((gUTT[0, 0] + gUTT[1, 1] + gUTT[2, 2] + gUTT[3, 3]).imag /
-                        (gUTT[0, 0] - gUTT[1, 1] - gUTT[2, 2] + gUTT[3, 3]).real)
+        denominator = (gUTT[0, 0] - gUTT[1, 1] - gUTT[2, 2] + gUTT[3, 3]).real
+        if np.isclose(denominator, 0):
+            psi = 0
+        else:
+            numerator = (gUTT[0, 0] + gUTT[1, 1] + gUTT[2, 2] + gUTT[3, 3]).imag
+            psi = np.arctan(numerator / denominator)
 
         gates_Delta = CompositeGate()
         with gates_Delta:
@@ -65,7 +69,7 @@ class TwoQubitDiagonalTransform(Synthesis):
         M2.imag[abs(M2.imag) < eps] = 0.0
 
         # Since M2 is a symmetric unitary matrix, we can diagonalize its real and
-        # imaginary part simultaneously. That is, ∃ P∈SO(4), s.t. M2 = P.D.P^T,
+        # imaginary part simultaneously. That is, ∃ P in SO(4), s.t. M2 = P.D.P^T,
         # where D is diagonal with unit-magnitude elements.
         D, P = CartanKAKDecomposition.diagonalize_unitary_symmetric(M2)
         d = np.angle(D) / 2

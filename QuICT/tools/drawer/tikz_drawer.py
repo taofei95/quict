@@ -1,9 +1,11 @@
 # -*- coding:utf8 -*-
 
 from copy import copy
+import numpy as np
 from typing import *
 
-from QuICT.core import *
+from QuICT.core import Circuit
+from QuICT.core.gate import *
 
 
 class TikzDrawer:

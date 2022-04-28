@@ -22,6 +22,7 @@ Template 2a_2:
 """
 
 from QuICT.core import *    # pylint: disable=unused-wildcard-import
+from QuICT.core.gate import *
 
 
 def template_nct_2a_2():
