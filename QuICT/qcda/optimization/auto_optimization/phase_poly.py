@@ -1,6 +1,7 @@
 from collections import Iterable
 
 from QuICT.core import *
+from QuICT.core.gate import *
 from .dag import DAG
 from math import log2
 

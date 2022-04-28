@@ -3,7 +3,9 @@ from typing import Iterator, Tuple, List, Set, Dict
 from collections import Iterable, deque
 import inspect
 
+import numpy as np
 from QuICT.core import *
+from QuICT.core.gate import *
 
 
 class DAG(Iterable):
