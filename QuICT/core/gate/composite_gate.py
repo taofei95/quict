@@ -82,8 +82,6 @@ class CompositeGate:
         self._mapping(targets)
         if CGATE_LIST:
             CGATE_LIST[-1].extend(self.gates)
-        
-        return self
 
     def __or__(self, targets):
         """ deal the operator '|'

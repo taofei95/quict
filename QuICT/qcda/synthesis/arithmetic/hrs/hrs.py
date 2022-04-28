@@ -211,19 +211,9 @@ def adder_rec(gate_set, control, x, c_bitwise, ancilla, ancilla_g):
         c_incrementer(gate_set, ancilla, x_H, g)
         for i in range(mid):
             CX & [ancilla, x_H[i]]
-        if n_control==0:
-            carry(gate_set, [], x_L, c_L, x_H, ancilla)
-        elif n_control==1:
-            carry(gate_set, [control[0]], x_L, c_L, x_H, ancilla)
-        else:
-            raise ValueError()
+        carry(gate_set, control, x_L, c_L, x_H, ancilla)
         c_incrementer(gate_set, ancilla, x_H, g)
-        if n_control==0:
-            carry(gate_set, [], x_L, c_L, x_H, ancilla)
-        elif n_control==1:
-            carry(gate_set, [control[0]], x_L, c_L, x_H, ancilla)
-        else:
-            raise ValueError()
+        carry(gate_set, control, x_L, c_L, x_H, ancilla)
         for i in range(mid):
             CX & [ancilla, x_H[i]]
         adder_rec(gate_set, control, x_L, c_L, ancilla, ancilla_g)
@@ -246,12 +236,7 @@ def adder(gate_set, control, x, c, ancilla, ancilla_g):
         adder_rec(gate_set, control, x, c_bitwise, ancilla, ancilla_g)
         for i in range(n):
             if c_bitwise[i] == '1':
-                if len(control)==0:
-                    X & x[i]
-                elif len(control)==1:
-                    CX & [control[0], x[i]]
-                else:
-                    raise ValueError()
+                var_controlled_X(gate_set, control, x[i])
 
 def c_sub(gate_set, control, x, c, ancilla, ancilla_g):
     """

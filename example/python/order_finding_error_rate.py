@@ -29,11 +29,9 @@ def naive_order_finding(a, N):
     return 0
 
 methods = {
-    # "BEA_zip_run": BEA_zip_run,
-    # "BEA_circuit": BEA_circuit,
-    # "BEA_run": BEA_run,
+    "BEA_zip_run": BEA_zip_run,
+    "BEA_run": BEA_run,
     "HRS_zip_run": HRS_zip_run,
-    # "HRS_circuit": HRS_circuit,
     "HRS_run": HRS_run
 }
 for mode in methods.keys():
