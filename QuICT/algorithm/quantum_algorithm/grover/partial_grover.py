@@ -10,7 +10,7 @@ from QuICT.core import Circuit
 from QuICT.core.gate import *
 from QuICT.qcda.synthesis.mct import MCTLinearOneDirtyAux
 
-from QuICT.simulation.gpu_simulator import ConstantStateVectorSimulator
+from QuICT.simulation.cpu_simulator import CircuitSimulator
 
 
 def calculate_r1_r2_one_target(N, K, eps):
@@ -32,7 +32,7 @@ class PartialGrover:
     https://arxiv.org/abs/quant-ph/0407122
     """
     @staticmethod
-    def run(n, k, oracle, simulator=None):
+    def run(n, k, oracle, simulator=CircuitSimulator()):
         """ partial grover search with one target
 
         Args:
@@ -43,8 +43,6 @@ class PartialGrover:
         Returns:
             int: the target address, big endian
         """
-        if simulator is None:
-            simulator = ConstantStateVectorSimulator()
         K = 1 << k
         N = 1 << n
         eps = 1 / K  # can use other epsilon

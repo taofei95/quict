@@ -1,52 +1,60 @@
-#!/usr/bin/env python
-# -*- coding:utf8 -*-
-# @TIME    : 2020/11/5 9:58
-# @Author  : Han Yu
-# @File    : unit_test.py
+from math import gcd
+import random
+from QuICT.algorithm.quantum_algorithm import ShorFactor
+from QuICT.algorithm.quantum_algorithm.shor.BEA_zip import order_finding as BEA_order_finding
+from QuICT.algorithm.quantum_algorithm.shor.HRS_zip import order_finding as HRS_order_finding
+import logging
 
-import pytest
-
-from QuICT.algorithm.quantum_algorithm import (
-    BEAShorFactor,
-    HRSShorFactor
+from QuICT.simulation.gpu_simulator import ConstantStateVectorSimulator
+simulator = ConstantStateVectorSimulator(
+    precision="double",
+    gpu_device_id=0,
+    sync=True
 )
+number_list = [
+    6, 8, 9, 10,
+    12, 14, 15, 16, 18, 20,
+    21, 22, 24, 25, 26, 27,
+]
+order_finding_test_modes = {"BEA":BEA_order_finding,"HRS":HRS_order_finding}
+run_test_modes = {"BEA_zip", "HRS_zip"}
+circuit_test_modes = {"BEA", "HRS"}
 
+def test_OrderFinding():
+    for mode in order_finding_test_modes.keys():
+        failure = 0
+        for N in number_list:
+            p = random.choice(list(filter(lambda x:gcd(x,N)==1,list(range(N)))))
+            print(f"testing ({p:2},{N:2})...",end="")
+            a = order_finding_test_modes[mode](p,N,simulator=simulator)
+            print(f"{'T' if (p**a)%N==1 else 'F'}: {p}**{a}==1 mod {N}")
+            if a==0 or (p**a)%N!=1:
+                failure += 1
+    print(f"success rate: {1-failure/len(number_list):.3f}")
 
-def test_BEAShorFactor_on_ConstantStateVectorSimulator():
-    from QuICT.simulation.gpu_simulator import ConstantStateVectorSimulator
-    simulator = ConstantStateVectorSimulator(
-        precision="double",
-        gpu_device_id=0,
-        sync=True
-    )
-    number_list = [
-        4, 6, 8, 9, 10,
-        12, 14, 15, 16, 18, 20,
-        21, 22, 24, 25, 26, 27,
-    ]
-    for number in number_list:
-        print('-------------------FACTORING %d-------------------------' % number)
-        a = BEAShorFactor.run(N=number, max_rd=10, simulator=simulator)
-        assert number % a == 0
+def test_ShorFactor_run():
+    for mode in run_test_modes:
+        print(f"mode: {mode}")
+        failure = 0
+        for number in number_list:
+            print('-------------------FACTORING %d-------------------------' % number)
+            a = ShorFactor(mode=mode,N=number).run(simulator=simulator)
+            if a == 0 or number % a != 0:
+                failure += 1
+        print(f"success rate: {1-failure/len(number_list):.3f}")
 
+def test_ShorFactor_circuit():
+    for mode in circuit_test_modes:
+        print(f"mode: {mode}")
+        failure = 0
+        for number in number_list:
+            print('-------------------FACTORING %d-------------------------' % number)
+            circuit, indices = ShorFactor(mode=mode,N=number).circuit()
+            a = ShorFactor(mode=mode,N=number).run(circuit=circuit, indices=indices ,simulator=simulator)
+            if a == 0 or number % a != 0:
+                failure += 1
+        print(f"success rate: {1-failure/len(number_list):.3f}")
 
-def test_HRSShorFactor_on_ConstantStateVectorSimulator():
-    from QuICT.simulation.gpu_simulator import ConstantStateVectorSimulator
-    simulator = ConstantStateVectorSimulator(
-        precision="double",
-        gpu_device_id=0,
-        sync=True
-    )
-    number_list = [
-        4, 6, 8, 9, 10,
-        12, 14, 15, 16, 18, 20,
-        21, 22, 24, 25, 26, 27,
-    ]
-    for number in number_list:
-        print('-------------------FACTORING %d-------------------------' % number)
-        a = HRSShorFactor.run(N=number, max_rd=10, simulator=simulator)
-        assert number % a == 0
-
-
-if __name__ == '__main__':
-    pytest.main(["./unit_test.py"])
+# # logging.root.setLevel(logging.INFO)
+# test_OrderFinding()
+# test_ShorFactor_circuit()

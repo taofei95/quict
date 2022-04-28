@@ -26,3 +26,5 @@ callgrind.out*
 *qubit_cnot_depth.inf
 cmake-build*/
 cmake-vsc*/
+orig
+comp

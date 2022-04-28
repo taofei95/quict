@@ -10,7 +10,7 @@ from QuICT.core import Circuit
 from QuICT.core.gate import *
 from QuICT.qcda.synthesis.mct import MCTLinearOneDirtyAux
 
-from QuICT.simulation.gpu_simulator import ConstantStateVectorSimulator
+from QuICT.simulation.cpu_simulator import CircuitSimulator
 import logging
 
 
@@ -36,7 +36,7 @@ class Grover:
     Quantum Computation and Quantum Information - Michael A. Nielsen & Isaac L. Chuang
     """
     @staticmethod
-    def run(n, oracle, simulator=None, demo_mode=False, **kwargs):
+    def run(n, oracle, simulator=CircuitSimulator(), demo_mode=False, **kwargs):
         """ grover search for f with custom oracle
 
         Args:
@@ -45,8 +45,6 @@ class Grover:
         Returns:
             int: the a satisfies that f(a) = 1
         """
-        if simulator is None:
-            simulator = ConstantStateVectorSimulator()
         circuit = Circuit(n + 1)
         index_q: list = list(range(n))
         result_q: int = n
