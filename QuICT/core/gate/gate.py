@@ -6,7 +6,11 @@
 import numpy as np
 import copy
 
-from QuICT.core.utils import GateType, SPECIAL_GATE_SET, DIAGONAL_GATE_SET, CGATE_LIST
+from QuICT.core.utils import (
+    GateType, SPECIAL_GATE_SET, DIAGONAL_GATE_SET, CGATE_LIST,
+    PAULI_GATE_SET, CLIFFORD_GATE_SET,
+    perm_decomposition
+)
 
 
 class BasicGate(object):
@@ -372,6 +376,14 @@ class BasicGate(object):
         """
         return self.controls == 1 and self.targets == 1
 
+    def is_clifford(self) -> bool:
+        """ judge whether gate's matrix is a Clifford gate
+
+        Returns:
+            bool: True if gate's matrix is a Clifford gate
+        """
+        return self.type in CLIFFORD_GATE_SET
+
     def is_diagonal(self) -> bool:
         """ judge whether gate's matrix is diagonal
 
@@ -385,6 +397,14 @@ class BasicGate(object):
 
     def _is_diagonal(self) -> bool:
         return np.allclose(np.diag(np.diag(self.matrix)), self.matrix)
+
+    def is_pauli(self) -> bool:
+        """ judge whether gate's matrix is a Pauli gate
+
+        Returns:
+            bool: True if gate's matrix is a Pauli gate
+        """
+        return self.type in PAULI_GATE_SET
 
     def is_special(self) -> bool:
         """ judge whether gate's is special gate, which is one of
@@ -474,6 +494,14 @@ class SGate(BasicGate):
             [0, 1j]
         ], dtype=np.complex128)
 
+    def inverse(self):
+        """ change it be sdg gate"""
+        _Sdagger = SDaggerGate()
+        _Sdagger.targs = copy.deepcopy(self.targs)
+        _Sdagger.assigned_qubits = copy.deepcopy(self.assigned_qubits)
+
+        return _Sdagger
+
 
 S = SGate()
 
@@ -492,6 +520,14 @@ class SDaggerGate(BasicGate):
             [1, 0],
             [0, -1j]
         ], dtype=np.complex128)
+
+    def inverse(self):
+        """ change it to be s gate """
+        _Sgate = SGate()
+        _Sgate.targs = copy.deepcopy(self.targs)
+        _Sgate.assigned_qubits = copy.deepcopy(self.assigned_qubits)
+
+        return _Sgate
 
 
 S_dagger = SDaggerGate()
@@ -1654,7 +1690,7 @@ class PermGate(BasicGate):
     def __call__(self, targets: int, params: list):
         """ pass permutation to the gate
 
-        the length of permutaion must be n, and should be a permutation for [0, n) without repeat
+        the length of params must be n, and should be a permutation for [0, n) without repeat
 
         Args:
             targets(int): the number of qubits
@@ -1688,8 +1724,24 @@ class PermGate(BasicGate):
 
         return _gate
 
+    def build_gate(self, targs: list = None):
+        from QuICT.core.gate import CompositeGate
+
+        swap_args: list[list[int]] = perm_decomposition(self.pargs[:])
+        cgate = CompositeGate()
+        with cgate:
+            for swap_arg in swap_args:
+                Swap & swap_arg
+
+        if targs is not None:
+            assert len(targs) == self.targets + self.controls
+            cgate & targs
+
+        return cgate
+
 
 Perm = PermGate()
+
 
 class PermFxGate(BasicGate):
     """ act an Fx oracle on a qureg
@@ -1808,46 +1860,6 @@ class UnitaryGate(BasicGate):
 
 
 Unitary = UnitaryGate()
-
-
-class ShorInitialGate(BasicGate):
-    """ a oracle gate to preparation the initial state before IQFT in Shor algorithm
-
-    backends will preparation the initial state by classical operator
-    with a fixed measure result of second register.
-    """
-    def __init__(self):
-        super().__init__(
-            controls=0,
-            targets=0,
-            params=0,
-            type=GateType.shor_init
-        )
-
-    def __call__(self, x: int, N: int, u: int):
-        """ pass the parameters
-
-        Args:
-            x (int): the base number
-            N (int): exponential
-            u (int[0/1]): the measure result of the second register
-
-        Returns:
-            ShorInitialGate: the gate after filled by parameters
-        """
-        params = [x, N, u]
-        for param in params:
-            if not self.permit_element(param):
-                raise TypeError("int/float/complex", param)
-
-        n = 2 * int(np.ceil(np.log2(N)))
-        self.targets = n
-        self.pargs = params
-
-        return self
-
-
-ShorInitial = ShorInitialGate()
 
 
 class CCXGate(BasicGate):

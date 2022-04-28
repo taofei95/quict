@@ -119,9 +119,8 @@ class CompositeGate:
         Raise:
             TypeException: the type of other is wrong
         """
-        self.inverse()
         try:
-            targets.extend(self.gates)
+            targets.extend(self.inverse().gates)
         except Exception as e:
             raise TypeError(f"Only support circuit for gateSet ^ circuit. {e}")
 
@@ -175,7 +174,7 @@ class CompositeGate:
 
         self._pointer = -1
 
-    def append(self, gate, is_extend: bool = False):
+    def append(self, gate, is_extend: bool = False, insert_idx: int = -1):
         gate = gate.copy()
 
         if self._pointer != -1:
@@ -199,7 +198,19 @@ class CompositeGate:
 
             self._update_qubit_limit(qubit_index)
 
-        self._gates.append(gate)
+        if insert_idx == -1:
+            self._gates.append(gate)
+        else:
+            self._gates.insert(insert_idx, gate)
+
+    def left_append(self, gate):
+        self.append(gate, insert_idx=0)
+
+    def left_extend(self, gates: list):
+        for idx, gate in enumerate(gates):
+            self.append(gate, is_extend=True, insert_idx=idx)
+
+        self._pointer = -1
 
     def width(self):
         """ the number of qubits applied by gates
@@ -255,7 +266,7 @@ class CompositeGate:
         Returns:
             int: the depth of the circuit
         """
-        return CircuitInformation.depth(self.gates)
+        return CircuitInformation.depth(self.gates, self.width())
 
     def __str__(self):
         cgate_info = {
@@ -289,7 +300,11 @@ class CompositeGate:
         Returns:
             CompositeGate: the inverse of the gateSet
         """
-        self._gates = [gate.inverse() for gate in self._gates[::-1]]
+        inverse_cgate = CompositeGate()
+        inverse_gates = [gate.inverse() for gate in self._gates[::-1]]
+        inverse_cgate.extend(inverse_gates)
+
+        return inverse_cgate
 
     def matrix(self, local: bool = False):
         """ matrix of these gates

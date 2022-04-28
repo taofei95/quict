@@ -4,6 +4,7 @@
 # @Author  : Han Yu
 # @File    : __init__.py
 
+from .symbolic_clifford_optimization import SymbolicCliffordOptimization
 from .cnot_ancillae import CnotAncillae
 from .commutative_optimization import CommutativeOptimization
 from .cnot_template import CnotForceBfs, CnotForceDepthBfs, CnotLocalForceBfs, CnotLocalForceDepthBfs, CnotStoreForceBfs
