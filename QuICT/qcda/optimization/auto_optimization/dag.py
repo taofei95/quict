@@ -15,10 +15,9 @@ class DAG(Iterable):
     DONE converter between netlist and DAG
     DONE topological sort
     DONE sub circuit enumeration
-    TODO weak ref needed!
+    TODO weak ref needed
     DONE need to distinguish interfaces of a multi qubit gate
     TODO refactor flag system
-    TODO keep qubit_loc updated
     """
 
     class Node:
@@ -40,9 +39,10 @@ class DAG(Iterable):
                 gate_(BasicGate): Gate represented by this node
                 qubit_(int): the actual qubit the gate sits on (used only when `gate_` is None)
             """
-            # DONE do we need to copy gate?
             self.gate = None if gate_ is None else gate_.copy()
+            # the actual qubit the i-th wire of the gate act on
             self.qubit_loc = [qubit_] if gate_ is None else list(gate_.affectArgs)
+            # inverse mapping of self.qubit_loc
             self.qubit_id = {qubit_: 0} if gate_ is None else {qubit_: i for i, qubit_ in enumerate(self.qubit_loc)}
             self.size = len(self.qubit_id)
             self.predecessors: List[Tuple[DAG.Node, int]] = [(None, 0)] * self.size
@@ -51,6 +51,13 @@ class DAG(Iterable):
             self.size = len(self.qubit_id)
 
         def add_forward_edge(self, qubit_, node):
+            """
+            Add an edge from self to node. Make sure qubit_id is up to date.
+
+            Args:
+                qubit_(int): the actual qubit this edge sit on
+                node(DAG.Node): the node this edge point to
+            """
             u_id = self.qubit_id[qubit_]
             v_id = node.qubit_id[qubit_]
             # print(u_id, v_id, self.size)
@@ -58,10 +65,23 @@ class DAG(Iterable):
             node.predecessors[v_id] = (self, u_id)
 
         def connect(self, forward_qubit, backward_qubit, node):
+            """
+            Connect (self, forward_qubit) to (node, backward_qubit)
+
+            Args:
+                forward_qubit(int): the wire this edge points from
+                backward_qubit(int): the wire this edge points to
+                node(DAG.Node):  the node this edge points to
+            """
             self.successors[forward_qubit] = (node, backward_qubit)
             node.predecessors[backward_qubit] = (self, forward_qubit)
 
         def erase(self):
+            """
+            erase this node from the DAG. It will:
+            1. set this node as FLAG_ERASED
+            2. remove pointers between it and adjacent nodes
+            """
             self.flag = self.FLAG_ERASED
             for qubit_ in range(self.size):
                 p_node, p_qubit = self.predecessors[qubit_]
@@ -70,6 +90,9 @@ class DAG(Iterable):
                     p_node.connect(p_qubit, n_qubit, n_node)
                 elif n_node:
                     n_node.successors[qubit_] = (None, 0)
+            # FIXME: the following assignment causes runtime error
+            # self.predecessors = None
+            # self.successors = None
 
     def __init__(self, gates: Circuit):
         """
@@ -80,6 +103,7 @@ class DAG(Iterable):
         self.size = gates.circuit_width()
         self.start_nodes = [self.Node(qubit_=i) for i in range(self.size)]
         self.end_nodes = [self.Node(qubit_=i) for i in range(self.size)]
+        self.global_phase = 0
         self._build_graph(gates)
 
     def circuit_width(self):
@@ -94,6 +118,9 @@ class DAG(Iterable):
         cur_nodes = self.start_nodes.copy()
         for gate_ in gates.gates:
             gate_: BasicGate
+            if gate_.qasm_name in ['ccz', 'ccx']:
+                raise Exception('ccz / ccx gates not supported yet' )
+
             node = self.Node(gate_)
             for qubit_ in gate_.affectArgs:
                 cur_nodes[qubit_].add_forward_edge(qubit_, node)
@@ -119,6 +146,9 @@ class DAG(Iterable):
                 mapping[(id(node), qubit_)] = mapping[(id(pred), qubit2)]
 
             node.gate | circ([mapping[(id(node), qubit_)] for qubit_ in range(node.size)])
+
+        if not np.isclose(self.global_phase, 0):
+            Phase(self.global_phase) | circ(0)
         return circ
 
     def topological_sort(self, include_dummy=False):
@@ -208,45 +238,6 @@ class DAG(Iterable):
             if node.gate is not None:
                 node.gate.affectArgs = node.qubit_loc
             node.qubit_id = {qubit_: i for i, qubit_ in enumerate(node.qubit_loc)}
-
-
-    @staticmethod
-    def _search_sub_circuit(start_node: Node, gate_set: Set[str], n_qubit: int):
-        prev_node: List[Tuple[DAG.Node, int]] = [None] * n_qubit
-        succ_node: List[Tuple[DAG.Node, int]] = [None] * n_qubit
-
-        queue = deque([start_node])
-        node_cnt = 0
-        while len(queue) > 0:
-            cur = queue.popleft()
-            cur.flag = cur.FLAG_VISITED
-            node_cnt += 1
-            for node_, qubit_ in cur.predecessors:
-                if node_.flag == node_.FLAG_DEFAULT and node_.gate is not None and \
-                        node_.gate.qasm_name in gate_set and all([prev_node[k] is None for k in node_.qubit_loc]):
-                    queue.append(node_)
-                    node_.flag = DAG.Node.FLAG_IN_QUE
-                elif node_.flag == node_.FLAG_IN_QUE:
-                    continue
-                elif prev_node[node_.qubit_loc[qubit_]] is None:
-                    prev_node[node_.qubit_loc[qubit_]] = (node_, qubit_)
-            for node_, qubit_ in cur.successors:
-                if node_.flag != node_.FLAG_VISITED and node_.gate is not None and \
-                        node_.gate.qasm_name in gate_set and all([succ_node[k] is None for k in node_.qubit_loc]):
-                    queue.append(node_)
-                    node_.flag = DAG.Node.FLAG_IN_QUE
-                elif node_.flag == node_.FLAG_IN_QUE:
-                    continue
-                elif succ_node[node_.qubit_loc[qubit_]] is None:
-                    succ_node[node_.qubit_loc[qubit_]] = (node_, qubit_)
-        return prev_node, succ_node, node_cnt
-
-    def enumerate_sub_circuit(self, gate_set: Set[str]):
-        self.reset_flag()
-        self.set_qubit_loc()
-        for node_ in self.topological_sort():
-            if node_.flag != node_.FLAG_VISITED and node_.gate.qasm_name in gate_set:
-                yield self._search_sub_circuit(node_, gate_set, self.size)
 
     def compare_circuit(self, other: Tuple[Node, int], anchor_qubit: int, flag_enabled: bool = False):
 
@@ -343,23 +334,6 @@ class DAG(Iterable):
         for node in DAG.topological_sort_sub_circuit(prev_node, succ_node):
             node.gate.copy() | circ(node.qubit_loc)
         return DAG(circ)
-
-    # @staticmethod
-    # def create_sub_circuit(prev_node: List[Tuple[Node, int]], succ_node: List[Tuple[Node, int]]):
-    #     circ = Circuit(len(prev_node))
-    #     dag = DAG(circ)
-    #     for qubit_ in range(dag.size):
-    #         if not prev_node[qubit_] or not succ_node[qubit_]:
-    #             continue
-    #
-    #         p_node, p_qubit = prev_node[qubit_]
-    #         n_node, n_qubit = p_node.successors[p_qubit]
-    #         dag.start_nodes[qubit_].connect(0, n_qubit, n_node)
-    #
-    #         p_node, p_qubit = succ_node[qubit_]
-    #         n_node, n_qubit = p_node.predecessors[p_qubit]
-    #         n_node.connect(n_qubit, 0, dag.end_nodes[qubit_])
-    #     return dag
 
     def __iter__(self):
         """

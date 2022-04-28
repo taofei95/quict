@@ -6,34 +6,13 @@ from .dag import DAG
 
 
 class OptimizationTemplate:
-    def __init__(self, template: DAG, replacement: DAG = None, anchor: int = 0):
+    def __init__(self, template: DAG, replacement: DAG = None,
+                 anchor: int = 0, weight: int = 1, phase: float = 0):
         self.template = template
         self.replacement = replacement
         self.anchor = anchor
-
-    # def replace(self, mapping: Dict[int, DAG.Node]):
-        # assert self.replacement, "Template has no replacement"
-        #
-        # replacement = self.replacement.copy()
-        # for qubit_ in range(self.template.size):
-        #     # first node on qubit_ in template circuit
-        #     t_node, t_qubit = self.template.start_nodes[qubit_].successors[0]
-        #     # first node on qubit_ in replacement circuit
-        #     r_node, r_qubit = replacement.start_nodes[qubit_].successors[0]
-        #     # node previous to the node corresponding to t_node in original circuit
-        #     p_node, p_qubit = mapping[id(t_node)].predecessors[t_qubit]
-        #     # place r_node after p_node
-        #     p_node.connect(p_qubit, r_qubit, r_node)
-        #
-        # for qubit_ in range(self.template.size):
-        #     # last node on qubit_ in template circuit
-        #     t_node, t_qubit = self.template.end_nodes[qubit_].predecessors[0]
-        #     # last node on qubit_ in replacement circuit
-        #     r_node, r_qubit = replacement.end_nodes[qubit_].predecessors[0]
-        #     # node successive to the node corresponding to t_node in original circuit
-        #     s_node, s_qubit = mapping[id(t_node)].successors[t_qubit]
-        #     # place s_node after r_node
-        #     r_node.connect(r_qubit, s_qubit, s_node)
+        self.weight = weight
+        self.phase = phase
 
     def compare(self, other: Tuple[DAG.Node, int], flag_enabled=False):
         return self.template.compare_circuit(other, self.anchor, flag_enabled)
@@ -66,6 +45,7 @@ class OptimizationTemplate:
         for mapping in matched:
             self.replace(mapping)
 
+        dag.global_phase = np.mod(dag.global_phase + len(matched) * self.phase, 2 * np.pi)
         return len(matched)
 
 
@@ -78,20 +58,20 @@ def get_circuit_from_list(n_qubit, gate_list):
 
 def generate_hadamard_gate_templates() -> List[OptimizationTemplate]:
     tpl_list = [
-        [1, [[H, 0], [H, 0]], []],
-        [1, [[H, 0], [S, 0], [H, 0]], [[S_dagger, 0], [H, 0], [S_dagger, 0]]],
-        [1, [[H, 0], [S_dagger, 0], [H, 0]], [[S, 0], [H, 0], [S, 0]]],
-        [2, [[H, 0], [H, 1], [CX, (0, 1)], [H, 0], [H, 1]], [[CX, (1, 0)]]],
-        [2, [[H, 1], [S, 1], [CX, (0, 1)], [S_dagger, 1], [H, 1]], [[S_dagger, 1], [CX, (0, 1)], [S, 1]]],
-        [2, [[H, 1], [S_dagger, 1], [CX, (0, 1)], [S, 1], [H, 1]], [[S, 1], [CX, (0, 1)], [S_dagger, 1]]],
-        [1, [[X, 0], [X, 0]], []]
+        [1, 2, 0, [[H, 0], [H, 0]], []],
+        [1, 1, +np.pi/4, [[H, 0], [S, 0], [H, 0]], [[S_dagger, 0], [H, 0], [S_dagger, 0]]],
+        [1, 1, -np.pi/4, [[H, 0], [S_dagger, 0], [H, 0]], [[S, 0], [H, 0], [S, 0]]],
+        [2, 4, 0, [[H, 0], [H, 1], [CX, (0, 1)], [H, 0], [H, 1]], [[CX, (1, 0)]]],
+        [2, 2, 0, [[H, 1], [S, 1], [CX, (0, 1)], [S_dagger, 1], [H, 1]], [[S_dagger, 1], [CX, (0, 1)], [S, 1]]],
+        [2, 2, 0, [[H, 1], [S_dagger, 1], [CX, (0, 1)], [S, 1], [H, 1]], [[S, 1], [CX, (0, 1)], [S_dagger, 1]]],
+        [1, 2, 0, [[X, 0], [X, 0]], []]
     ]
 
     ret = []
-    for n_qubit, tpl, rpl in tpl_list:
+    for n_qubit, weight, phase, tpl, rpl in tpl_list:
         tpl_circ = get_circuit_from_list(n_qubit, tpl)
         rpl_circ = get_circuit_from_list(n_qubit, rpl)
-        ret.append(OptimizationTemplate(DAG(tpl_circ), DAG(rpl_circ)))
+        ret.append(OptimizationTemplate(DAG(tpl_circ), DAG(rpl_circ), weight=weight, phase=phase))
     return ret
 
 

@@ -2,6 +2,7 @@ from collections import Iterable
 
 from QuICT.core import *
 from .dag import DAG
+from math import log2
 
 
 class PhasePolynomial:
@@ -58,7 +59,7 @@ class PhasePolynomial:
         max_monomial = max(self.phases.keys()) if len(self.phases.keys()) > 0 else 1
         circ = Circuit(self.size)
         visited = set()
-        for qubit_ in range(int(np.ceil(np.log2(max_monomial))) + 1):
+        for qubit_ in range(int(np.ceil(log2(max_monomial + 1))) + 1):
             if (1 << qubit_) in self.phases:
                 if abs(self.phases[1 << qubit_]) > epsilon:
                     Rz(self.phases[1 << qubit_]) | circ(qubit_)
