@@ -2494,6 +2494,33 @@ CSwap = CSwapGate()
 
 class modified_Givens_rotation(BasicGate):
     """ modified_Givens_rotation gate """
+    def __init__(self, params: list = [0]):
+        super().__init__(
+            controls=0,
+            targets=2,
+            params=1,
+            type= GateType.mgr
+        )
+
+        self.pargs = params
+
+    def __call__(self, alpha):
+        """ pass the unitary matrix
+
+        Args:
+            alpha (int/float/complex): the parameter for gate
+
+        Raises:
+            TypeError: param not one of int/float/complex
+
+        Returns:
+            BasicGate: The gate with parameters
+        """
+        if not self.permit_element(alpha):
+            raise TypeError("int/float/complex", alpha)
+
+        return modified_Givens_rotation([alpha])
+
     @property
     def matrix(self) -> np.ndarray:
         if self._matrix is None:
@@ -2501,52 +2528,22 @@ class modified_Givens_rotation(BasicGate):
             self._matrix = cgate.matrix()
         return self._matrix
 
-    def __init__(self, params: list = [np.pi / 2], targets: int = 2):
-        super().__init__(
-            controls=0,
-            targets=targets,
-            params=1,
-            type= GateType.mgr
-        )
-
-    def __call__(self, alpha, targets: int):
-        """ pass the unitary matrix
-
-        Args:
-            alpha (int/float/complex): the parameter for gate
-            targets(int): point out the number of bits of the gate
-
-        Raises:
-            TypeError: param not one of int/float/complex
-
-        Returns:
-            modified_Givens_rotation: the modified_Givens_rotation after filled by target number
-        """
-        if not self.permit_element(alpha):
-            raise TypeError("int/float/complex", alpha)
-
-        return modified_Givens_rotation([alpha], targets)
-
     def inverse(self):
-        _IMGR = modified_Givens_rotation()
-        _IMGR.targs = copy.deepcopy(self.targs)
-        _IMGR.targets = self.targets
+        _IMGR = self.copy()
+        _IMGR.pargs = - self.pargs
         return _IMGR
 
-    def build_gate(self, alpha, targets: int = 0):
+    def build_gate(self):
         from QuICT.core.gate import CompositeGate
-
-        if targets == 0:
-            targets = self.targets
 
         cgate = CompositeGate()
         with cgate:
-            sqiSwap & targets
-            Rx(alpha) & targets[0]
-            sqiSwap & targets
+            sqiSwap & [0, 1]
+            Rx(self.pargs) & 0
+            sqiSwap & [0, 1]
 
         args = self.cargs + self.targs
-        if len(args) == targets:
+        if len(args) == self.controls + self.targets:
             cgate & args
 
         return cgate
