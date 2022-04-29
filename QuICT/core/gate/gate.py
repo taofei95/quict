@@ -2540,7 +2540,9 @@ class modified_Givens_rotation(BasicGate):
         with cgate:
             sqiSwap & [0, 1]
             Rx(self.pargs) & 0
+            Rx(np.pi - self.pargs) & 1
             sqiSwap & [0, 1]
+            Rx(np.pi) & 0
 
         args = self.cargs + self.targs
         if len(args) == self.controls + self.targets:
