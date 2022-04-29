@@ -20,6 +20,7 @@ class Ansatz(object):
         
         Returns:
             (CompositeGate): a composite gate built from the given arguments
+
         """
         ...
     
@@ -32,6 +33,7 @@ class Ansatz(object):
         
         Returns:
             (QuantumCircuit)
+
         """
         ...
     
@@ -41,8 +43,10 @@ class Thouless(Ansatz):
 
     Hartree-Fock on a superconducting qubit quantum computer[Google Inc.]
     
-    arXiv: 2004.04174v4 [quant-ph] 18 Sep 2020"""
-    def ansatz_synthesis(n, angles):
+    arXiv: 2004.04174v4 [quant-ph] 18 Sep 2020
+    
+    """
+    def build_circuit(n, angles):
         '''Quantum Circuits with n qubits and C(n 2)  R(theta)[p,q] gates
         
         Args:
@@ -81,3 +85,8 @@ class Thouless(Ansatz):
         
         return ansatz
 
+
+# test functions
+if __name__ =='__main__':
+    ansatz = Thouless.build_circuit(9, [i for i in range(40)])
+    ansatz.draw()

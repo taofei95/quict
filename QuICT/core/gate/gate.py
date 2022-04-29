@@ -1656,6 +1656,27 @@ class iSwapGate(BasicGate):
 iSwap = iSwapGate()
 
 
+class iSwapDaggerGate(BasicGate):
+    """ iSwap gate """
+    def __init__(self):
+        super().__init__(
+            controls=0,
+            targets=2,
+            params=0,
+            type=GateType.iswapdg
+        )
+
+        self.matrix = np.array([
+            [1, 0, 0, 0],
+            [0, 0, - 1j, 0],
+            [0, - 1j, 0, 0],
+            [0, 0, 0, 1]
+        ], dtype=np.complex128)
+
+
+iSwap_dagger = iSwapDaggerGate()
+
+
 class SquareRootiSwapGate(BasicGate):
     """ Square Root of iSwap gate
 
@@ -2480,25 +2501,31 @@ class modified_Givens_rotation(BasicGate):
             self._matrix = cgate.matrix()
         return self._matrix
 
-    def __init__(self, targets: int = 2):
+    def __init__(self, params: list = [np.pi / 2], targets: int = 2):
         super().__init__(
             controls=0,
             targets=targets,
             params=1,
             type= GateType.mgr
-            # ...
         )
 
-    def __call__(self, targets: int):
+    def __call__(self, alpha, targets: int):
         """ pass the unitary matrix
 
         Args:
+            alpha (int/float/complex): the parameter for gate
             targets(int): point out the number of bits of the gate
+
+        Raises:
+            TypeError: param not one of int/float/complex
 
         Returns:
             modified_Givens_rotation: the modified_Givens_rotation after filled by target number
         """
-        return modified_Givens_rotation(targets)
+        if not self.permit_element(alpha):
+            raise TypeError("int/float/complex", alpha)
+
+        return modified_Givens_rotation([alpha], targets)
 
     def inverse(self):
         _IMGR = modified_Givens_rotation()
@@ -2506,7 +2533,7 @@ class modified_Givens_rotation(BasicGate):
         _IMGR.targets = self.targets
         return _IMGR
 
-    def build_gate(self, targets: int = 0):
+    def build_gate(self, alpha, targets: int = 0):
         from QuICT.core.gate import CompositeGate
 
         if targets == 0:
@@ -2514,11 +2541,9 @@ class modified_Givens_rotation(BasicGate):
 
         cgate = CompositeGate()
         with cgate:
-            for i in range(targets):
-                ...
-                # H & i
-                # for j in range(i + 1, targets):
-                #     CRz(2 * np.pi / (1 << j - i + 1)) & [j, i]
+            sqiSwap & targets
+            Rx(alpha) & targets[0]
+            sqiSwap & targets
 
         args = self.cargs + self.targs
         if len(args) == targets:
