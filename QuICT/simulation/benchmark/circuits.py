@@ -1,62 +1,150 @@
+import numpy as np
+
 from QuICT.core import *
 from QuICT.core.gate import *
+from random import choice, choices, uniform
 from typing import List, Iterable, Tuple, Callable
 
-DEFAULT_SCALE_SMALL = (1, 2, 3, 4, 5,)
-DEFAULT_SCALE_MEDIUM = (15, 16, 17,)
-DEFAULT_SCALE_LARGE = (30, 35, 40, 45, 50,)
+DEFAULT_SCALE_SMALL = [1, 2, 3, 4, 5, ]
+DEFAULT_SCALE_MEDIUM = [15, 16, 17, ]
+DEFAULT_SCALE_LARGE = [30, 35, 40, 45, 50, ]
 
 
-# Add meta-builder for CompositeGate
-class X(CompositeGate):
-    def __init__(self, meta_builder: Callable[[CompositeGate], CompositeGate] = lambda x: x):
-        super().__init__()
-        self.meta_flag: bool = false
-        self.meta_builder = meta_builder
-
-    # Maybe overwrite super().gates()
-    def unpack(self, prev: CompositeGate) -> Iterable[BasicGate]:
-        if self.meta_flag:
-            yield from self.gates
-        else:
-            yield from self.meta_builder(prev)
-
-
-def parse_scales(scale: str) -> Tuple[int]:
-    qubit_scales = tuple()
-    if scale == "smale":
-        qubit_scales = DEFAULT_SCALE_SMALL
+def parse_scales(scale: str) -> List[int]:
+    if scale == "small":
+        return DEFAULT_SCALE_SMALL
     elif scale == "medium":
-        qubit_scales = DEFAULT_SCALE_MEDIUM
+        return DEFAULT_SCALE_MEDIUM
     elif scale == "large":
-        qubit_scales = DEFAULT_SCALE_LARGE
+        return DEFAULT_SCALE_LARGE
     else:
-        ValueError("Only small/medium/large are allowed to choose circuit scale.")
-    return qubit_scales
+        raise ValueError("Only small/medium/large are allowed to choose circuit scale.")
 
 
 def default_size(scale: int) -> int:
-    return 20 * scale
+    return 40 * scale
+
+
+SINGLE_BIT_GATE = (
+    # No param
+    GateType.x,
+    GateType.y,
+    GateType.z,
+    GateType.h,
+    GateType.s,
+    GateType.sdg,
+    GateType.sx,
+    GateType.sy,
+    GateType.sw,
+    GateType.t,
+    GateType.tdg,
+    # W/ param
+    GateType.u1,
+    GateType.u2,
+    GateType.u3,
+    GateType.rx,
+    GateType.ry,
+    GateType.rz,
+    GateType.phase,
+)
+
+DIAG_1_GATE = (
+    GateType.s,
+    GateType.sdg,
+    GateType.z,
+    GateType.id,
+    GateType.u1,
+    GateType.rz,
+    GateType.t,
+    GateType.tdg,
+    GateType.phase,
+)
+
+DIAG_2_GATE = (
+    GateType.Rzz,
+)
+
+UNITARY_1_GATE = (
+    GateType.y,
+    GateType.sx,
+    GateType.sy,
+    GateType.sw,
+    GateType.u2,
+    GateType.u3,
+    GateType.rx,
+    GateType.ry,
+)
+
+UNITARY_2_GATE = (
+    GateType.fsim,
+    GateType.Rxx,
+    GateType.Ryy,
+    GateType.swap,
+)
+
+CTRL_DIAG_GATE = (
+    GateType.cz,
+    GateType.crz,
+    GateType.cu1,
+)
+
+CTRL_UNITARY_GATE = (
+    GateType.cx,
+    GateType.cy,
+    GateType.ch,
+    GateType.cu3,
+)
+
+
+# DIAG_GATE = list(DIAG_1_GATE)
+# DIAG_GATE.extend(DIAG_2_GATE)
+# DIAG_GATE = tuple(DIAG_GATE)
+
+
+def populate_random_param(gate: BasicGate) -> BasicGate:
+    g = gate
+    if gate.params > 0:
+        params = []
+        for _ in range(gate.params):
+            params.append(uniform(0, 2 * np.pi))
+        g = gate(*params)
+    return g
 
 
 def random_single_bit_gate() -> BasicGate:
-    pass
+    t = choice(SINGLE_BIT_GATE)
+    gate = build_gate(t, [0])
+    return populate_random_param(gate)
 
 
 def random_diag_gate() -> BasicGate:
-    pass
+    t = choice(range(len(DIAG_1_GATE) + len(DIAG_2_GATE)))
+    if t > len(DIAG_1_GATE):
+        gate = build_gate(DIAG_1_GATE[t], [0])
+    else:
+        gate = build_gate(DIAG_2_GATE[t], [0, 1])
+    return populate_random_param(gate)
 
 
 def random_ctrl_diag_gate() -> BasicGate:
-    pass
+    t = choice(CTRL_DIAG_GATE)
+    gate = build_gate(t, [0, 1])
+    return populate_random_param(gate)
 
 
 def random_unitary_gate() -> BasicGate:
-    pass
+    t = choice(range(len(UNITARY_1_GATE) + len(UNITARY_2_GATE)))
+    if t > len(UNITARY_1_GATE):
+        gate = build_gate(UNITARY_1_GATE[t], [0])
+    else:
+        gate = build_gate(UNITARY_2_GATE[t], [0, 1])
+    return populate_random_param(gate)
 
 
 def random_ctrl_unitary_gate() -> BasicGate:
-    pass
+    t = choice(CTRL_UNITARY_GATE)
+    gate = build_gate(t, [0, 1])
+    return populate_random_param(gate)
 
 
 class CircuitFactory:
@@ -66,7 +154,10 @@ class CircuitFactory:
         for qubit_num in qubit_scales:
             circ = Circuit(qubit_num)
             for _ in range(default_size(qubit_num)):
-                gate_generator() | circ
+                g = gate_generator()
+                if g.controls + g.targets > qubit_num:
+                    continue
+                g | circ(choices(range(qubit_num), k=g.controls + g.targets))
             yield circ
 
     @staticmethod
@@ -77,26 +168,25 @@ class CircuitFactory:
             QFT.build_gate(qubit_num) | circ
             yield circ
 
-
-def single_bit_gate_circuits(scale: str) -> Iterable[Circuit]:
-    yield from CircuitFactory.default(scale, random_single_bit_gate)
-
-
-def diag_gate_circuits(scale: str) -> Iterable[Circuit]:
-    yield from CircuitFactory.default(scale, random_diag_gate)
-
-
-def ctrl_diag_gate_circuits(scale: str) -> Iterable[Circuit]:
-    yield from CircuitFactory.default(scale, random_ctrl_diag_gate)
-
-
-def unitary_gate_circuits(scale: str) -> Iterable[Circuit]:
-    yield from CircuitFactory.default(scale, random_unitary_gate)
-
-
-def ctrl_unitary_gate_circuits(scale: str) -> Iterable[Circuit]:
-    yield from CircuitFactory.default(scale, random_ctrl_unitary_gate)
-
-
-def qft_circuits(scale: str) -> Iterable[Circuit]:
-    yield from CircuitFactory.qft(scale)
+# def single_bit_gate_circuits(scale: str) -> Iterable[Circuit]:
+#     yield from CircuitFactory.default(scale, random_single_bit_gate)
+#
+#
+# def diag_gate_circuits(scale: str) -> Iterable[Circuit]:
+#     yield from CircuitFactory.default(scale, random_diag_gate)
+#
+#
+# def ctrl_diag_gate_circuits(scale: str) -> Iterable[Circuit]:
+#     yield from CircuitFactory.default(scale, random_ctrl_diag_gate)
+#
+#
+# def unitary_gate_circuits(scale: str) -> Iterable[Circuit]:
+#     yield from CircuitFactory.default(scale, random_unitary_gate)
+#
+#
+# def ctrl_unitary_gate_circuits(scale: str) -> Iterable[Circuit]:
+#     yield from CircuitFactory.default(scale, random_ctrl_unitary_gate)
+#
+#
+# def qft_circuits(scale: str) -> Iterable[Circuit]:
+#     yield from CircuitFactory.qft(scale)
