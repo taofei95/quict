@@ -1668,8 +1668,8 @@ class iSwapDaggerGate(BasicGate):
 
         self.matrix = np.array([
             [1, 0, 0, 0],
-            [0, 0, - 1j, 0],
-            [0, - 1j, 0, 0],
+            [0, 0, -1j, 0],
+            [0, -1j, 0, 0],
             [0, 0, 0, 1]
         ], dtype=np.complex128)
 
