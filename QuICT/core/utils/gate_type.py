@@ -59,7 +59,6 @@ class GateType(Enum):
     # Composite gate
     qft = "QFT gate"
     iqft = "IQFT gate"
-    mgr = "Modified Givens Rotation gate"
 
 
 SPECIAL_GATE_SET = [
