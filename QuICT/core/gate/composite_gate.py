@@ -60,6 +60,11 @@ class CompositeGate:
         if gates:
             self.extend(gates)
 
+    def clean(self):
+        self._gates = []
+        self._min_qubit, self._max_qubit = np.inf, 0
+        self._pointer = -1
+
     def __and__(self, targets):
         """ assign qubits or indexes for given gates
 
