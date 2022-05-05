@@ -119,4 +119,4 @@ def gen_data(repeat: int = 100, size_list: List[int] = [i for i in range(5, 150,
 
 
 if __name__ == "__main__":
-    gen_data(5, [25, 26])
+    gen_data()
