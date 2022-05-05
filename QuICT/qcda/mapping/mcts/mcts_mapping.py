@@ -50,7 +50,7 @@ class MCTSMapping(Mapping):
         [1]Zhou, X., Li, S., & Feng, Y. (2020). Quantum Circuit Transformation Based on Simulated Annealing and
         Heuristic Search. IEEE Transactions on Computer-Aided Design of Integrated Circuits and Systems, 39, 4683-4694.
         """
-        circuit.const_lock = True
+        # circuit.const_lock = True
         num = layout.qubit_number
 
         circuit_dag = DAG(circuit=circuit, mode=Mode.TWO_QUBIT_CIRCUIT)
@@ -80,9 +80,11 @@ class MCTSMapping(Mapping):
 
         gates = mcts_tree.physical_circuit
 
-        circuit.const_lock = False
+        # circuit.const_lock = False
         if inplace:
-            circuit.set_flush_gates(gates)
+            # circuit.set_flush_gates(gates)
+            # return circuit
+            raise NotImplementedError()
         else:
             new_circuit = Circuit(num)
             new_circuit.extend(gates)
