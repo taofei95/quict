@@ -1,13 +1,14 @@
 from __future__ import annotations
 
 from collections import deque
-from typing import List, Tuple, Iterable
+from typing import Iterable, List, Tuple
 
 import matplotlib.pyplot as plt
 import networkx as nx
 
 from QuICT.core import Circuit
 from QuICT.core.gate.gate import *
+
 from .utility import Mode
 
 
@@ -92,20 +93,17 @@ class DAG(object):
 
     @property
     def compact_dag(self) -> np.ndarray:
-        """
-        """
+        """ """
         return np.concatenate([self._successors, self._precessors], axis=1)
 
     @property
     def node_qubits(self) -> np.ndarray:
-        """
-        """
+        """ """
         return self._node_qubits
 
     @property
     def index(self) -> np.ndarray:
-        """
-        """
+        """ """
         return self._index
 
     def get_successor_nodes(self, vertex: int) -> Iterable[int]:
@@ -124,7 +122,7 @@ class DAG(object):
         """
         The qubit associated with the edge from vertex i to vertex j
         """
-        return self._dag.edges[vertex_i, vertex_j]['qubit']
+        return self._dag.edges[vertex_i, vertex_j]["qubit"]
 
     def _transform_from_circuit(self, circuit: Circuit):
         """
@@ -137,18 +135,25 @@ class DAG(object):
 
         self._dag = nx.MultiDiGraph()
         for gate in circuit.gates:
-            self._dag.add_node(self._num_of_gate, gate=gate, depth=self._gate_depth(gate))
+            self._dag.add_node(
+                self._num_of_gate, gate=gate, depth=self._gate_depth(gate)
+            )
             if gate.controls + gate.targets == 1:
                 self._add_edge_in_dag(gate.targ)
             elif gate.controls + gate.targets == 2:
-                if gate.type == GateType.swap:
-                    self._add_edge_in_dag(gate.targs[0])
-                    self._add_edge_in_dag(gate.targs[1])
-                else:
-                    self._add_edge_in_dag(gate.targ)
-                    self._add_edge_in_dag(gate.carg)
+                # if gate.type == GateType.swap:
+                #     self._add_edge_in_dag(gate.targs[0])
+                #     self._add_edge_in_dag(gate.targs[1])
+                # else:
+                #     self._add_edge_in_dag(gate.targ)
+                #     self._add_edge_in_dag(gate.carg)
+                args = gate.cargs + gate.targs
+                self._add_edge_in_dag(args[0])
+                self._add_edge_in_dag(args[1])
             else:
-                raise Exception(str("The gate is not single qubit gate or two qubit gate"))
+                raise Exception(
+                    str("The gate is not single qubit gate or two qubit gate")
+                )
             self._num_of_gate = self._num_of_gate + 1
 
     def _construct_two_qubit_gates_circuit(self, circuit: Circuit):
@@ -164,9 +169,15 @@ class DAG(object):
         self._dag = nx.DiGraph()
 
         # Compact representation of DAG
-        self._successors = np.zeros(shape=(circuit.count_2qubit_gate(), 2), dtype=np.int32) - 1
-        self._precessors = np.zeros(shape=(circuit.count_2qubit_gate(), 2), dtype=np.int32) - 1
-        self._node_qubits = np.zeros(shape=(circuit.count_2qubit_gate(), 2), dtype=np.int32) - 1
+        self._successors = (
+            np.zeros(shape=(circuit.count_2qubit_gate(), 2), dtype=np.int32) - 1
+        )
+        self._precessors = (
+            np.zeros(shape=(circuit.count_2qubit_gate(), 2), dtype=np.int32) - 1
+        )
+        self._node_qubits = (
+            np.zeros(shape=(circuit.count_2qubit_gate(), 2), dtype=np.int32) - 1
+        )
 
         # Index and inverse index of gates from DAG to compact DAG
         self._index = np.zeros(circuit.size(), dtype=np.int32) - 1
@@ -180,17 +191,24 @@ class DAG(object):
                     self._index[self._num_of_gate] = self._num_of_two_qubit_gate
                     self._inverse_index[self._num_of_two_qubit_gate] = self._num_of_gate
                     self._add_node_in_compact_dag(gate)
-                    self._dag.add_node(self._num_of_gate, gate=gate, depth=self._gate_depth(gate))
-                    if gate.type == GateType.swap:
-                        self._add_edge_in_dag(gate.targs[0])
-                        self._add_edge_in_dag(gate.targs[1])
-                    else:
-                        self._add_edge_in_dag(gate.targ)
-                        self._add_edge_in_dag(gate.carg)
+                    self._dag.add_node(
+                        self._num_of_gate, gate=gate, depth=self._gate_depth(gate)
+                    )
+                    # if gate.type == GateType.swap:
+                    #     self._add_edge_in_dag(gate.targs[0])
+                    #     self._add_edge_in_dag(gate.targs[1])
+                    # else:
+                    #     self._add_edge_in_dag(gate.targ)
+                    #     self._add_edge_in_dag(gate.carg)
+                    args = gate.cargs + gate.targs
+                    self._add_edge_in_dag(args[0])
+                    self._add_edge_in_dag(args[1])
 
                     self._num_of_two_qubit_gate = self._num_of_two_qubit_gate + 1
             else:
-                raise Exception(str("The gate is not single qubit gate or two qubit gate"))
+                raise Exception(
+                    str("The gate is not single qubit gate or two qubit gate")
+                )
 
             self._num_of_gate = self._num_of_gate + 1
 
@@ -201,14 +219,19 @@ class DAG(object):
         """
         Add the node's information, including its successors ,precessors and node's qubits, to the compact matrix
         """
-        if gate.type == GateType.swap:
-            qubits = (gate.targs[0], gate.targs[1])
-        else:
-            qubits = (gate.carg, gate.targ)
+        # if gate.type == GateType.swap:
+        #     qubits = (gate.targs[0], gate.targs[1])
+        # else:
+        #     qubits = (gate.carg, gate.targ)
+        qubits = gate.cargs + gate.targs
 
         precessors = [
-            self._index[self._qubit_mask[qubits[0]]] if self._qubit_mask[qubits[0]] != -1 else -1,
-            self._index[self._qubit_mask[qubits[1]]] if self._qubit_mask[qubits[1]] != -1 else -1
+            self._index[self._qubit_mask[qubits[0]]]
+            if self._qubit_mask[qubits[0]] != -1
+            else -1,
+            self._index[self._qubit_mask[qubits[1]]]
+            if self._qubit_mask[qubits[1]] != -1
+            else -1,
         ]
         self._precessors[self._num_of_two_qubit_gate, :] = precessors
 
@@ -220,13 +243,22 @@ class DAG(object):
         Add the current two-qubit gate to its precessor as successor
         """
         if precessor != -1:
-            if self._successors[precessor][0] == -1 and self._successors[precessor][1] == -1:
+            if (
+                self._successors[precessor][0] == -1
+                and self._successors[precessor][1] == -1
+            ):
                 self._successors[precessor][0] = self._num_of_two_qubit_gate
                 self._node_qubits[precessor][0] = qubit
-            elif self._successors[precessor][0] == -1 and self._successors[precessor][1] != -1:
+            elif (
+                self._successors[precessor][0] == -1
+                and self._successors[precessor][1] != -1
+            ):
                 self._successors[precessor][0] = self._num_of_two_qubit_gate
                 self._node_qubits[precessor][0] = qubit
-            elif self._successors[precessor][0] != -1 and self._successors[precessor][1] == -1:
+            elif (
+                self._successors[precessor][0] != -1
+                and self._successors[precessor][1] == -1
+            ):
                 self._successors[precessor][1] = self._num_of_two_qubit_gate
                 self._node_qubits[precessor][1] = qubit
             else:
@@ -237,18 +269,23 @@ class DAG(object):
         Fullfill the node's information of qubits
         """
         if index != -1:
-            gate = self._dag.nodes[self._inverse_index[index]]['gate']
-            if gate.type == GateType.swap:
-                qubits = (gate.targs[0], gate.targs[1])
-            else:
-                qubits = (gate.carg, gate.targ)
+            gate = self._dag.nodes[self._inverse_index[index]]["gate"]
+            # if gate.type == GateType.swap:
+            #     qubits = (gate.targs[0], gate.targs[1])
+            # else:
+            #     qubits = (gate.carg, gate.targ)
+            qubits = gate.cargs + gate.targs
             i = index
             if self._node_qubits[i][0] == -1 and self._node_qubits[i][1] == -1:
                 self._node_qubits[i] = np.array(qubits)
             elif self._node_qubits[i][0] == -1 and self._node_qubits[i][1] != -1:
-                self._node_qubits[i][0] = qubits[0] if self._node_qubits[i][1] == qubits[1] else qubits[1]
+                self._node_qubits[i][0] = (
+                    qubits[0] if self._node_qubits[i][1] == qubits[1] else qubits[1]
+                )
             elif self._node_qubits[i][0] != -1 and self._node_qubits[i][1] == -1:
-                self._node_qubits[i][1] = qubits[1] if self._node_qubits[i][0] == qubits[0] else qubits[0]
+                self._node_qubits[i][1] = (
+                    qubits[1] if self._node_qubits[i][0] == qubits[0] else qubits[0]
+                )
             else:
                 pass
 
@@ -256,53 +293,63 @@ class DAG(object):
         """
         Indicate wether the gate share the same qubits with its preceeding gate
         """
-        if gate.type == GateType.swap:
-            qubits = (gate.targs[0], gate.targs[1])
-        else:
-            qubits = (gate.carg, gate.targ)
+        # if gate.type == GateType.swap:
+        #     qubits = (gate.targs[0], gate.targs[1])
+        # else:
+        #     qubits = (gate.carg, gate.targ)
+        qubits = gate.cargs + gate.targs
 
-        if self._qubit_mask[qubits[0]] != -1 and self._qubit_mask[qubits[0]] == self._qubit_mask[qubits[1]]:
+        if (
+            self._qubit_mask[qubits[0]] != -1
+            and self._qubit_mask[qubits[0]] == self._qubit_mask[qubits[1]]
+        ):
             return True
         else:
             return False
 
     def _gate_depth(self, gate: BasicGate) -> int:
-        """
-
-        """
+        """ """
         if gate.controls + gate.targets == 1:
             self._depth[self._num_of_gate] = self._gate_before_qubit_depth(gate.targ)
 
         elif gate.controls + gate.targets == 2:
-            self._depth[self._num_of_gate] = max(self._gate_before_qubit_depth(gate.targ),
-                                                 self._gate_before_qubit_depth(gate.carg))
+            args = gate.cargs + gate.targs
+            self._depth[self._num_of_gate] = max(
+                self._gate_before_qubit_depth(args[0]),
+                self._gate_before_qubit_depth(args[1]),
+            )
         else:
             raise Exception(str("The gate is not single qubit gate or two qubit gate"))
 
         return self._depth[self._num_of_gate]
 
     def _gate_before_qubit_depth(self, qubit: int) -> int:
-        """
-        """
+        """ """
         if self._qubit_mask[qubit] == -1:
             return 0
         else:
             return self._depth[self._qubit_mask[qubit]] + 1
 
     def _add_edge_in_dag(self, qubit: int):
-        """
-        """
+        """ """
         if qubit < len(self._qubit_mask):
             if self._qubit_mask[qubit] != -1:
-                self._dag.add_edge(self._qubit_mask[qubit], self._num_of_gate, qubit=qubit)
+                self._dag.add_edge(
+                    self._qubit_mask[qubit], self._num_of_gate, qubit=qubit
+                )
             else:
                 self._initial_qubit_mask[qubit] = self._num_of_gate
             self._qubit_mask[qubit] = self._num_of_gate
         else:
             raise Exception(str("   "))
 
-    def get_subcircuit(self, front_layer: List[int], qubit_mask: List[int], num_of_gates: int,
-                       gates_threshold: int = -1) -> Tuple[int, np.ndarray]:
+    def get_subcircuit(
+        self,
+        front_layer: List[int],
+        qubit_mask: List[int],
+        num_of_gates: int,
+        gates_threshold: int = -1,
+    ) -> Tuple[int, np.ndarray]:
         """
         Get the subcircuit  from the front layer in the circuit
         """
@@ -336,10 +383,14 @@ class DAG(object):
                     print(list(p))
                 for s in subcircuit:
                     print(list(s))
-                raise Exception("The number of gates in the subcircuit %d is greater than the given number %d" % (
-                    index, num_of_gates))
+                raise Exception(
+                    "The number of gates in the subcircuit %d is greater than the given number %d"
+                    % (index, num_of_gates)
+                )
             subcircuit[index, 0] = top
-            subcircuit[index, 1:] = np.concatenate((self._successors[top], self._precessors[top]))
+            subcircuit[index, 1:] = np.concatenate(
+                (self._successors[top], self._precessors[top])
+            )
             qubits_of_gates[index, :] = self._node_qubits[top]
             index += 1
             for i, suc in enumerate(self._successors[top]):
@@ -354,7 +405,8 @@ class DAG(object):
     def _is_free(self, gate_idx: int, qubit_mask: List[int]):
         ctrl, tar = self.node_qubits[gate_idx]
         if (qubit_mask[ctrl] == -1 or qubit_mask[ctrl] == gate_idx) and (
-                qubit_mask[tar] == -1 or qubit_mask[tar] == gate_idx):
+            qubit_mask[tar] == -1 or qubit_mask[tar] == gate_idx
+        ):
             return True
         else:
             return False
@@ -364,8 +416,15 @@ class DAG(object):
         Draw the DAG of the circuit with
         """
         plt.figure(figsize=(200, 10))
-        nx.draw(G=self._dag, pos=nx.multipartite_layout(self._dag, subset_key='depth'), node_size=50, width=1,
-                arrowsize=2, font_size=12, with_labels=True)
+        nx.draw(
+            G=self._dag,
+            pos=nx.multipartite_layout(self._dag, subset_key="depth"),
+            node_size=50,
+            width=1,
+            arrowsize=2,
+            font_size=12,
+            with_labels=True,
+        )
         # nx.draw(G = self._dag)
         plt.savefig("dag.png")
         plt.close()

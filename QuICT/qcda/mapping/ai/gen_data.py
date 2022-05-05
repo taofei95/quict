@@ -45,7 +45,7 @@ def gen_fc_layout(num_qubit: int) -> Layout:
 
 
 def gen_circ(num_qubit: int) -> Circuit:
-    size = num_qubit * num_qubit // 2
+    size = num_qubit * 5
     # No need for single bit gates.
     rand_list = [
         GateType.cx,
@@ -55,7 +55,7 @@ def gen_circ(num_qubit: int) -> Circuit:
         GateType.crz,
         GateType.cu1,
         GateType.cu3,
-        GateType.fsim,
+        # GateType.fsim,
     ]
     circ = Circuit(wires=num_qubit)
     circ.random_append(rand_size=size, typelist=rand_list)
@@ -86,37 +86,56 @@ def write_circ_gate_dag(circ: Circuit, path: str):
         cur_occupy[args[1]] = idx
     with open(path, "w") as f:
         f.write(f"# number of qubit: {num_qubit}\n")
+        data_str = ""
         for edge in edge_list:
-            f.write(f"{edge[0]} {edge[1]}\n")
+            data_str += f"{edge[0]} {edge[1]}\n"
+        f.write(data_str)
 
 
 def write_layout(layout: Layout, path: str):
     ensure_path(path)
     # layout.write_file(path)
     with open(path, "w") as f:
+        data_str = ""
         for edge in layout.edge_list:
             edge: LayoutEdge
-            f.write(f"{edge.u} {edge.v}\n")
+            data_str += f"{edge.u} {edge.v}\n"
+        f.write(data_str)
 
 
-def gen_data(repeat: int = 100, size_list: List[int] = [i for i in range(5, 150, 5)]):
+def write_circ_qasm(circ: Circuit, path: str):
+    with open(path, "w") as f:
+        f.write(circ.qasm())
+
+
+def gen_data(repeat: int = 10, size_list: List[int] = [i for i in range(5, 50)]):
     cwd = os.getcwd()
     data_dir = os.path.join(cwd, "data")
-    topo_list = [(gen_grid_layout, "grid"), (gen_fc_layout, "fc")]
+    topo_list = [(gen_grid_layout, "grid")]
     for topo_gen, name in topo_list:
         topo_dir = os.path.join(data_dir, name)
         for num_qubit in size_list:
             if name == "grid" and int(sqrt(num_qubit)) ** 2 != num_qubit:
                 continue
-            print(f"Circuit with {num_qubit} of {name} topology, {repeat} rounds.")
+            print(
+                f"Circuit with {num_qubit} qubits of {name} topology, {repeat} rounds."
+            )
             dir = os.path.join(topo_dir, str(num_qubit))
             topo_file = os.path.join(dir, "topo.txt")
             topo = topo_gen(num_qubit)
             write_layout(topo, topo_file)
             for i in range(repeat):
-                circ_file = os.path.join(dir, f"circ_{i}.txt")
+                circ_file = os.path.join(dir, f"circ_{i}.qasm")
                 circ = gen_circ(num_qubit)
-                write_circ_gate_dag(circ, circ_file)
+                result_circ_file = os.path.join(dir, f"result_circ_{i}.qasm")
+                result_circ = Mapping.execute(
+                    circuit=circ, init_mapping_method="naive", layout=topo
+                )
+                # write_circ_gate_dag(circ, circ_file)
+                write_circ_qasm(circ, circ_file)
+                write_circ_qasm(result_circ, result_circ_file)
+                if 0 == i % 10:
+                    print(f"    iter: {i}")
 
 
 if __name__ == "__main__":
