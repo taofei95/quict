@@ -108,6 +108,7 @@ def gen_data(repeat: int = 100, size_list: List[int] = [i for i in range(5, 150,
         for num_qubit in size_list:
             if name == "grid" and int(sqrt(num_qubit)) ** 2 != num_qubit:
                 continue
+            print(f"Circuit with {num_qubit} of {name} topology, {repeat} rounds.")
             dir = os.path.join(topo_dir, str(num_qubit))
             topo_file = os.path.join(dir, "topo.txt")
             topo = topo_gen(num_qubit)
