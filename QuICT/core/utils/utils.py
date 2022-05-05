@@ -4,7 +4,7 @@ import numpy as np
 CGATE_LIST = []
 
 
-def matrix_product_to_circuit(gate, max_q: int, min_q: int = 0):
+def matrix_product_to_circuit(gate_matrix, gate_args, max_q: int, min_q: int = 0):
     """ Expand gate matrix with the number of qubits
 
     Args:
@@ -18,21 +18,22 @@ def matrix_product_to_circuit(gate, max_q: int, min_q: int = 0):
     n = 1 << (max_q - min_q)
     xor = n - 1
     new_values = np.zeros((n, n), dtype=np.complex128)
+    assert gate_matrix.shape == (1 << len(gate_args), 1 << len(gate_args))
+    for arg in gate_args:
+        assert arg >= 0 and arg < max_q and isinstance(arg, int)
 
-    targs = np.array(gate.cargs + gate.targs, dtype=int)
-    matrix = gate.matrix.reshape(1 << len(targs), 1 << len(targs))
     datas = np.zeros(n, dtype=int)
     for i in range(n):
         nowi = 0
-        for t_idx, targ in enumerate(targs):
+        for t_idx, targ in enumerate(gate_args):
             assert targ >= min_q and targ < max_q
             k = (max_q - min_q) - 1 - (targ - min_q)
             if (1 << k) & i != 0:
-                nowi += (1 << (len(targs) - 1 - t_idx))
+                nowi += (1 << (len(gate_args) - 1 - t_idx))
 
         datas[i] = nowi
 
-    for i in targs:
+    for i in gate_args:
         xor = xor ^ (1 << (max_q - 1 - i))
 
     for i in range(n):
@@ -40,7 +41,7 @@ def matrix_product_to_circuit(gate, max_q: int, min_q: int = 0):
         for j in range(n):
             if (i & xor) == (j & xor):
                 nowj = datas[j]
-                new_values[i][j] = matrix[nowi][nowj]
+                new_values[i][j] = gate_matrix[nowi][nowj]
 
     return new_values
 

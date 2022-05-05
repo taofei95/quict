@@ -1,21 +1,11 @@
 import numpy as np
+from scipy.stats import unitary_group
 
 from QuICT.core import Circuit
 from QuICT.core.gate import Ry, Rz, CX
 from QuICT.algorithm.synthetical_unitary import SyntheticalUnitary
 from QuICT.qcda.synthesis.unitary_transform.two_qubit_transform import CartanKAKDecomposition, TwoQubitTransform
 from QuICT.qcda.synthesis.unitary_transform.two_qubit_diagonal_transform import TwoQubitDiagonalTransform
-
-
-def generate_unitary(n):
-    detM = 0
-    while np.isclose(detM, 0, rtol=1.0e-13, atol=1.0e-13):
-        A = np.random.randn(n, n)
-        B = np.random.randn(n, n)
-        M = A + 1j * B
-        detM = np.linalg.det(M)
-    U, _, _ = np.linalg.svd(M)
-    return U
 
 
 def Ud(a, b, c):
@@ -29,15 +19,15 @@ def Ud(a, b, c):
 
 
 def test_tensor_decompose():
-    U0 = generate_unitary(2)
-    U1 = generate_unitary(2)
+    U0 = unitary_group.rvs(2)
+    U1 = unitary_group.rvs(2)
     U = np.kron(U0, U1)
     CartanKAKDecomposition.tensor_decompose(U)
 
 
 def test_CKD():
     for _ in range(20):
-        U = generate_unitary(4)
+        U = unitary_group.rvs(4)
         CKD = CartanKAKDecomposition(U)
         CKD.decompose()
 
@@ -65,12 +55,12 @@ def test_CKD():
         Ucir = SyntheticalUnitary.run(circuit, showSU=True)
 
         assert np.allclose(matexp.dot(np.linalg.inv(Ucir)), np.eye(4)) \
-               or np.allclose(matexp.dot(np.linalg.inv(Ucir)), 1j * np.eye(4))
+            or np.allclose(matexp.dot(np.linalg.inv(Ucir)), 1j * np.eye(4))
 
 
 def test_two_bit_transform():
     for _ in range(200):
-        U = generate_unitary(4)
+        U = unitary_group.rvs(4)
         circuit = Circuit(2)
         TwoQubitTransform.execute(U) | circuit
 
@@ -81,7 +71,7 @@ def test_two_bit_transform():
 
 def test_two_qubit_diagonal_transform():
     for _ in range(200):
-        U = generate_unitary(4)
+        U = unitary_group.rvs(4)
         U /= np.linalg.det(U) ** 0.25
         circuit = Circuit(2)
         TwoQubitDiagonalTransform.execute(U) | circuit

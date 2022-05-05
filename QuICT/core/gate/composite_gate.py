@@ -120,9 +120,8 @@ class CompositeGate:
         Raise:
             TypeException: the type of other is wrong
         """
-        self.inverse()
         try:
-            targets.extend(self.gates)
+            targets.extend(self.inverse().gates)
         except Exception as e:
             raise TypeError(f"Only support circuit for gateSet ^ circuit. {e}")
 
@@ -268,7 +267,7 @@ class CompositeGate:
         Returns:
             int: the depth of the circuit
         """
-        return CircuitInformation.depth(self.gates)
+        return CircuitInformation.depth(self.gates, self.width())
 
     def __str__(self):
         cgate_info = {
@@ -330,7 +329,9 @@ class CompositeGate:
             if gate.is_special() and gate.type != GateType.unitary:
                 raise TypeError(f"Cannot combined the gate matrix with special gate {gate.type}")
 
-            matrix = np.matmul(matrix_product_to_circuit(gate, self._max_qubit, min_value), matrix)
+            matrix = np.matmul(matrix_product_to_circuit(
+                gate.matrix, gate.cargs + gate.targs, self._max_qubit, min_value
+            ), matrix)
 
         return matrix
 
