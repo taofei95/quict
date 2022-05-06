@@ -2,6 +2,8 @@ from random import randint
 from typing import Iterator, Tuple, List, Set, Dict
 from collections import Iterable, deque
 import inspect
+from itertools import chain
+
 
 import numpy as np
 from QuICT.core import *
@@ -43,7 +45,7 @@ class DAG(Iterable):
             """
             self.gate = None if gate_ is None else gate_.copy()
             # the actual qubit the i-th wire of the gate act on
-            self.qubit_loc = [qubit_] if gate_ is None else list(gate_.affectArgs)
+            self.qubit_loc = [qubit_] if gate_ is None else list(chain(gate_.cargs, gate_.targs))
             # inverse mapping of self.qubit_loc
             self.qubit_id = {qubit_: 0} if gate_ is None else {qubit_: i for i, qubit_ in enumerate(self.qubit_loc)}
             self.size = len(self.qubit_id)
@@ -102,34 +104,43 @@ class DAG(Iterable):
             gates(Circuit): Circuit represented by this DAG
         """
 
-        self.size = gates.circuit_width()
-        self.start_nodes = [self.Node(qubit_=i) for i in range(self.size)]
-        self.end_nodes = [self.Node(qubit_=i) for i in range(self.size)]
-        self.global_phase = 0
-        self._build_graph(gates)
+        self._width = gates.width()
 
-    def circuit_width(self):
+        self.start_nodes = [self.Node(qubit_=i) for i in range(self._width)]
+        self.end_nodes = [self.Node(qubit_=i) for i in range(self._width)]
+        self.global_phase = 0
+        self.init_size = self._build_graph(gates)
+
+    def width(self):
         """
         Get number of qubits of this circuit
         Returns:
             int: Number of qubits
         """
-        return self.size
+        return self._width
 
     def _build_graph(self, gates: Circuit):
+        node_cnt = 0
         cur_nodes = self.start_nodes.copy()
         for gate_ in gates.gates:
-            gate_: BasicGate
-            if gate_.qasm_name in ['ccz', 'ccx']:
-                raise Exception('ccz / ccx gates not supported yet' )
+            gate_list = [gate_]
+            if gate_.qasm_name == 'ccx':
+                gate_list = gate_.build_gate().gates
+            if gate_.qasm_name == 'ccz':
+                compo_gate = (CCXGate() & list(chain(gate_.cargs, gate_.targs))).build_gate()
+                gate_list = [HGate() & gate_.targ] + compo_gate.gates + [HGate() & gate_.targ]
 
-            node = self.Node(gate_)
-            for qubit_ in gate_.affectArgs:
-                cur_nodes[qubit_].add_forward_edge(qubit_, node)
-                cur_nodes[qubit_] = node
+            node_cnt += len(gate_list)
+            for each in gate_list:
+                node = self.Node(each)
+                for qubit_ in list(chain(each.cargs, each.targs)):
+                    cur_nodes[qubit_].add_forward_edge(qubit_, node)
+                    cur_nodes[qubit_] = node
 
-        for qubit_ in range(self.size):
+        for qubit_ in range(self._width):
             cur_nodes[qubit_].add_forward_edge(qubit_, self.end_nodes[qubit_])
+
+        return node_cnt
 
     def get_circuit(self):
         """
@@ -139,7 +150,7 @@ class DAG(Iterable):
             Circuit: Circuit equivalent to this DAG
         """
 
-        circ = Circuit(self.size)
+        circ = Circuit(self._width)
         mapping = {(id(node), 0): qubit_ for qubit_, node in enumerate(self.start_nodes)}
         for node in self.topological_sort():
             # print(node.gate.qasm_name)
@@ -238,7 +249,10 @@ class DAG(Iterable):
                 mapping[(id(node), qubit_)] = mapping[(id(pred), qubit2)]
                 node.qubit_loc[qubit_] = mapping[(id(node), qubit_)]
             if node.gate is not None:
-                node.gate.affectArgs = node.qubit_loc
+                # node.gate.affectArgs = node.qubit_loc
+                node.gate.cargs = node.qubit_loc[:node.gate.controls]
+                node.gate.targs = node.qubit_loc[node.gate.controls:]
+
             node.qubit_id = {qubit_: i for i, qubit_ in enumerate(node.qubit_loc)}
 
     def compare_circuit(self, other: Tuple[Node, int], anchor_qubit: int, flag_enabled: bool = False):
@@ -285,7 +299,7 @@ class DAG(Iterable):
     @staticmethod
     def replace_circuit(mapping: Dict[int, Tuple[Node, int]], replacement):
         replacement: DAG
-        for qubit_ in range(replacement.size):
+        for qubit_ in range(replacement.width()):
             # first node on qubit_ in replacement circuit
             r_node, r_qubit = replacement.start_nodes[qubit_].successors[0]
             # node previous to the node corresponding to t_node in original circuit
@@ -296,7 +310,7 @@ class DAG(Iterable):
             # place r_node after p_node
             p_node.connect(p_qubit, r_qubit, r_node)
 
-        for qubit_ in range(replacement.size):
+        for qubit_ in range(replacement.width()):
             # last node on qubit_ in replacement circuit
             r_node, r_qubit = replacement.end_nodes[qubit_].predecessors[0]
             # node successive to the node corresponding to t_node in original circuit
@@ -329,6 +343,21 @@ class DAG(Iterable):
             for qubit_ in range(each.size):
                 reachable.update(self._get_reachable_relation(each, qubit_))
         return reachable
+
+    def append(self, gate_: BasicGate):
+        node_ = self.Node(gate_)
+        for wire_, qubit_ in enumerate(node_.qubit_loc):
+            p_node, p_qubit = self.end_nodes[qubit_].predecessors[0]
+            p_node.successors[p_qubit] = (node_, wire_)
+            node_.predecessors[wire_] = (p_node, p_qubit)
+
+            node_.successors[wire_] = (self.end_nodes[qubit_], 0)
+            self.end_nodes[qubit_].predecessors[0] = (node_, wire_)
+
+    def extend(self, gates: List[BasicGate]):
+        # TODO test it
+        for each in gates:
+            self.append(each)
 
     @staticmethod
     def copy_sub_circuit(prev_node: List[Tuple[Node, int]], succ_node: List[Tuple[Node, int]]):

@@ -1,4 +1,5 @@
 from collections import Iterable
+from itertools import chain
 
 from QuICT.core import *
 from QuICT.core.gate import *
@@ -26,14 +27,14 @@ class PhasePolynomial:
 
         self.phases = {}
         self.gates = []
-        self.size = gates.circuit_width()
+        self.size = gates.width()
         self._build_poly(gates)
 
     def _build_poly(self, gates):
         monomials = {}
         for gate_ in gates:
             gate_: BasicGate
-            for qubit_ in gate_.affectArgs:
+            for qubit_ in chain(gate_.cargs, gate_.targs):
                 if qubit_ not in monomials:
                     monomials[qubit_] = 1 << (qubit_ + 1)
 
@@ -69,7 +70,7 @@ class PhasePolynomial:
         monomials = {}
         for gate_ in self.gates:
             gate_: BasicGate
-            for qubit_ in gate_.affectArgs:
+            for qubit_ in chain(gate_.cargs, gate_.targs):
                 if qubit_ not in monomials:
                     monomials[qubit_] = 1 << (qubit_ + 1)
 
@@ -78,7 +79,7 @@ class PhasePolynomial:
             elif gate_.qasm_name == 'x':
                 monomials[gate_.targ] = monomials[gate_.targ] ^ 1
 
-            type(gate_)() | circ(list(gate_.affectArgs))
+            gate_.copy() | circ(list(chain(gate_.cargs, gate_.targs)))
             cur_phase = monomials[gate_.targ] >> 1
             cur_sign = -1 if (monomials[gate_.targ] & 1) else 1
 

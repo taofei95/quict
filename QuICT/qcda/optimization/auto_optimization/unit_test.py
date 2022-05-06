@@ -23,7 +23,7 @@ def test_build_graph():
         assert np.allclose(mat_1, mat_2), f'hadamard_templates {i} not equal'
 
     for i, each in enumerate(single_qubit_gate_templates):
-        circ = Circuit(each.template.size)
+        circ = Circuit(each.template.width())
         Rz(1.234) | circ(each.anchor)
         mat_1 = SyntheticalUnitary.run(circ)
         mat_2 = SyntheticalUnitary.run(each.template.get_circuit())
@@ -40,21 +40,21 @@ def test_reduce_hadamard_gates():
     H | circ(1)
     S_dagger | circ(1)
     H | circ(1)
-    CX | circ((0, 1))
+    CX | circ([0, 1])
     H | circ(0)
     H | circ(1)
-    CX | circ((0, 1))
+    CX | circ([0, 1])
     H | circ(0)
     H | circ(1)
-    CX | circ((1, 0))
+    CX | circ([1, 0])
     H | circ(0)
     H | circ(1)
     S | circ(1)
-    CX | circ((2, 1))
+    CX | circ([2, 1])
     S_dagger | circ(1)
     H | circ(1)
     S_dagger | circ(0)
-    CX | circ((2, 0))
+    CX | circ([2, 0])
     S | circ(0)
     H | circ(0)
 
@@ -75,11 +75,11 @@ def test_cancel_single_qubit_gate():
     circ = Circuit(2)
     Rz(1) | circ(0)
     Rz(-1) | circ(1)
-    CX | circ((0, 1))
+    CX | circ([0, 1])
     Rz(2) | circ(0)
-    CX | circ((1, 0))
+    CX | circ([1, 0])
     Rz(np.pi) | circ(0)
-    CX | circ((1, 0))
+    CX | circ([1, 0])
     Rz(-3) | circ(0)
 
     # print()
@@ -95,20 +95,20 @@ def test_cancel_single_qubit_gate():
 
 def test_cancel_two_qubit_gate():
     circ = Circuit(3)
-    CX | circ((0, 1))
-    CX | circ((0, 2))
-    CX | circ((0, 1))
+    CX | circ([0, 1])
+    CX | circ([0, 2])
+    CX | circ([0, 1])
     H | circ(2)
-    CX | circ((2, 1))
+    CX | circ([2, 1])
     H | circ(2)
-    CX | circ((0, 2))
-    CX | circ((0, 1))
+    CX | circ([0, 2])
+    CX | circ([0, 1])
     H | circ(1)
-    CX | circ((0, 2))
-    CX | circ((1, 2))
-    CX | circ((0, 2))
+    CX | circ([0, 2])
+    CX | circ([1, 2])
+    CX | circ([0, 2])
     H | circ(1)
-    CX | circ((0, 1))
+    CX | circ([0, 1])
 
     # print()
     # circ.draw(method='command')
@@ -157,61 +157,80 @@ def check_circuit_optimization(circ: Circuit, label):
         assert False, f'test {label}: mat_1 and mat_2 not equal'
 
 
-def test_random_circuit():
-    n_qubit = 6
-    n_gate = 300
-    n_iter = 5
-    print(f'random ciruit test: {n_qubit} qubits, {n_gate} gates, {n_iter} iterations.')
-    for _ in range(n_iter):
-        print('iteration', _)
-        circ = Circuit(n_qubit)
-        # circ.random_append(n_gate, typeList=[GATE_ID['H'], GATE_ID['CX'], GATE_ID['X'], GATE_ID['Rz']])
-        check_circuit_optimization(circ, _)
-
-
 def test_parameterize_all():
-    bmk_path = '/home/longcheng/repo/optimizer/QFT_and_Adders/QFT8_before.qasm'
-    circ = OPENQASMInterface.load_file(bmk_path).circuit
-    # circ = Circuit(2)
-    # Rz(-np.pi / 4) | circ(1)
+    n_qubit = 6
+    n_gate = 200
 
+    support_gates = [GateType.h, GateType.cx, GateType.x, GateType.rz,
+                     GateType.t, GateType.tdg, GateType.s, GateType.sdg, GateType.z]
+    circ = Circuit(n_qubit)
+    circ.random_append(n_gate, typelist=support_gates)
     dag = DAG(circ)
-    # AutoOptimization.parameterize_all(dag)
-    # AutoOptimization.merge_rotations(dag)
-    # dag.get_circuit().draw(filename='parameter.jpg')
-    AutoOptimization.deparameterize_all(dag)
     AutoOptimization.parameterize_all(dag)
-    dag.get_circuit().draw(filename='deparameter.jpg')
-
     circ_optim = dag.get_circuit()
 
     mat_1 = SyntheticalUnitary.run(circ)
     mat_2 = SyntheticalUnitary.run(circ_optim)
-    print(mat_1 / mat_2)
+    assert np.allclose(mat_1, mat_2), "unitary changed after parameterize_all"
+
+    AutoOptimization.deparameterize_all(dag)
+    circ_optim = dag.get_circuit()
+    mat_2 = SyntheticalUnitary.run(circ_optim)
     assert np.allclose(mat_1, mat_2), "unitary changed after parameterize_all"
 
 
-def test_deparameterize():
-    circ = Circuit(1)
-    Rz(- np.pi / 4) | circ(0)
-    g1, p1 = CommutativeOptimization.deparameterize(circ.gates[0])
-    print(circ.gates[0].matrix, g1.matrix * np.exp(1j * p1), p1 / np.pi)
+def test_random_circuit():
+    n_qubit = 6
+    n_gate = 1000
+    n_iter = 5
+    print(f'random ciruit test: {n_qubit} qubits, {n_gate} gates, {n_iter} iterations.')
+    # support_gates = [GateType.h, GateType.cx]
+    support_gates = [GateType.h, GateType.cx, GateType.x, GateType.rz,
+                     GateType.t, GateType.tdg, GateType.s, GateType.sdg, GateType.z]
+    for _ in range(n_iter):
+        print('iteration', _)
+        circ = Circuit(n_qubit)
+
+        circ.random_append(n_gate, typelist=support_gates)
+        check_circuit_optimization(circ, _)
 
 
 def test_benchmark():
+    # bmk_path = '/home/longcheng/repo/optimizer/Arithmetic_and_Toffoli/'
     bmk_path = '/home/longcheng/repo/optimizer/QFT_and_Adders/'
+    cnt = 0
     for filename in os.listdir(bmk_path):
-        if filename.startswith('QFT') and filename.endswith('before.qasm'):
+        if filename.endswith('before_no_ccz.qasm'):
+            cnt += 1
             print(filename)
             path = os.path.join(bmk_path, filename)
 
             circ = OPENQASMInterface.load_file(path).circuit
+            if circ.size() > 10000:
+                print('Warning: circuit too large')
+                continue
+            if circ.size() <= 2000:
+                continue
+
             # circ.draw(filename=f'{filename}_before.jpg')
 
             circ_optim = AutoOptimization.execute(circ, verbose=True)
             # circ_optim.draw(filename=f'{filename}_after.jpg')
 
             # print(len(circ_optim.gates), '/', len(circ.gates))
+
+
+# def test_toffoli():
+#     bmk = '/home/longcheng/repo/optimizer/Arithmetic_and_Toffoli/barenco_tof_4_before_no_ccz.qasm'
+#     circ = OPENQASMInterface.load_file(bmk).circuit
+#     circ.draw(filename=f'bmk_before.jpg')
+#     # dag = DAG(circ)
+#     circ_optim = AutoOptimization.execute(circ, verbose=True)
+#     circ_optim.draw(filename=f'bmk_after.jpg')
+#
+#     mat_1 = SyntheticalUnitary.run(circ)
+#     mat_2 = SyntheticalUnitary.run(circ_optim)
+#     assert np.allclose(mat_1, mat_2), "unitary changed after parameterize_all"
 
 
 if __name__ == '__main__':

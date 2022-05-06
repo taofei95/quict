@@ -50,8 +50,10 @@ class AutoOptimization(Optimization):
     def deparameterize_all(cls, gates: DAG):
         for node in gates.topological_sort():
             if node.gate.qasm_name == 'rz':
-                gate_, phase_ = CommutativeOptimization.deparameterize(node.gate)
-                node.gate = gate_
+                compo_gate_, phase_ = CommutativeOptimization.deparameterize(node.gate)
+                if len(compo_gate_.gates) > 1:
+                    continue
+                node.gate = compo_gate_[0]
                 gates.global_phase += phase_
                 # print(phase_ / np.pi)
         # gates.global_phase = np.mod(gates.global_phase, 2 * np.pi)
@@ -207,7 +209,7 @@ class AutoOptimization(Optimization):
             Iterator[Tuple[List[DAG.Node, int]], Tuple[List[DAG.Node, int]], int]: CNOT+Rz Sub circuit
         """
 
-        # TODO update qubit locaton online
+        # TODO update qubit location online
         # reset qubit location of nodes in case it is corrupted sub circuit replacement
         gates.set_qubit_loc()
         # reset node flags to FLAG_DEFAULT
@@ -284,7 +286,7 @@ class AutoOptimization(Optimization):
             bound = {}
             visited_node = set()
             for neighbors in ['predecessors', 'successors']:
-                bound[neighbors]: List[Tuple[DAG.Node, int]] = [None] * gates.size
+                bound[neighbors]: List[Tuple[DAG.Node, int]] = [None] * gates.width()
                 for anchor_qubit, anchor_node in anchors.items():
                     if id(anchor_node) in term_node_set:
                         continue
@@ -310,7 +312,7 @@ class AutoOptimization(Optimization):
             # the boundary given by enumerate_cnot_rz_circuit is described by internal node of
             # the sub circuit, but PhasePolynomial and replace method need eternal boundary.
             # This conversion is necessary because nodes in eternal boundary may change due to previous iteration.
-            for qubit_ in range(gates.size):
+            for qubit_ in range(gates.width()):
                 if prev_node[qubit_] is not None:
                     # TODO remove assert
                     assert succ_node[qubit_] is not None, 'internal error'
@@ -333,13 +335,13 @@ class AutoOptimization(Optimization):
                 print('after')
                 circ.draw(method='command')
 
-            assert circ.circuit_size() <= node_cnt, 'phase polynomial increases gate count'
-            cnt += node_cnt - circ.circuit_size()
+            assert circ.size() <= node_cnt, 'phase polynomial increases gate count'
+            cnt += node_cnt - circ.size()
             replacement = DAG(circ)
 
             # calculate node mapping: replacement -> circuit
             mapping = {}
-            for qubit_ in range(gates.size):
+            for qubit_ in range(gates.width()):
                 if not prev_node[qubit_] or not succ_node[qubit_]:
                     continue
                 mapping[id(replacement.start_nodes[qubit_])] = prev_node[qubit_]
@@ -400,7 +402,7 @@ class AutoOptimization(Optimization):
                 break
             gate_cnt += cnt
         if verbose:
-            print(f'{gate_cnt} / {gates.circuit_size()} reduced in total, cost {np.round(total_time, 3)} s')
+            print(f'{gate_cnt} / {_gates.init_size} reduced in total, cost {np.round(total_time, 3)} s')
 
         return _gates.get_circuit()
 

@@ -21,7 +21,7 @@ class OptimizationTemplate:
     def replace(self, mapping: Dict[int, DAG.Node]):
         replacement = self.replacement.copy()
         new_mapping = {}
-        for qubit_ in range(replacement.size):
+        for qubit_ in range(replacement.width()):
             t_node, t_qubit = self.template.start_nodes[qubit_].successors[0]
             p_node, p_qubit = mapping[id(t_node)].predecessors[t_qubit]
             r_node = replacement.start_nodes[qubit_]
@@ -62,9 +62,9 @@ def generate_hadamard_gate_templates() -> List[OptimizationTemplate]:
         [1, 2, 0, [[H, 0], [H, 0]], []],
         [1, 1, +np.pi/4, [[H, 0], [S, 0], [H, 0]], [[S_dagger, 0], [H, 0], [S_dagger, 0]]],
         [1, 1, -np.pi/4, [[H, 0], [S_dagger, 0], [H, 0]], [[S, 0], [H, 0], [S, 0]]],
-        [2, 4, 0, [[H, 0], [H, 1], [CX, (0, 1)], [H, 0], [H, 1]], [[CX, (1, 0)]]],
-        [2, 2, 0, [[H, 1], [S, 1], [CX, (0, 1)], [S_dagger, 1], [H, 1]], [[S_dagger, 1], [CX, (0, 1)], [S, 1]]],
-        [2, 2, 0, [[H, 1], [S_dagger, 1], [CX, (0, 1)], [S, 1], [H, 1]], [[S, 1], [CX, (0, 1)], [S_dagger, 1]]],
+        [2, 4, 0, [[H, 0], [H, 1], [CX, [0, 1]], [H, 0], [H, 1]], [[CX, [1, 0]]]],
+        [2, 2, 0, [[H, 1], [S, 1], [CX, [0, 1]], [S_dagger, 1], [H, 1]], [[S_dagger, 1], [CX, [0, 1]], [S, 1]]],
+        [2, 2, 0, [[H, 1], [S_dagger, 1], [CX, [0, 1]], [S, 1], [H, 1]], [[S, 1], [CX, [0, 1]], [S_dagger, 1]]],
         [1, 2, 0, [[X, 0], [X, 0]], []]
     ]
 
@@ -78,10 +78,10 @@ def generate_hadamard_gate_templates() -> List[OptimizationTemplate]:
 
 def generate_single_qubit_gate_templates() -> List[OptimizationTemplate]:
     tpl_list = [
-        [2, 1, [[H, 1], [CX, (0, 1)], [H, 1]]],
-        [2, 1, [[CX, (0, 1)], [Rz(0), 1], [CX, (0, 1)]]],
-        [2, 0, [[CX, (0, 1)]]],
-        [3, 0, [[CX, (1, 0)], [CX, (0, 2)], [CX, (1, 0)]]],
+        [2, 1, [[H, 1], [CX, [0, 1]], [H, 1]]],
+        [2, 1, [[CX, [0, 1]], [Rz(0), 1], [CX, [0, 1]]]],
+        [2, 0, [[CX, [0, 1]]]],
+        [3, 0, [[CX, [1, 0]], [CX, [0, 2]], [CX, [1, 0]]]],
         [1, 0, [[H, 0], [X, 0], [H, 0]]]
     ]
 
@@ -94,8 +94,8 @@ def generate_single_qubit_gate_templates() -> List[OptimizationTemplate]:
 
 def generate_cnot_targ_templates() -> List[OptimizationTemplate]:
     tpl_list = [
-        [2, 1, [[CX, (0, 1)]]],
-        [2, 0, [[H, 0], [CX, (0, 1)], [H, 0]]],
+        [2, 1, [[CX, [0, 1]]]],
+        [2, 0, [[H, 0], [CX, [0, 1]], [H, 0]]],
         [1, 0, [[X, 0]]]
     ]
 
@@ -108,7 +108,7 @@ def generate_cnot_targ_templates() -> List[OptimizationTemplate]:
 
 def generate_cnot_ctrl_templates() -> List[OptimizationTemplate]:
     tpl_list = [
-        [2, 0, [[CX, (0, 1)]]],
+        [2, 0, [[CX, [0, 1]]]],
     ]
 
     ret = []
