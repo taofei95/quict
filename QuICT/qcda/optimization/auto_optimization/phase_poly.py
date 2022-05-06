@@ -1,4 +1,3 @@
-from collections import Iterable
 from itertools import chain
 
 from QuICT.core import *

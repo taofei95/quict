@@ -11,8 +11,6 @@ from .phase_poly import PhasePolynomial
 from .template import *
 import time
 
-DEBUG = False
-
 
 class AutoOptimization(Optimization):
     """
@@ -55,8 +53,8 @@ class AutoOptimization(Optimization):
                     continue
                 node.gate = compo_gate_[0]
                 gates.global_phase += phase_
-                # print(phase_ / np.pi)
-        # gates.global_phase = np.mod(gates.global_phase, 2 * np.pi)
+
+        gates.global_phase = np.mod(gates.global_phase, 2 * np.pi)
         return 0
 
     @classmethod
@@ -292,9 +290,6 @@ class AutoOptimization(Optimization):
                         continue
                     c_node = anchors[anchor_qubit]
                     while True:
-                        if DEBUG:
-                            if id(c_node) not in visited_node:
-                                print(c_node.gate.qasm_name, c_node.gate.affectArgs, c_node.gate.pargs)
                         visited_node.add(id(c_node))
                         p_node, _ = getattr(c_node, neighbors)[c_node.qubit_id[anchor_qubit]]
                         if id(p_node) in term_node_set:
@@ -314,8 +309,6 @@ class AutoOptimization(Optimization):
             # This conversion is necessary because nodes in eternal boundary may change due to previous iteration.
             for qubit_ in range(gates.width()):
                 if prev_node[qubit_] is not None:
-                    # TODO remove assert
-                    assert succ_node[qubit_] is not None, 'internal error'
                     c_node, c_qubit = prev_node[qubit_]
                     prev_node[qubit_] = c_node.predecessors[c_qubit]
                     c_node, c_qubit = succ_node[qubit_]
@@ -323,17 +316,10 @@ class AutoOptimization(Optimization):
 
             # extract the sub circuit
             sub_circ = DAG.copy_sub_circuit(prev_node, succ_node)
-            if DEBUG:
-                print('before', 'count', node_cnt)
-                sub_circ.get_circuit().draw(method='command')
 
             # calculate the phase poly and simplify it
             phase_poly = PhasePolynomial(sub_circ)
             circ = phase_poly.get_circuit()
-
-            if DEBUG:
-                print('after')
-                circ.draw(method='command')
 
             assert circ.size() <= node_cnt, 'phase polynomial increases gate count'
             cnt += node_cnt - circ.size()
@@ -360,9 +346,6 @@ class AutoOptimization(Optimization):
 
     @classmethod
     def _execute(cls, gates, routine: List[int], verbose):
-        if DEBUG:
-            mat_0 = SyntheticalUnitary.run(gates)
-            draw_cnt = 0
         _gates = DAG(gates)
 
         gate_cnt = 0
@@ -388,15 +371,6 @@ class AutoOptimization(Optimization):
                 cnt += cur_cnt
                 total_time += end_time - start_time
 
-                if DEBUG:
-                    circ_optim = _gates.get_circuit()
-
-                    circ_optim.draw(filename=f'{draw_cnt}.jpg')
-                    draw_cnt += 1
-
-                    mat_1 = SyntheticalUnitary.run(circ_optim)
-                    if not np.allclose(mat_0, mat_1):
-                        assert False
             # stop if nothing can be optimized
             if cnt == 0:
                 break

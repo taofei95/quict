@@ -4,9 +4,7 @@ import pytest
 from QuICT.core.gate import *
 import pickle
 from QuICT.qcda.optimization.auto_optimization.template import *
-from QuICT.qcda.optimization.auto_optimization.phase_poly import PhasePolynomial
-from QuICT.qcda.optimization.auto_optimization.dag import DAG
-from QuICT.qcda.optimization.auto_optimization.auto_optimization import AutoOptimization
+from QuICT.qcda.optimization.auto_optimization import DAG, AutoOptimization
 from QuICT.algorithm import SyntheticalUnitary
 from QuICT.tools.interface import OPENQASMInterface
 from QuICT.qcda.optimization.commutative_optimization import CommutativeOptimization
@@ -181,7 +179,7 @@ def test_parameterize_all():
 
 def test_random_circuit():
     n_qubit = 6
-    n_gate = 1000
+    n_gate = 200
     n_iter = 5
     print(f'random ciruit test: {n_qubit} qubits, {n_gate} gates, {n_iter} iterations.')
     # support_gates = [GateType.h, GateType.cx]
@@ -195,43 +193,5 @@ def test_random_circuit():
         check_circuit_optimization(circ, _)
 
 
-def test_benchmark():
-    # bmk_path = '/home/longcheng/repo/optimizer/Arithmetic_and_Toffoli/'
-    bmk_path = '/home/longcheng/repo/optimizer/QFT_and_Adders/'
-    cnt = 0
-    for filename in os.listdir(bmk_path):
-        if filename.endswith('before_no_ccz.qasm'):
-            cnt += 1
-            print(filename)
-            path = os.path.join(bmk_path, filename)
-
-            circ = OPENQASMInterface.load_file(path).circuit
-            if circ.size() > 10000:
-                print('Warning: circuit too large')
-                continue
-            if circ.size() <= 2000:
-                continue
-
-            # circ.draw(filename=f'{filename}_before.jpg')
-
-            circ_optim = AutoOptimization.execute(circ, verbose=True)
-            # circ_optim.draw(filename=f'{filename}_after.jpg')
-
-            # print(len(circ_optim.gates), '/', len(circ.gates))
-
-
-# def test_toffoli():
-#     bmk = '/home/longcheng/repo/optimizer/Arithmetic_and_Toffoli/barenco_tof_4_before_no_ccz.qasm'
-#     circ = OPENQASMInterface.load_file(bmk).circuit
-#     circ.draw(filename=f'bmk_before.jpg')
-#     # dag = DAG(circ)
-#     circ_optim = AutoOptimization.execute(circ, verbose=True)
-#     circ_optim.draw(filename=f'bmk_after.jpg')
-#
-#     mat_1 = SyntheticalUnitary.run(circ)
-#     mat_2 = SyntheticalUnitary.run(circ_optim)
-#     assert np.allclose(mat_1, mat_2), "unitary changed after parameterize_all"
-
-
 if __name__ == '__main__':
-    pytest.main(['./unit_test.py'])
+    pytest.main(['./auto_optimization_unit_test.py'])

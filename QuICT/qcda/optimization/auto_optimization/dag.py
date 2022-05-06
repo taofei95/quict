@@ -1,6 +1,7 @@
 from random import randint
 from typing import Iterator, Tuple, List, Set, Dict
-from collections import Iterable, deque
+from collections.abc import Iterable
+from collections import deque
 import inspect
 from itertools import chain
 
