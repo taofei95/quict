@@ -7,7 +7,6 @@
 from QuICT.core.gate import CompositeGate
 from QuICT.core import Circuit
 from QuICT.core.gate import Rz, sqiSwap
-from quict.QuICT.core.gate.gate import modified_Givens_rotation
 
 import numpy as np
 
@@ -62,8 +61,7 @@ class Thouless(Ansatz):
         
         return cgate
 
-    @staticmethod
-    def build_circuit(n, angles, num_electron_pairs, num_orbits):
+    def build_circuit(self, n, angles, num_electron_pairs, num_orbits):
         '''Quantum Circuits with n qubits and C(n 2)  R(theta)[p,q] gates
         
         Args:
@@ -76,35 +74,15 @@ class Thouless(Ansatz):
             Circuit: Quantum Circuits with N qubits and C(N 2) R gates
         '''
         # circuits with n qubits
-        ansatz = Circuit(n)
+        circuit = Circuit(n)
 
-        R = modified_Givens_rotation
+        gate = self.build_gate(n, angles, num_electron_pairs, num_orbits)
 
-        # add gates to the circuits in parallelization
-        if(n == 1):
-            return Circuit
-        elif(n == 2):
-            R(angles.pop()) | ansatz([0,1]) # assign the parameters to each circuit
-        elif(n > 2):
-            i = 0
-
-            while i < n - 1:
-                index = i
-                while index >= 0:
-                    R(angles.pop()) | ansatz([n - index - 2, n - index - 1])
-                    index -= 2
-                i += 1
-
-            while i > 0:
-                index = i-1
-                while index >= 0:
-                    R(angles.pop()) | ansatz([n - index - 2, n - index - 1])
-                    index -= 2
-                i -= 1
+        gate | circuit
         
-        return ansatz
+        return circuit
 
-    def build_gate(n, angles, num_electron_pairs, num_orbits):
+    def build_gate(self, n, angles, num_electron_pairs, num_orbits):
         """ 
         build a compositegate from a list of parameters
 
@@ -118,7 +96,7 @@ class Thouless(Ansatz):
         # circuits with n qubits
         ansatz = CompositeGate()
 
-        R = modified_Givens_rotation
+        R = self.modified_Givens_rotation
 
         with ansatz:
             # add gates to the circuits in parallelization
