@@ -94,10 +94,10 @@ class DAG(Iterable):
                 if p_node:
                     p_node.connect(p_qubit, n_qubit, n_node)
                 elif n_node:
-                    n_node.successors[qubit_] = (None, 0)
+                    n_node.predecessors[qubit_] = (None, 0)
             # FIXME: the following assignment causes runtime error
-            # self.predecessors = None
-            # self.successors = None
+            self.predecessors = None
+            self.successors = None
 
     def __init__(self, gates: Circuit):
         """
@@ -179,6 +179,8 @@ class DAG(Iterable):
             cur = queue.popleft()
             if cur.gate is not None or include_dummy:
                 yield cur
+            if cur.successors is None:
+                print('what')
             for nxt, _ in cur.successors:
                 if nxt is None:
                     continue
@@ -300,6 +302,7 @@ class DAG(Iterable):
     @staticmethod
     def replace_circuit(mapping: Dict[int, Tuple[Node, int]], replacement):
         replacement: DAG
+        erase_queue = deque()
         for qubit_ in range(replacement.width()):
             # first node on qubit_ in replacement circuit
             r_node, r_qubit = replacement.start_nodes[qubit_].successors[0]
@@ -308,6 +311,8 @@ class DAG(Iterable):
                 # TODO can we remove this if
                 continue
             p_node, p_qubit = mapping[id(replacement.start_nodes[qubit_])]
+            erase_queue.append(p_node.successors[p_qubit][0])
+
             # place r_node after p_node
             p_node.connect(p_qubit, r_qubit, r_node)
 
@@ -318,8 +323,22 @@ class DAG(Iterable):
             if id(replacement.end_nodes[qubit_]) not in mapping:
                 continue
             s_node, s_qubit = mapping[id(replacement.end_nodes[qubit_])]
+            d_node, d_qubit = s_node.predecessors[s_qubit]
+            d_node.successors[d_qubit] = (None, 0)
+
             # place s_node after r_node
             r_node.connect(r_qubit, s_qubit, s_node)
+
+        while len(erase_queue) > 0:
+            cur = erase_queue.popleft()
+            if cur is None or cur.flag == cur.FLAG_ERASED:
+                continue
+            for qubit_ in range(cur.size):
+                erase_queue.append(cur.successors[qubit_][0])
+
+            cur.flag = cur.FLAG_ERASED
+            cur.predecessors = None
+            cur.successors = None
 
     @staticmethod
     def _get_reachable_relation(node: Node, qubit_: int) -> Set[Tuple[Tuple[int, int], int]]:
@@ -382,3 +401,15 @@ class DAG(Iterable):
         # TODO faster implementation of copy()
         return DAG(self.get_circuit())
 
+    def destroy(self):
+        que = deque(self.start_nodes)
+        while len(que) > 0:
+            cur = que.popleft()
+            if cur is None or cur.flag == cur.FLAG_ERASED:
+                continue
+            for qubit_ in range(cur.size):
+                que.append(cur.successors[qubit_][0])
+
+            cur.flag = cur.FLAG_ERASED
+            cur.predecessors = None
+            cur.successors = None

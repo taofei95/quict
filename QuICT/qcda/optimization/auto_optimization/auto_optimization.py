@@ -84,9 +84,9 @@ class AutoOptimization(Optimization):
             gates(DAG): DAG of the circuit
         """
         cnt = 0
-        for node in gates.topological_sort():
+        for node in list(gates.topological_sort()):
             # enumerate every single qubit gate
-            if node.gate.qasm_name != 'rz':
+            if node.gate.qasm_name != 'rz' or node.flag == node.FLAG_ERASED:
                 continue
             # erase the gate if degree = 0
             if np.isclose(node.gate.parg, 0):
@@ -334,6 +334,7 @@ class AutoOptimization(Optimization):
                 mapping[id(replacement.end_nodes[qubit_])] = succ_node[qubit_]
 
             DAG.replace_circuit(mapping, replacement)
+            sub_circ.destroy()
 
         cls.deparameterize_all(gates)
         return cnt
