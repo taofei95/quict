@@ -24,7 +24,7 @@ def set_one(gates, qreg, N):
             N = N // 2
 
 
-def MCT_Linear_Simulation_Half():
+def test_MCT_Linear_Simulation_Half():
     max_qubit = 11
     for i in range(3, max_qubit):
         for m in range(1, i // 2 + (1 if i % 2 == 1 else 0)):

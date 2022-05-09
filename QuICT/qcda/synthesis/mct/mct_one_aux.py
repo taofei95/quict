@@ -7,11 +7,9 @@
 from QuICT.core import *
 from QuICT.core.gate import *
 from .mct_linear_simulation import MCTLinearHalfDirtyAux, half_dirty_aux
-from QuICT.qcda.utility import OutputAligner
 
 
 class MCTOneAux(object):
-    @OutputAligner(CompositeGate)
     def execute(self, qubit):
         """ Decomposition of n-qubit Toffoli gates with one ancillary qubit and linear circuit complexity
 
