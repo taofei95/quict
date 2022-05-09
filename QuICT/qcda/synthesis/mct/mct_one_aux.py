@@ -6,7 +6,7 @@
 
 from QuICT.core import *
 from QuICT.core.gate import *
-from .mct_linear_simulation import MCTLinearHalfDirtyAux, half_dirty_aux
+from .mct_linear_simulation import MCTLinearHalfDirtyAux
 
 
 class MCTOneAux(object):
@@ -50,17 +50,16 @@ class MCTOneAux(object):
             yet_auxs = [yet_another_qubit_list[i] for i in range(yet_m, yet_n - 1)]
             yet_target = yet_n - 1
 
-            MCTLinearHalfDirtyAux.execute(k1, n + 1) | gates
+            MCT_half_dirty = MCTLinearHalfDirtyAux()
+            half_dirty_gates = MCT_half_dirty.execute(k1, n + 1)
+            yet_gates = MCT_half_dirty.assign_qubits(yet_n, yet_m, yet_controls, yet_auxs, yet_target)
+
+            half_dirty_gates | gates
             H & qubit_list[-2]
             S & qubit_list[-1]
-
-            yet_gates = CompositeGate()
-            with yet_gates:
-                half_dirty_aux(yet_gates, yet_n, yet_m, yet_controls, yet_auxs, yet_target)
-
             yet_gates | gates
             S_dagger & qubit_list[-1]
-            MCTLinearHalfDirtyAux.execute(k1, n + 1) | gates
+            half_dirty_gates | gates
             S & qubit_list[-1]
             yet_gates | gates
 

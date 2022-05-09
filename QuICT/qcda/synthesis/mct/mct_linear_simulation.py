@@ -8,39 +8,8 @@ from QuICT.core import *
 from QuICT.core.gate import *
 
 
-def half_dirty_aux(gates, n, m, controls: list, auxs: list, target: int):
-    """
-
-    Args:
-        n(int): the number of qubits in the qureg
-        m(int): the number of bits of the toffoli
-
-    Returns:
-        the circuit which describe the decomposition result
-    """
-    with gates:
-        circuit = controls + auxs + [target]
-        if m == 1:
-            CX & [circuit[0], circuit[n - 1]]
-        elif m == 2:
-            CCX & [circuit[0], circuit[1], circuit[n - 1]]
-        else:
-            for i in range(m, 2, -1):
-                CCX & [circuit[i - 1], circuit[n - 1 - (m - i + 1)], circuit[n - 1 - (m - i)]]
-            CCX & [circuit[0], circuit[1], circuit[n - m + 1]]
-            for i in range(3, m + 1):
-                CCX & [circuit[i - 1], circuit[n - 1 - (m - i + 1)], circuit[n - 1 - (m - i)]]
-
-            for i in range(m - 1, 2, -1):
-                CCX & [circuit[i - 1], circuit[n - 1 - (m - i + 1)], circuit[n - 1 - (m - i)]]
-            CCX & [circuit[0], circuit[1], circuit[n - m + 1]]
-            for i in range(3, m):
-                CCX & [circuit[i - 1], circuit[n - 1 - (m - i + 1)], circuit[n - 1 - (m - i)]]
-
-
 class MCTLinearHalfDirtyAux(object):
-    @staticmethod
-    def execute(m, n):
+    def execute(self, m: int, n: int):
         """ A linear simulation for Toffoli gate
 
         https://arxiv.org/abs/quant-ph/9503016 Lemma 7.2
@@ -50,8 +19,12 @@ class MCTLinearHalfDirtyAux(object):
         If n ≥ 5 and m ∈ {3, . . . , ⌈n/2⌉} then (m+1)-Toffoli gate can be simulated
         by a network consisting of 4(m - 2) toffoli gates
 
+        Args:
+            n(int): the number of qubits in the qureg
+            m(int): the number of bits of the toffoli
+
         Returns:
-            CompositeGate
+            CompositeGate: the result of Decomposition
         """
         if m > (n // 2) + (1 if n % 2 == 1 else 0):
             raise Exception("control bit cannot above ceil(n/2)")
@@ -62,11 +35,42 @@ class MCTLinearHalfDirtyAux(object):
         auxs = [i for i in range(m, n - 1)]
         target = n - 1
 
+        return self.assign_qubits(n, m, controls, auxs, target)
+
+    @staticmethod
+    def assign_qubits(n: int, m: int, controls: list, auxs: list, target: int):
+        """
+        Args:
+            n(int): the number of qubits in the qureg
+            m(int): the number of bits of the toffoli
+            controls(list): list of control qubits
+            auxs(list): list of ancillas
+            target(int): target qubit
+
+        Returns:
+            CompositeGate: the result of Decomposition
+        """
         gates = CompositeGate()
         with gates:
-            half_dirty_aux(gates, n, m, controls, auxs, target)
-        return gates
+            circuit = controls + auxs + [target]
+            if m == 1:
+                CX & [circuit[0], circuit[n - 1]]
+            elif m == 2:
+                CCX & [circuit[0], circuit[1], circuit[n - 1]]
+            else:
+                for i in range(m, 2, -1):
+                    CCX & [circuit[i - 1], circuit[n - 1 - (m - i + 1)], circuit[n - 1 - (m - i)]]
+                CCX & [circuit[0], circuit[1], circuit[n - m + 1]]
+                for i in range(3, m + 1):
+                    CCX & [circuit[i - 1], circuit[n - 1 - (m - i + 1)], circuit[n - 1 - (m - i)]]
 
+                for i in range(m - 1, 2, -1):
+                    CCX & [circuit[i - 1], circuit[n - 1 - (m - i + 1)], circuit[n - 1 - (m - i)]]
+                CCX & [circuit[0], circuit[1], circuit[n - m + 1]]
+                for i in range(3, m):
+                    CCX & [circuit[i - 1], circuit[n - 1 - (m - i + 1)], circuit[n - 1 - (m - i)]]
+
+        return gates
 
 class MCTLinearOneDirtyAux(object):
     def execute(self, n):
@@ -83,7 +87,7 @@ class MCTLinearOneDirtyAux(object):
             n(int): the number of used qubit, which is (n + 2) for n-qubit Toffoli gates
 
         Returns:
-            CompositeGate
+            CompositeGate: the result of Decomposition
         """
         if n < 3:
             raise Exception("there must be at least one control bit")
@@ -117,16 +121,16 @@ class MCTLinearOneDirtyAux(object):
             auxs2 = controls[0: m1]
             target2 = target
 
-            # half_dirty_aux(n, m1, control1, auxs1, target1)
+            MCT_half_dirty = MCTLinearHalfDirtyAux()
             if m2 == 2:  # n == 6
-                half_dirty_aux(gates, n, m1, control1, auxs1, target1)
+                MCT_half_dirty.assign_qubits(n, m1, control1, auxs1, target1) | gates
                 CCX & [control2[0], control2[1], target2]
-                half_dirty_aux(gates, n, m1, control1, auxs1, target1)
+                MCT_half_dirty.assign_qubits(n, m1, control1, auxs1, target1) | gates
                 CCX & [control2[0], control2[1], target2]
             else:
-                half_dirty_aux(gates, n, m1, control1, auxs1, target1)
-                half_dirty_aux(gates, n, m2, control2, auxs2, target2)
-                half_dirty_aux(gates, n, m1, control1, auxs1, target1)
-                half_dirty_aux(gates, n, m2, control2, auxs2, target2)
+                MCT_half_dirty.assign_qubits(n, m1, control1, auxs1, target1) | gates
+                MCT_half_dirty.assign_qubits(n, m2, control2, auxs2, target2) | gates
+                MCT_half_dirty.assign_qubits(n, m1, control1, auxs1, target1) | gates
+                MCT_half_dirty.assign_qubits(n, m2, control2, auxs2, target2) | gates
 
         return gates
