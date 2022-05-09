@@ -8,96 +8,89 @@ from .._synthesis import Synthesis
 from QuICT.core import *
 from QuICT.core.gate import *
 from .mct_linear_simulation import MCTLinearHalfDirtyAux, half_dirty_aux
+from QuICT.qcda.utility import OutputAligner
 
 
-def merge_qubit(qubit_a, qubit_b):
-    """ merge two list into one in order
-    """
-    qureg = []
-    if not isinstance(qubit_a, list) and not isinstance(qubit_a, tuple):
-        qureg.append(qubit_a)
-    else:
-        for qubit in qubit_a:
-            qureg.append(qubit)
-    if not isinstance(qubit_b, list) and not isinstance(qubit_b, tuple):
-        qureg.append(qubit_b)
-    else:
-        for qubit in qubit_b:
-            qureg.append(qubit)
-    return qureg
-
-
-def solve(gates: CompositeGate, n):
-    """ Decomposition of n-qubit Toffoli gates with one ancillary qubit and linear circuit complexity
-
-    Args:
-        gates(CompositeGate):
-        n(int): the bit of toffoli gate
-    """
-    qubit_list = [i for i in range(n + 1)]
-    with gates:
-        if n == 3:
-            CCX & qubit_list[:3]
-            return
-        elif n == 2:
-            CX & qubit_list[:2]
-            return
-        if n % 2 == 1:
-            k1 = n // 2 + 1
-        else:
-            k1 = n // 2
-        k2 = n // 2 - 1
-
-        yet_another_qubit_list = merge_qubit(
-            merge_qubit(qubit_list[k1:k1 + k2 + 1], qubit_list[:k1]),
-            qubit_list[-1]
-        )
-        yet_m = k2 + 1
-        yet_n = n + 1
-        if yet_m > (yet_n // 2) + (1 if yet_n % 2 == 1 else 0):
-            raise Exception("control bit cannot above ceil(n/2)")
-        if yet_m < 1:
-            raise Exception("there must be at least one control bit")
-        yet_controls = [yet_another_qubit_list[i] for i in range(yet_m)]
-        yet_auxs = [yet_another_qubit_list[i] for i in range(yet_m, yet_n - 1)]
-        yet_target = yet_n - 1
-
-        MCTLinearHalfDirtyAux.execute(k1, n + 1) | gates
-        H & qubit_list[-2]
-        S & qubit_list[-1]
-
-        yet_gates = CompositeGate()
-        with yet_gates:
-            half_dirty_aux(yet_gates, yet_n, yet_m, yet_controls, yet_auxs, yet_target)
-        yet_gates | gates
-
-        S_dagger & qubit_list[-1]
-        MCTLinearHalfDirtyAux.execute(k1, n + 1) | gates
-        S & qubit_list[-1]
-
-        yet_gates = CompositeGate()
-        with yet_gates:
-            half_dirty_aux(yet_gates, yet_n, yet_m, yet_controls, yet_auxs, yet_target)
-        yet_gates | gates
-
-        H & qubit_list[-2]
-        S_dagger & qubit_list[-1]
-
-
-class MCTOneAux(Synthesis):
-    @staticmethod
-    def execute(n):
+class MCTOneAux(object):
+    @OutputAligner(CompositeGate)
+    def execute(self, qubit):
         """ Decomposition of n-qubit Toffoli gates with one ancillary qubit and linear circuit complexity
 
         He Y, Luo M X, Zhang E, et al.
         Decompositions of n-qubit Toffoli gates with linear circuit complexity[J].
         International Journal of Theoretical Physics, 2017, 56(7): 2350-2361.
+
         Args:
-            n(int): the bits of the toffoli gate
-        Return:
+            qubit(int): the number of used qubit, which is (n + 1) for n-qubit Toffoli gates
+
+        Returns:
             CompositeGate: the result of Decomposition
         """
+        n = qubit - 1
         gates = CompositeGate()
+        qubit_list = list(range(n + 1))
         with gates:
-            solve(gates, n - 1)
+            if n == 3:
+                CCX & qubit_list[:3]
+                return gates
+            elif n == 2:
+                CX & qubit_list[:2]
+                return gates
+            if n % 2 == 1:
+                k1 = n // 2 + 1
+            else:
+                k1 = n // 2
+            k2 = n // 2 - 1
+
+            yet_another_qubit_list = self.merge_qubit(
+                self.merge_qubit(qubit_list[k1:k1 + k2 + 1], qubit_list[:k1]),
+                qubit_list[-1]
+            )
+            yet_m = k2 + 1
+            yet_n = n + 1
+            if yet_m > (yet_n // 2) + (1 if yet_n % 2 == 1 else 0):
+                raise Exception("control bit cannot above ceil(n/2)")
+            if yet_m < 1:
+                raise Exception("there must be at least one control bit")
+            yet_controls = [yet_another_qubit_list[i] for i in range(yet_m)]
+            yet_auxs = [yet_another_qubit_list[i] for i in range(yet_m, yet_n - 1)]
+            yet_target = yet_n - 1
+
+            MCTLinearHalfDirtyAux.execute(k1, n + 1) | gates
+            H & qubit_list[-2]
+            S & qubit_list[-1]
+
+            yet_gates = CompositeGate()
+            with yet_gates:
+                half_dirty_aux(yet_gates, yet_n, yet_m, yet_controls, yet_auxs, yet_target)
+            yet_gates | gates
+
+            S_dagger & qubit_list[-1]
+            MCTLinearHalfDirtyAux.execute(k1, n + 1) | gates
+            S & qubit_list[-1]
+
+            yet_gates = CompositeGate()
+            with yet_gates:
+                half_dirty_aux(yet_gates, yet_n, yet_m, yet_controls, yet_auxs, yet_target)
+            yet_gates | gates
+
+            H & qubit_list[-2]
+            S_dagger & qubit_list[-1]
+
         return gates
+
+    def merge_qubit(self, qubit_a, qubit_b):
+        """ merge two list into one in order
+        """
+        qureg = []
+        if not isinstance(qubit_a, list) and not isinstance(qubit_a, tuple):
+            qureg.append(qubit_a)
+        else:
+            for qubit in qubit_a:
+                qureg.append(qubit)
+        if not isinstance(qubit_b, list) and not isinstance(qubit_b, tuple):
+            qureg.append(qubit_b)
+        else:
+            for qubit in qubit_b:
+                qureg.append(qubit)
+        return qureg

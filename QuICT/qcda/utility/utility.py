@@ -39,7 +39,7 @@ class OutputAligner(object):
                 input: input of func, the following types are supported.
                     1. CompositeGate: the input is a CompositeGate
                     2. Circuit: the input is a Circuit
-                    3. numpy.ndarray: the input is a unitary matrix
+                    3. other: any other reasonable input
 
             Returns:
                 CompositeGate/Circuit: output of func with whose output type aligned
@@ -49,17 +49,14 @@ class OutputAligner(object):
             assert self.output in [CompositeGate, Circuit], TypeError('Invalid output type')
 
             # Record width of input
+            width = None
             if isinstance(input, CompositeGate) or isinstance(input, Circuit):
                 width = input.width()
-            elif isinstance(input, np.ndarray):
-                assert input.ndim == 2 and input.shape[0] == input.shape[1],\
-                    ValueError('Input is not a square matrix')
-                width = int(round(np.log2(input.shape[0])))
-                assert 1 << width == input.shape[0], ValueError('Input is not a 2^n * 2^n matrix')
-            else:
-                raise TypeError('Invalid input type')
 
+            # Execute the function
             output = func(object, input)
+
+            # Align the output
             if isinstance(output, self.output):
                 return output
             if self.output == CompositeGate:
@@ -68,6 +65,8 @@ class OutputAligner(object):
                 return gates
             if self.output == Circuit:
                 output: CompositeGate
+                if width is None:
+                    width = output.width()
                 circuit = Circuit(width)
                 circuit.extend(output)
                 return circuit

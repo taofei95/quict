@@ -28,7 +28,7 @@ def create_simulator():
     return ConstantStateVectorSimulator()
 
 
-def test_MCT_Linear_Simulation_Half():
+def MCT_Linear_Simulation_Half():
     max_qubit = 11
     for i in range(3, max_qubit):
         for m in range(1, i // 2 + (1 if i % 2 == 1 else 0)):
@@ -82,7 +82,7 @@ def test_MCT_Linear_Simulation_Half():
     assert 1
 
 
-def test_MCT_Linear_Simulation_One_functional():
+def MCT_Linear_Simulation_One_functional():
     max_qubit = 11
     simulator = create_simulator()
     for n in range(6, max_qubit):
@@ -97,7 +97,7 @@ def test_MCT_Linear_Simulation_One_functional():
             gates = CompositeGate()
             Set(gates, controls_idx, control_bits)
             gates | circuit
-            print("%d bits control = %d" % (n - 2, control_bits))
+            # print("%d bits control = %d" % (n - 2, control_bits))
             gates = MCTLinearOneDirtyAux.execute(n)
             gates | circuit(controls_idx + target_idx + aux_idx)
             Measure | circuit
@@ -108,12 +108,12 @@ def test_MCT_Linear_Simulation_One_functional():
                 # (int(aux) != 0) or
                 (int(controls) != control_bits)
             ):
-                print("when control bits are %d, the targe is %d" % (control_bits, int(target)))
+                print("when control bits are %d, the target is %d" % (control_bits, int(target)))
                 assert 0
     assert 1
 
 
-def test_MCT_Linear_Simulation_One_unitary():
+def MCT_Linear_Simulation_One_unitary():
     max_qubit = 11
     for n in range(6, max_qubit):
         circuit = Circuit(n)
@@ -127,7 +127,7 @@ def test_MCT_Linear_Simulation_One_unitary():
         gates | circuit(controls_idx + target_idx + aux_idx)
         # assert 0
         unitary = SyntheticalUnitary.run(circuit)
-        print(circuit)
+        # print(circuit)
         N = 1 << (n - 1)
         for i in range(N):
             for j in range(N):
@@ -168,14 +168,14 @@ def test_MCT_Linear_Simulation_One_unitary():
     assert 1
 
 
-def test_MCT():
+def test_MCTOneAux():
     max_qubit = 11
     for i in range(3, max_qubit):
         circuit = Circuit(i)
-        MCTOneAux.execute(i) | circuit
-        # assert 0
+        MCTOA = MCTOneAux()
+        MCTOA.execute(i) | circuit
         unitary = SyntheticalUnitary.run(circuit)
-        print(circuit)
+        # print(circuit)
         for j in range(1 << i):
             flagj = True
             for l in range(2, i):
