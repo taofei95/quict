@@ -7,7 +7,6 @@
 from typing import *
 import numpy as np
 
-from .._synthesis import Synthesis
 from QuICT.core.gate import GateType, build_gate, CompositeGate
 
 
@@ -80,9 +79,8 @@ def inner_uniformly_rotation(
     return gates
 
 
-class UniformlyRy(Synthesis):
-    @classmethod
-    def execute(cls, angle_list, mapping=None):
+class UniformlyRy(object):
+    def execute(self, angle_list, mapping=None):
         """ uniformRyGate
 
         http://cn.arxiv.org/abs/quant-ph/0504100v1 Fig4 a)
@@ -102,9 +100,8 @@ class UniformlyRy(Synthesis):
         return uniformlyRotation(0, n, pargs, GateType.ry, mapping)
 
 
-class UniformlyRz(Synthesis):
-    @classmethod
-    def execute(cls, angle_list, mapping=None):
+class UniformlyRz(object):
+    def execute(self, angle_list, mapping=None):
         """ uniformRzGate
 
         http://cn.arxiv.org/abs/quant-ph/0504100v1 Fig4 a)

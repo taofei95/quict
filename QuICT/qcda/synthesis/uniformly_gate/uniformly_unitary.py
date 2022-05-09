@@ -7,7 +7,6 @@
 import numpy as np
 
 from . import UniformlyRz
-from .._synthesis import Synthesis
 from QuICT.core.gate import build_gate, GateType, CompositeGate, H, Rz, U3
 
 
@@ -147,13 +146,13 @@ def uniformlyUnitarySolve(low, high, unitary, mapping):
     gates = uniformlyUnitarySolve(low + 1, high, Rxv, mapping)
     gates.append(gateA)
     gates.extend(uniformlyUnitarySolve(low + 1, high, Rxu, mapping))
-    gates.extend(UniformlyRz.execute(angle_list, [mapping[i] for i in range(high - 1, low - 1, -1)]))
+    URz = UniformlyRz()
+    gates.extend(URz.execute(angle_list, [mapping[i] for i in range(high - 1, low - 1, -1)]))
     return gates
 
 
-class UniformlyUnitary(Synthesis):
-    @classmethod
-    def execute(cls, angle_list, mapping=None):
+class UniformlyUnitary(object):
+    def execute(self, angle_list, mapping=None):
         """ uniformUnitaryGate
 
         http://cn.arxiv.org/abs/quant-ph/0504100v1 Fig4 b)

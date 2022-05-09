@@ -4,7 +4,6 @@
 # @Author  : Han Yu
 # @File    : unit_test.py
 
-import pytest
 import random
 
 import numpy as np
@@ -27,7 +26,8 @@ def test_uniform_ry():
         for i in range(1, 6):
             circuit = Circuit(i)
             angles = [random.random() for _ in range(1 << (i - 1))]
-            UniformlyRy.execute(angles) | circuit
+            URy = UniformlyRy()
+            URy.execute(angles) | circuit
             unitary = SyntheticalUnitary.run(circuit)
             for j in range(1 << (i - 1)):
                 unitary_slice = unitary[2 * j:2 * (j + 1), 2 * j:2 * (j + 1)]
@@ -39,7 +39,8 @@ def test_uniform_rz():
         for i in range(1, 6):
             circuit = Circuit(i)
             angles = [random.random() for _ in range(1 << (i - 1))]
-            UniformlyRz.execute(angles) | circuit
+            URz = UniformlyRz()
+            URz.execute(angles) | circuit
             unitary = SyntheticalUnitary.run(circuit)
             for j in range(1 << (i - 1)):
                 unitary_slice = unitary[2 * j:2 * (j + 1), 2 * j:2 * (j + 1)]
@@ -51,7 +52,8 @@ def test_uniform_unitary():
         for i in range(1, 6):
             circuit = Circuit(i)
             unitaries = [generate_unitary() for _ in range(1 << (i - 1))]
-            UniformlyUnitary.execute(unitaries) | circuit
+            UUnitary = UniformlyUnitary()
+            UUnitary.execute(unitaries) | circuit
             unitary = SyntheticalUnitary.run(circuit)
             if abs(unitary[0, 0]) > 1e-10:
                 delta = unitaries[0][0][0] / unitary[0, 0]
@@ -63,7 +65,3 @@ def test_uniform_unitary():
                 phase = np.any(abs(unitary_slice - unitaries[j].reshape(2, 2)) > 1e-6)
                 if phase:
                     assert 0
-
-
-if __name__ == "__main__":
-    pytest.main(["./unit_test.py"])
