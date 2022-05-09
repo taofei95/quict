@@ -5,8 +5,9 @@ from typing import List, Union, Iterable, Tuple
 import numpy as np
 from copy import deepcopy
 
-from QuICT.core import Circuit, Trigger
+from QuICT.core import Circuit
 from QuICT.core.gate import BasicGate, Measure, GateType
+from QuICT.core.operator import Trigger
 
 
 cur_path = os.path.dirname(os.path.abspath(__file__))

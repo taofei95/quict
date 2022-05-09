@@ -8,7 +8,8 @@ from collections import defaultdict
 import numpy as np
 import cupy as cp
 
-from QuICT.core import Circuit, Trigger
+from QuICT.core import Circuit
+from QuICT.core.operator import Trigger
 from QuICT.core.gate import Measure, BasicGate
 from QuICT.core.utils import GateType
 from QuICT.ops.utils import LinAlgLoader
