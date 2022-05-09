@@ -12,7 +12,7 @@ from QuICT.algorithm import SyntheticalUnitary
 from QuICT.simulation.gpu_simulator import ConstantStateVectorSimulator
 
 
-def Set(gates, qreg, N):
+def set_one(gates, qreg, N):
     """
     Set the qreg as N, using X gates on specific qubits
     """
@@ -22,10 +22,6 @@ def Set(gates, qreg, N):
             if N % 2 == 1:
                 X & qreg[n - 1 - i]
             N = N // 2
-
-
-def create_simulator():
-    return ConstantStateVectorSimulator()
 
 
 def MCT_Linear_Simulation_Half():
@@ -82,11 +78,10 @@ def MCT_Linear_Simulation_Half():
     assert 1
 
 
-def MCT_Linear_Simulation_One_functional():
-    max_qubit = 11
-    simulator = create_simulator()
-    for n in range(6, max_qubit):
-        for control_bits in range(0, 2 ** (n - 2)):
+def test_MCT_Linear_Simulation_One_functional():
+    simulator = ConstantStateVectorSimulator()
+    for n in range(3, 7):
+        for control_bits in range(0, 1 << n - 2):
             circuit = Circuit(n)
             aux_idx = [0]
             controls_idx = [i for i in range(1, n - 1)]
@@ -95,10 +90,11 @@ def MCT_Linear_Simulation_One_functional():
             controls = circuit[controls_idx]
             target = circuit[target_idx]
             gates = CompositeGate()
-            Set(gates, controls_idx, control_bits)
+            set_one(gates, controls_idx, control_bits)
             gates | circuit
             # print("%d bits control = %d" % (n - 2, control_bits))
-            gates = MCTLinearOneDirtyAux.execute(n)
+            MCT = MCTLinearOneDirtyAux()
+            gates = MCT.execute(n)
             gates | circuit(controls_idx + target_idx + aux_idx)
             Measure | circuit
             simulator.run(circuit)
@@ -110,12 +106,10 @@ def MCT_Linear_Simulation_One_functional():
             ):
                 print("when control bits are %d, the target is %d" % (control_bits, int(target)))
                 assert 0
-    assert 1
 
 
-def MCT_Linear_Simulation_One_unitary():
-    max_qubit = 11
-    for n in range(6, max_qubit):
+def test_MCT_Linear_Simulation_One_unitary():
+    for n in range(3, 11):
         circuit = Circuit(n)
         aux_idx = [0]
         controls_idx = [i for i in range(1, n - 1)]
@@ -123,57 +117,24 @@ def MCT_Linear_Simulation_One_unitary():
         # aux = circuit[aux_idx]
         # controls = circuit[controls_idx]
         # target = circuit[target_idx]
-        gates = MCTLinearOneDirtyAux.execute(n)
+        MCT = MCTLinearOneDirtyAux()
+        gates = MCT.execute(n)
         gates | circuit(controls_idx + target_idx + aux_idx)
         # assert 0
         unitary = SyntheticalUnitary.run(circuit)
+        mat_mct = np.eye(1 << n - 1)
+        mat_mct[(1 << n - 1) - 2:, (1 << n - 1) - 2:] = X.matrix.real
+        # For the ancilla
+        mat_mct = np.kron(np.eye(2), mat_mct)
+        assert np.allclose(mat_mct, unitary)
         # print(circuit)
-        N = 1 << (n - 1)
-        for i in range(N):
-            for j in range(N):
-                if (i >= N - 2 and j >= N - 2):  # right bottom corner
-                    if ((i + j) % 2):
-                        if (
-                            (abs(unitary[i, j] - 1) > 1e-10) or
-                            (abs(unitary[N + i, N + j] - 1) > 1e-10)
-                        ):
-                            print("this should be 1", i, j, unitary[i, j], N + i, N + j, unitary[N + i, N + j])
-                            print(unitary)
-                            assert 0
-                    else:   # (i+j)%2 == 0
-                        if (
-                            (abs(unitary[i, j]) > 1e-10) or
-                            (abs(unitary[N + i, N + j]) > 1e-10)
-                        ):
-                            print("this should be 0", i, j, unitary[i, j], N + i, N + j, unitary[N + i, N + j])
-                            print(unitary)
-                            assert 0
-                else:   # diagonal part
-                    if (i == j):
-                        if (
-                            (abs(unitary[i, j] - 1) > 1e-10) or
-                            (abs(unitary[N + i, N + j] - 1) > 1e-10)
-                        ):
-                            print("this should be 1", i, j, unitary[i, j], N + i, N + j, unitary[N + i, N + j])
-                            print(unitary)
-                            assert 0
-                    else:   # non-diagonal
-                        if (
-                            (abs(unitary[i, j]) > 1e-10) or
-                            (abs(unitary[N + i, N + j]) > 1e-10)
-                        ):
-                            print("this should be 0", i, j, unitary[i, j], N + i, N + j, unitary[N + i, N + j])
-                            print(unitary)
-                            assert 0
-    assert 1
 
 
 def test_MCTOneAux():
-    max_qubit = 11
-    for n in range(3, max_qubit):
+    for n in range(3, 11):
         circuit = Circuit(n)
-        MCTOA = MCTOneAux()
-        MCTOA.execute(n) | circuit
+        MCT = MCTOneAux()
+        MCT.execute(n) | circuit
         unitary = SyntheticalUnitary.run(circuit)
         # print(circuit)
         mat_mct = np.eye(1 << n - 1)

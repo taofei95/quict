@@ -4,7 +4,6 @@
 # @Author  : Han Yu
 # @File    : MCT_Linear_Simulation.py
 
-from .._synthesis import Synthesis
 from QuICT.core import *
 from QuICT.core.gate import *
 
@@ -39,46 +38,7 @@ def half_dirty_aux(gates, n, m, controls: list, auxs: list, target: int):
                 CCX & [circuit[i - 1], circuit[n - 1 - (m - i + 1)], circuit[n - 1 - (m - i)]]
 
 
-def one_dirty_aux(gates, controls: list, target: int, aux: int):
-    with gates:
-        n = len(controls) + 2
-        # _ = controls + aux + target
-        if n == 5:
-            CCX & [controls[0], controls[1], aux]
-            CCX & [controls[2], aux, target]
-            CCX & [controls[0], controls[1], aux]
-            CCX & [controls[2], aux, target]
-            return
-        if n == 4:
-            CCX & [controls[0], controls[1], target]
-            return
-        if n == 3:
-            CX & [controls, target]
-            return
-        # n > 5
-        m1 = n // 2
-        m2 = n - m1 - 1
-        control1 = controls[0: m1]
-        auxs1 = controls[m1: n - 2] + [target]
-        target1 = aux
-        control2 = controls[m1: n - 2] + [aux]
-        auxs2 = controls[0: m1]
-        target2 = target
-
-        # half_dirty_aux(n, m1, control1, auxs1, target1)
-        if m2 == 2:  # n == 6
-            half_dirty_aux(gates, n, m1, control1, auxs1, target1)
-            CCX & [control2[0], control2[1], target2]
-            half_dirty_aux(gates, n, m1, control1, auxs1, target1)
-            CCX & [control2[0], control2[1], target2]
-        else:
-            half_dirty_aux(gates, n, m1, control1, auxs1, target1)
-            half_dirty_aux(gates, n, m2, control2, auxs2, target2)
-            half_dirty_aux(gates, n, m1, control1, auxs1, target1)
-            half_dirty_aux(gates, n, m2, control2, auxs2, target2)
-
-
-class MCTLinearHalfDirtyAux(Synthesis):
+class MCTLinearHalfDirtyAux(object):
     @staticmethod
     def execute(m, n):
         """ A linear simulation for Toffoli gate
@@ -108,9 +68,8 @@ class MCTLinearHalfDirtyAux(Synthesis):
         return gates
 
 
-class MCTLinearOneDirtyAux(Synthesis):
-    @staticmethod
-    def execute(n):
+class MCTLinearOneDirtyAux(object):
+    def execute(self, n):
         """ A linear simulation for Toffoli gate
 
         https://arxiv.org/abs/quant-ph/9503016 Corollary 7.4
@@ -120,19 +79,54 @@ class MCTLinearOneDirtyAux(Synthesis):
         On an n-bit circuit, an (n-2)-bit toffoli gate can be simulated by
         8(n-5) CCX gates, with 1 bit dirty ancilla.
 
+        Args:
+            n(int): the number of used qubit, which is (n + 2) for n-qubit Toffoli gates
+
         Returns:
             CompositeGate
         """
         if n < 3:
             raise Exception("there must be at least one control bit")
 
-        controls = [i for i in range(n - 2)]
+        controls = list(range(n - 2))
         target = n - 2
-        aux = n - 1      # this is a dirty ancilla
+        aux = n - 1     # this is a dirty ancilla
 
         gates = CompositeGate()
         with gates:
-            gates: CompositeGate
-            one_dirty_aux(gates, controls, target, aux)
+            n = len(controls) + 2
+            if n == 5:
+                CCX & [controls[0], controls[1], aux]
+                CCX & [controls[2], aux, target]
+                CCX & [controls[0], controls[1], aux]
+                CCX & [controls[2], aux, target]
+                return gates
+            if n == 4:
+                CCX & [controls[0], controls[1], target]
+                return gates
+            if n == 3:
+                CX & [controls[0], target]
+                return gates
+            # n > 5
+            m1 = n // 2
+            m2 = n - m1 - 1
+            control1 = controls[0: m1]
+            auxs1 = controls[m1: n - 2] + [target]
+            target1 = aux
+            control2 = controls[m1: n - 2] + [aux]
+            auxs2 = controls[0: m1]
+            target2 = target
+
+            # half_dirty_aux(n, m1, control1, auxs1, target1)
+            if m2 == 2:  # n == 6
+                half_dirty_aux(gates, n, m1, control1, auxs1, target1)
+                CCX & [control2[0], control2[1], target2]
+                half_dirty_aux(gates, n, m1, control1, auxs1, target1)
+                CCX & [control2[0], control2[1], target2]
+            else:
+                half_dirty_aux(gates, n, m1, control1, auxs1, target1)
+                half_dirty_aux(gates, n, m2, control2, auxs2, target2)
+                half_dirty_aux(gates, n, m1, control1, auxs1, target1)
+                half_dirty_aux(gates, n, m2, control2, auxs2, target2)
 
         return gates
