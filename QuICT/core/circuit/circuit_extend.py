@@ -1,3 +1,4 @@
+from enum import Enum
 from typing import Tuple, Union, List, Dict
 from types import FunctionType
 
@@ -110,3 +111,57 @@ class Trigger:
         for i in range(2 ** self.targets):
             if not isinstance(state_gate_mapping(i), (CompositeGate, BasicGate, None)):
                 raise KeyError("The trigger's mapping should only return CompositeGate for all possible state.")
+
+
+class DataSwitchType(Enum):
+    all = "ALL"
+    half = "HALF"
+    ctarg = "CTARGS"
+    prob = "PROB_ADD"
+
+
+class DataSwitch:
+    def __init__(self, destination, type, switch_condition=None):
+        self._destination = destination
+        self._type = type
+        self._cond = switch_condition
+
+    @property
+    def destination(self):
+        return self._destination
+
+    @property
+    def type(self):
+        return self._type
+
+    @property
+    def switch_condition(self):
+        return self._cond
+
+
+class DeviceTrigger:
+    def __init__(
+        self,
+        device_gate_mapping: Dict[int, CompositeGate]
+    ):
+        """
+        Args:
+            targets (int): The number of target qubits.
+            device_gate_mapping (Dict[int, CompositeGate]): The mapping of device and related composite gates.
+
+        Raises:
+            TypeError: Error input parameters.
+        """
+        self._dev_to_gate = device_gate_mapping
+
+    def mapping(self, dev: int) -> CompositeGate:
+        return self._dev_to_gate[dev]
+
+
+class Multiply:
+    def __init__(self, value):
+        self._value = value
+
+    @property
+    def value(self):
+        return self._value
