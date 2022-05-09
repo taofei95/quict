@@ -62,14 +62,17 @@ class WeightDecision(Algorithm):
         X | circuit(ancilla)
         H | circuit(ancilla)
 
+        MCTOA = MCTOneAux()
+        gates_mct = MCTOA.execute(num)
+
         for i in range(d - 1):
             oracle | circuit([i for i in range(num - 1)])
-            MCTOneAux.execute(num) | circuit
+            gates_mct | circuit
             gates_preparation ^ circuit(qreg)
             for q in qreg:
                 X | circuit(q)
 
-            MCTOneAux.execute(num) | circuit
+            gates_mct | circuit
             for q in qreg:
                 X | circuit(q)
 
@@ -79,7 +82,7 @@ class WeightDecision(Algorithm):
         H | circuit(ancilla)
         X | circuit(ancilla)
         oracle | circuit(list(range(num - 1)))
-        MCTOneAux.execute(num) | circuit
+        gates_mct | circuit
 
         # Measure
         for i in range(num - 1):

@@ -170,45 +170,17 @@ def MCT_Linear_Simulation_One_unitary():
 
 def test_MCTOneAux():
     max_qubit = 11
-    for i in range(3, max_qubit):
-        circuit = Circuit(i)
+    for n in range(3, max_qubit):
+        circuit = Circuit(n)
         MCTOA = MCTOneAux()
-        MCTOA.execute(i) | circuit
+        MCTOA.execute(n) | circuit
         unitary = SyntheticalUnitary.run(circuit)
         # print(circuit)
-        for j in range(1 << i):
-            flagj = True
-            for l in range(2, i):
-                if (j & (1 << l)) == 0:
-                    flagj = False
-                    break
-            for k in range(1 << i):
-                flag = flagj
-                for l in range(2, i):
-                    if (k & (1 << l)) == 0:
-                        flag = False
-                        break
-                if flag:
-                    if ((k & 1) != (j & 1)) or ((k & 2) == (j & 2)):
-                        if abs(abs(unitary[j, k])) > 1e-10:
-                            print(i, j, k, unitary[j, k])
-                            assert 0
-                    else:
-                        if abs(abs(unitary[j, k] - 1)) > 1e-10:
-                            print(i, j, k, unitary[j, k])
-                            assert 0
-                else:
-                    if j == k:
-                        if abs(abs(unitary[j, k] - 1)) > 1e-10:
-                            print(i, j, k, unitary[j, k])
-                            print(range(2, i), 1 << 2, j & (1 << 2), k & (1 << 2))
-                            print(unitary)
-                            assert 0
-                    else:
-                        if abs(abs(unitary[j, k])) > 1e-10:
-                            print(i, j, k, unitary[j, k])
-                            assert 0
-    assert 1
+        mat_mct = np.eye(1 << n - 1)
+        mat_mct[(1 << n - 1) - 2:, (1 << n - 1) - 2:] = X.matrix.real
+        # For the ancilla
+        mat_mct = np.kron(mat_mct, np.eye(2))
+        assert np.allclose(mat_mct, unitary)
 
 
 if __name__ == "__main__":

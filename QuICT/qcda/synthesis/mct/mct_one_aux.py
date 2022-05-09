@@ -42,10 +42,7 @@ class MCTOneAux(object):
                 k1 = n // 2
             k2 = n // 2 - 1
 
-            yet_another_qubit_list = self.merge_qubit(
-                self.merge_qubit(qubit_list[k1:k1 + k2 + 1], qubit_list[:k1]),
-                qubit_list[-1]
-            )
+            yet_another_qubit_list = qubit_list[k1:k1 + k2 + 1] + qubit_list[:k1] + [qubit_list[-1]]
             yet_m = k2 + 1
             yet_n = n + 1
             if yet_m > (yet_n // 2) + (1 if yet_n % 2 == 1 else 0):
@@ -63,34 +60,14 @@ class MCTOneAux(object):
             yet_gates = CompositeGate()
             with yet_gates:
                 half_dirty_aux(yet_gates, yet_n, yet_m, yet_controls, yet_auxs, yet_target)
-            yet_gates | gates
 
+            yet_gates | gates
             S_dagger & qubit_list[-1]
             MCTLinearHalfDirtyAux.execute(k1, n + 1) | gates
             S & qubit_list[-1]
-
-            yet_gates = CompositeGate()
-            with yet_gates:
-                half_dirty_aux(yet_gates, yet_n, yet_m, yet_controls, yet_auxs, yet_target)
             yet_gates | gates
 
             H & qubit_list[-2]
             S_dagger & qubit_list[-1]
 
         return gates
-
-    def merge_qubit(self, qubit_a, qubit_b):
-        """ merge two list into one in order
-        """
-        qureg = []
-        if not isinstance(qubit_a, list) and not isinstance(qubit_a, tuple):
-            qureg.append(qubit_a)
-        else:
-            for qubit in qubit_a:
-                qureg.append(qubit)
-        if not isinstance(qubit_b, list) and not isinstance(qubit_b, tuple):
-            qureg.append(qubit_b)
-        else:
-            for qubit in qubit_b:
-                qureg.append(qubit)
-        return qureg

@@ -54,6 +54,10 @@ def run_search_with_prior_knowledge(f, n, p, T, oracle):
     # Start with qreg in equal superposition and ancilla in |->
     QSP = QuantumStatePreparation('uniformly_gates')
     gates_preparation = QSP.execute(list(q))
+
+    MCTOA = MCTOneAux()
+    gates_mct = MCTOA.execute(num)
+
     X | ancilla
     H | ancilla
     gates_preparation | qreg
@@ -61,7 +65,7 @@ def run_search_with_prior_knowledge(f, n, p, T, oracle):
         oracle(f, qreg, ancilla)
         gates_preparation ^ qreg
         X | qreg
-        MCTOneAux.execute(num) | circuit
+        gates_mct | circuit
         X | qreg
         gates_preparation | qreg
     # Apply H
