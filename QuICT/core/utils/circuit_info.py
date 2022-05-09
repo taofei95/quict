@@ -4,6 +4,8 @@
 # @Author  : Han Yu, Li Kaiqi
 # @File    : _circuit_computing.py
 
+import numpy as np
+
 
 class CircuitInformation:
     @staticmethod
@@ -31,16 +33,12 @@ class CircuitInformation:
         return count
 
     @staticmethod
-    def depth(gates):
-        layers = []
+    def depth(gates, width):
+        depth = np.zeros(width, dtype=int)
         for gate in gates:
-            now = set(gate.cargs) | set(gate.targs)
-            for i in range(len(layers) - 1, -2, -1):
-                if i == -1 or len(now & layers[i]) > 0:
-                    if i + 1 == len(layers):
-                        layers.append(set())
-                    layers[i + 1] |= now
-        return len(layers)
+            targs = gate.cargs + gate.targs
+            depth[targs] = np.max(depth[targs]) + 1
+        return np.max(depth)
 
     @staticmethod
     def qasm(qreg, creg, gates):
