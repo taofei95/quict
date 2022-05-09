@@ -7,7 +7,7 @@ import numpy as np
 import copy
 
 from QuICT.core.utils import (
-    GateType, SPECIAL_GATE_SET, DIAGONAL_GATE_SET, CGATE_LIST,
+    GateType, MatrixType, SPECIAL_GATE_SET, DIAGONAL_GATE_SET, CGATE_LIST,
     PAULI_GATE_SET, CLIFFORD_GATE_SET,
     perm_decomposition
 )
@@ -62,6 +62,10 @@ class BasicGate(object):
     @property
     def type(self):
         return self._type
+
+    @property
+    def matrix_type(self):
+        return self._matrix_type
 
     @property
     def controls(self) -> int:
@@ -145,7 +149,8 @@ class BasicGate(object):
         controls: int,
         targets: int,
         params: int,
-        type: GateType
+        type: GateType,
+        matrix_type: MatrixType = MatrixType.normal
     ):
         self._matrix = None
 
@@ -158,6 +163,7 @@ class BasicGate(object):
 
         assert isinstance(type, GateType)
         self._type = type
+        self._matrix_type = matrix_type
         self._qasm_name = str(type.name)
         self._name = "-".join([str(type), "", ""])
 
@@ -486,7 +492,8 @@ class SGate(BasicGate):
             controls=0,
             targets=1,
             params=0,
-            type=GateType.s
+            type=GateType.s,
+            matrix_type=MatrixType.control
         )
 
         self.matrix = np.array([
@@ -513,7 +520,8 @@ class SDaggerGate(BasicGate):
             controls=0,
             targets=1,
             params=0,
-            type=GateType.sdg
+            type=GateType.sdg,
+            matrix_type=MatrixType.control
         )
 
         self.matrix = np.array([
@@ -540,7 +548,8 @@ class XGate(BasicGate):
             controls=0,
             targets=1,
             params=0,
-            type=GateType.x
+            type=GateType.x,
+            matrix_type=MatrixType.swap
         )
 
         self.matrix = np.array([
@@ -559,7 +568,8 @@ class YGate(BasicGate):
             controls=0,
             targets=1,
             params=0,
-            type=GateType.y
+            type=GateType.y,
+            matrix_type=MatrixType.reverse
         )
 
         self.matrix = np.array([
@@ -578,7 +588,8 @@ class ZGate(BasicGate):
             controls=0,
             targets=1,
             params=0,
-            type=GateType.z
+            type=GateType.z,
+            matrix_type=MatrixType.control
         )
 
         self.matrix = np.array([
@@ -675,7 +686,8 @@ class IDGate(BasicGate):
             controls=0,
             targets=1,
             params=0,
-            type=GateType.id
+            type=GateType.id,
+            matrix_type=MatrixType.diagonal
         )
 
         self.matrix = np.array([
@@ -694,7 +706,8 @@ class U1Gate(BasicGate):
             controls=0,
             targets=1,
             params=1,
-            type=GateType.u1
+            type=GateType.u1,
+            matrix_type=MatrixType.control
         )
 
         self.pargs = params
@@ -938,7 +951,8 @@ class RzGate(BasicGate):
             controls=0,
             targets=1,
             params=1,
-            type=GateType.rz
+            type=GateType.rz,
+            matrix_type=MatrixType.diagonal
         )
 
         self.pargs = params
@@ -984,7 +998,8 @@ class TGate(BasicGate):
             controls=0,
             targets=1,
             params=0,
-            type=GateType.t
+            type=GateType.t,
+            matrix_type=MatrixType.control
         )
 
         self.matrix = np.array([
@@ -1011,7 +1026,8 @@ class TDaggerGate(BasicGate):
             controls=0,
             targets=1,
             params=0,
-            type=GateType.tdg
+            type=GateType.tdg,
+            matrix_type=MatrixType.control
         )
 
         self.matrix = np.array([
@@ -1038,7 +1054,8 @@ class PhaseGate(BasicGate):
             controls=0,
             targets=1,
             params=1,
-            type=GateType.phase
+            type=GateType.phase,
+            matrix_type=MatrixType.diagonal
         )
 
         self.pargs = params
@@ -1084,7 +1101,8 @@ class CZGate(BasicGate):
             controls=1,
             targets=1,
             params=0,
-            type=GateType.cz
+            type=GateType.cz,
+            matrix_type=MatrixType.control
         )
 
         self.matrix = np.array([
@@ -1114,7 +1132,8 @@ class CXGate(BasicGate):
             controls=1,
             targets=1,
             params=0,
-            type=GateType.cx
+            type=GateType.cx,
+            matrix_type=MatrixType.reverse
         )
 
         self.matrix = np.array([
@@ -1144,7 +1163,8 @@ class CYGate(BasicGate):
             controls=1,
             targets=1,
             params=0,
-            type=GateType.cy
+            type=GateType.cy,
+            matrix_type=MatrixType.reverse
         )
 
         self.matrix = np.array([
@@ -1205,7 +1225,8 @@ class CRzGate(BasicGate):
             controls=1,
             targets=1,
             params=1,
-            type=GateType.crz
+            type=GateType.crz,
+            matrix_type=MatrixType.diagonal
         )
 
         self.pargs = params
@@ -1260,7 +1281,8 @@ class CU1Gate(BasicGate):
             controls=1,
             targets=1,
             params=1,
-            type=GateType.cu1
+            type=GateType.cu1,
+            matrix_type=MatrixType.control
         )
 
         self.pargs = params
@@ -1377,7 +1399,8 @@ class FSimGate(BasicGate):
             controls=0,
             targets=2,
             params=2,
-            type=GateType.fsim
+            type=GateType.fsim,
+            matrix_type=MatrixType.ctrl_normal
         )
 
         self.pargs = params
@@ -1432,7 +1455,8 @@ class RxxGate(BasicGate):
             controls=0,
             targets=2,
             params=1,
-            type=GateType.Rxx
+            type=GateType.Rxx,
+            matrix_type=MatrixType.normal_normal
         )
 
         self.pargs = params
@@ -1483,7 +1507,8 @@ class RyyGate(BasicGate):
             controls=0,
             targets=2,
             params=1,
-            type=GateType.Ryy
+            type=GateType.Ryy,
+            matrix_type=MatrixType.normal_normal
         )
 
         self.pargs = params
@@ -1534,7 +1559,8 @@ class RzzGate(BasicGate):
             controls=0,
             targets=2,
             params=1,
-            type=GateType.Rzz
+            type=GateType.Rzz,
+            matrix_type=MatrixType.diag_diag
         )
 
         self.pargs = params
@@ -1591,7 +1617,8 @@ class MeasureGate(BasicGate):
             controls=0,
             targets=1,
             params=0,
-            type=GateType.measure
+            type=GateType.measure,
+            matrix_type=MatrixType.special
         )
 
     @property
@@ -1613,7 +1640,8 @@ class ResetGate(BasicGate):
             controls=0,
             targets=1,
             params=0,
-            type=GateType.reset
+            type=GateType.reset,
+            matrix_type=MatrixType.special
         )
 
     @property
@@ -1635,7 +1663,8 @@ class BarrierGate(BasicGate):
             controls=0,
             targets=1,
             params=0,
-            type=GateType.barrier
+            type=GateType.barrier,
+            matrix_type=MatrixType.special
         )
 
     @property
@@ -1657,7 +1686,8 @@ class SwapGate(BasicGate):
             controls=0,
             targets=2,
             params=0,
-            type=GateType.swap
+            type=GateType.swap,
+            matrix_type=MatrixType.swap
         )
 
         self.matrix = np.array([
@@ -1684,7 +1714,8 @@ class PermGate(BasicGate):
             controls=0,
             targets=0,
             params=0,
-            type=GateType.perm
+            type=GateType.perm,
+            matrix_type=MatrixType.special
         )
 
     def __call__(self, targets: int, params: list):
@@ -1756,7 +1787,8 @@ class PermFxGate(BasicGate):
             controls=0,
             targets=0,
             params=0,
-            type=GateType.perm_fx
+            type=GateType.perm_fx,
+            matrix_type=MatrixType.special
         )
 
     def __call__(self, n: int, params: list):
@@ -1807,7 +1839,7 @@ class UnitaryGate(BasicGate):
             type=GateType.unitary
         )
 
-    def __call__(self, params: np.array):
+    def __call__(self, params: np.array, matrix_type: MatrixType = MatrixType.normal):
         """ pass the unitary matrix
 
         Args:
@@ -1839,7 +1871,22 @@ class UnitaryGate(BasicGate):
 
         _u.targets = n
         _u.matrix = params.astype(np.complex128)
+        if n <= 3:
+            _u._validate_matrix_type()
+
         return _u
+
+    def _validate_matrix_type(self):
+        if self._is_diagonal():
+            is_control = np.allclose(self.matrix[:-1, :-1], np.identity((2 ** self.targets - 1), dtype=np.complex128))
+            self._matrix_type = MatrixType.control if is_control else MatrixType.diagonal
+
+        if (
+            np.allclose(self.matrix[:-2, :-2], np.identity((2 ** self.targets - 2), dtype=np.complex128)) and
+            np.sum(self.matrix[:-2, -1]) + self.matrix[-1, -1] == 0 and
+            np.sum(self.matrix[-1, :-2]) + self.matrix[-2, -2] == 0
+        ):
+            self._matrix_type = MatrixType.reverse
 
     def copy(self):
         gate = super().copy()
@@ -1874,7 +1921,8 @@ class CCXGate(BasicGate):
             controls=2,
             targets=1,
             params=0,
-            type=GateType.ccx
+            type=GateType.ccx,
+            matrix_type=MatrixType.reverse
         )
 
         self.matrix = np.array([
@@ -1935,7 +1983,8 @@ class CCRzGate(BasicGate):
             controls=2,
             targets=1,
             params=1,
-            type=GateType.CCRz
+            type=GateType.CCRz,
+            matrix_type=MatrixType.diagonal
         )
 
         self.pargs = params
@@ -2113,7 +2162,8 @@ class CSwapGate(BasicGate):
             controls=1,
             targets=2,
             params=0,
-            type=GateType.cswap
+            type=GateType.cswap,
+            matrix_type=MatrixType.swap
         )
 
         self.matrix = np.array([

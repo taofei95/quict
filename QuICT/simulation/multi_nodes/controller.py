@@ -39,7 +39,7 @@ class MultiNodesController:
     def _launch_local(self):
         # Using multiprocess to start simulators, only for GPUs
         pass
-    
+
     def _launch_distributed(self):
         # send job to distributed
         pass

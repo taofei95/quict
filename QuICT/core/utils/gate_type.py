@@ -52,6 +52,18 @@ class GateType(Enum):
     iqft = "IQFT gate"
 
 
+class MatrixType(Enum):
+    normal = "normal matrix"
+    diagonal = "diagonal matrix"
+    control = "control matrix"
+    swap = "swap matrix"
+    reverse = "reverse matrix"
+    special = "special matrix"
+    diag_diag = "diagonal * diagonal"
+    ctrl_normal = "control * matrix"
+    normal_normal = "normal * normal"
+
+
 SPECIAL_GATE_SET = [
     GateType.measure,
     GateType.reset,
