@@ -122,7 +122,8 @@ class ConstantStateVectorSimulator(BasicGPUSimulator):
                     # Check for checkpoint
                     cp = mapping_cgate.checkpoint
                     position = 0 if cp is None else self._circuit.find_position(cp)
-                    self._pipeline = self._pipeline[:position] + deepcopy(mapping_cgate.gates) + self._pipeline[position:]
+                    self._pipeline = self._pipeline[:position] + deepcopy(mapping_cgate.gates) + \
+                        self._pipeline[position:]
 
             idx += 1
 
