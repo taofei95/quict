@@ -236,7 +236,7 @@ class CircuitSimulator:
                 cgate = gate.mapping(measured_state)
                 if cgate is not None:
                     cp = cgate.checkpoint
-                    position = 0 if cp is None else cp.find_position(circuit._checkpoints) - idx
+                    position = 0 if cp is None else circuit.find_position(cp) - idx
                     gate_set = gate_set[:position] + deepcopy(cgate.gates) + gate_set[position:] 
             else:
                 gate_desc_vec.extend(gate_to_desc(gate))

@@ -331,6 +331,21 @@ class Circuit(object):
         assert isinstance(gate, BasicGate), "The replaced gate must be a quantum gate or noised gate."
         self._gates[idx] = gate
 
+    def find_position(self, cp_child: CheckPointChild):
+        position = -1
+        if cp_child is None:
+            return position
+
+        for cp in self._checkpoints:
+            if cp.uid == cp_child.uid:
+                position = cp.position
+                cp.position = cp_child.shift
+            elif position != -1:
+                # change the related position for backward checkpoint
+                cp.position = cp_child.shift
+
+        return position
+
     def extend(self, gates: list):
         """ add gates to the circuit
 
@@ -339,12 +354,9 @@ class Circuit(object):
         """
         position = -1
         if not isinstance(gates, list):
-            gate_cp = gates.checkpoint
-            if gate_cp is not None:
-                position = gate_cp.find_position(self._checkpoints)
-
+            position = self.find_position(gates.checkpoint)
             gates = gates.gates
-            
+
         for gate in gates:
             if position == -1:
                 self.append(gate, is_extend=True)

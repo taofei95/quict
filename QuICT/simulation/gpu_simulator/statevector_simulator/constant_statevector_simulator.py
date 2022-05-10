@@ -117,8 +117,8 @@ class ConstantStateVectorSimulator(BasicGPUSimulator):
                     self.gateM_optimizer.build(mapping_cgate.gates)
                     # Check for checkpoint
                     cp = mapping_cgate.checkpoint
-                    position = 0 if cp is None else cp.find_position(self._circuit._checkpoints) - idx
-                    self._pipeline = self._pipeline[:position] + mapping_cgate.gates + self._pipeline[position:]
+                    position = 0 if cp is None else self._circuit.find_position(cp)
+                    self._pipeline = self._pipeline[:position] + deepcopy(mapping_cgate.gates) + self._pipeline[position:]
 
             idx += 1
 

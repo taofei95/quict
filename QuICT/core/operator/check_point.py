@@ -41,6 +41,10 @@ class CheckPointChild(Operator):
     def uid(self):
         return self._uid
 
+    @property
+    def shift(self):
+        return self._shift
+
     def __init__(self, uid: str, shift: int = 0):
         super().__init__(targets=1)
         self._uid = uid
