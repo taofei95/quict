@@ -339,7 +339,7 @@ class Circuit(object):
         """
         position = -1
         if not isinstance(gates, list):
-            gate_cp: CheckPointChild = gates.checkpoint
+            gate_cp = gates.checkpoint
             if gate_cp is not None:
                 position = gate_cp.find_position(self._checkpoints)
 

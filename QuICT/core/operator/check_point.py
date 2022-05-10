@@ -24,6 +24,10 @@ class CheckPoint(Operator):
         self._uid = unique_id_generator()
         self._pos = -1
 
+    def get_child(self, shift: int = 0):
+        assert isinstance(shift, int)
+        return CheckPointChild(self.uid, shift)
+
     def match(self, uid: str):
         return uid == self._uid
 

@@ -5,6 +5,7 @@
 # @File    : constant_statevecto_simulator
 
 from collections import defaultdict
+from copy import deepcopy
 import numpy as np
 import cupy as cp
 
@@ -55,7 +56,7 @@ class ConstantStateVectorSimulator(BasicGPUSimulator):
         if self._optimize:
             self._pipeline = self._optimizor.optimize(circuit.gates)
         else:
-            self._pipeline = circuit.gates
+            self._pipeline = deepcopy(circuit.gates)
 
         # Initial GateMatrix
         self._gate_matrix_prepare()
@@ -104,12 +105,22 @@ class ConstantStateVectorSimulator(BasicGPUSimulator):
             return self.vector
 
     def _exec(self):
+        idx = 0
         while self._pipeline:
             gate = self._pipeline.pop(0)
             if isinstance(gate, BasicGate):
                 self.apply_gate(gate)
             elif isinstance(gate, Trigger):
-                self.apply_trigger(gate)
+                mapping_cgate = self.apply_trigger(gate)
+                if mapping_cgate is not None:
+                    # optimized composite gate's matrix
+                    self.gateM_optimizer.build(mapping_cgate.gates)
+                    # Check for checkpoint
+                    cp = mapping_cgate.checkpoint
+                    position = 0 if cp is None else cp.find_position(self._circuit._checkpoints) - idx
+                    self._pipeline = self._pipeline[:position] + mapping_cgate.gates + self._pipeline[position:]
+
+            idx += 1
 
     def apply_gate(self, gate: BasicGate):
         """ Depending on the given quantum gate, apply the target algorithm to calculate the state vector.
@@ -385,10 +396,7 @@ class ConstantStateVectorSimulator(BasicGPUSimulator):
             state <<= 1
             state += int(result)
 
-        cgate = op.mapping(state)
-        if cgate is not None:
-            self.gateM_optimizer.build(cgate.gates)
-            self._exec(cgate)
+        return op.mapping(state)
 
     def sample(self):
         assert (self._circuit is not None)

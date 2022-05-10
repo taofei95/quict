@@ -218,6 +218,7 @@ class CircuitSimulator:
         qubits = circuit.width()
         gate_set = deepcopy(circuit.gates)
         gate_desc_vec: List[GateDescription] = []
+        idx = 0
         while gate_set:
             gate = gate_set.pop(0)
             if isinstance(gate, Trigger):
@@ -233,9 +234,14 @@ class CircuitSimulator:
                     measured_state += mstate
 
                 cgate = gate.mapping(measured_state)
-                gate_set = deepcopy(cgate.gates) + gate_set
+                if cgate is not None:
+                    cp = cgate.checkpoint
+                    position = 0 if cp is None else cp.find_position(circuit._checkpoints) - idx
+                    gate_set = gate_set[:position] + deepcopy(cgate.gates) + gate_set[position:] 
             else:
                 gate_desc_vec.extend(gate_to_desc(gate))
+
+            idx += 1
 
         amplitude, measure_raw = self._instance.run(circuit.width(), gate_desc_vec, keep_state)
         measure = self._map_measure(circuit, measure_raw)
