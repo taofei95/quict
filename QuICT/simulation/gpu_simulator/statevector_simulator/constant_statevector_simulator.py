@@ -44,6 +44,7 @@ class ConstantStateVectorSimulator(BasicGPUSimulator):
 
         # Initial simulator with limit_qubits
         self._algorithm = LinAlgLoader(device="GPU", enable_gate_kernel=True, enable_multigpu_gate_kernel=False)
+        self._pipeline = []
 
     def _initial_circuit(self, circuit: Circuit, use_previous: bool):
         """ Initial the qubits, quantum gates and state vector by given quantum circuit. """
@@ -52,9 +53,9 @@ class ConstantStateVectorSimulator(BasicGPUSimulator):
         self._measure_result = defaultdict(list)
 
         if self._optimize:
-            self._gates = self._optimizor.optimize(circuit.gates)
+            self._pipeline = self._optimizor.optimize(circuit.gates)
         else:
-            self._gates = circuit.gates
+            self._pipeline = circuit.gates
 
         # Initial GateMatrix
         self._gate_matrix_prepare()
@@ -67,7 +68,7 @@ class ConstantStateVectorSimulator(BasicGPUSimulator):
         """ Initial qubits' vector states. """
         vector_size = 1 << int(self._qubits)
         # Special Case for no gate circuit
-        if len(self._gates) == 0:
+        if len(self._pipeline) == 0:
             self._vector = np.zeros(vector_size, dtype=self._precision)
             self._vector[0] = self._precision(1)
             return
@@ -95,15 +96,16 @@ class ConstantStateVectorSimulator(BasicGPUSimulator):
         self._initial_circuit(circuit, use_previous)
 
         with cp.cuda.Device(self._device_id):
-            self._exec(self._gates)
+            self._exec()
 
         if record_measured:
             return self.vector, self._measure_result
         else:
             return self.vector
 
-    def _exec(self, gates: list):
-        for gate in gates:
+    def _exec(self):
+        while self._pipeline:
+            gate = self._pipeline.pop(0)
             if isinstance(gate, BasicGate):
                 self.apply_gate(gate)
             elif isinstance(gate, Trigger):

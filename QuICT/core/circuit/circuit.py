@@ -15,7 +15,7 @@ from QuICT.core.utils import (
     CircuitInformation,
     matrix_product_to_circuit
 )
-from QuICT.core.operator import Trigger, CheckPoint, Operator
+from QuICT.core.operator import Trigger, CheckPoint, Operator, CheckPointChild
 
 
 # global circuit id count
@@ -338,9 +338,7 @@ class Circuit(object):
             gates(list<BasicGate>): the gate to be added to the circuit
         """
         position = -1
-        print(type(gates))
         if not isinstance(gates, list):
-            print("here")
             gate_cp: CheckPointChild = gates.checkpoint
             if gate_cp is not None:
                 position = gate_cp.find_position(self._checkpoints)
