@@ -10,7 +10,7 @@ try:
 except ImportError:
     cupy = None
 
-from QuICT.core import Trigger
+from QuICT.core.operator import Trigger
 from QuICT.core.utils import SPECIAL_GATE_SET, GateType
 
 
