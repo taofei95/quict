@@ -58,6 +58,6 @@ class CheckPointChild(Operator):
                 cp.position = self._shift
 
         if pos == -1:
-            raise ValueError("Cannot find parent checkpoint for current checkpointchild.") 
+            raise ValueError("Cannot find parent checkpoint for current checkpointchild.")
 
         return pos

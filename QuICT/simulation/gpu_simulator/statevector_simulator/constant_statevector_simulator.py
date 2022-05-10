@@ -45,18 +45,22 @@ class ConstantStateVectorSimulator(BasicGPUSimulator):
 
         # Initial simulator with limit_qubits
         self._algorithm = LinAlgLoader(device="GPU", enable_gate_kernel=True, enable_multigpu_gate_kernel=False)
-        self._pipeline = []
 
     def _initial_circuit(self, circuit: Circuit, use_previous: bool):
         """ Initial the qubits, quantum gates and state vector by given quantum circuit. """
         self._circuit = circuit
         self._qubits = int(circuit.width())
         self._measure_result = defaultdict(list)
+        self._pipeline = []
 
         if self._optimize:
             self._pipeline = self._optimizor.optimize(circuit.gates)
         else:
-            self._pipeline = deepcopy(circuit.gates)
+            for gate in circuit.gates:
+                if isinstance(gate, BasicGate):
+                    self._pipeline.append(deepcopy(gate))
+                else:
+                    self._pipeline.append(gate)
 
         # Initial GateMatrix
         self._gate_matrix_prepare()
@@ -118,7 +122,8 @@ class ConstantStateVectorSimulator(BasicGPUSimulator):
                     # Check for checkpoint
                     cp = mapping_cgate.checkpoint
                     position = 0 if cp is None else self._circuit.find_position(cp)
-                    self._pipeline = self._pipeline[:position] + deepcopy(mapping_cgate.gates) + self._pipeline[position:]
+                    self._pipeline = self._pipeline[:position] + deepcopy(mapping_cgate.gates) + \
+                        self._pipeline[position:]
 
             idx += 1
 
