@@ -181,7 +181,7 @@ class CompositeGate:
         self._pointer = -1
 
     def append(self, gate, is_extend: bool = False, insert_idx: int = -1):
-        from QuICT.core.operator import CheckPointChild
+        from QuICT.core.operator import CheckPointChild, Operator
 
         if isinstance(gate, BasicGate):
             self._append_gate(gate, insert_idx)
@@ -189,6 +189,12 @@ class CompositeGate:
                 self._pointer = -1
         elif isinstance(gate, CheckPointChild):
             self._check_point = gate
+        else:
+            assert isinstance(gate, Operator)
+            if insert_idx == -1:
+                self._gates.append(gate)
+            else:
+                self._gates.insert(insert_idx, gate)
 
     def left_extend(self, gates: list):
         for idx, gate in enumerate(gates):

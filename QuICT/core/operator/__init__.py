@@ -1,6 +1,6 @@
 from ._operator import Operator
 from .trigger import Trigger
-from .data_switch import DataSwitch
+from .data_switch import DataSwitch, DataSwitchType
 from .device_trigger import DeviceTrigger
-from .multiply import Multiply
+from .special import Multiply, SpecialGate
 from .check_point import CheckPoint, CheckPointChild

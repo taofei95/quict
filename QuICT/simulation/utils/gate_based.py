@@ -10,7 +10,7 @@ try:
 except ImportError:
     cupy = None
 
-from QuICT.core.operator import Trigger
+from QuICT.core.operator import Operator
 from QuICT.core.utils import SPECIAL_GATE_SET, GateType
 
 
@@ -48,7 +48,7 @@ class GateMatrixs:
 
     def build(self, gates):
         for gate in gates:
-            if isinstance(gate, Trigger):
+            if isinstance(gate, Operator):
                 continue
 
             if gate.type in SPECIAL_GATE_SET and gate.type != GateType.unitary:

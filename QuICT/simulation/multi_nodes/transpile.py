@@ -1,8 +1,8 @@
 import numpy as np
 
-from QuICT.core import Circuit, DataSwitchType, DataSwitch
+from QuICT.core import Circuit
 from QuICT.core.gate import *
-from QuICT.core.circuit.circuit_extend import DeviceTrigger, Multiply
+from QuICT.core.operator import DataSwitch, DataSwitchType, DeviceTrigger, Multiply, SpecialGate
 from QuICT.qcda.synthesis import GateDecomposition
 
 
@@ -25,7 +25,7 @@ class Transpile:
         assert 2 ** self._split_qb_num == self._ndev
 
     def _transpile(self, circuit: Circuit, split_qubits: list):
-        t_qubits = circuit.qubits - self._split_qb_num
+        t_qubits = circuit.width() - self._split_qb_num
         transpiled_circuit = Circuit(t_qubits)
         for gate in circuit.gates:
             if gate.type in [GateType.id, GateType.barrier]:
@@ -34,9 +34,14 @@ class Transpile:
             gate_args = gate.cargs + gate.targs
             gate & self._args_adjust(gate_args, split_qubits)
             if len(set(gate_args) & set(split_qubits)) == 0:
-                gate | transpiled_circuit
+                if gate.matrix_type == MatrixType.special:
+                    SpecialGate(gate.type, gate_args) | transpiled_circuit
+                else:
+                    gate | transpiled_circuit
+
                 continue
 
+            # Deal with gate has qubits in splited qubits
             if len(gate_args) == 1:
                 device_trigger = self._single_qubit_gate_transpile(gate, split_qubits, t_qubits)
             elif len(gate_args) == 2:
@@ -45,6 +50,8 @@ class Transpile:
                 raise ValueError("Only supportted transpilt for gate less than 2 qubits.")
 
             device_trigger | transpiled_circuit
+
+        return transpiled_circuit
 
     def _single_qubit_gate_transpile(
         self,
@@ -80,17 +87,9 @@ class Transpile:
             # Controlled 1-qubit gates [Z, U1, T, T_dagger, S, S_dagger]
             elif matrix_type == MatrixType.control:
                 if _0_1:
-                    # TODO: Add multiply operator for circuit
                     Multiply(gate.matrix[1, 1]) | splited_cgate
             else:
-                continue
-                # gate_type = gate.type
-                # if gate_type == GateType.measure:
-                #     # TODO: special measure operator
-                #     MeasureDev(_0_1) | splited_cgate
-                # elif gate_type == GateType.reset:
-                #     # TODO: special reset operator
-                #     ResetDev(_0_1) | splited_cgate
+                SpecialGate(gate.type, gate_arg, 1 << split_idx) | splited_cgate
 
             dev_mapping[index] = splited_cgate
 
