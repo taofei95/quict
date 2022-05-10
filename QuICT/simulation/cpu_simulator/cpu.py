@@ -217,7 +217,13 @@ class CircuitSimulator:
             stacklevel=1
         )
         qubits = circuit.width()
-        gate_set = deepcopy(circuit.gates)
+        gate_set = []
+        for gate in circuit.gates:
+            if isinstance(gate, BasicGate):
+                gate_set.append(deepcopy(gate))
+            else:
+                gate_set.append(gate)
+
         gate_desc_vec: List[GateDescription] = []
         idx = 0
         while gate_set:
@@ -238,7 +244,7 @@ class CircuitSimulator:
                 if cgate is not None:
                     cp = cgate.checkpoint
                     position = 0 if cp is None else circuit.find_position(cp) - idx
-                    gate_set = gate_set[:position] + deepcopy(cgate.gates) + gate_set[position:] 
+                    gate_set = gate_set[:position] + deepcopy(cgate.gates) + gate_set[position:]
             else:
                 gate_desc_vec.extend(gate_to_desc(gate))
 
