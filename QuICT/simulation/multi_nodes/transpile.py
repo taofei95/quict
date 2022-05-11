@@ -32,7 +32,7 @@ class Transpile:
                 continue
 
             gate_args = gate.cargs + gate.targs
-            gate & self._args_adjust(gate_args, split_qubits)
+            gate = gate & self._args_adjust(gate_args, split_qubits)
             if len(set(gate_args) & set(split_qubits)) == 0:
                 if gate.matrix_type == MatrixType.special:
                     SpecialGate(gate.type, gate_args) | transpiled_circuit
@@ -102,7 +102,7 @@ class Transpile:
         max_qubits: int
     ):
         gate_args, matrix_type = gate.cargs + gate.targs, gate.matrix_type
-        union_args = set(gate_args) & set(split_qubits)
+        union_args = list(set(gate_args) & set(split_qubits))
         double_exceed, outside_index = False, False
         if len(union_args) == 2:
             double_exceed = True
@@ -240,7 +240,7 @@ class Transpile:
 
             dev_mapping[index] = splited_cgate
 
-        return dev_mapping
+        return DeviceTrigger(dev_mapping)
 
     def _args_adjust(self, gate_args, split_args):
         res = gate_args[:]

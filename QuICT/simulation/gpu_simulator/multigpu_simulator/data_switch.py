@@ -9,6 +9,10 @@ class DataSwitcher:
         proxy (Proxy): The NCCL Communicator.
         qubits (int): The number of qubits.
     """
+    @property
+    def id(self):
+        return self._id
+
     def __init__(self, proxy):
         self._proxy = proxy
         self._id = proxy.dev_id
