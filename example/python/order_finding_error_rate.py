@@ -15,12 +15,6 @@ import logging
 
 import QuICT
 print(QuICT.__file__)
-from QuICT.simulation.gpu_simulator import ConstantStateVectorSimulator
-simulator = ConstantStateVectorSimulator(
-    precision="double",
-    gpu_device_id=0,
-    sync=True
-)
 
 def naive_order_finding(a, N):
     for i in range(1,N):
@@ -43,7 +37,7 @@ for mode in methods.keys():
             if ref_order == 0:
                 continue
             print(f"[{mode}]testing [{a:3},{N:3}]...", end="")
-            order = methods[mode](a=a,N=N,simulator=ConstantStateVectorSimulator())
+            order = methods[mode](a=a,N=N)
             all += 1
             if order != ref_order:
                 error += 1

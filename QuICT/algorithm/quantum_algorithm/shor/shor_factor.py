@@ -7,15 +7,18 @@ from typing import List, Tuple
 
 from QuICT.core import Circuit
 from QuICT.core.gate import *
+from QuICT.core.operator import Trigger
 from .utility import *
 
 from QuICT.simulation.cpu_simulator import CircuitSimulator
 from QuICT.simulation import Simulator
 
+from .BEA_zip import construct_circuit as BEA_zip_circuit
 from .BEA_zip import order_finding as BEA_zip_run
 from .BEA import construct_circuit as BEA_circuit
 from .BEA import order_finding as BEA_run
 
+from .HRS_zip import construct_circuit as HRS_zip_circuit
 from .HRS_zip import order_finding as HRS_zip_run
 from .HRS import construct_circuit as HRS_circuit
 from .HRS import order_finding as HRS_run
@@ -31,8 +34,8 @@ class ShorFactor:
     _CIRCUIT_METHOD_OF_MODE = {
         "BEA":BEA_circuit, 
         "HRS":HRS_circuit, 
-        "BEA_zip":None, 
-        "HRS_zip":None}
+        "BEA_zip":BEA_zip_circuit, 
+        "HRS_zip":HRS_zip_circuit}
 
     # add a, N here
     def __init__(self, mode: str, N: int, eps: float = 1 / 10, max_rd: int = 2) -> None:
@@ -57,7 +60,7 @@ class ShorFactor:
             raise ValueError(f"{self.mode} mode has no circuit() method.")
         return ShorFactor._CIRCUIT_METHOD_OF_MODE[self.mode](a, self.N, self.eps)
 
-    def run(self, simulator: Simulator = CircuitSimulator(), circuit: Circuit = None, indices: List[int] = None) -> int:
+    def run(self, simulator: Simulator = CircuitSimulator(), circuit: Circuit = None, indices: List = None) -> int:
         # check if input is prime (using MillerRabin in klog(N), k is the number of rounds to run MillerRabin)
         if miller_rabin(self.N):
             logging.info("N does not pass miller rabin test, may be a prime number")
@@ -94,7 +97,13 @@ class ShorFactor:
                 r = ShorFactor._RUN_METHOD_OF_MODE[self.mode](a=a,N=self.N,simulator=simulator)
             else:
                 simulator.run(circuit)
-                phi = int(circuit[indices])<<len(indices)
+                if len(indices)>0 and type(indices[0])==int:
+                    phi = int(circuit[indices])/(1<<len(indices))
+                elif len(indices)>0 and type(indices[0])==Trigger:
+                    phi = eval("0b"+"".join([str(trig.measured[0]) for trig in indices]))/(1<<len(indices))
+                else:
+                    raise ValueError("wrong indices")
+                logging.info(f'phi: {phi:4.3f}')
                 r = Fraction(phi).limit_denominator(self.N - 1).denominator
 
             if r == 0: # no order found

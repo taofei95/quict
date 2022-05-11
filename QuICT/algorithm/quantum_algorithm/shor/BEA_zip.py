@@ -15,11 +15,77 @@ from QuICT.core import Circuit
 from QuICT.core.gate import *
 from QuICT.qcda.synthesis.arithmetic.bea import *
 from QuICT.algorithm import Algorithm
+from QuICT.core.operator import Trigger, CheckPoint, CheckPointChild
 from .utility import *
 
 from QuICT.simulation.cpu_simulator import CircuitSimulator
 from QuICT.simulation import Simulator
 
+def construct_circuit(a: int, N: int, eps: float = 1 / 10):
+    # phase estimation procedure
+    n = int(np.ceil(np.log2(N + 1)))
+    t = int(2 * n + 1 + np.ceil(np.log(2 + 1 / (2 * eps))))
+    logging.info(f'\tcircuit construction begin: circuit: n = {n} t = {t}')
+
+    circuit = Circuit(2 * n + 3)
+    b_reg = [i for i in range(n + 1)]
+    x_reg = [i for i in range(n + 1, 2 * n + 1)]
+    trickbit = [2 * n + 1]
+    qreg_low = [2 * n + 2]
+
+    # cgates[measured qubit index][added gate index][measured result]
+    cgates = [
+        [[CompositeGate() for measured in range(2)] for j in range(t+1)] for i in range(t)
+    ]
+    # triggers[measured qubit index][added gate index]
+    triggers = [[
+            Trigger(
+                1, [cgates[i][j][measured] for measured in range(2)],True
+            ) for j in range(t+1)
+        ] for i in range(t)
+    ]
+    triggers_reset = list(range(t))
+    # checkpoints[measured qubit index]
+    checkpoints = [CheckPoint() for i in range(t)]
+    checkpoints_reset = [CheckPoint() for i in range(t)]
+
+    # triggers!!!
+    for k in range(t): # end at k-th checkpoints
+        for i in range(k): # start at i-th qubits (compressed)
+            cpc = checkpoints[k].get_child()
+            Rz(-np.pi / (1 << (k - i))) | cgates[i][k-1-i][1](trickbit)
+            cpc | cgates[i][k-1-i][1]
+    # triggers for reset!!!
+    for i in range(t):
+        cgate = CompositeGate()
+        X | cgate(trickbit)
+        triggers_reset[i] = Trigger(1, [CompositeGate(), cgate], True)
+
+    # subcircuit: init \ket{1}\ket{0}
+    X | circuit(x_reg[n - 1])
+    for k in range(t):
+        # subcircuit CUa
+        H | circuit(trickbit)
+        gate_pow = pow(a, 1 << (t - 1 - k), N)
+        BEACUa.execute(n, gate_pow, N) | circuit
+        # subcircuit: semi-classical QFT
+        checkpoints[k] | circuit
+        H | circuit(trickbit)
+        # subcircuit: measure & reset trickbit
+        for i in range(t-k):
+            triggers[k][i] | circuit(trickbit)
+        triggers_reset[k] | circuit(trickbit)
+    return circuit, [triggers[i][0] for i in range(t)][::-1]
+
+
+def order_finding_with_circuit(a: int, N: int, eps: float = 1 / 10, simulator: Simulator = CircuitSimulator()):
+    circ, indices = construct_circuit(a,N,eps)
+    simulator.run(circ)
+    phi = eval("0b"+"".join([str(trig.measured[0]) for trig in indices]))/(1<<len(indices))
+    r = Fraction(phi).limit_denominator(N - 1).denominator
+    logging.info(phi)
+    logging.info(r)
+    return r
 
 def order_finding(a: int, N: int, eps: float = 1 / 10, simulator: Simulator = CircuitSimulator()):
     """

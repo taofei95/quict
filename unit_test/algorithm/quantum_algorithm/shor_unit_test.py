@@ -2,23 +2,27 @@ from math import gcd
 import random
 from QuICT.algorithm.quantum_algorithm import ShorFactor
 from QuICT.algorithm.quantum_algorithm.shor.BEA_zip import order_finding as BEA_order_finding
+from QuICT.algorithm.quantum_algorithm.shor.BEA_zip import order_finding_with_circuit as BEA_order_finding_w
 from QuICT.algorithm.quantum_algorithm.shor.HRS_zip import order_finding as HRS_order_finding
+# from QuICT.algorithm.quantum_algorithm.shor.BEA_zip import order_finding_with_circuit as BEA_order_finding_w
 import logging
 
 from QuICT.simulation.gpu_simulator import ConstantStateVectorSimulator
-simulator = ConstantStateVectorSimulator(
-    precision="double",
-    gpu_device_id=0,
-    sync=True
-)
+from QuICT.simulation.cpu_simulator.cpu import CircuitSimulator
+simulator = CircuitSimulator()
 number_list = [
     6, 8, 9, 10,
     12, 14, 15, 16, 18, 20,
     21, 22, 24, 25, 26, 27,
 ]
-order_finding_test_modes = {"BEA":BEA_order_finding,"HRS":HRS_order_finding}
+order_finding_test_modes = {
+    "BEA":BEA_order_finding,
+    "HRS":HRS_order_finding,
+    "BEA_circ":BEA_order_finding_w,
+    # "HRS_circ":HRS_order_finding_w
+}
 run_test_modes = {"BEA_zip", "HRS_zip"}
-circuit_test_modes = {"BEA", "HRS"}
+circuit_test_modes = {"BEA_zip", "HRS_zip", "BEA", "HRS"}
 
 def test_OrderFinding():
     for mode in order_finding_test_modes.keys():
