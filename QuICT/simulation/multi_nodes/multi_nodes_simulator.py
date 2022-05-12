@@ -4,23 +4,21 @@
 # @Author  : Kaiqi Li
 # @File    : proxy_simulator
 import random
-from collections import defaultdict
-import numpy as np
-from QuICT.simulation.cpu_simulator.cpu import CircuitSimulator
-from QuICT.simulation.gpu_simulator.statevector_simulator.constant_statevector_simulator import ConstantStateVectorSimulator
 import cupy as cp
+import numpy as np
+
+from QuICT.simulation.cpu_simulator import CircuitSimulator
+from QuICT.simulation.gpu_simulator import ConstantStateVectorSimulator
 
 from QuICT.core import Circuit
-from QuICT.core.gate import *
-from QuICT.simulation.gpu_simulator import BasicGPUSimulator
+from QuICT.core.gate import BasicGate, GateType
+from QuICT.core.operator import *
 from QuICT.utility import Proxy
-from QuICT.ops.utils import LinAlgLoader
-from QuICT.simulation.utils import GateGroup, GATE_TYPE_to_ID, MATRIX_INDEXES
 from QuICT.simulation.gpu_simulator.multigpu_simulator.data_switch import DataSwitcher
-from QuICT.qcda.synthesis import GateDecomposition
+from QuICT.ops.gate_kernel import Device_Prob_Calculator
 
 
-class MultiStateVectorSimulator:
+class MultiNodesSimulator:
     """
     The simulator which using multi-GPUs.
 
@@ -61,14 +59,45 @@ class MultiStateVectorSimulator:
         qubits = circuit.width()
         # initial state vector in simulator
         self.simulator.initial_state_vector(qubits)
-
-        with cp.cuda.Device(self._device_id):
-            for gate in self._gates:
-                self.apply_gate(gate)
+        self._pipeline = circuit.gates
+        while self._pipeline:
+            op = self._pipeline.pop(0)
+            if isinstance(op, BasicGate):
+                self.simulator.apply_gate(op)
+            elif isinstance(op, DeviceTrigger):
+                related_gate = op.mapping(self.proxy.id)
+                self._pipeline = related_gate.gates + self._pipeline
+            elif isinstance(op, DataSwitch):
+                self.proxy(op, self.vector)
+            elif isinstance(op, Multiply):
+                self.simulator.apply_multiply(op.value)
+            elif isinstance(op, SpecialGate):
+                # TODO: apply_specialgate in here
+                self.apply_specialgate(op)
+            else:
+                raise TypeError("Unsupportted operator in Multi-Nodes Simulator.")
 
         return self.simulator.vector
 
-    def _measure_operation(self, index):
+    def apply_specialgate(self, op: SpecialGate):
+        if self.proxy.id & op.proxy_idx:
+            prob = 0
+        else:
+            # prob calculation for all switch
+            prob = Device_Prob_Calculator(self.vector)
+
+        total_prob = self.proxy.add_prob(prob)
+        total_prob = total_prob.get()
+        
+        if op.proxy_idx != -1:
+            if op.type == GateType.measure:
+                self._apply_measure(op.proxy_idx, total_prob)
+            elif op.type == GateType.reset:
+                self._apply_reset(op.proxy_idx, total_prob)
+        else:
+            self.simulator.apply_specialgate(op.targ, op.type, total_prob)
+
+    def _apply_measure(self, proxy_idx: int, prob: float):
         """ The algorithm for the Measure gate.
 
         Args:
@@ -77,93 +106,40 @@ class MultiStateVectorSimulator:
         Returns:
             [bool]: state 0 or state 1
         """
-        default_parameters = (self._vector, self.total_qubits, self._sync)
-
-        # Calculate the device's probability.
-        prob_result = self._algorithm.Device_Prob_Calculator(
-            index,
-            self._vector,
-            self.qubits,
-            self.proxy.dev_id
-        )
-
-        # Combined the probability for all device
-        total_prob = self._data_switcher.add_prob(prob_result)
         _0 = random.random()        # random mistake
-        _1 = _0 > total_prob        # result in state 0 or state 1
-        prob = total_prob.get()
+        if _0 > prob:  # result in state 1
+            alpha = np.float32(1 / np.sqrt(1 - prob)) if self.simulator._precision == np.complex64 else \
+                np.float64(1 / np.sqrt(1 - prob))
 
-        if index >= self.qubits:    # target index exceed the limit
-            if _1:  # result in state 1
-                alpha = np.float32(1 / np.sqrt(1 - prob)) if self._precision == np.complex64 else \
-                    np.float64(1 / np.sqrt(1 - prob))
+            if self.proxy.id & proxy_idx:
+                self.simulator.apply_multiply(alpha)
+            else:
+                self.vector = cp.zeros_like(self.vector)
+        else:       # result in state 0
+            alpha = np.float32(1 / np.sqrt(prob)) if self.simulator._precision == np.complex64 else \
+                np.float64(1 / np.sqrt(prob))
 
-                if self.proxy.dev_id & (1 << (index - self.qubits)):
-                    self._algorithm.Float_Multiply(
-                        alpha,
-                        *default_parameters
-                    )
-                else:
-                    self._vector = cp.zeros_like(self._vector)
-            else:       # result in state 0
-                alpha = np.float32(1 / np.sqrt(prob)) if self._precision == np.complex64 else \
-                    np.float64(1 / np.sqrt(prob))
+            if self.proxy.id & proxy_idx:
+                self.vector = cp.zeros_like(self.vector)
+            else:
+                self.simulator.apply_multiply(alpha)
 
-                if self.proxy.dev_id & (1 << (index - self.qubits)):
-                    self._vector = cp.zeros_like(self._vector)
-                else:
-                    self._algorithm.Float_Multiply(
-                        alpha,
-                        *default_parameters
-                    )
-        else:
-            self._algorithm.MeasureGate_Apply(
-                index,
-                *default_parameters,
-                multigpu_prob=prob
-            )
+        return _0 > prob
 
-        return _1
-
-    def _reset_operation(self, index):
+    def _apply_reset(self, proxy_idx: int, prob: float):
         """ The algorithm for the Reset gate.
 
         Args:
             index (int): The target qubit of the applied quantum gate.
         """
-        default_parameters = (self._vector, self.total_qubits, self._sync)
-
-        # Calculate the device's probability
-        prob_result = self._algorithm.Device_Prob_Calculator(
-            index,
-            self._vector,
-            self.qubits,
-            self.proxy.dev_id
-        )
-
-        total_prob = self._data_switcher.add_prob(prob_result)
-        prob = total_prob.get()
-
-        if index >= self.qubits:
-            alpha = np.float64(np.sqrt(prob))
-
-            if alpha < 1e-6:
-                destination = self.proxy.dev_id ^ (1 << (index - self.qubits))
-                if not (self.proxy.dev_id & (1 << (index - self.qubits))):
-                    self._vector = cp.zeros_like(self._vector)
-                    self._data_switcher.all_switch(self._vector, destination)
-            else:
-                if self.proxy.dev_id & (1 << (index - self.qubits)):
-                    self._vector = cp.zeros_like(self._vector)
-                else:
-                    alpha = np.float64(1 / alpha)
-                    self._algorithm.Float_Multiply(
-                        alpha,
-                        *default_parameters
-                    )
+        alpha = np.float64(np.sqrt(prob))
+        if alpha < 1e-6:
+            destination = self.proxy.id ^ proxy_idx
+            if not (self.proxy.id & proxy_idx):
+                self.vector = cp.zeros_like(self.vector)
+                self.proxy.all_switch(self.vector, destination)
         else:
-            self._algorithm.ResetGate_Apply(
-                index,
-                *default_parameters,
-                multigpu_prob=prob
-            )
+            if self.proxy.id & proxy_idx:
+                self.vector = cp.zeros_like(self.vector)
+            else:
+                self.simulator.apply_multiply(np.float64(1 / alpha))

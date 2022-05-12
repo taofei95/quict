@@ -1,6 +1,8 @@
 import numpy as np
 import cupy as cp
 
+from QuICT.core.operator import DataSwitch, DataSwitchType
+
 
 class DataSwitcher:
     """ A class of data switch functions using by multi-GPU simulator.
@@ -16,6 +18,17 @@ class DataSwitcher:
     def __init__(self, proxy):
         self._proxy = proxy
         self._id = proxy.dev_id
+
+    def __call__(self, op: DataSwitch, vector):
+        destination = op.destination
+        if op.type == DataSwitchType.all:
+            self.all_switch(vector, destination)
+        elif op.type == DataSwitchType.half:
+            self.half_switch(vector, destination)
+        elif op.type == DataSwitchType.ctarg:
+            self.ctargs_switch(vector, destination, op.switch_condition)
+        else:
+            raise TypeError("unsupportted data switch type.")
 
     def _switch(self, vector, destination: int):
         """ Based data switch function, swithc the data between self and destination.

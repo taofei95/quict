@@ -1528,6 +1528,17 @@ MeasureGate_prop = cp.ReductionKernel(
 )
 
 
+Device_Prob_Calculator = cp.ReductionKernel(
+    'T x',
+    'T y',
+    'x',
+    'a + b',
+    'y = abs(a)*abs(a)',
+    '0',
+    'Device_Prob_Calculator'
+)
+
+
 MeasureGate0_single_kernel = cp.RawKernel(r'''
     #include <cupy/complex.cuh>
     extern "C" __global__
