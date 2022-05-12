@@ -10,37 +10,36 @@ from QuICT.core.gate import Rz, sqiSwap
 
 import numpy as np
 
-class Ansatz(object):
-    """ ansatz used to generate composite gates"""
+# class Ansatz(object):
+#     """ ansatz used to generate composite gates"""
 
-    def build_gate(self, *args):
-        """ 
-        build a compositegate from a list of parameters
+#     def build_gate(self, *args):
+#         """ 
+#         build a compositegate from a list of parameters
 
-        Args:
-            args(tuple): parameters of the ansatz builder
+#         Args:
+#             args(tuple): parameters of the ansatz builder
         
-        Returns:
-            (CompositeGate): a composite gate built from the given arguments
+#         Returns:
+#             (CompositeGate): a composite gate built from the given arguments
 
-        """
-        ...
+#         """
+#         ...
     
-    def build_circuit(self, *args):
-        """ 
-        build a quantum circuit from a list of parameters
+#     def build_circuit(self, *args):
+#         """ 
+#         build a quantum circuit from a list of parameters
 
-        Args:
-            args(tuple): parameters of the ansatz builder
+#         Args:
+#             args(tuple): parameters of the ansatz builder
         
-        Returns:
-            (QuantumCircuit)
+#         Returns:
+#             (QuantumCircuit)
 
-        """
-        ...
+#         """
+#         ...
     
-
-class Thouless(Ansatz):
+class Thouless():
     """ Thouless ansatz implemented from 
 
     Hartree-Fock on a superconducting qubit quantum computer[Google Inc.]
@@ -61,7 +60,7 @@ class Thouless(Ansatz):
         
         return cgate
 
-    def build_circuit(self, n, angles, num_electron_pairs, num_orbits):
+    def build_circuit(n, angles, num_electron_pairs, num_orbits):
         '''Quantum Circuits with n qubits and C(n 2)  R(theta)[p,q] gates
         
         Args:
@@ -76,13 +75,13 @@ class Thouless(Ansatz):
         # circuits with n qubits
         circuit = Circuit(n)
 
-        gate = self.build_gate(n, angles, num_electron_pairs, num_orbits)
+        gate = Thouless.build_gate(n, angles, num_electron_pairs, num_orbits)
 
         gate | circuit
         
         return circuit
 
-    def build_gate(self, n, angles, num_electron_pairs, num_orbits):
+    def build_gate(n, angles, num_electron_pairs, num_orbits):
         """ 
         build a compositegate from a list of parameters
 
@@ -96,7 +95,8 @@ class Thouless(Ansatz):
         # circuits with n qubits
         ansatz = CompositeGate()
 
-        R = self.modified_Givens_rotation
+        R = Thouless.modified_Givens_rotation
+        # R = CCRz
 
         with ansatz:
             # add gates to the circuits in parallelization
@@ -126,5 +126,5 @@ class Thouless(Ansatz):
 
 # test functions
 if __name__ =='__main__':
-    ansatz = Thouless.build_circuit(9, [i for i in range(40)])
+    ansatz = Thouless.build_circuit(9, [i for i in range(40)], 4, 5)
     ansatz.draw()
