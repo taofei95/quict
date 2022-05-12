@@ -78,15 +78,6 @@ def construct_circuit(a: int, N: int, eps: float = 1 / 10):
     return circuit, [triggers[i][0] for i in range(t)][::-1]
 
 
-def order_finding_with_circuit(a: int, N: int, eps: float = 1 / 10, simulator: Simulator = CircuitSimulator()):
-    circ, indices = construct_circuit(a,N,eps)
-    simulator.run(circ)
-    phi = eval("0b"+"".join([str(trig.measured[0]) for trig in indices]))/(1<<len(indices))
-    r = Fraction(phi).limit_denominator(N - 1).denominator
-    logging.info(phi)
-    logging.info(r)
-    return r
-
 def order_finding(a: int, N: int, eps: float = 1 / 10, simulator: Simulator = CircuitSimulator()):
     """
     The (2n+3)-qubit circuit used in the Shor algorithm is designed by \
@@ -115,17 +106,17 @@ def order_finding(a: int, N: int, eps: float = 1 / 10, simulator: Simulator = Ci
         H | circuit(trickbit)
         gate_pow = pow(a, 1 << (t - 1 - k), N)
         BEACUa.execute(n, gate_pow, N) | circuit
-        amp = simulator.run(circuit, use_previous=True)
+        amp = simulator.run(circuit, True)
         # subcircuit: semi-classical QFT
         circuit = Circuit(2 * n + 3)
         for i in range(k):
             if trickbit_store[i]:
                 Rz(-pi / (1 << (k - i))) | circuit(trickbit)
         H | circuit(trickbit)
-        amp = simulator.run(circuit, use_previous=True)
+        amp = simulator.run(circuit, True)
         circuit = Circuit(2 * n + 3)
         for idx in (b_reg + trickbit + qreg_low): Measure | circuit(idx)
-        amp = simulator.run(circuit, use_previous=True)
+        amp = simulator.run(circuit, True)
         # subcircuit: measure & reset trickbit
         assert int(circuit[qreg_low]) == 0 and int(circuit[b_reg]) == 0
         logging.info(f'\tthe {k}th trickbit measured to be {int(circuit[trickbit])}')
@@ -133,7 +124,7 @@ def order_finding(a: int, N: int, eps: float = 1 / 10, simulator: Simulator = Ci
         if trickbit_store[k] == 1:
             circuit = Circuit(2 * n + 3)
             X | circuit(trickbit)
-            simulator.run(circuit, use_previous=True)
+            simulator.run(circuit, True)
 
     # for idx in x_reg: Measure | circuit(idx)
     trickbit_store.reverse()
