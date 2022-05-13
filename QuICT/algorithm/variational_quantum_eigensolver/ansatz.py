@@ -138,8 +138,3 @@ class Thouless():
                     i -= 1
             
         return ansatz
-
-# test
-if __name__ =='__main__':
-    ansatz = Thouless.build_circuit(9, [i for i in range(40)], 4, 5)
-    ansatz.draw()
