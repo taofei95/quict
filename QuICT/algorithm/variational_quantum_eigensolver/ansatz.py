@@ -6,7 +6,7 @@
 
 from QuICT.core.gate import CompositeGate
 from QuICT.core import Circuit
-from QuICT.core.gate import Rz, sqiSwap
+from QuICT.core.gate import Rz, sqiSwap, X
 
 import numpy as np
  
@@ -113,25 +113,28 @@ class Thouless():
                 i = 0
 
                 while i < n - 1:
+                    layer = i + 1 # number of layer
+                    gate = 0 # number of gates
                     index = i
                     while index >= 0:
                         k = n - index - 2
-                        if  (k in modified or k + 1 in modified): # if any qubit is modified
-                            print("first add ", k)
+                        if  (k in modified or k + 1 in modified) and gate < layer and gate < n - min(n, num_electron_pairs): # if any qubit is modified
                             modified[k] = 1
                             modified[k+1] = 1
                             R(angles.pop()) & [k, k + 1]
+                            gate += 1
                         index -= 2
                     i += 1
 
-                print("i = ", i)
                 while i > 2:
+                    gate = 0
+                    layer = i - min(n, num_electron_pairs)
                     index = i-1
-                    while index >= 2 :
+                    while index >= 2 and gate < min(n, num_electron_pairs) and gate < layer:
                         k = n - index - 2
-                        print("last", k)
                         R(angles.pop()) & [k, k + 1]
                         index -= 2
+                        gate += 1
                     i -= 1
             
         return ansatz
