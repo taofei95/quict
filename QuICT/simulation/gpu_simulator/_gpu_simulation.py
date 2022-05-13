@@ -31,11 +31,13 @@ class BasicGPUSimulator(object):
         self._device_id = gpu_device_id
         self._sync = sync
         self._vector = None
+        self._using_gate_matrix = False
 
     def _gate_matrix_prepare(self):
         # Pretreatment gate matrixs optimizer
         self.gateM_optimizer = GateMatrixs(self._precision, self._device_id)
         self.gateM_optimizer.build(self._pipeline)
+        self._using_gate_matrix = True
 
     @property
     def circuit(self):
@@ -61,4 +63,7 @@ class BasicGPUSimulator(object):
         pass
 
     def get_gate_matrix(self, gate):
-        return self.gateM_optimizer.get_target_matrix(gate)
+        if self._using_gate_matrix:
+            return self.gateM_optimizer.get_target_matrix(gate)
+        else:
+            return cp.array(gate.matrix, dtype=self._precision)

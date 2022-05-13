@@ -68,18 +68,14 @@ class ConstantStateVectorSimulator(BasicGPUSimulator):
 
         # Initial vector state
         if not use_previous or self._vector is None:
-            self._initial_vector_state()
+            self.initial_state_vector()
 
-    def _initial_vector_state(self):
+    def initial_state_vector(self, qubits: int = 0):
         """ Initial qubits' vector states. """
-        vector_size = 1 << int(self._qubits)
-        # Special Case for no gate circuit
-        if len(self._pipeline) == 0:
-            self._vector = np.zeros(vector_size, dtype=self._precision)
-            self._vector[0] = self._precision(1)
-            return
+        if qubits != 0:
+            self._qubits = qubits
 
-        # Initial qubit's states
+        vector_size = 1 << int(self._qubits)
         self._vector = cp.zeros(vector_size, dtype=self._precision)
         self._vector.put(0, self._precision(1))
 
@@ -401,6 +397,9 @@ class ConstantStateVectorSimulator(BasicGPUSimulator):
                 *default_parameters,
                 multigpu_prob=prob
             )
+            if prob is not None:
+                return result
+
             self.circuit.qubits[index].measured = int(result)
             self._measure_result[index].append(result)
         elif type == GateType.reset:

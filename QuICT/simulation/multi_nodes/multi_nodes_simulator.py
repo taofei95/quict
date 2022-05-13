@@ -36,12 +36,12 @@ class MultiNodesSimulator:
     def __init__(
         self,
         proxy: Proxy,
-        device: str,
+        device: str = "CPU",
         **options
     ):
-        self.proxy = DataSwitcher(proxy)
+        self.proxy = None # DataSwither(proxy)
         self.simulator = CircuitSimulator(options) if device == "CPU" else \
-            ConstantStateVectorSimulator(options)
+            ConstantStateVectorSimulator()
 
     def run(
         self,
@@ -72,7 +72,6 @@ class MultiNodesSimulator:
             elif isinstance(op, Multiply):
                 self.simulator.apply_multiply(op.value)
             elif isinstance(op, SpecialGate):
-                # TODO: apply_specialgate in here
                 self.apply_specialgate(op)
             else:
                 raise TypeError("Unsupportted operator in Multi-Nodes Simulator.")
