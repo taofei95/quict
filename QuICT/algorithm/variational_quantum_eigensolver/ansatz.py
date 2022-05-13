@@ -9,7 +9,7 @@ from QuICT.core import Circuit
 from QuICT.core.gate import Rz, sqiSwap
 
 import numpy as np
-
+ 
 # class Ansatz(object):
 #     """ ansatz used to generate composite gates"""
 
@@ -38,7 +38,7 @@ import numpy as np
 
 #         """
 #         ...
-    
+ 
 class Thouless():
     """ Thouless ansatz implemented from 
 
@@ -60,14 +60,13 @@ class Thouless():
         
         return cgate
 
-    def build_circuit(n, angles, num_electron_pairs, num_orbits):
+    def build_circuit(n, angles, num_electron_pairs):
         '''Quantum Circuits with n qubits and C(n 2)  R(theta)[p,q] gates
         
         Args:
-            n(int): number of quantum qubits
+            n(int): number of orbits (e.g. quantum qubits)
             angles(List[float]): a list with C(N 2) parameter
             num_electron_pairs(int): number of electron pairs
-            num_orbits(int): number of orbits
 
         Returns:
             Circuit: Quantum Circuits with N qubits and C(N 2) R gates
@@ -75,13 +74,13 @@ class Thouless():
         # circuits with n qubits
         circuit = Circuit(n)
 
-        gate = Thouless.build_gate(n, angles, num_electron_pairs, num_orbits)
+        gate = Thouless.build_gate(n, angles, num_electron_pairs)
 
         gate | circuit
         
         return circuit
 
-    def build_gate(n, angles, num_electron_pairs, num_orbits):
+    def build_gate(n, angles, num_electron_pairs):
         """ 
         build a compositegate from a list of parameters
 
@@ -96,9 +95,15 @@ class Thouless():
         ansatz = CompositeGate()
 
         R = Thouless.modified_Givens_rotation
-        # R = CCRz
+
+        modified = {}
 
         with ansatz:
+            temp = num_electron_pairs
+            while temp > 0:
+                X & [temp - 1]
+                modified[temp - 1] = 1
+                temp -= 1
             # add gates to the circuits in parallelization
             if(n == 1):
                 return ansatz
@@ -110,21 +115,28 @@ class Thouless():
                 while i < n - 1:
                     index = i
                     while index >= 0:
-                        R(angles.pop()) & [n - index - 2, n - index - 1]
+                        k = n - index - 2
+                        if  (k in modified or k + 1 in modified): # if any qubit is modified
+                            print("first add ", k)
+                            modified[k] = 1
+                            modified[k+1] = 1
+                            R(angles.pop()) & [k, k + 1]
                         index -= 2
                     i += 1
 
-                while i > 0:
+                print("i = ", i)
+                while i > 2:
                     index = i-1
-                    while index >= 0:
-                        R(angles.pop()) & [n - index - 2, n - index - 1]
+                    while index >= 2 :
+                        k = n - index - 2
+                        print("last", k)
+                        R(angles.pop()) & [k, k + 1]
                         index -= 2
                     i -= 1
             
         return ansatz
 
-
-# test functions
+# test
 if __name__ =='__main__':
     ansatz = Thouless.build_circuit(9, [i for i in range(40)], 4, 5)
     ansatz.draw()
