@@ -1,3 +1,5 @@
+from itertools import chain
+
 import numpy as np
 from typing import List, Iterator
 import inspect
@@ -5,11 +7,19 @@ import inspect
 from QuICT.core import *
 from QuICT.qcda.optimization._optimization import Optimization
 from QuICT.qcda.optimization.commutative_optimization import CommutativeOptimization
+# from QuICT.utility.decorators import deprecated
 from QuICT.algorithm import SyntheticalUnitary
 from .dag import DAG
 from .phase_poly import PhasePolynomial
 from .template import *
 import time
+
+DEBUG = False
+
+
+def d_print(*args):
+    if DEBUG:
+        print(*args)
 
 
 class AutoOptimization(Optimization):
@@ -25,7 +35,7 @@ class AutoOptimization(Optimization):
         1: "reduce_hadamard_gates",
         2: "cancel_single_qubit_gates",
         3: "cancel_two_qubit_gates",
-        4: "merge_rotations",
+        4: "merge_rotations_upd",
         5: "float_rotations",
     }
     _optimize_routine = {
@@ -71,9 +81,11 @@ class AutoOptimization(Optimization):
             gates(DAG): DAG of the circuit
         """
         cnt = 0
+        cls.deparameterize_all(gates)
         # enumerate templates and replace every occurrence
         for template in hadamard_templates:
             cnt += template.replace_all(gates) * template.weight
+        cls.parameterize_all(gates)
         return cnt
 
     @classmethod
@@ -193,6 +205,245 @@ class AutoOptimization(Optimization):
         return cnt
 
     @classmethod
+    def traverse_cnot_rz_circuit(cls, anchor, flag_ofs=1):
+        d_print('=== enter traverse_cnot_rz_circuit ===')
+
+        flag_unvisited = 0
+        flag_visited = flag_ofs + 1
+        flag_term = flag_ofs + 2
+        # flag_skipped = flag_ofs + 2
+
+        anchors = {anchor.qubit_loc[0]: anchor, anchor.qubit_loc[1]: anchor}
+        anchor_queue = deque(anchors.keys())
+
+        term_node = {'predecessors': {}, 'successors': {}}
+        d_print('first traverse')
+        while len(anchor_queue) > 0:
+            anchor_qubit = anchor_queue.popleft()
+            d_print(f'\tanchor_q = {anchor_qubit}')
+            for neighbors in ['predecessors', 'successors']:
+                d_print(f'\t\tneighbors = {neighbors}')
+                c_node = anchors[anchor_qubit]
+                c_node.qubit_flag[c_node.qubit_id[anchor_qubit]] = flag_visited
+                while True:
+                    d_print(f'\t\tc_node = {c_node.gate}')
+                    p_node, p_qubit = getattr(c_node, neighbors)[c_node.qubit_id[anchor_qubit]]
+                    if p_node.gate is None or p_node.gate.qasm_name not in ['cx', 'x', 'rz']:
+                        term_node[neighbors][anchor_qubit] = p_node
+                        p_node.qubit_flag = [flag_term] * p_node.size
+                        break
+                    p_node.qubit_flag[p_qubit] = flag_visited
+
+                    if p_node.gate.qasm_name == 'cx':
+                        o_qubit = p_node.qubit_loc[p_qubit ^ 1]
+                        if o_qubit not in anchors:
+                            anchors[o_qubit] = p_node
+                            anchor_queue.append(o_qubit)
+                    c_node = p_node
+
+        # left_bound = {}
+        d_print('second traverse')
+        for neighbors in ['predecessors', 'successors']:
+            d_print(f'\tneighbors = {neighbors}')
+            prune_queue = deque()
+            for anchor_qubit, anchor_node in anchors.items():
+                d_print(f'\t\tanchor_q = {anchor_qubit}')
+                c_node = anchors[anchor_qubit]
+                # c_node.qubit_flag[c_node.qubit_id[anchor_qubit]] = flag_visited
+
+                while True:
+                    d_print(f'\t\tc_node = {c_node.gate}')
+                    p_node, p_qubit = getattr(c_node, neighbors)[c_node.qubit_id[anchor_qubit]]
+                    if p_node.qubit_flag[p_qubit] == flag_term:
+                        d_print(f'\t\t TERM: {p_node.gate}, {p_qubit}')
+                        if id(p_node) != id(term_node[neighbors][anchor_qubit]):
+                            prune_queue.append((p_node, p_qubit))
+                        # if anchor_qubit not in left_bound and neighbors == 'predecessors':
+                        #     left_bound[anchor_qubit] = (p_node, p_qubit)
+                        break
+
+                    # if p_node.qubit_flag[p_qubit] != flag_visited or p_node.gate.qasm_name != 'cx':
+                    #     c_node = p_node
+                    #     continue
+                    if p_node.gate.qasm_name == 'cx':
+                        o_qubit = p_qubit ^ 1
+                        if p_node.qubit_flag[o_qubit] != flag_visited:
+                            # TODO remove assert
+                            # assert p_node.qubit_flag[o_qubit] != flag_term, 'internal error'
+                            if o_qubit == 1:  # target out of bound, skip
+                                # p_node.qubit_flag[p_qubit] = flag_skipped
+                                pass
+                            else:  # control out of bound, terminate
+                                # print(p_node.gate, p_qubit)
+                                d_print(f'\tPRUNE: {p_node.gate}, {p_qubit}')
+                                p_node.qubit_flag[p_qubit] = flag_term
+                                prune_queue.append((p_node, p_qubit))
+                                break
+                                # if neighbors == 'predecessors':
+                                #     left_bound[anchor_qubit] = (p_node, p_qubit)
+                    c_node = p_node
+
+            while len(prune_queue) > 0:
+                d_print('\t<< one prune step >>')
+                c_node, c_qubit = prune_queue.popleft()
+                while True:
+                    d_print(f'\t\tc_node = {c_node.gate}')
+                    p_node, p_qubit = getattr(c_node, neighbors)[c_qubit]
+                    if id(p_node) == id(term_node[neighbors][p_node.qubit_loc[p_qubit]]):
+                        break
+                    p_node.qubit_flag[p_qubit] = flag_term
+                    if p_node.gate is not None and p_node.gate.qasm_name == 'cx':
+                        o_qubit = p_qubit ^ 1
+                        if p_node.qubit_flag[o_qubit] == flag_visited:
+                            if o_qubit == 0:
+                                pass
+                                # p_node.qubit_flag[o_qubit] = flag_skipped
+                            else:
+                                p_node.qubit_flag[o_qubit] = flag_term
+                                prune_queue.append((p_node, o_qubit))
+                    c_node, c_qubit = p_node, p_qubit
+
+                    # else:  # prune unreachable node
+                    #     p_node.qubit_flag[p_qubit] = p_node.FLAG_DEFAULT
+                    #     if p_node.gate is not None and p_node.gate.qasm_name == 'cx':
+                    #         if p_qubit == 0:
+                    #             p_node.qubit_flag[p_qubit ^ 1] = flag_ter_
+                    #         else:
+                    #             p_node.qubit_flag[p_qubit ^ 1] = p_node.FLAG_DEFAULT
+
+        left_bound = {}
+        anchors = {anchor.qubit_loc[0]: anchor, anchor.qubit_loc[1]: anchor}
+        anchor_queue = deque(anchors.keys())
+        d_print('third traverse')
+        while len(anchor_queue) > 0:
+            anchor_qubit = anchor_queue.popleft()
+            d_print(f'\tanchor_q = {anchor_qubit}')
+            for neighbors in ['predecessors', 'successors']:
+                d_print(f'\t\tneighbors = {neighbors}')
+                c_node = anchors[anchor_qubit]
+                while True:
+                    d_print(f'\t\tc_node = {c_node.gate}')
+                    p_node, p_qubit = getattr(c_node, neighbors)[c_node.qubit_id[anchor_qubit]]
+                    if p_node.qubit_flag[p_qubit] == flag_term:
+                        if neighbors == 'predecessors':
+                            left_bound[anchor_qubit] = (p_node, p_qubit)
+                        break
+                    if p_node.gate.qasm_name == 'cx' and all([f == flag_visited for f in p_node.qubit_flag]):
+                        o_qubit = p_node.qubit_loc[p_qubit ^ 1]
+                        if o_qubit not in anchors:
+                            anchors[o_qubit] = p_node
+                            anchor_queue.append(o_qubit)
+                    c_node = p_node
+
+        edge_count = {}
+        queue = deque()
+        for node_, qubit_ in left_bound.values():
+            s_node, s_qubit = node_.successors[qubit_]
+            if s_node.qubit_flag[s_qubit] != flag_term:
+                if id(s_node) not in edge_count:
+                    edge_count[id(s_node)] = sum([f == flag_visited for f in s_node.qubit_flag])
+                    # o_qubit = s_qubit ^ 1
+                    # if s_node.gate.qasm_name == 'cx' and s_node.qubit_flag[o_qubit] != flag_vis_:
+                    #     edge_count[id(s_node)] -= 1
+                edge_count[id(s_node)] -= 1
+                if edge_count[id(s_node)] == 0:
+                    # d_print('---', node_.gate, '->', s_node.gate)
+                    queue.append(s_node)
+
+        d_print('get sub circuit')
+        node_list = []
+        while len(queue) > 0:
+            cur = queue.popleft()
+            if cur.gate is not None and all([f == flag_visited for f in cur.qubit_flag]):
+                cur.flag = cur.FLAG_VISITED
+                node_list.append(cur)
+                d_print(f'\tcur = {cur.gate}')
+            for c_qubit in range(cur.size):
+                if cur.qubit_flag[c_qubit] != flag_visited:
+                    continue
+                s_node, s_qubit = cur.successors[c_qubit]
+                if s_node is None or s_node.qubit_flag[s_qubit] == flag_term:
+                    continue
+                if id(s_node) not in edge_count:
+                    edge_count[id(s_node)] = sum([f == flag_visited for f in s_node.qubit_flag])
+                    # edge_count[id(s_node)] = s_node.size
+                    # o_qubit = s_qubit ^ 1
+                    # if s_node.gate.qasm_name == 'cx' and s_node.qubit_flag[o_qubit] != flag_vis_:
+                    #     edge_count[id(s_node)] -= 1
+                edge_count[id(s_node)] -= 1
+                if edge_count[id(s_node)] == 0:
+                    # d_print('---', cur.gate, '->', s_node.gate)
+                    queue.append(s_node)
+        return node_list
+
+    @classmethod
+    def parse_cnot_rz_circuit(cls, node_list):
+        phases = {}
+        first_rz = {}
+        cur_phases = {}
+
+        for node_ in node_list:
+            # if node_.flag != node_.FLAG_IN_QUE:
+            #     continue
+            # node_.flag = node_.FLAG_VISITED
+
+            gate_ = node_.gate
+            for qubit_ in chain(gate_.cargs, gate_.targs):
+                if qubit_ not in cur_phases:
+                    cur_phases[qubit_] = 1 << (qubit_ + 1)
+
+            if gate_.qasm_name == 'cx':
+                cur_phases[gate_.targ] = cur_phases[gate_.targ] ^ cur_phases[gate_.carg]
+            elif gate_.qasm_name == 'x':
+                cur_phases[gate_.targ] = cur_phases[gate_.targ] ^ 1
+            elif gate_.qasm_name == 'rz':
+                sign = -1 if cur_phases[gate_.targ] & 1 else 1
+                mono = (cur_phases[gate_.targ] >> 1)
+                phases[mono] = sign * gate_.parg + (phases[mono] if mono in phases else 0)
+                if mono not in first_rz:
+                    first_rz[mono] = (node_, sign)
+                else:
+                    node_.flag = node_.FLAG_TO_ERASE
+
+        for phase_, pack_ in first_rz.items():
+            node_, sign = pack_
+            if np.isclose(phases[phase_], 0):
+                node_.erase()
+            else:
+                node_.gate.pargs = sign * phases[phase_]
+
+        cnt = 0
+        for node_ in node_list:
+            if node_.gate.qasm_name != 'rz' or node_.flag == node_.FLAG_ERASED:
+                continue
+            if node_.flag == node_.FLAG_TO_ERASE:
+                cnt += 1
+                node_.erase()
+        return cnt
+
+    @classmethod
+    def merge_rotations_upd(cls, gates: DAG):
+        if DEBUG:
+            gates.get_circuit().draw(filename='before_merge.jpg')
+        gates.reset_flag()
+        gates.set_qubit_loc()
+        cnt = 0
+        for idx, anchor_ in enumerate(list(gates.topological_sort())):
+            if anchor_.gate.qasm_name != 'cx' or anchor_.flag == anchor_.FLAG_VISITED:
+                continue
+
+            # mat_1 = SyntheticalUnitary.run(gates.get_circuit())
+            node_list = cls.traverse_cnot_rz_circuit(anchor_, idx * 2)
+            cnt += cls.parse_cnot_rz_circuit(node_list)
+
+            # mat_2 = SyntheticalUnitary.run(gates.get_circuit())
+            # assert np.allclose(mat_1, mat_2), 'mat_1 != mat_2'
+
+        if DEBUG:
+            gates.get_circuit().draw(filename='after_merge.jpg')
+        return cnt
+
+    @classmethod
     def enumerate_cnot_rz_circuit(cls, gates: DAG):
         """
         Iterate over CNOT+Rz sub circuit in Clifford+Rz circuit.
@@ -300,8 +551,6 @@ class AutoOptimization(Optimization):
 
     @classmethod
     def merge_rotations(cls, gates: DAG):
-        cls.parameterize_all(gates)
-
         cnt = 0
         for prev_node, succ_node, node_cnt in list(cls.enumerate_cnot_rz_circuit(gates)):
             # the boundary given by enumerate_cnot_rz_circuit is described by internal node of
@@ -336,7 +585,6 @@ class AutoOptimization(Optimization):
             DAG.replace_circuit(mapping, replacement)
             sub_circ.destroy()
 
-        cls.deparameterize_all(gates)
         return cnt
 
     @classmethod
@@ -348,6 +596,8 @@ class AutoOptimization(Optimization):
     @classmethod
     def _execute(cls, gates, routine: List[int], verbose):
         _gates = DAG(gates)
+        # _gates.get_circuit().draw(filename='decompose.jpg')
+        cls.parameterize_all(_gates)
 
         gate_cnt = 0
         round_cnt = 0
@@ -372,13 +622,18 @@ class AutoOptimization(Optimization):
                 cnt += cur_cnt
                 total_time += end_time - start_time
 
+                # if step == 4:
+                #     return _gates.get_circuit()
+
             # stop if nothing can be optimized
             if cnt == 0:
                 break
             gate_cnt += cnt
         if verbose:
-            print(f'{gate_cnt} / {_gates.init_size} reduced in total, cost {np.round(total_time, 3)} s')
+            print(f'{gate_cnt} / {_gates.init_size} reduced in total, '
+                  f'remain {_gates.init_size - gate_cnt} gates, cost {np.round(total_time, 3)} s')
 
+        cls.deparameterize_all(_gates)
         return _gates.get_circuit()
 
     @classmethod

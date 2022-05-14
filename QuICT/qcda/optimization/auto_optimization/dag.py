@@ -30,13 +30,13 @@ class DAG(Iterable):
         DAG node class.
         """
 
-        __slots__ = ['gate', 'predecessors', 'successors', 'flag', 'qubit_id', 'size', 'qubit_loc']
+        __slots__ = ['gate', 'predecessors', 'successors', 'flag', 'qubit_id', 'size', 'qubit_loc', 'qubit_flag']
 
         FLAG_DEFAULT = 0
         FLAG_VISITED = 1
         FLAG_ERASED = -1
         FLAG_IN_QUE = 2
-        # FLAG_ANCHOR = 3
+        FLAG_TO_ERASE = 3
 
         def __init__(self, gate_: BasicGate = None, qubit_=0):
             """
@@ -52,8 +52,8 @@ class DAG(Iterable):
             self.size = len(self.qubit_id)
             self.predecessors: List[Tuple[DAG.Node, int]] = [(None, 0)] * self.size
             self.successors: List[Tuple[DAG.Node, int]] = [(None, 0)] * self.size
+            self.qubit_flag = [self.FLAG_DEFAULT] * self.size
             self.flag = self.FLAG_DEFAULT
-            self.size = len(self.qubit_id)
 
         def add_forward_edge(self, qubit_, node):
             """
@@ -179,8 +179,6 @@ class DAG(Iterable):
             cur = queue.popleft()
             if cur.gate is not None or include_dummy:
                 yield cur
-            if cur.successors is None:
-                print('what')
             for nxt, _ in cur.successors:
                 if nxt is None:
                     continue
@@ -231,11 +229,14 @@ class DAG(Iterable):
 
     def reset_flag(self):
         for node in self.start_nodes:
-            node.flag = DAG.Node.FLAG_DEFAULT
+            node.flag = node.FLAG_DEFAULT
+            node.qubit_flag = [node.FLAG_DEFAULT] * node.size
         for node in self.end_nodes:
-            node.flag = DAG.Node.FLAG_DEFAULT
+            node.flag = node.FLAG_DEFAULT
+            node.qubit_flag = [node.FLAG_DEFAULT] * node.size
         for node in self.topological_sort():
-            node.flag = DAG.Node.FLAG_DEFAULT
+            node.flag = node.FLAG_DEFAULT
+            node.qubit_flag = [node.FLAG_DEFAULT] * node.size
 
     def set_qubit_loc(self):
         mapping = {(id(node), 0): qubit_ for qubit_, node in enumerate(self.start_nodes)}

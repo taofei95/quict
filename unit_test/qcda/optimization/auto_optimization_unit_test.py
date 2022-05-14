@@ -1,3 +1,6 @@
+import time
+from itertools import chain
+
 import numpy as np
 import pytest
 
@@ -120,6 +123,33 @@ def test_cancel_two_qubit_gate():
     assert np.allclose(mat_0, mat_1), 'unitary changed after cnot cancellation'
 
 
+def test_merge_rotations():
+    circ = Circuit(2)
+    Rz(1) | circ(0)
+    CX | circ([0, 1])
+    Rz(2) | circ(0)
+    CX | circ([1, 0])
+    H | circ(1)
+    Rz(np.pi) | circ(1)
+    CX | circ([0, 1])
+    Rz(-1) | circ(1)
+    CX | circ([0, 1])
+    Rz(np.pi) | circ(1)
+
+    print()
+    circ.draw(method='command')
+    dag = DAG(circ)
+    AutoOptimization.merge_rotations_upd(dag)
+    circ_optim = dag.get_circuit()
+    circ_optim.draw(method='command')
+
+    mat_0 = SyntheticalUnitary.run(circ)
+    mat_1 = SyntheticalUnitary.run(circ_optim)
+    assert np.allclose(mat_0, mat_1), 'unitary changed after merge rotations'
+
+    time.sleep(1)
+
+
 def test_enumerate_cnot_rz_circuit():
     circ = Circuit(3)
     H | circ(0)
@@ -147,7 +177,12 @@ def test_enumerate_cnot_rz_circuit():
 
 
 def check_circuit_optimization(circ: Circuit, label):
-    circ_optim = AutoOptimization.execute(circ)
+    try:
+        circ_optim = AutoOptimization.execute(circ, verbose=True)
+    except Exception as e:
+        pickle.dump(circ.gates, open(f'circ_{label}.dat', 'wb'))
+        raise e
+
     mat_1 = SyntheticalUnitary.run(circ)
     mat_2 = SyntheticalUnitary.run(circ_optim)
     if not np.allclose(mat_1, mat_2):
@@ -178,9 +213,9 @@ def test_parameterize_all():
 
 
 def test_random_circuit():
-    n_qubit = 6
-    n_gate = 200
-    n_iter = 5
+    n_qubit = 10
+    n_gate = 1000
+    n_iter = 10
     print(f'random ciruit test: {n_qubit} qubits, {n_gate} gates, {n_iter} iterations.')
     # support_gates = [GateType.h, GateType.cx]
     support_gates = [GateType.h, GateType.cx, GateType.x, GateType.rz,
@@ -191,6 +226,144 @@ def test_random_circuit():
 
         circ.random_append(n_gate, typelist=support_gates)
         check_circuit_optimization(circ, _)
+
+
+def test_benchmark():
+    bmk_path = '/home/longcheng/repo/optimizer/Arithmetic_and_Toffoli/mod5_4_before_no_ccz.qasm'
+    circ = OPENQASMInterface.load_file(bmk_path).circuit
+    optim_circ = AutoOptimization.execute(circ, verbose=True)
+    circ.draw(filename='original.jpg')
+    optim_circ.draw(filename='quict2.jpg')
+
+    # bmk_path = '/home/longcheng/repo/optimizer/Arithmetic_and_Toffoli/tof_3_after_light.qasm'
+    # circ = OPENQASMInterface.load_file(bmk_path).circuit
+    # circ.draw(filename='quipper.jpg')
+
+    mat_1 = SyntheticalUnitary.run(circ)
+    mat_2 = SyntheticalUnitary.run(optim_circ)
+    assert np.allclose(mat_1, mat_2), "unitary changed after parameterize_all"
+
+    print('=====================================')
+    dag = DAG(optim_circ)
+    AutoOptimization.parameterize_all(dag)
+    dag.get_circuit().draw(filename='quict3.jpg')
+    print(AutoOptimization.merge_rotations_upd(dag))
+    time.sleep(1)
+
+
+def test_circ_510():
+    gates = pickle.load(open('circ_debug_510.dat', 'rb'))
+    circ = Circuit(6)
+    for g in gates:
+        g | circ(list(chain(g.cargs, g.targs)))
+    circ.draw(filename='510.jpg')
+    # check_circuit_optimization(circ, 1234)
+    dag = DAG(circ)
+    AutoOptimization.reduce_hadamard_gates(dag)
+    circ_before = dag.get_circuit()
+    circ_before.draw(filename='before.jpg')
+    AutoOptimization.merge_rotations_upd(dag)
+    circ_after = dag.get_circuit()
+    circ_after.draw(filename='after.jpg')
+
+    mat_1 = SyntheticalUnitary.run(circ_before)
+    mat_2 = SyntheticalUnitary.run(circ_after)
+    assert np.allclose(mat_1, mat_2)
+
+
+def test_circ_4():
+    gates = pickle.load(open('circ_4.dat', 'rb'))
+    circ = Circuit(3)
+    for g in gates:
+        g | circ(list(chain(g.cargs, g.targs)))
+    circ.draw(method='command')
+
+    print('after')
+    # AutoOptimization.execute(circ).draw(method='command')
+    dag = DAG(circ)
+    AutoOptimization.parameterize_all(dag)
+    dag.get_circuit().draw(method='command')
+    AutoOptimization.merge_rotations_upd(dag)
+    dag.get_circuit().draw(method='command')
+
+    check_circuit_optimization(circ, 1234)
+
+
+def test_circ_8():
+    gates = pickle.load(open('circ_8.dat', 'rb'))
+    circ = Circuit(6)
+    for g in gates:
+        g | circ(list(chain(g.cargs, g.targs)))
+    circ.draw(filename='circ_8.jpg')
+    AutoOptimization.execute(circ, verbose=True)
+
+
+def test_circ_2():
+    gates = pickle.load(open('circ_debug_2.dat', 'rb'))
+    circ = Circuit(6)
+    for g in gates:
+        g | circ(list(chain(g.cargs, g.targs)))
+    circ.draw(filename='circ_8.jpg')
+    AutoOptimization.execute(circ, verbose=True)
+
+
+def test_circ_234():
+    gates = pickle.load(open('circ_234.dat', 'rb'))
+    circ = Circuit(6)
+    for g in gates:
+        g | circ(list(chain(g.cargs, g.targs)))
+    # circ.draw(filename='circ_8.jpg')
+    AutoOptimization.execute(circ, verbose=True)
+
+
+def test_circ_dd_1():
+    gates = pickle.load(open('circ_dd_1.dat', 'rb'))
+    circ = Circuit(6)
+    for g in gates:
+        g | circ(list(chain(g.cargs, g.targs)))
+    # circ.draw(filename='circ_8.jpg')
+    AutoOptimization.execute(circ, verbose=True)
+
+
+def test_circ_9():
+    gates = pickle.load(open('circ_debug_9.dat', 'rb'))
+    circ = Circuit(6)
+    for g in gates:
+        g | circ(list(chain(g.cargs, g.targs)))
+    # circ.draw(filename='circ_8.jpg')
+    check_circuit_optimization(circ, 12345)
+
+
+def test_circ_308():
+    gates = pickle.load(open('circ_debug_308.dat', 'rb'))
+    circ = Circuit(6)
+    for g in gates:
+        g | circ(list(chain(g.cargs, g.targs)))
+    # circ.draw(filename='circ_8.jpg')
+    check_circuit_optimization(circ, 12345)
+
+
+def test_arithmetic_benchmark():
+    # bmk_path = '/home/longcheng/repo/optimizer/Arithmetic_and_Toffoli/'
+    bmk_path = '/home/longcheng/repo/optimizer/Arithmetic_and_Toffoli/'
+    cnt = 0
+    for filename in os.listdir(bmk_path):
+        if filename.endswith('before_no_ccz.qasm'):
+            cnt += 1
+            print(filename)
+            path = os.path.join(bmk_path, filename)
+
+            circ = OPENQASMInterface.load_file(path).circuit
+            if circ.size() > 1000:
+                print('skipped: circuit too large')
+                continue
+
+            # circ.draw(filename=f'{filename}_before.jpg')
+
+            circ_optim = AutoOptimization.execute(circ, verbose=True)
+            # circ_optim.draw(filename=f'{filename}_after.jpg')
+
+            # print(len(circ_optim.gates), '/', len(circ.gates))
 
 
 if __name__ == '__main__':
