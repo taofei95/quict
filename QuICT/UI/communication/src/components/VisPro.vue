@@ -1,41 +1,40 @@
 <template>
   <el-container style="background-color: #13141c; padding: 0px">
-    <el-header style="height: 50px">
-      <el-row style="height: 50px">
-        <el-col
-          :span="3"
-          style="
+    <el-header style="height: 50px;">
+    <!-- <el-row>
+      <el-col :span="12"> -->
+      <el-space  style="height: 50px;font-size: var(--el-font-size-large);width: 100%;" size="large" direction="horizontal">
+        <div style="
             background-image: url('/assets/logo.png');
             background-repeat: no-repeat;
             background-position: left;
-          "
-        ></el-col
-      ></el-row>
+            width:160px;
+            height: 45px;
+          "></div>
+
+        <span>
+          QuCompuser
+        </span>
+
+        <span>
+          QCDA
+        </span>
+        
+      </el-space>
+      <!-- </el-col>
+      </el-row> -->
     </el-header>
     <el-container>
       <el-header class="status-bar" style="padding: 0px; height: 50px">
-        <ToolBar
-          v-on:SaveQCDA="SaveQCDA"
-          v-on:RunQCDA="RunQCDA"
-          v-on:LoadQCDA="LoadQCDA"
-          v-on:ChangeSet="ChangeSet"
-          v-on:UpdateCustomerSet="UpdateCustomerSet"
-          v-on:UpdataTopology="UpdataTopology"
-          :all_sets="all_sets"
-          :customer_set="customer_set"
-          :topology="topology"
-          :q="qbit"
-        >
+        <ToolBar v-on:SaveQCDA="SaveQCDA" v-on:RunQCDA="RunQCDA" v-on:LoadQCDA="LoadQCDA" v-on:ChangeSet="ChangeSet"
+          v-on:UpdateCustomerSet="UpdateCustomerSet" v-on:UpdataTopology="UpdataTopology" :all_sets="all_sets"
+          :customer_set="customer_set" :topology="topology" :q="qbit">
         </ToolBar>
       </el-header>
       <el-container>
         <el-container direction="vertical">
           <el-main class="vis-block">
-            <VisualizeZone
-              ref="visVue"
-              :VisContentIn="VisContent"
-              v-on:VisUpdate="VisUpdate"
-            >
+            <VisualizeZone ref="visVue" :VisContentIn="VisContent" v-on:VisUpdate="VisUpdate">
             </VisualizeZone>
           </el-main>
           <el-main class="status-bar" style="color: #9aa0be; padding: 0px">
@@ -43,35 +42,17 @@
               <el-col :span="4"></el-col>
               <el-col :span="16">{{ StatusContent }}</el-col>
               <el-col :span="4">
-                <el-button
-                  v-if="ExpandResult"
-                  size="small"
-                  type="primary"
-                  @click="ResultSmall"
-                  style="font-family: 'Segoe UI Symbol'"
-                  ></el-button
-                >
-                <el-button
-                  v-else
-                  size="small"
-                  type="primary"
-                  @click="ResultLarge"
-                  style="font-family: 'Segoe UI Symbol'"
-                  ></el-button
-                >
+                <el-button v-if="ExpandResult" size="small" type="primary" @click="ResultSmall"
+                  style="font-family: 'Segoe UI Symbol'"></el-button>
+                <el-button v-else size="small" type="primary" @click="ResultLarge"
+                  style="font-family: 'Segoe UI Symbol'"></el-button>
               </el-col>
             </el-row>
           </el-main>
           <el-main class="output-block" style="padding: 0px">
-            <el-tabs
-              type="border-card"
-              style="background: transparent !important; border: 0px solid"
-            >
+            <el-tabs type="border-card" style="background: transparent !important; border: 0px solid">
               <el-tab-pane label="Table">
-                <el-row
-                  style="height: 40px"
-                  v-if="Object.keys(OutputContent).length > 0"
-                >
+                <el-row style="height: 40px" v-if="Object.keys(OutputContent).length > 0">
                   <el-col :span="4"></el-col>
                   <el-col :span="6"><b>State</b></el-col>
                   <el-col :span="4"></el-col>
@@ -79,11 +60,7 @@
                   <el-col :span="4"></el-col>
                 </el-row>
 
-                <el-row
-                  style="height: 40px"
-                  v-for="[k, v] in Object.entries(OutputContent)"
-                  :key="k"
-                >
+                <el-row style="height: 40px" v-for="[k, v] in Object.entries(OutputContent)" :key="k">
                   <el-col :span="4"></el-col>
                   <el-col :span="6">{{ k }}</el-col>
                   <el-col :span="4"></el-col>
@@ -105,20 +82,11 @@
           </el-main>
         </el-container>
         <el-aside width="20%" style="background-color: #292c3d; padding: 0px">
-          <ProgramZone
-            :ProgramTextIn="ProgramText"
-            v-on:ProgramUpdate="ProgramUpdate"
-          >
+          <ProgramZone :ProgramTextIn="ProgramText" v-on:ProgramUpdate="ProgramUpdate">
           </ProgramZone>
         </el-aside>
-        <el-dialog
-          title="Login"
-          v-model="dialogLogin"
-          width="30%"
-          :close-on-click-modal="false"
-          :close-on-press-escape="false"
-          :show-close="false"
-        >
+        <el-dialog title="Login" v-model="dialogLogin" width="30%" :close-on-click-modal="false"
+          :close-on-press-escape="false" :show-close="false">
           <label>USER<el-input v-model="user"></el-input></label>
           <label>PASSWORD<el-input v-model="psw" type="password" show-password></el-input></label>
           <template #footer>
@@ -160,10 +128,11 @@
   height: calc(100vh - 20vh - 150px);
 }
 
-.el-tabs--border-card > .el-tabs__header .el-tabs__item.is-active {
+.el-tabs--border-card>.el-tabs__header .el-tabs__item.is-active {
   background-color: transparent !important;
 }
-.el-tabs--border-card > .el-tabs__header {
+
+.el-tabs--border-card>.el-tabs__header {
   background-color: transparent !important;
 }
 </style>
@@ -207,6 +176,10 @@ export default {
       OutputContent: {},
       StatusContent: "Create a circuit and run.",
       ExpandResult: false,
+      CurrentPage: "QuCompuser",
+      QuCompuserPageColor: "white",
+      QCDAPageColor: "gray",
+      AllPages: ["QuCompuser","QCDA"]
     };
   },
   components: {
@@ -917,5 +890,17 @@ export default {
     });
     // this.qbit = this.VisContent.q;
   },
+  watch: {
+    CurrentPage(newPage, oldPage){
+      this.AllPages.forEach(curPage=>{
+        if(newPage == curPage){
+          this[`${newPage}PageColor`]="white";
+        }
+        else if(oldPage == curPage){
+          this[`${oldPage}PageColor`]="gray";
+        }
+      })
+    }
+  }
 };
 </script>
