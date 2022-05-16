@@ -1,7 +1,7 @@
 import numpy as np
 
-from QuICT.core.gate import CompositeGate, Phase, CX
-from QuICT.qcda.synthesis.uniformly_gate import UniformlyRy, UniformlyRz
+from QuICT.core.gate import CompositeGate, GateType, Phase, CX
+from QuICT.qcda.synthesis.uniformly_gate import UniformlyRotation
 from QuICT.qcda.synthesis.unitary_transform import UnitaryTransform
 
 
@@ -60,18 +60,20 @@ class QuantumStatePreparation(object):
         omega = np.angle(state_vector)
         state_vector = np.abs(state_vector)
         # Now for the non-negative real state_vector
+        URy = UniformlyRotation(GateType.ry)
         denominator = np.linalg.norm(state_vector)
         for k in range(num_qubits - 1, -1, -1):
             numerator = np.linalg.norm(state_vector.reshape(1 << num_qubits - k, 1 << k), axis=1)
             alpha = np.where(np.isclose(denominator, 0), 0, 2 * np.arcsin(numerator[1::2] / denominator))
-            gates.extend(UniformlyRy.execute(alpha))
+            gates.extend(URy.execute(alpha))
             denominator = numerator
         # If state_vector is real and non-negative, no UniformlyRz will be needed.
+        URz = UniformlyRotation(GateType.rz)
         if not np.allclose(omega, 0):
             for k in range(num_qubits):
                 alpha = np.sum(omega.reshape(1 << num_qubits - k, 1 << k), axis=1)
                 alpha = (alpha[1::2] - alpha[0::2]) / (1 << k)
-                gates.extend(UniformlyRz.execute(alpha))
+                gates.extend(URz.execute(alpha))
             gates.append(Phase(np.average(omega)) & 0)
 
         return gates

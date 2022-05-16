@@ -7,18 +7,12 @@
 import random
 
 import numpy as np
+from scipy.stats import unitary_group
 
 from QuICT.algorithm import SyntheticalUnitary
 from QuICT.core import *
 from QuICT.core.gate import *
-from QuICT.qcda.synthesis import UniformlyRy, UniformlyRz, UniformlyUnitary
-
-
-def generate_unitary():
-    matrix = U3(random.random() * np.pi, random.random() * np.pi, random.random() * np.pi).matrix
-    matrix[:] *= np.exp(2j * np.pi * random.random())
-    # matrix = U3(np.pi / 2, np.pi / 2, np.pi / 2).matrix
-    return matrix
+from QuICT.qcda.synthesis import UniformlyRotation, UniformlyUnitary
 
 
 def test_uniform_ry():
@@ -26,7 +20,7 @@ def test_uniform_ry():
         for i in range(1, 6):
             circuit = Circuit(i)
             angles = [random.random() for _ in range(1 << (i - 1))]
-            URy = UniformlyRy()
+            URy = UniformlyRotation(GateType.ry)
             URy.execute(angles) | circuit
             unitary = SyntheticalUnitary.run(circuit)
             for j in range(1 << (i - 1)):
@@ -39,7 +33,7 @@ def test_uniform_rz():
         for i in range(1, 6):
             circuit = Circuit(i)
             angles = [random.random() for _ in range(1 << (i - 1))]
-            URz = UniformlyRz()
+            URz = UniformlyRotation(GateType.rz)
             URz.execute(angles) | circuit
             unitary = SyntheticalUnitary.run(circuit)
             for j in range(1 << (i - 1)):
@@ -51,7 +45,7 @@ def test_uniform_unitary():
     for _ in range(10):
         for i in range(1, 6):
             circuit = Circuit(i)
-            unitaries = [generate_unitary() for _ in range(1 << (i - 1))]
+            unitaries = [unitary_group.rvs(2) for _ in range(1 << (i - 1))]
             UUnitary = UniformlyUnitary()
             UUnitary.execute(unitaries) | circuit
             unitary = SyntheticalUnitary.run(circuit)

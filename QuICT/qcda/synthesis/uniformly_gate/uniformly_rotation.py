@@ -10,112 +10,97 @@ import numpy as np
 from QuICT.core.gate import GateType, build_gate, CompositeGate
 
 
-def uniformlyRotation(
+class UniformlyRotation(object):
+    """
+    Implements the uniformly Ry or Rz gate
+    
+    Reference:
+        http://cn.arxiv.org/abs/quant-ph/0504100v1 Fig4 a)
+    """
+    def __init__(self, gate_type=None):
+        """
+        Args:
+            gate_type(GateType): the type of uniformly gate, Ry or Rz
+        """
+        assert gate_type in [GateType.ry, GateType.rz], ValueError('Invalid gate_type')
+        self.gate_type = gate_type
+
+    def execute(self, angle_list):
+        """
+        Args:
+            angle_list(list<float>): the angles of Ry or Rz gates
+
+        Returns:
+            CompositeGate: CompositeGate that implements the uniformly gate
+        """
+        angle_list = list(angle_list)
+        n = int(np.log2(len(angle_list))) + 1
+        if 1 << (n - 1) != len(angle_list):
+            raise Exception("the number of parameters unmatched.")
+        return self.uniformly_rotation(0, n, angle_list, self.gate_type)
+
+    def uniformly_rotation(
+        self,
         low: int,
         high: int,
         z: List[float],
         gate_type: int,
-        mapping: List[int],
         is_left_cnot: bool = False
-) -> CompositeGate:
-    """
-    synthesis uniformlyRotation gate, bits range [low, high)
+    ) -> CompositeGate:
+        """
+        synthesis uniformlyRotation gate, bits range [low, high)
 
-    Args:
-        low(int): the left range low
-        high(int): the right range high
-        z(list<float>): the list of angle y
-        gate_type(int): the gateType (Rz or Ry)
-        mapping(list<int>): the qubit order of gate
-        is_left_cnot(bool): is cnot left decomposition
-    Returns:
-        gateSet: the synthesis gate list
-    """
-    return inner_uniformly_rotation(low, high, z, gate_type, mapping, True, is_left_cnot)
+        Args:
+            low(int): the left range low
+            high(int): the right range high
+            z(list<float>): the list of angle y
+            gate_type(int): the gateType (Rz or Ry)
+            is_left_cnot(bool): is cnot left decomposition
+        Returns:
+            gateSet: the synthesis gate list
+        """
+        return self.inner_uniformly_rotation(low, high, z, gate_type, True, is_left_cnot)
 
-
-def inner_uniformly_rotation(
+    def inner_uniformly_rotation(
+        self,
         low: int,
         high: int,
         z: List[float],
         gate_type: int,
-        mapping: List[int],
         is_first_level: bool,
         is_left_cnot: bool = False
-) -> CompositeGate:
-    if low + 1 == high:
-        gateA = build_gate(gate_type, mapping[low], [z[0].real])
-        gates = CompositeGate()
-        gates.append(gateA)
-        return gates
-    length = len(z) // 2
-    gateA = build_gate(GateType.cx, [mapping[low], mapping[high - 1]])
-    gateB = build_gate(GateType.cx, [mapping[low], mapping[high - 1]])
-    Rxp = []
-    Rxn = []
-    for i in range(length):
-        Rxp.append((z[i] + z[i + length]) / 2)
-        Rxn.append((z[i] - z[i + length]) / 2)
-    if is_first_level:
-        if is_left_cnot:
+    ) -> CompositeGate:
+        if low + 1 == high:
+            gateA = build_gate(gate_type, low, [z[0].real])
             gates = CompositeGate()
             gates.append(gateA)
-            gates.extend(inner_uniformly_rotation(low + 1, high, Rxn, gate_type, mapping, False, False))
+            return gates
+        length = len(z) // 2
+        gateA = build_gate(GateType.cx, [low, high - 1])
+        gateB = build_gate(GateType.cx, [low, high - 1])
+        Rxp = []
+        Rxn = []
+        for i in range(length):
+            Rxp.append((z[i] + z[i + length]) / 2)
+            Rxn.append((z[i] - z[i + length]) / 2)
+        if is_first_level:
+            if is_left_cnot:
+                gates = CompositeGate()
+                gates.append(gateA)
+                gates.extend(self.inner_uniformly_rotation(low + 1, high, Rxn, gate_type, False, False))
+                gates.append(gateB)
+                gates.extend(self.inner_uniformly_rotation(low + 1, high, Rxp, gate_type, False, True))
+            else:
+                gates = self.inner_uniformly_rotation(low + 1, high, Rxp, gate_type, False, False)
+                gates.append(gateA)
+                gates.extend(self.inner_uniformly_rotation(low + 1, high, Rxn, gate_type, False, True))
+                gates.append(gateB)
+        elif is_left_cnot:
+            gates = self.inner_uniformly_rotation(low + 1, high, Rxn, gate_type, False, False)
             gates.append(gateB)
-            gates.extend(inner_uniformly_rotation(low + 1, high, Rxp, gate_type, mapping, False, True))
+            gates.extend(self.inner_uniformly_rotation(low + 1, high, Rxp, gate_type, False, True))
         else:
-            gates = inner_uniformly_rotation(low + 1, high, Rxp, gate_type, mapping, False, False)
+            gates = self.inner_uniformly_rotation(low + 1, high, Rxp, gate_type, False, False)
             gates.append(gateA)
-            gates.extend(inner_uniformly_rotation(low + 1, high, Rxn, gate_type, mapping, False, True))
-            gates.append(gateB)
-    elif is_left_cnot:
-        gates = inner_uniformly_rotation(low + 1, high, Rxn, gate_type, mapping, False, False)
-        gates.append(gateB)
-        gates.extend(inner_uniformly_rotation(low + 1, high, Rxp, gate_type, mapping, False, True))
-    else:
-        gates = inner_uniformly_rotation(low + 1, high, Rxp, gate_type, mapping, False, False)
-        gates.append(gateA)
-        gates.extend(inner_uniformly_rotation(low + 1, high, Rxn, gate_type, mapping, False, True))
-    return gates
-
-
-class UniformlyRy(object):
-    def execute(self, angle_list, mapping=None):
-        """ uniformRyGate
-
-        http://cn.arxiv.org/abs/quant-ph/0504100v1 Fig4 a)
-
-        Args:
-            angle_list(list<float>): the angles of Ry Gates
-            mapping(list<int>) : the mapping of gates order
-        Returns:
-            gateSet: the synthesis gate list
-        """
-        pargs = list(angle_list)
-        n = int(np.round(np.log2(len(pargs)))) + 1
-        if mapping is None:
-            mapping = [i for i in range(n)]
-        if 1 << (n - 1) != len(pargs):
-            raise Exception("the number of parameters unmatched.")
-        return uniformlyRotation(0, n, pargs, GateType.ry, mapping)
-
-
-class UniformlyRz(object):
-    def execute(self, angle_list, mapping=None):
-        """ uniformRzGate
-
-        http://cn.arxiv.org/abs/quant-ph/0504100v1 Fig4 a)
-
-        Args:
-            angle_list(list<float>): the angles of Rz Gates
-            mapping(list<int>) : the mapping of gates order
-        Returns:
-            gateSet: the synthesis gate list
-        """
-        pargs = list(angle_list)
-        n = int(np.round(np.log2(len(pargs)))) + 1
-        if mapping is None:
-            mapping = [i for i in range(n)]
-        if 1 << (n - 1) != len(pargs):
-            raise Exception("the number of parameters unmatched.")
-        return uniformlyRotation(0, n, pargs, GateType.rz, mapping)
+            gates.extend(self.inner_uniformly_rotation(low + 1, high, Rxn, gate_type, False, True))
+        return gates
