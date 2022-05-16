@@ -63,9 +63,6 @@ class RandomWalk:
                 related_action = self._edge_dict[i][action_state]
                 unitary_matrix[related_action * self._action_space + action_state, curr_idx + action_state] = 1
 
-        # print(unitary_matrix)
-        # unitary_matrix = linalg.MatrixTensorI(unitary_matrix, 1, 1 << self._coin_qubits)
-        print(unitary_matrix)
         return Unitary(unitary_matrix)
 
     def run(self, device: str = "GPU", record_measured: bool = False):
