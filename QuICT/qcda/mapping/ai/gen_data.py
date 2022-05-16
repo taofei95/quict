@@ -92,15 +92,16 @@ def write_circ_gate_dag(circ: Circuit, path: str):
         f.write(data_str)
 
 
-def write_layout(layout: Layout, path: str):
-    ensure_path(path)
-    # layout.write_file(path)
-    with open(path, "w") as f:
-        data_str = ""
-        for edge in layout.edge_list:
-            edge: LayoutEdge
-            data_str += f"{edge.u} {edge.v}\n"
-        f.write(data_str)
+# def write_layout(name: str, num_qubit: int, layout: Layout, path: str):
+#     ensure_path(path)
+#     # layout.write_file(path)
+#     with open(path, "w") as f:
+#         data_str = f"{name}\n"
+#         data_str += f"{num_qubit}\n"
+#         for edge in layout.edge_list:
+#             edge: LayoutEdge
+#             data_str += f"{edge.u} {edge.v}\n"
+#         f.write(data_str)
 
 
 def write_circ_qasm(circ: Circuit, path: str):
@@ -108,7 +109,7 @@ def write_circ_qasm(circ: Circuit, path: str):
         f.write(circ.qasm())
 
 
-def gen_data(repeat: int = 10, size_list: List[int] = [i for i in range(5, 50)]):
+def gen_grid_data(repeat: int = 100, size_list: List[int] = [i for i in range(5, 50)]):
     cwd = os.getcwd()
     data_dir = os.path.join(cwd, "data")
     topo_list = [(gen_grid_layout, "grid")]
@@ -121,9 +122,9 @@ def gen_data(repeat: int = 10, size_list: List[int] = [i for i in range(5, 50)])
                 f"Circuit with {num_qubit} qubits of {name} topology, {repeat} rounds."
             )
             dir = os.path.join(topo_dir, str(num_qubit))
-            topo_file = os.path.join(dir, "topo.txt")
+            # topo_file = os.path.join(dir, "topo.txt")
             topo = topo_gen(num_qubit)
-            write_layout(topo, topo_file)
+            # write_layout(name, num_qubit, topo, topo_file)
             for i in range(repeat):
                 circ_file = os.path.join(dir, f"circ_{i}.qasm")
                 circ = gen_circ(num_qubit)
@@ -138,5 +139,37 @@ def gen_data(repeat: int = 10, size_list: List[int] = [i for i in range(5, 50)])
                     print(f"    iter: {i}")
 
 
+def get_ibmq_topo_dir():
+    for root, dirs, _ in os.walk("data"):
+        for name in dirs:
+            if name.startswith("ibmq"):
+                path = os.path.join(root, name)
+                # path = os.path.join(path, "topo.txt")
+                exists = os.path.isdir(path)
+                print(f"{path}, {exists}")
+                if exists:
+                    yield path
+
+
+def gen_ibmq_data(repeat=100):
+    for path in get_ibmq_topo_dir():
+        topo_path = os.path.join(path, "topo.txt")
+        layout = Layout.load_file(topo_path)
+        # print(layout)
+        num_qubit = layout.qubit_number
+        for i in range(repeat):
+            circ = gen_circ(num_qubit)
+            circ_file = os.path.join(path, f"circ_{i}.qasm")
+            result_circ_file = os.path.join(path, f"result_circ_{i}.qasm")
+            result_circ = Mapping.execute(
+                circuit=circ, init_mapping_method="naive", layout=layout
+            )
+            write_circ_qasm(circ, circ_file)
+            write_circ_qasm(result_circ, result_circ_file)
+            if 0 == i % 10:
+                print(f"    iter: {i}")
+
+
 if __name__ == "__main__":
-    gen_data()
+    # gen_grid_data(repeat=500, size_list=list(range(5, 40)))
+    gen_ibmq_data(500)
