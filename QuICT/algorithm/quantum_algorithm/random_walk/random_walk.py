@@ -119,7 +119,7 @@ class QuantumRandomWalk:
         for idx, pbit in enumerate(p_state):
             if idx != 0:
                 X | inc_mod(self.qubits - 1 - p_state[idx - 1])
-        
+
             ugate = Unitary(self._mct_generator(
                 self.qubits + self.dim,
                 self.qubits - 1 - pbit
