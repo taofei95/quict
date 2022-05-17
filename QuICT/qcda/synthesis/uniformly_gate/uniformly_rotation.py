@@ -13,7 +13,7 @@ from QuICT.core.gate import GateType, build_gate, CompositeGate
 class UniformlyRotation(object):
     """
     Implements the uniformly Ry or Rz gate
-    
+
     Reference:
         http://cn.arxiv.org/abs/quant-ph/0504100v1 Fig4 a)
     """

@@ -6,8 +6,7 @@ which is specially designed for the optimization of unitary transform.
 import numpy as np
 
 from QuICT.core.gate import CompositeGate, CX, Rx, Rz, Unitary
-from .two_qubit_transform import CartanKAKDecomposition
-from .._synthesis import Synthesis
+from .cartan_kak_decomposition import CartanKAKDecomposition
 
 # Magic basis
 B = (1.0 / np.sqrt(2)) * np.array([[1, 1j, 0, 0],
@@ -16,9 +15,15 @@ B = (1.0 / np.sqrt(2)) * np.array([[1, 1j, 0, 0],
                                    [1, -1j, 0, 0]], dtype=complex)
 
 
-class TwoQubitDiagonalTransform(Synthesis):
-    @classmethod
-    def execute(cls, matrix, eps=1e-15):
+class CartanKAKDiagonalDecomposition(object):
+    def __init__(self, eps=1e-15):
+        """
+        Args:
+            eps(float, optional): Eps of decomposition process
+        """
+        self.eps = eps
+
+    def execute(self, matrix):
         """
         Decompose a matrix U in SU(4) with Cartan KAK Decomposition. Unlike the
         original version, now the result circuit has a two-qubit gate whose
@@ -28,7 +33,6 @@ class TwoQubitDiagonalTransform(Synthesis):
 
         Args:
             matrix(np.array): 4*4 unitary matrix to be decomposed
-            eps(float, optional): Eps of decomposition process
 
         Returns:
             CompositeGate: Decomposed gates.
@@ -65,8 +69,8 @@ class TwoQubitDiagonalTransform(Synthesis):
         # Some preparation derived from Cartan involution
         Up = B.T.conj().dot(U).dot(B)
         M2 = Up.T.dot(Up)
-        M2.real[abs(M2.real) < eps] = 0.0
-        M2.imag[abs(M2.imag) < eps] = 0.0
+        M2.real[abs(M2.real) < self.eps] = 0.0
+        M2.imag[abs(M2.imag) < self.eps] = 0.0
 
         # Since M2 is a symmetric unitary matrix, we can diagonalize its real and
         # imaginary part simultaneously. That is, ∃ P in SO(4), s.t. M2 = P.D.P^T,
@@ -92,10 +96,10 @@ class TwoQubitDiagonalTransform(Synthesis):
         # Now is the time to calculate KL and KR
         KL = B.dot(Up).dot(P).dot(np.diag(np.exp(-1j * d))).dot(B.T.conj())
         KR = B.dot(P.T).dot(B.T.conj())
-        KL.real[abs(KL.real) < eps] = 0.0
-        KL.imag[abs(KL.imag) < eps] = 0.0
-        KR.real[abs(KR.real) < eps] = 0.0
-        KR.imag[abs(KR.imag) < eps] = 0.0
+        KL.real[abs(KL.real) < self.eps] = 0.0
+        KL.imag[abs(KL.imag) < self.eps] = 0.0
+        KR.real[abs(KR.real) < self.eps] = 0.0
+        KR.imag[abs(KR.imag) < self.eps] = 0.0
         KL0, KL1 = CartanKAKDecomposition.tensor_decompose(KL)
         KR0, KR1 = CartanKAKDecomposition.tensor_decompose(KR)
 

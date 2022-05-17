@@ -3,7 +3,7 @@ Decompose gates except for BasicGates in a CompositeGate or a Circuit
 """
 from QuICT.core import Circuit
 from QuICT.core.gate import BasicGate, CompositeGate, UnitaryGate
-from QuICT.qcda.synthesis.unitary_transform import UnitaryTransform
+from QuICT.qcda.synthesis.unitary_decomposition import UnitaryDecomposition
 from QuICT.qcda.utility import OutputAligner
 
 
@@ -14,7 +14,7 @@ class GateDecomposition(object):
         """
         Decompose gates except for BasicGates in a CompositeGate or a Circuit
         to BasicGates with the `build_gate` method if it is implemented.
-        Otherwise the `UnitaryTransform` would be used.
+        Otherwise the `UnitaryDecomposition` would be used.
 
         Args:
             gates(CompositeGate/Circuit): gates to be decomposed
@@ -33,7 +33,8 @@ class GateDecomposition(object):
         gates_decomposed = CompositeGate()
         for gate in gates:
             if isinstance(gate, UnitaryGate):
-                gate_mat, _ = UnitaryTransform.execute(gate.matrix, mapping=gate.targs)
+                UD = UnitaryDecomposition()
+                gate_mat, _ = UD.execute(gate.matrix, mapping=gate.targs)
                 gates_decomposed.extend(gate_mat)
             elif isinstance(gate, BasicGate):
                 try:

@@ -2,8 +2,9 @@
 import numpy as np
 from scipy.linalg import cossin
 from scipy.stats import unitary_group
-from QuICT.qcda.synthesis.uniformly_gate import UniformlyRy
-from QuICT.core import *
+
+from QuICT.qcda.synthesis.uniformly_gate import UniformlyRotation
+from QuICT.core.gate import GateType
 
 
 def test_unitary_first_level():
@@ -39,9 +40,8 @@ def test_unitary_first_level():
             assert np.isclose(np.cos(theta), c)
             theta *= 2
             angle_list.append(theta)
-        reversed_ry = UniformlyRy.execute(
-            angle_list=angle_list,
-            mapping=[(i + 1) % qubit_num for i in range(qubit_num)]
-        )
+        URy = UniformlyRotation(GateType.ry)
+        reversed_ry = URy.execute(angle_list)
+        reversed_ry & [(i + 1) % qubit_num for i in range(qubit_num)]
         mat2 = reversed_ry.matrix()
         assert np.allclose(mat2, cs)

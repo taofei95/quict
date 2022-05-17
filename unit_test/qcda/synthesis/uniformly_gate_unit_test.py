@@ -15,7 +15,7 @@ from QuICT.core.gate import *
 from QuICT.qcda.synthesis import UniformlyRotation, UniformlyUnitary
 
 
-def test_uniform_ry():
+def test_uniformly_ry():
     for _ in range(10):
         for i in range(1, 6):
             circuit = Circuit(i)
@@ -25,10 +25,10 @@ def test_uniform_ry():
             unitary = SyntheticalUnitary.run(circuit)
             for j in range(1 << (i - 1)):
                 unitary_slice = unitary[2 * j:2 * (j + 1), 2 * j:2 * (j + 1)]
-                assert not np.any(abs(unitary_slice - Ry(angles[j]).matrix.reshape(2, 2)) > 1e-10)
+                assert np.allclose(unitary_slice, Ry(angles[j]).matrix)
 
 
-def test_uniform_rz():
+def test_uniformly_rz():
     for _ in range(10):
         for i in range(1, 6):
             circuit = Circuit(i)
@@ -38,10 +38,10 @@ def test_uniform_rz():
             unitary = SyntheticalUnitary.run(circuit)
             for j in range(1 << (i - 1)):
                 unitary_slice = unitary[2 * j:2 * (j + 1), 2 * j:2 * (j + 1)]
-                assert not np.any(abs(unitary_slice - Rz(angles[j]).matrix.reshape(2, 2)) > 1e-10)
+                assert np.allclose(unitary_slice, Rz(angles[j]).matrix)
 
 
-def test_uniform_unitary():
+def test_uniformly_unitary():
     for _ in range(10):
         for i in range(1, 6):
             circuit = Circuit(i)
@@ -56,6 +56,4 @@ def test_uniform_unitary():
             for j in range(1 << (i - 1)):
                 unitary_slice = unitary[2 * j:2 * (j + 1), 2 * j:2 * (j + 1)]
                 unitary_slice[:] *= delta
-                phase = np.any(abs(unitary_slice - unitaries[j].reshape(2, 2)) > 1e-6)
-                if phase:
-                    assert 0
+                assert np.allclose(unitary_slice, unitaries[j].reshape(2, 2))

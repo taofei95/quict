@@ -2,9 +2,10 @@
 import numpy as np
 from scipy.linalg import block_diag
 from scipy.stats import unitary_group
-from QuICT.qcda.synthesis.unitary_transform.controlled_unitary import quantum_shannon_decompose
-from QuICT.qcda.synthesis.uniformly_gate import UniformlyRz
-from QuICT.core import *
+
+from QuICT.qcda.synthesis.unitary_decomposition.controlled_unitary import quantum_shannon_decompose
+from QuICT.qcda.synthesis.uniformly_gate import UniformlyRotation
+from QuICT.core.gate import GateType
 
 
 def test_controlled_unitary_first_level():  # Only test the first decomposition
@@ -21,10 +22,9 @@ def test_controlled_unitary_first_level():  # Only test the first decomposition
             theta = -2 * np.log(s) / 1j
             angle_list.append(theta)
 
-        gates = UniformlyRz.execute(
-            angle_list=angle_list,
-            mapping=[(i + 1) % qubit_num for i in range(qubit_num)]
-        )
+        URz = UniformlyRotation(GateType.rz)
+        gates = URz.execute(angle_list)
+        gates & [(i + 1) % qubit_num for i in range(qubit_num)]
         mat = gates.matrix()
         assert np.allclose(mat, block_diag(d, d.conj().T))
         assert np.allclose(block_diag(u1, u2), block_diag(v, v) @ mat @ block_diag(w, w))

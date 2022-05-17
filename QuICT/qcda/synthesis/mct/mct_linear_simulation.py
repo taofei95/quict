@@ -72,6 +72,7 @@ class MCTLinearHalfDirtyAux(object):
 
         return gates
 
+
 class MCTLinearOneDirtyAux(object):
     def execute(self, n):
         """ A linear simulation for Toffoli gate

@@ -5,7 +5,6 @@ Decomposition of SU(4) with Cartan KAK Decomposition
 import numpy as np
 
 from QuICT.core.gate import CompositeGate, CX, Ry, Rz, Unitary
-from .._synthesis import Synthesis
 
 # Magic basis
 B = (1.0 / np.sqrt(2)) * np.array([[1, 1j, 0, 0],
@@ -14,7 +13,7 @@ B = (1.0 / np.sqrt(2)) * np.array([[1, 1j, 0, 0],
                                    [1, -1j, 0, 0]], dtype=complex)
 
 
-class CartanKAKDecomposition:
+class CartanKAKDecomposition(object):
     """Cartan KAK Decomposition in SU(4)
 
     ∀ U in SU(4), ∃ KL0, KL1, KR0, KR1 in SU(2), a, b, c in R, s.t.
@@ -27,20 +26,18 @@ class CartanKAKDecomposition:
 
     The process of this part is taken from [1], while some notation is from [3],
     which is useful in the build_gate.
+
     Reference:
         [1] https://arxiv.org/abs/0806.4015
         [2] https://arxiv.org/abs/quant-ph/0507171
         [3] https://arxiv.org/abs/quant-ph/0308006
     """
 
-    def __init__(self, matrix, eps=1e-15):
+    def __init__(self, eps=1e-15):
         """
-
         Args:
-            matrix(np.array): 4*4 unitary matrix to be decomposed
             eps(float, optional): Eps of decomposition process
         """
-        self.matrix = matrix
         self.eps = eps
 
     @staticmethod
@@ -105,11 +102,28 @@ class CartanKAKDecomposition:
             ValueError("tensor_decompose: Final failed")
         return U0, U1
 
-    def decompose(self):
+    def execute(self, matrix):
         """
-        Decomposition process
+        Decompose a matrix U in SU(4) with Cartan KAK Decomposition to
+        a circuit, which contains only 1-qubit gates and CNOT gates.
+        The decomposition of Exp(i(a XX + b YY + c ZZ)) may vary a global phase.
+
+        Args:
+            matrix(np.array): 4*4 unitary matrix to be decomposed
+
+        Returns:
+            CompositeGate: Decomposed gates.
+
+        Reference:
+            [1] https://arxiv.org/abs/0806.4015
+            [2] https://arxiv.org/abs/quant-ph/0308006
         """
-        U = self.matrix.copy()
+        assert matrix.shape == (4, 4), \
+            ValueError("CartanKAKDecomposition: Input must be a 4*4 matrix.")
+        assert np.allclose(matrix.T.conj().dot(matrix), np.eye(4)), \
+            ValueError("CartanKAKDecomposition: Input must be a unitary matrix.")
+
+        U = matrix.copy()
         U /= np.linalg.det(U) ** (0.25)
         eps = self.eps
 
@@ -128,9 +142,9 @@ class CartanKAKDecomposition:
         # so that D is now in SU(4)
         d = np.angle(D) / 2
         d[3] = -d[0] - d[1] - d[2]
-        self.a = (d[0] + d[2]) / 2
-        self.b = (d[1] + d[2]) / 2
-        self.c = (d[0] + d[1]) / 2
+        a = (d[0] + d[2]) / 2
+        b = (d[1] + d[2]) / 2
+        c = (d[0] + d[1]) / 2
 
         # Similarly, P could be in O(4) instead of SO(4).
         if np.linalg.det(P) < 0:
@@ -143,51 +157,22 @@ class CartanKAKDecomposition:
         KL.imag[abs(KL.imag) < eps] = 0.0
         KR.real[abs(KR.real) < eps] = 0.0
         KR.imag[abs(KR.imag) < eps] = 0.0
-        self.KL0, self.KL1 = self.tensor_decompose(KL)
-        self.KR0, self.KR1 = self.tensor_decompose(KR)
+        KL0, KL1 = self.tensor_decompose(KL)
+        KR0, KR1 = self.tensor_decompose(KR)
 
-
-class TwoQubitTransform(Synthesis):
-    @classmethod
-    def execute(cls, matrix, eps=1e-15):
-        """
-        Decompose a matrix U in SU(4) with Cartan KAK Decomposition to
-        a circuit, which contains only 1-qubit gates and CNOT gates.
-        The decomposition of Exp(i(a XX + b YY + c ZZ)) may vary a global phase.
-
-        Args:
-            matrix(np.array): 4*4 unitary matrix to be decomposed
-            eps(float, optional): Eps of decomposition process
-
-        Returns:
-            CompositeGate: Decomposed gates.
-
-        Reference:
-            [1] https://arxiv.org/abs/0806.4015
-            [2] https://arxiv.org/abs/quant-ph/0308006
-        """
-
-        assert matrix.shape == (4, 4), \
-            ValueError("TwoQubitTransform: Input must be a 4*4 matrix.")
-        assert np.allclose(matrix.T.conj().dot(matrix), np.eye(4)), \
-            ValueError("TwoQubitTransform: Input must be a unitary matrix.")
-
-        CKD = CartanKAKDecomposition(matrix, eps)
-        CKD.decompose()
-
-        KL0 = CKD.KL0.dot(Rz(-np.pi / 2).matrix)
-        KL1 = CKD.KL1
-        KR0 = CKD.KR0
-        KR1 = Rz(np.pi / 2).matrix.dot(CKD.KR1)
+        KL0 = KL0.dot(Rz(-np.pi / 2).matrix)
+        KL1 = KL1
+        KR0 = KR0
+        KR1 = Rz(np.pi / 2).matrix.dot(KR1)
         gates = CompositeGate()
         with gates:
             Unitary(KR0) & 0
             Unitary(KR1) & 1
             CX & [1, 0]
-            Rz(np.pi / 2 - 2 * CKD.c) & 0
-            Ry(np.pi / 2 - 2 * CKD.a) & 1
+            Rz(np.pi / 2 - 2 * c) & 0
+            Ry(np.pi / 2 - 2 * a) & 1
             CX & [0, 1]
-            Ry(2 * CKD.b - np.pi / 2) & 1
+            Ry(2 * b - np.pi / 2) & 1
             CX & [1, 0]
             Unitary(KL0) & 0
             Unitary(KL1) & 1

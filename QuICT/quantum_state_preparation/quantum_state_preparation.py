@@ -2,7 +2,7 @@ import numpy as np
 
 from QuICT.core.gate import CompositeGate, GateType, Phase, CX
 from QuICT.qcda.synthesis.uniformly_gate import UniformlyRotation
-from QuICT.qcda.synthesis.unitary_transform import UnitaryTransform
+from QuICT.qcda.synthesis.unitary_decomposition import UnitaryDecomposition
 
 
 class QuantumStatePreparation(object):
@@ -109,13 +109,14 @@ class QuantumStatePreparation(object):
         with gates:
             for i in range(first_half):
                 CX & [i, i + first_half]
+        UD = UnitaryDecomposition()
         # Phase 3
-        U_gates, _ = UnitaryTransform.execute(U)
+        U_gates, _ = UD.execute(U)
         gates.extend(U_gates)
         # Phase 4
         if np.mod(num_qubits, 2) != 0:
             V = V[np.arange(1 << last_half).reshape(2, 1 << last_half - 1).T.flatten()]
-        V_gates, _ = UnitaryTransform.execute(V.T)
+        V_gates, _ = UD.execute(V.T)
         V_gates & list(range(first_half, num_qubits))
         gates.extend(V_gates)
 

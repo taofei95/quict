@@ -1,7 +1,8 @@
 # noinspection PyUnresolvedReferences
 import numpy as np
-from QuICT.qcda.synthesis.uniformly_gate import UniformlyRy
-from QuICT.core import *
+
+from QuICT.qcda.synthesis.uniformly_gate import UniformlyRotation
+from QuICT.core.gate import GateType
 
 
 def test_reversed_uniformly_ry():
@@ -11,10 +12,9 @@ def test_reversed_uniformly_ry():
         qubit_num = controlled_cnt + 1
         angle_cnt = 1 << controlled_cnt
         angle_list = [np.random.uniform(low=0, high=np.pi) for _ in range(angle_cnt)]
-        gates = UniformlyRy.execute(
-            angle_list=angle_list,
-            mapping=[(i + 1) % qubit_num for i in range(qubit_num)]
-        )
+        URy = UniformlyRotation(GateType.ry)
+        gates = URy.execute(angle_list)
+        gates & [(i + 1) % qubit_num for i in range(qubit_num)]
         mat = gates.matrix()
         for i in range(angle_cnt):
             for j in range(angle_cnt):
