@@ -1,176 +1,92 @@
+import numpy as np
+
 from QuICT.core import Circuit
 from QuICT.core.gate import *
+import QuICT.ops.linalg.cpu_calculator as linalg
+from .graph import Graph
 
 
-class QuantumRandomWalk:
-    _DEFAULT_COIN_OPERATOR = {
-        "h": H,
-        "i": ID,
-        "x": X,
-        "y": Y,
-        "z": Z
-    }
+class RandomWalk:
+    @property
+    def step(self):
+        return self._step
 
-    def __init__(self, T: int, p_space: int, dim: int = 1, coin_operator: str = "h"):
-        self.step = T
-        self.dim = dim
-        self.p_space = p_space
-        self.qubits = int(np.ceil(np.log2(p_space)))
+    @property
+    def graph(self):
+        return str(self._graph)
 
-        assert len(coin_operator) == self.dim
-        self._coin_operator = [self._DEFAULT_COIN_OPERATOR[op] for op in coin_operator]
-
-        self._circuit_construct()
-
-    def _circuit_construct(self):
-        self._circuit = Circuit(self.qubits * self.dim + self.dim)
-        is_squared = (self.p_space == 2 ** self.qubits)
-
-        if self.dim == 1:
-            self._build_1d_circuit(is_squared)
-        else:
-            self._build_2d_circuit(is_squared)
-
-    def _build_1d_circuit(self, is_squared: bool):
-        for _ in range(self.step):
-            self._coin_operator[0] | self._circuit(self.qubits)
-            self.shift_operator() | self._circuit
-            if not is_squared:
-                self._incre_mod() | self._circuit
-
-            self.shift_operator(decrement=True) | self._circuit
-            if not is_squared:
-                self._decre_mod() | self._circuit
-
-    def _build_2d_circuit(self, is_squared: bool):
-        max_qidx = self._circuit.width() - 1
-        coin_idx = [max_qidx - 1, max_qidx]
-        x_qidx = list(range(self.qubits)) + coin_idx
-        y_qidx = [i + self.qubits for i in range(self.qubits)] + coin_idx
-        for _ in range(self.step):
-            # Coin operator
-            self._coin_operator[0] | self._circuit(max_qidx - 1)
-            self._coin_operator[1] | self._circuit(max_qidx)
-
-            # Shift x- operator
-            self.shift_operator() | self._circuit(y_qidx)
-            if not is_squared:
-                self._incre_mod() | self._circuit(y_qidx)
-
-            self.shift_operator(decrement=True) | self._circuit(y_qidx)
-            if not is_squared:
-                self._decre_mod() | self._circuit(y_qidx)
-
-            # shift y- operator
-            X | self._circuit(max_qidx)
-            self.shift_operator() | self._circuit(x_qidx)
-            if not is_squared:
-                self._incre_mod() | self._circuit(x_qidx)
-
-            self.shift_operator(decrement=True) | self._circuit(x_qidx)
-            if not is_squared:
-                self._decre_mod() | self._circuit(x_qidx)
-
-            X | self._circuit(max_qidx)
-
-    def _mct_generator(self, qubits, target: int = 0):
-        _1 = (1 << qubits) - 1
-        _0 = _1 & ((1 << target) - 1) + (_1 >> (target + 1) << (target + 1))
-
-        unitary = np.identity(1 << qubits, dtype=np.complex128)
-        unitary[_1, _1], unitary[_0, _0] = np.complex128(0), np.complex128(0)
-        unitary[_0, _1], unitary[_1, _0] = np.complex128(1), np.complex128(1)
-
-        return unitary
-
-    def shift_operator(self, decrement: bool = False):
-        shift_cgate = CompositeGate()
-        qubits = self.qubits + self.dim
-        # Construct shift operator composite gate
-        if decrement:
-            for i in range(1, qubits + 1 - self.dim, 1):
-                X | shift_cgate(i)
-
-        for q_size in range(qubits, self.dim, -1):
-            if q_size > 3:
-                ugate = Unitary(self._mct_generator(q_size))
-                ugate | shift_cgate(list(range(qubits - 1, qubits - 1 - q_size, -1)))
-
-            if q_size == 3:
-                CCX | shift_cgate(list(range(qubits - 1, qubits - 4, -1)))
-
-            if q_size == 2:
-                CX | shift_cgate([qubits - 1, qubits - 2])
-
-            if decrement:
-                X | shift_cgate(qubits - q_size + 1)
-
-        return shift_cgate
-
-    def _incre_mod(self):
-        p_state = [i for i in range(self.qubits - 1, -1, -1) if self.p_space & (1 << i)]
-        _0_state = set(range(self.qubits)) ^ set(p_state)
-        
-        # Construct increment mod cgate
-        inc_mod = CompositeGate()
-        for _0 in _0_state:
-            X | inc_mod(self.qubits - 1 - _0)
-
-        for idx, pbit in enumerate(p_state):
-            if idx != 0:
-                X | inc_mod(self.qubits - 1 - p_state[idx - 1])
-
-            ugate = Unitary(self._mct_generator(
-                self.qubits + self.dim,
-                self.qubits - 1 - pbit
-            ))
-            ugate | inc_mod(list(range(self.qubits + self.dim - 1, -1, -1)))
-
-        for idx, pbit in enumerate(p_state[::-1]):
-            if idx == 0:
-                continue
-
-            ugate = Unitary(self._mct_generator(
-                self.qubits + self.dim,
-                self.qubits - 1 - pbit
-            ))
-            ugate | inc_mod(list(range(self.qubits + self.dim - 1, -1, -1)))
-            X | inc_mod(self.qubits - 1 - pbit)
-
-        for _0 in _0_state:
-            X | inc_mod(self.qubits - 1 - _0)
-
-        return inc_mod
-
-    def _decre_mod(self):
-        diff = (1 << self.qubits) - self.p_space
-        bitl_diff = int(np.log2(diff)) + 1
-        diff_state = [i for i in range(bitl_diff) if diff & (1 << i)]
-
-        # Construct decrement mod cgate
-        dec_mod = CompositeGate()
-        X | dec_mod(self.qubits + self.dim - 1)
-        for idx, dbit in enumerate(diff_state):
-            if idx != 0:
-                X | dec_mod(self.qubits - 1 - diff_state[idx - 1])
-
-            ugate = Unitary(self._mct_generator(
-                self.qubits + self.dim,
-                self.qubits - 1 - dbit
-            ))
-            ugate | dec_mod(list(range(self.qubits + self.dim - 1, -1, -1)))
-
-        X | dec_mod(self.qubits + self.dim - 1)
-        for dbit in diff_state[:-1]:
-            X | dec_mod(self.qubits - 1 - dbit)
-
-        return dec_mod
-
+    @property
     def circuit(self) -> Circuit:
         return self._circuit
 
-    def run(self, device: str = "CPU"):            
-        pass
+    def __init__(self, T: int, graph: Graph, coin_operator: np.ndarray = None):
+        self._step = T
+        self._graph = graph
+        self._coin_operator = coin_operator
+        self._operator_by_position = False
+        self._operator_by_time = False
 
-    def visible(self):
+        # Validation graph and coin operator
+        assert self._graph.validation(), "The edge's number should be equal."
+        self._operator_validation()
+        self._total_qubits = self._graph.position_qubits + self._action_qubits
+
+        # Build random walk circuit
+        self._circuit_construct()
+
+    def _operator_validation(self):
+        if self._coin_operator is not None:
+            assert self._graph.operator_validation(self._coin_operator), "The operator should be an unitary matrix."
+            self._action_qubits = int(np.ceil(np.log2(self._coin_operator.shape[0])))
+        else:
+            self._coin_operator = self._graph.operators
+            self._action_qubits = self._graph.action_qubits
+            self._operator_by_position = True
+            self._operator_by_time = self._graph.switched_time > 0
+
+    def _circuit_construct(self):
+        self._circuit = Circuit(self._total_qubits)
+        for t in range(self.step):
+            self._build_action_operator(t) | self._circuit
+            self._build_shift_operator() | self._circuit
+
+    def _build_action_operator(self, step: int):
+        action_qubits = [self._graph.position_qubits + i for i in range(self._action_qubits)]
+        if not (self._operator_by_position or self._operator_by_time):
+            return Unitary(self._coin_operator) & action_qubits
+
+        action_gate = CompositeGate()
+        curr_op_idx = (step // self._graph.switched_time) % len(self._graph.operators[0]) \
+            if self._operator_by_time else 0
+        for i in range(self._graph.position):
+            op = self._graph.operators[i][curr_op_idx]
+            x_idx = [pidx for pidx in range(self._graph.position_qubits) if not (i & 1 << pidx)]
+            for xi in x_idx:
+                X | action_gate(xi)
+
+            self._mct_generator(op) | action_gate
+            for xi in x_idx:
+                X | action_gate(xi)
+
+        return action_gate
+
+    def _mct_generator(self, op: np.ndarray):
+        mct_unitary = np.identity(1 << self._total_qubits, dtype=np.complex128)
+        op_shape = op.shape
+        mct_unitary[-op_shape[0]:, -op_shape[1]:] = op
+
+        return Unitary(mct_unitary) & list(range(self._total_qubits))
+
+    def _build_shift_operator(self):
+        unitary_matrix = np.zeros((1 << self._total_qubits, 1 << self._total_qubits), dtype=np.complex128)
+        for i in range(self._graph.position):
+            curr_idx = (1 << self._action_qubits) * i
+            for action_state in range(self._graph.action_space):
+                related_action = self._graph.edges[i][action_state]
+                unitary_matrix[related_action * (1 << self._action_qubits) + action_state, curr_idx + action_state] = 1
+
+        return Unitary(unitary_matrix)
+
+    def run(self, device: str = "GPU", record_measured: bool = False):
+        # TODO: bug fixed linalg.cpu.dot.
         pass

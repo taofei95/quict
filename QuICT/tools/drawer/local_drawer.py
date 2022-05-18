@@ -795,10 +795,12 @@ class PhotoDrawer(object):
                                                   gt=self.style.gt, sc=self.style.sc,
                                                   text=gate.qasm_name, subtext=subtext)
                 elif len(coord) > 3:
-                    self.draw_multiqubit_gate(coord, fc=self.style.dispcol['multi'],
-                                            ec=self.style.dispcol['multi'],
-                                            gt=self.style.gt, sc=self.style.sc,
-                                            text=gate.qasm_name, subtext="")
+                    self.draw_multiqubit_gate(
+                        coord, fc=self.style.dispcol['multi'],
+                        ec=self.style.dispcol['multi'],
+                        gt=self.style.gt, sc=self.style.sc,
+                        text=gate.qasm_name, subtext=""
+                    )
 
             layer_position.append(position)
             position = position + layer_width

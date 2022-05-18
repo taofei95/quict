@@ -1,18 +1,50 @@
+import numpy as np
 from collections import defaultdict
 from typing import Union, List, Dict
 
 
 class Graph:
     @property
-    def vector(self) -> int:
+    def position(self) -> int:
         return self._vectors
+
+    @property
+    def position_qubits(self) -> int:
+        return int(np.ceil(np.log2(self._vectors)))
+
+    @property
+    def action_space(self) -> int:
+        return len(self._edges[0])
+
+    @property
+    def action_qubits(self) -> int:
+        if self._operators is None:
+            return int(np.ceil(np.log2(self.action_space)))
+        else:
+            shape = self._operators[0][0].shape
+            return int(np.ceil(np.log2(shape[0])))
 
     @property
     def edges(self) -> dict:
         return self._edges
 
-    def __init__(self, position: int, edges: Union[List, Dict] = None):
+    @property
+    def operators(self) -> dict:
+        return self._operators
+
+    @property
+    def switched_time(self) -> int:
+        return self._switched_time
+
+    def __init__(
+        self,
+        position: int,
+        edges: Union[List, Dict] = None,
+        operators: Union[List, Dict] = None,
+        switched_time: int = -1
+    ):
         self._vectors = position
+        self._switched_time = switched_time
         self._edges = defaultdict(list)
         if edges is not None:
             iterator = enumerate(edges) if isinstance(edges, list) else edges.items()
@@ -20,8 +52,45 @@ class Graph:
                 assert isinstance(edge, list)
                 self._edges[idx] = edge
 
+        self._operators = defaultdict(list)
+        if operators is not None:
+            iterator = enumerate(operators) if isinstance(operators, list) else operators.items()
+            # assert len(iterator) == self._vectors, "The number of operators should equal to position"
+            for idx, operator in iterator:
+                assert self.operator_validation(operator), "The operator should be 1 or more unitary matrix."
+                self._operators[idx] = operator if isinstance(operator, list) else [operator]
+
     def __str__(self):
-        return str(self._edges)
+        return str(self._edges) + "\nOperators: " + str(self._operators)
+
+    def operator_validation(self, operator: Union[List, np.ndarray]) -> bool:
+        if isinstance(operator, np.ndarray):
+            return self._operator_validation(operator)
+
+        for op in operator:
+            if not self._operator_validation(op):
+                return False
+
+        return True
+
+    def _operator_validation(self, operator: np.ndarray):
+        shape = operator.shape
+        log2_shape = int(np.ceil(np.log2(shape[0])))
+
+        return (
+            shape[0] == shape[1] and
+            shape[0] == (1 << log2_shape) and
+            np.allclose(np.eye(shape[0]), operator.dot(operator.T.conj()))
+        )
+
+    def add_operator(self, u: int, operator: Union[List, np.ndarray]):
+        assert u >= 0 and u <= self._vectors
+        assert self.operator_validation(operator), "The operator should be 1 or more unitary matrix."
+        if isinstance(operator, np.ndarray):
+            operator = [operator]
+
+        for op in operator:
+            self._operators[u].append(op)
 
     def add_edge(self, u: int, v: int):
         assert u >= 0 and u <= self._vectors
