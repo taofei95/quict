@@ -20,7 +20,7 @@ def ex_gcd(a, b, arr):
 def mod_reverse(a, n):
     arr = [0, 1]
     g = ex_gcd(a, n, arr)
-    if g!=1:
+    if g != 1:
         raise ValueError(f"imput {a} and {n} does not coprime")
     return (arr[0] % n + n) % n
 
@@ -35,6 +35,7 @@ def fast_power(a, b, N):
         b >>= 1
     return x
 
+
 # transform an integer to n-length bitwise string
 
 
@@ -47,7 +48,7 @@ def int2bitwise(c, n):
         c_bitwise = c_bitwise[-n:]
         # print('c exceeds the length of a, thus is truncated')
     else:
-        c_bitwise = '0' * (n - len(c_bitwise)) + c_bitwise
+        c_bitwise = "0" * (n - len(c_bitwise)) + c_bitwise
     return c_bitwise
 
 
@@ -60,10 +61,11 @@ def set(qreg, N):
     m = len(str)
     if m > n:
         logging.warning(
-            f'When set qureg as N={N}, N exceeds the length of qureg n={n}, thus is truncated')
+            f"When set qureg as N={N}, N exceeds the length of qureg n={n}, thus is truncated"
+        )
 
     for i in range(min(n, m)):
-        if str[m - 1 - i] == '1':
+        if str[m - 1 - i] == "1":
             X | qreg[n - 1 - i]
 
 
@@ -90,10 +92,10 @@ def continued_fraction_expansion(n, d):
 
 
 def miller_rabin(num):
-    '''random prime test
+    """random prime test
         return True, num is a prime whp
         return False, num is a composite
-    '''
+    """
     Test = [2, 3, 5, 7, 11, 13, 17, 19, 23, 29]
     if num == 1:
         return False
@@ -120,29 +122,37 @@ def miller_rabin(num):
 
 MAX_ROUND = 3
 
+
 def reinforced_order_finding_constructor(order_finding):
-    def reinforced_order_finding(a: int, N: int, eps: float = 1 / 10, simulator = None):
+    def reinforced_order_finding(a: int, N: int, eps: float = 1 / 10, simulator=None):
         r_list = []
         i = 0
         while i < MAX_ROUND:
             i += 1
-            r = order_finding(a,N,eps,simulator)
-            if r!=0 and (a**r)%N==1:
-                logging.info(f'\tsuccess!')
+            r = order_finding(a, N, eps, simulator)
+            if r != 0 and (a ** r) % N == 1:
+                logging.info(f"\tsuccess!")
                 r_list.append(r)
         if len(r_list) == 0:
             return 0
         else:
-            return reduce(lambda x,y: (x*y)//gcd(x,y),r_list)
+            return reduce(lambda x, y: (x * y) // gcd(x, y), r_list)
+
     return reinforced_order_finding
 
 
 def run_twice_order_finding_constructor(order_finding):
-    def run(a: int, N: int, demo: str = None, eps: float = 1 / 10, simulator: Simulator = CircuitSimulator()):
+    def run(
+        a: int,
+        N: int,
+        demo: str = None,
+        eps: float = 1 / 10,
+        simulator: Simulator = CircuitSimulator(),
+    ):
         r1 = order_finding(a, N, eps, simulator)
         r2 = order_finding(a, N, eps, simulator)
-        flag1 = (pow(a, r1, N) == 1 and r1 != 0)
-        flag2 = (pow(a, r2, N) == 1 and r2 != 0)
+        flag1 = pow(a, r1, N) == 1 and r1 != 0
+        flag2 = pow(a, r2, N) == 1 and r2 != 0
         if flag1 and flag2:
             r = min(r1, r2)
         elif not flag1 and not flag2:
@@ -150,11 +160,12 @@ def run_twice_order_finding_constructor(order_finding):
         else:
             r = int(flag1) * r1 + int(flag2) * r2
 
-        if (pow(a, r, N) == 1 and r != 0):
-            msg = f'\torder_finding found candidate order: r = {r} of a = {a}'
+        if pow(a, r, N) == 1 and r != 0:
+            msg = f"\torder_finding found candidate order: r = {r} of a = {a}"
         else:
             r = 0
-            msg = '\torder_finding failed'
+            msg = "\torder_finding failed"
         logging.info(msg)
         return r
+
     return run

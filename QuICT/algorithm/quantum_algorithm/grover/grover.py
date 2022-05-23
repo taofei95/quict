@@ -28,6 +28,7 @@ class Grover:
 
     Quantum Computation and Quantum Information - Michael A. Nielsen & Isaac L. Chuang
     """
+
     @staticmethod
     def run(n, k, oracle, simulator=CircuitSimulator()):
         """ grover search for f with custom oracle
@@ -41,34 +42,40 @@ class Grover:
         Returns:
             int: the a satisfies that f(a) = 1
         """
-        assert k>0, "at least 1 ancilla, which is shared by MCT part"
+        assert k > 0, "at least 1 ancilla, which is shared by MCT part"
         circuit = Circuit(n + k)
-        index_q   = list(range(n))
-        ancilla_q  = list(range(n,n+k))
+        index_q = list(range(n))
+        ancilla_q = list(range(n, n + k))
         N = 2 ** n
         theta = 2 * np.arccos(np.sqrt(1 - 1 / N))
         T = round(np.arccos(np.sqrt(1 / N)) / theta)
-        phase_size = 0
-        oracle_size = 0
+        # phase_size = 0
+        # oracle_size = 0
 
         # create equal superposition state in index_q
-        for idx in index_q: H | circuit(idx)
+        for idx in index_q:
+            H | circuit(idx)
         # rotation
         for i in range(T):
             # Grover iteration
-            oracle | circuit(index_q+ancilla_q)
-            for idx in index_q: H | circuit(idx)
+            oracle | circuit(index_q + ancilla_q)
+            for idx in index_q:
+                H | circuit(idx)
             # control phase shift
-            for idx in index_q: X | circuit(idx)
+            for idx in index_q:
+                X | circuit(idx)
             H | circuit(index_q[n - 1])
-            MCTOneAux.execute(n + 1) | circuit(index_q+ancilla_q[:1])
+            MCTOneAux.execute(n + 1) | circuit(index_q + ancilla_q[:1])
 
             H | circuit(index_q[n - 1])
-            for idx in index_q: X | circuit(idx)
+            for idx in index_q:
+                X | circuit(idx)
             # control phase shift end
-            for idx in index_q: H | circuit(idx)
-        amp = simulator.run(circuit)
-        for idx in index_q: Measure | circuit(idx)
+            for idx in index_q:
+                H | circuit(idx)
+        simulator.run(circuit)
+        for idx in index_q:
+            Measure | circuit(idx)
         simulator.run(circuit)
         logging.info(f"circuit width          = {circuit.width():4}")
         logging.info(f"circuit depth          = {circuit.depth():4}")
