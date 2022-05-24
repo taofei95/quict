@@ -1,5 +1,3 @@
-import pytest
-
 import numpy as np
 
 from QuICT.core import Circuit
@@ -36,7 +34,3 @@ def test():
             gates_opt = SCO.execute(gates)
             # np.set_printoptions(precision=3, suppress=True)
             assert np.allclose(gates.matrix(), gates_opt.matrix())
-
-
-if __name__ == '__main__':
-    pytest.main(["./unit_test.py"])

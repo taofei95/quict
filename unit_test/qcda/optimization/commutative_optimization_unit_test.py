@@ -1,6 +1,3 @@
-
-import pytest
-
 import numpy as np
 
 from QuICT.algorithm import SyntheticalUnitary
@@ -68,7 +65,3 @@ def test():
         # phase = opt.dot(np.linalg.inv(original))
         assert np.allclose(original, opt)
         # assert np.allclose(phase, phase[0, 0] * np.eye(2 ** n), rtol=1e-10, atol=1e-10)
-
-
-if __name__ == '__main__':
-    pytest.main(["./unit_test.py"])
