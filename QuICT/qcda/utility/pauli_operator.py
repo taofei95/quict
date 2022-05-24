@@ -53,7 +53,7 @@ class PauliOperator(object):
         # Z Y = iX
         (GateType.z, GateType.y): (GateType.x, 1j),
         # Z Z = I
-        (GateType.z, GateType.z): (GateType.id, 1),
+        (GateType.z, GateType.z): (GateType.id, 1)
     }
 
     conjugate_rules = {
@@ -136,7 +136,7 @@ class PauliOperator(object):
         # Z Y Z = -Y
         (GateType.z, GateType.y): (GateType.y, -1),
         # Z Z Z = Z
-        (GateType.z, GateType.z): (GateType.z, 1),
+        (GateType.z, GateType.z): (GateType.z, 1)
     }
 
     standardize_rules = {

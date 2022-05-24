@@ -50,16 +50,15 @@ typelist = [GateType.cx, GateType.h, GateType.s, GateType.t, GateType.x, GateTyp
 
 
 def test():
-    for _ in range(100):
+    for _ in range(10):
         n = 5
         circuit = Circuit(n)
         circuit.random_append(rand_size=100, typelist=typelist)
         # print(circuit)
         # circuit.draw()
 
-        gates = CommutativeOptimization.execute(circuit, deparameterization=True)
-        circuit_opt = Circuit(n)
-        circuit_opt.extend(gates)
+        CO = CommutativeOptimization(deparameterization=True)
+        circuit_opt = CO.execute(circuit)
 
         # print(circuit_opt)
         # circuit_opt.draw()

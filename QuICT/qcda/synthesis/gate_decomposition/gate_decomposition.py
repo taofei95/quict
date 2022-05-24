@@ -39,7 +39,7 @@ class GateDecomposition(object):
             elif isinstance(gate, BasicGate):
                 try:
                     gates_decomposed.extend(gate.build_gate())
-                except:
+                except Exception:
                     gates_decomposed.append(gate)
             else:
                 raise ValueError('Unknown gate encountered')
