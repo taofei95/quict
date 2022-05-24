@@ -1,30 +1,30 @@
 import multiprocessing as mp
-import numpy as np
 from concurrent.futures import ProcessPoolExecutor, as_completed
 from cupy.cuda import nccl
+import numpy as np
 
 from QuICT.utility import Proxy
-from .multigpu_simulator import MultiStateVectorSimulator
+from .multi_nodes_simulator import MultiNodesSimulator
+from QuICT.simulation.gpu_simulator import MultiStateVectorSimulator
 
 
 if mp.get_start_method(allow_none=True) != "spawn":
     mp.set_start_method("spawn", force=True)
 
 
-def worker(ndev, uid, dev_id, precision, sync, circuit):
+def worker(ndev, uid, dev_id, circuit):
     proxy = Proxy(ndevs=ndev, uid=uid, dev_id=dev_id)
-    simulator = MultiStateVectorSimulator(
+    simulator = MultiNodesSimulator(
         proxy=proxy,
-        precision=precision,
-        gpu_device_id=dev_id,
-        sync=sync
+        device="GPU",
+        gpu_id=dev_id
     )
     state = simulator.run(circuit)
 
     return dev_id, state.get()
 
 
-class MultiDeviceSimulatorLauncher:
+class MultiNodeLauncher:
     def __init__(self, ndev: int, precision: str = "double", sync: bool = True):
         self.ndev = ndev
         self.precision = precision
@@ -39,8 +39,6 @@ class MultiDeviceSimulatorLauncher:
                     self.ndev,
                     uid,
                     dev_id,
-                    self.precision,
-                    self.sync,
                     circuit
                 ) for dev_id in range(self.ndev)
             ]

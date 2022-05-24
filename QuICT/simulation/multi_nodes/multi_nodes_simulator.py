@@ -36,12 +36,14 @@ class MultiNodesSimulator:
     def __init__(
         self,
         proxy: Proxy,
-        device: str = "CPU",
+        device: str = "GPU",
+        gpu_id: int = 0,
         **options
     ):
-        self.proxy = None # DataSwither(proxy)
+        self.proxy = proxy
+        self._data_switcher = DataSwitcher(self.proxy)
         self.simulator = CircuitSimulator(options) if device == "CPU" else \
-            ConstantStateVectorSimulator()
+            ConstantStateVectorSimulator(gpu_device_id=gpu_id)
 
     def run(
         self,
@@ -58,17 +60,18 @@ class MultiNodesSimulator:
         """
         qubits = circuit.width()
         # initial state vector in simulator
-        self.simulator.initial_state_vector(qubits)
+        self.simulator.initial_state_vector(qubits, (self._data_switcher.id != 0))
         self._pipeline = circuit.gates
-        while self._pipeline:
+        while len(self._pipeline) > 0:
             op = self._pipeline.pop(0)
+
             if isinstance(op, BasicGate):
                 self.simulator.apply_gate(op)
             elif isinstance(op, DeviceTrigger):
-                related_gate = op.mapping(self.proxy.id)
+                related_gate = op.mapping(self._data_switcher.id)
                 self._pipeline = related_gate.gates + self._pipeline
             elif isinstance(op, DataSwitch):
-                self.proxy(op, self.vector)
+                self._data_switcher(op, self.vector)
             elif isinstance(op, Multiply):
                 self.simulator.apply_multiply(op.value)
             elif isinstance(op, SpecialGate):
@@ -87,7 +90,7 @@ class MultiNodesSimulator:
 
         total_prob = self.proxy.add_prob(prob)
         total_prob = total_prob.get()
-        
+
         if op.proxy_idx != -1:
             if op.type == GateType.measure:
                 self._apply_measure(op.proxy_idx, total_prob)

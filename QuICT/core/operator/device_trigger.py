@@ -3,6 +3,7 @@ from typing import Dict
 from QuICT.core.gate import CompositeGate
 from ._operator import Operator
 
+
 class DeviceTrigger(Operator):
     def __init__(
         self,
@@ -18,6 +19,17 @@ class DeviceTrigger(Operator):
         """
         super().__init__(targets=1)
         self._dev_to_gate = device_gate_mapping
+
+    def __str__(self):
+        totals = ""
+        for k, v in self._dev_to_gate.items():
+            string = str(k) + ": "
+            for gate in v.gates:
+                string += gate.qasm()
+
+            totals += string + "\n"
+
+        return totals
 
     def mapping(self, dev: int) -> CompositeGate:
         return self._dev_to_gate[dev]

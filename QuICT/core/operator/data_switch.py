@@ -11,10 +11,13 @@ class DataSwitchType(Enum):
 
 class DataSwitch(Operator):
     def __init__(self, destination: int, type: DataSwitchType, switch_condition: dict = None):
-        super().__init__(targets = 1)
+        super().__init__(targets=1)
         self._destination = destination
         self._type = type
         self._cond = switch_condition
+
+    def qasm(self):
+        return f"{self.destination}+{self.type}+{self._cond}"
 
     @property
     def destination(self):

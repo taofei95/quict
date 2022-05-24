@@ -55,6 +55,7 @@ class MultiStateVectorSimulator(BasicGPUSimulator):
         self.qubits = int(self.total_qubits - np.log2(self.proxy.ndevs))
         self._gates = GateDecomposition.execute(circuit).gates
         self._measure_result = defaultdict(list)
+        self._pipeline = self._gates
 
         # Initial GateMatrix
         self._gate_matrix_prepare()
@@ -97,7 +98,8 @@ class MultiStateVectorSimulator(BasicGPUSimulator):
         self._initial_circuit(circuit, use_previous)
 
         with cp.cuda.Device(self._device_id):
-            for gate in self._gates:
+            while self._gates:
+                gate = self._gates.pop(0)
                 self.apply_gate(gate)
 
         if record_measured:
@@ -260,7 +262,6 @@ class MultiStateVectorSimulator(BasicGPUSimulator):
             elif t_index >= self.qubits:    # # target index exceed the device limit.
                 value = gate.matrix[2, 3] if self.proxy.dev_id & (1 << (t_index - self.qubits)) else \
                     gate.matrix[3, 2]
-
                 self._algorithm.Controlled_Multiply_targ(
                     c_index,
                     value,

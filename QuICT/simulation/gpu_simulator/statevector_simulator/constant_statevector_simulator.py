@@ -17,6 +17,7 @@ from QuICT.ops.utils import LinAlgLoader
 from QuICT.simulation.gpu_simulator import BasicGPUSimulator
 from QuICT.simulation.optimization import Optimizer
 from QuICT.simulation.utils import GATE_TYPE_to_ID, GateGroup
+from QuICT.ops.gate_kernel import Float_Multiply, Simple_Multiply
 
 
 class ConstantStateVectorSimulator(BasicGPUSimulator):
@@ -70,14 +71,15 @@ class ConstantStateVectorSimulator(BasicGPUSimulator):
         if not use_previous or self._vector is None:
             self.initial_state_vector()
 
-    def initial_state_vector(self, qubits: int = 0):
+    def initial_state_vector(self, qubits: int = 0, all_zeros: bool = False):
         """ Initial qubits' vector states. """
         if qubits != 0:
             self._qubits = qubits
 
         vector_size = 1 << int(self._qubits)
         self._vector = cp.zeros(vector_size, dtype=self._precision)
-        self._vector.put(0, self._precision(1))
+        if not all_zeros:
+            self._vector.put(0, self._precision(1))
 
     def run(
         self,
@@ -385,9 +387,9 @@ class ConstantStateVectorSimulator(BasicGPUSimulator):
     def apply_multiply(self, value):
         default_parameters = (self._vector, self._qubits, self._sync)
         if isinstance(value, float):
-            self._algorithm.Float_Multiply(value, *default_parameters)
+            Float_Multiply(value, *default_parameters)
         else:
-            self._algorithm.Simple_Multiply(value, *default_parameters)
+            Simple_Multiply(value, *default_parameters)
 
     def apply_specialgate(self, index: int, type: GateType, prob: float = None):
         default_parameters = (self._vector, self._qubits, self._sync)

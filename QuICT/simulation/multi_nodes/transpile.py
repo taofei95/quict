@@ -32,8 +32,9 @@ class Transpile:
                 continue
 
             gate_args = gate.cargs + gate.targs
-            gate = gate & self._args_adjust(gate_args, split_qubits)
-            if len(set(gate_args) & set(split_qubits)) == 0:
+            updated_args, union_arg = self._args_adjust(gate_args, split_qubits)
+            gate = gate & updated_args
+            if len(union_arg) == 0:
                 if gate.matrix_type == MatrixType.special:
                     SpecialGate(gate.type, gate_args) | transpiled_circuit
                 else:
@@ -43,9 +44,9 @@ class Transpile:
 
             # Deal with gate has qubits in splited qubits
             if len(gate_args) == 1:
-                device_trigger = self._single_qubit_gate_transpile(gate, split_qubits, t_qubits)
+                device_trigger = self._single_qubit_gate_transpile(gate, split_qubits)
             elif len(gate_args) == 2:
-                device_trigger = self._double_qubits_gate_transpile(gate, split_qubits, t_qubits)
+                device_trigger = self._double_qubits_gate_transpile(gate, t_qubits, split_qubits, union_arg)
             else:
                 raise ValueError("Only supportted transpilt for gate less than 2 qubits.")
 
@@ -56,21 +57,20 @@ class Transpile:
     def _single_qubit_gate_transpile(
         self,
         gate: BasicGate,
-        split_qubits: list,
-        max_qubits: int
+        split_qubits: list
     ):
         gate_arg, matrix_type = gate.targ, gate.matrix_type
-        split_idx = split_qubits.index(gate_arg)
+        split_idx = 1 << (split_qubits.index(gate_arg))
 
         dev_mapping = {}
         for index in range(self._ndev):
-            _0_1 = index & (1 << split_idx)
-            destination = index ^ (1 << split_idx)
+            _0_1 = index & split_idx
+            destination = index ^ split_idx
             splited_cgate = CompositeGate()
             # Normal 1-qubit gates
             if matrix_type == MatrixType.normal:
                 DataSwitch(destination, DataSwitchType.half) | splited_cgate
-                gate | splited_cgate(max_qubits - 1)
+                gate | splited_cgate(0)
                 DataSwitch(destination, DataSwitchType.half) | splited_cgate
             # diagonal 1-qubit gates
             elif matrix_type == MatrixType.diagonal:
@@ -81,7 +81,7 @@ class Transpile:
                 DataSwitch(destination, DataSwitchType.all) | splited_cgate
             # reverse 1-qubit gates
             elif matrix_type == MatrixType.reverse:
-                value = gate.matrix[_0_1, int(not _0_1)]
+                value = gate.matrix[int(not _0_1), _0_1]
                 Multiply(value) | splited_cgate
                 DataSwitch(destination, DataSwitchType.all) | splited_cgate
             # Controlled 1-qubit gates [Z, U1, T, T_dagger, S, S_dagger]
@@ -89,7 +89,7 @@ class Transpile:
                 if _0_1:
                     Multiply(gate.matrix[1, 1]) | splited_cgate
             else:
-                SpecialGate(gate.type, gate_arg, 1 << split_idx) | splited_cgate
+                SpecialGate(gate.type, gate_arg, split_idx) | splited_cgate
 
             dev_mapping[index] = splited_cgate
 
@@ -98,19 +98,19 @@ class Transpile:
     def _double_qubits_gate_transpile(
         self,
         gate: BasicGate,
+        circuit_qubits: int,
         split_qubits: list,
-        max_qubits: int
+        union_args: list
     ):
         gate_args, matrix_type = gate.cargs + gate.targs, gate.matrix_type
-        union_args = list(set(gate_args) & set(split_qubits))
-        double_exceed, outside_index = False, False
+        double_exceed = False
         if len(union_args) == 2:
             double_exceed = True
-            split_qubit_idx = [1 << split_qubits.index(arg) for arg in gate_args]
+            split_qubit_idx = [1 << split_qubits.index(arg) for _, arg in union_args]
         else:
-            outside_index = gate_args.index(union_args[0])
-            inside_index = outside_index ^ 1
-            split_qubit_idx = 1 << split_qubits.index(union_args[0])
+            single_union_idx = union_args[0][0]
+            inside_index = single_union_idx ^ 1
+            split_qubit_idx = 1 << split_qubits.index(union_args[0][1])
 
         dev_mapping = {}
         for index in range(self._ndev):
@@ -121,13 +121,13 @@ class Transpile:
                     if index & split_qubit_idx[0]:
                         value = gate.matrix[3, 3] if index & split_qubit_idx[1] else gate.matrix[2, 2]
                         Multiply(value) | splited_cgate
-                elif outside_index:  # carg in splited
+                elif single_union_idx == 0:  # carg in splited
                     if index & split_qubit_idx:
-                        Unitary(gate.target_matrix) | splited_cgate(gate_args[0])
+                        Unitary(gate.target_matrix, MatrixType.diagonal) | splited_cgate(gate_args[1])
                 else:
                     value = gate.matrix[3, 3] if index & split_qubit_idx else gate.matrix[2, 2]
                     control_matrix = np.array([[1, 0], [0, value]], dtype=np.complex128)
-                    Unitary(control_matrix) | splited_cgate(gate_args[1])
+                    Unitary(control_matrix, MatrixType.control) | splited_cgate(gate_args[0])
             # controlled 2-qubits gate [1, 1, 1, a]
             elif matrix_type == MatrixType.control:
                 value = gate.matrix[3, 3]
@@ -137,7 +137,7 @@ class Transpile:
                         Multiply(value) | splited_cgate
                 else:
                     if index & split_qubit_idx:
-                        Unitary(control_matrix) | splited_cgate(gate_args[inside_index])
+                        Unitary(control_matrix, MatrixType.control) | splited_cgate(gate_args[inside_index])
             # diagonal 2-qubits gate [a, b, c, d]
             elif matrix_type == MatrixType.diag_diag:
                 if double_exceed:
@@ -147,9 +147,9 @@ class Transpile:
 
                     value = gate.matrix[control_index, control_index]
                     Multiply(value) | splited_cgate
-                elif outside_index:
+                elif single_union_idx == 0:
                     matrix = gate.matrix[2:, 2:] if index & split_qubit_idx else gate.matrix[:2, :2]
-                    Unitary(matrix) | splited_cgate(gate_args[1])
+                    Unitary(matrix, MatrixType.diagonal) | splited_cgate(gate_args[1])
                 else:
                     _1 = 1 if index & split_qubit_idx else 0
                     matrix = np.identity(2, dtype=np.complex128)
@@ -162,31 +162,43 @@ class Transpile:
                         value = gate.matrix[2, 3] if index & split_qubit_idx[1] else gate.matrix[3, 2]
                         Multiply(value) | splited_cgate
                         DataSwitch(index ^ split_qubit_idx[1], DataSwitchType.all) | splited_cgate
-                elif outside_index:
+                elif single_union_idx == 0:
                     if index & split_qubit_idx:
                         matrix = gate.matrix[2:, 2:]
-                        Unitary(matrix) | splited_cgate(gate_args[1])
+                        Unitary(matrix, MatrixType.reverse) | splited_cgate(gate_args[1])
                 else:
                     matrix = np.identity(2, dtype=np.complex128)
                     matrix[1, 1] = gate.matrix[2, 3] if index & split_qubit_idx else gate.matrix[3, 2]
                     Unitary(matrix) | splited_cgate(gate_args[0])
-                    DataSwitch(index ^ split_qubit_idx, DataSwitchType.ctarg, {gate_args[0]: 1}) | splited_cgate
+                    DataSwitch(
+                        index ^ split_qubit_idx,
+                        DataSwitchType.ctarg,
+                        {circuit_qubits - 1 - gate_args[0]: 1}
+                    ) | splited_cgate
             # control-normal 2-qubits gate [CH, CU3]
             elif matrix_type == MatrixType.normal:
                 if double_exceed:
                     if index & split_qubit_idx[0]:
                         DataSwitch(index ^ split_qubit_idx[1], DataSwitchType.half) | splited_cgate
-                        Unitary(gate.matrix[2:, 2:]) | splited_cgate(max_qubits - 1)
+                        Unitary(gate.matrix[2:, 2:]) | splited_cgate(0)
                         DataSwitch(index ^ split_qubit_idx[1], DataSwitchType.half) | splited_cgate
-                elif outside_index:
+                elif single_union_idx == 0:
                     if index & split_qubit_idx:
                         Unitary(gate.matrix[2:, 2:]) | splited_cgate(gate_args[1])
                 else:
                     dest = index ^ split_qubit_idx
-                    DataSwitch(dest, DataSwitchType.ctarg, {gate_args[0]: int(index < dest)}) | splited_cgate
+                    DataSwitch(
+                        dest,
+                        DataSwitchType.ctarg,
+                        {circuit_qubits - 1 - gate_args[0]: int(index < dest)}
+                    ) | splited_cgate
                     if index & split_qubit_idx:
                         Unitary(gate.matrix[2:, 2:]) | splited_cgate(gate_args[0])
-                    DataSwitch(dest, DataSwitchType.ctarg, {gate_args[0]: int(index < dest)}) | splited_cgate
+                    DataSwitch(
+                        dest,
+                        DataSwitchType.ctarg,
+                        {circuit_qubits - 1 - gate_args[0]: int(index < dest)}
+                    ) | splited_cgate
             # Swap gate [swap]
             elif matrix_type == MatrixType.swap:
                 if double_exceed:
@@ -199,7 +211,11 @@ class Transpile:
                         DataSwitch(destination, DataSwitchType.all)
                 else:
                     dest = index ^ split_qubit_idx
-                    DataSwitch(dest, DataSwitchType.ctarg, {gate_args[inside_index]: int(index < dest)}) | splited_cgate
+                    DataSwitch(
+                        dest,
+                        DataSwitchType.ctarg,
+                        {circuit_qubits - 1 - gate_args[inside_index]: int(index < dest)}
+                    ) | splited_cgate
             # Diagonal * Matrix [Fsim]
             elif matrix_type == MatrixType.ctrl_normal:
                 if double_exceed:
@@ -208,35 +224,51 @@ class Transpile:
                     elif index & split_qubit_idx[0] or index & split_qubit_idx[1]:
                         destination = index ^ (sum(split_qubit_idx))
                         DataSwitch(destination, DataSwitchType.half) | splited_cgate
-                        Unitary(gate.matrix[2:, 2:]) | splited_cgate(max_qubits - 1)
+                        Unitary(gate.matrix[2:, 2:]) | splited_cgate(0)
                         DataSwitch(destination, DataSwitchType.half) | splited_cgate
                 else:
                     dest = index ^ split_qubit_idx
-                    DataSwitch(dest, DataSwitchType.ctarg, {gate_args[inside_index]: 0}) | splited_cgate
+                    DataSwitch(
+                        dest,
+                        DataSwitchType.ctarg,
+                        {circuit_qubits - 1 - gate_args[inside_index]: 0}
+                    ) | splited_cgate
                     if index & split_qubit_idx:
                         matrix = np.identity(2, dtype=np.complex128)
                         matrix[1, 1] = gate.matrix[3, 3]
-                        Unitary(matrix) | splited_cgate(gate_args[inside_index])
+                        Unitary(matrix, MatrixType.control) | splited_cgate(gate_args[inside_index])
                     else:
                         Unitary(gate.matrix[1:3, 1:3]) | splited_cgate(gate_args[inside_index])
-                    DataSwitch(dest, DataSwitchType.ctarg, {gate_args[inside_index]: 0}) | splited_cgate
+                    DataSwitch(
+                        dest,
+                        DataSwitchType.ctarg,
+                        {circuit_qubits - 1 - gate_args[inside_index]: 0}
+                    ) | splited_cgate
             # Matrix * Matrix [Rxx, Ryy]
-            elif matrix_type == MatrixType.normal:
+            elif matrix_type == MatrixType.normal_normal:
                 outside_matrix = gate.matrix[[0, 0, 3, 3], [0, 3, 0, 3]].reshape(2, 2)
                 inside_matrix = gate.matrix[1:3, 1:3]
                 if double_exceed:
                     destination = index ^ (sum(split_qubit_idx))
                     DataSwitch(destination, DataSwitchType.half) | splited_cgate
                     matrix = outside_matrix if abs(index - destination) < sum(split_qubit_idx) else inside_matrix
-                    Unitary(matrix) | splited_cgate(max_qubits - 1)
+                    Unitary(matrix) | splited_cgate(0)
                     DataSwitch(destination, DataSwitchType.half) | splited_cgate
                 else:
                     dest = index ^ split_qubit_idx
-                    DataSwitch(dest, DataSwitchType.ctarg, {gate_args[inside_index]: 0}) | splited_cgate
+                    DataSwitch(
+                        dest,
+                        DataSwitchType.ctarg,
+                        {circuit_qubits - 1 - gate_args[inside_index]: 1}
+                    ) | splited_cgate
 
-                    matrix = outside_matrix if index & split_qubit_idx else inside_matrix
-                    Unitary(matrix) | splited_cgate(max_qubits - 1)
-                    DataSwitch(dest, DataSwitchType.ctarg, {gate_args[inside_index]: 0}) | splited_cgate
+                    matrix = inside_matrix if index & split_qubit_idx else outside_matrix
+                    Unitary(matrix) | splited_cgate(gate_args[inside_index])
+                    DataSwitch(
+                        dest,
+                        DataSwitchType.ctarg,
+                        {circuit_qubits - 1 - gate_args[inside_index]: 1}
+                    ) | splited_cgate
 
             dev_mapping[index] = splited_cgate
 
@@ -244,15 +276,16 @@ class Transpile:
 
     def _args_adjust(self, gate_args, split_args):
         res = gate_args[:]
+        union_arg = []
         for idx, garg in enumerate(gate_args):
             if garg in split_args:
-                continue
+                union_arg.append((idx, garg))
 
             for sarg in split_args:
                 if sarg < garg:
                     res[idx] -= 1
 
-        return res
+        return res, union_arg
 
     def _split_qubits(self, circuit: Circuit) -> list:
         qubits = circuit.width()
