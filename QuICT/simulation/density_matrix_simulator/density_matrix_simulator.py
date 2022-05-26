@@ -2,6 +2,8 @@ import numpy as np
 import random
 
 from QuICT.core.circuit.circuit import Circuit
+from QuICT.core.gate import BasicGate
+from QuICT.core.noise import NoiseGate, NoiseModel
 from QuICT.simulation.unitary_simulator import UnitarySimulator
 from QuICT.core.utils import GateType, matrix_product_to_circuit
 import QuICT.ops.linalg.cpu_calculator as CPUCalculator
@@ -47,7 +49,52 @@ class DensityMatrixSimulation:
 
         return True
 
-    def _measure(self, gate, qubits):
+    def run(self, circuit: Circuit, noise_model: NoiseModel = None, density_matrix: np.ndarray = None):
+        qubits = circuit.width()
+        # Initial density matrix
+        if (density_matrix is None or not self.check_matrix(density_matrix)):
+            self._init_density_matrix(qubits)
+        else:
+            self._density_matrix = density_matrix
+
+        # apply noise model
+        if noise_model is not None:
+            circuit = noise_model.transpile(circuit)
+
+        based_circuit = Circuit(qubits)
+        for gate in circuit.gates:
+            if gate.type == GateType.measure:
+                measured_state = self.apply_measure(gate, qubits)
+                circuit.qubits[gate.targ].measured = int(measured_state)
+                continue
+
+            if isinstance(gate, BasicGate):
+                gate | based_circuit
+            else:
+                if based_circuit.size() > 0:
+                    self.apply_gates(based_circuit)
+                    based_circuit = Circuit(qubits)
+
+            if isinstance(gate, NoiseGate):
+                self.apply_noise(gate, qubits)
+            else:
+                pass
+
+        return self._density_matrix
+
+    def apply_gates(self, circuit: Circuit):
+        circuit_matrix = UnitarySimulator().get_unitary_matrix(circuit)
+
+        # step ops
+        self._density_matrix = self._computer.dot(
+            self._computer.dot(circuit_matrix, self._density_matrix),
+            circuit_matrix.conj().T
+        )
+
+    def apply_noise(self, noise_gate: NoiseGate, qubits: int):
+        pass
+
+    def apply_measure(self, gate, qubits):
         P0 = np.array([[1, 0], [0, 0]], dtype=self._precision)
 
         mea_0 = matrix_product_to_circuit(P0, gate.targs, qubits)
@@ -63,33 +110,3 @@ class DensityMatrixSimulation:
             self._density_matrix = self._computer.dot(self._computer.dot(U, self._density_matrix), U.conj().T)
 
         return _0_1
-
-    def run(self, circuit: Circuit, density_matrix: np.ndarray = None):
-        qubits = circuit.width()
-        if (density_matrix is None or not self.check_matrix(density_matrix)):
-            self._init_density_matrix(qubits)
-        else:
-            self._density_matrix = density_matrix
-
-        # Assume no measure gate in circuit middle, measure gate only appear last
-        # circuit.gates [non-measure gates] [measure gate]
-        measure_gate_list = []
-        for gate in circuit.gates:
-            if gate.type == GateType.measure:
-                measure_gate_list.append(gate)
-
-        circuit_matrix = UnitarySimulator().get_unitary_matrix(circuit)
-
-        # step ops
-        self._density_matrix = self._computer.dot(
-            self._computer.dot(circuit_matrix, self._density_matrix),
-            circuit_matrix.conj().T
-        )
-
-        # [measure gate] exist
-        if measure_gate_list:
-            for mea_gate in measure_gate_list:
-                _0_1 = self._measure(mea_gate, circuit.width())
-                circuit.qubits[gate.targ].measured = int(_0_1)
-
-        return self._density_matrix

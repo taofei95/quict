@@ -194,7 +194,7 @@ class DepolarizingError(PauilError):
         probs = [1 - prob / max_prob] + [prob / num_ops] * (num_ops - 1)
         ops = [''.join(i) for i in product(self._BASED_GATE_MATRIX.keys(), repeat=num_qubits)]
 
-        super().__init__(list(zip(ops, probs)))
+        super().__init__(list(zip(ops, probs)), num_qubits)
         self.type = NoiseChannel.depolarizing
 
 
@@ -213,19 +213,19 @@ class DampingError(QuantumNoiseError):
     Args:
         QuantumNoiseError (_type_): _description_
     """
-    def __init__(self, amplitude_prob: float, phase_prob: float, stable_state_prob: float = 0.0):
+    def __init__(self, amplitude_prob: float, phase_prob: float, dissipation_state: float = 0.0):
         assert amplitude_prob >= 0 and amplitude_prob <= 1, \
             f"Amplitude prob must between 0 and 1, not {amplitude_prob}."
         assert phase_prob >= 0 and phase_prob <= 1, f"Phase prob must between 0 and 1, not {phase_prob}."
-        assert stable_state_prob >= 0 and stable_state_prob <= 1, \
-            f"state prob must between 0 and 1, not {stable_state_prob}."
+        assert dissipation_state >= 0 and dissipation_state <= 1, \
+            f"state prob must between 0 and 1, not {dissipation_state}."
 
         if amplitude_prob + phase_prob > 1:
             raise KeyError("Invalid amplitude and phase damping prob, the sum cannot greater than 1.")
 
         self.amplitude_prob = amplitude_prob
         self.phase_prob = phase_prob
-        self.stable_state_prob = stable_state_prob
+        self.dissipation_state = dissipation_state
 
         super().__init__(self._create_kraus_ops())
         self.type = NoiseChannel.damping
@@ -238,13 +238,13 @@ class DampingError(QuantumNoiseError):
         if self.phase_prob != 0:
             damp_noise += f"phase damping prob: {self.phase_prob} "
 
-        if self.stable_state_prob != 0:
-            damp_noise += f"prob of stable state: {self.stable_state_prob}"
+        if self.dissipation_state != 0:
+            damp_noise += f"prob of stable state: {self.dissipation_state}"
 
         return damp_noise
 
     def _create_kraus_ops(self):
-        m0, m1 = np.sqrt(1 - self.stable_state_prob), np.sqrt(self.stable_state_prob)
+        m0, m1 = np.sqrt(1 - self.dissipation_state), np.sqrt(self.dissipation_state)
         sqrt_amp, sqrt_phase = np.sqrt(self.amplitude_prob), np.sqrt(self.phase_prob)
         sqrt_ap = np.sqrt(1 - self.amplitude_prob - self.phase_prob)
 

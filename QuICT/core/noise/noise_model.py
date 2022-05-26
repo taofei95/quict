@@ -73,7 +73,7 @@ class NoiseModel:
         self._instruction["all-qubits"].append((noise, gates))
         self._all_qubits_error_gates += gates if isinstance(gates, list) else [gates]
 
-    def circuit_apply(self, circuit):
+    def transpile(self, circuit):
         cir_gates = circuit.gates[:]
         for idx, gate in enumerate(cir_gates):
             if not isinstance(gate, BasicGate):
