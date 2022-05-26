@@ -10,13 +10,12 @@ from QuICT.core.qubit import Qubit, Qureg
 from QuICT.core.exception import TypeException
 from QuICT.core.layout import Layout, SupremacyLayout
 from QuICT.core.gate import BasicGate, H, Measure, build_random_gate, build_gate
-from QuICT.core.noise import NoiseGate
 from QuICT.core.utils import (
     GateType,
     CircuitInformation,
     matrix_product_to_circuit
 )
-from .circuit_extend import Trigger
+from QuICT.core.operator import Trigger, CheckPoint, Operator, CheckPointChild
 
 
 # global circuit id count
@@ -122,6 +121,7 @@ class Circuit(object):
         self._topology = topology
         self._fidelity = fidelity
         self._gates = []
+        self._checkpoints = []
         self._pointer = None
 
         if isinstance(wires, Qureg):
@@ -326,35 +326,63 @@ class Circuit(object):
         for idx, qubit in enumerate(self.qubits):
             self._idmap[qubit.id] = idx
 
-    def replace_gate(self, idx: int, gate: Union[BasicGate, NoiseGate]):
+    def replace_gate(self, idx: int, gate: BasicGate):
         assert idx >= 0 and idx < len(self._gates), "The index of replaced gate is wrong."
-        assert isinstance(gate, (BasicGate, NoiseGate)), "The replaced gate must be a quantum gate or noised gate."
+        assert isinstance(gate, BasicGate), "The replaced gate must be a quantum gate or noised gate."
         self._gates[idx] = gate
 
-    def extend(self, gates):
+    def find_position(self, cp_child: CheckPointChild):
+        position = -1
+        if cp_child is None:
+            return position
+
+        for cp in self._checkpoints:
+            if cp.uid == cp_child.uid:
+                position = cp.position
+                cp.position = cp_child.shift
+            elif position != -1:
+                # change the related position for backward checkpoint
+                cp.position = cp_child.shift
+
+        return position
+
+    def extend(self, gates: list):
         """ add gates to the circuit
 
         Args:
             gates(list<BasicGate>): the gate to be added to the circuit
         """
+        position = -1
+        if not isinstance(gates, list):
+            position = self.find_position(gates.checkpoint)
+            gates = gates.gates
+
         for gate in gates:
-            self.append(gate, is_extend=True)
+            if position == -1:
+                self.append(gate, is_extend=True)
+            else:
+                self.append(gate, is_extend=True, insert_idx=position)
+                position += 1
 
         self._pointer = None
 
-    def append(self, op: Union[BasicGate, Trigger, NoiseGate], is_extend: bool = False):
+    def append(self, op: Union[BasicGate, Operator], is_extend: bool = False, insert_idx: int = -1):
         qureg = self._pointer[:] if self._pointer else None
         if not is_extend:
             self._pointer = None
 
-        if isinstance(op, Trigger):
+        if isinstance(op, BasicGate):
+            self._add_gate(op, qureg, insert_idx)
+        elif isinstance(op, Trigger):
             self._add_trigger(op, qureg)
-        elif isinstance(op, (BasicGate, NoiseGate)):
-            self._add_gate(op, qureg)
+        elif isinstance(op, CheckPoint):
+            self._checkpoints.append(op)
+        elif isinstance(op, Operator):
+            self._gates.append(op)
         else:
             raise TypeError(f"Circuit can append a Trigger/BasicGate/NoiseGate, not {type(op)}.")
 
-    def _add_gate(self, gate: BasicGate, qureg: Qureg):
+    def _add_gate(self, gate: BasicGate, qureg: Qureg, insert_idx: int):
         """ add a gate into some qureg
 
         Args:
@@ -385,7 +413,10 @@ class Circuit(object):
         gate.assigned_qubits = qureg
         gate.update_name(qureg[0].id, len(self.gates))
 
-        self.gates.append(gate)
+        if insert_idx == -1:
+            self.gates.append(gate)
+        else:
+            self.gates.insert(insert_idx, gate)
 
     def _add_gate_to_all_qubits(self, gate):
         for idx in range(self.width()):
