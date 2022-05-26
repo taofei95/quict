@@ -29,10 +29,8 @@ def construct_circuit(a: int, N: int, eps: float = 1 / 10):
     logging.info(f"\tcircuit construction begin: circuit: n = {n} t = {t}")
 
     circuit = Circuit(2 * n + 3)
-    # b_reg = [i for i in range(n + 1)]
     x_reg = [i for i in range(n + 1, 2 * n + 1)]
     trickbit = [2 * n + 1]
-    # qreg_low = [2 * n + 2]
 
     # cgates[measured qubit index][added gate index][measured result]
     cgates = [

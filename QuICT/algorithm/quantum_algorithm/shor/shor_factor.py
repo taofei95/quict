@@ -42,6 +42,16 @@ class ShorFactor:
 
     # add a, N here
     def __init__(self, mode: str, N: int, eps: float = 1 / 10, max_rd: int = 2) -> None:
+        random.seed(2022)
+        a = N
+        while gcd(a, N) != 1:
+            a = random.randrange(0, N)
+        self._CIRCUIT_CACHE = {
+            "BEA": BEA_circuit(a, N, eps),
+            "HRS": HRS_circuit(a, N, eps),
+            "BEA_zip": BEA_zip_circuit(a, N, eps),
+            "HRS_zip": HRS_zip_circuit(a, N, eps)
+        }
         if mode not in ShorFactor._ALLOWED_MODES:
             raise ValueError(
                 f"{mode} mode is not valid. Consider {ShorFactor._ALLOWED_MODES}"
@@ -58,12 +68,7 @@ class ShorFactor:
             Circuit: order finding circuit that can be passed to ShorFactor::run method
             List[int]: the indices to be measured to get ~phi
         """
-        a = self.N
-        while gcd(a, self.N) != 1:
-            a = random.randrange(0, self.N)
-        if ShorFactor._CIRCUIT_METHOD_OF_MODE[self.mode] is None:
-            raise ValueError(f"{self.mode} mode has no circuit() method.")
-        return ShorFactor._CIRCUIT_METHOD_OF_MODE[self.mode](a, self.N, self.eps)
+        return self._CIRCUIT_CACHE[self.mode]
 
     def run(
         self,

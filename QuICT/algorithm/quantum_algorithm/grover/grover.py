@@ -49,8 +49,6 @@ class Grover:
         N = 2 ** n
         theta = 2 * np.arccos(np.sqrt(1 - 1 / N))
         T = round(np.arccos(np.sqrt(1 / N)) / theta)
-        # phase_size = 0
-        # oracle_size = 0
 
         # create equal superposition state in index_q
         for idx in index_q:
@@ -73,7 +71,6 @@ class Grover:
             # control phase shift end
             for idx in index_q:
                 H | circuit(idx)
-        simulator.run(circuit)
         for idx in index_q:
             Measure | circuit(idx)
         simulator.run(circuit)

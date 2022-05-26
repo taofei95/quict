@@ -1,6 +1,5 @@
 from functools import reduce
 from math import gcd
-from QuICT.core import *
 import logging
 import numpy as np
 

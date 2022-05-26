@@ -29,8 +29,6 @@ def construct_circuit(a: int, N: int, eps: float = 1 / 10):
 
     circuit = Circuit(2 * n + 2)
     x_reg = list(range(n))
-    # ancilla = list(range(n, 2 * n))
-    # indicator = 2 * n
     trickbit = [2 * n + 1]
 
     # cgates[measured qubit index][added gate index][measured result]
