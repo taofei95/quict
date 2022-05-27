@@ -45,41 +45,47 @@ order_finding_circuit_test_modes = {
 run_test_modes = {"BEA_zip", "HRS_zip"}
 circuit_test_modes = {"BEA_zip", "HRS_zip", "BEA", "HRS"}
 
+
 def test_OrderFinding():
     for mode in order_finding_test_modes.keys():
         failure = 0
         for N in number_list:
-            p = random.choice(list(filter(lambda x:gcd(x,N)==1,list(range(N)))))
-            print(f"testing ({p:2},{N:2})...",end="")
-            a = order_finding_test_modes[mode](p,N,simulator=simulator)
+            p = random.choice(list(filter(lambda x: gcd(x, N) == 1, list(range(N)))))
+            print(f"testing ({p:2},{N:2})...", end="")
+            a = order_finding_test_modes[mode](p, N, simulator=simulator)
             print(f"{'T' if (p**a)%N==1 else 'F'}: {p}**{a}==1 mod {N}")
-            if a==0 or (p**a)%N!=1:
+            if a == 0 or (p ** a) % N != 1:
                 failure += 1
     print(f"success rate: {1-failure/len(number_list):.3f}")
 
+
 def test_OrderFinding_circuit():
     from fractions import Fraction
+
     for mode in order_finding_circuit_test_modes.keys():
         failure = 0
         for N in number_list:
-            p = random.choice(list(filter(lambda x:gcd(x,N)==1,list(range(N)))))
-            print(f"testing ({p:2},{N:2})...",end="")
-            circ, indices = order_finding_circuit_test_modes[mode](p,N)
+            p = random.choice(list(filter(lambda x: gcd(x, N) == 1, list(range(N)))))
+            print(f"testing ({p:2},{N:2})...", end="")
+            circ, indices = order_finding_circuit_test_modes[mode](p, N)
             simulator.run(circ)
-            phi = eval("0b"+"".join([str(trig.measured[0]) for trig in indices]))/(1<<len(indices))
+            phi = eval("0b" + "".join([str(trig.measured[0]) for trig in indices])) / (
+                1 << len(indices)
+            )
             a = Fraction(phi).limit_denominator(N - 1).denominator
             print(f"{'T' if (p**a)%N==1 else 'F'}: {p}**{a}==1 mod {N}")
-            if a==0 or (p**a)%N!=1:
+            if a == 0 or (p ** a) % N != 1:
                 failure += 1
     print(f"success rate: {1-failure/len(number_list):.3f}")
+
 
 def test_ShorFactor_run():
     for mode in run_test_modes:
         print(f"mode: {mode}")
         failure = 0
         for number in number_list:
-            print('-------------------FACTORING %d-------------------------' % number)
-            a = ShorFactor(mode=mode,N=number).run(simulator=simulator)
+            print("-------------------FACTORING %d-------------------------" % number)
+            a = ShorFactor(mode=mode, N=number).run(simulator=simulator)
             if a == 0 or number % a != 0:
                 failure += 1
         print(f"success rate: {1-failure/len(number_list):.3f}")
@@ -98,4 +104,3 @@ def test_ShorFactor_circuit():
             if a == 0 or number % a != 0:
                 failure += 1
         print(f"success rate: {1-failure/len(number_list):.3f}")
-
