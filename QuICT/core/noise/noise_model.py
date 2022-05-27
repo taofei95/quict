@@ -1,9 +1,9 @@
 from typing import Union, List
 from collections import defaultdict
 
-from QuICT.core.noise import QuantumNoiseError
+from .noise_error import QuantumNoiseError
 from QuICT.core.gate import BasicGate, GateType, GATE_TYPE_TO_CLASS
-from .noise_gate import NoiseGate
+from QuICT.core.operator import NoiseGate
 
 
 class NoiseModel:

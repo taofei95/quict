@@ -3,7 +3,8 @@ import random
 
 from QuICT.core.circuit.circuit import Circuit
 from QuICT.core.gate import BasicGate
-from QuICT.core.noise import NoiseGate, NoiseModel
+from QuICT.core.noise import NoiseModel
+from QuICT.core.operator import NoiseGate
 from QuICT.simulation.unitary_simulator import UnitarySimulator
 from QuICT.core.utils import GateType, matrix_product_to_circuit
 import QuICT.ops.linalg.cpu_calculator as CPUCalculator
@@ -70,15 +71,18 @@ class DensityMatrixSimulation:
 
             if isinstance(gate, BasicGate):
                 gate | based_circuit
-            else:
+            elif isinstance(gate, NoiseGate):
                 if based_circuit.size() > 0:
                     self.apply_gates(based_circuit)
                     based_circuit = Circuit(qubits)
 
-            if isinstance(gate, NoiseGate):
                 self.apply_noise(gate, qubits)
             else:
-                pass
+                raise KeyError("Unsupportted operator in Density Matrix Simulator.")
+
+        if based_circuit.size() > 0:
+            self.apply_gates(based_circuit)
+            based_circuit = Circuit(qubits)
 
         return self._density_matrix
 
@@ -92,7 +96,13 @@ class DensityMatrixSimulation:
         )
 
     def apply_noise(self, noise_gate: NoiseGate, qubits: int):
-        pass
+        gate_args = noise_gate.targs
+        for kraus_matrix in noise_gate.noise_matrix:
+            umat = matrix_product_to_circuit(kraus_matrix, gate_args, qubits)
+            self._density_matrix += self._computer.dot(
+                self._computer.dot(umat, self._density_matrix),
+                umat.conj().T
+            )
 
     def apply_measure(self, gate, qubits):
         P0 = np.array([[1, 0], [0, 0]], dtype=self._precision)

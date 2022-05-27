@@ -15,7 +15,12 @@ from QuICT.core.utils import (
     CircuitInformation,
     matrix_product_to_circuit
 )
-from QuICT.core.operator import Trigger, CheckPoint, Operator, CheckPointChild
+from QuICT.core.operator import (
+    Trigger,
+    CheckPoint,
+    Operator,
+    CheckPointChild
+)
 
 
 # global circuit id count
