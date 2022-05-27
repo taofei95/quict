@@ -5,11 +5,13 @@
 # @File    : constant_statevecto_simulator
 
 from collections import defaultdict
+from copy import deepcopy
 import numpy as np
 import cupy as cp
 
 from QuICT.core import Circuit
-from QuICT.core.gate import Measure
+from QuICT.core.operator import Trigger
+from QuICT.core.gate import Measure, BasicGate
 from QuICT.core.utils import GateType
 from QuICT.ops.utils import LinAlgLoader
 from QuICT.simulation.gpu_simulator import BasicGPUSimulator
@@ -49,11 +51,16 @@ class ConstantStateVectorSimulator(BasicGPUSimulator):
         self._circuit = circuit
         self._qubits = int(circuit.width())
         self._measure_result = defaultdict(list)
+        self._pipeline = []
 
         if self._optimize:
-            self._gates = self._optimizor.optimize(circuit.gates)
+            self._pipeline = self._optimizor.optimize(circuit.gates)
         else:
-            self._gates = circuit.gates
+            for gate in circuit.gates:
+                if isinstance(gate, BasicGate):
+                    self._pipeline.append(deepcopy(gate))
+                else:
+                    self._pipeline.append(gate)
 
         # Initial GateMatrix
         self._gate_matrix_prepare()
@@ -66,7 +73,7 @@ class ConstantStateVectorSimulator(BasicGPUSimulator):
         """ Initial qubits' vector states. """
         vector_size = 1 << int(self._qubits)
         # Special Case for no gate circuit
-        if len(self._gates) == 0:
+        if len(self._pipeline) == 0:
             self._vector = np.zeros(vector_size, dtype=self._precision)
             self._vector[0] = self._precision(1)
             return
@@ -94,15 +101,33 @@ class ConstantStateVectorSimulator(BasicGPUSimulator):
         self._initial_circuit(circuit, use_previous)
 
         with cp.cuda.Device(self._device_id):
-            for gate in self._gates:
-                self.apply_gate(gate)
+            self._exec()
 
         if record_measured:
             return self.vector, self._measure_result
         else:
             return self.vector
 
-    def apply_gate(self, gate):
+    def _exec(self):
+        idx = 0
+        while self._pipeline:
+            gate = self._pipeline.pop(0)
+            if isinstance(gate, BasicGate):
+                self.apply_gate(gate)
+            elif isinstance(gate, Trigger):
+                mapping_cgate = self.apply_trigger(gate)
+                if mapping_cgate is not None:
+                    # optimized composite gate's matrix
+                    self.gateM_optimizer.build(mapping_cgate.gates)
+                    # Check for checkpoint
+                    cp = mapping_cgate.checkpoint
+                    position = 0 if cp is None else self._circuit.find_position(cp)
+                    self._pipeline = self._pipeline[:position] + deepcopy(mapping_cgate.gates) + \
+                        self._pipeline[position:]
+
+            idx += 1
+
+    def apply_gate(self, gate: BasicGate):
         """ Depending on the given quantum gate, apply the target algorithm to calculate the state vector.
 
         Args:
@@ -361,6 +386,22 @@ class ConstantStateVectorSimulator(BasicGPUSimulator):
         # unsupported quantum gates
         else:
             raise KeyError(f"Unsupported Gate: {gate_type}")
+
+    def apply_trigger(self, op: Trigger):
+        state = 0
+        for targ in op.targs:
+            index = self._qubits - 1 - targ
+            result = self._algorithm.MeasureGate_Apply(
+                index,
+                self._vector,
+                self._qubits,
+                self._sync
+            )
+            self.circuit.qubits[targ].measured = int(result)
+            state <<= 1
+            state += int(result)
+
+        return op.mapping(state)
 
     def sample(self):
         assert (self._circuit is not None)

@@ -4,6 +4,7 @@
 # @Author  : Han Yu
 # @File    : _exception.py
 
+
 class TypeException(Exception):
     """ Exception that the type of parameter is error.
 

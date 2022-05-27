@@ -374,9 +374,9 @@ class PauliOperator(object):
 
         if gate.type == GateType.cx:
             self.operator[gate.carg], self.operator[gate.targ], phase\
-                = PauliOperator.combine_rules[gate.type, self.operator[gate.carg], self.operator[gate.targ]]
+                = PauliOperator.conjugate_rules[gate.type, self.operator[gate.carg], self.operator[gate.targ]]
         else:
-            self.operator[gate.targ], phase = PauliOperator.combine_rules[gate.type, self.operator[gate.targ]]
+            self.operator[gate.targ], phase = PauliOperator.conjugate_rules[gate.type, self.operator[gate.targ]]
         self.phase *= phase
 
     @staticmethod
