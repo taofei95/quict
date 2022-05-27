@@ -45,7 +45,7 @@ class ShorFactor:
         a = N
         while gcd(a, N) != 1:
             a = random.randrange(0, N)
-        self._CIRCUIT_CACHE = self._CIRCUIT_METHOD_OF_MODE[self.mode](a, N, eps)
+        self._CIRCUIT_CACHE = ShorFactor._CIRCUIT_METHOD_OF_MODE[mode](a, N, eps)
         if mode not in ShorFactor._ALLOWED_MODES:
             raise ValueError(
                 f"{mode} mode is not valid. Consider {ShorFactor._ALLOWED_MODES}"
@@ -62,7 +62,7 @@ class ShorFactor:
             Circuit: order finding circuit that can be passed to ShorFactor::run method
             List[int]: the indices to be measured to get ~phi
         """
-        return self._CIRCUIT_CACHE[self.mode]
+        return self._CIRCUIT_CACHE
 
     def run(
         self,
