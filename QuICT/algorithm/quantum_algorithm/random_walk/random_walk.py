@@ -1,12 +1,16 @@
 import numpy as np
+from typing import Union, List
 
 from QuICT.core import Circuit
 from QuICT.core.gate import *
-import QuICT.ops.linalg.cpu_calculator as linalg
+from QuICT.qcda.synthesis.gate_decomposition import GateDecomposition
+from QuICT.qcda.optimization import CommutativeOptimization
+from QuICT.simulation.cpu_simulator import CircuitSimulator
 from .graph import Graph
 
 
 class RandomWalk:
+    """ The Quantum Random Walk Algorithm """
     @property
     def step(self):
         return self._step
@@ -17,9 +21,18 @@ class RandomWalk:
 
     @property
     def circuit(self) -> Circuit:
+        """ The quantum circuit of the random walk algorithm, including UnitaryGate """
         return self._circuit
 
     def __init__(self, T: int, graph: Graph, coin_operator: np.ndarray = None):
+        """ Initial the quantum random walk with given steps, graph and coin operator.
+
+        Args:
+            T (int): The steps of random walk, a step including a coin operator and a shift operator.
+            graph (Graph): The description of the position state, vectors represent the position space and
+                the edges represent the action space.
+            coin_operator (np.ndarray, optional): The coin operators, the unitary matrix. Defaults to None.
+        """
         self._step = T
         self._graph = graph
         self._coin_operator = coin_operator
@@ -35,6 +48,7 @@ class RandomWalk:
         self._circuit_construct()
 
     def _operator_validation(self):
+        """ Validate the operator """
         if self._coin_operator is not None:
             assert self._graph.operator_validation(self._coin_operator), "The operator should be an unitary matrix."
             self._action_qubits = int(np.ceil(np.log2(self._coin_operator.shape[0])))
@@ -45,12 +59,14 @@ class RandomWalk:
             self._operator_by_time = self._graph.switched_time > 0
 
     def _circuit_construct(self):
+        """ Construct random walk circuit """
         self._circuit = Circuit(self._total_qubits)
         for t in range(self.step):
             self._build_action_operator(t) | self._circuit
             self._build_shift_operator() | self._circuit
 
-    def _build_action_operator(self, step: int):
+    def _build_action_operator(self, step: int) -> CompositeGate:
+        """ Generator action operator """
         action_qubits = [self._graph.position_qubits + i for i in range(self._action_qubits)]
         if not (self._operator_by_position or self._operator_by_time):
             return Unitary(self._coin_operator) & action_qubits
@@ -70,14 +86,16 @@ class RandomWalk:
 
         return action_gate
 
-    def _mct_generator(self, op: np.ndarray):
+    def _mct_generator(self, op: np.ndarray) -> UnitaryGate:
+        """ Build multi-control-'op' gate """
         mct_unitary = np.identity(1 << self._total_qubits, dtype=np.complex128)
         op_shape = op.shape
         mct_unitary[-op_shape[0]:, -op_shape[1]:] = op
 
         return Unitary(mct_unitary) & list(range(self._total_qubits))
 
-    def _build_shift_operator(self):
+    def _build_shift_operator(self) -> UnitaryGate:
+        """ Generator shift operator """
         unitary_matrix = np.zeros((1 << self._total_qubits, 1 << self._total_qubits), dtype=np.complex128)
         for i in range(self._graph.position):
             curr_idx = (1 << self._action_qubits) * i
@@ -87,6 +105,36 @@ class RandomWalk:
 
         return Unitary(unitary_matrix)
 
-    def run(self, device: str = "GPU", record_measured: bool = False):
-        # TODO: bug fixed linalg.cpu.dot.
-        pass
+    def run(
+        self,
+        simulator=CircuitSimulator(),
+        record_measured: bool = False,
+        shots: int = 1
+    ) -> Union[np.ndarray, List]:
+        """ Simulate the quantum random walk circuit.
+
+        Args:
+            simulator (Union[ConstantStateVectorSimulator, CircuitSimulator], optional):
+                The simulator for simulating quantum circuit. Defaults to CircuitSimulator().
+            record_measured (bool, optional): whether return the final measured state with shots time,
+                or return the state vector after simulating. Defaults to False.
+            shots (int, optional): The repeatted times. Defaults to 1.
+
+        Returns:
+            Union[np.ndarray, List]: The state vector or measured states
+        """
+        # Step 1, transform the unitary gate and optimization
+        opt_circuit = GateDecomposition.execute(self._circuit)
+        opt_circuit = CommutativeOptimization.execute(opt_circuit)
+
+        # Return final state vector if not need
+        if not record_measured:
+            return simulator.run(opt_circuit)
+
+        state_list = [0] * (1 << self._circuit.width())
+        for _ in range(shots):
+            _ = simulator.run(opt_circuit)
+            measured_state = simulator.sample()
+            state_list[measured_state] += 1
+
+        return state_list

@@ -4,6 +4,7 @@ from typing import Union, List, Dict
 
 
 class Graph:
+    """ The graph descript position space and action space for quantum random walk """
     @property
     def position(self) -> int:
         return self._vectors
@@ -43,6 +44,15 @@ class Graph:
         operators: Union[List, Dict] = None,
         switched_time: int = -1
     ):
+        """ Initial the random walk graph.
+
+        Args:
+            position (int): The number of graph's vector.
+            edges (Union[List, Dict], optional): The edges of each vector. Defaults to None.
+            operators (Union[List, Dict], optional): The operators of each vector. Defaults to None.
+            switched_time (int, optional): The number of steps of each coin operator in the vector.
+                Defaults to -1, means not switch coin operator.
+        """
         self._vectors = position
         self._switched_time = switched_time
         self._edges = defaultdict(list)
@@ -52,7 +62,7 @@ class Graph:
                 assert isinstance(edge, list)
                 self._edges[idx] = edge
 
-        self._operators = defaultdict(list)
+        self._operators = defaultdict(list) if operators is not None else operators
         if operators is not None:
             iterator = enumerate(operators) if isinstance(operators, list) else operators.items()
             # assert len(iterator) == self._vectors, "The number of operators should equal to position"
@@ -64,6 +74,7 @@ class Graph:
         return str(self._edges) + "\nOperators: " + str(self._operators)
 
     def operator_validation(self, operator: Union[List, np.ndarray]) -> bool:
+        """ Validate the operators """
         if isinstance(operator, np.ndarray):
             return self._operator_validation(operator)
 
@@ -84,6 +95,7 @@ class Graph:
         )
 
     def add_operator(self, u: int, operator: Union[List, np.ndarray]):
+        """ Add operator to a vector. """
         assert u >= 0 and u <= self._vectors
         assert self.operator_validation(operator), "The operator should be 1 or more unitary matrix."
         if isinstance(operator, np.ndarray):
@@ -93,6 +105,7 @@ class Graph:
             self._operators[u].append(op)
 
     def add_edge(self, u: int, v: int):
+        """ Add edge """
         assert u >= 0 and u <= self._vectors
         assert v >= 0 and v <= self._vectors
 
@@ -100,6 +113,7 @@ class Graph:
             self._edges[u].append(v)
 
     def del_edge(self, u: int, v: int):
+        """ Remove edge """
         assert u >= 0 and u <= self._vectors
         assert v >= 0 and v <= self._vectors
 
@@ -107,6 +121,7 @@ class Graph:
             self._edges[u].remove(v)
 
     def validation(self) -> bool:
+        """ Validate that all vectors has same number of edges. """
         edge_size = len(self._edges[0])
         for edge in self._edges.values():
             if len(edge) != edge_size:
