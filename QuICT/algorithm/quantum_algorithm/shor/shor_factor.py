@@ -11,7 +11,6 @@ from QuICT.core.operator import Trigger
 from .utility import *
 
 from QuICT.simulation.cpu_simulator import CircuitSimulator
-from QuICT.simulation import Simulator
 
 from .BEA_zip import construct_circuit as BEA_zip_circuit
 from .BEA_zip import order_finding as BEA_zip_run
@@ -46,12 +45,7 @@ class ShorFactor:
         a = N
         while gcd(a, N) != 1:
             a = random.randrange(0, N)
-        self._CIRCUIT_CACHE = {
-            "BEA": BEA_circuit(a, N, eps),
-            "HRS": HRS_circuit(a, N, eps),
-            "BEA_zip": BEA_zip_circuit(a, N, eps),
-            "HRS_zip": HRS_zip_circuit(a, N, eps)
-        }
+        self._CIRCUIT_CACHE = self._CIRCUIT_METHOD_OF_MODE[self.mode](a, N, eps)
         if mode not in ShorFactor._ALLOWED_MODES:
             raise ValueError(
                 f"{mode} mode is not valid. Consider {ShorFactor._ALLOWED_MODES}"
@@ -72,7 +66,7 @@ class ShorFactor:
 
     def run(
         self,
-        simulator: Simulator = CircuitSimulator(),
+        simulator=CircuitSimulator(),
         circuit: Circuit = None,
         indices: List = None,
     ) -> int:

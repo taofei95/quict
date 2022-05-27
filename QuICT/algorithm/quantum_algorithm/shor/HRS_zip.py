@@ -14,7 +14,6 @@ import numpy as np
 from QuICT.core import Circuit
 from QuICT.core.gate import *
 from QuICT.qcda.synthesis.arithmetic.hrs import *
-from QuICT.simulation import Simulator
 from QuICT.simulation.cpu_simulator import CircuitSimulator
 from QuICT.core.operator import Trigger, CheckPoint, CheckPointChild
 
@@ -78,9 +77,7 @@ def construct_circuit(a: int, N: int, eps: float = 1 / 10):
     return circuit, [triggers[i][0] for i in range(t)][::-1]
 
 
-def order_finding(
-    a: int, N: int, eps: float = 1 / 10, simulator: Simulator = CircuitSimulator()
-):
+def order_finding(a: int, N: int, eps: float = 1 / 10, simulator=CircuitSimulator()):
     """
     Shor algorithm by THOMAS HANER, MARTIN ROETTELER, and KRYSTA M. SVORE \
     in "Factoring using 2n+2 qubits with Toffoli based modular multiplication"

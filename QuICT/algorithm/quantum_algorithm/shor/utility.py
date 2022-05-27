@@ -1,5 +1,7 @@
 from functools import reduce
 from math import gcd
+from QuICT.core.gate import X
+from QuICT.simulation.cpu_simulator import CircuitSimulator
 import logging
 import numpy as np
 
@@ -146,7 +148,7 @@ def run_twice_order_finding_constructor(order_finding):
         N: int,
         demo: str = None,
         eps: float = 1 / 10,
-        simulator: Simulator = CircuitSimulator(),
+        simulator=CircuitSimulator(),
     ):
         r1 = order_finding(a, N, eps, simulator)
         r2 = order_finding(a, N, eps, simulator)

@@ -19,7 +19,6 @@ from QuICT.qcda.synthesis.arithmetic.bea import *
 from .utility import *
 
 from QuICT.simulation.cpu_simulator import CircuitSimulator
-from QuICT.simulation import Simulator
 
 
 def construct_circuit(a: int, N: int, eps: float = 1 / 10):
@@ -52,9 +51,7 @@ def construct_circuit(a: int, N: int, eps: float = 1 / 10):
     return circuit, trickbits[::-1]  # for int(circuit[trickbits]) convenience
 
 
-def order_finding(
-    a: int, N: int, eps: float = 1 / 10, simulator: Simulator = CircuitSimulator()
-):
+def order_finding(a: int, N: int, eps: float = 1 / 10, simulator=CircuitSimulator()):
     circuit, trickbits = construct_circuit(a, N, eps)
     simulator.run(circuit)
     t = len(trickbits)
@@ -71,7 +68,7 @@ MAX_ROUND = 3
 
 
 def reinforced_order_finding(
-    a: int, N: int, eps: float = 1 / 10, simulator: Simulator = CircuitSimulator()
+    a: int, N: int, eps: float = 1 / 10, simulator=CircuitSimulator()
 ):
     circuit, trickbits = construct_circuit(a, N, eps)
     t = len(trickbits)
