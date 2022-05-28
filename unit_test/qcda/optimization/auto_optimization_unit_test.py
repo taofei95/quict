@@ -213,13 +213,15 @@ def test_parameterize_all():
 
 
 def test_random_circuit():
-    n_qubit = 10
-    n_gate = 1000
+    n_qubit = 6
+    n_gate = 200
     n_iter = 10
     print(f'random ciruit test: {n_qubit} qubits, {n_gate} gates, {n_iter} iterations.')
     # support_gates = [GateType.h, GateType.cx]
-    support_gates = [GateType.h, GateType.cx, GateType.x, GateType.rz,
-                     GateType.t, GateType.tdg, GateType.s, GateType.sdg, GateType.z]
+    support_gates = [GateType.h, GateType.cx, GateType.rz,
+                     GateType.t, GateType.tdg, GateType.s, GateType.sdg, GateType.z,
+                     GateType.ccx, GateType.x
+                     ]
     for _ in range(n_iter):
         print('iteration', _)
         circ = Circuit(n_qubit)
@@ -344,17 +346,20 @@ def test_circ_308():
 
 
 def test_arithmetic_benchmark():
-    # bmk_path = '/home/longcheng/repo/optimizer/Arithmetic_and_Toffoli/'
     bmk_path = '/home/longcheng/repo/optimizer/Arithmetic_and_Toffoli/'
+    # bmk_path = '/home/longcheng/repo/optimizer/QFT_and_Adders/'
     cnt = 0
     for filename in os.listdir(bmk_path):
         if filename.endswith('before_no_ccz.qasm'):
+        # if filename.endswith('before_no_ccz.qasm') and filename.startswith('Adder'):
             cnt += 1
             print(filename)
             path = os.path.join(bmk_path, filename)
 
             circ = OPENQASMInterface.load_file(path).circuit
-            if circ.size() > 1000:
+            if circ.size() <= 1000:
+                continue
+            if circ.size() > 10000:
                 print('skipped: circuit too large')
                 continue
 
@@ -364,6 +369,26 @@ def test_arithmetic_benchmark():
             # circ_optim.draw(filename=f'{filename}_after.jpg')
 
             # print(len(circ_optim.gates), '/', len(circ.gates))
+
+
+def test_ccx():
+    circ = Circuit(4)
+    CCX | circ([0, 1, 2])
+    CCX | circ([1, 2, 3])
+    # circ.draw(filename='ccx.jpg')
+
+    circ2 = Circuit(4)
+    for g in circ.gates:
+        gate_list = g.build_gate().gates
+        circ2.extend(gate_list)
+    circ2.draw(filename='ccx.jpg')
+
+    circ_optim = AutoOptimization.execute(circ)
+    mat_0 = SyntheticalUnitary.run(circ)
+    mat_1 = SyntheticalUnitary.run(circ_optim)
+
+    circ_optim.draw(filename='ccx_after.jpg')
+    assert np.allclose(mat_0, mat_1), 'unitary changed'
 
 
 if __name__ == '__main__':

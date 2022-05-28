@@ -9,6 +9,7 @@ from QuICT.qcda.optimization._optimization import Optimization
 from QuICT.qcda.optimization.commutative_optimization import CommutativeOptimization
 # from QuICT.utility.decorators import deprecated
 from QuICT.algorithm import SyntheticalUnitary
+from .symbolic_phase import SymbolicPhase, SymbolicPhaseVariable
 from .dag import DAG
 from .phase_poly import PhasePolynomial
 from .template import *
@@ -46,30 +47,34 @@ class AutoOptimization(Optimization):
     @classmethod
     def parameterize_all(cls, gates: DAG):
         for node in gates.topological_sort():
-            if node.gate.qasm_name in ['s', 't', 'sdg', 'tdg', 'z']:
-                gate_, phase_ = CommutativeOptimization.parameterize(node.gate)
-                node.gate = gate_
+            if node.gate_type in [GateType.s, GateType.t, GateType.sdg, GateType.tdg, GateType.z]:
+                gate_, phase_ = CommutativeOptimization.parameterize(node.get_gate())
+                node.gate_type = gate_.type
+                node.params = gate_.pargs
                 gates.global_phase += phase_
 
-        gates.global_phase = np.mod(gates.global_phase, 2 * np.pi)
+        if not isinstance(gates.global_phase, SymbolicPhase):
+            gates.global_phase %= 2 * np.pi
+        else:
+            gates.global_phase = np.mod(gates.global_phase, 2 * np.pi)
         return 0
 
     @classmethod
     def deparameterize_all(cls, gates: DAG):
         for node in gates.topological_sort():
-            if node.gate.qasm_name == 'rz':
-                compo_gate_, phase_ = CommutativeOptimization.deparameterize(node.gate)
+            if node.gate_type == GateType.rz and not isinstance(node.params[0], SymbolicPhase):
+                compo_gate_, phase_ = CommutativeOptimization.deparameterize(node.get_gate())
                 if len(compo_gate_.gates) > 1:
                     continue
-                node.gate = compo_gate_[0]
+                node.gate_type = compo_gate_[0].type
+                node.params = compo_gate_[0].pargs
                 gates.global_phase += phase_
 
-        gates.global_phase = np.mod(gates.global_phase, 2 * np.pi)
+        if not isinstance(gates.global_phase, SymbolicPhase):
+            gates.global_phase %= 2 * np.pi
+        else:
+            gates.global_phase = np.mod(gates.global_phase, 2 * np.pi)
         return 0
-
-    @classmethod
-    def decompose_ccz_gates(cls, gates: DAG):
-        pass
 
     @classmethod
     def reduce_hadamard_gates(cls, gates: DAG):
@@ -98,10 +103,10 @@ class AutoOptimization(Optimization):
         cnt = 0
         for node in list(gates.topological_sort()):
             # enumerate every single qubit gate
-            if node.gate.qasm_name != 'rz' or node.flag == node.FLAG_ERASED:
+            if node.gate_type != GateType.rz or node.flag == node.FLAG_ERASED:
                 continue
             # erase the gate if degree = 0
-            if np.isclose(node.gate.parg, 0):
+            if node.var_phase is not None and np.isclose(float(node.params[0]), 0):
                 node.erase()
                 cnt += 1
                 continue
@@ -113,12 +118,13 @@ class AutoOptimization(Optimization):
                 # (n_node, n_qubit): the start of template matching
                 n_node, n_qubit = c_node.successors[c_qubit]
                 # stop if reaching the end of circuit
-                if not n_node.gate:
+                if not n_node.gate_type:
                     break
 
                 # if n_node is another rz, merge and erase the original node
-                if n_node.gate.qasm_name == node.gate.qasm_name:
-                    n_node.gate.pargs = n_node.gate.parg + node.gate.parg
+                if n_node.gate_type == node.gate_type:
+                    # TODO var_phase
+                    n_node.params[0] = n_node.params[0] + node.params[0]
                     node.erase()
                     cnt += 1
                     break
@@ -149,7 +155,7 @@ class AutoOptimization(Optimization):
         reachable = gates.get_reachable_relation()
         for node in list(gates.topological_sort()):
             # enumerate every cnot gate
-            if node.flag == DAG.Node.FLAG_ERASED or node.gate.qasm_name != 'cx':
+            if node.flag == DAG.Node.FLAG_ERASED or node.gate_type != GateType.cx:
                 continue
 
             c_ctrl_node, c_ctrl_qubit = node, 0
@@ -158,7 +164,7 @@ class AutoOptimization(Optimization):
                 n_ctrl_node, n_ctrl_qubit = c_ctrl_node.successors[c_ctrl_qubit]
                 n_targ_node, n_targ_qubit = c_targ_node.successors[c_targ_qubit]
                 # remove two adjacent cnot gates
-                if id(n_ctrl_node) == id(n_targ_node) and n_ctrl_node.gate.qasm_name == 'cx' and \
+                if id(n_ctrl_node) == id(n_targ_node) and n_ctrl_node.gate_type == GateType.cx and \
                         n_ctrl_qubit == 0 and n_targ_qubit == 1:
                     n_ctrl_node.erase()
                     node.erase()
@@ -226,15 +232,15 @@ class AutoOptimization(Optimization):
                 c_node = anchors[anchor_qubit]
                 c_node.qubit_flag[c_node.qubit_id[anchor_qubit]] = flag_visited
                 while True:
-                    d_print(f'\t\tc_node = {c_node.gate}')
+                    d_print(f'\t\tc_node = {c_node.gate_type}')
                     p_node, p_qubit = getattr(c_node, neighbors)[c_node.qubit_id[anchor_qubit]]
-                    if p_node.gate is None or p_node.gate.qasm_name not in ['cx', 'x', 'rz']:
+                    if p_node.gate_type is None or p_node.gate_type not in [GateType.cx, GateType.x, GateType.rz]:
                         term_node[neighbors][anchor_qubit] = p_node
                         p_node.qubit_flag = [flag_term] * p_node.size
                         break
                     p_node.qubit_flag[p_qubit] = flag_visited
 
-                    if p_node.gate.qasm_name == 'cx':
+                    if p_node.gate_type == GateType.cx:
                         o_qubit = p_node.qubit_loc[p_qubit ^ 1]
                         if o_qubit not in anchors:
                             anchors[o_qubit] = p_node
@@ -252,10 +258,10 @@ class AutoOptimization(Optimization):
                 # c_node.qubit_flag[c_node.qubit_id[anchor_qubit]] = flag_visited
 
                 while True:
-                    d_print(f'\t\tc_node = {c_node.gate}')
+                    d_print(f'\t\tc_node = {c_node.gate_type}')
                     p_node, p_qubit = getattr(c_node, neighbors)[c_node.qubit_id[anchor_qubit]]
                     if p_node.qubit_flag[p_qubit] == flag_term:
-                        d_print(f'\t\t TERM: {p_node.gate}, {p_qubit}')
+                        d_print(f'\t\t TERM: {p_node.gate_type}, {p_qubit}')
                         if id(p_node) != id(term_node[neighbors][anchor_qubit]):
                             prune_queue.append((p_node, p_qubit))
                         # if anchor_qubit not in left_bound and neighbors == 'predecessors':
@@ -265,7 +271,7 @@ class AutoOptimization(Optimization):
                     # if p_node.qubit_flag[p_qubit] != flag_visited or p_node.gate.qasm_name != 'cx':
                     #     c_node = p_node
                     #     continue
-                    if p_node.gate.qasm_name == 'cx':
+                    if p_node.gate_type == GateType.cx:
                         o_qubit = p_qubit ^ 1
                         if p_node.qubit_flag[o_qubit] != flag_visited:
                             # TODO remove assert
@@ -275,7 +281,7 @@ class AutoOptimization(Optimization):
                                 pass
                             else:  # control out of bound, terminate
                                 # print(p_node.gate, p_qubit)
-                                d_print(f'\tPRUNE: {p_node.gate}, {p_qubit}')
+                                d_print(f'\tPRUNE: {p_node.gate_type}, {p_qubit}')
                                 p_node.qubit_flag[p_qubit] = flag_term
                                 prune_queue.append((p_node, p_qubit))
                                 break
@@ -287,12 +293,12 @@ class AutoOptimization(Optimization):
                 d_print('\t<< one prune step >>')
                 c_node, c_qubit = prune_queue.popleft()
                 while True:
-                    d_print(f'\t\tc_node = {c_node.gate}')
+                    d_print(f'\t\tc_node = {c_node.gate_type}')
                     p_node, p_qubit = getattr(c_node, neighbors)[c_qubit]
                     if id(p_node) == id(term_node[neighbors][p_node.qubit_loc[p_qubit]]):
                         break
                     p_node.qubit_flag[p_qubit] = flag_term
-                    if p_node.gate is not None and p_node.gate.qasm_name == 'cx':
+                    if p_node.gate_type is not None and p_node.gate_type == GateType.cx:
                         o_qubit = p_qubit ^ 1
                         if p_node.qubit_flag[o_qubit] == flag_visited:
                             if o_qubit == 0:
@@ -322,13 +328,13 @@ class AutoOptimization(Optimization):
                 d_print(f'\t\tneighbors = {neighbors}')
                 c_node = anchors[anchor_qubit]
                 while True:
-                    d_print(f'\t\tc_node = {c_node.gate}')
+                    d_print(f'\t\tc_node = {c_node.gate_type}')
                     p_node, p_qubit = getattr(c_node, neighbors)[c_node.qubit_id[anchor_qubit]]
                     if p_node.qubit_flag[p_qubit] == flag_term:
                         if neighbors == 'predecessors':
                             left_bound[anchor_qubit] = (p_node, p_qubit)
                         break
-                    if p_node.gate.qasm_name == 'cx' and all([f == flag_visited for f in p_node.qubit_flag]):
+                    if p_node.gate_type == GateType.cx and all([f == flag_visited for f in p_node.qubit_flag]):
                         o_qubit = p_node.qubit_loc[p_qubit ^ 1]
                         if o_qubit not in anchors:
                             anchors[o_qubit] = p_node
@@ -354,10 +360,10 @@ class AutoOptimization(Optimization):
         node_list = []
         while len(queue) > 0:
             cur = queue.popleft()
-            if cur.gate is not None and all([f == flag_visited for f in cur.qubit_flag]):
+            if cur.gate_type is not None and all([f == flag_visited for f in cur.qubit_flag]):
                 cur.flag = cur.FLAG_VISITED
                 node_list.append(cur)
-                d_print(f'\tcur = {cur.gate}')
+                d_print(f'\tcur = {cur.gate_type}')
             for c_qubit in range(cur.size):
                 if cur.qubit_flag[c_qubit] != flag_visited:
                     continue
@@ -387,19 +393,19 @@ class AutoOptimization(Optimization):
             #     continue
             # node_.flag = node_.FLAG_VISITED
 
-            gate_ = node_.gate
-            for qubit_ in chain(gate_.cargs, gate_.targs):
+            # gate_ = node_.get_gate()
+            for qubit_ in node_.qubit_loc:
                 if qubit_ not in cur_phases:
                     cur_phases[qubit_] = 1 << (qubit_ + 1)
 
-            if gate_.qasm_name == 'cx':
-                cur_phases[gate_.targ] = cur_phases[gate_.targ] ^ cur_phases[gate_.carg]
-            elif gate_.qasm_name == 'x':
-                cur_phases[gate_.targ] = cur_phases[gate_.targ] ^ 1
-            elif gate_.qasm_name == 'rz':
-                sign = -1 if cur_phases[gate_.targ] & 1 else 1
-                mono = (cur_phases[gate_.targ] >> 1)
-                phases[mono] = sign * gate_.parg + (phases[mono] if mono in phases else 0)
+            if node_.gate_type == GateType.cx:
+                cur_phases[node_.qubit_loc[1]] = cur_phases[node_.qubit_loc[1]] ^ cur_phases[node_.qubit_loc[0]]
+            elif node_.gate_type == GateType.x:
+                cur_phases[node_.qubit_loc[0]] = cur_phases[node_.qubit_loc[0]] ^ 1
+            elif node_.gate_type == GateType.rz:
+                sign = -1 if cur_phases[node_.qubit_loc[0]] & 1 else 1
+                mono = (cur_phases[node_.qubit_loc[0]] >> 1)
+                phases[mono] = sign * node_.params[0] + (phases[mono] if mono in phases else 0)
                 if mono not in first_rz:
                     first_rz[mono] = (node_, sign)
                 else:
@@ -407,14 +413,14 @@ class AutoOptimization(Optimization):
 
         for phase_, pack_ in first_rz.items():
             node_, sign = pack_
-            if np.isclose(phases[phase_], 0):
+            if np.isclose(float(phases[phase_]), 0):
                 node_.erase()
             else:
-                node_.gate.pargs = sign * phases[phase_]
+                node_.params = [sign * phases[phase_]]
 
         cnt = 0
         for node_ in node_list:
-            if node_.gate.qasm_name != 'rz' or node_.flag == node_.FLAG_ERASED:
+            if node_.gate_type != GateType.rz or node_.flag == node_.FLAG_ERASED:
                 continue
             if node_.flag == node_.FLAG_TO_ERASE:
                 cnt += 1
@@ -429,7 +435,7 @@ class AutoOptimization(Optimization):
         gates.set_qubit_loc()
         cnt = 0
         for idx, anchor_ in enumerate(list(gates.topological_sort())):
-            if anchor_.gate.qasm_name != 'cx' or anchor_.flag == anchor_.FLAG_VISITED:
+            if anchor_.gate_type != GateType.cx or anchor_.flag == anchor_.FLAG_VISITED:
                 continue
 
             # mat_1 = SyntheticalUnitary.run(gates.get_circuit())
@@ -465,7 +471,7 @@ class AutoOptimization(Optimization):
         gates.reset_flag()
         for node in gates.topological_sort():
             # enumerate over every unvisited CNOT gate
-            if node.flag == node.FLAG_VISITED or node.gate.qasm_name != 'cx':
+            if node.flag == node.FLAG_VISITED or node.gate_type != GateType.cx:
                 continue
 
             # set of terminate node's id
@@ -485,12 +491,12 @@ class AutoOptimization(Optimization):
                         p_node, p_qubit = getattr(c_node, neighbors)[c_node.qubit_id[anchor_qubit]]
 
                         # find a non CNOT+Rz gate. Set it a terminate node
-                        if p_node.gate is None or p_node.gate.qasm_name not in ['cx', 'x', 'rz'] or \
-                                p_node.flag == p_node.FLAG_VISITED:
+                        if p_node.gate_type is None or p_node.gate_type not in \
+                                [GateType.cx, GateType.x, GateType.rz] or p_node.flag == p_node.FLAG_VISITED:
                             term_node_set.add(id(p_node))
                             break
 
-                        if p_node.gate.qasm_name == 'cx':
+                        if p_node.gate_type == GateType.cx:
                             # encounter a new CNOT gate
                             visited_cnot[id(p_node)] = [p_node, 0b00]
                             # if we encounter a CNOT acting on a new qubit, set it as an anchor node
@@ -515,7 +521,7 @@ class AutoOptimization(Optimization):
                             p_node, p_qubit = getattr(c_node, neighbors)[c_node.qubit_id[anchor_qubit]]
                             if id(p_node) in term_node_set:
                                 break
-                            if p_node.gate.qasm_name == 'cx' and id(p_node) in visited_cnot:
+                            if p_node.gate_type == GateType.cx and id(p_node) in visited_cnot:
                                 visited_cnot[id(p_node)][1] |= 1 << p_node.qubit_id[anchor_qubit]
                                 if visited_cnot[id(p_node)][1] == 0b11 and p_node.flag == p_node.FLAG_DEFAULT:
                                     p_node.flag = p_node.FLAG_IN_QUE
@@ -588,6 +594,47 @@ class AutoOptimization(Optimization):
         return cnt
 
     @classmethod
+    def assign_symbolic_phases(cls, gates: DAG):
+        if not gates.has_symbolic_rz:
+            return 0
+
+        var_dict = {}
+        for node_ in gates.topological_sort():
+            if node_.gate_type == GateType.rz and isinstance(node_.params[0], SymbolicPhase):
+                cur_var_dict = node_.params[0].var_dict
+                for label in cur_var_dict:
+                    var, val = cur_var_dict[label]
+                    if label not in var_dict:
+                        var_dict[label] = [var, 0, []]
+
+                    var_dict[label][1] += val
+                    var_dict[label][2].append(node_.params[0])
+
+        ret = 0
+        for pack in var_dict.values():
+            var, coef_sum, expr_list = pack
+            var.phase = np.pi / 4
+            # print([expr.evaluate() for expr in expr_list])
+            t_cnt = sum([np.isclose(expr.evaluate(), 0) for expr in expr_list])
+            var.phase = -np.pi / 4
+            # print([expr.evaluate() for expr in expr_list])
+            tdg_cnt = sum([np.isclose(expr.evaluate(), 0) for expr in expr_list])
+            if t_cnt >= tdg_cnt:
+                var.phase = np.pi / 4
+            # print(t_cnt, tdg_cnt)
+
+            # gates.global_phase += var.phase / 2 * coef_sum
+            ret += max(t_cnt, tdg_cnt)
+
+        for node_ in gates.topological_sort():
+            if node_.gate_type == GateType.rz and isinstance(node_.params[0], SymbolicPhase):
+                node_.params[0] = node_.params[0].evaluate()
+
+        gates.global_phase = gates.global_phase.evaluate()
+        gates.has_symbolic_rz = False
+        return ret
+
+    @classmethod
     def float_rotations(cls, gates: DAG):
         """
         """
@@ -610,7 +657,7 @@ class AutoOptimization(Optimization):
             cnt = 0
             # apply each method in routine
             for step in routine:
-
+                # print(cls._optimize_sub_method[step])
                 start_time = time.time()
                 cur_cnt = getattr(cls, cls._optimize_sub_method[step])(_gates)
                 end_time = time.time()
@@ -627,8 +674,17 @@ class AutoOptimization(Optimization):
 
             # stop if nothing can be optimized
             if cnt == 0:
-                break
+                start_time = time.time()
+                cnt += cls.assign_symbolic_phases(_gates)
+                end_time = time.time()
+                if verbose:
+                    print(f'\tassign_symbolic_phases: {cnt} '
+                          f'gates reduced, cost {np.round(end_time - start_time, 3)} s')
+
+                if cnt == 0:
+                    break
             gate_cnt += cnt
+
         if verbose:
             print(f'{gate_cnt} / {_gates.init_size} reduced in total, '
                   f'remain {_gates.init_size - gate_cnt} gates, cost {np.round(total_time, 3)} s')

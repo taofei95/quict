@@ -4,11 +4,13 @@ from collections.abc import Iterable
 from collections import deque
 import inspect
 from itertools import chain
+from .symbolic_phase import SymbolicPhase, SymbolicPhaseVariable
 
 
 import numpy as np
 from QuICT.core import *
 from QuICT.core.gate import *
+from QuICT.core.gate.gate_builder import GATE_TYPE_TO_CLASS
 
 
 class DAG(Iterable):
@@ -25,12 +27,28 @@ class DAG(Iterable):
     TODO refactor flag system
     """
 
+    # class PhaseVariable:
+    #     __slots__ = ['expr_list']
+    #
+    #     def __init__(self):
+    #         self.expr_list = []
+    #
+    #     def assign(self):
+    #         pass
+    #
+    # class PhaseExpression:
+    #     __slots__ = ['var_list', 'const']
+    #
+    #     def __init__(self):
+    #         pass
+
     class Node:
         """
         DAG node class.
         """
 
-        __slots__ = ['gate', 'predecessors', 'successors', 'flag', 'qubit_id', 'size', 'qubit_loc', 'qubit_flag']
+        __slots__ = ['predecessors', 'successors', 'flag', 'qubit_id', 'size', 'qubit_loc', 'qubit_flag',
+                     'gate_type', '_params', 'var_phase']
 
         FLAG_DEFAULT = 0
         FLAG_VISITED = 1
@@ -44,7 +62,11 @@ class DAG(Iterable):
                 gate_(BasicGate): Gate represented by this node
                 qubit_(int): the actual qubit the gate sits on (used only when `gate_` is None)
             """
-            self.gate = None if gate_ is None else gate_.copy()
+            # self.gate = None if gate_ is None else gate_.copy()
+            self.gate_type = gate_.type if gate_ is not None else None
+            self._params = gate_.pargs if gate_ is not None else []
+            self.var_phase = None
+
             # the actual qubit the i-th wire of the gate act on
             self.qubit_loc = [qubit_] if gate_ is None else list(chain(gate_.cargs, gate_.targs))
             # inverse mapping of self.qubit_loc
@@ -54,6 +76,19 @@ class DAG(Iterable):
             self.successors: List[Tuple[DAG.Node, int]] = [(None, 0)] * self.size
             self.qubit_flag = [self.FLAG_DEFAULT] * self.size
             self.flag = self.FLAG_DEFAULT
+
+        @property
+        def params(self):
+            return self._params
+
+        @params.setter
+        def params(self, args):
+            assert type(args) == list, 'assignment of params must be a list'
+            self._params = args
+
+        def get_gate(self):
+            return GATE_TYPE_TO_CLASS[self.gate_type](*self.params) & self.qubit_loc \
+                if self.gate_type is not None else None
 
         def add_forward_edge(self, qubit_, node):
             """
@@ -110,6 +145,7 @@ class DAG(Iterable):
         self.start_nodes = [self.Node(qubit_=i) for i in range(self._width)]
         self.end_nodes = [self.Node(qubit_=i) for i in range(self._width)]
         self.global_phase = 0
+        self.has_symbolic_rz = False
         self.init_size = self._build_graph(gates)
 
     def width(self):
@@ -123,18 +159,38 @@ class DAG(Iterable):
     def _build_graph(self, gates: Circuit):
         node_cnt = 0
         cur_nodes = self.start_nodes.copy()
-        for gate_ in gates.gates:
-            gate_list = [gate_]
-            if gate_.qasm_name == 'ccx':
-                gate_list = gate_.build_gate().gates
-            if gate_.qasm_name == 'ccz':
-                compo_gate = (CCXGate() & list(chain(gate_.cargs, gate_.targs))).build_gate()
-                gate_list = [HGate() & gate_.targ] + compo_gate.gates + [HGate() & gate_.targ]
 
-            node_cnt += len(gate_list)
-            for each in gate_list:
-                node = self.Node(each)
-                for qubit_ in list(chain(each.cargs, each.targs)):
+        var_cnt = 0
+        for gate_ in gates.gates:
+            if gate_.type == GateType.ccx:
+                self.has_symbolic_rz = True
+                gate_list = gate_.build_gate().gates
+                node_cnt += len(gate_list)
+                var = SymbolicPhaseVariable(var_cnt)
+                var_cnt += 1
+                # print('---', id(var))
+
+                for each in gate_list:
+                    node = self.Node(each)
+                    if node.gate_type == GateType.t:
+                        node.gate_type = GateType.rz
+                        node.params = [SymbolicPhase() + var]
+                        # print(self.global_phase)
+                        self.global_phase += var / 2
+                        # print(id(node.params[0].var_dict[var_cnt-1][0]))
+                    elif node.gate_type == GateType.tdg:
+                        node.gate_type = GateType.rz
+                        node.params = [SymbolicPhase() - var]
+                        self.global_phase -= var / 2
+                        # print(id(node.params[0].var_dict[var_cnt - 1][0]))
+
+                    for qubit_ in list(chain(each.cargs, each.targs)):
+                        cur_nodes[qubit_].add_forward_edge(qubit_, node)
+                        cur_nodes[qubit_] = node
+            else:
+                node_cnt += 1
+                node = self.Node(gate_)
+                for qubit_ in list(chain(gate_.cargs, gate_.targs)):
                     cur_nodes[qubit_].add_forward_edge(qubit_, node)
                     cur_nodes[qubit_] = node
 
@@ -159,7 +215,7 @@ class DAG(Iterable):
                 pred, qubit2 = node.predecessors[qubit_]
                 mapping[(id(node), qubit_)] = mapping[(id(pred), qubit2)]
 
-            node.gate | circ([mapping[(id(node), qubit_)] for qubit_ in range(node.size)])
+            node.get_gate() | circ([mapping[(id(node), qubit_)] for qubit_ in range(node.size)])
 
         if not np.isclose(self.global_phase, 0):
             Phase(self.global_phase) | circ(0)
@@ -177,7 +233,7 @@ class DAG(Iterable):
         queue = deque(self.start_nodes)
         while len(queue) > 0:
             cur = queue.popleft()
-            if cur.gate is not None or include_dummy:
+            if cur.gate_type is not None or include_dummy:
                 yield cur
             for nxt, _ in cur.successors:
                 if nxt is None:
@@ -216,7 +272,7 @@ class DAG(Iterable):
 
         while len(queue) > 0:
             cur = queue.popleft()
-            if cur.gate is not None or include_dummy:
+            if cur.gate_type is not None or include_dummy:
                 yield cur
             for nxt, nxt_q in cur.successors:
                 if nxt is None or (id(nxt), nxt_q) in end_set:
@@ -252,10 +308,10 @@ class DAG(Iterable):
                 pred, qubit2 = node.predecessors[qubit_]
                 mapping[(id(node), qubit_)] = mapping[(id(pred), qubit2)]
                 node.qubit_loc[qubit_] = mapping[(id(node), qubit_)]
-            if node.gate is not None:
-                # node.gate.affectArgs = node.qubit_loc
-                node.gate.cargs = node.qubit_loc[:node.gate.controls]
-                node.gate.targs = node.qubit_loc[node.gate.controls:]
+            # if node.gate_type is not None:
+            #     # node.gate.affectArgs = node.qubit_loc
+            #     node.gate.cargs = node.qubit_loc[:node.gate.controls]
+            #     node.gate.targs = node.qubit_loc[node.gate.controls:]
 
             node.qubit_id = {qubit_: i for i, qubit_ in enumerate(node.qubit_loc)}
 
@@ -263,10 +319,10 @@ class DAG(Iterable):
 
         t_node, t_qubit = self.start_nodes[anchor_qubit].successors[0]
         o_node, o_qubit = other[0], (t_qubit if other[1] == -1 else other[1])
-        if o_node.gate is None:
+        if o_node.gate_type is None:
             return None
 
-        if o_node.gate.qasm_name != t_node.gate.qasm_name or (t_qubit != o_qubit) or (o_node.flag and flag_enabled):
+        if o_node.gate_type != t_node.gate_type or (t_qubit != o_qubit) or (o_node.flag and flag_enabled):
             return None
 
         mapping = {id(t_node): o_node}
@@ -277,7 +333,7 @@ class DAG(Iterable):
                 for qubit_ in range(u.size):
                     u_nxt, u_qubit = getattr(u, neighbors)[qubit_]
                     assert u_nxt, "u_nxt == None should not happen"
-                    if not u_nxt.gate:
+                    if not u_nxt.gate_type:
                         continue
 
                     v_nxt, v_qubit = getattr(v, neighbors)[qubit_]
@@ -287,9 +343,9 @@ class DAG(Iterable):
                         continue
 
                     assert v_nxt, "v_nxt == None should not happen"
-                    if not v_nxt.gate or u_qubit != v_qubit or \
+                    if not v_nxt.gate_type or u_qubit != v_qubit or \
                             (v_nxt.flag and flag_enabled) or \
-                            u_nxt.gate.qasm_name != v_nxt.gate.qasm_name:
+                            u_nxt.gate_type != v_nxt.gate_type:
                         return None
 
                     mapping[id(u_nxt)] = v_nxt
@@ -347,7 +403,7 @@ class DAG(Iterable):
         queue = deque([(node, qubit_)])
         while len(queue) > 0:
             cur, cur_q = queue.popleft()
-            if cur.gate is None:
+            if cur.gate_type is None:
                 continue
             nxt, _ = cur.successors[cur_q]
             if id(nxt) not in visited:
@@ -384,7 +440,7 @@ class DAG(Iterable):
     def copy_sub_circuit(prev_node: List[Tuple[Node, int]], succ_node: List[Tuple[Node, int]]):
         circ = Circuit(len(prev_node))
         for node in DAG.topological_sort_sub_circuit(prev_node, succ_node):
-            node.gate.copy() | circ(node.qubit_loc)
+            node.get_gate() | circ(node.qubit_loc)
         return DAG(circ)
 
     def __iter__(self):
@@ -396,7 +452,7 @@ class DAG(Iterable):
         """
 
         for node in self.topological_sort():
-            yield node.gate
+            yield node.get_gate()
 
     def copy(self):
         # TODO faster implementation of copy()
