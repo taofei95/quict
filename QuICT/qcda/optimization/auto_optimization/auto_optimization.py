@@ -614,14 +614,11 @@ class AutoOptimization(Optimization):
         for pack in var_dict.values():
             var, coef_sum, expr_list = pack
             var.phase = np.pi / 4
-            # print([expr.evaluate() for expr in expr_list])
             t_cnt = sum([np.isclose(expr.evaluate(), 0) for expr in expr_list])
             var.phase = -np.pi / 4
-            # print([expr.evaluate() for expr in expr_list])
             tdg_cnt = sum([np.isclose(expr.evaluate(), 0) for expr in expr_list])
             if t_cnt >= tdg_cnt:
                 var.phase = np.pi / 4
-            # print(t_cnt, tdg_cnt)
 
             # gates.global_phase += var.phase / 2 * coef_sum
             ret += max(t_cnt, tdg_cnt)
@@ -668,9 +665,6 @@ class AutoOptimization(Optimization):
 
                 cnt += cur_cnt
                 total_time += end_time - start_time
-
-                # if step == 4:
-                #     return _gates.get_circuit()
 
             # stop if nothing can be optimized
             if cnt == 0:

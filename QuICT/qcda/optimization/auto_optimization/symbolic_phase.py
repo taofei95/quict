@@ -2,6 +2,9 @@ import numpy as np
 
 
 class SymbolicPhaseVariable:
+    """
+    Symbolic phase variable.
+    """
     __slots__ = ['phase', 'label']
 
     def __init__(self, label):
@@ -27,6 +30,9 @@ class SymbolicPhaseVariable:
 
 
 class SymbolicPhase:
+    """
+    Symbolic phase expression.
+    """
     __slots__ = ['var_dict', 'const']
 
     def __init__(self):
@@ -70,11 +76,10 @@ class SymbolicPhase:
         elif isinstance(other, int) or isinstance(other, float):
             ret.const += other
         else:
-            raise TypeError("invalid right operator.")
+            raise TypeError("Invalid right operator.")
         return ret
 
     def __rmul__(self, other):
-        # print(other, type(other))
         ret = self.copy()
         if isinstance(other, float) or isinstance(other, int):
             ret.const *= other

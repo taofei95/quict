@@ -27,21 +27,6 @@ class DAG(Iterable):
     TODO refactor flag system
     """
 
-    # class PhaseVariable:
-    #     __slots__ = ['expr_list']
-    #
-    #     def __init__(self):
-    #         self.expr_list = []
-    #
-    #     def assign(self):
-    #         pass
-    #
-    # class PhaseExpression:
-    #     __slots__ = ['var_list', 'const']
-    #
-    #     def __init__(self):
-    #         pass
-
     class Node:
         """
         DAG node class.
@@ -162,6 +147,7 @@ class DAG(Iterable):
 
         var_cnt = 0
         for gate_ in gates.gates:
+            # decouple ccx building with dag
             if gate_.type == GateType.ccx:
                 self.has_symbolic_rz = True
                 gate_list = gate_.build_gate().gates
