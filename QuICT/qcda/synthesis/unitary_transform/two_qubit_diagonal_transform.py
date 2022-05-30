@@ -48,7 +48,7 @@ class TwoQubitDiagonalTransform(Synthesis):
         gUTT = U.T.dot(sy2).dot(U).dot(sy2).T
         denominator = (gUTT[0, 0] - gUTT[1, 1] - gUTT[2, 2] + gUTT[3, 3]).real
         if np.isclose(denominator, 0):
-            psi = 0
+            psi = np.pi / 2
         else:
             numerator = (gUTT[0, 0] + gUTT[1, 1] + gUTT[2, 2] + gUTT[3, 3]).imag
             psi = np.arctan(numerator / denominator)
@@ -73,6 +73,15 @@ class TwoQubitDiagonalTransform(Synthesis):
         # where D is diagonal with unit-magnitude elements.
         D, P = CartanKAKDecomposition.diagonalize_unitary_symmetric(M2)
         d = np.angle(D) / 2
+
+        # A special case occurs when there are pairs of -1 in D
+        if np.any(np.isclose(D, -1)):
+            if np.count_nonzero(np.isclose(D, -1)) == 2:
+                d[np.where(np.isclose(D, -1))] = np.pi / 2, -np.pi / 2
+            elif np.count_nonzero(np.isclose(D, -1)) == 4:
+                d[:] = np.pi / 2, np.pi / 2, -np.pi / 2, -np.pi / 2
+            else:
+                raise ValueError('Odd number of -1 in D')
 
         # Refinement time, by some mathematics we know that d here must be a rearragement
         # of d_Ud. However, the diagonalization process does not guarantee that they are
