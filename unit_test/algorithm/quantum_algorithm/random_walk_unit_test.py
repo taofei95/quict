@@ -4,14 +4,15 @@ import unittest
 from QuICT.core.gate import H, S
 from QuICT.algorithm.quantum_algorithm.random_walk import RandomWalk, Graph
 from QuICT.simulation.cpu_simulator import CircuitSimulator
+from QuICT.simulation.gpu_simulator import ConstantStateVectorSimulator
 
 
 class TestRandomWalk(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         print("The Random Walk unit test start!")
-        cls.simulator = CircuitSimulator()
-        cls.steps = 20
+        cls.simulator = ConstantStateVectorSimulator()
+        cls.steps = 10
 
     @classmethod
     def tearDownClass(cls) -> None:

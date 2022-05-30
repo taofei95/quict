@@ -97,11 +97,16 @@ class RandomWalk:
     def _build_shift_operator(self) -> UnitaryGate:
         """ Generator shift operator """
         unitary_matrix = np.zeros((1 << self._total_qubits, 1 << self._total_qubits), dtype=np.complex128)
+        record_idxes = list(range(1 << self._total_qubits))
         for i in range(self._graph.position):
             curr_idx = (1 << self._action_qubits) * i
             for action_state in range(self._graph.action_space):
                 related_action = self._graph.edges[i][action_state]
                 unitary_matrix[related_action * (1 << self._action_qubits) + action_state, curr_idx + action_state] = 1
+                record_idxes.remove(related_action * (1 << self._action_qubits) + action_state)
+
+        if len(record_idxes) > 0:
+            unitary_matrix[record_idxes, record_idxes] = 1
 
         return Unitary(unitary_matrix)
 
