@@ -8,7 +8,7 @@ import numpy as np
 
 from QuICT.core import Circuit
 from QuICT.core.gate import *
-from QuICT.qcda.synthesis.mct import MCTLinearOneDirtyAux
+from QuICT.qcda.synthesis.mct import MCTOneAux
 
 from QuICT.simulation.cpu_simulator import CircuitSimulator
 
@@ -20,8 +20,10 @@ def calculate_r1_r2_one_target(N, K, eps):
     theta = np.pi / 2 - (0.5 + r1) * o_theta
     sin_theta = np.sin(theta)
     sqrt_K_mul_alpha_yt = np.sqrt(K - sin_theta * sin_theta * (K - 1))
-    r2 = (np.sqrt(N / K) * 0.5) * (np.arcsin(sin_theta / sqrt_K_mul_alpha_yt) +
-                                   np.arcsin(sin_theta * (K - 2) / (2 * sqrt_K_mul_alpha_yt)))
+    r2 = (np.sqrt(N / K) * 0.5) * (
+        np.arcsin(sin_theta / sqrt_K_mul_alpha_yt)
+        + np.arcsin(sin_theta * (K - 2) / (2 * sqrt_K_mul_alpha_yt))
+    )
     r2 = round(r2)
     return r1, r2
 
@@ -31,71 +33,87 @@ class PartialGrover:
 
     https://arxiv.org/abs/quant-ph/0407122
     """
+
     @staticmethod
-    def run(n, k, oracle, simulator=CircuitSimulator()):
+    def run(n, n_block, k, oracle, simulator=CircuitSimulator()):
         """ partial grover search with one target
 
         Args:
             f(list<int>): the function to be decided
             n(int):       bits length of global address
-            k(int):       bits length of block address
-            oracle(CompositeGate):   the oracle assuming one ancilla@[n] in |->
+            n_block(int): bits length of block address
+            k(int):       length of oracle working space. assume clean
+            oracle(CompositeGate): the oracle that flip phase of target state.
+                [0:n] is index qreg,
+                [n:n+k] is ancilla
+                also assume that it works in style of QCQI p249 6.2
         Returns:
             int: the target address, big endian
         """
-        K = 1 << k
+        assert k >= 2, "at least 2 ancilla, which is shared bt the Grover part"
+        K = 1 << n_block
         N = 1 << n
         eps = 1 / K  # can use other epsilon
         r1, r2 = calculate_r1_r2_one_target(N, K, eps)
 
-        circuit = Circuit(n + 3)
-        qreg = list(range(n))
-        ancilla = n
-        dirty = n + 1
-        ctarget = n + 2
-        cqreg = [n + 2] + [i for i in range(n)]
+        circuit = Circuit(n + k + 1)
+        index_q = list(range(n))
+        oracle_q = list(range(n, n + k))
+        ancillia_q = [n + k]
         # step 1
-        for idx in qreg: H | circuit(idx)
-        X | circuit(ancilla)
-        H | circuit(ancilla)
+        for idx in index_q:
+            H | circuit(idx)
         for i in range(r1):
             # global inversion about target
-            oracle | circuit(qreg + [ancilla])
+            oracle | circuit(index_q + oracle_q)
             # global inversion about average
-            for idx in qreg: H | circuit(idx)
-            for idx in qreg: X | circuit(idx)
-            H | circuit(qreg[n - 1])
-            MCTLinearOneDirtyAux.execute(n + 1) | circuit(qreg + [dirty])
-            H | circuit(qreg[n - 1])
-            for idx in qreg: X | circuit(idx)
-            for idx in qreg: H | circuit(idx)
+            for idx in index_q:
+                H | circuit(idx)
+            for idx in index_q:
+                X | circuit(idx)
+            H | circuit(index_q[n - 1])
+            MCTOneAux.execute(n + 1) | circuit(index_q + oracle_q[:1])
+            H | circuit(index_q[n - 1])
+            for idx in index_q:
+                X | circuit(idx)
+            for idx in index_q:
+                H | circuit(idx)
         # step 2
         for i in range(r2):
             # global inversion about target
-            oracle | circuit(qreg + [ancilla])
+            oracle | circuit(index_q + oracle_q)
             # local inversion about average
-            local_n = n - k
-            local_qreg = [j for j in range(k, k + local_n)]
-            for idx in local_qreg: H | circuit(idx)
-            for idx in local_qreg: X | circuit(idx)
-            H | circuit(local_qreg[local_n - 1])
-            MCTLinearOneDirtyAux.execute(
-                local_n + 1) | circuit(local_qreg + [dirty])
-            H | circuit(local_qreg[local_n - 1])
-            for idx in local_qreg: X | circuit(idx)
-            for idx in local_qreg: H | circuit(idx)
+            local_n = n - n_block
+            local_index_q = [j for j in range(n_block, n_block + local_n)]
+            for idx in local_index_q:
+                H | circuit(idx)
+            for idx in local_index_q:
+                X | circuit(idx)
+            H | circuit(local_index_q[local_n - 1])
+            MCTOneAux.execute(local_n + 1) | circuit(local_index_q + oracle_q[:1])
+            H | circuit(local_index_q[local_n - 1])
+            for idx in local_index_q:
+                X | circuit(idx)
+            for idx in local_index_q:
+                H | circuit(idx)
         # step 3
-        oracle | circuit(qreg + [ctarget])
+        H | circuit(ancillia_q[0])
+        X | circuit(ancillia_q[0])
+        oracle | circuit(index_q + [ancillia_q[0]] + oracle_q[1:])
+        X | circuit(ancillia_q[0])
+        H | circuit(ancillia_q[0])
         # controlled inversion about average
-        CH | circuit([qreg[n - 1]] + [ctarget])
-        CH | circuit([qreg[n - 1]] + [ctarget])
-        CH | circuit([qreg[n - 1]] + [ctarget])
-        MCTLinearOneDirtyAux.execute(
-            n + 2) | circuit(cqreg[0:n] + [qreg[n - 1]] + [ancilla])
-        CH | circuit([qreg[n - 1]] + [ctarget])
-        CH | circuit([qreg[n - 1]] + [ctarget])
-        CH | circuit([qreg[n - 1]] + [ctarget])
+        for idx in index_q:
+            CH | circuit([ancillia_q[0], idx])
+        for idx in index_q:
+            CX | circuit([ancillia_q[0], idx])
+        MCTOneAux.execute(n + 2) | circuit([ancillia_q[0]] + index_q + oracle_q[:1])
+        for idx in index_q:
+            CX | circuit([ancillia_q[0], idx])
+        for idx in index_q:
+            CH | circuit([ancillia_q[0], idx])
         # Measure
-        for idx in qreg: Measure | circuit(idx)
+        for idx in index_q:
+            Measure | circuit(idx)
         simulator.run(circuit)
-        return int(circuit[qreg])
+        return int(circuit[index_q])

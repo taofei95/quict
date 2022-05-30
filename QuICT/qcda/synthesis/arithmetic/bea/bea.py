@@ -15,10 +15,11 @@ def ex_gcd(a, b, arr):
     arr[1] = t - int(a / b) * arr[1]
     return g
 
+
 def mod_reverse(a, n):
     arr = [0, 1]
     g = ex_gcd(a, n, arr)
-    if g!=1:
+    if g != 1:
         raise ValueError("not coprime")
     return (arr[0] % n + n) % n
 
