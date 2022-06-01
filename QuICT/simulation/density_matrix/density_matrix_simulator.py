@@ -11,7 +11,12 @@ import QuICT.ops.linalg.cpu_calculator as CPUCalculator
 
 
 class DensityMatrixSimulation:
+    """ The Density Matrix Simulator
 
+    Args:
+        device (str, optional): The device type, one of [CPU, GPU]. Defaults to "CPU".
+        precision (str, optional): The precision for the density matrix, one of [single, double]. Defaults to "double".
+    """
     def __init__(
         self,
         device: str = "CPU",
@@ -22,21 +27,28 @@ class DensityMatrixSimulation:
 
         if device == "CPU":
             self._computer = CPUCalculator
+            self._array_helper = np
         else:
             import QuICT.ops.linalg.gpu_calculator as GPUCalculator
-            self._computer = GPUCalculator
-
-    def _init_density_matrix(self, qubits):
-        if self._device == "CPU":
-            self._density_matrix = np.zeros((1 << qubits, 1 << qubits), dtype=self._precision)
-            self._density_matrix[0, 0] = self._precision(1)
-        else:
             import cupy as cp
 
-            self._density_matrix = cp.zeros((1 << qubits, 1 << qubits), dtype=self._precision)
+            self._computer = GPUCalculator
+            self._array_helper = cp
+
+    def init_density_matrix(self, qubits: int):
+        """ Initial density matrix by given qubits number.
+
+        Args:
+            qubits (int): the number of qubits.
+        """
+        self._density_matrix = self._array_helper.zeros((1 << qubits, 1 << qubits), dtype=self._precision)
+        if self._device == "CPU":
+            self._density_matrix[0, 0] = self._precision(1)
+        else:
             self._density_matrix.put((0, 0), self._precision(1))
 
     def check_matrix(self, matrix):
+        """ Density Matrix Validation. """
         if(matrix.T.conjugate() != matrix):
             return False
 
@@ -50,18 +62,35 @@ class DensityMatrixSimulation:
 
         return True
 
-    def run(self, circuit: Circuit, noise_model: NoiseModel = None, density_matrix: np.ndarray = None):
+    def run(
+        self,
+        circuit: Circuit,
+        noise_model: NoiseModel = None,
+        density_matrix: np.ndarray = None
+    ) -> np.ndarray:
+        """ Simulating the given circuit through density matrix simulator.
+
+        Args:
+            circuit (Circuit): The quantum circuit.
+            noise_model (NoiseModel, optional): The NoiseModel contains NoiseErrors. Defaults to None.
+            density_matrix (np.ndarray, optional): The initial-state density matrix. Defaults to None.
+
+        Returns:
+            np.ndarray: the density matrix after simulating
+        """
         qubits = circuit.width()
         # Initial density matrix
         if (density_matrix is None or not self.check_matrix(density_matrix)):
-            self._init_density_matrix(qubits)
+            self.init_density_matrix(qubits)
         else:
             self._density_matrix = density_matrix
 
-        # apply noise model
+        # Apply noise model
         if noise_model is not None:
             circuit = noise_model.transpile(circuit)
 
+        # Start simulator
+        # TODO: optimization
         based_circuit = Circuit(qubits)
         for gate in circuit.gates:
             if gate.type == GateType.measure:
@@ -70,6 +99,7 @@ class DensityMatrixSimulation:
                 continue
 
             if isinstance(gate, BasicGate):
+                # Collect BasicGates to generate one 
                 gate | based_circuit
             elif isinstance(gate, NoiseGate):
                 if based_circuit.size() > 0:
@@ -84,27 +114,55 @@ class DensityMatrixSimulation:
             self.apply_gates(based_circuit)
             based_circuit = Circuit(qubits)
 
+        noise_model.apply_readout_error(circuit.qubits)
         return self._density_matrix
 
     def apply_gates(self, circuit: Circuit):
+        """ Simulating Circuit with BasicGates
+        
+        dm = M*dm(M.conj)^T
+
+        Args:
+            circuit (Circuit): The circuit only have BasicGate.
+        """
         circuit_matrix = UnitarySimulator().get_unitary_matrix(circuit)
 
-        # step ops
         self._density_matrix = self._computer.dot(
             self._computer.dot(circuit_matrix, self._density_matrix),
             circuit_matrix.conj().T
         )
 
     def apply_noise(self, noise_gate: NoiseGate, qubits: int):
+        """ Simulating NoiseGate.
+
+        dm = /sum K*dm*(K.conj)^T
+
+        Args:
+            noise_gate (NoiseGate): The NoiseGate
+            qubits (int): The number of qubits in the circuit.
+        """
         gate_args = noise_gate.targs
+        noised_matrix = self._array_helper.zeros_like(self._density_matrix)
         for kraus_matrix in noise_gate.noise_matrix:
             umat = matrix_product_to_circuit(kraus_matrix, gate_args, qubits)
-            self._density_matrix += self._computer.dot(
+
+            noised_matrix += self._computer.dot(
                 self._computer.dot(umat, self._density_matrix),
                 umat.conj().T
             )
 
-    def apply_measure(self, gate, qubits):
+        self._density_matrix = noised_matrix.copy()
+
+    def apply_measure(self, gate, qubits) -> int:
+        """ Simulating the MeasureGate.
+
+        Args:
+            gate (BasicGate): The MeasureGate.
+            qubits (int): The number of qubits in the circuit.
+
+        Returns:
+            int: The measured result.
+        """
         P0 = np.array([[1, 0], [0, 0]], dtype=self._precision)
 
         mea_0 = matrix_product_to_circuit(P0, gate.targs, qubits)

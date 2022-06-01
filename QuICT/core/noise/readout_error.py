@@ -10,22 +10,23 @@ from .utils import NoiseChannel
 class ReadoutError:
     """ The Readout error class
 
-    p(n|m) describe the probability of getting the noise outcome n with the truly measured result m.
+    Example:
+        p(n|m) describe the probability of getting the noise outcome n with the truly measured result m. \n
+        The ReadoutError for 1 qubit: \n
+            P = [[p(0|0), p(1|0)], = [[0.8, 0.2], \n
+                 [p(0|1), p(1|1)]]    [0.3, 0.7]]
+
+        The ReadoutError for 2 qubit:
+            P = [[p(00|00), p(01|00), p(10|00), p(11|00)], \n
+                [p(00|01), p(01|01), p(10|01), p(11|01)], \n
+                [p(00|10), p(01|10), p(10|10), p(11|10)], \n
+                [p(00|11), p(01|11), p(10|11), p(11|11)]] \n
+
+    Important:
+        The sum of each rows in the prob should equal to 1.
 
     Args:
-    prob (List, np.ndarray): The probability of outcome assignment
-
-    E.g.
-    The ReadoutError for 1 qubit:
-    P = [[p(0|0), p(1|0)], = [[0.8, 0.2],
-         [p(0|1), p(1|1)]]    [0.3, 0.7]]
-
-    The ReadoutError for 2 qubit:
-    P = [[p(00|00), p(01|00), p(10|00), p(11|00)],
-         [p(00|01), p(01|01), p(10|01), p(11|01)],
-         [p(00|10), p(01|10), p(10|10), p(11|10)],
-         [p(00|11), p(01|11), p(10|11), p(11|11)]]
-
+        prob (List, np.ndarray): The probability of outcome assignment
     """
     @property
     def qubits(self) -> int:
@@ -75,6 +76,7 @@ class ReadoutError:
         return prob
 
     def compose(self, other):
+        """ dot(self.prob, other.prob) """
         assert isinstance(other, ReadoutError)
         if other.qubits != self.qubits:
             raise ValueError("other must have same qubits.")
@@ -83,12 +85,14 @@ class ReadoutError:
         return ReadoutError(compose_prob)
 
     def tensor(self, other):
+        """ tensor(self.prob, other.prob) """
         assert isinstance(other, ReadoutError)
 
         tensor_prob = tensor(self.prob, other.prob)
         return ReadoutError(tensor_prob)
 
     def power(self, n: int):
+        """ (self.prob)^n """
         assert isinstance(n, int)
 
         based_prob = copy.deepcopy(self.prob)
@@ -97,7 +101,8 @@ class ReadoutError:
 
         return ReadoutError(based_prob)
 
-    def is_identity(self):
+    def is_identity(self) -> bool:
+        """ Whether self.prob is identity matrix. """
         id_matrix = np.identity(2 ** self._qubits)
         if np.allclose(self._prob, id_matrix, rtol=1e-6):
             return True

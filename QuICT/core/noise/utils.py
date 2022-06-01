@@ -24,7 +24,7 @@ def is_kraus_ops(kraus: list) -> bool:
 class NoiseChannel(Enum):
     kraus = "Kraus Channel"
     unitary = "Unitary Channel"
-    pauil = "Pauil Channel"
+    pauil = "Pauli Channel"
     depolarizing = "Depolarizing Channel"
     damping = "Damping Channel"
     readout = "Readout Channel"

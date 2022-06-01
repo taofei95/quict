@@ -1,0 +1,110 @@
+#!/usr/bin/env python
+# -*- coding:utf8 -*-
+# @TIME    : 2022/1/17 1:20 下午
+# @Author  : Li Kaiqi
+# @File    : circuit_unit_test.py
+
+import unittest
+import numpy as np
+
+from QuICT.core import Circuit
+from QuICT.core.gate import *
+from QuICT.core.noise import *
+from QuICT.simulation.density_matrix import DensityMatrixSimulation
+
+
+class TestNoise(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        print("The Noise unit test start!")
+        cls.circuit = Circuit(3)
+        H | cls.circuit
+        CX | cls.circuit([1, 2])
+        CX | cls.circuit([0, 1])
+        CH | cls.circuit([1, 0])
+        Swap | cls.circuit([2, 1])
+        SX | cls.circuit(0)
+        T | cls.circuit(1)
+        T_dagger | cls.circuit(0)
+        X | cls.circuit(1)
+        Y | cls.circuit(1)
+        S | cls.circuit(2)
+        U1(np.pi / 2) | cls.circuit(2)
+        U3(np.pi, 0, 1) | cls.circuit(0)
+        Rx(np.pi) | cls.circuit(1)
+        Ry(np.pi / 2) | cls.circuit(2)
+        Rz(np.pi / 4) | cls.circuit(0)
+        # Measure | cir
+
+    @classmethod
+    def tearDownClass(cls) -> None:
+        print("The Noise unit test finished!")
+
+    def test_pauilerror(self):
+        pauil_error_rate = 0.4
+        # bitflip pauilerror
+        bf_err = BitflipError(pauil_error_rate)
+        
+        # phaseflip pauilerror
+        pf_err = PhaseflipError(pauil_error_rate)
+        
+        # 2-bits pauilerror
+        bits_err = PauliError(
+            [('xy', pauil_error_rate), ('zi', 1 - pauil_error_rate)],
+            num_qubits=2
+        )
+
+        # build noise model
+        nm = NoiseModel()
+        nm.add_noise_for_all_qubits(bf_err, ['h'])
+        nm.add_noise_for_all_qubits(pf_err, ['x', 'y'])
+        nm.add(bits_err, ['cx', 'ch'], [1, 2])
+
+        # Using Density Matrix Simulator to simulate
+        dm_simu = DensityMatrixSimulation()
+        density_matrix = dm_simu.run(TestNoise.circuit, nm)
+
+        assert 1
+
+    def test_depolarizingerror(self):
+        print(TestNoise.circuit.qasm())
+        depolarizing_rate = 0.05
+        # 1-qubit depolarizing error
+        single_dep = DepolarizingError(depolarizing_rate, num_qubits=1)
+        
+        # 2-qubits depolarizing error
+        double_dep = DepolarizingError(depolarizing_rate, num_qubits=2)
+
+        # build noise model
+        nm = NoiseModel()
+        nm.add_noise_for_all_qubits(single_dep, ['h', 'u1'])
+        nm.add(double_dep, ['cx'])
+
+        # Using Density Matrix Simulator to simulate
+        dm_simu = DensityMatrixSimulation()
+        density_matrix = dm_simu.run(TestNoise.circuit, nm)
+
+        assert 1
+
+    def test_damping(self):
+        # Amplitude damping error
+        amp_err = DampingError(amplitude_prob=0.1, phase_prob=0, dissipation_state=0.4)
+        # Phase damping error
+        phase_err = DampingError(amplitude_prob=0, phase_prob=0.3)
+        # Amp + Phase damping error
+        amp_phase_err = DampingError(amplitude_prob=0.1, phase_prob=0.3, dissipation_state=0.5)
+
+        # build noise model
+        nm = NoiseModel()
+        nm.add_noise_for_all_qubits(amp_err, ['h', 'u1'])
+        nm.add(phase_err, ['y'], [1])
+        nm.add(amp_phase_err, ['x'], [1])
+
+        # Using Density Matrix Simulator to simulate
+        dm_simu = DensityMatrixSimulation()
+        density_matrix = dm_simu.run(TestNoise.circuit, nm)
+
+        assert 1
+
+if __name__ == "__main__":
+    unittest.main()
