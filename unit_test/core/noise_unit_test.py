@@ -44,10 +44,10 @@ class TestNoise(unittest.TestCase):
         pauil_error_rate = 0.4
         # bitflip pauilerror
         bf_err = BitflipError(pauil_error_rate)
-        
+
         # phaseflip pauilerror
         pf_err = PhaseflipError(pauil_error_rate)
-        
+
         # 2-bits pauilerror
         bits_err = PauliError(
             [('xy', pauil_error_rate), ('zi', 1 - pauil_error_rate)],
@@ -62,7 +62,7 @@ class TestNoise(unittest.TestCase):
 
         # Using Density Matrix Simulator to simulate
         dm_simu = DensityMatrixSimulation()
-        density_matrix = dm_simu.run(TestNoise.circuit, nm)
+        _ = dm_simu.run(TestNoise.circuit, nm)
 
         assert 1
 
@@ -71,7 +71,7 @@ class TestNoise(unittest.TestCase):
         depolarizing_rate = 0.05
         # 1-qubit depolarizing error
         single_dep = DepolarizingError(depolarizing_rate, num_qubits=1)
-        
+
         # 2-qubits depolarizing error
         double_dep = DepolarizingError(depolarizing_rate, num_qubits=2)
 
@@ -82,7 +82,7 @@ class TestNoise(unittest.TestCase):
 
         # Using Density Matrix Simulator to simulate
         dm_simu = DensityMatrixSimulation()
-        density_matrix = dm_simu.run(TestNoise.circuit, nm)
+        _ = dm_simu.run(TestNoise.circuit, nm)
 
         assert 1
 
@@ -102,9 +102,40 @@ class TestNoise(unittest.TestCase):
 
         # Using Density Matrix Simulator to simulate
         dm_simu = DensityMatrixSimulation()
-        density_matrix = dm_simu.run(TestNoise.circuit, nm)
+        _ = dm_simu.run(TestNoise.circuit, nm)
 
         assert 1
+
+    def test_readout(self):
+        # single-qubit Readout Error
+        single_readout = ReadoutError(np.array([[0.8, 0.2], [0.2, 0.8]]))
+        # double-qubits Readout Error
+        double_readout = ReadoutError(
+            np.array(
+                [[0.7, 0.1, 0.1, 0.1],
+                 [0.1, 0.7, 0.1, 0.1],
+                 [0.1, 0.1, 0.7, 0.1],
+                 [0.1, 0.1, 0.1, 0.7]]
+            )
+        )
+
+        # build noise model
+        nm = NoiseModel()
+        nm.add_readout_error(single_readout, 4)
+        nm.add_readout_error(single_readout, [1, 3])
+        nm.add_readout_error(double_readout, [0, 2])
+
+        # Build measured circuit
+        cir = Circuit(5)
+        H | cir
+        Measure | cir
+
+        # Using Density Matrix Simulator to simulate
+        dm_simu = DensityMatrixSimulation()
+        _ = dm_simu.run(cir, nm)
+
+        assert 1
+
 
 if __name__ == "__main__":
     unittest.main()

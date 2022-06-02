@@ -159,7 +159,7 @@ class PauliError(QuantumNoiseError):
         return pn_str
 
     def _create_kraus_ops(self, pauil_ops, num_qubits) -> list:
-        """ Transfer the pauil operators to the Kraus operator. 
+        """ Transfer the pauil operators to the Kraus operator.
 
         Kraus Operator = np.sqrt(prob) * Pauil Gate's Matrix
         """

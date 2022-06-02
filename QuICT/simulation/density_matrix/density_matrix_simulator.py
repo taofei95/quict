@@ -85,41 +85,41 @@ class DensityMatrixSimulation:
         else:
             self._density_matrix = density_matrix
 
-        # Apply noise model
-        if noise_model is not None:
-            circuit = noise_model.transpile(circuit)
+        # Apply noise model, and transpile circuit into working_circuit.
+        working_circuit = circuit if noise_model is None else noise_model.transpile(circuit)
 
         # Start simulator
-        # TODO: optimization
         based_circuit = Circuit(qubits)
-        for gate in circuit.gates:
+        for gate in working_circuit.gates:
+            # Store continuous BasicGates into based_circuit
+            if isinstance(gate, BasicGate) and gate.type != GateType.measure:
+                gate | based_circuit
+                continue
+
+            if based_circuit.size() > 0:
+                self.apply_gates(based_circuit)
+                based_circuit = Circuit(qubits)
+
             if gate.type == GateType.measure:
                 measured_state = self.apply_measure(gate, qubits)
                 circuit.qubits[gate.targ].measured = int(measured_state)
-                continue
-
-            if isinstance(gate, BasicGate):
-                # Collect BasicGates to generate one 
-                gate | based_circuit
             elif isinstance(gate, NoiseGate):
-                if based_circuit.size() > 0:
-                    self.apply_gates(based_circuit)
-                    based_circuit = Circuit(qubits)
-
                 self.apply_noise(gate, qubits)
             else:
                 raise KeyError("Unsupportted operator in Density Matrix Simulator.")
 
         if based_circuit.size() > 0:
             self.apply_gates(based_circuit)
-            based_circuit = Circuit(qubits)
 
-        noise_model.apply_readout_error(circuit.qubits)
+        # Check Readout Error in the NoiseModel
+        if noise_model is not None:
+            noise_model.apply_readout_error(circuit.qubits)
+
         return self._density_matrix
 
     def apply_gates(self, circuit: Circuit):
         """ Simulating Circuit with BasicGates
-        
+
         dm = M*dm(M.conj)^T
 
         Args:
