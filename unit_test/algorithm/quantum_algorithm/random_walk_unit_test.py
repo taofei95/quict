@@ -1,7 +1,7 @@
 import numpy as np
 import unittest
 
-from QuICT.core.gate import H, S
+from QuICT.core.gate import H
 from QuICT.algorithm.quantum_algorithm.random_walk import RandomWalk, Graph
 from QuICT.simulation.cpu_simulator import CircuitSimulator
 from QuICT.simulation.gpu_simulator import ConstantStateVectorSimulator
@@ -40,7 +40,7 @@ class TestRandomWalk(unittest.TestCase):
         edges = [list(np.random.choice(8, size=4, replace=False)) for _ in range(8)]
         graph = Graph(8, edges)
 
-        rw = RandomWalk(TestRandomWalk.steps, graph, np.kron(H.matrix, H.matrix))
+        rw = RandomWalk(3, graph, np.kron(H.matrix, H.matrix))
         _ = rw.run(TestRandomWalk.simulator)
 
         assert 1

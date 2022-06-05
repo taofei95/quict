@@ -3,6 +3,7 @@ from typing import Union, List
 
 from QuICT.core import Circuit
 from QuICT.core.gate import *
+from QuICT.qcda.synthesis.unitary_transform import UnitaryTransform
 from QuICT.qcda.synthesis.gate_decomposition import GateDecomposition
 from QuICT.qcda.optimization import CommutativeOptimization
 from QuICT.simulation.cpu_simulator import CircuitSimulator
@@ -60,10 +61,14 @@ class RandomWalk:
 
     def _circuit_construct(self):
         """ Construct random walk circuit """
+        # Build shift operator
+        self._build_shift_operator()
+
+        # Build Circuit
         self._circuit = Circuit(self._total_qubits)
         for t in range(self.step):
             self._build_action_operator(t) | self._circuit
-            self._build_shift_operator() | self._circuit
+            self._shift_operator | self._circuit
 
     def _build_action_operator(self, step: int) -> CompositeGate:
         """ Generator action operator """
@@ -84,7 +89,7 @@ class RandomWalk:
             for xi in x_idx:
                 X | action_gate(xi)
 
-        return action_gate
+        return GateDecomposition.execute(action_gate)
 
     def _mct_generator(self, op: np.ndarray) -> UnitaryGate:
         """ Build multi-control-'op' gate """
@@ -94,21 +99,22 @@ class RandomWalk:
 
         return Unitary(mct_unitary) & list(range(self._total_qubits))
 
-    def _build_shift_operator(self) -> UnitaryGate:
+    def _build_shift_operator(self):
         """ Generator shift operator """
         unitary_matrix = np.zeros((1 << self._total_qubits, 1 << self._total_qubits), dtype=np.complex128)
         record_idxes = list(range(1 << self._total_qubits))
         for i in range(self._graph.position):
             curr_idx = (1 << self._action_qubits) * i
             for action_state in range(self._graph.action_space):
-                related_action = self._graph.edges[i][action_state]
-                unitary_matrix[related_action * (1 << self._action_qubits) + action_state, curr_idx + action_state] = 1
-                record_idxes.remove(related_action * (1 << self._action_qubits) + action_state)
+                related_idx = self._graph.edges[i][action_state] * (1 << self._action_qubits)
+                unitary_matrix[related_idx + action_state, curr_idx + action_state] = 1
+                if related_idx + action_state in record_idxes:
+                    record_idxes.remove(related_idx + action_state)
 
         if len(record_idxes) > 0:
             unitary_matrix[record_idxes, record_idxes] = 1
 
-        return Unitary(unitary_matrix)
+        self._shift_operator = UnitaryTransform.execute(unitary_matrix)[0]
 
     def run(
         self,
