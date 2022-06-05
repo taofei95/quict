@@ -141,6 +141,31 @@ class DAG(Iterable):
         """
         return self._width
 
+    @staticmethod
+    def _build_ccx(gate_):
+        cgate = CompositeGate()
+        with cgate:
+            H & 2
+            CX & [1, 2]
+            T_dagger & 2
+            CX & [0, 2]
+            T & 2
+            CX & [1, 2]
+            T_dagger & 2
+            CX & [0, 2]
+            CX & [0, 1]
+            T_dagger & 1
+            CX & [0, 1]
+            T & 0
+            T & 1
+            T & 2
+            H & 2
+
+        args = gate_.cargs + gate_.targs
+        if len(args) == gate_.controls + gate_.targets:
+            cgate & args
+        return cgate.gates
+
     def _build_graph(self, gates: Circuit):
         node_cnt = 0
         cur_nodes = self.start_nodes.copy()
@@ -150,7 +175,7 @@ class DAG(Iterable):
             # decouple ccx building with dag
             if gate_.type == GateType.ccx:
                 self.has_symbolic_rz = True
-                gate_list = gate_.build_gate().gates
+                gate_list = self._build_ccx(gate_)
                 node_cnt += len(gate_list)
                 var = SymbolicPhaseVariable(var_cnt)
                 var_cnt += 1
