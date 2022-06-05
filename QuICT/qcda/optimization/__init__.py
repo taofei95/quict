@@ -5,7 +5,7 @@
 # @File    : __init__.py
 
 from .symbolic_clifford_optimization import SymbolicCliffordOptimization
-from .cnot_ancillae import CnotAncillae
+from .cnot_ancilla import CnotAncilla
 from .commutative_optimization import CommutativeOptimization
 from .cnot_template import CnotForceBfs, CnotForceDepthBfs, CnotLocalForceBfs, CnotLocalForceDepthBfs, CnotStoreForceBfs
 from .cnot_without_ancillae import CnotWithoutAncillae

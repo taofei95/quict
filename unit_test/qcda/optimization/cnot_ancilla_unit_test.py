@@ -5,27 +5,10 @@
 # @File    : unit_test.py
 
 import numpy as np
-import pytest
-import random
 
 from QuICT.core import *
 from QuICT.core.gate import CX
-from QuICT.qcda.optimization import CnotAncillae
-
-
-def _getRandomList(n):
-    """ get first 2 number from 0, 1, ..., n - 1 randomly.
-
-    Args:
-        n(int)
-    Returns:
-        tuple<int, int>
-    """
-    _rand = [i for i in range(n)]
-    for i in range(n - 1, 0, -1):
-        do_get = random.randint(0, i)
-        _rand[do_get], _rand[i] = _rand[i], _rand[do_get]
-    return _rand[0], _rand[1]
+from QuICT.qcda.optimization import CnotAncilla
 
 
 def generate_matrix(circuit, n):
@@ -61,12 +44,6 @@ def check_equiv(circuit1, circuit2):
     n = circuit1.width()
     matrix1 = generate_matrix(circuit1, n)
     matrix2 = generate_matrix_with_ancillary(circuit2, n)
-    # circuit2.print_information()
-
-    print(matrix1)
-
-    print(np.any(matrix1 ^ matrix2))
-
     return not np.any(matrix1 ^ matrix2)
 
 
@@ -76,9 +53,6 @@ def test():
             circuit = Circuit(n)
             for i in range(n - 1):
                 CX | circuit([i, i + 1])
-            new_circuit = CnotAncillae.execute(circuit, size=s)
+            CA = CnotAncilla(size=s)
+            new_circuit = CA.execute(circuit)
             assert check_equiv(circuit, new_circuit)
-
-
-if __name__ == '__main__':
-    pytest.main(["./unit_test.py"])
