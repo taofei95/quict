@@ -29,6 +29,7 @@ class Trigger(Operator):
             targets (int): The number of target qubits.
             state_gate_mapping: The mapping of state and related composite gates.
                 (Union[Dict[int, CompositeGate], List[CompositeGate], Tuple[CompositeGate], FunctionType])
+            record_measured (bool): whether record the measured state into target qubits. Default to False
 
         Raises:
             TypeError: Error input parameters.
@@ -36,6 +37,8 @@ class Trigger(Operator):
         super().__init__(targets=targets)
         self._record_measured = record_measured
         self._measured = []
+
+        # Deal with state - compositegate mapping
         self._state_gate_mapping = {}
         if isinstance(state_gate_mapping, (list, tuple)):
             for idx, cgate in enumerate(state_gate_mapping):
@@ -74,6 +77,7 @@ class Trigger(Operator):
             return self._state_gate_mapping[state]
 
     def _check_function_validation(self, state_gate_mapping):
+        """ Validation the correctness of given state-composite mapping function. """
         for i in range(2 ** self.targets):
             if not isinstance(state_gate_mapping(i), (CompositeGate, BasicGate, None)):
                 raise KeyError("The trigger's mapping should only return CompositeGate for all possible state.")

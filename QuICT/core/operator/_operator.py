@@ -23,6 +23,11 @@ class Operator:
         self,
         targets: int
     ):
+        """ The SuperClass of all the operator.
+
+        Args:
+            targets (int): the number of the target bits of the gate
+        """
         assert targets >= 0 and isinstance(targets, int), f"targets must be a positive integer, not {type(targets)}"
         self._targets = targets
         self._targs = []
