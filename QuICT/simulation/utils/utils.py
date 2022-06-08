@@ -43,7 +43,7 @@ GATE_TYPE_to_ID = {
         GateType.tdg, GateType.s, GateType.sdg
     ],
     GateGroup.control_2arg: [GateType.cz, GateType.cu1],
-    GateGroup.control_3arg: [GateType.CCRz],
+    GateGroup.control_3arg: [GateType.CCRz, GateType.ccz],
     GateGroup.complexMIP_2arg: [GateType.fsim],
     GateGroup.complexIPIP_2arg: [GateType.Rxx, GateType.Ryy]
 }
