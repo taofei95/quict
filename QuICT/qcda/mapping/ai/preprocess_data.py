@@ -66,8 +66,8 @@ class Preprocessor:
         return layers
 
     @classmethod
-    def circ_to_swap_dist(cls, circ: Circuit) -> Dict[Set[int], float]:
-        ans: Dict[Set[int], float] = dict()
+    def circ_to_swap_dist(cls, circ: Circuit) -> Dict[Tuple[int, int], float]:
+        ans: Dict[Tuple[int, int], float] = dict()
         layers = cls.circ_to_layers(circ)
         for layer in layers:
             has_swap = False
@@ -82,5 +82,8 @@ class Preprocessor:
                         n_swap += 1
                 for gate in layer:
                     if gate.type == GateType.swap:
-                        ans[set(gate.targs)] = 1.0 / n_swap
+                        a, b = gate.targs[0], gate.targs[1]
+                        if a > b:
+                            a, b = b, a
+                        ans[(a, b)] = 1.0 / n_swap
         return ans
