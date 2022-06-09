@@ -14,7 +14,7 @@ from QuICT.core.operator import Trigger
 from QuICT.core.gate import Measure, BasicGate
 from QuICT.core.utils import GateType
 from QuICT.ops.utils import LinAlgLoader
-from QuICT.simulation.gpu_simulator import BasicGPUSimulator
+from QuICT.simulation.state_vector.gpu_simulator import BasicGPUSimulator
 from QuICT.simulation.optimization import Optimizer
 from QuICT.simulation.utils import GATE_TYPE_to_ID, GateGroup
 from QuICT.ops.gate_kernel import Float_Multiply, Simple_Multiply

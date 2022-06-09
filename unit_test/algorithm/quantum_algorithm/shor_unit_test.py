@@ -13,7 +13,7 @@ from QuICT.algorithm.quantum_algorithm import (
 
 
 def test_BEAShorFactor_on_ConstantStateVectorSimulator():
-    from QuICT.simulation.gpu_simulator import ConstantStateVectorSimulator
+    from QuICT.simulation.state_vector import ConstantStateVectorSimulator
     simulator = ConstantStateVectorSimulator(
         precision="double",
         gpu_device_id=0,
@@ -31,7 +31,7 @@ def test_BEAShorFactor_on_ConstantStateVectorSimulator():
 
 
 def test_HRSShorFactor_on_ConstantStateVectorSimulator():
-    from QuICT.simulation.gpu_simulator import ConstantStateVectorSimulator
+    from QuICT.simulation.state_vector import ConstantStateVectorSimulator
     simulator = ConstantStateVectorSimulator(
         precision="double",
         gpu_device_id=0,

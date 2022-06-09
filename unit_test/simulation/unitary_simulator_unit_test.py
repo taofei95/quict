@@ -4,14 +4,12 @@
 # @Author  : Li Kaiqi
 # @File    : unitary_simulator_unit_test.py
 
-import pytest
-
 import numpy as np
 
 from QuICT.algorithm import SyntheticalUnitary
 from QuICT.core import Circuit
 from QuICT.core.gate import *
-from QuICT.simulation.unitary_simulator import UnitarySimulator
+from QuICT.simulation.unitary import UnitarySimulator
 
 
 def test_unitary_generate():

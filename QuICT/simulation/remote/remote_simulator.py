@@ -8,7 +8,7 @@ from qiskit import transpile
 
 from QuICT.core import Circuit
 from QuICT.core.gate import *
-from QuICT.simulation.remote_simulator import RemoteSimulator
+from QuICT.simulation.remote import RemoteSimulator
 
 
 class QuantumLeafSimulator(RemoteSimulator):

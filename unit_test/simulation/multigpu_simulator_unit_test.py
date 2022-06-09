@@ -15,7 +15,7 @@ from QuICT.core.gate import *
 if os.environ.get("test_with_gpu"):
     from cupy.cuda import nccl
     from QuICT.utility import Proxy
-    from QuICT.simulation.gpu_simulator import MultiDeviceSimulatorLauncher
+    from QuICT.simulation.state_vector.gpu_simulator import MultiDeviceSimulatorLauncher
 
 
 q = 5

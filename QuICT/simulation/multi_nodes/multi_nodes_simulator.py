@@ -7,14 +7,13 @@ import random
 import cupy as cp
 import numpy as np
 
-from QuICT.simulation.cpu_simulator import CircuitSimulator
-from QuICT.simulation.gpu_simulator import ConstantStateVectorSimulator
+from QuICT.simulation.state_vector import CircuitSimulator, ConstantStateVectorSimulator
 
 from QuICT.core import Circuit
 from QuICT.core.gate import BasicGate, GateType
 from QuICT.core.operator import *
 from QuICT.utility import Proxy
-from QuICT.simulation.gpu_simulator.multigpu_simulator.data_switch import DataSwitcher
+from QuICT.simulation.state_vector.gpu_simulator.multigpu_simulator.data_switch import DataSwitcher
 from QuICT.ops.gate_kernel import Device_Prob_Calculator
 
 

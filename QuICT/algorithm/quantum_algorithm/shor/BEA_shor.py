@@ -21,8 +21,8 @@ from QuICT.qcda.synthesis.arithmetic.bea import *
 from QuICT.algorithm import Algorithm
 from .utility import *
 
-from QuICT.simulation.gpu_simulator import ConstantStateVectorSimulator
-from QuICT.simulation.unitary_simulator import UnitarySimulator
+from QuICT.simulation.state_vector import ConstantStateVectorSimulator
+from QuICT.simulation.unitary import UnitarySimulator
 from QuICT.simulation import Simulator
 
 

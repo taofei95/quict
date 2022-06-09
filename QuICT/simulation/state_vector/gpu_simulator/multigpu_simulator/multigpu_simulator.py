@@ -10,11 +10,11 @@ import cupy as cp
 
 from QuICT.core import Circuit
 from QuICT.core.gate import *
-from QuICT.simulation.gpu_simulator import BasicGPUSimulator
+from QuICT.simulation.state_vector.gpu_simulator import BasicGPUSimulator
 from QuICT.utility import Proxy
 from QuICT.ops.utils import LinAlgLoader
 from QuICT.simulation.utils import GateGroup, GATE_TYPE_to_ID, MATRIX_INDEXES
-from QuICT.simulation.gpu_simulator.multigpu_simulator.data_switch import DataSwitcher
+from QuICT.simulation.state_vector.gpu_simulator.multigpu_simulator.data_switch import DataSwitcher
 from QuICT.qcda.synthesis import GateDecomposition
 
 

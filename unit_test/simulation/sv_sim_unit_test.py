@@ -12,7 +12,7 @@ from QuICT.core.gate import *
 
 
 if os.environ.get("test_with_gpu"):
-    from QuICT.simulation.gpu_simulator import ConstantStateVectorSimulator
+    from QuICT.simulation.state_vector import ConstantStateVectorSimulator
 
 
 @unittest.skipUnless(os.environ.get("test_with_gpu", False), "require GPU")

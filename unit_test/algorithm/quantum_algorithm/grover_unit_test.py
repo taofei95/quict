@@ -9,7 +9,7 @@ import pytest
 from QuICT.algorithm.quantum_algorithm.grover import Grover, PartialGrover, GroverWithPriorKnowledge
 from QuICT.core import Circuit
 from QuICT.core.gate import *
-from QuICT.simulation.gpu_simulator import ConstantStateVectorSimulator
+from QuICT.simulation.state_vector import ConstantStateVectorSimulator
 
 
 def main_oracle(n, f):

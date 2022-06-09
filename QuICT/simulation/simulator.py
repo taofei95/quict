@@ -6,8 +6,8 @@
 import time
 
 from QuICT.core import Circuit
-from QuICT.simulation.cpu_simulator import CircuitSimulator
-from QuICT.simulation.unitary_simulator import UnitarySimulator
+from QuICT.simulation.state_vector import CircuitSimulator
+from QuICT.simulation.unitary import UnitarySimulator
 from QuICT.simulation.utils import option_validation, Result
 
 
@@ -59,7 +59,7 @@ class Simulator:
     def _load_simulator(self):
         """ Initial simulator. """
         if self._device == "GPU":
-            from QuICT.simulation.gpu_simulator import ConstantStateVectorSimulator
+            from QuICT.simulation.state_vector import ConstantStateVectorSimulator
 
         if self._backend == "unitary":
             simulator = UnitarySimulator(device=self._device, **self._options)
@@ -75,7 +75,7 @@ class Simulator:
 
     def _load_remote_simulator(self):
         """ Initial Remote simulator. """
-        from QuICT.simulation.remote_simulator import QuantumLeafSimulator, QiskitSimulator
+        from QuICT.simulation.remote import QuantumLeafSimulator, QiskitSimulator
 
         if self._device == "qiskit":
             simulator = QiskitSimulator(backend=self._backend, shots=self._shots, **self._options)

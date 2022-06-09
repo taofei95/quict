@@ -11,7 +11,7 @@ import numpy as np
 import QuICT.ops.linalg.cpu_calculator as CPUCalculator
 from QuICT.core import Circuit
 from QuICT.core.gate import *
-from QuICT.simulation.unitary_simulator import UnitarySimulator
+from QuICT.simulation.unitary import UnitarySimulator
 
 
 if os.environ.get("test_with_gpu"):
