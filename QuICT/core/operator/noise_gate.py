@@ -11,6 +11,11 @@ class NoiseGate(Operator):
         error (QuantumNoiseError): The noise error.
     """
     @property
+    def gate(self):
+        """ The based gate. """
+        return self._gate
+
+    @property
     def gate_matrix(self):
         """ The gate's matrix. """
         return self._gate.matrix
@@ -31,14 +36,14 @@ class NoiseGate(Operator):
         return self._error.type
 
     @property
-    def kraus_operators(self):
+    def kraus(self):
         """ The noised kraus operator """
-        return self._error.kraus_operators
+        return self._error.kraus
 
     @property
-    def kraus_operators_ctranspose(self):
+    def kraus_ct(self):
         """ The noised kraus operator's conjugate transpose. """
-        return self._error.kraus_operators_ctranspose
+        return self._error.kraus_ct
 
     def __init__(self, gate: BasicGate, error):
         assert isinstance(gate, BasicGate)
@@ -48,3 +53,7 @@ class NoiseGate(Operator):
         self._gate = gate
         self._error = error
         self._noise_matrix = self._error.apply_to_gate(gate.matrix)
+
+    def prob_mapping_operator(self, prob: float):
+        """ Return the related noise error's matrix with given probability. """
+        return self._error.prob_mapping_operator(prob)

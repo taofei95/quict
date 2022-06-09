@@ -34,7 +34,6 @@ class TestNoise(unittest.TestCase):
         Rx(np.pi) | cls.circuit(1)
         Ry(np.pi / 2) | cls.circuit(2)
         Rz(np.pi / 4) | cls.circuit(0)
-        # Measure | cir
 
     @classmethod
     def tearDownClass(cls) -> None:

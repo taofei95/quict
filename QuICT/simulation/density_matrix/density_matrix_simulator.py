@@ -2,7 +2,7 @@ import numpy as np
 import random
 
 from QuICT.core.circuit.circuit import Circuit
-from QuICT.core.gate import BasicGate
+from QuICT.core.gate import BasicGate, UnitaryGate, Unitary
 from QuICT.core.noise import NoiseModel
 from QuICT.core.operator import NoiseGate
 from QuICT.simulation.unitary_simulator import UnitarySimulator
@@ -66,7 +66,8 @@ class DensityMatrixSimulation:
         self,
         circuit: Circuit,
         noise_model: NoiseModel = None,
-        density_matrix: np.ndarray = None
+        density_matrix: np.ndarray = None,
+        accumulated_mode: bool = False
     ) -> np.ndarray:
         """ Simulating the given circuit through density matrix simulator.
 
@@ -74,6 +75,8 @@ class DensityMatrixSimulation:
             circuit (Circuit): The quantum circuit.
             noise_model (NoiseModel, optional): The NoiseModel contains NoiseErrors. Defaults to None.
             density_matrix (np.ndarray, optional): The initial-state density matrix. Defaults to None.
+            accumulated_mode (bool): If True, calculated density matrix with Kraus Operators in NoiseGate.
+                if True, p = \\sum Ki p Ki^T.conj(). Default to be False.
 
         Returns:
             np.ndarray: the density matrix after simulating
@@ -94,6 +97,12 @@ class DensityMatrixSimulation:
             # Store continuous BasicGates into based_circuit
             if isinstance(gate, BasicGate) and gate.type != GateType.measure:
                 gate | based_circuit
+                continue
+
+            if not accumulated_mode and isinstance(gate, NoiseGate):
+                ugate = self.apply_noise_without_accumulated(gate)
+                ugate | based_circuit
+                gate.gate | based_circuit
                 continue
 
             if based_circuit.size() > 0:
@@ -152,6 +161,12 @@ class DensityMatrixSimulation:
             )
 
         self._density_matrix = noised_matrix.copy()
+
+    def apply_noise_without_accumulated(self, gate: NoiseGate) -> UnitaryGate:
+        prob = np.random.random()
+        error_matrix = gate.prob_mapping_operator(prob)
+        gate_args = gate.targs
+        return Unitary(error_matrix) & gate_args
 
     def apply_measure(self, gate, qubits) -> int:
         """ Simulating the MeasureGate.
