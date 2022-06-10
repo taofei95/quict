@@ -35,6 +35,7 @@ class GateType(Enum):
     swap = "Swap gate"
     cswap = "cswap gate"
     ccx = "Toffoli gate"
+    ccz = "Multi-Control Z Gate"
     CCRz = "CCRz gate"
 
     # Special gate below
