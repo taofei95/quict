@@ -14,7 +14,7 @@ from QuICT.core.gate import BasicGate, GateType
 from QuICT.core.operator import *
 from QuICT.utility import Proxy
 from QuICT.simulation.state_vector.gpu_simulator.multigpu_simulator.data_switch import DataSwitcher
-from QuICT.ops.gate_kernel import Device_Prob_Calculator
+from QuICT.ops.gate_kernel.gate_function import Device_Prob_Calculator
 
 
 class MultiNodesSimulator:
@@ -81,13 +81,16 @@ class MultiNodesSimulator:
         return self.simulator.vector
 
     def apply_specialgate(self, op: SpecialGate):
-        if self.proxy.id & op.proxy_idx:
+        
+        if self._data_switcher.id & op.proxy_idx:
             prob = 0
         else:
             # prob calculation for all switch
             prob = Device_Prob_Calculator(self.vector)
 
-        total_prob = self.proxy.add_prob(prob)
+        print(prob)
+        print(type(prob))
+        total_prob = self._data_switcher.add_prob(prob)
         total_prob = total_prob.get()
 
         if op.proxy_idx != -1:
@@ -112,7 +115,7 @@ class MultiNodesSimulator:
             alpha = np.float32(1 / np.sqrt(1 - prob)) if self.simulator._precision == np.complex64 else \
                 np.float64(1 / np.sqrt(1 - prob))
 
-            if self.proxy.id & proxy_idx:
+            if self._data_switcher.id & proxy_idx:
                 self.simulator.apply_multiply(alpha)
             else:
                 self.vector = cp.zeros_like(self.vector)
@@ -120,7 +123,7 @@ class MultiNodesSimulator:
             alpha = np.float32(1 / np.sqrt(prob)) if self.simulator._precision == np.complex64 else \
                 np.float64(1 / np.sqrt(prob))
 
-            if self.proxy.id & proxy_idx:
+            if self._data_switcher.id & proxy_idx:
                 self.vector = cp.zeros_like(self.vector)
             else:
                 self.simulator.apply_multiply(alpha)
@@ -135,12 +138,12 @@ class MultiNodesSimulator:
         """
         alpha = np.float64(np.sqrt(prob))
         if alpha < 1e-6:
-            destination = self.proxy.id ^ proxy_idx
-            if not (self.proxy.id & proxy_idx):
+            destination = self._data_switcher.id ^ proxy_idx
+            if not (self._data_switcher.id & proxy_idx):
                 self.vector = cp.zeros_like(self.vector)
-                self.proxy.all_switch(self.vector, destination)
+                self._data_switcher.all_switch(self.vector, destination)
         else:
-            if self.proxy.id & proxy_idx:
+            if self._data_switcher.id & proxy_idx:
                 self.vector = cp.zeros_like(self.vector)
             else:
                 self.simulator.apply_multiply(np.float64(1 / alpha))

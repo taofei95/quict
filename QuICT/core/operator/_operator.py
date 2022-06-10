@@ -13,7 +13,10 @@ class Operator:
     @targs.setter
     def targs(self, targets: Union[List, int]):
         assert isinstance(targets, (int, list))
-        self._targs = list(targets)
+        if isinstance(targets, int):
+            self._targs = [targets]
+        else:
+            self._targs = targets
 
     @property
     def targ(self):

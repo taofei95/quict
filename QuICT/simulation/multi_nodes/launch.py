@@ -5,7 +5,6 @@ import numpy as np
 
 from QuICT.utility import Proxy
 from .multi_nodes_simulator import MultiNodesSimulator
-from QuICT.simulation.gpu_simulator import MultiStateVectorSimulator
 
 
 if mp.get_start_method(allow_none=True) != "spawn":

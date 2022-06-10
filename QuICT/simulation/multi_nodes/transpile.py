@@ -328,4 +328,4 @@ class Transpile:
         # step 3: transpile circuit by split qubits [add op.data_swap, change gate]
         transpiled_circuits = self._transpile(circuit, split_qubits)
 
-        return transpiled_circuits
+        return transpiled_circuits, split_qubits
