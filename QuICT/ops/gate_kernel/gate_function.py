@@ -21,6 +21,7 @@ __outward_functions = [
     "Controlled_Swap_more",
     "Controlled_Multiply_more",
     "Controlled_Swap_tmore",
+    "measured_prob_calculate",
     "MeasureGate_Apply",
     "ResetGate_Apply",
     "PermGate_Apply",
@@ -1648,7 +1649,35 @@ ResetGate1_double_kernel = cp.RawKernel(r'''
     ''', 'ResetGate1Double')
 
 
-def MeasureGate_Apply(index, vec, vec_bit, sync: bool = False, multigpu_prob=None):
+def measured_prob_calculate(index, vec, vec_bit, all_measured: bool = False, sync: bool = False):
+    # Deal with the whole vector state measured, only happen for multi-nodes simulator
+    if all_measured:
+        prob = Device_Prob_Calculator(vec)
+        return prob.real
+
+    # Kernel function preparation
+    task_number = 1 << (vec_bit - 1)
+    thread_per_block = min(256, task_number)
+    block_num = task_number // thread_per_block
+    kernel_functions = prop_add_double_kernel if vec.dtype == np.complex128 else prop_add_single_kernel
+
+    # Calculated the probability of measured 1 at current index
+    out = cp.empty(task_number, dtype=np.complex128)
+    kernel_functions(
+        (block_num, ),
+        (thread_per_block, ),
+        (index, vec, out)
+    )
+
+    prob = MeasureGate_prop(out, axis=0).real
+
+    if sync:
+        cp.cuda.Device().synchronize()
+
+    return prob
+
+
+def MeasureGate_Apply(index, vec, vec_bit, prob, sync: bool = False):
     """
     Measure Gate Measure.
     """
@@ -1657,39 +1686,25 @@ def MeasureGate_Apply(index, vec, vec_bit, sync: bool = False, multigpu_prob=Non
     thread_per_block = min(256, task_number)
     block_num = task_number // thread_per_block
     if vec.dtype == np.complex64:
-        kernel_functions = (prop_add_single_kernel, MeasureGate0_single_kernel, MeasureGate1_single_kernel)
+        kernel_functions = (MeasureGate0_single_kernel, MeasureGate1_single_kernel)
         float_type = np.float32
     else:
-        kernel_functions = (prop_add_double_kernel, MeasureGate0_double_kernel, MeasureGate1_double_kernel)
+        kernel_functions = (MeasureGate0_double_kernel, MeasureGate1_double_kernel)
         float_type = np.float64
-
-    # Calculate measured probability
-    if multigpu_prob:
-        prob = multigpu_prob
-    else:
-        out = cp.empty(task_number, dtype=np.complex128)
-        kernel_functions[0](
-            (block_num, ),
-            (thread_per_block, ),
-            (index, vec, out)
-        )
-
-        prob = MeasureGate_prop(out, axis=0).real
-        prob = prob.get()
 
     # Apply to state vector
     _0 = random.random()
     _1 = _0 > prob
     if not _1:
         alpha = float_type(1 / np.sqrt(prob))
-        kernel_functions[1](
+        kernel_functions[0](
             (block_num, ),
             (thread_per_block, ),
             (index, alpha, vec)
         )
     else:
         alpha = float_type(1 / np.sqrt(1 - prob))
-        kernel_functions[2](
+        kernel_functions[1](
             (block_num,),
             (thread_per_block,),
             (index, alpha, vec)
@@ -1701,7 +1716,7 @@ def MeasureGate_Apply(index, vec, vec_bit, sync: bool = False, multigpu_prob=Non
     return _1
 
 
-def ResetGate_Apply(index, vec, vec_bit, sync: bool = False, multigpu_prob=None):
+def ResetGate_Apply(index, vec, vec_bit, prob, sync: bool = False):
     """
     Measure Gate Measure.
     """
@@ -1710,34 +1725,20 @@ def ResetGate_Apply(index, vec, vec_bit, sync: bool = False, multigpu_prob=None)
     thread_per_block = min(256, task_number)
     block_num = task_number // thread_per_block
     if vec.dtype == np.complex64:
-        kernel_functions = (prop_add_single_kernel, ResetGate0_single_kernel, ResetGate1_single_kernel)
+        kernel_functions = (ResetGate0_single_kernel, ResetGate1_single_kernel)
     else:
-        kernel_functions = (prop_add_double_kernel, ResetGate0_double_kernel, ResetGate1_double_kernel)
-
-    # Calculate measured probability
-    if multigpu_prob:
-        prob = multigpu_prob
-    else:
-        out = cp.empty(task_number, dtype=np.complex128)
-        kernel_functions[0](
-            (block_num, ),
-            (thread_per_block, ),
-            (index, vec, out)
-        )
-
-        prob = MeasureGate_prop(out, axis=0).real
-        prob = prob.get()
+        kernel_functions = (ResetGate0_double_kernel, ResetGate1_double_kernel)
 
     # Apply to state vector
     alpha = np.float64(np.sqrt(prob))
     if alpha < 1e-6:
-        kernel_functions[2](
+        kernel_functions[1](
             (block_num, ),
             (thread_per_block,),
             (index, alpha, vec)
         )
     else:
-        kernel_functions[1](
+        kernel_functions[0](
             (block_num,),
             (thread_per_block,),
             (index, alpha, vec)

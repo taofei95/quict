@@ -832,8 +832,10 @@ class MultiStateVectorSimulator(BasicGPUSimulator):
         else:
             self._algorithm.MeasureGate_Apply(
                 index,
-                *default_parameters,
-                multigpu_prob=prob
+                self._vector,
+                self.total_qubits,
+                prob=prob,
+                sync=self._sync
             )
 
         return _1

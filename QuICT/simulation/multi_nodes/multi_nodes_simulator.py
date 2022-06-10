@@ -14,7 +14,7 @@ from QuICT.core.gate import BasicGate, GateType
 from QuICT.core.operator import *
 from QuICT.utility import Proxy
 from QuICT.simulation.state_vector.gpu_simulator.multigpu_simulator.data_switch import DataSwitcher
-from QuICT.ops.gate_kernel.gate_function import Device_Prob_Calculator
+from QuICT.ops.gate_kernel.gate_function import Device_Prob_Calculator, MeasureGate_Apply
 
 
 class MultiNodesSimulator:
@@ -81,15 +81,22 @@ class MultiNodesSimulator:
         return self.simulator.vector
 
     def apply_specialgate(self, op: SpecialGate):
-        
-        if self._data_switcher.id & op.proxy_idx:
-            prob = 0
+        """ 1. Get prob 
+                a. if divided, using 0 or all
+                b. if normal, calculate normal
+        Args:
+            op (SpecialGate): _description_
+        """
+        if op.proxy_idx != -1:
+            if self._data_switcher.id & op.proxy_idx:
+                temp = cp.zeros(1, dtype=np.complex128)
+                prob = temp[0].real
+            else:
+                # prob calculation for all switch
+                prob = Device_Prob_Calculator(self.vector).real
         else:
-            # prob calculation for all switch
-            prob = Device_Prob_Calculator(self.vector)
+            prob = self.simulator.get_measured_prob(op.targ)
 
-        print(prob)
-        print(type(prob))
         total_prob = self._data_switcher.add_prob(prob)
         total_prob = total_prob.get()
 
@@ -118,13 +125,13 @@ class MultiNodesSimulator:
             if self._data_switcher.id & proxy_idx:
                 self.simulator.apply_multiply(alpha)
             else:
-                self.vector = cp.zeros_like(self.vector)
+                self.simulator.apply_zeros()
         else:       # result in state 0
             alpha = np.float32(1 / np.sqrt(prob)) if self.simulator._precision == np.complex64 else \
                 np.float64(1 / np.sqrt(prob))
 
             if self._data_switcher.id & proxy_idx:
-                self.vector = cp.zeros_like(self.vector)
+                self.simulator.apply_zeros()
             else:
                 self.simulator.apply_multiply(alpha)
 
@@ -140,10 +147,10 @@ class MultiNodesSimulator:
         if alpha < 1e-6:
             destination = self._data_switcher.id ^ proxy_idx
             if not (self._data_switcher.id & proxy_idx):
-                self.vector = cp.zeros_like(self.vector)
+                self.simulator.apply_zeros()
                 self._data_switcher.all_switch(self.vector, destination)
         else:
             if self._data_switcher.id & proxy_idx:
-                self.vector = cp.zeros_like(self.vector)
+                self.simulator.apply_zeros()
             else:
                 self.simulator.apply_multiply(np.float64(1 / alpha))

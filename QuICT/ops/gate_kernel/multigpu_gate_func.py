@@ -90,7 +90,8 @@ def Device_Prob_Calculator(index, vec, device_qubits, dev_id):
 
     if index >= device_qubits:
         if dev_id & (1 << (index - device_qubits)):
-            return 0
+            temp = cp.zeros(1, dtype=np.complex128)
+            return temp[0].real
 
         task_number = vec.size
     else:

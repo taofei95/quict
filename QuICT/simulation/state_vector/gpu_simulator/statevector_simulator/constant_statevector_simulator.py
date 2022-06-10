@@ -282,10 +282,13 @@ class ConstantStateVectorSimulator(BasicGPUSimulator):
                 c_index,
                 *default_parameters
             )
-        # [Measure]
+        # [Measure, Reset]
         elif gate_type in [GateType.measure, GateType.reset]:
             index = self._qubits - 1 - gate.targ
-            self.apply_specialgate(index, gate_type)
+            prob = self.get_measured_prob(index).get()
+            result = self.apply_specialgate(index, gate_type, prob)
+            self.circuit.qubits[index].measured = int(result)
+            self._measure_result[index].append(result)
         # [Perm]
         elif gate_type == GateType.perm:
             args = gate.cargs + gate.targs
@@ -372,12 +375,8 @@ class ConstantStateVectorSimulator(BasicGPUSimulator):
         state = 0
         for targ in op.targs:
             index = self._qubits - 1 - targ
-            result = self._algorithm.MeasureGate_Apply(
-                index,
-                self._vector,
-                self._qubits,
-                self._sync
-            )
+            prob = self.get_measured_prob(index).get()
+            result = self.apply_specialgate(index, GateType.measure, prob)
             self.circuit.qubits[targ].measured = int(result)
             state <<= 1
             state += int(result)
@@ -391,24 +390,34 @@ class ConstantStateVectorSimulator(BasicGPUSimulator):
         else:
             Simple_Multiply(value, *default_parameters)
 
-    def apply_specialgate(self, index: int, type: GateType, prob: float = None):
-        default_parameters = (self._vector, self._qubits, self._sync)
-        if type == GateType.measure:
-            result = self._algorithm.MeasureGate_Apply(
-                index,
-                *default_parameters,
-                multigpu_prob=prob
-            )
-            if prob is not None:
-                return result
+    def apply_zeros(self):
+        self._vector = cp.zeros_like(self.vector)
 
-            self.circuit.qubits[index].measured = int(result)
-            self._measure_result[index].append(result)
-        elif type == GateType.reset:
-            self._algorithm.ResetGate_Apply(
+    def get_measured_prob(self, index: int, all_measured: bool = False):
+        return self._algorithm.measured_prob_calculate(
+            index,
+            self._vector,
+            self._qubits,
+            all_measured = all_measured,
+            sync = self._sync
+        )
+
+    def apply_specialgate(self, index: int, type: GateType, prob: float = None):
+        if type == GateType.measure:
+            return self._algorithm.MeasureGate_Apply(
                 index,
-                *default_parameters,
-                multigpu_prob=prob
+                self._vector,
+                self._qubits,
+                prob,
+                self._sync
+            )            
+        elif type == GateType.reset:
+            return self._algorithm.ResetGate_Apply(
+                index,
+                self._vector,
+                self._qubits,
+                prob,
+                self._sync
             )
 
     def sample(self):
