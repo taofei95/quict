@@ -6,7 +6,7 @@
 import numpy as np
 
 from QuICT.core.qubit import Qureg, Qubit
-from QuICT.core.gate.gate import BasicGate
+from QuICT.core.gate import BasicGate
 from QuICT.core.utils import GateType, CircuitInformation, matrix_product_to_circuit, CGATE_LIST
 
 
@@ -28,6 +28,10 @@ class CompositeGate:
     def name(self):
         return self._name
 
+    @property
+    def checkpoint(self):
+        return self._check_point
+
     def __enter__(self):
         global CGATE_LIST
         CGATE_LIST.append(self)
@@ -35,6 +39,10 @@ class CompositeGate:
         return self
 
     def __exit__(self, exc_type, exc_value, traceback):
+        # print(f"{exc_type}: {exc_value}")
+        if exc_type is not None:
+            raise Exception(exc_value)
+
         global CGATE_LIST
         CGATE_LIST.remove(self)
 
@@ -53,6 +61,7 @@ class CompositeGate:
 
         self._name = name if name else f"composite_gate_{self._id}"
         self._gates = []
+        self._check_point = None        # required checkpoint
         self._min_qubit = np.inf
         self._max_qubit = 0
         self._pointer = -1
@@ -96,7 +105,7 @@ class CompositeGate:
             TypeException: the type of other is wrong
         """
         try:
-            targets.extend(self.gates)
+            targets.extend(self)
         except Exception as e:
             raise TypeError(f"Only support circuit and composite gate. {e}")
 
@@ -171,6 +180,22 @@ class CompositeGate:
         self._pointer = -1
 
     def append(self, gate, is_extend: bool = False, insert_idx: int = -1):
+        from QuICT.core.operator import CheckPointChild
+
+        if isinstance(gate, BasicGate):
+            self._append_gate(gate, insert_idx)
+            if not is_extend:
+                self._pointer = -1
+        elif isinstance(gate, CheckPointChild):
+            self._check_point = gate
+
+    def left_extend(self, gates: list):
+        for idx, gate in enumerate(gates):
+            self.append(gate, is_extend=True, insert_idx=idx)
+
+        self._pointer = -1
+
+    def _append_gate(self, gate, insert_idx: int = -1):
         gate = gate.copy()
 
         if self._pointer != -1:
@@ -184,9 +209,6 @@ class CompositeGate:
                 gate.targs = qubit_index[gate.controls:]
             else:
                 raise KeyError(f"{gate.type} need {gate_args} indexes, but given {len(self._pointer)}")
-
-            if not is_extend:
-                self._pointer = -1
         else:
             qubit_index = gate.cargs + gate.targs
             if not qubit_index:
@@ -198,15 +220,6 @@ class CompositeGate:
             self._gates.append(gate)
         else:
             self._gates.insert(insert_idx, gate)
-
-    def left_append(self, gate):
-        self.append(gate, insert_idx=0)
-
-    def left_extend(self, gates: list):
-        for idx, gate in enumerate(gates):
-            self.append(gate, is_extend=True, insert_idx=idx)
-
-        self._pointer = -1
 
     def width(self):
         """ the number of qubits applied by gates
@@ -324,7 +337,9 @@ class CompositeGate:
             if gate.is_special() and gate.type != GateType.unitary:
                 raise TypeError(f"Cannot combined the gate matrix with special gate {gate.type}")
 
-            matrix = np.matmul(matrix_product_to_circuit(gate, self._max_qubit, min_value), matrix)
+            matrix = np.matmul(matrix_product_to_circuit(
+                gate.matrix, gate.cargs + gate.targs, self._max_qubit, min_value
+            ), matrix)
 
         return matrix
 
