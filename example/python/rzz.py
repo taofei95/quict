@@ -8,7 +8,7 @@ import numpy as np
 
 from QuICT.core import Circuit
 from QuICT.core.gate import H, Rzz
-from QuICT.simulation.gpu_simulator import ConstantStateVectorSimulator
+from QuICT.simulation.state_vector import ConstantStateVectorSimulator
 
 
 circuit = Circuit(3)

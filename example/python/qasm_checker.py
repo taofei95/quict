@@ -5,11 +5,11 @@
 # @File    : qasm_checker.py
 
 from QuICT.tools.interface import OPENQASMInterface
-from QuICT.simulation.gpu_simulator import ConstantStateVectorSimulator
+from QuICT.simulation.state_vector import ConstantStateVectorSimulator
 
 
 # load qasm
-qasm = OPENQASMInterface.load_file("../qasm/test.qasm")
+qasm = OPENQASMInterface.load_file("test_qasm.qasm")
 if qasm.valid_circuit:
     # generate circuit
     circuit = qasm.circuit
