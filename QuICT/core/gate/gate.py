@@ -1873,6 +1873,8 @@ class UnitaryGate(BasicGate):
         _u.matrix = params.astype(np.complex128)
         if n <= 3:
             _u._validate_matrix_type()
+        else:
+            _u._matrix_type = matrix_type
 
         return _u
 

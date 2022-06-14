@@ -12,11 +12,10 @@ import cupy as cp
 from QuICT.core import Circuit
 from QuICT.core.operator import Trigger
 from QuICT.core.gate import Measure, BasicGate
-from QuICT.core.utils import GateType
+from QuICT.core.utils import GateType, MatrixType
 from QuICT.ops.utils import LinAlgLoader
 from QuICT.simulation.state_vector.gpu_simulator import BasicGPUSimulator
 from QuICT.simulation.optimization import Optimizer
-from QuICT.simulation.utils import GATE_TYPE_to_ID, GateGroup
 from QuICT.ops.gate_kernel import Float_Multiply, Simple_Multiply
 
 
@@ -96,7 +95,7 @@ class ConstantStateVectorSimulator(BasicGPUSimulator):
         Returns:
             [array]: The state vector.
         """
-        self._initial_circuit(circuit, use_previous)
+        self.initial_circuit(circuit, use_previous)
         idx = 0
         while self._pipeline:
             gate = self._pipeline.pop(0)
@@ -120,73 +119,164 @@ class ConstantStateVectorSimulator(BasicGPUSimulator):
         else:
             return self.vector
 
-    def apply_gate(self, gate: BasicGate):
-        """ Depending on the given quantum gate, apply the target algorithm to calculate the state vector.
-
-        Args:
-            gate (Gate): the quantum gate in the circuit.
-        """
-        gate_type = gate.type
+    def apply_normal_matrix(self, gate: BasicGate):
+        # Get gate's parameters
+        assert gate.matrix_type == MatrixType.normal
+        args_num = gate.controls + gate.targets
+        gate_args = gate.cargs + gate.targs
+        matrix = self.get_gate_matrix(gate)
         default_parameters = (self._vector, self._qubits, self._sync)
 
-        # [H, SX, SY, SW, U2, U3, Rx, Ry]
-        if gate_type in GATE_TYPE_to_ID[GateGroup.matrix_1arg]:
-            t_index = self._qubits - 1 - gate.targ
-            matrix = self.get_gate_matrix(gate)
+        if args_num == 1:
+            index = self._qubits - 1 - gate_args[0]
             self._algorithm.Based_InnerProduct_targ(
-                t_index,
+                index,
                 matrix,
                 *default_parameters
             )
-        # [RZ, Phase]
-        elif gate_type in GATE_TYPE_to_ID[GateGroup.diagonal_1arg]:
-            t_index = self._qubits - 1 - gate.targ
-            matrix = self.get_gate_matrix(gate)
+        elif args_num == 2:
+            if gate.controls == gate.targets:
+                c_index = self._qubits - 1 - gate.carg
+                t_index = self._qubits - 1 - gate.targ
+                self._algorithm.Controlled_InnerProduct_ctargs(
+                    c_index,
+                    t_index,
+                    matrix,
+                    *default_parameters
+                )
+            elif gate.targets == 2:
+                indexes = [self._qubits - 1 - index for index in gate_args]
+                self._algorithm.Based_InnerProduct_targs(
+                    indexes,
+                    matrix,
+                    *default_parameters
+                )
+            else:
+                raise KeyError("Quantum gate cannot only have control qubits.")
+
+    def apply_diagonal_matrix(self, gate: BasicGate):
+        # Get gate's parameters
+        assert gate.matrix_type in [MatrixType.diagonal, MatrixType.diag_diag]
+        args_num = gate.controls + gate.targets
+        gate_args = gate.cargs + gate.targs
+        matrix = self.get_gate_matrix(gate)
+        default_parameters = (self._vector, self._qubits, self._sync)
+        
+        if args_num == 1:
+            index = self._qubits - 1 - gate.targ
             self._algorithm.Diagonal_Multiply_targ(
+                index,
+                matrix,
+                *default_parameters
+            )
+        elif args_num == 2:
+            if gate.controls == gate.targets:
+                c_index = self._qubits - 1 - gate.carg
+                t_index = self._qubits - 1 - gate.targ
+                self._algorithm.Controlled_Multiply_ctargs(
+                    c_index,
+                    t_index,
+                    matrix,
+                    *default_parameters
+                )
+            elif gate.targets == 2:
+                indexes = [self._qubits - 1 - index for index in gate_args]
+                self._algorithm.Diagonal_Multiply_targs(
+                    indexes,
+                    matrix,
+                    *default_parameters
+                )
+            else:
+                raise KeyError("Quantum gate cannot only have control qubits.")
+        else:   # [CCRz]
+            c_indexes = [self._qubits - 1 - carg for carg in gate.cargs]
+            t_index = self._qubits - 1 - gate.targ
+            self._algorithm.Controlled_Multiply_more(
+                c_indexes,
                 t_index,
                 matrix,
                 *default_parameters
             )
-        # [X]
-        elif gate_type in GATE_TYPE_to_ID[GateGroup.swap_1arg]:
-            t_index = self._qubits - 1 - gate.targ
+
+    def apply_swap_matrix(self, gate: BasicGate):
+        # Get gate's parameters
+        assert gate.matrix_type == MatrixType.swap
+        args_num = gate.controls + gate.targets
+        gate_args = gate.cargs + gate.targs
+        default_parameters = (self._vector, self._qubits, self._sync)
+
+        if args_num == 1:
+            index = self._qubits - 1 - gate.targ
             self._algorithm.RDiagonal_Swap_targ(
-                t_index,
+                index,
                 *default_parameters
             )
-        # [Y]
-        elif gate_type in GATE_TYPE_to_ID[GateGroup.reverse_1arg]:
-            t_index = self._qubits - 1 - gate.targ
-            matrix = self.get_gate_matrix(gate)
+        elif args_num == 2:
+            t_indexes = [self._qubits - 1 - targ for targ in gate_args]
+            self._algorithm.Controlled_Swap_targs(
+                t_indexes,
+                *default_parameters
+            )
+        else:   # CSwap
+            t_indexes = [self._qubits - 1 - targ for targ in gate.targs]
+            c_index = self._qubits - 1 - gate.carg
+            self._algorithm.Controlled_Swap_tmore(
+                t_indexes,
+                c_index,
+                *default_parameters
+            )
+
+    def apply_reverse_matrix(self, gate: BasicGate):
+        # Get gate's parameters
+        assert gate.matrix_type == MatrixType.reverse
+        args_num = gate.controls + gate.targets
+        gate_args = gate.cargs + gate.targs
+        matrix = self.get_gate_matrix(gate)
+        default_parameters = (self._vector, self._qubits, self._sync)
+
+        if args_num == 1:
+            index = self._qubits - 1 - gate_args[0]
             self._algorithm.RDiagonal_MultiplySwap_targ(
-                t_index,
+                index,
                 matrix,
                 *default_parameters
             )
-        # [Z, U1, T, T_dagger, S, S_dagger]
-        elif gate_type in GATE_TYPE_to_ID[GateGroup.control_1arg]:
-            t_index = self._qubits - 1 - gate.targ
-            val = gate.matrix[1, 1]
-            self._algorithm.Controlled_Multiply_targ(
-                t_index,
-                val,
-                *default_parameters
-            )
-        # [CRz]
-        elif gate_type == GateType.crz:
-            t_index = self._qubits - 1 - gate.targ
-            c_index = self._qubits - 1 - gate.carg
-            matrix = self.get_gate_matrix(gate)
-            self._algorithm.Controlled_Multiply_ctargs(
+        elif args_num == 2:   # only consider 1 control qubit + 1 target qubit
+            c_index = self._qubits - 1 - gate_args[0]
+            t_index = self._qubits - 1 - gate_args[1]
+            self._algorithm.Controlled_MultiplySwap_ctargs(
                 c_index,
                 t_index,
                 matrix,
                 *default_parameters
             )
-        # [Cz, CU1]
-        elif gate_type in GATE_TYPE_to_ID[GateGroup.control_2arg]:
+        else:   # CCX
+            c_indexes = [self._qubits - 1 - carg for carg in gate.cargs]
             t_index = self._qubits - 1 - gate.targ
-            c_index = self._qubits - 1 - gate.carg
+            self._algorithm.Controlled_Swap_more(
+                c_indexes,
+                t_index,
+                *default_parameters
+            )
+
+    def apply_control_matrix(self, gate: BasicGate):
+        # Get gate's parameters
+        assert gate.matrix_type == MatrixType.control
+        args_num = gate.controls + gate.targets
+        gate_args = gate.cargs + gate.targs
+        default_parameters = (self._vector, self._qubits, self._sync)
+        
+        if args_num == 1:
+            index = self._qubits - 1 - gate_args[0]
+            val = gate.matrix[1, 1]
+            self._algorithm.Controlled_Multiply_targ(
+                index,
+                val,
+                *default_parameters
+            )
+        elif args_num == 2:
+            c_index = self._qubits - 1 - gate_args[0]
+            t_index = self._qubits - 1 - gate_args[1]
             val = gate.matrix[3, 3]
             self._algorithm.Controlled_Product_ctargs(
                 c_index,
@@ -194,39 +284,56 @@ class ConstantStateVectorSimulator(BasicGPUSimulator):
                 val,
                 *default_parameters
             )
-        # [Rzz]
-        elif gate_type in GATE_TYPE_to_ID[GateGroup.diagonal_2arg]:
-            t_indexes = [self._qubits - 1 - targ for targ in gate.targs]
-            matrix = self.get_gate_matrix(gate)
-            self._algorithm.Diagonal_Multiply_targs(
-                t_indexes,
-                matrix,
-                *default_parameters
+
+    def apply_gate(self, gate: BasicGate):
+        """ Depending on the given quantum gate, apply the target algorithm to calculate the state vector.
+
+        Args:
+            gate (Gate): the quantum gate in the circuit.
+        """
+        matrix_type = gate.matrix_type
+        gate_type = gate.type
+        default_parameters = (self._vector, self._qubits, self._sync)
+
+        if gate_type == GateType.id or gate_type == GateType.barrier:
+            return
+
+        # Deal with quantum gate with more than 3 qubits.
+        if (
+            gate_type in [GateType.unitary, GateType.qft, GateType.iqft] and
+            gate.targets >= 3
+        ):
+            aux = cp.zeros_like(self._vector)
+            self._algorithm.matrix_dot_vector(
+                gate.matrix,
+                gate.controls + gate.targets,
+                self._vector,
+                self._qubits,
+                gate.cargs + gate.targs,
+                aux,
+                self._sync
             )
-        # [CX, CY]
-        elif gate_type in GATE_TYPE_to_ID[GateGroup.reverse_2arg]:
-            t_index = self._qubits - 1 - gate.targ
-            c_index = self._qubits - 1 - gate.carg
-            matrix = self.get_gate_matrix(gate)
-            self._algorithm.Controlled_MultiplySwap_ctargs(
-                c_index,
-                t_index,
-                matrix,
-                *default_parameters
-            )
-        # [CH, CU3]
-        elif gate_type in GATE_TYPE_to_ID[GateGroup.matrix_2arg]:
-            t_index = self._qubits - 1 - gate.targ
-            c_index = self._qubits - 1 - gate.carg
-            matrix = self.get_gate_matrix(gate)
-            self._algorithm.Controlled_InnerProduct_ctargs(
-                c_index,
-                t_index,
-                matrix,
-                *default_parameters
-            )
+            self.vector = aux
+
+            return
+
+        # [H, SX, SY, SW, U2, U3, Rx, Ry] 2-bits [CH, ] 2-bits[targets] [unitary]
+        if matrix_type == MatrixType.normal:
+            self.apply_normal_matrix(gate)
+        # [Rz, Phase], 2-bits [CRz], 3-bits [CCRz]
+        elif matrix_type in [MatrixType.diagonal, MatrixType.diag_diag]:
+            self.apply_diagonal_matrix(gate)
+        # [X] 2-bits [swap] 3-bits [CSWAP]
+        elif matrix_type == MatrixType.swap:
+            self.apply_swap_matrix(gate)
+        # [Y] 2-bits [CX, CY] 3-bits: [CCX]
+        elif matrix_type == MatrixType.reverse:
+            self.apply_reverse_matrix(gate)
+        # [S, sdg, Z, U1, T, tdg] # 2-bits [CZ, CU1]
+        elif matrix_type == MatrixType.control:
+            self.apply_control_matrix(gate)
         # [FSim]
-        elif gate_type in GATE_TYPE_to_ID[GateGroup.complexMIP_2arg]:
+        elif matrix_type == MatrixType.ctrl_normal:
             t_indexes = [self._qubits - 1 - targ for targ in gate.targs]
             matrix = self.get_gate_matrix(gate)
             self._algorithm.Completed_MxIP_targs(
@@ -235,7 +342,7 @@ class ConstantStateVectorSimulator(BasicGPUSimulator):
                 *default_parameters
             )
         # [Rxx, Ryy]
-        elif gate_type in GATE_TYPE_to_ID[GateGroup.complexIPIP_2arg]:
+        elif matrix_type == MatrixType.normal_normal:
             t_indexes = [self._qubits - 1 - targ for targ in gate.targs]
             matrix = self.get_gate_matrix(gate)
             self._algorithm.Completed_IPxIP_targs(
@@ -243,51 +350,12 @@ class ConstantStateVectorSimulator(BasicGPUSimulator):
                 matrix,
                 *default_parameters
             )
-        # [Swap]
-        elif gate_type in GATE_TYPE_to_ID[GateGroup.swap_2arg]:
-            t_indexes = [self._qubits - 1 - targ for targ in gate.targs]
-            self._algorithm.Controlled_Swap_targs(
-                t_indexes,
-                *default_parameters
-            )
-        # [ID], [Barrier]
-        elif gate_type == GateType.id or gate_type == GateType.barrier:
-            pass
-        # [CCX]
-        elif gate_type in GATE_TYPE_to_ID[GateGroup.reverse_3arg]:
-            c_indexes = [self._qubits - 1 - carg for carg in gate.cargs]
-            t_index = self._qubits - 1 - gate.targ
-            self._algorithm.Controlled_Swap_more(
-                c_indexes,
-                t_index,
-                *default_parameters
-            )
-        # [CCRz]
-        elif gate_type in GATE_TYPE_to_ID[GateGroup.control_3arg]:
-            c_indexes = [self._qubits - 1 - carg for carg in gate.cargs]
-            t_index = self._qubits - 1 - gate.targ
-            matrix = self.get_gate_matrix(gate)
-            self._algorithm.Controlled_Multiply_more(
-                c_indexes,
-                t_index,
-                matrix,
-                *default_parameters
-            )
-        # [CSwap]
-        elif gate_type in GATE_TYPE_to_ID[GateGroup.swap_3arg]:
-            t_indexes = [self._qubits - 1 - targ for targ in gate.targs]
-            c_index = self._qubits - 1 - gate.carg
-            self._algorithm.Controlled_Swap_tmore(
-                t_indexes,
-                c_index,
-                *default_parameters
-            )
         # [Measure, Reset]
         elif gate_type in [GateType.measure, GateType.reset]:
             index = self._qubits - 1 - gate.targ
             prob = self.get_measured_prob(index).get()
             result = self.apply_specialgate(index, gate_type, prob)
-            self.circuit.qubits[index].measured = int(result)
+            self.circuit.qubits[index].measured = result
             self._measure_result[index].append(result)
         # [Perm]
         elif gate_type == GateType.perm:
@@ -306,67 +374,6 @@ class ConstantStateVectorSimulator(BasicGPUSimulator):
                 gpu_out=False,
                 sync=self._sync
             )
-        # [Unitary]
-        elif gate_type == GateType.unitary:
-            qubit_idxes = gate.cargs + gate.targs
-            if len(qubit_idxes) == 1:   # 1-qubit unitary gate
-                t_index = self._qubits - 1 - qubit_idxes[0]
-                matrix = self.get_gate_matrix(gate)
-                if gate.is_diagonal():    # diagonal gate
-                    self._algorithm.Diagonal_Multiply_targ(
-                        t_index,
-                        matrix,
-                        *default_parameters
-                    )
-                else:   # non-diagonal gate
-                    self._algorithm.Based_InnerProduct_targ(
-                        t_index,
-                        matrix,
-                        *default_parameters
-                    )
-            elif len(qubit_idxes) == 2:     # 2-qubits unitary gate
-                indexes = [self._qubits - 1 - index for index in qubit_idxes]
-                indexes.sort()
-                matrix = self.get_gate_matrix(gate)
-                if gate.is_diagonal():        # diagonal gate
-                    self._algorithm.Diagonal_Multiply_targs(
-                        indexes,
-                        matrix,
-                        *default_parameters
-                    )
-                else:   # non-diagonal gate
-                    self._algorithm.Based_InnerProduct_targs(
-                        indexes,
-                        matrix,
-                        *default_parameters
-                    )
-            else:   # common unitary gate supported, but run slowly
-                aux = cp.zeros_like(self._vector)
-                matrix = self.get_gate_matrix(gate)
-                self._algorithm.matrix_dot_vector(
-                    matrix,
-                    gate.controls + gate.targets,
-                    self._vector,
-                    self._qubits,
-                    gate.cargs + gate.targs,
-                    aux,
-                    self._sync
-                )
-                self.vector = aux
-        # [QFT] & [IQFT]
-        elif gate_type == GateType.qft or gate_type == GateType.iqft:
-            aux = cp.zeros_like(self._vector)
-            matrix = cp.array(gate.matrix)
-            self._algorithm.matrix_dot_vector(
-                matrix,
-                gate.controls + gate.targets,
-                self._vector,
-                self._qubits,
-                gate.cargs + gate.targs,
-                aux,
-                self._sync
-            )
-            self.vector = aux
         # unsupported quantum gates
         else:
             raise KeyError(f"Unsupported Gate: {gate_type}")
@@ -377,9 +384,9 @@ class ConstantStateVectorSimulator(BasicGPUSimulator):
             index = self._qubits - 1 - targ
             prob = self.get_measured_prob(index).get()
             result = self.apply_specialgate(index, GateType.measure, prob)
-            self.circuit.qubits[targ].measured = int(result)
+            self.circuit.qubits[index].measured = result
             state <<= 1
-            state += int(result)
+            state += result
 
         return op.mapping(state)
 
@@ -404,13 +411,14 @@ class ConstantStateVectorSimulator(BasicGPUSimulator):
 
     def apply_specialgate(self, index: int, type: GateType, prob: float = None):
         if type == GateType.measure:
-            return self._algorithm.MeasureGate_Apply(
+            result = self._algorithm.MeasureGate_Apply(
                 index,
                 self._vector,
                 self._qubits,
                 prob,
                 self._sync
-            )            
+            )
+            return int(result)
         elif type == GateType.reset:
             return self._algorithm.ResetGate_Apply(
                 index,

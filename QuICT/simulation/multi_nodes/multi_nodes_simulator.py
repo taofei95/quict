@@ -14,7 +14,7 @@ from QuICT.core.gate import BasicGate, GateType
 from QuICT.core.operator import *
 from QuICT.utility import Proxy
 from QuICT.simulation.state_vector.gpu_simulator.multigpu_simulator.data_switch import DataSwitcher
-from QuICT.ops.gate_kernel.gate_function import Device_Prob_Calculator, MeasureGate_Apply
+from QuICT.ops.gate_kernel.gate_function import Device_Prob_Calculator
 
 
 class MultiNodesSimulator:
