@@ -13,7 +13,7 @@ from QuICT.core import Circuit
 from QuICT.core.gate import BasicGate, GateType
 from QuICT.core.operator import *
 from QuICT.utility import Proxy
-from QuICT.simulation.state_vector.gpu_simulator.multigpu_simulator.data_switch import DataSwitcher
+from QuICT.simulation.multi_nodes.data_switch import DataSwitcher
 from QuICT.ops.gate_kernel.gate_function import Device_Prob_Calculator
 
 
@@ -42,7 +42,7 @@ class MultiNodesSimulator:
         self.proxy = proxy
         self._data_switcher = DataSwitcher(self.proxy)
         self.simulator = CircuitSimulator(options) if device == "CPU" else \
-            ConstantStateVectorSimulator(gpu_device_id=gpu_id)
+            ConstantStateVectorSimulator(gpu_device_id=gpu_id, matrix_aggregation=False)
 
     def run(
         self,
@@ -57,9 +57,9 @@ class MultiNodesSimulator:
         Returns:
             [array]: The state vector.
         """
-        qubits = circuit.width()
+        self.simulator.initial_circuit(circuit)
         # initial state vector in simulator
-        self.simulator.initial_state_vector(qubits, (self._data_switcher.id != 0))
+        self.simulator.initial_state_vector(all_zeros=(self._data_switcher.id != 0))
         self._pipeline = circuit.gates
         while len(self._pipeline) > 0:
             op = self._pipeline.pop(0)
@@ -106,7 +106,7 @@ class MultiNodesSimulator:
             elif op.type == GateType.reset:
                 self._apply_reset(op.proxy_idx, total_prob)
         else:
-            self.simulator.apply_specialgate(op.targ, op.type, total_prob)
+            self.simulator.apply_specialgate(self.simulator._qubits - 1 - op.targ, op.type, total_prob)
 
     def _apply_measure(self, proxy_idx: int, prob: float):
         """ The algorithm for the Measure gate.

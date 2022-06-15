@@ -11,15 +11,15 @@ import cupy as cp
 
 from QuICT.core import Circuit
 from QuICT.core.operator import Trigger
-from QuICT.core.gate import Measure, BasicGate
+from QuICT.core.gate import Measure, BasicGate, CompositeGate
 from QuICT.core.utils import GateType, MatrixType
 from QuICT.ops.utils import LinAlgLoader
-from QuICT.simulation.state_vector.gpu_simulator import BasicGPUSimulator
 from QuICT.simulation.optimization import Optimizer
 from QuICT.ops.gate_kernel import Float_Multiply, Simple_Multiply
+from QuICT.simulation.utils import GateMatrixs
 
 
-class ConstantStateVectorSimulator(BasicGPUSimulator):
+class ConstantStateVectorSimulator:
     """
     The simulator for qubits' vector state.
 
@@ -30,24 +30,52 @@ class ConstantStateVectorSimulator(BasicGPUSimulator):
         gpu_device_id (int): The GPU device ID.
         sync (bool): Sync mode or Async mode.
     """
+    __PRECISION = ["single", "double"]
+
+    @property
+    def circuit(self):
+        return self._circuit
+
+    @property
+    def vector(self):
+        return self._vector
+
+    @vector.setter
+    def vector(self, vec):
+        with cp.cuda.Device(self._device_id):
+            if type(vec) is np.ndarray:
+                self._vector = cp.array(vec)
+            else:
+                self._vector = vec
+
+    @property
+    def device(self):
+        return self._device_id
+
     def __init__(
         self,
         precision: str = "double",
-        optimize: bool = False,
         gpu_device_id: int = 0,
+        optimize: bool = False,
+        matrix_aggregation: bool = True,
         sync: bool = True
     ):
-        BasicGPUSimulator.__init__(self, precision, gpu_device_id, sync)
+        if precision not in self.__PRECISION:
+            raise ValueError("Wrong precision. Please use one of [single, double].")
+
+        self._precision = np.complex128 if precision == "double" else np.complex64
+        self._device_id = gpu_device_id
+        self._sync = sync
+
+        self._using_matrix_aggregation = matrix_aggregation
         self._optimize = optimize
-        if self._optimize:
-            self._optimizor = Optimizer()
 
         # Initial simulator with limit_qubits
         self._algorithm = LinAlgLoader(device="GPU", enable_gate_kernel=True, enable_multigpu_gate_kernel=False)
         # Set gpu id
         cp.cuda.runtime.setDevice(self._device_id)
 
-    def _initial_circuit(self, circuit: Circuit, use_previous: bool):
+    def initial_circuit(self, circuit: Circuit):
         """ Initial the qubits, quantum gates and state vector by given quantum circuit. """
         self._circuit = circuit
         self._qubits = int(circuit.width())
@@ -55,7 +83,7 @@ class ConstantStateVectorSimulator(BasicGPUSimulator):
         self._pipeline = []
 
         if self._optimize:
-            self._pipeline = self._optimizor.optimize(circuit.gates)
+            self._pipeline = Optimizer().optimize(circuit.gates)
         else:
             for gate in circuit.gates:
                 if isinstance(gate, BasicGate):
@@ -63,12 +91,21 @@ class ConstantStateVectorSimulator(BasicGPUSimulator):
                 else:
                     self._pipeline.append(gate)
 
-        # Initial GateMatrix
-        self._gate_matrix_prepare()
+        # Initial GateMatrix if matrix_aggregation is True
+        if self._using_matrix_aggregation:
+            self._initial_matrix_aggregation()
 
-        # Initial vector state
-        if not use_previous or self._vector is None:
-            self.initial_state_vector()
+    def _initial_matrix_aggregation(self):
+        # Pretreatment gate matrixs optimizer
+        self.gateM_optimizer = GateMatrixs(self._precision, self._device_id)
+        self.gateM_optimizer.build(self._pipeline)
+
+    def get_gate_matrix(self, gate: BasicGate):
+        """ Return the gate's matrix in GPU. """
+        if self._using_matrix_aggregation:
+            return self.gateM_optimizer.get_target_matrix(gate)
+        else:
+            return cp.array(gate.matrix, dtype=self._precision)
 
     def initial_state_vector(self, qubits: int = 0, all_zeros: bool = False):
         """ Initial qubits' vector states. """
@@ -95,7 +132,10 @@ class ConstantStateVectorSimulator(BasicGPUSimulator):
         Returns:
             [array]: The state vector.
         """
-        self.initial_circuit(circuit, use_previous)
+        self.initial_circuit(circuit)
+        if not use_previous:
+            self.initial_state_vector()
+
         idx = 0
         while self._pipeline:
             gate = self._pipeline.pop(0)
@@ -105,7 +145,8 @@ class ConstantStateVectorSimulator(BasicGPUSimulator):
                 mapping_cgate = self.apply_trigger(gate)
                 if mapping_cgate is not None:
                     # optimized composite gate's matrix
-                    self.gateM_optimizer.build(mapping_cgate.gates)
+                    if self._using_matrix_aggregation:
+                        self.gateM_optimizer.build(mapping_cgate.gates)
                     # Check for checkpoint
                     cp = mapping_cgate.checkpoint
                     position = 0 if cp is None else self._circuit.find_position(cp) - idx
@@ -314,7 +355,6 @@ class ConstantStateVectorSimulator(BasicGPUSimulator):
                 self._sync
             )
             self.vector = aux
-
             return
 
         # [H, SX, SY, SW, U2, U3, Rx, Ry] 2-bits [CH, ] 2-bits[targets] [unitary]
@@ -354,9 +394,7 @@ class ConstantStateVectorSimulator(BasicGPUSimulator):
         elif gate_type in [GateType.measure, GateType.reset]:
             index = self._qubits - 1 - gate.targ
             prob = self.get_measured_prob(index).get()
-            result = self.apply_specialgate(index, gate_type, prob)
-            self.circuit.qubits[index].measured = result
-            self._measure_result[index].append(result)
+            self.apply_specialgate(index, gate_type, prob)
         # [Perm]
         elif gate_type == GateType.perm:
             args = gate.cargs + gate.targs
@@ -378,19 +416,20 @@ class ConstantStateVectorSimulator(BasicGPUSimulator):
         else:
             raise KeyError(f"Unsupported Gate: {gate_type}")
 
-    def apply_trigger(self, op: Trigger):
+    def apply_trigger(self, op: Trigger) -> CompositeGate:
+        """ Deal with the Operator <Trigger>. """
         state = 0
         for targ in op.targs:
             index = self._qubits - 1 - targ
             prob = self.get_measured_prob(index).get()
             result = self.apply_specialgate(index, GateType.measure, prob)
-            self.circuit.qubits[index].measured = result
             state <<= 1
             state += result
 
         return op.mapping(state)
 
     def apply_multiply(self, value):
+        """ Deal with Operator <Multiply>. """
         default_parameters = (self._vector, self._qubits, self._sync)
         if isinstance(value, float):
             Float_Multiply(value, *default_parameters)
@@ -398,9 +437,11 @@ class ConstantStateVectorSimulator(BasicGPUSimulator):
             Simple_Multiply(value, *default_parameters)
 
     def apply_zeros(self):
+        """ Set state vector to be zero. """
         self._vector = cp.zeros_like(self.vector)
 
-    def get_measured_prob(self, index: int, all_measured: bool = False):
+    def get_measured_prob(self, index: int, all_measured: bool = False) -> cp.ndarray:
+        """ Return the probability of measured state 1. """
         return self._algorithm.measured_prob_calculate(
             index,
             self._vector,
@@ -410,15 +451,18 @@ class ConstantStateVectorSimulator(BasicGPUSimulator):
         )
 
     def apply_specialgate(self, index: int, type: GateType, prob: float = None):
+        """ Apply Measure/Reset gate in to simulator. """
         if type == GateType.measure:
-            result = self._algorithm.MeasureGate_Apply(
+            result = int(self._algorithm.MeasureGate_Apply(
                 index,
                 self._vector,
                 self._qubits,
                 prob,
                 self._sync
-            )
-            return int(result)
+            ))
+            self._circuit.qubits[index].measured = result
+            self._measure_result[index].append(result)
+            return result
         elif type == GateType.reset:
             return self._algorithm.ResetGate_Apply(
                 index,
@@ -429,6 +473,7 @@ class ConstantStateVectorSimulator(BasicGPUSimulator):
             )
 
     def sample(self):
+        """ Return the measured result from current state vector. """
         assert (self._circuit is not None)
         temp_measure_circuit = Circuit(self._qubits)
         Measure | temp_measure_circuit
