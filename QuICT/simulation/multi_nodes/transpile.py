@@ -7,9 +7,9 @@ from QuICT.qcda.synthesis import GateDecomposition
 
 
 ALL_PENTY = 0.5
-HALF_PENTY = 1
-CARG_PENTY = 2
-PROB_ADD = 0.5
+HALF_PENTY = 2
+CARG_PENTY = 3
+PROB_ADD = 1
 
 
 NORMAL_GATE_SET_1qubit = [
@@ -19,7 +19,14 @@ NORMAL_GATE_SET_1qubit = [
 
 
 class Transpile:
+    """ Transpile the circuit by the number of devices.
+
+    Args:
+        ndev (int): The number of devices.
+    """
+
     def __init__(self, ndev: int):
+        
         self._ndev = ndev
         self._split_qb_num = int(np.log2(ndev))
         assert 2 ** self._split_qb_num == self._ndev
@@ -287,6 +294,54 @@ class Transpile:
 
         return res, union_arg
 
+    def _order_gates_by_depth(self, gates: list) -> list:
+        gate_by_depth = [[gates[0]]]          # List[list], gates for each depth level.
+        gate_args_by_depth = [set(gates[0].cargs + gates[0].targs)]     # List[set], gates' qubits for each depth level.
+        for gate in gates[1:]:
+            gate_arg = set(gate.cargs + gate.targs)
+            for i in range(len(gate_args_by_depth) - 1, -1, -1):
+                if gate_arg & gate_args_by_depth[i]:
+                    if i == len(gate_args_by_depth) - 1:
+                        gate_by_depth.append([gate])
+                        gate_args_by_depth.append(gate_arg)
+                    else:
+                        gate_by_depth[i + 1].append(gate)
+                        gate_args_by_depth[i + 1] = gate_arg | gate_args_by_depth[i + 1]
+                    break
+                else:
+                    if i == 0:
+                        gate_by_depth[i].append(gate)
+                        gate_args_by_depth[i] = gate_arg | gate_args_by_depth[i]
+
+        return gate_by_depth
+
+    def _gate_switch_cost_generator(self, gates_by_depth: list, qubits: int) -> list:
+        data_switch_cost_matrix = np.zeros((qubits, len(gates_by_depth)), dtype=np.int32)
+        for idx, depth_gates in enumerate(gates_by_depth):
+            for gate in depth_gates:
+                gate_matrix_type = gate.matrix_type
+                gate_args = gate.cargs + gate.targs
+                if gate_matrix_type == MatrixType.normal:
+                    if gate.controls == 0:
+                        data_switch_cost_matrix[gate_args, idx] += HALF_PENTY
+                    else:
+                        data_switch_cost_matrix[gate.targs, idx] += CARG_PENTY
+                elif gate_matrix_type == MatrixType.reverse:
+                    if gate.controls == 1:
+                        data_switch_cost_matrix[gate.targs, idx] += CARG_PENTY
+                elif gate_matrix_type == MatrixType.swap:
+                    if gate.targets > 1:
+                        data_switch_cost_matrix[gate_args[-1], idx] += CARG_PENTY
+                elif gate_matrix_type in [MatrixType.ctrl_normal, MatrixType.normal_normal]:
+                    data_switch_cost_matrix[gate_args, idx] += CARG_PENTY
+                elif gate.type in [GateType.measure, GateType.reset]:
+                    data_switch_cost_matrix[gate_args, idx] += PROB_ADD
+
+        return data_switch_cost_matrix
+
+    def _split_qubits_new(self, cost_matrix: np.ndarray):
+        pass
+
     def _split_qubits(self, circuit: Circuit) -> list:
         qubits = circuit.width()
         comm_cost = np.array([0] * qubits, dtype=np.float32)
@@ -319,10 +374,16 @@ class Transpile:
         return split_qubits
 
     def run(self, circuit: Circuit):
-        # step 1: run gatedecomposition
+        # step 1: run GateDecomposition to avoid Unitary with large qubits and other special gates
+        qubits = circuit.width()
         circuit.gates = GateDecomposition.execute(circuit).gates
 
+        # step 2: order the circuit's gates by depth
+        # depth_gate = self._order_gates_by_depth(gates)
+
         # step 2: decided split qubits
+        # cost_matrix = self._gate_switch_cost_generator(depth_gate, qubits)
+        # split_qubits = self._split_qubits_new(cost_matrix)
         split_qubits = self._split_qubits(circuit)
 
         # step 3: transpile circuit by split qubits [add op.data_swap, change gate]
