@@ -33,7 +33,7 @@ class DAG(Iterable):
         """
 
         __slots__ = ['predecessors', 'successors', 'flag', 'qubit_id', 'size', 'qubit_loc', 'qubit_flag',
-                     'gate_type', '_params', 'var_phase']
+                     'gate_type', '_params', 'poly_phase']
 
         FLAG_DEFAULT = 0
         FLAG_VISITED = 1
@@ -49,8 +49,7 @@ class DAG(Iterable):
             """
             # self.gate = None if gate_ is None else gate_.copy()
             self.gate_type = gate_.type if gate_ is not None else None
-            self._params = gate_.pargs if gate_ is not None else []
-            self.var_phase = None
+            self._params = gate_.pargs.copy() if gate_ is not None else []
 
             # the actual qubit the i-th wire of the gate act on
             self.qubit_loc = [qubit_] if gate_ is None else list(chain(gate_.cargs, gate_.targs))
@@ -61,6 +60,7 @@ class DAG(Iterable):
             self.successors: List[Tuple[DAG.Node, int]] = [(None, 0)] * self.size
             self.qubit_flag = [self.FLAG_DEFAULT] * self.size
             self.flag = self.FLAG_DEFAULT
+            self.poly_phase = None
 
         @property
         def params(self):
@@ -100,6 +100,14 @@ class DAG(Iterable):
             """
             self.successors[forward_qubit] = (node, backward_qubit)
             node.predecessors[backward_qubit] = (self, forward_qubit)
+
+        def append(self, forward_qubit, backward_qubit, node):
+            """
+            TODO add docstring
+            """
+            s_node, s_qubit = self.successors[forward_qubit]
+            self.connect(forward_qubit, backward_qubit, node)
+            node.connect(backward_qubit, s_qubit, s_node)
 
         def erase(self):
             """
@@ -228,7 +236,7 @@ class DAG(Iterable):
 
             node.get_gate() | circ([mapping[(id(node), qubit_)] for qubit_ in range(node.size)])
 
-        if not np.isclose(self.global_phase, 0):
+        if not np.isclose(float(self.global_phase), 0):
             Phase(self.global_phase) | circ(0)
         return circ
 
@@ -256,14 +264,11 @@ class DAG(Iterable):
                     queue.append(nxt)
 
     @staticmethod
-    def topological_sort_sub_circuit(prev_node, succ_node, include_dummy=False):
+    def topological_sort_sub_circuit(prev_node, succ_node):
         # TODO review edge cases that one income node is not in prev_node
         end_set = set()
-        for each in succ_node:
-            if each is None:
-                continue
-            node_, qubit_ = each
-            end_set.add((id(node_), qubit_))
+        for node_, qubit_ in filter(lambda x: x is not None, succ_node):
+            end_set.add(id(node_))
 
         edge_count = {}
         queue = deque()
@@ -272,7 +277,7 @@ class DAG(Iterable):
                 continue
             node_, qubit_ = each
             nxt, nxt_q = node_.successors[qubit_]
-            if (id(nxt), nxt_q) in end_set:
+            if id(nxt) in end_set:
                 continue
 
             if id(nxt) not in edge_count:
@@ -283,10 +288,10 @@ class DAG(Iterable):
 
         while len(queue) > 0:
             cur = queue.popleft()
-            if cur.gate_type is not None or include_dummy:
-                yield cur
+            yield cur
+
             for nxt, nxt_q in cur.successors:
-                if nxt is None or (id(nxt), nxt_q) in end_set:
+                if nxt is None or id(nxt) in end_set:
                     continue
                 if id(nxt) not in edge_count:
                     edge_count[id(nxt)] = nxt.size
@@ -430,6 +435,35 @@ class DAG(Iterable):
         for each in self.topological_sort(include_dummy=True):
             for qubit_ in range(each.size):
                 reachable.update(self._get_reachable_relation(each, qubit_))
+        return reachable
+
+    @staticmethod
+    def _get_sub_circuit_reachable_relation(node, qubit_, term_set):
+        visited = set()
+        queue = deque([(node, qubit_)])
+        while len(queue) > 0:
+            cur, cur_q = queue.popleft()
+            if id(cur) in term_set:
+                continue
+            nxt, _ = cur.successors[cur_q]
+            if id(nxt) not in visited:
+                for nxt_q in range(nxt.size):
+                    queue.append((nxt, nxt_q))
+                visited.add(id(nxt))
+
+        reachable = {((id(node), qubit_), o) for o in visited}
+        return reachable
+
+    @classmethod
+    def get_sub_circuit_reachable_relation(cls, prev_node, succ_node):
+        term_set = set()
+        for node_, qubit_ in filter(lambda x: x is not None, succ_node):
+            term_set.add(id(node_))
+
+        reachable = set()
+        for each in cls.topological_sort_sub_circuit(prev_node, succ_node):
+            for qubit_ in range(each.size):
+                reachable.update(cls._get_sub_circuit_reachable_relation(each, qubit_, term_set))
         return reachable
 
     def append(self, gate_: BasicGate):
