@@ -83,7 +83,7 @@ def reinforced_order_finding(
         )
         r = Fraction(phi_).limit_denominator(N - 1).denominator
         if r != 0 and (a ** r) % N == 1:
-            logging.info(f"\tsuccess!")
+            logging.info("\tsuccess!")
             r_list.append(r)
     if len(r_list) == 0:
         return 0
