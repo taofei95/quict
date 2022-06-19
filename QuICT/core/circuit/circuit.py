@@ -15,7 +15,13 @@ from QuICT.core.utils import (
     CircuitInformation,
     matrix_product_to_circuit
 )
-from QuICT.core.operator import Trigger, CheckPoint, Operator, CheckPointChild
+from QuICT.core.operator import (
+    Trigger,
+    CheckPoint,
+    Operator,
+    CheckPointChild,
+    NoiseGate
+)
 
 
 # global circuit id count
@@ -328,7 +334,7 @@ class Circuit(object):
 
     def replace_gate(self, idx: int, gate: BasicGate):
         assert idx >= 0 and idx < len(self._gates), "The index of replaced gate is wrong."
-        assert isinstance(gate, BasicGate), "The replaced gate must be a quantum gate or noised gate."
+        assert isinstance(gate, (BasicGate, NoiseGate)), "The replaced gate must be a quantum gate or noised gate."
         self._gates[idx] = gate
 
     def find_position(self, cp_child: CheckPointChild):

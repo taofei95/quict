@@ -162,7 +162,8 @@ def gate_to_desc(gate: BasicGate) -> List[GateDescription]:
     elif hasattr(gate, "build_gate"):
         # Try build gate to simpler gates
         result = []
-        for simple_gate in gate.build_gate():
+        cgate = gate.build_gate()
+        for simple_gate in cgate.gates:
             result.extend(gate_to_desc(simple_gate))
         return result
     else:

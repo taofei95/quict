@@ -101,8 +101,7 @@ class CartanKAKDecomposition:
         # Final test
         res = np.kron(U0, U1)
         dev = np.abs(np.abs(res.conj(res).T.dot(U).trace()) - 4)
-        assert dev < 1e-13, \
-            ValueError("tensor_decompose: Final failed")
+        assert dev < 1e-13, ValueError("tensor_decompose: Final failed")
         return U0, U1
 
     def decompose(self):

@@ -39,6 +39,10 @@ class CompositeGate:
         return self
 
     def __exit__(self, exc_type, exc_value, traceback):
+        # print(f"{exc_type}: {exc_value}")
+        if exc_type is not None:
+            raise Exception(exc_value)
+
         global CGATE_LIST
         CGATE_LIST.remove(self)
 

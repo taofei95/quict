@@ -1978,6 +1978,70 @@ class CCXGate(BasicGate):
 CCX = CCXGate()
 
 
+class CCZGate(BasicGate):
+    """ Multi-control Z gate
+
+    When using this gate, it will be showed as a whole gate
+    instend of being split into smaller gate
+
+    """
+    def __init__(self):
+        super().__init__(
+            controls=2,
+            targets=1,
+            params=0,
+            type=GateType.ccz
+        )
+
+        self.matrix = np.array([
+            [1, 0, 0, 0, 0, 0, 0, 0],
+            [0, 1, 0, 0, 0, 0, 0, 0],
+            [0, 0, 1, 0, 0, 0, 0, 0],
+            [0, 0, 0, 1, 0, 0, 0, 0],
+            [0, 0, 0, 0, 1, 0, 0, 0],
+            [0, 0, 0, 0, 0, 1, 0, 0],
+            [0, 0, 0, 0, 0, 0, 1, 0],
+            [0, 0, 0, 0, 0, 0, 0, -1]
+        ], dtype=np.complex128)
+
+        self._target_matrix = np.array([
+            [1, 0],
+            [0, -1]
+        ], dtype=np.complex128)
+
+    @property
+    def target_matrix(self) -> np.ndarray:
+        return self._target_matrix
+
+    def build_gate(self):
+        from QuICT.core.gate import CompositeGate
+
+        cgate = CompositeGate()
+        with cgate:
+            CX & [2, 1]
+            T_dagger & 1
+            CX & [0, 1]
+            T & 1
+            CX & [2, 1]
+            T_dagger & 1
+            CX & [0, 1]
+            T & 1
+            CX & [0, 2]
+            T_dagger & 2
+            CX & [0, 2]
+            T & 0
+            T & 2
+
+        args = self.cargs + self.targs
+        if len(args) == self.controls + self.targets:
+            cgate & args
+
+        return cgate
+
+
+CCZ = CCZGate()
+
+
 class CCRzGate(BasicGate):
     """ controlled-Rz gate with two control bits """
     def __init__(self, params: list = [0]):
