@@ -7,7 +7,6 @@ import inspect
 from QuICT.core import *
 from QuICT.qcda.optimization._optimization import Optimization
 from QuICT.qcda.optimization.commutative_optimization import CommutativeOptimization
-# from QuICT.utility.decorators import deprecated
 from QuICT.algorithm import SyntheticalUnitary
 from .symbolic_phase import SymbolicPhase, SymbolicPhaseVariable
 from .dag import DAG
@@ -638,22 +637,30 @@ class AutoOptimization(Optimization):
             assert len(pos_list[mono]) > 0
 
     @classmethod
-    def _change_poly_phase(cls, node, qubit_, delta, pos_list, change_history=None):
+    def _change_poly_phase(cls, node, qubit_, delta, pos_list=None, pos_cnt=None, history=None):
         cur = node.poly_phase[qubit_]
         d_print('remove', cur >> 1)
-        old = (node, qubit_, cur & 1)
-        pos_list[cur >> 1].remove(old)
+        if pos_list:
+            old = (node, qubit_, cur & 1)
+            pos_list[cur >> 1].remove(old)
+        if pos_cnt:
+            pos_cnt[cur >> 1] -= 1
 
         node.poly_phase[qubit_] ^= delta
         cur = node.poly_phase[qubit_]
-        new = (node, qubit_, cur & 1)
         d_print('add', cur >> 1)
-        if cur >> 1 not in pos_list:
-            pos_list[cur >> 1] = []
-        pos_list[cur >> 1].append(new)
+        if pos_list:
+            new = (node, qubit_, cur & 1)
+            if cur >> 1 not in pos_list:
+                pos_list[cur >> 1] = []
+            pos_list[cur >> 1].append(new)
+        if pos_cnt:
+            if cur >> 1 not in pos_cnt:
+                pos_cnt[cur >> 1] = 0
+            pos_cnt[cur >> 1] += 1
 
-        if change_history is not None:
-            change_history.append((node, qubit_, delta))
+        if history is not None:
+            history.append((node, qubit_, delta))
 
     @classmethod
     def _delete_from_pos_list(cls, node, pos_list):
@@ -664,12 +671,15 @@ class AutoOptimization(Optimization):
             pos_list[cur >> 1].remove(old)
 
     @classmethod
-    def _check_float_pos(cls, node, qubit_, pos_list, phases):
+    def _check_float_pos(cls, node, qubit_, phases, pos_list=None, pos_cnt=None):
         cur = node.poly_phase[qubit_] >> 1
         if cur not in phases or np.isclose(float(phases[cur]), 0):
             return True
         else:
-            return len(pos_list[cur]) > 1
+            if pos_list:
+                return len(pos_list[cur]) > 1
+            else:
+                return pos_cnt[cur] > 1
 
     @classmethod
     def _float_cancel_sub_circuit(cls, prev_node, succ_node):
@@ -740,7 +750,7 @@ class AutoOptimization(Optimization):
                 if id(n_ctrl_node) == id(n_targ_node) and n_ctrl_node.gate_type == GateType.cx and \
                         n_ctrl_qubit == 0 and n_targ_qubit == 1:
 
-                    if not cls._check_float_pos(cx, 1, pos_list, phases):
+                    if not cls._check_float_pos(cx, 1, phases, pos_list=pos_list):
                         break
 
                     success = True
@@ -767,12 +777,12 @@ class AutoOptimization(Optimization):
                         n_targ_node.gate_type == GateType.cx and \
                         n_targ_qubit == 1 and \
                         ((id(c_ctrl_node), c_ctrl_qubit), id(n_targ_node)) not in reachable and \
-                        cls._check_float_pos(cx, 1, pos_list, phases):
+                        cls._check_float_pos(cx, 1, phases, pos_list=pos_list):
                     # Case 2
                     d_print(n_targ_node.poly_phase, cx.poly_phase)
                     assert cx.poly_phase[1] ^ n_targ_node.poly_phase[0] == n_targ_node.poly_phase[1]
-                    cls._change_poly_phase(cx, 1, n_targ_node.poly_phase[0], pos_list, change_history)
-                    cls._change_poly_phase(n_targ_node, 1, cx.poly_phase[0], pos_list, change_history)
+                    cls._change_poly_phase(cx, 1, n_targ_node.poly_phase[0], pos_list=pos_list, history=change_history)
+                    cls._change_poly_phase(n_targ_node, 1, cx.poly_phase[0], pos_list=pos_list, history=change_history)
                     cls._debug_pos_list(pos_list, phases)
                     assert cx.poly_phase[0] == c_ctrl_node.poly_phase[c_ctrl_qubit]
                     d_print()
@@ -780,11 +790,11 @@ class AutoOptimization(Optimization):
                     c_targ_node, c_targ_qubit = n_targ_node, n_targ_qubit
 
                 elif id(n_targ_node) not in term_set and n_targ_node.gate_type == GateType.x and \
-                        cls._check_float_pos(cx, 1, pos_list, phases):
+                        cls._check_float_pos(cx, 1, phases, pos_list=pos_list):
                     # Case 1
                     assert cx.poly_phase[0] == c_ctrl_node.poly_phase[c_ctrl_qubit]
-                    cls._change_poly_phase(cx, 1, 1, pos_list, change_history)
-                    cls._change_poly_phase(n_targ_node, 0, cx.poly_phase[0], pos_list, change_history)
+                    cls._change_poly_phase(cx, 1, 1, pos_list=pos_list, history=change_history)
+                    cls._change_poly_phase(n_targ_node, 0, cx.poly_phase[0], pos_list=pos_list, history=change_history)
                     cls._debug_pos_list(pos_list, phases)
                     assert cx.poly_phase[0] == c_ctrl_node.poly_phase[c_ctrl_qubit]
 
@@ -794,7 +804,7 @@ class AutoOptimization(Optimization):
 
             if not success:
                 for node_, qubit_, delta_ in reversed(change_history):
-                    cls._change_poly_phase(node_, qubit_, delta_, pos_list)
+                    cls._change_poly_phase(node_, qubit_, delta_, pos_list=pos_list)
                     cls._debug_pos_list(pos_list, phases)
             else:
                 d_print('success')
@@ -830,31 +840,178 @@ class AutoOptimization(Optimization):
         return cnt
 
     @classmethod
+    def _try_float_cancel_sub_circuit(cls, prev_node, succ_node):
+        # calculate floating positions
+        phases = {}
+        cur_phases = {}
+        pos_cnt = {}
+
+        term_set = set()
+        for node_, qubit_ in filter(lambda x: x is not None, succ_node):
+            term_set.add(id(node_))
+
+        for qubit_, pack in enumerate(prev_node):
+            if pack is not None:
+                cur_phases[qubit_] = 1 << (qubit_ + 1)
+                pos_cnt[1 << qubit_] = 1
+
+        rz_cnt = 0
+        for node_ in list(DAG.topological_sort_sub_circuit(prev_node, succ_node)):
+            if node_.gate_type == GateType.cx:
+                cur_phases[node_.qubit_loc[1]] = cur_phases[node_.qubit_loc[1]] ^ cur_phases[node_.qubit_loc[0]]
+                node_.poly_phase = [cur_phases[node_.qubit_loc[0]], cur_phases[node_.qubit_loc[1]]]
+                for qubit_ in range(2):
+                    cur = node_.poly_phase[qubit_]
+                    if cur >> 1 not in pos_cnt:
+                        pos_cnt[cur >> 1] = 0
+                    pos_cnt[cur >> 1] += 1
+
+            elif node_.gate_type == GateType.x:
+                cur_phases[node_.qubit_loc[0]] = cur_phases[node_.qubit_loc[0]] ^ 1
+                node_.poly_phase = [cur_phases[node_.qubit_loc[0]]]
+                cur = node_.poly_phase[0]
+                if cur >> 1 not in pos_cnt:
+                    pos_cnt[cur >> 1] = 0
+                pos_cnt[cur >> 1] += 1
+
+            elif node_.gate_type == GateType.rz:
+                rz_cnt += 1
+                sign = -1 if cur_phases[node_.qubit_loc[0]] & 1 else 1
+                mono = (cur_phases[node_.qubit_loc[0]] >> 1)
+                phases[mono] = sign * node_.params[0] + (phases[mono] if mono in phases else 0)
+            else:
+                assert False, f'{node_.gate_type} type should not be included in sub circuit'
+
+        for phase in phases.values():
+            if not np.isclose(float(phase), 0):
+                rz_cnt -= 1
+        if rz_cnt > 0:
+            return True
+
+        reachable = DAG.get_sub_circuit_reachable_relation(prev_node, succ_node)
+        for cx in list(DAG.topological_sort_sub_circuit(prev_node, succ_node)):
+            if cx.gate_type != GateType.cx or cx.flag == cx.FLAG_ERASED:
+                continue
+
+            change_history = []
+            c_ctrl_node, c_ctrl_qubit = cx, 0
+            c_targ_node, c_targ_qubit = cx, 1
+            while True:
+                n_ctrl_node, n_ctrl_qubit = c_ctrl_node.successors[c_ctrl_qubit]
+                n_targ_node, n_targ_qubit = c_targ_node.successors[c_targ_qubit]
+                if id(n_ctrl_node) == id(n_targ_node) and n_ctrl_node.gate_type == GateType.cx and \
+                        n_ctrl_qubit == 0 and n_targ_qubit == 1:
+                    if not cls._check_float_pos(cx, 1, phases, pos_cnt=pos_cnt):
+                        break
+                    return True
+
+                if id(n_ctrl_node) not in term_set and n_ctrl_node.gate_type == GateType.rz:
+                    c_ctrl_node, c_ctrl_qubit = n_ctrl_node, n_ctrl_qubit
+                elif id(n_targ_node) not in term_set and n_targ_node.gate_type == GateType.rz:
+                    c_targ_node, c_targ_qubit = n_targ_node, n_targ_qubit
+                elif id(n_ctrl_node) not in term_set and \
+                        n_ctrl_node.gate_type == GateType.cx and \
+                        n_ctrl_qubit == 0 and \
+                        ((id(c_targ_node), c_targ_qubit), id(n_ctrl_node)) not in reachable:
+                    # Case 3
+                    c_ctrl_node, c_ctrl_qubit = n_ctrl_node, n_ctrl_qubit
+
+                elif id(n_targ_node) not in term_set and \
+                        n_targ_node.gate_type == GateType.cx and \
+                        n_targ_qubit == 1 and \
+                        ((id(c_ctrl_node), c_ctrl_qubit), id(n_targ_node)) not in reachable and \
+                        cls._check_float_pos(cx, 1, phases, pos_cnt=pos_cnt):
+                    # Case 2
+                    cls._change_poly_phase(cx, 1, n_targ_node.poly_phase[0], pos_cnt=pos_cnt, history=change_history)
+                    cls._change_poly_phase(n_targ_node, 1, cx.poly_phase[0], pos_cnt=pos_cnt, history=change_history)
+
+                    c_targ_node, c_targ_qubit = n_targ_node, n_targ_qubit
+
+                elif id(n_targ_node) not in term_set and n_targ_node.gate_type == GateType.x and \
+                        cls._check_float_pos(cx, 1, phases, pos_cnt=pos_cnt):
+                    # Case 1
+                    cls._change_poly_phase(cx, 1, 1, pos_cnt=pos_cnt, history=change_history)
+                    cls._change_poly_phase(n_targ_node, 0, cx.poly_phase[0], pos_cnt=pos_cnt, history=change_history)
+
+                    c_targ_node, c_targ_qubit = n_targ_node, n_targ_qubit
+                else:
+                    break
+
+            for node_, qubit_, delta_ in reversed(change_history):
+                cls._change_poly_phase(node_, qubit_, delta_, pos_cnt=pos_cnt)
+
+        return False
+
+    @classmethod
+    def try_float_cancel_two_qubit_gates(cls, gates):
+        gates.reset_flag()
+        gates.set_qubit_loc()
+        for prev_node, succ_node, node_cnt in list(cls._enumerate_cnot_rz_circuit(gates)):
+            # the boundary given by enumerate_cnot_rz_circuit is described by internal node of
+            # the sub circuit, but PhasePolynomial and replace method need eternal boundary.
+            # This conversion is necessary because nodes in eternal boundary may change due to previous iteration.
+            for qubit_ in range(gates.width()):
+                if prev_node[qubit_] is not None:
+                    c_node, c_qubit = prev_node[qubit_]
+                    prev_node[qubit_] = c_node.predecessors[c_qubit]
+                    c_node, c_qubit = succ_node[qubit_]
+                    succ_node[qubit_] = c_node.successors[c_qubit]
+            # print('what')
+            if cls._try_float_cancel_sub_circuit(prev_node, succ_node):
+                # print('the')
+                return True
+            # print('fuck')
+        return False
+
+    @classmethod
     def gate_preserving_rewrite(cls, gates):
         """
-        TODO try cancelling
+        DONE try cancelling
         TODO check enumerate circuit
-        TODO undo replacement
+        DONE undo replacement
         """
         cnt = 0
-        for template in gate_preserving_rewrite_template:
-            cnt += template.replace_all(gates)
-        return 0
+        success = True
+        while success:
+            success = False
+            # print(success)
+            for template in gate_preserving_rewrite_template:
+                for node in gates.topological_sort():
+                    mapping = template.compare((node, -1))
+                    if not mapping:
+                        continue
+                    original, undo_mapping = template.regrettable_replace(mapping)
+                    # print('what')
+                    if cls.try_float_cancel_two_qubit_gates(gates):
+                        # print('the')
+                        cnt += cls.float_cancel_two_qubit_gates(gates)
+                        success = True
+                        break
+                        # return cnt
+                    else:
+                        # print('fuck')
+                        template.undo_replace(original, undo_mapping)
+                if success:
+                    print('success', cnt)
+                    break
+
+        return cnt
 
     @classmethod
     def gate_reducing_rewrite(cls, gates):
         cnt = 0
         for template in gate_reducing_rewrite_template:
             cnt += template.replace_all(gates) * template.weight
+        if cnt:
+            cnt += cls.float_cancel_two_qubit_gates(gates)
         return cnt
 
     @classmethod
     def float_rotations(cls, gates: DAG):
         cnt = 0
         cnt += cls.float_cancel_two_qubit_gates(gates)
-        cnt += cls.gate_reducing_rewrite(gates)
         cnt += cls.gate_preserving_rewrite(gates)
-        cnt += cls.float_cancel_two_qubit_gates(gates)
+        cnt += cls.gate_reducing_rewrite(gates)
         return cnt
 
     @classmethod
@@ -866,6 +1023,7 @@ class AutoOptimization(Optimization):
         gate_cnt = 0
         round_cnt = 0
         total_time = 0
+
         while True:
             round_cnt += 1
             if verbose:

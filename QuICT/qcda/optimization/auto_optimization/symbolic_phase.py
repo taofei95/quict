@@ -41,13 +41,16 @@ class SymbolicPhase:
 
     def copy(self):
         ret = SymbolicPhase()
-        ret.var_dict = self.var_dict.copy()
+        for k, v in self.var_dict.items():
+            ret.var_dict[k] = v.copy()
         ret.const = self.const
         return ret
 
     def evaluate(self):
         ret = self.const
         for var, coef in self.var_dict.values():
+            if np.isclose(coef, 0):
+                continue
             if var.phase is None:
                 return float('inf')
             ret += var.phase * coef

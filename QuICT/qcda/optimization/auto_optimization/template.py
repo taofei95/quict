@@ -18,8 +18,11 @@ class OptimizingTemplate:
     def compare(self, other: Tuple[DAG.Node, int], flag_enabled=False):
         return self.template.compare_circuit(other, self.anchor, flag_enabled)
 
+    def get_replacement(self, mapping):
+        return self.replacement.copy()
+
     def replace(self, mapping: Dict[int, DAG.Node]):
-        replacement = self.replacement.copy()
+        replacement = self.get_replacement(mapping)
         new_mapping = {}
         for qubit_ in range(replacement.width()):
             t_node, t_qubit = self.template.start_nodes[qubit_].successors[0]
@@ -32,6 +35,53 @@ class OptimizingTemplate:
             r_node = replacement.end_nodes[qubit_]
             new_mapping[id(r_node)] = (s_node, s_qubit)
         DAG.replace_circuit(new_mapping, replacement)
+
+    def regrettable_replace(self, mapping: Dict[int, DAG.Node]):
+        replacement = self.get_replacement(mapping)
+        original = DAG(Circuit(replacement.width()))
+
+        new_mapping = {}
+        undo_mapping = {}
+        for qubit_ in range(replacement.width()):
+            t_node, t_qubit = self.template.start_nodes[qubit_].successors[0]
+            p_node, p_qubit = mapping[id(t_node)].predecessors[t_qubit]
+            r_node = replacement.start_nodes[qubit_]
+            new_mapping[id(r_node)] = (p_node, p_qubit)
+            undo_mapping[id(original.start_nodes[qubit_])] = (p_node, p_qubit)
+
+            t_node, t_qubit = self.template.end_nodes[qubit_].predecessors[0]
+            s_node, s_qubit = mapping[id(t_node)].successors[t_qubit]
+            r_node = replacement.end_nodes[qubit_]
+            new_mapping[id(r_node)] = (s_node, s_qubit)
+            undo_mapping[id(original.end_nodes[qubit_])] = (s_node, s_qubit)
+
+        DAG.replace_circuit(new_mapping, replacement, erase_old=False)
+
+        for qubit_ in range(replacement.width()):
+            t_node, t_qubit = self.template.start_nodes[qubit_].successors[0]
+            t_node = mapping[id(t_node)]
+            original.start_nodes[qubit_].connect(0, t_qubit, t_node)
+
+            t_node, t_qubit = self.template.end_nodes[qubit_].predecessors[0]
+            t_node = mapping[id(t_node)]
+            t_node.connect(t_qubit, 0, original.end_nodes[qubit_])
+
+        return original, undo_mapping
+
+        # original = DAG.copy_sub_circuit(prev_node, succ_node)
+        # undo_mapping = {}
+        # for qubit_ in range(replacement.width()):
+        #     t_node = replacement.start_nodes[qubit_]
+        #     o_node = original.start_nodes[qubit_]
+        #     undo_mapping[id(o_node)] = new_mapping[id(t_node)]
+        #
+        #     t_node = replacement.end_nodes[qubit_]
+        #     o_node = original.end_nodes[qubit_]
+        #     undo_mapping[id(o_node)] = new_mapping[id(t_node)]
+
+    @staticmethod
+    def undo_replace(original, undo_mapping):
+        DAG.replace_circuit(undo_mapping, original)
 
     def replace_all(self, dag: DAG):
         dag.reset_flag()
@@ -58,24 +108,26 @@ class ParameterizedTemplate(OptimizingTemplate):
         self.rz_list = list(filter(lambda g: g.gate_type == GateType.rz, template.topological_sort()))
         self.param_order = list(range(len(self.rz_list))) if param_order is None else param_order
 
-    def replace(self, mapping: Dict[int, DAG.Node]):
+    def get_replacement(self, mapping):
         replacement = self.replacement.copy()
         r_rz_list = list(filter(lambda g: g.gate_type == GateType.rz, replacement.topological_sort()))
         for idx, rz in zip(self.param_order, r_rz_list):
             rz.params = mapping[id(self.rz_list[idx])].params.copy()
+        return replacement
 
-        new_mapping = {}
-        for qubit_ in range(replacement.width()):
-            t_node, t_qubit = self.template.start_nodes[qubit_].successors[0]
-            p_node, p_qubit = mapping[id(t_node)].predecessors[t_qubit]
-            r_node = replacement.start_nodes[qubit_]
-            new_mapping[id(r_node)] = (p_node, p_qubit)
-
-            t_node, t_qubit = self.template.end_nodes[qubit_].predecessors[0]
-            s_node, s_qubit = mapping[id(t_node)].successors[t_qubit]
-            r_node = replacement.end_nodes[qubit_]
-            new_mapping[id(r_node)] = (s_node, s_qubit)
-        DAG.replace_circuit(new_mapping, replacement)
+    # def replace(self, mapping: Dict[int, DAG.Node]):
+    #     new_mapping = {}
+    #     for qubit_ in range(replacement.width()):
+    #         t_node, t_qubit = self.template.start_nodes[qubit_].successors[0]
+    #         p_node, p_qubit = mapping[id(t_node)].predecessors[t_qubit]
+    #         r_node = replacement.start_nodes[qubit_]
+    #         new_mapping[id(r_node)] = (p_node, p_qubit)
+    #
+    #         t_node, t_qubit = self.template.end_nodes[qubit_].predecessors[0]
+    #         s_node, s_qubit = mapping[id(t_node)].successors[t_qubit]
+    #         r_node = replacement.end_nodes[qubit_]
+    #         new_mapping[id(r_node)] = (s_node, s_qubit)
+    #     DAG.replace_circuit(new_mapping, replacement)
 
 
 def get_circuit_from_list(n_qubit, gate_list):

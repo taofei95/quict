@@ -373,7 +373,8 @@ class DAG(Iterable):
         return mapping
 
     @staticmethod
-    def replace_circuit(mapping: Dict[int, Tuple[Node, int]], replacement):
+    def replace_circuit(mapping: Dict[int, Tuple[Node, int]], replacement, erase_old=True):
+        # TODO check mem leak
         replacement: DAG
         erase_queue = deque()
         for qubit_ in range(replacement.width()):
@@ -384,7 +385,8 @@ class DAG(Iterable):
                 # TODO can we remove this if
                 continue
             p_node, p_qubit = mapping[id(replacement.start_nodes[qubit_])]
-            erase_queue.append(p_node.successors[p_qubit][0])
+            if erase_old:
+                erase_queue.append(p_node.successors[p_qubit][0])
 
             # place r_node after p_node
             p_node.connect(p_qubit, r_qubit, r_node)
@@ -402,16 +404,17 @@ class DAG(Iterable):
             # place s_node after r_node
             r_node.connect(r_qubit, s_qubit, s_node)
 
-        while len(erase_queue) > 0:
-            cur = erase_queue.popleft()
-            if cur is None or cur.flag == cur.FLAG_ERASED:
-                continue
-            for qubit_ in range(cur.size):
-                erase_queue.append(cur.successors[qubit_][0])
+        if erase_old:
+            while len(erase_queue) > 0:
+                cur = erase_queue.popleft()
+                if cur is None or cur.flag == cur.FLAG_ERASED:
+                    continue
+                for qubit_ in range(cur.size):
+                    erase_queue.append(cur.successors[qubit_][0])
 
-            cur.flag = cur.FLAG_ERASED
-            cur.predecessors = None
-            cur.successors = None
+                cur.flag = cur.FLAG_ERASED
+                cur.predecessors = None
+                cur.successors = None
 
     @staticmethod
     def _get_reachable_relation(node: Node, qubit_: int) -> Set[Tuple[Tuple[int, int], int]]:
