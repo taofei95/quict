@@ -291,7 +291,7 @@ def test_regrettable_replace():
 
 def test_random_circuit():
     n_qubit = 6
-    n_gate = 500
+    n_gate = 400
     n_iter = 5
 
     print(f'random ciruit test: {n_qubit} qubits, {n_gate} gates, {n_iter} iterations.')

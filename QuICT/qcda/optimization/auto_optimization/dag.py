@@ -156,6 +156,7 @@ class DAG(Iterable):
 
     @staticmethod
     def _build_ccx(gate_):
+        """CCX decomposition described in Nam et.al."""
         cgate = CompositeGate()
         with cgate:
             H & 2
@@ -190,9 +191,12 @@ class DAG(Iterable):
                 self.has_symbolic_rz = True
                 gate_list = self._build_ccx(gate_)
                 node_cnt += len(gate_list)
+
+                # create a new phase variable
                 var = SymbolicPhaseVariable(var_cnt)
                 var_cnt += 1
 
+                # represent phase of T/Tdg gates with this variable
                 for each in gate_list:
                     node = self.Node(each)
                     if node.gate_type == GateType.t:
@@ -336,10 +340,6 @@ class DAG(Iterable):
                 pred, qubit2 = node.predecessors[qubit_]
                 mapping[(id(node), qubit_)] = mapping[(id(pred), qubit2)]
                 node.qubit_loc[qubit_] = mapping[(id(node), qubit_)]
-            # if node.gate_type is not None:
-            #     # node.gate.affectArgs = node.qubit_loc
-            #     node.gate.cargs = node.qubit_loc[:node.gate.controls]
-            #     node.gate.targs = node.qubit_loc[node.gate.controls:]
 
             node.qubit_id = {qubit_: i for i, qubit_ in enumerate(node.qubit_loc)}
 

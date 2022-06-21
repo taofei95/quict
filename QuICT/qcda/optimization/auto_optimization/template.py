@@ -181,20 +181,6 @@ class ParameterizedTemplate(OptimizingTemplate):
             rz.params = mapping[id(self.rz_list[idx])].params.copy()
         return replacement
 
-    # def replace(self, mapping: Dict[int, DAG.Node]):
-    #     new_mapping = {}
-    #     for qubit_ in range(replacement.width()):
-    #         t_node, t_qubit = self.template.start_nodes[qubit_].successors[0]
-    #         p_node, p_qubit = mapping[id(t_node)].predecessors[t_qubit]
-    #         r_node = replacement.start_nodes[qubit_]
-    #         new_mapping[id(r_node)] = (p_node, p_qubit)
-    #
-    #         t_node, t_qubit = self.template.end_nodes[qubit_].predecessors[0]
-    #         s_node, s_qubit = mapping[id(t_node)].successors[t_qubit]
-    #         r_node = replacement.end_nodes[qubit_]
-    #         new_mapping[id(r_node)] = (s_node, s_qubit)
-    #     DAG.replace_circuit(new_mapping, replacement)
-
 
 def get_circuit_from_list(n_qubit, gate_list):
     circ = Circuit(n_qubit)
