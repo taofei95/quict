@@ -14,13 +14,6 @@ from .phase_poly import PhasePolynomial
 from .template import *
 import time
 
-DEBUG = False
-
-
-def d_print(*args):
-    if DEBUG:
-        print(*args)
-
 
 class AutoOptimization(Optimization):
     """
@@ -235,8 +228,6 @@ class AutoOptimization(Optimization):
 
     @classmethod
     def _traverse_cnot_rz_circuit(cls, anchor, flag_ofs=1):
-        d_print('=== enter traverse_cnot_rz_circuit ===')
-
         flag_unvisited = 0
         flag_visited = flag_ofs + 1
         flag_term = flag_ofs + 2
@@ -246,16 +237,12 @@ class AutoOptimization(Optimization):
         anchor_queue = deque(anchors.keys())
 
         term_node = {'predecessors': {}, 'successors': {}}
-        d_print('first traverse')
         while len(anchor_queue) > 0:
             anchor_qubit = anchor_queue.popleft()
-            d_print(f'\tanchor_q = {anchor_qubit}')
             for neighbors in ['predecessors', 'successors']:
-                d_print(f'\t\tneighbors = {neighbors}')
                 c_node = anchors[anchor_qubit]
                 c_node.qubit_flag[c_node.qubit_id[anchor_qubit]] = flag_visited
                 while True:
-                    d_print(f'\t\tc_node = {c_node.gate_type}')
                     p_node, p_qubit = getattr(c_node, neighbors)[c_node.qubit_id[anchor_qubit]]
                     if p_node.gate_type is None or p_node.gate_type not in [GateType.cx, GateType.x, GateType.rz]:
                         term_node[neighbors][anchor_qubit] = p_node
@@ -271,39 +258,25 @@ class AutoOptimization(Optimization):
                     c_node = p_node
 
         # left_bound = {}
-        d_print('second traverse')
         for neighbors in ['predecessors', 'successors']:
-            d_print(f'\tneighbors = {neighbors}')
             prune_queue = deque()
             for anchor_qubit, anchor_node in anchors.items():
-                d_print(f'\t\tanchor_q = {anchor_qubit}')
                 c_node = anchors[anchor_qubit]
                 # c_node.qubit_flag[c_node.qubit_id[anchor_qubit]] = flag_visited
 
                 while True:
-                    d_print(f'\t\tc_node = {c_node.gate_type}')
                     p_node, p_qubit = getattr(c_node, neighbors)[c_node.qubit_id[anchor_qubit]]
                     if p_node.qubit_flag[p_qubit] == flag_term:
-                        d_print(f'\t\t TERM: {p_node.gate_type}, {p_qubit}')
                         if id(p_node) != id(term_node[neighbors][anchor_qubit]):
                             prune_queue.append((p_node, p_qubit))
-                        # if anchor_qubit not in left_bound and neighbors == 'predecessors':
-                        #     left_bound[anchor_qubit] = (p_node, p_qubit)
                         break
 
-                    # if p_node.qubit_flag[p_qubit] != flag_visited or p_node.gate.qasm_name != 'cx':
-                    #     c_node = p_node
-                    #     continue
                     if p_node.gate_type == GateType.cx:
                         o_qubit = p_qubit ^ 1
                         if p_node.qubit_flag[o_qubit] != flag_visited:
-                            # assert p_node.qubit_flag[o_qubit] != flag_term, 'internal error'
                             if o_qubit == 1:  # target out of bound, skip
-                                # p_node.qubit_flag[p_qubit] = flag_skipped
                                 pass
                             else:  # control out of bound, terminate
-                                # print(p_node.gate, p_qubit)
-                                d_print(f'\tPRUNE: {p_node.gate_type}, {p_qubit}')
                                 p_node.qubit_flag[p_qubit] = flag_term
                                 prune_queue.append((p_node, p_qubit))
                                 break
@@ -312,10 +285,8 @@ class AutoOptimization(Optimization):
                     c_node = p_node
 
             while len(prune_queue) > 0:
-                d_print('\t<< one prune step >>')
                 c_node, c_qubit = prune_queue.popleft()
                 while True:
-                    d_print(f'\t\tc_node = {c_node.gate_type}')
                     p_node, p_qubit = getattr(c_node, neighbors)[c_qubit]
                     if id(p_node) == id(term_node[neighbors][p_node.qubit_loc[p_qubit]]):
                         break
@@ -331,26 +302,14 @@ class AutoOptimization(Optimization):
                                 prune_queue.append((p_node, o_qubit))
                     c_node, c_qubit = p_node, p_qubit
 
-                    # else:  # prune unreachable node
-                    #     p_node.qubit_flag[p_qubit] = p_node.FLAG_DEFAULT
-                    #     if p_node.gate is not None and p_node.gate.qasm_name == 'cx':
-                    #         if p_qubit == 0:
-                    #             p_node.qubit_flag[p_qubit ^ 1] = flag_ter_
-                    #         else:
-                    #             p_node.qubit_flag[p_qubit ^ 1] = p_node.FLAG_DEFAULT
-
         left_bound = {}
         anchors = {anchor.qubit_loc[0]: anchor, anchor.qubit_loc[1]: anchor}
         anchor_queue = deque(anchors.keys())
-        d_print('third traverse')
         while len(anchor_queue) > 0:
             anchor_qubit = anchor_queue.popleft()
-            d_print(f'\tanchor_q = {anchor_qubit}')
             for neighbors in ['predecessors', 'successors']:
-                d_print(f'\t\tneighbors = {neighbors}')
                 c_node = anchors[anchor_qubit]
                 while True:
-                    d_print(f'\t\tc_node = {c_node.gate_type}')
                     p_node, p_qubit = getattr(c_node, neighbors)[c_node.qubit_id[anchor_qubit]]
                     if p_node.qubit_flag[p_qubit] == flag_term:
                         if neighbors == 'predecessors':
@@ -370,22 +329,16 @@ class AutoOptimization(Optimization):
             if s_node.qubit_flag[s_qubit] != flag_term:
                 if id(s_node) not in edge_count:
                     edge_count[id(s_node)] = sum([f == flag_visited for f in s_node.qubit_flag])
-                    # o_qubit = s_qubit ^ 1
-                    # if s_node.gate.qasm_name == 'cx' and s_node.qubit_flag[o_qubit] != flag_vis_:
-                    #     edge_count[id(s_node)] -= 1
                 edge_count[id(s_node)] -= 1
                 if edge_count[id(s_node)] == 0:
-                    # d_print('---', node_.gate, '->', s_node.gate)
                     queue.append(s_node)
 
-        d_print('get sub circuit')
         node_list = []
         while len(queue) > 0:
             cur = queue.popleft()
             if cur.gate_type is not None and all([f == flag_visited for f in cur.qubit_flag]):
                 cur.flag = cur.FLAG_VISITED
                 node_list.append(cur)
-                d_print(f'\tcur = {cur.gate_type}')
             for c_qubit in range(cur.size):
                 if cur.qubit_flag[c_qubit] != flag_visited:
                     continue
@@ -394,13 +347,8 @@ class AutoOptimization(Optimization):
                     continue
                 if id(s_node) not in edge_count:
                     edge_count[id(s_node)] = sum([f == flag_visited for f in s_node.qubit_flag])
-                    # edge_count[id(s_node)] = s_node.size
-                    # o_qubit = s_qubit ^ 1
-                    # if s_node.gate.qasm_name == 'cx' and s_node.qubit_flag[o_qubit] != flag_vis_:
-                    #     edge_count[id(s_node)] -= 1
                 edge_count[id(s_node)] -= 1
                 if edge_count[id(s_node)] == 0:
-                    # d_print('---', cur.gate, '->', s_node.gate)
                     queue.append(s_node)
         return node_list
 
@@ -459,8 +407,6 @@ class AutoOptimization(Optimization):
         Returns:
             int: Number of gates reduced.
         """
-        if DEBUG:
-            gates.get_circuit().draw(filename='before_merge.jpg')
         gates.reset_flag()
         gates.set_qubit_loc()
         cnt = 0
@@ -468,15 +414,9 @@ class AutoOptimization(Optimization):
             if anchor_.gate_type != GateType.cx or anchor_.flag == anchor_.FLAG_VISITED:
                 continue
 
-            # mat_1 = SyntheticalUnitary.run(gates.get_circuit())
             node_list = cls._traverse_cnot_rz_circuit(anchor_, idx * 2)
             cnt += cls._parse_cnot_rz_circuit(node_list)
 
-            # mat_2 = SyntheticalUnitary.run(gates.get_circuit())
-            # assert np.allclose(mat_1, mat_2), 'mat_1 != mat_2'
-
-        if DEBUG:
-            gates.get_circuit().draw(filename='after_merge.jpg')
         return cnt
 
     @classmethod
@@ -631,17 +571,10 @@ class AutoOptimization(Optimization):
         gates.has_symbolic_rz = False
         return ret
 
-    @classmethod
-    def _debug_pos_list(cls, pos_list, phases):
-        for mono, val in phases.items():
-            if np.isclose(float(val), 0):
-                continue
-            assert len(pos_list[mono]) > 0
 
     @classmethod
     def _change_poly_phase(cls, node, qubit_, delta, pos_list=None, pos_cnt=None, history=None):
         cur = node.poly_phase[qubit_]
-        d_print('remove', cur >> 1)
         if pos_list:
             old = (node, qubit_, cur & 1)
             pos_list[cur >> 1].remove(old)
@@ -650,7 +583,6 @@ class AutoOptimization(Optimization):
 
         node.poly_phase[qubit_] ^= delta
         cur = node.poly_phase[qubit_]
-        d_print('add', cur >> 1)
         if pos_list:
             new = (node, qubit_, cur & 1)
             if cur >> 1 not in pos_list:
@@ -669,7 +601,6 @@ class AutoOptimization(Optimization):
         for qubit_ in range(node.size):
             cur = node.poly_phase[qubit_]
             old = (node, qubit_, cur & 1)
-            d_print('del', cur >> 1)
             pos_list[cur >> 1].remove(old)
 
     @classmethod
@@ -702,10 +633,6 @@ class AutoOptimization(Optimization):
 
         rz_cnt = 0
         for node_ in list(DAG.topological_sort_sub_circuit(prev_node, succ_node)):
-            # TODO remove assert
-            for qubit_ in node_.qubit_loc:
-                assert qubit_ in cur_phases, 'internal error'
-
             if node_.gate_type == GateType.cx:
                 cur_phases[node_.qubit_loc[1]] = cur_phases[node_.qubit_loc[1]] ^ cur_phases[node_.qubit_loc[0]]
                 node_.poly_phase = [cur_phases[node_.qubit_loc[0]], cur_phases[node_.qubit_loc[1]]]
@@ -745,7 +672,6 @@ class AutoOptimization(Optimization):
             c_ctrl_node, c_ctrl_qubit = cx, 0
             c_targ_node, c_targ_qubit = cx, 1
             while True:
-                assert cx.poly_phase[0] == c_ctrl_node.poly_phase[c_ctrl_qubit]
 
                 n_ctrl_node, n_ctrl_qubit = c_ctrl_node.successors[c_ctrl_qubit]
                 n_targ_node, n_targ_qubit = c_targ_node.successors[c_targ_qubit]
@@ -757,10 +683,8 @@ class AutoOptimization(Optimization):
 
                     success = True
 
-                    cls._debug_pos_list(pos_list, phases)
                     cls._delete_from_pos_list(n_ctrl_node, pos_list)
                     cls._delete_from_pos_list(cx, pos_list)
-                    cls._debug_pos_list(pos_list, phases)
 
                     n_ctrl_node.erase()
                     cx.erase()
@@ -773,7 +697,6 @@ class AutoOptimization(Optimization):
                         ((id(c_targ_node), c_targ_qubit), id(n_ctrl_node)) not in reachable:
                     # Case 3
                     c_ctrl_node, c_ctrl_qubit = n_ctrl_node, n_ctrl_qubit
-                    assert cx.poly_phase[0] == c_ctrl_node.poly_phase[c_ctrl_qubit]
 
                 elif id(n_targ_node) not in term_set and \
                         n_targ_node.gate_type == GateType.cx and \
@@ -781,24 +704,16 @@ class AutoOptimization(Optimization):
                         ((id(c_ctrl_node), c_ctrl_qubit), id(n_targ_node)) not in reachable and \
                         cls._check_float_pos(cx, 1, phases, pos_list=pos_list):
                     # Case 2
-                    d_print(n_targ_node.poly_phase, cx.poly_phase)
-                    assert cx.poly_phase[1] ^ n_targ_node.poly_phase[0] == n_targ_node.poly_phase[1]
                     cls._change_poly_phase(cx, 1, n_targ_node.poly_phase[0], pos_list=pos_list, history=change_history)
                     cls._change_poly_phase(n_targ_node, 1, cx.poly_phase[0], pos_list=pos_list, history=change_history)
-                    cls._debug_pos_list(pos_list, phases)
-                    assert cx.poly_phase[0] == c_ctrl_node.poly_phase[c_ctrl_qubit]
-                    d_print()
 
                     c_targ_node, c_targ_qubit = n_targ_node, n_targ_qubit
 
                 elif id(n_targ_node) not in term_set and n_targ_node.gate_type == GateType.x and \
                         cls._check_float_pos(cx, 1, phases, pos_list=pos_list):
                     # Case 1
-                    assert cx.poly_phase[0] == c_ctrl_node.poly_phase[c_ctrl_qubit]
                     cls._change_poly_phase(cx, 1, 1, pos_list=pos_list, history=change_history)
                     cls._change_poly_phase(n_targ_node, 0, cx.poly_phase[0], pos_list=pos_list, history=change_history)
-                    cls._debug_pos_list(pos_list, phases)
-                    assert cx.poly_phase[0] == c_ctrl_node.poly_phase[c_ctrl_qubit]
 
                     c_targ_node, c_targ_qubit = n_targ_node, n_targ_qubit
                 else:
@@ -807,16 +722,12 @@ class AutoOptimization(Optimization):
             if not success:
                 for node_, qubit_, delta_ in reversed(change_history):
                     cls._change_poly_phase(node_, qubit_, delta_, pos_list=pos_list)
-                    cls._debug_pos_list(pos_list, phases)
-            else:
-                d_print('success')
 
         # put back Rz
         for mono, phase in phases.items():
             if np.isclose(float(phase), 0):
                 continue
             rz_cnt -= 1
-            # print(mono, len(pos_list[mono]))
             c_node, c_qubit, sign = pos_list[mono][0]
             r_node = DAG.Node(Rz(0) & c_node.qubit_loc[c_qubit])
             r_node.params = [phase if sign == 0 else -phase]
@@ -975,11 +886,9 @@ class AutoOptimization(Optimization):
                     prev_node[qubit_] = c_node.predecessors[c_qubit]
                     c_node, c_qubit = succ_node[qubit_]
                     succ_node[qubit_] = c_node.successors[c_qubit]
-            # print('what')
             if cls._try_float_cancel_sub_circuit(prev_node, succ_node):
-                # print('the')
                 return True
-            # print('fuck')
+
         return False
 
     @classmethod
@@ -996,25 +905,20 @@ class AutoOptimization(Optimization):
         success = True
         while success:
             success = False
-            # print(success)
             for template in gate_preserving_rewrite_template:
                 for node in gates.topological_sort():
                     mapping = template.compare((node, -1))
                     if not mapping:
                         continue
                     original, undo_mapping = template.regrettable_replace(mapping)
-                    # print('what')
+
                     if cls.try_float_cancel_two_qubit_gates(gates):
-                        # print('the')
                         cnt += cls.float_cancel_two_qubit_gates(gates)
                         success = True
                         break
-                        # return cnt
                     else:
-                        # print('fuck')
                         template.undo_replace(original, undo_mapping)
                 if success:
-                    print('success', cnt)
                     break
 
         return cnt

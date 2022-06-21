@@ -87,7 +87,6 @@ class DAG(Iterable):
             """
             u_id = self.qubit_id[qubit_]
             v_id = node.qubit_id[qubit_]
-            # print(u_id, v_id, self.size)
             self.successors[u_id] = (node, v_id)
             node.predecessors[v_id] = (self, u_id)
 
@@ -193,21 +192,17 @@ class DAG(Iterable):
                 node_cnt += len(gate_list)
                 var = SymbolicPhaseVariable(var_cnt)
                 var_cnt += 1
-                # print('---', id(var))
 
                 for each in gate_list:
                     node = self.Node(each)
                     if node.gate_type == GateType.t:
                         node.gate_type = GateType.rz
                         node.params = [SymbolicPhase() + var]
-                        # print(self.global_phase)
                         self.global_phase += var / 2
-                        # print(id(node.params[0].var_dict[var_cnt-1][0]))
                     elif node.gate_type == GateType.tdg:
                         node.gate_type = GateType.rz
                         node.params = [SymbolicPhase() - var]
                         self.global_phase -= var / 2
-                        # print(id(node.params[0].var_dict[var_cnt - 1][0]))
 
                     for qubit_ in list(chain(each.cargs, each.targs)):
                         cur_nodes[qubit_].add_forward_edge(qubit_, node)
@@ -235,7 +230,6 @@ class DAG(Iterable):
         circ = Circuit(self._width)
         mapping = {(id(node), 0): qubit_ for qubit_, node in enumerate(self.start_nodes)}
         for node in self.topological_sort():
-            # print(node.gate.qasm_name)
             for qubit_ in range(node.size):
                 pred, qubit2 = node.predecessors[qubit_]
                 mapping[(id(node), qubit_)] = mapping[(id(pred), qubit2)]
