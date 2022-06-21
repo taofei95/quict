@@ -40,6 +40,12 @@ class SymbolicPhase:
         self.const = 0
 
     def copy(self):
+        """
+        Get a copy of this SymbolicPhase.
+
+        Returns:
+            SymbolicPhase: a copy
+        """
         ret = SymbolicPhase()
         for k, v in self.var_dict.items():
             ret.var_dict[k] = v.copy()
@@ -47,6 +53,13 @@ class SymbolicPhase:
         return ret
 
     def evaluate(self):
+        """
+        Evaluate the value of this SymbolicPhase.
+        If it contains any undetermined variable, it will return float('inf').
+
+        Returns:
+            float: value of this SymbolicPhase
+        """
         ret = self.const
         for var, coef in self.var_dict.values():
             if np.isclose(coef, 0):

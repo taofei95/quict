@@ -18,13 +18,6 @@ class DAG(Iterable):
     DAG representation of a quantum circuit that indicates the commutative
     relations between gates. Iterate over a DAG will gate a sequence of
     BasicGate's in topological order.
-
-    DONE converter between netlist and DAG
-    DONE topological sort
-    DONE sub circuit enumeration
-    TODO weak ref needed
-    DONE need to distinguish interfaces of a multi qubit gate
-    TODO refactor flag system
     """
 
     class Node:
@@ -55,9 +48,12 @@ class DAG(Iterable):
             self.qubit_loc = [qubit_] if gate_ is None else list(chain(gate_.cargs, gate_.targs))
             # inverse mapping of self.qubit_loc
             self.qubit_id = {qubit_: 0} if gate_ is None else {qubit_: i for i, qubit_ in enumerate(self.qubit_loc)}
+
             self.size = len(self.qubit_id)
             self.predecessors: List[Tuple[DAG.Node, int]] = [(None, 0)] * self.size
             self.successors: List[Tuple[DAG.Node, int]] = [(None, 0)] * self.size
+
+            # temp variables used for optimization algorithms
             self.qubit_flag = [self.FLAG_DEFAULT] * self.size
             self.flag = self.FLAG_DEFAULT
             self.poly_phase = None
@@ -72,6 +68,12 @@ class DAG(Iterable):
             self._params = args
 
         def get_gate(self):
+            """
+            Get a copy of corresponding gate of the node
+
+            Returns:
+                BasicGate: corresponding gate
+            """
             return GATE_TYPE_TO_CLASS[self.gate_type](*self.params) & self.qubit_loc \
                 if self.gate_type is not None else None
 
@@ -103,7 +105,12 @@ class DAG(Iterable):
 
         def append(self, forward_qubit, backward_qubit, node):
             """
-            TODO add docstring
+            Insert a (node, backward_qubit) after (self, forward_qubit)
+
+            Args:
+                forward_qubit(int): the wire this edge points from
+                backward_qubit(int): the wire this edge points to
+                node(DAG.Node):  the node this edge points to
             """
             s_node, s_qubit = self.successors[forward_qubit]
             self.connect(forward_qubit, backward_qubit, node)
@@ -123,7 +130,6 @@ class DAG(Iterable):
                     p_node.connect(p_qubit, n_qubit, n_node)
                 elif n_node:
                     n_node.predecessors[qubit_] = (None, 0)
-            # FIXME: the following assignment causes runtime error
             self.predecessors = None
             self.successors = None
 
@@ -245,7 +251,7 @@ class DAG(Iterable):
         Iterate over nodes in this DAG in topological order (ignore start nodes)
 
         Returns:
-            Iterator[DAG.Node]: gates in topological order
+            Iterator[DAG.Node]: nodes in topological order
         """
 
         edge_count = {}
@@ -265,7 +271,12 @@ class DAG(Iterable):
 
     @staticmethod
     def topological_sort_sub_circuit(prev_node, succ_node):
-        # TODO review edge cases that one income node is not in prev_node
+        """
+        Sort the sub circuit between prev_node and succ_node in topological order.
+
+        Returns:
+            Iterator[DAG.Node]: nodes in topological order
+        """
         end_set = set()
         for node_, qubit_ in filter(lambda x: x is not None, succ_node):
             end_set.add(id(node_))
@@ -300,6 +311,9 @@ class DAG(Iterable):
                     queue.append(nxt)
 
     def reset_flag(self):
+        """
+        Set flag of all nodes to FLAG_DEFAULT
+        """
         for node in self.start_nodes:
             node.flag = node.FLAG_DEFAULT
             node.qubit_flag = [node.FLAG_DEFAULT] * node.size
@@ -311,6 +325,10 @@ class DAG(Iterable):
             node.qubit_flag = [node.FLAG_DEFAULT] * node.size
 
     def set_qubit_loc(self):
+        """
+        Update qubit_loc of all nodes.
+        """
+
         mapping = {(id(node), 0): qubit_ for qubit_, node in enumerate(self.start_nodes)}
         for i, node in enumerate(self.start_nodes):
             node.qubit_loc[0] = i
@@ -332,6 +350,22 @@ class DAG(Iterable):
             node.qubit_id = {qubit_: i for i, qubit_ in enumerate(node.qubit_loc)}
 
     def compare_circuit(self, other: Tuple[Node, int], anchor_qubit: int, flag_enabled: bool = False):
+        """
+        Compare this circuit with another circuit.
+        This circuit starts from the first gate on the `anchor_qubit`.
+        The other starts from (gate, wire) defined by variable `other`.
+
+        Args:
+            other(Tuple[Node, int]): start point of the other circuit
+            anchor_qubit(int): start point of this circuit.
+            flag_enabled(bool): Whether consider `flag` field. If true,
+                nodes already with FLAG_VISITED will be
+                skipped. Nodes in the matching will be set FLAG_VISITED.
+
+        Returns:
+            Dict[int, DAG.Node]: mapping from id(node of this circuit) to
+                matched node in the other circuit. If not matched, return None.
+        """
 
         t_node, t_qubit = self.start_nodes[anchor_qubit].successors[0]
         o_node, o_qubit = other[0], (t_qubit if other[1] == -1 else other[1])
@@ -374,7 +408,14 @@ class DAG(Iterable):
 
     @staticmethod
     def replace_circuit(mapping: Dict[int, Tuple[Node, int]], replacement, erase_old=True):
-        # TODO check mem leak
+        """
+        Replace a part of this DAG with `replacement` defined by `mapping`.
+
+        Args:
+            mapping(Dict[int, Tuple[Node, int]]): mapping from the replacement to this circuit
+            replacement: new sub circuit
+            erase_old: whether erase old circuit
+        """
         replacement: DAG
         erase_queue = deque()
         for qubit_ in range(replacement.width()):
@@ -434,6 +475,12 @@ class DAG(Iterable):
         return reachable
 
     def get_reachable_relation(self) -> Set[Tuple[Tuple[int, int], int]]:
+        """
+        Get reachable relation of nodes, namely whether (node A, wire) can reach the other node B.
+
+        Returns:
+            Set[Tuple[Tuple[int, int], int]]: Reachable relation ((id(A), wire), id(B))
+        """
         reachable = set()
         for each in self.topological_sort(include_dummy=True):
             for qubit_ in range(each.size):
@@ -459,6 +506,20 @@ class DAG(Iterable):
 
     @classmethod
     def get_sub_circuit_reachable_relation(cls, prev_node, succ_node):
+        """
+        Get reachable relation of nodes in the sub circuit,
+        namely whether (node A, wire) can reach node B.
+
+        If prev_node[i] and succ_node[i] is None, the sub circuit does not contain qubit i.
+
+        Args:
+            prev_node(List[Tuple[DAG.Node, int]]): left bound of the sub circuit.
+            succ_node(List[Tuple[DAG.Node, int]]): right bound of the sub circuit.
+
+        Returns:
+            Set[Tuple[Tuple[int, int], int]]: Reachable relation ((id(A), wire), id(B))
+
+        """
         term_set = set()
         for node_, qubit_ in filter(lambda x: x is not None, succ_node):
             term_set.add(id(node_))
@@ -470,6 +531,12 @@ class DAG(Iterable):
         return reachable
 
     def append(self, gate_: BasicGate):
+        """
+        Add a gate after this DAG.
+
+        Args:
+            gate_(BasicGate): gate to add
+        """
         node_ = self.Node(gate_)
         for wire_, qubit_ in enumerate(node_.qubit_loc):
             p_node, p_qubit = self.end_nodes[qubit_].predecessors[0]
@@ -480,12 +547,27 @@ class DAG(Iterable):
             self.end_nodes[qubit_].predecessors[0] = (node_, wire_)
 
     def extend(self, gates: List[BasicGate]):
-        # TODO test it
+        """
+        Add a list of gates after this DAG
+
+        Args:
+            gates(List[BasicGate]): gates to add
+        """
         for each in gates:
             self.append(each)
 
     @staticmethod
     def copy_sub_circuit(prev_node: List[Tuple[Node, int]], succ_node: List[Tuple[Node, int]]):
+        """
+        Get a copy of a sub circuit.
+
+        Args:
+            prev_node(List[Tuple[DAG.Node, int]]): left bound of the sub circuit.
+            succ_node(List[Tuple[DAG.Node, int]]): right bound of the sub circuit.
+
+        Returns:
+            DAG: a copy of the sub circuit
+        """
         circ = Circuit(len(prev_node))
         for node in DAG.topological_sort_sub_circuit(prev_node, succ_node):
             node.get_gate() | circ(node.qubit_loc)
@@ -503,10 +585,18 @@ class DAG(Iterable):
             yield node.get_gate()
 
     def copy(self):
-        # TODO faster implementation of copy()
+        """
+        Get a copy of this circuit
+
+        Returns:
+            DAG: a copy
+        """
         return DAG(self.get_circuit())
 
     def destroy(self):
+        """
+        Destroy this DAG.
+        """
         que = deque(self.start_nodes)
         while len(que) > 0:
             cur = que.popleft()

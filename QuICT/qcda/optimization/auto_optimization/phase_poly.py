@@ -10,10 +10,6 @@ class PhasePolynomial:
     """
     Phase polynomial representation of a quantum circuit that only contains
     X, CX and Rz gates.
-
-    DONE circuit -> phase poly
-    DONE phase ploy -> circuit
-    DONE maybe use DAG?
     """
     def __init__(self, gates):
         """

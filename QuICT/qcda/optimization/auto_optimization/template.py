@@ -7,8 +7,19 @@ from .dag import DAG
 
 
 class OptimizingTemplate:
+    """
+    Circuit template used in AutoOptimization.
+    """
     def __init__(self, template: DAG, replacement: DAG = None,
                  anchor: int = 0, weight: int = 1, phase: float = 0):
+        """
+        Args:
+            template(DAG): template circuit
+            replacement(DAG): replacement circuit
+            anchor(int): starting qubit of comparison with `template`
+            weight(int): weight of this template
+            phase(float): global phase. exp(`phase` * pi) * `replacement` == `template`
+        """
         self.template = template
         self.replacement = replacement
         self.anchor = anchor
@@ -16,12 +27,42 @@ class OptimizingTemplate:
         self.phase = phase
 
     def compare(self, other: Tuple[DAG.Node, int], flag_enabled=False):
+        """
+        Compare the other circuit with template.
+        This circuit will start from the first gate on qubit `anchor`.
+        The other circuit will start from (node, wire) defined by `other`.
+
+        Args:
+            other: the start point of the other circuit
+            flag_enabled(bool): Whether consider `flag` field. If true,
+                nodes already with FLAG_VISITED will be
+                skipped. Nodes in the matching will be set FLAG_VISITED.
+
+        Returns:
+            Dict[int, DAG.Node]: mapping from id(node of this circuit) to
+                matched node in the other circuit. If not matched, return None.
+        """
         return self.template.compare_circuit(other, self.anchor, flag_enabled)
 
     def get_replacement(self, mapping):
+        """
+        Get a copy of replacement circuit.
+
+        Args:
+            mapping(Dict[int, DAG.Node]): the mapping found by `compare` method.
+        Returns:
+            DAG: a copy of replacement.
+        """
         return self.replacement.copy()
 
     def replace(self, mapping: Dict[int, DAG.Node]):
+        """
+        Replace by `mapping`.
+
+        Args:
+            mapping(Dict[int, DAG.Node]): mapping from id(template node) to
+                the matched node in the original circuit.
+        """
         replacement = self.get_replacement(mapping)
         new_mapping = {}
         for qubit_ in range(replacement.width()):
@@ -37,6 +78,17 @@ class OptimizingTemplate:
         DAG.replace_circuit(new_mapping, replacement)
 
     def regrettable_replace(self, mapping: Dict[int, DAG.Node]):
+        """
+        Replace by `mapping`, but can undo later.
+
+        Args:
+            mapping(Dict[int, DAG.Node]): mapping from id(template node) to
+                the matched node in the original circuit.
+        Returns:
+            Tuple[DAG, Dict[int, Tuple[DAG.Node, int]]]: (old circuit, mapping).
+                Information needed to undo the replacing.
+        """
+
         replacement = self.get_replacement(mapping)
         original = DAG(Circuit(replacement.width()))
 
@@ -68,22 +120,25 @@ class OptimizingTemplate:
 
         return original, undo_mapping
 
-        # original = DAG.copy_sub_circuit(prev_node, succ_node)
-        # undo_mapping = {}
-        # for qubit_ in range(replacement.width()):
-        #     t_node = replacement.start_nodes[qubit_]
-        #     o_node = original.start_nodes[qubit_]
-        #     undo_mapping[id(o_node)] = new_mapping[id(t_node)]
-        #
-        #     t_node = replacement.end_nodes[qubit_]
-        #     o_node = original.end_nodes[qubit_]
-        #     undo_mapping[id(o_node)] = new_mapping[id(t_node)]
-
     @staticmethod
     def undo_replace(original, undo_mapping):
+        """
+        Undo replacing.
+
+        Args:
+            original(DAG): return value of `regrettable_replace`
+            undo_mapping(Dict[int, Tuple[DAG.Node, int]]): return value of `regrettable_replace`
+        """
         DAG.replace_circuit(undo_mapping, original)
 
     def replace_all(self, dag: DAG):
+        """
+        Find all `template` in the `dag` and replace them with `replacement`.
+
+        Args:
+            dag(DAG): circuit to replace.
+        """
+
         dag.reset_flag()
 
         matched = []
@@ -101,6 +156,9 @@ class OptimizingTemplate:
 
 
 class ParameterizedTemplate(OptimizingTemplate):
+    """
+    Circuit template with Rz gates.
+    """
     def __init__(self, template: DAG, replacement: DAG = None,
                  anchor: int = 0, weight: int = 1, phase: float = 0, param_order: List[int] = None):
         super().__init__(template, replacement, anchor, weight, phase)
@@ -109,6 +167,14 @@ class ParameterizedTemplate(OptimizingTemplate):
         self.param_order = list(range(len(self.rz_list))) if param_order is None else param_order
 
     def get_replacement(self, mapping):
+        """
+        Get a copy of circuit `replacement`. Set Rz phases in the copy by `param_order`.
+
+        Args:
+            mapping(Dict[int, DAG.Node]): the mapping found by `compare` method.
+        Returns:
+            DAG: a copy of replacement.
+        """
         replacement = self.replacement.copy()
         r_rz_list = list(filter(lambda g: g.gate_type == GateType.rz, replacement.topological_sort()))
         for idx, rz in zip(self.param_order, r_rz_list):

@@ -35,7 +35,7 @@ class AutoOptimization(Optimization):
         1: "reduce_hadamard_gates",
         2: "cancel_single_qubit_gates",
         3: "cancel_two_qubit_gates",
-        4: "merge_rotations_upd",
+        4: "merge_rotations",
         5: "float_rotations",
     }
     _optimize_routine = {
@@ -45,6 +45,15 @@ class AutoOptimization(Optimization):
 
     @classmethod
     def parameterize_all(cls, gates: DAG):
+        """
+        Convert all applicable Rz gates into T/Tdg/S/Sdg/Z in the circuit.
+
+        Args:
+            gates(DAG): DAG of the circuit
+
+        Returns:
+            int: Number of gates reduced.
+        """
         for node in gates.topological_sort():
             if node.gate_type in [GateType.s, GateType.t, GateType.sdg, GateType.tdg, GateType.z]:
                 gate_, phase_ = CommutativeOptimization.parameterize(node.get_gate())
@@ -60,6 +69,15 @@ class AutoOptimization(Optimization):
 
     @classmethod
     def deparameterize_all(cls, gates: DAG):
+        """
+        Convert all applicable T/Tdg/S/Sdg/Z into Rz in the circuit.
+
+        Args:
+            gates(DAG): DAG of the circuit
+
+        Returns:
+            int: Number of gates reduced.
+        """
         for node in gates.topological_sort():
             if node.gate_type == GateType.rz and not isinstance(node.params[0], SymbolicPhase):
                 compo_gate_, phase_ = CommutativeOptimization.deparameterize(node.get_gate())
@@ -83,6 +101,8 @@ class AutoOptimization(Optimization):
 
         Args:
             gates(DAG): DAG of the circuit
+        Returns:
+            int: Number of H gates reduced.
         """
         cnt = 0
         cls.deparameterize_all(gates)
@@ -98,6 +118,8 @@ class AutoOptimization(Optimization):
         Merge Rz gates in Clifford+Rz circuit.
         Args:
             gates(DAG): DAG of the circuit
+        Returns:
+            int: Number of gates reduced.
         """
         cnt = 0
         for node in list(gates.topological_sort()):
@@ -122,7 +144,6 @@ class AutoOptimization(Optimization):
 
                 # if n_node is another rz, merge and erase the original node
                 if n_node.gate_type == node.gate_type:
-                    # TODO var_phase
                     n_node.params[0] = n_node.params[0] + node.params[0]
                     node.erase()
                     cnt += 1
@@ -146,9 +167,12 @@ class AutoOptimization(Optimization):
     @classmethod
     def cancel_two_qubit_gates(cls, gates: DAG):
         """
-        Merge CNOT gate in Clifford+Rz circuit.
+        Merge CX gate in Clifford+Rz circuit.
+
         Args:
             gates(DAG): DAG of the circuit
+        Returns:
+            int: Number of gates reduced.
         """
         cnt = 0
         reachable = gates.get_reachable_relation()
@@ -426,7 +450,15 @@ class AutoOptimization(Optimization):
         return cnt
 
     @classmethod
-    def merge_rotations_upd(cls, gates: DAG):
+    def merge_rotations(cls, gates: DAG):
+        """
+        Merge Rz gates using phase polynomials.
+
+        Args:
+            gates(DAG): DAG of the circuit
+        Returns:
+            int: Number of gates reduced.
+        """
         if DEBUG:
             gates.get_circuit().draw(filename='before_merge.jpg')
         gates.reset_flag()
@@ -554,45 +586,15 @@ class AutoOptimization(Optimization):
             yield bound['predecessors'], bound['successors'], len(visited_node)
 
     @classmethod
-    def merge_rotations(cls, gates: DAG):
-        cnt = 0
-        for prev_node, succ_node, node_cnt in list(cls._enumerate_cnot_rz_circuit(gates)):
-            # the boundary given by enumerate_cnot_rz_circuit is described by internal node of
-            # the sub circuit, but PhasePolynomial and replace method need eternal boundary.
-            # This conversion is necessary because nodes in eternal boundary may change due to previous iteration.
-            for qubit_ in range(gates.width()):
-                if prev_node[qubit_] is not None:
-                    c_node, c_qubit = prev_node[qubit_]
-                    prev_node[qubit_] = c_node.predecessors[c_qubit]
-                    c_node, c_qubit = succ_node[qubit_]
-                    succ_node[qubit_] = c_node.successors[c_qubit]
-
-            # extract the sub circuit
-            sub_circ = DAG.copy_sub_circuit(prev_node, succ_node)
-
-            # calculate the phase poly and simplify it
-            phase_poly = PhasePolynomial(sub_circ)
-            circ = phase_poly.get_circuit()
-
-            assert circ.size() <= node_cnt, 'phase polynomial increases gate count'
-            cnt += node_cnt - circ.size()
-            replacement = DAG(circ)
-
-            # calculate node mapping: replacement -> circuit
-            mapping = {}
-            for qubit_ in range(gates.width()):
-                if not prev_node[qubit_] or not succ_node[qubit_]:
-                    continue
-                mapping[id(replacement.start_nodes[qubit_])] = prev_node[qubit_]
-                mapping[id(replacement.end_nodes[qubit_])] = succ_node[qubit_]
-
-            DAG.replace_circuit(mapping, replacement)
-            sub_circ.destroy()
-
-        return cnt
-
-    @classmethod
     def assign_symbolic_phases(cls, gates: DAG):
+        """
+        Assign polarity to undetermined T gates in the circuit. Do it greedily to reduce gate count.
+
+        Args:
+            gates(DAG): DAG of the circuit
+        Returns:
+            int: Number of gates reduced.
+        """
         if not gates.has_symbolic_rz:
             return 0
 
@@ -823,6 +825,14 @@ class AutoOptimization(Optimization):
 
     @classmethod
     def float_cancel_two_qubit_gates(cls, gates):
+        """
+        Merge CX gates in the circuit while considering float positions of Rz gates.
+
+        Args:
+            gates(DAG): DAG of the circuit
+        Returns:
+            int: Number of gates reduced.
+        """
         gates.reset_flag()
         gates.set_qubit_loc()
         cnt = 0
@@ -944,6 +954,15 @@ class AutoOptimization(Optimization):
 
     @classmethod
     def try_float_cancel_two_qubit_gates(cls, gates):
+        """
+        Test whether float_cancel_two_qubit_gates can reduce gate count in the current circuit.
+
+        Args:
+            gates(DAG): DAG of the circuit
+        Returns:
+            bool: whether float_cancel_two_qubit_gates can reduce gate count
+        """
+
         gates.reset_flag()
         gates.set_qubit_loc()
         for prev_node, succ_node, node_cnt in list(cls._enumerate_cnot_rz_circuit(gates)):
@@ -966,9 +985,12 @@ class AutoOptimization(Optimization):
     @classmethod
     def gate_preserving_rewrite(cls, gates):
         """
-        DONE try cancelling
-        TODO check enumerate circuit
-        DONE undo replacement
+        Reduce gate count by gate preserving rewrite rules.
+
+        Args:
+            gates(DAG): DAG of the circuit
+        Returns:
+            int: Number of gates reduced.
         """
         cnt = 0
         success = True
@@ -999,6 +1021,14 @@ class AutoOptimization(Optimization):
 
     @classmethod
     def gate_reducing_rewrite(cls, gates):
+        """
+        Reduce gate count by gate reducing rewrite rules.
+
+        Args:
+            gates(DAG): DAG of the circuit
+        Returns:
+            int: Number of gates reduced.
+        """
         cnt = 0
         for template in gate_reducing_rewrite_template:
             cnt += template.replace_all(gates) * template.weight
@@ -1008,6 +1038,14 @@ class AutoOptimization(Optimization):
 
     @classmethod
     def float_rotations(cls, gates: DAG):
+        """
+        Reduce gate count by considering float positions of Rz gates.
+
+        Args:
+            gates(DAG): DAG of the circuit
+        Returns:
+            int: Number of gates reduced.
+        """
         cnt = 0
         cnt += cls.float_cancel_two_qubit_gates(gates)
         cnt += cls.gate_preserving_rewrite(gates)
@@ -1017,7 +1055,6 @@ class AutoOptimization(Optimization):
     @classmethod
     def _execute(cls, gates, routine: List[int], verbose):
         _gates = DAG(gates)
-        # _gates.get_circuit().draw(filename='decompose.jpg')
         cls.parameterize_all(_gates)
 
         gate_cnt = 0
@@ -1070,6 +1107,7 @@ class AutoOptimization(Optimization):
     def execute(cls, gates, mode='light', verbose=False):
         """
         Heuristic optimization of circuits in Clifford + Rz.
+        Heavy mode has not reached desired performance yet.
 
         Args:
               gates(Circuit): Circuit to be optimized
