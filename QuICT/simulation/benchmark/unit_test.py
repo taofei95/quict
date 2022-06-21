@@ -1,5 +1,4 @@
-from QuICT.simulation.cpu_simulator import CircuitSimulator
-from .benchmarks import Benchmarks
+from .benchmark_run import quict_sim, qiskit_sim
 
 
 def test_qft():
