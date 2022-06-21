@@ -262,7 +262,6 @@ class AutoOptimization(Optimization):
             prune_queue = deque()
             for anchor_qubit, anchor_node in anchors.items():
                 c_node = anchors[anchor_qubit]
-                # c_node.qubit_flag[c_node.qubit_id[anchor_qubit]] = flag_visited
 
                 while True:
                     p_node, p_qubit = getattr(c_node, neighbors)[c_node.qubit_id[anchor_qubit]]
@@ -280,8 +279,6 @@ class AutoOptimization(Optimization):
                                 p_node.qubit_flag[p_qubit] = flag_term
                                 prune_queue.append((p_node, p_qubit))
                                 break
-                                # if neighbors == 'predecessors':
-                                #     left_bound[anchor_qubit] = (p_node, p_qubit)
                     c_node = p_node
 
             while len(prune_queue) > 0:
@@ -296,7 +293,6 @@ class AutoOptimization(Optimization):
                         if p_node.qubit_flag[o_qubit] == flag_visited:
                             if o_qubit == 0:
                                 pass
-                                # p_node.qubit_flag[o_qubit] = flag_skipped
                             else:
                                 p_node.qubit_flag[o_qubit] = flag_term
                                 prune_queue.append((p_node, o_qubit))
@@ -359,11 +355,6 @@ class AutoOptimization(Optimization):
         cur_phases = {}
 
         for node_ in node_list:
-            # if node_.flag != node_.FLAG_IN_QUE:
-            #     continue
-            # node_.flag = node_.FLAG_VISITED
-
-            # gate_ = node_.get_gate()
             for qubit_ in node_.qubit_loc:
                 if qubit_ not in cur_phases:
                     cur_phases[qubit_] = 1 << (qubit_ + 1)
