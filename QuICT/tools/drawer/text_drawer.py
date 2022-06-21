@@ -18,7 +18,6 @@ import sys
 from shutil import get_terminal_size
 from warnings import warn
 import numpy as np
-from itertools import chain
 
 from QuICT.core.gate import *
 
@@ -1025,7 +1024,7 @@ class TextDrawing:
         top_box = list()
         bot_box = list()
 
-        qubit_index = sorted([i for i in chain(instruction.cargs, instruction.targs)])
+        qubit_index = sorted([i for i in ctrl_qubits + args_qubits])
 
         for ctrl_qubit in zip(ctrl_qubits, ctrl_state):
             if min(qubit_index) > layer.qregs.index(ctrl_qubit[0]):
@@ -1079,11 +1078,11 @@ class TextDrawing:
 
         # add in a gate that operates over multiple qubits
         def add_connected_gate(gate, gates, layer, current_cons):
-            affect_args = list(chain(gate.cargs, gate.targs))
             for i, g in enumerate(gates):
-                actual_index = self.qregs.index(affect_args[i])
+                gate_args = gate.cargs + gate.targs
+                actual_index = self.qregs.index(gate_args[i])
                 if actual_index not in [i for i, j in current_cons]:
-                    layer.set_qubit(affect_args[i], g)
+                    layer.set_qubit(gate_args[i], g)
                     current_cons.append((actual_index, g))
 
         ctrl_label = ""
@@ -1098,7 +1097,7 @@ class TextDrawing:
                     layer.set_qubit(qubit, Barrier())
         elif isinstance(gate, SwapGate):
             # swap
-            gates = [Ex(conditional=conditional) for _ in range(gate.controls + gate.targets)]
+            gates = [Ex(conditional=conditional) for _ in range(len(gate.cargs + gate.targs))]
             add_connected_gate(gate, gates, layer, current_cons)
 
         elif isinstance(gate, ResetGate):
