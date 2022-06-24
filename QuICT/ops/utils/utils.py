@@ -6,6 +6,8 @@
 
 import numpy as np
 
+from numba import njit
+
 
 def perm_sort(indexes: np.ndarray, blocks: int):
     n = len(indexes)
@@ -37,3 +39,14 @@ def perm_sort(indexes: np.ndarray, blocks: int):
             perm_op.append(("IDX", i, j))
 
     return perm_op, indexes
+
+
+@njit(nogil=True)
+def mapping_augment(mapping: np.ndarray) -> np.ndarray:
+    n = len(mapping)
+    p2n = 1 << n
+    res = np.zeros(shape=p2n, dtype=np.int64)
+    for i in range(p2n):
+        for k in range(n):
+            res[i] |= ((i >> (n - 1 - mapping[k])) & 1) << (n - 1 - k)
+    return res

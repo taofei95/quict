@@ -10,12 +10,12 @@ import cupy as cp
 
 from QuICT.core import Circuit
 from QuICT.core.gate import *
-from QuICT.core.utils import GateType
 from QuICT.simulation.gpu_simulator import BasicGPUSimulator
 from QuICT.utility import Proxy
-from QuICT.ops.utils import LinAlgLoader, perm_sort
+from QuICT.ops.utils import LinAlgLoader
 from QuICT.simulation.utils import GateGroup, GATE_TYPE_to_ID, MATRIX_INDEXES
 from QuICT.simulation.gpu_simulator.multigpu_simulator.data_switch import DataSwitcher
+from QuICT.qcda.synthesis import GateDecomposition
 
 
 class MultiStateVectorSimulator(BasicGPUSimulator):
@@ -53,7 +53,7 @@ class MultiStateVectorSimulator(BasicGPUSimulator):
         # Get qubits and limitation
         self.total_qubits = int(circuit.width())
         self.qubits = int(self.total_qubits - np.log2(self.proxy.ndevs))
-        self._gates = circuit.gates
+        self._gates = GateDecomposition.execute(circuit).gates
         self._measure_result = defaultdict(list)
 
         # Initial GateMatrix
@@ -122,6 +122,8 @@ class MultiStateVectorSimulator(BasicGPUSimulator):
         """
         gate_type = gate.type
         default_parameters = (self._vector, self.total_qubits, self._sync)
+        if gate.targets + gate.controls >= 3:
+            raise TypeError("do not support the quantum gate with more than 2 qubits.")
 
         # [H, SX, SY, SW, U2, U3, Rx, Ry]
         if gate_type in GATE_TYPE_to_ID[GateGroup.matrix_1arg]:
@@ -509,209 +511,9 @@ class MultiStateVectorSimulator(BasicGPUSimulator):
                     indexes,
                     *default_parameters
                 )
-        # [ID]
-        elif gate_type == GateType.id:
+        # [ID, Barrier]
+        elif gate_type == GateType.id or gate_type == GateType.barrier:
             pass
-        # [CCX]
-        elif gate_type in GATE_TYPE_to_ID[GateGroup.reverse_3arg]:
-            c_indexes = [self.total_qubits - 1 - carg for carg in gate.cargs]
-            c_indexes.sort()
-            t_index = self.total_qubits - 1 - gate.targ
-            matrix = self.get_gate_matrix(gate)
-
-            _t = t_index >= self.qubits         # target index exceed the limit?
-            _c0 = c_indexes[0] >= self.qubits   # control index exceed the limit?
-            _c1 = c_indexes[1] >= self.qubits   # larger control index exceed the limit?
-
-            if _t and _c0:
-                if (
-                    self.proxy.dev_id & (1 << (c_indexes[0] - self.qubits)) and
-                    self.proxy.dev_id & (1 << (c_indexes[1] - self.qubits))
-                ):
-                    destination = self.proxy.dev_id ^ (1 << (t_index - self.qubits))
-                    self._data_switcher.all_switch(self._vector, destination)
-            elif _t and _c1:
-                if self.proxy.dev_id & (1 << (c_indexes[1] - self.qubits)):
-                    destination = self.proxy.dev_id ^ (1 << (t_index - self.qubits))
-                    switch_condition = {c_indexes[0]: 1}
-                    self._data_switcher.ctargs_switch(
-                        self._vector,
-                        destination,
-                        switch_condition
-                    )
-            elif _c0:
-                if (
-                    self.proxy.dev_id & (1 << (c_indexes[0] - self.qubits)) and
-                    self.proxy.dev_id & (1 << (c_indexes[1] - self.qubits))
-                ):
-                    self._algorithm.RDiagonal_Swap_targ(
-                        t_index,
-                        *default_parameters
-                    )
-            elif _c1:
-                if self.proxy.dev_id & (1 << (c_indexes[1] - self.qubits)):
-                    temp_matrix = matrix[MATRIX_INDEXES[4]]
-                    self._algorithm.Controlled_MultiplySwap_ctargs(
-                        c_indexes[0],
-                        t_index,
-                        temp_matrix,
-                        *default_parameters
-                    )
-            elif _t:
-                destination = self.proxy.dev_id ^ (1 << (t_index - self.qubits))
-                switch_condition = {
-                    c_indexes[1]: 1,
-                    c_indexes[0]: 1
-                }
-                self._data_switcher.ctargs_switch(
-                    self._vector,
-                    destination,
-                    switch_condition
-                )
-            else:
-                self._algorithm.Controlled_Swap_more(
-                    c_indexes,
-                    t_index,
-                    *default_parameters
-                )
-        # [CCRz]
-        elif gate_type in GATE_TYPE_to_ID[GateGroup.control_3arg]:
-            c_indexes = [self.total_qubits - 1 - carg for carg in gate.cargs]
-            c_indexes.sort()
-            t_index = self.total_qubits - 1 - gate.targ
-            matrix = self.get_gate_matrix(gate)
-
-            _t = t_index >= self.qubits         # target index exceed the limit?
-            _c0 = c_indexes[0] >= self.qubits   # control index exceed the limit?
-            _c1 = c_indexes[1] >= self.qubits   # larger control index exceed the limit?
-
-            if _t and _c0:
-                if (
-                    self.proxy.dev_id & (1 << (c_indexes[0] - self.qubits)) and
-                    self.proxy.dev_id & (1 << (c_indexes[1] - self.qubits))
-                ):
-                    index = (7, 7) if self.proxy.dev_id & (1 << (t_index - self.qubits)) else \
-                        (6, 6)
-
-                    self._algorithm.Simple_Multiply(
-                        gate.matrix[index],
-                        *default_parameters
-                    )
-            elif _t and _c1:
-                if self.proxy.dev_id & (1 << (c_indexes[1] - self.qubits)):
-                    if self.proxy.dev_id & (1 << (t_index - self.qubits)):
-                        value = gate.matrix[7, 7]
-                    else:
-                        value = gate.matrix[6, 6]
-                    self._algorithm.Controlled_Multiply_targ(
-                        c_indexes[0],
-                        value,
-                        *default_parameters
-                    )
-            elif _c0:
-                if (
-                    self.proxy.dev_id & (1 << (c_indexes[0] - self.qubits)) and
-                    self.proxy.dev_id & (1 << (c_indexes[1] - self.qubits))
-                ):
-                    self._algorithm.Diagonal_Multiply_targ(
-                        t_index,
-                        matrix[MATRIX_INDEXES[7]],
-                        *default_parameters
-                    )
-            elif _c1:
-                if self.proxy.dev_id & (1 << (c_indexes[1] - self.qubits)):
-                    temp_matrix = matrix[MATRIX_INDEXES[4]]
-                    self._algorithm.Controlled_Multiply_ctargs(
-                        c_indexes[0],
-                        t_index,
-                        temp_matrix,
-                        *default_parameters
-                    )
-            elif _t:
-                index = (7, 7) if self.proxy.dev_id & (1 << (t_index - self.qubits)) else \
-                    (6, 6)
-
-                self._algorithm.Controlled_Product_ctargs(
-                    c_indexes[1],
-                    c_indexes[0],
-                    gate.matrix[index],
-                    *default_parameters
-                )
-            else:
-                self._algorithm.Controlled_Multiply_more(
-                    c_indexes,
-                    t_index,
-                    matrix,
-                    *default_parameters
-                )
-        # [CSwap]
-        elif gate_type in GATE_TYPE_to_ID[GateGroup.swap_3arg]:
-            t_indexes = [self.total_qubits - 1 - targ for targ in gate.targs]
-            t_indexes.sort()
-            c_index = self.total_qubits - 1 - gate.carg
-
-            _c = c_index >= self.qubits         # control index exceed the limit?
-            _t0 = t_indexes[0] >= self.qubits   # target index exceed the limit?
-            _t1 = t_indexes[1] >= self.qubits   # larger target index exceed the limit?
-
-            if _c and _t0:
-                if self.proxy.dev_id & (1 << (c_index - self.qubits)):
-                    _0 = (self.proxy.dev_id & (1 << (t_indexes[0] - self.qubits))) >> \
-                        (t_indexes[0] - self.qubits)
-                    _1 = self.proxy.dev_id & (1 << (t_indexes[1] - self.qubits)) >> \
-                        (t_indexes[1] - self.qubits)
-
-                    if _0 != _1:
-                        destination = self.proxy.dev_id ^ \
-                            ((1 << (t_indexes[1] - self.qubits)) + (1 << (t_indexes[0] - self.qubits)))
-                        self._data_switcher.all_switch(self._vector, destination)
-            elif _c and _t1:
-                if self.proxy.dev_id & (1 << (c_index - self.qubits)):
-                    destination = self.proxy.dev_id ^ (1 << (t_indexes[1] - self.qubits))
-                    switch_condition = {
-                        t_indexes[0]: int(self.proxy.dev_id < destination)
-                    }
-                    self._data_switcher.ctargs_switch(
-                        self._vector,
-                        destination,
-                        switch_condition
-                    )
-            elif _t0:
-                _0 = (self.proxy.dev_id & (1 << (t_indexes[0] - self.qubits))) >> (t_indexes[0] - self.qubits)
-                _1 = self.proxy.dev_id & (1 << (t_indexes[1] - self.qubits)) >> (t_indexes[1] - self.qubits)
-
-                if _0 != _1:
-                    destination = self.proxy.dev_id ^ \
-                        ((1 << (t_indexes[1] - self.qubits)) + (1 << (t_indexes[0] - self.qubits)))
-                    self._data_switcher.ctargs_switch(
-                        self._vector,
-                        destination,
-                        {c_index: 1}
-                    )
-            elif _t1:
-                destination = self.proxy.dev_id ^ (1 << (t_indexes[1] - self.qubits))
-                switch_condition = {
-                    c_index: 1,
-                    t_indexes[0]: int(self.proxy.dev_id < destination)
-                }
-
-                self._data_switcher.ctargs_switch(
-                    self._vector,
-                    destination,
-                    switch_condition
-                )
-            elif _c:
-                if self.proxy.dev_id & (1 << (c_index - self.qubits)):
-                    self._algorithm.Controlled_Swap_targs(
-                        t_indexes,
-                        *default_parameters
-                    )
-            else:
-                self._algorithm.Controlled_Swap_tmore(
-                    t_indexes,
-                    c_index,
-                    *default_parameters
-                )
         # [Measure]
         elif gate_type == GateType.measure:
             index = self.total_qubits - 1 - gate.targ
@@ -723,16 +525,7 @@ class MultiStateVectorSimulator(BasicGPUSimulator):
             index = self.total_qubits - 1 - gate.targ
 
             self._reset_operation(index)
-        # [Barrier]
-        elif gate_type == GateType.barrier:
-            pass
-        # [Perm] TODO: for uncertained qubits gate not support yet
-        elif (
-            gate_type == GateType.perm or
-            gate_type in GateGroup.perm_gate
-        ):
-            pass
-        # [Unitary] TODO: Currently only support the 1-, 2-qubits unitary quantum gates
+        # [Unitary]
         elif gate_type == GateType.unitary:
             qubit_idxes = gate.cargs + gate.targs
             if len(qubit_idxes) == 1:   # 1-qubit unitary gate
@@ -746,7 +539,7 @@ class MultiStateVectorSimulator(BasicGPUSimulator):
                     matrix = self.get_gate_matrix(gate)
 
                     self._based_matrix_operation(t_index, matrix)
-            elif len(qubit_idxes) == 2:     # 2-qubits unitary gate
+            else:     # 2-qubits unitary gate
                 indexes = [self.total_qubits - 1 - index for index in qubit_idxes]
                 indexes.sort()
                 matrix = self.get_gate_matrix(gate) if indexes[0] < self.qubits else gate.matrix
@@ -760,13 +553,6 @@ class MultiStateVectorSimulator(BasicGPUSimulator):
                         indexes,
                         matrix
                     )
-            else:   # common unitary gate supported, but run slowly
-                raise ValueError(
-                    "do not support the unitary gate with more than 2 qubits, please use gate decomposition first."
-                )
-        # [ShorInitial] TODO: Currently only support the 1-, 2-qubits unitary quantum gates
-        elif gate_type == GateType.shor_init:
-            pass
         # unsupported quantum gates
         else:
             raise KeyError("Unsupported Gate in multi-GPU version: {gate_type}.")
@@ -1093,68 +879,3 @@ class MultiStateVectorSimulator(BasicGPUSimulator):
                 *default_parameters,
                 multigpu_prob=prob
             )
-
-    def _perm_operation(self, indexes):
-        """ Temporary algorithm for the PermGate.
-
-        Args:
-            indexes ([int]): the parameter args in the PermGate
-
-        Returns:
-            [int]: the state indexes after permutation.
-        """
-        dev_num = self.proxy.ndevs
-        current_dev = self.proxy.dev_id
-        iter = len(indexes) // dev_num
-
-        ops, perm_indexes = perm_sort(indexes, dev_num)
-        for op in ops:
-            operation, sender, destination = op
-            if operation == "ALL":
-                if sender == current_dev:
-                    self._data_switcher.all_switch(
-                        self._vector,
-                        destination
-                    )
-            elif operation == "IDX":
-                if sender // iter == current_dev:
-                    ctargs = {}
-                    device_idx = sender % iter
-
-                    temp_iter, len_iter = iter, int(np.log2(iter))
-                    for c in range(len_iter):
-                        temp_iter //= 2
-                        if device_idx >= temp_iter:
-                            ctargs[len_iter - 1 - c] = 1
-                            device_idx -= temp_iter
-                        else:
-                            ctargs[len_iter - 1 - c] = 0
-
-                    self._data_switcher.ctargs_switch(
-                        self._vector,
-                        destination // iter,
-                        ctargs
-                    )
-                if destination // iter == current_dev:
-                    ctargs = {}
-                    device_idx = destination % iter
-
-                    temp_iter, len_iter = iter, int(np.log2(iter))
-                    for c in range(len_iter):
-                        temp_iter //= 2
-                        if device_idx >= temp_iter:
-                            ctargs[len_iter - 1 - c] = 1
-                            device_idx -= temp_iter
-                        else:
-                            ctargs[len_iter - 1 - c] = 0
-
-                    self._data_switcher.ctargs_switch(
-                        self._vector,
-                        sender // iter,
-                        ctargs
-                    )
-
-        swaped_indexes = perm_indexes[current_dev * iter:current_dev * iter + iter]
-        swaped_pargs = np.argsort(swaped_indexes)
-
-        return swaped_pargs

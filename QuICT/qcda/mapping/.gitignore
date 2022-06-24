@@ -20,5 +20,5 @@ temp.txt
 random_simulator
 rl_mcts.py
 data_generator.py*
-mcts_wrapper.cpp
+mcts/mcts_core/mcts_wrapper.cpp
 qubit_mapping

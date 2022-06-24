@@ -1,7 +1,7 @@
 from typing import *
 import numpy as np
 
-from QuICT.core.gate import BasicGate, CompositeGate
+from QuICT.core.gate import BasicGate, CompositeGate, GateType
 from QuICT.simulation.utils import DisjointSet, dp, build_unitary_gate
 import QuICT.ops.linalg.cpu_calculator as CPUCalculator
 
@@ -41,6 +41,9 @@ class UnitarySimulator():
         gates = CompositeGate()
 
         for gate in circuit.gates:
+            if gate.type == GateType.measure:
+                continue
+
             if gate.targets + gate.controls >= 3:
                 raise Exception("only support 2-qubit gates and 1-qubit gates.")
 
@@ -371,22 +374,23 @@ class UnitarySimulator():
 
     def _run(self, matrix, qubit):
         if self._device == "CPU":
-            aux = np.zeros_like(self._vector)
+            default_parameters = (matrix, qubit, self._vector, qubit, list(range(qubit)))
+            self._vector = self._computer.matrix_dot_vector(*default_parameters)
         else:
             import cupy as cp
 
             aux = cp.zeros_like(self._vector)
             matrix = cp.array(matrix)
 
-        self._computer.matrix_dot_vector(
-            matrix,
-            qubit,
-            self._vector,
-            qubit,
-            list(range(qubit)),
-            aux
-        )
-        self._vector = aux
+            self._computer.matrix_dot_vector(
+                matrix,
+                qubit,
+                self._vector,
+                qubit,
+                list(range(qubit)),
+                aux
+            )
+            self._vector = aux
 
     def sample(self):
         qubits = int(np.log2(self._vector.size))
