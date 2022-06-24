@@ -25,7 +25,7 @@ class RandomWalk:
         """ The quantum circuit of the random walk algorithm, including UnitaryGate """
         return self._circuit
 
-    def __init__(self, T: int, graph: Graph, coin_operator: np.ndarray = None):
+    def __init__(self, step: int, graph: Graph, coin_operator: np.ndarray = None):
         """ Initial the quantum random walk with given steps, graph and coin operator.
 
         Args:
@@ -34,7 +34,7 @@ class RandomWalk:
                 the edges represent the action space.
             coin_operator (np.ndarray, optional): The coin operators, the unitary matrix. Defaults to None.
         """
-        self._step = T
+        self._step = step
         self._graph = graph
         self._coin_operator = coin_operator
         self._operator_by_position = False

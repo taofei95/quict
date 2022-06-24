@@ -1,4 +1,4 @@
-from QuICT.core.gate import BasicGate
+from QuICT.core.gate import BasicGate, MatrixType
 from ._operator import Operator
 
 
@@ -52,7 +52,7 @@ class NoiseGate(Operator):
 
         self._gate = gate
         self._error = error
-        self._noise_matrix = self._error.apply_to_gate(gate.matrix)
+        self._noise_matrix = self._error.apply_to_gate(gate.matrix) if gate.matrix_type != MatrixType.special else None
 
     def prob_mapping_operator(self, prob: float):
         """ Return the related noise error's matrix with given probability. """
