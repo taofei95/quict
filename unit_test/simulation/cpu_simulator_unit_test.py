@@ -2,7 +2,7 @@ import numpy as np
 
 from QuICT.core.gate import *
 from QuICT.core.circuit import Circuit
-from QuICT.simulation.cpu_simulator import CircuitSimulator
+from QuICT.simulation.state_vector import CircuitSimulator
 
 
 def test_sim():
