@@ -34,7 +34,9 @@ class GateDescription:
     """An interface used for type hints. This class is actually implemented in C++ side.
     """
 
-    def __init__(self, gate_name: str, affect_args: Iterable[int], data_ptr: Iterable[complex]):
+    def __init__(
+        self, gate_name: str, affect_args: Iterable[int], data_ptr: Iterable[complex]
+    ):
         pass
 
 
@@ -54,6 +56,8 @@ diag_1 = (
     GateType.phase,  # TODO: optimize this with special_phase
 )
 
+# The unitary_x category is some gates treated as unitary.
+# The real unitary gates are not included.
 unitary_1 = (
     GateType.y,
     GateType.sx,
@@ -65,9 +69,7 @@ unitary_1 = (
     GateType.ry,
 )
 
-diag_2 = (
-    GateType.Rzz,
-)
+diag_2 = (GateType.Rzz,)
 
 unitary_2 = (
     GateType.fsim,
@@ -106,59 +108,71 @@ def gate_to_desc(gate: BasicGate) -> List[GateDescription]:
     """
     gate_type = gate.type
     if gate_type in special_x:
-        return [sim_back_bind.GateDescription(
-            "special_x",
-            list(get_gate_qubit_pos(gate)),
-            list([])
-        )]
+        return [
+            sim_back_bind.GateDescription(
+                "special_x", list(get_gate_qubit_pos(gate)), list([])
+            )
+        ]
     elif gate_type in special_h:
-        return [sim_back_bind.GateDescription(
-            "special_h",
-            list(get_gate_qubit_pos(gate)),
-            list([])
-        )]
+        return [
+            sim_back_bind.GateDescription(
+                "special_h", list(get_gate_qubit_pos(gate)), list([])
+            )
+        ]
     elif gate_type in diag_1:
-        return [sim_back_bind.GateDescription(
-            "diag_1",
-            list(get_gate_qubit_pos(gate)),
-            list(np.diag(gate.matrix))
-        )]
+        return [
+            sim_back_bind.GateDescription(
+                "diag_1", list(get_gate_qubit_pos(gate)), list(np.diag(gate.matrix))
+            )
+        ]
     elif gate_type in diag_2:
-        return [sim_back_bind.GateDescription(
-            "diag_2",
-            list(get_gate_qubit_pos(gate)),
-            list(np.diag(gate.matrix))
-        )]
+        return [
+            sim_back_bind.GateDescription(
+                "diag_2", list(get_gate_qubit_pos(gate)), list(np.diag(gate.matrix))
+            )
+        ]
     elif gate_type in unitary_1:
-        return [sim_back_bind.GateDescription(
-            "unitary_1",
-            list(get_gate_qubit_pos(gate)),
-            list(gate.matrix.flatten())
-        )]
+        return [
+            sim_back_bind.GateDescription(
+                "unitary_1", list(get_gate_qubit_pos(gate)), list(gate.matrix.flatten())
+            )
+        ]
     elif gate_type in unitary_2:
-        return [sim_back_bind.GateDescription(
-            "unitary_2",
-            list(get_gate_qubit_pos(gate)),
-            list(gate.matrix.flatten())
-        )]
+        return [
+            sim_back_bind.GateDescription(
+                "unitary_2", list(get_gate_qubit_pos(gate)), list(gate.matrix.flatten())
+            )
+        ]
     elif gate_type in ctrl_diag:
-        return [sim_back_bind.GateDescription(
-            "ctrl_diag",
-            list(get_gate_qubit_pos(gate)),
-            list(np.diag(gate.matrix)[2:].copy())
-        )]
+        return [
+            sim_back_bind.GateDescription(
+                "ctrl_diag",
+                list(get_gate_qubit_pos(gate)),
+                list(np.diag(gate.matrix)[2:].copy()),
+            )
+        ]
     elif gate_type in ctrl_unitary:
-        return [sim_back_bind.GateDescription(
-            "ctrl_unitary",
-            list(get_gate_qubit_pos(gate)),
-            list(gate.matrix[2:, 2:].copy().flatten())
-        )]
+        return [
+            sim_back_bind.GateDescription(
+                "ctrl_unitary",
+                list(get_gate_qubit_pos(gate)),
+                list(gate.matrix[2:, 2:].copy().flatten()),
+            )
+        ]
     elif gate_type in measure_gate:
-        return [sim_back_bind.GateDescription(
-            "measure",
-            list(get_gate_qubit_pos(gate)),
-            list([])
-        )]
+        return [
+            sim_back_bind.GateDescription(
+                "measure", list(get_gate_qubit_pos(gate)), list([])
+            )
+        ]
+    elif gate_type == GateType.unitary and gate.targets <= 2:
+        return [
+            sim_back_bind.GateDescription(
+                f"unitary_{gate.targets}",
+                list(get_gate_qubit_pos(gate)),
+                list(gate.matrix.flatten()),
+            )
+        ]
     elif hasattr(gate, "build_gate"):
         # Try build gate to simpler gates
         result = []
@@ -177,6 +191,7 @@ class CircuitSimulator:
     def __init__(self):
         self._circuit = None
         self._instance = sim_back_bind.CircuitSimulator()
+        self._gate_desc_vec: List[GateDescription] = []
 
     def name(self) -> str:
         """
@@ -201,7 +216,9 @@ class CircuitSimulator:
 
         return measure
 
-    def _run(self, circuit: Circuit, keep_state: bool = False) -> Tuple[np.ndarray, List[List[int]]]:
+    def _run(
+        self, circuit: Circuit, keep_state: bool = False
+    ) -> Tuple[np.ndarray, List[List[int]]]:
         """Run simulation by gate description sequence and return measure gate results.
 
         Parameters
@@ -214,7 +231,7 @@ class CircuitSimulator:
         warnings.warn(
             message="Attention! You are using a working-in-process version of circuit simulator!",
             category=Warning,
-            stacklevel=1
+            stacklevel=1,
         )
         qubits = circuit.width()
         gate_set = []
@@ -250,13 +267,19 @@ class CircuitSimulator:
 
             idx += 1
 
-        amplitude, measure_raw = self._instance.run(circuit.width(), gate_desc_vec, keep_state)
+        amplitude, measure_raw = self._instance.run(
+            circuit.width(), self._gate_desc_vec, keep_state
+        )
         measure = self._map_measure(circuit, measure_raw)
-
+        self._gate_desc_vec.clear()
         return amplitude, measure
 
-    def run(self, circuit: Circuit, keep_state: bool = False, output_measure_res: bool = False) \
-            -> Union[np.ndarray, Tuple[np.ndarray, List[List[int]]]]:
+    def run(
+        self,
+        circuit: Circuit,
+        keep_state: bool = False,
+        output_measure_res: bool = False,
+    ) -> Union[np.ndarray, Tuple[np.ndarray, List[List[int]]]]:
         """Run simulation by gate description sequence and return measure gate results.
 
         Parameters
