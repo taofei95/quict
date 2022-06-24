@@ -5,7 +5,7 @@ from QuICT.core.circuit.circuit import Circuit
 from QuICT.core.gate import BasicGate, UnitaryGate, Unitary
 from QuICT.core.noise import NoiseModel
 from QuICT.core.operator import NoiseGate
-from QuICT.simulation.unitary_simulator import UnitarySimulator
+from QuICT.simulation.unitary import UnitarySimulator
 from QuICT.core.utils import GateType, matrix_product_to_circuit
 import QuICT.ops.linalg.cpu_calculator as CPUCalculator
 

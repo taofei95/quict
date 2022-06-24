@@ -3,8 +3,7 @@ import unittest
 
 from QuICT.core.gate import H
 from QuICT.algorithm.quantum_algorithm.random_walk import RandomWalk, Graph
-from QuICT.simulation.cpu_simulator import CircuitSimulator
-from QuICT.simulation.gpu_simulator import ConstantStateVectorSimulator
+from QuICT.simulation.state_vector import ConstantStateVectorSimulator
 
 
 class TestRandomWalk(unittest.TestCase):

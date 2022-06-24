@@ -14,9 +14,8 @@ import numpy as np
 from QuICT.core import Circuit
 from QuICT.core.gate import *
 from QuICT.qcda.synthesis.arithmetic.hrs import *
-from QuICT.simulation.cpu_simulator import CircuitSimulator
-from QuICT.core.operator import Trigger, CheckPoint, CheckPointChild
-
+from QuICT.simulation.state_vector import CircuitSimulator
+from QuICT.core.operator import Trigger, CheckPoint
 from .utility import *
 
 

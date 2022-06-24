@@ -1,6 +1,6 @@
 import random
 import logging
-from math import pi, gcd
+from math import gcd
 import numpy as np
 from fractions import Fraction
 from typing import List, Tuple
@@ -8,9 +8,9 @@ from typing import List, Tuple
 from QuICT.core import Circuit
 from QuICT.core.gate import *
 from QuICT.core.operator import Trigger
+from QuICT.simulation.state_vector import CircuitSimulator
 from .utility import *
 
-from QuICT.simulation.cpu_simulator import CircuitSimulator
 
 from .BEA_zip import construct_circuit as BEA_zip_circuit
 from .BEA_zip import order_finding as BEA_zip_run

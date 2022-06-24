@@ -1,3 +1,4 @@
+from imp import source_from_cache
 import numpy as np
 
 from QuICT.core import Circuit
@@ -26,40 +27,66 @@ class Transpile:
     """
 
     def __init__(self, ndev: int):
-        
         self._ndev = ndev
         self._split_qb_num = int(np.log2(ndev))
         assert 2 ** self._split_qb_num == self._ndev
 
-    def _transpile(self, circuit: Circuit, split_qubits: list):
-        t_qubits = circuit.width() - self._split_qb_num
+    def _transpile(self, depth_gate: list, intervals: list, split_qubits: list, total_qubits: int):
+        print(split_qubits)
+        print(intervals)
+        t_qubits = total_qubits - self._split_qb_num
         transpiled_circuit = Circuit(t_qubits)
-        for gate in circuit.gates:
-            if gate.type in [GateType.id, GateType.barrier]:
-                continue
+        start_point = 0
+        for interval_idx, point in enumerate(intervals):
+            current_split_qubit = [split_qubits[interval_idx]]
+            for gates in depth_gate[start_point:point]:
+                for gate in gates:
+                    if gate.type in [GateType.id, GateType.barrier]:
+                        continue
 
-            gate_args = gate.cargs + gate.targs
-            updated_args, union_arg = self._args_adjust(gate_args, split_qubits)
-            gate = gate & updated_args
-            if len(union_arg) == 0:
-                if gate.matrix_type == MatrixType.special:
-                    SpecialGate(gate.type, gate_args) | transpiled_circuit
-                else:
-                    gate | transpiled_circuit
+                    gate_args = gate.cargs + gate.targs
+                    updated_args, union_arg = self._args_adjust(gate_args, current_split_qubit)
+                    gate = gate & updated_args
+                    if len(union_arg) == 0:
+                        if gate.matrix_type == MatrixType.special:
+                            SpecialGate(gate.type, gate_args) | transpiled_circuit
+                        else:
+                            gate | transpiled_circuit
 
-                continue
+                        continue
 
-            # Deal with gate has qubits in splited qubits
-            if len(gate_args) == 1:
-                device_trigger = self._single_qubit_gate_transpile(gate, split_qubits)
-            elif len(gate_args) == 2:
-                device_trigger = self._double_qubits_gate_transpile(gate, t_qubits, split_qubits, union_arg)
-            else:
-                raise ValueError("Only supportted transpilt for gate less than 2 qubits.")
+                    # Deal with gate has qubits in splited qubits
+                    if len(gate_args) == 1:
+                        device_trigger = self._single_qubit_gate_transpile(gate, current_split_qubit)
+                    elif len(gate_args) == 2:
+                        device_trigger = self._double_qubits_gate_transpile(gate, t_qubits, current_split_qubit, union_arg)
+                    else:
+                        raise ValueError("Only supportted transpilt for gate less than 2 qubits.")
 
-            device_trigger | transpiled_circuit
+                    device_trigger | transpiled_circuit
+
+            start_point = point
+            if interval_idx != len(intervals) - 1 and split_qubits[interval_idx + 1] != current_split_qubit[0]:
+                updated_sq_arg, _ = self._args_adjust([split_qubits[interval_idx + 1]], current_split_qubit)
+                self._split_qubit_exchange(1, t_qubits - 1 - updated_sq_arg[0]) | transpiled_circuit
 
         return transpiled_circuit
+
+    def _split_qubit_exchange(self, old_qubit, new_qubit):
+        dev_mapping = {}
+        for index in range(self._ndev):
+            splited_cgate = CompositeGate()
+            dest = index ^ old_qubit
+            _0_1 = int(index > dest)
+            DataSwitch(
+                index ^ old_qubit,
+                DataSwitchType.ctarg,
+                {new_qubit: _0_1}
+            ) | splited_cgate
+
+            dev_mapping[index] = splited_cgate
+
+        return DeviceTrigger(dev_mapping)
 
     def _single_qubit_gate_transpile(
         self,
@@ -282,6 +309,9 @@ class Transpile:
         return DeviceTrigger(dev_mapping)
 
     def _args_adjust(self, gate_args, split_args):
+        if isinstance(split_args, int):
+            split_args = [split_args]
+
         res = gate_args[:]
         union_arg = []
         for idx, garg in enumerate(gate_args):
@@ -294,45 +324,110 @@ class Transpile:
 
         return res, union_arg
 
-    def _split_qubits(self, circuit: Circuit) -> list:
-        qubits = circuit.width()
-        comm_cost = np.array([0] * qubits, dtype=np.float32)
-        for gate in circuit.gates:
-            # Consider trigger here
-            gate_type = gate.type
-            gate_args = gate.cargs + gate.targs
-            if gate_type in NORMAL_GATE_SET_1qubit:
-                comm_cost[gate_args[0]] += HALF_PENTY
-            elif gate_type in [GateType.x, GateType.y]:
-                comm_cost[gate_args[0]] += ALL_PENTY
-            elif gate_type in [
-                GateType.cx, GateType.cy, GateType.ch, GateType.cu3,
-                GateType.fsim, GateType.Rxx, GateType.Ryy, GateType.swap,
-                GateType.unitary
-            ]:
-                for arg in gate_args:
-                    comm_cost[arg] += CARG_PENTY
-            elif gate_type in [GateType.measure, GateType.reset]:
-                comm_cost[arg] += PROB_ADD
-            else:
-                continue
+    def _order_gates_by_depth(self, gates: list) -> list:
+        gate_by_depth = [[gates[0]]]          # List[list], gates for each depth level.
+        gate_args_by_depth = [set(gates[0].cargs + gates[0].targs)]     # List[set], gates' qubits for each depth level.
+        for gate in gates[1:]:
+            gate_arg = set(gate.cargs + gate.targs)
+            for i in range(len(gate_args_by_depth) - 1, -1, -1):
+                if gate_arg & gate_args_by_depth[i]:
+                    if i == len(gate_args_by_depth) - 1:
+                        gate_by_depth.append([gate])
+                        gate_args_by_depth.append(gate_arg)
+                    else:
+                        gate_by_depth[i + 1].append(gate)
+                        gate_args_by_depth[i + 1] = gate_arg | gate_args_by_depth[i + 1]
+                    break
+                else:
+                    if i == 0:
+                        gate_by_depth[i].append(gate)
+                        gate_args_by_depth[i] = gate_arg | gate_args_by_depth[i]
 
-        split_qubits = []
-        for _ in range(self._split_qb_num):
-            min_idx = np.argmin(comm_cost)
-            split_qubits.append(min_idx)
-            comm_cost[min_idx] = np.Infinity
+        return gate_by_depth
 
-        return split_qubits
+    def _gate_switch_cost_generator(self, gates_by_depth: list, qubits: int) -> list:
+        data_switch_cost_matrix = np.zeros((qubits, len(gates_by_depth)), dtype=np.int32)
+        for idx, depth_gates in enumerate(gates_by_depth):
+            for gate in depth_gates:
+                gate_matrix_type = gate.matrix_type
+                gate_args = gate.cargs + gate.targs
+                if gate_matrix_type == MatrixType.normal:
+                    if gate.controls == 0:
+                        data_switch_cost_matrix[gate_args, idx] += HALF_PENTY
+                    else:
+                        data_switch_cost_matrix[gate.targs, idx] += CARG_PENTY
+                elif gate_matrix_type == MatrixType.reverse:
+                    if gate.controls == 1:
+                        data_switch_cost_matrix[gate.targs, idx] += CARG_PENTY
+                elif gate_matrix_type == MatrixType.swap:
+                    if gate.targets > 1:
+                        data_switch_cost_matrix[gate_args[-1], idx] += CARG_PENTY
+                elif gate_matrix_type in [MatrixType.ctrl_normal, MatrixType.normal_normal]:
+                    data_switch_cost_matrix[gate_args, idx] += CARG_PENTY
+                elif gate.type in [GateType.measure, GateType.reset]:
+                    data_switch_cost_matrix[gate_args, idx] += PROB_ADD
+
+        return data_switch_cost_matrix
+
+    def _split_qubits(self, cost_matrix: np.ndarray, cost_threshold: int = 3):
+        # divided the cost matrix by longest period with switched cost less than cost_threshold
+        qubit_num, gate_depth = cost_matrix.shape
+        period_interval = []                # record cost matrix's period interval
+        sum_cost_by_longest_period = []     # record the sum of period interval of cost matrix
+        period_idx = 0
+        while period_idx < gate_depth - 1:
+            longest_period_idx = 0
+            for qubit in range(qubit_num):
+                switch_cost = 0
+                for idx in range(period_idx, gate_depth, 1):
+                    switch_cost += cost_matrix[qubit, idx]
+                    if switch_cost > cost_threshold:
+                        break
+
+                if idx > longest_period_idx:
+                    longest_period_idx = idx
+
+            switch_cost = np.sum(cost_matrix[:, period_idx:longest_period_idx], axis=1)
+            sum_cost_by_longest_period.append(switch_cost)
+
+            period_idx = longest_period_idx
+            period_interval.append(period_idx)
+
+        period_interval[-1] += 1
+        # find the smallest cost through the sum_cost_by_longest_period
+        sum_cost_by_longest_period = np.array(sum_cost_by_longest_period, dtype=np.int32)
+        period_qubit_selection = [int(np.argmin(sum_cost_by_longest_period[0]))]
+        for sum_cost in sum_cost_by_longest_period[1:]:
+            current_minarg = int(np.argmin(sum_cost))
+            if current_minarg != period_qubit_selection[-1]:      # required switch split qubits
+                # deal with add switch cost threshold
+                if sum_cost[period_qubit_selection[-1]] < sum_cost[current_minarg] + cost_threshold:
+                    current_minarg = period_qubit_selection[-1]
+                # deal with switch back cost
+                elif len(period_qubit_selection) >= 2 and period_qubit_selection[-2] == current_minarg:
+                    start_idx = len(period_qubit_selection) - 2
+                    previous_cost = np.sum(sum_cost_by_longest_period[start_idx:start_idx + 2, current_minarg])
+                    current_cost = np.sum(sum_cost_by_longest_period[start_idx:start_idx + 2, period_qubit_selection[-2:]]) + 2 * cost_threshold
+                    if previous_cost <= current_cost:
+                        period_qubit_selection[-1] = current_minarg
+
+            period_qubit_selection.append(current_minarg)
+
+        return period_interval, period_qubit_selection
 
     def run(self, circuit: Circuit):
         # step 1: run GateDecomposition to avoid Unitary with large qubits and other special gates
-        circuit.gates = GateDecomposition.execute(circuit).gates
+        qubits = circuit.width()
+        gates = GateDecomposition.execute(circuit).gates
 
-        # step 2: decided split qubits
-        split_qubits = self._split_qubits(circuit)
+        # step 2: order the circuit's gates by depth
+        depth_gate = self._order_gates_by_depth(gates)
 
-        # step 3: transpile circuit by split qubits [add op.data_swap, change gate]
-        transpiled_circuits = self._transpile(circuit, split_qubits)
+        # step 3: decided split qubits by depth gates
+        cost_matrix = self._gate_switch_cost_generator(depth_gate, qubits)
+        split_qubit_intervals, selected_qubit_per_intervals = self._split_qubits(cost_matrix)
 
-        return transpiled_circuits, split_qubits
+        # step 4: transpile circuit by split qubits [add op.data_swap, change gate]
+        transpiled_circuits = self._transpile(depth_gate, split_qubit_intervals, selected_qubit_per_intervals, qubits)
+
+        return transpiled_circuits, selected_qubit_per_intervals[-1]

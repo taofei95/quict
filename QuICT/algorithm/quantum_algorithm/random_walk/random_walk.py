@@ -6,7 +6,7 @@ from QuICT.core.gate import *
 from QuICT.qcda.synthesis.unitary_transform import UnitaryTransform
 from QuICT.qcda.synthesis.gate_decomposition import GateDecomposition
 from QuICT.qcda.optimization import CommutativeOptimization
-from QuICT.simulation.cpu_simulator import CircuitSimulator
+from QuICT.simulation.state_vector import CircuitSimulator
 from .graph import Graph
 
 

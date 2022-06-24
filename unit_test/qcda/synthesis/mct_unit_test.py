@@ -9,7 +9,7 @@ from QuICT.core import *
 from QuICT.core.gate import *
 from QuICT.qcda.synthesis.mct import MCTOneAux, MCTLinearHalfDirtyAux, MCTLinearOneDirtyAux
 from QuICT.algorithm import SyntheticalUnitary
-from QuICT.simulation.gpu_simulator import ConstantStateVectorSimulator
+from QuICT.simulation.state_vector import ConstantStateVectorSimulator
 
 
 def Set(gates, qreg, N):
