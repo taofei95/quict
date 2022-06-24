@@ -460,8 +460,8 @@ class ConstantStateVectorSimulator:
                 prob,
                 self._sync
             ))
-            self._circuit.qubits[index].measured = result
-            self._measure_result[index].append(result)
+            self._circuit.qubits[self._qubits - 1 - index].measured = result
+            self._measure_result[self._qubits - 1 - index].append(result)
             return result
         elif type == GateType.reset:
             return self._algorithm.ResetGate_Apply(
