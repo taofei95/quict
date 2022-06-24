@@ -192,6 +192,7 @@ class CircuitSimulator:
         self._circuit = None
         self._instance = sim_back_bind.CircuitSimulator()
         self._gate_desc_vec: List[GateDescription] = []
+        self._pending_gates: List[BasicGate] = []
 
     def name(self) -> str:
         """
@@ -216,56 +217,67 @@ class CircuitSimulator:
 
         return measure
 
+    def apply_gate(self, gate: BasicGate):
+        self._gate_desc_vec.append(deepcopy(gate))
+
     def _run(
-        self, circuit: Circuit, keep_state: bool = False
+        self, circuit: Union[Circuit, None], keep_state: bool = False
     ) -> Tuple[np.ndarray, List[List[int]]]:
         """Run simulation by gate description sequence and return measure gate results.
 
         Parameters
         ----------
         circuit:
-            quantum circuit to be simulated
+            Quantum circuit to be simulated. If `None` is passed, then all previous gates added by 
+            `apply_gate` would be executed.
         keep_state:
-            start simulation on previous result
+            Start simulation on previous result
         """
         warnings.warn(
             message="Attention! You are using a working-in-process version of circuit simulator!",
             category=Warning,
             stacklevel=1,
         )
-        qubits = circuit.width()
-        gate_set = []
-        for gate in circuit.gates:
-            if isinstance(gate, BasicGate):
-                gate_set.append(deepcopy(gate))
-            else:
-                gate_set.append(gate)
+        if circuit:
+            qubits = circuit.width()
+            gate_set = []
+            for gate in circuit.gates:
+                if isinstance(gate, BasicGate):
+                    gate_set.append(deepcopy(gate))
+                else:
+                    gate_set.append(gate)
 
-        gate_desc_vec: List[GateDescription] = []
-        idx = 0
-        while gate_set:
-            gate = gate_set.pop(0)
-            if isinstance(gate, Trigger):
-                for targ in gate.targs:
-                    mgate = Measure & targ
-                    gate_desc_vec.extend(gate_to_desc(mgate))
+            gate_desc_vec: List[GateDescription] = []
+            idx = 0
+            while gate_set:
+                gate = gate_set.pop(0)
+                if isinstance(gate, Trigger):
+                    for targ in gate.targs:
+                        mgate = Measure & targ
+                        gate_desc_vec.extend(gate_to_desc(mgate))
 
-                _, measure_raw = self._instance.run(qubits, gate_desc_vec, keep_state)
-                gate_desc_vec = []
-                measured_state, keep_state = 0, True
-                for mstate in measure_raw:
-                    measured_state << 1
-                    measured_state += mstate
+                    _, measure_raw = self._instance.run(
+                        qubits, gate_desc_vec, keep_state
+                    )
+                    gate_desc_vec = []
+                    measured_state, keep_state = 0, True
+                    for mstate in measure_raw:
+                        measured_state << 1
+                        measured_state += mstate
 
-                cgate = gate.mapping(measured_state)
-                if cgate is not None:
-                    cp = cgate.checkpoint
-                    position = 0 if cp is None else circuit.find_position(cp) - idx
-                    gate_set = gate_set[:position] + deepcopy(cgate.gates) + gate_set[position:]
-            else:
-                gate_desc_vec.extend(gate_to_desc(gate))
+                    cgate = gate.mapping(measured_state)
+                    if cgate is not None:
+                        cp = cgate.checkpoint
+                        position = 0 if cp is None else circuit.find_position(cp) - idx
+                        gate_set = (
+                            gate_set[:position]
+                            + deepcopy(cgate.gates)
+                            + gate_set[position:]
+                        )
+                else:
+                    gate_desc_vec.extend(gate_to_desc(gate))
 
-            idx += 1
+                idx += 1
 
         amplitude, measure_raw = self._instance.run(
             circuit.width(), self._gate_desc_vec, keep_state
@@ -276,7 +288,7 @@ class CircuitSimulator:
 
     def run(
         self,
-        circuit: Circuit,
+        circuit: Union[Circuit, None],
         keep_state: bool = False,
         output_measure_res: bool = False,
     ) -> Union[np.ndarray, Tuple[np.ndarray, List[List[int]]]]:
@@ -285,9 +297,10 @@ class CircuitSimulator:
         Parameters
         ----------
         circuit:
-            quantum circuit to be simulated
+            Quantum circuit to be simulated. If `None` is passed, then all previous gates added by 
+            `apply_gate` would be executed.
         keep_state:
-            start simulation on previous result
+            Start simulation on previous result
         """
         amplitude, measure = self._run(circuit, keep_state)
         self._circuit = circuit
