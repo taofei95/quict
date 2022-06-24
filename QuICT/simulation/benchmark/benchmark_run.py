@@ -31,7 +31,6 @@ def qiskit_sim(scale: str):
     # Import Qiskit
     from qiskit import QuantumCircuit
     from qiskit import Aer, transpile
-    import qiskit.quantum_info as qi
 
     for f_path in load_circ(scale):
         print(f"Testing {f_path}")
@@ -42,4 +41,4 @@ def qiskit_sim(scale: str):
         circ = transpile(circ, simulator)
 
         # Run and get counts
-        result = simulator.run(circ).result()
+        _ = simulator.run(circ).result()
