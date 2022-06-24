@@ -31,7 +31,6 @@ def qiskit_sim(scale: str):
     # Import Qiskit
     from qiskit import QuantumCircuit
     from qiskit import Aer, transpile
-    from qiskit.tools.visualization import plot_histogram, plot_state_city
     import qiskit.quantum_info as qi
 
     for f_path in load_circ(scale):
