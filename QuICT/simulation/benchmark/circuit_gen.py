@@ -13,6 +13,8 @@ DEFAULT_SCALE_SMALL = [
     5,
 ]
 DEFAULT_SCALE_MEDIUM = [
+    13,
+    14,
     15,
     16,
     17,
@@ -51,9 +53,9 @@ SINGLE_BIT_GATE = (
     GateType.h,
     GateType.s,
     GateType.sdg,
-    GateType.sx,
-    GateType.sy,
-    GateType.sw,
+    # GateType.sx,
+    # GateType.sy,
+    # GateType.sw,
     GateType.t,
     GateType.tdg,
     # W/ param
@@ -63,7 +65,7 @@ SINGLE_BIT_GATE = (
     GateType.rx,
     GateType.ry,
     GateType.rz,
-    GateType.phase,
+    # GateType.phase,
 )
 
 DIAG_1_GATE = (
@@ -75,16 +77,17 @@ DIAG_1_GATE = (
     GateType.rz,
     GateType.t,
     GateType.tdg,
-    GateType.phase,
+    # GateType.phase,
 )
 
-DIAG_2_GATE = (GateType.Rzz,)
+# DIAG_2_GATE = (GateType.Rzz,)
+DIAG_2_GATE = tuple()
 
 UNITARY_1_GATE = (
     GateType.y,
-    GateType.sx,
-    GateType.sy,
-    GateType.sw,
+    # GateType.sx,
+    # GateType.sy,
+    # GateType.sw,
     GateType.u2,
     GateType.u3,
     GateType.rx,
@@ -92,9 +95,9 @@ UNITARY_1_GATE = (
 )
 
 UNITARY_2_GATE = (
-    GateType.fsim,
-    GateType.Rxx,
-    GateType.Ryy,
+    # GateType.fsim,
+    # GateType.Rxx,
+    # GateType.Ryy,
     GateType.swap,
 )
 
