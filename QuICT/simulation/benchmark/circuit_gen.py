@@ -2,7 +2,7 @@ import numpy as np
 
 from QuICT.core import *
 from QuICT.core.gate import *
-from random import choice, choices, uniform
+from random import choice, choices, sample, uniform
 from typing import List, Iterable, Tuple, Callable
 
 DEFAULT_SCALE_SMALL = [
@@ -16,6 +16,8 @@ DEFAULT_SCALE_MEDIUM = [
     15,
     16,
     17,
+    18,
+    19,
 ]
 DEFAULT_SCALE_LARGE = [
     30,
@@ -173,7 +175,7 @@ class CircuitFactory:
                 g = gate_generator()
                 if g.controls + g.targets > qubit_num:
                     continue
-                g | circ(choices(range(qubit_num), k=g.controls + g.targets))
+                g | circ(sample(range(qubit_num), k=g.controls + g.targets))
             yield circ
 
     @staticmethod

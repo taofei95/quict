@@ -42,6 +42,9 @@ class CircuitInformation:
 
     @staticmethod
     def qasm(qreg, creg, gates):
+        if creg <= 0:
+            creg = qreg
+            
         qasm_string = 'OPENQASM 2.0;\ninclude "qelib1.inc";\n'
         qasm_string += f"qreg q[{qreg}];\n"
         qasm_string += f"creg c[{creg}];\n"
