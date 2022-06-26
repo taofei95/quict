@@ -1,30 +1,5 @@
 <template>
   <el-container style="background-color: #13141c; padding: 0px">
-    <el-header style="height: 50px;">
-    <!-- <el-row>
-      <el-col :span="12"> -->
-      <el-space  style="height: 50px;font-size: var(--el-font-size-large);width: 100%;" size="large" direction="horizontal">
-        <div style="
-            background-image: url('/assets/logo.png');
-            background-repeat: no-repeat;
-            background-position: left;
-            width:160px;
-            height: 45px;
-          "></div>
-
-        <span>
-          QuCompuser
-        </span>
-
-        <span>
-          QCDA
-        </span>
-        
-      </el-space>
-      <!-- </el-col>
-      </el-row> -->
-    </el-header>
-    <el-container>
       <el-header class="status-bar" style="padding: 0px; height: 50px">
         <ToolBar v-on:SaveQCDA="SaveQCDA" v-on:RunQCDA="RunQCDA" v-on:LoadQCDA="LoadQCDA" v-on:ChangeSet="ChangeSet"
           v-on:UpdateCustomerSet="UpdateCustomerSet" v-on:UpdataTopology="UpdataTopology" :all_sets="all_sets"
@@ -85,18 +60,8 @@
           <ProgramZone :ProgramTextIn="ProgramText" v-on:ProgramUpdate="ProgramUpdate">
           </ProgramZone>
         </el-aside>
-        <el-dialog title="Login" v-model="dialogLogin" width="30%" :close-on-click-modal="false"
-          :close-on-press-escape="false" :show-close="false">
-          <label>USER<el-input v-model="user"></el-input></label>
-          <label>PASSWORD<el-input v-model="psw" type="password" show-password></el-input></label>
-          <template #footer>
-            <span class="dialog-footer">
-              <el-button type="primary" @click="login()">OK</el-button>
-            </span>
-          </template>
-        </el-dialog>
+
       </el-container>
-    </el-container>
   </el-container>
 </template>
 <style>
@@ -148,24 +113,12 @@ export default {
   data: function () {
     return {
       ProgramText: "hello",
-      dialogLogin: false,
-      user: "",
-      psw: "",
       VisContent: {
         gateSet: [
-          // { name: "H", controls: 0, targets: 1, pargs: [], qasm_name:"h" },
         ],
         q: [0, 1, 2, 3, 4],
         gates: [
-          // {
-          //   q: 1,
-          //   name: "c",
-          //   index: 0,
-          //   selected: false,
-          //   targets: [2],
-          //   controls: [1],
-          //   pargs: [],
-          // },
+
         ],
       },
       all_sets: [],
@@ -176,10 +129,7 @@ export default {
       OutputContent: {},
       StatusContent: "Create a circuit and run.",
       ExpandResult: false,
-      CurrentPage: "QuCompuser",
-      QuCompuserPageColor: "white",
-      QCDAPageColor: "gray",
-      AllPages: ["QuCompuser","QCDA"]
+
     };
   },
   components: {
@@ -587,6 +537,7 @@ export default {
         this.socket.emit("qasm_load", {
           uuid: this.uuid,
           content: text,
+          source:'QuCompuser',
         });
       };
 
@@ -759,42 +710,9 @@ export default {
       this.$refs.visVue.vis_change();
       this.ProgramText = this.GenQASM();
     },
-    login() {
-      this.socket.emit("login", {
-        uuid: this.uuid,
-        content: {
-          user: this.user,
-          psw: this.psw,
-        },
-      });
-    },
-    testLogin() {
-      this.socket.emit("testLogin", {
-        uuid: this.uuid,
-        content: {},
-      });
-    },
+
   },
   mounted: function () {
-    this.socket.emit("testLogin", { uuid: this.uuid });
-    this.socket.on("login_success", (content) => {
-      // 收到后端处理好的qasm，显示到前端qasm编辑区域
-      console.log(content);
-      if (!content.uuid == this.uuid) {
-        return;
-      }
-      this.dialogLogin = false;
-      this.socket.emit("get_gate_set", { uuid: this.uuid });
-    });
-
-    this.socket.on("need_login", (content) => {
-      // 收到后端处理好的qasm，显示到前端qasm编辑区域
-      console.log(content);
-      if (!content.uuid == this.uuid) {
-        return;
-      }
-      this.dialogLogin = true;
-    });
 
     this.socket.on("qasm_load", (content) => {
       // 收到后端处理好的qasm，显示到前端qasm编辑区域
@@ -891,16 +809,7 @@ export default {
     // this.qbit = this.VisContent.q;
   },
   watch: {
-    CurrentPage(newPage, oldPage){
-      this.AllPages.forEach(curPage=>{
-        if(newPage == curPage){
-          this[`${newPage}PageColor`]="white";
-        }
-        else if(oldPage == curPage){
-          this[`${oldPage}PageColor`]="gray";
-        }
-      })
-    }
+
   }
 };
 </script>

@@ -235,23 +235,47 @@ def get_gate_set(content):
 @authenticated_only
 def load_file(content):
     uid = content['uuid']
+    source = content['source']
     content = content['content']
+    
     try:
         q = load_data(data=content)
         q.analyse_code_from_circuit()
-        r = q.qasm
     except Exception as e:
-        emit(
-            'info', {'uuid': uid, 'info': f"Illegal Qasm file: {e}."}, namespace="/api/pty")
+        if source == 'QCDA':
+            emit(
+                'QCDA_info', {'uuid': uid, 'info': f"Illegal Qasm file: {e}."}, namespace="/api/pty")
+        else:
+            emit(
+                'info', {'uuid': uid, 'info': f"Illegal Qasm file: {e}."}, namespace="/api/pty")
         logger.warning(
             f"error parse qasm file {e} {traceback.format_exc()}")
         return
-    emit(
-        "qasm_load", {'uuid': uid, 'qasm': r}, namespace="/api/pty")
-    gates = get_gates_list(q)
+    if source == 'QCDA':
+        # optimize 
+        optimized_q = optimize_qasm(q.qasm)
+        
+        emit(
+            "QCDA_o_qasm_load", {'uuid': uid, 'qasm': optimized_q.qasm}, namespace="/api/pty")
 
-    emit('gates_update', {'uuid': uid, 'gates': gates}, namespace="/api/pty")
+        gates = get_gates_list(optimized_q)
+        emit('QCDA_o_gates_update', {'uuid': uid, 'gates': gates}, namespace="/api/pty")
+    else:
+        # no optimize
+        emit(
+            "qasm_load", {'uuid': uid, 'qasm': q.qasm}, namespace="/api/pty")
 
+        gates = get_gates_list(q)
+        emit('gates_update', {'uuid': uid, 'gates': gates}, namespace="/api/pty")
+
+        
+
+def optimize_qasm(qasm_text): 
+    # optimize qasm to o_qasm_text  
+    o_qasm_text = qasm_text
+    o_q = load_data(o_qasm_text)
+    
+    return o_q
 
 @socketio.on("qasm_save", namespace="/api/pty")
 @authenticated_only
@@ -353,6 +377,88 @@ def run_file(content):
         emit(
             'info', {'uuid': uid, 'info': f"Run circuit error: {e}"}, namespace="/api/pty")
 
+@socketio.on("o_qasm_run", namespace="/api/pty")
+@authenticated_only
+def o_run_file(content):
+    uid = content['uuid']
+    data = content['content']
+    optimize = content['optimize']
+    mapping = content['mapping']
+    topology = content['topology']
+    set = content['set']
+    setting = content['setting']
+    logger.info(f"run content {content}")
+    try:
+
+        qasm = load_data(data=data)
+        circuit = qasm.circuit
+
+        circuit_topology = Layout(circuit.width())
+        for edge in topology:
+            uv = edge.split('_')
+            u = int(uv[0])
+            v = int(uv[1])
+            circuit_topology.add_edge(u, v)
+
+        # gate_set = []
+        # for gate_str in set['gates']:
+        #     gate_set.append(eval(gate_str['name'])())
+        # circuit_set = InstructionSet(gate_set)
+        # if set['name'] not in ['FullSet', 'CustomerSet']:
+        #     circuit_set = eval(set['name'])
+
+        emit(
+            'info',  {'uuid': uid, 'info': f"Compiling circuit..."}, namespace="/api/pty")
+
+        # qcda = QCDA()
+        # circuit_phy = qcda.compile(
+        #     circuit, circuit_set, circuit_topology, optimize, mapping)
+        # circuit = circuit_phy
+
+        logger.info(f"run qasm {circuit.qasm()}")
+        emit(
+            'info',  {'uuid': uid, 'info': f"Running circuit..."}, namespace="/api/pty")
+        # simulation = ConstantStateVectorSimulator(
+        #     circuit=circuit
+        # )
+        # # logger.info(simulation.vector)
+        # # logger.info(circuit.qasm())
+        # state = simulation.run()
+        # # logger.info(state)
+        # state_np = cupy.asnumpy(state)
+        # state_np_r = np.real(state_np)
+        # state_np_i = np.imag(state_np)
+        # state_str_r = np.array2string(state_np_r, separator=',', formatter={
+        #                               'float_kind': lambda x: "\""+("%f" % x).rstrip('0').rstrip('.')+"\""})
+        # state_str_i = np.array2string(state_np_i, separator=',', formatter={
+        #                               'float_kind': lambda x: "\""+("%f" % x).rstrip('0').rstrip('.')+"\""})
+        # # logger.info( state_str_r, state_str_i)
+        # state_r = json.loads(state_str_r)
+        # state_i = json.loads(state_str_i)
+        # index = []
+        # state_amp = []
+        # state_ang = []
+        # for i in range(len(state_r)):
+        #     index.append(format(i, f'0{int(math.log(len(state_r),2))}b'))
+        #     amp, ang = cal_mod(state_np_r[i], state_np_i[i])
+        #     state_amp.append(amp)
+        #     state_ang.append(ang)
+
+        # emit('run_result', {'uuid': uid, 'run_result': list(
+        #     zip(index, state_r, state_i, state_amp, state_ang))}, namespace="/api/pty")
+        # emit(
+        #     'info', {'uuid': uid, 'info': f"Run circuit finished."}, namespace="/api/pty")
+        # device=setting['device'], backend=setting['backend'], shots=setting['shots'],
+        simulation = Simulator(**setting)
+        result = simulation.run(circuit)
+        emit(
+            'info', {'uuid': uid, 'info': f"Run circuit finished."}, namespace="/api/pty")
+        emit('o_run_result', {'uuid': uid, 'run_result': result}, namespace="/api/pty")
+    except Exception as e:
+        import traceback
+        logger.warning(f"Run circuit error: {e}, {traceback.format_exc()}")
+        emit(
+            'info', {'uuid': uid, 'info': f"Run circuit error: {e}"}, namespace="/api/pty")
 
 def cal_mod(x, y):
     z = complex(x, y)

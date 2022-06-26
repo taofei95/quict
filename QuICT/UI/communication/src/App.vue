@@ -1,13 +1,13 @@
 <template>
-  <VisPro></VisPro>
+  <Home></Home>
 </template>
 
 <script>
-import VisPro from "./components/VisPro.vue";
+import Home from "./components/Home.vue";
 export default {
   name: "App",
   components: {
-    VisPro,
+    Home,
   },
 };
 </script>

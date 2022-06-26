@@ -187,14 +187,14 @@ export default {
         .attr("height", gateSize - 2)
         .attr("xlink:href", `./assets/delete.2x.png`)
         .style("transform", () => {
-          return `translateX(-90px) translateY(-5px)`;
+          return `translateX(-90px) translateY(-10px)`;
         });
 
       q.append("text")
         .text((d) => `Q [${d}]`)
         .style("fill", "white")
         .style("transform", () => {
-          return `translateX(-50px) translateY(${gateSize / 2}px)`;
+          return `translateX(-50px) translateY(${gateSize / 2 - 5}px)`;
         });
 
       q_head.on("click", (event, d) => { // 通知外层删除qbit
