@@ -9,7 +9,7 @@ import numpy as np
 import cupy as cp
 
 
-def dot(A, B, gpu_out: bool = True, sync: bool = True):
+def dot(A, B, gpu_out: bool = False, sync: bool = True):
     """ dot matrix A and matrix B
 
     Args:
@@ -65,7 +65,7 @@ tensor_double_kernel = cp.RawKernel(r'''
     ''', 'tensordouble')
 
 
-def tensor(A, B, gpu_out: bool = True, sync: bool = True):
+def tensor(A, B, gpu_out: bool = False, sync: bool = True):
     """ tensor A and B
 
     Args:
@@ -130,7 +130,7 @@ matrixt_double_kernel = cp.RawKernel(r'''
     ''', 'matrix_tensorI_double')
 
 
-def MatrixTensorI(A, n, m, gpu_out: bool = True, sync: bool = True):
+def MatrixTensorI(A, n, m, gpu_out: bool = False, sync: bool = True):
     """ tensor I^n and A and I^m
 
     Args:
@@ -206,7 +206,7 @@ vectorp_double_kernel = cp.RawKernel(r'''
     ''', 'vector_double_permutation')
 
 
-def VectorPermutation(A, mapping, changeInput: bool = False, gpu_out: bool = True, sync: bool = True):
+def VectorPermutation(A, mapping, changeInput: bool = False, gpu_out: bool = False, sync: bool = True):
     """ permutaion A with mapping, inplace
 
     Args:
@@ -299,7 +299,7 @@ matrixp_double_kernel = cp.RawKernel(r'''
     ''', 'matrix_double_permutation')
 
 
-def MatrixPermutation(A, mapping, changeInput: bool = False, gpu_out: bool = True, sync: bool = True):
+def MatrixPermutation(A, mapping, changeInput: bool = False, gpu_out: bool = False, sync: bool = True):
     """ permute mat with mapping, inplace
 
     Args:

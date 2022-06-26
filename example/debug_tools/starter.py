@@ -95,7 +95,7 @@ def set_qureg(qreg_index, N):
 
 helpers = {formatted_result, amp2idx, peeeeeeek, set_qureg}
 
-print(f"using helpers:")
+print("using helpers:")
 for helper in helpers:
     print("\t" + helper.__name__)
 

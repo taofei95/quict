@@ -132,7 +132,7 @@ def reinforced_order_finding_constructor(order_finding):
             i += 1
             r = order_finding(a, N, eps, simulator)
             if r != 0 and (a ** r) % N == 1:
-                logging.info(f"\tsuccess!")
+                logging.info("\tsuccess!")
                 r_list.append(r)
         if len(r_list) == 0:
             return 0
