@@ -81,7 +81,7 @@ class MultiNodesSimulator:
         return self.simulator.vector
 
     def apply_specialgate(self, op: SpecialGate):
-        """ 1. Get prob 
+        """ 1. Get prob
                 a. if divided, using 0 or all
                 b. if normal, calculate normal
         Args:

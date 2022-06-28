@@ -7,7 +7,6 @@ class DataSwitchType(Enum):
     all = "ALL"
     half = "HALF"
     ctarg = "CTARGS"
-    exchange = "EXCHANGE"
 
 
 class DataSwitch(Operator):

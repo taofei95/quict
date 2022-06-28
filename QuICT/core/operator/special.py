@@ -23,5 +23,5 @@ class SpecialGate(Operator):
     def __init__(self, type, targ: list, proxy_idx: int = -1):
         super().__init__(targets=1)
         self._type = type
-        self.targs = targ
         self._proxy_idx = proxy_idx
+        self.targs = targ

@@ -55,7 +55,7 @@ class GateType(Enum):
 
 class MatrixType(Enum):
     """ Different Type of quantum gates' matrix
-    
+
     normal: based type of matrix
         1-bits: [[a,b], [c,d]]
         2-bits(control): [[1, 0, 0, 0],

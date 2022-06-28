@@ -27,8 +27,6 @@ class DataSwitcher:
             self.half_switch(vector, destination)
         elif op.type == DataSwitchType.ctarg:
             self.ctargs_switch(vector, destination, op.switch_condition)
-        elif op.type == DataSwitchType.exchange:
-            self.exchange_switch(vector, destination, op.switch_condition)
         else:
             raise TypeError("unsupportted data switch type.")
 
@@ -115,9 +113,6 @@ class DataSwitcher:
         sending_data = vector[target_idx]
         recv_buf = self._switch(sending_data, destination)
         vector[target_idx] = recv_buf
-
-    def exchange_switch(self, vector, destination: int, condition):
-        pass
 
     def add_prob(self, prob_result):
         recv_buf = cp.zeros_like(prob_result)

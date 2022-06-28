@@ -9,7 +9,7 @@ from QuICT.simulation.state_vector import ConstantStateVectorSimulator
 
 
 # load qasm
-qasm = OPENQASMInterface.load_file("test_qasm.qasm")
+qasm = OPENQASMInterface.load_file("./test.qasm")
 if qasm.valid_circuit:
     # generate circuit
     circuit = qasm.circuit

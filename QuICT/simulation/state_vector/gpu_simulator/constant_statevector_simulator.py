@@ -202,7 +202,7 @@ class ConstantStateVectorSimulator:
         gate_args = gate.cargs + gate.targs
         matrix = self.get_gate_matrix(gate)
         default_parameters = (self._vector, self._qubits, self._sync)
-        
+
         if args_num == 1:
             index = self._qubits - 1 - gate.targ
             self._algorithm.Diagonal_Multiply_targ(
@@ -306,7 +306,7 @@ class ConstantStateVectorSimulator:
         args_num = gate.controls + gate.targets
         gate_args = gate.cargs + gate.targs
         default_parameters = (self._vector, self._qubits, self._sync)
-        
+
         if args_num == 1:
             index = self._qubits - 1 - gate_args[0]
             val = gate.matrix[1, 1]
@@ -446,8 +446,8 @@ class ConstantStateVectorSimulator:
             index,
             self._vector,
             self._qubits,
-            all_measured = all_measured,
-            sync = self._sync
+            all_measured=all_measured,
+            sync=self._sync
         )
 
     def apply_specialgate(self, index: int, type: GateType, prob: float = None):
