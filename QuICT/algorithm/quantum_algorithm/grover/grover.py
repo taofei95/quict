@@ -30,7 +30,7 @@ class Grover:
     """
 
     @staticmethod
-    def run(n, k, oracle, simulator=CircuitSimulator()):
+    def circuit(n, k, oracle):
         """ grover search for f with custom oracle
 
         Args:
@@ -73,9 +73,14 @@ class Grover:
                 H | circuit(idx)
         for idx in index_q:
             Measure | circuit(idx)
-        simulator.run(circuit)
         logging.info(f"circuit width          = {circuit.width():4}")
         logging.info(f"circuit depth          = {circuit.depth():4}")
         logging.info(f"circuit size           = {circuit.size():4}")
-        # logging.info(f"Grover iteration size  = {oracle_size:4}+{phase_size:4}")
+        return circuit
+
+    @staticmethod
+    def run(n, k, oracle, simulator=CircuitSimulator()):
+        index_q = list(range(n))
+        circuit = Grover.circuit(n, k, oracle)
+        simulator.run(circuit)
         return int(circuit[index_q])

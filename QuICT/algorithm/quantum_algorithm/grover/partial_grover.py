@@ -35,7 +35,7 @@ class PartialGrover:
     """
 
     @staticmethod
-    def run(n, n_block, k, oracle, simulator=CircuitSimulator()):
+    def circuit(n, n_block, k, oracle):
         """ partial grover search with one target
 
         Args:
@@ -115,5 +115,11 @@ class PartialGrover:
         # Measure
         for idx in index_q:
             Measure | circuit(idx)
+        return circuit
+
+    @staticmethod
+    def run(n, n_block, k, oracle, simulator=CircuitSimulator()):
+        index_q = list(range(n))
+        circuit = PartialGrover.circuit(n, n_block, k, oracle)
         simulator.run(circuit)
         return int(circuit[index_q])
