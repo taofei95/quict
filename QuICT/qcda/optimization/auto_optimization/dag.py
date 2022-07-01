@@ -155,11 +155,10 @@ class DAG(Iterable):
         return self._width
 
     @staticmethod
-    def _build_ccx(gate_):
+    def _build_ccz(gate_):
         """CCX decomposition described in Nam et.al."""
         cgate = CompositeGate()
         with cgate:
-            H & 2
             CX & [1, 2]
             T_dagger & 2
             CX & [0, 2]
@@ -173,7 +172,6 @@ class DAG(Iterable):
             T & 0
             T & 1
             T & 2
-            H & 2
 
         args = gate_.cargs + gate_.targs
         if len(args) == gate_.controls + gate_.targets:
@@ -187,9 +185,12 @@ class DAG(Iterable):
         var_cnt = 0
         for gate_ in gates.gates:
             # decouple ccx building with dag
-            if gate_.type == GateType.ccx:
+            if gate_.type == GateType.ccx or gate_.type == GateType.ccz:
                 self.has_symbolic_rz = True
-                gate_list = self._build_ccx(gate_)
+                gate_list = self._build_ccz(gate_)
+                if gate_.type == GateType.ccx:
+                    gate_list = [H & gate_.targ] + gate_list + [H & gate_.targ]
+
                 node_cnt += len(gate_list)
 
                 # create a new phase variable

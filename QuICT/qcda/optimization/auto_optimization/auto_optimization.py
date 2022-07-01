@@ -1074,7 +1074,7 @@ class AutoOptimization(Optimization):
               mode(str): Support 'light' and 'heavy' mode. See details in [1]
               verbose(bool): whether output details of each step
         Returns:
-            Circuit: The CompositeGate after optimization
+            Circuit: The circuit after optimization
 
         [1] Nam, Yunseong, et al. "Automated optimization of large quantum
         circuits with continuous parameters." npj Quantum Information 4.1

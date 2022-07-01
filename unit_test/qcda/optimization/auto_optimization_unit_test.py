@@ -291,13 +291,13 @@ def test_regrettable_replace():
 
 def test_random_circuit():
     n_qubit = 6
-    n_gate = 400
+    n_gate = 200
     n_iter = 5
 
     print(f'random ciruit test: {n_qubit} qubits, {n_gate} gates, {n_iter} iterations.')
     support_gates = [GateType.h, GateType.cx, GateType.rz,
                      GateType.t, GateType.tdg, GateType.s, GateType.sdg, GateType.z, GateType.x,
-                     GateType.ccx,
+                     GateType.ccx, GateType.ccz,
                      ]
     for _ in range(n_iter):
         print('iteration', _)
