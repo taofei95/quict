@@ -475,10 +475,12 @@ class ConstantStateVectorSimulator:
     def sample(self):
         """ Return the measured result from current state vector. """
         assert (self._circuit is not None)
+        original_sv = self._vector.copy()
         temp_measure_circuit = Circuit(self._qubits)
         Measure | temp_measure_circuit
 
         self.run(temp_measure_circuit, use_previous=True)
         measured_qubits = int(temp_measure_circuit.qubits)
 
+        self._vector = original_sv
         return measured_qubits

@@ -138,13 +138,15 @@ class RandomWalk:
         opt_circuit = GateDecomposition.execute(self._circuit)
         opt_circuit = CommutativeOptimization.execute(opt_circuit)
 
+        # Step 2, Simulate the quantum walk's circuit
+        state_vector = simulator.run(opt_circuit)
+
         # Return final state vector if not need
         if not record_measured:
-            return simulator.run(opt_circuit)
+            return state_vector
 
         state_list = [0] * (1 << self._circuit.width())
         for _ in range(shots):
-            _ = simulator.run(opt_circuit)
             measured_state = simulator.sample()
             state_list[measured_state] += 1
 
