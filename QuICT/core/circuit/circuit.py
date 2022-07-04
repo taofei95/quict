@@ -4,7 +4,6 @@
 # @Author  : Han Yu, Kaiqi Li
 # @File    : circuit.py
 from typing import Union, List
-from copy import deepcopy
 import numpy as np
 
 from QuICT.core.qubit import Qubit, Qureg
@@ -458,7 +457,8 @@ class Circuit(CircuitBased):
         self,
         rand_size: int = 10,
         typelist: list = None,
-        random_params: bool = False
+        random_params: bool = False,
+        probabilities: list = None
     ):
         """ add some random gate to the circuit
 
@@ -466,6 +466,8 @@ class Circuit(CircuitBased):
             rand_size(int): the number of the gate added to the circuit
             typelist(list<GateType>): the type of gate, default contains
                 Rx, Ry, Rz, Cx, Cy, Cz, CRz, Ch, Rxx, Ryy, Rzz and FSim
+            random_params(bool): whether using random parameters for all quantum gates with parameters.
+            probabilities: The probability of append for each gates
         """
         if typelist is None:
             typelist = [
@@ -475,9 +477,14 @@ class Circuit(CircuitBased):
                 GateType.Ryy, GateType.Rzz, GateType.fsim
             ]
 
+        if probabilities is not None:
+            assert sum(probabilities) == 1 and len(probabilities) == len(typelist)
+    
+        gate_prob = probabilities
+        gate_indexes = list(range(len(typelist)))
         n_qubit = self.width()
         for _ in range(rand_size):
-            rand_type = np.random.randint(0, len(typelist))
+            rand_type = np.random.choice(gate_indexes, p=gate_prob)
             gate_type = typelist[rand_type]
             self.append(build_random_gate(gate_type, n_qubit, random_params))
 
@@ -546,10 +553,3 @@ class Circuit(CircuitBased):
             self.update_qubit(remapping_qureg, is_append=False)
 
         qureg[:] = remapping_qureg
-
-    def circuit_type(self) -> str:
-        from QuICT.core.utils import CLIFFORD_GATE_SET
-
-        gate_type = set(self._gate_type.keys())
-        # is_clifford
-        pass
