@@ -1,5 +1,5 @@
 from os import path, walk
-from typing import Callable, Iterable, List, Union
+from typing import Iterable, List, Union
 from unicodedata import category
 
 from time import time
@@ -99,16 +99,30 @@ if __name__ == "__main__":
             # "unitary",
         ]
     else:
-        category = [category]
+        category = [args.category]
 
+    elapsed = {}
     if simulator in ["quict", "all"]:
+        elapsed["quict"] = {}
         print("Testing with QuICT simulator...")
-        start_time = time()
-        quict_sim(scale, category)
-        end_time = time()
-        print(f"Finished. Duration: {end_time-start_time:.4f}s")
+        for c in category:
+            start_time = time()
+            quict_sim(scale, c)
+            end_time = time()
+            elapsed["quict"][c] = end_time - start_time
     if simulator in ["qiskit", "all"]:
+        elapsed["qiskit"] = {}
+
         print("Testing with Qiskit simulator...")
-        qiskit_sim(scale, category)
-        end_time = time()
-        print(f"Finished. Duration: {end_time-start_time:.4f}s")
+        for c in category:
+            start_time = time()
+            qiskit_sim(scale, c)
+            end_time = time()
+            elapsed["qiskit"][c] = end_time - start_time
+
+    print("\n[Summary]")
+    print(f"Circuit size: {scale}")
+    for simulator in elapsed:
+        print(f"{simulator}:")
+        for c, t in elapsed[simulator].items():
+            print(f"    {c:16s}{t:0.4f}s")
