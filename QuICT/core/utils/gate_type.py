@@ -35,6 +35,7 @@ class GateType(Enum):
     swap = "Swap gate"
     cswap = "cswap gate"
     ccx = "Toffoli gate"
+    ccz = "Multi-Control Z Gate"
     CCRz = "CCRz gate"
 
     # Special gate below
@@ -45,13 +46,7 @@ class GateType(Enum):
 
     # no qasm represent below
     perm = "Perm gate"
-    control_perm_detail = "Control-Perm_Detail gate"
-    perm_shift = "Perm-Shift gate"
-    control_perm_shift = "Control-Perm-Shift gate"
-    perm_mul = "Perm-Mul gate"
-    control_perm_mul = "Control-Perm-Mul gate"
     perm_fx = "Perm-Fx gate"
-    shor_init = "Shor Initial gate"
 
     # Composite gate
     qft = "QFT gate"
@@ -64,13 +59,7 @@ SPECIAL_GATE_SET = [
     GateType.barrier,
     GateType.unitary,
     GateType.perm,
-    GateType.control_perm_detail,
-    GateType.perm_shift,
-    GateType.control_perm_shift,
-    GateType.perm_mul,
-    GateType.control_perm_mul,
     GateType.perm_fx,
-    GateType.shor_init,
     GateType.qft,
     GateType.iqft
 ]
@@ -98,4 +87,22 @@ SUPREMACY_GATE_SET = [
     GateType.sx,
     GateType.sy,
     GateType.sw
+]
+
+
+PAULI_GATE_SET = [
+    GateType.x,
+    GateType.y,
+    GateType.z
+]
+
+
+CLIFFORD_GATE_SET = [
+    GateType.x,
+    GateType.y,
+    GateType.z,
+    GateType.h,
+    GateType.s,
+    GateType.sdg,
+    GateType.cx
 ]

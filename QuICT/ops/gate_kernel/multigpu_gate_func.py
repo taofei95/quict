@@ -1,7 +1,7 @@
 import cupy as cp
 import numpy as np
 
-from .gate_function import prop_add, MeasureGate_prop_kernel
+from .gate_function import prop_add_double_kernel, prop_add_single_kernel, MeasureGate_prop
 
 
 __outward_functions = [
@@ -20,6 +20,7 @@ Simple_Multiply_single = cp.RawKernel(r'''
         vec[label] = vec[label]*val;
     }
     ''', 'SimpleMultiply')
+Simple_Multiply_single.compile()
 
 
 Simple_Multiply_double = cp.RawKernel(r'''
@@ -31,6 +32,7 @@ Simple_Multiply_double = cp.RawKernel(r'''
         vec[label] = vec[label]*val;
     }
     ''', 'SimpleMultiply')
+Simple_Multiply_double.compile()
 
 
 Float_Multiply_single = cp.RawKernel(r'''
@@ -42,6 +44,7 @@ Float_Multiply_single = cp.RawKernel(r'''
         vec[label] = vec[label] * value;
     }
     ''', 'FloatMultiply')
+Float_Multiply_single.compile()
 
 
 Float_Multiply_double = cp.RawKernel(r'''
@@ -53,18 +56,7 @@ Float_Multiply_double = cp.RawKernel(r'''
         vec[label] = vec[label] * value;
     }
     ''', 'FloatMultiply')
-
-
-prob_0 = cp.ElementwiseKernel(
-    'T x, raw T y', 'T z',
-    'z = 0',
-    'prop_add')
-
-
-prob_1 = cp.ElementwiseKernel(
-    'T x, raw T y', 'T z',
-    'z = abs(x) * abs(x)',
-    'prop_add')
+Float_Multiply_double.compile()
 
 
 def Simple_Multiply(val, vec, vec_bit, sync: bool = False):
@@ -93,16 +85,27 @@ def Device_Prob_Calculator(index, vec, device_qubits, dev_id):
     """
     Measure Gate Measure.
     """
+    kernel_function = prop_add_double_kernel if vec.dtype == np.complex128 else \
+        prop_add_single_kernel
+
     if index >= device_qubits:
         if dev_id & (1 << (index - device_qubits)):
-            prob = prob_0(vec, vec)
-        else:
-            prob = prob_1(vec, vec)
+            return 0
+
+        task_number = vec.size
     else:
-        prob = prop_add(vec, vec, 1 << index)
+        task_number = vec.size // 2
 
-    prob = MeasureGate_prop_kernel(prob, axis=0).real
+    thread_per_block = min(256, task_number)
+    block_num = task_number // thread_per_block
+    out = cp.empty(task_number, dtype=np.complex128)
+    kernel_function(
+        (block_num, ),
+        (thread_per_block, ),
+        (index, vec, out)
+    )
 
+    prob = MeasureGate_prop(out, axis=0).real
     return prob
 
 

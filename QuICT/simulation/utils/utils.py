@@ -43,13 +43,9 @@ GATE_TYPE_to_ID = {
         GateType.tdg, GateType.s, GateType.sdg
     ],
     GateGroup.control_2arg: [GateType.cz, GateType.cu1],
-    GateGroup.control_3arg: [GateType.CCRz],
+    GateGroup.control_3arg: [GateType.CCRz, GateType.ccz],
     GateGroup.complexMIP_2arg: [GateType.fsim],
-    GateGroup.complexIPIP_2arg: [GateType.Rxx, GateType.Ryy],
-    GateGroup.perm_gate: [
-        GateType.control_perm_detail, GateType.perm_shift, GateType.perm_mul,
-        GateType.control_perm_shift, GateType.control_perm_mul, GateType.perm_fx
-    ]
+    GateGroup.complexIPIP_2arg: [GateType.Rxx, GateType.Ryy]
 }
 
 

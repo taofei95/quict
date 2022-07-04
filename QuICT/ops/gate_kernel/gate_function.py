@@ -28,7 +28,7 @@ __outward_functions = [
 ]
 
 
-Diagonal_Multiply_targ_single = cp.RawKernel(r'''
+Diagonal_Multiply_targ_single_kernel = cp.RawKernel(r'''
     #include <cupy/complex.cuh>
     extern "C" __global__
     void Diagonal2x2Multiply(int parg, const complex<float>* mat, complex<float>* vec) {
@@ -45,7 +45,7 @@ Diagonal_Multiply_targ_single = cp.RawKernel(r'''
     ''', 'Diagonal2x2Multiply')
 
 
-Diagonal_Multiply_targ_double = cp.RawKernel(r'''
+Diagonal_Multiply_targ_double_kernel = cp.RawKernel(r'''
     #include <cupy/complex.cuh>
     extern "C" __global__
     void Diagonal2x2Multiply(int parg, const complex<double>* mat, complex<double>* vec) {
@@ -62,7 +62,7 @@ Diagonal_Multiply_targ_double = cp.RawKernel(r'''
     ''', 'Diagonal2x2Multiply')
 
 
-Diagonal_Multiply_targs_single = cp.RawKernel(r'''
+Diagonal_Multiply_targs_single_kernel = cp.RawKernel(r'''
     #include <cupy/complex.cuh>
     extern "C" __global__
     void Diagonal4x4Multiply(int high, int low, const complex<float>* mat, complex<float>* vec) {
@@ -88,7 +88,7 @@ Diagonal_Multiply_targs_single = cp.RawKernel(r'''
     ''', 'Diagonal4x4Multiply')
 
 
-Diagonal_Multiply_targs_double = cp.RawKernel(r'''
+Diagonal_Multiply_targs_double_kernel = cp.RawKernel(r'''
     #include <cupy/complex.cuh>
     extern "C" __global__
     void Diagonal4x4Multiply(int high, int low, const complex<double>* mat, complex<double>* vec) {
@@ -114,7 +114,7 @@ Diagonal_Multiply_targs_double = cp.RawKernel(r'''
     ''', 'Diagonal4x4Multiply')
 
 
-Based_InnerProduct_targ_single = cp.RawKernel(r'''
+Based_InnerProduct_targ_single_kernel = cp.RawKernel(r'''
     #include <cupy/complex.cuh>
     extern "C" __global__
     void Based2x2InnerProduct(int parg, const complex<float>* mat, complex<float>* vec) {
@@ -132,7 +132,7 @@ Based_InnerProduct_targ_single = cp.RawKernel(r'''
     ''', 'Based2x2InnerProduct')
 
 
-Based_InnerProduct_targ_double = cp.RawKernel(r'''
+Based_InnerProduct_targ_double_kernel = cp.RawKernel(r'''
     #include <cupy/complex.cuh>
     extern "C" __global__
     void Based2x2InnerProduct(int parg, const complex<double>* mat, complex<double>* vec) {
@@ -150,7 +150,7 @@ Based_InnerProduct_targ_double = cp.RawKernel(r'''
     ''', 'Based2x2InnerProduct')
 
 
-Based_InnerProduct_targs_single = cp.RawKernel(r'''
+Based_InnerProduct_targs_single_kernel = cp.RawKernel(r'''
     #include <cupy/complex.cuh>
     extern "C" __global__
     void Based4x4InnerProduct(int t0, int t1, const complex<float>* mat, complex<float>* vec) {
@@ -185,7 +185,7 @@ Based_InnerProduct_targs_single = cp.RawKernel(r'''
     ''', 'Based4x4InnerProduct')
 
 
-Based_InnerProduct_targs_double = cp.RawKernel(r'''
+Based_InnerProduct_targs_double_kernel = cp.RawKernel(r'''
     #include <cupy/complex.cuh>
     extern "C" __global__
     void Based4x4InnerProduct(int t0, int t1, const complex<double>* mat, complex<double>* vec) {
@@ -220,7 +220,7 @@ Based_InnerProduct_targs_double = cp.RawKernel(r'''
     ''', 'Based4x4InnerProduct')
 
 
-Controlled_Multiply_targ_single = cp.RawKernel(r'''
+Controlled_Multiply_targ_single_kernel = cp.RawKernel(r'''
     #include <cupy/complex.cuh>
     extern "C" __global__
     void Controlled2x2Multiply(int parg, const complex<float> val, complex<float>* vec) {
@@ -235,7 +235,7 @@ Controlled_Multiply_targ_single = cp.RawKernel(r'''
     ''', 'Controlled2x2Multiply')
 
 
-Controlled_Multiply_targ_double = cp.RawKernel(r'''
+Controlled_Multiply_targ_double_kernel = cp.RawKernel(r'''
     #include <cupy/complex.cuh>
     extern "C" __global__
     void Controlled2x2Multiply(int parg, const complex<double> val, complex<double>* vec) {
@@ -250,7 +250,7 @@ Controlled_Multiply_targ_double = cp.RawKernel(r'''
     ''', 'Controlled2x2Multiply')
 
 
-Controlled_Multiply_ctargs_single = cp.RawKernel(r'''
+Controlled_Multiply_ctargs_single_kernel = cp.RawKernel(r'''
     #include <cupy/complex.cuh>
     extern "C" __global__
     void Controlled4x4Multiply(const complex<float>* mat, complex<float>* vec, int c_index, int t_index) {
@@ -281,7 +281,7 @@ Controlled_Multiply_ctargs_single = cp.RawKernel(r'''
     ''', 'Controlled4x4Multiply')
 
 
-Controlled_Multiply_ctargs_double = cp.RawKernel(r'''
+Controlled_Multiply_ctargs_double_kernel = cp.RawKernel(r'''
     #include <cupy/complex.cuh>
     extern "C" __global__
     void Controlled4x4Multiply(const complex<double>* mat, complex<double>* vec, int c_index, int t_index){
@@ -312,7 +312,7 @@ Controlled_Multiply_ctargs_double = cp.RawKernel(r'''
     ''', 'Controlled4x4Multiply')
 
 
-Controlled_Product_ctargs_single = cp.RawKernel(r'''
+Controlled_Product_ctargs_single_kernel = cp.RawKernel(r'''
     #include <cupy/complex.cuh>
     extern "C" __global__
     void Controlled4x4Product(const complex<float> val, complex<float>* vec, int c_index, int t_index) {
@@ -341,7 +341,7 @@ Controlled_Product_ctargs_single = cp.RawKernel(r'''
     ''', 'Controlled4x4Product')
 
 
-Controlled_Product_ctargs_double = cp.RawKernel(r'''
+Controlled_Product_ctargs_double_kernel = cp.RawKernel(r'''
     #include <cupy/complex.cuh>
     extern "C" __global__
     void Controlled4x4Product(const complex<double> val, complex<double>* vec, int c_index, int t_index){
@@ -370,7 +370,7 @@ Controlled_Product_ctargs_double = cp.RawKernel(r'''
     ''', 'Controlled4x4Product')
 
 
-Controlled_InnerProduct_ctargs_single = cp.RawKernel(r'''
+Controlled_InnerProduct_ctargs_single_kernel = cp.RawKernel(r'''
     #include <cupy/complex.cuh>
     extern "C" __global__
     void Controlled4x4InnerProduct(const complex<float>* mat, complex<float>* vec, int c_index, int t_index) {
@@ -402,7 +402,7 @@ Controlled_InnerProduct_ctargs_single = cp.RawKernel(r'''
     ''', 'Controlled4x4InnerProduct')
 
 
-Controlled_InnerProduct_ctargs_double = cp.RawKernel(r'''
+Controlled_InnerProduct_ctargs_double_kernel = cp.RawKernel(r'''
     #include <cupy/complex.cuh>
     extern "C" __global__
     void Controlled4x4InnerProduct(const complex<double>* mat, complex<double>* vec, int c_index, int t_index) {
@@ -434,7 +434,7 @@ Controlled_InnerProduct_ctargs_double = cp.RawKernel(r'''
     ''', 'Controlled4x4InnerProduct')
 
 
-Controlled_MultiplySwap_ctargs_single = cp.RawKernel(r'''
+Controlled_MultiplySwap_ctargs_single_kernel = cp.RawKernel(r'''
     #include <cupy/complex.cuh>
     extern "C" __global__
     void Controlled4x4MultiSwap(const complex<float>* mat, complex<float>* vec, int c_index, int t_index) {
@@ -466,7 +466,7 @@ Controlled_MultiplySwap_ctargs_single = cp.RawKernel(r'''
     ''', 'Controlled4x4MultiSwap')
 
 
-Controlled_MultiplySwap_ctargs_double = cp.RawKernel(r'''
+Controlled_MultiplySwap_ctargs_double_kernel = cp.RawKernel(r'''
     #include <cupy/complex.cuh>
     extern "C" __global__
     void Controlled4x4MultiSwap(const complex<double>* mat, complex<double>* vec, int c_index, int t_index) {
@@ -498,7 +498,7 @@ Controlled_MultiplySwap_ctargs_double = cp.RawKernel(r'''
     ''', 'Controlled4x4MultiSwap')
 
 
-Controlled_Swap_targs_single = cp.RawKernel(r'''
+Controlled_Swap_targs_single_kernel = cp.RawKernel(r'''
     #include <cupy/complex.cuh>
     extern "C" __global__
     void Controlled4x4Swap(int high, int low, complex<float>* vec) {
@@ -522,7 +522,7 @@ Controlled_Swap_targs_single = cp.RawKernel(r'''
     ''', 'Controlled4x4Swap')
 
 
-Controlled_Swap_targs_double = cp.RawKernel(r'''
+Controlled_Swap_targs_double_kernel = cp.RawKernel(r'''
     #include <cupy/complex.cuh>
     extern "C" __global__
     void Controlled4x4Swap(int high, int low, complex<double>* vec) {
@@ -546,7 +546,7 @@ Controlled_Swap_targs_double = cp.RawKernel(r'''
     ''', 'Controlled4x4Swap')
 
 
-Completed_MxIP_targs_single = cp.RawKernel(r'''
+Completed_MxIP_targs_single_kernel = cp.RawKernel(r'''
     #include <cupy/complex.cuh>
     extern "C" __global__
     void CompletedMxIP(int high, int low, const complex<float>* mat, complex<float>* vec) {
@@ -574,7 +574,7 @@ Completed_MxIP_targs_single = cp.RawKernel(r'''
     ''', 'CompletedMxIP')
 
 
-Completed_MxIP_targs_double = cp.RawKernel(r'''
+Completed_MxIP_targs_double_kernel = cp.RawKernel(r'''
     #include <cupy/complex.cuh>
     extern "C" __global__
     void CompletedMxIP(int high, int low, const complex<double>* mat, complex<double>* vec) {
@@ -602,7 +602,7 @@ Completed_MxIP_targs_double = cp.RawKernel(r'''
     ''', 'CompletedMxIP')
 
 
-Completed_IPxIP_targs_single = cp.RawKernel(r'''
+Completed_IPxIP_targs_single_kernel = cp.RawKernel(r'''
     #include <cupy/complex.cuh>
     extern "C" __global__
     void CompletedIPxIP(int high, int low, const complex<float>* mat, complex<float>* vec) {
@@ -631,7 +631,7 @@ Completed_IPxIP_targs_single = cp.RawKernel(r'''
     ''', 'CompletedIPxIP')
 
 
-Completed_IPxIP_targs_double = cp.RawKernel(r'''
+Completed_IPxIP_targs_double_kernel = cp.RawKernel(r'''
     #include <cupy/complex.cuh>
     extern "C" __global__
     void CompletedIPxIP(int high, int low, const complex<double>* mat, complex<double>* vec) {
@@ -660,7 +660,7 @@ Completed_IPxIP_targs_double = cp.RawKernel(r'''
     ''', 'CompletedIPxIP')
 
 
-RDiagonal_Swap_targ_single = cp.RawKernel(r'''
+RDiagonal_Swap_targ_single_kernel = cp.RawKernel(r'''
     #include <cupy/complex.cuh>
     extern "C" __global__
     void RDiag2x2Swap(int parg, complex<float>* vec) {
@@ -678,7 +678,7 @@ RDiagonal_Swap_targ_single = cp.RawKernel(r'''
     ''', 'RDiag2x2Swap')
 
 
-RDiagonal_Swap_targ_double = cp.RawKernel(r'''
+RDiagonal_Swap_targ_double_kernel = cp.RawKernel(r'''
     #include <cupy/complex.cuh>
     extern "C" __global__
     void RDiag2x2Swap(int parg, complex<double>* vec) {
@@ -696,7 +696,7 @@ RDiagonal_Swap_targ_double = cp.RawKernel(r'''
     ''', 'RDiag2x2Swap')
 
 
-RDiagonal_MultiplySwap_targ_single = cp.RawKernel(r'''
+RDiagonal_MultiplySwap_targ_single_kernel = cp.RawKernel(r'''
     #include <cupy/complex.cuh>
     extern "C" __global__
     void RDiag2x2MultiSwap(int parg, const complex<float>* mat, complex<float>* vec) {
@@ -714,7 +714,7 @@ RDiagonal_MultiplySwap_targ_single = cp.RawKernel(r'''
     ''', 'RDiag2x2MultiSwap')
 
 
-RDiagonal_MultiplySwap_targ_double = cp.RawKernel(r'''
+RDiagonal_MultiplySwap_targ_double_kernel = cp.RawKernel(r'''
     #include <cupy/complex.cuh>
     extern "C" __global__
     void RDiag2x2MultiSwap(int parg, const complex<double>* mat, complex<double>* vec) {
@@ -732,7 +732,7 @@ RDiagonal_MultiplySwap_targ_double = cp.RawKernel(r'''
     ''', 'RDiag2x2MultiSwap')
 
 
-Controlled_Swap_more_single = cp.RawKernel(r'''
+Controlled_Swap_more_single_kernel = cp.RawKernel(r'''
     #include <cupy/complex.cuh>
     extern "C" __global__
     void Controlled8x8Swap(int high, int low, int t_index, complex<float>* vec) {
@@ -770,7 +770,7 @@ Controlled_Swap_more_single = cp.RawKernel(r'''
     ''', 'Controlled8x8Swap')
 
 
-Controlled_Swap_more_double = cp.RawKernel(r'''
+Controlled_Swap_more_double_kernel = cp.RawKernel(r'''
     #include <cupy/complex.cuh>
     extern "C" __global__
     void Controlled8x8Swap(int high, int low, int t_index, complex<double>* vec) {
@@ -808,7 +808,7 @@ Controlled_Swap_more_double = cp.RawKernel(r'''
     ''', 'Controlled8x8Swap')
 
 
-Controlled_Multiply_more_single = cp.RawKernel(r'''
+Controlled_Multiply_more_single_kernel = cp.RawKernel(r'''
     #include <cupy/complex.cuh>
     extern "C" __global__
     void Controlled8x8Multiply(int high, int low, int t_index, const complex<float>* mat, complex<float>* vec) {
@@ -845,7 +845,7 @@ Controlled_Multiply_more_single = cp.RawKernel(r'''
     ''', 'Controlled8x8Multiply')
 
 
-Controlled_Multiply_more_double = cp.RawKernel(r'''
+Controlled_Multiply_more_double_kernel = cp.RawKernel(r'''
     #include <cupy/complex.cuh>
     extern "C" __global__
     void Controlled8x8Multiply(int high, int low, int t_index, const complex<double>* mat, complex<double>* vec) {
@@ -882,7 +882,7 @@ Controlled_Multiply_more_double = cp.RawKernel(r'''
     ''', 'Controlled8x8Multiply')
 
 
-Controlled_Swap_tmore_single = cp.RawKernel(r'''
+Controlled_Swap_tmore_single_kernel = cp.RawKernel(r'''
     #include <cupy/complex.cuh>
     extern "C" __global__
     void Controlled8x8Swapt(int high, int low, int c_index, complex<float>* vec) {
@@ -921,7 +921,7 @@ Controlled_Swap_tmore_single = cp.RawKernel(r'''
     ''', 'Controlled8x8Swapt')
 
 
-Controlled_Swap_tmore_double = cp.RawKernel(r'''
+Controlled_Swap_tmore_double_kernel = cp.RawKernel(r'''
     #include <cupy/complex.cuh>
     extern "C" __global__
     void Controlled8x8Swapt(int high, int low, int c_index, complex<double>* vec) {
@@ -971,13 +971,13 @@ def Diagonal_Multiply_targ(t_index, mat, vec, vec_bit, sync: bool = False):
     block_num = task_number // thread_per_block
 
     if vec.dtype == np.complex64:
-        Diagonal_Multiply_targ_single(
+        Diagonal_Multiply_targ_single_kernel(
             (block_num,),
             (thread_per_block,),
             (t_index, mat, vec)
         )
     else:
-        Diagonal_Multiply_targ_double(
+        Diagonal_Multiply_targ_double_kernel(
             (block_num,),
             (thread_per_block,),
             (t_index, mat, vec)
@@ -1005,13 +1005,13 @@ def Diagonal_Multiply_targs(t_indexes, mat, vec, vec_bit, sync: bool = False):
         high, low = t_indexes[1], t_indexes[0]
 
     if vec.dtype == np.complex64:
-        Diagonal_Multiply_targs_single(
+        Diagonal_Multiply_targs_single_kernel(
             (block_num,),
             (thread_per_block,),
             (high, low, mat, vec)
         )
     else:
-        Diagonal_Multiply_targs_double(
+        Diagonal_Multiply_targs_double_kernel(
             (block_num,),
             (thread_per_block,),
             (high, low, mat, vec)
@@ -1032,13 +1032,13 @@ def Based_InnerProduct_targ(t_index, mat, vec, vec_bit, sync: bool = False):
     block_num = task_number // thread_per_block
 
     if vec.dtype == np.complex64:
-        Based_InnerProduct_targ_single(
+        Based_InnerProduct_targ_single_kernel(
             (block_num,),
             (thread_per_block,),
             (t_index, mat, vec)
         )
     else:
-        Based_InnerProduct_targ_double(
+        Based_InnerProduct_targ_double_kernel(
             (block_num,),
             (thread_per_block,),
             (t_index, mat, vec)
@@ -1061,13 +1061,13 @@ def Based_InnerProduct_targs(t_indexes, mat, vec, vec_bit, sync: bool = False):
     block_num = task_number // thread_per_block
 
     if vec.dtype == np.complex64:
-        Based_InnerProduct_targs_single(
+        Based_InnerProduct_targs_single_kernel(
             (block_num,),
             (thread_per_block,),
             (t_indexes[0], t_indexes[1], mat, vec)
         )
     else:
-        Based_InnerProduct_targs_double(
+        Based_InnerProduct_targs_double_kernel(
             (block_num,),
             (thread_per_block,),
             (t_indexes[0], t_indexes[1], mat, vec)
@@ -1088,13 +1088,13 @@ def Controlled_Multiply_targ(t_index, val, vec, vec_bit, sync: bool = False):
     block_num = task_number // thread_per_block
 
     if vec.dtype == np.complex64:
-        Controlled_Multiply_targ_single(
+        Controlled_Multiply_targ_single_kernel(
             (block_num,),
             (thread_per_block,),
             (t_index, val, vec)
         )
     else:
-        Controlled_Multiply_targ_double(
+        Controlled_Multiply_targ_double_kernel(
             (block_num,),
             (thread_per_block,),
             (t_index, val, vec)
@@ -1117,13 +1117,13 @@ def Controlled_Multiply_ctargs(c_index, t_index, mat, vec, vec_bit, sync: bool =
     block_num = task_number // thread_per_block
 
     if vec.dtype == np.complex64:
-        Controlled_Multiply_ctargs_single(
+        Controlled_Multiply_ctargs_single_kernel(
             (block_num,),
             (thread_per_block,),
             (mat, vec, c_index, t_index)
         )
     else:
-        Controlled_Multiply_ctargs_double(
+        Controlled_Multiply_ctargs_double_kernel(
             (block_num,),
             (thread_per_block,),
             (mat, vec, c_index, t_index)
@@ -1146,13 +1146,13 @@ def Controlled_Product_ctargs(c_index, t_index, value, vec, vec_bit, sync: bool 
     block_num = task_number // thread_per_block
 
     if vec.dtype == np.complex64:
-        Controlled_Product_ctargs_single(
+        Controlled_Product_ctargs_single_kernel(
             (block_num,),
             (thread_per_block,),
             (value, vec, c_index, t_index)
         )
     else:
-        Controlled_Product_ctargs_double(
+        Controlled_Product_ctargs_double_kernel(
             (block_num,),
             (thread_per_block,),
             (value, vec, c_index, t_index)
@@ -1175,13 +1175,13 @@ def Controlled_InnerProduct_ctargs(c_index, t_index, mat, vec, vec_bit, sync: bo
     block_num = task_number // thread_per_block
 
     if vec.dtype == np.complex64:
-        Controlled_InnerProduct_ctargs_single(
+        Controlled_InnerProduct_ctargs_single_kernel(
             (block_num,),
             (thread_per_block,),
             (mat, vec, c_index, t_index)
         )
     else:
-        Controlled_InnerProduct_ctargs_double(
+        Controlled_InnerProduct_ctargs_double_kernel(
             (block_num,),
             (thread_per_block,),
             (mat, vec, c_index, t_index)
@@ -1209,13 +1209,13 @@ def Completed_MxIP_targs(t_indexes, mat, vec, vec_bit, sync: bool = False):
         high, low = t_indexes[1], t_indexes[0]
 
     if vec.dtype == np.complex64:
-        Completed_MxIP_targs_single(
+        Completed_MxIP_targs_single_kernel(
             (block_num,),
             (thread_per_block,),
             (high, low, mat, vec)
         )
     else:
-        Completed_MxIP_targs_double(
+        Completed_MxIP_targs_double_kernel(
             (block_num,),
             (thread_per_block,),
             (high, low, mat, vec)
@@ -1243,13 +1243,13 @@ def Completed_IPxIP_targs(t_indexes, mat, vec, vec_bit, sync: bool = False):
         high, low = t_indexes[1], t_indexes[0]
 
     if vec.dtype == np.complex64:
-        Completed_IPxIP_targs_single(
+        Completed_IPxIP_targs_single_kernel(
             (block_num,),
             (thread_per_block,),
             (high, low, mat, vec)
         )
     else:
-        Completed_IPxIP_targs_double(
+        Completed_IPxIP_targs_double_kernel(
             (block_num,),
             (thread_per_block,),
             (high, low, mat, vec)
@@ -1270,13 +1270,13 @@ def RDiagonal_Swap_targ(t_index, vec, vec_bit, sync: bool = False):
     block_num = task_number // thread_per_block
 
     if vec.dtype == np.complex64:
-        RDiagonal_Swap_targ_single(
+        RDiagonal_Swap_targ_single_kernel(
             (block_num,),
             (thread_per_block,),
             (t_index, vec)
         )
     else:
-        RDiagonal_Swap_targ_double(
+        RDiagonal_Swap_targ_double_kernel(
             (block_num,),
             (thread_per_block,),
             (t_index, vec)
@@ -1297,13 +1297,13 @@ def RDiagonal_MultiplySwap_targ(t_index, mat, vec, vec_bit, sync: bool = False):
     block_num = task_number // thread_per_block
 
     if vec.dtype == np.complex64:
-        RDiagonal_MultiplySwap_targ_single(
+        RDiagonal_MultiplySwap_targ_single_kernel(
             (block_num,),
             (thread_per_block,),
             (t_index, mat, vec)
         )
     else:
-        RDiagonal_MultiplySwap_targ_double(
+        RDiagonal_MultiplySwap_targ_double_kernel(
             (block_num,),
             (thread_per_block,),
             (t_index, mat, vec)
@@ -1326,13 +1326,13 @@ def Controlled_MultiplySwap_ctargs(c_index, t_index, mat, vec, vec_bit, sync: bo
     block_num = task_number // thread_per_block
 
     if vec.dtype == np.complex64:
-        Controlled_MultiplySwap_ctargs_single(
+        Controlled_MultiplySwap_ctargs_single_kernel(
             (block_num,),
             (thread_per_block,),
             (mat, vec, c_index, t_index)
         )
     else:
-        Controlled_MultiplySwap_ctargs_double(
+        Controlled_MultiplySwap_ctargs_double_kernel(
             (block_num,),
             (thread_per_block,),
             (mat, vec, c_index, t_index)
@@ -1360,13 +1360,13 @@ def Controlled_Swap_targs(t_indexes, vec, vec_bit, sync: bool = False):
         high, low = t_indexes[1], t_indexes[0]
 
     if vec.dtype == np.complex64:
-        Controlled_Swap_targs_single(
+        Controlled_Swap_targs_single_kernel(
             (block_num,),
             (thread_per_block,),
             (high, low, vec)
         )
     else:
-        Controlled_Swap_targs_double(
+        Controlled_Swap_targs_double_kernel(
             (block_num,),
             (thread_per_block,),
             (high, low, vec)
@@ -1398,13 +1398,13 @@ def Controlled_Swap_more(c_indexes, t_index, vec, vec_bit, sync: bool = False):
         high, low = c_indexes[1], c_indexes[0]
 
     if vec.dtype == np.complex64:
-        Controlled_Swap_more_single(
+        Controlled_Swap_more_single_kernel(
             (block_num,),
             (thread_per_block,),
             (high, low, t_index, vec)
         )
     else:
-        Controlled_Swap_more_double(
+        Controlled_Swap_more_double_kernel(
             (block_num,),
             (thread_per_block,),
             (high, low, t_index, vec)
@@ -1436,13 +1436,13 @@ def Controlled_Multiply_more(c_indexes, t_index, mat, vec, vec_bit, sync: bool =
         high, low = c_indexes[1], c_indexes[0]
 
     if vec.dtype == np.complex64:
-        Controlled_Multiply_more_single(
+        Controlled_Multiply_more_single_kernel(
             (block_num,),
             (thread_per_block,),
             (high, low, t_index, mat, vec)
         )
     else:
-        Controlled_Multiply_more_double(
+        Controlled_Multiply_more_double_kernel(
             (block_num,),
             (thread_per_block,),
             (high, low, t_index, mat, vec)
@@ -1474,13 +1474,13 @@ def Controlled_Swap_tmore(t_indexes, c_index, vec, vec_bit, sync: bool = False):
         high, low = t_indexes[1], t_indexes[0]
 
     if vec.dtype == np.complex64:
-        Controlled_Swap_tmore_single(
+        Controlled_Swap_tmore_single_kernel(
             (block_num,),
             (thread_per_block,),
             (high, low, c_index, vec)
         )
     else:
-        Controlled_Swap_tmore_double(
+        Controlled_Swap_tmore_double_kernel(
             (block_num,),
             (thread_per_block,),
             (high, low, c_index, vec)
@@ -1493,20 +1493,39 @@ def Controlled_Swap_tmore(t_indexes, c_index, vec, vec_bit, sync: bool = False):
 """
 Special Gates: MeasureGate, ResetGate and PermGate
 """
-prop_add = cp.ElementwiseKernel(
-    'T x, raw T y, int32 index', 'T z',
-    'z = (i & index) ? 0 : abs(x) * abs(x)',
-    'prop_add')
+prop_add_single_kernel = cp.RawKernel(r'''
+    #include <cupy/complex.cuh>
+    extern "C" __global__
+    void ProbAddSingle(const int index, complex<float>* vec, complex<float>* out) {
+        int label = blockDim.x * blockIdx.x + threadIdx.x;
+        int _1 = (label & ((1 << index) - 1))
+                + (label >> index << (index + 1));
+        out[label] = abs(vec[_1]) * abs(vec[_1]);
+    }
+    ''', 'ProbAddSingle')
 
 
-MeasureGate_prop_kernel = cp.ReductionKernel(
+prop_add_double_kernel = cp.RawKernel(r'''
+    #include <cupy/complex.cuh>
+    extern "C" __global__
+    void ProbAddDouble(const int index, complex<double>* vec, complex<double>* out) {
+        int label = blockDim.x * blockIdx.x + threadIdx.x;
+        int _1 = (label & ((1 << index) - 1))
+                + (label >> index << (index + 1));
+        out[label] = abs(vec[_1]) * abs(vec[_1]);
+    }
+    ''', 'ProbAddDouble')
+
+
+MeasureGate_prop = cp.ReductionKernel(
     'T x',
     'T y',
     'x',
     'a + b',
     'y = abs(a)',
     '0',
-    'MeasureGate_prop_kernel')
+    'MeasureGate_prop'
+)
 
 
 MeasureGate0_single_kernel = cp.RawKernel(r'''
@@ -1583,7 +1602,7 @@ ResetGate1_single_kernel = cp.RawKernel(r'''
         int label = blockDim.x * blockIdx.x + threadIdx.x;
         int _0 = (label & ((1 << index) - 1))
                 + (label >> index << (index + 1));
-        int _1 = _0 + (1 << index)
+        int _1 = _0 + (1 << index);
 
         vec[_0] = vec[_1];
         vec[_1] = complex<float>(0, 0);
@@ -1618,128 +1637,53 @@ ResetGate1_double_kernel = cp.RawKernel(r'''
     ''', 'ResetGate1Double')
 
 
-PermGate_single_kernel = cp.RawKernel(r'''
-    #include <cupy/complex.cuh>
-    extern "C" __global__
-    void PermGate(const int idx_len, int vec_bit, int* indexes, complex<float>* vec) {
-        int label = blockDim.x * blockIdx.x + threadIdx.x;
-
-        complex<float> temp[1 << 12];
-        int swap_idx=0, vec_idx=0;
-        for(int i = 0; i < idx_len; i++){
-            swap_idx = indexes[i];
-            if (swap_idx != i){
-                vec_idx = (i << vec_bit) + label;
-                temp[i] = vec[vec_idx];
-                if (swap_idx < i){
-                    vec[vec_idx] = temp[swap_idx];
-                }else{
-                    vec[vec_idx] = vec[(swap_idx << vec_bit) + label];
-                }
-            }
-        }
-    }
-    ''', 'PermGate')
-
-
-PermGate_double_kernel = cp.RawKernel(r'''
-    #include <cupy/complex.cuh>
-    extern "C" __global__
-    void PermGate(const int idx_len, int vec_bit, int* indexes, complex<double>* vec) {
-        int label = blockDim.x * blockIdx.x + threadIdx.x;
-
-        complex<double> temp[1 << 12];
-        int swap_idx=0, vec_idx=0;
-        for(int i = 0; i < idx_len; i++){
-            swap_idx = indexes[i];
-            if (swap_idx != i){
-                vec_idx = (i << vec_bit) + label;
-                temp[i] = vec[vec_idx];
-                if (swap_idx < i){
-                    vec[vec_idx] = temp[swap_idx];
-                }else{
-                    vec[vec_idx] = vec[(swap_idx << vec_bit) + label];
-                }
-            }
-        }
-    }
-    ''', 'PermGate')
-
-
-PermFxGate_single_kernel = cp.RawKernel(r'''
-    #include <cupy/complex.cuh>
-    extern "C" __global__
-    void PermFxGate(const int start_idx, const int interval, complex<float>* vec) {
-        int label = start_idx + blockDim.x * blockIdx.x + threadIdx.x;
-
-        complex<float> temp = vec[label];
-        vec[label] = vec[label + interval];
-        vec[label + interval] = temp;
-    }
-    ''', 'PermFxGate')
-
-
-PermFxGate_double_kernel = cp.RawKernel(r'''
-    #include <cupy/complex.cuh>
-    extern "C" __global__
-    void PermFxGate(const int start_idx, int interval, complex<double>* vec) {
-        int label = start_idx + blockDim.x * blockIdx.x + threadIdx.x;
-
-        complex<double> temp = vec[label];
-        vec[label] = vec[label + interval];
-        vec[label + interval] = temp;
-    }
-    ''', 'PermFxGate')
-
-
 def MeasureGate_Apply(index, vec, vec_bit, sync: bool = False, multigpu_prob=None):
     """
     Measure Gate Measure.
     """
-    if not multigpu_prob:
-        prob = prop_add(vec, vec, 1 << index)
-        prob = MeasureGate_prop_kernel(prob, axis=0).real
-        prob = prob.get()
-    else:
-        prob = multigpu_prob
-
-    _0 = random.random()
-    _1 = _0 > prob
-
+    # Kernel function preparation
     task_number = 1 << (vec_bit - 1)
     thread_per_block = min(256, task_number)
     block_num = task_number // thread_per_block
-
-    if not _1:
-        if vec.dtype == np.complex64:
-            alpha = np.float32(1 / np.sqrt(prob))
-            MeasureGate0_single_kernel(
-                (block_num, ),
-                (thread_per_block, ),
-                (index, alpha, vec)
-            )
-        else:
-            alpha = np.float64(1 / np.sqrt(prob))
-            MeasureGate0_double_kernel(
-                (block_num,),
-                (thread_per_block,),
-                (index, alpha, vec)
-            )
+    if vec.dtype == np.complex64:
+        kernel_functions = (prop_add_single_kernel, MeasureGate0_single_kernel, MeasureGate1_single_kernel)
+        float_type = np.float32
     else:
-        if vec.dtype == np.complex64:
-            alpha = np.float32(1 / np.sqrt(1 - prob))
-            MeasureGate1_single_kernel(
-                (block_num,),
-                (thread_per_block,),
-                (index, alpha, vec)
-            )
-        else:
-            alpha = np.float64(1 / np.sqrt(1 - prob))
-            MeasureGate1_double_kernel(
-                (block_num,),
-                (thread_per_block,),
-                (index, alpha, vec)
-            )
+        kernel_functions = (prop_add_double_kernel, MeasureGate0_double_kernel, MeasureGate1_double_kernel)
+        float_type = np.float64
+
+    # Calculate measured probability
+    if multigpu_prob:
+        prob = multigpu_prob
+    else:
+        out = cp.empty(task_number, dtype=np.complex128)
+        kernel_functions[0](
+            (block_num, ),
+            (thread_per_block, ),
+            (index, vec, out)
+        )
+
+        prob = MeasureGate_prop(out, axis=0).real
+        prob = prob.get()
+
+    # Apply to state vector
+    _0 = random.random()
+    _1 = _0 > prob
+    if not _1:
+        alpha = float_type(1 / np.sqrt(prob))
+        kernel_functions[1](
+            (block_num, ),
+            (thread_per_block, ),
+            (index, alpha, vec)
+        )
+    else:
+        alpha = float_type(1 / np.sqrt(1 - prob))
+        kernel_functions[2](
+            (block_num,),
+            (thread_per_block,),
+            (index, alpha, vec)
+        )
+
     if sync:
         cp.cuda.Device().synchronize()
 
@@ -1750,93 +1694,49 @@ def ResetGate_Apply(index, vec, vec_bit, sync: bool = False, multigpu_prob=None)
     """
     Measure Gate Measure.
     """
-    if not multigpu_prob:
-        prob = prop_add(vec, vec, 1 << index)
-        prob = MeasureGate_prop_kernel(prob, axis=0).real
-        prob = prob.get()
-    else:
-        prob = multigpu_prob
-
+    # Kernel function preparation
     task_number = 1 << (vec_bit - 1)
     thread_per_block = min(256, task_number)
     block_num = task_number // thread_per_block
-
-    alpha = np.float64(np.sqrt(prob))
-
-    if alpha < 1e-6:
-        if vec.dtype == np.complex64:
-            ResetGate1_single_kernel(
-                (block_num, ),
-                (thread_per_block,),
-                (index, alpha, vec)
-            )
-        else:
-            ResetGate1_double_kernel(
-                (block_num,),
-                (thread_per_block,),
-                (index, alpha, vec)
-            )
-    else:
-        if vec.dtype == np.complex64:
-            ResetGate0_single_kernel(
-                (block_num,),
-                (thread_per_block,),
-                (index, alpha, vec)
-            )
-        else:
-            ResetGate0_double_kernel(
-                (block_num,),
-                (thread_per_block,),
-                (index, alpha, vec)
-            )
-
-    if sync:
-        cp.cuda.Device().synchronize()
-
-
-def PermGate_Apply(indexes, vec, vec_bit, sync: bool = False):
-    len_indexes = len(indexes)
-    targets = np.int32(np.log2(len(indexes)))
-    indexes = cp.array(indexes, dtype=np.int32)
-
-    task_number = 1 << (vec_bit - targets)
-    thread_per_block = min(256, task_number)
-    block_num = task_number // thread_per_block
-
     if vec.dtype == np.complex64:
-        PermGate_single_kernel(
+        kernel_functions = (prop_add_single_kernel, ResetGate0_single_kernel, ResetGate1_single_kernel)
+    else:
+        kernel_functions = (prop_add_double_kernel, ResetGate0_double_kernel, ResetGate1_double_kernel)
+
+    # Calculate measured probability
+    if multigpu_prob:
+        prob = multigpu_prob
+    else:
+        out = cp.empty(task_number, dtype=np.complex128)
+        kernel_functions[0](
+            (block_num, ),
+            (thread_per_block, ),
+            (index, vec, out)
+        )
+
+        prob = MeasureGate_prop(out, axis=0).real
+        prob = prob.get()
+
+    # Apply to state vector
+    alpha = np.float64(np.sqrt(prob))
+    if alpha < 1e-6:
+        kernel_functions[2](
             (block_num, ),
             (thread_per_block,),
-            (len_indexes, vec_bit - targets, indexes, vec)
+            (index, alpha, vec)
         )
     else:
-        PermGate_double_kernel(
+        kernel_functions[1](
             (block_num,),
             (thread_per_block,),
-            (len_indexes, vec_bit - targets, indexes, vec)
+            (index, alpha, vec)
         )
 
     if sync:
         cp.cuda.Device().synchronize()
 
 
-def PermFxGate_Apply(indexes, blocks, vec, vec_bit, sync: bool = False):
-    half_block_size = 1 << (vec_bit - blocks - 1)
-    task_number = half_block_size
-    thread_per_block = min(256, task_number)
-    block_num = task_number // thread_per_block
-
-    for idx in indexes:
-        start_idx = idx * 2 * half_block_size
-        if vec.dtype == np.complex64:
-            PermFxGate_single_kernel(
-                (block_num, ),
-                (thread_per_block,),
-                (start_idx, half_block_size, vec)
-            )
-        else:
-            PermFxGate_double_kernel(
-                (block_num,),
-                (thread_per_block,),
-                (start_idx, half_block_size, vec)
-            )
+kernel_funcs = list(locals().keys())
+for name in kernel_funcs:
+    if name.endswith("kernel"):
+        locals()[name].compile()
