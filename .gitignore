@@ -27,4 +27,5 @@ callgrind.out*
 cmake-build*/
 cmake-vsc*/
 QuICT/qcda/mapping/mcts_core/mcts_wrapper.cpp
-QuICT/qcda/mapping/ai/data*
+QuICT/qcda/mapping/ai/data/*
+!QuICT/qcda/mapping/ai/data/topo/*
