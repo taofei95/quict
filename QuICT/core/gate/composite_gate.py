@@ -7,27 +7,22 @@ import numpy as np
 
 from QuICT.core.qubit import Qureg, Qubit
 from QuICT.core.gate import BasicGate
-from QuICT.core.utils import GateType, CircuitInformation, matrix_product_to_circuit, CGATE_LIST
+from QuICT.core.utils import (
+    GateType,
+    CircuitBased,
+    matrix_product_to_circuit,
+    CGATE_LIST,
+    unique_id_generator
+)
 
 
-# global composite gate id count
-cgate_id = 0
-
-
-class CompositeGate:
+class CompositeGate(CircuitBased):
     """ Implement a group of gate
 
     Attributes:
+        name (str): the name of the composite gate
         gates (list<BasicGate>): gates within this composite gate
     """
-    @property
-    def gates(self):
-        return self._gates
-
-    @property
-    def name(self):
-        return self._name
-
     @property
     def checkpoint(self):
         return self._check_point
@@ -55,18 +50,15 @@ class CompositeGate:
             name [str]: the name of composite gate
             gates List[BasicGate]: The gates are added into this composite gate
         """
-        global cgate_id
-        self._id = cgate_id
-        cgate_id += 1
+        if name is None:
+            name = "composite_gate_" + unique_id_generator()
 
-        self._name = name if name else f"composite_gate_{self._id}"
-        self._gates = []
+        super().__init__(name)
         self._check_point = None        # required checkpoint
         self._min_qubit = np.inf
         self._max_qubit = 0
-        self._pointer = -1
 
-        if gates:
+        if gates is not None:
             self.extend(gates)
 
     def __and__(self, targets):
@@ -177,7 +169,7 @@ class CompositeGate:
         for gate in gates:
             self.append(gate, is_extend=True)
 
-        self._pointer = -1
+        self._pointer = None
 
     def append(self, gate, is_extend: bool = False, insert_idx: int = -1):
         from QuICT.core.operator import CheckPointChild
@@ -185,7 +177,13 @@ class CompositeGate:
         if isinstance(gate, BasicGate):
             self._append_gate(gate, insert_idx)
             if not is_extend:
-                self._pointer = -1
+                self._pointer = None
+
+            # Update gate type dict
+            if gate.type in self._gate_type.keys():
+                self._gate_type[gate.type] += 1
+            else:
+                self._gate_type[gate.type] = 1
         elif isinstance(gate, CheckPointChild):
             self._check_point = gate
 
@@ -193,12 +191,12 @@ class CompositeGate:
         for idx, gate in enumerate(gates):
             self.append(gate, is_extend=True, insert_idx=idx)
 
-        self._pointer = -1
+        self._pointer = None
 
     def _append_gate(self, gate, insert_idx: int = -1):
         gate = gate.copy()
 
-        if self._pointer != -1:
+        if self._pointer is not None:
             qubit_index = self._pointer[:]
             gate_args = gate.controls + gate.targets
             if len(self._pointer) > gate_args:
@@ -228,80 +226,6 @@ class CompositeGate:
             int: the number of qubits applied by gates
         """
         return self._max_qubit
-
-    def size(self):
-        """ the size of the gates
-
-        Returns:
-            int: the number of gates in gates
-        """
-        return len(self._gates)
-
-    def count_2qubit_gate(self):
-        """ the number of the two qubit gates in the set
-
-        Returns:
-            int: the number of the two qubit gates in the set
-        """
-        return CircuitInformation.count_2qubit_gate(self.gates)
-
-    def count_1qubit_gate(self):
-        """ the number of the one qubit gates in the set
-
-        Returns:
-            int: the number of the one qubit gates in the set
-        """
-        return CircuitInformation.count_1qubit_gate(self.gates)
-
-    def count_gate_by_gatetype(self, gate_type):
-        """ the number of the gates which are some type in the set
-
-        Args:
-            gateType(GateType): the type of gates to be count
-
-        Returns:
-            int: the number of the gates which are some type in the circuit
-        """
-        return CircuitInformation.count_gate_by_gatetype(self.gates, gate_type)
-
-    def depth(self):
-        """ the depth of the circuit for some gate.
-
-        Args:
-            gateTypes(list<GateType>):
-                the types to be count into depth calculate
-                if count all type of gates, leave it being None.
-
-        Returns:
-            int: the depth of the circuit
-        """
-        return CircuitInformation.depth(self.gates, self.width())
-
-    def __str__(self):
-        cgate_info = {
-            "width": self.width(),
-            "size": self.size(),
-            "depth": self.depth(),
-            "1-qubit gates": self.count_1qubit_gate(),
-            "2-qubit gates": self.count_2qubit_gate(),
-            "gates detail": []
-        }
-
-        for gate in self.gates:
-            cgate_info["gates detail"].append(str(gate))
-
-        return str(cgate_info)
-
-    def qasm(self):
-        """ get OpenQASM 2.0 describe for the composite gate
-
-        Returns:
-            str: OpenQASM 2.0 describe
-        """
-        qreg = self.width()
-        creg = self.count_gate_by_gatetype(GateType.measure)
-
-        return CircuitInformation.qasm(qreg, creg, self.gates)
 
     def inverse(self):
         """ the inverse of CompositeGate
