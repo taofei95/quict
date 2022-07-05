@@ -207,23 +207,29 @@ class Circuit(CircuitBased):
 
         targets.extend(self.gates)
 
-    def update_qubit(self, qubits: Union[Qureg, int], is_append: bool = False):
+    def update_qubit(self, qubits: Union[Qureg, int], is_append: bool = True):
         """ Update the qubits in circuit.
 
         Args:
             qubits (Qureg): The new qubits.
-            is_append (bool, optional): whether add qubits or replace qubits. Defaults to False, add qubits.
+            is_append (bool, optional): whether add qubits or replace qubits. Defaults to True, add qubits.
         """
         if isinstance(qubits, int):
             assert qubits > 0
             qubits = Qureg(qubits)
 
-        if not is_append:
-            self._qubits = qubits
-        else:
+        if is_append:
             self._qubits = self._qubits + qubits
+        else:
+            self._qubits = qubits
 
     def replace_gate(self, idx: int, gate: BasicGate):
+        """ Replace the quantum gate in the target index.
+
+        Args:
+            idx (int): The index of replaced quantum gate in circuit.
+            gate (BasicGate): The new quantum gate
+        """
         assert idx >= 0 and idx < len(self._gates), "The index of replaced gate is wrong."
         assert isinstance(gate, (BasicGate, NoiseGate)), "The replaced gate must be a quantum gate or noised gate."
         self._gates[idx] = gate
@@ -244,7 +250,7 @@ class Circuit(CircuitBased):
         return position
 
     def extend(self, gates: list):
-        """ add gates to the circuit
+        """ Add list of gates to the circuit
 
         Args:
             gates(list<BasicGate>): the gate to be added to the circuit
@@ -371,7 +377,7 @@ class Circuit(CircuitBased):
         if qubit_limit:
             target_qubits = qubit_limit
             if isinstance(qubit_limit, Qureg):
-                target_qubits = [self.index_for_qubit(qubit) for qubit in qubit_limit]
+                target_qubits = [self._qubits.index(qubit) for qubit in qubit_limit]
             elif isinstance(qubit_limit, int):
                 target_qubits = [qubit_limit]
 
@@ -420,41 +426,6 @@ class Circuit(CircuitBased):
             if int(gate_idx) != index:
                 gate.name = '-'.join([gate_type, gate_qb, str(index)])
 
-    def index_for_qubit(self, qubit, ancilla=None) -> int:
-        """ find the index of qubit in this circuit
-
-        the index ignored the ancilla qubit
-
-        Args:
-            qubit(Qubit): the qubit need to be indexed.
-            ancilla(Qureg): the ancillary qubit
-
-        Returns:
-            int: the index of the qubit.
-
-        Raises:
-            Exception: the qubit is not in the circuit
-        """
-        if not isinstance(qubit, Qubit):
-            raise TypeError(f"Only support qubit here, not {type(qubit)}.")
-
-        if qubit not in self.qubits:
-            raise Exception("the qubit is not in the circuit or it is an ancillary qubit.")
-
-        if ancilla is None:
-            return self.qubits.index(qubit.id)
-
-        if not isinstance(ancilla, Qureg):
-            raise TypeError(f"Ancilla must be a Qureg here, not {type(ancilla)}.")
-
-        enterspace = 0
-        for q in self.qubits:
-            if q not in ancilla:
-                enterspace += 1
-
-            if q.id == qubit.id:
-                return enterspace
-
     def random_append(
         self,
         rand_size: int = 10,
@@ -481,7 +452,7 @@ class Circuit(CircuitBased):
 
         if probabilities is not None:
             assert sum(probabilities) == 1 and len(probabilities) == len(typelist)
-    
+
         gate_prob = probabilities
         gate_indexes = list(range(len(typelist)))
         n_qubit = self.width()

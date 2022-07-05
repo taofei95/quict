@@ -3,6 +3,7 @@
 # @TIME    : 2022/1/14 9:36 下午
 # @Author  : Han Yu, Li Kaiqi
 # @File    : composite_gate.py
+from typing import Union
 import numpy as np
 
 from QuICT.core.qubit import Qureg, Qubit
@@ -44,12 +45,6 @@ class CompositeGate(CircuitBased):
         return True
 
     def __init__(self, name: str = None, gates: list = None):
-        """ initial a CompositeGate with gate(s)
-
-        Args:
-            name [str]: the name of composite gate
-            gates List[BasicGate]: The gates are added into this composite gate
-        """
         if name is None:
             name = "composite_gate_" + unique_id_generator()
 
@@ -61,7 +56,7 @@ class CompositeGate(CircuitBased):
         if gates is not None:
             self.extend(gates)
 
-    def __and__(self, targets):
+    def __and__(self, targets: Union[int, list, Qubit, Qureg]):
         """ assign qubits or indexes for given gates
 
         Args:
@@ -132,7 +127,7 @@ class CompositeGate(CircuitBased):
         """
         return self._gates[item]
 
-    def __call__(self, indexes: list):
+    def __call__(self, indexes: Union[list, int]):
         if isinstance(indexes, int):
             indexes = [indexes]
 
