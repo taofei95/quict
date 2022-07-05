@@ -122,7 +122,3 @@ def test_5():
         new_circuit.extend(new_circuit_gates)
         if not check_equiv(circuit, new_circuit):
             assert 0
-
-
-if __name__ == '__main__':
-    pytest.main(["./unit_test.py"])
