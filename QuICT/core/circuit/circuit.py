@@ -31,10 +31,8 @@ class Circuit(CircuitBased):
     Circuit is the core part of the framework.
 
     Attributes:
-        id(int): the unique identity code of a circuit, which is generated globally.
+        wires(Union[Qureg, int]): the number of qubits for the circuit
         name(str): the name of the circuit
-        qubits(Qureg): the qureg formed by all qubits of the circuit
-        gates(list<BasicGate>): all gates attached to the circuit
         topology(list<tuple<int, int>>):
             The topology of the circuit. When the topology list is empty, it will be seemed as fully connected.
         fidelity(float): the fidelity of the circuit
@@ -131,7 +129,7 @@ class Circuit(CircuitBased):
 
         if method == 'matp':
             if filename is None:
-                filename = str(self.id) + '.jpg'
+                filename = str(self.name) + '.jpg'
             elif '.' not in filename:
                 filename += '.jpg'
 
@@ -209,13 +207,17 @@ class Circuit(CircuitBased):
 
         targets.extend(self.gates)
 
-    def update_qubit(self, qubits: Qureg, is_append: bool = False):
+    def update_qubit(self, qubits: Union[Qureg, int], is_append: bool = False):
         """ Update the qubits in circuit.
 
         Args:
             qubits (Qureg): The new qubits.
             is_append (bool, optional): whether add qubits or replace qubits. Defaults to False, add qubits.
         """
+        if isinstance(qubits, int):
+            assert qubits > 0
+            qubits = Qureg(qubits)
+
         if not is_append:
             self._qubits = qubits
         else:
@@ -550,6 +552,6 @@ class Circuit(CircuitBased):
         remapping_qureg = self.qubits[remapping_index]
 
         if circuit_update:
-            self.update_qubit(remapping_qureg, is_append=False)
+            self._qubits = remapping_qureg
 
         qureg[:] = remapping_qureg
