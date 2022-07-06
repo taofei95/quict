@@ -49,6 +49,16 @@ class Circuit(CircuitBased):
         self._qubits = qubits
 
     @property
+    def ancillae_qubits(self) -> List[int]:
+        return self._ancillae_qubits
+
+    @ancillae_qubits.setter
+    def ancillae_qubits(self, ancillae_qubits: List[int]):
+        for idx in ancillae_qubits:
+            assert idx >= 0 and idx < self.width()
+            self._ancillae_qubits.append(idx)
+
+    @property
     def topology(self) -> Layout:
         return self._topology
 
@@ -86,14 +96,9 @@ class Circuit(CircuitBased):
         wires,
         name: str = None,
         topology: Layout = None,
-        fidelity: float = None
+        fidelity: float = None,
+        ancillae_qubits: List[int] = None
     ):
-        """
-        generator a circuit
-
-        Args:
-            wires(int/qureg/[qubit]): the number of qubits in the circuit
-        """
         if name is None:
             name = "circuit_" + unique_id_generator()
 
@@ -106,6 +111,10 @@ class Circuit(CircuitBased):
             self._qubits = wires
         else:
             self._qubits = Qureg(wires)
+
+        self._ancillae_qubits = []
+        if ancillae_qubits is not None:
+            self.ancillae_qubits = ancillae_qubits
 
     def __del__(self):
         """ release the memory """
@@ -207,21 +216,20 @@ class Circuit(CircuitBased):
 
         targets.extend(self.gates)
 
-    def update_qubit(self, qubits: Union[Qureg, int], is_append: bool = True):
-        """ Update the qubits in circuit.
+    def add_qubit(self, qubits: Union[Qureg, int], is_ancillae_qubit: bool = False):
+        """ add additional qubits in circuit.
 
         Args:
-            qubits (Qureg): The new qubits.
-            is_append (bool, optional): whether add qubits or replace qubits. Defaults to True, add qubits.
+            qubits Union[Qureg, int]: The new qubits.
+            is_ancillae_qubit (bool, optional): whether the given qubits is ancillae, default to False.
         """
         if isinstance(qubits, int):
             assert qubits > 0
             qubits = Qureg(qubits)
 
-        if is_append:
-            self._qubits = self._qubits + qubits
-        else:
-            self._qubits = qubits
+        self._qubits = self._qubits + qubits
+        if is_ancillae_qubit:
+            self._ancillae_qubits += list(range(self.width() - len(qubits), self.width()))
 
     def replace_gate(self, idx: int, gate: BasicGate):
         """ Replace the quantum gate in the target index.
