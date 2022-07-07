@@ -28,6 +28,21 @@ class CompositeGate(CircuitBased):
     def checkpoint(self):
         return self._check_point
 
+    def __init__(self, name: str = None, gates: list = None):
+        if name is None:
+            name = "composite_gate_" + unique_id_generator()
+
+        super().__init__(name)
+        self._check_point = None        # required checkpoint
+        self._min_qubit = np.inf
+        self._max_qubit = 0
+
+        if gates is not None:
+            self.extend(gates)
+
+    ####################################################################
+    ############          CompositeGate Context             ############
+    ####################################################################
     def __enter__(self):
         global CGATE_LIST
         CGATE_LIST.append(self)
@@ -44,17 +59,24 @@ class CompositeGate(CircuitBased):
 
         return True
 
-    def __init__(self, name: str = None, gates: list = None):
-        if name is None:
-            name = "composite_gate_" + unique_id_generator()
+    ####################################################################
+    ############        CompositeGate Qureg Mapping         ############
+    ####################################################################
+    def width(self):
+        """ the number of qubits applied by gates
 
-        super().__init__(name)
-        self._check_point = None        # required checkpoint
-        self._min_qubit = np.inf
-        self._max_qubit = 0
+        Returns:
+            int: the number of qubits applied by gates
+        """
+        return self._max_qubit
 
-        if gates is not None:
-            self.extend(gates)
+    def __call__(self, indexes: Union[list, int]):
+        if isinstance(indexes, int):
+            indexes = [indexes]
+
+        self._update_qubit_limit(indexes)
+        self._pointer = indexes
+        return self
 
     def __and__(self, targets: Union[int, list, Qubit, Qureg]):
         """ assign qubits or indexes for given gates
@@ -75,6 +97,34 @@ class CompositeGate(CircuitBased):
         if CGATE_LIST:
             CGATE_LIST[-1].extend(self.gates)
 
+    def _mapping(self, targets: Qureg):
+        """ remapping the gates' affectArgs
+
+        Args:
+            targets(Qureg/List): the related qubits
+        """
+        for gate in self._gates:
+            args_index = gate.cargs + gate.targs
+            if isinstance(targets, Qureg):
+                target_qureg = targets(args_index)
+                gate.assigned_qubits = target_qureg
+                gate.update_name(target_qureg[0].id)
+            else:
+                gate.cargs = [targets[carg] for carg in gate.cargs]
+                gate.targs = [targets[targ] for targ in gate.targs]
+
+    def _update_qubit_limit(self, indexes: list):
+        for idx in indexes:
+            assert idx >= 0 and isinstance(idx, int)
+            if idx >= self._max_qubit:
+                self._max_qubit = idx + 1
+
+            if idx < self._min_qubit:
+                self._min_qubit = idx
+
+    ####################################################################
+    ############            CompositeGate Build             ############
+    ####################################################################
     def __or__(self, targets):
         """ deal the operator '|'
 
@@ -126,39 +176,6 @@ class CompositeGate(CircuitBased):
             [BasicGates]: the gates
         """
         return self._gates[item]
-
-    def __call__(self, indexes: Union[list, int]):
-        if isinstance(indexes, int):
-            indexes = [indexes]
-
-        self._update_qubit_limit(indexes)
-        self._pointer = indexes
-        return self
-
-    def _mapping(self, targets: Qureg):
-        """ remapping the gates' affectArgs
-
-        Args:
-            targets(Qureg/List): the related qubits
-        """
-        for gate in self._gates:
-            args_index = gate.cargs + gate.targs
-            if isinstance(targets, Qureg):
-                target_qureg = targets(args_index)
-                gate.assigned_qubits = target_qureg
-                gate.update_name(target_qureg[0].id)
-            else:
-                gate.cargs = [targets[carg] for carg in gate.cargs]
-                gate.targs = [targets[targ] for targ in gate.targs]
-
-    def _update_qubit_limit(self, indexes: list):
-        for idx in indexes:
-            assert idx >= 0 and isinstance(idx, int)
-            if idx >= self._max_qubit:
-                self._max_qubit = idx + 1
-
-            if idx < self._min_qubit:
-                self._min_qubit = idx
 
     def extend(self, gates: list):
         for gate in gates:
@@ -214,14 +231,9 @@ class CompositeGate(CircuitBased):
         else:
             self._gates.insert(insert_idx, gate)
 
-    def width(self):
-        """ the number of qubits applied by gates
-
-        Returns:
-            int: the number of qubits applied by gates
-        """
-        return self._max_qubit
-
+    ####################################################################
+    ############            CompositeGate Utils             ############
+    ####################################################################
     def inverse(self):
         """ the inverse of CompositeGate
 
@@ -234,7 +246,7 @@ class CompositeGate(CircuitBased):
 
         return inverse_cgate
 
-    def matrix(self, local: bool = False):
+    def matrix(self, local: bool = False) -> np.ndarray:
         """ matrix of these gates
 
         Args:
@@ -262,7 +274,7 @@ class CompositeGate(CircuitBased):
 
         return matrix
 
-    def equal(self, target, ignore_phase=True, eps=1e-7):
+    def equal(self, target, ignore_phase=True, eps=1e-7) -> bool:
         """ whether is equally with target or not.
 
         Args:
