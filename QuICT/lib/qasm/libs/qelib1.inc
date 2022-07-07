@@ -70,6 +70,16 @@ gate ccx a,b,c
   cx a,b; t a; tdg b;
   cx a,b;
 }
+// C3 gate: MultiControl-Z
+gate ccz a,b,c
+{
+  cx b,c; tdg c;
+  cx a,c; t c;
+  cx b,c; tdg c;
+  cx a,c; t b; t c;
+  cx a,b; t a; tdg b;
+  cx a,b;
+}
 // cswap (Fredkin)
 gate cswap a,b,c
 {
