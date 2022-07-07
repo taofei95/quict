@@ -8,7 +8,7 @@ import os
 
 import numpy as np
 
-from QuICT.qcda.optimization.cnot_template.utility.utility import apply_cx, count, generate_layer
+from QuICT.qcda.optimization.cnot_local_force.utility.utility import apply_cx, count, generate_layer
 
 
 def generate_json(n):
@@ -58,7 +58,7 @@ def generate_json(n):
         l += 1
 
     keys = out.keys()
-    with open(f"{os.path.dirname(os.path.abspath(__file__))}/{n}qubit_cnot_depth.inf", 'w') as file:
+    with open(f"{os.path.dirname(os.path.abspath(__file__))}{os.path.sep}{n}qubit_cnot_depth.inf", 'w') as file:
         file.write(";")
         for key in keys:
             string = f"{key}:"
