@@ -23,6 +23,7 @@ from QuICT.core.operator import (
     CheckPointChild,
     NoiseGate
 )
+from .dag_circuit import DAGCircuit
 
 
 class Circuit(CircuitBased):
@@ -288,8 +289,8 @@ class Circuit(CircuitBased):
 
         return gate_by_depth
 
-    def get_DAG_circuit(self):
-        pass
+    def get_DAG_circuit(self) -> DAGCircuit:
+        return DAGCircuit(self)
 
     ####################################################################    
     ############          Circuit Build Operators           ############
@@ -469,7 +470,7 @@ class Circuit(CircuitBased):
         self._add_gate_to_all_qubits(Measure)
 
     ####################################################################
-    ############                Circuit Tools               ############
+    ############                Circuit Utils               ############
     ####################################################################
     def sub_circuit(
         self,
