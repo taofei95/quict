@@ -189,7 +189,7 @@ class Circuit(CircuitBased):
         """
         return self.qubits[item]
 
-    def add_qubit(self, qubits: Union[Qureg, int], is_ancillae_qubit: bool = False):
+    def add_qubit(self, qubits: Union[Qureg, int], is_ancillary_qubit: bool = False):
         """ add additional qubits in circuit.
 
         Args:
@@ -201,7 +201,7 @@ class Circuit(CircuitBased):
             qubits = Qureg(qubits)
 
         self._qubits = self._qubits + qubits
-        if is_ancillae_qubit:
+        if is_ancillary_qubit:
             self._ancillae_qubits += list(range(self.width() - len(qubits), self.width()))
 
     def remapping(self, qureg: Qureg, mapping: list, circuit_update: bool = False):
@@ -270,7 +270,8 @@ class Circuit(CircuitBased):
             List[List[BasicGate]]: The list of gates which at same layers in circuit.
         """
         gate_by_depth = [[self.gates[0]]]          # List[list], gates for each depth level.
-        gate_args_by_depth = [set(self.gates[0].cargs + self.gates[0].targs)]     # List[set], gates' qubits for each depth level.
+        # List[set], gates' qubits for each depth level.
+        gate_args_by_depth = [set(self.gates[0].cargs + self.gates[0].targs)]
         for gate in self.gates[1:]:
             gate_arg = set(gate.cargs + gate.targs)
             for i in range(len(gate_args_by_depth) - 1, -1, -1):
@@ -290,9 +291,29 @@ class Circuit(CircuitBased):
         return gate_by_depth
 
     def get_DAG_circuit(self) -> DAGCircuit:
+        """
+        Translate a quantum circuit to a directed acyclic graph
+        via quantum gates dependencies (The commutation of quantum gates).
+
+        The nodes in the graph represented the quantum gates, and the edges means the two quantum
+        gates is non-commutation. In other words, a directed edge between node A with quantum gate GA
+        and node B with quantum gate GB, the quantum gate GA does not commute with GB.
+
+        The nodes in the graph have the following attributes:
+        'name', 'gate', 'cargs', 'targs', 'qargs', 'successors', 'predecessors'.
+
+        **Reference:**
+
+        [1] Iten, R., Moyard, R., Metger, T., Sutter, D. and Woerner, S., 2020.
+        Exact and practical pattern matching for quantum circuit optimization.
+        `arXiv:1909.05270 <https://arxiv.org/abs/1909.05270>`_
+
+        Returns:
+            DAGCircuit: A directed acyclic graph represent current quantum circuit
+        """
         return DAGCircuit(self)
 
-    ####################################################################    
+    ####################################################################
     ############          Circuit Build Operators           ############
     ####################################################################
     def extend(self, gates: list):
