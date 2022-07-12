@@ -1,12 +1,20 @@
 from enum import Enum
 import multiprocessing as mp
 from concurrent.futures import ProcessPoolExecutor, as_completed
+
+import cupy as cp
+import numpy as np
 from cupy.cuda import nccl
 
 from QuICT.utility import Proxy
 from QuICT.core import Circuit
 from .transpile import Transpile
 from .multi_nodes_simulator import MultiNodesSimulator
+from QuICT.ops.linalg.gpu_calculator import VectorPermutation
+
+
+if mp.get_start_method(allow_none=True) != "spawn":
+    mp.set_start_method("spawn", force=True)
 
 
 class DeviceType(Enum):
@@ -19,13 +27,25 @@ class ModeType(Enum):
     distributed = "distributed"
 
 
+def worker(circuit, ndev, uid, dev_id, device: str = "GPU"):
+    proxy = Proxy(ndevs=ndev, uid=uid, dev_id=dev_id)
+    simulator = MultiNodesSimulator(
+        proxy=proxy,
+        device=device,
+        gpu_id=dev_id
+    )
+    state = simulator.run(circuit)
+
+    return dev_id, state
+
+
 class MultiNodesController:
     # Not support noise circuit
     def __init__(
         self,
         ndev: int,
-        dev_type: DeviceType,
-        mode: ModeType,
+        dev_type: DeviceType = DeviceType.gpu,
+        mode: ModeType = ModeType.local,
         **options
     ):
         self.ndev = ndev
@@ -35,15 +55,35 @@ class MultiNodesController:
 
     def run(self, circuit: Circuit):
         # transpile circuit
-        divided_circuits = self._transpiler.run(circuit)
+        divided_circuits, split_qubit = self._transpiler.run(circuit)
 
         # start
         if self._mode_type == ModeType.local:
-            pass
+            return self._launch_local(divided_circuits, split_qubit)
 
-    def _launch_local(self):
+    def _launch_local(self, dcircuit: Circuit, splited_qubits):
         # Using multiprocess to start simulators, only for GPUs
-        pass
+        proxy_id = nccl.get_unique_id()
+        with ProcessPoolExecutor(max_workers=self.ndev) as executor:
+            tasks = [
+                executor.submit(
+                    worker,
+                    dcircuit,
+                    self.ndev,
+                    proxy_id,
+                    dev_id
+                ) for dev_id in range(self.ndev)
+            ]
+
+        results = []
+        for t in as_completed(tasks):
+            results.append(t.result())
+
+        z = [None] * self.ndev
+        for idx, vec in results:
+            z[idx] = vec
+
+        return cp.concatenate(z)
 
     def _launch_distributed(self):
         # send job to distributed
