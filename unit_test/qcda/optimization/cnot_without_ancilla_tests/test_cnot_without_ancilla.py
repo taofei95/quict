@@ -4,12 +4,12 @@ import numpy as np
 from QuICT.core import *
 from QuICT.core.gate import BasicGate, GateType
 
-from QuICT.qcda.optimization.cnot_without_ancillae import CnotWithoutAncillae
-from QuICT.qcda.optimization.cnot_without_ancillae.block_ldu_decompose import BlockLDUDecompose
+from QuICT.qcda.optimization.cnot_without_ancilla import CnotWithoutAncilla
+from QuICT.qcda.optimization.cnot_without_ancilla.block_ldu_decompose import BlockLDUDecompose
 
 from .utility import *
 from QuICT.utility import *
-from QuICT.qcda.optimization.cnot_without_ancillae.utility import *
+from QuICT.qcda.optimization.cnot_without_ancilla.utility import *
 
 
 def test_remapping_run():
@@ -26,7 +26,7 @@ def test_remapping_run():
 
         remapped_mat: np.ndarray = eye[remapping].copy()
 
-        parallel_elimination = CnotWithoutAncillae.remapping_run(remapping)
+        parallel_elimination = CnotWithoutAncilla.remapping_run(remapping)
         assert len(parallel_elimination) == 3
         for elimination_level in parallel_elimination:
             for c, t in elimination_level:
@@ -58,9 +58,9 @@ def test_triangular_matrix_run():
 
         # Test parallel row elimination
         lower_parallel_elimination = \
-            CnotWithoutAncillae.triangular_matrix_run(mat=lower, is_lower_triangular=True)
+            CnotWithoutAncilla.triangular_matrix_run(mat=lower, is_lower_triangular=True)
         upper_parallel_elimination = \
-            CnotWithoutAncillae.triangular_matrix_run(mat=upper, is_lower_triangular=False)
+            CnotWithoutAncilla.triangular_matrix_run(mat=upper, is_lower_triangular=False)
 
         # Correctness of elimination
         for elimination_level in lower_parallel_elimination:
@@ -103,7 +103,7 @@ def test_small_matrix_run():
             i, j = x[0], x[1]
             mat[j, :] ^= mat[i, :]
 
-        parallel_elimination = CnotWithoutAncillae.small_matrix_run(mat)
+        parallel_elimination = CnotWithoutAncilla.small_matrix_run(mat)
         for elimination_level in parallel_elimination:
             for c, t in elimination_level:
                 mat[t, :] ^= mat[c, :]
@@ -123,8 +123,8 @@ def test_recursion_first_level():
         mult_result = f2_matmul(mult_result, u_)
         assert np.allclose(mult_result, mat)
 
-        p_e = CnotWithoutAncillae.remapping_run(remapping)
-        p_e.extend(CnotWithoutAncillae.triangular_matrix_run(l_, is_lower_triangular=True))
+        p_e = CnotWithoutAncilla.remapping_run(remapping)
+        p_e.extend(CnotWithoutAncilla.triangular_matrix_run(l_, is_lower_triangular=True))
 
         for elimination_level in p_e:
             for c, t in elimination_level:
@@ -133,7 +133,7 @@ def test_recursion_first_level():
         d_inv = f2_inverse(d_)
         mat = f2_matmul(d_inv, mat)
 
-        p_e = CnotWithoutAncillae.triangular_matrix_run(u_, is_lower_triangular=False)
+        p_e = CnotWithoutAncilla.triangular_matrix_run(u_, is_lower_triangular=False)
         for level in p_e:
             for c, t in level:
                 mat[t, :] ^= mat[c, :]
@@ -150,7 +150,7 @@ def test_matrix_run():
 
         mat_cpy: np.ndarray = mat.copy()
 
-        parallel_elimination = CnotWithoutAncillae.matrix_run(mat)
+        parallel_elimination = CnotWithoutAncilla.matrix_run(mat)
         assert np.allclose(mat, mat_cpy)
 
         # Test elimination correctness
@@ -175,7 +175,8 @@ def test_cnot_without_ancillae():
         n = random.randint(2, 200)
         circuit1 = Circuit(n)
         circuit1.random_append(30 * n, typelist=[GateType.cx])
-        gates = CnotWithoutAncillae.run(circuit1)
+        CWA = CnotWithoutAncilla()
+        gates = CWA.run(circuit1)
         test_mat1 = np.eye(n, dtype=bool)
         test_mat2 = np.eye(n, dtype=bool)
         for gate in circuit1.gates:
@@ -198,9 +199,10 @@ def test_cnot_without_ancillae():
 #         _up = 10
 #         for _ in range(_up):
 #             circuit1 = Circuit(qubit_num)
-#             circuit1.random_append(30 * qubit_num, typelist=[GATE_ID["CX"]])
-#             gates = CnotWithoutAncillae.run(circuit1)
-#             depth = gates.circuit_depth()
+#             circuit1.random_append(30 * qubit_num, typelist=[GateType.cx])
+#             CWA = CnotWithoutAncilla()
+#             gates = CWA.run(circuit1)
+#             depth = gates.depth()
 #             factor = depth / qubit_num
 #             average_factor += factor
 #         average_factor /= _up

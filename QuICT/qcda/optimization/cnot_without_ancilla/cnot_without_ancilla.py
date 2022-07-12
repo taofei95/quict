@@ -9,11 +9,9 @@ from .edge_coloring import EdgeColoring
 from .block_ldu_decompose import BlockLDUDecompose
 
 
-class CnotWithoutAncillae:
-
-    @classmethod
+class CnotWithoutAncilla(object):
     def run(
-            cls,
+            self,
             circuit_segment: Union[Circuit, CompositeGate]
     ) -> CompositeGate:
         if isinstance(circuit_segment, Circuit):
@@ -34,7 +32,7 @@ class CnotWithoutAncillae:
 
         composite_gate = CompositeGate()
 
-        parallel_elimination = cls.matrix_run(mat)
+        parallel_elimination = self.matrix_run(mat)
         parallel_elimination.reverse()
         for level in parallel_elimination:
             for c, t in level:

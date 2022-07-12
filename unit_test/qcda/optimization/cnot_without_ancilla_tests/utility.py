@@ -1,7 +1,7 @@
 import numpy as np
 import random
 
-from QuICT.qcda.optimization.cnot_without_ancillae.graph import *
+from QuICT.qcda.optimization.cnot_without_ancilla.graph import *
 
 
 def f2_random_invertible_matrix_gen(n) -> np.ndarray:

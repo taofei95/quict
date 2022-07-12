@@ -1,7 +1,7 @@
 import random
 
 from .utility import get_bipartite, _b_bipartite_test
-from QuICT.qcda.optimization.cnot_without_ancillae import *
+from QuICT.qcda.optimization.cnot_without_ancilla import *
 
 
 def test_euler_partition():

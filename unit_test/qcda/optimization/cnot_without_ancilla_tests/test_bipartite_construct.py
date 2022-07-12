@@ -1,7 +1,7 @@
 import random
 
 from .utility import get_bipartite, _b_bipartite_test
-from QuICT.qcda.optimization.cnot_without_ancillae.edge_coloring import *
+from QuICT.qcda.optimization.cnot_without_ancilla.edge_coloring import *
 
 
 def test_max_deg_even():

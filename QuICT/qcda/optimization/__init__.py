@@ -8,7 +8,7 @@ from .symbolic_clifford_optimization import SymbolicCliffordOptimization
 from .cnot_ancilla import CnotAncilla
 from .commutative_optimization import CommutativeOptimization
 from .cnot_local_force import CnotForceBfs, CnotForceDepthBfs, CnotLocalForceBfs, CnotLocalForceDepthBfs, CnotStoreForceBfs
-from .cnot_without_ancillae import CnotWithoutAncillae
+from .cnot_without_ancilla import CnotWithoutAncilla
 from .topological_cnot import TopologicalCnot
 from .topological_cnot_rz import TopologicalCnotRz
 from .template_optimization import TemplateOptimization

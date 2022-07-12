@@ -1,6 +1,6 @@
 import random
 
-from QuICT.qcda.optimization.cnot_without_ancillae import EdgeColoring
+from QuICT.qcda.optimization.cnot_without_ancilla import EdgeColoring
 from .utility import get_bipartite
 
 
