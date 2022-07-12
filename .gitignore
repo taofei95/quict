@@ -28,4 +28,5 @@ cmake-build*/
 cmake-vsc*/
 QuICT/qcda/mapping/mcts_core/mcts_wrapper.cpp
 /QuICT/qcda/mapping/ai/data/circ/
+/QuICT/qcda/mapping/ai/data/processed/
 !/QuICT/qcda/mapping/ai/data/topo/*

@@ -45,17 +45,12 @@ def gen_fc_layout(num_qubit: int) -> Layout:
 
 
 def gen_circ(num_qubit: int) -> Circuit:
-    size = num_qubit * 5
+    size = num_qubit * 10
     # No need for single bit gates.
     rand_list = [
         GateType.cx,
-        GateType.cy,
-        GateType.cz,
-        GateType.ch,
-        GateType.crz,
-        GateType.cu1,
-        GateType.cu3,
-        # GateType.fsim,
+        GateType.rx,
+        GateType.ry,
     ]
     circ = Circuit(wires=num_qubit)
     circ.random_append(rand_size=size, typelist=rand_list)
@@ -63,9 +58,9 @@ def gen_circ(num_qubit: int) -> Circuit:
 
 
 def ensure_path(path: str):
-    dir, _ = os.path.split(os.path.abspath(path))
-    if not os.path.exists(dir):
-        os.makedirs(dir, exist_ok=True)
+    if not os.path.exists(path):
+        print(f"Creating absent {path}...")
+        os.makedirs(path, exist_ok=True)
 
 
 def write_circ_gate_dag(circ: Circuit, path: str):
@@ -139,28 +134,32 @@ def gen_grid_data(repeat: int = 100, size_list: List[int] = [i for i in range(5,
                     print(f"    iter: {i}")
 
 
-def get_ibmq_topo_dir():
-    for root, dirs, _ in os.walk("data"):
-        for name in dirs:
+def get_ibmq_topo():
+    for root, _, files in os.walk("data"):
+        for name in files:
             if name.startswith("ibmq"):
                 path = os.path.join(root, name)
-                # path = os.path.join(path, "topo.txt")
-                exists = os.path.isdir(path)
-                print(f"{path}, {exists}")
+                exists = os.path.isfile(path)
+                # print(f"{path}, {exists}")
                 if exists:
                     yield path
 
 
 def gen_ibmq_data(repeat=100):
-    for path in get_ibmq_topo_dir():
-        topo_path = os.path.join(path, "topo.txt")
+    for topo_path in get_ibmq_topo():
+        topo_name = os.path.basename(topo_path)
+        topo_name = os.path.splitext(topo_name)[0]
         layout = Layout.load_file(topo_path)
-        # print(layout)
         num_qubit = layout.qubit_number
+        print(f"Generating {topo_name} for {repeat} rounds...")
+        circ_dir = os.path.join("data", "circ")
+        circ_dir = os.path.join(circ_dir, topo_name)
+        print(circ_dir)
+        ensure_path(circ_dir)
         for i in range(repeat):
             circ = gen_circ(num_qubit)
-            circ_file = os.path.join(path, f"circ_{i}.qasm")
-            result_circ_file = os.path.join(path, f"result_circ_{i}.qasm")
+            circ_file = os.path.join(circ_dir, f"circ_{i}.qasm")
+            result_circ_file = os.path.join(circ_dir, f"result_circ_{i}.qasm")
             result_circ = Mapping.execute(
                 circuit=circ, init_mapping_method="naive", layout=layout
             )
@@ -171,5 +170,6 @@ def gen_ibmq_data(repeat=100):
 
 
 if __name__ == "__main__":
-    # gen_grid_data(repeat=500, size_list=list(range(5, 40)))
+    # for x in get_ibmq_topo():
+    #     print(x)
     gen_ibmq_data(500)
