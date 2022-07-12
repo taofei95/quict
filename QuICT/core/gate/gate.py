@@ -3,6 +3,7 @@
 # @TIME    : 2022/1/17 9:04
 # @Author  : Han Yu, Li Kaiqi
 # @File    : gate.py
+from typing import Union
 import numpy as np
 import copy
 
@@ -77,11 +78,12 @@ class BasicGate(object):
         return self._cargs
 
     @cargs.setter
-    def cargs(self, cargs: list):
-        if isinstance(cargs, list):
-            self._cargs = cargs
-        else:
-            self._cargs = [cargs]
+    def cargs(self, cargs: Union[list, int]):
+        if isinstance(cargs, int):
+            cargs = [cargs]
+
+        assert len(cargs) == len(set(cargs)), "Duplicated control qubit indexes."
+        self._cargs = cargs
 
     @property
     def targets(self) -> int:
@@ -98,10 +100,12 @@ class BasicGate(object):
 
     @targs.setter
     def targs(self, targs: list):
-        if isinstance(targs, list):
-            self._targs = targs
-        else:
-            self._targs = [targs]
+        if isinstance(targs, int):
+            targs = [targs]
+
+        assert len(targs) == len(set(targs)), "Duplicated target qubit indexes."
+        assert not set(self._cargs) & set(targs), "Same qubit indexes in control and target."
+        self._targs = targs
 
     @property
     def params(self) -> int:
