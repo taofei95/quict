@@ -275,7 +275,7 @@ class Transpile:
                     DataSwitch(
                         index ^ outer_qubit_idx,
                         DataSwitchType.ctarg,
-                        {t_qubits - 1 - gate_args[0]: 1}
+                        {t_qubits - 1 - inner_args: 1}
                     ) | splited_cgate
             # control-normal 2-qubits gate [CH, CU3]
             elif matrix_type == MatrixType.normal:
