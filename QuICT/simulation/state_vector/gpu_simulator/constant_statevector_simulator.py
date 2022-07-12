@@ -16,7 +16,7 @@ from QuICT.core.gate import Measure, BasicGate, CompositeGate
 from QuICT.core.utils import GateType, MatrixType
 from QuICT.ops.utils import LinAlgLoader
 from QuICT.simulation.optimization import Optimizer
-from QuICT.ops.gate_kernel import Float_Multiply, Simple_Multiply
+from QuICT.ops.gate_kernel import float_multiply, complex_multiply
 from QuICT.simulation.utils import GateMatrixs
 
 
@@ -203,7 +203,7 @@ class ConstantStateVectorSimulator:
         elif matrix_type == MatrixType.ctrl_normal:
             t_indexes = [self._qubits - 1 - targ for targ in gate.targs]
             matrix = self._get_gate_matrix(gate)
-            self._algorithm.Completed_MxIP_targs(
+            self._algorithm.ctrl_normal_targs(
                 t_indexes,
                 matrix,
                 *default_parameters
@@ -212,7 +212,7 @@ class ConstantStateVectorSimulator:
         elif matrix_type == MatrixType.normal_normal:
             t_indexes = [self._qubits - 1 - targ for targ in gate.targs]
             matrix = self._get_gate_matrix(gate)
-            self._algorithm.Completed_IPxIP_targs(
+            self._algorithm.normal_normal_targs(
                 t_indexes,
                 matrix,
                 *default_parameters
@@ -254,7 +254,7 @@ class ConstantStateVectorSimulator:
         # Deal with 1-qubit normal gate e.g. H
         if args_num == 1:
             index = self._qubits - 1 - gate_args[0]
-            self._algorithm.Based_InnerProduct_targ(
+            self._algorithm.normal_targ(
                 index,
                 matrix,
                 *default_parameters
@@ -263,7 +263,7 @@ class ConstantStateVectorSimulator:
             if gate.controls == gate.targets:
                 c_index = self._qubits - 1 - gate.carg
                 t_index = self._qubits - 1 - gate.targ
-                self._algorithm.Controlled_InnerProduct_ctargs(
+                self._algorithm.normal_ctargs(
                     c_index,
                     t_index,
                     matrix,
@@ -271,7 +271,7 @@ class ConstantStateVectorSimulator:
                 )
             elif gate.targets == 2:     # Deal with 2-qubits unitary gate
                 indexes = [self._qubits - 1 - index for index in gate_args]
-                self._algorithm.Based_InnerProduct_targs(
+                self._algorithm.normal_targs(
                     indexes,
                     matrix,
                     *default_parameters
@@ -290,7 +290,7 @@ class ConstantStateVectorSimulator:
         # Deal with 1-qubit diagonal gate, e.g. Rz
         if args_num == 1:
             index = self._qubits - 1 - gate.targ
-            self._algorithm.Diagonal_Multiply_targ(
+            self._algorithm.diagonal_targ(
                 index,
                 matrix,
                 *default_parameters
@@ -299,7 +299,7 @@ class ConstantStateVectorSimulator:
             if gate.controls == gate.targets:
                 c_index = self._qubits - 1 - gate.carg
                 t_index = self._qubits - 1 - gate.targ
-                self._algorithm.Controlled_Multiply_ctargs(
+                self._algorithm.diagonal_ctargs(
                     c_index,
                     t_index,
                     matrix,
@@ -307,7 +307,7 @@ class ConstantStateVectorSimulator:
                 )
             elif gate.targets == 2:
                 indexes = [self._qubits - 1 - index for index in gate_args]
-                self._algorithm.Diagonal_Multiply_targs(
+                self._algorithm.diagonal_targs(
                     indexes,
                     matrix,
                     *default_parameters
@@ -317,7 +317,7 @@ class ConstantStateVectorSimulator:
         else:   # [CCRz]
             c_indexes = [self._qubits - 1 - carg for carg in gate.cargs]
             t_index = self._qubits - 1 - gate.targ
-            self._algorithm.Controlled_Multiply_more(
+            self._algorithm.diagonal_more(
                 c_indexes,
                 t_index,
                 matrix,
@@ -333,20 +333,20 @@ class ConstantStateVectorSimulator:
 
         if args_num == 1:       # Deal with X Gate
             index = self._qubits - 1 - gate.targ
-            self._algorithm.RDiagonal_Swap_targ(
+            self._algorithm.swap_targ(
                 index,
                 *default_parameters
             )
         elif args_num == 2:     # Deal with Swap Gate
             t_indexes = [self._qubits - 1 - targ for targ in gate_args]
-            self._algorithm.Controlled_Swap_targs(
+            self._algorithm.swap_targs(
                 t_indexes,
                 *default_parameters
             )
         else:   # CSwap
             t_indexes = [self._qubits - 1 - targ for targ in gate.targs]
             c_index = self._qubits - 1 - gate.carg
-            self._algorithm.Controlled_Swap_tmore(
+            self._algorithm.swap_tmore(
                 t_indexes,
                 c_index,
                 *default_parameters
@@ -362,7 +362,7 @@ class ConstantStateVectorSimulator:
 
         if args_num == 1:   # Deal with 1-qubit reverse gate, e.g. Y
             index = self._qubits - 1 - gate_args[0]
-            self._algorithm.RDiagonal_MultiplySwap_targ(
+            self._algorithm.reverse_targ(
                 index,
                 matrix,
                 *default_parameters
@@ -370,7 +370,7 @@ class ConstantStateVectorSimulator:
         elif args_num == 2:   # only consider 1 control qubit + 1 target qubit
             c_index = self._qubits - 1 - gate_args[0]
             t_index = self._qubits - 1 - gate_args[1]
-            self._algorithm.Controlled_MultiplySwap_ctargs(
+            self._algorithm.reverse_ctargs(
                 c_index,
                 t_index,
                 matrix,
@@ -379,7 +379,7 @@ class ConstantStateVectorSimulator:
         else:   # CCX
             c_indexes = [self._qubits - 1 - carg for carg in gate.cargs]
             t_index = self._qubits - 1 - gate.targ
-            self._algorithm.Controlled_Swap_more(
+            self._algorithm.reverse_more(
                 c_indexes,
                 t_index,
                 *default_parameters
@@ -395,7 +395,7 @@ class ConstantStateVectorSimulator:
         if args_num == 1:       # Deal with 1-qubit control gate, e.g. S
             index = self._qubits - 1 - gate_args[0]
             val = gate.matrix[1, 1]
-            self._algorithm.Controlled_Multiply_targ(
+            self._algorithm.control_targ(
                 index,
                 val,
                 *default_parameters
@@ -404,7 +404,7 @@ class ConstantStateVectorSimulator:
             c_index = self._qubits - 1 - gate_args[0]
             t_index = self._qubits - 1 - gate_args[1]
             val = gate.matrix[3, 3]
-            self._algorithm.Controlled_Product_ctargs(
+            self._algorithm.control_ctargs(
                 c_index,
                 t_index,
                 val,
@@ -446,9 +446,9 @@ class ConstantStateVectorSimulator:
         """
         default_parameters = (self._vector, self._qubits, self._sync)
         if isinstance(value, float):
-            Float_Multiply(value, *default_parameters)
+            float_multiply(value, *default_parameters)
         else:
-            Simple_Multiply(value, *default_parameters)
+            complex_multiply(value, *default_parameters)
 
     def apply_zeros(self):
         """ Set state vector to be zero. """
@@ -482,7 +482,7 @@ class ConstantStateVectorSimulator:
             [float]: The target qubit's measured value or reset value, <0 or <1
         """
         if type == GateType.measure:
-            result = int(self._algorithm.MeasureGate_Apply(
+            result = int(self._algorithm.apply_measuregate(
                 index,
                 self._vector,
                 self._qubits,
@@ -493,7 +493,7 @@ class ConstantStateVectorSimulator:
             self._measure_result[self._qubits - 1 - index].append(result)
             return result
         elif type == GateType.reset:
-            return self._algorithm.ResetGate_Apply(
+            return self._algorithm.apply_resetgate(
                 index,
                 self._vector,
                 self._qubits,

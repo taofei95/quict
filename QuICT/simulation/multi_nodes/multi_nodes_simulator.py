@@ -14,7 +14,7 @@ from QuICT.core.gate import BasicGate, GateType
 from QuICT.core.operator import *
 from QuICT.utility import Proxy
 from QuICT.simulation.multi_nodes.data_switch import DataSwitcher
-from QuICT.ops.gate_kernel.gate_function import Device_Prob_Calculator
+from QuICT.ops.gate_kernel.gate_function import mn_measureprob_calculator
 
 
 class MultiNodesSimulator:
@@ -93,7 +93,7 @@ class MultiNodesSimulator:
                 prob = temp[0].real
             else:
                 # prob calculation for all switch
-                prob = Device_Prob_Calculator(self.vector).real
+                prob = mn_measureprob_calculator(self.vector).real
         else:
             prob = self.simulator.get_measured_prob(op.targ)
 

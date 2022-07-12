@@ -407,9 +407,9 @@ class UnitarySimulator():
                 self._vector
             )
         else:
-            from QuICT.ops.gate_kernel import MeasureGate_Apply
+            from QuICT.ops.gate_kernel import apply_measuregate
 
-            result = MeasureGate_Apply(
+            result = apply_measuregate(
                 qubit,
                 self._vector,
                 total_qubits
