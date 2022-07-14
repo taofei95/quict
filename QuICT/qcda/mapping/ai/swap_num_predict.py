@@ -2,7 +2,15 @@ from typing import Iterable, Tuple, List
 import torch
 from torch.nn import Flatten, LazyLinear, Linear
 import torch.nn.functional as F
-from torch_geometric.nn import SAGEConv, GATConv, global_sort_pool, to_hetero
+from torch_geometric.nn import (
+    SAGEConv,
+    GATConv,
+    GCNConv,
+    GCN2Conv,
+    TAGConv,
+    global_sort_pool,
+    to_hetero,
+)
 from torch_geometric.data import HeteroData
 import torch_geometric.transforms as GT
 
@@ -13,7 +21,7 @@ class SwapPredGNN(torch.nn.Module):
         self.hidden_gc_layer = torch.nn.ModuleList()
         # Do not know why SAGEConv causes an error.
         for h in hidden_channel:
-            self.hidden_gc_layer.append(GATConv(-1, h))
+            self.hidden_gc_layer.append(GATConv(-1, h, 3))
         self.last_gc_layer = GATConv(-1, out_channel)
 
     def forward(self, x, edge_index):
@@ -61,6 +69,8 @@ class SwapPredMix(torch.nn.Module):
         self.ml_model = SwapPredMLP(
             lc_qubit * gc_out_channel, ml_hidden_channel, ml_out_channel
         )
+        self.lc_qubit = lc_qubit
+        self.gc_out_channel = gc_out_channel
 
     def forward(self, data: HeteroData):
         gc_out = self.gc_model(data.x_dict, data.edge_index_dict)
