@@ -293,5 +293,6 @@ class DAGCircuit:
             layout (layout, optional): The networkx.layout. Defaults to nx.shell_layout.
         """
         graph_name = f"{self.name}.jpg"
+        plt.cla()
         nx.draw(self._graph, pos=layout(self._graph), with_labels=True)
         plt.savefig(graph_name)
