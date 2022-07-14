@@ -2,34 +2,9 @@ from typing import Iterable, Tuple, List
 import torch
 from torch.nn import Flatten, LazyLinear, Linear
 import torch.nn.functional as F
-from torch_geometric.nn import (
-    SAGEConv,
-    GATConv,
-    GCNConv,
-    GCN2Conv,
-    TAGConv,
-    global_sort_pool,
-    to_hetero,
-)
+from torch_geometric.nn import GCNConv, global_sort_pool
 from torch_geometric.data import HeteroData
 import torch_geometric.transforms as GT
-
-
-class SwapPredGNN(torch.nn.Module):
-    def __init__(self, hidden_channel: Iterable[int], out_channel: int,) -> None:
-        super().__init__()
-        self.hidden_gc_layer = torch.nn.ModuleList()
-        # Do not know why SAGEConv causes an error.
-        for h in hidden_channel:
-            self.hidden_gc_layer.append(GATConv(-1, h, 3))
-        self.last_gc_layer = GATConv(-1, out_channel)
-
-    def forward(self, x, edge_index):
-        for conv in self.hidden_gc_layer:
-            x = conv(x, edge_index)
-            x = F.relu(x)
-        x = self.last_gc_layer(x, edge_index)
-        return x
 
 
 class SwapPredMLP(torch.nn.Module):
@@ -52,91 +27,115 @@ class SwapPredMLP(torch.nn.Module):
         return x
 
 
+class SwapPredGnn(torch.nn.Module):
+    def __init__(
+        self, hidden_channel: Iterable[int], out_channel: int, pool_node: int
+    ) -> None:
+        super().__init__()
+        self.hidden_gc_layer = torch.nn.ModuleList()
+        for h in hidden_channel:
+            self.hidden_gc_layer.append(GCNConv(-1, h))
+        self.last_gc_layer = GCNConv(-1, out_channel)
+        self.pool_node = pool_node
+
+    def forward(self, data):
+        x, edge_index, batch = data.x, data.edge_index, data.batch
+        for gcl in self.hidden_gc_layer:
+            x = gcl(x, edge_index)
+            x = F.relu(x)
+        x = self.last_gc_layer(x, edge_index)
+        x = global_sort_pool(x, batch, k=self.pool_node)
+        return x
+
+
 class SwapPredMix(torch.nn.Module):
     def __init__(
         self,
-        lc_qubit: int,
-        gc_hidden_channel: Iterable[int],
-        gc_out_channel: int,
-        gc_model_metadata,
+        topo_gc_hidden_channel: Iterable[int],
+        topo_gc_out_channel: int,
+        topo_pool_node: int,
+        lc_gc_hidden_channel: Iterable[int],
+        lc_gc_out_channel: int,
+        lc_pool_node: int,
         ml_hidden_channel: Iterable[int],
         ml_out_channel: int,
     ) -> None:
         super().__init__()
-        gc_model = SwapPredGNN(gc_hidden_channel, gc_out_channel)
-        self.gc_model = to_hetero(gc_model, gc_model_metadata)
-        self.flatten = Flatten(0, -1)
-        self.ml_model = SwapPredMLP(
-            lc_qubit * gc_out_channel, ml_hidden_channel, ml_out_channel
+        self.topo_gnn = SwapPredGnn(
+            hidden_channel=topo_gc_hidden_channel,
+            out_channel=topo_gc_out_channel,
+            pool_node=topo_pool_node,
         )
-        self.lc_qubit = lc_qubit
-        self.gc_out_channel = gc_out_channel
+        self.topo_flatten = Flatten(start_dim=0)
+        self.lc_gnn = SwapPredGnn(
+            hidden_channel=lc_gc_hidden_channel,
+            out_channel=lc_gc_out_channel,
+            pool_node=lc_pool_node,
+        )
+        self.lc_flatten = Flatten(start_dim=0)
+        self.mlp = SwapPredMLP(
+            in_channel=topo_pool_node * topo_gc_out_channel
+            + lc_pool_node * lc_gc_out_channel,
+            hidden_channel=ml_hidden_channel,
+            out_channel=ml_out_channel,
+        )
 
-    def forward(self, data: HeteroData):
-        gc_out = self.gc_model(data.x_dict, data.edge_index_dict)
-        gc_out_lc_flat = self.flatten(gc_out["lc_qubit"])
-        pred = self.ml_model(gc_out_lc_flat)
-        return pred
+    def forward(self, data):
+        topo_x = self.topo_gnn(data["topo"])
+        topo_x = self.topo_flatten(topo_x)
+        lc_x = self.lc_gnn(data["lc"])
+        lc_x = self.lc_flatten(lc_x)
+        x = torch.concat((topo_x, lc_x,))
+        x = self.mlp(x)
+        return x
 
 
 if __name__ == "__main__":
-    data_1 = HeteroData()
+    from torch_geometric.data import Data
 
-    data_1["lc_qubit"].x = torch.tensor(
-        [
-            [0, 0, 0, 0, 1],
-            [0, 0, 0, 1, 0],
-            [0, 0, 1, 0, 0],
-            [0, 1, 0, 0, 0],
-            [1, 0, 0, 0, 0],
-        ],
-        dtype=torch.float,
-    )
-    data_1["pc_qubit"].x = torch.tensor(
-        [[0, 0, 1], [0, 1, 0], [1, 0, 0]], dtype=torch.float
+    model = SwapPredMix(
+        topo_gc_hidden_channel=[2, 2,],
+        topo_gc_out_channel=2,
+        topo_pool_node=2,
+        lc_gc_hidden_channel=[2, 2,],
+        lc_gc_out_channel=2,
+        lc_pool_node=2,
+        ml_hidden_channel=[3, 3,],
+        ml_out_channel=1,
     )
 
-    data_1["lc_qubit", "lc_conn", "lc_qubit"].edge_index = (
-        torch.tensor([[0, 1], [0, 2]], dtype=torch.int).t().contiguous()
-    )
-    data_1["pc_qubit", "pc_conn", "pc_qubit"].edge_index = (
-        torch.tensor([[0, 1], [1, 2]], dtype=torch.int).t().contiguous()
-    )
+    node_feature_num = 10
 
-    data_1 = GT.ToUndirected()(data_1)
+    topo_x = torch.zeros(3, node_feature_num)
+    topo_x[:, :3] = torch.eye(3, dtype=float)
+    topo_edge_index = [[0, 1], [1, 2], [0, 2]]
+    lc_x = torch.zeros(5, node_feature_num)
+    lc_x[:, :5] = torch.eye(5, dtype=float)
+    lc_edge_index = [[0, 1], [1, 2]]
 
-    data_2 = HeteroData()
+    topo_edge_index = torch.tensor(topo_edge_index, dtype=torch.long).t().contiguous()
+    lc_edge_index = torch.tensor(lc_edge_index, dtype=torch.long).t().contiguous()
+    topo_data = Data(x=topo_x, edge_index=topo_edge_index)
+    lc_data = Data(x=lc_x, edge_index=lc_edge_index)
 
-    data_2["lc_qubit"].x = torch.tensor(
-        [
-            [0, 0, 0, 0, 1],
-            [0, 0, 0, 1, 0],
-            [0, 0, 1, 0, 0],
-            [0, 1, 0, 0, 0],
-            [1, 0, 0, 0, 0],
-        ],
-        dtype=torch.float,
-    )
-    data_2["pc_qubit"].x = torch.tensor(
-        [[0, 0, 1], [0, 1, 0], [1, 0, 0]], dtype=torch.float
-    )
-
-    data_2["lc_qubit", "lc_conn", "lc_qubit"].edge_index = (
-        torch.tensor([[0, 1], [0, 2], [1, 2]], dtype=torch.int).t().contiguous()
-    )
-    data_2["pc_qubit", "pc_conn", "pc_qubit"].edge_index = (
-        torch.tensor([[0, 1], [1, 2]], dtype=torch.int).t().contiguous()
-    )
-
-    data_2 = GT.ToUndirected()(data_2)
-
-    model = SwapPredMix(5, [3, 3,], 2, data_1.metadata(), [3, 3,], 1)
-
-    print(data_1.metadata())
-
+    data = {"topo": topo_data, "lc": lc_data}
     with torch.no_grad():
-        out = model(data_1)
-        print(out)
-        out = model(data_2)
+        out = model(data)
         print(out)
 
+    topo_x = torch.zeros(4, node_feature_num)
+    topo_x[:, :4] = torch.eye(4, dtype=float)
+    topo_edge_index = [[0, 1], [1, 2], [0, 2]]
+    lc_x = torch.zeros(6, node_feature_num)
+    lc_x[:, :6] = torch.eye(6, dtype=float)
+    lc_edge_index = [[0, 1], [1, 2]]
+
+    topo_edge_index = torch.tensor(topo_edge_index, dtype=torch.long).t().contiguous()
+    lc_edge_index = torch.tensor(lc_edge_index, dtype=torch.long).t().contiguous()
+    topo_data = Data(x=topo_x, edge_index=topo_edge_index)
+    lc_data = Data(x=lc_x, edge_index=lc_edge_index)
+
+    data = {"topo": topo_data, "lc": lc_data}
+    with torch.no_grad():
+        out = model(data)
+        print(out)

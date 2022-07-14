@@ -1,5 +1,5 @@
 from ctypes.wintypes import LPSC_HANDLE
-from typing import Generator, Iterable, List, Tuple, Union
+from typing import Dict, Generator, Iterable, List, Tuple, Union
 
 from QuICT.core.circuit.circuit import Circuit
 from QuICT.core.gate.gate import BasicGate
@@ -14,15 +14,11 @@ import networkx as nx
 
 
 class MappingDataProcessor:
-    def __init__(
-        self, MAX_PC_QUBIT: int = 200, MAX_LC_NODE: int = 1000, working_dir: str = ".",
-    ) -> None:
+    def __init__(self, working_dir: str = ".",) -> None:
         self._data_dir = path.join(working_dir, "data")
         self._circ_dir = path.join(self._data_dir, "circ")
         self._topo_dir = path.join(self._data_dir, "topo")
         self._processed_dir = path.join(self._data_dir, "processed")
-        self.MAX_PC_QUBIT = MAX_PC_QUBIT
-        self.MAX_LC_NODE = MAX_LC_NODE
 
     def _get_topo_names(self) -> Iterable[str]:
         for _, _, filenames in walk(self._topo_dir):
@@ -33,9 +29,7 @@ class MappingDataProcessor:
         layout = Layout.load_file(path.join(self._topo_dir, f"{topo_name}.layout"))
         return layout.edge_list
 
-    def _load_circuits(
-        self, topo_name
-    ) -> Iterable[Tuple[Circuit, Circuit]]:
+    def _load_circuits(self, topo_name) -> Iterable[Tuple[Circuit, Circuit]]:
         for root, _, filenames in walk(path.join(self._circ_dir, topo_name)):
             for name in filenames:
                 if name.startswith("result"):
@@ -51,36 +45,38 @@ class MappingDataProcessor:
 
     def _build_data_from_circ(
         self, pc_conn: List[LayoutEdge], src_circ: Circuit, res_circ: Circuit
-    ) -> Tuple[Data, Data, int]:
-        pc_x = torch.eye(self.MAX_PC_QUBIT, dtype=torch.long)
-        pc_edge_index = []
+    ) -> Tuple[Dict[str, Data], int]:
+        topo_x = torch.eye(src_circ.width(), dtype=torch.long)
+        topo_edge_index = []
         for edge in pc_conn:
-            pc_edge_index.append((edge.u, edge.v,))
-            pc_edge_index.append((edge.v, edge.u,))
-        pc_edge_index = torch.tensor(pc_edge_index, dtype=torch.float).t().contiguous()
-        pc_data = Data(x=pc_x, edge_index=pc_edge_index)
+            topo_edge_index.append((edge.u, edge.v,))
+            topo_edge_index.append((edge.v, edge.u,))
+        topo_edge_index = (
+            torch.tensor(topo_edge_index, dtype=torch.float).t().contiguous()
+        )
+        topo_data = Data(x=topo_x, edge_index=topo_edge_index)
 
         dag = nx.DiGraph()  # Load from circuit in the future
-        lc_x = torch.eye(self.MAX_LC_NODE, dtype=torch.long)
+        lc_node_num = -1
+        lc_x = torch.eye(lc_node_num, dtype=torch.long)
         lc_edge_index = []
-        gate_id_map = {}
-        for node in nx.topological_sort(dag) and len(gate_id_map) < self.MAX_LC_NODE:
-            if node not in gate_id_map:
-                gate_id_map[node] = len(gate_id_map)
-            for neighbor in dag[node] and len(gate_id_map) < self.MAX_LC_NODE:
-                if neighbor not in gate_id_map:
-                    gate_id_map[neighbor] = len(gate_id_map)
+        for node in nx.topological_sort(dag):
+            for neighbor in dag[node]:
                 lc_edge_index.append((node, neighbor,))
         lc_edge_index = torch.tensor(lc_edge_index, dtype=torch.float).t().contiguous()
         lc_data = Data(x=lc_x, edge_index=lc_edge_index)
 
         extra_swap_cnt = len(res_circ.gates) - len(src_circ.gates)
 
-        return pc_data, lc_data, extra_swap_cnt
+        data_dict = {}
+        data_dict["topo"] = topo_data
+        data_dict["lc"] = lc_data
+
+        return data_dict, extra_swap_cnt
 
     def _load_by_topo_name(
         self, topo_name: str
-    ) -> Iterable[Tuple[Data, Data, int]]:
+    ) -> Iterable[Tuple[Dict[str, Data], int]]:
         layout_edges = self._load_layout_edge(topo_name)
         for src_circ, res_circ in self._load_circuits(topo_name):
             yield self._build_data_from_circ(layout_edges, src_circ, res_circ)
