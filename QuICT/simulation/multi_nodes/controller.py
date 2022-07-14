@@ -57,11 +57,16 @@ class MultiNodesController:
         # transpile circuit
         divided_circuits, split_qubit = self._transpiler.run(circuit)
 
-        # start
-        if self._mode_type == ModeType.local:
-            return self._launch_local(divided_circuits, split_qubit)
+        # Prepare mapping permutation
+        inner_mapping = list(range(circuit.width()))
+        inner_mapping.remove(int(split_qubit))
+        permutation = [split_qubit] + inner_mapping
 
-    def _launch_local(self, dcircuit: Circuit, splited_qubits):
+        # start launch multi-node simulator
+        if self._mode_type == ModeType.local:
+            return self._launch_local(divided_circuits, permutation)
+
+    def _launch_local(self, dcircuit: Circuit, permutation: list):
         # Using multiprocess to start simulators, only for GPUs
         proxy_id = nccl.get_unique_id()
         with ProcessPoolExecutor(max_workers=self.ndev) as executor:
@@ -83,7 +88,8 @@ class MultiNodesController:
         for idx, vec in results:
             z[idx] = vec
 
-        return cp.concatenate(z)
+        combined_sv = cp.concatenate(z)
+        return VectorPermutation(combined_sv, np.array(permutation))
 
     def _launch_distributed(self):
         # send job to distributed
