@@ -2,7 +2,11 @@
 CPU:
   unitary:
     precision: double
+
   statevector:
+    precision: double
+
+  density_matrix:
     precision: double
 
 # GPU simulator
@@ -13,8 +17,12 @@ GPU:
   statevector:
     precision: double
     gpu_device_id: 0
+    optimization: False
+    matrix_aggregation: True
     sync: True
-    optimize: False
+
+  density_matrix:
+    precision: double
 
 qiskit:
   token: 1

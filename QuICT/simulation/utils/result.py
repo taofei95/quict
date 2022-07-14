@@ -1,8 +1,5 @@
-from collections import defaultdict
 import os
 import numpy as np
-
-from QuICT.core.utils import unique_id_generator
 
 
 class Result:
@@ -15,21 +12,25 @@ class Result:
     """
     def __init__(
         self,
+        circuit_id: str,
         device: str,
         backend: str,
         shots: int,
         options: dict
     ):
-        self.id = unique_id_generator()
+        self.id = circuit_id.split('_')[1]
         self.device = device
         self.backend = backend
         self.shots = shots
         self.options = options
-        self.spending_time = 0
-        self.counts = defaultdict(int)
+        self.counts = {}
 
         # prepare output path
         self.output_path = self._prepare_output_file()
+
+    def __str__(self):
+        return f"ID: {self.id}\nDevice: {self.device}\nBackend: {self.backend}\nShots: {self.shots}\n" + \
+            f"Options: {self.options}\nResults: {self.counts}"
 
     def _prepare_output_file(self):
         """ Prepare output path. """
@@ -41,39 +42,29 @@ class Result:
 
         return output_path
 
-    def record(self, result, spending_time: float = None, qubits: int = None):
+    def record_sample(self, result: list):
         """ Record circuit's result
 
         Args:
-            result (int or np.array): The measured result from StateVectorSimulator or matrix from Unitary Simulator.
-
-        Raises:
-            TypeError: Wrong type input.
+            result (list): The sample of measured result from given circuit.
         """
-        if isinstance(result, int):
-            bit_idx = "{0:0b}".format(result)
-            if qubits:
-                bit_idx = bit_idx.zfill(qubits)
-            self.counts[bit_idx] += 1
+        for i in range(len(result)):
+            bit_idx = "{0:0b}".format(i)
+            bit_idx = bit_idx.zfill(int(np.log2(len(result))))
+            self.counts[bit_idx] = result[i]
 
-        if spending_time is not None:
-            self.spending_time += spending_time / self.shots
+        with open(f"{self.output_path}/result.log", "w") as of:
+            of.write(str(self.__dict__))
+            of.write(str(self.counts))
 
     def record_circuit(self, circuit):
         """ dump the circuit. """
         with open(f"{self.output_path}/circuit.qasm", "w") as of:
             of.write(circuit.qasm())
 
-    def record_sv(self, state, shot):
+    def record_amplitude(self, amplitude):
         """ dump the circuit. """
         if self.device == "GPU":
-            state = state.get()
+            amplitude = amplitude.get()
 
-        np.savetxt(f"{self.output_path}/state_{shot}.txt", state)
-
-    def dumps(self):
-        """ dump the result. """
-        with open(f"{self.output_path}/result.log", "w") as of:
-            of.write(str(self.__dict__))
-
-        return self.__dict__
+        np.savetxt(f"{self.output_path}/amplitude.txt", amplitude)

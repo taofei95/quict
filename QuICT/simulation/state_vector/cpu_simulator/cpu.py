@@ -228,7 +228,7 @@ class CircuitSimulator:
         Parameters
         ----------
         circuit:
-            Quantum circuit to be simulated. If `None` is passed, then all previous gates added by 
+            Quantum circuit to be simulated. If `None` is passed, then all previous gates added by
             `apply_gate` would be executed.
         keep_state:
             Start simulation on previous result
@@ -297,7 +297,7 @@ class CircuitSimulator:
         Parameters
         ----------
         circuit:
-            Quantum circuit to be simulated. If `None` is passed, then all previous gates added by 
+            Quantum circuit to be simulated. If `None` is passed, then all previous gates added by
             `apply_gate` would be executed.
         keep_state:
             Start simulation on previous result

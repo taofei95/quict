@@ -3,11 +3,10 @@
 # @TIME    : 2021/4/27 2:02 下午
 # @Author  : Han Yu
 # @File    : _simulator
-import time
-
 from QuICT.core import Circuit
 from QuICT.simulation.state_vector import CircuitSimulator
 from QuICT.simulation.unitary import UnitarySimulator
+from QuICT.simulation.density_matrix import DensityMatrixSimulation
 from QuICT.simulation.utils import option_validation, Result
 
 
@@ -15,39 +14,45 @@ class Simulator:
     """ The high-level simulation class, including CPU/GPU/Remote simulator mode.
 
     Args:
-        device (str): The device of the simulator.
-        backend (str): The backend for the simulator.
-        shots (int): The running times; must be a positive integer.
+        device (str): The device of the simulator. One of [CPU, GPU, qiskit, qcompute]
+        backend (str): The backend for the simulator. One of [unitary, statevector, density_matrix]
+        shots (int): The running times; must be a positive integer, default to 1.
+        circuit_record (bool): whether record circuit's qasm in output, default to False.
+        amplitude_record (bool): whether record the amplitude of qubits, default to False.
         **options (dict): other optional parameters for the simulator.
     """
 
-    __DEVICE = ["CPU", "GPU", "qiskit", "qcompute"]
-    __BACKEND = ["unitary", "statevector"]
+    __DEVICE = ["CPU", "GPU"]
+    __REMOTE_DEVICE = ["qiskit", "qcompute"]
+    __BACKEND = ["unitary", "statevector", "density_matrix"]
 
     def __init__(
             self,
             device: str,
             backend: str,
             shots: int = 1,
+            circuit_record: bool = False,
+            amplitude_record: bool = False,
             **options
     ):
         assert (shots >= 1)
         self._device = device
         self._backend = backend
         self._shots = shots
+        self._circuit_record = circuit_record
+        self._amplitude_record = amplitude_record
         self._options = self._validate_options(options=options)
 
         # initial simulator
-        if device not in Simulator.__DEVICE:
+        if device not in Simulator.__DEVICE + Simulator.__REMOTE_DEVICE:
             raise ValueError(
                 f"Unsupportted device {device}, please select one of {Simulator.__DEVICE}."
             )
 
-        self._is_remote = self._device in Simulator.__DEVICE[-2:]
-        if self._is_remote:
-            self._simulator = self._load_remote_simulator()
-        else:
+        if self._device in Simulator.__DEVICE:
             self._simulator = self._load_simulator()
+        else:
+            self._simulator = self._load_remote_simulator()
 
     @option_validation()
     def _validate_options(self, options, default_options=None):
@@ -66,6 +71,8 @@ class Simulator:
         elif self._backend == "statevector":
             simulator = ConstantStateVectorSimulator(**self._options) \
                 if self._device == "GPU" else CircuitSimulator()
+        elif self._backend == "density_matrix":     # TODO: DM.run has different input
+            simulator = DensityMatrixSimulation(device=self._device, **self._options)
         else:
             raise ValueError(
                 f"Unsupportted backend {self.backend}, please select one of {Simulator.__BACKEND}."
@@ -89,11 +96,9 @@ class Simulator:
         return simulator
 
     def run(
-            self,
-            circuit: Circuit,
-            use_previous: bool = False,
-            circuit_out: bool = False,
-            statevector_out: bool = False
+        self,
+        circuit: Circuit,
+        use_previous: bool = False
     ):
         """ start simulator with given circuit
 
@@ -104,21 +109,18 @@ class Simulator:
         Yields:
             [array]: The state vector.
         """
-        result = Result(self._device, self._backend, self._shots, self._options)
-        if circuit_out:
+        result = Result(circuit.name, self._device, self._backend, self._shots, self._options)
+        if self._circuit_record:
             result.record_circuit(circuit)
 
         if self._device in Simulator.__DEVICE[2:]:
             return self._simulator.run(circuit, use_previous)
-        else:
-            for shot in range(self._shots):
-                s_time = time.time()
-                state = self._simulator.run(circuit, use_previous)
-                e_time = time.time()
 
-                if statevector_out:
-                    result.record_sv(state, shot)
+        amplitude = self._simulator.run(circuit, use_previous)
+        if self._amplitude_record:
+            result.record_amplitude(amplitude)
 
-                result.record(self._simulator.sample(), e_time - s_time, len(circuit.qubits))
+        sample_result = self._simulator.sample(self._shots)
+        result.record_sample(sample_result)
 
-        return result.dumps()
+        return result
