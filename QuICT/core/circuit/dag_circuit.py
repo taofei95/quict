@@ -221,7 +221,7 @@ class DAGCircuit:
         cgate = current_node.gate
         point = [previous_node]
         matched = False
-        visited = []
+        visited = [current_node.id]
         while len(point) != 0:
             pnode = point.pop()
             if isinstance(pnode, int):
