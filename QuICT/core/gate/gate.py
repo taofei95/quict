@@ -384,19 +384,14 @@ class BasicGate(object):
                 qubits_dict[x] = idx
             # Create two masked gates whose affected qubits are the minimal ones
             self_masked = self.cargs + self.targs
-            print(self_masked)
             for i in range(len(self_masked)):
                 self_masked[i] = qubits_dict[self_masked[i]]
             goal_masked = goal.cargs + goal.targs
-            print(goal_masked)
             for i in range(len(goal_masked)):
                 goal_masked[i] = qubits_dict[goal_masked[i]]
-            print(self_masked, goal_masked)
             # Compute the matrix commutation
             self_matrix = matrix_product_to_circuit(self.matrix, self_masked, len(qubits))
             goal_matrix = matrix_product_to_circuit(goal.matrix, goal_masked, len(qubits))
-            print(self_matrix)
-            print(goal_matrix)
             return np.allclose(self_matrix.dot(goal_matrix), goal_matrix.dot(self_matrix), rtol=eps, atol=eps)
 
     def is_single(self) -> bool:
