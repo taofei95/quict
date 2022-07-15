@@ -10,7 +10,7 @@ import copy
 from QuICT.core.utils import (
     GateType, SPECIAL_GATE_SET, DIAGONAL_GATE_SET, CGATE_LIST,
     PAULI_GATE_SET, CLIFFORD_GATE_SET,
-    perm_decomposition
+    perm_decomposition, matrix_product_to_circuit
 )
 
 
@@ -331,38 +331,73 @@ class BasicGate(object):
         Return:
             bool: True if commutative
         """
-        if self.is_special() or goal.is_special():
+        # Check the affected qubits
+        self_controls = set(self.cargs)
+        self_targets = set(self.targs)
+        goal_controls = set(goal.cargs)
+        goal_targets = set(goal.targs)
+        # If the affected qubits of the gates are completely different, they must commute
+        self_qubits = self_controls | self_targets
+        goal_qubits = goal_controls | goal_targets
+        if len(self_qubits & goal_qubits) == 0:
+            return True
+
+        # Ignore all the special gates except for the unitary gates due to the difficulty of getting the matrices
+        if (
+            (self.is_special() and self.type != GateType.unitary) or
+            (goal.is_special() and self.type != GateType.unitary)
+        ):
             return False
 
-        if self.targets > 1 or goal.targets > 1:
-            return False
-
+        # Check the target matrices of the gates
         A = self.target_matrix
         B = goal.target_matrix
+        # It means commuting that any of the target matrices is close to identity
         if (
-            np.allclose(A, np.identity(2), rtol=eps, atol=eps) or
-            np.allclose(B, np.identity(2), rtol=eps, atol=eps)
+            np.allclose(A, np.identity(1 << self.targets), rtol=eps, atol=eps) or
+            np.allclose(B, np.identity(1 << goal.targets), rtol=eps, atol=eps)
         ):
             return True
 
-        set_controls = set(self.cargs)
-        set_targets = set(self.targs)
-        set_goal_controls = set(goal.cargs)
-        set_goal_targets = set(goal.targs)
+        # For gates whose number of target qubits is 1, optimized judgment could be used
+        if self.targets == 1 and goal.targets == 1:
+            # Diagonal target gates commutes with the control qubits
+            if (
+                (len(self_controls & goal_targets) > 0 and not goal.is_diagonal()) or
+                (len(goal_controls & self_targets) > 0 and not self.is_diagonal())
+            ):
+                return False
+            # Compute the target matrix commutation
+            if (
+                len(goal_targets & self_targets) > 0 and
+                not np.allclose(A.dot(B), B.dot(A), rtol=eps, atol=eps)
+            ):
+                return False
 
-        commutative_set = set_controls.intersection(set_goal_targets)
-        if len(commutative_set) > 0 and not goal.is_diagonal():
-            return False
-
-        commutative_set = set_goal_controls.intersection(set_targets)
-        if len(commutative_set) > 0 and not self.is_diagonal():
-            return False
-
-        commutative_set = set_goal_targets.intersection(set_targets)
-        if len(commutative_set) > 0 and not np.allclose(A.dot(B), B.dot(A), rtol=1.0e-13, atol=1.0e-13):
-            return False
-
-        return True
+            return True
+        # Otherwise, we need to calculate the matrix commutation directly
+        else:
+            # Collect all the affected qubits and create the converter to the minimal qubits
+            qubits = self_qubits | goal_qubits
+            qubits_dict = {}
+            for idx, x in enumerate(qubits):
+                qubits_dict[x] = idx
+            # Create two masked gates whose affected qubits are the minimal ones
+            self_masked = self.cargs + self.targs
+            print(self_masked)
+            for i in range(len(self_masked)):
+                self_masked[i] = qubits_dict[self_masked[i]]
+            goal_masked = goal.cargs + goal.targs
+            print(goal_masked)
+            for i in range(len(goal_masked)):
+                goal_masked[i] = qubits_dict[goal_masked[i]]
+            print(self_masked, goal_masked)
+            # Compute the matrix commutation
+            self_matrix = matrix_product_to_circuit(self.matrix, self_masked, len(qubits))
+            goal_matrix = matrix_product_to_circuit(goal.matrix, goal_masked, len(qubits))
+            print(self_matrix)
+            print(goal_matrix)
+            return np.allclose(self_matrix.dot(goal_matrix), goal_matrix.dot(self_matrix), rtol=eps, atol=eps)
 
     def is_single(self) -> bool:
         """ judge whether gate is a one qubit gate(excluding special gate like measure, reset, custom and so on)
