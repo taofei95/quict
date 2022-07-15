@@ -48,8 +48,8 @@ class NoiseGate(Operator):
     def __init__(self, gate: BasicGate, error):
         assert isinstance(gate, BasicGate)
         super().__init__(gate.controls + gate.targets)
-        self.targs = gate.cargs + gate.targs
-
+        self.targs = gate.targs
+        self.cargs = gate.cargs
         self._gate = gate
         self._error = error
         self._noise_matrix = self._error.apply_to_gate(gate.matrix) if gate.matrix_type != MatrixType.special else None

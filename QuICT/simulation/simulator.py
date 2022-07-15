@@ -4,6 +4,7 @@
 # @Author  : Han Yu
 # @File    : _simulator
 from QuICT.core import Circuit
+from QuICT.core.noise import NoiseModel
 from QuICT.simulation.state_vector import CircuitSimulator
 from QuICT.simulation.unitary import UnitarySimulator
 from QuICT.simulation.density_matrix import DensityMatrixSimulation
@@ -98,12 +99,14 @@ class Simulator:
     def run(
         self,
         circuit: Circuit,
+        noise_model: NoiseModel = None,
         use_previous: bool = False
     ):
         """ start simulator with given circuit
 
         Args:
             circuit (Circuit): The quantum circuits.
+            noise_model (NoiseModel, optional): The NoiseModel only for density_matrix simulator. Defaults to None.
             use_previous (bool, optional): Using the previous state vector. Defaults to False.
 
         Yields:
@@ -113,10 +116,11 @@ class Simulator:
         if self._circuit_record:
             result.record_circuit(circuit)
 
-        if self._device in Simulator.__DEVICE[2:]:
+        if self._device in Simulator.__REMOTE_DEVICE:
             return self._simulator.run(circuit, use_previous)
 
-        amplitude = self._simulator.run(circuit, use_previous)
+        amplitude = self._simulator.run(circuit, noise_model, use_previous) if self._backend == "density_matrix" else \
+            self._simulator.run(circuit, use_previous)
         if self._amplitude_record:
             result.record_amplitude(amplitude)
 

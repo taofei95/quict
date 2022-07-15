@@ -16,14 +16,19 @@ class DensityMatrixSimulation:
     Args:
         device (str, optional): The device type, one of [CPU, GPU]. Defaults to "CPU".
         precision (str, optional): The precision for the density matrix, one of [single, double]. Defaults to "double".
+        accumulated_mode (bool): If True, calculated density matrix with Kraus Operators in NoiseGate.
+            if True, p = \\sum Ki p Ki^T.conj(). Default to be False.
     """
     def __init__(
         self,
         device: str = "CPU",
-        precision: str = "double"
+        precision: str = "double",
+        accumulated_mode: bool = False
     ):
         self._device = device
         self._precision = np.complex128 if precision == "double" else np.complex64
+        self._accumulated_mode = accumulated_mode
+        self._density_matrix = None
 
         if device == "CPU":
             self._computer = CPUCalculator
@@ -35,7 +40,13 @@ class DensityMatrixSimulation:
             self._computer = GPUCalculator
             self._array_helper = cp
 
-    def init_density_matrix(self, qubits: int):
+    def initial_circuit(self, circuit: Circuit, noise_model: NoiseModel):
+        """ Initial the qubits, quantum gates and state vector by given quantum circuit. """
+        self._circuit = circuit if noise_model is None else noise_model.transpile(circuit)
+        self._qubits = int(circuit.width())
+        self._last_call_per_qubit = [None] * self._qubits
+
+    def initial_density_matrix(self, qubits: int):
         """ Initial density matrix by given qubits number.
 
         Args:
@@ -66,40 +77,34 @@ class DensityMatrixSimulation:
         self,
         circuit: Circuit,
         noise_model: NoiseModel = None,
-        density_matrix: np.ndarray = None,
-        accumulated_mode: bool = False
+        use_previous: bool = False
     ) -> np.ndarray:
         """ Simulating the given circuit through density matrix simulator.
 
         Args:
             circuit (Circuit): The quantum circuit.
             noise_model (NoiseModel, optional): The NoiseModel contains NoiseErrors. Defaults to None.
-            density_matrix (np.ndarray, optional): The initial-state density matrix. Defaults to None.
-            accumulated_mode (bool): If True, calculated density matrix with Kraus Operators in NoiseGate.
-                if True, p = \\sum Ki p Ki^T.conj(). Default to be False.
+            use_previous (bool, optional): Using the previous state vector. Defaults to False.
 
         Returns:
             np.ndarray: the density matrix after simulating
         """
-        qubits = circuit.width()
+        self.initial_circuit(circuit, noise_model)
         # Initial density matrix
-        if (density_matrix is None or not self.check_matrix(density_matrix)):
-            self.init_density_matrix(qubits)
+        if (self._density_matrix is None or not use_previous):
+            self.initial_density_matrix(self._qubits)
         else:
-            self._density_matrix = density_matrix
-
-        # Apply noise model, and transpile circuit into working_circuit.
-        working_circuit = circuit if noise_model is None else noise_model.transpile(circuit)
+            assert self.check_matrix(self._density_matrix)
 
         # Start simulator
-        based_circuit = Circuit(qubits)
-        for gate in working_circuit.gates:
+        based_circuit = Circuit(self._qubits)
+        for gate in self._circuit.gates:
             # Store continuous BasicGates into based_circuit
             if isinstance(gate, BasicGate) and gate.type != GateType.measure:
                 gate | based_circuit
                 continue
 
-            if not accumulated_mode and isinstance(gate, NoiseGate):
+            if not self._accumulated_mode and isinstance(gate, NoiseGate):
                 ugate = self.apply_noise_without_accumulated(gate)
                 ugate | based_circuit
                 gate.gate | based_circuit
@@ -107,13 +112,13 @@ class DensityMatrixSimulation:
 
             if based_circuit.size() > 0:
                 self.apply_gates(based_circuit)
-                based_circuit = Circuit(qubits)
+                based_circuit = Circuit(self._qubits)
 
             if gate.type == GateType.measure:
-                measured_state = self.apply_measure(gate, qubits)
-                circuit.qubits[gate.targ].measured = int(measured_state)
+                self.apply_measure(gate, self._qubits)
+                self._last_call_per_qubit[gate.targ] = GateType.measure
             elif isinstance(gate, NoiseGate):
-                self.apply_noise(gate, qubits)
+                self.apply_noise(gate, self._qubits)
             else:
                 raise KeyError("Unsupportted operator in Density Matrix Simulator.")
 
@@ -150,7 +155,7 @@ class DensityMatrixSimulation:
             noise_gate (NoiseGate): The NoiseGate
             qubits (int): The number of qubits in the circuit.
         """
-        gate_args = noise_gate.targs
+        gate_args = noise_gate.cargs + noise_gate.targs
         noised_matrix = self._array_helper.zeros_like(self._density_matrix)
         for kraus_matrix in noise_gate.noise_matrix:
             umat = matrix_product_to_circuit(kraus_matrix, gate_args, qubits)
@@ -168,28 +173,49 @@ class DensityMatrixSimulation:
         gate_args = gate.targs
         return Unitary(error_matrix) & gate_args
 
-    def apply_measure(self, gate, qubits) -> int:
+    def apply_measure(self, gate, qubit: int):
         """ Simulating the MeasureGate.
 
         Args:
             gate (BasicGate): The MeasureGate.
-            qubits (int): The number of qubits in the circuit.
+            qubits (int): The index of qubits in the circuit.
 
         Returns:
             int: The measured result.
         """
         P0 = np.array([[1, 0], [0, 0]], dtype=self._precision)
 
-        mea_0 = matrix_product_to_circuit(P0, gate.targs, qubits)
+        mea_0 = matrix_product_to_circuit(P0, gate.targs, qubit)
         prob_0 = np.matmul(mea_0, self._density_matrix).trace()
         _0_1 = random.random() < prob_0
         if _0_1:
-            U = np.matmul(mea_0, np.eye(1 << qubits) / np.sqrt(prob_0))
+            U = np.matmul(mea_0, np.eye(1 << qubit) / np.sqrt(prob_0))
             self._density_matrix = self._computer.dot(self._computer.dot(U, self._density_matrix), U.conj().T)
         else:
             P1 = np.array([[0, 0], [0, 1]], dtype=self._precision)
-            mea_1 = matrix_product_to_circuit(P1, gate.targs, qubits)
-            U = np.matmul(mea_1, np.eye(1 << qubits) / np.sqrt(1 - prob_0))
+            mea_1 = matrix_product_to_circuit(P1, gate.targs, qubit)
+            U = np.matmul(mea_1, np.eye(1 << qubit) / np.sqrt(1 - prob_0))
             self._density_matrix = self._computer.dot(self._computer.dot(U, self._density_matrix), U.conj().T)
 
-        return _0_1
+        self._circuit.qubits[qubit].measured = int(_0_1)
+
+    def sample(self, shots: int) -> list:
+        assert (self._density_matrix is not None)
+        original_dm = self._density_matrix.copy()
+        state_list = [0] * self._density_matrix.shape[0]
+        measured_idx = [
+            i for i in range(self._qubits)
+            if self._last_call_per_qubit[i] == GateType.measure
+        ]
+
+        for _ in range(shots):
+            for m_id in measured_idx:
+                index = self._qubits - 1 - m_id
+                prob = self.get_measured_prob(index).get()
+                _ = self.apply_specialgate(index, GateType.measure, prob)
+
+            state_list[int(self._circuit.qubits)] += 1
+            self._density_matrix = original_dm.copy()
+
+        return state_list
+
