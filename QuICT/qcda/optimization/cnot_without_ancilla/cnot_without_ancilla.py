@@ -10,7 +10,7 @@ from .block_ldu_decompose import BlockLDUDecompose
 
 
 class CnotWithoutAncilla(object):
-    def run(
+    def execute(
             self,
             circuit_segment: Union[Circuit, CompositeGate]
     ) -> CompositeGate:

@@ -176,7 +176,7 @@ def test_cnot_without_ancillae():
         circuit1 = Circuit(n)
         circuit1.random_append(30 * n, typelist=[GateType.cx])
         CWA = CnotWithoutAncilla()
-        gates = CWA.run(circuit1)
+        gates = CWA.execute(circuit1)
         test_mat1 = np.eye(n, dtype=bool)
         test_mat2 = np.eye(n, dtype=bool)
         for gate in circuit1.gates:

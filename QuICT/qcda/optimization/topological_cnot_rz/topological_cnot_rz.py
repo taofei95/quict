@@ -4,7 +4,6 @@
 # @Author  : Han Yu
 # @File    : topological_cnot_rz.py
 
-from .._optimization import Optimization
 from QuICT.qcda.optimization import TopologicalCnot
 from QuICT.core import *
 from QuICT.core.gate import build_gate, CompositeGate, GateType
@@ -81,8 +80,7 @@ def read(circuit):
     for i in range(len(circuit.gates)):
         gate = circuit.gates[i]
         if gate.type == GateType.cx:
-            READ_CNOT[topo_forward_map[gate.targ]] ^= \
-                READ_CNOT[topo_forward_map[gate.carg]]
+            READ_CNOT[topo_forward_map[gate.targ]] ^= READ_CNOT[topo_forward_map[gate.carg]]
         elif gate.type == GateType.rz:
             index = cnot_index.setdefault(READ_CNOT[topo_forward_map[gate.targ]], 0)
             if index != 0:
@@ -204,10 +202,6 @@ def solve(input, th, waitDeal, undirected_topology):
         if total != N:
             raise Exception("algorithm error")
 
-        print(gsxy, TOPO)
-        for gate in gates:
-            print(gate)
-
         gsxy_gate = TopologicalCnot.execute(cnot_struct=gsxy, topology=undirected_topology).gates
         gsxy_gate.reverse()
 
@@ -222,15 +216,14 @@ def solve(input, th, waitDeal, undirected_topology):
     return ans
 
 
-class TopologicalCnotRz(Optimization):
+class TopologicalCnotRz(object):
     """ optimize the cnot_Rz circuit on topological device
 
     use topological_cnot to optimize a cnot circuit on topological device
 
     """
 
-    @classmethod
-    def execute(cls, circuit: Circuit, *pargs):
+    def execute(self, circuit: Circuit):
         """
 
         Args:

@@ -4,7 +4,6 @@
 # @Author  : Han Yu
 # @File    : unit_test.py
 
-import pytest
 import random
 
 import numpy as np
@@ -85,7 +84,6 @@ def check_equiv(circuit1, circuit2):
     n = circuit1.width()
     matrix1 = generate_matrix(circuit1.gates, n)
     matrix2 = generate_matrix(circuit2.gates if isinstance(circuit2, Circuit) else circuit2, n)
-
     return not np.any(matrix1 ^ matrix2)
 
 
@@ -101,7 +99,8 @@ def test_1():
             circuit = Circuit(i, topology=layout)
             for _ in range(i * 100):
                 CX | circuit(list(_getRandomList(2)))
-            new_circuit = TopologicalCnot.execute(circuit)
+            TC = TopologicalCnot()
+            new_circuit = TC.execute(circuit)
             if not check_equiv(circuit, new_circuit):
                 assert 0
 
@@ -114,10 +113,8 @@ def test_1():
                 topology.append((topo[j], topo[j + 1]))
             for _ in range(i // 10):
                 topology.append(_getRandomList(2))
-            new_circuit = TopologicalCnot.execute(cnot_struct=generate_matrix_list(circuit.gates, i), topology=topology)
+            new_circuit = TC._TopologicalCnot__execute_with_cnot_struct(
+                cnot_struct=generate_matrix_list(circuit.gates, i), topology=topology
+            )
             if not check_equiv(circuit, new_circuit):
                 assert 0
-
-
-if __name__ == '__main__':
-    pytest.main(["./unit_test.py"])

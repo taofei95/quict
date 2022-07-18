@@ -4,7 +4,6 @@
 # @Author  : Han Yu
 # @File    : unit_test.py
 
-import pytest
 import random
 
 import numpy as np
@@ -57,12 +56,6 @@ def check_equiv(circuit1, circuit2):
     """
     matrix1 = SyntheticalUnitary.run(circuit1)
     matrix2 = SyntheticalUnitary.run(circuit2)
-
-    # print(abs(matrix1 - matrix2))
-
-    # print(matrix1)
-    # print(matrix2)
-
     return not np.any(abs(abs(matrix1 - matrix2)) > 1e-6)
 
 
@@ -90,10 +83,5 @@ def test_2():
     CX | circuit([0, 1])
     Rz(np.pi / 4) | circuit(1)
     new_circuit = TopologicalCnotRz.execute(circuit)
-    print(new_circuit)
     if not check_equiv(circuit, new_circuit):
         assert 0
-
-
-if __name__ == '__main__':
-    pytest.main(["./unit_test.py"])
