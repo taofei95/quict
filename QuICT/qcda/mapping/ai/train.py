@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 from swap_num_predict import SwapPredMix
-from data_set import MappingDataLoaderFactory
+from data_loader import MappingDataLoaderFactory
 
 
 class Trainer:
@@ -26,15 +26,18 @@ class Trainer:
         )
         last_loss = 0.0
         running_loss = 0.0
+        ref_label_sum = 0.0
+        ref_running_label_sum = 0.0
         for i, batch in enumerate(self.loader):
-            inputs, labels = batch
+            data, labels = batch
 
             optimizer.zero_grad()
 
-            outputs = self.model(inputs)
+            outputs = self.model(data)
 
-            loss = self.loss_fn(outputs, labels[0])
+            loss = self.loss_fn(outputs, labels)
             loss.backward()
+            ref_running_label_sum += torch.sum(labels)
 
             optimizer.step()
 
@@ -43,8 +46,12 @@ class Trainer:
             w = 100
             if (i + 1) % w == 0:
                 last_loss = running_loss / w
-                print(f"    batch {i+1} loss: {last_loss:.8f}")
+                ref_label_sum = ref_running_label_sum / w
+                print(
+                    f"    batch {i+1} loss: {last_loss:.8f} (avg. of targets: {ref_label_sum:.8f})"
+                )
                 running_loss = 0.0
+                ref_running_label_sum = 0.0
 
         return last_loss
 
@@ -54,21 +61,19 @@ class Trainer:
 
             self.model.train(True)
             avg_loss = self.train_one_epoch()
+            print(f"One epoch finishes. Avg. loss: {avg_loss:.8f}")
             self.model.train(False)
 
 
 if __name__ == "__main__":
-    MAX_PC_QUBIT = 200
-    MAX_LC_QUBIT = 500
     model = SwapPredMix(
-        lc_qubit=MAX_LC_QUBIT,
-        gc_hidden_channel=[500, 500, 300, 300, 100, 100,],
-        gc_out_channel=50,
-        gc_model_metadata=(
-            ["lc_qubit", "pc_qubit"],
-            [("lc_qubit", "lc_conn", "lc_qubit"), ("pc_qubit", "pc_conn", "pc_qubit")],
-        ),
-        ml_hidden_channel=[5000, 2000, 500],
+        topo_gc_hidden_channel=[100, 100, 80,],
+        topo_gc_out_channel=50,
+        topo_pool_node=50,
+        lc_gc_hidden_channel=[80, 80, 50],
+        lc_gc_out_channel=50,
+        lc_pool_node=50,
+        ml_hidden_channel=[3000, 500, 100,],
         ml_out_channel=1,
     )
     device = "cuda" if torch.cuda.is_available() else "cpu"

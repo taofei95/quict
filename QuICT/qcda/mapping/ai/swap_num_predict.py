@@ -3,7 +3,7 @@ import torch
 from torch.nn import Flatten, LazyLinear, Linear
 import torch.nn.functional as F
 from torch_geometric.nn import GCNConv, global_sort_pool
-from torch_geometric.data import HeteroData
+from torch_geometric.data import HeteroData, Batch, Data
 import torch_geometric.transforms as GT
 
 
@@ -104,11 +104,13 @@ if __name__ == "__main__":
         ml_out_channel=1,
     )
 
-    node_feature_num = 10
+    topo_data_list = []
+    lc_data_list = []
+    node_feature_num = 20
 
     topo_x = torch.zeros(3, node_feature_num)
     topo_x[:, :3] = torch.eye(3, dtype=float)
-    topo_edge_index = [[0, 1], [1, 2], [0, 2]]
+    topo_edge_index = [[0, 1], [1, 0], [1, 2], [2, 1], [0, 2], [2, 0]]
     lc_x = torch.zeros(5, node_feature_num)
     lc_x[:, :5] = torch.eye(5, dtype=float)
     lc_edge_index = [[0, 1], [1, 2]]
@@ -118,14 +120,24 @@ if __name__ == "__main__":
     topo_data = Data(x=topo_x, edge_index=topo_edge_index)
     lc_data = Data(x=lc_x, edge_index=lc_edge_index)
 
-    data = {"topo": topo_data, "lc": lc_data}
+    topo_data_list.append(topo_data)
+    lc_data_list.append(lc_data)
+    topo_data_list = Batch.from_data_list(topo_data_list)
+    lc_data_list = Batch.from_data_list(lc_data_list)
+
+    data = {}
+    data["topo"] = topo_data_list
+    data["lc"] = lc_data_list
+
     with torch.no_grad():
         out = model(data)
         print(out)
 
+    topo_data_list = []
+    lc_data_list = []
     topo_x = torch.zeros(4, node_feature_num)
     topo_x[:, :4] = torch.eye(4, dtype=float)
-    topo_edge_index = [[0, 1], [1, 2], [0, 2]]
+    topo_edge_index = [[0, 1], [1, 0], [1, 2], [2, 1], [0, 2], [2, 0], [0, 3], [3, 0]]
     lc_x = torch.zeros(6, node_feature_num)
     lc_x[:, :6] = torch.eye(6, dtype=float)
     lc_edge_index = [[0, 1], [1, 2]]
@@ -135,7 +147,51 @@ if __name__ == "__main__":
     topo_data = Data(x=topo_x, edge_index=topo_edge_index)
     lc_data = Data(x=lc_x, edge_index=lc_edge_index)
 
-    data = {"topo": topo_data, "lc": lc_data}
+    topo_data_list.append(topo_data)
+    lc_data_list.append(lc_data)
+
+    topo_data_list = Batch.from_data_list(topo_data_list)
+    lc_data_list = Batch.from_data_list(lc_data_list)
+    data = {}
+    data["topo"] = topo_data_list
+    data["lc"] = lc_data_list
+
+    with torch.no_grad():
+        out = model(data)
+        print(out)
+
+    topo_data_list = []
+    lc_data_list = []
+    topo_x = torch.zeros(20, node_feature_num)
+    topo_x[:, :20] = torch.eye(20, dtype=float)
+    topo_edge_index = [
+        [0, 1],
+        [1, 0],
+        [1, 2],
+        [2, 1],
+        [0, 2],
+        [2, 0],
+        [15, 16],
+        [16, 15],
+    ]
+    lc_x = torch.zeros(10, node_feature_num)
+    lc_x[:, :10] = torch.eye(10, dtype=float)
+    lc_edge_index = [[0, 1], [1, 3], [2, 3]]
+
+    topo_edge_index = torch.tensor(topo_edge_index, dtype=torch.long).t().contiguous()
+    lc_edge_index = torch.tensor(lc_edge_index, dtype=torch.long).t().contiguous()
+    topo_data = Data(x=topo_x, edge_index=topo_edge_index)
+    lc_data = Data(x=lc_x, edge_index=lc_edge_index)
+
+    topo_data_list.append(topo_data)
+    lc_data_list.append(lc_data)
+
+    topo_data_list = Batch.from_data_list(topo_data_list)
+    lc_data_list = Batch.from_data_list(lc_data_list)
+    data = {}
+    data["topo"] = topo_data_list
+    data["lc"] = lc_data_list
+
     with torch.no_grad():
         out = model(data)
         print(out)
