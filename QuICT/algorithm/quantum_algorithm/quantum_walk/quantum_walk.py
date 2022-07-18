@@ -10,7 +10,7 @@ from QuICT.simulation.state_vector import CircuitSimulator
 from .graph import Graph
 
 
-class RandomWalk:
+class QuantumWalk:
     """ The Quantum Random Walk Algorithm """
     @property
     def step(self):
@@ -119,6 +119,7 @@ class RandomWalk:
     def run(
         self,
         simulator=CircuitSimulator(),
+        optimization: bool = False,
         record_measured: bool = False,
         shots: int = 1
     ) -> Union[np.ndarray, List]:
@@ -127,6 +128,8 @@ class RandomWalk:
         Args:
             simulator (Union[ConstantStateVectorSimulator, CircuitSimulator], optional):
                 The simulator for simulating quantum circuit. Defaults to CircuitSimulator().
+            optimization (bool, optional): whether using QCDA to optimize quantum walk circuit, may
+                spend lots of times when circuit is large.
             record_measured (bool, optional): whether return the final measured state with shots time,
                 or return the state vector after simulating. Defaults to False.
             shots (int, optional): The repeatted times. Defaults to 1.
@@ -135,8 +138,11 @@ class RandomWalk:
             Union[np.ndarray, List]: The state vector or measured states
         """
         # Step 1, transform the unitary gate and optimization
-        opt_circuit = GateDecomposition.execute(self._circuit)
-        opt_circuit = CommutativeOptimization.execute(opt_circuit)
+        if optimization:
+            opt_circuit = GateDecomposition.execute(self._circuit)
+            opt_circuit = CommutativeOptimization.execute(opt_circuit)
+        else:
+            opt_circuit = self._circuit
 
         # Step 2, Simulate the quantum walk's circuit
         state_vector = simulator.run(self.circuit)

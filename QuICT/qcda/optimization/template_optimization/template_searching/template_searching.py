@@ -48,7 +48,7 @@ class TemplateSearching:
         if self.identity(temp_circuit):
             for i in range(n):
                 for j in range(1, n - i):
-                    new_circuit = self.copy_circuit(temp_circuit.sub_circuit(self.target, i, j))
+                    new_circuit = self.copy_circuit(temp_circuit.sub_circuit(i, j, self.target))
                     if self.identity(new_circuit):
                         return False
             return True

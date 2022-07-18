@@ -2,11 +2,11 @@ import numpy as np
 import unittest
 
 from QuICT.core.gate import H
-from QuICT.algorithm.quantum_algorithm.random_walk import RandomWalk, Graph
-from QuICT.simulation.state_vector import ConstantStateVectorSimulator
+from QuICT.simulation.state_vector import ConstantStateVectorSimulator, CircuitSimulator
+from QuICT.algorithm.quantum_algorithm.quantum_walk import QuantumWalk, Graph
 
 
-class TestRandomWalk(unittest.TestCase):
+class TestQuantumWalk(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         print("The Random Walk unit test start!")
@@ -21,8 +21,8 @@ class TestRandomWalk(unittest.TestCase):
         edges = [[3, 1], [0, 2], [1, 3], [2, 0]]
         graph = Graph(4, edges)
 
-        rw = RandomWalk(TestRandomWalk.steps, graph, H.matrix)
-        _ = rw.run(TestRandomWalk.simulator)
+        qw = QuantumWalk(TestQuantumWalk.steps, graph, H.matrix)
+        _ = qw.run(TestQuantumWalk.simulator)
 
         assert 1
 
@@ -30,8 +30,8 @@ class TestRandomWalk(unittest.TestCase):
         edges = [[2, 1], [0, 2], [1, 0]]
         graph = Graph(3, edges)
 
-        rw = RandomWalk(TestRandomWalk.steps, graph, H.matrix)
-        _ = rw.run(TestRandomWalk.simulator)
+        qw = QuantumWalk(TestQuantumWalk.steps, graph, H.matrix)
+        _ = qw.run(TestQuantumWalk.simulator)
 
         assert 1
 
@@ -39,8 +39,8 @@ class TestRandomWalk(unittest.TestCase):
         edges = [list(np.random.choice(8, size=4, replace=False)) for _ in range(8)]
         graph = Graph(8, edges)
 
-        rw = RandomWalk(3, graph, np.kron(H.matrix, H.matrix))
-        _ = rw.run(TestRandomWalk.simulator)
+        qw = QuantumWalk(3, graph, np.kron(H.matrix, H.matrix))
+        _ = qw.run(TestQuantumWalk.simulator)
 
         assert 1
 
