@@ -177,7 +177,6 @@ class DAGCircuit:
         gates = self._circuit.gates
         endpoints = []      # The endpoint of current DAG graph
         for idx, gate in enumerate(gates):
-            current_edges = self._graph.number_of_edges()
             # Add new node into DAG Graph
             assert isinstance(gate, BasicGate), "Only support BasicGate in DAGCircuit."
             current_node = DAGNode(idx, gate)
@@ -186,8 +185,8 @@ class DAGCircuit:
             # Check the relationship of current node and previous node
             updated_endpoints = []
             for previous_node in endpoints:
-                is_matched = self._backward_trace(previous_node, current_node)
-                if is_matched:
+                self._backward_trace(previous_node, current_node)
+                if self._graph.edges(idx) != 0:
                     updated_endpoints.append(current_node)
                     if not self._graph.has_edge(previous_node.id, idx):
                         updated_endpoints.append(previous_node)
@@ -195,7 +194,7 @@ class DAGCircuit:
                     updated_endpoints.append(previous_node)
 
             # if no edges add, create new original node
-            if current_edges == self._graph.number_of_edges():
+            if self._graph.degree(idx) == 0:
                 endpoints.insert(0, current_node)
             else:
                 endpoints = self._endpoints_order(updated_endpoints)
@@ -220,7 +219,6 @@ class DAGCircuit:
         """
         cgate = current_node.gate
         point = [previous_node]
-        matched = False
         visited = [current_node.id]
         while len(point) != 0:
             pnode = point.pop()
@@ -229,21 +227,16 @@ class DAGCircuit:
 
             if not pnode.gate.commutative(cgate):
                 self._graph.add_edge(pnode.id, current_node.id)
-                matched = True
-                break
+                # Check whether matched node's successors can have a edge with current node
+                self._forward_trace(pnode, current_node, visited)
 
-            pred_list = list(self._graph.predecessors(pnode.id))
-            point += pred_list
+            if not self._graph.has_edge(pnode.id, current_node.id):
+                pred_list = list(self._graph.predecessors(pnode.id))
+                point += pred_list
 
             visited.append(pnode.id)
 
-        # Check whether matched node's successors can have a edge with current node
-        if matched:
-            matched = self._forward_trace(pnode, current_node, visited)
-
-        return matched
-
-    def _forward_trace(self, previous_node, current_node, visited_nodes) -> bool:
+    def _forward_trace(self, previous_node, current_node, visited_nodes):
         """ Check whether previous node has a successors which can have a edge with
         current node.
 
@@ -258,7 +251,6 @@ class DAGCircuit:
         """
         point = list(self._graph.successors(previous_node.id))
         cgate = current_node.gate
-        matched = True
         while len(point) != 0:
             pnode = point.pop()
             if isinstance(pnode, int):
@@ -267,13 +259,10 @@ class DAGCircuit:
             if pnode.id not in visited_nodes:
                 if not pnode.gate.commutative(cgate):
                     self._graph.remove_edge(previous_node.id, current_node.id)
-                    matched = False
                     break
 
             succ_list = list(self._graph.successors(pnode.id))
             point += succ_list
-
-        return matched
 
     def _endpoints_order(self, endpoints: list):
         node_ids = [endpoint.id for endpoint in endpoints]
