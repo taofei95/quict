@@ -1,20 +1,25 @@
+from typing import Union
 import numpy as np
 
 
 CGATE_LIST = []
 
 
-def matrix_product_to_circuit(gate_matrix, gate_args, max_q: int, min_q: int = 0):
+def matrix_product_to_circuit(gate_matrix: np.ndarray, gate_args: Union[int, list], max_q: int, min_q: int = 0):
     """ Expand gate matrix with the number of qubits
 
     Args:
-        gate (BasicGate): The quantum gate
+        gate_matrix (np.ndarray): The gate's matrix.
+        gate_args Union[int, list]: The gate's qubit indexes.
         max_q (int): The qubits' number
         min_q (int, optional): The minimum qubit's number. Defaults to 0.
 
     Returns:
         np.array: the expanded gate's 2-D matrix
     """
+    if isinstance(gate_args, int):
+        gate_args = [gate_args]
+
     n = 1 << (max_q - min_q)
     xor = n - 1
     new_values = np.zeros((n, n), dtype=np.complex128)

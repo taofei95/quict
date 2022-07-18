@@ -55,7 +55,6 @@ class Result:
 
         with open(f"{self.output_path}/result.log", "w") as of:
             of.write(str(self.__dict__))
-            of.write(str(self.counts))
 
     def record_circuit(self, circuit):
         """ dump the circuit. """
