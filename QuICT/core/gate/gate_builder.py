@@ -46,6 +46,7 @@ GATE_TYPE_TO_CLASS = {
     GateType.swap: SwapGate,
     GateType.cswap: CSwapGate,
     GateType.ccx: CCXGate,
+    GateType.ccz: CCZGate,
     GateType.CCRz: CCRzGate,
     GateType.measure: MeasureGate,
     GateType.reset: ResetGate,
