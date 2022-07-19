@@ -56,7 +56,7 @@ def test():
                 layout.add_edge(random.sample(range(n), 2))
             circuit = Circuit(n, topology=layout)
             for _ in range(n * 100):
-                CX | circuit(list(random.sample(range(n), 2)))
+                CX | circuit(random.sample(range(n), 2))
             TC = TopologicalCnot()
             new_circuit = TC.execute(circuit)
             assert check_equiv(circuit, new_circuit)

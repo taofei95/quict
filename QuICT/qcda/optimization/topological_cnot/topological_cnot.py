@@ -7,7 +7,7 @@
 import numpy as np
 from queue import Queue
 
-from QuICT.core import *
+from QuICT.core import Circuit
 from QuICT.core.gate import build_gate, CX, H, GateType
 
 
@@ -222,7 +222,6 @@ class TopologicalCnot(object):
                 CX | output([t, c])
                 H | output(c)
                 H | output(t)
-
         return output
 
     def delete_dfs(self, now):
