@@ -8,10 +8,7 @@ import numpy as np
 from queue import Queue
 
 from QuICT.core import *
-from QuICT.core.gate import build_gate, CompositeGate, GateType
-
-# the the gates which makes the identity of "read_cnot", the ans is its inverse
-GATES = []
+from QuICT.core.gate import build_gate, CX, H, GateType
 
 
 class SteinerTree(object):
@@ -140,16 +137,16 @@ class SteinerTree(object):
             self.father[_pre[0] + self.N] = root
             self.build_STtree(_pre[0] + self.N, _pre[1])
 
-    def elimination_below(self, gauss_elimination: list):
+    def elimination_below(self, gauss_elimination: list, gates: list):
         """ elimination with some rows below ith row and ith column.
 
         Args:
             gauss_elimination(list<int>): the equations should be changed in the process.
         """
 
-        self._elimination_below_dfs(self.root, gauss_elimination)
+        self._elimination_below_dfs(self.root, gauss_elimination, gates)
 
-    def _elimination_below_dfs(self, now, gauss_elimination: list):
+    def _elimination_below_dfs(self, now, gauss_elimination: list, gates: list):
         """ elimination with dfs
 
         Args:
@@ -161,34 +158,34 @@ class SteinerTree(object):
             if self.ST[son] == 0:
                 gauss_elimination[son] ^= gauss_elimination[now]
                 gate = build_gate(GateType.cx, [now, son])
-                GATES.append(gate)
-            self._elimination_below_dfs(son, gauss_elimination)
+                gates.append(gate)
+            self._elimination_below_dfs(son, gauss_elimination, gates)
         if now != self.root:
             gauss_elimination[now] ^= gauss_elimination[self.father[now]]
             gate = build_gate(GateType.cx, [self.father[now], now])
-            GATES.append(gate)
+            gates.append(gate)
 
-    def elimination_above(self, gauss_elimination: list):
-        self._elimination_above_preorder(self.root, gauss_elimination)
-        self._elimination_above_postorder(self.root, gauss_elimination)
+    def elimination_above(self, gauss_elimination: list, gates: list):
+        self._elimination_above_preorder(self.root, gauss_elimination, gates)
+        self._elimination_above_postorder(self.root, gauss_elimination, gates)
 
-    def _elimination_above_preorder(self, now, gauss_elimination: list):
+    def _elimination_above_preorder(self, now, gauss_elimination: list, gates: list):
         for son in self.sons[now]:
             if self.ST[son] == 0:
                 gauss_elimination[now] ^= gauss_elimination[son]
                 gate = build_gate(GateType.cx, [son, now])
-                GATES.append(gate)
+                gates.append(gate)
 
         for son in self.sons[now]:
-            self._elimination_above_preorder(son, gauss_elimination)
+            self._elimination_above_preorder(son, gauss_elimination, gates)
 
-    def _elimination_above_postorder(self, now, gauss_elimination: list):
+    def _elimination_above_postorder(self, now, gauss_elimination: list, gates: list):
         for son in self.sons[now]:
-            self._elimination_above_postorder(son, gauss_elimination)
+            self._elimination_above_postorder(son, gauss_elimination, gates)
         if now != self.root:
             gauss_elimination[self.father[now]] ^= gauss_elimination[now]
             gate = build_gate(GateType.cx, [now, self.father[now]])
-            GATES.append(gate)
+            gates.append(gate)
 
 
 class TopologicalCnot(object):
@@ -204,49 +201,29 @@ class TopologicalCnot(object):
             circuit(Circuit): the circuit to be optimize
         """
         cnot_struct = self.read_circuit(circuit)
-        ans = self.__execute_with_cnot_struct(cnot_struct)
+        gates = self.__execute_with_cnot_struct(cnot_struct)
 
-        if circuit is not None:
-            N = circuit.width()
-            if circuit.topology is None or len(circuit.topology.edge_list) == 0:
-                topo = [[True] * N] * N
-            else:
-                topo = [[False] * N] * N
-                for topology in circuit.topology.edge_list:
-                    topo[topology.u][topology.v] = True
+        if circuit.topology is None or len(circuit.topology.edge_list) == 0:
+            topology = [[True] * self.width] * self.width
         else:
-            N = len(cnot_struct)
-            if topology is None or len(topology) == 0:
-                topo = [[True] * N] * N
+            topology = [[False] * self.width] * self.width
+            for topo in circuit.topology.edge_list:
+                topology[topo.u][topo.v] = True
+
+        output = Circuit(self.width)
+        for gate in gates:
+            c = self.topo_backward_map[gate.carg]
+            t = self.topo_backward_map[gate.targ]
+            if topology[c][t]:
+                CX | output([c, t])
             else:
-                topo = [[False] * N] * N
-                for topos in topology:
-                    topo[topos[0]][topos[1]] = True
+                H | output(c)
+                H | output(t)
+                CX | output([t, c])
+                H | output(c)
+                H | output(t)
 
-        output = CompositeGate()
-        for item in ans:
-            c = self.topo_backward_map[item.carg]
-            t = self.topo_backward_map[item.targ]
-            if topo[c][t]:
-                gate = build_gate(GateType.cx, [c, t])
-                output.append(gate)
-            else:
-                gate = build_gate(GateType.h, c)
-                output.append(gate)
-                gate = build_gate(GateType.h, t)
-                output.append(gate)
-
-                gate = build_gate(GateType.cx, [t, c])
-                output.append(gate)
-
-                gate = build_gate(GateType.h, c)
-                output.append(gate)
-                gate = build_gate(GateType.h, t)
-                output.append(gate)
-        # return output
-        new_circuit = Circuit(N)
-        new_circuit.extend(output)
-        return new_circuit
+        return output
 
     def delete_dfs(self, now):
         """ search for a initial mapping to get (maybe) better topology
@@ -264,7 +241,7 @@ class TopologicalCnot(object):
         self.topo_backward_map[self.delete_total] = now
         self.delete_total += 1
 
-    def read_circuit(self, circuit):
+    def read_circuit(self, circuit: Circuit):
         """
         Transform input circuit to CNOT struct, with the forward and backward topology map calculated
 
@@ -309,8 +286,6 @@ class TopologicalCnot(object):
             cnot_struct(list<int>): the struct of cnot circuit
             topology(list<tuple<int, int>>, optional): topology of circuit
         """
-        global GATES
-
         if topology is not None:
             self.width = len(cnot_struct)
             if len(topology) == 0:
@@ -329,7 +304,7 @@ class TopologicalCnot(object):
         steiner_tree = SteinerTree(self.width, self.undirected_topology)
 
         # apply Gaussian Elimination on the matrix
-        GATES = []
+        gates = []
 
         for i in range(self.width):
             j = self.width
@@ -367,7 +342,7 @@ class TopologicalCnot(object):
             for j in range(len(paths) - 2, -1, -1):
                 cnot_struct[paths[j]] ^= cnot_struct[paths[j + 1]]
                 gate = build_gate(GateType.cx, [paths[j + 1], paths[j]])
-                GATES.append(gate)
+                gates.append(gate)
 
             # elimination below rows
             needCover = []
@@ -377,7 +352,7 @@ class TopologicalCnot(object):
             if len(needCover) > 0:
                 needCover.append(i)
                 steiner_tree.build_ST(needCover, i)
-                steiner_tree.elimination_below(cnot_struct)
+                steiner_tree.elimination_below(cnot_struct, gates)
 
             # elimination this row
 
@@ -419,7 +394,7 @@ class TopologicalCnot(object):
             if len(needCover) > 0:
                 needCover.append(i)
                 steiner_tree.build_ST(needCover, i)
-                steiner_tree.elimination_above(cnot_struct)
+                steiner_tree.elimination_above(cnot_struct, gates)
 
-        GATES.reverse()
-        return GATES
+        gates.reverse()
+        return gates
