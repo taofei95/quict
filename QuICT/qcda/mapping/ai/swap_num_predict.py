@@ -1,10 +1,10 @@
-from typing import Iterable, Tuple, List
+from typing import Iterable
 import torch
-from torch.nn import Flatten, LazyLinear, Linear
+from torch.nn import Flatten, Linear
 import torch.nn.functional as F
 from torch_geometric.nn import GCNConv, global_sort_pool
-from torch_geometric.data import HeteroData, Batch, Data
-import torch_geometric.transforms as GT
+from torch_geometric.nn import Linear as PygLinear
+from torch_geometric.data import Batch, Data
 
 
 class SwapPredMLP(torch.nn.Module):
@@ -33,15 +33,17 @@ class SwapPredGnn(torch.nn.Module):
     ) -> None:
         super().__init__()
         self.hidden_gc_layer = torch.nn.ModuleList()
+        self.linear_layer = torch.nn.ModuleList()
         for h in hidden_channel:
             self.hidden_gc_layer.append(GCNConv(-1, h))
+            self.linear_layer.append(PygLinear(-1, h))
         self.last_gc_layer = GCNConv(-1, out_channel)
         self.pool_node = pool_node
 
     def forward(self, data):
         x, edge_index, batch = data.x, data.edge_index, data.batch
-        for gcl in self.hidden_gc_layer:
-            x = gcl(x, edge_index)
+        for gcl, lin in zip(self.hidden_gc_layer, self.linear_layer):
+            x = gcl(x, edge_index) + lin(x) * 0.5
             x = F.relu(x)
         x = self.last_gc_layer(x, edge_index)
         x = global_sort_pool(x, batch, k=self.pool_node)

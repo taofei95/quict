@@ -61,16 +61,16 @@ class Trainer:
 
             self.model.train(True)
             avg_loss = self.train_one_epoch()
-            print(f"One epoch finishes. Avg. loss: {avg_loss:.8f}")
+            # print(f"One epoch finishes. Avg. loss: {avg_loss:.8f}")
             self.model.train(False)
 
 
 if __name__ == "__main__":
     model = SwapPredMix(
-        topo_gc_hidden_channel=[100, 100, 80,],
+        topo_gc_hidden_channel=[100, 100, 100, 100,],
         topo_gc_out_channel=50,
         topo_pool_node=50,
-        lc_gc_hidden_channel=[80, 80, 50],
+        lc_gc_hidden_channel=[1000, 200, 100,],
         lc_gc_out_channel=50,
         lc_pool_node=50,
         ml_hidden_channel=[3000, 500, 100,],
