@@ -12,7 +12,7 @@ from QuICT.core.gate import build_gate, CX, H, GateType
 
 
 class SteinerTree(object):
-    """ the Steiner_Tree struct
+    """ the SteinerTree struct
 
     we use exponent time to construct the exact steiner tree
     # fix it with a 2-approximation polynomial algorithm
@@ -30,10 +30,8 @@ class SteinerTree(object):
         pre(np.array<int>): the state which update this state in dp.
         root(int): the root of the tree.
     """
-
     def __init__(self, n, topo):
         """
-
         Args:
             n(int): number of the vertexes in the tree
             topo(n * n boolean matrix): topological relationship for n vertexes,
@@ -60,9 +58,7 @@ class SteinerTree(object):
             ST_input(list<int>): the indexes of vertexes which should be contained in the tree.
                                  ST_input[-1] should be the root.
             lower_bound(int): the minimum index of vertexes which can be used
-
         """
-
         size = len(ST_input)
         self.root = ST_input[-1]
         self.dp = np.array([-1] * self.N * (1 << size), dtype=np.int64).reshape((self.N, 1 << size))
@@ -123,7 +119,6 @@ class SteinerTree(object):
             root(int): the i in dp[i][j]
             state(int): the j in dp[i][j]
         """
-
         if state == self.ST[root]:
             return
         _pre = self.pre[root][state]
@@ -152,7 +147,6 @@ class SteinerTree(object):
         Args:
             now(int): vertex now
             gauss_elimination(list<int>): the equations should be changed in the process.
-
         """
         for son in self.sons[now]:
             if self.ST[son] == 0:
@@ -194,8 +188,7 @@ class TopologicalCnot(object):
 
     use steiner tree to optimize a cnot circuit on topological device
     """
-
-    def execute(self, circuit: Circuit = None):
+    def execute(self, circuit: Circuit):
         """
         Args:
             circuit(Circuit): the circuit to be optimize
