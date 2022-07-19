@@ -45,15 +45,14 @@ class Simulator:
         self._options = self._validate_options(options=options)
 
         # initial simulator
-        if device not in Simulator.__DEVICE + Simulator.__REMOTE_DEVICE:
-            raise ValueError(
-                f"Unsupportted device {device}, please select one of {Simulator.__DEVICE}."
-            )
-
         if self._device in Simulator.__DEVICE:
             self._simulator = self._load_simulator()
-        else:
+        elif self._device in Simulator.__REMOTE_DEVICE:
             self._simulator = self._load_remote_simulator()
+        else:
+            raise ValueError(
+                f"Unsupportted device {device}, please select one of {Simulator.__DEVICE + Simulator.__REMOTE_DEVICE}."
+            )
 
     @option_validation()
     def _validate_options(self, options, default_options=None):

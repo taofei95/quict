@@ -162,9 +162,7 @@ class DensityMatrixSimulation:
         gate_args = noise_gate.cargs + noise_gate.targs
         noised_matrix = self._array_helper.zeros_like(self._density_matrix)
         for kraus_matrix in noise_gate.noise_matrix:
-            umat = matrix_product_to_circuit(kraus_matrix, gate_args, qubits)
-            if self._device == "GPU":
-                umat = self._array_helper.array(umat)
+            umat = matrix_product_to_circuit(kraus_matrix, gate_args, qubits, gpu_output=self._device == "GPU")
 
             noised_matrix += self._computer.dot(
                 self._computer.dot(umat, self._density_matrix),
@@ -186,23 +184,23 @@ class DensityMatrixSimulation:
             index (int): The index of measured qubit.
         """
         P0 = self._array_helper.array([[1, 0], [0, 0]], dtype=self._precision)
-
-        mea_0 = matrix_product_to_circuit(P0, index, self._qubits)
-        if self._device == "GPU":
-            mea_0 = self._array_helper.array(mea_0)
-
+        mea_0 = matrix_product_to_circuit(P0, index, self._qubits, gpu_output=self._device=="GPU")
         prob_0 = self._array_helper.matmul(mea_0, self._density_matrix).trace()
         _1 = random.random() > prob_0
         if not _1:
-            U = self._array_helper.matmul(mea_0, self._array_helper.eye(1 << self._qubits) / self._array_helper.sqrt(prob_0))
+            U = self._array_helper.matmul(
+                mea_0,
+                self._array_helper.eye(1 << self._qubits) / self._array_helper.sqrt(prob_0)
+            )
             self._density_matrix = self._computer.dot(self._computer.dot(U, self._density_matrix), U.conj().T)
         else:
             P1 = self._array_helper.array([[0, 0], [0, 1]], dtype=self._precision)
-            mea_1 = matrix_product_to_circuit(P1, index, self._qubits)
-            if self._device == "GPU":
-                mea_1 = self._array_helper.array(mea_1)
+            mea_1 = matrix_product_to_circuit(P1, index, self._qubits, gpu_output=self._device=="GPU")
 
-            U = self._array_helper.matmul(mea_1, self._array_helper.eye(1 << self._qubits) / self._array_helper.sqrt(1 - prob_0))
+            U = self._array_helper.matmul(
+                mea_1,
+                self._array_helper.eye(1 << self._qubits) / self._array_helper.sqrt(1 - prob_0)
+            )
             self._density_matrix = self._computer.dot(self._computer.dot(U, self._density_matrix), U.conj().T)
 
         self._circuit.qubits[index].measured = int(_1)

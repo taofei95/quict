@@ -12,7 +12,7 @@ import cupy as cp
 
 from QuICT.core import Circuit
 from QuICT.core.operator import Trigger
-from QuICT.core.gate import Measure, BasicGate, CompositeGate
+from QuICT.core.gate import BasicGate, CompositeGate
 from QuICT.core.utils import GateType, MatrixType
 from QuICT.ops.utils import LinAlgLoader
 from QuICT.simulation.optimization import Optimizer
@@ -26,8 +26,7 @@ class ConstantStateVectorSimulator:
 
     Args:
         circuit (Circuit): The quantum circuit.
-        precision (str): The precision for the state vector, single precision means complex64,
-            double precision means complex128.
+        precision (str): The precision for the state vector, one of [single, double]. Defaults to "double".
         gpu_device_id (int): The GPU device ID.
         optimization (bool): Combined suitable quantum gates into one unitary gate, to speed up.
         matrix_aggregation (bool): Using quantum gate matrix's aggregation to optimize running speed.

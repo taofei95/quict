@@ -5,7 +5,13 @@ import numpy as np
 CGATE_LIST = []
 
 
-def matrix_product_to_circuit(gate_matrix: np.ndarray, gate_args: Union[int, list], max_q: int, min_q: int = 0):
+def matrix_product_to_circuit(
+    gate_matrix: np.ndarray,
+    gate_args: Union[int, list],
+    max_q: int,
+    min_q: int = 0,
+    gpu_output: bool = False
+):
     """ Expand gate matrix with the number of qubits
 
     Args:
@@ -13,6 +19,7 @@ def matrix_product_to_circuit(gate_matrix: np.ndarray, gate_args: Union[int, lis
         gate_args Union[int, list]: The gate's qubit indexes.
         max_q (int): The qubits' number
         min_q (int, optional): The minimum qubit's number. Defaults to 0.
+        gpu_output(bool, optional): Generate matrix in GPU or not. Default to False.
 
     Returns:
         np.array: the expanded gate's 2-D matrix
@@ -47,6 +54,11 @@ def matrix_product_to_circuit(gate_matrix: np.ndarray, gate_args: Union[int, lis
             if (i & xor) == (j & xor):
                 nowj = datas[j]
                 new_values[i][j] = gate_matrix[nowi][nowj]
+
+    if gpu_output:
+        import cupy as cp
+
+        new_values = cp.array(new_values)
 
     return new_values
 
