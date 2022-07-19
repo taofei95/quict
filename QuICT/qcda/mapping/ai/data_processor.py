@@ -1,4 +1,4 @@
-from typing import Dict, Generator, Iterable, List, Tuple, Union
+from typing import Dict, Iterable, List, Tuple
 
 from QuICT.core.circuit.circuit import Circuit
 from QuICT.core.gate.gate import BasicGate

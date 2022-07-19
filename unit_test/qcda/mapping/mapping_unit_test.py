@@ -41,4 +41,4 @@ def test_mapping():
 
 
 if __name__ == "__main__":
-    pytest.main("./mapping_test.py")
+    pytest.main("./mapping_unit_test.py")

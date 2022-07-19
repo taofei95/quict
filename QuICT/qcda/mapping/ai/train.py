@@ -1,13 +1,13 @@
 import torch
 import torch.nn as nn
-from swap_num_predict import SwapPredMix
-from data_loader import MappingDataLoaderFactory
+from QuICT.qcda.mapping.ai.swap_num_predict import SwapPredMixBase
+from QuICT.qcda.mapping.ai.data_loader import MappingDataLoaderFactory
 
 
 class Trainer:
     def __init__(
         self,
-        model: SwapPredMix,
+        model: SwapPredMixBase,
         batch_size: int = 1,
         total_epoch: int = 200,
         device: str = "cpu",
@@ -66,14 +66,12 @@ class Trainer:
 
 
 if __name__ == "__main__":
-    model = SwapPredMix(
+    model = SwapPredMixBase(
         topo_gc_hidden_channel=[100, 100, 100, 100,],
-        topo_gc_out_channel=50,
-        topo_pool_node=50,
-        lc_gc_hidden_channel=[1000, 200, 100,],
-        lc_gc_out_channel=50,
-        lc_pool_node=50,
-        ml_hidden_channel=[3000, 500, 100,],
+        lc_gc_hidden_channel=[1000, 500, 300, 300, 100,],
+        topo_lc_gc_out_channel=100,
+        topo_lc_gc_pool_node=100,
+        ml_hidden_channel=[3000, 500, 100,],  
         ml_out_channel=1,
     )
     device = "cuda" if torch.cuda.is_available() else "cpu"

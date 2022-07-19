@@ -1,13 +1,13 @@
-from typing import Iterable
+from math import floor
+from typing import Iterable, Tuple, Union
 import torch
-from torch.nn import Flatten, Linear
+from torch.nn import Flatten, Linear, Conv2d, MaxPool2d, ReLU
 import torch.nn.functional as F
 from torch_geometric.nn import GCNConv, global_sort_pool
 from torch_geometric.nn import Linear as PygLinear
-from torch_geometric.data import Batch, Data
 
 
-class SwapPredMLP(torch.nn.Module):
+class Mlp(torch.nn.Module):
     def __init__(
         self, in_channel: int, hidden_channel: Iterable[int], out_channel: int
     ) -> None:
@@ -27,7 +27,7 @@ class SwapPredMLP(torch.nn.Module):
         return x
 
 
-class SwapPredGnn(torch.nn.Module):
+class MultiLayerGnn(torch.nn.Module):
     def __init__(
         self, hidden_channel: Iterable[int], out_channel: int, pool_node: int
     ) -> None:
@@ -39,6 +39,7 @@ class SwapPredGnn(torch.nn.Module):
             self.linear_layer.append(PygLinear(-1, h))
         self.last_gc_layer = GCNConv(-1, out_channel)
         self.pool_node = pool_node
+        self.out_channel = out_channel
 
     def forward(self, data):
         x, edge_index, batch = data.x, data.edge_index, data.batch
@@ -47,153 +48,107 @@ class SwapPredGnn(torch.nn.Module):
             x = F.relu(x)
         x = self.last_gc_layer(x, edge_index)
         x = global_sort_pool(x, batch, k=self.pool_node)
+        # Global sort pooling flattens tensors. We reshape them.
+        x = torch.reshape(x, (self.pool_node, self.out_channel))
         return x
 
 
-class SwapPredMix(torch.nn.Module):
+class CnnRecognition(torch.nn.Module):
+    def __init__(self, h: int, w: int,) -> None:
+        """Wrapper for generating multi-layer 2D CNN.
+        Input of this model should have shape (1, h, w). Output is a (c_out, h_out, w_out) tensor.
+
+        Args:
+            h (int): Input 2D height.
+            w (int): Input 2D width.
+        """
+        super().__init__()
+        h_out = h
+        w_out = w
+
+        self.conv_group_1 = torch.nn.Sequential(
+            Conv2d(2, 64, 3, padding="same"),
+            ReLU(),
+            Conv2d(64, 64, 3, padding="same"),
+            ReLU(),
+            MaxPool2d(2, stride=2),
+        )
+        h_out = int(floor((h_out - 1 * (2 - 1) - 1) / 2 + 1))
+        w_out = int(floor((w_out - 1 * (2 - 1) - 1) / 2 + 1))
+
+        self.conv_group_2 = torch.nn.Sequential(
+            Conv2d(64, 128, 3, padding="same"),
+            ReLU(),
+            Conv2d(128, 128, 3, padding="same"),
+            ReLU(),
+            MaxPool2d(2, stride=2),
+        )
+        h_out = int(floor((h_out - 1 * (2 - 1) - 1) / 2 + 1))
+        w_out = int(floor((w_out - 1 * (2 - 1) - 1) / 2 + 1))
+
+        self.conv_group_3 = torch.nn.Sequential(
+            Conv2d(128, 256, 3, padding="same"),
+            ReLU(),
+            Conv2d(256, 256, 3, padding="same"),
+            ReLU(),
+            Conv2d(256, 256, 3, padding="same"),
+            ReLU(),
+            Conv2d(256, 256, 3, padding="same"),
+            ReLU(),
+            MaxPool2d(2, stride=2),
+        )
+        h_out = int(floor((h_out - 1 * (2 - 1) - 1) / 2 + 1))
+        w_out = int(floor((w_out - 1 * (2 - 1) - 1) / 2 + 1))
+
+        self.h_out = h_out
+        self.w_out = w_out
+        self.c_out = 256
+
+    def forward(self, x):
+        x = self.conv_group_1(x)
+        x = self.conv_group_2(x)
+        x = self.conv_group_3(x)
+        return x
+
+
+class SwapPredMixBase(torch.nn.Module):
     def __init__(
         self,
         topo_gc_hidden_channel: Iterable[int],
-        topo_gc_out_channel: int,
-        topo_pool_node: int,
         lc_gc_hidden_channel: Iterable[int],
-        lc_gc_out_channel: int,
-        lc_pool_node: int,
+        topo_lc_gc_out_channel: int,
+        topo_lc_gc_pool_node: int,
         ml_hidden_channel: Iterable[int],
         ml_out_channel: int,
     ) -> None:
         super().__init__()
-        self.topo_gnn = SwapPredGnn(
+        self.topo_gnn = MultiLayerGnn(
             hidden_channel=topo_gc_hidden_channel,
-            out_channel=topo_gc_out_channel,
-            pool_node=topo_pool_node,
+            out_channel=topo_lc_gc_out_channel,
+            pool_node=topo_lc_gc_pool_node,
         )
-        self.topo_flatten = Flatten(start_dim=0)
-        self.lc_gnn = SwapPredGnn(
+
+        self.lc_gnn = MultiLayerGnn(
             hidden_channel=lc_gc_hidden_channel,
-            out_channel=lc_gc_out_channel,
-            pool_node=lc_pool_node,
+            out_channel=topo_lc_gc_out_channel,
+            pool_node=topo_lc_gc_pool_node,
         )
-        self.lc_flatten = Flatten(start_dim=0)
-        self.mlp = SwapPredMLP(
-            in_channel=topo_pool_node * topo_gc_out_channel
-            + lc_pool_node * lc_gc_out_channel,
-            hidden_channel=ml_hidden_channel,
-            out_channel=ml_out_channel,
-        )
+        self.fuse_cnn = CnnRecognition(topo_lc_gc_pool_node, topo_lc_gc_out_channel)
+
+        self.flatten_len = self.fuse_cnn.c_out * self.fuse_cnn.h_out * self.fuse_cnn.w_out
+        self.fuse_flatten = Flatten(start_dim=0, end_dim=-1)
+
+        self.mlp = Mlp(self.flatten_len, ml_hidden_channel, ml_out_channel)
 
     def forward(self, data):
         topo_x = self.topo_gnn(data["topo"])
-        topo_x = self.topo_flatten(topo_x)
         lc_x = self.lc_gnn(data["lc"])
-        lc_x = self.lc_flatten(lc_x)
-        x = torch.concat((topo_x, lc_x,))
+
+        x = torch.stack((topo_x, lc_x,), dim=0)
+
+        x = self.fuse_cnn(x)
+        x = self.fuse_flatten(x)
         x = self.mlp(x)
+
         return x
 
-
-if __name__ == "__main__":
-    from torch_geometric.data import Data
-
-    model = SwapPredMix(
-        topo_gc_hidden_channel=[2, 2,],
-        topo_gc_out_channel=2,
-        topo_pool_node=2,
-        lc_gc_hidden_channel=[2, 2,],
-        lc_gc_out_channel=2,
-        lc_pool_node=2,
-        ml_hidden_channel=[3, 3,],
-        ml_out_channel=1,
-    )
-
-    topo_data_list = []
-    lc_data_list = []
-    node_feature_num = 20
-
-    topo_x = torch.zeros(3, node_feature_num)
-    topo_x[:, :3] = torch.eye(3, dtype=float)
-    topo_edge_index = [[0, 1], [1, 0], [1, 2], [2, 1], [0, 2], [2, 0]]
-    lc_x = torch.zeros(5, node_feature_num)
-    lc_x[:, :5] = torch.eye(5, dtype=float)
-    lc_edge_index = [[0, 1], [1, 2]]
-
-    topo_edge_index = torch.tensor(topo_edge_index, dtype=torch.long).t().contiguous()
-    lc_edge_index = torch.tensor(lc_edge_index, dtype=torch.long).t().contiguous()
-    topo_data = Data(x=topo_x, edge_index=topo_edge_index)
-    lc_data = Data(x=lc_x, edge_index=lc_edge_index)
-
-    topo_data_list.append(topo_data)
-    lc_data_list.append(lc_data)
-    topo_data_list = Batch.from_data_list(topo_data_list)
-    lc_data_list = Batch.from_data_list(lc_data_list)
-
-    data = {}
-    data["topo"] = topo_data_list
-    data["lc"] = lc_data_list
-
-    with torch.no_grad():
-        out = model(data)
-        print(out)
-
-    topo_data_list = []
-    lc_data_list = []
-    topo_x = torch.zeros(4, node_feature_num)
-    topo_x[:, :4] = torch.eye(4, dtype=float)
-    topo_edge_index = [[0, 1], [1, 0], [1, 2], [2, 1], [0, 2], [2, 0], [0, 3], [3, 0]]
-    lc_x = torch.zeros(6, node_feature_num)
-    lc_x[:, :6] = torch.eye(6, dtype=float)
-    lc_edge_index = [[0, 1], [1, 2]]
-
-    topo_edge_index = torch.tensor(topo_edge_index, dtype=torch.long).t().contiguous()
-    lc_edge_index = torch.tensor(lc_edge_index, dtype=torch.long).t().contiguous()
-    topo_data = Data(x=topo_x, edge_index=topo_edge_index)
-    lc_data = Data(x=lc_x, edge_index=lc_edge_index)
-
-    topo_data_list.append(topo_data)
-    lc_data_list.append(lc_data)
-
-    topo_data_list = Batch.from_data_list(topo_data_list)
-    lc_data_list = Batch.from_data_list(lc_data_list)
-    data = {}
-    data["topo"] = topo_data_list
-    data["lc"] = lc_data_list
-
-    with torch.no_grad():
-        out = model(data)
-        print(out)
-
-    topo_data_list = []
-    lc_data_list = []
-    topo_x = torch.zeros(20, node_feature_num)
-    topo_x[:, :20] = torch.eye(20, dtype=float)
-    topo_edge_index = [
-        [0, 1],
-        [1, 0],
-        [1, 2],
-        [2, 1],
-        [0, 2],
-        [2, 0],
-        [15, 16],
-        [16, 15],
-    ]
-    lc_x = torch.zeros(10, node_feature_num)
-    lc_x[:, :10] = torch.eye(10, dtype=float)
-    lc_edge_index = [[0, 1], [1, 3], [2, 3]]
-
-    topo_edge_index = torch.tensor(topo_edge_index, dtype=torch.long).t().contiguous()
-    lc_edge_index = torch.tensor(lc_edge_index, dtype=torch.long).t().contiguous()
-    topo_data = Data(x=topo_x, edge_index=topo_edge_index)
-    lc_data = Data(x=lc_x, edge_index=lc_edge_index)
-
-    topo_data_list.append(topo_data)
-    lc_data_list.append(lc_data)
-
-    topo_data_list = Batch.from_data_list(topo_data_list)
-    lc_data_list = Batch.from_data_list(lc_data_list)
-    data = {}
-    data["topo"] = topo_data_list
-    data["lc"] = lc_data_list
-
-    with torch.no_grad():
-        out = model(data)
-        print(out)
