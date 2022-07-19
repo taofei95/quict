@@ -34,7 +34,8 @@ class GateDecomposition(object):
         for gate in gates:
             if isinstance(gate, UnitaryGate):
                 UD = UnitaryDecomposition()
-                gate_mat, _ = UD.execute(gate.matrix, mapping=gate.targs)
+                gate_mat, _ = UD.execute(gate.matrix)
+                gate_mat & gate.targs
                 gates_decomposed.extend(gate_mat)
             elif isinstance(gate, BasicGate):
                 try:
