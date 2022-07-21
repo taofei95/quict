@@ -5,7 +5,6 @@
 # @File    : tmvh.py
 
 from QuICT.core.gate import CX, CCX, CompositeGate, X
-from ..._synthesis import Synthesis
 
 
 def peres_gate(gate_set, a, b, c):
@@ -261,7 +260,7 @@ def division(gate_set, a, b, r, ancilla):
         X & r[n - 1]
 
 
-class RippleCarryAdder(Synthesis):
+class RippleCarryAdder(object):
     """
     (a,b) -> (a,b'=a+b)
     Args:
@@ -289,7 +288,7 @@ class RippleCarryAdder(Synthesis):
         return gate_set
 
 
-class Multiplication(Synthesis):
+class Multiplication(object):
     """
     (a,b,p=0,ancilla=0) -> (a,b,p=a*b,ancilla=0)
 
@@ -323,7 +322,7 @@ class Multiplication(Synthesis):
         return gate_set
 
 
-class RestoringDivision(Synthesis):
+class RestoringDivision(object):
     """
     (a,b,r=0,overflow=0) -> (a%b,b,a//b,0)
     Args:

@@ -23,8 +23,8 @@ if __name__ == '__main__':
     target = random.sample(range(5), 3)
     Unitary(matrix) | circuit(target)
     circuit.random_append(typelist=typelist)
-    # circuit.draw()
+    circuit.draw()
 
     qcda = QCDA(instruction=USTCSet, layout=layout)
     circuit_phy = qcda.compile(circuit)
-    # circuit_phy.draw()
+    circuit_phy.draw()

@@ -9,7 +9,7 @@ class OutputAligner(object):
     Decorating class that keeps the type of output aligned with that of input for QCDA execute functions
 
     Valid type of output are restricted to be CompositeGate or Circuit.
-    For functions with other types of input or other special usages, the type of output could be assigned.
+    For functions with other types of input, the type of output could be assigned.
     """
     def __init__(self, output=None):
         """
@@ -44,12 +44,9 @@ class OutputAligner(object):
             Returns:
                 CompositeGate/Circuit: output of func with whose output type aligned
             """
-            if self.output is None:
-                self.output = type(input)
-            assert self.output in [CompositeGate, Circuit], TypeError('Invalid output type')
-
             # Record width of input
             if isinstance(input, CompositeGate) or isinstance(input, Circuit):
+                self.output = type(input)
                 width = input.width()
             elif isinstance(input, np.ndarray):
                 assert input.ndim == 2 and input.shape[0] == input.shape[1],\
@@ -58,6 +55,8 @@ class OutputAligner(object):
                 assert 1 << width == input.shape[0], ValueError('Input is not a 2^n * 2^n matrix')
             else:
                 raise TypeError('Invalid input type')
+
+            assert self.output in [CompositeGate, Circuit], TypeError('Invalid output type')
 
             output = func(object, input)
             if isinstance(output, self.output):
