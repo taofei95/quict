@@ -175,7 +175,7 @@ def measure_gate_apply(
     vec_idx_0 = np.array(vec_idx_0, dtype=np.int32)
     vec_idx_1 = [idx for idx in range(len(vec)) if idx & target_index]
     vec_idx_1 = np.array(vec_idx_1, dtype=np.int32)
-    prob = np.sum(np.square(np.abs(vec[vec_idx_1])))
+    prob = np.sum(np.square(np.abs(vec[vec_idx_0])))
 
     _1 = random.random() > prob
     if _1:

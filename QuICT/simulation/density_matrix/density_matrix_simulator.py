@@ -184,7 +184,7 @@ class DensityMatrixSimulation:
             index (int): The index of measured qubit.
         """
         P0 = self._array_helper.array([[1, 0], [0, 0]], dtype=self._precision)
-        mea_0 = matrix_product_to_circuit(P0, index, self._qubits, gpu_output=self._device=="GPU")
+        mea_0 = matrix_product_to_circuit(P0, index, self._qubits, gpu_output=self._device == "GPU")
         prob_0 = self._array_helper.matmul(mea_0, self._density_matrix).trace()
         _1 = random.random() > prob_0
         if not _1:
@@ -195,7 +195,7 @@ class DensityMatrixSimulation:
             self._density_matrix = self._computer.dot(self._computer.dot(U, self._density_matrix), U.conj().T)
         else:
             P1 = self._array_helper.array([[0, 0], [0, 1]], dtype=self._precision)
-            mea_1 = matrix_product_to_circuit(P1, index, self._qubits, gpu_output=self._device=="GPU")
+            mea_1 = matrix_product_to_circuit(P1, index, self._qubits, gpu_output=self._device == "GPU")
 
             U = self._array_helper.matmul(
                 mea_1,

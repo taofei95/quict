@@ -1,14 +1,20 @@
 from typing import *
 import numpy as np
+from QuICT.core import gate
+from QuICT.core.circuit.circuit import Circuit
 
 from QuICT.core.gate import BasicGate, CompositeGate, GateType
+from QuICT.core.utils.gate_type import MatrixType
 from QuICT.simulation.utils import DisjointSet, dp, build_unitary_gate
 import QuICT.ops.linalg.cpu_calculator as CPUCalculator
 
 
 class UnitarySimulator():
-    """
-    Algorithms to calculate the unitary matrix of a Circuit, and simulate the quantum circuit.
+    """ Algorithms to calculate the unitary matrix of a quantum circuit, and simulate.
+
+    Args:
+        device (str, optional): The device type, one of [CPU, GPU]. Defaults to "CPU".
+        precision (str, optional): The precision for the unitary matrix, one of [single, double]. Defaults to "double".
     """
 
     def __init__(
@@ -19,13 +25,17 @@ class UnitarySimulator():
         self._device = device
         self._precision = np.complex128 if precision == "double" else np.complex64
         self._vector = None
+        self._circuit = None
 
         if device == "CPU":
             self._computer = CPUCalculator
+            self._array_helper = np
         else:
+            import cupy as cp
             import QuICT.ops.linalg.gpu_calculator as GPUCalculator
 
             self._computer = GPUCalculator
+            self._array_helper = cp
 
     def pretreatment(self, circuit):
         """
@@ -35,11 +45,10 @@ class UnitarySimulator():
         Return:
             CompositeGate: the gates after pretreatment
         """
-        circuit_width = circuit.width()
-        gateSet = [np.identity(2, dtype=self._precision) for _ in range(circuit_width)]
-        tangle = [i for i in range(circuit.width())]
+        qubits_num = circuit.width()
+        gateSet = [self._array_helper.identity(2, dtype=self._precision) for _ in range(qubits_num)]
+        tangle = [i for i in range(qubits_num)]
         gates = CompositeGate()
-
         for gate in circuit.gates:
             if gate.type == GateType.measure:
                 continue
@@ -47,41 +56,42 @@ class UnitarySimulator():
             if gate.targets + gate.controls >= 3:
                 raise Exception("only support 2-qubit gates and 1-qubit gates.")
 
+            gate_matrix = self._array_helper.array(gate.matrix) if self._device == "GPU" else gate.matrix
+            gate_args = gate.cargs + gate.targs
             # 1-qubit gate
             if gate.targets + gate.controls == 1:
-                target = gate.targ
+                target = gate_args[0]
                 if tangle[target] == target:
-                    gateSet[target] = self._computer.dot(gate.matrix, gateSet[target])
+                    gateSet[target] = self._computer.dot(gate_matrix, gateSet[target])
                 else:
                     if tangle[target] < target:
                         gateSet[target] = self._computer.dot(
-                            np.kron(np.identity(2, dtype=self._precision), gate.matrix),
+                            self._array_helper.kron(self._array_helper.identity(2, dtype=self._precision), gate_matrix),
                             gateSet[target]
                         )
                     else:
                         gateSet[target] = self._computer.dot(
-                            np.kron(gate.matrix, np.identity(2, dtype=self._precision)),
+                            self._array_helper.kron(gate_matrix, self._array_helper.identity(2, dtype=self._precision)),
                             gateSet[target]
                         )
                     gateSet[tangle[target]] = gateSet[target]
 
             # 2-qubit gate
             else:
-                affectArgs = gate.cargs + gate.targs
-                target1, target2 = affectArgs[0], affectArgs[1]
+                target1, target2 = gate_args[0], gate_args[1]
                 if target1 < target2:
-                    matrix = gate.matrix
+                    matrix = gate_matrix
                 else:
-                    matrix = self._computer.MatrixPermutation(gate.matrix, np.array([1, 0]))
+                    matrix = self._computer.MatrixPermutation(gate_matrix, self._array_helper.array([1, 0]))
 
                 if tangle[target1] == target2:
                     gateSet[target1] = self._computer.dot(matrix, gateSet[target1])
                     gateSet[target2] = gateSet[target1]
                 elif tangle[target1] == target1 and tangle[target2] == target2:
                     if target1 < target2:
-                        target_matrix = np.kron(gateSet[target1], gateSet[target2])
+                        target_matrix = self._array_helper.kron(gateSet[target1], gateSet[target2])
                     else:
-                        target_matrix = np.kron(gateSet[target2], gateSet[target1])
+                        target_matrix = self._array_helper.kron(gateSet[target2], gateSet[target1])
 
                     gateSet[target1] = self._computer.dot(matrix, target_matrix)
                     gateSet[target2] = gateSet[target1]
@@ -95,24 +105,24 @@ class UnitarySimulator():
                         target = target2
 
                     build_unitary_gate(gates, gateSet[target], [target, tangle[target]])
-                    gateSet[tangle[target]] = np.identity(2, dtype=self._precision)
-                    gateSet[target] = np.identity(2, dtype=self._precision)
+                    gateSet[tangle[target]] = self._array_helper.identity(2, dtype=self._precision)
+                    gateSet[target] = self._array_helper.identity(2, dtype=self._precision)
                     tangle[tangle[target]] = tangle[target]
                     tangle[target] = target
 
                     if tangle[revive] == revive:
                         if revive <= target1 and revive <= target2:
-                            target_matrix = np.kron(gateSet[revive], np.identity(2, dtype=self._precision))
+                            target_matrix = self._array_helper.kron(gateSet[revive], self._array_helper.identity(2, dtype=self._precision))
                         else:
-                            target_matrix = np.kron(np.identity(2, dtype=self._precision), gateSet[revive])
+                            target_matrix = self._array_helper.kron(self._array_helper.identity(2, dtype=self._precision), gateSet[revive])
 
                         gateSet[target1] = self._computer.dot(matrix, target_matrix)
                         gateSet[target2] = gateSet[target1]
                         tangle[revive], tangle[target] = target, revive
                     else:
                         build_unitary_gate(gates, gateSet[revive], [revive, tangle[revive]])
-                        gateSet[tangle[revive]] = np.identity(2, dtype=self._precision)
-                        gateSet[revive] = np.identity(2, dtype=self._precision)
+                        gateSet[tangle[revive]] = self._array_helper.identity(2, dtype=self._precision)
+                        gateSet[revive] = self._array_helper.identity(2, dtype=self._precision)
                         tangle[tangle[revive]] = tangle[revive]
                         tangle[revive] = revive
 
@@ -120,12 +130,18 @@ class UnitarySimulator():
                         gateSet[target2] = gateSet[target1]
                         tangle[revive], tangle[target] = target, revive
 
-        for i in range(circuit_width):
+        for i in range(qubits_num):
             if tangle[i] == i:
-                if not np.allclose(np.identity(2, dtype=self._precision), gateSet[i]):
+                if not self._array_helper.allclose(
+                    self._array_helper.identity(2, dtype=self._precision),
+                    gateSet[i]
+                ):
                     build_unitary_gate(gates, gateSet[i], i)
             elif tangle[i] > i:
-                if not np.allclose(np.identity(4, dtype=self._precision), gateSet[i]):
+                if not self._array_helper.allclose(
+                    self._array_helper.identity(4, dtype=self._precision),
+                    gateSet[i]
+                ):
                     build_unitary_gate(gates, gateSet[i], [i, tangle[i]])
 
         return gates
@@ -233,7 +249,7 @@ class UnitarySimulator():
         Combine 2 gates into a new unitary gate.
 
         Returns:
-            matrix, affectArgs
+            matrix, gate_args
         """
 
         seta = set(args_a)
@@ -258,28 +274,28 @@ class UnitarySimulator():
             mat_b = self._computer.MatrixTensorI(mat_b_, 1, 1 << (len_c - len_b))
 
         mps = [0] * len_c
-        affectArgs = [0] * len_c
+        gate_args = [0] * len_c
         cnt = len_a
         for rb in range(len_b):
             if args_b[rb] not in seta:
                 mps[rb] = cnt
-                affectArgs[cnt] = args_b[rb]
+                gate_args[cnt] = args_b[rb]
                 cnt += 1
             else:
                 for ra in range(len_a):
                     if args_a[ra] == args_b[rb]:
                         mps[rb] = ra
-                        affectArgs[ra] = args_b[rb]
+                        gate_args[ra] = args_b[rb]
                         break
         cnt = len_b
         for ra in range(len_a):
             if args_a[ra] not in setb:
                 mps[cnt] = ra
-                affectArgs[ra] = args_a[ra]
+                gate_args[ra] = args_a[ra]
                 cnt += 1
-        mat_b = self._computer.MatrixPermutation(mat_b, np.array(mps))
+        mat_b = self._computer.MatrixPermutation(mat_b, self._array_helper.array(mps))
         res_mat = self._computer.dot(mat_b, mat_a)
-        return res_mat, affectArgs
+        return res_mat, gate_args
 
     def merge_unitary_by_ordering(
             self,
@@ -298,7 +314,7 @@ class UnitarySimulator():
                 gates).
 
         Returns:
-            matrix, affectArgs
+            matrix, gate_args
         """
         len_gate = gates.size()
         d_set = DisjointSet(len_gate)
@@ -323,96 +339,188 @@ class UnitarySimulator():
         res_arg = mat_args[x]
         return res_mat, res_arg
 
+    def get_unitary_matrix_new(self, circuit: Circuit = None):
+        if circuit is not None:
+            self.initial_circuit(circuit)
+
+        assert self._circuit is not None
+        gates_order_by_depth = self._circuit.get_gates_order_by_depth()
+        unitary_per_qubits = []     # List[List[unitary_matrix(np/cp.ndarray), target_qubits(List[int])]]
+        inside_qubits = {}          # Dict[qubit_idx: related index in unitary_per_qubits]
+        for gates in gates_order_by_depth:
+            for gate in gates:
+                if gate.controls + gate.targets >= 3:
+                    raise Exception("only support 2-qubit gates and 1-qubit gates.")
+                
+                if gate.matrix_type == MatrixType.special:
+                    continue
+
+                args = gate.cargs + gate.targs
+                matrix = gate.matrix if self._device == "CPU" else self._array_helper.array(gate.matrix)
+                if len(args) == 0:      # Deal with single-qubit gate
+                    if args[0] in inside_qubits.keys():
+                        related_unitary, related_unitary_args = unitary_per_qubits[inside_qubits[args[0]]]
+                        merged_unitary, merged_unitary_args = self.merge_unitaries(
+                            related_unitary, related_unitary_args,
+                            matrix, args
+                        )
+                        unitary_per_qubits[inside_qubits[args[0]]] = [merged_unitary, merged_unitary_args]
+                    else:
+                        inside_qubits[args[0]] = len(unitary_per_qubits)
+                        unitary_per_qubits.append([matrix, args])
+                else:       # Deal with double-qubits gate
+                    inside_qubits_set = set(inside_qubits.keys())
+                    intersect_qubits = set(args) & inside_qubits_set
+                    if len(intersect_qubits) == 2:
+                        pass
+                    elif len(intersect_qubits) == 1:
+                        related_unitary, related_unitary_args = unitary_per_qubits[inside_qubits[intersect_qubits[0]]]
+                        merged_unitary, merged_unitary_args = self.merge_unitaries(
+                            related_unitary, related_unitary_args,
+                            matrix, args
+                        )
+                        unitary_per_qubits[inside_qubits[args[0]]] = [merged_unitary, merged_unitary_args]
+                    else:
+                        for arg in args:
+                            inside_qubits[arg] = len(unitary_per_qubits)
+
+                        unitary_per_qubits.append([matrix, args])
+
+        if len(unitary_per_qubits) == 1:
+            return unitary_per_qubits[0][0]
+
+        based_unitary, based_unitary_args = unitary_per_qubits[0]
+        for ut, ut_args in unitary_per_qubits[1:]:
+            based_unitary, based_unitary_args = self.merge_unitaries(
+                based_unitary, based_unitary_args,
+                ut, ut_args
+            )
+
+        return based_unitary
+
+    def merge_unitaries(self, u1, u1_args, u2, u2_args):
+        pass
+
     def run(self, circuit, use_previous: bool = False) -> np.ndarray:
-        qubit = circuit.width()
-        if not (use_previous and self._vector is not None):
-            self._initial_vector_state(qubit)
+        import time
+
+        stime = time.time()
+        self.initial_circuit(circuit)
+        if not use_previous or self._vector is not None:
+            self.initial_vector_state()
 
         if len(circuit.gates) == 0:
             return self._vector
 
+        et_init = time.time()
+        print(f"vector/circuit initial time: {et_init - stime}")
         # Step 1: Generate the unitary matrix of the given circuit
-        unitary_matrix = self.get_unitary_matrix(circuit)
-
+        unitary_matrix = self.get_unitary_matrix()
+        et_unitary = time.time()
+        print(f"generate unitary matrix time: {et_unitary - et_init}")
         # Step 2: Simulation with the unitary matrix and qubit's state vector
-        self._run(unitary_matrix, qubit)
-
+        self._run(unitary_matrix)
+        et_simulate = time.time()
+        print(f"simulation time: {et_simulate - et_unitary}")
         # Step 3: return the state vector after simulation
         return self._vector
 
-    def _initial_vector_state(self, qubit):
+    def initial_circuit(self, circuit):
+        self._qubits_num = circuit.width()
+        self._circuit = circuit
+
+    def initial_vector_state(self):
+        """ Initial the state vector for simulation through UnitarySimulator,
+        must after initial_circuit
+        """
+        self._vector = self._array_helper.zeros(1 << self._qubits_num, dtype=self._precision)
         if self._device == "CPU":
-            self._vector = np.zeros(1 << qubit, dtype=self._precision)
             self._vector[0] = self._precision(1)
         else:
-            import cupy as cp
-
-            self._vector = cp.zeros(1 << qubit, dtype=self._precision)
             self._vector.put(0, self._precision(1))
 
-    def get_unitary_matrix(self, circuit) -> np.ndarray:
+    def get_unitary_matrix(self, circuit: Circuit = None) -> np.ndarray:
         """
         Get the unitary matrix of circuit
 
         Args:
-            circuit (Circuit): Input circuit to be simulated.
+            circuit (Circuit): Input circuit to be simulated, if None.
 
         Returns:
             np.ndarray: The unitary matrix of input circuit.
         """
-        qubit = circuit.width()
-        ordering, small_gates = self.unitary_pretreatment(circuit)
+        if circuit is not None:
+            self.initial_circuit(circuit)
+
+        assert self._circuit is not None
+        ordering, small_gates = self.unitary_pretreatment(self._circuit)
         u_mat, u_args = self.merge_unitary_by_ordering(small_gates, ordering)
         result_mat, _ = self.merge_two_unitary(
-            np.identity(1 << qubit, dtype=self._precision),
-            [i for i in range(qubit)],
+            self._array_helper.identity(1 << self._qubits_num, dtype=self._precision),
+            [i for i in range(self._qubits_num)],
             u_mat,
             u_args
         )
 
         return result_mat
 
-    def _run(self, matrix, qubit):
+    def _run(self, matrix):
         if self._device == "CPU":
-            default_parameters = (matrix, qubit, self._vector, qubit, list(range(qubit)))
+            default_parameters = (matrix, self._qubits_num, self._vector, self._qubits_num, list(range(self._qubits_num)))
             self._vector = self._computer.matrix_dot_vector(*default_parameters)
         else:
-            import cupy as cp
-
-            aux = cp.zeros_like(self._vector)
-            matrix = cp.array(matrix)
+            aux = self._array_helper.zeros_like(self._vector)
+            matrix = self._array_helper.array(matrix)
 
             self._computer.matrix_dot_vector(
                 matrix,
-                qubit,
+                self._qubits_num,
                 self._vector,
-                qubit,
-                list(range(qubit)),
+                self._qubits_num,
+                list(range(self._qubits_num)),
                 aux
             )
             self._vector = aux
 
-    def sample(self):
-        qubits = int(np.log2(self._vector.size))
-        result = 0
-        for i in range(qubits - 1, -1, -1):
-            result += self._measure(qubits, i) << i
+    def sample(self, shots: int):
+        """_summary_
 
-        return result
+        Args:
+            shots (int): _description_
 
-    def _measure(self, total_qubits, qubit):
+        Returns:
+            _type_: _description_
+        """
+        assert self._circuit is not None
+        original_sv = self._vector.copy()
+        counts = [0] * (1 << self._qubits_num)
+        for _ in range(shots):
+            for i in range(self._qubits_num):
+                self._measure(i)
+
+            counts[int(self._circuit.qubits)] += 1
+            self._vector = original_sv.copy()
+
+        return counts
+
+    def _measure(self, index):
         if self._device == "CPU":
             result = self._computer.measure_gate_apply(
-                qubit,
+                index,
                 self._vector
             )
         else:
-            from QuICT.ops.gate_kernel import apply_measuregate
-
-            result = apply_measuregate(
-                qubit,
+            from QuICT.ops.gate_kernel import apply_measuregate, measured_prob_calculate
+            prob = measured_prob_calculate(
+                index,
                 self._vector,
-                total_qubits
+                self._qubits_num
+            )
+            result = apply_measuregate(
+                index,
+                self._vector,
+                self._qubits_num,
+                prob=prob
             )
 
-        return int(result)
+        self._circuit.qubits[self._qubits_num - 1 - index].measured = int(result)

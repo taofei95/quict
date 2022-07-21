@@ -169,7 +169,8 @@ SUPREMACY_GATE_SET = [
 PAULI_GATE_SET = [
     GateType.x,
     GateType.y,
-    GateType.z
+    GateType.z,
+    GateType.id
 ]
 
 
