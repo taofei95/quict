@@ -25,6 +25,10 @@ if __name__ == '__main__':
     circuit.random_append(typelist=typelist)
     circuit.draw()
 
-    qcda = QCDA(instruction=USTCSet, layout=layout)
+    qcda = QCDA()
+    qcda.add_default_synthesis(USTCSet)
+    qcda.add_default_optimization()
+    qcda.add_default_mapping(layout)
+    qcda.add_default_synthesis(USTCSet)
     circuit_phy = qcda.compile(circuit)
     circuit_phy.draw()
