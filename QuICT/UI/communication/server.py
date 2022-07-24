@@ -280,6 +280,7 @@ def optimize_qasm(qasm_text):
     # optimize qasm to o_qasm_text  
     o_qasm_text = qasm_text
     o_q = load_data(o_qasm_text)
+    o_q.analyse_code_from_circuit()
     
     return o_q
 

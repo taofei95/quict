@@ -184,10 +184,52 @@ export default {
       });
     },
     run_o_QCDA() {
+      let setting = {};
+      setting.device = "GPU"; //this.dialogBe;
+      setting.shots = 1; //Number(this.dialogSeShots);
+      setting.backend = "statevector"; //
+      setting.gpu_device_id = 0; //Number(this.dialogSe_GPU_device_id);
+      setting.sync = true; //this.dialogSe_sync;
+      setting.optimize = true; //this.dialogSe_optimize;
+      // switch (setting.device) {
+      //   case "CPU":
+      //     setting.backend = "unitary";
+      //     setting.precision = this.dialogSe_Precision;
+      //     break;
+      //   case "GPU":
+      //     setting.backend = this.dialogBe_Backend;
+      //     setting.precision = this.dialogSe_Precision;
+      //     switch (this.dialogBe_Backend) {
+      //       case "unitary":
+      //         break;
+      //       case "statevector":
+      //         setting.gpu_device_id = Number(this.dialogSe_GPU_device_id);
+      //         setting.sync = this.dialogSe_sync;
+      //         setting.optimize = this.dialogSe_optimize;
+      //         break;
+      //       case "multiGPU":
+      //         setting.ndev = Number(this.dialogSe_ndev);
+      //         setting.sync = this.dialogSe_sync;
+      //         break;
+      //     }
+      //     break;
+      //   case "qiskit":
+      //     setting.token = Number(this.dialogSeToken);
+      //     break;
+      //   case "qcompute":
+      //     setting.token = Number(this.dialogSeToken);
+      //     break;
+      // }
+
       this.socket.emit("o_qasm_run", {
         uuid: this.uuid,
         content: this.o_ProgramText,
-        source: 'QCDA'
+        source: 'QCDA',
+        optimize: true, //opSwitch,
+        mapping: true, //mapSwitch,
+        topology: [], //this.topology,
+        set: this.all_sets[0],
+        setting: setting,
       });
     },
     append2Group(groupGates, posX, gate) {
