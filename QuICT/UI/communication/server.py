@@ -191,7 +191,8 @@ def testLogin(content):
 @socketio.on("get_gate_set", namespace="/api/pty")
 @authenticated_only
 def get_gate_set(content):
-    uid = content['uuid']    
+    uid = content['uuid']
+    source = content['source']    
     gate_set = []
     # QFT, IQFT,Perm, ControlPermMulDetail, PermShift, ControlPermShift, PermMul, ControlPermMul, PermFx, Unitary, ShorInitial,
     FullSet = [H, S, S_dagger, X, Y, Z, SX, SY, SW, ID, U1, U2, U3, Rx, Ry, Rz, T, T_dagger, Phase, CZ,
@@ -227,8 +228,12 @@ def get_gate_set(content):
                 "qasm_name": str(gate.qasm_name).lower(),
             })
         gate_set.append(simpleSet)
-    emit('all_sets', {'uuid': uid,
-                      'all_sets': gate_set}, namespace="/api/pty")
+    if source == 'QCDA':
+        emit('n_all_sets', {'uuid': uid,
+                        'all_sets': gate_set}, namespace="/api/pty")
+    else:
+        emit('all_sets', {'uuid': uid,
+                        'all_sets': gate_set}, namespace="/api/pty")
 
 
 @socketio.on("qasm_load", namespace="/api/pty")
@@ -236,10 +241,10 @@ def get_gate_set(content):
 def load_file(content):
     uid = content['uuid']
     source = content['source']
-    content = content['content']
+    program_text = content['content']
     
     try:
-        q = load_data(data=content)
+        q = load_data(data=program_text)
         q.analyse_code_from_circuit()
     except Exception as e:
         if source == 'QCDA':
@@ -253,6 +258,7 @@ def load_file(content):
         return
     if source == 'QCDA':
         # optimize 
+        logger.info(f'q.qasm: {q.qasm}')
         optimized_q = optimize_qasm(q.qasm)
         
         emit(

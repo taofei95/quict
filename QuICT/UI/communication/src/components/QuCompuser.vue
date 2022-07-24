@@ -573,7 +573,7 @@ export default {
           return `${d[0]}\nCounts:${d[1]}`;
         },
         xDomain: d3.map(Object.entries(result), (d) => d[0]), // sort by descending frequency
-        yFormat: "d", //".3f",
+        yFormat: ".1f", //".3f", //"d",
         // yLabel: "Amplitude",
         yLabel: "nCounts",
         width: width,

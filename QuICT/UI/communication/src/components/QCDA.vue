@@ -21,7 +21,21 @@
         </el-button>
 
       </div>
-      <div id="step_1_N" class="div_not_selected"></div>
+      <div id="step_1_N" class="div_not_selected">
+        <el-container>
+          <el-main class="vis-block">
+            <nVisualizeZone ref="n_visVue" :VisContentIn="n_VisContent" v-on:VisUpdate="n_VisUpdate">
+            </nVisualizeZone>
+          </el-main>
+          <el-aside width="20%" style="background-color: #292c3d; padding: 0px">
+            <ProgramZone :ProgramTextIn="n_ProgramText" v-on:ProgramUpdate="n_ProgramUpdate">
+            </ProgramZone>
+          </el-aside>
+
+        </el-container>
+        <el-button size="large" type="primary" plain @click="confirm_newQCDA" :enabled="NewConfirmBtnEnable"
+          style="margin: 0px 10px; font-family: 'Segoe UI Symbol'"> Confirm </el-button>
+      </div>
       <div id="step_1_L" class="div_not_selected">
         <el-upload class="load_qcda" :action="uploadBackend" :multiple="multipleUpload" :show-file-list="showFileList"
           :before-upload="loadQCDA">
@@ -35,7 +49,7 @@
         <oVisualizeZone ref="o_visVue" :VisContentIn="o_VisContent">
           <!-- TODO: replace with a one way vue component -->
         </oVisualizeZone>
-        <el-button size="large" type="primary" plain @click="run_o_QCDA" 
+        <el-button size="large" type="primary" plain @click="run_o_QCDA"
           style="margin: 0px 10px; font-family: 'Segoe UI Symbol'"> Confirm </el-button>
       </div>
       <div id="step_3" class="div_not_selected">
@@ -56,6 +70,8 @@
 <script>
 import * as d3 from "d3";
 import oVisualizeZone from "./oVisualizeZone.vue";
+import nVisualizeZone from "./nVisualizeZone.vue";
+import ProgramZone from "./ProgramZone.vue";
 
 export default {
   props: {},
@@ -65,7 +81,25 @@ export default {
       showFileList: false,
       multipleUpload: false,
       current_step: 0,
-      ProgramText: "",
+      l_ProgramText: "",
+      n_ProgramText: "",
+      o_ProgramText: "",
+      l_VisContent: {
+        gateSet: [
+        ],
+        q: [0, 1, 2, 3, 4],
+        gates: [
+
+        ],
+      },
+      n_VisContent: {
+        gateSet: [
+        ],
+        q: [0, 1, 2, 3, 4],
+        gates: [
+
+        ],
+      },
       o_VisContent: {
         gateSet: [
         ],
@@ -75,10 +109,13 @@ export default {
         ],
       },
       LoadConfirmBtnEnable: false,
+      NewConfirmBtnEnable: false,
     };
   },
   components: {
     oVisualizeZone,
+    nVisualizeZone,
+    ProgramZone,
   },
   methods: {
     new_qcda() {
@@ -88,6 +125,7 @@ export default {
       d3.select("#step_1_L").attr("class", "div_not_selected");
       d3.select("#step_2").attr("class", "div_not_selected");
       d3.select("#step_3").attr("class", "div_not_selected");
+      this.socket.emit("get_gate_set", { uuid: this.uuid, source:'QCDA' });
     },
     load_qcda() {
       this.current_step = 1;
@@ -105,7 +143,7 @@ export default {
       d3.select("#step_2").attr("class", "div_selected");
       d3.select("#step_3").attr("class", "div_not_selected");
     },
-    confirm_o_QCDA(){
+    confirm_o_QCDA() {
       this.current_step = 3;
       d3.select("#step_0").attr("class", "div_not_selected");
       d3.select("#step_1_N").attr("class", "div_not_selected");
@@ -122,7 +160,7 @@ export default {
       reader.onload = (evt) => {
         let text = evt.target.result;
         console.log(text);
-        this.ProgramText = text;
+        this.l_ProgramText = text;
         this.LoadConfirmBtnEnable = true;
 
       };
@@ -134,15 +172,22 @@ export default {
     confirm_loadQCDA() {
       this.socket.emit("qasm_load", {
         uuid: this.uuid,
-        content: this.ProgramText,
-        source:'QCDA'
+        content: this.l_ProgramText,
+        source: 'QCDA'
       });
     },
-    run_o_QCDA(){
+    confirm_newQCDA() {
+      this.socket.emit("qasm_load", {
+        uuid: this.uuid,
+        content: this.n_ProgramText,
+        source: 'QCDA'
+      });
+    },
+    run_o_QCDA() {
       this.socket.emit("o_qasm_run", {
         uuid: this.uuid,
-        content: this.ProgramText,
-        source:'QCDA'
+        content: this.o_ProgramText,
+        source: 'QCDA'
       });
     },
     append2Group(groupGates, posX, gate) {
@@ -208,6 +253,314 @@ export default {
       }
       return listGates;
     },
+    n_VisUpdate(VisAction) {
+      // 更新gate列表
+      // this.ProgramText = VisContent;
+      console.log(VisAction);
+
+      if (VisAction.type == "gates add") {
+        // 新加gate
+        let posX = VisAction.x;
+
+        if (posX < 0) {
+          posX = 0;
+        }
+        let posY = VisAction.y;
+        if (posY > this.n_VisContent.q.length) {
+          posY = this.n_VisContent.q.length - 1;
+        }
+        if (posY < 0) {
+          posY = 0;
+        }
+        let y_max = posY + VisAction.gate.controls + VisAction.gate.targets - 1;
+        if (y_max > this.n_VisContent.q.length - 1) {
+          for (let i = this.n_VisContent.q.length; i <= y_max; i++) {
+            this.n_VisContent.q.push(i);
+          }
+        }
+        let gate = {
+          q: posY,
+          name: VisAction.gate.name,
+          targets: [],
+          controls: [],
+          selected: false,
+          pargs: [],
+          img: VisAction.gate.img,
+          qasm_name: VisAction.gate.qasm_name,
+        };
+        for (let i = 0; i < VisAction.gate.controls; i++) {
+          gate.controls.push(posY + i);
+        }
+        for (
+          let i = VisAction.gate.controls;
+          i < VisAction.gate.targets + VisAction.gate.controls;
+          i++
+        ) {
+          gate.targets.push(posY + i);
+        }
+        VisAction.gate.pargs.forEach((element) => {
+          gate.pargs.push(element);
+        });
+
+        let groupedGates = this.GroupGates(this.n_VisContent.gates);
+        this.insert2Group(groupedGates, posX, gate);
+        this.n_VisContent.gates = this.ListGates(groupedGates);
+
+        this.$refs.n_visVue.vis_change();
+      }
+      if (VisAction.type == "gates remove") {
+        // 删除gate
+        this.n_VisContent.gates.splice(VisAction.index, 1);
+        for (let i = 0; i < this.n_VisContent.gates.length; i++) {
+          this.n_VisContent.gates[i].index = i;
+        }
+        this.$refs.n_visVue.vis_change();
+      }
+      if (VisAction.type == "gates edit") {
+        // 编辑gate
+        let min = this.n_VisContent.q.length;
+        VisAction.gate.targets.forEach((element) => {
+          if (element < min) {
+            min = element;
+          }
+        });
+        VisAction.gate.controls.forEach((element) => {
+          if (element < min) {
+            min = element;
+          }
+        });
+        VisAction.gate.q = min;
+        this.n_VisContent.gates.splice(VisAction.gate.index, 1);
+        let groupedGates = this.GroupGates(this.n_VisContent.gates);
+        this.insert2Group(groupedGates, VisAction.gate.posX, VisAction.gate);
+        this.n_VisContent.gates = this.ListGates(groupedGates);
+
+        this.$refs.n_visVue.vis_change();
+      }
+      if (VisAction.type == "gates move") {
+        // 移动gate
+        let posX = VisAction.x;
+
+        if (posX < 0) {
+          posX = 0;
+        }
+        let posY = VisAction.y;
+        if (posY > this.n_VisContent.q.length) {
+          posY = this.n_VisContent.q.length - 1;
+        }
+        if (posY < 0) {
+          posY = 0;
+        }
+
+        let min = this.n_VisContent.q.length - 1;
+        let max = 0;
+        VisAction.gate.controls.forEach((element) => {
+          if (element > max) {
+            max = element;
+          }
+          if (element < min) {
+            min = element;
+          }
+        });
+        VisAction.gate.targets.forEach((element) => {
+          if (element > max) {
+            max = element;
+          }
+          if (element < min) {
+            min = element;
+          }
+        });
+        let delta = posY - VisAction.gate.q;
+        if (min + delta < 0) {
+          delta = 0 - min;
+        }
+        if (max + delta > this.n_VisContent.q.length - 1) {
+          delta = this.n_VisContent.q.length - 1 - max;
+        }
+        VisAction.gate.q += delta;
+        for (let i = 0; i < VisAction.gate.controls.length; i++) {
+          VisAction.gate.controls[i] += delta;
+        }
+        for (let i = 0; i < VisAction.gate.targets.length; i++) {
+          VisAction.gate.targets[i] += delta;
+        }
+        console.log(posX, posY, delta, VisAction.gate);
+
+        this.n_VisContent.gates.splice(VisAction.gate.index, 1);
+        let groupedGates = this.GroupGates(this.n_VisContent.gates);
+        this.insert2Group(groupedGates, posX, VisAction.gate);
+        this.n_VisContent.gates = this.ListGates(groupedGates);
+
+        this.$refs.n_visVue.vis_change();
+      }
+      if (VisAction.type == "q add") {
+        // 新加qbit
+        this.Q_Add();
+        this.$refs.n_visVue.vis_change();
+      }
+      if (VisAction.type == "q remove") {
+        // 删除qbit
+        this.Q_Remove(VisAction.index);
+        this.$refs.n_visVue.vis_change();
+      }
+      this.qbit = this.n_VisContent.q;
+      this.n_ProgramText = this.GenQASM();
+      this.NewConfirmBtnEnable = true;
+    },
+    n_ProgramUpdate(ProgramText) {
+      // 通知后端qasm更新
+      this.socket.emit("programe_update", {
+        uuid: this.uuid,
+        content: ProgramText,
+        source: 'QCDA',
+      });
+      this.NewConfirmBtnEnable = true;
+    },
+    GroupGates(Gates) {
+      // 把gate按x轴分组
+      let groupGates = [];
+      Gates.forEach((gate) => {
+        while (gate.posX >= groupGates.length) {
+          groupGates.push([]);
+        }
+        groupGates[gate.posX].push(gate);
+      });
+
+      return groupGates;
+    },
+    insert2Group(groupGates, posX, gate) {
+      // 插入当前gate到指定x坐标
+      console.log("groupGates before", groupGates);
+      while (posX >= groupGates.length) {
+        groupGates.push([]);
+      }
+      let group = groupGates[posX];
+      for (let i = 0; i < group.length; i++) {
+        if (this.checkConflict(group[i], gate)) {
+          if (i == 0) {
+            let cut1 = [gate];
+            groupGates.splice(posX, 0, cut1);
+          } else {
+            let groupCopy = JSON.parse(JSON.stringify(group));
+            let cut1 = groupCopy.splice(0, i);
+            cut1.push(gate);
+            let cut2 = groupCopy;
+            groupGates.splice(posX, 1, cut1, cut2);
+          }
+          return;
+        }
+      }
+      group.push(gate);
+      console.log("groupGates after", groupGates);
+    },
+    GenQASM() {
+      // 从gate列表生成qasm
+      let qasm_string = 'OPENQASM 2.0;\ninclude "qelib1.inc";\n';
+      let cbits = 0;
+      this.n_VisContent.gates.forEach((gate) => {
+        if (gate.name == "MeasureGate") {
+          cbits += 1;
+        }
+      });
+
+      qasm_string += `qreg q[${this.n_VisContent.q.length}];\n`;
+      if (cbits != 0) {
+        qasm_string += `creg c[${cbits}];\n`;
+      }
+      cbits = 0;
+      this.n_VisContent.gates.forEach((gate) => {
+        if (gate.name == "MeasureGate") {
+          qasm_string += `measure q[${gate.targets[0]}] -> c[${cbits}];\n`;
+          cbits += 1;
+        } else {
+          let qasm = this.qasm(gate);
+          if (qasm == "error") {
+            console.log(
+              "the circuit cannot be transformed to a valid describe in OpenQASM 2.0"
+            );
+            console.log(gate);
+            return "error";
+          }
+          qasm_string += this.qasm(gate);
+        }
+      });
+      return qasm_string;
+    },
+    qasm(gate) {
+      // 从gate生成qasm片段
+      let qasm_string = gate.qasm_name;
+      if (gate.pargs.length > 0) {
+        qasm_string += "(";
+        for (let i = 0; i < gate.pargs.length; i++) {
+          if (i != 0) {
+            qasm_string += ", ";
+          }
+          qasm_string += String(gate.pargs[i]);
+        }
+        qasm_string += ")";
+      }
+      qasm_string += " ";
+      let first_in = true;
+      gate.controls.forEach((p) => {
+        if (!first_in) {
+          qasm_string += ", ";
+        } else {
+          first_in = false;
+        }
+        qasm_string += `q[${p}]`;
+      });
+      gate.targets.forEach((p) => {
+        if (!first_in) {
+          qasm_string += ", ";
+        } else {
+          first_in = false;
+        }
+        qasm_string += `q[${p}]`;
+      });
+      qasm_string += ";\n";
+      return qasm_string;
+    },
+    Q_Add() {
+      // 新加qbit
+      this.n_VisContent.q.push(this.n_VisContent.q.length);
+    },
+    Q_Remove(idx) {
+      // 删除qbit
+      for (let i = this.n_VisContent.gates.length - 1; i >= 0; i--) {
+        let touched_q = false;
+        if (this.n_VisContent.gates[i].q == idx) {
+          touched_q = true;
+        } else {
+          this.n_VisContent.gates[i].controls.forEach((c) => {
+            if (c == idx) {
+              touched_q = true;
+            }
+          });
+          if (!touched_q) {
+            this.n_VisContent.gates[i].targets.forEach((t) => {
+              if (t == idx) {
+                touched_q = true;
+              }
+            });
+          }
+        }
+        if (touched_q) {
+          this.n_VisContent.gates.splice(i, 1);
+        } else if (this.n_VisContent.gates[i].q > idx) {
+          this.n_VisContent.gates[i].q--;
+          for (let j = 0; j < this.n_VisContent.gates[i].controls.length; j++) {
+            this.n_VisContent.gates[i].controls[j] -= 1;
+          }
+          for (let j = 0; j < this.n_VisContent.gates[i].targets.length; j++) {
+            this.n_VisContent.gates[i].targets[j] -= 1;
+          }
+        }
+      }
+      for (let i = 0; i < this.n_VisContent.gates.length; i++) {
+        this.n_VisContent.gates[i].index = i;
+      }
+      this.n_VisContent.q.pop();
+    },
   },
   mounted: function () {
     this.socket.on("QCDA_o_qasm_load", (content) => {
@@ -261,6 +614,21 @@ export default {
       this.$refs.o_visVue.vis_change();
       this.show_o_qasm()
     });
+
+    this.socket.on("n_all_sets", (content) => {
+      // 收到后端instruction Set 列表， 更新前端相关显示
+      console.log(content);
+      if (!content.uuid == this.uuid) {
+        return;
+      }
+      this.n_VisContent.gateSet = content.all_sets[0]["gates"];
+      this.customer_set = [];
+      let customer_set = { name: "CustomerSet", gates: [] };
+      this.all_sets = content.all_sets;
+      this.all_sets.push(customer_set);
+      this.$refs.n_visVue.vis_change();
+    });
+
   },
   watch: {},
   emits: {

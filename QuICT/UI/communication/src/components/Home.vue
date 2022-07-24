@@ -134,7 +134,7 @@ export default {
         return;
       }
       this.dialogLogin = false;
-      this.socket.emit("get_gate_set", { uuid: this.uuid });
+      this.socket.emit("get_gate_set", { uuid: this.uuid, source:'Home' });
     });
 
     this.socket.on("need_login", (content) => {
