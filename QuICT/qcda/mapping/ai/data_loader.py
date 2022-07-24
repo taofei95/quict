@@ -6,6 +6,8 @@ import torch
 from torch.utils.data import DataLoader as TorchDataLoader
 from torch.utils.data import Dataset
 
+from QuICT.qcda.mapping.ai.data_def import PairData
+
 
 class MappingDataSet(Dataset):
     def __init__(self, data_dir: str, device: str) -> None:
@@ -22,14 +24,12 @@ class MappingDataSet(Dataset):
     def __len__(self):
         return self._circ_cnt
 
-    def __getitem__(self, idx: int) -> Tuple[Dict[str, Data], int]:
+    def __getitem__(self, idx: int) -> Tuple[PairData, int]:
         f_path = osp.join(self._data_dir, f"{idx}.pt")
         with open(f_path, "rb") as f:
-            circ_dict_raw, target = torch.load(f)
-            circ_dict = {}
-            circ_dict["lc"] = circ_dict_raw["lc"].to(self.device)
-            circ_dict["topo"] = circ_dict_raw["topo"].to(self.device)
-            return circ_dict, target
+            circ, target = torch.load(f)
+            circ = circ.to(self.device)
+            return circ, target
 
 
 class MappingDataLoaderFactory:
@@ -46,16 +46,11 @@ class MappingDataLoaderFactory:
 
         def collat_fn(batch):
             circ_dicts_raw, targets = zip(*batch)
-            topo_batch = []
-            lc_batch = []
-            for d in circ_dicts_raw:
-                topo_batch.append(d["topo"])
-                lc_batch.append(d["lc"])
-            circ_dicts = {}
-            circ_dicts["topo"] = Batch.from_data_list(topo_batch)
-            circ_dicts["lc"] = Batch.from_data_list(lc_batch)
-            targets = torch.tensor(list(targets)).to(device)
-            return circ_dicts, targets
+            circuits = Batch.from_data_list(
+                list(circ_dicts_raw), follow_batch=["x_topo", "x_lc"]
+            )
+            targets = torch.tensor(list(targets), dtype=torch.float).unsqueeze(dim=1).to(device=device)
+            return circuits, targets
 
         loader = TorchDataLoader(
             dataset=dataset,
