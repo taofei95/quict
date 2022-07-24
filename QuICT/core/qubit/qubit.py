@@ -4,6 +4,7 @@
 # @Author  : Han Yu, Li Kaiqi
 # @File    : qubit.py
 import random
+from typing import Union
 
 from QuICT.core.exception import *
 from QuICT.core.utils import unique_id_generator
@@ -276,3 +277,13 @@ class Qureg(list):
                 diff_qubit.append(qubit)
 
         return Qureg(diff_qubit)
+
+    def index(self, qubit: Union[str, Qubit]):
+        if isinstance(qubit, Qubit):
+            return super().index(qubit)
+
+        for idx, item in enumerate(self):
+            if item.id == qubit:
+                return idx
+
+        raise ValueError("The given qubit is not in this Qureg.")
