@@ -228,7 +228,7 @@ export default {
         optimize: true, //opSwitch,
         mapping: true, //mapSwitch,
         topology: [], //this.topology,
-        set: this.all_sets[0],
+        set: this.n_VisContent.gateSet,
         setting: setting,
       });
     },
