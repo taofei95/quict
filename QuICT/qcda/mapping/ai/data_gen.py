@@ -1,7 +1,8 @@
+from ast import arg
 import os
 from math import ceil, sqrt
 from typing import List
-
+from random import randint
 from QuICT.core.circuit import *
 from QuICT.core.gate import *
 from QuICT.core.layout import *
@@ -45,7 +46,7 @@ def gen_fc_layout(num_qubit: int) -> Layout:
 
 
 def gen_circ(num_qubit: int) -> Circuit:
-    size = num_qubit * 10
+    size = randint(10, 300)
     # No need for single bit gates.
     rand_list = [
         GateType.cx,
@@ -61,42 +62,6 @@ def ensure_path(path: str):
     if not os.path.exists(path):
         print(f"Creating absent {path}...")
         os.makedirs(path, exist_ok=True)
-
-
-def write_circ_gate_dag(circ: Circuit, path: str):
-    ensure_path(path)
-    num_qubit = circ.width()
-    cur_occupy: List[int] = [-1 for _ in range(num_qubit)]
-    edge_list = []
-    for idx, gate in enumerate(circ.gates):
-        gate: BasicGate
-        args = gate.cargs + gate.targs
-        i = cur_occupy[args[0]]
-        j = cur_occupy[args[1]]
-        if i >= 0:
-            edge_list.append((i, idx))
-        if j >= 0:
-            edge_list.append((j, idx))
-        cur_occupy[args[0]] = idx
-        cur_occupy[args[1]] = idx
-    with open(path, "w") as f:
-        f.write(f"# number of qubit: {num_qubit}\n")
-        data_str = ""
-        for edge in edge_list:
-            data_str += f"{edge[0]} {edge[1]}\n"
-        f.write(data_str)
-
-
-# def write_layout(name: str, num_qubit: int, layout: Layout, path: str):
-#     ensure_path(path)
-#     # layout.write_file(path)
-#     with open(path, "w") as f:
-#         data_str = f"{name}\n"
-#         data_str += f"{num_qubit}\n"
-#         for edge in layout.edge_list:
-#             edge: LayoutEdge
-#             data_str += f"{edge.u} {edge.v}\n"
-#         f.write(data_str)
 
 
 def write_circ_qasm(circ: Circuit, path: str):
@@ -145,31 +110,72 @@ def get_ibmq_topo():
                     yield path
 
 
-def gen_ibmq_data(repeat=100):
+def task_seg(pid: int, circ_dir: str, layout: Layout, repeat: int, begin: int, end):
+    for i in range(begin, end):
+        if 0 == i % 10:
+            print(f"    pid: {pid}, iter: {i}")
+        circ = gen_circ(layout.qubit_number)
+        circ_file = os.path.join(circ_dir, f"circ_{pid*repeat+i}.qasm")
+        result_circ_file = os.path.join(circ_dir, f"result_circ_{pid*repeat+i}.qasm")
+        result_circ = Mapping.execute(
+            circuit=circ, init_mapping_method="naive", layout=layout
+        )
+        write_circ_qasm(circ, circ_file)
+        write_circ_qasm(result_circ, result_circ_file)
+        del circ
+        del circ_file
+
+
+def task(pid: int, circ_dir: str, layout: Layout, repeat: int):
+    task_seg(pid, circ_dir, layout, repeat, 0, repeat)
+
+
+def run(x):
+    return x[0](*x[1:])
+
+
+def gen_ibmq_data(repeat: int, p_num: int):
+    from multiprocessing import Process, Pool
+
     for topo_path in get_ibmq_topo():
         topo_name = os.path.basename(topo_path)
         topo_name = os.path.splitext(topo_name)[0]
+
+        if topo_name != "ibmq_peekskill":
+            continue
+
         layout = Layout.load_file(topo_path)
         num_qubit = layout.qubit_number
-        print(f"Generating {topo_name} for {repeat} rounds...")
+        print(f"Generating {topo_name} for {repeat * p_num} rounds...")
         circ_dir = os.path.join("data", "circ")
         circ_dir = os.path.join(circ_dir, topo_name)
         print(circ_dir)
         ensure_path(circ_dir)
-        for i in range(repeat):
-            circ = gen_circ(num_qubit)
-            circ_file = os.path.join(circ_dir, f"circ_{i}.qasm")
-            result_circ_file = os.path.join(circ_dir, f"result_circ_{i}.qasm")
-            result_circ = Mapping.execute(
-                circuit=circ, init_mapping_method="naive", layout=layout
-            )
-            write_circ_qasm(circ, circ_file)
-            write_circ_qasm(result_circ, result_circ_file)
-            if 0 == i % 10:
-                print(f"    iter: {i}")
+
+        task_list = []
+
+        if num_qubit < 15:
+            for i in range(p_num):
+                task_list.append((task, i, circ_dir, layout, repeat))
+        else:
+            seg = 100
+            for i in range(p_num):
+                for begin in range(0, repeat, seg):
+                    task_list.append(
+                        (
+                            task_seg,
+                            i,
+                            circ_dir,
+                            layout,
+                            repeat,
+                            begin,
+                            min(repeat, begin + seg),
+                        ),
+                    )
+
+        with Pool(processes=p_num) as pool:
+            pool.map(run, task_list)
 
 
 if __name__ == "__main__":
-    # for x in get_ibmq_topo():
-    #     print(x)
-    gen_ibmq_data(500)
+    gen_ibmq_data(repeat=1000, p_num=3)

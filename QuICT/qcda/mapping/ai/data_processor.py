@@ -3,6 +3,7 @@ from typing import Dict, Generator, Iterable, List, Tuple, Union
 from QuICT.core.circuit.circuit import Circuit
 from QuICT.core.gate.gate import BasicGate
 from QuICT.core.layout import Layout, LayoutEdge
+from QuICT.qcda.mapping.ai.data_def import PairData
 from os import path, walk
 from QuICT.tools.interface import OPENQASMInterface
 import torch
@@ -48,22 +49,21 @@ class MappingDataProcessor:
 
     def _build_data_from_circ(
         self, pc_conn: List[LayoutEdge], src_circ: Circuit, res_circ: Circuit
-    ) -> Tuple[Dict[str, Data], int]:
-        topo_x = torch.zeros(
+    ) -> Tuple[PairData, int]:
+        x_topo = torch.zeros(
             (src_circ.width(), self.topo_feature_dim), dtype=torch.float
         )
-        topo_x[:, : src_circ.width()] = torch.eye(src_circ.width(), dtype=torch.float)
-        topo_edge_index = []
+        x_topo[:, : src_circ.width()] = torch.eye(src_circ.width(), dtype=torch.float)
+        edge_index_topo = []
         for edge in pc_conn:
-            topo_edge_index.append((edge.u, edge.v,))
-            topo_edge_index.append((edge.v, edge.u,))
-        topo_edge_index = (
-            torch.tensor(topo_edge_index, dtype=torch.long).t().contiguous()
+            edge_index_topo.append((edge.u, edge.v,))
+            edge_index_topo.append((edge.v, edge.u,))
+        edge_index_topo = (
+            torch.tensor(edge_index_topo, dtype=torch.long).t().contiguous()
         )
-        topo_data = Data(x=topo_x, edge_index=topo_edge_index)
 
         lc_node_num = 0
-        lc_edge_index = []
+        edge_index_lc = []
         qubit_num = src_circ.width()
         cur_occ = [-1 for _ in range(qubit_num)]
         for gate in src_circ.gates:
@@ -73,28 +73,28 @@ class MappingDataProcessor:
                 continue
             for arg in args:
                 if cur_occ[arg] != -1:
-                    lc_edge_index.append(
+                    edge_index_lc.append(
                         [cur_occ[arg], lc_node_num,]
                     )
                 cur_occ[arg] = lc_node_num
             lc_node_num += 1
-        lc_x = torch.zeros((lc_node_num, self.lc_feature_dim), dtype=torch.float)
-        lc_x[:, :lc_node_num] = torch.eye(lc_node_num, dtype=torch.float)
+        x_lc = torch.zeros((lc_node_num, self.lc_feature_dim), dtype=torch.float)
+        x_lc[:, :lc_node_num] = torch.eye(lc_node_num, dtype=torch.float)
 
-        lc_edge_index = torch.tensor(lc_edge_index, dtype=torch.long).t().contiguous()
-        lc_data = Data(x=lc_x, edge_index=lc_edge_index)
+        edge_index_lc = torch.tensor(edge_index_lc, dtype=torch.long).t().contiguous()
 
         extra_swap_cnt = len(res_circ.gates) - len(src_circ.gates)
 
-        data_dict = {}
-        data_dict["topo"] = topo_data
-        data_dict["lc"] = lc_data
+        pair_data = PairData(
+            edge_index_topo=edge_index_topo,
+            x_topo=x_topo,
+            edge_index_lc=edge_index_lc,
+            x_lc=x_lc,
+        )
 
-        return data_dict, extra_swap_cnt
+        return pair_data, extra_swap_cnt
 
-    def _load_by_topo_name(
-        self, topo_name: str
-    ) -> Iterable[Tuple[Dict[str, Data], int]]:
+    def _load_by_topo_name(self, topo_name: str) -> Iterable[Tuple[PairData, int]]:
         layout_edges = self._load_layout_edge(topo_name)
         for src_circ, res_circ in self._load_circuits(topo_name):
             yield self._build_data_from_circ(layout_edges, src_circ, res_circ)
