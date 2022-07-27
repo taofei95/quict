@@ -1,12 +1,12 @@
 from typing import *
 import numpy as np
-from QuICT.core import gate
 from QuICT.core.circuit.circuit import Circuit
 
 from QuICT.core.gate import BasicGate, CompositeGate, GateType
 from QuICT.core.utils.gate_type import MatrixType
 from QuICT.simulation.utils import DisjointSet, dp, build_unitary_gate
 import QuICT.ops.linalg.cpu_calculator as CPUCalculator
+from QuICT.simulation.optimization import Optimizer
 
 
 class UnitarySimulator():
@@ -347,6 +347,7 @@ class UnitarySimulator():
         gates_order_by_depth = self._circuit.get_gates_order_by_depth()
         unitary_per_qubits = []     # List[List[unitary_matrix(np/cp.ndarray), target_qubits(List[int])]]
         inside_qubits = {}          # Dict[qubit_idx: related index in unitary_per_qubits]
+        # TODO: add GroupGateSet for related 2-qubits gates
         for gates in gates_order_by_depth:
             for gate in gates:
                 if gate.controls + gate.targets >= 3:
@@ -366,11 +367,14 @@ class UnitarySimulator():
                         )
                         unitary_per_qubits[inside_qubits[args[0]]] = [merged_unitary, merged_unitary_args]
                     else:
-                        inside_qubits[args[0]] = len(unitary_per_qubits)
                         unitary_per_qubits.append([matrix, args])
+                        inside_qubits[args[0]] = len(unitary_per_qubits) - 1
                 else:       # Deal with double-qubits gate
-                    intersect_qubits = [arg for arg in args if arg in inside_qubits.keys()]
-                    outer_qubits = [arg for arg in args if arg not in inside_qubits.keys()]
+                    if args[0] > args[1]:
+                        self._computer.MatrixPermutation(matrix, self._array_helper.array([1, 0]), changeInput=True)
+                        args.sort()
+
+                    intersect_qubits = set(args) & set(inside_qubits.keys())
                     if len(intersect_qubits) == 2:
                         related_idx0 = inside_qubits[args[0]]
                         related_idx1 = inside_qubits[args[1]]
@@ -381,53 +385,19 @@ class UnitarySimulator():
                                 matrix, args
                             )
                             unitary_per_qubits[related_idx0] = [merged_unitary, merged_unitary_args]
-                        else:
-                            left_unitary, left_unitary_args = unitary_per_qubits[related_idx0]
-                            right_unitary, right_unitary_args = unitary_per_qubits[related_idx1]
-                            merged_unitary, merged_unitary_args = self.merge_unitaries(
-                                left_unitary, left_unitary_args,
-                                right_unitary, right_unitary_args
-                            )
-                            merged_unitary, merged_unitary_args = self.merge_unitaries(
-                                merged_unitary, merged_unitary_args,
-                                matrix, args
-                            )
+                            continue
 
-                            leaved_idx = min([related_idx0, related_idx1])
-                            deleted_idx = max([related_idx0, related_idx1])
-                            unitary_per_qubits[leaved_idx] = [merged_unitary, merged_unitary_args]
-                            del unitary_per_qubits[deleted_idx]
-                            for temp_arg in merged_unitary_args:
-                                inside_qubits[temp_arg] = leaved_idx
+                    unitary_per_qubits.append([matrix, args])
+                    inside_qubits[args[0]] = len(unitary_per_qubits) - 1
+                    inside_qubits[args[1]] = len(unitary_per_qubits) - 1
 
-                            for key, value in inside_qubits.items():
-                                if value > deleted_idx:
-                                    inside_qubits[key] -= 1
-                    elif len(intersect_qubits) == 1:
-                        related_idx = inside_qubits[intersect_qubits[0]]
-                        related_unitary, related_unitary_args = unitary_per_qubits[related_idx]
-                        merged_unitary, merged_unitary_args = self.merge_unitaries(
-                            related_unitary, related_unitary_args,
-                            matrix, args
-                        )
-                        unitary_per_qubits[related_idx] = [merged_unitary, merged_unitary_args]
-                        inside_qubits[outer_qubits[0]] = related_idx
-                    else:
-                        for arg in args:
-                            inside_qubits[arg] = len(unitary_per_qubits)
-
-                        unitary_per_qubits.append([matrix, args])
-
-        # if len(unitary_per_qubits) == 1:
-        #     return unitary_per_qubits[0][0]
-
-        based_unitary, based_unitary_args = unitary_per_qubits[0]
-        for ut, ut_args in unitary_per_qubits[1:]:
-            based_unitary, based_unitary_args = self.merge_unitaries(
-                based_unitary, based_unitary_args,
-                ut, ut_args
-            )
-
+        half_size = len(unitary_per_qubits) // 2
+        left_unitary, left_unitary_args = self._combined_unitaries_by_qubits(unitary_per_qubits[:half_size])
+        right_unitary, right_unitary_args = self._combined_unitaries_by_qubits(unitary_per_qubits[half_size:])
+        based_unitary, based_unitary_args = self.merge_unitaries(
+            left_unitary, left_unitary_args,
+            right_unitary, right_unitary_args
+        )
         if len(based_unitary_args) != self._qubits_num:
             return self._tensor_unitary(based_unitary, based_unitary_args, list(range(self._qubits_num)))
 
@@ -438,6 +408,14 @@ class UnitarySimulator():
         insection_args = u1_args_set & u2_args_set
         if len(insection_args) == 0:
             return self._computer.tensor(u1, u2), u1_args + u2_args
+
+        if u1_args_set == u2_args_set:
+            args_idx = [u1_args.index(u2_arg) for u2_arg in u2_args]
+            self._computer.MatrixPermutation(
+                u2,
+                self._array_helper.array(args_idx),
+                changeInput=True
+            )
 
         union_args = u1_args + [i for i in u2_args if i not in u1_args] if len(u1_args) >= len(u2_args) else \
             u2_args + [i for i in u1_args if i not in u2_args]
@@ -451,20 +429,19 @@ class UnitarySimulator():
 
     def _tensor_unitary(self, unitary, unitary_args, extend_args):
         uargs_idx = [extend_args.index(uarg) for uarg in unitary_args]
-        left, right = min(uargs_idx), max(uargs_idx)
-        if right - left == len(unitary_args) - 1:
-            mono_diff = np.diff(uargs_idx)
+        mono_diff = np.diff(uargs_idx)
+        if np.allclose(abs(mono_diff), 1):
             if np.allclose(mono_diff, -1):
                 self._computer.MatrixPermutation(
                     unitary,
-                    np.arange(len(unitary_args) - 1, -1, -1),
+                    self._array_helper.arange(len(unitary_args) - 1, -1, -1),
                     changeInput=True
                 )
 
             return self._computer.MatrixTensorI(
                 unitary,
-                1 << (left - 0),
-                1 << (len(extend_args) - 1 - right)
+                1 << (min(uargs_idx) - 0),
+                1 << (len(extend_args) - 1 - max(uargs_idx))
             )
 
         tensor_matrix = self._computer.MatrixTensorI(
@@ -475,7 +452,24 @@ class UnitarySimulator():
         tmatrix_args = unitary_args + [earg for earg in extend_args if earg not in unitary_args]
         permutation_index = [extend_args.index(tm_arg) for tm_arg in tmatrix_args]
 
-        return self._computer.MatrixPermutation(tensor_matrix, np.array(permutation_index))
+        return self._computer.MatrixPermutation(tensor_matrix, self._array_helper.array(permutation_index))
+
+    def _combined_unitaries_by_qubits(self, unitaries):
+        idx = np.arange(len(unitaries), dtype=np.int)
+        # np.random.shuffle(idx)
+        if len(idx) == 4:
+            idx = [1, 2, 0, 3]
+        print(idx)
+
+        based_unitary, based_unitary_args = unitaries[idx[0]]
+        for i in idx[1:]:
+            ut, ut_args = unitaries[i]
+            based_unitary, based_unitary_args = self.merge_unitaries(
+                based_unitary, based_unitary_args,
+                ut, ut_args
+            )
+
+        return based_unitary, based_unitary_args
 
     def run(self, circuit, use_previous: bool = False) -> np.ndarray:
         import time
@@ -491,7 +485,7 @@ class UnitarySimulator():
         et_init = time.time()
         print(f"vector/circuit initial time: {et_init - stime}")
         # Step 1: Generate the unitary matrix of the given circuit
-        unitary_matrix = self.get_unitary_matrix()
+        unitary_matrix = self.get_unitary_matrix_new()
         et_unitary = time.time()
         print(f"generate unitary matrix time: {et_unitary - et_init}")
         # Step 2: Simulation with the unitary matrix and qubit's state vector
