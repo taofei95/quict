@@ -64,7 +64,10 @@ class OPENQASMInterface(BasicInterface):
         "cz": GateType.cz,
         "ch": GateType.ch,
         "crz": GateType.crz,
-        "rzz": GateType.Rzz,
+        "ccrz": GateType.ccrz,
+        "rzz": GateType.rzz,
+        "rxx": GateType.rxx,
+        "ryy": GateType.ryy,
         "cu1": GateType.cu1,
         "cu3": GateType.cu3,
         "cswap": GateType.cswap

@@ -29,14 +29,14 @@ class GateType(Enum):
     cu1 = "controlled-U1 gate"
     cu3 = "controlled-U3 gate"
     fsim = "fSim gate"
-    Rxx = "Rxx gate"
-    Ryy = "Ryy gate"
-    Rzz = "Rzz gate"
+    rxx = "Rxx gate"
+    ryy = "Ryy gate"
+    rzz = "Rzz gate"
     swap = "Swap gate"
     cswap = "cswap gate"
     ccx = "Toffoli gate"
     ccz = "Multi-Control Z Gate"
-    CCRz = "CCRz gate"
+    ccrz = "CCRz gate"
 
     # Special gate below
     measure = "Measure gate"
@@ -154,8 +154,8 @@ DIAGONAL_GATE_SET = [
     GateType.cz,
     GateType.crz,
     GateType.cu1,
-    GateType.Rzz,
-    GateType.CCRz
+    GateType.rzz,
+    GateType.ccrz
 ]
 
 

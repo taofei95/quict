@@ -69,12 +69,12 @@ unitary_1 = (
     GateType.ry,
 )
 
-diag_2 = (GateType.Rzz,)
+diag_2 = (GateType.rzz,)
 
 unitary_2 = (
     GateType.fsim,
-    GateType.Rxx,
-    GateType.Ryy,
+    GateType.rxx,
+    GateType.ryy,
     GateType.swap,  # Maybe this could be optimized
 )
 

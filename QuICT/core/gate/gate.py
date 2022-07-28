@@ -1489,7 +1489,7 @@ class RxxGate(BasicGate):
             controls=0,
             targets=2,
             params=1,
-            type=GateType.Rxx,
+            type=GateType.rxx,
             matrix_type=MatrixType.normal_normal
         )
 
@@ -1541,7 +1541,7 @@ class RyyGate(BasicGate):
             controls=0,
             targets=2,
             params=1,
-            type=GateType.Ryy,
+            type=GateType.ryy,
             matrix_type=MatrixType.normal_normal
         )
 
@@ -1593,7 +1593,7 @@ class RzzGate(BasicGate):
             controls=0,
             targets=2,
             params=1,
-            type=GateType.Rzz,
+            type=GateType.rzz,
             matrix_type=MatrixType.diag_diag
         )
 
@@ -2083,7 +2083,7 @@ class CCRzGate(BasicGate):
             controls=2,
             targets=1,
             params=1,
-            type=GateType.CCRz,
+            type=GateType.ccrz,
             matrix_type=MatrixType.diagonal
         )
 

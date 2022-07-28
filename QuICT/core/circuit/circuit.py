@@ -442,8 +442,8 @@ class Circuit(CircuitBased):
             typelist = [
                 GateType.rx, GateType.ry, GateType.rz,
                 GateType.cx, GateType.cy, GateType.crz,
-                GateType.ch, GateType.cz, GateType.Rxx,
-                GateType.Ryy, GateType.Rzz, GateType.fsim
+                GateType.ch, GateType.cz, GateType.rxx,
+                GateType.ryy, GateType.rzz, GateType.fsim
             ]
 
         if probabilities is not None:

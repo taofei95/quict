@@ -15,7 +15,7 @@ elimination = [
 ]
 addition = [
     GateType.u1, GateType.rx, GateType.ry, GateType.rz, GateType.phase,
-    GateType.crz, GateType.cu1, GateType.fsim, GateType.Rxx, GateType.Ryy, GateType.Rzz
+    GateType.crz, GateType.cu1, GateType.fsim, GateType.rxx, GateType.ryy, GateType.rzz
 ]
 multiplication = [GateType.unitary]
 other = [GateType.sx, GateType.sy, GateType.s, GateType.sdg, GateType.t, GateType.tdg]
