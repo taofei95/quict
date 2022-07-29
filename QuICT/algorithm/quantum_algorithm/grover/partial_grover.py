@@ -5,6 +5,7 @@
 # @File    : partial_grover.py
 
 import numpy as np
+import logging
 
 from QuICT.core import Circuit
 from QuICT.core.gate import *
@@ -53,7 +54,7 @@ class PartialGrover:
         assert k >= 2, "at least 2 ancilla, which is shared bt the Grover part"
         K = 1 << n_block
         N = 1 << n
-        eps = 1 / K  # can use other epsilon
+        eps = 1 / np.sqrt(K)  # can use other epsilon
         r1, r2 = calculate_r1_r2_one_target(N, K, eps)
 
         circuit = Circuit(n + k + 1)
@@ -115,6 +116,11 @@ class PartialGrover:
         # Measure
         for idx in index_q:
             Measure | circuit(idx)
+        logging.info(f"circuit width          = {circuit.width():4}")
+        # logging.info(f"circuit depth          = {circuit.depth():4}")
+        logging.info(f"oracle  calls          = {r1+r2:4}")
+        # logging.info(f"oracle  size           = {oracle.size():4}")
+        logging.info(f"other circuit size     = {circuit.size() - oracle.size()*(r1+r2):4}")
         return circuit
 
     @staticmethod

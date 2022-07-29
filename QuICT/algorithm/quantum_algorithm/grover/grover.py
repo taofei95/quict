@@ -74,8 +74,10 @@ class Grover:
         for idx in index_q:
             Measure | circuit(idx)
         logging.info(f"circuit width          = {circuit.width():4}")
-        logging.info(f"circuit depth          = {circuit.depth():4}")
-        logging.info(f"circuit size           = {circuit.size():4}")
+        # logging.info(f"circuit depth          = {circuit.depth():4}")
+        logging.info(f"oracle  calls          = {T:4}")
+        # logging.info(f"oracle  size           = {oracle.size():4}")
+        logging.info(f"other circuit size     = {circuit.size() - oracle.size()*T:4}")
         return circuit
 
     @staticmethod
