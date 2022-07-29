@@ -456,10 +456,6 @@ class UnitarySimulator():
 
     def _combined_unitaries_by_qubits(self, unitaries):
         idx = np.arange(len(unitaries), dtype=np.int)
-        # np.random.shuffle(idx)
-        if len(idx) == 4:
-            idx = [1, 2, 0, 3]
-        print(idx)
 
         based_unitary, based_unitary_args = unitaries[idx[0]]
         for i in idx[1:]:
@@ -485,7 +481,7 @@ class UnitarySimulator():
         et_init = time.time()
         print(f"vector/circuit initial time: {et_init - stime}")
         # Step 1: Generate the unitary matrix of the given circuit
-        unitary_matrix = self.get_unitary_matrix_new()
+        unitary_matrix = self.get_unitary_matrix()
         et_unitary = time.time()
         print(f"generate unitary matrix time: {et_unitary - et_init}")
         # Step 2: Simulation with the unitary matrix and qubit's state vector
@@ -536,21 +532,13 @@ class UnitarySimulator():
 
     def _run(self, matrix):
         if self._device == "CPU":
-            default_parameters = (matrix, self._qubits_num, self._vector, self._qubits_num, list(range(self._qubits_num)))
-            self._vector = self._computer.matrix_dot_vector(*default_parameters)
+            self._vector = self._computer.dot(matrix, self._vector)
         else:
-            aux = self._array_helper.zeros_like(self._vector)
             matrix = self._array_helper.array(matrix)
-
-            self._computer.matrix_dot_vector(
+            self._vector = self._computer.dot(
                 matrix,
-                self._qubits_num,
-                self._vector,
-                self._qubits_num,
-                list(range(self._qubits_num)),
-                aux
+                self._vector
             )
-            self._vector = aux
 
     def sample(self, shots: int):
         """_summary_

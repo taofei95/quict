@@ -147,10 +147,17 @@ def dot(A, B):
     if not isinstance(B, np.ndarray):
         B = np.array(B)
 
-    if A.dtype == np.complex64 and B.dtype == np.complex64:
-        return linalg.dotf(A, B)
-    elif A.dtype == np.complex128 and B.dtype == np.complex128:
-        return linalg.dotd(A, B)
+    assert A.dtype == B.dtype and A.shape[1] == B.shape[0]
+    if A.dtype == np.complex64:
+        if B.ndim == 1:
+            return linalg.vdotmf(A, B)
+        else:
+            return linalg.dotf(A, B)
+    elif A.dtype == np.complex128:
+        if B.ndim == 1:
+            return linalg.vdotmd(A, B)
+        else:
+            return linalg.dotd(A, B)
     else:
         raise TypeError(f"The matrix should be complex64 or complex128, not {A.dtype} and {B.dtype}.")
 
@@ -181,11 +188,11 @@ def multiply(A, B):
 
 
 def matrix_dot_vector(
-    mat: np.ndarray,
-    mat_bit: np.int32,
     vec: np.ndarray,
-    vec_bit: np.int32,
-    affect_args: np.ndarray
+    vec_bit: int,
+    mat: np.ndarray,
+    mat_bit: int,
+    mat_args: np.ndarray
 ):
     """ Dot the quantum gate's matrix and qubits'state vector, depending on the target qubits of gate.
 
@@ -194,7 +201,7 @@ def matrix_dot_vector(
         mat_bit (np.int32): The quantum gate's qubit number
         vec (np.ndarray): The state vector of qubits
         vec_bit (np.int32): The number of qubits
-        affect_args (np.ndarray): The target qubits of quantum gate
+        mat_args (np.ndarray): The target qubits of quantum gate
 
     Raises:
         TypeError: matrix and vector should be complex and with same precision
@@ -210,15 +217,18 @@ def matrix_dot_vector(
     if not isinstance(vec, np.ndarray):
         vec = np.array(vec)
 
-    if not isinstance(affect_args, np.ndarray):
-        affect_args = np.array(affect_args, np.int32)
-    elif affect_args.dtype != np.int32:
-        affect_args = affect_args.astype(np.int32)
+    if not isinstance(mat_args, np.ndarray):
+        mat_args = np.array(mat_args, np.int32)
+    elif mat_args.dtype != np.int32:
+        mat_args = mat_args.astype(np.int32)
+
+    if mat_bit == vec_bit:
+        return dot(mat, vec)
 
     if mat.dtype == np.complex64 and vec.dtype == np.complex64:
-        return linalg.matdotvecf(mat, mat_bit, vec, vec_bit, affect_args)
+        return linalg.matdotvecf(mat, mat_bit, vec, vec_bit, mat_args)
     elif mat.dtype == np.complex128 and vec.dtype == np.complex128:
-        return linalg.matdotvecd(mat, mat_bit, vec, vec_bit, affect_args)
+        return linalg.matdotvecd(mat, mat_bit, vec, vec_bit, mat_args)
     else:
         raise TypeError(f"The matrix should be complex64 or complex128, not {mat.dtype} and {vec.dtype}.")
 

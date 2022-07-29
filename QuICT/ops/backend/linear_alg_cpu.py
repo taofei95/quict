@@ -115,6 +115,8 @@ def tensor(A, B):
 
 @cc.export('dotf', 'c8[:, :](c8[:, :], c8[:, :])')
 @cc.export('dotd', 'c16[:, :](c16[:, :], c16[:, :])')
+@cc.export('vdotmf', 'c8[:](c8[:, :], c8[:])')
+@cc.export('vdotmd', 'c16[:](c16[:, :], c16[:])')
 def dot(A, B):
     """ dot matrix A and matrix B
 
