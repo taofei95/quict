@@ -53,7 +53,35 @@
           style="margin: 0px 10px; font-family: 'Segoe UI Symbol'"> Confirm </el-button>
       </div>
       <div id="step_3" class="div_not_selected">
-        <!-- result div -->
+        <el-tabs type="border-card" style="background: transparent !important; border: 0px solid">
+              <el-tab-pane label="Table">
+                <el-row style="height: 40px" v-if="Object.keys(OutputContent).length > 0">
+                  <el-col :span="4"></el-col>
+                  <el-col :span="6"><b>State</b></el-col>
+                  <el-col :span="4"></el-col>
+                  <el-col :span="6"><b>Measured</b></el-col>
+                  <el-col :span="4"></el-col>
+                </el-row>
+
+                <el-row style="height: 40px" v-for="[k, v] in Object.entries(OutputContent)" :key="k">
+                  <el-col :span="4"></el-col>
+                  <el-col :span="6">{{ k }}</el-col>
+                  <el-col :span="4"></el-col>
+                  <el-col :span="6">{{ v }}</el-col>
+                  <!-- <el-col :span="6" v-if="result[2].startsWith('-')"
+                    >{{ result[1]
+                    }}{{ result[2].replace("-", " - ") }} j</el-col
+                  >
+                  <el-col :span="6" v-else
+                    >{{ result[1] }} + {{ result[2] }} j</el-col
+                  > -->
+                  <el-col :span="4"></el-col>
+                </el-row>
+              </el-tab-pane>
+              <el-tab-pane label="Histogram">
+                <div id="o_histogram"></div>
+              </el-tab-pane>
+            </el-tabs>
       </div>
     </el-main>
   </el-container>
@@ -110,6 +138,7 @@ export default {
       },
       LoadConfirmBtnEnable: false,
       NewConfirmBtnEnable: false,
+      OutputContent: {},
     };
   },
   components: {
@@ -603,6 +632,131 @@ export default {
       }
       this.n_VisContent.q.pop();
     },
+    DrawHistogram(result) {
+      // 绘制Amplitude图
+      console.log("DrawHistogram", result);
+
+      let width = Object.entries(result).length * 30 + 100;
+      let height = 350;
+      let histogram_zone = d3.select("#o_histogram");
+      histogram_zone.selectAll("*").remove();
+      let chart = this.BarChart(Object.entries(result), {
+        x: (d) => d[0],
+        y: (d) => d[1],
+        title: (d) => {
+          // return `Amplitude:${d3.format(".3f")(d[3])}\nPhase angle:${d[4]}`;
+          return `${d[0]}\nCounts:${d[1]}`;
+        },
+        xDomain: d3.map(Object.entries(result), (d) => d[0]), // sort by descending frequency
+        yFormat: ".1f", //".3f", //"d",
+        // yLabel: "Amplitude",
+        yLabel: "nCounts",
+        width: width,
+        height: height,
+        color: "steelblue",
+      });
+      histogram_zone.node().appendChild(chart);
+    },
+    BarChart( // 用d3绘制barchart
+      data,
+      {
+        x = (d, i) => i, // given d in data, returns the (ordinal) x-value
+        y = (d) => d, // given d in data, returns the (quantitative) y-value
+        title, // given d in data, returns the title text
+        marginTop = 20, // the top margin, in pixels
+        marginRight = 0, // the right margin, in pixels
+        marginBottom = 30, // the bottom margin, in pixels
+        marginLeft = 40, // the left margin, in pixels
+        width = 640, // the outer width of the chart, in pixels
+        height = 400, // the outer height of the chart, in pixels
+        xDomain, // an array of (ordinal) x-values
+        xRange = [marginLeft, width - marginRight], // [left, right]
+        yType = d3.scaleLinear, // y-scale type
+        yDomain, // [ymin, ymax]
+        yRange = [height - marginBottom, marginTop], // [bottom, top]
+        xPadding = 0.1, // amount of x-range to reserve to separate bars
+        yFormat, // a format specifier string for the y-axis
+        yLabel, // a label for the y-axis
+        color = "currentColor", // bar fill color
+      } = {}
+    ) {
+      // Compute values.
+      const X = d3.map(data, x);
+      const Y = d3.map(data, y);
+
+      // Compute default domains, and unique the x-domain.
+      if (xDomain === undefined) xDomain = X;
+      if (yDomain === undefined) yDomain = [0, d3.max(Y)];
+      xDomain = new d3.InternSet(xDomain);
+
+      // Omit any data not present in the x-domain.
+      const I = d3.range(X.length).filter((i) => xDomain.has(X[i]));
+
+      // Construct scales, axes, and formats.
+      const xScale = d3.scaleBand(xDomain, xRange).padding(xPadding);
+      const yScale = yType(yDomain, yRange);
+      const xAxis = d3.axisBottom(xScale).tickSizeOuter(0);
+      const yAxis = d3.axisLeft(yScale).ticks(height / 40, yFormat);
+
+      // Compute titles.
+      if (title === undefined) {
+        const formatValue = yScale.tickFormat(100, yFormat);
+        title = (i) => `${X[i]}\n${formatValue(Y[i])}`;
+      } else {
+        const O = d3.map(data, (d) => d);
+        const T = title;
+        title = (i) => T(O[i], i, data);
+      }
+
+      const svg = d3
+        .create("svg")
+        .attr("width", width)
+        .attr("height", height)
+        .attr("viewBox", [0, 0, width, height])
+        .attr("style", "max-width: 100%; height: auto; height: intrinsic;");
+
+      svg
+        .append("g")
+        .attr("transform", `translate(${marginLeft},0)`)
+        .call(yAxis)
+        .call((g) => g.select(".domain").remove())
+        .call((g) =>
+          g
+            .selectAll(".tick line")
+            .clone()
+            .attr("x2", width - marginLeft - marginRight)
+            .attr("stroke-opacity", 0.1)
+        )
+        .call((g) =>
+          g
+            .append("text")
+            .attr("x", -marginLeft)
+            .attr("y", 10)
+            .attr("fill", "currentColor")
+            .attr("text-anchor", "start")
+            .text(yLabel)
+        );
+
+      const bar = svg
+        .append("g")
+        .attr("fill", color)
+        .selectAll("rect")
+        .data(I)
+        .join("rect")
+        .attr("x", (i) => xScale(X[i]))
+        .attr("y", (i) => yScale(Y[i]))
+        .attr("height", (i) => yScale(0) - yScale(Y[i]))
+        .attr("width", xScale.bandwidth());
+
+      if (title) bar.append("title").text(title);
+
+      svg
+        .append("g")
+        .attr("transform", `translate(0,${height - marginBottom})`)
+        .call(xAxis);
+
+      return svg.node();
+    },
   },
   mounted: function () {
     this.socket.on("QCDA_o_qasm_load", (content) => {
@@ -669,6 +823,17 @@ export default {
       this.all_sets = content.all_sets;
       this.all_sets.push(customer_set);
       this.$refs.n_visVue.vis_change();
+    });
+
+    this.socket.on("o_run_result", (content) => {
+      // 收到后端运行qasm结果， 在前端展示
+      console.log(content);
+      if (!content.uuid == this.uuid) {
+        return;
+      }
+      this.OutputContent = content.run_result.counts;
+      this.DrawHistogram(content.run_result.counts);
+      this.confirm_o_QCDA();
     });
 
   },
