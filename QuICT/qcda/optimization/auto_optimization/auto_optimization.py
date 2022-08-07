@@ -954,28 +954,36 @@ class AutoOptimization(Optimization):
         Returns:
             int: Number of gates reduced.
         """
+        # print('hello')
         cnt = 0
         success = True
         while success:
             success = False
             for template in gate_preserving_rewrite_template:
                 for node in gates.topological_sort():
-                    mapping = template.compare((node, -1))
+                    mapping = template.compare((node, -1), dummy_rz=True)
                     if not mapping:
                         continue
                     original, undo_mapping = template.regrettable_replace(mapping)
 
                     if cls.try_float_cancel_two_qubit_gates(gates):
+                        # print('get', cnt)
                         # if rewriting enables cancellation else where, do it and restart template matching
                         cnt += cls.float_cancel_two_qubit_gates(gates)
                         success = True
                         break
-                    else:
-                        # undo replacing if otherwise
-                        template.undo_replace(original, undo_mapping)
+
+                    # tmp = cls.cancel_two_qubit_gates(gates)
+                    # if tmp:
+                    #     cnt += tmp
+                    #     success = True
+                    #     break
+                    #
+                    # undo replacing if otherwise
+                    template.undo_replace(original, undo_mapping)
                 if success:
                     break
-
+        # print('exit')
         return cnt
 
     @classmethod
@@ -993,6 +1001,7 @@ class AutoOptimization(Optimization):
             cnt += template.replace_all(gates) * template.weight
         if cnt:
             cnt += cls.float_cancel_two_qubit_gates(gates)
+            cnt += cls.cancel_two_qubit_gates(gates)
         return cnt
 
     @classmethod

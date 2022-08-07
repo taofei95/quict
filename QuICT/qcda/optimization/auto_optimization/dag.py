@@ -132,6 +132,12 @@ class DAG(Iterable):
             self.predecessors = None
             self.successors = None
 
+    class VirtualNode(Node):
+        def __init__(self, gate_: BasicGate, predecessors, successors):
+            super().__init__(gate_=gate_)
+            self.predecessors = predecessors
+            self.successors = successors
+
     def __init__(self, gates: Circuit):
         """
         Args:
@@ -344,11 +350,13 @@ class DAG(Iterable):
 
             node.qubit_id = {qubit_: i for i, qubit_ in enumerate(node.qubit_loc)}
 
-    def compare_circuit(self, other: Tuple[Node, int], anchor_qubit: int, flag_enabled: bool = False):
+    def compare_circuit(self, other: Tuple[Node, int], anchor_qubit: int,
+                        flag_enabled: bool = False, dummy_rz: bool = False):
         """
         Compare this circuit with another circuit.
         This circuit starts from the first gate on the `anchor_qubit`.
         The other starts from (gate, wire) defined by variable `other`.
+        Param values (such as phases in Rz) ignored.
 
         Args:
             other(Tuple[Node, int]): start point of the other circuit
@@ -356,12 +364,13 @@ class DAG(Iterable):
             flag_enabled(bool): Whether consider `flag` field. If true,
                 nodes already with FLAG_VISITED will be
                 skipped. Nodes in the matching will be set FLAG_VISITED.
+            dummy_rz(bool): Enable dummy_rz feature: when there is a rz is `self`
+            but not in `other`, create a virtual Rz(0) in `other` to match them.
 
         Returns:
             Dict[int, DAG.Node]: mapping from id(node of this circuit) to
                 matched node in the other circuit. If not matched, return None.
         """
-
         t_node, t_qubit = self.start_nodes[anchor_qubit].successors[0]
         o_node, o_qubit = other[0], (t_qubit if other[1] == -1 else other[1])
         if o_node.gate_type is None:
@@ -372,7 +381,9 @@ class DAG(Iterable):
 
         mapping = {id(t_node): o_node}
         queue = deque([(t_node, o_node)])
+        # print('>>>')
         while len(queue) > 0:
+            # print('while')
             u, v = queue.popleft()
             for neighbors in ['predecessors', 'successors']:
                 for qubit_ in range(u.size):
@@ -383,14 +394,26 @@ class DAG(Iterable):
 
                     v_nxt, v_qubit = getattr(v, neighbors)[qubit_]
                     if id(u_nxt) in mapping:
+                        if dummy_rz and isinstance(mapping[id(u_nxt)], DAG.VirtualNode):
+                            continue
                         if id(mapping[id(u_nxt)]) != id(v_nxt) or u_qubit != v_qubit:
                             return None
                         continue
 
                     assert v_nxt, "v_nxt == None should not happen"
-                    if not v_nxt.gate_type or u_qubit != v_qubit or \
-                            (v_nxt.flag and flag_enabled) or \
-                            u_nxt.gate_type != v_nxt.gate_type:
+                    # v_nxt fails to match u_nxt
+                    if not v_nxt.gate_type or (v_nxt.flag and flag_enabled) or \
+                            u_nxt.gate_type != v_nxt.gate_type or u_qubit != v_qubit:
+                        # if u_nxt is a rz, put a virtual node in v_nxt
+                        if dummy_rz and u_nxt.gate_type == GateType.rz:
+                            vnode = DAG.VirtualNode(
+                                Rz(0),
+                                [(v, qubit_)] if neighbors == 'successors' else [(v_nxt, v_qubit)],
+                                [(v_nxt, v_qubit)] if neighbors == 'successors' else [(v, qubit_)]
+                            )
+                            mapping[id(u_nxt)] = vnode
+                            queue.append((u_nxt, vnode))
+                            continue
                         return None
 
                     mapping[id(u_nxt)] = v_nxt

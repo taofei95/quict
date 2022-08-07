@@ -26,7 +26,7 @@ class OptimizingTemplate:
         self.weight = weight
         self.phase = phase
 
-    def compare(self, other: Tuple[DAG.Node, int], flag_enabled=False):
+    def compare(self, other: Tuple[DAG.Node, int], flag_enabled=False, dummy_rz=False):
         """
         Compare the other circuit with template.
         This circuit will start from the first gate on qubit `anchor`.
@@ -42,7 +42,7 @@ class OptimizingTemplate:
             Dict[int, DAG.Node]: mapping from id(node of this circuit) to
                 matched node in the other circuit. If not matched, return None.
         """
-        return self.template.compare_circuit(other, self.anchor, flag_enabled)
+        return self.template.compare_circuit(other, self.anchor, flag_enabled, dummy_rz)
 
     def get_replacement(self, mapping):
         """
@@ -143,7 +143,7 @@ class OptimizingTemplate:
 
         matched = []
         for node in dag.topological_sort():
-            mapping = self.compare((node, -1), flag_enabled=True)
+            mapping = self.compare((node, -1), flag_enabled=True, dummy_rz=True)
             if not mapping:
                 continue
             matched.append(mapping)
@@ -179,6 +179,8 @@ class ParameterizedTemplate(OptimizingTemplate):
         r_rz_list = list(filter(lambda g: g.gate_type == GateType.rz, replacement.topological_sort()))
         for idx, rz in zip(self.param_order, r_rz_list):
             rz.params = mapping[id(self.rz_list[idx])].params.copy()
+            if np.isclose(float(rz.params[0]), 0):
+                rz.erase()
         return replacement
 
 
@@ -187,6 +189,13 @@ def get_circuit_from_list(n_qubit, gate_list):
     for Gate_, qubit_ in gate_list:
         Gate_ | circ(qubit_)
     return circ
+
+
+def reverse_order(order):
+    rev = [0] * len(order)
+    for idx, val in enumerate(order):
+        rev[val] = idx
+    return rev
 
 
 def generate_hadamard_gate_templates() -> List[OptimizingTemplate]:
@@ -269,7 +278,8 @@ def generate_gate_preserving_rewrite_template() -> List[ParameterizedTemplate]:
         tpl_circ = get_circuit_from_list(n_qubit, tpl)
         rpl_circ = get_circuit_from_list(n_qubit, rpl)
         ret.append(ParameterizedTemplate(DAG(tpl_circ), DAG(rpl_circ), param_order=order))
-    return ret
+        ret.append(ParameterizedTemplate(DAG(rpl_circ), DAG(tpl_circ), param_order=reverse_order(order)))
+        return ret
 
 
 def generate_gate_reducing_rewrite_template() -> List[ParameterizedTemplate]:
