@@ -189,7 +189,7 @@ class DAG(Iterable):
         cur_nodes = self.start_nodes.copy()
 
         var_cnt = 0
-        for gate_ in gates.gates:
+        for idx, gate_ in enumerate(gates.gates):
             # decouple ccx building with dag
             if gate_.type == GateType.ccx or gate_.type == GateType.ccz:
                 self.has_symbolic_rz = True
@@ -381,9 +381,7 @@ class DAG(Iterable):
 
         mapping = {id(t_node): o_node}
         queue = deque([(t_node, o_node)])
-        # print('>>>')
         while len(queue) > 0:
-            # print('while')
             u, v = queue.popleft()
             for neighbors in ['predecessors', 'successors']:
                 for qubit_ in range(u.size):
@@ -441,7 +439,7 @@ class DAG(Iterable):
             r_node, r_qubit = replacement.start_nodes[qubit_].successors[0]
             # node previous to the node corresponding to t_node in original circuit
             if id(replacement.start_nodes[qubit_]) not in mapping:
-                # TODO can we remove this if
+                # FIXME can we remove this if
                 continue
             p_node, p_qubit = mapping[id(replacement.start_nodes[qubit_])]
             if erase_old:
@@ -504,6 +502,38 @@ class DAG(Iterable):
             for qubit_ in range(each.size):
                 reachable.update(self._get_reachable_relation(each, qubit_))
         return reachable
+
+    @staticmethod
+    def get_reachable_set(node: Node, qubit_: int, succ_node=None):
+        """
+        Get a set of reachable nodes starting from (node, qubit_)
+
+        Args:
+            node(DAG.Node): starting node
+            qubit_(int): starting wire
+            succ_node(List[DAG.Node]): right boundary
+
+        Returns:
+            Set[int]: id of reachable nodes
+        """
+        term_set = set()
+        if succ_node is not None:
+            for node_, qubit_ in filter(lambda x: x is not None, succ_node):
+                term_set.add(id(node_))
+
+        visited = set()
+        queue = deque([(node, qubit_)])
+        while len(queue) > 0:
+            cur, cur_q = queue.popleft()
+            if cur.gate_type or id(cur) in term_set:
+                continue
+            nxt, _ = cur.successors[cur_q]
+            if id(nxt) not in visited:
+                for nxt_q in range(nxt.size):
+                    queue.append((nxt, nxt_q))
+                visited.add(id(nxt))
+
+        return visited
 
     @staticmethod
     def _get_sub_circuit_reachable_relation(node, qubit_, term_set):
