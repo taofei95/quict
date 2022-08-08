@@ -16,3 +16,6 @@ class PairData(Data):
             return self.x_lc.size(0)
         else:
             return super().__inc__(key, value, *args, **kwargs)
+
+    def __cat__(self, key, value):
+        return 1 if 'edge' in key else 0

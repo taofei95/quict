@@ -45,9 +45,9 @@ class SwapPredGnn(torch.nn.Module):
 
     def forward(self, x, edge_index, batch):
         for gcl, lin in zip(self.hidden_gc_layer, self.linear_layer):
-            x = gcl(x, edge_index) + lin(x) * 0.5
+            x = gcl(x, edge_index)
             # x = F.relu(x)
-            x = F.leaky_relu(x)
+            x = F.leaky_relu(x) + lin(x)
         x = self.last_gc_layer(x, edge_index)
         x = global_sort_pool(x, batch, k=self.pool_node)
         return x

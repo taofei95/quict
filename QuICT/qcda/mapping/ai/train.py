@@ -22,7 +22,7 @@ class Trainer:
 
     def train_one_epoch(self):
         optimizer = torch.optim.RAdam(
-            self.model.parameters(), lr=0.001, weight_decay=5e-4
+            self.model.parameters(), lr=0.001, weight_decay=0
         )
         last_loss = 0.0
         running_loss = 0.0
@@ -68,7 +68,7 @@ class Trainer:
 
 if __name__ == "__main__":
     model = SwapPredMix(
-        topo_gc_hidden_channel=[500, 500, 200, 100, 100,],
+        topo_gc_hidden_channel=[2000, 500, 200, 100, 100,],
         topo_gc_out_channel=50,
         topo_pool_node=50,
         lc_gc_hidden_channel=[1000, 1000, 800, 600, 100,],
@@ -78,7 +78,7 @@ if __name__ == "__main__":
         ml_out_channel=1,
     )
     device = "cuda" if torch.cuda.is_available() else "cpu"
-    # device = "cpu"
-    trainer = Trainer(model=model, device=device, batch_size=32)
+    # print(device)
+    trainer = Trainer(model=model, device=device, batch_size=16)
     trainer.train()
 

@@ -1,16 +1,13 @@
-from typing import Dict, Iterable, List, Tuple
+from typing import Iterable, List, Tuple
 
 from QuICT.core.circuit.circuit import Circuit
 from QuICT.core.gate.gate import BasicGate
 from QuICT.core.layout import Layout, LayoutEdge
 from QuICT.qcda.mapping.ai.data_def import PairData
-from os import path, walk
+from os import path, walk, replace
 from QuICT.tools.interface import OPENQASMInterface
 import torch
-from torch_geometric.data import HeteroData, Data
-import torch_geometric.transforms as GT
-import numpy as np
-import networkx as nx
+import re
 
 
 class MappingDataProcessor:
@@ -101,25 +98,43 @@ class MappingDataProcessor:
 
     def build(self):
         from os import makedirs
+        from threading import Thread
 
-        processed_cnt = 0
+        class ProcessTask(Thread):
+            def __init__(self, processor: MappingDataProcessor, topo_name: str):
+                Thread.__init__(self=self)
+                self.topo_name = topo_name
+                self.processor = processor
+
+            def run(self):
+                processed_cnt = 0
+                processed_dir = self.processor.processed_dir
+                for data in self.processor._load_by_topo_name(self.topo_name):
+                    f_path = path.join(processed_dir, f"{self.topo_name}_{processed_cnt}.pt")
+                    with open(f_path, "wb") as f:
+                        torch.save(data, f)
+                    processed_cnt += 1
+
+                    if processed_cnt % 100 == 0:
+                        print(
+                            f"    Processed {processed_cnt} data files({self.topo_name})."
+                        )
+                    # break # Debug use
+
         if not path.exists(self.processed_dir):
             makedirs(self.processed_dir)
         print("Pre-processing all data...")
+        tlist: List[ProcessTask] = []
         for name in self._get_topo_names():
-            print(f"    Processing circuits under {name}")
-            for data in self._load_by_topo_name(name):
-                f_path = path.join(self.processed_dir, f"{processed_cnt}.pt")
-                with open(f_path, "wb") as f:
-                    torch.save(data, f)
-                processed_cnt += 1
-
-                if processed_cnt % 100 == 0:
-                    print(f"        Processed {processed_cnt} data files.")
-                # break # Debug use
+            print(f"Processing circuits under {name}")
+            t = ProcessTask(self, name)
+            t.start()
+            tlist.append(t)
+        for t in tlist:
+            t.join()
 
 
 if __name__ == "__main__":
-    processor = MappingDataProcessor(topo_feature_dim=50, lc_feature_dim=2000)
+    processor = MappingDataProcessor(topo_feature_dim=50, lc_feature_dim=4000)
     processor.build()
 
