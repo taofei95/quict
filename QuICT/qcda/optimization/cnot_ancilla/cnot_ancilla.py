@@ -5,6 +5,7 @@
 # @File    : cnot_ancillae.py
 
 from math import log2, ceil, floor, sqrt
+from typing import Union
 
 import numpy as np
 
@@ -31,7 +32,7 @@ class CnotAncilla(object):
         self.size = size
 
     @OutputAligner()
-    def execute(self, circuit: CompositeGate):
+    def execute(self, circuit: Union[Circuit, CompositeGate]):
         """
         Args:
             circuit(CompositeGate/Circuit): circuit to be optimize
@@ -134,9 +135,7 @@ class CnotAncilla(object):
         ancillary = c[self.width: 3 * self.width]
         # goal qubits in Lemma 6
         ystart = c[:self.width]
-        # d2logn = floor(logn / 2)
         d2logn = int(floor(round(sqrt(length)) / 2))
-        # sqrtn = sqrt(n)
         sqrtn = int(pow(2, d2logn))
         # real length
         length = min(length, np.shape(Y_part)[1])
@@ -145,7 +144,6 @@ class CnotAncilla(object):
         for j in range(ceil(length / d2logn)):
             # Step 1 Construct Pj's (Lemma 5)
             cols = min(d2logn, length - j * d2logn)
-            # assert cols == d2logn
             r_sqrtn = int(pow(2, cols))
             self.construct_pj(ancillary[sqrtn + sqrtn * d2logn * j // 2:], x[j * d2logn:],
                               ancillary[j * (sqrtn - 1):], r_sqrtn, cols)
@@ -154,10 +152,9 @@ class CnotAncilla(object):
         pointer = self.width
         for k in range(ceil(length / d2logn)):
             # do Step 2 and Step 3 one by one
-            #  Step 2 Copy rows in Pj's
+            # Step 2 Copy rows in Pj's
             Step2_start = len(self.CNOT)
             cols = min(d2logn, length - k * d2logn)
-            # assert cols == d2logn
             r_sqrtn = int(pow(2, cols))
             sl = [0] * (r_sqrtn - 1)
             sl_origin = [[] * 0 for _ in range(r_sqrtn - 1)]
@@ -203,7 +200,6 @@ class CnotAncilla(object):
                 if l == 0:
                     continue
                 l -= 1
-                # print(u, l, sl_origin[l])
                 assert len(sl_origin[l]) > 0
                 if sl_origin[l][0][0] == 0:
                     sl_origin[l] = sl_origin[l][1:]
@@ -247,7 +243,6 @@ class CnotAncilla(object):
                 number_a = 1
                 while tj > 0:
                     for i in range(number_a):
-                        # print(now + i, first, len(c))
                         self.CNOT.append((c[now + i], c[first]))
                         first += 1
                         tj -= 1

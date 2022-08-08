@@ -4,6 +4,4 @@
 # @Author  : Han Yu
 # @File    : __init__.py
 
-from .cnot_bfs import generate_json
-from .cnot_depth_bfs import generate_json
 from .utility import *

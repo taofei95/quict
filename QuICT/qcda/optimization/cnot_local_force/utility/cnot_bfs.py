@@ -70,8 +70,3 @@ def generate_json(n):
             if len_tuples == 0:
                 string += ';'
             file.write(string)
-
-
-if __name__ == "__main__":
-    for n in range(1, 6):
-        generate_json(n)

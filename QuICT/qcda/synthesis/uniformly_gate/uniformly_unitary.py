@@ -20,7 +20,7 @@ class UniformlyUnitary(object):
     def execute(self, matrices):
         """
         Args:
-            angle_list(list<float>): the matrices of unitary gates
+            matrices(list<numpy.array>): the matrices of unitary gates
 
         Returns:
             CompositeGate: CompositeGate that implements the uniformly gate
@@ -42,12 +42,12 @@ class UniformlyUnitary(object):
             the synthesis result
         """
         if low + 1 == high:
-            gateA = self.unitary_to_u3gate(unitary[0], low)
+            rot = self.unitary_to_u3gate(unitary[0], low)
             gates = CompositeGate()
-            gates.append(gateA)
+            gates.append(rot)
             return gates
         length = len(unitary) // 2
-        gateA = build_gate(GateType.cx, [low, high - 1])
+        cx = build_gate(GateType.cx, [low, high - 1])
         Rxv = []
         Rxu = []
         angle_list = [0] * 2 * length
@@ -62,7 +62,7 @@ class UniformlyUnitary(object):
             angle_list[dual_position] = angles[0]
             angle_list[dual_position + length] = angles[1]
         gates = self.uniformly_unitary(low + 1, high, Rxv)
-        gates.append(gateA)
+        gates.append(cx)
         gates.extend(self.uniformly_unitary(low + 1, high, Rxu))
         URz = UniformlyRotation(GateType.rz)
         urz = URz.execute(angle_list)

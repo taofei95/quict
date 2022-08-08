@@ -53,7 +53,7 @@ class ControlledUnitaryDecomposition(object):
         else:
             return gates, shift
 
-    def __i_tensor_unitary(
+    def _i_tensor_unitary(
         self,
         u: np.ndarray,
         recursive_basis: int,
@@ -101,17 +101,13 @@ class ControlledUnitaryDecomposition(object):
         Returns:
             Tuple[CompositeGate, complex]: Synthesized gates and factor shift.
         """
-
         qubit_num = 1 + int(round(np.log2(u1.shape[0])))
-
         v, d, w = quantum_shannon_decompose(u1, u2)
-
         shift: complex = 1.0
 
         # diag(u1, u2) == diag(v, v) @ diag(d, d_dagger) @ diag(w, w)
-
         # diag(v, v)
-        v_gates, _shift = self.__i_tensor_unitary(v, recursive_basis, keep_left_diagonal=True)
+        v_gates, _shift = self._i_tensor_unitary(v, recursive_basis, keep_left_diagonal=True)
         shift *= _shift
 
         # diag(d, d_dagger)
@@ -133,7 +129,7 @@ class ControlledUnitaryDecomposition(object):
                 for k in range(4):
                     w[i + k, :] *= forwarded_mat[k, k]
 
-        w_gates, _shift = self.__i_tensor_unitary(w, recursive_basis, keep_left_diagonal=keep_left_diagonal)
+        w_gates, _shift = self._i_tensor_unitary(w, recursive_basis, keep_left_diagonal=keep_left_diagonal)
         shift *= _shift
 
         gates = CompositeGate()

@@ -42,6 +42,10 @@ class MCTSMapping(object):
         self.layout = layout
         self.init_mapping = init_mapping
         self.init_mapping_method = init_mapping_method
+        if self.init_mapping is not None:
+            assert isinstance(self.init_mapping, list), Exception("Layout should be a list of integers")
+        else:
+            assert self.init_mapping_method in ["anneal", "naive"], Exception("No such initial mapping method")
         self.Nsim = Nsim
         self.Nsch = Nsch
         self.num_of_process = num_of_process
@@ -77,13 +81,9 @@ class MCTSMapping(object):
                     param={"T_max": 100, "T_min": 1, "alpha": 0.99, "iterations": 1000}
                 )
                 self.init_mapping = list(best_mapping)
-            elif self.init_mapping_method == "naive":
+            if self.init_mapping_method == "naive":
                 self.init_mapping = [i for i in range(num_of_qubits)]
-            else:
-                raise Exception("No such initial mapping method")
 
-        if not isinstance(self.init_mapping, list):
-            raise Exception("Layout should be a list of integers")
         mcts_tree = MCTS(
             coupling_graph=coupling_graph,
             Nsim=self.Nsim,

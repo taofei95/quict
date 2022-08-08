@@ -43,7 +43,7 @@ class UniformlyRotation(object):
         self,
         low: int,
         high: int,
-        z: List[float],
+        angles: List[float],
         gate_type: int,
         is_left_cnot: bool = False
     ) -> CompositeGate:
@@ -53,54 +53,53 @@ class UniformlyRotation(object):
         Args:
             low(int): the left range low
             high(int): the right range high
-            z(list<float>): the list of angle y
+            angles(list<float>): the list of angle y
             gate_type(int): the gateType (Rz or Ry)
             is_left_cnot(bool): is cnot left decomposition
         Returns:
             gateSet: the synthesis gate list
         """
-        return self.inner_uniformly_rotation(low, high, z, gate_type, True, is_left_cnot)
+        return self.inner_uniformly_rotation(low, high, angles, gate_type, True, is_left_cnot)
 
     def inner_uniformly_rotation(
         self,
         low: int,
         high: int,
-        z: List[float],
+        angles: List[float],
         gate_type: int,
         is_first_level: bool,
         is_left_cnot: bool = False
     ) -> CompositeGate:
         if low + 1 == high:
-            gateA = build_gate(gate_type, low, [z[0].real])
+            rot = build_gate(gate_type, low, [angles[0].real])
             gates = CompositeGate()
-            gates.append(gateA)
+            gates.append(rot)
             return gates
-        length = len(z) // 2
-        gateA = build_gate(GateType.cx, [low, high - 1])
-        gateB = build_gate(GateType.cx, [low, high - 1])
+        length = len(angles) // 2
+        cx = build_gate(GateType.cx, [low, high - 1])
         Rxp = []
         Rxn = []
         for i in range(length):
-            Rxp.append((z[i] + z[i + length]) / 2)
-            Rxn.append((z[i] - z[i + length]) / 2)
+            Rxp.append((angles[i] + angles[i + length]) / 2)
+            Rxn.append((angles[i] - angles[i + length]) / 2)
         if is_first_level:
             if is_left_cnot:
                 gates = CompositeGate()
-                gates.append(gateA)
+                gates.append(cx)
                 gates.extend(self.inner_uniformly_rotation(low + 1, high, Rxn, gate_type, False, False))
-                gates.append(gateB)
+                gates.append(cx)
                 gates.extend(self.inner_uniformly_rotation(low + 1, high, Rxp, gate_type, False, True))
             else:
                 gates = self.inner_uniformly_rotation(low + 1, high, Rxp, gate_type, False, False)
-                gates.append(gateA)
+                gates.append(cx)
                 gates.extend(self.inner_uniformly_rotation(low + 1, high, Rxn, gate_type, False, True))
-                gates.append(gateB)
+                gates.append(cx)
         elif is_left_cnot:
             gates = self.inner_uniformly_rotation(low + 1, high, Rxn, gate_type, False, False)
-            gates.append(gateB)
+            gates.append(cx)
             gates.extend(self.inner_uniformly_rotation(low + 1, high, Rxp, gate_type, False, True))
         else:
             gates = self.inner_uniformly_rotation(low + 1, high, Rxp, gate_type, False, False)
-            gates.append(gateA)
+            gates.append(cx)
             gates.extend(self.inner_uniformly_rotation(low + 1, high, Rxn, gate_type, False, True))
         return gates
