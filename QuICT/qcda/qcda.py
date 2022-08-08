@@ -37,7 +37,7 @@ class QCDA(object):
         """
         self.process.append(method)
 
-    def add_default_synthesis(self, instruction=None):
+    def add_default_synthesis(self, target_instruction=None):
         """ Generate the default synthesis process
 
         The default synthesis process contains the GateDecomposition and GateTransform, which would
@@ -46,9 +46,9 @@ class QCDA(object):
         Args:
             instruction(InstructionSet): The target InstructionSet
         """
-        assert instruction is not None, ValueError('No InstructionSet provided for Synthesis')
+        assert target_instruction is not None, ValueError('No InstructionSet provided for Synthesis')
         self.add_method(GateDecomposition())
-        self.add_method(GateTransform(instruction))
+        self.add_method(GateTransform(target_instruction))
 
     def add_default_optimization(self):
         """ Generate the default optimization process
