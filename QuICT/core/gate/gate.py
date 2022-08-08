@@ -635,8 +635,8 @@ class SXGate(BasicGate):
         )
 
         self.matrix = np.array([
-            [1 / np.sqrt(2), -1j / np.sqrt(2)],
-            [-1j / np.sqrt(2), 1 / np.sqrt(2)]
+            [0.5 + 0.5j, 0.5 - 0.5j],
+            [0.5 - 0.5j, 0.5 + 0.5j]
         ], dtype=np.complex128)
 
     def inverse(self):
@@ -1097,7 +1097,7 @@ class PhaseGate(BasicGate):
     @property
     def matrix(self):
         return np.array([
-            [np.exp(self.parg * 1j), 0],
+            [1, 0],
             [0, np.exp(self.parg * 1j)]
         ], dtype=np.complex128)
 
@@ -1109,6 +1109,52 @@ class PhaseGate(BasicGate):
 
 
 Phase = PhaseGate()
+
+
+class GlobalPhaseGate(BasicGate):
+    """ Phase gate """
+    def __init__(self, params: list = [0]):
+        super().__init__(
+            controls=0,
+            targets=1,
+            params=1,
+            type=GateType.gphase
+        )
+        self._qasm_name = "phase"
+        self.pargs = params
+
+    def __call__(self, alpha):
+        """ Set parameters for the gate.
+
+        Args:
+            alpha (int/float/complex): The parameter for gate
+
+        Raises:
+            TypeError: param not one of int/float/complex
+
+        Returns:
+            BasicGate: The gate with parameters
+        """
+        if not self.permit_element(alpha):
+            raise TypeError("int/float/complex", alpha)
+
+        return PhaseGate([alpha])
+
+    @property
+    def matrix(self):
+        return np.array([
+            [np.exp(self.parg * 1j), 0],
+            [0, np.exp(self.parg * 1j)]
+        ], dtype=np.complex128)
+
+    def inverse(self):
+        _Phase = self.copy()
+        _Phase.pargs = [-self.parg]
+
+        return _Phase
+
+
+GPhase = GlobalPhaseGate()
 
 
 class CZGate(BasicGate):
