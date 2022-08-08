@@ -158,13 +158,36 @@ class AutoOptimization(Optimization):
         return cnt
 
     class ReachableSet:
+        """
+        Data structure that manages the reachable relations in a DAG.
+
+        For a DAG of over 10000 nodes, storing reachable relations between all nodes
+        consumes excessive memories. ReachableSet will automatically manage and
+        store recently used relations.
+        """
         def __init__(self, succ_node=None, max_size=1000000):
+            """
+            Args:
+                  succ_node(List[Tuple[DAG.Node, int]]): right boundary
+                  max_size(int): max number of entries stored in this set.
+            """
             self.succ_node = succ_node
             self.size = 0
             self.reachable = {}
             self.max_size = max_size
 
         def query(self, node, qubit_, other):
+            """
+            Ask whether `(node, qubit_)` can reach the node `other`.
+
+            Args:
+                node(DAG.Node): the starting node
+                qubit_(int): the starting wire
+                other(DAG.Node): the target node
+
+            Returns:
+                bool: whether reachable
+            """
             key = (id(node), qubit_)
             if key not in self.reachable:
                 new_set = DAG.get_reachable_set(node, qubit_, self.succ_node)
@@ -186,7 +209,6 @@ class AutoOptimization(Optimization):
             int: Number of gates reduced.
         """
         cnt = 0
-        # reachable = gates.get_reachable_relation()
         reachable = cls.ReachableSet()
         for node in list(gates.topological_sort()):
             # enumerate every cnot gate
@@ -220,8 +242,6 @@ class AutoOptimization(Optimization):
                     #   |    | U |    !=   | U |   |
                     # --X----|___|--     --|___|---X--
 
-                    # if mapping and all([((id(c_targ_node), c_targ_qubit), id(o))
-                    #                     not in reachable for o in mapping.values()]):
                     if mapping and all([reachable.query(c_targ_node, c_targ_qubit, o) for o in mapping.values()]):
                         c_ctrl_node, c_ctrl_qubit = template.template.end_nodes[template.anchor].predecessors[0]
                         c_ctrl_node = mapping[id(c_ctrl_node)]
@@ -235,8 +255,6 @@ class AutoOptimization(Optimization):
                 for template in cnot_targ_template:
                     mapping = template.compare(c_targ_node.successors[c_targ_qubit])
                     # if control node can reach any node in the template, it will block commuting.
-                    # if mapping and all([((id(c_ctrl_node), c_ctrl_qubit), id(o))
-                    #                     not in reachable for o in mapping.values()]):
                     if mapping and all([reachable.query(c_ctrl_node, c_ctrl_qubit, o) for o in mapping.values()]):
                         c_targ_node, c_targ_qubit = template.template.end_nodes[template.anchor].predecessors[0]
                         c_targ_node = mapping[id(c_targ_node)]
@@ -696,7 +714,6 @@ class AutoOptimization(Optimization):
         cnt = 0
 
         reachable = DAG.get_sub_circuit_reachable_relation(prev_node, succ_node)
-        # reachable = cls.ReachableSet(succ_node=succ_node)
         for cx in list(DAG.topological_sort_sub_circuit(prev_node, succ_node)):
             if cx.gate_type != GateType.cx or cx.flag == cx.FLAG_ERASED:
                 continue
@@ -730,7 +747,6 @@ class AutoOptimization(Optimization):
                         n_ctrl_node.gate_type == GateType.cx and \
                         n_ctrl_qubit == 0 and \
                         ((id(c_targ_node), c_targ_qubit), id(n_ctrl_node)) not in reachable:
-                        # reachable.query(c_targ_node, c_targ_qubit, n_ctrl_node):
                     # Case A: share control
                     # ---O--O--
                     # ---|--|--
@@ -743,7 +759,6 @@ class AutoOptimization(Optimization):
                         n_targ_qubit == 1 and \
                         ((id(c_ctrl_node), c_ctrl_qubit), id(n_targ_node)) not in reachable and \
                         cls._check_float_pos(cx, 1, phases, pos_list=pos_list):
-                        # reachable.query(c_ctrl_node, c_ctrl_qubit, n_targ_node) and \
                     # Case B: share target
                     # ---X--X--
                     # ---|--|--
@@ -868,7 +883,6 @@ class AutoOptimization(Optimization):
 
         # STEP 2: try cx cancellation
         reachable = DAG.get_sub_circuit_reachable_relation(prev_node, succ_node)
-        # reachable = cls.ReachableSet(succ_node=succ_node)
         for cx in list(DAG.topological_sort_sub_circuit(prev_node, succ_node)):
             if cx.gate_type != GateType.cx or cx.flag == cx.FLAG_ERASED:
                 continue
@@ -901,7 +915,6 @@ class AutoOptimization(Optimization):
                         n_ctrl_node.gate_type == GateType.cx and \
                         n_ctrl_qubit == 0 and \
                         ((id(c_targ_node), c_targ_qubit), id(n_ctrl_node)) not in reachable:
-                        # reachable.query(c_targ_node, c_targ_qubit, n_ctrl_node):
                     # Case A: share control
                     # ---O--O--
                     # ---|--|--
@@ -914,7 +927,6 @@ class AutoOptimization(Optimization):
                         n_targ_qubit == 1 and \
                         ((id(c_ctrl_node), c_ctrl_qubit), id(n_targ_node)) not in reachable and \
                         cls._check_float_pos(cx, 1, phases, pos_cnt=pos_cnt):
-                        # reachable.query(c_ctrl_node, c_ctrl_qubit, n_targ_node) and \
                     # Case B: share target
                     # ---X--X--
                     # ---|--|--

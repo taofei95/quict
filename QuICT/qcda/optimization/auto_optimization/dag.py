@@ -133,7 +133,17 @@ class DAG(Iterable):
             self.successors = None
 
     class VirtualNode(Node):
+        """
+        Virtual DAG node. When we want to temporarily insert a node into a DAG
+        but not actually change the DAG structure, we can create a virtual node.
+        """
         def __init__(self, gate_: BasicGate, predecessors, successors):
+            """
+            Args:
+                gate_(BasicGate): the gate
+                predecessors(List[Tuple[DAG.Node, int]]): predecessors of this node
+                successors(List[Tuple[DAG.Node, int]]): successors of this node
+            """
             super().__init__(gate_=gate_)
             self.predecessors = predecessors
             self.successors = successors
@@ -511,7 +521,7 @@ class DAG(Iterable):
         Args:
             node(DAG.Node): starting node
             qubit_(int): starting wire
-            succ_node(List[DAG.Node]): right boundary
+            succ_node(List[Tuple[DAG.Node, int]]): right boundary
 
         Returns:
             Set[int]: id of reachable nodes
