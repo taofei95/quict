@@ -219,6 +219,7 @@ class PauliOperator(object):
 
         Args:
             keep_id(bool, optional): whether to keep the IDgate in the CompositeGate
+            keep_phase(bool, optional): whether to keep the global phase in the CompositeGate
 
         Returns:
             CompositeGate: The CompositeGate corresponding to the PauliOperator
@@ -231,7 +232,7 @@ class PauliOperator(object):
             gates.append(gate)
         if keep_phase and not np.isclose(self.phase, 1 + 0j):
             phase = -1j * np.log(self.phase)
-            gate = build_gate(GateType.phase, 0, phase.real)
+            gate = build_gate(GateType.gphase, 0, phase.real)
             gates.append(gate)
         return gates
 

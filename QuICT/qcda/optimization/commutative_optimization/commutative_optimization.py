@@ -14,7 +14,7 @@ elimination = [
     GateType.cy, GateType.cz, GateType.ch, GateType.ccx, GateType.swap
 ]
 addition = [
-    GateType.u1, GateType.rx, GateType.ry, GateType.rz, GateType.phase,
+    GateType.u1, GateType.rx, GateType.ry, GateType.rz, GateType.phase, GateType.gphase,
     GateType.crz, GateType.cu1, GateType.fsim, GateType.Rxx, GateType.Ryy, GateType.Rzz
 ]
 multiplication = [GateType.unitary]
@@ -49,7 +49,7 @@ class CommutativeOptimization(object):
     """
     para_rule = {
         GateType.x: (Rx(np.pi), np.pi / 2),
-        GateType.sx: (Rx(np.pi / 2), 0),
+        GateType.sx: (Rx(np.pi / 2), np.pi / 4),
         GateType.y: (Ry(np.pi), np.pi / 2),
         GateType.sy: (Ry(np.pi / 2), 0),
         GateType.z: (Rz(np.pi), np.pi / 2),
@@ -62,13 +62,13 @@ class CommutativeOptimization(object):
     depara_rule = {
         # Rx
         (GateType.rx, 0): ([ID], 0),
-        (GateType.rx, 2): ([SX], 0),
+        (GateType.rx, 2): ([SX], -np.pi / 4),
         (GateType.rx, 4): ([X], -np.pi / 2),
-        (GateType.rx, 6): ([X, SX], -np.pi / 2),
+        (GateType.rx, 6): ([X, SX], -3 * np.pi / 4),
         (GateType.rx, 8): ([ID], np.pi),
-        (GateType.rx, 10): ([SX], np.pi),
+        (GateType.rx, 10): ([SX], 3 * np.pi / 4),
         (GateType.rx, 12): ([X], np.pi / 2),
-        (GateType.rx, 14): ([X, SX], np.pi / 2),
+        (GateType.rx, 14): ([X, SX], np.pi / 4),
         # Ry
         (GateType.ry, 0): ([ID], 0),
         (GateType.ry, 2): ([SY], 0),
@@ -241,8 +241,8 @@ class CommutativeOptimization(object):
             if gate.type == GateType.id:
                 continue
 
-            # PhaseGate
-            if gate.type == GateType.phase:
+            # GlobalPhaseGate
+            if gate.type == GateType.gphase:
                 phase_angle += gate.parg
                 continue
 
@@ -304,7 +304,7 @@ class CommutativeOptimization(object):
 
         gates_opt = CompositeGate()
         for node in nodes:
-            if node.identity or node.gate.type == GateType.phase:
+            if node.identity or node.gate.type == GateType.gphase:
                 phase_angle += np.angle(node.gate.matrix[0, 0])
             elif self.deparameterization:
                 gates_depara, phase = self.deparameterize(node.gate)
@@ -316,6 +316,6 @@ class CommutativeOptimization(object):
         phase_angle = np.mod(phase_angle.real, 2 * np.pi)
         if not np.isclose(phase_angle, 0) and not np.isclose(phase_angle, 2 * np.pi):
             with gates_opt:
-                Phase(phase_angle) & 0
+                GPhase(phase_angle) & 0
 
         return gates_opt

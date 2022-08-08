@@ -1138,7 +1138,7 @@ class GlobalPhaseGate(BasicGate):
         if not self.permit_element(alpha):
             raise TypeError("int/float/complex", alpha)
 
-        return PhaseGate([alpha])
+        return GlobalPhaseGate([alpha])
 
     @property
     def matrix(self):

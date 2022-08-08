@@ -1,6 +1,6 @@
 import numpy as np
 
-from QuICT.core.gate import CompositeGate, GateType, Phase, CX
+from QuICT.core.gate import CompositeGate, GateType, GPhase, CX
 from QuICT.qcda.synthesis.uniformly_gate import UniformlyRotation
 from QuICT.qcda.synthesis.unitary_decomposition import UnitaryDecomposition
 
@@ -74,7 +74,7 @@ class QuantumStatePreparation(object):
                 alpha = np.sum(omega.reshape(1 << num_qubits - k, 1 << k), axis=1)
                 alpha = (alpha[1::2] - alpha[0::2]) / (1 << k)
                 gates.extend(URz.execute(alpha))
-            gates.append(Phase(np.average(omega)) & 0)
+            gates.append(GPhase(np.average(omega)) & 0)
 
         return gates
 

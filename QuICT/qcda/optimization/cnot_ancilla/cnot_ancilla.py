@@ -151,7 +151,6 @@ class CnotAncilla(object):
 
         pointer = self.width
         for k in range(ceil(length / d2logn)):
-            # do Step 2 and Step 3 one by one
             # Step 2 Copy rows in Pj's
             Step2_start = len(self.CNOT)
             cols = min(d2logn, length - k * d2logn)

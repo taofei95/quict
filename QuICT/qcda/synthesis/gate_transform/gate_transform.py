@@ -68,7 +68,7 @@ class GateTransform(object):
                     phase = np.angle(np.dot(unitaries[targ], np.linalg.inv(local_matrix))[0][0])
                     if (not np.isclose(np.mod(phase, 2 * np.pi), 0) and
                         not np.isclose(np.mod(phase, 2 * np.pi), 2 * np.pi)):
-                        gates_transformed.append(Phase(phase) & targ)
+                        gates_transformed.append(GPhase(phase) & targ)
                     compositeGateStep2.extend(gates_transformed)
                     unitaries[targ] = np.identity(2, dtype=np.complex128)
                 compositeGateStep2.append(gate)
@@ -83,6 +83,6 @@ class GateTransform(object):
             phase = np.angle(np.dot(unitaries[i], np.linalg.inv(local_matrix))[0][0])
             if (not np.isclose(np.mod(phase, 2 * np.pi), 0) and
                 not np.isclose(np.mod(phase, 2 * np.pi), 2 * np.pi)):
-                gates_transformed.append(Phase(phase) & i)
+                gates_transformed.append(GPhase(phase) & i)
             compositeGateStep2.extend(gates_transformed)
         return compositeGateStep2
