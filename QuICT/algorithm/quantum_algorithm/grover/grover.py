@@ -30,7 +30,7 @@ class Grover:
     """
 
     @staticmethod
-    def circuit(n, k, oracle):
+    def circuit(n, k, oracle, m=1, measure=True):
         """ grover search for f with custom oracle
 
         Args:
@@ -39,6 +39,8 @@ class Grover:
             oracle(CompositeGate): the oracle that flip phase of target state.
                 [0:n] is index qreg,
                 [n:n+k] is ancilla
+            m(int): number of solution 
+            measure(bool): measure included or not
         Returns:
             int: the a satisfies that f(a) = 1
         """
@@ -47,8 +49,8 @@ class Grover:
         index_q = list(range(n))
         ancilla_q = list(range(n, n + k))
         N = 2 ** n
-        theta = 2 * np.arccos(np.sqrt(1 - 1 / N))
-        T = round(np.arccos(np.sqrt(1 / N)) / theta)
+        theta = 2 * np.arccos(np.sqrt(1 - m / N))
+        T = round(np.arccos(np.sqrt(m / N)) / theta)
 
         # create equal superposition state in index_q
         for idx in index_q:
@@ -72,7 +74,8 @@ class Grover:
             for idx in index_q:
                 H | circuit(idx)
         for idx in index_q:
-            Measure | circuit(idx)
+            if measure:
+                Measure | circuit(idx)
         logging.info(f"circuit width          = {circuit.width():4}")
         # logging.info(f"circuit depth          = {circuit.depth():4}")
         logging.info(f"oracle  calls          = {T:4}")
