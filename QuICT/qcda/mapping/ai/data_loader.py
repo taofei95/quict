@@ -1,25 +1,28 @@
-from os import path as osp
-import os
-from typing import Dict, List, Tuple
-from torch_geometric.data import HeteroData, Data, Batch
+import os.path as osp
+from os import walk
 import torch
-from torch.utils.data import DataLoader as TorchDataLoader
-from torch.utils.data import Dataset
+from torch_geometric.data import Dataset as PygDataset
+from torch_geometric.data import Batch as PygBatch
+from torch_geometric.loader import DataLoader as PygDataLoader
+from torch_geometric.nn.models import Node2Vec
+from typing import Tuple, Iterable
+from QuICT.core import Circuit
+from QuICT.core.gate import BasicGate
+from QuICT.core.layout import Layout, LayoutEdge
+from QuICT.tools.interface import OPENQASMInterface
 
 from QuICT.qcda.mapping.ai.data_def import PairData
-from QuICT.qcda.mapping.ai.data_processor import MappingDataProcessor
 
 
-class MappingDataSet(Dataset):
-    def __init__(self, data_dir: str, device: str) -> None:
+class MappingDataset(PygDataset):
+    def __init__(self, data_dir: str) -> None:
         super().__init__()
         self._file_names = []
         self._data_dir = data_dir
-        self.device = device
         if not osp.exists(data_dir):
             raise FileNotFoundError(data_dir)
         print(f"Loading dataset from {data_dir}")
-        for _, _, filenames in os.walk(data_dir):
+        for _, _, filenames in walk(data_dir):
             self._file_names = filenames
 
     def __len__(self):
@@ -35,41 +38,30 @@ class MappingDataSet(Dataset):
 class MappingDataLoaderFactory:
     @staticmethod
     def get_loader(
-        batch_size: int, shuffle: bool, device: str, data_dir: str = None,
+        batch_size: int, shuffle: bool, data_dir: str = None,
     ):
         if data_dir is None:
             data_dir = osp.dirname(osp.realpath(__file__))
             data_dir = osp.join(data_dir, "data")
             data_dir = osp.join(data_dir, "processed")
 
-        dataset = MappingDataSet(data_dir=data_dir, device=device)
+        dataset = MappingDataset(data_dir=data_dir)
 
-        def collat_fn(batch):
-            circuits, targets = zip(*batch)
-            assert len(batch) == len(circuits) and len(batch) == len(targets)
-            circuits = Batch.from_data_list(
-                list(circuits), follow_batch=["x_topo", "x_lc"]
-            ).to(device=device)
-            targets = (
-                torch.tensor(list(targets), dtype=torch.float)
-                .unsqueeze(dim=1)
-                .to(device=device)
-            )
-            return circuits, targets
-
-        loader = TorchDataLoader(
+        loader = PygDataLoader(
             dataset=dataset,
             batch_size=batch_size,
             shuffle=shuffle,
-            collate_fn=collat_fn,
+            follow_batch=["x_topo", "x_lc"],
         )
         return loader
 
 
 if __name__ == "__main__":
-    loader = MappingDataLoaderFactory.get_loader(
-        batch_size=10, shuffle=True, device="cpu"
-    )
+    loader = MappingDataLoaderFactory.get_loader(batch_size=10, shuffle=True)
+    cnt = 0
+    print(len(loader))
     for batch in loader:
         print(batch)
-        break
+        cnt += 1
+        if cnt == 3:
+            break

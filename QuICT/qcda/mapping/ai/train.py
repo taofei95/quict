@@ -16,20 +16,20 @@ class Trainer:
         self.model = model.to(device=self.device)
         self.total_epoch = total_epoch
         self.loader = MappingDataLoaderFactory.get_loader(
-            batch_size=batch_size, shuffle=True, device=self.device
+            batch_size=batch_size, shuffle=True
         )
         self.loss_fn = nn.L1Loss()
 
     def train_one_epoch(self):
-        optimizer = torch.optim.RAdam(
-            self.model.parameters(), lr=0.001, weight_decay=0
-        )
+        optimizer = torch.optim.RAdam(self.model.parameters(), lr=0.001, weight_decay=0)
         last_loss = 0.0
         running_loss = 0.0
         ref_label_sum = 0.0
         ref_running_label_sum = 0.0
         for i, batch in enumerate(self.loader):
             data, labels = batch
+            data = data.to(self.device)
+            labels = labels.to(self.device)
             size = int(torch.numel(labels))
 
             outputs = self.model(data)
@@ -68,7 +68,7 @@ class Trainer:
 
 if __name__ == "__main__":
     model = SwapPredMix(
-        topo_gc_hidden_channel=[2000, 500, 200, 100, 100,],
+        topo_gc_hidden_channel=[1000, 500, 200, 100, 100,],
         topo_gc_out_channel=50,
         topo_pool_node=50,
         lc_gc_hidden_channel=[1000, 1000, 800, 600, 100,],
@@ -79,6 +79,6 @@ if __name__ == "__main__":
     )
     device = "cuda" if torch.cuda.is_available() else "cpu"
     # print(device)
-    trainer = Trainer(model=model, device=device, batch_size=16)
+    trainer = Trainer(model=model, device=device, batch_size=32)
     trainer.train()
 

@@ -1,140 +1,145 @@
-from typing import Iterable, List, Tuple
-
+from typing import Iterable
 from QuICT.core.circuit.circuit import Circuit
 from QuICT.core.gate.gate import BasicGate
-from QuICT.core.layout import Layout, LayoutEdge
-from QuICT.qcda.mapping.ai.data_def import PairData
-from os import path, walk, replace
+from os import walk, rename, makedirs
+from os import path as osp
 from QuICT.tools.interface import OPENQASMInterface
-import torch
 import re
+from typing import Tuple, Iterable
+import torch
+from QuICT.qcda.mapping.ai.data_def import PairData
+from torch_geometric.nn.models import Node2Vec
+from QuICT.core.layout import Layout, LayoutEdge
 
 
 class MappingDataProcessor:
     def __init__(
         self, topo_feature_dim: int, lc_feature_dim: int, working_dir: str = ".",
     ) -> None:
-        self.data_dir = path.join(working_dir, "data")
-        self.circ_dir = path.join(self.data_dir, "circ")
-        self.topo_dir = path.join(self.data_dir, "topo")
-        self.processed_dir = path.join(self.data_dir, "processed")
-        self.topo_feature_dim = topo_feature_dim
-        self.lc_feature_dim = lc_feature_dim
+        self._data_dir = osp.join(working_dir, "data")
+        self._circ_dir = osp.join(self._data_dir, "circ")
+        self._topo_dir = osp.join(self._data_dir, "topo")
+        self._processed_dir = osp.join(self._data_dir, "processed")
+
+        self._topo_feature_dim = topo_feature_dim
+        self._lc_feature_dim = lc_feature_dim
+
+        self._circ_path_list = list(self._load_circuits_path())
 
     def _get_topo_names(self) -> Iterable[str]:
-        for _, _, filenames in walk(self.topo_dir):
+        for _, _, filenames in walk(self._topo_dir):
             for name in filenames:
                 yield name.split(".")[0]
 
-    def _load_layout_edge(self, topo_name) -> List[LayoutEdge]:
-        layout = Layout.load_file(path.join(self.topo_dir, f"{topo_name}.layout"))
-        return layout.edge_list
-
-    def _load_circuits(self, topo_name) -> Iterable[Tuple[Circuit, Circuit]]:
-        for root, _, filenames in walk(path.join(self.circ_dir, topo_name)):
+    def _wash_circuits(self, topo_name):
+        cnt = 0
+        for root, _, filenames in walk(osp.join(self._circ_dir, topo_name)):
             for name in filenames:
-                if name.startswith("result"):
+                if name.startswith("result") or name.startswith("skip"):
                     continue
-                circ_path = path.join(root, name)
-                result_circ_path = path.join(root, f"result_{name}")
-                # print(circ_path)
-                circuit: Circuit = OPENQASMInterface.load_file(circ_path).circuit
-                result_circuit: Circuit = OPENQASMInterface.load_file(
-                    result_circ_path
-                ).circuit
-                yield circuit, result_circuit
+                cnt += 1
+                if cnt % 100 == 0:
+                    print(f"    Processed {cnt} files.")
 
-    def _build_data_from_circ(
-        self, pc_conn: List[LayoutEdge], src_circ: Circuit, res_circ: Circuit
-    ) -> Tuple[PairData, int]:
-        x_topo = torch.zeros(
-            (src_circ.width(), self.topo_feature_dim), dtype=torch.float
-        )
-        x_topo[:, : src_circ.width()] = torch.eye(src_circ.width(), dtype=torch.float)
-        edge_index_topo = []
-        for edge in pc_conn:
-            edge_index_topo.append((edge.u, edge.v,))
-            edge_index_topo.append((edge.v, edge.u,))
-        edge_index_topo = (
-            torch.tensor(edge_index_topo, dtype=torch.long).t().contiguous()
-        )
+                circ_path = osp.join(root, name)
 
+                circ: Circuit = OPENQASMInterface.load_file(circ_path).circuit
+
+                no_2bit_gate = True
+                i = 0
+                while no_2bit_gate and i < len(circ.gates):
+                    g: BasicGate = circ.gates[i]
+                    n = len(g.cargs + g.targs)
+                    if n == 2:
+                        no_2bit_gate = False
+                    i += 1
+                if no_2bit_gate:
+                    # Rename the raw qasm to skip them during training
+                    id = re.search(r"\d+", circ_path).group(0)
+                    replace_name = circ_path.replace(f"circ_{id}", f"skip_circ{id}")
+                    print(
+                        f"There's no 2 bit gate in {circ_path}. Rename it as {replace_name}."
+                    )
+                    rename(circ_path, replace_name)
+
+    def wash_circuits(self):
+        for topo_name in self._get_topo_names():
+            print(f"Processing circuits under {topo_name}...")
+            self._wash_circuits(topo_name)
+
+    def _get_topo_names(self) -> Iterable[str]:
+        for _, _, filenames in walk(self._topo_dir):
+            for name in filenames:
+                yield name.split(".")[0]
+
+    def _load_circuits_path(self) -> Iterable[Tuple[str, str, str]]:
+        for topo_name in self._get_topo_names():
+            topo_path = osp.join(self._topo_dir, f"{topo_name}.layout")
+            for root, _, filenames in walk(osp.join(self._circ_dir, topo_name)):
+                for name in filenames:
+                    if name.startswith("result") or name.startswith("skip"):
+                        continue
+                    circ_path = osp.join(root, name)
+                    result_circ_path = osp.join(root, f"result_{name}")
+                    yield topo_path, circ_path, result_circ_path
+
+    def _build_circ_edge_index(self, circ: Circuit) -> torch.Tensor:
         lc_node_num = 0
-        edge_index_lc = []
-        qubit_num = src_circ.width()
+        edge_index = []
+        qubit_num = circ.width()
         cur_occ = [-1 for _ in range(qubit_num)]
-        for gate in src_circ.gates:
+        for gate in circ.gates:
             gate: BasicGate
             args = gate.cargs + gate.targs
             if len(args) != 2:
                 continue
+            edge_index.append([lc_node_num, lc_node_num])
             for arg in args:
                 if cur_occ[arg] != -1:
-                    edge_index_lc.append(
+                    edge_index.append(
                         [cur_occ[arg], lc_node_num,]
                     )
                 cur_occ[arg] = lc_node_num
             lc_node_num += 1
-        x_lc = torch.zeros((lc_node_num, self.lc_feature_dim), dtype=torch.float)
-        x_lc[:, :lc_node_num] = torch.eye(lc_node_num, dtype=torch.float)
+        edge_index = torch.tensor(edge_index, dtype=torch.long).t().contiguous()
+        return edge_index
 
-        edge_index_lc = torch.tensor(edge_index_lc, dtype=torch.long).t().contiguous()
+    def _build(self) -> Iterable[Tuple[PairData, int]]:
+        for topo_path, circ_path, result_circ_path in self._circ_path_list:
+            layout = Layout.load_file(topo_path)
+            edge_index_topo = []
+            for edge in layout.edge_list:
+                edge: LayoutEdge
+                edge_index_topo.append((edge.u, edge.v))
+                edge_index_topo.append((edge.v, edge.u))
+            edge_index_topo = (
+                torch.tensor(edge_index_topo, dtype=torch.long).t().contiguous()
+            )
+            x_topo = torch.eye(self._topo_feature_dim, dtype=torch.float)
 
-        extra_swap_cnt = len(res_circ.gates) - len(src_circ.gates)
+            lc_circ: Circuit = OPENQASMInterface.load_file(circ_path).circuit
+            res_circ: Circuit = OPENQASMInterface.load_file(result_circ_path).circuit
 
-        pair_data = PairData(
-            edge_index_topo=edge_index_topo,
-            x_topo=x_topo,
-            edge_index_lc=edge_index_lc,
-            x_lc=x_lc,
-        )
+            swap_cnt = len(res_circ.gates) - len(lc_circ.gates)
 
-        return pair_data, extra_swap_cnt
+            edge_index_lc = self._build_circ_edge_index(lc_circ)
+            x_lc = torch.eye(self._lc_feature_dim, dtype=torch.float)
+            pair_data = PairData(edge_index_topo, x_topo, edge_index_lc, x_lc)
 
-    def _load_by_topo_name(self, topo_name: str) -> Iterable[Tuple[PairData, int]]:
-        layout_edges = self._load_layout_edge(topo_name)
-        for src_circ, res_circ in self._load_circuits(topo_name):
-            yield self._build_data_from_circ(layout_edges, src_circ, res_circ)
+            yield pair_data, swap_cnt
 
     def build(self):
-        from os import makedirs
-        from threading import Thread
-
-        class ProcessTask(Thread):
-            def __init__(self, processor: MappingDataProcessor, topo_name: str):
-                Thread.__init__(self=self)
-                self.topo_name = topo_name
-                self.processor = processor
-
-            def run(self):
-                processed_cnt = 0
-                processed_dir = self.processor.processed_dir
-                for data in self.processor._load_by_topo_name(self.topo_name):
-                    f_path = path.join(processed_dir, f"{self.topo_name}_{processed_cnt}.pt")
-                    with open(f_path, "wb") as f:
-                        torch.save(data, f)
-                    processed_cnt += 1
-
-                    if processed_cnt % 100 == 0:
-                        print(
-                            f"    Processed {processed_cnt} data files({self.topo_name})."
-                        )
-                    # break # Debug use
-
-        if not path.exists(self.processed_dir):
-            makedirs(self.processed_dir)
-        print("Pre-processing all data...")
-        tlist: List[ProcessTask] = []
-        for name in self._get_topo_names():
-            print(f"Processing circuits under {name}")
-            t = ProcessTask(self, name)
-            t.start()
-            tlist.append(t)
-        for t in tlist:
-            t.join()
+        if not osp.exists(self._processed_dir):
+            makedirs(self._processed_dir)
+        for idx, data in enumerate(self._build()):
+            f_name = osp.join(self._processed_dir, f"{idx}.pt")
+            torch.save(data, f_name)
+            if (idx + 1) % 100 == 0:
+                print(f"    Processed {idx+1} files.")
 
 
 if __name__ == "__main__":
-    processor = MappingDataProcessor(topo_feature_dim=50, lc_feature_dim=4000)
+    processor = MappingDataProcessor(topo_feature_dim=50, lc_feature_dim=1000)
+    # processor.wash_circuits()
     processor.build()
 
