@@ -279,6 +279,8 @@ class CircuitSimulator:
 
                 idx += 1
 
+        self._gate_desc_vec = gate_desc_vec
+
         amplitude, measure_raw = self._instance.run(
             circuit.width(), self._gate_desc_vec, keep_state
         )
@@ -310,23 +312,17 @@ class CircuitSimulator:
         else:
             return amplitude
 
-    def sample(self, circuit: Circuit = None) -> int:
-        """Appending measure gates to end of circuit if not presented then
-        apply measurement. Before calling this method, one should call `run`
-        method first.
+    def sample(self, shots: int = 1) -> List[int]:
+        assert self._circuit is not None
 
-        Parameters
-        ----------
-        circuit:
-            quantum circuit to be simulated
-        """
-        if circuit is None:
-            circuit = self._circuit
+        measure_accumulated = [0 for _ in range(self._circuit.width())]
 
-        measure_raw = self._instance.sample(circuit.width())
-        value = 0
-        for x in measure_raw:
-            value <<= 1
-            value += x
+        for _ in range(shots):
+            # C++ simulator will automatically copy a state vector for sampling.
+            # Sample operation never affects the state vector itself.
+            measure_raw = self._instance.sample(self._circuit.width())
 
-        return value
+            for idx, measured in enumerate(measure_raw):
+                measure_accumulated[idx] += measured
+
+        return measure_accumulated

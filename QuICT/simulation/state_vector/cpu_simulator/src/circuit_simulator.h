@@ -86,6 +86,13 @@ std::vector<int> CircuitSimulator<Precision>::sample(uint64_t qubit_num) {
   if (real_ == nullptr || imag_ == nullptr) {
     throw std::runtime_error("Sample with invalid amplitude vector!");
   }
+
+  size_t len = 1ULL << qubit_num_;
+  Precision *real_cpy = new Precision[len];
+  Precision *imag_cpy = new Precision[len];
+  std::copy(real_, real_ + len, real_cpy);
+  std::copy(imag_, imag_ + len, imag_cpy);
+
   std::vector<GateDescription<Precision>> gate_desc_vec;
   std::vector<int> measure_res;
   for (uint64_t i = 0; i < qubit_num_; ++i) {
@@ -93,14 +100,18 @@ std::vector<int> CircuitSimulator<Precision>::sample(uint64_t qubit_num) {
   }
   if (qubit_num_ > 4) {  // Can use matricks simulator
     for (const auto &gate_desc : gate_desc_vec) {
-      matricks_sim_.apply_gate(qubit_num_, gate_desc, real_, imag_,
+      matricks_sim_.apply_gate(qubit_num_, gate_desc, real_cpy, imag_cpy,
                                measure_res);
     }
   } else {  // Only can use plain simulator
     for (const auto &gate_desc : gate_desc_vec) {
-      tiny_sim_.apply_gate(qubit_num_, gate_desc, real_, imag_, measure_res);
+      tiny_sim_.apply_gate(qubit_num_, gate_desc, real_cpy, imag_cpy, measure_res);
     }
   }
+
+  delete[] real_cpy;
+  delete[] imag_cpy;
+
   return measure_res;
 }
 };  // namespace QuICT
