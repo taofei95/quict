@@ -42,6 +42,7 @@ class SwapPredGnn(torch.nn.Module):
             self.linear_layer.append(PygLinear(-1, h))
         self.last_gc_layer = GCNConv(-1, out_channel)
         self.pool_node = pool_node
+        self.out_channel = out_channel
 
     def forward(self, x, edge_index, batch):
         for gcl, lin in zip(self.hidden_gc_layer, self.linear_layer):
@@ -65,31 +66,36 @@ class SwapPredMix(torch.nn.Module):
         ml_hidden_channel: Iterable[int],
         ml_out_channel: int,
     ) -> None:
+        assert lc_gc_out_channel == topo_gc_out_channel
         super().__init__()
+
+        self.gc_mix_out_channel = (
+            topo_pool_node * topo_gc_out_channel + lc_pool_node * lc_gc_out_channel
+        )
+
         self.topo_gnn = SwapPredGnn(
             hidden_channel=topo_gc_hidden_channel,
             out_channel=topo_gc_out_channel,
             pool_node=topo_pool_node,
         )
-        self.topo_flatten = Flatten(start_dim=1)
         self.lc_gnn = SwapPredGnn(
             hidden_channel=lc_gc_hidden_channel,
             out_channel=lc_gc_out_channel,
             pool_node=lc_pool_node,
         )
-        self.lc_flatten = Flatten(start_dim=1)
         self.mlp = SwapPredMLP(
-            in_channel=topo_pool_node * topo_gc_out_channel
-            + lc_pool_node * lc_gc_out_channel,
+            in_channel=self.gc_mix_out_channel,
             hidden_channel=ml_hidden_channel,
             out_channel=ml_out_channel,
         )
 
-    def forward(self, data):
-        x_topo = self.topo_gnn(data.x_topo, data.edge_index_topo, data.x_topo_batch)
-        x_topo = self.topo_flatten(x_topo)
-        x_lc = self.lc_gnn(data.x_lc, data.edge_index_lc, data.x_lc_batch)
-        x_lc = self.lc_flatten(x_lc)
+    def forward(self, pair_data):
+        x_topo = self.topo_gnn(
+            pair_data.x_topo, pair_data.edge_index_topo, pair_data.x_topo_batch
+        )
+        x_lc = self.lc_gnn(
+            pair_data.x_lc, pair_data.edge_index_lc, pair_data.x_lc_batch
+        )
         x = torch.concat((x_topo, x_lc,), dim=-1)
         x = self.mlp(x)
         return x

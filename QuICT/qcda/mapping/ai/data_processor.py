@@ -93,7 +93,7 @@ class MappingDataProcessor:
             args = gate.cargs + gate.targs
             if len(args) != 2:
                 continue
-            edge_index.append([lc_node_num, lc_node_num])
+            # edge_index.append([lc_node_num, lc_node_num])
             for arg in args:
                 if cur_occ[arg] != -1:
                     edge_index.append(
