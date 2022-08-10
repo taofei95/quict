@@ -1,6 +1,6 @@
 from typing import Iterable
 import torch
-from torch.nn import Flatten, Linear
+from torch.nn import Flatten, Linear, Conv1d, MaxPool1d, LayerNorm
 import torch.nn.functional as F
 from torch_geometric.nn import GCNConv, global_sort_pool
 from torch_geometric.nn import Linear as PygLinear
@@ -69,9 +69,10 @@ class SwapPredMix(torch.nn.Module):
         assert lc_gc_out_channel == topo_gc_out_channel
         super().__init__()
 
-        self.gc_mix_out_channel = (
-            topo_pool_node * topo_gc_out_channel + lc_pool_node * lc_gc_out_channel
-        )
+        self.total_node = lc_pool_node + topo_pool_node
+        self.total_feature_dim = topo_gc_out_channel
+
+        self.mix_flat_out_dim = self.total_feature_dim * self.total_node
 
         self.topo_gnn = SwapPredGnn(
             hidden_channel=topo_gc_hidden_channel,
@@ -83,8 +84,54 @@ class SwapPredMix(torch.nn.Module):
             out_channel=lc_gc_out_channel,
             pool_node=lc_pool_node,
         )
+
+        self.ln = LayerNorm(normalized_shape=self.mix_flat_out_dim)
+
+        conv1d_channels = [16, 16, 32]
+        conv1d_ks = [self.total_feature_dim, 5, 5]
+
+        # Conv1 & pooling
+        self.conv1d_1 = Conv1d(
+            in_channels=1,
+            out_channels=conv1d_channels[0],
+            kernel_size=conv1d_ks[0],
+            stride=conv1d_ks[0],
+        )
+        self.dense_dim = int(
+            (self.mix_flat_out_dim - 1 * (conv1d_ks[0] - 1) - 1) / conv1d_ks[0] + 1
+        )
+        self.max_pool1d_1 = MaxPool1d(2, 2)
+        self.dense_dim = int((self.dense_dim - 1 * (2 - 1) - 1) / 2 + 1)
+
+        # Conv2 & pooling
+        self.conv1d_2 = Conv1d(
+            in_channels=conv1d_channels[0],
+            out_channels=conv1d_channels[1],
+            kernel_size=conv1d_ks[1],
+            padding=conv1d_ks[1] - 1,
+        )
+        self.dense_dim = int(
+            (self.dense_dim + 2 * (conv1d_ks[1] - 1) - 1 * (conv1d_ks[1] - 1) - 1) / 1
+            + 1
+        )
+        self.max_pool1d_2 = MaxPool1d(2, 2)
+        self.dense_dim = int((self.dense_dim - 1 * (2 - 1) - 1) / 2 + 1)
+
+        self.conv1d_3 = Conv1d(
+            in_channels=conv1d_channels[1],
+            out_channels=conv1d_channels[2],
+            kernel_size=conv1d_ks[2],
+            padding=conv1d_ks[2] - 1,
+        )
+        self.dense_dim = int(
+            (self.dense_dim + 2 * (conv1d_ks[2] - 1) - 1 * (conv1d_ks[2] - 1) - 1) / 1
+            + 1
+        )
+
+        self.dense_dim *= conv1d_channels[-1]
+
         self.mlp = SwapPredMLP(
-            in_channel=self.gc_mix_out_channel,
+            in_channel=self.dense_dim,
             hidden_channel=ml_hidden_channel,
             out_channel=ml_out_channel,
         )
@@ -92,53 +139,27 @@ class SwapPredMix(torch.nn.Module):
     def forward(self, pair_data):
         x_topo = self.topo_gnn(
             pair_data.x_topo, pair_data.edge_index_topo, pair_data.x_topo_batch
-        )
+        )  # [batch, topo_pool_node * topo_out_feature]
         x_lc = self.lc_gnn(
             pair_data.x_lc, pair_data.edge_index_lc, pair_data.x_lc_batch
-        )
-        x = torch.concat((x_topo, x_lc,), dim=-1)
+        )  # [batch, lc_pool_node * lc_out_feature]
+        x = torch.concat(
+            (x_topo, x_lc,), dim=-1
+        )  # [batch, total_node * total_feature_dim]
+
+        x = self.ln(x)
+
+        x = torch.reshape(
+            x, (-1, 1, self.total_node * self.total_feature_dim)
+        )  # [batch, 1, total_node * total_feature_dim]
+        x = self.conv1d_1(x)
+        x = F.leaky_relu(x)
+        x = self.max_pool1d_1(x)
+        x = self.conv1d_2(x)
+        x = F.leaky_relu(x)
+        x = self.max_pool1d_2(x)
+        x = self.conv1d_3(x)
+        x = torch.flatten(x, start_dim=1, end_dim=-1)
         x = self.mlp(x)
         return x
-
-
-if __name__ == "__main__":
-    from torch_geometric.data import Data
-
-    model = SwapPredMix(
-        topo_gc_hidden_channel=[2, 2,],
-        topo_gc_out_channel=2,
-        topo_pool_node=2,
-        lc_gc_hidden_channel=[2, 2,],
-        lc_gc_out_channel=2,
-        lc_pool_node=2,
-        ml_hidden_channel=[3, 3,],
-        ml_out_channel=1,
-    )
-
-    topo_data_list = []
-    lc_data_list = []
-    node_feature_num = 20
-
-    x_topo = torch.zeros(3, node_feature_num)
-    x_topo[:, :3] = torch.eye(3, dtype=float)
-    edge_index_topo = [[0, 1], [1, 0], [1, 2], [2, 1], [0, 2], [2, 0]]
-    x_lc = torch.zeros(5, node_feature_num)
-    x_lc[:, :5] = torch.eye(5, dtype=float)
-    edge_index_lc = [[0, 1], [1, 2]]
-
-    edge_index_topo = torch.tensor(edge_index_topo, dtype=torch.long).t().contiguous()
-    edge_index_lc = torch.tensor(edge_index_lc, dtype=torch.long).t().contiguous()
-    data = PairData(
-        edge_index_topo=edge_index_topo,
-        x_topo=x_topo,
-        edge_index_lc=edge_index_lc,
-        x_lc=x_lc,
-    )
-
-    batch = Batch.from_data_list([data], follow_batch=["x_topo", "x_lc"])
-    print(batch)
-
-    with torch.no_grad():
-        out = model(batch)
-        print(out)
 

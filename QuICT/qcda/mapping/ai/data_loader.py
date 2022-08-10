@@ -37,9 +37,7 @@ class MappingDataset(PygDataset):
 
 class MappingDataLoaderFactory:
     @staticmethod
-    def get_loader(
-        batch_size: int, shuffle: bool, data_dir: str = None,
-    ):
+    def get_loader(batch_size: int, shuffle: bool, device, data_dir: str = None):
         if data_dir is None:
             data_dir = osp.dirname(osp.realpath(__file__))
             data_dir = osp.join(data_dir, "data")
