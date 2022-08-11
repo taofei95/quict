@@ -2,7 +2,7 @@ from typing import Iterable
 import torch
 from torch.nn import Flatten, Linear, Conv1d, MaxPool1d, LayerNorm
 import torch.nn.functional as F
-from torch_geometric.nn import GCNConv, global_sort_pool
+from torch_geometric.nn import GCNConv, global_sort_pool, GATConv
 from torch_geometric.nn import Linear as PygLinear
 from torch_geometric.data import Batch, Data
 
@@ -38,9 +38,9 @@ class SwapPredGnn(torch.nn.Module):
         self.hidden_gc_layer = torch.nn.ModuleList()
         self.linear_layer = torch.nn.ModuleList()
         for h in hidden_channel:
-            self.hidden_gc_layer.append(GCNConv(-1, h))
+            self.hidden_gc_layer.append(GATConv(-1, h))
             self.linear_layer.append(PygLinear(-1, h))
-        self.last_gc_layer = GCNConv(-1, out_channel)
+        self.last_gc_layer = GATConv(-1, out_channel)
         self.pool_node = pool_node
         self.out_channel = out_channel
 

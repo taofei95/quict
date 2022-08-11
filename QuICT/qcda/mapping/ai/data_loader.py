@@ -15,7 +15,12 @@ from QuICT.qcda.mapping.ai.data_def import PairData
 
 
 class MappingDataset(PygDataset):
-    def __init__(self, data_dir: str) -> None:
+    def __init__(self, data_dir: str = None) -> None:
+        if data_dir is None:
+            data_dir = osp.dirname(osp.realpath(__file__))
+            data_dir = osp.join(data_dir, "data")
+            data_dir = osp.join(data_dir, "processed")
+            
         super().__init__()
         self._file_names = []
         self._data_dir = data_dir
