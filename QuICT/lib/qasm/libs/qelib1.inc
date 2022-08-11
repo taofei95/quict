@@ -148,3 +148,8 @@ gate ryy(theta) a,b
   cx a,b;
   rx(pi/2) a; rx(pi/2) b;
 }
+// FSim Gate
+gate fsim(alpha, beta) a,b
+{
+  cx a,b;
+}

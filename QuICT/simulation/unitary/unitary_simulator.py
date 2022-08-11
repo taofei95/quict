@@ -1,12 +1,11 @@
 from typing import *
 import numpy as np
-from QuICT.core.circuit.circuit import Circuit
 
+from QuICT.core import Circuit
 from QuICT.core.gate import BasicGate, CompositeGate, GateType
 from QuICT.core.utils.gate_type import MatrixType
 from QuICT.simulation.utils import DisjointSet, dp, build_unitary_gate
 import QuICT.ops.linalg.cpu_calculator as CPUCalculator
-from QuICT.simulation.optimization import Optimizer
 
 
 class UnitarySimulator():
@@ -338,134 +337,6 @@ class UnitarySimulator():
         res_mat = matrices[x]
         res_arg = mat_args[x]
         return res_mat, res_arg
-
-    def get_unitary_matrix_new(self, circuit: Circuit = None):
-        if circuit is not None:
-            self.initial_circuit(circuit)
-
-        assert self._circuit is not None
-        gates_order_by_depth = self._circuit.get_gates_order_by_depth()
-        unitary_per_qubits = []     # List[List[unitary_matrix(np/cp.ndarray), target_qubits(List[int])]]
-        inside_qubits = {}          # Dict[qubit_idx: related index in unitary_per_qubits]
-        # TODO: add GroupGateSet for related 2-qubits gates
-        for gates in gates_order_by_depth:
-            for gate in gates:
-                if gate.controls + gate.targets >= 3:
-                    raise Exception("only support 2-qubit gates and 1-qubit gates.")
-
-                if gate.matrix_type == MatrixType.special:
-                    continue
-
-                args = gate.cargs + gate.targs
-                matrix = gate.matrix if self._device == "CPU" else self._array_helper.array(gate.matrix)
-                if len(args) == 1:      # Deal with single-qubit gate
-                    if args[0] in inside_qubits.keys():
-                        related_unitary, related_unitary_args = unitary_per_qubits[inside_qubits[args[0]]]
-                        merged_unitary, merged_unitary_args = self.merge_unitaries(
-                            related_unitary, related_unitary_args,
-                            matrix, args
-                        )
-                        unitary_per_qubits[inside_qubits[args[0]]] = [merged_unitary, merged_unitary_args]
-                    else:
-                        unitary_per_qubits.append([matrix, args])
-                        inside_qubits[args[0]] = len(unitary_per_qubits) - 1
-                else:       # Deal with double-qubits gate
-                    if args[0] > args[1]:
-                        self._computer.MatrixPermutation(matrix, self._array_helper.array([1, 0]), changeInput=True)
-                        args.sort()
-
-                    intersect_qubits = set(args) & set(inside_qubits.keys())
-                    if len(intersect_qubits) == 2:
-                        related_idx0 = inside_qubits[args[0]]
-                        related_idx1 = inside_qubits[args[1]]
-                        if related_idx0 == related_idx1:
-                            related_unitary, related_unitary_args = unitary_per_qubits[related_idx0]
-                            merged_unitary, merged_unitary_args = self.merge_unitaries(
-                                related_unitary, related_unitary_args,
-                                matrix, args
-                            )
-                            unitary_per_qubits[related_idx0] = [merged_unitary, merged_unitary_args]
-                            continue
-
-                    unitary_per_qubits.append([matrix, args])
-                    inside_qubits[args[0]] = len(unitary_per_qubits) - 1
-                    inside_qubits[args[1]] = len(unitary_per_qubits) - 1
-
-        half_size = len(unitary_per_qubits) // 2
-        left_unitary, left_unitary_args = self._combined_unitaries_by_qubits(unitary_per_qubits[:half_size])
-        right_unitary, right_unitary_args = self._combined_unitaries_by_qubits(unitary_per_qubits[half_size:])
-        based_unitary, based_unitary_args = self.merge_unitaries(
-            left_unitary, left_unitary_args,
-            right_unitary, right_unitary_args
-        )
-        if len(based_unitary_args) != self._qubits_num:
-            return self._tensor_unitary(based_unitary, based_unitary_args, list(range(self._qubits_num)))
-
-        return self._computer.MatrixPermutation(based_unitary, np.array(based_unitary_args))
-
-    def merge_unitaries(self, u1, u1_args, u2, u2_args):
-        u1_args_set, u2_args_set = set(u1_args), set(u2_args)
-        insection_args = u1_args_set & u2_args_set
-        if len(insection_args) == 0:
-            return self._computer.tensor(u1, u2), u1_args + u2_args
-
-        if u1_args_set == u2_args_set:
-            args_idx = [u1_args.index(u2_arg) for u2_arg in u2_args]
-            self._computer.MatrixPermutation(
-                u2,
-                self._array_helper.array(args_idx),
-                changeInput=True
-            )
-
-        union_args = u1_args + [i for i in u2_args if i not in u1_args] if len(u1_args) >= len(u2_args) else \
-            u2_args + [i for i in u1_args if i not in u2_args]
-        if len(union_args) != len(u1_args_set):
-            u1 = self._tensor_unitary(u1, u1_args, union_args)
-
-        if len(union_args) != len(u2_args_set):
-            u2 = self._tensor_unitary(u2, u2_args, union_args)
-
-        return self._computer.dot(u2, u1), union_args
-
-    def _tensor_unitary(self, unitary, unitary_args, extend_args):
-        uargs_idx = [extend_args.index(uarg) for uarg in unitary_args]
-        mono_diff = np.diff(uargs_idx)
-        if np.allclose(abs(mono_diff), 1):
-            if np.allclose(mono_diff, -1):
-                self._computer.MatrixPermutation(
-                    unitary,
-                    self._array_helper.arange(len(unitary_args) - 1, -1, -1),
-                    changeInput=True
-                )
-
-            return self._computer.MatrixTensorI(
-                unitary,
-                1 << (min(uargs_idx) - 0),
-                1 << (len(extend_args) - 1 - max(uargs_idx))
-            )
-
-        tensor_matrix = self._computer.MatrixTensorI(
-            unitary,
-            1,
-            1 << (len(extend_args) - len(unitary_args))
-        )
-        tmatrix_args = unitary_args + [earg for earg in extend_args if earg not in unitary_args]
-        permutation_index = [extend_args.index(tm_arg) for tm_arg in tmatrix_args]
-
-        return self._computer.MatrixPermutation(tensor_matrix, self._array_helper.array(permutation_index))
-
-    def _combined_unitaries_by_qubits(self, unitaries):
-        idx = np.arange(len(unitaries), dtype=np.int)
-
-        based_unitary, based_unitary_args = unitaries[idx[0]]
-        for i in idx[1:]:
-            ut, ut_args = unitaries[i]
-            based_unitary, based_unitary_args = self.merge_unitaries(
-                based_unitary, based_unitary_args,
-                ut, ut_args
-            )
-
-        return based_unitary, based_unitary_args
 
     def run(self, circuit, use_previous: bool = False) -> np.ndarray:
         import time

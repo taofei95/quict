@@ -70,7 +70,8 @@ class OPENQASMInterface(BasicInterface):
         "ryy": GateType.ryy,
         "cu1": GateType.cu1,
         "cu3": GateType.cu3,
-        "cswap": GateType.cswap
+        "cswap": GateType.cswap,
+        "fsim": GateType.fsim
     }
 
     token = None
