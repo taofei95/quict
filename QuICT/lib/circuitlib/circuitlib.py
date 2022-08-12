@@ -194,6 +194,7 @@ class CircuitLib:
         elif name == "experiment":
             filename = filename + '/' + para[0]
             if para[0] == "Mapping":
+                filename = filename + '/' + para[1]
                 circuit  = self.load_all(filename)
                 if circuit != None:
                     circuit_list.append(circuit)
