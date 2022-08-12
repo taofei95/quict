@@ -3,7 +3,6 @@ from scipy.stats import unitary_group
 
 from QuICT.core import Circuit
 from QuICT.core.gate import Ry, Rz, CX
-from QuICT.algorithm.synthetical_unitary import SyntheticalUnitary
 from QuICT.qcda.synthesis.unitary_transform.two_qubit_transform import CartanKAKDecomposition, TwoQubitTransform
 from QuICT.qcda.synthesis.unitary_transform.two_qubit_diagonal_transform import TwoQubitDiagonalTransform
 
@@ -52,10 +51,19 @@ def test_CKD():
         U /= np.linalg.det(U) ** 0.25
         # Usyn = KL.dot(matexp).dot(KR)
         # print(U.dot(np.linalg.inv(Usyn)))
-        Ucir = SyntheticalUnitary.run(circuit, showSU=True)
+        Ucir = show_SU(circuit.matrix())
 
         assert np.allclose(matexp.dot(np.linalg.inv(Ucir)), np.eye(4)) \
             or np.allclose(matexp.dot(np.linalg.inv(Ucir)), 1j * np.eye(4))
+
+
+def show_SU(matrix):
+    det = np.linalg.det(matrix)
+    n = np.shape(matrix)[0]
+    det = np.power(det, 1 / n)
+    matrix[:] /= det
+
+    return matrix
 
 
 def test_two_bit_transform():
@@ -64,7 +72,7 @@ def test_two_bit_transform():
         circuit = Circuit(2)
         TwoQubitTransform.execute(U) | circuit
 
-        Ucir = SyntheticalUnitary.run(circuit)
+        Ucir = circuit.matrix()
         phase = U.dot(np.linalg.inv(Ucir))
         assert np.allclose(phase, phase[0, 0] * np.eye(4))
 
@@ -76,6 +84,6 @@ def test_two_qubit_diagonal_transform():
         circuit = Circuit(2)
         TwoQubitDiagonalTransform.execute(U) | circuit
 
-        Ucir = SyntheticalUnitary.run(circuit)
+        Ucir = circuit.matrix()
         phase = U.dot(np.linalg.inv(Ucir))
         assert np.allclose(phase, phase[0, 0] * np.eye(4))

@@ -8,7 +8,6 @@ import numpy as np
 
 from QuICT.core import Circuit
 from QuICT.core.gate import *
-from QuICT.algorithm.synthetical_unitary import SyntheticalUnitary
 
 
 SINGLE_GATE = [X, H, S, S_dagger, X, Y, Z, ID, U1, U2, U3, Rx, Ry, Rz, T, T_dagger]
@@ -37,7 +36,7 @@ def test_single():
         circuit = Circuit(1)
         qureg, gen_g = generate_gate(gate, 1, circuit)
         gen_g | qureg
-        unitary = SyntheticalUnitary.run(circuit, showSU=False)
+        unitary = circuit.matrix()
         ans = np.asmatrix(gen_g.matrix)
         ans = ans.reshape(2, 2)
         if (abs(abs(unitary - ans)) > 1e-10).any():

@@ -9,7 +9,6 @@ import random
 
 import numpy as np
 
-from QuICT.algorithm import SyntheticalUnitary
 from QuICT.core import *
 from QuICT.core.gate import CX, Rz
 from QuICT.core.layout import Layout
@@ -55,15 +54,7 @@ def check_equiv(circuit1, circuit2):
     Returns:
         bool: True if equiv
     """
-    matrix1 = SyntheticalUnitary.run(circuit1)
-    matrix2 = SyntheticalUnitary.run(circuit2)
-
-    # print(abs(matrix1 - matrix2))
-
-    # print(matrix1)
-    # print(matrix2)
-
-    return not np.any(abs(abs(matrix1 - matrix2)) > 1e-6)
+    return np.allclose(circuit1.matrix(), circuit2.matrix(), rtol=1e-6)
 
 
 def test_1():

@@ -46,26 +46,8 @@ def mat_from_circuit(circuit):
 def equiv(circuit1, circuit2):
     if circuit1.width() != circuit2.width():
         return False
-    # mat1 = mat_from_circuit(circuit1)
-    # mat2 = mat_from_circuit(circuit2)
-    mat1 = SyntheticalUnitary.run(circuit1, showSU=False)
-    mat2 = SyntheticalUnitary.run(circuit2, showSU=False)
-    return not np.any(mat1 != mat2)
 
-
-def _getRandomList(l, n):
-    """ get l number from 0, 1, ..., n - 1 randomly.
-    Args:
-        l(int)
-        n(int)
-    Returns:
-        list<int>: the list of l random numbers
-    """
-    _rand = [i for i in range(n)]
-    for i in range(n - 1, 0, -1):
-        do_get = random.randint(0, i)
-        _rand[do_get], _rand[i] = _rand[i], _rand[do_get]
-    return _rand[:l]
+    return np.allclose(circuit1.matrix(), circuit2.matrix())
 
 
 def test_can_run():
@@ -80,11 +62,9 @@ def test_can_run():
     for i in range(3, 4):
         circuit = Circuit(i)
         circuit.random_append(100, typelist=[GateType.x, GateType.cx, GateType.ccx])
-        # indexes = _getRandomList(3, len(names))
 
         templates = []
         for name in names:
-            # name = names[index]
             templates.append(eval(name)())
         circuit_opt = TemplateOptimization.execute(circuit, templates)
         equ = equiv(circuit, circuit_opt)

@@ -9,7 +9,6 @@ import random
 import numpy as np
 import pytest
 
-from QuICT.algorithm import SyntheticalUnitary
 from QuICT.core import *
 from QuICT.core.gate import CX, S, T, X, Z
 from QuICT.qcda.optimization import CnotForceBfs, CnotForceDepthBfs, CnotLocalForceBfs, CnotLocalForceDepthBfs
@@ -81,8 +80,8 @@ def test_2():
         new_circuit.extend(new_circuit_gates)
         print(circuit)
         print(new_circuit)
-        syn1 = SyntheticalUnitary.run(circuit)
-        syn2 = SyntheticalUnitary.run(new_circuit)
+        syn1 = circuit.matrix()
+        syn2 = new_circuit.matrix()
         assert not np.any(np.abs(syn1 - syn2) > 1e-7)
 
 

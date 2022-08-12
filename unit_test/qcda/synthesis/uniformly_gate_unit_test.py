@@ -6,10 +6,8 @@
 
 import pytest
 import random
-
 import numpy as np
 
-from QuICT.algorithm import SyntheticalUnitary
 from QuICT.core import *
 from QuICT.core.gate import *
 from QuICT.qcda.synthesis import UniformlyRy, UniformlyRz, UniformlyUnitary
@@ -18,7 +16,7 @@ from QuICT.qcda.synthesis import UniformlyRy, UniformlyRz, UniformlyUnitary
 def generate_unitary():
     matrix = U3(random.random() * np.pi, random.random() * np.pi, random.random() * np.pi).matrix
     matrix[:] *= np.exp(2j * np.pi * random.random())
-    # matrix = U3(np.pi / 2, np.pi / 2, np.pi / 2).matrix
+
     return matrix
 
 
@@ -28,7 +26,7 @@ def test_uniform_ry():
             circuit = Circuit(i)
             angles = [random.random() for _ in range(1 << (i - 1))]
             UniformlyRy.execute(angles) | circuit
-            unitary = SyntheticalUnitary.run(circuit)
+            unitary = circuit.matrix()
             for j in range(1 << (i - 1)):
                 unitary_slice = unitary[2 * j:2 * (j + 1), 2 * j:2 * (j + 1)]
                 assert not np.any(abs(unitary_slice - Ry(angles[j]).matrix.reshape(2, 2)) > 1e-10)
@@ -40,7 +38,7 @@ def test_uniform_rz():
             circuit = Circuit(i)
             angles = [random.random() for _ in range(1 << (i - 1))]
             UniformlyRz.execute(angles) | circuit
-            unitary = SyntheticalUnitary.run(circuit)
+            unitary = circuit.matrix()
             for j in range(1 << (i - 1)):
                 unitary_slice = unitary[2 * j:2 * (j + 1), 2 * j:2 * (j + 1)]
                 assert not np.any(abs(unitary_slice - Rz(angles[j]).matrix.reshape(2, 2)) > 1e-10)
@@ -52,7 +50,7 @@ def test_uniform_unitary():
             circuit = Circuit(i)
             unitaries = [generate_unitary() for _ in range(1 << (i - 1))]
             UniformlyUnitary.execute(unitaries) | circuit
-            unitary = SyntheticalUnitary.run(circuit)
+            unitary = circuit.matrix()
             if abs(unitary[0, 0]) > 1e-10:
                 delta = unitaries[0][0][0] / unitary[0, 0]
             else:

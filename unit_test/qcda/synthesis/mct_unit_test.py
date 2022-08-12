@@ -8,7 +8,6 @@ import pytest
 from QuICT.core import *
 from QuICT.core.gate import *
 from QuICT.qcda.synthesis.mct import MCTOneAux, MCTLinearHalfDirtyAux, MCTLinearOneDirtyAux
-from QuICT.algorithm import SyntheticalUnitary
 from QuICT.simulation.state_vector import ConstantStateVectorSimulator
 
 
@@ -34,7 +33,7 @@ def test_MCT_Linear_Simulation_Half():
         for m in range(1, i // 2 + (1 if i % 2 == 1 else 0)):
             circuit = Circuit(i)
             MCTLinearHalfDirtyAux.execute(m, i) | circuit
-            unitary = SyntheticalUnitary.run(circuit, showSU=False)
+            unitary = circuit.matrix()
             for j in range(1 << i):
                 for k in range(1 << i):
                     flag = True
@@ -91,7 +90,6 @@ def test_MCT_Linear_Simulation_One_functional():
             aux_idx = [0]
             controls_idx = [i for i in range(1, n - 1)]
             target_idx = [n - 1]
-            # aux = circuit[aux_idx]
             controls = circuit[controls_idx]
             target = circuit[target_idx]
             gates = CompositeGate()
@@ -105,7 +103,6 @@ def test_MCT_Linear_Simulation_One_functional():
             if (
                 (control_bits == 2 ** (n - 2) - 1 and int(target) == 0) or
                 (control_bits != 2 ** (n - 2) - 1 and int(target) == 1) or
-                # (int(aux) != 0) or
                 (int(controls) != control_bits)
             ):
                 print("when control bits are %d, the targe is %d" % (control_bits, int(target)))
@@ -120,14 +117,10 @@ def test_MCT_Linear_Simulation_One_unitary():
         aux_idx = [0]
         controls_idx = [i for i in range(1, n - 1)]
         target_idx = [n - 1]
-        # aux = circuit[aux_idx]
-        # controls = circuit[controls_idx]
-        # target = circuit[target_idx]
         gates = MCTLinearOneDirtyAux.execute(n)
         gates | circuit(controls_idx + target_idx + aux_idx)
         # assert 0
-        unitary = SyntheticalUnitary.run(circuit)
-        print(circuit)
+        unitary = circuit.matrix()
         N = 1 << (n - 1)
         for i in range(N):
             for j in range(N):
@@ -174,8 +167,7 @@ def test_MCT():
         circuit = Circuit(i)
         MCTOneAux.execute(i) | circuit
         # assert 0
-        unitary = SyntheticalUnitary.run(circuit)
-        print(circuit)
+        unitary = circuit.matrix()
         for j in range(1 << i):
             flagj = True
             for l in range(2, i):

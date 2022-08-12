@@ -3,7 +3,6 @@ import numpy as np
 from scipy.linalg import cossin
 from scipy.linalg import block_diag
 from QuICT.core import *
-from QuICT.algorithm import SyntheticalUnitary
 from QuICT.qcda.synthesis.uniformly_gate import UniformlyRy
 
 
@@ -13,7 +12,7 @@ def test_csd():
         n = 6
         circuit = Circuit(n)
         circuit.random_append(rand_size=20)
-        mat1 = SyntheticalUnitary.run(circuit)
+        mat1 = circuit.matrix()
         mat_size = mat1.shape[0]
         _, cs, _ = cossin(mat1, mat_size // 2, mat_size // 2)
         u, angle_list, v_dagger = cossin(mat1, mat_size // 2, mat_size // 2, separate=True)

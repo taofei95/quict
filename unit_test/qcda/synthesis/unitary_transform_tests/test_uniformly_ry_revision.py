@@ -2,7 +2,6 @@ import random
 
 import numpy as np
 
-from QuICT.algorithm import SyntheticalUnitary
 from QuICT.core import *
 from QuICT.core.gate import Ry
 from QuICT.qcda.synthesis.unitary_transform.uniformly_ry_revision import UniformlyRyRevision
@@ -14,7 +13,7 @@ def test_uniform_ry():
             circuit = Circuit(i)
             angles = [random.random() for _ in range(1 << (i - 1))]
             UniformlyRyRevision.execute(angles) | circuit
-            unitary = SyntheticalUnitary.run(circuit)
+            unitary = circuit.matrix()
             # circuit.print_information()
             # print(unitary)
             for j in range(1 << (i - 1)):

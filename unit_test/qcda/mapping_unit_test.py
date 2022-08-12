@@ -4,7 +4,6 @@ from typing import List
 from QuICT.core.layout import *
 from QuICT.core.gate import *
 from QuICT.core.circuit import *
-from QuICT.algorithm import SyntheticalUnitary
 from QuICT.qcda.mapping import MCTSMapping as Mapping
 from QuICT.qcda.mapping.utility import CouplingGraph
 from QuICT.tools.interface import OPENQASMInterface
@@ -24,20 +23,9 @@ def test_mapping():
                 assert(coupling_graph.is_adjacent(g.targs[0], g.targs[1]))
             else:
                 assert(coupling_graph.is_adjacent(g.targ, g.carg))
-    ori_array = SyntheticalUnitary.run(qc)
-    trans_array = SyntheticalUnitary.run(transformed_circuit)
+    ori_array = qc.matrix()
+    trans_array = transformed_circuit.matrix()
     np.allclose(ori_array, trans_array)
-#     qasm = OPENQASMInterface.load_circuit(transformed_circuit)
-#     qasm.output_qasm(f"{dir}/output_circuit.qasm")
-#     print("The original circuit size is {}. After mapping, its size is {}."
-#           .format(qc.size(), transformed_circuit.size()))
-#     CouplingGraph(coupling_graph=layout).draw(file_path=f"{dir}/coupling_graph.jpg")
-#     qc.draw(method="matp", filename=f"{dir}/original_circuit.jpg")
-#     Check if the number of single qubit gates and two qubit gates(except SWAP gates) remains the same
-#     transformed_circuit.draw(method="matp",
-#                              filename=f"{dir}/transformed_circuit.jpg")
-#     print([qc.count_1qubit_gate(), transformed_circuit.count_1qubit_gate()] )
-#     print([qc.count_2qubit_gate(), transformed_circuit.count_2qubit_gate()] )
 
 
 if __name__ == "__main__":
