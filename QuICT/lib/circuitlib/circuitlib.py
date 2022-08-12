@@ -34,7 +34,7 @@ class CircuitLib:
         circuit_all = []
         for root, dirs, files in os.walk(filename):
             for file in files:
-                qasm = OPENQASMInterface.load_file(file)
+                qasm = OPENQASMInterface.load_file(filename + '/' + file)
                 if not qasm.valid_circuit:
                     raise QasmError("Missing input file")
                 circuit_all.append(qasm.circuit)
@@ -47,14 +47,14 @@ class CircuitLib:
         filename = "./circuit_qasm/"+name
         
         if name == "template":
-            for bit_num in range(para[0]):
-                for size in range(para[1]):
-                    for depth in range(para[2]):
+            for bit_num in range(para[0] + 1):
+                for size in range(para[1] + 1):
+                    for depth in range(para[2] + 1):
                         part_name = str(bit_num) + '_' + str(size) + '_' + str(depth)
                         for root, dirs, files in os.walk(filename):
                             for file in files:
                                 if file.find(part_name) != -1:
-                                    qasm = OPENQASMInterface.load_file(file)
+                                    qasm = OPENQASMInterface.load_file(filename + '/' + file)
                                     if not qasm.valid_circuit:
                                         raise QasmError("Missing input file")
                                     circuit_list.append(qasm.circuit)
