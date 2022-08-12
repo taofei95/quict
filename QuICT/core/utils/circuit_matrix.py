@@ -1,8 +1,54 @@
 from typing import *
+from collections import namedtuple
 import numpy as np
 
 from .gate_type import MatrixType
 import QuICT.ops.linalg.cpu_calculator as CPUCalculator
+
+
+def get_gates_order_by_depth(gates: list) -> list:
+    """ Order the gates of circuit by its depth layer
+
+    Returns:
+        List[List[BasicGate]]: The list of gates which at same layers in circuit.
+    """
+    gate_by_depth = [[gates[0]]]          # List[list], gates for each depth level.
+    # List[set], gates' qubits for each depth level.
+    gate_args_by_depth = [set(gates[0].cargs + gates[0].targs)]
+    for gate in gates[1:]:
+        gate_arg = set(gate.cargs + gate.targs)
+        for i in range(len(gate_args_by_depth) - 1, -1, -1):
+            if gate_arg & gate_args_by_depth[i]:
+                if i == len(gate_args_by_depth) - 1:
+                    gate_by_depth.append([gate])
+                    gate_args_by_depth.append(gate_arg)
+                else:
+                    gate_by_depth[i + 1].append(gate)
+                    gate_args_by_depth[i + 1] = gate_arg | gate_args_by_depth[i + 1]
+                break
+            else:
+                if i == 0:
+                    gate_by_depth[i].append(gate)
+                    gate_args_by_depth[i] = gate_arg | gate_args_by_depth[i]
+
+    return gate_by_depth
+
+
+class MatrixGroup:
+    def __init__(self, matrix, args, blocked_args: set = set([])):
+        self.args = set(args)
+        self.value = [(matrix, args)]
+        self.block_args = blocked_args
+
+    def append(self, matrix, args):
+        self.args = self.args | set(args)
+        self.value.append((matrix, args))
+
+    def intersect(self, args: list):
+        intersect_qubits = list(set(args) & self.args)
+        blocked_qubits = list(set(args) & self.block_args)
+
+        return intersect_qubits, blocked_qubits
 
 
 class CircuitMatrix:
@@ -18,68 +64,85 @@ class CircuitMatrix:
             self._computer = GPUCalculator
             self._array_helper = cp
 
-    def get_unitary_matrix(self, gates: list, qubits_num: int) -> np.ndarray:
-        matrix_groups = []          # List[List[(gate.matrix, gate.args)]]
-        inside_qubits = {}          # Dict[qubit_idx: related index in matrix_groups]
-        depth_qubits = [0] * qubits_num
-        for gate in gates:
-            if gate.controls + gate.targets >= 3:
-                raise Exception("only support 2-qubit gates and 1-qubit gates.")
+    def get_unitary_matrix(self, gates:list, qubits_num: int, mini_arg: int = 0) -> np.ndarray:
+        # Order gates by depth
+        gates_order_by_depth = get_gates_order_by_depth(gates)
 
-            if gate.matrix_type == MatrixType.special:
-                continue
+        # Get MatrixGroups by its qubit args and depth
+        matrix_groups = [[]]          # List[List[MatrixGroup]]
+        for layer_gates in gates_order_by_depth:
+            for gate in layer_gates:
+                if gate.controls + gate.targets >= 3:
+                    raise Exception("only support 2-qubit gates and 1-qubit gates.")
 
-            args = gate.cargs + gate.targs
-            matrix = gate.matrix if self._device == "CPU" else self._array_helper.array(gate.matrix)
-            if len(args) == 1:      # Deal with single-qubit gate
-                if args[0] in inside_qubits.keys():
-                    related_matrix_group_idx = inside_qubits[args[0]]
-                    matrix_groups[related_matrix_group_idx].append((matrix, args))
-                else:
-                    matrix_groups.append([(matrix, args)])
-                    inside_qubits[args[0]] = len(matrix_groups) - 1
-            else:       # Deal with double-qubits gate
-                if args[0] > args[1]:
+                if gate.matrix_type == MatrixType.special:
+                    continue
+
+                args = gate.cargs + gate.targs
+                matrix = gate.matrix if self._device == "CPU" else self._array_helper.array(gate.matrix)
+                if len(args) == 2 and args[0] > args[1]:
                     args.sort()
                     matrix = self._computer.MatrixPermutation(matrix, self._array_helper.array([1, 0]))
 
-                intersect_qubits = list(set(args) & set(inside_qubits.keys()))
-                related_matrix_group_idx = len(matrix_groups)
-                if len(intersect_qubits) == 0:
-                    matrix_groups.append([(matrix, args)])
-                elif len(intersect_qubits) == 1:
-                    if depth_qubits[args[0]] == depth_qubits[args[1]]:
-                        related_matrix_group_idx = inside_qubits[intersect_qubits[0]]
-                        matrix_groups[related_matrix_group_idx].append((matrix, args))
-                    else:
-                        matrix_groups.append([(matrix, args)])
-                        related_idx = inside_qubits[intersect_qubits[0]]
-                        updated_depth = max(depth_qubits[args[0]], depth_qubits[args[1]])
-                        covered_qubits = [qid for qid, rid in inside_qubits.items() if rid == related_idx]
-                        for c_q in covered_qubits:
-                            del inside_qubits[c_q]
-                            depth_qubits[c_q] = updated_depth
+                is_intersect, is_blocked_layer = self._find_related_MatrixGroup(matrix_groups, args)
+                if not is_intersect:
+                    new_mg = MatrixGroup(matrix, args)
+                    matrix_groups[is_blocked_layer].append(new_mg)
                 else:
-                    related_idx0 = inside_qubits[args[0]]
-                    related_idx1 = inside_qubits[args[1]]
-                    if related_idx0 == related_idx1:
-                        matrix_groups[related_idx0].append((matrix, args))
-                        continue
+                    if len(is_intersect) == 2:
+                        related_mg0, related_mg1 = is_intersect[0], is_intersect[1]
+                        if related_mg0.position == related_mg1.position:
+                            matrix_groups[related_mg0.layer][related_mg0.position].append(matrix, args)
+                        else:
+                            blocked_args = matrix_groups[related_mg0.layer][related_mg0.position].args | \
+                                matrix_groups[related_mg1.layer][related_mg1.position].args
+                            new_mg = MatrixGroup(matrix, args, blocked_args)
+                            if related_mg0.layer == len(matrix_groups) - 1:
+                                matrix_groups.append([new_mg])
+                            else:
+                                matrix_groups[related_mg0.layer + 1].append(new_mg)
                     else:
-                        matrix_groups.append([(matrix, args)])
-                        covered_qubits = [qid for qid, rid in inside_qubits.items() if rid == related_idx0 or rid == related_idx1]
-                        for c_q in covered_qubits:
-                            del inside_qubits[c_q]
-                            depth_qubits[c_q] += 1
+                        intersect_info = is_intersect[0]
+                        matrix_groups[intersect_info.layer][intersect_info.position].append(matrix, args)
 
-                for arg in args:
-                    inside_qubits[arg] = related_matrix_group_idx
+        # Combined the matries in each MatrixGroup
+        combined_matries = []
+        for layer in matrix_groups:
+            for mg in layer:
+                combined_matries.append(self._combined_gates(mg.value))
 
-        combined_matries = []       # List[gate]
-        for glist in matrix_groups:
-            combined_matries.append(self._combined_gates(glist))
+        # Combined all matries from the combined MatrixGroup
+        circuit_matrix, circuit_matrix_args = self._combined_gates(combined_matries)
+        # Permutation the circuit matrix with currect qubits' order
+        args_baseline = list(range(mini_arg, qubits_num, 1))
+        if circuit_matrix_args != args_baseline:
+            circuit_matrix = self._tensor_unitary(circuit_matrix, circuit_matrix_args, args_baseline)
 
-        return self._combined_gates(combined_matries)
+        return circuit_matrix
+
+    def _find_related_MatrixGroup(self, matrix_groups: list, args: list):
+        intersect_info = namedtuple('IntersectInfo', ['arg', 'layer', 'position'])
+        is_blocked = 0
+        is_intersect = []
+        for lidx in range(len(matrix_groups) - 1, -1, -1):
+            layer = matrix_groups[lidx]
+            for midx, mg in enumerate(layer):
+                iq, bq = mg.intersect(args)
+                if len(iq) > 0:
+                    for idx in iq:
+                        inter_info = intersect_info(idx, lidx, midx)
+                        is_intersect.append(inter_info)
+
+                if len(bq) > 0:
+                    is_blocked = lidx
+
+            if len(is_intersect) > 0:
+                return is_intersect, False
+
+            if is_blocked:
+                break
+
+        return is_intersect, is_blocked
 
     def merge_gates(self, u1, u1_args, u2, u2_args):
         u1_args_set, u2_args_set = set(u1_args), set(u2_args)
@@ -129,17 +192,6 @@ class CircuitMatrix:
         permutation_index = [extend_args.index(tm_arg) for tm_arg in tmatrix_args]
 
         return self._computer.MatrixPermutation(tensor_matrix, self._array_helper.array(permutation_index))
-
-    def _combined_gates_by_order(self, gates):
-        based_matrix, based_matrix_args = gates[0]
-        for i in range(1, len(gates)):
-            current_matrix, current_matrix_args = gates[i]
-            based_matrix, based_matrix_args = self.merge_gates(
-                based_matrix, based_matrix_args,
-                current_matrix, current_matrix_args
-            )
-
-        return based_matrix, based_matrix_args
 
     def _combined_gates(self, gates):
         args_num = [len(args) for _, args in gates]

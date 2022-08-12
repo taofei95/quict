@@ -4,10 +4,12 @@
 # @Author  : Han Yu, Li Kaiqi
 # @File    : _circuit_computing.py
 
+from typing import List
 import numpy as np
 from enum import Enum
 
 from .gate_type import GateType
+from .circuit_matrix import CircuitMatrix, get_gates_order_by_depth
 
 
 class CircuitBased(object):
@@ -134,6 +136,29 @@ class CircuitBased(object):
                 qasm_string += gate.qasm()
 
         return qasm_string
+
+    def get_gates_order_by_depth(self) -> List[List]:
+        """ Order the gates of circuit by its depth layer
+
+        Returns:
+            List[List[BasicGate]]: The list of gates which at same layers in circuit.
+        """
+        return get_gates_order_by_depth(self.gates)
+
+    def matrix(self, device: str = "CPU", mini_arg: int = 0) -> np.ndarray:
+        """ Generate the circuit's unitary matrix which compose by all quantum gates' matrix in current circuit. 
+
+        Args:
+            device (str, optional): The device type for generate circuit's matrix, one of [CPU, GPU]. Defaults to "CPU".
+            mini_arg (int, optional): The minimal qubit args, only use for CompositeGate local mode. Default to 0.
+        """
+        assert device in ["CPU", "GPU"]
+        circuit_matrix = CircuitMatrix(device)
+
+        if not self._gates:
+            return None
+
+        return circuit_matrix.get_unitary_matrix(self.gates, self.width(), mini_arg)
 
 
 class CircuitMode(Enum):

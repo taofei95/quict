@@ -257,33 +257,22 @@ class CompositeGate(CircuitBased):
 
         return inverse_cgate
 
-    def matrix(self, local: bool = False) -> np.ndarray:
+    def matrix(self, device: str = "CPU", local: bool = False) -> np.ndarray:
         """ matrix of these gates
 
         Args:
+            device (str, optional): The device type for generate circuit's matrix, one of [CPU, GPU]. Defaults to "CPU".
             local: whether regards the min_qubit as the 0's qubit
 
         Returns:
             np.ndarray: the matrix of the gates
         """
-        if not self._gates:
-            return None
-
         if local and isinstance(self._min_qubit, int):
             min_value = self._min_qubit
         else:
             min_value = 0
 
-        matrix = np.eye(1 << (self._max_qubit - min_value))
-        for gate in self.gates:
-            if gate.is_special() and gate.type != GateType.unitary:
-                raise TypeError(f"Cannot combined the gate matrix with special gate {gate.type}")
-
-            matrix = np.matmul(matrix_product_to_circuit(
-                gate.matrix, gate.cargs + gate.targs, self._max_qubit, min_value
-            ), matrix)
-
-        return matrix
+        return super().matrix(device, min_value)
 
     def equal(self, target, ignore_phase=True, eps=1e-7) -> bool:
         """ whether is equally with target or not.
