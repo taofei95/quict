@@ -64,7 +64,7 @@ class CircuitMatrix:
             self._computer = GPUCalculator
             self._array_helper = cp
 
-    def get_unitary_matrix(self, gates:list, qubits_num: int, mini_arg: int = 0) -> np.ndarray:
+    def get_unitary_matrix(self, gates: list, qubits_num: int, mini_arg: int = 0) -> np.ndarray:
         # Order gates by depth
         gates_order_by_depth = get_gates_order_by_depth(gates)
 
@@ -211,7 +211,7 @@ class CircuitMatrix:
         return gates[0]
 
     def _find_mini_args_num(self, nums: list):
-        mini_num = sum(nums)*2
+        mini_num = sum(nums) * 2
         left, right = -1, -1
         for i in range(1, len(nums), 1):
             if nums[i] + nums[i - 1] < mini_num:

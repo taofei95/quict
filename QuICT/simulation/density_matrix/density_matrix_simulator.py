@@ -5,7 +5,6 @@ from QuICT.core.circuit.circuit import Circuit
 from QuICT.core.gate import BasicGate, UnitaryGate, Unitary
 from QuICT.core.noise import NoiseModel
 from QuICT.core.operator import NoiseGate
-from QuICT.simulation.unitary import UnitarySimulator
 from QuICT.core.utils import GateType, matrix_product_to_circuit
 import QuICT.ops.linalg.cpu_calculator as CPUCalculator
 
@@ -141,10 +140,7 @@ class DensityMatrixSimulation:
         Args:
             circuit (Circuit): The circuit only have BasicGate.
         """
-        circuit_matrix = UnitarySimulator().get_unitary_matrix(circuit)
-        if self._device == "GPU":
-            circuit_matrix = self._array_helper.array(circuit_matrix)
-
+        circuit_matrix = circuit.matrix(self._device)
         self._density_matrix = self._computer.dot(
             self._computer.dot(circuit_matrix, self._density_matrix),
             circuit_matrix.conj().T

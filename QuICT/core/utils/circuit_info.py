@@ -146,7 +146,7 @@ class CircuitBased(object):
         return get_gates_order_by_depth(self.gates)
 
     def matrix(self, device: str = "CPU", mini_arg: int = 0) -> np.ndarray:
-        """ Generate the circuit's unitary matrix which compose by all quantum gates' matrix in current circuit. 
+        """ Generate the circuit's unitary matrix which compose by all quantum gates' matrix in current circuit.
 
         Args:
             device (str, optional): The device type for generate circuit's matrix, one of [CPU, GPU]. Defaults to "CPU".

@@ -57,6 +57,7 @@ class UnitarySimulator():
         if isinstance(matrix, Circuit):
             self._qubits_num = matrix.width()
             self._unitary_matrix = matrix.matrix(self._device)
+            assert 2 ** self._qubits_num == self._unitary_matrix.shape[0]
         else:
             row, col = matrix.shape
             self._qubits_num = int(np.log2(row))
