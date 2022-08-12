@@ -120,10 +120,9 @@ class Simulator:
 
         amplitude = self._simulator.run(circuit, noise_model, use_previous) if self._backend == "density_matrix" else \
             self._simulator.run(circuit, use_previous)
-        if self._amplitude_record:
-            result.record_amplitude(amplitude)
+        result.record_amplitude(amplitude, self._amplitude_record)
 
         sample_result = self._simulator.sample(self._shots)
         result.record_sample(sample_result)
 
-        return result
+        return result.__dict__()

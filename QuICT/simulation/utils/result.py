@@ -24,6 +24,7 @@ class Result:
         self.shots = shots
         self.options = options
         self.counts = {}
+        self.state_vector = None
 
         # prepare output path
         self.output_path = self._prepare_output_file()
@@ -31,6 +32,21 @@ class Result:
     def __str__(self):
         return f"ID: {self.id}\nDevice: {self.device}\nBackend: {self.backend}\nShots: {self.shots}\n" + \
             f"Options: {self.options}\nResults: {self.counts}"
+
+    def __dict__(self):
+        return {
+            "id": self.id,
+            "shots": self.shots,
+            "backend_info": {
+                "device": self.device,
+                "backend": self.backend,
+                "options": self.options
+            },
+            "data": {
+                "state_vector": self.state_vector,
+                "counts": self.counts
+            }
+        }
 
     def _prepare_output_file(self):
         """ Prepare output path. """
@@ -61,9 +77,12 @@ class Result:
         with open(f"{self.output_path}/circuit.qasm", "w") as of:
             of.write(circuit.qasm())
 
-    def record_amplitude(self, amplitude):
+    def record_amplitude(self, amplitude, is_record: bool = False):
         """ dump the circuit. """
         if self.device == "GPU":
             amplitude = amplitude.get()
 
-        np.savetxt(f"{self.output_path}/amplitude.txt", amplitude)
+        if is_record:
+            np.savetxt(f"{self.output_path}/amplitude.txt", amplitude)
+
+        self.state_vector = amplitude.copy()

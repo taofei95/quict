@@ -88,14 +88,15 @@ class UnitarySimulator():
         Returns:
             _type_: _description_
         """
-        assert self._circuit is not None
         original_sv = self._vector.copy()
         counts = [0] * (1 << self._qubits_num)
         for _ in range(shots):
+            measured_result = 0
             for i in range(self._qubits_num):
-                self._measure(i)
+                measured_result <<= 1
+                measured_result += self._measure(i)
 
-            counts[int(self._circuit.qubits)] += 1
+            counts[measured_result] += 1
             self._vector = original_sv.copy()
 
         return counts
@@ -120,4 +121,4 @@ class UnitarySimulator():
                 prob=prob
             )
 
-        self._circuit.qubits[self._qubits_num - 1 - index].measured = int(result)
+        return int(result)
