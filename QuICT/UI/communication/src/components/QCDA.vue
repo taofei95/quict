@@ -33,6 +33,8 @@
           </el-aside>
 
         </el-container>
+        <el-button size="large" type="primary" plain @click="back_qcda"
+          style="margin: 0px 10px; font-family: 'Segoe UI Symbol'"> Back </el-button>
         <el-button size="large" type="primary" plain @click="confirm_newQCDA" :enabled="NewConfirmBtnEnable"
           style="margin: 0px 10px; font-family: 'Segoe UI Symbol'"> Confirm </el-button>
       </div>
@@ -42,6 +44,8 @@
           <el-button size="large" type="primary" plain style="margin: 0px 10px; font-family: 'Segoe UI Symbol'"> LOAD
           </el-button>
         </el-upload>
+        <el-button size="large" type="primary" plain @click="back_qcda"
+          style="margin: 0px 10px; font-family: 'Segoe UI Symbol'"> Back </el-button>
         <el-button size="large" type="primary" plain @click="confirm_loadQCDA" :enabled="LoadConfirmBtnEnable"
           style="margin: 0px 10px; font-family: 'Segoe UI Symbol'"> Confirm </el-button>
       </div>
@@ -49,39 +53,45 @@
         <oVisualizeZone ref="o_visVue" :VisContentIn="o_VisContent">
           <!-- TODO: replace with a one way vue component -->
         </oVisualizeZone>
+        <el-button size="large" type="primary" plain @click="back_o_qasm"
+          style="margin: 0px 10px; font-family: 'Segoe UI Symbol'"> Back </el-button>
         <el-button size="large" type="primary" plain @click="run_o_QCDA"
           style="margin: 0px 10px; font-family: 'Segoe UI Symbol'"> Confirm </el-button>
       </div>
       <div id="step_3" class="div_not_selected">
         <el-tabs type="border-card" style="background: transparent !important; border: 0px solid">
-              <el-tab-pane label="Table">
-                <el-row style="height: 40px" v-if="Object.keys(OutputContent).length > 0">
-                  <el-col :span="4"></el-col>
-                  <el-col :span="6"><b>State</b></el-col>
-                  <el-col :span="4"></el-col>
-                  <el-col :span="6"><b>Measured</b></el-col>
-                  <el-col :span="4"></el-col>
-                </el-row>
+          <el-tab-pane label="Table">
+            <el-row style="height: 40px" v-if="Object.keys(OutputContent).length > 0">
+              <el-col :span="4"></el-col>
+              <el-col :span="6"><b>State</b></el-col>
+              <el-col :span="4"></el-col>
+              <el-col :span="6"><b>Measured</b></el-col>
+              <el-col :span="4"></el-col>
+            </el-row>
 
-                <el-row style="height: 40px" v-for="[k, v] in Object.entries(OutputContent)" :key="k">
-                  <el-col :span="4"></el-col>
-                  <el-col :span="6">{{ k }}</el-col>
-                  <el-col :span="4"></el-col>
-                  <el-col :span="6">{{ v }}</el-col>
-                  <!-- <el-col :span="6" v-if="result[2].startsWith('-')"
+            <el-row style="height: 40px" v-for="[k, v] in Object.entries(OutputContent)" :key="k">
+              <el-col :span="4"></el-col>
+              <el-col :span="6">{{ k }}</el-col>
+              <el-col :span="4"></el-col>
+              <el-col :span="6">{{ v }}</el-col>
+              <!-- <el-col :span="6" v-if="result[2].startsWith('-')"
                     >{{ result[1]
                     }}{{ result[2].replace("-", " - ") }} j</el-col
                   >
                   <el-col :span="6" v-else
                     >{{ result[1] }} + {{ result[2] }} j</el-col
                   > -->
-                  <el-col :span="4"></el-col>
-                </el-row>
-              </el-tab-pane>
-              <el-tab-pane label="Histogram">
-                <div id="o_histogram"></div>
-              </el-tab-pane>
-            </el-tabs>
+              <el-col :span="4"></el-col>
+            </el-row>
+          </el-tab-pane>
+          <el-tab-pane label="Histogram">
+            <div id="o_histogram"></div>
+          </el-tab-pane>
+        </el-tabs>
+        <el-button size="large" type="primary" plain @click="back_r_QCDA"
+          style="margin: 0px 10px; font-family: 'Segoe UI Symbol'"> Back </el-button>
+        <el-button size="large" type="primary" plain @click="back_qcda"
+          style="margin: 0px 10px; font-family: 'Segoe UI Symbol'"> Restart </el-button>
       </div>
     </el-main>
   </el-container>
@@ -139,6 +149,7 @@ export default {
       LoadConfirmBtnEnable: false,
       NewConfirmBtnEnable: false,
       OutputContent: {},
+      Route: "N",
     };
   },
   components: {
@@ -149,20 +160,39 @@ export default {
   methods: {
     new_qcda() {
       this.current_step = 1;
+      this.Route = "N";
       d3.select("#step_0").attr("class", "div_not_selected");
       d3.select("#step_1_N").attr("class", "div_selected");
       d3.select("#step_1_L").attr("class", "div_not_selected");
       d3.select("#step_2").attr("class", "div_not_selected");
       d3.select("#step_3").attr("class", "div_not_selected");
-      this.socket.emit("get_gate_set", { uuid: this.uuid, source:'QCDA' });
+      this.socket.emit("get_gate_set", { uuid: this.uuid, source: 'QCDA' });
     },
     load_qcda() {
       this.current_step = 1;
+      this.Route = "L";
       d3.select("#step_0").attr("class", "div_not_selected");
       d3.select("#step_1_N").attr("class", "div_not_selected");
       d3.select("#step_1_L").attr("class", "div_selected");
       d3.select("#step_2").attr("class", "div_not_selected");
       d3.select("#step_3").attr("class", "div_not_selected");
+    },
+    back_qcda() {
+      this.current_step = 0;
+      d3.select("#step_0").attr("class", "div_selected");
+      d3.select("#step_1_N").attr("class", "div_not_selected");
+      d3.select("#step_1_L").attr("class", "div_not_selected");
+      d3.select("#step_2").attr("class", "div_not_selected");
+      d3.select("#step_3").attr("class", "div_not_selected");
+      this.n_VisContent = {
+        gateSet: [
+        ],
+        q: [0, 1, 2, 3, 4],
+        gates: [
+
+        ],
+      };
+      this.n_ProgramText = "";
     },
     show_o_qasm() {
       this.current_step = 2;
@@ -172,6 +202,19 @@ export default {
       d3.select("#step_2").attr("class", "div_selected");
       d3.select("#step_3").attr("class", "div_not_selected");
     },
+    back_o_qasm() {
+      this.current_step = 1;
+      d3.select("#step_0").attr("class", "div_not_selected");
+      if (this.Route == "N") {
+        d3.select("#step_1_N").attr("class", "div_selected");
+        d3.select("#step_1_L").attr("class", "div_not_selected");
+      } else if (this.Route == "L") {
+        d3.select("#step_1_N").attr("class", "div_not_selected");
+        d3.select("#step_1_L").attr("class", "div_selected");
+      }
+      d3.select("#step_2").attr("class", "div_not_selected");
+      d3.select("#step_3").attr("class", "div_not_selected");
+    },
     confirm_o_QCDA() {
       this.current_step = 3;
       d3.select("#step_0").attr("class", "div_not_selected");
@@ -179,6 +222,14 @@ export default {
       d3.select("#step_1_L").attr("class", "div_not_selected");
       d3.select("#step_2").attr("class", "div_not_selected");
       d3.select("#step_3").attr("class", "div_selected");
+    },
+    back_r_QCDA() {
+      this.current_step = 2;
+      d3.select("#step_0").attr("class", "div_not_selected");
+      d3.select("#step_1_N").attr("class", "div_not_selected");
+      d3.select("#step_1_L").attr("class", "div_not_selected");
+      d3.select("#step_2").attr("class", "div_selected");
+      d3.select("#step_3").attr("class", "div_not_selected");
     },
     loadQCDA(file) {
       // 加载qasm文件
