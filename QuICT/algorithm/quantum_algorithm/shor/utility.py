@@ -121,7 +121,7 @@ def miller_rabin(num):
     return True
 
 
-MAX_ROUND = 3
+MAX_ROUND = 2
 
 
 def reinforced_order_finding_constructor(order_finding):

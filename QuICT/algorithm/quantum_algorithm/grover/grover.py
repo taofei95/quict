@@ -50,7 +50,7 @@ class Grover:
         ancilla_q = list(range(n, n + k))
         N = 2 ** n
         theta = 2 * np.arccos(np.sqrt(1 - m / N))
-        T = round(np.arccos(np.sqrt(m / N)) / theta)
+        T = int(np.arccos(np.sqrt(m / N)) / theta)+1
 
         # create equal superposition state in index_q
         for idx in index_q:

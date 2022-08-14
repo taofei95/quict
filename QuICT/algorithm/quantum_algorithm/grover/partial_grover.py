@@ -14,17 +14,11 @@ from QuICT.qcda.synthesis.mct import MCTOneAux
 from QuICT.simulation.cpu_simulator import CircuitSimulator
 
 
-def calculate_r1_r2_one_target(N, K, eps):
-    r1 = np.sqrt(N) * np.pi * 0.25 * (1 - eps)
+def calculate_r1_r2_one_target(N, K):
+    # see https://arxiv.org/abs/quant-ph/0504157
+    r1 = np.sqrt(N) * np.pi * 0.25 - np.sqrt(N/K) * np.sqrt(3/4)
+    r2 = np.sqrt(N/K) * np.pi * (1/6)
     r1 = round(r1)
-    o_theta = 2 * np.arccos(np.sqrt(1 - 1 / N))
-    theta = np.pi / 2 - (0.5 + r1) * o_theta
-    sin_theta = np.sin(theta)
-    sqrt_K_mul_alpha_yt = np.sqrt(K - sin_theta * sin_theta * (K - 1))
-    r2 = (np.sqrt(N / K) * 0.5) * (
-        np.arcsin(sin_theta / sqrt_K_mul_alpha_yt)
-        + np.arcsin(sin_theta * (K - 2) / (2 * sqrt_K_mul_alpha_yt))
-    )
     r2 = round(r2)
     return r1, r2
 
@@ -36,7 +30,7 @@ class PartialGrover:
     """
 
     @staticmethod
-    def circuit(n, n_block, k, oracle):
+    def circuit(n, n_block, k, oracle, measure=True):
         """ partial grover search with one target
 
         Args:
@@ -54,8 +48,8 @@ class PartialGrover:
         assert k >= 2, "at least 2 ancilla, which is shared bt the Grover part"
         K = 1 << n_block
         N = 1 << n
-        eps = 1 / np.sqrt(K)  # can use other epsilon
-        r1, r2 = calculate_r1_r2_one_target(N, K, eps)
+        # eps = 1 / np.sqrt(K)  # can use other epsilon
+        r1, r2 = calculate_r1_r2_one_target(N, K)
 
         circuit = Circuit(n + k + 1)
         index_q = list(range(n))
@@ -115,12 +109,15 @@ class PartialGrover:
             CH | circuit([ancillia_q[0], idx])
         # Measure
         for idx in index_q:
-            Measure | circuit(idx)
-        logging.info(f"circuit width          = {circuit.width():4}")
+            if measure:
+                Measure | circuit(idx)
+        logging.info(f"circuit width           = {circuit.width():4}")
         # logging.info(f"circuit depth          = {circuit.depth():4}")
-        logging.info(f"oracle  calls          = {r1+r2:4}")
+        logging.info(f"global Grover iteration = {r1:4}")
+        logging.info(f"local  Grover iteration = {r2:4}")
+        logging.info(f"oracle  calls           = {r1+r2+1:4}")
         # logging.info(f"oracle  size           = {oracle.size():4}")
-        logging.info(f"other circuit size     = {circuit.size() - oracle.size()*(r1+r2):4}")
+        logging.info(f"other circuit size      = {circuit.size() - oracle.size()*(r1+r2):4}")
         return circuit
 
     @staticmethod

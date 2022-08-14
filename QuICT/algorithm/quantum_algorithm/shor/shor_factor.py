@@ -69,6 +69,7 @@ class ShorFactor:
         simulator=CircuitSimulator(),
         circuit: Circuit = None,
         indices: List = None,
+        forced_quantum_approach = False
     ) -> int:
         # check if input is prime (using MillerRabin in klog(N), k is the number of rounds to run MillerRabin)
         if miller_rabin(self.N):
@@ -96,13 +97,21 @@ class ShorFactor:
         rd = 0
         while rd < self.max_rd:
             # 3. Choose a random number a (1<a<N)
-            a = random.randint(2, self.N - 1)
-            gcd = np.gcd(a, self.N)
-            if gcd > 1:
-                logging.info(
-                    f"Shor succeed: randomly chosen a = {a}, who has common factor {gcd} with N classically"
-                )
-                return gcd
+            if forced_quantum_approach:
+                logging.info(f"forced quantum approach, looking for coprime number...")
+                while True:
+                    a = random.randint(2, self.N - 1)
+                    gcd = np.gcd(a, self.N)
+                    if gcd == 1:
+                        break
+            else:
+                a = random.randint(2, self.N - 1)
+                gcd = np.gcd(a, self.N)
+                if gcd > 1:
+                    logging.info(
+                        f"Shor succeed: randomly chosen a = {a}, who has common factor {gcd} with N classically"
+                    )
+                    return gcd
             logging.info(f"round = {rd}")
             rd += 1
             # 4. Use quantum order-finding algorithm to find the order of a
