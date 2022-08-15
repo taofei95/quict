@@ -1,2 +1,3 @@
 torch_runs/
+model/
 *.ipynb
