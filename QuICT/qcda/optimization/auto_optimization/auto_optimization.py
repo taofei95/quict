@@ -242,7 +242,7 @@ class AutoOptimization(Optimization):
                     #   |    | U |    !=   | U |   |
                     # --X----|___|--     --|___|---X--
 
-                    if mapping and all([reachable.query(c_targ_node, c_targ_qubit, o) for o in mapping.values()]):
+                    if mapping and all([not reachable.query(c_targ_node, c_targ_qubit, o) for o in mapping.values()]):
                         c_ctrl_node, c_ctrl_qubit = template.template.end_nodes[template.anchor].predecessors[0]
                         c_ctrl_node = mapping[id(c_ctrl_node)]
                         break
@@ -255,7 +255,7 @@ class AutoOptimization(Optimization):
                 for template in cnot_targ_template:
                     mapping = template.compare(c_targ_node.successors[c_targ_qubit])
                     # if control node can reach any node in the template, it will block commuting.
-                    if mapping and all([reachable.query(c_ctrl_node, c_ctrl_qubit, o) for o in mapping.values()]):
+                    if mapping and all([not reachable.query(c_ctrl_node, c_ctrl_qubit, o) for o in mapping.values()]):
                         c_targ_node, c_targ_qubit = template.template.end_nodes[template.anchor].predecessors[0]
                         c_targ_node = mapping[id(c_targ_node)]
                         break

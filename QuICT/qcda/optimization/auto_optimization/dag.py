@@ -449,7 +449,6 @@ class DAG(Iterable):
             r_node, r_qubit = replacement.start_nodes[qubit_].successors[0]
             # node previous to the node corresponding to t_node in original circuit
             if id(replacement.start_nodes[qubit_]) not in mapping:
-                # FIXME can we remove this if
                 continue
             p_node, p_qubit = mapping[id(replacement.start_nodes[qubit_])]
             if erase_old:
@@ -535,7 +534,7 @@ class DAG(Iterable):
         queue = deque([(node, qubit_)])
         while len(queue) > 0:
             cur, cur_q = queue.popleft()
-            if cur.gate_type or id(cur) in term_set:
+            if cur.gate_type is None or id(cur) in term_set:
                 continue
             nxt, _ = cur.successors[cur_q]
             if id(nxt) not in visited:

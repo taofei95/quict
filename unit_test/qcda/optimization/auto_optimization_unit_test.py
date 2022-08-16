@@ -108,9 +108,13 @@ def test_cancel_two_qubit_gate():
     CX | circ([0, 1])
 
     dag = DAG(circ)
+    # print(AutoOptimization.cancel_two_qubit_gates(dag))
+    assert AutoOptimization.cancel_two_qubit_gates(dag) == 8, 'cnot cancellation failed'
     circ_optim = dag.get_circuit()
 
-    assert AutoOptimization.cancel_two_qubit_gates(dag) == 8, 'cnot cancellation failed'
+    # circ.draw(filename='a.jpg')
+    # circ_optim.draw(filename='b.jpg')
+
     mat_0 = SyntheticalUnitary.run(circ)
     mat_1 = SyntheticalUnitary.run(circ_optim)
     assert np.allclose(mat_0, mat_1), 'unitary changed after cnot cancellation'
@@ -170,7 +174,7 @@ def test_enumerate_cnot_rz_circuit():
 
 def check_circuit_optimization(circ: Circuit, label, mode='light'):
     try:
-        circ_optim = AutoOptimization.execute(circ, mode=mode)
+        circ_optim = AutoOptimization.execute(circ, mode=mode, verbose=False)
     except Exception as e:
         pickle.dump(circ.gates, open(f'circ_{label}.dat', 'wb'))
         raise e
@@ -299,6 +303,7 @@ def test_random_circuit():
                      GateType.t, GateType.tdg, GateType.s, GateType.sdg, GateType.z, GateType.x,
                      GateType.ccx, GateType.ccz,
                      ]
+    # support_gates = [GateType.h, GateType.cx, GateType.rz,]
     for _ in range(n_iter):
         print('iteration', _)
         circ = Circuit(n_qubit)
