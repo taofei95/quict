@@ -52,30 +52,31 @@ class UnitarySimulator():
 
     def run(
         self,
-        matrix: Union[np.ndarray, Circuit],
+        circuit: Union[np.ndarray, Circuit],
         state_vector: np.ndarray = None,
         use_previous: bool = False
     ) -> np.ndarray:
         """ Simulation by given unitary matrix or circuit
 
         Args:
-            matrix (Union[np.ndarray, Circuit]): The unitary matrix or the circuit for simulation
+            circuit (Union[np.ndarray, Circuit]): The unitary matrix or the circuit for simulation
+            state_vector (ndarray): The initial state vector.
             use_previous (bool, optional): whether using previous state vector. Defaults to False.
 
         Returns:
             np.ndarray: The state vector after simulation
         """
         # Step 1: Generate the unitary matrix of the given circuit
-        if isinstance(matrix, Circuit):
-            self._qubits_num = matrix.width()
-            self._unitary_matrix = matrix.matrix(self._device)
+        if isinstance(circuit, Circuit):
+            self._qubits_num = circuit.width()
+            self._unitary_matrix = circuit.matrix(self._device)
             assert 2 ** self._qubits_num == self._unitary_matrix.shape[0]
         else:
-            row, col = matrix.shape
+            row, col = circuit.shape
             self._qubits_num = int(np.log2(row))
             assert row == col and 2 ** self._qubits_num == col
 
-            self._unitary_matrix = self._array_helper.array(matrix)
+            self._unitary_matrix = self._array_helper.array(circuit)
 
         # Step 2: Prepare the state vector
         if state_vector is not None:

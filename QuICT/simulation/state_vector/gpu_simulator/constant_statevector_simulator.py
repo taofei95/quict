@@ -126,6 +126,7 @@ class ConstantStateVectorSimulator:
 
         Args:
             circuit (Circuit): The quantum circuits.
+            state_vector (ndarray): The initial state vector.
             use_previous (bool, optional): Using the previous state vector. Defaults to False.
             record_runtime_measured (bool, optional): Record qubits' measured state during the simulation.
 

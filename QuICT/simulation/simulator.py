@@ -15,7 +15,7 @@ from QuICT.simulation.utils import Result
 
 
 class Simulator:
-    """ The high-level simulation class, including CPU/GPU/Remote simulator mode.
+    """ The high-level simulation class, including all QuICT simulator mode.
 
     Args:
         device (str): The device of the simulator. One of [CPU, GPU, qiskit, qcompute]
@@ -84,7 +84,9 @@ class Simulator:
         """ start simulator with given circuit
 
         Args:
-            circuit (Circuit): The quantum circuits.
+            circuit Union[Circuit, np.ndarray]: The quantum circuits or unitary matrix.
+            state_vector (ndarray): The initial state vector.
+            density_matrix (ndarray): The initial density matrix.
             noise_model (NoiseModel, optional): The NoiseModel only for density_matrix simulator. Defaults to None.
             use_previous (bool, optional): Using the previous state vector. Defaults to False.
 

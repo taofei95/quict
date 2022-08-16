@@ -83,7 +83,7 @@ class DensityMatrixSimulation:
 
         Args:
             circuit (Circuit): The quantum circuit.
-            density_matrix (np.ndarray)
+            density_matrix (np.ndarray): The initial density matrix.
             noise_model (NoiseModel, optional): The NoiseModel contains NoiseErrors. Defaults to None.
             use_previous (bool, optional): Using the previous state vector. Defaults to False.
 
