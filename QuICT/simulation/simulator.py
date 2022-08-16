@@ -3,6 +3,9 @@
 # @TIME    : 2021/4/27 2:02 下午
 # @Author  : Han Yu
 # @File    : _simulator
+import numpy as np
+from typing import Union
+
 from QuICT.core import Circuit
 from QuICT.core.noise import NoiseModel
 from QuICT.simulation.state_vector import CircuitSimulator
@@ -16,7 +19,7 @@ class Simulator:
 
     Args:
         device (str): The device of the simulator. One of [CPU, GPU, qiskit, qcompute]
-        backend (str): The backend for the simulator. One of [unitary, statevector, density_matrix]
+        backend (str): The backend for the simulator. One of [unitary, state_vector, density_matrix]
         shots (int): The running times; must be a positive integer, default to 1.
         circuit_record (bool): whether record circuit's qasm in output, default to False.
         amplitude_record (bool): whether record the amplitude of qubits, default to False.
@@ -24,35 +27,30 @@ class Simulator:
     """
 
     __DEVICE = ["CPU", "GPU"]
-    __REMOTE_DEVICE = ["qiskit", "qcompute"]
-    __BACKEND = ["unitary", "statevector", "density_matrix"]
+    __BACKEND = ["unitary", "state_vector", "density_matrix"]
 
     def __init__(
             self,
-            device: str,
-            backend: str,
+            device: str = "CPU",
+            backend: str = None,
             shots: int = 1,
             circuit_record: bool = False,
             amplitude_record: bool = False,
             **options
     ):
-        assert (shots >= 1)
+        assert device in Simulator.__DEVICE, "Device should be one of [CPU, GPU]."
         self._device = device
+        if backend is not None:
+            assert backend in Simulator.__BACKEND, "backend should be one of [unitary, state_vector, density_matrix]."
         self._backend = backend
+
+        assert (shots >= 1)
         self._shots = shots
-        self._circuit_record = circuit_record
-        self._amplitude_record = amplitude_record
         self._options = self._validate_options(options=options)
 
-        # initial simulator
-        if self._device in Simulator.__DEVICE:
-            self._simulator = self._load_simulator()
-        elif self._device in Simulator.__REMOTE_DEVICE:
-            self._simulator = self._load_remote_simulator()
-        else:
-            raise ValueError(
-                f"Unsupportted device {device}, please select one of {Simulator.__DEVICE + Simulator.__REMOTE_DEVICE}."
-            )
+        # Result's arguments
+        self._circuit_record = circuit_record
+        self._amplitude_record = amplitude_record
 
     @option_validation()
     def _validate_options(self, options, default_options=None):
@@ -68,7 +66,7 @@ class Simulator:
 
         if self._backend == "unitary":
             simulator = UnitarySimulator(device=self._device, **self._options)
-        elif self._backend == "statevector":
+        elif self._backend == "state_vector":
             simulator = ConstantStateVectorSimulator(**self._options) \
                 if self._device == "GPU" else CircuitSimulator()
         elif self._backend == "density_matrix":     # TODO: DM.run has different input
@@ -80,24 +78,11 @@ class Simulator:
 
         return simulator
 
-    def _load_remote_simulator(self):
-        """ Initial Remote simulator. """
-        from QuICT.simulation.remote import QuantumLeafSimulator, QiskitSimulator
-
-        if self._device == "qiskit":
-            simulator = QiskitSimulator(backend=self._backend, shots=self._shots, **self._options)
-        elif self._device == "qcompute":
-            simulator = QuantumLeafSimulator(backend=self._backend, shots=self._shots, **self._options)
-        else:
-            raise ValueError(
-                f"Unsupportted remote device {self._device}, please select one of [qiskit, qcompute]."
-            )
-
-        return simulator
-
     def run(
         self,
-        circuit: Circuit,
+        circuit: Union[Circuit, np.ndarray],
+        state_vector: np.ndarray = None,
+        density_matrix: np.ndarray = None,
         noise_model: NoiseModel = None,
         use_previous: bool = False
     ):
@@ -111,18 +96,25 @@ class Simulator:
         Yields:
             [array]: The state vector.
         """
-        result = Result(circuit.name, self._device, self._backend, self._shots, self._options)
-        if self._circuit_record:
+        if not isinstance(circuit, Circuit):
+            self._backend = "unitary"
+        elif density_matrix is not None or noise_model is not None:
+            self._backend = "density_matrix"
+
+        if self._backend is None:
+            self._backend = "state_vector"
+
+        circuit_name = circuit.name if circuit is not None else ""
+        result = Result(circuit_name, self._device, self._backend, self._shots, self._options)
+        if self._circuit_record and circuit is not None:
             result.record_circuit(circuit)
 
-        if self._device in Simulator.__REMOTE_DEVICE:
-            return self._simulator.run(circuit, use_previous)
-
-        amplitude = self._simulator.run(circuit, noise_model, use_previous) if self._backend == "density_matrix" else \
-            self._simulator.run(circuit, use_previous)
+        simulator = self._load_simulator()
+        amplitude = simulator.run(circuit, density_matrix, noise_model, use_previous) if self._backend == "density_matrix" else \
+            simulator.run(circuit, state_vector, use_previous)
         result.record_amplitude(amplitude, self._amplitude_record)
 
-        sample_result = self._simulator.sample(self._shots)
+        sample_result = simulator.sample(self._shots)
         result.record_sample(sample_result)
 
         return result.__dict__()

@@ -12,6 +12,14 @@ class UnitarySimulator():
         device (str, optional): The device type, one of [CPU, GPU]. Defaults to "CPU".
         precision (str, optional): The precision for the unitary matrix, one of [single, double]. Defaults to "double".
     """
+    @property
+    def vector(self):
+        return self._vector
+
+    @vector.setter
+    def vector(self, vec):
+        self._vector = self._array_helper.array(vec)
+        assert self._array_helper.sum(self._vector) == 1, "The sum of state-vector should be equal to 1."
 
     def __init__(
             self,
@@ -43,7 +51,12 @@ class UnitarySimulator():
         else:
             self._vector.put(0, self._precision(1))
 
-    def run(self, matrix: Union[np.ndarray, Circuit], use_previous: bool = False) -> np.ndarray:
+    def run(
+        self,
+        matrix: Union[np.ndarray, Circuit],
+        state_vector: np.ndarray = None,
+        use_previous: bool = False
+    ) -> np.ndarray:
         """ Simulation by given unitary matrix or circuit
 
         Args:
@@ -65,19 +78,25 @@ class UnitarySimulator():
 
             self._unitary_matrix = self._array_helper.array(matrix)
 
+        # Step 2: Prepare the state vector
+        if state_vector is not None:
+            assert 2 ** self._qubits_num == state_vector.size, "The state vector should has the same qubits with the circuit."
+            self.vector = state_vector
         if not use_previous or self._vector is None:
             self.initial_vector_state()
 
-        if self._unitary_matrix is None:
-            return self._vector
-
-        # Step 2: Simulation with the unitary matrix and qubit's state vector
-        self._vector = self._computer.dot(
-            self._unitary_matrix,
-            self._vector
-        )
+        # Step 3: Simulation with the unitary matrix and qubit's state vector
+        if not self._is_identity():
+            self._vector = self._computer.dot(
+                self._unitary_matrix,
+                self._vector
+            )
 
         return self._vector
+
+    def _is_identity(self):
+        identity_matrix = self._array_helper.identity(1 << self._qubits_num, dtype=self._precision)
+        return self._array_helper.allclose(self._unitary_matrix, identity_matrix)
 
     def sample(self, shots: int):
         """_summary_

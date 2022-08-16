@@ -50,6 +50,8 @@ class ConstantStateVectorSimulator:
             else:
                 self._vector = vec
 
+            assert cp.sum(self._vector) == 1, "The sum of state-vector should be equal to 1."
+
     @property
     def device(self):
         return self._device_id
@@ -119,21 +121,24 @@ class ConstantStateVectorSimulator:
     def run(
         self,
         circuit: Circuit,
-        use_previous: bool = False,
-        record_measured: bool = False
+        state_vector: Union[np.ndarray, cp.ndarray] = None,
+        use_previous: bool = False
     ) -> np.ndarray:
         """ start simulator with given circuit
 
         Args:
             circuit (Circuit): The quantum circuits.
             use_previous (bool, optional): Using the previous state vector. Defaults to False.
-            record_measured (bool, optional): Record measured result within circuit or not.
+            record_runtime_measured (bool, optional): Record qubits' measured state during the simulation.
 
         Returns:
             [array]: The state vector.
         """
         self.initial_circuit(circuit)
-        if not use_previous:
+        if state_vector is not None:
+            self.vector = state_vector
+            assert 2 ** self._qubits == self.vector.size, "The state vector should has the same qubits with the circuit."
+        elif not use_previous:
             self.initial_state_vector()
 
         idx = -1
@@ -145,10 +150,7 @@ class ConstantStateVectorSimulator:
             elif isinstance(gate, Trigger):
                 self.apply_trigger(gate, idx)
 
-        if record_measured:
-            return self.vector, self._measure_result
-        else:
-            return self.vector
+        return self.vector
 
     def apply_gate(self, gate: BasicGate):
         """ Depending on the given quantum gate, apply the target algorithm to calculate the state vector.
@@ -489,16 +491,16 @@ class ConstantStateVectorSimulator:
                 self._sync
             ))
             self._circuit.qubits[self._qubits - 1 - index].measured = result
-            self._measure_result[self._qubits - 1 - index].append(result)
-            return result
         elif type == GateType.reset:
-            return self._algorithm.apply_resetgate(
+            result = self._algorithm.apply_resetgate(
                 index,
                 self._vector,
                 self._qubits,
                 prob,
                 self._sync
             )
+
+        return result
 
     def sample(self, shots: int = 1) -> list:
         """ Sample the measured result from current state vector, please initial Circuit first

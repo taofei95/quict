@@ -75,6 +75,7 @@ class DensityMatrixSimulation:
     def run(
         self,
         circuit: Circuit,
+        density_matrix: np.ndarray = None,
         noise_model: NoiseModel = None,
         use_previous: bool = False
     ) -> np.ndarray:
@@ -82,6 +83,7 @@ class DensityMatrixSimulation:
 
         Args:
             circuit (Circuit): The quantum circuit.
+            density_matrix (np.ndarray)
             noise_model (NoiseModel, optional): The NoiseModel contains NoiseErrors. Defaults to None.
             use_previous (bool, optional): Using the previous state vector. Defaults to False.
 
@@ -90,10 +92,11 @@ class DensityMatrixSimulation:
         """
         self.initial_circuit(circuit, noise_model)
         # Initial density matrix
-        if (self._density_matrix is None or not use_previous):
+        if density_matrix is not None:
+            assert self.check_matrix(density_matrix)
+            self._density_matrix = density_matrix
+        elif (self._density_matrix is None or not use_previous):
             self.initial_density_matrix(self._qubits)
-        else:
-            assert self.check_matrix(self._density_matrix)
 
         # Start simulator
         based_circuit = Circuit(self._qubits)

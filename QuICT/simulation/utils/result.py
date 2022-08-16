@@ -25,6 +25,7 @@ class Result:
         self.options = options
         self.counts = {}
         self.state_vector = None
+        self.density_matrix = None
 
         # prepare output path
         self.output_path = self._prepare_output_file()
@@ -43,8 +44,9 @@ class Result:
                 "options": self.options
             },
             "data": {
+                "counts": self.counts,
                 "state_vector": self.state_vector,
-                "counts": self.counts
+                "density_matrix": self.density_matrix
             }
         }
 
@@ -85,4 +87,7 @@ class Result:
         if is_record:
             np.savetxt(f"{self.output_path}/amplitude.txt", amplitude)
 
-        self.state_vector = amplitude.copy()
+        if self.backend == "state_vector":
+            self.state_vector = amplitude.copy()
+        else:
+            self.density_matrix = amplitude.copy()

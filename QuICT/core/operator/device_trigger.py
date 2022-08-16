@@ -5,6 +5,7 @@ from ._operator import Operator
 
 
 class DeviceTrigger(Operator):
+    """ The mapping of Quantum gates and device id. """
     def __init__(
         self,
         device_gate_mapping: Dict[int, CompositeGate]
