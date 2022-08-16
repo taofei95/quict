@@ -50,8 +50,6 @@ class ConstantStateVectorSimulator:
             else:
                 self._vector = vec
 
-            assert cp.sum(self._vector) == 1, "The sum of state-vector should be equal to 1."
-
     @property
     def device(self):
         return self._device_id
@@ -137,7 +135,8 @@ class ConstantStateVectorSimulator:
         self.initial_circuit(circuit)
         if state_vector is not None:
             self.vector = state_vector
-            assert 2 ** self._qubits == self.vector.size, "The state vector should has the same qubits with the circuit."
+            assert 2 ** self._qubits == self.vector.size, \
+                "The state vector should has the same qubits with the circuit."
         elif not use_previous:
             self.initial_state_vector()
 

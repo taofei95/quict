@@ -11,7 +11,7 @@ from QuICT.core.noise import NoiseModel
 from QuICT.simulation.state_vector import CircuitSimulator
 from QuICT.simulation.unitary import UnitarySimulator
 from QuICT.simulation.density_matrix import DensityMatrixSimulation
-from QuICT.simulation.utils import option_validation, Result
+from QuICT.simulation.utils import Result
 
 
 class Simulator:
@@ -28,6 +28,7 @@ class Simulator:
 
     __DEVICE = ["CPU", "GPU"]
     __BACKEND = ["unitary", "state_vector", "density_matrix"]
+    __DEFAULT_OPTIONS = ["precision", "gpu_device_id", "optimization", "matrix_aggregate", "sync"]
 
     def __init__(
             self,
@@ -35,7 +36,7 @@ class Simulator:
             backend: str = None,
             shots: int = 1,
             circuit_record: bool = False,
-            amplitude_record: bool = False,
+            amplitude_record: bool = True,
             **options
     ):
         assert device in Simulator.__DEVICE, "Device should be one of [CPU, GPU]."
@@ -52,29 +53,23 @@ class Simulator:
         self._circuit_record = circuit_record
         self._amplitude_record = amplitude_record
 
-    @option_validation()
-    def _validate_options(self, options, default_options=None):
-        for key, value in options.items():
-            default_options[key] = value
+    def _validate_options(self, options):
+        for key in options.keys():
+            assert key in Simulator.__DEFAULT_OPTIONS, f"Unrecognized simulator's options {key}"
 
-        return default_options
+        return options
 
     def _load_simulator(self):
         """ Initial simulator. """
         if self._device == "GPU":
             from QuICT.simulation.state_vector import ConstantStateVectorSimulator
 
-        if self._backend == "unitary":
-            simulator = UnitarySimulator(device=self._device, **self._options)
-        elif self._backend == "state_vector":
+        if self._backend == "state_vector":
             simulator = ConstantStateVectorSimulator(**self._options) \
                 if self._device == "GPU" else CircuitSimulator()
-        elif self._backend == "density_matrix":     # TODO: DM.run has different input
-            simulator = DensityMatrixSimulation(device=self._device, **self._options)
         else:
-            raise ValueError(
-                f"Unsupportted backend {self.backend}, please select one of {Simulator.__BACKEND}."
-            )
+            simulator = UnitarySimulator(device=self._device, **self._options) if self._backend == "unitary" else \
+                DensityMatrixSimulation(device=self._device, **self._options)
 
         return simulator
 
@@ -110,8 +105,11 @@ class Simulator:
             result.record_circuit(circuit)
 
         simulator = self._load_simulator()
-        amplitude = simulator.run(circuit, density_matrix, noise_model, use_previous) if self._backend == "density_matrix" else \
+        if self._backend == "density_matrix":
+            amplitude = simulator.run(circuit, density_matrix, noise_model, use_previous)
+        else:
             simulator.run(circuit, state_vector, use_previous)
+
         result.record_amplitude(amplitude, self._amplitude_record)
 
         sample_result = simulator.sample(self._shots)

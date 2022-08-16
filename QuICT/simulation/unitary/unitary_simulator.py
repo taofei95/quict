@@ -19,7 +19,6 @@ class UnitarySimulator():
     @vector.setter
     def vector(self, vec):
         self._vector = self._array_helper.array(vec)
-        assert self._array_helper.sum(self._vector) == 1, "The sum of state-vector should be equal to 1."
 
     def __init__(
             self,
@@ -80,9 +79,10 @@ class UnitarySimulator():
 
         # Step 2: Prepare the state vector
         if state_vector is not None:
-            assert 2 ** self._qubits_num == state_vector.size, "The state vector should has the same qubits with the circuit."
+            assert 2 ** self._qubits_num == state_vector.size, \
+                "The state vector should has the same qubits with the circuit."
             self.vector = state_vector
-        if not use_previous or self._vector is None:
+        elif not use_previous or self._vector is None:
             self.initial_vector_state()
 
         # Step 3: Simulation with the unitary matrix and qubit's state vector

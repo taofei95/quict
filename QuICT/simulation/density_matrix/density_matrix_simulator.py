@@ -59,15 +59,15 @@ class DensityMatrixSimulation:
 
     def check_matrix(self, matrix):
         """ Density Matrix Validation. """
-        if(matrix.T.conjugate() != matrix):
+        if not np.allclose(matrix.T.conjugate(), matrix):
             return False
 
         eigenvalues = np.linalg.eig(matrix)[0]
         for ev in eigenvalues:
-            if(ev < 0):
+            if ev < 0 and not np.isclose(ev, 0, rtol=1e-6):
                 return False
 
-        if(matrix.trace() != 1):
+        if not np.isclose(matrix.trace(), 1, rtol=1e-6):
             return False
 
         return True
