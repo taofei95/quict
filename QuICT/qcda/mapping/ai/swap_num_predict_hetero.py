@@ -1,5 +1,5 @@
-from torch_geometric.nn import SAGEConv, to_hetero
-from torch_geometric.nn import Linear as PygLinear
+from torch_geometric.nn import SAGEConv, GATConv, to_hetero
+from torch_geometric.nn import Linear as PygLinear, LayerNorm as PygLayerNorm
 from torch_geometric.nn import global_sort_pool
 import torch.nn.functional as F
 import torch
@@ -9,25 +9,25 @@ from torch import nn
 class SwapNumPredictGcn(nn.Module):
     def __init__(self, out_channel: int) -> None:
         super().__init__()
-        self.conv_1 = SAGEConv(-1, 800)
-        self.lin_1 = PygLinear(-1, 800)
+        self.conv_1 = GATConv(-1, 200)
+        self.lin_1 = PygLinear(-1, 200)
 
-        self.conv_2 = SAGEConv(-1, 800)
-        self.lin_2 = PygLinear(-1, 800)
+        self.conv_2 = GATConv(-1, 200)
+        self.lin_2 = PygLinear(-1, 200)
 
-        self.conv_3 = SAGEConv(-1, 500)
-        self.lin_3 = PygLinear(-1, 500)
+        self.conv_3 = GATConv(-1, 100)
+        self.lin_3 = PygLinear(-1, 100)
 
-        self.conv_4 = SAGEConv(-1, 500)
-        self.lin_4 = PygLinear(-1, 500)
+        self.conv_4 = GATConv(-1, 100)
+        self.lin_4 = PygLinear(-1, 100)
 
-        self.conv_5 = SAGEConv(-1, 200)
-        self.lin_5 = PygLinear(-1, 200)
+        self.conv_5 = GATConv(-1, 50)
+        self.lin_5 = PygLinear(-1, 50)
 
-        self.conv_6 = SAGEConv(-1, 200)
-        self.lin_6 = PygLinear(-1, 200)
+        self.conv_6 = GATConv(-1, 50)
+        self.lin_6 = PygLinear(-1, 50)
 
-        self.last_conv = SAGEConv(-1, out_channel)
+        self.last_conv = GATConv(-1, out_channel)
 
     def forward(self, x, edge_index):
         x = F.leaky_relu(self.conv_1(x, edge_index)) + self.lin_1(x)

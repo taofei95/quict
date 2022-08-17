@@ -77,6 +77,17 @@ class MappingHeteroDataset(PygDataset):
             ),
         )
 
+    @classmethod
+    def to_hetero_data(cls, raw_data: PairData) -> HeteroData:
+        data = HeteroData()
+        data["topo"].x = raw_data.x_topo
+        data["lc"].x = raw_data.x_lc
+
+        data["topo", "topo_edge", "topo"].edge_index = raw_data.edge_index_topo
+        data["lc", "lc_edge", "lc"].edge_index = raw_data.edge_index_lc
+
+        return data
+
     def __len__(self):
         return len(self._file_names)
 
@@ -84,12 +95,7 @@ class MappingHeteroDataset(PygDataset):
         f_path = osp.join(self._data_dir, self._file_names[idx])
         with open(f_path, "rb") as f:
             raw_data, target = torch.load(f)
-            data = HeteroData()
-            data["topo"].x = raw_data.x_topo
-            data["lc"].x = raw_data.x_lc
-
-            data["topo", "topo_edge", "topo"].edge_index = raw_data.edge_index_topo
-            data["lc", "lc_edge", "lc"].edge_index = raw_data.edge_index_lc
+            data = self.to_hetero_data(raw_data)
             return data, target
 
 

@@ -41,6 +41,8 @@ class MCTSNode {
   std::vector<Gate> candidate_swap_list;
   std::vector<float> probs_of_children;
   CouplingGraph* coupling_graph;
+
+  // circuit is a flatten array of size (num_2bit_gate * 2) containing all 2bit gates' ctrl args and target args.
   Circuit* circuit;
 
   int update_by_swap_gate(mcts::Gate& swap_gate);

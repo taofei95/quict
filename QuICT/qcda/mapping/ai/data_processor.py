@@ -1,8 +1,10 @@
-from typing import Iterable
+from typing import Iterable, Union
 from QuICT.core.circuit.circuit import Circuit
+from QuICT.core.gate.composite_gate import CompositeGate
 from QuICT.core.gate.gate import BasicGate
 from os import walk, rename, makedirs
 from os import path as osp
+from QuICT.core.utils.circuit_info import CircuitBased
 from QuICT.tools.interface import OPENQASMInterface
 import re
 from typing import Tuple, Iterable
@@ -10,19 +12,21 @@ import torch
 from QuICT.qcda.mapping.ai.data_def import PairData
 from torch_geometric.nn.models import Node2Vec
 from QuICT.core.layout import Layout, LayoutEdge
+import networkx as nx
 
 
 class MappingDataProcessor:
     def __init__(
-        self, topo_feature_dim: int, lc_feature_dim: int, working_dir: str = ".",
+        self,
+        max_qubit_num: int,
+        working_dir: str = ".",
     ) -> None:
         self._data_dir = osp.join(working_dir, "data")
         self._circ_dir = osp.join(self._data_dir, "circ")
         self._topo_dir = osp.join(self._data_dir, "topo")
         self._processed_dir = osp.join(self._data_dir, "processed")
 
-        self._topo_feature_dim = topo_feature_dim
-        self._lc_feature_dim = lc_feature_dim
+        self._max_qubit_num = max_qubit_num
 
         self._circ_path_list = list(self._load_circuits_path())
 
@@ -83,48 +87,80 @@ class MappingDataProcessor:
                     result_circ_path = osp.join(root, f"result_{name}")
                     yield topo_path, circ_path, result_circ_path
 
-    def _build_circ_edge_index(self, circ: Circuit) -> torch.Tensor:
+    def _build_circ_edge_index(
+        self, circ: CircuitBased
+    ) -> Tuple[torch.Tensor, torch.Tensor]:
         lc_node_num = 0
         edge_index = []
         qubit_num = circ.width()
         cur_occ = [-1 for _ in range(qubit_num)]
+        gate_labels = []
         for gate in circ.gates:
             gate: BasicGate
             args = gate.cargs + gate.targs
             if len(args) != 2:
                 continue
-            # edge_index.append([lc_node_num, lc_node_num])
+            gate_labels.append(args)
             for arg in args:
                 if cur_occ[arg] != -1:
                     edge_index.append(
-                        [cur_occ[arg], lc_node_num,]
+                        [
+                            cur_occ[arg],
+                            lc_node_num,
+                        ]
                     )
                 cur_occ[arg] = lc_node_num
             lc_node_num += 1
         edge_index = torch.tensor(edge_index, dtype=torch.long).t().contiguous()
-        return edge_index
+        x = torch.zeros(lc_node_num, self._max_qubit_num, dtype=torch.float)
+        for i, gate_label in enumerate(gate_labels):
+            a, b = gate_label
+            x[i, a] = 1
+            x[i, b] = 1
+        return edge_index, x
+
+    def _build_topo_edge_index(self, layout: Layout) -> torch.Tensor:
+        edge_index_topo = []
+        for edge in layout.edge_list:
+            edge: LayoutEdge
+            edge_index_topo.append((edge.u, edge.v))
+            edge_index_topo.append((edge.v, edge.u))
+        return torch.tensor(edge_index_topo, dtype=torch.long).t().contiguous()
+
+    def _build_topo_x(self, layout: Layout) -> torch.Tensor:
+        x_topo = torch.zeros(
+            self._max_qubit_num, self._max_qubit_num * 2, dtype=torch.float
+        )
+        x_topo[:, : self._max_qubit_num] = torch.eye(
+            self._max_qubit_num, dtype=torch.float
+        )
+        graph = nx.Graph()
+        for edge in layout.edge_list:
+            edge: LayoutEdge
+            graph.add_edge(edge.u, edge.v)
+        shortest = dict(nx.all_pairs_shortest_path_length(graph))
+        nq = layout.qubit_number
+        x_topo[:nq, self._max_qubit_num : nq + self._max_qubit_num] = torch.tensor(
+            [list(shortest[i]) for i in range(nq)], dtype=float
+        )
+        return x_topo
+
+    def _build_pair_data(self, lc_circ: CircuitBased, layout: Layout) -> PairData:
+        edge_index_topo = self._build_topo_edge_index(layout)
+        x_topo = self._build_topo_x(layout)
+        edge_index_lc, x_lc = self._build_circ_edge_index(lc_circ)
+        return PairData(edge_index_topo, x_topo, edge_index_lc, x_lc)
 
     def _build(self) -> Iterable[Tuple[PairData, int]]:
         for topo_path, circ_path, result_circ_path in self._circ_path_list:
             layout = Layout.load_file(topo_path)
-            edge_index_topo = []
-            for edge in layout.edge_list:
-                edge: LayoutEdge
-                edge_index_topo.append((edge.u, edge.v))
-                edge_index_topo.append((edge.v, edge.u))
-            edge_index_topo = (
-                torch.tensor(edge_index_topo, dtype=torch.long).t().contiguous()
-            )
-            x_topo = torch.eye(self._topo_feature_dim, dtype=torch.float)
 
             lc_circ: Circuit = OPENQASMInterface.load_file(circ_path).circuit
             res_circ: Circuit = OPENQASMInterface.load_file(result_circ_path).circuit
 
             swap_cnt = len(res_circ.gates) - len(lc_circ.gates)
 
-            edge_index_lc = self._build_circ_edge_index(lc_circ)
-            x_lc = torch.eye(self._lc_feature_dim, dtype=torch.float)
-            pair_data = PairData(edge_index_topo, x_topo, edge_index_lc, x_lc)
+            pair_data = self._build_pair_data(lc_circ, layout)
 
             yield pair_data, swap_cnt
 
@@ -139,7 +175,6 @@ class MappingDataProcessor:
 
 
 if __name__ == "__main__":
-    processor = MappingDataProcessor(topo_feature_dim=50, lc_feature_dim=1000)
+    processor = MappingDataProcessor(max_qubit_num=50)
     # processor.wash_circuits()
     processor.build()
-
