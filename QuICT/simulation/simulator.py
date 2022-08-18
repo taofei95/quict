@@ -31,13 +31,13 @@ class Simulator:
     __DEFAULT_OPTIONS = ["precision", "gpu_device_id", "optimization", "matrix_aggregate", "sync"]
 
     def __init__(
-            self,
-            device: str = "CPU",
-            backend: str = None,
-            shots: int = 1,
-            circuit_record: bool = False,
-            amplitude_record: bool = True,
-            **options
+        self,
+        device: str = "CPU",
+        backend: str = None,
+        shots: int = 1,
+        circuit_record: bool = False,
+        amplitude_record: bool = True,
+        **options
     ):
         assert device in Simulator.__DEVICE, "Device should be one of [CPU, GPU]."
         self._device = device

@@ -160,6 +160,11 @@ class CircuitBased(object):
 
         return circuit_matrix.get_unitary_matrix(self.gates, self.width(), mini_arg)
 
+    def convert_precision(self):
+        """ Convert all gates in Cicuit/CompositeGate into single precision. """
+        for gate in self.gates:
+            gate.convert_precision()
+
 
 class CircuitMode(Enum):
     Clifford = "Clifford"

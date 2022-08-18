@@ -81,9 +81,11 @@ class ConstantStateVectorSimulator:
         """ Initial the qubits, quantum gates and state vector by given quantum circuit. """
         self._circuit = circuit
         self._qubits = int(circuit.width())
-        self._measure_result = defaultdict(list)
         self._last_call_per_qubit = [None] * self._qubits
         self._pipeline = []
+
+        if self._precision == np.complex64:
+            circuit.convert_precision()
 
         if self._optimize:
             self._pipeline = Optimizer().optimize(circuit.gates)

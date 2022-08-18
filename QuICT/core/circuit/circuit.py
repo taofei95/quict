@@ -13,8 +13,7 @@ from QuICT.core.gate import BasicGate, H, Measure, build_random_gate, build_gate
 from QuICT.core.utils import (
     GateType,
     CircuitBased,
-    unique_id_generator,
-    matrix_product_to_circuit
+    unique_id_generator
 )
 from QuICT.core.operator import (
     Trigger,
@@ -560,13 +559,3 @@ class Circuit(CircuitBased):
                 filename += '.txt'
 
             textDrawing.dump(filename)
-
-    def matrix_product_to_circuit(self, gate) -> np.ndarray:
-        """ extend a gate's matrix in the all circuit unitary linear space
-
-        gate's matrix tensor products some identity matrix.
-
-        Args:
-            gate(BasicGate): the gate to be extended.
-        """
-        return matrix_product_to_circuit(gate.matrix, gate.cargs + gate.targs, len(self.qubits))

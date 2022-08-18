@@ -9,9 +9,7 @@ import numpy as np
 from QuICT.core.qubit import Qureg, Qubit
 from QuICT.core.gate import BasicGate
 from QuICT.core.utils import (
-    GateType,
     CircuitBased,
-    matrix_product_to_circuit,
     CGATE_LIST,
     unique_id_generator
 )

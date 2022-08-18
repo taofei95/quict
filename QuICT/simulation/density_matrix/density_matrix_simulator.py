@@ -173,7 +173,8 @@ class DensityMatrixSimulation:
     def apply_noise_without_accumulated(self, gate: NoiseGate) -> UnitaryGate:
         prob = np.random.random()
         error_matrix = gate.prob_mapping_operator(prob)
-        gate_args = gate.targs
+        gate_args = gate.cargs + gate.targs
+
         return Unitary(error_matrix) & gate_args
 
     def apply_measure(self, index: int):
