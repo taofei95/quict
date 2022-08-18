@@ -8,7 +8,7 @@ from QuICT.core.gate import H, S
 from QuICT.simulation.utils import GateMatrixs
 
 
-@unittest.skipUnless(os.environ.get("test_with_gpu", False), "require GPU")
+# @unittest.skipUnless(os.environ.get("test_with_gpu", False), "require GPU")
 class TestGateMatrix(unittest.TestCase):
     def test_gate_matrix(self):
         # example circuit
