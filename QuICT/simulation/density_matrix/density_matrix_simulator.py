@@ -45,6 +45,9 @@ class DensityMatrixSimulation:
         self._qubits = int(circuit.width())
         self._last_call_per_qubit = [None] * self._qubits
 
+        if self._precision == np.complex64:
+            circuit.convert_precision()
+
     def initial_density_matrix(self, qubits: int):
         """ Initial density matrix by given qubits number.
 
@@ -62,12 +65,15 @@ class DensityMatrixSimulation:
         if not np.allclose(matrix.T.conjugate(), matrix):
             return False
 
+        if not isinstance(matrix, np.ndarray):
+            matrix = matrix.get()
+
         eigenvalues = np.linalg.eig(matrix)[0]
         for ev in eigenvalues:
-            if ev < 0 and not np.isclose(ev, 0, rtol=1e-6):
+            if ev < 0 and not np.isclose(ev, 0, rtol=1e-4):
                 return False
 
-        if not np.isclose(matrix.trace(), 1, rtol=1e-6):
+        if not np.isclose(matrix.trace(), 1, rtol=1e-4):
             return False
 
         return True
@@ -94,7 +100,7 @@ class DensityMatrixSimulation:
         # Initial density matrix
         if density_matrix is not None:
             assert self.check_matrix(density_matrix)
-            self._density_matrix = density_matrix
+            self._density_matrix = self._array_helper.array(density_matrix, dtype=self._precision)
         elif (self._density_matrix is None or not use_previous):
             self.initial_density_matrix(self._qubits)
 
@@ -143,6 +149,9 @@ class DensityMatrixSimulation:
         Args:
             circuit (Circuit): The circuit only have BasicGate.
         """
+        if self._precision == np.complex64:
+            circuit.convert_precision()
+
         circuit_matrix = circuit.matrix(self._device)
         self._density_matrix = self._computer.dot(
             self._computer.dot(circuit_matrix, self._density_matrix),

@@ -137,9 +137,9 @@ class ConstantStateVectorSimulator:
         """
         self.initial_circuit(circuit)
         if state_vector is not None:
-            self.vector = state_vector
-            assert 2 ** self._qubits == self.vector.size, \
+            assert 2 ** self._qubits == state_vector.size, \
                 "The state vector should has the same qubits with the circuit."
+            self.vector = cp.array(state_vector, dtype=self._precision)
         elif not use_previous:
             self.initial_state_vector()
 

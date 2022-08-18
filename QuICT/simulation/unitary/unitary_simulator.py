@@ -1,7 +1,7 @@
 from typing import *
 import numpy as np
 
-from QuICT.core import Circuit, circuit
+from QuICT.core import Circuit
 import QuICT.ops.linalg.cpu_calculator as CPUCalculator
 
 
@@ -68,6 +68,9 @@ class UnitarySimulator():
         """
         # Step 1: Generate the unitary matrix of the given circuit
         if isinstance(circuit, Circuit):
+            if self._precision == np.complex64:
+                circuit.convert_precision()
+
             self._qubits_num = circuit.width()
             self._unitary_matrix = circuit.matrix(self._device)
             assert 2 ** self._qubits_num == self._unitary_matrix.shape[0]
@@ -75,14 +78,13 @@ class UnitarySimulator():
             row, col = circuit.shape
             self._qubits_num = int(np.log2(row))
             assert row == col and 2 ** self._qubits_num == col
-
-            self._unitary_matrix = self._array_helper.array(circuit)
+            self._unitary_matrix = self._array_helper.array(circuit, dtype=self._precision)
 
         # Step 2: Prepare the state vector
         if state_vector is not None:
             assert 2 ** self._qubits_num == state_vector.size, \
                 "The state vector should has the same qubits with the circuit."
-            self.vector = state_vector
+            self.vector = self._array_helper.array(state_vector, dtype=self._precision)
         elif not use_previous or self._vector is None:
             self.initial_vector_state()
 
