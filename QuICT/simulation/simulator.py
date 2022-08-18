@@ -35,6 +35,7 @@ class Simulator:
         device: str = "CPU",
         backend: str = None,
         shots: int = 1,
+        precision: str = "double",
         circuit_record: bool = False,
         amplitude_record: bool = True,
         **options
@@ -44,6 +45,7 @@ class Simulator:
         if backend is not None:
             assert backend in Simulator.__BACKEND, "backend should be one of [unitary, state_vector, density_matrix]."
         self._backend = backend
+        self._precision = precision
 
         assert (shots >= 1)
         self._shots = shots
@@ -65,11 +67,13 @@ class Simulator:
             from QuICT.simulation.state_vector import ConstantStateVectorSimulator
 
         if self._backend == "state_vector":
-            simulator = ConstantStateVectorSimulator(**self._options) \
+            simulator = ConstantStateVectorSimulator(precision=self._precision, **self._options) \
                 if self._device == "GPU" else CircuitSimulator()
         else:
-            simulator = UnitarySimulator(device=self._device, **self._options) if self._backend == "unitary" else \
-                DensityMatrixSimulation(device=self._device, **self._options)
+            if self._backend == "unitary":
+                simulator = UnitarySimulator(device=self._device, precision=self._precision)
+            else:
+                simulator = DensityMatrixSimulation(device=self._device, precision=self._precision)
 
         return simulator
 
@@ -101,7 +105,7 @@ class Simulator:
         if self._backend is None:
             self._backend = "state_vector"
 
-        circuit_name = circuit.name if circuit is not None else ""
+        circuit_name = circuit.name if isinstance(circuit, Circuit) else ""
         result = Result(circuit_name, self._device, self._backend, self._shots, self._options)
         if self._circuit_record and circuit is not None:
             result.record_circuit(circuit)
