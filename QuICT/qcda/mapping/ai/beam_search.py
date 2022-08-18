@@ -1,6 +1,6 @@
 from operator import mod
 from sys import flags
-from typing import Iterable, List, Tuple, Union
+from typing import Iterable, List, Set, Tuple, Union
 from QuICT.core import *
 from QuICT.core.gate import CompositeGate, build_gate
 from QuICT.core.layout.layout import LayoutEdge
@@ -57,11 +57,11 @@ def beam_search_mapping(
     ]
 
     # A beam contains several (physical_circuit, logical_circuit, Dep-Dag, cur_mapping, swap_count) tuples.
-    beam: List[Tuple[CompositeGate, List[int], nx.DiGraph, List[int], int]]
+    beam: List[Tuple[CompositeGate, Set[int], nx.DiGraph, List[int], int]]
     beam = [
         (
             CompositeGate(),
-            [0 for _ in range(len(circ.gates))],
+            set([i for i in range(len(circ.gates))]),
             _build_base_graph(),
             [i for i in range(circ.width())],
             0,
@@ -72,7 +72,7 @@ def beam_search_mapping(
     x_topo = pre_processor._build_topo_x(layout)
 
     def _beam_cmp_key(
-        state: Tuple[CompositeGate, List[int], nx.DiGraph, List[int], int]
+        state: Tuple[CompositeGate, Set[int], nx.DiGraph, List[int], int]
     ) -> int:
         cnt = state[4]
         # TODO: add nn inference count
@@ -125,16 +125,19 @@ def beam_search_mapping(
     beam_width = int(circ.width() * 1.5)
 
     while len(beam) > 0:
-        for pc, lc, lc_dep_graph, cur_mapping, swap_cnt in beam:
-            if len(pc.gates) == 0 and swap_cnt < ans_cnt:
+        window = len(beam)
+        for pc, lc, lc_dep_graph, cur_mapping, swap_cnt in beam[:window]:
+            if len(lc) == 0 and swap_cnt < ans_cnt:
                 ans_circ = pc
                 ans_cnt = swap_cnt
                 continue
-            for i, executed in enumerate(lc):
-                if executed:
-                    continue
+            lc_loop_cpy = copy(lc)
+            for i in lc_loop_cpy:
                 # Eagerly execute any single bit gate
                 if circ.gates[i].controls + circ.gates[i].targets == 1:
+                    print(
+                        f"Physical circuit length {len(pc.gates)}. Logical circuit length {len(lc)}. Bypassing a {circ.gates[i].type}."
+                    )
                     pc.append(
                         build_gate(
                             circ.gates[i].type,
@@ -142,7 +145,7 @@ def beam_search_mapping(
                             circ.gates[i].pargs,
                         )
                     )
-                    lc[i] = 1
+                    lc.remove(i)
                     beam.append((pc, lc, lc_dep_graph, cur_mapping, swap_cnt))
                     continue
                 # Execute by topological order
@@ -161,7 +164,7 @@ def beam_search_mapping(
                     cur_mapping_cpy = copy(cur_mapping)
 
                     pc_cpy.append(build_gate(gate.type, [a, b], gate.pargs))
-                    lc_cpy[i] = 1
+                    lc_cpy.remove(i)
                     lc_dep_graph_cpy.remove_node(i)
                     beam.append(
                         (pc_cpy, lc_cpy, lc_dep_graph_cpy, cur_mapping_cpy, swap_cnt)
@@ -187,10 +190,21 @@ def beam_search_mapping(
                         cur_mapping[x],
                     )
                     beam.append(
-                        (pc, lc, lc_dep_graph_cpy, cur_mapping_cpy, swap_cnt + 1)
+                        (
+                            pc_cpy,
+                            lc_cpy,
+                            lc_dep_graph_cpy,
+                            cur_mapping_cpy,
+                            swap_cnt + 1,
+                        )
                     )
+
         beam.sort(key=_beam_cmp_key, reverse=True)
+        print("Beam augmentation stage finished.")
+        print(f"Current best physical circuit length: {len(beam[0][0].gates)}.")
+        print(f"Current best logical circuit length: {len(beam[0][1])}.")
         if len(beam) > beam_width:
+            print("Cut off beam width.")
             beam = beam[:beam_width]
 
     return ans_circ
@@ -236,4 +250,7 @@ if __name__ == "__main__":
         circ = Circuit(layout.qubit_number)
         circ.random_append(gate_num)
 
+    print(f"Circuit info:\n1-bit gate: {circ.count_1qubit_gate()}\n2-bit gate: {circ.count_2qubit_gate()}")
+
+    print("Start beam search")
     circ_mapped = beam_search_mapping(circ, layout, model)
