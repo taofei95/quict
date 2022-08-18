@@ -18,7 +18,7 @@ class Result:
         shots: int,
         options: dict
     ):
-        self.id = circuit_id.split('_')[1]
+        self.id = circuit_id
         self.device = device
         self.backend = backend
         self.shots = shots
@@ -87,7 +87,7 @@ class Result:
         if is_record:
             np.savetxt(f"{self.output_path}/amplitude.txt", amplitude)
 
-        if self.backend == "state_vector":
-            self.state_vector = amplitude.copy()
-        else:
+        if self.backend == "density_matrix":
             self.density_matrix = amplitude.copy()
+        else:
+            self.state_vector = amplitude.copy()
