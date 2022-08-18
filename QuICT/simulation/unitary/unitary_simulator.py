@@ -68,11 +68,8 @@ class UnitarySimulator():
         """
         # Step 1: Generate the unitary matrix of the given circuit
         if isinstance(circuit, Circuit):
-            if self._precision == np.complex64:
-                circuit.convert_precision()
-
             self._qubits_num = circuit.width()
-            self._unitary_matrix = circuit.matrix(self._device)
+            self._unitary_matrix = circuit.matrix(self._device).astype(self._precision)
             assert 2 ** self._qubits_num == self._unitary_matrix.shape[0]
         else:
             row, col = circuit.shape

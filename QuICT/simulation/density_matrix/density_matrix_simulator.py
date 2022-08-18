@@ -149,10 +149,7 @@ class DensityMatrixSimulation:
         Args:
             circuit (Circuit): The circuit only have BasicGate.
         """
-        if self._precision == np.complex64:
-            circuit.convert_precision()
-
-        circuit_matrix = circuit.matrix(self._device)
+        circuit_matrix = circuit.matrix(self._device).astype(self._precision)
         self._density_matrix = self._computer.dot(
             self._computer.dot(circuit_matrix, self._density_matrix),
             circuit_matrix.conj().T
