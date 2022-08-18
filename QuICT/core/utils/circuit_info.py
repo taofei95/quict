@@ -158,12 +158,28 @@ class CircuitBased(object):
         if not self._gates:
             return None
 
+        if self.size() > self.count_1qubit_gate() + self.count_2qubit_gate():
+            self.gate_decomposition()
+
         return circuit_matrix.get_unitary_matrix(self.gates, self.width(), mini_arg)
 
     def convert_precision(self):
         """ Convert all gates in Cicuit/CompositeGate into single precision. """
         for gate in self.gates:
             gate.convert_precision()
+
+    def gate_decomposition(self):
+        added_idxes = 0     # The number of gates which add from gate.build_gate()
+        for i in range(self.size()):
+            gate = self.gates[i + added_idxes]
+            if hasattr(gate, "build_gate"):
+                decomp_gates = gate.build_gate()
+                self.gates.remove(gate)
+                for g in decomp_gates:
+                    self._gates.insert(i + added_idxes, g)
+                    added_idxes += 1
+
+                added_idxes -= 1    # minus the original gate
 
 
 class CircuitMode(Enum):

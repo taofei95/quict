@@ -515,7 +515,7 @@ class BasicGate(object):
             return True
         else:
             tp = type(element)
-            if tp == np.int64 or tp == np.float64 or tp == self._precision:
+            if tp == np.int64 or tp == np.float64 or tp == np.complex128:
                 return True
             return False
 
@@ -1960,6 +1960,15 @@ class UnitaryGate(BasicGate):
         _U.targets = self.targets
 
         return _U
+
+    def build_gate(self):
+        from QuICT.qcda.synthesis.unitary_transform import UnitaryTransform
+
+        assert self.controls + self.targets > 0
+        mapping_args = self.cargs + self.targs
+        composite_gate, _ = UnitaryTransform.execute(self.matrix, mapping=mapping_args)
+
+        return composite_gate
 
 
 Unitary = UnitaryGate()
