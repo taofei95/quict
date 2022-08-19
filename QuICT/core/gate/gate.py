@@ -501,6 +501,9 @@ class BasicGate(object):
             gate.assigned_qubits = copy.deepcopy(self.assigned_qubits)
             gate.update_name(gate.assigned_qubits[0].id)
 
+        if self.precision == np.complex64:
+            gate.convert_precision()
+
         return gate
 
     @staticmethod

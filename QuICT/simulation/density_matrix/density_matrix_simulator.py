@@ -104,22 +104,22 @@ class DensityMatrixSimulation:
             self.initial_density_matrix(self._qubits)
 
         # Start simulator
-        based_circuit = CompositeGate()
+        cgate = CompositeGate()
         for gate in self._circuit.gates:
-            # Store continuous BasicGates into based_circuit
+            # Store continuous BasicGates into cgate
             if isinstance(gate, BasicGate) and gate.type != GateType.measure:
-                gate | based_circuit
+                gate | cgate
                 continue
 
             if not self._accumulated_mode and isinstance(gate, NoiseGate):
                 ugate = self.apply_noise_without_accumulated(gate)
-                ugate | based_circuit
-                gate.gate | based_circuit
+                ugate | cgate
+                gate.gate | cgate
                 continue
 
-            if based_circuit.size() > 0:
-                self.apply_gates(based_circuit)
-                based_circuit = Circuit(self._qubits)
+            if cgate.size() > 0:
+                self.apply_gates(cgate)
+                cgate = CompositeGate()
 
             if gate.type == GateType.measure:
                 self.apply_measure(gate.targ)
@@ -128,8 +128,8 @@ class DensityMatrixSimulation:
             else:
                 raise KeyError("Unsupportted operator in Density Matrix Simulator.")
 
-        if based_circuit.size() > 0:
-            self.apply_gates(based_circuit)
+        if cgate.size() > 0:
+            self.apply_gates(cgate)
 
         # Check Readout Error in the NoiseModel
         if noise_model is not None:
