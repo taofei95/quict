@@ -1,5 +1,5 @@
 import numpy as np
-from typing import Union, List
+from typing import Union, List, Dict
 
 from QuICT.core import Circuit
 from QuICT.core.gate import *
@@ -25,28 +25,22 @@ class QuantumWalk:
         """ The quantum circuit of the random walk algorithm, including UnitaryGate """
         return self._circuit
 
-    def __init__(self, T: int, graph: Graph, coin_operator: np.ndarray = None):
-        """ Initial the quantum random walk with given steps, graph and coin operator.
+    def __init__(self, simulator=CircuitSimulator(), shots: int = 1):
+        """ Initialize the simulator circuit of quantum random walk.
 
         Args:
-            T (int): The steps of random walk, a step including a coin operator and a shift operator.
-            graph (Graph): The description of the position state, vectors represent the position space and
-                the edges represent the action space.
-            coin_operator (np.ndarray, optional): The coin operators, the unitary matrix. Defaults to None.
+            simulator (Union[ConstantStateVectorSimulator, CircuitSimulator], optional):
+                The simulator for simulating quantum circuit. Defaults to CircuitSimulator().
+            shots (int, optional): The repeated times. Defaults to 1.
         """
-        self._step = T
-        self._graph = graph
-        self._coin_operator = coin_operator
+        self._simulator = simulator
+        self._shots = shots
+        self._step = 0
+        self._graph = None
+        self._coin_operator = None
+        self._total_qubits = None
         self._operator_by_position = False
         self._operator_by_time = False
-
-        # Validation graph and coin operator
-        assert self._graph.validation(), "The edge's number should be equal."
-        self._operator_validation()
-        self._total_qubits = self._graph.position_qubits + self._action_qubits
-
-        # Build random walk circuit
-        self._circuit_construct()
 
     def _operator_validation(self):
         """ Validate the operator """
@@ -116,27 +110,46 @@ class QuantumWalk:
 
         self._shift_operator = UnitaryTransform.execute(unitary_matrix)[0]
 
-    def run(
-        self,
-        simulator=CircuitSimulator(),
-        optimization: bool = False,
-        record_measured: bool = False,
-        shots: int = 1
-    ) -> Union[np.ndarray, List]:
-        """ Simulate the quantum random walk circuit.
+    def run(self,
+            step: int,
+            position: int,
+            edges: Union[List, Dict] = None,
+            operators: Union[List, Dict] = None,
+            coin_operator: np.ndarray = None,
+            switched_time: int = -1,
+            optimization: bool = False,
+            record_measured: bool = False,
+        ) -> Union[np.ndarray, List]:
+        """ Initial the quantum random walk with given steps, graph and coin operator.
 
         Args:
-            simulator (Union[ConstantStateVectorSimulator, CircuitSimulator], optional):
-                The simulator for simulating quantum circuit. Defaults to CircuitSimulator().
+            step (int): The steps of random walk, a step including a coin operator and a shift operator.
+            position (int): The number of graph's vertex.
+            edges (Union[List, Dict], optional): The edges of each vertex. Defaults to None.
+            operators (Union[List, Dict], optional): The operators of each vertex. Defaults to None.
+            switched_time (int, optional): The number of steps of each coin operator in the vector.
+                Defaults to -1, means not switch coin operator.
+            coin_operator (np.ndarray, optional): The coin operators, the unitary matrix. Defaults to None.
             optimization (bool, optional): whether using QCDA to optimize quantum walk circuit, may
                 spend lots of times when circuit is large.
             record_measured (bool, optional): whether return the final measured state with shots time,
                 or return the state vector after simulating. Defaults to False.
-            shots (int, optional): The repeatted times. Defaults to 1.
 
         Returns:
             Union[np.ndarray, List]: The state vector or measured states
         """
+        self._step = step
+        self._graph = Graph(position, edges, operators, switched_time)
+        self._coin_operator = coin_operator
+
+        # Validation graph and coin operator
+        assert self._graph.validation(), "The edge's number should be equal."
+        self._operator_validation()
+        self._total_qubits = self._graph.position_qubits + self._action_qubits
+
+        # Build random walk circuit
+        self._circuit_construct()
+
         # Step 1, transform the unitary gate and optimization
         if optimization:
             opt_circuit = GateDecomposition.execute(self._circuit)
@@ -146,12 +159,12 @@ class QuantumWalk:
 
         # Return final state vector if not need
         if not record_measured:
-            return simulator.run(opt_circuit)
+            return self._simulator.run(opt_circuit)
 
         state_list = [0] * (1 << self._circuit.width())
-        for _ in range(shots):
-            _ = simulator.run(opt_circuit)
-            measured_state = simulator.sample()
+        for _ in range(self._shots):
+            _ = self._simulator.run(opt_circuit)
+            measured_state = self._simulator.sample()
             state_list[measured_state] += 1
 
         return state_list
