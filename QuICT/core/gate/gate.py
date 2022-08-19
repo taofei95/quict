@@ -145,6 +145,10 @@ class BasicGate(object):
         return self.targs[0]
 
     @property
+    def precision(self):
+        return self._precision
+
+    @property
     def qasm_name(self):
         return self._qasm_name
 
@@ -1822,6 +1826,9 @@ class PermGate(BasicGate):
             assert len(targs) == self.targets + self.controls
             cgate & targs
 
+        if self._precision == np.complex64:
+            cgate.convert_precision()
+
         return cgate
 
 
@@ -1966,9 +1973,12 @@ class UnitaryGate(BasicGate):
 
         assert self.controls + self.targets > 0
         mapping_args = self.cargs + self.targs
-        composite_gate, _ = UnitaryTransform.execute(self.matrix, mapping=mapping_args)
+        cgate, _ = UnitaryTransform.execute(self.matrix, mapping=mapping_args)
 
-        return composite_gate
+        if self._precision == np.complex64:
+            cgate.convert_precision()
+
+        return cgate
 
 
 Unitary = UnitaryGate()
@@ -2035,6 +2045,9 @@ class CCXGate(BasicGate):
         if len(args) == self.controls + self.targets:
             cgate & args
 
+        if self._precision == np.complex64:
+            cgate.convert_precision()
+
         return cgate
 
 
@@ -2098,6 +2111,9 @@ class CCZGate(BasicGate):
         args = self.cargs + self.targs
         if len(args) == self.controls + self.targets:
             cgate & args
+
+        if self._precision == np.complex64:
+            cgate.convert_precision()
 
         return cgate
 
@@ -2175,6 +2191,9 @@ class CCRzGate(BasicGate):
         if len(args) == self.controls + self.targets:
             cgate & args
 
+        if self._precision == np.complex64:
+            cgate.convert_precision()
+
         return cgate
 
 
@@ -2232,6 +2251,9 @@ class QFTGate(BasicGate):
         if len(args) == targets:
             cgate & args
 
+        if self._precision == np.complex64:
+            cgate.convert_precision()
+
         return cgate
 
 
@@ -2273,6 +2295,9 @@ class IQFTGate(QFTGate):
         args = self.cargs + self.targs
         if len(args) == targets:
             cgate & args
+
+        if self._precision == np.complex64:
+            cgate.convert_precision()
 
         return cgate
 
@@ -2343,6 +2368,9 @@ class CSwapGate(BasicGate):
         args = self.cargs + self.targs
         if len(args) == self.controls + self.targets:
             cgate & args
+
+        if self._precision == np.complex64:
+            cgate.convert_precision()
 
         return cgate
 

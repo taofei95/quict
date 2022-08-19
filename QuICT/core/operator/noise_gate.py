@@ -1,3 +1,5 @@
+import numpy as np
+
 from QuICT.core.gate import BasicGate, MatrixType
 from ._operator import Operator
 
@@ -57,3 +59,9 @@ class NoiseGate(Operator):
     def prob_mapping_operator(self, prob: float):
         """ Return the related noise error's matrix with given probability. """
         return self._error.prob_mapping_operator(prob)
+
+    def convert_precision(self):
+        self._gate.convert_precision()
+        if self._noise_matrix is not None:
+            for noise_matrix in self._noise_matrix:
+                noise_matrix = noise_matrix.astype(np.complex64)

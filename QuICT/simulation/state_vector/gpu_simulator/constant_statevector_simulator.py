@@ -81,7 +81,6 @@ class ConstantStateVectorSimulator:
         """ Initial the qubits, quantum gates and state vector by given quantum circuit. """
         self._circuit = circuit
         self._qubits = int(circuit.width())
-        self._last_call_per_qubit = [None] * self._qubits
         self._pipeline = []
 
         if self._precision == np.complex64:
@@ -165,9 +164,6 @@ class ConstantStateVectorSimulator:
         default_parameters = (self._vector, self._qubits, self._sync)
         if gate_type == GateType.id or gate_type == GateType.barrier:
             return
-
-        for args in gate.cargs + gate.targs:
-            self._last_call_per_qubit[args] = gate_type
 
         # Deal with quantum gate with more than 3 qubits.
         if (
@@ -516,9 +512,10 @@ class ConstantStateVectorSimulator:
         assert (self._circuit is not None)
         original_sv = self._vector.copy()
         state_list = [0] * (1 << self._qubits)
+        lastcall_per_qubit = self._circuit.get_lastcall_for_each_qubits()
         measured_idx = [
             i for i in range(self._qubits)
-            if self._last_call_per_qubit[i] not in [GateType.reset, GateType.measure]
+            if lastcall_per_qubit not in [GateType.reset, GateType.measure]
         ]
 
         for _ in range(shots):
