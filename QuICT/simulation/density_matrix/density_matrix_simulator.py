@@ -196,7 +196,7 @@ class DensityMatrixSimulation:
         if not _1:
             U = self._array_helper.matmul(
                 mea_0,
-                self._array_helper.eye(1 << self._qubits) / self._array_helper.sqrt(prob_0)
+                self._array_helper.eye(1 << self._qubits, dtype=self._precision) / self._array_helper.sqrt(prob_0)
             )
             self._density_matrix = self._computer.dot(self._computer.dot(U, self._density_matrix), U.conj().T)
         else:
@@ -205,7 +205,7 @@ class DensityMatrixSimulation:
 
             U = self._array_helper.matmul(
                 mea_1,
-                self._array_helper.eye(1 << self._qubits) / self._array_helper.sqrt(1 - prob_0)
+                self._array_helper.eye(1 << self._qubits, dtype=self._precision) / self._array_helper.sqrt(1 - prob_0)
             )
             self._density_matrix = self._computer.dot(self._computer.dot(U, self._density_matrix), U.conj().T)
 

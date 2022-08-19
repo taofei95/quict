@@ -29,7 +29,7 @@ def matrix_product_to_circuit(
 
     n = 1 << (max_q - min_q)
     xor = n - 1
-    new_values = np.zeros((n, n), dtype=np.complex128)
+    new_values = np.zeros((n, n), dtype=gate_matrix.dtype)
     assert gate_matrix.shape == (1 << len(gate_args), 1 << len(gate_args))
     for arg in gate_args:
         assert arg >= 0 and arg < max_q and isinstance(arg, int)
