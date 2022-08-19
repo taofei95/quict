@@ -137,6 +137,22 @@ class CircuitBased(object):
 
         return qasm_string
 
+    def get_lastcall_for_each_qubits(self) -> List[GateType]:
+        lastcall_per_qubits = [None] * self.width()
+        inside_qargs = []
+        for i in range(self.size() - 1, -1, -1):
+            gate_args = self._gates[i].cargs + self._gates[i].targs
+            gate_type = self._gates[i].type
+            for garg in gate_args:
+                if lastcall_per_qubits[garg] is None:
+                    lastcall_per_qubits[garg] = gate_type
+                    inside_qargs.append(garg)
+
+            if len(inside_qargs) == self.width():
+                break
+
+        return lastcall_per_qubits
+
     def get_gates_order_by_depth(self) -> List[List]:
         """ Order the gates of circuit by its depth layer
 
@@ -166,7 +182,8 @@ class CircuitBased(object):
     def convert_precision(self):
         """ Convert all gates in Cicuit/CompositeGate into single precision. """
         for gate in self.gates:
-            gate.convert_precision()
+            if hasattr(gate, "convert_precision"):
+                gate.convert_precision()
 
     def gate_decomposition(self):
         added_idxes = 0     # The number of gates which add from gate.build_gate()

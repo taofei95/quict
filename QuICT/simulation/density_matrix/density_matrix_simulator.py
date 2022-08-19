@@ -2,7 +2,7 @@ import numpy as np
 import random
 
 from QuICT.core.circuit.circuit import Circuit
-from QuICT.core.gate import BasicGate, UnitaryGate, Unitary
+from QuICT.core.gate import BasicGate, UnitaryGate, Unitary, CompositeGate
 from QuICT.core.noise import NoiseModel
 from QuICT.core.operator import NoiseGate
 from QuICT.core.utils import GateType, matrix_product_to_circuit
@@ -43,7 +43,6 @@ class DensityMatrixSimulation:
         """ Initial the qubits, quantum gates and state vector by given quantum circuit. """
         self._circuit = circuit if noise_model is None else noise_model.transpile(circuit)
         self._qubits = int(circuit.width())
-        self._last_call_per_qubit = [None] * self._qubits
 
         if self._precision == np.complex64:
             circuit.convert_precision()
@@ -105,25 +104,22 @@ class DensityMatrixSimulation:
             self.initial_density_matrix(self._qubits)
 
         # Start simulator
-        based_circuit = Circuit(self._qubits)
+        cgate = CompositeGate()
         for gate in self._circuit.gates:
-            for arg in gate.cargs + gate.targs:
-                self._last_call_per_qubit[arg] = gate.type
-
-            # Store continuous BasicGates into based_circuit
+            # Store continuous BasicGates into cgate
             if isinstance(gate, BasicGate) and gate.type != GateType.measure:
-                gate | based_circuit
+                gate | cgate
                 continue
 
             if not self._accumulated_mode and isinstance(gate, NoiseGate):
                 ugate = self.apply_noise_without_accumulated(gate)
-                ugate | based_circuit
-                gate.gate | based_circuit
+                ugate | cgate
+                gate.gate | cgate
                 continue
 
-            if based_circuit.size() > 0:
-                self.apply_gates(based_circuit)
-                based_circuit = Circuit(self._qubits)
+            if cgate.size() > 0:
+                self.apply_gates(cgate)
+                cgate = CompositeGate()
 
             if gate.type == GateType.measure:
                 self.apply_measure(gate.targ)
@@ -132,8 +128,8 @@ class DensityMatrixSimulation:
             else:
                 raise KeyError("Unsupportted operator in Density Matrix Simulator.")
 
-        if based_circuit.size() > 0:
-            self.apply_gates(based_circuit)
+        if cgate.size() > 0:
+            self.apply_gates(cgate)
 
         # Check Readout Error in the NoiseModel
         if noise_model is not None:
@@ -141,21 +137,18 @@ class DensityMatrixSimulation:
 
         return self._density_matrix
 
-    def apply_gates(self, circuit: Circuit):
+    def apply_gates(self, cgate: CompositeGate):
         """ Simulating Circuit with BasicGates
 
         dm = M*dm(M.conj)^T
 
         Args:
-            circuit (Circuit): The circuit only have BasicGate.
+            cgate (CompositeGate): The CompositeGate.
         """
-        if self._precision == np.complex64:
-            circuit.convert_precision()
-
-        circuit_matrix = circuit.matrix(self._device)
+        cgate_matrix = cgate.matrix(self._device)
         self._density_matrix = self._computer.dot(
-            self._computer.dot(circuit_matrix, self._density_matrix),
-            circuit_matrix.conj().T
+            self._computer.dot(cgate_matrix, self._density_matrix),
+            cgate_matrix.conj().T
         )
 
     def apply_noise(self, noise_gate: NoiseGate, qubits: int):
@@ -184,7 +177,11 @@ class DensityMatrixSimulation:
         error_matrix = gate.prob_mapping_operator(prob)
         gate_args = gate.cargs + gate.targs
 
-        return Unitary(error_matrix) & gate_args
+        unitary_gate = Unitary(error_matrix) & gate_args
+        if self._precision == np.complex64:
+            unitary_gate.convert_precision()
+
+        return unitary_gate
 
     def apply_measure(self, index: int):
         """ Simulating the MeasureGate.
@@ -218,9 +215,10 @@ class DensityMatrixSimulation:
         assert (self._density_matrix is not None)
         original_dm = self._density_matrix.copy()
         state_list = [0] * self._density_matrix.shape[0]
+        lastcall_per_qubit = self._circuit.get_lastcall_for_each_qubits()
         measured_idx = [
             i for i in range(self._qubits)
-            if self._last_call_per_qubit[i] != GateType.measure
+            if lastcall_per_qubit[i] != GateType.measure
         ]
 
         for _ in range(shots):
