@@ -1,3 +1,5 @@
 torch_runs/
 model/
 *.ipynb
+data/
+!data/topo

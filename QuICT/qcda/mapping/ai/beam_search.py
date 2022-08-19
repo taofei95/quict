@@ -7,7 +7,7 @@ from QuICT.core.layout.layout import LayoutEdge
 from QuICT.core.utils.circuit_info import CircuitBased
 from QuICT.core.gate.gate import BasicGate
 from QuICT.core.utils.gate_type import GateType
-from QuICT.qcda.mapping.ai.data_loader import MappingHeteroDataset
+from QuICT.qcda.mapping.ai.dataset import MappingHeteroDataset
 from QuICT.qcda.mapping.ai.data_processor import MappingDataProcessor
 from QuICT.qcda.mapping.ai.data_def import PairData
 from QuICT.qcda.mapping.ai.swap_num_predict_hetero import SwapNumPredictHeteroMix

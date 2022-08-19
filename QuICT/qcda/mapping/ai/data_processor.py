@@ -1,26 +1,32 @@
-from typing import Iterable, Union
+import re
+from os import makedirs
+from os import path as osp
+from os import rename, walk
+from typing import Any, Iterable, List, Tuple, Union
+
+import networkx as nx
+import numpy as np
+import torch
 from QuICT.core.circuit.circuit import Circuit
 from QuICT.core.gate.composite_gate import CompositeGate
 from QuICT.core.gate.gate import BasicGate
-from os import walk, rename, makedirs
-from os import path as osp
-from QuICT.core.utils.circuit_info import CircuitBased
-from QuICT.tools.interface import OPENQASMInterface
-import re
-from typing import Tuple, Iterable
-import torch
-from QuICT.qcda.mapping.ai.data_def import PairData
-from torch_geometric.nn.models import Node2Vec
 from QuICT.core.layout import Layout, LayoutEdge
-import networkx as nx
+from QuICT.core.utils.circuit_info import CircuitBased
+from QuICT.qcda.mapping.ai.data_def import PairData
+from QuICT.tools.interface import OPENQASMInterface
+from torch_geometric.data import HeteroData
+from torch_geometric.nn.models import Node2Vec
 
 
 class MappingDataProcessor:
     def __init__(
         self,
         max_qubit_num: int,
-        working_dir: str = ".",
+        working_dir: str = None,
     ) -> None:
+        if working_dir is None:
+            working_dir = osp.dirname(osp.abspath(__file__))
+
         self._data_dir = osp.join(working_dir, "data")
         self._circ_dir = osp.join(self._data_dir, "circ")
         self._topo_dir = osp.join(self._data_dir, "topo")
@@ -151,6 +157,77 @@ class MappingDataProcessor:
         edge_index_lc, x_lc = self._build_circ_edge_index(lc_circ)
         return PairData(edge_index_topo, x_topo, edge_index_lc, x_lc)
 
+    def _build_layered_data(
+        self, lc_circ: CircuitBased, layout: Layout
+    ) -> List[HeteroData]:
+        """Build circuit representation by layers.
+
+        Args:
+            lc_circ (CircuitBased): Input circuit.
+            layout (Layout): Input layout.
+
+        Returns:
+            List[HeteroData]: A list of (topo, logical circuit) heterogenous data.
+        """
+        max_qubit_number = self._max_qubit_num
+        qubit_number = layout.qubit_number
+        layers_raw: List[List[Tuple[int, int]]] = []
+        occupied = [-1 for _ in range(max_qubit_number)]
+        for gate in lc_circ.gates:
+            gate: BasicGate
+            if gate.controls + gate.targets != 2:
+                continue
+            a, b = gate.cargs + gate.targs
+            idx = max(occupied[a], occupied[b]) + 1
+            while idx >= len(layers_raw):
+                layers_raw.append([])
+            layers_raw[idx].append((a, b))
+            layers_raw[idx].append((b, a))
+            occupied[a] = idx
+            occupied[b] = idx
+        lc_edge_index_layers = []
+        for layer in layers_raw:
+            lc_edge_index_layers.append(
+                torch.tensor(layer, dtype=torch.long).T.contiguous()
+            )
+        lc_x = torch.zeros(max_qubit_number, max_qubit_number, dtype=torch.float)
+        lc_x[:qubit_number, :qubit_number] = torch.eye(qubit_number, dtype=torch.float)
+
+        topo_edge_index = []
+        for edge in layout.edge_list:
+            edge: LayoutEdge
+            topo_edge_index.append([edge.u, edge.v])
+            topo_edge_index.append([edge.v, edge.u])
+        topo_edge_index = torch.tensor(topo_edge_index, dtype=torch.long).T.contiguous()
+        topo_x = lc_x.clone()
+
+        layers = []
+
+        for lc_edge_index_layer in lc_edge_index_layers:
+            data = HeteroData()
+            data["topo"].x = topo_x.clone()
+            data["lc"].x = lc_x.clone()
+
+            data["topo", "topo_edge", "topo"].edge_index = topo_edge_index.clone()
+            data["lc", "lc_edge", "lc"].edge_index = lc_edge_index_layer
+
+            layers.append(data)
+
+        return layers
+
+    def _build_layered_data_all(self):
+        for topo_path, circ_path, result_circ_path in self._circ_path_list:
+            layout = Layout.load_file(topo_path)
+
+            lc_circ: Circuit = OPENQASMInterface.load_file(circ_path).circuit
+            res_circ: Circuit = OPENQASMInterface.load_file(result_circ_path).circuit
+
+            swap_cnt = len(res_circ.gates) - len(lc_circ.gates)
+
+            layer_data = self._build_layered_data(lc_circ, layout)
+
+            yield layer_data, swap_cnt
+
     def _build(self) -> Iterable[Tuple[PairData, int]]:
         for topo_path, circ_path, result_circ_path in self._circ_path_list:
             layout = Layout.load_file(topo_path)
@@ -164,11 +241,19 @@ class MappingDataProcessor:
 
             yield pair_data, swap_cnt
 
-    def build(self):
-        if not osp.exists(self._processed_dir):
-            makedirs(self._processed_dir)
-        for idx, data in enumerate(self._build()):
-            f_name = osp.join(self._processed_dir, f"{idx}.pt")
+    def build(self, data_generator: Any = None, process_dir: str = None):
+        if process_dir is None:
+            process_dir = self._processed_dir
+
+        if data_generator is None:
+            data_generator = self._build()
+
+        print(f"Save data into {process_dir}")
+
+        if not osp.exists(process_dir):
+            makedirs(process_dir)
+        for idx, data in enumerate(data_generator):
+            f_name = osp.join(process_dir, f"{idx}.pt")
             torch.save(data, f_name)
             if (idx + 1) % 100 == 0:
                 print(f"    Processed {idx+1} files.")
@@ -177,4 +262,9 @@ class MappingDataProcessor:
 if __name__ == "__main__":
     processor = MappingDataProcessor(max_qubit_num=50)
     # processor.wash_circuits()
-    processor.build()
+    process_dir = osp.dirname(osp.abspath(__file__))
+    process_dir = osp.join(process_dir, "data")
+    process_dir = osp.join(process_dir, "processed_layered")
+    processor.build(
+        data_generator=processor._build_layered_data_all(), process_dir=process_dir
+    )

@@ -1,12 +1,12 @@
 import os.path as osp
 from os import walk
 import torch
-from torch_geometric.data import Dataset as PygDataset
+from torch_geometric.data import Dataset as PygDataset, Data as PygData
 from torch_geometric.data import HeteroData
 from torch_geometric.data import Batch as PygBatch
 from torch_geometric.loader import DataLoader as PygDataLoader
 from torch_geometric.nn.models import Node2Vec
-from typing import Tuple, Iterable
+from typing import List, Tuple, Iterable
 from QuICT.core import Circuit
 from QuICT.core.gate import BasicGate
 from QuICT.core.layout import Layout, LayoutEdge
@@ -42,7 +42,7 @@ class MappingDataset(PygDataset):
             return circ, target
 
 
-class MappingHeteroDataset(PygDataset):
+class MappingBaseDataset(PygDataset):
     def __init__(self, data_dir: str = None, file_names: Iterable[str] = None) -> None:
         super().__init__()
         if data_dir is None:
@@ -77,6 +77,14 @@ class MappingHeteroDataset(PygDataset):
             ),
         )
 
+    def __len__(self):
+        return len(self._file_names)
+
+
+class MappingHeteroDataset(MappingBaseDataset):
+    def __init__(self, data_dir: str = None, file_names: Iterable[str] = None) -> None:
+        super().__init__(data_dir=data_dir, file_names=file_names)
+
     @classmethod
     def to_hetero_data(cls, raw_data: PairData) -> HeteroData:
         data = HeteroData()
@@ -88,9 +96,6 @@ class MappingHeteroDataset(PygDataset):
 
         return data
 
-    def __len__(self):
-        return len(self._file_names)
-
     def __getitem__(self, idx: int) -> Tuple[HeteroData, int]:
         f_path = osp.join(self._data_dir, self._file_names[idx])
         with open(f_path, "rb") as f:
@@ -99,20 +104,51 @@ class MappingHeteroDataset(PygDataset):
             return data, target
 
 
-class MappingDataLoaderFactory:
-    @staticmethod
-    def get_loader(batch_size: int, shuffle: bool, device, data_dir: str = None):
-        if data_dir is None:
-            data_dir = osp.dirname(osp.realpath(__file__))
-            data_dir = osp.join(data_dir, "data")
-            data_dir = osp.join(data_dir, "processed")
+class MappingLayeredDataset(MappingBaseDataset):
+    def __init__(self, data_dir: str = None, file_names: Iterable[str] = None) -> None:
+        super().__init__(data_dir=data_dir, file_names=file_names)
 
-        dataset = MappingDataset(data_dir=data_dir)
+        self.hetero_metadata = self[0][0][0].metadata()
 
-        loader = PygDataLoader(
-            dataset=dataset,
-            batch_size=batch_size,
-            shuffle=shuffle,
-            follow_batch=["x_topo", "x_lc"],
+    def __getitem__(self, idx: int):
+        f_path = osp.join(self._data_dir, self._file_names[idx])
+        with open(f_path, "rb") as f:
+            raw_data, target = torch.load(f)
+            # raw_data: List[HeteroData]
+            return raw_data, target
+
+    def loader(self, batch_size: int, shuffle: bool, device: str = "cpu"):
+        def _collate_fn(data_list):
+            hetero_layers_data_list, swap_counts = zip(*data_list)
+            swap_counts = torch.tensor(swap_counts, dtype=torch.float).to(device)
+            hetero_layers_data_list = zip(*hetero_layers_data_list)
+            # Now each item is the same layer of different graphs.
+            hetero_batch_layers = []
+            for hetero_layers in hetero_layers_data_list:
+                batch = PygBatch.from_data_list(hetero_layers).to(device)
+                hetero_batch_layers.append(batch)
+
+            return hetero_batch_layers, swap_counts
+
+        return PygDataLoader(
+            dataset=self, batch_size=batch_size, shuffle=shuffle, collate_fn=_collate_fn
         )
-        return loader
+
+
+# class MappingDataLoaderFactory:
+#     @staticmethod
+#     def get_loader(batch_size: int, shuffle: bool, device, data_dir: str = None):
+#         if data_dir is None:
+#             data_dir = osp.dirname(osp.realpath(__file__))
+#             data_dir = osp.join(data_dir, "data")
+#             data_dir = osp.join(data_dir, "processed")
+
+#         dataset = MappingDataset(data_dir=data_dir)
+
+#         loader = PygDataLoader(
+#             dataset=dataset,
+#             batch_size=batch_size,
+#             shuffle=shuffle,
+#             follow_batch=["x_topo", "x_lc"],
+#         )
+#         return loader

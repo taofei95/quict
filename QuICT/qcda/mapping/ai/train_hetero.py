@@ -4,7 +4,7 @@ import os
 
 import torch
 import torch.nn as nn
-from QuICT.qcda.mapping.ai.data_loader import MappingHeteroDataset
+from QuICT.qcda.mapping.ai.dataset import MappingHeteroDataset
 from QuICT.qcda.mapping.ai.swap_num_predict_hetero import SwapNumPredictHeteroMix
 from torch_geometric.loader import DataLoader as PygDataLoader
 
