@@ -68,7 +68,7 @@ class InstructionSet(object):
     def two_qubit_gate(self, two_qubit_gate):
         """ set two_qubit_gate
 
-        the basicGate class is transformed to gate id
+        the BasicGate class is transformed to GateType
 
         Args:
             two_qubit_gate(int/BasicGate):
