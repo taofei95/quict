@@ -1,5 +1,4 @@
 from QuICT.tools.interface import OPENQASMInterface
-from QuICT.qcda.optimization.template_optimization.template_searching.lib import TemplateLib
 import os
 
 class CircuitLib:
