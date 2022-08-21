@@ -17,10 +17,10 @@ class CircuitLib:
                     args[2]: int, depth of qubits
 
         random:     args[0]: string, random circuit type (ctrl_diag/ctrl_unitary/diag/qft/single_bit/unitary)
-                    args]1]: stirng (small/medium/large) or int, size type
+                    args[1]: stirng (small/medium/large) or int, size type
 
         algorithm:  args[0]: string, algorithm circuit type (QFT/Grover/Supermacy)
-                    args]1]: int, size type
+                    args[1]: int, size type
 
         Experiment: args[0]: string, experiment circuit type (Mapping/Adder)
                     args[1]: for Mapping: string, circuit name
