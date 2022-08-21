@@ -22,7 +22,7 @@ class CircuitLib:
         algorithm:  args[0]: string, algorithm circuit type (QFT/Grover/Supermacy)
                     args[1]: int, size type
 
-        Experiment: args[0]: string, experiment circuit type (Mapping/Adder)
+        experiment: args[0]: string, experiment circuit type (Mapping/Adder)
                     args[1]: for Mapping: string, circuit name
                              for Adder:   int, circuit size
 
