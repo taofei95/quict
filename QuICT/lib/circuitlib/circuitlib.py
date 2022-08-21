@@ -8,19 +8,23 @@ class CircuitLib:
 
     get_circuit(name, *args)
     
-    name: template, random, algorithm, experiment
+    name: string, circuit type name (template/random/algorithm/experiment}
     
     *args:
     
-        template:   qubit_num, 
-                    size, 
-                    depth
-        random:     circuit_type (ctrl_diag/ctrl_unitary/diag/qft/single_bit/unitary),
-                    size_type (small/medium/large) or qubit number
-        algorithm:  circuit_type (QFT/Grover/Supermacy), 
-                    qubit number
-        Experiment: circuit_type(Mapping/Adder),
-                    qubit number
+        template:   args[0]: int, number of qubits
+                    args[1]: int, size of qubits
+                    args[2]: int, depth of qubits
+
+        random:     args[0]: string, random circuit type (ctrl_diag/ctrl_unitary/diag/qft/single_bit/unitary)
+                    args]1]: stirng (small/medium/large) or int, size type
+
+        algorithm:  args[0]: string, algorithm circuit type (QFT/Grover/Supermacy)
+                    args]1]: int, size type
+
+        Experiment: args[0]: string, experiment circuit type (Mapping/Adder)
+                    args[1]: for Mapping: string, circuit name
+                             for Adder:   int, circuit size
 
 """
 
@@ -41,7 +45,7 @@ class CircuitLib:
         
         para = args
         circuit_list = []
-        filename = os.path.abspath(__file__) + name
+        filename = os.path.dirname(os.path.abspath(__file__)) + '/circuit_qasm/' + name
         
         if name == "template":
             for bit_num in range(para[0] + 1):
