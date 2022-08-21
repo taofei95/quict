@@ -2,7 +2,9 @@ from QuICT.tools.interface import OPENQASMInterface
 from QuICT.qcda.optimization.template_optimization.template_searching.lib import TemplateLib
 import os
 
-""" Circuit Library
+class CircuitLib:
+
+    """ Circuit Library
 
     get_circuit(name, *args)
     
@@ -22,8 +24,6 @@ import os
 
 """
 
-class CircuitLib:
-
     def load_qasm(self, filename):
         qasm = OPENQASMInterface.load_file(filename)
         if not qasm.valid_circuit:
@@ -34,17 +34,14 @@ class CircuitLib:
         circuit_all = []
         for root, dirs, files in os.walk(filename):
             for file in files:
-                qasm = OPENQASMInterface.load_file(filename + '/' + file)
-                if not qasm.valid_circuit:
-                    raise QasmError("Missing input file")
-                circuit_all.append(qasm.circuit)
+                circuit_all.append(self.load_qasm(filename + '/' + file))
         return circuit_all
 
     def get_circuit(self, name="template", *args):
         
         para = args
         circuit_list = []
-        filename = "./circuit_qasm/"+name
+        filename = os.path.abspath(__file__) + name
         
         if name == "template":
             for bit_num in range(para[0] + 1):
@@ -54,137 +51,25 @@ class CircuitLib:
                         for root, dirs, files in os.walk(filename):
                             for file in files:
                                 if file.find(part_name) != -1:
-                                    qasm = OPENQASMInterface.load_file(filename + '/' + file)
-                                    if not qasm.valid_circuit:
-                                        raise QasmError("Missing input file")
-                                    circuit_list.append(qasm.circuit)
+                                    circuit_list.append(self.load_qasm(filename + '/' + file))
         elif name == "random":
             filename = filename + '/' + para[0]
-            if para[0] == "ctrl_diag":
-                random_list = []
-                if para[1] == 'small':
-                    for i in range(1, 6):
-                        random_list.append(i)
-                elif para[1] == 'middle':
-                    for i in range(13, 20):
-                        random_list.append(i)
-                elif para[1] == 'large':
-                    for i in range(30, 55, 5):
-                        random_list.append(i)
-                else:
-                    random_list.append(para[1])
-                for list_name in random_list:
-                    filename_temp = filename + '/' + str(list_name) + ".qasm"
-                    circuit  = self.load_qasm(filename_temp)
-                    if circuit != None:
-                        circuit_list.append(circuit)
-            elif para[0] == "ctrl_unitary":
-                random_list = []
-                if para[1] == 'small':
-                    for i in range(1, 6):
-                        random_list.append(i)
-                elif para[1] == 'middle':
-                    for i in range(13, 20):
-                        random_list.append(i)
-                elif para[1] == 'large':
-                    for i in range(30, 55, 5):
-                        random_list.append(i)
-                else:
-                    random_list.append(para[1])
-                for list_name in random_list:
-                    filename_temp = filename + '/' + str(list_name) + ".qasm"
-                    circuit  = self.load_qasm(filename_temp)
-                    if circuit != None:
-                        circuit_list.append(circuit)
-            elif para[0] == "diag":
-                random_list = []
-                if para[1] == 'small':
-                    for i in range(1, 6):
-                        random_list.append(i)
-                elif para[1] == 'middle':
-                    for i in range(13, 20):
-                        random_list.append(i)
-                elif para[1] == 'large':
-                    for i in range(30, 55, 5):
-                        random_list.append(i)
-                else:
-                    random_list.append(para[1])
-                for list_name in random_list:
-                    filename_temp = filename + '/' + str(list_name) + ".qasm"
-                    circuit  = self.load_qasm(filename_temp)
-                    if circuit != None:
-                        circuit_list.append(circuit)
-            elif para[0] == "qft":
-                random_list = []
-                if para[1] == 'small':
-                    for i in range(1, 6):
-                        random_list.append(i)
-                elif para[1] == 'middle':
-                    for i in range(13, 20):
-                        random_list.append(i)
-                elif para[1] == 'large':
-                    for i in range(30, 55, 5):
-                        random_list.append(i)
-                else:
-                    random_list.append(para[1])
-                for list_name in random_list:
-                    filename_temp = filename + '/' + str(list_name) + ".qasm"
-                    circuit  = self.load_qasm(filename_temp)
-                    if circuit != None:
-                        circuit_list.append(circuit)
-            elif para[0] == "single_bit":
-                random_list = []
-                if para[1] == 'small':
-                    for i in range(1, 6):
-                        random_list.append(i)
-                elif para[1] == 'middle':
-                    for i in range(13, 20):
-                        random_list.append(i)
-                elif para[1] == 'large':
-                    for i in range(30, 55, 5):
-                        random_list.append(i)
-                else:
-                    random_list.append(para[1])
-                for list_name in random_list:
-                    filename_temp = filename + '/' + str(list_name) + ".qasm"
-                    circuit  = self.load_qasm(filename_temp)
-                    if circuit != None:
-                        circuit_list.append(circuit)
-            elif para[0] == "unitary":
-                random_list = []
-                if para[1] == 'small':
-                    for i in range(1, 6):
-                        random_list.append(i)
-                elif para[1] == 'middle':
-                    for i in range(13, 20):
-                        random_list.append(i)
-                elif para[1] == 'large':
-                    for i in range(30, 55, 5):
-                        random_list.append(i)
-                else:
-                    random_list.append(para[1])
-                for list_name in random_list:
-                    filename_temp = filename + '/' + str(list_name) + ".qasm"
-                    circuit  = self.load_qasm(filename_temp)
-                    if circuit != None:
-                        circuit_list.append(circuit)
+            list_dict = {"small":[1,2,3,4,5], "middle":[13,14,15,16,17,18,19], "large":[30,35,40,45,50]}
+            if para[1] in list_dict:
+                random_list = list_dict[para[1]]
             else:
-                filename = ""
+                random_list = [para[1]]
+            for list_name in random_list:
+                filename_temp = filename + '/' + str(list_name) + ".qasm"
+                circuit  = self.load_qasm(filename_temp)
+                if circuit != None:
+                    circuit_list.append(circuit)
 
         elif name == "algorithm":
             filename = filename + '/' + para[0]
-            if para[0] == "QFT":
-                filename = filename + '/qft_' + str(para[1]) + ".qasm"
-                circuit  = self.load_qasm(filename)
-                if circuit != None:
-                    circuit_list.append(circuit)
-            elif para[0] == "Grover":
-                filename = filename + '/grover_' + str(para[1]) + ".qasm"
-                circuit  = self.load_qasm(filename)
-                if circuit != None:
-                    circuit_list.append(circuit)
-            elif para[0]== "Supermacy":
-                filename = filename + '/' + str(para[1]) + ".qasm"
+            list_dict = {"QFT":"/qft_", "Grover":"/grover_", "Supermacy":"/"}
+            if para[0] in list_dict:
+                filename = filename + list_dict[para[0]] + str(para[1]) + ".qasm"
                 circuit  = self.load_qasm(filename)
                 if circuit != None:
                     circuit_list.append(circuit)
