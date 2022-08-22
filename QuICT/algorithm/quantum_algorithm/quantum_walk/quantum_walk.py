@@ -11,7 +11,7 @@ from .graph import Graph
 
 
 class QuantumWalk:
-    """ The Quantum Random Walk Algorithm """
+    """ The Quantum Random Walk Algorithm. """
     @property
     def step(self):
         return self._step
@@ -22,7 +22,7 @@ class QuantumWalk:
 
     @property
     def circuit(self) -> Circuit:
-        """ The quantum circuit of the random walk algorithm, including UnitaryGate """
+        """ The quantum circuit of the random walk algorithm, including UnitaryGate. """
         return self._circuit
 
     def __init__(self, simulator=CircuitSimulator(), shots: int = 1):
@@ -43,7 +43,7 @@ class QuantumWalk:
         self._operator_by_time = False
 
     def _operator_validation(self):
-        """ Validate the operator """
+        """ Validate the operator. """
         if self._coin_operator is not None:
             assert self._graph.operator_validation(self._coin_operator), "The operator should be an unitary matrix."
             self._action_qubits = int(np.ceil(np.log2(self._coin_operator.shape[0])))
@@ -54,7 +54,7 @@ class QuantumWalk:
             self._operator_by_time = self._graph.switched_time > 0
 
     def _circuit_construct(self):
-        """ Construct random walk circuit """
+        """ Construct random walk circuit. """
         # Build shift operator
         self._build_shift_operator()
 
@@ -65,7 +65,7 @@ class QuantumWalk:
             self._shift_operator | self._circuit
 
     def _build_action_operator(self, step: int) -> CompositeGate:
-        """ Generator action operator """
+        """ Generator action operator. """
         action_qubits = [self._graph.position_qubits + i for i in range(self._action_qubits)]
         if not (self._operator_by_position or self._operator_by_time):
             return Unitary(self._coin_operator) & action_qubits
@@ -86,7 +86,7 @@ class QuantumWalk:
         return GateDecomposition.execute(action_gate)
 
     def _mct_generator(self, op: np.ndarray) -> UnitaryGate:
-        """ Build multi-control-'op' gate """
+        """ Build multi-control-'op' gate. """
         mct_unitary = np.identity(1 << self._total_qubits, dtype=np.complex128)
         op_shape = op.shape
         mct_unitary[-op_shape[0]:, -op_shape[1]:] = op
@@ -94,7 +94,7 @@ class QuantumWalk:
         return Unitary(mct_unitary) & list(range(self._total_qubits))
 
     def _build_shift_operator(self):
-        """ Generator shift operator """
+        """ Generator shift operator. """
         unitary_matrix = np.zeros((1 << self._total_qubits, 1 << self._total_qubits), dtype=np.complex128)
         record_idxes = list(range(1 << self._total_qubits))
         for i in range(self._graph.position):
@@ -136,7 +136,7 @@ class QuantumWalk:
                 or return the state vector after simulating. Defaults to False.
 
         Returns:
-            Union[np.ndarray, List]: The state vector or measured states
+            Union[np.ndarray, List]: The state vector or measured states.
         """
         self._step = step
         self._graph = Graph(position, edges, operators, switched_time)

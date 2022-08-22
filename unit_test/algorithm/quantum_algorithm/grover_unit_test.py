@@ -4,7 +4,7 @@
 # @Author  : Zhu Qinlin
 # @File    : unit_test.py
 
-import pytest
+import unittest
 
 from QuICT.algorithm.quantum_algorithm.grover import (
     Grover,
@@ -43,50 +43,60 @@ def main_oracle(n, f):
     return 2, cgate
 
 
-def test_grover_on_ConstantStateVectorSimulator():
-    for n in range(3, 9):
-        error = 0
-        N = 2 ** n
-        for target in range(0, N):
-            f = [target]
-            k, oracle = main_oracle(n, f)
-            result = Grover.run(n, k, oracle, ConstantStateVectorSimulator())
-            if target != result:
-                error += 1
-                print("For n = %d, target = %d, found = %d" % (n, target, result))
-        error_rate = error / N
-        print(
-            "for n = %d, %d errors in %d tests, error rate = %f"
-            % (n, error, N, error_rate)
-        )
-        if error_rate > 0.15:
-            assert 0
-    assert 1
+class TestGrover(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        print("The Grover unit test start!")
+        cls.simulator = ConstantStateVectorSimulator()
 
+    @classmethod
+    def tearDownClass(cls) -> None:
+        print("The Grover unit test finished!")
 
-def test_partial_grover_on_ConstantStateVectorSimulator():
-    n_block = 3
-    for n in range(5, 9):
-        print("run with n = ", n)
-        error = 0
-        N = 2 ** n
-        for target in range(0, N):
-            f = [target]
-            k, oracle = main_oracle(n, f)
-            result = PartialGrover.run(
-                n, n_block, k, oracle, ConstantStateVectorSimulator()
+    def test_grover_on_ConstantStateVectorSimulator(self):
+        for n in range(3, 9):
+            error = 0
+            N = 2 ** n
+            for target in range(0, N):
+                f = [target]
+                k, oracle = main_oracle(n, f)
+                grover = Grover(TestGrover.simulator)
+                result = grover.run(n, k, oracle)
+                if target != result:
+                    error += 1
+                    print("For n = %d, target = %d, found = %d" % (n, target, result))
+            error_rate = error / N
+            print(
+                "for n = %d, %d errors in %d tests, error rate = %f"
+                % (n, error, N, error_rate)
             )
-            if (target >> (n - k)) != (result >> (n - k)):
-                error += 1
-        error_rate = error / N
-        print(
-            "for n = %d, %d errors in %d tests, error rate = %f"
-            % (n, error, N, error / N)
-        )
-        if error_rate > 0.15:
-            assert 0
-    assert 1
+            if error_rate > 0.15:
+                assert 0
+        assert 1
+
+    def test_partial_grover_on_ConstantStateVectorSimulator(self):
+        n_block = 3
+        for n in range(5, 9):
+            print("run with n = ", n)
+            error = 0
+            N = 2 ** n
+            for target in range(0, N):
+                f = [target]
+                k, oracle = main_oracle(n, f)
+                result = PartialGrover.run(
+                    n, n_block, k, oracle, ConstantStateVectorSimulator()
+                )
+                if (target >> (n - k)) != (result >> (n - k)):
+                    error += 1
+            error_rate = error / N
+            print(
+                "for n = %d, %d errors in %d tests, error rate = %f"
+                % (n, error, N, error / N)
+            )
+            if error_rate > 0.15:
+                assert 0
+        assert 1
 
 
 if __name__ == "__main__":
-    pytest.main(["./unit_test.py"])
+    unittest.main()
