@@ -4,47 +4,9 @@
 # @Author  : Han Yu
 # @File    : instruction_set.py
 
-from QuICT.core.gate import BasicGate, GateType
-from QuICT.core.gate.gate_builder import GATE_TYPE_TO_CLASS
-from .transform_rule import TransformRule
+from QuICT.core.gate import GateType
+from .transform_rule.one_qubit_gate_rules import *
 from .transform_rule.two_qubit_gate_rules import *
-from .transform_rule.SU2_rules import *
-
-
-def _capitalize_name_of_gate(class_name):
-    """ According to the class_name, generator the capitalized name
-
-    Args:
-        class_name(string): class name of the gate
-
-    Returns:
-        string: the capitalized name
-    """
-    index = class_name.find("Gate")
-    if index == -1:
-        raise Exception("the parameter is not legal.")
-    class_name = class_name[:index]
-    return class_name.capitalize()
-
-
-def _generate_default_rule(source, target):
-    """ According to the source gate and target gate(2-qubit), choose a appropriate default rule
-
-    Args:
-        source(BasicGate/int): source gate (id)
-        target(BasicGate/int): target gate (id)
-
-    Returns:
-        TransformRule: a valid rule.
-    """
-    if isinstance(source, BasicGate):
-        source = source.type
-    if isinstance(target, BasicGate):
-        target = target.type
-    source = _capitalize_name_of_gate(GATE_TYPE_TO_CLASS[source].__name__)
-    target = _capitalize_name_of_gate(GATE_TYPE_TO_CLASS[target].__name__)
-    rule_name = f"{source}2{target}Rule"
-    return eval(rule_name)
 
 
 class InstructionSet(object):
@@ -53,13 +15,12 @@ class InstructionSet(object):
     Instruction Set contains gates and some rules, which can be assigned by user.
 
     Attributes:
-        two_qubit_gate(int): the index of the two_qubit_gate
-        one_qubit_gates(list<int>): the indexes of the one_qubit_gate
-        SU2_rule(TransformRule): rules to transform SU(2) into instruction set
+        one_qubit_gates(list<GateType>): the types of the one_qubit_gate
+        one_qubit_rule(callable): rules to transform SU(2) into instruction set
+        two_qubit_gate(GateType): the type of the two_qubit_gate
         rule_map(dictionary): A two-dimensional map from source gate and target gate to transform rule
-
     """
-
+    # Two-qubit gate and two-qubit rules
     @property
     def two_qubit_gate(self):
         return self.__two_qubit_gate
@@ -68,15 +29,21 @@ class InstructionSet(object):
     def two_qubit_gate(self, two_qubit_gate):
         """ set two_qubit_gate
 
-        the BasicGate class is transformed to GateType
-
         Args:
-            two_qubit_gate(int/BasicGate):
+            two_qubit_gate(GateType): two-qubit gate in the InstructionSet
         """
-        if isinstance(two_qubit_gate, BasicGate):
-            two_qubit_gate = two_qubit_gate.type
+        assert isinstance(two_qubit_gate, GateType), TypeError('two_qubit_gate should be a GateType')
         self.__two_qubit_gate = two_qubit_gate
 
+    @property
+    def two_qubit_rule_map(self):
+        return self.__two_qubit_rule_map
+
+    @two_qubit_rule_map.setter
+    def two_qubit_rule_map(self, two_qubit_rule_map):
+        self.__two_qubit_rule_map = two_qubit_rule_map
+
+    # One-qubit gates and one-qubit rule
     @property
     def one_qubit_gates(self):
         return self.__one_qubit_gates
@@ -85,96 +52,70 @@ class InstructionSet(object):
     def one_qubit_gates(self, one_qubit_gates):
         """ set one_qubit_gates
 
-        the basicGate class is transformed to gate id
-
         Args:
-            two_qubit_gate(list<int/BasicGate>):
+            one_qubit_gates(list<GateType>): one-qubit gates in the InstructionSet
         """
-        one_qubit_gates_list = []
-        for element in one_qubit_gates:
-            if isinstance(element, BasicGate):
-                one_qubit_gates_list.append(element.type)
-            else:
-                one_qubit_gates_list.append(element)
-        self.__one_qubit_gates = one_qubit_gates_list
+        assert isinstance(one_qubit_gates, list), TypeError('one_qubit_gates should be a list')
+        for one_qubit_gate in one_qubit_gates:
+            assert isinstance(one_qubit_gate, GateType), TypeError('each one_qubit_gate should be a GateType')
+        self.__one_qubit_gates = one_qubit_gates
 
     @property
-    def SU2_rule(self) -> TransformRule:
+    def one_qubit_rule(self):
         """ the rule of decompose 2*2 unitary into target gates
 
+        If not assigned by the register_one_qubit_rule method, some pre-implemented method would be chosen
+        corresponding to the one_qubit_gates. An Exception will be raised when no method is chosen.
+
         Returns:
-            TransformRule: the corresponding rule
+            callable: the corresponding rule
         """
-        if self.__SU2_rule:
-            return self.__SU2_rule
-        if set(self.one_qubit_gates).issubset((GateType.rz, GateType.ry)):
-            return ZyzRule
-        if set(self.one_qubit_gates).issubset((GateType.rx, GateType.ry)):
-            return XyxRule
-        if set(self.one_qubit_gates).issubset((GateType.rz, GateType.sx, GateType.x)):
-            return IbmqRule
+        if self.__one_qubit_rule:
+            return self.__one_qubit_rule
+        if set((GateType.rz, GateType.ry)).issubset(set(self.one_qubit_gates)):
+            return zyz_rule
+        if set((GateType.rx, GateType.ry)).issubset(set(self.one_qubit_gates)):
+            return xyx_rule
+        if set((GateType.rz, GateType.sx, GateType.x)).issubset(set(self.one_qubit_gates)):
+            return ibmq_rule
         raise Exception("please register the SU2 decomposition rule.")
 
-    @property
-    def rule_map(self):
-        return self.__rule_map
-
-    @rule_map.setter
-    def rule_map(self, rule_map):
-        self.__rule_map = rule_map
-
-    def __init__(self, qubit_gates):
-        self.__two_qubit_gate = 0
-        one_qubit_gates = []
-        for gate in qubit_gates:
-            if gate.targets + gate.controls == 2:
-                self.two_qubit_gate = gate
-            else:
-                one_qubit_gates.append(gate)
+    def __init__(self, two_qubit_gate, one_qubit_gates):
+        self.two_qubit_gate = two_qubit_gate
         self.one_qubit_gates = one_qubit_gates
-        self.__SU2_rule = None
-        self.__rule_map = {}
+        self.__one_qubit_rule = None
+        self.__two_qubit_rule_map = {}
 
-    def select_transform_rule(self, source) -> TransformRule:
+    def select_transform_rule(self, source):
         """ choose a rule which transforms source gate into target gate(2-qubit)
 
         Args:
-            source(BasicGate/int): the id of source gate
+            source(GateType): the type of source gate
 
         Returns:
-            TransformRule: the transform rules
+            callable: the transform rules
         """
-        if isinstance(source, BasicGate):
-            source = source.type
-        if source in self.rule_map:
-            return self.rule_map[source]
-        rule = _generate_default_rule(source, self.two_qubit_gate)
-        self.rule_map[source] = rule
+        assert isinstance(source, GateType)
+        if source in self.two_qubit_rule_map:
+            return self.two_qubit_rule_map[source]
+        rule = eval(f"{source.name}2{self.two_qubit_gate.name}_rule")
+        self.two_qubit_rule_map[source] = rule
         return rule
 
-    def register_SU2_rule(self, transformRule):
-        """ register SU(2) decompostion rule
+    def register_one_qubit_rule(self, one_qubit_rule):
+        """ register one-qubit gate decompostion rule
 
         Args:
-            transformRule(TransformRule): decompostion rule
+            one_qubit_rule(callable): decompostion rule
         """
-        self.__SU2_rule = transformRule
+        self.__one_qubit_rule = one_qubit_rule
 
-    def register_rule_map(self, transformRule):
+    def register_two_qubit_rule_map(self, two_qubit_rule, source):
         """ register rule which transforms from source gate into target gate
 
         Args:
-            transformRule(TransformRule): the transform rule
+            two_qubit_rule(callable): the transform rule
+            source(GateType): the type of source gate
         """
-        if transformRule.target != self.two_qubit_gate:
-            raise Exception("the target is not in the target")
-        self.rule_map[transformRule.source] = transformRule
-
-    def batch_register_rule_map(self, transformRules):
-        """ batch register rules which transforms from source gate into target gate
-
-        Args:
-            transformRules(list<TransformRule>): the transform rules
-        """
-        for transformRule in transformRules:
-            self.register_rule_map(transformRule)
+        assert isinstance(source, GateType)
+        self.two_qubit_rule_map[source] = two_qubit_rule

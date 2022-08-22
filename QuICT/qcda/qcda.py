@@ -31,9 +31,9 @@ class QCDA(object):
 
     def add_method(self, method=None):
         """ Adding a specific method to the process
-        
+
         Args:
-            method: Some QCDA method 
+            method: Some QCDA method
         """
         self.process.append(method)
 

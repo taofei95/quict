@@ -16,7 +16,7 @@ def test_google():
         GT = GateTransform(GoogleSet)
         circuit_tran = GT.execute(circuit)
         gates_tran = CompositeGate(gates=circuit_tran.gates)
-        assert gates.equal(gates_tran)
+        assert np.allclose(gates.matrix(), gates_tran.matrix())
 
 
 def test_ustc():
@@ -27,7 +27,7 @@ def test_ustc():
         GT = GateTransform(USTCSet)
         circuit_tran = GT.execute(circuit)
         gates_tran = CompositeGate(gates=circuit_tran.gates)
-        assert gates.equal(gates_tran)
+        assert np.allclose(gates.matrix(), gates_tran.matrix())
 
 
 def test_ibmq():
@@ -38,7 +38,7 @@ def test_ibmq():
         GT = GateTransform(IBMQSet)
         circuit_tran = GT.execute(circuit)
         gates_tran = CompositeGate(gates=circuit_tran.gates)
-        assert gates.equal(gates_tran)
+        assert np.allclose(gates.matrix(), gates_tran.matrix())
 
 
 def test_ionq():
@@ -49,11 +49,11 @@ def test_ionq():
         GT = GateTransform(IonQSet)
         circuit_tran = GT.execute(circuit)
         gates_tran = CompositeGate(gates=circuit_tran.gates)
-        assert gates.equal(gates_tran)
+        assert np.allclose(gates.matrix(), gates_tran.matrix())
 
 
 def test_buildZyz():
-    buildSet = InstructionSet([CY, Rz, Ry])
+    buildSet = InstructionSet(GateType.cy, [GateType.rz, GateType.ry])
     for i in range(2, 6):
         circuit = Circuit(i)
         circuit.random_append(20)
@@ -61,13 +61,13 @@ def test_buildZyz():
         GT = GateTransform(buildSet)
         circuit_tran = GT.execute(circuit)
         gates_tran = CompositeGate(gates=circuit_tran.gates)
-        assert gates.equal(gates_tran)
+        assert np.allclose(gates.matrix(), gates_tran.matrix())
 
 
 def test_buildZyzWithRegister():
-    buildSet = InstructionSet([CY, Rz, Ry])
-    buildSet.register_SU2_rule(ZyzRule)
-    buildSet.register_rule_map(Cx2CyRule)
+    buildSet = InstructionSet(GateType.cy, [GateType.rz, GateType.ry])
+    buildSet.register_one_qubit_rule(zyz_rule)
+    buildSet.register_two_qubit_rule_map(cx2cy_rule, GateType.cx)
     for i in range(2, 6):
         circuit = Circuit(i)
         circuit.random_append(20)
@@ -75,4 +75,4 @@ def test_buildZyzWithRegister():
         GT = GateTransform(buildSet)
         circuit_tran = GT.execute(circuit)
         gates_tran = CompositeGate(gates=circuit_tran.gates)
-        assert gates.equal(gates_tran)
+        assert np.allclose(gates.matrix(), gates_tran.matrix())

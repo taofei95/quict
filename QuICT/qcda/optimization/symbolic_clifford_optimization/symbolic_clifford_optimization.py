@@ -10,7 +10,7 @@ import numpy as np
 from QuICT.core import Circuit
 from QuICT.core.gate import CompositeGate, GateType, H, CX, CY, CZ, X, S, Z, S_dagger
 from QuICT.qcda.optimization.commutative_optimization import CommutativeOptimization
-from QuICT.qcda.synthesis.gate_transform.transform_rule import Cy2CxRule, Cz2CxRule
+from QuICT.qcda.synthesis.gate_transform.transform_rule import cy2cx_rule, cz2cx_rule
 from QuICT.qcda.utility import PauliOperator, OutputAligner
 
 
@@ -242,9 +242,9 @@ class SymbolicCliffordOptimization(object):
             if pauli.operator[qubit] == GateType.x:
                 compute.append(CX & [control, qubit])
             if pauli.operator[qubit] == GateType.y:
-                compute.extend(Cy2CxRule.transform(CY & [control, qubit]))
+                compute.extend(cy2cx_rule(CY & [control, qubit]))
             if pauli.operator[qubit] == GateType.z:
-                compute.extend(Cz2CxRule.transform(CZ & [control, qubit]))
+                compute.extend(cz2cx_rule(CZ & [control, qubit]))
         # restore the symbolic phase
         if np.isclose(pauli.phase, 1j):
             compute.append(S & control)
