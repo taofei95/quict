@@ -410,8 +410,8 @@ class BasicGate(object):
             for i in range(len(goal_masked)):
                 goal_masked[i] = qubits_dict[goal_masked[i]]
             # Compute the matrix commutation
-            self_matrix = self.extend(len(qubits))
-            goal_matrix = goal.extend(len(qubits))
+            self_matrix = self.expand(len(qubits))
+            goal_matrix = goal.expand(len(qubits))
             return np.allclose(self_matrix.dot(goal_matrix), goal_matrix.dot(self_matrix), rtol=eps, atol=eps)
 
     def is_single(self) -> bool:
@@ -469,8 +469,8 @@ class BasicGate(object):
         """
         return self.type in SPECIAL_GATE_SET
 
-    def extend(self, qubits_num: int) -> bool:
-        """ extend self matrix into the circuit's unitary linear space
+    def expand(self, qubits_num: int) -> bool:
+        """ expand self matrix into the circuit's unitary linear space
 
         Args:
             qubits_num (int): the number of qubits of the target circuit.

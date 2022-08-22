@@ -2,6 +2,7 @@ from typing import Union, List
 
 
 class Operator:
+    """ The SuperClass of all the operator. """
     @property
     def targets(self):
         return self._targets
@@ -26,8 +27,7 @@ class Operator:
         self,
         targets: int
     ):
-        """ The SuperClass of all the operator.
-
+        """
         Args:
             targets (int): the number of the target bits of the gate
         """

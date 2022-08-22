@@ -93,26 +93,22 @@ class TestGPULinalg(unittest.TestCase):
     def test_matrix_dot_vector(self):
         qubit_num = 10
         circuit = Circuit(qubit_num)
-        QFT.build_gate(qubit_num) | circuit
+        QFT(qubit_num) | circuit
 
-        anc = cp.zeros((1 << qubit_num, ), dtype=np.complex64)
         vec = cp.zeros((1 << qubit_num, ), dtype=np.complex64)
         vec.put(0, np.complex64(1))
+        vec = GPUCalculator.matrix_dot_vector(
+            vec,
+            qubit_num,
+            circuit.matrix(),
+            list(range(10)),
+            sync=True
+        )
 
-        small_gates = UnitarySimulator().pretreatment(circuit)
-        for gate in small_gates:
-            GPUCalculator.matrix_dot_vector(
-                gate.matrix,
-                gate.targets + gate.controls,
-                vec,
-                qubit_num,
-                np.array(gate.cargs + gate.targs, dtype=np.int32),
-                auxiliary_vec=anc,
-                sync=True
-            )
-            anc, vec = vec, anc
+        sim = UnitarySimulator("GPU")
+        sv = sim.run(circuit.matrix())
 
-        assert 1
+        assert np.allclose(vec, sv)
 
 
 class TestCPULinalg(unittest.TestCase):

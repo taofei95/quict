@@ -119,7 +119,7 @@ class DensityMatrixSimulation:
 
             if cgate.size() > 0:
                 self.apply_gates(cgate)
-                cgate = CompositeGate()
+                cgate.clean()
 
             if gate.type == GateType.measure:
                 self.apply_measure(gate.targ)

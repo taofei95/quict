@@ -77,7 +77,7 @@ class TestCircuit(unittest.TestCase):
     def test_circuit_matrix_product(self):
         cir = TestCircuit.based_circuit
         mp_gate = CZ & [1, 3]
-        mp_data = mp_gate.extend(cir.width())
+        mp_data = mp_gate.expand(cir.width())
 
         assert mp_data.shape == (1 << 5, 1 << 5)
 

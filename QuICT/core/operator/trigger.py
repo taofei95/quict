@@ -10,19 +10,10 @@ class Trigger(Operator):
     The trigger for switch the dynamic circuit; contains the target qubits and
     related circuits with different state.
     """
-    @property
-    def is_record(self):
-        return self._record_measured
-
-    @property
-    def measured(self):
-        return self._measured
-
     def __init__(
         self,
         targets: int,
-        state_gate_mapping: Union[Dict[int, CompositeGate], List[CompositeGate], Tuple[CompositeGate], FunctionType],
-        record_measured: bool = False
+        state_gate_mapping: Union[Dict[int, CompositeGate], List[CompositeGate], Tuple[CompositeGate], FunctionType]
     ):
         """
         Args:
@@ -35,8 +26,6 @@ class Trigger(Operator):
             TypeError: Error input parameters.
         """
         super().__init__(targets=targets)
-        self._record_measured = record_measured
-        self._measured = []
 
         # Deal with state - compositegate mapping
         self._state_gate_mapping = {}
@@ -68,8 +57,6 @@ class Trigger(Operator):
             CompositeGate: The related composite gate.
         """
         assert state >= 0 and state < 2 ** self.targets, f"The state should between 0 and {2**self.targets}."
-        if self.is_record:
-            self._measured.append(state)
 
         if isinstance(self._state_gate_mapping, FunctionType):
             return self._state_gate_mapping(state)
