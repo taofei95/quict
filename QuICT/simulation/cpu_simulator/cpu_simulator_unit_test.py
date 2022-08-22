@@ -3,7 +3,6 @@ import numpy as np
 from QuICT.core.gate import *
 from QuICT.core.circuit import Circuit
 from QuICT.simulation.cpu_simulator import CircuitSimulator
-from scipy.stats import unitary_group
 
 
 def test_sim():
@@ -39,17 +38,4 @@ def test_measure_gate():
         _ = simulator.run(circuit)
         measure_res = simulator.sample(circuit)
 
-        # print(measure_res)
-
-
-def test_unitary_gate():
-    qubit_num = 4
-    circuit = Circuit(qubit_num)
-    Unitary(unitary_group.rvs(2)) | circuit([0])
-    Unitary(unitary_group.rvs(2)) | circuit([1])
-    Unitary(unitary_group.rvs(2)) | circuit([2])
-    Unitary(unitary_group.rvs(2)) | circuit([3])
-    Unitary(unitary_group.rvs(2 ** 2)) | circuit([0, 1])
-    Unitary(unitary_group.rvs(2 ** 2)) | circuit([2, 0])
-    Unitary(unitary_group.rvs(2 ** 2)) | circuit([3, 1])
-
+        print(measure_res)

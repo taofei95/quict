@@ -10,12 +10,10 @@ from os import path, getcwd, system
 from Cython.Build import cythonize
 from setuptools import setup
 from setuptools import find_packages, Extension
-
 # from setuptools.command.build_ext import build_ext
 from Cython.Distutils.build_ext import build_ext
-
 # import platform
-from contextlib import redirect_stdout, redirect_stderr
+from contextlib import redirect_stdout,redirect_stderr
 from io import StringIO
 
 import numpy as np
@@ -46,7 +44,7 @@ def print_if_not_none(s):
 
 
 def print_with_wrapper(header, out_obj):
-    if header[0] != "\033":
+    if header[0] != '\033':
         if len(header) > 12:
             header = header[:9] + "..."
         if len(header) < 12:
@@ -75,11 +73,11 @@ def run_with_output_wrapper(header, args, cwd):
 
     try:
         with subprocess.Popen(
-            args=args,
-            cwd=cwd,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT,
-            # universal_newlines=True,
+                args=args,
+                cwd=cwd,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                # universal_newlines=True,
         ) as proc:
             print_with_wrapper(header, proc.stdout)
             ret_code = proc.wait()
@@ -115,16 +113,9 @@ class CMakeExtension(Extension):
 
 
 class CythonExtension(Extension):
-    def __init__(
-        self,
-        name,
-        cython_sources,
-        extra_compile_args,
-        extra_link_args,
-        libraries,
-        runtime_library_dirs,
-        cmake_dep,
-    ):
+    def __init__(self, name, cython_sources, extra_compile_args,
+                 extra_link_args, libraries,
+                 runtime_library_dirs, cmake_dep):
         # self.name = name
         # self.sources = sources
 
@@ -148,16 +139,14 @@ class ExtensionBuild(build_ext):
     def cython_build_extension(self, ext):
         if ext.cmake_dep:
             self.cmake_build_extension(ext.cmake_dep)
-        cython_ext = cythonize(
-            Extension(
-                ext.name,
-                ext.cython_src,
-                extra_compile_args=ext.extra_compile_args,
-                extra_link_args=ext.extra_link_args,
-                libraries=ext.libraries,
-                runtime_library_dirs=ext.runtime_library_dirs,
-            )
-        )
+        cython_ext = cythonize(Extension(
+            ext.name,
+            ext.cython_src,
+            extra_compile_args=ext.extra_compile_args,
+            extra_link_args=ext.extra_link_args,
+            libraries=ext.libraries,
+            runtime_library_dirs=ext.runtime_library_dirs,
+        ))
 
         ext_dir = os.path.abspath(os.path.dirname(self.get_ext_fullpath(ext.name)))
         # required for auto-detection of auxiliary "native" libs
@@ -257,9 +246,7 @@ class ExtensionBuild(build_ext):
             # Multi-config generators have a different way to specify configs
             if not single_config:
                 cmake_args += [
-                    "-DCMAKE_LIBRARY_OUTPUT_DIRECTORY_{}={}".format(
-                        cfg.upper(), ext_dir
-                    )
+                    "-DCMAKE_LIBRARY_OUTPUT_DIRECTORY_{}={}".format(cfg.upper(), ext_dir)
                 ]
                 build_args += ["--config", cfg]
 
@@ -285,9 +272,7 @@ class ExtensionBuild(build_ext):
         print_cyan(f"[{ext_name}]")
         print_with_wrapper(ext_name, " ".join(["cmake", ext.source_dir] + cmake_args))
         if hasattr(self, "parallel") and self.parallel:
-            print_yellow(
-                "Extensions are built in parallel. Shell output might be messed up."
-            )
+            print_yellow("Extensions are built in parallel. Shell output might be messed up.")
         print_with_wrapper(ext_name, "Configuring...")
         run_with_output_wrapper(
             header=ext_name,
@@ -329,31 +314,41 @@ packages = find_packages(where=prj_root_relative)
 
 print(f"Found packages: {packages}")
 
+# if platform.system() == 'Linux':
+#     lib1 = f"{prj_root_relative}/QuICT/qcda/mapping/mcts/mcts_core/mcts_wrapper.cpython-38-x86_64-linux-gnu.so"
+#     lib2 = f"{prj_root_relative}/QuICT/qcda/mapping/mcts/mcts_core/lib/build/libmcts.so"
+# else:
+#     lib1 = f"{prj_root_relative}/QuICT/qcda/mapping/mcts/mcts_core/mcts_wrapper.cpython-38-darwin.so"
+#     lib2 = f"{prj_root_relative}/QuICT/qcda/mapping/mcts/mcts_core/lib/build/libmcts.dylib"
+#     system(f"install_name_tool -add_rpath {path.dirname(lib2)} {lib1}")
+
 # static file
 file_data = [
     ("QuICT/lib/qasm/libs", [f"{prj_root_relative}/QuICT/lib/qasm/libs/qelib1.inc"]),
-    (
-        "QuICT/simulation/config",
-        [f"{prj_root_relative}/QuICT/simulation/config/default.yml"],
-    ),
+    # ("QuICT/qcda/mapping/mcts/mcts_core",
+    #  [lib1]
+    #  ),
+    # ("QuICT/qcda/mapping/mcts/mcts_core/lib/build",
+    #  [lib2]
+    #  )
 ]
 
 # 3rd party library
 requires = [
-    "pytest>=6.2.3",
-    "numpy>=1.20.1",
-    "networkx>=2.5.1",
-    "matplotlib>=3.3.4",
-    "cython>=0.29.23",
-    "ply>=3.11",
-    "scipy",
-    "ujson",
+    'pytest>=6.2.3',
+    'numpy>=1.20.1',
+    'networkx>=2.5.1',
+    'matplotlib>=3.3.4',
+    'cython>=0.29.23',
+    'ply>=3.11',
+    'scipy',
+    'ujson',
 ]
 
 # version information
 about = {}
 
-with open(f"{prj_root_relative}/QuICT/__version__.py", "r") as f:
+with open(f"{prj_root_relative}/QuICT/__version__.py", 'r') as f:
     exec(f.read(), about)
 
 print_cyan("[Build Python]")
@@ -367,28 +362,22 @@ setup(
     url=about["__url__"],
     package_dir={"QuICT": f"{prj_root_relative}/QuICT/"},
     ext_modules=[
-        CMakeExtension(
-            "QuICT.utility.graph_structure.",
-            f"{prj_root}/QuICT/utility/graph_structure",
-        ),
-        CMakeExtension(
-            "QuICT.simulation.cpu_simulator.",
-            f"{prj_root}/QuICT/simulation/cpu_simulator/",
-        ),
+        CMakeExtension("QuICT.utility.graph_structure.", f"{prj_root}/QuICT/utility/graph_structure"),
+        CMakeExtension("QuICT.simulation.cpu_simulator.",
+                       f"{prj_root}/QuICT/simulation/cpu_simulator/"),
         CythonExtension(
             "QuICT.qcda.mapping.mcts.mcts_core.mcts_wrapper",
             [f"{prj_root}/QuICT/qcda/mapping/mcts/mcts_core/mcts_wrapper.pyx"],
-            extra_compile_args=[
-                "-std=c++14",
-                f"-I{prj_root}/QuICT/qcda/mapping/mcts/mcts_core/lib/include/",
-                f"-I{np.get_include()}",
-            ],
+            extra_compile_args=["-std=c++14",
+                                f"-I{prj_root}/QuICT/qcda/mapping/mcts/mcts_core/lib/include/",
+                                f"-I{np.get_include()}"
+                                ],
             extra_link_args=[f"-L{prj_root}/QuICT/qcda/mapping/mcts/mcts_core/lib/"],
             libraries=["mcts"],
             runtime_library_dirs=[f"{prj_root}/QuICT/qcda/mapping/mcts/mcts_core/lib/"],
             cmake_dep=CMakeExtension(
                 "QuICT.qcda.mapping.mcts.mcts_core.lib.",
-                f"{prj_root}/QuICT/qcda/mapping/mcts/mcts_core/lib/",
+                f"{prj_root}/QuICT/qcda/mapping/mcts/mcts_core/lib/"
             ),
         ),
     ],
