@@ -989,7 +989,7 @@ class AutoOptimization(Optimization):
         Returns:
             int: Number of gates reduced.
         """
-        # print('hello')
+
         cnt = 0
         success = True
         while success:
@@ -1002,7 +1002,6 @@ class AutoOptimization(Optimization):
                     original, undo_mapping = template.regrettable_replace(mapping)
 
                     if cls.try_float_cancel_two_qubit_gates(gates):
-                        # print('get', cnt)
                         # if rewriting enables cancellation else where, do it and restart template matching
                         cnt += cls.float_cancel_two_qubit_gates(gates)
                         success = True
@@ -1018,7 +1017,6 @@ class AutoOptimization(Optimization):
                     template.undo_replace(original, undo_mapping)
                 if success:
                     break
-        # print('exit')
         return cnt
 
     @classmethod
@@ -1072,7 +1070,6 @@ class AutoOptimization(Optimization):
             cnt = 0
             # apply each method in routine
             for step in routine:
-                # print(cls._optimize_sub_method[step])
                 start_time = time.time()
                 cur_cnt = getattr(cls, cls._optimize_sub_method[step])(_gates)
                 end_time = time.time()
