@@ -1,18 +1,14 @@
-from itertools import chain
-
 import numpy as np
+import time
 from typing import List, Iterator
-import inspect
 
 from QuICT.core import *
 from QuICT.qcda.optimization._optimization import Optimization
 from QuICT.qcda.optimization.commutative_optimization import CommutativeOptimization
-from QuICT.algorithm import SyntheticalUnitary
-from .symbolic_phase import SymbolicPhase, SymbolicPhaseVariable
+
+from .symbolic_phase import SymbolicPhase
 from .dag import DAG
-from .phase_poly import PhasePolynomial
 from .template import *
-import time
 
 
 class AutoOptimization(Optimization):

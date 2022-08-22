@@ -1,16 +1,14 @@
-from random import randint
+import numpy as np
 from typing import Iterator, Tuple, List, Set, Dict
 from collections.abc import Iterable
 from collections import deque
-import inspect
 from itertools import chain
-from .symbolic_phase import SymbolicPhase, SymbolicPhaseVariable
 
-
-import numpy as np
 from QuICT.core import *
 from QuICT.core.gate import *
 from QuICT.core.gate.gate_builder import GATE_TYPE_TO_CLASS
+
+from .symbolic_phase import SymbolicPhase, SymbolicPhaseVariable
 
 
 class DAG(Iterable):

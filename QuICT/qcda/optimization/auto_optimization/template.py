@@ -1,8 +1,8 @@
 from typing import Dict, Tuple, List
-from collections import deque
 
 from QuICT.core import *
 from QuICT.core.gate import *
+
 from .dag import DAG
 
 
