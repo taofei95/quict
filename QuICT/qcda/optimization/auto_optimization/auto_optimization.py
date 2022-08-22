@@ -1,3 +1,5 @@
+from collections import deque
+
 import numpy as np
 import time
 from typing import List, Iterator
@@ -266,7 +268,6 @@ class AutoOptimization(Optimization):
         flag_unvisited = 0
         flag_visited = flag_ofs + 1
         flag_term = flag_ofs + 2
-        # flag_skipped = flag_ofs + 2
 
         anchors = {anchor.qubit_loc[0]: anchor, anchor.qubit_loc[1]: anchor}
         anchor_queue = deque(anchors.keys())
@@ -292,7 +293,6 @@ class AutoOptimization(Optimization):
                             anchor_queue.append(o_qubit)
                     c_node = p_node
 
-        # left_bound = {}
         for neighbors in ['predecessors', 'successors']:
             prune_queue = deque()
             for anchor_qubit, anchor_node in anchors.items():
@@ -574,7 +574,6 @@ class AutoOptimization(Optimization):
                     if label not in var_dict:
                         var_dict[label] = [var, []]
 
-                    # var_dict[label][1] += val
                     var_dict[label][1].append(node_.params[0])
 
         ret = 0
@@ -1007,12 +1006,6 @@ class AutoOptimization(Optimization):
                         success = True
                         break
 
-                    # tmp = cls.cancel_two_qubit_gates(gates)
-                    # if tmp:
-                    #     cnt += tmp
-                    #     success = True
-                    #     break
-                    #
                     # undo replacing if otherwise
                     template.undo_replace(original, undo_mapping)
                 if success:

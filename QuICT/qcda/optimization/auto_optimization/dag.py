@@ -38,7 +38,6 @@ class DAG(Iterable):
                 gate_(BasicGate): Gate represented by this node
                 qubit_(int): the actual qubit the gate sits on (used only when `gate_` is None)
             """
-            # self.gate = None if gate_ is None else gate_.copy()
             self.gate_type = gate_.type if gate_ is not None else None
             self._params = gate_.pargs.copy() if gate_ is not None else []
 
