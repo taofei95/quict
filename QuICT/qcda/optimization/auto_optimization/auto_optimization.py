@@ -41,9 +41,6 @@ class AutoOptimization(Optimization):
 
         Args:
             gates(DAG): DAG of the circuit
-
-        Returns:
-            int: Number of gates reduced.
         """
         for node in gates.topological_sort():
             if node.gate_type in [GateType.s, GateType.t, GateType.sdg, GateType.tdg, GateType.z]:
@@ -56,7 +53,6 @@ class AutoOptimization(Optimization):
             gates.global_phase %= 2 * np.pi
         else:
             gates.global_phase = np.mod(gates.global_phase, 2 * np.pi)
-        return 0
 
     @classmethod
     def deparameterize_all(cls, gates: DAG):
@@ -65,9 +61,6 @@ class AutoOptimization(Optimization):
 
         Args:
             gates(DAG): DAG of the circuit
-
-        Returns:
-            int: Number of gates reduced.
         """
         for node in gates.topological_sort():
             if node.gate_type == GateType.rz and not isinstance(node.params[0], SymbolicPhase):
@@ -82,7 +75,6 @@ class AutoOptimization(Optimization):
             gates.global_phase %= 2 * np.pi
         else:
             gates.global_phase = np.mod(gates.global_phase, 2 * np.pi)
-        return 0
 
     @classmethod
     def reduce_hadamard_gates(cls, gates: DAG):
@@ -230,15 +222,17 @@ class AutoOptimization(Optimization):
                 mapping = None
                 for template in cnot_ctrl_template:
                     mapping = template.compare(c_ctrl_node.successors[c_ctrl_qubit])
-                    #        .___.         .___.
-                    # --O----| U |--     --| U |---O--
-                    #   |    |___|     =   |___|   |
-                    # --X-----------     ----------X--
-                    # if target node can reach any node in the template, it will block commuting:
-                    #        .___.         .___.
-                    # --O----|   |--     --|   |---O--
-                    #   |    | U |    !=   | U |   |
-                    # --X----|___|--     --|___|---X--
+                    # After we find a template U after current cnot, there are two cases:
+                    # Case 1:        .___.         .___.
+                    #         --O----| U |--     --| U |---O--
+                    #           |    |___|     =   |___|   |
+                    #         --X-----------     ----------X--
+                    # Case 2:        .___.         .___.
+                    #         --O----|   |--     --|   |---O--
+                    #           |    | U |    !=   | U |   |
+                    #         --X----|___|--     --|___|---X--
+                    # The template only guarantees control node 'O' can be moved across U, so case 2 is invalid.
+                    # By further checking whether 'X' can reach any nodes in U, we can exclude case 2.
 
                     if mapping and all([not reachable.query(c_targ_node, c_targ_qubit, o) for o in mapping.values()]):
                         c_ctrl_node, c_ctrl_qubit = template.template.end_nodes[template.anchor].predecessors[0]
