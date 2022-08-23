@@ -16,7 +16,7 @@ def test_google():
         GT = GateTransform(GoogleSet)
         circuit_tran = GT.execute(circuit)
         gates_tran = CompositeGate(gates=circuit_tran.gates)
-        assert np.allclose(gates.matrix(), gates_tran.matrix())
+        assert np.allclose(gates.matrix(), gates_tran.matrix(), rtol=1e-7, atol=1e-7)
 
 
 def test_ustc():
@@ -27,7 +27,7 @@ def test_ustc():
         GT = GateTransform(USTCSet)
         circuit_tran = GT.execute(circuit)
         gates_tran = CompositeGate(gates=circuit_tran.gates)
-        assert np.allclose(gates.matrix(), gates_tran.matrix())
+        assert np.allclose(gates.matrix(), gates_tran.matrix(), rtol=1e-7, atol=1e-7)
 
 
 def test_ibmq():
@@ -38,7 +38,7 @@ def test_ibmq():
         GT = GateTransform(IBMQSet)
         circuit_tran = GT.execute(circuit)
         gates_tran = CompositeGate(gates=circuit_tran.gates)
-        assert np.allclose(gates.matrix(), gates_tran.matrix())
+        assert np.allclose(gates.matrix(), gates_tran.matrix(), rtol=1e-7, atol=1e-7)
 
 
 def test_ionq():
@@ -49,7 +49,7 @@ def test_ionq():
         GT = GateTransform(IonQSet)
         circuit_tran = GT.execute(circuit)
         gates_tran = CompositeGate(gates=circuit_tran.gates)
-        assert np.allclose(gates.matrix(), gates_tran.matrix())
+        assert np.allclose(gates.matrix(), gates_tran.matrix(), rtol=1e-7, atol=1e-7)
 
 
 def test_buildZyz():
@@ -61,7 +61,7 @@ def test_buildZyz():
         GT = GateTransform(buildSet)
         circuit_tran = GT.execute(circuit)
         gates_tran = CompositeGate(gates=circuit_tran.gates)
-        assert np.allclose(gates.matrix(), gates_tran.matrix())
+        assert np.allclose(gates.matrix(), gates_tran.matrix(), rtol=1e-7, atol=1e-7)
 
 
 def test_buildZyzWithRegister():
@@ -75,4 +75,4 @@ def test_buildZyzWithRegister():
         GT = GateTransform(buildSet)
         circuit_tran = GT.execute(circuit)
         gates_tran = CompositeGate(gates=circuit_tran.gates)
-        assert np.allclose(gates.matrix(), gates_tran.matrix())
+        assert np.allclose(gates.matrix(), gates_tran.matrix(), rtol=1e-7, atol=1e-7)
