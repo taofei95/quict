@@ -21,6 +21,7 @@ class TestDagCircuit(unittest.TestCase):
         edge_list = dag_cir.edges()
         gs = TestDagCircuit.circuit.gates
 
+        #test the relationship of nodes
         for start, end in edge_list:
             assert not gs[start].commutative(gs[end])
             forward = True
