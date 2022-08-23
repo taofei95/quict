@@ -5,11 +5,11 @@
 # @File    : standard_grover.py
 
 import numpy as np
+import logging
 
 from QuICT.core import Circuit
 from QuICT.core.gate import *
 from QuICT.simulation.cpu_simulator import CircuitSimulator
-import logging
 
 
 class Grover:
