@@ -1,6 +1,4 @@
-import pytest
 import time
-from itertools import chain
 
 import numpy as np
 
@@ -9,9 +7,6 @@ import pickle
 from QuICT.qcda.optimization.auto_optimization.template import *
 from QuICT.qcda.optimization.auto_optimization import DAG, AutoOptimization
 from QuICT.algorithm import SyntheticalUnitary
-from QuICT.tools.interface import OPENQASMInterface
-from QuICT.qcda.optimization.commutative_optimization import CommutativeOptimization
-import os
 
 
 def test_build_graph():
@@ -174,7 +169,8 @@ def test_enumerate_cnot_rz_circuit():
 
 def check_circuit_optimization(circ: Circuit, label, mode='light'):
     try:
-        circ_optim = AutoOptimization.execute(circ, mode=mode, verbose=False)
+        AO = AutoOptimization(mode=mode, verbose=False)
+        circ_optim = AO.execute(circ)
     except Exception as e:
         pickle.dump(circ.gates, open(f'circ_{label}.dat', 'wb'))
         raise e
@@ -212,7 +208,8 @@ def test_ccx():
     circ = Circuit(6)
     circ.random_append(10, typelist=[GateType.ccx])
 
-    circ_optim = AutoOptimization.execute(circ)
+    AO = AutoOptimization()
+    circ_optim = AO.execute(circ)
     mat_0 = SyntheticalUnitary.run(circ)
     mat_1 = SyntheticalUnitary.run(circ_optim)
 
@@ -311,8 +308,3 @@ def test_random_circuit():
         circ.random_append(n_gate, typelist=support_gates)
         check_circuit_optimization(circ, _, mode='light')
         check_circuit_optimization(circ, _, mode='heavy')
-
-
-if __name__ == '__main__':
-    pytest.main(['./auto_optimization_unit_test.py'])
-
