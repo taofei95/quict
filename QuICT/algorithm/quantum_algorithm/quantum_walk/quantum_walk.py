@@ -3,7 +3,7 @@ from typing import Union, List
 
 from QuICT.core import Circuit
 from QuICT.core.gate import *
-from QuICT.qcda.synthesis.unitary_transform import UnitaryTransform
+from QuICT.qcda.synthesis.unitary_decomposition import UnitaryDecomposition
 from QuICT.qcda.synthesis.gate_decomposition import GateDecomposition
 from QuICT.qcda.optimization import CommutativeOptimization
 from QuICT.simulation.state_vector import CircuitSimulator
@@ -114,7 +114,7 @@ class QuantumWalk:
         if len(record_idxes) > 0:
             unitary_matrix[record_idxes, record_idxes] = 1
 
-        self._shift_operator = UnitaryTransform.execute(unitary_matrix)[0]
+        self._shift_operator = UnitaryDecomposition().execute(unitary_matrix)[0]
 
     def run(
         self,

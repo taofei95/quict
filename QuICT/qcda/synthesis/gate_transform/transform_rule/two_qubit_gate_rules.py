@@ -70,7 +70,7 @@ def cx2fsim_rule(gate):
     return gates
 
 
-def cx2Rxx_rule(gate):
+def cx2rxx_rule(gate):
     targs = gate.cargs + gate.targs
     gates = CompositeGate()
     with gates:
@@ -83,7 +83,7 @@ def cx2Rxx_rule(gate):
     return gates
 
 
-def cx2Ryy_rule(gate):
+def cx2ryy_rule(gate):
     targs = gate.cargs + gate.targs
     gates = CompositeGate()
     with gates:
@@ -100,7 +100,7 @@ def cx2Ryy_rule(gate):
     return gates
 
 
-def cx2Rzz_rule(gate):
+def cx2rzz_rule(gate):
     targs = gate.cargs + gate.targs
     gates = CompositeGate()
     with gates:
@@ -182,7 +182,7 @@ def cy2fsim_rule(gate):
     return gates
 
 
-def cy2Rxx_rule(gate):
+def cy2rxx_rule(gate):
     targs = gate.cargs + gate.targs
     gates = CompositeGate()
     with gates:
@@ -197,7 +197,7 @@ def cy2Rxx_rule(gate):
     return gates
 
 
-def cy2Ryy_rule(gate):
+def cy2ryy_rule(gate):
     targs = gate.cargs + gate.targs
     gates = CompositeGate()
     with gates:
@@ -213,7 +213,7 @@ def cy2Ryy_rule(gate):
     return gates
 
 
-def cy2Rzz_rule(gate):
+def cy2rzz_rule(gate):
     targs = gate.cargs + gate.targs
     gates = CompositeGate()
     with gates:
@@ -286,7 +286,7 @@ def cz2fsim_rule(gate):
     return gates
 
 
-def cz2Rxx_rule(gate):
+def cz2rxx_rule(gate):
     targs = gate.cargs + gate.targs
     gates = CompositeGate()
     with gates:
@@ -301,7 +301,7 @@ def cz2Rxx_rule(gate):
     return gates
 
 
-def cz2Ryy_rule(gate):
+def cz2ryy_rule(gate):
     targs = gate.cargs + gate.targs
     gates = CompositeGate()
     with gates:
@@ -318,7 +318,7 @@ def cz2Ryy_rule(gate):
     return gates
 
 
-def cz2Rzz_rule(gate):
+def cz2rzz_rule(gate):
     targs = gate.cargs + gate.targs
     gates = CompositeGate()
     with gates:
@@ -415,7 +415,7 @@ def crz2fsim_rule(gate):
     return gates
 
 
-def crz2Rxx_rule(gate):
+def crz2rxx_rule(gate):
     theta = gate.pargs[0]
     targs = gate.cargs + gate.targs
     gates = CompositeGate()
@@ -434,7 +434,7 @@ def crz2Rxx_rule(gate):
     return gates
 
 
-def crz2Ryy_rule(gate):
+def crz2ryy_rule(gate):
     theta = gate.pargs[0]
     targs = gate.cargs + gate.targs
     gates = CompositeGate()
@@ -456,7 +456,7 @@ def crz2Ryy_rule(gate):
     return gates
 
 
-def crz2Rzz_rule(gate):
+def crz2rzz_rule(gate):
     theta = gate.pargs[0]
     targs = gate.cargs + gate.targs
     gates = CompositeGate()
@@ -544,7 +544,7 @@ def ch2fsim_rule(gate):
     return gates
 
 
-def ch2Rxx_rule(gate):
+def ch2rxx_rule(gate):
     targs = gate.cargs + gate.targs
     gates = CompositeGate()
     with gates:
@@ -560,7 +560,7 @@ def ch2Rxx_rule(gate):
     return gates
 
 
-def ch2Ryy_rule(gate):
+def ch2ryy_rule(gate):
     targs = gate.cargs + gate.targs
     gates = CompositeGate()
     with gates:
@@ -578,7 +578,7 @@ def ch2Ryy_rule(gate):
     return gates
 
 
-def ch2Rzz_rule(gate):
+def ch2rzz_rule(gate):
     targs = gate.cargs + gate.targs
     gates = CompositeGate()
     with gates:
@@ -602,7 +602,7 @@ transform Rxx gate into others
 """
 
 
-def Rxx2cx_rule(gate):
+def rxx2cx_rule(gate):
     theta = gate.pargs[0]
     targs = gate.cargs + gate.targs
     gates = CompositeGate()
@@ -617,7 +617,7 @@ def Rxx2cx_rule(gate):
     return gates
 
 
-def Rxx2cy_rule(gate):
+def rxx2cy_rule(gate):
     theta = gate.pargs[0]
     targs = gate.cargs + gate.targs
     gates = CompositeGate()
@@ -634,7 +634,7 @@ def Rxx2cy_rule(gate):
     return gates
 
 
-def Rxx2cz_rule(gate):
+def rxx2cz_rule(gate):
     theta = gate.pargs[0]
     targs = gate.cargs + gate.targs
     gates = CompositeGate()
@@ -647,7 +647,7 @@ def Rxx2cz_rule(gate):
     return gates
 
 
-def Rxx2ch_rule(gate):
+def rxx2ch_rule(gate):
     theta = gate.pargs[0]
     targs = gate.cargs + gate.targs
     gates = CompositeGate()
@@ -664,7 +664,7 @@ def Rxx2ch_rule(gate):
     return gates
 
 
-def Rxx2crz_rule(gate):
+def rxx2crz_rule(gate):
     theta = gate.pargs[0]
     targs = gate.cargs + gate.targs
     gates = CompositeGate()
@@ -679,7 +679,7 @@ def Rxx2crz_rule(gate):
     return gates
 
 
-def Rxx2fsim_rule(gate):
+def rxx2fsim_rule(gate):
     targs = gate.cargs + gate.targs
     theta = gate.pargs[0]
     gates = CompositeGate()
@@ -692,7 +692,7 @@ def Rxx2fsim_rule(gate):
     return gates
 
 
-def Rxx2Ryy_rule(gate):
+def rxx2ryy_rule(gate):
     theta = gate.pargs[0]
     targs = gate.cargs + gate.targs
     gates = CompositeGate()
@@ -709,7 +709,7 @@ def Rxx2Ryy_rule(gate):
     return gates
 
 
-def Rxx2Rzz_rule(gate):
+def rxx2rzz_rule(gate):
     theta = gate.pargs[0]
     targs = gate.cargs + gate.targs
     gates = CompositeGate()
@@ -727,7 +727,7 @@ transform Ryy gate into others
 """
 
 
-def Ryy2cx_rule(gate):
+def ryy2cx_rule(gate):
     theta = gate.pargs[0]
     targs = gate.cargs + gate.targs
     gates = CompositeGate()
@@ -742,7 +742,7 @@ def Ryy2cx_rule(gate):
     return gates
 
 
-def Ryy2cy_rule(gate):
+def ryy2cy_rule(gate):
     theta = gate.pargs[0]
     targs = gate.cargs + gate.targs
     gates = CompositeGate()
@@ -759,7 +759,7 @@ def Ryy2cy_rule(gate):
     return gates
 
 
-def Ryy2cz_rule(gate):
+def ryy2cz_rule(gate):
     theta = gate.pargs[0]
     targs = gate.cargs + gate.targs
     gates = CompositeGate()
@@ -776,7 +776,7 @@ def Ryy2cz_rule(gate):
     return gates
 
 
-def Ryy2ch_rule(gate):
+def ryy2ch_rule(gate):
     theta = gate.pargs[0]
     targs = gate.cargs + gate.targs
     gates = CompositeGate()
@@ -793,7 +793,7 @@ def Ryy2ch_rule(gate):
     return gates
 
 
-def Ryy2crz_rule(gate):
+def ryy2crz_rule(gate):
     theta = gate.pargs[0]
     targs = gate.cargs + gate.targs
     gates = CompositeGate()
@@ -812,7 +812,7 @@ def Ryy2crz_rule(gate):
     return gates
 
 
-def Ryy2fsim_rule(gate):
+def ryy2fsim_rule(gate):
     targs = gate.cargs + gate.targs
     theta = gate.pargs[0]
     gates = CompositeGate()
@@ -829,7 +829,7 @@ def Ryy2fsim_rule(gate):
     return gates
 
 
-def Ryy2Rxx_rule(gate):
+def ryy2rxx_rule(gate):
     theta = gate.pargs[0]
     targs = gate.cargs + gate.targs
     gates = CompositeGate()
@@ -859,7 +859,7 @@ def Ryy2Rxx_rule(gate):
     return gates
 
 
-def Ryy2Rzz_rule(gate):
+def ryy2rzz_rule(gate):
     theta = gate.pargs[0]
     targs = gate.cargs + gate.targs
     gates = CompositeGate()
@@ -877,7 +877,7 @@ transform Rzz gate into others
 """
 
 
-def Rzz2cx_rule(gate):
+def rzz2cx_rule(gate):
     theta = gate.pargs[0]
     targs = gate.cargs + gate.targs
     gates = CompositeGate()
@@ -888,7 +888,7 @@ def Rzz2cx_rule(gate):
     return gates
 
 
-def Rzz2cy_rule(gate):
+def rzz2cy_rule(gate):
     theta = gate.pargs[0]
     targs = gate.cargs + gate.targs
     gates = CompositeGate()
@@ -901,7 +901,7 @@ def Rzz2cy_rule(gate):
     return gates
 
 
-def Rzz2cz_rule(gate):
+def rzz2cz_rule(gate):
     theta = gate.pargs[0]
     targs = gate.cargs + gate.targs
     gates = CompositeGate()
@@ -914,7 +914,7 @@ def Rzz2cz_rule(gate):
     return gates
 
 
-def Rzz2ch_rule(gate):
+def rzz2ch_rule(gate):
     theta = gate.pargs[0]
     targs = gate.cargs + gate.targs
     gates = CompositeGate()
@@ -929,7 +929,7 @@ def Rzz2ch_rule(gate):
     return gates
 
 
-def Rzz2crz_rule(gate):
+def rzz2crz_rule(gate):
     theta = gate.pargs[0]
     targs = gate.cargs + gate.targs
     gates = CompositeGate()
@@ -944,7 +944,7 @@ def Rzz2crz_rule(gate):
     return gates
 
 
-def Rzz2fsim_rule(gate):
+def rzz2fsim_rule(gate):
     targs = gate.cargs + gate.targs
     theta = gate.pargs[0]
     gates = CompositeGate()
@@ -957,7 +957,7 @@ def Rzz2fsim_rule(gate):
     return gates
 
 
-def Rzz2Rxx_rule(gate):
+def rzz2rxx_rule(gate):
     theta = gate.pargs[0]
     targs = gate.cargs + gate.targs
     gates = CompositeGate()
@@ -975,7 +975,7 @@ def Rzz2Rxx_rule(gate):
     return gates
 
 
-def Rzz2Ryy_rule(gate):
+def rzz2ryy_rule(gate):
     theta = gate.pargs[0]
     targs = gate.cargs + gate.targs
     gates = CompositeGate()
@@ -1130,7 +1130,7 @@ def fsim2crz_rule(gate):
     return gates
 
 
-def fsim2Rxx_rule(gate):
+def fsim2rxx_rule(gate):
     theta = gate.pargs[0]
     fai = gate.pargs[1]
     targs = gate.cargs + gate.targs
@@ -1159,7 +1159,7 @@ def fsim2Rxx_rule(gate):
     return gates
 
 
-def fsim2Ryy_rule(gate):
+def fsim2ryy_rule(gate):
     theta = gate.pargs[0]
     fai = gate.pargs[1]
     targs = gate.cargs + gate.targs
@@ -1193,7 +1193,7 @@ def fsim2Ryy_rule(gate):
     return gates
 
 
-def fsim2Rzz_rule(gate):
+def fsim2rzz_rule(gate):
     theta = gate.pargs[0]
     fai = gate.pargs[1]
     targs = gate.cargs + gate.targs

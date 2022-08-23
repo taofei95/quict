@@ -2019,11 +2019,12 @@ class UnitaryGate(BasicGate):
         return _U
 
     def build_gate(self):
-        from QuICT.qcda.synthesis.unitary_transform import UnitaryTransform
+        from QuICT.qcda.synthesis.unitary_decomposition import UnitaryDecomposition
 
         assert self.controls + self.targets > 0
         mapping_args = self.cargs + self.targs
-        cgate, _ = UnitaryTransform.execute(self.matrix, mapping=mapping_args)
+        cgate, _ = UnitaryDecomposition().execute(self.matrix)
+        cgate & mapping_args
 
         if self._precision == np.complex64:
             cgate.convert_precision()
