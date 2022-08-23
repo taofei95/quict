@@ -160,7 +160,3 @@ def test_disentangler_random():
                     assert pauli_x.operator[i] == GateType.x and pauli_z.operator[i] == GateType.z
                 else:
                     assert pauli_x.operator[i] == GateType.id and pauli_z.operator[i] == GateType.id
-
-
-if __name__ == '__main__':
-    pytest.main(["./unit_test.py"])

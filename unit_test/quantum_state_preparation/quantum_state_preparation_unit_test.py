@@ -14,7 +14,7 @@ def random_unit_vector(n):
 
 def test_with_uniformly_gates():
     for n in range(2, 6):
-        for _ in range(100):
+        for _ in range(10):
             state_vector = random_unit_vector(n)
             QSP = QuantumStatePreparation('uniformly_gates')
             gates = QSP.execute(state_vector)
@@ -27,7 +27,7 @@ def test_with_uniformly_gates():
 
 def test_with_unitary_decomposition():
     for n in range(2, 6):
-        for _ in range(100):
+        for _ in range(10):
             state_vector = random_unit_vector(n)
             QSP = QuantumStatePreparation('unitary_decomposition')
             gates = QSP.execute(state_vector)

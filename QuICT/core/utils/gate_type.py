@@ -21,6 +21,7 @@ class GateType(Enum):
     t = "T gate"
     tdg = "The conjugate transpose of T gate"
     phase = "Phase gate"
+    gphase = "Global Phase gate"
     cz = "controlled-Z gate"
     cx = "controlled-X gate"
     cy = "controlled-Y gate"
@@ -151,6 +152,7 @@ DIAGONAL_GATE_SET = [
     GateType.t,
     GateType.tdg,
     GateType.phase,
+    GateType.gphase,
     GateType.cz,
     GateType.crz,
     GateType.cu1,

@@ -8,7 +8,6 @@ from numpy import gcd
 
 from QuICT.core import Circuit
 from QuICT.core.gate import CompositeGate, X, CX, CCX, Swap
-from ..._synthesis import Synthesis
 
 
 def Inverse(a, N):
@@ -379,7 +378,7 @@ def ExpMod(a, N, x, result, qubit_a, b, c, overflow, qubit_N, t):
         a_inv = (a_inv ** 2) % N
 
 
-class VBEAdder(Synthesis):
+class VBEAdder(object):
     @staticmethod
     def execute(n):
         """ a circuit calculate a+b, a and b are gotten from some qubits.
@@ -408,7 +407,7 @@ class VBEAdder(Synthesis):
         return CompositeGate(gates=circuit.gates)
 
 
-class VBEAdderMod(Synthesis):
+class VBEAdderMod(object):
     @staticmethod
     def execute(N, n):
         """ a circuit calculate (a+b) mod N.
@@ -442,7 +441,7 @@ class VBEAdderMod(Synthesis):
         return CompositeGate(gates=circuit.gates)
 
 
-class VBEMulAddMod(Synthesis):
+class VBEMulAddMod(object):
     @staticmethod
     def execute(a, N, n, m):
         """ a circuit calculate b + x*a mod N.
@@ -479,7 +478,7 @@ class VBEMulAddMod(Synthesis):
         return CompositeGate(gates=circuit.gates)
 
 
-class VBEExpMod(Synthesis):
+class VBEExpMod(object):
     @staticmethod
     def execute(a, N, n, m):
         """ give parameters to the VBE

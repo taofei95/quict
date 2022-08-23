@@ -1116,7 +1116,7 @@ class PhaseGate(BasicGate):
             targets=1,
             params=1,
             type=GateType.phase,
-            matrix_type=MatrixType.diagonal
+            matrix_type=MatrixType.control
         )
 
         self.pargs = params
@@ -1141,7 +1141,7 @@ class PhaseGate(BasicGate):
     @property
     def matrix(self):
         return np.array([
-            [np.exp(self.parg * 1j), 0],
+            [1, 0],
             [0, np.exp(self.parg * 1j)]
         ], dtype=self._precision)
 
@@ -1153,6 +1153,53 @@ class PhaseGate(BasicGate):
 
 
 Phase = PhaseGate()
+
+
+class GlobalPhaseGate(BasicGate):
+    """ Phase gate """
+    def __init__(self, params: list = [0]):
+        super().__init__(
+            controls=0,
+            targets=1,
+            params=1,
+            type=GateType.gphase,
+            matrix_type=MatrixType.diagonal
+        )
+        self._qasm_name = "phase"
+        self.pargs = params
+
+    def __call__(self, alpha):
+        """ Set parameters for the gate.
+
+        Args:
+            alpha (int/float/complex): The parameter for gate
+
+        Raises:
+            TypeError: param not one of int/float/complex
+
+        Returns:
+            BasicGate: The gate with parameters
+        """
+        if not self.permit_element(alpha):
+            raise TypeError("int/float/complex", alpha)
+
+        return GlobalPhaseGate([alpha])
+
+    @property
+    def matrix(self):
+        return np.array([
+            [np.exp(self.parg * 1j), 0],
+            [0, np.exp(self.parg * 1j)]
+        ], dtype=self._precision)
+
+    def inverse(self):
+        _Phase = self.copy()
+        _Phase.pargs = [-self.parg]
+
+        return _Phase
+
+
+GPhase = GlobalPhaseGate()
 
 
 class CZGate(BasicGate):
@@ -1756,7 +1803,7 @@ class SwapGate(BasicGate):
             [0, 0, 1, 0],
             [0, 1, 0, 0],
             [0, 0, 0, 1]
-        ], dtype=self._precision)
+        ], dtype=np.complex128)
 
 
 Swap = SwapGate()
