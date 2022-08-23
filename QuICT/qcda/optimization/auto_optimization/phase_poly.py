@@ -4,8 +4,6 @@ from math import log2
 from QuICT.core import *
 from QuICT.core.gate import *
 
-from .dag import DAG
-
 
 class PhasePolynomial:
     """

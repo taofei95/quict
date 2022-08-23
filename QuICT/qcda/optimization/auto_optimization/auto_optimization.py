@@ -2,18 +2,18 @@ from collections import deque
 
 import numpy as np
 import time
-from typing import List, Iterator
+from typing import List
 
 from QuICT.core import *
-from QuICT.qcda.optimization._optimization import Optimization
 from QuICT.qcda.optimization.commutative_optimization import CommutativeOptimization
+from QuICT.qcda.utility import OutputAligner
 
 from .symbolic_phase import SymbolicPhase
 from .dag import DAG
 from .template import *
 
 
-class AutoOptimization(Optimization):
+class AutoOptimization(object):
     """
     Heuristic optimization of circuits in Clifford + Rz.
 
@@ -259,7 +259,6 @@ class AutoOptimization(Optimization):
 
     @classmethod
     def _traverse_cnot_rz_circuit(cls, anchor, flag_ofs=1):
-        flag_unvisited = 0
         flag_visited = flag_ofs + 1
         flag_term = flag_ofs + 2
 
@@ -1040,10 +1039,42 @@ class AutoOptimization(Optimization):
         cnt += cls.gate_reducing_rewrite(gates)
         return cnt
 
-    @classmethod
-    def _execute(cls, gates, routine: List[int], verbose):
+    def __init__(self, mode='light', verbose=False):
+        """
+        Heuristic optimization of circuits in Clifford + Rz.
+        Heavy mode has not reached desired performance yet.
+
+        Args:
+              mode(str): Support 'light' and 'heavy' mode. See details in [1]
+              verbose(bool): whether output details of each step
+
+        [1] Nam, Yunseong, et al. "Automated optimization of large quantum
+        circuits with continuous parameters." npj Quantum Information 4.1
+        (2018): 1-12.
+        """
+        assert mode in self._optimize_routine, Exception(f'unrecognized mode {mode}')
+        self.mode = mode
+        self.verbose = verbose
+
+    @OutputAligner()
+    def execute(self, gates):
+        """
+        Heuristic optimization of circuits in Clifford + Rz.
+        Heavy mode has not reached desired performance yet.
+
+        Args:
+              gates(Circuit): Circuit to be optimized
+
+        Returns:
+            Circuit: The circuit after optimization
+
+        [1] Nam, Yunseong, et al. "Automated optimization of large quantum
+        circuits with continuous parameters." npj Quantum Information 4.1
+        (2018): 1-12.
+        """
+        routine = self._optimize_routine[self.mode]
         _gates = DAG(gates)
-        cls.parameterize_all(_gates)
+        self.parameterize_all(_gates)
 
         gate_cnt = 0
         round_cnt = 0
@@ -1051,18 +1082,18 @@ class AutoOptimization(Optimization):
 
         while True:
             round_cnt += 1
-            if verbose:
+            if self.verbose:
                 print(f'ROUND #{round_cnt}:')
 
             cnt = 0
             # apply each method in routine
             for step in routine:
                 start_time = time.time()
-                cur_cnt = getattr(cls, cls._optimize_sub_method[step])(_gates)
+                cur_cnt = getattr(self, self._optimize_sub_method[step])(_gates)
                 end_time = time.time()
 
-                if verbose:
-                    print(f'\t{cls._optimize_sub_method[step]}: {cur_cnt} '
+                if self.verbose:
+                    print(f'\t{self._optimize_sub_method[step]}: {cur_cnt} '
                           f'gates reduced, cost {np.round(end_time - start_time, 3)} s')
 
                 cnt += cur_cnt
@@ -1071,9 +1102,9 @@ class AutoOptimization(Optimization):
             if cnt == 0:
                 # assign symbolic t gates for nearly optimized circuit
                 start_time = time.time()
-                cnt += cls.assign_symbolic_phases(_gates)
+                cnt += self.assign_symbolic_phases(_gates)
                 end_time = time.time()
-                if verbose:
+                if self.verbose:
                     print(f'\tassign_symbolic_phases: {cnt} '
                           f'gates reduced, cost {np.round(end_time - start_time, 3)} s')
 
@@ -1083,32 +1114,10 @@ class AutoOptimization(Optimization):
 
             gate_cnt += cnt
 
-        cls.deparameterize_all(_gates)
+        self.deparameterize_all(_gates)
         ret = _gates.get_circuit()
 
-        if verbose:
+        if self.verbose:
             print(f'initially {_gates.init_size} gates, '
                   f'remain {ret.size()} gates, cost {np.round(total_time, 3)} s')
         return ret
-
-    @classmethod
-    def execute(cls, gates, mode='light', verbose=False):
-        """
-        Heuristic optimization of circuits in Clifford + Rz.
-        Heavy mode has not reached desired performance yet.
-
-        Args:
-              gates(Circuit): Circuit to be optimized
-              mode(str): Support 'light' and 'heavy' mode. See details in [1]
-              verbose(bool): whether output details of each step
-        Returns:
-            Circuit: The circuit after optimization
-
-        [1] Nam, Yunseong, et al. "Automated optimization of large quantum
-        circuits with continuous parameters." npj Quantum Information 4.1
-        (2018): 1-12.
-        """
-        if mode in cls._optimize_routine:
-            return cls._execute(gates, cls._optimize_routine[mode], verbose)
-        else:
-            raise Exception(f'unrecognized mode {mode}')

@@ -1,5 +1,5 @@
 import numpy as np
-from typing import Iterator, Tuple, List, Set, Dict
+from typing import Tuple, List, Set, Dict
 from collections.abc import Iterable
 from collections import deque
 from itertools import chain
@@ -255,7 +255,7 @@ class DAG(Iterable):
             node.get_gate() | circ([mapping[(id(node), qubit_)] for qubit_ in range(node.size)])
 
         if not np.isclose(float(self.global_phase), 0):
-            Phase(self.global_phase) | circ(0)
+            GPhase(self.global_phase) | circ(0)
         return circ
 
     def topological_sort(self, include_dummy=False):
