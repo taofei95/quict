@@ -15,7 +15,6 @@ from QuICT.core.operator import Trigger
 from QuICT.core.gate import BasicGate, CompositeGate
 from QuICT.core.utils import GateType, MatrixType
 from QuICT.ops.utils import LinAlgLoader
-from QuICT.simulation.optimization import Optimizer
 from QuICT.ops.gate_kernel import float_multiply, complex_multiply
 from QuICT.simulation.utils import GateMatrixs
 
@@ -28,7 +27,6 @@ class ConstantStateVectorSimulator:
         circuit (Circuit): The quantum circuit.
         precision (str): The precision for the state vector, one of [single, double]. Defaults to "double".
         gpu_device_id (int): The GPU device ID.
-        optimization (bool): Combined suitable quantum gates into one unitary gate, to speed up.
         matrix_aggregation (bool): Using quantum gate matrix's aggregation to optimize running speed.
         sync (bool): Sync mode or Async mode.
     """
@@ -58,7 +56,6 @@ class ConstantStateVectorSimulator:
         self,
         precision: str = "double",
         gpu_device_id: int = 0,
-        optimization: bool = False,
         matrix_aggregation: bool = True,
         sync: bool = True
     ):
@@ -69,8 +66,8 @@ class ConstantStateVectorSimulator:
         self._device_id = gpu_device_id
         self._sync = sync
 
+        # Optimization
         self._using_matrix_aggregation = matrix_aggregation
-        self._optimize = optimization
 
         # Initial simulator with limit_qubits
         self._algorithm = LinAlgLoader(device="GPU", enable_gate_kernel=True, enable_multigpu_gate_kernel=False)
@@ -86,14 +83,7 @@ class ConstantStateVectorSimulator:
         if self._precision == np.complex64:
             circuit.convert_precision()
 
-        if self._optimize:
-            self._pipeline = Optimizer().optimize(circuit.gates)
-        else:
-            for gate in circuit.gates:
-                if isinstance(gate, BasicGate):
-                    self._pipeline.append(deepcopy(gate))
-                else:
-                    self._pipeline.append(gate)
+        self._pipeline = circuit.gates
 
         # Initial GateMatrix if matrix_aggregation is True
         if self._using_matrix_aggregation:
@@ -107,11 +97,8 @@ class ConstantStateVectorSimulator:
         else:
             return cp.array(gate.matrix, dtype=self._precision)
 
-    def initial_state_vector(self, qubits: int = 0, all_zeros: bool = False):
+    def initial_state_vector(self, all_zeros: bool = False):
         """ Initial qubits' vector states. """
-        if qubits != 0:
-            self._qubits = qubits
-
         vector_size = 1 << int(self._qubits)
         self._vector = cp.zeros(vector_size, dtype=self._precision)
         if not all_zeros:
@@ -142,14 +129,16 @@ class ConstantStateVectorSimulator:
         elif not use_previous:
             self.initial_state_vector()
 
-        idx = -1
-        while self._pipeline:
-            gate = self._pipeline.pop(0)
+        idx = 0
+        while idx < len(self._pipeline):
+            gate = self._pipeline[idx]
             idx += 1
             if isinstance(gate, BasicGate):
                 self.apply_gate(gate)
             elif isinstance(gate, Trigger):
                 self.apply_trigger(gate, idx)
+            else:
+                raise TypeError(f"Unsupported circuit operator {type(gate)} in State Vector Simulator.")
 
         return self.vector
 
@@ -170,17 +159,15 @@ class ConstantStateVectorSimulator:
             gate_type in [GateType.unitary, GateType.qft, GateType.iqft] and
             gate.targets >= 3
         ):
-            aux = cp.zeros_like(self._vector)
-            self._algorithm.matrix_dot_vector(
-                gate.matrix,
-                gate.controls + gate.targets,
+            matrix = self._get_gate_matrix(gate)
+            self._vector = self._algorithm.matrix_dot_vector(
                 self._vector,
                 self._qubits,
+                matrix,
                 gate.cargs + gate.targs,
-                aux,
                 self._sync
             )
-            self.vector = aux
+
             return
 
         # [H, SX, SY, SW, U2, U3, Rx, Ry] 2-bits [CH, ] 2-bits[targets] [unitary]
@@ -417,15 +404,12 @@ class ConstantStateVectorSimulator:
             op (Trigger): The operator Trigger
             current_idx (int): the index of Trigger in Circuit
         """
-        state = 0
         for targ in op.targs:
             index = self._qubits - 1 - targ
             prob = self.get_measured_prob(index).get()
-            result = self.apply_specialgate(index, GateType.measure, prob)
-            state <<= 1
-            state += result
+            _ = self.apply_specialgate(index, GateType.measure, prob)
 
-        mapping_cgate = op.mapping(state)
+        mapping_cgate = op.mapping(int(self._circuit[op.targs]))
         if isinstance(mapping_cgate, CompositeGate):
             # optimized composite gate's matrix
             if self._using_matrix_aggregation:
@@ -433,8 +417,8 @@ class ConstantStateVectorSimulator:
 
             # Check for checkpoint
             cp = mapping_cgate.checkpoint
-            position = 0 if cp is None else self._circuit.find_position(cp) - current_idx
-            self._pipeline = self._pipeline[:position] + deepcopy(mapping_cgate.gates) + \
+            position = current_idx if cp is None else self._circuit.find_position(cp)
+            self._pipeline = self._pipeline[:position] + mapping_cgate.gates + \
                 self._pipeline[position:]
 
     def apply_multiply(self, value: Union[float, np.complex]):

@@ -410,8 +410,8 @@ class BasicGate(object):
             for i in range(len(goal_masked)):
                 goal_masked[i] = qubits_dict[goal_masked[i]]
             # Compute the matrix commutation
-            self_matrix = self.extend(len(qubits))
-            goal_matrix = goal.extend(len(qubits))
+            self_matrix = self.expand(len(qubits))
+            goal_matrix = goal.expand(len(qubits))
             return np.allclose(self_matrix.dot(goal_matrix), goal_matrix.dot(self_matrix), rtol=eps, atol=eps)
 
     def is_single(self) -> bool:
@@ -469,8 +469,8 @@ class BasicGate(object):
         """
         return self.type in SPECIAL_GATE_SET
 
-    def extend(self, qubits_num: int) -> bool:
-        """ extend self matrix into the circuit's unitary linear space
+    def expand(self, qubits_num: int) -> bool:
+        """ expand self matrix into the circuit's unitary linear space
 
         Args:
             qubits_num (int): the number of qubits of the target circuit.
@@ -1116,7 +1116,7 @@ class PhaseGate(BasicGate):
             targets=1,
             params=1,
             type=GateType.phase,
-            matrix_type=MatrixType.diagonal
+            matrix_type=MatrixType.control
         )
 
         self.pargs = params
@@ -1141,7 +1141,7 @@ class PhaseGate(BasicGate):
     @property
     def matrix(self):
         return np.array([
-            [np.exp(self.parg * 1j), 0],
+            [1, 0],
             [0, np.exp(self.parg * 1j)]
         ], dtype=self._precision)
 
@@ -1153,6 +1153,53 @@ class PhaseGate(BasicGate):
 
 
 Phase = PhaseGate()
+
+
+class GlobalPhaseGate(BasicGate):
+    """ Phase gate """
+    def __init__(self, params: list = [0]):
+        super().__init__(
+            controls=0,
+            targets=1,
+            params=1,
+            type=GateType.gphase,
+            matrix_type=MatrixType.diagonal
+        )
+        self._qasm_name = "phase"
+        self.pargs = params
+
+    def __call__(self, alpha):
+        """ Set parameters for the gate.
+
+        Args:
+            alpha (int/float/complex): The parameter for gate
+
+        Raises:
+            TypeError: param not one of int/float/complex
+
+        Returns:
+            BasicGate: The gate with parameters
+        """
+        if not self.permit_element(alpha):
+            raise TypeError("int/float/complex", alpha)
+
+        return GlobalPhaseGate([alpha])
+
+    @property
+    def matrix(self):
+        return np.array([
+            [np.exp(self.parg * 1j), 0],
+            [0, np.exp(self.parg * 1j)]
+        ], dtype=self._precision)
+
+    def inverse(self):
+        _Phase = self.copy()
+        _Phase.pargs = [-self.parg]
+
+        return _Phase
+
+
+GPhase = GlobalPhaseGate()
 
 
 class CZGate(BasicGate):
@@ -1756,7 +1803,7 @@ class SwapGate(BasicGate):
             [0, 0, 1, 0],
             [0, 1, 0, 0],
             [0, 0, 0, 1]
-        ], dtype=self._precision)
+        ], dtype=np.complex128)
 
 
 Swap = SwapGate()
@@ -1972,11 +2019,12 @@ class UnitaryGate(BasicGate):
         return _U
 
     def build_gate(self):
-        from QuICT.qcda.synthesis.unitary_transform import UnitaryTransform
+        from QuICT.qcda.synthesis.unitary_decomposition import UnitaryDecomposition
 
         assert self.controls + self.targets > 0
         mapping_args = self.cargs + self.targs
-        cgate, _ = UnitaryTransform.execute(self.matrix, mapping=mapping_args)
+        cgate, _ = UnitaryDecomposition().execute(self.matrix)
+        cgate & mapping_args
 
         if self._precision == np.complex64:
             cgate.convert_precision()

@@ -1660,7 +1660,7 @@ def measured_prob_calculate(index, vec, vec_bit, all_measured: bool = False, syn
     kernel_functions = prop_add_double_kernel if vec.dtype == np.complex128 else prop_add_single_kernel
 
     # Calculated the probability of measured 1 at current index
-    out = cp.empty(task_number, dtype=np.complex128)
+    out = cp.empty(task_number, dtype=vec.dtype)
     kernel_functions(
         (block_num, ),
         (thread_per_block, ),

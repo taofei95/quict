@@ -32,6 +32,7 @@ GATE_TYPE_TO_CLASS = {
     GateType.t: TGate,
     GateType.tdg: TDaggerGate,
     GateType.phase: PhaseGate,
+    GateType.gphase: GlobalPhaseGate,
     GateType.cz: CZGate,
     GateType.cx: CXGate,
     GateType.cy: CYGate,
