@@ -140,7 +140,7 @@ class UnitarySimulator():
                 index,
                 self._vector,
                 self._qubits_num,
-                prob=prob
+                prob=prob.get()
             )
 
         return int(result)

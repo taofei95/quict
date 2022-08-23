@@ -256,10 +256,12 @@ class CircuitSimulator:
                         qubits, gate_desc_vec, keep_state
                     )
                     gate_desc_vec = []
-                    measured_state, keep_state = 0, True
+                    measured_state, keep_state, targ_idx = 0, True, 0
                     for mstate in measure_raw:
                         measured_state << 1
                         measured_state += mstate
+                        circuit[gate.targs[targ_idx]].measured = mstate
+                        targ_idx += 1
 
                     cgate = gate.mapping(measured_state)
                     if cgate is not None:
