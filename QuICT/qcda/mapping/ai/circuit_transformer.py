@@ -1,6 +1,13 @@
+"""
+This file contains a modified version of <Do Transformers Really Perform Bad for Graph Representation?>
+(https://arxiv.org/abs/2106.05234).
+"""
+
+
 from math import sqrt
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 
 
 class SelfAttn(nn.Module):
@@ -46,8 +53,8 @@ class SelfAttn(nn.Module):
 class MultiHeadAttn(nn.Module):
     def __init__(
         self,
-        head: int,
         feat_dim: int,
+        head: int,
     ) -> None:
         super().__init__()
         self._attn_layers = nn.ModuleList(
@@ -63,3 +70,61 @@ class MultiHeadAttn(nn.Module):
         output = torch.cat(attn_list, dim=-1)
         output = self._out_proj(output)
         return output
+
+
+class FeedForwardNet(nn.Module):
+    def __init__(self, feat_dim: int) -> None:
+        super().__init__()
+
+        self._lin1 = nn.Linear(in_features=feat_dim, out_features=feat_dim)
+        self._lin2 = nn.Linear(in_features=feat_dim, out_features=feat_dim)
+
+    def forward(self, x):
+        x = self._lin1(x)
+        x = F.relu(x)
+        x = self._lin2(x)
+        return x
+
+
+class CircuitTransFormerLayer(nn.Module):
+    def __init__(
+        self,
+        node_num: int,
+        feat_dim: int,
+        head: int,
+    ) -> None:
+        super().__init__()
+
+        self._mha = MultiHeadAttn(feat_dim=feat_dim, head=head)
+        self._ln1 = nn.LayerNorm((node_num, feat_dim))
+        self._ffn = FeedForwardNet(feat_dim=feat_dim)
+        self._ln2 = nn.LayerNorm((node_num, feat_dim))
+
+    def forward(self, x, attn_bias=None):
+        x = self._mha(self._ln1(x), attn_bias) + x
+        x = self._ffn(self._ln2(x)) + x
+        return x
+
+
+class BiasedGraphormer(nn.Module):
+    def __init__(
+        self,
+        node_num: int,
+        feat_dim: int,
+        head: int,
+        num_attn_layer: int = 6,
+    ) -> None:
+        super().__init__()
+        self._transformer_layers = nn.ModuleList(
+            [
+                CircuitTransFormerLayer(
+                    node_num=node_num, feat_dim=feat_dim, head=head
+                )
+                for _ in range(num_attn_layer)
+            ]
+        )
+
+    def forward(self, x, attn_bias=None):
+        for layer in self._transformer_layers:
+            x = layer(x, attn_bias)
+        return x
