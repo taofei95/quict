@@ -25,3 +25,9 @@ class SpecialGate(Operator):
         self._type = type
         self._proxy_idx = proxy_idx
         self.targs = targ
+
+    def qasm(self):
+        return f"{self._type}, {self.targs}, {self._proxy_idx}."
+
+    def __str__(self):
+        return f"{self._type}, {self.targs}, {self._proxy_idx}."
