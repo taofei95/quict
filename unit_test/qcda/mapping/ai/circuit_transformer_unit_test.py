@@ -41,10 +41,11 @@ def test_multi_head_attn():
 
                 for batch_size in [1, 3, 5]:
                     x_batch = torch.randn(batch_size, node_num, feat_dim)
+                    attn_bias_batch = torch.stack([attn_bias for _ in range(batch_size)])
                     with torch.no_grad():
                         y_batch = model(x_batch)
                         assert y_batch.shape == x_batch.shape
-                        y_batch = model(x_batch, attn_bias)
+                        y_batch = model(x_batch, attn_bias_batch)
                         assert y_batch.shape == x_batch.shape
 
 
@@ -63,10 +64,11 @@ def test_circuit_transformer_layer():
 
                 for batch_size in [1, 3, 5]:
                     x_batch = torch.randn(batch_size, node_num, feat_dim)
+                    attn_bias_batch = torch.stack([attn_bias for _ in range(batch_size)])
                     with torch.no_grad():
                         y_batch = model(x_batch)
                         assert y_batch.shape == x_batch.shape
-                        y_batch = model(x_batch, attn_bias)
+                        y_batch = model(x_batch, attn_bias_batch)
                         assert y_batch.shape == x_batch.shape
 
 
@@ -92,10 +94,11 @@ def test_biased_graphormer():
 
                     for batch_size in [1, 3, 5]:
                         x_batch = torch.randn(batch_size, node_num, feat_dim)
+                        attn_bias_batch = torch.stack([attn_bias for _ in range(batch_size)])
                         with torch.no_grad():
                             y_batch = model(x_batch)
                             assert y_batch.shape == x_batch.shape
-                            y_batch = model(x_batch, attn_bias)
+                            y_batch = model(x_batch, attn_bias_batch)
                             assert y_batch.shape == x_batch.shape
 
 
