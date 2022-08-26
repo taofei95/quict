@@ -3,6 +3,7 @@ import os.path as osp
 from typing import Iterable, List, Tuple
 
 import networkx as nx
+import torch
 from QuICT.core import *
 from QuICT.core.gate import BasicGate
 from QuICT.core.layout import Layout, LayoutEdge
@@ -60,7 +61,7 @@ class CircuitVnodeProcessor:
             g.add_edge(edge.u, edge.v)
         return g
 
-    def _build_circ_repr(self, circ: Circuit, max_layer_num:int) -> nx.Graph:
+    def _build_circ_repr(self, circ: Circuit, max_layer_num: int) -> nx.Graph:
         """Build a graph representation of a circuit.
         The circuit is divided into layers and each layer
         is built into a sub graph with respect to qubits.
@@ -68,8 +69,8 @@ class CircuitVnodeProcessor:
 
         Args:
             circ (Circuit): Circuit to be built.
-            max_layer_num (int): Maximal number of layers of circuit. If the 
-            circuit has fewer layers, some empty layers will be padded. If the 
+            max_layer_num (int): Maximal number of layers of circuit. If the
+            circuit has fewer layers, some empty layers will be padded. If the
             circuit has more layers, extra layers will be dropped.
 
         Returns:
@@ -102,3 +103,64 @@ class CircuitVnodeProcessor:
             #     for i in range(offset, offset + self._max_qubit_num):
             #         g.add_edge(i, i - self._max_qubit_num)
         return g
+
+    def get_spacial_encoding(
+        self, graph: nx.Graph, max_topology_diameter: int
+    ) -> torch.IntTensor:
+        """Build the spacial encoding of a given graph. A spacial
+        encoding is similar to a shortest path matrix except that the
+        shortest path corresponding with special virtual node is set as -1.
+
+        Args:
+            graph (nx.Graph): Graph to be handled. The input graph must
+            have consecutive node indices starting from 0. You must
+            guarantee that 0 is the virtual node.
+
+        Returns:
+            torch.IntTensor: Spacial encoding matrix WITHOUT embedding.
+        """
+        num_node = len(graph.nodes)
+        _inf = max_topology_diameter + 2
+        dist = [[_inf for _ in range(num_node)] for _ in range(num_node)]
+        dist = torch.IntTensor(dist)
+        for i in range(num_node):
+            dist[i][i] = 0
+
+        sp = nx.all_pairs_shortest_path_length(graph)
+        for u, row in sp:
+            for v, d in row.items():
+                dist[u][v] = d
+
+        v = 0
+        for i in range(num_node):
+            dist[v][i] = max_topology_diameter + 1
+            dist[i][v] = max_topology_diameter + 1
+        dist[v][v] = 0
+
+        return dist
+
+    def get_spacing_encoding_scale_factor(
+        self, graph: nx.Graph, max_qubit_num: int, penalty_factor: float = 0.8
+    ) -> torch.Tensor:
+        """Get the scale factor for spacial encoding. This is
+        used as penalty for remote layers in circuit.
+
+        Args:
+            graph (nx.Graph): Layered graph of a circuit, including a virtual node labeled with 0.
+            max_qubit_num (int): Qubit number AFTER padding.
+
+        Return:
+            torch.Tensor: Factor tensor shaped as (n, 1).
+        """
+        num_node = len(graph.nodes)
+        layer_num = (num_node - 1) // max_qubit_num
+        assert layer_num * max_qubit_num + 1 == num_node
+
+        penalty = 1
+        factors = torch.empty((num_node, 1), dtype=torch.float)
+        factors[0][0] = 1.0
+        for layer in range(layer_num):
+            for i in range(layer * max_qubit_num + 1, (layer + 1) * max_qubit_num + 1):
+                factors[i][0] = penalty
+            penalty *= penalty_factor
+        return factors

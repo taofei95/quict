@@ -107,10 +107,10 @@ def test_circuit_transformer():
     feat_dim = 30
     processor = CircuitVnodeProcessor(max_qubit_num=max_qubit_num)
     circ_graph = processor._build_circ_repr(circ=circ, max_layer_num=max_layer_num)
-    spacial_encoding = get_spacial_encoding(
+    spacial_encoding = processor.get_spacial_encoding(
         graph=circ_graph, max_topology_diameter=max_qubit_num
     )
-    encoding_scale_factor = get_spacing_encoding_scale_factor(
+    encoding_scale_factor = processor.get_spacing_encoding_scale_factor(
         graph=circ_graph, max_qubit_num=max_qubit_num
     )
     model = CircuitTransformer(
