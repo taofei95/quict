@@ -4,8 +4,6 @@
 # @Author  : Kaiqi Li
 # @File    : constant_statevecto_simulator
 
-from collections import defaultdict
-from copy import deepcopy
 from typing import Union
 import numpy as np
 import cupy as cp
@@ -431,6 +429,9 @@ class ConstantStateVectorSimulator:
         if isinstance(value, float):
             float_multiply(value, *default_parameters)
         else:
+            if self._precision == np.complex64:
+                value = np.complex64(value)
+
             complex_multiply(value, *default_parameters)
 
     def apply_zeros(self):

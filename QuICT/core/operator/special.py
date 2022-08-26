@@ -10,6 +10,9 @@ class Multiply(Operator):
     def value(self):
         return self._value
 
+    def qasm(self):
+        return f"{self._value}"
+
 
 class SpecialGate(Operator):
     @property

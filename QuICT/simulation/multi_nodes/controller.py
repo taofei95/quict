@@ -27,12 +27,13 @@ class ModeType(Enum):
     distributed = "distributed"
 
 
-def worker(circuit, ndev, uid, dev_id, device: str = "GPU"):
+def worker(circuit, ndev, uid, dev_id, options, device: str = "GPU"):
     proxy = Proxy(ndevs=ndev, uid=uid, dev_id=dev_id)
     simulator = MultiNodesSimulator(
         proxy=proxy,
         device=device,
-        gpu_id=dev_id
+        gpu_id=dev_id,
+        **options
     )
     state = simulator.run(circuit)
 
@@ -51,6 +52,7 @@ class MultiNodesController:
         self.ndev = ndev
         self._device_type = dev_type
         self._mode_type = mode
+        self._options = options
         self._transpiler = Transpile(self.ndev)
 
     def run(self, circuit: Circuit):
@@ -76,7 +78,8 @@ class MultiNodesController:
                     dcircuit,
                     self.ndev,
                     proxy_id,
-                    dev_id
+                    dev_id,
+                    self._options
                 ) for dev_id in range(self.ndev)
             ]
 

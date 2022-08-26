@@ -41,8 +41,8 @@ class MultiNodesSimulator:
     ):
         self.proxy = proxy
         self._data_switcher = DataSwitcher(self.proxy)
-        self.simulator = CircuitSimulator(options) if device == "CPU" else \
-            ConstantStateVectorSimulator(gpu_device_id=gpu_id, matrix_aggregation=False)
+        self.simulator = CircuitSimulator() if device == "CPU" else \
+            ConstantStateVectorSimulator(gpu_device_id=gpu_id, **options)
 
     def run(
         self,
@@ -68,6 +68,9 @@ class MultiNodesSimulator:
                 self.simulator.apply_gate(op)
             elif isinstance(op, DeviceTrigger):
                 related_gate = op.mapping(self._data_switcher.id)
+                if self.simulator._precision == np.complex64:
+                    related_gate.convert_precision()
+
                 self._pipeline = related_gate.gates + self._pipeline
             elif isinstance(op, DataSwitch):
                 self._data_switcher(op, self.vector)
