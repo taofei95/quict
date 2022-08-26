@@ -441,7 +441,12 @@ class Transpile:
             period_idx = longest_period_idx
             period_interval.append(period_idx)
 
-        period_interval[-1] += 1
+        if gate_depth == 1:
+            period_interval.append(gate_depth)
+            sum_cost_by_longest_period.append(np.sum(cost_matrix, axis=1))
+        else:
+            period_interval[-1] += 1
+
         # find the smallest cost through the sum_cost_by_longest_period
         sum_cost_by_longest_period = np.array(sum_cost_by_longest_period, dtype=np.int32)
         period_qubit_selection = [int(np.argmin(sum_cost_by_longest_period[0]))]
@@ -476,9 +481,9 @@ class Transpile:
             Circuit, List[int]: The distributed circuit and split qubit indexes
         """
         # step 1: run GateDecomposition to avoid Unitary with large qubits and other special gates
+        circuit.gate_decomposition()
         self._qubits = circuit.width()
         self._depth = circuit.depth()
-        circuit.gate_decomposition()
 
         # step 2: order the circuit's gates by depth
         depth_gate = circuit.get_gates_order_by_depth()
