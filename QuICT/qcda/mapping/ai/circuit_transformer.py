@@ -32,6 +32,8 @@ class SelfAttn(nn.Module):
         batched = len(x.shape) == 3
         if not batched:
             x = torch.unsqueeze(x, dim=0)
+            if attn_bias is not None:
+                attn_bias = torch.unsqueeze(attn_bias, dim=0)
 
         q = self._lin_q(x)
         k = self._lin_k(x)
@@ -122,6 +124,8 @@ class BiasedGraphormer(nn.Module):
         )
 
     def forward(self, x, attn_bias=None):
+        if attn_bias is not None:
+            assert len(x.shape) == len(attn_bias.shape)
         for layer in self._transformer_layers:
             x = layer(x, attn_bias)
         return x

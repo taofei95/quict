@@ -121,7 +121,17 @@ def test_circuit_transformer():
         max_layer_num=10,
     )
     x = torch.randn(max_qubit_num * max_layer_num + 1, feat_dim)
-    x = model(x, spacial_encoding, encoding_scale_factor)
+    y_no_batch = model(x, spacial_encoding, encoding_scale_factor)
+    assert y_no_batch.shape == x.shape
+
+    batch_size = 3
+    x = torch.randn(batch_size, max_qubit_num * max_layer_num + 1, feat_dim)
+    spacial_encoding = torch.stack([spacial_encoding for _ in range(batch_size)])
+    encoding_scale_factor = torch.stack(
+        [encoding_scale_factor for _ in range(batch_size)]
+    )
+    y_batch = model(x, spacial_encoding, encoding_scale_factor)
+    assert y_batch.shape == x.shape
 
 
 if __name__ == "__main__":
