@@ -324,7 +324,7 @@ class BasicGate(object):
 
     def convert_precision(self):
         """ Convert gate's precision into single precision np.complex64. """
-        if self.matrix is None:
+        if self.type in [GateType.measure, GateType.reset, GateType.barrier]:
             return
 
         self._precision = np.complex64

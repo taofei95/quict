@@ -30,7 +30,7 @@ def test_cartan_kak():
         CKD = CartanKAKDecomposition()
         CKD.execute(U) | circuit
 
-        Ucir =circuit.matrix()
+        Ucir = circuit.matrix()
         phase = U.dot(np.linalg.inv(Ucir))
         assert np.allclose(phase, phase[0, 0] * np.eye(4))
 

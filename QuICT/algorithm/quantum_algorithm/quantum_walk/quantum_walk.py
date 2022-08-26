@@ -89,7 +89,7 @@ class QuantumWalk:
             for xi in x_idx:
                 X | action_gate(xi)
 
-        return GateDecomposition.execute(action_gate)
+        return GateDecomposition().execute(action_gate)
 
     def _mct_generator(self, op: np.ndarray) -> UnitaryGate:
         """ Build multi-control-'op' gate """

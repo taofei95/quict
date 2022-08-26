@@ -311,14 +311,16 @@ class CircuitSimulator:
     def sample(self, shots: int = 1) -> List[int]:
         assert self._circuit is not None
 
-        measure_accumulated = [0 for _ in range(self._circuit.width())]
-
+        state_list = [0] * (1 << self._circuit.width())
         for _ in range(shots):
             # C++ simulator will automatically copy a state vector for sampling.
             # Sample operation never affects the state vector itself.
             measure_raw = self._instance.sample(self._circuit.width())
-
+            state = 0
             for idx, measured in enumerate(measure_raw):
-                measure_accumulated[idx] += measured
+                measured <<= self._circuit.width() - 1 - idx
+                state += measured
 
-        return measure_accumulated
+            state_list[state] += 1
+
+        return state_list

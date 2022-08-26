@@ -3,7 +3,6 @@ import numpy as np
 from QuICT.core import Circuit
 from QuICT.core.gate import *
 from QuICT.core.operator import DataSwitch, DataSwitchType, DeviceTrigger, Multiply, SpecialGate
-from QuICT.qcda.synthesis import GateDecomposition
 
 
 ALL_PENTY = 0.5
@@ -86,7 +85,7 @@ class Transpile:
                     inner_args, outer_arg = self._args_adjust(gate_args, current_outer_qubits, inner_qubit_indexes)
                     if len(outer_arg) == 0:
                         if gate.matrix_type == MatrixType.special:
-                            SpecialGate(gate.type, gate_args) | transpiled_circuit
+                            SpecialGate(gate.type, inner_args) | transpiled_circuit
                         else:
                             gate = gate & inner_args
                             gate | transpiled_circuit
@@ -136,10 +135,13 @@ class Transpile:
         based_range = list(range(self._qubits))
         based_range.remove(old)
         based_range[based_range.index(new)] = old
-        arg_sorted = np.argsort(based_range)
-        arg_sorted = [int(index) for index in arg_sorted]
 
-        return Perm(self._qubits - self._split_qb_num, arg_sorted)
+        # re-order the based range by its indexes
+        minimal_indexes = np.argsort(based_range)
+        for idx, mini_idx in enumerate(minimal_indexes):
+            based_range[mini_idx] = idx
+
+        return Perm(self._qubits - self._split_qb_num, based_range)
 
     def _single_qubit_gate_transpile(
         self,
@@ -376,35 +378,6 @@ class Transpile:
 
         return DeviceTrigger(dev_mapping)
 
-    def _order_gates_by_depth(self, gates: list) -> list:
-        """ Order the gates of circuit by its layer
-
-        Args:
-            gates (list): The list of gates.
-
-        Returns:
-            list: The list of gates at same layers in circuit.
-        """
-        gate_by_depth = [[gates[0]]]          # List[list], gates for each depth level.
-        gate_args_by_depth = [set(gates[0].cargs + gates[0].targs)]     # List[set], gates' qubits for each depth level.
-        for gate in gates[1:]:
-            gate_arg = set(gate.cargs + gate.targs)
-            for i in range(len(gate_args_by_depth) - 1, -1, -1):
-                if gate_arg & gate_args_by_depth[i]:
-                    if i == len(gate_args_by_depth) - 1:
-                        gate_by_depth.append([gate])
-                        gate_args_by_depth.append(gate_arg)
-                    else:
-                        gate_by_depth[i + 1].append(gate)
-                        gate_args_by_depth[i + 1] = gate_arg | gate_args_by_depth[i + 1]
-                    break
-                else:
-                    if i == 0:
-                        gate_by_depth[i].append(gate)
-                        gate_args_by_depth[i] = gate_arg | gate_args_by_depth[i]
-
-        return gate_by_depth
-
     def _gate_switch_cost_generator(self, gates_by_depth: list) -> np.ndarray:
         """ Depending on the gates' type, calculated the switched cost for each gates.
 
@@ -468,7 +441,12 @@ class Transpile:
             period_idx = longest_period_idx
             period_interval.append(period_idx)
 
-        period_interval[-1] += 1
+        if gate_depth == 1:
+            period_interval.append(gate_depth)
+            sum_cost_by_longest_period.append(np.sum(cost_matrix, axis=1))
+        else:
+            period_interval[-1] += 1
+
         # find the smallest cost through the sum_cost_by_longest_period
         sum_cost_by_longest_period = np.array(sum_cost_by_longest_period, dtype=np.int32)
         period_qubit_selection = [int(np.argmin(sum_cost_by_longest_period[0]))]
@@ -503,12 +481,12 @@ class Transpile:
             Circuit, List[int]: The distributed circuit and split qubit indexes
         """
         # step 1: run GateDecomposition to avoid Unitary with large qubits and other special gates
+        circuit.gate_decomposition()
         self._qubits = circuit.width()
         self._depth = circuit.depth()
-        gates = GateDecomposition.execute(circuit).gates
 
         # step 2: order the circuit's gates by depth
-        depth_gate = self._order_gates_by_depth(gates)
+        depth_gate = circuit.get_gates_order_by_depth()
 
         # step 3: decided split qubits by depth gates
         cost_matrix = self._gate_switch_cost_generator(depth_gate)
