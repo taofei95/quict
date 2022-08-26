@@ -1,9 +1,11 @@
+from typing import Iterable
 import torch
 from torch import nn
 import torch.nn.functional as F
 from torch_geometric.data import Data as PygData
 from torch_geometric.utils import add_self_loops
 import torch_geometric.nn as gnn
+from torch_geometric.nn.aggr import SortAggregation, SumAggregation
 from QuICT.qcda.mapping.ai.dataset import MappingLayeredDataset
 
 
@@ -50,24 +52,19 @@ class SwapPredictGcn(nn.Module):
         return x
 
 
-class SwapPredMix(nn.Module):
+class SwapPredLstm(nn.Module):
     def __init__(
         self,
         max_qubit: int,
         gcn_out_channel: int,
-        hetero_metadata: str,
-        out_channel: int,
+        lstm_out_channel: int,
     ) -> None:
         super().__init__()
         self._max_qubit = max_qubit
         self._gcn_out_channel = gcn_out_channel
-        self._out_channel = out_channel
+        self._out_channel = lstm_out_channel
 
-        self._gcn = gnn.to_hetero(
-            module=SwapPredictGcn(out_channel=gcn_out_channel),
-            metadata=hetero_metadata,
-            aggr="sum",
-        )
+        self._gcn = SwapPredictGcn(out_channel=gcn_out_channel)
 
         self._lstm = nn.LSTM(
             input_size=self._gcn_out_channel, hidden_size=self._out_channel
@@ -76,19 +73,66 @@ class SwapPredMix(nn.Module):
     def forward(self, x):
         layer_outputs = []
         for layer_graph in x:
-            _y = self._gcn(layer_graph.x_dict, layer_graph.edge_index_dict)
-            _y = _y["lc"]
-            # Reshape pyg flattened [batch_size * num_node, feature_dim] back into [batch_size, num_node, feature_dim]
-            _y = torch.reshape(_y, (-1, self._max_qubit, self._gcn_out_channel))
-            # Manually do sum aggregation because of buggy PYG aggregator on heterogeneous graphs.
-            _y = torch.sum(_y, 1)
+            _y = self._gcn(layer_graph.x, layer_graph.edge_index)
             layer_outputs.append(_y)
 
         layer_outputs = torch.stack(layer_outputs)
 
-        seq_feature, (_, _) = self._lstm(layer_outputs)
+        seq_feature, _ = self._lstm(layer_outputs)
 
-        return seq_feature
+        return seq_feature[-1]
+
+
+class SwapPredMlp(nn.Module):
+    def __init__(
+        self, in_channel: int, hidden_channels: Iterable[int], mlp_out_channel: int
+    ) -> None:
+        super().__init__()
+        self._lins = nn.ModuleList()
+
+        last_c = in_channel
+        for c in hidden_channels:
+            self._lins.append(nn.Linear(last_c, c))
+
+        self._last_lin = nn.Linear(last_c, mlp_out_channel)
+
+    def forward(self, x):
+        for lin in self._lins:
+            x = lin(x)
+            x = F.leaky_relu(x)
+        x = self._last_lin(x)
+        return x
+
+
+class SwapPredMix(nn.Module):
+    def __init__(
+        self,
+        max_qubit: int,
+        gcn_out_channel: int,
+        lstm_out_channel: int,
+        mlp_hidden_channels: Iterable[int],
+        out_channel: int,
+    ) -> None:
+        super().__init__()
+        self._max_qubit = max_qubit
+        self._gcn = SwapPredictGcn(out_channel=gcn_out_channel)
+        self._lstm = SwapPredLstm(
+            max_qubit=max_qubit,
+            gcn_out_channel=gcn_out_channel,
+            lstm_out_channel=lstm_out_channel,
+        )
+        self._mlp = SwapPredMlp(
+            in_channel=lstm_out_channel,
+            hidden_channels=mlp_hidden_channels,
+            mlp_out_channel=out_channel,
+        )
+
+    def forward(self, x, edge_index):
+        x = self._gcn(x, edge_index)
+        x = self._lstm(x)
+        x = self._mlp(x)
+
+        return x
 
 
 if __name__ == "__main__":
@@ -98,7 +142,7 @@ if __name__ == "__main__":
     data_dir = osp.join(data_dir, "data")
     data_dir = osp.join(data_dir, "processed_layered")
     dataset = MappingLayeredDataset(data_dir=data_dir)
-    loader = dataset.loader(16, True)
+    loader = dataset.loader(16, True, "cuda")
 
     # print(loader)
 
@@ -110,7 +154,8 @@ if __name__ == "__main__":
         gcn_out_channel=50,
         hetero_metadata=dataset.hetero_metadata,
         out_channel=50,
-    )
+    ).to("cuda")
+
     with torch.no_grad():
         data, labels = batch
         out = model(data)

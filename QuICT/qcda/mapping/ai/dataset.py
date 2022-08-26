@@ -1,6 +1,7 @@
 import os.path as osp
 from os import walk
 import torch
+from torch.utils.data import DataLoader
 from torch_geometric.data import Dataset as PygDataset, Data as PygData
 from torch_geometric.data import HeteroData
 from torch_geometric.data import Batch as PygBatch
@@ -63,6 +64,14 @@ class MappingBaseDataset(PygDataset):
         else:
             self._file_names = file_names
 
+    def __len__(self):
+        return len(self._file_names)
+
+
+class MappingHeteroDataset(MappingBaseDataset):
+    def __init__(self, data_dir: str = None, file_names: Iterable[str] = None) -> None:
+        super().__init__(data_dir=data_dir, file_names=file_names)
+
     def split_tv(
         self, point: int = 90
     ) -> Tuple["MappingHeteroDataset", "MappingHeteroDataset"]:
@@ -76,14 +85,6 @@ class MappingBaseDataset(PygDataset):
                 data_dir=self._data_dir, file_names=self._file_names[p:]
             ),
         )
-
-    def __len__(self):
-        return len(self._file_names)
-
-
-class MappingHeteroDataset(MappingBaseDataset):
-    def __init__(self, data_dir: str = None, file_names: Iterable[str] = None) -> None:
-        super().__init__(data_dir=data_dir, file_names=file_names)
 
     @classmethod
     def to_hetero_data(cls, raw_data: PairData) -> HeteroData:
@@ -110,6 +111,20 @@ class MappingLayeredDataset(MappingBaseDataset):
 
         self.hetero_metadata = self[0][0][0].metadata()
 
+    def split_tv(
+        self, point: int = 90
+    ) -> Tuple["MappingLayeredDataset", "MappingLayeredDataset"]:
+        shuffle(self._file_names)
+        p = len(self) * point // 100
+        return (
+            MappingLayeredDataset(
+                data_dir=self._data_dir, file_names=self._file_names[:p]
+            ),
+            MappingLayeredDataset(
+                data_dir=self._data_dir, file_names=self._file_names[p:]
+            ),
+        )
+
     def __getitem__(self, idx: int):
         f_path = osp.join(self._data_dir, self._file_names[idx])
         with open(f_path, "rb") as f:
@@ -130,7 +145,7 @@ class MappingLayeredDataset(MappingBaseDataset):
 
             return hetero_batch_layers, swap_counts
 
-        return PygDataLoader(
+        return DataLoader(
             dataset=self, batch_size=batch_size, shuffle=shuffle, collate_fn=_collate_fn
         )
 

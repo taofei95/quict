@@ -1,5 +1,8 @@
 import torch
+from QuICT.core import *
 from QuICT.qcda.mapping.ai.circuit_transformer import *
+from QuICT.qcda.mapping.ai.data_processor_vnode import CircuitVnodeProcessor
+import networkx as nx
 
 
 def test_self_attn():
@@ -67,7 +70,7 @@ def test_circuit_transformer_layer():
                         assert y_batch.shape == x_batch.shape
 
 
-def test_circuit_transformer():
+def test_biased_graphormer():
     for head in [1, 3, 5]:
         for feat_dim in [3, 4, 5, 6, 7]:
             for qubit_num in [2, 3, 5, 10]:
@@ -96,8 +99,34 @@ def test_circuit_transformer():
                             assert y_batch.shape == x_batch.shape
 
 
+def test_circuit_transformer():
+    circ = Circuit(10)
+    circ.random_append(200)
+    max_qubit_num = 50
+    max_layer_num = 10
+    feat_dim = 30
+    processor = CircuitVnodeProcessor(max_qubit_num=max_qubit_num)
+    circ_graph = processor._build_circ_repr(circ=circ, max_layer_num=max_layer_num)
+    spacial_encoding = get_spacial_encoding(
+        graph=circ_graph, max_topology_diameter=max_qubit_num
+    )
+    encoding_scale_factor = get_spacing_encoding_scale_factor(
+        graph=circ_graph, max_qubit_num=max_qubit_num
+    )
+    model = CircuitTransformer(
+        max_qubit_num=max_qubit_num,
+        max_topology_diameter=max_qubit_num,
+        feat_dim=feat_dim,
+        head=6,
+        max_layer_num=10,
+    )
+    x = torch.randn(max_qubit_num * max_layer_num + 1, feat_dim)
+    x = model(x, spacial_encoding, encoding_scale_factor)
+
+
 if __name__ == "__main__":
-    import pytest
     import os
+
+    import pytest
 
     pytest.main([os.path.abspath(__file__)])

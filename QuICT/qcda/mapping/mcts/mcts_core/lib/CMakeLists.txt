@@ -8,15 +8,15 @@ option(USE_OpenMP "Use OpenMP to enamble <omp.h>" on)
 
 include_directories("${PROJECT_SOURCE_DIR}/include/")
 
-find_package(Torch REQUIRED)
+# find_package(Torch REQUIRED)
 
 if(USE_OpenMP)
   find_package(OpenMP REQUIRED)
 endif(USE_OpenMP)
 
-if(Torch_FOUND)
-    set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${TORCH_CXX_FLAGS}")
-endif()
+# if(Torch_FOUND)
+#     set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${TORCH_CXX_FLAGS}")
+# endif()
 
 if(OpenMP_FOUND)
     set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
@@ -39,9 +39,9 @@ add_library(mcts SHARED ${MCTS_SRC})
 
 set_property(TARGET mcts PROPERTY CXX_STANDARD 14)
 
-add_executable(test_torch "test/test_torch.cc")
-target_link_libraries(test_torch "${TORCH_LIBRARIES}")
-set_property(TARGET test_torch PROPERTY CXX_STANDARD 17)
+# add_executable(test_torch "test/test_torch.cc")
+# target_link_libraries(test_torch "${TORCH_LIBRARIES}")
+# set_property(TARGET test_torch PROPERTY CXX_STANDARD 17)
 
 if(TEST_MCTS)
     add_executable(test_mcts test_mcts_tree.cc ${MCTS_SRC})
