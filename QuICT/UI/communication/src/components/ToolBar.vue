@@ -39,7 +39,7 @@
         <div>
           <el-input v-model="dialogTpNodeCount" label="n=" @change="TpNodeCountChange"></el-input>
         </div>
-        <div id="topologyZone">
+        <div :id="id_base">
           <svg />
         </div>
       </div>
@@ -53,8 +53,8 @@
           <el-button @click="pvAll">All</el-button>
           <el-button @click="pvReverse">Reverse</el-button>
           <el-button type="primary" @click="
-            dialogTpVisible = false;
-          TpConfirm();
+  dialogTpVisible = false;
+TpConfirm();
           ">OK</el-button>
         </span>
       </template>
@@ -148,17 +148,17 @@
           font-family: 'Segoe UI Symbol';
           background: transparent !important;
         "> Setting</el-button>
-      <span style="color: #409eff; font-size: large">|</span>
-      <el-upload class="upload-demo" :action="uploadBackend" :multiple="multipleUpload" :show-file-list="showFileList"
+      <span v-if="show_save_run_load" style="color: #409eff; font-size: large">|</span>
+      <el-upload v-if="show_save_run_load" class="upload-demo" :action="uploadBackend" :multiple="multipleUpload" :show-file-list="showFileList"
         :before-upload="loadQCDA">
         <el-button size="small" type="primary" plain style="margin: 0px 10px; font-family: 'Segoe UI Symbol'"> LOAD
         </el-button>
       </el-upload>
 
-      <el-button size="small" type="primary" plain @click="saveQCDA"
+      <el-button v-if="show_save_run_load" size="small" type="primary" plain @click="saveQCDA"
         style="margin: 0px 10px; font-family: 'Segoe UI Symbol'"> SAVE</el-button>
 
-      <el-button size="small" type="primary" @click="runQCDA" style="margin: 0px 10px; font-family: 'Segoe UI Symbol'">
+      <el-button v-if="show_save_run_load" size="small" type="primary" @click="runQCDA" style="margin: 0px 10px; font-family: 'Segoe UI Symbol'">
          RUN</el-button>
     </el-col>
   </el-row>
@@ -177,6 +177,8 @@ export default {
     customer_set: Array,
     topology: Array,
     q: Array,
+    id_base: String,
+    show_save_run_load: Boolean,
   },
   data: function () {
     return {
@@ -306,10 +308,10 @@ export default {
       // 更新topology图
       //draw control-target zone
       if (this.topologyZone != undefined) {
-        d3.select("#topologyZone").select("svg").selectAll("*").remove();
+        d3.select(`#${this.id_base}`).select("svg").selectAll("*").remove();
       }
       this.topologyZone = d3
-        .select("#topologyZone")
+        .select(`#${this.id_base}`)
         .select("svg")
         .attr("width", "340px")
         .attr("height", "340px")
@@ -519,6 +521,18 @@ export default {
     },
     runQCDA() {
       // 通知外层运行当前qasm
+      let setting = this.getSetting();
+      setTimeout(() => {
+        this.$emit("RunQCDA", this.opSwitch, this.mapSwitch, setting);
+      }, 200)
+    },
+    getOpSwitch(){
+      return this.opSwitch;
+    },
+    getMapSwitch(){
+      return this.mapSwitch;
+    },
+    getSetting(){
       let setting = {};
       setting.device = this.dialogBe;
       setting.shots = Number(this.dialogSeShots);
@@ -551,9 +565,7 @@ export default {
           setting.token = Number(this.dialogSeToken);
           break;
       }
-      setTimeout(() => {
-        this.$emit("RunQCDA", this.opSwitch, this.mapSwitch, setting);
-      }, 200)
+      return setting;
     },
     loadQCDA(file) {
       // 通知外层已载入qasm

@@ -3,7 +3,7 @@
       <el-header class="status-bar" style="padding: 0px; height: 50px">
         <ToolBar v-on:SaveQCDA="SaveQCDA" v-on:RunQCDA="RunQCDA" v-on:LoadQCDA="LoadQCDA" v-on:ChangeSet="ChangeSet"
           v-on:UpdateCustomerSet="UpdateCustomerSet" v-on:UpdataTopology="UpdataTopology" :all_sets="all_sets"
-          :customer_set="customer_set" :topology="topology" :q="qbit">
+          :customer_set="customer_set" :topology="topology" :q="qbit" :id_base="'QuCompuser'" :show_save_run_load="true">
         </ToolBar>
       </el-header>
       <el-container>

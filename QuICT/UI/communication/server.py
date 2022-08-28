@@ -231,6 +231,9 @@ def get_gate_set(content):
     if source == 'QCDA':
         emit('n_all_sets', {'uuid': uid,
                         'all_sets': gate_set}, namespace="/api/pty")
+    elif source == 'QCDA_load':
+        emit('l_all_sets', {'uuid': uid,
+                        'all_sets': gate_set}, namespace="/api/pty")
     else:
         emit('all_sets', {'uuid': uid,
                         'all_sets': gate_set}, namespace="/api/pty")
@@ -258,13 +261,17 @@ def load_file(content):
         return
     if source == 'QCDA':
         # optimize 
+        optimize = content['optimize']
+        mapping = content['mapping']
+        topology = content['topology']
+        set = content['set']
         logger.info(f'q.qasm: {q.qasm}')
-        optimized_q = optimize_qasm(q.qasm)
+        optimized_q = optimize_qasm(uid=uid, qasm_text=program_text, topology=topology, set=set, optimize=optimize, mapping=mapping)
         
         emit(
             "QCDA_o_qasm_load", {'uuid': uid, 'qasm': optimized_q.qasm}, namespace="/api/pty")
-
-        gates = get_gates_list(optimized_q)
+        
+        gates = get_gates_list(q)
         emit('QCDA_o_gates_update', {'uuid': uid, 'gates': gates}, namespace="/api/pty")
     else:
         # no optimize
@@ -276,13 +283,51 @@ def load_file(content):
 
         
 
-def optimize_qasm(qasm_text): 
-    # optimize qasm to o_qasm_text  
-    o_qasm_text = qasm_text
-    o_q = load_data(o_qasm_text)
-    o_q.analyse_code_from_circuit()
+def optimize_qasm(uid, qasm_text, topology, set, optimize, mapping): 
+
+    qasm = load_data(data=qasm_text)
+    circuit = qasm.circuit
+
+    circuit_topology = Layout(circuit.width())
+    for edge in topology:
+        uv = edge.split('_')
+        u = int(uv[0])
+        v = int(uv[1])
+        circuit_topology.add_edge(u, v)
+
+    if set['name'] not in ['FullSet', 'CustomerSet']:
+        circuit_set = eval(set['name'])
+    else:
+        gate_set2 = []
+        gate_set1 = []
+        for gate_str in set['gates']:
+            t_gate = eval(gate_str['name'])()
+            if t_gate._controls + t_gate._targets==1:
+                gate_set1.append(t_gate._type)
+            else :
+                # gate_set2.append(t_gate._type)
+                gate_set2 = t_gate._type
+        circuit_set = InstructionSet(gate_set2, gate_set1)
     
-    return o_q
+
+    emit(
+        'info',  {'uuid': uid, 'info': f"Compiling circuit..."}, namespace="/api/pty")
+
+    qcda = QCDA()
+    qcda.add_default_synthesis(circuit_set)
+    if optimize:
+        qcda.add_default_optimization()
+    if mapping:
+        qcda.add_default_mapping(circuit_topology)
+
+    # qcda.add_default_synthesis(USTCSet)
+    circuit_phy = qcda.compile(circuit)
+
+    # circuit_phy = qcda.compile(
+    #     circuit, circuit_set, circuit_topology, optimization=optimize, mapping=mapping)
+    q = load_data(data=circuit_phy.qasm())
+    q.analyse_code_from_circuit()
+    return q
 
 @socketio.on("qasm_save", namespace="/api/pty")
 @authenticated_only
@@ -314,65 +359,12 @@ def run_file(content):
     logger.info(f"run content {content}")
     try:
 
-        qasm = load_data(data=data)
-        circuit = qasm.circuit
-
-        circuit_topology = Layout(circuit.width())
-        for edge in topology:
-            uv = edge.split('_')
-            u = int(uv[0])
-            v = int(uv[1])
-            circuit_topology.add_edge(u, v)
-
-        gate_set = []
-        for gate_str in set['gates']:
-            gate_set.append(eval(gate_str['name'])())
-        circuit_set = InstructionSet(gate_set)
-        if set['name'] not in ['FullSet', 'CustomerSet']:
-            circuit_set = eval(set['name'])
-
-        emit(
-            'info',  {'uuid': uid, 'info': f"Compiling circuit..."}, namespace="/api/pty")
-
-        qcda = QCDA()
-        circuit_phy = qcda.compile(
-            circuit, circuit_set, circuit_topology, optimization=optimize, mapping=mapping)
+        circuit_phy = optimize_qasm(uid=uid, qasm_text=data, topology=topology, set=set, optimize=optimize, mapping=mapping)
         circuit = circuit_phy
 
         logger.info(f"run qasm {circuit.qasm()}")
         emit(
             'info',  {'uuid': uid, 'info': f"Running circuit..."}, namespace="/api/pty")
-        # simulation = ConstantStateVectorSimulator(
-        #     circuit=circuit
-        # )
-        # # logger.info(simulation.vector)
-        # # logger.info(circuit.qasm())
-        # state = simulation.run()
-        # # logger.info(state)
-        # state_np = cupy.asnumpy(state)
-        # state_np_r = np.real(state_np)
-        # state_np_i = np.imag(state_np)
-        # state_str_r = np.array2string(state_np_r, separator=',', formatter={
-        #                               'float_kind': lambda x: "\""+("%f" % x).rstrip('0').rstrip('.')+"\""})
-        # state_str_i = np.array2string(state_np_i, separator=',', formatter={
-        #                               'float_kind': lambda x: "\""+("%f" % x).rstrip('0').rstrip('.')+"\""})
-        # # logger.info( state_str_r, state_str_i)
-        # state_r = json.loads(state_str_r)
-        # state_i = json.loads(state_str_i)
-        # index = []
-        # state_amp = []
-        # state_ang = []
-        # for i in range(len(state_r)):
-        #     index.append(format(i, f'0{int(math.log(len(state_r),2))}b'))
-        #     amp, ang = cal_mod(state_np_r[i], state_np_i[i])
-        #     state_amp.append(amp)
-        #     state_ang.append(ang)
-
-        # emit('run_result', {'uuid': uid, 'run_result': list(
-        #     zip(index, state_r, state_i, state_amp, state_ang))}, namespace="/api/pty")
-        # emit(
-        #     'info', {'uuid': uid, 'info': f"Run circuit finished."}, namespace="/api/pty")
-        # device=setting['device'], backend=setting['backend'], shots=setting['shots'],
         simulation = Simulator(**setting)
         result = simulation.run(circuit)
         emit(
@@ -389,73 +381,15 @@ def run_file(content):
 def o_run_file(content):
     uid = content['uuid']
     data = content['content']
-    optimize = content['optimize']
-    mapping = content['mapping']
-    topology = content['topology']
-    set = content['set']
     setting = content['setting']
     logger.info(f"run content {content}")
     try:
 
         qasm = load_data(data=data)
         circuit = qasm.circuit
-
-        circuit_topology = Layout(circuit.width())
-        for edge in topology:
-            uv = edge.split('_')
-            u = int(uv[0])
-            v = int(uv[1])
-            circuit_topology.add_edge(u, v)
-
-        # gate_set = []
-        # for gate_str in set['gates']:
-        #     gate_set.append(eval(gate_str['name'])())
-        # circuit_set = InstructionSet(gate_set)
-        # if set['name'] not in ['FullSet', 'CustomerSet']:
-        #     circuit_set = eval(set['name'])
-
-        emit(
-            'info',  {'uuid': uid, 'info': f"Compiling circuit..."}, namespace="/api/pty")
-
-        # qcda = QCDA()
-        # circuit_phy = qcda.compile(
-        #     circuit, circuit_set, circuit_topology, optimize, mapping)
-        # circuit = circuit_phy
-
         logger.info(f"run qasm {circuit.qasm()}")
         emit(
             'info',  {'uuid': uid, 'info': f"Running circuit..."}, namespace="/api/pty")
-        # simulation = ConstantStateVectorSimulator(
-        #     circuit=circuit
-        # )
-        # # logger.info(simulation.vector)
-        # # logger.info(circuit.qasm())
-        # state = simulation.run()
-        # # logger.info(state)
-        # state_np = cupy.asnumpy(state)
-        # state_np_r = np.real(state_np)
-        # state_np_i = np.imag(state_np)
-        # state_str_r = np.array2string(state_np_r, separator=',', formatter={
-        #                               'float_kind': lambda x: "\""+("%f" % x).rstrip('0').rstrip('.')+"\""})
-        # state_str_i = np.array2string(state_np_i, separator=',', formatter={
-        #                               'float_kind': lambda x: "\""+("%f" % x).rstrip('0').rstrip('.')+"\""})
-        # # logger.info( state_str_r, state_str_i)
-        # state_r = json.loads(state_str_r)
-        # state_i = json.loads(state_str_i)
-        # index = []
-        # state_amp = []
-        # state_ang = []
-        # for i in range(len(state_r)):
-        #     index.append(format(i, f'0{int(math.log(len(state_r),2))}b'))
-        #     amp, ang = cal_mod(state_np_r[i], state_np_i[i])
-        #     state_amp.append(amp)
-        #     state_ang.append(ang)
-
-        # emit('run_result', {'uuid': uid, 'run_result': list(
-        #     zip(index, state_r, state_i, state_amp, state_ang))}, namespace="/api/pty")
-        # emit(
-        #     'info', {'uuid': uid, 'info': f"Run circuit finished."}, namespace="/api/pty")
-        # device=setting['device'], backend=setting['backend'], shots=setting['shots'],
         simulation = Simulator(**setting)
         result = simulation.run(circuit)
         emit(

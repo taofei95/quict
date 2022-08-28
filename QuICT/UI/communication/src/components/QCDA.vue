@@ -24,6 +24,11 @@
       <div id="step_1_N" class="div_not_selected">
         <el-container>
           <el-main class="vis-block">
+            <ToolBar ref="n_toolBar" v-on:SaveQCDA="toolbar_func" v-on:RunQCDA="toolbar_func"
+              v-on:LoadQCDA="toolbar_func" v-on:ChangeSet="n_ChangeSet" v-on:UpdateCustomerSet="n_UpdateCustomerSet"
+              v-on:UpdataTopology="n_UpdataTopology" :all_sets="n_all_sets" :customer_set="n_customer_set"
+              :topology="n_topology" :q="n_qbit" :id_base="'QCDA_new'" :show_save_run_load="false">
+            </ToolBar>
             <nVisualizeZone ref="n_visVue" :VisContentIn="n_VisContent" v-on:VisUpdate="n_VisUpdate">
             </nVisualizeZone>
           </el-main>
@@ -39,6 +44,11 @@
           style="margin: 0px 10px; font-family: 'Segoe UI Symbol'"> Confirm </el-button>
       </div>
       <div id="step_1_L" class="div_not_selected">
+        <ToolBar ref="l_toolBar" v-on:SaveQCDA="toolbar_func" v-on:RunQCDA="toolbar_func" v-on:LoadQCDA="toolbar_func"
+          v-on:ChangeSet="l_ChangeSet" v-on:UpdateCustomerSet="l_UpdateCustomerSet"
+          v-on:UpdataTopology="l_UpdataTopology" :all_sets="l_all_sets" :customer_set="l_customer_set"
+          :topology="l_topology" :q="l_qbit" :id_base="'QCDA_load'" :show_save_run_load="false">
+        </ToolBar>
         <el-upload class="load_qcda" :action="uploadBackend" :multiple="multipleUpload" :show-file-list="showFileList"
           :before-upload="loadQCDA">
           <el-button size="large" type="primary" plain style="margin: 0px 10px; font-family: 'Segoe UI Symbol'"> LOAD
@@ -110,6 +120,7 @@ import * as d3 from "d3";
 import oVisualizeZone from "./oVisualizeZone.vue";
 import nVisualizeZone from "./nVisualizeZone.vue";
 import ProgramZone from "./ProgramZone.vue";
+import ToolBar from "./ToolBar.vue";
 
 export default {
   props: {},
@@ -150,14 +161,28 @@ export default {
       NewConfirmBtnEnable: false,
       OutputContent: {},
       Route: "N",
+      n_all_sets: [],
+      l_all_sets: [],
+      n_customer_set: [],
+      l_customer_set: [],
+      n_current_set: 0,
+      l_current_set: 0,
+      n_topology: [],
+      l_topology: [],
+      n_qbit: [],
+      l_qbit: [],
     };
   },
   components: {
     oVisualizeZone,
     nVisualizeZone,
     ProgramZone,
+    ToolBar,
   },
   methods: {
+    toolbar_func() {
+      return true;
+    },
     new_qcda() {
       this.current_step = 1;
       this.Route = "N";
@@ -176,6 +201,7 @@ export default {
       d3.select("#step_1_L").attr("class", "div_selected");
       d3.select("#step_2").attr("class", "div_not_selected");
       d3.select("#step_3").attr("class", "div_not_selected");
+      this.socket.emit("get_gate_set", { uuid: this.uuid, source: 'QCDA_load' });
     },
     back_qcda() {
       this.current_step = 0;
@@ -253,62 +279,38 @@ export default {
       this.socket.emit("qasm_load", {
         uuid: this.uuid,
         content: this.l_ProgramText,
-        source: 'QCDA'
+        source: 'QCDA',
+        optimize: this.$refs.l_toolBar.getOpSwitch(),
+        mapping: this.$refs.l_toolBar.getMapSwitch(),
+        topology: this.l_topology,
+        set: this.l_all_sets[this.l_current_set],
       });
     },
     confirm_newQCDA() {
       this.socket.emit("qasm_load", {
         uuid: this.uuid,
         content: this.n_ProgramText,
-        source: 'QCDA'
+        source: 'QCDA',
+        optimize: this.$refs.n_toolBar.getOpSwitch(),
+        mapping: this.$refs.n_toolBar.getMapSwitch(),
+        topology: this.n_topology,
+        set: this.n_all_sets[this.n_current_set],
       });
     },
     run_o_QCDA() {
       let setting = {};
-      setting.device = "GPU"; //this.dialogBe;
-      setting.shots = 1; //Number(this.dialogSeShots);
-      setting.backend = "statevector"; //
-      setting.gpu_device_id = 0; //Number(this.dialogSe_GPU_device_id);
-      setting.sync = true; //this.dialogSe_sync;
-      setting.optimize = true; //this.dialogSe_optimize;
-      // switch (setting.device) {
-      //   case "CPU":
-      //     setting.backend = "unitary";
-      //     setting.precision = this.dialogSe_Precision;
-      //     break;
-      //   case "GPU":
-      //     setting.backend = this.dialogBe_Backend;
-      //     setting.precision = this.dialogSe_Precision;
-      //     switch (this.dialogBe_Backend) {
-      //       case "unitary":
-      //         break;
-      //       case "statevector":
-      //         setting.gpu_device_id = Number(this.dialogSe_GPU_device_id);
-      //         setting.sync = this.dialogSe_sync;
-      //         setting.optimize = this.dialogSe_optimize;
-      //         break;
-      //       case "multiGPU":
-      //         setting.ndev = Number(this.dialogSe_ndev);
-      //         setting.sync = this.dialogSe_sync;
-      //         break;
-      //     }
-      //     break;
-      //   case "qiskit":
-      //     setting.token = Number(this.dialogSeToken);
-      //     break;
-      //   case "qcompute":
-      //     setting.token = Number(this.dialogSeToken);
-      //     break;
-      // }
+      if (this.Route == "N") {
+        setting = this.$refs.n_toolBar.getSetting();
+      }
+      else {
+        setting = this.$refs.l_toolBar.getSetting();
+      }
+
 
       this.socket.emit("o_qasm_run", {
         uuid: this.uuid,
         content: this.o_ProgramText,
         source: 'QCDA',
-        optimize: true, //opSwitch,
-        mapping: true, //mapSwitch,
-        topology: [], //this.topology,
-        set: this.n_VisContent.gateSet,
         setting: setting,
       });
     },
@@ -517,16 +519,16 @@ export default {
       }
       if (VisAction.type == "q add") {
         // 新加qbit
-        this.Q_Add();
+        this.n_Q_Add();
         this.$refs.n_visVue.vis_change();
       }
       if (VisAction.type == "q remove") {
         // 删除qbit
-        this.Q_Remove(VisAction.index);
+        this.n_Q_Remove(VisAction.index);
         this.$refs.n_visVue.vis_change();
       }
       this.qbit = this.n_VisContent.q;
-      this.n_ProgramText = this.GenQASM();
+      this.n_ProgramText = this.n_GenQASM();
       this.NewConfirmBtnEnable = true;
     },
     n_ProgramUpdate(ProgramText) {
@@ -575,7 +577,7 @@ export default {
       group.push(gate);
       console.log("groupGates after", groupGates);
     },
-    GenQASM() {
+    n_GenQASM() {
       // 从gate列表生成qasm
       let qasm_string = 'OPENQASM 2.0;\ninclude "qelib1.inc";\n';
       let cbits = 0;
@@ -591,6 +593,39 @@ export default {
       }
       cbits = 0;
       this.n_VisContent.gates.forEach((gate) => {
+        if (gate.name == "MeasureGate") {
+          qasm_string += `measure q[${gate.targets[0]}] -> c[${cbits}];\n`;
+          cbits += 1;
+        } else {
+          let qasm = this.qasm(gate);
+          if (qasm == "error") {
+            console.log(
+              "the circuit cannot be transformed to a valid describe in OpenQASM 2.0"
+            );
+            console.log(gate);
+            return "error";
+          }
+          qasm_string += this.qasm(gate);
+        }
+      });
+      return qasm_string;
+    },
+    l_GenQASM() {
+      // 从gate列表生成qasm
+      let qasm_string = 'OPENQASM 2.0;\ninclude "qelib1.inc";\n';
+      let cbits = 0;
+      this.l_VisContent.gates.forEach((gate) => {
+        if (gate.name == "MeasureGate") {
+          cbits += 1;
+        }
+      });
+
+      qasm_string += `qreg q[${this.l_VisContent.q.length}];\n`;
+      if (cbits != 0) {
+        qasm_string += `creg c[${cbits}];\n`;
+      }
+      cbits = 0;
+      this.l_VisContent.gates.forEach((gate) => {
         if (gate.name == "MeasureGate") {
           qasm_string += `measure q[${gate.targets[0]}] -> c[${cbits}];\n`;
           cbits += 1;
@@ -642,11 +677,11 @@ export default {
       qasm_string += ";\n";
       return qasm_string;
     },
-    Q_Add() {
+    n_Q_Add() {
       // 新加qbit
       this.n_VisContent.q.push(this.n_VisContent.q.length);
     },
-    Q_Remove(idx) {
+    n_Q_Remove(idx) {
       // 删除qbit
       for (let i = this.n_VisContent.gates.length - 1; i >= 0; i--) {
         let touched_q = false;
@@ -682,6 +717,47 @@ export default {
         this.n_VisContent.gates[i].index = i;
       }
       this.n_VisContent.q.pop();
+    },
+    l_Q_Add() {
+      // 新加qbit
+      this.l_VisContent.q.push(this.l_VisContent.q.length);
+    },
+    l_Q_Remove(idx) {
+      // 删除qbit
+      for (let i = this.l_VisContent.gates.length - 1; i >= 0; i--) {
+        let touched_q = false;
+        if (this.l_VisContent.gates[i].q == idx) {
+          touched_q = true;
+        } else {
+          this.l_VisContent.gates[i].controls.forEach((c) => {
+            if (c == idx) {
+              touched_q = true;
+            }
+          });
+          if (!touched_q) {
+            this.l_VisContent.gates[i].targets.forEach((t) => {
+              if (t == idx) {
+                touched_q = true;
+              }
+            });
+          }
+        }
+        if (touched_q) {
+          this.l_VisContent.gates.splice(i, 1);
+        } else if (this.l_VisContent.gates[i].q > idx) {
+          this.l_VisContent.gates[i].q--;
+          for (let j = 0; j < this.l_VisContent.gates[i].controls.length; j++) {
+            this.l_VisContent.gates[i].controls[j] -= 1;
+          }
+          for (let j = 0; j < this.l_VisContent.gates[i].targets.length; j++) {
+            this.l_VisContent.gates[i].targets[j] -= 1;
+          }
+        }
+      }
+      for (let i = 0; i < this.l_VisContent.gates.length; i++) {
+        this.l_VisContent.gates[i].index = i;
+      }
+      this.l_VisContent.q.pop();
     },
     DrawHistogram(result) {
       // 绘制Amplitude图
@@ -808,8 +884,65 @@ export default {
 
       return svg.node();
     },
+    n_ChangeSet(newSet) {
+      // 切换instructionSet
+      console.log(`set changed: ${newSet}`);
+      this.n_current_set = newSet;
+      this.n_VisContent.gateSet = this.n_all_sets[this.n_current_set]["gates"];
+      this.$refs.n_visVue.vis_change();
+    },
+    n_UpdateCustomerSet(customerSet) {
+      // 更新customerSet
+      console.log(`customer Set changed: ${customerSet}`);
+      let customer_set = { name: "CustomerSet", gates: customerSet };
+      this.n_customer_set = customerSet;
+      this.n_all_sets.pop();
+      this.n_all_sets.push(customer_set);
+    },
+    n_UpdataTopology(topology, qbit) {
+      // 更新topology
+      this.n_topology = topology;
+      while (this.n_VisContent.q.length < qbit.length) {
+        this.n_Q_Add();
+      }
+      while (this.n_VisContent.q.length > qbit.length) {
+        this.n_Q_Remove(this.VisContent.q.length - 1);
+      }
+      this.n_qbit = this.n_VisContent.q;
+      this.$refs.n_visVue.vis_change();
+      this.n_ProgramText = this.n_GenQASM();
+    },
+    l_ChangeSet(newSet) {
+      // 切换instructionSet
+      console.log(`set changed: ${newSet}`);
+      this.l_current_set = newSet;
+      this.l_VisContent.gateSet = this.l_all_sets[this.l_current_set]["gates"];
+      // this.$refs.l_visVue.vis_change();
+    },
+    l_UpdateCustomerSet(customerSet) {
+      // 更新customerSet
+      console.log(`customer Set changed: ${customerSet}`);
+      let customer_set = { name: "CustomerSet", gates: customerSet };
+      this.l_customer_set = customerSet;
+      this.l_all_sets.pop();
+      this.l_all_sets.push(customer_set);
+    },
+    l_UpdataTopology(topology, qbit) {
+      // 更新topology
+      this.l_topology = topology;
+      while (this.l_VisContent.q.length < qbit.length) {
+        this.l_Q_Add();
+      }
+      while (this.l_VisContent.q.length > qbit.length) {
+        this.l_Q_Remove(this.VisContent.q.length - 1);
+      }
+      this.l_qbit = this.l_VisContent.q;
+      // this.$refs.l_visVue.vis_change();
+      this.l_ProgramText = this.l_GenQASM();
+    },
   },
   mounted: function () {
+    // let this_ref = this;
     this.socket.on("QCDA_o_qasm_load", (content) => {
       // 收到后端处理好的o_qasm
       console.log(content);
@@ -869,11 +1002,25 @@ export default {
         return;
       }
       this.n_VisContent.gateSet = content.all_sets[0]["gates"];
-      this.customer_set = [];
+      this.n_customer_set = [];
       let customer_set = { name: "CustomerSet", gates: [] };
-      this.all_sets = content.all_sets;
-      this.all_sets.push(customer_set);
+      this.n_all_sets = content.all_sets;
+      this.n_all_sets.push(customer_set);
       this.$refs.n_visVue.vis_change();
+    });
+
+    this.socket.on("l_all_sets", (content) => {
+      // 收到后端instruction Set 列表， 更新前端相关显示
+      console.log(content);
+      if (!content.uuid == this.uuid) {
+        return;
+      }
+      this.l_VisContent.gateSet = content.all_sets[0]["gates"];
+      this.l_customer_set = [];
+      let customer_set = { name: "CustomerSet", gates: [] };
+      this.l_all_sets = content.all_sets;
+      this.l_all_sets.push(customer_set);
+      // this.$refs.n_visVue.vis_change();
     });
 
     this.socket.on("o_run_result", (content) => {
