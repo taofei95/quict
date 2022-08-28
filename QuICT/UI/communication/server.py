@@ -13,7 +13,7 @@ import traceback
 from werkzeug.utils import secure_filename
 from flask_cors import CORS
 from loguru import logger
-# from QuICT.qcda.qcda import QCDA
+from QuICT.qcda.qcda import QCDA
 import uuid
 import numpy as np
 import cupy
@@ -25,13 +25,13 @@ from flask import Flask, send_file, send_from_directory, flash, request, redirec
 from flask_socketio import SocketIO, send, disconnect, emit
 from QuICT.core import *
 from QuICT.core.gate import *
-# from QuICT.qcda.synthesis.gate_transform.instruction_set import InstructionSet
+from QuICT.qcda.synthesis.gate_transform.instruction_set import InstructionSet
 from QuICT.tools.interface import OPENQASMInterface
 # from QuICT.qcda.simulation.statevector_simulator import ConstantStateVectorSimulator
 from QuICT.simulation.simulator import Simulator
 from QuICT.lib import Qasm
 # from QuICT.qcda.optimization.commutative_optimization import CommutativeOptimization
-# from QuICT.qcda.synthesis.gate_transform import *
+from QuICT.qcda.synthesis.gate_transform import *
 import functools
 import flask_login
 from flask_login import current_user, login_required
@@ -324,20 +324,20 @@ def run_file(content):
             v = int(uv[1])
             circuit_topology.add_edge(u, v)
 
-        # gate_set = []
-        # for gate_str in set['gates']:
-        #     gate_set.append(eval(gate_str['name'])())
-        # circuit_set = InstructionSet(gate_set)
-        # if set['name'] not in ['FullSet', 'CustomerSet']:
-        #     circuit_set = eval(set['name'])
+        gate_set = []
+        for gate_str in set['gates']:
+            gate_set.append(eval(gate_str['name'])())
+        circuit_set = InstructionSet(gate_set)
+        if set['name'] not in ['FullSet', 'CustomerSet']:
+            circuit_set = eval(set['name'])
 
         emit(
             'info',  {'uuid': uid, 'info': f"Compiling circuit..."}, namespace="/api/pty")
 
-        # qcda = QCDA()
-        # circuit_phy = qcda.compile(
-        #     circuit, circuit_set, circuit_topology, optimize, mapping)
-        # circuit = circuit_phy
+        qcda = QCDA()
+        circuit_phy = qcda.compile(
+            circuit, circuit_set, circuit_topology, optimization=optimize, mapping=mapping)
+        circuit = circuit_phy
 
         logger.info(f"run qasm {circuit.qasm()}")
         emit(
