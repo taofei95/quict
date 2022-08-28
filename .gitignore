@@ -31,3 +31,4 @@ QuICT/UI/communication/node_modules
 QuICT/UI/communication/temp
 QuICT/UI/communication/Output
 cmake-vsc*/
+unit_test/**/*.jpg

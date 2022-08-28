@@ -53,7 +53,7 @@ class PauliOperator(object):
         # Z Y = iX
         (GateType.z, GateType.y): (GateType.x, 1j),
         # Z Z = I
-        (GateType.z, GateType.z): (GateType.id, 1),
+        (GateType.z, GateType.z): (GateType.id, 1)
     }
 
     conjugate_rules = {
@@ -136,7 +136,7 @@ class PauliOperator(object):
         # Z Y Z = -Y
         (GateType.z, GateType.y): (GateType.y, -1),
         # Z Z Z = Z
-        (GateType.z, GateType.z): (GateType.z, 1),
+        (GateType.z, GateType.z): (GateType.z, 1)
     }
 
     standardize_rules = {
@@ -219,6 +219,7 @@ class PauliOperator(object):
 
         Args:
             keep_id(bool, optional): whether to keep the IDgate in the CompositeGate
+            keep_phase(bool, optional): whether to keep the global phase in the CompositeGate
 
         Returns:
             CompositeGate: The CompositeGate corresponding to the PauliOperator
@@ -231,7 +232,7 @@ class PauliOperator(object):
             gates.append(gate)
         if keep_phase and not np.isclose(self.phase, 1 + 0j):
             phase = -1j * np.log(self.phase)
-            gate = build_gate(GateType.phase, 0, phase.real)
+            gate = build_gate(GateType.gphase, 0, phase.real)
             gates.append(gate)
         return gates
 

@@ -7,24 +7,12 @@
 import numpy as np
 from queue import Queue
 
-from .._optimization import Optimization
-from QuICT.core import *
-from QuICT.core.gate import build_gate, CompositeGate, GateType
-
-TOPO = [[]]
-
-# number of qubits
-N = 0
-
-# the input of cnot struct
-READ_CNOT = []
-
-# the the gates which makes the identity of "read_cnot", the ans is its inverse
-GATES = []
+from QuICT.core import Circuit
+from QuICT.core.gate import build_gate, CX, H, GateType
 
 
-class Steiner_Tree(object):
-    """ the Steiner_Tree struct
+class SteinerTree(object):
+    """ the SteinerTree struct
 
     we use exponent time to construct the exact steiner tree
     # fix it with a 2-approximation polynomial algorithm
@@ -42,10 +30,8 @@ class Steiner_Tree(object):
         pre(np.array<int>): the state which update this state in dp.
         root(int): the root of the tree.
     """
-
     def __init__(self, n, topo):
         """
-
         Args:
             n(int): number of the vertexes in the tree
             topo(n * n boolean matrix): topological relationship for n vertexes,
@@ -72,9 +58,7 @@ class Steiner_Tree(object):
             ST_input(list<int>): the indexes of vertexes which should be contained in the tree.
                                  ST_input[-1] should be the root.
             lower_bound(int): the minimum index of vertexes which can be used
-
         """
-
         size = len(ST_input)
         self.root = ST_input[-1]
         self.dp = np.array([-1] * self.N * (1 << size), dtype=np.int64).reshape((self.N, 1 << size))
@@ -135,7 +119,6 @@ class Steiner_Tree(object):
             root(int): the i in dp[i][j]
             state(int): the j in dp[i][j]
         """
-
         if state == self.ST[root]:
             return
         _pre = self.pre[root][state]
@@ -149,302 +132,261 @@ class Steiner_Tree(object):
             self.father[_pre[0] + self.N] = root
             self.build_STtree(_pre[0] + self.N, _pre[1])
 
-    def elimination_below(self, gauss_elimination: list):
+    def elimination_below(self, gauss_elimination: list, gates: list):
         """ elimination with some rows below ith row and ith column.
 
         Args:
             gauss_elimination(list<int>): the equations should be changed in the process.
         """
 
-        self._elimination_below_dfs(self.root, gauss_elimination)
+        self._elimination_below_dfs(self.root, gauss_elimination, gates)
 
-    def _elimination_below_dfs(self, now, gauss_elimination: list):
+    def _elimination_below_dfs(self, now, gauss_elimination: list, gates: list):
         """ elimination with dfs
 
         Args:
             now(int): vertex now
             gauss_elimination(list<int>): the equations should be changed in the process.
-
         """
         for son in self.sons[now]:
             if self.ST[son] == 0:
                 gauss_elimination[son] ^= gauss_elimination[now]
                 gate = build_gate(GateType.cx, [now, son])
-                GATES.append(gate)
-            self._elimination_below_dfs(son, gauss_elimination)
+                gates.append(gate)
+            self._elimination_below_dfs(son, gauss_elimination, gates)
         if now != self.root:
             gauss_elimination[now] ^= gauss_elimination[self.father[now]]
             gate = build_gate(GateType.cx, [self.father[now], now])
-            GATES.append(gate)
+            gates.append(gate)
 
-    def elimination_above(self, gauss_elimination: list):
-        self._elimination_above_preorder(self.root, gauss_elimination)
-        self._elimination_above_postorder(self.root, gauss_elimination)
+    def elimination_above(self, gauss_elimination: list, gates: list):
+        self._elimination_above_preorder(self.root, gauss_elimination, gates)
+        self._elimination_above_postorder(self.root, gauss_elimination, gates)
 
-    def _elimination_above_preorder(self, now, gauss_elimination: list):
+    def _elimination_above_preorder(self, now, gauss_elimination: list, gates: list):
         for son in self.sons[now]:
             if self.ST[son] == 0:
                 gauss_elimination[now] ^= gauss_elimination[son]
                 gate = build_gate(GateType.cx, [son, now])
-                GATES.append(gate)
+                gates.append(gate)
 
         for son in self.sons[now]:
-            self._elimination_above_preorder(son, gauss_elimination)
+            self._elimination_above_preorder(son, gauss_elimination, gates)
 
-    def _elimination_above_postorder(self, now, gauss_elimination: list):
+    def _elimination_above_postorder(self, now, gauss_elimination: list, gates: list):
         for son in self.sons[now]:
-            self._elimination_above_postorder(son, gauss_elimination)
+            self._elimination_above_postorder(son, gauss_elimination, gates)
         if now != self.root:
             gauss_elimination[self.father[now]] ^= gauss_elimination[now]
             gate = build_gate(GateType.cx, [now, self.father[now]])
-            GATES.append(gate)
+            gates.append(gate)
 
 
-def delete_dfs(now):
-    """ search for a initial mapping to get better(maybe) topology
-
-    in this order, vertex i is not cut in [i, n)
-
-    Args:
-        now(int): the index of vertex now
-    """
-    global TOPO, N
-
-    delete_dfs.delete_vis[now] = True
-    for i in range(N - 1, -1, -1):
-        if now != i and TOPO[now][i] and not delete_dfs.delete_vis[i]:
-            delete_dfs(i)
-    delete_dfs.topo_forward_map[now] = delete_dfs.delete_total
-    delete_dfs.topo_backward_map[delete_dfs.delete_total] = now
-    delete_dfs.delete_total += 1
-
-
-def read(circuit, cnot_struct, topology):
-    """ get describe from the circuit or cnot_struct
-
-    Args:
-        circuit(Circuit): the input circuit, contained the information of topology and (maybe) cnot
-        cnot_struct(list<int>): the information of cnot. if None, the information is contained in the circuit
-        topology(list<tuple<int, int>>): topology of circuit, None or empty means fully connected
-    Returns:
-        Steiner_Tree: the whole graph of the st
-        list<int>: the inverse of the initial mapping
-    """
-
-    global TOPO, READ_CNOT, N
-    if circuit is not None:
-        N = circuit.width()
-        if circuit.topology is None or len(circuit.topology.edge_list) == 0:
-            TOPO = [[True] * N] * N
-        else:
-            TOPO = [[False] * N] * N
-            for topology in circuit.topology.edge_list:
-                TOPO[topology.u][topology.v] = TOPO[topology.v][topology.u] = True
-    else:
-        N = len(cnot_struct)
-        if topology is None or len(topology) == 0:
-            TOPO = [[True] * N] * N
-        else:
-            TOPO = [[False] * N] * N
-            for topos in topology:
-                TOPO[topos[0]][topos[1]] = TOPO[topos[1]][topos[0]] = True
-
-    delete_dfs.topo_forward_map = [0] * N
-    delete_dfs.topo_backward_map = [0] * N
-    delete_dfs.delete_vis = [0] * N
-    delete_dfs.delete_total = 0
-
-    delete_dfs(N - 1)
-
-    topo_forward_map = getattr(delete_dfs, "topo_forward_map")
-    topo_backward_map = getattr(delete_dfs, "topo_backward_map")
-
-    if cnot_struct is not None:
-        READ_CNOT = cnot_struct
-    else:
-        READ_CNOT = []
-        for i in range(N):
-            READ_CNOT.append(1 << i)
-
-        for i in range(len(circuit.gates)):
-            gate = circuit.gates[i]
-            if gate.type == GateType.cx:
-                READ_CNOT[topo_forward_map[gate.targ]] ^= \
-                    READ_CNOT[topo_forward_map[gate.carg]]
-
-    ST = Steiner_Tree(N, TOPO)
-    return ST, topo_backward_map
-
-
-def solve(ST_tree):
-    """ main part of the algorithm
-
-    Args:
-        ST_tree(Steiner_Tree): the whole graph
-
-    Returns:
-        list<CXGates>: the result of the algorithm
-
-    """
-    global GATES, N, READ_CNOT
-
-    # apply Gaussian Elimination on the matrix
-    gauss_elimination = READ_CNOT
-    GATES = []
-
-    for i in range(N):
-        j = N
-        for t in range(i, N):
-            if gauss_elimination[t] & (1 << i):
-                j = t
-                break
-
-        if j >= N:
-            raise Exception("the matrix is not singular matrix")
-
-        # find a line that the ith bit is 1, and find a path to make the ith bit of ith line 1
-        pre = [-1] * N
-        if i != j:
-            bfs = Queue()
-            bfs.put(j)
-            while not bfs.empty():
-                u = bfs.get()
-                for j in range(i, N):
-                    if j != u and TOPO[u][j]:
-                        if pre[j] == -1:
-                            pre[j] = u
-                            if j == i:
-                                break
-                            bfs.put(j)
-                if pre[i] != -1:
-                    break
-
-        paths = [i]
-        u = pre[i]
-        while u != -1:
-            paths.append(u)
-            u = pre[u]
-
-        for j in range(len(paths) - 2, -1, -1):
-            gauss_elimination[paths[j]] ^= gauss_elimination[paths[j + 1]]
-            gate = build_gate(GateType.cx, [paths[j + 1], paths[j]])
-            GATES.append(gate)
-
-        # elimination below rows
-        needCover = []
-        for j in range(i + 1, N):
-            if gauss_elimination[j] & (1 << i):
-                needCover.append(j)
-        if len(needCover) > 0:
-            needCover.append(i)
-            ST_tree.build_ST(needCover, i)
-            ST_tree.elimination_below(gauss_elimination)
-
-        # elimination this row
-
-        # find a set S whose summation in equal to row 1 except column i
-        back_gauss_elimination = [0] * (i + 1)
-        xor_result = [0] * (i + 1)
-        for j in range(i + 1, N):
-            back_gauss_elimination.append(gauss_elimination[j])
-            xor_result.append(1 << j)
-
-        for j in range(i + 1, N):
-            k = N
-            for t in range(j, N):
-                if back_gauss_elimination[t] & (1 << j):
-                    k = t
-                    break
-            if k == N:
-                raise Exception("the matrix is not singular matrix")
-            back_gauss_elimination[k], back_gauss_elimination[j] = \
-                back_gauss_elimination[j], back_gauss_elimination[k]
-            xor_result[k], xor_result[j] = xor_result[j], xor_result[k]
-            for k in range(j + 1, N):
-                if back_gauss_elimination[k] & (1 << j):
-                    back_gauss_elimination[k] ^= back_gauss_elimination[j]
-                    xor_result[k] ^= xor_result[j]
-
-        val = gauss_elimination[i]
-        S_element = 0
-        for j in range(i + 1, N):
-            if val & (1 << j):
-                val ^= back_gauss_elimination[j]
-                S_element ^= xor_result[j]
-
-        needCover = []
-        for j in range(i + 1, N):
-            if S_element & (1 << j):
-                needCover.append(j)
-
-        if len(needCover) > 0:
-            needCover.append(i)
-            ST_tree.build_ST(needCover, i)
-            ST_tree.elimination_above(gauss_elimination)
-
-    GATES.reverse()
-    return GATES
-
-
-class TopologicalCnot(Optimization):
+class TopologicalCnot(object):
     """ optimize the cnot circuit on topological device
     https://arxiv.org/pdf/1910.14478.pdf
 
     use steiner tree to optimize a cnot circuit on topological device
-
     """
-
-    @classmethod
-    def execute(cls, circuit: Circuit = None, cnot_struct=None, topology=None):
+    def execute(self, circuit: Circuit):
         """
-
         Args:
             circuit(Circuit): the circuit to be optimize
-            cnot_struct(list<int>/None): the struct of cnot circuit. if None, read circuit
-            topology(list<tuple<int, int>>): topology of circuit
         """
-        global TOPO, N
-        steiner_tree, topo_backward_map = read(circuit, cnot_struct, topology)
-        ans = solve(steiner_tree)
+        cnot_struct = self.read_circuit(circuit)
+        gates = self.__execute_with_cnot_struct(cnot_struct)
 
-        if circuit is not None:
-            N = circuit.width()
-            if circuit.topology is None or len(circuit.topology.edge_list) == 0:
-                topo = [[True] * N] * N
-            else:
-                topo = [[False] * N] * N
-                for topology in circuit.topology.edge_list:
-                    topo[topology.u][topology.v] = True
+        if circuit.topology is None or len(circuit.topology.edge_list) == 0:
+            topology = [[True] * self.width] * self.width
         else:
-            N = len(cnot_struct)
-            if topology is None or len(topology) == 0:
-                topo = [[True] * N] * N
+            topology = [[False] * self.width] * self.width
+            for topo in circuit.topology.edge_list:
+                topology[topo.u][topo.v] = True
+
+        output = Circuit(self.width)
+        for gate in gates:
+            c = self.topo_backward_map[gate.carg]
+            t = self.topo_backward_map[gate.targ]
+            if topology[c][t]:
+                CX | output([c, t])
             else:
-                topo = [[False] * N] * N
-                for topos in topology:
-                    topo[topos[0]][topos[1]] = True
+                H | output(c)
+                H | output(t)
+                CX | output([t, c])
+                H | output(c)
+                H | output(t)
+        return output
 
-        output = CompositeGate()
-        for item in ans:
-            c = topo_backward_map[item.carg]
-            t = topo_backward_map[item.targ]
-            if topo[c][t]:
-                gate = build_gate(GateType.cx, [c, t])
-                output.append(gate)
+    def delete_dfs(self, now):
+        """ search for a initial mapping to get (maybe) better topology
+
+        in this order, vertex i is not cut in [i, n)
+
+        Args:
+            now(int): the index of vertex now
+        """
+        self.delete_vis[now] = True
+        for i in range(self.width - 1, -1, -1):
+            if now != i and self.undirected_topology[now][i] and not self.delete_vis[i]:
+                self.delete_dfs(i)
+        self.topo_forward_map[now] = self.delete_total
+        self.topo_backward_map[self.delete_total] = now
+        self.delete_total += 1
+
+    def read_circuit(self, circuit: Circuit):
+        """
+        Transform input circuit to CNOT struct, with the forward and backward topology map calculated
+
+        Args:
+            circuit(Circuit): input circuit
+
+        Returns:
+            list<int>: CNOT struct read from the circuit
+        """
+        self.width = circuit.width()
+        if circuit.topology is None or len(circuit.topology.edge_list) == 0:
+            self.undirected_topology = [[True] * self.width] * self.width
+        else:
+            self.undirected_topology = [[False] * self.width] * self.width
+            for topo in circuit.topology.edge_list:
+                self.undirected_topology[topo.u][topo.v] = True
+                self.undirected_topology[topo.v][topo.u] = True
+
+        self.topo_forward_map = [0] * self.width
+        self.topo_backward_map = [0] * self.width
+        self.delete_vis = [0] * self.width
+        self.delete_total = 0
+        self.delete_dfs(self.width - 1)
+
+        cnot_struct = []
+        for i in range(self.width):
+            cnot_struct.append(1 << i)
+
+        for i in range(len(circuit.gates)):
+            gate = circuit.gates[i]
+            if gate.type == GateType.cx:
+                cnot_struct[self.topo_forward_map[gate.targ]] ^= cnot_struct[self.topo_forward_map[gate.carg]]
+
+        return cnot_struct
+
+    def __execute_with_cnot_struct(self, cnot_struct, topology=None):
+        """
+        Compute the optimized CNOT gates with given CNOT struct
+        Be aware that if this function is used alone, a topology will be necessary
+
+        Args:
+            cnot_struct(list<int>): the struct of cnot circuit
+            topology(list<tuple<int, int>>, optional): topology of circuit
+        """
+        if topology is not None:
+            self.width = len(cnot_struct)
+            if len(topology) == 0:
+                self.undirected_topology = [[True] * self.width] * self.width
             else:
-                gate = build_gate(GateType.h, c)
-                output.append(gate)
-                gate = build_gate(GateType.h, t)
-                output.append(gate)
+                self.undirected_topology = [[False] * self.width] * self.width
+                for topo in topology:
+                    self.undirected_topology[topo[0]][topo[1]] = self.undirected_topology[topo[1]][topo[0]] = True
 
-                gate = build_gate(GateType.cx, [t, c])
-                output.append(gate)
+            self.topo_forward_map = [0] * self.width
+            self.topo_backward_map = [0] * self.width
+            self.delete_vis = [0] * self.width
+            self.delete_total = 0
+            self.delete_dfs(self.width - 1)
 
-                gate = build_gate(GateType.h, c)
-                output.append(gate)
-                gate = build_gate(GateType.h, t)
-                output.append(gate)
-        # return output
-        new_circuit = Circuit(N)
-        new_circuit.extend(output)
-        return new_circuit
+        steiner_tree = SteinerTree(self.width, self.undirected_topology)
+
+        # apply Gaussian Elimination on the matrix
+        gates = []
+
+        for i in range(self.width):
+            j = self.width
+            for t in range(i, self.width):
+                if cnot_struct[t] & (1 << i):
+                    j = t
+                    break
+
+            if j >= self.width:
+                raise Exception("the matrix is not singular matrix")
+
+            # find a line that the ith bit is 1, and find a path to make the ith bit of ith line 1
+            pre = [-1] * self.width
+            if i != j:
+                bfs = Queue()
+                bfs.put(j)
+                while not bfs.empty():
+                    u = bfs.get()
+                    for j in range(i, self.width):
+                        if j != u and self.undirected_topology[u][j]:
+                            if pre[j] == -1:
+                                pre[j] = u
+                                if j == i:
+                                    break
+                                bfs.put(j)
+                    if pre[i] != -1:
+                        break
+
+            paths = [i]
+            u = pre[i]
+            while u != -1:
+                paths.append(u)
+                u = pre[u]
+
+            for j in range(len(paths) - 2, -1, -1):
+                cnot_struct[paths[j]] ^= cnot_struct[paths[j + 1]]
+                gate = build_gate(GateType.cx, [paths[j + 1], paths[j]])
+                gates.append(gate)
+
+            # elimination below rows
+            needCover = []
+            for j in range(i + 1, self.width):
+                if cnot_struct[j] & (1 << i):
+                    needCover.append(j)
+            if len(needCover) > 0:
+                needCover.append(i)
+                steiner_tree.build_ST(needCover, i)
+                steiner_tree.elimination_below(cnot_struct, gates)
+
+            # elimination this row
+
+            # find a set S whose summation in equal to row 1 except column i
+            back_gauss_elimination = [0] * (i + 1)
+            xor_result = [0] * (i + 1)
+            for j in range(i + 1, self.width):
+                back_gauss_elimination.append(cnot_struct[j])
+                xor_result.append(1 << j)
+
+            for j in range(i + 1, self.width):
+                k = self.width
+                for t in range(j, self.width):
+                    if back_gauss_elimination[t] & (1 << j):
+                        k = t
+                        break
+                if k == self.width:
+                    raise Exception("the matrix is not singular matrix")
+                back_gauss_elimination[k], back_gauss_elimination[j] = \
+                    back_gauss_elimination[j], back_gauss_elimination[k]
+                xor_result[k], xor_result[j] = xor_result[j], xor_result[k]
+                for k in range(j + 1, self.width):
+                    if back_gauss_elimination[k] & (1 << j):
+                        back_gauss_elimination[k] ^= back_gauss_elimination[j]
+                        xor_result[k] ^= xor_result[j]
+
+            val = cnot_struct[i]
+            S_element = 0
+            for j in range(i + 1, self.width):
+                if val & (1 << j):
+                    val ^= back_gauss_elimination[j]
+                    S_element ^= xor_result[j]
+
+            needCover = []
+            for j in range(i + 1, self.width):
+                if S_element & (1 << j):
+                    needCover.append(j)
+
+            if len(needCover) > 0:
+                needCover.append(i)
+                steiner_tree.build_ST(needCover, i)
+                steiner_tree.elimination_above(cnot_struct, gates)
+
+        gates.reverse()
+        return gates

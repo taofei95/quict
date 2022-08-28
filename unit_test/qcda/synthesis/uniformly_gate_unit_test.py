@@ -4,54 +4,50 @@
 # @Author  : Han Yu
 # @File    : unit_test.py
 
-import pytest
 import random
 
 import numpy as np
+from scipy.stats import unitary_group
 
 from QuICT.algorithm import SyntheticalUnitary
 from QuICT.core import *
 from QuICT.core.gate import *
-from QuICT.qcda.synthesis import UniformlyRy, UniformlyRz, UniformlyUnitary
+from QuICT.qcda.synthesis import UniformlyRotation, UniformlyUnitary
 
 
-def generate_unitary():
-    matrix = U3(random.random() * np.pi, random.random() * np.pi, random.random() * np.pi).matrix
-    matrix[:] *= np.exp(2j * np.pi * random.random())
-    # matrix = U3(np.pi / 2, np.pi / 2, np.pi / 2).matrix
-    return matrix
-
-
-def test_uniform_ry():
+def test_uniformly_ry():
     for _ in range(10):
         for i in range(1, 6):
             circuit = Circuit(i)
             angles = [random.random() for _ in range(1 << (i - 1))]
-            UniformlyRy.execute(angles) | circuit
+            URy = UniformlyRotation(GateType.ry)
+            URy.execute(angles) | circuit
             unitary = SyntheticalUnitary.run(circuit)
             for j in range(1 << (i - 1)):
                 unitary_slice = unitary[2 * j:2 * (j + 1), 2 * j:2 * (j + 1)]
-                assert not np.any(abs(unitary_slice - Ry(angles[j]).matrix.reshape(2, 2)) > 1e-10)
+                assert np.allclose(unitary_slice, Ry(angles[j]).matrix)
 
 
-def test_uniform_rz():
+def test_uniformly_rz():
     for _ in range(10):
         for i in range(1, 6):
             circuit = Circuit(i)
             angles = [random.random() for _ in range(1 << (i - 1))]
-            UniformlyRz.execute(angles) | circuit
+            URz = UniformlyRotation(GateType.rz)
+            URz.execute(angles) | circuit
             unitary = SyntheticalUnitary.run(circuit)
             for j in range(1 << (i - 1)):
                 unitary_slice = unitary[2 * j:2 * (j + 1), 2 * j:2 * (j + 1)]
-                assert not np.any(abs(unitary_slice - Rz(angles[j]).matrix.reshape(2, 2)) > 1e-10)
+                assert np.allclose(unitary_slice, Rz(angles[j]).matrix)
 
 
-def test_uniform_unitary():
+def test_uniformly_unitary():
     for _ in range(10):
         for i in range(1, 6):
             circuit = Circuit(i)
-            unitaries = [generate_unitary() for _ in range(1 << (i - 1))]
-            UniformlyUnitary.execute(unitaries) | circuit
+            unitaries = [unitary_group.rvs(2) for _ in range(1 << (i - 1))]
+            UUnitary = UniformlyUnitary()
+            UUnitary.execute(unitaries) | circuit
             unitary = SyntheticalUnitary.run(circuit)
             if abs(unitary[0, 0]) > 1e-10:
                 delta = unitaries[0][0][0] / unitary[0, 0]
@@ -60,10 +56,4 @@ def test_uniform_unitary():
             for j in range(1 << (i - 1)):
                 unitary_slice = unitary[2 * j:2 * (j + 1), 2 * j:2 * (j + 1)]
                 unitary_slice[:] *= delta
-                phase = np.any(abs(unitary_slice - unitaries[j].reshape(2, 2)) > 1e-6)
-                if phase:
-                    assert 0
-
-
-if __name__ == "__main__":
-    pytest.main(["./unit_test.py"])
+                assert np.allclose(unitary_slice, unitaries[j].reshape(2, 2))

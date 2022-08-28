@@ -4,28 +4,41 @@
 # @Author  : Han Yu
 # @File    : unit_test
 
-import pytest
+import numpy as np
+from scipy.stats import unitary_group
 
-from QuICT.core import *
-from QuICT.qcda.synthesis.gate_transform import *
-
-
-def test_SU2():
-    assert XyxRule.check_equal()
-    assert IbmqRule.check_equal()
-    assert ZyzRule.check_equal()
-    assert XzxRule.check_equal()
+from QuICT.core.gate import build_gate
+from QuICT.qcda.synthesis.gate_transform.transform_rule import *
 
 
-def test_rules_transform():
-    gateList = [CX, CY, CZ, CH, CRz, Rxx, Ryy, Rzz, FSim]
-    from QuICT.qcda.synthesis.gate_transform.instruction_set import _generate_default_rule
-    for i in range(len(gateList)):
-        for j in range(len(gateList)):
-            if i != j:
-                rule = _generate_default_rule(gateList[i], gateList[j])
-                assert rule.check_equal(ignore_phase=False)
+def test_one_qubit_rules():
+    for _ in range(20):
+        mat = unitary_group.rvs(2)
+        for rule in [xyx_rule, zyz_rule, ibmq_rule]:
+            unitary = Unitary(mat) & 0
+            gates = rule(unitary)
+            phase = np.dot(gates.matrix(), np.linalg.inv(mat))
+            assert np.allclose(phase, phase * np.identity(2))
 
 
-if __name__ == "__main__":
-    pytest.main(["./unit_test.py"])
+def test_two_qubit_rules():
+    typelist = [
+        GateType.cx,
+        GateType.cy,
+        GateType.cz,
+        GateType.ch,
+        GateType.crz,
+        GateType.Rxx,
+        GateType.Ryy,
+        GateType.Rzz,
+        GateType.fsim
+    ]
+    for source in typelist:
+        for target in typelist:
+            if source != target:
+                rule = eval(f"{source.name}2{target.name}_rule")
+                gate = build_gate(source, [0, 1])
+                if gate.params:
+                    gate.pargs = list(np.random.uniform(0, 2 * np.pi, gate.params))
+                gates = rule(gate)
+                assert np.allclose(gate.matrix, gates.matrix())

@@ -1,5 +1,3 @@
-import pytest
-
 import numpy as np
 
 from QuICT.core import Circuit
@@ -32,10 +30,7 @@ def test():
             circuit = Circuit(n)
             circuit.random_append(20 * n, clifford)
             gates = CompositeGate(gates=circuit.gates)
-            gates_opt = SymbolicCliffordOptimization.execute(gates)
+            SCO = SymbolicCliffordOptimization()
+            gates_opt = SCO.execute(gates)
             # np.set_printoptions(precision=3, suppress=True)
             assert np.allclose(gates.matrix(), gates_opt.matrix())
-
-
-if __name__ == '__main__':
-    pytest.main(["./unit_test.py"])
