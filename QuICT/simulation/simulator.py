@@ -11,7 +11,7 @@ from QuICT.core.noise import NoiseModel
 from QuICT.simulation.state_vector import CircuitSimulator
 from QuICT.simulation.unitary import UnitarySimulator
 from QuICT.simulation.density_matrix import DensityMatrixSimulation
-from QuICT.simulation.utils import Result
+from QuICT.simulation.utils import Result, options_validation
 
 
 class Simulator:
@@ -21,6 +21,7 @@ class Simulator:
         device (str): The device of the simulator. One of [CPU, GPU, qiskit, qcompute]
         backend (str): The backend for the simulator. One of [unitary, state_vector, density_matrix]
         shots (int): The running times; must be a positive integer, default to 1.
+        precision (str): The precision of simulator, one of [single, double], default to double.
         circuit_record (bool): whether record circuit's qasm in output, default to False.
         amplitude_record (bool): whether record the amplitude of qubits, default to False.
         **options (dict): other optional parameters for the simulator.
@@ -49,17 +50,14 @@ class Simulator:
 
         assert (shots >= 1)
         self._shots = shots
-        self._options = self._validate_options(options=options)
+        if options_validation(options=options, device=self._device, backend=self._backend):
+            self._options = options
+        else:
+            raise KeyError(f"Unmatched options arguments depending on {self._device} and {self._backend}.")
 
         # Result's arguments
         self._circuit_record = circuit_record
         self._amplitude_record = amplitude_record
-
-    def _validate_options(self, options):
-        for key in options.keys():
-            assert key in Simulator.__DEFAULT_OPTIONS, f"Unrecognized simulator's options {key}"
-
-        return options
 
     def _load_simulator(self):
         """ Initial simulator. """
@@ -95,7 +93,7 @@ class Simulator:
             use_previous (bool, optional): Using the previous state vector. Defaults to False.
 
         Yields:
-            [array]: The state vector.
+            [dict]: The Result Dict.
         """
         if not isinstance(circuit, Circuit):
             self._backend = "unitary"

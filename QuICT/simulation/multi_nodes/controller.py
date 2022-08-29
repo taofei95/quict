@@ -11,6 +11,7 @@ from QuICT.core import Circuit
 from .transpile import Transpile
 from .multi_nodes_simulator import MultiNodesSimulator
 from QuICT.ops.linalg.gpu_calculator import VectorPermutation
+from QuICT.simulation.utils import options_validation
 
 
 if mp.get_start_method(allow_none=True) != "spawn":
@@ -52,7 +53,11 @@ class MultiNodesController:
         self.ndev = ndev
         self._device_type = dev_type
         self._mode_type = mode
-        self._options = options
+        if options_validation(options=options, device="GPU", backend="state_vector"):
+            self._options = options
+        else:
+            raise KeyError("Unmatched options arguments depending on GPU and state_vector.")
+
         self._transpiler = Transpile(self.ndev)
 
     def run(self, circuit: Circuit):
