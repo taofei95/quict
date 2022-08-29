@@ -29,28 +29,42 @@ class Grover:
     Quantum Computation and Quantum Information - Michael A. Nielsen & Isaac L. Chuang
     """
 
-    @staticmethod
-    def circuit(n, k, oracle, m=1, measure=True):
-        """ grover search for f with custom oracle
-
+    def __init__(self, n, n_ancilla, oracle, n_solution=1, measure=True, simulator=CircuitSimulator()) -> None:
+        """
         Args:
             n(int): the length of input of f
-            k(int): length of oracle working space. assume clean
+            n_ancilla(int): length of oracle working space. assume clean
             oracle(CompositeGate): the oracle that flip phase of target state.
                 [0:n] is index qreg,
                 [n:n+k] is ancilla
-            m(int): number of solution 
+            n_solution(int): number of solution 
             measure(bool): measure included or not
+        """
+        assert n_ancilla > 0, "at least 1 ancilla, which is shared by MCT part"
+        self.n = n
+        self.n_ancilla = n_ancilla
+        self.oracle = oracle
+        self.n_solution = n_solution
+        self.measure = measure
+        self.simulator = simulator
+
+    def circuit(self):
+        """ grover search for f with custom oracle
+
         Returns:
             int: the a satisfies that f(a) = 1
         """
-        assert k > 0, "at least 1 ancilla, which is shared by MCT part"
-        circuit = Circuit(n + k)
+        n = self.n
+        n_ancilla = self.n_ancilla
+        oracle = self.oracle
+        n_solution = self.n_solution
+        measure = self.measure
+        circuit = Circuit(n + n_ancilla)
         index_q = list(range(n))
-        ancilla_q = list(range(n, n + k))
+        ancilla_q = list(range(n, n + n_ancilla))
         N = 2 ** n
-        theta = 2 * np.arccos(np.sqrt(1 - m / N))
-        T = int(np.arccos(np.sqrt(m / N)) / theta)+1
+        theta = 2 * np.arccos(np.sqrt(1 - n_solution / N))
+        T = int(np.arccos(np.sqrt(n_solution / N)) / theta)+1
 
         # create equal superposition state in index_q
         for idx in index_q:
@@ -76,16 +90,15 @@ class Grover:
         for idx in index_q:
             if measure:
                 Measure | circuit(idx)
-        logging.info(f"circuit width          = {circuit.width():4}")
-        # logging.info(f"circuit depth          = {circuit.depth():4}")
-        logging.info(f"oracle  calls          = {T:4}")
-        # logging.info(f"oracle  size           = {oracle.size():4}")
-        logging.info(f"other circuit size     = {circuit.size() - oracle.size()*T:4}")
+        logging.info(
+            f"circuit width          = {circuit.width():4}" +
+            f"oracle  calls          = {T:4}" +
+            f"other circuit size     = {circuit.size() - oracle.size()*T:4}"
+        )
         return circuit
 
-    @staticmethod
-    def run(n, k, oracle, simulator=CircuitSimulator()):
-        index_q = list(range(n))
-        circuit = Grover.circuit(n, k, oracle)
-        simulator.run(circuit)
+    def run(self):
+        index_q = list(range(self.n))
+        circuit = self.circuit()
+        self.simulator.run(circuit)
         return int(circuit[index_q])

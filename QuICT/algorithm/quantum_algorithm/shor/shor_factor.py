@@ -40,7 +40,7 @@ class ShorFactor:
     }
 
     # add a, N here
-    def __init__(self, mode: str, N: int, eps: float = 1 / 10, max_rd: int = 2) -> None:
+    def __init__(self, mode: str, N: int, eps: float = 1 / 10, max_rd: int = 2, simulator=CircuitSimulator()) -> None:
         random.seed(2022)
         a = N
         while gcd(a, N) != 1:
@@ -54,6 +54,7 @@ class ShorFactor:
         self.N = N
         self.eps = eps
         self.max_rd = max_rd
+        self.simulator = simulator
 
     def circuit(self) -> Tuple[Circuit, List[int]]:
         """construct the quantum part of Shor algorithm, i.e. order finding circuit
@@ -66,11 +67,20 @@ class ShorFactor:
 
     def run(
         self,
-        simulator=CircuitSimulator(),
         circuit: Circuit = None,
         indices: List = None,
         forced_quantum_approach = False
     ) -> int:
+        """run full factoring algorithm.
+
+        Args:
+            circuit (Circuit, optional): if None, a circuit will be constructed for order finding purpose; else the given circuit is used as order finding circuit. Defaults to None.
+            indices (List, optional): The indices of $\ket{n}$. Only used when `circuit` is not None. Defaults to None.
+            forced_quantum_approach (bool, optional): If true, only x that gcd(x,N)=1 will be used. Defaults to False.
+
+        Returns:
+            int: the factor
+        """
         # check if input is prime (using MillerRabin in klog(N), k is the number of rounds to run MillerRabin)
         if miller_rabin(self.N):
             logging.info("N does not pass miller rabin test, may be a prime number")
@@ -96,6 +106,7 @@ class ShorFactor:
                 return u2
         rd = 0
         while rd < self.max_rd:
+            logging.info(f"round = {rd}")
             # 3. Choose a random number a (1<a<N)
             if forced_quantum_approach:
                 logging.info(f"forced quantum approach, looking for coprime number...")
@@ -112,7 +123,6 @@ class ShorFactor:
                         f"Shor succeed: randomly chosen a = {a}, who has common factor {gcd} with N classically"
                     )
                     return gcd
-            logging.info(f"round = {rd}")
             rd += 1
             # 4. Use quantum order-finding algorithm to find the order of a
             logging.info(
@@ -121,10 +131,10 @@ class ShorFactor:
             # check if any input circuit. if no, run according to `mode`; else run the input circuit
             if circuit is None:
                 r = ShorFactor._RUN_METHOD_OF_MODE[self.mode](
-                    a=a, N=self.N, simulator=simulator
+                    a=a, N=self.N, simulator=self.simulator
                 )
             else:
-                simulator.run(circuit)
+                self.simulator.run(circuit)
                 if len(indices) > 0 and type(indices[0]) == int:
                     phi = int(circuit[indices]) / (1 << len(indices))
                 elif len(indices) > 0 and type(indices[0]) == Trigger:

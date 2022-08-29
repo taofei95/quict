@@ -15,7 +15,6 @@ from QuICT.algorithm.quantum_algorithm.shor.HRS_zip import (
 )
 import logging
 
-from QuICT.simulation.gpu_simulator import ConstantStateVectorSimulator
 from QuICT.simulation.cpu_simulator.cpu import CircuitSimulator
 
 simulator = CircuitSimulator()

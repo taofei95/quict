@@ -174,8 +174,6 @@ class CompositeGate:
                 self._min_qubit = idx
 
     def extend(self, gates: list):
-        if type(gates) == CompositeGate:
-            gates = gates.gates
         for gate in gates:
             self.append(gate, is_extend=True)
 
