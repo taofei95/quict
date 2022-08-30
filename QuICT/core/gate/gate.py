@@ -3,9 +3,9 @@
 # @TIME    : 2022/1/17 9:04
 # @Author  : Han Yu, Li Kaiqi
 # @File    : gate.py
+import copy
 from typing import Union
 import numpy as np
-import copy
 
 from QuICT.core.utils import (
     GateType, MatrixType, SPECIAL_GATE_SET, DIAGONAL_GATE_SET, CGATE_LIST,
@@ -410,8 +410,8 @@ class BasicGate(object):
             for i in range(len(goal_masked)):
                 goal_masked[i] = qubits_dict[goal_masked[i]]
             # Compute the matrix commutation
-            self_matrix = self.expand(len(qubits))
-            goal_matrix = goal.expand(len(qubits))
+            self_matrix = self.expand(list(qubits))
+            goal_matrix = goal.expand(list(qubits))
             return np.allclose(self_matrix.dot(goal_matrix), goal_matrix.dot(self_matrix), rtol=eps, atol=eps)
 
     def is_single(self) -> bool:
@@ -469,15 +469,27 @@ class BasicGate(object):
         """
         return self.type in SPECIAL_GATE_SET
 
-    def expand(self, qubits_num: int) -> bool:
-        """ expand self matrix into the circuit's unitary linear space
+    def expand(self, qubits: Union[int, list]) -> bool:
+        """ expand self matrix into the circuit's unitary linear space. If input qubits is integer, please make sure
+        the indexes of current gate is within [0, qubits).
 
         Args:
-            qubits_num (int): the number of qubits of the target circuit.
+            qubits Union[int, list]: the total number of qubits of the target circuit or the indexes of expand qubits.
         """
-        assert qubits_num > self.controls + self.targets
+        if isinstance(qubits, int):
+            qubits = list(range(qubits))
 
-        return matrix_product_to_circuit(self.matrix, self.cargs + self.targs, qubits_num)
+        qubits_num = len(qubits)
+        if qubits_num == self.controls + self.targets:
+            return self.matrix
+
+        assert qubits_num > self.controls + self.targets, "The expand qubits' num should larger than gate's qubits num."
+        gate_args = self.cargs + self.targs
+        if len(gate_args) == 0:     # Deal with not assigned quantum gate
+            gate_args = [qubits[i] for i in range(self.controls + self.targets)]
+
+        updated_args = [qubits.index(garg) for garg in gate_args]
+        return matrix_product_to_circuit(self.matrix, updated_args, qubits_num)
 
     def copy(self):
         """ return a copy of this gate
