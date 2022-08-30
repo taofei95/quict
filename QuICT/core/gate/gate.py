@@ -685,8 +685,8 @@ class SXGate(BasicGate):
         )
 
         self.matrix = np.array([
-            [1 / np.sqrt(2), -1j / np.sqrt(2)],
-            [-1j / np.sqrt(2), 1 / np.sqrt(2)]
+            [0.5 + 0.5j, 0.5 - 0.5j],
+            [0.5 - 0.5j, 0.5 + 0.5j]
         ], dtype=self._precision)
 
     def inverse(self):
