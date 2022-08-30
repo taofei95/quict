@@ -13,6 +13,7 @@ class CircuitVnodeProcessor:
     def __init__(
         self,
         max_qubit_num: int,
+        max_layer_num: int,
         working_dir: str = None,
     ) -> None:
         if working_dir is None:
@@ -21,9 +22,11 @@ class CircuitVnodeProcessor:
         self._data_dir = osp.join(working_dir, "data")
         self._circ_dir = osp.join(self._data_dir, "circ")
         self._topo_dir = osp.join(self._data_dir, "topo")
-        self._processed_dir = osp.join(self._data_dir, "processed_vnode")
+        self._processed_dir = osp.join(self._data_dir, "processed_graphormer")
 
         self._max_qubit_num = max_qubit_num
+        self._max_layer_num = max_layer_num
+        self._max_dist = 2 * max_layer_num
 
         self._circ_path_list = list(self._load_circuits_path())
 
@@ -54,14 +57,14 @@ class CircuitVnodeProcessor:
             nx.Graph: Graph representation.
         """
         g = nx.Graph()
-        for i in range(self._max_qubit_num + 1):
+        for i in range(self._max_qubit_num):
             g.add_node(i)
         for edge in topo.edge_list:
             edge: LayoutEdge
             g.add_edge(edge.u, edge.v)
         return g
 
-    def _build_circ_repr(self, circ: Circuit, max_layer_num: int) -> nx.Graph:
+    def _build_circ_repr(self, circ: Circuit) -> nx.Graph:
         """Build a graph representation of a circuit.
         The circuit is divided into layers and each layer
         is built into a sub graph with respect to qubits.
@@ -70,14 +73,15 @@ class CircuitVnodeProcessor:
 
         Args:
             circ (Circuit): Circuit to be built.
-            max_layer_num (int): Maximal number of layers of circuit. If the
-            circuit has fewer layers, some empty layers will be padded. If the
-            circuit has more layers, extra layers will be dropped.
+                If circuit has fewer layers, some empty layers will be padded. If the
+                circuit has more layers, extra layers will be dropped.
 
         Returns:
             nx.Graph: Graph representation.
         """
-        layers_raw: List[List[Tuple[int, int]]] = [[] for _ in range(max_layer_num)]
+        layers_raw: List[List[Tuple[int, int]]] = [
+            [] for _ in range(self._max_layer_num)
+        ]
         occupied = [-1 for _ in range(self._max_qubit_num)]
         for gate in circ.gates:
             gate: BasicGate
@@ -96,67 +100,67 @@ class CircuitVnodeProcessor:
             g.add_node(i)
         for layer_idx, layer in enumerate(layers_raw):
             offset = layer_idx * self._max_qubit_num + 1
-            if layer_idx == 0:
-                for b in range(offset, offset + self._max_qubit_num):
-                    g.add_edge(b, 0)
-            if layer_idx > 0:
-                for b in range(offset, offset + self._max_qubit_num):
-                    g.add_edge(b, b - self._max_qubit_num)
+            for b in range(self._max_qubit_num):
+                prev = 0 if layer_idx == 0 else b + offset - self._max_qubit_num
+                g.add_edge(b + offset, prev)
             for u, v in layer:
                 g.add_edge(u + offset, v + offset)
         return g
 
     def get_spacial_encoding(
-        self, graph: nx.Graph, max_topology_diameter: int
+        self, circ_graph: nx.Graph, topo: Layout = None
     ) -> torch.IntTensor:
-        """Build the spacial encoding of a given graph. A spacial
+        """Build the spacial encoding of a given graph. The spacial encoding
+        will be masked by corresponding physical topology. A spacial
         encoding is similar to a shortest path matrix except that the
-        shortest path corresponding with special virtual node is set as -1.
+        vertex pair we do not need is set as 0 distance.
 
         Args:
-            graph (nx.Graph): Graph to be handled. The input graph must
-            have consecutive node indices starting from 0. You must
-            guarantee that 0 is the virtual node.
+            circ_graph (nx.Graph): Graph to be handled. The input graph must
+                have consecutive node indices starting from 0. You must
+                guarantee that 0 is the virtual node.
+            topo (Layout): Topology of the physical device.
 
         Returns:
             torch.IntTensor: Spacial encoding matrix WITHOUT embedding.
+                If there's no available path between two nodes, the
+                distance will be marked as 0.
         """
-        num_node = len(graph.nodes)
-        _inf = max_topology_diameter + 2
-        dist = [[_inf for _ in range(num_node)] for _ in range(num_node)]
+        num_node = len(circ_graph.nodes)
+        dist = [[0 for _ in range(num_node)] for _ in range(num_node)]
         dist = torch.IntTensor(dist)
-        for i in range(num_node):
-            dist[i][i] = 0
 
-        sp = nx.all_pairs_shortest_path_length(graph)
+        topo_graph = self._build_topo_repr(topo=topo)
+        topo_dist = [
+            [0 for _ in range(self._max_qubit_num)] for _ in range(self._max_qubit_num)
+        ]
+        sp = nx.all_pairs_shortest_path_length(topo_graph)
         for u, row in sp:
             for v, d in row.items():
-                dist[u][v] = d
+                topo_dist[u][v] = d
+                topo_dist[v][u] = d
+        topo_dist = torch.IntTensor(topo_dist)
+
+        # Virtual node and first layer
+        for b in range(self._max_qubit_num):
+            dist[0][b + 1] = 1
+            dist[b + 1][0] = 1
+        for layer_idx in range(1, self._max_layer_num):
+            offset = 1 + layer_idx * self._max_qubit_num
+            # Inter-layer connections
+            for b in range(self._max_qubit_num):
+                prev = b + offset - self._max_qubit_num
+                dist[b][prev] = 1
+                dist[prev][b] = 1
+            # Inner-layer connections
+            for u in range(self._max_qubit_num):
+                for v in range(self._max_qubit_num):
+                    if circ_graph.has_edge(u + offset, v + offset):
+                        dist[u + offset][v + offset] = topo_dist[u][v]
+                        dist[v + offset][u + offset] = topo_dist[u][v]
 
         return dist
 
-    # def get_spacing_encoding_scale_factor(
-    #     self, graph: nx.Graph, max_qubit_num: int, penalty_factor: float = 0.8
-    # ) -> torch.Tensor:
-    #     """Get the scale factor for spacial encoding. This is
-    #     used as penalty for remote layers in circuit.
 
-    #     Args:
-    #         graph (nx.Graph): Layered graph of a circuit, including a virtual node labeled with 0.
-    #         max_qubit_num (int): Qubit number AFTER padding.
-
-    #     Return:
-    #         torch.Tensor: Factor tensor shaped as (n, 1).
-    #     """
-    #     num_node = len(graph.nodes)
-    #     layer_num = (num_node - 1) // max_qubit_num
-    #     assert layer_num * max_qubit_num + 1 == num_node
-
-    #     penalty = 1
-    #     factors = torch.empty((num_node, 1), dtype=torch.float)
-    #     factors[0][0] = 1.0
-    #     for layer in range(layer_num):
-    #         for i in range(layer * max_qubit_num + 1, (layer + 1) * max_qubit_num + 1):
-    #             factors[i][0] = penalty
-    #         penalty *= penalty_factor
-    #     return factors
+if __name__ == "__main__":
+    pass

@@ -8,14 +8,12 @@ import networkx as nx
 import numpy as np
 import torch
 from QuICT.core.circuit.circuit import Circuit
-from QuICT.core.gate.composite_gate import CompositeGate
 from QuICT.core.gate.gate import BasicGate
 from QuICT.core.layout import Layout, LayoutEdge
 from QuICT.core.utils.circuit_info import CircuitBased
 from QuICT.qcda.mapping.ai.data_def import PairData
 from QuICT.tools.interface import OPENQASMInterface
 from torch_geometric.data import HeteroData
-from torch_geometric.nn.models import Node2Vec
 
 
 class MappingDataProcessor:

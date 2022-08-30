@@ -1,8 +1,7 @@
 import torch
 from QuICT.core import *
-from QuICT.qcda.mapping.ai.circuit_transformer import *
-from QuICT.qcda.mapping.ai.data_processor_vnode import CircuitVnodeProcessor
-import networkx as nx
+from QuICT.qcda.mapping.ai.circuit_graphormer import *
+from QuICT.qcda.mapping.ai.data_processor_graphormer import CircuitVnodeProcessor
 
 
 def test_self_attn():
@@ -110,17 +109,21 @@ def test_biased_graphormer():
 
 def test_circuit_transformer():
     circ = Circuit(10)
+    topo = Layout(10)
+    # Use a cycle topo as example
+    for i in range(10):
+        topo.add_edge(i, (i + 1) % 10)
     circ.random_append(200)
-    max_qubit_num = 50
+    max_qubit_num = 30
     max_layer_num = 10
     feat_dim = 30
-    processor = CircuitVnodeProcessor(max_qubit_num=max_qubit_num)
-
-    circ_graph = processor._build_circ_repr(circ=circ, max_layer_num=max_layer_num)
-    spacial_encoding = processor.get_spacial_encoding(
-        graph=circ_graph, max_topology_diameter=max_qubit_num
+    processor = CircuitVnodeProcessor(
+        max_qubit_num=max_qubit_num, max_layer_num=max_layer_num
     )
-    model = CircuitTransformer(
+
+    circ_graph = processor._build_circ_repr(circ=circ)
+    spacial_encoding = processor.get_spacial_encoding(circ_graph=circ_graph, topo=topo)
+    model = CircuitGraphormer(
         max_qubit_num=max_qubit_num,
         max_topology_diameter=max_qubit_num,
         feat_dim=feat_dim,

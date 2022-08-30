@@ -131,7 +131,7 @@ class BiasedGraphormer(nn.Module):
         return x
 
 
-class CircuitTransformer(nn.Module):
+class CircuitGraphormer(nn.Module):
     def __init__(
         self,
         max_qubit_num: int,

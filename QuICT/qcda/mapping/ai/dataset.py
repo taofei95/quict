@@ -105,22 +105,20 @@ class MappingHeteroDataset(MappingBaseDataset):
             return data, target
 
 
-class MappingLayeredDataset(MappingBaseDataset):
+class MappingGraphormerDataset(MappingBaseDataset):
     def __init__(self, data_dir: str = None, file_names: Iterable[str] = None) -> None:
         super().__init__(data_dir=data_dir, file_names=file_names)
 
-        self.hetero_metadata = self[0][0][0].metadata()
-
     def split_tv(
         self, point: int = 90
-    ) -> Tuple["MappingLayeredDataset", "MappingLayeredDataset"]:
+    ) -> Tuple["MappingGraphormerDataset", "MappingGraphormerDataset"]:
         shuffle(self._file_names)
         p = len(self) * point // 100
         return (
-            MappingLayeredDataset(
+            MappingGraphormerDataset(
                 data_dir=self._data_dir, file_names=self._file_names[:p]
             ),
-            MappingLayeredDataset(
+            MappingGraphormerDataset(
                 data_dir=self._data_dir, file_names=self._file_names[p:]
             ),
         )
@@ -148,22 +146,3 @@ class MappingLayeredDataset(MappingBaseDataset):
         return DataLoader(
             dataset=self, batch_size=batch_size, shuffle=shuffle, collate_fn=_collate_fn
         )
-
-
-# class MappingDataLoaderFactory:
-#     @staticmethod
-#     def get_loader(batch_size: int, shuffle: bool, device, data_dir: str = None):
-#         if data_dir is None:
-#             data_dir = osp.dirname(osp.realpath(__file__))
-#             data_dir = osp.join(data_dir, "data")
-#             data_dir = osp.join(data_dir, "processed")
-
-#         dataset = MappingDataset(data_dir=data_dir)
-
-#         loader = PygDataLoader(
-#             dataset=dataset,
-#             batch_size=batch_size,
-#             shuffle=shuffle,
-#             follow_batch=["x_topo", "x_lc"],
-#         )
-#         return loader
