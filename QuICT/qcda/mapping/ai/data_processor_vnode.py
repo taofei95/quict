@@ -66,6 +66,7 @@ class CircuitVnodeProcessor:
         The circuit is divided into layers and each layer
         is built into a sub graph with respect to qubits.
         All subgraphs will be connected by qubits.
+        A virtual node (labeled as 0) will be connected with all the qubits in the first layer.
 
         Args:
             circ (Circuit): Circuit to be built.
@@ -93,15 +94,16 @@ class CircuitVnodeProcessor:
         g = nx.Graph()
         for i in range(self._max_qubit_num * len(layers_raw) + 1):
             g.add_node(i)
-        for idx, layer in enumerate(layers_raw):
-            offset = idx * self._max_qubit_num + 1
-            for b in range(offset, offset + self._max_qubit_num):
-                g.add_edge(b, 0)
+        for layer_idx, layer in enumerate(layers_raw):
+            offset = layer_idx * self._max_qubit_num + 1
+            if layer_idx == 0:
+                for b in range(offset, offset + self._max_qubit_num):
+                    g.add_edge(b, 0)
+            if layer_idx > 0:
+                for b in range(offset, offset + self._max_qubit_num):
+                    g.add_edge(b, b - self._max_qubit_num)
             for u, v in layer:
                 g.add_edge(u + offset, v + offset)
-            # if idx > 0:
-            #     for i in range(offset, offset + self._max_qubit_num):
-            #         g.add_edge(i, i - self._max_qubit_num)
         return g
 
     def get_spacial_encoding(
@@ -131,36 +133,30 @@ class CircuitVnodeProcessor:
             for v, d in row.items():
                 dist[u][v] = d
 
-        v = 0
-        for i in range(num_node):
-            dist[v][i] = max_topology_diameter + 1
-            dist[i][v] = max_topology_diameter + 1
-        dist[v][v] = 0
-
         return dist
 
-    def get_spacing_encoding_scale_factor(
-        self, graph: nx.Graph, max_qubit_num: int, penalty_factor: float = 0.8
-    ) -> torch.Tensor:
-        """Get the scale factor for spacial encoding. This is
-        used as penalty for remote layers in circuit.
+    # def get_spacing_encoding_scale_factor(
+    #     self, graph: nx.Graph, max_qubit_num: int, penalty_factor: float = 0.8
+    # ) -> torch.Tensor:
+    #     """Get the scale factor for spacial encoding. This is
+    #     used as penalty for remote layers in circuit.
 
-        Args:
-            graph (nx.Graph): Layered graph of a circuit, including a virtual node labeled with 0.
-            max_qubit_num (int): Qubit number AFTER padding.
+    #     Args:
+    #         graph (nx.Graph): Layered graph of a circuit, including a virtual node labeled with 0.
+    #         max_qubit_num (int): Qubit number AFTER padding.
 
-        Return:
-            torch.Tensor: Factor tensor shaped as (n, 1).
-        """
-        num_node = len(graph.nodes)
-        layer_num = (num_node - 1) // max_qubit_num
-        assert layer_num * max_qubit_num + 1 == num_node
+    #     Return:
+    #         torch.Tensor: Factor tensor shaped as (n, 1).
+    #     """
+    #     num_node = len(graph.nodes)
+    #     layer_num = (num_node - 1) // max_qubit_num
+    #     assert layer_num * max_qubit_num + 1 == num_node
 
-        penalty = 1
-        factors = torch.empty((num_node, 1), dtype=torch.float)
-        factors[0][0] = 1.0
-        for layer in range(layer_num):
-            for i in range(layer * max_qubit_num + 1, (layer + 1) * max_qubit_num + 1):
-                factors[i][0] = penalty
-            penalty *= penalty_factor
-        return factors
+    #     penalty = 1
+    #     factors = torch.empty((num_node, 1), dtype=torch.float)
+    #     factors[0][0] = 1.0
+    #     for layer in range(layer_num):
+    #         for i in range(layer * max_qubit_num + 1, (layer + 1) * max_qubit_num + 1):
+    #             factors[i][0] = penalty
+    #         penalty *= penalty_factor
+    #     return factors

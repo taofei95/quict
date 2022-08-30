@@ -167,11 +167,10 @@ class CircuitTransformer(nn.Module):
         self,
         x: torch.Tensor,
         spacial_encoding: torch.IntTensor,
-        encoding_factor: torch.Tensor,
     ):
         se = self._spacial_emedding(spacial_encoding)
         se = torch.squeeze(se, dim=-1)
-        attn_bias = se * encoding_factor
+        attn_bias = se
 
         x = self._graphomer(x, attn_bias)
 

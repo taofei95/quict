@@ -1,5 +1,5 @@
 torch_runs/
 model/
-test/
+tmp/
 data/
 !data/topo

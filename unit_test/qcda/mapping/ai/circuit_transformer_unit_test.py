@@ -109,12 +109,10 @@ def test_circuit_transformer():
     max_layer_num = 10
     feat_dim = 30
     processor = CircuitVnodeProcessor(max_qubit_num=max_qubit_num)
+    
     circ_graph = processor._build_circ_repr(circ=circ, max_layer_num=max_layer_num)
     spacial_encoding = processor.get_spacial_encoding(
         graph=circ_graph, max_topology_diameter=max_qubit_num
-    )
-    encoding_scale_factor = processor.get_spacing_encoding_scale_factor(
-        graph=circ_graph, max_qubit_num=max_qubit_num
     )
     model = CircuitTransformer(
         max_qubit_num=max_qubit_num,
@@ -124,16 +122,13 @@ def test_circuit_transformer():
         max_layer_num=10,
     )
     x = torch.randn(max_qubit_num * max_layer_num + 1, feat_dim)
-    y_no_batch = model(x, spacial_encoding, encoding_scale_factor)
+    y_no_batch = model(x, spacial_encoding)
     assert y_no_batch.shape == x.shape
 
     batch_size = 3
     x = torch.randn(batch_size, max_qubit_num * max_layer_num + 1, feat_dim)
     spacial_encoding = torch.stack([spacial_encoding for _ in range(batch_size)])
-    encoding_scale_factor = torch.stack(
-        [encoding_scale_factor for _ in range(batch_size)]
-    )
-    y_batch = model(x, spacial_encoding, encoding_scale_factor)
+    y_batch = model(x, spacial_encoding)
     assert y_batch.shape == x.shape
 
 
