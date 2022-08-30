@@ -171,8 +171,15 @@ class CircuitBased(object):
         assert device in ["CPU", "GPU"]
         circuit_matrix = CircuitMatrix(device)
 
-        if not self._gates:
-            return None
+        if self.size() == 0:
+            if device == "CPU":
+                circuit_matrix = np.identity(1 << self.width(), dtype=np.complex128)
+            else:
+                import cupy as cp
+
+                circuit_matrix = cp.identity(1 << self.width(), dtype=np.complex128)
+
+            return circuit_matrix
 
         if self.size() > self.count_1qubit_gate() + self.count_2qubit_gate():
             self.gate_decomposition()
