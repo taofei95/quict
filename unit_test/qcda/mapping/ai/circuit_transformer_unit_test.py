@@ -41,7 +41,9 @@ def test_multi_head_attn():
 
                 for batch_size in [1, 3, 5]:
                     x_batch = torch.randn(batch_size, node_num, feat_dim)
-                    attn_bias_batch = torch.stack([attn_bias for _ in range(batch_size)])
+                    attn_bias_batch = torch.stack(
+                        [attn_bias for _ in range(batch_size)]
+                    )
                     with torch.no_grad():
                         y_batch = model(x_batch)
                         assert y_batch.shape == x_batch.shape
@@ -64,7 +66,9 @@ def test_circuit_transformer_layer():
 
                 for batch_size in [1, 3, 5]:
                     x_batch = torch.randn(batch_size, node_num, feat_dim)
-                    attn_bias_batch = torch.stack([attn_bias for _ in range(batch_size)])
+                    attn_bias_batch = torch.stack(
+                        [attn_bias for _ in range(batch_size)]
+                    )
                     with torch.no_grad():
                         y_batch = model(x_batch)
                         assert y_batch.shape == x_batch.shape
@@ -94,7 +98,9 @@ def test_biased_graphormer():
 
                     for batch_size in [1, 3, 5]:
                         x_batch = torch.randn(batch_size, node_num, feat_dim)
-                        attn_bias_batch = torch.stack([attn_bias for _ in range(batch_size)])
+                        attn_bias_batch = torch.stack(
+                            [attn_bias for _ in range(batch_size)]
+                        )
                         with torch.no_grad():
                             y_batch = model(x_batch)
                             assert y_batch.shape == x_batch.shape
@@ -109,7 +115,7 @@ def test_circuit_transformer():
     max_layer_num = 10
     feat_dim = 30
     processor = CircuitVnodeProcessor(max_qubit_num=max_qubit_num)
-    
+
     circ_graph = processor._build_circ_repr(circ=circ, max_layer_num=max_layer_num)
     spacial_encoding = processor.get_spacial_encoding(
         graph=circ_graph, max_topology_diameter=max_qubit_num
@@ -123,13 +129,13 @@ def test_circuit_transformer():
     )
     x = torch.randn(max_qubit_num * max_layer_num + 1, feat_dim)
     y_no_batch = model(x, spacial_encoding)
-    assert y_no_batch.shape == x.shape
+    assert y_no_batch.shape == torch.Size((feat_dim,))
 
     batch_size = 3
     x = torch.randn(batch_size, max_qubit_num * max_layer_num + 1, feat_dim)
     spacial_encoding = torch.stack([spacial_encoding for _ in range(batch_size)])
     y_batch = model(x, spacial_encoding)
-    assert y_batch.shape == x.shape
+    assert y_batch.shape == torch.Size((batch_size, feat_dim))
 
 
 if __name__ == "__main__":

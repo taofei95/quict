@@ -143,15 +143,6 @@ class CircuitTransformer(nn.Module):
     ) -> None:
         super().__init__()
 
-        # if max_layer_num is None and max_volume is None:
-        #     raise ValueError("Must provide at least one of max_layer_num, max_volume")
-        # if max_layer_num is None:
-        #     max_layer_num = max_volume // max_qubit_num
-        #     if max_layer_num * max_qubit_num != max_volume:
-        #         raise ValueError("Volume must be divided by qubit number.")
-        # if max_volume is None:
-        #     max_volume = max_qubit_num * max_layer_num
-
         max_volume = max_layer_num * max_qubit_num
 
         self._graphomer = BiasedGraphormer(
@@ -168,10 +159,16 @@ class CircuitTransformer(nn.Module):
         x: torch.Tensor,
         spacial_encoding: torch.IntTensor,
     ):
+        is_batch = len(x.shape) == 3
         se = self._spacial_emedding(spacial_encoding)
         se = torch.squeeze(se, dim=-1)
         attn_bias = se
 
         x = self._graphomer(x, attn_bias)
 
-        return x
+        # Node with label 0 is the virtual node, which is used as 
+        # the readout node.
+        if is_batch:
+            return x[:, 0, :]
+        else:
+            return x[0, :]
