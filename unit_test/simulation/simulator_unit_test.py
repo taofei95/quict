@@ -1,7 +1,7 @@
 import os
 import unittest
 import numpy as np
-from copy import deepcopy
+from copy import deepcopy 
 
 from QuICT.simulation.unitary import UnitarySimulator
 from QuICT.simulation.state_vector import ConstantStateVectorSimulator
@@ -12,7 +12,7 @@ from QuICT.core.circuit.circuit import Circuit
 from QuICT.core.gate.gate import *
 
 
-@unittest.skipUnless(os.environ.get("test_with_gpu", True), "require GPU")
+# @unittest.skipUnless(os.environ.get("test_with_gpu", True), "require GPU")
 class TestGPUSimulator(unittest.TestCase): 
     @classmethod
     def setUpClass(cls): 
@@ -63,8 +63,7 @@ class TestGPUSimulator(unittest.TestCase):
         sv = sv_sim.run(deepcopy(TestGPUSimulator.circuit))
         assert np.allclose(sv["data"]["state_vector"], TestGPUSimulator.sv_data_single, atol=1e-6)
 
-    
-    def test_densitymatrix(self):
+    def test_density_matrix(self):
         sim = DensityMatrixSimulation("GPU")
         DM = sim.run(deepcopy(TestGPUSimulator.circuit)).get()
         assert np.allclose(DM,TestGPUSimulator.dm_data)
@@ -80,7 +79,23 @@ class TestGPUSimulator(unittest.TestCase):
         d_sim = Simulator(device="GPU", backend="density_matrix",precision="single")
         dm = d_sim.run(deepcopy(TestGPUSimulator.circuit))
         assert np.allclose(dm["data"]["density_matrix"], TestGPUSimulator.dm_data_single, atol=1e-6)
+    
+    def test_matrix_aggregation(self):
+        t = ConstantStateVectorSimulator(matrix_aggregation=True)
+        T = t.run(deepcopy(TestGPUSimulator.circuit)).get()
+        assert np.allclose(T, TestGPUSimulator.sv_data)
 
+        t = ConstantStateVectorSimulator(matrix_aggregation=True,precision="single")
+        T = t.run(deepcopy(TestGPUSimulator.circuit)).get()
+        assert np.allclose(T, TestGPUSimulator.sv_data_single, atol=1e-6)
+        
+        f = ConstantStateVectorSimulator(matrix_aggregation=False)
+        F = f.run(deepcopy(TestGPUSimulator.circuit)).get()
+        assert np.allclose(F, TestGPUSimulator.sv_data)
+
+        f = ConstantStateVectorSimulator(matrix_aggregation=False,precision="single")
+        F = f.run(deepcopy(TestGPUSimulator.circuit)).get()
+        assert np.allclose(F, TestGPUSimulator.sv_data_single, atol=1e-6)
 
 class TestCPUSimulator(unittest.TestCase): 
     @classmethod

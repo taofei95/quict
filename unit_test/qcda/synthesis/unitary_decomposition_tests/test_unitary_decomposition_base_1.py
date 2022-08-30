@@ -2,7 +2,8 @@ import numpy as np
 from scipy.stats import unitary_group
 
 from QuICT.qcda.synthesis.unitary_decomposition import UnitaryDecomposition
-
+from QuICT.core.circuit import *
+from QuICT.core.gate import *
 
 def test_unitary_decomposition_base_1():
     for qubit_num in range(2, 6):
@@ -11,3 +12,6 @@ def test_unitary_decomposition_base_1():
         gates, _ = UD.execute(mat1)
         mat2 = gates.matrix()
         assert np.allclose(mat1, mat2)
+
+
+

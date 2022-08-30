@@ -6,7 +6,7 @@ from QuICT.core import Qureg, Circuit, Qubit
 from QuICT.core.gate import *
 from QuICT.core.utils import GateType
 from scipy.stats import unitary_group
-from quict.QuICT.core.gate.gate_builder import build_random_gate,build_gate
+from QuICT.core.gate.gate_builder import build_random_gate,build_gate
 
 class TestGate(unittest.TestCase):
     @classmethod
@@ -169,6 +169,43 @@ class TestGate(unittest.TestCase):
             gate_type = typelist_2qubit[random.randint(0, len(typelist_2qubit) - 1)]
             rg2 = build_random_gate(gate_type, 10, random_params=True)
             assert rg2.type == gate_type
+
+    def test_gate_expand(self):
+        # single qubit quantum gate expand test
+        single_gate = H
+        expand_sgate1 = single_gate.expand(3)
+        expand_sgate2 = single_gate.expand([0, 1, 2])
+        
+        cir = Circuit(3)
+        H | cir(0)
+        assert np.allclose(expand_sgate1, cir.matrix()) and np.allclose(expand_sgate2, cir.matrix())
+        
+        # single qubit assigned quantum gate expand test
+        single_gate_assigned = H & 1
+        expand_sagate1 = single_gate_assigned.expand(3)
+        expand_sagate2 = single_gate_assigned.expand([0, 1, 2])
+        
+        cir = Circuit(3)
+        H | cir(1)
+        assert np.allclose(expand_sagate1, cir.matrix()) and np.allclose(expand_sagate2, cir.matrix())
+
+        # double-qubits quantum gate expand test
+        double_gate = CX
+        expand_dgate1 = double_gate.expand(3)
+        expand_dgate2 = double_gate.expand([0, 1, 2])
+        
+        cir = Circuit(3)
+        CX | cir([0, 1])
+        assert np.allclose(expand_dgate1, cir.matrix()) and np.allclose(expand_dgate2, cir.matrix())
+       
+        # double-qubits assigned quantum gate expand test
+        double_gate_assigned = CX & [1, 2]
+        expand_sdgate1 = double_gate_assigned.expand(3)
+        expand_sdgate2 = double_gate_assigned.expand([0, 1, 2])
+        
+        cir = Circuit(3)
+        CX | cir([1, 2])
+        assert np.allclose(expand_sdgate1, cir.matrix()) and np.allclose(expand_sdgate2, cir.matrix())
 
 if __name__ == "__main__":
     unittest.TestCase()
