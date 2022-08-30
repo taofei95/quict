@@ -363,8 +363,8 @@ setup(
     package_dir={"QuICT": f"{prj_root_relative}/QuICT/"},
     ext_modules=[
         CMakeExtension("QuICT.utility.graph_structure.", f"{prj_root}/QuICT/utility/graph_structure"),
-        CMakeExtension("QuICT.simulation.cpu_simulator.",
-                       f"{prj_root}/QuICT/simulation/cpu_simulator/"),
+        CMakeExtension("QuICT.simulation.state_vector.cpu_simulator.",
+                       f"{prj_root}/QuICT/simulation/state_vector/cpu_simulator/"),
         CythonExtension(
             "QuICT.qcda.mapping.mcts.mcts_core.mcts_wrapper",
             [f"{prj_root}/QuICT/qcda/mapping/mcts/mcts_core/mcts_wrapper.pyx"],

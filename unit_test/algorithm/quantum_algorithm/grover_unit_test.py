@@ -13,8 +13,8 @@ from QuICT.algorithm.quantum_algorithm.grover import (
 )
 from QuICT.core import Circuit
 from QuICT.core.gate import *
+from QuICT.simulation.state_vector import ConstantStateVectorSimulator
 from QuICT.qcda.synthesis.mct import MCTOneAux
-from QuICT.simulation.gpu_simulator import ConstantStateVectorSimulator
 
 
 def main_oracle(n, f):

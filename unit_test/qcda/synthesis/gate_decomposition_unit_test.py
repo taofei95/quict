@@ -3,7 +3,6 @@ import random
 import numpy as np
 from scipy.stats import unitary_group
 
-from QuICT.algorithm import SyntheticalUnitary
 from QuICT.core import *
 from QuICT.core.gate import *
 from QuICT.qcda.synthesis.gate_decomposition import GateDecomposition
@@ -22,6 +21,4 @@ def test_circuit():
     GD = GateDecomposition()
     circuit_decomposed = GD.execute(circuit)
 
-    original = SyntheticalUnitary.run(circuit)
-    decomposed = SyntheticalUnitary.run(circuit_decomposed)
-    assert np.allclose(original, decomposed)
+    assert np.allclose(circuit.matrix(), circuit_decomposed.matrix())

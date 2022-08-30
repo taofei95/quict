@@ -28,9 +28,9 @@ def test_two_qubit_rules():
         GateType.cz,
         GateType.ch,
         GateType.crz,
-        GateType.Rxx,
-        GateType.Ryy,
-        GateType.Rzz,
+        GateType.rxx,
+        GateType.ryy,
+        GateType.rzz,
         GateType.fsim
     ]
     for source in typelist:

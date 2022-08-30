@@ -2,7 +2,6 @@ import numpy as np
 from scipy.stats import unitary_group
 
 from QuICT.core import Circuit
-from QuICT.algorithm.synthetical_unitary import SyntheticalUnitary
 from QuICT.qcda.synthesis.unitary_decomposition.cartan_kak_decomposition import CartanKAKDecomposition
 from QuICT.qcda.synthesis.unitary_decomposition.cartan_kak_diagonal_decomposition import CartanKAKDiagonalDecomposition
 
@@ -31,7 +30,7 @@ def test_cartan_kak():
         CKD = CartanKAKDecomposition()
         CKD.execute(U) | circuit
 
-        Ucir = SyntheticalUnitary.run(circuit)
+        Ucir = circuit.matrix()
         phase = U.dot(np.linalg.inv(Ucir))
         assert np.allclose(phase, phase[0, 0] * np.eye(4))
 
@@ -44,6 +43,6 @@ def test_cartan_kak_diagonal():
         CKDD = CartanKAKDiagonalDecomposition()
         CKDD.execute(U) | circuit
 
-        Ucir = SyntheticalUnitary.run(circuit)
+        Ucir = circuit.matrix()
         phase = U.dot(np.linalg.inv(Ucir))
         assert np.allclose(phase, phase[0, 0] * np.eye(4))

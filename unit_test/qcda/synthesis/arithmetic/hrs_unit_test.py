@@ -8,7 +8,7 @@ from QuICT.qcda.synthesis.arithmetic.hrs import (
     HRSMulMod,
     CHRSMulMod,
 )
-from QuICT.simulation.gpu_simulator import ConstantStateVectorSimulator
+from QuICT.simulation.state_vector import ConstantStateVectorSimulator
 from example.debug_tools.starter import set_qureg
 
 

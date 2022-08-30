@@ -5,7 +5,6 @@ import QuICT
 
 print(f"using {QuICT.__file__} ...")
 import cupy as cp
-from QuICT.simulation.gpu_simulator import ConstantStateVectorSimulator
 
 
 def formatted_result(result, l, qregs, qregs_name):

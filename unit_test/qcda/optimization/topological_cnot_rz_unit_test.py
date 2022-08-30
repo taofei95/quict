@@ -8,7 +8,6 @@ import random
 
 import numpy as np
 
-from QuICT.algorithm import SyntheticalUnitary
 from QuICT.core import Circuit
 from QuICT.core.gate import CX, Rz
 from QuICT.core.layout import Layout
@@ -24,8 +23,8 @@ def check_equiv(circuit1, circuit2):
     Returns:
         bool: True if equiv
     """
-    matrix1 = SyntheticalUnitary.run(circuit1)
-    matrix2 = SyntheticalUnitary.run(circuit2)
+    matrix1 = circuit1.matrix()
+    matrix2 = circuit2.matrix()
     return np.allclose(matrix1, matrix2)
 
 
