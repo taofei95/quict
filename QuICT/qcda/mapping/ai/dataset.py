@@ -107,6 +107,10 @@ class MappingHeteroDataset(MappingBaseDataset):
 
 class MappingGraphormerDataset(MappingBaseDataset):
     def __init__(self, data_dir: str = None, file_names: Iterable[str] = None) -> None:
+        if data_dir is None:
+            data_dir = osp.dirname(osp.realpath(__file__))
+            data_dir = osp.join(data_dir, "data")
+            data_dir = osp.join(data_dir, "processed_graphormer")
         super().__init__(data_dir=data_dir, file_names=file_names)
 
     def split_tv(
@@ -126,22 +130,16 @@ class MappingGraphormerDataset(MappingBaseDataset):
     def __getitem__(self, idx: int):
         f_path = osp.join(self._data_dir, self._file_names[idx])
         with open(f_path, "rb") as f:
-            raw_data, target = torch.load(f)
-            # raw_data: List[HeteroData]
-            return raw_data, target
+            x, spacial_encoding = torch.load(f)
+            # Some process
+            return x, spacial_encoding
 
     def loader(self, batch_size: int, shuffle: bool, device: str = "cpu"):
         def _collate_fn(data_list):
-            hetero_layers_data_list, swap_counts = zip(*data_list)
-            swap_counts = torch.tensor(swap_counts, dtype=torch.float).to(device)
-            hetero_layers_data_list = zip(*hetero_layers_data_list)
-            # Now each item is the same layer of different graphs.
-            hetero_batch_layers = []
-            for hetero_layers in hetero_layers_data_list:
-                batch = PygBatch.from_data_list(hetero_layers).to(device)
-                hetero_batch_layers.append(batch)
-
-            return hetero_batch_layers, swap_counts
+            xs, spacial_encodings = zip(*data_list)
+            xs = torch.stack(xs).to(device=device)
+            spacial_encodings = torch.stack(spacial_encodings).to(device=device)
+            return xs, spacial_encodings
 
         return DataLoader(
             dataset=self, batch_size=batch_size, shuffle=shuffle, collate_fn=_collate_fn
