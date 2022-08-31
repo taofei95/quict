@@ -55,9 +55,6 @@ class Grover:
         for i in range(steps):
             # Grover iteration
             oracle | circuit(index_q + oracle_q)
-            # s_c = np.ones((1 << index_qubits, 1 << index_qubits)) / (1 << index_qubits)
-            # matrix = -np.eye(1 << index_qubits) + 2 * s_c
-            # Unitary(matrix) | circuit(index_q)
             for idx in index_q:
                 H | circuit(idx)
             # control phase shift
