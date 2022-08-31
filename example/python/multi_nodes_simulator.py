@@ -1,10 +1,7 @@
-from copy import deepcopy
 import os
 import numpy as np
 
 from QuICT.core.gate import *
-from QuICT.simulation.multi_nodes.multi_nodes_simulator import MultiNodesSimulator
-from QuICT.simulation.unitary.unitary_simulator import UnitarySimulator
 from QuICT.tools.interface import OPENQASMInterface
 from QuICT.simulation.multi_nodes.controller import MultiNodesController
 
