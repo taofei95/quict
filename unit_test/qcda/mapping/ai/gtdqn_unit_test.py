@@ -1,0 +1,41 @@
+from QuICT.qcda.mapping.ai.gtdqn import GraphTransformerDeepQNetwork
+import torch
+from random import randint
+
+
+def test_gtdqn():
+    max_qubit_num = 10
+    max_layer_num = 10
+    inner_feat_dim = 30
+    head = 3
+    node_num = max_qubit_num * max_layer_num + 1
+
+    model = GraphTransformerDeepQNetwork(
+        max_qubit_num=max_qubit_num,
+        max_layer_num=max_layer_num,
+        inner_feat_dim=inner_feat_dim,
+        head=head,
+    )
+
+    x_no_batch = [randint(0, max_qubit_num) for _ in range(node_num)]
+    x_no_batch = torch.tensor(x_no_batch, dtype=torch.int)
+    spacial_encoding = [
+        [randint(0, max_qubit_num) for _ in range(node_num)] for _ in range(node_num)
+    ]
+    spacial_encoding = torch.tensor(spacial_encoding, dtype=torch.int)
+    y_no_batch = model(x_no_batch, spacial_encoding)
+
+    assert y_no_batch.shape == torch.Size(
+        (
+            max_qubit_num,
+            max_qubit_num,
+        )
+    )
+
+    batch_size = 3
+
+    x_batch = torch.stack([x_no_batch for _ in range(batch_size)])
+    spacial_encoding_batch = torch.stack([spacial_encoding for _ in range(batch_size)])
+    y_batch = model(x_batch, spacial_encoding_batch)
+
+    assert y_batch.shape == torch.Size((batch_size, max_qubit_num, max_qubit_num))

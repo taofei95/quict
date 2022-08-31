@@ -125,12 +125,12 @@ class BiasedGraphormer(nn.Module):
         )
 
     def forward(self, x, attn_bias=None):
-        if attn_bias is not None:
-            # (n, f) ~ (n, n)
-            # or (b, n, f) ~ (b, n, n)
-            assert x.shape[-2] == self._node_num
-            assert attn_bias.shape[-1] == self._node_num
-            assert attn_bias.shape[-2] == self._node_num
+        # if attn_bias is not None:
+        #     # (n, f) ~ (n, n)
+        #     # or (b, n, f) ~ (b, n, n)
+        #     assert x.shape[-2] == self._node_num
+        #     assert attn_bias.shape[-1] == self._node_num
+        #     assert attn_bias.shape[-2] == self._node_num
         for layer in self._transformer_layers:
             x = layer(x, attn_bias)
         return x

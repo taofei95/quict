@@ -129,12 +129,14 @@ class MappingGraphormerDataset:
 
         self._topo_graph_map = {}
         self._topo_qubit_num_map = {}
+        self._topo_x_map = {}
         for topo_name in self.processor.get_topo_names():
             topo_path = osp.join(topo_dir, f"{topo_name}.layout")
             topo = Layout.load_file(topo_path)
             topo_graph = self.processor.get_topo_graph(topo)
             self._topo_graph_map[topo_name] = topo_graph
             self._topo_qubit_num_map[topo_name] = topo.qubit_number
+            self._topo_x_map[topo_name] = self.processor.get_x(topo.qubit_number)
 
     def __getitem__(self, idx: int) -> Tuple[torch.Tensor, torch.IntTensor]:
         f_path = osp.join(self._processed_dir, f"{idx}.pt")
