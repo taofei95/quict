@@ -116,6 +116,7 @@ class BiasedGraphormer(nn.Module):
         num_attn_layer: int = 6,
     ) -> None:
         super().__init__()
+        self._node_num = node_num
         self._transformer_layers = nn.ModuleList(
             [
                 CircuitGraphormerLayer(node_num=node_num, feat_dim=feat_dim, head=head)
@@ -125,7 +126,11 @@ class BiasedGraphormer(nn.Module):
 
     def forward(self, x, attn_bias=None):
         if attn_bias is not None:
-            assert len(x.shape) == len(attn_bias.shape)
+            # (n, f) ~ (n, n)
+            # or (b, n, f) ~ (b, n, n)
+            assert x.shape[-2] == self._node_num
+            assert attn_bias.shape[-1] == self._node_num
+            assert attn_bias.shape[-2] == self._node_num
         for layer in self._transformer_layers:
             x = layer(x, attn_bias)
         return x
@@ -136,7 +141,6 @@ class CircuitGraphormer(nn.Module):
         self,
         max_qubit_num: int,
         max_layer_num: int,
-        max_topology_diameter: int,
         feat_dim: int,
         head: int,
         num_attn_layer: int = 6,
@@ -144,6 +148,10 @@ class CircuitGraphormer(nn.Module):
         super().__init__()
 
         max_volume = max_layer_num * max_qubit_num
+
+        self._x_embedding = nn.Embedding(
+            num_embeddings=max_qubit_num + 2, embedding_dim=feat_dim, padding_idx=0
+        )
 
         self._graphomer = BiasedGraphormer(
             node_num=max_volume + 1,
@@ -153,7 +161,7 @@ class CircuitGraphormer(nn.Module):
         )
 
         self._spacial_emedding = nn.Embedding(
-            num_embeddings=max_topology_diameter + 2, embedding_dim=1, padding_idx=0
+            num_embeddings=max_qubit_num + 2, embedding_dim=1, padding_idx=0
         )
 
     def forward(
@@ -161,11 +169,12 @@ class CircuitGraphormer(nn.Module):
         x: torch.Tensor,
         spacial_encoding: torch.IntTensor,
     ):
-        is_batch = len(x.shape) == 3
+        is_batch = len(x.shape) == 2
         se = self._spacial_emedding(spacial_encoding)
         se = torch.squeeze(se, dim=-1)
         attn_bias = se
 
+        x = self._x_embedding(x)
         x = self._graphomer(x, attn_bias)
 
         # Node with label 0 is the virtual node, which is used as

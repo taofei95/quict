@@ -121,34 +121,36 @@ class MappingGraphormerDataset:
         metadata_path = osp.join(processed_dir, "metadata.pt")
         self.metadata = torch.load(metadata_path)  # (max_qubit_num, max_layer_num)
 
-        self._processor = CircuitGraphormerDataProcessor(
+        self.processor = CircuitGraphormerDataProcessor(
             max_qubit_num=self.metadata[0],
             max_layer_num=self.metadata[1],
             data_dir=data_dir,
         )
 
         self._topo_graph_map = {}
-        for topo_name in self._processor.get_topo_names():
+        self._topo_qubit_num_map = {}
+        for topo_name in self.processor.get_topo_names():
             topo_path = osp.join(topo_dir, f"{topo_name}.layout")
             topo = Layout.load_file(topo_path)
-            topo_graph = self._processor.get_topo_graph(topo)
+            topo_graph = self.processor.get_topo_graph(topo)
             self._topo_graph_map[topo_name] = topo_graph
+            self._topo_qubit_num_map[topo_name] = topo.qubit_number
 
     def __getitem__(self, idx: int) -> Tuple[torch.Tensor, torch.IntTensor]:
         f_path = osp.join(self._processed_dir, f"{idx}.pt")
         with open(f_path, "rb") as f:
             layered_circ, topo_name = torch.load(f)
             topo_graph = self._topo_graph_map[topo_name]
-            x = self._processor.get_x()
-            circ_graph = self._processor.get_circ_graph(layered_circ=layered_circ)
-            spacial_encoding = self._processor.get_spacial_encoding(
+            x = self.processor.get_x()
+            circ_graph = self.processor.get_circ_graph(layered_circ=layered_circ)
+            spacial_encoding = self.processor.get_spacial_encoding(
                 circ_graph=circ_graph, topo_graph=topo_graph
             )
             return x, spacial_encoding
 
 
 if __name__ == "__main__":
-    # This is used as test. It's not suitable to be put into unit_test because it depends on 
+    # This is used as test. It's not suitable to be put into unit_test because it depends on
     # data we collected.
     dataset = MappingGraphormerDataset()
     qubit_num, layer_num = dataset.metadata
@@ -156,4 +158,9 @@ if __name__ == "__main__":
     x, spacial_encoding = dataset[0]
 
     assert x.shape == torch.Size((node_num,))
-    assert spacial_encoding.shape == torch.Size((node_num, node_num,))
+    assert spacial_encoding.shape == torch.Size(
+        (
+            node_num,
+            node_num,
+        )
+    )

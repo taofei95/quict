@@ -139,17 +139,16 @@ def test_circuit_graphormer():
         )
         model = CircuitGraphormer(
             max_qubit_num=max_qubit_num,
-            max_topology_diameter=max_qubit_num,
             feat_dim=feat_dim,
             head=6,
             max_layer_num=max_layer_num,
         )
-        x = torch.randn(max_qubit_num * max_layer_num + 1, feat_dim)
+        x = processor.get_x(10)
         y_no_batch = model(x, spacial_encoding)
         assert y_no_batch.shape == torch.Size((feat_dim,))
 
         batch_size = 3
-        x = torch.randn(batch_size, max_qubit_num * max_layer_num + 1, feat_dim)
+        x = torch.stack([x, x, x])
         spacial_encoding = torch.stack([spacial_encoding for _ in range(batch_size)])
         y_batch = model(x, spacial_encoding)
         assert y_batch.shape == torch.Size((batch_size, feat_dim))

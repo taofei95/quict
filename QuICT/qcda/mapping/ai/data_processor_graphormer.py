@@ -31,8 +31,6 @@ class CircuitGraphormerDataProcessor:
         self._max_layer_num = max_layer_num
         self._node_num = 1 + max_qubit_num * max_layer_num
 
-        self._x = None
-
         self._circ_path_list = None
 
     @property
@@ -243,19 +241,17 @@ class CircuitGraphormerDataProcessor:
 
         return dist
 
-    def _get_x(self) -> torch.Tensor:
+    def get_x(self, topo_qubit_number: int) -> torch.Tensor:
+        assert topo_qubit_number <= self._max_qubit_num
+
         x = [0 for _ in range(self._node_num)]
+        x[0] = self._max_qubit_num + 1
         for layer_idx in range(self._max_layer_num):
             offset = 1 + self._max_qubit_num * layer_idx
-            for b in range(self._max_qubit_num):
+            for b in range(topo_qubit_number):
                 x[b + offset] = b + 1
-        x = torch.tensor(x, dtype=torch.float)
+        x = torch.tensor(x, dtype=torch.int)
         return x
-
-    def get_x(self):
-        if self._x is None:
-            self._x = self._get_x()
-        return self._x
 
     def _build(self) -> Iterable[Tuple[List[Set[Tuple[int, int]]], str]]:
         """Build all circuit representations.
