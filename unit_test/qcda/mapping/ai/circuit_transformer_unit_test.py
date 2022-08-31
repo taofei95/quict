@@ -127,14 +127,15 @@ def test_circuit_graphormer():
         processor = CircuitGraphormerDataProcessor(
             max_qubit_num=max_qubit_num, max_layer_num=max_layer_num
         )
-
-        circ_graph, successful = processor._build_circ_repr(circ=circ)
+        layered_circ, successful = processor.get_layered_circ(circ=circ)
         if not successful:
             retry += 1
             continue
+        circ_graph = processor.get_circ_graph(layered_circ=layered_circ)
 
+        topo_graph = processor.get_topo_graph(topo=topo)
         spacial_encoding = processor.get_spacial_encoding(
-            circ_graph=circ_graph, topo=topo
+            circ_graph=circ_graph, topo_graph=topo_graph
         )
         model = CircuitGraphormer(
             max_qubit_num=max_qubit_num,
@@ -157,14 +158,7 @@ def test_circuit_graphormer():
 
 def test_processor_build():
     processor = CircuitGraphormerDataProcessor(max_layer_num=30, max_qubit_num=10)
-    x, spacial_encoding = next(iter(processor._build()))
-    assert x.shape == torch.Size((30 * 10 + 1, 10))
-    assert spacial_encoding.shape == torch.Size((30 * 10 + 1, 30 * 10 + 1))
-
-
-if __name__ == "__main__":
-    import os
-
-    import pytest
-
-    pytest.main([os.path.abspath(__file__)])
+    layered_circ, topo_name = next(iter(processor._build()))
+    assert type(layered_circ) is list
+    assert type(layered_circ[0]) is set
+    assert type(topo_name) is str

@@ -87,7 +87,7 @@ class FeedForwardNet(nn.Module):
         return x
 
 
-class CircuitTransFormerLayer(nn.Module):
+class CircuitGraphormerLayer(nn.Module):
     def __init__(
         self,
         node_num: int,
@@ -118,7 +118,7 @@ class BiasedGraphormer(nn.Module):
         super().__init__()
         self._transformer_layers = nn.ModuleList(
             [
-                CircuitTransFormerLayer(node_num=node_num, feat_dim=feat_dim, head=head)
+                CircuitGraphormerLayer(node_num=node_num, feat_dim=feat_dim, head=head)
                 for _ in range(num_attn_layer)
             ]
         )
@@ -152,7 +152,9 @@ class CircuitGraphormer(nn.Module):
             num_attn_layer=num_attn_layer,
         )
 
-        self._spacial_emedding = nn.Embedding(max_topology_diameter + 3, 1)
+        self._spacial_emedding = nn.Embedding(
+            num_embeddings=max_topology_diameter + 2, embedding_dim=1, padding_idx=0
+        )
 
     def forward(
         self,
@@ -166,7 +168,7 @@ class CircuitGraphormer(nn.Module):
 
         x = self._graphomer(x, attn_bias)
 
-        # Node with label 0 is the virtual node, which is used as 
+        # Node with label 0 is the virtual node, which is used as
         # the readout node.
         if is_batch:
             return x[:, 0, :]
