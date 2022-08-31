@@ -1,7 +1,9 @@
 import torch
 from QuICT.core import *
 from QuICT.qcda.mapping.ai.circuit_graphormer import *
-from QuICT.qcda.mapping.ai.data_processor_graphormer import CircuitVnodeProcessor
+from QuICT.qcda.mapping.ai.data_processor_graphormer import (
+    CircuitGraphormerDataProcessor,
+)
 
 
 def test_self_attn():
@@ -50,11 +52,11 @@ def test_multi_head_attn():
                         assert y_batch.shape == x_batch.shape
 
 
-def test_circuit_transformer_layer():
+def test_circuit_graphformer_layer():
     for head in [1, 3, 5]:
         for feat_dim in [3, 4, 5, 6, 7]:
             for node_num in [1, 3, 20]:
-                model = CircuitTransFormerLayer(node_num, feat_dim, head)
+                model = CircuitGraphormerLayer(node_num, feat_dim, head)
                 x_no_batch = torch.randn(node_num, feat_dim)
                 attn_bias = torch.randn(node_num, node_num)
                 with torch.no_grad():
@@ -107,38 +109,57 @@ def test_biased_graphormer():
                             assert y_batch.shape == x_batch.shape
 
 
-def test_circuit_transformer():
+def test_circuit_graphormer():
     circ = Circuit(10)
     topo = Layout(10)
     # Use a cycle topo as example
     for i in range(10):
         topo.add_edge(i, (i + 1) % 10)
-    circ.random_append(200)
-    max_qubit_num = 30
-    max_layer_num = 10
-    feat_dim = 30
-    processor = CircuitVnodeProcessor(
-        max_qubit_num=max_qubit_num, max_layer_num=max_layer_num
-    )
 
-    circ_graph = processor._build_circ_repr(circ=circ)
-    spacial_encoding = processor.get_spacial_encoding(circ_graph=circ_graph, topo=topo)
-    model = CircuitGraphormer(
-        max_qubit_num=max_qubit_num,
-        max_topology_diameter=max_qubit_num,
-        feat_dim=feat_dim,
-        head=6,
-        max_layer_num=10,
-    )
-    x = torch.randn(max_qubit_num * max_layer_num + 1, feat_dim)
-    y_no_batch = model(x, spacial_encoding)
-    assert y_no_batch.shape == torch.Size((feat_dim,))
+    successful = False
+    max_retry = 3
+    retry = 0
+    while not successful and retry < max_retry:
+        circ.random_append(30)
+        max_qubit_num = 30
+        max_layer_num = 20
+        feat_dim = 30
+        processor = CircuitGraphormerDataProcessor(
+            max_qubit_num=max_qubit_num, max_layer_num=max_layer_num
+        )
 
-    batch_size = 3
-    x = torch.randn(batch_size, max_qubit_num * max_layer_num + 1, feat_dim)
-    spacial_encoding = torch.stack([spacial_encoding for _ in range(batch_size)])
-    y_batch = model(x, spacial_encoding)
-    assert y_batch.shape == torch.Size((batch_size, feat_dim))
+        circ_graph, successful = processor._build_circ_repr(circ=circ)
+        if not successful:
+            retry += 1
+            continue
+
+        spacial_encoding = processor.get_spacial_encoding(
+            circ_graph=circ_graph, topo=topo
+        )
+        model = CircuitGraphormer(
+            max_qubit_num=max_qubit_num,
+            max_topology_diameter=max_qubit_num,
+            feat_dim=feat_dim,
+            head=6,
+            max_layer_num=max_layer_num,
+        )
+        x = torch.randn(max_qubit_num * max_layer_num + 1, feat_dim)
+        y_no_batch = model(x, spacial_encoding)
+        assert y_no_batch.shape == torch.Size((feat_dim,))
+
+        batch_size = 3
+        x = torch.randn(batch_size, max_qubit_num * max_layer_num + 1, feat_dim)
+        spacial_encoding = torch.stack([spacial_encoding for _ in range(batch_size)])
+        y_batch = model(x, spacial_encoding)
+        assert y_batch.shape == torch.Size((batch_size, feat_dim))
+    assert retry < max_retry
+
+
+def test_processor_build():
+    processor = CircuitGraphormerDataProcessor(max_layer_num=30, max_qubit_num=10)
+    x, spacial_encoding = next(iter(processor._build()))
+    assert x.shape == torch.Size((30 * 10 + 1, 10))
+    assert spacial_encoding.shape == torch.Size((30 * 10 + 1, 30 * 10 + 1))
 
 
 if __name__ == "__main__":

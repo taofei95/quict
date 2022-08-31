@@ -7,9 +7,10 @@ import torch
 from QuICT.core import *
 from QuICT.core.gate import BasicGate
 from QuICT.core.layout import Layout, LayoutEdge
+from QuICT.tools.interface.qasm_interface import OPENQASMInterface
 
 
-class CircuitVnodeProcessor:
+class CircuitGraphormerDataProcessor:
     def __init__(
         self,
         max_qubit_num: int,
@@ -26,16 +27,44 @@ class CircuitVnodeProcessor:
 
         self._max_qubit_num = max_qubit_num
         self._max_layer_num = max_layer_num
-        self._max_dist = 2 * max_layer_num
+        self._node_num = 1 + max_qubit_num * max_layer_num
 
         self._circ_path_list = list(self._load_circuits_path())
+
+    def _show_layer_distribution(self):
+        distribution = {}
+        for idx, (_, circ_path) in enumerate(self._load_circuits_path()):
+            if (idx + 1) % 100 == 0:
+                print(f"Processed {idx + 1} files.")
+
+            circ = OPENQASMInterface.load_file(circ_path).circuit
+            layers_raw: List[List[Tuple[int, int]]] = []
+            occupied = [-1 for _ in range(self._max_qubit_num)]
+            for gate in circ.gates:
+                gate: BasicGate
+                if gate.controls + gate.targets != 2:
+                    continue
+                a, b = gate.cargs + gate.targs
+                idx = max(occupied[a], occupied[b]) + 1
+                if idx >= len(layers_raw):
+                    layers_raw.append([])
+                layers_raw[idx].append((a, b))
+                layers_raw[idx].append((b, a))
+                occupied[a] = idx
+                occupied[b] = idx
+
+            l = len(layers_raw)
+            if l not in distribution:
+                distribution[l] = 0
+            distribution[l] += 1
+        print(distribution)
 
     def _get_topo_names(self) -> Iterable[str]:
         for _, _, filenames in os.walk(self._topo_dir):
             for name in filenames:
                 yield name.split(".")[0]
 
-    def _load_circuits_path(self) -> Iterable[Tuple[str, str, str]]:
+    def _load_circuits_path(self) -> Iterable[Tuple[str, str]]:
         for topo_name in self._get_topo_names():
             topo_path = osp.join(self._topo_dir, f"{topo_name}.layout")
             for root, _, filenames in os.walk(osp.join(self._circ_dir, topo_name)):
@@ -43,8 +72,7 @@ class CircuitVnodeProcessor:
                     if name.startswith("result") or name.startswith("skip"):
                         continue
                     circ_path = osp.join(root, name)
-                    result_circ_path = osp.join(root, f"result_{name}")
-                    yield topo_path, circ_path, result_circ_path
+                    yield topo_path, circ_path
 
     def _build_topo_repr(self, topo: Layout) -> nx.Graph:
         """Build tha graph representation of a topology.
@@ -64,7 +92,7 @@ class CircuitVnodeProcessor:
             g.add_edge(edge.u, edge.v)
         return g
 
-    def _build_circ_repr(self, circ: Circuit) -> nx.Graph:
+    def _build_circ_repr(self, circ: Circuit) -> Tuple[nx.Graph, bool]:
         """Build a graph representation of a circuit.
         The circuit is divided into layers and each layer
         is built into a sub graph with respect to qubits.
@@ -77,7 +105,7 @@ class CircuitVnodeProcessor:
                 circuit has more layers, extra layers will be dropped.
 
         Returns:
-            nx.Graph: Graph representation.
+            Tuple[nx.Graph, bool]: Graph representation. Second boolean variable is success flag.
         """
         layers_raw: List[List[Tuple[int, int]]] = [
             [] for _ in range(self._max_layer_num)
@@ -89,14 +117,14 @@ class CircuitVnodeProcessor:
                 continue
             a, b = gate.cargs + gate.targs
             idx = max(occupied[a], occupied[b]) + 1
-            if idx >= len(layers_raw):
-                continue
+            if idx >= self._max_layer_num:
+                return None, False
             layers_raw[idx].append((a, b))
             layers_raw[idx].append((b, a))
             occupied[a] = idx
             occupied[b] = idx
         g = nx.Graph()
-        for i in range(self._max_qubit_num * len(layers_raw) + 1):
+        for i in range(self._node_num):
             g.add_node(i)
         for layer_idx, layer in enumerate(layers_raw):
             offset = layer_idx * self._max_qubit_num + 1
@@ -105,7 +133,7 @@ class CircuitVnodeProcessor:
                 g.add_edge(b + offset, prev)
             for u, v in layer:
                 g.add_edge(u + offset, v + offset)
-        return g
+        return g, True
 
     def get_spacial_encoding(
         self, circ_graph: nx.Graph, topo: Layout = None
@@ -161,6 +189,50 @@ class CircuitVnodeProcessor:
 
         return dist
 
+    def _build(self) -> Iterable[Tuple[torch.Tensor, torch.IntTensor]]:
+        """Build all circuit representations.
+
+        Returns:
+            Iterable[Tuple[torch.Tensor, torch.IntTensor]]: Generator of
+                all tuples like (x, spacial_encoding).
+        """
+        for topo_path, circ_path in self._circ_path_list:
+            topo = Layout.load_file(topo_path)
+
+            lc_circ: Circuit = OPENQASMInterface.load_file(circ_path).circuit
+
+            lc_circ_g, successful = self._build_circ_repr(circ=lc_circ)
+            if not successful:
+                continue
+
+            spacial_encoding = self.get_spacial_encoding(
+                circ_graph=lc_circ_g, topo=topo
+            )
+            x_layer = torch.eye(self._max_qubit_num, dtype=torch.float)
+            x = torch.empty((self._node_num, self._max_qubit_num), dtype=torch.float)
+            x[0] = torch.ones(self._max_qubit_num) / self._max_qubit_num
+            for layer_idx in range(self._max_layer_num):
+                offset = 1 + layer_idx * self._max_qubit_num
+                x[offset : offset + self._max_qubit_num] = x_layer
+
+            yield x, spacial_encoding
+
+    def build(self):
+        """Build all circuit representations and save them into process_dir."""
+        if not osp.exists(self._processed_dir):
+            print("No directory to save data. Create one.")
+            os.makedirs(self._processed_dir)
+
+        print("Start building...")
+        for idx, data in enumerate(self._build()):
+            if (idx + 1) % 100 == 0:
+                progress = (idx + 1) * 100 / len(self._circ_path_list)
+                print(f"Processed {idx+1} files. Current progress: {progress:0.2f}%.")
+            path = osp.join(self._processed_dir, f"{idx}.pt")
+            torch.save(data, path)
+
 
 if __name__ == "__main__":
-    pass
+    processor = CircuitGraphormerDataProcessor(max_qubit_num=30, max_layer_num=70)
+    # processor._show_layer_distribution()
+    processor.build()
