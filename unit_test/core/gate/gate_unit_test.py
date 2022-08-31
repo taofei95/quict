@@ -6,12 +6,14 @@ from QuICT.core import Qureg, Circuit, Qubit
 from QuICT.core.gate import *
 from QuICT.core.utils import GateType
 from scipy.stats import unitary_group
-from QuICT.core.gate.gate_builder import build_random_gate,build_gate
+from QuICT.core.gate.gate_builder import build_random_gate, build_gate
+
 
 class TestGate(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         print("The Circuit unit test start!")
+
     @classmethod
     def tearDownClass(cls) -> None:
         print("The Circuit unit test finished!")
@@ -42,7 +44,6 @@ class TestGate(unittest.TestCase):
         cg_ccrz | cir([7, 8, 9])  # 22
 
         assert len(cir.gates) == 23
-        cir.draw()
 
     def test_gate_name(self):
         my_gate = HGate()
@@ -58,9 +59,9 @@ class TestGate(unittest.TestCase):
         # two qubit gate
         my_gate = CZGate()
         assert my_gate.name.split('-')[0] == str(GateType.cz)
-        q= Qureg(2)
+        q = Qureg(2)
         cir = Circuit(q)
-        my_gate | cir([0,1])
+        my_gate | cir([0, 1])
         assert cir.gates[0].name.split('-')[1] == str(q[0].id[:6])
         assert cir.gates[0].name.split('-')[2] == str(0)
 
@@ -101,10 +102,10 @@ class TestGate(unittest.TestCase):
         assert S.matrix_type != H.matrix_type
         assert S.matrix_type != CX.matrix_type
 
-    # test special gate
-    assert Measure.is_special() and not H.is_special()
+        # test special gate
+        assert Measure.is_special() and not H.is_special()
 
-    #gate_builder_test
+    # gate_builder_test
     def test_build_gate(self):
         for _ in range(10):
             typelist_1qubit = [GateType.rx, GateType.ry, GateType.rz]
@@ -175,16 +176,16 @@ class TestGate(unittest.TestCase):
         single_gate = H
         expand_sgate1 = single_gate.expand(3)
         expand_sgate2 = single_gate.expand([0, 1, 2])
-        
+
         cir = Circuit(3)
         H | cir(0)
         assert np.allclose(expand_sgate1, cir.matrix()) and np.allclose(expand_sgate2, cir.matrix())
-        
+
         # single qubit assigned quantum gate expand test
         single_gate_assigned = H & 1
         expand_sagate1 = single_gate_assigned.expand(3)
         expand_sagate2 = single_gate_assigned.expand([0, 1, 2])
-        
+
         cir = Circuit(3)
         H | cir(1)
         assert np.allclose(expand_sagate1, cir.matrix()) and np.allclose(expand_sagate2, cir.matrix())
@@ -193,20 +194,20 @@ class TestGate(unittest.TestCase):
         double_gate = CX
         expand_dgate1 = double_gate.expand(3)
         expand_dgate2 = double_gate.expand([0, 1, 2])
-        
+
         cir = Circuit(3)
         CX | cir([0, 1])
         assert np.allclose(expand_dgate1, cir.matrix()) and np.allclose(expand_dgate2, cir.matrix())
-       
+
         # double-qubits assigned quantum gate expand test
         double_gate_assigned = CX & [1, 2]
         expand_sdgate1 = double_gate_assigned.expand(3)
         expand_sdgate2 = double_gate_assigned.expand([0, 1, 2])
-        
+
         cir = Circuit(3)
         CX | cir([1, 2])
         assert np.allclose(expand_sdgate1, cir.matrix()) and np.allclose(expand_sdgate2, cir.matrix())
 
-if __name__ == "__main__":
-    unittest.TestCase()
 
+if __name__ == "__main__":
+    unittest.main()

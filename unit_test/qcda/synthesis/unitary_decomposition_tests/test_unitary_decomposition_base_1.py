@@ -5,6 +5,7 @@ from QuICT.qcda.synthesis.unitary_decomposition import UnitaryDecomposition
 from QuICT.core.circuit import *
 from QuICT.core.gate import *
 
+
 def test_unitary_decomposition_base_1():
     for qubit_num in range(2, 6):
         mat1 = unitary_group.rvs(1 << qubit_num)
@@ -12,6 +13,3 @@ def test_unitary_decomposition_base_1():
         gates, _ = UD.execute(mat1)
         mat2 = gates.matrix()
         assert np.allclose(mat1, mat2)
-
-
-

@@ -3,11 +3,12 @@ import unittest
 from QuICT.core import Circuit
 from QuICT.core.gate import *
 
+
 class TestDagCircuit(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         print("Dag Circuit unit test start!")
-        #build circuit with 5qubits and 20gates
+        # build circuit with 5qubits and 20gates
         cls.circuit = Circuit(5)
         cls.circuit.random_append(20)
 
@@ -21,7 +22,7 @@ class TestDagCircuit(unittest.TestCase):
         edge_list = dag_cir.edges()
         gs = TestDagCircuit.circuit.gates
 
-        #test the relationship of nodes
+        # test the relationship of nodes
         for start, end in edge_list:
             assert not gs[start].commutative(gs[end])
             forward = True
@@ -36,5 +37,6 @@ class TestDagCircuit(unittest.TestCase):
                     assert 0
         assert 1
 
-if __name__ ==" __main__":
+
+if __name__ == " __main__":
     unittest.main()

@@ -5,12 +5,14 @@ from QuICT.core.gate import *
 from QuICT.qcda.optimization.commutative_optimization import CommutativeOptimization
 from QuICT.core.gate import GateType
 
+
 def test_parameterize():
     test_list = [X, Y, Z, SX, SY, S, S_dagger, T, T_dagger]
     for gate in test_list:
         gate = gate & 0
         gate_para, phase = CommutativeOptimization.parameterize(gate)
         assert np.allclose(gate.matrix, np.exp(1j * phase) * gate_para.matrix)
+
 
 def test_deparameterize():
     # Rx
@@ -56,14 +58,3 @@ def test():
         # phase = opt.dot(np.linalg.inv(original))
         assert np.allclose(circuit.matrix(), circuit_opt.matrix())
         # assert np.allclose(phase, phase[0, 0] * np.eye(2 ** n), rtol=1e-10, atol=1e-10)
-
-
-def combine():
-    for x in range(4):
-        gate_x = Rx(x * np.pi / 2) & 0
-
-        gate_y = CX(x * np.pi / 2) & 0
-
-        a = CommutativeOptimization.combine(gate_x,gate_y)
-        print(a)
-

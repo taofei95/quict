@@ -5,6 +5,7 @@ from QuICT.core import Circuit
 from QuICT.core.gate import QFT, S, CX, H, X, CRz, CZ, CY
 from QuICT.core.utils.gate_type import GateType
 
+
 class TestCircuit(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
@@ -61,7 +62,7 @@ class TestCircuit(unittest.TestCase):
         S | cir(qureg[0])
         CX | cir(qureg[1, 3])
 
-        #append different type of gate
+        # append different type of gate
         H | cir(1)
         CX | cir([1, 3])
         X | cir(qureg[1])
@@ -107,8 +108,9 @@ class TestCircuit(unittest.TestCase):
 
         q2 = cir[0, 1, 4]
         cir.remapping(q2, [0, 2, 1], circuit_update=True)
+
         assert q2[0] == cir[0]
-    
+
     def test_circuit_decomposition(self):
         # Gate with build_gate function
         build_gate_typelist = [GateType.ccrz, GateType.cswap, GateType.ccz, GateType.ccx]
@@ -116,38 +118,36 @@ class TestCircuit(unittest.TestCase):
         cir.random_append(30)
         cir.random_append(10, build_gate_typelist)
         QFT(5) | cir
-        
+
         build_gate_typelist = [GateType.ccrz, GateType.cswap, GateType.ccz, GateType.ccx]
         cir = Circuit(TestCircuit.qubits)
         cir.random_append(30)
         cir.random_append(10, build_gate_typelist)
         QFT(5) | cir
-        
         cir.gate_decomposition()
         for gate in cir.gates:
             assert gate.controls + gate.targets < 3
-            
+
     def test_circuit_convert_precision(self):
         cir = Circuit(TestCircuit.qubits)
         cir.random_append(100)
         cir.convert_precision()
-        
         for gate in cir.gates:
             assert gate.precision == np.complex64
-            
+
     def test_circuit_matrix(self):
         from QuICT.simulation.state_vector import CircuitSimulator
         from QuICT.simulation.unitary import UnitarySimulator
-        
+
         cir = Circuit(TestCircuit.qubits)
         cir.random_append(100)
         state_vector_cir = CircuitSimulator().run(cir)
 
         cir_matrix = cir.matrix()
         state_vector_matrix = UnitarySimulator().run(cir_matrix)
-        
+
         assert np.allclose(state_vector_cir, state_vector_matrix)
 
-if __name__ ==" __main__":
-    unittest.main()
 
+if __name__ == " __main__":
+    unittest.main()
