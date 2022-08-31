@@ -12,13 +12,10 @@ from .graph import Graph
 
 class QuantumWalk:
     """ The Quantum Random Walk Algorithm. """
+
     @property
     def step(self):
         return self._step
-
-    @property
-    def graph(self):
-        return str(self._graph)
 
     @property
     def circuit(self) -> Circuit:
@@ -35,14 +32,17 @@ class QuantumWalk:
         """
         self._simulator = simulator
         self._shots = shots
-        self._step = 0
+        self._step = None
         self._graph = None
+        self._shift_operator = None
         self._coin_operator = None
+        self._position_qubits = None
+        self._action_qubits = None
         self._total_qubits = None
         self._operator_by_position = False
         self._operator_by_time = False
 
-    def _operator_validation(self):
+    def _coin_operator_validation(self):
         """ Validate the operator. """
         if self._coin_operator is not None:
             assert self._graph.operator_validation(self._coin_operator), "The operator should be an unitary matrix."
@@ -55,18 +55,15 @@ class QuantumWalk:
 
     def _circuit_construct(self):
         """ Construct random walk circuit. """
-        # Build shift operator
-        self._build_shift_operator()
-
         # Build Circuit
         self._circuit = Circuit(self._total_qubits)
         for t in range(self.step):
-            self._build_action_operator(t) | self._circuit
-            self._shift_operator | self._circuit
+            self._build_coin_operator(t) | self._circuit
+            self._build_shift_operator() | self._circuit
 
-    def _build_action_operator(self, step: int) -> CompositeGate:
+    def _build_coin_operator(self, step: int) -> CompositeGate:
         """ Generator action operator. """
-        action_qubits = [self._graph.position_qubits + i for i in range(self._action_qubits)]
+        action_qubits = [self._position_qubits + i for i in range(self._action_qubits)]
         if not (self._operator_by_position or self._operator_by_time):
             return Unitary(self._coin_operator) & action_qubits
 
@@ -75,14 +72,13 @@ class QuantumWalk:
             if self._operator_by_time else 0
         for i in range(self._graph.position):
             op = self._graph.operators[i][curr_op_idx]
-            x_idx = [pidx for pidx in range(self._graph.position_qubits) if not (i & 1 << pidx)]
+            x_idx = [pidx for pidx in range(self._position_qubits) if not (i & 1 << pidx)]
             for xi in x_idx:
                 X | action_gate(xi)
 
             self._mct_generator(op) | action_gate
             for xi in x_idx:
                 X | action_gate(xi)
-
         return GateDecomposition.execute(action_gate)
 
     def _mct_generator(self, op: np.ndarray) -> UnitaryGate:
@@ -107,8 +103,9 @@ class QuantumWalk:
 
         if len(record_idxes) > 0:
             unitary_matrix[record_idxes, record_idxes] = 1
-
-        self._shift_operator = UnitaryTransform.execute(unitary_matrix)[0]
+        np.set_printoptions(threshold=np.inf)
+        return Unitary(unitary_matrix)
+        # return UnitaryTransform.execute(unitary_matrix)[0]
 
     def run(self,
             step: int,
@@ -119,7 +116,7 @@ class QuantumWalk:
             switched_time: int = -1,
             optimization: bool = False,
             record_measured: bool = False,
-        ) -> Union[np.ndarray, List]:
+            ) -> Union[np.ndarray, List]:
         """ Initial the quantum random walk with given steps, graph and coin operator.
 
         Args:
@@ -144,8 +141,9 @@ class QuantumWalk:
 
         # Validation graph and coin operator
         assert self._graph.validation(), "The edge's number should be equal."
-        self._operator_validation()
-        self._total_qubits = self._graph.position_qubits + self._action_qubits
+        self._coin_operator_validation()
+        self._position_qubits = self._graph.position_qubits
+        self._total_qubits = self._position_qubits + self._action_qubits
 
         # Build random walk circuit
         self._circuit_construct()
