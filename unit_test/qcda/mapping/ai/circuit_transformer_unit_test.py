@@ -1,8 +1,8 @@
 import torch
 from QuICT.core import *
-from QuICT.qcda.mapping.ai.circuit_graphormer import *
-from QuICT.qcda.mapping.ai.data_processor_graphormer import (
-    CircuitGraphormerDataProcessor,
+from QuICT.qcda.mapping.ai.circuit_transformer import *
+from QuICT.qcda.mapping.ai.data_processor_transformer import (
+    CircuitTransformerDataProcessor,
 )
 
 
@@ -112,51 +112,64 @@ def test_biased_graphormer():
 def test_circuit_graphormer():
     circ = Circuit(10)
     topo = Layout(10)
-    # Use a cycle topo as example
-    for i in range(10):
-        topo.add_edge(i, (i + 1) % 10)
+    max_qubit_num = 30
+    max_layer_num = 20
+    feat_dim = 30
+    processor = CircuitTransformerDataProcessor(
+        max_qubit_num=max_qubit_num, max_layer_num=max_layer_num
+    )
+    # Use a line topo as example
+    for i in range(9):
+        topo.add_edge(i, (i + 1))
+    topo_graph = processor.get_topo_graph(topo=topo)
+    topo_dist = torch.zeros((max_qubit_num, max_qubit_num), dtype=torch.int)
+    sp = nx.all_pairs_dijkstra_path_length(topo_graph)
+    for u, row in sp:
+        for v, d in row.items():
+            topo_dist[u][v] = d
+            topo_dist[v][u] = d
+
+    model = CircuitTransformer(
+        max_qubit_num=max_qubit_num,
+        feat_dim=feat_dim,
+        head=6,
+        max_layer_num=max_layer_num,
+    )
 
     successful = False
     max_retry = 3
     retry = 0
     while not successful and retry < max_retry:
         circ.random_append(30)
-        max_qubit_num = 30
-        max_layer_num = 20
-        feat_dim = 30
-        processor = CircuitGraphormerDataProcessor(
-            max_qubit_num=max_qubit_num, max_layer_num=max_layer_num
-        )
+
         layered_circ, successful = processor.get_layered_circ(circ=circ)
         if not successful:
             retry += 1
             continue
-        circ_graph = processor.get_circ_graph(layered_circ=layered_circ)
+        circ_graph = processor.get_circ_graph(
+            layered_circ=layered_circ, topo_dist=topo_dist
+        )
+        spacial_encoding = processor.get_spacial_encoding(circ_graph=circ_graph)
 
-        topo_graph = processor.get_topo_graph(topo=topo)
-        spacial_encoding = processor.get_spacial_encoding(
-            circ_graph=circ_graph, topo_graph=topo_graph
-        )
-        model = CircuitGraphormer(
-            max_qubit_num=max_qubit_num,
-            feat_dim=feat_dim,
-            head=6,
-            max_layer_num=max_layer_num,
-        )
         x = processor.get_x(10)
         y_no_batch = model(x, spacial_encoding)
-        assert y_no_batch.shape == torch.Size((feat_dim,))
+        assert y_no_batch.shape == torch.Size(
+            (
+                max_qubit_num,
+                feat_dim,
+            )
+        )
 
         batch_size = 3
         x = torch.stack([x, x, x])
         spacial_encoding = torch.stack([spacial_encoding for _ in range(batch_size)])
         y_batch = model(x, spacial_encoding)
-        assert y_batch.shape == torch.Size((batch_size, feat_dim))
+        assert y_batch.shape == torch.Size((batch_size,max_qubit_num, feat_dim))
     assert retry < max_retry
 
 
 def test_processor_build():
-    processor = CircuitGraphormerDataProcessor(max_layer_num=30, max_qubit_num=10)
+    processor = CircuitTransformerDataProcessor(max_layer_num=30, max_qubit_num=10)
     layered_circ, topo_name = next(iter(processor._build()))
     assert type(layered_circ) is list
     assert type(layered_circ[0]) is set

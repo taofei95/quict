@@ -11,7 +11,7 @@ from QuICT.core.utils.circuit_info import CircuitBased
 from QuICT.tools.interface.qasm_interface import OPENQASMInterface
 
 
-class CircuitGraphormerDataProcessor:
+class CircuitTransformerDataProcessor:
     def __init__(
         self,
         max_qubit_num: int,
@@ -29,9 +29,11 @@ class CircuitGraphormerDataProcessor:
 
         self._max_qubit_num = max_qubit_num
         self._max_layer_num = max_layer_num
-        self._node_num = 1 + max_qubit_num * max_layer_num
+        self._node_num = max_qubit_num * (max_layer_num + 1)
 
         self._circ_path_list = None
+
+        self._topo_names = None
 
     @property
     def circ_path_list(self) -> List[Tuple[str, str]]:
@@ -49,7 +51,7 @@ class CircuitGraphormerDataProcessor:
 
     def _show_layer_distribution(self):
         distribution = {}
-        for idx, (_, circ_path) in enumerate(self._load_circuits_path()):
+        for idx, (_, circ_path) in enumerate(self.circ_path_list):
             if (idx + 1) % 100 == 0:
                 print(f"Processed {idx + 1} files.")
 
@@ -75,13 +77,17 @@ class CircuitGraphormerDataProcessor:
             distribution[l] += 1
         print(distribution)
 
-    def get_topo_names(self) -> Iterable[str]:
-        for _, _, filenames in os.walk(self._topo_dir):
-            for name in filenames:
-                yield name.split(".")[0]
+    @property
+    def topo_names(self) -> List[str]:
+        if self._topo_names is None:
+            self._topo_names = []
+            for _, _, filenames in os.walk(self._topo_dir):
+                for name in filenames:
+                    self._topo_names.append(name.split(".")[0])
+        return self._topo_names
 
     def _load_circuits_path(self) -> Iterable[Tuple[str, str]]:
-        for topo_name in self.get_topo_names():
+        for topo_name in self.topo_names:
             for root, _, filenames in os.walk(osp.join(self._circ_dir, topo_name)):
                 for name in filenames:
                     if name.startswith("result") or name.startswith("skip"):
@@ -137,34 +143,47 @@ class CircuitGraphormerDataProcessor:
             occupied[b] = idx
         return layers_raw, True
 
-    def remap_layered_circ(
-        self, layered_circ: List[Set[Tuple[int, int]]], cur_mapping: List[int]
-    ) -> List[Set[Tuple[int, int]]]:
-        new_layers = [set() for _ in range(self._max_layer_num)]
-        for layer_idx, layer in enumerate(layered_circ):
-            for u, v in layer:
-                _u = cur_mapping[u]
-                _v = cur_mapping[v]
-                new_layers[layer_idx].add((_u, _v))
-                new_layers[layer_idx].add((_v, _u))
-        return new_layers
+    # def remap_layered_circ(
+    #     self, layered_circ: List[Set[Tuple[int, int]]], cur_mapping: List[int]
+    # ) -> List[Set[Tuple[int, int]]]:
+    #     new_layers = [set() for _ in range(self._max_layer_num)]
+    #     for layer_idx, layer in enumerate(layered_circ):
+    #         for u, v in layer:
+    #             _u = cur_mapping[u]
+    #             _v = cur_mapping[v]
+    #             new_layers[layer_idx].add((_u, _v))
+    #             new_layers[layer_idx].add((_v, _u))
+    #     return new_layers
 
-    def get_circ_graph(self, layered_circ: List[Set[Tuple[int, int]]]) -> nx.Graph:
+    def get_circ_graph(
+        self,
+        layered_circ: List[Set[Tuple[int, int]]],
+        topo_dist: torch.IntTensor,
+        cur_mapping: List[int] = None,
+    ) -> nx.Graph:
         """Build a graph representation of a circuit.
         The circuit is divided into layers and each layer
         is built into a sub graph with respect to qubits.
         All subgraphs will be connected by qubits.
-        A virtual node (labeled as 0) will be connected with all the qubits in the first layer.
+        A virtual layer would be inserted and connected to the first layer
+        by qubit.
 
         Args:
             layered_circ (List[Set[Tuple[int, int]]]): Circuit to be built. Circuit is
                 represented in the layered 2-bit gate pair form.
                 If circuit has fewer layers, some empty layers will be padded. If the
                 circuit has more layers, extra layers will be dropped.
+            topo_dist (torch.IntTensor): Physical qubit distance matrix.
+            cur_mapping (List[int]): Current physical-logical qubit mapping.
+                logical qubit u is mapped to physical qubit cur_mapping[v].
+                If cur_mapping is not provided, the identical mapping will be used.
 
         Returns:
             nx.Graph: Graph representation.
         """
+        if cur_mapping is None:
+            cur_mapping = [i for i in range(self._max_qubit_num)]
+
         while len(layered_circ) < self._max_layer_num:
             layered_circ.append([])
 
@@ -172,17 +191,28 @@ class CircuitGraphormerDataProcessor:
         for i in range(self._node_num):
             g.add_node(i)
         for layer_idx, layer in enumerate(layered_circ):
-            offset = layer_idx * self._max_qubit_num + 1
+            offset = (layer_idx + 1) * self._max_qubit_num
             for b in range(self._max_qubit_num):
-                prev = 0 if layer_idx == 0 else b + offset - self._max_qubit_num
-                g.add_edge(b + offset, prev)
+                prev = b + offset - self._max_qubit_num
+                g.add_edge(b + offset, prev, weight=1)
             for u, v in layer:
-                g.add_edge(u + offset, v + offset)
+                _u = cur_mapping[u]
+                _v = cur_mapping[v]
+                g.add_edge(_u + offset, _v + offset, weight=topo_dist[_u][_v])
         return g
 
-    def get_spacial_encoding(
-        self, circ_graph: nx.Graph, topo_graph: nx.Graph, cur_mapping: List[int] = None
-    ) -> torch.IntTensor:
+    def get_topo_dist(self, topo_graph: nx.Graph) -> torch.IntTensor:
+        topo_dist = torch.zeros(
+            (self._max_qubit_num, self._max_qubit_num), dtype=torch.int
+        )
+        sp = nx.all_pairs_shortest_path_length(topo_graph)
+        for u, row in sp:
+            for v, d in row.items():
+                topo_dist[u][v] = d
+                topo_dist[v][u] = d
+        return topo_dist
+
+    def get_spacial_encoding(self, circ_graph: nx.Graph) -> torch.IntTensor:
         """Build the spacial encoding of a given graph. The spacial encoding
         will be masked by corresponding physical topology. A spacial
         encoding is similar to a shortest path matrix except that the
@@ -190,55 +220,19 @@ class CircuitGraphormerDataProcessor:
 
         Args:
             circ_graph (nx.Graph): Graph to be handled. The input graph must
-                have consecutive node indices starting from 0. You must
-                guarantee that 0 is the virtual node.
-            topo_graph (nx.Graph): Topology of the physical device.
-            cur_mapping (List[int]): Current physical-logical qubit mapping.
-                logical qubit u is mapped to physical qubit cur_mapping[v].
-                If cur_mapping is not provided, the identical mapping will be used.
+                be remapped by current mapping.
 
         Returns:
             torch.IntTensor: Spacial encoding matrix WITHOUT embedding.
                 If there's no available path between two nodes, the
                 distance will be marked as 0.
         """
-        if cur_mapping is None:
-            cur_mapping = [i for i in range(self._max_qubit_num)]
-
-        node_num = self._node_num
-        dist = [[0 for _ in range(node_num)] for _ in range(node_num)]
-        dist = torch.IntTensor(dist)
-
-        topo_dist = [
-            [0 for _ in range(self._max_qubit_num)] for _ in range(self._max_qubit_num)
-        ]
-        sp = nx.all_pairs_shortest_path_length(topo_graph)
+        dist = torch.zeros((self._node_num, self._node_num), dtype=torch.int)
+        sp = nx.all_pairs_dijkstra_path_length(circ_graph)
         for u, row in sp:
             for v, d in row.items():
-                topo_dist[u][v] = d
-                topo_dist[v][u] = d
-        topo_dist = torch.IntTensor(topo_dist)
-
-        # Virtual node and first layer
-        for b in range(self._max_qubit_num):
-            dist[0][b + 1] = 1
-            dist[b + 1][0] = 1
-        for layer_idx in range(1, self._max_layer_num):
-            offset = 1 + layer_idx * self._max_qubit_num
-            # Inter-layer connections
-            for b in range(self._max_qubit_num):
-                prev = b + offset - self._max_qubit_num
-                dist[b][prev] = 1
-                dist[prev][b] = 1
-            # Inner-layer connections
-            for u in range(self._max_qubit_num):
-                for v in range(self._max_qubit_num):
-                    _u = cur_mapping[u]
-                    _v = cur_mapping[v]
-                    if circ_graph.has_edge(_u + offset, _v + offset):
-                        dist[_u + offset][_v + offset] = topo_dist[u][v]
-                        dist[_v + offset][_u + offset] = topo_dist[u][v]
-
+                dist[u][v] = d
+                dist[v][u] = d
         return dist
 
     def get_x(self, topo_qubit_number: int) -> torch.Tensor:
@@ -287,6 +281,6 @@ class CircuitGraphormerDataProcessor:
 
 
 if __name__ == "__main__":
-    processor = CircuitGraphormerDataProcessor(max_qubit_num=30, max_layer_num=70)
+    processor = CircuitTransformerDataProcessor(max_qubit_num=30, max_layer_num=70)
     # processor._show_layer_distribution()
     processor.build()

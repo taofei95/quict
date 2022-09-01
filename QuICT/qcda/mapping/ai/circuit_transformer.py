@@ -125,18 +125,12 @@ class BiasedGraphormer(nn.Module):
         )
 
     def forward(self, x, attn_bias=None):
-        # if attn_bias is not None:
-        #     # (n, f) ~ (n, n)
-        #     # or (b, n, f) ~ (b, n, n)
-        #     assert x.shape[-2] == self._node_num
-        #     assert attn_bias.shape[-1] == self._node_num
-        #     assert attn_bias.shape[-2] == self._node_num
         for layer in self._transformer_layers:
             x = layer(x, attn_bias)
         return x
 
 
-class CircuitGraphormer(nn.Module):
+class CircuitTransformer(nn.Module):
     def __init__(
         self,
         max_qubit_num: int,
@@ -145,23 +139,35 @@ class CircuitGraphormer(nn.Module):
         head: int,
         num_attn_layer: int = 6,
     ) -> None:
+        """Circuit transformer constructor.
+
+        Args:
+            max_qubit_num (int): Maximal number of qubit of circuits after padding.
+            max_layer_num (int): Maximal number of layer of circuits after padding. This layer number should NOT contains any virtual nodes.
+            feat_dim (int): Dimension of node feature embeddings.
+            head (int): Attention mechanism head number.
+            num_attn_layer (int, optional): Number of attention layers. Defaults to 6.
+        """
+
         super().__init__()
 
-        max_volume = max_layer_num * max_qubit_num
+        self._max_qubit_num = max_qubit_num
 
         self._x_embedding = nn.Embedding(
             num_embeddings=max_qubit_num + 2, embedding_dim=feat_dim, padding_idx=0
         )
 
         self._graphomer = BiasedGraphormer(
-            node_num=max_volume + 1,
+            node_num=(max_layer_num + 1) * max_qubit_num,
             feat_dim=feat_dim,
             head=head,
             num_attn_layer=num_attn_layer,
         )
 
         self._spacial_emedding = nn.Embedding(
-            num_embeddings=max_qubit_num + 2, embedding_dim=1, padding_idx=0
+            num_embeddings=max_qubit_num * max_layer_num + 1,
+            embedding_dim=1,
+            padding_idx=0,
         )
 
     def forward(
@@ -177,9 +183,9 @@ class CircuitGraphormer(nn.Module):
         x = self._x_embedding(x)
         x = self._graphomer(x, attn_bias)
 
-        # Node with label 0 is the virtual node, which is used as
-        # the readout node.
+        # Nodes in the first layer are virtual nodes.
+        # They are used as the readout nodes.
         if is_batch:
-            return x[:, 0, :]
+            return x[:, : self._max_qubit_num, :]
         else:
-            return x[0, :]
+            return x[: self._max_qubit_num, :]

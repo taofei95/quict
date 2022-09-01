@@ -8,7 +8,7 @@ def test_gtdqn():
     max_layer_num = 10
     inner_feat_dim = 30
     head = 3
-    node_num = max_qubit_num * max_layer_num + 1
+    node_num = max_qubit_num * (max_layer_num + 1)
 
     model = GraphTransformerDeepQNetwork(
         max_qubit_num=max_qubit_num,

@@ -3,7 +3,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from QuICT.qcda.mapping.ai.circuit_graphormer import CircuitGraphormer
+from QuICT.qcda.mapping.ai.circuit_transformer import CircuitTransformer
 
 
 class GraphTransformerDeepQNetwork(nn.Module):
@@ -17,7 +17,7 @@ class GraphTransformerDeepQNetwork(nn.Module):
     ) -> None:
         super().__init__()
 
-        self._circ_graph_transformer = CircuitGraphormer(
+        self._circ_graph_transformer = CircuitTransformer(
             max_qubit_num=max_qubit_num,
             max_layer_num=max_layer_num,
             feat_dim=inner_feat_dim,
@@ -25,19 +25,12 @@ class GraphTransformerDeepQNetwork(nn.Module):
             num_attn_layer=num_attn_layer,
         )
 
-        lv = 3
-        step = (max_qubit_num - inner_feat_dim) // lv
         self._mlp = nn.Sequential(
-            nn.Linear(in_features=inner_feat_dim, out_features=inner_feat_dim + step),
+            nn.Linear(in_features=inner_feat_dim, out_features=inner_feat_dim),
             nn.LeakyReLU(),
-            nn.Linear(
-                in_features=inner_feat_dim + step,
-                out_features=inner_feat_dim + 2 * step,
-            ),
+            nn.Linear(in_features=inner_feat_dim, out_features=inner_feat_dim),
             nn.LeakyReLU(),
-            nn.Linear(
-                in_features=inner_feat_dim + 2 * step, out_features=max_qubit_num
-            ),
+            nn.Linear(in_features=inner_feat_dim, out_features=inner_feat_dim),
         )
 
         self._scale = sqrt(1.0 / float(max_qubit_num))
@@ -51,7 +44,6 @@ class GraphTransformerDeepQNetwork(nn.Module):
         x = self._mlp(x)
 
         x = x * self._scale
-        x = torch.unsqueeze(x, dim=-1)
         x = torch.bmm(x, torch.transpose(x, -1, -2))
         if is_batch:
             return x
