@@ -134,12 +134,14 @@ class CNFSATOracle:
                 clause_number = int(new[3])
                 continue
             else:
-                for i in range(len(new)): #注意这里是否减1 要检查一下
-                    new[i] = int(new[i])
-                    new[i] = new[i][:-1]
-            CNF_data.append(new)  #给各个Clause 编号0,1 ...m-1#
-        #for i in range(len(CNF_data)):    k = max(k,len(CNF_data[i]) - 1)
+                int_new = []
+                for i in range(len(new) - 1): #注意这里是否减1 要检查一下
+                    int_new.append(int(new[i]))
+
+            CNF_data.append(int_new)  #给各个Clause 编号0,1 ...m-1#
+
         f.close()
+
         return variable_nunmber, clause_number, CNF_data
 
     def clause(self, CNF_data: List, variable_nunmber: int, Aux: int, StartID: int, EndID: int, target: int, current_depth: int, depth: int):
