@@ -146,7 +146,7 @@ class CNFSATOracle:
         p = math.floor(Aux/2) + 1
         if StartID == EndID:
             #n= variable_nunmber + Aux + 1
-            controls = CNF_data[StartID]
+            controls = CNF_data[StartID][:-1]
             if target < variable_nunmber + p:
                 current_Aux = target + 1
             else:
