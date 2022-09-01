@@ -9,16 +9,13 @@ import logging
 from math import pi, gcd
 import numpy as np
 from fractions import Fraction
-from functools import reduce
 
 from QuICT.core import Circuit
 from QuICT.core.gate import *
 from QuICT.qcda.synthesis.arithmetic.bea import *
-from QuICT.algorithm import Algorithm
-from QuICT.core.operator import Trigger, CheckPoint, CheckPointChild
+from QuICT.core.operator import Trigger, CheckPoint
+from QuICT.simulation.state_vector import CircuitSimulator
 from .utility import *
-
-from QuICT.simulation.cpu_simulator import CircuitSimulator
 
 
 def construct_circuit(a: int, N: int, eps: float = 1 / 10):

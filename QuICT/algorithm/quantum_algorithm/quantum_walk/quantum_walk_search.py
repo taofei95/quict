@@ -7,7 +7,7 @@ from QuICT.core import Circuit
 from QuICT.core.gate import *
 from QuICT.qcda.synthesis.gate_decomposition import GateDecomposition
 from QuICT.qcda.optimization import CommutativeOptimization
-from QuICT.simulation.gpu_simulator import ConstantStateVectorSimulator
+from QuICT.simulation.state_vector import ConstantStateVectorSimulator
 from QuICT.algorithm.quantum_algorithm.quantum_walk import Graph
 from QuICT.algorithm.quantum_algorithm.quantum_walk import QuantumWalk
 
@@ -136,8 +136,8 @@ class QuantumWalkSearch(QuantumWalk):
 
         # Step 1, transform the unitary gate and optimization
         if optimization:
-            opt_circuit = GateDecomposition.execute(self._circuit)
-            opt_circuit = CommutativeOptimization.execute(opt_circuit)
+            opt_circuit = GateDecomposition().execute(self._circuit)
+            opt_circuit = CommutativeOptimization().execute(opt_circuit)
         else:
             opt_circuit = self._circuit
 
@@ -148,9 +148,7 @@ class QuantumWalkSearch(QuantumWalk):
 
 
 if __name__ == "__main__":
-    from QuICT.simulation.gpu_simulator import ConstantStateVectorSimulator
-
-    simulator = ConstantStateVectorSimulator()
+    simulator = ConstantStateVectorSimulator(matrix_aggregation=False)
     grover = QuantumWalkSearch(simulator)
-    result = grover.run(index_qubits=2, target=2)
+    result = grover.run(index_qubits=3, target=6)
     grover.draw()

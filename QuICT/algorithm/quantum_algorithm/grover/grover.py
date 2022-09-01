@@ -9,7 +9,17 @@ import logging
 
 from QuICT.core import Circuit
 from QuICT.core.gate import *
-from QuICT.simulation.cpu_simulator import CircuitSimulator
+from QuICT.simulation.state_vector import CircuitSimulator
+import logging
+
+
+def degree_counterclockwise(v1: np.ndarray, v2: np.ndarray):
+    """from v1 to v2
+    """
+    d = np.real(np.arccos(sum(v1 * v2) / np.sqrt(sum(v1 * v1) * sum(v2 * v2))))
+    if d > 0.5 * np.pi:
+        d = np.pi - d
+    return d
 
 
 class Grover:

@@ -13,13 +13,13 @@ from QuICT.algorithm.quantum_algorithm.grover import (
 )
 from QuICT.core import Circuit
 from QuICT.core.gate import *
+from QuICT.simulation.state_vector import ConstantStateVectorSimulator
 from QuICT.qcda.synthesis.mct import MCTOneAux
-from QuICT.simulation.gpu_simulator import ConstantStateVectorSimulator
 
 
 def main_oracle(n, f):
     assert len(f) == 1, "only 1 target support for this oracle"
-    assert f[0] >= 0 and f[0] < (1 << n)
+    assert 0 <= f[0] < (1 << n)
 
     result_q = [n]
     cgate = CompositeGate()
@@ -47,7 +47,7 @@ class TestGrover(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         print("The Grover unit test start!")
-        cls.simulator = ConstantStateVectorSimulator()
+        cls.simulator = ConstantStateVectorSimulator(matrix_aggregation=False)
 
     @classmethod
     def tearDownClass(cls) -> None:

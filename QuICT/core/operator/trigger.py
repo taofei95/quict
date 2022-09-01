@@ -10,19 +10,10 @@ class Trigger(Operator):
     The trigger for switch the dynamic circuit; contains the target qubits and
     related circuits with different state.
     """
-    @property
-    def is_record(self):
-        return self._record_measured
-
-    @property
-    def measured(self):
-        return self._measured
-
     def __init__(
         self,
         targets: int,
-        state_gate_mapping: Union[Dict[int, CompositeGate], List[CompositeGate], Tuple[CompositeGate], FunctionType],
-        record_measured: bool = False
+        state_gate_mapping: Union[Dict[int, CompositeGate], List[CompositeGate], Tuple[CompositeGate], FunctionType]
     ):
         """
         Args:
@@ -35,19 +26,17 @@ class Trigger(Operator):
             TypeError: Error input parameters.
         """
         super().__init__(targets=targets)
-        self._record_measured = record_measured
-        self._measured = []
 
         # Deal with state - compositegate mapping
         self._state_gate_mapping = {}
         if isinstance(state_gate_mapping, (list, tuple)):
             for idx, cgate in enumerate(state_gate_mapping):
-                assert isinstance(cgate, (CompositeGate, BasicGate)), \
+                assert isinstance(cgate, (CompositeGate, BasicGate, type(None))), \
                     "Only accept CompositeGate or BasicGate for state_gate_mapping."
                 self._state_gate_mapping[idx] = cgate
         elif isinstance(state_gate_mapping, dict):
             for key, value in state_gate_mapping.items():
-                assert isinstance(key, int) and isinstance(value, (CompositeGate, BasicGate))
+                assert isinstance(key, int) and isinstance(value, (CompositeGate, BasicGate, type(None)))
 
             self._state_gate_mapping = state_gate_mapping
         elif isinstance(state_gate_mapping, FunctionType):
@@ -68,8 +57,6 @@ class Trigger(Operator):
             CompositeGate: The related composite gate.
         """
         assert state >= 0 and state < 2 ** self.targets, f"The state should between 0 and {2**self.targets}."
-        if self.is_record:
-            self._measured.append(state)
 
         if isinstance(self._state_gate_mapping, FunctionType):
             return self._state_gate_mapping(state)
@@ -79,5 +66,5 @@ class Trigger(Operator):
     def _check_function_validation(self, state_gate_mapping):
         """ Validation the correctness of given state-composite mapping function. """
         for i in range(2 ** self.targets):
-            if not isinstance(state_gate_mapping(i), (CompositeGate, BasicGate, None)):
+            if not isinstance(state_gate_mapping(i), (CompositeGate, BasicGate, type(None))):
                 raise KeyError("The trigger's mapping should only return CompositeGate for all possible state.")

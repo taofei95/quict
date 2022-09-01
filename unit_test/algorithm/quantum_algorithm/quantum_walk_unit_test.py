@@ -2,9 +2,8 @@ import numpy as np
 import unittest
 
 from QuICT.core.gate import H
+from QuICT.simulation.state_vector import ConstantStateVectorSimulator, CircuitSimulator
 from QuICT.algorithm.quantum_algorithm.quantum_walk import QuantumWalk, Graph
-from QuICT.simulation.cpu_simulator import CircuitSimulator
-from QuICT.simulation.gpu_simulator import ConstantStateVectorSimulator
 
 
 class TestQuantumWalk(unittest.TestCase):
@@ -12,7 +11,7 @@ class TestQuantumWalk(unittest.TestCase):
     def setUpClass(cls):
         print("The Random Walk unit test start!")
         cls.steps = 10
-        cls.simulator = ConstantStateVectorSimulator()
+        cls.simulator = ConstantStateVectorSimulator(matrix_aggregation=False)
 
     @classmethod
     def tearDownClass(cls) -> None:
