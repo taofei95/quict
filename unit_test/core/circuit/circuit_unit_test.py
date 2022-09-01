@@ -2,8 +2,8 @@ import numpy as np
 import unittest
 
 from QuICT.core import Circuit
-from QuICT.core.gate import QFT, S, CX, H, X, CRz, CZ, CY
 from QuICT.core.utils.gate_type import GateType
+from QuICT.core.gate import QFT, S, CX, H, X, CRz, CZ, CY
 
 
 class TestCircuit(unittest.TestCase):

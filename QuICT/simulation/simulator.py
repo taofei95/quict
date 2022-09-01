@@ -105,7 +105,7 @@ class Simulator:
 
         circuit_name = circuit.name if isinstance(circuit, Circuit) else ""
         result = Result(circuit_name, self._device, self._backend, self._shots, self._options)
-        print(self._backend)
+       
         if self._circuit_record and circuit is not None:
             result.record_circuit(circuit)
 

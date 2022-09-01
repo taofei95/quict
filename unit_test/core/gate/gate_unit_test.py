@@ -42,7 +42,6 @@ class TestGate(unittest.TestCase):
         CCRz(1) | cir([7, 8, 9])  # 17
         cg_ccrz = CCRz.build_gate()
         cg_ccrz | cir([7, 8, 9])  # 22
-
         assert len(cir.gates) == 23
 
     def test_gate_name(self):
