@@ -11,7 +11,7 @@ class TestQuantumWalk(unittest.TestCase):
     def setUpClass(cls):
         print("The Random Walk unit test start!")
         cls.steps = 10
-        cls.simulator = ConstantStateVectorSimulator(matrix_aggregation=False)
+        cls.simulator = ConstantStateVectorSimulator()
 
     @classmethod
     def tearDownClass(cls) -> None:

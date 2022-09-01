@@ -63,13 +63,6 @@ class QuantumWalkSearch(QuantumWalk):
         search_array[self._target][self._target] = 1
         coin_oracle = np.kron(np.eye(self._graph.position), self._coin_unmarked) + np.kron(search_array, self._coin_marked - self._coin_unmarked)
         return Unitary(coin_oracle)
-        # operators = []
-        # for i in range(self._graph.position):
-        #     if i == self._target:
-        #         operators.append(coin_marked)
-        #     else:
-        #         operators.append(coin_unmarked)
-        # return operators
 
     def _is_unit_hamming_distance(self, x, y):
         return str(bin(x ^ y))[2:].count("1") == 1
@@ -148,7 +141,7 @@ class QuantumWalkSearch(QuantumWalk):
 
 
 if __name__ == "__main__":
-    simulator = ConstantStateVectorSimulator(matrix_aggregation=False)
+    simulator = ConstantStateVectorSimulator()
     grover = QuantumWalkSearch(simulator)
     result = grover.run(index_qubits=3, target=6)
     grover.draw()
