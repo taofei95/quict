@@ -3,29 +3,9 @@ import os
 
 class CircuitLib:
 
-    """ Circuit Library
+    """ Circuitlib
 
-    get_circuit(name, *args)
-    
-    name: template, random, algorithm, experiment
-    
-    *args:
-    
-        template:   args[0]: qubit_num, upper bound of qubit number of templates
-                    args[1]: size, upper bound of size of templates
-                    args[2]: depth, upper bound of depth of templates
-        
-        random:     args[0]: circuit_type (ctrl_diag/ctrl_unitary/diag/qft/single_bit/unitary), type of random circuits
-                    args[1]: size_type (small/medium/large), get a list of random circuits with similar qubit numbers
-                             or qubit number, get a single random circuit with the given qubit number
-
-        algorithm:  args[0]: circuit_type (QFT/Grover/Supermacy), type of algorithm circuits
-                    args[1]: size_type (small/medium/large), get a list of algorithm circuits with similar qubit numbers (only for QFT/Grover circuits)
-                             or qubit number, get a single algorithm circuit with the given qubit number
-        Experiment: args[0]: circuit_type(Mapping/Adder), type of experiment circuits
-                    args[1]: (for Adder) size_type (small/medium/large), get a list of adder circuits with similar qubit numbers
-                                         or qubit number, get a single adder circuit with the given qubit number
-                             (for Mapping) mapping_name, get all mapping circuits under the same qubit mapping
+    A circuit library function. Get circuits with .qasm type
 
     """
 
@@ -49,6 +29,28 @@ class CircuitLib:
         return circuit_all
 
     def get_circuit(self, name="template", *args):
+
+        '''
+    
+        name: "template", "random", "algorithm", "experiment"
+    
+        *args:
+    
+                template:   args[0]: qubit_num, upper bound of qubit number of templates
+                            args[1]: size, upper bound of size of templates
+                            args[2]: depth, upper bound of depth of templates
+        
+                random:     args[0]: circuit_type ("ctrl_diag"/"ctrl_unitary"/"diag"/"qft"/"single_bit"/"unitary"), type of random circuits
+                            args[1]: qubit number (list/int), get a list of circuits (a single circuit) with given qubit numbers
+
+                algorithm:  args[0]: circuit_type ("QFT"/"Grover"/"Supermacy"), type of algorithm circuits
+                            args[1]: qubit number (list/int), get a list of circuits (a single circuit) with given qubit numbers
+                
+                experiment: args[0]: circuit_type("Mapping"/"Adder"), type of experiment circuits
+                            args[1]: (for Adder)  qubit number (list/int), get a list of circuits (a single circuit) with given qubit numbers
+                                     (for Mapping) mapping_name, get all mapping circuits under the same qubit mapping
+
+        '''
         
         para = args
         circuit_list = []
@@ -72,11 +74,10 @@ class CircuitLib:
             # get all random circuits
 
             filename = filename + '/' + para[0]
-            list_dict = {"small":[1,2,3,4,5], "middle":[13,14,15,16,17,18,19], "large":[30,35,40,45,50]}
-            if para[1] in list_dict:
-                random_list = list_dict[para[1]]
-            else:
+            if isinstance(para[1], int):
                 random_list = [para[1]]
+            else:
+                random_list = para[1]
             for list_name in random_list:
                 filename_temp = filename + '/' + str(list_name) + ".qasm"
                 circuit  = self.load_qasm(filename_temp)
@@ -88,19 +89,19 @@ class CircuitLib:
             # get all algorithm circuits
 
             filename = filename + '/' + para[0]
-            list_dict = {"small":[11,13,15,17,19], "middle":[51,53,55,57,59], "large":[91,93,95,97,99]}
             list_dict_2 = {"QFT":"/qft_", "Grover":"/grover_", "Supermacy":"/"}
             if para[0] in list_dict_2:
-                if para[0] == "Supermacy":
-                    filename = filename + list_dict[para[0]] + str(para[1]) + ".qasm"
-                    circuit  = self.load_qasm(filename)
-                    if circuit != None:
-                        circuit_list.append(circuit)
-                else:
-                    if para[1] in list_dict:
-                        algorithm_list = list_dict[para[1]]
+                if isinstance(para[1], int):
+                        algorithm_list = [[para[1]]
                     else:
-                        algorithm_list = [para[1]]
+                        algorithm_list = para[1]
+                if para[0] == "Supermacy":
+                    for list_name in algorithm_list:
+                        filename = filename + list_dict[para[0]] + str(para[1]) + ".qasm"
+                        circuit  = self.load_qasm(filename)
+                        if circuit != None:
+                            circuit_list.append(circuit)
+                else:
                     for list_name in algorithm_list:
                         filename_temp = filename + '/' + str(list_name) + ".qasm"
                         circuit  = self.load_qasm(filename_temp)
@@ -121,11 +122,10 @@ class CircuitLib:
                     circuit_list.append(circuit)
             elif para[0] == "Adder":
                 filename = filename + '/adder_n'
-                list_dict = {"small":[10,13,16,19,22], "middle":[40,43,46,49,52], "large":[70,73,76,79,82]}
-                if para[1] in list_dict:
-                    adder_list = list_dict[para[1]]
-                else:
+                if isinstance(para[1], int):
                     adder_list = [para[1]]
+                else:
+                    adder_list = para[1]
                 for list_name in adder_list:
                     filename_temp = filename + str(list_name) + ".qasm"
                     circuit  = self.load_qasm(filename_temp)
@@ -136,9 +136,3 @@ class CircuitLib:
         else:
             filename = ""
         return circuit_list
-
-if __name__ == '__main__':
-    circuit_list = CircuitLib().get_circuit("random", "qft", "small")
-    print(len(circuit_list))
-    for circuit in circuit_list:
-        print(circuit.qasm())
