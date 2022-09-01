@@ -152,5 +152,5 @@ if __name__ == "__main__":
 
     simulator = ConstantStateVectorSimulator()
     grover = QuantumWalkSearch(simulator)
-    result = grover.run(index_qubits=7, target=7)
+    result = grover.run(index_qubits=2, target=2)
     grover.draw()
