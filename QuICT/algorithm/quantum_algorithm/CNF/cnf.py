@@ -15,15 +15,13 @@ from QuICT.core.operator import Trigger
 import logging
 
 #from .._synthesis import Synthesis
-import random
-#import logging
-from math import pi, gcd
+#import random import logging from math import pi, gcd
 import numpy as np
 from fractions import Fraction
 from typing import List, Tuple
 
 #from QuICT.core import Circuit
-#from QuICT.core.gate import *
+#from QuICT.core.gate import *cc
 
 # from QuICT.simulation.cpu_simulator import CircuitSimulator
 from QuICT.qcda.synthesis.mct import one_dirty_aux
@@ -42,12 +40,11 @@ class CNFSATOracle:
             Circuit: 
             List[int]: the indices to be measured to get ~phi
         """
-        return self._cgates
+        return self._cgate
 
     def execute(m, n):
         gates = CompositeGate()
         #with gates:
-            
         #return gates
     
     def run(
@@ -71,12 +68,25 @@ class CNFSATOracle:
         self._cgate = CompositeGate()
         p = math.floor(ancilla_qubits_num / 2) + 1
         depth=math.ceil(math.log( clause_number , p ))
+        target = variable_nunmber
         if clause_number==1:
             #n= variable_nunmber + Aux + 1
             controls = CNF_data[0]
-            target = variable_nunmber
+            controls_abs=[]
+            controls_X=[]
+            
             current_Aux = target + 1
-            one_dirty_aux(controls, target, current_Aux) #QuICT.qcda.synthesis.mct.
+            for i in range(len(controls)):
+                if controls[i] < 0:
+                    controls_X.append(-controls[i]-1)
+                    controls_abs.append(-controls[i]-1)
+                if controls[i] > 0:
+                    controls_abs.append(controls[i]-1)
+            for i in range(len(controls_X)):
+                X | self._cgate(controls_X[i])
+            one_dirty_aux(self._cgate, controls_abs, target, current_Aux) #QuICT.qcda.synthesis.mct.
+            for i in range(len(controls_X)):
+                X | self._cgate(controls_X[i])
         else:
             block_len = p ** (math.ceil(math.log(clause_number,p))-1)
             block_number = math.ceil((clause_number) / block_len )
@@ -90,8 +100,10 @@ class CNFSATOracle:
                 )
                 #(j - 1)s+1, js, Ancilla[j], d-1) ?new[j]=j
                 controls.append(variable_nunmber +p+ j)
+
             current_Aux = variable_nunmber + 1 
-            self._cgate | one_dirty_aux(self._ccontrols, variable_nunmber, current_Aux)
+            one_dirty_aux(self._cgate, controls, target, current_Aux)
+            
             for j in range(block_number):
                 self.clause(
                     CNF_data, variable_nunmber,
@@ -122,8 +134,9 @@ class CNFSATOracle:
                 clause_number = int(new[3])
                 continue
             else:
-                for i in range(len(new)-1): #注意这里是否减1 要检查一下
-                    new[i] = int(new[i]) - 1
+                for i in range(len(new)): #注意这里是否减1 要检查一下
+                    new[i] = int(new[i])
+                    new[i] = new[i][:-1]
             CNF_data.append(new)  #给各个Clause 编号0,1 ...m-1#
         #for i in range(len(CNF_data)):    k = max(k,len(CNF_data[i]) - 1)
         f.close()
@@ -138,31 +151,44 @@ class CNFSATOracle:
                 current_Aux = target + 1
             else:
                 current_Aux = target - 1
-                one_dirty_aux(controls, target, current_Aux)
+            controls_abs=[]
+            controls_X=[]
+            for i in range(len(controls)):
+                if controls[i] < 0:
+                    controls_X.append(-controls[i]-1)
+                    controls_abs.append(-controls[i]-1)
+                if controls[i] > 0:
+                    controls_abs.append(controls[i]-1)
+            for i in range(len(controls_X)):
+                X | self._cgate(controls_X[i])
+            
+            one_dirty_aux(self._cgate, controls_abs, target, current_Aux)
+            for i in range(len(controls_X)):
+                X | self._cgate(controls_X[i])
         else: 
             if StartID +1 == EndID :
                 if (math.floor((depth - current_depth) % 2)) == 1:
-                    CCX | self._cgate([[variable_nunmber + Aux -1  , variable_nunmber + Aux , target]])    
+                    CCX | self._cgate([variable_nunmber + Aux -1  , variable_nunmber + Aux , target])    
                     self.clause(CNF_data, variable_nunmber, Aux, StartID,StartID, variable_nunmber + Aux - 1, current_depth-1, depth)
 
-                    CCX | self._cgate([[variable_nunmber + Aux -1  , variable_nunmber + Aux , target]])
+                    CCX | self._cgate([variable_nunmber + Aux -1  , variable_nunmber + Aux , target])
                     self.clause(CNF_data, variable_nunmber, Aux, EndID, EndID, variable_nunmber + Aux, current_depth-1, depth)
                     
-                    CCX | self._cgate([[variable_nunmber + Aux -1  , variable_nunmber + Aux , target]])
+                    CCX | self._cgate([variable_nunmber + Aux -1  , variable_nunmber + Aux , target])
                     self.clause(CNF_data, variable_nunmber, Aux, StartID,StartID, variable_nunmber + Aux - 1, current_depth-1, depth)
 
-                    CCX | self._cgate([[variable_nunmber + Aux -1  , variable_nunmber + Aux , target]])
+                    CCX | self._cgate([variable_nunmber + Aux -1  , variable_nunmber + Aux , target])
                 else:
-                    CCX | self._cgate([[variable_nunmber + 1  , variable_nunmber + 2 , target]])    
+                    CCX | self._cgate([variable_nunmber + 1  , variable_nunmber + 2 , target])    
                     self.clause(CNF_data, variable_nunmber, Aux, StartID,StartID, variable_nunmber + 1, current_depth-1, depth)
 
-                    CCX | self._cgate([[variable_nunmber + 1  , variable_nunmber + 2 , target]]) 
+                    CCX | self._cgate([variable_nunmber + 1  , variable_nunmber + 2 , target]) 
                     self.clause(CNF_data, variable_nunmber, Aux, EndID, EndID, variable_nunmber + 2, current_depth-1, depth)
                     
-                    CCX | self._cgate([[variable_nunmber + 1  , variable_nunmber + 2 , target]]) 
+                    CCX | self._cgate([variable_nunmber + 1  , variable_nunmber + 2 , target]) 
                     self.clause(CNF_data, variable_nunmber, Aux, StartID,StartID, variable_nunmber + 1, current_depth-1, depth)
 
-                    CCX | self._cgate([[variable_nunmber + 1  , variable_nunmber + 2 , target]]) 
+                    CCX | self._cgate([variable_nunmber + 1  , variable_nunmber + 2 , target]) 
             else:
                 #print(EndID-StartID)
                 #print(math.log(EndID-StartID, p))
@@ -192,20 +218,18 @@ class CNFSATOracle:
                             
                     # topPhase 
 
-                    CCX | self._cgate([[variable_nunmber + Aux - 2*block_number + 4  , variable_nunmber + Aux - 2*block_number + 3, variable_nunmber + Aux - block_number + 3]])    
+                    CCX | self._cgate([variable_nunmber + Aux - 2*block_number + 4  , variable_nunmber + Aux - 2*block_number + 3, variable_nunmber + Aux - block_number + 3])    
                     self.clause(CNF_data, variable_nunmber, Aux, StartID + (block_number-2) * block_len, np.minimum(StartID + (block_number-1) * block_len-1, EndID), variable_nunmber + Aux - 2*block_number + 4, current_depth-1, depth)
 
-                    CCX | self._cgate([[variable_nunmber + Aux - 2*block_number + 4  , variable_nunmber + Aux - 2*block_number + 3, variable_nunmber + Aux - block_number + 3]])
+                    CCX | self._cgate([variable_nunmber + Aux - 2*block_number + 4  , variable_nunmber + Aux - 2*block_number + 3, variable_nunmber + Aux - block_number + 3])
                     self.clause(CNF_data, variable_nunmber, Aux, StartID + (block_number-1) * block_len, np.minimum(StartID + (block_number) * block_len-1, EndID), variable_nunmber + Aux - 2*block_number + 3, current_depth-1, depth)
 
-                    CCX | self._cgate([[variable_nunmber + Aux - 2*block_number + 4  , variable_nunmber + Aux - 2*block_number + 3, variable_nunmber + Aux - block_number + 3]])
+                    CCX | self._cgate([variable_nunmber + Aux - 2*block_number + 4  , variable_nunmber + Aux - 2*block_number + 3, variable_nunmber + Aux - block_number + 3])
                     self.clause(CNF_data, variable_nunmber, Aux, StartID + (block_number-2) * block_len, np.minimum(StartID + (block_number-1) * block_len-1, EndID), variable_nunmber + Aux - 2*block_number + 4, current_depth-1, depth)
 
-                    CCX | self._cgate([[variable_nunmber + Aux - 2*block_number + 4  , variable_nunmber + Aux - 2*block_number + 3, variable_nunmber + Aux - block_number + 3]])    
+                    CCX | self._cgate([variable_nunmber + Aux - 2*block_number + 4  , variable_nunmber + Aux - 2*block_number + 3, variable_nunmber + Aux - block_number + 3])    
                 
                     #QuICT.qcda.synthesis.mct.
-                    #gate | one_dirty_aux(gates, controls, target, current_Aux)
-                
 
                     #downPhase
                     for j in range(1, block_number-2):
@@ -257,9 +281,9 @@ class CNFSATOracle:
                     
                     #控制位variable_nunmber + Aux - block_number + 2 -j 放 clause ， 另一个 控制位(将与此for内的前一个target 相同)并和target 依次上升
                     for j in range(1, block_number-2):
-                        CCX | self._cgate([[variable_nunmber + p-1 - block_number + 2 -j , variable_nunmber + p-1 -j, variable_nunmber + p-1 +1-j]] )
+                        CCX | self._cgate([variable_nunmber + p-1 - block_number + 2 -j , variable_nunmber + p-1 -j, variable_nunmber + p-1 +1-j] )
                         self.clause(CNF_data, variable_nunmber, Aux, StartID + j * block_len, np.minimum(StartID + j * block_len-1, EndID), variable_nunmber + p-1 - block_number + 2 -j, current_depth-1, depth)
-                        CCX | self._cgate([[variable_nunmber + p-1 - block_number + 2 -j , variable_nunmber + p-1 -j, variable_nunmber + p-1 +1-j]] )
+                        CCX | self._cgate([variable_nunmber + p-1 - block_number + 2 -j , variable_nunmber + p-1 -j, variable_nunmber + p-1 +1-j] )
                             
                     # topPhase 
 
@@ -274,9 +298,7 @@ class CNFSATOracle:
 
                     CCX | self._cgate([variable_nunmber + p-1 - 2*block_number + 4  , variable_nunmber + p-1 - 2*block_number + 3, variable_nunmber + p-1 - block_number + 3])    
                 
-                    #QuICT.qcda.synthesis.mct.
-                    #gate | one_dirty_aux(gates, controls, target, current_Aux)
-                
+                    #QuICT.qcda.synthesis.mct.            
 
                     #downPhase
                     for j in range(1, block_number-2):
@@ -313,9 +335,7 @@ class CNFSATOracle:
                     CCX | self._cgate([variable_nunmber + p-1 - 2*block_number + 4  , variable_nunmber + p-1 - 2*block_number + 3, variable_nunmber + p-1 - block_number + 3])    
                 
                     #QuICT.qcda.synthesis.mct.
-                    #gate | one_dirty_aux(gates, controls, target, current_Aux)
-                
-
+             
                     #downPhase
                     for j in range(1, block_number-2):
                         jdown = block_number-2 - j
