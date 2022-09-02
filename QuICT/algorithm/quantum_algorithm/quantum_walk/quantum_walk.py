@@ -122,7 +122,7 @@ class QuantumWalk:
             optimization: bool = False,
             record_measured: bool = False,
             ) -> Union[np.ndarray, List]:
-        """ Initial the quantum random walk with given steps, graph and coin operator.
+        """ Execute the quantum random walk with given steps, graph and coin operator.
 
         Args:
             step (int): The steps of random walk, a step including a coin operator and a shift operator.
