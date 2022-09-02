@@ -1,13 +1,13 @@
+import os
 import networkx as nx
 from random import choice, randint
 import os.path as osp
-from QuICT.qcda.mapping.ai.data_processor_transformer import (
-    CircuitTransformerDataProcessor,
-)
-from typing import Dict, List, Tuple, Set
+from typing import Dict, Iterable, List, Tuple, Set
 import torch
 from QuICT.core import *
-from QuICT.core.gate import GateType
+from QuICT.core.gate import GateType, BasicGate
+from QuICT.core.layout import LayoutEdge
+from QuICT.core.utils import CircuitBased
 
 
 class CircuitTransformerDataFactory:
@@ -21,12 +21,16 @@ class CircuitTransformerDataFactory:
 
         self._max_qubit_num = max_qubit_num
         self._max_layer_num = max_layer_num
+        self._node_num = max_qubit_num * (max_layer_num + 1)
 
-        self.processor = CircuitTransformerDataProcessor(
-            max_qubit_num=max_qubit_num,
-            max_layer_num=max_layer_num,
-            data_dir=data_dir,
-        )
+        # self.processor = CircuitTransformerDataProcessor(
+        #     max_qubit_num=max_qubit_num,
+        #     max_layer_num=max_layer_num,
+        #     data_dir=data_dir,
+        # )
+
+        self._circ_path_list = None
+        self._topo_names = None
 
         # Topo attr cache def
         # These attributes maps are lazily initialized for faster start up.
@@ -37,6 +41,170 @@ class CircuitTransformerDataFactory:
         self._topo_x_map = {}
         self._topo_mask_map = {}
         self._topo_dist_map = {}
+
+    @property
+    def circ_path_list(self) -> List[Tuple[str, str]]:
+        if self._circ_path_list is None:
+            self._circ_path_list = list(self._load_circuits_path())
+        return self._circ_path_list
+
+    @property
+    def topo_names(self) -> List[str]:
+        if self._topo_names is None:
+            self._topo_names = []
+            for _, _, filenames in os.walk(self._topo_dir):
+                for name in filenames:
+                    self._topo_names.append(name.split(".")[0])
+        return self._topo_names
+
+    def _load_circuits_path(self) -> Iterable[Tuple[str, str]]:
+        for topo_name in self.topo_names:
+            for root, _, filenames in os.walk(osp.join(self._circ_dir, topo_name)):
+                for name in filenames:
+                    if name.startswith("result") or name.startswith("skip"):
+                        continue
+                    circ_path = osp.join(root, name)
+                    yield topo_name, circ_path
+
+    def get_topo_graph(self, topo: Layout) -> nx.Graph:
+        """Build tha graph representation of a topology.
+        Then add a virtual node (labeled 0) into it.
+
+        Args:
+            topo (Layout): Topology to be built.
+
+        Returns:
+            nx.Graph: Graph representation.
+        """
+        g = nx.Graph()
+        for i in range(self._max_qubit_num):
+            g.add_node(i)
+        for edge in topo.edge_list:
+            edge: LayoutEdge
+            g.add_edge(edge.u, edge.v)
+        return g
+
+    def get_layered_circ(
+        self, circ: CircuitBased
+    ) -> Tuple[List[Set[Tuple[int, int]]], bool]:
+        """Get all 2-bit gate pairs by layers.
+
+        Args:
+            circ (CircuitBased): Input circuit.
+
+        Returns:
+            Tuple[List[Set[Tuple[int, int]]], bool]:
+                List of layers, and a success flag. A layer is a set of pairs.
+        """
+        layers_raw: List[Set[Tuple[int, int]]] = [
+            set() for _ in range(self._max_layer_num)
+        ]
+        occupied = [-1 for _ in range(self._max_qubit_num)]
+        for gate in circ.gates:
+            gate: BasicGate
+            if gate.controls + gate.targets != 2:
+                continue
+            a, b = gate.cargs + gate.targs
+            idx = max(occupied[a], occupied[b]) + 1
+            if idx >= self._max_layer_num:
+                return None, False
+            layers_raw[idx].add((a, b))
+            layers_raw[idx].add((b, a))
+            occupied[a] = idx
+            occupied[b] = idx
+        return layers_raw, True
+
+    def get_circ_graph(
+        self,
+        layered_circ: List[Set[Tuple[int, int]]],
+        topo_dist: torch.IntTensor,
+        cur_mapping: List[int] = None,
+    ) -> nx.Graph:
+        """Build a graph representation of a circuit.
+        The circuit is divided into layers and each layer
+        is built into a sub graph with respect to qubits.
+        All subgraphs will be connected by qubits.
+        A virtual layer would be inserted and connected to the first layer
+        by qubit.
+
+        Args:
+            layered_circ (List[Set[Tuple[int, int]]]): Circuit to be built. Circuit is
+                represented in the layered 2-bit gate pair form.
+                If circuit has fewer layers, some empty layers will be padded. If the
+                circuit has more layers, extra layers will be dropped.
+            topo_dist (torch.IntTensor): Physical qubit distance matrix.
+            cur_mapping (List[int]): Current physical-logical qubit mapping.
+                logical qubit u is mapped to physical qubit cur_mapping[v].
+                If cur_mapping is not provided, the identical mapping will be used.
+
+        Returns:
+            nx.Graph: Graph representation.
+        """
+        if cur_mapping is None:
+            cur_mapping = [i for i in range(self._max_qubit_num)]
+
+        while len(layered_circ) < self._max_layer_num:
+            layered_circ.append([])
+
+        g = nx.Graph()
+        for i in range(self._node_num):
+            g.add_node(i)
+        for layer_idx, layer in enumerate(layered_circ):
+            offset = (layer_idx + 1) * self._max_qubit_num
+            for b in range(self._max_qubit_num):
+                prev = b + offset - self._max_qubit_num
+                g.add_edge(b + offset, prev, weight=1)
+            for u, v in layer:
+                _u = cur_mapping[u]
+                _v = cur_mapping[v]
+                g.add_edge(_u + offset, _v + offset, weight=topo_dist[_u][_v])
+        return g
+
+    def get_topo_dist(self, topo_graph: nx.Graph) -> torch.IntTensor:
+        topo_dist = torch.zeros(
+            (self._max_qubit_num, self._max_qubit_num), dtype=torch.int
+        )
+        sp = nx.all_pairs_shortest_path_length(topo_graph)
+        for u, row in sp:
+            for v, d in row.items():
+                topo_dist[u][v] = d
+                topo_dist[v][u] = d
+        return topo_dist
+
+    def get_spacial_encoding(self, circ_graph: nx.Graph) -> torch.IntTensor:
+        """Build the spacial encoding of a given graph. The spacial encoding
+        will be masked by corresponding physical topology. A spacial
+        encoding is similar to a shortest path matrix except that the
+        vertex pair we do not need is set as 0 distance.
+
+        Args:
+            circ_graph (nx.Graph): Graph to be handled. The input graph must
+                be remapped by current mapping.
+
+        Returns:
+            torch.IntTensor: Spacial encoding matrix WITHOUT embedding.
+                If there's no available path between two nodes, the
+                distance will be marked as 0.
+        """
+        dist = torch.zeros((self._node_num, self._node_num), dtype=torch.int)
+        sp = nx.all_pairs_dijkstra_path_length(circ_graph)
+        for u, row in sp:
+            for v, d in row.items():
+                dist[u][v] = d
+                dist[v][u] = d
+        return dist
+
+    def get_x(self, topo_qubit_number: int) -> torch.Tensor:
+        assert topo_qubit_number <= self._max_qubit_num
+
+        x = [0 for _ in range(self._node_num)]
+        x[0] = self._max_qubit_num + 1
+        for layer_idx in range(self._max_layer_num):
+            offset = 1 + self._max_qubit_num * layer_idx
+            for b in range(topo_qubit_number):
+                x[b + offset] = b + 1
+        x = torch.tensor(x, dtype=torch.int)
+        return x
 
     @property
     def topo_graph_map(self) -> Dict[str, nx.Graph]:
@@ -75,16 +243,14 @@ class CircuitTransformerDataFactory:
         return self._topo_dist_map
 
     def _reset_topo_attr_cache(self):
-        for topo_name in self.processor.topo_names:
+        for topo_name in self.topo_names:
             topo_path = osp.join(self._topo_dir, f"{topo_name}.layout")
             topo = Layout.load_file(topo_path)
-            topo_graph = self.processor.get_topo_graph(topo)
+            topo_graph = self.get_topo_graph(topo)
             self._topo_graph_map[topo_name] = topo_graph
             self._topo_qubit_num_map[topo_name] = topo.qubit_number
-            self._topo_x_map[topo_name] = self.processor.get_x(topo.qubit_number)
-            self._topo_dist_map[topo_name] = self.processor.get_topo_dist(
-                topo_graph=topo_graph
-            )
+            self._topo_x_map[topo_name] = self.get_x(topo.qubit_number)
+            self._topo_dist_map[topo_name] = self.get_topo_dist(topo_graph=topo_graph)
 
             topo_mask = torch.zeros(
                 (topo.qubit_number, topo.qubit_number), dtype=torch.float
@@ -96,7 +262,19 @@ class CircuitTransformerDataFactory:
                 topo_edge.append((u, v))
                 topo_edge.append((v, u))
             self._topo_mask_map[topo_name] = topo_mask
-            self._topo_edge_map = topo_edge
+            self._topo_edge_map[topo_name] = topo_edge
+
+    def remap_layered_circ(
+        self, layered_circ: List[Set[Tuple[int, int]]], cur_mapping: List[int]
+    ) -> List[Set[Tuple[int, int]]]:
+        new_layers = [set() for _ in range(self._max_layer_num)]
+        for layer_idx, layer in enumerate(layered_circ):
+            for u, v in layer:
+                _u = cur_mapping[u]
+                _v = cur_mapping[v]
+                new_layers[layer_idx].add((_u, _v))
+                new_layers[layer_idx].add((_v, _u))
+        return new_layers
 
     def get_one(
         self,
@@ -107,7 +285,7 @@ class CircuitTransformerDataFactory:
         Returns:
             Tuple[List[Set[Tuple[int, int]]], str, torch.IntTensor, torch.IntTensor]: (layered_circ, topo_name, x, spacial_encoding, cur_mapping)
         """
-        topo_name: str = choice(self.processor.topo_names)
+        topo_name: str = choice(self.topo_names)
         qubit_num = self.topo_qubit_num_map[topo_name]
         circ = Circuit(qubit_num)
         gate_num = randint(
@@ -119,18 +297,18 @@ class CircuitTransformerDataFactory:
                 GateType.cx,
             ],
         )
-        layered_circ, success = self.processor.get_layered_circ(circ=circ)
+        layered_circ, success = self.get_layered_circ(circ=circ)
         if not success:
             raise RuntimeError("Circuit layer exceed!!!")
 
         x = self.topo_x_map[topo_name]
         cur_mapping = [i for i in range(self.topo_qubit_num_map[topo_name])]
-        circ_graph = self.processor.get_circ_graph(
+        circ_graph = self.get_circ_graph(
             layered_circ=layered_circ,
             cur_mapping=cur_mapping,
             topo_dist=self.topo_dist_map[topo_name],
         )
-        spacial_encoding = self.processor.get_spacial_encoding(
+        spacial_encoding = self.get_spacial_encoding(
             circ_graph=circ_graph,
         )
         return layered_circ, topo_name, x, spacial_encoding, cur_mapping

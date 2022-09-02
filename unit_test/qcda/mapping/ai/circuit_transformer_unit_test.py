@@ -1,9 +1,7 @@
 import torch
 from QuICT.core import *
 from QuICT.qcda.mapping.ai.circuit_transformer import *
-from QuICT.qcda.mapping.ai.data_processor_transformer import (
-    CircuitTransformerDataProcessor,
-)
+from QuICT.qcda.mapping.ai.transformer_data_factory import CircuitTransformerDataFactory
 
 
 def test_self_attn():
@@ -115,13 +113,13 @@ def test_circuit_graphormer():
     max_qubit_num = 30
     max_layer_num = 20
     feat_dim = 30
-    processor = CircuitTransformerDataProcessor(
+    factory = CircuitTransformerDataFactory(
         max_qubit_num=max_qubit_num, max_layer_num=max_layer_num
     )
     # Use a line topo as example
     for i in range(9):
         topo.add_edge(i, (i + 1))
-    topo_graph = processor.get_topo_graph(topo=topo)
+    topo_graph = factory.get_topo_graph(topo=topo)
     topo_dist = torch.zeros((max_qubit_num, max_qubit_num), dtype=torch.int)
     sp = nx.all_pairs_dijkstra_path_length(topo_graph)
     for u, row in sp:
@@ -142,16 +140,16 @@ def test_circuit_graphormer():
     while not successful and retry < max_retry:
         circ.random_append(30)
 
-        layered_circ, successful = processor.get_layered_circ(circ=circ)
+        layered_circ, successful = factory.get_layered_circ(circ=circ)
         if not successful:
             retry += 1
             continue
-        circ_graph = processor.get_circ_graph(
+        circ_graph = factory.get_circ_graph(
             layered_circ=layered_circ, topo_dist=topo_dist
         )
-        spacial_encoding = processor.get_spacial_encoding(circ_graph=circ_graph)
+        spacial_encoding = factory.get_spacial_encoding(circ_graph=circ_graph)
 
-        x = processor.get_x(10)
+        x = factory.get_x(10)
         y_no_batch = model(x, spacial_encoding)
         assert y_no_batch.shape == torch.Size(
             (
@@ -166,11 +164,3 @@ def test_circuit_graphormer():
         y_batch = model(x, spacial_encoding)
         assert y_batch.shape == torch.Size((batch_size,max_qubit_num, feat_dim))
     assert retry < max_retry
-
-
-def test_processor_build():
-    processor = CircuitTransformerDataProcessor(max_layer_num=30, max_qubit_num=10)
-    layered_circ, topo_name = next(iter(processor._build()))
-    assert type(layered_circ) is list
-    assert type(layered_circ[0]) is set
-    assert type(topo_name) is str
