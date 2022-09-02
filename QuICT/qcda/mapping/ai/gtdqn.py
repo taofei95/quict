@@ -17,6 +17,8 @@ class GraphTransformerDeepQNetwork(nn.Module):
     ) -> None:
         super().__init__()
 
+        self._max_qubit_num = max_qubit_num
+
         self._circ_graph_transformer = CircuitTransformer(
             max_qubit_num=max_qubit_num,
             max_layer_num=max_layer_num,
@@ -45,6 +47,7 @@ class GraphTransformerDeepQNetwork(nn.Module):
 
         x = x * self._scale
         x = torch.bmm(x, torch.transpose(x, -1, -2))
+        x = x.view(-1, self._max_qubit_num * self._max_qubit_num)
         if is_batch:
             return x
         else:

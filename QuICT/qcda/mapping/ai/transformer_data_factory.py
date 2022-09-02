@@ -12,7 +12,11 @@ from QuICT.core.utils import CircuitBased
 
 class CircuitTransformerDataFactory:
     def __init__(
-        self, max_qubit_num: int, max_layer_num: int, data_dir: str = None
+        self,
+        max_qubit_num: int,
+        max_layer_num: int,
+        data_dir: str = None,
+        device: str = "cuda" if torch.cuda.is_available() else "cpu",
     ) -> None:
         if data_dir is None:
             data_dir = osp.dirname(osp.realpath(__file__))
@@ -22,12 +26,7 @@ class CircuitTransformerDataFactory:
         self._max_qubit_num = max_qubit_num
         self._max_layer_num = max_layer_num
         self._node_num = max_qubit_num * (max_layer_num + 1)
-
-        # self.processor = CircuitTransformerDataProcessor(
-        #     max_qubit_num=max_qubit_num,
-        #     max_layer_num=max_layer_num,
-        #     data_dir=data_dir,
-        # )
+        self._device = device
 
         self._circ_path_list = None
         self._topo_names = None
@@ -186,7 +185,10 @@ class CircuitTransformerDataFactory:
                 If there's no available path between two nodes, the
                 distance will be marked as 0.
         """
-        dist = torch.zeros((self._node_num, self._node_num), dtype=torch.int)
+        dist = torch.zeros(
+            (self._node_num, self._node_num), dtype=torch.int, device=self._device
+        )
+        # TODO: Replace this stupid pYtHoN iPlEmEnTaTiOn with a FASTER one.
         sp = nx.all_pairs_dijkstra_path_length(circ_graph)
         for u, row in sp:
             for v, d in row.items():
@@ -203,7 +205,7 @@ class CircuitTransformerDataFactory:
             offset = 1 + self._max_qubit_num * layer_idx
             for b in range(topo_qubit_number):
                 x[b + offset] = b + 1
-        x = torch.tensor(x, dtype=torch.int)
+        x = torch.tensor(x, dtype=torch.int, device=self._device)
         return x
 
     @property
@@ -253,7 +255,9 @@ class CircuitTransformerDataFactory:
             self._topo_dist_map[topo_name] = self.get_topo_dist(topo_graph=topo_graph)
 
             topo_mask = torch.zeros(
-                (topo.qubit_number, topo.qubit_number), dtype=torch.float
+                (topo.qubit_number, topo.qubit_number),
+                dtype=torch.float,
+                device=self._device,
             )
             topo_edge = []
             for u, v in topo_graph.edges:

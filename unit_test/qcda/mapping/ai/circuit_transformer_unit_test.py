@@ -114,7 +114,9 @@ def test_circuit_graphormer():
     max_layer_num = 20
     feat_dim = 30
     factory = CircuitTransformerDataFactory(
-        max_qubit_num=max_qubit_num, max_layer_num=max_layer_num
+        max_qubit_num=max_qubit_num,
+        max_layer_num=max_layer_num,
+        device="cpu",
     )
     # Use a line topo as example
     for i in range(9):
@@ -162,5 +164,5 @@ def test_circuit_graphormer():
         x = torch.stack([x, x, x])
         spacial_encoding = torch.stack([spacial_encoding for _ in range(batch_size)])
         y_batch = model(x, spacial_encoding)
-        assert y_batch.shape == torch.Size((batch_size,max_qubit_num, feat_dim))
+        assert y_batch.shape == torch.Size((batch_size, max_qubit_num, feat_dim))
     assert retry < max_retry
