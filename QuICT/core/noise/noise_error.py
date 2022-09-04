@@ -1,6 +1,5 @@
 from itertools import product
 import math
-from re import A
 import numpy as np
 from typing import List, Tuple
 
@@ -77,7 +76,7 @@ class QuantumNoiseError:
     def __str__(self):
         ne_str = f"{self.type.value} with {self.qubits} qubits.\n"
         for i, nm in enumerate(self._operators):
-            ne_str += f"Noise_op_{i} with probability {self._probs[i]}: {nm}\n"
+            ne_str += f"Noise with probability {self._probs[i]}: {nm}\n"
 
         return ne_str
 
@@ -86,11 +85,11 @@ class QuantumNoiseError:
         assert other.qubits == self.qubits and isinstance(other, QuantumNoiseError)
 
         composed_ops = []
-        for i, noise_matrix in self._operators:
+        for i, noise_matrix in enumerate(self._operators):
             self_prob = self._probs[i]
-            for j, other_noise_matrix in other.operators:
+            for j, other_noise_matrix in enumerate(other.operators):
                 other_prob = other.probabilties[j]
-                composed_ops.append(self_prob * other_prob, dot(noise_matrix, other_noise_matrix))
+                composed_ops.append((dot(noise_matrix, other_noise_matrix), self_prob * other_prob))
 
         return QuantumNoiseError(composed_ops)
 
@@ -99,11 +98,11 @@ class QuantumNoiseError:
         assert other.qubits == self.qubits and isinstance(other, QuantumNoiseError)
 
         composed_ops = []
-        for i, noise_matrix in self._operators:
+        for i, noise_matrix in enumerate(self._operators):
             self_prob = self._probs[i]
-            for j, other_noise_matrix in other.operators:
+            for j, other_noise_matrix in enumerate(other.operators):
                 other_prob = other.probabilties[j]
-                composed_ops.append(self_prob * other_prob, tensor(noise_matrix, other_noise_matrix))
+                composed_ops.append((tensor(noise_matrix, other_noise_matrix), self_prob * other_prob))
 
         return QuantumNoiseError(composed_ops)
 

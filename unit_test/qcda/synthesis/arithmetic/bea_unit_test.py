@@ -10,7 +10,7 @@ from QuICT.qcda.synthesis.arithmetic.bea import (
     BEAMulMod,
     BEACUa
 )
-from QuICT.simulation.gpu_simulator import ConstantStateVectorSimulator
+from QuICT.simulation.state_vector import ConstantStateVectorSimulator
 
 
 def set_qureg(qreg_index, N):

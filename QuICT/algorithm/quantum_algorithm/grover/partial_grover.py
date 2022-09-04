@@ -11,7 +11,7 @@ from QuICT.core import Circuit
 from QuICT.core.gate import *
 from QuICT.qcda.synthesis.mct import MCTOneAux
 
-from QuICT.simulation.cpu_simulator import CircuitSimulator
+from QuICT.simulation.state_vector import CircuitSimulator
 
 
 def calculate_r1_r2_one_target(N, K):
@@ -80,7 +80,7 @@ class PartialGrover:
             for idx in index_q:
                 X | circuit(idx)
             H | circuit(index_q[n - 1])
-            MCTOneAux.execute(n + 1) | circuit(index_q + oracle_q[:1])
+            MCTOneAux().execute(n + 1) | circuit(index_q + oracle_q[:1])
             H | circuit(index_q[n - 1])
             for idx in index_q:
                 X | circuit(idx)
@@ -98,7 +98,7 @@ class PartialGrover:
             for idx in local_index_q:
                 X | circuit(idx)
             H | circuit(local_index_q[local_n - 1])
-            MCTOneAux.execute(local_n + 1) | circuit(local_index_q + oracle_q[:1])
+            MCTOneAux().execute(local_n + 1) | circuit(local_index_q + oracle_q[:1])
             H | circuit(local_index_q[local_n - 1])
             for idx in local_index_q:
                 X | circuit(idx)
@@ -115,7 +115,7 @@ class PartialGrover:
             CH | circuit([ancillia_q[0], idx])
         for idx in index_q:
             CX | circuit([ancillia_q[0], idx])
-        MCTOneAux.execute(n + 2) | circuit([ancillia_q[0]] + index_q + oracle_q[:1])
+        MCTOneAux().execute(n + 2) | circuit([ancillia_q[0]] + index_q + oracle_q[:1])
         for idx in index_q:
             CX | circuit([ancillia_q[0], idx])
         for idx in index_q:

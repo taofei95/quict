@@ -13,6 +13,7 @@ from QuICT.algorithm.quantum_algorithm.grover import (
 )
 from QuICT.core import Circuit
 from QuICT.core.gate import *
+from QuICT.simulation.state_vector import ConstantStateVectorSimulator
 from QuICT.qcda.synthesis.mct import MCTOneAux
 
 
@@ -31,7 +32,7 @@ def main_oracle(n, f):
         for i in range(n):
             if target_binary[i] == "0":
                 X & i
-    MCTOneAux.execute(n + 2) | cgate
+    MCTOneAux().execute(n + 2) | cgate
     # un-compute
     with cgate:
         for i in range(n):

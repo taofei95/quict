@@ -5,3 +5,4 @@
 # @File    : __init__.py
 
 from .circuit import Circuit
+from .dag_circuit import DAGCircuit

@@ -4,6 +4,7 @@
 # @Author  : Han Yu, Li Kaiqi
 # @File    : qubit.py
 import random
+from typing import Union
 
 from QuICT.core.exception import *
 from QuICT.core.utils import unique_id_generator
@@ -24,6 +25,8 @@ class Qubit(object):
             the probability of measure result to be 1, which range in [0, 1].
             After apply measure gate on the qubit, this attribute can be read,
             otherwise raise an exception
+        historical_measured(list):
+            Record all measured result of current qubits.
     """
 
     @property
@@ -36,7 +39,14 @@ class Qubit(object):
 
     @measured.setter
     def measured(self, measured):
+        if self._measured is not None:
+            self._historical_measured.append(self._measured)
+
         self._measured = measured
+
+    @property
+    def historical_measured(self):
+        return self._historical_measured
 
     @property
     def prob(self) -> float:
@@ -55,6 +65,7 @@ class Qubit(object):
         self._id = unique_id_generator()
         self._measured = None
         self._prob = prob
+        self._historical_measured = []
 
     def __str__(self):
         """ string describe of the qubit
@@ -276,3 +287,13 @@ class Qureg(list):
                 diff_qubit.append(qubit)
 
         return Qureg(diff_qubit)
+
+    def index(self, qubit: Union[str, Qubit]):
+        if isinstance(qubit, Qubit):
+            return super().index(qubit)
+
+        for idx, item in enumerate(self):
+            if item.id == qubit:
+                return idx
+
+        raise ValueError("The given qubit is not in this Qureg.")

@@ -1,9 +1,10 @@
+import logging
+import numpy as np
+
 from functools import reduce
 from math import gcd
 from QuICT.core.gate import X
-from QuICT.simulation.cpu_simulator import CircuitSimulator
-import logging
-import numpy as np
+from QuICT.simulation.state_vector import CircuitSimulator
 
 
 def ex_gcd(a, b, arr):

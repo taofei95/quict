@@ -7,7 +7,6 @@
 from QuICT.core import Circuit
 from QuICT.core.gate import *
 from QuICT.algorithm.quantum_algorithm.shor.utility import int2bitwise, mod_reverse
-from ..._synthesis import Synthesis
 
 
 def var_controlled_X(gate_set, controls, target):
@@ -436,7 +435,7 @@ def mul_mod(gate_set, control, x, a, ancilla, N, indicator):
         mul_mod_raw_reversed(gate_set, control, x, a_r, ancilla, N, indicator)
 
 
-class HRSAdder(Synthesis):
+class HRSAdder(object):
     @staticmethod
     def execute(n, c):
         """
@@ -462,7 +461,7 @@ class HRSAdder(Synthesis):
         return gate_set
 
 
-class HRSAdderMod(Synthesis):
+class HRSAdderMod(object):
     @staticmethod
     def execute(n, a, N):
         """
@@ -498,7 +497,7 @@ class HRSAdderMod(Synthesis):
         return gate_set
 
 
-class HRSMulMod(Synthesis):
+class HRSMulMod(object):
     @staticmethod
     def execute(n, a, N):
         """
@@ -533,7 +532,7 @@ class HRSMulMod(Synthesis):
         return gate_set
 
 
-class CHRSMulMod(Synthesis):
+class CHRSMulMod(object):
     @staticmethod
     def execute(n, a, N):
         """

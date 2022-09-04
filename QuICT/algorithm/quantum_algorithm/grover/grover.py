@@ -10,7 +10,7 @@ from QuICT.core import Circuit
 from QuICT.core.gate import *
 from QuICT.qcda.synthesis.mct import MCTOneAux
 
-from QuICT.simulation.cpu_simulator import CircuitSimulator
+from QuICT.simulation.state_vector import CircuitSimulator
 import logging
 
 
@@ -79,7 +79,7 @@ class Grover:
             for idx in index_q:
                 X | circuit(idx)
             H | circuit(index_q[n - 1])
-            MCTOneAux.execute(n + 1) | circuit(index_q + ancilla_q[:1])
+            MCTOneAux().execute(n + 1) | circuit(index_q + ancilla_q[:1])
 
             H | circuit(index_q[n - 1])
             for idx in index_q:

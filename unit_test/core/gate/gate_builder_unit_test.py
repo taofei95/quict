@@ -14,8 +14,8 @@ from QuICT.core.utils import GateType
 typelist_1qubit = [GateType.rx, GateType.ry, GateType.rz]
 typelist_2qubit = [
     GateType.cx, GateType.cy, GateType.crz,
-    GateType.ch, GateType.cz, GateType.Rxx,
-    GateType.Ryy, GateType.Rzz, GateType.fsim
+    GateType.ch, GateType.cz, GateType.rxx,
+    GateType.ryy, GateType.rzz, GateType.fsim
 ]
 
 

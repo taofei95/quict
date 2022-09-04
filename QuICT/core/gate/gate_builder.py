@@ -32,6 +32,7 @@ GATE_TYPE_TO_CLASS = {
     GateType.t: TGate,
     GateType.tdg: TDaggerGate,
     GateType.phase: PhaseGate,
+    GateType.gphase: GlobalPhaseGate,
     GateType.cz: CZGate,
     GateType.cx: CXGate,
     GateType.cy: CYGate,
@@ -40,14 +41,14 @@ GATE_TYPE_TO_CLASS = {
     GateType.cu1: CU1Gate,
     GateType.cu3: CU3Gate,
     GateType.fsim: FSimGate,
-    GateType.Rxx: RxxGate,
-    GateType.Ryy: RyyGate,
-    GateType.Rzz: RzzGate,
+    GateType.rxx: RxxGate,
+    GateType.ryy: RyyGate,
+    GateType.rzz: RzzGate,
     GateType.swap: SwapGate,
     GateType.cswap: CSwapGate,
     GateType.ccx: CCXGate,
     GateType.ccz: CCZGate,
-    GateType.CCRz: CCRzGate,
+    GateType.ccrz: CCRzGate,
     GateType.measure: MeasureGate,
     GateType.reset: ResetGate,
     GateType.barrier: BarrierGate,
@@ -117,6 +118,6 @@ def build_random_gate(
     gate.targs = choiced_qubits[gate.controls:]
 
     if random_params and gate.params:
-        gate.pargs = [np.random.uniform(0, 2 * np.pi, gate.params) for _ in range(gate.params)]
+        gate.pargs = list(np.random.uniform(0, 2 * np.pi, gate.params))
 
     return gate

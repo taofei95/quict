@@ -1,4 +1,3 @@
-
 from typing import List
 
 from QuICT.core.utils import unique_id_generator
@@ -6,6 +5,13 @@ from ._operator import Operator
 
 
 class CheckPoint(Operator):
+    """ The CheckPoint is a sign of the circuit, the Composite Gate with the related
+    CheckPointChild will be add into the sign indexes of the circuit.
+
+    Example:
+        Use the syntax "CheckPoint | Circuit" to add a CheckPointChild into the Circuit.
+        A circuit may have more than one CheckPoints.
+    """
     @property
     def uid(self):
         """ Unique Identity Number. Used for mapping CheckPoint and CheckPointChild. """
@@ -23,13 +29,6 @@ class CheckPoint(Operator):
         self._pos += shift
 
     def __init__(self):
-        """ The CheckPoint is a sign of the circuit, the Composite Gate with the related
-        CheckPointChild will be add into the sign indexes of the circuit.
-
-        Example:
-            Use the syntax "CheckPoint | Circuit" to add a CheckPointChild into the Circuit.
-            A circuit may have more than one CheckPoints.
-        """
         super().__init__(targets=1)
         self._uid = unique_id_generator()
         self._pos = -1
@@ -50,6 +49,12 @@ class CheckPoint(Operator):
 
 
 class CheckPointChild(Operator):
+    """ The child for CheckPoint, used with the CompositGate. The purpose of the CheckPointChild is
+    to add CompositeGate into the target index of the circuit.
+
+    Example:
+        Use the syntax "CheckPointChild | CompositeGate" to add a CheckPointChild into the CompositeGate.
+    """
     @property
     def uid(self):
         """ Unique identity number. Used for mapping CheckPoint and CheckPointChild. """
@@ -61,11 +66,7 @@ class CheckPointChild(Operator):
         return self._shift
 
     def __init__(self, uid: str, shift: int = 0):
-        """ The child for CheckPoint, used with the CompositGate. The purpose of the CheckPointChild is
-        to add CompositeGate into the target index of the circuit.
-
-        Example:
-            Use the syntax "CheckPointChild | CompositeGate" to add a CheckPointChild into the CompositeGate.
+        """ Initial a CheckPointChild.
 
         Args:
             uid (str): The unique identity number, same with its CheckPoint.

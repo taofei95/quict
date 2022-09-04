@@ -4,27 +4,26 @@ import random
 
 
 __outward_functions = [
-    "Diagonal_Multiply_targ",
-    "Diagonal_Multiply_targs",
-    "Based_InnerProduct_targ",
-    "Based_InnerProduct_targs",
-    "Controlled_Multiply_targ",
-    "Controlled_Multiply_ctargs",
-    "Controlled_Product_ctargs",
-    "Controlled_InnerProduct_ctargs",
-    "Completed_MxIP_targs",
-    "Completed_IPxIP_targs",
-    "RDiagonal_Swap_targ",
-    "RDiagonal_MultiplySwap_targ",
-    "Controlled_MultiplySwap_ctargs",
-    "Controlled_Swap_targs",
-    "Controlled_Swap_more",
-    "Controlled_Multiply_more",
-    "Controlled_Swap_tmore",
-    "MeasureGate_Apply",
-    "ResetGate_Apply",
-    "PermGate_Apply",
-    "PermFxGate_Apply"
+    "diagonal_targ",
+    "diagonal_targs",
+    "normal_targ",
+    "normal_targs",
+    "control_targ",
+    "diagonal_ctargs",
+    "control_ctargs",
+    "normal_ctargs",
+    "ctrl_normal_targs",
+    "normal_normal_targs",
+    "swap_targ",
+    "reverse_targ",
+    "reverse_ctargs",
+    "swap_targs",
+    "reverse_more",
+    "diagonal_more",
+    "swap_tmore",
+    "measured_prob_calculate",
+    "apply_measuregate",
+    "apply_resetgate"
 ]
 
 
@@ -960,7 +959,7 @@ Controlled_Swap_tmore_double_kernel = cp.RawKernel(r'''
     ''', 'Controlled8x8Swapt')
 
 
-def Diagonal_Multiply_targ(t_index, mat, vec, vec_bit, sync: bool = False):
+def diagonal_targ(t_index, mat, vec, vec_bit, sync: bool = False):
     """
     Diagonal matrix (2x2) dot vector
         [[a, 0],    *   vec
@@ -987,7 +986,7 @@ def Diagonal_Multiply_targ(t_index, mat, vec, vec_bit, sync: bool = False):
         cp.cuda.Device().synchronize()
 
 
-def Diagonal_Multiply_targs(t_indexes, mat, vec, vec_bit, sync: bool = False):
+def diagonal_targs(t_indexes, mat, vec, vec_bit, sync: bool = False):
     """
     Diagonal matrix (4x4) dot vector
         [[a, 0, 0, 0],    *   vec
@@ -1021,7 +1020,7 @@ def Diagonal_Multiply_targs(t_indexes, mat, vec, vec_bit, sync: bool = False):
         cp.cuda.Device().synchronize()
 
 
-def Based_InnerProduct_targ(t_index, mat, vec, vec_bit, sync: bool = False):
+def normal_targ(t_index, mat, vec, vec_bit, sync: bool = False):
     """
     Based matrix (2x2) dot vector
         [[a, b],    *   vec
@@ -1048,7 +1047,7 @@ def Based_InnerProduct_targ(t_index, mat, vec, vec_bit, sync: bool = False):
         cp.cuda.Device().synchronize()
 
 
-def Based_InnerProduct_targs(t_indexes, mat, vec, vec_bit, sync: bool = False):
+def normal_targs(t_indexes, mat, vec, vec_bit, sync: bool = False):
     """
     Based matrix (4x4) dot vector
         [[a, b, c, d],    *   vec
@@ -1077,7 +1076,7 @@ def Based_InnerProduct_targs(t_indexes, mat, vec, vec_bit, sync: bool = False):
         cp.cuda.Device().synchronize()
 
 
-def Controlled_Multiply_targ(t_index, val, vec, vec_bit, sync: bool = False):
+def control_targ(t_index, val, vec, vec_bit, sync: bool = False):
     """
     Controlled matrix (2x2) dot vector
         [[1, 0],    *   vec
@@ -1104,7 +1103,7 @@ def Controlled_Multiply_targ(t_index, val, vec, vec_bit, sync: bool = False):
         cp.cuda.Device().synchronize()
 
 
-def Controlled_Multiply_ctargs(c_index, t_index, mat, vec, vec_bit, sync: bool = False):
+def diagonal_ctargs(c_index, t_index, mat, vec, vec_bit, sync: bool = False):
     """
     Controlled matrix (4x4) dot vector
      e.g.   [[1, 0, 0, 0],    *   vec
@@ -1133,7 +1132,7 @@ def Controlled_Multiply_ctargs(c_index, t_index, mat, vec, vec_bit, sync: bool =
         cp.cuda.Device().synchronize()
 
 
-def Controlled_Product_ctargs(c_index, t_index, value, vec, vec_bit, sync: bool = False):
+def control_ctargs(c_index, t_index, value, vec, vec_bit, sync: bool = False):
     """
     Controlled matrix (4x4) dot vector
      e.g.   [[1, 0, 0, 0],    *   vec
@@ -1162,7 +1161,7 @@ def Controlled_Product_ctargs(c_index, t_index, value, vec, vec_bit, sync: bool 
         cp.cuda.Device().synchronize()
 
 
-def Controlled_InnerProduct_ctargs(c_index, t_index, mat, vec, vec_bit, sync: bool = False):
+def normal_ctargs(c_index, t_index, mat, vec, vec_bit, sync: bool = False):
     """
     Controlled matrix (4x4) dot vector
      e.g.   [[1, 0, 0, 0],    *   vec
@@ -1191,7 +1190,7 @@ def Controlled_InnerProduct_ctargs(c_index, t_index, mat, vec, vec_bit, sync: bo
         cp.cuda.Device().synchronize()
 
 
-def Completed_MxIP_targs(t_indexes, mat, vec, vec_bit, sync: bool = False):
+def ctrl_normal_targs(t_indexes, mat, vec, vec_bit, sync: bool = False):
     """
     Completed matrix (4x4) dot vector
             [[A, 0, 0, 0],    *   vec
@@ -1225,7 +1224,7 @@ def Completed_MxIP_targs(t_indexes, mat, vec, vec_bit, sync: bool = False):
         cp.cuda.Device().synchronize()
 
 
-def Completed_IPxIP_targs(t_indexes, mat, vec, vec_bit, sync: bool = False):
+def normal_normal_targs(t_indexes, mat, vec, vec_bit, sync: bool = False):
     """
     Completed matrix (4x4) dot vector
             [[A, 0, 0, B],    *   vec
@@ -1259,7 +1258,7 @@ def Completed_IPxIP_targs(t_indexes, mat, vec, vec_bit, sync: bool = False):
         cp.cuda.Device().synchronize()
 
 
-def RDiagonal_Swap_targ(t_index, vec, vec_bit, sync: bool = False):
+def swap_targ(t_index, vec, vec_bit, sync: bool = False):
     """
     reverse diagonal matrix (2x2) dot vector
         [[0, 1],        *       vec
@@ -1286,7 +1285,7 @@ def RDiagonal_Swap_targ(t_index, vec, vec_bit, sync: bool = False):
         cp.cuda.Device().synchronize()
 
 
-def RDiagonal_MultiplySwap_targ(t_index, mat, vec, vec_bit, sync: bool = False):
+def reverse_targ(t_index, mat, vec, vec_bit, sync: bool = False):
     """
     reverse diagonal matrix (2x2) dot vector
         [[0, a],        *       vec
@@ -1313,7 +1312,7 @@ def RDiagonal_MultiplySwap_targ(t_index, mat, vec, vec_bit, sync: bool = False):
         cp.cuda.Device().synchronize()
 
 
-def Controlled_MultiplySwap_ctargs(c_index, t_index, mat, vec, vec_bit, sync: bool = False):
+def reverse_ctargs(c_index, t_index, mat, vec, vec_bit, sync: bool = False):
     """
     Controlled matrix (4x4) dot vector
      e.g.   [[1, 0, 0, 0],    *   vec
@@ -1342,7 +1341,7 @@ def Controlled_MultiplySwap_ctargs(c_index, t_index, mat, vec, vec_bit, sync: bo
         cp.cuda.Device().synchronize()
 
 
-def Controlled_Swap_targs(t_indexes, vec, vec_bit, sync: bool = False):
+def swap_targs(t_indexes, vec, vec_bit, sync: bool = False):
     """
     Controlled matrix (4x4) dot vector
             [[1, 0, 0, 0],    *   vec
@@ -1376,7 +1375,7 @@ def Controlled_Swap_targs(t_indexes, vec, vec_bit, sync: bool = False):
         cp.cuda.Device().synchronize()
 
 
-def Controlled_Swap_more(c_indexes, t_index, vec, vec_bit, sync: bool = False):
+def reverse_more(c_indexes, t_index, vec, vec_bit, sync: bool = False):
     """
     Controlled matrix (8x8) dot vector
        [[1, 0, 0, 0, 0, 0, 0, 0],       *       vec
@@ -1414,7 +1413,7 @@ def Controlled_Swap_more(c_indexes, t_index, vec, vec_bit, sync: bool = False):
         cp.cuda.Device().synchronize()
 
 
-def Controlled_Multiply_more(c_indexes, t_index, mat, vec, vec_bit, sync: bool = False):
+def diagonal_more(c_indexes, t_index, mat, vec, vec_bit, sync: bool = False):
     """
     Controlled matrix (8x8) dot vector
        [[1, 0, 0, 0, 0, 0, 0, 0],       *       vec
@@ -1452,7 +1451,7 @@ def Controlled_Multiply_more(c_indexes, t_index, mat, vec, vec_bit, sync: bool =
         cp.cuda.Device().synchronize()
 
 
-def Controlled_Swap_tmore(t_indexes, c_index, vec, vec_bit, sync: bool = False):
+def swap_tmore(t_indexes, c_index, vec, vec_bit, sync: bool = False):
     """
     Controlled matrix (8x8) dot vector
        [[1, 0, 0, 0, 0, 0, 0, 0],       *       vec
@@ -1525,6 +1524,17 @@ MeasureGate_prop = cp.ReductionKernel(
     'y = abs(a)',
     '0',
     'MeasureGate_prop'
+)
+
+
+mn_measureprob_calculator = cp.ReductionKernel(
+    'T x',
+    'T y',
+    'x',
+    'a + b',
+    'y = abs(a)*abs(a)',
+    '0',
+    'mn_measureprob_calculator'
 )
 
 
@@ -1637,7 +1647,35 @@ ResetGate1_double_kernel = cp.RawKernel(r'''
     ''', 'ResetGate1Double')
 
 
-def MeasureGate_Apply(index, vec, vec_bit, sync: bool = False, multigpu_prob=None):
+def measured_prob_calculate(index, vec, vec_bit, all_measured: bool = False, sync: bool = False):
+    # Deal with the whole vector state measured, only happen for multi-nodes simulator
+    if all_measured:
+        prob = mn_measureprob_calculator(vec)
+        return prob.real
+
+    # Kernel function preparation
+    task_number = 1 << (vec_bit - 1)
+    thread_per_block = min(256, task_number)
+    block_num = task_number // thread_per_block
+    kernel_functions = prop_add_double_kernel if vec.dtype == np.complex128 else prop_add_single_kernel
+
+    # Calculated the probability of measured 1 at current index
+    out = cp.empty(task_number, dtype=vec.dtype)
+    kernel_functions(
+        (block_num, ),
+        (thread_per_block, ),
+        (index, vec, out)
+    )
+
+    prob = MeasureGate_prop(out, axis=0).real
+
+    if sync:
+        cp.cuda.Device().synchronize()
+
+    return prob
+
+
+def apply_measuregate(index, vec, vec_bit, prob, sync: bool = False):
     """
     Measure Gate Measure.
     """
@@ -1646,39 +1684,25 @@ def MeasureGate_Apply(index, vec, vec_bit, sync: bool = False, multigpu_prob=Non
     thread_per_block = min(256, task_number)
     block_num = task_number // thread_per_block
     if vec.dtype == np.complex64:
-        kernel_functions = (prop_add_single_kernel, MeasureGate0_single_kernel, MeasureGate1_single_kernel)
+        kernel_functions = (MeasureGate0_single_kernel, MeasureGate1_single_kernel)
         float_type = np.float32
     else:
-        kernel_functions = (prop_add_double_kernel, MeasureGate0_double_kernel, MeasureGate1_double_kernel)
+        kernel_functions = (MeasureGate0_double_kernel, MeasureGate1_double_kernel)
         float_type = np.float64
-
-    # Calculate measured probability
-    if multigpu_prob:
-        prob = multigpu_prob
-    else:
-        out = cp.empty(task_number, dtype=np.complex128)
-        kernel_functions[0](
-            (block_num, ),
-            (thread_per_block, ),
-            (index, vec, out)
-        )
-
-        prob = MeasureGate_prop(out, axis=0).real
-        prob = prob.get()
 
     # Apply to state vector
     _0 = random.random()
     _1 = _0 > prob
     if not _1:
         alpha = float_type(1 / np.sqrt(prob))
-        kernel_functions[1](
+        kernel_functions[0](
             (block_num, ),
             (thread_per_block, ),
             (index, alpha, vec)
         )
     else:
         alpha = float_type(1 / np.sqrt(1 - prob))
-        kernel_functions[2](
+        kernel_functions[1](
             (block_num,),
             (thread_per_block,),
             (index, alpha, vec)
@@ -1690,7 +1714,7 @@ def MeasureGate_Apply(index, vec, vec_bit, sync: bool = False, multigpu_prob=Non
     return _1
 
 
-def ResetGate_Apply(index, vec, vec_bit, sync: bool = False, multigpu_prob=None):
+def apply_resetgate(index, vec, vec_bit, prob, sync: bool = False):
     """
     Measure Gate Measure.
     """
@@ -1699,34 +1723,20 @@ def ResetGate_Apply(index, vec, vec_bit, sync: bool = False, multigpu_prob=None)
     thread_per_block = min(256, task_number)
     block_num = task_number // thread_per_block
     if vec.dtype == np.complex64:
-        kernel_functions = (prop_add_single_kernel, ResetGate0_single_kernel, ResetGate1_single_kernel)
+        kernel_functions = (ResetGate0_single_kernel, ResetGate1_single_kernel)
     else:
-        kernel_functions = (prop_add_double_kernel, ResetGate0_double_kernel, ResetGate1_double_kernel)
-
-    # Calculate measured probability
-    if multigpu_prob:
-        prob = multigpu_prob
-    else:
-        out = cp.empty(task_number, dtype=np.complex128)
-        kernel_functions[0](
-            (block_num, ),
-            (thread_per_block, ),
-            (index, vec, out)
-        )
-
-        prob = MeasureGate_prop(out, axis=0).real
-        prob = prob.get()
+        kernel_functions = (ResetGate0_double_kernel, ResetGate1_double_kernel)
 
     # Apply to state vector
     alpha = np.float64(np.sqrt(prob))
     if alpha < 1e-6:
-        kernel_functions[2](
+        kernel_functions[1](
             (block_num, ),
             (thread_per_block,),
             (index, alpha, vec)
         )
     else:
-        kernel_functions[1](
+        kernel_functions[0](
             (block_num,),
             (thread_per_block,),
             (index, alpha, vec)

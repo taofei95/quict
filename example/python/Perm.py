@@ -5,7 +5,7 @@
 # @File    : Perm.py
 from QuICT.core import Circuit
 from QuICT.core.gate import *
-from QuICT.simulation.gpu_simulator import ConstantStateVectorSimulator
+from QuICT.simulation.state_vector import ConstantStateVectorSimulator
 
 circuit = Circuit(4)
 PermFx(2, [0]) | circuit([0, 1, 2])
