@@ -39,7 +39,7 @@ typelist = [GateType.rx, GateType.ry, GateType.rz,
             GateType.s, GateType.t, GateType.h,
             GateType.cx, GateType.crz, GateType.fsim]
 typelist = [GateType.rx, GateType.ry, GateType.rz, GateType.x, GateType.y, GateType.z, GateType.cx]
-typelist = [GateType.cx, GateType.h, GateType.s, GateType.t, GateType.x, GateType.y, GateType.z]
+# typelist = [GateType.cx, GateType.h, GateType.s, GateType.t, GateType.x, GateType.y, GateType.z]
 # typelist = [GateType.rx, GateType.ry, GateType.rz]
 # typelist = [GateType.x, GateType.y, GateType.z]
 # typelist = [GateType.cx, GateType.crz, GateType.fsim]
@@ -50,7 +50,7 @@ def test():
     for _ in range(10):
         n = 5
         circuit = Circuit(n)
-        circuit.random_append(rand_size=100, typelist=typelist)
+        circuit.random_append(rand_size=100, typelist=typelist, random_params=True)
         # print(circuit)
         # circuit.draw()
 
