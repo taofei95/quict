@@ -527,7 +527,7 @@ export default {
         this.n_Q_Remove(VisAction.index);
         this.$refs.n_visVue.vis_change();
       }
-      this.qbit = this.n_VisContent.q;
+      this.n_qbit = this.n_VisContent.q;
       this.n_ProgramText = this.n_GenQASM();
       this.NewConfirmBtnEnable = true;
     },
@@ -906,7 +906,7 @@ export default {
         this.n_Q_Add();
       }
       while (this.n_VisContent.q.length > qbit.length) {
-        this.n_Q_Remove(this.VisContent.q.length - 1);
+        this.n_Q_Remove(this.n_VisContent.q.length - 1);
       }
       this.n_qbit = this.n_VisContent.q;
       this.$refs.n_visVue.vis_change();
@@ -934,7 +934,7 @@ export default {
         this.l_Q_Add();
       }
       while (this.l_VisContent.q.length > qbit.length) {
-        this.l_Q_Remove(this.VisContent.q.length - 1);
+        this.l_Q_Remove(this.l_VisContent.q.length - 1);
       }
       this.l_qbit = this.l_VisContent.q;
       // this.$refs.l_visVue.vis_change();
@@ -1020,6 +1020,8 @@ export default {
       let customer_set = { name: "CustomerSet", gates: [] };
       this.l_all_sets = content.all_sets;
       this.l_all_sets.push(customer_set);
+      this.l_qbit = this.l_VisContent.q;
+      this.l_ProgramText = this.l_GenQASM();
       // this.$refs.n_visVue.vis_change();
     });
 

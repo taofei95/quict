@@ -247,8 +247,7 @@ def load_file(content):
     program_text = content['content']
     
     try:
-        q = load_data(data=program_text)
-        q.analyse_code_from_circuit()
+        circuit = load_data(data=program_text)
     except Exception as e:
         if source == 'QCDA':
             emit(
@@ -265,28 +264,27 @@ def load_file(content):
         mapping = content['mapping']
         topology = content['topology']
         set = content['set']
-        logger.info(f'q.qasm: {q.qasm}')
+        logger.info(f'circuit.qasm(): {circuit.qasm()}')
         optimized_q = optimize_qasm(uid=uid, qasm_text=program_text, topology=topology, set=set, optimize=optimize, mapping=mapping)
         
         emit(
-            "QCDA_o_qasm_load", {'uuid': uid, 'qasm': optimized_q.qasm}, namespace="/api/pty")
+            "QCDA_o_qasm_load", {'uuid': uid, 'qasm': optimized_q.qasm()}, namespace="/api/pty")
         
-        gates = get_gates_list(q)
+        gates = get_gates_list(optimized_q)
         emit('QCDA_o_gates_update', {'uuid': uid, 'gates': gates}, namespace="/api/pty")
     else:
         # no optimize
         emit(
-            "qasm_load", {'uuid': uid, 'qasm': q.qasm}, namespace="/api/pty")
+            "qasm_load", {'uuid': uid, 'qasm': circuit.qasm()}, namespace="/api/pty")
 
-        gates = get_gates_list(q)
+        gates = get_gates_list(circuit)
         emit('gates_update', {'uuid': uid, 'gates': gates}, namespace="/api/pty")
 
         
 
 def optimize_qasm(uid, qasm_text, topology, set, optimize, mapping): 
 
-    qasm = load_data(data=qasm_text)
-    circuit = qasm.circuit
+    circuit = load_data(data=qasm_text)
 
     circuit_topology = Layout(circuit.width())
     for edge in topology:
@@ -320,14 +318,15 @@ def optimize_qasm(uid, qasm_text, topology, set, optimize, mapping):
     if mapping:
         qcda.add_default_mapping(circuit_topology)
 
-    # qcda.add_default_synthesis(USTCSet)
+    qcda.add_default_synthesis(circuit_set)
     circuit_phy = qcda.compile(circuit)
+    
+    logger.info(f"circuit_phy.qasm() {circuit_phy.qasm()}")
 
-    # circuit_phy = qcda.compile(
-    #     circuit, circuit_set, circuit_topology, optimization=optimize, mapping=mapping)
-    q = load_data(data=circuit_phy.qasm())
-    q.analyse_code_from_circuit()
-    return q
+    # instance = OPENQASMInterface()
+    # instance.load_circuit(circuit_phy)
+    
+    return circuit_phy
 
 @socketio.on("qasm_save", namespace="/api/pty")
 @authenticated_only
@@ -385,8 +384,7 @@ def o_run_file(content):
     logger.info(f"run content {content}")
     try:
 
-        qasm = load_data(data=data)
-        circuit = qasm.circuit
+        circuit = load_data(data=data)
         logger.info(f"run qasm {circuit.qasm()}")
         emit(
             'info',  {'uuid': uid, 'info': f"Running circuit..."}, namespace="/api/pty")
@@ -410,7 +408,7 @@ def load_data(data) -> OPENQASMInterface:
     instance.ast = Qasm(data=data).parse()
     instance.analyse_circuit_from_ast(instance.ast)
 
-    return instance
+    return instance.circuit
 
 
 @socketio.on("programe_update", namespace="/api/pty")
@@ -435,8 +433,8 @@ def programe_update(content):
             'info', {'uuid': uid, 'info': f"update gates error: {e}"}, namespace="/api/pty")
 
 
-def get_gates_list(qasm):
-    gates_org = qasm.circuit_gates
+def get_gates_list(qasm:Circuit):
+    gates_org = qasm.gates
     gates = []
 
     for gate in gates_org:
