@@ -2,6 +2,7 @@ import torch
 from QuICT.core import *
 from QuICT.qcda.mapping.ai.circuit_transformer import *
 from QuICT.qcda.mapping.ai.transformer_data_factory import CircuitTransformerDataFactory
+import numpy as np
 
 
 def test_self_attn():
@@ -122,7 +123,7 @@ def test_circuit_graphormer():
     for i in range(9):
         topo.add_edge(i, (i + 1))
     topo_graph = factory.get_topo_graph(topo=topo)
-    topo_dist = torch.zeros((max_qubit_num, max_qubit_num), dtype=torch.int)
+    topo_dist = np.zeros((max_qubit_num, max_qubit_num), dtype=int)
     sp = nx.all_pairs_dijkstra_path_length(topo_graph)
     for u, row in sp:
         for v, d in row.items():
@@ -146,10 +147,10 @@ def test_circuit_graphormer():
         if not successful:
             retry += 1
             continue
-        circ_graph = factory.get_circ_graph(
+        circ_edges = factory.get_circ_edges(
             layered_circ=layered_circ, topo_dist=topo_dist
         )
-        spacial_encoding = factory.get_spacial_encoding(circ_graph=circ_graph)
+        spacial_encoding = factory.get_spacial_encoding(circ_edges=circ_edges)
 
         x = factory.get_x(10)
         y_no_batch = model(x, spacial_encoding)

@@ -63,9 +63,10 @@ class Trainer:
     def __init__(
         self,
         max_qubit_num: int = 30,
-        max_layer_num: int = 30,
+        max_layer_num: int = 50,
         inner_feat_dim: int = 30,
         head: int = 3,
+        num_attn_layer: int = 6,
         gamma: float = 0.95,
         replay_pool_size: int = 10000,
         batch_size: int = 16,
@@ -118,12 +119,14 @@ class Trainer:
             max_layer_num=max_layer_num,
             inner_feat_dim=inner_feat_dim,
             head=head,
+            num_attn_layer=num_attn_layer,
         ).to(device=device)
         self._target_net = GraphTransformerDeepQNetwork(
             max_qubit_num=max_qubit_num,
             max_layer_num=max_layer_num,
             inner_feat_dim=inner_feat_dim,
             head=head,
+            num_attn_layer=num_attn_layer,
         ).to(device=device)
         # Guarantee they two have the same parameter values.
         self._target_net.load_state_dict(self._policy_net.state_dict())
@@ -149,10 +152,15 @@ class Trainer:
         self._writer = SummaryWriter(log_dir=log_dir)
 
     def _reset_explore_state(self):
+        print("Resetting exploration status...")
+        start_time = time()
         self._state = State(*self._data_factory.get_one())
         # Move to GPU if needed
         self._state.x = self._state.x.to(self._device)
         self._state.spacial_encoding = self._state.spacial_encoding.to(self._device)
+        end_time = time()
+        duration = end_time - start_time
+        print(f"Reset fished within {duration:0.4f}s.")
 
     def _select_action(self) -> Tuple[int, int]:
         eps_threshold = self._epsilon_end + (
@@ -186,7 +194,9 @@ class Trainer:
         else:
             return choice(edges)
 
-    def _take_action(self, action: Tuple[int, int]) -> Tuple[Union[State, None], bool]:
+    def _take_action(
+        self, action: Tuple[int, int]
+    ) -> Tuple[Union[State, None], float, bool]:
         """Take given action on trainer's state.
 
         Args:
@@ -202,32 +212,56 @@ class Trainer:
             self._state.layered_circ, next_mapping
         )
         topo_dist = self._data_factory.topo_dist_map[self._state.topo_name]
-        while len(next_layered_circ) > 0:
-            # Remove applicable gates in the front layer.
-            for x, y in copy(next_layered_circ[0]):
+        se_cpy = self._state.spacial_encoding.detach().clone()
+        remove_layer_num = 0
+        prev_layer_num = len(self._state.layered_circ)
+        max_q = self._max_qubit_num
+        # max_l = self._max_layer_num
+        reward = 0.0
+        for layer_idx, layer in enumerate(next_layered_circ):
+            offset = (layer_idx + 1) * max_q
+            for x, y in copy(layer):
                 if topo_dist[x][y] == 1:
-                    next_layered_circ[0].remove((x, y))
-            if len(next_layered_circ[0]) == 0:
-                # Front layer is all applied. Remove it.
-                next_layered_circ.pop(0)
-            else:
+                    layer.remove((x, y))
+                    se_cpy[x + offset][y + offset] = 0
+                    se_cpy[y + offset][x + offset] = 0
+                    reward += 1.0
+            if len(layer) > 0:
                 break
+            remove_layer_num += 1
+        next_layered_circ = next_layered_circ[remove_layer_num:]
 
         # Check if there are only padded empty layers left.
         terminated = len(next_layered_circ) == 0
         if terminated:
-            return None, True
+            return None, reward, True
 
         # X for the same topology is always the same, so there's ne need to copy.
         next_x = self._state.x
-        next_circ_graph = self._data_factory.get_circ_graph(
-            layered_circ=next_layered_circ,
-            topo_dist=topo_dist,
-            cur_mapping=next_mapping,
+
+        # TODO: Avoid construct a brand new graph distance matrix
+        next_spacial_encoding = torch.zeros_like(
+            se_cpy, dtype=torch.int, device=self._device
         )
-        next_spacial_encoding = self._data_factory.get_spacial_encoding(
-            circ_graph=next_circ_graph
-        )
+        remain_layer_start = remove_layer_num
+        remain_layer_end = prev_layer_num
+        remain_layer_num = remain_layer_end - remain_layer_start
+        assert remain_layer_num == len(next_layered_circ)
+
+        next_spacial_encoding[:max_q, :max_q] = se_cpy[:max_q, :max_q]
+        next_spacial_encoding[:max_q, max_q : (remain_layer_num + 1) * max_q] = se_cpy[
+            :max_q, (remain_layer_start + 1) * max_q : (remain_layer_end + 1) * max_q
+        ]
+        next_spacial_encoding[max_q : (remain_layer_num + 1) * max_q, :max_q] = se_cpy[
+            (remain_layer_start + 1) * max_q : (remain_layer_end + 1) * max_q, :max_q
+        ]
+        next_spacial_encoding[
+            max_q : (remain_layer_num + 1) * max_q,
+            max_q : (remain_layer_num + 1) * max_q,
+        ] = se_cpy[
+            (remain_layer_start + 1) * max_q : (remain_layer_end + 1) * max_q,
+            (remain_layer_start + 1) * max_q : (remain_layer_end + 1) * max_q,
+        ]
 
         next_state = State(
             layered_circ=next_layered_circ,
@@ -237,16 +271,13 @@ class Trainer:
             cur_mapping=next_mapping,
         )
 
-        return next_state, False
-
-    @classmethod
-    def _get_reward(cls, cur_state: State, next_state: State, terminated: bool):
-        # TODO
-        return 0.0
+        return next_state, reward, False
 
     def _optimize_model(self) -> Union[None, float]:
         if len(self._replay) < self._batch_size:
-            print("Experience pool is too small. Keep exploring...")
+            print(
+                f"Experience pool is too small({len(self._replay)}). Keep exploring..."
+            )
             return None
         transitions = self._replay.sample(self._batch_size)
         states, actions, next_states, rewards = zip(*transitions)
@@ -273,7 +304,9 @@ class Trainer:
             [state.spacial_encoding for state in next_states if state is not None]
         )
 
-        state_action_values = self._policy_net(xs, spacial_encodings).gather(1, actions).squeeze()
+        state_action_values = (
+            self._policy_net(xs, spacial_encodings).gather(1, actions).squeeze()
+        )
         next_state_values = torch.zeros(self._batch_size, device=self._device)
         next_state_values[non_final_mask] = (
             self._target_net(non_final_next_xs, non_final_next_spacial_encodings)
@@ -292,7 +325,7 @@ class Trainer:
         self._optimizer.step()
         return loss_val
 
-    def train_one_epoch(self, epoch_id: int):
+    def train_one_epoch(self):
         self._reset_explore_state()
         observe_period = 5
         running_loss = 0.0
@@ -300,15 +333,11 @@ class Trainer:
         for i in range(self._explore_period):
             if self._state is None:
                 # Search finishes early.
+                print("State terminates. Search stops early.")
                 break
 
             action = self._select_action()
-            next_state, terminated = self._take_action(action=action)
-            reward = self._get_reward(
-                cur_state=self._state,
-                next_state=next_state,
-                terminated=terminated,
-            )
+            next_state, reward, terminated = self._take_action(action=action)
 
             # Put this transition into experience replay pool.
             self._replay.push(
@@ -328,7 +357,10 @@ class Trainer:
             running_loss += cur_loss
 
             # Update target net every C steps.
-            if epoch_id % self._target_update_period == 0:
+            if (self._explore_step + 1) % self._target_update_period == 0:
+                print(
+                    f"\tAlready explored \t{self._explore_step} steps. Updating model..."
+                )
                 self._target_net.load_state_dict(self._policy_net.state_dict())
 
             if (i + 1) % observe_period == 0:
@@ -336,6 +368,7 @@ class Trainer:
                 duration = cur - last_stamp
                 last_stamp = cur
                 rate = duration / observe_period
+                running_loss /= observe_period
                 print(
                     f"\tIteration {i}, running loss: {running_loss:0.6f}, explore rate: {rate:0.4f} s/action"
                 )
@@ -345,7 +378,7 @@ class Trainer:
         print(f"Training on {self._device}...\n")
         for epoch_id in range(1, 1 + self._total_epoch):
             print(f"Epoch {epoch_id}:")
-            self.train_one_epoch(epoch_id=epoch_id)
+            self.train_one_epoch()
             print()
 
 
