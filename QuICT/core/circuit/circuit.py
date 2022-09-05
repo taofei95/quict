@@ -418,6 +418,10 @@ class Circuit(CircuitBased):
                 GateType.ryy, GateType.rzz, GateType.fsim
             ]
 
+        unsupported_gate_type = [GateType.unitary, GateType.perm, GateType.perm_fx]
+        assert len(set(typelist) & set(unsupported_gate_type)) == 0, \
+            f"{set(typelist) & set(unsupported_gate_type)} is not support in random append."
+
         if probabilities is not None:
             assert np.isclose(sum(probabilities), 1, atol=1e-6) and len(probabilities) == len(typelist)
 
