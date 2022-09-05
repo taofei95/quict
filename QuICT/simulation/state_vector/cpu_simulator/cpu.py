@@ -181,14 +181,24 @@ def gate_to_desc(gate: BasicGate) -> List[GateDescription]:
             result.extend(gate_to_desc(simple_gate))
         return result
     else:
+        print(gate_type)
         NotImplementedError(f"No implementation for {gate.name}")
 
 
 class CircuitSimulator:
-    """An interface used for type hints. This class is actually implemented in C++ side.
+    """ An interface used for type hints. This class is actually implemented in C++ side.
+    
+    Args:
+        precision (str): The precision for the state vector, one of [single, double]. Defaults to "double".
     """
 
-    def __init__(self):
+    __PRECISION = ["single", "double"]
+
+    def __init__(self, precision: str = "double"):        
+        if precision not in self.__PRECISION:
+            raise ValueError("Wrong precision. Please use one of [single, double].")
+
+        self._precision = np.complex128 if precision == "double" else np.complex64
         self._circuit = None
         self._instance = sim_back_bind.CircuitSimulator()
         self._gate_desc_vec: List[GateDescription] = []
@@ -210,19 +220,15 @@ class CircuitSimulator:
             if isinstance(gate, BasicGate) and gate.type == GateType.measure:
                 mid_map.append(gate.targ)
 
-        measure: List[List[int]] = [[] for _ in range(circuit.width())]
         for idx, elem in enumerate(mid_map):
-            measure[elem].append(measure_raw[idx])
             circuit.qubits[elem].measured = measure_raw[idx]
-
-        return measure
 
     def apply_gate(self, gate: BasicGate):
         self._gate_desc_vec.append(deepcopy(gate))
 
     def _run(
         self, circuit: Union[Circuit, None], keep_state: bool = False
-    ) -> Tuple[np.ndarray, List[List[int]]]:
+    ) -> np.ndarray:
         """Run simulation by gate description sequence and return measure gate results.
 
         Parameters
@@ -280,15 +286,18 @@ class CircuitSimulator:
         amplitude, measure_raw = self._instance.run(
             circuit.width(), self._gate_desc_vec, keep_state
         )
-        measure = self._map_measure(circuit, measure_raw)
+        self._map_measure(circuit, measure_raw)
         self._gate_desc_vec.clear()
-        return amplitude, measure
+        if self._precision == np.complex64:
+            return amplitude.astype(np.complex64)
+
+        return amplitude
 
     def run(
         self,
         circuit: Union[Circuit, None],
-        keep_state: bool = False,
-        output_measure_res: bool = False,
+        state_vector: np.ndarray = None,
+        keep_state: bool = False
     ) -> Union[np.ndarray, Tuple[np.ndarray, List[List[int]]]]:
         """Run simulation by gate description sequence and return measure gate results.
 
@@ -300,13 +309,10 @@ class CircuitSimulator:
         keep_state:
             Start simulation on previous result
         """
-        amplitude, measure = self._run(circuit, keep_state)
+        amplitude = self._run(circuit, keep_state)
         self._circuit = circuit
 
-        if output_measure_res:
-            return amplitude, measure
-        else:
-            return amplitude
+        return amplitude
 
     def sample(self, shots: int = 1) -> List[int]:
         assert self._circuit is not None
