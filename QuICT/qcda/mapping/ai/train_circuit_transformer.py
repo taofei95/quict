@@ -9,7 +9,6 @@ from copy import deepcopy, copy
 
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
 import torch.optim as optim
 from QuICT.qcda.mapping.ai.gtdqn import GraphTransformerDeepQNetwork
 from QuICT.qcda.mapping.ai.transformer_data_factory import CircuitTransformerDataFactory
@@ -63,16 +62,16 @@ class Trainer:
     def __init__(
         self,
         max_qubit_num: int = 30,
-        max_layer_num: int = 50,
+        max_layer_num: int = 60,
         inner_feat_dim: int = 30,
         head: int = 3,
         num_attn_layer: int = 6,
-        gamma: float = 0.95,
+        gamma: float = 0.99,
         replay_pool_size: int = 10000,
         batch_size: int = 16,
         total_epoch: int = 200,
-        explore_period: int = 100,
-        target_update_period: int = 100,
+        explore_period: int = 800,
+        target_update_period: int = 200,
         epsilon_start: float = 0.9,
         epsilon_end: float = 0.05,
         epsilon_decay: float = 100.0,
@@ -160,7 +159,10 @@ class Trainer:
         self._state.spacial_encoding = self._state.spacial_encoding.to(self._device)
         end_time = time()
         duration = end_time - start_time
-        print(f"Reset fished within {duration:0.4f}s.")
+        ps = len(self._replay)
+        print(
+            f"Reset fished within {duration:0.4f}s. Current experience pool size: {ps}"
+        )
 
     def _select_action(self) -> Tuple[int, int]:
         eps_threshold = self._epsilon_end + (
@@ -225,7 +227,7 @@ class Trainer:
                     layer.remove((x, y))
                     se_cpy[x + offset][y + offset] = 0
                     se_cpy[y + offset][x + offset] = 0
-                    reward += 1.0
+                    reward += 10.0
             if len(layer) > 0:
                 break
             remove_layer_num += 1
@@ -327,8 +329,9 @@ class Trainer:
 
     def train_one_epoch(self):
         self._reset_explore_state()
-        observe_period = 5
+        observe_period = 10
         running_loss = 0.0
+        running_reward = 0.0
         last_stamp = time()
         for i in range(self._explore_period):
             if self._state is None:
@@ -338,6 +341,7 @@ class Trainer:
 
             action = self._select_action()
             next_state, reward, terminated = self._take_action(action=action)
+            running_reward += reward
 
             # Put this transition into experience replay pool.
             self._replay.push(
@@ -359,19 +363,23 @@ class Trainer:
             # Update target net every C steps.
             if (self._explore_step + 1) % self._target_update_period == 0:
                 print(
-                    f"\tAlready explored \t{self._explore_step} steps. Updating model..."
+                    f"    Already explored {self._explore_step + 1} steps. Updating model..."
                 )
                 self._target_net.load_state_dict(self._policy_net.state_dict())
 
+            self._writer.add_scalar("Loss", cur_loss, self._explore_step)
+            self._writer.add_scalar("Reward", reward, self._explore_step)
             if (i + 1) % observe_period == 0:
                 cur = time()
                 duration = cur - last_stamp
                 last_stamp = cur
                 rate = duration / observe_period
                 running_loss /= observe_period
+                running_reward /= observe_period
                 print(
-                    f"\tIteration {i}, running loss: {running_loss:0.6f}, explore rate: {rate:0.4f} s/action"
+                    f"    [{i+1}] loss: {running_loss:0.4f}, average reward: {running_reward:0.4f}, explore rate: {rate:0.4f} s/action"
                 )
+                running_reward = 0.0
                 running_loss = 0.0
 
     def train(self):

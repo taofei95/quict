@@ -36,8 +36,6 @@ def _fill_x(
     topo_qubit_num: int,
 ) -> np.ndarray:
     assert topo_qubit_num <= max_qubit_num
-
-    # x = np.zeros(node_num, dtype=int)
     x[0] = max_qubit_num + 1
     for layer_idx in range(max_layer_num):
         offset = 1 + max_qubit_num * layer_idx
