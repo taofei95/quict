@@ -17,7 +17,8 @@ gate id a { U(0,0,0) a; }
 gate u0(gamma) q { U(0,0,0) q; }
 
 // --- QE Standard Gates ---
-
+// phase gate
+gate p(lambda) a { U(0,0,lambda) a; }
 // Pauli gate: bit-flip
 gate x a { u3(pi,0,pi) a; }
 // Pauli gate: bit and phase flip
@@ -34,6 +35,20 @@ gate sdg a { u1(-pi/2) a; }
 gate t a { u1(pi/4) a; }
 // C3 gate: conjugate of sqrt(S)
 gate tdg a { u1(-pi/4) a; }
+
+// --- Sqat Gates ---
+// sqrt-X gate
+gate sx a { sdg a; h a; sdg a; }
+// sqrt-W gate
+gate sw a {
+  u1(pi/4) a; sx a; u1(pi/2) a;
+  sx a; x a; u1(-pi/4) a;
+}
+// sqrt-Y gate
+gate sy a {
+  sx a; u1(pi/2) a; sx a;
+  x a;
+}
 
 // --- Standard rotations ---
 // Rotation around X-axis
@@ -86,6 +101,23 @@ gate cswap a,b,c
   cx c,b;
   ccx a,b,c;
   cx c,b;
+}
+// controlled rx rotation
+gate crx(lambda) a,b
+{
+  u1(pi/2) b;
+  cx a,b;
+  u3(-lambda/2,0,0) b;
+  cx a,b;
+  u3(lambda/2,-pi/2,0) b;
+}
+// controlled ry rotation
+gate cry(lambda) a,b
+{
+  ry(lambda/2) b;
+  cx a,b;
+  ry(-lambda/2) b;
+  cx a,b;
 }
 // controlled rz rotation
 gate crz(lambda) a,b

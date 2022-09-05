@@ -119,7 +119,7 @@ class CircuitBased(object):
 
     def qasm(self):
         qreg = self.width()
-        creg = self.count_gate_by_gatetype(GateType.measure)
+        creg = min(self.count_gate_by_gatetype(GateType.measure), qreg)
         if creg == 0:
             creg = qreg
 
@@ -132,6 +132,7 @@ class CircuitBased(object):
             if gate.qasm_name == "measure":
                 qasm_string += f"measure q[{gate.targ}] -> c[{cbits}];\n"
                 cbits += 1
+                cbits = cbits % creg
             else:
                 qasm_string += gate.qasm()
 
