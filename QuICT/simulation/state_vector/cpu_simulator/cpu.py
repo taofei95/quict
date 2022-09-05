@@ -187,14 +187,14 @@ def gate_to_desc(gate: BasicGate) -> List[GateDescription]:
 
 class CircuitSimulator:
     """ An interface used for type hints. This class is actually implemented in C++ side.
-    
+
     Args:
         precision (str): The precision for the state vector, one of [single, double]. Defaults to "double".
     """
 
     __PRECISION = ["single", "double"]
 
-    def __init__(self, precision: str = "double"):        
+    def __init__(self, precision: str = "double"):
         if precision not in self.__PRECISION:
             raise ValueError("Wrong precision. Please use one of [single, double].")
 
