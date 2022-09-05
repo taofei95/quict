@@ -419,7 +419,7 @@ class Circuit(CircuitBased):
             ]
 
         if probabilities is not None:
-            assert sum(probabilities) == 1 and len(probabilities) == len(typelist)
+            assert np.isclose(sum(probabilities), 1, atol=1e-6) and len(probabilities) == len(typelist)
 
         gate_prob = probabilities
         gate_indexes = list(range(len(typelist)))
