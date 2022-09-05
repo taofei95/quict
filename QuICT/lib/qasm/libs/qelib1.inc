@@ -95,6 +95,15 @@ gate crz(lambda) a,b
   u1(-lambda/2) b;
   cx a,b;
 }
+// double controlled rz rotation
+gate ccrz(lambda) a,b,c
+{
+  crz(lambda/2) b,c;
+  cx a,b;
+  crz(-lambda/2) b,c;
+  cx a,b;
+  crz(-lambda/2) a,c;
+}
 // controlled phase rotation
 gate cu1(lambda) a,b
 {
@@ -119,5 +128,28 @@ gate rzz(theta) a,b
 {
   cx a,b;
   u1(theta) b;
+  cx a,b;
+}
+// two-qubit XX rotation
+gate rxx(theta) a,b
+{
+  h a; h b;
+  cx a,b;
+  u1(theta) b;
+  cx a,b;
+  h a; h b;
+}
+// two-qubit YY rotation
+gate ryy(theta) a,b
+{
+  rx(pi/2) a; rx(pi/2) b;
+  cx a,b;
+  u1(theta) b;
+  cx a,b;
+  rx(pi/2) a; rx(pi/2) b;
+}
+// FSim Gate
+gate fsim(alpha, beta) a,b
+{
   cx a,b;
 }

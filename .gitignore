@@ -26,4 +26,5 @@ callgrind.out*
 *qubit_cnot_depth.inf
 cmake-build*/
 cmake-vsc*/
+unit_test/**/*.jpg
 QuICT/qcda/mapping/mcts_core/mcts_wrapper.cpp

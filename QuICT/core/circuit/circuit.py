@@ -13,8 +13,7 @@ from QuICT.core.gate import BasicGate, H, Measure, build_random_gate, build_gate
 from QuICT.core.utils import (
     GateType,
     CircuitBased,
-    unique_id_generator,
-    matrix_product_to_circuit
+    unique_id_generator
 )
 from QuICT.core.operator import (
     Trigger,
@@ -263,33 +262,6 @@ class Circuit(CircuitBased):
 
         return position
 
-    def get_gates_order_by_depth(self) -> List[List[BasicGate]]:
-        """ Order the gates of circuit by its depth layer
-
-        Returns:
-            List[List[BasicGate]]: The list of gates which at same layers in circuit.
-        """
-        gate_by_depth = [[self.gates[0]]]          # List[list], gates for each depth level.
-        # List[set], gates' qubits for each depth level.
-        gate_args_by_depth = [set(self.gates[0].cargs + self.gates[0].targs)]
-        for gate in self.gates[1:]:
-            gate_arg = set(gate.cargs + gate.targs)
-            for i in range(len(gate_args_by_depth) - 1, -1, -1):
-                if gate_arg & gate_args_by_depth[i]:
-                    if i == len(gate_args_by_depth) - 1:
-                        gate_by_depth.append([gate])
-                        gate_args_by_depth.append(gate_arg)
-                    else:
-                        gate_by_depth[i + 1].append(gate)
-                        gate_args_by_depth[i + 1] = gate_arg | gate_args_by_depth[i + 1]
-                    break
-                else:
-                    if i == 0:
-                        gate_by_depth[i].append(gate)
-                        gate_args_by_depth[i] = gate_arg | gate_args_by_depth[i]
-
-        return gate_by_depth
-
     def get_DAG_circuit(self) -> DAGCircuit:
         """
         Translate a quantum circuit to a directed acyclic graph
@@ -442,8 +414,8 @@ class Circuit(CircuitBased):
             typelist = [
                 GateType.rx, GateType.ry, GateType.rz,
                 GateType.cx, GateType.cy, GateType.crz,
-                GateType.ch, GateType.cz, GateType.Rxx,
-                GateType.Ryy, GateType.Rzz, GateType.fsim
+                GateType.ch, GateType.cz, GateType.rxx,
+                GateType.ryy, GateType.rzz, GateType.fsim
             ]
 
         if probabilities is not None:
@@ -587,13 +559,3 @@ class Circuit(CircuitBased):
                 filename += '.txt'
 
             textDrawing.dump(filename)
-
-    def matrix_product_to_circuit(self, gate) -> np.ndarray:
-        """ extend a gate's matrix in the all circuit unitary linear space
-
-        gate's matrix tensor products some identity matrix.
-
-        Args:
-            gate(BasicGate): the gate to be extended.
-        """
-        return matrix_product_to_circuit(gate.matrix, gate.cargs + gate.targs, len(self.qubits))

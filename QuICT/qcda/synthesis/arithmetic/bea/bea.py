@@ -1,7 +1,6 @@
 import numpy as np
 
 from QuICT.core.gate import CompositeGate, CX, CCX, CSwap, X, QFT, IQFT, CU1, U1, CCRz, Phase
-from ..._synthesis import Synthesis
 
 
 def ex_gcd(a, b, arr):
@@ -288,7 +287,7 @@ def c_mult_mod(gate_set, a, N, x, b, c, low):
         IQFT.build_gate(len(b)) & b
 
 
-class BEAAdder(Synthesis):
+class BEAAdder(object):
     @staticmethod
     def execute(n):
         """ a circuit calculate a+b, a and b are gotten from some qubits.
@@ -306,7 +305,7 @@ class BEAAdder(Synthesis):
         return gate_set
 
 
-class BEAAdderWired(Synthesis):
+class BEAAdderWired(object):
     @staticmethod
     def execute(n, a):
         """ a circuit calculate a+b, a is wired, and b are gotten from some qubits.
@@ -327,7 +326,7 @@ class BEAAdderWired(Synthesis):
         return gate_set
 
 
-class BEAReverseAdderWired(Synthesis):
+class BEAReverseAdderWired(object):
     @staticmethod
     def execute(n, a):
         """
@@ -347,7 +346,7 @@ class BEAReverseAdderWired(Synthesis):
         return gate_set
 
 
-class CCBEAAdderWired(Synthesis):
+class CCBEAAdderWired(object):
     @staticmethod
     def execute(n, a):
         """
@@ -369,7 +368,7 @@ class CCBEAAdderWired(Synthesis):
         return gate_set
 
 
-class CCBEAReverseAdderWired(Synthesis):
+class CCBEAReverseAdderWired(object):
     @staticmethod
     def execute(n, a):
         """
@@ -391,7 +390,7 @@ class CCBEAReverseAdderWired(Synthesis):
         return gate_set
 
 
-class CCBEAAdderMod(Synthesis):
+class CCBEAAdderMod(object):
     @staticmethod
     def execute(n, a, N):
         """ use fourier_adder_wired/cc_fourier_adder_wired to calculate (a+b)%N in Fourier space
@@ -423,7 +422,7 @@ class CCBEAAdderMod(Synthesis):
         return gate_set
 
 
-class BEAAdderMod(Synthesis):
+class BEAAdderMod(object):
     @staticmethod
     def execute(n, a, N):
         """ use fourier_adder_wired/cc_fourier_adder_wired
@@ -454,7 +453,7 @@ class BEAAdderMod(Synthesis):
         return gate_set
 
 
-class CBEAMulMod(Synthesis):
+class CBEAMulMod(object):
     @staticmethod
     def execute(n, a, N):
         """ use cc_fourier_adder_mod to calculate (b+ax)%N in Fourier space
@@ -489,7 +488,7 @@ class CBEAMulMod(Synthesis):
         return gate_set
 
 
-class BEAMulMod(Synthesis):
+class BEAMulMod(object):
     @staticmethod
     def execute(n, a, N):
         """ use fourier_adder_mod to calculate (b+ax)%N in Fourier space. No control bits
@@ -522,7 +521,7 @@ class BEAMulMod(Synthesis):
         return gate_set
 
 
-class BEACUa(Synthesis):
+class BEACUa(object):
     @staticmethod
     def execute(n, a, N):
         """ Controlled-U_a, ((a*x)MOD(N)) if c=1, else (x)

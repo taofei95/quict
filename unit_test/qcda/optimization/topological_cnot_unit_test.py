@@ -4,45 +4,14 @@
 # @Author  : Han Yu
 # @File    : unit_test.py
 
-import pytest
 import random
 
 import numpy as np
 
-from QuICT.core import *
+from QuICT.core import Circuit
 from QuICT.core.gate import CX, GateType
 from QuICT.core.layout import Layout
 from QuICT.qcda.optimization import TopologicalCnot
-
-
-def _getRandomList(n):
-    """ get first 2 number from 0, 1, ..., n - 1 randomly.
-
-    Args:
-        n(int)
-    Returns:
-        tuple<int, int>
-    """
-    _rand = [i for i in range(n)]
-    for i in range(n - 1, 0, -1):
-        do_get = random.randint(0, i)
-        _rand[do_get], _rand[i] = _rand[i], _rand[do_get]
-    return _rand[0], _rand[1]
-
-
-def _getAllRandomList(n):
-    """ get n number from 0, 1, ..., n - 1 randomly.
-
-    Args:
-        n(int)
-    Returns:
-        tuple<int, int>
-    """
-    _rand = [i for i in range(n)]
-    for i in range(n - 1, 0, -1):
-        do_get = random.randint(0, i)
-        _rand[do_get], _rand[i] = _rand[i], _rand[do_get]
-    return _rand
 
 
 def generate_matrix(gates, n):
@@ -61,18 +30,6 @@ def generate_matrix(gates, n):
     return matrix
 
 
-def generate_matrix_list(gates, n):
-    matrix = generate_matrix(gates, n)
-    matrix_values = []
-    for i in range(n):
-        values = 0
-        for j in range(n):
-            if matrix[i, j]:
-                values += 1 << j
-        matrix_values.append(values)
-    return matrix_values
-
-
 def check_equiv(circuit1, circuit2):
     """ check whether two circuit is equiv
 
@@ -84,40 +41,22 @@ def check_equiv(circuit1, circuit2):
     """
     n = circuit1.width()
     matrix1 = generate_matrix(circuit1.gates, n)
-    matrix2 = generate_matrix(circuit2.gates if isinstance(circuit2, Circuit) else circuit2, n)
-
+    matrix2 = generate_matrix(circuit2.gates, n)
     return not np.any(matrix1 ^ matrix2)
 
 
-def test_1():
+def test():
     for _ in range(20):
-        for i in range(2, 10):
-            layout = Layout(i)
-            topo = _getAllRandomList(i)
+        for n in range(2, 10):
+            layout = Layout(n)
+            topo = random.sample(range(n), n)
             for j in range(len(topo) - 1):
                 layout.add_edge(topo[j], topo[j + 1])
-            for _ in range(i // 10):
-                layout.add_edge(_getRandomList(2))
-            circuit = Circuit(i, topology=layout)
-            for _ in range(i * 100):
-                CX | circuit(list(_getRandomList(2)))
-            new_circuit = TopologicalCnot.execute(circuit)
-            if not check_equiv(circuit, new_circuit):
-                assert 0
-
-            circuit = Circuit(i)
-            for _ in range(i * 100):
-                CX | circuit(list(_getRandomList(2)))
-            topo = _getAllRandomList(i)
-            topology = []
-            for j in range(len(topo) - 1):
-                topology.append((topo[j], topo[j + 1]))
-            for _ in range(i // 10):
-                topology.append(_getRandomList(2))
-            new_circuit = TopologicalCnot.execute(cnot_struct=generate_matrix_list(circuit.gates, i), topology=topology)
-            if not check_equiv(circuit, new_circuit):
-                assert 0
-
-
-if __name__ == '__main__':
-    pytest.main(["./unit_test.py"])
+            for _ in range(n // 10):
+                layout.add_edge(random.sample(range(n), 2))
+            circuit = Circuit(n, topology=layout)
+            for _ in range(n * 100):
+                CX | circuit(random.sample(range(n), 2))
+            TC = TopologicalCnot()
+            new_circuit = TC.execute(circuit)
+            assert check_equiv(circuit, new_circuit)

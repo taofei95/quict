@@ -5,9 +5,12 @@
 # @File    : IBMQ_set.py
 
 from .. import InstructionSet
-from ..transform_rule import XyxRule
+from ..transform_rule import xyx_rule
 
 from QuICT.core.gate import *
 
-GoogleSet = InstructionSet([FSim, SX, SY, SW, Rx, Ry])
-GoogleSet.register_SU2_rule(XyxRule)
+GoogleSet = InstructionSet(
+    GateType.fsim,
+    [GateType.sx, GateType.sy, GateType.sw, GateType.rx, GateType.ry]
+)
+GoogleSet.register_one_qubit_rule(xyx_rule)

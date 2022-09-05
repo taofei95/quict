@@ -3,10 +3,10 @@ from typing import Union, List
 
 from QuICT.core import Circuit
 from QuICT.core.gate import *
-from QuICT.qcda.synthesis.unitary_transform import UnitaryTransform
+from QuICT.qcda.synthesis.unitary_decomposition import UnitaryDecomposition
 from QuICT.qcda.synthesis.gate_decomposition import GateDecomposition
 from QuICT.qcda.optimization import CommutativeOptimization
-from QuICT.simulation.cpu_simulator import CircuitSimulator
+from QuICT.simulation.state_vector import CircuitSimulator
 from .graph import Graph
 
 
@@ -25,7 +25,7 @@ class QuantumWalk:
         """ The quantum circuit of the random walk algorithm, including UnitaryGate """
         return self._circuit
 
-    def __init__(self, T: int, graph: Graph, coin_operator: np.ndarray = None):
+    def __init__(self, step: int, graph: Graph, coin_operator: np.ndarray = None):
         """ Initial the quantum random walk with given steps, graph and coin operator.
 
         Args:
@@ -34,7 +34,7 @@ class QuantumWalk:
                 the edges represent the action space.
             coin_operator (np.ndarray, optional): The coin operators, the unitary matrix. Defaults to None.
         """
-        self._step = T
+        self._step = step
         self._graph = graph
         self._coin_operator = coin_operator
         self._operator_by_position = False
@@ -89,7 +89,7 @@ class QuantumWalk:
             for xi in x_idx:
                 X | action_gate(xi)
 
-        return GateDecomposition.execute(action_gate)
+        return GateDecomposition().execute(action_gate)
 
     def _mct_generator(self, op: np.ndarray) -> UnitaryGate:
         """ Build multi-control-'op' gate """
@@ -114,7 +114,7 @@ class QuantumWalk:
         if len(record_idxes) > 0:
             unitary_matrix[record_idxes, record_idxes] = 1
 
-        self._shift_operator = UnitaryTransform.execute(unitary_matrix)[0]
+        self._shift_operator = UnitaryDecomposition().execute(unitary_matrix)[0]
 
     def run(
         self,
@@ -144,14 +144,11 @@ class QuantumWalk:
         else:
             opt_circuit = self._circuit
 
+        # Step 2, Simulate the quantum walk's circuit
+        state_vector = simulator.run(self.circuit)
+
         # Return final state vector if not need
         if not record_measured:
-            return simulator.run(opt_circuit)
+            return state_vector
 
-        state_list = [0] * (1 << self._circuit.width())
-        for _ in range(shots):
-            _ = simulator.run(opt_circuit)
-            measured_state = simulator.sample()
-            state_list[measured_state] += 1
-
-        return state_list
+        return simulator.sample(shots)
