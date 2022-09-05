@@ -227,7 +227,7 @@ class CircuitSimulator:
         self._gate_desc_vec.append(deepcopy(gate))
 
     def _run(
-        self, circuit: Union[Circuit, None], keep_state: bool = False
+        self, circuit: Union[Circuit, None], use_previous: bool = False
     ) -> np.ndarray:
         """Run simulation by gate description sequence and return measure gate results.
 
@@ -236,7 +236,7 @@ class CircuitSimulator:
         circuit:
             Quantum circuit to be simulated. If `None` is passed, then all previous gates added by
             `apply_gate` would be executed.
-        keep_state:
+        use_previous:
             Start simulation on previous result
         """
         warnings.warn(
@@ -259,10 +259,10 @@ class CircuitSimulator:
                         gate_desc_vec.extend(gate_to_desc(mgate))
 
                     _, measure_raw = self._instance.run(
-                        qubits, gate_desc_vec, keep_state
+                        qubits, gate_desc_vec, use_previous
                     )
                     gate_desc_vec = []
-                    measured_state, keep_state, targ_idx = 0, True, 0
+                    measured_state, use_previous, targ_idx = 0, True, 0
                     for mstate in measure_raw:
                         measured_state << 1
                         measured_state += mstate
@@ -284,7 +284,7 @@ class CircuitSimulator:
         self._gate_desc_vec = gate_desc_vec
 
         amplitude, measure_raw = self._instance.run(
-            circuit.width(), self._gate_desc_vec, keep_state
+            circuit.width(), self._gate_desc_vec, use_previous
         )
         self._map_measure(circuit, measure_raw)
         self._gate_desc_vec.clear()
@@ -297,7 +297,7 @@ class CircuitSimulator:
         self,
         circuit: Union[Circuit, None],
         state_vector: np.ndarray = None,
-        keep_state: bool = False
+        use_previous: bool = False
     ) -> Union[np.ndarray, Tuple[np.ndarray, List[List[int]]]]:
         """Run simulation by gate description sequence and return measure gate results.
 
@@ -306,10 +306,10 @@ class CircuitSimulator:
         circuit:
             Quantum circuit to be simulated. If `None` is passed, then all previous gates added by
             `apply_gate` would be executed.
-        keep_state:
+        use_previous:
             Start simulation on previous result
         """
-        amplitude = self._run(circuit, keep_state)
+        amplitude = self._run(circuit, use_previous)
         self._circuit = circuit
 
         return amplitude
