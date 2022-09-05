@@ -19,7 +19,7 @@ def test_uniformly_ry():
     for _ in range(10):
         for i in range(1, 6):
             circuit = Circuit(i)
-            angles = [random.random() for _ in range(1 << (i - 1))]
+            angles = [2 * np.pi * random.random() for _ in range(1 << (i - 1))]
             URy = UniformlyRotation(GateType.ry)
             URy.execute(angles) | circuit
             unitary = SyntheticalUnitary.run(circuit)
@@ -32,7 +32,7 @@ def test_uniformly_rz():
     for _ in range(10):
         for i in range(1, 6):
             circuit = Circuit(i)
-            angles = [random.random() for _ in range(1 << (i - 1))]
+            angles = [2 * np.pi * random.random() for _ in range(1 << (i - 1))]
             URz = UniformlyRotation(GateType.rz)
             URz.execute(angles) | circuit
             unitary = SyntheticalUnitary.run(circuit)
