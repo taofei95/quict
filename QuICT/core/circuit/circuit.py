@@ -538,7 +538,6 @@ class Circuit(CircuitBased):
             method(str): the method to draw the circuit
                 matp: matplotlib
                 command : command
-                tex : tex source
         """
         from QuICT.tools.drawer import PhotoDrawer, TextDrawing
 
