@@ -17,7 +17,7 @@ from matplotlib import pyplot as plt
 from QuICT.core import *
 from QuICT.core.utils import GateType
 from QuICT.qcda.mapping.ai.gtdqn import GraphTransformerDeepQNetwork
-from QuICT.qcda.mapping.ai.transformer_data_factory import CircuitTransformerDataFactory
+from QuICT.qcda.mapping.ai.data_factory_transformer import CircuitTransformerDataFactory
 from torch.utils.tensorboard import SummaryWriter
 
 
@@ -270,7 +270,7 @@ class Trainer:
         _e = prev_layer_num  # Remain layer id end
         _n = _e - _s  # Remain layer number
         assert _n == len(next_layered_circ)
-        
+
         # Vertices in the first layer cannot reach each other. Keep the distance as 0.
         # next_spacial_encoding[:_q, :_q] = se_cpy[:_q, :_q]
 

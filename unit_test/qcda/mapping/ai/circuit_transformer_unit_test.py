@@ -1,7 +1,7 @@
 import torch
 from QuICT.core import *
 from QuICT.qcda.mapping.ai.circuit_transformer import *
-from QuICT.qcda.mapping.ai.transformer_data_factory import CircuitTransformerDataFactory
+from QuICT.qcda.mapping.ai.data_factory_transformer import CircuitTransformerDataFactory
 import numpy as np
 
 
