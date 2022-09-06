@@ -1,6 +1,6 @@
 import os
 import networkx as nx
-from random import choice, randint
+from random import choice, randint, shuffle
 import os.path as osp
 from typing import Dict, Iterable, List, Tuple, Set
 import torch
@@ -36,11 +36,11 @@ def _fill_x(
     topo_qubit_num: int,
 ) -> np.ndarray:
     assert topo_qubit_num <= max_qubit_num
-    x[0] = max_qubit_num + 1
-    for layer_idx in range(max_layer_num):
-        offset = 1 + max_qubit_num * layer_idx
-        for b in range(topo_qubit_num):
-            x[b + offset] = b + 1
+    q = max_qubit_num
+    for b in range(q):
+        x[b] = b + 1
+    for i in range(max_layer_num):
+        x[(i + 1) * q : (i + 2) * q] = x[:q]
     return x
 
 
@@ -70,6 +70,7 @@ class CircuitTransformerDataFactory:
 
         self._topo_graph_map = {}
         self._topo_edge_map = {}
+        self._topo_edge_mat_map = {}
         self._topo_qubit_num_map = {}
         self._topo_x_map = {}
         self._topo_mask_map = {}
@@ -131,6 +132,7 @@ class CircuitTransformerDataFactory:
         """
         layers_raw: List[Set[Tuple[int, int]]] = []
         occupied = [-1 for _ in range(self._max_qubit_num)]
+        flag = True
         for gate in circ.gates:
             gate: BasicGate
             if gate.controls + gate.targets != 2:
@@ -138,14 +140,14 @@ class CircuitTransformerDataFactory:
             a, b = gate.cargs + gate.targs
             idx = max(occupied[a], occupied[b]) + 1
             if idx >= self._max_layer_num:
-                return None, False
+                flag = False
             while idx >= len(layers_raw):
                 layers_raw.append(set())
             layers_raw[idx].add((a, b))
             layers_raw[idx].add((b, a))
             occupied[a] = idx
             occupied[b] = idx
-        return layers_raw, True
+        return layers_raw, flag
 
     def get_circ_edges(
         self,
@@ -277,6 +279,12 @@ class CircuitTransformerDataFactory:
             self._reset_topo_attr_cache()
         return self._topo_dist_map
 
+    @property
+    def topo_edge_mat_map(self) -> Dict[str, np.ndarray]:
+        if len(self._topo_edge_mat_map) == 0:
+            self._reset_topo_attr_cache()
+        return self._topo_edge_mat_map
+
     def _reset_topo_attr_cache(self):
         for topo_name in self.topo_names:
             topo_path = osp.join(self._topo_dir, f"{topo_name}.layout")
@@ -288,18 +296,21 @@ class CircuitTransformerDataFactory:
             self._topo_dist_map[topo_name] = self.get_topo_dist(topo_graph=topo_graph)
 
             topo_mask = torch.zeros(
-                (topo.qubit_number, topo.qubit_number),
-                dtype=torch.float,
-                device=self._device,
+                (topo.qubit_number, topo.qubit_number), dtype=torch.float, device="cpu"
             )
+
             topo_edge = []
+            topo_edge_mat = np.zeros((topo.qubit_number, topo.qubit_number), dtype=int)
             for u, v in topo_graph.edges:
                 topo_mask[u][v] = 1.0
                 topo_mask[v][u] = 1.0
                 topo_edge.append((u, v))
                 topo_edge.append((v, u))
+                topo_edge_mat[u][v] = 1
+                topo_edge_mat[v][u] = 1
             self._topo_mask_map[topo_name] = topo_mask
             self._topo_edge_map[topo_name] = topo_edge
+            self._topo_edge_mat_map[topo_name] = topo_edge_mat
 
     @classmethod
     def remap_layered_circ(
@@ -328,18 +339,17 @@ class CircuitTransformerDataFactory:
         circ = Circuit(qubit_num)
 
         success = False
-        while not success:
-            circ.gates.clear()
-            gate_num = randint(
-                1, max(qubit_num * randint(3, self._max_layer_num) // 5, 30)
-            )
-            circ.random_append(
-                gate_num,
-                typelist=[
-                    GateType.cx,
-                ],
-            )
-            layered_circ, success = self.get_layered_circ(circ=circ)
+        circ.gates.clear()
+        gate_num = randint(1, max(qubit_num // 2 * randint(2, self._max_layer_num), 30))
+        circ.random_append(
+            gate_num,
+            typelist=[
+                GateType.cx,
+            ],
+        )
+        layered_circ, success = self.get_layered_circ(circ=circ)
+        while len(layered_circ) > self._max_layer_num:
+            layered_circ.pop(-1)
 
         x = self.topo_x_map[topo_name]
         cur_mapping = [i for i in range(self.topo_qubit_num_map[topo_name])]

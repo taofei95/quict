@@ -1,15 +1,21 @@
+import io
 import math
 import os
 import os.path as osp
 from collections import deque
+from copy import copy, deepcopy
 from random import choice, randint, random, sample
 from time import time
 from typing import List, Set, Tuple, Union
-from copy import deepcopy, copy
 
+import numpy as np
 import torch
 import torch.nn as nn
 import torch.optim as optim
+import torchvision.transforms as TvT
+from matplotlib import pyplot as plt
+from QuICT.core import *
+from QuICT.core.utils import GateType
 from QuICT.qcda.mapping.ai.gtdqn import GraphTransformerDeepQNetwork
 from QuICT.qcda.mapping.ai.transformer_data_factory import CircuitTransformerDataFactory
 from torch.utils.tensorboard import SummaryWriter
@@ -150,13 +156,29 @@ class Trainer:
             os.makedirs(log_dir)
         self._writer = SummaryWriter(log_dir=log_dir)
 
+        # Validation circuits examples
+        v_size = 3
+        v_topo_names = sample(self._data_factory.topo_names, k=v_size)
+        self._v_circs = []
+        for topo_name in v_topo_names:
+            q = self._data_factory.topo_qubit_num_map[topo_name]
+            circ = Circuit(q)
+            circ.random_append(rand_size=q * 5, typelist=[GateType.cx])
+            x = self._data_factory.get_x(q)
+            layered_circ, success = self._data_factory.get_layered_circ(circ)
+            assert success
+            circ_edges = self._data_factory.get_circ_edges(
+                layered_circ, self._data_factory.topo_dist_map[topo_name]
+            )
+            spacial_encoding = self._data_factory.get_spacial_encoding(circ_edges)
+            self._v_circs.append((topo_name, x, spacial_encoding))
+
     def _reset_explore_state(self):
         print("Resetting exploration status...")
         start_time = time()
         self._state = State(*self._data_factory.get_one())
-        # Move to GPU if needed
-        self._state.x = self._state.x.to(self._device)
-        self._state.spacial_encoding = self._state.spacial_encoding.to(self._device)
+        self._state.x = self._state.x.to("cpu")
+        self._state.spacial_encoding = self._state.spacial_encoding.to("cpu")
         end_time = time()
         duration = end_time - start_time
         ps = len(self._replay)
@@ -170,11 +192,12 @@ class Trainer:
         ) * math.exp(-1.0 * self._explore_step / self._epsilon_decay)
         self._explore_step += 1
         sample = random()
-        graph = self._data_factory.topo_graph_map[self._state.topo_name]
         edges = self._data_factory.topo_edge_map[self._state.topo_name]
         if sample > eps_threshold:
             # Chose an action based on policy_net
-            q_mat = self._policy_net(self._state.x, self._state.spacial_encoding)
+            x = self._state.x.to(self._device)
+            se = self._state.spacial_encoding.to(self._device)
+            q_mat = self._policy_net(x, se).detach().cpu()
             q_mat = q_mat.view(self._max_qubit_num, self._max_qubit_num)
             topo_qubit_num = self._data_factory.topo_qubit_num_map[
                 self._state.topo_name
@@ -185,14 +208,9 @@ class Trainer:
                 * self._data_factory.topo_mask_map[self._state.topo_name]
             )
             pos = int(torch.argmax(q_mat))
+            del q_mat
             u, v = pos // topo_qubit_num, pos % topo_qubit_num
-            if graph.has_edge(u, v):
-                # Policy net gives a correct output. Return it.
-                action = u, v
-            else:
-                # Policy net gives wrong output. Now we gives a random output
-                action = choice(edges)
-            return action
+            return u, v
         else:
             return choice(edges)
 
@@ -208,6 +226,12 @@ class Trainer:
             Tuple[Union[State, None], bool]: Tuple of (Next State, Terminated).
         """
         u, v = action
+        graph = self._data_factory.topo_graph_map[self._state.topo_name]
+        if not graph.has_edge(u, v):
+            reward = -10.0
+            next_state = self._state
+            return next_state, reward, False
+
         next_mapping = deepcopy(self._state.cur_mapping)
         next_mapping[u], next_mapping[v] = next_mapping[v], next_mapping[u]
         next_layered_circ = self._data_factory.remap_layered_circ(
@@ -217,11 +241,11 @@ class Trainer:
         se_cpy = self._state.spacial_encoding.detach().clone()
         remove_layer_num = 0
         prev_layer_num = len(self._state.layered_circ)
-        max_q = self._max_qubit_num
+        _q = self._max_qubit_num
         # max_l = self._max_layer_num
         reward = 0.0
         for layer_idx, layer in enumerate(next_layered_circ):
-            offset = (layer_idx + 1) * max_q
+            offset = (layer_idx + 1) * _q
             for x, y in copy(layer):
                 if topo_dist[x][y] == 1:
                     layer.remove((x, y))
@@ -241,28 +265,27 @@ class Trainer:
         # X for the same topology is always the same, so there's ne need to copy.
         next_x = self._state.x
 
-        # TODO: Avoid construct a brand new graph distance matrix
-        next_spacial_encoding = torch.zeros_like(
-            se_cpy, dtype=torch.int, device=self._device
-        )
-        remain_layer_start = remove_layer_num
-        remain_layer_end = prev_layer_num
-        remain_layer_num = remain_layer_end - remain_layer_start
-        assert remain_layer_num == len(next_layered_circ)
+        next_spacial_encoding = torch.zeros_like(se_cpy, dtype=torch.int, device="cpu")
+        _s = remove_layer_num  # Remain layer id start
+        _e = prev_layer_num  # Remain layer id end
+        _n = _e - _s  # Remain layer number
+        assert _n == len(next_layered_circ)
+        
+        # Vertices in the first layer cannot reach each other. Keep the distance as 0.
+        # next_spacial_encoding[:_q, :_q] = se_cpy[:_q, :_q]
 
-        next_spacial_encoding[:max_q, :max_q] = se_cpy[:max_q, :max_q]
-        next_spacial_encoding[:max_q, max_q : (remain_layer_num + 1) * max_q] = se_cpy[
-            :max_q, (remain_layer_start + 1) * max_q : (remain_layer_end + 1) * max_q
-        ]
-        next_spacial_encoding[max_q : (remain_layer_num + 1) * max_q, :max_q] = se_cpy[
-            (remain_layer_start + 1) * max_q : (remain_layer_end + 1) * max_q, :max_q
-        ]
-        next_spacial_encoding[
-            max_q : (remain_layer_num + 1) * max_q,
-            max_q : (remain_layer_num + 1) * max_q,
-        ] = se_cpy[
-            (remain_layer_start + 1) * max_q : (remain_layer_end + 1) * max_q,
-            (remain_layer_start + 1) * max_q : (remain_layer_end + 1) * max_q,
+        # Add none zero entries first remained layer forwards with 1. Use this part as the first virtual layer distances forwards.
+        _tmp = se_cpy[(_s + 1) * _q : (_s + 2) * _q, (_s + 1) * _q : (_e + 1) * _q]
+        _mask = _tmp.clamp(min=0, max=1)
+        next_spacial_encoding[:_q, _q : (_n + 1) * _q] = (_tmp + 1) * _mask
+
+        # No vertices can go back to the first layer. So keeping the distance as 0 is enough.
+        # next_spacial_encoding[_q : (_n + 1) * _q, :_q] = 0
+
+        # Copy bottom-right corner.
+        next_spacial_encoding[_q : (_n + 1) * _q, _q : (_n + 1) * _q,] = se_cpy[
+            (_s + 1) * _q : (_e + 1) * _q,
+            (_s + 1) * _q : (_e + 1) * _q,
         ]
 
         next_state = State(
@@ -290,8 +313,10 @@ class Trainer:
             device=self._device,
         )  # [B, 1]
 
-        xs = torch.stack([state.x for state in states])
-        spacial_encodings = torch.stack([state.spacial_encoding for state in states])
+        xs = torch.stack([state.x for state in states]).to(self._device)
+        spacial_encodings = torch.stack(
+            [state.spacial_encoding for state in states]
+        ).to(self._device)
         rewards = torch.tensor(rewards, device=self._device)
 
         non_final_mask = torch.tensor(
@@ -301,10 +326,10 @@ class Trainer:
         )
         non_final_next_xs = torch.stack(
             [state.x for state in next_states if state is not None]
-        )
+        ).to(self._device)
         non_final_next_spacial_encodings = torch.stack(
             [state.spacial_encoding for state in next_states if state is not None]
-        )
+        ).to(self._device)
 
         state_action_values = (
             self._policy_net(xs, spacial_encodings).gather(1, actions).squeeze()
@@ -327,9 +352,29 @@ class Trainer:
         self._optimizer.step()
         return loss_val
 
+    def _draw_v_heat_maps(self, timestamp: int):
+        for topo_name, x, spacial_encoding in self._v_circs:
+            q_mat = self._policy_net(x, spacial_encoding)
+            q_mat = q_mat.detach().cpu().numpy()
+            q_mat = np.reshape(q_mat, (self._max_qubit_num, self._max_qubit_num))
+            topo_qubit_num = self._data_factory.topo_qubit_num_map[topo_name]
+            mask = self._data_factory.topo_mask_map[topo_name].numpy()
+            q_mat = q_mat[:topo_qubit_num, :topo_qubit_num] * mask
+            # Normalize q_mat
+            q_mat = np.clip(q_mat, 0, None)
+            q_mat = (q_mat - np.min(q_mat)) / np.ptp(q_mat)
+            e_mat = self._data_factory.topo_edge_mat_map[topo_name]
+            fig, (ax1, ax2) = plt.subplots(ncols=2)
+            im1 = ax1.matshow(q_mat, interpolation=None)
+            im2 = ax2.matshow(e_mat, interpolation=None)
+            fig.colorbar(im1, ax=ax1)
+            fig.colorbar(im2, ax=ax2)
+            self._writer.add_figure(f"{topo_name} policy attention", fig, timestamp)
+            del q_mat
+
     def train_one_epoch(self):
         self._reset_explore_state()
-        observe_period = 10
+        observe_period = 20
         running_loss = 0.0
         running_reward = 0.0
         last_stamp = time()
@@ -388,6 +433,7 @@ class Trainer:
             print(f"Epoch {epoch_id}:")
             self.train_one_epoch()
             print()
+            self._draw_v_heat_maps(epoch_id + 1)
 
 
 if __name__ == "__main__":
