@@ -1,4 +1,5 @@
-from argparse import ArgumentParser, RawTextHelpFormatter
+from argparse import ArgumentParser, Namespace, RawTextHelpFormatter
+from copy import deepcopy
 
 
 QUICT_DESCRIBE = """
@@ -177,26 +178,28 @@ def job_cli_construct(job_sp: ArgumentParser):
     from QuICT.cloud.client.job import (
         start_job, stop_job, restart_job, delete_job, status_job, list_jobs
     )
+    from QuICT.cloud.cli.utils import get_template
 
+    # quict job get_template
     subparser = job_sp.add_subparsers()
-    get_template = subparser.add_parser(
+    get_templates = subparser.add_parser(
         name="get_template",
         description="Get job template.",
         help="Get job's template."
     )
-    get_template.add_argument(
+    get_templates.add_argument(
         "-t", "--type",
         choices=["simulation", "qcda", "all"], default="all",
         help="Get the template about simulation jobs or QCDA jobs."
     )
-    get_template.add_argument(
+    get_templates.add_argument(
         "-o", "--output",
-        nargs="?",
-        default=".",
+        nargs="?", default=".", dest="output_path",
         help="The output path, default to be current path."
     )
+    get_templates.set_defaults(func=get_template)
 
-    # start job
+    # quict job start
     start = subparser.add_parser(
         name="start",
         description="Start the job.",
@@ -204,12 +207,12 @@ def job_cli_construct(job_sp: ArgumentParser):
     )
     start.add_argument(
         "-f", "--file",
-        nargs="+",
+        nargs="+", dest="file",
         help="The path of jobs file, could be a directory or some file path.",
     )
     start.set_defaults(func=start_job)
 
-    # check job status
+    # quict job status
     status = subparser.add_parser(
         name="status",
         description="check the job's status.",
@@ -217,12 +220,12 @@ def job_cli_construct(job_sp: ArgumentParser):
     )
     status.add_argument(
         "-n", "--name",
-        nargs=1,
+        nargs=1, dest="name",
         help="The name of target job."
     )
     status.set_defaults(func=status_job)
 
-    # stop
+    # quict job stop
     stop = subparser.add_parser(
         name="stop",
         description="stop a job.",
@@ -230,12 +233,12 @@ def job_cli_construct(job_sp: ArgumentParser):
     )
     stop.add_argument(
         "-n", "--name",
-        nargs=1,
+        nargs=1, dest="name",
         help="The name of target job."
     )
     stop.set_defaults(func=stop_job)
 
-    # restart
+    # quict job restart
     restart = subparser.add_parser(
         name="restart",
         description="restart the job.",
@@ -243,12 +246,12 @@ def job_cli_construct(job_sp: ArgumentParser):
     )
     restart.add_argument(
         "-n", "--name",
-        nargs=1,
+        nargs=1, dest="name",
         help="The name of target job."
     )
     restart.set_defaults(func=restart_job)
 
-    # delete
+    # quict job delete
     delete = subparser.add_parser(
         name="delete",
         description="delete the job.",
@@ -256,12 +259,12 @@ def job_cli_construct(job_sp: ArgumentParser):
     )
     delete.add_argument(
         "-n", "--name",
-        nargs=1,
+        nargs=1, dest="name",
         help="The name of target job."
     )
     delete.set_defaults(func=delete_job)
 
-    # list
+    # quict job list
     list_job = subparser.add_parser(
         name="list",
         description="list the job.",
@@ -339,6 +342,8 @@ def env_cli_construct(env_sp: ArgumentParser):
 
 
 def benchmark_cli_construct(benchmark_sp: ArgumentParser):
+    from QuICT.cloud.cli.utils import get_benchmark_qcda, get_benchmark_simulation
+
     subparser = benchmark_sp.add_subparsers()
     # quict benchmark qcda
     qcda = subparser.add_parser(
@@ -349,6 +354,7 @@ def benchmark_cli_construct(benchmark_sp: ArgumentParser):
     qcda.add_argument(
         "-i", "--instruction_set",
         choices=["USTC", "Google", "IBMQ", "IONQ"], nargs="?",
+        default=False,
         help="Using given instruction set to do QCDA benchmark."
     )
     qcda.add_argument(
@@ -356,11 +362,7 @@ def benchmark_cli_construct(benchmark_sp: ArgumentParser):
         action="store_true",
         help="show QCDA's mapping benchmark or not."
     )
-    qcda.add_argument(
-        "-o", "--optimization",
-        action="store_true",
-        help="show QCDA's optimization benchmark or not"
-    )
+    qcda.set_defaults(func=get_benchmark_qcda)
 
     # quict benchmark simulation
     simulation = subparser.add_parser(
@@ -378,8 +380,17 @@ def benchmark_cli_construct(benchmark_sp: ArgumentParser):
         choices=["small", "medium", "large", "all"], default="all",
         help="Choice the size of simulation, default to all."
     )
+    simulation.set_defaults(func=get_benchmark_simulation)
+
+
+def _decompose_namespace(args: Namespace):
+    mapping_args = vars(deepcopy(args))
+    del mapping_args["func"]
+
+    return mapping_args
 
 
 if __name__ == "__main__":
-    test = cli_construct()
-    test.func(test)
+    args = cli_construct()
+    map_args = _decompose_namespace(args)
+    args.func(**map_args)
