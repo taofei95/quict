@@ -9,6 +9,7 @@ import math
 import re
 
 import numpy as np
+import matplotlib
 from matplotlib import patches
 from matplotlib import pyplot as plt
 
@@ -627,9 +628,7 @@ class PhotoDrawer(object):
             'max_y': 0,
         }
         anchors = {}
-
         max_name = 0
-
         for i in range(cir_len):
             name = f'$q_{{{i}}}$'
             max_name = max(max_name, len(name))
@@ -858,5 +857,13 @@ class PhotoDrawer(object):
         if self.style.figwidth < 0.0:
             self.style.figwidth = fig_w * 4.3 * self.style.fs / 72 / WID
         self.figure.set_size_inches(self.style.figwidth, self.style.figwidth * fig_h / fig_w)
-        self.figure.savefig(filename, dpi=self.style.dpi,
-                            bbox_inches='tight')
+
+        plt_backend = matplotlib.get_backend()
+        if plt_backend == "agg":
+            filename = f"{circuit.name}.jpg" if filename is None else filename
+
+        if filename is not None:
+            self.figure.savefig(filename, dpi=self.style.dpi,
+                                bbox_inches='tight')
+        else:
+            self.figure.show()

@@ -537,19 +537,19 @@ class Circuit(CircuitBased):
         """ draw the photo of circuit in the run directory
 
         Args:
-            filename(str): the output filename without file extensions,
-                           default to be the name of the circuit
             method(str): the method to draw the circuit
                 matp: matplotlib
                 command : command
+            filename(str): the output filename without file extensions, default to None.
+                if filename is None, it will using matlibplot.show() except matlibplot.backend
+                is agg, it will output jpg file named circuit's name.
         """
         from QuICT.tools.drawer import PhotoDrawer, TextDrawing
 
         if method == 'matp':
-            if filename is None:
-                filename = str(self.name) + '.jpg'
-            elif '.' not in filename:
-                filename += '.jpg'
+            if filename is not None:
+                if '.' not in filename:
+                    filename += '.jpg'
 
             photoDrawer = PhotoDrawer()
             photoDrawer.run(self, filename)
