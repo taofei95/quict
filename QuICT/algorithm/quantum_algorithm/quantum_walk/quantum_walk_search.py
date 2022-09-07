@@ -1,15 +1,15 @@
-import numpy as np
 import logging
-from typing import Union, List, Dict
-import matplotlib.pyplot as plt
+from typing import Dict, List, Union
 
+import matplotlib.pyplot as plt
+import numpy as np
+
+from QuICT.algorithm.quantum_algorithm.quantum_walk import Graph, QuantumWalk
 from QuICT.core import Circuit
 from QuICT.core.gate import *
-from QuICT.qcda.synthesis.gate_decomposition import GateDecomposition
 from QuICT.qcda.optimization import CommutativeOptimization
+from QuICT.qcda.synthesis.gate_decomposition import GateDecomposition
 from QuICT.simulation.state_vector import ConstantStateVectorSimulator
-from QuICT.algorithm.quantum_algorithm.quantum_walk import Graph
-from QuICT.algorithm.quantum_algorithm.quantum_walk import QuantumWalk
 
 
 class QuantumWalkSearch(QuantumWalk):

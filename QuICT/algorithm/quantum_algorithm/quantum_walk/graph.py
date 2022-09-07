@@ -1,6 +1,7 @@
-import numpy as np
 from collections import defaultdict
-from typing import Union, List, Dict
+from typing import Dict, List, Union
+
+import numpy as np
 
 
 class Graph:
