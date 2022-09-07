@@ -1132,6 +1132,7 @@ class PhaseGate(BasicGate):
         )
 
         self.pargs = params
+        self._qasm_name = "p"
 
     def __call__(self, alpha):
         """ Set parameters for the gate.

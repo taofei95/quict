@@ -418,8 +418,12 @@ class Circuit(CircuitBased):
                 GateType.ryy, GateType.rzz, GateType.fsim
             ]
 
+        unsupported_gate_type = [GateType.unitary, GateType.perm, GateType.perm_fx]
+        assert len(set(typelist) & set(unsupported_gate_type)) == 0, \
+            f"{set(typelist) & set(unsupported_gate_type)} is not support in random append."
+
         if probabilities is not None:
-            assert sum(probabilities) == 1 and len(probabilities) == len(typelist)
+            assert np.isclose(sum(probabilities), 1, atol=1e-6) and len(probabilities) == len(typelist)
 
         gate_prob = probabilities
         gate_indexes = list(range(len(typelist)))
@@ -533,20 +537,19 @@ class Circuit(CircuitBased):
         """ draw the photo of circuit in the run directory
 
         Args:
-            filename(str): the output filename without file extensions,
-                           default to be the name of the circuit
             method(str): the method to draw the circuit
                 matp: matplotlib
                 command : command
-                tex : tex source
+            filename(str): the output filename without file extensions, default to None.
+                if filename is None, it will using matlibplot.show() except matlibplot.backend
+                is agg, it will output jpg file named circuit's name.
         """
         from QuICT.tools.drawer import PhotoDrawer, TextDrawing
 
         if method == 'matp':
-            if filename is None:
-                filename = str(self.name) + '.jpg'
-            elif '.' not in filename:
-                filename += '.jpg'
+            if filename is not None:
+                if '.' not in filename:
+                    filename += '.jpg'
 
             photoDrawer = PhotoDrawer()
             photoDrawer.run(self, filename)
