@@ -1818,6 +1818,21 @@ class SwapGate(BasicGate):
             [0, 0, 0, 1]
         ], dtype=np.complex128)
 
+    def build_gate(self):
+        from QuICT.core.gate import CompositeGate
+
+        cgate = CompositeGate()
+        with cgate:
+            CX & [0, 1]
+            CX & [1, 0]
+            CX & [0, 1]
+
+        args = self.cargs + self.targs
+        if len(args) == self.controls + self.targets:
+            cgate & args
+
+        return cgate
+
 
 Swap = SwapGate()
 
