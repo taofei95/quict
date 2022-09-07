@@ -174,6 +174,10 @@ def circuit_cli_construct(circuit_sp: ArgumentParser):
 
 
 def job_cli_construct(job_sp: ArgumentParser):
+    from QuICT.cloud.client.job import (
+        start_job, stop_job, restart_job, delete_job, status_job, list_jobs
+    )
+
     subparser = job_sp.add_subparsers()
     get_template = subparser.add_parser(
         name="get_template",
@@ -203,18 +207,20 @@ def job_cli_construct(job_sp: ArgumentParser):
         nargs="+",
         help="The path of jobs file, could be a directory or some file path.",
     )
+    start.set_defaults(func=start_job)
 
     # check job status
-    check = subparser.add_parser(
-        name="check",
+    status = subparser.add_parser(
+        name="status",
         description="check the job's status.",
         help="check the job."
     )
-    check.add_argument(
+    status.add_argument(
         "-n", "--name",
         nargs=1,
         help="The name of target job."
     )
+    status.set_defaults(func=status_job)
 
     # stop
     stop = subparser.add_parser(
@@ -227,6 +233,7 @@ def job_cli_construct(job_sp: ArgumentParser):
         nargs=1,
         help="The name of target job."
     )
+    stop.set_defaults(func=stop_job)
 
     # restart
     restart = subparser.add_parser(
@@ -239,6 +246,7 @@ def job_cli_construct(job_sp: ArgumentParser):
         nargs=1,
         help="The name of target job."
     )
+    restart.set_defaults(func=restart_job)
 
     # delete
     delete = subparser.add_parser(
@@ -251,23 +259,27 @@ def job_cli_construct(job_sp: ArgumentParser):
         nargs=1,
         help="The name of target job."
     )
+    delete.set_defaults(func=delete_job)
 
     # list
-    _ = subparser.add_parser(
+    list_job = subparser.add_parser(
         name="list",
         description="list the job.",
         help="list the job."
     )
+    list_job.set_defaults(func=list_jobs)
 
 
 def cluster_cli_construct(cluster_sp: ArgumentParser):
+    from QuICT.cloud.client.cluster import status_cluster
     subparser = cluster_sp.add_subparsers()
     # quict cluster status
-    _ = subparser.add_parser(
+    status = subparser.add_parser(
         name="status",
         description="Show cluster running status.",
         help="Show cluster running status.",
     )
+    status.set_defaults(func=status_cluster)
 
 
 def env_cli_construct(env_sp: ArgumentParser):
@@ -370,3 +382,4 @@ def benchmark_cli_construct(benchmark_sp: ArgumentParser):
 
 if __name__ == "__main__":
     test = cli_construct()
+    test.func(test)
