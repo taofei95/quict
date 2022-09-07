@@ -39,10 +39,9 @@ class QuantumWalkSearch(QuantumWalk):
         log2_shape = int(np.ceil(np.log2(shape[0])))
 
         return (
-                shape[0] == shape[1] == 1 << self._total_qubits and
-                shape[0] == (1 << log2_shape) and
-                np.allclose(np.eye(shape[0]), coin_oracle.dot(coin_oracle.T.conj()))
-        )
+            shape[0] == shape[1] == 1 << self._total_qubits and
+            shape[0] == (1 << log2_shape) and
+            np.allclose(np.eye(shape[0]), coin_oracle.dot(coin_oracle.T.conj())))
 
     def _circuit_construct(self):
         """ Construct random walk search circuit. """
@@ -70,7 +69,8 @@ class QuantumWalkSearch(QuantumWalk):
             self._coin_marked = np.eye(2 ** self._action_qubits) - 2 * (x.T @ x)
         search_array = np.zeros((self._graph.position, self._graph.position))
         search_array[self._target][self._target] = 1
-        coin_oracle = np.kron(np.eye(self._graph.position), self._coin_unmarked) + np.kron(search_array, self._coin_marked - self._coin_unmarked)
+        coin_oracle = np.kron(np.eye(self._graph.position), self._coin_unmarked) + \
+            np.kron(search_array, self._coin_marked - self._coin_unmarked)
         return Unitary(coin_oracle)
 
     def _is_unit_hamming_distance(self, x, y):
@@ -118,9 +118,10 @@ class QuantumWalkSearch(QuantumWalk):
             target (int, optional): The index of the target element.
             step (int, optional): The steps of random walk, a step including a coin operator and a shift operator.
             coin_marked (np.ndarray, optional): The coin operator for the target node. Should be a unitary matrix.
-            coin_unmarked (np.ndarray, optional): The coin operator for other nodes except the target. Should be a unitary matrix.
-                Defaults to Grover coin.
-            coin_oracle (np.ndarray, optional): A coin operator which takes on the function of an oracle. Should be a unitary matrix.
+            coin_unmarked (np.ndarray, optional): The coin operator for other nodes except the target.
+                Should be a unitary matrix. Defaults to Grover coin.
+            coin_oracle (np.ndarray, optional): A coin operator which takes on the function of an oracle.
+                Should be a unitary matrix.
             switched_time (int, optional): The number of steps of each coin operator in the vector.
                 Defaults to -1, means not switch coin operator.
             optimization (bool, optional): whether using QCDA to optimize quantum walk circuit, may
