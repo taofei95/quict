@@ -71,7 +71,7 @@ class CircuitLib:
 
         para = args
         circuit_list = []
-        filename = os.path.abspath(__file__) + name
+        filename = os.path.dirname(__file__) + '/circuit_qasm/' + name
 
         if name == "template":
 
