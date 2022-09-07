@@ -14,7 +14,6 @@
 
 from QuICT.core.gate import *
 from QuICT.core.circuit import Circuit
-from QuICT.algorithm import SyntheticalUnitary
 from collections import Counter
 
 
@@ -39,7 +38,7 @@ class TemplateSearching:
         return new_circuit
 
     def identity(self, temp_circuit):
-        matrix = SyntheticalUnitary.run(temp_circuit, showSU=False)
+        matrix = temp_circuit.matrix()
         n = np.size(matrix, 0)
         return np.allclose(np.identity(n, dtype=np.complex128), matrix)
 

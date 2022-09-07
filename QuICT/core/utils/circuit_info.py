@@ -4,10 +4,12 @@
 # @Author  : Han Yu, Li Kaiqi
 # @File    : _circuit_computing.py
 
+from typing import List
 import numpy as np
 from enum import Enum
 
 from .gate_type import GateType
+from .circuit_matrix import CircuitMatrix, get_gates_order_by_depth
 
 
 class CircuitBased(object):
@@ -117,7 +119,7 @@ class CircuitBased(object):
 
     def qasm(self):
         qreg = self.width()
-        creg = self.count_gate_by_gatetype(GateType.measure)
+        creg = min(self.count_gate_by_gatetype(GateType.measure), qreg)
         if creg == 0:
             creg = qreg
 
@@ -130,10 +132,79 @@ class CircuitBased(object):
             if gate.qasm_name == "measure":
                 qasm_string += f"measure q[{gate.targ}] -> c[{cbits}];\n"
                 cbits += 1
+                cbits = cbits % creg
             else:
                 qasm_string += gate.qasm()
 
         return qasm_string
+
+    def get_lastcall_for_each_qubits(self) -> List[GateType]:
+        lastcall_per_qubits = [None] * self.width()
+        inside_qargs = []
+        for i in range(self.size() - 1, -1, -1):
+            gate_args = self._gates[i].cargs + self._gates[i].targs
+            gate_type = self._gates[i].type
+            for garg in gate_args:
+                if lastcall_per_qubits[garg] is None:
+                    lastcall_per_qubits[garg] = gate_type
+                    inside_qargs.append(garg)
+
+            if len(inside_qargs) == self.width():
+                break
+
+        return lastcall_per_qubits
+
+    def get_gates_order_by_depth(self) -> List[List]:
+        """ Order the gates of circuit by its depth layer
+
+        Returns:
+            List[List[BasicGate]]: The list of gates which at same layers in circuit.
+        """
+        return get_gates_order_by_depth(self.gates)
+
+    def matrix(self, device: str = "CPU", mini_arg: int = 0) -> np.ndarray:
+        """ Generate the circuit's unitary matrix which compose by all quantum gates' matrix in current circuit.
+
+        Args:
+            device (str, optional): The device type for generate circuit's matrix, one of [CPU, GPU]. Defaults to "CPU".
+            mini_arg (int, optional): The minimal qubit args, only use for CompositeGate local mode. Default to 0.
+        """
+        assert device in ["CPU", "GPU"]
+        circuit_matrix = CircuitMatrix(device)
+
+        if self.size() == 0:
+            if device == "CPU":
+                circuit_matrix = np.identity(1 << self.width(), dtype=np.complex128)
+            else:
+                import cupy as cp
+
+                circuit_matrix = cp.identity(1 << self.width(), dtype=np.complex128)
+
+            return circuit_matrix
+
+        if self.size() > self.count_1qubit_gate() + self.count_2qubit_gate():
+            self.gate_decomposition()
+
+        return circuit_matrix.get_unitary_matrix(self.gates, self.width(), mini_arg)
+
+    def convert_precision(self):
+        """ Convert all gates in Cicuit/CompositeGate into single precision. """
+        for gate in self.gates:
+            if hasattr(gate, "convert_precision"):
+                gate.convert_precision()
+
+    def gate_decomposition(self):
+        added_idxes = 0     # The number of gates which add from gate.build_gate()
+        for i in range(self.size()):
+            gate = self.gates[i + added_idxes]
+            if hasattr(gate, "build_gate"):
+                decomp_gates = gate.build_gate()
+                self.gates.remove(gate)
+                for g in decomp_gates:
+                    self._gates.insert(i + added_idxes, g)
+                    added_idxes += 1
+
+                added_idxes -= 1    # minus the original gate
 
 
 class CircuitMode(Enum):

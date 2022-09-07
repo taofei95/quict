@@ -2,7 +2,7 @@ import numpy as np
 from QuICT.core import Circuit
 
 from QuICT.quantum_state_preparation import QuantumStatePreparation
-from QuICT.simulation.gpu_simulator import ConstantStateVectorSimulator
+from QuICT.simulation.state_vector import ConstantStateVectorSimulator
 
 
 def random_unit_vector(n):

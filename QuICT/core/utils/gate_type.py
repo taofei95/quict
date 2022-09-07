@@ -30,14 +30,14 @@ class GateType(Enum):
     cu1 = "controlled-U1 gate"
     cu3 = "controlled-U3 gate"
     fsim = "fSim gate"
-    Rxx = "Rxx gate"
-    Ryy = "Ryy gate"
-    Rzz = "Rzz gate"
+    rxx = "Rxx gate"
+    ryy = "Ryy gate"
+    rzz = "Rzz gate"
     swap = "Swap gate"
     cswap = "cswap gate"
     ccx = "Toffoli gate"
     ccz = "Multi-Control Z Gate"
-    CCRz = "CCRz gate"
+    ccrz = "CCRz gate"
 
     # Special gate below
     measure = "Measure gate"
@@ -46,12 +46,88 @@ class GateType(Enum):
     unitary = "Unitary gate"
 
     # no qasm represent below
-    perm = "Perm gate"
+    perm = "Permutation gate"
     perm_fx = "Perm-Fx gate"
 
     # Composite gate
     qft = "QFT gate"
     iqft = "IQFT gate"
+
+
+class MatrixType(Enum):
+    """ Different Type of quantum gates' matrix
+
+    normal: based type of matrix
+        1-bits: [[a,b], [c,d]]
+        2-bits(control): [[1, 0, 0, 0],
+                          [0, 1, 0, 0],
+                          [0, 0, a, b],
+                          [0, 0, c, d]]
+    diagonal: diagonal matrix
+        1-bits: [a, 0], [0, b]
+        2-bits(control): [[1, 0, 0, 0],
+                          [0, 1, 0, 0],
+                          [0, 0, a, 0],
+                          [0, 0, 0, b]]
+        2-bits(targets): [[a, 0, 0, 0],
+                          [0, b, 0, 0],
+                          [0, 0, c, 0],
+                          [0, 0, 0, d]]
+        3-bits (control, target); [1, 1, 1, 1, 1, 1, a, b] -- diagonal values
+    control: control diagonal matrix
+        1-bits: [[1, 0], [0, a]]
+        2-bits(control): [[1, 0, 0, 0],
+                          [0, 1, 0, 0],
+                          [0, 0, 1, 0],
+                          [0, 0, 0, a]]
+    swap: swap quantum gates' matrix
+        1-bit [x]: [[0, 1], [1, 0]]
+        2-bit [swap]: [[1, 0, 0, 0],
+                       [0, 0, 1, 0],
+                       [0, 1, 0, 0],
+                       [0, 0, 0, 1]]
+        3-bit [cswap]: [[ID(4)],
+                        ,   [1, 0, 0, 0],
+                            [0, 0, 1, 0],
+                            [0, 1, 0, 0],
+                            [0, 0, 0, 1]]
+    reverse; reverse matrix
+        1-bit: [0, a], [b, 0]
+        2-bit: [[1, 0, 0, 0],
+                [0, 1, 0, 0],
+                [0, 0, 0, a],
+                [0, 0, b, 0]]
+        3-bit: [ID(4)]
+                    [1, 0, 0, 0]
+                    [0, 1, 0, 0]
+                    [0, 0, 0, a]
+                    [0, 0, b, 0]
+    special: no matrix [Measure, Reset, Barrier, Perm]
+    diag_diag: 2-qubits diagonal matrix
+        2-bits [Rzz]:  [[a, 0, 0, 0],
+                        [0, b, 0, 0],
+                        [0, 0, c, 0],
+                        [0, 0, 0, d]]
+    ctrl_normal: control-normal mixed quantum gate's matrix
+        2-bits [FSim]: [[1, 0, 0, 0],
+                        [0, a, b, 0],
+                        [0, c, d, 0],
+                        [0, 0, 0, A]]
+    normal-normal: normal-normal mixed quantum gate's matrix
+        2-bits [Rxx, Ryy]: [[A, 0, 0, B],
+                            [0, a, b, 0],
+                            [0, c, d, 0],
+                            [C, 0, 0, D]]
+    """
+    normal = "normal matrix"
+    diagonal = "diagonal matrix"
+    control = "control matrix"
+    swap = "swap matrix"
+    reverse = "reverse matrix"
+    special = "special matrix"
+    diag_diag = "diagonal * diagonal"
+    ctrl_normal = "control * matrix"
+    normal_normal = "normal * normal"
 
 
 SPECIAL_GATE_SET = [
@@ -80,8 +156,8 @@ DIAGONAL_GATE_SET = [
     GateType.cz,
     GateType.crz,
     GateType.cu1,
-    GateType.Rzz,
-    GateType.CCRz
+    GateType.rzz,
+    GateType.ccrz
 ]
 
 
@@ -95,7 +171,8 @@ SUPREMACY_GATE_SET = [
 PAULI_GATE_SET = [
     GateType.x,
     GateType.y,
-    GateType.z
+    GateType.z,
+    GateType.id
 ]
 
 

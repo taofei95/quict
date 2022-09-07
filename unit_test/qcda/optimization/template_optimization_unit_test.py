@@ -8,7 +8,6 @@ import numpy as np
 
 from QuICT.core import Circuit
 from QuICT.core.gate import GateType
-from QuICT.algorithm import SyntheticalUnitary
 from QuICT.qcda.optimization.template_optimization.templates import *
 from QuICT.qcda.optimization.template_optimization import TemplateOptimization
 
@@ -23,6 +22,6 @@ def test():
             circuit.random_append(100, typelist=[GateType.x, GateType.cx, GateType.ccx])
 
             circuit_opt = TO.execute(circuit)
-            mat = SyntheticalUnitary.run(circuit, showSU=False)
-            mat_opt = SyntheticalUnitary.run(circuit_opt, showSU=False)
+            mat = circuit.matrix()
+            mat_opt = circuit_opt.matrix()
             assert np.allclose(mat, mat_opt)

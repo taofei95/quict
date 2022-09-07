@@ -1,9 +1,9 @@
 import numpy as np
 
-from QuICT.algorithm import SyntheticalUnitary
 from QuICT.core import *
 from QuICT.core.gate import *
 from QuICT.qcda.optimization.commutative_optimization import CommutativeOptimization
+from QuICT.core.gate import GateType
 
 
 def test_parameterize():
@@ -51,17 +51,8 @@ def test():
         n = 5
         circuit = Circuit(n)
         circuit.random_append(rand_size=100, typelist=typelist, random_params=True)
-        # print(circuit)
-        # circuit.draw()
 
         CO = CommutativeOptimization(deparameterization=True)
         circuit_opt = CO.execute(circuit)
 
-        # print(circuit_opt)
-        # circuit_opt.draw()
-
-        original = SyntheticalUnitary.run(circuit)
-        opt = SyntheticalUnitary.run(circuit_opt)
-        # phase = opt.dot(np.linalg.inv(original))
-        assert np.allclose(original, opt)
-        # assert np.allclose(phase, phase[0, 0] * np.eye(2 ** n), rtol=1e-10, atol=1e-10)
+        assert np.allclose(circuit.matrix(), circuit_opt.matrix())

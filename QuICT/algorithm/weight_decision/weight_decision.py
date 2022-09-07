@@ -5,7 +5,7 @@ from QuICT.core import Circuit
 from QuICT.core.gate import X, H, Measure
 from QuICT.quantum_state_preparation import QuantumStatePreparation
 from QuICT.qcda.synthesis.mct import MCTOneAux
-from QuICT.simulation.gpu_simulator import ConstantStateVectorSimulator
+from QuICT.simulation.state_vector import ConstantStateVectorSimulator
 
 
 def weight_decison_para(n, k, l):

@@ -2,6 +2,7 @@ from typing import Union, List
 
 
 class Operator:
+    """ The SuperClass of all the operator. """
     @property
     def targets(self):
         return self._targets
@@ -13,7 +14,10 @@ class Operator:
     @targs.setter
     def targs(self, targets: Union[List, int]):
         assert isinstance(targets, (int, list))
-        self._targs = list(targets)
+        if isinstance(targets, int):
+            self._targs = [targets]
+        else:
+            self._targs = targets
 
     @property
     def targ(self):
@@ -23,8 +27,7 @@ class Operator:
         self,
         targets: int
     ):
-        """ The SuperClass of all the operator.
-
+        """
         Args:
             targets (int): the number of the target bits of the gate
         """
