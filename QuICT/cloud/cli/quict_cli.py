@@ -87,6 +87,10 @@ def cli_construct():
 
 
 def circuit_cli_construct(circuit_sp: ArgumentParser):
+    from QuICT.cloud.cli.utils import (
+        get_random_circuit, get_algorithm_circuit, store_quantum_circuit,
+        delete_quantum_circuit, list_quantum_circuit
+    )
     subparser = circuit_sp.add_subparsers()
     # quict circuit get_random
     get_random = subparser.add_parser(
@@ -96,7 +100,7 @@ def circuit_cli_construct(circuit_sp: ArgumentParser):
     )
     get_random.add_argument(
         "-i", "--instruction_set",
-        choices=["USTC", "Google", "IBMQ", "IONQ"], nargs="?",
+        choices=["USTC", "Google", "IBMQ", "IONQ"], nargs="?", default="random",
         help="Choice the instrcution set for random circuit."
     )
     get_random.add_argument(
@@ -110,10 +114,16 @@ def circuit_cli_construct(circuit_sp: ArgumentParser):
         help="The number of quantum gates."
     )
     get_random.add_argument(
+        "-p", "--param",
+        action="store_true", dest="random_param",
+        help="The number of quantum gates."
+    )
+    get_random.add_argument(
         "-o", "--output",
-        nargs="?", default=".",
+        nargs="?", default=".", dest="output_path",
         help="The output path, default to be current path."
     )
+    get_random.set_defaults(func=get_random_circuit)
 
     # quict circuit get_algorithm
     get_algorithm = subparser.add_parser(
@@ -133,19 +143,20 @@ def circuit_cli_construct(circuit_sp: ArgumentParser):
     )
     get_algorithm.add_argument(
         "-o", "--output",
-        nargs="?", default=".",
+        nargs="?", default=".", dest="output_path",
         help="The output path, default to be current path."
     )
+    get_algorithm.set_defaults(func=get_algorithm_circuit)
 
     # quict circuit add
     add = subparser.add_parser(
         name="add",
-        description="Store quantum circuit.",
-        help="store quantum circuit"
+        description="Store quantum circuit qasm.",
+        help="store quantum circuit qasm"
     )
     add.add_argument(
         "-n", "--name",
-        nargs=1,
+        type=str,
         help="The name of quantum circuit."
     )
     add.add_argument(
@@ -153,6 +164,7 @@ def circuit_cli_construct(circuit_sp: ArgumentParser):
         nargs=1, default=".",
         help="The path of qasm file."
     )
+    add.set_defaults(func=store_quantum_circuit)
 
     # quict circuit delete
     delete = subparser.add_parser(
@@ -162,16 +174,18 @@ def circuit_cli_construct(circuit_sp: ArgumentParser):
     )
     delete.add_argument(
         "-n", "--name",
-        nargs=1,
+        type=str,
         help="The name of quantum circuit."
     )
+    delete.set_defaults(func=delete_quantum_circuit)
 
     # quict circuit list
-    _ = subparser.add_parser(
+    list_cir = subparser.add_parser(
         name="list",
-        description="list all the quantum circuit.",
-        help="list all the quantum circuit."
+        description="list all customed quantum circuit.",
+        help="list all customed quantum circuit."
     )
+    list_cir.set_defaults(func=list_quantum_circuit)
 
 
 def job_cli_construct(job_sp: ArgumentParser):

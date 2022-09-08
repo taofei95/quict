@@ -32,10 +32,9 @@ def delete_job(name: str):
 
 @job_blueprint.route(f"{URL_PREFIX}/list", methods=["GET"])
 def list_jobs():
-    return [1,2,3]
+    return [1, 2, 3]
 
 
 @job_blueprint.route(f"{URL_PREFIX}/<name>:status", methods=["GET"])
 def status_jobs(name: str):
     return [name, "status"]
-
