@@ -66,7 +66,7 @@ class Graph:
         self._operators = defaultdict(list) if operators is not None else operators
         if operators is not None:
             iterator = enumerate(operators) if isinstance(operators, list) else operators.items()
-            # assert len(iterator) == self._nodes, "The number of operators should equal to position"
+            assert len(iterator) == self._nodes, "The number of operators should equal to position"
             for idx, operator in iterator:
                 assert self.operator_validation(operator), "The operator should be 1 or more unitary matrix."
                 self._operators[idx] = operator if isinstance(operator, list) else [operator]
