@@ -8,7 +8,6 @@ from QuICT.algorithm.quantum_algorithm.quantum_walk import Graph, QuantumWalk
 from QuICT.core import Circuit
 from QuICT.core.gate import *
 from QuICT.qcda.optimization import CommutativeOptimization
-from QuICT.qcda.synthesis.gate_decomposition import GateDecomposition
 from QuICT.simulation.state_vector import ConstantStateVectorSimulator
 
 
@@ -108,8 +107,6 @@ class QuantumWalkSearch(QuantumWalk):
             coin_unmarked: np.ndarray = None,
             coin_oracle: np.ndarray = None,
             switched_time: int = -1,
-            optimization: bool = False,
-            record_measured: bool = True,
             ):
         """ Execute the quantum walk search with given number of index qubits.
 
@@ -124,9 +121,6 @@ class QuantumWalkSearch(QuantumWalk):
                 Should be a unitary matrix.
             switched_time (int, optional): The number of steps of each coin operator in the vector.
                 Defaults to -1, means not switch coin operator.
-            optimization (bool, optional): whether using QCDA to optimize quantum walk circuit, may
-                spend lots of times when circuit is large.
-            record_measured (bool, optional): whether return the final measured state. Defaults to True.
 
         Returns:
             Union[np.ndarray, List]: The state vector or measured states.
@@ -159,21 +153,6 @@ class QuantumWalkSearch(QuantumWalk):
         # Build random walk circuit
         self._circuit_construct()
 
-        # Step 1, transform the unitary gate and optimization
-        if optimization:
-            opt_circuit = GateDecomposition().execute(self._circuit)
-            opt_circuit = CommutativeOptimization().execute(opt_circuit)
-        else:
-            opt_circuit = self._circuit
-
-        # Return final state vector if not need
-        if not record_measured:
-            self.sv = self._simulator.run(opt_circuit)
-            return self.sv
-
-
-if __name__ == "__main__":
-    simulator = ConstantStateVectorSimulator()
-    grover = QuantumWalkSearch(simulator)
-    result = grover.run(index_qubits=3, target=6)
-    grover.draw()
+        # Return final state vector
+        self.sv = self._simulator.run(self._circuit)
+        return self.sv

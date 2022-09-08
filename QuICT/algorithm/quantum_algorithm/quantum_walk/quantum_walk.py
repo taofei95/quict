@@ -5,7 +5,6 @@ import numpy as np
 from QuICT.core import Circuit
 from QuICT.core.gate import *
 from QuICT.qcda.optimization import CommutativeOptimization
-from QuICT.qcda.synthesis.gate_decomposition import GateDecomposition
 from QuICT.qcda.synthesis.unitary_decomposition import UnitaryDecomposition
 from QuICT.simulation.state_vector import CircuitSimulator
 
@@ -28,16 +27,14 @@ class QuantumWalk:
         """ The quantum circuit of the random walk algorithm, including UnitaryGate. """
         return self._circuit
 
-    def __init__(self, simulator=CircuitSimulator(), shots: int = 1):
+    def __init__(self, simulator=CircuitSimulator()):
         """ Initialize the simulator circuit of quantum random walk.
 
         Args:
             simulator (Union[ConstantStateVectorSimulator, CircuitSimulator], optional):
                 The simulator for simulating quantum circuit. Defaults to CircuitSimulator().
-            shots (int, optional): The repeated times. Defaults to 1.
         """
         self._simulator = simulator
-        self._shots = shots
         self._step = None
         self._graph = None
         self._shift_operator = None
@@ -112,7 +109,6 @@ class QuantumWalk:
             unitary_matrix[record_idxes, record_idxes] = 1
 
         return Unitary(unitary_matrix)
-        # return UnitaryDecomposition().execute(unitary_matrix)[0]
 
     def run(self,
             step: int,
@@ -121,8 +117,7 @@ class QuantumWalk:
             operators: Union[List, Dict] = None,
             coin_operator: np.ndarray = None,
             switched_time: int = -1,
-            optimization: bool = False,
-            record_measured: bool = False,
+            shots: int = 1
             ) -> Union[np.ndarray, List]:
         """ Execute the quantum random walk with given steps, graph and coin operator.
 
@@ -134,10 +129,7 @@ class QuantumWalk:
             switched_time (int, optional): The number of steps of each coin operator in the vector.
                 Defaults to -1, means not switch coin operator.
             coin_operator (np.ndarray, optional): The coin operators, the unitary matrix. Defaults to None.
-            optimization (bool, optional): whether using QCDA to optimize quantum walk circuit, may
-                spend lots of times when circuit is large.
-            record_measured (bool, optional): whether return the final measured state with shots time,
-                or return the state vector after simulating. Defaults to False.
+            shots (int, optional): The repeated times. Defaults to 1.
 
         Returns:
             Union[np.ndarray, List]: The state vector or measured states.
@@ -155,18 +147,7 @@ class QuantumWalk:
         # Build random walk circuit
         self._circuit_construct()
 
-        # Step 1, transform the unitary gate and optimization
-        if optimization:
-            opt_circuit = GateDecomposition().execute(self._circuit)
-            opt_circuit = CommutativeOptimization().execute(opt_circuit)
-        else:
-            opt_circuit = self._circuit
+        # Simulate the quantum walk's circuit
+        _ = self._simulator.run(self._circuit)
 
-        # Step 2, Simulate the quantum walk's circuit
-        state_vector = self._simulator.run(opt_circuit)
-
-        # Return final state vector if not need
-        if not record_measured:
-            return state_vector
-
-        return self._simulator.sample(self._shots)
+        return self._simulator.sample(shots)
