@@ -1,0 +1,16 @@
+name: experience-sim    # The name of job
+mode: local             # The mode of job, one of [local, remote]
+type: simulation        # The type of job, one of [simulation, qcda]
+circuit: /path/to/circuit/qasm    # The path of circuit's qasm file
+resource:
+  device: CPU           # Device Type: local -- [CPU/GPU]; remote -- [CPU/GPU/plugins]
+  num: 1                # Device number; in local mode, it will use all CPU whatever the number is.
+simulation:
+  shots: 100            # The repeat times of experience
+  precision: single     # The precision of simualtor
+  backend: state_vector # The backend of simualtor, one of [unitary, state_vector, density_matrix].
+                        # if using unitary, the circuit could be an .npy file to store unitary matrix.
+
+docker: /name/of/docker # the experience environment [TODO]
+mount_path: /path/to/mount/folder   # the folder which need mount to distributed system; only work in remote mode
+output_path: /path/to/result        # the folder to store result

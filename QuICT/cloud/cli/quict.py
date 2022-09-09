@@ -161,7 +161,7 @@ def circuit_cli_construct(circuit_sp: ArgumentParser):
     )
     add.add_argument(
         "-f", "--file",
-        nargs=1, default=".",
+        type=str, default=".",
         help="The path of qasm file."
     )
     add.set_defaults(func=store_quantum_circuit)
@@ -189,10 +189,9 @@ def circuit_cli_construct(circuit_sp: ArgumentParser):
 
 
 def job_cli_construct(job_sp: ArgumentParser):
-    from QuICT.cloud.client.job import (
-        start_job, stop_job, restart_job, delete_job, status_job, list_jobs
+    from QuICT.cloud.cli.utils import (
+        start_job, stop_job, restart_job, delete_job, status_job, list_jobs, get_template
     )
-    from QuICT.cloud.cli.utils import get_template
 
     # quict job get_template
     subparser = job_sp.add_subparsers()
@@ -221,7 +220,7 @@ def job_cli_construct(job_sp: ArgumentParser):
     )
     start.add_argument(
         "-f", "--file",
-        nargs="+", dest="file",
+        type=str, dest="file",
         help="The path of jobs file, could be a directory or some file path.",
     )
     start.set_defaults(func=start_job)
@@ -288,7 +287,8 @@ def job_cli_construct(job_sp: ArgumentParser):
 
 
 def cluster_cli_construct(cluster_sp: ArgumentParser):
-    from QuICT.cloud.client.cluster import status_cluster
+    from QuICT.cloud.cli.utils import status_cluster
+
     subparser = cluster_sp.add_subparsers()
     # quict cluster status
     status = subparser.add_parser(

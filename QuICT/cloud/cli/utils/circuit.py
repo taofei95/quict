@@ -4,6 +4,7 @@ import shutil
 from QuICT.core import Circuit
 from QuICT.core.gate import GateType
 from QuICT.lib import CircuitLib
+from .decorator import path_check, validation_qasm
 
 
 default_customed_circuit_folder = os.path.join(
@@ -13,16 +14,14 @@ default_customed_circuit_folder = os.path.join(
 )
 
 
+@path_check
 def get_random_circuit(
     qubits: list,
     size: list,
     random_param: bool,
-    output_path: str,
-    instruction_set: str = "random"
+    instruction_set: str = "random",
+    output_path: str = '.'
 ):
-    if not os.path.exists(output_path):
-        os.makedirs(output_path)
-
     google_set = [GateType.sx, GateType.sy, GateType.sw, GateType.rx, GateType.ry, GateType.fsim]
     ibmq_set = [GateType.rz, GateType.sx, GateType.x, GateType.cx]
     ionq_set = [GateType.rx, GateType.ry, GateType.rz, GateType.rxx]
@@ -55,19 +54,16 @@ def get_random_circuit(
                 f.write(cir.qasm())
 
 
-def get_algorithm_circuit(alg: str, qubits: list, output_path: str):
-    if not os.path.exists(output_path):
-        os.makedirs(output_path)
-
-    cir_list = CircuitLib().get_circuit(
-        "algorithm", alg, qubits
-    )
+@path_check
+def get_algorithm_circuit(alg: str, qubits: list, output_path: str = "."):
+    cir_list = CircuitLib().get_circuit("algorithm", alg, qubits)
     for cir in cir_list:
         file_name = f"{alg}_{cir.width()}.qasm"
         with open(f"{output_path}/{file_name}", "w+") as f:
             f.write(cir.qasm())
 
 
+@validation_qasm
 def store_quantum_circuit(name: str, file: str):
     get_folder_name = os.listdir(default_customed_circuit_folder)
     if not name.endswith(".qasm"):
@@ -76,7 +72,7 @@ def store_quantum_circuit(name: str, file: str):
     if name in get_folder_name:
         raise KeyError("Repeat circuits name.")
 
-    shutil.copy(file, default_customed_circuit_folder)
+    shutil.copy(file, f"{default_customed_circuit_folder}/{name}")
 
 
 def delete_quantum_circuit(name: str):
