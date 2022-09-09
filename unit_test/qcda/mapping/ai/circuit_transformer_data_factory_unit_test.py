@@ -1,5 +1,5 @@
 import torch
-from QuICT.qcda.mapping.ai.data_factory_transformer import CircuitTransformerDataFactory
+from QuICT.qcda.mapping.ai.data_factory import CircuitTransformerDataFactory
 
 
 def test_data_gen():

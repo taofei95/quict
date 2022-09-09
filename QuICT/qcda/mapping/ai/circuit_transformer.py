@@ -87,7 +87,7 @@ class FeedForwardNet(nn.Module):
         return x
 
 
-class CircuitGraphormerLayer(nn.Module):
+class GraphTransformerLayer(nn.Module):
     def __init__(
         self,
         node_num: int,
@@ -107,7 +107,7 @@ class CircuitGraphormerLayer(nn.Module):
         return x
 
 
-class BiasedGraphormer(nn.Module):
+class GraphTransformer(nn.Module):
     def __init__(
         self,
         node_num: int,
@@ -119,12 +119,27 @@ class BiasedGraphormer(nn.Module):
         self._node_num = node_num
         self._transformer_layers = nn.ModuleList(
             [
-                CircuitGraphormerLayer(node_num=node_num, feat_dim=feat_dim, head=head)
+                GraphTransformerLayer(node_num=node_num, feat_dim=feat_dim, head=head)
                 for _ in range(num_attn_layer)
             ]
         )
 
+        self._x_embedding = nn.Embedding(
+            num_embeddings=node_num + 1,
+            embedding_dim=feat_dim,
+            padding_idx=0,
+        )
+
+        self._spacial_emedding = nn.Embedding(
+            num_embeddings=node_num + 1,
+            embedding_dim=1,
+            padding_idx=0,
+        )
+
     def forward(self, x, attn_bias=None):
+        x = self._x_embedding(x)
+        if attn_bias is not None:
+            attn_bias = self._spacial_emedding(attn_bias).squeeze(-1)
         for layer in self._transformer_layers:
             x = layer(x, attn_bias)
         return x
@@ -153,21 +168,11 @@ class CircuitTransformer(nn.Module):
 
         self._max_qubit_num = max_qubit_num
 
-        self._x_embedding = nn.Embedding(
-            num_embeddings=max_qubit_num + 2, embedding_dim=feat_dim, padding_idx=0
-        )
-
-        self._graphomer = BiasedGraphormer(
+        self._graphomer = GraphTransformer(
             node_num=(max_layer_num + 1) * max_qubit_num,
             feat_dim=feat_dim,
             head=head,
             num_attn_layer=num_attn_layer,
-        )
-
-        self._spacial_emedding = nn.Embedding(
-            num_embeddings=max_qubit_num * max_layer_num + 1,
-            embedding_dim=1,
-            padding_idx=0,
         )
 
     def forward(
@@ -176,12 +181,7 @@ class CircuitTransformer(nn.Module):
         spacial_encoding: torch.IntTensor,
     ):
         is_batch = len(x.shape) == 2
-        se = self._spacial_emedding(spacial_encoding)
-        se = torch.squeeze(se, dim=-1)
-        attn_bias = se
-
-        x = self._x_embedding(x)
-        x = self._graphomer(x, attn_bias)
+        x = self._graphomer(x, spacial_encoding)
 
         # Nodes in the first layer are virtual nodes.
         # They are used as the readout nodes.

@@ -1,4 +1,3 @@
-import io
 import math
 import os
 import os.path as osp
@@ -17,7 +16,7 @@ from matplotlib import pyplot as plt
 from QuICT.core import *
 from QuICT.core.utils import GateType
 from QuICT.qcda.mapping.ai.gtdqn import GraphTransformerDeepQNetwork
-from QuICT.qcda.mapping.ai.data_factory_transformer import CircuitTransformerDataFactory
+from QuICT.qcda.mapping.ai.data_factory import CircuitTransformerDataFactory
 from torch.utils.tensorboard import SummaryWriter
 
 
@@ -170,7 +169,9 @@ class Trainer:
             circ_edges = self._data_factory.get_circ_edges(
                 layered_circ, self._data_factory.topo_dist_map[topo_name]
             )
-            spacial_encoding = self._data_factory.get_spacial_encoding(circ_edges)
+            spacial_encoding = self._data_factory.get_spacial_encoding(
+                self._data_factory.topo_dist_map[topo_name], circ_edges
+            )
             self._v_circs.append((topo_name, x, spacial_encoding))
 
     def _reset_explore_state(self):

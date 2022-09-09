@@ -1,7 +1,7 @@
 import torch
 from QuICT.core import *
 from QuICT.qcda.mapping.ai.circuit_transformer import *
-from QuICT.qcda.mapping.ai.data_factory_transformer import CircuitTransformerDataFactory
+from QuICT.qcda.mapping.ai.data_factory import CircuitTransformerDataFactory
 import numpy as np
 
 
@@ -55,7 +55,7 @@ def test_circuit_graphformer_layer():
     for head in [1, 3, 5]:
         for feat_dim in [3, 4, 5, 6, 7]:
             for node_num in [1, 3, 20]:
-                model = CircuitGraphormerLayer(node_num, feat_dim, head)
+                model = GraphTransformerLayer(node_num, feat_dim, head)
                 x_no_batch = torch.randn(node_num, feat_dim)
                 attn_bias = torch.randn(node_num, node_num)
                 with torch.no_grad():
@@ -82,30 +82,34 @@ def test_biased_graphormer():
             for qubit_num in [2, 3, 5, 10]:
                 for layer_num in [1, 2, 3]:
                     node_num = layer_num * qubit_num + 1
-                    model = BiasedGraphormer(
+                    model = GraphTransformer(
                         node_num=node_num,
                         feat_dim=feat_dim,
                         head=head,
                         num_attn_layer=6,
                     )
-                    x_no_batch = torch.randn(node_num, feat_dim)
-                    attn_bias = torch.randn(node_num, node_num)
+                    x_no_batch = torch.randint(0, node_num + 1, (node_num,))
+                    attn_bias = torch.randint(0, node_num + 1, (node_num, node_num))
                     with torch.no_grad():
                         y_no_batch = model(x_no_batch)
-                        assert y_no_batch.shape == x_no_batch.shape
+                        assert y_no_batch.shape == torch.Size([node_num, feat_dim])
                         y_no_batch = model(x_no_batch, attn_bias)
-                        assert y_no_batch.shape == x_no_batch.shape
+                        assert y_no_batch.shape == torch.Size([node_num, feat_dim])
 
                     for batch_size in [1, 3, 5]:
-                        x_batch = torch.randn(batch_size, node_num, feat_dim)
+                        x_batch = torch.randint(0, node_num + 1, (batch_size, node_num))
                         attn_bias_batch = torch.stack(
                             [attn_bias for _ in range(batch_size)]
                         )
                         with torch.no_grad():
                             y_batch = model(x_batch)
-                            assert y_batch.shape == x_batch.shape
+                            assert y_batch.shape == torch.Size(
+                                [batch_size, node_num, feat_dim]
+                            )
                             y_batch = model(x_batch, attn_bias_batch)
-                            assert y_batch.shape == x_batch.shape
+                            assert y_batch.shape == torch.Size(
+                                [batch_size, node_num, feat_dim]
+                            )
 
 
 def test_circuit_graphormer():
@@ -150,7 +154,9 @@ def test_circuit_graphormer():
         circ_edges = factory.get_circ_edges(
             layered_circ=layered_circ, topo_dist=topo_dist
         )
-        spacial_encoding = factory.get_spacial_encoding(circ_edges=circ_edges)
+        spacial_encoding = factory.get_spacial_encoding(
+            topo_dist=topo_dist, circ_edges=circ_edges
+        )
 
         x = factory.get_x(10)
         y_no_batch = model(x, spacial_encoding)

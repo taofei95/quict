@@ -204,7 +204,7 @@ class CircuitTransformerDataFactory:
         return topo_dist
 
     def get_spacial_encoding(
-        self, circ_edges: Tuple[Tuple[int, int, int]]
+        self, topo_dist: np.ndarray, circ_edges: Tuple[Tuple[int, int, int]]
     ) -> torch.IntTensor:
         """Build the spacial encoding of a given graph. The spacial encoding
         will be masked by corresponding physical topology. A spacial
@@ -224,6 +224,7 @@ class CircuitTransformerDataFactory:
         inf = n + 100
         dist = np.empty(shape=(n, n), dtype=int)
         dist[:, :] = inf
+        dist[: self._max_qubit_num, : self._max_qubit_num] = topo_dist
         for u, v, w in circ_edges:
             dist[u][v] = w
         dist = _floyd(n, dist, inf)
@@ -359,6 +360,7 @@ class CircuitTransformerDataFactory:
             topo_dist=self.topo_dist_map[topo_name],
         )
         spacial_encoding = self.get_spacial_encoding(
+            topo_dist=self.topo_dist_map[topo_name],
             circ_edges=circ_edges,
         )
         return layered_circ, topo_name, x, spacial_encoding, cur_mapping
