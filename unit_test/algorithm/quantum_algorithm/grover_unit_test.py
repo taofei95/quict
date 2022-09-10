@@ -50,7 +50,7 @@ def test_grover():
         for target in range(0, N):
             f = [target]
             k, oracle = main_oracle(n, f)
-            result = Grover(n, k, oracle).run()
+            result = Grover().run(n, k, oracle)
             if target != result:
                 error += 1
                 print("For n = %d, target = %d, found = %d" % (n, target, result))
@@ -73,7 +73,7 @@ def test_partial_grover():
         for target in range(0, N):
             f = [target]
             k, oracle = main_oracle(n, f)
-            result = PartialGrover(n, n_block, k, oracle).run()
+            result = PartialGrover().run(n, n_block, k, oracle)
             if (target >> (n - k)) != (result >> (n - k)):
                 error += 1
         error_rate = error / N

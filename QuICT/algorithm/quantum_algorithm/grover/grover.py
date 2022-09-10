@@ -29,42 +29,31 @@ class Grover:
     Quantum Computation and Quantum Information - Michael A. Nielsen & Isaac L. Chuang
     """
 
-    def __init__(self, n, n_ancilla, oracle, n_solution=1, measure=True, simulator=CircuitSimulator()) -> None:
-        """
+    def __init__(self) -> None:
+        pass
+
+    def circuit(self, n, n_ancilla, oracle, n_solution=1, measure=True):
+        """ grover search for f with custom oracle
+
         Args:
             n(int): the length of input of f
             n_ancilla(int): length of oracle working space. assume clean
             oracle(CompositeGate): the oracle that flip phase of target state.
                 [0:n] is index qreg,
                 [n:n+k] is ancilla
-            n_solution(int): number of solution 
+            n_solution(int): number of solution
             measure(bool): measure included or not
-        """
-        assert n_ancilla > 0, "at least 1 ancilla, which is shared by MCT part"
-        self.n = n
-        self.n_ancilla = n_ancilla
-        self.oracle = oracle
-        self.n_solution = n_solution
-        self.measure = measure
-        self.simulator = simulator
-
-    def circuit(self):
-        """ grover search for f with custom oracle
 
         Returns:
             int: the a satisfies that f(a) = 1
         """
-        n = self.n
-        n_ancilla = self.n_ancilla
-        oracle = self.oracle
-        n_solution = self.n_solution
-        measure = self.measure
+        assert n_ancilla > 0, "at least 1 ancilla, which is shared by MCT part"
         circuit = Circuit(n + n_ancilla)
         index_q = list(range(n))
         ancilla_q = list(range(n, n + n_ancilla))
         N = 2 ** n
         theta = 2 * np.arccos(np.sqrt(1 - n_solution / N))
-        T = int(np.arccos(np.sqrt(n_solution / N)) / theta)+1
+        T = int(np.arccos(np.sqrt(n_solution / N)) / theta) + 1
 
         # create equal superposition state in index_q
         for idx in index_q:
@@ -97,8 +86,8 @@ class Grover:
         )
         return circuit
 
-    def run(self):
-        index_q = list(range(self.n))
-        circuit = self.circuit()
-        self.simulator.run(circuit)
+    def run(self, n, n_ancilla, oracle, n_solution=1, measure=True, simulator=CircuitSimulator()):
+        index_q = list(range(n))
+        circuit = self.circuit(n, n_ancilla, oracle, n_solution, measure)
+        simulator.run(circuit)
         return int(circuit[index_q])

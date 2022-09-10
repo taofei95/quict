@@ -16,8 +16,8 @@ from QuICT.simulation.state_vector import CircuitSimulator
 
 def calculate_r1_r2_one_target(N, K):
     # see https://arxiv.org/abs/quant-ph/0504157
-    r1 = np.sqrt(N) * np.pi * 0.25 - np.sqrt(N/K) * np.sqrt(3/4)
-    r2 = np.sqrt(N/K) * np.pi * (1/6)
+    r1 = np.sqrt(N) * np.pi * 0.25 - np.sqrt(N / K) * np.sqrt(3 / 4)
+    r2 = np.sqrt(N / K) * np.pi * (1 / 6)
     r1 = round(r1)
     r2 = round(r2)
     return r1, r2
@@ -29,8 +29,12 @@ class PartialGrover:
     https://arxiv.org/abs/quant-ph/0407122
     """
 
-    def __init__(self, n, n_block, n_ancilla, oracle, measure=True, simulator=CircuitSimulator()) -> None:
-        """
+    def __init__(self) -> None:
+        pass
+
+    def circuit(self, n, n_block, n_ancilla, oracle, measure=True):
+        """ partial grover search with one target
+
         Args:
             n(int):         bits length of global address
             n_block(int):   bits length of block address
@@ -40,26 +44,10 @@ class PartialGrover:
                 [n:n+k] is ancilla
                 also assume that it works in style of QCQI p249 6.2
             measure(bool): measure included or not
-        """
-        assert n_ancilla >= 2, "at least 2 ancilla, which is shared bt the Grover part"
-        self.n = n
-        self.n_block = n_block
-        self.n_ancilla = n_ancilla
-        self.oracle = oracle
-        self.measure = measure
-        self.simulator = simulator
-
-    def circuit(self):
-        """ partial grover search with one target
 
         Returns:
             int: the target address, big endian
         """
-        n = self.n
-        n_block = self.n_block
-        n_ancilla = self.n_ancilla
-        oracle = self.oracle
-        measure = self.measure
         K = 1 << n_block
         N = 1 << n
         r1, r2 = calculate_r1_r2_one_target(N, K)
@@ -133,8 +121,8 @@ class PartialGrover:
         )
         return circuit
 
-    def run(self):
-        index_q = list(range(self.n))
-        circuit = self.circuit()
-        self.simulator.run(circuit)
+    def run(self, n, n_block, n_ancilla, oracle, measure=True, simulator=CircuitSimulator()):
+        index_q = list(range(n))
+        circuit = self.circuit(n, n_block, n_ancilla, oracle, measure)
+        simulator.run(circuit)
         return int(circuit[index_q])
