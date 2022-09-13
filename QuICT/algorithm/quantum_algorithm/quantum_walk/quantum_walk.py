@@ -45,11 +45,22 @@ class QuantumWalk:
         self._operator_by_position = False
         self._operator_by_time = False
 
-    def _coin_operator_validation(self):
+        # parameters only for quantum walk search
+        self._search = False
+        self._target = None
+        self._coin_marked = None
+        self._coin_unmarked = None
+        self._coin_oracle = None
+
+    def _coin_operator_validation(self, coin_operator):
         """ Validate the operator. """
-        if self._coin_operator is not None:
-            assert self._graph.operator_validation(self._coin_operator), "The operator should be an unitary matrix."
-            self._action_qubits = int(np.ceil(np.log2(self._coin_operator.shape[0])))
+        if coin_operator is not None:
+            assert self._graph.operator_validation(coin_operator), "The coin operator should be an unitary matrix."
+            if self._search:
+                assert coin_operator.shape[0] == 1 << self._total_qubits, "The coin oracle should be a unitary matrix" \
+                                                                          "with side length 2 ** totel_qubits. "
+            else:
+                self._action_qubits = int(np.ceil(np.log2(coin_operator.shape[0])))
         else:
             self._coin_operator = self._graph.operators
             self._action_qubits = self._graph.action_qubits
@@ -60,12 +71,39 @@ class QuantumWalk:
         """ Construct random walk circuit. """
         # Build Circuit
         self._circuit = Circuit(self._total_qubits)
+        if self._search:
+            for idx in range(self._total_qubits):
+                H | self.circuit(idx)
         for t in range(self.step):
             self._build_coin_operator(t) | self._circuit
             self._build_shift_operator() | self._circuit
 
     def _build_coin_operator(self, step: int) -> CompositeGate:
         """ Generator action operator. """
+        if self._search:
+            if self._coin_oracle:
+                return Unitary(coin_oracle)
+
+            an = 5 / 8
+            a0 = 1 / 8
+            if self._coin_unmarked is None:  # set C0 to G
+                s_c = np.ones((2 ** self._action_qubits, 2 ** self._action_qubits)) / (2 ** self._action_qubits)
+                self._coin_unmarked = np.eye(2 ** self._action_qubits) - 2 * s_c
+            if self._coin_marked is None:
+                x = np.zeros((1, 2 ** self._action_qubits))
+                a = np.sqrt(an ** 2 + (a0 ** 2) * (2 ** self._action_qubits - 1))
+                for i in range(2 ** self._action_qubits):
+                    if i == self._position_qubits - 1:
+                        x[0, i] = an / a
+                    else:
+                        x[0, i] = a0 / a
+                self._coin_marked = np.eye(2 ** self._action_qubits) - 2 * (x.T @ x)
+            search_array = np.zeros((self._graph.position, self._graph.position))
+            search_array[self._target][self._target] = 1
+            coin_oracle = np.kron(np.eye(self._graph.position), self._coin_unmarked) + \
+                np.kron(search_array, self._coin_marked - self._coin_unmarked)
+            return Unitary(coin_oracle)
+
         action_qubits = [self._position_qubits + i for i in range(self._action_qubits)]
         if not (self._operator_by_position or self._operator_by_time):
             return Unitary(self._coin_operator) & action_qubits
@@ -140,7 +178,7 @@ class QuantumWalk:
 
         # Validation graph and coin operator
         assert self._graph.validation(), "The edge's number should be equal."
-        self._coin_operator_validation()
+        self._coin_operator_validation(self._coin_operator)
         self._position_qubits = self._graph.position_qubits
         self._total_qubits = self._position_qubits + self._action_qubits
 

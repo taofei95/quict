@@ -25,41 +25,7 @@ class QuantumWalkSearch(QuantumWalk):
                 The simulator for simulating quantum circuit. Defaults to ConstantStateVectorSimulator().
         """
         QuantumWalk.__init__(self, simulator)
-        self._target = None
-        self._coin_marked = None
-        self._coin_unmarked = None
-        self._coin_oracle = None
-        self.sv = None
-
-    def _circuit_construct(self):
-        """ Construct random walk search circuit. """
-        # Build Circuit
-        self._circuit = Circuit(self._total_qubits)
-        for idx in range(self._total_qubits):
-            H | self.circuit(idx)
-        for t in range(self.step):
-            self._coin_operator | self._circuit
-            self._build_shift_operator() | self._circuit
-
-    def _build_coin_operator(self, an=5 / 8, a0=1 / 8):
-        """ Generate a coin oracle by using the unmarked and marked coin operators. """
-        if self._coin_unmarked is None:  # set C0 to G
-            s_c = np.ones((2 ** self._action_qubits, 2 ** self._action_qubits)) / (2 ** self._action_qubits)
-            self._coin_unmarked = np.eye(2 ** self._action_qubits) - 2 * s_c
-        if self._coin_marked is None:
-            x = np.zeros((1, 2 ** self._action_qubits))
-            a = np.sqrt(an ** 2 + (a0 ** 2) * (2 ** self._action_qubits - 1))
-            for i in range(2 ** self._action_qubits):
-                if i == self._position_qubits - 1:
-                    x[0, i] = an / a
-                else:
-                    x[0, i] = a0 / a
-            self._coin_marked = np.eye(2 ** self._action_qubits) - 2 * (x.T @ x)
-        search_array = np.zeros((self._graph.position, self._graph.position))
-        search_array[self._target][self._target] = 1
-        coin_oracle = np.kron(np.eye(self._graph.position), self._coin_unmarked) + \
-            np.kron(search_array, self._coin_marked - self._coin_unmarked)
-        return Unitary(coin_oracle)
+        self._search = True
 
     def _is_unit_hamming_distance(self, x, y):
         """ Calculate the hamming distance of two nodes of the n-cube. """
@@ -133,10 +99,7 @@ class QuantumWalkSearch(QuantumWalk):
             assert 0 <= target < position, "Target should be within the range of values allowed by the index register. "
             self._target = target
         if coin_oracle is not None:
-            assert self._graph.operator_validation(coin_oracle), "The coin oracle should be a unitary matrix "
-            self._coin_operator = Unitary(coin_oracle)
-        else:
-            self._coin_operator = self._build_coin_operator()
+            self._coin_operator_validation(coin_oracle)
 
         # Build random walk circuit
         self._circuit_construct()
