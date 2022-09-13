@@ -7,7 +7,6 @@ import numpy as np
 from QuICT.algorithm.quantum_algorithm.quantum_walk import Graph, QuantumWalk
 from QuICT.core import Circuit
 from QuICT.core.gate import *
-from QuICT.qcda.optimization import CommutativeOptimization
 from QuICT.simulation.state_vector import ConstantStateVectorSimulator
 
 
@@ -31,16 +30,6 @@ class QuantumWalkSearch(QuantumWalk):
         self._coin_unmarked = None
         self._coin_oracle = None
         self.sv = None
-
-    def _coin_oracle_validation(self, coin_oracle):
-        """ Validate the coin oracle. """
-        shape = coin_oracle.shape
-        log2_shape = int(np.ceil(np.log2(shape[0])))
-
-        return (
-            shape[0] == shape[1] == 1 << self._total_qubits and
-            shape[0] == (1 << log2_shape) and
-            np.allclose(np.eye(shape[0]), coin_oracle.dot(coin_oracle.T.conj())))
 
     def _circuit_construct(self):
         """ Construct random walk search circuit. """
@@ -144,8 +133,7 @@ class QuantumWalkSearch(QuantumWalk):
             assert 0 <= target < position, "Target should be within the range of values allowed by the index register. "
             self._target = target
         if coin_oracle is not None:
-            assert self._coin_oracle_validation(coin_oracle), "The coin oracle should be a unitary matrix with side " \
-                                                              "length 2 ** totel_qubits. "
+            assert self._graph.operator_validation(coin_oracle), "The coin oracle should be a unitary matrix "
             self._coin_operator = Unitary(coin_oracle)
         else:
             self._coin_operator = self._build_coin_operator()
