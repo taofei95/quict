@@ -46,7 +46,7 @@ class GateType(Enum):
     unitary = "Unitary gate"
 
     # no qasm represent below
-    perm = "Perm gate"
+    perm = "Permutation gate"
     perm_fx = "Perm-Fx gate"
 
     # Composite gate
