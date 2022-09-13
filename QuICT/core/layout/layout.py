@@ -97,20 +97,20 @@ class Layout:
                 prior_list.append(edge)
         return prior_list
 
-    def add_edge(self, u, v, error_rate=1.0, two_way=False):
+    def add_edge(self, u, v, error_rate=1.0, directional=False):
         """ add an edge in the layout
 
         Args:
             u(int): the edge endpoint u
             v(int): the edge endpoint v
             error_rate(float): the error_rate, default 1
-            two_way(bool): whthere the edge is two_way
+            two_way(bool): whether the edge is directional
         """
         if u == v:
             raise Exception("two endpoint shouldn't be the same")
         edge = LayoutEdge(u, v, error_rate)
         self._inner_add_edge(edge)
-        if two_way:
+        if not directional:
             edge = LayoutEdge(v, u, error_rate)
             self._inner_add_edge(edge)
 
