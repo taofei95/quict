@@ -533,7 +533,7 @@ class Circuit(CircuitBased):
 
         return sub_circuit
 
-    def draw(self, method='matp', filename=None):
+    def draw(self, method: str = 'matp', filename: str = None, show: bool = True):
         """ draw the photo of circuit in the run directory
 
         Args:
@@ -541,18 +541,24 @@ class Circuit(CircuitBased):
                 matp: matplotlib
                 command : command
             filename(str): the output filename without file extensions, default to None.
-                if filename is None, it will using matlibplot.show() except matlibplot.backend
+                If filename is None, it will using matlibplot.show() except matlibplot.backend
                 is agg, it will output jpg file named circuit's name.
+            show()
+
+        Returns:
+            If method is "matp", a matplotlib Figure is returned.
         """
         from QuICT.tools.drawer import PhotoDrawer, TextDrawing
 
-        if method == 'matp':
+        if method == 'matp' or method == 'matp_fig_only':
             if filename is not None:
                 if '.' not in filename:
                     filename += '.jpg'
-
             photoDrawer = PhotoDrawer()
-            photoDrawer.run(self, filename)
+            fig = photoDrawer.run(self, filename)
+            if show:
+                fig.show()
+            return fig
         elif method == 'command':
             textDrawing = TextDrawing([i for i in range(len(self.qubits))], self.gates)
             if filename is None:

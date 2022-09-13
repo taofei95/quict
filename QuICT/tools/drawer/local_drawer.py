@@ -865,7 +865,4 @@ class PhotoDrawer(object):
         if filename is not None:
             self.figure.savefig(filename, dpi=self.style.dpi,
                                 bbox_inches='tight')
-        else:
-            self.figure.show()
-
         return self.figure
