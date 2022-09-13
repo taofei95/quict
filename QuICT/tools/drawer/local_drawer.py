@@ -619,7 +619,7 @@ class PhotoDrawer(object):
                          zorder=PORDER_TEXT)
             self.draw_line([offset_x + 0.5, y], [now['max_x'], y], zorder=PORDER_REGLINE)
 
-    def run(self, circuit, filename=None, show_depth=False):
+    def run(self, circuit, filename=None, show_depth=False) -> plt.Figure:
         global cir_len
         cir_len = circuit.width()
         name_dict = collections.OrderedDict()
@@ -867,3 +867,5 @@ class PhotoDrawer(object):
                                 bbox_inches='tight')
         else:
             self.figure.show()
+
+        return self.figure
