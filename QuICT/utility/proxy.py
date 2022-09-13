@@ -14,18 +14,20 @@ from QuICT.utility.timeout import timeout
 
 
 # Mapping between dtype and nccl dtype
+# Modify for cupy>9.0.0
+
 type_mapping = {
-    "int8": nccl.NCCL_INT8,
-    "uint8": nccl.NCCL_UINT8,
-    "int32": nccl.NCCL_INT32,
-    "uint32": nccl.NCCL_UINT32,
-    "int64": nccl.NCCL_INT64,
-    "uint64": nccl.NCCL_UINT64,
-    "float16": nccl.NCCL_FLOAT16,
-    "float32": nccl.NCCL_FLOAT32,
-    "float64": nccl.NCCL_FLOAT64,
-    "complex64": nccl.NCCL_FLOAT64,
-    "complex128": nccl.NCCL_FLOAT64
+    "int8": np.int8,
+    "uint8": np.uint8,
+    "int32": np.int32,
+    "uint32": np.uint32,
+    "int64": np.int64,
+    "uint64": np.uint64,
+    "float16": np.float16,
+    "float32": np.float32,
+    "float64": np.float64,
+    "complex64": np.complex64,
+    "complex128": np.complex128
 }
 
 
