@@ -141,15 +141,9 @@ class DAG(object):
             if gate.controls + gate.targets == 1:
                 self._add_edge_in_dag(gate.targ)
             elif gate.controls + gate.targets == 2:
-                # if gate.type == GateType.swap:
-                #     self._add_edge_in_dag(gate.targs[0])
-                #     self._add_edge_in_dag(gate.targs[1])
-                # else:
-                #     self._add_edge_in_dag(gate.targ)
-                #     self._add_edge_in_dag(gate.carg)
-                args = gate.cargs + gate.targs
-                self._add_edge_in_dag(args[0])
-                self._add_edge_in_dag(args[1])
+                qubits = tuple(gate.cargs + gate.targs)
+                self._add_edge_in_dag(qubits[0])
+                self._add_edge_in_dag(qubits[1])
             else:
                 raise Exception(
                     str("The gate is not single qubit gate or two qubit gate")
@@ -191,18 +185,10 @@ class DAG(object):
                     self._index[self._num_of_gate] = self._num_of_two_qubit_gate
                     self._inverse_index[self._num_of_two_qubit_gate] = self._num_of_gate
                     self._add_node_in_compact_dag(gate)
-                    self._dag.add_node(
-                        self._num_of_gate, gate=gate, depth=self._gate_depth(gate)
-                    )
-                    # if gate.type == GateType.swap:
-                    #     self._add_edge_in_dag(gate.targs[0])
-                    #     self._add_edge_in_dag(gate.targs[1])
-                    # else:
-                    #     self._add_edge_in_dag(gate.targ)
-                    #     self._add_edge_in_dag(gate.carg)
-                    args = gate.cargs + gate.targs
-                    self._add_edge_in_dag(args[0])
-                    self._add_edge_in_dag(args[1])
+                    self._dag.add_node(self._num_of_gate, gate=gate, depth=self._gate_depth(gate))
+                    qubits = gate.cargs + gate.targs
+                    self._add_edge_in_dag(qubits[0])
+                    self._add_edge_in_dag(qubits[1])
 
                     self._num_of_two_qubit_gate = self._num_of_two_qubit_gate + 1
             else:
@@ -219,11 +205,7 @@ class DAG(object):
         """
         Add the node's information, including its successors ,precessors and node's qubits, to the compact matrix
         """
-        # if gate.type == GateType.swap:
-        #     qubits = (gate.targs[0], gate.targs[1])
-        # else:
-        #     qubits = (gate.carg, gate.targ)
-        qubits = gate.cargs + gate.targs
+        qubits = tuple(gate.cargs + gate.targs)
 
         precessors = [
             self._index[self._qubit_mask[qubits[0]]]
@@ -269,12 +251,9 @@ class DAG(object):
         Fullfill the node's information of qubits
         """
         if index != -1:
-            gate = self._dag.nodes[self._inverse_index[index]]["gate"]
-            # if gate.type == GateType.swap:
-            #     qubits = (gate.targs[0], gate.targs[1])
-            # else:
-            #     qubits = (gate.carg, gate.targ)
-            qubits = gate.cargs + gate.targs
+            gate = self._dag.nodes[self._inverse_index[index]]['gate']
+            qubits = tuple(gate.cargs + gate.targs)
+
             i = index
             if self._node_qubits[i][0] == -1 and self._node_qubits[i][1] == -1:
                 self._node_qubits[i] = np.array(qubits)
@@ -293,11 +272,7 @@ class DAG(object):
         """
         Indicate wether the gate share the same qubits with its preceeding gate
         """
-        # if gate.type == GateType.swap:
-        #     qubits = (gate.targs[0], gate.targs[1])
-        # else:
-        #     qubits = (gate.carg, gate.targ)
-        qubits = gate.cargs + gate.targs
+        qubits = tuple(gate.cargs + gate.targs)
 
         if (
             self._qubit_mask[qubits[0]] != -1
@@ -313,11 +288,9 @@ class DAG(object):
             self._depth[self._num_of_gate] = self._gate_before_qubit_depth(gate.targ)
 
         elif gate.controls + gate.targets == 2:
-            args = gate.cargs + gate.targs
-            self._depth[self._num_of_gate] = max(
-                self._gate_before_qubit_depth(args[0]),
-                self._gate_before_qubit_depth(args[1]),
-            )
+            qubits = gate.cargs + gate.targs
+            self._depth[self._num_of_gate] = max(self._gate_before_qubit_depth(qubits[0]),
+                                                 self._gate_before_qubit_depth(qubits[1]))
         else:
             raise Exception(str("The gate is not single qubit gate or two qubit gate"))
 

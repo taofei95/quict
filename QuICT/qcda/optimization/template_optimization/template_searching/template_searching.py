@@ -15,14 +15,11 @@
 from QuICT.core.gate import *
 from QuICT.core.circuit import Circuit
 from collections import Counter
+import time
 
 
 class TemplateSearching:
-
-    """
-    search templates, only for clifford gates
-    search for S, CNOT, H gates
-    """
+    """ for clifford gates search for S, CNOT, H gates """
 
     def __init__(self, qubit_num, gate_num, gate_dep):
         self.qubit_num = qubit_num
@@ -30,7 +27,9 @@ class TemplateSearching:
         self.dep = gate_dep
         self.template_list = []
         self.temp_qubit_dep = [0] * qubit_num
-        self.target = list(range(qubit_num))
+        self.target = []
+        for i in range(qubit_num):
+            self.target.append(i)
 
     def copy_circuit(self, temp_circuit):
         new_circuit = Circuit(temp_circuit.width())
@@ -40,7 +39,14 @@ class TemplateSearching:
     def identity(self, temp_circuit):
         matrix = temp_circuit.matrix()
         n = np.size(matrix, 0)
-        return np.allclose(np.identity(n, dtype=np.complex128), matrix)
+        tot = 0
+        for i in range(n):
+            for j in range(n):
+                if i != j:
+                    tot += abs(matrix[i, j])
+                else:
+                    tot += abs(matrix[i, j] - 1)
+        return abs(tot) < 1e-2
 
     def check_minimum(self, temp_circuit):
         n = temp_circuit.size()
@@ -74,8 +80,9 @@ class TemplateSearching:
                             flag_check_graph = False
                         else:
                             if status_list_a[i][k] == 'S':
-                                flag_check_graph = (flag_check_graph &
-                                                    (Counter(inform_list_a[i][k]) == Counter(inform_list_b[j][k])))
+                                flag_check_graph = flag_check_graph & (
+                                    Counter(inform_list_a[i][k]) == Counter(inform_list_b[j][k])
+                                )
                             else:
                                 mapping_list_a = Counter(inform_list_a[i][k])
                                 mapping_list_b = Counter(inform_list_b[j][k])
@@ -94,8 +101,10 @@ class TemplateSearching:
             flag_check_graph = False
             for i in range(self.qubit_num):
                 if not self.mapped[i]:
-                    if len(inform_list_a[vertex_a]) == len(inform_list_b[i]) and \
-                            len(status_list_a[vertex_a]) == len(status_list_b[i]):
+                    if (
+                        len(inform_list_a[vertex_a]) == len(inform_list_b[i]) and
+                        len(status_list_a[vertex_a]) == len(status_list_b[i])
+                    ):
                         flag_check_list = True
                         self.mapped[i] = True
                         self.mapping[vertex_a] = i
@@ -104,9 +113,9 @@ class TemplateSearching:
                             check_b = status_list_b[i][j]
                             flag_check_list = flag_check_list & (check_a == check_b)
                         if flag_check_list:
-                            flag_check_graph = (flag_check_graph or
-                                                self.graph_isomorphism(inform_list_a, inform_list_b,
-                                                                       status_list_a, status_list_b))
+                            flag_check_graph = flag_check_graph or self.graph_isomorphism(
+                                inform_list_a, inform_list_b, status_list_a, status_list_b
+                            )
                             if flag_check_graph:
                                 break
                         if not flag_check_graph:
@@ -135,10 +144,15 @@ class TemplateSearching:
         circuit_a = self.commutative_processing(circuit_a)
         circuit_b = self.commutative_processing(circuit_b)
 
-        inform_list_a = [[]] * self.qubit_num
-        inform_list_b = [[]] * self.qubit_num
-        status_list_a = [[]] * self.qubit_num
-        status_list_b = [[]] * self.qubit_num
+        inform_list_a = []
+        status_list_a = []
+        inform_list_b = []
+        status_list_b = []
+        for i in range(self.qubit_num):
+            inform_list_a.append([])
+            status_list_a.append([])
+            inform_list_b.append([])
+            status_list_b.append([])
 
         temp_inform_list = []
         for i in range(self.qubit_num):
@@ -235,11 +249,22 @@ class TemplateSearching:
 
         return not flag_carg_graph
 
+#    def check_list_not_isomorphism(self, temp_circuit):
+
+        # check if the circuit is not isomorphism with every template in the list
+
+#        no_isomorphism = True
+#        for template in self.template_list:
+#            no_isomorphism = no_isomorphism & self.check_circuit_not_isomorphism(temp_circuit, template)
+#        return no_isomorphism
+
     def search(self, temp_gate_num, temp_circuit):
 
         # check whether it is a template
         if 1 <= temp_gate_num <= self.gate_num:
             if self.identity(temp_circuit):
+                # if self.check_list_not_isomorphism(temp_circuit):
+                #     self.template_list.append(temp_circuit)
                 self.template_list.append([temp_circuit, self.check_minimum(temp_circuit)])
                 return
         if temp_gate_num == self.gate_num:
@@ -290,9 +315,11 @@ class TemplateSearching:
             if relationship_iso[i] == -1:
                 relationship_iso[i] = i
                 for j in range(len_list):
-                    if relationship_iso[j] == -1 and not \
-                            self.check_circuit_not_isomorphism(self.template_list[i][0], self.template_list[j][0]):
+                    if relationship_iso[j] == -1 and not self.check_circuit_not_isomorphism(
+                        self.template_list[i][0], self.template_list[j][0]
+                    ):
                         self.template_list[i][1] = self.template_list[i][1] and self.template_list[j][1]
                         relationship_iso[j] = i
                         self.template_list[j][1] = False
+
         return self.template_list
