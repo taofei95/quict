@@ -61,8 +61,8 @@ class DataFactory:
     @property
     def _x_raw(self) -> torch.LongTensor:
         if self._x is None:
-            x = 1 + torch.arange(self._node_num,dtype=torch.long)
-            x = torch.tensor(x, dtype=torch.long)
+            x = 1 + torch.arange(self._node_num, dtype=torch.long)
+            # x = torch.tensor(x, dtype=torch.long)
             self._x = x
         return self._x
 
@@ -127,21 +127,23 @@ class DataFactory:
             self._topo_dist_map[topo_name] = self.get_topo_dist(topo_graph=topo_graph)
 
             topo_mask = torch.zeros(
-                (topo.qubit_number, topo.qubit_number), dtype=torch.float
+                (self._max_qubit_num, self._max_qubit_num), dtype=torch.float
             )
 
             topo_edge = []
-            topo_edge_mat = np.zeros((topo.qubit_number, topo.qubit_number), dtype=int)
+            topo_adj_mat_thin = np.zeros(
+                (topo.qubit_number, topo.qubit_number), dtype=int
+            )
             for u, v in topo_graph.edges:
                 topo_mask[u][v] = 1.0
                 topo_mask[v][u] = 1.0
                 topo_edge.append((u, v))
                 topo_edge.append((v, u))
-                topo_edge_mat[u][v] = 1
-                topo_edge_mat[v][u] = 1
+                topo_adj_mat_thin[u][v] = 1
+                topo_adj_mat_thin[v][u] = 1
             self._topo_mask_map[topo_name] = topo_mask
             self._topo_edge_map[topo_name] = topo_edge
-            self._topo_edge_mat_map[topo_name] = topo_edge_mat
+            self._topo_edge_mat_map[topo_name] = topo_adj_mat_thin
 
     def get_topo_graph(self, topo: Layout) -> nx.Graph:
         """Build tha graph representation of a topology.
@@ -232,8 +234,9 @@ class DataFactory:
             offset = q * (layer_idx + 1)
             for b in range(q):
                 _b = b + offset
-                # Directed edge from previous layer to current layer
+                # Directed edge from previous layer to current layer?
                 edge_index.append((_b - q, _b))
+                edge_index.append((_b, _b - q))
             for u, v in layer:
                 _u = u + offset
                 _v = v + offset
@@ -254,22 +257,27 @@ class DataFactory:
                 _u = cur_mapping[u]
                 _v = cur_mapping[v]
                 new_layers[layer_idx].add((_u, _v))
-                new_layers[layer_idx].add((_v, _u))
+                # new_layers[layer_idx].add((_v, _u))
         return new_layers
 
     def get_one(
-        self,
+        self, topo_name: str = None
     ) -> Tuple[
         List[Set[Tuple[int, int]]], str, torch.LongTensor, torch.LongTensor, List[int]
     ]:
-        topo_name: str = choice(self.topo_names)
+        if topo_name is None:
+            topo_name: str = choice(self.topo_names)
+        # topo_name: str = "ibmq_peekskill"
         qubit_num = self.topo_qubit_num_map[topo_name]
         topo_graph = self.topo_graph_map[topo_name]
         circ = Circuit(qubit_num)
 
         success = False
         circ.gates.clear()
-        gate_num = randint(1, max(qubit_num // 2 * randint(2, self._max_layer_num), 30))
+        min_gn = 80
+        gate_num = randint(
+            min_gn, max(qubit_num // 2 * randint(2, self._max_layer_num), min_gn)
+        )
         circ.random_append(
             gate_num,
             typelist=[

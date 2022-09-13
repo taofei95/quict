@@ -3,6 +3,7 @@ from copy import copy, deepcopy
 from random import choice, random
 from typing import List, Set, Tuple, Union
 
+import numpy as np
 import torch
 from QuICT.qcda.mapping.ai.data_factory import DataFactory
 from QuICT.qcda.mapping.ai.gnn_mapping import GnnMapping
@@ -45,7 +46,7 @@ class Agent:
         inner_feat_dim: int = 50,
         epsilon_start: float = 0.9,
         epsilon_end: float = 0.05,
-        epsilon_decay: float = 100.0,
+        epsilon_decay: float = 400.0,
     ) -> None:
         # Copy values in.
         self._max_qubit_num = max_qubit_num
@@ -56,18 +57,17 @@ class Agent:
         self._epsilon_decay = epsilon_decay
 
         # Exploration related.
-        self._explore_step = 0
+        self.explore_step = 0
         self._state = None  # Reset during training
 
         # Random data generator
-        self._data_factory = DataFactory(
+        self.factory = DataFactory(
             max_qubit_num=max_qubit_num,
             max_layer_num=max_layer_num,
         )
 
-    def reset_explore_state(self):
-        self._state = State(*self._data_factory.get_one())
-        self._explore_step = 0
+    def reset_explore_state(self, topo_name: str = None):
+        self._state = State(*self.factory.get_one(topo_name=topo_name))
 
     def select_action(
         self,
@@ -76,13 +76,13 @@ class Agent:
     ) -> Tuple[int, int]:
         eps_threshold = self._epsilon_end + (
             self._epsilon_start - self._epsilon_end
-        ) * math.exp(-1.0 * self._explore_step / self._epsilon_decay)
-        self._explore_step += 1
+        ) * math.exp(-1.0 * self.explore_step / self._epsilon_decay)
+        self.explore_step += 1
         sample = random()
-        edges = self._data_factory.topo_edge_map[self._state.topo_name]
+        edges = self.factory.topo_edge_map[self._state.topo_name]
         if sample > eps_threshold:
             max_q = self._max_qubit_num
-            q = self._data_factory.topo_qubit_num_map[self._state.topo_name]
+            q = self.factory.topo_qubit_num_map[self._state.topo_name]
 
             # Chose an action based on policy_net
             x = self._state.x.to(policy_net_device)
@@ -91,8 +91,8 @@ class Agent:
             attn = attn.view(max_q, max_q)
 
             # Use a mask matrix to filter out unwanted qubit pairs.
-            mask = self._data_factory.topo_mask_map[self._state.topo_name]
-            attn = attn[:q, :q] * mask
+            mask = self.factory.topo_mask_map[self._state.topo_name]
+            attn = attn[:q, :q] * mask[:q, :q]
             pos = int(torch.argmax(attn))
             del attn
             u, v = pos // q, pos % q
@@ -100,9 +100,26 @@ class Agent:
         else:
             return choice(edges)
 
-    def _take_action(
+    def first_layer_dist_sum(
+        self, layered_circ: List[Set[Tuple[int, int]]], topo_dist: np.ndarray
+    ) -> float:
+        s = 0.0
+        if len(layered_circ) == 0:
+            return s
+        for u, v in layered_circ[0]:
+            s += topo_dist[u][v]
+        s /= 2
+        return s
+
+    def count_gate_num(self) -> int:
+        num = 0
+        for layer in self._state.layered_circ:
+            num += len(layer) // 2
+        return num
+
+    def take_action(
         self, action: Tuple[int, int]
-    ) -> Tuple[Union[State, None], float, bool]:
+    ) -> Tuple[State, Union[State, None], float, bool]:
         """Take given action on trainer's state.
 
         Args:
@@ -112,25 +129,34 @@ class Agent:
             Tuple[Union[State, None], bool]: Tuple of (Next State, Terminated).
         """
         u, v = action
-        graph = self._data_factory.topo_graph_map[self._state.topo_name]
+        graph = self.factory.topo_graph_map[self._state.topo_name]
         if not graph.has_edge(u, v):
             reward = 0.0
             next_state = self._state
-            return next_state, reward, False
+            prev_state = self._state
+            return prev_state, next_state, reward, False
 
         next_mapping = deepcopy(self._state.cur_mapping)
         next_mapping[u], next_mapping[v] = next_mapping[v], next_mapping[u]
-        next_layered_circ = self._data_factory.remap_layered_circ(
+        next_layered_circ = self.factory.remap_layered_circ(
             self._state.layered_circ, next_mapping
         )
-        topo_dist = self._data_factory.topo_dist_map[self._state.topo_name]
+        topo_dist = self.factory.topo_dist_map[self._state.topo_name]
+        q = self.factory.topo_qubit_num_map[self._state.topo_name]
         remove_layer_num = 0
-        reward = 0.0
+        dist_bias = self.first_layer_dist_sum(
+            layered_circ=self._state.layered_circ, topo_dist=topo_dist
+        )
+        next_dist_bias = self.first_layer_dist_sum(
+            layered_circ=next_layered_circ, topo_dist=topo_dist
+        )
+        # reward = max(0, (dist_bias - next_dist_bias) / q)
+        reward = max(0, (dist_bias - next_dist_bias) / q / q / q)
         for layer in next_layered_circ:
             for x, y in copy(layer):
                 if topo_dist[x][y] == 1:
                     layer.remove((x, y))
-                    reward += 1.0
+                    reward += 0.5
             if len(layer) > 0:
                 break
             remove_layer_num += 1
@@ -139,14 +165,16 @@ class Agent:
         # Check if there are only padded empty layers left.
         terminated = len(next_layered_circ) == 0
         if terminated:
-            return None, reward, True
+            prev_state = self._state
+            self._state = None
+            return prev_state, None, reward, True
 
         # X for the same topology is always the same, so there's ne need to copy.
         next_x = self._state.x
 
         # Generate new edge_index
-        topo_graph = self._data_factory.topo_graph_map[self._state.topo_name]
-        next_edge_index = self._data_factory.get_circ_edge_index(
+        topo_graph = self.factory.topo_graph_map[self._state.topo_name]
+        next_edge_index = self.factory.get_circ_edge_index(
             layered_circ=next_layered_circ,
             topo_graph=topo_graph,
         )
@@ -158,5 +186,6 @@ class Agent:
             edge_index=next_edge_index,
             cur_mapping=next_mapping,
         )
-
-        return next_state, reward, False
+        prev_state = self._state
+        self._state = next_state
+        return prev_state, next_state, reward, False

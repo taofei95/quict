@@ -24,18 +24,29 @@ class GnnMapping(nn.Module):
                 gnn.GCNConv(in_channels=feat_dim, out_channels=feat_dim),
                 gnn.GCNConv(in_channels=feat_dim, out_channels=feat_dim),
                 gnn.GCNConv(in_channels=feat_dim, out_channels=feat_dim),
+                gnn.GCNConv(in_channels=feat_dim, out_channels=feat_dim),
+                gnn.GCNConv(in_channels=feat_dim, out_channels=feat_dim),
+                gnn.GCNConv(in_channels=feat_dim, out_channels=feat_dim),
+                gnn.GCNConv(in_channels=feat_dim, out_channels=feat_dim),
             ]
         )
+        
         self._last_gc = gnn.GCNConv(in_channels=feat_dim, out_channels=feat_dim)
 
         self._mlp = nn.Sequential(
+            nn.Linear(in_features=2 * feat_dim, out_features=2 * feat_dim),
+            nn.LeakyReLU(),
             nn.Linear(in_features=2 * feat_dim, out_features=2 * feat_dim),
             nn.LeakyReLU(),
             nn.Linear(in_features=2 * feat_dim, out_features=feat_dim),
             nn.LeakyReLU(),
             nn.Linear(in_features=feat_dim, out_features=feat_dim),
             nn.LeakyReLU(),
+            nn.Linear(in_features=feat_dim, out_features=feat_dim),
+            nn.LeakyReLU(),
             nn.Linear(in_features=feat_dim, out_features=feat_dim // 2),
+            nn.LeakyReLU(),
+            nn.Linear(in_features=feat_dim // 2, out_features=feat_dim // 2),
             nn.LeakyReLU(),
             nn.Linear(in_features=feat_dim // 2, out_features=feat_dim // 2),
             nn.LeakyReLU(),
