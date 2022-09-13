@@ -17,9 +17,9 @@ from QuICT.core.circuit import Circuit
 from collections import Counter
 import time
 
+
 class TemplateSearching:
-# for clifford gates
-# search for S, CNOT, H gates
+    """ for clifford gates search for S, CNOT, H gates """
 
     def __init__(self, qubit_num, gate_num, gate_dep):
         self.qubit_num = qubit_num
@@ -45,7 +45,7 @@ class TemplateSearching:
                 if i != j:
                     tot += abs(matrix[i, j])
                 else:
-                    tot += abs(matrix[i, j]-1)
+                    tot += abs(matrix[i, j] - 1)
         return abs(tot) < 1e-2
 
     def check_minimum(self, temp_circuit):
@@ -80,7 +80,9 @@ class TemplateSearching:
                             flag_check_graph = False
                         else:
                             if status_list_a[i][k] == 'S':
-                                flag_check_graph = flag_check_graph & (Counter(inform_list_a[i][k]) == Counter(inform_list_b[j][k]))
+                                flag_check_graph = flag_check_graph & (
+                                    Counter(inform_list_a[i][k]) == Counter(inform_list_b[j][k])
+                                )
                             else:
                                 mapping_list_a = Counter(inform_list_a[i][k])
                                 mapping_list_b = Counter(inform_list_b[j][k])
@@ -99,7 +101,10 @@ class TemplateSearching:
             flag_check_graph = False
             for i in range(self.qubit_num):
                 if not self.mapped[i]:
-                    if len(inform_list_a[vertex_a]) == len(inform_list_b[i]) and len(status_list_a[vertex_a]) == len(status_list_b[i]):
+                    if (
+                        len(inform_list_a[vertex_a]) == len(inform_list_b[i]) and
+                        len(status_list_a[vertex_a]) == len(status_list_b[i])
+                    ):
                         flag_check_list = True
                         self.mapped[i] = True
                         self.mapping[vertex_a] = i
@@ -108,7 +113,9 @@ class TemplateSearching:
                             check_b = status_list_b[i][j]
                             flag_check_list = flag_check_list & (check_a == check_b)
                         if flag_check_list:
-                            flag_check_graph = flag_check_graph or self.graph_isomorphism(inform_list_a, inform_list_b, status_list_a, status_list_b)
+                            flag_check_graph = flag_check_graph or self.graph_isomorphism(
+                                inform_list_a, inform_list_b, status_list_a, status_list_b
+                            )
                             if flag_check_graph:
                                 break
                         if not flag_check_graph:
@@ -120,11 +127,11 @@ class TemplateSearching:
     def commutative_processing(self, temp_circuit):
         for i in range(len(temp_circuit.gates) - 1):
             gate_a = temp_circuit.gates[i]
-            gate_b = temp_circuit.gates[i+1]
+            gate_b = temp_circuit.gates[i + 1]
             if gate_a.commutative(gate_b):
                 if gate_a.is_control_single() and not gate_b.is_control_single():
                     temp_circuit.gates[i] = gate_b
-                    temp_circuit.gates[i+1] = gate_a
+                    temp_circuit.gates[i + 1] = gate_a
                     temp_circuit = self.commutative_processing(temp_circuit)
         return temp_circuit
 
@@ -263,8 +270,8 @@ class TemplateSearching:
         if temp_gate_num == self.gate_num:
             return
 
-        #brute-force searching
-        #s gate
+        # brute-force searching
+        # s gate
         for s in range(0, self.qubit_num):
             if self.temp_qubit_dep[s] + 1 <= self.dep:
                 new_circuit = self.copy_circuit(temp_circuit)
@@ -308,22 +315,11 @@ class TemplateSearching:
             if relationship_iso[i] == -1:
                 relationship_iso[i] = i
                 for j in range(len_list):
-                    if relationship_iso[j] == -1 and not self.check_circuit_not_isomorphism(self.template_list[i][0], self.template_list[j][0]):
+                    if relationship_iso[j] == -1 and not self.check_circuit_not_isomorphism(
+                        self.template_list[i][0], self.template_list[j][0]
+                    ):
                         self.template_list[i][1] = self.template_list[i][1] and self.template_list[j][1]
                         relationship_iso[j] = i
                         self.template_list[j][1] = False
-        # for i in range(len_list):
-        #     if relationship_iso[i] == i:
-        #         print(self.template_list[i][0].draw('matp', str(i)))
-        #         print((self.commutative_processing(self.template_list[i][0])).draw('matp', str(100+i)))
-        return self.template_list
 
-print(time.perf_counter())
-program = TemplateSearching(3, 4, 4)
-list_circuit = program.run_template_searching()
-print(time.perf_counter())
-label = 1
-for item_circuit in list_circuit:
-    if item_circuit[1]:
-        print(item_circuit[0].draw('matp', str(label)))
-        label += 1
+        return self.template_list
