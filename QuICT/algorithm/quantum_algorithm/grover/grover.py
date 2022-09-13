@@ -29,26 +29,31 @@ class Grover:
     Quantum Computation and Quantum Information - Michael A. Nielsen & Isaac L. Chuang
     """
 
-    @staticmethod
-    def run(n, k, oracle, simulator=CircuitSimulator()):
+    def __init__(self) -> None:
+        pass
+
+    def circuit(self, n, n_ancilla, oracle, n_solution=1, measure=True):
         """ grover search for f with custom oracle
 
         Args:
             n(int): the length of input of f
-            k(int): length of oracle working space. assume clean
+            n_ancilla(int): length of oracle working space. assume clean
             oracle(CompositeGate): the oracle that flip phase of target state.
                 [0:n] is index qreg,
                 [n:n+k] is ancilla
+            n_solution(int): number of solution
+            measure(bool): measure included or not
+
         Returns:
             int: the a satisfies that f(a) = 1
         """
-        assert k > 0, "at least 1 ancilla, which is shared by MCT part"
-        circuit = Circuit(n + k)
+        assert n_ancilla > 0, "at least 1 ancilla, which is shared by MCT part"
+        circuit = Circuit(n + n_ancilla)
         index_q = list(range(n))
-        ancilla_q = list(range(n, n + k))
+        ancilla_q = list(range(n, n + n_ancilla))
         N = 2 ** n
-        theta = 2 * np.arccos(np.sqrt(1 - 1 / N))
-        T = round(np.arccos(np.sqrt(1 / N)) / theta)
+        theta = 2 * np.arccos(np.sqrt(1 - n_solution / N))
+        T = int(np.arccos(np.sqrt(n_solution / N)) / theta) + 1
 
         # create equal superposition state in index_q
         for idx in index_q:
@@ -63,7 +68,7 @@ class Grover:
             for idx in index_q:
                 X | circuit(idx)
             H | circuit(index_q[n - 1])
-            MCTOneAux.execute(n + 1) | circuit(index_q + ancilla_q[:1])
+            MCTOneAux().execute(n + 1) | circuit(index_q + ancilla_q[:1])
 
             H | circuit(index_q[n - 1])
             for idx in index_q:
@@ -72,10 +77,17 @@ class Grover:
             for idx in index_q:
                 H | circuit(idx)
         for idx in index_q:
-            Measure | circuit(idx)
+            if measure:
+                Measure | circuit(idx)
+        logging.info(
+            f"circuit width          = {circuit.width():4}" +
+            f"oracle  calls          = {T:4}" +
+            f"other circuit size     = {circuit.size() - oracle.size()*T:4}"
+        )
+        return circuit
+
+    def run(self, n, n_ancilla, oracle, n_solution=1, measure=True, simulator=CircuitSimulator()):
+        index_q = list(range(n))
+        circuit = self.circuit(n, n_ancilla, oracle, n_solution, measure)
         simulator.run(circuit)
-        logging.info(f"circuit width          = {circuit.width():4}")
-        logging.info(f"circuit depth          = {circuit.depth():4}")
-        logging.info(f"circuit size           = {circuit.size():4}")
-        # logging.info(f"Grover iteration size  = {oracle_size:4}+{phase_size:4}")
         return int(circuit[index_q])

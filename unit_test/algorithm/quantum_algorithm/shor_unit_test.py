@@ -43,7 +43,9 @@ order_finding_circuit_test_modes = {
     "HRS": HRS_construct_circuit,
 }
 run_test_modes = {"BEA_zip", "HRS_zip"}
-circuit_test_modes = {"BEA_zip", "HRS_zip", "BEA", "HRS"}
+circuit_test_modes = {
+    # "BEA_zip", "HRS_zip", 
+    "BEA", "HRS"}
 
 
 def test_OrderFinding():
@@ -85,7 +87,7 @@ def test_ShorFactor_run():
         failure = 0
         for number in number_list:
             print("-------------------FACTORING %d-------------------------" % number)
-            a = ShorFactor(mode=mode, N=number).run(simulator=simulator)
+            a = ShorFactor(mode=mode).run(N=number)
             if a == 0 or number % a != 0:
                 failure += 1
         print(f"success rate: {1-failure/len(number_list):.3f}")
@@ -96,11 +98,15 @@ def test_ShorFactor_circuit():
         print(f"mode: {mode}")
         failure = 0
         for number in number_list:
+            if number % 2 == 0 or number == 25 or number == 27:
+                continue
             print("-------------------FACTORING %d-------------------------" % number)
-            circuit, indices = ShorFactor(mode=mode, N=number).circuit()
-            a = ShorFactor(mode=mode, N=number).run(
-                circuit=circuit, indices=indices, simulator=simulator
+            circuit, indices = ShorFactor(mode=mode).circuit(N=number)
+            a = ShorFactor(mode=mode).run(
+                N=number, circuit=circuit, indices=indices
             )
             if a == 0 or number % a != 0:
                 failure += 1
         print(f"success rate: {1-failure/len(number_list):.3f}")
+
+test_ShorFactor_circuit()
