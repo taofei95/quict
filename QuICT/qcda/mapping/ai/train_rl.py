@@ -2,7 +2,6 @@ import os
 import os.path as osp
 from collections import deque
 from random import sample
-from sre_parse import State
 from time import time
 from typing import List, Union
 

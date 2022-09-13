@@ -1,7 +1,7 @@
 import os
 import os.path as osp
 from random import choice, randint
-from typing import Dict, Iterable, List, Set, Tuple
+from typing import Dict, List, Set, Tuple
 
 import networkx as nx
 import numpy as np
