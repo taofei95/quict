@@ -149,7 +149,11 @@ class ConstantStateVectorSimulator:
         matrix_type = gate.matrix_type
         gate_type = gate.type
         default_parameters = (self._vector, self._qubits, self._sync)
-        if gate_type == GateType.id or gate_type == GateType.barrier:
+        if (
+            gate_type == GateType.id or
+            gate_type == GateType.barrier or
+            gate.is_identity()
+        ):
             return
 
         # Deal with quantum gate with more than 3 qubits.
