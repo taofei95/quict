@@ -162,6 +162,7 @@ class ConstantStateVectorSimulator:
             gate.targets >= 3
         ):
             matrix = self._get_gate_matrix(gate)
+            matrix = matrix.reshape(1 << (gate.controls + gate.targets), 1 << (gate.controls + gate.targets))
             self._vector = self._algorithm.matrix_dot_vector(
                 self._vector,
                 self._qubits,
