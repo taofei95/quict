@@ -3,7 +3,6 @@ import numpy as np
 from QuICT.core import *
 from QuICT.core.gate import *
 from QuICT.qcda.optimization.commutative_optimization import CommutativeOptimization
-from QuICT.core.gate import GateType
 
 
 def test_parameterize():
