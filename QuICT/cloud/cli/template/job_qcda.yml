@@ -1,23 +1,21 @@
-name: experience-qcda     # The name of job
-mode: local               # The mode of job, one of [local, remote]
-type: qcda                # The type of job, one of [simulation, qcda]
-circuit: /path/to/circuit/qasm    # The path of circuit's qasm file
+name: experience-qcda               # The name of job
+type: qcda                          # The type of job, one of [simulation, qcda]
+circuit: /path/to/circuit/qasm      # The path of circuit's qasm file
+
 qcda:
   synthesis:
-    enable: True            # enable synthesis or not
-    instruction_set: None   # The specified instruction set
-  optimization: 
-    enable: True    # Enable optimization or not
-    mode: auto      # Optimization mode, one of [auto, customized]
-    template_matching: False    # enable template matching or not
-    commutative_opt: False      # enable communication optimization or not
-    CNOT: False                 # enable optimization for CNOT circuit or not
-    Clifford: False             # enable optimization for Clifford circuit or not
+    enable: True                    # enable synthesis or not
+    instruction_set: None           # The specified instruction set
+  optimization:
+    enable: True                    # Enable optimization or not
+    mode: auto                      # Optimization mode, one of [auto, customized]
+    template_matching: False        # enable template matching or not
+    commutative_opt: False          # enable communication optimization or not
+    CNOT: False                     # enable optimization for CNOT circuit or not
+    Clifford: False                 # enable optimization for Clifford circuit or not
   mapping:
-    enable: True    # Enable mapping or not
-    basic_type: line                # The common topology, one of [line/grid]
+    enable: True                    # Enable mapping or not
+    basic_type: line                # The common topology, one of [line/grid/customized]
     layout_path: /path/to/topology  # The path of the file which store the topology
 
-docker: /name/of/docker             # the experience environment [TODO]
-mount_path: /path/to/mount/folder   # the folder which need mount to distributed system; only work in remote mode [TODO]
 output_path: /path/to/result        # the folder to store result

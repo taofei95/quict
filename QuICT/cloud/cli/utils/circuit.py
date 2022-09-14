@@ -3,8 +3,8 @@ import shutil
 
 from QuICT.core import Circuit
 from QuICT.core.gate import GateType
-from QuICT.lib import CircuitLib
-from .decorator import path_check, validation_qasm
+from QuICT.lib.circuitlib import CircuitLib
+from .helper_function import path_check, qasm_validation
 
 
 default_customed_circuit_folder = os.path.join(
@@ -63,7 +63,6 @@ def get_algorithm_circuit(alg: str, qubits: list, output_path: str = "."):
             f.write(cir.qasm())
 
 
-@validation_qasm
 def store_quantum_circuit(name: str, file: str):
     get_folder_name = os.listdir(default_customed_circuit_folder)
     if not name.endswith(".qasm"):
@@ -72,6 +71,8 @@ def store_quantum_circuit(name: str, file: str):
     if name in get_folder_name:
         raise KeyError("Repeat circuits name.")
 
+    # qasm file validation
+    qasm_validation(file)
     shutil.copy(file, f"{default_customed_circuit_folder}/{name}")
 
 

@@ -219,6 +219,11 @@ def job_cli_construct(job_sp: ArgumentParser):
         help="start the job."
     )
     start.add_argument(
+        "-m", "--mode",
+        choices=["local", "remote"], default="local", dest="mode",
+        help="Run current job in local environment or remote environment."
+    )
+    start.add_argument(
         "-f", "--file",
         type=str, dest="file",
         help="The path of jobs file, could be a directory or some file path.",
@@ -232,8 +237,13 @@ def job_cli_construct(job_sp: ArgumentParser):
         help="check the job."
     )
     status.add_argument(
+        "-m", "--mode",
+        choices=["local", "remote"], default="local", dest="mode",
+        help="Run current job in local environment or remote environment."
+    )
+    status.add_argument(
         "-n", "--name",
-        nargs=1, dest="name",
+        type=str, dest="name",
         help="The name of target job."
     )
     status.set_defaults(func=status_job)
@@ -245,8 +255,13 @@ def job_cli_construct(job_sp: ArgumentParser):
         help="stop a job."
     )
     stop.add_argument(
+        "-m", "--mode",
+        choices=["local", "remote"], default="local", dest="mode",
+        help="Run current job in local environment or remote environment."
+    )
+    stop.add_argument(
         "-n", "--name",
-        nargs=1, dest="name",
+        type=str, dest="name",
         help="The name of target job."
     )
     stop.set_defaults(func=stop_job)
@@ -258,8 +273,13 @@ def job_cli_construct(job_sp: ArgumentParser):
         help="restart the job."
     )
     restart.add_argument(
+        "-m", "--mode",
+        choices=["local", "remote"], default="local", dest="mode",
+        help="Run current job in local environment or remote environment."
+    )
+    restart.add_argument(
         "-n", "--name",
-        nargs=1, dest="name",
+        type=str, dest="name",
         help="The name of target job."
     )
     restart.set_defaults(func=restart_job)
@@ -271,8 +291,13 @@ def job_cli_construct(job_sp: ArgumentParser):
         help="delete the job."
     )
     delete.add_argument(
+        "-m", "--mode",
+        choices=["local", "remote"], default="local", dest="mode",
+        help="Run current job in local environment or remote environment."
+    )
+    delete.add_argument(
         "-n", "--name",
-        nargs=1, dest="name",
+        type=str, dest="name",
         help="The name of target job."
     )
     delete.set_defaults(func=delete_job)
@@ -282,6 +307,11 @@ def job_cli_construct(job_sp: ArgumentParser):
         name="list",
         description="list the job.",
         help="list the job."
+    )
+    list_job.add_argument(
+        "-m", "--mode",
+        choices=["local", "remote"], default="local", dest="mode",
+        help="Run current job in local environment or remote environment."
     )
     list_job.set_defaults(func=list_jobs)
 
@@ -309,7 +339,7 @@ def env_cli_construct(env_sp: ArgumentParser):
     )
     build.add_argument(
         "-p", "--path",
-        nargs=1,
+        type=str,
         help="The path of Docker build file."
     )
 
@@ -321,7 +351,7 @@ def env_cli_construct(env_sp: ArgumentParser):
     )
     deploy.add_argument(
         "-n", "--name",
-        nargs=1, type=str,
+        type=str,
         help="The docker's name."
     )
     deploy.add_argument(
@@ -350,7 +380,7 @@ def env_cli_construct(env_sp: ArgumentParser):
     )
     delete.add_argument(
         "-n", "--name",
-        nargs=1, type=str,
+        type=str,
         help="The docker's name which to delete."
     )
 
