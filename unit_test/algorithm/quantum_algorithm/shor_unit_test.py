@@ -108,5 +108,3 @@ def test_ShorFactor_circuit():
             if a == 0 or number % a != 0:
                 failure += 1
         print(f"success rate: {1-failure/len(number_list):.3f}")
-
-test_ShorFactor_circuit()

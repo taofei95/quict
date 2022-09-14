@@ -1,9 +1,3 @@
-#!/usr/bin/env python
-# -*- coding:utf8 -*-
-# @TIME    : 2021/6/1 16:20 上午
-# @Author  : Zhu Qinlin
-# @File    : standard_grover.py
-
 import numpy as np
 
 from QuICT.core import Circuit

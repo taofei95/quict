@@ -449,7 +449,8 @@ class MCTSNode:
         self._front_layer = []
         while len(fl_stack) > 0:
             gate = fl_stack.pop()
-            if self._is_swap(gate) is not True:
+            gate_ = self.circuit_dag[gate]['gate']
+            if gate_.controls == 1 and gate_.targets == 1:
                 control = self._get_gate_control(gate)
                 target = self._get_gate_target(gate)
             else:
@@ -471,7 +472,8 @@ class MCTSNode:
         """
         for suc in self.circuit_dag.get_successor_nodes(gate_in_dag):
             self._qubit_mask[self._edge_qubit(gate_in_dag, suc)] = suc
-            if self._is_swap(suc) is not True:
+            gate_ = self.circuit_dag[suc]['gate']
+            if gate_.controls == 1 and gate_.targets == 1:
                 control = self._get_gate_control(suc)
                 target = self._get_gate_target(suc)
             else:

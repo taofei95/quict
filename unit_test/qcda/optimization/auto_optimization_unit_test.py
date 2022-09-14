@@ -1,9 +1,8 @@
 import time
-
 import numpy as np
+import pickle
 
 from QuICT.core.gate import *
-import pickle
 from QuICT.qcda.optimization.auto_optimization.template import *
 from QuICT.qcda.optimization.auto_optimization import DAG, AutoOptimization
 
@@ -11,7 +10,6 @@ from QuICT.qcda.optimization.auto_optimization import DAG, AutoOptimization
 def test_build_graph():
     for i, each in enumerate(hadamard_templates):
         print('hadamard template', i)
-        each.template.get_circuit().draw(method='command')
         each.replacement.get_circuit().draw(method='command')
         mat_1 = each.template.get_circuit().matrix()
         mat_2 = each.replacement.get_circuit().matrix() * np.exp(1j * each.phase)
