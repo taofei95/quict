@@ -38,6 +38,7 @@ class DataFactory:
         if data_dir is None:
             data_dir = osp.dirname(osp.realpath(__file__))
             data_dir = osp.join(data_dir, "data")
+        self._data_dir = data_dir
         self._topo_dir = osp.join(data_dir, "topo")
 
         self._max_qubit_num = max_qubit_num
@@ -50,6 +51,7 @@ class DataFactory:
         # Topo attr cache def
         # These attributes maps are lazily initialized for faster start up.
 
+        self._topo_map = {}
         self._topo_graph_map = {}
         self._topo_edge_map = {}
         self._topo_edge_mat_map = {}
@@ -117,10 +119,17 @@ class DataFactory:
             self._reset_attr_cache()
         return self._topo_edge_mat_map
 
+    @property
+    def topo_map(self) -> Dict[str, Layout]:
+        if len(self._topo_map) == 0:
+            self._reset_attr_cache()
+        return self._topo_map
+
     def _reset_attr_cache(self):
         for topo_name in self.topo_names:
             topo_path = osp.join(self._topo_dir, f"{topo_name}.layout")
             topo = Layout.load_file(topo_path)
+            self._topo_map[topo_name] = topo
             topo_graph = self.get_topo_graph(topo)
             self._topo_graph_map[topo_name] = topo_graph
             self._topo_qubit_num_map[topo_name] = topo.qubit_number
@@ -174,6 +183,22 @@ class DataFactory:
         dist = _floyd(n, dist, _inf)
         return dist
 
+    def get_topo_mask(self, topo_graph: nx.Graph) -> torch.Tensor:
+        topo_mask = torch.zeros(
+            (self._max_qubit_num, self._max_qubit_num), dtype=torch.float
+        )
+        for u, v in topo_graph.edges:
+            topo_mask[u][v] = 1.0
+            topo_mask[v][u] = 1.0
+        return topo_mask
+
+    def get_topo_edges(self, topo_graph: nx.Graph) -> np.ndarray:
+        topo_edge = []
+        for u, v in topo_graph.edges:
+            topo_edge.append((u, v))
+            topo_edge.append((v, u))
+        return topo_edge
+
     def get_layered_circ(
         self, circ: CircuitBased
     ) -> Tuple[List[Set[Tuple[int, int]]], bool]:
@@ -209,7 +234,10 @@ class DataFactory:
         return self._x_raw
 
     def get_circ_edge_index(
-        self, layered_circ: List[Set[Tuple[int, int]]], topo_graph: nx.Graph
+        self,
+        layered_circ: List[Set[Tuple[int, int]]],
+        topo_graph: nx.Graph,
+        logic2phy: List[int],
     ) -> torch.IntTensor:
         """Build the edge index of circuit graph. A virtual layer will be appended first
         to gather information and fuse topology.
@@ -217,12 +245,12 @@ class DataFactory:
         Args:
             layered_circ (List[Set[Tuple[int, int]]]): Layered circuit representation after remapped by current mapping.
             topo_graph (nx.Graph): Topology graph.
+            logic2phy (List[int]): Current logical to physical mapping.
 
         Returns:
             torch.IntTensor
         """
         q = self._max_qubit_num
-        # l = len(layered_circ)
         edge_index = []
 
         # Virtual layer is used for topology.
@@ -238,8 +266,8 @@ class DataFactory:
                 edge_index.append((_b - q, _b))
                 edge_index.append((_b, _b - q))
             for u, v in layer:
-                _u = u + offset
-                _v = v + offset
+                _u = logic2phy[u] + offset
+                _v = logic2phy[v] + offset
                 edge_index.append((_u, _v))
                 edge_index.append((_v, _u))
 
@@ -247,29 +275,39 @@ class DataFactory:
 
         return edge_index
 
-    @classmethod
-    def remap_layered_circ(
-        cls, layered_circ: List[Set[Tuple[int, int]]], cur_mapping: List[int]
-    ) -> List[Set[Tuple[int, int]]]:
-        new_layers = [set() for _ in range(len(layered_circ))]
-        for layer_idx, layer in enumerate(layered_circ):
-            for u, v in layer:
-                _u = cur_mapping[u]
-                _v = cur_mapping[v]
-                new_layers[layer_idx].add((_u, _v))
-                # new_layers[layer_idx].add((_v, _u))
-        return new_layers
+    # @classmethod
+    # def remap_layered_circ(
+    #     cls, layered_circ: List[Set[Tuple[int, int]]], cur_mapping: List[int]
+    # ) -> List[Set[Tuple[int, int]]]:
+    #     new_layers = [set() for _ in range(len(layered_circ))]
+    #     for layer_idx, layer in enumerate(layered_circ):
+    #         for u, v in layer:
+    #             _u = cur_mapping[u]
+    #             _v = cur_mapping[v]
+    #             new_layers[layer_idx].add((_u, _v))
+    #             # new_layers[layer_idx].add((_v, _u))
+    #     return new_layers
 
     def get_one(
         self, topo_name: str = None
     ) -> Tuple[
-        List[Set[Tuple[int, int]]], str, torch.LongTensor, torch.LongTensor, List[int]
+        List[Set[Tuple[int, int]]],
+        Layout,
+        torch.Tensor,
+        nx.Graph,
+        np.ndarray,
+        torch.LongTensor,
+        torch.LongTensor,
+        List[int],
     ]:
         if topo_name is None:
             topo_name: str = choice(self.topo_names)
         # topo_name: str = "ibmq_peekskill"
+        topo = self.topo_map[topo_name]
         qubit_num = self.topo_qubit_num_map[topo_name]
         topo_graph = self.topo_graph_map[topo_name]
+        topo_dist = self.get_topo_dist(topo_graph=topo_graph)
+        topo_edges = tuple(self.topo_edge_map[topo_name])
         circ = Circuit(qubit_num)
 
         success = False
@@ -293,5 +331,16 @@ class DataFactory:
         edge_index = self.get_circ_edge_index(
             layered_circ=layered_circ,
             topo_graph=topo_graph,
+            logic2phy=cur_mapping,
         )
-        return layered_circ, topo_name, x, edge_index, cur_mapping
+        return (
+            layered_circ,
+            topo,
+            self.topo_mask_map[topo_name],
+            topo_graph,
+            topo_dist,
+            topo_edges,
+            x,
+            edge_index,
+            cur_mapping,
+        )
