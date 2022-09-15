@@ -23,8 +23,8 @@ class Grover:
     Quantum Computation and Quantum Information - Michael A. Nielsen & Isaac L. Chuang
     """
 
-    def __init__(self) -> None:
-        pass
+    def __init__(self, simulator) -> None:
+        self.simulator = simulator
 
     def circuit(self, n, n_ancilla, oracle, n_solution=1, measure=True):
         """ grover search for f with custom oracle
@@ -80,7 +80,8 @@ class Grover:
         )
         return circuit
 
-    def run(self, n, n_ancilla, oracle, n_solution=1, measure=True, simulator=CircuitSimulator()):
+    def run(self, n, n_ancilla, oracle, n_solution=1, measure=True):
+        simulator = self.simulator
         index_q = list(range(n))
         circuit = self.circuit(n, n_ancilla, oracle, n_solution, measure)
         simulator.run(circuit)

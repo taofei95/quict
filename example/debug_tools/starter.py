@@ -1,6 +1,6 @@
 # exec(open("build/starter.py").read())
-from QuICT.simulation.cpu_simulator.cpu import CircuitSimulator
-from QuICT.simulation.gpu_simulator import ConstantStateVectorSimulator
+from QuICT.simulation.state_vector.cpu_simulator import CircuitSimulator
+from QuICT.simulation.state_vector.gpu_simulator import ConstantStateVectorSimulator
 from QuICT.core import Circuit, circuit
 from QuICT.core.gate import *
 import QuICT

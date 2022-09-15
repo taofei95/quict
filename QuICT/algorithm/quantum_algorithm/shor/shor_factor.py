@@ -40,7 +40,7 @@ class ShorFactor:
     }
 
     # add a, N here
-    def __init__(self, mode: str, eps: float = 1 / 10, max_rd: int = 2) -> None:
+    def __init__(self, mode: str, eps: float = 1 / 10, max_rd: int = 2, simulator=CircuitSimulator()) -> None:
         if mode not in ShorFactor._ALLOWED_MODES:
             raise ValueError(
                 f"{mode} mode is not valid. Consider {ShorFactor._ALLOWED_MODES}"
@@ -49,6 +49,7 @@ class ShorFactor:
         self.mode = mode
         self.eps = eps
         self.max_rd = max_rd
+        self.simulator = simulator
         self._previous_N = None
 
     def circuit(self, N: int) -> Tuple[Circuit, List[int]]:
@@ -75,8 +76,7 @@ class ShorFactor:
         N,
         circuit: Circuit = None,
         indices: List = None,
-        forced_quantum_approach=False,
-        simulator=CircuitSimulator()
+        forced_quantum_approach=False
     ) -> int:
         """run full factoring algorithm.
 
@@ -90,6 +90,7 @@ class ShorFactor:
         Returns:
             int: the factor
         """
+        simulator = self.simulator
         # check if input is prime (using MillerRabin in klog(N), k is the number of rounds to run MillerRabin)
         if miller_rabin(N):
             logging.info("N does not pass miller rabin test, may be a prime number")
@@ -144,11 +145,11 @@ class ShorFactor:
                 )
             else:
                 simulator.run(circuit)
-                if len(indices) > 0 and type(indices[0]) == int:
+                if len(indices) > 0 and self.mode in {"BEA", "HRS"}:
                     phi = int(circuit[indices]) / (1 << len(indices))
-                elif len(indices) > 0 and type(indices[0]) == Trigger:
+                elif len(indices) > 0 and self.mode in {"BEA_zip", "HRS_zip"}:
                     phi = eval(
-                        "0b" + "".join([str(trig.measured[0]) for trig in indices])
+                        "0b" + "".join([str(circuit[indices[0]].historical_measured[idx]) for idx in indices[1:]])
                     ) / (1 << len(indices))
                 else:
                     raise ValueError("wrong indices")

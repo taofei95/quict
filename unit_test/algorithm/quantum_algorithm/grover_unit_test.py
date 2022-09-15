@@ -54,14 +54,14 @@ class TestGrover(unittest.TestCase):
         print("The Grover unit test finished!")
 
     def test_grover_on_ConstantStateVectorSimulator(self):
-        for n in range(3, 9):
+        for n in range(3, 7):
             error = 0
             N = 2 ** n
             for target in range(0, N):
                 f = [target]
                 k, oracle = main_oracle(n, f)
-                grover = Grover()
-                result = grover.run(n, k, oracle, simulator=TestGrover.simulator)
+                grover = Grover(simulator=TestGrover.simulator)
+                result = grover.run(n, k, oracle)
                 if target != result:
                     error += 1
                     print("For n = %d, target = %d, found = %d" % (n, target, result))
@@ -76,15 +76,15 @@ class TestGrover(unittest.TestCase):
 
     def test_partial_grover_on_ConstantStateVectorSimulator(self):
         n_block = 3
-        for n in range(5, 9):
+        for n in range(5, 8):
             print("run with n = ", n)
             error = 0
             N = 2 ** n
             for target in range(0, N):
                 f = [target]
                 k, oracle = main_oracle(n, f)
-                result = PartialGrover().run(
-                    n, n_block, k, oracle, simulator=ConstantStateVectorSimulator()
+                result = PartialGrover(simulator=TestGrover.simulator).run(
+                    n, n_block, k, oracle
                 )
                 if (target >> (n - k)) != (result >> (n - k)):
                     error += 1
