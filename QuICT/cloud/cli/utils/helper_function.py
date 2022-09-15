@@ -109,3 +109,15 @@ def name_validation(func):
         return func(self, *args, **kwargs)
 
     return wraps
+
+
+class DottableDict(dict):
+    def __init__(self, *args, **kwargs):
+        dict.__init__(self, *args, **kwargs)
+        self.__dict__ = self
+
+    def assignment(self, pid, type, status, output_path):
+        self.pid = pid
+        self.type = type
+        self.status = status
+        self.output_path = output_path

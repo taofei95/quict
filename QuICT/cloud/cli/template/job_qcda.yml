@@ -5,14 +5,14 @@ circuit: /path/to/circuit/qasm      # The path of circuit's qasm file
 qcda:
   synthesis:
     enable: True                    # enable synthesis or not
-    instruction_set: None           # The specified instruction set
+    instruction_set: None           # The specified instruction set [USTC, Google, IonQ, IBMQ]
   optimization:
     enable: True                    # Enable optimization or not
     mode: auto                      # Optimization mode, one of [auto, customized]
-    template_matching: False        # enable template matching or not
-    commutative_opt: False          # enable communication optimization or not
-    CNOT: False                     # enable optimization for CNOT circuit or not
-    Clifford: False                 # enable optimization for Clifford circuit or not
+    # template_matching: False        # enable template matching or not
+    # commutative_opt: False          # enable communication optimization or not
+    # CNOT: False                     # enable optimization for CNOT circuit or not
+    # Clifford: False                 # enable optimization for Clifford circuit or not
   mapping:
     enable: True                    # Enable mapping or not
     basic_type: line                # The common topology, one of [line/grid/customized]

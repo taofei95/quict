@@ -36,6 +36,7 @@ class Simulator:
         backend: str = None,
         shots: int = 1,
         precision: str = "double",
+        output_path: str = None,
         circuit_record: bool = False,
         amplitude_record: bool = True,
         **options
@@ -55,6 +56,7 @@ class Simulator:
             raise KeyError(f"Unmatched options arguments depending on {self._device} and {self._backend}.")
 
         # Result's arguments
+        self._output_path = output_path
         self._circuit_record = circuit_record
         self._amplitude_record = amplitude_record
 
@@ -103,7 +105,7 @@ class Simulator:
             self._backend = "state_vector"
 
         circuit_name = circuit.name if isinstance(circuit, Circuit) else ""
-        result = Result(circuit_name, self._device, self._backend, self._shots, self._options)
+        result = Result(circuit_name, self._device, self._backend, self._shots, self._options, self._output_path)
         if self._circuit_record and circuit is not None:
             result.record_circuit(circuit)
 

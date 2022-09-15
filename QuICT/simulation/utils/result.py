@@ -1,3 +1,4 @@
+from builtins import dict
 import os
 import numpy as np
 
@@ -16,7 +17,8 @@ class Result:
         device: str,
         backend: str,
         shots: int,
-        options: dict
+        options: dict,
+        output_path: str = None
     ):
         self.id = circuit_id
         self.device = device
@@ -28,7 +30,7 @@ class Result:
         self.density_matrix = None
 
         # prepare output path
-        self.output_path = self._prepare_output_file()
+        self.output_path = self._prepare_output_file(output_path)
 
     def __str__(self):
         return f"ID: {self.id}\nDevice: {self.device}\nBackend: {self.backend}\nShots: {self.shots}\n" + \
@@ -50,10 +52,11 @@ class Result:
             }
         }
 
-    def _prepare_output_file(self):
+    def _prepare_output_file(self, output_path: str):
         """ Prepare output path. """
-        curr_path = os.getcwd()
-        output_path = os.path.join(curr_path, "output", self.id)
+        if output_path is None:
+            curr_path = os.getcwd()
+            output_path = os.path.join(curr_path, "output", self.id)
 
         if not os.path.exists(output_path):
             os.makedirs(output_path)
@@ -72,7 +75,7 @@ class Result:
             self.counts[bit_idx] = result[i]
 
         with open(f"{self.output_path}/result.log", "w") as of:
-            of.write(str(self.__dict__))
+            of.write(str(self.counts))
 
     def record_circuit(self, circuit):
         """ dump the circuit. """

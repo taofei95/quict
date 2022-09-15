@@ -1,20 +1,23 @@
 import os
 import psutil
-import time
 from collections import defaultdict, namedtuple
 import multiprocessing as mp
 
 from QuICT.core import Circuit
 from QuICT.simulation import Simulator
 from QuICT.tools.interface import OPENQASMInterface
-from QuICT.cloud.cli.utils.helper_function import name_validation
-
-
-JOBINFO = namedtuple('JOBINFO', 'pid type status output_path')
+from QuICT.cloud.cli.utils.helper_function import name_validation, DottableDict
 
 
 def simulation_start(circuit: Circuit, simualtor_options: dict, output_path: str):
-    pass
+    simulator = Simulator(
+        device=simualtor_options['resource']['device'],
+        backend=simualtor_options['backend'],
+        shots=simualtor_options['shots'],
+        precision=simualtor_options['precision'],
+        output_path=output_path
+    )
+    simulator.run(circuit)
 
 
 def qcda_start(circuit: Circuit, qcda_options: dict, output_path: str):
@@ -23,7 +26,7 @@ def qcda_start(circuit: Circuit, qcda_options: dict, output_path: str):
 
 class QuICTLocalJobManager:
     def __init__(self):
-        self._job_queue = defaultdict(dict)
+        self._job_queue = defaultdict()
 
     def start_job(self, yml_dict: dict):
         # Check job name
@@ -37,7 +40,10 @@ class QuICTLocalJobManager:
 
         # Create Job in job_queue
         job_type = yml_dict['type']
-        job_info = JOBINFO(0, job_type, 'initialing', yml_dict['output_path'])
+        job_info = DottableDict()
+        job_info.assignment(
+            0, job_type, 'initial', yml_dict['output_path']
+        )
         self._job_queue[name] = job_info
 
         # Start job by its purpose
@@ -50,7 +56,7 @@ class QuICTLocalJobManager:
         circuit: Circuit,
         options: dict
     ):
-        job_info: JOBINFO = self._job_queue[name]
+        job_info = self._job_queue[name]
         output_path = job_info.output_path
 
         # Start process for current job
@@ -64,7 +70,7 @@ class QuICTLocalJobManager:
         job_info.status = 'running'
 
     def _update_job_status(self, name: str):
-        job_info: JOBINFO = self._job_queue[name]
+        job_info = self._job_queue[name]
         job_pid = job_info.pid
         try:
             job_process = psutil.Process(job_pid)
