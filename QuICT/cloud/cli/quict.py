@@ -1,3 +1,5 @@
+#!/home/likaiqi/.conda/envs/env_kq/bin/python
+
 from argparse import ArgumentParser, Namespace, RawTextHelpFormatter
 from copy import deepcopy
 
@@ -51,13 +53,21 @@ def cli_construct():
     )
     circuit_cli_construct(circuit_sp)
 
-    # Job
-    job_sp = subparsers.add_parser(
-        name="job",
-        description="QuICT Jobs related.",
-        help="QuICT job's related tools."
+    # Local Mode's Job
+    local_sp = subparsers.add_parser(
+        name="local",
+        description="QuICT Local Modes Jobs.",
+        help="QuICT job's management in Local Mode."
     )
-    job_cli_construct(job_sp)
+    job_cli_construct(local_sp, mode="local")
+
+    # Local Mode's Job
+    remote_sp = subparsers.add_parser(
+        name="remote",
+        description="QuICT Remote Modes Jobs.",
+        help="QuICT job's management in Remote Mode."
+    )
+    job_cli_construct(remote_sp, mode="remote")
 
     # Cluster
     cluster_sp = subparsers.add_parser(
@@ -105,12 +115,12 @@ def circuit_cli_construct(circuit_sp: ArgumentParser):
     )
     get_random.add_argument(
         "-q", "--qubits",
-        nargs="+", type=int, default=5,
+        nargs="+", type=int, default=[5],
         help="The number of qubits' number."
     )
     get_random.add_argument(
         "-s", "--size",
-        nargs="+", type=int, default=25,
+        nargs="+", type=int, default=[25],
         help="The number of quantum gates."
     )
     get_random.add_argument(
@@ -119,8 +129,8 @@ def circuit_cli_construct(circuit_sp: ArgumentParser):
         help="The number of quantum gates."
     )
     get_random.add_argument(
-        "-o", "--output",
-        nargs="?", default=".", dest="output_path",
+        "output_path",
+        nargs="?", default=".",
         help="The output path, default to be current path."
     )
     get_random.set_defaults(func=get_random_circuit)
@@ -132,7 +142,7 @@ def circuit_cli_construct(circuit_sp: ArgumentParser):
         help="get quantum algorithm's circuit"
     )
     get_algorithm.add_argument(
-        "-a", "--alg",
+        "alg", nargs="?",
         choices=["QFT", "Grover", "Shor", "VQE"], default="QFT",
         help="The quantum algorithm."
     )
@@ -142,8 +152,8 @@ def circuit_cli_construct(circuit_sp: ArgumentParser):
         help="The number of qubits' number."
     )
     get_algorithm.add_argument(
-        "-o", "--output",
-        nargs="?", default=".", dest="output_path",
+        "output_path",
+        nargs="?", default=".",
         help="The output path, default to be current path."
     )
     get_algorithm.set_defaults(func=get_algorithm_circuit)
@@ -155,12 +165,11 @@ def circuit_cli_construct(circuit_sp: ArgumentParser):
         help="store quantum circuit qasm"
     )
     add.add_argument(
-        "-n", "--name",
-        type=str,
+        "name", type=str,
         help="The name of quantum circuit."
     )
     add.add_argument(
-        "-f", "--file",
+        "file", nargs="?",
         type=str, default=".",
         help="The path of qasm file."
     )
@@ -173,8 +182,7 @@ def circuit_cli_construct(circuit_sp: ArgumentParser):
         help="delete quantum circuit"
     )
     delete.add_argument(
-        "-n", "--name",
-        type=str,
+        "name", type=str,
         help="The name of quantum circuit."
     )
     delete.set_defaults(func=delete_quantum_circuit)
@@ -188,9 +196,23 @@ def circuit_cli_construct(circuit_sp: ArgumentParser):
     list_cir.set_defaults(func=list_quantum_circuit)
 
 
-def job_cli_construct(job_sp: ArgumentParser):
-    from QuICT.cloud.cli.utils import (
-        start_job, stop_job, restart_job, delete_job, status_job, list_jobs, get_template
+def job_cli_construct(mode_sp: ArgumentParser, mode: str):
+    from QuICT.cloud.cli.utils import get_template
+
+    if mode == "local":
+        from QuICT.cloud.cli.utils import (
+            start_job, stop_job, restart_job, delete_job, status_job, list_jobs
+        )
+    elif mode == "remote":
+        from QuICT.cloud.client.remote.job import (
+            start_job, stop_job, restart_job, delete_job, status_job, list_jobs
+        )
+
+    mode_subparser = mode_sp.add_subparsers()
+    job_sp = mode_subparser.add_parser(
+        name="job",
+        description="QuICT Jobs Management.",
+        help="QuICT job's related tools."
     )
 
     # quict job get_template
@@ -206,8 +228,7 @@ def job_cli_construct(job_sp: ArgumentParser):
         help="Get the template about simulation jobs or QCDA jobs."
     )
     get_templates.add_argument(
-        "-o", "--output",
-        nargs="?", default=".", dest="output_path",
+        "output_path", nargs="?", default=".",
         help="The output path, default to be current path."
     )
     get_templates.set_defaults(func=get_template)
@@ -219,13 +240,7 @@ def job_cli_construct(job_sp: ArgumentParser):
         help="start the job."
     )
     start.add_argument(
-        "-m", "--mode",
-        choices=["local", "remote"], default="local", dest="mode",
-        help="Run current job in local environment or remote environment."
-    )
-    start.add_argument(
-        "-f", "--file",
-        type=str, dest="file",
+        "file", type=str,
         help="The path of jobs file, could be a directory or some file path.",
     )
     start.set_defaults(func=start_job)
@@ -237,13 +252,7 @@ def job_cli_construct(job_sp: ArgumentParser):
         help="check the job."
     )
     status.add_argument(
-        "-m", "--mode",
-        choices=["local", "remote"], default="local", dest="mode",
-        help="Run current job in local environment or remote environment."
-    )
-    status.add_argument(
-        "-n", "--name",
-        type=str, dest="name",
+        "name", type=str,
         help="The name of target job."
     )
     status.set_defaults(func=status_job)
@@ -255,13 +264,7 @@ def job_cli_construct(job_sp: ArgumentParser):
         help="stop a job."
     )
     stop.add_argument(
-        "-m", "--mode",
-        choices=["local", "remote"], default="local", dest="mode",
-        help="Run current job in local environment or remote environment."
-    )
-    stop.add_argument(
-        "-n", "--name",
-        type=str, dest="name",
+        "name", type=str,
         help="The name of target job."
     )
     stop.set_defaults(func=stop_job)
@@ -273,13 +276,7 @@ def job_cli_construct(job_sp: ArgumentParser):
         help="restart the job."
     )
     restart.add_argument(
-        "-m", "--mode",
-        choices=["local", "remote"], default="local", dest="mode",
-        help="Run current job in local environment or remote environment."
-    )
-    restart.add_argument(
-        "-n", "--name",
-        type=str, dest="name",
+        "name", type=str,
         help="The name of target job."
     )
     restart.set_defaults(func=restart_job)
@@ -291,13 +288,7 @@ def job_cli_construct(job_sp: ArgumentParser):
         help="delete the job."
     )
     delete.add_argument(
-        "-m", "--mode",
-        choices=["local", "remote"], default="local", dest="mode",
-        help="Run current job in local environment or remote environment."
-    )
-    delete.add_argument(
-        "-n", "--name",
-        type=str, dest="name",
+        "name", type=str,
         help="The name of target job."
     )
     delete.set_defaults(func=delete_job)
@@ -307,11 +298,6 @@ def job_cli_construct(job_sp: ArgumentParser):
         name="list",
         description="list the job.",
         help="list the job."
-    )
-    list_job.add_argument(
-        "-m", "--mode",
-        choices=["local", "remote"], default="local", dest="mode",
-        help="Run current job in local environment or remote environment."
     )
     list_job.set_defaults(func=list_jobs)
 
@@ -338,9 +324,9 @@ def env_cli_construct(env_sp: ArgumentParser):
         help="build dockers",
     )
     build.add_argument(
-        "-p", "--path",
+        "path",
         type=str,
-        help="The path of Docker build file."
+        help="The path of docker-build file."
     )
 
     # quict env deploy
@@ -350,7 +336,7 @@ def env_cli_construct(env_sp: ArgumentParser):
         help="deploy the docker into cluster",
     )
     deploy.add_argument(
-        "-n", "--name",
+        "name",
         type=str,
         help="The docker's name."
     )
@@ -379,7 +365,7 @@ def env_cli_construct(env_sp: ArgumentParser):
         help="Delete docker environment."
     )
     delete.add_argument(
-        "-n", "--name",
+        "name",
         type=str,
         help="The docker's name which to delete."
     )
@@ -402,9 +388,8 @@ def benchmark_cli_construct(benchmark_sp: ArgumentParser):
         help="Using given instruction set to do QCDA benchmark."
     )
     qcda.add_argument(
-        "-m", "--mapping",
-        action="store_true",
-        help="show QCDA's mapping benchmark or not."
+        "-t", "--topology", nargs='?',
+        help="the file which contains the topology."
     )
     qcda.set_defaults(func=get_benchmark_qcda)
 
@@ -415,7 +400,7 @@ def benchmark_cli_construct(benchmark_sp: ArgumentParser):
         help="show the benchmarks about Simulation."
     )
     simulation.add_argument(
-        "-d", "--device", nargs="?",
+        "device", nargs="?",
         choices=["CPU", "GPU"], default="CPU",
         help="Select CPU/GPU in simulation."
     )

@@ -129,4 +129,7 @@ class QuICTLocalJobManager:
             if job_info.status not in ["finish", "stop"]:
                 self._update_job_status(name)
 
+        # Display job queue
+        print(self._job_queue)
+
         return self._job_queue

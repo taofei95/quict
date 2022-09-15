@@ -6,7 +6,6 @@ from .helper_function import path_check, yaml_decompostion
 
 # Local Controller
 local_job_manager = QuICTLocalJobManager()
-# Remote Controller
 
 
 @path_check
@@ -26,55 +25,25 @@ def get_template(type: str, output_path: str):
 
 
 @yaml_decompostion
-def start_job(file: dict, mode: str):
-    if mode == "local":
-        return local_job_manager.start_job(file)
-    elif mode == "remote":
-        pass
-    else:
-        raise KeyError(f"unrecognized mode {mode} in CLI, please use [local, remote].")
+def start_job(file: dict):
+    return local_job_manager.start_job(file)
 
 
-def stop_job(name: str, mode: str):
-    if mode == "local":
-        return local_job_manager.stop_job(name)
-    elif mode == "remote":
-        pass
-    else:
-        raise KeyError(f"unrecognized mode {mode} in CLI, please use [local, remote].")
+def stop_job(name: str):
+    return local_job_manager.stop_job(name)
 
 
-def restart_job(name: str, mode: str):
-    if mode == "local":
-        return local_job_manager.restart_job(name)
-    elif mode == "remote":
-        pass
-    else:
-        raise KeyError(f"unrecognized mode {mode} in CLI, please use [local, remote].")
+def restart_job(name: str):
+    return local_job_manager.restart_job(name)
 
 
-def delete_job(name: str, mode: str):
-    if mode == "local":
-        return local_job_manager.delete_job(name)
-    elif mode == "remote":
-        pass
-    else:
-        raise KeyError(f"unrecognized mode {mode} in CLI, please use [local, remote].")
+def delete_job(name: str):
+    return local_job_manager.delete_job(name)
 
 
-def status_job(name: str, mode: str):
-    if mode == "local":
-        return local_job_manager.status_job(name)
-    elif mode == "remote":
-        pass
-    else:
-        raise KeyError(f"unrecognized mode {mode} in CLI, please use [local, remote].")
+def status_job(name: str):
+    return local_job_manager.status_job(name)
 
 
-def list_jobs(mode: str):
-    if mode == "local":
-        return local_job_manager.list_job()
-    elif mode == "remote":
-        pass
-    else:
-        raise KeyError(f"unrecognized mode {mode} in CLI, please use [local, remote].")
+def list_jobs():
+    return local_job_manager.list_job()

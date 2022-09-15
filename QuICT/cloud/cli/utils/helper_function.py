@@ -18,7 +18,7 @@ def _job_validation(job_dict: dict):
     name = job_dict["name"]
     assert isinstance(name, str), f"Job's name shoule be a string, not {type(name)}."
     _type = job_dict["type"]
-    assert _type in ["qacd", "simulation"], f"Job's type should be one of [qcda, simulation], not {_type}."
+    assert _type in ["qcda", "simulation"], f"Job's type should be one of [qcda, simulation], not {_type}."
 
     # circuit's qasm file validation
     circuit = job_dict["circuit"]
