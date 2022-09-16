@@ -25,8 +25,8 @@ from typing import List, Tuple
 # from QuICT.simulation.cpu_simulator import CircuitSimulator
 from QuICT.qcda.synthesis.mct import one_dirty_aux
 from QuICT.qcda.synthesis.mct.mct_linear_simulation import half_dirty_aux
-from QuICT.qcda.optimization.commutative_optimization import *
-#from QuICT.qcda.optimization._optimization import Optimization
+from QuICT.qcda.optimization.commutative_optimization import CommutativeOptimization
+
 
 class CNFSATOracle:
      
@@ -60,22 +60,20 @@ class CNFSATOracle:
         target = variable_nunmber
         if clause_number==1:
             #n= variable_nunmber + Aux + 1
-            controls = CNF_data[1]
+            controls = CNF_data[0]
             controls_abs=[]
             controls_X=[]
             
             current_Aux = target + 1
             for i in range(len(controls)):
                 if controls[i] < 0:
+                    controls_X.append(-controls[i]-1)
                     controls_abs.append(-controls[i]-1)
                 if controls[i] > 0:
                     controls_abs.append(controls[i]-1)
-                    controls_X.append(controls[i]-1)
             for i in range(len(controls_X)):
                 X | self._cgate(controls_X[i])
-            X | self._cgate(target)
-            one_dirty_aux(self._cgate, controls_abs, target, ancilla_qubits_num) #QuICT.qcda.synthesis.mct.
-            X | self._cgate(target)
+            one_dirty_aux(self._cgate, controls_abs, target, current_Aux) #QuICT.qcda.synthesis.mct.
             for i in range(len(controls_X)):
                 X | self._cgate(controls_X[i])
         else:
@@ -144,15 +142,15 @@ class CNFSATOracle:
             controls_X=[]
             for i in range(len(controls)):
                 if controls[i] < 0:
+                    controls_X.append(-controls[i]-1)
                     controls_abs.append(-controls[i]-1)
                 if controls[i] > 0:
                     controls_abs.append(controls[i]-1)
-                    controls_X.append(controls[i]-1)
+            
             for i in range(len(controls_X)):
                 X | self._cgate(controls_X[i])
-            X | self._cgate(target)
+            
             one_dirty_aux(self._cgate, controls_abs, target, current_Aux)
-            X | self._cgate(target)
             for i in range(len(controls_X)):
                 X | self._cgate(controls_X[i])
         else: 
@@ -379,11 +377,7 @@ if __name__=="__main__":
     cnf.run("./1.cnf") 
     #./QuICT/algorithm/quantum_algorithm/CNF/
     cgate = cnf.circuit()
-    
-    #print(cgate.qasm())
-    circuit_temp=Circuit(15)
-    circuit_temp.extend(cgate)
-    circuit_temp.draw(filename='1.jpg')
+    print(cgate.qasm())
 
 
 # python QuICT/algorithm/qm/cnf/cnf.py """
