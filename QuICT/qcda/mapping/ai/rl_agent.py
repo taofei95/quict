@@ -1,7 +1,7 @@
 import copy
 import math
 from random import choice, random
-from typing import List, Set, Tuple, Union
+from typing import Dict, List, Set, Tuple, Union
 
 import networkx as nx
 import numpy as np
@@ -16,7 +16,7 @@ from QuICT.qcda.mapping.ai.gnn_mapping import GnnMapping
 class State:
     def __init__(
         self,
-        layered_circ: List[Set[Tuple[int, int]]],
+        layered_circ: List[Dict[Tuple[int, int], BasicGate]],
         topo: Layout,
         topo_mask: torch.Tensor,
         topo_graph: nx.Graph,
@@ -69,6 +69,7 @@ class Agent:
         epsilon_start: float = 0.9,
         epsilon_end: float = 0.05,
         epsilon_decay: float = 100.0,
+        reward_scale: float = 100.0,
     ) -> None:
         # Copy values in.
         self._max_qubit_num = max_qubit_num
@@ -77,6 +78,7 @@ class Agent:
         self._epsilon_start = epsilon_start
         self._epsilon_end = epsilon_end
         self._epsilon_decay = epsilon_decay
+        self.reward_scale = reward_scale
 
         # Exploration related.
         self.explore_step = 0
@@ -148,13 +150,18 @@ class Agent:
             )
 
     def first_layer_dist_sum(
-        self, layered_circ: List[Set[Tuple[int, int]]], topo_dist: np.ndarray
+        self,
+        layered_circ: List[Dict[Tuple[int, int], BasicGate]],
+        topo_dist: np.ndarray,
+        logic2phy: List[int],
     ) -> float:
         s = 0.0
         if len(layered_circ) == 0:
             return s
-        for u, v in layered_circ[0]:
-            s += topo_dist[u][v]
+        for u, v in layered_circ[0].keys():
+            _u = logic2phy[u]
+            _v = logic2phy[v]
+            s += topo_dist[_u][_v]
         s /= 2
         return s
 
@@ -165,7 +172,7 @@ class Agent:
         return num
 
     def take_action(
-        self, action: Tuple[int, int], logical_circ: CircuitBased = None
+        self, action: Tuple[int, int], construct_gate: bool = False
     ) -> Tuple[State, Union[State, None], float, bool]:
         """Take given action on trainer's state.
 
@@ -180,14 +187,14 @@ class Agent:
         self.explore_step += 1
         u, v = action
         graph = self.state.topo_graph
-        scale = 1.0
+        scale = self.reward_scale
         if not graph.has_edge(u, v):
-            reward = 0.0
+            reward = -scale
             next_state = None
             prev_state = self.state
             return prev_state, next_state, reward, True
 
-        if logical_circ is not None:
+        if construct_gate:
             with self.mapped_circ:
                 Swap & [u, v]
 
@@ -203,20 +210,32 @@ class Agent:
         next_layered_circ = copy.deepcopy(self.state.layered_circ)
         topo_dist = self.state.topo_dist
         remove_layer_num = 0
-        reward = 0.0
+        q = self.state.topo.qubit_number
+        bias = (
+            self.first_layer_dist_sum(
+                layered_circ=self.state.layered_circ,
+                topo_dist=topo_dist,
+                logic2phy=self.state.logic2phy,
+            )
+            - self.first_layer_dist_sum(
+                layered_circ=next_layered_circ,
+                topo_dist=topo_dist,
+                logic2phy=next_logic2phy,
+            )
+        ) / q
+        reward = bias * scale
         for layer in next_layered_circ:
             for x, y in copy.copy(layer):
                 _x = next_logic2phy[x]
                 _y = next_logic2phy[y]
                 if topo_dist[_x][_y] == 1:
-                    layer.remove((x, y))
+                    gate = layer.pop((x, y))
                     reward += scale / 2
-
-                    if logical_circ is not None:
-                        gate: BasicGate = logical_circ.gates.pop(0)
+                    if construct_gate:
                         a, b = gate.cargs + gate.targs
                         with self.mapped_circ:
                             gate & [next_logic2phy[a], next_logic2phy[b]]
+                    
 
             if len(layer) > 0:
                 break
@@ -278,6 +297,8 @@ class Agent:
         Returns:
             CompositeGate: Mapped circuit.
         """
+        circ_cpy = copy.deepcopy(circ)
+        circ = circ_cpy
         cur_mapping = [i for i in range(self._max_qubit_num)]
         layered_circ, _ = self.factory.get_layered_circ(circ=circ)
         topo_graph = self.factory.get_topo_graph(topo=layout)
@@ -311,8 +332,9 @@ class Agent:
                     policy_net=policy_net,
                     policy_net_device=policy_net_device,
                 )
-                _, _, _, terminated = self.take_action(action=action, logical_circ=circ)
+                _, _, _, terminated = self.take_action(action=action, construct_gate=circ)
                 step += 1
                 if cutoff is not None and step >= cutoff:
                     break
+            self.explore_step -= step
             return self.mapped_circ

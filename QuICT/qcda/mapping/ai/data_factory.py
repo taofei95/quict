@@ -8,9 +8,10 @@ import numpy as np
 import torch
 from numba import njit
 from QuICT.core import *
-from QuICT.core.gate import BasicGate, GateType
+from QuICT.core.gate import BasicGate, GateType, CompositeGate
 from QuICT.core.layout import LayoutEdge
 from QuICT.core.utils import CircuitBased
+from __future__ import annotations
 
 
 @njit
@@ -26,6 +27,21 @@ def _floyd(n: int, dist: np.ndarray, _inf: int) -> np.ndarray:
             if dist[i][j] >= _inf:
                 dist[i][j] = 0
     return dist
+
+
+# class GateLayer(CompositeGate):
+#     def __init__(self, max_qubit: int, idx: int) -> None:
+#         super().__init__()
+#         self.idx = idx
+#         self._max_qubit = max_qubit
+#         self.prev = [None for _ in range(max_qubit)]
+#         self.next = [None for _ in range(max_qubit)]
+
+#     def append(self, gate: BasicGate, prev: Dict[int, GateLayer]):
+#         super().append(gate)
+#         for idx, layer in prev.items():
+#             self.prev[idx] = layer
+#             layer.next[idx] = self
 
 
 class DataFactory:
@@ -201,17 +217,17 @@ class DataFactory:
 
     def get_layered_circ(
         self, circ: CircuitBased
-    ) -> Tuple[List[Set[Tuple[int, int]]], bool]:
+    ) -> Tuple[List[Dict[Tuple[int, int], BasicGate]], bool]:
         """Get all 2-bit gate pairs by layers.
 
         Args:
             circ (CircuitBased): Input circuit.
 
         Returns:
-            Tuple[List[Set[Tuple[int, int]]], bool]:
-                List of layers, and a success flag. A layer is a set of pairs.
+            Tuple[List[Dict[Tuple[int, int], BasicGate]], bool]:
+                List of layers, and a success flag. A layer is a map from qubit-pair to quantum gate.
         """
-        layers_raw: List[Set[Tuple[int, int]]] = []
+        layers_raw: List[Dict[Tuple[int, int], BasicGate]] = []
         occupied = [-1 for _ in range(self._max_qubit_num)]
         flag = True
         for gate in circ.gates:
@@ -224,8 +240,8 @@ class DataFactory:
                 flag = False
             while idx >= len(layers_raw):
                 layers_raw.append(set())
-            layers_raw[idx].add((a, b))
-            layers_raw[idx].add((b, a))
+            layers_raw[idx][(a, b)] = gate
+            layers_raw[idx][(b, a)] = gate
             occupied[a] = idx
             occupied[b] = idx
         return layers_raw, flag
@@ -235,7 +251,7 @@ class DataFactory:
 
     def get_circ_edge_index(
         self,
-        layered_circ: List[Set[Tuple[int, int]]],
+        layered_circ: List[Dict[Tuple[int, int], BasicGate]],
         topo_graph: nx.Graph,
         logic2phy: List[int],
     ) -> torch.IntTensor:
@@ -243,7 +259,7 @@ class DataFactory:
         to gather information and fuse topology.
 
         Args:
-            layered_circ (List[Set[Tuple[int, int]]]): Layered circuit representation after remapped by current mapping.
+            layered_circ (List[Dict[Tuple[int, int], BasicGate]]): Layered circuit representation after remapped by current mapping.
             topo_graph (nx.Graph): Topology graph.
             logic2phy (List[int]): Current logical to physical mapping.
 
@@ -265,7 +281,7 @@ class DataFactory:
                 # Directed edge from previous layer to current layer?
                 edge_index.append((_b - q, _b))
                 edge_index.append((_b, _b - q))
-            for u, v in layer:
+            for u, v in layer.keys():
                 _u = logic2phy[u] + offset
                 _v = logic2phy[v] + offset
                 edge_index.append((_u, _v))

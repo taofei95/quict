@@ -1,8 +1,9 @@
 import os
 import os.path as osp
-from collections import deque
-from random import sample
 import re
+from collections import deque
+from math import log
+from random import sample
 from time import time
 from typing import List, Tuple, Union
 
@@ -10,14 +11,13 @@ import numpy as np
 import torch
 import torch.nn as nn
 import torch.optim as optim
-from matplotlib import pyplot as plt
+from QuICT.core import *
 from QuICT.qcda.mapping.ai.gnn_mapping import GnnMapping
 from QuICT.qcda.mapping.ai.rl_agent import Agent, Transition
+from QuICT.tools.interface.qasm_interface import OPENQASMInterface
 from torch.utils.tensorboard import SummaryWriter
 from torch_geometric.data import Batch as PygBatch
 from torch_geometric.data import Data as PygData
-from QuICT.core import *
-from QuICT.tools.interface.qasm_interface import OPENQASMInterface
 
 
 class ReplayMemory:
@@ -89,18 +89,20 @@ class Trainer:
             max_layer_num=max_layer_num,
             feat_dim=inner_feat_dim,
         ).to(device=device)
+        self._policy_net.train(True)
         self._target_net = GnnMapping(
             max_qubit_num=max_qubit_num,
             max_layer_num=max_layer_num,
             feat_dim=inner_feat_dim,
         ).to(device=device)
+        self._target_net.train(False)
 
         # Guarantee they two have the same parameter values.
         self._target_net.load_state_dict(self._policy_net.state_dict())
 
         # Loss function & optimizer
         self._smooth_l1 = nn.SmoothL1Loss()
-        self._optimizer = optim.RMSprop(self._policy_net.parameters(), lr=0.001)
+        self._optimizer = optim.RMSprop(self._policy_net.parameters(), lr=0.008)
 
         # Prepare path to save model files during training
         print("Preparing model saving directory...")
@@ -151,26 +153,25 @@ class Trainer:
         Returns:
             Tuple[int, int]: Total swap gate inserted by current model, and by MCTS.
         """
-        self._policy_net.train(False)
+        self._target_net.train(False)
         model_num = 0
         for v_datum in self._v_data:
             cutoff = len(v_datum.circ.gates) * v_datum.circ.width()
-            logic_cnt = len(v_datum.circ.gates)
+            self._agent.mapped_circ.clean()
             result_circ = self._agent.map_all(
                 circ=v_datum.circ,
                 layout=v_datum.topo,
-                policy_net=self._policy_net,
+                policy_net=self._target_net,
                 policy_net_device=self._device,
                 cutoff=cutoff,
             )
-            model_num += len(result_circ.gates) - logic_cnt
+            model_num += len(result_circ.gates) - len(v_datum.circ.gates)
 
         if self._mcts_num == -1:
             mcts_num = 0
             for v_datum in self._v_data:
                 mcts_num += len(v_datum.mapped_circ.gates) - len(v_datum.circ.gates)
             self._mcts_num = mcts_num
-        self._policy_net.train(True)
         return model_num, self._mcts_num
 
     def _optimize_model(self) -> Union[None, float]:
@@ -237,6 +238,7 @@ class Trainer:
         loss_2 = self._smooth_l1(attn_mat.view(b, q, q) * mask, zeros) * 0.005
 
         loss = loss_1 + loss_2
+        # loss = loss_1
 
         self._optimizer.zero_grad()
         loss.backward()
@@ -323,14 +325,15 @@ class Trainer:
                 layer_num = len(self._agent.state.layered_circ)
                 gate_num = self._agent.count_gate_num()
                 print(
-                    f"    [{i+1}] loss: {running_loss:0.4f}, average reward: {running_reward:0.4f}, #gate: {gate_num}, #layer: {layer_num}, explore rate: {rate:0.2f} action/s"
+                    f"    [{i+1:<4}] loss: {running_loss:6.4f}, reward: {running_reward:4.2f}, "
+                    + f"#gate: {gate_num}, #layer: {layer_num}, explore rate: {rate:4.2f} action/s"
                 )
                 running_reward = 0.0
                 running_loss = 0.0
 
     def train(self):
         print(f"Training on {self._device}...\n")
-        # self._random_fill_replay()
+        self._random_fill_replay()
         for epoch_id in range(1, 1 + self._total_epoch):
             print(f"Epoch {epoch_id}:")
             self.train_one_epoch()
