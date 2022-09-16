@@ -12,7 +12,7 @@ import pytest
 from QuICT.core import Layout
 
 
-def getRandomList(count, upper_bound):
+def get_random_list(count, upper_bound):
     _rand = [i for i in range(upper_bound)]
     for i in range(upper_bound - 1, 0, -1):
         do_get = random.randint(0, i)
@@ -37,16 +37,18 @@ def test_random_build():
     for i in range(2, 10):
         layout = Layout(i)
         for _ in range(200):
-            out_list = getRandomList(2, i)
+            out_list = get_random_list(2, i)
             layout.add_edge(out_list[0], out_list[1], random.random())
             assert layout.check_edge(out_list[0], out_list[1])
 
 
 def test_load():
-    layout = Layout.load_file(os.path.dirname(os.path.abspath(__file__)) + "/../../example/layout/ibmqx2.layout")
+    layout = Layout.load_file(os.path.dirname(os.path.abspath(__file__)) + "/../../example/layout/ibmqx2_layout.json")
     assert layout.name == 'ibmqx2'
     assert layout.qubit_number == 5
     assert len(layout.edge_list) == 6
+    for edge in layout:
+        assert not edge.directional
 
 
 if __name__ == "__main__":
