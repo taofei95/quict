@@ -63,9 +63,11 @@ def _job_validation(job_dict: dict):
                 raise ValueError(f"Failure to load Layout from layout_path, due to {e}.")
 
     # output-path preparation
-    output_path = job_dict["output_path"]
+    output_path = os.path.join(job_dict["output_path"], name)
     if not os.path.exists(output_path):
         os.makedirs(output_path)
+
+    job_dict["output_path"] = output_path
 
 
 def path_check(func):
@@ -94,30 +96,3 @@ def yaml_decompostion(func):
         func(file=yaml_dict)
 
     return wraps
-
-
-def name_validation(func):
-    """ create the output path, if not exist. """
-    def wraps(self, *args, **kwargs):
-        name = args[0] if args else kwargs["name"]
-        # Check job name
-        if name not in list(self._job_queue.keys()):
-            raise KeyError(
-                f"Unmatched job name {name} in local jobs, please using \'quict local job list\' first."
-            )
-
-        return func(self, *args, **kwargs)
-
-    return wraps
-
-
-class DottableDict(dict):
-    def __init__(self, *args, **kwargs):
-        dict.__init__(self, *args, **kwargs)
-        self.__dict__ = self
-
-    def assignment(self, pid, type, status, output_path):
-        self.pid = pid
-        self.type = type
-        self.status = status
-        self.output_path = output_path
