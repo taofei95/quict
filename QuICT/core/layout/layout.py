@@ -128,7 +128,7 @@ class Layout:
     @property
     def directionalized(self) -> Layout:
         """Return a copy of current layout with all un-directional edges
-            replaced with 2 reversed directional edges.
+        replaced with 2 reversed directional edges.
         """
         layout = Layout(self._qubit_number, self._name)
         for edge in self:
@@ -136,14 +136,10 @@ class Layout:
                 layout.add_edge(edge)
             else:
                 layout.add_edge(
-                    LayoutEdge(
-                        u=edge.u, v=edge.v, directional=True, error_rate=edge.error_rate
-                    )
+                    u=edge.u, v=edge.v, directional=True, error_rate=edge.error_rate
                 )
                 layout.add_edge(
-                    LayoutEdge(
-                        u=edge.v, v=edge.u, directional=True, error_rate=edge.error_rate
-                    )
+                    u=edge.v, v=edge.u, directional=True, error_rate=edge.error_rate
                 )
         return layout
 
@@ -201,7 +197,7 @@ class Layout:
             f.write(self.to_json())
 
     @classmethod
-    def from_json(cls, json_str: str)->Layout:
+    def from_json(cls, json_str: str) -> Layout:
         json_obj = json.loads(json_str)
         name = json_obj["name"]
         qubit_number = json_obj["qubit_number"]
@@ -216,13 +212,9 @@ class Layout:
                 else cls.DIRECTIONAL_DEFAULT
             )
             error_rate = (
-                edge["error_rate"]
-                if "error_rate" in edge
-                else cls.ERROR_RATE_DEFAULT
+                edge["error_rate"] if "error_rate" in edge else cls.ERROR_RATE_DEFAULT
             )
-            layout.add_edge(
-                u=u, v=v, directional=directional, error_rate=error_rate
-            )
+            layout.add_edge(u=u, v=v, directional=directional, error_rate=error_rate)
         return layout
 
     @classmethod
