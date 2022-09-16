@@ -61,6 +61,7 @@ class LayoutEdge:
         data["v"] = self._v
         data["error_rate"] = self._error_rate
         data["directional"] = self._directional
+        return data
 
     def __init__(self, u: int, v: int, directional: bool, error_rate: float):
         self._u = u
@@ -169,7 +170,7 @@ class Layout:
         self._directionalized = None
 
     def check_edge(self, u, v):
-        """check whether layout contain u->v
+        """Check whether layout contain u->v
 
         Args:
             u(int): the edge endpoint u
@@ -200,7 +201,32 @@ class Layout:
             f.write(self.to_json())
 
     @classmethod
-    def load_file(cls, file_path: str):
+    def from_json(cls, json_str: str)->Layout:
+        json_obj = json.loads(json_str)
+        name = json_obj["name"]
+        qubit_number = json_obj["qubit_number"]
+        layout = Layout(qubit_number, name)
+        edges = json_obj["edges"]
+        for edge in edges:
+            u = edge["u"]
+            v = edge["v"]
+            directional = (
+                edge["directional"]
+                if "directional" in edge
+                else cls.DIRECTIONAL_DEFAULT
+            )
+            error_rate = (
+                edge["error_rate"]
+                if "error_rate" in edge
+                else cls.ERROR_RATE_DEFAULT
+            )
+            layout.add_edge(
+                u=u, v=v, directional=directional, error_rate=error_rate
+            )
+        return layout
+
+    @classmethod
+    def load_file(cls, file_path: str) -> Layout:
         """Load layout from file.
         Args:
             file_path(str): Path of layout file.
@@ -208,25 +234,4 @@ class Layout:
             Layout: Layout parsed from file.
         """
         with open(file_path) as f:
-            json_obj = json.load(f)
-            name = json_obj["name"]
-            qubit_number = json_obj["qubit_number"]
-            layout = Layout(qubit_number, name)
-            edges = json_obj["edges"]
-            for edge in edges:
-                u = edge["u"]
-                v = edge["v"]
-                directional = (
-                    edge["directional"]
-                    if "directional" in edge
-                    else cls.DIRECTIONAL_DEFAULT
-                )
-                error_rate = (
-                    edge["error_rate"]
-                    if "error_rate" in edge
-                    else cls.ERROR_RATE_DEFAULT
-                )
-                layout.add_edge(
-                    u=u, v=v, directional=directional, error_rate=error_rate
-                )
-        return layout
+            return cls.from_json(f.read())

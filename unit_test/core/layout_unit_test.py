@@ -43,12 +43,26 @@ def test_random_build():
 
 
 def test_load():
-    layout = Layout.load_file(os.path.dirname(os.path.abspath(__file__)) + "/../../example/layout/ibmqx2_layout.json")
-    assert layout.name == 'ibmqx2'
+    layout = Layout.load_file(
+        os.path.dirname(os.path.abspath(__file__))
+        + "/../../example/layout/ibmqx2_layout.json"
+    )
+    assert layout.name == "ibmqx2"
     assert layout.qubit_number == 5
     assert len(layout.edge_list) == 6
     for edge in layout:
         assert not edge.directional
+
+
+def test_store():
+    for i in range(2, 10):
+        layout = Layout(i)
+        for _ in range(200):
+            out_list = get_random_list(2, i)
+            layout.add_edge(out_list[0], out_list[1], random.random())
+        another_layout = Layout.from_json(layout.to_json())
+        for edge in layout:
+            assert another_layout.check_edge(edge.u, edge.v)
 
 
 if __name__ == "__main__":
