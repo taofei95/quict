@@ -27,3 +27,4 @@ callgrind.out*
 cmake-build*/
 cmake-vsc*/
 unit_test/**/*.jpg
+.history
