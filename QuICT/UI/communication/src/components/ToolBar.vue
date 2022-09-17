@@ -6,7 +6,7 @@
     <el-dialog title="Instruction Set" v-model="dialogCmdVisible" width="30%" :before-close="handleCmdClose">
       <div style="text-align: left">
         <el-radio v-for="instruction in all_sets" :key="instruction" :label="all_sets.indexOf(instruction)"
-          v-model="dialogCmd" style="display: inline-flex">{{ instruction.name }}</el-radio>
+          v-model="currentSet" style="display: inline-flex">{{ instruction.name }}</el-radio>
         <div>
           <span style="display: block"><b>Customer Set</b>(Click to remove from Customer Set)</span>
           <img v-for="gate in customerSet" :key="gate" :src="'./assets/gate_set/' + gate.img" @click="
@@ -149,8 +149,8 @@ TpConfirm();
           background: transparent !important;
         "> Setting</el-button>
       <span v-if="show_save_run_load" style="color: #409eff; font-size: large">|</span>
-      <el-upload v-if="show_save_run_load" class="upload-demo" :action="uploadBackend" :multiple="multipleUpload" :show-file-list="showFileList"
-        :before-upload="loadQCDA">
+      <el-upload v-if="show_save_run_load" class="upload-demo" :action="uploadBackend" :multiple="multipleUpload"
+        :show-file-list="showFileList" :before-upload="loadQCDA">
         <el-button size="small" type="primary" plain style="margin: 0px 10px; font-family: 'Segoe UI Symbol'"> LOAD
         </el-button>
       </el-upload>
@@ -158,7 +158,8 @@ TpConfirm();
       <el-button v-if="show_save_run_load" size="small" type="primary" plain @click="saveQCDA"
         style="margin: 0px 10px; font-family: 'Segoe UI Symbol'"> SAVE</el-button>
 
-      <el-button v-if="show_save_run_load" size="small" type="primary" @click="runQCDA" style="margin: 0px 10px; font-family: 'Segoe UI Symbol'">
+      <el-button v-if="show_save_run_load" size="small" type="primary" @click="runQCDA"
+        style="margin: 0px 10px; font-family: 'Segoe UI Symbol'">
          RUN</el-button>
     </el-col>
   </el-row>
@@ -192,7 +193,7 @@ export default {
       dialogTpVisible: false,
       dialogBeVisible: false,
       dialogSeVisible: false,
-      dialogCmd: 0,
+      currentSet: 0,
       dialogBe: `GPU`,
       opSwitch: false,
       mapSwitch: false,
@@ -224,7 +225,7 @@ export default {
     handleCmdClose(done) {
       this.$confirm("确认关闭？")
         .then(() => {
-          console.log(this.dialogCmd);
+          console.log(this.currentSet);
           done();
         })
         .catch(() => { });
@@ -232,7 +233,7 @@ export default {
     handleTpClose(done) {
       this.$confirm("确认关闭？")
         .then(() => {
-          console.log(this.dialogCmd);
+          console.log(this.currentSet);
           done();
         })
         .catch(() => { });
@@ -240,7 +241,7 @@ export default {
     handleBeClose(done) {
       this.$confirm("确认关闭？")
         .then(() => {
-          console.log(this.dialogCmd);
+          console.log(this.currentSet);
           this.TpCancel();
           done();
         })
@@ -526,13 +527,13 @@ export default {
         this.$emit("RunQCDA", this.opSwitch, this.mapSwitch, setting);
       }, 200)
     },
-    getOpSwitch(){
+    getOpSwitch() {
       return this.opSwitch;
     },
-    getMapSwitch(){
+    getMapSwitch() {
       return this.mapSwitch;
     },
-    getSetting(){
+    getSetting() {
       let setting = {};
       setting.device = this.dialogBe;
       setting.shots = Number(this.dialogSeShots);
@@ -574,14 +575,27 @@ export default {
     },
     ChangeSet() {
       // 通知外层切换instruction set
-      this.$emit("ChangeSet", this.dialogCmd);
+      this.$emit("ChangeSet", this.currentSet);
       return false;
     },
     AddToCustomerSet(gate) {
+      console.log(`add gate 2 customer set: ${gate}`);
       // 添加gate到customerSet
       this.tempSet.splice(this.tempSet.indexOf(gate), 1);
+      if (this.Is2BitGate(gate)) {
+        for (let i = 0; i < this.customerSet.length; i++) {
+          if (this.Is2BitGate(this.customerSet[i])) {
+            this.tempSet.push(this.customerSet[i]);
+            this.customerSet.splice(i, 1);
+            break;
+          }
+        }
+      }
       this.customerSet.push(gate);
       this.UpdateCustomerSet();
+    },
+    Is2BitGate(gate) {
+      return (gate.targets + gate.controls > 1);
     },
     RemoveFromCustomerSet(gate) {
       // 从customerSet中移除当前gate
@@ -592,14 +606,14 @@ export default {
     UpdateCustomerSet() {
       // 通知外层更新customerSet
       this.$emit("UpdateCustomerSet", this.customerSet);
-      if (this.all_sets[this.dialogCmd]["name"] == "CustomerSet") {
+      if (this.all_sets[this.currentSet]["name"] == "CustomerSet") {
         this.ChangeSet();
       }
     },
   },
   mounted: function () { },
   watch: {
-    dialogCmd() {
+    currentSet() {
       this.ChangeSet();
     },
     customer_set() {

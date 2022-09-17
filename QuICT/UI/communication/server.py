@@ -306,6 +306,7 @@ def optimize_qasm(uid, qasm_text, topology, set, optimize, mapping):
                 # gate_set2.append(t_gate._type)
                 gate_set2 = t_gate._type
         circuit_set = InstructionSet(gate_set2, gate_set1)
+        circuit_set.register_one_qubit_rule(xyx_rule)
     
 
     emit(
@@ -358,8 +359,7 @@ def run_file(content):
     logger.info(f"run content {content} \nusing setting {setting}")
     try:
 
-        circuit_phy = optimize_qasm(uid=uid, qasm_text=data, topology=topology, set=set, optimize=optimize, mapping=mapping)
-        circuit = circuit_phy
+        circuit = optimize_qasm(uid=uid, qasm_text=data, topology=topology, set=set, optimize=optimize, mapping=mapping)
 
         logger.info(f"run qasm {circuit.qasm()}")
         emit(
@@ -382,11 +382,16 @@ def run_file(content):
 def o_run_file(content):
     uid = content['uuid']
     data = content['content']
+    optimize = content['optimize']
+    mapping = content['mapping']
+    topology = content['topology']
+    set = content['set']
     setting = content['setting']
     logger.info(f"run content {content}")
     try:
-
-        circuit = load_data(data=data)
+         
+        circuit = optimize_qasm(uid=uid, qasm_text=data, topology=topology, set=set, optimize=optimize, mapping=mapping)
+        # circuit = load_data(data=data)
         logger.info(f"run qasm {circuit.qasm()}")
         emit(
             'info',  {'uuid': uid, 'info': f"Running circuit..."}, namespace="/api/pty")
@@ -394,6 +399,8 @@ def o_run_file(content):
         result = simulation.run(circuit)
         emit(
             'info', {'uuid': uid, 'info': f"Run circuit finished."}, namespace="/api/pty")
+        logger.info(f"run result {result}")
+        result["data"]["state_vector"] = None;
         emit('o_run_result', {'uuid': uid, 'run_result': result}, namespace="/api/pty")
     except Exception as e:
         import traceback

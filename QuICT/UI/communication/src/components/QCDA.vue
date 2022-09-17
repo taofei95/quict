@@ -306,11 +306,27 @@ export default {
         setting = this.$refs.l_toolBar.getSetting();
       }
 
-
+      let ProgramText = this.n_ProgramText;
+      let optimize = this.$refs.n_toolBar.getOpSwitch();
+      let mapping = this.$refs.n_toolBar.getMapSwitch();
+      let topology = this.n_topology;
+      let set = this.n_all_sets[this.n_current_set];
+      
+      if (this.Route == "L") {
+        ProgramText = this.l_ProgramText;
+        optimize = this.$refs.l_toolBar.getOpSwitch();
+        mapping = this.$refs.l_toolBar.getMapSwitch();
+        topology = this.l_topology;
+        set = this.l_all_sets[this.l_current_set];
+      }
       this.socket.emit("o_qasm_run", {
         uuid: this.uuid,
-        content: this.o_ProgramText,
+        content: ProgramText,
         source: 'QCDA',
+        optimize: optimize,
+        mapping: mapping,
+        topology: topology,
+        set: set,
         setting: setting,
       });
     },
