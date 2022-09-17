@@ -355,7 +355,7 @@ def run_file(content):
     topology = content['topology']
     set = content['set']
     setting = content['setting']
-    logger.info(f"run content {content}")
+    logger.info(f"run content {content} \nusing setting {setting}")
     try:
 
         circuit_phy = optimize_qasm(uid=uid, qasm_text=data, topology=topology, set=set, optimize=optimize, mapping=mapping)
@@ -368,6 +368,8 @@ def run_file(content):
         result = simulation.run(circuit)
         emit(
             'info', {'uuid': uid, 'info': f"Run circuit finished."}, namespace="/api/pty")
+        logger.info(f"run result {result}")
+        result["data"]["state_vector"] = None;
         emit('run_result', {'uuid': uid, 'run_result': result}, namespace="/api/pty")
     except Exception as e:
         import traceback

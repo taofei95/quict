@@ -1031,8 +1031,8 @@ export default {
       if (!content.uuid == this.uuid) {
         return;
       }
-      this.OutputContent = content.run_result.counts;
-      this.DrawHistogram(content.run_result.counts);
+      this.OutputContent = content.run_result.data.counts;
+      this.DrawHistogram(content.run_result.data.counts);
       this.confirm_o_QCDA();
     });
 
