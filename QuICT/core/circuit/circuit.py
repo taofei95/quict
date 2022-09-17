@@ -13,8 +13,7 @@ from QuICT.core.gate import BasicGate, H, Measure, build_random_gate, build_gate
 from QuICT.core.utils import (
     GateType,
     CircuitBased,
-    unique_id_generator,
-    matrix_product_to_circuit
+    unique_id_generator
 )
 from QuICT.core.operator import (
     Trigger,
@@ -263,33 +262,6 @@ class Circuit(CircuitBased):
 
         return position
 
-    def get_gates_order_by_depth(self) -> List[List[BasicGate]]:
-        """ Order the gates of circuit by its depth layer
-
-        Returns:
-            List[List[BasicGate]]: The list of gates which at same layers in circuit.
-        """
-        gate_by_depth = [[self.gates[0]]]          # List[list], gates for each depth level.
-        # List[set], gates' qubits for each depth level.
-        gate_args_by_depth = [set(self.gates[0].cargs + self.gates[0].targs)]
-        for gate in self.gates[1:]:
-            gate_arg = set(gate.cargs + gate.targs)
-            for i in range(len(gate_args_by_depth) - 1, -1, -1):
-                if gate_arg & gate_args_by_depth[i]:
-                    if i == len(gate_args_by_depth) - 1:
-                        gate_by_depth.append([gate])
-                        gate_args_by_depth.append(gate_arg)
-                    else:
-                        gate_by_depth[i + 1].append(gate)
-                        gate_args_by_depth[i + 1] = gate_arg | gate_args_by_depth[i + 1]
-                    break
-                else:
-                    if i == 0:
-                        gate_by_depth[i].append(gate)
-                        gate_args_by_depth[i] = gate_arg | gate_args_by_depth[i]
-
-        return gate_by_depth
-
     def get_DAG_circuit(self) -> DAGCircuit:
         """
         Translate a quantum circuit to a directed acyclic graph
@@ -442,12 +414,16 @@ class Circuit(CircuitBased):
             typelist = [
                 GateType.rx, GateType.ry, GateType.rz,
                 GateType.cx, GateType.cy, GateType.crz,
-                GateType.ch, GateType.cz, GateType.Rxx,
-                GateType.Ryy, GateType.Rzz, GateType.fsim
+                GateType.ch, GateType.cz, GateType.rxx,
+                GateType.ryy, GateType.rzz, GateType.fsim
             ]
 
+        unsupported_gate_type = [GateType.unitary, GateType.perm, GateType.perm_fx]
+        assert len(set(typelist) & set(unsupported_gate_type)) == 0, \
+            f"{set(typelist) & set(unsupported_gate_type)} is not support in random append."
+
         if probabilities is not None:
-            assert sum(probabilities) == 1 and len(probabilities) == len(typelist)
+            assert np.isclose(sum(probabilities), 1, atol=1e-6) and len(probabilities) == len(typelist)
 
         gate_prob = probabilities
         gate_indexes = list(range(len(typelist)))
@@ -557,43 +533,67 @@ class Circuit(CircuitBased):
 
         return sub_circuit
 
-    def draw(self, method='matp', filename=None):
-        """ draw the photo of circuit in the run directory
+    def draw(self, method: str = 'matp_auto', filename: str = None):
+        """Draw the figure of circuit.
 
         Args:
-            filename(str): the output filename without file extensions,
-                           default to be the name of the circuit
             method(str): the method to draw the circuit
-                matp: matplotlib
+                matp_inline: Show the figure interactively but do not save it to file.
+                matp_file: Save the figure to file but do not show it interactively.
+                matp_auto: Automatically select inline or file mode according to matplotlib backend.
+                matp_silent: Return the drawn figure without saving or showing.
                 command : command
-                tex : tex source
+            filename(str): the output filename without file extensions, default to None.
+                If filename is None, it will using matlibplot.show() except matlibplot.backend
+                is agg, it will output jpg file named circuit's name.
+            get_figure(bool): Whether to return the figure object of matplotlib.
+
+        Returns:
+            If method is 'matp_silent', a matplotlib Figure is returned. Note that that figure is created in matplotlib
+            Object Oriented interface, which means it must be display with IPython.display.
+
+        Examples:
+            >>> from IPython.display import display
+            >>> circ = Circuit(5)
+            >>> circ.random_append()
+            >>> silent_fig = circ.draw(method="matp_silent")
+            >>> display(silent_fig)
         """
         from QuICT.tools.drawer import PhotoDrawer, TextDrawing
+        import matplotlib
 
-        if method == 'matp':
-            if filename is None:
-                filename = str(self.name) + '.jpg'
-            elif '.' not in filename:
-                filename += '.jpg'
+        if method.startswith('matp'):
+            if filename is not None:
+                    if '.' not in filename:
+                        filename += '.jpg'
+            photo_drawer = PhotoDrawer()
+            if method == 'matp_auto':
+                save_file = matplotlib.get_backend() == 'agg'
+                show_inline = matplotlib.get_backend() != 'agg'
+            elif method == 'matp_file':
+                save_file = True
+                show_inline = False
+            elif method == 'matp_inline':
+                save_file = False
+                show_inline = True
+            elif method == 'matp_silent':
+                save_file = False
+                show_inline = False
+            silent = (not show_inline) and (not save_file)
 
-            photoDrawer = PhotoDrawer()
-            photoDrawer.run(self, filename)
+            photo_drawer.run(circuit=self, filename=filename, save_file=save_file)
+
+            if show_inline:
+                from IPython.display import display
+                display(photo_drawer.figure)
+            elif silent:
+                return photo_drawer.figure
         elif method == 'command':
-            textDrawing = TextDrawing([i for i in range(len(self.qubits))], self.gates)
+            text_drawer = TextDrawing([i for i in range(len(self.qubits))], self.gates)
             if filename is None:
-                print(textDrawing.single_string())
+                print(text_drawer.single_string())
                 return
             elif '.' not in filename:
                 filename += '.txt'
 
-            textDrawing.dump(filename)
-
-    def matrix_product_to_circuit(self, gate) -> np.ndarray:
-        """ extend a gate's matrix in the all circuit unitary linear space
-
-        gate's matrix tensor products some identity matrix.
-
-        Args:
-            gate(BasicGate): the gate to be extended.
-        """
-        return matrix_product_to_circuit(gate.matrix, gate.cargs + gate.targs, len(self.qubits))
+            text_drawer.dump(filename)

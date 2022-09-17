@@ -22,7 +22,7 @@ class MCTS(object):
             target = cur_mapping[gate.targ]
             cur_gate.cargs = int(control)
             cur_gate.targs = int(target)
-        elif cur_gate.type == GateType.swap:
+        elif cur_gate.targets == 2:
             target_0 = cur_mapping[gate.targs[0]]
             target_1 = cur_mapping[gate.targs[1]]
             cur_gate.targs = [int(target_0), int(target_1)]
@@ -252,7 +252,7 @@ class MCTS(object):
         """
         if gate.is_control_single():
             return [gate.targ, gate.carg]
-        elif gate.type == GateType.swap:
+        elif gate.targets == 2:
             return gate.targs
         else:
             raise Exception("The gate type %d is not supported" % (gate.type()))

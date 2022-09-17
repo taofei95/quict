@@ -6,7 +6,6 @@
 
 import numpy as np
 
-from QuICT.algorithm import SyntheticalUnitary
 from QuICT.core import Circuit
 from QuICT.core.gate import GateType
 from QuICT.qcda.optimization import CnotForceBfs, CnotForceDepthBfs, CnotLocalForceBfs, CnotLocalForceDepthBfs
@@ -54,8 +53,8 @@ def test_2():
             circuit.random_append(30, typelist=[GateType.z, GateType.x, GateType.cx])
             CLFB = CnotLocalForceBfs(False)
             new_circuit = CLFB.execute(circuit)
-            syn1 = SyntheticalUnitary.run(circuit)
-            syn2 = SyntheticalUnitary.run(new_circuit)
+            syn1 = circuit.matrix()
+            syn2 = new_circuit.matrix()
             assert np.allclose(syn1, syn2)
 
 

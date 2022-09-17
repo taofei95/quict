@@ -7,8 +7,7 @@
 from QuICT.core import *
 from QuICT.core.gate import *
 from QuICT.qcda.synthesis.mct import MCTOneAux, MCTLinearHalfDirtyAux, MCTLinearOneDirtyAux
-from QuICT.algorithm import SyntheticalUnitary
-from QuICT.simulation.gpu_simulator import ConstantStateVectorSimulator
+from QuICT.simulation.state_vector import ConstantStateVectorSimulator
 
 
 def set_ones(qreg, N):
@@ -31,7 +30,7 @@ def test_MCT_Linear_Simulation_Half():
             circuit = Circuit(n)
             MCT = MCTLinearHalfDirtyAux()
             MCT.execute(m, n) | circuit
-            unitary = SyntheticalUnitary.run(circuit)
+            unitary = circuit.matrix()
             mat_mct = np.eye(1 << n)
             mat_mct[-1 << n - m:, -1 << n - m:] = \
                 np.kron(np.eye(1 << n - m - 1), X.matrix.real)
@@ -46,7 +45,6 @@ def test_MCT_Linear_Simulation_One_functional():
             aux_idx = [0]
             controls_idx = [i for i in range(1, n - 1)]
             target_idx = [n - 1]
-            # aux = circuit[aux_idx]
             controls = circuit[controls_idx]
             target = circuit[target_idx]
 
@@ -60,7 +58,6 @@ def test_MCT_Linear_Simulation_One_functional():
             if (
                 (control_bits == 2 ** (n - 2) - 1 and int(target) == 0) or
                 (control_bits != 2 ** (n - 2) - 1 and int(target) == 1) or
-                # (int(aux) != 0) or
                 (int(controls) != control_bits)
             ):
                 print("when control bits are %d, the target is %d" % (control_bits, int(target)))
@@ -79,7 +76,7 @@ def test_MCT_Linear_Simulation_One_unitary():
         MCT = MCTLinearOneDirtyAux()
         gates = MCT.execute(n)
         gates | circuit(controls_idx + target_idx + aux_idx)
-        unitary = SyntheticalUnitary.run(circuit)
+        unitary = circuit.matrix()
         mat_mct = np.eye(1 << n - 1)
         mat_mct[(1 << n - 1) - 2:, (1 << n - 1) - 2:] = X.matrix.real
         mat_mct = np.kron(np.eye(2), mat_mct)
@@ -91,7 +88,7 @@ def test_MCTOneAux():
         circuit = Circuit(n)
         MCT = MCTOneAux()
         MCT.execute(n) | circuit
-        unitary = SyntheticalUnitary.run(circuit)
+        unitary = circuit.matrix()
         mat_mct = np.eye(1 << n - 1)
         mat_mct[(1 << n - 1) - 2:, (1 << n - 1) - 2:] = X.matrix.real
         mat_mct = np.kron(mat_mct, np.eye(2))

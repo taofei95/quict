@@ -61,7 +61,7 @@ class TestNoise(unittest.TestCase):
 
         # Using Density Matrix Simulator to simulate
         dm_simu = DensityMatrixSimulation()
-        _ = dm_simu.run(TestNoise.circuit, nm)
+        _ = dm_simu.run(TestNoise.circuit, noise_model=nm)
 
         assert 1
 
@@ -81,7 +81,7 @@ class TestNoise(unittest.TestCase):
 
         # Using Density Matrix Simulator to simulate
         dm_simu = DensityMatrixSimulation()
-        _ = dm_simu.run(TestNoise.circuit, nm)
+        _ = dm_simu.run(TestNoise.circuit, noise_model=nm)
 
         assert 1
 
@@ -101,7 +101,7 @@ class TestNoise(unittest.TestCase):
 
         # Using Density Matrix Simulator to simulate
         dm_simu = DensityMatrixSimulation()
-        _ = dm_simu.run(TestNoise.circuit, nm)
+        _ = dm_simu.run(TestNoise.circuit, noise_model=nm)
 
         assert 1
 
@@ -131,7 +131,7 @@ class TestNoise(unittest.TestCase):
 
         # Using Density Matrix Simulator to simulate
         dm_simu = DensityMatrixSimulation()
-        _ = dm_simu.run(cir, nm)
+        _ = dm_simu.run(cir, noise_model=nm)
 
         assert 1
 

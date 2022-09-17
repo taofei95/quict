@@ -1,2 +1,2 @@
 from .graph import Graph
-from .random_walk import QuantumWalk
+from .quantum_walk import QuantumWalk

@@ -7,7 +7,6 @@ import numpy as np
 
 from QuICT.core import Circuit
 from QuICT.core.gate import U3
-from QuICT.algorithm import SyntheticalUnitary
 from QuICT.qcda.synthesis import UniformlyUnitary
 
 
@@ -22,7 +21,7 @@ unitary7 = U3([0, 0, 0]).matrix
 unitary8 = U3([0, 0, 0]).matrix
 unitaries = [unitary1, unitary2, unitary3, unitary4, unitary5, unitary6, unitary7, unitary8]
 UniformlyUnitary.execute(unitaries) | circuit
-unitary = SyntheticalUnitary.run(circuit)
+unitary = circuit.matrix()
 print(np.round(unitary, 2))
 if abs(unitary[0, 0]) > 1e-10:
     delta = unitary1[0] / unitary[0, 0]

@@ -51,6 +51,10 @@ class OPENQASMInterface(BasicInterface):
         "tdg": GateType.tdg,
         "s": GateType.s,
         "sdg": GateType.sdg,
+        "sx": GateType.sx,
+        "sy": GateType.sy,
+        "sw": GateType.sw,
+        "p": GateType.phase,
         "swap": GateType.swap,
         "rx": GateType.rx,
         "ry": GateType.ry,
@@ -64,10 +68,14 @@ class OPENQASMInterface(BasicInterface):
         "cz": GateType.cz,
         "ch": GateType.ch,
         "crz": GateType.crz,
-        "rzz": GateType.Rzz,
+        "ccrz": GateType.ccrz,
+        "rzz": GateType.rzz,
+        "rxx": GateType.rxx,
+        "ryy": GateType.ryy,
         "cu1": GateType.cu1,
         "cu3": GateType.cu3,
-        "cswap": GateType.cswap
+        "cswap": GateType.cswap,
+        "fsim": GateType.fsim
     }
 
     token = None
