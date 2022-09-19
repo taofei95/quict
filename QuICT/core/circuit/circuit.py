@@ -203,6 +203,10 @@ class Circuit(CircuitBased):
         if is_ancillary_qubit:
             self._ancillae_qubits += list(range(self.width() - len(qubits), self.width()))
 
+    def reset_qubits(self):
+        """ Reset all qubits in current circuit. """
+        self._qubits.reset_qubits()
+
     def remapping(self, qureg: Qureg, mapping: list, circuit_update: bool = False):
         """ Realignment the qubits by the given mapping.
 
