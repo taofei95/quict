@@ -63,6 +63,7 @@ class ShorFactor:
             List[int]: the indices to be measured to get ~phi
         """
         if self._previous_N is not None and self._previous_N == N:
+            self._circuit_cache[0].reset_qubits()
             return self._circuit_cache
         # without usable previous circuit
         a = N
@@ -144,6 +145,7 @@ class ShorFactor:
                     a=a, N=N, simulator=simulator
                 )
             else:
+                circuit.reset_qubits()
                 simulator.run(circuit)
                 if len(indices) > 0 and self.mode in {"BEA", "HRS"}:
                     phi = int(circuit[indices]) / (1 << len(indices))

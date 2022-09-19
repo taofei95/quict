@@ -113,8 +113,8 @@ def test_ShorFactor_run():
 
 def test_ShorFactor_circuit():
     for mode in circuit_test_modes:
-        if mode in {"BEA_zip", "HRS_zip"}:
-            raise AssertionError("clear circuit state e.g. hitorical_measured to run this mode")
+        # if mode in {"BEA_zip", "HRS_zip"}:
+        #     raise AssertionError("clear circuit state e.g. hitorical_measured to run this mode")
         print(f"mode: {mode}")
         failure = 0
         for number in number_list:
