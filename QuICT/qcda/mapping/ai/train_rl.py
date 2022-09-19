@@ -2,7 +2,7 @@ import os
 import os.path as osp
 import re
 from collections import deque
-from random import sample
+from random import random, sample
 from time import time
 from typing import List, Tuple, Union
 
@@ -39,6 +39,7 @@ class ValidationData:
         self.mapped_circ = mapped_circ
         self.topo = topo
 
+# TODO: Add MCTS prior experience
 
 class Trainer:
     def __init__(

@@ -11,6 +11,7 @@ from QuICT.core.gate import *
 from QuICT.core.utils import CircuitBased
 from QuICT.qcda.mapping.ai.data_factory import DataFactory, State, Transition
 from QuICT.qcda.mapping.ai.gnn_mapping import GnnMapping
+from torch_geometric.data import Batch as PygBatch
 
 
 class Agent:
@@ -57,8 +58,12 @@ class Agent:
         q = self.state.topo.qubit_number
 
         # Chose an action based on policy_net
-        circ_pyg = self.state.circ_pyg_data.clone().to(policy_net_device)
-        topo_pyg = self.state.topo_pyg_data.clone().to(policy_net_device)
+        circ_pyg = PygBatch.from_data_list([self.state.circ_pyg_data]).to(
+            policy_net_device
+        )
+        topo_pyg = PygBatch.from_data_list([self.state.topo_pyg_data]).to(
+            policy_net_device
+        )
         attn = policy_net(circ_pyg, topo_pyg).detach().cpu()
         attn = attn.view(max_q, max_q)
 

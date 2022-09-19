@@ -35,6 +35,7 @@ class ConvStack(nn.Module):
         self._first = gnn.GATv2Conv(
             in_channels=feat_dim, out_channels=feat_dim, heads=heads
         )
+        # self._first = gnn.GCNConv(in_channels=feat_dim, out_channels=feat_dim, normalize=False)
 
         self._inner = nn.ModuleList(
             [
@@ -46,11 +47,21 @@ class ConvStack(nn.Module):
                 for _ in range(num_hidden_layer)
             ]
         )
+        # self._inner = nn.ModuleList(
+        #     [
+        #         gnn.GCNConv(
+        #             in_channels=feat_dim,
+        #             out_channels=feat_dim,
+        #             normalize=False,
+        #         )
+        #         for _ in range(num_hidden_layer)
+        #     ]
+        # )
 
         self._last = gnn.GATv2Conv(
             in_channels=feat_dim * heads, out_channels=feat_dim, heads=1
         )
-
+        # self._last = gnn.GCNConv(in_channels=feat_dim, out_channels=feat_dim, normalize=False)
         # self._ffn = Ffn(feat_dim=feat_dim)
 
         self._normalize = normalize
@@ -94,7 +105,7 @@ class CircuitGnn(nn.Module):
         # One gate is targeting 2 qubits. So the feature dimension is actually doubled.
         self._gc = nn.ModuleList(
             [
-                ConvStack(feat_dim=feat_dim * 2, heads=heads, num_hidden_layer=3),
+                ConvStack(feat_dim=feat_dim * 2, heads=heads, num_hidden_layer=4),
             ]
         )
 

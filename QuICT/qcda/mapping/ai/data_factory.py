@@ -30,6 +30,7 @@ def _floyd(n: int, dist: np.ndarray, _inf: int) -> np.ndarray:
                 dist[i][j] = 0
     return dist
 
+# TODO: Add virtual node for topo graph
 
 class CircuitGraph:
     """DAG Representation of a quantum circuit. A virtual node will be
