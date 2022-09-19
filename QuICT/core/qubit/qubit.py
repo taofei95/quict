@@ -39,10 +39,9 @@ class Qubit(object):
 
     @measured.setter
     def measured(self, measured):
+        self._measured = measured
         if self._measured is not None:
             self._historical_measured.append(self._measured)
-
-        self._measured = measured
 
     @property
     def historical_measured(self):
@@ -99,6 +98,11 @@ class Qubit(object):
             The qubit has not be measured.
         """
         return bool(int(self))
+
+    def reset(self):
+        """ Reset self qubit status. """
+        self._historical_measured = []
+        self._measured = None
 
 
 class Qureg(list):
@@ -297,3 +301,8 @@ class Qureg(list):
                 return idx
 
         raise ValueError("The given qubit is not in this Qureg.")
+
+    def reset_qubits(self):
+        """ Reset all qubits' status. """
+        for qubit in self:
+            qubit.reset()
