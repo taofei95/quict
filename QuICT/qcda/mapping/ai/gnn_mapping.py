@@ -30,15 +30,15 @@ class ConvStack(nn.Module):
     ) -> None:
         super().__init__()
 
-        assert num_hidden_layer > 2
+        assert num_hidden_layer > 0
 
-        self._first = gnn.GATConv(
+        self._first = gnn.GATv2Conv(
             in_channels=feat_dim, out_channels=feat_dim, heads=heads
         )
 
         self._inner = nn.ModuleList(
             [
-                gnn.GATConv(
+                gnn.GATv2Conv(
                     in_channels=feat_dim * heads,
                     out_channels=feat_dim,
                     heads=heads,
@@ -47,7 +47,7 @@ class ConvStack(nn.Module):
             ]
         )
 
-        self._last = gnn.GATConv(
+        self._last = gnn.GATv2Conv(
             in_channels=feat_dim * heads, out_channels=feat_dim, heads=1
         )
 
@@ -71,63 +71,136 @@ class ConvStack(nn.Module):
         return x
 
 
+class CircuitGnn(nn.Module):
+    def __init__(
+        self,
+        max_qubit_num: int,
+        max_gate_num: int,
+        feat_dim: int,
+        heads: int,
+    ) -> None:
+        super().__init__()
+
+        self._max_qubit_num = max_qubit_num
+        self._max_gate_num = max_gate_num
+        self._feat_dim = feat_dim
+
+        # All gate nodes and virtual node feature embedding.
+        self._x_em = nn.Embedding(
+            num_embeddings=max_gate_num + 1,
+            embedding_dim=feat_dim,
+        )
+
+        # One gate is targeting 2 qubits. So the feature dimension is actually doubled.
+        self._gc = nn.ModuleList(
+            [
+                ConvStack(feat_dim=feat_dim * 2, heads=heads, num_hidden_layer=3),
+            ]
+        )
+
+    def forward(self, x, edge_index, batch=None):
+        n = self._max_gate_num + 1
+        f = self._feat_dim
+
+        x = self._x_em(x).view(-1, 2 * f)  # [b * n, 2 * f]
+        for conv in self._gc:
+            x = conv(x, edge_index, batch) + x  # [b * n, 2 * f]
+        x = x.view(-1, n, 2 * f)  # [b, n, 2 * f]
+        x = x[:, 0, :].contiguous().view(-1, 2 * f)  # [b, 2 * f]
+        return x
+
+
+class LayoutGnn(nn.Module):
+    def __init__(
+        self,
+        max_qubit_num: int,
+        feat_dim: int,
+        heads: int,
+    ) -> None:
+        super().__init__()
+
+        self._max_qubit_num = max_qubit_num
+        self._feat_dim = feat_dim
+
+        self._x_em = nn.Embedding(num_embeddings=max_qubit_num, embedding_dim=feat_dim)
+
+        self._gc = nn.ModuleList(
+            [
+                ConvStack(feat_dim=feat_dim * 3, heads=heads, num_hidden_layer=3),
+            ]
+        )
+
+    def forward(self, circ_feat, x, edge_index, batch=None):
+        q = self._max_qubit_num
+        f = self._feat_dim
+
+        # Input circ_feat has shape [b, 2 * f]
+        circ_feat = torch.repeat_interleave(
+            circ_feat, q, dim=0
+        ).contiguous()  # [b * q, 2 * f]
+        x = self._x_em(x).view(-1, f)  # [b * q, f]
+        x = torch.cat((x, circ_feat), dim=1)  # [b * q, 3 * f]
+
+        for conv in self._gc:
+            x = conv(x, edge_index, batch) + x
+        x = x.view(-1, q, f)  # [b, q, 3 * f]
+        return x
+
+
 class GnnMapping(nn.Module):
     def __init__(
         self,
         max_qubit_num: int,
-        max_layer_num: int,
+        max_gate_num: int,
         feat_dim: int,
         heads: int = 2,
     ) -> None:
         super().__init__()
 
         self._max_qubit_num = max_qubit_num
-        self._max_layer_num = max_layer_num
+        self._max_gate_num = max_gate_num
         self._feat_dim = feat_dim
 
-        self._x_em = nn.Embedding(
-            num_embeddings=max_qubit_num * (max_layer_num + 1) + 1,
-            embedding_dim=feat_dim,
-            padding_idx=0,
+        self._circ_gnn = CircuitGnn(
+            max_qubit_num=max_qubit_num,
+            max_gate_num=max_gate_num,
+            feat_dim=feat_dim,
+            heads=heads,
         )
 
-        self._gc = nn.ModuleList(
-            [
-                ConvStack(feat_dim=feat_dim, heads=heads, num_hidden_layer=4),
-                ConvStack(feat_dim=feat_dim, heads=heads, num_hidden_layer=4),
-            ]
+        self._layout_gnn = LayoutGnn(
+            max_qubit_num=max_qubit_num,
+            feat_dim=feat_dim,
+            heads=heads,
         )
 
         self._mlp = nn.Sequential(
-            nn.Linear(in_features=2 * feat_dim, out_features=2 * feat_dim),
+            nn.Linear(feat_dim * 6, feat_dim * 6),
             nn.LeakyReLU(),
-            nn.Linear(in_features=2 * feat_dim, out_features=feat_dim),
+            nn.Linear(feat_dim * 6, feat_dim * 2),
             nn.LeakyReLU(),
-            nn.Linear(in_features=feat_dim, out_features=feat_dim),
+            nn.LayerNorm(feat_dim * 2),
+            nn.Linear(feat_dim * 2, feat_dim // 2),
             nn.LeakyReLU(),
-            nn.Linear(in_features=feat_dim, out_features=1),
+            nn.Linear(feat_dim // 2, 1),
         )
 
-    def forward(self, x, edge_index, batch=None):
-        n = self._max_qubit_num
-        l = self._max_layer_num
+    def forward(self, circ_pyg, topo_pyg):
         f = self._feat_dim
+        q = self._max_qubit_num
 
-        x = self._x_em(x)
+        circ_feat = self._circ_gnn(
+            circ_pyg.x, circ_pyg.edge_index, circ_pyg.batch
+        )  # [b, 2 * f]
+        x = self._layout_gnn(
+            circ_feat, topo_pyg.x, topo_pyg.edge_index, topo_pyg.batch
+        )  # [b, q, 3 * f]
 
-        for block in self._gc:
-            x = block(x, edge_index, batch)
-
-        x = x.view(-1, n * (l + 1), f)
-        x = x[:, :n, :].contiguous()
-        # Pair wise concatenation
-        idx_pairs = torch.cartesian_prod(
-            torch.arange(x.shape[-2]), torch.arange(x.shape[-2])
-        )
-        x = x[:, idx_pairs]  # [b, n * n, 2, f]
-        x = x.view(-1, n, n, 2 * f)
-        x = self._mlp(x)  # [b, n, n, 1]
-        x = x.view(-1, n, n)
+        idx_pairs = torch.cartesian_prod(torch.arange(q), torch.arange(q))
+        x = x[:, idx_pairs].contiguous()  # [b, q * q, 2, 3 * f]
+        x = x.view(-1, q, q, 6 * f)
+        x = self._mlp(x).view(-1, q, q)  # [b, q, q]
         x = (x + x.transpose(-1, -2)) / 2
-        x = x.view(-1, n * n)
+        # gather q * q dim for convenient max
+        x = x.view(-1, q * q)  # [b, q * q]
         return x

@@ -44,8 +44,8 @@ class Trainer:
     def __init__(
         self,
         max_qubit_num: int = 30,
-        max_layer_num: int = 60,
-        inner_feat_dim: int = 50,
+        max_gate_num: int = 1000,
+        feat_dim: int = 50,
         gamma: float = 0.9,
         replay_pool_size: int = 20000,
         batch_size: int = 32,
@@ -60,7 +60,7 @@ class Trainer:
 
         # Copy values in.
         self._max_qubit_num = max_qubit_num
-        self._max_layer_num = max_layer_num
+        self._max_gate_num = max_gate_num
         self._gamma = gamma
         self._batch_size = batch_size
         self._total_epoch = total_epoch
@@ -72,8 +72,8 @@ class Trainer:
         print("Initializing agent...")
         self._agent = Agent(
             max_qubit_num=max_qubit_num,
-            max_gate_num=max_layer_num,
-            inner_feat_dim=inner_feat_dim,
+            max_gate_num=max_gate_num,
+            inner_feat_dim=feat_dim,
         )
         self._agent.factory._reset_attr_cache()
 
@@ -85,14 +85,14 @@ class Trainer:
         print("Resetting policy & target model...")
         self._policy_net = GnnMapping(
             max_qubit_num=max_qubit_num,
-            max_layer_num=max_layer_num,
-            feat_dim=inner_feat_dim,
+            max_gate_num=max_gate_num,
+            feat_dim=feat_dim,
         ).to(device=device)
         self._policy_net.train(True)
         self._target_net = GnnMapping(
             max_qubit_num=max_qubit_num,
-            max_layer_num=max_layer_num,
-            feat_dim=inner_feat_dim,
+            max_gate_num=max_gate_num,
+            feat_dim=feat_dim,
         ).to(device=device)
         self._target_net.train(False)
 
@@ -188,12 +188,14 @@ class Trainer:
             device=self._device,
         )  # [B, 1]
 
-        data_list = [state.pyg_data for state in states]
-        batch = PygBatch.from_data_list(data_list=data_list).to(device=self._device)
+        circ_data_list = [state.circ_pyg_data for state in states]
+        circ_pyg = PygBatch.from_data_list(circ_data_list).to(self._device)
+        topo_data_list = [state.topo_pyg_data for state in states]
+        topo_pyg = PygBatch.from_data_list(topo_data_list).to(self._device)
         rewards = torch.tensor(rewards, device=self._device)
 
         # Current Q estimation
-        attn_mat = self._policy_net(batch.x, batch.edge_index, batch.batch)
+        attn_mat = self._policy_net(circ_pyg, topo_pyg)  # [b, q * q]
         state_action_values = attn_mat.gather(1, actions).squeeze()
 
         # Q* by Bellman Equation
@@ -202,17 +204,24 @@ class Trainer:
             device=self._device,
             dtype=torch.bool,
         )
-        non_final_data_list = [
-            state.pyg_data for state in next_states if state is not None
+        non_final_circ_data_list = [
+            state.circ_pyg_data for state in next_states if state is not None
         ]
-        non_final_batch = PygBatch.from_data_list(data_list=non_final_data_list).to(
-            device=self._device
+        non_final_circ_pyg = PygBatch.from_data_list(non_final_circ_data_list).to(
+            self._device
+        )
+        non_final_topo_data_list = [
+            state.topo_pyg_data for state in states if state is not None
+        ]
+        non_final_topo_pyg = PygBatch.from_data_list(non_final_topo_data_list).to(
+            self._device
         )
         next_state_values = torch.zeros(self._batch_size, device=self._device)
         next_state_values[non_final_mask] = (
             self._target_net(
-                non_final_batch.x, non_final_batch.edge_index, non_final_batch.batch
-            )  # [b, n * n]
+                non_final_circ_pyg,
+                non_final_topo_pyg,
+            )  # [b, q * q]
             .clone()
             .detach()
             .max(1)[0]

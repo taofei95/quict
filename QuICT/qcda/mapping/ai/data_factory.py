@@ -13,6 +13,7 @@ from QuICT.core.gate import BasicGate, CompositeGate, GateType
 from QuICT.core.layout import LayoutEdge
 from QuICT.core.utils.circuit_info import CircuitBased
 from torch_geometric.data import Data as PygData
+from torch_geometric.utils import from_networkx
 
 
 @njit
@@ -55,13 +56,14 @@ class CircuitGraph:
 
         v_node = 0
         occupied = [-1 for _ in range(q)]
-        self._bit2gid: List[List[int]] = []
+        self._bit2gid: List[List[int]] = [[] for _ in range(q)]
         """Qubit to all gates on it.
         """
         for gid, gate in enumerate(self._gates):
             assert gate.controls + gate.targets == 2, "Only 2 bit gates are supported."
             args = tuple(gate.cargs + gate.targs)
             # Position to Gate ID
+            # TODO: Fixme
             self._bit2gid[args[0]].append(gid)
             self._bit2gid[args[1]].append(gid)
             # DAG edges
@@ -75,22 +77,14 @@ class CircuitGraph:
             self._graph.add_edge(v_node, gid)
             self._graph.add_edge(gid, v_node)
 
-    def __copy__(self):
-        cls = self.__class__
-        result = cls.__new__(cls)
-        result.__dict__.update(self.__dict__)
-        return result
-
-    def __deepcopy__(self, memo):
-        cls = self.__class__
-        result = cls.__new__(cls)
-        memo[id(self)] = result
-        for k, v in self.__dict__.items():
-            setattr(result, k, copy.deepcopy(v, memo))
-        return result
-
     def copy(self):
-        return copy.deepcopy(self)
+        cls = self.__class__
+        result = cls.__new__(cls)
+        result._max_gate_num = self._max_gate_num
+        result._graph = copy.deepcopy(self._graph)
+        result._gates = copy.deepcopy(self._gates)
+        result._bit2gid = copy.deepcopy(self._bit2gid)
+        return result
 
     def count_gate(self) -> int:
         return nx.number_of_nodes(self._graph) - 1
@@ -105,8 +99,9 @@ class CircuitGraph:
         Returns:
             int: Removed gate number.
         """
+        remove_cnt = 0
         bit = 0
-        while bit <= len(self._bit2gid):
+        while bit < len(self._bit2gid):
             if not self._bit2gid[bit]:
                 continue
             front = self._bit2gid[bit][0]
@@ -127,33 +122,38 @@ class CircuitGraph:
                 self._bit2gid[b].pop(0)
                 gid = front
                 self._graph.remove_node(gid + 1)
-            # There may be more gate can be removed after removal.
-            # Do not add bit and keep exploring this bit.
+                remove_cnt += 1
+                # There may be more gate can be removed after removal.
+                # Do not add bit and keep exploring this bit.
+            else:
+                bit += 1
 
-    def remove_gate(self, logical_pos: Tuple[int, int]) -> bool:
-        """Remove 2-bit gate at give position.
+        return remove_cnt
 
-        Args:
-            logical_pos (Tuple[int, int]): Gate to be removed. Position is the qubit targets in logical view.
-                The order does not matter.
+    # def try_remove_gate(self, logical_pos: Tuple[int, int]) -> bool:
+    #     """Remove 2-bit gate at give position.
 
-        Returns:
-            bool: Whether removal operation successes.
-        """
-        u, v = logical_pos
-        if (
-            (not self._bit2gid[u])  # No gate on qubit u
-            or (not self._bit2gid[v])  # No gate on qubit v
-            or (
-                self._bit2gid[u][0] != self._bit2gid[v][0]
-            )  # Gates on (u, v) are not the same
-        ):
-            return False
-        gid = self._bit2gid[u][0]
-        self._bit2gid[u].pop(0)
-        self._bit2gid[v].pop(0)
-        self._graph.remove_node(gid + 1)
-        return True
+    #     Args:
+    #         logical_pos (Tuple[int, int]): Gate to be removed. Position is the qubit targets in logical view.
+    #             The order does not matter.
+
+    #     Returns:
+    #         bool: Whether removal operation successes.
+    #     """
+    #     u, v = logical_pos
+    #     if (
+    #         (not self._bit2gid[u])  # No gate on qubit u
+    #         or (not self._bit2gid[v])  # No gate on qubit v
+    #         or (
+    #             self._bit2gid[u][0] != self._bit2gid[v][0]
+    #         )  # Gates on (u, v) are not the same
+    #     ):
+    #         return False
+    #     gid = self._bit2gid[u][0]
+    #     self._bit2gid[u].pop(0)
+    #     self._bit2gid[v].pop(0)
+    #     self._graph.remove_node(gid + 1)
+    #     return True
 
     def to_pyg(self, logic2phy: List[int]) -> PygData:
         """Convert current data into PyG Data according to current mapping.
@@ -170,7 +170,9 @@ class CircuitGraph:
         x[0][0] = 1
         x[0][1] = 1
         for node in self._graph.nodes:
-            gid = int(node["gid"])
+            if node == 0:
+                continue
+            gid = node - 1
             gate = self._gates[gid]
             args = gate.cargs + gate.targs
             x[gid + 1][0] = logic2phy[args[0]] + 2
@@ -192,7 +194,8 @@ class State:
         topo_graph: nx.Graph,
         topo_dist: np.ndarray,
         topo_edges: Tuple[Tuple[int, int]],
-        pyg_data: PygData,
+        circ_pyg_data: PygData,
+        topo_pyg_data: PygData,
         logic2phy: List[int],
         phy2logic: List[int] = None,
     ) -> None:
@@ -202,7 +205,8 @@ class State:
         self.topo_graph = topo_graph
         self.topo_dist = topo_dist
         self.topo_edges = topo_edges
-        self.pyg_data = pyg_data
+        self.circ_pyg_data = circ_pyg_data
+        self.topo_pyg_data = topo_pyg_data
         self.logic2phy = logic2phy
         """Logical to physical mapping
         """
@@ -339,7 +343,6 @@ class DataFactory:
 
     def _get_topo_graph(self, topo: Layout) -> nx.Graph:
         """Build tha graph representation of a topology.
-        Then add a virtual node (labeled 0) into it.
 
         Args:
             topo (Layout): Topology to be built.
@@ -404,7 +407,12 @@ class DataFactory:
         )
         circ_graph = CircuitGraph(circ=circ, max_gate_num=self._max_gate_num)
         logic2phy = [i for i in range(self.topo_qubit_num_map[topo_name])]
-        pyg_data = circ_graph.to_pyg(logic2phy)
+        circ_pyg_data = circ_graph.to_pyg(logic2phy)
+
+        topo_pyg_data = from_networkx(topo_graph)
+        topo_pyg_data.x = torch.arange(self._max_qubit_num, dtype=torch.long).unsqueeze(
+            dim=-1
+        )
 
         state = State(
             circ_graph=circ_graph,
@@ -413,7 +421,8 @@ class DataFactory:
             topo_graph=topo_graph,
             topo_dist=topo_dist,
             topo_edges=topo_edges,
-            pyg_data=pyg_data,
+            circ_pyg_data=circ_pyg_data,
+            topo_pyg_data=topo_pyg_data,
             logic2phy=logic2phy,
         )
         return state

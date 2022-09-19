@@ -57,9 +57,9 @@ class Agent:
         q = self.state.topo.qubit_number
 
         # Chose an action based on policy_net
-        x = self.state.pyg_data.x.to(policy_net_device)
-        edge_index = self.state.pyg_data.edge_index.to(policy_net_device)
-        attn = policy_net(x, edge_index).detach().cpu()
+        circ_pyg = self.state.circ_pyg_data.clone().to(policy_net_device)
+        topo_pyg = self.state.topo_pyg_data.clone().to(policy_net_device)
+        attn = policy_net(circ_pyg, topo_pyg).detach().cpu()
         attn = attn.view(max_q, max_q)
 
         # Use a mask matrix to filter out unwanted qubit pairs.
@@ -162,11 +162,11 @@ class Agent:
         bias = 0
         reward = bias * scale
 
-        success = next_circ_graph.remove_gate(action)
-        assert success, "Can only remove a gate in the first layer!!!"
-        next_circ_graph.eager_exec(
+        # success = next_circ_graph.try_remove_gate(action)
+        cnt = next_circ_graph.eager_exec(
             logic2phy=next_logic2phy, topo_graph=self.state.topo_graph
         )
+        reward += cnt * scale
 
         # Check if there are only padded empty layers left.
         terminated = next_circ_graph.count_gate() == 0
@@ -175,7 +175,7 @@ class Agent:
             self.state = None
             return prev_state, None, reward, True
 
-        next_pyg_data = next_circ_graph.to_pyg(next_logic2phy)
+        next_circ_pyg = next_circ_graph.to_pyg(next_logic2phy)
         next_state = State(
             circ_graph=next_circ_graph,
             topo=self.state.topo,
@@ -183,7 +183,8 @@ class Agent:
             topo_graph=self.state.topo_graph,
             topo_dist=self.state.topo_dist,
             topo_edges=self.state.topo_edges,
-            pyg_data=next_pyg_data,
+            circ_pyg_data=next_circ_pyg,
+            topo_pyg_data=self.state.topo_pyg_data,
             logic2phy=next_logic2phy,
             phy2logic=next_phy2logic,
         )
