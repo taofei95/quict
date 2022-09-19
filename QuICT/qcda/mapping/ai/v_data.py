@@ -10,7 +10,7 @@ from QuICT.core.utils import GateType
 from QuICT.qcda.mapping.ai.data_factory import DataFactory
 from QuICT.qcda.mapping.mcts import MCTSMapping
 
-factory = DataFactory(max_qubit_num=30, max_layer_num=50)
+factory = DataFactory(max_qubit_num=30, max_gate_num=50)
 
 data_dir = osp.dirname(osp.realpath(__file__))
 data_dir = osp.join(data_dir, "data")

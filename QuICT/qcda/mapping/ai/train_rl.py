@@ -2,7 +2,6 @@ import os
 import os.path as osp
 import re
 from collections import deque
-from math import log
 from random import sample
 from time import time
 from typing import List, Tuple, Union
@@ -73,7 +72,7 @@ class Trainer:
         print("Initializing agent...")
         self._agent = Agent(
             max_qubit_num=max_qubit_num,
-            max_layer_num=max_layer_num,
+            max_gate_num=max_layer_num,
             inner_feat_dim=inner_feat_dim,
         )
         self._agent.factory._reset_attr_cache()
@@ -123,56 +122,56 @@ class Trainer:
         self._writer = SummaryWriter(log_dir=log_dir)
 
         # Validation circuits
-        print("Preparing validation data...")
-        self._v_data: List[ValidationData] = []
-        self._mcts_num: int = -1
-        self._fill_v_data()
+        # print("Preparing validation data...")
+        # self._v_data: List[ValidationData] = []
+        # self._mcts_num: int = -1
+        # self._fill_v_data()
 
-    def _fill_v_data(self):
-        v_data_dir = osp.join(self._agent.factory._data_dir, "v_data")
-        pattern = re.compile(r"(\w+)_(\d+).qasm")
-        for _, _, file_names in os.walk(v_data_dir):
-            for file_name in file_names:
-                if file_name.startswith("mapped"):
-                    continue
+    # def _fill_v_data(self):
+    #     v_data_dir = osp.join(self._agent.factory._data_dir, "v_data")
+    #     pattern = re.compile(r"(\w+)_(\d+).qasm")
+    #     for _, _, file_names in os.walk(v_data_dir):
+    #         for file_name in file_names:
+    #             if file_name.startswith("mapped"):
+    #                 continue
 
-                file_path = osp.join(v_data_dir, file_name)
-                mapped_file_path = osp.join(v_data_dir, f"mapped_{file_name}")
-                groups = pattern.match(file_name)
-                topo_name = groups[1]
-                topo = self._agent.factory.topo_map[topo_name]
-                circ = OPENQASMInterface.load_file(file_path).circuit
-                mapped_circ = OPENQASMInterface.load_file(mapped_file_path).circuit
-                self._v_data.append(
-                    ValidationData(circ=circ, mapped_circ=mapped_circ, topo=topo)
-                )
+    #             file_path = osp.join(v_data_dir, file_name)
+    #             mapped_file_path = osp.join(v_data_dir, f"mapped_{file_name}")
+    #             groups = pattern.match(file_name)
+    #             topo_name = groups[1]
+    #             topo = self._agent.factory.topo_map[topo_name]
+    #             circ = OPENQASMInterface.load_file(file_path).circuit
+    #             mapped_circ = OPENQASMInterface.load_file(mapped_file_path).circuit
+    #             self._v_data.append(
+    #                 ValidationData(circ=circ, mapped_circ=mapped_circ, topo=topo)
+    #             )
 
-    def validate_model(self) -> Tuple[int, int]:
-        """Map all validation circuits to corresponding topologies.
+    # def validate_model(self) -> Tuple[int, int]:
+    #     """Map all validation circuits to corresponding topologies.
 
-        Returns:
-            Tuple[int, int]: Total swap gate inserted by current model, and by MCTS.
-        """
-        self._target_net.train(False)
-        model_num = 0
-        for v_datum in self._v_data:
-            cutoff = len(v_datum.circ.gates) * v_datum.circ.width()
-            self._agent.mapped_circ.clean()
-            result_circ = self._agent.map_all(
-                circ=v_datum.circ,
-                layout=v_datum.topo,
-                policy_net=self._target_net,
-                policy_net_device=self._device,
-                cutoff=cutoff,
-            )
-            model_num += len(result_circ.gates) - len(v_datum.circ.gates)
+    #     Returns:
+    #         Tuple[int, int]: Total swap gate inserted by current model, and by MCTS.
+    #     """
+    #     self._target_net.train(False)
+    #     model_num = 0
+    #     for v_datum in self._v_data:
+    #         cutoff = len(v_datum.circ.gates) * v_datum.circ.width()
+    #         self._agent.mapped_circ.clean()
+    #         result_circ = self._agent.map_all(
+    #             circ=v_datum.circ,
+    #             layout=v_datum.topo,
+    #             policy_net=self._target_net,
+    #             policy_net_device=self._device,
+    #             cutoff=cutoff,
+    #         )
+    #         model_num += len(result_circ.gates) - len(v_datum.circ.gates)
 
-        if self._mcts_num == -1:
-            mcts_num = 0
-            for v_datum in self._v_data:
-                mcts_num += len(v_datum.mapped_circ.gates) - len(v_datum.circ.gates)
-            self._mcts_num = mcts_num
-        return model_num, self._mcts_num
+    #     if self._mcts_num == -1:
+    #         mcts_num = 0
+    #         for v_datum in self._v_data:
+    #             mcts_num += len(v_datum.mapped_circ.gates) - len(v_datum.circ.gates)
+    #         self._mcts_num = mcts_num
+    #     return model_num, self._mcts_num
 
     def _optimize_model(self) -> Union[None, float]:
         if len(self._replay) < self._batch_size:
@@ -189,9 +188,7 @@ class Trainer:
             device=self._device,
         )  # [B, 1]
 
-        data_list = [
-            PygData(x=state.x, edge_index=state.edge_index) for state in states
-        ]
+        data_list = [state.pyg_data for state in states]
         batch = PygBatch.from_data_list(data_list=data_list).to(device=self._device)
         rewards = torch.tensor(rewards, device=self._device)
 
@@ -206,9 +203,7 @@ class Trainer:
             dtype=torch.bool,
         )
         non_final_data_list = [
-            PygData(x=state.x, edge_index=state.edge_index)
-            for state in next_states
-            if state is not None
+            state.pyg_data for state in next_states if state is not None
         ]
         non_final_batch = PygBatch.from_data_list(data_list=non_final_data_list).to(
             device=self._device
@@ -322,11 +317,10 @@ class Trainer:
                 rate = observe_period / duration
                 running_loss /= observe_period
                 running_reward /= observe_period
-                layer_num = len(self._agent.state.layered_circ)
                 gate_num = self._agent.count_gate_num()
                 print(
                     f"    [{i+1:<4}] loss: {running_loss:6.4f}, reward: {running_reward:4.2f}, "
-                    + f"#gate: {gate_num}, #layer: {layer_num}, explore rate: {rate:4.2f} action/s"
+                    + f"#gate: {gate_num}, explore rate: {rate:4.2f} action/s"
                 )
                 running_reward = 0.0
                 running_loss = 0.0
@@ -339,16 +333,16 @@ class Trainer:
             self.train_one_epoch()
             # Epoch ends. Validate current model.
             print("   Validating current model on some circuits...")
-            model_num, mcts_num = self.validate_model()
-            print(f"    #SWAP by RL: {model_num}, #SWAP by MCTS: {mcts_num}")
-            self._writer.add_scalars(
-                "Validation Performance",
-                {
-                    "#SWAP by RL": model_num,
-                    "#SWAP by MCTS": mcts_num,
-                },
-                epoch_id + 1,
-            )
+            # model_num, mcts_num = self.validate_model()
+            # print(f"    #SWAP by RL: {model_num}, #SWAP by MCTS: {mcts_num}")
+            # self._writer.add_scalars(
+            #     "Validation Performance",
+            #     {
+            #         "#SWAP by RL": model_num,
+            #         "#SWAP by MCTS": mcts_num,
+            #     },
+            #     epoch_id + 1,
+            # )
             print()
 
 
