@@ -73,13 +73,13 @@ def construct_circuit(a: int, N: int, eps: float = 1 / 10):
         H | circuit(trickbit)
         # subcircuit: measure & reset trickbit
         for i in range(t - k):
-            if i==0:
+            if i == 0:
                 history_indices.append(ptr)
             triggers[k][i] | circuit(trickbit)
-            ptr+=1
+            ptr += 1
         triggers_reset[k] | circuit(trickbit)
-        ptr+=1
-    return circuit, trickbit+history_indices[::-1]
+        ptr += 1
+    return circuit, trickbit + history_indices[::-1]
 
 
 def order_finding(a: int, N: int, eps: float = 1 / 10, simulator=CircuitSimulator()):
