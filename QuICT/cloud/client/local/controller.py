@@ -1,54 +1,7 @@
 import os
 import redis
 import psutil
-import multiprocessing as mp
-
-from QuICT.core import Circuit, Layout
-from QuICT.simulation import Simulator
-from QuICT.tools.interface import OPENQASMInterface
-from QuICT.qcda.qcda import QCDA
-from QuICT.qcda.synthesis.gate_transform import *
-
-
-iset_mapping = {
-    "USTC": USTCSet,
-    "Google": GoogleSet,
-    "IBMQ": IBMQSet,
-    "IonQ": IonQSet
-}
-
-
-def simulation_start(circuit: Circuit, simualtor_options: dict, output_path: str):
-    simulator = Simulator(
-        device=simualtor_options['resource']['device'],
-        backend=simualtor_options['backend'],
-        shots=simualtor_options['shots'],
-        precision=simualtor_options['precision'],
-        output_path=output_path
-    )
-    simulator.run(circuit)
-
-
-def qcda_start(circuit: Circuit, qcda_options: dict, output_path: str):
-    qcda = QCDA()
-    map_opt = qcda_options['mapping']
-    if map_opt['enable']:
-        layout_path = map_opt['layout_path']
-        layout = Layout.load_file(layout_path)
-        qcda.add_default_mapping(layout)
-
-    opt_opt = qcda_options['optimization']
-    if opt_opt['enable']:
-        qcda.add_default_optimization()
-
-    sync_opt = qcda_options['synthesis']
-    if sync_opt['enable']:
-        instruction_set = iset_mapping[sync_opt['instruction_set']]
-        qcda.add_default_synthesis(instruction_set)
-
-    circuit_opt = qcda.compile(circuit)
-    output_path = os.path.join(output_path, 'circuit.qasm')
-    circuit_opt.qasm(output_path)
+import subprocess
 
 
 class QuICTLocalJobManager:
@@ -74,42 +27,48 @@ class QuICTLocalJobManager:
         if self._redis_connection.exists(name):
             raise KeyError("Repeated name in local jobs.")
 
-        # Get circuit
+        # Get information from given yml dict
         cir_path = yml_dict['circuit']
-        circuit = OPENQASMInterface.load_file(cir_path).circuit
-
-        # Create Job in job_queue
         job_type = yml_dict['type']
+        job_options = yml_dict["simulation"] if job_type == "simulation" else yml_dict["qcda"]
         output_path = yml_dict['output_path']
-
-        # Start job by its purpose
-        runtime_args = yml_dict["simulation"] if job_type == "simulation" else yml_dict["qcda"]
-        pid = self._start_job(circuit, job_type, output_path, runtime_args)
 
         # Set job information into Redis.
         job_info = {
-            'pid': pid,
             'type': job_type,
-            'status': 'running',
-            'output_path': output_path
+            'circuit': cir_path,
+            'status': 'initializing',
+            'output_path': output_path,
+            'pid': -1
         }
         self._redis_connection.hmset(name, job_info)
 
-    def _start_job(
-        self,
-        circuit: Circuit,
-        job_type: str,
-        output_path: str,
-        options: dict
-    ):
-        # Start process for current job
-        target_function = simulation_start if job_type == "simulation" else qcda_start
-        process = mp.Process(target=target_function, args=(circuit, options, output_path))
-        process.start()
-        process.join()
-        pid = process.pid
+        # Start job by its purpose
+        command_file_path = os.path.join(
+            os.path.dirname(__file__),
+            "../../cli/script",
+            f"{job_type}.py"
+        )
+        if job_type == "simulation":
+            shots = job_options["shots"]
+            device = job_options["resource"]["device"]
+            backend = job_options["backend"]
+            precision = job_options["precision"]
+            runtime_args = f"{cir_path} {shots} {device} {backend} {precision} {output_path}"
+        else:
+            runtime_args = f"{cir_path} {output_path}"
+            if job_options["mapping"]["enable"]:
+                layout_path = job_options["layout_path"]
+                runtime_args += f" {layout_path}"
 
-        return pid
+            if not job_options["optimization"]["enable"]:
+                runtime_args += " False"
+
+            if job_options["synthesis"]["enable"]:
+                iset = job_options["synthesis"]["instruction_set"]
+                runtime_args += f" {iset}"
+
+        _ = subprocess.call(f"python {command_file_path} {name} {runtime_args}", shell=True)
 
     def _update_job_status(self, name: str):
         job_status = str(self._redis_connection.hget(name, 'status'), "utf-8")
@@ -119,11 +78,8 @@ class QuICTLocalJobManager:
         job_pid = int(self._redis_connection.hget(name, 'pid'))
         try:
             _ = psutil.Process(job_pid)
-            job_status = 'running'   # job_process.status()
         except:
-            job_status = "finish"
-
-        self._redis_connection.hset(name, 'status', job_status)
+            self._redis_connection.hset(name, 'status', 'finish')
 
     def status_job(self, name: str):
         # Check job's list contain given job
