@@ -4,7 +4,9 @@
     "edges": [
         {
             "u": 0,
-            "v": 1
+            "v": 1,
+            "directional": false,
+            "error_rate": 1.0
         },
         {
             "u": 0,
