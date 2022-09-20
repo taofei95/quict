@@ -49,7 +49,6 @@ for laytype in layout_type:
                     lines_mapping.append([int(a), int(b)])
                 
                 cir_q = QuantumCircuit.from_qasm_file(circuit_folder_path + '/' + file_name)
-                # print(cir_q)
                 coupling_map = CouplingMap(couplinglist=lines_mapping)
                 ss = StochasticSwap(coupling_map=coupling_map)
                 pass_manager = PassManager(ss)

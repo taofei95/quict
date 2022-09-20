@@ -19,17 +19,12 @@ import numpy as np
 from fractions import Fraction
 from typing import List, Tuple
 
-#from QuICT.core import Circuit
-#from QuICT.core.gate import *cc
-
-# from QuICT.simulation.cpu_simulator import CircuitSimulator
-from QuICT.qcda.synthesis.mct import one_dirty_aux
-from QuICT.qcda.synthesis.mct.mct_linear_simulation import half_dirty_aux
+from QuICT.qcda.synthesis.mct.mct_linear_simulation import MCTLinearOneDirtyAux
 from QuICT.qcda.optimization.commutative_optimization import *
 #from QuICT.qcda.optimization._optimization import Optimization
 
 class CNFSATOracle:
-     
+
     def __init__(self, simu = None):
         self.simulator = simu
 
@@ -74,7 +69,14 @@ class CNFSATOracle:
             for i in range(len(controls_X)):
                 X | self._cgate(controls_X[i])
             X | self._cgate(target)
-            one_dirty_aux(self._cgate, controls_abs, target, ancilla_qubits_num) #QuICT.qcda.synthesis.mct.
+            # one_dirty_aux(self._cgate, controls_abs, target, ancilla_qubits_num) #QuICT.qcda.synthesis.mct.
+            mct_gates = MCTLinearOneDirtyAux().execute(len(controls_abs)+2)
+            mct_targets = controls_abs
+            mct_targets.append(target)
+            mct_targets.append(ancilla_qubits_num)
+            mct_gates & mct_targets
+            self._cgate.extend(mct_gates)
+
             X | self._cgate(target)
             for i in range(len(controls_X)):
                 X | self._cgate(controls_X[i])
@@ -92,7 +94,13 @@ class CNFSATOracle:
                 controls.append(variable_nunmber + ancilla_qubits_num - p + 1 + j)
 
             current_Aux = variable_nunmber + 1 
-            one_dirty_aux(self._cgate, controls, target, current_Aux)
+            # one_dirty_aux(self._cgate, controls, target, current_Aux)
+            mct_gates = MCTLinearOneDirtyAux().execute(len(controls)+2)
+            mct_targets = controls
+            mct_targets.append(target)
+            mct_targets.append(current_Aux)
+            mct_gates & mct_targets
+            self._cgate.extend(mct_gates)
             
             for j in range(block_number):
                 self.clause(
@@ -152,7 +160,13 @@ class CNFSATOracle:
             for i in range(len(controls_X)):
                 X | self._cgate(controls_X[i])
             X | self._cgate(target)
-            one_dirty_aux(self._cgate, controls_abs, target, current_Aux)
+            # one_dirty_aux(self._cgate, controls_abs, target, current_Aux)
+            mct_gates = MCTLinearOneDirtyAux().execute(len(controls_abs)+2)
+            mct_targets = controls_abs
+            mct_targets.append(target)
+            mct_targets.append(current_Aux)
+            mct_gates & mct_targets
+            self._cgate.extend(mct_gates)
             X | self._cgate(target)
             for i in range(len(controls_X)):
                 X | self._cgate(controls_X[i])
@@ -377,7 +391,9 @@ class CNFSATOracle:
 
 if __name__=="__main__":
     cnf = CNFSATOracle()
-    cnf.run("./1.cnf") 
+    from os import path as osp
+    self_path = osp.abspath(osp.dirname(__file__))
+    cnf.run(osp.join(self_path, "1.cnf")) 
     #./QuICT/algorithm/quantum_algorithm/CNF/
     cgate = cnf.circuit()
     
