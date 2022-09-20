@@ -26,10 +26,6 @@ def qcda_start(
     circuit = OPENQASMInterface.load_file(circuit_path).circuit
 
     qcda = QCDA()
-    if bool(layout_path):
-        layout = Layout.load_file(layout_path)
-        qcda.add_default_mapping(layout)
-
     if bool(optimization):
         qcda.add_default_optimization()
 
@@ -37,12 +33,16 @@ def qcda_start(
         instruction_set = iset_mapping[instruction_set]
         qcda.add_default_synthesis(instruction_set)
 
+    if bool(layout_path):
+        layout = Layout.load_file(layout_path)
+        qcda.add_default_mapping(layout)
+
     circuit_opt = qcda.compile(circuit)
     output_path = os.path.join(output_path, 'circuit.qasm')
     circuit_opt.qasm(output_path)
 
 
-if __name__=="__main__":
+if __name__ == "__main__":
     qcda_start(
         *sys.argv[1:]
     )

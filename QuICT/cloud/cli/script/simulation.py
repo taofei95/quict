@@ -26,7 +26,7 @@ def simulation_start(
     simulator.run(circuit)
 
 
-if __name__=="__main__":
+if __name__ == "__main__":
     simulation_start(
         *sys.argv[1:]
     )
