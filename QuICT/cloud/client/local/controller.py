@@ -33,16 +33,6 @@ class QuICTLocalJobManager:
         job_options = yml_dict["simulation"] if job_type == "simulation" else yml_dict["qcda"]
         output_path = yml_dict['output_path']
 
-        # Set job information into Redis.
-        job_info = {
-            'type': job_type,
-            'circuit': cir_path,
-            'status': 'initializing',
-            'output_path': output_path,
-            'pid': -1
-        }
-        self._redis_connection.hmset(name, job_info)
-
         # Start job by its purpose
         command_file_path = os.path.join(
             os.path.dirname(__file__),
@@ -57,18 +47,33 @@ class QuICTLocalJobManager:
             runtime_args = f"{cir_path} {shots} {device} {backend} {precision} {output_path}"
         else:
             runtime_args = f"{cir_path} {output_path}"
-            if job_options["mapping"]["enable"]:
-                layout_path = job_options["layout_path"]
-                runtime_args += f" {layout_path}"
+            optimization = job_options["optimization"]["enable"]
+            runtime_args += f" {optimization}"
 
-            if not job_options["optimization"]["enable"]:
+            if job_options["mapping"]["enable"]:
+                layout_path = job_options["mapping"]["layout_path"]
+                runtime_args += f" {layout_path}"
+            else:
                 runtime_args += " False"
 
             if job_options["synthesis"]["enable"]:
                 iset = job_options["synthesis"]["instruction_set"]
                 runtime_args += f" {iset}"
 
-        _ = subprocess.call(f"python {command_file_path} {name} {runtime_args}", shell=True)
+        proc = subprocess.Popen(
+            f"python {command_file_path} {runtime_args}",
+            stdout=subprocess.PIPE, shell=True
+        )
+
+        # Set job information into Redis.
+        job_info = {
+            'type': job_type,
+            'circuit': cir_path,
+            'status': 'running',
+            'output_path': output_path,
+            'pid': proc.pid
+        }
+        self._redis_connection.hmset(name, job_info)
 
     def _update_job_status(self, name: str):
         job_status = str(self._redis_connection.hget(name, 'status'), "utf-8")
@@ -119,7 +124,7 @@ class QuICTLocalJobManager:
         try:
             job_process = psutil.Process(job_pid)
             job_process.resume()
-            self._redis_connection.hset(name, 'status', 'stop')
+            self._redis_connection.hset(name, 'status', 'running')
         except Exception as e:
             raise KeyError(f"Failure to restart the job {name}, due to {e}.")
 
