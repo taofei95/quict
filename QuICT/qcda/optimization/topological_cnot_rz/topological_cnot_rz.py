@@ -30,9 +30,9 @@ class TopologicalCnotRz(object):
         result = self.solve(cnot_struct, input, th, waitDeal, undirected_topology)
 
         if circuit.topology is None or len(circuit.topology.edge_list) == 0:
-            topology = [[True] * self.width] * self.width
+            topology = [[True for _ in range(self.width)] for _ in range(self.width)]
         else:
-            topology = [[False] * self.width] * self.width
+            topology = [[False for _ in range(self.width)] for _ in range(self.width)]
             for topo in circuit.topology.edge_list:
                 topology[topo.u][topo.v] = True
 
@@ -83,15 +83,15 @@ class TopologicalCnotRz(object):
         waitDeal = set()
         self.width = circuit.width()
         if circuit.topology is None or len(circuit.topology.edge_list) == 0:
-            self.undirected_topology = [[True] * self.width] * self.width
+            self.undirected_topology = [[True for _ in range(self.width)] for _ in range(self.width)]
         else:
-            self.undirected_topology = [[False] * self.width] * self.width
+            self.undirected_topology = [[False for _ in range(self.width)] for _ in range(self.width)]
             for topology in circuit.topology.edge_list:
                 self.undirected_topology[topology.u][topology.v] = True
                 self.undirected_topology[topology.v][topology.u] = True
-        self.topo_forward_map = [0] * self.width
-        self.topo_backward_map = [0] * self.width
-        self.delete_vis = [0] * self.width
+        self.topo_forward_map = [0 for _ in range(self.width)]
+        self.topo_backward_map = [0 for _ in range(self.width)]
+        self.delete_vis = [0 for _ in range(self.width)]
         self.delete_total = 0
         self.delete_dfs(self.width - 1)
 
@@ -143,7 +143,7 @@ class TopologicalCnotRz(object):
 
         while len(waitDeal) > 0 or not flag:
             gates = []
-            a = [0] * self.width
+            a = [0 for _ in range(self.width)]
             total = 0
             gsxy = []
             needDeal = []
