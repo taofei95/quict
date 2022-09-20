@@ -1,0 +1,228 @@
+qubit_number: 5 
+TO
+gate size: 25 
+1, ori circuit depth: 14, gate size: 25, opt circuit depth: 14 
+2, ori circuit depth: 16, gate size: 25, opt circuit depth: 16 
+3, ori circuit depth: 15, gate size: 25, opt circuit depth: 15 
+4, ori circuit depth: 16, gate size: 25, opt circuit depth: 16 
+5, ori circuit depth: 15, gate size: 25, opt circuit depth: 15 
+gate size: 35 
+1, ori circuit depth: 21, gate size: 35, opt circuit depth: 21 
+2, ori circuit depth: 21, gate size: 34, opt circuit depth: 20 
+3, ori circuit depth: 21, gate size: 35, opt circuit depth: 21 
+4, ori circuit depth: 20, gate size: 35, opt circuit depth: 20 
+5, ori circuit depth: 19, gate size: 35, opt circuit depth: 19 
+gate size: 45 
+1, ori circuit depth: 29, gate size: 41, opt circuit depth: 25 
+2, ori circuit depth: 30, gate size: 41, opt circuit depth: 26 
+3, ori circuit depth: 27, gate size: 45, opt circuit depth: 27 
+4, ori circuit depth: 27, gate size: 44, opt circuit depth: 27 
+5, ori circuit depth: 27, gate size: 44, opt circuit depth: 27 
+gate size: 55 
+1, ori circuit depth: 31, gate size: 53, opt circuit depth: 28 
+2, ori circuit depth: 37, gate size: 53, opt circuit depth: 37 
+3, ori circuit depth: 36, gate size: 53, opt circuit depth: 34 
+4, ori circuit depth: 33, gate size: 53, opt circuit depth: 31 
+5, ori circuit depth: 41, gate size: 54, opt circuit depth: 40 
+gate size: 65 
+1, ori circuit depth: 38, gate size: 64, opt circuit depth: 37 
+2, ori circuit depth: 41, gate size: 65, opt circuit depth: 41 
+3, ori circuit depth: 43, gate size: 65, opt circuit depth: 43 
+4, ori circuit depth: 38, gate size: 60, opt circuit depth: 36 
+5, ori circuit depth: 34, gate size: 65, opt circuit depth: 34 
+gate size: 75 
+1, ori circuit depth: 49, gate size: 75, opt circuit depth: 49 
+2, ori circuit depth: 43, gate size: 73, opt circuit depth: 42 
+3, ori circuit depth: 42, gate size: 75, opt circuit depth: 42 
+4, ori circuit depth: 45, gate size: 75, opt circuit depth: 45 
+5, ori circuit depth: 49, gate size: 74, opt circuit depth: 47 
+qubit_number: 6 
+TO
+gate size: 30 
+1, ori circuit depth: 14, gate size: 30, opt circuit depth: 14 
+2, ori circuit depth: 16, gate size: 30, opt circuit depth: 16 
+3, ori circuit depth: 17, gate size: 30, opt circuit depth: 17 
+4, ori circuit depth: 16, gate size: 28, opt circuit depth: 15 
+5, ori circuit depth: 19, gate size: 30, opt circuit depth: 19 
+gate size: 42 
+1, ori circuit depth: 29, gate size: 40, opt circuit depth: 27 
+2, ori circuit depth: 27, gate size: 42, opt circuit depth: 27 
+3, ori circuit depth: 24, gate size: 42, opt circuit depth: 24 
+4, ori circuit depth: 24, gate size: 38, opt circuit depth: 22 
+5, ori circuit depth: 22, gate size: 42, opt circuit depth: 22 
+gate size: 54 
+1, ori circuit depth: 33, gate size: 52, opt circuit depth: 31 
+2, ori circuit depth: 33, gate size: 54, opt circuit depth: 33 
+3, ori circuit depth: 33, gate size: 54, opt circuit depth: 33 
+4, ori circuit depth: 31, gate size: 54, opt circuit depth: 31 
+5, ori circuit depth: 30, gate size: 53, opt circuit depth: 29 
+gate size: 66 
+1, ori circuit depth: 30, gate size: 66, opt circuit depth: 30 
+2, ori circuit depth: 35, gate size: 64, opt circuit depth: 36 
+3, ori circuit depth: 37, gate size: 66, opt circuit depth: 37 
+4, ori circuit depth: 27, gate size: 66, opt circuit depth: 27 
+5, ori circuit depth: 38, gate size: 65, opt circuit depth: 37 
+gate size: 78 
+1, ori circuit depth: 47, gate size: 78, opt circuit depth: 47 
+2, ori circuit depth: 38, gate size: 74, opt circuit depth: 34 
+3, ori circuit depth: 46, gate size: 76, opt circuit depth: 45 
+4, ori circuit depth: 43, gate size: 78, opt circuit depth: 43 
+5, ori circuit depth: 42, gate size: 78, opt circuit depth: 42 
+gate size: 90 
+1, ori circuit depth: 45, gate size: 89, opt circuit depth: 44 
+2, ori circuit depth: 47, gate size: 87, opt circuit depth: 47 
+3, ori circuit depth: 48, gate size: 87, opt circuit depth: 47 
+4, ori circuit depth: 48, gate size: 90, opt circuit depth: 48 
+5, ori circuit depth: 52, gate size: 87, opt circuit depth: 50 
+qubit_number: 7 
+TO
+gate size: 35 
+1, ori circuit depth: 15, gate size: 35, opt circuit depth: 15 
+2, ori circuit depth: 17, gate size: 35, opt circuit depth: 17 
+3, ori circuit depth: 21, gate size: 35, opt circuit depth: 21 
+4, ori circuit depth: 16, gate size: 35, opt circuit depth: 16 
+5, ori circuit depth: 14, gate size: 35, opt circuit depth: 14 
+gate size: 49 
+1, ori circuit depth: 18, gate size: 49, opt circuit depth: 18 
+2, ori circuit depth: 20, gate size: 48, opt circuit depth: 20 
+3, ori circuit depth: 27, gate size: 49, opt circuit depth: 27 
+4, ori circuit depth: 23, gate size: 49, opt circuit depth: 23 
+5, ori circuit depth: 25, gate size: 48, opt circuit depth: 24 
+gate size: 63 
+1, ori circuit depth: 32, gate size: 60, opt circuit depth: 29 
+2, ori circuit depth: 34, gate size: 61, opt circuit depth: 33 
+3, ori circuit depth: 31, gate size: 63, opt circuit depth: 31 
+4, ori circuit depth: 32, gate size: 60, opt circuit depth: 31 
+5, ori circuit depth: 36, gate size: 62, opt circuit depth: 34 
+gate size: 77 
+1, ori circuit depth: 43, gate size: 75, opt circuit depth: 41 
+2, ori circuit depth: 42, gate size: 76, opt circuit depth: 42 
+3, ori circuit depth: 30, gate size: 77, opt circuit depth: 30 
+4, ori circuit depth: 39, gate size: 73, opt circuit depth: 37 
+5, ori circuit depth: 42, gate size: 74, opt circuit depth: 41 
+gate size: 91 
+1, ori circuit depth: 43, gate size: 87, opt circuit depth: 41 
+2, ori circuit depth: 52, gate size: 89, opt circuit depth: 52 
+3, ori circuit depth: 47, gate size: 88, opt circuit depth: 46 
+4, ori circuit depth: 51, gate size: 87, opt circuit depth: 49 
+5, ori circuit depth: 43, gate size: 89, opt circuit depth: 43 
+gate size: 105 
+1, ori circuit depth: 50, gate size: 97, opt circuit depth: 48 
+2, ori circuit depth: 56, gate size: 97, opt circuit depth: 47 
+3, ori circuit depth: 57, gate size: 100, opt circuit depth: 54 
+4, ori circuit depth: 54, gate size: 98, opt circuit depth: 49 
+5, ori circuit depth: 59, gate size: 104, opt circuit depth: 59 
+qubit_number: 8 
+TO
+gate size: 40 
+1, ori circuit depth: 19, gate size: 40, opt circuit depth: 19 
+2, ori circuit depth: 18, gate size: 40, opt circuit depth: 18 
+3, ori circuit depth: 14, gate size: 40, opt circuit depth: 14 
+4, ori circuit depth: 16, gate size: 40, opt circuit depth: 16 
+5, ori circuit depth: 17, gate size: 37, opt circuit depth: 17 
+gate size: 56 
+1, ori circuit depth: 23, gate size: 56, opt circuit depth: 23 
+2, ori circuit depth: 24, gate size: 56, opt circuit depth: 24 
+3, ori circuit depth: 27, gate size: 54, opt circuit depth: 25 
+4, ori circuit depth: 25, gate size: 55, opt circuit depth: 23 
+5, ori circuit depth: 25, gate size: 50, opt circuit depth: 22 
+gate size: 72 
+1, ori circuit depth: 35, gate size: 70, opt circuit depth: 34 
+2, ori circuit depth: 33, gate size: 69, opt circuit depth: 36 
+3, ori circuit depth: 29, gate size: 70, opt circuit depth: 27 
+4, ori circuit depth: 35, gate size: 69, opt circuit depth: 31 
+5, ori circuit depth: 27, gate size: 71, opt circuit depth: 27 
+gate size: 88 
+1, ori circuit depth: 34, gate size: 88, opt circuit depth: 34 
+2, ori circuit depth: 37, gate size: 85, opt circuit depth: 34 
+3, ori circuit depth: 31, gate size: 87, opt circuit depth: 35 
+4, ori circuit depth: 36, gate size: 86, opt circuit depth: 38 
+5, ori circuit depth: 42, gate size: 88, opt circuit depth: 42 
+gate size: 104 
+1, ori circuit depth: 43, gate size: 104, opt circuit depth: 43 
+2, ori circuit depth: 49, gate size: 102, opt circuit depth: 48 
+3, ori circuit depth: 46, gate size: 102, opt circuit depth: 46 
+4, ori circuit depth: 46, gate size: 102, opt circuit depth: 45 
+5, ori circuit depth: 42, gate size: 102, opt circuit depth: 43 
+gate size: 120 
+1, ori circuit depth: 55, gate size: 116, opt circuit depth: 54 
+2, ori circuit depth: 58, gate size: 118, opt circuit depth: 55 
+3, ori circuit depth: 50, gate size: 118, opt circuit depth: 50 
+4, ori circuit depth: 55, gate size: 117, opt circuit depth: 55 
+5, ori circuit depth: 50, gate size: 120, opt circuit depth: 50 
+qubit_number: 9 
+TO
+gate size: 45 
+1, ori circuit depth: 19, gate size: 45, opt circuit depth: 19 
+2, ori circuit depth: 20, gate size: 45, opt circuit depth: 20 
+3, ori circuit depth: 18, gate size: 45, opt circuit depth: 18 
+4, ori circuit depth: 17, gate size: 45, opt circuit depth: 17 
+5, ori circuit depth: 19, gate size: 43, opt circuit depth: 19 
+gate size: 63 
+1, ori circuit depth: 28, gate size: 62, opt circuit depth: 27 
+2, ori circuit depth: 24, gate size: 63, opt circuit depth: 24 
+3, ori circuit depth: 24, gate size: 62, opt circuit depth: 24 
+4, ori circuit depth: 23, gate size: 62, opt circuit depth: 21 
+5, ori circuit depth: 27, gate size: 63, opt circuit depth: 27 
+gate size: 81 
+1, ori circuit depth: 36, gate size: 77, opt circuit depth: 35 
+2, ori circuit depth: 39, gate size: 81, opt circuit depth: 39 
+3, ori circuit depth: 32, gate size: 79, opt circuit depth: 32 
+4, ori circuit depth: 38, gate size: 78, opt circuit depth: 43 
+5, ori circuit depth: 34, gate size: 81, opt circuit depth: 34 
+gate size: 99 
+1, ori circuit depth: 40, gate size: 99, opt circuit depth: 40 
+2, ori circuit depth: 38, gate size: 97, opt circuit depth: 34 
+3, ori circuit depth: 46, gate size: 99, opt circuit depth: 46 
+4, ori circuit depth: 48, gate size: 98, opt circuit depth: 48 
+5, ori circuit depth: 51, gate size: 99, opt circuit depth: 51 
+gate size: 117 
+1, ori circuit depth: 46, gate size: 117, opt circuit depth: 46 
+2, ori circuit depth: 56, gate size: 115, opt circuit depth: 56 
+3, ori circuit depth: 53, gate size: 116, opt circuit depth: 55 
+4, ori circuit depth: 45, gate size: 117, opt circuit depth: 45 
+5, ori circuit depth: 53, gate size: 117, opt circuit depth: 53 
+gate size: 135 
+1, ori circuit depth: 58, gate size: 131, opt circuit depth: 54 
+2, ori circuit depth: 62, gate size: 132, opt circuit depth: 60 
+3, ori circuit depth: 50, gate size: 134, opt circuit depth: 49 
+4, ori circuit depth: 62, gate size: 133, opt circuit depth: 63 
+5, ori circuit depth: 58, gate size: 135, opt circuit depth: 58 
+qubit_number: 10 
+TO
+gate size: 50 
+1, ori circuit depth: 20, gate size: 50, opt circuit depth: 20 
+2, ori circuit depth: 23, gate size: 50, opt circuit depth: 23 
+3, ori circuit depth: 18, gate size: 49, opt circuit depth: 15 
+4, ori circuit depth: 21, gate size: 50, opt circuit depth: 21 
+5, ori circuit depth: 21, gate size: 50, opt circuit depth: 21 
+gate size: 70 
+1, ori circuit depth: 32, gate size: 70, opt circuit depth: 32 
+2, ori circuit depth: 30, gate size: 68, opt circuit depth: 32 
+3, ori circuit depth: 31, gate size: 70, opt circuit depth: 31 
+4, ori circuit depth: 31, gate size: 70, opt circuit depth: 31 
+5, ori circuit depth: 25, gate size: 70, opt circuit depth: 25 
+gate size: 90 
+1, ori circuit depth: 41, gate size: 89, opt circuit depth: 43 
+2, ori circuit depth: 34, gate size: 88, opt circuit depth: 33 
+3, ori circuit depth: 35, gate size: 88, opt circuit depth: 40 
+4, ori circuit depth: 35, gate size: 84, opt circuit depth: 34 
+5, ori circuit depth: 33, gate size: 90, opt circuit depth: 33 
+gate size: 110 
+1, ori circuit depth: 44, gate size: 109, opt circuit depth: 45 
+2, ori circuit depth: 42, gate size: 107, opt circuit depth: 42 
+3, ori circuit depth: 45, gate size: 108, opt circuit depth: 43 
+4, ori circuit depth: 42, gate size: 110, opt circuit depth: 42 
+5, ori circuit depth: 36, gate size: 110, opt circuit depth: 36 
+gate size: 130 
+1, ori circuit depth: 55, gate size: 130, opt circuit depth: 55 
+2, ori circuit depth: 45, gate size: 128, opt circuit depth: 47 
+3, ori circuit depth: 55, gate size: 130, opt circuit depth: 55 
+4, ori circuit depth: 55, gate size: 130, opt circuit depth: 55 
+5, ori circuit depth: 59, gate size: 128, opt circuit depth: 59 
+gate size: 150 
+1, ori circuit depth: 49, gate size: 147, opt circuit depth: 51 
+2, ori circuit depth: 65, gate size: 150, opt circuit depth: 65 
+3, ori circuit depth: 61, gate size: 149, opt circuit depth: 61 
+4, ori circuit depth: 60, gate size: 149, opt circuit depth: 57 
+5, ori circuit depth: 51, gate size: 150, opt circuit depth: 51 

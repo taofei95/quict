@@ -1,0 +1,1790 @@
+line
+qubit_number: 5 
+Nom 
+gate size: 25 
+1, swap gates number: 4 
+2, swap gates number: 4 
+3, swap gates number: 4 
+4, swap gates number: 2 
+5, swap gates number: 1 
+gate size: 35 
+1, swap gates number: 5 
+2, swap gates number: 10 
+3, swap gates number: 5 
+4, swap gates number: 4 
+5, swap gates number: 6 
+gate size: 45 
+1, swap gates number: 8 
+2, swap gates number: 3 
+3, swap gates number: 6 
+4, swap gates number: 8 
+5, swap gates number: 4 
+gate size: 55 
+1, swap gates number: 4 
+2, swap gates number: 3 
+3, swap gates number: 8 
+4, swap gates number: 10 
+5, swap gates number: 14 
+gate size: 65 
+1, swap gates number: 4 
+2, swap gates number: 7 
+3, swap gates number: 9 
+4, swap gates number: 4 
+5, swap gates number: 9 
+gate size: 75 
+1, swap gates number: 9 
+2, swap gates number: 8 
+3, swap gates number: 11 
+4, swap gates number: 11 
+5, swap gates number: 11 
+IONQ 
+gate size: 25 
+1, swap gates number: 2 
+2, swap gates number: 4 
+3, swap gates number: 4 
+4, swap gates number: 4 
+5, swap gates number: 2 
+gate size: 35 
+1, swap gates number: 5 
+2, swap gates number: 4 
+3, swap gates number: 4 
+4, swap gates number: 4 
+5, swap gates number: 3 
+gate size: 45 
+1, swap gates number: 5 
+2, swap gates number: 5 
+3, swap gates number: 6 
+4, swap gates number: 6 
+5, swap gates number: 10 
+gate size: 55 
+1, swap gates number: 4 
+2, swap gates number: 3 
+3, swap gates number: 9 
+4, swap gates number: 8 
+5, swap gates number: 5 
+gate size: 65 
+1, swap gates number: 7 
+2, swap gates number: 8 
+3, swap gates number: 9 
+4, swap gates number: 10 
+5, swap gates number: 9 
+gate size: 75 
+1, swap gates number: 10 
+2, swap gates number: 3 
+3, swap gates number: 13 
+4, swap gates number: 9 
+5, swap gates number: 12 
+IBMQ 
+gate size: 25 
+1, swap gates number: 2 
+2, swap gates number: 0 
+3, swap gates number: 3 
+4, swap gates number: 0 
+5, swap gates number: 2 
+gate size: 35 
+1, swap gates number: 4 
+2, swap gates number: 4 
+3, swap gates number: 4 
+4, swap gates number: 7 
+5, swap gates number: 4 
+gate size: 45 
+1, swap gates number: 7 
+2, swap gates number: 3 
+3, swap gates number: 4 
+4, swap gates number: 6 
+5, swap gates number: 4 
+gate size: 55 
+1, swap gates number: 9 
+2, swap gates number: 7 
+3, swap gates number: 7 
+4, swap gates number: 6 
+5, swap gates number: 6 
+gate size: 65 
+1, swap gates number: 4 
+2, swap gates number: 5 
+3, swap gates number: 7 
+4, swap gates number: 6 
+5, swap gates number: 10 
+gate size: 75 
+1, swap gates number: 7 
+2, swap gates number: 15 
+3, swap gates number: 10 
+4, swap gates number: 8 
+5, swap gates number: 11 
+USTC 
+gate size: 25 
+1, swap gates number: 6 
+2, swap gates number: 1 
+3, swap gates number: 4 
+4, swap gates number: 5 
+5, swap gates number: 5 
+gate size: 35 
+1, swap gates number: 6 
+2, swap gates number: 4 
+3, swap gates number: 3 
+4, swap gates number: 4 
+5, swap gates number: 3 
+gate size: 45 
+1, swap gates number: 2 
+2, swap gates number: 2 
+3, swap gates number: 5 
+4, swap gates number: 5 
+5, swap gates number: 6 
+gate size: 55 
+1, swap gates number: 8 
+2, swap gates number: 8 
+3, swap gates number: 3 
+4, swap gates number: 7 
+5, swap gates number: 6 
+gate size: 65 
+1, swap gates number: 11 
+2, swap gates number: 6 
+3, swap gates number: 6 
+4, swap gates number: 12 
+5, swap gates number: 7 
+gate size: 75 
+1, swap gates number: 16 
+2, swap gates number: 11 
+3, swap gates number: 10 
+4, swap gates number: 13 
+5, swap gates number: 8 
+qubit_number: 6 
+Nom 
+gate size: 30 
+1, swap gates number: 5 
+2, swap gates number: 3 
+3, swap gates number: 4 
+4, swap gates number: 3 
+5, swap gates number: 4 
+gate size: 42 
+1, swap gates number: 7 
+2, swap gates number: 8 
+3, swap gates number: 6 
+4, swap gates number: 6 
+5, swap gates number: 6 
+gate size: 54 
+1, swap gates number: 8 
+2, swap gates number: 13 
+3, swap gates number: 11 
+4, swap gates number: 8 
+5, swap gates number: 14 
+gate size: 66 
+1, swap gates number: 16 
+2, swap gates number: 14 
+3, swap gates number: 14 
+4, swap gates number: 15 
+5, swap gates number: 13 
+gate size: 78 
+1, swap gates number: 19 
+2, swap gates number: 12 
+3, swap gates number: 15 
+4, swap gates number: 15 
+5, swap gates number: 17 
+gate size: 90 
+1, swap gates number: 19 
+2, swap gates number: 18 
+3, swap gates number: 16 
+4, swap gates number: 13 
+5, swap gates number: 10 
+IONQ 
+gate size: 30 
+1, swap gates number: 8 
+2, swap gates number: 8 
+3, swap gates number: 3 
+4, swap gates number: 5 
+5, swap gates number: 10 
+gate size: 42 
+1, swap gates number: 4 
+2, swap gates number: 5 
+3, swap gates number: 5 
+4, swap gates number: 6 
+5, swap gates number: 6 
+gate size: 54 
+1, swap gates number: 7 
+2, swap gates number: 16 
+3, swap gates number: 6 
+4, swap gates number: 13 
+5, swap gates number: 6 
+gate size: 66 
+1, swap gates number: 13 
+2, swap gates number: 18 
+3, swap gates number: 12 
+4, swap gates number: 5 
+5, swap gates number: 10 
+gate size: 78 
+1, swap gates number: 11 
+2, swap gates number: 9 
+3, swap gates number: 17 
+4, swap gates number: 9 
+5, swap gates number: 16 
+gate size: 90 
+1, swap gates number: 15 
+2, swap gates number: 13 
+3, swap gates number: 13 
+4, swap gates number: 11 
+5, swap gates number: 14 
+IBMQ 
+gate size: 30 
+1, swap gates number: 1 
+2, swap gates number: 6 
+3, swap gates number: 5 
+4, swap gates number: 3 
+5, swap gates number: 2 
+gate size: 42 
+1, swap gates number: 6 
+2, swap gates number: 7 
+3, swap gates number: 4 
+4, swap gates number: 5 
+5, swap gates number: 11 
+gate size: 54 
+1, swap gates number: 8 
+2, swap gates number: 11 
+3, swap gates number: 7 
+4, swap gates number: 9 
+5, swap gates number: 13 
+gate size: 66 
+1, swap gates number: 7 
+2, swap gates number: 9 
+3, swap gates number: 8 
+4, swap gates number: 8 
+5, swap gates number: 14 
+gate size: 78 
+1, swap gates number: 11 
+2, swap gates number: 14 
+3, swap gates number: 11 
+4, swap gates number: 11 
+5, swap gates number: 13 
+gate size: 90 
+1, swap gates number: 14 
+2, swap gates number: 22 
+3, swap gates number: 12 
+4, swap gates number: 18 
+5, swap gates number: 20 
+USTC 
+gate size: 30 
+1, swap gates number: 3 
+2, swap gates number: 4 
+3, swap gates number: 9 
+4, swap gates number: 9 
+5, swap gates number: 6 
+gate size: 42 
+1, swap gates number: 4 
+2, swap gates number: 6 
+3, swap gates number: 10 
+4, swap gates number: 8 
+5, swap gates number: 4 
+gate size: 54 
+1, swap gates number: 9 
+2, swap gates number: 6 
+3, swap gates number: 12 
+4, swap gates number: 5 
+5, swap gates number: 10 
+gate size: 66 
+1, swap gates number: 14 
+2, swap gates number: 12 
+3, swap gates number: 9 
+4, swap gates number: 8 
+5, swap gates number: 6 
+gate size: 78 
+1, swap gates number: 13 
+2, swap gates number: 14 
+3, swap gates number: 14 
+4, swap gates number: 12 
+5, swap gates number: 13 
+gate size: 90 
+1, swap gates number: 9 
+2, swap gates number: 13 
+3, swap gates number: 18 
+4, swap gates number: 11 
+5, swap gates number: 21 
+qubit_number: 7 
+Nom 
+gate size: 35 
+1, swap gates number: 10 
+2, swap gates number: 7 
+3, swap gates number: 8 
+4, swap gates number: 4 
+5, swap gates number: 9 
+gate size: 49 
+1, swap gates number: 15 
+2, swap gates number: 10 
+3, swap gates number: 21 
+4, swap gates number: 8 
+5, swap gates number: 13 
+gate size: 63 
+1, swap gates number: 12 
+2, swap gates number: 10 
+3, swap gates number: 10 
+4, swap gates number: 13 
+5, swap gates number: 13 
+gate size: 77 
+1, swap gates number: 12 
+2, swap gates number: 19 
+3, swap gates number: 12 
+4, swap gates number: 16 
+5, swap gates number: 20 
+gate size: 91 
+1, swap gates number: 21 
+2, swap gates number: 21 
+3, swap gates number: 16 
+4, swap gates number: 22 
+5, swap gates number: 11 
+gate size: 105 
+1, swap gates number: 9 
+2, swap gates number: 21 
+3, swap gates number: 22 
+4, swap gates number: 21 
+5, swap gates number: 20 
+IONQ 
+gate size: 35 
+1, swap gates number: 8 
+2, swap gates number: 14 
+3, swap gates number: 9 
+4, swap gates number: 7 
+5, swap gates number: 12 
+gate size: 49 
+1, swap gates number: 19 
+2, swap gates number: 11 
+3, swap gates number: 19 
+4, swap gates number: 6 
+5, swap gates number: 9 
+gate size: 63 
+1, swap gates number: 17 
+2, swap gates number: 15 
+3, swap gates number: 15 
+4, swap gates number: 14 
+5, swap gates number: 13 
+gate size: 77 
+1, swap gates number: 20 
+2, swap gates number: 16 
+3, swap gates number: 11 
+4, swap gates number: 10 
+5, swap gates number: 21 
+gate size: 91 
+1, swap gates number: 23 
+2, swap gates number: 19 
+3, swap gates number: 23 
+4, swap gates number: 16 
+5, swap gates number: 15 
+gate size: 105 
+1, swap gates number: 16 
+2, swap gates number: 27 
+3, swap gates number: 20 
+4, swap gates number: 15 
+5, swap gates number: 26 
+IBMQ 
+gate size: 35 
+1, swap gates number: 7 
+2, swap gates number: 7 
+3, swap gates number: 10 
+4, swap gates number: 10 
+5, swap gates number: 7 
+gate size: 49 
+1, swap gates number: 8 
+2, swap gates number: 9 
+3, swap gates number: 12 
+4, swap gates number: 15 
+5, swap gates number: 9 
+gate size: 63 
+1, swap gates number: 14 
+2, swap gates number: 19 
+3, swap gates number: 14 
+4, swap gates number: 12 
+5, swap gates number: 10 
+gate size: 77 
+1, swap gates number: 12 
+2, swap gates number: 17 
+3, swap gates number: 11 
+4, swap gates number: 17 
+5, swap gates number: 23 
+gate size: 91 
+1, swap gates number: 17 
+2, swap gates number: 23 
+3, swap gates number: 15 
+4, swap gates number: 14 
+5, swap gates number: 22 
+gate size: 105 
+1, swap gates number: 17 
+2, swap gates number: 26 
+3, swap gates number: 13 
+4, swap gates number: 21 
+5, swap gates number: 18 
+USTC 
+gate size: 35 
+1, swap gates number: 10 
+2, swap gates number: 13 
+3, swap gates number: 6 
+4, swap gates number: 5 
+5, swap gates number: 6 
+gate size: 49 
+1, swap gates number: 11 
+2, swap gates number: 17 
+3, swap gates number: 7 
+4, swap gates number: 9 
+5, swap gates number: 3 
+gate size: 63 
+1, swap gates number: 6 
+2, swap gates number: 10 
+3, swap gates number: 3 
+4, swap gates number: 11 
+5, swap gates number: 15 
+gate size: 77 
+1, swap gates number: 19 
+2, swap gates number: 13 
+3, swap gates number: 17 
+4, swap gates number: 22 
+5, swap gates number: 12 
+gate size: 91 
+1, swap gates number: 20 
+2, swap gates number: 27 
+3, swap gates number: 8 
+4, swap gates number: 19 
+5, swap gates number: 15 
+gate size: 105 
+1, swap gates number: 27 
+2, swap gates number: 23 
+3, swap gates number: 18 
+4, swap gates number: 12 
+5, swap gates number: 18 
+qubit_number: 8 
+Nom 
+gate size: 40 
+1, swap gates number: 9 
+2, swap gates number: 7 
+3, swap gates number: 9 
+4, swap gates number: 13 
+5, swap gates number: 12 
+gate size: 56 
+1, swap gates number: 3 
+2, swap gates number: 15 
+3, swap gates number: 12 
+4, swap gates number: 23 
+5, swap gates number: 18 
+gate size: 72 
+1, swap gates number: 14 
+2, swap gates number: 25 
+3, swap gates number: 11 
+4, swap gates number: 17 
+5, swap gates number: 19 
+gate size: 88 
+1, swap gates number: 26 
+2, swap gates number: 27 
+3, swap gates number: 25 
+4, swap gates number: 25 
+5, swap gates number: 24 
+gate size: 104 
+1, swap gates number: 22 
+2, swap gates number: 21 
+3, swap gates number: 20 
+4, swap gates number: 22 
+5, swap gates number: 26 
+gate size: 120 
+1, swap gates number: 25 
+2, swap gates number: 19 
+3, swap gates number: 28 
+4, swap gates number: 25 
+5, swap gates number: 24 
+IONQ 
+gate size: 40 
+1, swap gates number: 5 
+2, swap gates number: 10 
+3, swap gates number: 12 
+4, swap gates number: 6 
+5, swap gates number: 8 
+gate size: 56 
+1, swap gates number: 30 
+2, swap gates number: 13 
+3, swap gates number: 13 
+4, swap gates number: 21 
+5, swap gates number: 17 
+gate size: 72 
+1, swap gates number: 14 
+2, swap gates number: 34 
+3, swap gates number: 13 
+4, swap gates number: 19 
+5, swap gates number: 15 
+gate size: 88 
+1, swap gates number: 17 
+2, swap gates number: 13 
+3, swap gates number: 18 
+4, swap gates number: 27 
+5, swap gates number: 38 
+gate size: 104 
+1, swap gates number: 26 
+2, swap gates number: 19 
+3, swap gates number: 23 
+4, swap gates number: 20 
+5, swap gates number: 18 
+gate size: 120 
+1, swap gates number: 41 
+2, swap gates number: 20 
+3, swap gates number: 35 
+4, swap gates number: 30 
+5, swap gates number: 32 
+IBMQ 
+gate size: 40 
+1, swap gates number: 13 
+2, swap gates number: 6 
+3, swap gates number: 11 
+4, swap gates number: 10 
+5, swap gates number: 7 
+gate size: 56 
+1, swap gates number: 16 
+2, swap gates number: 10 
+3, swap gates number: 14 
+4, swap gates number: 10 
+5, swap gates number: 13 
+gate size: 72 
+1, swap gates number: 27 
+2, swap gates number: 13 
+3, swap gates number: 33 
+4, swap gates number: 17 
+5, swap gates number: 14 
+gate size: 88 
+1, swap gates number: 28 
+2, swap gates number: 29 
+3, swap gates number: 22 
+4, swap gates number: 19 
+5, swap gates number: 15 
+gate size: 104 
+1, swap gates number: 30 
+2, swap gates number: 23 
+3, swap gates number: 22 
+4, swap gates number: 27 
+5, swap gates number: 19 
+gate size: 120 
+1, swap gates number: 18 
+2, swap gates number: 38 
+3, swap gates number: 34 
+4, swap gates number: 25 
+5, swap gates number: 22 
+USTC 
+gate size: 40 
+1, swap gates number: 12 
+2, swap gates number: 14 
+3, swap gates number: 16 
+4, swap gates number: 12 
+5, swap gates number: 9 
+gate size: 56 
+1, swap gates number: 12 
+2, swap gates number: 18 
+3, swap gates number: 17 
+4, swap gates number: 19 
+5, swap gates number: 13 
+gate size: 72 
+1, swap gates number: 13 
+2, swap gates number: 17 
+3, swap gates number: 24 
+4, swap gates number: 23 
+5, swap gates number: 7 
+gate size: 88 
+1, swap gates number: 31 
+2, swap gates number: 22 
+3, swap gates number: 20 
+4, swap gates number: 26 
+5, swap gates number: 23 
+gate size: 104 
+1, swap gates number: 21 
+2, swap gates number: 18 
+3, swap gates number: 19 
+4, swap gates number: 12 
+5, swap gates number: 35 
+gate size: 120 
+1, swap gates number: 25 
+2, swap gates number: 24 
+3, swap gates number: 24 
+4, swap gates number: 14 
+5, swap gates number: 32 
+qubit_number: 9 
+Nom 
+gate size: 45 
+1, swap gates number: 12 
+2, swap gates number: 6 
+3, swap gates number: 14 
+4, swap gates number: 19 
+5, swap gates number: 18 
+gate size: 63 
+1, swap gates number: 29 
+2, swap gates number: 29 
+3, swap gates number: 32 
+4, swap gates number: 18 
+5, swap gates number: 14 
+gate size: 81 
+1, swap gates number: 22 
+2, swap gates number: 24 
+3, swap gates number: 16 
+4, swap gates number: 19 
+5, swap gates number: 13 
+gate size: 99 
+1, swap gates number: 42 
+2, swap gates number: 21 
+3, swap gates number: 30 
+4, swap gates number: 28 
+5, swap gates number: 28 
+gate size: 117 
+1, swap gates number: 35 
+2, swap gates number: 48 
+3, swap gates number: 33 
+4, swap gates number: 41 
+5, swap gates number: 34 
+gate size: 135 
+1, swap gates number: 37 
+2, swap gates number: 35 
+3, swap gates number: 42 
+4, swap gates number: 39 
+5, swap gates number: 44 
+IONQ 
+gate size: 45 
+1, swap gates number: 9 
+2, swap gates number: 8 
+3, swap gates number: 16 
+4, swap gates number: 24 
+5, swap gates number: 14 
+gate size: 63 
+1, swap gates number: 20 
+2, swap gates number: 20 
+3, swap gates number: 25 
+4, swap gates number: 16 
+5, swap gates number: 10 
+gate size: 81 
+1, swap gates number: 22 
+2, swap gates number: 17 
+3, swap gates number: 26 
+4, swap gates number: 27 
+5, swap gates number: 25 
+gate size: 99 
+1, swap gates number: 22 
+2, swap gates number: 41 
+3, swap gates number: 34 
+4, swap gates number: 40 
+5, swap gates number: 26 
+gate size: 117 
+1, swap gates number: 24 
+2, swap gates number: 47 
+3, swap gates number: 48 
+4, swap gates number: 47 
+5, swap gates number: 35 
+gate size: 135 
+1, swap gates number: 34 
+2, swap gates number: 32 
+3, swap gates number: 34 
+4, swap gates number: 48 
+5, swap gates number: 46 
+IBMQ 
+gate size: 45 
+1, swap gates number: 18 
+2, swap gates number: 10 
+3, swap gates number: 8 
+4, swap gates number: 11 
+5, swap gates number: 17 
+gate size: 63 
+1, swap gates number: 24 
+2, swap gates number: 23 
+3, swap gates number: 18 
+4, swap gates number: 15 
+5, swap gates number: 21 
+gate size: 81 
+1, swap gates number: 21 
+2, swap gates number: 27 
+3, swap gates number: 19 
+4, swap gates number: 29 
+5, swap gates number: 23 
+gate size: 99 
+1, swap gates number: 33 
+2, swap gates number: 18 
+3, swap gates number: 24 
+4, swap gates number: 25 
+5, swap gates number: 29 
+gate size: 117 
+1, swap gates number: 18 
+2, swap gates number: 22 
+3, swap gates number: 43 
+4, swap gates number: 35 
+5, swap gates number: 16 
+gate size: 135 
+1, swap gates number: 46 
+2, swap gates number: 36 
+3, swap gates number: 41 
+4, swap gates number: 21 
+5, swap gates number: 30 
+USTC 
+gate size: 45 
+1, swap gates number: 8 
+2, swap gates number: 17 
+3, swap gates number: 9 
+4, swap gates number: 21 
+5, swap gates number: 14 
+gate size: 63 
+1, swap gates number: 8 
+2, swap gates number: 23 
+3, swap gates number: 15 
+4, swap gates number: 19 
+5, swap gates number: 21 
+gate size: 81 
+1, swap gates number: 22 
+2, swap gates number: 24 
+3, swap gates number: 25 
+4, swap gates number: 24 
+5, swap gates number: 25 
+gate size: 99 
+1, swap gates number: 24 
+2, swap gates number: 30 
+3, swap gates number: 49 
+4, swap gates number: 51 
+5, swap gates number: 25 
+gate size: 117 
+1, swap gates number: 27 
+2, swap gates number: 41 
+3, swap gates number: 42 
+4, swap gates number: 35 
+5, swap gates number: 22 
+gate size: 135 
+1, swap gates number: 33 
+2, swap gates number: 34 
+3, swap gates number: 42 
+4, swap gates number: 49 
+5, swap gates number: 58 
+qubit_number: 10 
+Nom 
+gate size: 50 
+1, swap gates number: 21 
+2, swap gates number: 17 
+3, swap gates number: 10 
+4, swap gates number: 7 
+5, swap gates number: 28 
+gate size: 70 
+1, swap gates number: 37 
+2, swap gates number: 30 
+3, swap gates number: 19 
+4, swap gates number: 21 
+5, swap gates number: 30 
+gate size: 90 
+1, swap gates number: 26 
+2, swap gates number: 14 
+3, swap gates number: 33 
+4, swap gates number: 51 
+5, swap gates number: 22 
+gate size: 110 
+1, swap gates number: 38 
+2, swap gates number: 27 
+3, swap gates number: 37 
+4, swap gates number: 38 
+5, swap gates number: 51 
+gate size: 130 
+1, swap gates number: 45 
+2, swap gates number: 56 
+3, swap gates number: 51 
+4, swap gates number: 32 
+5, swap gates number: 31 
+gate size: 150 
+1, swap gates number: 25 
+2, swap gates number: 41 
+3, swap gates number: 42 
+4, swap gates number: 19 
+5, swap gates number: 50 
+IONQ 
+gate size: 50 
+1, swap gates number: 25 
+2, swap gates number: 25 
+3, swap gates number: 10 
+4, swap gates number: 15 
+5, swap gates number: 20 
+gate size: 70 
+1, swap gates number: 11 
+2, swap gates number: 9 
+3, swap gates number: 25 
+4, swap gates number: 17 
+5, swap gates number: 32 
+gate size: 90 
+1, swap gates number: 30 
+2, swap gates number: 45 
+3, swap gates number: 33 
+4, swap gates number: 34 
+5, swap gates number: 31 
+gate size: 110 
+1, swap gates number: 21 
+2, swap gates number: 47 
+3, swap gates number: 37 
+4, swap gates number: 19 
+5, swap gates number: 30 
+gate size: 130 
+1, swap gates number: 31 
+2, swap gates number: 36 
+3, swap gates number: 44 
+4, swap gates number: 29 
+5, swap gates number: 54 
+gate size: 150 
+1, swap gates number: 59 
+2, swap gates number: 44 
+3, swap gates number: 58 
+4, swap gates number: 55 
+5, swap gates number: 43 
+IBMQ 
+gate size: 50 
+1, swap gates number: 19 
+2, swap gates number: 26 
+3, swap gates number: 13 
+4, swap gates number: 13 
+5, swap gates number: 18 
+gate size: 70 
+1, swap gates number: 32 
+2, swap gates number: 28 
+3, swap gates number: 24 
+4, swap gates number: 20 
+5, swap gates number: 22 
+gate size: 90 
+1, swap gates number: 25 
+2, swap gates number: 37 
+3, swap gates number: 24 
+4, swap gates number: 42 
+5, swap gates number: 31 
+gate size: 110 
+1, swap gates number: 39 
+2, swap gates number: 24 
+3, swap gates number: 13 
+4, swap gates number: 53 
+5, swap gates number: 37 
+gate size: 130 
+1, swap gates number: 31 
+2, swap gates number: 55 
+3, swap gates number: 42 
+4, swap gates number: 41 
+5, swap gates number: 50 
+gate size: 150 
+1, swap gates number: 56 
+2, swap gates number: 55 
+3, swap gates number: 50 
+4, swap gates number: 60 
+5, swap gates number: 52 
+USTC 
+gate size: 50 
+1, swap gates number: 11 
+2, swap gates number: 15 
+3, swap gates number: 20 
+4, swap gates number: 11 
+5, swap gates number: 11 
+gate size: 70 
+1, swap gates number: 25 
+2, swap gates number: 18 
+3, swap gates number: 15 
+4, swap gates number: 34 
+5, swap gates number: 29 
+gate size: 90 
+1, swap gates number: 16 
+2, swap gates number: 28 
+3, swap gates number: 16 
+4, swap gates number: 42 
+5, swap gates number: 44 
+gate size: 110 
+1, swap gates number: 32 
+2, swap gates number: 64 
+3, swap gates number: 30 
+4, swap gates number: 47 
+5, swap gates number: 43 
+gate size: 130 
+1, swap gates number: 42 
+2, swap gates number: 45 
+3, swap gates number: 25 
+4, swap gates number: 32 
+5, swap gates number: 30 
+gate size: 150 
+1, swap gates number: 45 
+2, swap gates number: 49 
+3, swap gates number: 56 
+4, swap gates number: 36 
+5, swap gates number: 41 
+grid
+qubit_number: 5 
+Nom 
+gate size: 25 
+1, swap gates number: 2 
+2, swap gates number: 2 
+3, swap gates number: 3 
+4, swap gates number: 1 
+5, swap gates number: 0 
+gate size: 35 
+1, swap gates number: 2 
+2, swap gates number: 3 
+3, swap gates number: 2 
+4, swap gates number: 2 
+5, swap gates number: 1 
+gate size: 45 
+1, swap gates number: 3 
+2, swap gates number: 1 
+3, swap gates number: 2 
+4, swap gates number: 4 
+5, swap gates number: 2 
+gate size: 55 
+1, swap gates number: 1 
+2, swap gates number: 2 
+3, swap gates number: 3 
+4, swap gates number: 4 
+5, swap gates number: 5 
+gate size: 65 
+1, swap gates number: 1 
+2, swap gates number: 2 
+3, swap gates number: 5 
+4, swap gates number: 3 
+5, swap gates number: 3 
+gate size: 75 
+1, swap gates number: 2 
+2, swap gates number: 3 
+3, swap gates number: 4 
+4, swap gates number: 4 
+5, swap gates number: 6 
+IONQ 
+gate size: 25 
+1, swap gates number: 1 
+2, swap gates number: 2 
+3, swap gates number: 2 
+4, swap gates number: 3 
+5, swap gates number: 1 
+gate size: 35 
+1, swap gates number: 1 
+2, swap gates number: 2 
+3, swap gates number: 2 
+4, swap gates number: 2 
+5, swap gates number: 1 
+gate size: 45 
+1, swap gates number: 2 
+2, swap gates number: 2 
+3, swap gates number: 2 
+4, swap gates number: 3 
+5, swap gates number: 3 
+gate size: 55 
+1, swap gates number: 2 
+2, swap gates number: 1 
+3, swap gates number: 5 
+4, swap gates number: 3 
+5, swap gates number: 2 
+gate size: 65 
+1, swap gates number: 3 
+2, swap gates number: 3 
+3, swap gates number: 5 
+4, swap gates number: 4 
+5, swap gates number: 4 
+gate size: 75 
+1, swap gates number: 4 
+2, swap gates number: 1 
+3, swap gates number: 6 
+4, swap gates number: 3 
+5, swap gates number: 4 
+IBMQ 
+gate size: 25 
+1, swap gates number: 1 
+2, swap gates number: 0 
+3, swap gates number: 2 
+4, swap gates number: 0 
+5, swap gates number: 1 
+gate size: 35 
+1, swap gates number: 2 
+2, swap gates number: 1 
+3, swap gates number: 2 
+4, swap gates number: 3 
+5, swap gates number: 1 
+gate size: 45 
+1, swap gates number: 4 
+2, swap gates number: 2 
+3, swap gates number: 2 
+4, swap gates number: 2 
+5, swap gates number: 3 
+gate size: 55 
+1, swap gates number: 3 
+2, swap gates number: 3 
+3, swap gates number: 1 
+4, swap gates number: 2 
+5, swap gates number: 2 
+gate size: 65 
+1, swap gates number: 3 
+2, swap gates number: 2 
+3, swap gates number: 2 
+4, swap gates number: 3 
+5, swap gates number: 3 
+gate size: 75 
+1, swap gates number: 3 
+2, swap gates number: 6 
+3, swap gates number: 5 
+4, swap gates number: 4 
+5, swap gates number: 4 
+USTC 
+gate size: 25 
+1, swap gates number: 3 
+2, swap gates number: 1 
+3, swap gates number: 1 
+4, swap gates number: 2 
+5, swap gates number: 2 
+gate size: 35 
+1, swap gates number: 2 
+2, swap gates number: 2 
+3, swap gates number: 1 
+4, swap gates number: 2 
+5, swap gates number: 2 
+gate size: 45 
+1, swap gates number: 1 
+2, swap gates number: 2 
+3, swap gates number: 2 
+4, swap gates number: 2 
+5, swap gates number: 2 
+gate size: 55 
+1, swap gates number: 4 
+2, swap gates number: 4 
+3, swap gates number: 2 
+4, swap gates number: 3 
+5, swap gates number: 4 
+gate size: 65 
+1, swap gates number: 4 
+2, swap gates number: 3 
+3, swap gates number: 3 
+4, swap gates number: 5 
+5, swap gates number: 2 
+gate size: 75 
+1, swap gates number: 5 
+2, swap gates number: 4 
+3, swap gates number: 5 
+4, swap gates number: 6 
+5, swap gates number: 3 
+qubit_number: 6 
+Nom 
+gate size: 30 
+1, swap gates number: 2 
+2, swap gates number: 1 
+3, swap gates number: 1 
+4, swap gates number: 1 
+5, swap gates number: 2 
+gate size: 42 
+1, swap gates number: 3 
+2, swap gates number: 4 
+3, swap gates number: 3 
+4, swap gates number: 3 
+5, swap gates number: 5 
+gate size: 54 
+1, swap gates number: 4 
+2, swap gates number: 6 
+3, swap gates number: 4 
+4, swap gates number: 3 
+5, swap gates number: 6 
+gate size: 66 
+1, swap gates number: 8 
+2, swap gates number: 6 
+3, swap gates number: 6 
+4, swap gates number: 4 
+5, swap gates number: 6 
+gate size: 78 
+1, swap gates number: 7 
+2, swap gates number: 7 
+3, swap gates number: 7 
+4, swap gates number: 6 
+5, swap gates number: 8 
+gate size: 90 
+1, swap gates number: 10 
+2, swap gates number: 10 
+3, swap gates number: 6 
+4, swap gates number: 7 
+5, swap gates number: 4 
+IONQ 
+gate size: 30 
+1, swap gates number: 4 
+2, swap gates number: 5 
+3, swap gates number: 2 
+4, swap gates number: 2 
+5, swap gates number: 5 
+gate size: 42 
+1, swap gates number: 2 
+2, swap gates number: 2 
+3, swap gates number: 2 
+4, swap gates number: 4 
+5, swap gates number: 2 
+gate size: 54 
+1, swap gates number: 2 
+2, swap gates number: 7 
+3, swap gates number: 2 
+4, swap gates number: 5 
+5, swap gates number: 3 
+gate size: 66 
+1, swap gates number: 6 
+2, swap gates number: 9 
+3, swap gates number: 6 
+4, swap gates number: 3 
+5, swap gates number: 4 
+gate size: 78 
+1, swap gates number: 6 
+2, swap gates number: 5 
+3, swap gates number: 6 
+4, swap gates number: 4 
+5, swap gates number: 7 
+gate size: 90 
+1, swap gates number: 8 
+2, swap gates number: 8 
+3, swap gates number: 6 
+4, swap gates number: 7 
+5, swap gates number: 7 
+IBMQ 
+gate size: 30 
+1, swap gates number: 1 
+2, swap gates number: 2 
+3, swap gates number: 3 
+4, swap gates number: 3 
+5, swap gates number: 0 
+gate size: 42 
+1, swap gates number: 3 
+2, swap gates number: 3 
+3, swap gates number: 2 
+4, swap gates number: 2 
+5, swap gates number: 5 
+gate size: 54 
+1, swap gates number: 5 
+2, swap gates number: 4 
+3, swap gates number: 3 
+4, swap gates number: 5 
+5, swap gates number: 5 
+gate size: 66 
+1, swap gates number: 3 
+2, swap gates number: 5 
+3, swap gates number: 4 
+4, swap gates number: 3 
+5, swap gates number: 9 
+gate size: 78 
+1, swap gates number: 5 
+2, swap gates number: 7 
+3, swap gates number: 4 
+4, swap gates number: 5 
+5, swap gates number: 6 
+gate size: 90 
+1, swap gates number: 7 
+2, swap gates number: 8 
+3, swap gates number: 6 
+4, swap gates number: 7 
+5, swap gates number: 10 
+USTC 
+gate size: 30 
+1, swap gates number: 2 
+2, swap gates number: 2 
+3, swap gates number: 4 
+4, swap gates number: 4 
+5, swap gates number: 3 
+gate size: 42 
+1, swap gates number: 2 
+2, swap gates number: 4 
+3, swap gates number: 5 
+4, swap gates number: 4 
+5, swap gates number: 2 
+gate size: 54 
+1, swap gates number: 4 
+2, swap gates number: 3 
+3, swap gates number: 5 
+4, swap gates number: 2 
+5, swap gates number: 5 
+gate size: 66 
+1, swap gates number: 7 
+2, swap gates number: 6 
+3, swap gates number: 4 
+4, swap gates number: 4 
+5, swap gates number: 4 
+gate size: 78 
+1, swap gates number: 6 
+2, swap gates number: 6 
+3, swap gates number: 7 
+4, swap gates number: 4 
+5, swap gates number: 5 
+gate size: 90 
+1, swap gates number: 3 
+2, swap gates number: 6 
+3, swap gates number: 8 
+4, swap gates number: 5 
+5, swap gates number: 10 
+qubit_number: 7 
+Nom 
+gate size: 35 
+1, swap gates number: 5 
+2, swap gates number: 3 
+3, swap gates number: 3 
+4, swap gates number: 1 
+5, swap gates number: 4 
+gate size: 49 
+1, swap gates number: 7 
+2, swap gates number: 3 
+3, swap gates number: 8 
+4, swap gates number: 2 
+5, swap gates number: 6 
+gate size: 63 
+1, swap gates number: 5 
+2, swap gates number: 5 
+3, swap gates number: 4 
+4, swap gates number: 5 
+5, swap gates number: 7 
+gate size: 77 
+1, swap gates number: 5 
+2, swap gates number: 7 
+3, swap gates number: 5 
+4, swap gates number: 8 
+5, swap gates number: 11 
+gate size: 91 
+1, swap gates number: 7 
+2, swap gates number: 7 
+3, swap gates number: 7 
+4, swap gates number: 10 
+5, swap gates number: 5 
+gate size: 105 
+1, swap gates number: 5 
+2, swap gates number: 10 
+3, swap gates number: 11 
+4, swap gates number: 12 
+5, swap gates number: 8 
+IONQ 
+gate size: 35 
+1, swap gates number: 3 
+2, swap gates number: 6 
+3, swap gates number: 3 
+4, swap gates number: 3 
+5, swap gates number: 6 
+gate size: 49 
+1, swap gates number: 7 
+2, swap gates number: 5 
+3, swap gates number: 5 
+4, swap gates number: 4 
+5, swap gates number: 4 
+gate size: 63 
+1, swap gates number: 7 
+2, swap gates number: 6 
+3, swap gates number: 5 
+4, swap gates number: 6 
+5, swap gates number: 5 
+gate size: 77 
+1, swap gates number: 8 
+2, swap gates number: 8 
+3, swap gates number: 4 
+4, swap gates number: 5 
+5, swap gates number: 7 
+gate size: 91 
+1, swap gates number: 10 
+2, swap gates number: 8 
+3, swap gates number: 10 
+4, swap gates number: 6 
+5, swap gates number: 9 
+gate size: 105 
+1, swap gates number: 6 
+2, swap gates number: 9 
+3, swap gates number: 10 
+4, swap gates number: 6 
+5, swap gates number: 10 
+IBMQ 
+gate size: 35 
+1, swap gates number: 3 
+2, swap gates number: 3 
+3, swap gates number: 4 
+4, swap gates number: 5 
+5, swap gates number: 4 
+gate size: 49 
+1, swap gates number: 3 
+2, swap gates number: 3 
+3, swap gates number: 4 
+4, swap gates number: 6 
+5, swap gates number: 2 
+gate size: 63 
+1, swap gates number: 6 
+2, swap gates number: 7 
+3, swap gates number: 5 
+4, swap gates number: 4 
+5, swap gates number: 3 
+gate size: 77 
+1, swap gates number: 4 
+2, swap gates number: 8 
+3, swap gates number: 5 
+4, swap gates number: 8 
+5, swap gates number: 9 
+gate size: 91 
+1, swap gates number: 6 
+2, swap gates number: 10 
+3, swap gates number: 7 
+4, swap gates number: 7 
+5, swap gates number: 9 
+gate size: 105 
+1, swap gates number: 7 
+2, swap gates number: 10 
+3, swap gates number: 6 
+4, swap gates number: 7 
+5, swap gates number: 8 
+USTC 
+gate size: 35 
+1, swap gates number: 4 
+2, swap gates number: 5 
+3, swap gates number: 2 
+4, swap gates number: 2 
+5, swap gates number: 2 
+gate size: 49 
+1, swap gates number: 5 
+2, swap gates number: 6 
+3, swap gates number: 4 
+4, swap gates number: 4 
+5, swap gates number: 2 
+gate size: 63 
+1, swap gates number: 3 
+2, swap gates number: 4 
+3, swap gates number: 2 
+4, swap gates number: 2 
+5, swap gates number: 6 
+gate size: 77 
+1, swap gates number: 9 
+2, swap gates number: 7 
+3, swap gates number: 6 
+4, swap gates number: 12 
+5, swap gates number: 7 
+gate size: 91 
+1, swap gates number: 9 
+2, swap gates number: 9 
+3, swap gates number: 3 
+4, swap gates number: 8 
+5, swap gates number: 7 
+gate size: 105 
+1, swap gates number: 11 
+2, swap gates number: 10 
+3, swap gates number: 8 
+4, swap gates number: 8 
+5, swap gates number: 8 
+qubit_number: 8 
+Nom 
+gate size: 40 
+1, swap gates number: 4 
+2, swap gates number: 3 
+3, swap gates number: 5 
+4, swap gates number: 6 
+5, swap gates number: 6 
+gate size: 56 
+1, swap gates number: 2 
+2, swap gates number: 7 
+3, swap gates number: 5 
+4, swap gates number: 12 
+5, swap gates number: 8 
+gate size: 72 
+1, swap gates number: 7 
+2, swap gates number: 11 
+3, swap gates number: 7 
+4, swap gates number: 7 
+5, swap gates number: 7 
+gate size: 88 
+1, swap gates number: 9 
+2, swap gates number: 9 
+3, swap gates number: 11 
+4, swap gates number: 11 
+5, swap gates number: 11 
+gate size: 104 
+1, swap gates number: 12 
+2, swap gates number: 12 
+3, swap gates number: 7 
+4, swap gates number: 13 
+5, swap gates number: 13 
+gate size: 120 
+1, swap gates number: 9 
+2, swap gates number: 7 
+3, swap gates number: 14 
+4, swap gates number: 9 
+5, swap gates number: 10 
+IONQ 
+gate size: 40 
+1, swap gates number: 3 
+2, swap gates number: 4 
+3, swap gates number: 6 
+4, swap gates number: 4 
+5, swap gates number: 5 
+gate size: 56 
+1, swap gates number: 11 
+2, swap gates number: 7 
+3, swap gates number: 5 
+4, swap gates number: 10 
+5, swap gates number: 8 
+gate size: 72 
+1, swap gates number: 6 
+2, swap gates number: 14 
+3, swap gates number: 8 
+4, swap gates number: 7 
+5, swap gates number: 7 
+gate size: 88 
+1, swap gates number: 9 
+2, swap gates number: 7 
+3, swap gates number: 10 
+4, swap gates number: 12 
+5, swap gates number: 15 
+gate size: 104 
+1, swap gates number: 11 
+2, swap gates number: 9 
+3, swap gates number: 11 
+4, swap gates number: 9 
+5, swap gates number: 7 
+gate size: 120 
+1, swap gates number: 15 
+2, swap gates number: 7 
+3, swap gates number: 17 
+4, swap gates number: 12 
+5, swap gates number: 15 
+IBMQ 
+gate size: 40 
+1, swap gates number: 6 
+2, swap gates number: 4 
+3, swap gates number: 6 
+4, swap gates number: 6 
+5, swap gates number: 4 
+gate size: 56 
+1, swap gates number: 5 
+2, swap gates number: 4 
+3, swap gates number: 6 
+4, swap gates number: 6 
+5, swap gates number: 6 
+gate size: 72 
+1, swap gates number: 11 
+2, swap gates number: 6 
+3, swap gates number: 13 
+4, swap gates number: 11 
+5, swap gates number: 6 
+gate size: 88 
+1, swap gates number: 15 
+2, swap gates number: 14 
+3, swap gates number: 10 
+4, swap gates number: 7 
+5, swap gates number: 6 
+gate size: 104 
+1, swap gates number: 16 
+2, swap gates number: 10 
+3, swap gates number: 6 
+4, swap gates number: 12 
+5, swap gates number: 9 
+gate size: 120 
+1, swap gates number: 9 
+2, swap gates number: 17 
+3, swap gates number: 12 
+4, swap gates number: 13 
+5, swap gates number: 11 
+USTC 
+gate size: 40 
+1, swap gates number: 7 
+2, swap gates number: 6 
+3, swap gates number: 9 
+4, swap gates number: 6 
+5, swap gates number: 4 
+gate size: 56 
+1, swap gates number: 5 
+2, swap gates number: 7 
+3, swap gates number: 8 
+4, swap gates number: 12 
+5, swap gates number: 7 
+gate size: 72 
+1, swap gates number: 6 
+2, swap gates number: 8 
+3, swap gates number: 13 
+4, swap gates number: 8 
+5, swap gates number: 4 
+gate size: 88 
+1, swap gates number: 12 
+2, swap gates number: 11 
+3, swap gates number: 9 
+4, swap gates number: 12 
+5, swap gates number: 11 
+gate size: 104 
+1, swap gates number: 9 
+2, swap gates number: 8 
+3, swap gates number: 8 
+4, swap gates number: 8 
+5, swap gates number: 15 
+gate size: 120 
+1, swap gates number: 12 
+2, swap gates number: 14 
+3, swap gates number: 11 
+4, swap gates number: 10 
+5, swap gates number: 13 
+qubit_number: 9 
+Nom 
+gate size: 45 
+1, swap gates number: 4 
+2, swap gates number: 3 
+3, swap gates number: 7 
+4, swap gates number: 7 
+5, swap gates number: 9 
+gate size: 63 
+1, swap gates number: 12 
+2, swap gates number: 12 
+3, swap gates number: 15 
+4, swap gates number: 7 
+5, swap gates number: 8 
+gate size: 81 
+1, swap gates number: 8 
+2, swap gates number: 13 
+3, swap gates number: 10 
+4, swap gates number: 8 
+5, swap gates number: 4 
+gate size: 99 
+1, swap gates number: 17 
+2, swap gates number: 9 
+3, swap gates number: 14 
+4, swap gates number: 12 
+5, swap gates number: 11 
+gate size: 117 
+1, swap gates number: 13 
+2, swap gates number: 18 
+3, swap gates number: 13 
+4, swap gates number: 19 
+5, swap gates number: 11 
+gate size: 135 
+1, swap gates number: 17 
+2, swap gates number: 13 
+3, swap gates number: 17 
+4, swap gates number: 19 
+5, swap gates number: 17 
+IONQ 
+gate size: 45 
+1, swap gates number: 4 
+2, swap gates number: 5 
+3, swap gates number: 8 
+4, swap gates number: 10 
+5, swap gates number: 7 
+gate size: 63 
+1, swap gates number: 9 
+2, swap gates number: 9 
+3, swap gates number: 11 
+4, swap gates number: 9 
+5, swap gates number: 4 
+gate size: 81 
+1, swap gates number: 12 
+2, swap gates number: 9 
+3, swap gates number: 11 
+4, swap gates number: 13 
+5, swap gates number: 9 
+gate size: 99 
+1, swap gates number: 12 
+2, swap gates number: 18 
+3, swap gates number: 13 
+4, swap gates number: 15 
+5, swap gates number: 12 
+gate size: 117 
+1, swap gates number: 13 
+2, swap gates number: 24 
+3, swap gates number: 21 
+4, swap gates number: 17 
+5, swap gates number: 12 
+gate size: 135 
+1, swap gates number: 17 
+2, swap gates number: 15 
+3, swap gates number: 16 
+4, swap gates number: 17 
+5, swap gates number: 18 
+IBMQ 
+gate size: 45 
+1, swap gates number: 8 
+2, swap gates number: 5 
+3, swap gates number: 5 
+4, swap gates number: 5 
+5, swap gates number: 8 
+gate size: 63 
+1, swap gates number: 11 
+2, swap gates number: 9 
+3, swap gates number: 7 
+4, swap gates number: 7 
+5, swap gates number: 9 
+gate size: 81 
+1, swap gates number: 9 
+2, swap gates number: 12 
+3, swap gates number: 7 
+4, swap gates number: 14 
+5, swap gates number: 10 
+gate size: 99 
+1, swap gates number: 13 
+2, swap gates number: 7 
+3, swap gates number: 11 
+4, swap gates number: 12 
+5, swap gates number: 16 
+gate size: 117 
+1, swap gates number: 8 
+2, swap gates number: 10 
+3, swap gates number: 16 
+4, swap gates number: 13 
+5, swap gates number: 8 
+gate size: 135 
+1, swap gates number: 21 
+2, swap gates number: 13 
+3, swap gates number: 16 
+4, swap gates number: 9 
+5, swap gates number: 16 
+USTC 
+gate size: 45 
+1, swap gates number: 4 
+2, swap gates number: 8 
+3, swap gates number: 5 
+4, swap gates number: 7 
+5, swap gates number: 7 
+gate size: 63 
+1, swap gates number: 4 
+2, swap gates number: 9 
+3, swap gates number: 9 
+4, swap gates number: 9 
+5, swap gates number: 8 
+gate size: 81 
+1, swap gates number: 11 
+2, swap gates number: 11 
+3, swap gates number: 12 
+4, swap gates number: 12 
+5, swap gates number: 12 
+gate size: 99 
+1, swap gates number: 11 
+2, swap gates number: 12 
+3, swap gates number: 22 
+4, swap gates number: 17 
+5, swap gates number: 9 
+gate size: 117 
+1, swap gates number: 13 
+2, swap gates number: 16 
+3, swap gates number: 18 
+4, swap gates number: 13 
+5, swap gates number: 9 
+gate size: 135 
+1, swap gates number: 17 
+2, swap gates number: 15 
+3, swap gates number: 19 
+4, swap gates number: 17 
+5, swap gates number: 22 
+qubit_number: 10 
+Nom 
+gate size: 50 
+1, swap gates number: 8 
+2, swap gates number: 10 
+3, swap gates number: 5 
+4, swap gates number: 4 
+5, swap gates number: 11 
+gate size: 70 
+1, swap gates number: 11 
+2, swap gates number: 13 
+3, swap gates number: 9 
+4, swap gates number: 11 
+5, swap gates number: 10 
+gate size: 90 
+1, swap gates number: 15 
+2, swap gates number: 5 
+3, swap gates number: 16 
+4, swap gates number: 21 
+5, swap gates number: 12 
+gate size: 110 
+1, swap gates number: 14 
+2, swap gates number: 12 
+3, swap gates number: 17 
+4, swap gates number: 19 
+5, swap gates number: 19 
+gate size: 130 
+1, swap gates number: 21 
+2, swap gates number: 24 
+3, swap gates number: 23 
+4, swap gates number: 14 
+5, swap gates number: 14 
+gate size: 150 
+1, swap gates number: 12 
+2, swap gates number: 19 
+3, swap gates number: 19 
+4, swap gates number: 11 
+5, swap gates number: 23 
+IONQ 
+gate size: 50 
+1, swap gates number: 11 
+2, swap gates number: 10 
+3, swap gates number: 6 
+4, swap gates number: 8 
+5, swap gates number: 8 
+gate size: 70 
+1, swap gates number: 6 
+2, swap gates number: 4 
+3, swap gates number: 13 
+4, swap gates number: 6 
+5, swap gates number: 18 
+gate size: 90 
+1, swap gates number: 11 
+2, swap gates number: 19 
+3, swap gates number: 14 
+4, swap gates number: 18 
+5, swap gates number: 12 
+gate size: 110 
+1, swap gates number: 10 
+2, swap gates number: 19 
+3, swap gates number: 14 
+4, swap gates number: 10 
+5, swap gates number: 14 
+gate size: 130 
+1, swap gates number: 13 
+2, swap gates number: 20 
+3, swap gates number: 16 
+4, swap gates number: 16 
+5, swap gates number: 23 
+gate size: 150 
+1, swap gates number: 25 
+2, swap gates number: 14 
+3, swap gates number: 26 
+4, swap gates number: 25 
+5, swap gates number: 22 
+IBMQ 
+gate size: 50 
+1, swap gates number: 10 
+2, swap gates number: 9 
+3, swap gates number: 7 
+4, swap gates number: 6 
+5, swap gates number: 9 
+gate size: 70 
+1, swap gates number: 14 
+2, swap gates number: 12 
+3, swap gates number: 13 
+4, swap gates number: 6 
+5, swap gates number: 11 
+gate size: 90 
+1, swap gates number: 11 
+2, swap gates number: 13 
+3, swap gates number: 13 
+4, swap gates number: 17 
+5, swap gates number: 16 
+gate size: 110 
+1, swap gates number: 16 
+2, swap gates number: 14 
+3, swap gates number: 8 
+4, swap gates number: 22 
+5, swap gates number: 20 
+gate size: 130 
+1, swap gates number: 13 
+2, swap gates number: 29 
+3, swap gates number: 16 
+4, swap gates number: 22 
+5, swap gates number: 24 
+gate size: 150 
+1, swap gates number: 24 
+2, swap gates number: 23 
+3, swap gates number: 19 
+4, swap gates number: 25 
+5, swap gates number: 21 
+USTC 
+gate size: 50 
+1, swap gates number: 6 
+2, swap gates number: 9 
+3, swap gates number: 9 
+4, swap gates number: 6 
+5, swap gates number: 6 
+gate size: 70 
+1, swap gates number: 8 
+2, swap gates number: 8 
+3, swap gates number: 8 
+4, swap gates number: 13 
+5, swap gates number: 14 
+gate size: 90 
+1, swap gates number: 6 
+2, swap gates number: 14 
+3, swap gates number: 9 
+4, swap gates number: 19 
+5, swap gates number: 19 
+gate size: 110 
+1, swap gates number: 14 
+2, swap gates number: 28 
+3, swap gates number: 11 
+4, swap gates number: 18 
+5, swap gates number: 20 
+gate size: 130 
+1, swap gates number: 18 
+2, swap gates number: 20 
+3, swap gates number: 8 
+4, swap gates number: 16 
+5, swap gates number: 12 
+gate size: 150 
+1, swap gates number: 24 
+2, swap gates number: 20 
+3, swap gates number: 21 
+4, swap gates number: 17 
+5, swap gates number: 15 

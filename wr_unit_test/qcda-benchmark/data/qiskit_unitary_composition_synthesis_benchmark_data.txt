@@ -1,0 +1,15 @@
+Quict circuit size:60, Quict circuit depth:43
+Qiskit circuit size:85, Qiskit circuit depth:71
+Quict circuit size:280, Quict circuit depth:207
+Qiskit circuit size:451, Qiskit circuit depth:400
+Quict circuit size:1208, Quict circuit depth:911
+Qiskit circuit size:2105, Qiskit circuit depth:1960
+Quict circuit size:5016, Quict circuit depth:3823
+Qiskit circuit size:9115, Qiskit circuit depth:8735
+Quict circuit size:20440, Quict circuit depth:15663
+Qiskit circuit size:37761, Qiskit circuit depth:36822
+Quict circuit size:82520, Quict circuit depth:63407
+Qiskit circuit size:152443, Qiskit circuit depth:150222
+Quict circuit size:331608, Quict circuit depth:255151
+Qiskit circuit size:606553, Qiskit circuit depth:601421
+Quict circuit size:1329496, Quict circuit depth:1023663
