@@ -30,9 +30,11 @@ def _floyd(n: int, dist: np.ndarray, _inf: int) -> np.ndarray:
                 dist[i][j] = 0
     return dist
 
+
 # TODO: Add virtual node for topo graph
 
-class CircuitGraph:
+
+class CircuitState:
     """DAG Representation of a quantum circuit. A virtual node will be
     added with label 0.
     """
@@ -64,14 +66,15 @@ class CircuitGraph:
             assert gate.controls + gate.targets == 2, "Only 2 bit gates are supported."
             args = tuple(gate.cargs + gate.targs)
             # Position to Gate ID
-            # TODO: Fixme
             self._bit2gid[args[0]].append(gid)
             self._bit2gid[args[1]].append(gid)
             # DAG edges
             if occupied[args[0]] != -1:
                 self._graph.add_edge(occupied[args[0]], gid)
+                # self._graph.add_edge(gid, occupied[args[0]])
             if occupied[args[1]] != -1:
                 self._graph.add_edge(occupied[args[1]], gid)
+                # self._graph.add_edge(gid, occupied[args[1]])
             occupied[args[0]] = gid
             occupied[args[1]] = gid
             # Virtual node edges
@@ -90,12 +93,12 @@ class CircuitGraph:
     def count_gate(self) -> int:
         return nx.number_of_nodes(self._graph) - 1
 
-    def eager_exec(self, logic2phy: List[int], topo_graph: nx.Graph) -> int:
+    def eager_exec(self, logic2phy: List[int], topo_graph: nx.DiGraph) -> int:
         """Eagerly remove all executable gates for now.
 
         Args:
             logic2phy (List[int]): Current logical to physical qubit mapping.
-            topo_graph (nx.Graph): Physical topology graph.
+            topo_graph (nx.DiGraph): Physical topology graph.
 
         Returns:
             int: Removed gate number.
@@ -104,6 +107,7 @@ class CircuitGraph:
         bit = 0
         while bit < len(self._bit2gid):
             if not self._bit2gid[bit]:
+                bit += 1
                 continue
             front = self._bit2gid[bit][0]
             gate = self._gates[front]
@@ -131,30 +135,41 @@ class CircuitGraph:
 
         return remove_cnt
 
-    # def try_remove_gate(self, logical_pos: Tuple[int, int]) -> bool:
-    #     """Remove 2-bit gate at give position.
+    def sample_bias(
+        self,
+        topo_dist: np.ndarray,
+        cur_logic2phy: List[int],
+        next_logic2phy: List[int],
+        qubit_number: int,
+    ) -> float:
+        """Summation of topological distances of all first gates on each qubits.
 
-    #     Args:
-    #         logical_pos (Tuple[int, int]): Gate to be removed. Position is the qubit targets in logical view.
-    #             The order does not matter.
+        Args:
+            topo_dist (np.ndarray): Physical device topology distance
+            cur_logic2phy (List[int]): Current logical to physical mapping
+            next_logic2phy (List[int]): Next logical to physical mapping
+            qubit_number (int): Number of qubit in physical layout.
 
-    #     Returns:
-    #         bool: Whether removal operation successes.
-    #     """
-    #     u, v = logical_pos
-    #     if (
-    #         (not self._bit2gid[u])  # No gate on qubit u
-    #         or (not self._bit2gid[v])  # No gate on qubit v
-    #         or (
-    #             self._bit2gid[u][0] != self._bit2gid[v][0]
-    #         )  # Gates on (u, v) are not the same
-    #     ):
-    #         return False
-    #     gid = self._bit2gid[u][0]
-    #     self._bit2gid[u].pop(0)
-    #     self._bit2gid[v].pop(0)
-    #     self._graph.remove_node(gid + 1)
-    #     return True
+        Returns:
+            float: Bias based on distance summation
+        """
+        return 0.0
+        # s = 0.0
+        # for bit_stick in self._bit2gid:
+        #     if not bit_stick:
+        #         continue
+        #     gate = self._gates[bit_stick[0]]
+        #     a, b = gate.cargs + gate.targs
+        #     _a, _b = cur_logic2phy[a], cur_logic2phy[b]
+        #     prev_d = topo_dist[_a][_b]
+        #     _a, _b = next_logic2phy[a], next_logic2phy[b]
+        #     next_d = topo_dist[_a][_b]
+        #     s += prev_d - next_d
+        # if abs(s) < 1e-6:
+        #     s += 0.1
+        # # s = max(s, 0)
+        # s = s / (qubit_number ** 2)
+        # return s
 
     def to_pyg(self, logic2phy: List[int]) -> PygData:
         """Convert current data into PyG Data according to current mapping.
@@ -189,10 +204,10 @@ class CircuitGraph:
 class State:
     def __init__(
         self,
-        circ_graph: CircuitGraph,
+        circ_graph: CircuitState,
         topo: Layout,
         topo_mask: torch.Tensor,
-        topo_graph: nx.Graph,
+        topo_graph: nx.DiGraph,
         topo_dist: np.ndarray,
         topo_edges: Tuple[Tuple[int, int]],
         circ_pyg_data: PygData,
@@ -200,7 +215,7 @@ class State:
         logic2phy: List[int],
         phy2logic: List[int] = None,
     ) -> None:
-        self.circ_graph = circ_graph
+        self.circ_state = circ_graph
         self.topo = topo
         self.topo_mask = topo_mask
         self.topo_graph = topo_graph
@@ -272,7 +287,7 @@ class DataFactory:
         return self._topo_names
 
     @property
-    def topo_graph_map(self) -> Dict[str, nx.Graph]:
+    def topo_graph_map(self) -> Dict[str, nx.DiGraph]:
         if len(self._topo_graph_map) == 0:
             self._reset_attr_cache()
         return self._topo_graph_map
@@ -313,9 +328,16 @@ class DataFactory:
             self._reset_attr_cache()
         return self._topo_map
 
+    def get_topo_pyg(self, topo_graph: nx.DiGraph) -> PygData:
+        topo_pyg_data = from_networkx(topo_graph)
+        topo_pyg_data.x = torch.arange(self._max_qubit_num, dtype=torch.long).unsqueeze(
+            dim=-1
+        )
+        return topo_pyg_data
+
     def _reset_attr_cache(self):
         for topo_name in self.topo_names:
-            topo_path = osp.join(self._topo_dir, f"{topo_name}.layout")
+            topo_path = osp.join(self._topo_dir, f"{topo_name}.json")
             topo = Layout.load_file(topo_path)
             self._topo_map[topo_name] = topo
             topo_graph = self._get_topo_graph(topo)
@@ -323,73 +345,64 @@ class DataFactory:
             self._topo_qubit_num_map[topo_name] = topo.qubit_number
             self._topo_dist_map[topo_name] = self._get_topo_dist(topo_graph=topo_graph)
 
-            topo_mask = torch.zeros(
-                (self._max_qubit_num, self._max_qubit_num), dtype=torch.float
-            )
+            topo_mask = self._get_topo_mask(topo_graph=topo_graph)
 
-            topo_edge = []
+            topo_edge = self._get_topo_edges(topo_graph=topo_graph)
             topo_adj_mat_thin = np.zeros(
                 (topo.qubit_number, topo.qubit_number), dtype=int
             )
             for u, v in topo_graph.edges:
-                topo_mask[u][v] = 1.0
-                topo_mask[v][u] = 1.0
-                topo_edge.append((u, v))
-                topo_edge.append((v, u))
                 topo_adj_mat_thin[u][v] = 1
-                topo_adj_mat_thin[v][u] = 1
             self._topo_mask_map[topo_name] = topo_mask
             self._topo_edge_map[topo_name] = topo_edge
             self._topo_edge_mat_map[topo_name] = topo_adj_mat_thin
 
-    def _get_topo_graph(self, topo: Layout) -> nx.Graph:
+    def _get_topo_graph(self, topo: Layout) -> nx.DiGraph:
         """Build tha graph representation of a topology.
 
         Args:
             topo (Layout): Topology to be built.
 
         Returns:
-            nx.Graph: Graph representation.
+            nx.DiGraph: Graph representation.
         """
-        g = nx.Graph()
+        g = nx.DiGraph()
+        # g.add_node(0)
         for i in range(self._max_qubit_num):
             g.add_node(i)
-        for edge in topo.edge_list:
-            edge: LayoutEdge
+        for edge in topo.directionalized:
             g.add_edge(edge.u, edge.v)
         return g
 
-    def _get_topo_dist(self, topo_graph: nx.Graph) -> np.ndarray:
+    def _get_topo_dist(self, topo_graph: nx.DiGraph) -> np.ndarray:
         _inf = nx.number_of_nodes(topo_graph) + 5
         n = self._max_qubit_num
         dist = np.empty((n, n), dtype=np.int)
         dist[:, :] = _inf
         for u, v in topo_graph.edges:
             dist[u][v] = 1
-            dist[v][u] = 1
         dist = _floyd(n, dist, _inf)
         return dist
 
-    def _get_topo_mask(self, topo_graph: nx.Graph) -> torch.Tensor:
+    def _get_topo_mask(self, topo_graph: nx.DiGraph) -> torch.Tensor:
         topo_mask = torch.zeros(
             (self._max_qubit_num, self._max_qubit_num), dtype=torch.float
         )
         for u, v in topo_graph.edges:
             topo_mask[u][v] = 1.0
-            topo_mask[v][u] = 1.0
         return topo_mask
 
-    def _get_topo_edges(self, topo_graph: nx.Graph) -> np.ndarray:
+    def _get_topo_edges(self, topo_graph: nx.DiGraph) -> np.ndarray:
         topo_edge = []
         for u, v in topo_graph.edges:
             topo_edge.append((u, v))
-            topo_edge.append((v, u))
         return topo_edge
 
     def get_one(self, topo_name: str = None) -> State:
         if topo_name is None:
             topo_name: str = choice(self.topo_names)
-        # topo_name: str = "ibmq_peekskill"
+        # TODO: Rotate topo
+        topo_name: str = "ibmq_lima"
         topo = self.topo_map[topo_name]
         qubit_num = self.topo_qubit_num_map[topo_name]
         topo_graph = self.topo_graph_map[topo_name]
@@ -398,7 +411,7 @@ class DataFactory:
         topo_edges = tuple(self.topo_edge_map[topo_name])
         circ = Circuit(qubit_num)
 
-        min_gn = 80
+        min_gn = 30
         gate_num = randint(min_gn, max(self._max_gate_num, min_gn))
         circ.random_append(
             gate_num,
@@ -406,14 +419,11 @@ class DataFactory:
                 GateType.crz,
             ],
         )
-        circ_graph = CircuitGraph(circ=circ, max_gate_num=self._max_gate_num)
+        circ_graph = CircuitState(circ=circ, max_gate_num=self._max_gate_num)
         logic2phy = [i for i in range(self.topo_qubit_num_map[topo_name])]
         circ_pyg_data = circ_graph.to_pyg(logic2phy)
 
-        topo_pyg_data = from_networkx(topo_graph)
-        topo_pyg_data.x = torch.arange(self._max_qubit_num, dtype=torch.long).unsqueeze(
-            dim=-1
-        )
+        topo_pyg_data = self.get_topo_pyg(topo_graph=topo_graph)
 
         state = State(
             circ_graph=circ_graph,

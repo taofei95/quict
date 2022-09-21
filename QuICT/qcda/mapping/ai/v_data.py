@@ -19,12 +19,12 @@ data_dir = osp.join(data_dir, "v_data")
 if not osp.exists(data_dir):
     os.makedirs(data_dir)
 
-circ_num_each_topo = 1
+circ_num_each_topo = 2
 
 
 for topo_name in factory.topo_names:
     print(f"Starting processing {topo_name}...")
-    topo_path = osp.join(factory._topo_dir, f"{topo_name}.layout")
+    topo_path = osp.join(factory._topo_dir, f"{topo_name}.json")
     topo = Layout.load_file(topo_path)
     q = topo.qubit_number
     mcts_mapper = MCTSMapping(layout=topo)

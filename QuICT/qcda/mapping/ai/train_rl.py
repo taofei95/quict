@@ -4,11 +4,12 @@ import re
 from collections import deque
 from random import random, sample
 from time import time
-from typing import List, Tuple, Union
+from typing import Dict, List, Tuple, Union
 
 import numpy as np
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 import torch.optim as optim
 from QuICT.core import *
 from QuICT.qcda.mapping.ai.gnn_mapping import GnnMapping
@@ -39,18 +40,20 @@ class ValidationData:
         self.mapped_circ = mapped_circ
         self.topo = topo
 
+
 # TODO: Add MCTS prior experience
+
 
 class Trainer:
     def __init__(
         self,
-        max_qubit_num: int = 30,
-        max_gate_num: int = 1000,
+        max_qubit_num: int = 27,
+        max_gate_num: int = 200,
         feat_dim: int = 50,
         gamma: float = 0.9,
         replay_pool_size: int = 20000,
         batch_size: int = 32,
-        total_epoch: int = 200,
+        total_epoch: int = 2000,
         explore_period: int = 2000,
         target_update_period: int = 10,
         device: str = "cuda" if torch.cuda.is_available() else "cpu",
@@ -123,56 +126,65 @@ class Trainer:
         self._writer = SummaryWriter(log_dir=log_dir)
 
         # Validation circuits
-        # print("Preparing validation data...")
-        # self._v_data: List[ValidationData] = []
-        # self._mcts_num: int = -1
-        # self._fill_v_data()
+        print("Preparing validation data...")
+        self._v_data: List[ValidationData] = []
+        self._mcts_num: Dict[str, int] = {}
+        self._fill_v_data()
 
-    # def _fill_v_data(self):
-    #     v_data_dir = osp.join(self._agent.factory._data_dir, "v_data")
-    #     pattern = re.compile(r"(\w+)_(\d+).qasm")
-    #     for _, _, file_names in os.walk(v_data_dir):
-    #         for file_name in file_names:
-    #             if file_name.startswith("mapped"):
-    #                 continue
+    def _fill_v_data(self):
+        v_data_dir = osp.join(self._agent.factory._data_dir, "v_data")
+        pattern = re.compile(r"(\w+)_(\d+).qasm")
+        for _, _, file_names in os.walk(v_data_dir):
+            for file_name in file_names:
+                if file_name.startswith("mapped"):
+                    continue
 
-    #             file_path = osp.join(v_data_dir, file_name)
-    #             mapped_file_path = osp.join(v_data_dir, f"mapped_{file_name}")
-    #             groups = pattern.match(file_name)
-    #             topo_name = groups[1]
-    #             topo = self._agent.factory.topo_map[topo_name]
-    #             circ = OPENQASMInterface.load_file(file_path).circuit
-    #             mapped_circ = OPENQASMInterface.load_file(mapped_file_path).circuit
-    #             self._v_data.append(
-    #                 ValidationData(circ=circ, mapped_circ=mapped_circ, topo=topo)
-    #             )
+                file_path = osp.join(v_data_dir, file_name)
+                mapped_file_path = osp.join(v_data_dir, f"mapped_{file_name}")
+                groups = pattern.match(file_name)
+                topo_name = groups[1]
+                # TODO: Rotate topo
+                if "lima" not in topo_name:
+                    continue
+                topo = self._agent.factory.topo_map[topo_name]
+                circ = OPENQASMInterface.load_file(file_path).circuit
+                mapped_circ = OPENQASMInterface.load_file(mapped_file_path).circuit
+                self._v_data.append(
+                    ValidationData(circ=circ, mapped_circ=mapped_circ, topo=topo)
+                )
 
-    # def validate_model(self) -> Tuple[int, int]:
-    #     """Map all validation circuits to corresponding topologies.
+    def validate_model(self) -> Tuple[Dict[str, int], Dict[str, int]]:
+        """Map all validation circuits to corresponding topologies.
 
-    #     Returns:
-    #         Tuple[int, int]: Total swap gate inserted by current model, and by MCTS.
-    #     """
-    #     self._target_net.train(False)
-    #     model_num = 0
-    #     for v_datum in self._v_data:
-    #         cutoff = len(v_datum.circ.gates) * v_datum.circ.width()
-    #         self._agent.mapped_circ.clean()
-    #         result_circ = self._agent.map_all(
-    #             circ=v_datum.circ,
-    #             layout=v_datum.topo,
-    #             policy_net=self._target_net,
-    #             policy_net_device=self._device,
-    #             cutoff=cutoff,
-    #         )
-    #         model_num += len(result_circ.gates) - len(v_datum.circ.gates)
+        Returns:
+            Tuple[Dict[str, int], Dict[str, int]]: Total swap gate inserted by current model, and by MCTS, indexed by layout name.
+        """
+        self._target_net.train(False)
+        model_num: Dict[str, int] = {}
+        for v_datum in self._v_data:
+            cutoff = len(v_datum.circ.gates) * v_datum.circ.width()
+            self._agent.mapped_circ.clean()
+            result_circ = self._agent.map_all(
+                circ=v_datum.circ,
+                layout=v_datum.topo,
+                policy_net=self._target_net,
+                policy_net_device=self._device,
+                cutoff=cutoff,
+            )
+            topo_name = v_datum.topo.name
+            if topo_name not in model_num:
+                model_num[topo_name] = 0
+            model_num[topo_name] += len(result_circ.gates) - len(v_datum.circ.gates)
 
-    #     if self._mcts_num == -1:
-    #         mcts_num = 0
-    #         for v_datum in self._v_data:
-    #             mcts_num += len(v_datum.mapped_circ.gates) - len(v_datum.circ.gates)
-    #         self._mcts_num = mcts_num
-    #     return model_num, self._mcts_num
+        if len(self._mcts_num) == 0:
+            for v_datum in self._v_data:
+                topo_name = v_datum.topo.name
+                if topo_name not in self._mcts_num:
+                    self._mcts_num[topo_name] = 0
+                self._mcts_num[topo_name] += len(v_datum.mapped_circ.gates) - len(
+                    v_datum.circ.gates
+                )
+        return model_num, self._mcts_num
 
     def _optimize_model(self) -> Union[None, float]:
         if len(self._replay) < self._batch_size:
@@ -212,7 +224,7 @@ class Trainer:
             self._device
         )
         non_final_topo_data_list = [
-            state.topo_pyg_data for state in states if state is not None
+            state.topo_pyg_data for state in next_states if state is not None
         ]
         non_final_topo_pyg = PygBatch.from_data_list(non_final_topo_data_list).to(
             self._device
@@ -232,18 +244,18 @@ class Trainer:
         loss_1 = self._smooth_l1(state_action_values, expected_state_action_values)
 
         # Empirical loss on output attention
-        b = self._batch_size
-        q = self._max_qubit_num
-        mask = [state.topo_mask for state in states]
-        mask = (
-            (torch.ones(b, q, q) - torch.stack(mask)).detach().to(device=self._device)
-        )
-        zeros = torch.zeros(b, q, q).detach().to(device=self._device)
+        # b = self._batch_size
+        # q = self._max_qubit_num
+        # mask = [state.topo_mask for state in states]
+        # mask = (
+        #     (torch.ones(b, q, q) - torch.stack(mask)).detach().to(device=self._device)
+        # )
+        # zeros = torch.zeros(b, q, q).detach().to(device=self._device)
+        # attn_mat_illegal = F.relu(attn_mat.view(b, q, q) * (1 - mask))
+        # loss_2 = self._smooth_l1(attn_mat_illegal, zeros) * 0.1
 
-        loss_2 = self._smooth_l1(attn_mat.view(b, q, q) * mask, zeros) * 0.005
-
-        loss = loss_1 + loss_2
-        # loss = loss_1
+        # loss = loss_1 + loss_2
+        loss = loss_1
 
         self._optimizer.zero_grad()
         loss.backward()
@@ -317,7 +329,10 @@ class Trainer:
 
             if terminated:
                 # Search finishes early.
-                print("    State terminates. Resetting exploration.")
+                print("    State terminates. Resetting exploration")
+                # if self._agent.state.circ_state.count_gate() > 0:
+                #     print(" (This is an early stop because of illegal action)", end="")
+                # print("...")
                 self._agent.reset_explore_state()
 
             if (i + 1) % observe_period == 0:
@@ -328,32 +343,40 @@ class Trainer:
                 running_loss /= observe_period
                 running_reward /= observe_period
                 gate_num = self._agent.count_gate_num()
+                layout_name = self._agent.state.topo.name
                 print(
                     f"    [{i+1:<4}] loss: {running_loss:6.4f}, reward: {running_reward:4.2f}, "
-                    + f"#gate: {gate_num}, explore rate: {rate:4.2f} action/s"
+                    + f"#gate: {gate_num}, explore rate: {rate:4.2f} action/s, layout name: {layout_name}"
                 )
                 running_reward = 0.0
                 running_loss = 0.0
 
     def train(self):
         print(f"Training on {self._device}...\n")
-        self._random_fill_replay()
+        # self._random_fill_replay()
         for epoch_id in range(1, 1 + self._total_epoch):
             print(f"Epoch {epoch_id}:")
             self.train_one_epoch()
             # Epoch ends. Validate current model.
-            print("   Validating current model on some circuits...")
-            # model_num, mcts_num = self.validate_model()
-            # print(f"    #SWAP by RL: {model_num}, #SWAP by MCTS: {mcts_num}")
-            # self._writer.add_scalars(
-            #     "Validation Performance",
-            #     {
-            #         "#SWAP by RL": model_num,
-            #         "#SWAP by MCTS": mcts_num,
-            #     },
-            #     epoch_id + 1,
-            # )
-            print()
+            print("Validating current model on some circuits...")
+            model_num, mcts_num = self.validate_model()
+            print("[Validation Summary]")
+            for topo_name in model_num.keys():
+                print(f"    #SWAP by RL: {model_num[topo_name]}, #SWAP by MCTS: {mcts_num[topo_name]} ({topo_name})")
+                self._writer.add_scalars(
+                    f"Validation Performance ({topo_name})",
+                    {
+                        "#SWAP by RL": model_num[topo_name],
+                        "#SWAP by MCTS": mcts_num[topo_name],
+                    },
+                    epoch_id + 1,
+                )
+                print()
+            if epoch_id % 200 == 0 and epoch_id >= 200:
+                torch.save(
+                    self._target_net.state_dict(),
+                    osp.join(self._model_path, f"model_epoch_{epoch_id}.pt"),
+                )
 
 
 if __name__ == "__main__":

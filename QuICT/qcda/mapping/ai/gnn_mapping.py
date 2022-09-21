@@ -105,7 +105,7 @@ class CircuitGnn(nn.Module):
         # One gate is targeting 2 qubits. So the feature dimension is actually doubled.
         self._gc = nn.ModuleList(
             [
-                ConvStack(feat_dim=feat_dim * 2, heads=heads, num_hidden_layer=4),
+                ConvStack(feat_dim=feat_dim * 2, heads=heads, num_hidden_layer=5),
             ]
         )
 
@@ -188,10 +188,16 @@ class GnnMapping(nn.Module):
         self._mlp = nn.Sequential(
             nn.Linear(feat_dim * 6, feat_dim * 6),
             nn.LeakyReLU(),
+            nn.Linear(feat_dim * 6, feat_dim * 6),
+            nn.LeakyReLU(),
             nn.Linear(feat_dim * 6, feat_dim * 2),
+            nn.LeakyReLU(),
+            nn.Linear(feat_dim * 2, feat_dim * 2),
             nn.LeakyReLU(),
             nn.LayerNorm(feat_dim * 2),
             nn.Linear(feat_dim * 2, feat_dim // 2),
+            nn.LeakyReLU(),
+            nn.Linear(feat_dim // 2, feat_dim // 2),
             nn.LeakyReLU(),
             nn.Linear(feat_dim // 2, 1),
         )
@@ -211,7 +217,7 @@ class GnnMapping(nn.Module):
         x = x[:, idx_pairs].contiguous()  # [b, q * q, 2, 3 * f]
         x = x.view(-1, q, q, 6 * f)
         x = self._mlp(x).view(-1, q, q)  # [b, q, q]
-        x = (x + x.transpose(-1, -2)) / 2
+        # x = (x + x.transpose(-1, -2)) / 2
         # gather q * q dim for convenient max
         x = x.view(-1, q * q)  # [b, q * q]
         return x

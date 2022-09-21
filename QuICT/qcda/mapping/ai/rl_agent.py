@@ -9,7 +9,12 @@ import torch
 from QuICT.core import *
 from QuICT.core.gate import *
 from QuICT.core.utils import CircuitBased
-from QuICT.qcda.mapping.ai.data_factory import DataFactory, State, Transition
+from QuICT.qcda.mapping.ai.data_factory import (
+    CircuitState,
+    DataFactory,
+    State,
+    Transition,
+)
 from QuICT.qcda.mapping.ai.gnn_mapping import GnnMapping
 from torch_geometric.data import Batch as PygBatch
 
@@ -107,24 +112,8 @@ class Agent:
                 policy_net_device=policy_net_device,
             )
 
-    def first_layer_dist_sum(
-        self,
-        layered_circ: List[Dict[Tuple[int, int], BasicGate]],
-        topo_dist: np.ndarray,
-        logic2phy: List[int],
-    ) -> float:
-        s = 0.0
-        if len(layered_circ) == 0:
-            return s
-        for u, v in layered_circ[0].keys():
-            _u = logic2phy[u]
-            _v = logic2phy[v]
-            s += topo_dist[_u][_v]
-        s /= 2
-        return s
-
     def count_gate_num(self) -> int:
-        return self.state.circ_graph.count_gate()
+        return self.state.circ_state.count_gate()
 
     def take_action(
         self, action: Tuple[int, int], construct_gate: bool = False
@@ -137,7 +126,7 @@ class Agent:
                 Some gates may be inserted into the agent's itself's `mapped_circ`.
 
         Returns:
-            Tuple[Union[State, None], bool]: Tuple of (Next State, Terminated).
+            Tuple[State, Union[State, None], float, bool]: Tuple of (Previous State, Next State, Reward, Terminated).
         """
         self.explore_step += 1
         u, v = action
@@ -162,10 +151,15 @@ class Agent:
             next_logic2phy[_lv],
             next_logic2phy[_lu],
         )
-        next_circ_graph = self.state.circ_graph.copy()
-        q = self.state.topo.qubit_number
-        bias = 0
-        reward = bias * scale
+        next_circ_graph = self.state.circ_state.copy()
+        bias = self.state.circ_state.sample_bias(
+            topo_dist=self.state.topo_dist,
+            cur_logic2phy=self.state.logic2phy,
+            next_logic2phy=next_logic2phy,
+            qubit_number=self.state.topo.qubit_number,
+        )
+        action_penalty = -1
+        reward = action_penalty + bias * scale
 
         # success = next_circ_graph.try_remove_gate(action)
         cnt = next_circ_graph.eager_exec(
@@ -177,8 +171,8 @@ class Agent:
         terminated = next_circ_graph.count_gate() == 0
         if terminated:
             prev_state = self.state
-            self.state = None
-            return prev_state, None, reward, True
+            next_state = None
+            return prev_state, next_state, reward, True
 
         next_circ_pyg = next_circ_graph.to_pyg(next_logic2phy)
         next_state = State(
@@ -195,69 +189,65 @@ class Agent:
         )
         prev_state = self.state
         self.state = next_state
-        return prev_state, next_state, reward, False
+        return prev_state, next_state, reward, terminated
 
-    # def map_all(
-    #     self,
-    #     circ: CircuitBased,
-    #     layout: Layout,
-    #     policy_net: GnnMapping,
-    #     policy_net_device: str,
-    #     cutoff: int = None,
-    # ) -> CompositeGate:
-    #     """Map given circuit to topology layout. Note that this methods will change internal exploration state.
+    def map_all(
+        self,
+        circ: CircuitBased,
+        layout: Layout,
+        policy_net: GnnMapping,
+        policy_net_device: str,
+        cutoff: int = None,
+    ) -> CompositeGate:
+        """Map given circuit to topology layout. Note that this methods will change internal exploration state.
 
-    #     Args:
-    #         circ (CircuitBased): Circuit to be mapped.
-    #         layout (Layout): Topology layout.
-    #         policy_net (GnnMapping): Policy network.
-    #         policy_net_device (str): Policy network device.
-    #         cutoff (int, optional): The maximal steps of execution. If the policy network cannot
-    #             stop with in `cutoff` steps, force it to early stop. Defaults to None.
+        Args:
+            circ (CircuitBased): Circuit to be mapped.
+            layout (Layout): Topology layout.
+            policy_net (GnnMapping): Policy network.
+            policy_net_device (str): Policy network device.
+            cutoff (int, optional): The maximal steps of execution. If the policy network cannot
+                stop with in `cutoff` steps, force it to early stop. Defaults to None.
 
-    #     Returns:
-    #         CompositeGate: Mapped circuit.
-    #     """
-    #     circ_cpy = copy.deepcopy(circ)
-    #     circ = circ_cpy
-    #     cur_mapping = [i for i in range(self._max_qubit_num)]
-    #     layered_circ, _ = self.factory.get_layered_circ(circ=circ)
-    #     topo_graph = self.factory._get_topo_graph(topo=layout)
-    #     topo_dist = self.factory._get_topo_dist(topo_graph=topo_graph)
-    #     topo_mask = self.factory._get_topo_mask(topo_graph=topo_graph)
-    #     topo_edges = self.factory._get_topo_edges(topo_graph=topo_graph)
-    #     x = self.factory.get_x().to(device=policy_net_device)
-    #     edge_index = self.factory.get_circ_edge_index(
-    #         layered_circ=layered_circ,
-    #         topo_graph=topo_graph,
-    #         logic2phy=cur_mapping,
-    #     ).to(device=policy_net_device)
+        Returns:
+            CompositeGate: Mapped circuit.
+        """
+        circ_cpy = copy.deepcopy(circ)
+        circ = circ_cpy
+        logic2phy = [i for i in range(self._max_qubit_num)]
+        topo_graph = self.factory._get_topo_graph(topo=layout)
+        topo_dist = self.factory._get_topo_dist(topo_graph=topo_graph)
+        topo_mask = self.factory._get_topo_mask(topo_graph=topo_graph)
+        topo_edges = self.factory._get_topo_edges(topo_graph=topo_graph)
+        circ_graph = CircuitState(circ=circ, max_gate_num=policy_net._max_gate_num)
+        circ_pyg = circ_graph.to_pyg(logic2phy)
+        topo_pyg = self.factory.get_topo_pyg(topo_graph=topo_graph)
 
-    #     self.state = State(
-    #         layered_circ=layered_circ,
-    #         topo=layout,
-    #         topo_mask=topo_mask,
-    #         topo_graph=topo_graph,
-    #         topo_dist=topo_dist,
-    #         topo_edges=topo_edges,
-    #         x=x,
-    #         edge_index=edge_index,
-    #         logic2phy=cur_mapping,
-    #     )
+        self.state = State(
+            circ_graph=circ_graph,
+            topo=layout,
+            topo_mask=topo_mask,
+            topo_graph=topo_graph,
+            topo_dist=topo_dist,
+            topo_edges=topo_edges,
+            circ_pyg_data=circ_pyg,
+            topo_pyg_data=topo_pyg,
+            logic2phy=logic2phy,
+        )
 
-    #     terminated = False
-    #     step = 0
-    #     with torch.no_grad():
-    #         while not terminated:
-    #             action = self.select_action(
-    #                 policy_net=policy_net,
-    #                 policy_net_device=policy_net_device,
-    #             )
-    #             _, _, _, terminated = self.take_action(
-    #                 action=action, construct_gate=circ
-    #             )
-    #             step += 1
-    #             if cutoff is not None and step >= cutoff:
-    #                 break
-    #         self.explore_step -= step
-    #         return self.mapped_circ
+        terminated = False
+        step = 0
+        with torch.no_grad():
+            while not terminated:
+                action = self.select_action(
+                    policy_net=policy_net,
+                    policy_net_device=policy_net_device,
+                )
+                _, _, _, terminated = self.take_action(
+                    action=action, construct_gate=circ
+                )
+                step += 1
+                if cutoff is not None and step >= cutoff:
+                    break
+            self.explore_step -= step
+            return self.mapped_circ
