@@ -26,26 +26,16 @@ class VQA:
         self._hamiltonian = hamiltonian
         self._simulator = simulator
 
-    def cal_expect(self, state, optimize=True):
-        start = time.time()
+    def cal_expect(self, state):
         n_qubits = int(np.log2(len(state)))
-        if optimize:
-            circuits = self._hamiltonian.construct_hamiton_circuit(n_qubits)
-            coefficients = self._hamiltonian.coefficients
-            state_vector = np.zeros(len(state))
-            for coeff, circuit in zip(coefficients, circuits):
-                sv = self._simulator.run(circuit, state)
-                state_vector += coeff * sv.get().real
-            expect = sum(state * state_vector)
-        else:
-            state = state.reshape(-1, 1)
-            hamiton_matrix = self._hamiltonian.get_hamiton_matrix(n_qubits)
-            expect = gpu_calculator.dot(
-                gpu_calculator.dot(state.T, hamiton_matrix.real), state
-            )[0, 0]
-            # expect = state.T @ hamiton_matrix.real @ state
-        t = time.time() - start
-        return expect, t
+        circuits = self._hamiltonian.construct_hamiton_circuit(n_qubits)
+        coefficients = self._hamiltonian.coefficients
+        state_vector = np.zeros(len(state))
+        for coeff, circuit in zip(coefficients, circuits):
+            sv = self._simulator.run(circuit, state)
+            state_vector += coeff * sv.get().real
+        expect = sum(state * state_vector)
+        return expect
 
     def run(self):
         raise NotImplementedError
@@ -89,8 +79,6 @@ if __name__ == "__main__":
     # h = Hamiltonian([[0.2, "Z0", "I1"], [1, "X1"]])
     vqa = VQA(hamiltonian=h)
     # state = np.array([np.sqrt(3) / 3, 1 / 2, 1 / 3, np.sqrt(11) / 6])
-    loss1, t1 = vqa.cal_expect(state)
-    loss2, t2 = vqa.cal_expect(state, False)
-    print(loss1, loss2)
-    print(t1, t2)
+    loss = vqa.cal_expect(state)
+    print(loss)
 

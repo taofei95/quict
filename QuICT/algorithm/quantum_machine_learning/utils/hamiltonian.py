@@ -61,19 +61,18 @@ class Hamiltonian:
             num = 0
             for i in range(n_qubits):
                 if i not in qubit_index:
-                    # matrix = np.kron(matrix, np.eye(2, dtype=np.complex128))
-                    matrix = gpu_calculator.tensor(matrix, np.eye(2, dtype=np.complex128))
+                    matrix = np.kron(matrix, np.eye(2, dtype=np.complex128))
                     num += 1
                 else:
                     gate = pauli_gate[i - num]
                     if gate == "X":
-                        matrix = gpu_calculator.tensor(matrix, X.matrix)
+                        matrix = np.kron(matrix, X.matrix)
                     elif gate == "Y":
-                        matrix = gpu_calculator.tensor(matrix, Y.matrix)
+                        matrix = np.kron(matrix, Y.matrix)
                     elif gate == "Z":
-                        matrix = gpu_calculator.tensor(matrix, Z.matrix)
+                        matrix = np.kron(matrix, Z.matrix)
                     elif gate == "I":
-                        matrix = gpu_calculator.tensor(matrix, np.eye(2, dtype=np.complex128))
+                        matrix = np.kron(matrix, np.eye(2, dtype=np.complex128))
                     else:
                         raise ValueError("Invalid Pauli gate")
 
@@ -153,5 +152,4 @@ def main():
 
 if __name__ == "__main__":
     main()
-
 
