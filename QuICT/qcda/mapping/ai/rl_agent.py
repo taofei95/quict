@@ -79,6 +79,7 @@ class Agent:
         large = torch.finfo(attn.dtype).max
         pos = int((attn - large * (1 - mask) - large * (1 - mask)).argmax())
         u, v = pos // q, pos % q
+        assert u < q and v < q and mask[u][v] > 0
         return u, v
 
     def select_action(
@@ -132,7 +133,7 @@ class Agent:
         u, v = action
         graph = self.state.topo_graph
         scale = self.reward_scale
-        if not graph.has_edge(u, v):
+        if not graph.has_edge(u + 1, v + 1):
             reward = -scale
             next_state = None
             prev_state = self.state

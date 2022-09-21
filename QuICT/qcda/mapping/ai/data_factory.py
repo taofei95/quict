@@ -339,9 +339,9 @@ class DataFactory:
 
     def get_topo_pyg(self, topo_graph: nx.DiGraph) -> PygData:
         topo_pyg_data = from_networkx(topo_graph)
-        topo_pyg_data.x = torch.arange(self._max_qubit_num, dtype=torch.long).unsqueeze(
-            dim=-1
-        )
+        topo_pyg_data.x = torch.arange(
+            self._max_qubit_num + 1, dtype=torch.long
+        ).unsqueeze(dim=-1)
         return topo_pyg_data
 
     def _reset_attr_cache(self):
@@ -358,7 +358,7 @@ class DataFactory:
 
             topo_edge = self._get_topo_edges(topo_graph=topo_graph)
             topo_adj_mat_thin = np.zeros(
-                (topo.qubit_number, topo.qubit_number), dtype=int
+                (topo.qubit_number + 1, topo.qubit_number + 1), dtype=int
             )
             for u, v in topo_graph.edges:
                 topo_adj_mat_thin[u][v] = 1
@@ -376,16 +376,18 @@ class DataFactory:
             nx.DiGraph: Graph representation.
         """
         g = nx.DiGraph()
-        # g.add_node(0)
+        g.add_node(0)
         for i in range(self._max_qubit_num):
-            g.add_node(i)
+            # g.add_node(i)
+            g.add_node(i + 1)
         for edge in topo.directionalized:
-            g.add_edge(edge.u, edge.v)
+            g.add_edge(edge.u + 1, edge.v + 1)
+            # g.add_edge(edge.u, edge.v)
         return g
 
     def _get_topo_dist(self, topo_graph: nx.DiGraph) -> np.ndarray:
         _inf = nx.number_of_nodes(topo_graph) + 5
-        n = self._max_qubit_num
+        n = self._max_qubit_num + 1
         dist = np.empty((n, n), dtype=np.int)
         dist[:, :] = _inf
         for u, v in topo_graph.edges:
@@ -395,16 +397,22 @@ class DataFactory:
 
     def _get_topo_mask(self, topo_graph: nx.DiGraph) -> torch.Tensor:
         topo_mask = torch.zeros(
-            (self._max_qubit_num, self._max_qubit_num), dtype=torch.float
+            (self._max_qubit_num + 1, self._max_qubit_num + 1), dtype=torch.float
         )
         for u, v in topo_graph.edges:
-            topo_mask[u][v] = 1.0
+            # topo_mask[u][v] = 1.0
+            if v == 0 or u == 0:
+                continue
+            topo_mask[u - 1][v - 1] = 1.0
         return topo_mask
 
     def _get_topo_edges(self, topo_graph: nx.DiGraph) -> np.ndarray:
         topo_edge = []
         for u, v in topo_graph.edges:
-            topo_edge.append((u, v))
+            # topo_edge.append((u, v))
+            if v == 0 or u == 0:
+                continue
+            topo_edge.append((u - 1, v - 1))
         return topo_edge
 
     def get_one(self, topo_name: str = None) -> State:
