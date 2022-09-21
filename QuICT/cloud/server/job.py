@@ -3,7 +3,7 @@ from flask import Blueprint
 
 
 job_blueprint = Blueprint(name="jobs", import_name=__name__)
-URL_PREFIX = "/v1/jobs"
+URL_PREFIX = "/quict/jobs"
 
 
 @job_blueprint.route(f"{URL_PREFIX}/start", methods=["POST"])
