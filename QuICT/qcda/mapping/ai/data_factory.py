@@ -54,8 +54,10 @@ class CircuitState:
             )
 
         self._graph = nx.DiGraph()
+        self._graph.add_node(0)
         for gid in range(len(self._gates)):
             self._graph.add_node(gid + 1)
+            # self._graph.add_node(gid)
 
         v_node = 0
         occupied = [-1 for _ in range(q)]
@@ -70,16 +72,14 @@ class CircuitState:
             self._bit2gid[args[1]].append(gid)
             # DAG edges
             if occupied[args[0]] != -1:
-                self._graph.add_edge(occupied[args[0]], gid)
-                # self._graph.add_edge(gid, occupied[args[0]])
+                self._graph.add_edge(occupied[args[0]] + 1, gid + 1)
             if occupied[args[1]] != -1:
-                self._graph.add_edge(occupied[args[1]], gid)
-                # self._graph.add_edge(gid, occupied[args[1]])
+                self._graph.add_edge(occupied[args[1]] + 1, gid + 1)
             occupied[args[0]] = gid
             occupied[args[1]] = gid
             # Virtual node edges
-            self._graph.add_edge(v_node, gid)
-            self._graph.add_edge(gid, v_node)
+            self._graph.add_edge(v_node, gid + 1)
+            self._graph.add_edge(gid + 1, v_node)
 
     def copy(self):
         cls = self.__class__
@@ -93,12 +93,18 @@ class CircuitState:
     def count_gate(self) -> int:
         return nx.number_of_nodes(self._graph) - 1
 
-    def eager_exec(self, logic2phy: List[int], topo_graph: nx.DiGraph) -> int:
+    def eager_exec(
+        self,
+        logic2phy: List[int],
+        topo_graph: nx.DiGraph,
+        physical_circ: CompositeGate = None,
+    ) -> int:
         """Eagerly remove all executable gates for now.
 
         Args:
             logic2phy (List[int]): Current logical to physical qubit mapping.
             topo_graph (nx.DiGraph): Physical topology graph.
+            physical_circ (CompositeGate, optional): If set, executed gates are appended to it.
 
         Returns:
             int: Removed gate number.
@@ -121,12 +127,15 @@ class CircuitState:
                 bit += 1
                 continue
             _a, _b = logic2phy[a], logic2phy[b]
-            if topo_graph.has_edge(_a, _b) or topo_graph.has_edge(_b, _a):
+            if topo_graph.has_edge(_a, _b):
                 # This gate can be removed
                 self._bit2gid[a].pop(0)
                 self._bit2gid[b].pop(0)
                 gid = front
                 self._graph.remove_node(gid + 1)
+                if physical_circ is not None:
+                    with physical_circ:
+                        gate & [_a, _b]
                 remove_cnt += 1
                 # There may be more gate can be removed after removal.
                 # Do not add bit and keep exploring this bit.
@@ -213,7 +222,7 @@ class State:
         circ_pyg_data: PygData,
         topo_pyg_data: PygData,
         logic2phy: List[int],
-        phy2logic: List[int] = None,
+        # phy2logic: List[int] = None,
     ) -> None:
         self.circ_state = circ_graph
         self.topo = topo
@@ -226,13 +235,13 @@ class State:
         self.logic2phy = logic2phy
         """Logical to physical mapping
         """
-        self.phy2logic = phy2logic
-        """Physical to logical mapping
-        """
-        if phy2logic is None:
-            self.phy2logic = [-1 for _ in range(len(logic2phy))]
-            for i in range(len(logic2phy)):
-                self.phy2logic[logic2phy[i]] = i
+        # self.phy2logic = phy2logic
+        # """Physical to logical mapping
+        # """
+        # if phy2logic is None:
+        #     self.phy2logic = [-1 for _ in range(len(logic2phy))]
+        #     for i in range(len(logic2phy)):
+        #         self.phy2logic[logic2phy[i]] = i
 
 
 class Transition:

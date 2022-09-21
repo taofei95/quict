@@ -96,12 +96,6 @@ class CircuitGnn(nn.Module):
         self._max_gate_num = max_gate_num
         self._feat_dim = feat_dim
 
-        # All gate nodes and virtual node feature embedding.
-        self._x_em = nn.Embedding(
-            num_embeddings=max_gate_num + 1,
-            embedding_dim=feat_dim,
-        )
-
         # One gate is targeting 2 qubits. So the feature dimension is actually doubled.
         self._gc = nn.ModuleList(
             [
@@ -109,14 +103,15 @@ class CircuitGnn(nn.Module):
             ]
         )
 
+        # self._aggr = gnn.aggr.MeanAggregation()
+
     def forward(self, x, edge_index, batch=None):
-        n = self._max_gate_num + 1
+        n = self._max_gate_num
         f = self._feat_dim
 
-        x = self._x_em(x).view(-1, 2 * f)  # [b * n, 2 * f]
         for conv in self._gc:
-            x = conv(x, edge_index, batch) + x  # [b * n, 2 * f]
-        x = x.view(-1, n, 2 * f)  # [b, n, 2 * f]
+            x = conv(x, edge_index, batch) + x  # [b * (n + 1), 2 * f]
+        x = x.view(-1, n + 1, 2 * f)  # [b, (n + 1), 2 * f]
         x = x[:, 0, :].contiguous().view(-1, 2 * f)  # [b, 2 * f]
         return x
 
@@ -133,8 +128,6 @@ class LayoutGnn(nn.Module):
         self._max_qubit_num = max_qubit_num
         self._feat_dim = feat_dim
 
-        self._x_em = nn.Embedding(num_embeddings=max_qubit_num, embedding_dim=feat_dim)
-
         self._gc = nn.ModuleList(
             [
                 ConvStack(feat_dim=feat_dim * 3, heads=heads, num_hidden_layer=3),
@@ -149,7 +142,6 @@ class LayoutGnn(nn.Module):
         circ_feat = torch.repeat_interleave(
             circ_feat, q, dim=0
         ).contiguous()  # [b * q, 2 * f]
-        x = self._x_em(x).view(-1, f)  # [b * q, f]
         x = torch.cat((x, circ_feat), dim=1)  # [b * q, 3 * f]
 
         for conv in self._gc:
@@ -171,6 +163,12 @@ class GnnMapping(nn.Module):
         self._max_qubit_num = max_qubit_num
         self._max_gate_num = max_gate_num
         self._feat_dim = feat_dim
+
+        # All gate nodes and virtual node feature embedding.
+        self._x_em = nn.Embedding(
+            num_embeddings=max_qubit_num + 2,
+            embedding_dim=feat_dim,
+        )
 
         self._circ_gnn = CircuitGnn(
             max_qubit_num=max_qubit_num,
@@ -206,11 +204,15 @@ class GnnMapping(nn.Module):
         f = self._feat_dim
         q = self._max_qubit_num
 
+        circ_x = self._x_em(circ_pyg.x).view(-1, 2 * f) # [b * n, 2 * f]
+
         circ_feat = self._circ_gnn(
-            circ_pyg.x, circ_pyg.edge_index, circ_pyg.batch
+            circ_x, circ_pyg.edge_index, circ_pyg.batch
         )  # [b, 2 * f]
+
+        topo_x = self._x_em(topo_pyg.x).view(-1, f) # [b * q, f]
         x = self._layout_gnn(
-            circ_feat, topo_pyg.x, topo_pyg.edge_index, topo_pyg.batch
+            circ_feat, topo_x, topo_pyg.edge_index, topo_pyg.batch
         )  # [b, q, 3 * f]
 
         idx_pairs = torch.cartesian_prod(torch.arange(q), torch.arange(q))

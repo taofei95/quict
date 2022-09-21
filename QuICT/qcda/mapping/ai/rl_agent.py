@@ -143,14 +143,7 @@ class Agent:
                 Swap & [u, v]
 
         next_logic2phy = copy.deepcopy(self.state.logic2phy)
-        next_phy2logic = copy.deepcopy(self.state.phy2logic)
-        _lu, _lv = next_phy2logic[v], next_phy2logic[u]
-        next_phy2logic[u], next_phy2logic[v] = _lv, _lu
-        # _lu, _lv = _lv, _lu
-        next_logic2phy[_lu], next_logic2phy[_lv] = (
-            next_logic2phy[_lv],
-            next_logic2phy[_lu],
-        )
+        next_logic2phy[u], next_logic2phy[v] = next_logic2phy[v], next_logic2phy[u]
         next_circ_graph = self.state.circ_state.copy()
         bias = self.state.circ_state.sample_bias(
             topo_dist=self.state.topo_dist,
@@ -161,9 +154,11 @@ class Agent:
         action_penalty = -1
         reward = action_penalty + bias * scale
 
-        # success = next_circ_graph.try_remove_gate(action)
+        physical_circ = self.mapped_circ if construct_gate else None
         cnt = next_circ_graph.eager_exec(
-            logic2phy=next_logic2phy, topo_graph=self.state.topo_graph
+            logic2phy=next_logic2phy,
+            topo_graph=self.state.topo_graph,
+            physical_circ=physical_circ,
         )
         reward += cnt * scale
 
@@ -185,7 +180,7 @@ class Agent:
             circ_pyg_data=next_circ_pyg,
             topo_pyg_data=self.state.topo_pyg_data,
             logic2phy=next_logic2phy,
-            phy2logic=next_phy2logic,
+            # phy2logic=next_phy2logic,
         )
         prev_state = self.state
         self.state = next_state
@@ -244,7 +239,7 @@ class Agent:
                     policy_net_device=policy_net_device,
                 )
                 _, _, _, terminated = self.take_action(
-                    action=action, construct_gate=circ
+                    action=action, construct_gate=True
                 )
                 step += 1
                 if cutoff is not None and step >= cutoff:

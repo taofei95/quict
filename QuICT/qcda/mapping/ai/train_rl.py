@@ -47,8 +47,8 @@ class ValidationData:
 class Trainer:
     def __init__(
         self,
-        max_qubit_num: int = 27,
-        max_gate_num: int = 200,
+        max_qubit_num: int = 5,
+        max_gate_num: int = 100,
         feat_dim: int = 50,
         gamma: float = 0.9,
         replay_pool_size: int = 20000,
