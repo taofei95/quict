@@ -339,9 +339,8 @@ class DataFactory:
 
     def get_topo_pyg(self, topo_graph: nx.DiGraph) -> PygData:
         topo_pyg_data = from_networkx(topo_graph)
-        topo_pyg_data.x = torch.arange(
-            self._max_qubit_num + 1, dtype=torch.long
-        ).unsqueeze(dim=-1)
+        x = 1 + torch.arange(self._max_qubit_num + 1, dtype=torch.long)
+        topo_pyg_data.x = x.unsqueeze(dim=-1)
         return topo_pyg_data
 
     def _reset_attr_cache(self):
@@ -387,17 +386,19 @@ class DataFactory:
 
     def _get_topo_dist(self, topo_graph: nx.DiGraph) -> np.ndarray:
         _inf = nx.number_of_nodes(topo_graph) + 5
-        n = self._max_qubit_num + 1
+        n = self._max_qubit_num
         dist = np.empty((n, n), dtype=np.int)
         dist[:, :] = _inf
         for u, v in topo_graph.edges:
-            dist[u][v] = 1
+            if u == 0 or v == 0:
+                continue
+            dist[u - 1][v - 1] = 1
         dist = _floyd(n, dist, _inf)
         return dist
 
     def _get_topo_mask(self, topo_graph: nx.DiGraph) -> torch.Tensor:
         topo_mask = torch.zeros(
-            (self._max_qubit_num + 1, self._max_qubit_num + 1), dtype=torch.float
+            (self._max_qubit_num, self._max_qubit_num), dtype=torch.float
         )
         for u, v in topo_graph.edges:
             # topo_mask[u][v] = 1.0
@@ -428,7 +429,7 @@ class DataFactory:
         topo_edges = tuple(self.topo_edge_map[topo_name])
         circ = Circuit(qubit_num)
 
-        min_gn = 30
+        min_gn = 10
         gate_num = randint(min_gn, max(self._max_gate_num, min_gn))
         circ.random_append(
             gate_num,

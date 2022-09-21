@@ -169,6 +169,7 @@ class GnnMapping(nn.Module):
         self._x_em = nn.Embedding(
             num_embeddings=max_qubit_num + 2,
             embedding_dim=feat_dim,
+            padding_idx=0,
         )
 
         self._circ_gnn = CircuitGnn(

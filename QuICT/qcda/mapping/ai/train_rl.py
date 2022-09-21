@@ -48,13 +48,13 @@ class Trainer:
     def __init__(
         self,
         max_qubit_num: int = 5,
-        max_gate_num: int = 100,
+        max_gate_num: int = 50,
         feat_dim: int = 50,
         gamma: float = 0.9,
         replay_pool_size: int = 20000,
         batch_size: int = 32,
         total_epoch: int = 2000,
-        explore_period: int = 2000,
+        explore_period: int = 500,
         target_update_period: int = 10,
         device: str = "cuda" if torch.cuda.is_available() else "cpu",
         model_path: str = None,
@@ -174,16 +174,14 @@ class Trainer:
             topo_name = v_datum.topo.name
             if topo_name not in model_num:
                 model_num[topo_name] = 0
-            model_num[topo_name] += len(result_circ.gates) - len(v_datum.circ.gates)
+            model_num[topo_name] += len(result_circ.gates)
 
         if len(self._mcts_num) == 0:
             for v_datum in self._v_data:
                 topo_name = v_datum.topo.name
                 if topo_name not in self._mcts_num:
                     self._mcts_num[topo_name] = 0
-                self._mcts_num[topo_name] += len(v_datum.mapped_circ.gates) - len(
-                    v_datum.circ.gates
-                )
+                self._mcts_num[topo_name] += len(v_datum.mapped_circ.gates)
         return model_num, self._mcts_num
 
     def _optimize_model(self) -> Union[None, float]:
@@ -362,12 +360,12 @@ class Trainer:
             model_num, mcts_num = self.validate_model()
             print("[Validation Summary]")
             for topo_name in model_num.keys():
-                print(f"    #SWAP by RL: {model_num[topo_name]}, #SWAP by MCTS: {mcts_num[topo_name]} ({topo_name})")
+                print(f"    #Gate by RL: {model_num[topo_name]}, #Gate by MCTS: {mcts_num[topo_name]} ({topo_name})")
                 self._writer.add_scalars(
                     f"Validation Performance ({topo_name})",
                     {
-                        "#SWAP by RL": model_num[topo_name],
-                        "#SWAP by MCTS": mcts_num[topo_name],
+                        "#Gate by RL": model_num[topo_name],
+                        "#Gate by MCTS": mcts_num[topo_name],
                     },
                     epoch_id + 1,
                 )

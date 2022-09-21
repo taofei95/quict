@@ -77,7 +77,8 @@ class Agent:
         attn: torch.Tensor = attn[:q, :q]
         # https://discuss.pytorch.org/t/masked-argmax-in-pytorch/105341/2
         large = torch.finfo(attn.dtype).max
-        pos = int((attn - large * (1 - mask) - large * (1 - mask)).argmax())
+        # pos = int((attn - large * (1 - mask) - large * (1 - mask)).argmax())
+        pos = int((attn - large * (1 - mask)).argmax())
         u, v = pos // q, pos % q
         assert u < q and v < q and mask[u][v] > 0
         return u, v
@@ -185,7 +186,7 @@ class Agent:
         )
         prev_state = self.state
         self.state = next_state
-        return prev_state, next_state, reward, terminated
+        return prev_state, next_state, reward, False
 
     def map_all(
         self,
