@@ -2,22 +2,34 @@ import os
 import os.path as osp
 import re
 from collections import deque
-from random import random, sample
+from random import sample
 from time import time
 from typing import Dict, List, Tuple, Union
 
-import numpy as np
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
 import torch.optim as optim
 from QuICT.core import *
+from QuICT.core.gate.composite_gate import CompositeGate
 from QuICT.qcda.mapping.ai.gnn_mapping import GnnMapping
 from QuICT.qcda.mapping.ai.rl_agent import Agent, Transition
 from QuICT.tools.interface.qasm_interface import OPENQASMInterface
 from torch.utils.tensorboard import SummaryWriter
 from torch_geometric.data import Batch as PygBatch
-from torch_geometric.data import Data as PygData
+from matplotlib.figure import Figure
+
+
+def _wrap2circ(cg_or_circ: Union[Circuit, CompositeGate] = None):
+    if cg_or_circ is None:
+        return None
+    elif isinstance(cg_or_circ, Circuit):
+        return cg_or_circ
+    elif isinstance(cg_or_circ, CompositeGate):
+        circ = Circuit(cg_or_circ.width())
+        circ.extend(cg_or_circ.gates)
+        return circ
+    else:
+        raise TypeError("Only supports Circuit/CompositeGate")
 
 
 class ReplayMemory:
@@ -35,9 +47,16 @@ class ReplayMemory:
 
 
 class ValidationData:
-    def __init__(self, circ: Circuit, mapped_circ: Circuit, topo: Layout) -> None:
+    def __init__(
+        self,
+        circ: Circuit,
+        topo: Layout,
+        mcts_mapped_circ: Union[Circuit, CompositeGate],
+        rl_mapped_circ: Union[Circuit, CompositeGate] = None,
+    ) -> None:
         self.circ = circ
-        self.mapped_circ = mapped_circ
+        self.mcts_mapped_circ = mcts_mapped_circ
+        self.rl_mapped_circ = rl_mapped_circ
         self.topo = topo
 
 
@@ -148,21 +167,24 @@ class Trainer:
                     continue
                 topo = self._agent.factory.topo_map[topo_name]
                 circ = OPENQASMInterface.load_file(file_path).circuit
-                mapped_circ = OPENQASMInterface.load_file(mapped_file_path).circuit
+                mcts_mapped_circ = OPENQASMInterface.load_file(mapped_file_path).circuit
                 self._v_data.append(
-                    ValidationData(circ=circ, mapped_circ=mapped_circ, topo=topo)
+                    ValidationData(
+                        circ=circ,
+                        topo=topo,
+                        mcts_mapped_circ=mcts_mapped_circ,
+                    )
                 )
 
-    def validate_model(self) -> Tuple[Dict[str, int], Dict[str, int]]:
+    def validate_model(self) -> List[ValidationData]:
         """Map all validation circuits to corresponding topologies.
 
         Returns:
-            Tuple[Dict[str, int], Dict[str, int]]: Total swap gate inserted by current model, and by MCTS, indexed by layout name.
+            List[ValidationData]: Multiple instances.
         """
-        self._target_net.train(False)
-        model_num: Dict[str, int] = {}
         for v_datum in self._v_data:
-            cutoff = len(v_datum.circ.gates) * v_datum.circ.width()
+            # cutoff = len(v_datum.circ.gates) * v_datum.circ.width()
+            cutoff = 30
             self._agent.mapped_circ.clean()
             result_circ = self._agent.map_all(
                 circ=v_datum.circ,
@@ -171,18 +193,8 @@ class Trainer:
                 policy_net_device=self._device,
                 cutoff=cutoff,
             )
-            topo_name = v_datum.topo.name
-            if topo_name not in model_num:
-                model_num[topo_name] = 0
-            model_num[topo_name] += len(result_circ.gates)
-
-        if len(self._mcts_num) == 0:
-            for v_datum in self._v_data:
-                topo_name = v_datum.topo.name
-                if topo_name not in self._mcts_num:
-                    self._mcts_num[topo_name] = 0
-                self._mcts_num[topo_name] += len(v_datum.mapped_circ.gates)
-        return model_num, self._mcts_num
+            v_datum.rl_mapped_circ = _wrap2circ(result_circ)
+        return self._v_data
 
     def _optimize_model(self) -> Union[None, float]:
         if len(self._replay) < self._batch_size:
@@ -315,6 +327,9 @@ class Trainer:
             cur_loss = self._optimize_model()
             self._policy_net.train(False)
             if cur_loss is None:
+                if terminated:
+                    print("    State terminates. Resetting exploration")
+                    self._agent.reset_explore_state()
                 continue
             running_loss += cur_loss
 
@@ -326,11 +341,7 @@ class Trainer:
             self._writer.add_scalar("Reward", reward, self._agent.explore_step)
 
             if terminated:
-                # Search finishes early.
                 print("    State terminates. Resetting exploration")
-                # if self._agent.state.circ_state.count_gate() > 0:
-                #     print(" (This is an early stop because of illegal action)", end="")
-                # print("...")
                 self._agent.reset_explore_state()
 
             if (i + 1) % observe_period == 0:
@@ -349,6 +360,39 @@ class Trainer:
                 running_reward = 0.0
                 running_loss = 0.0
 
+    def show_validation_results(self, results: List[ValidationData], epoch_id: int):
+        print("[Validation Summary]")
+        mcts_num = {}
+        rl_num = {}
+        for v_datum in results:
+            topo_name = v_datum.topo.name
+            mcts_num[topo_name] = 0
+            rl_num[topo_name] = 0
+        for idx, v_datum in enumerate(results):
+            topo_name = v_datum.topo.name
+            mcts_num[topo_name] += len(v_datum.mcts_mapped_circ.gates)
+            rl_num[topo_name] += len(v_datum.rl_mapped_circ.gates)
+            mcts_circ_fig = v_datum.mcts_mapped_circ.draw(method="matp_silent")
+            rl_circ_fig = v_datum.rl_mapped_circ.draw(method="matp_silent")
+            mcts_circ_fig.dpi = 70
+            rl_circ_fig.dpi = 70
+            self._writer.add_figure(
+                f"{topo_name}-{idx} (MCTS)", mcts_circ_fig, epoch_id
+            )
+            self._writer.add_figure(f"{topo_name}-{idx} (RL)", rl_circ_fig, epoch_id)
+            print(
+                f"    #Gate by RL: {rl_num[topo_name]}, #Gate by MCTS: {mcts_num[topo_name]} ({topo_name})"
+            )
+            self._writer.add_scalars(
+                f"Validation Performance ({topo_name})",
+                {
+                    "#Gate by RL": rl_num[topo_name],
+                    "#Gate by MCTS": mcts_num[topo_name],
+                },
+                epoch_id + 1,
+            )
+        print()
+
     def train(self):
         print(f"Training on {self._device}...\n")
         # self._random_fill_replay()
@@ -357,19 +401,8 @@ class Trainer:
             self.train_one_epoch()
             # Epoch ends. Validate current model.
             print("Validating current model on some circuits...")
-            model_num, mcts_num = self.validate_model()
-            print("[Validation Summary]")
-            for topo_name in model_num.keys():
-                print(f"    #Gate by RL: {model_num[topo_name]}, #Gate by MCTS: {mcts_num[topo_name]} ({topo_name})")
-                self._writer.add_scalars(
-                    f"Validation Performance ({topo_name})",
-                    {
-                        "#Gate by RL": model_num[topo_name],
-                        "#Gate by MCTS": mcts_num[topo_name],
-                    },
-                    epoch_id + 1,
-                )
-                print()
+            results = self.validate_model()
+            self.show_validation_results(results, epoch_id)
             if epoch_id % 200 == 0 and epoch_id >= 200:
                 torch.save(
                     self._target_net.state_dict(),

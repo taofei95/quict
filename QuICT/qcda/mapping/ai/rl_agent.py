@@ -22,9 +22,9 @@ from torch_geometric.data import Batch as PygBatch
 class Agent:
     def __init__(
         self,
-        max_qubit_num: int = 30,
-        max_gate_num: int = 1000,
-        inner_feat_dim: int = 50,
+        max_qubit_num: int,
+        max_gate_num: int,
+        inner_feat_dim: int,
         epsilon_start: float = 0.9,
         epsilon_end: float = 0.05,
         epsilon_decay: float = 100.0,
@@ -165,15 +165,15 @@ class Agent:
         )
         reward += cnt * scale
 
-        # Check if there are only padded empty layers left.
-        terminated = next_circ_state.count_gate() == 0
+        next_circ_pyg = next_circ_state.to_pyg(next_logic2phy)
+
+        terminated = next_circ_pyg is None
         if terminated:
             prev_state = self.state
             next_state = None
             self.state = next_state
             return prev_state, next_state, reward, True
 
-        next_circ_pyg = next_circ_state.to_pyg(next_logic2phy)
         next_state = State(
             circ_graph=next_circ_state,
             topo=self.state.topo,

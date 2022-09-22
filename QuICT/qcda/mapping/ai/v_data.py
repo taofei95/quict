@@ -19,7 +19,7 @@ data_dir = osp.join(data_dir, "v_data")
 if not osp.exists(data_dir):
     os.makedirs(data_dir)
 
-circ_num_each_topo = 2
+circ_num_each_topo = 3
 
 
 for topo_name in factory.topo_names:
@@ -31,7 +31,7 @@ for topo_name in factory.topo_names:
     for i in range(circ_num_each_topo):
         print(".", end="")
         circ = Circuit(q)
-        g = 20 * (i + 1)
+        g = 3 * (i + 1)
         circ.random_append(rand_size=g, typelist=[GateType.crz])
         qasm = circ.qasm()
         qasm_path = osp.join(data_dir, f"{topo_name}_{i}.qasm")

@@ -66,17 +66,17 @@ class CircuitState:
         """
         for gid, gate in enumerate(self._gates):
             assert gate.controls + gate.targets == 2, "Only 2 bit gates are supported."
-            args = tuple(gate.cargs + gate.targs)
+            a, b = gate.cargs + gate.targs
             # Position to Gate ID
-            self._bit2gid[args[0]].append(gid)
-            self._bit2gid[args[1]].append(gid)
+            self._bit2gid[a].append(gid)
+            self._bit2gid[b].append(gid)
             # DAG edges
-            if occupied[args[0]] != -1:
-                self._graph.add_edge(occupied[args[0]], gid)
-            if occupied[args[1]] != -1:
-                self._graph.add_edge(occupied[args[1]], gid)
-            occupied[args[0]] = gid
-            occupied[args[1]] = gid
+            if occupied[a] != -1:
+                self._graph.add_edge(occupied[a], gid)
+            if occupied[b] != -1:
+                self._graph.add_edge(occupied[b], gid)
+            occupied[a] = gid
+            occupied[b] = gid
             # Virtual node edges
             # self._graph.add_edge(v_node, gid + 1)
             # self._graph.add_edge(gid + 1, v_node)
@@ -86,8 +86,8 @@ class CircuitState:
         result = cls.__new__(cls)
         result._max_gate_num = self._max_gate_num
         result._graph = copy.deepcopy(self._graph)
-        # result._gates = copy.deepcopy(self._gates)
-        result._gates = self._gates
+        result._gates = copy.deepcopy(self._gates)
+        # result._gates = self._gates
         result._bit2gid = copy.deepcopy(self._bit2gid)
         return result
 
@@ -163,44 +163,49 @@ class CircuitState:
         Returns:
             float: Bias based on distance summation
         """
-        # return 0.0
-        s = 0.0
-        for bit_stick in self._bit2gid:
-            if not bit_stick:
-                continue
-            gate = self._gates[bit_stick[0]]
-            a, b = gate.cargs + gate.targs
-            _a, _b = cur_logic2phy[a], cur_logic2phy[b]
-            prev_d = topo_dist[_a][_b]
-            _a, _b = next_logic2phy[a], next_logic2phy[b]
-            next_d = topo_dist[_a][_b]
-            s += prev_d - next_d
-        if abs(s) < 1e-6:
-            s += 0.1
-        # s = max(s, 0)
-        s = s / (qubit_number**2)
-        return s
+        return 0.0
+        # s = 0.0
+        # for bit_stick in self._bit2gid:
+        #     if not bit_stick:
+        #         continue
+        #     gate = self._gates[bit_stick[0]]
+        #     a, b = gate.cargs + gate.targs
+        #     _a, _b = cur_logic2phy[a], cur_logic2phy[b]
+        #     prev_d = topo_dist[_a][_b]
+        #     _a, _b = next_logic2phy[a], next_logic2phy[b]
+        #     next_d = topo_dist[_a][_b]
+        #     s += prev_d - next_d
+        # if abs(s) < 1e-6:
+        #     s += 0.1
+        # # s = max(s, 0)
+        # # if s < 0:
+        # #     s = s * 2
+        # s = s / (qubit_number**2)
+        # return s
 
-    def to_pyg(self, logic2phy: List[int]) -> PygData:
+    def to_pyg(self, logic2phy: List[int]) -> Union[PygData, None]:
         """Convert current data into PyG Data according to current mapping.
 
         Arg:
             logic2phy (List[int]): Logical to physical qubit mapping.
 
         Returns:
-            PygData: PyG data. Each normal node will be assigned to 2 qubit ID (starting from 2).
+            Union[PygData, None]: Return None if the circuit cannot be constructed to a graph. 
+                Otherwise return PyG data. Each normal node will be assigned to 2 qubit ID (starting from 2).
                 Virtual node will be labeled as (1, 1). Some nodes will be appended to graph to ensure alignment.
                 Appended nodes will be labeled as (0, 0).
         """
+        if len(self._graph.edges) == 0:
+            return None
         x = torch.zeros(self._max_gate_num, 2, dtype=torch.long)
         for node in self._graph.nodes:
             # if node == 0:
             #     continue
             gid = node
             gate = self._gates[gid]
-            args = gate.cargs + gate.targs
-            x[gid + 1][0] = logic2phy[args[0]] + 2
-            x[gid + 1][1] = logic2phy[args[1]] + 2
+            a, b = gate.cargs + gate.targs
+            x[gid][0] = logic2phy[a] + 1
+            x[gid][1] = logic2phy[b] + 1
         edge_index = []
         for u, v in self._graph.edges:
             edge_index.append([u, v])
@@ -357,7 +362,7 @@ class DataFactory:
 
             topo_edge = self._get_topo_edges(topo_graph=topo_graph)
             topo_adj_mat_thin = np.zeros(
-                (topo.qubit_number + 1, topo.qubit_number + 1), dtype=int
+                (topo.qubit_number, topo.qubit_number), dtype=int
             )
             for u, v in topo_graph.edges:
                 topo_adj_mat_thin[u][v] = 1
