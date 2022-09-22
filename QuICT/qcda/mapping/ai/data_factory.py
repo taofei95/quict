@@ -54,12 +54,12 @@ class CircuitState:
             )
 
         self._graph = nx.DiGraph()
-        self._graph.add_node(0)
+        # self._graph.add_node(0)
         for gid in range(len(self._gates)):
-            self._graph.add_node(gid + 1)
-            # self._graph.add_node(gid)
+            # self._graph.add_node(gid + 1)
+            self._graph.add_node(gid)
 
-        v_node = 0
+        # v_node = 0
         occupied = [-1 for _ in range(q)]
         self._bit2gid: List[List[int]] = [[] for _ in range(q)]
         """Qubit to all gates on it.
@@ -72,26 +72,27 @@ class CircuitState:
             self._bit2gid[args[1]].append(gid)
             # DAG edges
             if occupied[args[0]] != -1:
-                self._graph.add_edge(occupied[args[0]] + 1, gid + 1)
+                self._graph.add_edge(occupied[args[0]], gid)
             if occupied[args[1]] != -1:
-                self._graph.add_edge(occupied[args[1]] + 1, gid + 1)
+                self._graph.add_edge(occupied[args[1]], gid)
             occupied[args[0]] = gid
             occupied[args[1]] = gid
             # Virtual node edges
-            self._graph.add_edge(v_node, gid + 1)
-            self._graph.add_edge(gid + 1, v_node)
+            # self._graph.add_edge(v_node, gid + 1)
+            # self._graph.add_edge(gid + 1, v_node)
 
     def copy(self):
         cls = self.__class__
         result = cls.__new__(cls)
         result._max_gate_num = self._max_gate_num
         result._graph = copy.deepcopy(self._graph)
-        result._gates = copy.deepcopy(self._gates)
+        # result._gates = copy.deepcopy(self._gates)
+        result._gates = self._gates
         result._bit2gid = copy.deepcopy(self._bit2gid)
         return result
 
     def count_gate(self) -> int:
-        return nx.number_of_nodes(self._graph) - 1
+        return nx.number_of_nodes(self._graph)
 
     def eager_exec(
         self,
@@ -132,7 +133,7 @@ class CircuitState:
                 self._bit2gid[a].pop(0)
                 self._bit2gid[b].pop(0)
                 gid = front
-                self._graph.remove_node(gid + 1)
+                self._graph.remove_node(gid)
                 if physical_circ is not None:
                     with physical_circ:
                         gate & [_a, _b]
@@ -162,23 +163,23 @@ class CircuitState:
         Returns:
             float: Bias based on distance summation
         """
-        return 0.0
-        # s = 0.0
-        # for bit_stick in self._bit2gid:
-        #     if not bit_stick:
-        #         continue
-        #     gate = self._gates[bit_stick[0]]
-        #     a, b = gate.cargs + gate.targs
-        #     _a, _b = cur_logic2phy[a], cur_logic2phy[b]
-        #     prev_d = topo_dist[_a][_b]
-        #     _a, _b = next_logic2phy[a], next_logic2phy[b]
-        #     next_d = topo_dist[_a][_b]
-        #     s += prev_d - next_d
-        # if abs(s) < 1e-6:
-        #     s += 0.1
-        # # s = max(s, 0)
-        # s = s / (qubit_number ** 2)
-        # return s
+        # return 0.0
+        s = 0.0
+        for bit_stick in self._bit2gid:
+            if not bit_stick:
+                continue
+            gate = self._gates[bit_stick[0]]
+            a, b = gate.cargs + gate.targs
+            _a, _b = cur_logic2phy[a], cur_logic2phy[b]
+            prev_d = topo_dist[_a][_b]
+            _a, _b = next_logic2phy[a], next_logic2phy[b]
+            next_d = topo_dist[_a][_b]
+            s += prev_d - next_d
+        if abs(s) < 1e-6:
+            s += 0.1
+        # s = max(s, 0)
+        s = s / (qubit_number**2)
+        return s
 
     def to_pyg(self, logic2phy: List[int]) -> PygData:
         """Convert current data into PyG Data according to current mapping.
@@ -191,13 +192,11 @@ class CircuitState:
                 Virtual node will be labeled as (1, 1). Some nodes will be appended to graph to ensure alignment.
                 Appended nodes will be labeled as (0, 0).
         """
-        x = torch.zeros(self._max_gate_num + 1, 2, dtype=torch.long)
-        x[0][0] = 1
-        x[0][1] = 1
+        x = torch.zeros(self._max_gate_num, 2, dtype=torch.long)
         for node in self._graph.nodes:
-            if node == 0:
-                continue
-            gid = node - 1
+            # if node == 0:
+            #     continue
+            gid = node
             gate = self._gates[gid]
             args = gate.cargs + gate.targs
             x[gid + 1][0] = logic2phy[args[0]] + 2
@@ -339,7 +338,8 @@ class DataFactory:
 
     def get_topo_pyg(self, topo_graph: nx.DiGraph) -> PygData:
         topo_pyg_data = from_networkx(topo_graph)
-        x = 1 + torch.arange(self._max_qubit_num + 1, dtype=torch.long)
+        # x = 1 + torch.arange(self._max_qubit_num + 1, dtype=torch.long)
+        x = 1 + torch.arange(self._max_qubit_num, dtype=torch.long)
         topo_pyg_data.x = x.unsqueeze(dim=-1)
         return topo_pyg_data
 
@@ -375,13 +375,13 @@ class DataFactory:
             nx.DiGraph: Graph representation.
         """
         g = nx.DiGraph()
-        g.add_node(0)
+        # g.add_node(0)
         for i in range(self._max_qubit_num):
-            # g.add_node(i)
-            g.add_node(i + 1)
+            g.add_node(i)
+            # g.add_node(i + 1)
         for edge in topo.directionalized:
-            g.add_edge(edge.u + 1, edge.v + 1)
-            # g.add_edge(edge.u, edge.v)
+            # g.add_edge(edge.u + 1, edge.v + 1)
+            g.add_edge(edge.u, edge.v)
         return g
 
     def _get_topo_dist(self, topo_graph: nx.DiGraph) -> np.ndarray:
@@ -390,9 +390,10 @@ class DataFactory:
         dist = np.empty((n, n), dtype=np.int)
         dist[:, :] = _inf
         for u, v in topo_graph.edges:
-            if u == 0 or v == 0:
-                continue
-            dist[u - 1][v - 1] = 1
+            # if u == 0 or v == 0:
+            #     continue
+            # dist[u - 1][v - 1] = 1
+            dist[u][v] = 1
         dist = _floyd(n, dist, _inf)
         return dist
 
@@ -401,19 +402,19 @@ class DataFactory:
             (self._max_qubit_num, self._max_qubit_num), dtype=torch.float
         )
         for u, v in topo_graph.edges:
-            # topo_mask[u][v] = 1.0
-            if v == 0 or u == 0:
-                continue
-            topo_mask[u - 1][v - 1] = 1.0
+            # if v == 0 or u == 0:
+            #     continue
+            # topo_mask[u - 1][v - 1] = 1.0
+            topo_mask[u][v] = 1.0
         return topo_mask
 
     def _get_topo_edges(self, topo_graph: nx.DiGraph) -> np.ndarray:
         topo_edge = []
         for u, v in topo_graph.edges:
-            # topo_edge.append((u, v))
-            if v == 0 or u == 0:
-                continue
-            topo_edge.append((u - 1, v - 1))
+            # if v == 0 or u == 0:
+            #     continue
+            # topo_edge.append((u - 1, v - 1))
+            topo_edge.append((u, v))
         return topo_edge
 
     def get_one(self, topo_name: str = None) -> State:

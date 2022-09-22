@@ -4,22 +4,6 @@ import torch.nn.functional as F
 import torch_geometric.nn as gnn
 
 
-class Ffn(nn.Module):
-    """Feed forward network without normalization layer."""
-
-    def __init__(self, feat_dim: int) -> None:
-        super().__init__()
-
-        self._lin_1 = nn.Linear(in_features=feat_dim, out_features=feat_dim)
-        self._lin_2 = nn.Linear(in_features=feat_dim, out_features=feat_dim)
-
-    def forward(self, x):
-        residual = x
-        x = F.leaky_relu(self._lin_1(x))
-        x = self._lin_2(x) + residual
-        return x
-
-
 class ConvStack(nn.Module):
     def __init__(
         self,
@@ -35,7 +19,6 @@ class ConvStack(nn.Module):
         self._first = gnn.GATv2Conv(
             in_channels=feat_dim, out_channels=feat_dim, heads=heads
         )
-        # self._first = gnn.GCNConv(in_channels=feat_dim, out_channels=feat_dim, normalize=False)
 
         self._inner = nn.ModuleList(
             [
@@ -47,22 +30,10 @@ class ConvStack(nn.Module):
                 for _ in range(num_hidden_layer)
             ]
         )
-        # self._inner = nn.ModuleList(
-        #     [
-        #         gnn.GCNConv(
-        #             in_channels=feat_dim,
-        #             out_channels=feat_dim,
-        #             normalize=False,
-        #         )
-        #         for _ in range(num_hidden_layer)
-        #     ]
-        # )
 
         self._last = gnn.GATv2Conv(
             in_channels=feat_dim * heads, out_channels=feat_dim, heads=1
         )
-        # self._last = gnn.GCNConv(in_channels=feat_dim, out_channels=feat_dim, normalize=False)
-        # self._ffn = Ffn(feat_dim=feat_dim)
 
         self._normalize = normalize
         if normalize:
@@ -76,7 +47,6 @@ class ConvStack(nn.Module):
         x = (
             F.leaky_relu(self._last(x, edge_index)) + residual
         )  # [b * n, h, f] -> [b * n, f]
-        # x = self._ffn(x)
         if self._normalize:
             x = self._ln(x, batch)
         return x
@@ -103,16 +73,16 @@ class CircuitGnn(nn.Module):
             ]
         )
 
-        # self._aggr = gnn.aggr.MeanAggregation()
+        self._aggr = gnn.aggr.MeanAggregation()
 
     def forward(self, x, edge_index, batch=None):
         n = self._max_gate_num
         f = self._feat_dim
 
         for conv in self._gc:
-            x = conv(x, edge_index, batch) + x  # [b * (n + 1), 2 * f]
-        x = x.view(-1, n + 1, 2 * f)  # [b, (n + 1), 2 * f]
-        x = x[:, 0, :].contiguous().view(-1, 2 * f)  # [b, 2 * f]
+            x = conv(x, edge_index, batch) + x  # [b * n, 2 * f]
+        x = self._aggr(x, batch) # [b, 2 * f]
+        x = x.view(-1, 2 * f)  # [b, 2 * f]
         return x
 
 
@@ -140,14 +110,14 @@ class LayoutGnn(nn.Module):
 
         # Input circ_feat has shape [b, 2 * f]
         circ_feat = torch.repeat_interleave(
-            circ_feat, q + 1, dim=0
-        ).contiguous()  # [b * (q + 1), 2 * f]
-        x = torch.cat((x, circ_feat), dim=1)  # [b * (q + 1), 3 * f]
+            circ_feat, q, dim=0
+        ).contiguous()  # [b * q, 2 * f]
+        x = torch.cat((x, circ_feat), dim=1)  # [b * q, 3 * f]
 
         for conv in self._gc:
             x = conv(x, edge_index, batch) + x
-        x = x.view(-1, q + 1, f)  # [b, q + 1, 3 * f]
-        x = x[:, 1:, :]
+        x = x.view(-1, q, f)  # [b, q, 3 * f]
+        # x = x[:, 1:, :]
         return x
 
 
@@ -194,7 +164,6 @@ class GnnMapping(nn.Module):
             nn.LeakyReLU(),
             nn.Linear(feat_dim * 2, feat_dim * 2),
             nn.LeakyReLU(),
-            nn.LayerNorm(feat_dim * 2),
             nn.Linear(feat_dim * 2, feat_dim // 2),
             nn.LeakyReLU(),
             nn.Linear(feat_dim // 2, feat_dim // 2),
@@ -220,6 +189,7 @@ class GnnMapping(nn.Module):
         idx_pairs = torch.cartesian_prod(torch.arange(q), torch.arange(q))
         x = x[:, idx_pairs].contiguous()  # [b, q * q, 2, 3 * f]
         x = x.view(-1, q, q, 6 * f)
+        x = x / (6 * f)
         x = self._mlp(x).view(-1, q, q)  # [b, q, q]
         # x = (x + x.transpose(-1, -2)) / 2
         # gather q * q dim for convenient max

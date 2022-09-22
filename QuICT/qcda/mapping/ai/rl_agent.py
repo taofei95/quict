@@ -134,10 +134,11 @@ class Agent:
         u, v = action
         graph = self.state.topo_graph
         scale = self.reward_scale
-        if not graph.has_edge(u + 1, v + 1):
+        if not graph.has_edge(u, v):
             reward = -scale
-            next_state = None
             prev_state = self.state
+            next_state = None
+            self.state = next_state
             return prev_state, next_state, reward, True
 
         if construct_gate:
@@ -146,8 +147,8 @@ class Agent:
 
         next_logic2phy = copy.deepcopy(self.state.logic2phy)
         next_logic2phy[u], next_logic2phy[v] = next_logic2phy[v], next_logic2phy[u]
-        next_circ_graph = self.state.circ_state.copy()
-        bias = self.state.circ_state.sample_bias(
+        next_circ_state = self.state.circ_state.copy()
+        bias = next_circ_state.sample_bias(
             topo_dist=self.state.topo_dist,
             cur_logic2phy=self.state.logic2phy,
             next_logic2phy=next_logic2phy,
@@ -157,7 +158,7 @@ class Agent:
         reward = action_penalty + bias * scale
 
         physical_circ = self.mapped_circ if construct_gate else None
-        cnt = next_circ_graph.eager_exec(
+        cnt = next_circ_state.eager_exec(
             logic2phy=next_logic2phy,
             topo_graph=self.state.topo_graph,
             physical_circ=physical_circ,
@@ -165,15 +166,16 @@ class Agent:
         reward += cnt * scale
 
         # Check if there are only padded empty layers left.
-        terminated = next_circ_graph.count_gate() == 0
+        terminated = next_circ_state.count_gate() == 0
         if terminated:
             prev_state = self.state
             next_state = None
+            self.state = next_state
             return prev_state, next_state, reward, True
 
-        next_circ_pyg = next_circ_graph.to_pyg(next_logic2phy)
+        next_circ_pyg = next_circ_state.to_pyg(next_logic2phy)
         next_state = State(
-            circ_graph=next_circ_graph,
+            circ_graph=next_circ_state,
             topo=self.state.topo,
             topo_mask=self.state.topo_mask,
             topo_graph=self.state.topo_graph,
@@ -247,4 +249,5 @@ class Agent:
                 if cutoff is not None and step >= cutoff:
                     break
             self.explore_step -= step
+            self.state = None
             return self.mapped_circ
