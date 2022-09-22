@@ -154,8 +154,8 @@ class Agent:
             next_logic2phy=next_logic2phy,
             qubit_number=self.state.topo.qubit_number,
         )
-        action_penalty = -1
-        reward = action_penalty + bias * scale
+        action_penalty = -10
+        reward = action_penalty + bias
 
         physical_circ = self.mapped_circ if construct_gate else None
         cnt = next_circ_state.eager_exec(

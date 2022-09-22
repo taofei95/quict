@@ -160,25 +160,22 @@ class CircuitState:
         Returns:
             float: Bias based on distance summation
         """
-        return 0.0
-        # s = 0.0
-        # for bit_stick in self._bit2gid:
-        #     if not bit_stick:
-        #         continue
-        #     gate = self._gates[bit_stick[0]]
-        #     a, b = gate.cargs + gate.targs
-        #     _a, _b = cur_logic2phy[a], cur_logic2phy[b]
-        #     prev_d = topo_dist[_a][_b]
-        #     _a, _b = next_logic2phy[a], next_logic2phy[b]
-        #     next_d = topo_dist[_a][_b]
-        #     s += prev_d - next_d
-        # if abs(s) < 1e-6:
-        #     s += 0.1
-        # # s = max(s, 0)
-        # # if s < 0:
-        # #     s = s * 2
-        # s = s / (qubit_number**2)
-        # return s
+        # return 0.0
+        s = 0.0
+        for gate in self.first_layer_gates().values():
+            a, b = gate.cargs + gate.targs
+            _a, _b = cur_logic2phy[a], cur_logic2phy[b]
+            prev_d = topo_dist[_a][_b]
+            _a, _b = next_logic2phy[a], next_logic2phy[b]
+            next_d = topo_dist[_a][_b]
+            s += prev_d - next_d
+        if abs(s) < 1e-6:
+            s += 0.1
+        # s = max(s, 0)
+        # if s < 0:
+        #     s = s * 2
+        s = s / (qubit_number)
+        return s
 
     def to_pyg(self, logic2phy: List[int]) -> PygData:
         """Convert current data into PyG Data according to current mapping.
