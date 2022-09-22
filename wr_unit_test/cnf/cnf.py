@@ -15,16 +15,20 @@ import logging
 
 #from .._synthesis import Synthesis
 #import random import logging from math import pi, gcd
-import numpy as np
 from fractions import Fraction
 from typing import List, Tuple
 
-from QuICT.qcda.synthesis.mct.mct_linear_simulation import MCTLinearOneDirtyAux
+#from QuICT.core import Circuit
+#from QuICT.core.gate import *cc
+
+# from QuICT.simulation.cpu_simulator import CircuitSimulator
+from QuICT.qcda.synthesis.mct import one_dirty_aux
+from QuICT.qcda.synthesis.mct.mct_linear_simulation import half_dirty_aux
 from QuICT.qcda.optimization.commutative_optimization import *
 #from QuICT.qcda.optimization._optimization import Optimization
 
 class CNFSATOracle:
-
+     
     def __init__(self, simu = None):
         self.simulator = simu
 
@@ -69,15 +73,8 @@ class CNFSATOracle:
             for i in range(len(controls_X)):
                 X | self._cgate(controls_X[i])
             X | self._cgate(target)
-            # one_dirty_aux(self._cgate, controls_abs, target, ancilla_qubits_num) #QuICT.qcda.synthesis.mct.
-            mct_gates = MCTLinearOneDirtyAux().execute(len(controls_abs)+2)
-            mct_targets = controls_abs
-            mct_targets.append(target)
-            mct_targets.append(ancilla_qubits_num)
-            mct_gates & mct_targets
-            self._cgate.extend(mct_gates)
-
-            X | self._cgate(target)
+            one_dirty_aux(self._cgate, controls_abs, target, current_Aux) #QuICT.qcda.synthesis.mct.
+            #X | self._cgate(target)
             for i in range(len(controls_X)):
                 X | self._cgate(controls_X[i])
         else:
@@ -94,13 +91,7 @@ class CNFSATOracle:
                 controls.append(variable_nunmber + ancilla_qubits_num - p + 1 + j)
 
             current_Aux = variable_nunmber + 1 
-            # one_dirty_aux(self._cgate, controls, target, current_Aux)
-            mct_gates = MCTLinearOneDirtyAux().execute(len(controls)+2)
-            mct_targets = controls
-            mct_targets.append(target)
-            # mct_targets.append(current_Aux)
-            mct_gates & mct_targets
-            self._cgate.extend(mct_gates)
+            one_dirty_aux(self._cgate, controls, target, current_Aux)
             
             for j in range(block_number):
                 self.clause(
@@ -110,7 +101,7 @@ class CNFSATOracle:
                 )
 
         # print(self._cgate)
-        print(self._cgate.qasm())
+        #print(self._cgate.qasm())
 
         # Step 3: Simulator
         # simu_circuit = Circuit(self._cgate.width())
@@ -135,7 +126,7 @@ class CNFSATOracle:
                 for i in range(len(new)-1): #注意这里是否减1 要检查一下
                     int_new.append(int(new[i]))
             CNF_data.append(int_new)  #给各个Clause 编号0,1 ...m-1#
-        print(CNF_data)
+        #print(CNF_data)
         f.close()
 
         return variable_nunmber, clause_number, CNF_data
@@ -160,14 +151,8 @@ class CNFSATOracle:
             for i in range(len(controls_X)):
                 X | self._cgate(controls_X[i])
             X | self._cgate(target)
-            # one_dirty_aux(self._cgate, controls_abs, target, current_Aux)
-            mct_gates = MCTLinearOneDirtyAux().execute(len(controls_abs)+2)
-            mct_targets = controls_abs
-            mct_targets.append(target)
-            mct_targets.append(current_Aux)
-            mct_gates & mct_targets
-            self._cgate.extend(mct_gates)
-            X | self._cgate(target)
+            one_dirty_aux(self._cgate, controls_abs, target, current_Aux)
+            #X | self._cgate(target)
             for i in range(len(controls_X)):
                 X | self._cgate(controls_X[i])
         else: 
@@ -391,16 +376,14 @@ class CNFSATOracle:
 
 if __name__=="__main__":
     cnf = CNFSATOracle()
-    from os import path as osp
-    self_path = osp.abspath(osp.dirname(__file__))
-    cnf.run(osp.join(self_path, "1.cnf")) 
+    cnf.run("./1.cnf") 
     #./QuICT/algorithm/quantum_algorithm/CNF/
     cgate = cnf.circuit()
     
     #print(cgate.qasm())
-    circuit_temp=Circuit(15)
-    circuit_temp.extend(cgate)
-    circuit_temp.draw(filename='1.jpg')
+    #circuit_temp=Circuit(15)
+    #circuit_temp.extend(cgate)
+    #circuit_temp.draw(filename='1.jpg')
 
 
 # python QuICT/algorithm/qm/cnf/cnf.py """

@@ -399,4 +399,4 @@ gate size: 150
 4, Quict circuit size [ori:opt]=[150:108] ; circuit depth [ori:opt]=[34:25] 
 4, Qiskit circuit size [ori:opt]=[150:126] ; circuit depth [ori:opt]=[34:28] 
 5, Quict circuit size [ori:opt]=[150:110] ; circuit depth [ori:opt]=[37:33] 
-5, Qiskit circuit size [ori:opt]=[150:142] ; circuit depth [ori:opt]=[37:37] 
+5, Qiskit circuit size [ori:opt]=[150:142] ; circuit depth [ori:opt]=[37:37]
