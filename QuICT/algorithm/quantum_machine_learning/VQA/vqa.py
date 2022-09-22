@@ -65,9 +65,8 @@ if __name__ == "__main__":
 
     def random_state(n_qubits):
         state = np.random.randn(1 << n_qubits)
-        state /= sum(state)
+        state /= sum(abs(state))
         state = abs(state) ** 0.5
-        print(sum(state * state))
         return state
 
     n_qubits = 1
@@ -81,4 +80,7 @@ if __name__ == "__main__":
     # state = np.array([np.sqrt(3) / 3, 1 / 2, 1 / 3, np.sqrt(11) / 6])
     loss = vqa.cal_expect(state)
     print(loss)
+
+
+
 
