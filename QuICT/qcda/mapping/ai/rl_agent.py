@@ -24,7 +24,6 @@ class Agent:
         self,
         max_qubit_num: int,
         max_gate_num: int,
-        inner_feat_dim: int,
         epsilon_start: float = 0.9,
         epsilon_end: float = 0.05,
         epsilon_decay: float = 100.0,
@@ -33,7 +32,6 @@ class Agent:
         # Copy values in.
         self._max_qubit_num = max_qubit_num
         self._max_gate_num = max_gate_num
-        self._feat_dim = inner_feat_dim
         self._epsilon_start = epsilon_start
         self._epsilon_end = epsilon_end
         self._epsilon_decay = epsilon_decay
@@ -137,7 +135,8 @@ class Agent:
         if not graph.has_edge(u, v):
             reward = -scale
             prev_state = self.state
-            next_state = None
+            # next_state = None
+            next_state = self.state
             self.state = next_state
             return prev_state, next_state, reward, True
 
@@ -168,7 +167,8 @@ class Agent:
         terminated = next_circ_state.count_gate() == 0
         if terminated:
             prev_state = self.state
-            next_state = None
+            # next_state = None
+            next_state = self.state
             self.state = next_state
             return prev_state, next_state, reward, True
 
@@ -190,17 +190,22 @@ class Agent:
         self.state = next_state
         return prev_state, next_state, reward, False
 
+    @classmethod
     def map_all(
-        self,
+        cls,
+        max_qubit_num:int,
+        max_gate_num:int,
         circ: CircuitBased,
         layout: Layout,
         policy_net: GnnMapping,
         policy_net_device: str,
         cutoff: int = None,
-    ) -> CompositeGate:
+    ) -> Tuple[CompositeGate, CompositeGate]:
         """Map given circuit to topology layout. Note that this methods will change internal exploration state.
 
         Args:
+            max_qubit_num (int): Maximal qubit number after padding.
+            max_gate_num (int): Maximal gate number after padding.
             circ (CircuitBased): Circuit to be mapped.
             layout (Layout): Topology layout.
             policy_net (GnnMapping): Policy network.
@@ -209,20 +214,19 @@ class Agent:
                 stop with in `cutoff` steps, force it to early stop. Defaults to None.
 
         Returns:
-            CompositeGate: Mapped circuit.
+            Tuple[CompositeGate, CompositeGate]: Mapped circuit, remained circuit.
         """
-        circ_cpy = copy.deepcopy(circ)
-        circ = circ_cpy
-        logic2phy = [i for i in range(self._max_qubit_num)]
-        topo_graph = self.factory._get_topo_graph(topo=layout)
-        topo_dist = self.factory._get_topo_dist(topo_graph=topo_graph)
-        topo_mask = self.factory._get_topo_mask(topo_graph=topo_graph)
-        topo_edges = self.factory._get_topo_edges(topo_graph=topo_graph)
+        logic2phy = [i for i in range(max_qubit_num)]
+        agent = Agent(max_qubit_num=max_qubit_num,max_gate_num=max_gate_num)
+        topo_graph = agent.factory._get_topo_graph(topo=layout)
+        topo_dist = agent.factory._get_topo_dist(topo_graph=topo_graph)
+        topo_mask = agent.factory._get_topo_mask(topo_graph=topo_graph)
+        topo_edges = agent.factory._get_topo_edges(topo_graph=topo_graph)
         circ_graph = CircuitState(circ=circ, max_gate_num=policy_net._max_gate_num)
         circ_pyg = circ_graph.to_pyg(logic2phy)
-        topo_pyg = self.factory.get_topo_pyg(topo_graph=topo_graph)
+        topo_pyg = agent.factory.get_topo_pyg(topo_graph=topo_graph)
 
-        self.state = State(
+        agent.state = State(
             circ_graph=circ_graph,
             topo=layout,
             topo_mask=topo_mask,
@@ -238,16 +242,14 @@ class Agent:
         step = 0
         with torch.no_grad():
             while not terminated:
-                action = self.select_action(
+                action = agent.select_action(
                     policy_net=policy_net,
                     policy_net_device=policy_net_device,
                 )
-                _, _, _, terminated = self.take_action(
+                _, _, _, terminated = agent.take_action(
                     action=action, construct_gate=True
                 )
                 step += 1
                 if cutoff is not None and step >= cutoff:
                     break
-            self.explore_step -= step
-            self.state = None
-            return self.mapped_circ
+            return agent.mapped_circ, agent.state.remained_circ()

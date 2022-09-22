@@ -45,9 +45,9 @@ class CircuitState:
         self._max_gate_num = max_gate_num
         q = circ.width()
         if isinstance(circ, CircuitBased):
-            self._gates: List[BasicGate] = circ.gates
+            self._gates: List[BasicGate] = copy.deepcopy(circ.gates)
         elif isinstance(circ, list):
-            self._gates = circ
+            self._gates = copy.deepcopy(circ)
         else:
             raise TypeError(
                 "circ argument only supports Circuit/CompositeGate/List[BasicGate]"
@@ -142,6 +142,20 @@ class CircuitState:
                             gate & [_a, _b]
         return remove_cnt
 
+    def remained_circ(self, logic2phy: List[int]) -> CompositeGate:
+        gates = {}
+        for bit_stick in self._bit2gid:
+            for gid in bit_stick:
+                if gid not in gates:
+                    gates[gid] = self._gates[gid]
+        cg = CompositeGate()
+        for gate in gates.values():
+            a, b = gate.cargs + gate.targs
+            a, b = logic2phy[a], logic2phy[b]
+            with cg:
+                gate & [a, b]
+        return cg
+
     def sample_bias(
         self,
         topo_dist: np.ndarray,
@@ -174,7 +188,7 @@ class CircuitState:
         # s = max(s, 0)
         # if s < 0:
         #     s = s * 2
-        s = s / (qubit_number)
+        # s = s / (qubit_number)
         return s
 
     def to_pyg(self, logic2phy: List[int]) -> PygData:
@@ -239,6 +253,9 @@ class State:
         #     self.phy2logic = [-1 for _ in range(len(logic2phy))]
         #     for i in range(len(logic2phy)):
         #         self.phy2logic[logic2phy[i]] = i
+
+    def remained_circ(self) -> CompositeGate:
+        return self.circ_state.remained_circ(self.logic2phy)
 
 
 class Transition:

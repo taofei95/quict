@@ -53,11 +53,13 @@ class ValidationData:
         topo: Layout,
         mcts_mapped_circ: Union[Circuit, CompositeGate],
         rl_mapped_circ: Union[Circuit, CompositeGate] = None,
+        remained_circ: Union[Circuit, CompositeGate] = None,
     ) -> None:
         self.circ = circ
         self.mcts_mapped_circ = mcts_mapped_circ
         self.rl_mapped_circ = rl_mapped_circ
         self.topo = topo
+        self.remained_circ = remained_circ
 
 
 # TODO: Add MCTS prior experience
@@ -73,7 +75,7 @@ class Trainer:
         replay_pool_size: int = 20000,
         batch_size: int = 32,
         total_epoch: int = 2000,
-        explore_period: int = 500,
+        explore_period: int = 200,
         target_update_period: int = 10,
         device: str = "cuda" if torch.cuda.is_available() else "cpu",
         model_path: str = None,
@@ -96,7 +98,6 @@ class Trainer:
         self._agent = Agent(
             max_qubit_num=max_qubit_num,
             max_gate_num=max_gate_num,
-            inner_feat_dim=feat_dim,
         )
         self._agent.factory._reset_attr_cache()
 
@@ -148,9 +149,9 @@ class Trainer:
         print("Preparing validation data...")
         self._v_data: List[ValidationData] = []
         self._mcts_num: Dict[str, int] = {}
-        self._fill_v_data()
+        self._load_v_data()
 
-    def _fill_v_data(self):
+    def _load_v_data(self):
         v_data_dir = osp.join(self._agent.factory._data_dir, "v_data")
         pattern = re.compile(r"(\w+)_(\d+).qasm")
         for _, _, file_names in os.walk(v_data_dir):
@@ -162,9 +163,6 @@ class Trainer:
                 mapped_file_path = osp.join(v_data_dir, f"mapped_{file_name}")
                 groups = pattern.match(file_name)
                 topo_name = groups[1]
-                # TODO: Rotate topo
-                if "lima" not in topo_name:
-                    continue
                 topo = self._agent.factory.topo_map[topo_name]
                 circ = OPENQASMInterface.load_file(file_path).circuit
                 mcts_mapped_circ = OPENQASMInterface.load_file(mapped_file_path).circuit
@@ -186,7 +184,9 @@ class Trainer:
             # cutoff = len(v_datum.circ.gates) * v_datum.circ.width()
             cutoff = 30
             self._agent.mapped_circ.clean()
-            result_circ = self._agent.map_all(
+            result_circ, remained_circ = self._agent.map_all(
+                max_qubit_num=self._max_qubit_num,
+                max_gate_num=self._max_gate_num,
                 circ=v_datum.circ,
                 layout=v_datum.topo,
                 policy_net=self._target_net,
@@ -194,6 +194,7 @@ class Trainer:
                 cutoff=cutoff,
             )
             v_datum.rl_mapped_circ = _wrap2circ(result_circ)
+            v_datum.remained_circ = _wrap2circ(remained_circ)
         return self._v_data
 
     def _optimize_model(self) -> Union[None, float]:
@@ -312,6 +313,8 @@ class Trainer:
             prev_state, next_state, reward, terminated = self._agent.take_action(
                 action=action
             )
+            if terminated:
+                next_state = None
             running_reward += reward
 
             # Put this transition into experience replay pool.
@@ -370,27 +373,31 @@ class Trainer:
             rl_num[topo_name] = 0
         for idx, v_datum in enumerate(results):
             topo_name = v_datum.topo.name
-            mcts_num[topo_name] += len(v_datum.mcts_mapped_circ.gates)
-            rl_num[topo_name] += len(v_datum.rl_mapped_circ.gates)
+            _mcts_num = len(v_datum.mcts_mapped_circ.gates)
+            _rl_num = len(v_datum.rl_mapped_circ.gates)
+            mcts_num[topo_name] += _mcts_num
+            rl_num[topo_name] += _rl_num
             mcts_circ_fig = v_datum.mcts_mapped_circ.draw(method="matp_silent")
             rl_circ_fig = v_datum.rl_mapped_circ.draw(method="matp_silent")
-            mcts_circ_fig.dpi = 70
-            rl_circ_fig.dpi = 70
+            rl_remain_circ_fig = v_datum.remained_circ.draw(method="matp_silent")
+            mcts_circ_fig.dpi = 50
+            rl_circ_fig.dpi = 50
             self._writer.add_figure(
                 f"{topo_name}-{idx} (MCTS)", mcts_circ_fig, epoch_id
             )
             self._writer.add_figure(f"{topo_name}-{idx} (RL)", rl_circ_fig, epoch_id)
+            self._writer.add_figure(f"{topo_name}-{idx} (RL Remained)", rl_remain_circ_fig, epoch_id)
             print(
-                f"    #Gate by RL: {rl_num[topo_name]}, #Gate by MCTS: {mcts_num[topo_name]} ({topo_name})"
+                f"    #Gate by RL: {_rl_num}, #Gate by MCTS: {_mcts_num} ({topo_name})"
             )
-            self._writer.add_scalars(
-                f"Validation Performance ({topo_name})",
-                {
-                    "#Gate by RL": rl_num[topo_name],
-                    "#Gate by MCTS": mcts_num[topo_name],
-                },
-                epoch_id + 1,
-            )
+        self._writer.add_scalars(
+            f"Validation Performance ({topo_name})",
+            {
+                "#Gate by RL": rl_num[topo_name],
+                "#Gate by MCTS": mcts_num[topo_name],
+            },
+            epoch_id + 1,
+        )
         print()
 
     def train(self):

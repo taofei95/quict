@@ -32,7 +32,7 @@ for topo_name in factory.topo_names:
         print(".", end="")
         circ = Circuit(q)
         g = 3 * (i + 1)
-        circ.random_append(rand_size=g, typelist=[GateType.crz])
+        circ.random_append(rand_size=g, typelist=[GateType.cx])
         qasm = circ.qasm()
         qasm_path = osp.join(data_dir, f"{topo_name}_{i}.qasm")
         with open(qasm_path, "w") as f:
