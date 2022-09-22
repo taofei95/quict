@@ -54,12 +54,12 @@ class CircuitState:
             )
 
         self._graph = nx.DiGraph()
-        # self._graph.add_node(0)
+        self._graph.add_node(0)
         for gid in range(len(self._gates)):
-            # self._graph.add_node(gid + 1)
-            self._graph.add_node(gid)
+            self._graph.add_node(gid + 1)
+            # self._graph.add_node(gid)
 
-        # v_node = 0
+        v_node = 0
         occupied = [-1 for _ in range(q)]
         self._bit2gid: List[List[int]] = [[] for _ in range(q)]
         """Qubit to all gates on it.
@@ -67,19 +67,20 @@ class CircuitState:
         for gid, gate in enumerate(self._gates):
             assert gate.controls + gate.targets == 2, "Only 2 bit gates are supported."
             a, b = gate.cargs + gate.targs
+            assert a != b
             # Position to Gate ID
             self._bit2gid[a].append(gid)
             self._bit2gid[b].append(gid)
             # DAG edges
             if occupied[a] != -1:
-                self._graph.add_edge(occupied[a], gid)
+                self._graph.add_edge(occupied[a] + 1, gid + 1)
             if occupied[b] != -1:
-                self._graph.add_edge(occupied[b], gid)
+                self._graph.add_edge(occupied[b] + 1, gid + 1)
             occupied[a] = gid
             occupied[b] = gid
             # Virtual node edges
-            # self._graph.add_edge(v_node, gid + 1)
-            # self._graph.add_edge(gid + 1, v_node)
+            self._graph.add_edge(v_node, gid + 1)
+            self._graph.add_edge(gid + 1, v_node)
 
     def copy(self):
         cls = self.__class__
@@ -92,7 +93,20 @@ class CircuitState:
         return result
 
     def count_gate(self) -> int:
-        return nx.number_of_nodes(self._graph)
+        return nx.number_of_nodes(self._graph) - 1
+
+    def first_layer_gates(self) -> Dict[int, BasicGate]:
+        ans = {}
+        for bit_stick in self._bit2gid:
+            if not bit_stick:
+                # Skip if empty
+                continue
+            gid = bit_stick[0]
+            gate = self._gates[gid]
+            a, b = gate.cargs + gate.targs
+            if self._bit2gid[a][0] == self._bit2gid[b][0] and gid not in ans:
+                ans[gid] = self._gates[gid]
+        return ans
 
     def eager_exec(
         self,
@@ -111,38 +125,21 @@ class CircuitState:
             int: Removed gate number.
         """
         remove_cnt = 0
-        bit = 0
-        while bit < len(self._bit2gid):
-            if not self._bit2gid[bit]:
-                bit += 1
-                continue
-            front = self._bit2gid[bit][0]
-            gate = self._gates[front]
-            a, b = gate.cargs + gate.targs
-            if (
-                (not self._bit2gid[a])
-                or (not self._bit2gid[b])
-                or self._bit2gid[a][0] != self._bit2gid[b][0]
-            ):
-                # Cannot remove anymore. Step forward.
-                bit += 1
-                continue
-            _a, _b = logic2phy[a], logic2phy[b]
-            if topo_graph.has_edge(_a, _b):
-                # This gate can be removed
-                self._bit2gid[a].pop(0)
-                self._bit2gid[b].pop(0)
-                gid = front
-                self._graph.remove_node(gid)
-                if physical_circ is not None:
-                    with physical_circ:
-                        gate & [_a, _b]
-                remove_cnt += 1
-                # There may be more gate can be removed after removal.
-                # Do not add bit and keep exploring this bit.
-            else:
-                bit += 1
-
+        remove_any = True
+        while remove_any:
+            remove_any = False
+            for gid, gate in self.first_layer_gates().items():
+                a, b = gate.cargs + gate.targs
+                _a, _b = logic2phy[a], logic2phy[b]
+                if topo_graph.has_edge(_a, _b):
+                    self._bit2gid[a].pop(0)
+                    self._bit2gid[b].pop(0)
+                    remove_cnt += 1
+                    remove_any = True
+                    self._graph.remove_node(gid + 1)
+                    if physical_circ is not None:
+                        with physical_circ:
+                            gate & [_a, _b]
         return remove_cnt
 
     def sample_bias(
@@ -183,29 +180,28 @@ class CircuitState:
         # s = s / (qubit_number**2)
         # return s
 
-    def to_pyg(self, logic2phy: List[int]) -> Union[PygData, None]:
+    def to_pyg(self, logic2phy: List[int]) -> PygData:
         """Convert current data into PyG Data according to current mapping.
 
         Arg:
             logic2phy (List[int]): Logical to physical qubit mapping.
 
         Returns:
-            Union[PygData, None]: Return None if the circuit cannot be constructed to a graph. 
-                Otherwise return PyG data. Each normal node will be assigned to 2 qubit ID (starting from 2).
+            PygData: PyG data. Each normal node will be assigned to 2 qubit ID (starting from 2).
                 Virtual node will be labeled as (1, 1). Some nodes will be appended to graph to ensure alignment.
                 Appended nodes will be labeled as (0, 0).
         """
-        if len(self._graph.edges) == 0:
-            return None
-        x = torch.zeros(self._max_gate_num, 2, dtype=torch.long)
+        x = torch.zeros(self._max_gate_num + 1, 2, dtype=torch.long)
+        x[0][0] = 1
+        x[0][1] = 1
         for node in self._graph.nodes:
-            # if node == 0:
-            #     continue
-            gid = node
+            if node == 0:
+                continue
+            gid = node - 1
             gate = self._gates[gid]
             a, b = gate.cargs + gate.targs
-            x[gid][0] = logic2phy[a] + 1
-            x[gid][1] = logic2phy[b] + 1
+            x[gid][0] = logic2phy[a] + 2
+            x[gid][1] = logic2phy[b] + 2
         edge_index = []
         for u, v in self._graph.edges:
             edge_index.append([u, v])

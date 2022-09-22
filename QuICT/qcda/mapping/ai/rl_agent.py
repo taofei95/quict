@@ -165,14 +165,14 @@ class Agent:
         )
         reward += cnt * scale
 
-        next_circ_pyg = next_circ_state.to_pyg(next_logic2phy)
-
-        terminated = next_circ_pyg is None
+        terminated = next_circ_state.count_gate() == 0
         if terminated:
             prev_state = self.state
             next_state = None
             self.state = next_state
             return prev_state, next_state, reward, True
+
+        next_circ_pyg = next_circ_state.to_pyg(next_logic2phy)
 
         next_state = State(
             circ_graph=next_circ_state,

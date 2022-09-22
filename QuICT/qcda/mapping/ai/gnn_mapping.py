@@ -80,7 +80,7 @@ class CircuitGnn(nn.Module):
         f = self._feat_dim
 
         for conv in self._gc:
-            x = conv(x, edge_index, batch) + x  # [b * n, 2 * f]
+            x = conv(x, edge_index, batch) + x  # [b * (n + 1), 2 * f]
         x = self._aggr(x, batch) # [b, 2 * f]
         x = x.view(-1, 2 * f)  # [b, 2 * f]
         return x
@@ -175,13 +175,13 @@ class GnnMapping(nn.Module):
         f = self._feat_dim
         q = self._max_qubit_num
 
-        circ_x = self._x_em(circ_pyg.x).view(-1, 2 * f)  # [b * n, 2 * f]
+        circ_x = self._x_em(circ_pyg.x).view(-1, 2 * f)  # [b * (n + 1), 2 * f]
 
         circ_feat = self._circ_gnn(
             circ_x, circ_pyg.edge_index, circ_pyg.batch
         )  # [b, 2 * f]
 
-        topo_x = self._x_em(topo_pyg.x).view(-1, f)  # [b * (q + 1), f]
+        topo_x = self._x_em(topo_pyg.x).view(-1, f)  # [b * q, f]
         x = self._layout_gnn(
             circ_feat, topo_x, topo_pyg.edge_index, topo_pyg.batch
         )  # [b, q, 3 * f]
