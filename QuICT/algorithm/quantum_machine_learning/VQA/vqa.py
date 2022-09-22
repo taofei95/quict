@@ -79,8 +79,15 @@ if __name__ == "__main__":
     vqa = VQA(hamiltonian=h)
     # state = np.array([np.sqrt(3) / 3, 1 / 2, 1 / 3, np.sqrt(11) / 6])
     loss = vqa.cal_expect(state)
-    print(loss)
+    # print(loss)
+    cx = CX.matrix
+    rz = Rz.matrix
+    h = H.matrix
+    rx = Rx.matrix
+    i = np.eye(2)
 
+    from QuICT.qcda.synthesis.unitary_decomposition import UnitaryDecomposition
 
-
-
+    gd = UnitaryDecomposition()
+    a = gd.execute(Rxx.matrix)[0]
+    print(a.qasm())
