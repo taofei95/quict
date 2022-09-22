@@ -76,7 +76,7 @@ class Hamiltonian:
                     else:
                         raise ValueError("Invalid Pauli gate")
 
-            hamiton_matrix += coeff * matrix.get()
+            hamiton_matrix += coeff * matrix
         return hamiton_matrix
 
     def construct_hamiton_circuit(self, n_qubits):
