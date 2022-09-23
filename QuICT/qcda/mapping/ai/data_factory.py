@@ -84,16 +84,16 @@ class CircuitState:
             # self._graph.add_edge(v_node, gid + 1)
             # self._graph.add_edge(gid + 1, v_node)
 
-    def copy(self):
+    def __deepcopy__(self, memo):
         cls = self.__class__
         result = cls.__new__(cls)
-        result._qubit_num = self._qubit_num
-        result._max_gate_num = self._max_gate_num
-        result._graph = copy.deepcopy(self._graph)
-        result._gates = copy.deepcopy(self._gates)
-        # result._gates = self._gates
-        result._bit2gid = copy.deepcopy(self._bit2gid)
+        memo[id(self)] = result
+        for k, v in self.__dict__.items():
+            setattr(result, k, copy.deepcopy(v, memo))
         return result
+
+    def copy(self):
+        return copy.deepcopy(self)
 
     def count_gate(self) -> int:
         return nx.number_of_nodes(self._graph)
