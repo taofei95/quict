@@ -152,6 +152,8 @@ class Agent:
             cur_logic2phy=self.state.logic2phy,
             next_logic2phy=next_logic2phy,
             qubit_number=self.state.topo.qubit_number,
+            scale=scale,
+            clip=5,
         )
         action_penalty = -10
         reward = action_penalty + bias
@@ -166,7 +168,6 @@ class Agent:
 
         terminated = next_circ_state.count_gate() == 0
         if terminated:
-            reward += 2 * scale
             prev_state = self.state
             # next_state = None
             next_state = self.state

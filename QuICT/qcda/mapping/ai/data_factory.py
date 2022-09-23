@@ -162,6 +162,8 @@ class CircuitState:
         cur_logic2phy: List[int],
         next_logic2phy: List[int],
         qubit_number: int,
+        scale: float,
+        clip: float,
     ) -> float:
         """Summation of topological distances of all first gates on each qubits.
 
@@ -170,26 +172,30 @@ class CircuitState:
             cur_logic2phy (List[int]): Current logical to physical mapping
             next_logic2phy (List[int]): Next logical to physical mapping
             qubit_number (int): Number of qubit in physical layout.
+            scale (float): Scale factor.
+            clip (float): Clip bias in [-c, c] interval.
+
 
         Returns:
             float: Bias based on distance summation
         """
-        # return 0.0
-        s = 0.0
-        for gate in self.first_layer_gates().values():
-            a, b = gate.cargs + gate.targs
-            _a, _b = cur_logic2phy[a], cur_logic2phy[b]
-            prev_d = topo_dist[_a][_b]
-            _a, _b = next_logic2phy[a], next_logic2phy[b]
-            next_d = topo_dist[_a][_b]
-            s += prev_d - next_d
-        if abs(s) < 1e-6:
-            s += 0.1
-        # s = max(s, 0)
-        # if s < 0:
-        #     s = s * 2
-        # s = s / (qubit_number)
-        return s
+        return 0.0
+        # bias = 0.0
+        # for gate in self.first_layer_gates().values():
+        #     a, b = gate.cargs + gate.targs
+        #     _a, _b = cur_logic2phy[a], cur_logic2phy[b]
+        #     prev_d = topo_dist[_a][_b]
+        #     _a, _b = next_logic2phy[a], next_logic2phy[b]
+        #     next_d = topo_dist[_a][_b]
+        #     bias += prev_d - next_d
+        # if abs(bias) < 1e-6:
+        #     bias += 0.1
+        # # s = max(s, 0)
+        # # if s < 0:
+        # #     s = s * 2
+        # bias = bias * scale / (qubit_number)
+        # bias = min(clip, max(-clip, bias))
+        # return bias
 
     def to_pyg(self, logic2phy: List[int]) -> PygData:
         """Convert current data into PyG Data according to current mapping.
