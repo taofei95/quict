@@ -127,10 +127,10 @@ class GnnMapping(nn.Module):
         self._feat_dim = feat_dim
 
         # All gate nodes and virtual node feature embedding.
-        self._x_em = nn.Embedding(
-            num_embeddings=max_qubit_num + 2,
-            embedding_dim=feat_dim,
-            padding_idx=0,
+        self._x_trans = nn.Sequential(
+            nn.Linear(in_features=max_qubit_num, out_features=feat_dim),
+            nn.LeakyReLU(),
+            nn.Linear(in_features=feat_dim, out_features=feat_dim),
         )
 
         self._circ_gnn = CircuitGnn(
@@ -175,13 +175,12 @@ class GnnMapping(nn.Module):
         f = self._feat_dim
         q = self._max_qubit_num
 
-        circ_x = self._x_em(circ_pyg.x).view(-1, 2 * f)  # [b * n, 2 * f]
-
+        circ_x = self._x_trans(circ_pyg.x).view(-1, 2 * f)
         circ_feat = self._circ_gnn(
             circ_x, circ_pyg.edge_index, circ_pyg.batch
         )  # [b, 2 * f]
 
-        topo_x = self._x_em(topo_pyg.x).view(-1, f)  # [b * q, f]
+        topo_x = self._x_trans(topo_pyg.x).view(-1, f)  # [b * q, f]
         x = self._layout_gnn(
             circ_feat, topo_x, topo_pyg.edge_index, topo_pyg.batch
         )  # [b, q, 3 * f]

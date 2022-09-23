@@ -193,7 +193,7 @@ class CircuitState:
         action = random.choices(population=candidates, weights=weights, k=1)[0]
         return action
 
-    def to_pyg(self, logic2phy: List[int]) -> PygData:
+    def to_pyg(self, logic2phy: List[int], max_qubit_number: int) -> PygData:
         """Convert current data into PyG Data according to current mapping.
 
         Arg:
@@ -201,18 +201,17 @@ class CircuitState:
             max_qubit_num (int): Padding size.
 
         Returns:
-            PygData: PyG data. Each normal node will be assigned to 2 qubit ID (starting from 1).
-                Some nodes will be appended to graph to ensure alignment.
-                Appended nodes will be labeled as (0, 0).
+            PygData: PyG data.
         """
-        x = torch.zeros(self._max_gate_num, 2, dtype=torch.long)
+        max_q = max_qubit_number
+        x = torch.zeros(self._max_gate_num, 2, max_q, dtype=torch.float)
         edge_index = []
         for node in self._graph.nodes:
             gid = node
             gate = self._gates[gid]
             a, b = gate.cargs + gate.targs
-            x[gid][0] = logic2phy[a] + 1
-            x[gid][1] = logic2phy[b] + 1
+            x[gid][0][logic2phy[a]] = 1
+            x[gid][1][logic2phy[b]] = 1
             # Add self loops
             edge_index.append([gid, gid])
         for u, v in self._graph.edges:
@@ -357,8 +356,8 @@ class DataFactory:
 
     def get_topo_pyg(self, topo_graph: nx.DiGraph) -> PygData:
         topo_pyg_data = from_networkx(topo_graph)
-        x = 1 + torch.arange(self._max_qubit_num, dtype=torch.long)
-        topo_pyg_data.x = x.unsqueeze(dim=-1)
+        x = torch.eye(self._max_qubit_num, dtype=torch.float)
+        topo_pyg_data.x = x
         return topo_pyg_data
 
     def _reset_attr_cache(self):
@@ -463,7 +462,7 @@ class DataFactory:
             circ_state.eager_exec(logic2phy=logic2phy, topo_graph=topo_graph)
             success = circ_state.count_gate() > 0
 
-        circ_pyg_data = circ_state.to_pyg(logic2phy)
+        circ_pyg_data = circ_state.to_pyg(logic2phy, self._max_qubit_num)
 
         topo_pyg_data = self.get_topo_pyg(topo_graph=topo_graph)
 

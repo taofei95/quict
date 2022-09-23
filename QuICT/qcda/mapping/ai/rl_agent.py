@@ -165,7 +165,7 @@ class Agent:
             self.state = next_state
             return prev_state, next_state, reward, True
 
-        next_circ_pyg = next_circ_state.to_pyg(next_logic2phy)
+        next_circ_pyg = next_circ_state.to_pyg(next_logic2phy, self._max_qubit_num)
 
         next_state = State(
             circ_graph=next_circ_state,
@@ -183,9 +183,8 @@ class Agent:
         self.state = next_state
         return prev_state, next_state, reward, False
 
-    @classmethod
     def map_all(
-        cls,
+        self,
         max_qubit_num: int,
         max_gate_num: int,
         circ: CircuitBased,
@@ -216,7 +215,7 @@ class Agent:
         topo_mask = agent.factory._get_topo_mask(topo_graph=topo_graph)
         topo_edges = agent.factory._get_topo_edges(topo_graph=topo_graph)
         circ_state = CircuitState(circ=circ, max_gate_num=policy_net._max_gate_num)
-        circ_pyg = circ_state.to_pyg(logic2phy)
+        circ_pyg = circ_state.to_pyg(logic2phy, self._max_qubit_num)
         topo_pyg = agent.factory.get_topo_pyg(topo_graph=topo_graph)
 
         circ_state.eager_exec(
