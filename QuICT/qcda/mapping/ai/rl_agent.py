@@ -104,8 +104,7 @@ class Agent:
             self._epsilon_start - self._epsilon_end
         ) * math.exp(-1.0 * self.explore_step / self._epsilon_decay)
         if epsilon_random and random() <= eps_threshold:
-            edges = self.state.topo_edges
-            return choice(edges)
+            return self.state.biased_random_swap()
         else:
             return self._select_action(
                 policy_net=policy_net,
@@ -147,16 +146,8 @@ class Agent:
         next_logic2phy = copy.deepcopy(self.state.logic2phy)
         next_logic2phy[u], next_logic2phy[v] = next_logic2phy[v], next_logic2phy[u]
         next_circ_state = self.state.circ_state.copy()
-        bias = next_circ_state.sample_bias(
-            topo_dist=self.state.topo_dist,
-            cur_logic2phy=self.state.logic2phy,
-            next_logic2phy=next_logic2phy,
-            qubit_number=self.state.topo.qubit_number,
-            scale=scale,
-            clip=1,
-        )
         action_penalty = -1
-        reward = action_penalty + bias
+        reward = action_penalty
 
         physical_circ = self.mapped_circ if construct_gate else None
         cnt = next_circ_state.eager_exec(

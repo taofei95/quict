@@ -5,54 +5,6 @@ import torch.nn.functional as F
 import torch_geometric.nn as gnn
 
 
-class ConvStack(nn.Module):
-    def __init__(
-        self,
-        feat_dim: int,
-        heads: int,
-        num_hidden_layer: int,
-        normalize: bool = True,
-    ) -> None:
-        super().__init__()
-
-        assert num_hidden_layer > 0
-
-        self._first = gnn.GATv2Conv(
-            in_channels=feat_dim, out_channels=feat_dim, heads=heads
-        )
-
-        self._inner = nn.ModuleList(
-            [
-                gnn.GATv2Conv(
-                    in_channels=feat_dim * heads,
-                    out_channels=feat_dim,
-                    heads=heads,
-                )
-                for _ in range(num_hidden_layer)
-            ]
-        )
-
-        self._last = gnn.GATv2Conv(
-            in_channels=feat_dim * heads, out_channels=feat_dim, heads=1
-        )
-
-        self._normalize = normalize
-        if normalize:
-            self._ln = gnn.LayerNorm(in_channels=feat_dim)
-
-    def forward(self, x, edge_index, batch):
-        residual = x
-        x = F.leaky_relu(self._first(x, edge_index))  # [b * n, f] -> [b * n, h, f]
-        for conv in self._inner:
-            x = F.leaky_relu(conv(x, edge_index))  # [b * n, h, f]
-        x = (
-            F.leaky_relu(self._last(x, edge_index)) + residual
-        )  # [b * n, h, f] -> [b * n, f]
-        if self._normalize:
-            x = self._ln(x, batch)
-        return x
-
-
 class CircuitGnn(nn.Module):
     def __init__(
         self,
@@ -67,12 +19,26 @@ class CircuitGnn(nn.Module):
         self._max_gate_num = max_gate_num
         self._feat_dim = feat_dim
 
-        # One gate is targeting 2 qubits. So the feature dimension is actually doubled.
-        self._gc = nn.ModuleList(
+        self._gc_first = gnn.GATv2Conv(
+            in_channels=2 * feat_dim, out_channels=2 * feat_dim, heads=heads
+        )
+
+        self._gc_inner = nn.ModuleList(
             [
-                ConvStack(feat_dim=feat_dim * 2, heads=heads, num_hidden_layer=5),
+                gnn.GATv2Conv(
+                    in_channels=2 * feat_dim * heads,
+                    out_channels=2 * feat_dim,
+                    heads=heads,
+                )
+                for _ in range(3)
             ]
         )
+
+        self._gc_last = gnn.GATv2Conv(
+            in_channels=2 * feat_dim * heads, out_channels=2 * feat_dim, heads=1
+        )
+
+        self._norm = gnn.LayerNorm(in_channels=2*feat_dim)
 
         self._aggr = gnn.aggr.SoftmaxAggregation(learn=True)
 
@@ -81,8 +47,13 @@ class CircuitGnn(nn.Module):
         f = self._feat_dim
 
         if torch.numel(edge_index) > 0:
-            for conv in self._gc:
-                x = conv(x, edge_index, batch) + x  # [b * n, 2 * f]
+            residual = x
+            x = F.leaky_relu(self._gc_first(x, edge_index))
+            for conv in self._gc_inner:
+                x = F.leaky_relu(conv(x, edge_index))
+            x = F.leaky_relu(self._gc_last(x, edge_index))
+            x = x + residual
+            x = self._norm(x, batch)
         x = self._aggr(x, batch)  # [b, 2 * f]
         x = x.view(-1, 2 * f)  # [b, 2 * f]
         return x
@@ -100,10 +71,25 @@ class LayoutGnn(nn.Module):
         self._max_qubit_num = max_qubit_num
         self._feat_dim = feat_dim
 
-        self._gc = nn.ModuleList(
+        self._gc_first = gnn.GATv2Conv(
+            in_channels=3 * feat_dim, out_channels=3 * feat_dim, heads=heads
+        )
+
+        self._gc_inner = nn.ModuleList(
             [
-                ConvStack(feat_dim=feat_dim * 3, heads=heads, num_hidden_layer=3),
+                gnn.GATv2Conv(
+                    in_channels=3 * feat_dim * heads,
+                    out_channels=3 * feat_dim,
+                    heads=heads,
+                )
+                for _ in range(3)
             ]
+        )
+
+        self._norm = gnn.LayerNorm(in_channels=3*feat_dim)
+
+        self._gc_last = gnn.GATv2Conv(
+            in_channels=3 * feat_dim * heads, out_channels=3 * feat_dim, heads=1
         )
 
     def forward(self, circ_feat, x, edge_index, batch=None):
@@ -116,8 +102,13 @@ class LayoutGnn(nn.Module):
         ).contiguous()  # [b * q, 2 * f]
         x = torch.cat((x, circ_feat), dim=1)  # [b * q, 3 * f]
 
-        for conv in self._gc:
-            x = conv(x, edge_index, batch) + x
+        residual = x
+        x = F.leaky_relu(self._gc_first(x, edge_index))
+        for conv in self._gc_inner:
+            x = F.leaky_relu(conv(x, edge_index))
+        x = F.leaky_relu(self._gc_last(x, edge_index))
+        x = x + residual
+        x = self._norm(x, batch)
         x = x.view(-1, q, f)  # [b, q, 3 * f]
         # x = x[:, 1:, :]
         return x
@@ -191,7 +182,7 @@ class GnnMapping(nn.Module):
         idx_pairs = torch.cartesian_prod(torch.arange(q), torch.arange(q))
         x = x[:, idx_pairs].contiguous()  # [b, q * q, 2, 3 * f]
         x = x.view(-1, q, q, 6 * f)
-        # x = x / math.sqrt(6 * f)
+        x = x / math.sqrt(6 * f)
         x = self._mlp(x).view(-1, q, q)  # [b, q, q]
         # x = (x + x.transpose(-1, -2)) / 2
         # gather q * q dim for convenient max

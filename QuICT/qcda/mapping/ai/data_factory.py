@@ -2,6 +2,7 @@ import copy
 import os
 import os.path as osp
 from random import choice, randint
+import random
 from typing import Dict, List, Tuple, Union
 
 import networkx as nx
@@ -42,6 +43,7 @@ class CircuitState:
     def __init__(
         self, circ: Union[Circuit, CompositeGate, List[BasicGate]], max_gate_num: int
     ) -> None:
+        self._qubit_num = circ.width()
         self._max_gate_num = max_gate_num
         q = circ.width()
         if isinstance(circ, CircuitBased):
@@ -85,6 +87,7 @@ class CircuitState:
     def copy(self):
         cls = self.__class__
         result = cls.__new__(cls)
+        result._qubit_num = self._qubit_num
         result._max_gate_num = self._max_gate_num
         result._graph = copy.deepcopy(self._graph)
         result._gates = copy.deepcopy(self._gates)
@@ -156,46 +159,38 @@ class CircuitState:
                 gate & [a, b]
         return cg
 
-    def sample_bias(
-        self,
-        topo_dist: np.ndarray,
-        cur_logic2phy: List[int],
-        next_logic2phy: List[int],
-        qubit_number: int,
-        scale: float,
-        clip: float,
-    ) -> float:
-        """Summation of topological distances of all first gates on each qubits.
+    def biased_random_swap(
+        self, topo_dist: np.ndarray, logic2phy: List[int], zero_shift: float = 0.005
+    ) -> Tuple[int, int]:
+        candidates = []
+        weights = []
 
-        Args:
-            topo_dist (np.ndarray): Physical device topology distance
-            cur_logic2phy (List[int]): Current logical to physical mapping
-            next_logic2phy (List[int]): Next logical to physical mapping
-            qubit_number (int): Number of qubit in physical layout.
-            scale (float): Scale factor.
-            clip (float): Clip bias in [-c, c] interval.
-
-
-        Returns:
-            float: Bias based on distance summation
-        """
-        return 0.0
-        # bias = 0.0
-        # for gate in self.first_layer_gates().values():
-        #     a, b = gate.cargs + gate.targs
-        #     _a, _b = cur_logic2phy[a], cur_logic2phy[b]
-        #     prev_d = topo_dist[_a][_b]
-        #     _a, _b = next_logic2phy[a], next_logic2phy[b]
-        #     next_d = topo_dist[_a][_b]
-        #     bias += prev_d - next_d
-        # if abs(bias) < 1e-6:
-        #     bias += 0.1
-        # # s = max(s, 0)
-        # # if s < 0:
-        # #     s = s * 2
-        # bias = bias * scale / (qubit_number)
-        # bias = min(clip, max(-clip, bias))
-        # return bias
+        for i in range(self._qubit_num):
+            for j in range(i + 1, self._qubit_num):
+                if abs(topo_dist[i][j] - 1) > 1e-6:
+                    continue
+                candidates.append((i, j))
+                next_logic2phy = copy.copy(logic2phy)
+                next_logic2phy[i], next_logic2phy[j] = (
+                    next_logic2phy[j],
+                    next_logic2phy[i],
+                )
+                bias = 0
+                for gate in self.first_layer_gates().values():
+                    a, b = gate.cargs + gate.targs
+                    _a, _b = logic2phy[a], logic2phy[b]
+                    prev_d = topo_dist[_a][_b]
+                    _a, _b = next_logic2phy[a], next_logic2phy[b]
+                    next_d = topo_dist[_a][_b]
+                    bias += prev_d - next_d
+                if abs(bias) < 1e-6:
+                    bias = zero_shift
+                elif bias < 0:
+                    bias = 0.0
+                weights.append(bias)
+        assert len(candidates) > 0
+        action = random.choices(population=candidates, weights=weights, k=1)[0]
+        return action
 
     def to_pyg(self, logic2phy: List[int]) -> PygData:
         """Convert current data into PyG Data according to current mapping.
@@ -262,6 +257,9 @@ class State:
 
     def remained_circ(self) -> CompositeGate:
         return self.circ_state.remained_circ(self.logic2phy)
+
+    def biased_random_swap(self) -> Tuple[int, int]:
+        return self.circ_state.biased_random_swap(self.topo_dist, self.logic2phy)
 
 
 class Transition:
@@ -449,7 +447,6 @@ class DataFactory:
         topo_mask = self.topo_mask_map[topo_name]
         topo_dist = self._get_topo_dist(topo_graph=topo_graph)
         topo_edges = tuple(self.topo_edge_map[topo_name])
-        
 
         min_gn = 2
         gate_num = randint(min_gn, max(self._max_gate_num, min_gn))
