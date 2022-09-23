@@ -16,7 +16,6 @@ from QuICT.qcda.mapping.ai.rl_agent import Agent, Transition
 from QuICT.tools.interface.qasm_interface import OPENQASMInterface
 from torch.utils.tensorboard import SummaryWriter
 from torch_geometric.data import Batch as PygBatch
-from matplotlib.figure import Figure
 
 
 def _wrap2circ(cg_or_circ: Union[Circuit, CompositeGate] = None):
@@ -51,12 +50,10 @@ class ValidationData:
         self,
         circ: Circuit,
         topo: Layout,
-        mcts_mapped_circ: Union[Circuit, CompositeGate],
         rl_mapped_circ: Union[Circuit, CompositeGate] = None,
         remained_circ: Union[Circuit, CompositeGate] = None,
     ) -> None:
         self.circ = circ
-        self.mcts_mapped_circ = mcts_mapped_circ
         self.rl_mapped_circ = rl_mapped_circ
         self.topo = topo
         self.remained_circ = remained_circ
@@ -160,19 +157,19 @@ class Trainer:
                     continue
 
                 file_path = osp.join(v_data_dir, file_name)
-                mapped_file_path = osp.join(v_data_dir, f"mapped_{file_name}")
+                # mapped_file_path = osp.join(v_data_dir, f"mapped_{file_name}")
                 groups = pattern.match(file_name)
                 topo_name = groups[1]
                 topo = self._agent.factory.topo_map[topo_name]
                 circ = OPENQASMInterface.load_file(file_path).circuit
-                mcts_mapped_circ = OPENQASMInterface.load_file(mapped_file_path).circuit
+                # mcts_mapped_circ = OPENQASMInterface.load_file(mapped_file_path).circuit
                 self._v_data.append(
                     ValidationData(
                         circ=circ,
                         topo=topo,
-                        mcts_mapped_circ=mcts_mapped_circ,
                     )
                 )
+        self._v_data.sort(key=lambda x: len(x.circ.gates))
 
     def validate_model(self) -> List[ValidationData]:
         """Map all validation circuits to corresponding topologies.
@@ -365,36 +362,32 @@ class Trainer:
 
     def show_validation_results(self, results: List[ValidationData], epoch_id: int):
         print("[Validation Summary]")
-        mcts_num = {}
         rl_num = {}
+        original_num = {}
         for v_datum in results:
             topo_name = v_datum.topo.name
-            mcts_num[topo_name] = 0
             rl_num[topo_name] = 0
+            original_num[topo_name] = 0
         for idx, v_datum in enumerate(results):
             topo_name = v_datum.topo.name
-            _mcts_num = len(v_datum.mcts_mapped_circ.gates)
             _rl_num = len(v_datum.rl_mapped_circ.gates)
-            mcts_num[topo_name] += _mcts_num
+            _original_num = len(v_datum.circ.gates)
             rl_num[topo_name] += _rl_num
-            mcts_circ_fig = v_datum.mcts_mapped_circ.draw(method="matp_silent")
+            original_num[topo_name] += _original_num
             rl_circ_fig = v_datum.rl_mapped_circ.draw(method="matp_silent")
-            rl_remain_circ_fig = v_datum.remained_circ.draw(method="matp_silent")
-            mcts_circ_fig.dpi = 50
+            original_circ_fig = v_datum.circ.draw(method="matp_silent")
             rl_circ_fig.dpi = 50
-            self._writer.add_figure(
-                f"{topo_name}-{idx} (MCTS)", mcts_circ_fig, epoch_id
-            )
+            original_circ_fig.dpi = 50
             self._writer.add_figure(f"{topo_name}-{idx} (RL)", rl_circ_fig, epoch_id)
-            self._writer.add_figure(f"{topo_name}-{idx} (RL Remained)", rl_remain_circ_fig, epoch_id)
+            self._writer.add_figure(f"{topo_name}-{idx}", original_circ_fig, epoch_id)
             print(
-                f"    #Gate by RL: {_rl_num}, #Gate by MCTS: {_mcts_num} ({topo_name})"
+                f"    #Gate in circuit: {_original_num}, #Gate by RL: {_rl_num} ({topo_name})"
             )
         self._writer.add_scalars(
             f"Validation Performance ({topo_name})",
             {
+                "#Gate in circuit": original_num[topo_name],
                 "#Gate by RL": rl_num[topo_name],
-                "#Gate by MCTS": mcts_num[topo_name],
             },
             epoch_id + 1,
         )

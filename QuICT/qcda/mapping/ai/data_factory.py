@@ -445,7 +445,7 @@ class DataFactory:
         topo_edges = tuple(self.topo_edge_map[topo_name])
         circ = Circuit(qubit_num)
 
-        min_gn = 10
+        min_gn = 2
         gate_num = randint(min_gn, max(self._max_gate_num, min_gn))
         circ.random_append(
             gate_num,
