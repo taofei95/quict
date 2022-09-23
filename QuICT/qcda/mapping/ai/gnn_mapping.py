@@ -46,14 +46,13 @@ class CircuitGnn(nn.Module):
         n = self._max_gate_num
         f = self._feat_dim
 
-        if torch.numel(edge_index) > 0:
-            residual = x
-            x = F.leaky_relu(self._gc_first(x, edge_index))
-            for conv in self._gc_inner:
-                x = F.leaky_relu(conv(x, edge_index))
-            x = F.leaky_relu(self._gc_last(x, edge_index))
-            x = x + residual
-            x = self._norm(x, batch)
+        residual = x
+        x = F.leaky_relu(self._gc_first(x, edge_index))
+        for conv in self._gc_inner:
+            x = F.leaky_relu(conv(x, edge_index))
+        x = F.leaky_relu(self._gc_last(x, edge_index))
+        x = x + residual
+        x = self._norm(x, batch)
         x = self._aggr(x, batch)  # [b, 2 * f]
         x = x.view(-1, 2 * f)  # [b, 2 * f]
         return x

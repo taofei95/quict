@@ -193,7 +193,7 @@ class CircuitState:
         action = random.choices(population=candidates, weights=weights, k=1)[0]
         return action
 
-    def to_pyg(self, logic2phy: List[int], max_qubit_num: int) -> PygData:
+    def to_pyg(self, logic2phy: List[int]) -> PygData:
         """Convert current data into PyG Data according to current mapping.
 
         Arg:
@@ -201,25 +201,23 @@ class CircuitState:
             max_qubit_num (int): Padding size.
 
         Returns:
-            PygData: PyG data.
+            PygData: PyG data. Each normal node will be assigned to 2 qubit ID (starting from 1).
+                Some nodes will be appended to graph to ensure alignment.
+                Appended nodes will be labeled as (0, 0).
         """
-        m = max_qubit_num
-        x = torch.zeros(self._max_gate_num, m * 2 + 2, dtype=torch.float)
+        x = torch.zeros(self._max_gate_num, 2, dtype=torch.long)
+        edge_index = []
         for node in self._graph.nodes:
-            if node == 0:
-                continue
-            gid = node - 1
+            gid = node
             gate = self._gates[gid]
             a, b = gate.cargs + gate.targs
-            x[gid][logic2phy[a]] = 1  # qubit 1
-            x[gid][m + logic2phy[b]] = +1  # qubit 2
-            x[gid][2 * m + self._graph[gid]["tag"]] = 1  # tag
-        edge_index = []
+            x[gid][0] = logic2phy[a] + 1
+            x[gid][1] = logic2phy[b] + 1
+            # Add self loops
+            edge_index.append([gid, gid])
         for u, v in self._graph.edges:
             edge_index.append([u, v])
-        edge_index = torch.tensor(edge_index, dtype=torch.long)
-        if torch.numel(edge_index) > 0:
-            edge_index = edge_index.T.contiguous()
+        edge_index = torch.tensor(edge_index, dtype=torch.long).T.contiguous()
         data = PygData(x=x, edge_index=edge_index)
         return data
 
@@ -359,7 +357,7 @@ class DataFactory:
 
     def get_topo_pyg(self, topo_graph: nx.DiGraph) -> PygData:
         topo_pyg_data = from_networkx(topo_graph)
-        x = 2 + torch.arange(self._max_qubit_num, dtype=torch.long)
+        x = 1 + torch.arange(self._max_qubit_num, dtype=torch.long)
         topo_pyg_data.x = x.unsqueeze(dim=-1)
         return topo_pyg_data
 
