@@ -117,14 +117,12 @@ class Agent:
         return self.state.circ_state.count_gate()
 
     def take_action(
-        self, action: Tuple[int, int], construct_gate: bool = False
+        self, action: Tuple[int, int]
     ) -> Tuple[State, Union[State, None], float, bool]:
         """Take given action on trainer's state.
 
         Args:
             action (Tuple[int, int]): Swap gate used on current topology.
-            logical_circ (CircuitBased): If not None, will perform action and remove some gates on given logical circuits.
-                Some gates may be inserted into the agent's itself's `mapped_circ`.
 
         Returns:
             Tuple[State, Union[State, None], float, bool]: Tuple of (Previous State, Next State, Reward, Terminated).
@@ -141,9 +139,8 @@ class Agent:
             self.state = next_state
             return prev_state, next_state, reward, True
 
-        if construct_gate:
-            with self.mapped_circ:
-                Swap & [u, v]
+        with self.mapped_circ:
+            Swap & [u, v]
 
         next_logic2phy = copy.deepcopy(self.state.logic2phy)
         next_logic2phy[u], next_logic2phy[v] = next_logic2phy[v], next_logic2phy[u]
@@ -151,11 +148,10 @@ class Agent:
         action_penalty = -1
         reward = action_penalty
         # Execute as many as possible
-        physical_circ = self.mapped_circ if construct_gate else None
         cnt = next_circ_state.eager_exec(
             logic2phy=next_logic2phy,
             topo_graph=self.state.topo_graph,
-            physical_circ=physical_circ,
+            physical_circ=self.mapped_circ,
         )
         self._last_action = action
         self._last_exec_cnt = cnt

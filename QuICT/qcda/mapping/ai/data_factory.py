@@ -63,27 +63,28 @@ class CircuitState:
             self._graph.add_node(gid)
 
         v_node = 0
-        occupied = [-1 for _ in range(q)]
+        self._occupied = [-1 for _ in range(q)]
         self._bit2gid: List[List[int]] = [[] for _ in range(q)]
         """Qubit to all gates on it.
         """
         for gid, gate in enumerate(self._gates):
-            assert gate.controls + gate.targets == 2, "Only 2 bit gates are supported."
-            a, b = gate.cargs + gate.targs
-            assert a != b
-            # Position to Gate ID
-            self._bit2gid[a].append(gid)
-            self._bit2gid[b].append(gid)
-            # DAG edges
-            if occupied[a] != -1:
-                self._graph.add_edge(occupied[a], gid)
-            if occupied[b] != -1:
-                self._graph.add_edge(occupied[b], gid)
-            occupied[a] = gid
-            occupied[b] = gid
-            # Virtual node edges
-            # self._graph.add_edge(v_node, gid + 1)
-            # self._graph.add_edge(gid + 1, v_node)
+            self.add_gate(gid, gate, 1)
+
+    def add_gate(self, gid, gate: BasicGate, tag: int):
+        assert gate.controls + gate.targets == 2, "Only 2 bit gates are supported."
+        a, b = gate.cargs + gate.targs
+        assert a != b
+        # Position to Gate ID
+        self._bit2gid[a].append(gid)
+        self._bit2gid[b].append(gid)
+        # DAG edges
+        if self._occupied[a] != -1:
+            self._graph.add_edge(self._occupied[a], gid)
+        if self._occupied[b] != -1:
+            self._graph.add_edge(self._occupied[b], gid)
+        nx.set_node_attributes(self._gates, {gid: {"tag": tag}})
+        self._occupied[a] = gid
+        self._occupied[b] = gid
 
     def __deepcopy__(self, memo):
         cls = self.__class__
@@ -186,32 +187,33 @@ class CircuitState:
                     bias += prev_d - next_d
                 if abs(bias) < 1e-6:
                     bias = zero_shift
-                bias = math.e ** bias
+                bias = math.e**bias
                 weights.append(bias)
         assert len(candidates) > 0
         action = random.choices(population=candidates, weights=weights, k=1)[0]
         return action
 
-    def to_pyg(self, logic2phy: List[int]) -> PygData:
+    def to_pyg(self, logic2phy: List[int], max_qubit_num: int) -> PygData:
         """Convert current data into PyG Data according to current mapping.
 
         Arg:
             logic2phy (List[int]): Logical to physical qubit mapping.
+            max_qubit_num (int): Padding size.
 
         Returns:
-            PygData: PyG data. Each normal node will be assigned to 2 qubit ID (starting from 2).
-                Virtual node will be labeled as (1, 1). Some nodes will be appended to graph to ensure alignment.
-                Appended nodes will be labeled as (0, 0).
+            PygData: PyG data.
         """
-        x = torch.zeros(self._max_gate_num, 2, dtype=torch.long)
+        m = max_qubit_num
+        x = torch.zeros(self._max_gate_num, m * 2 + 2, dtype=torch.float)
         for node in self._graph.nodes:
             if node == 0:
                 continue
             gid = node - 1
             gate = self._gates[gid]
             a, b = gate.cargs + gate.targs
-            x[gid][0] = logic2phy[a] + 1
-            x[gid][1] = logic2phy[b] + 1
+            x[gid][logic2phy[a]] = 1  # qubit 1
+            x[gid][m + logic2phy[b]] = +1  # qubit 2
+            x[gid][2 * m + self._graph[gid]["tag"]] = 1  # tag
         edge_index = []
         for u, v in self._graph.edges:
             edge_index.append([u, v])
@@ -357,8 +359,7 @@ class DataFactory:
 
     def get_topo_pyg(self, topo_graph: nx.DiGraph) -> PygData:
         topo_pyg_data = from_networkx(topo_graph)
-        # x = 1 + torch.arange(self._max_qubit_num + 1, dtype=torch.long)
-        x = 1 + torch.arange(self._max_qubit_num, dtype=torch.long)
+        x = 2 + torch.arange(self._max_qubit_num, dtype=torch.long)
         topo_pyg_data.x = x.unsqueeze(dim=-1)
         return topo_pyg_data
 
