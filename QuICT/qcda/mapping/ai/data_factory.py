@@ -54,10 +54,10 @@ class CircuitState:
             )
 
         self._graph = nx.DiGraph()
-        self._graph.add_node(0)
+        # self._graph.add_node(0)
         for gid in range(len(self._gates)):
-            self._graph.add_node(gid + 1)
-            # self._graph.add_node(gid)
+            # self._graph.add_node(gid + 1)
+            self._graph.add_node(gid)
 
         v_node = 0
         occupied = [-1 for _ in range(q)]
@@ -73,14 +73,14 @@ class CircuitState:
             self._bit2gid[b].append(gid)
             # DAG edges
             if occupied[a] != -1:
-                self._graph.add_edge(occupied[a] + 1, gid + 1)
+                self._graph.add_edge(occupied[a], gid)
             if occupied[b] != -1:
-                self._graph.add_edge(occupied[b] + 1, gid + 1)
+                self._graph.add_edge(occupied[b], gid)
             occupied[a] = gid
             occupied[b] = gid
             # Virtual node edges
-            self._graph.add_edge(v_node, gid + 1)
-            self._graph.add_edge(gid + 1, v_node)
+            # self._graph.add_edge(v_node, gid + 1)
+            # self._graph.add_edge(gid + 1, v_node)
 
     def copy(self):
         cls = self.__class__
@@ -93,7 +93,7 @@ class CircuitState:
         return result
 
     def count_gate(self) -> int:
-        return nx.number_of_nodes(self._graph) - 1
+        return nx.number_of_nodes(self._graph)
 
     def first_layer_gates(self) -> Dict[int, BasicGate]:
         ans = {}
@@ -136,7 +136,7 @@ class CircuitState:
                     self._bit2gid[b].pop(0)
                     remove_cnt += 1
                     remove_any = True
-                    self._graph.remove_node(gid + 1)
+                    self._graph.remove_node(gid)
                     if physical_circ is not None:
                         with physical_circ:
                             gate & [_a, _b]
@@ -208,21 +208,21 @@ class CircuitState:
                 Virtual node will be labeled as (1, 1). Some nodes will be appended to graph to ensure alignment.
                 Appended nodes will be labeled as (0, 0).
         """
-        x = torch.zeros(self._max_gate_num + 1, 2, dtype=torch.long)
-        x[0][0] = 1
-        x[0][1] = 1
+        x = torch.zeros(self._max_gate_num, 2, dtype=torch.long)
         for node in self._graph.nodes:
             if node == 0:
                 continue
             gid = node - 1
             gate = self._gates[gid]
             a, b = gate.cargs + gate.targs
-            x[gid][0] = logic2phy[a] + 2
-            x[gid][1] = logic2phy[b] + 2
+            x[gid][0] = logic2phy[a] + 1
+            x[gid][1] = logic2phy[b] + 1
         edge_index = []
         for u, v in self._graph.edges:
             edge_index.append([u, v])
-        edge_index = torch.tensor(edge_index, dtype=torch.long).T.contiguous()
+        edge_index = torch.tensor(edge_index, dtype=torch.long)
+        if torch.numel(edge_index) > 0:
+            edge_index = edge_index.T.contiguous()
         data = PygData(x=x, edge_index=edge_index)
         return data
 

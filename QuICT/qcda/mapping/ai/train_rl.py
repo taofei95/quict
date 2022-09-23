@@ -72,7 +72,7 @@ class Trainer:
         replay_pool_size: int = 20000,
         batch_size: int = 32,
         total_epoch: int = 2000,
-        explore_period: int = 200,
+        explore_period: int = 500,
         target_update_period: int = 10,
         device: str = "cuda" if torch.cuda.is_available() else "cpu",
         model_path: str = None,

@@ -79,8 +79,9 @@ class CircuitGnn(nn.Module):
         n = self._max_gate_num
         f = self._feat_dim
 
-        for conv in self._gc:
-            x = conv(x, edge_index, batch) + x  # [b * (n + 1), 2 * f]
+        if torch.numel(edge_index) > 0:
+            for conv in self._gc:
+                x = conv(x, edge_index, batch) + x  # [b * n, 2 * f]
         x = self._aggr(x, batch) # [b, 2 * f]
         x = x.view(-1, 2 * f)  # [b, 2 * f]
         return x
@@ -137,7 +138,7 @@ class GnnMapping(nn.Module):
 
         # All gate nodes and virtual node feature embedding.
         self._x_em = nn.Embedding(
-            num_embeddings=max_qubit_num + 2,
+            num_embeddings=max_qubit_num + 1,
             embedding_dim=feat_dim,
             padding_idx=0,
         )
@@ -175,7 +176,7 @@ class GnnMapping(nn.Module):
         f = self._feat_dim
         q = self._max_qubit_num
 
-        circ_x = self._x_em(circ_pyg.x).view(-1, 2 * f)  # [b * (n + 1), 2 * f]
+        circ_x = self._x_em(circ_pyg.x).view(-1, 2 * f)  # [b * n, 2 * f]
 
         circ_feat = self._circ_gnn(
             circ_x, circ_pyg.edge_index, circ_pyg.batch
