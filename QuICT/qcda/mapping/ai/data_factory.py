@@ -82,7 +82,7 @@ class CircuitState:
             self._graph.add_edge(self._occupied[a], gid)
         if self._occupied[b] != -1:
             self._graph.add_edge(self._occupied[b], gid)
-        nx.set_node_attributes(self._gates, {gid: {"tag": tag}})
+        nx.set_node_attributes(self._graph, {gid: {"tag": tag}})
         self._occupied[a] = gid
         self._occupied[b] = gid
 

@@ -242,9 +242,7 @@ class Agent:
                     policy_net=policy_net,
                     policy_net_device=policy_net_device,
                 )
-                _, _, _, terminated = agent.take_action(
-                    action=action, construct_gate=True
-                )
+                _, _, _, terminated = agent.take_action(action=action)
                 step += 1
                 if cutoff is not None and step >= cutoff:
                     break
