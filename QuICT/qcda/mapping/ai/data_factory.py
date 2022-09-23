@@ -1,4 +1,5 @@
 import copy
+import math
 import os
 import os.path as osp
 from random import choice, randint
@@ -185,8 +186,7 @@ class CircuitState:
                     bias += prev_d - next_d
                 if abs(bias) < 1e-6:
                     bias = zero_shift
-                elif bias < 0:
-                    bias = 0.0
+                bias = math.e ** bias
                 weights.append(bias)
         assert len(candidates) > 0
         action = random.choices(population=candidates, weights=weights, k=1)[0]

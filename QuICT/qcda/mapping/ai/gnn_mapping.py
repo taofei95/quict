@@ -38,7 +38,7 @@ class CircuitGnn(nn.Module):
             in_channels=2 * feat_dim * heads, out_channels=2 * feat_dim, heads=1
         )
 
-        self._norm = gnn.LayerNorm(in_channels=2*feat_dim)
+        self._norm = gnn.LayerNorm(in_channels=2 * feat_dim)
 
         self._aggr = gnn.aggr.SoftmaxAggregation(learn=True)
 
@@ -86,7 +86,7 @@ class LayoutGnn(nn.Module):
             ]
         )
 
-        self._norm = gnn.LayerNorm(in_channels=3*feat_dim)
+        self._norm = gnn.LayerNorm(in_channels=3 * feat_dim)
 
         self._gc_last = gnn.GATv2Conv(
             in_channels=3 * feat_dim * heads, out_channels=3 * feat_dim, heads=1
@@ -109,8 +109,7 @@ class LayoutGnn(nn.Module):
         x = F.leaky_relu(self._gc_last(x, edge_index))
         x = x + residual
         x = self._norm(x, batch)
-        x = x.view(-1, q, f)  # [b, q, 3 * f]
-        # x = x[:, 1:, :]
+        x = x.view(-1, q, 3 * f).contiguous()  # [b, q, 3 * f]
         return x
 
 
@@ -148,16 +147,25 @@ class GnnMapping(nn.Module):
             heads=heads,
         )
 
-        self._mlp = nn.Sequential(
-            nn.Linear(feat_dim * 6, feat_dim * 6),
+        self._mlp_1 = nn.Sequential(
+            nn.Linear(feat_dim * 3, feat_dim * 3),
             nn.LeakyReLU(),
-            nn.Linear(feat_dim * 6, feat_dim * 6),
+            nn.Linear(feat_dim * 3, feat_dim * 3),
             nn.LeakyReLU(),
-            nn.Linear(feat_dim * 6, feat_dim * 2),
+            nn.Linear(feat_dim * 3, feat_dim),
             nn.LeakyReLU(),
+            nn.Linear(feat_dim, feat_dim),
+            nn.LeakyReLU(),
+            nn.Linear(feat_dim, feat_dim),
+            nn.LeakyReLU(),
+        )
+
+        self._mlp_2 = nn.Sequential(
             nn.Linear(feat_dim * 2, feat_dim * 2),
             nn.LeakyReLU(),
-            nn.Linear(feat_dim * 2, feat_dim // 2),
+            nn.Linear(feat_dim * 2, feat_dim),
+            nn.LeakyReLU(),
+            nn.Linear(feat_dim, feat_dim // 2),
             nn.LeakyReLU(),
             nn.Linear(feat_dim // 2, feat_dim // 2),
             nn.LeakyReLU(),
@@ -179,12 +187,12 @@ class GnnMapping(nn.Module):
             circ_feat, topo_x, topo_pyg.edge_index, topo_pyg.batch
         )  # [b, q, 3 * f]
 
+        x = self._mlp_1(x)  # [b, q, f]
+
         idx_pairs = torch.cartesian_prod(torch.arange(q), torch.arange(q))
-        x = x[:, idx_pairs].contiguous()  # [b, q * q, 2, 3 * f]
-        x = x.view(-1, q, q, 6 * f)
-        x = x / math.sqrt(6 * f)
-        x = self._mlp(x).view(-1, q, q)  # [b, q, q]
-        # x = (x + x.transpose(-1, -2)) / 2
-        # gather q * q dim for convenient max
+        x = x[:, idx_pairs].contiguous()  # [b, q * q, 2, f]
+        x = x.view(-1, q, q, 2 * f)
+        x = x / math.sqrt(2 * f)
+        x = self._mlp_2(x).view(-1, q, q)  # [b, q, q]
         x = x.view(-1, q * q)  # [b, q * q]
         return x
