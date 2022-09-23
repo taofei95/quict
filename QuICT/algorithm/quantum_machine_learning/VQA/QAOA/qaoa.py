@@ -1,5 +1,6 @@
 import numpy as np
 import os, sys, time
+import random
 import tqdm
 import torch
 import torch.nn.functional as torch_F
@@ -7,7 +8,6 @@ import torchvision
 import torchvision.transforms.functional as torchvision_F
 import torch.utils.tensorboard
 from QuICT.algorithm.quantum_machine_learning.VQA.model.QAOANet import QAOANet
-from easydict import EasyDict as edict
 from QuICT.algorithm.quantum_machine_learning.utils.hamiltonian import Hamiltonian
 from QuICT.simulation.state_vector import ConstantStateVectorSimulator
 
@@ -21,7 +21,7 @@ class QAOA:
 
     def run(self, optimizer, lr, max_iter, simulator=ConstantStateVectorSimulator()):
         optim = optimizer([dict(params=self.net.parameters(), lr=lr)])
-        state = np.zeros(self.n_qubits ** 2)
+        state = np.zeros(1 << self.n_qubits)
         state[0] = 1
         state = state.astype(np.complex128)
 
@@ -64,7 +64,15 @@ if __name__ == "__main__":
         state = abs(state) ** 0.5
         return state
 
-    n_qubits = 2
+    def seed(seed):
+        torch.manual_seed(seed)
+        torch.cuda.manual_seed_all(seed)
+        np.random.seed(seed)
+        random.seed(seed)
+        torch.backends.cudnn.deterministic = True
+
+    seed(17)
+    n_qubits = 3
     pauli_str = random_pauli_str(2, n_qubits)
     print(pauli_str)
     h = Hamiltonian(pauli_str)
@@ -73,3 +81,4 @@ if __name__ == "__main__":
     qaoa = QAOA(n_qubits, 4, h)
     qaoa.run(optimizer=torch.optim.Adam, lr=0.1, max_iter=200)
     # state = np.array([np.sqrt(3) / 3, 1 / 2, 1 / 3, np.sqrt(11) / 6])
+

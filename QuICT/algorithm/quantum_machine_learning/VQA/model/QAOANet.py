@@ -1,5 +1,7 @@
 import torch.nn
 import numpy as np
+import random
+import time
 
 from QuICT.core import Circuit
 from QuICT.core.gate import *
@@ -49,11 +51,13 @@ class QAOANet(VQANet):
                     else:
                         raise ValueError("Invalid Pauli gate")
             matrix *= np.sin(gamma * coeff) * (1j)
-            U_gamma_matrix *= matrix_i - matrix
-
-        return Unitary(U_gamma_matrix)
+            U_gamma_matrix = U_gamma_matrix.dot(matrix_i - matrix)
+        ud = UnitaryDecomposition()
+        U_gamma = ud.execute(U_gamma_matrix)[0]
+        return U_gamma
 
     def construct_ansatz(self):
+        start = time.time()
         ansatz = Circuit(self.n_qubits)
         # initialize state vector
         H | ansatz
@@ -65,11 +69,17 @@ class QAOANet(VQANet):
             U_gamma = self.construct_U_gamma_layer(float(self.gamma[p]))
             U_gamma | ansatz
 
+        end = time.time() - start
+        print(end)
         return ansatz
 
     def define_network(self):
-        self.beta = torch.nn.Parameter(torch.rand(self.depth, device=self.device, requires_grad=True))
-        self.gamma = torch.nn.Parameter(torch.rand(self.depth, device=self.device, requires_grad=True))
+        self.beta = torch.nn.Parameter(
+            torch.rand(self.depth, device=self.device, requires_grad=True)
+        )
+        self.gamma = torch.nn.Parameter(
+            torch.rand(self.depth, device=self.device, requires_grad=True)
+        )
         self.ansatz = self.construct_ansatz()
 
     def forward(self, state, simulator=ConstantStateVectorSimulator()):
