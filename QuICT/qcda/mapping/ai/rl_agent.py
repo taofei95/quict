@@ -48,6 +48,8 @@ class Agent:
         )
 
         self.mapped_circ = CompositeGate()
+        self._last_exec_cnt = 0
+        self._last_action = None
 
     def reset_explore_state(self, topo_name: str = None):
         self.state = self.factory.get_one(topo_name=topo_name)
@@ -148,13 +150,15 @@ class Agent:
         next_circ_state = self.state.circ_state.copy()
         action_penalty = -1
         reward = action_penalty
-
+        # Execute as many as possible
         physical_circ = self.mapped_circ if construct_gate else None
         cnt = next_circ_state.eager_exec(
             logic2phy=next_logic2phy,
             topo_graph=self.state.topo_graph,
             physical_circ=physical_circ,
         )
+        self._last_action = action
+        self._last_exec_cnt = cnt
         reward += cnt * scale
 
         terminated = next_circ_state.count_gate() == 0
