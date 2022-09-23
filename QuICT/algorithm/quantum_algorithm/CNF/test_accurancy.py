@@ -54,9 +54,9 @@ def test():
         circuit_temp.extend(cgate)
         Measure | circuit_temp
 
-        circuit_temp.draw(filename='test_0.jpg')
-        sim = CircuitSimulator()
-        amplitude = sim.run(circuit_temp)
+        # circuit_temp.draw(filename='test_0.jpg')
+        # sim = CircuitSimulator()
+        # amplitude = sim.run(circuit_temp)
         print(int(circuit_temp.qubits[variable_number])) #量子结果
             
 
