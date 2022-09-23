@@ -2,7 +2,7 @@ import os
 import base64
 import json
 import requests
-from Crypto.Cipher import AES
+import Crypto
 
 
 class EncryptedRequest:
@@ -76,14 +76,14 @@ class EncryptedRequest:
         return self.decryptedmsg(content, aes_key)
 
     def encryptedmsg(self, msg: str, key: str) -> bytes:
-        aes = AES.new(self._padding(key), mode=AES.MODE_ECB)
+        aes = Crypto.Cipher.AES.new(self._padding(key), mode=Crypto.Cipher.AES.MODE_ECB)
         aes_message = aes.encrypt(self._padding(msg))
         encrypted_text = str(base64.encodebytes(aes_message), encoding='utf-8')
 
         return encrypted_text
 
     def decryptedmsg(self, msg: bytes, key: str):
-        aes = AES.new(self._padding(key), mode=AES.MODE_ECB)
+        aes = Crypto.Cipher.AES.new(self._padding(key), mode=Crypto.Cipher.AES.MODE_ECB)
         base64_decryptedmsg = base64.decodebytes(msg.encode(encoding='utf-8'))
         encrypted_msg = str(aes.decrypt(base64_decryptedmsg), encoding='utf-8').replace('\0', '')
 

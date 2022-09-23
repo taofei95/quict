@@ -126,7 +126,7 @@ def circuit_cli_construct(circuit_sp: ArgumentParser):
     get_random.add_argument(
         "-p", "--param",
         action="store_true", dest="random_param",
-        help="The number of quantum gates."
+        help="Using random parameters for quantum gates."
     )
     get_random.add_argument(
         "output_path",
@@ -143,7 +143,7 @@ def circuit_cli_construct(circuit_sp: ArgumentParser):
     )
     get_algorithm.add_argument(
         "alg", nargs="?",
-        choices=["QFT", "Grover", "Shor", "VQE"], default="QFT",
+        choices=["QFT", "Grover", "Supremacy"], default="QFT",
         help="The quantum algorithm."
     )
     get_algorithm.add_argument(
@@ -204,7 +204,7 @@ def job_cli_construct(mode_sp: ArgumentParser, mode: str):
             start_job, stop_job, restart_job, delete_job, status_job, list_jobs
         )
     elif mode == "remote":
-        from QuICT.cloud.client.remote.job import (
+        from QuICT.cloud.cli.utils.remote import (
             start_job, stop_job, restart_job, delete_job, status_job, list_jobs
         )
 
@@ -303,7 +303,7 @@ def job_cli_construct(mode_sp: ArgumentParser, mode: str):
 
 
 def cluster_cli_construct(cluster_sp: ArgumentParser):
-    from QuICT.cloud.cli.utils import status_cluster
+    from QuICT.cloud.cli.utils.remote import status_cluster
 
     subparser = cluster_sp.add_subparsers()
     # quict cluster status
