@@ -27,7 +27,7 @@ class Agent:
         epsilon_start: float = 0.9,
         epsilon_end: float = 0.05,
         epsilon_decay: float = 100.0,
-        reward_scale: float = 100.0,
+        reward_scale: float = 10.0,
     ) -> None:
         # Copy values in.
         self._max_qubit_num = max_qubit_num
@@ -153,9 +153,9 @@ class Agent:
             next_logic2phy=next_logic2phy,
             qubit_number=self.state.topo.qubit_number,
             scale=scale,
-            clip=5,
+            clip=1,
         )
-        action_penalty = -10
+        action_penalty = -1
         reward = action_penalty + bias
 
         physical_circ = self.mapped_circ if construct_gate else None
@@ -195,8 +195,8 @@ class Agent:
     @classmethod
     def map_all(
         cls,
-        max_qubit_num:int,
-        max_gate_num:int,
+        max_qubit_num: int,
+        max_gate_num: int,
         circ: CircuitBased,
         layout: Layout,
         policy_net: GnnMapping,
@@ -219,17 +219,20 @@ class Agent:
             Tuple[CompositeGate, CompositeGate]: Mapped circuit, remained circuit.
         """
         logic2phy = [i for i in range(max_qubit_num)]
-        agent = Agent(max_qubit_num=max_qubit_num,max_gate_num=max_gate_num)
+        agent = Agent(max_qubit_num=max_qubit_num, max_gate_num=max_gate_num)
         topo_graph = agent.factory._get_topo_graph(topo=layout)
         topo_dist = agent.factory._get_topo_dist(topo_graph=topo_graph)
         topo_mask = agent.factory._get_topo_mask(topo_graph=topo_graph)
         topo_edges = agent.factory._get_topo_edges(topo_graph=topo_graph)
-        circ_graph = CircuitState(circ=circ, max_gate_num=policy_net._max_gate_num)
-        circ_pyg = circ_graph.to_pyg(logic2phy)
+        circ_state = CircuitState(circ=circ, max_gate_num=policy_net._max_gate_num)
+        circ_pyg = circ_state.to_pyg(logic2phy)
         topo_pyg = agent.factory.get_topo_pyg(topo_graph=topo_graph)
 
+        circ_state.eager_exec(
+            logic2phy=logic2phy, topo_graph=topo_graph, physical_circ=agent.mapped_circ
+        )
         agent.state = State(
-            circ_graph=circ_graph,
+            circ_graph=circ_state,
             topo=layout,
             topo_mask=topo_mask,
             topo_graph=topo_graph,
@@ -240,7 +243,7 @@ class Agent:
             logic2phy=logic2phy,
         )
 
-        terminated = False
+        terminated = circ_state.count_gate() == 0
         step = 0
         with torch.no_grad():
             while not terminated:

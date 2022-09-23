@@ -1,3 +1,4 @@
+import math
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -73,7 +74,7 @@ class CircuitGnn(nn.Module):
             ]
         )
 
-        self._aggr = gnn.aggr.MeanAggregation()
+        self._aggr = gnn.aggr.SoftmaxAggregation(learn=True)
 
     def forward(self, x, edge_index, batch=None):
         n = self._max_gate_num
@@ -82,7 +83,7 @@ class CircuitGnn(nn.Module):
         if torch.numel(edge_index) > 0:
             for conv in self._gc:
                 x = conv(x, edge_index, batch) + x  # [b * n, 2 * f]
-        x = self._aggr(x, batch) # [b, 2 * f]
+        x = self._aggr(x, batch)  # [b, 2 * f]
         x = x.view(-1, 2 * f)  # [b, 2 * f]
         return x
 
@@ -190,7 +191,7 @@ class GnnMapping(nn.Module):
         idx_pairs = torch.cartesian_prod(torch.arange(q), torch.arange(q))
         x = x[:, idx_pairs].contiguous()  # [b, q * q, 2, 3 * f]
         x = x.view(-1, q, q, 6 * f)
-        x = x / (6 * f)
+        # x = x / math.sqrt(6 * f)
         x = self._mlp(x).view(-1, q, q)  # [b, q, q]
         # x = (x + x.transpose(-1, -2)) / 2
         # gather q * q dim for convenient max

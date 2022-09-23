@@ -449,24 +449,30 @@ class DataFactory:
         topo_mask = self.topo_mask_map[topo_name]
         topo_dist = self._get_topo_dist(topo_graph=topo_graph)
         topo_edges = tuple(self.topo_edge_map[topo_name])
-        circ = Circuit(qubit_num)
+        
 
         min_gn = 2
         gate_num = randint(min_gn, max(self._max_gate_num, min_gn))
-        circ.random_append(
-            gate_num,
-            typelist=[
-                GateType.crz,
-            ],
-        )
-        circ_graph = CircuitState(circ=circ, max_gate_num=self._max_gate_num)
-        logic2phy = [i for i in range(self.topo_qubit_num_map[topo_name])]
-        circ_pyg_data = circ_graph.to_pyg(logic2phy)
+        success = False
+        while not success:
+            circ = Circuit(qubit_num)
+            circ.random_append(
+                gate_num,
+                typelist=[
+                    GateType.crz,
+                ],
+            )
+            circ_state = CircuitState(circ=circ, max_gate_num=self._max_gate_num)
+            logic2phy = [i for i in range(self.topo_qubit_num_map[topo_name])]
+            circ_state.eager_exec(logic2phy=logic2phy, topo_graph=topo_graph)
+            success = circ_state.count_gate() > 0
+
+        circ_pyg_data = circ_state.to_pyg(logic2phy)
 
         topo_pyg_data = self.get_topo_pyg(topo_graph=topo_graph)
 
         state = State(
-            circ_graph=circ_graph,
+            circ_graph=circ_state,
             topo=topo,
             topo_mask=topo_mask,
             topo_graph=topo_graph,
