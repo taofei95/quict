@@ -25,7 +25,7 @@ class CircuitGnn(nn.Module):
                     in_channels=feat_dim,
                     out_channels=feat_dim,
                 )
-                for _ in range(6)
+                for i in range(8)
             ]
         )
 

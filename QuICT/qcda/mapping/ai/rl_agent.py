@@ -57,7 +57,6 @@ class Agent:
         assert self.topo is not None
         self._qubit_num = self.topo.qubit_number
 
-
     def register_topo(self, topo: Union[Layout, str]):
         if isinstance(topo, str):
             self.topo = self.factory.topo_map[topo]
@@ -66,8 +65,9 @@ class Agent:
         else:
             raise TypeError("Only supports a layout name or Layout object.")
 
-        for idx, edge in enumerate(self.topo):
-            swap = (edge.u, edge.v)
+        swaps = [(edge.u, edge.v) for edge in self.topo]
+        swaps.sort()
+        for idx, swap in enumerate(swaps):
             self.action_id_by_swap[swap] = idx
             self.swap_by_action_id[idx] = swap
         self.action_num = len(self.action_id_by_swap)
