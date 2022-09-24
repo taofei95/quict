@@ -1,7 +1,7 @@
 import copy
 import math
 from random import choice, random
-from typing import Dict, List, Tuple, Union
+from typing import Dict, List, Optional, Set, Tuple, Union
 
 import networkx as nx
 import numpy as np
@@ -22,7 +22,7 @@ from torch_geometric.data import Batch as PygBatch
 class Agent:
     def __init__(
         self,
-        max_qubit_num: int,
+        topo: Union[Layout, str],
         max_gate_num: int,
         epsilon_start: float = 0.9,
         epsilon_end: float = 0.05,
@@ -30,7 +30,6 @@ class Agent:
         reward_scale: float = 10.0,
     ) -> None:
         # Copy values in.
-        self._max_qubit_num = max_qubit_num
         self._max_gate_num = max_gate_num
         self._epsilon_start = epsilon_start
         self._epsilon_end = epsilon_end
@@ -41,47 +40,59 @@ class Agent:
         self.explore_step = 0
         self.state = None  # Reset during training
 
-        # Random data generator
-        self.factory = DataFactory(
-            max_qubit_num=max_qubit_num,
-            max_gate_num=max_gate_num,
-        )
-
         self.mapped_circ = CompositeGate()
         self._last_exec_cnt = 0
         self._last_action = None
 
-    def reset_explore_state(self, topo_name: str = None):
-        self.state = self.factory.get_one(topo_name=topo_name)
+        # Random data generator
+        self.factory = DataFactory(
+            topo=topo,
+            max_gate_num=max_gate_num,
+        )
+
+        self.action_id_by_swap: Dict[Tuple[int, int], int] = {}
+        self.swap_by_action_id: Dict[int, Tuple[int, int]] = {}
+        self.action_num = 0
+        self.register_topo(topo)
+        assert self.topo is not None
+        self._qubit_num = self.topo.qubit_number
+
+
+    def register_topo(self, topo: Union[Layout, str]):
+        if isinstance(topo, str):
+            self.topo = self.factory.topo_map[topo]
+        elif isinstance(topo, Layout):
+            self.topo = topo
+        else:
+            raise TypeError("Only supports a layout name or Layout object.")
+
+        for idx, edge in enumerate(self.topo):
+            swap = (edge.u, edge.v)
+            self.action_id_by_swap[swap] = idx
+            self.swap_by_action_id[idx] = swap
+        self.action_num = len(self.action_id_by_swap)
+
+    def reset_explore_state(self):
+        self.state = self.factory.get_one()
 
     def _select_action(
         self,
         policy_net: GnnMapping,
         policy_net_device: str,
     ):
-        max_q = self._max_qubit_num
-        q = self.state.topo.qubit_number
+        a = self.action_num
 
         # Chose an action based on policy_net
         circ_pyg = PygBatch.from_data_list([self.state.circ_pyg_data]).to(
             policy_net_device
         )
-        topo_pyg = PygBatch.from_data_list([self.state.topo_pyg_data]).to(
-            policy_net_device
-        )
-        attn = policy_net(circ_pyg, topo_pyg).detach().cpu()
-        attn = attn.view(max_q, max_q)
+        q_vec = policy_net(circ_pyg).detach().cpu()
+        q_vec = q_vec.view(a)  # [a]
 
-        # Use a mask matrix to filter out unwanted qubit pairs.
-        mask = self.state.topo_mask[:q, :q]
-        attn: torch.Tensor = attn[:q, :q]
-        # https://discuss.pytorch.org/t/masked-argmax-in-pytorch/105341/2
-        large = torch.finfo(attn.dtype).max
-        # pos = int((attn - large * (1 - mask) - large * (1 - mask)).argmax())
-        pos = int((attn - large * (1 - mask)).argmax())
-        u, v = pos // q, pos % q
-        assert u < q and v < q and mask[u][v] > 0
-        return u, v
+        # Query action swap using action id
+        idx = int(torch.argmax(q_vec))
+        action = self.swap_by_action_id[idx]
+        return action
 
     def select_action(
         self,
@@ -165,7 +176,7 @@ class Agent:
             self.state = next_state
             return prev_state, next_state, reward, True
 
-        next_circ_pyg = next_circ_state.to_pyg(next_logic2phy, self._max_qubit_num)
+        next_circ_pyg = next_circ_state.to_pyg(next_logic2phy, self._qubit_num)
 
         next_state = State(
             circ_graph=next_circ_state,
@@ -175,9 +186,7 @@ class Agent:
             topo_dist=self.state.topo_dist,
             topo_edges=self.state.topo_edges,
             circ_pyg_data=next_circ_pyg,
-            topo_pyg_data=self.state.topo_pyg_data,
             logic2phy=next_logic2phy,
-            # phy2logic=next_phy2logic,
         )
         prev_state = self.state
         self.state = next_state
@@ -185,7 +194,6 @@ class Agent:
 
     def map_all(
         self,
-        max_qubit_num: int,
         max_gate_num: int,
         circ: CircuitBased,
         layout: Layout,
@@ -208,15 +216,14 @@ class Agent:
         Returns:
             Tuple[CompositeGate, CompositeGate]: Mapped circuit, remained circuit.
         """
-        logic2phy = [i for i in range(max_qubit_num)]
-        agent = Agent(max_qubit_num=max_qubit_num, max_gate_num=max_gate_num)
+        logic2phy = [i for i in range(layout.qubit_number)]
+        agent = Agent(topo=layout, max_gate_num=max_gate_num)
         topo_graph = agent.factory._get_topo_graph(topo=layout)
         topo_dist = agent.factory._get_topo_dist(topo_graph=topo_graph)
         topo_mask = agent.factory._get_topo_mask(topo_graph=topo_graph)
         topo_edges = agent.factory._get_topo_edges(topo_graph=topo_graph)
         circ_state = CircuitState(circ=circ, max_gate_num=policy_net._max_gate_num)
-        circ_pyg = circ_state.to_pyg(logic2phy, self._max_qubit_num)
-        topo_pyg = agent.factory.get_topo_pyg(topo_graph=topo_graph)
+        circ_pyg = circ_state.to_pyg(logic2phy, self._qubit_num)
 
         circ_state.eager_exec(
             logic2phy=logic2phy, topo_graph=topo_graph, physical_circ=agent.mapped_circ
@@ -229,7 +236,6 @@ class Agent:
             topo_dist=topo_dist,
             topo_edges=topo_edges,
             circ_pyg_data=circ_pyg,
-            topo_pyg_data=topo_pyg,
             logic2phy=logic2phy,
         )
 

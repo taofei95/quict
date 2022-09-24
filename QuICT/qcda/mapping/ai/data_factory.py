@@ -4,7 +4,7 @@ import os
 import os.path as osp
 from random import choice, randint
 import random
-from typing import Dict, List, Tuple, Union
+from typing import Dict, Iterator, List, Set, Tuple, Union
 
 import networkx as nx
 import numpy as np
@@ -62,7 +62,6 @@ class CircuitState:
             # self._graph.add_node(gid + 1)
             self._graph.add_node(gid)
 
-        v_node = 0
         self._occupied = [-1 for _ in range(q)]
         self._bit2gid: List[List[int]] = [[] for _ in range(q)]
         """Qubit to all gates on it.
@@ -231,7 +230,6 @@ class State:
         topo_dist: np.ndarray,
         topo_edges: Tuple[Tuple[int, int]],
         circ_pyg_data: PygData,
-        topo_pyg_data: PygData,
         logic2phy: List[int],
         # phy2logic: List[int] = None,
     ) -> None:
@@ -242,7 +240,6 @@ class State:
         self.topo_dist = topo_dist
         self.topo_edges = topo_edges
         self.circ_pyg_data = circ_pyg_data
-        self.topo_pyg_data = topo_pyg_data
         self.logic2phy = logic2phy
         """Logical to physical mapping
         """
@@ -277,7 +274,7 @@ class Transition:
 class DataFactory:
     def __init__(
         self,
-        max_qubit_num: int,
+        topo: Union[str, Layout],
         max_gate_num: int,
         data_dir: str = None,
     ) -> None:
@@ -287,14 +284,12 @@ class DataFactory:
         self._data_dir = data_dir
         self._topo_dir = osp.join(data_dir, "topo")
 
-        self._max_qubit_num = max_qubit_num
         self._max_gate_num = max_gate_num
 
         self._topo_names = None
 
         # Topo attr cache def
         # These attributes maps are lazily initialized for faster start up.
-
         self._topo_map = {}
         self._topo_graph_map = {}
         self._topo_edge_map = {}
@@ -302,6 +297,14 @@ class DataFactory:
         self._topo_qubit_num_map = {}
         self._topo_mask_map = {}
         self._topo_dist_map = {}
+
+        if isinstance(topo, str):
+            self._cur_topo = self.topo_map[topo]
+        elif isinstance(topo, Layout):
+            self._cur_topo = topo
+        else:
+            raise TypeError("Only support layout name or Layout object.")
+        assert self._cur_topo is not None
 
     @property
     def topo_names(self) -> List[str]:
@@ -354,12 +357,6 @@ class DataFactory:
             self._reset_attr_cache()
         return self._topo_map
 
-    def get_topo_pyg(self, topo_graph: nx.DiGraph) -> PygData:
-        topo_pyg_data = from_networkx(topo_graph)
-        x = torch.eye(self._max_qubit_num, dtype=torch.float)
-        topo_pyg_data.x = x
-        return topo_pyg_data
-
     def _reset_attr_cache(self):
         for topo_name in self.topo_names:
             topo_path = osp.join(self._topo_dir, f"{topo_name}.json")
@@ -393,7 +390,7 @@ class DataFactory:
         """
         g = nx.DiGraph()
         # g.add_node(0)
-        for i in range(self._max_qubit_num):
+        for i in range(topo.qubit_number):
             g.add_node(i)
             # g.add_node(i + 1)
         for edge in topo.directionalized:
@@ -403,7 +400,7 @@ class DataFactory:
 
     def _get_topo_dist(self, topo_graph: nx.DiGraph) -> np.ndarray:
         _inf = nx.number_of_nodes(topo_graph) + 5
-        n = self._max_qubit_num
+        n = nx.number_of_nodes(topo_graph)
         dist = np.empty((n, n), dtype=np.int)
         dist[:, :] = _inf
         for u, v in topo_graph.edges:
@@ -415,9 +412,8 @@ class DataFactory:
         return dist
 
     def _get_topo_mask(self, topo_graph: nx.DiGraph) -> torch.Tensor:
-        topo_mask = torch.zeros(
-            (self._max_qubit_num, self._max_qubit_num), dtype=torch.float
-        )
+        n = nx.number_of_nodes(topo_graph)
+        topo_mask = torch.zeros((n, n), dtype=torch.float)
         for u, v in topo_graph.edges:
             # if v == 0 or u == 0:
             #     continue
@@ -434,17 +430,13 @@ class DataFactory:
             topo_edge.append((u, v))
         return topo_edge
 
-    def get_one(self, topo_name: str = None) -> State:
-        if topo_name is None:
-            topo_name: str = choice(self.topo_names)
-        # TODO: Rotate topo
-        topo_name: str = "ibmq_lima"
-        topo = self.topo_map[topo_name]
-        qubit_num = self.topo_qubit_num_map[topo_name]
-        topo_graph = self.topo_graph_map[topo_name]
-        topo_mask = self.topo_mask_map[topo_name]
+    def get_one(self) -> State:
+        topo = self._cur_topo
+        qubit_num = self.topo_qubit_num_map[topo.name]
+        topo_graph = self.topo_graph_map[topo.name]
+        topo_mask = self.topo_mask_map[topo.name]
         topo_dist = self._get_topo_dist(topo_graph=topo_graph)
-        topo_edges = tuple(self.topo_edge_map[topo_name])
+        topo_edges = tuple(self.topo_edge_map[topo.name])
 
         min_gn = 2
         gate_num = randint(min_gn, max(self._max_gate_num, min_gn))
@@ -458,13 +450,11 @@ class DataFactory:
                 ],
             )
             circ_state = CircuitState(circ=circ, max_gate_num=self._max_gate_num)
-            logic2phy = [i for i in range(self.topo_qubit_num_map[topo_name])]
+            logic2phy = [i for i in range(self.topo_qubit_num_map[topo.name])]
             circ_state.eager_exec(logic2phy=logic2phy, topo_graph=topo_graph)
             success = circ_state.count_gate() > 0
 
-        circ_pyg_data = circ_state.to_pyg(logic2phy, self._max_qubit_num)
-
-        topo_pyg_data = self.get_topo_pyg(topo_graph=topo_graph)
+        circ_pyg_data = circ_state.to_pyg(logic2phy, topo.qubit_number)
 
         state = State(
             circ_graph=circ_state,
@@ -474,7 +464,6 @@ class DataFactory:
             topo_dist=topo_dist,
             topo_edges=topo_edges,
             circ_pyg_data=circ_pyg_data,
-            topo_pyg_data=topo_pyg_data,
             logic2phy=logic2phy,
         )
         return state

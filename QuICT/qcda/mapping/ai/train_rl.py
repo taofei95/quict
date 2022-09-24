@@ -59,13 +59,10 @@ class ValidationData:
         self.remained_circ = remained_circ
 
 
-# TODO: Add MCTS prior experience
-
-
 class Trainer:
     def __init__(
         self,
-        max_qubit_num: int = 5,
+        topo: Union[str, Layout],
         max_gate_num: int = 50,
         feat_dim: int = 50,
         gamma: float = 0.9,
@@ -81,7 +78,6 @@ class Trainer:
         print("Initializing trainer...")
 
         # Copy values in.
-        self._max_qubit_num = max_qubit_num
         self._max_gate_num = max_gate_num
         self._gamma = gamma
         self._batch_size = batch_size
@@ -93,9 +89,10 @@ class Trainer:
         # Initialize Agent
         print("Initializing agent...")
         self._agent = Agent(
-            max_qubit_num=max_qubit_num,
+            topo=topo,
             max_gate_num=max_gate_num,
         )
+        self._topo = self._agent.topo
         self._agent.factory._reset_attr_cache()
 
         # Experience replay memory pool
@@ -105,15 +102,17 @@ class Trainer:
         # DQN
         print("Resetting policy & target model...")
         self._policy_net = GnnMapping(
-            max_qubit_num=max_qubit_num,
+            qubit_num=self._topo.qubit_number,
             max_gate_num=max_gate_num,
             feat_dim=feat_dim,
+            action_num=self._agent.action_num,
         ).to(device=device)
         self._policy_net.train(True)
         self._target_net = GnnMapping(
-            max_qubit_num=max_qubit_num,
+            qubit_num=self._topo.qubit_number,
             max_gate_num=max_gate_num,
             feat_dim=feat_dim,
+            action_num=self._agent.action_num,
         ).to(device=device)
         self._target_net.train(False)
 
@@ -182,7 +181,6 @@ class Trainer:
             cutoff = 30
             self._agent.mapped_circ.clean()
             result_circ, remained_circ = self._agent.map_all(
-                max_qubit_num=self._max_qubit_num,
                 max_gate_num=self._max_gate_num,
                 circ=v_datum.circ,
                 layout=v_datum.topo,
@@ -204,20 +202,18 @@ class Trainer:
         states, actions, next_states, rewards = zip(*transitions)
 
         actions = torch.tensor(
-            [[u * self._max_qubit_num + v] for u, v in actions],
-            dtype=torch.int64,
+            [[self._agent.action_id_by_swap[action]] for action in actions],
+            dtype=torch.long,
             device=self._device,
         )  # [B, 1]
 
         circ_data_list = [state.circ_pyg_data for state in states]
         circ_pyg = PygBatch.from_data_list(circ_data_list).to(self._device)
-        topo_data_list = [state.topo_pyg_data for state in states]
-        topo_pyg = PygBatch.from_data_list(topo_data_list).to(self._device)
         rewards = torch.tensor(rewards, device=self._device)
 
         # Current Q estimation
-        attn_mat = self._policy_net(circ_pyg, topo_pyg)  # [b, q * q]
-        state_action_values = attn_mat.gather(1, actions).squeeze()
+        q_vec = self._policy_net(circ_pyg)  # [b, a]
+        state_action_values = q_vec.gather(1, actions).squeeze()
 
         # Q* by Bellman Equation
         non_final_mask = torch.tensor(
@@ -231,39 +227,18 @@ class Trainer:
         non_final_circ_pyg = PygBatch.from_data_list(non_final_circ_data_list).to(
             self._device
         )
-        non_final_topo_data_list = [
-            state.topo_pyg_data for state in next_states if state is not None
-        ]
-        non_final_topo_pyg = PygBatch.from_data_list(non_final_topo_data_list).to(
-            self._device
-        )
         next_state_values = torch.zeros(self._batch_size, device=self._device)
         next_state_values[non_final_mask] = (
             self._target_net(
                 non_final_circ_pyg,
-                non_final_topo_pyg,
-            )  # [b, q * q]
+            )  # [b, a]
             .clone()
             .detach()
             .max(1)[0]
         )
         expected_state_action_values = (next_state_values * self._gamma) + rewards
 
-        loss_1 = self._smooth_l1(state_action_values, expected_state_action_values)
-
-        # Empirical loss on output attention
-        # b = self._batch_size
-        # q = self._max_qubit_num
-        # mask = [state.topo_mask for state in states]
-        # mask = (
-        #     (torch.ones(b, q, q) - torch.stack(mask)).detach().to(device=self._device)
-        # )
-        # zeros = torch.zeros(b, q, q).detach().to(device=self._device)
-        # attn_mat_illegal = F.relu(attn_mat.view(b, q, q) * (1 - mask))
-        # loss_2 = self._smooth_l1(attn_mat_illegal, zeros) * 0.1
-
-        # loss = loss_1 + loss_2
-        loss = loss_1
+        loss = self._smooth_l1(state_action_values, expected_state_action_values)
 
         self._optimizer.zero_grad()
         loss.backward()
@@ -411,6 +386,6 @@ class Trainer:
 
 
 if __name__ == "__main__":
-    # trainer = Trainer(device="cpu")
-    trainer = Trainer()
+    # trainer = Trainer(topo="ibmq_lima", device="cpu")
+    trainer = Trainer(topo="ibmq_lima")
     trainer.train()
