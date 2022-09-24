@@ -163,7 +163,7 @@ class CircuitState:
         return cg
 
     def biased_random_swap(
-        self, topo_dist: np.ndarray, logic2phy: List[int], zero_shift: float = 0.005
+        self, topo_dist: np.ndarray, logic2phy: List[int], zero_shift: float = 0.1
     ) -> Tuple[int, int]:
         candidates = []
         weights = []
@@ -188,10 +188,13 @@ class CircuitState:
                     bias += prev_d - next_d
                 if abs(bias) < 1e-6:
                     bias = zero_shift
-                bias = math.e**bias
+                bias = max(0, bias)
                 weights.append(bias)
         assert len(candidates) > 0
-        action = random.choices(population=candidates, weights=weights, k=1)[0]
+        if random.random() < 0.5:
+            action = random.choices(population=candidates, weights=weights, k=1)[0]
+        else:
+            action = random.choices(population=candidates, k=1)[0]
         return action
 
     def to_pyg(self, logic2phy: List[int], max_qubit_number: int) -> PygData:
