@@ -33,9 +33,6 @@ def _floyd(n: int, dist: np.ndarray, _inf: int) -> np.ndarray:
     return dist
 
 
-# TODO: Add virtual node for topo graph
-
-
 class CircuitState:
     """DAG Representation of a quantum circuit. A virtual node will be
     added with label 0.
@@ -69,6 +66,8 @@ class CircuitState:
         for gid, gate in enumerate(self._gates):
             self.add_gate(gid, gate, 1)
 
+        self._removed_cnt = 0
+
     def add_gate(self, gid, gate: BasicGate, tag: int):
         assert gate.controls + gate.targets == 2, "Only 2 bit gates are supported."
         a, b = gate.cargs + gate.targs
@@ -79,9 +78,11 @@ class CircuitState:
         # DAG edges
         if self._occupied[a] != -1:
             self._graph.add_edge(self._occupied[a], gid)
+            # self._graph.add_edge(gid, self._occupied[a])
         if self._occupied[b] != -1:
             self._graph.add_edge(self._occupied[b], gid)
-        nx.set_node_attributes(self._graph, {gid: {"tag": tag}})
+            # self._graph.add_edge(gid, self._occupied[b])
+        nx.set_node_attributes(self._graph, {gid: {"gid": gid}})
         self._occupied[a] = gid
         self._occupied[b] = gid
 
@@ -144,6 +145,7 @@ class CircuitState:
                     if physical_circ is not None:
                         with physical_circ:
                             gate & [_a, _b]
+        self._removed_cnt += remove_cnt
         return remove_cnt
 
     def remained_circ(self, logic2phy: List[int]) -> CompositeGate:
@@ -203,14 +205,15 @@ class CircuitState:
             PygData: PyG data.
         """
         max_q = max_qubit_number
-        x = torch.zeros(self._max_gate_num, 2, max_q, dtype=torch.float)
+        x = torch.zeros(self._max_gate_num, 2, dtype=torch.long)
         edge_index = []
-        for node in self._graph.nodes:
-            gid = node
+        g = nx.convert_node_labels_to_integers(self._graph)
+        for node in g.nodes:
+            gid = g.nodes[node]["gid"]
             gate = self._gates[gid]
             a, b = gate.cargs + gate.targs
-            x[gid][0][logic2phy[a]] = 1
-            x[gid][1][logic2phy[b]] = 1
+            x[node][0] = logic2phy[a] + 1
+            x[node][1] = logic2phy[b] + 1
             # Add self loops
             edge_index.append([gid, gid])
         for u, v in self._graph.edges:
