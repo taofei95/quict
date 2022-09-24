@@ -197,7 +197,7 @@ class CircuitState:
             action = random.choices(population=candidates, k=1)[0]
         return action
 
-    def to_pyg(self, logic2phy: List[int], max_qubit_number: int) -> PygData:
+    def to_pyg(self, logic2phy: List[int]) -> PygData:
         """Convert current data into PyG Data according to current mapping.
 
         Arg:
@@ -207,10 +207,10 @@ class CircuitState:
         Returns:
             PygData: PyG data.
         """
-        max_q = max_qubit_number
         x = torch.zeros(self._max_gate_num, 2, dtype=torch.long)
         edge_index = []
-        g = nx.convert_node_labels_to_integers(self._graph)
+        # g = nx.convert_node_labels_to_integers(self._graph)
+        g = self._graph
         for node in g.nodes:
             gid = g.nodes[node]["gid"]
             gate = self._gates[gid]
@@ -460,7 +460,7 @@ class DataFactory:
             circ_state.eager_exec(logic2phy=logic2phy, topo_graph=topo_graph)
             success = circ_state.count_gate() > 0
 
-        circ_pyg_data = circ_state.to_pyg(logic2phy, topo.qubit_number)
+        circ_pyg_data = circ_state.to_pyg(logic2phy)
 
         state = State(
             circ_graph=circ_state,
