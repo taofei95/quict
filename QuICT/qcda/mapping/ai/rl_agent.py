@@ -83,10 +83,10 @@ class Agent:
         a = self.action_num
 
         # Chose an action based on policy_net
-        # data = PygBatch.from_data_list([self.state.circ_pyg_data]).to(
-        #     policy_net_device
-        # )
-        data = self.state.circ_layered_matrices.to(policy_net_device)
+        data = PygBatch.from_data_list([self.state.circ_pyg_data]).to(
+            policy_net_device
+        )
+        # data = self.state.circ_layered_matrices.to(policy_net_device)
         q_vec = policy_net(data).detach().cpu()
         q_vec = q_vec.view(a)  # [a]
 
@@ -155,9 +155,13 @@ class Agent:
             Swap & [u, v]
 
         next_logic2phy = copy.deepcopy(self.state.logic2phy)
-        next_logic2phy[u], next_logic2phy[v] = next_logic2phy[v], next_logic2phy[u]
+        next_phy2logic = copy.deepcopy(self.state.phy2logic)
+        # Current (u, v) are physical qubit labels
+        next_phy2logic[u], next_phy2logic[v] = next_phy2logic[v], next_phy2logic[u]
+        lu, lv = next_phy2logic[u], next_phy2logic[v]
+        next_logic2phy[lu], next_logic2phy[lv] = next_logic2phy[lv], next_logic2phy[lu]
         next_circ_state = self.state.circ_info.copy()
-        action_penalty = -1
+        action_penalty = 0
         reward = action_penalty
         # Execute as many as possible
         cnt = next_circ_state.eager_exec(
@@ -181,6 +185,7 @@ class Agent:
             circ_info=next_circ_state,
             topo=self.state.topo_info.topo,
             logic2phy=next_logic2phy,
+            phy2logic=next_phy2logic,
         )
         prev_state = self.state
         self.state = next_state

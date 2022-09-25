@@ -4,7 +4,7 @@ import os
 import os.path as osp
 from random import choice, randint
 import random
-from typing import Dict, Iterator, List, Set, Tuple, Union
+from typing import Dict, Iterator, List, Optional, Set, Tuple, Union
 
 import networkx as nx
 import numpy as np
@@ -490,12 +490,19 @@ class State:
         circ_info: CircuitInfo,
         topo: Layout,
         logic2phy: List[int],
+        phy2logic: Optional[List[int]] = None,
     ) -> None:
         self.circ_info = circ_info
         self.topo_info = TopoInfo(topo=topo)
         self.logic2phy = logic2phy
         """Logical to physical mapping
         """
+        q = topo.qubit_number
+        self.phy2logic = phy2logic
+        if self.phy2logic is None:
+            self.phy2logic = [0 for _ in range(q)]
+        for i in range(q):
+            self.phy2logic[self.logic2phy[i]] = i
 
         self._circ_pyg_data = None
         self._circ_layered_matrices = None

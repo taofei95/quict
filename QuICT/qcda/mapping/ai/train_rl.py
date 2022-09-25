@@ -63,7 +63,7 @@ class Trainer:
     def __init__(
         self,
         topo: Union[str, Layout],
-        max_gate_num: int = 50,
+        max_gate_num: int = 100,
         feat_dim: int = 100,
         gamma: float = 0.9,
         replay_pool_size: int = 20000,
@@ -209,12 +209,12 @@ class Trainer:
 
         rewards = torch.tensor(rewards, device=self._device)
 
-        # data_list = [state.circ_pyg_data for state in states]
-        # data_batch = PygBatch.from_data_list(data_list).to(self._device)
-        data_list = [state.circ_layered_matrices for state in states]
-        data_batch = nn.utils.rnn.pad_sequence(
-            sequences=data_list, batch_first=True
-        ).to(self._device)
+        data_list = [state.circ_pyg_data for state in states]
+        data_batch = PygBatch.from_data_list(data_list).to(self._device)
+        # data_list = [state.circ_layered_matrices for state in states]
+        # data_batch = nn.utils.rnn.pad_sequence(
+        #     sequences=data_list, batch_first=True
+        # ).to(self._device)
 
         # Current Q estimation
         q_vec = self._policy_net(data_batch)  # [b, a]
@@ -226,18 +226,18 @@ class Trainer:
             device=self._device,
             dtype=torch.bool,
         )
-        # non_final_data_list = [
-        #     state.circ_pyg_data for state in next_states if state is not None
-        # ]
-        # non_final_data_batch = PygBatch.from_data_list(non_final_data_list).to(
-        #     self._device
-        # )
         non_final_data_list = [
-            state.circ_layered_matrices for state in next_states if state is not None
+            state.circ_pyg_data for state in next_states if state is not None
         ]
-        non_final_data_batch = nn.utils.rnn.pad_sequence(
-            sequences=non_final_data_list, batch_first=True
-        ).to(self._device)
+        non_final_data_batch = PygBatch.from_data_list(non_final_data_list).to(
+            self._device
+        )
+        # non_final_data_list = [
+        #     state.circ_layered_matrices for state in next_states if state is not None
+        # ]
+        # non_final_data_batch = nn.utils.rnn.pad_sequence(
+        #     sequences=non_final_data_list, batch_first=True
+        # ).to(self._device)
         next_state_values = torch.zeros(self._batch_size, device=self._device)
         next_state_values[non_final_mask] = (
             self._target_net(
