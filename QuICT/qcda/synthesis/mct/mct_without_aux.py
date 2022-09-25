@@ -1,6 +1,6 @@
 import numpy as np
 
-from QuICT.core.gate import CompositeGate, H, CU1
+from QuICT.core.gate import CompositeGate, H, X, CX, CU1
 
 
 class MCTWithoutAux(object):
@@ -19,6 +19,14 @@ class MCTWithoutAux(object):
             CompositeGate: the n-qubit Toffoli gate
         """
         gates = CompositeGate()
+        if n == 1:
+            X & 1 | gates
+            return gates
+
+        if n == 2:
+            CX & [0, 1] | gates
+            return gates
+
         for control in range(n - 2, 0, -1):
             for target in range(control + 1, n):
                 if target == control + 1:

@@ -1,7 +1,7 @@
 import numpy as np
 from QuICT.core import Circuit
 
-from QuICT.quantum_state_preparation import QuantumStatePreparation
+from QuICT.quantum_state_preparation import QuantumStatePreparation, SparseQuantumStatePreparation
 from QuICT.simulation.state_vector import ConstantStateVectorSimulator
 
 
@@ -36,3 +36,20 @@ def test_with_unitary_decomposition():
             simulator = ConstantStateVectorSimulator()
             state = simulator.run(circuit)
             assert np.allclose(state_vector, state)
+
+
+def test_multicontrol_G():
+    for n in range(2, 6):
+        for _ in range(10):
+            state_vector = random_unit_vector(1)
+            alpha, beta = state_vector
+            gates = SparseQuantumStatePreparation.multicontrol_G(n, alpha, beta)
+            omega = 2 * np.arcsin(np.abs(alpha))
+            gamma = np.angle(alpha) - np.angle(beta)
+            mat = np.array([
+                [np.sin(omega / 2), np.exp(1j * gamma) * np.cos(omega / 2)],
+                [np.exp(-1j * gamma) * np.cos(omega / 2), -np.sin(omega / 2)],
+            ])
+            # np.set_printoptions(precision=3, suppress=True)
+            assert np.allclose(gates.matrix()[-2:, -2:], mat)
+            assert(np.isclose(mat.dot(state_vector.T)[1], 0))

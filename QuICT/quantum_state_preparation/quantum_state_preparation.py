@@ -1,13 +1,12 @@
 import numpy as np
 
-from QuICT.core.gate import CompositeGate, GateType, GPhase, CX
-from QuICT.qcda.synthesis.uniformly_gate import UniformlyRotation
-from QuICT.qcda.synthesis.unitary_decomposition import UnitaryDecomposition
+from QuICT.core.gate import CompositeGate, GateType, GPhase, X, CX, Ry, Rz
+from QuICT.qcda.synthesis import MCTWithoutAux, UniformlyRotation, UnitaryDecomposition
 
 
 class QuantumStatePreparation(object):
     """
-    For a given quantum state |psi>, create a CompositeGate C such that |psi> = C |0>
+    For a given quantum state |psi>, create a CompositeGate C that |psi> = C |0>
     """
     def __init__(self, method='unitary_decomposition'):
         """
@@ -119,5 +118,78 @@ class QuantumStatePreparation(object):
         V_gates, _ = UD.execute(V.T)
         V_gates & list(range(first_half, num_qubits))
         gates.extend(V_gates)
+
+        return gates
+
+
+class SparseQuantumStatePreparation(object):
+    """
+    For a sparse quantum state |psi>, i.e. only a few of entries in the statevector is not zero,
+    create a circuit C that |psi> = C |0>
+    """
+    def __init__(self, input_format='state_array'):
+        """
+        Despite the original state vector, we could also use a 'state array' to describe a sparse quantum state.
+        That is, each element [basis, amplitude] in the state array gives the amplitude on the computational basis,
+        where the bases are boolean strings and not shown amplitudes are zeros.
+        Be careful that no duplicated basis is allowed.
+
+        Args:
+            input_mode(str, optional): chosen input in ['state_array', 'state_vector']
+
+        Reference:
+            https://ieeexplore.ieee.org/abstract/document/9586240/metrics
+        """
+        assert input_format in ['state_array', 'state_vector'],\
+            ValueError('Invalid sparse quantum state preparation input format')
+        self.input_format = input_format
+
+    def execute(self, state_array) -> CompositeGate:
+        """
+        Quantum state preparation for sparse state
+
+        Args:
+            state_array: input quantum state, whose format is decided by the input_format
+
+        Returns:
+            CompositeGate: the preparation CompositeGate
+        """
+        if self.input_format == 'state_array':
+            # By the dict rule, only the last value of duplicated key works.
+            state = dict(state_array)
+        if self.input_format == 'state_vector':
+            state = dict()
+            for basis, amp in enumerate(state_array):
+                if not np.isclose(amp, 0):
+                    state[bin(basis)[2:]] = amp
+
+        state: dict
+
+    @staticmethod
+    def multicontrol_G(control: int, alpha: complex, beta: complex) -> CompositeGate:
+        """
+        Create a CompositeGate that maps alpha|0> + beta|1> to e^{i lambda} |0> with some control qubits
+
+        Args:
+            control(int): the number of control qubits
+            alpha(complex): alpha in the initial state
+            beta(complex): beta in the initial stats
+
+        Returns:
+            CompositeGate: the required CompositeGate
+
+        References:
+            https://arxiv.org/abs/quant-ph/9503016
+        """
+        assert np.isclose(np.power(np.abs(alpha), 2) + np.power(np.abs(beta), 2), 1)
+        omega = 2 * np.arcsin(np.abs(alpha))
+        gamma = np.angle(alpha) - np.angle(beta)
+
+        gates = CompositeGate()
+        Rz(gamma) & control | gates
+        Ry(omega / 2) & control | gates
+        MCTWithoutAux().execute(control + 1) | gates
+        Ry(-omega / 2) & control | gates
+        Rz(-gamma) & control | gates
 
         return gates
