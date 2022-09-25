@@ -133,7 +133,7 @@ def index():
 
 
 @app.route("/<path:path>")
-@login_required
+# @login_required
 def root_folder(path: str):
     return send_from_directory("./dist/", path)
 
