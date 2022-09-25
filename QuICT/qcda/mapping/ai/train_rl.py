@@ -64,12 +64,12 @@ class Trainer:
         self,
         topo: Union[str, Layout],
         max_gate_num: int = 50,
-        feat_dim: int = 50,
+        feat_dim: int = 100,
         gamma: float = 0.9,
         replay_pool_size: int = 20000,
         batch_size: int = 32,
         total_epoch: int = 2000,
-        explore_period: int = 500,
+        explore_period: int = 2000,
         target_update_period: int = 10,
         device: str = "cuda" if torch.cuda.is_available() else "cpu",
         model_path: str = None,
@@ -207,12 +207,17 @@ class Trainer:
             device=self._device,
         )  # [B, 1]
 
-        circ_data_list = [state.circ_pyg_data for state in states]
-        circ_pyg = PygBatch.from_data_list(circ_data_list).to(self._device)
         rewards = torch.tensor(rewards, device=self._device)
 
+        # data_list = [state.circ_pyg_data for state in states]
+        # data_batch = PygBatch.from_data_list(data_list).to(self._device)
+        data_list = [state.circ_layered_matrices for state in states]
+        data_batch = nn.utils.rnn.pad_sequence(
+            sequences=data_list, batch_first=True
+        ).to(self._device)
+
         # Current Q estimation
-        q_vec = self._policy_net(circ_pyg)  # [b, a]
+        q_vec = self._policy_net(data_batch)  # [b, a]
         state_action_values = q_vec.gather(1, actions).squeeze()
 
         # Q* by Bellman Equation
@@ -221,16 +226,22 @@ class Trainer:
             device=self._device,
             dtype=torch.bool,
         )
-        non_final_circ_data_list = [
-            state.circ_pyg_data for state in next_states if state is not None
+        # non_final_data_list = [
+        #     state.circ_pyg_data for state in next_states if state is not None
+        # ]
+        # non_final_data_batch = PygBatch.from_data_list(non_final_data_list).to(
+        #     self._device
+        # )
+        non_final_data_list = [
+            state.circ_layered_matrices for state in next_states if state is not None
         ]
-        non_final_circ_pyg = PygBatch.from_data_list(non_final_circ_data_list).to(
-            self._device
-        )
+        non_final_data_batch = nn.utils.rnn.pad_sequence(
+            sequences=non_final_data_list, batch_first=True
+        ).to(self._device)
         next_state_values = torch.zeros(self._batch_size, device=self._device)
         next_state_values[non_final_mask] = (
             self._target_net(
-                non_final_circ_pyg,
+                non_final_data_batch,
             )  # [b, a]
             .clone()
             .detach()
@@ -270,7 +281,7 @@ class Trainer:
 
     def train_one_epoch(self):
         self._agent.reset_explore_state()
-        observe_period = 50
+        observe_period = 100
         running_loss = 0.0
         running_reward = 0.0
         last_stamp = time()

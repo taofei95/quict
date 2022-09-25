@@ -83,10 +83,11 @@ class Agent:
         a = self.action_num
 
         # Chose an action based on policy_net
-        circ_pyg = PygBatch.from_data_list([self.state.circ_pyg_data]).to(
-            policy_net_device
-        )
-        q_vec = policy_net(circ_pyg).detach().cpu()
+        # data = PygBatch.from_data_list([self.state.circ_pyg_data]).to(
+        #     policy_net_device
+        # )
+        data = self.state.circ_layered_matrices.to(policy_net_device)
+        q_vec = policy_net(data).detach().cpu()
         q_vec = q_vec.view(a)  # [a]
 
         # Query action swap using action id

@@ -333,6 +333,7 @@ class CircuitInfo:
             for u, v in layer:
                 ans[idx][u][v] = 1
                 ans[idx][v][u] = 1
+        ans = ans.view(-1, q * q)
         return ans
 
     def eager_exec(
@@ -497,18 +498,29 @@ class State:
         """
 
         self._circ_pyg_data = None
-    
+        self._circ_layered_matrices = None
+
     @property
     def circ_pyg_data(self):
         if self._circ_pyg_data is None:
             self._circ_pyg_data = self.circ_info.to_pyg(self.logic2phy)
         return self._circ_pyg_data
 
+    @property
+    def circ_layered_matrices(self) -> torch.Tensor:
+        if self._circ_layered_matrices is None:
+            self._circ_layered_matrices = self.circ_info.layered_gate_matrices(
+                self.logic2phy
+            )
+        return self._circ_layered_matrices
+
     def remained_circ(self) -> CompositeGate:
         return self.circ_info.remained_circ(self.logic2phy)
 
     def biased_random_swap(self) -> Tuple[int, int]:
-        return self.circ_info.biased_random_swap(self.topo_info.topo_dist, self.logic2phy)
+        return self.circ_info.biased_random_swap(
+            self.topo_info.topo_dist, self.logic2phy
+        )
 
 
 class Transition:
