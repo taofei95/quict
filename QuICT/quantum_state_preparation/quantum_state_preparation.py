@@ -2,6 +2,7 @@ import numpy as np
 
 from QuICT.core.gate import CompositeGate, GateType, GPhase, X, CX, Ry, Rz
 from QuICT.qcda.synthesis import MCTWithoutAux, UniformlyRotation, UnitaryDecomposition
+from QuICT.simulation.state_vector import ConstantStateVectorSimulator
 
 
 class QuantumStatePreparation(object):
@@ -160,14 +161,21 @@ class SparseQuantumStatePreparation(object):
             width = len(state.keys()[0])
             for basis in state.keys():
                 assert len(basis) == width, ValueError('Bases must have the same length.')
+            state_vector = self.dict_to_statevector(state)
         if self.input_format == 'state_vector':
-            state = dict()
-            width = int(round(np.log2(state_array.size)))
-            for basis, amp in enumerate(state_array):
-                if not np.isclose(amp, 0):
-                    state[bin(basis)[2:]] = amp
+            state, width = self.statevector_to_dict(state_array)
+            state_vector = np.array(state_array)
 
-        state: dict
+        gates = CompositeGate()
+        simulator = ConstantStateVectorSimulator()
+        while len(state) > 1:
+            gates_last = self.reduce_state(state, width)
+            state_vector = self.dict_to_statevector(state)
+            state_vector = simulator.run(gates_last, state_vector)
+            state, width = self.statevector_to_dict(state_vector)
+            gates.extend(gates_last)
+
+        return gates.inverse()
 
     def reduce_state(self, state: dict, width: int) -> CompositeGate:
         """
@@ -268,3 +276,21 @@ class SparseQuantumStatePreparation(object):
         Rz(-gamma) & control | gates
 
         return gates
+
+    @staticmethod
+    def statevector_to_dict(state_vector):
+        state = dict()
+        width = int(round(np.log2(state_vector.size)))
+        for basis, amp in enumerate(state_vector):
+            if not np.isclose(amp, 0):
+                state[bin(basis)[2:].zfill(width)] = amp
+        return state, width
+
+    @staticmethod
+    def dict_to_statevector(state: dict, width):
+        state_vector = np.zeros(1 << width)
+        for basis, amp in state.items():
+            if not np.isclose(amp, 0):
+                basis = int('0b' + basis)
+                state_vector[basis] = amp
+        return state_vector
