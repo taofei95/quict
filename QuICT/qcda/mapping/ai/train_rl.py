@@ -11,7 +11,7 @@ import torch.nn as nn
 import torch.optim as optim
 from QuICT.core import *
 from QuICT.core.gate.composite_gate import CompositeGate
-from QuICT.qcda.mapping.ai.gnn_mapping import GnnMapping
+from QuICT.qcda.mapping.ai.nn_mapping import NnMapping
 from QuICT.qcda.mapping.ai.rl_agent import Agent, Transition
 from QuICT.tools.interface.qasm_interface import OPENQASMInterface
 from torch.utils.tensorboard import SummaryWriter
@@ -101,14 +101,14 @@ class Trainer:
 
         # DQN
         print("Resetting policy & target model...")
-        self._policy_net = GnnMapping(
+        self._policy_net = NnMapping(
             qubit_num=self._topo.qubit_number,
             max_gate_num=max_gate_num,
             feat_dim=feat_dim,
             action_num=self._agent.action_num,
         ).to(device=device)
         self._policy_net.train(True)
-        self._target_net = GnnMapping(
+        self._target_net = NnMapping(
             qubit_num=self._topo.qubit_number,
             max_gate_num=max_gate_num,
             feat_dim=feat_dim,
@@ -327,7 +327,7 @@ class Trainer:
                 running_loss /= observe_period
                 running_reward /= observe_period
                 gate_num = self._agent.count_gate_num()
-                layout_name = self._agent.state.topo.name
+                layout_name = self._agent.state.topo_info.topo.name
                 print(
                     f"    [{i+1:<4}] loss: {running_loss:6.4f}, reward: {running_reward:4.2f}, "
                     + f"#gate: {gate_num}, explore rate: {rate:4.2f} action/s, layout name: {layout_name}"

@@ -9,13 +9,13 @@ import torch
 from QuICT.core import *
 from QuICT.core.gate import *
 from QuICT.core.utils import CircuitBased
-from QuICT.qcda.mapping.ai.data_factory import (
-    CircuitState,
+from QuICT.qcda.mapping.ai.data_def import (
+    CircuitInfo,
     DataFactory,
     State,
     Transition,
 )
-from QuICT.qcda.mapping.ai.gnn_mapping import GnnMapping
+from QuICT.qcda.mapping.ai.nn_mapping import NnMapping
 from torch_geometric.data import Batch as PygBatch
 
 
@@ -77,7 +77,7 @@ class Agent:
 
     def _select_action(
         self,
-        policy_net: GnnMapping,
+        policy_net: NnMapping,
         policy_net_device: str,
     ):
         a = self.action_num
@@ -96,7 +96,7 @@ class Agent:
 
     def select_action(
         self,
-        policy_net: GnnMapping,
+        policy_net: NnMapping,
         policy_net_device: str,
         epsilon_random: bool = False,
     ) -> Tuple[int, int]:
@@ -125,7 +125,7 @@ class Agent:
             )
 
     def count_gate_num(self) -> int:
-        return self.state.circ_state.count_gate()
+        return self.state.circ_info.count_gate()
 
     def take_action(
         self, action: Tuple[int, int]
@@ -140,7 +140,7 @@ class Agent:
         """
         self.explore_step += 1
         u, v = action
-        graph = self.state.topo_graph
+        graph = self.state.topo_info.topo_graph
         scale = self.reward_scale
         if not graph.has_edge(u, v):
             reward = -scale
@@ -155,13 +155,13 @@ class Agent:
 
         next_logic2phy = copy.deepcopy(self.state.logic2phy)
         next_logic2phy[u], next_logic2phy[v] = next_logic2phy[v], next_logic2phy[u]
-        next_circ_state = self.state.circ_state.copy()
+        next_circ_state = self.state.circ_info.copy()
         action_penalty = -1
         reward = action_penalty
         # Execute as many as possible
         cnt = next_circ_state.eager_exec(
             logic2phy=next_logic2phy,
-            topo_graph=self.state.topo_graph,
+            topo_graph=self.state.topo_info.topo_graph,
             physical_circ=self.mapped_circ,
         )
         self._last_action = action
@@ -176,16 +176,9 @@ class Agent:
             self.state = next_state
             return prev_state, next_state, reward, True
 
-        next_circ_pyg = next_circ_state.to_pyg(next_logic2phy)
-
         next_state = State(
-            circ_graph=next_circ_state,
-            topo=self.state.topo,
-            topo_mask=self.state.topo_mask,
-            topo_graph=self.state.topo_graph,
-            topo_dist=self.state.topo_dist,
-            topo_edges=self.state.topo_edges,
-            circ_pyg_data=next_circ_pyg,
+            circ_info=next_circ_state,
+            topo=self.state.topo_info.topo,
             logic2phy=next_logic2phy,
         )
         prev_state = self.state
@@ -197,7 +190,7 @@ class Agent:
         max_gate_num: int,
         circ: CircuitBased,
         layout: Layout,
-        policy_net: GnnMapping,
+        policy_net: NnMapping,
         policy_net_device: str,
         cutoff: int = None,
     ) -> Tuple[CompositeGate, CompositeGate]:
@@ -218,24 +211,15 @@ class Agent:
         """
         logic2phy = [i for i in range(layout.qubit_number)]
         agent = Agent(topo=layout, max_gate_num=max_gate_num)
-        topo_graph = agent.factory._get_topo_graph(topo=layout)
-        topo_dist = agent.factory._get_topo_dist(topo_graph=topo_graph)
-        topo_mask = agent.factory._get_topo_mask(topo_graph=topo_graph)
-        topo_edges = agent.factory._get_topo_edges(topo_graph=topo_graph)
-        circ_state = CircuitState(circ=circ, max_gate_num=policy_net._max_gate_num)
-        circ_pyg = circ_state.to_pyg(logic2phy)
+        topo_graph = agent.factory.get_topo_graph(topo=layout)
+        circ_state = CircuitInfo(circ=circ, max_gate_num=policy_net._max_gate_num)
 
         circ_state.eager_exec(
             logic2phy=logic2phy, topo_graph=topo_graph, physical_circ=agent.mapped_circ
         )
         agent.state = State(
-            circ_graph=circ_state,
+            circ_info=circ_state,
             topo=layout,
-            topo_mask=topo_mask,
-            topo_graph=topo_graph,
-            topo_dist=topo_dist,
-            topo_edges=topo_edges,
-            circ_pyg_data=circ_pyg,
             logic2phy=logic2phy,
         )
 

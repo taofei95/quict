@@ -7,7 +7,7 @@ import os.path as osp
 from QuICT.core import *
 from QuICT.core.layout.layout import Layout
 from QuICT.core.utils import GateType
-from QuICT.qcda.mapping.ai.data_factory import DataFactory
+from QuICT.qcda.mapping.ai.data_def import DataFactory
 # from QuICT.qcda.mapping.mcts import MCTSMapping
 
 factory = DataFactory(max_qubit_num=30, max_gate_num=50)

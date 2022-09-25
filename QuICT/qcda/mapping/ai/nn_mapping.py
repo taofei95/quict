@@ -1,9 +1,7 @@
-import math
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch_geometric.nn as gnn
-from scipy.stats import ortho_group
 
 
 class CircuitGnn(nn.Module):
@@ -25,7 +23,7 @@ class CircuitGnn(nn.Module):
                     in_channels=feat_dim,
                     out_channels=feat_dim,
                 )
-                for i in range(8)
+                for _ in range(8)
             ]
         )
 
@@ -42,7 +40,10 @@ class CircuitGnn(nn.Module):
         return x
 
 
-class GnnMapping(nn.Module):
+CircuitNn = CircuitGnn
+
+
+class NnMapping(nn.Module):
     def __init__(
         self,
         qubit_num: int,
@@ -65,7 +66,7 @@ class GnnMapping(nn.Module):
         )
         nn.init.orthogonal_(self._x_trans.weight)
 
-        self._circ_gnn = CircuitGnn(
+        self._circ_gnn = CircuitNn(
             qubit_num=qubit_num,
             max_gate_num=max_gate_num,
             feat_dim=feat_dim,
