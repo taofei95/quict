@@ -157,13 +157,86 @@ class SparseQuantumStatePreparation(object):
         if self.input_format == 'state_array':
             # By the dict rule, only the last value of duplicated key works.
             state = dict(state_array)
+            width = len(state.keys()[0])
+            for basis in state.keys():
+                assert len(basis) == width, ValueError('Bases must have the same length.')
         if self.input_format == 'state_vector':
             state = dict()
+            width = int(round(np.log2(state_array.size)))
             for basis, amp in enumerate(state_array):
                 if not np.isclose(amp, 0):
                     state[bin(basis)[2:]] = amp
 
         state: dict
+
+    def reduce_state(self, state: dict, width: int) -> CompositeGate:
+        """
+        Algorithm 1 in the reference, to reduce the non-zero entries in the state vector.
+
+        Args:
+            state(dict): a sparse state dict
+            width(int): the width of the state
+
+        Returns:
+            CompositeGate: a CompositeGate that reduce the state dict
+        """
+        gates = CompositeGate()
+        self.dif_qubits = []
+        self.dif_values = []
+
+        x1 = self.dif_qubits_values(state.keys(), width)
+        dif = self.dif_qubits.pop()
+        self.dif_values.pop()
+
+        T_prime = []
+        for x in state.keys():
+            for b, v in zip(self.dif_qubits, self.dif_values):
+                if x[b] != v:
+                    break
+                T_prime.append(x)
+        T_prime.remove(x1)
+        x2 = self.dif_qubits_values(T_prime, width)
+
+        if x1[dif] != '1':
+            X & dif | gates
+        for b in range(width):
+            if b == dif:
+                continue
+            if x1[b] != x2[b]:
+                CX & [dif, b] | gates
+        for b in self.dif_qubits:
+            if x2[b] != '1':
+                X & b | gates
+
+        mcg = self.multicontrol_G(len(self.dif_qubits), state[x2], state[x1])
+        mcg & (self.dif_qubits + [dif]) | gates
+        return gates
+
+    def dif_qubits_values(self, basis_list: list, width: int):
+        while len(basis_list) > 1:
+            dif_b = None
+            dif_T0 = []
+            dif_T1 = []
+            for b in range(width):
+                T0 = []
+                T1 = []
+                for x in basis_list:
+                    if x[b] == '0':
+                        T0.append(x)
+                    else:
+                        T1.append(x)
+                if T0 and T1 and np.abs(len(dif_T0) - len(dif_T1)) < np.abs(len(T0) - len(T1)):
+                    dif_b = b
+                    dif_T0 = T0
+                    dif_T1 = T1
+            self.dif_qubits.append(dif_b)
+            if len(dif_T0) < len(dif_T1):
+                self.dif_values.append(0)
+                basis_list = dif_T0
+            else:
+                self.dif_values.append(1)
+                basis_list = dif_T1
+        return basis_list[0]
 
     @staticmethod
     def multicontrol_G(control: int, alpha: complex, beta: complex) -> CompositeGate:
@@ -181,7 +254,9 @@ class SparseQuantumStatePreparation(object):
         References:
             https://arxiv.org/abs/quant-ph/9503016
         """
-        assert np.isclose(np.power(np.abs(alpha), 2) + np.power(np.abs(beta), 2), 1)
+        arr = np.array([alpha, beta])
+        arr /= np.linalg.norm(arr)
+        print(np.linalg.norm(arr))
         omega = 2 * np.arcsin(np.abs(alpha))
         gamma = np.angle(alpha) - np.angle(beta)
 
