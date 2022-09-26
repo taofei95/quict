@@ -43,7 +43,7 @@ def test_multicontrol_G():
         for _ in range(10):
             state_vector = random_unit_vector(2)
             alpha, beta = state_vector
-            gates = SparseQuantumStatePreparation.multicontrol_G(n, alpha, beta)
+            gates, phase = SparseQuantumStatePreparation.multicontrol_G(n, alpha, beta)
             omega = 2 * np.arcsin(np.abs(alpha))
             gamma = np.angle(alpha) - np.angle(beta)
             mat = np.array([
@@ -51,7 +51,7 @@ def test_multicontrol_G():
                 [np.exp(-1j * gamma) * np.cos(omega / 2), -np.sin(omega / 2)],
             ])
             assert np.allclose(gates.matrix()[-2:, -2:], mat)
-            assert(np.isclose(gates.matrix()[-2:, -2:].dot(state_vector.T)[1], 0))
+            assert np.allclose(gates.matrix()[-2:, -2:-1].reshape(2), np.exp(-1j * phase) * state_vector)
 
 
 def test_reduce_state():

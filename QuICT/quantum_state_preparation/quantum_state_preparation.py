@@ -228,7 +228,7 @@ class SparseQuantumStatePreparation(object):
             if x2[b] != '1':
                 X & b | gates
 
-        mcg = self.multicontrol_G(len(self.dif_qubits), state[x2], state[x1])
+        mcg, _ = self.multicontrol_G(len(self.dif_qubits), state[x2], state[x1])
         mcg & (self.dif_qubits + [dif])
         mcg | gates
         return gates
@@ -262,7 +262,7 @@ class SparseQuantumStatePreparation(object):
     @staticmethod
     def multicontrol_G(control: int, alpha: complex, beta: complex) -> CompositeGate:
         """
-        Create a CompositeGate that maps alpha|0> + beta|1> to e^{i lambda} |0> with some control qubits
+        Create a CompositeGate that maps alpha|0> + beta|1> to e^{i phase} |0> with some control qubits
 
         Args:
             control(int): the number of control qubits
@@ -288,7 +288,7 @@ class SparseQuantumStatePreparation(object):
         Ry(-omega / 2) & control | gates
         Rz(-gamma) & control | gates
 
-        return gates
+        return gates, np.angle(alpha)
 
     @staticmethod
     def statevector_to_dict(state_vector):
