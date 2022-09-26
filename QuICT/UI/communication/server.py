@@ -285,6 +285,8 @@ def load_file(content):
 def optimize_qasm(uid, qasm_text, topology, set, optimize, mapping): 
 
     circuit = load_data(data=qasm_text)
+    if not optimize and not mapping:
+        return circuit
 
     circuit_topology = Layout(circuit.width())
     for edge in topology:
@@ -313,13 +315,15 @@ def optimize_qasm(uid, qasm_text, topology, set, optimize, mapping):
         'info',  {'uuid': uid, 'info': f"Compiling circuit..."}, namespace="/api/pty")
 
     qcda = QCDA()
-    qcda.add_default_synthesis(circuit_set)
+    if set['name'] not in ['FullSet']:
+        qcda.add_default_synthesis(circuit_set)
     if optimize:
         qcda.add_default_optimization()
     if mapping:
         qcda.add_default_mapping(circuit_topology)
 
-    qcda.add_default_synthesis(circuit_set)
+    if set['name'] not in ['FullSet']:
+        qcda.add_default_synthesis(circuit_set)
     circuit_phy = qcda.compile(circuit)
     
     logger.info(f"circuit_phy.qasm() {circuit_phy.qasm()}")
@@ -412,7 +416,7 @@ def cal_mod(x, y):
     z = complex(x, y)
     return cmath.polar(z)
 
-def load_data(data) -> OPENQASMInterface:
+def load_data(data) -> Circuit:
     instance = OPENQASMInterface()
     instance.ast = Qasm(data=data).parse()
     instance.analyse_circuit_from_ast(instance.ast)
