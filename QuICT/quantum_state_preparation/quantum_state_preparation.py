@@ -1,5 +1,6 @@
 import numpy as np
 
+from QuICT.core import Circuit
 from QuICT.core.gate import CompositeGate, GateType, GPhase, X, CX, Ry, Rz
 from QuICT.qcda.synthesis import MCTWithoutAux, UniformlyRotation, UnitaryDecomposition
 from QuICT.simulation.state_vector import ConstantStateVectorSimulator
@@ -161,7 +162,7 @@ class SparseQuantumStatePreparation(object):
             width = len(state.keys()[0])
             for basis in state.keys():
                 assert len(basis) == width, ValueError('Bases must have the same length.')
-            state_vector = self.dict_to_statevector(state)
+            state_vector = self.dict_to_statevector(state, width)
         if self.input_format == 'state_vector':
             state, width = self.statevector_to_dict(state_array)
             state_vector = np.array(state_array)
@@ -170,8 +171,10 @@ class SparseQuantumStatePreparation(object):
         simulator = ConstantStateVectorSimulator()
         while len(state) > 1:
             gates_last = self.reduce_state(state, width)
-            state_vector = self.dict_to_statevector(state)
-            state_vector = simulator.run(gates_last, state_vector)
+            state_vector = self.dict_to_statevector(state, width)
+            cir = Circuit(width)
+            cir.extend(gates_last)
+            state_vector = simulator.run(cir, state_vector).get()
             state, width = self.statevector_to_dict(state_vector)
             gates.extend(gates_last)
 
@@ -198,9 +201,12 @@ class SparseQuantumStatePreparation(object):
 
         T_prime = []
         for x in state.keys():
+            tp = True
             for b, v in zip(self.dif_qubits, self.dif_values):
-                if x[b] != v:
+                if x[b] != str(v):
+                    tp = False
                     break
+            if tp:
                 T_prime.append(x)
         T_prime.remove(x1)
         x2 = self.dif_qubits_values(T_prime, width)
@@ -217,7 +223,8 @@ class SparseQuantumStatePreparation(object):
                 X & b | gates
 
         mcg = self.multicontrol_G(len(self.dif_qubits), state[x2], state[x1])
-        mcg & (self.dif_qubits + [dif]) | gates
+        mcg & (self.dif_qubits + [dif])
+        mcg | gates
         return gates
 
     def dif_qubits_values(self, basis_list: list, width: int):
@@ -233,12 +240,12 @@ class SparseQuantumStatePreparation(object):
                         T0.append(x)
                     else:
                         T1.append(x)
-                if T0 and T1 and np.abs(len(dif_T0) - len(dif_T1)) < np.abs(len(T0) - len(T1)):
+                if T0 and T1 and np.abs(len(dif_T0) - len(dif_T1)) <= np.abs(len(T0) - len(T1)):
                     dif_b = b
                     dif_T0 = T0
                     dif_T1 = T1
             self.dif_qubits.append(dif_b)
-            if len(dif_T0) < len(dif_T1):
+            if len(dif_T0) <= len(dif_T1):
                 self.dif_values.append(0)
                 basis_list = dif_T0
             else:
@@ -264,7 +271,7 @@ class SparseQuantumStatePreparation(object):
         """
         arr = np.array([alpha, beta])
         arr /= np.linalg.norm(arr)
-        print(np.linalg.norm(arr))
+        alpha, beta = arr
         omega = 2 * np.arcsin(np.abs(alpha))
         gamma = np.angle(alpha) - np.angle(beta)
 
@@ -288,9 +295,9 @@ class SparseQuantumStatePreparation(object):
 
     @staticmethod
     def dict_to_statevector(state: dict, width):
-        state_vector = np.zeros(1 << width)
+        state_vector = np.zeros(1 << width, dtype=complex)
         for basis, amp in state.items():
             if not np.isclose(amp, 0):
-                basis = int('0b' + basis)
+                basis = int(basis, base=2)
                 state_vector[basis] = amp
         return state_vector

@@ -20,7 +20,7 @@ class MCTWithoutAux(object):
         """
         gates = CompositeGate()
         if n == 1:
-            X & 1 | gates
+            X & 0 | gates
             return gates
 
         if n == 2:
