@@ -910,10 +910,8 @@ export default {
     n_UpdateCustomerSet(customerSet) {
       // 更新customerSet
       console.log(`customer Set changed: ${customerSet}`);
-      let customer_set = { name: "CustomerSet", gates: customerSet };
       this.n_customer_set = customerSet;
-      this.n_all_sets.pop();
-      this.n_all_sets.push(customer_set);
+      this.n_all_sets[1].gates = customerSet;
     },
     n_UpdataTopology(topology, qbit) {
       // 更新topology
@@ -938,10 +936,8 @@ export default {
     l_UpdateCustomerSet(customerSet) {
       // 更新customerSet
       console.log(`customer Set changed: ${customerSet}`);
-      let customer_set = { name: "CustomerSet", gates: customerSet };
       this.l_customer_set = customerSet;
-      this.l_all_sets.pop();
-      this.l_all_sets.push(customer_set);
+      this.l_all_sets[1].gates = customerSet;
     },
     l_UpdataTopology(topology, qbit) {
       // 更新topology
@@ -1019,9 +1015,7 @@ export default {
       }
       this.n_VisContent.gateSet = content.all_sets[0]["gates"];
       this.n_customer_set = [];
-      let customer_set = { name: "CustomerSet", gates: [] };
       this.n_all_sets = content.all_sets;
-      this.n_all_sets.push(customer_set);
       this.$refs.n_visVue.vis_change();
     });
 
@@ -1033,9 +1027,8 @@ export default {
       }
       this.l_VisContent.gateSet = content.all_sets[0]["gates"];
       this.l_customer_set = [];
-      let customer_set = { name: "CustomerSet", gates: [] };
       this.l_all_sets = content.all_sets;
-      this.l_all_sets.push(customer_set);
+  
       this.l_qbit = this.l_VisContent.q;
       this.l_ProgramText = this.l_GenQASM();
       // this.$refs.n_visVue.vis_change();

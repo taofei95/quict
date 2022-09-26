@@ -197,7 +197,7 @@ def get_gate_set(content):
     # QFT, IQFT,Perm, ControlPermMulDetail, PermShift, ControlPermShift, PermMul, ControlPermMul, PermFx, Unitary, ShorInitial,
     FullSet = [H, S, S_dagger, X, Y, Z, SX, SY, SW, ID, U1, U2, U3, Rx, Ry, Rz, T, T_dagger, Phase, CZ,
                CX, CY, CH, CRz, CU1, CU3, FSim, Rxx, Ryy, Rzz, Measure, Reset, Barrier, Swap, CCX, CCRz,  CSwap]
-    for name, gateset in {'FullSet': FullSet, 'GoogleSet': [FSim, SX, SY, SW, Rx, Ry], 'IBMQSet': [CX, Rz, SX, X], 'IonQSet': [Rxx, Rx, Ry, Rz], 'USTCSet': [CX, Rx, Ry, Rz, H, X]}.items():
+    for name, gateset in {'FullSet': FullSet, 'CustomerSet':[], 'GoogleSet': [FSim, SX, SY, SW, Rx, Ry], 'IBMQSet': [CX, Rz, SX, X], 'IonQSet': [Rxx, Rx, Ry, Rz], 'USTCSet': [CX, Rx, Ry, Rz, H, X]}.items():
         logger.warning(name)
         simpleSet = {'name': name, 'gates': []}
         for gate in gateset:

@@ -692,10 +692,8 @@ export default {
     UpdateCustomerSet(customerSet) {
       // 更新customerSet
       console.log(`customer Set changed: ${customerSet}`);
-      let customer_set = { name: "CustomerSet", gates: customerSet };
       this.customer_set = customerSet;
-      this.all_sets.pop();
-      this.all_sets.push(customer_set);
+      this.all_sets[1].gates = customerSet;
     },
     UpdataTopology(topology, qbit) {
       // 更新topology
@@ -750,9 +748,7 @@ export default {
       }
       this.VisContent.gateSet = content.all_sets[0]["gates"];
       this.customer_set = [];
-      let customer_set = { name: "CustomerSet", gates: [] };
       this.all_sets = content.all_sets;
-      this.all_sets.push(customer_set);
       this.$refs.visVue.vis_change();
     });
     this.socket.on("info", (content) => {

@@ -3,7 +3,7 @@
     <el-col :span="12">
       <span> </span>
     </el-col>
-    <el-dialog title="Instruction Set" v-model="dialogCmdVisible" width="30%" :before-close="handleCmdClose">
+    <el-dialog title="Instruction Set" v-model="dialogCmdVisible" width="30%">
       <div style="text-align: left">
         <el-radio v-for="instruction in all_sets" :key="instruction" :label="all_sets.indexOf(instruction)"
           v-model="currentSet" style="display: inline-flex">{{ instruction.name }}</el-radio>
@@ -28,13 +28,13 @@
       </div>
       <template #footer>
         <span class="dialog-footer">
-          <el-button @click="dialogCmdVisible = false">Cancel</el-button>
+          <!-- <el-button @click="dialogCmdVisible = false">Cancel</el-button> -->
           <el-button type="primary" @click="dialogCmdVisible = false">OK</el-button>
         </span>
       </template>
     </el-dialog>
 
-    <el-dialog title="Topology" v-model="dialogTpVisible" width="30%" :before-close="handleTpClose">
+    <el-dialog title="Topology" v-model="dialogTpVisible" width="30%">
       <div>
         <div>
           <el-input v-model="dialogTpNodeCount" label="n=" @change="TpNodeCountChange"></el-input>
@@ -60,20 +60,16 @@ TpConfirm();
       </template>
     </el-dialog>
 
-    <el-dialog title="Backend" v-model="dialogBeVisible" width="30%" :before-close="handleBeClose">
+    <el-dialog title="Backend" v-model="dialogBeVisible" width="30%">
       <div>
         <span>Device</span>
         <el-radio v-model="dialogBe" label="CPU">CPU</el-radio>
         <el-radio v-model="dialogBe" label="GPU">GPU</el-radio>
-        <el-radio v-model="dialogBe" label="qiskit">qiskit</el-radio>
-        <el-radio v-model="dialogBe" label="qcompute">qcompute</el-radio>
+        <!-- <el-radio v-model="dialogBe" label="qiskit">qiskit</el-radio>
+        <el-radio v-model="dialogBe" label="qcompute">qcompute</el-radio> -->
       </div>
       <div>
-        <el-select placeholder="Backend" v-if="dialogBe == 'CPU'" v-model="dialogBe_Backend">
-          <span>Backend</span>
-          <el-option key="unitary" label="unitary" value="unitary"> </el-option>
-        </el-select>
-        <el-select v-model="dialogBe_Backend" placeholder="Backend" v-if="dialogBe == 'GPU'">
+        <el-select v-model="dialogBe_Backend" placeholder="Backend">
           <span>Backend</span>
           <el-option v-for="item in dialogBe_Backend_options" :key="item.value" :label="item.label" :value="item.value">
           </el-option>
@@ -81,13 +77,13 @@ TpConfirm();
       </div>
       <template #footer>
         <span class="dialog-footer">
-          <el-button @click="dialogBeVisible = false">Cancel</el-button>
+          <!-- <el-button @click="dialogBeVisible = false">Cancel</el-button> -->
           <el-button type="primary" @click="dialogBeVisible = false">OK</el-button>
         </span>
       </template>
     </el-dialog>
 
-    <el-dialog title="Setting" v-model="dialogSeVisible" width="30%" :before-close="handleSeClose">
+    <el-dialog title="Setting" v-model="dialogSeVisible" width="30%">
       <div>
         <span style="display: block; text-align: center">Shots</span>
         <el-input v-model="dialogSeShots" label="n="></el-input>
@@ -96,24 +92,10 @@ TpConfirm();
           <el-radio v-model="dialogSe_Precision" label="single">single</el-radio>
           <el-radio v-model="dialogSe_Precision" label="double">double</el-radio>
         </div>
-        <div v-if="dialogBe == 'GPU' && dialogBe_Backend == 'statevector'">
-          <span style="display: block; text-align: center" id="GPU_device_ID">GPU device ID</span>
-          <el-input v-model="dialogSe_GPU_device_id" label="GPU_device_ID">0</el-input>
-          <el-checkbox v-model="dialogSe_sync" style="line-hight: 20px">Sync</el-checkbox>
-          <el-checkbox v-model="dialogSe_optimize" style="line-hight: 20px">Optimize</el-checkbox>
-        </div>
-        <div v-if="dialogBe == 'GPU' && dialogBe_Backend == 'multiGPU'">
-          <el-input v-model="dialogSe_ndev" label="NDEV">0</el-input>
-          <el-checkbox v-model="dialogSe_sync" style="line-hight: 20px">Sync</el-checkbox>
-        </div>
-        <div v-if="dialogBe == 'qiskit' || dialogBe == 'qcompute'">
-          <span style="display: block; text-align: center" id="Token">Token</span>
-          <el-input v-model="dialogSeToken" label="Token"></el-input>
-        </div>
       </div>
       <template #footer>
         <span class="dialog-footer">
-          <el-button @click="dialogSeVisible = false">Cancel</el-button>
+          <!-- <el-button @click="dialogSeVisible = false">Cancel</el-button> -->
           <el-button type="primary" @click="dialogSeVisible = false">OK</el-button>
         </span>
       </template>
@@ -222,7 +204,7 @@ export default {
     };
   },
   methods: {
-    handleCmdClose(done) {
+    /* handleCmdClose(done) {
       this.$confirm("确认关闭？")
         .then(() => {
           console.log(this.currentSet);
@@ -246,7 +228,7 @@ export default {
           done();
         })
         .catch(() => { });
-    },
+    }, */
     showTopologyEdit() {
       this.dialogTpVisible = true;
       this.ResetTopology();
