@@ -5,8 +5,15 @@
     </el-col>
     <el-dialog title="Instruction Set" v-model="dialogCmdVisible" width="30%">
       <div style="text-align: left">
-        <el-radio v-for="instruction in all_sets" :key="instruction" :label="all_sets.indexOf(instruction)"
-          v-model="currentSet" style="display: inline-flex">{{ instruction.name }}</el-radio>
+        <div>
+        <el-radio :label="0" v-model="currentSet" style="display: inline-block">{{ all_sets[0].name }}</el-radio>
+        <el-radio :label="1" v-model="currentSet" style="display: inline-block">{{ all_sets[1].name }}</el-radio>
+        <br />
+        <el-radio :label="2" v-model="currentSet" style="display: inline-block">{{ all_sets[2].name }}</el-radio>
+        <el-radio :label="3" v-model="currentSet" style="display: inline-block">{{ all_sets[3].name }}</el-radio>
+        <el-radio :label="4" v-model="currentSet" style="display: inline-block">{{ all_sets[4].name }}</el-radio>
+        <el-radio :label="5" v-model="currentSet" style="display: inline-block">{{ all_sets[5].name }}</el-radio>
+      </div>
         <div>
           <span style="display: block"><b>Customer Set</b>(Click to remove from Customer Set)</span>
           <img v-for="gate in customerSet" :key="gate" :src="'./assets/gate_set/' + gate.img" @click="
