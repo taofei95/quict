@@ -2,13 +2,20 @@ import os
 import base64
 import json
 import requests
-import Crypto
+from Crypto.Cipher import AES
+from Crypto.Util.Padding import unpad, pad
+
+from .utils import get_config
 
 
 class EncryptedRequest:
-    def __init__(self, username: str):
-        self._user = username
-        self._user_password = None      # Get userpassword by username
+    def __init__(self):
+        pass
+
+    def get_current_user(self):
+        current_login_status = get_config()
+        # return current_login_status['username']
+        return "testestetste"
 
     def get(self, url: str):
         aes_key = os.urandom(16)
@@ -17,7 +24,7 @@ class EncryptedRequest:
         # Get response.
         response = requests.get(
             url=url,
-            headers=json.dumps(header),
+            headers=json.dumps(header)
         )
 
         # decrepted response
@@ -33,7 +40,7 @@ class EncryptedRequest:
         response = requests.post(
             url=url,
             headers=json.dumps(header),
-            data=json_dict
+            data=self.encryptedmsg(json_dict, aes_key)
         )
 
         # decrepted response
@@ -49,42 +56,51 @@ class EncryptedRequest:
         response = requests.delete(
             url=url,
             headers=json.dumps(header),
-            data=json_dict
+            data=self.encryptedmsg(json_dict, aes_key)
         )
 
         # decrepted response
         decrpted_response = self._decrepted_response(response)
         return json.loads(decrpted_response)
 
-    def _padding(self, value: str, block_size: int = 16) -> bytes:
-        if len(value) % block_size != 0:
-            value += '\0' * (block_size - len(value) % block_size)
-
-        return str.encode(value)
-
     def _generate_header(self, aes_key: bytes):
+        username = self.get_current_user()
         return {
-            'user_name': self._user,
-            'aes_key': self.encryptedmsg(aes_key, self._user_password)
+            'username': username,
+            'aes_key': self.encryptedmsg(aes_key, username)
         }
 
     def _decrepted_response(self, response: requests.Response):
         encrypted_aes_key = response.headers.get('aes_key')
         content = response.content
 
-        aes_key = self.decryptedmsg(encrypted_aes_key, self._user_password)
+        aes_key = self.decryptedmsg(encrypted_aes_key, self.get_current_user(), True)
         return self.decryptedmsg(content, aes_key)
 
-    def encryptedmsg(self, msg: str, key: str) -> bytes:
-        aes = Crypto.Cipher.AES.new(self._padding(key), mode=Crypto.Cipher.AES.MODE_ECB)
-        aes_message = aes.encrypt(self._padding(msg))
-        encrypted_text = str(base64.encodebytes(aes_message), encoding='utf-8')
+    def encryptedmsg(self, msg: str, key: bytes) -> bytes:
+        if isinstance(msg, str):
+            msg = msg.encode()
+
+        if isinstance(key, str):
+            key = key.encode()
+    
+        aes = AES.new(pad(key, 16), mode=AES.MODE_ECB)
+        aes_message = aes.encrypt(pad(msg, 16))
+        encrypted_text = base64.encodebytes(aes_message)
 
         return encrypted_text
 
-    def decryptedmsg(self, msg: bytes, key: str):
-        aes = Crypto.Cipher.AES.new(self._padding(key), mode=Crypto.Cipher.AES.MODE_ECB)
-        base64_decryptedmsg = base64.decodebytes(msg.encode(encoding='utf-8'))
-        encrypted_msg = str(aes.decrypt(base64_decryptedmsg), encoding='utf-8').replace('\0', '')
+    def decryptedmsg(self, msg: bytes, key: str, output_byte: bool = False):
+        if isinstance(msg, str):
+            msg = msg.encode()
+
+        if isinstance(key, str):
+            key = key.encode()
+
+        aes = AES.new(pad(key, 16), mode=AES.MODE_ECB)
+        base64_decryptedmsg = base64.decodebytes(msg)
+        encrypted_msg = unpad(aes.decrypt(base64_decryptedmsg), 16)
+        if not output_byte:
+            encrypted_msg = str(unpad(aes.decrypt(base64_decryptedmsg), 16), encoding='utf-8')
 
         return encrypted_msg

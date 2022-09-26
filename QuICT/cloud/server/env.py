@@ -5,7 +5,7 @@ env_blueprint = Blueprint(name="env", import_name=__name__)
 URL_PREFIX = "/quict/env"
 
 
-@cluster_blueprint.route(f"{URL_PREFIX}/login", methods=["GET"])
+@cluster_blueprint.route(f"{URL_PREFIX}/login", methods=["POST"])
 def login():
     """start a job. """
     return [4, 5, 6]

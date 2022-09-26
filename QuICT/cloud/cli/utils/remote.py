@@ -2,10 +2,11 @@ from QuICT.cloud.client.remote import QuICTRemoteManager
 from .helper_function import yaml_decompostion
 
 
-def login(username: str, password: str):
-    global remote_manager
-    remote_manager = QuICTRemoteManager(username, password)
-    remote_manager.login()
+remote_manager = QuICTRemoteManager()
+
+
+def login(name: str, password: str):
+    remote_manager.login(name, password)
 
 
 def logout():
