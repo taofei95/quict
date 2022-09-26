@@ -129,7 +129,7 @@ class SparseQuantumStatePreparation(object):
     For a sparse quantum state |psi>, i.e. only a few of entries in the statevector is not zero,
     create a circuit C that |psi> = C |0>
     """
-    def __init__(self, input_format='state_array'):
+    def __init__(self, input_format='state_vector'):
         """
         Despite the original state vector, we could also use a 'state array' to describe a sparse quantum state.
         That is, each element [basis, amplitude] in the state array gives the amplitude on the computational basis,
@@ -159,7 +159,7 @@ class SparseQuantumStatePreparation(object):
         if self.input_format == 'state_array':
             # By the dict rule, only the last value of duplicated key works.
             state = dict(state_array)
-            width = len(state.keys()[0])
+            width = len(list(state.keys())[0])
             for basis in state.keys():
                 assert len(basis) == width, ValueError('Bases must have the same length.')
             state_vector = self.dict_to_statevector(state, width)
@@ -178,6 +178,12 @@ class SparseQuantumStatePreparation(object):
             state, width = self.statevector_to_dict(state_vector)
             gates.extend(gates_last)
 
+        x = list(state.keys())[0]
+        for b in range(width):
+            if x[b] == '1':
+                X & b | gates
+        phase = -np.angle(state[x])
+        GPhase(phase) & 0 | gates
         return gates.inverse()
 
     def reduce_state(self, state: dict, width: int) -> CompositeGate:
