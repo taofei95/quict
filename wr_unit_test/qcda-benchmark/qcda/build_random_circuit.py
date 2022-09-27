@@ -5,13 +5,23 @@ from QuICT.core import Circuit
 from QuICT.core.utils.gate_type import GateType
 
 
+# single_typelist = [
+#     GateType.h, GateType.id, GateType.phase, GateType.rx, GateType.t,
+#     GateType.ry, GateType.rz, GateType.s, GateType.sdg, 
+#     GateType.tdg, GateType.u1, GateType.u2, GateType.u3
+# ]
+# double_typelist = [
+#     GateType.ch, GateType.crz, GateType.cu1, GateType.cu3, 
+#     GateType.cx, GateType.cy, GateType.cz, GateType.rxx, 
+#     GateType.rzz, GateType.swap 
+# ]
 single_typelist = [
     GateType.h, GateType.id, GateType.phase, GateType.rx, GateType.t,
     GateType.ry, GateType.rz, GateType.s, GateType.sdg, 
     GateType.tdg, GateType.u1, GateType.u2, GateType.u3
 ]
 double_typelist = [
-    GateType.ch, GateType.crz, GateType.cu1, GateType.cu3, 
+    GateType.cu1, GateType.cu3, 
     GateType.cx, GateType.cy, GateType.cz, GateType.rxx, 
     GateType.rzz, GateType.swap 
 ]
@@ -19,9 +29,9 @@ len_s, len_d = len(single_typelist), len(double_typelist)
 prob = [0.8 / len_s] * len_s + [0.2 / len_d] * len_d
 
 #build random circuit for qcda benchmark
-qubit_num = [5, 6, 7, 8, 9, 10]
+qubit_num = [5, 10, 15, 20]
 gate_multiply = [5, 7, 9, 11, 13, 15]
-folder_path = "wr_unit_test/qcda-benchmark/Random_set/qiskit"
+folder_path = "wr_unit_test/sim-benchmark/circuit/qiskitnew"
 if not os.path.exists(folder_path):
     os.makedirs(folder_path)
 

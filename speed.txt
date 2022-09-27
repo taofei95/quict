@@ -1,0 +1,5 @@
+qubit_number: 5 
+gate size: 25 
+0,QuICT run time : 0.70474
+1,QuICT run time : 0.001179
+2,QuICT run time : 0.001006
