@@ -147,11 +147,11 @@ class CommutativeOptimization(object):
         gates_depara = CompositeGate()
         try:
             parg = np.mod(gate.parg, 4 * np.pi) / (np.pi / 4)
-            if np.isclose(round(parg), parg):
-                g_list, phase = cls.depara_rule[gate.type, round(parg)]
-                for g in g_list:
-                    gates_depara.append(g & gate.targ)
-                return gates_depara, phase
+            assert np.isclose(round(parg), parg)
+            g_list, phase = cls.depara_rule[gate.type, round(parg)]
+            for g in g_list:
+                gates_depara.append(g & gate.targ)
+            return gates_depara, phase
         except Exception:
             gates_depara.append(gate)
             return gates_depara, 0

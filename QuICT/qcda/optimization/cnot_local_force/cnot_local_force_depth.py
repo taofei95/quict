@@ -10,6 +10,7 @@ from .cnot_force_depth import CnotForceDepthBfs
 from .cnot_store_force_depth import CnotStoreForceDepthBfs
 from QuICT.core import Circuit
 from QuICT.core.gate import CX, GateType
+from QuICT.qcda.utility import OutputAligner
 
 
 class CnotLocalForceDepthBfs(object):
@@ -23,6 +24,7 @@ class CnotLocalForceDepthBfs(object):
         """
         self.store = store
 
+    @OutputAligner()
     def execute(self, circuit: Circuit):
         """ optimize the circuit locally
         Args:
