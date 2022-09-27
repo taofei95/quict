@@ -159,6 +159,8 @@ class Trainer:
                 # mapped_file_path = osp.join(v_data_dir, f"mapped_{file_name}")
                 groups = pattern.match(file_name)
                 topo_name = groups[1]
+                if topo_name != self._topo.name:
+                    continue
                 topo = self._agent.factory.topo_map[topo_name]
                 circ = OPENQASMInterface.load_file(file_path).circuit
                 # mcts_mapped_circ = OPENQASMInterface.load_file(mapped_file_path).circuit
@@ -177,8 +179,7 @@ class Trainer:
             List[ValidationData]: Multiple instances.
         """
         for v_datum in self._v_data:
-            # cutoff = len(v_datum.circ.gates) * v_datum.circ.width()
-            cutoff = 30
+            cutoff = len(v_datum.circ.gates) * v_datum.circ.width()
             self._agent.mapped_circ.clean()
             result_circ, remained_circ = self._agent.map_all(
                 max_gate_num=self._max_gate_num,
@@ -397,6 +398,7 @@ class Trainer:
 
 
 if __name__ == "__main__":
-    # trainer = Trainer(topo="ibmq_lima", device="cpu")
-    trainer = Trainer(topo="ibmq_lima")
+    topo = "ibmq_lima"
+    # trainer = Trainer(topo=topo, device="cpu")
+    trainer = Trainer(topo=topo)
     trainer.train()

@@ -201,7 +201,7 @@ class DataFactory:
         qubit_num = self.topo_qubit_num_map[topo.name]
         topo_graph = self.topo_graph_map[topo.name]
 
-        min_gn = 2
+        min_gn = self._max_gate_num // 3
         gate_num = randint(min_gn, max(self._max_gate_num, min_gn))
         success = False
         while not success:
