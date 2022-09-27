@@ -6,7 +6,7 @@ import base64
 DEFAULT_ENCRYPTED_KEY = "QuICTOpenSource2022"
 
 
-def encrypted_passwd(passwd: str):
+def encrypted_passwd(passwd: str) -> str:
     key = DEFAULT_ENCRYPTED_KEY.encode('utf-8')
     passwd = passwd.encode('utf-8')
     encrypted_passwd = hmac.new(key, passwd, digestmod=sha256).digest()
@@ -16,4 +16,4 @@ def encrypted_passwd(passwd: str):
 
 
 d = "test for eudislienfsef03>/dsf"
-print(encrypted_passwd(d))
+print(type(encrypted_passwd(d)))

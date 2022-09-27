@@ -1,21 +1,20 @@
 import os
-import base64
+import datetime
 import json
+import jwt
 import requests
-from Crypto.Cipher import AES
-from Crypto.Util.Padding import unpad, pad
 
 from .utils import get_config
+from .encrypt_manager import EncryptManager
 
 
 class EncryptedRequest:
     def __init__(self):
-        pass
+        self._encrypt = EncryptManager()
 
     def get_current_user(self):
         current_login_status = get_config()
-        # return current_login_status['username']
-        return "testestetste"
+        return current_login_status['username']
 
     def get(self, url: str):
         aes_key = os.urandom(16)
@@ -40,14 +39,14 @@ class EncryptedRequest:
         response = requests.post(
             url=url,
             headers=json.dumps(header),
-            data=self.encryptedmsg(json_dict, aes_key)
+            data=self._encrypt.encryptedmsg(json_dict, aes_key)
         )
 
         # decrepted response
         decrpted_response = self._decrepted_response(response)
         return json.loads(decrpted_response)
 
-    def delete(self, url: str , json_dict: dict = None):
+    def delete(self, url: str, json_dict: dict = None):
         aes_key = os.urandom(16)
         header = self._generate_header(aes_key)
         if json_dict is not None:
@@ -56,7 +55,7 @@ class EncryptedRequest:
         response = requests.delete(
             url=url,
             headers=json.dumps(header),
-            data=self.encryptedmsg(json_dict, aes_key)
+            data=self._encrypt.encryptedmsg(json_dict, aes_key)
         )
 
         # decrepted response
@@ -65,42 +64,23 @@ class EncryptedRequest:
 
     def _generate_header(self, aes_key: bytes):
         username = self.get_current_user()
-        return {
+        payload = {
             'username': username,
-            'aes_key': self.encryptedmsg(aes_key, username)
+            'aes_key': self._encrypt.encryptedmsg(aes_key, username).decode('ascii'),
+            'exp': (datetime.datetime.utcnow() + datetime.timedelta(minutes=15)).timestamp()
         }
+
+        jwt_token = jwt.encode(
+            payload=payload,
+            key="TestForQuICT",
+            algorithm="HS256"
+        )
+
+        return {"Authorization": f"Bearer {jwt_token}"}
 
     def _decrepted_response(self, response: requests.Response):
         encrypted_aes_key = response.headers.get('aes_key')
         content = response.content
 
-        aes_key = self.decryptedmsg(encrypted_aes_key, self.get_current_user(), True)
-        return self.decryptedmsg(content, aes_key)
-
-    def encryptedmsg(self, msg: str, key: bytes) -> bytes:
-        if isinstance(msg, str):
-            msg = msg.encode()
-
-        if isinstance(key, str):
-            key = key.encode()
-    
-        aes = AES.new(pad(key, 16), mode=AES.MODE_ECB)
-        aes_message = aes.encrypt(pad(msg, 16))
-        encrypted_text = base64.encodebytes(aes_message)
-
-        return encrypted_text
-
-    def decryptedmsg(self, msg: bytes, key: str, output_byte: bool = False):
-        if isinstance(msg, str):
-            msg = msg.encode()
-
-        if isinstance(key, str):
-            key = key.encode()
-
-        aes = AES.new(pad(key, 16), mode=AES.MODE_ECB)
-        base64_decryptedmsg = base64.decodebytes(msg)
-        encrypted_msg = unpad(aes.decrypt(base64_decryptedmsg), 16)
-        if not output_byte:
-            encrypted_msg = str(unpad(aes.decrypt(base64_decryptedmsg), 16), encoding='utf-8')
-
-        return encrypted_msg
+        aes_key = self._encrypt.decryptedmsg(encrypted_aes_key, self.get_current_user(), True)
+        return self._encrypt.decryptedmsg(content, aes_key)

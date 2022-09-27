@@ -29,21 +29,26 @@ def cli_construct():
     parser.add_argument('--version', action='version', version='QuICT CLI 1.0', help="Show the current version.")
     subparsers = parser.add_subparsers()
 
+    # Build env management
+    from QuICT.cloud.cli.utils.remote import login, logout
+
     # Login
     login_sp = subparsers.add_parser(
         name="login",
         description="Login to QuICT Cloud System.",
         help="Login to QuICT Cloud System.",
     )
-    login_sp.add_argument("-n", "--name", type=str, nargs=1)
-    login_sp.add_argument("-p", "--password", type=str, nargs=1)
+    login_sp.add_argument("-n", "--name", type=str)
+    login_sp.add_argument("-p", "--password", type=str)
+    login_sp.set_defaults(func=login)
 
     # Logout
-    _ = subparsers.add_parser(
+    logout_sp = subparsers.add_parser(
         name="logout",
         description="Logout from the QuICT.",
         help="Logout from the QuICT."
     )
+    logout_sp.set_defaults(func=logout)
 
     # Circuit
     circuit_sp = subparsers.add_parser(

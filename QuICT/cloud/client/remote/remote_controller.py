@@ -2,6 +2,7 @@ from datetime import datetime
 from builtins import KeyError
 
 from .encrypt_request import EncryptedRequest
+from .encrypt_manager import EncryptManager
 from .utils import get_config, update_config
 
 
@@ -20,6 +21,7 @@ class QuICTRemoteManager:
         api_server_port: str = default_api_server_port
     ):
         self._url_prefix = f"http://{hostname}:{api_server_port}/quict"
+        self._encrypt = EncryptManager()
         self._encryptedrequest = EncryptedRequest()
 
     def _validation_login_status(self):
@@ -46,9 +48,10 @@ class QuICTRemoteManager:
     ############                Login & Logout              ############
     ####################################################################
     def login(self, username: str, password: str):
+        self._update_login_status(username, login=False)
         success = self._encryptedrequest.post(
             f"{self._url_prefix}/env/login",
-            {'username': username, 'password': password}
+            {'username': username, 'password': self._encrypt.encrypted_passwd(password)}
         )
 
         if not success:
@@ -65,7 +68,7 @@ class QuICTRemoteManager:
     def status_cluster(self):
         self._validation_login_status()
 
-        url = f"{self._url_prefix}/cluster/status"
+        url = f"{self._url_prefix}/env/status"
         return self._encryptedrequest.get(url)
 
     ####################################################################
@@ -89,7 +92,7 @@ class QuICTRemoteManager:
     def restart_job(self, job_name: str):
         url = f"{self._url_prefix}/job/{job_name}:restart"
         return self._encryptedrequest.post(url)
-    
+
     def delete_job(self, job_name: str):
         url = f"{self._url_prefix}/job/{job_name}:delete"
         return self._encryptedrequest.delete(url)
