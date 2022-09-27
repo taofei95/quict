@@ -2,6 +2,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch_geometric.nn as gnn
+from QuICT.qcda.mapping.ai.api_switch import CIRCUIT_REPR_API, CircuitReprEnum
 
 
 class CircuitGnn(nn.Module):
@@ -65,7 +66,7 @@ class CircuitRnn(nn.Module):
         return hn
 
 
-class NnMapping(nn.Module):
+class GnnMapping(nn.Module):
     def __init__(
         self,
         qubit_num: int,
@@ -94,8 +95,6 @@ class NnMapping(nn.Module):
             feat_dim=feat_dim,
         )
 
-        # self._circ_rnn = CircuitRnn(qubit_num, feat_dim)
-
         f_start = feat_dim
 
         self._mlp_1 = nn.Sequential(
@@ -114,6 +113,45 @@ class NnMapping(nn.Module):
             circ_x, data.edge_index, data.batch
         )  # [b, f]
 
-        # circ_feat = self._circ_rnn(data)
         x = self._mlp_1(circ_feat).view(-1, a)  # [b, a]
         return x
+
+class RnnMapping(nn.Module):
+    def __init__(
+        self,
+        qubit_num: int,
+        max_gate_num: int,
+        feat_dim: int,
+        action_num: int,
+    ) -> None:
+        super().__init__()
+
+        self._max_qubit_num = qubit_num
+        self._max_gate_num = max_gate_num
+        self._feat_dim = feat_dim
+        self._action_num = action_num
+
+        self._circ_rnn = CircuitRnn(qubit_num, feat_dim)
+
+        f_start = feat_dim
+
+        self._mlp_1 = nn.Sequential(
+            nn.Linear(f_start, f_start//2),
+            nn.ReLU(),
+            nn.Linear(f_start //2, self._action_num),
+        )
+
+    def forward(self, data):
+        f = self._feat_dim
+        a = self._action_num
+
+        circ_feat = self._circ_rnn(data)
+        x = self._mlp_1(circ_feat).view(-1, a)  # [b, a]
+        return x
+
+if CIRCUIT_REPR_API == CircuitReprEnum.DAG:
+    NnMapping = GnnMapping
+elif CIRCUIT_REPR_API == CircuitReprEnum.MAT_SEQ:
+    NnMapping = RnnMapping
+else:
+    NnMapping = None

@@ -1,20 +1,13 @@
 import copy
 import math
-from random import choice, random
-from typing import Dict, List, Optional, Set, Tuple, Union
+from random import random
+from typing import Dict, Tuple, Union
 
-import networkx as nx
-import numpy as np
 import torch
 from QuICT.core import *
 from QuICT.core.gate import *
 from QuICT.core.utils import CircuitBased
-from QuICT.qcda.mapping.ai.data_def import (
-    CircuitInfo,
-    DataFactory,
-    State,
-    Transition,
-)
+from QuICT.qcda.mapping.ai.data_def import CircuitInfo, DataFactory, State
 from QuICT.qcda.mapping.ai.nn_mapping import NnMapping
 from torch_geometric.data import Batch as PygBatch
 
@@ -83,9 +76,7 @@ class Agent:
         a = self.action_num
 
         # Chose an action based on policy_net
-        data = PygBatch.from_data_list([self.state.circ_pyg_data]).to(
-            policy_net_device
-        )
+        data = State.batch_from_list([self.state.to_nn_data()], policy_net_device)
         # data = self.state.circ_layered_matrices.to(policy_net_device)
         q_vec = policy_net(data).detach().cpu()
         q_vec = q_vec.view(a)  # [a]

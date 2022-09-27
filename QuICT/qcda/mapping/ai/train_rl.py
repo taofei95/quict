@@ -4,7 +4,7 @@ import re
 from collections import deque
 from random import sample
 from time import time
-from typing import Dict, List, Tuple, Union
+from typing import Dict, List, Union
 
 import torch
 import torch.nn as nn
@@ -12,7 +12,8 @@ import torch.optim as optim
 from QuICT.core import *
 from QuICT.core.gate.composite_gate import CompositeGate
 from QuICT.qcda.mapping.ai.nn_mapping import NnMapping
-from QuICT.qcda.mapping.ai.rl_agent import Agent, Transition
+from QuICT.qcda.mapping.ai.rl_agent import Agent
+from QuICT.qcda.mapping.ai.data_def import State, Transition
 from QuICT.tools.interface.qasm_interface import OPENQASMInterface
 from torch.utils.tensorboard import SummaryWriter
 from torch_geometric.data import Batch as PygBatch
@@ -210,12 +211,8 @@ class Trainer:
 
         rewards = torch.tensor(rewards, device=self._device)
 
-        data_list = [state.circ_pyg_data for state in states]
-        data_batch = PygBatch.from_data_list(data_list).to(self._device)
-        # data_list = [state.circ_layered_matrices for state in states]
-        # data_batch = nn.utils.rnn.pad_sequence(
-        #     sequences=data_list, batch_first=True
-        # ).to(self._device)
+        data_list = [state.to_nn_data() for state in states]
+        data_batch = State.batch_from_list(data_list=data_list, device=self._device)
 
         # Current Q estimation
         q_vec = self._policy_net(data_batch)  # [b, a]
@@ -228,17 +225,11 @@ class Trainer:
             dtype=torch.bool,
         )
         non_final_data_list = [
-            state.circ_pyg_data for state in next_states if state is not None
+            state.to_nn_data() for state in next_states if state is not None
         ]
-        non_final_data_batch = PygBatch.from_data_list(non_final_data_list).to(
-            self._device
+        non_final_data_batch = State.batch_from_list(
+            data_list=non_final_data_list, device=self._device
         )
-        # non_final_data_list = [
-        #     state.circ_layered_matrices for state in next_states if state is not None
-        # ]
-        # non_final_data_batch = nn.utils.rnn.pad_sequence(
-        #     sequences=non_final_data_list, batch_first=True
-        # ).to(self._device)
         next_state_values = torch.zeros(self._batch_size, device=self._device)
         next_state_values[non_final_mask] = (
             self._target_net(

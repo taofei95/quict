@@ -1,21 +1,21 @@
 import copy
-import math
 import os
 import os.path as osp
-from random import choice, randint
 import random
-from typing import Dict, Iterator, List, Optional, Set, Tuple, Union
+from random import randint
+from typing import Dict, List, Optional, Tuple, Union
 
 import networkx as nx
 import numpy as np
 import torch
+import torch.nn as nn
 from numba import njit
 from QuICT.core import *
 from QuICT.core.gate import BasicGate, CompositeGate, GateType
-from QuICT.core.layout import LayoutEdge
 from QuICT.core.utils.circuit_info import CircuitBased
+from QuICT.qcda.mapping.ai.api_switch import CIRCUIT_REPR_API, CircuitReprEnum
+from torch_geometric.data import Batch as PygBatch
 from torch_geometric.data import Data as PygData
-from torch_geometric.utils import from_networkx
 
 
 @njit
@@ -528,6 +528,29 @@ class State:
         return self.circ_info.biased_random_swap(
             self.topo_info.topo_dist, self.logic2phy
         )
+
+    def to_nn_data(self):
+        if CIRCUIT_REPR_API == CircuitReprEnum.DAG:
+            return self.circ_pyg_data
+        elif CIRCUIT_REPR_API == CircuitReprEnum.MAT_SEQ:
+            return self.circ_layered_matrices
+        else:
+            raise NotImplementedError(
+                f"Not implemented for circuit representation API {CIRCUIT_REPR_API}"
+            )
+
+    @staticmethod
+    def batch_from_list(data_list: list, device: str):
+        if CIRCUIT_REPR_API == CircuitReprEnum.DAG:
+            return PygBatch.from_data_list(data_list=data_list).to(device=device)
+        elif CIRCUIT_REPR_API == CircuitReprEnum.MAT_SEQ:
+            return nn.utils.rnn.pad_sequence(sequences=data_list, batch_first=True).to(
+                device
+            )
+        else:
+            raise NotImplementedError(
+                f"Not implemented for circuit representation API {CIRCUIT_REPR_API}"
+            )
 
 
 class Transition:

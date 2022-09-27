@@ -7,7 +7,6 @@ import os.path as osp
 from QuICT.core import *
 from QuICT.core.layout.layout import Layout
 from QuICT.core.utils import GateType
-from QuICT.qcda.mapping.ai.data_def import DataFactory
 
 # from QuICT.qcda.mapping.mcts import MCTSMapping
 
