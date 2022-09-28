@@ -12,15 +12,13 @@ class CircuitInfo:
     """DAG Representation of a quantum circuit."""
 
     def __init__(
-        self, circ: Union[Circuit, CompositeGate, List[BasicGate]], max_gate_num: int
+        self, circ: Union[Circuit, CompositeGate], max_gate_num: int
     ) -> None:
         self._qubit_num = circ.width()
         self._max_gate_num = max_gate_num
         q = circ.width()
         if isinstance(circ, Circuit) or isinstance(circ, CompositeGate):
             self._gates: List[BasicGate] = copy.deepcopy(circ.gates)
-        elif isinstance(circ, list):
-            self._gates = copy.deepcopy(circ)
         else:
             raise TypeError(
                 "circ argument only supports Circuit/CompositeGate/List[BasicGate]"
