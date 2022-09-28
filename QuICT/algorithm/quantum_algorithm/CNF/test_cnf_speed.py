@@ -2,7 +2,6 @@ import os
 import time
 import numpy as np
 import math
-import random
 from QuICT.algorithm.quantum_algorithm.CNF.cnf import *#CNFSATOracle
 from QuICT.qcda.optimization import *
 # from QuICT.simulation.unitary_simulator import UnitarySimulator
@@ -31,23 +30,19 @@ def read_CNF(cnf_file):
         return variable_number, clause_number, CNF_data
 
 def test():
-    # x0 x1，x2, x_{n variable_number -1}
-    filename_test =  "QuICT/algorithm/quantum_algorithm/CNF/3_9_100"
+# x0 x1，x2, x_{n variable_number -1}
+    filename_test =  "QuICT/algorithm/quantum_algorithm/CNF/cnf_test_data/3_40_99"
     AuxQubitNumber = 4
     variable_number , clause_number , CNF_data = read_CNF(filename_test)
 
 
     #真值表初值变化
     b=[]
-    print(variable_number)
-    cnf = CNFSATOracle()
-    cnf.run(filename_test, AuxQubitNumber)
-    cgate = cnf.circuit()
-    circuit_temp = Circuit(variable_number + 2 + AuxQubitNumber)
-    d=random.sample(list(range(2**variable_number)), 10)
-    
-
-    for a in d:
+    for a in range(2 ** variable_number):
+        cnf = CNFSATOracle()
+        cnf.run(filename_test, AuxQubitNumber)
+        cgate = cnf.circuit()
+        circuit_temp=Circuit(variable_number + 2 + AuxQubitNumber)
         randomnum = a
         x=[]
         for ii in range(variable_number):
@@ -60,14 +55,9 @@ def test():
                 X | circuit_temp(ii)
         circuit_temp.extend(cgate)
         Measure | circuit_temp
-        print(circuit_temp.size())
-
-        stime = time.time()
-        sim = CircuitSimulator()
-        amplitude = sim.run(circuit_temp)
-        ltime = time.time()
-        print(f"cnf run speed : {ltime - stime}")
-
+        CircuitSimulator().run(circuit_temp)
+        #circuit_temp.draw(filename='test_0.jpg')
+        #amplitude = sim.run(circuit_temp)
         #print(circuit_temp.qubits[variable_number].measured)
         #print(int(circuit_temp.qubits[variable_number]))
             
@@ -93,5 +83,5 @@ def test():
             print(cnf_result)
             b.append(a)
     print(b)
-    # f.close()
+
 test()
