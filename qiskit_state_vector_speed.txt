@@ -1,28 +1,2 @@
 qubit_number: 5 
-qiskit cpu average simulation time : 0.000923
-qiskit cpu average simulation time : 0.000605
-qiskit cpu average simulation time : 0.000895
-qiskit cpu average simulation time : 0.000635
-qiskit cpu average simulation time : 0.00069
-qiskit cpu average simulation time : 0.000743
-qubit_number: 10 
-qiskit cpu average simulation time : 0.000664
-qiskit cpu average simulation time : 0.000885
-qiskit cpu average simulation time : 0.000987
-qiskit cpu average simulation time : 0.001575
-qiskit cpu average simulation time : 0.001062
-qiskit cpu average simulation time : 0.003556
-qubit_number: 15 
-qiskit cpu average simulation time : 0.00085
-qiskit cpu average simulation time : 0.001078
-qiskit cpu average simulation time : 0.001303
-qiskit cpu average simulation time : 0.001533
-qiskit cpu average simulation time : 0.014199
-qiskit cpu average simulation time : 0.011522
-qubit_number: 20 
-qiskit cpu average simulation time : 0.001043
-qiskit cpu average simulation time : 0.001282
-qiskit cpu average simulation time : 0.001531
-qiskit cpu average simulation time : 0.001823
-qiskit cpu average simulation time : 0.002077
-qiskit cpu average simulation time : 0.002052
+qiskit cpu average simulation time : 0.003081

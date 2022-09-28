@@ -12,7 +12,8 @@ qubits_num = [4, 6, 8, 10, 12]
 gates_num = [5, 7, 9, 11, 13, 15]
 sim_c = CircuitSimulator()
 sim_g = DensityMatrixSimulation("GPU")
-backend = Aer.get_backend('statevector_simulator')
+sim_q_c = Aer.get_backend('aer_simulator_density_matrix')
+simu_q_g = Aer.get_backend('aer_simulator_density_matrix')
 
 f = open("qiskit_density_matrix_speed.txt", 'w+')
 for q_num in qubits_num:
@@ -23,7 +24,7 @@ for q_num in qubits_num:
     )
     for gm in gates_num:
         # f.write(f"gate size: {q_num * gm} \n")
-        quict_cpu_time, quict_gpu_time = 0, 0
+        quict_cpu_time, quict_gpu_time, qiskit_cpu_time, qiskit_gpu_time = 0, 0, 0, 0
         for i in range(10):
             filename = f"q{q_num}-g{gm * q_num}-{i}.qasm"
             cir = OPENQASMInterface.load_file(
@@ -42,25 +43,22 @@ for q_num in qubits_num:
             lltime = time.time()
             quict_gpu_time += round(lltime - sstime, 6)
             
-            # qiskit
+            # qiskit cpu
             circ = QuantumCircuit.from_qasm_file(circuit_folder_path + '/' + filename)
-            # # circ.save_amplitudes()
-            # # circ.save_statevector()
-            # ssstime = time.time()
-            # job = backend.run(circ)
-            # # result = job.result()
-            # # outputstate = result.get_statevector(circ)
-            # llltime = time.time()
-            # qiskit_cpu_time += round(llltime - ssstime, 6)
-
-            # circ.save_amplitudes(list(range(1 << 10)))
-
-            circ.save_density_matrix()
-            simulator = Aer.get_backend('aer_simulator')
-            circ = transpile(circ, simulator)
+            circ = transpile(circ, sim_q_c)
             ssstime = time.time()
-            result = simulator.run(circ).result()
-            
-        f.write(f"quict cpu average simulation time : {round(quict_cpu_time/10, 6)}, quict gpu average simulation time : {round(quict_gpu_time/10, 6)}\n")
+            amp = sim_q_c.run(circ)
+            llltime = time.time()
+            qiskit_cpu_time += round(llltime - ssstime, 6)
 
+            #qiskit gpu
+            simu_q_g.set_options(device='GPU')
+            circ = transpile(circ, simu_q_g)
+            sssstime = time.time()
+            amp = simu_q_g.run(circ)
+            lllltime = time.time()
+            qiskit_gpu_time += round(lllltime - sssstime, 6)
+
+        f.write(f"quict cpu time : {round(quict_cpu_time/10, 6)}, quict gpu time : {round(quict_gpu_time/10, 6)}, qiskit cpu time : {round(qiskit_cpu_time/10, 6)}, qiskit gpu time : {round(qiskit_gpu_time/10, 6)}\n")
+        
 f.close()

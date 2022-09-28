@@ -1,0 +1,3 @@
+qubit_number: 4 
+quict cpu time : 0.000567, quict gpu time : 0.071083, qiskit cpu time : 0.000521, qiskit gpu time : 0.000287
+quict cpu time : 0.000523, quict gpu time : 0.010731, qiskit cpu time : 0.000356, qiskit gpu time : 0.000309
