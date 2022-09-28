@@ -32,7 +32,7 @@ def read_CNF(cnf_file):
 
 def test():
     # x0 x1，x2, x_{n variable_number -1}
-    filename_test =  "QuICT/algorithm/quantum_algorithm/CNF/3_9_100"
+    filename_test =  "QuICT/algorithm/quantum_algorithm/CNF/3_11_100"
     AuxQubitNumber = 4
     variable_number , clause_number , CNF_data = read_CNF(filename_test)
 
@@ -60,7 +60,7 @@ def test():
                 X | circuit_temp(ii)
         circuit_temp.extend(cgate)
         Measure | circuit_temp
-        print(circuit_temp.size())
+        print(circuit_temp.width())
 
         stime = time.time()
         sim = CircuitSimulator()
