@@ -6,19 +6,20 @@ from QuICT.simulation.state_vector import CircuitSimulator
 from QuICT.simulation.density_matrix import DensityMatrixSimulation
 from QuICT.tools.interface.qasm_interface import OPENQASMInterface
 
-from qiskit import QuantumCircuit, Aer
+from qiskit import QuantumCircuit, Aer, transpile
 
-qubits_num = [5, 10]
+qubits_num = [4, 6, 8, 10, 12]
 gates_num = [5, 7, 9, 11, 13, 15]
 sim_c = CircuitSimulator()
 sim_g = DensityMatrixSimulation("GPU")
+backend = Aer.get_backend('statevector_simulator')
 
 f = open("qiskit_density_matrix_speed.txt", 'w+')
 for q_num in qubits_num:
     f.write(f"qubit_number: {q_num} \n")
     circuit_folder_path = os.path.join(
         os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
-        "circuit/qiskitnew"
+        "circuit/qiskitdm"
     )
     for gm in gates_num:
         # f.write(f"gate size: {q_num * gm} \n")
@@ -40,7 +41,25 @@ for q_num in qubits_num:
             sv = sim_g.run(cir)
             lltime = time.time()
             quict_gpu_time += round(lltime - sstime, 6)
+            
+            # qiskit
+            circ = QuantumCircuit.from_qasm_file(circuit_folder_path + '/' + filename)
+            # # circ.save_amplitudes()
+            # # circ.save_statevector()
+            # ssstime = time.time()
+            # job = backend.run(circ)
+            # # result = job.result()
+            # # outputstate = result.get_statevector(circ)
+            # llltime = time.time()
+            # qiskit_cpu_time += round(llltime - ssstime, 6)
 
+            # circ.save_amplitudes(list(range(1 << 10)))
+
+            circ.save_density_matrix()
+            simulator = Aer.get_backend('aer_simulator')
+            circ = transpile(circ, simulator)
+            ssstime = time.time()
+            result = simulator.run(circ).result()
             
         f.write(f"quict cpu average simulation time : {round(quict_cpu_time/10, 6)}, quict gpu average simulation time : {round(quict_gpu_time/10, 6)}\n")
 

@@ -29,9 +29,9 @@ len_s, len_d = len(single_typelist), len(double_typelist)
 prob = [0.8 / len_s] * len_s + [0.2 / len_d] * len_d
 
 #build random circuit for qcda benchmark
-qubit_num = [5, 10, 15, 20]
+qubit_num = [4, 6, 8, 10, 12]
 gate_multiply = [5, 7, 9, 11, 13, 15]
-folder_path = "wr_unit_test/sim-benchmark/circuit/qiskitnew"
+folder_path = "wr_unit_test/sim-benchmark/circuit/qiskitdm"
 if not os.path.exists(folder_path):
     os.makedirs(folder_path)
 

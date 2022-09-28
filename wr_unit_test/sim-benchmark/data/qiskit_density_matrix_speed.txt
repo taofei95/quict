@@ -1,14 +1,35 @@
-qubit_number: 5 
-quict cpu average simulation time : 0.019607, quict gpu average simulation time : 0.086878
-quict cpu average simulation time : 0.006714, quict gpu average simulation time : 0.018814
-quict cpu average simulation time : 0.005502, quict gpu average simulation time : 0.027939
-quict cpu average simulation time : 0.013182, quict gpu average simulation time : 0.023431
-quict cpu average simulation time : 0.007834, quict gpu average simulation time : 0.030906
-quict cpu average simulation time : 0.008339, quict gpu average simulation time : 0.034648
+qubit_number: 4 
+quict cpu average simulation time : 0.000535, quict gpu average simulation time : 0.072149
+quict cpu average simulation time : 0.000456, quict gpu average simulation time : 0.009781
+quict cpu average simulation time : 0.000532, quict gpu average simulation time : 0.021809
+quict cpu average simulation time : 0.000651, quict gpu average simulation time : 0.014451
+quict cpu average simulation time : 0.000737, quict gpu average simulation time : 0.016501
+quict cpu average simulation time : 0.000867, quict gpu average simulation time : 0.028
+qubit_number: 6 
+quict cpu average simulation time : 0.002302, quict gpu average simulation time : 0.013896
+quict cpu average simulation time : 0.0016, quict gpu average simulation time : 0.016996
+quict cpu average simulation time : 0.010927, quict gpu average simulation time : 0.024346
+quict cpu average simulation time : 0.019929, quict gpu average simulation time : 0.037531
+quict cpu average simulation time : 0.010005, quict gpu average simulation time : 0.040456
+quict cpu average simulation time : 0.004515, quict gpu average simulation time : 0.035745
+qubit_number: 8 
+quict cpu average simulation time : 0.006766, quict gpu average simulation time : 0.018372
+quict cpu average simulation time : 0.001938, quict gpu average simulation time : 0.031448
+quict cpu average simulation time : 0.002437, quict gpu average simulation time : 0.039027
+quict cpu average simulation time : 0.004691, quict gpu average simulation time : 0.047449
+quict cpu average simulation time : 0.003821, quict gpu average simulation time : 0.050887
+quict cpu average simulation time : 0.004719, quict gpu average simulation time : 0.05999
 qubit_number: 10 
-quict cpu average simulation time : 0.003058, quict gpu average simulation time : 0.086887
-quict cpu average simulation time : 0.004688, quict gpu average simulation time : 0.099925
-quict cpu average simulation time : 0.020671, quict gpu average simulation time : 0.138014
-quict cpu average simulation time : 0.022538, quict gpu average simulation time : 0.138882
-quict cpu average simulation time : 0.028476, quict gpu average simulation time : 0.161582
-quict cpu average simulation time : 0.057514, quict gpu average simulation time : 0.179755
+quict cpu average simulation time : 0.003588, quict gpu average simulation time : 0.084665
+quict cpu average simulation time : 0.007204, quict gpu average simulation time : 0.090675
+quict cpu average simulation time : 0.003329, quict gpu average simulation time : 0.118667
+quict cpu average simulation time : 0.008586, quict gpu average simulation time : 0.128459
+quict cpu average simulation time : 0.005419, quict gpu average simulation time : 0.154929
+quict cpu average simulation time : 0.013196, quict gpu average simulation time : 0.170253
+qubit_number: 12 
+quict cpu average simulation time : 0.011552, quict gpu average simulation time : 3.691443
+quict cpu average simulation time : 0.006341, quict gpu average simulation time : 3.912138
+quict cpu average simulation time : 0.017533, quict gpu average simulation time : 4.688261
+quict cpu average simulation time : 0.01378, quict gpu average simulation time : 5.366346
+quict cpu average simulation time : 0.008056, quict gpu average simulation time : 5.47204
+quict cpu average simulation time : 0.013482, quict gpu average simulation time : 6.128702

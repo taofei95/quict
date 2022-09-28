@@ -14,10 +14,9 @@ double_typelist = [GateType.cx, GateType.cz, GateType.swap]
 len_s, len_d = len(single_typelist), len(double_typelist)
 prob = [0.8 / len_s] * len_s + [0.2 / len_d] * len_d
 
-folder_path = "wr_unit_test/machine-benchmark/circuit_qasm/ori_qasm"
 qubit_num = 5
 cir = Circuit(qubit_num)
-cir.random_append(rand_size=50, typelist=single_typelist+double_typelist, probabilities=prob)
+cir.random_append(rand_size=20, typelist=single_typelist+double_typelist, probabilities=prob)
 
 cir_opt = CommutativeOptimization().execute(cir)
 
