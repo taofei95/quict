@@ -21,15 +21,12 @@ class QAOA:
 
     def run(self, optimizer, lr, max_iter, simulator=ConstantStateVectorSimulator()):
         optim = optimizer([dict(params=self.net.parameters(), lr=lr)])
-        state = np.zeros(1 << self.n_qubits)
-        state[0] = 1
-        state = state.astype(np.complex128)
 
         self.net.train()
         loader = tqdm.trange(max_iter, desc="training", leave=False)
         for it in loader:
             optim.zero_grad()
-            state = self.net.forward(state, simulator)
+            state = self.net(simulator)
             loss = self.net.loss_func(state, simulator)
             loss.backward()
             optim.step()
@@ -72,13 +69,11 @@ if __name__ == "__main__":
         torch.backends.cudnn.deterministic = True
 
     seed(17)
-    n_qubits = 3
-    pauli_str = random_pauli_str(2, n_qubits)
+    n_qubits = 2
+    pauli_str = random_pauli_str(4, n_qubits)
     print(pauli_str)
     h = Hamiltonian(pauli_str)
-    state = random_state(n_qubits)
     # h = Hamiltonian([[0.2, "Z0", "I1"], [1, "X1"]])
     qaoa = QAOA(n_qubits, 4, h)
-    qaoa.run(optimizer=torch.optim.Adam, lr=0.1, max_iter=200)
+    qaoa.run(optimizer=torch.optim.Adam, lr=0.1, max_iter=10)
     # state = np.array([np.sqrt(3) / 3, 1 / 2, 1 / 3, np.sqrt(11) / 6])
-

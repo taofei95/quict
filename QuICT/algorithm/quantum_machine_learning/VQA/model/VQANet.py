@@ -23,7 +23,7 @@ class VQANet(torch.nn.Module):
         raise NotImplementedError
 
     def loss_func(self, state, simulator=ConstantStateVectorSimulator()):
-        assert 1 << self.n_qubits == len(state)
+        assert (1 << self.n_qubits) == len(state)
         circuits = self.hamiltonian.construct_hamiton_circuit(self.n_qubits)
         coefficients = self.hamiltonian.coefficients
         state_vector = np.zeros(len(state))

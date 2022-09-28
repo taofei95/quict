@@ -6,9 +6,11 @@ import time
 from QuICT.core import Circuit
 from QuICT.core.gate import *
 from QuICT.algorithm.quantum_machine_learning.utils.hamiltonian import Hamiltonian
+from QuICT.algorithm.quantum_machine_learning.utils.ansatz import Ansatz
 from QuICT.algorithm.quantum_machine_learning.VQA.model.VQANet import VQANet
 from QuICT.simulation.state_vector import ConstantStateVectorSimulator
 from QuICT.qcda.synthesis.unitary_decomposition import UnitaryDecomposition
+
 
 
 class QAOANet(VQANet):
@@ -20,6 +22,21 @@ class QAOANet(VQANet):
         device=torch.device("cuda:0"),
     ):
         super().__init__(n_qubits, depth, hamiltonian, device)
+        self.define_network()
+
+    def define_network(self):
+        self.beta = torch.nn.Parameter(
+            torch.rand(self.depth, device=self.device), requires_grad=True
+        )
+        self.gamma = torch.nn.Parameter(
+            torch.rand(self.depth, device=self.device), requires_grad=True
+        )
+
+    def forward(self, simulator=ConstantStateVectorSimulator()):
+        circuit = self.construct_ansatz(self.gamma, self.beta)
+        ansatz = Ansatz(circuit, self.device)
+        ansatz.forward()
+        return state
 
     def construct_U_gamma_layer(self, gamma):
         U_gamma_matrix = np.eye(1 << self.n_qubits, dtype=np.complex128)
@@ -51,40 +68,28 @@ class QAOANet(VQANet):
                     else:
                         raise ValueError("Invalid Pauli gate")
             matrix *= np.sin(gamma * coeff) * (1j)
-            U_gamma_matrix = U_gamma_matrix.dot(matrix_i - matrix)
-        ud = UnitaryDecomposition()
-        U_gamma = ud.execute(U_gamma_matrix)[0]
-        return U_gamma
+            U_gamma_matrix = (matrix_i - matrix).dot(U_gamma_matrix)
+        # ud = UnitaryDecomposition()
+        # U_gamma = ud.execute(U_gamma_matrix)[0]
+        return Unitary(U_gamma_matrix)
 
-    def construct_ansatz(self):
+    def construct_ansatz(self, gamma, beta):
         start = time.time()
         ansatz = Circuit(self.n_qubits)
         # initialize state vector
         H | ansatz
+
         for p in range(self.depth):
-            # construct U_beta
-            U_beta = Rx(float(2 * self.beta[p]))
-            U_beta | ansatz
             # construct U_gamma
-            U_gamma = self.construct_U_gamma_layer(float(self.gamma[p]))
+            U_gamma = self.construct_U_gamma_layer(float(gamma[p]))
             U_gamma | ansatz
 
+            # construct U_beta
+            U_beta = Rx(float(2 * beta[p]))
+            U_beta | ansatz
+
         end = time.time() - start
-        print(end)
         return ansatz
-
-    def define_network(self):
-        self.beta = torch.nn.Parameter(
-            torch.rand(self.depth, device=self.device, requires_grad=True)
-        )
-        self.gamma = torch.nn.Parameter(
-            torch.rand(self.depth, device=self.device, requires_grad=True)
-        )
-        self.ansatz = self.construct_ansatz()
-
-    def forward(self, state, simulator=ConstantStateVectorSimulator()):
-        state = simulator.run(self.ansatz, state)
-        return state
 
 
 if __name__ == "__main__":
