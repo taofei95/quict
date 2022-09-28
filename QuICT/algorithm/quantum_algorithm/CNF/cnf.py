@@ -325,9 +325,8 @@ class CNFSATOracle:
                             CCX | self._cgate([c[Aux-(EndID-StartID)+j-1] , c[Aux- 2*(EndID - StartID) + j], c[Aux- 2*(EndID - StartID) -1 + j]])
 
                 else: #EndID-StartID > p-1  block number >1
-                    block_len = math.floor((EndID - StartID +1) /p)
+                    block_len = math.ceil((EndID - StartID +1) /p)
                     block_number = math.ceil((EndID - StartID + 1) / block_len )
-
                     if block_number == 2:
                         if ((depth - current_depth) % 2) == 1: # 当前为奇数层  target 在variable_number + ancilla_qubits_num - p + 1 + j
                             #print("2 block 1", target)
@@ -365,14 +364,15 @@ class CNFSATOracle:
                                 #print(   "2n"   )   
                                 #层数差 奇数 的存储位 为 variable_number +Aux- p+1+j  至 variable_number + Aux  要从差为偶数层 取数据
                                 #层数差 偶数 的存储位 为 variable_number 至 variable_number + p -1      要从差为奇数层 取数据
-                                
-                                # UpPhase 1 升阶段 第一位要单独处理，其target 即最终target。控制位一个在variable_number + Aux；另一个在 variable_number + Aux - block_number +2 上， variable_number + Aux - block_number +2 上放一个低一层的 clause。
+                               # UpPhase 1 升阶段 第一位要单独处理，其target 即最终target。控制位一个在variable_number + Aux；另一个在 variable_number + Aux - block_number +2 上， variable_number + Aux - block_number +2 上放一个低一层的 clause。
+                            print(EndID ,StartID,p,block_len)
+                            print(Aux,len(c),block_number,"aabb" )
                             CCX | self._cgate([c[block_number-1] , c[2*(block_number-1)-1] , target])
                             self.clause(CNF_data, variable_number, Aux, StartID, StartID + block_len -1 , c[block_number-1], current_depth-1, depth)
                             CCX | self._cgate([c[block_number-1] , c[2*(block_number-1)-1] , target])
                                 
                                 #控制位variable_number + Aux - (block_number-1) + 2 -j 放 clause ， 另一个 控制位(将与此for内的前一个target 相同)并和target 依次上升
-                            for j in range(1, block_number-1 - 1):
+                            for j in range(1, block_number-2):
                                 CCX | self._cgate([c[(block_number-1)  -j] , c[2*(block_number-1)-1  - j], c[2*(block_number-1) - j]])
                                 self.clause(CNF_data, variable_number, Aux, StartID + j*block_len , StartID -1 + (j+1)*block_len, c[(block_number-1)-j], current_depth-1, depth)
                                 CCX | self._cgate([c[(block_number-1)  -j] , c[2*(block_number-1)-1  - j], c[2*(block_number-1) - j]])
@@ -432,7 +432,7 @@ class CNFSATOracle:
                             CCX | self._cgate([c[Aux  -block_number] , c[Aux - 2*(block_number-1)] , target])
                                 
                                 #控制位variable_number + Aux - (block_number-1) + 2 -j 放 clause ， 另一个 控制位(将与此for内的前一个target 相同)并和target 依次上升
-                            for j in range(1, block_number-1 - 1):
+                            for j in range(1, block_number-2):
                                 CCX | self._cgate([c[Aux-(block_number-1)+j-1] , c[Aux- 2*(block_number-1) + j], c[Aux- 2*(block_number-1) -1 + j]])
                                 self.clause(CNF_data, variable_number, Aux, StartID + j*block_len , StartID -1 +(1+ j)*block_len, c[Aux-(block_number-1)+j-1], current_depth-1, depth)
                                 CCX | self._cgate([c[Aux-(block_number-1)+j-1] , c[Aux- 2*(block_number-1) + j], c[Aux- 2*(block_number-1) -1 + j]])
@@ -450,9 +450,10 @@ class CNFSATOracle:
                             CCX | self._cgate([c[Aux-2]  , c[Aux-1], c[ Aux-2 - EndID + StartID ]])    
                                 
                                 #控制位variable_number + Aux - (block_number-1) + 2 -j 放 clause ， 另一个 控制位(将与此for内的前一个target 相同)并和target 依次上升
-                            for j in range( EndID - StartID - 2, 0 , -1):
+                            for j in range( block_number-3, 0 , -1):
+                                #print(Aux, block_number,j,EndID,StartID, Aux-(block_number-1)+j-1,  Aux- 2*(block_number-1) + j ,Aux- 2*(block_number-1) -1 + j,len(c))
                                 CCX | self._cgate([c[Aux-(block_number-1)+j-1] , c[Aux- 2*(block_number-1) + j], c[Aux- 2*(block_number-1) -1 + j]])
-                                self.clause(CNF_data, variable_number, Aux, StartID + j , StartID + j, c[Aux-(block_number-1)+j-1], current_depth-1, depth)
+                                self.clause(CNF_data, variable_number, Aux, StartID + j*block_len , StartID -1 +(1+ j)*block_len, c[Aux-(block_number-1)+j-1], current_depth-1, depth)
                                 CCX | self._cgate([c[Aux-(block_number-1)+j-1] , c[Aux- 2*(block_number-1) + j], c[Aux- 2*(block_number-1) -1 + j]])
 
                             CCX | self._cgate([c[Aux  -block_number ] , c[Aux - 2*(block_number-1)] , target])
@@ -480,9 +481,9 @@ class CNFSATOracle:
                             CCX | self._cgate([c[Aux-2]  , c[Aux-1], c[ Aux-2 - EndID + StartID ]])    
                                 
                                 #控制位variable_number + Aux - (block_number-1) + 2 -j 放 clause ， 另一个 控制位(将与此for内的前一个target 相同)并和target 依次上升
-                            for j in range( EndID - StartID - 2, 0 , -1):
+                            for j in range( block_number-3, 0 , -1):
                                 CCX | self._cgate([c[Aux-(block_number-1)+j-1] , c[Aux- 2*(block_number-1) + j], c[Aux- 2*(block_number-1) -1 + j]])
-                                self.clause(CNF_data, variable_number, Aux, StartID + j , StartID + j, c[Aux-(block_number-1)+j-1], current_depth-1, depth)
+                                self.clause(CNF_data, variable_number, Aux, StartID + j*block_len , StartID -1 +(1+ j)*block_len, c[Aux-(block_number-1)+j-1], current_depth-1, depth)
                                 CCX | self._cgate([c[Aux-(block_number-1)+j-1] , c[Aux- 2*(block_number-1) + j], c[Aux- 2*(block_number-1) -1 + j]])
 
 
