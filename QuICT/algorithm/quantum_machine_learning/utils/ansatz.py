@@ -12,25 +12,38 @@ class Ansatz:
 
     def _apply_gate(self, state, gate_tensor, act_bits):
         # Step 1: Relabel the qubits and calculate their corresponding index values.
-        act_bits_idx = list(np.zeros(len(act_bits), dtype=np.int32))
-        for i in range(len(act_bits)):
-            act_bits_idx[i] = 1 << (self._n_qubits - 1 - act_bits[i])
+        act_bits = [self._n_qubits - 1 - act_bits[i] for i in range(len(act_bits))]
+        bits_idx = [1 << i for i in range(self._n_qubits)]
+        act_bits_idx = list(np.array(bits_idx)[act_bits])
         act_bits_idx.reverse()
+        inact_bits_idx = list(set(bits_idx) - (set(act_bits_idx)))
 
-        # Step 2: Get action indices.
-        act_idx = [0]
+        # Step 2: Get the first set of action indices.
+        _act_idx = [0]
         for i in range(len(act_bits_idx)):
-            for j in range(len(act_idx)):
-                act_idx.append(act_bits_idx[i] + act_idx[j])
-        act_idx = torch.tensor(act_idx).to(self._device)
-        action_state = state.index_select(0, act_idx).reshape((act_idx.shape[0], 1))
+            for j in range(len(_act_idx)):
+                _act_idx.append(act_bits_idx[i] + _act_idx[j])
+        _act_idx = torch.tensor(_act_idx).to(self._device)
 
-        # Step 3: Apply the gate on the action indices of the state.
-        action_result = torch.mm(gate_tensor, action_state).reshape(act_idx.shape[0])
+        # Step 3: Get the following action indices.
+        offsets = [0]
+        for i in range(len(inact_bits_idx)):
+            for j in range(len(offsets)):
+                offsets.append(inact_bits_idx[i] + offsets[j])
 
-        # Step 4: Refill the state vector according to the action indices.
-        for i in range(len(act_idx)):
-            state[act_idx[i]] = action_result[i]
+        for offset in offsets:
+            act_idx = _act_idx + offset * torch.ones(
+                len(_act_idx), dtype=torch.int32
+            ).to(self._device)
+            # Step 4: Apply the gate on the action indices of the state.
+            action_state = state.index_select(0, act_idx).reshape((act_idx.shape[0], 1))
+            action_result = torch.mm(gate_tensor, action_state).reshape(
+                act_idx.shape[0]
+            )
+
+            # Step 5: Refill the state vector according to the action indices.
+            for i in range(len(act_idx)):
+                state[act_idx[i]] = action_result[i]
 
         return state
 
@@ -44,7 +57,7 @@ class Ansatz:
             if isinstance(state_vector, np.ndarray):
                 state = torch.from_numpy(state_vector).to(self._device)
             else:
-                state = state_vector
+                state = state_vector.clone()
         assert state.shape[0] == 1 << self._n_qubits
 
         gates = self._circuit.gates
@@ -59,17 +72,38 @@ class Ansatz:
 if __name__ == "__main__":
     from QuICT.simulation.state_vector import ConstantStateVectorSimulator
 
-    state = np.array(
-        [np.sqrt(3) / 3, 1 / 2, 1 / 3, np.sqrt(11) / 6], dtype=np.complex128
-    )
-    print("init state ", state.real)
-    circuit = Circuit(2)
-    H | circuit(1)
+    def random_pauli_str(n_items, n_qubits):
+        pauli_str = []
+        coeffs = np.random.rand(n_items)
+        for i in range(n_items):
+            pauli = [coeffs[i]]
+            for qid in range(n_qubits):
+                flag = np.random.randint(0, 5)
+                if flag == 0:
+                    pauli.append("X" + str(qid))
+                elif flag == 1:
+                    pauli.append("Y" + str(qid))
+                elif flag == 2:
+                    pauli.append("Z" + str(qid))
+                elif flag == 3:
+                    pauli.append("I" + str(qid))
+                elif flag == 4:
+                    continue
+            pauli_str.append(pauli)
+        return pauli_str
+
+    def random_state(n_qubits):
+        state = np.random.randn(1 << n_qubits)
+        state /= sum(abs(state))
+        state = abs(state) ** 0.5
+        state = state.astype(np.complex128)
+        return state
+
+    state = random_state(5)
+    circuit = Circuit(5)
+    HH = np.kron(H.matrix, H.matrix)
+    HH = Unitary(HH)
+    HH | circuit([2, 4])
     ansatz = Ansatz(circuit)
     sv = ansatz.forward(state)
     print(np.array(sv.cpu()).real)
-
-    simulator = ConstantStateVectorSimulator()
-    sv = simulator.run(circuit, state)
-    print(sv.real)
-
