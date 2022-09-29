@@ -12,7 +12,6 @@ from QuICT.simulation.state_vector import ConstantStateVectorSimulator
 from QuICT.qcda.synthesis.unitary_decomposition import UnitaryDecomposition
 
 
-
 class QAOANet(VQANet):
     def __init__(
         self,
@@ -32,10 +31,10 @@ class QAOANet(VQANet):
             torch.rand(self.depth, device=self.device), requires_grad=True
         )
 
-    def forward(self, simulator=ConstantStateVectorSimulator()):
+    def forward(self, state=None):
         circuit = self.construct_ansatz(self.gamma, self.beta)
         ansatz = Ansatz(circuit, self.device)
-        ansatz.forward()
+        state = ansatz.forward(state)
         return state
 
     def construct_U_gamma_layer(self, gamma):
