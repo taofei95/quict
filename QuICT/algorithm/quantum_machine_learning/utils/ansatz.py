@@ -1,5 +1,3 @@
-import ssl
-from tkinter import N
 import torch
 import numpy as np
 from QuICT.core import Circuit
@@ -31,7 +29,8 @@ class Ansatz:
         action_result = torch.mm(gate_tensor, action_state).reshape(act_idx.shape[0])
 
         # Step 4: Refill the state vector according to the action indices.
-        state.scatter_(0, act_idx, action_result)
+        for i in range(len(act_idx)):
+            state[act_idx[i]] = action_result[i]
 
         return state
 
@@ -41,6 +40,12 @@ class Ansatz:
                 self._device
             )
             state[0] = 1
+        else:
+            if isinstance(state_vector, np.ndarray):
+                state = torch.from_numpy(state_vector).to(self._device)
+            else:
+                state = state_vector
+        assert state.shape[0] == 1 << self._n_qubits
 
         gates = self._circuit.gates
         for gate in gates:
@@ -54,17 +59,17 @@ class Ansatz:
 if __name__ == "__main__":
     from QuICT.simulation.state_vector import ConstantStateVectorSimulator
 
-    circuit = Circuit(5)
-    HH = np.kron(H.matrix, H.matrix)
-    HHH = np.kron(HH, H.matrix)
-    HHHH = np.kron(HHH, H.matrix)
-    HHHH = Unitary(HHHH)
-    HHHH | circuit([3, 1, 0, 2])
+    state = np.array(
+        [np.sqrt(3) / 3, 1 / 2, 1 / 3, np.sqrt(11) / 6], dtype=np.complex128
+    )
+    print("init state ", state.real)
+    circuit = Circuit(2)
+    H | circuit(1)
     ansatz = Ansatz(circuit)
-    state = ansatz.forward()
-    print(np.array(state.cpu()))
+    sv = ansatz.forward(state)
+    print(np.array(sv.cpu()).real)
 
     simulator = ConstantStateVectorSimulator()
-    sv = simulator.run(circuit)
-    print(sv)
+    sv = simulator.run(circuit, state)
+    print(sv.real)
 

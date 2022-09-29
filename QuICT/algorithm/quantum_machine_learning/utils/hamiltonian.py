@@ -1,11 +1,13 @@
 from typing import Dict, List, Union
 import numpy as np
 import copy
+import torch
 
 from QuICT.core import Circuit
 from QuICT.core.gate import *
 from QuICT.simulation.state_vector import ConstantStateVectorSimulator
 from QuICT.ops.linalg import gpu_calculator
+from QuICT.algorithm.quantum_machine_learning.utils.ansatz import Ansatz
 
 
 class Hamiltonian:
@@ -96,6 +98,25 @@ class Hamiltonian:
                     raise ValueError("Invalid Pauli gate.")
             hamiton_circuits.append(circuit)
         return hamiton_circuits
+    
+    def construct_hamiton_ansatz(self, n_qubits, device=torch.device("cuda:0")):
+        hamiton_ansatz = []
+        for qubit_index, pauli_gate in zip(self._qubit_indexes, self._pauli_gates):
+            circuit = Circuit(n_qubits)
+            for qid, gate in zip(qubit_index, pauli_gate):
+                if gate == "X":
+                    X | circuit(qid)
+                elif gate == "Y":
+                    Y | circuit(qid)
+                elif gate == "Z":
+                    Z | circuit(qid)
+                elif gate == "I":
+                    continue
+                else:
+                    raise ValueError("Invalid Pauli gate.")
+            ansatz = Ansatz(circuit, device)
+            hamiton_ansatz.append(ansatz)
+        return hamiton_ansatz
 
     def _pauli_str_validation(self):
         for pauli_operator in self._pauli_str:
