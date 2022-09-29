@@ -363,8 +363,8 @@ class CNFSATOracle:
                                 #层数差 奇数 的存储位 为 variable_number +Aux- p+1+j  至 variable_number + Aux  要从差为偶数层 取数据
                                 #层数差 偶数 的存储位 为 variable_number 至 variable_number + p -1      要从差为奇数层 取数据
                                # UpPhase 1 升阶段 第一位要单独处理，其target 即最终target。控制位一个在variable_number + Aux；另一个在 variable_number + Aux - block_number +2 上， variable_number + Aux - block_number +2 上放一个低一层的 clause。
-                            print(EndID ,StartID,p,block_len)
-                            print(Aux,len(c),block_number,"aabb" )
+                            #print(EndID ,StartID,p,block_len)
+                            #print(Aux,len(c),block_number,"aabb" )
                             CCX | self._cgate([c[block_number-1] , c[2*(block_number-1)-1] , target])
                             self.clause(CNF_data, variable_number, Aux, StartID, StartID + block_len -1 , c[block_number-1], current_depth-1, depth)
                             CCX | self._cgate([c[block_number-1] , c[2*(block_number-1)-1] , target])
