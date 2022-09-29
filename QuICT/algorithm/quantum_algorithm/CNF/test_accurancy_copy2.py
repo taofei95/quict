@@ -32,7 +32,7 @@ def read_CNF(cnf_file):
 
 def test():
     # x0 x1，x2, x_{n variable_number -1}
-    filename_test =  "QuICT/algorithm/quantum_algorithm/CNF/test_data/3_11_100"
+    filename_test =  "QuICT/algorithm/quantum_algorithm/CNF/test_data/4_27_0"
     AuxQubitNumber = 4
     variable_number , clause_number , CNF_data = read_CNF(filename_test)
 
