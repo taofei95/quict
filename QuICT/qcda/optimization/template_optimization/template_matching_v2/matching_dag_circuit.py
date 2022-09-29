@@ -4,6 +4,10 @@ from collections.abc import Iterable
 from QuICT.core.circuit.dag_circuit import DAGNode, DAGCircuit
 from QuICT.core.gate import BasicGate
 from collections import deque
+from collections import namedtuple
+
+
+NodeInfo = namedtuple('NodeInfo', ['matched_with', 'is_blocked'])
 
 
 class MatchingDAGNode(DAGNode):
@@ -26,7 +30,7 @@ class MatchingDAGNode(DAGNode):
         return ret
 
     def matchable(self):
-        return not self.is_blocked and self.matched_with is not None
+        return (not self.is_blocked) and (self.matched_with is None)
 
     def compare_with(self, other, qubit_mapping=None) -> bool:
         if self.name != other.name:
@@ -36,6 +40,9 @@ class MatchingDAGNode(DAGNode):
                 if qubit_mapping[t_qubit] != c_qubit:
                     return False
         return True
+
+    def node_info(self):
+        return NodeInfo(self.matched_with, self.is_blocked)
 
 
 class MatchingDAGCircuit(DAGCircuit):
@@ -73,8 +80,8 @@ class MatchingDAGCircuit(DAGCircuit):
             self.get_node(node_id).predecessors = list(node_pdces)
 
     def init_forward_matching(self, node_id, other_id, s2v_enabled=False):
-        for node in self.nodes():
-            node: MatchingDAGNode
+        for nid in self.nodes():
+            node = self.get_node(nid)
             if node.id == node_id:
                 node.matched_with = other_id
                 if s2v_enabled:
@@ -94,6 +101,7 @@ class MatchingDAGCircuit(DAGCircuit):
             assert False, 'start must be int or iterable objects'
 
         que = deque(visited)
+        init_visited = visited.copy()
         while len(que) > 0:
             cur_node = self.get_node(que.popleft())
             for node_id in getattr(cur_node, direction):
@@ -101,7 +109,7 @@ class MatchingDAGCircuit(DAGCircuit):
                     que.append(node_id)
                     visited.add(node_id)
 
-        return visited
+        return visited - init_visited
 
     def all_predecessors(self, start) -> Set[int]:
         return self._all_reachable(start, 'predecessors')
@@ -110,15 +118,4 @@ class MatchingDAGCircuit(DAGCircuit):
         return self._all_reachable(start, 'successors')
 
     def matching_info(self):
-        nodes = [self.get_node(i) for i in range(self.size)]
-        return [(node.matched_with, node.is_blocked) for node in nodes]
-
-    # @staticmethod
-    # def compare_node(self, other, qubit_mapping=None) -> bool:
-    #     if self.name != other.name:
-    #         return False
-    #     if qubit_mapping is not None:
-    #         for t_qubit, c_qubit in zip(self.qargs, other.qargs):
-    #             if qubit_mapping[t_qubit] != c_qubit:
-    #                 return False
-    #     return True
+        return [self.get_node(i).node_info() for i in range(self.size)]

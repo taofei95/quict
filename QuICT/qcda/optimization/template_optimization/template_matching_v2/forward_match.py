@@ -7,7 +7,8 @@ class ForwardMatch:
 
     @classmethod
     def _insert_match_nodes(cls, match_nodes: List[MatchingDAGNode], node: MatchingDAGNode):
-        # TODO code review
+        # TODO fix your binary search
+        """
         key = node.successors_to_visit
         lb, rb = 0, len(match_nodes) - 1
         # bin search first element that > key
@@ -19,6 +20,10 @@ class ForwardMatch:
                 # FIXME mid or mid-1
                 rb = mid
         match_nodes.insert(lb - 1, node)
+        """
+        if len(node.successors_to_visit) > 0:
+            match_nodes.append(node)
+            match_nodes.sort(key=lambda n: n.successors_to_visit[0])
 
     @classmethod
     def _find_candidates(cls,
@@ -28,8 +33,15 @@ class ForwardMatch:
         # TODO code review
         match = {match[i][0] for i in range(len(match))}
         # block = reduce(set.__or__, [template.all_successors(i) for i in (match - {t_node_id})])
-        block = template.all_successors((match - {t_node_id}))
-        return template.get_node(t_node_id).successors - match - block
+
+        block = set()
+        for u in match - {t_node_id}:
+            for v in template.get_node(u).successors:
+                if v not in match:
+                    block |= template.all_successors(v)
+
+        id_set = set(template.get_node(t_node_id).successors) - match - block
+        return [template.get_node(i) for i in id_set]
 
     @classmethod
     def execute(cls,
@@ -53,14 +65,15 @@ class ForwardMatch:
             #     continue
 
             # TODO be careful to return node object
-            nxt_node: MatchingDAGNode = cur_node.pop_successors_to_visit()
-            if nxt_node is None:
+            nxt_node_id = cur_node.pop_successors_to_visit()
+            if nxt_node_id is None:
                 continue
+            nxt_node = circuit.get_node(nxt_node_id)
 
             if cur_node.successors_to_visit:
                 cls._insert_match_nodes(match_nodes, cur_node)
 
-            if not cur_node.matchable():
+            if not nxt_node.matchable():
                 continue
 
             cands: List[MatchingDAGNode] = cls._find_candidates(match, template, cur_node.matched_with)
@@ -69,14 +82,15 @@ class ForwardMatch:
                 if t_nxt_node.compare_with(nxt_node, qubit_mapping):
                     t_nxt_node.matched_with = nxt_node.id
                     nxt_node.matched_with = t_nxt_node.id
-                    match.append([t_nxt_node.id, nxt_node.id])
+                    match.append((t_nxt_node.id, nxt_node.id))
 
                     # calc nxt_node.successors_to_visit
                     nxt_node.successors_to_visit = sorted(list(filter(
                         lambda x: circuit.get_node(x).matchable,
                         nxt_node.successors
                     )))
-                    match_nodes.append(nxt_node)
+                    # match_nodes.append(nxt_node)
+                    cls._insert_match_nodes(match_nodes, nxt_node)
 
                     success = True
                     break

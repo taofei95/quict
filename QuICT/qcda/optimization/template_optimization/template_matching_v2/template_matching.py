@@ -26,8 +26,8 @@ class TemplateMatching:
         c_successors = circuit.all_successors(c_node_id)
 
         # FIXME review this condition
-        cands = c_successors if 2 * len(t_successors) > template.size - t_node_id - 1 \
-            else sorted(set(range(circuit.size)) - set(c_successors), reverse=True)
+        cands = c_successors if 2 * len(t_successors) > template.width - t_node_id - 1 \
+            else sorted(set(range(circuit.width)) - set(c_successors), reverse=True)
 
         ret = set(circuit.get_node(c_node_id).qargs)
         for cand in cands[: cnt]:
@@ -46,8 +46,8 @@ class TemplateMatching:
                 ):
 
         ret = []
-        for t_node_id in range(template.size):
-            for c_node_id in range(circuit.size):
+        for t_node_id in range(template.width):
+            for c_node_id in range(circuit.width):
                 t_node = template.get_node(t_node_id)
                 c_node = circuit.get_node(c_node_id)
                 if not t_node.compare_with(c_node):
@@ -56,15 +56,22 @@ class TemplateMatching:
                 fixed_q = [] if qubit_fixing_param is None \
                     else cls._qubit_fixing(circuit, template, c_node_id, t_node_id, *qubit_fixing_param)
 
-                all_free_q = set(range(circuit.size)) - set(fixed_q)
-                for free_q in itertools.combinations(all_free_q, template.size - len(fixed_q)):
+                all_free_q = set(range(circuit.width)) - set(fixed_q)
+                for free_q in itertools.combinations(all_free_q, template.width - len(fixed_q)):
                     q_set = list(free_q) + fixed_q
-                    for mapping in itertools.permutations(q_set):
+                    for mapping in itertools.permutations(q_set, template.width):
+                        # print('hello')
                         if not t_node.compare_with(c_node, mapping):
                             continue
 
+                        # print(q_set, t_node_id, c_node_id)
+                        # continue
                         forward_match = ForwardMatch.execute(
                             circuit, template, c_node_id, t_node_id, list(mapping))
+
+                        # print(q_set, t_node_id, c_node_id, forward_match)
+                        # continue
+
                         match_list = BackwardMatch.execute(
                             circuit, template, forward_match, c_node_id, t_node_id, list(mapping), prune_param)
 
