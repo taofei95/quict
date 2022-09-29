@@ -1,5 +1,3 @@
-from crypt import methods
-import imp
 import os
 import time
 
@@ -17,8 +15,8 @@ sim_c = CircuitSimulator()
 sim_g = ConstantStateVectorSimulator(gpu_device_id=0)
 backend_c = Aer.get_backend('statevector_simulator')
 # backend_g = StatevectorSimulator()
-backend_g = AerSimulator(methods='statevector', device='GPU')
-# backend_g = Aer.get_backend('aer_simulator')
+# backend_g = AerSimulator(methods='statevector', device='GPU')
+backend_g = Aer.get_backend('aer_simulator')
 # backend_g = Aer.get_backend('aer_simulator_statevector_gpu')
 
 f = open("qiskit_state_vector_speed.txt", 'w+')
@@ -57,12 +55,14 @@ for q_num in qubits_num:
             # qiskit_cpu_time += round(llltime - ssstime, 6)
 
             # qiskit gpu
-            # simulator = AerSimulator()
+            # backend_g = AerSimulator()
+            # backend_g['method'] = 'statevector'
+            # backend_g['device'] = 'GPU'
             # simulator.backend_options(methods='statevector', device='GPU')
-            # result = execute(circ, simulator).result()
+            # result = execute(circ, backend_g, backend=AerSimulator).result()
             # print(result)
 
-            backend_g.set_options()
+            backend_g.set_options(device='GPU')
             sssstime = time.time()
             job = backend_g.run(circ)
             lllltime = time.time()
