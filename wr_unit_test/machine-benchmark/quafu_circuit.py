@@ -16,13 +16,13 @@ prob = [0.8 / len_s] * len_s + [0.2 / len_d] * len_d
 
 qubit_num = 5
 cir = Circuit(qubit_num)
-cir.random_append(rand_size=20, typelist=single_typelist+double_typelist, probabilities=prob)
+cir.random_append(rand_size=40, typelist=single_typelist+double_typelist, probabilities=prob)
 
 cir_opt = CommutativeOptimization().execute(cir)
 
 sim = UnitarySimulator()
 amp = sim.run(cir_opt)
-print(amp)
+print(abs(amp))
 
 print(cir.qasm())
 print(cir_opt.qasm())

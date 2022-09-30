@@ -1,0 +1,28 @@
+qubit_number: 5 
+quict cpu time : 0.003007, quict gpu time : 0.018352, qiskit cpu time : 0.003365, qiskit gpu time : 0.01626
+quict cpu time : 0.001225, quict gpu time : 0.001481, qiskit cpu time : 0.002844, qiskit gpu time : 0.003344
+quict cpu time : 0.001599, quict gpu time : 0.001816, qiskit cpu time : 0.003096, qiskit gpu time : 0.003644
+quict cpu time : 0.002347, quict gpu time : 0.002006, qiskit cpu time : 0.003244, qiskit gpu time : 0.003665
+quict cpu time : 0.002296, quict gpu time : 0.002338, qiskit cpu time : 0.003513, qiskit gpu time : 0.003884
+quict cpu time : 0.002556, quict gpu time : 0.002622, qiskit cpu time : 0.003504, qiskit gpu time : 0.004312
+qubit_number: 10 
+quict cpu time : 0.003874, quict gpu time : 0.001958, qiskit cpu time : 0.003552, qiskit gpu time : 0.003867
+quict cpu time : 0.002452, quict gpu time : 0.002487, qiskit cpu time : 0.003914, qiskit gpu time : 0.004059
+quict cpu time : 0.004418, quict gpu time : 0.003152, qiskit cpu time : 0.00442, qiskit gpu time : 0.00448
+quict cpu time : 0.004033, quict gpu time : 0.003672, qiskit cpu time : 0.004538, qiskit gpu time : 0.004547
+quict cpu time : 0.004726, quict gpu time : 0.004245, qiskit cpu time : 0.005051, qiskit gpu time : 0.004845
+quict cpu time : 0.005917, quict gpu time : 0.004769, qiskit cpu time : 0.005456, qiskit gpu time : 0.005183
+qubit_number: 15 
+quict cpu time : 0.005236, quict gpu time : 0.002694, qiskit cpu time : 0.064481, qiskit gpu time : 0.003287
+quict cpu time : 0.005949, quict gpu time : 0.003548, qiskit cpu time : 0.004912, qiskit gpu time : 0.003968
+quict cpu time : 0.009686, quict gpu time : 0.004425, qiskit cpu time : 0.013287, qiskit gpu time : 0.004725
+quict cpu time : 0.016072, quict gpu time : 0.005445, qiskit cpu time : 0.10638, qiskit gpu time : 0.005316
+quict cpu time : 0.019045, quict gpu time : 0.006437, qiskit cpu time : 0.125703, qiskit gpu time : 0.005736
+quict cpu time : 0.01757, quict gpu time : 0.008423, qiskit cpu time : 0.066056, qiskit gpu time : 0.006975
+qubit_number: 20 
+quict cpu time : 0.101779, quict gpu time : 0.007054, qiskit cpu time : 0.141161, qiskit gpu time : 0.019911
+quict cpu time : 0.139227, quict gpu time : 0.009292, qiskit cpu time : 0.167798, qiskit gpu time : 0.018983
+quict cpu time : 0.155806, quict gpu time : 0.011628, qiskit cpu time : 0.185398, qiskit gpu time : 0.020336
+quict cpu time : 0.177736, quict gpu time : 0.013612, qiskit cpu time : 0.154778, qiskit gpu time : 0.028914
+quict cpu time : 0.209745, quict gpu time : 0.01647, qiskit cpu time : 0.172318, qiskit gpu time : 0.022813
+quict cpu time : 0.24622, quict gpu time : 0.018652, qiskit cpu time : 0.163238, qiskit gpu time : 0.024952

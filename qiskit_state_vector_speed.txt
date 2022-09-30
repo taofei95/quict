@@ -1,4 +1,0 @@
-qubit_number: 20 
-quict cpu time : 0.0, quict gpu time : 0.0, qiskit cpu time : 0.0, qiskit gpu time : 0.001018
-quict cpu time : 0.0, quict gpu time : 0.0, qiskit cpu time : 0.0, qiskit gpu time : 0.000868
-quict cpu time : 0.0, quict gpu time : 0.0, qiskit cpu time : 0.0, qiskit gpu time : 0.001077

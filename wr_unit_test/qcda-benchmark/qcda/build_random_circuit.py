@@ -21,7 +21,7 @@ single_typelist = [
     GateType.tdg, GateType.u1, GateType.u2, GateType.u3
 ]
 double_typelist = [
-    GateType.cu1, GateType.cu3, 
+    GateType.cu1,
     GateType.cx, GateType.cy, GateType.cz, GateType.rxx, 
     GateType.rzz, GateType.swap 
 ]
@@ -31,7 +31,7 @@ prob = [0.8 / len_s] * len_s + [0.2 / len_d] * len_d
 #build random circuit for qcda benchmark
 qubit_num = [4, 6, 8, 10, 12]
 gate_multiply = [5, 7, 9, 11, 13, 15]
-folder_path = "wr_unit_test/sim-benchmark/circuit/qiskitdm"
+folder_path = "wr_unit_test/sim-benchmark/circuit/qiskit2"
 if not os.path.exists(folder_path):
     os.makedirs(folder_path)
 

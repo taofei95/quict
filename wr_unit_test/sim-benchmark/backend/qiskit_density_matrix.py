@@ -13,14 +13,14 @@ gates_num = [5, 7, 9, 11, 13, 15]
 sim_c = CircuitSimulator()
 sim_g = DensityMatrixSimulation("GPU")
 sim_q_c = Aer.get_backend('aer_simulator_density_matrix')
-simu_q_g = Aer.get_backend('aer_simulator_density_matrix')
+sim_q_g = Aer.get_backend('aer_simulator_density_matrix_gpu')
 
 f = open("qiskit_density_matrix_speed.txt", 'w+')
 for q_num in qubits_num:
     f.write(f"qubit_number: {q_num} \n")
     circuit_folder_path = os.path.join(
         os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
-        "circuit/qiskitdm"
+        "circuit/qiskit2"
     )
     for gm in gates_num:
         # f.write(f"gate size: {q_num * gm} \n")
@@ -43,19 +43,21 @@ for q_num in qubits_num:
             lltime = time.time()
             quict_gpu_time += round(lltime - sstime, 6)
             
-            # qiskit cpu
             circ = QuantumCircuit.from_qasm_file(circuit_folder_path + '/' + filename)
-            circ = transpile(circ, sim_q_c)
+            circ.save_density_matrix()
+            circ.save_state()
+
+            # qiskit cpu
             ssstime = time.time()
-            amp = sim_q_c.run(circ)
+            amp = sim_q_c.run(circ).result()
+            # dm = amp.save_state(circ)
             llltime = time.time()
             qiskit_cpu_time += round(llltime - ssstime, 6)
 
             #qiskit gpu
-            simu_q_g.set_options(device='GPU')
-            circ = transpile(circ, simu_q_g)
             sssstime = time.time()
-            amp = simu_q_g.run(circ)
+            amp = sim_q_g.run(circ).result()
+            # dm = amp.save_state(circ)
             lllltime = time.time()
             qiskit_gpu_time += round(lllltime - sssstime, 6)
 
