@@ -16,28 +16,27 @@ class QAOANet(VQANet):
     def __init__(
         self,
         n_qubits: int,
-        depth: int,
+        p: int,
         hamiltonian: Hamiltonian,
         device=torch.device("cuda:0"),
     ):
-        super().__init__(n_qubits, depth, hamiltonian, device)
+        super().__init__(n_qubits, p, hamiltonian, device)
         self.define_network()
 
     def define_network(self):
         self.beta = torch.nn.Parameter(
-            torch.rand(self.depth, device=self.device), requires_grad=True
+            torch.rand(self.p, device=self.device), requires_grad=True
         )
         self.gamma = torch.nn.Parameter(
-            torch.rand(self.depth, device=self.device), requires_grad=True
+            torch.rand(self.p, device=self.device), requires_grad=True
         )
 
     def forward(self, state=None):
-        circuit = self.construct_ansatz(self.gamma, self.beta)
-        ansatz = Ansatz(circuit, self.device)
+        ansatz = self.construct_ansatz(self.gamma, self.beta)
         state = ansatz.forward(state)
         return state
 
-    def construct_U_gamma_layer(self, gamma):
+    def construct_U_gamma_layer(self, ansatz, gamma):
         U_gamma_matrix = np.eye(1 << self.n_qubits, dtype=np.complex128)
 
         for coeff, qubit_index, pauli_gate in zip(
@@ -74,18 +73,17 @@ class QAOANet(VQANet):
 
     def construct_ansatz(self, gamma, beta):
         start = time.time()
-        ansatz = Circuit(self.n_qubits)
+        ansatz = Ansatz(self.n_qubits, device=self.device)
         # initialize state vector
-        H | ansatz
+        ansatz.add_gate(H)
 
-        for p in range(self.depth):
+        for p in range(self.p):
             # construct U_gamma
-            U_gamma = self.construct_U_gamma_layer(float(gamma[p]))
-            U_gamma | ansatz
+            self.construct_U_gamma_layer(ansatz, float(gamma[p]))
 
             # construct U_beta
             U_beta = Rx(float(2 * beta[p]))
-            U_beta | ansatz
+            ansatz.add_gate(U_beta)
 
         end = time.time() - start
         return ansatz
@@ -125,5 +123,5 @@ if __name__ == "__main__":
     h = Hamiltonian(pauli_str)
     state = random_state(n_qubits)
     # h = Hamiltonian([[0.2, "Z0", "I1"], [1, "X1"]])
-    net = QAOANet(hamiltonian=h, depth=1, n_qubits=n_qubits)
+    net = QAOANet(hamiltonian=h, p=1, n_qubits=n_qubits)
     # state = np.array([np.sqrt(3) / 3, 1 / 2, 1 / 3, np.sqrt(11) / 6])

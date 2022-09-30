@@ -564,6 +564,25 @@ class HGate(BasicGate):
 H = HGate()
 
 
+class HYGate(BasicGate):
+    """ Self-inverse gate """
+    def __init__(self):
+        super().__init__(
+            controls=0,
+            targets=1,
+            params=0,
+            type=GateType.hy
+        )
+
+        self.matrix = np.array([
+            [1j / np.sqrt(2), -1j / np.sqrt(2)],
+            [1j / np.sqrt(2), -1j / np.sqrt(2)]
+        ], dtype=self._precision)
+
+
+Hy = HYGate()
+
+
 class SGate(BasicGate):
     """ S gate """
     def __init__(self):

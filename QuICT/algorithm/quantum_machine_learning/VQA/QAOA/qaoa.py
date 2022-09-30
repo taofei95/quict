@@ -6,6 +6,7 @@ import torch
 import torch.nn.functional as torch_F
 import torchvision
 import torchvision.transforms.functional as torchvision_F
+
 # import torch.utils.tensorboard
 from QuICT.algorithm.quantum_machine_learning.VQA.model.QAOANet import QAOANet
 from QuICT.algorithm.quantum_machine_learning.utils.hamiltonian import Hamiltonian
@@ -14,10 +15,10 @@ from QuICT.simulation.state_vector import ConstantStateVectorSimulator
 
 class QAOA:
     def __init__(
-        self, n_qubits, depth, hamiltonian: Hamiltonian, device=torch.device("cuda:0")
+        self, n_qubits, p, hamiltonian: Hamiltonian, device=torch.device("cuda:0")
     ):
         self.n_qubits = n_qubits
-        self.net = QAOANet(n_qubits, depth, hamiltonian, device).to(device)
+        self.net = QAOANet(n_qubits, p, hamiltonian, device).to(device)
 
     def run(self, optimizer, lr, max_iter):
         optim = optimizer([dict(params=self.net.parameters(), lr=lr)])

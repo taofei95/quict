@@ -9,13 +9,13 @@ class VQANet(torch.nn.Module):
     def __init__(
         self,
         n_qubits: int,
-        depth: int,
+        p: int,
         hamiltonian: Hamiltonian,
         device=torch.device("cuda:0"),
     ):
         super().__init__()
         self.n_qubits = n_qubits
-        self.depth = depth
+        self.p = p
         self.hamiltonian = hamiltonian
         self.device = device
         self.define_network()
@@ -85,6 +85,6 @@ if __name__ == "__main__":
     print(pauli_str)
     h = Hamiltonian(pauli_str)
     state = random_state(n_qubits)
-    net = VQANet(hamiltonian=h, depth=1, n_qubits=n_qubits)
+    net = VQANet(hamiltonian=h, p=1, n_qubits=n_qubits)
     loss = net.loss_func(state)
     print(loss)
