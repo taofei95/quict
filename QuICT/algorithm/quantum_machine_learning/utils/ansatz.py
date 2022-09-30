@@ -12,6 +12,18 @@ class Ansatz:
         self._gates = [] if circuit is None else circuit.gates
         self._device = device
 
+    def __add__(self, other):
+        ansatz = Ansatz(
+            n_qubits=max(self._n_qubits, other._n_qubits), device=self._device
+        )
+        for gate in self._gates:
+            gate.update_name("ansatz", len(ansatz._gates))
+            ansatz._gates.append(gate)
+        for other_gate in other._gates:
+            other_gate.update_name("ansatz", len(ansatz._gates))
+            ansatz._gates.append(other_gate)
+        return ansatz
+
     def add_gate(self, gate, act_bits: Union[int, list] = None):
         assert isinstance(gate.type, GateType)
         if act_bits is None:
@@ -82,7 +94,6 @@ class Ansatz:
 
         gates = self._gates if self._circuit is None else self._circuit.gates
         for gate in gates:
-            print(gate)
             gate_tensor = torch.from_numpy(gate.matrix).to(self._device)
             act_bits = gate.cargs + gate.targs
             state = self._apply_gate(state, gate_tensor, act_bits)
@@ -122,18 +133,29 @@ if __name__ == "__main__":
 
     state = random_state(5)
     circuit = Circuit(5)
-    HH = np.kron(H.matrix, H.matrix)
-    HH = Unitary(HH)
-    HH | circuit([0, 1])
+    Rxx(0.5) | circuit([1,3])
+    simulator = ConstantStateVectorSimulator()
+    sv = simulator.run(circuit, state)
+    print(sv.real)
+    
+    circuit2 = Circuit(5)
+    H | circuit2(1)
+    H | circuit2(3)
+    CX | circuit2([1,3])
+    Rz(0.5) | circuit2(3)
+    CX | circuit2([1,3])
+    H | circuit2(1)
+    H | circuit2(3)
+    sv = simulator.run(circuit, state)
+    print(sv.real)
+    
+    # HH = np.kron(H.matrix, H.matrix)
+    # HH = Unitary(HH)
+    # HH | circuit([0, 1])
     # Rz(0.5) | circuit(2)
     # ansatz = Ansatz(5, circuit)
     # sv = ansatz.forward(state)
 
-    ansatz2 = Ansatz(5)
-    ansatz2.add_gate(H)
-    sv = ansatz2.forward(state)
     # print(np.array(sv.cpu()).real)
 
-    # simulator = ConstantStateVectorSimulator()
-    # sv = simulator.run(circuit, state)
-    # print(sv.real)
+    

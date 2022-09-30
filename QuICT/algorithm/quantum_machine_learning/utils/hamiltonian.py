@@ -149,6 +149,10 @@ def main():
     state = np.array([np.sqrt(3) / 3, 1 / 2, 1 / 3, np.sqrt(11) / 6])
     state = state.reshape(-1, 1)
     h = Hamiltonian([[0.2, "Z0", "I1"], [1, "X1"]])
+    print(h._pauli_gates)
+    print(h._qubit_indexes)
+    print(h._coefficients)
+    
     # pauli_str = [
     #     [-1.0, "z0", "z1"],
     #     [-1.0, "z1", "z2"],
@@ -156,9 +160,9 @@ def main():
     #     [-1.0, "z3", "z0"],
     # ]
     # h = Hamiltonian(pauli_str)
-    hamiton_matrix = h.get_hamiton_matrix(2)
-    print(hamiton_matrix.real)
-    print(state.T @ hamiton_matrix.real @ state)
+    # hamiton_matrix = h.get_hamiton_matrix(2)
+    # print(hamiton_matrix.real)
+    # print(state.T @ hamiton_matrix.real @ state)
     # print(h._pauli_gates)
     # print(h._qubit_indexes)
     # print(h._h_matrix)

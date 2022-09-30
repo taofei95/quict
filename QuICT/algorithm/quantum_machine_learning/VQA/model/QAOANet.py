@@ -36,40 +36,67 @@ class QAOANet(VQANet):
         state = ansatz.forward(state)
         return state
 
-    def construct_U_gamma_layer(self, ansatz, gamma):
-        U_gamma_matrix = np.eye(1 << self.n_qubits, dtype=np.complex128)
-
-        for coeff, qubit_index, pauli_gate in zip(
+    def construct_U_gamma_layer(self, gamma):
+        ansatz = Ansatz(n_qubits=self.n_qubits, device=self.device)
+        for coeff, qids, gates in zip(
             self.hamiltonian._coefficients,
             self.hamiltonian._qubit_indexes,
             self.hamiltonian._pauli_gates,
         ):
-            matrix = np.array([1], dtype=np.complex128)
-            matrix_i = np.cos(gamma * coeff) * np.eye(
-                1 << self.n_qubits, dtype=np.complex128
-            )
-            num = 0
-            for i in range(self.n_qubits):
-                if i not in qubit_index:
-                    matrix = np.kron(matrix, np.eye(2, dtype=np.complex128))
-                    num += 1
-                else:
-                    gate = pauli_gate[i - num]
-                    if gate == "X":
-                        matrix = np.kron(matrix, X.matrix)
-                    elif gate == "Y":
-                        matrix = np.kron(matrix, Y.matrix)
-                    elif gate == "Z":
-                        matrix = np.kron(matrix, Z.matrix)
-                    elif gate == "I":
-                        matrix = np.kron(matrix, np.eye(2, dtype=np.complex128))
+            # Remove I from pauli_gates and remove corresponding qid from qubit_indexes
+            #################
+
+            # Mapping e.g.Rxyz
+            if len(qids) > 1:
+                for i in range(len(qids)):
+                    if gates[i] == "X":
+                        ansatz.add_gate(H, qids[i])
+                    elif gate[i] == "Y":
+                        ansatz.add_gate(Hy, qids[i])
+                    elif gate[i] == "Z":
+                        continue
                     else:
-                        raise ValueError("Invalid Pauli gate")
-            matrix *= np.sin(gamma * coeff) * (1j)
-            U_gamma_matrix = (matrix_i - matrix).dot(U_gamma_matrix)
-        # ud = UnitaryDecomposition()
-        # U_gamma = ud.execute(U_gamma_matrix)[0]
-        return Unitary(U_gamma_matrix)
+                        raise ValueError("Invalid Pauli gate.")
+                ansatz = ansatz + self._Rnz_ansatz(gamma, qids)
+                for i in range(len(qids)):
+                    if gates[i] == "X":
+                        ansatz.add_gate(H, qids[i])
+                    elif gate[i] == "Y":
+                        ansatz.add_gate(Hy, qids[i])
+                    elif gate[i] == "Z":
+                        continue
+                    else:
+                        raise ValueError("Invalid Pauli gate.")
+            # Only Rx, Ry, Rz
+            elif len(qids) == 1:
+                if gates[0] == "X":
+                    ansatz.add_gate(Rx(gamma), qids)
+                elif gate[0] == "Y":
+                    ansatz.add_gate(Ry(gamma), qids)
+                elif gate[0] == "Z":
+                    ansatz.add_gate(Rz(gamma), qids)
+                else:
+                    raise ValueError("Invalid Pauli gate.")
+            # Only coeff
+            else:
+                
+
+        return ansatz
+
+    def _Rnz_ansatz(self, gamma, tar_idx: Union[int, list]):
+        ansatz = Ansatz(n_qubits=self.n_qubits, device=self.device)
+        if isinstance(tar_idx, int):
+            ansatz.add_gate(Rz(gamma), tar_idx)
+        else:
+            # Add CNOT gates
+            for i in range(len(tar_idx) - 1):
+                ansatz.add_gate(CX, [tar_idx[i : i + 2]])
+            # Add RZ gate
+            ansatz.add_gate(Rz(gamma), tar_idx[-1])
+            # Add CNOT gates
+            for i in range(len(tar_idx) - 1, 0, -1):
+                ansatz.add_gate(CX, [tar_idx[i : i + 2]])
+        return ansatz
 
     def construct_ansatz(self, gamma, beta):
         start = time.time()
@@ -79,7 +106,7 @@ class QAOANet(VQANet):
 
         for p in range(self.p):
             # construct U_gamma
-            self.construct_U_gamma_layer(ansatz, float(gamma[p]))
+            ansatz = ansatz + self.construct_U_gamma_layer(float(gamma[p]))
 
             # construct U_beta
             U_beta = Rx(float(2 * beta[p]))
