@@ -5,10 +5,21 @@ from QuICT.core.gate import *
 
 
 class Ansatz:
-    def __init__(self, circuit: Circuit, device=torch.device("cuda:0")):
+    def __init__(self, n_qubits, circuit=None, device=torch.device("cuda:0")):
         self._circuit = circuit
-        self._n_qubits = self._circuit.width()
+        self._n_qubits = n_qubits if circuit is None else circuit.width()
+        self._gates = [] if circuit is None else circuit.gates
         self._device = device
+
+    def add_gate(self, gate, act_bits: Union[int, list]):
+        assert isinstance(gate.type, GateType)
+        if isinstance(act_bits, int):
+            gate.targs = act_bits
+        else:
+            assert len(act_bits) == gate.controls + gate.targets
+            gate.cargs = act_bits[: gate.controls]
+            gate.targs = act_bits[gate.controls :]
+        self._gates.append(gate)
 
     def _apply_gate(self, state, gate_tensor, act_bits):
         # Step 1: Relabel the qubits and calculate their corresponding index values.
@@ -60,7 +71,7 @@ class Ansatz:
                 state = state_vector.clone()
         assert state.shape[0] == 1 << self._n_qubits
 
-        gates = self._circuit.gates
+        gates = self._gates if self._circuit is None else self._circuit.gates
         for gate in gates:
             gate_tensor = torch.from_numpy(gate.matrix).to(self._device)
             act_bits = gate.cargs + gate.targs
@@ -103,7 +114,18 @@ if __name__ == "__main__":
     circuit = Circuit(5)
     HH = np.kron(H.matrix, H.matrix)
     HH = Unitary(HH)
-    HH | circuit([2, 4])
-    ansatz = Ansatz(circuit)
+    Rx(0.3) | circuit(0)
+    Rz(0.5) | circuit(2)
+    ansatz = Ansatz(5, circuit)
     sv = ansatz.forward(state)
     print(np.array(sv.cpu()).real)
+
+    ansatz2 = Ansatz(5)
+    ansatz2.add_gate(Rx(0.3), [0])
+    ansatz2.add_gate(Rz(0.5), [2])
+    sv = ansatz2.forward(state)
+    print(np.array(sv.cpu()).real)
+
+    simulator = ConstantStateVectorSimulator()
+    sv = simulator.run(circuit, state)
+    print(sv.real)
