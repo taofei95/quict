@@ -1,3 +1,4 @@
+from ssl import HAS_ECDH
 import torch
 import numpy as np
 from QuICT.core import Circuit
@@ -11,15 +12,23 @@ class Ansatz:
         self._gates = [] if circuit is None else circuit.gates
         self._device = device
 
-    def add_gate(self, gate, act_bits: Union[int, list]):
+    def add_gate(self, gate, act_bits: Union[int, list] = None):
         assert isinstance(gate.type, GateType)
-        if isinstance(act_bits, int):
-            gate.targs = act_bits
+        if act_bits is None:
+            for qid in range(self._n_qubits):
+                new_gate = gate.copy()
+                new_gate.targs = [qid]
+                new_gate.update_name("ansatz", len(self._gates))
+                self._gates.append(new_gate)
         else:
-            assert len(act_bits) == gate.controls + gate.targets
-            gate.cargs = act_bits[: gate.controls]
-            gate.targs = act_bits[gate.controls :]
-        self._gates.append(gate)
+            if isinstance(act_bits, int):
+                gate.targs = act_bits
+            else:
+                assert len(act_bits) == gate.controls + gate.targets
+                gate.cargs = act_bits[: gate.controls]
+                gate.targs = act_bits[gate.controls :]
+            gate.update_name("ansatz", len(self._gates))
+            self._gates.append(gate)
 
     def _apply_gate(self, state, gate_tensor, act_bits):
         # Step 1: Relabel the qubits and calculate their corresponding index values.
@@ -73,6 +82,7 @@ class Ansatz:
 
         gates = self._gates if self._circuit is None else self._circuit.gates
         for gate in gates:
+            print(gate)
             gate_tensor = torch.from_numpy(gate.matrix).to(self._device)
             act_bits = gate.cargs + gate.targs
             state = self._apply_gate(state, gate_tensor, act_bits)
@@ -114,18 +124,16 @@ if __name__ == "__main__":
     circuit = Circuit(5)
     HH = np.kron(H.matrix, H.matrix)
     HH = Unitary(HH)
-    Rx(0.3) | circuit(0)
-    Rz(0.5) | circuit(2)
-    ansatz = Ansatz(5, circuit)
-    sv = ansatz.forward(state)
-    print(np.array(sv.cpu()).real)
+    HH | circuit([0, 1])
+    # Rz(0.5) | circuit(2)
+    # ansatz = Ansatz(5, circuit)
+    # sv = ansatz.forward(state)
 
     ansatz2 = Ansatz(5)
-    ansatz2.add_gate(Rx(0.3), [0])
-    ansatz2.add_gate(Rz(0.5), [2])
+    ansatz2.add_gate(H)
     sv = ansatz2.forward(state)
-    print(np.array(sv.cpu()).real)
+    # print(np.array(sv.cpu()).real)
 
-    simulator = ConstantStateVectorSimulator()
-    sv = simulator.run(circuit, state)
-    print(sv.real)
+    # simulator = ConstantStateVectorSimulator()
+    # sv = simulator.run(circuit, state)
+    # print(sv.real)

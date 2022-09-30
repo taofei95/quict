@@ -114,7 +114,7 @@ class Hamiltonian:
                     continue
                 else:
                     raise ValueError("Invalid Pauli gate.")
-            ansatz = Ansatz(circuit, device)
+            ansatz = Ansatz(n_qubits, circuit, device)
             hamiton_ansatz.append(ansatz)
         return hamiton_ansatz
 
