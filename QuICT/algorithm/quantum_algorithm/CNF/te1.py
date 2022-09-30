@@ -5,7 +5,7 @@ import math
 from QuICT.algorithm.quantum_algorithm.CNF.cnf import *#CNFSATOracle
 from QuICT.qcda.optimization import *
 # from QuICT.simulation.unitary_simulator import UnitarySimulator
-from QuICT.simulation.cpu_simulator import CircuitSimulator
+from QuICT.simulation.state_vector import CircuitSimulator
 
 
 def read_CNF(cnf_file):
@@ -31,20 +31,24 @@ def read_CNF(cnf_file):
 
 def test():
 # x0 x1，x2, x_{n variable_number -1}
-    filename_test =  "./9"
-    AuxQubitNumber = 6
+    filename_test =  "./10"
+    AuxQubitNumber = 5
     variable_number , clause_number , CNF_data = read_CNF(filename_test)
-
+    cnf = CNFSATOracle()
+    cnf.run(filename_test, AuxQubitNumber)
+    
+    cgate = cnf.circuit()
+    #circuittt = Circuit(variable_number + AuxQubitNumber + 2)
+    #circuittt.extend(cgate)
+    #circuittt.draw(filename='22.jpg')
 
     #真值表初值变化
     b=[]
-    for a in range(2 ** variable_number):
-        cnf = CNFSATOracle()
-        cnf.run(filename_test, AuxQubitNumber)
-        cgate = cnf.circuit()
-        circuit_temp=Circuit(variable_number + 2 + AuxQubitNumber)
+    d=[0,1,3,5,7,1025]
+    for a in range(16):
         randomnum = a
         x=[]
+        circuit_temp=Circuit(variable_number + 1 + AuxQubitNumber)
         for ii in range(variable_number):
             oneorzero = math.floor(randomnum % 2)
             randomnum = math.floor(randomnum/2) 
@@ -74,7 +78,7 @@ def test():
             if clause_result == 0:
                 cnf_result = 0
                 break
-        print(cnf_result, " ", a)
+        print(cnf_result) #, " ", a,x)
 
         if cnf_result !=  circuit_temp.qubits[variable_number].measured : #比较一下经典与量子电路的 真假值(是否满足的情况)，是否相同。
             print("!!!!!!!!!")
