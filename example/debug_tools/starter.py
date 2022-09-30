@@ -1,11 +1,12 @@
 # exec(open("build/starter.py").read())
+from QuICT.simulation.state_vector.cpu_simulator import CircuitSimulator
+from QuICT.simulation.state_vector.gpu_simulator import ConstantStateVectorSimulator
 from QuICT.core import Circuit, circuit
 from QuICT.core.gate import *
 import QuICT
 
 print(f"using {QuICT.__file__} ...")
 import cupy as cp
-from QuICT.simulation.gpu_simulator import ConstantStateVectorSimulator
 
 
 def formatted_result(result, l, qregs, qregs_name):
@@ -73,6 +74,29 @@ def peeeeeeek(n, qregs=None):
     print(amp2idx(amp, show_n=n, qregs=qregs))
 
 
+def trace_prob(amp, c):
+    """diag(partial_trace(|amp><amp|))
+
+    Args:
+        amp (cupy.ndarray): amplitude
+        c (list<int>): qubits preserved
+
+    Returns:
+        numpy.ndarray: probability distribution for subspace on qubits preserved
+    """
+    from math import log2
+
+    amp = cp.asnumpy(amp)
+    n = int(log2(len(amp)))
+    m = len(c)
+    c_ortho = list(set(list(range(n))) - set(c))
+    assert (1 << n) == len(amp)
+
+    prob = np.power(np.abs(amp), 2)
+    new_prob = np.sum(np.reshape(prob, tuple([2 for i in range(n)])), tuple(c_ortho))
+    return np.reshape(new_prob, (1 << m,))
+
+
 def set_qureg(qreg_index, N):
     """set qureg to the state |N> in big-endian, same direction as arithmetic circuits
 
@@ -93,7 +117,7 @@ def set_qureg(qreg_index, N):
     return gate_set
 
 
-helpers = {formatted_result, amp2idx, peeeeeeek, set_qureg}
+helpers = {formatted_result, amp2idx, peeeeeeek, trace_prob, set_qureg}
 
 print("using helpers:")
 for helper in helpers:

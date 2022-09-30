@@ -6,7 +6,6 @@
 
 from QuICT.core import Circuit
 from QuICT.core.gate import *
-from QuICT.algorithm import SyntheticalUnitary
 
 
 circuit = Circuit(3)
@@ -27,5 +26,5 @@ T           | circuit(0)
 T           | circuit(2)
 H           | circuit(2)
 
-unitary = SyntheticalUnitary.run(circuit, showSU=False)
+unitary = circuit.matrix()
 print(unitary)

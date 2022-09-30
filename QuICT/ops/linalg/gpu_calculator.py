@@ -5,6 +5,7 @@
 # @File    : gpu_calculator
 
 import math
+from typing import List, Union
 import numpy as np
 import cupy as cp
 
@@ -411,7 +412,6 @@ matrix_dot_vector_double_kernel = cp.RawKernel(r'''
                     now += 1 << affect_args[mat_bit - 1 - k];
                 }
             }
-            anc[now] = 0;
             for(int k = 0; k < mat_len; k++){
                 int shift = other;
                 for(int l = 0; l < mat_bit; l++){
@@ -428,41 +428,54 @@ matrix_dot_vector_double_kernel = cp.RawKernel(r'''
 
 
 def matrix_dot_vector(
-    mat,
-    mat_bit,
-    vec,
-    vec_bit,
-    affect_args,
-    auxiliary_vec,
+    vec: Union[np.ndarray, cp.ndarray],
+    vec_bit: int,
+    mat: Union[np.ndarray, cp.ndarray],
+    mat_args: List[int],
     sync: bool = True
 ):
-    mat_length = 1 << mat_bit
+    # Matrix property
+    mat_bit = np.int32(len(mat_args))
+    mat_length = np.square(mat_bit, dtype=np.int32)
+    assert vec_bit >= mat_bit, "Vector length should larger than matrix."
 
+    if vec_bit == mat_bit:
+        return dot(mat, vec, sync=sync)
+
+    # GPU preparation
     task_number = 1 << (vec_bit - mat_bit)
     thread_per_block = min(256, task_number)
     block_num = task_number // thread_per_block
 
+    # matrix args and sorted args
     for i in range(mat_bit):
-        affect_args[i] = vec_bit - 1 - affect_args[i]
+        mat_args[i] = vec_bit - 1 - mat_args[i]
 
-    affect_args_sorts = affect_args.copy()
-    affect_args_sorts.sort()
+    sorted_mat_args = mat_args.copy()
+    sorted_mat_args.sort()
+    mat_args = cp.array(mat_args, dtype=np.int32)
+    sorted_mat_args = cp.array(sorted_mat_args, dtype=np.int32)
 
-    mat = cp.array(mat, dtype=vec.dtype)
-    mat_bit = np.int32(mat_bit)
-    mat_length = np.int32(mat_length)
-    affect_args = cp.array(affect_args, dtype=np.int32)
-    affect_args_sorts = cp.array(affect_args_sorts, dtype=np.int32)
+    # Vector, Matrix preparation
+    if isinstance(vec, np.ndarray):
+        vec = cp.array(vec, dtype=vec.dtype)
+
+    if isinstance(mat, np.ndarray):
+        mat = cp.array(mat, dtype=mat.dtype)
+    auxiliary_vec = cp.zeros_like(vec, dtype=vec.dtype)
+
+    # Start GPU kernel function
     kernel_function = matrix_dot_vector_single_kernel if vec.dtype == np.complex64 else matrix_dot_vector_double_kernel
-
     kernel_function(
         (block_num,),
         (thread_per_block,),
-        (mat, mat_bit, mat_length, vec, affect_args, affect_args_sorts, auxiliary_vec)
+        (mat, mat_bit, mat_length, vec, mat_args, sorted_mat_args, auxiliary_vec)
     )
 
     if sync:
         cp.cuda.Device().synchronize()
+
+    return auxiliary_vec
 
 
 kernel_funcs = list(locals().keys())
