@@ -16,8 +16,9 @@ if __name__ == "__main__":
     CZ | circuit([2, 3])
     CRz | circuit([3, 4])
     circuit.draw()
-    compositeGate = GateTransform.execute(circuit, IBMQSet)
+    GT = GateTransform()
+    compositeGate = GT.execute(circuit)
 
     new_circuit = Circuit(5)
-    new_circuit.extend(compositeGate)
+    new_circuit.extend(compositeGate.gates)
     new_circuit.draw()

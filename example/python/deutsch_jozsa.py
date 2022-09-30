@@ -6,7 +6,7 @@
 
 from QuICT.core import Circuit
 from QuICT.core.gate import H, X, Measure, PermFx
-from QuICT.simulation.gpu_simulator import ConstantStateVectorSimulator
+from QuICT.simulation.state_vector import ConstantStateVectorSimulator
 
 
 def run_deutsch_jozsa(n, oracle):

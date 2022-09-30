@@ -5,7 +5,7 @@
 # @File    : CCX_Dec.py
 from QuICT.core import Circuit
 from QuICT.core.gate import *
-from QuICT.simulation.gpu_simulator import ConstantStateVectorSimulator
+from QuICT.simulation.state_vector import ConstantStateVectorSimulator
 
 
 # Build quantum circuit
@@ -49,4 +49,5 @@ simulator = ConstantStateVectorSimulator(
     sync=True
 )
 amplitude = simulator.run(circuit=circuit)
-print(amplitude)
+
+print(circuit.qasm())

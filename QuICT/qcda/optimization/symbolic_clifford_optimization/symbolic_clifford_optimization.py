@@ -9,13 +9,12 @@ import numpy as np
 
 from QuICT.core import Circuit
 from QuICT.core.gate import CompositeGate, GateType, H, CX, CY, CZ, X, S, Z, S_dagger
-from QuICT.qcda.optimization._optimization import Optimization
 from QuICT.qcda.optimization.commutative_optimization import CommutativeOptimization
-from QuICT.qcda.synthesis.gate_transform.transform_rule import Cy2CxRule, Cz2CxRule
-from QuICT.qcda.utility import PauliOperator
+from QuICT.qcda.synthesis.gate_transform.transform_rule import cy2cx_rule, cz2cx_rule
+from QuICT.qcda.utility import PauliOperator, OutputAligner
 
 
-class SymbolicCliffordOptimization(Optimization):
+class SymbolicCliffordOptimization(object):
     """
     Implement the Clifford circuit optimization process described in Reference, which
     consists of the following 4 steps:
@@ -27,13 +26,21 @@ class SymbolicCliffordOptimization(Optimization):
     Reference:
         https://arxiv.org/abs/2105.02291
     """
-    @classmethod
-    def execute(cls, gates: CompositeGate, control_sets=None):
+    def __init__(self, control_sets=None):
+        """
+        Args:
+            control_sets(list, optional): containing several control_set, which is list of qubit,
+                CX coupling control_set and the complement would be decoupled
+        """
+        assert control_sets is None or isinstance(control_sets, list),\
+            TypeError('control_set must be list of qubit')
+        self.control_sets = control_sets
+
+    @OutputAligner()
+    def execute(self, gates: CompositeGate):
         """
         Args:
             gates(Circuit/CompositeGate): the Clifford Circuit/CompositeGate to be optimized
-            control_sets(list, optional): containing several control_set, which is list of qubit,
-                                          CX coupling control_set and the complement would be decoupled
 
         Returns:
             CompositeGate: the Clifford CompositeGate after optimization
@@ -45,78 +52,77 @@ class SymbolicCliffordOptimization(Optimization):
             TypeError('Invalid input(Circuit/CompositeGate)')
         for gate in gates:
             assert gate.is_clifford(), ValueError('Only Clifford CompositeGate')
-        assert control_sets is None or isinstance(control_sets, list),\
-            TypeError('control_set must be list of qubit')
-        if control_sets is None:
-            control_sets = list(itertools.combinations(range(width), 2))
+        if self.control_sets is None:
+            self.control_sets = list(itertools.combinations(range(width), 2))
 
-        compute, global_pauli = cls.partition(gates, width)
-
-        def reorder(gates: CompositeGate):
-            """
-            For CompositeGate with CX, H, S only, reorder gates so that S appears as late as possible
-            """
-            for gate in gates:
-                assert gate.type in [GateType.cx, GateType.h, GateType.s],\
-                    ValueError('Only CX, H, S gates are allowed in reorder')
-            width = gates.width()
-            gates_reorder = CompositeGate()
-            S_stack = [[] for _ in range(width)]
-            for gate in gates:
-                if gate.type == GateType.s:
-                    S_stack[gate.targ].append(gate)
-                else:
-                    gates_reorder.extend(S_stack[gate.targ])
-                    gates_reorder.append(gate)
-                    S_stack[gate.targ] = []
-            for qubit in range(width):
-                gates_reorder.extend(S_stack[qubit])
-            return gates_reorder
-
-        def cx_reverse(gates: CompositeGate, control_set: list):
-            """
-            For CX in the CompositeGate, if its target qubit is in the control_set while its control qubit
-            is not, the control and target qubit will be reversed by adding H gates.
-            """
-            gates_reverse = CompositeGate()
-            for gate in gates:
-                if gate.type == GateType.cx and gate.carg not in control_set and gate.targ in control_set:
-                    with gates_reverse:
-                        H & gate.carg
-                        H & gate.targ
-                        CX & [gate.targ, gate.carg]
-                        H & gate.carg
-                        H & gate.targ
-                else:
-                    gates_reverse.append(gate)
-            return gates_reverse
-
-        def circular_optimization(gates: CompositeGate, width: int, global_pauli: PauliOperator):
-            # TODO: More optimization to be added here
-            while True:
-                gates_opt = CommutativeOptimization.execute(gates, deparameterization=True)
-                compute, pauli = cls.partition(gates_opt, width)
-                global_pauli = pauli.combine(global_pauli)
-                if compute.size() == gates.size() and gates_opt.size() == gates.size():
-                    break
-                gates = compute
-            return compute, global_pauli
+        compute, global_pauli = self.partition(gates, width)
 
         size = compute.size()
         while True:
-            control_set = list(random.choice(control_sets))
-            compute, global_pauli = circular_optimization(compute, width, global_pauli)
-            compute = cx_reverse(compute, control_set)
-            compute, global_pauli = circular_optimization(compute, width, global_pauli)
-            compute = reorder(compute)
-            compute = cls.symbolic_peephole_optimization(compute, control_set)
-            compute, global_pauli = circular_optimization(compute, width, global_pauli)
+            control_set = list(random.choice(self.control_sets))
+            compute, global_pauli = self.circular_optimization(compute, width, global_pauli)
+            compute = self.cx_reverse(compute, control_set)
+            compute, global_pauli = self.circular_optimization(compute, width, global_pauli)
+            compute = self.reorder(compute)
+            compute = self.symbolic_peephole_optimization(compute, control_set)
+            compute, global_pauli = self.circular_optimization(compute, width, global_pauli)
             if compute.size() == size:
                 break
             size = compute.size()
 
         compute.extend(global_pauli.gates(keep_phase=True))
         return compute
+
+    def reorder(self, gates: CompositeGate):
+        """
+        For CompositeGate with CX, H, S only, reorder gates so that S appears as late as possible
+        """
+        for gate in gates:
+            assert gate.type in [GateType.cx, GateType.h, GateType.s],\
+                ValueError('Only CX, H, S gates are allowed in reorder')
+        width = gates.width()
+        gates_reorder = CompositeGate()
+        S_stack = [[] for _ in range(width)]
+        for gate in gates:
+            if gate.type == GateType.s:
+                S_stack[gate.targ].append(gate)
+            else:
+                gates_reorder.extend(S_stack[gate.targ])
+                gates_reorder.append(gate)
+                S_stack[gate.targ] = []
+        for qubit in range(width):
+            gates_reorder.extend(S_stack[qubit])
+        return gates_reorder
+
+    def cx_reverse(self, gates: CompositeGate, control_set: list):
+        """
+        For CX in the CompositeGate, if its target qubit is in the control_set while its control qubit
+        is not, the control and target qubit will be reversed by adding H gates.
+        """
+        gates_reverse = CompositeGate()
+        for gate in gates:
+            if gate.type == GateType.cx and gate.carg not in control_set and gate.targ in control_set:
+                with gates_reverse:
+                    H & gate.carg
+                    H & gate.targ
+                    CX & [gate.targ, gate.carg]
+                    H & gate.carg
+                    H & gate.targ
+            else:
+                gates_reverse.append(gate)
+        return gates_reverse
+
+    def circular_optimization(self, gates: CompositeGate, width: int, global_pauli: PauliOperator):
+        # TODO: More optimization to be added here
+        CO = CommutativeOptimization(deparameterization=True)
+        while True:
+            gates_opt = CO.execute(gates)
+            compute, pauli = self.partition(gates_opt, width)
+            global_pauli = pauli.combine(global_pauli)
+            if compute.size() == gates.size() and gates_opt.size() == gates.size():
+                break
+            gates = compute
+        return compute, global_pauli
 
     @staticmethod
     def partition(gates: CompositeGate, width=None):
@@ -182,49 +188,6 @@ class SymbolicCliffordOptimization(Optimization):
                 assert not (gate.carg not in control_set and gate.targ in control_set),\
                     ValueError('Coupling CX must have the control qubit in control_set')
 
-        def local_symbolic_optimization(gates: CompositeGate, control: int):
-            """
-            Inner method for symbolic peephole optimization
-            """
-            for gate in gates:
-                assert gate.targ != control, ValueError('control qubit should not be targeted')
-
-            symbolic_gates = CompositeGate()
-            for gate in gates:
-                # symbolize coupling cx
-                if gate.type == GateType.cx and gate.carg == control:
-                    symbolic_gates.append(X & gate.targ)
-                else:
-                    symbolic_gates.append(gate)
-
-            # pauli here is symbolic pauli, including symbolic phase
-            compute, pauli = cls.partition(symbolic_gates)
-
-            # such partition may cause negative optimization, if so, return the original gates
-            if gates.count_2qubit_gate() < compute.count_2qubit_gate() + pauli.hamming_weight:
-                return gates
-
-            # restore the symbolic pauli
-            for qubit in range(pauli.width):
-                if qubit == control:
-                    assert pauli.operator[qubit] == GateType.id
-                    continue
-                if pauli.operator[qubit] == GateType.x:
-                    compute.append(CX & [control, qubit])
-                if pauli.operator[qubit] == GateType.y:
-                    compute.extend(Cy2CxRule.transform(CY & [control, qubit]))
-                if pauli.operator[qubit] == GateType.z:
-                    compute.extend(Cz2CxRule.transform(CZ & [control, qubit]))
-            # restore the symbolic phase
-            if np.isclose(pauli.phase, 1j):
-                compute.append(S & control)
-            if np.isclose(pauli.phase, -1):
-                compute.append(Z & control)
-            if np.isclose(pauli.phase, -1j):
-                compute.append(S_dagger & control)
-
-            return compute
-
         gates_opt = CompositeGate()
         current = CompositeGate()
         control = None
@@ -234,7 +197,7 @@ class SymbolicCliffordOptimization(Optimization):
                    (gate.type == GateType.cx and (gate.carg == control or gate.carg not in control_set))):
                     current.append(gate)
                 else:
-                    gates_opt.extend(local_symbolic_optimization(current, control))
+                    gates_opt.extend(cls.local_symbolic_optimization(current, control))
                     current = CompositeGate()
             if current.size() == 0:
                 if (gate.type != GateType.cx or
@@ -245,5 +208,49 @@ class SymbolicCliffordOptimization(Optimization):
                     control = gate.carg
 
         if current.size() != 0:
-            gates_opt.extend(local_symbolic_optimization(current, control))
+            gates_opt.extend(cls.local_symbolic_optimization(current, control))
         return gates_opt
+
+    @classmethod
+    def local_symbolic_optimization(cls, gates: CompositeGate, control: int):
+        """
+        Inner method for symbolic peephole optimization
+        """
+        for gate in gates:
+            assert gate.targ != control, ValueError('control qubit should not be targeted')
+
+        symbolic_gates = CompositeGate()
+        for gate in gates:
+            # symbolize coupling cx
+            if gate.type == GateType.cx and gate.carg == control:
+                symbolic_gates.append(X & gate.targ)
+            else:
+                symbolic_gates.append(gate)
+
+        # pauli here is symbolic pauli, including symbolic phase
+        compute, pauli = cls.partition(symbolic_gates)
+
+        # such partition may cause negative optimization, if so, return the original gates
+        if gates.count_2qubit_gate() < compute.count_2qubit_gate() + pauli.hamming_weight:
+            return gates
+
+        # restore the symbolic pauli
+        for qubit in range(pauli.width):
+            if qubit == control:
+                assert pauli.operator[qubit] == GateType.id
+                continue
+            if pauli.operator[qubit] == GateType.x:
+                compute.append(CX & [control, qubit])
+            if pauli.operator[qubit] == GateType.y:
+                compute.extend(cy2cx_rule(CY & [control, qubit]))
+            if pauli.operator[qubit] == GateType.z:
+                compute.extend(cz2cx_rule(CZ & [control, qubit]))
+        # restore the symbolic phase
+        if np.isclose(pauli.phase, 1j):
+            compute.append(S & control)
+        if np.isclose(pauli.phase, -1):
+            compute.append(Z & control)
+        if np.isclose(pauli.phase, -1j):
+            compute.append(S_dagger & control)
+
+        return compute

@@ -47,7 +47,6 @@ class TestCompositeGate(unittest.TestCase):
         H | test_gate(2)
         CX | test_gate([0, 1])
         CX | test_gate([0, 2])
-        CCRz | test_gate([0, 1, 2])
 
         matrix = test_gate.matrix()
         assert matrix.shape == (1 << 3, 1 << 3)

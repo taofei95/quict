@@ -1,4 +1,4 @@
-from QuICT.core.circuit.circuit_extend import Trigger
+from QuICT.core.operator import Trigger
 from QuICT.core import Circuit
 from QuICT.core.gate import *
 
@@ -22,7 +22,7 @@ trigger | c(
     [0]
 )  # trigger measure its target and then switch on the result to construct gates
 
-from QuICT.simulation.gpu_simulator import ConstantStateVectorSimulator
+from QuICT.simulation.state_vector import ConstantStateVectorSimulator
 
 sim = ConstantStateVectorSimulator()
 amp = sim.run(c)

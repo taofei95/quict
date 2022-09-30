@@ -1092,9 +1092,7 @@ class TextDrawing:
             mgate = MeasureFrom()
             layer.set_qubit(gate.targs[0], mgate)
         elif isinstance(gate, BarrierGate):
-            for qubit in gate.targs:
-                if qubit in self.targs:
-                    layer.set_qubit(qubit, Barrier())
+            layer.set_qubit(gate.targ, Barrier())
         elif isinstance(gate, SwapGate):
             # swap
             gates = [Ex(conditional=conditional) for _ in range(len(gate.cargs + gate.targs))]
@@ -1138,7 +1136,8 @@ class TextDrawing:
                                 conditional=conditional)
         else:
             raise Exception(
-                "Text visualizer does not know how to handle this instruction: ", instruction.qasm_name)
+                f"Text visualizer does not know how to handle this instruction: {gate.type}."
+            )
 
         # sort into the order they were declared in
         # this ensures that connected boxes have lines in the right direction
