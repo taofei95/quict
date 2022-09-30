@@ -11,8 +11,7 @@ from QuICT.qcda.synthesis.mct import MCTOneAux
 from QuICT.core.operator import Trigger
 import logging
 from typing import List, Tuple
-from QuICT.qcda.synthesis.mct import one_dirty_aux
-from QuICT.qcda.synthesis.mct.mct_linear_simulation import half_dirty_aux
+# from QuICT.qcda.synthesis.mct.mct_linear_simulation import half_dirty_aux
 from QuICT.qcda.optimization.commutative_optimization import *
 
 #from .._synthesis import Synthesis
@@ -70,7 +69,8 @@ class CNFSATOracle:
             for i in range(len(controls_X)):
                 X | self._cgate(controls_X[i])
             X | self._cgate(target)
-            one_dirty_aux(self._cgate, controls_abs, target, current_Aux) #QuICT.qcda.synthesis.mct.
+            MCTOneAux().execute(len(controls_abs) + 2) | self._cgate(controls_abs + [current_Aux, target])
+            # one_dirty_aux(self._cgate, controls_abs, target, current_Aux) #QuICT.qcda.synthesis.mct.
             #X | self._cgate(target)
             for i in range(len(controls_X)):
                 X | self._cgate(controls_X[i])
@@ -84,7 +84,8 @@ class CNFSATOracle:
                         ancilla_qubits_num, j+1, j+1,
                         variable_number +  j+1, depth-1, depth
                     )
-                one_dirty_aux(self._cgate, controls_abs, target, target-1)
+                MCTOneAux().execute(len(controls_abs) + 2) | self._cgate(controls_abs + [target - 1, target])
+                # one_dirty_aux(self._cgate, controls_abs, target, target-1)
                 for j in range(clause_number):
                     controls_abs.append(variable_number +  j+1)
                     self.clause(
@@ -106,7 +107,9 @@ class CNFSATOracle:
                     controls.append(variable_number + ancilla_qubits_num - p + 1 + j)
 
                 current_Aux = variable_number + 1 
-                one_dirty_aux(self._cgate, controls, target, current_Aux)
+                
+                MCTOneAux().execute(len(controls_abs) + 2) | self._cgate(controls + [current_Aux, target])
+                # one_dirty_aux(self._cgate, controls, target, current_Aux)
                 
                 for j in range(block_number):
                     self.clause(
@@ -158,7 +161,10 @@ class CNFSATOracle:
             for i in range(len(controls_X)):
                 X | self._cgate(controls_X[i])
             X | self._cgate(target)
-            one_dirty_aux(self._cgate, controls_abs, target, current_Aux)
+            print(controls_abs)
+            print(target)
+            MCTOneAux().execute(len(controls_abs) + 2) | self._cgate(controls_abs + [current_Aux, target])
+            # one_dirty_aux(self._cgate, controls_abs, target, current_Aux)
             #X | self._cgate(target)
             for i in range(len(controls_X)):
                 X | self._cgate(controls_X[i])
