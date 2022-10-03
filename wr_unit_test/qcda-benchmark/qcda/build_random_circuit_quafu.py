@@ -1,28 +1,46 @@
+import os
+from copy import deepcopy
 from QuICT.core.circuit.circuit import Circuit
-from QuICT.qcda.optimization import *
+from QuICT.qcda.mapping.mcts.mcts_mapping import MCTSMapping
+from QuICT.qcda.optimization.auto_optimization import AutoOptimization
+from QuICT.qcda.synthesis import InstructionSet
 from QuICT.simulation.unitary import *
 from QuICT.core.utils.gate_type import GateType
+from QuICT.core.layout.layout import Layout
+from QuICT.qcda.qcda import QCDA
+
+qf_iset = InstructionSet(
+    GateType.cx,
+    [GateType.h, GateType.rx, GateType.ry, GateType.rz]
+)
+layout = Layout.load_file(
+    os.path.dirname(os.path.abspath(__file__)) + 
+    f"/../layout/line5.layout"
+)
+qcda_workflow = QCDA()
+qcda_workflow.add_default_optimization()
+qcda_workflow.add_default_synthesis(qf_iset)
+qcda_workflow.add_default_mapping(layout)
 
 
-quafu_typelist = [
-    GateType.x, GateType.y, GateType.z, GateType.h,
-    GateType.t, GateType.tdg, GateType.s, GateType.sdg,
-    GateType.sx, GateType.cx, GateType.cz,
-    GateType.swap, GateType.rx, GateType.ry, GateType.rz
-]
+single_typelist = [GateType.h, GateType.cx, GateType.rz]
+double_typelist = [0.2,0.2,0.6]
 qubit_num = 5
 cir = Circuit(qubit_num)
-cir.random_append(rand_size=15, typelist=quafu_typelist)
-cir.draw(filename="quafu_5")
-# print(cir.qasm())
+cir.random_append(rand_size=50, typelist=single_typelist, probabilities=double_typelist)
+print(cir.size())
 
-cir_opt = CommutativeOptimization().execute(cir)
-# print(cir_opt.qasm())
+cir_opt = qcda_workflow.compile(deepcopy(cir))
+cir_ori = MCTSMapping(layout).execute(cir)
+# cir_map = MCTSMapping(layout).execute(cir_opt)
+
 
 sim = UnitarySimulator()
-amp = sim.run(cir_opt)
-print(amp)
-print(cir.qasm())
+amp = sim.run(cir_ori)
+print(abs(amp))
+
+print(cir_ori.qasm())
 print(cir_opt.qasm())
-print(cir.size(), cir_opt.size())
-print(cir.depth(), cir_opt.depth())
+
+print(cir_ori.size(), cir_opt.size())
+print(cir_ori.depth(), cir_opt.depth())
