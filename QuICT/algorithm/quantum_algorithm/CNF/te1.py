@@ -31,8 +31,8 @@ def read_CNF(cnf_file):
 
 def test():
 # x0 x1，x2, x_{n variable_number -1}
-    filename_test =  "./10"
-    AuxQubitNumber = 5
+    filename_test =  "QuICT/algorithm/quantum_algorithm/CNF/test_data/3_11_100"
+    AuxQubitNumber = 3
     variable_number , clause_number , CNF_data = read_CNF(filename_test)
     cnf = CNFSATOracle()
     cnf.run(filename_test, AuxQubitNumber)

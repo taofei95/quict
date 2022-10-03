@@ -1,13 +1,11 @@
 import os
 import time
 import numpy as np
-import cupy as cp
 import math
-import random
 from QuICT.algorithm.quantum_algorithm.CNF.cnf import *#CNFSATOracle
 from QuICT.qcda.optimization import *
 # from QuICT.simulation.unitary_simulator import UnitarySimulator
-from QuICT.simulation.state_vector import ConstantStateVectorSimulator
+from QuICT.simulation.cpu_simulator import CircuitSimulator
 
 
 def read_CNF(cnf_file):
@@ -32,26 +30,19 @@ def read_CNF(cnf_file):
         return variable_number, clause_number, CNF_data
 
 def test():
-    # x0 x1，x2, x_{n variable_number -1}
-    filename_test =  "QuICT/algorithm/quantum_algorithm/CNF/test_data/6_18_0"
-    AuxQubitNumber = 9
+# x0 x1，x2, x_{n variable_number -1}
+    filename_test =  "QuICT/algorithm/quantum_algorithm/CNF/2.cnf"
     variable_number , clause_number , CNF_data = read_CNF(filename_test)
 
+
     #真值表初值变化
-    b=[]
-    # print(variable_number)
-    cnf = CNFSATOracle()
-    cnf.run(filename_test, AuxQubitNumber)
-    cgate = cnf.circuit()
-    print(cgate.size())
-    print(cgate.depth())
-    # circ = Circuit(variable_number + 4)
-    
-    d=random.sample(list(range(2**variable_number)), 10)
-    for a in d:
-        circ = Circuit(variable_number + 1 + AuxQubitNumber)
-        x = []
+    for a in range(2 ** variable_number):  #改
+        cnf = CNFSATOracle()
+        cnf.run(filename_test)
+        cgate = cnf.circuit()
+        circuit_temp=Circuit(variable_number + 2 + 4)
         randomnum = a
+        x=[]
         for ii in range(variable_number):
             oneorzero = math.floor(randomnum % 2)
             randomnum = math.floor(randomnum/2) 
@@ -59,22 +50,17 @@ def test():
                 x.append(0)
             else:
                 x.append(1)
-                X | circ(ii)
-        cgate | circ
-        Measure | circ
-        # i_sv = cp.zeros(1 << (variable_number + 4), dtype=np.complex64)
-        sim = ConstantStateVectorSimulator()
-        amplitude = sim.run(circ)
+                X | circuit_temp(ii)
+        circuit_temp.extend(cgate)
+        Measure | circuit_temp
 
-        #print(circuit_temp.qubits[variable_number].measured)
-        #print(int(circuit_temp.qubits[variable_number]))
+        # circuit_temp.draw(filename='test_0.jpg')
+        # sim = CircuitSimulator()
+        # amplitude = sim.run(circuit_temp)
+        print(int(circuit_temp.qubits[variable_number])) #量子结果
+        result_lz = int(circuit_temp.qubits[variable_number])
 
-        # x = [0] * (2 ** variable_number)
-        # x[a] = 1
-        # for i in range(variable_number):
-        #     if (1 << i) & a == 1:
-        #         x[]
-        cnf_result = 1  #经典部分 真假值 
+        cnf_result = 1
         for i in range(clause_number):
             clause_result = 0
             for j in range(len(CNF_data[i+1])):
@@ -86,14 +72,6 @@ def test():
             if clause_result == 0:
                 cnf_result = 0
                 break
-        print(cnf_result, " ", a)
-
-        if cnf_result !=  circ.qubits[variable_number].measured : #比较一下经典与量子电路的 真假值(是否满足的情况)，是否相同。
-            print("!!!!!!!!!")
-            print(a)
-            print(circ.qubits[variable_number].measured)
-            print(cnf_result)
-            b.append(a)
-    print(b)
-    # f.close()
+        print(cnf_result) #经典结果
+        assert result_lz == cnf_result
 test()
