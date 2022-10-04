@@ -1,6 +1,7 @@
-from typing import Set
+from typing import Set, List
 from collections.abc import Iterable
 
+from QuICT.core import Circuit
 from QuICT.core.circuit.dag_circuit import DAGNode, DAGCircuit
 from QuICT.core.gate import BasicGate
 from collections import deque
@@ -119,3 +120,45 @@ class MatchingDAGCircuit(DAGCircuit):
 
     def matching_info(self):
         return [self.get_node(i).node_info() for i in range(self.size)]
+
+    def get_circuit(self):
+        circ = Circuit(self.width)
+        for node_id in self.nodes():
+            node: MatchingDAGNode = self.get_node(node_id)
+            circ.append(node.gate.copy())
+        return circ
+
+
+class Match:
+    """
+    Class to store matches
+    """
+    def __init__(self, match: List, qubit_mapping: List):
+        self.match = sorted(match)
+        self.qubit_mapping = qubit_mapping
+        self._template_nodes = None
+        self._circuit_nodes = None
+
+    def __len__(self):
+        return len(self.match)
+
+    def __hash__(self):
+        return hash(tuple(self.match))
+
+    def __str__(self):
+        return f'Match({str(self.match)}, {str(self.qubit_mapping)})'
+
+    def __repr__(self):
+        return str(self)
+
+    @property
+    def template_nodes(self):
+        if self._template_nodes is None:
+            self._template_nodes = {m[0] for m in self.match}
+        return self._template_nodes
+
+    @property
+    def circuit_nodes(self):
+        if self._circuit_nodes is None:
+            self._circuit_nodes = {m[1] for m in self.match}
+        return self._circuit_nodes

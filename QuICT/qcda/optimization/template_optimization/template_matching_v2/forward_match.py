@@ -64,7 +64,6 @@ class ForwardMatch:
             #     # FIXME: can we remove this if
             #     continue
 
-            # TODO be careful to return node object
             nxt_node_id = cur_node.pop_successors_to_visit()
             if nxt_node_id is None:
                 continue
@@ -106,6 +105,6 @@ class ForwardMatch:
                         t = succ_node.matched_with
                         template.get_node(t).matched_with = None
                         succ_node.matched_with = None
-                        match.remove([t, succ_node.id])
+                        match.remove((t, succ_node.id))
 
         return match

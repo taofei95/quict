@@ -2,7 +2,7 @@ from typing import List, Tuple
 from collections import deque
 import heapq
 
-from .matching_dag_circuit import MatchingDAGCircuit, MatchingDAGNode, NodeInfo
+from .matching_dag_circuit import MatchingDAGCircuit, MatchingDAGNode, NodeInfo, Match
 
 
 class MatchingScenario:
@@ -37,9 +37,9 @@ class BackwardMatch:
     @classmethod
     def _prune(cls, scenarios: deque, gate_indices, depth, width):
         counters = [s.counter for s in scenarios]
-        if counters.count(max(counters)) == len(counters) and counters[0] <= len(gate_indices) \
+        if counters.count(max(counters)) == len(counters) and counters[0] < len(gate_indices) \
                 and counters[0] % depth == 0:
-            ret = heapq.nlargest(width, scenarios, key=lambda s: len(s.match))
+            ret = deque(heapq.nlargest(width, scenarios, key=lambda s: len(s.match)))
             return ret
         return scenarios
 
@@ -96,7 +96,7 @@ class BackwardMatch:
                 c_node_id: int,
                 t_node_id: int,
                 qubit_mapping: List[int],
-                prune_param=None) -> List[List[Tuple[int, int]]]:
+                prune_param=None) -> List[Match]:
 
         gate_indices = cls._calc_gate_indices(circuit)
         scenarios = deque([
@@ -116,7 +116,7 @@ class BackwardMatch:
             if prune_param is not None:
                 scenarios = cls._prune(scenarios, gate_indices, *prune_param)
 
-            cur_scenario = scenarios.pop()
+            cur_scenario = scenarios.popleft()
             c_info = cur_scenario.circuit_info
             t_info = cur_scenario.template_info
             match = cur_scenario.match
@@ -124,7 +124,7 @@ class BackwardMatch:
             backward_match = list(filter(lambda x: x not in forward_match, match))
 
             if counter >= len(gate_indices) or len(backward_match) == remain_cnt:
-                res.append(sorted(match))
+                res.append(Match(match, qubit_mapping))
                 continue
 
             cur_c_node_id = gate_indices[counter]
@@ -210,5 +210,4 @@ class BackwardMatch:
 
         max_len = max(len(match) for match in res)
         maximal_res = filter(lambda m: len(m) == max_len, res)
-        unique_res = set(map(tuple, maximal_res))
-        return list(map(list, unique_res))
+        return list(set(maximal_res))

@@ -2,7 +2,7 @@ import itertools
 from typing import List
 
 from QuICT.core import Circuit
-from .matching_dag_circuit import MatchingDAGCircuit, MatchingDAGNode
+from .matching_dag_circuit import MatchingDAGCircuit, MatchingDAGNode, Match
 from .backward_match import BackwardMatch
 from .forward_match import ForwardMatch
 
@@ -25,14 +25,15 @@ class TemplateMatching:
         t_successors = template.all_successors(t_node_id)
         c_successors = circuit.all_successors(c_node_id)
 
-        # FIXME review this condition
-        cands = c_successors if 2 * len(t_successors) > template.width - t_node_id - 1 \
-            else sorted(set(range(circuit.width)) - set(c_successors), reverse=True)
+        if len(t_successors) > (template.size - t_node_id - 1) / 2:
+            cands = sorted(c_successors)
+        else:
+            cands = sorted(set(range(circuit.size)) - set(c_successors), reverse=True)
 
         ret = set(circuit.get_node(c_node_id).qargs)
         for cand in cands[: cnt]:
             cur = ret | set(circuit.get_node(cand).qargs)
-            if len(cur) > cnt:
+            if len(cur) > template.width:
                 break
             ret = cur
         return list(ret)
@@ -41,50 +42,34 @@ class TemplateMatching:
     def execute(cls,
                 circuit: MatchingDAGCircuit,
                 template: MatchingDAGCircuit,
-                qubit_fixing_param: List[int] = None,
+                qubit_fixing_len: int = 0,
                 prune_param: List[int] = None
                 ):
 
-        ret = []
-        for t_node_id in range(template.width):
-            for c_node_id in range(circuit.width):
+        match_set = set()
+        for t_node_id in range(template.size):
+            for c_node_id in range(circuit.size):
                 t_node = template.get_node(t_node_id)
                 c_node = circuit.get_node(c_node_id)
                 if not t_node.compare_with(c_node):
                     continue
 
-                fixed_q = [] if qubit_fixing_param is None \
-                    else cls._qubit_fixing(circuit, template, c_node_id, t_node_id, *qubit_fixing_param)
+                fixed_q = cls._qubit_fixing(circuit, template, c_node_id, t_node_id, qubit_fixing_len) \
+                    if qubit_fixing_len else []
 
                 all_free_q = set(range(circuit.width)) - set(fixed_q)
+                # print(fixed_q, len(fixed_q), template.width)
                 for free_q in itertools.combinations(all_free_q, template.width - len(fixed_q)):
                     q_set = list(free_q) + fixed_q
                     for mapping in itertools.permutations(q_set, template.width):
-                        # print('hello')
                         if not t_node.compare_with(c_node, mapping):
                             continue
 
-                        # print(q_set, t_node_id, c_node_id)
-                        # continue
                         forward_match = ForwardMatch.execute(
                             circuit, template, c_node_id, t_node_id, list(mapping))
 
-                        # print(q_set, t_node_id, c_node_id, forward_match)
-                        # continue
-
                         match_list = BackwardMatch.execute(
                             circuit, template, forward_match, c_node_id, t_node_id, list(mapping), prune_param)
+                        match_set.update(match_list)
 
-                        # TODO do sth
-                        ret.extend(match_list)
-
-                # for qubit_mapping in itertools.permutations(range(circuit.size), template.size):
-                #     if not t_node.compare_with(c_node, qubit_mapping):
-                #         continue
-                #
-                #     forward_match = ForwardMatch.execute(
-                #         circuit, template, c_node_id, t_node_id, list(qubit_mapping))
-                #     match_list = BackwardMatch.execute(
-                #         circuit, template, forward_match, c_node_id, t_node_id, list(qubit_mapping), prune_param)
-                #     ret.extend(match_list)
-        return ret
+        return list(match_set)
