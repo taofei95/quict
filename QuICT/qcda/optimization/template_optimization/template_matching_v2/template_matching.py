@@ -42,7 +42,7 @@ class TemplateMatching:
     def execute(cls,
                 circuit: MatchingDAGCircuit,
                 template: MatchingDAGCircuit,
-                qubit_fixing_len: int = 0,
+                qubit_fixing_param: List[int] = None,
                 prune_param: List[int] = None
                 ):
 
@@ -54,8 +54,8 @@ class TemplateMatching:
                 if not t_node.compare_with(c_node):
                     continue
 
-                fixed_q = cls._qubit_fixing(circuit, template, c_node_id, t_node_id, qubit_fixing_len) \
-                    if qubit_fixing_len else []
+                fixed_q = cls._qubit_fixing(circuit, template, c_node_id, t_node_id, *qubit_fixing_param) \
+                    if qubit_fixing_param else []
 
                 all_free_q = set(range(circuit.width)) - set(fixed_q)
                 # print(fixed_q, len(fixed_q), template.width)

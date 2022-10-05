@@ -131,7 +131,6 @@ class BackwardMatch:
             cur_c_node = circuit.get_node(cur_c_node_id)
             if c_info[cur_c_node_id].is_blocked:
                 nxt_scenario = MatchingScenario(c_info, t_info, match, counter + 1)
-                # FIXME stack or queue
                 scenarios.append(nxt_scenario)
                 continue
 

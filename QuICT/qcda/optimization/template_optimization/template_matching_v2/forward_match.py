@@ -30,9 +30,7 @@ class ForwardMatch:
                          match: List[Tuple[int, int]],
                          template: MatchingDAGCircuit,
                          t_node_id: int) -> List[MatchingDAGNode]:
-        # TODO code review
         match = {match[i][0] for i in range(len(match))}
-        # block = reduce(set.__or__, [template.all_successors(i) for i in (match - {t_node_id})])
 
         block = set()
         for u in match - {t_node_id}:
@@ -59,10 +57,6 @@ class ForwardMatch:
         while len(match_nodes) > 0:
             cur_node: MatchingDAGNode = match_nodes[0]
             match_nodes.pop(0)
-
-            # if not cur_node.successors_to_visit:
-            #     # FIXME: can we remove this if
-            #     continue
 
             nxt_node_id = cur_node.pop_successors_to_visit()
             if nxt_node_id is None:
