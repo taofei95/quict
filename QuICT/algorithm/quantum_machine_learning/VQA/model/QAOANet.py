@@ -2,6 +2,7 @@ import torch.nn
 import numpy as np
 import random
 import time
+import re
 
 from QuICT.core import Circuit
 from QuICT.core.gate import *
@@ -44,42 +45,50 @@ class QAOANet(VQANet):
             self.hamiltonian._pauli_gates,
         ):
             # Remove I from pauli_gates and remove corresponding qid from qubit_indexes
-            #################
+            findI = [i.start() for i in re.finditer("I", gates)]
+            gates = gates.replace("I", "")
+            for i in findI:
+                qids.pop(i)
 
-            # Mapping e.g.Rxyz
+            # Mapping e.g. Rxyz
             if len(qids) > 1:
                 for i in range(len(qids)):
                     if gates[i] == "X":
                         ansatz.add_gate(H, qids[i])
-                    elif gate[i] == "Y":
+                    elif gates[i] == "Y":
                         ansatz.add_gate(Hy, qids[i])
-                    elif gate[i] == "Z":
+                    elif gates[i] == "Z":
                         continue
                     else:
                         raise ValueError("Invalid Pauli gate.")
-                ansatz = ansatz + self._Rnz_ansatz(gamma, qids)
+                ansatz = ansatz + self._Rnz_ansatz(2 * coeff * gamma, qids)
                 for i in range(len(qids)):
                     if gates[i] == "X":
                         ansatz.add_gate(H, qids[i])
-                    elif gate[i] == "Y":
+                    elif gates[i] == "Y":
                         ansatz.add_gate(Hy, qids[i])
-                    elif gate[i] == "Z":
+                    elif gates[i] == "Z":
                         continue
                     else:
                         raise ValueError("Invalid Pauli gate.")
             # Only Rx, Ry, Rz
             elif len(qids) == 1:
                 if gates[0] == "X":
-                    ansatz.add_gate(Rx(gamma), qids)
-                elif gate[0] == "Y":
-                    ansatz.add_gate(Ry(gamma), qids)
-                elif gate[0] == "Z":
-                    ansatz.add_gate(Rz(gamma), qids)
+                    ansatz.add_gate(Rx(2 * coeff * gamma), qids)
+                elif gates[0] == "Y":
+                    ansatz.add_gate(Ry(2 * coeff * gamma), qids)
+                elif gates[0] == "Z":
+                    ansatz.add_gate(Rz(2 * coeff * gamma), qids)
                 else:
                     raise ValueError("Invalid Pauli gate.")
             # Only coeff
             else:
-                
+                RI = np.array(
+                    [[np.exp(-coeff * 1j), 0], [0, np.exp(-coeff * 1j)]],
+                    dtype=np.complex128,
+                )
+                RI = Unitary(RI)
+                ansatz.add_gate(RI)
 
         return ansatz
 
@@ -90,12 +99,12 @@ class QAOANet(VQANet):
         else:
             # Add CNOT gates
             for i in range(len(tar_idx) - 1):
-                ansatz.add_gate(CX, [tar_idx[i : i + 2]])
+                ansatz.add_gate(CX, tar_idx[i : i + 2])
             # Add RZ gate
             ansatz.add_gate(Rz(gamma), tar_idx[-1])
             # Add CNOT gates
-            for i in range(len(tar_idx) - 1, 0, -1):
-                ansatz.add_gate(CX, [tar_idx[i : i + 2]])
+            for i in range(len(tar_idx) - 2, -1, -1):
+                ansatz.add_gate(CX, tar_idx[i : i + 2])
         return ansatz
 
     def construct_ansatz(self, gamma, beta):
@@ -106,10 +115,11 @@ class QAOANet(VQANet):
 
         for p in range(self.p):
             # construct U_gamma
-            ansatz = ansatz + self.construct_U_gamma_layer(float(gamma[p]))
+            U_gamma = self.construct_U_gamma_layer(gamma[p])
+            ansatz = ansatz + U_gamma
 
             # construct U_beta
-            U_beta = Rx(float(2 * beta[p]))
+            U_beta = Rx(2 * beta[p])
             ansatz.add_gate(U_beta)
 
         end = time.time() - start
