@@ -66,7 +66,7 @@ class DataFactory:
         return self._topo_names
 
     @property
-    def topo_graph_map(self) -> Dict[str, nx.DiGraph]:
+    def topo_graph_map(self) -> Dict[str, nx.Graph]:
         if len(self._topo_graph_map) == 0:
             self._reset_attr_cache()
         return self._topo_graph_map
@@ -121,35 +121,36 @@ class DataFactory:
             self._topo_edge_mat_map[topo_name] = topo_adj_mat_thin
 
     @classmethod
-    def get_topo_graph(cls, topo: Layout) -> nx.DiGraph:
+    def get_topo_graph(cls, topo: Layout) -> nx.Graph:
         """Build tha graph representation of a topology.
 
         Args:
             topo (Layout): Topology to be built.
 
         Returns:
-            nx.DiGraph: Graph representation.
+            nx.Graph: Graph representation.
         """
-        g = nx.DiGraph()
+        g = nx.Graph()
         for i in range(topo.qubit_number):
             g.add_node(i)
-        for edge in topo.directionalized:
+        for edge in topo:
             g.add_edge(edge.u, edge.v)
         return g
 
     @classmethod
-    def get_topo_dist(cls, topo_graph: nx.DiGraph) -> np.ndarray:
+    def get_topo_dist(cls, topo_graph: nx.Graph) -> np.ndarray:
         _inf = nx.number_of_nodes(topo_graph) + 5
         n = nx.number_of_nodes(topo_graph)
         dist = np.empty((n, n), dtype=np.int)
         dist[:, :] = _inf
         for u, v in topo_graph.edges:
             dist[u][v] = 1
+            dist[v][u] = 1
         dist = _floyd(n, dist, _inf)
         return dist
 
     @classmethod
-    def get_topo_edges(cls, topo_graph: nx.DiGraph) -> List[Tuple[int, int]]:
+    def get_topo_edges(cls, topo_graph: nx.Graph) -> List[Tuple[int, int]]:
         topo_edge = []
         for u, v in topo_graph.edges:
             topo_edge.append((u, v))

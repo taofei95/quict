@@ -1,13 +1,16 @@
-from math import log, sqrt
+from __future__ import annotations
+
+import copy
 import random
-from tkinter.messagebox import NO
-from typing import Dict, Optional, Tuple, Union, List
+from math import log, sqrt
+from tarfile import is_tarfile
+from typing import Dict, List, Optional, Tuple, Union
+
 from QuICT.core import *
 from QuICT.core.gate.composite_gate import CompositeGate
-from QuICT.qcda.mapping.mcts_refactor.common.layout_info import LayoutInfo
+from .common.layout_info import LayoutInfo
+
 from .common import CircuitInfo
-from __future__ import annotations
-import copy
 
 
 class MCTSTreeNode:
@@ -22,7 +25,7 @@ class MCTSTreeNode:
         self.circ_info = circuit_info
         self.layout_info = layout_info
         self.executed_circ = CompositeGate()
-        self.children: Dict[Tuple[int, int], MCTSTreeNode] = []
+        self.children: Dict[Tuple[int, int], MCTSTreeNode] = {}
         self.q_value: float = 0.0
         self.parent = parent
         self.transition_reward = 0.0
@@ -42,20 +45,23 @@ class MCTSTreeNode:
         u, v = action
         self.phy2logic[u], self.phy2logic[v] = self.phy2logic[v], self.phy2logic[u]
         lu, lv = self.phy2logic[u], self.phy2logic[v]
-        self.logic2phy[lu], self.phy2logic[lv] = self.logic2phy[lv], self.logic2phy[lu]
+        self.logic2phy[lu], self.logic2phy[lv] = self.logic2phy[lv], self.logic2phy[lu]
 
     def _recommended_action(self) -> List[Tuple[int, int]]:
+        assert not self.is_terminated_node()
         ans = []
         relative_qubit = set()
         for gate in self.circ_info.first_layer_gates.values():
             if gate.controls + gate.targets == 1:
                 continue
             a, b = gate.cargs + gate.targs
-            relative_qubit.add(a)
-            relative_qubit.add(b)
+            _a, _b = self.logic2phy[a], self.logic2phy[b]
+            relative_qubit.add(_a)
+            relative_qubit.add(_b)
         for a, b in self.layout_info.topo_edges:
             if a in relative_qubit or b in relative_qubit:
                 ans.append((a, b))
+        assert len(ans) > 0
         return ans
 
     def _expand_one(self, action: Tuple[int, int]) -> MCTSTreeNode:
@@ -67,11 +73,13 @@ class MCTSTreeNode:
             phy2logic=copy.copy(self.phy2logic),
         )
         successor._update_mapping(action=action)
+        cg = CompositeGate()
         reward = successor.circ_info.eager_exec(
             logic2phy=successor.logic2phy,
             topo_graph=successor.layout_info.topo_graph,
-            physical_circ=self.executed_circ,
+            physical_circ=cg,
         )
+        successor.executed_circ = cg
         successor.transition_reward = reward
         return successor
 
@@ -94,23 +102,31 @@ class MCTSTreeNode:
         assert len(self.children) > 0, "After expansion, node must have successors!"
 
     def _biased_random_simulate(self, sim_gate_num: int, epsilon: float) -> float:
+        if self.is_terminated_node():
+            return 0.0
         remove_cnt = 0
-        cur = self
+        cur = MCTSTreeNode(
+            circuit_info=copy.deepcopy(self.circ_info),
+            layout_info=self.layout_info,
+            parent=self.parent,
+            logic2phy=copy.copy(self.logic2phy),
+            phy2logic=copy.copy(self.phy2logic),
+        )
         step = 0
-        while remove_cnt < sim_gate_num:
+        while remove_cnt < sim_gate_num and not cur.is_terminated_node():
             candidates = cur._recommended_action()
             impact_factors = []
             for u, v in candidates:
                 cur_d, nxt_d = 0, 0
-                for gate in self.circ_info.first_layer_gates.values():
+                for gate in cur.circ_info.first_layer_gates.values():
                     a, b = gate.cargs + gate.targs
-                    _a, _b = self.logic2phy[a], self.logic2phy[b]
-                    cur_d += self.layout_info.topo_dist[_a][_b]
-                    l2p = copy.copy(self.logic2phy)
-                    lu, lv = self.phy2logic[u], self.phy2logic[v]
+                    _a, _b = cur.logic2phy[a], cur.logic2phy[b]
+                    cur_d += cur.layout_info.topo_dist[_a][_b]
+                    l2p = copy.copy(cur.logic2phy)
+                    lu, lv = cur.phy2logic[u], cur.phy2logic[v]
                     l2p[lu], l2p[lv] = l2p[lv], l2p[lu]
                     _a, _b = l2p[a], l2p[b]
-                    nxt_d += self.layout_info.topo_dist[_a][_b]
+                    nxt_d += cur.layout_info.topo_dist[_a][_b]
                 factor = cur_d - nxt_d
                 if factor < 1e-6 and factor > -1e-6:
                     factor += epsilon
@@ -122,8 +138,11 @@ class MCTSTreeNode:
             ]
             suc = cur._expand_one(action)
             remove_cnt += suc.transition_reward
+            del cur
             cur = suc
             step += 1
+            # if cur.is_terminated_node():
+                # break
         return float(step)
 
     def simulate(self, sim_cnt: int, sim_gate_num: int, gamma: float, epsilon: float):
@@ -155,10 +174,9 @@ class MCTSTreeNode:
             Tuple[Tuple[int, int], MCTSTreeNode, bool]: Action to child, child node, whether mapping ends.
         """
         candidates = [pair for pair in self.children.items()]
-        candidates.sort(
-            key=lambda x: x[1].q_value + x[1].transition_reward, reverse=True
+        action, child = max(
+            candidates, key=lambda x: x[1].q_value + x[1].transition_reward
         )
-        action, child = candidates[0]
         terminated = child.is_terminated_node()
         return action, child, terminated
 

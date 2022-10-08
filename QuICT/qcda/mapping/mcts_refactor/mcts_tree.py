@@ -1,4 +1,7 @@
 from typing import Tuple, Union
+from QuICT.core.gate.gate import BasicGate
+
+from QuICT.qcda.mapping.mcts_refactor.common.circuit_info import CircuitInfo
 from .mcts_tree_node import MCTSTreeNode
 from QuICT.core import *
 from QuICT.core.gate import CompositeGate
@@ -8,16 +11,19 @@ from .common import LayoutInfo
 class MCTSTree:
     def __init__(
         self,
-        circuit_like: Union[Circuit, CompositeGate],
+        circuit_info: CircuitInfo,
         layout_info: LayoutInfo,
         bp_num: int,
         sim_cnt: int,
         sim_gate_num: int,
         gamma: float,
-        epsilon: float = 0.001,
-        c: float = 0.1,
+        epsilon: float,
+        c: float,
     ) -> None:
-        self._root = MCTSTreeNode(circuit_like=circuit_like, parent=None)
+        self._root = MCTSTreeNode(
+            circuit_info=circuit_info,
+            layout_info=layout_info,
+        )
         self._layout_info = layout_info
 
         self._bp_num = bp_num
@@ -36,7 +42,9 @@ class MCTSTree:
         for _ in range(self._bp_num):
             cur = self._root
             while len(cur.children) > 0:
-                cur = self._root.select_child(self._c)
+                cur = cur.select_child(self._c)
+            if cur.is_terminated_node():
+                break
             cur.expand()
             for leaf in cur.children.values():
                 leaf.simulate(
@@ -47,4 +55,13 @@ class MCTSTree:
                 )
                 leaf.back_propagate(self._gamma)
         action, self._root, terminated = self._root.best_child()
+        assert self._layout_info.topo_graph.has_edge(*action), "Illegal action!"
+        for gate in self._root.executed_circ.gates:
+            gate: BasicGate
+            if gate.controls + gate.targets == 1:
+                continue
+            a, b = gate.cargs + gate.targs
+            assert self._layout_info.topo_graph.has_edge(
+                a, b
+            ), "Wrong executed circuit!"
         return action, self._root.executed_circ, terminated

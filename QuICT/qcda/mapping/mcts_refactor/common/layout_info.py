@@ -16,7 +16,7 @@ class LayoutInfo:
         self._edges = None
 
     @property
-    def topo_graph(self) -> nx.DiGraph:
+    def topo_graph(self) -> nx.Graph:
         if self._graph is None:
             self._graph = DataFactory.get_topo_graph(self.layout)
         return self._graph

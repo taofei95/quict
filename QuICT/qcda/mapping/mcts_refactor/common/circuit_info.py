@@ -96,14 +96,14 @@ class CircuitInfo:
     def eager_exec(
         self,
         logic2phy: List[int],
-        topo_graph: nx.DiGraph,
+        topo_graph: nx.Graph,
         physical_circ: CompositeGate = None,
     ) -> int:
         """Eagerly remove all executable gates for now.
 
         Args:
             logic2phy (List[int]): Current logical to physical qubit mapping.
-            topo_graph (nx.DiGraph): Physical topology graph.
+            topo_graph (nx.Graph): Physical topology graph.
             physical_circ (CompositeGate, optional): If set, executed gates are appended to it.
 
         Returns:
