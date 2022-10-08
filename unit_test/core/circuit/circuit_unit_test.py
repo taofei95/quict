@@ -149,5 +149,5 @@ class TestCircuit(unittest.TestCase):
         assert np.allclose(state_vector_cir, state_vector_matrix)
 
 
-if __name__ == " __main__":
+if __name__ == "__main__":
     unittest.main()

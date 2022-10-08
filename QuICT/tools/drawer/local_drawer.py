@@ -10,6 +10,7 @@ import re
 
 import numpy as np
 from matplotlib import patches
+from matplotlib.figure import Figure
 from matplotlib import pyplot as plt
 
 from QuICT.core.gate import *
@@ -145,7 +146,9 @@ class PhotoDrawer(object):
 
     def __init__(self):
         self.style = DefaultStyle()
-        self.figure = plt.figure()
+        # plt.figure() will always trigger interactive mode eagerly. Use matplotlib.figure.Figure's full OO interface.
+        # refer: https://stackoverflow.com/questions/18207563/using-interactive-and-non-interactive-backends-within-one-program
+        self.figure = Figure()
         self.figure.patch.set_facecolor(color='#ffffff')
         self.ax = self.figure.add_subplot(111)
         self.ax.set_xticks([])
@@ -618,7 +621,7 @@ class PhotoDrawer(object):
                          zorder=PORDER_TEXT)
             self.draw_line([offset_x + 0.5, y], [now['max_x'], y], zorder=PORDER_REGLINE)
 
-    def run(self, circuit, filename=None, show_depth=False):
+    def run(self, circuit, filename=None, show_depth=False, save_file=False):
         global cir_len
         cir_len = circuit.width()
         name_dict = collections.OrderedDict()
@@ -627,9 +630,7 @@ class PhotoDrawer(object):
             'max_y': 0,
         }
         anchors = {}
-
         max_name = 0
-
         for i in range(cir_len):
             name = f'$q_{{{i}}}$'
             max_name = max(max_name, len(name))
@@ -858,5 +859,10 @@ class PhotoDrawer(object):
         if self.style.figwidth < 0.0:
             self.style.figwidth = fig_w * 4.3 * self.style.fs / 72 / WID
         self.figure.set_size_inches(self.style.figwidth, self.style.figwidth * fig_h / fig_w)
-        self.figure.savefig(filename, dpi=self.style.dpi,
-                            bbox_inches='tight')
+
+        if save_file:
+            filename = f"{circuit.name}.jpg" if filename is None else filename
+
+        if filename is not None:
+            self.figure.savefig(filename, dpi=self.style.dpi,
+                                bbox_inches='tight')

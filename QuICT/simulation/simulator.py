@@ -29,7 +29,6 @@ class Simulator:
 
     __DEVICE = ["CPU", "GPU"]
     __BACKEND = ["unitary", "state_vector", "density_matrix"]
-    __DEFAULT_OPTIONS = ["precision", "gpu_device_id", "optimization", "matrix_aggregate", "sync"]
 
     def __init__(
         self,
@@ -66,7 +65,7 @@ class Simulator:
 
         if self._backend == "state_vector":
             simulator = ConstantStateVectorSimulator(precision=self._precision, **self._options) \
-                if self._device == "GPU" else CircuitSimulator()
+                if self._device == "GPU" else CircuitSimulator(precision=self._precision)
         else:
             if self._backend == "unitary":
                 simulator = UnitarySimulator(device=self._device, precision=self._precision)
@@ -105,7 +104,6 @@ class Simulator:
 
         circuit_name = circuit.name if isinstance(circuit, Circuit) else ""
         result = Result(circuit_name, self._device, self._backend, self._shots, self._options)
-       
         if self._circuit_record and circuit is not None:
             result.record_circuit(circuit)
 

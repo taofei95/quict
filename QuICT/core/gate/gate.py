@@ -469,6 +469,12 @@ class BasicGate(object):
         """
         return self.type in SPECIAL_GATE_SET
 
+    def is_identity(self) -> bool:
+        if self.type in [GateType.reset, GateType.measure, GateType.barrier]:
+            return False
+
+        return np.allclose(self.matrix, np.identity(1 << (self.controls + self.targets), dtype=self.precision))
+
     def expand(self, qubits: Union[int, list]) -> bool:
         """ expand self matrix into the circuit's unitary linear space. If input qubits is integer, please make sure
         the indexes of current gate is within [0, qubits).
@@ -1817,6 +1823,21 @@ class SwapGate(BasicGate):
             [0, 1, 0, 0],
             [0, 0, 0, 1]
         ], dtype=np.complex128)
+
+    def build_gate(self):
+        from QuICT.core.gate import CompositeGate
+
+        cgate = CompositeGate()
+        with cgate:
+            CX & [0, 1]
+            CX & [1, 0]
+            CX & [0, 1]
+
+        args = self.cargs + self.targs
+        if len(args) == self.controls + self.targets:
+            cgate & args
+
+        return cgate
 
 
 Swap = SwapGate()
