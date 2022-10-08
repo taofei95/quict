@@ -11,9 +11,7 @@ from QuICT.core.gate import BasicGate, CompositeGate
 class CircuitInfo:
     """DAG Representation of a quantum circuit."""
 
-    def __init__(
-        self, circ: Union[Circuit, CompositeGate], max_gate_num: int
-    ) -> None:
+    def __init__(self, circ: Union[Circuit, CompositeGate], max_gate_num: int) -> None:
         self._qubit_num = circ.width()
         self._max_gate_num = max_gate_num
         q = circ.width()
@@ -37,21 +35,30 @@ class CircuitInfo:
         """Qubit to all gates on it.
         """
         for gid, gate in enumerate(self._gates):
-            assert gate.controls + gate.targets == 2, "Only 2 bit gates are supported."
+            bit_num = gate.controls + gate.targets
+            assert bit_num <= 2, "Only 1 or 2 bit gates are supported."
             self._reset_cache()
-            a, b = gate.cargs + gate.targs
-            assert a != b
-            # Position to Gate ID
-            self._bit2gid[a].append(gid)
-            self._bit2gid[b].append(gid)
-            # DAG edges
-            if occupied[a] != -1:
-                self._graph.add_edge(occupied[a], gid)
-            if occupied[b] != -1:
-                self._graph.add_edge(occupied[b], gid)
-            nx.set_node_attributes(self._graph, {gid: {"gid": gid}})
-            occupied[a] = gid
-            occupied[b] = gid
+            if bit_num == 1:
+                a = gate.targ
+                self._bit2gid[a].append(gid)
+                if occupied[a] != -1:
+                    self._graph.add_edge(occupied[a], gid)
+                nx.set_node_attributes(self._graph, {gid: {"gid": gid}})
+                occupied[a] = gid
+            elif bit_num == 2:
+                a, b = gate.cargs + gate.targs
+                assert a != b
+                # Position to Gate ID
+                self._bit2gid[a].append(gid)
+                self._bit2gid[b].append(gid)
+                # DAG edges
+                if occupied[a] != -1:
+                    self._graph.add_edge(occupied[a], gid)
+                if occupied[b] != -1:
+                    self._graph.add_edge(occupied[b], gid)
+                nx.set_node_attributes(self._graph, {gid: {"gid": gid}})
+                occupied[a] = gid
+                occupied[b] = gid
 
         self._removed_cnt = 0
 
@@ -88,8 +95,13 @@ class CircuitInfo:
                 continue
             gid = bit_stick[0]
             gate = self._gates[gid]
-            a, b = gate.cargs + gate.targs
-            if self._bit2gid[a][0] == self._bit2gid[b][0] and (gid not in ans):
+            bit_num = gate.controls + gate.targets
+            if bit_num == 2:
+                a, b = gate.cargs + gate.targs
+                if self._bit2gid[a][0] == self._bit2gid[b][0] and (gid not in ans):
+                    ans[gid] = self._gates[gid]
+            elif bit_num == 1:
+                a = gate.targ
                 ans[gid] = self._gates[gid]
         return ans
 
@@ -115,18 +127,28 @@ class CircuitInfo:
         while remove_any:
             remove_any = False
             for gid, gate in self._get_first_layer_gates().items():
-                a, b = gate.cargs + gate.targs
-                assert self._bit2gid[a][0] == self._bit2gid[b][0]
-                _a, _b = logic2phy[a], logic2phy[b]
-                if topo_graph.has_edge(_a, _b):
+                if gate.controls + gate.targets == 1:
+                    a = gate.targ
+                    _a = logic2phy[a]
                     self._bit2gid[a].pop(0)
-                    self._bit2gid[b].pop(0)
-                    remove_cnt += 1
                     remove_any = True
                     self._graph.remove_node(gid)
                     if physical_circ is not None:
                         with physical_circ:
-                            gate & [_a, _b]
+                            gate & [_a]
+                elif gate.controls + gate.targets == 2:
+                    a, b = gate.cargs + gate.targs
+                    assert self._bit2gid[a][0] == self._bit2gid[b][0]
+                    _a, _b = logic2phy[a], logic2phy[b]
+                    if topo_graph.has_edge(_a, _b):
+                        self._bit2gid[a].pop(0)
+                        self._bit2gid[b].pop(0)
+                        remove_cnt += 1
+                        remove_any = True
+                        self._graph.remove_node(gid)
+                        if physical_circ is not None:
+                            with physical_circ:
+                                gate & [_a, _b]
         self._removed_cnt += remove_cnt
         return remove_cnt
 
@@ -138,10 +160,10 @@ class CircuitInfo:
                     gates[gid] = self._gates[gid]
         cg = CompositeGate()
         for gate in gates.values():
-            a, b = gate.cargs + gate.targs
-            a, b = logic2phy[a], logic2phy[b]
+            args = gate.cargs + gate.targs
+            args = [logic2phy[arg] for arg in args]
             with cg:
-                gate & [a, b]
+                gate & args
         return cg
 
     def biased_random_swap(
@@ -162,6 +184,8 @@ class CircuitInfo:
                 )
                 bias = 0
                 for gate in self.first_layer_gates.values():
+                    if gate.controls + gate.targets != 2:
+                        continue
                     a, b = gate.cargs + gate.targs
                     _a, _b = logic2phy[a], logic2phy[b]
                     prev_d = topo_dist[_a][_b]

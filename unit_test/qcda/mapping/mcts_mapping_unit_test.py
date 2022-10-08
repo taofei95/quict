@@ -70,8 +70,7 @@ def test_mapping():
             q = layout.qubit_number
             circ = Circuit(q)
             circ.random_append(
-                15,
-                typelist=[GateType.crz, GateType.cx, GateType.ch, GateType.rxx],
+                20,
                 random_params=True,
             )
 
