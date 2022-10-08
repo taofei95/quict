@@ -1,4 +1,5 @@
 import os
+import random
 import time
 import numpy as np
 import math
@@ -31,8 +32,8 @@ def read_CNF(cnf_file):
 
 def test():
 # x0 x1，x2, x_{n variable_number -1}
-    filename_test =  "QuICT/algorithm/quantum_algorithm/CNF/test_data/3_11_100"
-    AuxQubitNumber = 3
+    filename_test =  "QuICT/algorithm/quantum_algorithm/CNF/test_data/6_18_0"
+    AuxQubitNumber = 7
     variable_number , clause_number , CNF_data = read_CNF(filename_test)
     cnf = CNFSATOracle()
     cnf.run(filename_test, AuxQubitNumber)
@@ -44,8 +45,9 @@ def test():
 
     #真值表初值变化
     b=[]
-    d=[0,1,3,5,7,1025]
-    for a in range(16):
+    # d=[0,1,3,5,7,1025]
+    d=random.sample(list(range(2**variable_number)), 10)
+    for a in d:
         randomnum = a
         x=[]
         circuit_temp=Circuit(variable_number + 1 + AuxQubitNumber)

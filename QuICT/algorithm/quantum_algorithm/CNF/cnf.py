@@ -84,7 +84,7 @@ class CNFSATOracle:
                         ancilla_qubits_num, j+1, j+1,
                         variable_number +  j+1, depth-1, depth
                     )
-                MCTOneAux().execute(len(controls_abs) + 2) | self._cgate(controls_abs + [target, target+1]) 
+                MCTOneAux().execute(len(controls_abs) + 2) | self._cgate(controls_abs + [target, target - 1]) 
                 # one_dirty_aux(self._cgate, controls_abs, target, target+1)
                 for j in range(clause_number):
                     controls_abs.append(variable_number +  j+1)
@@ -444,16 +444,16 @@ class CNFSATOracle:
                                 CCX | self._cgate([c[Aux-(block_number-1)+j-1] , c[Aux- 2*(block_number-1) + j], c[Aux- 2*(block_number-1) -1 + j]])
                                     
                                 # topPhase 
-                            CCX | self._cgate([c[Aux-2]  , c[Aux-1], c[ Aux-2 - EndID + StartID ]])    
+                            CCX | self._cgate([c[Aux-2]  , c[Aux-1], c[ Aux-2 - (block_number-1) ]])    
                             self.clause(CNF_data, variable_number, Aux, StartID + (block_number-2)*block_len, StartID + (block_number-1)*block_len -1, c[Aux-2], current_depth-1, depth)
 
-                            CCX | self._cgate([c[Aux-2]  , c[Aux-1], c[ Aux-2 - EndID + StartID ]])     
+                            CCX | self._cgate([c[Aux-2]  , c[Aux-1], c[ Aux-2 - (block_number-1) ]])     
                             self.clause(CNF_data, variable_number, Aux, StartID + (block_number-1)*block_len, EndID, c[Aux-1], current_depth-1, depth)
 
-                            CCX | self._cgate([c[Aux-2]  , c[Aux-1], c[ Aux-2 - EndID + StartID ]])  
+                            CCX | self._cgate([c[Aux-2]  , c[Aux-1], c[ Aux-2 - (block_number-1) ]])  
                             self.clause(CNF_data, variable_number, Aux, StartID + (block_number-2)*block_len, StartID + (block_number-1)*block_len -1, c[Aux-2], current_depth-1, depth)
                             
-                            CCX | self._cgate([c[Aux-2]  , c[Aux-1], c[ Aux-2 - EndID + StartID ]])    
+                            CCX | self._cgate([c[Aux-2]  , c[Aux-1], c[ Aux-2 - (block_number-1) ]])    
                                 
                                 #控制位variable_number + Aux - (block_number-1) + 2 -j 放 clause ， 另一个 控制位(将与此for内的前一个target 相同)并和target 依次上升
                             for j in range( block_number-3, 0 , -1):
@@ -475,16 +475,16 @@ class CNFSATOracle:
                                 CCX | self._cgate([c[Aux-(block_number-1)+j-1] , c[Aux- 2*(block_number-1) + j], c[Aux- 2*(block_number-1) -1 + j]])
                                     
                                 # topPhase 
-                            CCX | self._cgate([c[Aux-2]  , c[Aux-1], c[ Aux-2 - EndID + StartID ]])    
+                            CCX | self._cgate([c[Aux-2]  , c[Aux-1], c[ Aux-2 - (block_number-1) ]])    
                             self.clause(CNF_data, variable_number, Aux, StartID + (block_number-2)*block_len, StartID + (block_number-1)*block_len -1, c[Aux-2], current_depth-1, depth)
 
-                            CCX | self._cgate([c[Aux-2]  , c[Aux-1], c[ Aux-2 - EndID + StartID ]])     
+                            CCX | self._cgate([c[Aux-2]  , c[Aux-1], c[ Aux-2 - (block_number-1) ]])     
                             self.clause(CNF_data, variable_number, Aux, StartID + (block_number-1)*block_len, EndID, c[Aux-1], current_depth-1, depth)
 
-                            CCX | self._cgate([c[Aux-2]  , c[Aux-1], c[ Aux-2 - EndID + StartID ]])  
+                            CCX | self._cgate([c[Aux-2]  , c[Aux-1], c[ Aux-2 - (block_number-1) ]])  
                             self.clause(CNF_data, variable_number, Aux, StartID + (block_number-2)*block_len, StartID + (block_number-1)*block_len -1, c[Aux-2], current_depth-1, depth)
                             
-                            CCX | self._cgate([c[Aux-2]  , c[Aux-1], c[ Aux-2 - EndID + StartID ]])    
+                            CCX | self._cgate([c[Aux-2]  , c[Aux-1], c[ Aux-2 - (block_number-1) ]])    
                                 
                                 #控制位variable_number + Aux - (block_number-1) + 2 -j 放 clause ， 另一个 控制位(将与此for内的前一个target 相同)并和target 依次上升
                             for j in range( block_number-3, 0 , -1):
