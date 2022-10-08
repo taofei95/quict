@@ -68,7 +68,6 @@ class QuICTLocalJobManager:
         # Set job information into Redis.
         job_info = {
             'type': job_type,
-            'circuit': cir_path,
             'status': 'running',
             'output_path': output_path,
             'pid': proc.pid

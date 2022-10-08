@@ -9,6 +9,7 @@ def qasm_validation(qasm_file):
     try:
         qasm = OPENQASMInterface.load_file(qasm_file)
         assert qasm.valid_circuit
+        return qasm.circuit
     except:
         raise ValueError(f"Failure to load circuit from given file. {qasm_file}.")
 
@@ -21,8 +22,9 @@ def _job_validation(job_dict: dict):
     assert _type in ["qcda", "simulation"], f"Job's type should be one of [qcda, simulation], not {_type}."
 
     # circuit's qasm file validation
-    circuit = job_dict["circuit"]
-    qasm_validation(circuit)
+    circuit = qasm_validation(job_dict["circuit"])
+    job_dict['circuit_string'] = circuit.qasm()
+    job_dict['circuit_width'] = circuit.width()
 
     # Runtime parameters' validation
     if _type == "simulation":   # validation for simulation job
