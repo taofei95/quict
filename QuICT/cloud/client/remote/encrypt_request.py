@@ -11,6 +11,7 @@ from .encrypt_manager import EncryptManager
 class EncryptedRequest:
     def __init__(self):
         self._encrypt = EncryptManager()
+        self.__SALT = "TestForQuICT"
 
     def get_current_user(self):
         current_login_status = get_config()
@@ -23,7 +24,7 @@ class EncryptedRequest:
         # Get response.
         response = requests.get(
             url=url,
-            headers=json.dumps(header)
+            headers=header
         )
 
         # decrepted response
@@ -38,7 +39,7 @@ class EncryptedRequest:
 
         response = requests.post(
             url=url,
-            headers=json.dumps(header),
+            headers=header,
             data=self._encrypt.encryptedmsg(json_dict, aes_key)
         )
 
@@ -54,8 +55,8 @@ class EncryptedRequest:
 
         response = requests.delete(
             url=url,
-            headers=json.dumps(header),
-            data=self._encrypt.encryptedmsg(json_dict, aes_key)
+            headers=header,
+            data=self._encrypt.encryptedmsg(json_dict, aes_key) if json_dict is not None else None
         )
 
         # decrepted response
@@ -67,20 +68,29 @@ class EncryptedRequest:
         payload = {
             'username': username,
             'aes_key': self._encrypt.encryptedmsg(aes_key, username).decode('ascii'),
-            'exp': (datetime.datetime.utcnow() + datetime.timedelta(minutes=15)).timestamp()
+            'exp': datetime.datetime.utcnow() + datetime.timedelta(minutes=15)
         }
 
         jwt_token = jwt.encode(
             payload=payload,
-            key="TestForQuICT",
+            key=self.__SALT,
             algorithm="HS256"
         )
 
         return {"Authorization": f"Bearer {jwt_token}"}
 
     def _decrepted_response(self, response: requests.Response):
-        encrypted_aes_key = response.headers.get('aes_key')
+        jwt_token = response.headers.get('Authorization')
+        if jwt_token and jwt_token.startswith('Bearer '):
+            payload = jwt.decode(jwt_token[7:], self.__SALT, ["HS256"])
+        else:
+            payload = None
+
+        username = payload.get("username", None)
+        assert username == self.get_current_user()
+        encrypted_aes_key = payload.get('aes_key')
+
         content = response.content
 
-        aes_key = self._encrypt.decryptedmsg(encrypted_aes_key, self.get_current_user(), True)
+        aes_key = self._encrypt.decryptedmsg(encrypted_aes_key, username, True)
         return self._encrypt.decryptedmsg(content, aes_key)

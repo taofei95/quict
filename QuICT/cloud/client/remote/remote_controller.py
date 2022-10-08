@@ -10,8 +10,8 @@ from .utils import get_config, update_config
 # TODO: file copy between local and remote
 
 
-default_hostname = "0.0.0.0"
-default_api_server_port = "0000"
+default_hostname = "127.0.0.1"
+default_api_server_port = "5000"
 
 
 class QuICTRemoteManager:
@@ -36,7 +36,7 @@ class QuICTRemoteManager:
         if time_diff.seconds > 3600:
             raise ValueError("Please login again. The last login is expired.")
 
-    def _update_login_status(self, username, login: bool = True):
+    def _update_user_status(self, username, login: bool = True):
         local_status = {
             'username': username,
             'login_status': login,
@@ -48,7 +48,7 @@ class QuICTRemoteManager:
     ############                Login & Logout              ############
     ####################################################################
     def login(self, username: str, password: str):
-        self._update_login_status(username, login=False)
+        self._update_user_status(username, login=False)
         success = self._encryptedrequest.post(
             f"{self._url_prefix}/env/login",
             {'username': username, 'password': self._encrypt.encrypted_passwd(password)}
@@ -57,10 +57,10 @@ class QuICTRemoteManager:
         if not success:
             raise ValueError("unmatched login username and password.")
         else:
-            self._update_login_status(username)
+            self._update_user_status(username)
 
     def logout(self):
-        self._update_login_status(None, False)
+        self._update_user_status(None, False)
 
     ####################################################################
     ############             Cluster API Function           ############
@@ -75,28 +75,29 @@ class QuICTRemoteManager:
     ############               Job API Function             ############
     ####################################################################
     def start_job(self, yml_dict: dict):
-        url = f"{self._url_prefix}/job/start"
+        url = f"{self._url_prefix}/jobs/start"
 
-        # TODO: related file copy to server
+        # Delete Circuit Qasm Path here, not use for remote mode
+        del yml_dict['circuit']
 
         return self._encryptedrequest.post(url, yml_dict)
 
     def status_job(self, job_name: str):
-        url = f"{self._url_prefix}/job/{job_name}:status"
+        url = f"{self._url_prefix}/jobs/{job_name}:status"
         return self._encryptedrequest.get(url)
 
     def stop_job(self, job_name: str):
-        url = f"{self._url_prefix}/job/{job_name}:stop"
+        url = f"{self._url_prefix}/jobs/{job_name}:stop"
         return self._encryptedrequest.post(url)
 
     def restart_job(self, job_name: str):
-        url = f"{self._url_prefix}/job/{job_name}:restart"
+        url = f"{self._url_prefix}/jobs/{job_name}:restart"
         return self._encryptedrequest.post(url)
 
     def delete_job(self, job_name: str):
-        url = f"{self._url_prefix}/job/{job_name}:delete"
+        url = f"{self._url_prefix}/jobs/{job_name}:delete"
         return self._encryptedrequest.delete(url)
 
     def list_jobs(self):
-        url = f"{self._url_prefix}/job/list"
+        url = f"{self._url_prefix}/jobs/list"
         return self._encryptedrequest.get(url)

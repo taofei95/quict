@@ -18,8 +18,9 @@ def status_cluster():
 
 
 @yaml_decompostion
-def start_job(file: str):
-    remote_manager.start_job(file)
+def start_job(file: dict):
+    data = remote_manager.start_job(file)
+    print(data)
 
 
 def stop_job(name: str):
@@ -31,12 +32,13 @@ def restart_job(name: str):
 
 
 def delete_job(name: str):
-    remote_manager.delete_job(name)
-
+    data = remote_manager.delete_job(name)
+    print(data)
 
 def status_job(name: str):
     remote_manager.status_job(name)
 
 
 def list_jobs():
-    remote_manager.list_jobs()
+    data = remote_manager.list_jobs()
+    print(data)

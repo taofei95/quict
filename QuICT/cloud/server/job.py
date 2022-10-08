@@ -1,7 +1,7 @@
-import requests
 from flask import Blueprint
 
-from .script.requset_validation import request_validation
+from script.requset_validation import request_validation
+from script.redis_controller import RedisController
 
 
 job_blueprint = Blueprint(name="jobs", import_name=__name__)
@@ -14,15 +14,17 @@ def start_job(**kwargs):
     """start a job. """
     job_dict = kwargs['json_dict']
 
+    return job_dict
+
     # start job by redis controller
-    return ["start"]
+    # RedisController().add_job(job_dict)
 
 
 @job_blueprint.route(f"{URL_PREFIX}/<name>:stop", methods=["POST"])
 @request_validation
 def stop_job(name: str):
     """ Stop a job. """
-    return [name, "stop"]
+    RedisController().add_operator(name, "killed")
 
 
 @job_blueprint.route(f"{URL_PREFIX}/<name>:restart", methods=["POST"])

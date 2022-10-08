@@ -1,7 +1,6 @@
-import requests
 from flask import Blueprint
 
-from .script.requset_validation import request_validation
+from script.requset_validation import request_validation
 
 
 env_blueprint = Blueprint(name="env", import_name=__name__)

@@ -4,7 +4,10 @@ import os
 import functools
 from flask import request, Response
 
-from ...client.remote.encrypt_manager import EncryptManager
+from QuICT.cloud.client.remote.encrypt_manager import EncryptManager
+
+
+__SALT = "TestForQuICT"
 
 
 def request_validation(func):
@@ -20,7 +23,11 @@ def request_validation(func):
         # Get jwt_token and its payload
         encrypt = EncryptManager()
         jwt_token = request.headers.get('Authorization')
-        payload = jwt.decode(jwt_token, "TestForQuICT", ["HS256"])
+        if jwt_token and jwt_token.startswith('Bearer '):
+            payload = jwt.decode(jwt_token[7:], __SALT, ["HS256"])
+        else:
+            payload=None
+
         username = payload.get("username", None)
         aes_key = payload.get('aes_key')
 
@@ -51,7 +58,7 @@ def create_response(username: str, json_dict: dict):
 
     jwt_token = jwt.encode(
         payload=payload,
-        key="TestForQuICT",
+        key=__SALT,
         algorithm="HS256"
     )
 
