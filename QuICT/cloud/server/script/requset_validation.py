@@ -29,6 +29,7 @@ def request_validation(func):
             payload=None
 
         username = payload.get("username", None)
+        kwargs['username'] = username
         aes_key = payload.get('aes_key')
 
         # TODO: check user available
