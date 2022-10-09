@@ -31,7 +31,7 @@ class QAOA:
             loss = self.net.loss_func(state)
             loss.backward()
             optim.step()
-            print(loss)
+            print(loss.item())
 
 
 if __name__ == "__main__":
@@ -71,10 +71,10 @@ if __name__ == "__main__":
 
     seed(17)
     n_qubits = 2
-    pauli_str = random_pauli_str(4, n_qubits)
+    pauli_str = random_pauli_str(2, n_qubits)
     print(pauli_str)
     h = Hamiltonian(pauli_str)
     # h = Hamiltonian([[0.2, "Z0", "I1"], [1, "X1"]])
-    qaoa = QAOA(n_qubits, 4, h)
+    qaoa = QAOA(n_qubits, 1, h)
     qaoa.run(optimizer=torch.optim.Adam, lr=0.1, max_iter=10)
     # state = np.array([np.sqrt(3) / 3, 1 / 2, 1 / 3, np.sqrt(11) / 6])

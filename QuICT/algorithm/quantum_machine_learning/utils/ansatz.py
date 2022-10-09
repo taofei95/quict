@@ -1,15 +1,15 @@
-from ssl import HAS_ECDH
 import torch
 import numpy as np
 from QuICT.core import Circuit
 from QuICT.core.gate import *
+from QuICT.algorithm.quantum_machine_learning.utils.gate_tensor import BasicGateTensor
 
 
 class Ansatz:
     def __init__(self, n_qubits, circuit=None, device=torch.device("cuda:0")):
         self._circuit = circuit
         self._n_qubits = n_qubits if circuit is None else circuit.width()
-        self._gates = [] if circuit is None else circuit.gates
+        self._gates = [] if circuit is None else self._gate_to_tensor(circuit.gates)
         self._device = device
 
     def __add__(self, other):
@@ -24,8 +24,25 @@ class Ansatz:
             ansatz._gates.append(other_gate)
         return ansatz
 
+    def _gate_to_tensor(self, gates):
+        gates_tensor = []
+        for gate in gates:
+            gate_tensor = BasicGateTensor(
+                gate.controls, gate.targets, gate.params, gate.type
+            )
+            gate_tensor.pargs = copy.deepcopy(gate.pargs)
+            gate_tensor.targs = copy.deepcopy(gate.targs)
+            gate_tensor.cargs = copy.deepcopy(gate.cargs)
+            gate_tensor.matrix = torch.from_numpy(gate.matrix)
+            gate_tensor.assigned_qubits = copy.deepcopy(gate.assigned_qubits)
+            gate_tensor.update_name(gate.assigned_qubits[0].id)
+            gates_tensor.append(gate_tensor)
+
+        return gates_tensor
+
     def add_gate(self, gate, act_bits: Union[int, list] = None):
         assert isinstance(gate.type, GateType)
+        assert isinstance(gate.matrix, torch.Tensor)
         if act_bits is None:
             for qid in range(self._n_qubits):
                 new_gate = gate.copy()
@@ -91,10 +108,10 @@ class Ansatz:
             else:
                 state = state_vector.clone()
         assert state.shape[0] == 1 << self._n_qubits
-
-        gates = self._gates if self._circuit is None else self._circuit.gates
+        
+        gates = self._gates
         for gate in gates:
-            gate_tensor = torch.from_numpy(gate.matrix).to(self._device)
+            gate_tensor = gate.matrix.to(self._device)
             act_bits = gate.cargs + gate.targs
             state = self._apply_gate(state, gate_tensor, act_bits)
 
@@ -134,7 +151,9 @@ if __name__ == "__main__":
     simulator = ConstantStateVectorSimulator()
     state = random_state(2)
     circuit = Circuit(2)
-    RI = np.array([[np.exp(-0.32 * 1j), 0],[0, np.exp(-0.32 * 1j)]], dtype=np.complex128)
+    RI = np.array(
+        [[np.exp(-0.32 * 1j), 0], [0, np.exp(-0.32 * 1j)]], dtype=np.complex128
+    )
     RI = Unitary(RI)
     H | circuit
     sv = simulator.run(circuit)
@@ -142,7 +161,7 @@ if __name__ == "__main__":
     RI | circuit
     sv = simulator.run(circuit)
     print(sv.real)
-    
+
     # circuit2 = Circuit(5)
     # H | circuit2(1)
     # H | circuit2(3)
@@ -153,7 +172,7 @@ if __name__ == "__main__":
     # H | circuit2(3)
     # sv = simulator.run(circuit, state)
     # print(sv.real)
-    
+
     # HH = np.kron(H.matrix, H.matrix)
     # HH = Unitary(HH)
     # HH | circuit([0, 1])
@@ -163,4 +182,3 @@ if __name__ == "__main__":
 
     # print(np.array(sv.cpu()).real)
 
-    

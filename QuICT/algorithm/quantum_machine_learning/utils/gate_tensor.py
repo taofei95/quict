@@ -3,39 +3,14 @@ from typing import Union
 import numpy as np
 import torch
 
+from QuICT.core.gate import *
 from QuICT.core.utils import (
-    GateType, MatrixType, SPECIAL_GATE_SET, DIAGONAL_GATE_SET, CGATE_LIST,
-    PAULI_GATE_SET, CLIFFORD_GATE_SET,
-    perm_decomposition, matrix_product_to_circuit
+    GateType,
+    SPECIAL_GATE_SET,
 )
 
 
 class BasicGateTensor(object):
-    """ the abstract SuperClass of all basic quantum gate
-
-    All basic quantum gate described in the framework have
-    some common attributes and some common functions
-    which defined in this class
-
-    Attributes:
-        name(str): the name of the gate
-        controls(int): the number of the control bits of the gate
-        cargs(list<int>): the list of the index of control bits in the circuit
-        carg(int, read only): the first object of cargs
-
-        targets(int): the number of the target bits of the gate
-        targs(list<int>): the list of the index of target bits in the circuit
-        targ(int, read only): the first object of targs
-
-        params(list): the number of the parameter of the gate
-        pargs(list): the list of the parameter
-        parg(read only): the first object of pargs
-
-        qasm_name(str, read only): gate's name in the OpenQASM 2.0
-        type(GateType, read only): gate's type described by GateType
-
-        matrix(np.array): the unitary matrix of the quantum gate act on targets
-    """
     @property
     def name(self) -> str:
         return self._name
@@ -45,15 +20,15 @@ class BasicGateTensor(object):
         self._name = name
 
     @property
-    def matrix(self) -> torch.tensor:
+    def matrix(self) -> torch.Tensor:
         return self._matrix
 
     @matrix.setter
-    def matrix(self, matrix) -> torch.tensor:
+    def matrix(self, matrix) -> torch.Tensor:
         self._matrix = matrix
 
     @property
-    def target_matrix(self) -> torch.tensor:
+    def target_matrix(self) -> torch.Tensor:
         return self.matrix
 
     @property
@@ -104,7 +79,9 @@ class BasicGateTensor(object):
             targs = [targs]
 
         assert len(targs) == len(set(targs)), "Duplicated target qubit indexes."
-        assert not set(self._cargs) & set(targs), "Same qubit indexes in control and target."
+        assert not set(self._cargs) & set(
+            targs
+        ), "Same qubit indexes in control and target."
         self._targs = targs
 
     @property
@@ -120,13 +97,16 @@ class BasicGateTensor(object):
         return self._pargs
 
     @pargs.setter
-    def pargs(self, pargs: list):
-        if isinstance(pargs, list):
-            self._pargs = pargs
+    def pargs(self, pargs: torch.Tensor):
+        if isinstance(pargs, torch.Tensor):
+            self._pargs = pargs if pargs.dim() > 0 else pargs.unsqueeze(0)
+        elif isinstance(pargs, list):
+            self._pargs = torch.tensor(pargs).to(self.device)
+        elif isinstance(pargs, np.array):
+            self._pargs = torch.from_numpy(pargs).to(self.device)
         else:
-            self._pargs = [pargs]
-
-        assert len(self._pargs) == self.params
+            self._pargs = torch.tensor([pargs]).to(self.device)
+        assert self._pargs.shape[0] == self.params
 
     @property
     def parg(self):
@@ -145,8 +125,8 @@ class BasicGateTensor(object):
         return self._precision
 
     @property
-    def qasm_name(self):
-        return self._qasm_name
+    def device(self):
+        return self._device
 
     def __init__(
         self,
@@ -154,67 +134,48 @@ class BasicGateTensor(object):
         targets: int,
         params: int,
         type: GateType,
-        matrix_type: MatrixType = MatrixType.normal
+        device=torch.device("cuda:0"),
     ):
         self._matrix = None
 
         self._controls = controls
         self._targets = targets
         self._params = params
-        self._cargs = []    # list of int
-        self._targs = []    # list of int
-        self._pargs = []    # list of float/..
+        self._device = device
+        self._cargs = []  # list of int
+        self._targs = []  # list of int
+        self._pargs = torch.tensor([]).to(device)  # list of float/..
 
         assert isinstance(type, GateType)
         self._type = type
-        self._matrix_type = matrix_type
-        self._precision = np.complex128
-        self._qasm_name = str(type.name)
+        self._precision = torch.complex128
         self._name = "-".join([str(type), "", ""])
 
-        self.assigned_qubits = []   # list of qubits
+        self.assigned_qubits = []  # list of qubits
 
     def __call__(self):
-        """ give parameters for the gate, and give parameters by "()", and parameters should be one of int/float/complex
-
-        Some Examples are like this:
-
-        Rz(np.pi / 2)           | qubit
-        U3(np.pi / 2, 0, 0)     | qubit
-
-        *Important*: There is no parameters for current quantum gate.
-
-        Returns:
-            BasicGate: the gate after filled by parameters
-        """
         return self.copy()
 
     def __eq__(self, other):
-        assert isinstance(other, BasicGate)
+        assert isinstance(other, BasicGateTensor)
         if (
-            self.type != other.type or
-            (self.cargs + self.targs) != (other.cargs + other.targs) or
-            not np.allclose(self.matrix, other.matrix)
+            self.type != other.type
+            or (self.cargs + self.targs) != (other.cargs + other.targs)
+            or not torch.allclose(self.matrix, other.matrix)
         ):
             return False
 
         return True
 
     def update_name(self, qubit_id: str, circuit_idx: int = None):
-        """ Updated gate's name with the given information
-
-        Args:
-            qubit_id (str): The qubit's unique ID.
-            circuit_idx (int, optional): The gate's order index in the circuit. Defaults to None.
-        """
         qubit_id = qubit_id[:6]
-        name_parts = self.name.split('-')
+        name_parts = self.name.split("-")
         name_parts[1] = qubit_id
 
         if circuit_idx is not None:
             name_parts[2] = str(circuit_idx)
 
-        self.name = '-'.join(name_parts)
+        self.name = "-".join(name_parts)
 
     def __str__(self):
         """ get gate information """
@@ -224,7 +185,7 @@ class BasicGateTensor(object):
             "control_bit": self.cargs,
             "targets": self.targets,
             "target_bit": self.targs,
-            "parameters": self.pargs
+            "parameters": self.pargs,
         }
 
         return str(gate_info)
@@ -233,7 +194,7 @@ class BasicGateTensor(object):
         """ return a copy of this gate
 
         Returns:
-            gate(BasicGate): a copy of this gate
+            gate(BasicGateTensor): a copy of this gate
         """
         class_name = str(self.__class__.__name__)
         gate = globals()[class_name]()
@@ -243,7 +204,7 @@ class BasicGateTensor(object):
             gate.targets = self.targets
             gate.params = self.params
 
-        gate.pargs = copy.deepcopy(self.pargs)
+        gate.pargs = self.pargs
         gate.targs = copy.deepcopy(self.targs)
         gate.cargs = copy.deepcopy(self.cargs)
 
@@ -251,27 +212,243 @@ class BasicGateTensor(object):
             gate.assigned_qubits = copy.deepcopy(self.assigned_qubits)
             gate.update_name(gate.assigned_qubits[0].id)
 
-        if self.precision == np.complex64:
-            gate.convert_precision()
-
         return gate
 
     @staticmethod
     def permit_element(element):
-        """ judge whether the type of a parameter is int/float/complex
-
-        for a quantum gate, the parameter should be int/float/complex
-
-        Args:
-            element: the element to be judged
-
-        Returns:
-            bool: True if the type of element is int/float/complex
-        """
-        if isinstance(element, int) or isinstance(element, float) or isinstance(element, complex):
+        if (
+            isinstance(element, int)
+            or isinstance(element, float)
+            or isinstance(element, complex)
+            or isinstance(element, torch.Tensor)
+        ):
             return True
-        else:
-            tp = type(element)
-            if tp == np.int64 or tp == np.float64 or tp == np.complex128:
-                return True
-            return False
+        return False
+
+
+class HGate(BasicGateTensor):
+    """ Hadamard gate """
+
+    def __init__(self):
+        super().__init__(controls=0, targets=1, params=0, type=GateType.h)
+
+        self.matrix = torch.tensor(
+            [[1 / np.sqrt(2), 1 / np.sqrt(2)], [1 / np.sqrt(2), -1 / np.sqrt(2)],],
+            dtype=self._precision,
+        ).to(self.device)
+
+
+H = HGate()
+
+
+class HYGate(BasicGateTensor):
+    """ Self-inverse gate """
+
+    def __init__(self):
+        super().__init__(controls=0, targets=1, params=0, type=GateType.hy)
+
+        self.matrix = torch.tensor(
+            [[1 / np.sqrt(2), -1j / np.sqrt(2)], [1j / np.sqrt(2), -1 / np.sqrt(2)],],
+            dtype=self._precision,
+        ).to(self.device)
+
+
+Hy = HYGate()
+
+
+class CXGate(BasicGateTensor):
+    """ controlled-X gate """
+
+    def __init__(self):
+        super().__init__(
+            controls=1, targets=1, params=0, type=GateType.cx,
+        )
+
+        self.matrix = torch.tensor(
+            [[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 0, 1], [0, 0, 1, 0]],
+            dtype=self._precision,
+        ).to(self.device)
+
+        self._target_matrix = torch.tensor([[0, 1], [1, 0]], dtype=self._precision).to(
+            self.device
+        )
+
+    @property
+    def target_matrix(self):
+        return self._target_matrix
+
+
+CX = CXGate()
+
+
+class XGate(BasicGateTensor):
+    """ Pauli-X gate """
+
+    def __init__(self):
+        super().__init__(
+            controls=0, targets=1, params=0, type=GateType.x,
+        )
+
+        self.matrix = torch.tensor([[0, 1], [1, 0]], dtype=self._precision).to(
+            self.device
+        )
+
+
+X = XGate()
+
+
+class YGate(BasicGateTensor):
+    """ Pauli-Y gate """
+
+    def __init__(self):
+        super().__init__(
+            controls=0, targets=1, params=0, type=GateType.y,
+        )
+
+        self.matrix = torch.tensor([[0, -1j], [1j, 0]], dtype=self._precision).to(
+            self.device
+        )
+
+
+Y = YGate()
+
+
+class ZGate(BasicGateTensor):
+    """ Pauli-Z gate """
+
+    def __init__(self):
+        super().__init__(
+            controls=0, targets=1, params=0, type=GateType.z,
+        )
+
+        self.matrix = torch.tensor([[1, 0], [0, -1]], dtype=self._precision).to(
+            self.device
+        )
+
+
+Z = ZGate()
+
+
+class RxGate(BasicGateTensor):
+    """ Rotation around the x-axis gate """
+
+    def __init__(self, params=torch.tensor([np.pi / 2])):
+        super().__init__(controls=0, targets=1, params=1, type=GateType.rx)
+
+        self.pargs = params
+
+    def __call__(self, alpha):
+        if not self.permit_element(alpha):
+            raise TypeError("int/float/complex/torch.Tensor", alpha)
+
+        return (
+            RxGate(alpha)
+            if isinstance(alpha, torch.Tensor)
+            else RxGate(torch.tensor([alpha]))
+        )
+
+    @property
+    def matrix(self):
+        matrix = torch.zeros([2, 2], dtype=self._precision).to(self.device)
+        matrix[0, 0] = torch.cos(self.parg / 2)
+        matrix[0, 1] = 1j * -torch.sin(self.parg / 2)
+        matrix[1, 0] = 1j * -torch.sin(self.parg / 2)
+        matrix[1, 1] = torch.cos(self.parg / 2)
+
+        return matrix
+
+
+Rx = RxGate()
+
+
+class RyGate(BasicGateTensor):
+    """ Rotation around the y-axis gate """
+
+    def __init__(self, params=torch.tensor([np.pi / 2])):
+        super().__init__(controls=0, targets=1, params=1, type=GateType.ry)
+
+        self.pargs = params
+
+    def __call__(self, alpha):
+        if not self.permit_element(alpha):
+            raise TypeError("int/float/complex/torch.Tensor", alpha)
+
+        return (
+            RyGate(alpha)
+            if isinstance(alpha, torch.Tensor)
+            else RyGate(torch.tensor([alpha]))
+        )
+
+    @property
+    def matrix(self):
+        matrix = torch.zeros([2, 2], dtype=self._precision).to(self.device)
+        matrix[0, 0] = torch.cos(self.parg / 2)
+        matrix[0, 1] = -torch.sin(self.parg / 2)
+        matrix[1, 0] = torch.sin(self.parg / 2)
+        matrix[1, 1] = torch.cos(self.parg / 2)
+
+        return matrix
+
+
+Ry = RyGate()
+
+
+class RzGate(BasicGateTensor):
+    """ Rotation around the z-axis gate """
+
+    def __init__(self, params=torch.tensor([np.pi / 2])):
+        super().__init__(
+            controls=0, targets=1, params=1, type=GateType.rz,
+        )
+
+        self.pargs = params
+
+    def __call__(self, alpha):
+        if not self.permit_element(alpha):
+            raise TypeError("int/float/complex/torch.Tensor", alpha)
+
+        return (
+            RzGate(alpha)
+            if isinstance(alpha, torch.Tensor)
+            else RIGate(torch.tensor([alpha]))
+        )
+
+    @property
+    def matrix(self):
+        matrix = torch.zeros([2, 2], dtype=self._precision).to(self.device)
+        matrix[0, 0] = torch.exp(-self.parg / 2 * 1j)
+        matrix[1, 1] = torch.exp(self.parg / 2 * 1j)
+
+        return matrix
+
+
+Rz = RzGate()
+
+
+class RIGate(BasicGateTensor):
+    def __init__(self, params=torch.tensor([np.pi / 2])):
+        super().__init__(
+            controls=0, targets=1, params=1, type=GateType.ri,
+        )
+
+        self.pargs = params
+
+    def __call__(self, alpha):
+        if not self.permit_element(alpha):
+            raise TypeError("int/float/complex/torch.Tensor", alpha)
+
+        return (
+            RIGate(alpha)
+            if isinstance(alpha, torch.Tensor)
+            else RIGate(torch.tensor([alpha]))
+        )
+
+    @property
+    def matrix(self):
+        return torch.tensor(
+            [[np.exp(self.parg * 1j), 0], [0, np.exp(self.parg * 1j)]],
+            dtype=self._precision,
+        ).to(self.device)
+
+
+RI = RIGate()

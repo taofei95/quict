@@ -575,8 +575,8 @@ class HYGate(BasicGate):
         )
 
         self.matrix = np.array([
-            [1j / np.sqrt(2), -1j / np.sqrt(2)],
-            [1j / np.sqrt(2), -1j / np.sqrt(2)]
+            [1 / np.sqrt(2), -1j / np.sqrt(2)],
+            [1j / np.sqrt(2), -1 / np.sqrt(2)]
         ], dtype=self._precision)
 
 

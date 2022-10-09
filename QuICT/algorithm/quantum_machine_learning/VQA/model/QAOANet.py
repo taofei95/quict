@@ -1,16 +1,15 @@
+from sqlalchemy import null
+import torch
 import torch.nn
 import numpy as np
 import random
 import time
 import re
 
-from QuICT.core import Circuit
-from QuICT.core.gate import *
+from QuICT.algorithm.quantum_machine_learning.utils.gate_tensor import *
 from QuICT.algorithm.quantum_machine_learning.utils.hamiltonian import Hamiltonian
 from QuICT.algorithm.quantum_machine_learning.utils.ansatz import Ansatz
 from QuICT.algorithm.quantum_machine_learning.VQA.model.VQANet import VQANet
-from QuICT.simulation.state_vector import ConstantStateVectorSimulator
-from QuICT.qcda.synthesis.unitary_decomposition import UnitaryDecomposition
 
 
 class QAOANet(VQANet):
@@ -22,7 +21,6 @@ class QAOANet(VQANet):
         device=torch.device("cuda:0"),
     ):
         super().__init__(n_qubits, p, hamiltonian, device)
-        self.define_network()
 
     def define_network(self):
         self.beta = torch.nn.Parameter(
@@ -83,12 +81,7 @@ class QAOANet(VQANet):
                     raise ValueError("Invalid Pauli gate.")
             # Only coeff
             else:
-                RI = np.array(
-                    [[np.exp(-coeff * 1j), 0], [0, np.exp(-coeff * 1j)]],
-                    dtype=np.complex128,
-                )
-                RI = Unitary(RI)
-                ansatz.add_gate(RI)
+                ansatz.add_gate(RI(-coeff))
 
         return ansatz
 
@@ -117,7 +110,7 @@ class QAOANet(VQANet):
             # construct U_gamma
             U_gamma = self.construct_U_gamma_layer(gamma[p])
             ansatz = ansatz + U_gamma
-
+            
             # construct U_beta
             U_beta = Rx(2 * beta[p])
             ansatz.add_gate(U_beta)
