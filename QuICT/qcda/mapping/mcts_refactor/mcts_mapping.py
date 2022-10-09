@@ -54,7 +54,7 @@ class MCTSMapping:
             c=self._c,
         )
 
-        terminated = False
+        terminated = mcts_tree._root.is_terminated_node()
         while not terminated:
             action, part, terminated = mcts_tree.step()
             with cg:
