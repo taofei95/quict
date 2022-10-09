@@ -373,7 +373,7 @@ def run_file(content):
         emit(
             'info', {'uuid': uid, 'info': f"Run circuit finished."}, namespace="/api/pty")
         logger.info(f"run result {result}")
-        result["data"]["state_vector"] = None;
+        result["data"]["state_vector"] = None
         emit('run_result', {'uuid': uid, 'run_result': result}, namespace="/api/pty")
     except Exception as e:
         import traceback

@@ -35,7 +35,7 @@
                   <el-col :span="4"></el-col>
                 </el-row>
 
-                <el-row style="height: 40px" v-for="[k, v] in Object.entries(OutputContent)" :key="k">
+                <el-row style="height: 40px" v-for="[k, v] in Object.entries(OutputContent).sort()" :key="k">
                   <el-col :span="4"></el-col>
                   <el-col :span="6">{{ k }}</el-col>
                   <el-col :span="4"></el-col>
@@ -565,14 +565,14 @@ export default {
       let height = 350;
       let histogram_zone = d3.select("#histogram");
       histogram_zone.selectAll("*").remove();
-      let chart = this.BarChart(Object.entries(result), {
+      let chart = this.BarChart(Object.entries(result).sort(), {
         x: (d) => d[0],
         y: (d) => d[1],
         title: (d) => {
           // return `Amplitude:${d3.format(".3f")(d[3])}\nPhase angle:${d[4]}`;
           return `${d[0]}\nCounts:${d[1]}`;
         },
-        xDomain: d3.map(Object.entries(result), (d) => d[0]), // sort by descending frequency
+        xDomain: d3.map(Object.entries(result).sort(), (d) => d[0]), // sort by descending frequency
         yFormat: ".1f", //".3f", //"d",
         // yLabel: "Amplitude",
         yLabel: "nCounts",
