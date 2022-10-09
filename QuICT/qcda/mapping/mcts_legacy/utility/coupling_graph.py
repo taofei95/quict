@@ -177,7 +177,7 @@ class CouplingGraph(object):
         """
         Construct the coupling graph from the layout class
         """
-        edge_list = [(edge.u, edge.v) for edge in coupling_graph.directionalized]
+        edge_list = [(edge.u, edge.v) for edge in coupling_graph.edge_list]
         res_graph = nx.Graph(edge_list)
         self._coupling_graph = res_graph
 

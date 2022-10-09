@@ -1,1 +1,1 @@
-from .mcts import MCTSMapping
+from .impl_wrapper import MCTSMapping

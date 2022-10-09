@@ -366,18 +366,18 @@ setup(
         CMakeExtension("QuICT.simulation.state_vector.cpu_simulator.",
                        f"{prj_root}/QuICT/simulation/state_vector/cpu_simulator/"),
         CythonExtension(
-            "QuICT.qcda.mapping.mcts.mcts_core.mcts_wrapper",
-            [f"{prj_root}/QuICT/qcda/mapping/mcts/mcts_core/mcts_wrapper.pyx"],
+            "QuICT.qcda.mapping.mcts_legacy.mcts.mcts_core.mcts_wrapper",
+            [f"{prj_root}/QuICT/qcda/mapping/mcts_legacy/mcts/mcts_core/mcts_wrapper.pyx"],
             extra_compile_args=["-std=c++14",
-                                f"-I{prj_root}/QuICT/qcda/mapping/mcts/mcts_core/lib/include/",
+                                f"-I{prj_root}/QuICT/qcda/mapping/mcts_legacy/mcts/mcts_core/lib/include/",
                                 f"-I{np.get_include()}"
                                 ],
-            extra_link_args=[f"-L{prj_root}/QuICT/qcda/mapping/mcts/mcts_core/lib/"],
+            extra_link_args=[f"-L{prj_root}/QuICT/qcda/mapping/mcts_legacy/mcts/mcts_core/lib/"],
             libraries=["mcts"],
-            runtime_library_dirs=[f"{prj_root}/QuICT/qcda/mapping/mcts/mcts_core/lib/"],
+            runtime_library_dirs=[f"{prj_root}/QuICT/qcda/mapping/mcts_legacy/mcts/mcts_core/lib/"],
             cmake_dep=CMakeExtension(
                 "QuICT.qcda.mapping.mcts.mcts_core.lib.",
-                f"{prj_root}/QuICT/qcda/mapping/mcts/mcts_core/lib/"
+                f"{prj_root}/QuICT/qcda/mapping/mcts_legacy/mcts/mcts_core/lib/"
             ),
         ),
     ],

@@ -5,7 +5,7 @@ from QuICT.core.circuit import *
 from QuICT.core.exception import *
 from QuICT.core.gate import *
 from QuICT.core.layout import *
-from QuICT.qcda.mapping.utility import *
+from ..utility import *
 from .mcts import *
 
 
