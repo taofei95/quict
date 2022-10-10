@@ -46,7 +46,6 @@ def test():
     print(cgate.size())
     print(cgate.depth())
     
-    
     # circ = Circuit(variable_number + 4)
     
     d=random.sample(list(range(2**variable_number)), 10)
