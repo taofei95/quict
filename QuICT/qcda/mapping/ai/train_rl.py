@@ -229,14 +229,21 @@ class Trainer:
         non_final_data_batch = State.batch_from_list(
             data_list=non_final_data_list, device=self._device
         )
+        # Use Double DQN extension
+        next_actions = (
+            self._policy_net(non_final_data_batch)
+            .clone()
+            .detach()
+            .max(1)[1]
+            .view(-1, 1)
+        )
         next_state_values = torch.zeros(self._batch_size, device=self._device)
         next_state_values[non_final_mask] = (
             self._target_net(
                 non_final_data_batch,
             )  # [b, a]
-            .clone()
-            .detach()
-            .max(1)[0]
+            .gather(1, next_actions)
+            .squeeze()
         )
         expected_state_action_values = (next_state_values * self._gamma) + rewards
 

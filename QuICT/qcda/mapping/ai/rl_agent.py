@@ -18,7 +18,7 @@ class Agent:
         max_gate_num: int,
         epsilon_start: float = 0.9,
         epsilon_end: float = 0.05,
-        epsilon_decay: float = 20000.0,
+        epsilon_decay: float = 1000.0,
         reward_scale: float = 5.0,
     ) -> None:
         # Copy values in.
@@ -132,9 +132,10 @@ class Agent:
         """
         self.explore_step += 1
         u, v = action
-        graph = self.state.topo_info.topo_graph
+        # graph = self.state.topo_info.topo_graph
+        topo_dist = self.state.topo_info.topo_dist
         scale = self.reward_scale
-        if not graph.has_edge(u, v):
+        if topo_dist[u][v] < 0.01: # not connected
             reward = -scale
             prev_state = self.state
             # next_state = None
@@ -145,8 +146,8 @@ class Agent:
         with self.mapped_circ:
             Swap & [u, v]
 
-        next_logic2phy = copy.deepcopy(self.state.logic2phy)
-        next_phy2logic = copy.deepcopy(self.state.phy2logic)
+        next_logic2phy = copy.copy(self.state.logic2phy) # It's enough to use copy for List[int]
+        next_phy2logic = copy.copy(self.state.phy2logic)
         # Current (u, v) are physical qubit labels
         next_phy2logic[u], next_phy2logic[v] = next_phy2logic[v], next_phy2logic[u]
         lu, lv = next_phy2logic[u], next_phy2logic[v]
