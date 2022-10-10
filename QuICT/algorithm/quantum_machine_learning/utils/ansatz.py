@@ -2,6 +2,7 @@ import torch
 import numpy as np
 from QuICT.core import Circuit
 from QuICT.core.gate import *
+from QuICT.algorithm.quantum_machine_learning.utils.gate_tensor import *
 from QuICT.algorithm.quantum_machine_learning.utils.gate_tensor import BasicGateTensor
 
 
@@ -43,6 +44,7 @@ class Ansatz:
     def add_gate(self, gate, act_bits: Union[int, list] = None):
         assert isinstance(gate.type, GateType)
         assert isinstance(gate.matrix, torch.Tensor)
+        assert self._gate_validation(gate)
         if act_bits is None:
             for qid in range(self._n_qubits):
                 new_gate = gate.copy()
@@ -50,14 +52,29 @@ class Ansatz:
                 new_gate.update_name("ansatz", len(self._gates))
                 self._gates.append(new_gate)
         else:
+            new_gate = gate.copy()
             if isinstance(act_bits, int):
-                gate.targs = act_bits
+                new_gate.targs = act_bits
             else:
-                assert len(act_bits) == gate.controls + gate.targets
-                gate.cargs = act_bits[: gate.controls]
-                gate.targs = act_bits[gate.controls :]
-            gate.update_name("ansatz", len(self._gates))
-            self._gates.append(gate)
+                assert len(act_bits) == new_gate.controls + new_gate.targets
+                new_gate.cargs = act_bits[: new_gate.controls]
+                new_gate.targs = act_bits[new_gate.controls :]
+            new_gate.update_name("ansatz", len(self._gates))
+            self._gates.append(new_gate)
+
+    def _gate_validation(self, gate):
+        gate_matrix = gate.matrix
+        shape = gate_matrix.shape
+        log2_shape = int(np.ceil(np.log2(shape[0])))
+
+        return (
+            shape[0] == shape[1]
+            and shape[0] == (1 << log2_shape)
+            and torch.allclose(
+                torch.eye(shape[0], dtype=gate.precision).to(self._device),
+                torch.mm(gate_matrix, gate_matrix.T.conj()),
+            )
+        )
 
     def _apply_gate(self, state, gate_tensor, act_bits):
         # Step 1: Relabel the qubits and calculate their corresponding index values.
@@ -108,9 +125,8 @@ class Ansatz:
             else:
                 state = state_vector.clone()
         assert state.shape[0] == 1 << self._n_qubits
-        
-        gates = self._gates
-        for gate in gates:
+
+        for gate in self._gates:
             gate_tensor = gate.matrix.to(self._device)
             act_bits = gate.cargs + gate.targs
             state = self._apply_gate(state, gate_tensor, act_bits)
@@ -121,64 +137,37 @@ class Ansatz:
 if __name__ == "__main__":
     from QuICT.simulation.state_vector import ConstantStateVectorSimulator
 
-    def random_pauli_str(n_items, n_qubits):
-        pauli_str = []
-        coeffs = np.random.rand(n_items)
-        for i in range(n_items):
-            pauli = [coeffs[i]]
-            for qid in range(n_qubits):
-                flag = np.random.randint(0, 5)
-                if flag == 0:
-                    pauli.append("X" + str(qid))
-                elif flag == 1:
-                    pauli.append("Y" + str(qid))
-                elif flag == 2:
-                    pauli.append("Z" + str(qid))
-                elif flag == 3:
-                    pauli.append("I" + str(qid))
-                elif flag == 4:
-                    continue
-            pauli_str.append(pauli)
-        return pauli_str
-
-    def random_state(n_qubits):
-        state = np.random.randn(1 << n_qubits)
-        state /= sum(abs(state))
-        state = abs(state) ** 0.5
-        state = state.astype(np.complex128)
-        return state
-
-    simulator = ConstantStateVectorSimulator()
-    state = random_state(2)
-    circuit = Circuit(2)
-    RI = np.array(
-        [[np.exp(-0.32 * 1j), 0], [0, np.exp(-0.32 * 1j)]], dtype=np.complex128
+    state = np.array(
+        [
+            -0.2118 + 1.3275e-01j,
+            0.0691 + 2.4027e-01j,
+            0.0691 + 2.4027e-01j,
+            0.2500 + 1.2772e-19j,
+            0.0691 + 2.4027e-01j,
+            0.2500 + 1.2772e-19j,
+            0.2500 + 1.6824e-17j,
+            0.0691 - 2.4027e-01j,
+            0.0691 + 2.4027e-01j,
+            0.2500 - 1.6824e-17j,
+            0.2500 - 1.2772e-19j,
+            0.0691 - 2.4027e-01j,
+            0.2500 - 1.2772e-19j,
+            0.0691 - 2.4027e-01j,
+            0.0691 - 2.4027e-01j,
+            -0.2118 - 1.3275e-01j,
+        ]
     )
-    RI = Unitary(RI)
+    simulator = ConstantStateVectorSimulator()
+    circuit = Circuit(4)
     H | circuit
+    Rx(0.4) | circuit
     sv = simulator.run(circuit)
     print(sv.real)
-    RI | circuit
-    sv = simulator.run(circuit)
-    print(sv.real)
+    print(sum(sv.real * sv.real))
 
-    # circuit2 = Circuit(5)
-    # H | circuit2(1)
-    # H | circuit2(3)
-    # CX | circuit2([1,3])
-    # Rz(0.5) | circuit2(3)
-    # CX | circuit2([1,3])
-    # H | circuit2(1)
-    # H | circuit2(3)
-    # sv = simulator.run(circuit, state)
-    # print(sv.real)
-
-    # HH = np.kron(H.matrix, H.matrix)
-    # HH = Unitary(HH)
-    # HH | circuit([0, 1])
-    # Rz(0.5) | circuit(2)
-    # ansatz = Ansatz(5, circuit)
-    # sv = ansatz.forward(state)
-
-    # print(np.array(sv.cpu()).real)
-
+    ansatz = Ansatz(4)
+    ansatz.add_gate(H_tensor)
+    ansatz.add_gate(Rx_tensor(0.4))
+    sv = ansatz.forward()
+    print(sv.real.cpu().numpy())
+    print(sum(sv.real.cpu().numpy() * sv.real.cpu().numpy()))

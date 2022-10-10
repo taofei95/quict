@@ -3,35 +3,42 @@ import os, sys, time
 import random
 import tqdm
 import torch
-import torch.nn.functional as torch_F
-import torchvision
-import torchvision.transforms.functional as torchvision_F
 
 # import torch.utils.tensorboard
 from QuICT.algorithm.quantum_machine_learning.VQA.model.QAOANet import QAOANet
 from QuICT.algorithm.quantum_machine_learning.utils.hamiltonian import Hamiltonian
-from QuICT.simulation.state_vector import ConstantStateVectorSimulator
 
 
 class QAOA:
     def __init__(
-        self, n_qubits, p, hamiltonian: Hamiltonian, device=torch.device("cuda:0")
+        self,
+        n_qubits,
+        p,
+        hamiltonian: Hamiltonian,
+        loss_func=None,
+        device=torch.device("cuda:0"),
     ):
         self.n_qubits = n_qubits
+        self.loss_func = loss_func
         self.net = QAOANet(n_qubits, p, hamiltonian, device).to(device)
 
-    def run(self, optimizer, lr, max_iter):
+    def run(self, optimizer, lr, max_iters):
         optim = optimizer([dict(params=self.net.parameters(), lr=lr)])
 
         self.net.train()
-        loader = tqdm.trange(max_iter, desc="training", leave=False)
+        loader = tqdm.trange(max_iters, desc="training", leave=False)
         for it in loader:
             optim.zero_grad()
             state = self.net()
-            loss = self.net.loss_func(state)
+            loss = (
+                self.net.loss_func(state)
+                if self.loss_func is None
+                else self.loss_func(state)
+            )
             loss.backward()
             optim.step()
             print(loss.item())
+        return state
 
 
 if __name__ == "__main__":
@@ -71,10 +78,10 @@ if __name__ == "__main__":
 
     seed(17)
     n_qubits = 2
-    pauli_str = random_pauli_str(2, n_qubits)
+    n_items = 3
+    p = 1
+    pauli_str = random_pauli_str(n_items, n_qubits)
     print(pauli_str)
     h = Hamiltonian(pauli_str)
-    # h = Hamiltonian([[0.2, "Z0", "I1"], [1, "X1"]])
-    qaoa = QAOA(n_qubits, 1, h)
-    qaoa.run(optimizer=torch.optim.Adam, lr=0.1, max_iter=10)
-    # state = np.array([np.sqrt(3) / 3, 1 / 2, 1 / 3, np.sqrt(11) / 6])
+    qaoa = QAOA(n_qubits, p, h)
+    qaoa.run(optimizer=torch.optim.Adam, lr=0.1, max_iters=50)

@@ -144,7 +144,7 @@ class BasicGateTensor(object):
         self._device = device
         self._cargs = []  # list of int
         self._targs = []  # list of int
-        self._pargs = torch.tensor([]).to(device)  # list of float/..
+        self._pargs = torch.tensor([]).to(device)
 
         assert isinstance(type, GateType)
         self._type = type
@@ -238,7 +238,7 @@ class HGate(BasicGateTensor):
         ).to(self.device)
 
 
-H = HGate()
+H_tensor = HGate()
 
 
 class HYGate(BasicGateTensor):
@@ -253,7 +253,7 @@ class HYGate(BasicGateTensor):
         ).to(self.device)
 
 
-Hy = HYGate()
+Hy_tensor = HYGate()
 
 
 class CXGate(BasicGateTensor):
@@ -278,7 +278,7 @@ class CXGate(BasicGateTensor):
         return self._target_matrix
 
 
-CX = CXGate()
+CX_tensor = CXGate()
 
 
 class XGate(BasicGateTensor):
@@ -294,7 +294,7 @@ class XGate(BasicGateTensor):
         )
 
 
-X = XGate()
+X_tensor = XGate()
 
 
 class YGate(BasicGateTensor):
@@ -310,7 +310,7 @@ class YGate(BasicGateTensor):
         )
 
 
-Y = YGate()
+Y_tensor = YGate()
 
 
 class ZGate(BasicGateTensor):
@@ -326,7 +326,7 @@ class ZGate(BasicGateTensor):
         )
 
 
-Z = ZGate()
+Z_tensor = ZGate()
 
 
 class RxGate(BasicGateTensor):
@@ -351,14 +351,14 @@ class RxGate(BasicGateTensor):
     def matrix(self):
         matrix = torch.zeros([2, 2], dtype=self._precision).to(self.device)
         matrix[0, 0] = torch.cos(self.parg / 2)
-        matrix[0, 1] = 1j * -torch.sin(self.parg / 2)
-        matrix[1, 0] = 1j * -torch.sin(self.parg / 2)
+        matrix[0, 1] = 1j * (-torch.sin(self.parg / 2))
+        matrix[1, 0] = 1j * (-torch.sin(self.parg / 2))
         matrix[1, 1] = torch.cos(self.parg / 2)
 
         return matrix
 
 
-Rx = RxGate()
+Rx_tensor = RxGate()
 
 
 class RyGate(BasicGateTensor):
@@ -390,7 +390,7 @@ class RyGate(BasicGateTensor):
         return matrix
 
 
-Ry = RyGate()
+Ry_tensor = RyGate()
 
 
 class RzGate(BasicGateTensor):
@@ -422,7 +422,7 @@ class RzGate(BasicGateTensor):
         return matrix
 
 
-Rz = RzGate()
+Rz_tensor = RzGate()
 
 
 class RIGate(BasicGateTensor):
@@ -451,4 +451,4 @@ class RIGate(BasicGateTensor):
         ).to(self.device)
 
 
-RI = RIGate()
+RI_tensor = RIGate()

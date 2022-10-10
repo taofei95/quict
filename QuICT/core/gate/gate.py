@@ -1089,6 +1089,36 @@ class RzGate(BasicGate):
 Rz = RzGate()
 
 
+class RIGate(BasicGate):
+    def __init__(self, params: list = [np.pi / 2]):
+        super().__init__(
+            controls=0,
+            targets=1,
+            params=1,
+            type=GateType.ri,
+            matrix_type=MatrixType.diagonal
+        )
+
+        self.pargs = params
+
+    def __call__(self, alpha):
+        if not self.permit_element(alpha):
+            raise TypeError("int/float/complex", alpha)
+
+        return RIGate([alpha])
+
+    @property
+    def matrix(self):
+        return np.array(
+            [[np.exp(self.parg * 1j), 0],
+             [0, np.exp(self.parg * 1j)]],
+            dtype=self._precision,
+        )
+
+
+RI = RIGate()
+
+
 class TGate(BasicGate):
     """ T gate """
     def __init__(self):
