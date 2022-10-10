@@ -393,24 +393,33 @@ class CircuitInfo:
         candidates = []
         weights = []
 
+        next_logic2phy = copy.copy(logic2phy)
+
+        gate_args = []
+        for gate in self.first_layer_gates.values():
+            args = gate.cargs + gate.targs
+            gate_args.append(args)
+
         for i in range(self._qubit_num):
             for j in range(i + 1, self._qubit_num):
                 if abs(topo_dist[i][j] - 1) > 1e-6:
                     continue
                 candidates.append((i, j))
-                next_logic2phy = copy.copy(logic2phy)
                 next_logic2phy[i], next_logic2phy[j] = (
                     next_logic2phy[j],
                     next_logic2phy[i],
                 )
                 bias = 0
-                for gate in self.first_layer_gates.values():
-                    a, b = gate.cargs + gate.targs
+                for a, b in gate_args:
                     _a, _b = logic2phy[a], logic2phy[b]
                     prev_d = topo_dist[_a][_b]
                     _a, _b = next_logic2phy[a], next_logic2phy[b]
                     next_d = topo_dist[_a][_b]
                     bias += prev_d - next_d
+                next_logic2phy[i], next_logic2phy[j] = (
+                    next_logic2phy[j],
+                    next_logic2phy[i],
+                )
                 if abs(bias) < 1e-6:
                     bias = zero_shift
                 bias = max(0, bias)

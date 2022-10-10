@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 import os
 import os.path as osp
 import re
@@ -11,12 +13,11 @@ import torch.nn as nn
 import torch.optim as optim
 from QuICT.core import *
 from QuICT.core.gate.composite_gate import CompositeGate
+from QuICT.qcda.mapping.ai.data_def import State, Transition
 from QuICT.qcda.mapping.ai.nn_mapping import NnMapping
 from QuICT.qcda.mapping.ai.rl_agent import Agent
-from QuICT.qcda.mapping.ai.data_def import State, Transition
 from QuICT.tools.interface.qasm_interface import OPENQASMInterface
 from torch.utils.tensorboard import SummaryWriter
-from torch_geometric.data import Batch as PygBatch
 
 
 def _wrap2circ(cg_or_circ: Union[Circuit, CompositeGate] = None):
@@ -68,10 +69,10 @@ class Trainer:
         feat_dim: int = 100,
         gamma: float = 0.9,
         replay_pool_size: int = 20000,
-        batch_size: int = 32,
+        batch_size: int = 64,
         total_epoch: int = 2000,
-        explore_period: int = 2000,
-        target_update_period: int = 10,
+        explore_period: int = 4000,
+        target_update_period: int = 20,
         device: str = "cuda" if torch.cuda.is_available() else "cpu",
         model_path: str = None,
         log_dir: str = None,
@@ -96,12 +97,7 @@ class Trainer:
         self._topo = self._agent.topo
         self._agent.factory._reset_attr_cache()
 
-        # Experience replay memory pool
-        print("Preparing experience pool...")
-        self._replay = ReplayMemory(replay_pool_size)
-
-        # DQN
-        print("Resetting policy & target model...")
+        print("Preparing policy & target networks...")
         self._policy_net = NnMapping(
             qubit_num=self._topo.qubit_number,
             max_gate_num=max_gate_num,
@@ -116,9 +112,12 @@ class Trainer:
             action_num=self._agent.action_num,
         ).to(device=device)
         self._target_net.train(False)
-
         # Guarantee they two have the same parameter values.
         self._target_net.load_state_dict(self._policy_net.state_dict())
+
+        # Experience replay memory pool
+        print("Preparing experience pool...")
+        self._replay = ReplayMemory(replay_pool_size)
 
         # Loss function & optimizer
         self._smooth_l1 = nn.SmoothL1Loss()
@@ -249,28 +248,6 @@ class Trainer:
         self._optimizer.step()
         return loss_val
 
-    def _random_fill_replay(self):
-        """Fill replay pool with one circuit for each topology."""
-        for topo_name in self._agent.factory.topo_names:
-            self._agent.reset_explore_state(topo_name=topo_name)
-            with torch.no_grad():
-                action = self._agent.select_action(
-                    policy_net=self._policy_net,
-                    policy_net_device=self._device,
-                    epsilon_random=True,
-                )
-            prev_state, next_state, reward, terminated = self._agent.take_action(
-                action=action
-            )
-            self._replay.push(
-                Transition(
-                    state=prev_state,
-                    action=action,
-                    next_state=next_state,
-                    reward=reward,
-                )
-            )
-
     def train_one_epoch(self):
         self._agent.reset_explore_state()
         observe_period = 100
@@ -352,12 +329,17 @@ class Trainer:
             _original_num = len(v_datum.circ.gates)
             rl_num[topo_name] += _rl_num
             original_num[topo_name] += _original_num
-            rl_circ_fig = v_datum.rl_mapped_circ.draw(method="matp_silent")
-            original_circ_fig = v_datum.circ.draw(method="matp_silent")
-            rl_circ_fig.dpi = 50
-            original_circ_fig.dpi = 50
-            self._writer.add_figure(f"{topo_name}-{idx} (RL)", rl_circ_fig, epoch_id)
-            self._writer.add_figure(f"{topo_name}-{idx}", original_circ_fig, epoch_id)
+            if epoch_id % 10 == 0:
+                rl_circ_fig = v_datum.rl_mapped_circ.draw(method="matp_silent")
+                original_circ_fig = v_datum.circ.draw(method="matp_silent")
+                rl_circ_fig.dpi = 75
+                original_circ_fig.dpi = 75
+                self._writer.add_figure(
+                    f"{topo_name}-{idx} (RL)", rl_circ_fig, epoch_id
+                )
+                self._writer.add_figure(
+                    f"{topo_name}-{idx}", original_circ_fig, epoch_id
+                )
             print(
                 f"    #Gate in circuit: {_original_num}, #Gate by RL: {_rl_num} ({topo_name})"
             )
@@ -373,7 +355,6 @@ class Trainer:
 
     def train(self):
         print(f"Training on {self._device}...\n")
-        # self._random_fill_replay()
         for epoch_id in range(1, 1 + self._total_epoch):
             print(f"Epoch {epoch_id}:")
             self.train_one_epoch()
@@ -389,7 +370,7 @@ class Trainer:
 
 
 if __name__ == "__main__":
-    topo = "ibmq_lima"
+    topo = "grid_3x3"
     # trainer = Trainer(topo=topo, device="cpu")
     trainer = Trainer(topo=topo)
     trainer.train()

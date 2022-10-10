@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 """This file generates some random circuits used for validation of trained RL agent.
 """
 
@@ -19,7 +21,7 @@ if not osp.exists(data_dir):
 
 circ_num_each_topo = 5
 
-for topo_name in ["grid_4x4", "ibmq_lima"]:
+for topo_name in ["grid_4x4", "grid_3x3", "ibmq_lima"]:
     print(f"Starting processing {topo_name}...")
     topo_dir = osp.dirname(osp.abspath(__file__))
     topo_dir = osp.join(topo_dir, "data")

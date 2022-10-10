@@ -9,7 +9,6 @@ from QuICT.core.gate import *
 from QuICT.core.utils import CircuitBased
 from QuICT.qcda.mapping.ai.data_def import CircuitInfo, DataFactory, State
 from QuICT.qcda.mapping.ai.nn_mapping import NnMapping
-from torch_geometric.data import Batch as PygBatch
 
 
 class Agent:
@@ -19,7 +18,7 @@ class Agent:
         max_gate_num: int,
         epsilon_start: float = 0.9,
         epsilon_end: float = 0.05,
-        epsilon_decay: float = 100.0,
+        epsilon_decay: float = 20000.0,
         reward_scale: float = 5.0,
     ) -> None:
         # Copy values in.
@@ -43,6 +42,7 @@ class Agent:
             max_gate_num=max_gate_num,
         )
 
+        # Initialize policy & target network
         self.action_id_by_swap: Dict[Tuple[int, int], int] = {}
         self.swap_by_action_id: Dict[int, Tuple[int, int]] = {}
         self.action_num = 0
@@ -194,7 +194,6 @@ class Agent:
         """Map given circuit to topology layout. Note that this methods will change internal exploration state.
 
         Args:
-            max_qubit_num (int): Maximal qubit number after padding.
             max_gate_num (int): Maximal gate number after padding.
             circ (CircuitBased): Circuit to be mapped.
             layout (Layout): Topology layout.

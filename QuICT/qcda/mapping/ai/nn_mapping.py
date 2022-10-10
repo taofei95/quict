@@ -98,9 +98,9 @@ class GnnMapping(nn.Module):
         f_start = feat_dim
 
         self._mlp_1 = nn.Sequential(
-            nn.Linear(f_start, f_start//2),
+            nn.Linear(f_start, f_start // 2),
             nn.ReLU(),
-            nn.Linear(f_start //2, self._action_num),
+            nn.Linear(f_start // 2, self._action_num),
         )
 
     def forward(self, data):
@@ -109,12 +109,11 @@ class GnnMapping(nn.Module):
 
         circ_x = self._x_trans(data.x).view(-1, 2, f)
         circ_x = torch.sum(circ_x, -2) / 2  # [b * n, f]
-        circ_feat = self._circ_gnn(
-            circ_x, data.edge_index, data.batch
-        )  # [b, f]
+        circ_feat = self._circ_gnn(circ_x, data.edge_index, data.batch)  # [b, f]
 
         x = self._mlp_1(circ_feat).view(-1, a)  # [b, a]
         return x
+
 
 class RnnMapping(nn.Module):
     def __init__(
@@ -136,9 +135,9 @@ class RnnMapping(nn.Module):
         f_start = feat_dim
 
         self._mlp_1 = nn.Sequential(
-            nn.Linear(f_start, f_start//2),
+            nn.Linear(f_start, f_start // 2),
             nn.ReLU(),
-            nn.Linear(f_start //2, self._action_num),
+            nn.Linear(f_start // 2, self._action_num),
         )
 
     def forward(self, data):
@@ -148,6 +147,7 @@ class RnnMapping(nn.Module):
         circ_feat = self._circ_rnn(data)
         x = self._mlp_1(circ_feat).view(-1, a)  # [b, a]
         return x
+
 
 if CIRCUIT_REPR_API == CircuitReprEnum.DAG:
     NnMapping = GnnMapping
