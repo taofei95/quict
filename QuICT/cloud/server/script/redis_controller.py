@@ -1,7 +1,7 @@
 import json
 import redis
 
-from ..utils.data_structure import JobOperatorType
+from ..utils.data_structure import JobOperatorType, JobState
 
 
 class RedisController:
@@ -21,6 +21,9 @@ class RedisController:
 
     def get_user_dynamic_info(self, user_name: str):
         return self._redis_connection.hgetall(f"User_Dynamic_Info:{user_name}")
+
+    def update_user_dynamic_info(self, user_name: str, job_resource: dict):
+        self._redis_connection.hmset(f"User_Dynamic_Info:{user_name}", job_resource)
 
     def get_user_password(self, user_name: str):
         return self._redis_connection.hget("user_password_mapping", user_name)
@@ -53,16 +56,16 @@ class RedisController:
     ############              Jobs DB Function              ############
     ####################################################################
     def get_pending_jobs_queue(self):
-        return self._redis_connection.get("pending_jobs")
+        return self._redis_connection.lrange("pending_jobs", 0, -1)
 
     def get_running_jobs_queue(self):
-        return self._redis_connection.get("running_jobs")
+        return self._redis_connection.lrange("running_jobs", 0, -1)
 
     def get_finish_jobs_queue(self):
-        return self._redis_connection.get("finish_jobs")
+        return self._redis_connection.lrange("finish_jobs", 0, -1)
 
-    def get_operator_jobs_queue(self):
-        return self._redis_connection.get("operator_queue")
+    def get_operator_queue(self):
+        return self._redis_connection.lrange("operator_queue", 0, -1)
 
     def get_job_info(self, job_name):
         return self._redis_connection.hgetall(f"Job_Info:{job_name}")
@@ -84,18 +87,18 @@ class RedisController:
         self._redis_connection.rpush("pending_jobs", job_name)
 
         # Add job info into JobInfo Table
-        job_dict['state'] = 'pending'
+        job_dict['state'] = JobState.Pending
         self._redis_connection.hmset(f"Job_Info:{job_name}", job_dict)
 
     def add_running_job_from_pending_jobs(self, job_name: str):
         self._redis_connection.rpush("running_jobs", job_name)
-        self._redis_connection.lrem("pending_jobs", 1, value=job_name)
-        self._redis_connection.hset(f"Job_Info:{job_name}", 'state', 'running')
+        self._redis_connection.lrem("pending_jobs", 0, value=job_name)
+        self._redis_connection.hset(f"Job_Info:{job_name}", 'state', JobState.Running)
 
     def add_finish_job_from_running_jobs(self, job_name: str):
         self._redis_connection.rpush("finish_jobs", job_name)
-        self._redis_connection.lrem("running_jobs", 1, value=job_name)
-        self._redis_connection.hset(f"Job_Info:{job_name}", 'state', 'finish')
+        self._redis_connection.lrem("running_jobs", 0, value=job_name)
+        self._redis_connection.hset(f"Job_Info:{job_name}", 'state', JobState.Finish)
 
     def add_operator(self, job_name: str, operator: JobOperatorType):
         related_operator = job_name + operator.value
@@ -109,7 +112,7 @@ class RedisController:
         self._redis_connection.lrem(f"{job_status}_jobs", 1, job_name)
         self._redis_connection.delete(f"Job_Info:{job_name}")
 
-    def change_job_state(self, job_name: str, state: str):
+    def change_job_state(self, job_name: str, state: JobState):
         self._redis_connection.hset(f"Job_Info:{job_name}", 'state', state)
 
     ####################################################################
