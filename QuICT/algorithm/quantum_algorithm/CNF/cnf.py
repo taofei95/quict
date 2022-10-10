@@ -35,7 +35,7 @@ class CNFSATOracle:
         self,
         cnf_file: str,
         ancilla_qubits_num: int = 3 ,
-        dirty_ancilla: int = 0
+        dirty_ancilla: int = 0 # 0表示clean; >0 表示dirty
     ) -> int:
         """ Run CNF algorithm
 
