@@ -4,7 +4,7 @@ import numpy as np
 import cupy as cp
 import math
 import random
-from QuICT.algorithm.quantum_algorithm.CNF.cnf import *#CNFSATOracle
+from QuICT.algorithm.quantum_algorithm.CNF.cnfdepth import *#CNFSATOracle
 from QuICT.qcda.optimization import *
 # from QuICT.simulation.unitary_simulator import UnitarySimulator
 from QuICT.simulation.state_vector import ConstantStateVectorSimulator
@@ -33,21 +33,22 @@ def read_CNF(cnf_file):
 
 def test():
     # x0 x1，x2, x_{n variable_number -1}
-    filename_test =  "QuICT/algorithm/quantum_algorithm/CNF/test_data/4_9_0"
-    AuxQubitNumber = 12
+    filename_test =  "./xxxx"
+    AuxQubitNumber = 15
     variable_number , clause_number , CNF_data = read_CNF(filename_test)
 
     #真值表初值变化
     b=[]
     # print(variable_number)
-    cnf = CNFSATOracle()
+    cnf = CNFSATDEPTHOracle()
     cnf.run(filename_test, AuxQubitNumber)
     cgate = cnf.circuit()
     print(cgate.size())
     print(cgate.depth())
+    
     # circ = Circuit(variable_number + 4)
     
-    d=random.sample(list(range(2**variable_number)), 10)
+    d=random.sample(list(range(2**variable_number)), 8)
     for a in d:
         circ = Circuit(variable_number + 1 + AuxQubitNumber)
         x = []
@@ -62,6 +63,8 @@ def test():
                 X | circ(ii)
         cgate | circ
         Measure | circ
+        # circuittt.extend(cgate)
+        #circ.draw(filename='15depth.jpg')
         # i_sv = cp.zeros(1 << (variable_number + 4), dtype=np.complex64)
         sim = ConstantStateVectorSimulator()
         amplitude = sim.run(circ)
