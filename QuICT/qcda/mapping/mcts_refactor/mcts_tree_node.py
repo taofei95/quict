@@ -133,16 +133,16 @@ class MCTSTreeNode:
                 elif factor < 0:
                     factor = 0
                 impact_factors.append(factor)
-            action = random.choices(population=candidates, weights=impact_factors, k=1)[
-                0
-            ]
+            action = random.choices(
+                population=candidates,
+                weights=impact_factors,
+                k=1,
+            )[0]
             suc = cur._expand_one(action)
             remove_cnt += suc.transition_reward
             del cur
             cur = suc
             step += 1
-            # if cur.is_terminated_node():
-                # break
         return float(step)
 
     def simulate(self, sim_cnt: int, sim_gate_num: int, gamma: float, epsilon: float):

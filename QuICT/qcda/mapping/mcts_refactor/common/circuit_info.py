@@ -23,17 +23,14 @@ class CircuitInfo:
             )
 
         self._graph = nx.DiGraph()
-        # self._graph.add_node(0)
         for gid in range(len(self._gates)):
-            # self._graph.add_node(gid + 1)
             self._graph.add_node(gid)
 
         self._first_layer_gates = None
 
         occupied = [-1 for _ in range(q)]
         self._bit2gid: List[List[int]] = [[] for _ in range(q)]
-        """Qubit to all gates on it.
-        """
+        """Qubit to all gates on it."""
         for gid, gate in enumerate(self._gates):
             bit_num = gate.controls + gate.targets
             assert bit_num <= 2, "Only 1 or 2 bit gates are supported."
