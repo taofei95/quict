@@ -38,5 +38,5 @@ class VQANet(torch.nn.Module):
             sv = ansatz.forward(state)
             state_vector += coeff * sv
 
-        loss = torch.sum(state * state_vector).real
+        loss = -torch.sum(state * state_vector).real
         return loss

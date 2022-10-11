@@ -18,9 +18,11 @@ class Ansatz:
             n_qubits=max(self._n_qubits, other._n_qubits), device=self._device
         )
         for gate in self._gates:
+            gate.to(self._device)
             gate.update_name("ansatz", len(ansatz._gates))
             ansatz._gates.append(gate)
         for other_gate in other._gates:
+            other_gate.to(self._device)
             other_gate.update_name("ansatz", len(ansatz._gates))
             ansatz._gates.append(other_gate)
         return ansatz
@@ -29,12 +31,12 @@ class Ansatz:
         gates_tensor = []
         for gate in gates:
             gate_tensor = BasicGateTensor(
-                gate.controls, gate.targets, gate.params, gate.type
+                gate.controls, gate.targets, gate.params, gate.type, self._device
             )
-            gate_tensor.pargs = copy.deepcopy(gate.pargs)
+            gate_tensor.pargs = copy.deepcopy(gate.pargs).to(self._device)
             gate_tensor.targs = copy.deepcopy(gate.targs)
             gate_tensor.cargs = copy.deepcopy(gate.cargs)
-            gate_tensor.matrix = torch.from_numpy(gate.matrix)
+            gate_tensor.matrix = torch.from_numpy(gate.matrix).to(self._device)
             gate_tensor.assigned_qubits = copy.deepcopy(gate.assigned_qubits)
             gate_tensor.update_name(gate.assigned_qubits[0].id)
             gates_tensor.append(gate_tensor)
@@ -47,12 +49,12 @@ class Ansatz:
         assert self._gate_validation(gate)
         if act_bits is None:
             for qid in range(self._n_qubits):
-                new_gate = gate.copy()
+                new_gate = gate.copy().to(self._device)
                 new_gate.targs = [qid]
                 new_gate.update_name("ansatz", len(self._gates))
                 self._gates.append(new_gate)
         else:
-            new_gate = gate.copy()
+            new_gate = gate.copy().to(self._device)
             if isinstance(act_bits, int):
                 new_gate.targs = act_bits
             else:
@@ -132,43 +134,3 @@ class Ansatz:
             state = self._apply_gate(state, gate_tensor, act_bits)
 
         return state
-
-
-if __name__ == "__main__":
-    from QuICT.simulation.state_vector import ConstantStateVectorSimulator
-
-    state = np.array(
-        [
-            -0.2118 + 1.3275e-01j,
-            0.0691 + 2.4027e-01j,
-            0.0691 + 2.4027e-01j,
-            0.2500 + 1.2772e-19j,
-            0.0691 + 2.4027e-01j,
-            0.2500 + 1.2772e-19j,
-            0.2500 + 1.6824e-17j,
-            0.0691 - 2.4027e-01j,
-            0.0691 + 2.4027e-01j,
-            0.2500 - 1.6824e-17j,
-            0.2500 - 1.2772e-19j,
-            0.0691 - 2.4027e-01j,
-            0.2500 - 1.2772e-19j,
-            0.0691 - 2.4027e-01j,
-            0.0691 - 2.4027e-01j,
-            -0.2118 - 1.3275e-01j,
-        ]
-    )
-    simulator = ConstantStateVectorSimulator()
-    circuit = Circuit(4)
-    H | circuit
-    Rx(0.4) | circuit(0)
-    Rx(0.4) | circuit(1)
-    sv = simulator.run(circuit, state)
-    print(sum(sv.real * sv.real))
-
-    ansatz = Ansatz(4)
-    ansatz.add_gate(H_tensor)
-    ansatz.add_gate(Rx_tensor(0.4), 0)
-    ansatz.add_gate(Rx_tensor(0.4), 1)
-    sv = ansatz.forward()
-    print(sv.real.cpu().numpy())
-    print(sum(sv.real.cpu().numpy() * sv.real.cpu().numpy()))
