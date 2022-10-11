@@ -25,7 +25,7 @@ class MaxCut:
     def _maxcut_hamiltonian(self):
         pauli_list = []
         for edge in self._edges:
-            pauli_list.append([-1, "Z" + str(edge[0]), "Z" + str(edge[1])])
+            pauli_list.append([-1.0, "Z" + str(edge[0]), "Z" + str(edge[1])])
         hamiltonian = Hamiltonian(pauli_list)
 
         return hamiltonian
@@ -157,12 +157,12 @@ class MaxCut:
 
 
 if __name__ == "__main__":
-    n = 4
-    edges = [(0, 1), (1, 2), (2, 3), (3, 0)]
+    n = 5
+    edges = [(0, 1), (1, 2), (2, 3), (3, 4), (1, 3)]
     maxcut = MaxCut(n, edges)
-    maxcut.draw_graph()
+    # maxcut.draw_graph()
     max_cut_num, cut_edges = maxcut.solve_maxcut(
-        p=4, max_iters=100, lr=0.1, plot_prob=True, device=torch.device("cuda:1")
+        p=4, max_iters=100, lr=0.1, plot_prob=True, draw_circuit=True
     )
     print("Max cut: {}".format(max_cut_num))
     print("Cut edges: {}".format(cut_edges))

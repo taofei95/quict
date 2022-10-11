@@ -5,6 +5,7 @@ import torch
 
 from QuICT.core import Circuit
 from QuICT.core.gate import *
+from QuICT.algorithm.quantum_machine_learning.utils.gate_tensor import *
 from QuICT.simulation.state_vector import ConstantStateVectorSimulator
 from QuICT.ops.linalg import gpu_calculator
 from QuICT.algorithm.quantum_machine_learning.utils.ansatz import Ansatz
@@ -100,21 +101,37 @@ class Hamiltonian:
         return hamiton_circuits
     
     def construct_hamiton_ansatz(self, n_qubits, device=torch.device("cuda:0")):
+        # hamiton_ansatz = []
+        # for qubit_index, pauli_gate in zip(self._qubit_indexes, self._pauli_gates):
+        #     circuit = Circuit(n_qubits)
+        #     for qid, gate in zip(qubit_index, pauli_gate):
+        #         if gate == "X":
+        #             X | circuit(qid)
+        #         elif gate == "Y":
+        #             Y | circuit(qid)
+        #         elif gate == "Z":
+        #             Z | circuit(qid)
+        #         elif gate == "I":
+        #             continue
+        #         else:
+        #             raise ValueError("Invalid Pauli gate.")
+        #     ansatz = Ansatz(n_qubits, circuit, device)
+        #     hamiton_ansatz.append(ansatz)
+        # return hamiton_ansatz
         hamiton_ansatz = []
         for qubit_index, pauli_gate in zip(self._qubit_indexes, self._pauli_gates):
-            circuit = Circuit(n_qubits)
+            ansatz = Ansatz(n_qubits, device=device)
             for qid, gate in zip(qubit_index, pauli_gate):
                 if gate == "X":
-                    X | circuit(qid)
+                    ansatz.add_gate(X_tensor, qid)
                 elif gate == "Y":
-                    Y | circuit(qid)
+                    ansatz.add_gate(Y_tensor, qid)
                 elif gate == "Z":
-                    Z | circuit(qid)
+                    ansatz.add_gate(Z_tensor, qid)
                 elif gate == "I":
                     continue
                 else:
                     raise ValueError("Invalid Pauli gate.")
-            ansatz = Ansatz(n_qubits, circuit, device)
             hamiton_ansatz.append(ansatz)
         return hamiton_ansatz
 
@@ -148,7 +165,7 @@ class Hamiltonian:
 def main():
     state = np.array([np.sqrt(3) / 3, 1 / 2, 1 / 3, np.sqrt(11) / 6])
     state = state.reshape(-1, 1)
-    h = Hamiltonian([[0.2, "Z0", "I1"], [1, "X1"]])
+    h = Hamiltonian([[0.2, "Z0", "I1"], [1]])
     print(h._pauli_gates)
     print(h._qubit_indexes)
     print(h._coefficients)

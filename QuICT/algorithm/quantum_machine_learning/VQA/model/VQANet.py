@@ -38,5 +38,17 @@ class VQANet(torch.nn.Module):
             sv = ansatz.forward(state)
             state_vector += coeff * sv
 
-        loss = -torch.sum(state * state_vector).real
+        loss = - torch.sum(state.real * state_vector.real)
+        # print(state)
+        # print(state_vector)
+        # print(state * state_vector)
+        
+        # hamiton_matrix = self.hamiltonian.get_hamiton_matrix(self.n_qubits)
+        # hamiton_matrix = torch.from_numpy(hamiton_matrix).to(self.device)
+        # state = state.reshape(1, -1)
+        # loss = -torch.mm(state, torch.mm(hamiton_matrix, state.T))[0].real
+        
+        # print(state)
+        # print(torch.mm(hamiton_matrix, state.T))
+        
         return loss
