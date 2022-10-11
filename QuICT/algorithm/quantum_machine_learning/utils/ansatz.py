@@ -160,14 +160,15 @@ if __name__ == "__main__":
     simulator = ConstantStateVectorSimulator()
     circuit = Circuit(4)
     H | circuit
-    Rx(0.4) | circuit
-    sv = simulator.run(circuit)
-    print(sv.real)
+    Rx(0.4) | circuit(0)
+    Rx(0.4) | circuit(1)
+    sv = simulator.run(circuit, state)
     print(sum(sv.real * sv.real))
 
     ansatz = Ansatz(4)
     ansatz.add_gate(H_tensor)
-    ansatz.add_gate(Rx_tensor(0.4))
+    ansatz.add_gate(Rx_tensor(0.4), 0)
+    ansatz.add_gate(Rx_tensor(0.4), 1)
     sv = ansatz.forward()
     print(sv.real.cpu().numpy())
     print(sum(sv.real.cpu().numpy() * sv.real.cpu().numpy()))

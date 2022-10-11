@@ -26,10 +26,10 @@ class QAOANet(VQANet):
 
     def define_network(self):
         self.beta = torch.nn.Parameter(
-            torch.rand(self.p, device=self.device), requires_grad=True
+            torch.ones(self.p, device=self.device), requires_grad=True
         )
         self.gamma = torch.nn.Parameter(
-            torch.rand(self.p, device=self.device), requires_grad=True
+            torch.ones(self.p, device=self.device), requires_grad=True
         )
 
     def forward(self, state=None):

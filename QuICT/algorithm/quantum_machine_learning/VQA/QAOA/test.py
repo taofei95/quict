@@ -1,6 +1,7 @@
-import numpy as np
 import networkx as nx
+import numpy as np
 import matplotlib.pyplot as plt
+from pandas import cut
 import torch
 from typing import Dict, List, Union
 
@@ -22,6 +23,11 @@ class MaxCut:
         hamiltonian = Hamiltonian(pauli_list)
 
         return hamiltonian
+
+    def draw_prob(self, prob, shots):
+        plt.figure()
+        plt.bar(range(len(prob)), prob)
+        plt.show()
 
     def draw_graph(self):
         plt.figure()
@@ -51,17 +57,20 @@ class MaxCut:
         G.add_edges_from(self._edges)
         pos = nx.circular_layout(G)
 
-        node_cut = [
+        node_color = [
             "red" if self.solution_bit[v] == "1" else "#1f78b4" for v in range(self._n)
         ]
-        edge_cut = []
+        edge_color = []
+        edge_style = []
         for u in range(self._n):
             for v in range(u + 1, self._n):
                 if (u, v) in self._edges or (v, u) in self._edges:
                     if self.solution_bit[u] == self.solution_bit[v]:
-                        edge_cut.append("black")
+                        edge_color.append("black")
+                        edge_style.append("solid")
                     else:
-                        edge_cut.append("red")
+                        edge_color.append("red")
+                        edge_style.append("dashed")
 
         options = {
             "with_labels": True,
@@ -71,16 +80,29 @@ class MaxCut:
             "node_size": 2000,
             "width": 2,
         }
-        nx.draw(G, pos, node_color=node_cut, edge_color=edge_cut, **options)
+        nx.draw(
+            G,
+            pos,
+            node_color=node_color,
+            edge_color=edge_color,
+            style=edge_style,
+            **options
+        )
         ax = plt.gca()
         ax.margins(0.20)
         plt.axis("off")
         plt.show()
 
-    def draw_prob(self, prob, shots):
-        plt.figure()
-        plt.bar(range(len(prob)), np.array(prob) / shots)
-        plt.show()
+    def result(self):
+        cut_edges = []
+        for u in range(self._n):
+            for v in range(u + 1, self._n):
+                if (u, v) in self._edges or (v, u) in self._edges:
+                    if self.solution_bit[u] != self.solution_bit[v]:
+                        cut_edges.append((u, v))
+
+        max_cut_num = len(cut_edges)
+        return max_cut_num, cut_edges
 
     def solve_maxcut(
         self, p, max_iters, lr, shots=1000, draw_circuit=False, plot_prob=False
@@ -100,15 +122,19 @@ class MaxCut:
             self.draw_prob(prob, shots)
         solution = prob.index(max(prob))
         self.solution_bit = ("{:0" + str(self._n) + "b}").format(solution)
+        max_cut_num, cut_edges = self.result()
 
-        return self.solution_bit
+        return  # max_cut_num, cut_edges
 
 
 if __name__ == "__main__":
-    n = 5
-    edges = [(0, 1), (1, 2), (2, 3), (3, 4), (4, 0), (1, 3)]
+    n = 4
+    edges = [(0, 1), (1, 2), (2, 3), (3, 0)]
     maxcut = MaxCut(n, edges)
     maxcut.draw_graph()
-    solution_bit = maxcut.solve_maxcut(p=4, max_iters=120, lr=0.1, plot_prob=True)
+    max_cut_num, cut_edges = maxcut.solve_maxcut(
+        p=4, max_iters=120, lr=0.1, plot_prob=True
+    )
+    print("Max cut: {}".format(max_cut_num))
+    print("Cut edges: {}".format(cut_edges))
     maxcut.draw_result()
-
