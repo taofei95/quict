@@ -10,9 +10,9 @@ class Ansatz:
     def __init__(self, n_qubits, circuit=None, device=torch.device("cuda:0")):
         self._circuit = circuit
         self._n_qubits = n_qubits if circuit is None else circuit.width()
-        self._gates = [] if circuit is None else self._gate_to_tensor(circuit.gates)
         self._device = device
-
+        self._gates = [] if circuit is None else self._gate_to_tensor(circuit.gates)
+        
     def __add__(self, other):
         ansatz = Ansatz(
             n_qubits=max(self._n_qubits, other._n_qubits), device=self._device
@@ -31,9 +31,9 @@ class Ansatz:
         gates_tensor = []
         for gate in gates:
             gate_tensor = BasicGateTensor(
-                gate.controls, gate.targets, gate.params, gate.type, self._device
+                gate.controls, gate.targets, gate.params, gate.type, device=self._device
             )
-            gate_tensor.pargs = copy.deepcopy(gate.pargs).to(self._device)
+            gate_tensor.pargs = torch.tensor(copy.deepcopy(gate.pargs)).to(self._device)
             gate_tensor.targs = copy.deepcopy(gate.targs)
             gate_tensor.cargs = copy.deepcopy(gate.cargs)
             gate_tensor.matrix = torch.from_numpy(gate.matrix).to(self._device)
@@ -49,12 +49,12 @@ class Ansatz:
         assert self._gate_validation(gate)
         if act_bits is None:
             for qid in range(self._n_qubits):
-                new_gate = gate.copy().to(self._device)
+                new_gate = gate.copy()
                 new_gate.targs = [qid]
                 new_gate.update_name("ansatz", len(self._gates))
-                self._gates.append(new_gate)
+                self._gates.append(new_gate.to(self._device))
         else:
-            new_gate = gate.copy().to(self._device)
+            new_gate = gate.copy()
             if isinstance(act_bits, int):
                 new_gate.targs = act_bits
             else:
@@ -62,7 +62,7 @@ class Ansatz:
                 new_gate.cargs = act_bits[: new_gate.controls]
                 new_gate.targs = act_bits[new_gate.controls :]
             new_gate.update_name("ansatz", len(self._gates))
-            self._gates.append(new_gate)
+            self._gates.append(new_gate.to(self._device))
 
     def _gate_validation(self, gate):
         gate_matrix = gate.matrix
@@ -74,7 +74,7 @@ class Ansatz:
             and shape[0] == (1 << log2_shape)
             and torch.allclose(
                 torch.eye(shape[0], dtype=gate.precision).to(self._device),
-                torch.mm(gate_matrix, gate_matrix.T.conj()),
+                torch.mm(gate_matrix, gate_matrix.T.conj()).to(self._device),
             )
         )
 

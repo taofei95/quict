@@ -167,6 +167,12 @@ class BasicGateTensor(object):
 
         return True
 
+    def to(self, device: torch.device):
+        self._pargs = self._pargs.to(device)
+        if self._matrix is not None:
+            self._matrix = self._matrix.to(device)
+        return self.copy()
+
     def update_name(self, qubit_id: str, circuit_idx: int = None):
         qubit_id = qubit_id[:6]
         name_parts = self.name.split("-")
@@ -178,7 +184,7 @@ class BasicGateTensor(object):
         self.name = "-".join(name_parts)
 
     def __str__(self):
-        """ get gate information """
+        """get gate information"""
         gate_info = {
             "name": self.name,
             "controls": self.controls,
@@ -191,7 +197,7 @@ class BasicGateTensor(object):
         return str(gate_info)
 
     def copy(self):
-        """ return a copy of this gate
+        """return a copy of this gate
 
         Returns:
             gate(BasicGateTensor): a copy of this gate
@@ -227,13 +233,16 @@ class BasicGateTensor(object):
 
 
 class HGate(BasicGateTensor):
-    """ Hadamard gate """
+    """Hadamard gate"""
 
     def __init__(self):
         super().__init__(controls=0, targets=1, params=0, type=GateType.h)
 
         self.matrix = torch.tensor(
-            [[1 / np.sqrt(2), 1 / np.sqrt(2)], [1 / np.sqrt(2), -1 / np.sqrt(2)],],
+            [
+                [1 / np.sqrt(2), 1 / np.sqrt(2)],
+                [1 / np.sqrt(2), -1 / np.sqrt(2)],
+            ],
             dtype=self._precision,
         ).to(self.device)
 
@@ -242,13 +251,16 @@ H_tensor = HGate()
 
 
 class HYGate(BasicGateTensor):
-    """ Self-inverse gate """
+    """Self-inverse gate"""
 
     def __init__(self):
         super().__init__(controls=0, targets=1, params=0, type=GateType.hy)
 
         self.matrix = torch.tensor(
-            [[1 / np.sqrt(2), -1j / np.sqrt(2)], [1j / np.sqrt(2), -1 / np.sqrt(2)],],
+            [
+                [1 / np.sqrt(2), -1j / np.sqrt(2)],
+                [1j / np.sqrt(2), -1 / np.sqrt(2)],
+            ],
             dtype=self._precision,
         ).to(self.device)
 
@@ -257,11 +269,14 @@ Hy_tensor = HYGate()
 
 
 class CXGate(BasicGateTensor):
-    """ controlled-X gate """
+    """controlled-X gate"""
 
     def __init__(self):
         super().__init__(
-            controls=1, targets=1, params=0, type=GateType.cx,
+            controls=1,
+            targets=1,
+            params=0,
+            type=GateType.cx,
         )
 
         self.matrix = torch.tensor(
@@ -282,11 +297,14 @@ CX_tensor = CXGate()
 
 
 class XGate(BasicGateTensor):
-    """ Pauli-X gate """
+    """Pauli-X gate"""
 
     def __init__(self):
         super().__init__(
-            controls=0, targets=1, params=0, type=GateType.x,
+            controls=0,
+            targets=1,
+            params=0,
+            type=GateType.x,
         )
 
         self.matrix = torch.tensor([[0, 1], [1, 0]], dtype=self._precision).to(
@@ -298,11 +316,14 @@ X_tensor = XGate()
 
 
 class YGate(BasicGateTensor):
-    """ Pauli-Y gate """
+    """Pauli-Y gate"""
 
     def __init__(self):
         super().__init__(
-            controls=0, targets=1, params=0, type=GateType.y,
+            controls=0,
+            targets=1,
+            params=0,
+            type=GateType.y,
         )
 
         self.matrix = torch.tensor([[0, -1j], [1j, 0]], dtype=self._precision).to(
@@ -314,11 +335,14 @@ Y_tensor = YGate()
 
 
 class ZGate(BasicGateTensor):
-    """ Pauli-Z gate """
+    """Pauli-Z gate"""
 
     def __init__(self):
         super().__init__(
-            controls=0, targets=1, params=0, type=GateType.z,
+            controls=0,
+            targets=1,
+            params=0,
+            type=GateType.z,
         )
 
         self.matrix = torch.tensor([[1, 0], [0, -1]], dtype=self._precision).to(
@@ -330,7 +354,7 @@ Z_tensor = ZGate()
 
 
 class RxGate(BasicGateTensor):
-    """ Rotation around the x-axis gate """
+    """Rotation around the x-axis gate"""
 
     def __init__(self, params=torch.tensor([np.pi / 2])):
         super().__init__(controls=0, targets=1, params=1, type=GateType.rx)
@@ -362,7 +386,7 @@ Rx_tensor = RxGate()
 
 
 class RyGate(BasicGateTensor):
-    """ Rotation around the y-axis gate """
+    """Rotation around the y-axis gate"""
 
     def __init__(self, params=torch.tensor([np.pi / 2])):
         super().__init__(controls=0, targets=1, params=1, type=GateType.ry)
@@ -394,11 +418,14 @@ Ry_tensor = RyGate()
 
 
 class RzGate(BasicGateTensor):
-    """ Rotation around the z-axis gate """
+    """Rotation around the z-axis gate"""
 
     def __init__(self, params=torch.tensor([np.pi / 2])):
         super().__init__(
-            controls=0, targets=1, params=1, type=GateType.rz,
+            controls=0,
+            targets=1,
+            params=1,
+            type=GateType.rz,
         )
 
         self.pargs = params
@@ -428,7 +455,10 @@ Rz_tensor = RzGate()
 class RIGate(BasicGateTensor):
     def __init__(self, params=torch.tensor([np.pi / 2])):
         super().__init__(
-            controls=0, targets=1, params=1, type=GateType.ri,
+            controls=0,
+            targets=1,
+            params=1,
+            type=GateType.ri,
         )
 
         self.pargs = params

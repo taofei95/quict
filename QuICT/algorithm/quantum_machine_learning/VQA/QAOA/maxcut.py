@@ -157,8 +157,8 @@ class MaxCut:
 
 
 if __name__ == "__main__":
-    n = 5
-    edges = [(0, 1), (1, 2), (2, 3), (3, 4), (4, 0), (1, 3)]
+    n = 4
+    edges = [(0, 1), (1, 2), (2, 3), (3, 0)]
     maxcut = MaxCut(n, edges)
     maxcut.draw_graph()
     max_cut_num, cut_edges = maxcut.solve_maxcut(
