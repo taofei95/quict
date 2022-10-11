@@ -30,7 +30,11 @@ class MCTSMapping:
         self,
         circuit_like: Union[Circuit, CompositeGate],
         with_final_mapping: bool = False,
-    ) -> Union[CompositeGate, Tuple[CompositeGate, List[int], List[int]]]:
+    ) -> Union[
+        Union[Circuit, CompositeGate],
+        Tuple[Union[Circuit, CompositeGate], List[int], List[int]],
+    ]:
+        output_circ = type(circuit_like) is Circuit
         cg = CompositeGate()
         q = circuit_like.width()
         circuit_info = CircuitInfo(
@@ -65,7 +69,14 @@ class MCTSMapping:
             mcts_tree._root.phy2logic,
         )
         del mcts_tree
-        if not with_final_mapping:
-            return cg
+
+        if output_circ:
+            result = Circuit(cg.width())
+            result.extend(cg.gates)
         else:
-            return cg, final_logic2phy, final_phy2logic
+            result = cg
+
+        if not with_final_mapping:
+            return result
+        else:
+            return result, final_logic2phy, final_phy2logic
