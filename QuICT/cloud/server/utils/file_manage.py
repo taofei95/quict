@@ -35,4 +35,3 @@ def delete_job_folder(user_name, job_name):
         os.remove(job_path)
     else:
         raise KeyError("job name do not exists.")
-

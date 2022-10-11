@@ -14,6 +14,7 @@ URL_PREFIX = "/quict/jobs"
 def start_job(**kwargs):
     """start a job. """
     job_dict = kwargs['json_dict']
+    job_dict['username'] = kwargs['username']
 
     # start job by redis controller
     RedisController().add_pending_job(job_dict)
@@ -23,21 +24,21 @@ def start_job(**kwargs):
 @request_validation
 def stop_job(name: str, username: str):
     """ Stop a job. """
-    RedisController().add_operator(username+name, JobOperatorType.stop)
+    RedisController().add_operator(f"{username}:{name}", JobOperatorType.stop)
 
 
 @job_blueprint.route(f"{URL_PREFIX}/<name>:restart", methods=["POST"])
 @request_validation
 def restart_job(name: str, username: str):
     """ restart a job. """
-    RedisController().add_operator(username+name, JobOperatorType.restart)
+    RedisController().add_operator(f"{username}:{name}", JobOperatorType.restart)
 
 
 @job_blueprint.route(f"{URL_PREFIX}/<name>:delete", methods=["DELETE"])
 @request_validation
 def delete_job(name: str, username: str):
     """ delete a job. """
-    RedisController().add_operator(username+name, JobOperatorType.delete)
+    RedisController().add_operator(f"{username}:{name}", JobOperatorType.delete)
 
 
 @job_blueprint.route(f"{URL_PREFIX}/list", methods=["GET"])
@@ -49,4 +50,4 @@ def list_jobs(username: str):
 @job_blueprint.route(f"{URL_PREFIX}/<name>:status", methods=["GET"])
 @request_validation
 def status_jobs(name: str, username: str):
-    RedisController().get_job_info(username+name)
+    RedisController().get_job_info(f"{username}:{name}")

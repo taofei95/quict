@@ -81,14 +81,15 @@ class RedisController:
 
     def add_pending_job(self, job_dict: dict):
         job_name = job_dict['job_name']
-        if self._redis_connection.exists(f"Job_Info:{job_name}"):
+        username = job_dict['username']
+        if self._redis_connection.exists(f"Job_Info:{username}:{job_name}"):
             raise KeyError("repeated name.")
 
-        self._redis_connection.rpush("pending_jobs", job_name)
+        self._redis_connection.rpush("pending_jobs", f"{username}:{job_name}")
 
         # Add job info into JobInfo Table
         job_dict['state'] = JobState.Pending
-        self._redis_connection.hmset(f"Job_Info:{job_name}", job_dict)
+        self._redis_connection.hmset(f"Job_Info:{username}:{job_name}", job_dict)
 
     def add_running_job_from_pending_jobs(self, job_name: str):
         self._redis_connection.rpush("running_jobs", job_name)
@@ -101,16 +102,23 @@ class RedisController:
         self._redis_connection.hset(f"Job_Info:{job_name}", 'state', JobState.Finish)
 
     def add_operator(self, job_name: str, operator: JobOperatorType):
-        related_operator = job_name + operator.value
-        self._redis_connection.rpush("operator_queue", related_operator)
+        self._redis_connection.rpush("operator_queue", f"{job_name}:{operator.value}")
 
     def remove_job(self, job_name: str):
         if not self._redis_connection.exists(f"Job_Info:{job_name}"):
             raise KeyError("job not in database.")
 
-        job_status = self._redis_connection.hget(f"Job_Info:{job_name}", "state")
-        self._redis_connection.lrem(f"{job_status}_jobs", 1, job_name)
+        job_state = self._redis_connection.hget(f"Job_Info:{job_name}", "state")
+        if job_state == JobState.Error:
+            job_state = JobState.Finish
+        elif job_state == JobState.Stop:
+            job_state = JobState.Running
+
+        self._redis_connection.lrem(f"{job_state.value}_jobs", 0, job_name)
         self._redis_connection.delete(f"Job_Info:{job_name}")
+
+    def remove_operator(self, op: str):
+        self._redis_connection.lrem('operator_queue', 0, op)
 
     def change_job_state(self, job_name: str, state: JobState):
         self._redis_connection.hset(f"Job_Info:{job_name}", 'state', state)

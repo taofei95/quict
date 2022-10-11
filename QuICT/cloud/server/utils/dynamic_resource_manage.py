@@ -46,8 +46,12 @@ def user_stop_jobs_op(user_info: dict, op: ResourceOp) -> Tuple[bool, dict]:
     max_stopped_job_number = user_info['maximum_stop_level']
     current_stopped_job_number = user_info['number_of_stop_jobs']
 
-    if current_stopped_job_number + signal > max_stopped_job_number:
+    if (
+        current_stopped_job_number + signal > max_stopped_job_number or
+        user_info['number_of_running_jobs'] >= user_info['max_running_jobs']
+    ):
         return False, user_info
 
     user_info['number_of_stop_jobs'] += signal
+    user_info['number_of_running_jobs'] -= signal
     return True, user_info

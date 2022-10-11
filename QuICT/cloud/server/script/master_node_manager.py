@@ -137,17 +137,19 @@ class RunningJobProcessor(multiprocessing.Process):
         for job_name in running_jobs:
             # TODO: check running job status
             job_detail = json.loads(self.redis_connection.get_job_info(job_name))
-            job_state = self._check_job_state(job_name)
-
-            if job_state in [JobState.Finish, JobState.Error]:
-                self.redis_connection.add_finish_job_from_running_jobs(job_name)
-            else:
-                continue
-
-            # Release User's resource
             user_info = json.loads(
                 self.redis_connection.get_user_dynamic_info(job_detail['username'])
             )
+            if job_detail['state'] == JobState.Stop:
+                continue
+
+            job_state = self._check_job_state(job_name)
+            is_finish = job_state in [JobState.Finish, JobState.Error]
+            if not is_finish:
+                continue
+
+            self.redis_connection.add_finish_job_from_running_jobs(job_name)
+            # Release User's resource
             updated_user_info = user_resource_op(
                 user_info, job_detail['resource'], ResourceOp.Release
             )
@@ -182,7 +184,9 @@ class OperatorQueueProcessor(multiprocessing.Process):
             else:
                 self._restart_related_job(job_name, job_detail)
 
-    def _stop_related_job(self, job_name: str, job_detail: dict):
+            self.redis_connection.remove_operator(op)
+
+    def _stop_related_job(self, job_name: str, job_detail: dict) -> bool:
         running_jobs = self.redis_connection.get_running_jobs_queue()
         assert job_name in running_jobs
         username = job_detail['username']
@@ -190,42 +194,46 @@ class OperatorQueueProcessor(multiprocessing.Process):
         # Update user's related info
         user_info = self.redis_connection.get_user_dynamic_info(username)
         # Release User resource
-        is_stopped, updated_user_resource = user_resource_op(
-            user_info, job_detail['resource'], ResourceOp.Release
+        is_stopped, updated_user_info = user_stop_jobs_op(
+            user_info, ResourceOp.Release
         )
 
         # TODO: Stop given job through k8s CLI
         if is_stopped:
+            self.redis_connection.change_job_state(job_name, JobState.Stop)
+            self.redis_connection.update_user_dynamic_info(username, updated_user_info)
+        else:
+            # TODO: return warning about failure to stop target jobs
             pass
-            self.redis_connection.update_user_dynamic_info(username, updated_user_resource)
 
     def _restart_related_job(self, job_name: str, job_detail: dict):
         username = job_detail['username']
         assert job_detail['state']  == JobState.Stop
 
-        # TODO: Restart given job through k8s
-
         # Update user's related info
         user_info = self.redis_connection.get_user_dynamic_info(username)
         # Release User resource
-        updated_user_resource = user_resource_op(
-            user_info, job_detail['resource'], ResourceOp.Allocation
+        is_restart, updated_user_info = user_stop_jobs_op(
+            user_info, ResourceOp.Allocation
         )
-        self.redis_connection.update_user_dynamic_info(username, updated_user_resource)
 
-        # Update job's state
-        self.redis_connection.change_job_state(job_name, JobState.Running)
+        # TODO: Restart given job through k8s CLI
+
+        if is_restart:
+            self.redis_connection.update_user_dynamic_info(username, updated_user_info)
+            # Update job's state
+            self.redis_connection.change_job_state(job_name, JobState.Running)
 
     def _delete_related_job(self, job_name: str, job_detail: dict):
         job_state = job_detail['state']
         username = job_detail['username']
 
         # Rm job from finish jobs queue
-        if job_state in [JobState.Error.value, JobState.Finish.value]:
+        if job_state in [JobState.Error, JobState.Finish]:
             delete_job_folder(job_name, username)
 
-        if job_state == JobState.Running.value:
-            # TODO: stop running job
+        if job_state in [JobState.Running, JobState.Stop]:
+            # TODO: kill running job
             pass
 
             # Get User Info
@@ -234,6 +242,12 @@ class OperatorQueueProcessor(multiprocessing.Process):
             updated_user_resource = user_resource_op(
                 user_info, job_detail['resource'], ResourceOp.Release
             )
+
+            if job_state == JobState.Stop:
+                _, updated_user_resource = user_stop_jobs_op(
+                    updated_user_resource, ResourceOp.Release
+                )
+
             self.redis_connection.update_user_dynamic_info(username, updated_user_resource)
 
         self.redis_connection.remove_job(job_name)
