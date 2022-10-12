@@ -1,26 +1,89 @@
+#build env
+import json
+from quafu import QuantumCircuit
+from quafu import User
+from QuICT.simulation.unitary.unitary_simulator import UnitarySimulator
+user = User()
+user.save_apitoken('wRyYinzRHl-VDBRQkMWvi0GcQLpKUQVdMhou2iDtAGL.9JDMwczNxgjN2EjOiAHelJCL3QTM6ICZpJye.9JiN1IzUIJiOicGbhJCLiQ1VKJiOiAXe0Jye')
+
+# qc = QuantumCircuit(4)
+# new_path = f"random.qasm"
+# with open(new_path) as data_file:
+#   data = data_file.read()
+#   print(data) 
+#   data_content = json.loads(data)
+  
+# test_cir = """OPENQASM 2.0;
+# include "qelib1.inc";
+# qreg q[4];
+# h q[0];
+# h q[1];
+# h q[2];
+# h q[3];
+# """
+# qc.from_openqasm(test_cir)
+# qc.draw_circuit()
+
+# from quafu import Task
+# task = Task()
+# task.load_account()
+# task.config(backend="ScQ-P10", shots=3000, compile=False)
+# res = task.send(qc)
+
+# print(res.counts) #counts
+# print(res.amplitudes) #amplitude
+# res.plot_amplitudes()
+
+from QuICT.tools.interface.qasm_interface import OPENQASMInterface
+#########################################################################
+cir = OPENQASMInterface.load_file("wr_unit_test/machine-benchmark/randomori.qasm").circuit
+qc = QuantumCircuit(5)
+test_cir = cir.qasm()
+qc.from_openqasm(test_cir)
+
+from quafu import Task
+task = Task()
+task.load_account()
+task.config(backend="ScQ-P10", shots=3000, compile=False, priority=2)
+res = task.send(qc, name="ej")
+
+quafu_dict = res.amplitudes
+quafu_amp = [0] * (2 ** 5)
+for key, value in quafu_dict.items():
+    quafu_amp[int(key, 2)] = value
+########################################################################
+cir_opt = OPENQASMInterface.load_file("wr_unit_test/machine-benchmark/randomopt.qasm").circuit
+qc = QuantumCircuit(5)
+test_cir = cir_opt.qasm()
+qc.from_openqasm(test_cir)
+
+from quafu import Task
+task = Task()
+task.load_account()
+task.config(backend="ScQ-P10", shots=3000, compile=False, priority=2)
+res = task.send(qc, name="ej1")
+
+quafu_dict2 = res.amplitudes
+quafu_amp2 = [0] * (2 ** 5)
+for key, value in quafu_dict2.items():
+    quafu_amp2[int(key, 2)] = value
+
+#####################################################################
+sim = UnitarySimulator()
+amp2 = sim.run(cir_opt)
+amp1 = sim.run(cir)
+
+import numpy as np
+import scipy.stats
+p = np.asarray(abs(amp1))
+q = np.asarray(abs(amp2))
+
+m = np.asarray(quafu_amp)
+n = np.asarray(quafu_amp2)
 
 
-import re
-
-
-data = []
-file = 'wr_unit_test/qcda-benchmark/data/qiskit_optimization_benchmark_data_3.txt'
-with open(file, 'r+') as of:
-    txt = of.readlines()
-    for t in txt:
-        data.append(re.findall('\d+', t))
-
-# print(len(data))
-for x in range(0, len(data), 67):
-    qubits = data[x]
-    qubits_q = data[x+1, x+67]
-    for y in range(0, len(qubits_q), 11):
-        gates = data[y]
-        gates_g = data[y+1, y+11]
-        quict_opt_size, quict_ori_depth, quict_opt_depth = 0, 0, 0
-        qiskit_opt_size, qiskit_ori_depth, qiskit_opt_depth = 0, 0, 0
-        for z in range(0, len(gates_g), 2):
-            quict_opt_size += int(gates_g[z][2])/5
-            quict_opt_size += int(gates_g[z][3])/5
-            quict_opt_size += int(gates_g[z][4])/5
-
+def KL_divergence(p, q):
+    return scipy.stats.entropy(p, q, base=2)
+print((KL_divergence(p, q) + KL_divergence(q, p)) /2)
+print((KL_divergence(p, n) + KL_divergence(n, p)) /2)
+print((KL_divergence(p, m) + KL_divergence(m, p)) /2)
