@@ -70,7 +70,8 @@ class CNFSATOracle:
             for i in range(len(controls_X)):
                 X | self._cgate(controls_X[i])
             X | self._cgate(target)
-            MCTOneAux().execute(len(controls_abs) + 2) | self._cgate(controls_abs + [ target , current_Aux]) 
+            if controls_abs != []:
+                MCTOneAux().execute(len(controls_abs) + 2) | self._cgate(controls_abs + [ target , current_Aux]) 
             # one_dirty_aux(self._cgate, controls_abs, target, current_Aux) #QuICT.qcda.synthesis.mct.
             #X | self._cgate(target)
             for i in range(len(controls_X)):
@@ -86,7 +87,8 @@ class CNFSATOracle:
                             ancilla_qubits_num, j+1, j+1,
                             variable_number +  j+1, depth-1, depth
                         )
-                    MCTOneAux().execute(len(controls_abs) + 2) | self._cgate(controls_abs + [target, target-1]) 
+                    if controls_abs != []:    
+                        MCTOneAux().execute(len(controls_abs) + 2) | self._cgate(controls_abs + [target, target-1]) 
                     # one_dirty_aux(self._cgate, controls_abs, target, target+1)
                     for j in range(clause_number):
                         controls_abs.append(variable_number +  j+1)
@@ -109,8 +111,8 @@ class CNFSATOracle:
                         controls.append(variable_number + ancilla_qubits_num - p + 1 + j)
 
                     current_Aux = variable_number + 1 
-                    
-                    MCTOneAux().execute(len(controls) + 2) | self._cgate(controls + [ target, current_Aux] ) 
+                    if controls != []:
+                        MCTOneAux().execute(len(controls) + 2) | self._cgate(controls + [ target, current_Aux] ) 
                     # one_dirty_aux(self._cgate, controls, target, current_Aux)
                     
                     for j in range(block_number):
@@ -234,12 +236,19 @@ class CNFSATOracle:
                 variable_number = int(new[2])
                 clause_number = int(new[3])
             else:
-                for i in range(len(new)-1): #注意这里是否减1 要检查一下
-                    int_new.append(int(new[i]))
+                for x in new:
+                    if (x != '0') and (int(x) not in int_new):
+                        int_new.append(int(x))
+                        if (- int(x)) in int_new:
+                            int_new = []
+                            break
+                #new1.remove('0')
+                #for i in range(len(new1)): #注意这里是否减1 要检查一下
+                #    int_new.append(int(new1[i]))
             CNF_data.append(int_new)  #给各个Clause 编号0,1 ...m-1#
 
         f.close()
-
+        print(CNF_data)
         return variable_number, clause_number, CNF_data
 
     def clause(self, CNF_data: List, variable_number: int, Aux: int, StartID: int, EndID: int, target: int, current_depth: int, depth: int):
@@ -265,7 +274,8 @@ class CNFSATOracle:
             X | self._cgate(target)
             #print(controls_abs)
             #print(target)
-            MCTOneAux().execute(len(controls_abs) + 2) | self._cgate(controls_abs + [ target,current_Aux])
+            if controls_abs != []:
+                MCTOneAux().execute(len(controls_abs) + 2) | self._cgate(controls_abs + [ target, current_Aux])
             # one_dirty_aux(self._cgate, controls_abs, target, current_Aux)
             #X | self._cgate(target)
             for i in range(len(controls_X)):

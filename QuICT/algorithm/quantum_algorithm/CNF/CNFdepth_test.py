@@ -33,7 +33,7 @@ def read_CNF(cnf_file):
 
 def test():
     # x0 x1，x2, x_{n variable_number -1}
-    filename_test =  "./xxxx"
+    filename_test =  "./9"
     AuxQubitNumber = 15
     variable_number , clause_number , CNF_data = read_CNF(filename_test)
 
