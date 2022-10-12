@@ -8,6 +8,7 @@ from ..utils import (
     user_resource_op, user_stop_jobs_op
 )
 
+
 class MasterNodeManager:
     def __init__(self):
         self.check_interval = 15
@@ -133,7 +134,7 @@ class RunningJobProcessor(multiprocessing.Process):
     def _check_running_jobs(self):
         # Get running jobs
         running_jobs = self.redis_connection.get_running_jobs_queue()
-        
+
         for job_name in running_jobs:
             # TODO: check running job status
             job_detail = json.loads(self.redis_connection.get_job_info(job_name))
@@ -173,7 +174,7 @@ class OperatorQueueProcessor(multiprocessing.Process):
     def _check_operator_queue(self):
         # Get Operator Queue
         operator_queue = self.redis_connection.get_operator_queue()
-        
+
         for op in operator_queue:
             job_name, operator = op[:-3], op[-3:]
             job_detail = self.redis_connection.get_job_info(job_name)

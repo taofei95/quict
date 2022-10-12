@@ -4,7 +4,7 @@ import subprocess
 class ResourceNodeManager:
     def __init__(self):
         pass
-    
+
     def start_job(self, job_dict: dict):
         # Start Job within Container
 

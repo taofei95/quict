@@ -35,6 +35,7 @@ def delete_job(name: str):
     data = remote_manager.delete_job(name)
     print(data)
 
+
 def status_job(name: str):
     remote_manager.status_job(name)
 

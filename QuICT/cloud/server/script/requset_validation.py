@@ -26,7 +26,7 @@ def request_validation(func):
         if jwt_token and jwt_token.startswith('Bearer '):
             payload = jwt.decode(jwt_token[7:], __SALT, ["HS256"])
         else:
-            payload=None
+            payload = None
 
         username = payload.get("username", None)
         kwargs['username'] = username

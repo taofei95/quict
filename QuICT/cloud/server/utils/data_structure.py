@@ -16,8 +16,7 @@ class JobState(Enum):
     Pending = "pending",
     Running = "running",
     Finish = "finish",
-    
+
     # Un-normal State
     Error = "error",
     Stop = "stop"
-    

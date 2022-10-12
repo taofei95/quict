@@ -15,31 +15,14 @@ class RedisController:
     ####################################################################
     ############               User DB Function             ############
     ####################################################################
-    def validation(self, username: str, passwd: str):
-        encrypted_passwd = self._redis_connection.hget("Encrypted_pwd_mapping", username)
-        return encrypted_passwd == passwd
-
     def get_user_dynamic_info(self, user_name: str):
         return self._redis_connection.hgetall(f"User_Dynamic_Info:{user_name}")
 
     def update_user_dynamic_info(self, user_name: str, job_resource: dict):
         self._redis_connection.hmset(f"User_Dynamic_Info:{user_name}", job_resource)
 
-    def get_user_password(self, user_name: str):
-        return self._redis_connection.hget("user_password_mapping", user_name)
-
-    def register_user(self, user_name: str, user_info: dict):
-        encode_passwd = user_info['password']
-        # Update user-passwd mapping
-        self._redis_connection.hset("user_password_mapping", user_name, encode_passwd)
-
-        # Add user info
-        del user_info['password']
-        self._redis_connection.hset(f"user:{user_name}", user_info)
-
     def delete_user(self, user_name: str):
-        self._redis_connection.hdel("user_password_mapping", user_name)
-        self._redis_connection.delete(f"user:{user_name}")
+        self._redis_connection.delete(f"User_Dynamic_Info:{user_name}")
 
     ####################################################################
     ############             Cluster DB Function            ############

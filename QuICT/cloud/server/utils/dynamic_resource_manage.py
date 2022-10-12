@@ -38,7 +38,7 @@ def user_resource_op(user_info: dict, resource_info: dict, op: ResourceOp) -> Tu
 
 def _qubits_operator(qa, qb, signal):
     q_max, q_min = max(qa, qb), min(qa, qb)
-    return q_max + signal*(2 ** -(q_max - q_min))
+    return q_max + signal * (2 ** -(q_max - q_min))
 
 
 def user_stop_jobs_op(user_info: dict, op: ResourceOp) -> Tuple[bool, dict]:
