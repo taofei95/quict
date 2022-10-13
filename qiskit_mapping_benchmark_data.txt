@@ -1,0 +1,178 @@
+line
+qubit_number: 5 
+gate size: 25 
+1, Quict swap gates number: 4 
+2, Quict swap gates number: 1 
+3, Quict swap gates number: 5 
+4, Quict swap gates number: 1 
+5, Quict swap gates number: 4 
+gate size: 35 
+1, Quict swap gates number: 3 
+2, Quict swap gates number: 7 
+3, Quict swap gates number: 5 
+4, Quict swap gates number: 2 
+5, Quict swap gates number: 3 
+gate size: 45 
+1, Quict swap gates number: 7 
+2, Quict swap gates number: 5 
+3, Quict swap gates number: 6 
+4, Quict swap gates number: 5 
+5, Quict swap gates number: 7 
+gate size: 55 
+1, Quict swap gates number: 10 
+2, Quict swap gates number: 8 
+3, Quict swap gates number: 6 
+4, Quict swap gates number: 6 
+5, Quict swap gates number: 5 
+gate size: 65 
+1, Quict swap gates number: 8 
+2, Quict swap gates number: 3 
+3, Quict swap gates number: 15 
+4, Quict swap gates number: 6 
+5, Quict swap gates number: 8 
+gate size: 75 
+1, Quict swap gates number: 12 
+2, Quict swap gates number: 9 
+3, Quict swap gates number: 10 
+4, Quict swap gates number: 11 
+5, Quict swap gates number: 13 
+qubit_number: 6 
+gate size: 30 
+1, Quict swap gates number: 5 
+2, Quict swap gates number: 5 
+3, Quict swap gates number: 5 
+4, Quict swap gates number: 6 
+5, Quict swap gates number: 7 
+gate size: 42 
+1, Quict swap gates number: 10 
+2, Quict swap gates number: 10 
+3, Quict swap gates number: 5 
+4, Quict swap gates number: 8 
+5, Quict swap gates number: 4 
+gate size: 54 
+1, Quict swap gates number: 12 
+2, Quict swap gates number: 5 
+3, Quict swap gates number: 16 
+4, Quict swap gates number: 12 
+5, Quict swap gates number: 9 
+gate size: 66 
+1, Quict swap gates number: 10 
+2, Quict swap gates number: 8 
+3, Quict swap gates number: 10 
+4, Quict swap gates number: 11 
+5, Quict swap gates number: 13 
+gate size: 78 
+1, Quict swap gates number: 16 
+2, Quict swap gates number: 11 
+3, Quict swap gates number: 20 
+4, Quict swap gates number: 11 
+5, Quict swap gates number: 18 
+gate size: 90 
+1, Quict swap gates number: 17 
+2, Quict swap gates number: 10 
+3, Quict swap gates number: 13 
+4, Quict swap gates number: 17 
+5, Quict swap gates number: 15 
+qubit_number: 7 
+gate size: 35 
+1, Quict swap gates number: 8 
+2, Quict swap gates number: 11 
+3, Quict swap gates number: 11 
+4, Quict swap gates number: 5 
+5, Quict swap gates number: 9 
+gate size: 49 
+1, Quict swap gates number: 7 
+2, Quict swap gates number: 12 
+3, Quict swap gates number: 5 
+4, Quict swap gates number: 14 
+5, Quict swap gates number: 14 
+gate size: 63 
+1, Quict swap gates number: 14 
+2, Quict swap gates number: 17 
+3, Quict swap gates number: 10 
+4, Quict swap gates number: 10 
+5, Quict swap gates number: 10 
+gate size: 77 
+1, Quict swap gates number: 18 
+2, Quict swap gates number: 23 
+3, Quict swap gates number: 17 
+4, Quict swap gates number: 21 
+5, Quict swap gates number: 10 
+gate size: 91 
+1, Quict swap gates number: 26 
+2, Quict swap gates number: 23 
+3, Quict swap gates number: 22 
+4, Quict swap gates number: 20 
+5, Quict swap gates number: 18 
+gate size: 105 
+1, Quict swap gates number: 25 
+2, Quict swap gates number: 23 
+3, Quict swap gates number: 17 
+4, Quict swap gates number: 40 
+5, Quict swap gates number: 20 
+qubit_number: 8 
+gate size: 40 
+1, Quict swap gates number: 10 
+2, Quict swap gates number: 12 
+3, Quict swap gates number: 23 
+4, Quict swap gates number: 24 
+5, Quict swap gates number: 9 
+gate size: 56 
+1, Quict swap gates number: 6 
+2, Quict swap gates number: 17 
+3, Quict swap gates number: 11 
+4, Quict swap gates number: 18 
+5, Quict swap gates number: 18 
+gate size: 72 
+1, Quict swap gates number: 16 
+2, Quict swap gates number: 17 
+3, Quict swap gates number: 11 
+4, Quict swap gates number: 16 
+5, Quict swap gates number: 15 
+gate size: 88 
+1, Quict swap gates number: 33 
+2, Quict swap gates number: 28 
+3, Quict swap gates number: 16 
+4, Quict swap gates number: 11 
+5, Quict swap gates number: 26 
+gate size: 104 
+1, Quict swap gates number: 39 
+2, Quict swap gates number: 24 
+3, Quict swap gates number: 24 
+4, Quict swap gates number: 32 
+5, Quict swap gates number: 35 
+gate size: 120 
+1, Quict swap gates number: 31 
+2, Quict swap gates number: 35 
+3, Quict swap gates number: 23 
+4, Quict swap gates number: 23 
+5, Quict swap gates number: 28 
+qubit_number: 9 
+gate size: 45 
+1, Quict swap gates number: 17 
+2, Quict swap gates number: 18 
+3, Quict swap gates number: 8 
+4, Quict swap gates number: 14 
+5, Quict swap gates number: 19 
+gate size: 63 
+1, Quict swap gates number: 27 
+2, Quict swap gates number: 21 
+3, Quict swap gates number: 21 
+4, Quict swap gates number: 35 
+5, Quict swap gates number: 35 
+gate size: 81 
+1, Quict swap gates number: 39 
+2, Quict swap gates number: 39 
+3, Quict swap gates number: 30 
+4, Quict swap gates number: 24 
+5, Quict swap gates number: 29 
+gate size: 99 
+1, Quict swap gates number: 17 
+2, Quict swap gates number: 31 
+3, Quict swap gates number: 21 
+4, Quict swap gates number: 36 
+5, Quict swap gates number: 14 
+gate size: 117 
+1, Quict swap gates number: 45 
+2, Quict swap gates number: 44 
+3, Quict swap gates number: 28 

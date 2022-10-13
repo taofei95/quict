@@ -38,23 +38,23 @@ def read0_CNF(cnf_file):
 
 def test():
     # x0 x1，x2, x_{n variable_number -1}
-    filename_test =  "./22"
-    AuxQubitNumber = 8
-    variable_number , clause_number , CNF_data = read0_CNF(filename_test)
-    
+    filename_test =  "QuICT/algorithm/quantum_algorithm/CNF/test_data/3_6_0"
+    AuxQubitNumber = 4
+    variable_number , clause_number , CNF_data = read_CNF(filename_test)
+
     #真值表初值变化
     b=[]
     # print(variable_number)
     cnf = CNFSATOracle()
-    cnf.run(filename_test, AuxQubitNumber, 1)
+    cnf.run(filename_test, AuxQubitNumber)
     cgate = cnf.circuit()
     print(cgate.size())
     print(cgate.depth())
     
     # circ = Circuit(variable_number + 4)
     
-    d=random.sample(list(range(2**variable_number)), 32)
-    for a in d: #(d + [44, 31, 29, 38, 56, 14, 41, 2]):
+    d=random.sample(list(range(2**variable_number)), 10)
+    for a in d:
         circ = Circuit(variable_number + 1 + AuxQubitNumber)
         x = []
         randomnum = a
@@ -69,7 +69,7 @@ def test():
         cgate | circ
         Measure | circ
         # circuittt.extend(cgate)
-        #circ.draw(filename='6-3.jpg')
+        circ.draw(filename='6-3.jpg')
         # i_sv = cp.zeros(1 << (variable_number + 4), dtype=np.complex64)
         sim = ConstantStateVectorSimulator()
         amplitude = sim.run(circ)

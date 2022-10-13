@@ -1,4 +1,5 @@
 import os
+import random
 import time
 import numpy as np
 import math
@@ -39,15 +40,14 @@ def test():
     cnf.run(filename_test, AuxQubitNumber, dirtyAncilla)
     
     cgate = cnf.circuit()
-    #circuittt = Circuit(variable_number + AuxQubitNumber + 1)
+    #circuittt = Circuit(variable_number + AuxQubitNumber + 2)
     #circuittt.extend(cgate)
-    circuittt = Circuit(5)
-    CX | circuittt([1,3])  
-    circuittt.draw(filename='new8.jpg')
+    #circuittt.draw(filename='22.jpg')
 
     #真值表初值变化
     b=[]
-    d=[470, 263, 90, 473, 406]
+    # d=[0,1,3,5,7,1025]
+    d=random.sample(list(range(2**variable_number)), 10)
     for a in d:
         randomnum = a
         x=[]
