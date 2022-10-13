@@ -58,7 +58,7 @@ class TemplateMatching:
                     if qubit_fixing_param else []
 
                 all_free_q = set(range(circuit.width)) - set(fixed_q)
-                # print(fixed_q, len(fixed_q), template.width)
+
                 for free_q in itertools.combinations(all_free_q, template.width - len(fixed_q)):
                     q_set = list(free_q) + fixed_q
                     for mapping in itertools.permutations(q_set, template.width):

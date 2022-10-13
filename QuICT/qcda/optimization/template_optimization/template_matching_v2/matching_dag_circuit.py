@@ -1,5 +1,8 @@
-from typing import Set, List
+from typing import Set, List, Union
 from collections.abc import Iterable
+from functools import cached_property
+
+import numpy as np
 
 from QuICT.core import Circuit
 from QuICT.core.circuit.dag_circuit import DAGNode, DAGCircuit
@@ -12,6 +15,9 @@ NodeInfo = namedtuple('NodeInfo', ['matched_with', 'is_blocked'])
 
 
 class MatchingDAGNode(DAGNode):
+    """
+    DAG node class tailored for template matching algorithm.
+    """
     __slots__ = ['successors_to_visit', 'matched_with', 'is_blocked',
                  '_id', '_gate', '_name', '_cargs', '_targs', '_qargs',
                  '_successors', '_predecessors']
@@ -20,9 +26,17 @@ class MatchingDAGNode(DAGNode):
         self.successors_to_visit = []
         self.matched_with = None
         self.is_blocked = False
-        super().__init__(id, gate)
+        # FIXME super use mutable as default values
+        super().__init__(id, gate, predecessors=[], successors=[])
 
     def pop_successors_to_visit(self):
+        """
+        Pop the first element of successors_to_visit. If no more, return None.
+
+        Returns:
+            int: first element of successors_to_visit
+        """
+
         if not self.successors_to_visit:
             return None
 
@@ -31,56 +45,108 @@ class MatchingDAGNode(DAGNode):
         return ret
 
     def matchable(self):
+        """
+        Returns:
+            bool: Whether the node can be matched
+        """
         return (not self.is_blocked) and (self.matched_with is None)
 
     def compare_with(self, other, qubit_mapping=None) -> bool:
+        """
+        Compare `self` to the node `other` under mapping `qubit_mapping`.
+        qubit i of `self` is mapped to qubit qubit_mapping[i] of `other`.
+        If `qubit_mapping` is None, only compare gate type.
+        The order of control qubits is ignored.
+
+        Args:
+            other(MatchingDAGNode): the other node
+            qubit_mapping(list): mapping
+        """
+
         if self.name != other.name:
             return False
         if qubit_mapping is not None:
-            for t_qubit, c_qubit in zip(self.qargs, other.qargs):
+            t_cargs = set(map(lambda x: qubit_mapping[x], self.cargs))
+            c_cargs = set(other.cargs)
+            if t_cargs != c_cargs:
+                return False
+
+            for t_qubit, c_qubit in zip(self.targs, other.targs):
                 if qubit_mapping[t_qubit] != c_qubit:
                     return False
         return True
 
     def node_info(self):
+        """
+        Return:
+            tuple: (the matched node, whether is blocked)
+        """
         return NodeInfo(self.matched_with, self.is_blocked)
+
+    def append_pred(self, u):
+        """
+        Append a node id to successors.
+
+        Args:
+            u(int): the node
+        """
+        self._predecessors.append(u)
+
+    def append_succ(self, u):
+        """
+        Append a node id to predecessors.
+
+        Args:
+            u(int): the node
+        """
+
+        self._successors.append(u)
 
 
 class MatchingDAGCircuit(DAGCircuit):
+    """
+        DAG circuit class tailored for template matching algorithm.
+    """
+
+    def __init__(self, circuit: Circuit):
+        self._successor_cache = {}
+        self._predecessor_cache = {}
+        super().__init__(circuit)
+
+    def add_edge(self, u, v):
+        """
+        Add a directed edge to DAG.
+
+        Args:
+            u(int): start node
+            v(int): end node
+        """
+
+        self._graph.add_edge(u, v)
+        self.get_node(u).append_succ(v)
+        self.get_node(v).append_pred(u)
+
     def _to_dag_circuit(self):
         gates = self._circuit.gates
-        endpoints = []      # The endpoint of current DAG graph
-        for idx, gate in enumerate(gates):
-            # Add new node into DAG Graph
-            assert isinstance(gate, BasicGate), "Only support BasicGate in DAGCircuit."
-            current_node = MatchingDAGNode(idx, gate)
-            self.add_node(current_node)
-
-            # Check the relationship of current node and previous node
-            updated_endpoints = []
-            for previous_node in endpoints:
-                self._backward_trace(previous_node, current_node)
-                if self._graph.edges(idx) != 0:
-                    updated_endpoints.append(current_node)
-                    if not self._graph.has_edge(previous_node.id, idx):
-                        updated_endpoints.append(previous_node)
-                else:
-                    updated_endpoints.append(previous_node)
-
-            # if no edges add, create new original node
-            if self._graph.degree(idx) == 0:
-                endpoints.insert(0, current_node)
-            else:
-                endpoints = self._endpoints_order(updated_endpoints)
-
-        # Add successors and predecessors for all nodes
-        for node_id in range(self.size):
-            node_sces = self._graph.successors(node_id)
-            node_pdces = self._graph.predecessors(node_id)
-            self.get_node(node_id).successors = list(node_sces)
-            self.get_node(node_id).predecessors = list(node_pdces)
+        reachable = np.zeros(shape=(len(gates), ), dtype=bool)
+        for idx, g in enumerate(gates):
+            assert isinstance(g, BasicGate), "Only support BasicGate in DAGCircuit."
+            cur = MatchingDAGNode(idx, g)
+            self.add_node(cur)
+            reachable[: idx] = True
+            for prev in reversed(range(idx)):
+                if reachable[prev] and not g.commutative(gates[prev]):
+                    self.add_edge(prev, idx)
+                    reachable[list(self.all_predecessors(prev, cache_enabled=False))] = False
 
     def init_forward_matching(self, node_id, other_id, s2v_enabled=False):
+        """
+        Initialize forward matching info.
+        Args:
+            node_id(int): the start node of forward matching
+            other_id(int): the start node of the other circuit to match
+            s2v_enabled(bool): whether initialize successors_to_visit
+        """
         for nid in self.nodes():
             node = self.get_node(nid)
             if node.id == node_id:
@@ -112,13 +178,61 @@ class MatchingDAGCircuit(DAGCircuit):
 
         return visited - init_visited
 
-    def all_predecessors(self, start) -> Set[int]:
-        return self._all_reachable(start, 'predecessors')
+    def all_predecessors(self, start, cache_enabled=True) -> Set[int]:
+        """
+        Return all predecessors (direct and undirect) of `start`.
+        `start` can be a node id (int) or many node ids (Iterable).
+        Return values of single node query will be cached if `cache_enable` is True.
 
-    def all_successors(self, start) -> Set[int]:
-        return self._all_reachable(start, 'successors')
+        Args:
+            start(Union[int, Iterable]): the start node(s)
+            cache_enabled(bool): whether use cache
+
+        Returns:
+            set: set of predecessors
+        """
+
+        if not cache_enabled or isinstance(start, Iterable):
+            return self._all_reachable(start, 'predecessors')
+        elif isinstance(start, int):
+            if start not in self._predecessor_cache:
+                self._predecessor_cache[start] = set(self.get_node(start).predecessors)
+                for succ in self.get_node(start).predecessors:
+                    self._predecessor_cache[start] |= self.all_predecessors(succ)
+            return self._predecessor_cache[start]
+        else:
+            assert False, 'start must be int or iterable objects'
+
+    def all_successors(self, start, cache_enabled=True) -> Set[int]:
+        """
+        Return all successors (direct and undirect) of `start`.
+        `start` can be a node id (int) or many node ids (Iterable).
+        Return values of single node query will be cached if `cache_enable` is True.
+
+        Args:
+            start(Union[int, Iterable]): the start node(s)
+            cache_enabled(bool): whether use cache
+
+        Returns:
+            Set[int]: set of successors
+        """
+
+        if not cache_enabled or isinstance(start, Iterable):
+            return self._all_reachable(start, 'successors')
+        elif isinstance(start, int):
+            if start not in self._successor_cache:
+                self._successor_cache[start] = set(self.get_node(start).successors)
+                for succ in self.get_node(start).successors:
+                    self._successor_cache[start] |= self.all_successors(succ)
+            return self._successor_cache[start]
+        else:
+            assert False, 'start must be int or iterable objects'
 
     def matching_info(self):
+        """
+        Returns:
+              List[NodeInfo]: matching info used by backward_match
+        """
         return [self.get_node(i).node_info() for i in range(self.size)]
 
     def get_circuit(self):
@@ -136,8 +250,6 @@ class Match:
     def __init__(self, match: List, qubit_mapping: List):
         self.match = sorted(match)
         self.qubit_mapping = qubit_mapping
-        self._template_nodes = None
-        self._circuit_nodes = None
 
     def __len__(self):
         return len(self.match)
@@ -151,14 +263,20 @@ class Match:
     def __repr__(self):
         return str(self)
 
-    @property
+    @cached_property
     def template_nodes(self):
-        if self._template_nodes is None:
-            self._template_nodes = {m[0] for m in self.match}
-        return self._template_nodes
+        """
+        Returns:
+            Set[int]: Set of tempalte nodes
+        """
 
-    @property
+        return {m[0] for m in self.match}
+
+    @cached_property
     def circuit_nodes(self):
-        if self._circuit_nodes is None:
-            self._circuit_nodes = {m[1] for m in self.match}
-        return self._circuit_nodes
+        """
+        Returns:
+            Set[int]: Set of circuit nodes
+        """
+
+        return {m[1] for m in self.match}

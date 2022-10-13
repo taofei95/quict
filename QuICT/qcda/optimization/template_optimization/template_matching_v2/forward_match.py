@@ -7,20 +7,6 @@ class ForwardMatch:
 
     @classmethod
     def _insert_match_nodes(cls, match_nodes: List[MatchingDAGNode], node: MatchingDAGNode):
-        # TODO fix your binary search
-        """
-        key = node.successors_to_visit
-        lb, rb = 0, len(match_nodes) - 1
-        # bin search first element that > key
-        while lb < rb:
-            mid = (lb + rb) // 2
-            if match_nodes[mid].successors_to_visit <= key:
-                lb = mid + 1
-            else:
-                # FIXME mid or mid-1
-                rb = mid
-        match_nodes.insert(lb - 1, node)
-        """
         if len(node.successors_to_visit) > 0:
             match_nodes.append(node)
             match_nodes.sort(key=lambda n: n.successors_to_visit[0])

@@ -23,9 +23,8 @@ class BackwardMatch:
 
     @classmethod
     def _find_candidates(cls, match, template, template_info, t_node_id) -> List[MatchingDAGNode]:
-        # DONE why starting from t_node_id?
-        # DONE why not successors
         successors = set(template.all_successors(t_node_id))
+
         matches = {m[0] for m in match}
         ret = sorted(filter(
             lambda x: x not in successors and x not in matches and not template_info[x].is_blocked,
@@ -108,7 +107,6 @@ class BackwardMatch:
             )
         ])
 
-        # FIXME (t_node_id - 1) or t_node_id
         remain_cnt = template.size - t_node_id - len(forward_match)
 
         res = []
@@ -128,7 +126,7 @@ class BackwardMatch:
                 continue
 
             cur_c_node_id = gate_indices[counter]
-            cur_c_node = circuit.get_node(cur_c_node_id)
+            cur_c_node: MatchingDAGNode = circuit.get_node(cur_c_node_id)
             if c_info[cur_c_node_id].is_blocked:
                 nxt_scenario = MatchingScenario(c_info, t_info, match, counter + 1)
                 scenarios.append(nxt_scenario)
@@ -146,18 +144,15 @@ class BackwardMatch:
                     cur_t_info = t_info.copy()
                     cur_match = match.copy()
 
-                    # block_list = []
                     broken_match = []
 
                     for block_id in template.all_successors(cur_t_node.id):
                         if cur_t_info[block_id].matched_with is None:
                             cur_t_info[block_id] = NodeInfo(None, True)
 
-                            # FIXME do we need block_list
                             for t_nxt_id in template.all_successors(block_id):
                                 c_nxt_id = cur_t_info[t_nxt_id].matched_with
                                 if c_nxt_id is not None:
-                                    # FIXME do we need to block c_nxt_id
                                     cur_c_info[c_nxt_id] = NodeInfo(None, True)
                                     broken_match.append(t_nxt_id)
                                 cur_t_info[t_nxt_id] = NodeInfo(None, True)
@@ -172,7 +167,6 @@ class BackwardMatch:
                         cur_c_info[cur_c_node_id] = NodeInfo(cur_t_node.id, False)
                         new_match.append((cur_t_node.id, cur_c_node_id))
                         nxt_scenario = MatchingScenario(cur_c_info, cur_t_info, new_match, counter + 1)
-                        # print('!', new_match)
                         scenarios.append(nxt_scenario)
 
                         flag_succeed = True
@@ -193,8 +187,8 @@ class BackwardMatch:
                     lambda i: c_info[i].matched_with is not None,
                     circuit.all_successors(cur_c_node_id)
                 ))
-                predecessors = circuit.all_predecessors(cur_c_node_id)
-                if not following_match or not predecessors:
+
+                if not following_match or not cur_c_node.predecessors:
                     nxt_scenario = MatchingScenario(c_info, t_info, match, counter + 1)
                     scenarios.append(nxt_scenario)
                 else:

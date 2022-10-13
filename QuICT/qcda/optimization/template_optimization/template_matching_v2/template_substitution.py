@@ -1,6 +1,6 @@
 from itertools import chain
 from typing import List
-from functools import cmp_to_key
+from functools import cached_property
 
 from QuICT.core import Circuit
 from .matching_dag_circuit import MatchingDAGCircuit, MatchingDAGNode, Match
@@ -23,31 +23,22 @@ class Substitution:
         self.circuit = circuit
         self.template = template
         self.match = match
-        self._cost = None
-        self._pred_set = None
-        self._pred = None
 
-    @property
+    @cached_property
     def cost(self):
-        if self._cost is None:
-            old_nodes = self.match.template_nodes
-            new_nodes = set(range(self.template.size)) - old_nodes
-            old_cost = sum(GATE_COST[self.template.get_node(n).name] for n in old_nodes)
-            new_cost = sum(GATE_COST[self.template.get_node(n).name] for n in new_nodes)
-            self._cost = old_cost - new_cost
-        return self._cost
+        old_nodes = self.match.template_nodes
+        new_nodes = set(range(self.template.size)) - old_nodes
+        old_cost = sum(GATE_COST[self.template.get_node(n).name] for n in old_nodes)
+        new_cost = sum(GATE_COST[self.template.get_node(n).name] for n in new_nodes)
+        return old_cost - new_cost
 
-    @property
+    @cached_property
     def pred(self):
-        if self._pred is None:
-            self._pred = sorted(self.pred_set)
-        return self._pred
+        return sorted(self.pred_set)
 
-    @property
+    @cached_property
     def pred_set(self):
-        if self._pred_set is None:
-            self._pred_set = self.circuit.all_predecessors(self.match.circuit_nodes)
-        return self._pred_set
+        return self.circuit.all_predecessors(self.match.circuit_nodes)
 
     def cmp_with(self, other):
         assert isinstance(other, Substitution)
@@ -66,6 +57,21 @@ class Substitution:
 
 
 class TemplateSubstitution:
+
+    @classmethod
+    def _sort_sub_list(cls, sub_list: List[Substitution]):
+        res = []
+        while len(sub_list) > 0:
+            found = -1
+            for idx, cur in enumerate(sub_list):
+                if cur is not None and all(s.cmp_with(cur) > 0 for s in sub_list):
+                    found = idx
+                    break
+
+            res.append(sub_list[found])
+            sub_list = sub_list[:found] + sub_list[found+1:]
+
+        return res
 
     @classmethod
     def _calc_sub_list(cls,
@@ -94,7 +100,7 @@ class TemplateSubstitution:
                 visited_nodes |= cur_nodes
                 sub_list.append(sub)
 
-        return sorted(sub_list, key=cmp_to_key(Substitution.cmp_with))
+        return cls._sort_sub_list(sub_list)
 
     @classmethod
     def execute(cls,

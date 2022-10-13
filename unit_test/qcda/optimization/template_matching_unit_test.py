@@ -2,7 +2,11 @@ import pytest
 
 from QuICT.core import *
 from QuICT.core.gate import *
-from QuICT.qcda.optimization.template_optimization.template_matching_v2 import MatchingDAGCircuit, TemplateMatching, ForwardMatch
+from QuICT.qcda.optimization.template_optimization.template_matching_v2 import \
+    MatchingDAGCircuit, TemplateMatching, ForwardMatch
+from QuICT.qcda.optimization.template_optimization.template_matching_v2.template_optimization import \
+    TemplateOptimization
+from QuICT.algorithm import SyntheticalUnitary
 
 
 def get_circ():
@@ -54,7 +58,7 @@ def test_dag():
     dag_circ.draw()
 
     template.draw(filename='matching_template.jpg')
-    template_circ = MatchingDAGCircuit(circ)
+    template_circ = MatchingDAGCircuit(template)
     template_circ.draw()
 
 
@@ -70,6 +74,32 @@ def test_forward_matching():
     res = ForwardMatch.execute(circ_dag, template_dag, c_node_id, t_node_id, qubit_mapping)
     ans = [(0, 6), (4, 7), (6, 8), (2, 10), (7, 11), (8, 12), (9, 13), (11, 18), (10, 20)]
     assert res == ans
+
+
+def test_ccx():
+    circ = Circuit(4)
+    CCX | circ([0, 1, 2])
+    CCX | circ([1, 0, 2])
+
+    circ_optim = TemplateOptimization.execute(circ)
+    assert circ_optim.size() == 0
+
+
+def test_random_circuit():
+    n_iter = 20
+    n_qubits = 8
+    n_gates = 200
+    gates = [GateType.x, GateType.cx, GateType.ccx, GateType.h, GateType.s, GateType.t]
+
+    for idx in range(n_iter):
+        print('testing', idx)
+        circ = Circuit(n_qubits)
+        circ.random_append(n_gates, typelist=gates)
+        circ_optim = TemplateOptimization.execute(circ)
+
+        mat_1 = SyntheticalUnitary.run(circ)
+        mat_2 = SyntheticalUnitary.run(circ_optim)
+        assert np.allclose(mat_1, mat_2)
 
 
 if __name__ == '__main__':
