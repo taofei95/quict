@@ -31,21 +31,24 @@ def read_CNF(cnf_file):
 
 def test():
 # x0 x1，x2, x_{n variable_number -1}
-    filename_test =  "./10"
-    AuxQubitNumber = 5
+    filename_test =  "./1"
+    AuxQubitNumber = 4
+    dirtyAncilla = 1 # 0表示clean; >0 表示dirty
     variable_number , clause_number , CNF_data = read_CNF(filename_test)
     cnf = CNFSATOracle()
-    cnf.run(filename_test, AuxQubitNumber)
+    cnf.run(filename_test, AuxQubitNumber, dirtyAncilla)
     
     cgate = cnf.circuit()
-    #circuittt = Circuit(variable_number + AuxQubitNumber + 2)
+    #circuittt = Circuit(variable_number + AuxQubitNumber + 1)
     #circuittt.extend(cgate)
-    #circuittt.draw(filename='22.jpg')
+    circuittt = Circuit(5)
+    CX | circuittt([1,3])  
+    circuittt.draw(filename='new8.jpg')
 
     #真值表初值变化
     b=[]
-    d=[0,1,3,5,7,1025]
-    for a in range(16):
+    d=[470, 263, 90, 473, 406]
+    for a in d:
         randomnum = a
         x=[]
         circuit_temp=Circuit(variable_number + 1 + AuxQubitNumber)
@@ -74,7 +77,7 @@ def test():
                     clause_result += x[CNF_data[i+1][j]-1] 
                 else:
                     if CNF_data[i+1][j] < 0:
-                        clause_result += (1 - x[-CNF_data[i+1][j]-1] )
+                        clause_result += ( 1 - x[-CNF_data[i+1][j]-1] )
             if clause_result == 0:
                 cnf_result = 0
                 break
