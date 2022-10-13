@@ -248,7 +248,7 @@ class CNFSATOracle:
             CNF_data.append(int_new)  #给各个Clause 编号0,1 ...m-1#
 
         f.close()
-        print(CNF_data)
+        #print(CNF_data)
         return variable_number, clause_number, CNF_data
 
     def clause(self, CNF_data: List, variable_number: int, Aux: int, StartID: int, EndID: int, target: int, current_depth: int, depth: int):

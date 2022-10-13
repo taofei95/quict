@@ -24,17 +24,21 @@ def read_CNF(cnf_file):
                 variable_number = int(new[2])
                 clause_number = int(new[3])
             else:
-                for i in range(len(new)-1): #注意这里减1 
-                    int_new.append(int(new[i]))
+                for x in new:
+                    if (x != '0') and (int(x) not in int_new):
+                        int_new.append(int(x))
+                        if (- int(x)) in int_new:
+                            int_new = []
+                            break
             CNF_data.append(int_new)  #给各个Clause 编号0,1 ...m-1#
-        #print(CNF_data)
         f.close()
+        print(CNF_data)
         return variable_number, clause_number, CNF_data
 
 def test():
     # x0 x1，x2, x_{n variable_number -1}
-    filename_test =  "./9"
-    AuxQubitNumber = 15
+    filename_test =  "./test_data/6_9_0"
+    AuxQubitNumber = 16
     variable_number , clause_number , CNF_data = read_CNF(filename_test)
 
     #真值表初值变化
@@ -49,7 +53,7 @@ def test():
     # circ = Circuit(variable_number + 4)
     
     d=random.sample(list(range(2**variable_number)), 8)
-    for a in d:
+    for a in d+[105, 315, 501, 255, 266, 221, 387, 339, 181, 33]:
         circ = Circuit(variable_number + 1 + AuxQubitNumber)
         x = []
         randomnum = a
@@ -80,15 +84,18 @@ def test():
         cnf_result = 1  #经典部分 真假值 
         for i in range(clause_number):
             clause_result = 0
-            for j in range(len(CNF_data[i+1])):
-                if CNF_data[i+1][j] > 0:
-                    clause_result += x[CNF_data[i+1][j]-1] 
-                else:
-                    if CNF_data[i+1][j] < 0:
-                        clause_result += (1 - x[-CNF_data[i+1][j]-1] )
-            if clause_result == 0:
-                cnf_result = 0
-                break
+            if len(CNF_data[i+1]) == 0:
+                clause_result = 1
+            else:
+                for j in range(len(CNF_data[i+1])):
+                    if CNF_data[i+1][j] > 0:
+                        clause_result += x[CNF_data[i+1][j]-1] 
+                    else:
+                        if CNF_data[i+1][j] < 0:
+                            clause_result += (1 - x[-CNF_data[i+1][j]-1] )
+                if clause_result == 0:
+                    cnf_result = 0
+                    break
         print(cnf_result, " ", a)
 
         if cnf_result !=  circ.qubits[variable_number].measured : #比较一下经典与量子电路的 真假值(是否满足的情况)，是否相同。
