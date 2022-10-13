@@ -28,3 +28,4 @@ cmake-build*/
 cmake-vsc*/
 unit_test/**/*.jpg
 .history
+/QAOA_model*

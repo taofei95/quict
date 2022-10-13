@@ -95,7 +95,7 @@ class QAOA:
             loader.set_postfix(loss=loss.item())
 
             # Save checkpoint
-            if save_model and ((it + 1) % 100 == 0 or (it + 1) == max_iters):
+            if save_model and ((it + 1) % 10 == 0 or (it + 1) == max_iters):
                 if self.model_path is None:
                     now = time.strftime(
                         "%Y-%m-%d-%H_%M_%S", time.localtime(time.time())

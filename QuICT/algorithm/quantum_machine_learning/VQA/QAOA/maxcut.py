@@ -1,4 +1,3 @@
-from pyexpat import model
 import numpy as np
 import torch
 import random
@@ -36,7 +35,7 @@ class MaxCut:
     def _draw_prob(self, prob, shots):
         plt.figure()
         plt.xlabel("Qubit States")
-        plt.xlabel("Probabilities")
+        plt.ylabel("Probabilities")
         plt.bar(range(len(prob)), np.array(prob) / shots)
         if self.model_path is not None:
             plt.savefig(self.model_path + "/Probabilities.jpg")
@@ -141,7 +140,7 @@ class MaxCut:
         draw_circuit=False,
         plot_prob=False,
         load_model=None,
-        save_model=False, 
+        save_model=False,
         resume: Union[bool, list] = False,
         device=torch.device("cuda:0"),
     ):
@@ -165,7 +164,7 @@ class MaxCut:
             if self.model_path is None:
                 circuit.draw()
             else:
-                circuit.draw(self.model_path + "/Maxcut_circuit.jpg")
+                circuit.draw(filename=self.model_path + "/Maxcut_circuit.jpg")
         simulator = ConstantStateVectorSimulator()
         simulator.vector = state.cpu().detach().numpy()
         simulator.circuit = circuit
@@ -181,43 +180,25 @@ class MaxCut:
 
 
 if __name__ == "__main__":
-    n = 4
-    edges = [(0, 1), (1, 2), (2, 3), (3, 0)]
-    maxcut = MaxCut(n, edges)
-    # maxcut.draw_graph()
-    # # training
-    # max_cut_num, cut_edges = maxcut.solve_maxcut(
-    #     p=4,
-    #     max_iters=200,
-    #     lr=0.1,
-    #     plot_prob=True,
-    #     draw_circuit=False,
-    #     save_model=True,
-    # )
-    # print("Max cut: {}".format(max_cut_num))
-    # print("Cut edges: {}".format(cut_edges))
-    # maxcut.draw_result()
-    
-    # # continue training
-    # max_cut_num, cut_edges = maxcut.solve_maxcut(
-    #     p=4,
-    #     max_iters=300,
-    #     lr=0.1,
-    #     plot_prob=True,
-    #     draw_circuit=False,
-    #     save_model=True,
-    #     resume=100,
-    #     load_model="QAOA_model_2022-10-13-10_01_36"
-    # )
-    # print("Max cut: {}".format(max_cut_num))
-    # print("Cut edges: {}".format(cut_edges))
 
-    # testing
+    def circle_graph(n):
+        edges = []
+        for i in range(n - 1):
+            edges.append((i, i + 1))
+        edges.append((n - 1, 0))
+        return edges
+
+    n = 13
+    maxcut = MaxCut(n, circle_graph(n))
+    # training
     max_cut_num, cut_edges = maxcut.solve_maxcut(
-        p=4,
+        p=n,
+        max_iters=30,
+        lr=0.1,
         plot_prob=True,
-        draw_circuit=False,
-        load_model="QAOA_model_2022-10-13-10_01_36"
+        save_model=True,
+        # load_model="QAOA_model_2022-10-13-13_58_36"
     )
     print("Max cut: {}".format(max_cut_num))
     print("Cut edges: {}".format(cut_edges))
+    maxcut.draw_result()
