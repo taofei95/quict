@@ -1,4 +1,3 @@
-from typing import Dict, List, Union
 import numpy as np
 import copy
 import torch
@@ -6,8 +5,6 @@ import torch
 from QuICT.core import Circuit
 from QuICT.core.gate import *
 from QuICT.algorithm.quantum_machine_learning.utils.gate_tensor import *
-from QuICT.simulation.state_vector import ConstantStateVectorSimulator
-from QuICT.ops.linalg import gpu_calculator
 from QuICT.algorithm.quantum_machine_learning.utils.ansatz import Ansatz
 
 
@@ -99,25 +96,8 @@ class Hamiltonian:
                     raise ValueError("Invalid Pauli gate.")
             hamiton_circuits.append(circuit)
         return hamiton_circuits
-    
+
     def construct_hamiton_ansatz(self, n_qubits, device=torch.device("cuda:0")):
-        # hamiton_ansatz = []
-        # for qubit_index, pauli_gate in zip(self._qubit_indexes, self._pauli_gates):
-        #     circuit = Circuit(n_qubits)
-        #     for qid, gate in zip(qubit_index, pauli_gate):
-        #         if gate == "X":
-        #             X | circuit(qid)
-        #         elif gate == "Y":
-        #             Y | circuit(qid)
-        #         elif gate == "Z":
-        #             Z | circuit(qid)
-        #         elif gate == "I":
-        #             continue
-        #         else:
-        #             raise ValueError("Invalid Pauli gate.")
-        #     ansatz = Ansatz(n_qubits, circuit, device)
-        #     hamiton_ansatz.append(ansatz)
-        # return hamiton_ansatz
         hamiton_ansatz = []
         for qubit_index, pauli_gate in zip(self._qubit_indexes, self._pauli_gates):
             ansatz = Ansatz(n_qubits, device=device)
@@ -160,38 +140,3 @@ class Hamiltonian:
             indexes.append(int(pauli_gate[1:]))
         self._qubit_indexes.append(indexes)
         self._pauli_gates.append(pauli_gates)
-
-
-def main():
-    state = np.array([np.sqrt(3) / 3, 1 / 2, 1 / 3, np.sqrt(11) / 6])
-    state = state.reshape(-1, 1)
-    h = Hamiltonian([[0.2, "Z0", "I1"], [1]])
-    print(h._pauli_gates)
-    print(h._qubit_indexes)
-    print(h._coefficients)
-    
-    # pauli_str = [
-    #     [-1.0, "z0", "z1"],
-    #     [-1.0, "z1", "z2"],
-    #     [-1.0, "z2", "z3"],
-    #     [-1.0, "z3", "z0"],
-    # ]
-    # h = Hamiltonian(pauli_str)
-    # hamiton_matrix = h.get_hamiton_matrix(2)
-    # print(hamiton_matrix.real)
-    # print(state.T @ hamiton_matrix.real @ state)
-    # print(h._pauli_gates)
-    # print(h._qubit_indexes)
-    # print(h._h_matrix)
-    # circuit = h.construct_hamiton_circuit(2)
-    # simulator = ConstantStateVectorSimulator()
-    # sv1 = simulator.run(circuit[0], state)
-    # sv2 = simulator.run(circuit[1], state)
-    # print(state.T@sv1.get().real)
-    # print(sum(state*sv1.get().real))
-    # print((0.2*sv1.real + sv2.real))
-
-
-if __name__ == "__main__":
-    main()
-

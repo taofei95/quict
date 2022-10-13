@@ -1,8 +1,10 @@
-import networkx as nx
+from pyexpat import model
 import numpy as np
-import matplotlib.pyplot as plt
 import torch
 import random
+import networkx as nx
+import matplotlib.pyplot as plt
+from typing import Union
 
 from QuICT.simulation.state_vector import ConstantStateVectorSimulator
 from QuICT.algorithm.quantum_machine_learning.VQA.QAOA.qaoa import QAOA
@@ -14,6 +16,7 @@ class MaxCut:
         self._n = n
         self._edges = edges
         self.solution_bit = None
+        self.model_path = None
 
     def _seed(self, seed: int):
         torch.manual_seed(seed)
@@ -35,6 +38,8 @@ class MaxCut:
         plt.xlabel("Qubit States")
         plt.xlabel("Probabilities")
         plt.bar(range(len(prob)), np.array(prob) / shots)
+        if self.model_path is not None:
+            plt.savefig(self.model_path + "/Probabilities.jpg")
         plt.show()
 
     def draw_graph(self):
@@ -106,6 +111,8 @@ class MaxCut:
         ax = plt.gca()
         ax.margins(0.20)
         plt.axis("off")
+        if self.model_path is not None:
+            plt.savefig(self.model_path + "/Maxcut_result.jpg")
         plt.show()
 
     def _result(self):
@@ -126,22 +133,39 @@ class MaxCut:
 
     def solve_maxcut(
         self,
-        p: int,
-        max_iters: int,
-        lr: float,
+        p: int = 4,
+        max_iters: int = 150,
+        lr: float = 0.1,
         shots: int = 1000,
         seed: int = 0,
         draw_circuit=False,
         plot_prob=False,
+        load_model=None,
+        save_model=False, 
+        resume: Union[bool, list] = False,
         device=torch.device("cuda:0"),
     ):
         self._seed(seed)
         hamiltonian = self._maxcut_hamiltonian()
         qaoa = QAOA(self._n, p, hamiltonian, device=device)
-        state = qaoa.run(optimizer=torch.optim.Adam, lr=lr, max_iters=max_iters)
+        if load_model is not None and load_model != "" and resume is False:
+            state = qaoa.test(model_path=load_model)
+        else:
+            state = qaoa.train(
+                optimizer=torch.optim.Adam,
+                lr=lr,
+                max_iters=max_iters,
+                model_path=load_model,
+                save_model=save_model,
+                resume=resume,
+            )
+        self.model_path = qaoa.model_path
         circuit = qaoa.net.construct_circuit()
         if draw_circuit:
-            circuit.draw()
+            if self.model_path is None:
+                circuit.draw()
+            else:
+                circuit.draw(self.model_path + "/Maxcut_circuit.jpg")
         simulator = ConstantStateVectorSimulator()
         simulator.vector = state.cpu().detach().numpy()
         simulator.circuit = circuit
@@ -157,13 +181,43 @@ class MaxCut:
 
 
 if __name__ == "__main__":
-    n = 5
-    edges = [(0, 1), (1, 2), (2, 3), (3, 4), (4, 0), (1, 3), (2, 4)]
+    n = 4
+    edges = [(0, 1), (1, 2), (2, 3), (3, 0)]
     maxcut = MaxCut(n, edges)
-    maxcut.draw_graph()
+    # maxcut.draw_graph()
+    # # training
+    # max_cut_num, cut_edges = maxcut.solve_maxcut(
+    #     p=4,
+    #     max_iters=200,
+    #     lr=0.1,
+    #     plot_prob=True,
+    #     draw_circuit=False,
+    #     save_model=True,
+    # )
+    # print("Max cut: {}".format(max_cut_num))
+    # print("Cut edges: {}".format(cut_edges))
+    # maxcut.draw_result()
+    
+    # # continue training
+    # max_cut_num, cut_edges = maxcut.solve_maxcut(
+    #     p=4,
+    #     max_iters=300,
+    #     lr=0.1,
+    #     plot_prob=True,
+    #     draw_circuit=False,
+    #     save_model=True,
+    #     resume=100,
+    #     load_model="QAOA_model_2022-10-13-10_01_36"
+    # )
+    # print("Max cut: {}".format(max_cut_num))
+    # print("Cut edges: {}".format(cut_edges))
+
+    # testing
     max_cut_num, cut_edges = maxcut.solve_maxcut(
-        p=4, max_iters=100, lr=0.1, plot_prob=True
+        p=4,
+        plot_prob=True,
+        draw_circuit=False,
+        load_model="QAOA_model_2022-10-13-10_01_36"
     )
     print("Max cut: {}".format(max_cut_num))
     print("Cut edges: {}".format(cut_edges))
-    maxcut.draw_result()

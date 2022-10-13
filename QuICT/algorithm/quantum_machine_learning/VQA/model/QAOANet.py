@@ -1,8 +1,6 @@
 from fileinput import filename
 import torch
 import torch.nn
-import numpy as np
-import time
 import re
 
 from QuICT.core import Circuit
@@ -11,7 +9,6 @@ from QuICT.algorithm.quantum_machine_learning.utils.gate_tensor import *
 from QuICT.algorithm.quantum_machine_learning.utils.hamiltonian import Hamiltonian
 from QuICT.algorithm.quantum_machine_learning.utils.ansatz import Ansatz
 from QuICT.algorithm.quantum_machine_learning.VQA.model.VQANet import VQANet
-from QuICT.simulation.state_vector import ConstantStateVectorSimulator
 
 
 class QAOANet(VQANet):

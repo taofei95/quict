@@ -1,5 +1,6 @@
 import torch
 import numpy as np
+
 from QuICT.algorithm.quantum_machine_learning.utils.hamiltonian import Hamiltonian
 from QuICT.algorithm.quantum_machine_learning.utils.ansatz import Ansatz
 
@@ -21,7 +22,7 @@ class VQANet(torch.nn.Module):
 
     def define_network(self):
         raise NotImplementedError
-
+    
     def loss_func(self, state):
         if isinstance(state, np.ndarray):
             state = torch.from_numpy(state).to(self.device)
@@ -37,7 +38,6 @@ class VQANet(torch.nn.Module):
         for coeff, ansatz in zip(coefficients, ansatz_list):
             sv = ansatz.forward(state)
             state_vector += coeff * sv
+        loss = -torch.sum(state.conj() * state_vector).real
 
-        loss = - torch.sum(state.conj() * state_vector).real
-        
         return loss

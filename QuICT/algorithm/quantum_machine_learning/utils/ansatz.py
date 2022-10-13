@@ -1,6 +1,5 @@
 import torch
 import numpy as np
-from QuICT.core import Circuit
 from QuICT.core.gate import *
 from QuICT.algorithm.quantum_machine_learning.utils.gate_tensor import *
 from QuICT.algorithm.quantum_machine_learning.utils.gate_tensor import BasicGateTensor
