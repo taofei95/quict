@@ -113,3 +113,70 @@ class QAOA:
         self.net.eval()
         state = self.net()
         return state
+
+
+if __name__ == "__main__":
+    import numpy as np
+    import random
+    import torch
+    import matplotlib.pyplot as plt
+    from QuICT.simulation.state_vector import ConstantStateVectorSimulator
+    from QuICT.algorithm.quantum_machine_learning.utils.hamiltonian import Hamiltonian
+
+    def random_pauli_str(n_items, n_qubits):
+        pauli_str = []
+        coeffs = np.random.rand(n_items)
+        for i in range(n_items):
+            pauli = [coeffs[i]]
+            for qid in range(n_qubits):
+                flag = np.random.randint(0, 5)
+                if flag == 0:
+                    pauli.append("X" + str(qid))
+                elif flag == 1:
+                    pauli.append("Y" + str(qid))
+                elif flag == 2:
+                    pauli.append("Z" + str(qid))
+                elif flag == 3:
+                    pauli.append("I" + str(qid))
+                elif flag == 4:
+                    continue
+            pauli_str.append(pauli)
+        return pauli_str
+
+    def seed(seed: int):
+        torch.manual_seed(seed)
+        torch.cuda.manual_seed_all(seed)
+        np.random.seed(seed)
+        random.seed(seed)
+        torch.backends.cudnn.deterministic = True
+
+    def draw_prob(prob, shots, model_path=None):
+        plt.figure()
+        plt.xlabel("Qubit States")
+        plt.ylabel("Probabilities")
+        plt.bar(range(len(prob)), np.array(prob) / shots)
+        if model_path is not None:
+            plt.savefig(model_path + "/Probabilities.jpg")
+        plt.show()
+
+    seed(0)
+    n_items = 3
+    n_qubits = 5
+    pauli_list = random_pauli_str(n_items, n_qubits)
+    print(pauli_list)
+    hamiltonian = Hamiltonian(pauli_list)
+    qaoa = QAOA(n_qubits, p=10, hamiltonian=hamiltonian)
+    state = qaoa.train(
+        optimizer=torch.optim.Adam, lr=0.1, max_iters=100, save_model=True
+    )
+    # state = qaoa.test(model_path="QAOA_model_2022-10-13-15_17_48") 
+    expect = -qaoa.net.loss_func(state)
+    print("Expect: ", expect)
+
+    hamiltonian_matrix = hamiltonian.get_hamiton_matrix(n_qubits)
+    eigens = np.linalg.eig(hamiltonian_matrix)
+    max_eigen = np.real(eigens[0][np.argmax(eigens[0])])
+    print("Max Eigen: ", max_eigen)
+
+    # circuit = qaoa.net.construct_circuit()
+    # circuit.draw(filename=qaoa.model_path + "/circuit.jpg")

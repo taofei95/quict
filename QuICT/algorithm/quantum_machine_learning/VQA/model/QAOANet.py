@@ -43,9 +43,8 @@ class QAOANet(VQANet):
         ):
             # Remove I from pauli_gates and remove corresponding qid from qubit_indexes
             findI = [i.start() for i in re.finditer("I", gates)]
+            qids = (np.delete(np.array(qids), findI)).tolist()
             gates = gates.replace("I", "")
-            for i in findI:
-                qids.pop(i)
 
             # Mapping e.g. Rxyz
             if len(qids) > 1:
@@ -124,9 +123,8 @@ class QAOANet(VQANet):
         ):
             # Remove I from pauli_gates and remove corresponding qid from qubit_indexes
             findI = [i.start() for i in re.finditer("I", gates)]
+            qids = (np.delete(np.array(qids), findI)).tolist()
             gates = gates.replace("I", "")
-            for i in findI:
-                qids.pop(i)
 
             # Mapping e.g. Rxyz
             if len(qids) > 1:

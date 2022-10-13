@@ -188,12 +188,12 @@ if __name__ == "__main__":
         edges.append((n - 1, 0))
         return edges
 
-    n = 13
+    n = 4
     maxcut = MaxCut(n, circle_graph(n))
     # training
     max_cut_num, cut_edges = maxcut.solve_maxcut(
         p=n,
-        max_iters=30,
+        max_iters=100,
         lr=0.1,
         plot_prob=True,
         save_model=True,
