@@ -28,6 +28,7 @@ class Hamiltonian:
 
     def __init__(self, pauli_str: list):
         self._pauli_str = pauli_str
+        self._remove_I()
         self._coefficients = []
         self._pauli_gates = []
         self._qubit_indexes = []
@@ -53,66 +54,43 @@ class Hamiltonian:
             pauli_operator[0] *= other
         return Hamiltonian(new_pauli_str)
 
+    def _remove_I(self):
+        new_pauli_str = []
+        for pauli_operator in self._pauli_str:
+            for pauli_gate in pauli_operator[1:][::-1]:
+                if "I" in pauli_gate:
+                    pauli_operator.remove(pauli_gate)
+            new_pauli_str.append(pauli_operator)
+
+        self._pauli_str = new_pauli_str
+
     def get_hamiton_matrix(self, n_qubits):
         hamiton_matrix = np.zeros((1 << n_qubits, 1 << n_qubits), dtype=np.complex128)
-        for coeff, qubit_index, pauli_gate in zip(
-            self._coefficients, self._qubit_indexes, self._pauli_gates
-        ):
-            matrix = np.array([1], dtype=np.complex128)
-            num = 0
-            for i in range(n_qubits):
-                if i not in qubit_index:
-                    matrix = np.kron(matrix, np.eye(2, dtype=np.complex128))
-                    num += 1
-                else:
-                    gate = pauli_gate[i - num]
-                    if gate == "X":
-                        matrix = np.kron(matrix, X.matrix)
-                    elif gate == "Y":
-                        matrix = np.kron(matrix, Y.matrix)
-                    elif gate == "Z":
-                        matrix = np.kron(matrix, Z.matrix)
-                    elif gate == "I":
-                        matrix = np.kron(matrix, np.eye(2, dtype=np.complex128))
-                    else:
-                        raise ValueError("Invalid Pauli gate")
+        hamiton_circuits = self.construct_hamiton_circuit(n_qubits)
+        for coeff, circuit in zip(self._coefficients, hamiton_circuits):
+            hamiton_matrix += coeff * circuit.matrix()
 
-            hamiton_matrix += coeff * matrix
         return hamiton_matrix
 
     def construct_hamiton_circuit(self, n_qubits):
         hamiton_circuits = []
+        gate_dict = {"X": X, "Y": Y, "Z": Z}
         for qubit_index, pauli_gate in zip(self._qubit_indexes, self._pauli_gates):
             circuit = Circuit(n_qubits)
             for qid, gate in zip(qubit_index, pauli_gate):
-                if gate == "X":
-                    X | circuit(qid)
-                elif gate == "Y":
-                    Y | circuit(qid)
-                elif gate == "Z":
-                    Z | circuit(qid)
-                elif gate == "I":
-                    continue
-                else:
-                    raise ValueError("Invalid Pauli gate.")
+                assert gate in gate_dict.keys(), "Invalid Pauli gate."
+                gate_dict[gate] | circuit(qid)
             hamiton_circuits.append(circuit)
         return hamiton_circuits
 
     def construct_hamiton_ansatz(self, n_qubits, device=torch.device("cuda:0")):
         hamiton_ansatz = []
+        gate_dict = {"X": X_tensor, "Y": Y_tensor, "Z": Z_tensor}
         for qubit_index, pauli_gate in zip(self._qubit_indexes, self._pauli_gates):
             ansatz = Ansatz(n_qubits, device=device)
             for qid, gate in zip(qubit_index, pauli_gate):
-                if gate == "X":
-                    ansatz.add_gate(X_tensor, qid)
-                elif gate == "Y":
-                    ansatz.add_gate(Y_tensor, qid)
-                elif gate == "Z":
-                    ansatz.add_gate(Z_tensor, qid)
-                elif gate == "I":
-                    continue
-                else:
-                    raise ValueError("Invalid Pauli gate.")
+                assert gate in gate_dict.keys(), "Invalid Pauli gate."
+                ansatz.add_gate(gate_dict[gate], qid)
             hamiton_ansatz.append(ansatz)
         return hamiton_ansatz
 

@@ -41,42 +41,29 @@ class QAOANet(VQANet):
             self.hamiltonian._qubit_indexes,
             self.hamiltonian._pauli_gates,
         ):
-            # Remove I from pauli_gates and remove corresponding qid from qubit_indexes
-            findI = [i.start() for i in re.finditer("I", gates)]
-            qids = (np.delete(np.array(qids), findI)).tolist()
-            gates = gates.replace("I", "")
-
             # Mapping e.g. Rxyz
             if len(qids) > 1:
+                gate_dict = {"X": H_tensor, "Y": Hy_tensor}
                 for i in range(len(qids)):
-                    if gates[i] == "X":
-                        ansatz.add_gate(H_tensor, qids[i])
-                    elif gates[i] == "Y":
-                        ansatz.add_gate(Hy_tensor, qids[i])
-                    elif gates[i] == "Z":
-                        continue
-                    else:
-                        raise ValueError("Invalid Pauli gate.")
+                    if gates[i] != "Z":
+                        assert gates[i] in gate_dict.keys(), "Invalid Pauli gate."
+                        ansatz.add_gate(gate_dict[gates[i]], qids[i])
                 ansatz = ansatz + self._Rnz_ansatz(2 * coeff * gamma, qids)
                 for i in range(len(qids)):
-                    if gates[i] == "X":
-                        ansatz.add_gate(H_tensor, qids[i])
-                    elif gates[i] == "Y":
-                        ansatz.add_gate(Hy_tensor, qids[i])
-                    elif gates[i] == "Z":
-                        continue
-                    else:
-                        raise ValueError("Invalid Pauli gate.")
+                    if gates[i] != "Z":
+                        assert gates[i] in gate_dict.keys(), "Invalid Pauli gate."
+                        ansatz.add_gate(gate_dict[gates[i]], qids[i])
+
             # Only Rx, Ry, Rz
             elif len(qids) == 1:
-                if gates[0] == "X":
-                    ansatz.add_gate(Rx_tensor(2 * coeff * gamma), qids)
-                elif gates[0] == "Y":
-                    ansatz.add_gate(Ry_tensor(2 * coeff * gamma), qids)
-                elif gates[0] == "Z":
-                    ansatz.add_gate(Rz_tensor(2 * coeff * gamma), qids)
-                else:
-                    raise ValueError("Invalid Pauli gate.")
+                gate_dict = {
+                    "X": Rx_tensor(2 * coeff * gamma),
+                    "Y": Ry_tensor(2 * coeff * gamma),
+                    "Z": Rz_tensor(2 * coeff * gamma),
+                }
+                assert gates[0] in gate_dict.keys(), "Invalid Pauli gate."
+                ansatz.add_gate(gate_dict[gates[0]], qids[0])
+
             # Only coeff
             else:
                 ansatz.add_gate(RI_tensor(-coeff))
@@ -90,12 +77,12 @@ class QAOANet(VQANet):
         else:
             # Add CNOT gates
             for i in range(len(tar_idx) - 1):
-                ansatz.add_gate(CX_tensor, tar_idx[i: i + 2])
+                ansatz.add_gate(CX_tensor, tar_idx[i : i + 2])
             # Add RZ gate
             ansatz.add_gate(Rz_tensor(gamma), tar_idx[-1])
             # Add CNOT gates
             for i in range(len(tar_idx) - 2, -1, -1):
-                ansatz.add_gate(CX_tensor, tar_idx[i: i + 2])
+                ansatz.add_gate(CX_tensor, tar_idx[i : i + 2])
         return ansatz
 
     def construct_ansatz(self):
@@ -121,44 +108,30 @@ class QAOANet(VQANet):
             self.hamiltonian._qubit_indexes,
             self.hamiltonian._pauli_gates,
         ):
-            # Remove I from pauli_gates and remove corresponding qid from qubit_indexes
-            findI = [i.start() for i in re.finditer("I", gates)]
-            qids = (np.delete(np.array(qids), findI)).tolist()
-            gates = gates.replace("I", "")
-
             # Mapping e.g. Rxyz
             if len(qids) > 1:
+                gate_dict = {"X": H, "Y": Hy}
                 for i in range(len(qids)):
-                    if gates[i] == "X":
-                        H | circuit(qids[i])
-                    elif gates[i] == "Y":
-                        Hy | circuit(qids[i])
-                    elif gates[i] == "Z":
-                        continue
-                    else:
-                        raise ValueError("Invalid Pauli gate.")
+                    if gates[i] != "Z":
+                        assert gates[i] in gate_dict.keys(), "Invalid Pauli gate."
+                        gate_dict[gates[i]] | circuit(qids[i])
                 Rnz_circuit = self._Rnz_circuit(2 * coeff * gamma, qids)
                 circuit.extend(Rnz_circuit.gates)
-
                 for i in range(len(qids)):
-                    if gates[i] == "X":
-                        H | circuit(qids[i])
-                    elif gates[i] == "Y":
-                        Hy | circuit(qids[i])
-                    elif gates[i] == "Z":
-                        continue
-                    else:
-                        raise ValueError("Invalid Pauli gate.")
+                    if gates[i] != "Z":
+                        assert gates[i] in gate_dict.keys(), "Invalid Pauli gate."
+                        gate_dict[gates[i]] | circuit(qids[i])
+
             # Only Rx, Ry, Rz
             elif len(qids) == 1:
-                if gates[0] == "X":
-                    Rx(2 * coeff * gamma) | circuit(qids[0])
-                elif gates[0] == "Y":
-                    Ry(2 * coeff * gamma) | circuit(qids[0])
-                elif gates[0] == "Z":
-                    Rz(2 * coeff * gamma) | circuit(qids[0])
-                else:
-                    raise ValueError("Invalid Pauli gate.")
+                gate_dict = {
+                    "X": Rx(2 * coeff * gamma),
+                    "Y": Ry(2 * coeff * gamma),
+                    "Z": Rz(2 * coeff * gamma),
+                }
+                assert gates[0] in gate_dict.keys(), "Invalid Pauli gate."
+                gate_dict[gates[0]] | circuit(qids[0])
+
             # Only coeff
             else:
                 RI | circuit
@@ -172,12 +145,12 @@ class QAOANet(VQANet):
         else:
             # Add CNOT gates
             for i in range(len(tar_idx) - 1):
-                CX | circuit(tar_idx[i: i + 2])
+                CX | circuit(tar_idx[i : i + 2])
             # Add RZ gate
             Rz(gamma) | circuit(tar_idx[-1])
             # Add CNOT gates
             for i in range(len(tar_idx) - 2, -1, -1):
-                CX | circuit(tar_idx[i: i + 2])
+                CX | circuit(tar_idx[i : i + 2])
         return circuit
 
     def construct_circuit(self):
