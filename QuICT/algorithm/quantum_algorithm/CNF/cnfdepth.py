@@ -100,7 +100,7 @@ class CNFSATDEPTHOracle:
                     MCTOneAux().execute(len(controls_abs) + 2) | self._cgate(controls_abs + [target, target-1]) 
                 # one_dirty_aux(self._cgate, controls_abs, target, target+1)
                 for j in range(clause_number):
-                    controls_abs.append(variable_number +  j+1)
+                    
                     self.clause(
                         CNF_data, variable_number, ancilla_qubits_num, clause_length, CleanQubitNumber,
                          j+1, j+1,
@@ -196,7 +196,7 @@ class CNFSATDEPTHOracle:
                 X | self._cgate(controls_X[i])
         else:  #StartID 和 EndID 不同 
             #print(StartID, EndID)
-            if ((EndID - StartID) * (clause_length) < (Aux - 2 * CleanQubitNumber + 1)) & ((EndID - StartID ) < p) : #if block_number == 1 而且 EndID - StartID > 1 
+            if ((EndID - StartID) * (clause_length) < (Aux - 2 * CleanQubitNumber + 1)) and ((EndID - StartID ) < p) : #if block_number == 1 而且 EndID - StartID > 1 
                 #print(" <p ", EndID,StartID,p,target) 
                 #print(c)
                 #print(c,p, EndID,StartID, 2*(EndID - StartID)-1)
