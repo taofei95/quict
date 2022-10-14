@@ -1,21 +1,23 @@
-import numpy as np
-import torch
 import random
-import networkx as nx
-import matplotlib.pyplot as plt
 from typing import Union
 
+import matplotlib.pyplot as plt
+import networkx as nx
+import numpy as np
+import torch
+
+from QuICT.algorithm.quantum_machine_learning.utils import Hamiltonian
+from QuICT.algorithm.quantum_machine_learning.VQA.QAOA import QAOA
 from QuICT.simulation.state_vector import ConstantStateVectorSimulator
-from QuICT.algorithm.quantum_machine_learning.VQA.QAOA.qaoa import QAOA
-from QuICT.algorithm.quantum_machine_learning.utils.hamiltonian import Hamiltonian
 
 
 class MaxCut:
-    def __init__(self, n: int, edges: list):
+    def __init__(self, n: int, edges: list, simulator=ConstantStateVectorSimulator()):
         self._n = n
         self._edges = edges
         self.solution_bit = None
         self.model_path = None
+        self.simulator = simulator
 
     def _seed(self, seed: int):
         torch.manual_seed(seed)
@@ -41,27 +43,21 @@ class MaxCut:
             plt.savefig(self.model_path + "/Probabilities.jpg")
         plt.show()
 
-    def draw_graph(self):
-        plt.figure()
-        plt.title("Graph")
-        G = nx.Graph()
-        G.add_nodes_from(range(self._n))
-        G.add_edges_from(self._edges)
-        pos = nx.circular_layout(G)
-        options = {
-            "with_labels": True,
-            "font_size": 20,
-            "font_weight": "bold",
-            "font_color": "white",
-            "node_size": 2000,
-            "width": 2,
-        }
-        nx.draw_networkx(G, pos, **options)
-        ax = plt.gca()
-        ax.margins(0.20)
-        plt.axis("off")
-        plt.show()
-        return
+    def _result(self):
+        cut_edges = []
+        for u in range(self._n):
+            for v in range(u + 1, self._n):
+                if (
+                    (u, v) in self._edges
+                    or (v, u) in self._edges
+                    or [u, v] in self._edges
+                    or [v, u] in self._edges
+                ):
+                    if self.solution_bit[u] != self.solution_bit[v]:
+                        cut_edges.append((u, v))
+
+        max_cut_num = len(cut_edges)
+        return max_cut_num, cut_edges
 
     def draw_result(self):
         plt.figure()
@@ -114,21 +110,27 @@ class MaxCut:
             plt.savefig(self.model_path + "/Maxcut_result.jpg")
         plt.show()
 
-    def _result(self):
-        cut_edges = []
-        for u in range(self._n):
-            for v in range(u + 1, self._n):
-                if (
-                    (u, v) in self._edges
-                    or (v, u) in self._edges
-                    or [u, v] in self._edges
-                    or [v, u] in self._edges
-                ):
-                    if self.solution_bit[u] != self.solution_bit[v]:
-                        cut_edges.append((u, v))
-
-        max_cut_num = len(cut_edges)
-        return max_cut_num, cut_edges
+    def draw_graph(self):
+        plt.figure()
+        plt.title("Graph")
+        G = nx.Graph()
+        G.add_nodes_from(range(self._n))
+        G.add_edges_from(self._edges)
+        pos = nx.circular_layout(G)
+        options = {
+            "with_labels": True,
+            "font_size": 20,
+            "font_weight": "bold",
+            "font_color": "white",
+            "node_size": 2000,
+            "width": 2,
+        }
+        nx.draw_networkx(G, pos, **options)
+        ax = plt.gca()
+        ax.margins(0.20)
+        plt.axis("off")
+        plt.show()
+        return
 
     def solve_maxcut(
         self,
@@ -141,17 +143,17 @@ class MaxCut:
         plot_prob=False,
         load_model=None,
         save_model=False,
-        resume: Union[bool, list] = False,
-        device=torch.device("cuda:0"),
+        resume: Union[bool, int] = False,
+        device="cuda:0",
     ):
         self._seed(seed)
         hamiltonian = self._maxcut_hamiltonian()
-        qaoa = QAOA(self._n, p, hamiltonian, device=device)
-        if load_model is not None and load_model != "" and resume is False:
+        qaoa = QAOA(self._n, p, hamiltonian, device=device, seed=seed)
+        if load_model is not None and resume is False:
             state = qaoa.test(model_path=load_model)
         else:
             state = qaoa.train(
-                optimizer=torch.optim.Adam,
+                optimizer="Adam",
                 lr=lr,
                 max_iters=max_iters,
                 model_path=load_model,
@@ -165,11 +167,10 @@ class MaxCut:
                 circuit.draw()
             else:
                 circuit.draw(filename=self.model_path + "/Maxcut_circuit.jpg")
-        simulator = ConstantStateVectorSimulator()
-        simulator.vector = state.cpu().detach().numpy()
-        simulator.circuit = circuit
-        simulator._qubits = circuit.width()
-        prob = simulator.sample(shots)
+        self.simulator.vector = state.cpu().detach().numpy()
+        self.simulator.circuit = circuit
+        self.simulator._qubits = circuit.width()
+        prob = self.simulator.sample(shots)
         if plot_prob:
             self._draw_prob(prob, shots)
         solution = prob.index(max(prob))
@@ -177,28 +178,3 @@ class MaxCut:
         max_cut_num, cut_edges = self._result()
 
         return max_cut_num, cut_edges
-
-
-if __name__ == "__main__":
-
-    def circle_graph(n):
-        edges = []
-        for i in range(n - 1):
-            edges.append((i, i + 1))
-        edges.append((n - 1, 0))
-        return edges
-
-    n = 4
-    maxcut = MaxCut(n, circle_graph(n))
-    # training
-    max_cut_num, cut_edges = maxcut.solve_maxcut(
-        p=n,
-        max_iters=100,
-        lr=0.1,
-        plot_prob=True,
-        save_model=True,
-        # load_model="QAOA_model_2022-10-13-13_58_36"
-    )
-    print("Max cut: {}".format(max_cut_num))
-    print("Cut edges: {}".format(cut_edges))
-    maxcut.draw_result()

@@ -1,11 +1,12 @@
-import numpy as np
 import copy
+
+import numpy as np
 import torch
 
+from QuICT.algorithm.quantum_machine_learning.utils import Ansatz
+from QuICT.algorithm.quantum_machine_learning.utils.gate_tensor import *
 from QuICT.core import Circuit
 from QuICT.core.gate import *
-from QuICT.algorithm.quantum_machine_learning.utils.gate_tensor import *
-from QuICT.algorithm.quantum_machine_learning.utils.ansatz import Ansatz
 
 
 class Hamiltonian:

@@ -1,8 +1,8 @@
-import torch
 import numpy as np
-from QuICT.core.gate import *
+import torch
+
 from QuICT.algorithm.quantum_machine_learning.utils.gate_tensor import *
-from QuICT.algorithm.quantum_machine_learning.utils.gate_tensor import BasicGateTensor
+from QuICT.core.gate import *
 
 
 class Ansatz:
@@ -11,7 +11,7 @@ class Ansatz:
         self._n_qubits = n_qubits if circuit is None else circuit.width()
         self._device = device
         self._gates = [] if circuit is None else self._gate_to_tensor(circuit.gates)
-        
+
     def __add__(self, other):
         ansatz = Ansatz(
             n_qubits=max(self._n_qubits, other._n_qubits), device=self._device

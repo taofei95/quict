@@ -1,13 +1,11 @@
 import copy
 from typing import Union
+
 import numpy as np
 import torch
 
 from QuICT.core.gate import *
-from QuICT.core.utils import (
-    GateType,
-    SPECIAL_GATE_SET,
-)
+from QuICT.core.utils import SPECIAL_GATE_SET, GateType
 
 
 class BasicGateTensor(object):

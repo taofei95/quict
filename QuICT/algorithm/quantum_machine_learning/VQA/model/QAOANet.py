@@ -1,14 +1,14 @@
+import re
 from fileinput import filename
+
 import torch
 import torch.nn
-import re
 
+from QuICT.algorithm.quantum_machine_learning.utils import Ansatz, Hamiltonian
+from QuICT.algorithm.quantum_machine_learning.utils.gate_tensor import *
+from QuICT.algorithm.quantum_machine_learning.VQA.model import VQANet
 from QuICT.core import Circuit
 from QuICT.core.gate import *
-from QuICT.algorithm.quantum_machine_learning.utils.gate_tensor import *
-from QuICT.algorithm.quantum_machine_learning.utils.hamiltonian import Hamiltonian
-from QuICT.algorithm.quantum_machine_learning.utils.ansatz import Ansatz
-from QuICT.algorithm.quantum_machine_learning.VQA.model.VQANet import VQANet
 
 
 class QAOANet(VQANet):
@@ -90,12 +90,12 @@ class QAOANet(VQANet):
         else:
             # Add CNOT gates
             for i in range(len(tar_idx) - 1):
-                ansatz.add_gate(CX_tensor, tar_idx[i : i + 2])
+                ansatz.add_gate(CX_tensor, tar_idx[i: i + 2])
             # Add RZ gate
             ansatz.add_gate(Rz_tensor(gamma), tar_idx[-1])
             # Add CNOT gates
             for i in range(len(tar_idx) - 2, -1, -1):
-                ansatz.add_gate(CX_tensor, tar_idx[i : i + 2])
+                ansatz.add_gate(CX_tensor, tar_idx[i: i + 2])
         return ansatz
 
     def construct_ansatz(self):
@@ -172,12 +172,12 @@ class QAOANet(VQANet):
         else:
             # Add CNOT gates
             for i in range(len(tar_idx) - 1):
-                CX | circuit(tar_idx[i : i + 2])
+                CX | circuit(tar_idx[i: i + 2])
             # Add RZ gate
             Rz(gamma) | circuit(tar_idx[-1])
             # Add CNOT gates
             for i in range(len(tar_idx) - 2, -1, -1):
-                CX | circuit(tar_idx[i : i + 2])
+                CX | circuit(tar_idx[i: i + 2])
         return circuit
 
     def construct_circuit(self):

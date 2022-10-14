@@ -1,8 +1,7 @@
-import torch
 import numpy as np
+import torch
 
-from QuICT.algorithm.quantum_machine_learning.utils.hamiltonian import Hamiltonian
-from QuICT.algorithm.quantum_machine_learning.utils.ansatz import Ansatz
+from QuICT.algorithm.quantum_machine_learning.utils import Hamiltonian
 
 
 class VQANet(torch.nn.Module):
@@ -22,7 +21,7 @@ class VQANet(torch.nn.Module):
 
     def define_network(self):
         raise NotImplementedError
-    
+
     def loss_func(self, state):
         if isinstance(state, np.ndarray):
             state = torch.from_numpy(state).to(self.device)
