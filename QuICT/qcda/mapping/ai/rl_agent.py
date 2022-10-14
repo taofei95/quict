@@ -18,7 +18,7 @@ class Agent:
         max_gate_num: int,
         epsilon_start: float = 0.9,
         epsilon_end: float = 0.05,
-        epsilon_decay: float = 1000.0,
+        epsilon_decay: float = 500.0,
         reward_scale: float = 5.0,
     ) -> None:
         # Copy values in.

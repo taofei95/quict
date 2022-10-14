@@ -65,13 +65,13 @@ class Trainer:
     def __init__(
         self,
         topo: Union[str, Layout],
-        max_gate_num: int = 100,
+        max_gate_num: int = 200,
         feat_dim: int = 100,
         gamma: float = 0.9,
         replay_pool_size: int = 20000,
         batch_size: int = 64,
         total_epoch: int = 2000,
-        explore_period: int = 4000,
+        explore_period: int = 10000,
         target_update_period: int = 20,
         device: str = "cuda" if torch.cuda.is_available() else "cpu",
         model_path: str = None,
@@ -112,7 +112,7 @@ class Trainer:
             action_num=self._agent.action_num,
         ).to(device=device)
         self._target_net.train(False)
-        # Guarantee they two have the same parameter values.
+        # Guarantee they have the same parameter values.
         self._target_net.load_state_dict(self._policy_net.state_dict())
 
         # Experience replay memory pool
@@ -146,6 +146,9 @@ class Trainer:
         self._v_data: List[ValidationData] = []
         self._mcts_num: Dict[str, int] = {}
         self._load_v_data()
+
+        # best so far
+        self._v_best_score = 1e9
 
     def _load_v_data(self):
         v_data_dir = osp.join(self._agent.factory._data_dir, "v_data")
@@ -229,22 +232,38 @@ class Trainer:
         non_final_data_batch = State.batch_from_list(
             data_list=non_final_data_list, device=self._device
         )
-        # Use Double DQN extension
-        next_actions = (
-            self._policy_net(non_final_data_batch)
-            .clone()
-            .detach()
-            .max(1)[1]
-            .view(-1, 1)
-        )
+        #
+        # Use double DQN extension
+        #
+        # next_actions = (
+        #     self._policy_net(non_final_data_batch)
+        #     .clone()
+        #     .detach()
+        #     .max(1)[1]
+        #     .view(-1, 1)
+        # )
+        # next_state_values = torch.zeros(self._batch_size, device=self._device)
+        # next_state_values[non_final_mask] = (
+        #     self._target_net(
+        #         non_final_data_batch,
+        #     )  # [b, a]
+        #     .gather(1, next_actions)
+        #     .squeeze()
+        # )
+
+        #
+        # Use normal DQN
+        #
         next_state_values = torch.zeros(self._batch_size, device=self._device)
         next_state_values[non_final_mask] = (
             self._target_net(
                 non_final_data_batch,
-            )  # [b, a]
-            .gather(1, next_actions)
-            .squeeze()
+            ) # [b, a]
+            .clone()
+            .detach()
+            .max(1)[0]
         )
+
         expected_state_action_values = (next_state_values * self._gamma) + rewards
 
         loss = self._smooth_l1(state_action_values, expected_state_action_values)
@@ -336,7 +355,16 @@ class Trainer:
             _original_num = len(v_datum.circ.gates)
             rl_num[topo_name] += _rl_num
             original_num[topo_name] += _original_num
-            if epoch_id % 10 == 0:
+            print(
+                f"    #Gate in circuit: {_original_num}, #Gate by RL: {_rl_num} ({topo_name})"
+            )
+        if rl_num[topo_name] < self._v_best_score:
+            self._v_best_score = rl_num[topo_name]
+            torch.save(
+                self._target_net.state_dict(),
+                osp.join(self._model_path, f"model_epoch_{epoch_id}.pt"),
+            )
+            for idx, v_datum in enumerate(results):
                 rl_circ_fig = v_datum.rl_mapped_circ.draw(method="matp_silent")
                 original_circ_fig = v_datum.circ.draw(method="matp_silent")
                 rl_circ_fig.dpi = 75
@@ -347,14 +375,12 @@ class Trainer:
                 self._writer.add_figure(
                     f"{topo_name}-{idx}", original_circ_fig, epoch_id
                 )
-            print(
-                f"    #Gate in circuit: {_original_num}, #Gate by RL: {_rl_num} ({topo_name})"
-            )
         self._writer.add_scalars(
             f"Validation Performance ({topo_name})",
             {
                 "#Gate in circuit": original_num[topo_name],
                 "#Gate by RL": rl_num[topo_name],
+                "#Gate by RL (best)": self._v_best_score,
             },
             epoch_id + 1,
         )
@@ -369,15 +395,10 @@ class Trainer:
             print("Validating current model on some circuits...")
             results = self.validate_model()
             self.show_validation_results(results, epoch_id)
-            if epoch_id % 200 == 0 and epoch_id >= 200:
-                torch.save(
-                    self._target_net.state_dict(),
-                    osp.join(self._model_path, f"model_epoch_{epoch_id}.pt"),
-                )
 
 
 if __name__ == "__main__":
-    topo = "grid_3x3"
-    # trainer = Trainer(topo=topo, device="cpu")
-    trainer = Trainer(topo=topo)
+    topo = "grid_4x4"
+    device = "cuda:1"
+    trainer = Trainer(topo=topo, device=device)
     trainer.train()

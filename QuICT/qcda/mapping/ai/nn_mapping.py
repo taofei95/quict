@@ -17,24 +17,36 @@ class CircuitGnn(nn.Module):
         self._max_gate_num = max_gate_num
         self._feat_dim = feat_dim
 
-        self._gc_inner = nn.ModuleList(
+        self._gc_grp_1 = nn.ModuleList(
             [
                 gnn.SAGEConv(
                     in_channels=feat_dim,
                     out_channels=feat_dim,
                 )
-                for _ in range(8)
+                for _ in range(3)
             ]
         )
-
+        # self._norm_1 = gnn.GraphNorm(in_channels=feat_dim)
+        self._gc_grp_2 = nn.ModuleList(
+            [
+                gnn.SAGEConv(
+                    in_channels=feat_dim,
+                    out_channels=feat_dim,
+                )
+                for _ in range(3)
+            ]
+        )
         self._aggr = gnn.aggr.SoftmaxAggregation(learn=True)
 
     def forward(self, x, edge_index, batch=None):
         n = self._max_gate_num
         f = self._feat_dim
 
-        for conv in self._gc_inner:
-            x = F.relu(conv(x, edge_index))
+        for conv in self._gc_grp_1:
+            x = F.relu(conv(x, edge_index)) + x
+        # x = self._norm_1(x,batch)
+        for conv in self._gc_grp_2:
+            x = F.relu(conv(x, edge_index)) + x
         x = self._aggr(x, batch)  # [b, f]
         x = x.view(-1, f)  # [b, f]
         return x
@@ -87,5 +99,6 @@ class GnnMapping(nn.Module):
 
         x = self._mlp_1(circ_feat).view(-1, a)  # [b, a]
         return x
+
 
 NnMapping = GnnMapping
