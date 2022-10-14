@@ -23,6 +23,10 @@ from QuICT.core.operator import (
     NoiseGate
 )
 from .dag_circuit import DAGCircuit
+from QuICT.tools import Logger
+
+
+logger = Logger("circuit")
 
 
 class Circuit(CircuitBased):
@@ -116,12 +120,17 @@ class Circuit(CircuitBased):
         if ancillae_qubits is not None:
             self.ancillae_qubits = ancillae_qubits
 
+        logger.info(f"Initial Quantum Circuit {name} with {wires} qubits.")
+        if self._topology is not None:
+            logger.info(f"The Layout for Quantum Circuit is {self._topology}.")
+
     def __del__(self):
         """ release the memory """
         self.gates = None
         self.qubits = None
         self.topology = None
         self.fidelity = None
+        logger.info(f"Delete Quantum Circuit {self._name}.")
 
     def __or__(self, targets):
         """deal the operator '|'
@@ -203,9 +212,12 @@ class Circuit(CircuitBased):
         if is_ancillary_qubit:
             self._ancillae_qubits += list(range(self.width() - len(qubits), self.width()))
 
+        logger.debug(f"Quantum Circuit {self._name} add {len(qubits)} qubits.")
+
     def reset_qubits(self):
         """ Reset all qubits in current circuit. """
         self._qubits.reset_qubits()
+        logger.debug(f"Reset qubits' measured result in the Quantum Circuit {self._name}.")
 
     def remapping(self, qureg: Qureg, mapping: list, circuit_update: bool = False):
         """ Realignment the qubits by the given mapping.
@@ -227,12 +239,31 @@ class Circuit(CircuitBased):
 
         if circuit_update:
             self._qubits = remapping_qureg
+            logger.debug(f"The qureg {qureg} is permutation by the order {mapping}.")
 
         qureg[:] = remapping_qureg
 
     ####################################################################
     ############          Circuit Gates Operators           ############
     ####################################################################
+    def _add_quantumgate_into_circuit(self, gate: BasicGate, insert_idx: int = -1):
+        if insert_idx == -1:
+            self.gates.append(gate)
+            insert_idx = len(self.gates)
+        else:
+            self.gates.insert(insert_idx, gate)
+
+        logger.debug(
+            f"Add quantum gate {gate.type} with qubit indexes {gate.cargs + gate.targs} " +
+            f"with index {insert_idx}."
+        )
+
+        # Update gate type dict
+        if gate.type in self._gate_type.keys():
+            self._gate_type[gate.type] += 1
+        else:
+            self._gate_type[gate.type] = 1
+
     def _update_gate_index(self):
         for index, gate in enumerate(self.gates):
             gate_type, gate_qb, gate_idx = gate.name.split('-')
@@ -249,6 +280,7 @@ class Circuit(CircuitBased):
         """
         assert idx >= 0 and idx < len(self._gates), "The index of replaced gate is wrong."
         assert isinstance(gate, (BasicGate, NoiseGate)), "The replaced gate must be a quantum gate or noised gate."
+        logger.debug(f"The origin gate {self._gates[idx]} is replaced by {gate}")
         self._gates[idx] = gate
 
     def find_position(self, cp_child: CheckPointChild):
@@ -323,8 +355,10 @@ class Circuit(CircuitBased):
             self._add_trigger(op, qureg)
         elif isinstance(op, CheckPoint):
             self._checkpoints.append(op)
+            logger.debug(f"Add an CheckPoint which point to index {op.position}.")
         elif isinstance(op, Operator):
             self._gates.append(op)
+            logger.debug(f"Add an operator {type(op)}.")
         else:
             raise TypeError(f"Circuit can append a Trigger/BasicGate/NoiseGate, not {type(op)}.")
 
@@ -359,16 +393,8 @@ class Circuit(CircuitBased):
         gate.assigned_qubits = qureg
         gate.update_name(qureg[0].id, len(self.gates))
 
-        if insert_idx == -1:
-            self.gates.append(gate)
-        else:
-            self.gates.insert(insert_idx, gate)
-
-        # Update gate type dict
-        if gate.type in self._gate_type.keys():
-            self._gate_type[gate.type] += 1
-        else:
-            self._gate_type[gate.type] = 1
+        # Add gate into circuit
+        self._add_quantumgate_into_circuit(gate, insert_idx)
 
     def _add_gate_to_all_qubits(self, gate):
         for idx in range(self.width()):
@@ -377,13 +403,7 @@ class Circuit(CircuitBased):
             new_gate.assigned_qubits = self.qubits(idx)
             new_gate.update_name(self.qubits[idx].id, len(self.gates))
 
-            self.gates.append(new_gate)
-
-        # Update gate type dict
-        if gate.type in self._gate_type.keys():
-            self._gate_type[gate.type] += self.width()
-        else:
-            self._gate_type[gate.type] = self.width()
+            self._add_quantumgate_into_circuit(new_gate)
 
     def _add_trigger(self, op: Trigger, qureg: Qureg):
         if qureg:
@@ -397,6 +417,7 @@ class Circuit(CircuitBased):
                 assert targ < self.width(), "The trigger's target exceed the width of the circuit."
 
         self.gates.append(op)
+        logger.debug(f"Add an operator Trigger with qubit indexes {op.targs}.")
 
     def random_append(
         self,
@@ -429,6 +450,7 @@ class Circuit(CircuitBased):
         if probabilities is not None:
             assert np.isclose(sum(probabilities), 1, atol=1e-6) and len(probabilities) == len(typelist)
 
+        logger.debug(f"Random append {rand_size} quantum gates from {typelist} with probability {probabilities}.")
         gate_prob = probabilities
         gate_indexes = list(range(len(typelist)))
         n_qubit = self.width()
@@ -448,6 +470,7 @@ class Circuit(CircuitBased):
         qubits = len(self.qubits)
         supremacy_layout = SupremacyLayout(qubits)
         supremacy_typelist = [GateType.sx, GateType.sy, GateType.sw]
+        logger.debug(f"Append Supremacy Circuit with mapping pattern sequence {pattern} and repeat {repeat} times.")
 
         self._add_gate_to_all_qubits(H)
 
@@ -492,6 +515,11 @@ class Circuit(CircuitBased):
         Return:
             Circuit: the sub circuit
         """
+        max_size_for_logger = max_size if max_size == -1 else len(self.gates) - start
+        logger.info(
+            f"Get {max_size_for_logger} gates from gate index {start}" +
+            f" with target qubits {qubit_limit} and gate limit {gate_limit}."
+        )
         if qubit_limit:
             target_qubits = qubit_limit
             if isinstance(qubit_limit, Qureg):
@@ -534,6 +562,7 @@ class Circuit(CircuitBased):
 
         if remove:
             self._update_gate_index()
+            logger.warn(f"Remove sub-circuit's gates from quantum circuit {self._name}.")
 
         return sub_circuit
 
@@ -568,8 +597,8 @@ class Circuit(CircuitBased):
 
         if method.startswith('matp'):
             if filename is not None:
-                    if '.' not in filename:
-                        filename += '.jpg'
+                if '.' not in filename:
+                    filename += '.jpg'
             photo_drawer = PhotoDrawer()
             if method == 'matp_auto':
                 save_file = matplotlib.get_backend() == 'agg'
