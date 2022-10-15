@@ -27,8 +27,7 @@ class MatchingDAGNode(DAGNode):
         self.successors_to_visit = []
         self.matched_with = None
         self.is_blocked = False
-        # FIXME super use mutable as default values
-        super().__init__(id, gate, predecessors=[], successors=[])
+        super().__init__(id, gate)
 
     def pop_successors_to_visit(self):
         """
@@ -84,24 +83,24 @@ class MatchingDAGNode(DAGNode):
         """
         return NodeInfo(self.matched_with, self.is_blocked)
 
-    def append_pred(self, u):
-        """
-        Append a node id to successors.
-
-        Args:
-            u(int): the node
-        """
-        self._predecessors.append(u)
-
-    def append_succ(self, u):
-        """
-        Append a node id to predecessors.
-
-        Args:
-            u(int): the node
-        """
-
-        self._successors.append(u)
+    # def append_pred(self, u):
+    #     """
+    #     Append a node id to successors.
+    #
+    #     Args:
+    #         u(int): the node
+    #     """
+    #     self._predecessors.append(u)
+    #
+    # def append_succ(self, u):
+    #     """
+    #     Append a node id to predecessors.
+    #
+    #     Args:
+    #         u(int): the node
+    #     """
+    #
+    #     self._successors.append(u)
 
 
 class MatchingDAGCircuit(DAGCircuit):
@@ -112,33 +111,33 @@ class MatchingDAGCircuit(DAGCircuit):
     def __init__(self, circuit: Circuit):
         self._successor_cache = {}
         self._predecessor_cache = {}
-        super().__init__(circuit)
+        super().__init__(circuit, node_type=MatchingDAGNode)
 
-    def add_edge(self, u, v):
-        """
-        Add a directed edge to DAG.
-
-        Args:
-            u(int): start node
-            v(int): end node
-        """
-
-        self._graph.add_edge(u, v)
-        self.get_node(u).append_succ(v)
-        self.get_node(v).append_pred(u)
-
-    def _to_dag_circuit(self):
-        gates = self._circuit.gates
-        reachable = np.zeros(shape=(len(gates), ), dtype=bool)
-        for idx, g in enumerate(gates):
-            assert isinstance(g, BasicGate), "Only support BasicGate in DAGCircuit."
-            cur = MatchingDAGNode(idx, g)
-            self.add_node(cur)
-            reachable[: idx] = True
-            for prev in reversed(range(idx)):
-                if reachable[prev] and not g.commutative(gates[prev]):
-                    self.add_edge(prev, idx)
-                    reachable[list(self.all_predecessors(prev, cache_enabled=False))] = False
+    # def add_edge(self, u, v):
+    #     """
+    #     Add a directed edge to DAG.
+    #
+    #     Args:
+    #         u(int): start node
+    #         v(int): end node
+    #     """
+    #
+    #     self._graph.add_edge(u, v)
+    #     self.get_node(u).append_succ(v)
+    #     self.get_node(v).append_pred(u)
+    #
+    # def _to_dag_circuit(self):
+    #     gates = self._circuit.gates
+    #     reachable = np.zeros(shape=(len(gates), ), dtype=bool)
+    #     for idx, g in enumerate(gates):
+    #         assert isinstance(g, BasicGate), "Only support BasicGate in DAGCircuit."
+    #         cur = MatchingDAGNode(idx, g)
+    #         self.add_node(cur)
+    #         reachable[: idx] = True
+    #         for prev in reversed(range(idx)):
+    #             if reachable[prev] and not g.commutative(gates[prev]):
+    #                 self.add_edge(prev, idx)
+    #                 reachable[list(self.all_predecessors(prev, cache_enabled=False))] = False
 
     def init_forward_matching(self, node_id, other_id, s2v_enabled=False):
         """
@@ -160,6 +159,7 @@ class MatchingDAGCircuit(DAGCircuit):
                     node.successors_to_visit = []
             node.is_blocked = False
 
+    """
     def _all_reachable(self, start, direction):
         if isinstance(start, int):
             visited = {start}
@@ -178,6 +178,7 @@ class MatchingDAGCircuit(DAGCircuit):
                     visited.add(node_id)
 
         return visited - init_visited
+    """
 
     def all_predecessors(self, start, cache_enabled=True) -> Set[int]:
         """
@@ -206,7 +207,7 @@ class MatchingDAGCircuit(DAGCircuit):
 
     def all_successors(self, start, cache_enabled=True) -> Set[int]:
         """
-        Return all successors (direct and undirect) of `start`.
+        Return all successors (direct and indirect) of `start`.
         `start` can be a node id (int) or many node ids (Iterable).
         Return values of single node query will be cached if `cache_enable` is True.
 

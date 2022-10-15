@@ -1,3 +1,7 @@
+from collections import Iterable, deque
+from typing import Set
+
+import numpy as np
 import networkx as nx
 import matplotlib.pyplot as plt
 
@@ -53,15 +57,34 @@ class DAGNode:
     def predecessors(self, pdces: list):
         self._predecessors = pdces
 
-    def __init__(self, id: int, gate: BasicGate, successors: list = [], predecessors: list = []):
+    def __init__(self, id: int, gate: BasicGate, successors: list = None, predecessors: list = None):
         self._id = id
         self._gate = gate
         self._name = gate.qasm_name
         self._cargs = gate.cargs
         self._targs = gate.targs
         self._qargs = gate.cargs + gate.targs
-        self._successors = successors
-        self._predecessors = predecessors
+        self._successors = [] if successors is None else successors
+        self._predecessors = [] if predecessors is None else predecessors
+
+    def append_pred(self, u):
+        """
+        Append a node id to successors.
+
+        Args:
+            u(int): the node
+        """
+        self._predecessors.append(u)
+
+    def append_succ(self, u):
+        """
+        Append a node id to predecessors.
+
+        Args:
+            u(int): the node
+        """
+
+        self._successors.append(u)
 
 
 class DAGCircuit:
@@ -95,12 +118,13 @@ class DAGCircuit:
     def width(self) -> int:
         return self._width
 
-    def __init__(self, circuit):
+    def __init__(self, circuit, node_type=DAGNode):
         self._circuit = circuit
         self._name = f"DAG_{self._circuit.name}"
         self._size = self._circuit.size()
         self._width = self._circuit.width()
         self._graph = nx.DiGraph()
+        self._node_type = node_type
         # Build DAG Circuit
         self._to_dag_circuit()
 
@@ -173,6 +197,78 @@ class DAGCircuit:
     ############                Circuit to DAG              ############
     ####################################################################
     def _to_dag_circuit(self):
+        gates = self._circuit.gates
+        reachable = np.zeros(shape=(len(gates), ), dtype=bool)
+        for idx, g in enumerate(gates):
+            assert isinstance(g, BasicGate), "Only support BasicGate in DAGCircuit."
+            cur = self._node_type(idx, g)
+            self.add_node(cur)
+            reachable[: idx] = True
+            for prev in reversed(range(idx)):
+                if reachable[prev] and not g.commutative(gates[prev]):
+                    self.add_edge(prev, idx)
+                    reachable[list(self.all_predecessors(prev))] = False
+
+    def _all_reachable(self, start, direction):
+        if isinstance(start, int):
+            visited = {start}
+        elif isinstance(start, Iterable):
+            visited = set(start)
+        else:
+            assert False, 'start must be int or iterable objects'
+
+        que = deque(visited)
+        init_visited = visited.copy()
+        while len(que) > 0:
+            cur_node = self.get_node(que.popleft())
+            for node_id in getattr(cur_node, direction):
+                if node_id not in visited:
+                    que.append(node_id)
+                    visited.add(node_id)
+
+        return visited - init_visited
+
+    def all_predecessors(self, start) -> Set[int]:
+        """
+        Return all predecessors (direct and indirect) of `start`.
+        `start` can be a node id (int) or many node ids (Iterable).
+
+        Args:
+            start(int/Iterable): the start node(s)
+
+        Returns:
+            set: set of predecessors
+        """
+
+        return self._all_reachable(start, 'predecessors')
+
+    def all_successors(self, start) -> Set[int]:
+        """
+        Return all successors (direct and indirect) of `start`.
+
+        Args:
+            start(int/Iterable): the start node(s)
+
+        Returns:
+            Set[int]: set of successors
+        """
+
+        return self._all_reachable(start, 'successors')
+
+    def add_edge(self, u, v):
+        """
+        Add a directed edge to DAG.
+
+        Args:
+            u(int): start node
+            v(int): end node
+        """
+
+        self._graph.add_edge(u, v)
+        self.get_node(u).append_succ(v)
+        self.get_node(v).append_pred(u)
+
+    def _to_dag_circuit_deprecated(self):
         """ Algorithm to generate DAG circuit. """
         gates = self._circuit.gates
         endpoints = []      # The endpoint of current DAG graph
