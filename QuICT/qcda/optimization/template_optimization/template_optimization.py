@@ -7,10 +7,9 @@ from QuICT.core import Circuit
 from QuICT.qcda.optimization.template_optimization.template_matching.template_substitution import TemplateSubstitution
 from QuICT.qcda.optimization.template_optimization.template_matching.template_matching import TemplateMatching
 from QuICT.qcda.optimization.template_optimization.template_matching.template_matching import MatchingDAGCircuit
-from QuICT.qcda.optimization._optimization import Optimization
 
 
-class TemplateOptimization(Optimization):
+class TemplateOptimization(object):
     """
     Template optimization algorithm.
 
@@ -19,17 +18,13 @@ class TemplateOptimization(Optimization):
     `arXiv:1909.05270 <https://arxiv.org/abs/1909.05270>`
     """
 
-    @classmethod
-    def execute(
-        cls,
-        circuit,
-        template_list=None,
-        heuristics_qubits_param=None,
-        heuristics_backward_param=None
+    def __init__(
+            self,
+            template_list=None,
+            heuristics_qubits_param=None,
+            heuristics_backward_param=None
     ):
         """
-        Execute template optimization algorithm.
-
         Heuristic qubit parameters `heuristics_qubits_param` is in the form [cnt] where `cnt` is
         the number of additional qubits explored when enumerating the qubit mapping (recommended
         value is 1).
@@ -42,18 +37,32 @@ class TemplateOptimization(Optimization):
         specified.
 
         Args:
-            circuit(Circuit): the circuit to be optimized
             template_list(List[Circuit]): the list of templates used (the default value is [X-X, CX-CX, CCX-CCX]).
             heuristics_qubits_param(List[int]): Heuristic qubit parameters
             heuristics_backward_param(List[int]): Heuristic backward match parameter
         """
 
-        if template_list is None:
-            template_list = [template_nct_2a_1(), template_nct_2a_2(), template_nct_2a_3()]
+        self.template_list = template_list
+        self.heuristics_qubits_param = heuristics_qubits_param
+        self.heuristics_backward_param = heuristics_backward_param
+
+        if self.template_list is None:
+            self.template_list = [template_nct_2a_1(), template_nct_2a_2(), template_nct_2a_3()]
+
+    def execute(self, circuit):
+        """
+        Execute template optimization algorithm.
+
+        Args:
+            circuit(Circuit): the circuit to be optimized
+
+        Returns:
+            Circuit: the optimized circuit
+        """
 
         circ_dag = MatchingDAGCircuit(circuit)
 
-        for template in template_list:
+        for template in self.template_list:
             template_dag = MatchingDAGCircuit(template)
 
             if template_dag.width > circ_dag.width:
@@ -62,8 +71,8 @@ class TemplateOptimization(Optimization):
             matches = TemplateMatching.execute(
                 circ_dag,
                 template_dag,
-                heuristics_qubits_param,
-                heuristics_backward_param
+                self.heuristics_qubits_param,
+                self.heuristics_backward_param
             )
 
             circ_dag = TemplateSubstitution.execute(circ_dag, template_dag, matches)

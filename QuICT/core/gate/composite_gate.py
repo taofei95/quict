@@ -9,9 +9,7 @@ import numpy as np
 from QuICT.core.qubit import Qureg, Qubit
 from QuICT.core.gate import BasicGate
 from QuICT.core.utils import (
-    GateType,
     CircuitBased,
-    matrix_product_to_circuit,
     CGATE_LIST,
     unique_id_generator
 )
@@ -77,6 +75,11 @@ class CompositeGate(CircuitBased):
         self._update_qubit_limit(indexes)
         self._pointer = indexes
         return self
+
+    def clean(self):
+        self._gates = []
+        self._min_qubit, self._max_qubit = np.inf, 0
+        self._pointer = -1
 
     def __and__(self, targets: Union[int, list, Qubit, Qureg]):
         """ assign qubits or indexes for given gates
@@ -184,7 +187,7 @@ class CompositeGate(CircuitBased):
         self._pointer = None
 
     def append(self, gate, is_extend: bool = False, insert_idx: int = -1):
-        from QuICT.core.operator import CheckPointChild
+        from QuICT.core.operator import CheckPointChild, Operator
 
         if isinstance(gate, BasicGate):
             self._append_gate(gate, insert_idx)
@@ -198,6 +201,12 @@ class CompositeGate(CircuitBased):
                 self._gate_type[gate.type] = 1
         elif isinstance(gate, CheckPointChild):
             self._check_point = gate
+        else:
+            assert isinstance(gate, Operator)
+            if insert_idx == -1:
+                self._gates.append(gate)
+            else:
+                self._gates.insert(insert_idx, gate)
 
     def left_extend(self, gates: list):
         for idx, gate in enumerate(gates):
@@ -246,33 +255,22 @@ class CompositeGate(CircuitBased):
 
         return inverse_cgate
 
-    def matrix(self, local: bool = False) -> np.ndarray:
+    def matrix(self, device: str = "CPU", local: bool = False) -> np.ndarray:
         """ matrix of these gates
 
         Args:
+            device (str, optional): The device type for generate circuit's matrix, one of [CPU, GPU]. Defaults to "CPU".
             local: whether regards the min_qubit as the 0's qubit
 
         Returns:
             np.ndarray: the matrix of the gates
         """
-        if not self._gates:
-            return None
-
         if local and isinstance(self._min_qubit, int):
             min_value = self._min_qubit
         else:
             min_value = 0
 
-        matrix = np.eye(1 << (self._max_qubit - min_value))
-        for gate in self.gates:
-            if gate.is_special() and gate.type != GateType.unitary:
-                raise TypeError(f"Cannot combined the gate matrix with special gate {gate.type}")
-
-            matrix = np.matmul(matrix_product_to_circuit(
-                gate.matrix, gate.cargs + gate.targs, self._max_qubit, min_value
-            ), matrix)
-
-        return matrix
+        return super().matrix(device, min_value)
 
     def equal(self, target, ignore_phase=True, eps=1e-7) -> bool:
         """ whether is equally with target or not.

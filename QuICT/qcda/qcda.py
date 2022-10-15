@@ -1,19 +1,10 @@
 """
-Class for customizing the process of synthesis, optimization and mapping
+Class for customizing the whole process of synthesis, optimization and mapping
 """
 
-import numpy as np
-
-from QuICT.core import Circuit
-from QuICT.core.gate import CompositeGate
-from QuICT.qcda.synthesis.unitary_transform import UnitaryTransform
-from QuICT.tools.interface import OPENQASMInterface
-from .synthesis._synthesis import Synthesis
-from .optimization._optimization import Optimization
-from .mapping._mapping import Mapping
-from .synthesis import GateDecomposition, GateTransform
-from .optimization import CommutativeOptimization
-from .mapping import MCTSMapping
+from QuICT.qcda.synthesis import GateDecomposition, GateTransform
+from QuICT.qcda.optimization import CommutativeOptimization
+from QuICT.qcda.mapping import MCTSMapping
 
 
 class QCDA(object):
@@ -22,81 +13,31 @@ class QCDA(object):
     In this class, we meant to provide the users with a direct path to design the
     process by which they could transform a unitary matrix to a quantum circuit
     and/or optimize a quantum circuit.
-
-    In this version, users could choose whether to use the synthesis, optimization
-    and mapping operations implemented by us.
-
-    XXX: Although the structure of `process` is kept, now the revision of `process`
-    is highly restricted in case of unexpected behaviour resulting from inappropriate
-    modification. Now the users could only overload the `compile` function to completely
-    control the workflow of `process`. Still, it is needed that a certain design for
-    allowing the users to revise the `process` with their own operations, only if the
-    executions are similar to the original ones.(How to ensure that the user gives a proper
-    `process`? That's why it is not implemented in this version.)
-
-    TODO: Optimization before synthesis is a good idea. However, because of the lack
-    of methods to deal with complex gates, this subprocess is omitted in this version.
-
-    TODO: Some optimization processes are related to topology, the structure of the process
-    might be revised.
     """
-    def __init__(self):
+    def __init__(self, process=None):
         """ Initialize a QCDA process
 
-        Args:
-            process(list): A list of synthesis, optimization and mapping operations
+        A QCDA process is defined by a list of synthesis, optimization and mapping.
+        Experienced users could customize the process for certain purposes.
 
-        Note:
-            The element of `process` must be a list formatted as [operation, args, kwargs],
-            in which `operation`, `args`, `kwargs` are the class of operation, the arguments
-            and the keyword arguments respectively.
+        Args:
+            instruction(InstructionSet, optional): InstructionSet for default process
+            layout(Layout, optional): Layout for default process
+            process(list, optional): A customized list of Synthesis, Optimization and Mapping
         """
         self.process = []
+        if process is not None:
+            self.process = process
 
-    @classmethod
-    def load_gates(cls, objective):
-        """ Load the objective to CompositeGate with BasicGates only
-
-        The objective would be analyzed and tranformed to a CompositeGate depending on its
-        type, with the ComplexGates in it decomposed to BasicGates.
+    def add_method(self, method=None):
+        """ Adding a specific method to the process
 
         Args:
-            objective: objective of QCDA process, the following types are supported.
-                1. str: the objective is the path of an OPENQASM file
-                2. numpy.ndarray: the objective is a unitary matrix
-                3. Circuit: the objective is a Circuit
-                4. CompositeGate: the objective is a CompositeGate
-
-        Returns:
-            CompositeGate: gates equivalent to the objective, with BasicGates only
-
-        Raises:
-            If the objective could not be resolved as any of the above types.
+            method: Some QCDA method
         """
-        # Load the objective as gates
-        if isinstance(objective, np.ndarray):
-            gates, _ = UnitaryTransform.execute(objective)
+        self.process.append(method)
 
-        if isinstance(objective, str):
-            qasm = OPENQASMInterface.load_file(objective)
-            if qasm.valid_circuit:
-                # FIXME: no circuit here
-                circuit = qasm.circuit
-                gates = CompositeGate(gates=circuit.gates)
-            else:
-                raise ValueError("Invalid qasm file!")
-
-        if isinstance(objective, Circuit):
-            gates = CompositeGate(gates=objective.gates)
-
-        if isinstance(objective, CompositeGate):
-            gates = CompositeGate(gates=objective.gates)
-
-        assert isinstance(gates, CompositeGate), TypeError('Invalid objective!')
-        return gates
-
-    @staticmethod
-    def default_synthesis(instruction):
+    def add_default_synthesis(self, target_instruction=None):
         """ Generate the default synthesis process
 
         The default synthesis process contains the GateDecomposition and GateTransform, which would
@@ -104,110 +45,40 @@ class QCDA(object):
 
         Args:
             instruction(InstructionSet): The target InstructionSet
-
-        Returns:
-            List: Synthesis subprocess
         """
-        assert instruction is not None,\
-            ValueError('No InstructionSet provided for Synthesis')
-        subprocess = []
-        subprocess.append([GateDecomposition, [], {}])
-        subprocess.append([GateTransform, [instruction], {}])
-        return subprocess
+        assert target_instruction is not None, ValueError('No InstructionSet provided for Synthesis')
+        self.add_method(GateDecomposition())
+        self.add_method(GateTransform(target_instruction))
 
-    @staticmethod
-    def default_optimization():
+    def add_default_optimization(self):
         """ Generate the default optimization process
 
         The default optimization process contains the CommutativeOptimization.
         TODO: Now TemplateOptimization only works for Clifford+T circuits, to be added.
-
-        Returns:
-            List: Optimization subprocess
         """
-        subprocess = []
-        subprocess.append([CommutativeOptimization, [], {}])
-        return subprocess
+        self.add_method(CommutativeOptimization())
 
-    @staticmethod
-    def default_mapping(layout):
+    def add_default_mapping(self, layout=None):
         """ Generate the default mapping process
 
         The default mapping process contains the Mapping
 
         Args:
             layout(Layout): Topology of the target physical device
-
-        Returns:
-            List: Mapping subprocess
         """
-        assert layout is not None,\
-            ValueError('No Layout provided for Mapping')
-        subprocess = []
-        subprocess.append([MCTSMapping, [layout], {'init_mapping_method': 'anneal'}])
-        return subprocess
+        assert layout is not None, ValueError('No Layout provided for Mapping')
+        self.add_method(MCTSMapping(layout, init_mapping_method='anneal'))
 
-    def compile(self, objective, instruction=None, layout=None, synthesis=True, optimization=True, mapping=True):
-        """ Compile the objective with default process setting
-
-        The easy-to-use process for the users to compile the objective with certain InstructionSet
-        and topology. Three switches are given to control whether to use the corresponding subprocess.
-        Be aware that synthesis subprocess needs `instruction` and mapping subprocess needs `topology`.
+    def compile(self, circuit):
+        """ Compile the circuit with the given process
 
         Args:
-            objective: objective of QCDA process, the following types are supported.
-                1. str: the objective is the path of an OPENQASM file
-                2. numpy.ndarray: the objective is a unitary matrix
-                3. Circuit: the objective is a Circuit
-                4. CompositeGate: the objective is a CompositeGate
-            instruction(InstructionSet): The target InstructionSet
-            layout(Layout): Topology of the target physical device
-            synthesis(bool): whether to use synthesis subprocess(`instruction` needed)
-            optimization(bool): whether to use optimization subprocess
-            mapping(bool): whether to use mapping subprocess(`topology` needed)
-
-        Returns:
-            CompositeGate/Circuit: the resulting CompositeGate or Circuit(depending on whether to use
-            the mapping process)
-        """
-        gates = self.load_gates(objective)
-
-        if synthesis:
-            self.process.extend(self.default_synthesis(instruction))
-        if optimization:
-            self.process.extend(self.default_optimization())
-        if mapping:
-            self.process.extend(self.default_mapping(layout))
-
-        gates = self.__custom_compile(gates)
-        self.process = []
-
-        return gates
-
-    def __custom_compile(self, gates):
-        """ The execution of the QCDA process
-
-        This is the exection part of the QCDA process, after the process is generated by default
-        or created by advanced users.
-
-        Args:
-            gates(CompositeGate): The CompositeGate to be compiled by `self.process`
+            circuit(CompositeGate/Circuit): the target CompositeGate or Circuit
 
         Returns:
             CompositeGate/Circuit: the resulting CompositeGate or Circuit
-
-        HACK: Feel free to hack this part if needed, though it works for default process.
         """
-        for operation, args, kwargs in self.process:
-            if isinstance(operation, Synthesis) or isinstance(operation, Optimization):
-                gates = CompositeGate(gates=gates.gates)
-            if isinstance(operation, Mapping):
-                circuit = Circuit(gates.width())
-                circuit.extend(gates.gates)
-                gates = circuit
+        for process in self.process:
+            circuit = process.execute(circuit)
 
-            print('Processing {}'.format(operation.__name__))
-            gates = operation.execute(gates, *args, **kwargs)
-            print('Process {} finished'.format(operation.__name__))
-
-        return gates
+        return circuit

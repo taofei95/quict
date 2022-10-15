@@ -25,6 +25,8 @@ class Qubit(object):
             the probability of measure result to be 1, which range in [0, 1].
             After apply measure gate on the qubit, this attribute can be read,
             otherwise raise an exception
+        historical_measured(list):
+            Record all measured result of current qubits.
     """
 
     @property
@@ -38,6 +40,12 @@ class Qubit(object):
     @measured.setter
     def measured(self, measured):
         self._measured = measured
+        if self._measured is not None:
+            self._historical_measured.append(self._measured)
+
+    @property
+    def historical_measured(self):
+        return self._historical_measured
 
     @property
     def prob(self) -> float:
@@ -56,6 +64,7 @@ class Qubit(object):
         self._id = unique_id_generator()
         self._measured = None
         self._prob = prob
+        self._historical_measured = []
 
     def __str__(self):
         """ string describe of the qubit
@@ -89,6 +98,11 @@ class Qubit(object):
             The qubit has not be measured.
         """
         return bool(int(self))
+
+    def reset(self):
+        """ Reset self qubit status. """
+        self._historical_measured = []
+        self._measured = None
 
 
 class Qureg(list):
@@ -287,3 +301,8 @@ class Qureg(list):
                 return idx
 
         raise ValueError("The given qubit is not in this Qureg.")
+
+    def reset_qubits(self):
+        """ Reset all qubits' status. """
+        for qubit in self:
+            qubit.reset()

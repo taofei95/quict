@@ -2,17 +2,16 @@ import numpy as np
 import unittest
 
 from QuICT.core.gate import H
+from QuICT.simulation.state_vector import ConstantStateVectorSimulator, CircuitSimulator
 from QuICT.algorithm.quantum_algorithm.quantum_walk import QuantumWalk, Graph
-from QuICT.simulation.cpu_simulator import CircuitSimulator
-from QuICT.simulation.gpu_simulator import ConstantStateVectorSimulator
 
 
 class TestQuantumWalk(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         print("The Random Walk unit test start!")
-        cls.simulator = ConstantStateVectorSimulator()
         cls.steps = 10
+        cls.simulator = ConstantStateVectorSimulator()
 
     @classmethod
     def tearDownClass(cls) -> None:
@@ -20,28 +19,22 @@ class TestQuantumWalk(unittest.TestCase):
 
     def test_circular_random_walk(self):
         edges = [[3, 1], [0, 2], [1, 3], [2, 0]]
-        graph = Graph(4, edges)
-
-        qw = QuantumWalk(TestQuantumWalk.steps, graph, H.matrix)
-        _ = qw.run(TestQuantumWalk.simulator)
+        qw = QuantumWalk(TestQuantumWalk.simulator)
+        _ = qw.run(step=TestQuantumWalk.steps, position=4, edges=edges, coin_operator=H.matrix)
 
         assert 1
 
     def test_unbalanced_random_walk(self):
         edges = [[2, 1], [0, 2], [1, 0]]
-        graph = Graph(3, edges)
-
-        qw = QuantumWalk(TestQuantumWalk.steps, graph, H.matrix)
-        _ = qw.run(TestQuantumWalk.simulator)
+        qw = QuantumWalk(TestQuantumWalk.simulator)
+        _ = qw.run(step=TestQuantumWalk.steps, position=3, edges=edges, coin_operator=H.matrix)
 
         assert 1
 
     def test_2qcoin_random_walk(self):
         edges = [list(np.random.choice(8, size=4, replace=False)) for _ in range(8)]
-        graph = Graph(8, edges)
-
-        qw = QuantumWalk(3, graph, np.kron(H.matrix, H.matrix))
-        _ = qw.run(TestQuantumWalk.simulator)
+        qw = QuantumWalk(TestQuantumWalk.simulator)
+        _ = qw.run(step=3, position=8, edges=edges, coin_operator=np.kron(H.matrix, H.matrix))
 
         assert 1
 

@@ -26,5 +26,9 @@ if __name__ == '__main__':
     circuit.draw()
 
     qcda = QCDA()
-    circuit_phy = qcda.compile(circuit, USTCSet, layout)
+    qcda.add_default_synthesis(USTCSet)
+    qcda.add_default_optimization()
+    qcda.add_default_mapping(layout)
+    qcda.add_default_synthesis(USTCSet)
+    circuit_phy = qcda.compile(circuit)
     circuit_phy.draw()

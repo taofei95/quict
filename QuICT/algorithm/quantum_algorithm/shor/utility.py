@@ -1,9 +1,10 @@
+import logging
+import numpy as np
+
 from functools import reduce
 from math import gcd
 from QuICT.core.gate import X
-from QuICT.simulation.cpu_simulator import CircuitSimulator
-import logging
-import numpy as np
+from QuICT.simulation.state_vector import CircuitSimulator
 
 
 def ex_gcd(a, b, arr):
@@ -121,7 +122,7 @@ def miller_rabin(num):
     return True
 
 
-MAX_ROUND = 3
+MAX_ROUND = 2
 
 
 def reinforced_order_finding_constructor(order_finding):

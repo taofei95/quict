@@ -13,10 +13,9 @@ typelist = [
 
 if __name__ == '__main__':
     circuit = Circuit(5)
-    circuit.random_append(rand_size=100, typelist=typelist)
+    circuit.random_append(rand_size=100, typelist=typelist, random_params=True)
     circuit.draw()
 
-    gates = CommutativeOptimization.execute(circuit)
-    circuit_opt = Circuit(5)
-    circuit_opt.extend(gates)
+    CO = CommutativeOptimization()
+    circuit_opt = CO.execute(circuit)
     circuit_opt.draw()

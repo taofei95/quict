@@ -7,7 +7,6 @@
 from QuICT.core import Circuit
 from QuICT.core.gate import *
 from QuICT.algorithm.quantum_algorithm.shor.utility import int2bitwise, mod_reverse
-from ..._synthesis import Synthesis
 
 
 def var_controlled_X(gate_set, controls, target):
@@ -24,7 +23,7 @@ def var_controlled_X(gate_set, controls, target):
         elif n_control == 1:
             CX & [controls[0], target]
         elif n_control == 2:
-            CCX & [controls[0], controls[1], target]
+            CCX.build_gate() & [controls[0], controls[1], target]
         else:
             raise ValueError()
 
@@ -51,13 +50,13 @@ def carry(gate_set, control, a, c_bitwise, g_aug, overflow):
                 if n_control == 0:
                     CX & [a[0], overflow]
                 elif n_control == 1:
-                    CCX & [control[0], a[0], overflow]
+                    CCX.build_gate() & [control[0], a[0], overflow]
                 elif n_control == 2:
                     # CCCX | (c[0],c[1],a[0],overflow) with g_aug[0] as ancilla
-                    CCX & [a[0], g_aug[0], overflow]
-                    CCX & [control[0], control[1], g_aug[0]]
-                    CCX & [a[0], g_aug[0], overflow]
-                    CCX & [control[0], control[1], g_aug[0]]
+                    CCX.build_gate() & [a[0], g_aug[0], overflow]
+                    CCX.build_gate() & [control[0], control[1], g_aug[0]]
+                    CCX.build_gate() & [a[0], g_aug[0], overflow]
+                    CCX.build_gate() & [control[0], control[1], g_aug[0]]
                 else:
                     raise ValueError()
             return
@@ -65,13 +64,13 @@ def carry(gate_set, control, a, c_bitwise, g_aug, overflow):
         if n_control == 0:
             CX & [g[0], overflow]
         elif n_control == 1:
-            CCX & [control[0], g[0], overflow]
+            CCX.build_gate() & [control[0], g[0], overflow]
         elif n_control == 2:
             # CCCX | (c1,c2,g[0],overflow) with a[0] as ancilla
-            CCX & [g[0], a[0], overflow]
-            CCX & [control[0], control[1], a[0]]
-            CCX & [g[0], a[0], overflow]
-            CCX & [control[0], control[1], a[0]]
+            CCX.build_gate() & [g[0], a[0], overflow]
+            CCX.build_gate() & [control[0], control[1], a[0]]
+            CCX.build_gate() & [g[0], a[0], overflow]
+            CCX.build_gate() & [control[0], control[1], a[0]]
         else:
             raise ValueError()
 
@@ -79,38 +78,38 @@ def carry(gate_set, control, a, c_bitwise, g_aug, overflow):
             if c_bitwise[i] == "1":
                 CX & [a[i], g[i]]
                 X & a[i]
-            CCX & [g[i + 1], a[i], g[i]]
+            CCX.build_gate() & [g[i + 1], a[i], g[i]]
         if c_bitwise[n - 2] == "1":
             CX & [a[n - 2], g[n - 2]]
             X & a[n - 2]
         if c_bitwise[n - 1] == "1":
-            CCX & [a[n - 1], a[n - 2], g[n - 2]]
+            CCX.build_gate() & [a[n - 1], a[n - 2], g[n - 2]]
         for i in range(n - 2):
-            CCX & [g[n - 2 - i], a[n - 3 - i], g[n - 3 - i]]
+            CCX.build_gate() & [g[n - 2 - i], a[n - 3 - i], g[n - 3 - i]]
 
         if n_control == 0:
             CX & [g[0], overflow]
         elif n_control == 1:
-            CCX & [control[0], g[0], overflow]
+            CCX.build_gate() & [control[0], g[0], overflow]
         elif n_control == 2:
             # CCCX | (c1,c2,g[0],overflow) with a[0] as ancilla
-            CCX & [g[0], a[0], overflow]
-            CCX & [control[0], control[1], a[0]]
-            CCX & [g[0], a[0], overflow]
-            CCX & [control[0], control[1], a[0]]
+            CCX.build_gate() & [g[0], a[0], overflow]
+            CCX.build_gate() & [control[0], control[1], a[0]]
+            CCX.build_gate() & [g[0], a[0], overflow]
+            CCX.build_gate() & [control[0], control[1], a[0]]
         else:
             raise ValueError()
 
         # uncomputation
         for i in range(n - 2):
-            CCX & [g[i + 1], a[i], g[i]]
+            CCX.build_gate() & [g[i + 1], a[i], g[i]]
         if c_bitwise[n - 1] == "1":
-            CCX & [a[n - 1], a[n - 2], g[n - 2]]
+            CCX.build_gate() & [a[n - 1], a[n - 2], g[n - 2]]
         if c_bitwise[n - 2] == "1":
             X & a[n - 2]
             CX & [a[n - 2], g[n - 2]]
         for i in range(n - 2):
-            CCX & [g[n - 2 - i], a[n - 3 - i], g[n - 3 - i]]
+            CCX.build_gate() & [g[n - 2 - i], a[n - 3 - i], g[n - 3 - i]]
             if c_bitwise[n - 3 - i] == "1":
                 X & a[n - 3 - i]
                 CX & [a[n - 3 - i], g[n - 3 - i]]
@@ -131,10 +130,10 @@ def sub_widget(gate_set, v, g):
         for i in range(n - 1):
             CX & [g[n - 1 - i], v[n - 1 - i]]
             CX & [g[n - 2 - i], g[n - 1 - i]]
-            CCX & [g[n - 1 - i], v[n - 1 - i], g[n - 2 - i]]
+            CCX.build_gate() & [g[n - 1 - i], v[n - 1 - i], g[n - 2 - i]]
         CX & [g[0], v[0]]
         for i in range(n - 1):
-            CCX & [g[i + 1], v[i + 1], g[i]]
+            CCX.build_gate() & [g[i + 1], v[i + 1], g[i]]
             CX & [g[i], g[i + 1]]
             CX & [g[i], v[i + 1]]
 
@@ -436,7 +435,7 @@ def mul_mod(gate_set, control, x, a, ancilla, N, indicator):
         mul_mod_raw_reversed(gate_set, control, x, a_r, ancilla, N, indicator)
 
 
-class HRSAdder(Synthesis):
+class HRSAdder(object):
     @staticmethod
     def execute(n, c):
         """
@@ -462,7 +461,7 @@ class HRSAdder(Synthesis):
         return gate_set
 
 
-class HRSAdderMod(Synthesis):
+class HRSAdderMod(object):
     @staticmethod
     def execute(n, a, N):
         """
@@ -498,7 +497,7 @@ class HRSAdderMod(Synthesis):
         return gate_set
 
 
-class HRSMulMod(Synthesis):
+class HRSMulMod(object):
     @staticmethod
     def execute(n, a, N):
         """
@@ -533,7 +532,7 @@ class HRSMulMod(Synthesis):
         return gate_set
 
 
-class CHRSMulMod(Synthesis):
+class CHRSMulMod(object):
     @staticmethod
     def execute(n, a, N):
         """

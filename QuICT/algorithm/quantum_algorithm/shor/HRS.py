@@ -7,17 +7,14 @@ by THOMAS HANER, MARTIN ROETTELER, and KRYSTA M. SVORE in \
 """
 
 import logging
-from math import pi
 import numpy as np
 from fractions import Fraction
 
 from QuICT.core import Circuit
 from QuICT.core.gate import *
 from QuICT.qcda.synthesis.arithmetic.hrs import *
-from QuICT.algorithm import Algorithm
+from QuICT.simulation.state_vector import CircuitSimulator
 from .utility import *
-
-from QuICT.simulation.cpu_simulator import CircuitSimulator
 
 
 def construct_circuit(a: int, N: int, eps: float = 1 / 10):
