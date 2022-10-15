@@ -1,4 +1,4 @@
-from typing import Set, List, Union
+from typing import Set, List
 from collections.abc import Iterable
 from functools import cached_property
 
@@ -18,6 +18,7 @@ class MatchingDAGNode(DAGNode):
     """
     DAG node class tailored for template matching algorithm.
     """
+
     __slots__ = ['successors_to_visit', 'matched_with', 'is_blocked',
                  '_id', '_gate', '_name', '_cargs', '_targs', '_qargs',
                  '_successors', '_predecessors']
@@ -182,10 +183,10 @@ class MatchingDAGCircuit(DAGCircuit):
         """
         Return all predecessors (direct and undirect) of `start`.
         `start` can be a node id (int) or many node ids (Iterable).
-        Return values of single node query will be cached if `cache_enable` is True.
+        Return values of single node query will be cached if `cache_enable` is True
 
         Args:
-            start(Union[int, Iterable]): the start node(s)
+            start(int/Iterable): the start node(s)
             cache_enabled(bool): whether use cache
 
         Returns:
@@ -210,7 +211,7 @@ class MatchingDAGCircuit(DAGCircuit):
         Return values of single node query will be cached if `cache_enable` is True.
 
         Args:
-            start(Union[int, Iterable]): the start node(s)
+            start(int/Iterable): the start node(s)
             cache_enabled(bool): whether use cache
 
         Returns:
@@ -236,6 +237,13 @@ class MatchingDAGCircuit(DAGCircuit):
         return [self.get_node(i).node_info() for i in range(self.size)]
 
     def get_circuit(self):
+        """
+        Output the circuit of this DAG.
+
+        Returns:
+            Circuit: the circuit
+        """
+
         circ = Circuit(self.width)
         for node_id in self.nodes():
             node: MatchingDAGNode = self.get_node(node_id)

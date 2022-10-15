@@ -1,3 +1,5 @@
+from typing import List
+
 from QuICT.qcda.optimization.template_optimization.templates import \
     template_nct_2a_1, template_nct_2a_2, template_nct_2a_3
 
@@ -9,6 +11,13 @@ from QuICT.qcda.optimization._optimization import Optimization
 
 
 class TemplateOptimization(Optimization):
+    """
+    Template optimization algorithm.
+
+    [1] Iten, R., Moyard, R., Metger, T., Sutter, D. and Woerner, S., 2020.
+    Exact and practical pattern matching for quantum circuit optimization.
+    `arXiv:1909.05270 <https://arxiv.org/abs/1909.05270>`
+    """
 
     @classmethod
     def execute(
@@ -18,6 +27,26 @@ class TemplateOptimization(Optimization):
         heuristics_qubits_param=None,
         heuristics_backward_param=None
     ):
+        """
+        Execute template optimization algorithm.
+
+        Heuristic qubit parameters `heuristics_qubits_param` is in the form [cnt] where `cnt` is
+        the number of additional qubits explored when enumerating the qubit mapping (recommended
+        value is 1).
+
+        Heuristic backward match parameter `heuristics_backward_param` is in the form [D, W].
+        Backward match will prune the search tree when depth=k*D (k = 1, 2, ...) and at most W
+        maximal matching scenarios will survive (recommended value is [3, 1]).
+
+        Above two heuristic algorithms will be executed only when the corresponding parameter is
+        specified.
+
+        Args:
+            circuit(Circuit): the circuit to be optimized
+            template_list(List[Circuit]): the list of templates used (the default value is [X-X, CX-CX, CCX-CCX]).
+            heuristics_qubits_param(List[int]): Heuristic qubit parameters
+            heuristics_backward_param(List[int]): Heuristic backward match parameter
+        """
 
         if template_list is None:
             template_list = [template_nct_2a_1(), template_nct_2a_2(), template_nct_2a_3()]
