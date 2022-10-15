@@ -3,8 +3,8 @@ import pytest
 from QuICT.core import *
 from QuICT.core.gate import *
 from QuICT.qcda.optimization.template_optimization.template_matching_v2 import \
-    MatchingDAGCircuit, TemplateMatching, ForwardMatch
-from QuICT.qcda.optimization.template_optimization.template_matching_v2.template_optimization import \
+    MatchingDAGCircuit, ForwardMatch
+from QuICT.qcda.optimization.template_optimization.template_optimization import \
     TemplateOptimization
 from QuICT.algorithm import SyntheticalUnitary
 

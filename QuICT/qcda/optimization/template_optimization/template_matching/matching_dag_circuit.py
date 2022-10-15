@@ -1,14 +1,11 @@
 from typing import Set, List
 from collections.abc import Iterable
 from functools import cached_property
-
-import numpy as np
+from collections import namedtuple
 
 from QuICT.core import Circuit
 from QuICT.core.circuit.dag_circuit import DAGNode, DAGCircuit
 from QuICT.core.gate import BasicGate
-from collections import deque
-from collections import namedtuple
 
 
 NodeInfo = namedtuple('NodeInfo', ['matched_with', 'is_blocked'])
@@ -83,25 +80,6 @@ class MatchingDAGNode(DAGNode):
         """
         return NodeInfo(self.matched_with, self.is_blocked)
 
-    # def append_pred(self, u):
-    #     """
-    #     Append a node id to successors.
-    #
-    #     Args:
-    #         u(int): the node
-    #     """
-    #     self._predecessors.append(u)
-    #
-    # def append_succ(self, u):
-    #     """
-    #     Append a node id to predecessors.
-    #
-    #     Args:
-    #         u(int): the node
-    #     """
-    #
-    #     self._successors.append(u)
-
 
 class MatchingDAGCircuit(DAGCircuit):
     """
@@ -112,32 +90,6 @@ class MatchingDAGCircuit(DAGCircuit):
         self._successor_cache = {}
         self._predecessor_cache = {}
         super().__init__(circuit, node_type=MatchingDAGNode)
-
-    # def add_edge(self, u, v):
-    #     """
-    #     Add a directed edge to DAG.
-    #
-    #     Args:
-    #         u(int): start node
-    #         v(int): end node
-    #     """
-    #
-    #     self._graph.add_edge(u, v)
-    #     self.get_node(u).append_succ(v)
-    #     self.get_node(v).append_pred(u)
-    #
-    # def _to_dag_circuit(self):
-    #     gates = self._circuit.gates
-    #     reachable = np.zeros(shape=(len(gates), ), dtype=bool)
-    #     for idx, g in enumerate(gates):
-    #         assert isinstance(g, BasicGate), "Only support BasicGate in DAGCircuit."
-    #         cur = MatchingDAGNode(idx, g)
-    #         self.add_node(cur)
-    #         reachable[: idx] = True
-    #         for prev in reversed(range(idx)):
-    #             if reachable[prev] and not g.commutative(gates[prev]):
-    #                 self.add_edge(prev, idx)
-    #                 reachable[list(self.all_predecessors(prev, cache_enabled=False))] = False
 
     def init_forward_matching(self, node_id, other_id, s2v_enabled=False):
         """
@@ -158,27 +110,6 @@ class MatchingDAGCircuit(DAGCircuit):
                 if s2v_enabled:
                     node.successors_to_visit = []
             node.is_blocked = False
-
-    """
-    def _all_reachable(self, start, direction):
-        if isinstance(start, int):
-            visited = {start}
-        elif isinstance(start, Iterable):
-            visited = set(start)
-        else:
-            assert False, 'start must be int or iterable objects'
-
-        que = deque(visited)
-        init_visited = visited.copy()
-        while len(que) > 0:
-            cur_node = self.get_node(que.popleft())
-            for node_id in getattr(cur_node, direction):
-                if node_id not in visited:
-                    que.append(node_id)
-                    visited.add(node_id)
-
-        return visited - init_visited
-    """
 
     def all_predecessors(self, start, cache_enabled=True) -> Set[int]:
         """
