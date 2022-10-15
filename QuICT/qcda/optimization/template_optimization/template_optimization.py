@@ -4,9 +4,9 @@ from QuICT.qcda.optimization.template_optimization.templates import \
     template_nct_2a_1, template_nct_2a_2, template_nct_2a_3
 
 from QuICT.core import Circuit
-from QuICT.qcda.optimization.template_optimization.template_matching_v2.template_substitution import TemplateSubstitution
-from QuICT.qcda.optimization.template_optimization.template_matching_v2.template_matching import TemplateMatching
-from QuICT.qcda.optimization.template_optimization.template_matching_v2.template_matching import MatchingDAGCircuit
+from QuICT.qcda.optimization.template_optimization.template_matching.template_substitution import TemplateSubstitution
+from QuICT.qcda.optimization.template_optimization.template_matching.template_matching import TemplateMatching
+from QuICT.qcda.optimization.template_optimization.template_matching.template_matching import MatchingDAGCircuit
 from QuICT.qcda.optimization._optimization import Optimization
 
 

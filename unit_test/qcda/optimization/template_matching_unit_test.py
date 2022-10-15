@@ -2,7 +2,7 @@ import pytest
 
 from QuICT.core import *
 from QuICT.core.gate import *
-from QuICT.qcda.optimization.template_optimization.template_matching_v2 import \
+from QuICT.qcda.optimization.template_optimization.template_matching import \
     MatchingDAGCircuit, ForwardMatch
 from QuICT.qcda.optimization.template_optimization.template_optimization import \
     TemplateOptimization
