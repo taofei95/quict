@@ -96,8 +96,8 @@ def amplitude_estimate(
     l = ceil(1 + log2(pi/(3*true_eps))) # by formula 27
     delta = DELTA # fixed
     delta_c = delta/(2*l) # success rate of $1-2l\delta_c$
-    N_1_shot = ceil(40*log(2/delta_c)) #TODO: optimization
-    N_2_shot = ceil(20*log(2/delta_c)) #TODO: optimization
+    N_1_shot = ceil(1944*log(2/delta_c)) #TODO: optimization
+    N_2_shot = ceil(972*log(2/delta_c)) #TODO: optimization
     logging.info(f"using (l,N1,N2)=({l:2},{N_1_shot:5},{N_2_shot:5})")
     theta_min, theta_max = 0, 0.252
     j0 = l
