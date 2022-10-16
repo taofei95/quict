@@ -6,14 +6,14 @@
     <el-dialog title="Instruction Set" v-model="dialogCmdVisible" width="30%">
       <div style="text-align: left">
         <div>
-        <el-radio :label="0" v-model="currentSet" style="display: inline-block">{{ all_sets[0].name }}</el-radio>
-        <el-radio :label="1" v-model="currentSet" style="display: inline-block">{{ all_sets[1].name }}</el-radio>
-        <br />
-        <el-radio :label="2" v-model="currentSet" style="display: inline-block">{{ all_sets[2].name }}</el-radio>
-        <el-radio :label="3" v-model="currentSet" style="display: inline-block">{{ all_sets[3].name }}</el-radio>
-        <el-radio :label="4" v-model="currentSet" style="display: inline-block">{{ all_sets[4].name }}</el-radio>
-        <el-radio :label="5" v-model="currentSet" style="display: inline-block">{{ all_sets[5].name }}</el-radio>
-      </div>
+          <el-radio :label="0" v-model="currentSet" style="display: inline-block">{{ all_sets[0].name }}</el-radio>
+          <el-radio :label="1" v-model="currentSet" style="display: inline-block">{{ all_sets[1].name }}</el-radio>
+          <br />
+          <el-radio :label="2" v-model="currentSet" style="display: inline-block">{{ all_sets[2].name }}</el-radio>
+          <el-radio :label="3" v-model="currentSet" style="display: inline-block">{{ all_sets[3].name }}</el-radio>
+          <el-radio :label="4" v-model="currentSet" style="display: inline-block">{{ all_sets[4].name }}</el-radio>
+          <el-radio :label="5" v-model="currentSet" style="display: inline-block">{{ all_sets[5].name }}</el-radio>
+        </div>
         <div>
           <span style="display: block"><b>Customer Set</b>(Click to remove from Customer Set)</span>
           <img v-for="gate in customerSet" :key="gate" :src="'./assets/gate_set/' + gate.img" @click="
@@ -52,24 +52,25 @@
       </div>
       <template #footer>
         <span class="dialog-footer">
-          <el-upload class="upload-demo" :action="uploadBackend" :multiple="multipleUpload"
-            :show-file-list="showFileList" :before-upload="TpLoad" style="display: inline-block">
-            <el-button size="small" type="primary" style="font-family: 'Segoe UI Symbol'"> LOAD</el-button>
-          </el-upload>
-          <el-button @click="pvClear">Clear</el-button>
-          <el-button @click="pvAll">All</el-button>
-          <el-button @click="pvReverse">Reverse</el-button>
-          <el-button type="primary" @click="
-  dialogTpVisible = false;
-TpConfirm();
-          ">OK</el-button>
+          <div>
+            <el-button @click="pvClear">Clear</el-button>
+            <el-button @click="pvAll">All</el-button>
+            <el-button @click="pvReverse">Reverse</el-button>
+          </div>
+          <div>
+            <el-upload class="upload-demo" :action="uploadBackend" :multiple="multipleUpload"
+              :show-file-list="showFileList" :before-upload="TpLoad" style="display: inline-block">
+              <el-button type="primary" style="font-family: 'Segoe UI Symbol'"> LOAD</el-button>
+            </el-upload>
+            <el-button type="primary" @click="dialogTpVisible = false;TpConfirm();">OK</el-button>
+          </div>
         </span>
       </template>
     </el-dialog>
 
     <el-dialog title="Backend" v-model="dialogBeVisible" width="30%">
       <div>
-        <span>Device</span>
+        <span style="margin:0px 10px 0px 0px">Device:</span>
         <el-radio v-model="dialogBe" label="CPU">CPU</el-radio>
         <el-radio v-model="dialogBe" label="GPU">GPU</el-radio>
         <!-- <el-radio v-model="dialogBe" label="qiskit">qiskit</el-radio>
@@ -77,7 +78,7 @@ TpConfirm();
       </div>
       <div>
         <el-select v-model="dialogBe_Backend" placeholder="Backend">
-          <span>Backend</span>
+          <!-- <span>Backend: </span> -->
           <el-option v-for="item in dialogBe_Backend_options" :key="item.value" :label="item.label" :value="item.value">
           </el-option>
         </el-select>
@@ -139,7 +140,7 @@ TpConfirm();
         "> Setting</el-button>
       <span v-if="show_save_run_load" style="color: #409eff; font-size: large">|</span>
       <el-upload v-if="show_save_run_load" class="upload-demo" :action="uploadBackend" :multiple="multipleUpload"
-        :show-file-list="showFileList" :before-upload="loadQCDA">
+        :show-file-list="showFileList" :before-upload="loadQCDA" style="margin: 0px">
         <el-button size="small" type="primary" plain style="margin: 0px 10px; font-family: 'Segoe UI Symbol'"> LOAD
         </el-button>
       </el-upload>

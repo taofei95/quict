@@ -14,10 +14,13 @@
     </el-header>
     <el-main style="padding: 0px !important; height: calc(100vh - 100px)">
       <div id="step_0" class="div_selected">
-        <el-button size="large" type="primary" style="font-family: 'Segoe UI Symbol'" @click="new_qcda"> New
+        <el-button size="large" type="primary"
+          style="font-family: 'Segoe UI Symbol'; width: 100px; height: 100px; margin: 100px 10px;" @click="new_qcda">
+          New
         </el-button>
-        <el-button size="large" type="primary" plain style="margin: 0px 10px; font-family: 'Segoe UI Symbol'"
-          @click="load_qcda"> LOAD
+        <el-button size="large" type="primary" plain
+          style="margin: 100px 10px; font-family: 'Segoe UI Symbol'; width: 100px; height: 100px;" @click="load_qcda">
+          LOAD
         </el-button>
 
       </div>
@@ -31,6 +34,10 @@
             </ToolBar>
             <nVisualizeZone ref="n_visVue" :VisContentIn="n_VisContent" v-on:VisUpdate="n_VisUpdate">
             </nVisualizeZone>
+            <el-button size="large" type="primary" plain @click="back_qcda"
+              style="margin: 0px 10px; font-family: 'Segoe UI Symbol'"> Back </el-button>
+            <el-button size="large" type="primary" plain @click="confirm_newQCDA" :enabled="NewConfirmBtnEnable"
+              style="margin: 0px 10px; font-family: 'Segoe UI Symbol'"> Next </el-button>
           </el-main>
           <el-aside width="20%" style="background-color: #292c3d; padding: 0px">
             <ProgramZone :ProgramTextIn="n_ProgramText" v-on:ProgramUpdate="n_ProgramUpdate">
@@ -38,10 +45,7 @@
           </el-aside>
 
         </el-container>
-        <el-button size="large" type="primary" plain @click="back_qcda"
-          style="margin: 0px 10px; font-family: 'Segoe UI Symbol'"> Back </el-button>
-        <el-button size="large" type="primary" plain @click="confirm_newQCDA" :enabled="NewConfirmBtnEnable"
-          style="margin: 0px 10px; font-family: 'Segoe UI Symbol'"> Confirm </el-button>
+
       </div>
       <div id="step_1_L" class="div_not_selected">
         <ToolBar ref="l_toolBar" v-on:SaveQCDA="toolbar_func" v-on:RunQCDA="toolbar_func" v-on:LoadQCDA="toolbar_func"
@@ -51,13 +55,13 @@
         </ToolBar>
         <el-upload class="load_qcda" :action="uploadBackend" :multiple="multipleUpload" :show-file-list="showFileList"
           :before-upload="loadQCDA">
-          <el-button size="large" type="primary" plain style="margin: 0px 10px; font-family: 'Segoe UI Symbol'"> LOAD
+          <el-button size="large" type="primary" plain style="margin: 100px 10px; font-family: 'Segoe UI Symbol';width: 100px; height: 100px;"> LOAD
           </el-button>
         </el-upload>
         <el-button size="large" type="primary" plain @click="back_qcda"
           style="margin: 0px 10px; font-family: 'Segoe UI Symbol'"> Back </el-button>
-        <el-button size="large" type="primary" plain @click="confirm_loadQCDA" :enabled="LoadConfirmBtnEnable"
-          style="margin: 0px 10px; font-family: 'Segoe UI Symbol'"> Confirm </el-button>
+        <el-button size="large" type="primary" plain @click="confirm_loadQCDA" :disabled="LoadConfirmBtnDisable"
+          style="margin: 0px 10px; font-family: 'Segoe UI Symbol'"> Next </el-button>
       </div>
       <div id="step_2" class="div_not_selected">
         <oVisualizeZone ref="o_visVue" :VisContentIn="o_VisContent">
@@ -66,7 +70,7 @@
         <el-button size="large" type="primary" plain @click="back_o_qasm"
           style="margin: 0px 10px; font-family: 'Segoe UI Symbol'"> Back </el-button>
         <el-button size="large" type="primary" plain @click="run_o_QCDA"
-          style="margin: 0px 10px; font-family: 'Segoe UI Symbol'"> Confirm </el-button>
+          style="margin: 0px 10px; font-family: 'Segoe UI Symbol'"> Next </el-button>
       </div>
       <div id="step_3" class="div_not_selected">
         <el-tabs type="border-card" style="background: transparent !important; border: 0px solid">
@@ -157,7 +161,7 @@ export default {
 
         ],
       },
-      LoadConfirmBtnEnable: false,
+      LoadConfirmBtnDisable: true,
       NewConfirmBtnEnable: false,
       OutputContent: {},
       Route: "N",
@@ -219,6 +223,7 @@ export default {
         ],
       };
       this.n_ProgramText = "";
+      this.LoadConfirmBtnDisable = true;
     },
     show_o_qasm() {
       this.current_step = 2;
@@ -237,6 +242,7 @@ export default {
       } else if (this.Route == "L") {
         d3.select("#step_1_N").attr("class", "div_not_selected");
         d3.select("#step_1_L").attr("class", "div_selected");
+        this.LoadConfirmBtnDisable = true;
       }
       d3.select("#step_2").attr("class", "div_not_selected");
       d3.select("#step_3").attr("class", "div_not_selected");
@@ -267,7 +273,7 @@ export default {
         let text = evt.target.result;
         console.log(text);
         this.l_ProgramText = text;
-        this.LoadConfirmBtnEnable = true;
+        this.LoadConfirmBtnDisable = false;
 
       };
 
@@ -311,7 +317,7 @@ export default {
       let mapping = this.$refs.n_toolBar.getMapSwitch();
       let topology = this.n_topology;
       let set = this.n_all_sets[this.n_current_set];
-      
+
       if (this.Route == "L") {
         ProgramText = this.l_ProgramText;
         optimize = this.$refs.l_toolBar.getOpSwitch();
@@ -1028,7 +1034,7 @@ export default {
       this.l_VisContent.gateSet = content.all_sets[0]["gates"];
       this.l_customer_set = [];
       this.l_all_sets = content.all_sets;
-  
+
       this.l_qbit = this.l_VisContent.q;
       this.l_ProgramText = this.l_GenQASM();
       // this.$refs.n_visVue.vis_change();
