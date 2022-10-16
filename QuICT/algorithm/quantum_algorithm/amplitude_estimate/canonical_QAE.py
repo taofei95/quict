@@ -1,16 +1,19 @@
 """
-canonical Quantum Amplitude Estimation in "Quantum Amplitude Amplification and Estimation"
+canonical Quantum Amplitude Estimation \
+in "Quantum Amplitude Amplification and Estimation"
 see arXiv:quant-ph/0005055
 """
 
-from QuICT.simulation.state_vector.gpu_simulator.constant_statevector_simulator import ConstantStateVectorSimulator
-import logging
 import numpy as np
 
 from QuICT.core import Circuit
-from QuICT.core.gate import *
+from QuICT.core.gate import CompositeGate, Swap, H, Measure, IQFT
 
-from QuICT.algorithm.quantum_algorithm.amplitude_estimate.utility import OracleInfo, StatePreparationInfo
+from QuICT.algorithm.quantum_algorithm.amplitude_estimate.utility import (
+    OracleInfo,
+    StatePreparationInfo,
+)
+
 
 def construct_circuit(
     eps=0.1,
@@ -21,7 +24,7 @@ def construct_circuit(
         raise AssertionError("oracle info must be given")
     if state_preparation is None:
         state_preparation = StatePreparationInfo(n=oracle.n)
-    assert state_preparation.n==oracle.n
+    assert state_preparation.n == oracle.n
     n = oracle.n
     # see Theorem 12, case k=1
     m = int(np.ceil(np.log2(2 * np.pi / (np.sqrt(1 + 4 * eps) - 1))))
@@ -66,6 +69,7 @@ def amplitude_estimate(
 ):
     cgate, info = construct_circuit(eps, oracle, state_preparation)
     from types import SimpleNamespace
+
     info = SimpleNamespace(**info)
     circ = Circuit(info.m + info.n + info.n_ancilla)
     cgate | circ

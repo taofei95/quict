@@ -1,10 +1,8 @@
 import logging
-import numpy as np
 
-from QuICT.core import Circuit
-from QuICT.core.gate import *
-from QuICT.simulation.state_vector import CircuitSimulator
+from QuICT.core.gate import CompositeGate, CX, CH, X, H
 from QuICT.qcda.synthesis.mct import MCTOneAux
+
 
 class OracleInfo:
     def __init__(
@@ -55,21 +53,20 @@ class StatePreparationInfo:
         # control on 0
         cgate = CompositeGate()
         if controlled:
-            indices = list(range(1,1+n))
+            indices = list(range(1, 1 + n))
             for i in indices:
-                CX | cgate([0,i])
-            CH | cgate([0,indices[n-1]])
-            MCTOneAux().execute(n+2) | cgate
-            CH | cgate([0,indices[n-1]])
+                CX | cgate([0, i])
+            CH | cgate([0, indices[n - 1]])
+            MCTOneAux().execute(n + 2) | cgate
+            CH | cgate([0, indices[n - 1]])
             for i in indices:
-                CX | cgate([0,i])
+                CX | cgate([0, i])
         else:
             for i in range(n):
                 X | cgate(i)
-            H | cgate(n-1)
-            MCTOneAux().execute(n+1) | cgate
-            H | cgate(n-1)
+            H | cgate(n - 1)
+            MCTOneAux().execute(n + 1) | cgate
+            H | cgate(n - 1)
             for i in range(n):
                 X | cgate(i)
         return cgate
-
