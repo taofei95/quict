@@ -14,7 +14,7 @@
     </el-header>
     <el-main style="padding: 0px !important; height: calc(100vh - 100px)">
       <div id="step_0" class="div_selected">
-        <el-button size="large" type="primary"
+        <el-button size="large" type="primary" plain
           style="font-family: 'Segoe UI Symbol'; width: 100px; height: 100px; margin: 100px 10px;" @click="new_qcda">
           New
         </el-button>
@@ -104,7 +104,7 @@
         </el-tabs>
         <el-button size="large" type="primary" plain @click="back_r_QCDA"
           style="margin: 0px 10px; font-family: 'Segoe UI Symbol'"> Back </el-button>
-        <el-button size="large" type="primary" plain @click="back_qcda"
+        <el-button size="large" type="primary" @click="back_qcda"
           style="margin: 0px 10px; font-family: 'Segoe UI Symbol'"> Restart </el-button>
       </div>
     </el-main>
