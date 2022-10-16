@@ -10,6 +10,7 @@ import re
 
 import numpy as np
 from matplotlib import patches
+from matplotlib.figure import Figure
 from matplotlib import pyplot as plt
 
 from QuICT.core.gate import *
@@ -145,7 +146,9 @@ class PhotoDrawer(object):
 
     def __init__(self):
         self.style = DefaultStyle()
-        self.figure = plt.figure()
+        # plt.figure() will always trigger interactive mode eagerly. Use matplotlib.figure.Figure's full OO interface.
+        # refer: https://stackoverflow.com/questions/18207563/using-interactive-and-non-interactive-backends-within-one-program
+        self.figure = Figure()
         self.figure.patch.set_facecolor(color='#ffffff')
         self.ax = self.figure.add_subplot(111)
         self.ax.set_xticks([])
@@ -512,39 +515,37 @@ class PhotoDrawer(object):
         if not text:
             return 0.0
 
-        if False:
-            t = self.plt_mod.text(0.5, 0.5, text, fontsize=fontsize)
-            return t.get_window_extent(renderer=self._renderer).width / 60.0
-        else:
-            math_mode_match = re.compile(r"(?<!\\)\$(.*)(?<!\\)\$").search(text)
-            num_underscores = 0
-            num_carets = 0
-            if math_mode_match:
-                math_mode_text = math_mode_match.group(1)
-                num_underscores = math_mode_text.count('_')
-                num_carets = math_mode_text.count('^')
+        math_mode_match = re.compile(r"(?<!\\)\$(.*)(?<!\\)\$").search(text)
+        num_underscores = 0
+        num_carets = 0
+        if math_mode_match:
+            math_mode_text = math_mode_match.group(1)
+            num_underscores = math_mode_text.count('_')
+            num_carets = math_mode_text.count('^')
 
-            # If there are subscripts or superscripts in mathtext string
-            # we need to account for that spacing by manually removing
-            # from text string for text length
-            if num_underscores:
-                text = text.replace('_', '', num_underscores)
-            if num_carets:
-                text = text.replace('^', '', num_carets)
+        # If there are subscripts or superscripts in mathtext string
+        # we need to account for that spacing by manually removing
+        # from text string for text length
+        if num_underscores:
+            text = text.replace('_', '', num_underscores)
+        if num_carets:
+            text = text.replace('^', '', num_carets)
 
-            # This changes hyphen to + to match width of math mode minus sign.
-            if param:
-                text = text.replace('-', '+')
+        # This changes hyphen to + to match width of math mode minus sign.
+        if param:
+            text = text.replace('-', '+')
 
-            f = 0 if fontsize == self.style else 1
-            sum_text = 0.0
-            for c in text:
-                try:
+        f = 0 if fontsize == self.style else 1
+        sum_text = 0.0
+        for c in text:
+            try:
+                if c not in ["$", "\\"]:
                     sum_text += self.char_list[c][f]
-                except KeyError:
-                    # if non-ASCII char, use width of 'c', an average size
-                    sum_text += self.char_list['c'][f]
-            return sum_text
+            except KeyError:
+                # if non-ASCII char, use width of 'c', an average size
+                sum_text += self.char_list['c'][f]
+
+        return sum_text
 
     def draw_multiqubit_gate(self, xy, fc=None, ec=None, gt=None, sc=None, text='', subtext=''):
         xpos = min([x[0] for x in xy])
@@ -561,7 +562,7 @@ class PhotoDrawer(object):
         qubit_span = abs(ypos) - abs(ypos_max) + 1
         height = HIG + (qubit_span - 1)
         box = patches.Rectangle(
-            xy=(xpos - 0.5 * wid, ypos - .5 * HIG), width=wid, height=height,
+            xy=(xpos - 0.5 * wid, ypos - 0.5 * HIG), width=wid, height=height,
             fc=fc, ec=ec, linewidth=self.lwidth15, zorder=PORDER_GATE)
         self.ax.add_patch(box)
 
@@ -620,7 +621,7 @@ class PhotoDrawer(object):
                          zorder=PORDER_TEXT)
             self.draw_line([offset_x + 0.5, y], [now['max_x'], y], zorder=PORDER_REGLINE)
 
-    def run(self, circuit, filename=None, show_depth=False):
+    def run(self, circuit, filename=None, show_depth=False, save_file=False):
         global cir_len
         cir_len = circuit.width()
         name_dict = collections.OrderedDict()
@@ -629,9 +630,7 @@ class PhotoDrawer(object):
             'max_y': 0,
         }
         anchors = {}
-
         max_name = 0
-
         for i in range(cir_len):
             name = f'$q_{{{i}}}$'
             max_name = max(max_name, len(name))
@@ -663,11 +662,9 @@ class PhotoDrawer(object):
                         box_width = math.floor(len(param) / 10)
                         if box_width <= 1:
                             box_width = 1
-                        if layer_width < box_width:
-                            if box_width > 2:
-                                layer_width = box_width
-                            else:
-                                layer_width = 2
+
+                        if layer_width <= box_width:
+                            layer_width = box_width + 1
 
             for gate in layer.gates:
                 coord = []
@@ -688,7 +685,7 @@ class PhotoDrawer(object):
                     param = self.get_parameter_str(gate.pargs)
 
                 if gate.type == GateType.perm:
-                    name = str(gate)
+                    name = gate.type.value
                     for coor in coord:
                         self.draw_gate(coor, name, '')
                     self.draw_line(bottom, top, lc=self.style.dispcol[name])
@@ -862,5 +859,10 @@ class PhotoDrawer(object):
         if self.style.figwidth < 0.0:
             self.style.figwidth = fig_w * 4.3 * self.style.fs / 72 / WID
         self.figure.set_size_inches(self.style.figwidth, self.style.figwidth * fig_h / fig_w)
-        self.figure.savefig(filename, dpi=self.style.dpi,
-                            bbox_inches='tight')
+
+        if save_file:
+            filename = f"{circuit.name}.jpg" if filename is None else filename
+
+        if filename is not None:
+            self.figure.savefig(filename, dpi=self.style.dpi,
+                                bbox_inches='tight')

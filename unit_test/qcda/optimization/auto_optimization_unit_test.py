@@ -1,9 +1,8 @@
 import time
-
 import numpy as np
+import pickle
 
 from QuICT.core.gate import *
-import pickle
 from QuICT.qcda.optimization.auto_optimization.template import *
 from QuICT.qcda.optimization.auto_optimization import DAG, AutoOptimization
 
@@ -11,7 +10,6 @@ from QuICT.qcda.optimization.auto_optimization import DAG, AutoOptimization
 def test_build_graph():
     for i, each in enumerate(hadamard_templates):
         print('hadamard template', i)
-        each.template.get_circuit().draw(method='command')
         each.replacement.get_circuit().draw(method='command')
         mat_1 = each.template.get_circuit().matrix()
         mat_2 = each.replacement.get_circuit().matrix() * np.exp(1j * each.phase)
@@ -188,7 +186,7 @@ def test_parameterize_all():
     support_gates = [GateType.h, GateType.cx, GateType.x, GateType.rz,
                      GateType.t, GateType.tdg, GateType.s, GateType.sdg, GateType.z]
     circ = Circuit(n_qubit)
-    circ.random_append(n_gate, typelist=support_gates)
+    circ.random_append(n_gate, typelist=support_gates, random_params=True)
     dag = DAG(circ)
     AutoOptimization.parameterize_all(dag)
     circ_optim = dag.get_circuit()
@@ -304,6 +302,6 @@ def test_random_circuit():
         print('iteration', _)
         circ = Circuit(n_qubit)
 
-        circ.random_append(n_gate, typelist=support_gates)
+        circ.random_append(n_gate, typelist=support_gates, random_params=True)
         check_circuit_optimization(circ, _, mode='light')
         check_circuit_optimization(circ, _, mode='heavy')

@@ -203,6 +203,10 @@ class Circuit(CircuitBased):
         if is_ancillary_qubit:
             self._ancillae_qubits += list(range(self.width() - len(qubits), self.width()))
 
+    def reset_qubits(self):
+        """ Reset all qubits in current circuit. """
+        self._qubits.reset_qubits()
+
     def remapping(self, qureg: Qureg, mapping: list, circuit_update: bool = False):
         """ Realignment the qubits by the given mapping.
 
@@ -418,8 +422,12 @@ class Circuit(CircuitBased):
                 GateType.ryy, GateType.rzz, GateType.fsim
             ]
 
+        unsupported_gate_type = [GateType.unitary, GateType.perm, GateType.perm_fx]
+        assert len(set(typelist) & set(unsupported_gate_type)) == 0, \
+            f"{set(typelist) & set(unsupported_gate_type)} is not support in random append."
+
         if probabilities is not None:
-            assert sum(probabilities) == 1 and len(probabilities) == len(typelist)
+            assert np.isclose(sum(probabilities), 1, atol=1e-6) and len(probabilities) == len(typelist)
 
         gate_prob = probabilities
         gate_indexes = list(range(len(typelist)))
@@ -529,33 +537,67 @@ class Circuit(CircuitBased):
 
         return sub_circuit
 
-    def draw(self, method='matp', filename=None):
-        """ draw the photo of circuit in the run directory
+    def draw(self, method: str = 'matp_auto', filename: str = None):
+        """Draw the figure of circuit.
 
         Args:
-            filename(str): the output filename without file extensions,
-                           default to be the name of the circuit
             method(str): the method to draw the circuit
-                matp: matplotlib
+                matp_inline: Show the figure interactively but do not save it to file.
+                matp_file: Save the figure to file but do not show it interactively.
+                matp_auto: Automatically select inline or file mode according to matplotlib backend.
+                matp_silent: Return the drawn figure without saving or showing.
                 command : command
-                tex : tex source
+            filename(str): the output filename without file extensions, default to None.
+                If filename is None, it will using matlibplot.show() except matlibplot.backend
+                is agg, it will output jpg file named circuit's name.
+            get_figure(bool): Whether to return the figure object of matplotlib.
+
+        Returns:
+            If method is 'matp_silent', a matplotlib Figure is returned. Note that that figure is created in matplotlib
+            Object Oriented interface, which means it must be display with IPython.display.
+
+        Examples:
+            >>> from IPython.display import display
+            >>> circ = Circuit(5)
+            >>> circ.random_append()
+            >>> silent_fig = circ.draw(method="matp_silent")
+            >>> display(silent_fig)
         """
         from QuICT.tools.drawer import PhotoDrawer, TextDrawing
+        import matplotlib
 
-        if method == 'matp':
-            if filename is None:
-                filename = str(self.name) + '.jpg'
-            elif '.' not in filename:
-                filename += '.jpg'
+        if method.startswith('matp'):
+            if filename is not None:
+                    if '.' not in filename:
+                        filename += '.jpg'
+            photo_drawer = PhotoDrawer()
+            if method == 'matp_auto':
+                save_file = matplotlib.get_backend() == 'agg'
+                show_inline = matplotlib.get_backend() != 'agg'
+            elif method == 'matp_file':
+                save_file = True
+                show_inline = False
+            elif method == 'matp_inline':
+                save_file = False
+                show_inline = True
+            elif method == 'matp_silent':
+                save_file = False
+                show_inline = False
+            silent = (not show_inline) and (not save_file)
 
-            photoDrawer = PhotoDrawer()
-            photoDrawer.run(self, filename)
+            photo_drawer.run(circuit=self, filename=filename, save_file=save_file)
+
+            if show_inline:
+                from IPython.display import display
+                display(photo_drawer.figure)
+            elif silent:
+                return photo_drawer.figure
         elif method == 'command':
-            textDrawing = TextDrawing([i for i in range(len(self.qubits))], self.gates)
+            text_drawer = TextDrawing([i for i in range(len(self.qubits))], self.gates)
             if filename is None:
-                print(textDrawing.single_string())
+                print(text_drawer.single_string())
                 return
             elif '.' not in filename:
                 filename += '.txt'
 
-            textDrawing.dump(filename)
+            text_drawer.dump(filename)

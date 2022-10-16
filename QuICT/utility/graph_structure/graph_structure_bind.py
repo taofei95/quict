@@ -10,7 +10,7 @@ mod_name = "graph_structure"
 mod_path = "graph_structure"
 
 for file in os.listdir(cur_path):
-    if file.startswith(mod_path):
+    if file.startswith(mod_path) and file.endswith("so"):
         mod_path = f"{cur_path}/{file}"
 
 spec = importlib.util.spec_from_file_location(mod_name, mod_path)

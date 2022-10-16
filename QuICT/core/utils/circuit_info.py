@@ -117,9 +117,17 @@ class CircuitBased(object):
 
         return str(circuit_info)
 
-    def qasm(self):
+    def qasm(self, output_file: str = None):
+        """ The qasm of current CompositeGate/Circuit.
+
+        Args:
+            output_file (str): The output qasm file's name or path
+
+        Returns:
+            str: The string of Circuit/CompositeGate's qasm.
+        """
         qreg = self.width()
-        creg = self.count_gate_by_gatetype(GateType.measure)
+        creg = min(self.count_gate_by_gatetype(GateType.measure), qreg)
         if creg == 0:
             creg = qreg
 
@@ -132,8 +140,13 @@ class CircuitBased(object):
             if gate.qasm_name == "measure":
                 qasm_string += f"measure q[{gate.targ}] -> c[{cbits}];\n"
                 cbits += 1
+                cbits = cbits % creg
             else:
                 qasm_string += gate.qasm()
+
+        if output_file is not None:
+            with open(output_file, 'w+') as of:
+                of.write(qasm_string)
 
         return qasm_string
 

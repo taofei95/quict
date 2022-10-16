@@ -37,7 +37,7 @@ def construct_circuit(a: int, N: int, eps: float = 1 / 10):
     # triggers[measured qubit index][added gate index]
     triggers = [
         [
-            Trigger(1, [cgates[i][j][measured] for measured in range(2)], True)
+            Trigger(1, [cgates[i][j][measured] for measured in range(2)])
             for j in range(t + 1)
         ]
         for i in range(t)
@@ -56,11 +56,13 @@ def construct_circuit(a: int, N: int, eps: float = 1 / 10):
     for i in range(t):
         cgate = CompositeGate()
         X | cgate(trickbit)
-        triggers_reset[i] = Trigger(1, [CompositeGate(), cgate], True)
+        triggers_reset[i] = Trigger(1, [CompositeGate(), cgate])
 
     # subcircuit: init \ket{1}\ket{0}
     X | circuit(x_reg[n - 1])
 
+    history_indices = []
+    ptr = 0
     for k in range(t):
         # subcircuit CUa
         H | circuit(trickbit)
@@ -71,9 +73,13 @@ def construct_circuit(a: int, N: int, eps: float = 1 / 10):
         H | circuit(trickbit)
         # subcircuit: measure & reset trickbit
         for i in range(t - k):
+            if i == 0:
+                history_indices.append(ptr)
             triggers[k][i] | circuit(trickbit)
+            ptr += 1
         triggers_reset[k] | circuit(trickbit)
-    return circuit, [triggers[i][0] for i in range(t)][::-1]
+        ptr += 1
+    return circuit, trickbit + history_indices[::-1]
 
 
 def order_finding(a: int, N: int, eps: float = 1 / 10, simulator=CircuitSimulator()):
@@ -104,18 +110,18 @@ def order_finding(a: int, N: int, eps: float = 1 / 10, simulator=CircuitSimulato
         H | circuit(trickbit)
         gate_pow = pow(a, 1 << (t - 1 - k), N)
         CHRSMulMod.execute(n, gate_pow, N) | circuit
-        simulator.run(circuit, True)
+        simulator.run(circuit, use_previous=True)
         # subcircuit: semi-classical QFT
         circuit = Circuit(2 * n + 2)
         for i in range(k):
             if trickbit_store[i]:
                 Rz(-pi / (1 << (k - i))) | circuit(trickbit)
         H | circuit(trickbit)
-        simulator.run(circuit, True)
+        simulator.run(circuit, use_previous=True)
         circuit = Circuit(2 * n + 2)
         for idx in [trickbit] + ancilla + [indicator]:
             Measure | circuit(idx)
-        simulator.run(circuit, True)
+        simulator.run(circuit, use_previous=True)
         # subcircuit: measure & reset trickbit
         assert int(circuit[indicator]) == 0 and int(circuit[ancilla]) == 0
         logging.info(f"\tthe {k}th trickbit measured to be {int(circuit[trickbit])}")
@@ -123,7 +129,7 @@ def order_finding(a: int, N: int, eps: float = 1 / 10, simulator=CircuitSimulato
         if trickbit_store[k] == 1:
             circuit = Circuit(2 * n + 2)
             X | circuit(trickbit)
-            simulator.run(circuit, True)
+            simulator.run(circuit, use_previous=True)
 
     # for idx in x_reg: Measure | circuit(idx)
     trickbit_store.reverse()

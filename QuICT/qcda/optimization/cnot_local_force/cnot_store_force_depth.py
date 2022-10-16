@@ -10,12 +10,14 @@ import numpy as np
 
 from QuICT.core import Circuit
 from QuICT.core.gate import CX, GateType
+from QuICT.qcda.utility import OutputAligner
 
 
 class CnotStoreForceDepthBfs(object):
     """ use bfs to optimize the cnot circuit
 
     """
+    @OutputAligner()
     def execute(self, circuit: Circuit):
         """ find the best circuit by bfs
 

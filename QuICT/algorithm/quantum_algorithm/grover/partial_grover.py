@@ -29,8 +29,8 @@ class PartialGrover:
     https://arxiv.org/abs/quant-ph/0407122
     """
 
-    def __init__(self) -> None:
-        pass
+    def __init__(self, simulator) -> None:
+        self.simulator = simulator
 
     def circuit(self, n, n_block, n_ancilla, oracle, measure=True):
         """ partial grover search with one target
@@ -121,7 +121,8 @@ class PartialGrover:
         )
         return circuit
 
-    def run(self, n, n_block, n_ancilla, oracle, measure=True, simulator=CircuitSimulator()):
+    def run(self, n, n_block, n_ancilla, oracle, measure=True):
+        simulator = self.simulator
         index_q = list(range(n))
         circuit = self.circuit(n, n_block, n_ancilla, oracle, measure)
         simulator.run(circuit)
