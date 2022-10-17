@@ -9,6 +9,31 @@ from QuICT.core.utils import SPECIAL_GATE_SET, GateType
 
 
 class BasicGateTensor(object):
+    """ the abstract SuperClass of all basic tensor quantum gate
+
+    All basic quantum gate described in the framework have
+    some common attributes and some common functions
+    which defined in this class
+
+    Attributes:
+        name(str): the name of the gate
+        controls(int): the number of the control bits of the gate
+        cargs(list<int>): the list of the index of control bits in the circuit
+        carg(int, read only): the first object of cargs
+
+        targets(int): the number of the target bits of the gate
+        targs(list<int>): the list of the index of target bits in the circuit
+        targ(int, read only): the first object of targs
+
+        params(list): the number of the parameter of the gate
+        pargs(torch.Tensor): the parameters
+        parg(read only): the first object of pargs
+
+        type(GateType, read only): gate's type described by GateType
+
+        matrix(torch.Tensor): the unitary matrix of the quantum gate act on targets
+    """
+
     @property
     def name(self) -> str:
         return self._name
@@ -152,6 +177,17 @@ class BasicGateTensor(object):
         self.assigned_qubits = []  # list of qubits
 
     def __call__(self):
+        """ give parameters for the gate, and give parameters by "()", and parameters should be one of int/float/complex
+
+        Some Examples are like this:
+
+        Rz(np.pi / 2)           | qubit
+
+        *Important*: There is no parameters for current quantum gate.
+
+        Returns:
+            BasicGateTensor: the gate after filled by parameters
+        """
         return self.copy()
 
     def __eq__(self, other):
@@ -166,12 +202,26 @@ class BasicGateTensor(object):
         return True
 
     def to(self, device: torch.device):
+        """Move the tensor quantum gate to specify device.
+
+        Args:
+            device (torch.device): cpu or cuda device.
+
+        Returns:
+            BasicGateTensor: the gate on the specified device.
+        """
         self._pargs = self._pargs.to(device)
         if self._matrix is not None:
             self._matrix = self._matrix.to(device)
         return self.copy()
 
     def update_name(self, qubit_id: str, circuit_idx: int = None):
+        """ Updated gate's name with the given information
+
+        Args:
+            qubit_id (str): The qubit's ID.
+            circuit_idx (int, optional): The gate's order index in the circuit. Defaults to None.
+        """
         qubit_id = qubit_id[:6]
         name_parts = self.name.split("-")
         name_parts[1] = qubit_id
@@ -220,6 +270,16 @@ class BasicGateTensor(object):
 
     @staticmethod
     def permit_element(element):
+        """ judge whether the type of a parameter is int/float/complex/torch.Tensor
+
+        for a quantum gate, the parameter should be int/float/complex/torch.Tensor
+
+        Args:
+            element: the element to be judged
+
+        Returns:
+            bool: True if the type of element is int/float/complex/torch.Tensor
+        """
         if (
             isinstance(element, int)
             or isinstance(element, float)
@@ -237,10 +297,7 @@ class HGate(BasicGateTensor):
         super().__init__(controls=0, targets=1, params=0, type=GateType.h)
 
         self.matrix = torch.tensor(
-            [
-                [1 / np.sqrt(2), 1 / np.sqrt(2)],
-                [1 / np.sqrt(2), -1 / np.sqrt(2)],
-            ],
+            [[1 / np.sqrt(2), 1 / np.sqrt(2)], [1 / np.sqrt(2), -1 / np.sqrt(2)],],
             dtype=self._precision,
         ).to(self.device)
 
@@ -255,10 +312,7 @@ class HYGate(BasicGateTensor):
         super().__init__(controls=0, targets=1, params=0, type=GateType.hy)
 
         self.matrix = torch.tensor(
-            [
-                [1 / np.sqrt(2), -1j / np.sqrt(2)],
-                [1j / np.sqrt(2), -1 / np.sqrt(2)],
-            ],
+            [[1 / np.sqrt(2), -1j / np.sqrt(2)], [1j / np.sqrt(2), -1 / np.sqrt(2)],],
             dtype=self._precision,
         ).to(self.device)
 
@@ -271,10 +325,7 @@ class CXGate(BasicGateTensor):
 
     def __init__(self):
         super().__init__(
-            controls=1,
-            targets=1,
-            params=0,
-            type=GateType.cx,
+            controls=1, targets=1, params=0, type=GateType.cx,
         )
 
         self.matrix = torch.tensor(
@@ -299,10 +350,7 @@ class XGate(BasicGateTensor):
 
     def __init__(self):
         super().__init__(
-            controls=0,
-            targets=1,
-            params=0,
-            type=GateType.x,
+            controls=0, targets=1, params=0, type=GateType.x,
         )
 
         self.matrix = torch.tensor([[0, 1], [1, 0]], dtype=self._precision).to(
@@ -318,10 +366,7 @@ class YGate(BasicGateTensor):
 
     def __init__(self):
         super().__init__(
-            controls=0,
-            targets=1,
-            params=0,
-            type=GateType.y,
+            controls=0, targets=1, params=0, type=GateType.y,
         )
 
         self.matrix = torch.tensor([[0, -1j], [1j, 0]], dtype=self._precision).to(
@@ -337,10 +382,7 @@ class ZGate(BasicGateTensor):
 
     def __init__(self):
         super().__init__(
-            controls=0,
-            targets=1,
-            params=0,
-            type=GateType.z,
+            controls=0, targets=1, params=0, type=GateType.z,
         )
 
         self.matrix = torch.tensor([[1, 0], [0, -1]], dtype=self._precision).to(
@@ -420,10 +462,7 @@ class RzGate(BasicGateTensor):
 
     def __init__(self, params=torch.tensor([np.pi / 2])):
         super().__init__(
-            controls=0,
-            targets=1,
-            params=1,
-            type=GateType.rz,
+            controls=0, targets=1, params=1, type=GateType.rz,
         )
 
         self.pargs = params
@@ -453,10 +492,7 @@ Rz_tensor = RzGate()
 class RIGate(BasicGateTensor):
     def __init__(self, params=torch.tensor([np.pi / 2])):
         super().__init__(
-            controls=0,
-            targets=1,
-            params=1,
-            type=GateType.ri,
+            controls=0, targets=1, params=1, type=GateType.ri,
         )
 
         self.pargs = params

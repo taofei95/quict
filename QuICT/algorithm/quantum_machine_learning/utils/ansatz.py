@@ -6,13 +6,35 @@ from QuICT.core.gate import *
 
 
 class Ansatz:
+    """The Ansatz class."""
+
+    @property
+    def n_qubits(self):
+        return self._n_qubits
+
+    @property
+    def device(self):
+        return self._device
+
+    @property
+    def gates(self):
+        return self._gates
+
     def __init__(self, n_qubits, circuit=None, device=torch.device("cuda:0")):
-        self._circuit = circuit
+        """Initialize an empty Ansatz or from a Circuit.
+
+        Args:
+            n_qubits (int): The number of qubits.
+            circuit (Circuit, optional): Initialize an Ansatz from a Circuit. Defaults to None.
+            device (torch.device, optional): The device to which the Ansatz is assigned.
+                Defaults to torch.device("cuda:0").
+        """
         self._n_qubits = n_qubits if circuit is None else circuit.width()
         self._device = device
         self._gates = [] if circuit is None else self._gate_to_tensor(circuit.gates)
 
     def __add__(self, other):
+        """Combine two Ansatz into one."""
         ansatz = Ansatz(
             n_qubits=max(self._n_qubits, other._n_qubits), device=self._device
         )
@@ -27,6 +49,7 @@ class Ansatz:
         return ansatz
 
     def _gate_to_tensor(self, gates):
+        """Copy the Circuit gates to Ansatz tensor gates."""
         gates_tensor = []
         for gate in gates:
             gate_tensor = BasicGateTensor(
@@ -43,6 +66,13 @@ class Ansatz:
         return gates_tensor
 
     def add_gate(self, gate, act_bits: Union[int, list] = None):
+        """Add a gate into the ansatz.
+
+        Args:
+            gate (BasicGateTensor): The tensor quantum gate.
+            act_bits (Union[int, list], optional): The targets the gate acts on.
+                Defaults to None, which means the gate will act on each qubit of the ansatz.
+        """
         assert isinstance(gate.type, GateType)
         assert isinstance(gate.matrix, torch.Tensor)
         assert self._gate_validation(gate)
@@ -64,6 +94,7 @@ class Ansatz:
             self._gates.append(new_gate.to(self._device))
 
     def _gate_validation(self, gate):
+        """Validate the gate."""
         gate_matrix = gate.matrix
         shape = gate_matrix.shape
         log2_shape = int(np.ceil(np.log2(shape[0])))
@@ -78,6 +109,16 @@ class Ansatz:
         )
 
     def _apply_gate(self, state, gate_tensor, act_bits):
+        """Apply a tensor gate to a state vector.
+
+        Args:
+            state (torch.Tensor): The initial state vector.
+            gate_tensor (BasicGateTensor): The tensor quantum gate.
+            act_bits (list): The targets the gate acts on.
+
+        Returns:
+            torch.Tensor: The state vector.
+        """
         # Step 1: Relabel the qubits and calculate their corresponding index values.
         act_bits = [self._n_qubits - 1 - act_bits[i] for i in range(len(act_bits))]
         bits_idx = [1 << i for i in range(self._n_qubits)]
@@ -115,6 +156,15 @@ class Ansatz:
         return state
 
     def forward(self, state_vector=None):
+        """The Forward Propagation process of an ansatz.
+
+        Args:
+            state_vector (np.array/torch.Tensor, optional): The initial state vector.
+                Defaults to None, which means |0>.
+
+        Returns:
+            torch.Tensor: The state vector.
+        """
         if state_vector is None:
             state = torch.zeros(1 << self._n_qubits, dtype=torch.complex128).to(
                 self._device
