@@ -26,10 +26,9 @@ class QuICTException(Exception):
     """The base exception class for QuICT.
 
     Args:
-        error_code (int): the predefined QuICT error code. You can find the
-            detailed definition in: `maro.utils.exception.error_code.py`.
-        msg (str): Description of the error. Defaults to None, which will
-            show the base error information.
+        error_code (int): the predefined QuICT error code.
+        msg (str): the description of the error. If is None, which will
+        show the base error information.
     """
 
     def __init__(self, error_code: int = 1000, msg: str = None):
