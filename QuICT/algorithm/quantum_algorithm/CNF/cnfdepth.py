@@ -86,27 +86,121 @@ class CNFSATDEPTHOracle:
             for i in range(len(controls_X)):
                 X | self._cgate(controls_X[i])
         else:
-            #if dirty_ancilla == 0 :
-            if clause_number < ancilla_qubits_num + 1 :
-                controls_abs=[]
-                for j in range(clause_number):
-                    controls_abs.append(variable_number +  j + 1)
-                    self.clause(
-                        CNF_data, variable_number, ancilla_qubits_num, clause_length, CleanQubitNumber,
-                         j+1, j+1,
-                        variable_number +  j + 1, depth-1, depth
-                    )
-                if controls_abs != []:
-                    MCTOneAux().execute(len(controls_abs) + 2) | self._cgate(controls_abs + [target, target-1]) 
-                # one_dirty_aux(self._cgate, controls_abs, target, target+1)
-                for j in range(clause_number):
-                    
-                    self.clause(
-                        CNF_data, variable_number, ancilla_qubits_num, clause_length, CleanQubitNumber,
-                         j+1, j+1,
-                        variable_number +  j+1, depth-1, depth
-                    )
+            if ((clause_number - 1 ) * (clause_length + 1) + 2 * clause_number) < ancilla_qubits_num + 1 :
+                c=[]
+                for i in range(variable_number, variable_number + ancilla_qubits_num +1):
+                    if (i != target):
+                        c.append(i)
+
+                for j in range(2, clause_number + 1, 1):
+                    controls = CNF_data[j]
+                    for jj in range(len(controls)):
+                        CX | self._cgate([abs(controls[jj])-1, (j - 1) * clause_length  + jj + variable_number + 2 * clause_number +1])
+
+                controls = CNF_data[1]
+                controls_abs0=[]
+                controls_X0=[]
+                for i in range(len(controls)):
+                    if controls[i] < 0:
+                        controls_abs0.append(-controls[i]-1)
+                    if controls[i] > 0:
+                        controls_abs0.append(controls[i]-1)
+                        controls_X0.append(controls[i]-1)
+                for i in range(len(controls_X0)):
+                    X | self._cgate(controls_X0[i])
+                X | self._cgate(c[0])
+                #print(controls_abs)
+                #print(target)
+                if controls_abs0 != []:
+                    MCTOneAux().execute(len(controls_abs0) + 2) | self._cgate(controls_abs0 + [ c[0] , c[0] + clause_number ])
+                # one_dirty_aux(self._cgate, controls_abs, target, current_Aux)
+                #X | self._cgate(target)
+                for i in range(len(controls_X0)):
+                    X | self._cgate(controls_X0[i])
+
+                for j in range(2, clause_number + 1):
+                    controls = CNF_data[j]
+                    controls_abs=[]
+                    controls_X=[]
+                    for jj in range(len(controls)):
+                        if controls[jj] < 0:
+                            controls_abs.append((j - 1) * clause_length + jj + variable_number + 2 * clause_number +1)
+                        if controls[jj] > 0:
+                            controls_abs.append((j - 1) * clause_length + jj + variable_number + 2 * clause_number +1)
+                            controls_X.append((j - 1) * clause_length + jj + variable_number + 2 * clause_number +1)
+                    for i in range(len(controls_X)):
+                        X | self._cgate(controls_X[i])
+                    X | self._cgate(c[j - 1])
+                    if controls_abs != []:
+                        MCTOneAux().execute(len(controls_abs) + 2) | self._cgate(controls_abs + [ c[j-1]  , c[j-1] + clause_number ])
+                    # one_dirty_aux(self._cgate, controls_abs, target, current_Aux)
+                    #X | self._cgate(target)
+                    for i in range(len(controls_X)):
+                        X | self._cgate(controls_X[i])
+                a = 0                  
+                if clause_number == 2:
+                    CCX | self._cgate([c[0], c[1], target])
+                else:
+                    b = clause_number
+                    for j in range(clause_number-1):
+                        CCX | self._cgate([c[a + 2*j], c[a + 2*j + 1], c[b+j]])
+                        
+                    CCX | self._cgate([c[b + clause_number - 2], c[b + clause_number - 3 ], target])
+                
+                #还原    
+                    for j in range(clause_number-1):
+                        CCX | self._cgate([c[a + 2*j], c[a + 2*j + 1], c[b+j]])
+                        
+                for j in range(2, clause_number + 1, 1):
+                    controls = CNF_data[j]
+                    for jj in range(len(controls)):
+                        CX | self._cgate([abs(controls[jj])-1, (j - 1) * clause_length  + jj + variable_number + 2 * clause_number +1])
+
+                controls = CNF_data[1]
+                controls_abs0=[]
+                controls_X0=[]
+                for i in range(len(controls)):
+                    if controls[i] < 0:
+                        controls_abs0.append(-controls[i]-1)
+                    if controls[i] > 0:
+                        controls_abs0.append(controls[i]-1)
+                        controls_X0.append(controls[i]-1)
+                for i in range(len(controls_X0)):
+                    X | self._cgate(controls_X0[i])
+                X | self._cgate(c[0])
+                #print(controls_abs)
+                #print(target)
+                if controls_abs0 != []:
+                    MCTOneAux().execute(len(controls_abs0) + 2) | self._cgate(controls_abs0 + [ c[0] , c[0] + clause_number  ])
+                # one_dirty_aux(self._cgate, controls_abs, target, current_Aux)
+                #X | self._cgate(target)
+                for i in range(len(controls_X0)):
+                    X | self._cgate(controls_X0[i])
+
+                for j in range(1 + 1, clause_number + 1):
+                    controls = CNF_data[j]
+                    controls_abs=[]
+                    controls_X=[]
+                    for jj in range(len(controls)):
+                        if controls[jj] < 0:
+                            controls_abs.append((j - 1) * clause_length   + jj + variable_number + 2 * clause_number +1)
+                        if controls[jj] > 0:
+                            controls_abs.append((j - 1) * clause_length + jj + variable_number + 2 * clause_number +1)
+                            controls_X.append((j - 1) * clause_length + jj + variable_number + 2 * clause_number +1)
+                    for i in range(len(controls_X)):
+                        X | self._cgate(controls_X[i])
+                    X | self._cgate(c[j - 1])
+                    #print(controls_abs)
+                    #print(target)
+                    if controls_abs != []:
+                        MCTOneAux().execute(len(controls_abs) + 2) | self._cgate(controls_abs + [ c[j-1]  , c[j-1] + clause_number ])
+                    # one_dirty_aux(self._cgate, controls_abs, target, current_Aux)
+                    #X | self._cgate(target)
+                    for i in range(len(controls_X)):
+                        X | self._cgate(controls_X[i])
+                
             else:
+                
                 p = math.floor( (CleanQubitNumber + 1) /2)
                 block_len = math.ceil(clause_number / p)
                 block_number = math.ceil(clause_number / block_len )
@@ -130,7 +224,7 @@ class CNFSATDEPTHOracle:
                     self.clause(
                         CNF_data, variable_number, ancilla_qubits_num, clause_length, CleanQubitNumber,
                           j * block_len +1, np.minimum( (j+1) * block_len, clause_number),
-                        variable_number + ancilla_qubits_num - p + 1 + j, depth-1, depth
+                        variable_number + CleanQubitNumber - p + 1 + j, depth-1, depth
                     )
             
 
@@ -227,7 +321,7 @@ class CNFSATDEPTHOracle:
                 #print(controls_abs)
                 #print(target)
                 if controls_abs0 != []:
-                    MCTOneAux().execute(len(controls_abs0) + 2) | self._cgate(controls_abs0 + [ c[0]+ CleanQubitNumber, c[0]  ])
+                    MCTOneAux().execute(len(controls_abs0) + 2) | self._cgate(controls_abs0 + [ c[0], c[0] + CleanQubitNumber ])
                 # one_dirty_aux(self._cgate, controls_abs, target, current_Aux)
                 #X | self._cgate(target)
                 for i in range(len(controls_X0)):
@@ -249,7 +343,7 @@ class CNFSATDEPTHOracle:
                     #print(controls_abs)
                     #print(target)
                     if controls_abs != []:
-                        MCTOneAux().execute(len(controls_abs) + 2) | self._cgate(controls_abs + [ c[j] + CleanQubitNumber , c[j] ])
+                        MCTOneAux().execute(len(controls_abs) + 2) | self._cgate(controls_abs + [ c[j] , c[j] + CleanQubitNumber ])
                     # one_dirty_aux(self._cgate, controls_abs, target, current_Aux)
                     #X | self._cgate(target)
                     for i in range(len(controls_X)):
@@ -286,7 +380,7 @@ class CNFSATDEPTHOracle:
                 #print(controls_abs)
                 #print(target)
                 if controls_abs0 != []:
-                    MCTOneAux().execute(len(controls_abs0) + 2) | self._cgate(controls_abs0 + [ c[0]+ CleanQubitNumber, c[0]  ])
+                    MCTOneAux().execute(len(controls_abs0) + 2) | self._cgate(controls_abs0 + [ c[0] , c[0] + CleanQubitNumber ])
                 # one_dirty_aux(self._cgate, controls_abs, target, current_Aux)
                 #X | self._cgate(target)
                 for i in range(len(controls_X0)):
@@ -308,7 +402,7 @@ class CNFSATDEPTHOracle:
                     #print(controls_abs)
                     #print(target)
                     if controls_abs != []:
-                        MCTOneAux().execute(len(controls_abs) + 2) | self._cgate(controls_abs + [ c[j] + CleanQubitNumber , c[j] ])
+                        MCTOneAux().execute(len(controls_abs) + 2) | self._cgate(controls_abs + [ c[j] , c[j]  + CleanQubitNumber ])
                     # one_dirty_aux(self._cgate, controls_abs, target, current_Aux)
                     #X | self._cgate(target)
                     for i in range(len(controls_X)):
