@@ -8,6 +8,7 @@ import torch
 
 from QuICT.algorithm.quantum_machine_learning.utils import Hamiltonian
 from QuICT.algorithm.quantum_machine_learning.VQA.QAOA import QAOA
+from QuICT.algorithm.tools.drawer import graph_drawer as gd
 from QuICT.simulation.state_vector import ConstantStateVectorSimulator
 
 
@@ -60,77 +61,12 @@ class MaxCut:
         return max_cut_num, cut_edges
 
     def draw_result(self):
-        plt.figure()
-        plt.title("The result of MaxCut")
-        G = nx.Graph()
-        G.add_nodes_from(range(self._n))
-        G.add_edges_from(self._edges)
-        pos = nx.circular_layout(G)
-
-        node_color = [
-            "red" if self.solution_bit[v] == "1" else "#1f78b4" for v in range(self._n)
-        ]
-        edge_color = []
-        edge_style = []
-        for u in range(self._n):
-            for v in range(u + 1, self._n):
-                if (
-                    (u, v) in self._edges
-                    or (v, u) in self._edges
-                    or [u, v] in self._edges
-                    or [v, u] in self._edges
-                ):
-                    if self.solution_bit[u] == self.solution_bit[v]:
-                        edge_color.append("black")
-                        edge_style.append("solid")
-                    else:
-                        edge_color.append("red")
-                        edge_style.append("dashed")
-
-        options = {
-            "with_labels": True,
-            "font_size": 20,
-            "font_weight": "bold",
-            "font_color": "white",
-            "node_size": 2000,
-            "width": 2,
-        }
-        nx.draw(
-            G,
-            pos,
-            node_color=node_color,
-            edge_color=edge_color,
-            style=edge_style,
-            **options
+        gd.draw_maxcut_result(
+            range(self._n), self._edges, self.solution_bit, save_path=self.model_path
         )
-        ax = plt.gca()
-        ax.margins(0.20)
-        plt.axis("off")
-        if self.model_path is not None:
-            plt.savefig(self.model_path + "/Maxcut_result.jpg")
-        plt.show()
 
     def draw_graph(self):
-        plt.figure()
-        plt.title("Graph")
-        G = nx.Graph()
-        G.add_nodes_from(range(self._n))
-        G.add_edges_from(self._edges)
-        pos = nx.circular_layout(G)
-        options = {
-            "with_labels": True,
-            "font_size": 20,
-            "font_weight": "bold",
-            "font_color": "white",
-            "node_size": 2000,
-            "width": 2,
-        }
-        nx.draw_networkx(G, pos, **options)
-        ax = plt.gca()
-        ax.margins(0.20)
-        plt.axis("off")
-        plt.show()
-        return
+        gd.draw_graph(range(self._n), self._edges)
 
     def solve_maxcut(
         self,
