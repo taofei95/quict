@@ -147,7 +147,8 @@ class PhotoDrawer(object):
     def __init__(self):
         self.style = DefaultStyle()
         # plt.figure() will always trigger interactive mode eagerly. Use matplotlib.figure.Figure's full OO interface.
-        # refer: https://stackoverflow.com/questions/18207563/using-interactive-and-non-interactive-backends-within-one-program
+        # refer:
+        # https://stackoverflow.com/questions/18207563/using-interactive-and-non-interactive-backends-within-one-program
         self.figure = Figure()
         self.figure.patch.set_facecolor(color='#ffffff')
         self.ax = self.figure.add_subplot(111)
