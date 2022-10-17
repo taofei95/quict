@@ -86,7 +86,7 @@ class CNFSATDEPTHOracle:
             for i in range(len(controls_X)):
                 X | self._cgate(controls_X[i])
         else:
-            if ((clause_number - 1 ) * (clause_length + 1) + 2 * clause_number) < ancilla_qubits_num + 1 :
+            if ((clause_number - 1 ) * (clause_length + 1) + 2 * clause_number) < ancilla_qubits_num :
                 c=[]
                 for i in range(variable_number, variable_number + ancilla_qubits_num +1):
                     if (i != target):
@@ -200,7 +200,6 @@ class CNFSATDEPTHOracle:
                         X | self._cgate(controls_X[i])
                 
             else:
-                
                 p = math.floor( (CleanQubitNumber + 1) /2)
                 block_len = math.ceil(clause_number / p)
                 block_number = math.ceil(clause_number / block_len )
