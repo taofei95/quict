@@ -2,10 +2,10 @@ import logging
 
 from QuICT.simulation.state_vector import CircuitSimulator
 
-from .canonical_QAE import amplitude_estimate as canonical_run
-from .max_likely_QAE import amplitude_estimate as max_likely_run
-from .FQAE import amplitude_estimate as fast_run
-from .canonical_QAE import construct_circuit as canonical_circuit
+from .backend.canonical_QAE import amplitude_estimate as canonical_run
+from .backend.max_likely_QAE import amplitude_estimate as max_likely_run
+from .backend.FQAE import amplitude_estimate as fast_run
+from .backend.canonical_QAE import construct_circuit as canonical_circuit
 from .utility import StatePreparationInfo, OracleInfo
 
 

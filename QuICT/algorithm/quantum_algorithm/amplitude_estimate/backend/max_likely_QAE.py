@@ -3,7 +3,7 @@ from scipy.optimize import brute
 
 from QuICT.core import Circuit
 from QuICT.core.gate import CompositeGate, Measure
-from .utility import OracleInfo, StatePreparationInfo
+from ..utility import OracleInfo, StatePreparationInfo
 
 
 def amplitude_estimate(

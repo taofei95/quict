@@ -5,7 +5,7 @@ from math import floor, ceil, pi, acos, asin, log, log2, sqrt, cos, sin
 from QuICT.core import Circuit
 from QuICT.core.gate import Ry
 
-from .utility import OracleInfo, StatePreparationInfo
+from ..utility import OracleInfo, StatePreparationInfo
 
 DELTA = 0.05
 N_1_SHOT_CONST = 1944 # TODO: optimization
