@@ -1,4 +1,3 @@
-#TODO: add `backend` folder and move all implementations there
 import numpy as np
 from types import SimpleNamespace
 

@@ -48,15 +48,13 @@ def amplitude_estimate(
         state_preparation.A(n) | circ
         for _ in range(m):
             Q_gate | circ
-        for j in range(n):
-            Measure | circ(j)
         h = 0
-        for _ in range(N_shot):  # TODO: using `sample`
-            simulator.run(circ)
-            res = bin(int(circ[:n]))[2:].rjust(n, "0")
-            if oracle.is_good_state(res):
-                h += 1
-        good_counts[i] = h
+        simulator.run(circ)
+        sample_result = simulator.sample(N_shot)
+        for j in range(2 ** (n + n_ancilla)):
+            res = bin(j)[2:].rjust(n + n_ancilla, "0")
+            if oracle.is_good_state(res[:n]):
+                good_counts[i] += sample_result[j]
 
     # MLE
     search_eps = 1e-10
