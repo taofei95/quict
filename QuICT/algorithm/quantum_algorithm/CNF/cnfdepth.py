@@ -2,7 +2,7 @@
 # @TIME    : 2022/7/
 # @Author  : 
 # @File    : 
-from builtins import print
+#from builtins import print
 import math
 import numpy as np
 from QuICT.core import *     #Circuit
@@ -55,7 +55,7 @@ class CNFSATDEPTHOracle:
         S = math.floor( clause_length / math.log( ancilla_qubits_num, 2 ))
         if S < 1:
             S = 1
-        CleanQubitNumber = math.floor((ancilla_qubits_num) / (S+1))   #干净、脏比特数目   非底层能处理的块数
+        CleanQubitNumber = math.floor((ancilla_qubits_num) / (S+1))   #干净、脏比特数目   其+1 = 非底层能处理的块数的2 倍
         assert CleanQubitNumber > 2 , "Need more auxiliary qubit for enough momery space."
         MemoryQubitNumber = ancilla_qubits_num - 2 * CleanQubitNumber #暂存比特数目 记录
         assert ancilla_qubits_num > 2 * clause_length + 2 , "Need more auxiliary qubit or some CNF-clause contains too many variables.."
@@ -110,8 +110,7 @@ class CNFSATDEPTHOracle:
                 for i in range(len(controls_X0)):
                     X | self._cgate(controls_X0[i])
                 X | self._cgate(c[0])
-                #print(controls_abs)
-                #print(target)
+
                 if controls_abs0 != []:
                     MCTOneAux().execute(len(controls_abs0) + 2) | self._cgate(controls_abs0 + [ c[0] , c[0] + clause_number ])
                 # one_dirty_aux(self._cgate, controls_abs, target, current_Aux)
@@ -169,8 +168,7 @@ class CNFSATDEPTHOracle:
                 for i in range(len(controls_X0)):
                     X | self._cgate(controls_X0[i])
                 X | self._cgate(c[0])
-                #print(controls_abs)
-                #print(target)
+
                 if controls_abs0 != []:
                     MCTOneAux().execute(len(controls_abs0) + 2) | self._cgate(controls_abs0 + [ c[0] , c[0] + clause_number  ])
                 # one_dirty_aux(self._cgate, controls_abs, target, current_Aux)
@@ -191,41 +189,99 @@ class CNFSATDEPTHOracle:
                     for i in range(len(controls_X)):
                         X | self._cgate(controls_X[i])
                     X | self._cgate(c[j - 1])
-                    #print(controls_abs)
-                    #print(target)
+
                     if controls_abs != []:
                         MCTOneAux().execute(len(controls_abs) + 2) | self._cgate(controls_abs + [ c[j-1]  , c[j-1] + clause_number ])
                     # one_dirty_aux(self._cgate, controls_abs, target, current_Aux)
                     #X | self._cgate(target)
                     for i in range(len(controls_X)):
                         X | self._cgate(controls_X[i])
-                
             else:
-                p = math.floor( (CleanQubitNumber + 1) /2)
-                block_len = math.ceil(clause_number / p)
-                block_number = math.ceil(clause_number / block_len )
-                
-                controls = []
-                
-                for j in range(block_number):
-                    self.clause(
-                        CNF_data, variable_number, ancilla_qubits_num, clause_length, CleanQubitNumber,
-                         j * block_len +1, np.minimum( (j+1) * block_len, clause_number),
-                        variable_number + CleanQubitNumber - p + 1 + j, depth-1, depth
-                    )
-                    controls.append(variable_number + CleanQubitNumber - p + 1 + j)
+                if (clause_number < 1 + CleanQubitNumber):
+                    controls_XX=[]
+                    for j in range(1, clause_number + 1):
+                        controls = CNF_data[j]
+                        controls_abs=[]
+                        controls_X=[]
+                        for jj in range(len(controls)):
+                            if controls[jj] < 0:
+                                controls_abs.append( - controls[jj] -1)
+                            if controls[jj] > 0:
+                                controls_abs.append( controls[jj]- 1)
+                                controls_X.append( controls[jj]-1)
+                        for i in range(len(controls_X)):
+                            X | self._cgate(controls_X[i])
+                        X | self._cgate(variable_number + CleanQubitNumber + j )
 
-                current_Aux = variable_number + 1 
-                if controls != []:
-                    MCTOneAux().execute(len(controls) + 2) | self._cgate(controls + [ target, current_Aux] ) 
-                # one_dirty_aux(self._cgate, controls, target, current_Aux)
-                
-                for j in range(block_number):
-                    self.clause(
-                        CNF_data, variable_number, ancilla_qubits_num, clause_length, CleanQubitNumber,
-                          j * block_len +1, np.minimum( (j+1) * block_len, clause_number),
-                        variable_number + CleanQubitNumber - p + 1 + j, depth-1, depth
-                    )
+                        controls_XX.append(variable_number + CleanQubitNumber + j)
+                        
+                        if controls_abs != []:
+                            MCTOneAux().execute(len(controls_abs) + 2) | self._cgate(controls_abs + [ variable_number + CleanQubitNumber + j  , variable_number + j ])
+                        else:
+                            X | self._cgate(variable_number + CleanQubitNumber + j)
+                        # one_dirty_aux(self._cgate, controls_abs, target, current_Aux)
+                        #X | self._cgate(target)
+                        for i in range(len(controls_X)):
+                            X | self._cgate(controls_X[i])
+                    
+                    if controls_XX != []:
+                        MCTOneAux().execute(len(controls_XX) + 2) | self._cgate(controls_XX + [ variable_number , variable_number - 1 ])
+                    else:
+                        X | self._cgate(variable_number)
+
+                    for j in range(1, clause_number + 1):
+                        controls = CNF_data[j]
+                        controls_abs=[]
+                        controls_X=[]
+                        for jj in range(len(controls)):
+                            if controls[jj] < 0:
+                                controls_abs.append( - controls[jj] -1)
+                            if controls[jj] > 0:
+                                controls_abs.append( controls[jj]- 1)
+                                controls_X.append( controls[jj]-1)
+                        for i in range(len(controls_X)):
+                            X | self._cgate(controls_X[i])
+                        X | self._cgate(variable_number + CleanQubitNumber + j )
+                        
+                        if controls_abs != []:
+                            MCTOneAux().execute(len(controls_abs) + 2) | self._cgate(controls_abs + [ variable_number + CleanQubitNumber + j  , variable_number + j ])
+                        else:
+                            X | self._cgate(variable_number + CleanQubitNumber + j)
+                        # one_dirty_aux(self._cgate, controls_abs, target, current_Aux)
+                        #X | self._cgate(target)
+                        for i in range(len(controls_X)):
+                            X | self._cgate(controls_X[i])                       
+
+
+                                                
+
+
+                else:
+                    p = math.floor( (CleanQubitNumber + 1) /2)
+                    block_len = math.ceil(clause_number / p)
+                    block_number = math.ceil(clause_number / block_len )
+                    
+                    controls = []
+                    
+                    for j in range(block_number):
+                        self.clause(
+                            CNF_data, variable_number, ancilla_qubits_num, clause_length, CleanQubitNumber,
+                            j * block_len +1, np.minimum( (j+1) * block_len, clause_number),
+                            variable_number + CleanQubitNumber - p + 1 + j, depth-1, depth
+                        )
+                        controls.append(variable_number + CleanQubitNumber - p + 1 + j)
+
+                    current_Aux = variable_number + CleanQubitNumber + 1
+                    if controls != []:
+                        MCTOneAux().execute(len(controls) + 2) | self._cgate(controls + [ target, current_Aux] ) 
+                    # one_dirty_aux(self._cgate, controls, target, current_Aux)
+                    
+                    for j in range(block_number):
+                        self.clause(
+                            CNF_data, variable_number, ancilla_qubits_num, clause_length, CleanQubitNumber,
+                            j * block_len +1, np.minimum( (j+1) * block_len, clause_number),
+                            variable_number + CleanQubitNumber - p + 1 + j, depth-1, depth
+                        )
             
 
 
@@ -254,7 +310,7 @@ class CNFSATDEPTHOracle:
             CNF_data.append(int_new)  #给各个Clause 编号0,1 ...m-1#
             if len(int_new) > clause_length :
                 clause_length = len(int_new)
-        #print(CNF_data)
+    
         f.close()
 
         return variable_number, clause_number, clause_length, CNF_data
@@ -280,23 +336,23 @@ class CNFSATDEPTHOracle:
             for i in range(len(controls_X)):
                 X | self._cgate(controls_X[i])
             X | self._cgate(target)
-            #print(controls_abs)
-            #print(target)
+
+            current_Aux  = target + CleanQubitNumber 
+            if target > (variable_number + CleanQubitNumber - 1):
+                current_Aux  = target - 1
             if controls_abs != []:
-                MCTOneAux().execute(len(controls_abs) + 2) | self._cgate(controls_abs + [ target, target + CleanQubitNumber  ])
+                MCTOneAux().execute(len(controls_abs) + 2) | self._cgate(controls_abs + [ target, current_Aux ])
             # one_dirty_aux(self._cgate, controls_abs, target, current_Aux)
             #X | self._cgate(target)
             for i in range(len(controls_X)):
                 X | self._cgate(controls_X[i])
         else:  #StartID 和 EndID 不同 
-            #print(StartID, EndID)
+         
             if ((EndID - StartID) * (clause_length) < (Aux - 2 * CleanQubitNumber + 1)) and ((EndID - StartID ) < p) : #if block_number == 1 而且 EndID - StartID > 1 
-                #print(" <p ", EndID,StartID,p,target) 
-                #print(c)
-                #print(c,p, EndID,StartID, 2*(EndID - StartID)-1)
+
                 
                 c=[]
-                for i in range(variable_number, variable_number + CleanQubitNumber +1):
+                for i in range(variable_number, variable_number + 2 * CleanQubitNumber +1):
                     if (i != target):
                         c.append(i)
 
@@ -318,8 +374,7 @@ class CNFSATDEPTHOracle:
                 for i in range(len(controls_X0)):
                     X | self._cgate(controls_X0[i])
                 X | self._cgate(target)
-                #print(controls_abs)
-                #print(target)
+       
                 if controls_abs0 != []:
                     MCTOneAux().execute(len(controls_abs0) + 2) | self._cgate(controls_abs0 + [ c[0], c[0] + CleanQubitNumber ])
                 # one_dirty_aux(self._cgate, controls_abs, target, current_Aux)
@@ -340,8 +395,7 @@ class CNFSATDEPTHOracle:
                     for i in range(len(controls_X)):
                         X | self._cgate(controls_X[i])
                     X | self._cgate(c[j - StartID])
-                    #print(controls_abs)
-                    #print(target)
+            
                     if controls_abs != []:
                         MCTOneAux().execute(len(controls_abs) + 2) | self._cgate(controls_abs + [ c[j] , c[j] + CleanQubitNumber ])
                     # one_dirty_aux(self._cgate, controls_abs, target, current_Aux)
@@ -377,8 +431,7 @@ class CNFSATDEPTHOracle:
                 for i in range(len(controls_X0)):
                     X | self._cgate(controls_X0[i])
                 X | self._cgate(target)
-                #print(controls_abs)
-                #print(target)
+        
                 if controls_abs0 != []:
                     MCTOneAux().execute(len(controls_abs0) + 2) | self._cgate(controls_abs0 + [ c[0] , c[0] + CleanQubitNumber ])
                 # one_dirty_aux(self._cgate, controls_abs, target, current_Aux)
@@ -399,177 +452,218 @@ class CNFSATDEPTHOracle:
                     for i in range(len(controls_X)):
                         X | self._cgate(controls_X[i])
                     X | self._cgate(c[j - StartID])
-                    #print(controls_abs)
-                    #print(target)
+             
                     if controls_abs != []:
                         MCTOneAux().execute(len(controls_abs) + 2) | self._cgate(controls_abs + [ c[j] , c[j]  + CleanQubitNumber ])
                     # one_dirty_aux(self._cgate, controls_abs, target, current_Aux)
                     #X | self._cgate(target)
                     for i in range(len(controls_X)):
                         X | self._cgate(controls_X[i])
-
-            else: #EndID-StartID 比较大，底层放不下，  block number >1
-                block_len = math.ceil((EndID - StartID +1) /p)
-                block_number = math.ceil((EndID - StartID + 1) / block_len )
-                if block_number == 2:
-                    if ((depth - current_depth) % 2) == 1: # 当前为奇数层  target 在variable_number + ancilla_qubits_num - p + 1 + j
-                        #print("2 block 1", target)
-                        CCX | self._cgate([variable_number + 1  , variable_number  , target])    
-                        self.clause(CNF_data, variable_number, Aux, clause_length, CleanQubitNumber, StartID, StartID + block_len -1 , variable_number + 1, current_depth-1, depth)
-
-                        CCX | self._cgate([variable_number + 1  , variable_number  , target])
-                        self.clause(CNF_data, variable_number, Aux, clause_length, CleanQubitNumber, StartID + block_len, EndID, variable_number , current_depth-1, depth)
-                        
-                        CCX | self._cgate([variable_number + 1  , variable_number  , target])
-                        self.clause(CNF_data, variable_number, Aux, clause_length, CleanQubitNumber, StartID, StartID + block_len -1, variable_number + 1, current_depth-1, depth)
-
-                        CCX | self._cgate([variable_number + 1  , variable_number  , target]) 
-                        self.clause(CNF_data, variable_number, Aux, clause_length, CleanQubitNumber, StartID + block_len, EndID, variable_number , current_depth-1, depth)
-                    else: # 当前偶数层 
-                        #print("2 block 0", target)  
-                        CCX | self._cgate([variable_number + CleanQubitNumber -1  , variable_number + CleanQubitNumber , target])   
-                        self.clause(CNF_data, variable_number, Aux, clause_length, CleanQubitNumber, StartID, StartID + block_len-1, variable_number + CleanQubitNumber - 1, current_depth-1, depth)
-
-                        CCX | self._cgate([variable_number + CleanQubitNumber -1  , variable_number + CleanQubitNumber , target])
-                        self.clause(CNF_data, variable_number, Aux, clause_length, CleanQubitNumber, StartID + block_len, EndID, variable_number + CleanQubitNumber , current_depth-1, depth)
-                        
-                        CCX | self._cgate([variable_number + CleanQubitNumber -1  , variable_number + CleanQubitNumber , target])
-                        self.clause(CNF_data, variable_number, Aux, clause_length, CleanQubitNumber, StartID, StartID + block_len-1, variable_number + CleanQubitNumber - 1, current_depth-1, depth)
-
-                        CCX | self._cgate([variable_number + CleanQubitNumber -1  , variable_number + CleanQubitNumber , target]) 
-                        self.clause(CNF_data, variable_number, Aux, clause_length, CleanQubitNumber, StartID + block_len, EndID, variable_number + CleanQubitNumber , current_depth-1, depth)
-                else:
-                        #block number >2
+            else:
+                if ( EndID - StartID ) < CleanQubitNumber:
                     c=[]
-                    for i in range( variable_number, variable_number + CleanQubitNumber  + 1 ):
-                        if i != target :
+
+                    for i in range(variable_number + CleanQubitNumber + 1, variable_number + 2 * CleanQubitNumber +1):
+                        if (i != target):
                             c.append(i)
-                    if ((depth - current_depth) % 2) == 1: 
-                            #print(   "2n"   )   
-                            #层数差 奇数 的存储位 为 variable_number +CleanQubitNumber- p+1+j  至 variable_number + CleanQubitNumber   要从差为偶数层 取数据
-                            #层数差 偶数 的存储位 为 variable_number 至 variable_number + p -1      要从差为奇数层 取数据
-                            # UpPhase 1 升阶段 第一位要单独处理，其target 即最终target。控制位一个在variable_number + Aux；另一个在 variable_number + CleanQubitNumber -  block_number +2 上， variable_number + CleanQubitNumber -  block_number +2 上放一个低一层的 clause。
-                        #print(EndID ,StartID,p,block_len)
-                        #print(Aux,len(c),block_number,"aabb" )
-                        CCX | self._cgate([c[block_number-1] , c[2*(block_number-1)-1] , target])
-                        self.clause(CNF_data, variable_number, Aux, clause_length, CleanQubitNumber, 
-                                    StartID, StartID + block_len -1 , c[block_number-1], current_depth-1, depth)
-                        CCX | self._cgate([c[block_number-1] , c[2*(block_number-1)-1] , target])
+                    if () == 1:  #偶数层
+                        controls_abs=[]
+                        for j in range(EndID - StartID + 1):
+                            controls_abs.append( variable_number + CleanQubitNumber + 1 + j)
+                            self.clause(
+                                CNF_data, variable_number, Aux, clause_length, CleanQubitNumber,
+                                 StartID + j, StartID + j,
+                                 variable_number + CleanQubitNumber + 1 + j, depth-1, depth
+                                 )
+                        if controls_abs != []:    
+                            MCTOneAux().execute(len(controls_abs) + 2) | self._cgate(controls_abs + [target, variable_number - 1]) 
+                        for j in range(EndID - StartID + 1):
+                            self.clause(
+                                CNF_data, variable_number, Aux, clause_length, CleanQubitNumber,
+                                 StartID + j, StartID + j,
+                                 variable_number + CleanQubitNumber + 1 + j, depth-1, depth
+                                 )
+                    else: #奇数层
+                        controls_abs=[]
+                        for j in range(EndID - StartID + 1):
+                            controls_abs.append(variable_number + CleanQubitNumber + 1 + j)
+                            self.clause(
+                                CNF_data, variable_number, Aux, clause_length, CleanQubitNumber,
+                                 StartID + j, StartID + j,
+                                 variable_number + CleanQubitNumber + 1 + j, depth-1, depth
+                                 )
+                        if controls_abs != []:    
+                            MCTOneAux().execute(len(controls_abs) + 2) | self._cgate(controls_abs + [target, variable_number - 1 ]) 
+                        for j in range(EndID - StartID + 1):
+                            self.clause(
+                                CNF_data, variable_number, Aux, clause_length, CleanQubitNumber,
+                                 StartID + j, StartID + j,
+                                 variable_number + CleanQubitNumber + 1 + j, depth-1, depth
+                                 )
+
+
+
+
+                else: #EndID-StartID 比较大，底层放不下，  block number >1
+                    block_len = math.ceil((EndID - StartID +1) /p)
+                    block_number = math.ceil((EndID - StartID + 1) / block_len )
+                    if block_number == 2:
+                        if ((depth - current_depth) % 2) == 1: # 当前为奇数层  target 在variable_number + ancilla_qubits_num - p + 1 + j
+                          
+                            CCX | self._cgate([variable_number + 1  , variable_number  , target])    
+                            self.clause(CNF_data, variable_number, Aux, clause_length, CleanQubitNumber, StartID, StartID + block_len -1 , variable_number + 1, current_depth-1, depth)
+
+                            CCX | self._cgate([variable_number + 1  , variable_number  , target])
+                            self.clause(CNF_data, variable_number, Aux, clause_length, CleanQubitNumber, StartID + block_len, EndID, variable_number , current_depth-1, depth)
                             
-                            #控制位variable_number + CleanQubitNumber -  (block_number-1) + 2 -j 放 clause ， 另一个 控制位(将与此for内的前一个target 相同)并和target 依次上升
-                        for j in range(1, block_number-2):
-                            CCX | self._cgate([c[(block_number-1)  -j] , c[2*(block_number-1)-1  - j], c[2*(block_number-1) - j]])
-                            self.clause(CNF_data, variable_number, Aux, clause_length, CleanQubitNumber,
-                                    StartID + j*block_len , StartID -1 + (j+1)*block_len, c[(block_number-1)-j], current_depth-1, depth)
-                            CCX | self._cgate([c[(block_number-1)  -j] , c[2*(block_number-1)-1  - j], c[2*(block_number-1) - j]])
-                                
-                            # topPhase 
-                        CCX | self._cgate([c[1]  , c[0], c[ block_number ]])    
-                        self.clause(CNF_data, variable_number, Aux, clause_length, CleanQubitNumber,  StartID + (block_number-2)*block_len, StartID + (block_number-1)*block_len -1, c[1], current_depth-1, depth)
+                            CCX | self._cgate([variable_number + 1  , variable_number  , target])
+                            self.clause(CNF_data, variable_number, Aux, clause_length, CleanQubitNumber, StartID, StartID + block_len -1, variable_number + 1, current_depth-1, depth)
 
-                        CCX | self._cgate([c[1]  , c[0], c[ block_number ]])    
-                        self.clause(CNF_data, variable_number, Aux, clause_length, CleanQubitNumber, StartID + (block_number-1)*block_len, EndID, c[0], current_depth-1, depth)
+                            CCX | self._cgate([variable_number + 1  , variable_number  , target]) 
+                            self.clause(CNF_data, variable_number, Aux, clause_length, CleanQubitNumber, StartID + block_len, EndID, variable_number , current_depth-1, depth)
+                        else: # 当前偶数层 
+                         
+                            CCX | self._cgate([variable_number + CleanQubitNumber -1  , variable_number + CleanQubitNumber , target])   
+                            self.clause(CNF_data, variable_number, Aux, clause_length, CleanQubitNumber, StartID, StartID + block_len-1, variable_number + CleanQubitNumber - 1, current_depth-1, depth)
 
-                        CCX | self._cgate([c[1]  , c[0], c[ block_number ]])    
-                        self.clause(CNF_data, variable_number, Aux, clause_length, CleanQubitNumber, StartID + (block_number-2)*block_len, StartID + (block_number-1)*block_len -1, c[1], current_depth-1, depth)
-            
-                        CCX | self._cgate([c[1]  , c[0], c[ block_number ]])    
-                        
-                            #downPhase
-                        for j in range(block_number-1 - 2 , 0, -1):
-                            CCX | self._cgate([c[(block_number-1)  -j] , c[2*(block_number-1)-1  - j], c[2*(block_number-1) - j]])
-                            self.clause(CNF_data, variable_number, Aux, clause_length, CleanQubitNumber, StartID + j*block_len , StartID -1 + (j+1)*block_len, c[(block_number-1)  -j], current_depth-1, depth)
-                            CCX | self._cgate([c[(block_number-1)  -j] , c[2*(block_number-1)-1  - j], c[2*(block_number-1) - j]])   
-
-                        CCX | self._cgate([c[block_number-1 ] , c[2*(block_number-1)-1] , target])
-                        self.clause(CNF_data, variable_number, Aux, clause_length, CleanQubitNumber, StartID, StartID + block_len -1 , c[block_number-1 ], current_depth-1, depth)
-                        CCX | self._cgate([c[ block_number-1] , c[2*(block_number-1)-1] , target])
-
-                            #repeat....
-
-                            # 还原各个位置
-                            #控制位variable_number + CleanQubitNumber -  (block_number-1) + 2 -j 放 clause ， 另一个 控制位(将与此for内的前一个target 相同)并和target 依次上升
-                        for j in range(1, block_number-1 - 1):
-                            CCX | self._cgate([c[(block_number-1)  -j] , c[2*(block_number-1)-1  - j], c[2*(block_number-1) - j]])
-                            self.clause(CNF_data, variable_number, Aux, clause_length, CleanQubitNumber, StartID + j*block_len , StartID -1 + (j+1)*block_len, c[(block_number-1)  -j], current_depth-1, depth)
-                            CCX | self._cgate([c[(block_number-1)  -j] , c[2*(block_number-1)-1  - j], c[2*(block_number-1) - j]])
-                                
-                            # topPhase 
-                        CCX | self._cgate([c[1]  , c[0], c[ block_number ]])    
-                        self.clause(CNF_data, variable_number, Aux, clause_length, CleanQubitNumber, StartID + (block_number-2)*block_len, StartID + (block_number-1)*block_len -1, c[1], current_depth-1, depth)
-
-                        CCX | self._cgate([c[1]  , c[0], c[ block_number ]])    
-                        self.clause(CNF_data, variable_number, Aux, clause_length, CleanQubitNumber, StartID + (block_number-1)*block_len, EndID, c[0], current_depth-1, depth)
-
-                        CCX | self._cgate([c[1]  , c[0], c[ block_number ]])    
-                        self.clause(CNF_data, variable_number, Aux, clause_length, CleanQubitNumber, StartID + (block_number-2)*block_len, StartID + (block_number-1)*block_len -1, c[1], current_depth-1, depth)
-            
-                        CCX | self._cgate([c[1]  , c[0], c[ block_number ]])    
-                        
-                            #downPhase
-                        for j in range(block_number-1 - 2 , 0, -1):
-                            CCX | self._cgate([c[(block_number-1)  -j] , c[2*(block_number-1)-1  - j], c[2*(block_number-1) - j]])
-                            self.clause(CNF_data, variable_number, Aux, clause_length, CleanQubitNumber, StartID + j*block_len , StartID -1 + (j+1)*block_len, c[(block_number-1)  -j], current_depth-1, depth)
-                            CCX | self._cgate([c[(block_number-1)  -j] , c[2*(block_number-1)-1  - j], c[2*(block_number-1) - j]])   
-
-                    else: #偶数层
-                        CCX | self._cgate([c[CleanQubitNumber  -block_number ] , c[CleanQubitNumber - 2*(block_number-1)] , target])
-                        self.clause(CNF_data, variable_number, Aux, clause_length, CleanQubitNumber, StartID, StartID -1 + block_len , c[CleanQubitNumber  -block_number ], current_depth-1, depth)
-                        CCX | self._cgate([c[CleanQubitNumber  -block_number] , c[CleanQubitNumber - 2*(block_number-1)] , target])
+                            CCX | self._cgate([variable_number + CleanQubitNumber -1  , variable_number + CleanQubitNumber , target])
+                            self.clause(CNF_data, variable_number, Aux, clause_length, CleanQubitNumber, StartID + block_len, EndID, variable_number + CleanQubitNumber , current_depth-1, depth)
                             
-                            #控制位variable_number + CleanQubitNumber -  (block_number-1) + 2 -j 放 clause ， 另一个 控制位(将与此for内的前一个target 相同)并和target 依次上升
-                        for j in range(1, block_number-2):
-                            CCX | self._cgate([c[CleanQubitNumber-(block_number-1)+j-1] , c[CleanQubitNumber- 2*(block_number-1) + j], c[CleanQubitNumber- 2*(block_number-1) -1 + j]])
-                            self.clause(CNF_data, variable_number, Aux, clause_length, CleanQubitNumber, StartID + j*block_len , StartID -1 +(1+ j)*block_len, c[CleanQubitNumber-(block_number-1)+j-1], current_depth-1, depth)
-                            CCX | self._cgate([c[CleanQubitNumber-(block_number-1)+j-1] , c[CleanQubitNumber- 2*(block_number-1) + j], c[CleanQubitNumber- 2*(block_number-1) -1 + j]])
+                            CCX | self._cgate([variable_number + CleanQubitNumber -1  , variable_number + CleanQubitNumber , target])
+                            self.clause(CNF_data, variable_number, Aux, clause_length, CleanQubitNumber, StartID, StartID + block_len-1, variable_number + CleanQubitNumber - 1, current_depth-1, depth)
+
+                            CCX | self._cgate([variable_number + CleanQubitNumber -1  , variable_number + CleanQubitNumber , target]) 
+                            self.clause(CNF_data, variable_number, Aux, clause_length, CleanQubitNumber, StartID + block_len, EndID, variable_number + CleanQubitNumber , current_depth-1, depth)
+                    else:
+                            #block number >2
+                        c=[]
+                        for i in range( variable_number, variable_number + CleanQubitNumber  + 1 ):
+                            if i != target :
+                                c.append(i)
+                        if ((depth - current_depth) % 2) == 1: 
+  
+                                #层数差 奇数 的存储位 为 variable_number +CleanQubitNumber- p+1+j  至 variable_number + CleanQubitNumber   要从差为偶数层 取数据
+                                #层数差 偶数 的存储位 为 variable_number 至 variable_number + p -1      要从差为奇数层 取数据
+                                # UpPhase 1 升阶段 第一位要单独处理，其target 即最终target。控制位一个在variable_number + Aux；另一个在 variable_number + CleanQubitNumber -  block_number +2 上， variable_number + CleanQubitNumber -  block_number +2 上放一个低一层的 clause。
+
+                            CCX | self._cgate([c[block_number-1] , c[2*(block_number-1)-1] , target])
+                            self.clause(CNF_data, variable_number, Aux, clause_length, CleanQubitNumber, 
+                                        StartID, StartID + block_len -1 , c[block_number-1], current_depth-1, depth)
+                            CCX | self._cgate([c[block_number-1] , c[2*(block_number-1)-1] , target])
                                 
-                            # topPhase 
-                        CCX | self._cgate([c[CleanQubitNumber-2]  , c[CleanQubitNumber-1], c[ CleanQubitNumber-2 - (block_number-1) ]])    
-                        self.clause(CNF_data, variable_number, Aux, clause_length, CleanQubitNumber, StartID + (block_number-2)*block_len, StartID + (block_number-1)*block_len -1, c[CleanQubitNumber-2], current_depth-1, depth)
+                                #控制位variable_number + CleanQubitNumber -  (block_number-1) + 2 -j 放 clause ， 另一个 控制位(将与此for内的前一个target 相同)并和target 依次上升
+                            for j in range(1, block_number-2):
+                                CCX | self._cgate([c[(block_number-1)  -j] , c[2*(block_number-1)-1  - j], c[2*(block_number-1) - j]])
+                                self.clause(CNF_data, variable_number, Aux, clause_length, CleanQubitNumber,
+                                        StartID + j*block_len , StartID -1 + (j+1)*block_len, c[(block_number-1)-j], current_depth-1, depth)
+                                CCX | self._cgate([c[(block_number-1)  -j] , c[2*(block_number-1)-1  - j], c[2*(block_number-1) - j]])
+                                    
+                                # topPhase 
+                            CCX | self._cgate([c[1]  , c[0], c[ block_number ]])    
+                            self.clause(CNF_data, variable_number, Aux, clause_length, CleanQubitNumber,  StartID + (block_number-2)*block_len, StartID + (block_number-1)*block_len -1, c[1], current_depth-1, depth)
 
-                        CCX | self._cgate([c[CleanQubitNumber-2]  , c[CleanQubitNumber-1], c[ CleanQubitNumber-2 - (block_number-1) ]])     
-                        self.clause(CNF_data, variable_number, Aux, clause_length, CleanQubitNumber, StartID + (block_number-1)*block_len, EndID, c[CleanQubitNumber-1], current_depth-1, depth)
+                            CCX | self._cgate([c[1]  , c[0], c[ block_number ]])    
+                            self.clause(CNF_data, variable_number, Aux, clause_length, CleanQubitNumber, StartID + (block_number-1)*block_len, EndID, c[0], current_depth-1, depth)
 
-                        CCX | self._cgate([c[CleanQubitNumber-2]  , c[CleanQubitNumber-1], c[ CleanQubitNumber-2 - (block_number-1) ]])  
-                        self.clause(CNF_data, variable_number, Aux, clause_length, CleanQubitNumber, StartID + (block_number-2)*block_len, StartID + (block_number-1)*block_len -1, c[CleanQubitNumber-2], current_depth-1, depth)
-                        
-                        CCX | self._cgate([c[CleanQubitNumber-2]  , c[CleanQubitNumber-1], c[ CleanQubitNumber-2 - (block_number-1) ]])    
+                            CCX | self._cgate([c[1]  , c[0], c[ block_number ]])    
+                            self.clause(CNF_data, variable_number, Aux, clause_length, CleanQubitNumber, StartID + (block_number-2)*block_len, StartID + (block_number-1)*block_len -1, c[1], current_depth-1, depth)
+                
+                            CCX | self._cgate([c[1]  , c[0], c[ block_number ]])    
                             
-                            #控制位variable_number + CleanQubitNumber -  (block_number-1) + 2 -j 放 clause ， 另一个 控制位(将与此for内的前一个target 相同)并和target 依次上升
-                        for j in range( block_number-3, 0 , -1):
-                            #print(Aux, block_number,j,EndID,StartID, CleanQubitNumber-(block_number-1)+j-1,  CleanQubitNumber- 2*(block_number-1) + j ,CleanQubitNumber- 2*(block_number-1) -1 + j,len(c))
-                            CCX | self._cgate([c[CleanQubitNumber-(block_number-1)+j-1] , c[CleanQubitNumber- 2*(block_number-1) + j], c[CleanQubitNumber- 2*(block_number-1) -1 + j]])
-                            self.clause(CNF_data, variable_number, Aux, clause_length, CleanQubitNumber, StartID + j*block_len , StartID -1 +(1+ j)*block_len, c[CleanQubitNumber-(block_number-1)+j-1], current_depth-1, depth)
-                            CCX | self._cgate([c[CleanQubitNumber-(block_number-1)+j-1] , c[CleanQubitNumber- 2*(block_number-1) + j], c[CleanQubitNumber- 2*(block_number-1) -1 + j]])
+                                #downPhase
+                            for j in range(block_number-1 - 2 , 0, -1):
+                                CCX | self._cgate([c[(block_number-1)  -j] , c[2*(block_number-1)-1  - j], c[2*(block_number-1) - j]])
+                                self.clause(CNF_data, variable_number, Aux, clause_length, CleanQubitNumber, StartID + j*block_len , StartID -1 + (j+1)*block_len, c[(block_number-1)  -j], current_depth-1, depth)
+                                CCX | self._cgate([c[(block_number-1)  -j] , c[2*(block_number-1)-1  - j], c[2*(block_number-1) - j]])   
 
-                        CCX | self._cgate([c[CleanQubitNumber - block_number ] , c[CleanQubitNumber -  2*(block_number-1)] , target])
-                        self.clause(CNF_data, variable_number, Aux, clause_length, CleanQubitNumber, StartID, StartID -1 + block_len , c[CleanQubitNumber - block_number ], current_depth-1, depth)
-                        CCX | self._cgate([c[CleanQubitNumber - block_number] , c[CleanQubitNumber -  2*(block_number-1)] , target])
+                            CCX | self._cgate([c[block_number-1 ] , c[2*(block_number-1)-1] , target])
+                            self.clause(CNF_data, variable_number, Aux, clause_length, CleanQubitNumber, StartID, StartID + block_len -1 , c[block_number-1 ], current_depth-1, depth)
+                            CCX | self._cgate([c[ block_number-1] , c[2*(block_number-1)-1] , target])
 
-                            # 还原各个位置
+                                #repeat....
 
-                            #控制位variable_number + CleanQubitNumber -  (block_number-1) + 2 -j 放 clause ， 另一个 控制位(将与此for内的前一个target 相同)并和target 依次上升
-                        for j in range(1, block_number-1 - 1):
-                            CCX | self._cgate([c[CleanQubitNumber-(block_number-1)+j-1] , c[CleanQubitNumber- 2*(block_number-1) + j], c[CleanQubitNumber- 2*(block_number-1) -1 + j]])
-                            self.clause(CNF_data, variable_number, Aux, clause_length, CleanQubitNumber, StartID + j*block_len , StartID -1 +(1+ j)*block_len, c[CleanQubitNumber-(block_number-1)+j-1], current_depth-1, depth)
-                            CCX | self._cgate([c[CleanQubitNumber-(block_number-1)+j-1] , c[CleanQubitNumber- 2*(block_number-1) + j], c[CleanQubitNumber- 2*(block_number-1) -1 + j]])
+                                # 还原各个位置
+                                #控制位variable_number + CleanQubitNumber -  (block_number-1) + 2 -j 放 clause ， 另一个 控制位(将与此for内的前一个target 相同)并和target 依次上升
+                            for j in range(1, block_number-1 - 1):
+                                CCX | self._cgate([c[(block_number-1)  -j] , c[2*(block_number-1)-1  - j], c[2*(block_number-1) - j]])
+                                self.clause(CNF_data, variable_number, Aux, clause_length, CleanQubitNumber, StartID + j*block_len , StartID -1 + (j+1)*block_len, c[(block_number-1)  -j], current_depth-1, depth)
+                                CCX | self._cgate([c[(block_number-1)  -j] , c[2*(block_number-1)-1  - j], c[2*(block_number-1) - j]])
+                                    
+                                # topPhase 
+                            CCX | self._cgate([c[1]  , c[0], c[ block_number ]])    
+                            self.clause(CNF_data, variable_number, Aux, clause_length, CleanQubitNumber, StartID + (block_number-2)*block_len, StartID + (block_number-1)*block_len -1, c[1], current_depth-1, depth)
+
+                            CCX | self._cgate([c[1]  , c[0], c[ block_number ]])    
+                            self.clause(CNF_data, variable_number, Aux, clause_length, CleanQubitNumber, StartID + (block_number-1)*block_len, EndID, c[0], current_depth-1, depth)
+
+                            CCX | self._cgate([c[1]  , c[0], c[ block_number ]])    
+                            self.clause(CNF_data, variable_number, Aux, clause_length, CleanQubitNumber, StartID + (block_number-2)*block_len, StartID + (block_number-1)*block_len -1, c[1], current_depth-1, depth)
+                
+                            CCX | self._cgate([c[1]  , c[0], c[ block_number ]])    
+                            
+                                #downPhase
+                            for j in range(block_number-1 - 2 , 0, -1):
+                                CCX | self._cgate([c[(block_number-1)  -j] , c[2*(block_number-1)-1  - j], c[2*(block_number-1) - j]])
+                                self.clause(CNF_data, variable_number, Aux, clause_length, CleanQubitNumber, StartID + j*block_len , StartID -1 + (j+1)*block_len, c[(block_number-1)  -j], current_depth-1, depth)
+                                CCX | self._cgate([c[(block_number-1)  -j] , c[2*(block_number-1)-1  - j], c[2*(block_number-1) - j]])   
+
+                        else: #偶数层
+                            CCX | self._cgate([c[CleanQubitNumber  -block_number ] , c[CleanQubitNumber - 2*(block_number-1)] , target])
+                            self.clause(CNF_data, variable_number, Aux, clause_length, CleanQubitNumber, StartID, StartID -1 + block_len , c[CleanQubitNumber  -block_number ], current_depth-1, depth)
+                            CCX | self._cgate([c[CleanQubitNumber  -block_number] , c[CleanQubitNumber - 2*(block_number-1)] , target])
                                 
-                            # topPhase 
-                        CCX | self._cgate([c[CleanQubitNumber-2]  , c[CleanQubitNumber-1], c[ CleanQubitNumber-2 - (block_number-1) ]])    
-                        self.clause(CNF_data, variable_number, Aux, clause_length, CleanQubitNumber, StartID + (block_number-2)*block_len, StartID + (block_number-1)*block_len -1, c[CleanQubitNumber-2], current_depth-1, depth)
+                                #控制位variable_number + CleanQubitNumber -  (block_number-1) + 2 -j 放 clause ， 另一个 控制位(将与此for内的前一个target 相同)并和target 依次上升
+                            for j in range(1, block_number-2):
+                                CCX | self._cgate([c[CleanQubitNumber-(block_number-1)+j-1] , c[CleanQubitNumber- 2*(block_number-1) + j], c[CleanQubitNumber- 2*(block_number-1) -1 + j]])
+                                self.clause(CNF_data, variable_number, Aux, clause_length, CleanQubitNumber, StartID + j*block_len , StartID -1 +(1+ j)*block_len, c[CleanQubitNumber-(block_number-1)+j-1], current_depth-1, depth)
+                                CCX | self._cgate([c[CleanQubitNumber-(block_number-1)+j-1] , c[CleanQubitNumber- 2*(block_number-1) + j], c[CleanQubitNumber- 2*(block_number-1) -1 + j]])
+                                    
+                                # topPhase 
+                            CCX | self._cgate([c[CleanQubitNumber-2]  , c[CleanQubitNumber-1], c[ CleanQubitNumber-2 - (block_number-1) ]])    
+                            self.clause(CNF_data, variable_number, Aux, clause_length, CleanQubitNumber, StartID + (block_number-2)*block_len, StartID + (block_number-1)*block_len -1, c[CleanQubitNumber-2], current_depth-1, depth)
 
-                        CCX | self._cgate([c[CleanQubitNumber-2]  , c[CleanQubitNumber-1], c[ CleanQubitNumber-2 - (block_number-1) ]])     
-                        self.clause(CNF_data, variable_number, Aux, clause_length, CleanQubitNumber, StartID + (block_number-1)*block_len, EndID, c[CleanQubitNumber-1], current_depth-1, depth)
+                            CCX | self._cgate([c[CleanQubitNumber-2]  , c[CleanQubitNumber-1], c[ CleanQubitNumber-2 - (block_number-1) ]])     
+                            self.clause(CNF_data, variable_number, Aux, clause_length, CleanQubitNumber, StartID + (block_number-1)*block_len, EndID, c[CleanQubitNumber-1], current_depth-1, depth)
 
-                        CCX | self._cgate([c[CleanQubitNumber-2]  , c[CleanQubitNumber-1], c[ CleanQubitNumber-2 - (block_number-1) ]])  
-                        self.clause(CNF_data, variable_number, Aux, clause_length, CleanQubitNumber, StartID + (block_number-2)*block_len, StartID + (block_number-1)*block_len -1, c[CleanQubitNumber-2], current_depth-1, depth)
-                        
-                        CCX | self._cgate([c[CleanQubitNumber-2]  , c[CleanQubitNumber-1], c[ CleanQubitNumber-2 - (block_number-1) ]])    
+                            CCX | self._cgate([c[CleanQubitNumber-2]  , c[CleanQubitNumber-1], c[ CleanQubitNumber-2 - (block_number-1) ]])  
+                            self.clause(CNF_data, variable_number, Aux, clause_length, CleanQubitNumber, StartID + (block_number-2)*block_len, StartID + (block_number-1)*block_len -1, c[CleanQubitNumber-2], current_depth-1, depth)
                             
-                            #控制位variable_number + CleanQubitNumber -  (block_number-1) + 2 -j 放 clause ， 另一个 控制位(将与此for内的前一个target 相同)并和target 依次上升
-                        for j in range( block_number-3, 0 , -1):
-                            CCX | self._cgate([c[CleanQubitNumber-(block_number-1)+j-1] , c[CleanQubitNumber- 2*(block_number-1) + j], c[CleanQubitNumber- 2*(block_number-1) -1 + j]])
-                            self.clause(CNF_data, variable_number, Aux, clause_length, CleanQubitNumber, StartID + j*block_len , StartID -1 +(1+ j)*block_len, c[CleanQubitNumber-(block_number-1)+j-1], current_depth-1, depth)
-                            CCX | self._cgate([c[CleanQubitNumber-(block_number-1)+j-1] , c[CleanQubitNumber- 2*(block_number-1) + j], c[CleanQubitNumber- 2*(block_number-1) -1 + j]])
+                            CCX | self._cgate([c[CleanQubitNumber-2]  , c[CleanQubitNumber-1], c[ CleanQubitNumber-2 - (block_number-1) ]])    
+                                
+                                #控制位variable_number + CleanQubitNumber -  (block_number-1) + 2 -j 放 clause ， 另一个 控制位(将与此for内的前一个target 相同)并和target 依次上升
+                            for j in range( block_number-3, 0 , -1):
+                                CCX | self._cgate([c[CleanQubitNumber-(block_number-1)+j-1] , c[CleanQubitNumber- 2*(block_number-1) + j], c[CleanQubitNumber- 2*(block_number-1) -1 + j]])
+                                self.clause(CNF_data, variable_number, Aux, clause_length, CleanQubitNumber, StartID + j*block_len , StartID -1 +(1+ j)*block_len, c[CleanQubitNumber-(block_number-1)+j-1], current_depth-1, depth)
+                                CCX | self._cgate([c[CleanQubitNumber-(block_number-1)+j-1] , c[CleanQubitNumber- 2*(block_number-1) + j], c[CleanQubitNumber- 2*(block_number-1) -1 + j]])
+
+                            CCX | self._cgate([c[CleanQubitNumber - block_number ] , c[CleanQubitNumber -  2*(block_number-1)] , target])
+                            self.clause(CNF_data, variable_number, Aux, clause_length, CleanQubitNumber, StartID, StartID -1 + block_len , c[CleanQubitNumber - block_number ], current_depth-1, depth)
+                            CCX | self._cgate([c[CleanQubitNumber - block_number] , c[CleanQubitNumber -  2*(block_number-1)] , target])
+
+                                # 还原各个位置
+
+                                #控制位variable_number + CleanQubitNumber -  (block_number-1) + 2 -j 放 clause ， 另一个 控制位(将与此for内的前一个target 相同)并和target 依次上升
+                            for j in range(1, block_number-1 - 1):
+                                CCX | self._cgate([c[CleanQubitNumber-(block_number-1)+j-1] , c[CleanQubitNumber- 2*(block_number-1) + j], c[CleanQubitNumber- 2*(block_number-1) -1 + j]])
+                                self.clause(CNF_data, variable_number, Aux, clause_length, CleanQubitNumber, StartID + j*block_len , StartID -1 +(1+ j)*block_len, c[CleanQubitNumber-(block_number-1)+j-1], current_depth-1, depth)
+                                CCX | self._cgate([c[CleanQubitNumber-(block_number-1)+j-1] , c[CleanQubitNumber- 2*(block_number-1) + j], c[CleanQubitNumber- 2*(block_number-1) -1 + j]])
+                                    
+                                # topPhase 
+                            CCX | self._cgate([c[CleanQubitNumber-2]  , c[CleanQubitNumber-1], c[ CleanQubitNumber-2 - (block_number-1) ]])    
+                            self.clause(CNF_data, variable_number, Aux, clause_length, CleanQubitNumber, StartID + (block_number-2)*block_len, StartID + (block_number-1)*block_len -1, c[CleanQubitNumber-2], current_depth-1, depth)
+
+                            CCX | self._cgate([c[CleanQubitNumber-2]  , c[CleanQubitNumber-1], c[ CleanQubitNumber-2 - (block_number-1) ]])     
+                            self.clause(CNF_data, variable_number, Aux, clause_length, CleanQubitNumber, StartID + (block_number-1)*block_len, EndID, c[CleanQubitNumber-1], current_depth-1, depth)
+
+                            CCX | self._cgate([c[CleanQubitNumber-2]  , c[CleanQubitNumber-1], c[ CleanQubitNumber-2 - (block_number-1) ]])  
+                            self.clause(CNF_data, variable_number, Aux, clause_length, CleanQubitNumber, StartID + (block_number-2)*block_len, StartID + (block_number-1)*block_len -1, c[CleanQubitNumber-2], current_depth-1, depth)
+                            
+                            CCX | self._cgate([c[CleanQubitNumber-2]  , c[CleanQubitNumber-1], c[ CleanQubitNumber-2 - (block_number-1) ]])    
+                                
+                                #控制位variable_number + CleanQubitNumber -  (block_number-1) + 2 -j 放 clause ， 另一个 控制位(将与此for内的前一个target 相同)并和target 依次上升
+                            for j in range( block_number-3, 0 , -1):
+                                CCX | self._cgate([c[CleanQubitNumber-(block_number-1)+j-1] , c[CleanQubitNumber- 2*(block_number-1) + j], c[CleanQubitNumber- 2*(block_number-1) -1 + j]])
+                                self.clause(CNF_data, variable_number, Aux, clause_length, CleanQubitNumber, StartID + j*block_len , StartID -1 +(1+ j)*block_len, c[CleanQubitNumber-(block_number-1)+j-1], current_depth-1, depth)
+                                CCX | self._cgate([c[CleanQubitNumber-(block_number-1)+j-1] , c[CleanQubitNumber- 2*(block_number-1) + j], c[CleanQubitNumber- 2*(block_number-1) -1 + j]])
 
 
