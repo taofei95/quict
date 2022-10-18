@@ -1,32 +1,25 @@
-"""
-Quantum Amplitude Estimation in "Faster Amplitude Estimation"
-see arXiv:2003.02417[quant-ph]
-"""
 import logging
 import numpy as np
 from math import floor, ceil, pi, acos, asin, log, log2, sqrt, cos, sin
 
 from QuICT.core import Circuit
 from QuICT.core.gate import Ry
+
 from .utility import OracleInfo, StatePreparationInfo
 
 DELTA = 0.05
-
+N_1_SHOT_CONST = 1944 # TODO: optimization
+N_2_SHOT_CONST = 972  # TODO: optimization
 
 def _cos_estimate(
     m,
     N_shot,
-    oracle: OracleInfo = None,
-    state_preparation: StatePreparationInfo = None,
+    oracle: OracleInfo,
+    state_preparation: StatePreparationInfo,
     simulator=None,
 ):
     """estimate cos(2(2**m+1)θ) in modified oracle A×R
     """
-    if oracle is None:
-        raise AssertionError("oracle info must be given")
-    if state_preparation is None:
-        state_preparation = StatePreparationInfo(n=oracle.n)
-    assert state_preparation.n == oracle.n
     n = oracle.n
     n_ancilla = max([1, oracle.n_ancilla, state_preparation.n_ancilla])
     # Q'^m where A'=A×R
@@ -47,8 +40,6 @@ def _cos_estimate(
         )
         state_preparation.A(n) | circ(list(range(n + n_ancilla)))
         Ry(asin(1 / 4) * 2) | circ([n + n_ancilla])
-    # for j in range(n):
-    #     Measure | circ(j)
     simulator.run(circ)
     sample_result = simulator.sample(N_shot)
     for i in range(2 ** (n + n_ancilla + 1)):
@@ -85,26 +76,27 @@ def _atan(s, c):
 
 
 def amplitude_estimate(
-    eps=0.05,
-    oracle: OracleInfo = None,
-    state_preparation: StatePreparationInfo = None,
-    simulator=None,
+    eps,
+    oracle: OracleInfo,
+    state_preparation: StatePreparationInfo,
+    simulator,
 ):
-    """implementation of the paper `faster amplitude estimation`.
+    """implementation of the paper "Faster Amplitude Estimation".\
+    see arXiv:2003.02417[quant-ph]
 
     Args:
-        eps (float, optional): Defaults to 0.05.
-        oracle (OracleInfo, optional): Defaults to None.
-        state_preparation (StatePreparationInfo, optional): Defaults to None.
-        simulator (Simulator, optional): Defaults to None.
+        eps (float): Error allowed.
+        oracle (OracleInfo): Oracle information.
+        state_preparation (StatePreparationInfo): State preparation information.
+        simulator (Simulator): Simulation backend.
     """
     # algorithm parameters
     true_eps = eps / 2  # (4*a+true_eps)**2-(4*a)**2<eps and a<1/4
     l = ceil(1 + log2(pi / (3 * true_eps)))  # by formula 27
     delta = DELTA  # fixed
     delta_c = delta / (2 * l)  # success rate of $1-2l\delta_c$
-    N_1_shot = ceil(1944 * log(2 / delta_c))  # TODO: optimization
-    N_2_shot = ceil(972 * log(2 / delta_c))  # TODO: optimization
+    N_1_shot = ceil(N_1_SHOT_CONST * log(2 / delta_c))
+    N_2_shot = ceil(N_2_SHOT_CONST * log(2 / delta_c))
     logging.info(f"using (l,N1,N2)=({l:2},{N_1_shot:5},{N_2_shot:5})")
     theta_min, theta_max = 0, 0.252
     j0 = l
@@ -130,8 +122,7 @@ def amplitude_estimate(
                 2 ** (j - 1), N_2_shot, oracle, state_preparation, simulator
             )
             s_estimate = (
-                c_estimate * cos(mu)
-                - _cos_estimate(
+                c_estimate * cos(mu) - _cos_estimate(
                     2 ** (j - 1) + 2 ** (j0 - 1),
                     N_2_shot,
                     oracle,

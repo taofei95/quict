@@ -1,32 +1,20 @@
-"""
-canonical Quantum Amplitude Estimation \
-in "Quantum Amplitude Amplification and Estimation"
-see arXiv:quant-ph/0005055
-"""
-
+#TODO: add `backend` folder and move all implementations there
 import numpy as np
+from types import SimpleNamespace
 
 from QuICT.core import Circuit
 from QuICT.core.gate import CompositeGate, Swap, H, Measure, IQFT
 
-from QuICT.algorithm.quantum_algorithm.amplitude_estimate.utility import (
-    OracleInfo,
-    StatePreparationInfo,
-)
+from .utility import OracleInfo, StatePreparationInfo
 
 
 def construct_circuit(
-    eps=0.1,
-    oracle: OracleInfo = None,
-    state_preparation: StatePreparationInfo = None,
+    eps,
+    oracle: OracleInfo,
+    state_preparation: StatePreparationInfo,
 ):
-    if oracle is None:
-        raise AssertionError("oracle info must be given")
-    if state_preparation is None:
-        state_preparation = StatePreparationInfo(n=oracle.n)
-    assert state_preparation.n == oracle.n
-    n = oracle.n
     # see Theorem 12, case k=1
+    n = oracle.n
     m = int(np.ceil(np.log2(2 * np.pi / (np.sqrt(1 + 4 * eps) - 1))))
     n_ancilla = max([1, oracle.n_ancilla, state_preparation.n_ancilla])
     trickbits = list(range(m))
@@ -62,19 +50,29 @@ def construct_circuit(
 
 
 def amplitude_estimate(
-    eps=0.1,
-    oracle: OracleInfo = None,
-    state_preparation: StatePreparationInfo = None,
-    simulator=None,
+    eps,
+    oracle: OracleInfo,
+    state_preparation: StatePreparationInfo,
+    simulator,
 ):
-    cgate, info = construct_circuit(eps, oracle, state_preparation)
-    from types import SimpleNamespace
+    """canonical Quantum Amplitude Estimation \
+    in "Quantum Amplitude Amplification and Estimation"
+    see arXiv:quant-ph/0005055
 
-    info = SimpleNamespace(**info)
-    circ = Circuit(info.m + info.n + info.n_ancilla)
+    Args:
+        eps (float, optional): error allowed.
+        oracle (OracleInfo): oracle information.
+        state_preparation (StatePreparationInfo, optional): state preparation infomations.
+        simulator (Simulator): Simulation backend.
+
+    Returns:
+        float: the amplitude of good states
+    """
+    cgate, info = construct_circuit(eps, oracle, state_preparation)
+    circ = Circuit(info["m"] + info["n"] + info["n_ancilla"])
     cgate | circ
-    for idx in info.trickbits:
+    for idx in info["trickbits"]:
         Measure | circ(idx)
     simulator.run(circ)
-    y = int(circ[info.trickbits])
-    return np.sin(np.pi * y / (1 << info.m)) ** 2
+    y = int(circ[info["trickbits"]])
+    return np.sin(np.pi * y / (1 << info["m"])) ** 2

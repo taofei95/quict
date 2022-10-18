@@ -1,15 +1,9 @@
 import pytest
 
-from QuICT.algorithm.quantum_algorithm.amplitude_estimate import QAE
-from QuICT.algorithm.quantum_algorithm.amplitude_estimate import (
-    StatePreparationInfo,
-    OracleInfo,
-)
+from QuICT.algorithm.quantum_algorithm import QAE, StatePreparationInfo, OracleInfo
 
-from QuICT.core import Circuit
 from QuICT.core.gate import *
 from QuICT.simulation.state_vector import ConstantStateVectorSimulator
-from QuICT.qcda.synthesis.mct import MCTOneAux
 
 
 def example_oracle(n):
