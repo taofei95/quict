@@ -1,11 +1,12 @@
-from typing import Tuple, Union
-from QuICT.core.gate.gate import BasicGate
+from typing import Tuple
 
-from QuICT.qcda.mapping.mcts_refactor.common.circuit_info import CircuitInfo
-from .mcts_tree_node import MCTSTreeNode
 from QuICT.core import *
 from QuICT.core.gate import CompositeGate
-from .common import LayoutInfo
+from QuICT.core.gate.gate import BasicGate
+
+from ..common import LayoutInfo
+from ..common.circuit_info import CircuitInfo
+from .mcts_tree_node import MCTSTreeNode
 
 
 class MCTSTree:

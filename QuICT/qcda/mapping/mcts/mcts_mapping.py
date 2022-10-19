@@ -1,9 +1,11 @@
-from typing import List, Tuple, Union
+from typing import Union
+
 from QuICT.core import *
 from QuICT.core.gate import CompositeGate
 from QuICT.core.gate.gate import *
-from .common import CircuitInfo, LayoutInfo
+from QuICT.qcda.utility import OutputAligner
 
+from ..common import CircuitInfo, LayoutInfo
 from .mcts_tree import MCTSTree
 
 
@@ -25,15 +27,14 @@ class MCTSMapping:
         self._c = c
         self._gamma = gamma
         self._epsilon = epsilon
+        self.logic2phy = []
+        self.phy2logic = []
 
+    @OutputAligner()
     def execute(
         self,
         circuit_like: Union[Circuit, CompositeGate],
-        with_final_mapping: bool = False,
-    ) -> Union[
-        Union[Circuit, CompositeGate],
-        Tuple[Union[Circuit, CompositeGate], List[int], List[int]],
-    ]:
+    ) -> Union[Circuit, CompositeGate]:
         output_circ = type(circuit_like) is Circuit
         cg = CompositeGate()
         q = circuit_like.width()
@@ -64,7 +65,7 @@ class MCTSMapping:
             with cg:
                 Swap & list(action)
             cg.extend(part)
-        final_logic2phy, final_phy2logic = (
+        self.logic2phy, self.phy2logic = (
             mcts_tree._root.logic2phy,
             mcts_tree._root.phy2logic,
         )
@@ -76,7 +77,4 @@ class MCTSMapping:
         else:
             result = cg
 
-        if not with_final_mapping:
-            return result
-        else:
-            return result, final_logic2phy, final_phy2logic
+        return result

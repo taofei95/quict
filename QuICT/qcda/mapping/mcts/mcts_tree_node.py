@@ -3,14 +3,13 @@ from __future__ import annotations
 import copy
 import random
 from math import log, sqrt
-from tarfile import is_tarfile
-from typing import Dict, List, Optional, Tuple, Union
+from typing import Dict, List, Optional, Tuple
 
 from QuICT.core import *
 from QuICT.core.gate.composite_gate import CompositeGate
-from .common.layout_info import LayoutInfo
 
-from .common import CircuitInfo
+from ..common import CircuitInfo
+from ..common.layout_info import LayoutInfo
 
 
 class MCTSTreeNode:
