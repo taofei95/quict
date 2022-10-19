@@ -348,7 +348,7 @@ class CNFSATDEPTHOracle:
                 X | self._cgate(controls_X[i])
         else:  #StartID 和 EndID 不同 
          
-            if ((EndID - StartID) * (clause_length) < (Aux - 2 * CleanQubitNumber + 1)) and ((EndID - StartID ) < p) : #if block_number == 1 而且 EndID - StartID > 1 
+            if ((EndID - StartID) * (clause_length + 1) < (Aux -  CleanQubitNumber + 1)) and ((EndID - StartID ) < CleanQubitNumber) : #if block_number == 1 而且 EndID - StartID > 1 
 
                 
                 c=[]
