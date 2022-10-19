@@ -4,23 +4,22 @@ https://github.com/pybind/cmake_example/blob/0baee7e073a9b3738052f543e6bed412aaa
 """
 
 import os
-import sys
 import subprocess
-from os import path, getcwd
-from Cython.Build import cythonize
-from setuptools import setup
-from setuptools import find_packages, Extension
-
-# from setuptools.command.build_ext import build_ext
-from Cython.Distutils.build_ext import build_ext
-
-# import platform
-from contextlib import redirect_stdout, redirect_stderr
+import sys
+from contextlib import redirect_stderr, redirect_stdout
 from io import StringIO
-
-import numpy as np
-
+from os import getcwd, path
 from typing import *
+
+from Cython.Build import cythonize
+from Cython.Distutils.build_ext import build_ext
+from setuptools import Extension, find_packages, setup
+
+import pybind11
+
+pybind11_cmake_dir = pybind11.__path__[0]
+for p in ["share", "cmake", "pybind11"]:
+    pybind11_cmake_dir = path.join(pybind11_cmake_dir, p)
 
 
 # print helpers
@@ -233,6 +232,7 @@ class ExtensionBuild(build_ext):
             "-DPYTHON_EXECUTABLE={}".format(sys.executable),
             "-DBUILD_VERSION_INFO={}".format(self.distribution.get_version()),
             "-DCMAKE_BUILD_TYPE={}".format(cfg),  # not used on MSVC, but no harm
+            "-Dpybind11_DIR={}".format(pybind11_cmake_dir),
         ]
         build_args = []
 
@@ -363,10 +363,6 @@ setup(
     url=about["__url__"],
     package_dir={"QuICT": f"{prj_root_relative}/QuICT/"},
     ext_modules=[
-        CMakeExtension(
-            "QuICT.utility.graph_structure.",
-            f"{prj_root}/QuICT/utility/graph_structure",
-        ),
         CMakeExtension(
             "QuICT.simulation.state_vector.cpu_simulator.",
             f"{prj_root}/QuICT/simulation/state_vector/cpu_simulator/",

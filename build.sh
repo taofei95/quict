@@ -51,16 +51,6 @@ git submodule update --init --recursive
 
 # Clear older version build.sh remnants
 
-#print_segment
-#
-#print_cyan "[Clear Remnants]"
-#
-#echo "Deleting useless files in source code tree created by older version of build.sh"
-#
-#[[ -f "$prj_root/QuICT/CPU_simulator/quick_operator_cdll.so" ]] && \
-#echo "Deleting $prj_root/QuICT/CPU_simulator/quick_operator_cdll.so" && \
-#rm "$prj_root/QuICT/CPU_simulator/quick_operator_cdll.so"
-
 # Set C++ compiler
 
 print_segment
@@ -68,7 +58,7 @@ print_cyan "[C/C++ Compiler]"
 
 echo "Selecting C compiler"
 
-[[ $CC == "" ]] && CC=gcc
+[[ $CC == "" ]] && CC=cc
 CC=$(command -v $CC)
 export CC=$CC
 
@@ -76,7 +66,7 @@ echo "Selected $CC as C compiler"
 
 echo "Selecting C++ compiler"
 
-[[ $CXX == "" ]] && CXX=g++
+[[ $CXX == "" ]] && CXX=c++
 CXX=$(command -v $CXX)
 export CXX=$CXX
 
@@ -97,58 +87,6 @@ fi
 
 echo "Selected $cmake_gen as CMake generator"
 
-print_segment
-
-NPROC=4
-
-if [[ $OS =~ "Linux" ]]; then
-  NPROC=$(grep -c ^processor /proc/cpuinfo)
-elif [[ $OS =~ "Darwin" ]]; then
-  NPROC=$(sysctl hw.ncpu | awk '{print $$2}')
-fi
-
-NPROC=$($PYTHON3 -c "print(int($NPROC/2))")
-
-export CMAKE_BUILD_PARALLEL_LEVEL=$NPROC
-
-echo "Building with parallel parameter: $NPROC"
-
-# Build TBB
-
-if [[ $OS =~ "Darwin" ]];then
-  print_segment
-
-  echo "Building TBB from source"
-
-  print_segment
-
-  tbb_src_dir="$prj_build_dir/oneTBB"
-
-  if ! [[ -d $tbb_src_dir ]]; then
-    mkdir -p $tbb_src_dir
-    git clone -b tbb_2020 https://github.com/oneapi-src/oneTBB.git $tbb_src_dir
-  fi
-
-  echo "Detecting protential parallel"
-
-  # possible build failure
-  cd $tbb_src_dir && \
-    make -j$NPROC && \
-    cd $prj_root || exit 1
-
-  tbb_build_dir=""
-
-  for dir in "$tbb_src_dir/build/"*; do
-    if [[ -d $dir ]] && [[ $dir == *"_release" ]]; then
-      tbb_build_dir=$dir
-    fi
-  done
-
-  [[ $tbb_build_dir == "" ]] && echo "TBB build directory error! Exit." && exit 1
-
-  echo "TBB built in $tbb_build_dir"
-fi
-
 # Build C++ sources in tree
 
 print_segment
@@ -160,27 +98,8 @@ echo "Building python egg"
 
 print_segment
 
-#if [[ $OS =~ "Darwin" ]];then
-#  cd "$prj_root"/QuICT/qcda/mapping/mcts/mcts_core && ./build.sh  || exit 1
-#else
-#  cd "$prj_root"/QuICT/qcda/mapping/mcts/mcts_core && chmod u+x ./build.sh && ./build.sh  || exit 1
-#fi
-
 cd $prj_root && \
-$PYTHON3 ./setup.py build_ext "$@" || exit 1
-
-#print_cyan "[Copying Back]"
-#
-#echo -e "Copying built libraries back into source code tree to help run pytest\n"
-#
-#find "$prj_root/build/" -type f -name "*.so" | while read file
-#do
-#    dest=$(echo "$file" | grep -oE "build.*" | grep -oE "QuICT.*" ) || exit 1
-#    dest="$prj_root/$dest"
-#    dest=$(echo $dest | sed -E "s/[^/]*\.so//")
-#    echo -e "cp $file $dest\n"
-#    cp "$file" "$dest" || exit 1
-#done
+$PYTHON3 ./setup.py bdist_wheel "$@" || exit 1
 
 print_magenta "Done."
 

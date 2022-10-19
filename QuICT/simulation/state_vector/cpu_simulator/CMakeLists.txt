@@ -10,7 +10,7 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ftree-vectorize -fopenmp -mavx -mavx2 -mfma")
 
 find_package(Python3 COMPONENTS Interpreter Development)
-add_subdirectory(../../../utility/extern/pybind11 ../cmake-build-pybind11/sim_back_bind EXCLUDE_FROM_ALL)
+find_package(pybind11 CONFIG)
 include_directories(${Python3_INCLUDE_DIRS})
 
 pybind11_add_module(sim_back_bind cpu.cpp src/circuit_simulator.h src/q_state_simulator.h src/matricks_simulator.h
