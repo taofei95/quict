@@ -1,4 +1,4 @@
-name: experience-sim              # The name of job
+job_name: experience-sim              # The name of job
 type: simulation                  # The type of job, one of [simulation, qcda]
 circuit: /path/to/circuit/qasm    # The path of circuit's qasm file
 

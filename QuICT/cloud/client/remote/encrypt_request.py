@@ -13,9 +13,9 @@ class EncryptedRequest:
         self._encrypt = EncryptManager()
         self.__SALT = "TestForQuICT"
 
-    def get_current_user(self):
+    def get_current_userinfo(self):
         current_login_status = get_config()
-        return current_login_status['username']
+        return current_login_status
 
     def get(self, url: str):
         aes_key = os.urandom(16)
@@ -64,10 +64,10 @@ class EncryptedRequest:
         return json.loads(decrpted_response)
 
     def _generate_header(self, aes_key: bytes):
-        username = self.get_current_user()
+        userinfo = self.get_current_userinfo()
         payload = {
-            'username': username,
-            'aes_key': self._encrypt.encryptedmsg(aes_key, username).decode('ascii'),
+            'username': userinfo['username'],
+            'aes_key': self._encrypt.encryptedmsg(aes_key, userinfo['password'][:16]).decode('ascii'),
             'exp': datetime.datetime.utcnow() + datetime.timedelta(minutes=15)
         }
 
@@ -87,10 +87,12 @@ class EncryptedRequest:
             payload = None
 
         username = payload.get("username", None)
-        assert username == self.get_current_user()
         encrypted_aes_key = payload.get('aes_key')
+
+        userinfo = self.get_current_userinfo()
+        assert username == userinfo['username']
 
         content = response.content
 
-        aes_key = self._encrypt.decryptedmsg(encrypted_aes_key, username, True)
+        aes_key = self._encrypt.decryptedmsg(encrypted_aes_key, userinfo['password'][:16], True)
         return self._encrypt.decryptedmsg(content, aes_key)

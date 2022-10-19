@@ -36,9 +36,10 @@ class QuICTRemoteManager:
         if time_diff.seconds > 3600:
             raise ValueError("Please login again. The last login is expired.")
 
-    def _update_user_status(self, username, login: bool = True):
+    def _update_user_status(self, username: str, password: str, login: bool = True):
         local_status = {
             'username': username,
+            'password': password,
             'login_status': login,
             'last_login_date': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         }
@@ -48,16 +49,17 @@ class QuICTRemoteManager:
     ############                Login & Logout              ############
     ####################################################################
     def login(self, username: str, password: str):
-        self._update_user_status(username, login=False)
+        encrypted_passwd = self._encrypt.encrypted_passwd(password)
+        self._update_user_status(username, encrypted_passwd, login=False)
         success = self._encryptedrequest.post(
             f"{self._url_prefix}/env/login",
-            {'username': username, 'password': self._encrypt.encrypted_passwd(password)}
+            {'username': username, 'password': encrypted_passwd}
         )
 
         if not success:
             raise ValueError("unmatched login username and password.")
         else:
-            self._update_user_status(username)
+            self._update_user_status(username, encrypted_passwd, login=True)
 
     def logout(self):
         self._update_user_status(None, False)

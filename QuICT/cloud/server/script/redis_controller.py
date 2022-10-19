@@ -1,7 +1,7 @@
 import json
 import redis
 
-from ..utils.data_structure import JobOperatorType, JobState
+from QuICT.cloud.server.utils.data_structure import JobOperatorType, JobState
 
 
 class RedisController:

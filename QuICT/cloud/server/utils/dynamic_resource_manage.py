@@ -1,5 +1,5 @@
 from typing import Tuple
-from data_structure import ResourceOp
+from .data_structure import ResourceOp
 
 
 def user_resource_op(user_info: dict, resource_info: dict, op: ResourceOp) -> Tuple[bool, dict]:

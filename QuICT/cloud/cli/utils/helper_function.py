@@ -16,7 +16,7 @@ def qasm_validation(qasm_file):
 
 def _job_validation(job_dict: dict):
     # Necessary feature
-    name = job_dict["name"]
+    name = job_dict["job_name"]
     assert isinstance(name, str), f"Job's name shoule be a string, not {type(name)}."
     _type = job_dict["type"]
     assert _type in ["qcda", "simulation"], f"Job's type should be one of [qcda, simulation], not {_type}."

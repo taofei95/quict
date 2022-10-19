@@ -8,6 +8,14 @@ from QuICT.cloud.client.remote.encrypt_manager import EncryptManager
 
 
 __SALT = "TestForQuICT"
+default_user_dict = {
+    "test": EncryptManager().encrypted_passwd("test"),
+    "likaiqi": EncryptManager().encrypted_passwd("lkqtest")
+}
+
+
+def get_user_password(username: str):
+    return default_user_dict[username]
 
 
 def request_validation(func):
@@ -31,30 +39,30 @@ def request_validation(func):
         username = payload.get("username", None)
         kwargs['username'] = username
         aes_key = payload.get('aes_key')
-
+        encrypted_passwd = get_user_password(username)[:16]
         # TODO: check user available
 
         data = request.data
         if data != b'':
-            decrypted_aeskey = encrypt.decryptedmsg(aes_key, username, True)
+            decrypted_aeskey = encrypt.decryptedmsg(aes_key, encrypted_passwd, True)
             decrypted_data = encrypt.decryptedmsg(data, decrypted_aeskey)
             kwargs['json_dict'] = json.loads(decrypted_data)
 
         return_data = func(*args, **kwargs)
 
         # create header for response
-        return create_response(username, return_data)
+        return create_response(username, encrypted_passwd, return_data)
 
     return with_valid
 
 
-def create_response(username: str, json_dict: dict):
+def create_response(username: str, password: str, json_dict: dict):
     encrypt = EncryptManager()
     aes_key = os.urandom(16)
 
     payload = {
         'username': username,
-        'aes_key': encrypt.encryptedmsg(aes_key, username).decode('ascii')
+        'aes_key': encrypt.encryptedmsg(aes_key, password).decode('ascii')
     }
 
     jwt_token = jwt.encode(
