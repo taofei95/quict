@@ -91,9 +91,9 @@ echo "Selected $cmake_gen as CMake generator"
 
 print_segment
 
-print_cyan "[Python Egg]"
+print_cyan "[Python Wheel]"
 
-echo "Building python egg"
+echo "Building python wheel"
 
 
 print_segment
