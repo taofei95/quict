@@ -88,4 +88,3 @@ def draw_maxcut_result(
     if save_path:
         plt.savefig(save_path + "/{}.jpg".format(title))
     plt.show()
-

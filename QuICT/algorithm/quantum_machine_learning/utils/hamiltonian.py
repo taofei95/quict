@@ -32,7 +32,7 @@ class Hamiltonian:
 
         Args:
             pauli_str (list): A list of Hamiltonian information.
-            
+
             Some Examples are like this:
 
             [[0.4, 'Y0', 'X1', 'Z2', 'I5'], [0.6]]

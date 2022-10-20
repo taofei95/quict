@@ -79,7 +79,7 @@ class MaxCut:
 
     def draw_result(self):
         """Draw the result of the MaxCut problem.
-        
+
         The two node-sets are colored in red and blue respectively.
         The red dashed lines represent the cut edges.
         """

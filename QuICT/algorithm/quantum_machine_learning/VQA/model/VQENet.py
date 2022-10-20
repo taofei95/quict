@@ -6,7 +6,7 @@ from QuICT.algorithm.quantum_machine_learning.utils import Hamiltonian
 
 class VQENet(torch.nn.Module):
     """Variational Quantum Eigensolver algorithm.
-    
+
     VQE <https://arxiv.org/abs/1304.3061> is a quantum algorithm that uses a variational
     technique to find the minimum eigenvalue of the Hamiltonian of a given system.
     """
@@ -49,7 +49,7 @@ class VQENet(torch.nn.Module):
             state (torch.Tensor): The state vector.
 
         Returns:
-            torch.Tensor: Loss, which is equal to the expectation of H. 
+            torch.Tensor: Loss, which is equal to the expectation of H.
         """
         if isinstance(state, np.ndarray):
             state = torch.from_numpy(state).to(self.device)

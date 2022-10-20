@@ -297,7 +297,7 @@ class HGate(BasicGateTensor):
         super().__init__(controls=0, targets=1, params=0, type=GateType.h)
 
         self.matrix = torch.tensor(
-            [[1 / np.sqrt(2), 1 / np.sqrt(2)], [1 / np.sqrt(2), -1 / np.sqrt(2)],],
+            [[1 / np.sqrt(2), 1 / np.sqrt(2)], [1 / np.sqrt(2), -1 / np.sqrt(2)]],
             dtype=self._precision,
         ).to(self.device)
 
@@ -312,7 +312,7 @@ class HYGate(BasicGateTensor):
         super().__init__(controls=0, targets=1, params=0, type=GateType.hy)
 
         self.matrix = torch.tensor(
-            [[1 / np.sqrt(2), -1j / np.sqrt(2)], [1j / np.sqrt(2), -1 / np.sqrt(2)],],
+            [[1 / np.sqrt(2), -1j / np.sqrt(2)], [1j / np.sqrt(2), -1 / np.sqrt(2)]],
             dtype=self._precision,
         ).to(self.device)
 
