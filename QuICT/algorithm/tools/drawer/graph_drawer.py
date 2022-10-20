@@ -1,3 +1,6 @@
+"""A collection of utility functions for drawing."""
+
+
 import matplotlib.pyplot as plt
 import networkx as nx
 
@@ -15,6 +18,14 @@ OPTIONS = {
 def draw_graph(
     nodes, edges, title: str = "Graph", save_path=None,
 ):
+    """Draw an undirected graph based on given nodes and edges.
+
+    Args:
+        nodes (list): The nodes of the graph.
+        edges (list): The edges of the graph.
+        title (str, optional): The title of the figure. Defaults to "Graph".
+        save_path (str, optional): The path to save the figure. Defaults to None.
+    """
     plt.figure()
     plt.title(title)
     G = nx.Graph()
@@ -34,6 +45,15 @@ def draw_graph(
 def draw_maxcut_result(
     nodes, edges, solution_bit, title: str = "The result of MaxCut", save_path=None,
 ):
+    """Draw an undirected graph based on given nodes and edges.
+
+    Args:
+        nodes (list): The nodes of the graph.
+        edges (list): The edges of the graph.
+        solution_bit (str): The result state as a binary string.
+        title (str, optional): The title of the figure. Defaults to "The result of MaxCut".
+        save_path (str, optional): The path to save the figure. Defaults to None.
+    """
     plt.figure()
     plt.title(title)
     G = nx.Graph()
