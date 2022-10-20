@@ -142,7 +142,6 @@ class MaxCut:
             )
         self.model_path = qaoa.model_path
         circuit = qaoa.net.construct_circuit()
-        circuit.qasm("qasm5.txt")
         if draw_circuit:
             if self.model_path is None:
                 circuit.draw()
