@@ -2,7 +2,7 @@
 Class for customizing the whole process of synthesis, optimization and mapping
 """
 
-from QuICT.qcda.synthesis import GateDecomposition, GateTransform
+from QuICT.qcda.synthesis import GateTransform
 from QuICT.qcda.optimization import CommutativeOptimization
 from QuICT.qcda.mapping import MCTSMapping
 
@@ -40,14 +40,13 @@ class QCDA(object):
     def add_default_synthesis(self, target_instruction=None):
         """ Generate the default synthesis process
 
-        The default synthesis process contains the GateDecomposition and GateTransform, which would
+        The default synthesis process contains the GateTransform, which would
         transform the gates in the original Circuit/CompositeGate to a certain InstructionSet.
 
         Args:
             instruction(InstructionSet): The target InstructionSet
         """
         assert target_instruction is not None, ValueError('No InstructionSet provided for Synthesis')
-        self.add_method(GateDecomposition())
         self.add_method(GateTransform(target_instruction))
 
     def add_default_optimization(self):
@@ -78,6 +77,7 @@ class QCDA(object):
         Returns:
             CompositeGate/Circuit: the resulting CompositeGate or Circuit
         """
+        circuit.gate_decomposition()
         for process in self.process:
             circuit = process.execute(circuit)
 
