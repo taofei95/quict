@@ -3,7 +3,7 @@ import numpy as np
 from QuICT.algorithm import Algorithm
 from QuICT.core import Circuit
 from QuICT.core.gate import X, H, Measure
-from QuICT.quantum_state_preparation import QuantumStatePreparation
+from QuICT.qcda.synthesis.quantum_state_preparation import QuantumStatePreparation
 from QuICT.qcda.synthesis.mct import MCTOneAux
 from QuICT.simulation.state_vector import ConstantStateVectorSimulator
 

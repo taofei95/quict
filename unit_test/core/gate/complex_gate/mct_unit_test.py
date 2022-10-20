@@ -6,7 +6,7 @@
 
 from QuICT.core import *
 from QuICT.core.gate import *
-from QuICT.qcda.synthesis.mct import MCTOneAux, MCTLinearHalfDirtyAux, MCTLinearOneDirtyAux, MCTWithoutAux
+from QuICT.core.gate.complex_gate import MCTOneAux, MCTLinearHalfDirtyAux, MCTLinearOneDirtyAux, MCTWithoutAux
 from QuICT.simulation.state_vector import ConstantStateVectorSimulator
 
 

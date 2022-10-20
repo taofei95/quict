@@ -7,7 +7,7 @@
 import numpy as np
 
 from .uniformly_rotation import UniformlyRotation
-from QuICT.core.gate import build_gate, GateType, CompositeGate, H, Rz, U3
+from QuICT.core.gate import build_gate, GateType, CompositeGate, H, Rz
 
 
 class UniformlyUnitary(object):

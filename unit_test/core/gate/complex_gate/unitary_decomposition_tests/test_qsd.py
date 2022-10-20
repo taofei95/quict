@@ -2,7 +2,7 @@
 import numpy as np
 from scipy.stats import unitary_group
 
-from QuICT.qcda.synthesis.unitary_decomposition.controlled_unitary import quantum_shannon_decompose
+from QuICT.core.gate.complex_gate.unitary_decomposition.controlled_unitary import quantum_shannon_decompose
 
 
 def test_qsd():

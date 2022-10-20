@@ -1,7 +1,7 @@
 import numpy as np
 from QuICT.core import Circuit
 
-from QuICT.quantum_state_preparation import QuantumStatePreparation, SparseQuantumStatePreparation
+from QuICT.qcda.synthesis.quantum_state_preparation import QuantumStatePreparation, SparseQuantumStatePreparation
 from QuICT.simulation.state_vector import ConstantStateVectorSimulator
 
 
