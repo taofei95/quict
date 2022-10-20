@@ -51,12 +51,10 @@ class PendingJobProcessor(multiprocessing.Process):
         pending_jobs = self.redis_connection.get_pending_jobs_queue()
 
         for job_name in pending_jobs:
-            job_detail = json.loads(self.redis_connection.get_job_info(job_name))
+            job_detail = self.redis_connection.get_job_info(job_name)
 
             # User's limitation
-            user_info = json.loads(
-                self.redis_connection.get_user_dynamic_info(job_detail['username'])
-            )
+            user_info = self.redis_connection.get_user_dynamic_info(job_detail['username'])
             is_user_satisfied, updated_user_info = user_resource_op(
                 user_info, job_detail['resource'], ResourceOp.Allocation
             )
@@ -70,54 +68,7 @@ class PendingJobProcessor(multiprocessing.Process):
             self.redis_connection.update_user_dynamic_info(job_detail['username'], updated_user_info)
 
     def _start_job(self, job_detail: dict):
-        container_name_list = []
-        for component_type, command_info in job_detail["components"].items():
-            for number in range(command_info["num"]):
-                container_name = NameCreator.create_name_with_uuid(prefix=component_type)
-                environment_parameters = f"-e CONTAINER_NAME={container_name} " f"-e JOB_NAME={job_detail['name']} "
-                labels = f"-l CONTAINER_NAME={container_name} " f"-l JOB_NAME={job_detail['name']} "
-                if int(command_info["resources"]["gpu"]) == 0:
-                    component_command = START_CONTAINER_COMMAND.format(
-                        cpu=command_info["resources"]["cpu"],
-                        memory=command_info["resources"]["memory"],
-                        container_name=container_name,
-                        volumes=command_info["mount"]["target"],
-                        environment_parameters=environment_parameters,
-                        labels=labels,
-                        image_name=command_info["image"],
-                        command=command_info["command"],
-                    )
-                else:
-                    component_command = START_CONTAINER_WITH_GPU_COMMAND.format(
-                        cpu=command_info["resources"]["cpu"],
-                        memory=command_info["resources"]["memory"],
-                        gpu=command_info["resources"]["gpu"],
-                        container_name=container_name,
-                        volumes=command_info["mount"]["target"],
-                        environment_parameters=environment_parameters,
-                        labels=labels,
-                        image_name=command_info["image"],
-                        command=command_info["command"],
-                    )
-
-                completed_process = subprocess.run(
-                    component_command,
-                    shell=True,
-                    stdout=subprocess.PIPE,
-                    stderr=subprocess.PIPE,
-                    encoding="utf8",
-                )
-                if completed_process.returncode != 0:
-                    raise ResourceAllocationFailed(completed_process.stderr)
-                container_name_list.append(container_name)
-
-        job_detail["status"] = JobStatus.RUNNING
-        job_detail["container_name_list"] = container_name_list
-        self.redis_connection.hset(
-            f"{self.cluster_name}:job_details",
-            job_detail["name"],
-            json.dumps(job_detail),
-        )
+        pass
 
 
 class RunningJobProcessor(multiprocessing.Process):
@@ -137,10 +88,8 @@ class RunningJobProcessor(multiprocessing.Process):
 
         for job_name in running_jobs:
             # TODO: check running job status
-            job_detail = json.loads(self.redis_connection.get_job_info(job_name))
-            user_info = json.loads(
-                self.redis_connection.get_user_dynamic_info(job_detail['username'])
-            )
+            job_detail = self.redis_connection.get_job_info(job_name)
+            user_info = self.redis_connection.get_user_dynamic_info(job_detail['username'])
             if job_detail['state'] == JobState.Stop:
                 continue
 
@@ -151,7 +100,7 @@ class RunningJobProcessor(multiprocessing.Process):
 
             self.redis_connection.add_finish_job_from_running_jobs(job_name)
             # Release User's resource
-            updated_user_info = user_resource_op(
+            _, updated_user_info = user_resource_op(
                 user_info, job_detail['resource'], ResourceOp.Release
             )
             self.redis_connection.update_user_dynamic_info(job_detail['username'], updated_user_info)

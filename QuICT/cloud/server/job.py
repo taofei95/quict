@@ -19,6 +19,8 @@ def start_job(**kwargs):
     # start job by redis controller
     RedisController().add_pending_job(job_dict)
 
+    return RedisController().get_pending_jobs_queue()
+
 
 @job_blueprint.route(f"{URL_PREFIX}/<name>:stop", methods=["POST"])
 @request_validation
@@ -44,10 +46,10 @@ def delete_job(name: str, username: str):
 @job_blueprint.route(f"{URL_PREFIX}/list", methods=["GET"])
 @request_validation
 def list_jobs(username: str):
-    RedisController().list_jobs(username)
+    return RedisController().list_jobs(username)
 
 
 @job_blueprint.route(f"{URL_PREFIX}/<name>:status", methods=["GET"])
 @request_validation
 def status_jobs(name: str, username: str):
-    RedisController().get_job_info(f"{username}:{name}")
+    return RedisController().get_job_info(f"{username}:{name}")

@@ -28,8 +28,7 @@ class EncryptedRequest:
         )
 
         # decrepted response
-        decrpted_response = self._decrepted_response(response)
-        return json.loads(decrpted_response)
+        return self._decrepted_response(response)
 
     def post(self, url: str, json_dict: dict = None):
         aes_key = os.urandom(16)
@@ -40,12 +39,11 @@ class EncryptedRequest:
         response = requests.post(
             url=url,
             headers=header,
-            data=self._encrypt.encryptedmsg(json_dict, aes_key)
+            data=self._encrypt.encryptedmsg(json_dict, aes_key) if json_dict is not None else None
         )
 
         # decrepted response
-        decrpted_response = self._decrepted_response(response)
-        return json.loads(decrpted_response)
+        return self._decrepted_response(response)
 
     def delete(self, url: str, json_dict: dict = None):
         aes_key = os.urandom(16)
@@ -60,8 +58,7 @@ class EncryptedRequest:
         )
 
         # decrepted response
-        decrpted_response = self._decrepted_response(response)
-        return json.loads(decrpted_response)
+        return self._decrepted_response(response)
 
     def _generate_header(self, aes_key: bytes):
         userinfo = self.get_current_userinfo()
@@ -94,5 +91,13 @@ class EncryptedRequest:
 
         content = response.content
 
+        if not content:
+            return None
+
         aes_key = self._encrypt.decryptedmsg(encrypted_aes_key, userinfo['password'][:16], True)
-        return self._encrypt.decryptedmsg(content, aes_key)
+        decrypted_data = json.loads(self._encrypt.decryptedmsg(content, aes_key))
+
+        if isinstance(decrypted_data, dict) and 'error' in decrypted_data.keys():
+            raise KeyError(f"{decrypted_data['error']}")
+
+        return decrypted_data

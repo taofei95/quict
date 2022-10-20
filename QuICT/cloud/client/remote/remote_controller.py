@@ -31,8 +31,8 @@ class QuICTRemoteManager:
 
         current_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         login_time = local_status['last_login_date']
-        time_diff = datetime.strptime(login_time, '%Y-%m-%d %H:%M:%S') -\
-            datetime.strptime(current_time, '%Y-%m-%d %H:%M:%S')
+        time_diff = datetime.strptime(current_time, '%Y-%m-%d %H:%M:%S') - \
+            datetime.strptime(login_time, '%Y-%m-%d %H:%M:%S')
         if time_diff.seconds > 3600:
             raise ValueError("Please login again. The last login is expired.")
 
@@ -77,6 +77,8 @@ class QuICTRemoteManager:
     ############               Job API Function             ############
     ####################################################################
     def start_job(self, yml_dict: dict):
+        self._validation_login_status()
+
         url = f"{self._url_prefix}/jobs/start"
 
         # Delete Circuit Qasm Path here, not use for remote mode
@@ -85,21 +87,31 @@ class QuICTRemoteManager:
         return self._encryptedrequest.post(url, yml_dict)
 
     def status_job(self, job_name: str):
+        self._validation_login_status()
+
         url = f"{self._url_prefix}/jobs/{job_name}:status"
         return self._encryptedrequest.get(url)
 
     def stop_job(self, job_name: str):
+        self._validation_login_status()
+
         url = f"{self._url_prefix}/jobs/{job_name}:stop"
         return self._encryptedrequest.post(url)
 
     def restart_job(self, job_name: str):
+        self._validation_login_status()
+
         url = f"{self._url_prefix}/jobs/{job_name}:restart"
         return self._encryptedrequest.post(url)
 
     def delete_job(self, job_name: str):
+        self._validation_login_status()
+
         url = f"{self._url_prefix}/jobs/{job_name}:delete"
         return self._encryptedrequest.delete(url)
 
     def list_jobs(self):
+        self._validation_login_status()
+
         url = f"{self._url_prefix}/jobs/list"
         return self._encryptedrequest.get(url)

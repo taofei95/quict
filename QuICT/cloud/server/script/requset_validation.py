@@ -18,6 +18,14 @@ def get_user_password(username: str):
     return default_user_dict[username]
 
 
+def format_job_dict(job_dict: dict):
+    for key, value in job_dict.items():
+        if not isinstance(value, (str, int, float, bytes)):
+            job_dict[key] = json.dumps(value)
+
+    return job_dict
+
+
 def request_validation(func):
     """Check JWT validity and do data decryption before getting into the actual logistic.
     Args:
@@ -46,12 +54,15 @@ def request_validation(func):
         if data != b'':
             decrypted_aeskey = encrypt.decryptedmsg(aes_key, encrypted_passwd, True)
             decrypted_data = encrypt.decryptedmsg(data, decrypted_aeskey)
-            kwargs['json_dict'] = json.loads(decrypted_data)
+            kwargs['json_dict'] = format_job_dict(json.loads(decrypted_data))
 
-        return_data = func(*args, **kwargs)
-
-        # create header for response
-        return create_response(username, encrypted_passwd, return_data)
+        try:
+            return_data = func(*args, **kwargs)
+        except Exception as e:
+            return_data = {'error': repr(e)}
+        finally:
+            # create header for response
+            return create_response(username, encrypted_passwd, return_data)
 
     return with_valid
 

@@ -24,7 +24,10 @@ def _job_validation(job_dict: dict):
     # circuit's qasm file validation
     circuit = qasm_validation(job_dict["circuit"])
     job_dict['circuit_string'] = circuit.qasm()
-    job_dict['circuit_width'] = circuit.width()
+
+    # Create Resource Dict
+    resource_dict = {}
+    resource_dict['number_of_qubits'] = circuit.width()
 
     # Runtime parameters' validation
     if _type == "simulation":   # validation for simulation job
@@ -36,9 +39,12 @@ def _job_validation(job_dict: dict):
             "backend should be one of [state_vector, density_matrix, unitary]."
 
         # validation job's resource
-        resource_dict: dict = simulation_dict["resource"]
-        assert resource_dict["device"] in ["CPU", "GPU"], "Job's resource device should be one of [CPU, GPU]."
-        assert resource_dict["num"] >= 1, "The number of resource device should >= 1."
+        job_resource: dict = simulation_dict["resource"]
+        assert len(job_resource.keys()) == 2, "Resource only accept input device and num."
+        assert job_resource["device"] in ["CPU", "GPU"], "Job's resource device should be one of [CPU, GPU]."
+        assert job_resource["num"] >= 1, "The number of resource device should >= 1."
+        resource_dict.update(job_resource)
+        del simulation_dict["resource"]
     else:   # validation for qcda job
         qcda_dict: dict = job_dict["qcda"]
         # validation qcda-synthesis
@@ -63,6 +69,12 @@ def _job_validation(job_dict: dict):
                 _ = Layout.load_file(map_dict["layout_path"])
             except Exception as e:
                 raise ValueError(f"Failure to load Layout from layout_path, due to {e}.")
+
+        # Resource update
+        resource_dict['device'] = "CPU"
+
+    # Combined Resouce dict into job dict
+    job_dict['resource'] = resource_dict
 
     # output-path preparation
     output_path = os.path.join(job_dict["output_path"], name)

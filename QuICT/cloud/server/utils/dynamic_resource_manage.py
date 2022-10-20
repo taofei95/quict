@@ -7,11 +7,11 @@ def user_resource_op(user_info: dict, resource_info: dict, op: ResourceOp) -> Tu
     target_resource = resource_info['number_of_qubits']
     number_of_running_jobs = user_info['number_of_running_jobs'] + signal
     # exceed limit job number
-    if number_of_running_jobs > user_info['max_running_jobs']:
+    if number_of_running_jobs > user_info['maximum_parallel_level']:
         return False, user_info
 
     # Deal with running job's resource
-    if resource_info['type'] == "CPU":
+    if resource_info['device'] == "CPU":
         cur_user_running_qubits = _qubits_operator(
             user_info['running_qubits_in_cpu'], target_resource, signal
         )
@@ -28,7 +28,7 @@ def user_resource_op(user_info: dict, resource_info: dict, op: ResourceOp) -> Tu
 
     # Update user's infomation
     user_info['number_of_running_jobs'] = number_of_running_jobs
-    if resource_info['type'] == "CPU":
+    if resource_info['device'] == "CPU":
         user_info['running_qubits_in_cpu'] = cur_user_running_qubits
     else:
         user_info['running_qubits_in_gpu'] = cur_user_running_qubits
@@ -37,8 +37,11 @@ def user_resource_op(user_info: dict, resource_info: dict, op: ResourceOp) -> Tu
 
 
 def _qubits_operator(qa, qb, signal):
+    if qa == 0 or qb == 0:
+        return max(qa, qb)
+
     q_max, q_min = max(qa, qb), min(qa, qb)
-    return q_max + signal * (2 ** -(q_max - q_min))
+    return q_max * (1 + signal * (2 ** -(q_max - q_min)))
 
 
 def user_stop_jobs_op(user_info: dict, op: ResourceOp) -> Tuple[bool, dict]:
