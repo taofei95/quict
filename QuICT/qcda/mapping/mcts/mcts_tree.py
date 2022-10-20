@@ -35,7 +35,8 @@ class MCTSTree:
         self._epsilon = epsilon
 
     def step(self) -> Tuple[Tuple[int, int], CompositeGate, bool]:
-        """Execute multiple search rounds. Return a swap selection and update current search tree root.
+        """Execute multiple search rounds. 
+        Return a swap selection and update current search tree root.
 
         Returns:
             Tuple[Tuple[int, int], bool]: Selected swap action, whether mapping ends.

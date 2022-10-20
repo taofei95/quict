@@ -15,7 +15,7 @@ class CircuitInfo:
         self._qubit_num = circ.width()
         self._max_gate_num = max_gate_num
         q = circ.width()
-        if isinstance(circ, Circuit) or isinstance(circ, CompositeGate):
+        if isinstance(circ, (Circuit, CompositeGate)):
             self._gates: List[BasicGate] = copy.deepcopy(circ.gates)
         else:
             raise TypeError(
@@ -80,12 +80,12 @@ class CircuitInfo:
     def first_layer_gates(self) -> Dict[int, BasicGate]:
         if self._first_layer_gates is not None:
             return self._first_layer_gates
-        ans = self._get_first_layer_gates()
-        self._first_layer_gates = ans
-        return ans
+        answer = self._get_first_layer_gates()
+        self._first_layer_gates = answer
+        return answer
 
     def _get_first_layer_gates(self) -> Dict[int, BasicGate]:
-        ans = {}
+        answer = {}
         for bit_stick in self._bit2gid:
             if not bit_stick:
                 # Skip if empty
@@ -95,12 +95,12 @@ class CircuitInfo:
             bit_num = gate.controls + gate.targets
             if bit_num == 2:
                 a, b = gate.cargs + gate.targs
-                if self._bit2gid[a][0] == self._bit2gid[b][0] and (gid not in ans):
-                    ans[gid] = self._gates[gid]
+                if self._bit2gid[a][0] == self._bit2gid[b][0] and (gid not in answer):
+                    answer[gid] = self._gates[gid]
             elif bit_num == 1:
                 a = gate.targ
-                ans[gid] = self._gates[gid]
-        return ans
+                answer[gid] = self._gates[gid]
+        return answer
 
     def eager_exec(
         self,

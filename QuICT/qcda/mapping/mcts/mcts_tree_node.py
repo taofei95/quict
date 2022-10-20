@@ -31,7 +31,7 @@ class MCTSTreeNode:
         self.visit_cnt: int = 1
 
         if logic2phy is None:
-            logic2phy = [i for i in range(self.circ_info._qubit_num)]
+            logic2phy = list(range(self.circ_info._qubit_num))
         self.logic2phy = logic2phy
 
         if phy2logic is None:
@@ -48,7 +48,7 @@ class MCTSTreeNode:
 
     def _recommended_action(self) -> List[Tuple[int, int]]:
         assert not self.is_terminated_node()
-        ans = []
+        answer = []
         relative_qubit = set()
         for gate in self.circ_info.first_layer_gates.values():
             if gate.controls + gate.targets == 1:
@@ -59,9 +59,9 @@ class MCTSTreeNode:
             relative_qubit.add(_b)
         for a, b in self.layout_info.topo_edges:
             if a in relative_qubit or b in relative_qubit:
-                ans.append((a, b))
-        assert len(ans) > 0
-        return ans
+                answer.append((a, b))
+        assert len(answer) > 0
+        return answer
 
     def _expand_one(self, action: Tuple[int, int]) -> MCTSTreeNode:
         successor = MCTSTreeNode(
@@ -84,7 +84,7 @@ class MCTSTreeNode:
 
     def select_child(self, c: float) -> MCTSTreeNode:
         self.visit_cnt += 1
-        candidates = [child for child in self.children.values()]
+        candidates = list(self.children.values())
         candidates.sort(
             key=lambda x: x.q_value
             + x.transition_reward
@@ -170,9 +170,10 @@ class MCTSTreeNode:
         """Best child's action, state, and terminate info.
 
         Returns:
-            Tuple[Tuple[int, int], MCTSTreeNode, bool]: Action to child, child node, whether mapping ends.
+            Tuple[Tuple[int, int], MCTSTreeNode, bool]:
+                Action to child, child node, whether mapping ends.
         """
-        candidates = [pair for pair in self.children.items()]
+        candidates = list(self.children.items())
         action, child = max(
             candidates, key=lambda x: x[1].q_value + x[1].transition_reward
         )

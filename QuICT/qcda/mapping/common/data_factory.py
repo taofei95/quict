@@ -1,10 +1,12 @@
-import numpy as np
-from typing import Tuple, Union, List, Dict
 import os
 from os import path as osp
-from QuICT.core import *
-from numba import njit
+from typing import Dict, List, Tuple, Union
+
 import networkx as nx
+from numba import njit
+import numpy as np
+
+from QuICT.core import *
 
 
 @njit

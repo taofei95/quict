@@ -2,7 +2,6 @@ from typing import List, Tuple
 
 import networkx as nx
 import numpy as np
-import torch
 from QuICT.core import *
 from .data_factory import DataFactory
 
@@ -20,12 +19,6 @@ class LayoutInfo:
         if self._graph is None:
             self._graph = DataFactory.get_topo_graph(self.layout)
         return self._graph
-
-    @property
-    def topo_mask(self) -> torch.Tensor:
-        if self._mask is None:
-            self._mask = DataFactory.get_topo_mask(topo_graph=self.topo_graph)
-        return self._mask
 
     @property
     def topo_dist(self) -> np.ndarray:
