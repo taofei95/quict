@@ -1,17 +1,21 @@
-import re
-from fileinput import filename
-
 import torch
 import torch.nn
 
 from QuICT.algorithm.quantum_machine_learning.utils import Ansatz, Hamiltonian
 from QuICT.algorithm.quantum_machine_learning.utils.gate_tensor import *
-from QuICT.algorithm.quantum_machine_learning.VQA.model import VQANet
+from QuICT.algorithm.quantum_machine_learning.VQA.model import VQENet
 from QuICT.core import Circuit
 from QuICT.core.gate import *
 
 
-class QAOANet(VQANet):
+class QAOANet(VQENet):
+    """The network used by QAOA.
+
+    The QAOANet implementation directly extends VQENet and inherits its optimization structure.
+    However, unlike VQE, which can be configured with arbitrary ansatzes, QAOA uses its
+    own fine-tuned ansatz.
+    """
+
     def __init__(
         self,
         n_qubits: int,
@@ -19,9 +23,19 @@ class QAOANet(VQANet):
         hamiltonian: Hamiltonian,
         device=torch.device("cuda:0"),
     ):
+        """Initialize a QAOANet instance.
+
+        Args:
+            n_qubits (int): The number of qubits.
+            p (int): The number of layers of the network.
+            hamiltonian (Hamiltonian): The hamiltonian for a specific task.
+            device (torch.device, optional): The device to which the VQANet is assigned.
+                Defaults to torch.device("cuda:0").
+        """
         super().__init__(n_qubits, p, hamiltonian, device)
 
     def define_network(self):
+        """Define the network parameters to be trained."""
         self.beta = torch.nn.Parameter(
             torch.rand(self.p, device=self.device), requires_grad=True
         )
@@ -30,6 +44,15 @@ class QAOANet(VQANet):
         )
 
     def forward(self, state=None):
+        """The forward propagation process of QAOANet.
+
+        Args:
+            state (np.array/torch.Tensor, optional): The input state vector.
+                Defaults to None, which means the initial state |0>.
+
+        Returns:
+            torch.Tensor: The output state vector.
+        """
         ansatz = self.construct_ansatz()
         state = ansatz.forward(state)
         return state
@@ -86,6 +109,11 @@ class QAOANet(VQANet):
         return ansatz
 
     def construct_ansatz(self):
+        """Build QAOA ansatz with optimizable parameters.
+
+        Returns:
+            Ansatz: The QAOA ansatz.
+        """
         ansatz = Ansatz(self.n_qubits, device=self.device)
         # initialize state vector
         ansatz.add_gate(H_tensor)
@@ -154,6 +182,11 @@ class QAOANet(VQANet):
         return circuit
 
     def construct_circuit(self):
+        """Build QAOA circuit with optimizable parameters.
+
+        Returns:
+            Circuit: The QAOA circuit.
+        """
         gamma = self.gamma.cpu().detach().numpy()
         beta = self.beta.cpu().detach().numpy()
         circuit = Circuit(self.n_qubits)
@@ -170,3 +203,14 @@ class QAOANet(VQANet):
             U_beta | circuit
 
         return circuit
+
+    def loss_func(self, state):
+        """The loss function for QAOA, as opposed to VQE, which aims to maximize the expectation of <Ψ|H|Ψ>.
+
+        Args:
+            state (torch.Tensor): The state vector.
+
+        Returns:
+            torch.Tensor: Loss, which is equal to the negative expectation of <Ψ|H|Ψ>. 
+        """
+        return -super().loss_func(state)

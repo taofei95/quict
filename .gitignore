@@ -29,3 +29,4 @@ cmake-vsc*/
 unit_test/**/*.jpg
 .history
 /QAOA_model*
+/del

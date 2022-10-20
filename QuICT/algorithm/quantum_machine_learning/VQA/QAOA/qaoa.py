@@ -29,6 +29,12 @@ OPTIMIZER_LIST = [
 
 
 class QAOA:
+    """Quantum Approximate Optimization Algorithm.
+
+    QAOA <https://arxiv.org/abs/1411.4028> is a algorithm for finding approximate
+    solutions to combinatorial-optimization problems.
+    """
+
     def __init__(
         self,
         n_qubits: int,
@@ -101,7 +107,9 @@ class QAOA:
         resume: Union[bool, int] = False,
     ):
         now = time.strftime("%Y-%m-%d-%H_%M_%S", time.localtime(time.time()))
-        self.model_path = model_path if model_path else "QAOA_model_" + now
+        self.model_path = (
+            "QAOA_model_" + now if save_model and model_path is None else model_path
+        )
         assert optimizer in OPTIMIZER_LIST
         optimizer = getattr(torch.optim, optimizer)
         self.optim = optimizer([dict(params=self.net.parameters(), lr=lr)])

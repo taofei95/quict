@@ -4,7 +4,13 @@ import torch
 from QuICT.algorithm.quantum_machine_learning.utils import Hamiltonian
 
 
-class VQANet(torch.nn.Module):
+class VQENet(torch.nn.Module):
+    """Variational Quantum Eigensolver algorithm.
+    
+    VQE <https://arxiv.org/abs/1304.3061> is a quantum algorithm that uses a variational
+    technique to find the minimum eigenvalue of the Hamiltonian of a given system.
+    """
+
     def __init__(
         self,
         n_qubits: int,
@@ -12,6 +18,15 @@ class VQANet(torch.nn.Module):
         hamiltonian: Hamiltonian,
         device=torch.device("cuda:0"),
     ):
+        """Initialize a VQENet instance.
+
+        Args:
+            n_qubits (int): The number of qubits.
+            p (int): The number of layers of the network.
+            hamiltonian (Hamiltonian): The hamiltonian for a specific task.
+            device (torch.device, optional): The device to which the VQANet is assigned.
+                Defaults to torch.device("cuda:0").
+        """
         super().__init__()
         self.n_qubits = n_qubits
         self.p = p
@@ -20,9 +35,22 @@ class VQANet(torch.nn.Module):
         self.define_network()
 
     def define_network(self):
+        """Define the network construction.
+
+        Raises:
+            NotImplementedError: to be completed
+        """
         raise NotImplementedError
 
     def loss_func(self, state):
+        """The loss function for VQE, which aims to minimize the expectation of <Ψ|H|Ψ>.
+
+        Args:
+            state (torch.Tensor): The state vector.
+
+        Returns:
+            torch.Tensor: Loss, which is equal to the expectation of <Ψ|H|Ψ>. 
+        """
         if isinstance(state, np.ndarray):
             state = torch.from_numpy(state).to(self.device)
         assert state.shape[0] == 1 << self.n_qubits
@@ -37,6 +65,6 @@ class VQANet(torch.nn.Module):
         for coeff, ansatz in zip(coefficients, ansatz_list):
             sv = ansatz.forward(state)
             state_vector += coeff * sv
-        loss = -torch.sum(state.conj() * state_vector).real
+        loss = torch.sum(state.conj() * state_vector).real
 
         return loss

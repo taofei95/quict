@@ -34,7 +34,7 @@ class Ansatz:
         self._gates = [] if circuit is None else self._gate_to_tensor(circuit.gates)
 
     def __add__(self, other):
-        """Combine two Ansatz into one."""
+        """Add the gates of an ansatz into the ansatz."""
         ansatz = Ansatz(
             n_qubits=max(self._n_qubits, other._n_qubits), device=self._device
         )

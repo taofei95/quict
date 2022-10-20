@@ -20,6 +20,7 @@ class MaxCut:
         self.simulator = simulator
 
     def _seed(self, seed: int):
+        """Random seed."""
         torch.manual_seed(seed)
         torch.cuda.manual_seed_all(seed)
         np.random.seed(seed)
@@ -27,6 +28,11 @@ class MaxCut:
         torch.backends.cudnn.deterministic = True
 
     def _maxcut_hamiltonian(self):
+        """Generate the hamiltonian
+
+        Returns:
+            Hamiltonian: _description_
+        """
         pauli_list = []
         for edge in self._edges:
             pauli_list.append([-1.0, "Z" + str(edge[0]), "Z" + str(edge[1])])
@@ -44,6 +50,7 @@ class MaxCut:
         plt.show()
 
     def _result(self):
+        """Solve the number of maxcut and cut edges according to the state."""
         cut_edges = []
         for u in range(self._n):
             for v in range(u + 1, self._n):
@@ -60,11 +67,17 @@ class MaxCut:
         return max_cut_num, cut_edges
 
     def draw_result(self):
+        """Draw the result of MaxCut.
+        
+           The two node-sets are colored red and blue respectively.
+           The red dashed lines represent the cut edges.
+        """
         gd.draw_maxcut_result(
             range(self._n), self._edges, self.solution_bit, save_path=self.model_path
         )
 
     def draw_graph(self):
+        """Draw the graph."""
         gd.draw_graph(range(self._n), self._edges)
 
     def solve_maxcut(
@@ -81,6 +94,24 @@ class MaxCut:
         resume: Union[bool, int] = False,
         device="cuda:0",
     ):
+        """_summary_
+
+        Args:
+            p (int, optional): _description_. Defaults to 4.
+            max_iters (int, optional): _description_. Defaults to 150.
+            lr (float, optional): _description_. Defaults to 0.1.
+            shots (int, optional): _description_. Defaults to 1000.
+            seed (int, optional): _description_. Defaults to 0.
+            draw_circuit (bool, optional): _description_. Defaults to False.
+            plot_prob (bool, optional): _description_. Defaults to False.
+            load_model (_type_, optional): _description_. Defaults to None.
+            save_model (bool, optional): _description_. Defaults to False.
+            resume (Union[bool, int], optional): _description_. Defaults to False.
+            device (str, optional): _description_. Defaults to "cuda:0".
+
+        Returns:
+            _type_: _description_
+        """
         self._seed(seed)
         hamiltonian = self._maxcut_hamiltonian()
         qaoa = QAOA(self._n, p, hamiltonian, device=device, seed=seed)
@@ -97,6 +128,7 @@ class MaxCut:
             )
         self.model_path = qaoa.model_path
         circuit = qaoa.net.construct_circuit()
+        circuit.qasm("qasm5.txt")
         if draw_circuit:
             if self.model_path is None:
                 circuit.draw()
