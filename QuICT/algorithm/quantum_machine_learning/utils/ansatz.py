@@ -6,7 +6,7 @@ from QuICT.core.gate import *
 
 
 class Ansatz:
-    """The Ansatz class."""
+    """The Ansatz class, which is similar to Circuit but support the auto-grad of Pytorch."""
 
     @property
     def n_qubits(self):

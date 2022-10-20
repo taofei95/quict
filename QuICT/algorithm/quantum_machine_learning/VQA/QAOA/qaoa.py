@@ -44,6 +44,18 @@ class QAOA:
         seed: int = 0,
         device="cuda:0",
     ):
+        """_summary_
+
+        Args:
+            n_qubits (int): The number of qubits.
+            p (int): The number of layers of the QAOANet.
+            hamiltonian (Hamiltonian): The hamiltonian for a specific task.
+            loss_func (optional): The customized loss function.
+                Defaults to None, which means using the default loss function.
+            seed (int, optional): The random seed. Defaults to 0.
+            device (str, optional): The device to which the model is assigned.
+                Defaults to "cuda:0".
+        """
         self.n_qubits = n_qubits
         self.device = torch.device(device)
         self._seed(seed)
@@ -53,6 +65,11 @@ class QAOA:
         self.optim = None
 
     def _seed(self, seed: int):
+        """Set random seed
+
+        Args:
+            seed (int): The random seed.
+        """
         torch.manual_seed(seed)
         torch.cuda.manual_seed_all(seed)
         np.random.seed(seed)
@@ -60,6 +77,12 @@ class QAOA:
         torch.backends.cudnn.deterministic = True
 
     def _save_checkpoint(self, it, latest=False):
+        """Save the model and optimizer.
+
+        Args:
+            it (_type_): _description_
+            latest (bool, optional): _description_. Defaults to False.
+        """
         os.makedirs(self.model_path, exist_ok=True)
         checkpoint = dict(
             iter=it, graph=self.net.state_dict(), optimizer=self.optim.state_dict()
@@ -72,6 +95,18 @@ class QAOA:
             )
 
     def _restore_checkpoint(self, resume):
+        """_summary_
+
+        Args:
+            resume (_type_): _description_
+
+        Raises:
+            Exception: _description_
+            Exception: _description_
+
+        Returns:
+            _type_: _description_
+        """
         assert resume and self.model_path
         try:
             model_name = (
@@ -106,6 +141,20 @@ class QAOA:
         ckp_freq: int = 10,
         resume: Union[bool, int] = False,
     ):
+        """_summary_
+
+        Args:
+            optimizer (str): _description_
+            lr (float): _description_
+            max_iters (int): _description_
+            save_model (bool, optional): _description_. Defaults to True.
+            model_path (_type_, optional): _description_. Defaults to None.
+            ckp_freq (int, optional): _description_. Defaults to 10.
+            resume (Union[bool, int], optional): _description_. Defaults to False.
+
+        Returns:
+            _type_: _description_
+        """
         now = time.strftime("%Y-%m-%d-%H_%M_%S", time.localtime(time.time()))
         self.model_path = (
             "QAOA_model_" + now if save_model and model_path is None else model_path
@@ -138,6 +187,14 @@ class QAOA:
         return state
 
     def test(self, model_path):
+        """_summary_
+
+        Args:
+            model_path (_type_): _description_
+
+        Returns:
+            _type_: _description_
+        """
         assert model_path is not None and model_path != ""
         self.model_path = model_path
         # Restore checkpoint

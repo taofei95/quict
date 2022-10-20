@@ -29,7 +29,7 @@ class QAOANet(VQENet):
             n_qubits (int): The number of qubits.
             p (int): The number of layers of the network.
             hamiltonian (Hamiltonian): The hamiltonian for a specific task.
-            device (torch.device, optional): The device to which the VQANet is assigned.
+            device (torch.device, optional): The device to which the QAOANet is assigned.
                 Defaults to torch.device("cuda:0").
         """
         super().__init__(n_qubits, p, hamiltonian, device)
@@ -205,12 +205,12 @@ class QAOANet(VQENet):
         return circuit
 
     def loss_func(self, state):
-        """The loss function for QAOA, as opposed to VQE, which aims to maximize the expectation of <Ψ|H|Ψ>.
+        """The loss function for QAOA, as opposed to VQE, which aims to maximize the expectation of H.
 
         Args:
             state (torch.Tensor): The state vector.
 
         Returns:
-            torch.Tensor: Loss, which is equal to the negative expectation of <Ψ|H|Ψ>. 
+            torch.Tensor: Loss, which is equal to the negative expectation of H.
         """
         return -super().loss_func(state)

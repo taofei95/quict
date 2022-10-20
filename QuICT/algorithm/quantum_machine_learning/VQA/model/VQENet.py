@@ -43,13 +43,13 @@ class VQENet(torch.nn.Module):
         raise NotImplementedError
 
     def loss_func(self, state):
-        """The loss function for VQE, which aims to minimize the expectation of <Ψ|H|Ψ>.
+        """The loss function for VQE, which aims to minimize the expectation of H.
 
         Args:
             state (torch.Tensor): The state vector.
 
         Returns:
-            torch.Tensor: Loss, which is equal to the expectation of <Ψ|H|Ψ>. 
+            torch.Tensor: Loss, which is equal to the expectation of H. 
         """
         if isinstance(state, np.ndarray):
             state = torch.from_numpy(state).to(self.device)
