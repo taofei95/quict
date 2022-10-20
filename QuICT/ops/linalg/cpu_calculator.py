@@ -11,7 +11,7 @@ try:
     from QuICT.ops.backend import linalg
 except ImportError:
     backend_file_path = os.path.dirname(__file__) + "/../backend/linear_alg_cpu.py"
-    res = subprocess.call(["python", backend_file_path])
+    res = subprocess.call(["python3", backend_file_path])
     from QuICT.ops.backend import linalg
 
 
