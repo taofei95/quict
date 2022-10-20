@@ -6,17 +6,14 @@ https://github.com/pybind/cmake_example/blob/0baee7e073a9b3738052f543e6bed412aaa
 import os
 import subprocess
 import sys
-from contextlib import redirect_stderr, redirect_stdout
-from io import StringIO
 from os import getcwd, path
-# from typing import *
 
 from setuptools import Extension, find_packages, setup
 from setuptools.command.build_ext import build_ext
 
 import pybind11
 
-pybind11_cmake_dir = pybind11.__path__[0]
+pybind11_cmake_dir = list(pybind11.__path__)[0]
 for p in ["share", "cmake", "pybind11"]:
     pybind11_cmake_dir = path.join(pybind11_cmake_dir, p)
 
@@ -48,7 +45,7 @@ def print_with_wrapper(header, out_obj):
         if len(header) > 12:
             header = header[:9] + "..."
         if len(header) < 12:
-            for i in range(12 - len(header)):
+            for _ in range(12 - len(header)):
                 header += "."
 
         header = f"\033[36m[{header}]\033[39m "
@@ -66,7 +63,7 @@ def run_with_output_wrapper(header, args, cwd):
     if len(header) > 12:
         header = header[:9] + "..."
     if len(header) < 12:
-        for i in range(12 - len(header)):
+        for _ in range(12 - len(header)):
             header += "."
 
     header = f"\033[36m[{header}]\033[39m "
@@ -109,6 +106,9 @@ class CMakeExtension(Extension):
 
 
 class ExtensionBuild(build_ext):
+    def __init__(self, dist) -> None:
+        super().__init__(dist)
+
     def build_extension(self, ext):
         if isinstance(ext, CMakeExtension):
             self.cmake_build_extension(ext)
