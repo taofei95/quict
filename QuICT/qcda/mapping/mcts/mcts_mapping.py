@@ -35,7 +35,7 @@ class MCTSMapping:
         self,
         circuit_like: Union[Circuit, CompositeGate],
     ) -> Union[Circuit, CompositeGate]:
-        output_circ = type(circuit_like) is Circuit
+        output_circ = isinstance(circuit_like, Circuit)
         cg = CompositeGate()
         q = circuit_like.width()
         circuit_info = CircuitInfo(
@@ -43,7 +43,7 @@ class MCTSMapping:
         )
         # Bypass first part
         circuit_info.eager_exec(
-            logic2phy=[i for i in range(q)],
+            logic2phy=list(range(q)),
             physical_circ=cg,
             topo_graph=self._layout_info.topo_graph,
         )

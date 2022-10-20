@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import copy
 import random
-from math import log, sqrt
+from math import factorial, log, sqrt
 from typing import Dict, List, Optional, Tuple
 
 from QuICT.core import *
@@ -127,7 +127,7 @@ class MCTSTreeNode:
                     _a, _b = l2p[a], l2p[b]
                     nxt_d += cur.layout_info.topo_dist[_a][_b]
                 factor = cur_d - nxt_d
-                if factor < 1e-6 and factor > -1e-6:
+                if abs(factor) < 1e-6:
                     factor += epsilon
                 elif factor < 0:
                     factor = 0
