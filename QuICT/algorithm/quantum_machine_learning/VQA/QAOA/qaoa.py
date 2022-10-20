@@ -29,7 +29,7 @@ OPTIMIZER_LIST = [
 
 
 class QAOA:
-    """Quantum Approximate Optimization Algorithm.
+    """Quantum Approximate Optimization Algorithm. User interface class.
 
     QAOA <https://arxiv.org/abs/1411.4028> is a algorithm for finding approximate
     solutions to combinatorial-optimization problems.
@@ -44,14 +44,14 @@ class QAOA:
         seed: int = 0,
         device="cuda:0",
     ):
-        """_summary_
+        """Complete QAOA algorithm process instance.
 
         Args:
             n_qubits (int): The number of qubits.
-            p (int): The number of layers of the QAOANet.
+            p (int): The number of QAOA layers.
             hamiltonian (Hamiltonian): The hamiltonian for a specific task.
-            loss_func (optional): The customized loss function.
-                Defaults to None, which means using the default loss function.
+            loss_func (optional): The User-defined loss function.
+                Defaults to None, which means using the build-in default loss function.
             seed (int, optional): The random seed. Defaults to 0.
             device (str, optional): The device to which the model is assigned.
                 Defaults to "cuda:0".
@@ -65,7 +65,7 @@ class QAOA:
         self.optim = None
 
     def _seed(self, seed: int):
-        """Set random seed
+        """Set random seed.
 
         Args:
             seed (int): The random seed.
@@ -77,11 +77,11 @@ class QAOA:
         torch.backends.cudnn.deterministic = True
 
     def _save_checkpoint(self, it, latest=False):
-        """Save the model and optimizer.
+        """Save the model and optimizer as a checkpoint.
 
         Args:
-            it (_type_): _description_
-            latest (bool, optional): _description_. Defaults to False.
+            it (int): The number of the saved iteration.
+            latest (bool, optional): Whether this is the last iteration. Defaults to False.
         """
         os.makedirs(self.model_path, exist_ok=True)
         checkpoint = dict(
@@ -95,17 +95,14 @@ class QAOA:
             )
 
     def _restore_checkpoint(self, resume):
-        """_summary_
+        """Restore the model and optimizer from a checkpoint.
 
         Args:
-            resume (_type_): _description_
-
-        Raises:
-            Exception: _description_
-            Exception: _description_
+            resume (int/bool): If resume is True, restore the latest checkpoint.
+                Or users can specify a checkpoint saved in an iteration to restore.
 
         Returns:
-            _type_: _description_
+            int: The number of the restored iteration.
         """
         assert resume and self.model_path
         try:
@@ -141,19 +138,22 @@ class QAOA:
         ckp_freq: int = 10,
         resume: Union[bool, int] = False,
     ):
-        """_summary_
+        """The training process.
 
         Args:
-            optimizer (str): _description_
-            lr (float): _description_
-            max_iters (int): _description_
-            save_model (bool, optional): _description_. Defaults to True.
-            model_path (_type_, optional): _description_. Defaults to None.
-            ckp_freq (int, optional): _description_. Defaults to 10.
-            resume (Union[bool, int], optional): _description_. Defaults to False.
+            optimizer (str): The built-in optimizers in Pytorch. Need to choose from OPTIMIZER_LIST.
+            lr (float): The learning rate.
+            max_iters (int): The maximum number of iterations to train.
+            save_model (bool, optional): Whether to save the models. Defaults to True.
+            model_path (str, optional): The specified model save path.
+                Defaults to None, and a new folder will be created based on the timestamp.
+            ckp_freq (int, optional): The number of iterations to interval to save a checkpoint. Defaults to 10.
+            resume (Union[bool, int], optional): Whether to restore an existing model and continue training.
+                Defaults to False. If False, train from scratch. If True, restore the latest checkpoint.
+                Or users can specify a checkpoint saved in an iteration to restore.
 
         Returns:
-            _type_: _description_
+            torch.Tensor: The final state vector.
         """
         now = time.strftime("%Y-%m-%d-%H_%M_%S", time.localtime(time.time()))
         self.model_path = (
@@ -187,13 +187,13 @@ class QAOA:
         return state
 
     def test(self, model_path):
-        """_summary_
+        """The testing process.
 
         Args:
-            model_path (_type_): _description_
+            model_path (str): The save path of the model to be tested.
 
         Returns:
-            _type_: _description_
+            torch.Tensor: The final state vector.
         """
         assert model_path is not None and model_path != ""
         self.model_path = model_path

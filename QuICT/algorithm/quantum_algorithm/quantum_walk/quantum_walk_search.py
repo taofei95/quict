@@ -54,15 +54,16 @@ class QuantumWalkSearch(QuantumWalk):
         plt.bar(range(self._graph.position), prob)
         plt.show()
 
-    def run(self,
-            index_qubits: int,
-            target: int = None,
-            step: int = None,
-            coin_marked: np.ndarray = None,
-            coin_unmarked: np.ndarray = None,
-            coin_oracle: np.ndarray = None,
-            switched_time: int = -1,
-            ):
+    def run(
+        self,
+        index_qubits: int,
+        target: int = None,
+        step: int = None,
+        coin_marked: np.ndarray = None,
+        coin_unmarked: np.ndarray = None,
+        coin_oracle: np.ndarray = None,
+        switched_time: int = -1,
+    ):
         """ Execute the quantum walk search with given number of index qubits.
 
         Args:
@@ -85,7 +86,11 @@ class QuantumWalkSearch(QuantumWalk):
         self._action_qubits = int(np.ceil(np.log2(index_qubits)))  # c
         self._total_qubits = self._position_qubits + self._action_qubits
         position = 1 << index_qubits  # N
-        self._step = step if step is not None and step > 0 else int(np.ceil(np.sqrt(position) * np.pi / 2)) + 1
+        self._step = (
+            step
+            if step is not None and step > 0
+            else int(np.ceil(np.sqrt(position) * np.pi / 2)) + 1
+        )
         self._coin_marked = coin_marked
         self._coin_unmarked = coin_unmarked
         edges = self._get_hypercube_edges(position)
@@ -94,9 +99,13 @@ class QuantumWalkSearch(QuantumWalk):
         # Validation graph
         assert self._graph.validation(), "The edge's number should be equal."
         # Validation coin operator
-        assert coin_oracle is not None or target is not None, "Should provide a coin oracle or a target index."
+        assert (
+            coin_oracle is not None or target is not None
+        ), "Should provide a coin oracle or a target index."
         if target is not None:
-            assert 0 <= target < position, "Target should be within the range of values allowed by the index register. "
+            assert (
+                0 <= target < position
+            ), "Target should be within the range of values allowed by the index register. "
             self._target = target
         if coin_oracle is not None:
             self._coin_operator_validation(coin_oracle)

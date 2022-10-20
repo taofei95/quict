@@ -12,7 +12,17 @@ from QuICT.simulation.state_vector import ConstantStateVectorSimulator
 
 
 class MaxCut:
+    """Solving the maxcut problem with QAOA. User interface class."""
+
     def __init__(self, n: int, edges: list, simulator=ConstantStateVectorSimulator()):
+        """Instantiate MaxCut class with a specified graph.
+
+        Args:
+            n (int): The number of nodes of the graph.
+            edges (list): The edges of the graph.
+            simulator (Union[ConstantStateVectorSimulator, CircuitSimulator], optional):
+                The simulator for simulating quantum circuit. Defaults to ConstantStateVectorSimulator().
+        """
         self._n = n
         self._edges = edges
         self.solution_bit = None
@@ -28,10 +38,10 @@ class MaxCut:
         torch.backends.cudnn.deterministic = True
 
     def _maxcut_hamiltonian(self):
-        """Generate the hamiltonian
+        """Construct a Hamiltonian for the MaxCut problem of a given graph.
 
         Returns:
-            Hamiltonian: _description_
+            Hamiltonian: The hamiltonian of the graph for MaxCut.
         """
         pauli_list = []
         for edge in self._edges:
@@ -41,6 +51,7 @@ class MaxCut:
         return hamiltonian
 
     def _draw_prob(self, prob, shots):
+        """Draw the measurement result."""
         plt.figure()
         plt.xlabel("Qubit States")
         plt.ylabel("Probabilities")
@@ -67,10 +78,10 @@ class MaxCut:
         return max_cut_num, cut_edges
 
     def draw_result(self):
-        """Draw the result of MaxCut.
+        """Draw the result of the MaxCut problem.
         
-           The two node-sets are colored red and blue respectively.
-           The red dashed lines represent the cut edges.
+        The two node-sets are colored in red and blue respectively.
+        The red dashed lines represent the cut edges.
         """
         gd.draw_maxcut_result(
             range(self._n), self._edges, self.solution_bit, save_path=self.model_path
@@ -94,23 +105,26 @@ class MaxCut:
         resume: Union[bool, int] = False,
         device="cuda:0",
     ):
-        """_summary_
+        """Find the approximated solution of given Max-Cut problem via QAOA.
 
         Args:
-            p (int, optional): _description_. Defaults to 4.
-            max_iters (int, optional): _description_. Defaults to 150.
-            lr (float, optional): _description_. Defaults to 0.1.
-            shots (int, optional): _description_. Defaults to 1000.
-            seed (int, optional): _description_. Defaults to 0.
-            draw_circuit (bool, optional): _description_. Defaults to False.
-            plot_prob (bool, optional): _description_. Defaults to False.
-            load_model (_type_, optional): _description_. Defaults to None.
-            save_model (bool, optional): _description_. Defaults to False.
-            resume (Union[bool, int], optional): _description_. Defaults to False.
-            device (str, optional): _description_. Defaults to "cuda:0".
+            p (int, optional): The number of QAOA layers. Defaults to 4.
+            max_iters (int, optional):  The maximum number of iterations to train. Defaults to 150.
+            lr (float, optional): The learning rate. Defaults to 0.1.
+            shots (int, optional): The number of sampling times in the final measurement. Defaults to 1000.
+            seed (int, optional): The random seed. Defaults to 0.
+            draw_circuit (bool, optional): Whether draw the QAOA quantum circuit. Defaults to False.
+            plot_prob (bool, optional): Whether to draw the measurement result. Defaults to False.
+            load_model (str, optional): The specified path to restore a model. Defaults to None.
+            save_model (bool, optional): Whether to save the models. Defaults to False.
+            resume (Union[bool, int], optional): Whether to restore an existing model and continue training.
+                Defaults to False. If False, train from scratch. If True, restore the latest checkpoint.
+                Or users can specify a checkpoint saved in an iteration to restore.
+            device (str, optional): The device to which the model is assigned. Defaults to "cuda:0".
 
         Returns:
-            _type_: _description_
+            int: The number of max cut edges.
+            list: The list of cut edges.
         """
         self._seed(seed)
         hamiltonian = self._maxcut_hamiltonian()
