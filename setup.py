@@ -7,37 +7,37 @@ import os
 import subprocess
 import sys
 from os import getcwd, path
+from typing import List, Tuple
 
 from setuptools import Extension, find_packages, setup
 from setuptools.command.build_ext import build_ext
 
 import pybind11
 
-pybind11_cmake_dir = list(pybind11.__path__)[0]
+pybind11_cmake_dir = pybind11.__path__[0]
 for p in ["share", "cmake", "pybind11"]:
     pybind11_cmake_dir = path.join(pybind11_cmake_dir, p)
-
 
 # print helpers
 def print_segment():
     print("\033[92m", "=" * 80, "\033[39m", sep="")
 
 
-def print_cyan(s):
-    print(f"\033[36m{s}\033[39m")
+def print_cyan(segment):
+    print(f"\033[36m{segment}\033[39m")
 
 
-def print_magenta(s):
-    print(f"\033[95m{s}\033[39m")
+def print_magenta(segment):
+    print(f"\033[95m{segment}\033[39m")
 
 
-def print_yellow(s):
-    print(f"\033[33m{s}\033[39m")
+def print_yellow(segment):
+    print(f"\033[33m{segment}\033[39m")
 
 
-def print_if_not_none(s):
-    if s:
-        print(s)
+def print_if_not_none(segment):
+    if segment:
+        print(segment)
 
 
 def print_with_wrapper(header, out_obj):
@@ -82,10 +82,10 @@ def run_with_output_wrapper(header, args, cwd):
 
 
 # Detect if I'm in `root` or `root/build`
-py_file_path = path.dirname(path.abspath(__file__))
+PY_FILE_PATH = path.dirname(path.abspath(__file__))
 
-prj_root_relative = "." if getcwd() == py_file_path else ".."
-prj_root = path.abspath(prj_root_relative)
+PRJ_ROOT_RELATIVE = "." if getcwd() == PY_FILE_PATH else ".."
+PRJ_ROOT = path.abspath(PRJ_ROOT_RELATIVE)
 
 # Convert distutils Windows platform specifiers to CMake -A arguments
 PLAT_TO_CMAKE = {
@@ -106,12 +106,58 @@ class CMakeExtension(Extension):
 
 
 class ExtensionBuild(build_ext):
-    def __init__(self, dist) -> None:
-        super().__init__(dist)
-
     def build_extension(self, ext):
         if isinstance(ext, CMakeExtension):
             self.cmake_build_extension(ext)
+
+    def prepare_cmake_args(
+        self, cmake_generator: str, ext_dir: str, cfg: str
+    ) -> Tuple[List[str], List[str]]:
+        configure_args = []
+        build_args = []
+        # Set Python_EXECUTABLE instead if you use PYBIND11_FINDPYTHON
+        # EXAMPLE_VERSION_INFO shows you how to pass a value into the C++ code
+        # from Python.
+        configure_args = [
+            f"-DCMAKE_LIBRARY_OUTPUT_DIRECTORY={ext_dir}",
+            f"-DPYTHON_EXECUTABLE={sys.executable}",
+            f"-DBUILD_VERSION_INFO={self.distribution.get_version()}",
+            f"-DCMAKE_BUILD_TYPE={cfg}",  # not used on MSVC, but no harm
+            f"-Dpybind11_DIR={pybind11_cmake_dir}",
+        ]
+        build_args = []
+
+        if self.compiler.compiler_type != "msvc":
+            if not cmake_generator:
+                configure_args += ["-GUnix Makefiles"]
+        else:
+            # Single config generators are handled "normally"
+            single_config = any(x in cmake_generator for x in ("NMake", "Ninja"))
+
+            # CMake allows an arch-in-generator style for backward compatibility
+            contains_arch = any(x in cmake_generator for x in ("ARM", "Win64"))
+
+            # Specify the arch if using MSVC generator, but only if it doesn't
+            # contain a backward-compatibility arch spec already in the
+            # generator name.
+            if not single_config and not contains_arch:
+                configure_args += ["-A", PLAT_TO_CMAKE[self.plat_name]]
+
+            # Multi-config generators have a different way to specify configs
+            if not single_config:
+                configure_args += [
+                    f"-DCMAKE_LIBRARY_OUTPUT_DIRECTORY_{cfg.upper()}={ext_dir}"
+                ]
+                build_args += ["--config", cfg]
+            # Set CMAKE_BUILD_PARALLEL_LEVEL to control the parallel build level
+            # across all generators.
+            if "CMAKE_BUILD_PARALLEL_LEVEL" not in os.environ:
+                # self.parallel is a Python 3 only way to set parallel jobs by hand
+                # using -j in the build_ext call, not supported by pip or PyPA-build.
+                if hasattr(self, "parallel") and self.parallel:
+                    # CMake 3.12+ only.
+                    build_args += [f"-j{self.parallel}"]
+        return configure_args, build_args
 
     def cmake_build_extension(self, ext):
         ext_dir = os.path.abspath(os.path.dirname(self.get_ext_fullpath(ext.name)))
@@ -126,53 +172,9 @@ class ExtensionBuild(build_ext):
         # Can be set with Conda-Build, for example.
         cmake_generator = os.environ.get("CMAKE_GENERATOR", "")
 
-        # Set Python_EXECUTABLE instead if you use PYBIND11_FINDPYTHON
-        # EXAMPLE_VERSION_INFO shows you how to pass a value into the C++ code
-        # from Python.
-        cmake_args = [
-            "-DCMAKE_LIBRARY_OUTPUT_DIRECTORY={}".format(ext_dir),
-            "-DPYTHON_EXECUTABLE={}".format(sys.executable),
-            "-DBUILD_VERSION_INFO={}".format(self.distribution.get_version()),
-            "-DCMAKE_BUILD_TYPE={}".format(cfg),  # not used on MSVC, but no harm
-            "-Dpybind11_DIR={}".format(pybind11_cmake_dir),
-        ]
-        build_args = []
-
-        if self.compiler.compiler_type != "msvc":
-            if not cmake_generator:
-                cmake_args += ["-GUnix Makefiles"]
-
-        else:
-
-            # Single config generators are handled "normally"
-            single_config = any(x in cmake_generator for x in {"NMake", "Ninja"})
-
-            # CMake allows an arch-in-generator style for backward compatibility
-            contains_arch = any(x in cmake_generator for x in {"ARM", "Win64"})
-
-            # Specify the arch if using MSVC generator, but only if it doesn't
-            # contain a backward-compatibility arch spec already in the
-            # generator name.
-            if not single_config and not contains_arch:
-                cmake_args += ["-A", PLAT_TO_CMAKE[self.plat_name]]
-
-            # Multi-config generators have a different way to specify configs
-            if not single_config:
-                cmake_args += [
-                    "-DCMAKE_LIBRARY_OUTPUT_DIRECTORY_{}={}".format(
-                        cfg.upper(), ext_dir
-                    )
-                ]
-                build_args += ["--config", cfg]
-
-        # Set CMAKE_BUILD_PARALLEL_LEVEL to control the parallel build level
-        # across all generators.
-        if "CMAKE_BUILD_PARALLEL_LEVEL" not in os.environ:
-            # self.parallel is a Python 3 only way to set parallel jobs by hand
-            # using -j in the build_ext call, not supported by pip or PyPA-build.
-            if hasattr(self, "parallel") and self.parallel:
-                # CMake 3.12+ only.
-                build_args += ["-j{}".format(self.parallel)]
+        configure_args, build_args = self.prepare_cmake_args(
+            cmake_generator, ext_dir, cfg
+        )
 
         ext_name = ext.name
         if ext_name[-1] == ".":
@@ -185,7 +187,9 @@ class ExtensionBuild(build_ext):
             os.makedirs(build_temp)
 
         print_cyan(f"[{ext_name}]")
-        print_with_wrapper(ext_name, " ".join(["cmake", ext.source_dir] + cmake_args))
+        print_with_wrapper(
+            ext_name, " ".join(["cmake", ext.source_dir] + configure_args)
+        )
         if hasattr(self, "parallel") and self.parallel:
             print_yellow(
                 "Extensions are built in parallel. Shell output might be messed up."
@@ -193,7 +197,7 @@ class ExtensionBuild(build_ext):
         print_with_wrapper(ext_name, "Configuring...")
         run_with_output_wrapper(
             header=ext_name,
-            args=["cmake", ext.source_dir] + cmake_args,
+            args=["cmake", ext.source_dir] + configure_args,
             cwd=build_temp,
         )
         print_with_wrapper(ext_name, "Building...")
@@ -204,9 +208,9 @@ class ExtensionBuild(build_ext):
         )
         print_with_wrapper(ext_name, "Copying back...")
         libs = []
-        for f in os.listdir(ext_dir):
-            if f.endswith(".so"):
-                libs.append(f"{ext_dir}{f}")
+        for file in os.listdir(ext_dir):
+            if file.endswith(".so"):
+                libs.append(f"{ext_dir}{file}")
         run_with_output_wrapper(
             header=ext_name,
             args=["cp", " ".join(libs), ext.source_dir],
@@ -214,27 +218,17 @@ class ExtensionBuild(build_ext):
         )
 
 
-packages = find_packages(where=prj_root_relative)
+packages = find_packages(where=PRJ_ROOT_RELATIVE)
 
 # static file
 file_data = [
-    ("QuICT/lib/qasm/libs", [f"{prj_root_relative}/QuICT/lib/qasm/libs/qelib1.inc"]),
-]
-
-# 3rd party library
-requires = [
-    "numpy>=1.20.1",
-    "networkx>=2.5.1",
-    "matplotlib>=3.3.4",
-    "ply>=3.11",
-    "scipy",
-    "ujson",
+    ("QuICT/lib/qasm/libs", [f"{PRJ_ROOT_RELATIVE}/QuICT/lib/qasm/libs/qelib1.inc"]),
 ]
 
 # version information
 about = {}
 
-with open(f"{prj_root_relative}/QuICT/__version__.py", "r") as f:
+with open(f"{PRJ_ROOT_RELATIVE}/QuICT/__version__.py", "r", encoding="utf-8") as f:
     exec(f.read(), about)
 
 setup(
@@ -244,11 +238,11 @@ setup(
     author=about["__author__"],
     author_email=about["__email__"],
     url=about["__url__"],
-    package_dir={"QuICT": f"{prj_root_relative}/QuICT/"},
+    package_dir={"QuICT": f"{PRJ_ROOT_RELATIVE}/QuICT/"},
     ext_modules=[
         CMakeExtension(
             "QuICT.simulation.state_vector.cpu_simulator.",
-            f"{prj_root}/QuICT/simulation/state_vector/cpu_simulator/",
+            f"{PRJ_ROOT}/QuICT/simulation/state_vector/cpu_simulator/",
         ),
     ],
     cmdclass={"build_ext": ExtensionBuild},
@@ -256,7 +250,6 @@ setup(
     data_files=file_data,
     include_package_data=True,
     python_requires=">=3.8",
-    install_requires=requires,
     zip_safe=False,
 )
 print_segment()
