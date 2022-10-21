@@ -41,7 +41,7 @@ def user_resource_op(user_info: dict, resource_info: dict, op: ResourceOp) -> Tu
 def _qubits_operator(qa, qb: int, signal):
     assert qb > 0
     if signal == -1:
-        assert qa >= qb
+        assert np.isclose(qa, qb) or qa > qb
 
     if qa == 0:
         return qb
