@@ -1,4 +1,6 @@
 from typing import Tuple
+import numpy as np
+
 from .data_structure import ResourceOp
 
 
@@ -36,12 +38,16 @@ def user_resource_op(user_info: dict, resource_info: dict, op: ResourceOp) -> Tu
     return True, user_info
 
 
-def _qubits_operator(qa, qb, signal):
-    if qa == 0 or qb == 0:
-        return max(qa, qb)
+def _qubits_operator(qa, qb: int, signal):
+    assert qb > 0
+    if signal == -1:
+        assert qa >= qb
 
-    q_max, q_min = max(qa, qb), min(qa, qb)
-    return q_max * (1 + signal * (2 ** -(q_max - q_min)))
+    if qa == 0:
+        return qb
+
+    result = 2 ** qa + signal * 2 ** qb
+    return np.log2(result) if not np.isclose(result, 0) else 0
 
 
 def user_stop_jobs_op(user_info: dict, op: ResourceOp) -> Tuple[bool, dict]:
