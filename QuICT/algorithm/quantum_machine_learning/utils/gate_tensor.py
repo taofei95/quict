@@ -193,9 +193,9 @@ class BasicGateTensor(object):
     def __eq__(self, other):
         assert isinstance(other, BasicGateTensor)
         if (
-            self.type != other.type
-            or (self.cargs + self.targs) != (other.cargs + other.targs)
-            or not torch.allclose(self.matrix, other.matrix)
+            self.type != other.type or
+            (self.cargs + self.targs) != (other.cargs + other.targs) or
+            not torch.allclose(self.matrix, other.matrix)
         ):
             return False
 
@@ -281,10 +281,10 @@ class BasicGateTensor(object):
             bool: True if the type of element is int/float/complex/torch.Tensor
         """
         if (
-            isinstance(element, int)
-            or isinstance(element, float)
-            or isinstance(element, complex)
-            or isinstance(element, torch.Tensor)
+            isinstance(element, int) or
+            isinstance(element, float) or
+            isinstance(element, complex) or
+            isinstance(element, torch.Tensor)
         ):
             return True
         return False

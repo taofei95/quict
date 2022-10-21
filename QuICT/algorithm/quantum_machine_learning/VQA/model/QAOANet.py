@@ -1,5 +1,6 @@
 import torch
 import torch.nn
+from typing import NamedTuple
 
 from QuICT.algorithm.quantum_machine_learning.utils import Ansatz, Hamiltonian
 from QuICT.algorithm.quantum_machine_learning.utils.gate_tensor import *
@@ -64,28 +65,28 @@ class QAOANet(VQENet):
             self.hamiltonian._qubit_indexes,
             self.hamiltonian._pauli_gates,
         ):
+            gate_dict = {
+                "X": {"mqids": H_tensor, "qid": Rx_tensor(2 * coeff * gamma)},
+                "Y": {"mqids": Hy_tensor, "qid": Ry_tensor(2 * coeff * gamma)},
+                "Z": {"qid": Rz_tensor(2 * coeff * gamma)},
+            }
+
             # Mapping e.g. Rxyz
             if len(qids) > 1:
-                gate_dict = {"X": H_tensor, "Y": Hy_tensor}
                 for i in range(len(qids)):
                     if gates[i] != "Z":
                         assert gates[i] in gate_dict.keys(), "Invalid Pauli gate."
-                        ansatz.add_gate(gate_dict[gates[i]], qids[i])
+                        ansatz.add_gate(gate_dict[gates[i]]['mqids'], qids[i])
                 ansatz = ansatz + self._Rnz_ansatz(2 * coeff * gamma, qids)
                 for i in range(len(qids)):
                     if gates[i] != "Z":
                         assert gates[i] in gate_dict.keys(), "Invalid Pauli gate."
-                        ansatz.add_gate(gate_dict[gates[i]], qids[i])
+                        ansatz.add_gate(gate_dict[gates[i]]['mqids'], qids[i])
 
             # Only Rx, Ry, Rz
             elif len(qids) == 1:
-                gate_dict = {
-                    "X": Rx_tensor(2 * coeff * gamma),
-                    "Y": Ry_tensor(2 * coeff * gamma),
-                    "Z": Rz_tensor(2 * coeff * gamma),
-                }
                 assert gates[0] in gate_dict.keys(), "Invalid Pauli gate."
-                ansatz.add_gate(gate_dict[gates[0]], qids[0])
+                ansatz.add_gate(gate_dict[gates[0]]['qid'], qids[0])
 
             # Only coeff
             else:
@@ -136,29 +137,29 @@ class QAOANet(VQENet):
             self.hamiltonian._qubit_indexes,
             self.hamiltonian._pauli_gates,
         ):
+            gate_dict = {
+                "X": {"mqids": H, "qid": Rx(2 * coeff * gamma)},
+                "Y": {"mqids": Hy, "qid": Ry(2 * coeff * gamma)},
+                "Z": {"qid": Rz(2 * coeff * gamma)},
+            }
+
             # Mapping e.g. Rxyz
             if len(qids) > 1:
-                gate_dict = {"X": H, "Y": Hy}
                 for i in range(len(qids)):
                     if gates[i] != "Z":
                         assert gates[i] in gate_dict.keys(), "Invalid Pauli gate."
-                        gate_dict[gates[i]] | circuit(qids[i])
+                        gate_dict[gates[i]]['mqids'] | circuit(qids[i])
                 Rnz_circuit = self._Rnz_circuit(2 * coeff * gamma, qids)
                 circuit.extend(Rnz_circuit.gates)
                 for i in range(len(qids)):
                     if gates[i] != "Z":
                         assert gates[i] in gate_dict.keys(), "Invalid Pauli gate."
-                        gate_dict[gates[i]] | circuit(qids[i])
+                        gate_dict[gates[i]]['mqids'] | circuit(qids[i])
 
             # Only Rx, Ry, Rz
             elif len(qids) == 1:
-                gate_dict = {
-                    "X": Rx(2 * coeff * gamma),
-                    "Y": Ry(2 * coeff * gamma),
-                    "Z": Rz(2 * coeff * gamma),
-                }
                 assert gates[0] in gate_dict.keys(), "Invalid Pauli gate."
-                gate_dict[gates[0]] | circuit(qids[0])
+                gate_dict[gates[0]]['qid'] | circuit(qids[0])
 
             # Only coeff
             else:

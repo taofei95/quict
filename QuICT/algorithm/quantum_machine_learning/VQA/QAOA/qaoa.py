@@ -123,8 +123,7 @@ class QAOA:
             raise Exception("Cannot load the model correctly.")
 
         it = checkpoint["iter"]
-        if resume is not True:
-            assert resume == it
+        assert resume is True or resume == it
 
         return it
 

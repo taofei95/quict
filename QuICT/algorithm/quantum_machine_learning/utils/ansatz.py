@@ -100,9 +100,9 @@ class Ansatz:
         log2_shape = int(np.ceil(np.log2(shape[0])))
 
         return (
-            shape[0] == shape[1]
-            and shape[0] == (1 << log2_shape)
-            and torch.allclose(
+            shape[0] == shape[1] and
+            shape[0] == (1 << log2_shape) and
+            torch.allclose(
                 torch.eye(shape[0], dtype=gate.precision).to(self._device),
                 torch.mm(gate_matrix, gate_matrix.T.conj()).to(self._device),
             )

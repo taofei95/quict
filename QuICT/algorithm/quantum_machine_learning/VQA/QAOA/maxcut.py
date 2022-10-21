@@ -66,10 +66,10 @@ class MaxCut:
         for u in range(self._n):
             for v in range(u + 1, self._n):
                 if (
-                    (u, v) in self._edges
-                    or (v, u) in self._edges
-                    or [u, v] in self._edges
-                    or [v, u] in self._edges
+                    (u, v) in self._edges or
+                    (v, u) in self._edges or
+                    [u, v] in self._edges or
+                    [v, u] in self._edges
                 ):
                     if self.solution_bit[u] != self.solution_bit[v]:
                         cut_edges.append((u, v))
