@@ -26,7 +26,7 @@ class Grover:
     def __init__(self, simulator) -> None:
         self.simulator = simulator
 
-    def circuit(self, n, n_ancilla, oracle, n_solution=1, measure=True):
+    def circuit(self, n, n_ancilla, oracle, n_solution=1, measure=True, is_bit_flip=False):
         """ grover search for f with custom oracle
 
         Args:
@@ -55,7 +55,13 @@ class Grover:
         # rotation
         for i in range(T):
             # Grover iteration
+            if is_bit_flip:
+                X | circuit(ancilla_q[0])
+                H | circuit(ancilla_q[0])
             oracle | circuit(index_q + ancilla_q)
+            if is_bit_flip:
+                H | circuit(ancilla_q[0])
+                X | circuit(ancilla_q[0])
             for idx in index_q:
                 H | circuit(idx)
             # control phase shift
@@ -80,9 +86,9 @@ class Grover:
         )
         return circuit
 
-    def run(self, n, n_ancilla, oracle, n_solution=1, measure=True):
+    def run(self, n, n_ancilla, oracle, n_solution=1, measure=True, is_bit_flip=False):
         simulator = self.simulator
         index_q = list(range(n))
-        circuit = self.circuit(n, n_ancilla, oracle, n_solution, measure)
+        circuit = self.circuit(n, n_ancilla, oracle, n_solution, measure, is_bit_flip)
         simulator.run(circuit)
         return int(circuit[index_q])
