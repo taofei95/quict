@@ -41,7 +41,7 @@ def read_CNF(cnf_file):
         return variable_number, clause_number, CNF_data
 
 def test():
-    filename_test =  "./test_data/3_6_100"
+    filename_test =  "./2"
     AuxQubitNumber = 5
     variable_number , clause_number , CNF_data = read_CNF(filename_test)
     #print(CNF_data)
@@ -49,11 +49,11 @@ def test():
     #b=[]
     # print(variable_number)
     cnf = CNFSATOracle()
-    cnf.run(filename_test, AuxQubitNumber,1)
+    cnf.run(filename_test, AuxQubitNumber, 1)
     oracle = cnf.circuit()
-    grover = Grover(simulator=TestGrover.simulator)
+    grover = Grover(ConstantStateVectorSimulator())
     
-    result = grover.run(variable_number, AuxQubitNumber, oracle)
+    result = grover.run(variable_number, AuxQubitNumber + 1, oracle)
 
 
 test()
