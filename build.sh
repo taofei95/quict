@@ -17,8 +17,6 @@ prj_root="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 
 prj_build_dir="$prj_root/build"
 
-OS=$(uname -a)
-
 PYTHON3=$(command -v python3)
 
 # Set root & building directory

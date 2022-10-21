@@ -35,7 +35,6 @@ class MCTSMapping:
         self,
         circuit_like: Union[Circuit, CompositeGate],
     ) -> Union[Circuit, CompositeGate]:
-        output_circ = isinstance(circuit_like, Circuit)
         cg = CompositeGate()
         q = circuit_like.width()
         circuit_info = CircuitInfo(
@@ -71,10 +70,5 @@ class MCTSMapping:
         )
         del mcts_tree
 
-        if output_circ:
-            result = Circuit(cg.width())
-            result.extend(cg.gates)
-        else:
-            result = cg
-
+        result = cg
         return result
