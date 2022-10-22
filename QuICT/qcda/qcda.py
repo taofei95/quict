@@ -5,6 +5,10 @@ Class for customizing the whole process of synthesis, optimization and mapping
 from QuICT.qcda.synthesis import GateTransform
 from QuICT.qcda.optimization import CommutativeOptimization
 from QuICT.qcda.mapping import MCTSMapping
+from QuICT.tools import Logger
+
+
+logger = Logger("QCDA")
 
 
 class QCDA(object):
@@ -77,8 +81,10 @@ class QCDA(object):
         Returns:
             CompositeGate/Circuit: the resulting CompositeGate or Circuit
         """
+        logger.info(f"QCDA Now processing GateDecomposition.")
         circuit.gate_decomposition()
         for process in self.process:
+            logger.info(f"QCDA Now processing {process.__class__.__name__}.")
             circuit = process.execute(circuit)
 
         return circuit

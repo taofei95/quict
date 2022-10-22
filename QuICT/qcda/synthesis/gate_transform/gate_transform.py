@@ -42,6 +42,7 @@ class GateTransform(object):
         else:
             raise TypeError("Invalid input for GateTransform")
 
+        gates.gate_decomposition()
         gates = self.two_qubit_transform(gates)
         gates = self.one_qubit_transform(gates)
         return gates
