@@ -37,7 +37,7 @@ class CircuitBased(object):
         self._pointer = None
 
     def size(self) -> int:
-        """ the number of gates in the circuit/CompositeGate
+        """ the number of gates in the circuit/CompositeGate 
 
         Returns:
             int: the number of gates in circuit
