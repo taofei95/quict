@@ -184,7 +184,7 @@ def test_cnot_without_ancillae():
             c = gate.carg
             t = gate.targ
             test_mat1[t, :] ^= test_mat1[c, :]
-        for gate in gates:
+        for gate in gates.gates:
             gate: BasicGate
             c = gate.carg
             t = gate.targ

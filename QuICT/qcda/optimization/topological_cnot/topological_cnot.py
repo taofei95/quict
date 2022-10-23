@@ -38,7 +38,7 @@ class SteinerTree(object):
                                       it is directed.
         """
         self.N = n
-        self.matrix = [[False] * n] * n
+        self.matrix = [[False for _ in range(n)] for _ in range(n)]
         self.dp = np.array([], dtype=np.int64)
         self.ST = []
         for i in range(n):
@@ -61,10 +61,10 @@ class SteinerTree(object):
         """
         size = len(ST_input)
         self.root = ST_input[-1]
-        self.dp = np.array([-1] * self.N * (1 << size), dtype=np.int64).reshape((self.N, 1 << size))
+        self.dp = -1 * np.ones((self.N, 1 << size))
         self.pre = np.zeros((self.N, 1 << size, 2), dtype=np.int64)
-        self.ST = [0] * self.N
-        self.father = [-1] * self.N
+        self.ST = [0 for _ in range(self.N)]
+        self.father = [-1 for _ in range(self.N)]
         self.sons = []
         for i in range(self.N):
             self.sons.append([])
@@ -77,7 +77,7 @@ class SteinerTree(object):
 
         que = Queue()
         for j in range(1 << size):
-            vis = [0] * self.N
+            vis = [0 for _ in range(self.N)]
             for i in range(lower_bound, self.N):
                 if self.ST[i] != 0 and (self.ST[i] & j) == 0:
                     continue
@@ -197,9 +197,9 @@ class TopologicalCnot(object):
         gates = self.__execute_with_cnot_struct(cnot_struct)
 
         if circuit.topology is None or len(circuit.topology.edge_list) == 0:
-            topology = [[True] * self.width] * self.width
+            topology = [[True for _ in range(self.width)] for _ in range(self.width)]
         else:
-            topology = [[False] * self.width] * self.width
+            topology = [[False for _ in range(self.width)] for _ in range(self.width)]
             for topo in circuit.topology.edge_list:
                 topology[topo.u][topo.v] = True
 
@@ -245,16 +245,16 @@ class TopologicalCnot(object):
         """
         self.width = circuit.width()
         if circuit.topology is None or len(circuit.topology.edge_list) == 0:
-            self.undirected_topology = [[True] * self.width] * self.width
+            self.undirected_topology = [[True for _ in range(self.width)] for _ in range(self.width)]
         else:
-            self.undirected_topology = [[False] * self.width] * self.width
+            self.undirected_topology = [[False for _ in range(self.width)] for _ in range(self.width)]
             for topo in circuit.topology.edge_list:
                 self.undirected_topology[topo.u][topo.v] = True
                 self.undirected_topology[topo.v][topo.u] = True
 
-        self.topo_forward_map = [0] * self.width
-        self.topo_backward_map = [0] * self.width
-        self.delete_vis = [0] * self.width
+        self.topo_forward_map = [0 for _ in range(self.width)]
+        self.topo_backward_map = [0 for _ in range(self.width)]
+        self.delete_vis = [0 for _ in range(self.width)]
         self.delete_total = 0
         self.delete_dfs(self.width - 1)
 
@@ -281,15 +281,15 @@ class TopologicalCnot(object):
         if topology is not None:
             self.width = len(cnot_struct)
             if len(topology) == 0:
-                self.undirected_topology = [[True] * self.width] * self.width
+                self.undirected_topology = [[True for _ in range(self.width)] for _ in range(self.width)]
             else:
-                self.undirected_topology = [[False] * self.width] * self.width
+                self.undirected_topology = [[False for _ in range(self.width)] for _ in range(self.width)]
                 for topo in topology:
                     self.undirected_topology[topo[0]][topo[1]] = self.undirected_topology[topo[1]][topo[0]] = True
 
-            self.topo_forward_map = [0] * self.width
-            self.topo_backward_map = [0] * self.width
-            self.delete_vis = [0] * self.width
+            self.topo_forward_map = [0 for _ in range(self.width)]
+            self.topo_backward_map = [0 for _ in range(self.width)]
+            self.delete_vis = [0 for _ in range(self.width)]
             self.delete_total = 0
             self.delete_dfs(self.width - 1)
 
@@ -309,7 +309,7 @@ class TopologicalCnot(object):
                 raise Exception("the matrix is not singular matrix")
 
             # find a line that the ith bit is 1, and find a path to make the ith bit of ith line 1
-            pre = [-1] * self.width
+            pre = [-1 for _ in range(self.width)]
             if i != j:
                 bfs = Queue()
                 bfs.put(j)
@@ -349,8 +349,8 @@ class TopologicalCnot(object):
             # elimination this row
 
             # find a set S whose summation in equal to row 1 except column i
-            back_gauss_elimination = [0] * (i + 1)
-            xor_result = [0] * (i + 1)
+            back_gauss_elimination = [0 for _ in range(i + 1)]
+            xor_result = [0 for _ in range(i + 1)]
             for j in range(i + 1, self.width):
                 back_gauss_elimination.append(cnot_struct[j])
                 xor_result.append(1 << j)

@@ -32,7 +32,7 @@ def main_oracle(n, f):
         for i in range(n):
             if target_binary[i] == "0":
                 X & i
-    MCTOneAux.execute(n + 2) | cgate
+    MCTOneAux().execute(n + 2) | cgate
     # un-compute
     with cgate:
         for i in range(n):
@@ -54,13 +54,13 @@ class TestGrover(unittest.TestCase):
         print("The Grover unit test finished!")
 
     def test_grover_on_ConstantStateVectorSimulator(self):
-        for n in range(3, 9):
+        for n in range(3, 7):
             error = 0
             N = 2 ** n
             for target in range(0, N):
                 f = [target]
                 k, oracle = main_oracle(n, f)
-                grover = Grover(TestGrover.simulator)
+                grover = Grover(simulator=TestGrover.simulator)
                 result = grover.run(n, k, oracle)
                 if target != result:
                     error += 1
@@ -76,15 +76,15 @@ class TestGrover(unittest.TestCase):
 
     def test_partial_grover_on_ConstantStateVectorSimulator(self):
         n_block = 3
-        for n in range(5, 9):
+        for n in range(5, 8):
             print("run with n = ", n)
             error = 0
             N = 2 ** n
             for target in range(0, N):
                 f = [target]
                 k, oracle = main_oracle(n, f)
-                result = PartialGrover.run(
-                    n, n_block, k, oracle, ConstantStateVectorSimulator()
+                result = PartialGrover(simulator=TestGrover.simulator).run(
+                    n, n_block, k, oracle
                 )
                 if (target >> (n - k)) != (result >> (n - k)):
                     error += 1
@@ -93,7 +93,7 @@ class TestGrover(unittest.TestCase):
                 "for n = %d, %d errors in %d tests, error rate = %f"
                 % (n, error, N, error / N)
             )
-            if error_rate > 0.15:
+            if error_rate > 0.3:
                 assert 0
         assert 1
 

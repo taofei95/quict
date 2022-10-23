@@ -20,7 +20,6 @@ class Trigger(Operator):
             targets (int): The number of target qubits.
             state_gate_mapping: The mapping of state and related composite gates.
                 (Union[Dict[int, CompositeGate], List[CompositeGate], Tuple[CompositeGate], FunctionType])
-            record_measured (bool): whether record the measured state into target qubits. Default to False
 
         Raises:
             TypeError: Error input parameters.
