@@ -186,7 +186,7 @@ def test_parameterize_all():
     support_gates = [GateType.h, GateType.cx, GateType.x, GateType.rz,
                      GateType.t, GateType.tdg, GateType.s, GateType.sdg, GateType.z]
     circ = Circuit(n_qubit)
-    circ.random_append(n_gate, typelist=support_gates)
+    circ.random_append(n_gate, typelist=support_gates, random_params=True)
     dag = DAG(circ)
     AutoOptimization.parameterize_all(dag)
     circ_optim = dag.get_circuit()
@@ -302,6 +302,6 @@ def test_random_circuit():
         print('iteration', _)
         circ = Circuit(n_qubit)
 
-        circ.random_append(n_gate, typelist=support_gates)
+        circ.random_append(n_gate, typelist=support_gates, random_params=True)
         check_circuit_optimization(circ, _, mode='light')
         check_circuit_optimization(circ, _, mode='heavy')

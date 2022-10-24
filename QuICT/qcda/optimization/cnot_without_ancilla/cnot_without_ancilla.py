@@ -1,8 +1,10 @@
-import numpy as np
 from typing import *
+
+import numpy as np
+
 from QuICT.core import *
 from QuICT.core.gate import build_gate, BasicGate, CompositeGate, GateType
-
+from QuICT.qcda.utility import OutputAligner
 from .utility import *
 from .graph import *
 from .edge_coloring import EdgeColoring
@@ -10,6 +12,7 @@ from .block_ldu_decompose import BlockLDUDecompose
 
 
 class CnotWithoutAncilla(object):
+    @OutputAligner()
     def execute(
             self,
             circuit_segment: Union[Circuit, CompositeGate]

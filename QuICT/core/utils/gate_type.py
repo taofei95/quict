@@ -3,6 +3,7 @@ from enum import Enum
 
 class GateType(Enum):
     h = "H gate"
+    hy = "Self-inverse gate"
     s = "S gate"
     sdg = "The conjugate transpose of Phase gate"
     x = "Pauli-X gate"
@@ -18,6 +19,7 @@ class GateType(Enum):
     rx = "Rx gate"
     ry = "Ry gate"
     rz = "Rz gate"
+    ri = "Ri gate"
     t = "T gate"
     tdg = "The conjugate transpose of T gate"
     phase = "Phase gate"

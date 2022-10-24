@@ -6,7 +6,7 @@
 
 from QuICT.core import *
 from QuICT.core.gate import *
-from QuICT.qcda.synthesis.mct import MCTOneAux, MCTLinearHalfDirtyAux, MCTLinearOneDirtyAux
+from QuICT.qcda.synthesis.mct import MCTOneAux, MCTLinearHalfDirtyAux, MCTLinearOneDirtyAux, MCTWithoutAux
 from QuICT.simulation.state_vector import ConstantStateVectorSimulator
 
 
@@ -92,4 +92,15 @@ def test_MCTOneAux():
         mat_mct = np.eye(1 << n - 1)
         mat_mct[(1 << n - 1) - 2:, (1 << n - 1) - 2:] = X.matrix.real
         mat_mct = np.kron(mat_mct, np.eye(2))
+        assert np.allclose(mat_mct, unitary)
+
+
+def test_MCTWithoutAux():
+    for n in range(3, 9):
+        circuit = Circuit(n)
+        MCT = MCTWithoutAux()
+        MCT.execute(n) | circuit
+        unitary = circuit.matrix()
+        mat_mct = np.eye(1 << n)
+        mat_mct[(1 << n) - 2:, (1 << n) - 2:] = X.matrix.real
         assert np.allclose(mat_mct, unitary)
