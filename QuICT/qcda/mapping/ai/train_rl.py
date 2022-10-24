@@ -258,7 +258,7 @@ class Trainer:
         next_state_values[non_final_mask] = (
             self._target_net(
                 non_final_data_batch,
-            ) # [b, a]
+            )  # [b, a]
             .clone()
             .detach()
             .max(1)[0]
@@ -360,21 +360,23 @@ class Trainer:
             )
         if rl_num[topo_name] < self._v_best_score:
             self._v_best_score = rl_num[topo_name]
-            torch.save(
-                self._target_net.state_dict(),
-                osp.join(self._model_path, f"model_epoch_{epoch_id}.pt"),
-            )
-            for idx, v_datum in enumerate(results):
-                rl_circ_fig = v_datum.rl_mapped_circ.draw(method="matp_silent")
-                original_circ_fig = v_datum.circ.draw(method="matp_silent")
-                rl_circ_fig.dpi = 75
-                original_circ_fig.dpi = 75
-                self._writer.add_figure(
-                    f"{topo_name}-{idx} (RL)", rl_circ_fig, epoch_id
+            if epoch_id > 5:
+                torch.save(
+                    self._target_net.state_dict(),
+                    osp.join(self._model_path, f"model_epoch_{epoch_id}.pt"),
                 )
-                self._writer.add_figure(
-                    f"{topo_name}-{idx}", original_circ_fig, epoch_id
-                )
+            # if self._topo.qubit_number <= 16:
+            #     for idx, v_datum in enumerate(results):
+            #         rl_circ_fig = v_datum.rl_mapped_circ.draw(method="matp_silent")
+            #         original_circ_fig = v_datum.circ.draw(method="matp_silent")
+            #         rl_circ_fig.dpi = 75
+            #         original_circ_fig.dpi = 75
+            #         self._writer.add_figure(
+            #             f"{topo_name}-{idx} (RL)", rl_circ_fig, epoch_id
+            #         )
+            #         self._writer.add_figure(
+            #             f"{topo_name}-{idx}", original_circ_fig, epoch_id
+            #         )
         self._writer.add_scalars(
             f"Validation Performance ({topo_name})",
             {
@@ -398,7 +400,7 @@ class Trainer:
 
 
 if __name__ == "__main__":
-    topo = "grid_4x4"
+    topo = "grid_5x5"
     device = "cuda:1"
     trainer = Trainer(topo=topo, device=device)
     trainer.train()
