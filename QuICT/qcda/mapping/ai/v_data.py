@@ -21,7 +21,7 @@ if not osp.exists(data_dir):
 
 circ_num_each_topo = 5
 
-for topo_name in ["grid_4x4", "grid_3x3", "ibmq_lima"]:
+for topo_name in ["grid_5x5", "grid_4x4", "grid_3x3", "ibmq_lima"]:
     print(f"Starting processing {topo_name}...")
     topo_dir = osp.dirname(osp.abspath(__file__))
     topo_dir = osp.join(topo_dir, "data")
@@ -34,7 +34,7 @@ for topo_name in ["grid_4x4", "grid_3x3", "ibmq_lima"]:
         print(".", end="")
         circ = Circuit(q)
         g = 10 * (i + 1)
-        circ.random_append(rand_size=g, typelist=[GateType.cx])
+        circ.random_append(rand_size=g, typelist=[GateType.crz], random_params=True)
         qasm = circ.qasm()
         qasm_path = osp.join(data_dir, f"{topo_name}_{i}.qasm")
         with open(qasm_path, "w") as f:
