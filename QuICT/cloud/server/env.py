@@ -17,7 +17,11 @@ def login(**kwargs):
     username = json_dict['username']
     pwd = json_dict["password"]
 
-    return SQLManger().validation_password(username, pwd)
+    # Redis update.
+
+    return True
+
+    # return SQLManger().validation_password(username, pwd)
 
 
 @env_blueprint.route(f"{URL_PREFIX}/register", methods=["POST"])
@@ -33,15 +37,38 @@ def register(**kwargs):
 
 @env_blueprint.route(f"{URL_PREFIX}/register", methods=["POST"])
 @request_validation
-def unsubscribe(**kwargs):
-    username = kwargs['username']
-
+def unsubscribe(username):
     SQLManger().delete_user(username)
     RedisController().delete_user(username)
 
 
-@env_blueprint.route(f"{URL_PREFIX}/status", methods=["GET"])
+@env_blueprint.route(f"{URL_PREFIX}/update_pw", methods=["POST"])
 @request_validation
-def status_cluster():
-    """ Return cluster state. """
-    return RedisController().get_cluster_status()
+def update_password(username, new_password):
+    SQLManger().update_password(username, new_password)
+
+
+@env_blueprint.route(f"{URL_PREFIX}/update_user_info", methods=["POST"])
+@request_validation
+def update_password(username, new_email: str = None, new_level: int = None):
+    if new_email is not None:
+        SQLManger().update_user_email(username, new_email)
+
+    if new_level is not None:
+        SQLManger().update_user_level(username, new_level)
+
+
+@env_blueprint.route(f"{URL_PREFIX}/forget_password", methods=["POST"])
+@request_validation
+def forget_password(username: str):
+    user_info = SQLManger().get_user_info(username)
+    user_email = user_info[1]
+
+    # TODO: Send email to user
+    pass    
+
+# @env_blueprint.route(f"{URL_PREFIX}/status", methods=["GET"])
+# @request_validation
+# def status_cluster():
+#     """ Return cluster state. """
+#     return RedisController().get_cluster_status()

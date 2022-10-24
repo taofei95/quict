@@ -5,17 +5,10 @@ import functools
 from flask import request, Response
 
 from QuICT.cloud.client.remote.encrypt_manager import EncryptManager
+from sql_controller import SQLManger
 
 
 __SALT = "TestForQuICT"
-default_user_dict = {
-    "test": EncryptManager().encrypted_passwd("test"),
-    "likaiqi": EncryptManager().encrypted_passwd("lkqtest")
-}
-
-
-def get_user_password(username: str):
-    return default_user_dict[username]
 
 
 def format_job_dict(job_dict: dict):
@@ -36,6 +29,7 @@ def request_validation(func):
 
     @functools.wraps(func)
     def with_valid(*args, **kwargs):
+        sql_conn = SQLManger()
         # Get jwt_token and its payload
         encrypt = EncryptManager()
         jwt_token = request.headers.get('Authorization')
@@ -45,9 +39,10 @@ def request_validation(func):
             payload = None
 
         username = payload.get("username", None)
+        assert sql_conn.validate_user(username)
         kwargs['username'] = username
         aes_key = payload.get('aes_key')
-        encrypted_passwd = get_user_password(username)[:16]
+        encrypted_passwd = sql_conn.get_password(username)[:16]
         # TODO: check user available
 
         data = request.data
