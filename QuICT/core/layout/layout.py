@@ -69,6 +69,10 @@ class LayoutEdge:
         self._error_rate = error_rate
         self._directional = directional
 
+    def __str__(self):
+        dir = ' <-> ' if self._directional else '-->'
+        return f"{self._u} {dir} {self._v}, with error rate {self._error_rate}"
+
 
 class Layout:
     """Implement a topology in a physical device
@@ -108,7 +112,11 @@ class Layout:
         self._directionalized = None
 
     def __str__(self):
-        return f"{self._name}\n{self._qubit_number}\n{self.edge_list}"
+        layout_str = f"{self._name} with {self._qubit_number} qubits."
+        for edge in self.edge_list:
+            layout_str += f"\n{edge}"
+
+        return layout_str
 
     def out_edges(self, begin_point: int) -> List[LayoutEdge]:
         """edges begin from begin_point
