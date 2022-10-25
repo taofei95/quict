@@ -3,7 +3,7 @@ import json
 import multiprocessing
 
 from redis_controller import RedisController
-from ..utils import (
+from QuICT.cloud.server.utils import (
     delete_job_folder, JobOperatorType, JobState, ResourceOp,
     user_resource_op, user_stop_jobs_op
 )

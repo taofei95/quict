@@ -2,6 +2,7 @@ import json
 import redis
 
 from QuICT.cloud.server.utils.data_structure import JobOperatorType, JobState
+from QuICT.cloud.server.utils.get_config import get_default_user_config
 
 
 class RedisController:
@@ -20,22 +21,17 @@ class RedisController:
             self._redis_connection.hgetall(f"User_Dynamic_Info:{user_name}")
         )
 
-    def update_user_dynamic_info(self, user_name: str, job_resource: dict):
-        self._redis_connection.hmset(f"User_Dynamic_Info:{user_name}", job_resource)
+    def update_user_dynamic_info(self, user_name: str, user_info: dict = None):
+        if user_info is None:
+            if self._redis_connection.exists(f"User_Dynamic_Info:{user_name}"):
+                return
 
-    def delete_user(self, user_name: str):
+            user_info = get_default_user_config(user_name)
+
+        self._redis_connection.hmset(f"User_Dynamic_Info:{user_name}", user_info)
+
+    def delete_user_dynamic_info(self, user_name: str):
         self._redis_connection.delete(f"User_Dynamic_Info:{user_name}")
-
-    ####################################################################
-    ############             Cluster DB Function            ############
-    ####################################################################
-    def get_cluster_status(self):
-        # May using k8s CLI to replace
-        return self._redis_connection.get("cluster")
-
-    def update_cluster_status(self, clauster_status: dict):
-        clauster_name = clauster_status['name']
-        self._redis_connection.hset(f"clauster:{clauster_name}", clauster_status)
 
     ####################################################################
     ############              Jobs DB Function              ############

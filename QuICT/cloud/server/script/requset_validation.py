@@ -5,7 +5,7 @@ import functools
 from flask import request, Response
 
 from QuICT.cloud.client.remote.encrypt_manager import EncryptManager
-from sql_controller import SQLManger
+from .sql_controller import SQLManger
 
 
 __SALT = "TestForQuICT"
@@ -19,7 +19,7 @@ def format_job_dict(job_dict: dict):
     return job_dict
 
 
-def request_validation(func):
+def request_validation(login: bool = False):
     """Check JWT validity and do data decryption before getting into the actual logistic.
     Args:
         func:
@@ -27,39 +27,42 @@ def request_validation(func):
         None.
     """
 
-    @functools.wraps(func)
-    def with_valid(*args, **kwargs):
-        sql_conn = SQLManger()
-        # Get jwt_token and its payload
-        encrypt = EncryptManager()
-        jwt_token = request.headers.get('Authorization')
-        if jwt_token and jwt_token.startswith('Bearer '):
-            payload = jwt.decode(jwt_token[7:], __SALT, ["HS256"])
-        else:
-            payload = None
+    def decorator(func):
+        @functools.wraps(func)
+        def with_valid(*args, **kwargs):
+            sql_conn = SQLManger()
+            # Get jwt_token and its payload
+            encrypt = EncryptManager()
+            jwt_token = request.headers.get('Authorization')
+            if jwt_token and jwt_token.startswith('Bearer '):
+                payload = jwt.decode(jwt_token[7:], __SALT, ["HS256"])
+            else:
+                payload = None
 
-        username = payload.get("username", None)
-        assert sql_conn.validate_user(username)
-        kwargs['username'] = username
-        aes_key = payload.get('aes_key')
-        encrypted_passwd = sql_conn.get_password(username)[:16]
-        # TODO: check user available
+            username = payload.get("username", None)
+            assert sql_conn.validate_user(username)
+            kwargs['username'] = username
+            aes_key = payload.get('aes_key')
+            encrypted_passwd = sql_conn.get_password(username)[:16] if not login else \
+                __SALT
 
-        data = request.data
-        if data != b'':
-            decrypted_aeskey = encrypt.decryptedmsg(aes_key, encrypted_passwd, True)
-            decrypted_data = encrypt.decryptedmsg(data, decrypted_aeskey)
-            kwargs['json_dict'] = format_job_dict(json.loads(decrypted_data))
+            data = request.data
+            if data != b'':
+                decrypted_aeskey = encrypt.decryptedmsg(aes_key, encrypted_passwd, True)
+                decrypted_data = encrypt.decryptedmsg(data, decrypted_aeskey)
+                kwargs['json_dict'] = format_job_dict(json.loads(decrypted_data))
 
-        try:
-            return_data = func(*args, **kwargs)
-        except Exception as e:
-            return_data = {'error': repr(e)}
-        finally:
-            # create header for response
-            return create_response(username, encrypted_passwd, return_data)
+            try:
+                return_data = func(*args, **kwargs)
+            except Exception as e:
+                return_data = {'error': repr(e)}
+            finally:
+                # create header for response
+                return create_response(username, encrypted_passwd, return_data)
 
-    return with_valid
+        return with_valid
+
+    return decorator
 
 
 def create_response(username: str, password: str, json_dict: dict):

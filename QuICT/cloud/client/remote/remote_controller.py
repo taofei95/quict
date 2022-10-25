@@ -26,7 +26,7 @@ class QuICTRemoteManager:
 
     def _validation_login_status(self):
         local_status = get_config()
-        if not local_status['login_status']:
+        if not local_status['login']:
             raise KeyError("Please login first.")
 
         current_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
@@ -36,11 +36,20 @@ class QuICTRemoteManager:
         if time_diff.seconds > 3600:
             raise ValueError("Please login again. The last login is expired.")
 
-    def _update_user_status(self, username: str, password: str, login: bool = True):
+    def _update_user_status(self, username: str, password: str):
         local_status = {
             'username': username,
             'password': password,
-            'login_status': login,
+            'login': True,
+            'last_login_date': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        }
+        update_config(local_status)
+
+    def _clear_user_status(self):
+        local_status = {
+            'username': None,
+            'password': None,
+            'login': False,
             'last_login_date': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         }
         update_config(local_status)
@@ -50,28 +59,19 @@ class QuICTRemoteManager:
     ####################################################################
     def login(self, username: str, password: str):
         encrypted_passwd = self._encrypt.encrypted_passwd(password)
-        self._update_user_status(username, encrypted_passwd, login=False)
         success = self._encryptedrequest.post(
             f"{self._url_prefix}/env/login",
-            {'username': username, 'password': encrypted_passwd}
+            {'username': username, 'password': encrypted_passwd},
+            authorized=True
         )
 
         if not success:
             raise ValueError("unmatched login username and password.")
         else:
-            self._update_user_status(username, encrypted_passwd, login=True)
+            self._update_user_status(username, encrypted_passwd)
 
     def logout(self):
-        self._update_user_status(None, False)
-
-    ####################################################################
-    ############             Cluster API Function           ############
-    ####################################################################
-    def status_cluster(self):
-        self._validation_login_status()
-
-        url = f"{self._url_prefix}/env/status"
-        return self._encryptedrequest.get(url)
+        self._clear_user_status()
 
     ####################################################################
     ############               Job API Function             ############

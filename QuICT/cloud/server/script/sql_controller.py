@@ -33,7 +33,8 @@ class SQLManger:
         # Temp add here, delete after create datebase
         self._cursor.execute('CREATE TABLE USER_PASS_MAPPING(NAME text unique, PASSWORD text)')
         self._cursor.execute(
-            'CREATE TABLE USER_STATIC_INFO(NAME text unique, EMAIL text, LEVEL INT, MAX_RUNNING_JOB INT, MAX_STOPPED_JOB INT, GPU_ALLOWENCE BOOL)'
+            'CREATE TABLE USER_STATIC_INFO( \
+                NAME text unique, EMAIL text, LEVEL INT, MAX_RUNNING_JOB INT, MAX_STOPPED_JOB INT, GPU_ALLOWENCE BOOL)'
         )
 
     def validation_password(self, username: str, passwd: str) -> bool:
@@ -59,16 +60,19 @@ class SQLManger:
         self._cursor.execute(f"UPDATE USER_PASS_MAPPING SET PASSWORD = \'{new_passwd}\' WHERE NAME = \'{username}\'")
 
     @sql_locked
-    def add_user(self, username: str, passwd: str, user_info: dict):
+    def add_user(self, user_info: dict):
+        username = user_info['username']
+        passwd = user_info['password']
+        email = user_info['email']
+        level = user_info['level']
+
         # Add user-passwd into USER_PASS_MAPPING
         self._cursor.execute(f"INSERT INTO USER_PASS_MAPPING VALUES (\'{username}\', \'{passwd}\')")
 
         # Add user info into database
-        level = user_info['level']
-        email = user_info['email']
-        max_rjobs = user_info['max_running_job']
-        max_sjobs = user_info['max_stopped_job']
-        gpu_allow = user_info['gpu_allowence']
+        max_rjobs = level * 5
+        max_sjobs = level * 10
+        gpu_allow = True
         self._cursor.execute(
             f"INSERT INTO USER_STATIC_INFO \
             VALUES(\'{username}\', \'{email}\', \'{level}\', \'{max_rjobs}\', \'{max_sjobs}\', \'{gpu_allow}\')"
@@ -88,7 +92,7 @@ class SQLManger:
     def update_user_level(self, username: str, new_level: int):
         max_rjobs = new_level * 3
         max_sjobs = new_level * 10
-        
+
         self._cursor.execute(
             f"UPDATE USER_STATIC_INFO SET \
             LEVEL = \'{new_level}\', MAX_RUNNING_JOB = \'{max_rjobs}\', MAX_STOPPED_JOB = \'{max_sjobs}\' \

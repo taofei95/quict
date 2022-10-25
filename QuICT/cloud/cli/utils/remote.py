@@ -13,10 +13,6 @@ def logout():
     remote_manager.logout()
 
 
-def status_cluster():
-    return remote_manager.status_cluster()
-
-
 @yaml_decompostion
 def start_job(file: dict):
     data = remote_manager.start_job(file)

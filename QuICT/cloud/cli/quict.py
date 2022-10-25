@@ -74,21 +74,13 @@ def cli_construct():
     )
     job_cli_construct(remote_sp, mode="remote")
 
-    # Cluster
-    cluster_sp = subparsers.add_parser(
-        name="cluster",
-        description="cluster status related.",
-        help="get cluster information."
-    )
-    cluster_cli_construct(cluster_sp)
-
-    # Environment
-    env_sp = subparsers.add_parser(
-        name="env",
-        description="Environment related tools",
-        help="Manage environment"
-    )
-    env_cli_construct(env_sp)
+    # TODO: Environment
+    # env_sp = subparsers.add_parser(
+    #     name="env",
+    #     description="Environment related tools",
+    #     help="Manage environment"
+    # )
+    # env_cli_construct(env_sp)
 
     # Benchmark
     benchmark_sp = subparsers.add_parser(
@@ -305,19 +297,6 @@ def job_cli_construct(mode_sp: ArgumentParser, mode: str):
         help="list the job."
     )
     list_job.set_defaults(func=list_jobs)
-
-
-def cluster_cli_construct(cluster_sp: ArgumentParser):
-    from QuICT.cloud.cli.utils.remote import status_cluster
-
-    subparser = cluster_sp.add_subparsers()
-    # quict cluster status
-    status = subparser.add_parser(
-        name="status",
-        description="Show cluster running status.",
-        help="Show cluster running status.",
-    )
-    status.set_defaults(func=status_cluster)
 
 
 def env_cli_construct(env_sp: ArgumentParser):

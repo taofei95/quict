@@ -1,5 +1,3 @@
-username: test      # Username here
-
 # Static User Information
 maximum_parallel_level: 3
 maximum_stop_level: 10
