@@ -1,6 +1,8 @@
-from random import randint
-from typing import List, Optional, Tuple, Union
 import os.path as osp
+from collections import deque
+from random import randint, sample
+from typing import List, Optional, Tuple, Union
+
 import networkx as nx
 import torch
 from QuICT.core import *
@@ -125,6 +127,7 @@ class LayoutInfo(LayoutInfoBase):
     def __init__(self, layout: Layout) -> None:
         super().__init__(layout)
 
+
 class State:
     def __init__(
         self,
@@ -189,3 +192,106 @@ class Transition:
 
     def __iter__(self):
         return iter((self.state, self.action, self.next_state, self.reward))
+
+
+class ReplayMemory:
+    def __init__(self, capacity: int) -> None:
+        self._memory = deque([], maxlen=capacity)
+
+    def push(self, transition: Transition):
+        self._memory.append(transition)
+
+    def sample(self, batch_size: int) -> List[Transition]:
+        return sample(self._memory, batch_size)
+
+    def __len__(self) -> int:
+        return len(self._memory)
+
+    def __iter__(self):
+        return iter(self._memory)
+
+    def clear(self):
+        self._memory.clear()
+
+
+class ValidationData:
+    def __init__(
+        self,
+        circ: Circuit,
+        topo: Layout,
+        rl_mapped_circ: Union[Circuit, CompositeGate] = None,
+        remained_circ: Union[Circuit, CompositeGate] = None,
+    ) -> None:
+        self.circ = circ
+        self.rl_mapped_circ = rl_mapped_circ
+        self.topo = topo
+        self.remained_circ = remained_circ
+
+
+class TrainConfig:
+    def __init__(
+        self,
+        topo: Union[str, Layout],
+        max_gate_num: int = 200,
+        feat_dim: int = 100,
+        gamma: float = 0.9,
+        replay_pool_size: int = 20000,
+        batch_size: int = 64,
+        total_epoch: int = 2000,
+        explore_period: int = 10000,
+        target_update_period: int = 20,
+        actor_num: int = 2,
+        world_size: int = 3,
+        model_sync_period: int = 10,
+        memory_sync_period: int = 10,
+        device: str = "cuda" if torch.cuda.is_available() else "cpu",
+        model_path: str = None,
+        log_dir: str = None,
+        epsilon_start: float = 0.9,
+        epsilon_end: float = 0.05,
+        epsilon_decay: float = 500.0,
+        reward_scale: float = 5.0,
+    ) -> None:
+        self.factory = DataFactory(topo=topo, max_gate_num=max_gate_num)
+
+        self.topo = self.factory._cur_topo
+
+        swaps = [(edge.u, edge.v) for edge in self.topo]
+        swaps.sort()
+        self.action_id_by_swap = {}
+        self.swap_by_action_id = {}
+        for idx, swap in enumerate(swaps):
+            self.action_id_by_swap[swap] = idx
+            self.swap_by_action_id[idx] = swap
+        self.action_num = len(self.action_id_by_swap)
+
+        self.distributed_backend = "nccl" if "cuda" in device else "gloo"
+
+        self.max_gate_num = max_gate_num
+        self.feat_dim = feat_dim
+        self.gamma = gamma
+        self.replay_pool_size = replay_pool_size
+        self.batch_size = batch_size
+        self.total_epoch = total_epoch
+        self.explore_period = explore_period
+        self.target_update_period = target_update_period
+        self.model_sync_period = model_sync_period
+        self.memory_sync_period = memory_sync_period
+        self.actor_num = actor_num
+        self.world_size = world_size
+        self.device = device
+        self.epsilon_start = epsilon_start
+        self.epsilon_end = epsilon_end
+        self.epsilon_decay = epsilon_decay
+        self.reward_scale = reward_scale
+
+        if model_path is None:
+            model_path = osp.dirname(osp.abspath(__file__))
+            model_path = osp.join(model_path, "model_rl_mapping")
+        self.model_path = model_path
+
+        if log_dir is None:
+            log_dir = osp.dirname(osp.abspath(__file__))
+            log_dir = osp.join(log_dir, "torch_runs")
+            log_dir = osp.join(log_dir, "rl_mapping")
+        self.log_dir = log_dir

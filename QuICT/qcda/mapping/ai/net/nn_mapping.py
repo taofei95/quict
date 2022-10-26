@@ -79,7 +79,7 @@ class GnnMapping(nn.Module):
             embedding_dim=feat_dim,
             padding_idx=0,
         )
-        nn.init.orthogonal_(self._x_trans.weight)
+        # nn.init.orthogonal_(self._x_trans.weight)
 
         self._circ_gnn = CircuitGnn(
             qubit_num=qubit_num,

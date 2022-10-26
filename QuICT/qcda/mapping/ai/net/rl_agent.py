@@ -7,26 +7,17 @@ import torch
 from QuICT.core import *
 from QuICT.core.gate import *
 from QuICT.core.utils import CircuitBased
-from QuICT.qcda.mapping.ai.data_def import CircuitInfo, DataFactory, State
+from QuICT.qcda.mapping.ai.data_def import CircuitInfo, DataFactory, State, TrainConfig
 from QuICT.qcda.mapping.ai.net.nn_mapping import NnMapping
 
 
 class Agent:
     def __init__(
         self,
-        topo: Union[Layout, str],
-        max_gate_num: int,
-        epsilon_start: float = 0.9,
-        epsilon_end: float = 0.05,
-        epsilon_decay: float = 500.0,
-        reward_scale: float = 5.0,
+        config: TrainConfig,
     ) -> None:
         # Copy values in.
-        self._max_gate_num = max_gate_num
-        self._epsilon_start = epsilon_start
-        self._epsilon_end = epsilon_end
-        self._epsilon_decay = epsilon_decay
-        self.reward_scale = reward_scale
+        self.config = config
 
         # Exploration related.
         self.explore_step = 0
@@ -36,44 +27,19 @@ class Agent:
         self._last_exec_cnt = 0
         self._last_action = None
 
-        # Random data generator
-        self.factory = DataFactory(
-            topo=topo,
-            max_gate_num=max_gate_num,
-        )
-
         # Initialize policy & target network
-        self.action_id_by_swap: Dict[Tuple[int, int], int] = {}
-        self.swap_by_action_id: Dict[int, Tuple[int, int]] = {}
-        self.action_num = 0
-        self.register_topo(topo)
-        assert self.topo is not None
-        self._qubit_num = self.topo.qubit_number
-
-    def register_topo(self, topo: Union[Layout, str]):
-        if isinstance(topo, str):
-            self.topo = self.factory.topo_map[topo]
-        elif isinstance(topo, Layout):
-            self.topo = topo
-        else:
-            raise TypeError("Only supports a layout name or Layout object.")
-
-        swaps = [(edge.u, edge.v) for edge in self.topo]
-        swaps.sort()
-        for idx, swap in enumerate(swaps):
-            self.action_id_by_swap[swap] = idx
-            self.swap_by_action_id[idx] = swap
-        self.action_num = len(self.action_id_by_swap)
+        assert config.topo is not None
+        self._qubit_num = config.topo.qubit_number
 
     def reset_explore_state(self):
-        self.state = self.factory.get_one()
+        self.state = self.config.factory.get_one()
 
     def _select_action(
         self,
         policy_net: NnMapping,
         policy_net_device: str,
     ):
-        a = self.action_num
+        a = self.config.action_num
 
         # Chose an action based on policy_net
         data = State.batch_from_list([self.state.to_nn_data()], policy_net_device)
@@ -83,7 +49,7 @@ class Agent:
 
         # Query action swap using action id
         idx = int(torch.argmax(q_vec))
-        action = self.swap_by_action_id[idx]
+        action = self.config.swap_by_action_id[idx]
         return action
 
     def select_action(
@@ -104,10 +70,10 @@ class Agent:
         Returns:
             Tuple[int, int]: Selected action.
         """
-
-        eps_threshold = self._epsilon_end + (
-            self._epsilon_start - self._epsilon_end
-        ) * math.exp(-1.0 * self.explore_step / self._epsilon_decay)
+        config = self.config
+        eps_threshold = config.epsilon_end + (
+            config.epsilon_start - config.epsilon_end
+        ) * math.exp(-1.0 * self.explore_step / config.epsilon_decay)
         if epsilon_random and random() <= eps_threshold:
             return self.state.biased_random_swap()
         else:
@@ -134,7 +100,7 @@ class Agent:
         u, v = action
         # graph = self.state.topo_info.topo_graph
         topo_dist = self.state.layout_info.topo_dist
-        scale = self.reward_scale
+        scale = self.config.reward_scale
         if topo_dist[u][v] < 0.01:  # not connected
             reward = -scale
             prev_state = self.state
@@ -210,7 +176,7 @@ class Agent:
         """
         logic2phy = [i for i in range(layout.qubit_number)]
         agent = Agent(topo=layout, max_gate_num=max_gate_num)
-        topo_graph = agent.factory.get_topo_graph(topo=layout)
+        topo_graph = self.config.factory.get_topo_graph(topo=layout)
         circ_state = CircuitInfo(circ=circ, max_gate_num=policy_net._max_gate_num)
 
         circ_state.eager_exec(
