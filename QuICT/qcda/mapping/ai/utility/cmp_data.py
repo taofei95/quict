@@ -19,6 +19,7 @@ def map_circ(circ: Circuit, layout: Layout) -> Circuit:
 
 def main():
     data_dir = osp.abspath(osp.dirname(__file__))
+    data_dir = osp.join(data_dir, os.pardir)
     data_dir = osp.join(data_dir, "data")
     topo_dir = osp.join(data_dir, "topo")
     layouts = {}
@@ -53,6 +54,7 @@ def main():
 
 def check(layout_name: str):
     data_dir = osp.abspath(osp.dirname(__file__))
+    data_dir = osp.join(data_dir, os.pardir)
     data_dir = osp.join(data_dir, "data")
     topo_dir = osp.join(data_dir, "topo")
     layouts = {}

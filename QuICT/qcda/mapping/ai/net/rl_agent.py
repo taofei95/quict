@@ -8,7 +8,7 @@ from QuICT.core import *
 from QuICT.core.gate import *
 from QuICT.core.utils import CircuitBased
 from QuICT.qcda.mapping.ai.data_def import CircuitInfo, DataFactory, State
-from QuICT.qcda.mapping.ai.nn_mapping import NnMapping
+from QuICT.qcda.mapping.ai.net.nn_mapping import NnMapping
 
 
 class Agent:

@@ -14,8 +14,8 @@ import torch.optim as optim
 from QuICT.core import *
 from QuICT.core.gate.composite_gate import CompositeGate
 from QuICT.qcda.mapping.ai.data_def import State, Transition
-from QuICT.qcda.mapping.ai.nn_mapping import NnMapping
-from QuICT.qcda.mapping.ai.rl_agent import Agent
+from QuICT.qcda.mapping.ai.net.nn_mapping import NnMapping
+from QuICT.qcda.mapping.ai.net.rl_agent import Agent
 from QuICT.tools.interface.qasm_interface import OPENQASMInterface
 from torch.utils.tensorboard import SummaryWriter
 
@@ -127,6 +127,7 @@ class Trainer:
         print("Preparing model saving directory...")
         if model_path is None:
             model_path = osp.dirname(osp.abspath(__file__))
+            model_path = osp.join(model_path, os.pardir)
             model_path = osp.join(model_path, "model_rl_mapping")
         if not osp.exists(model_path):
             os.makedirs(model_path)
@@ -135,6 +136,7 @@ class Trainer:
         # Prepare summary writer and its logging directory
         if log_dir is None:
             log_dir = osp.dirname(osp.abspath(__file__))
+            log_dir = osp.join(log_dir, os.pardir)
             log_dir = osp.join(log_dir, "torch_runs")
             log_dir = osp.join(log_dir, "rl_mapping")
         if not osp.exists(log_dir):

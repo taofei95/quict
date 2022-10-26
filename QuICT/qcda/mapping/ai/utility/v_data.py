@@ -11,6 +11,7 @@ from QuICT.core.layout.layout import Layout
 from QuICT.core.utils import GateType
 
 data_dir = osp.dirname(osp.realpath(__file__))
+data_dir = osp.join(data_dir, os.pardir)
 data_dir = osp.join(data_dir, "data")
 data_dir = osp.join(data_dir, "v_data")
 
@@ -22,6 +23,7 @@ circ_num_each_topo = 10
 for topo_name in ["grid_4x4", "grid_3x3", "ibmq_lima"]:
     print(f"Starting processing {topo_name}...")
     topo_dir = osp.dirname(osp.abspath(__file__))
+    topo_dir = osp.join(topo_dir, os.pardir)
     topo_dir = osp.join(topo_dir, "data")
     topo_dir = osp.join(topo_dir, "topo")
     topo_path = osp.join(topo_dir, f"{topo_name}.json")
