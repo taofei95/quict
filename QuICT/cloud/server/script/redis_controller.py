@@ -22,6 +22,24 @@ class RedisController:
         )
 
     def update_user_dynamic_info(self, user_name: str, user_info: dict = None):
+        """ Update/Initial User Information in Redis.
+
+        Args:
+            user_name (str): The user's name
+            user_info (dict, optional): _description_. Defaults to None.
+                user_info: dict = {
+                    username: str,
+                    maximum_parallel_level: int,
+                    maximum_stop_level: int,
+                    GPU_allowence: bool,
+                    max_qubits_in_cpu: float,
+                    max_qubits_in_gpu: float,
+                    number_of_running_jobs: int,
+                    number_of_stop_jobs: int,
+                    running_qubits_in_gpu: float,
+                    running_qubits_in_cpu: float,
+                }
+        """
         if user_info is None:
             if self._redis_connection.exists(f"User_Dynamic_Info:{user_name}"):
                 return
@@ -51,8 +69,11 @@ class RedisController:
     def get_job_info(self, job_name):
         return self.dict_decode(self._redis_connection.hgetall(f"Job_Info:{job_name}"))
 
-    def list_jobs(self, username: str):
+    def list_jobs(self, username: str, name_only: bool = False):
         keys = self._redis_connection.keys(f"Job_Info:{username}*")
+        if name_only:
+            return self.list_decode(keys)
+
         job_infos_str = ""
         for k in keys:
             table = self.dict_decode(self._redis_connection.hgetall(k.decode('utf-8')))
@@ -77,10 +98,10 @@ class RedisController:
         self._redis_connection.lrem("pending_jobs", 0, value=job_name)
         self._redis_connection.hset(f"Job_Info:{job_name}", 'state', JobState.Running.value)
 
-    def add_finish_job_from_running_jobs(self, job_name: str):
+    def add_finish_job_from_running_jobs(self, job_name: str, job_state: JobState):
         self._redis_connection.rpush("finish_jobs", job_name)
         self._redis_connection.lrem("running_jobs", 0, value=job_name)
-        self._redis_connection.hset(f"Job_Info:{job_name}", 'state', JobState.Finish.value)
+        self._redis_connection.hset(f"Job_Info:{job_name}", 'state', job_state.value)
 
     def add_operator(self, job_name: str, operator: JobOperatorType):
         if not self._redis_connection.exists(f"Job_Info:{job_name}"):
@@ -88,11 +109,13 @@ class RedisController:
 
         self._redis_connection.rpush("operator_queue", f"{job_name}:{operator.value}")
 
-    def remove_job(self, job_name: str):
+    def remove_job(self, job_name: str, job_state: str = None):
         if not self._redis_connection.exists(f"Job_Info:{job_name}"):
             raise KeyError("job not in database.")
 
-        job_state = self._redis_connection.hget(f"Job_Info:{job_name}", "state").decode()
+        if job_state is None:
+            job_state = self._redis_connection.hget(f"Job_Info:{job_name}", "state").decode()
+
         if job_state == JobState.Error.value:
             job_state = "finish"
         elif job_state == JobState.Stop.value:

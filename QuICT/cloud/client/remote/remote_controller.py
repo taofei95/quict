@@ -6,7 +6,6 @@ from .encrypt_manager import EncryptManager
 from .utils import get_config, update_config
 
 
-# TODO: user/passwd store and validation
 # TODO: file copy between local and remote
 
 

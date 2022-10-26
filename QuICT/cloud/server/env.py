@@ -1,4 +1,5 @@
 from flask import Blueprint
+from QuICT.cloud.server.utils.data_structure import JobOperatorType
 
 from script.requset_validation import request_validation
 from script.redis_controller import RedisController
@@ -55,8 +56,16 @@ def register(**kwargs):
 @request_validation()
 def unsubscribe(username):
     """ Delete an user. """
+    redis_controller = RedisController()
+    job_list = redis_controller.list_jobs(username, name_only=True)
+    for job_name in job_list:
+        redis_controller.add_operator(job_name, JobOperatorType.delete)
+
+    # Delete user in Redis, need to wait all jobs delete first.
+    redis_controller.add_operator(username, JobOperatorType.user_delete)
+
+    # Delete user information in database
     SQLManger().delete_user(username)
-    RedisController().delete_user(username)
 
 
 @env_blueprint.route(f"{URL_PREFIX}/update_password", methods=["POST"])

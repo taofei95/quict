@@ -1,6 +1,6 @@
 import time
-import json
 import multiprocessing
+import random
 
 from redis_controller import RedisController
 from QuICT.cloud.server.utils import (
@@ -22,17 +22,17 @@ class MasterNodeManager:
         )
         pending_job_agent.start()
 
-        killed_job_agent = RunningJobProcessor(
+        running_job_agent = RunningJobProcessor(
             redis_connection=self.redis_connection,
             check_interval=self.check_interval,
         )
-        killed_job_agent.start()
+        running_job_agent.start()
 
-        job_tracking_agent = OperatorQueueProcessor(
+        operator_queue_agent = OperatorQueueProcessor(
             redis_connection=self.redis_connection,
             check_interval=self.check_interval,
         )
-        job_tracking_agent.start()
+        operator_queue_agent.start()
 
 
 class PendingJobProcessor(multiprocessing.Process):
@@ -90,7 +90,7 @@ class RunningJobProcessor(multiprocessing.Process):
             # TODO: check running job status
             job_detail = self.redis_connection.get_job_info(job_name)
             user_info = self.redis_connection.get_user_dynamic_info(job_detail['username'])
-            if job_detail['state'] == JobState.Stop:
+            if job_detail['state'] == JobState.Stop.value:
                 continue
 
             job_state = self._check_job_state(job_name)
@@ -98,7 +98,7 @@ class RunningJobProcessor(multiprocessing.Process):
             if not is_finish:
                 continue
 
-            self.redis_connection.add_finish_job_from_running_jobs(job_name)
+            self.redis_connection.add_finish_job_from_running_jobs(job_name, job_state)
             # Release User's resource
             _, updated_user_info = user_resource_op(
                 user_info, job_detail['resource'], ResourceOp.Release
@@ -106,7 +106,15 @@ class RunningJobProcessor(multiprocessing.Process):
             self.redis_connection.update_user_dynamic_info(job_detail['username'], updated_user_info)
 
     def _check_job_state(self, job_name: str):
-        pass
+        # FIXME: temporary fake code, only test pipeline work.
+        temp = random.random()
+        if temp >= 0.5:
+            return JobState.Finish
+
+        if temp <= 0.1:
+            return JobState.Error
+
+        return JobState.Running
 
 
 class OperatorQueueProcessor(multiprocessing.Process):
@@ -125,23 +133,28 @@ class OperatorQueueProcessor(multiprocessing.Process):
         operator_queue = self.redis_connection.get_operator_queue()
 
         for op in operator_queue:
-            job_name, operator = op[:-3], op[-3:]
+            job_name, operator = op[:-4], op[-3:]
             job_detail = self.redis_connection.get_job_info(job_name)
             if operator == JobOperatorType.delete.value:
-                self._delete_related_job(job_name, job_detail)
+                is_success = self._delete_related_job(job_name, job_detail)
             elif operator == JobOperatorType.stop.value:
-                self._stop_related_job(job_name, job_detail)
+                is_success = self._stop_related_job(job_name, job_detail)
+            elif operator == JobOperatorType.restart.value:
+                is_success = self._restart_related_job(job_name, job_detail)
             else:
-                self._restart_related_job(job_name, job_detail)
+                is_success = self._delete_user_info(job_name)
 
-            self.redis_connection.remove_operator(op)
+            if is_success:
+                self.redis_connection.remove_operator(op)
 
     def _stop_related_job(self, job_name: str, job_detail: dict) -> bool:
         running_jobs = self.redis_connection.get_running_jobs_queue()
-        assert job_name in running_jobs
-        username = job_detail['username']
+        if job_name not in running_jobs:
+            print("No running jobs need to stop.")
+            return True
 
         # Update user's related info
+        username = job_detail['username']
         user_info = self.redis_connection.get_user_dynamic_info(username)
         # Release User resource
         is_stopped, updated_user_info = user_stop_jobs_op(
@@ -154,9 +167,10 @@ class OperatorQueueProcessor(multiprocessing.Process):
             self.redis_connection.update_user_dynamic_info(username, updated_user_info)
         else:
             # TODO: return warning about failure to stop target jobs
-            pass
+            print("Failure to stop target job.")
+            return False
 
-    def _restart_related_job(self, job_name: str, job_detail: dict):
+    def _restart_related_job(self, job_name: str, job_detail: dict) -> bool:
         username = job_detail['username']
         assert job_detail['state']  == JobState.Stop
 
@@ -174,33 +188,43 @@ class OperatorQueueProcessor(multiprocessing.Process):
             # Update job's state
             self.redis_connection.change_job_state(job_name, JobState.Running)
 
+        return True
+
     def _delete_related_job(self, job_name: str, job_detail: dict):
-        job_state = job_detail['state']
         username = job_detail['username']
+        job_state = job_detail['state']
 
         # Rm job from finish jobs queue
-        if job_state in [JobState.Error, JobState.Finish]:
+        if job_state in [JobState.Finish.value, JobState.Error.value]:
             delete_job_folder(job_name, username)
-
-        if job_state in [JobState.Running, JobState.Stop]:
+        # Rm job from running jobs
+        elif job_state in [JobState.Running.value, JobState.Stop.value]:
             # TODO: kill running job
-            pass
 
             # Get User Info
             user_info = self.redis_connection.get_user_dynamic_info(username)
             # Release User resource
-            updated_user_resource = user_resource_op(
-                user_info, job_detail['resource'], ResourceOp.Release
-            )
-
             if job_state == JobState.Stop:
                 _, updated_user_resource = user_stop_jobs_op(
                     updated_user_resource, ResourceOp.Release
                 )
+            else:
+                _, updated_user_resource = user_resource_op(
+                    user_info, job_detail['resource'], ResourceOp.Release
+                )
 
             self.redis_connection.update_user_dynamic_info(username, updated_user_resource)
 
-        self.redis_connection.remove_job(job_name)
+        self.redis_connection.remove_job(job_name, job_state)
+        return True
+
+    def _delete_user_info(self, user_name: str) -> bool:
+        user_info = self.redis_connection.get_user_dynamic_info(user_name)
+        if user_info["number_of_running_jobs"] == 0:
+            self.redis_connection.delete_user_dynamic_info(user_name)
+            return True
+
+        return False
 
 
 if __name__ == "__main__":

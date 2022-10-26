@@ -5,6 +5,7 @@ class JobOperatorType(Enum):
     restart = "RES"
     stop = "STP"
     delete = "DEL"
+    user_delete = "UDL"
 
 
 class ResourceOp(Enum):
