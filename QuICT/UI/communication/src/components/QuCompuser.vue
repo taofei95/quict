@@ -112,7 +112,7 @@ export default {
   props: {},
   data: function () {
     return {
-      ProgramText: "hello",
+      ProgramText: "OPENQASM 2.0; \ninclude \"qelib1.inc\";\nqreg q[5];",
       VisContent: {
         gateSet: [
         ],
@@ -125,7 +125,7 @@ export default {
       current_set: 0,
       customer_set: [],
       topology: [],
-      qbit: [],
+      qbit: [0, 1, 2, 3, 4],
       OutputContent: {},
       StatusContent: "Create a circuit and run.",
       ExpandResult: false,

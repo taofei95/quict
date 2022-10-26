@@ -46,6 +46,10 @@
         <div>
           <el-input v-model="dialogTpNodeCount" label="n=" @change="TpNodeCountChange"></el-input>
         </div>
+        <div>
+          <el-radio v-for="item in dialogTpTypeOptions" :key="item" :label="item" v-model="dialogTpType"
+            style="display: inline-block">{{ item }}</el-radio>
+        </div>
         <div :id="id_base">
           <svg />
         </div>
@@ -62,7 +66,10 @@
               :show-file-list="showFileList" :before-upload="TpLoad" style="display: inline-block">
               <el-button type="primary" style="font-family: 'Segoe UI Symbol'"> LOAD</el-button>
             </el-upload>
-            <el-button type="primary" @click="dialogTpVisible = false;TpConfirm();">OK</el-button>
+            <el-button type="primary" @click="
+              dialogTpVisible = false;
+            TpConfirm();
+            ">OK</el-button>
           </div>
         </span>
       </template>
@@ -70,7 +77,7 @@
 
     <el-dialog title="Backend" v-model="dialogBeVisible" width="30%">
       <div>
-        <span style="margin:0px 10px 0px 0px">Device:</span>
+        <span style="margin: 0px 10px 0px 0px">Device:</span>
         <el-radio v-model="dialogBe" label="CPU">CPU</el-radio>
         <el-radio v-model="dialogBe" label="GPU">GPU</el-radio>
         <!-- <el-radio v-model="dialogBe" label="qiskit">qiskit</el-radio>
@@ -122,7 +129,7 @@
       <el-button size="small" @click="showTopologyEdit"
         style="margin: 0px 20px 0px 10px; background: transparent !important" type="primary"><img
           src="/assets/topology.2x.png" style="height: 10px" />Topology</el-button>
-      <el-space direction="vertical" :size="1" style="line-height: 19px !important;">
+      <el-space direction="vertical" :size="1" style="line-height: 19px !important">
         <el-checkbox v-model="opSwitch" size="small" label="Optimize"></el-checkbox>
 
         <el-checkbox v-model="mapSwitch" size="small" label="Mapping"></el-checkbox>
@@ -195,6 +202,8 @@ export default {
       qbit: [],
       topologyZone: undefined,
       dialogTpNodeCount: 0,
+      dialogTpType: "linear",
+      dialogTpTypeOptions: ["linear", "grid", "customer"],
       dialogSeShots: 1,
       dialogSe_Precision: "double",
       precision_need_show: false,
@@ -251,31 +260,27 @@ export default {
     pvAll() {
       // topology设为全连接
       this.pvClear();
-      for (let i = 0; i < this.qbit.length; i++) {
-        for (let j = i + 1; j < this.qbit.length; j++) {
-          this.tp.push(`${this.qbit[i]}_${this.qbit[j]}`);
-        }
+      for (let i = 0; i < this.fullTp.length; i++) {
+        this.tp.push(`${this.fullTp[i][0]}_${this.fullTp[i][1]}`);
       }
       this.updateTopology();
     },
     pvReverse() {
       // topology反选
       let t_tp = [];
-      for (let i = 0; i < this.qbit.length; i++) {
-        for (let j = i + 1; j < this.qbit.length; j++) {
-          let uvExist = false;
-          for (let k = this.tp.length - 1; k >= 0; k--) {
-            if (
-              this.tp[k] == `${this.qbit[i]}_${this.qbit[j]}` ||
-              this.tp[k] == `${this.qbit[j]}_${this.qbit[i]}`
-            ) {
-              uvExist = true;
-              break;
-            }
+      for (let i = 0; i < this.fullTp.length; i++) {
+        let uvExist = false;
+        for (let k = this.tp.length - 1; k >= 0; k--) {
+          if (
+            this.tp[k] == `${this.fullTp[i][0]}_${this.fullTp[i][1]}` ||
+            this.tp[k] == `${this.fullTp[i][1]}_${this.fullTp[i][0]}`
+          ) {
+            uvExist = true;
+            break;
           }
-          if (!uvExist) {
-            t_tp.push(`${this.qbit[i]}_${this.qbit[j]}`);
-          }
+        }
+        if (!uvExist) {
+          t_tp.push(`${this.fullTp[i][0]}_${this.fullTp[i][1]}`);
         }
       }
       this.tp = t_tp;
@@ -313,6 +318,7 @@ export default {
         });
 
       //draw connect lines
+      console.log(this.tp);
       this.topologyZone
         .selectAll(".tpFull")
         .data(this.fullTp)
@@ -440,13 +446,27 @@ export default {
           }
         }
       }
+      this.SetFullTp();
+      this.updateTopology();
+    },
+    SetFullTp() {
       this.fullTp = [];
-      for (let i = 0; i < this.qbit.length; i++) {
-        for (let j = i + 1; j < this.qbit.length; j++) {
-          this.fullTp.push([this.qbit[i], this.qbit[j]]);
+      if (this.dialogTpType == "customer") {
+        for (let i = 0; i < this.qbit.length - 1; i++) {
+          for (let j = i + 1; j < this.qbit.length; j++) {
+            this.fullTp.push([this.qbit[i], this.qbit[j]]);
+          }
+        }
+      } else if (this.dialogTpType == "linear") {
+        for (let i = 0; i < this.qbit.length - 1; i++) {
+          this.fullTp.push([this.qbit[i], this.qbit[i + 1]]);
+        }
+      } else if (this.dialogTpType == "grid") {
+        // TODO: update
+        for (let i = 0; i < this.qbit.length - 1; i++) {
+          this.fullTp.push([this.qbit[i], this.qbit[i + 1]]);
         }
       }
-      this.updateTopology();
     },
     TpLoad(file) {
       // 加载topology文件
@@ -472,6 +492,7 @@ export default {
           }
           this.dialogTpNodeCount = new_q;
           this.tp = new_tp;
+          this.dialogTpType = "customer";
           this.TpNodeCountChange();
         } catch (error) {
           console.log(error);
@@ -498,13 +519,8 @@ export default {
     ResetQbit() {
       // 重置节点数
       this.qbit = JSON.parse(JSON.stringify(this.q));
-      this.fullTp = [];
       this.dialogTpNodeCount = this.qbit.length;
-      for (let i = 0; i < this.qbit.length; i++) {
-        for (let j = i + 1; j < this.qbit.length; j++) {
-          this.fullTp.push([this.qbit[i], this.qbit[j]]);
-        }
-      }
+      this.SetFullTp();
     },
     saveQCDA() {
       // 通知外层保存当前qasm
@@ -515,7 +531,7 @@ export default {
       let setting = this.getSetting();
       setTimeout(() => {
         this.$emit("RunQCDA", this.opSwitch, this.mapSwitch, setting);
-      }, 200)
+      }, 200);
     },
     getOpSwitch() {
       return this.opSwitch;
@@ -585,7 +601,7 @@ export default {
       this.UpdateCustomerSet();
     },
     Is2BitGate(gate) {
-      return (gate.targets + gate.controls > 1);
+      return gate.targets + gate.controls > 1;
     },
     RemoveFromCustomerSet(gate) {
       // 从customerSet中移除当前gate
@@ -601,7 +617,9 @@ export default {
       }
     },
   },
-  mounted: function () { },
+  mounted: function () {
+    this.ResetQbit();
+  },
   watch: {
     currentSet() {
       this.ChangeSet();
@@ -627,6 +645,24 @@ export default {
     },
     q() {
       this.ResetQbit();
+    },
+    dialogTpType() {
+      this.SetFullTp();
+      let tmp_tp = [];
+      for (let i = 0; i < this.fullTp.length; i++) {
+        for (let k = this.tp.length - 1; k >= 0; k--) {
+          let u = Number(this.tp[k].split("_")[0]);
+          let v = Number(this.tp[k].split("_")[1]);
+          if ((u == this.fullTp[i][0] && v == this.fullTp[i][1]) || (u == this.fullTp[i][1] && v == this.fullTp[i][0])) {
+            
+            tmp_tp.push(this.tp[k]);
+            this.tp.splice(k, 1)
+            break;
+          }
+        }
+      }
+      this.tp = tmp_tp;
+      this.updateTopology();
     },
   },
   emits: {
