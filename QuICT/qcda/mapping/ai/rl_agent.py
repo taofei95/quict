@@ -133,7 +133,7 @@ class Agent:
         self.explore_step += 1
         u, v = action
         # graph = self.state.topo_info.topo_graph
-        topo_dist = self.state.topo_info.topo_dist
+        topo_dist = self.state.layout_info.topo_dist
         scale = self.reward_scale
         if topo_dist[u][v] < 0.01: # not connected
             reward = -scale
@@ -158,7 +158,7 @@ class Agent:
         # Execute as many as possible
         cnt = next_circ_state.eager_exec(
             logic2phy=next_logic2phy,
-            topo_graph=self.state.topo_info.topo_graph,
+            topo_graph=self.state.layout_info.topo_graph,
             physical_circ=self.mapped_circ,
         )
         self._last_action = action
@@ -175,7 +175,7 @@ class Agent:
 
         next_state = State(
             circ_info=next_circ_state,
-            topo=self.state.topo_info.topo,
+            layout=self.state.layout_info.layout,
             logic2phy=next_logic2phy,
             phy2logic=next_phy2logic,
         )
@@ -216,7 +216,7 @@ class Agent:
         )
         agent.state = State(
             circ_info=circ_state,
-            topo=layout,
+            layout=layout,
             logic2phy=logic2phy,
         )
 

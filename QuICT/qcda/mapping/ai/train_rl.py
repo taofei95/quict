@@ -333,7 +333,7 @@ class Trainer:
                 running_loss /= observe_period
                 running_reward /= observe_period
                 gate_num = self._agent.count_gate_num()
-                layout_name = self._agent.state.topo_info.topo.name
+                layout_name = self._agent.state.layout_info.layout.name
                 print(
                     f"    [{i+1:<4}] loss: {running_loss:6.4f}, reward: {running_reward:4.2f}, "
                     + f"#gate: {gate_num}, explore rate: {rate:4.2f} action/s, layout name: {layout_name}"
@@ -400,7 +400,7 @@ class Trainer:
 
 
 if __name__ == "__main__":
-    topo = "grid_5x5"
+    topo = "grid_3x3"
     device = "cuda:1"
     trainer = Trainer(topo=topo, device=device)
     trainer.train()

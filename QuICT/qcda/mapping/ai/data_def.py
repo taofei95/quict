@@ -1,6 +1,6 @@
 from random import randint
-from typing import List, Optional, Tuple
-
+from typing import List, Optional, Tuple, Union
+import os.path as osp
 import networkx as nx
 import torch
 from QuICT.core import *
@@ -14,6 +14,14 @@ from ..common.layout_info import LayoutInfo as LayoutInfoBase
 
 
 class DataFactory(DataFactoryBase):
+    def __init__(
+        self, topo: Union[str, Layout], max_gate_num: int, data_dir: str = None
+    ) -> None:
+        if data_dir is None:
+            data_dir = osp.abspath(osp.dirname(__file__))
+            data_dir = osp.join(data_dir, "data")
+        super().__init__(topo, max_gate_num, data_dir)
+
     def get_one(self) -> "State":
         topo = self._cur_topo
         qubit_num = self.topo_qubit_num_map[topo.name]
@@ -37,7 +45,7 @@ class DataFactory(DataFactoryBase):
 
         state = State(
             circ_info=circ_state,
-            topo=topo,
+            layout=topo,
             logic2phy=logic2phy,
         )
         return state
@@ -113,24 +121,24 @@ class CircuitInfo(CircuitInfoBase):
         return data
 
 
-class TopoInfo(LayoutInfoBase):
-    pass
-
+class LayoutInfo(LayoutInfoBase):
+    def __init__(self, layout: Layout) -> None:
+        super().__init__(layout)
 
 class State:
     def __init__(
         self,
         circ_info: CircuitInfo,
-        topo: Layout,
+        layout: Layout,
         logic2phy: List[int],
         phy2logic: Optional[List[int]] = None,
     ) -> None:
         self.circ_info = circ_info
-        self.topo_info = TopoInfo(topo=topo)
+        self.layout_info = LayoutInfo(layout)
         self.logic2phy = logic2phy
         """Logical to physical mapping
         """
-        q = topo.qubit_number
+        q = layout.qubit_number
         self.phy2logic = phy2logic
         if self.phy2logic is None:
             self.phy2logic = [0 for _ in range(q)]
@@ -159,7 +167,7 @@ class State:
 
     def biased_random_swap(self) -> Tuple[int, int]:
         return self.circ_info.biased_random_swap(
-            self.topo_info.topo_dist, self.logic2phy
+            self.layout_info.topo_dist, self.logic2phy
         )
 
     def to_nn_data(self):

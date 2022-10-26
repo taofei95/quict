@@ -3,3 +3,4 @@ torch_runs/
 tmp/
 data/
 !data/topo
+*.log
