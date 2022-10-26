@@ -78,7 +78,7 @@ class Agent:
         # Chose an action based on policy_net
         data = State.batch_from_list([self.state.to_nn_data()], policy_net_device)
         # data = self.state.circ_layered_matrices.to(policy_net_device)
-        q_vec = policy_net(data).detach().cpu()
+        q_vec = policy_net(data.x, data.edge_index, data.batch).detach().cpu()
         q_vec = q_vec.view(a)  # [a]
 
         # Query action swap using action id
@@ -135,7 +135,7 @@ class Agent:
         # graph = self.state.topo_info.topo_graph
         topo_dist = self.state.layout_info.topo_dist
         scale = self.reward_scale
-        if topo_dist[u][v] < 0.01: # not connected
+        if topo_dist[u][v] < 0.01:  # not connected
             reward = -scale
             prev_state = self.state
             # next_state = None
@@ -146,7 +146,9 @@ class Agent:
         with self.mapped_circ:
             Swap & [u, v]
 
-        next_logic2phy = copy.copy(self.state.logic2phy) # It's enough to use copy for List[int]
+        next_logic2phy = copy.copy(
+            self.state.logic2phy
+        )  # It's enough to use copy for List[int]
         next_phy2logic = copy.copy(self.state.phy2logic)
         # Current (u, v) are physical qubit labels
         next_phy2logic[u], next_phy2logic[v] = next_phy2logic[v], next_phy2logic[u]

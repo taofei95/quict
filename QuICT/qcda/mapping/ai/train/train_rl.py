@@ -98,19 +98,23 @@ class Trainer:
         self._agent.factory._reset_attr_cache()
 
         print("Preparing policy & target networks...")
-        self._policy_net = NnMapping(
-            qubit_num=self._topo.qubit_number,
-            max_gate_num=max_gate_num,
-            feat_dim=feat_dim,
-            action_num=self._agent.action_num,
-        ).to(device=device)
+        self._policy_net = torch.jit.script(
+            NnMapping(
+                qubit_num=self._topo.qubit_number,
+                max_gate_num=max_gate_num,
+                feat_dim=feat_dim,
+                action_num=self._agent.action_num,
+            ).to(device=device)
+        )
         self._policy_net.train(True)
-        self._target_net = NnMapping(
-            qubit_num=self._topo.qubit_number,
-            max_gate_num=max_gate_num,
-            feat_dim=feat_dim,
-            action_num=self._agent.action_num,
-        ).to(device=device)
+        self._target_net = torch.jit.script(
+            NnMapping(
+                qubit_num=self._topo.qubit_number,
+                max_gate_num=max_gate_num,
+                feat_dim=feat_dim,
+                action_num=self._agent.action_num,
+            ).to(device=device)
+        )
         self._target_net.train(False)
         # Guarantee they have the same parameter values.
         self._target_net.load_state_dict(self._policy_net.state_dict())
@@ -219,7 +223,11 @@ class Trainer:
         data_batch = State.batch_from_list(data_list=data_list, device=self._device)
 
         # Current Q estimation
-        q_vec = self._policy_net(data_batch)  # [b, a]
+        q_vec = self._policy_net(
+            data_batch.x,
+            data_batch.edge_index,
+            data_batch.batch,
+        )  # [b, a]
         state_action_values = q_vec.gather(1, actions).squeeze()
 
         # Q* by Bellman Equation
@@ -234,24 +242,6 @@ class Trainer:
         non_final_data_batch = State.batch_from_list(
             data_list=non_final_data_list, device=self._device
         )
-        #
-        # Use double DQN extension
-        #
-        # next_actions = (
-        #     self._policy_net(non_final_data_batch)
-        #     .clone()
-        #     .detach()
-        #     .max(1)[1]
-        #     .view(-1, 1)
-        # )
-        # next_state_values = torch.zeros(self._batch_size, device=self._device)
-        # next_state_values[non_final_mask] = (
-        #     self._target_net(
-        #         non_final_data_batch,
-        #     )  # [b, a]
-        #     .gather(1, next_actions)
-        #     .squeeze()
-        # )
 
         #
         # Use normal DQN
@@ -259,7 +249,9 @@ class Trainer:
         next_state_values = torch.zeros(self._batch_size, device=self._device)
         next_state_values[non_final_mask] = (
             self._target_net(
-                non_final_data_batch,
+                non_final_data_batch.x,
+                non_final_data_batch.edge_index,
+                non_final_data_batch.batch,
             )  # [b, a]
             .clone()
             .detach()

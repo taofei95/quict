@@ -1,3 +1,4 @@
+from typing import Optional, Union
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -22,7 +23,7 @@ class CircuitGnn(nn.Module):
                 gnn.SAGEConv(
                     in_channels=feat_dim,
                     out_channels=feat_dim,
-                )
+                ).jittable()
                 for _ in range(3)
             ]
         )
@@ -32,13 +33,18 @@ class CircuitGnn(nn.Module):
                 gnn.SAGEConv(
                     in_channels=feat_dim,
                     out_channels=feat_dim,
-                )
+                ).jittable()
                 for _ in range(3)
             ]
         )
         self._aggr = gnn.aggr.SoftmaxAggregation(learn=True)
 
-    def forward(self, x, edge_index, batch=None):
+    def forward(
+        self,
+        x: torch.Tensor,
+        edge_index: torch.Tensor,
+        batch: Optional[torch.Tensor] = None,
+    ):
         n = self._max_gate_num
         f = self._feat_dim
 
@@ -89,13 +95,13 @@ class GnnMapping(nn.Module):
             nn.Linear(f_start // 2, self._action_num),
         )
 
-    def forward(self, data):
+    def forward(self, x: torch.Tensor, edge_index: torch.Tensor, batch: torch.Tensor):
         f = self._feat_dim
         a = self._action_num
 
-        circ_x = self._x_trans(data.x).view(-1, 2, f)
+        circ_x = self._x_trans(x).view(-1, 2, f)
         circ_x = torch.sum(circ_x, -2) / 2  # [b * n, f]
-        circ_feat = self._circ_gnn(circ_x, data.edge_index, data.batch)  # [b, f]
+        circ_feat = self._circ_gnn(circ_x, edge_index, batch)  # [b, f]
 
         x = self._mlp_1(circ_feat).view(-1, a)  # [b, a]
         return x
