@@ -5,8 +5,8 @@ from .helper_function import yaml_decompostion
 remote_manager = QuICTRemoteManager()
 
 
-def login(name: str, password: str):
-    remote_manager.login(name, password)
+def login(username: str, password: str):
+    remote_manager.login(username, password)
 
 
 def logout():

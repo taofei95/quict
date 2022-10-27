@@ -40,7 +40,8 @@ def request_validation(login: bool = False):
                 payload = None
 
             username = payload.get("username", None)
-            assert sql_conn.validate_user(username)
+            if not sql_conn.validate_user(username):
+                return create_response(username, __SALT, {'error': "unauthorized user"})
             kwargs['username'] = username
             aes_key = payload.get('aes_key')
             encrypted_passwd = sql_conn.get_password(username)[:16] if not login else \

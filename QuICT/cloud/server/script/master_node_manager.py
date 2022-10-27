@@ -148,37 +148,42 @@ class OperatorQueueProcessor(multiprocessing.Process):
                 self.redis_connection.remove_operator(op)
 
     def _stop_related_job(self, job_name: str, job_detail: dict) -> bool:
+        if job_detail['state'] != JobState.Running.value:
+            print("no need to stop an non-running job.")
+            return True
+
         running_jobs = self.redis_connection.get_running_jobs_queue()
         if job_name not in running_jobs:
             print("No running jobs need to stop.")
-            return True
+            return False
 
         # Update user's related info
         username = job_detail['username']
         user_info = self.redis_connection.get_user_dynamic_info(username)
         # Release User resource
         is_stopped, updated_user_info = user_stop_jobs_op(
-            user_info, ResourceOp.Release
+            user_info, ResourceOp.Allocation
         )
 
         # TODO: Stop given job through k8s CLI
-        if is_stopped:
-            self.redis_connection.change_job_state(job_name, JobState.Stop)
-            self.redis_connection.update_user_dynamic_info(username, updated_user_info)
-        else:
-            # TODO: return warning about failure to stop target jobs
-            print("Failure to stop target job.")
-            return False
+        self.redis_connection.change_job_state(job_name, JobState.Stop)
+        self.redis_connection.update_user_dynamic_info(username, updated_user_info)
+
+        # TODO: return warning about failure to stop target jobs
+        # print("Failure to stop target job.")
+        return is_stopped
 
     def _restart_related_job(self, job_name: str, job_detail: dict) -> bool:
         username = job_detail['username']
-        assert job_detail['state']  == JobState.Stop
+        if not job_detail['state']  == JobState.Stop.value:
+            print("No stoped job need to be restart.")
+            return True
 
         # Update user's related info
         user_info = self.redis_connection.get_user_dynamic_info(username)
         # Release User resource
         is_restart, updated_user_info = user_stop_jobs_op(
-            user_info, ResourceOp.Allocation
+            user_info, ResourceOp.Release
         )
 
         # TODO: Restart given job through k8s CLI
@@ -196,7 +201,8 @@ class OperatorQueueProcessor(multiprocessing.Process):
 
         # Rm job from finish jobs queue
         if job_state in [JobState.Finish.value, JobState.Error.value]:
-            delete_job_folder(job_name, username)
+            # delete_job_folder(job_name, username)
+            pass
         # Rm job from running jobs
         elif job_state in [JobState.Running.value, JobState.Stop.value]:
             # TODO: kill running job

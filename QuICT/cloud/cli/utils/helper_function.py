@@ -6,6 +6,7 @@ from QuICT.tools.interface import OPENQASMInterface
 
 
 def qasm_validation(qasm_file):
+    """ whether the given qasm file is valid or not. If not valid, raise ValueError. """
     try:
         qasm = OPENQASMInterface.load_file(qasm_file)
         assert qasm.valid_circuit
@@ -97,6 +98,7 @@ def path_check(func):
 
 
 def yaml_decompostion(func):
+    """ The decorator for normalized job's yaml file. """
     def wraps(*args, **kwargs):
         yaml_file = args[0] if args else kwargs["file"]
         # step 1: load yaml file

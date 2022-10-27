@@ -38,8 +38,14 @@ def cli_construct():
         description="Login to QuICT Cloud System.",
         help="Login to QuICT Cloud System.",
     )
-    login_sp.add_argument("-n", "--name", type=str)
-    login_sp.add_argument("-p", "--password", type=str)
+    login_sp.add_argument(
+        "username", type=str,
+        help="The username used to login."
+    )
+    login_sp.add_argument(
+        "password", type=str,
+        help="The password of user."
+    )
     login_sp.set_defaults(func=login)
 
     # Logout
@@ -53,15 +59,15 @@ def cli_construct():
     # Circuit
     circuit_sp = subparsers.add_parser(
         name="circuit",
-        description="Manage the circuit.",
-        help="get circuit template."
+        description="Manage the local circuit library.",
+        help="get quantum circuit qasm."
     )
     circuit_cli_construct(circuit_sp)
 
     # Local Mode's Job
     local_sp = subparsers.add_parser(
         name="local",
-        description="QuICT Local Modes Jobs.",
+        description="Local Modes QuICT Job Management",
         help="QuICT job's management in Local Mode."
     )
     job_cli_construct(local_sp, mode="local")
@@ -69,7 +75,7 @@ def cli_construct():
     # Local Mode's Job
     remote_sp = subparsers.add_parser(
         name="remote",
-        description="QuICT Remote Modes Jobs.",
+        description="Remote Modes QuICT Job Management.",
         help="QuICT job's management in Remote Mode."
     )
     job_cli_construct(remote_sp, mode="remote")
@@ -85,7 +91,7 @@ def cli_construct():
     # Benchmark
     benchmark_sp = subparsers.add_parser(
         name="benchmark",
-        description="benchmark related.",
+        description="QuICT Benchmark",
         help="QuICT benchmark"
     )
     benchmark_cli_construct(benchmark_sp)
@@ -94,10 +100,16 @@ def cli_construct():
 
 
 def circuit_cli_construct(circuit_sp: ArgumentParser):
+    """ Build circuit module in CLI
+
+    Args:
+        circuit_sp (ArgumentParser): Circuit Parser
+    """
     from QuICT.cloud.cli.utils import (
         get_random_circuit, get_algorithm_circuit, store_quantum_circuit,
         delete_quantum_circuit, list_quantum_circuit
     )
+
     subparser = circuit_sp.add_subparsers()
     # quict circuit get_random
     get_random = subparser.add_parser(
@@ -113,7 +125,7 @@ def circuit_cli_construct(circuit_sp: ArgumentParser):
     get_random.add_argument(
         "-q", "--qubits",
         nargs="+", type=int, default=[5],
-        help="The number of qubits' number."
+        help="The number of qubits."
     )
     get_random.add_argument(
         "-s", "--size",
@@ -176,7 +188,7 @@ def circuit_cli_construct(circuit_sp: ArgumentParser):
     delete = subparser.add_parser(
         name="delete",
         description="delete quantum circuit.",
-        help="delete quantum circuit"
+        help="delete the quantum circuit"
     )
     delete.add_argument(
         "name", type=str,
@@ -194,6 +206,12 @@ def circuit_cli_construct(circuit_sp: ArgumentParser):
 
 
 def job_cli_construct(mode_sp: ArgumentParser, mode: str):
+    """ Build Job module [include remote and local mode] in CLI
+
+    Args:
+        mode_sp (ArgumentParser): Job Mode Parser
+        mode (str): mode description, one of [local, remote]
+    """
     from QuICT.cloud.cli.utils import get_template
 
     if mode == "local":
@@ -269,8 +287,8 @@ def job_cli_construct(mode_sp: ArgumentParser, mode: str):
     # quict job restart
     restart = subparser.add_parser(
         name="restart",
-        description="restart the job.",
-        help="restart the job."
+        description="restart a stopped job.",
+        help="restart a stopped job."
     )
     restart.add_argument(
         "name", type=str,
@@ -293,8 +311,8 @@ def job_cli_construct(mode_sp: ArgumentParser, mode: str):
     # quict job list
     list_job = subparser.add_parser(
         name="list",
-        description="list the job.",
-        help="list the job."
+        description="list all jobs.",
+        help="list all jobs."
     )
     list_job.set_defaults(func=list_jobs)
 
@@ -356,6 +374,11 @@ def env_cli_construct(env_sp: ArgumentParser):
 
 
 def benchmark_cli_construct(benchmark_sp: ArgumentParser):
+    """ Build Benchmark Module in CLI
+
+    Args:
+        benchmark_sp (ArgumentParser): Benchmark Parser
+    """
     from QuICT.cloud.cli.utils import get_benchmark_qcda, get_benchmark_simulation
 
     subparser = benchmark_sp.add_subparsers()

@@ -1,5 +1,4 @@
 from datetime import datetime
-from builtins import KeyError
 
 from .encrypt_request import EncryptedRequest
 from .encrypt_manager import EncryptManager
@@ -14,6 +13,7 @@ default_api_server_port = "5000"
 
 
 class QuICTRemoteManager:
+    """ QuICT Job Management for the Remote Mode. """
     def __init__(
         self,
         hostname: str = default_hostname,

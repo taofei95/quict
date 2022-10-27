@@ -5,6 +5,7 @@ import subprocess
 
 
 class QuICTLocalJobManager:
+    """ QuICT Job Management for the Local Mode. Using Redis to store running-time information. """
     def __init__(self):
         try:
             self._redis_pool = redis.ConnectionPool(host='127.0.0.1', port=6379, db=0)
@@ -22,6 +23,14 @@ class QuICTLocalJobManager:
         self._update_job_status(name)
 
     def start_job(self, yml_dict: dict):
+        """ Start the job describe by the given yaml file.
+
+        Args:
+            yml_dict (dict): The given yaml file
+
+        Raises:
+            KeyError: Key Error in given yaml file
+        """
         # Check job name
         name = yml_dict["name"]
         if self._redis_connection.exists(name):
@@ -86,6 +95,7 @@ class QuICTLocalJobManager:
             self._redis_connection.hset(name, 'status', 'finish')
 
     def status_job(self, name: str):
+        """ Get job's states """
         # Check job's list contain given job
         self._name_validation(name)
 
@@ -93,6 +103,7 @@ class QuICTLocalJobManager:
         return self._redis_connection.hgetall(name)
 
     def stop_job(self, name: str):
+        """ Stop a job. """
         # Check job's list contain given job
         self._name_validation(name)
 
@@ -111,6 +122,7 @@ class QuICTLocalJobManager:
             raise KeyError(f"Failure to stop the job {name}, due to {e}.")
 
     def restart_job(self, name: str):
+        """ Restart a job. """
         # Check job's list contain given job
         self._name_validation(name)
 
@@ -128,6 +140,7 @@ class QuICTLocalJobManager:
             raise KeyError(f"Failure to restart the job {name}, due to {e}.")
 
     def delete_job(self, name: str):
+        """ Delete a job. """
         # Check job's list contain given job
         self._name_validation(name)
 
@@ -146,6 +159,7 @@ class QuICTLocalJobManager:
         self._redis_connection.delete(name)
 
     def list_job(self):
+        """ List all jobs. """
         all_jobs = self._redis_connection.keys()
         for job_name in all_jobs:
             job_name = str(job_name, "utf-8")

@@ -22,6 +22,15 @@ def get_random_circuit(
     instruction_set: str = "random",
     output_path: str = '.'
 ):
+    """ Generate the circuit with give parameters and write circuit's qasm into output path.
+
+    Args:
+        qubits (list): The list of qubits number.
+        size (list): The list of circuit's gate number.
+        random_param (bool): whether using random parameters for all quantum gates with parameters.
+        instruction_set (str, optional): The given instruction sets. Defaults to "random".
+        output_path (str, optional): The output folder. Defaults to current work dir.
+    """
     google_set = [GateType.sx, GateType.sy, GateType.sw, GateType.rx, GateType.ry, GateType.fsim]
     ibmq_set = [GateType.rz, GateType.sx, GateType.x, GateType.cx]
     ionq_set = [GateType.rx, GateType.ry, GateType.rz, GateType.rxx]
@@ -56,6 +65,7 @@ def get_random_circuit(
 
 @path_check
 def get_algorithm_circuit(alg: str, qubits: list, output_path: str = "."):
+    """ Get the algorithm circuit and write its qasm into output path. """
     cir_list = CircuitLib().get_circuit("algorithm", alg, qubits)
     for cir in cir_list:
         file_name = f"{alg}_{cir.width()}.qasm"
@@ -64,6 +74,7 @@ def get_algorithm_circuit(alg: str, qubits: list, output_path: str = "."):
 
 
 def store_quantum_circuit(name: str, file: str):
+    """ Save the given quantum circuit into Quantum Circuit Library. """
     get_folder_name = os.listdir(default_customed_circuit_folder)
     if not name.endswith(".qasm"):
         name += ".qasm"
@@ -77,6 +88,7 @@ def store_quantum_circuit(name: str, file: str):
 
 
 def delete_quantum_circuit(name: str):
+    """ Delete the customed quantum circuit in Circuit Library. """
     get_folder_name = os.listdir(default_customed_circuit_folder)
     if not name.endswith(".qasm"):
         name += ".qasm"
@@ -88,4 +100,5 @@ def delete_quantum_circuit(name: str):
 
 
 def list_quantum_circuit():
+    """ List all customed quantum circuit in Circuit Library. """
     print(os.listdir(default_customed_circuit_folder))

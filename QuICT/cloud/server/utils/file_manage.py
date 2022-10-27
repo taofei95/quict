@@ -31,7 +31,7 @@ def delete_user_folder(user_name):
 
 def delete_job_folder(user_name, job_name):
     job_path = os.path.join(USER_ROOT_PATH, user_name, job_name)
-    if os.path.exists(os.path.join):
+    if os.path.exists(job_path):
         os.remove(job_path)
     else:
         raise KeyError("job name do not exists.")

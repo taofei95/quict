@@ -9,6 +9,7 @@ from .encrypt_manager import EncryptManager
 
 
 class EncryptedRequest:
+    """ The class contains encrypted request(get, post, delete). """
     def __init__(self):
         self._encrypt = EncryptManager()
         self.__SALT = "TestForQuICT"

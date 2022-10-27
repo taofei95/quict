@@ -57,7 +57,7 @@ def user_stop_jobs_op(user_info: dict, op: ResourceOp) -> Tuple[bool, dict]:
 
     if (
         current_stopped_job_number + signal > max_stopped_job_number or
-        user_info['number_of_running_jobs'] >= user_info['max_running_jobs']
+        user_info['number_of_running_jobs'] >= user_info['maximum_parallel_level']
     ):
         return False, user_info
 

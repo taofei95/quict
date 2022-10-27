@@ -128,7 +128,7 @@ class RedisController:
         self._redis_connection.lrem('operator_queue', 0, op)
 
     def change_job_state(self, job_name: str, state: JobState):
-        self._redis_connection.hset(f"Job_Info:{job_name}", 'state', state.name)
+        self._redis_connection.hset(f"Job_Info:{job_name}", 'state', state.value)
 
     ####################################################################
     ############            Redis Utils Function            ############
