@@ -7,7 +7,7 @@
 import numpy as np
 
 from .uniformly_rotation import UniformlyRotation
-from QuICT.core.gate import build_gate, GateType, CompositeGate, H, Rz
+from QuICT.core.gate import build_gate, GateType, CompositeGate, H, Rz, CX
 
 
 class UniformlyUnitary(object):
@@ -47,7 +47,6 @@ class UniformlyUnitary(object):
             gates.append(rot)
             return gates
         length = len(unitary) // 2
-        cx = build_gate(GateType.cx, [low, high - 1])
         Rxv = []
         Rxu = []
         angle_list = [0] * 2 * length
@@ -62,7 +61,7 @@ class UniformlyUnitary(object):
             angle_list[dual_position] = angles[0]
             angle_list[dual_position + length] = angles[1]
         gates = self.uniformly_unitary(low + 1, high, Rxv)
-        gates.append(cx)
+        CX & [low, high - 1] | gates
         gates.extend(self.uniformly_unitary(low + 1, high, Rxu))
         URz = UniformlyRotation(GateType.rz)
         urz = URz.execute(angle_list)
@@ -95,25 +94,25 @@ class UniformlyUnitary(object):
         assert np.allclose(gate.matrix, unitary)
         return gate
 
-    def u2_phase_angle(self, X):
+    def u2_phase_angle(self, mat):
         """ express U(2) with SU(2) and phase
 
         exp(i * phi / 2) SU(2) = U(2)
 
         Args:
-            X(np.ndarray): U2 matrix
+            mat(np.ndarray): U2 matrix
 
         Returns:
             float: phase angle
         """
-        if abs(X[0, 0]) < 1e-10:
-            absX = -X[1, 0] * X[0, 1]
+        if abs(mat[0, 0]) < 1e-10:
+            absX = -mat[1, 0] * mat[0, 1]
             phase = np.angle(absX) / 2
-            X /= np.exp(1j * phase)
+            mat /= np.exp(1j * phase)
         else:
-            absX = X[0, 0] * X[1, 1]
+            absX = mat[0, 0] * mat[1, 1]
             phase = np.angle(absX) / 2
-            X /= np.exp(1j * phase)
+            mat /= np.exp(1j * phase)
 
         return 2 * phase
 
@@ -134,15 +133,15 @@ class UniformlyUnitary(object):
         a = np.array(u1).reshape(2, 2)
         b = np.array(u2).reshape(2, 2)
 
-        X = a.dot(b.T.conj())
-        phi = self.u2_phase_angle(X)
-        x1 = np.angle(X[0, 0])
+        mat = a.dot(b.T.conj())
+        phi = self.u2_phase_angle(mat)
+        x1 = np.angle(mat[0, 0])
 
         r11_angle = 1j / 2 * (-np.pi / 2 - phi / 2 - x1)
         r22_angle = 1j / 2 * (np.pi / 2 - phi / 2 + x1)
         r = np.diag([np.exp(r11_angle), np.exp(r22_angle)])
 
-        rXr = r.dot(X).dot(r) * np.exp(1j * phi / 2)
+        rXr = r.dot(mat).dot(r) * np.exp(1j * phi / 2)
         lamda, hU = np.linalg.eig(rXr)
         if abs(abs(lamda[0] - 1j)) >= 1e-10:
             hU[:, [0, 1]] = hU[:, [1, 0]]

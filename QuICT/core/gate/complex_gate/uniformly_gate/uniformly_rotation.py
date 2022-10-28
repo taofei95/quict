@@ -7,7 +7,7 @@
 from typing import *
 import numpy as np
 
-from QuICT.core.gate import GateType, build_gate, CompositeGate
+from QuICT.core.gate import GateType, build_gate, CompositeGate, CX
 
 
 class UniformlyRotation(object):
@@ -76,7 +76,6 @@ class UniformlyRotation(object):
             gates.append(rot)
             return gates
         length = len(angles) // 2
-        cx = build_gate(GateType.cx, [low, high - 1])
         Rxp = []
         Rxn = []
         for i in range(length):
@@ -85,21 +84,21 @@ class UniformlyRotation(object):
         if is_first_level:
             if is_left_cnot:
                 gates = CompositeGate()
-                gates.append(cx)
+                CX & [low, high - 1] | gates
                 gates.extend(self.inner_uniformly_rotation(low + 1, high, Rxn, gate_type, False, False))
-                gates.append(cx)
+                CX & [low, high - 1] | gates
                 gates.extend(self.inner_uniformly_rotation(low + 1, high, Rxp, gate_type, False, True))
             else:
                 gates = self.inner_uniformly_rotation(low + 1, high, Rxp, gate_type, False, False)
-                gates.append(cx)
+                CX & [low, high - 1] | gates
                 gates.extend(self.inner_uniformly_rotation(low + 1, high, Rxn, gate_type, False, True))
-                gates.append(cx)
+                CX & [low, high - 1] | gates
         elif is_left_cnot:
             gates = self.inner_uniformly_rotation(low + 1, high, Rxn, gate_type, False, False)
-            gates.append(cx)
+            CX & [low, high - 1] | gates
             gates.extend(self.inner_uniformly_rotation(low + 1, high, Rxp, gate_type, False, True))
         else:
             gates = self.inner_uniformly_rotation(low + 1, high, Rxp, gate_type, False, False)
-            gates.append(cx)
+            CX & [low, high - 1] | gates
             gates.extend(self.inner_uniformly_rotation(low + 1, high, Rxn, gate_type, False, True))
         return gates
