@@ -20,8 +20,8 @@ class MCTLinearHalfDirtyAux(object):
         by a network consisting of 4(m - 2) toffoli gates
 
         Args:
-            n(int): the number of qubits in the qureg
             m(int): the number of bits of the toffoli
+            n(int): the number of qubits in the qureg
 
         Returns:
             CompositeGate: the result of Decomposition

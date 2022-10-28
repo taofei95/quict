@@ -95,15 +95,15 @@ class UnitaryDecomposition(object):
         """
         Parts of following comments are from Scipy documentation
         (https://docs.scipy.org/doc/scipy/reference/generated/scipy.linalg.cossin.html)
-                                ┌                   ┐
-                                │ I  0  0 │ 0  0  0 │
+                                   ┌                   ┐
+                                   │ I  0  0 │ 0  0  0 │
         ┌           ┐   ┌         ┐│ 0  C  0 │ 0 -S  0 │┌         ┐*
         │ X11 │ X12 │   │ U1 │    ││ 0  0  0 │ 0  0 -I ││ V1 │    │
         │ ────┼──── │ = │────┼────││─────────┼─────────││────┼────│
         │ X21 │ X22 │   │    │ U2 ││ 0  0  0 │ I  0  0 ││    │ V2 │
         └           ┘   └         ┘│ 0  S  0 │ 0  C  0 │└         ┘
-                                │ 0  0  I │ 0  0  0 │
-                                └                   ┘
+                                   │ 0  0  I │ 0  0  0 │
+                                   └                   ┘
 
         Both u and v are controlled unitary operations hence can be
         decomposed into 2 (smaller) unitary operations and 1 controlled rotation.
