@@ -1,11 +1,10 @@
 from typing import *
 import numpy as np
 
-from ..uniformly_gate import UniformlyRotation
-from .utility import *
-
 from QuICT.core import *
 from QuICT.core.gate import *
+from QuICT.core.gate.complex_gate.uniformly_gate import UniformlyRotation
+from .utility import *
 
 
 class ControlledUnitaryDecomposition(object):

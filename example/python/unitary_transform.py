@@ -2,7 +2,7 @@
 from scipy.stats import unitary_group
 
 from QuICT.core import Circuit
-from QuICT.core.gate.complex_gate.unitary_decomposition import UnitaryDecomposition
+from QuICT.qcda.synthesis.unitary_decomposition import UnitaryDecomposition
 
 
 if __name__ == '__main__':

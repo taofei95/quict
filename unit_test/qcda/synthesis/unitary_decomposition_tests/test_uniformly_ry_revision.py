@@ -2,7 +2,7 @@ import numpy as np
 
 from QuICT.core import Circuit
 from QuICT.core.gate import Ry
-from QuICT.core.gate.complex_gate.unitary_decomposition.uniformly_ry_revision import UniformlyRyRevision
+from QuICT.qcda.synthesis.unitary_decomposition.uniformly_ry_revision import UniformlyRyRevision
 
 
 def test_uniform_ry():

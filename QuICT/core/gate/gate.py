@@ -2053,7 +2053,7 @@ class UnitaryGate(BasicGate):
         return _U
 
     def build_gate(self):
-        from QuICT.core.gate.complex_gate import UnitaryDecomposition
+        from QuICT.qcda.synthesis import UnitaryDecomposition
 
         assert self.controls + self.targets > 0
         mapping_args = self.cargs + self.targs

@@ -1,7 +1,7 @@
 import numpy as np
 from scipy.stats import unitary_group
 
-from QuICT.core.gate.complex_gate.unitary_decomposition import UnitaryDecomposition
+from QuICT.qcda.synthesis.unitary_decomposition import UnitaryDecomposition
 
 
 def test_unitary_decomposition_base_2():

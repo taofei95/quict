@@ -4,10 +4,10 @@ import numpy as np
 from scipy.linalg import cossin
 from QuICT.core import *
 from QuICT.core.gate import *
+from QuICT.core.gate.complex_gate.uniformly_gate import UniformlyRotation
 
 from .cartan_kak_decomposition import CartanKAKDecomposition
 from .cartan_kak_diagonal_decomposition import CartanKAKDiagonalDecomposition
-from ..uniformly_gate import UniformlyRotation
 from .uniformly_ry_revision import UniformlyRyRevision
 from .utility import *
 
