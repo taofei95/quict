@@ -1,3 +1,4 @@
+import random
 
 from scipy.stats import unitary_group
 
@@ -9,7 +10,7 @@ from QuICT.qcda.qcda import QCDA
 typelist = [GateType.rx, GateType.ry, GateType.rz, GateType.x, GateType.y, GateType.z, GateType.cx]
 
 if __name__ == '__main__':
-    layout = Layout.load_file("../layout/ibmqx2.layout")
+    layout = Layout.load_file("../layout/ibmqx2_layout.json")
 
     circuit = Circuit(5)
     circuit.random_append(typelist=typelist)

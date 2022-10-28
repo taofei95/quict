@@ -15,7 +15,7 @@ class UniformlyRotation(object):
     Implements the uniformly Ry or Rz gate
 
     Reference:
-        http://cn.arxiv.org/abs/quant-ph/0504100v1 Fig4 a)
+        https://arxiv.org/abs/quant-ph/0504100 Fig4 a)
     """
     def __init__(self, gate_type=None):
         """

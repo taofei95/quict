@@ -5,7 +5,7 @@ import numpy as np
 from QuICT.core import Circuit
 from QuICT.core.gate import *
 from QuICT.qcda.optimization import CommutativeOptimization
-from QuICT.qcda.synthesis.unitary_decomposition import UnitaryDecomposition
+from QuICT.core.gate.complex_gate.unitary_decomposition import UnitaryDecomposition
 from QuICT.simulation.state_vector import CircuitSimulator
 
 from .graph import Graph

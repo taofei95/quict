@@ -1,7 +1,7 @@
 # noinspection PyUnresolvedReferences
 import numpy as np
 
-from QuICT.qcda.synthesis.uniformly_gate import UniformlyRotation
+from QuICT.core.gate.complex_gate.uniformly_gate import UniformlyRotation
 from QuICT.core.gate import GateType
 
 

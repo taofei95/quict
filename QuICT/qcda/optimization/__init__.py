@@ -14,6 +14,4 @@ from .cnot_local_force import (
     CnotStoreForceBfs, CnotStoreForceDepthBfs
 )
 from .cnot_without_ancilla import CnotWithoutAncilla
-from .topological_cnot import TopologicalCnot
-from .topological_cnot_rz import TopologicalCnotRz
 from .template_optimization import TemplateOptimization

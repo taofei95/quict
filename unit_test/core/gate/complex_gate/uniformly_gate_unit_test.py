@@ -10,7 +10,7 @@ from scipy.stats import unitary_group
 
 from QuICT.core import *
 from QuICT.core.gate import *
-from QuICT.qcda.synthesis import UniformlyRotation, UniformlyUnitary
+from QuICT.core.gate.complex_gate import UniformlyRotation, UniformlyUnitary
 
 
 def test_uniformly_ry():
