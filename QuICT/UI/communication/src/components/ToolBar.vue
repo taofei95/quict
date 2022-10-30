@@ -6,37 +6,86 @@
     <el-dialog title="Instruction Set" v-model="dialogCmdVisible" width="30%">
       <div style="text-align: left">
         <div>
-          <el-radio :label="0" v-model="currentSet" style="display: inline-block">{{ all_sets[0].name }}</el-radio>
-          <el-radio :label="1" v-model="currentSet" style="display: inline-block">{{ all_sets[1].name }}</el-radio>
+          <el-radio
+            :label="0"
+            v-model="currentSet"
+            style="display: inline-block"
+            >{{ all_sets[0].name }}</el-radio
+          >
+          <el-radio
+            :label="1"
+            v-model="currentSet"
+            style="display: inline-block"
+            >{{ all_sets[1].name }}</el-radio
+          >
           <br />
-          <el-radio :label="2" v-model="currentSet" style="display: inline-block">{{ all_sets[2].name }}</el-radio>
-          <el-radio :label="3" v-model="currentSet" style="display: inline-block">{{ all_sets[3].name }}</el-radio>
-          <el-radio :label="4" v-model="currentSet" style="display: inline-block">{{ all_sets[4].name }}</el-radio>
-          <el-radio :label="5" v-model="currentSet" style="display: inline-block">{{ all_sets[5].name }}</el-radio>
+          <el-radio
+            :label="2"
+            v-model="currentSet"
+            style="display: inline-block"
+            >{{ all_sets[2].name }}</el-radio
+          >
+          <el-radio
+            :label="3"
+            v-model="currentSet"
+            style="display: inline-block"
+            >{{ all_sets[3].name }}</el-radio
+          >
+          <el-radio
+            :label="4"
+            v-model="currentSet"
+            style="display: inline-block"
+            >{{ all_sets[4].name }}</el-radio
+          >
+          <el-radio
+            :label="5"
+            v-model="currentSet"
+            style="display: inline-block"
+            >{{ all_sets[5].name }}</el-radio
+          >
         </div>
         <div>
-          <span style="display: block"><b>Customer Set</b>(Click to remove from Customer Set)</span>
-          <img v-for="gate in customerSet" :key="gate" :src="'./assets/gate_set/' + gate.img" @click="
-            () => {
-              RemoveFromCustomerSet(gate);
-            }
-          " style="display: inline-flex" />
-          <span v-if="customerSet.length == 0" style="display: block; text-align: center">No gate in customer
-            set.</span>
+          <span style="display: block"
+            ><b>Customer Set</b>(Click to remove from Customer Set)</span
+          >
+          <img
+            v-for="gate in customerSet"
+            :key="gate"
+            :src="'./assets/gate_set/' + gate.img"
+            @click="
+              () => {
+                RemoveFromCustomerSet(gate);
+              }
+            "
+            style="display: inline-flex"
+          />
+          <span
+            v-if="customerSet.length == 0"
+            style="display: block; text-align: center"
+            >No gate in customer set.</span
+          >
         </div>
         <div>
           <span style="display: block">Click to add to Customer Set</span>
-          <img v-for="gate in tempSet" :key="gate" :src="'./assets/gate_set/' + gate.img" @click="
-            () => {
-              AddToCustomerSet(gate);
-            }
-          " style="display: inline-flex" />
+          <img
+            v-for="gate in tempSet"
+            :key="gate"
+            :src="'./assets/gate_set/' + gate.img"
+            @click="
+              () => {
+                AddToCustomerSet(gate);
+              }
+            "
+            style="display: inline-flex"
+          />
         </div>
       </div>
       <template #footer>
         <span class="dialog-footer">
           <!-- <el-button @click="dialogCmdVisible = false">Cancel</el-button> -->
-          <el-button type="primary" @click="dialogCmdVisible = false">OK</el-button>
+          <el-button type="primary" @click="dialogCmdVisible = false"
+            >OK</el-button
+          >
         </span>
       </template>
     </el-dialog>
@@ -44,11 +93,21 @@
     <el-dialog title="Topology" v-model="dialogTpVisible" width="30%">
       <div>
         <div>
-          <el-input v-model="dialogTpNodeCount" label="n=" @change="TpNodeCountChange"></el-input>
+          <el-input
+            v-model="dialogTpNodeCount"
+            label="n="
+            @change="TpNodeCountChange"
+          ></el-input>
         </div>
         <div>
-          <el-radio v-for="item in dialogTpTypeOptions" :key="item" :label="item" v-model="dialogTpType"
-            style="display: inline-block">{{ item }}</el-radio>
+          <el-radio
+            v-for="item in dialogTpTypeOptions"
+            :key="item"
+            :label="item"
+            v-model="dialogTpType"
+            style="display: inline-block"
+            >{{ item }}</el-radio
+          >
         </div>
         <div :id="id_base">
           <svg />
@@ -62,14 +121,26 @@
             <el-button @click="pvReverse">Reverse</el-button>
           </div>
           <div>
-            <el-upload class="upload-demo" :action="uploadBackend" :multiple="multipleUpload"
-              :show-file-list="showFileList" :before-upload="TpLoad" style="display: inline-block">
-              <el-button type="primary" style="font-family: 'Segoe UI Symbol'"> LOAD</el-button>
+            <el-upload
+              class="upload-demo"
+              :action="uploadBackend"
+              :multiple="multipleUpload"
+              :show-file-list="showFileList"
+              :before-upload="TpLoad"
+              style="display: inline-block"
+            >
+              <el-button type="primary" style="font-family: 'Segoe UI Symbol'"
+                > LOAD</el-button
+              >
             </el-upload>
-            <el-button type="primary" @click="
-              dialogTpVisible = false;
-            TpConfirm();
-            ">OK</el-button>
+            <el-button
+              type="primary"
+              @click="
+                dialogTpVisible = false;
+                TpConfirm();
+              "
+              >OK</el-button
+            >
           </div>
         </span>
       </template>
@@ -86,14 +157,21 @@
       <div>
         <el-select v-model="dialogBe_Backend" placeholder="Backend">
           <!-- <span>Backend: </span> -->
-          <el-option v-for="item in dialogBe_Backend_options" :key="item.value" :label="item.label" :value="item.value">
+          <el-option
+            v-for="item in dialogBe_Backend_options"
+            :key="item.value"
+            :label="item.label"
+            :value="item.value"
+          >
           </el-option>
         </el-select>
       </div>
       <template #footer>
         <span class="dialog-footer">
           <!-- <el-button @click="dialogBeVisible = false">Cancel</el-button> -->
-          <el-button type="primary" @click="dialogBeVisible = false">OK</el-button>
+          <el-button type="primary" @click="dialogBeVisible = false"
+            >OK</el-button
+          >
         </span>
       </template>
     </el-dialog>
@@ -104,60 +182,135 @@
         <el-input v-model="dialogSeShots" label="n="></el-input>
         <div v-if="dialogBe == 'CPU' || dialogBe == 'GPU'">
           <span style="display: block; text-align: center">Precision</span>
-          <el-radio v-model="dialogSe_Precision" label="single">single</el-radio>
-          <el-radio v-model="dialogSe_Precision" label="double">double</el-radio>
+          <el-radio v-model="dialogSe_Precision" label="single"
+            >single</el-radio
+          >
+          <el-radio v-model="dialogSe_Precision" label="double"
+            >double</el-radio
+          >
         </div>
       </div>
       <template #footer>
         <span class="dialog-footer">
           <!-- <el-button @click="dialogSeVisible = false">Cancel</el-button> -->
-          <el-button type="primary" @click="dialogSeVisible = false">OK</el-button>
+          <el-button type="primary" @click="dialogSeVisible = false"
+            >OK</el-button
+          >
         </span>
       </template>
     </el-dialog>
 
-    <el-col :span="12" style="
+    <el-col
+      :span="12"
+      style="
         display: inline-flex;
         justify-content: flex-end;
         align-items: center;
-      ">
-      <el-button size="small" type="primary" @click="dialogCmdVisible = true" style="
+      "
+    >
+      <el-button
+        size="small"
+        type="primary"
+        @click="dialogCmdVisible = true"
+        style="
           margin: 0px 10px;
           font-family: 'Segoe UI Symbol';
           background: transparent !important;
-        ">Instruction Set ⏷</el-button>
-      <el-button size="small" @click="showTopologyEdit"
-        style="margin: 0px 20px 0px 10px; background: transparent !important" type="primary"><img
-          src="/assets/topology.2x.png" style="height: 10px" />Topology</el-button>
-      <el-space direction="vertical" :size="1" style="line-height: 19px !important">
-        <el-checkbox v-model="opSwitch" size="small" label="Optimize"></el-checkbox>
+        "
+        >Instruction Set ⏷</el-button
+      >
+      <el-button
+        size="small"
+        @click="showTopologyEdit"
+        style="margin: 0px 20px 0px 10px; background: transparent !important"
+        type="primary"
+        ><img
+          src="/assets/topology.2x.png"
+          style="height: 10px"
+        />Topology</el-button
+      >
+      <el-space
+        direction="vertical"
+        :size="1"
+        style="line-height: 19px !important"
+      >
+        <el-checkbox
+          v-model="opSwitch"
+          size="small"
+          label="Optimize"
+        ></el-checkbox>
 
-        <el-checkbox v-model="mapSwitch" size="small" label="Mapping"></el-checkbox>
+        <el-checkbox
+          v-model="mapSwitch"
+          size="small"
+          label="Mapping"
+        ></el-checkbox>
       </el-space>
-      <span style="color: #409eff; font-size: large; margin: 0px 0px 0px 10px">|</span>
-      <el-button size="small" type="primary" @click="dialogBeVisible = true" style="
+      <span style="color: #409eff; font-size: large; margin: 0px 0px 0px 10px"
+        >|</span
+      >
+      <el-button
+        size="small"
+        type="primary"
+        @click="dialogBeVisible = true"
+        style="
           margin: 0px 10px;
           font-family: 'Segoe UI Symbol';
           background: transparent !important;
-        ">Backend ⏷</el-button>
-      <el-button size="small" type="primary" @click="dialogSeVisible = true" style="
+        "
+        >Backend ⏷</el-button
+      >
+      <el-button
+        size="small"
+        type="primary"
+        @click="dialogSeVisible = true"
+        style="
           margin: 0px 10px;
           font-family: 'Segoe UI Symbol';
           background: transparent !important;
-        "> Setting</el-button>
-      <span v-if="show_save_run_load" style="color: #409eff; font-size: large">|</span>
-      <el-upload v-if="show_save_run_load" class="upload-demo" :action="uploadBackend" :multiple="multipleUpload"
-        :show-file-list="showFileList" :before-upload="loadQCDA" style="margin: 0px">
-        <el-button size="small" type="primary" plain style="margin: 0px 10px; font-family: 'Segoe UI Symbol'"> LOAD
+        "
+        > Setting</el-button
+      >
+      <span v-if="show_save_run_load" style="color: #409eff; font-size: large"
+        >|</span
+      >
+      <el-upload
+        v-if="show_save_run_load"
+        class="upload-demo"
+        :action="uploadBackend"
+        :multiple="multipleUpload"
+        :show-file-list="showFileList"
+        :before-upload="loadQCDA"
+        style="margin: 0px"
+      >
+        <el-button
+          size="small"
+          type="primary"
+          plain
+          style="margin: 0px 10px; font-family: 'Segoe UI Symbol'"
+          > LOAD
         </el-button>
       </el-upload>
 
-      <el-button v-if="show_save_run_load" size="small" type="primary" plain @click="saveQCDA"
-        style="margin: 0px 10px; font-family: 'Segoe UI Symbol'"> SAVE</el-button>
+      <el-button
+        v-if="show_save_run_load"
+        size="small"
+        type="primary"
+        plain
+        @click="saveQCDA"
+        style="margin: 0px 10px; font-family: 'Segoe UI Symbol'"
+        > SAVE</el-button
+      >
 
-      <el-button v-if="show_save_run_load" size="small" type="primary" @click="runQCDA"
-        style="margin: 0px 10px; font-family: 'Segoe UI Symbol'">
-         RUN</el-button>
+      <el-button
+        v-if="show_save_run_load"
+        size="small"
+        type="primary"
+        @click="runQCDA"
+        style="margin: 0px 10px; font-family: 'Segoe UI Symbol'"
+      >
+         RUN</el-button
+      >
     </el-col>
   </el-row>
 </template>
@@ -316,114 +469,203 @@ export default {
         .style("transform", () => {
           return `translateX(20px) translateY(20px)`;
         });
-
-      //draw connect lines
       console.log(this.tp);
-      this.topologyZone
-        .selectAll(".tpFull")
-        .data(this.fullTp)
-        .join("line")
-        .classed("tpFull", true)
-        .attr("stroke", "gray")
-        .attr("stroke-width", 5)
-        .attr("x1", (d) => {
-          return (
-            150 + 150 * Math.cos((d[0] * 2 * Math.PI) / this.dialogTpNodeCount)
-          );
-        })
-        .attr("y1", (d) => {
-          return (
-            150 + 150 * Math.sin((d[0] * 2 * Math.PI) / this.dialogTpNodeCount)
-          );
-        })
-        .attr("x2", (d) => {
-          return (
-            150 + 150 * Math.cos((d[1] * 2 * Math.PI) / this.dialogTpNodeCount)
-          );
-        })
-        .attr("y2", (d) => {
-          return (
-            150 + 150 * Math.sin((d[1] * 2 * Math.PI) / this.dialogTpNodeCount)
-          );
-        })
-        .on("click", (event, d) => {
-          this.pvSwitch(d[0], d[1]);
-        });
+      if (this.dialogTpType == "grid") {
+        let col = this.cal_layout_col(this.qbit.length);
+        let uv_len = 300 / (col - 1);
+        //draw connect lines
+        this.topologyZone
+          .selectAll(".tpFull")
+          .data(this.fullTp)
+          .join("line")
+          .classed("tpFull", true)
+          .attr("stroke", "gray")
+          .attr("stroke-width", 5)
+          .attr("x1", (d) => {
+            return this.cal_node_col(d[0], col) * uv_len;
+          })
+          .attr("y1", (d) => {
+            return this.cal_node_row(d[0], col) * uv_len;
+          })
+          .attr("x2", (d) => {
+            return this.cal_node_col(d[1], col) * uv_len;
+          })
+          .attr("y2", (d) => {
+            return this.cal_node_row(d[1], col) * uv_len;
+          })
+          .on("click", (event, d) => {
+            this.pvSwitch(d[0], d[1]);
+          });
 
-      //draw connect lines
-      this.topologyZone
-        .selectAll(".tpUV")
-        .data(this.tp)
-        .join("line")
-        .classed("tpUV", true)
-        .attr("stroke", "steelblue")
-        .attr("stroke-width", 6)
-        .attr("x1", (d) => {
-          return (
-            150 +
-            150 *
-            Math.cos(
-              (Number(d.split("_")[0]) * 2 * Math.PI) / this.dialogTpNodeCount
-            )
-          );
-        })
-        .attr("y1", (d) => {
-          return (
-            150 +
-            150 *
-            Math.sin(
-              (Number(d.split("_")[0]) * 2 * Math.PI) / this.dialogTpNodeCount
-            )
-          );
-        })
-        .attr("x2", (d) => {
-          return (
-            150 +
-            150 *
-            Math.cos(
-              (Number(d.split("_")[1]) * 2 * Math.PI) / this.dialogTpNodeCount
-            )
-          );
-        })
-        .attr("y2", (d) => {
-          return (
-            150 +
-            150 *
-            Math.sin(
-              (Number(d.split("_")[1]) * 2 * Math.PI) / this.dialogTpNodeCount
-            )
-          );
-        })
-        .on("click", (event, d) => {
-          this.pvSwitch(Number(d.split("_")[0]), Number(d.split("_")[1]));
-        });
+        //draw connect lines
+        this.topologyZone
+          .selectAll(".tpUV")
+          .data(this.tp)
+          .join("line")
+          .classed("tpUV", true)
+          .attr("stroke", "steelblue")
+          .attr("stroke-width", 6)
+          .attr("x1", (d) => {
+            return this.cal_node_col(Number(d.split("_")[0]), col) * uv_len;
+          })
+          .attr("y1", (d) => {
+            return this.cal_node_row(Number(d.split("_")[0]), col) * uv_len;
+          })
+          .attr("x2", (d) => {
+            return this.cal_node_col(Number(d.split("_")[1]), col) * uv_len;
+          })
+          .attr("y2", (d) => {
+            return this.cal_node_row(Number(d.split("_")[1]), col) * uv_len;
+          })
+          .on("click", (event, d) => {
+            this.pvSwitch(Number(d.split("_")[0]), Number(d.split("_")[1]));
+          });
 
-      // draw qbit
-      let q_root = this.topologyZone
-        .selectAll(".qNode")
-        .data(this.qbit)
-        .join("g")
-        .classed("qNode", true)
-        .style("transform", (d, i) => {
-          return `translateX(${150 + 150 * Math.cos((i * 2 * Math.PI) / this.dialogTpNodeCount)
-            }px) translateY(${150 + 150 * Math.sin((i * 2 * Math.PI) / this.dialogTpNodeCount)
+        // draw qbit
+        let q_root = this.topologyZone
+          .selectAll(".qNode")
+          .data(this.qbit)
+          .join("g")
+          .classed("qNode", true)
+          .style("transform", (d, i) => {
+            return `translateX(${
+              this.cal_node_col(i, col) * uv_len
+            }px) translateY(${this.cal_node_row(i, col) * uv_len}px)`;
+          });
+        q_root
+          .append("circle")
+          .attr("stroke", "steelblue")
+          .attr("stroke-width", 1.5)
+          .attr("fill", "lightblue")
+          .attr("r", 15);
+
+        q_root
+          .append("text")
+          .text((d, i) => `${i}`)
+          .style("transform", () => {
+            return `translateY(5px)`;
+          })
+          .attr("fill", "black")
+          .style("text-anchor", "middle");
+      } else {
+        //draw connect lines
+
+        this.topologyZone
+          .selectAll(".tpFull")
+          .data(this.fullTp)
+          .join("line")
+          .classed("tpFull", true)
+          .attr("stroke", "gray")
+          .attr("stroke-width", 5)
+          .attr("x1", (d) => {
+            return (
+              150 +
+              150 * Math.cos((d[0] * 2 * Math.PI) / this.dialogTpNodeCount)
+            );
+          })
+          .attr("y1", (d) => {
+            return (
+              150 +
+              150 * Math.sin((d[0] * 2 * Math.PI) / this.dialogTpNodeCount)
+            );
+          })
+          .attr("x2", (d) => {
+            return (
+              150 +
+              150 * Math.cos((d[1] * 2 * Math.PI) / this.dialogTpNodeCount)
+            );
+          })
+          .attr("y2", (d) => {
+            return (
+              150 +
+              150 * Math.sin((d[1] * 2 * Math.PI) / this.dialogTpNodeCount)
+            );
+          })
+          .on("click", (event, d) => {
+            this.pvSwitch(d[0], d[1]);
+          });
+
+        //draw connect lines
+        this.topologyZone
+          .selectAll(".tpUV")
+          .data(this.tp)
+          .join("line")
+          .classed("tpUV", true)
+          .attr("stroke", "steelblue")
+          .attr("stroke-width", 6)
+          .attr("x1", (d) => {
+            return (
+              150 +
+              150 *
+                Math.cos(
+                  (Number(d.split("_")[0]) * 2 * Math.PI) /
+                    this.dialogTpNodeCount
+                )
+            );
+          })
+          .attr("y1", (d) => {
+            return (
+              150 +
+              150 *
+                Math.sin(
+                  (Number(d.split("_")[0]) * 2 * Math.PI) /
+                    this.dialogTpNodeCount
+                )
+            );
+          })
+          .attr("x2", (d) => {
+            return (
+              150 +
+              150 *
+                Math.cos(
+                  (Number(d.split("_")[1]) * 2 * Math.PI) /
+                    this.dialogTpNodeCount
+                )
+            );
+          })
+          .attr("y2", (d) => {
+            return (
+              150 +
+              150 *
+                Math.sin(
+                  (Number(d.split("_")[1]) * 2 * Math.PI) /
+                    this.dialogTpNodeCount
+                )
+            );
+          })
+          .on("click", (event, d) => {
+            this.pvSwitch(Number(d.split("_")[0]), Number(d.split("_")[1]));
+          });
+
+        // draw qbit
+        let q_root = this.topologyZone
+          .selectAll(".qNode")
+          .data(this.qbit)
+          .join("g")
+          .classed("qNode", true)
+          .style("transform", (d, i) => {
+            return `translateX(${
+              150 + 150 * Math.cos((i * 2 * Math.PI) / this.dialogTpNodeCount)
+            }px) translateY(${
+              150 + 150 * Math.sin((i * 2 * Math.PI) / this.dialogTpNodeCount)
             }px)`;
-        });
-      q_root
-        .append("circle")
-        .attr("stroke", "steelblue")
-        .attr("stroke-width", 1.5)
-        .attr("fill", "lightblue")
-        .attr("r", 15);
+          });
+        q_root
+          .append("circle")
+          .attr("stroke", "steelblue")
+          .attr("stroke-width", 1.5)
+          .attr("fill", "lightblue")
+          .attr("r", 15);
 
-      q_root
-        .append("text")
-        .text((d, i) => `${i}`)
-        .style("transform", () => {
-          return `translateY(5px)`;
-        })
-        .attr("fill", "black")
-        .style("text-anchor", "middle");
+        q_root
+          .append("text")
+          .text((d, i) => `${i}`)
+          .style("transform", () => {
+            return `translateY(5px)`;
+          })
+          .attr("fill", "black")
+          .style("text-anchor", "middle");
+      }
     },
     TpNodeCountChange() {
       // 节点数修改
@@ -446,7 +688,27 @@ export default {
           }
         }
       }
+      this.clear_tp();
+    },
+    clear_tp()
+    {
       this.SetFullTp();
+      let tmp_tp = [];
+      for (let i = 0; i < this.fullTp.length; i++) {
+        for (let k = this.tp.length - 1; k >= 0; k--) {
+          let u = Number(this.tp[k].split("_")[0]);
+          let v = Number(this.tp[k].split("_")[1]);
+          if (
+            (u == this.fullTp[i][0] && v == this.fullTp[i][1]) ||
+            (u == this.fullTp[i][1] && v == this.fullTp[i][0])
+          ) {
+            tmp_tp.push(this.tp[k]);
+            this.tp.splice(k, 1);
+            break;
+          }
+        }
+      }
+      this.tp = tmp_tp;
       this.updateTopology();
     },
     SetFullTp() {
@@ -463,10 +725,47 @@ export default {
         }
       } else if (this.dialogTpType == "grid") {
         // TODO: update
-        for (let i = 0; i < this.qbit.length - 1; i++) {
-          this.fullTp.push([this.qbit[i], this.qbit[i + 1]]);
+        let i = this.cal_layout_col(this.qbit.length);
+        for (let x = 0; x < this.qbit.length - 1; x++) {
+          if (x % i != i - 1) {
+            this.fullTp.push([this.qbit[x], this.qbit[x + 1]]);
+          }
+          if (x + i < this.qbit.length) {
+            this.fullTp.push([this.qbit[x], this.qbit[x + i]]);
+          }
         }
       }
+    },
+    cal_layout_col(qubits) {
+      /*Returns:
+        The shape of layout: (row_size, column_size, additional_row_qubits, additional_column_qubits)
+        e.g.: (3, 4, 2, 0): for 14 qubits grid layout
+        [[a, a, a, a],
+         [a, a, a, a],
+         [a, a, a, a],
+         [a, a, -, -]]
+    
+    # First, get the nearly sqrt integer */
+      let row = Math.floor(Math.sqrt(qubits));
+      let column = Math.ceil(qubits / row);
+
+      // if (row * column == qubits) {
+      //   return row, column, 0, 0;
+      // }
+      // additional = qubits - row * column;
+      // if (row < column) {
+      //   return row, column, additional, 0;
+      // } else {
+      //   return row, column, 0, additional;
+      // }
+
+      return column;
+    },
+    cal_node_col(node_num, col) {
+      return node_num % col;
+    },
+    cal_node_row(node_num, col) {
+      return (node_num - (node_num % col)) / col;
     },
     TpLoad(file) {
       // 加载topology文件
@@ -647,22 +946,7 @@ export default {
       this.ResetQbit();
     },
     dialogTpType() {
-      this.SetFullTp();
-      let tmp_tp = [];
-      for (let i = 0; i < this.fullTp.length; i++) {
-        for (let k = this.tp.length - 1; k >= 0; k--) {
-          let u = Number(this.tp[k].split("_")[0]);
-          let v = Number(this.tp[k].split("_")[1]);
-          if ((u == this.fullTp[i][0] && v == this.fullTp[i][1]) || (u == this.fullTp[i][1] && v == this.fullTp[i][0])) {
-            
-            tmp_tp.push(this.tp[k]);
-            this.tp.splice(k, 1)
-            break;
-          }
-        }
-      }
-      this.tp = tmp_tp;
-      this.updateTopology();
+      this.clear_tp();
     },
   },
   emits: {
