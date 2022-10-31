@@ -14,6 +14,7 @@ class Actor:
         action = self.agent.select_action(
             policy_net=self.policy_net,
             policy_net_device=self.config.device,
+            epsilon_random=True,
         )
 
         prev_state, next_state, reward, terminated = self.agent.take_action(

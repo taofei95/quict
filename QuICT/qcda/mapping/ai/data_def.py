@@ -72,7 +72,7 @@ class CircuitInfo(CircuitInfoBase):
             _a, _b = logic2phy[a], logic2phy[b]
             layers[layer_id].append((_a, _b))
         q = self._qubit_num
-        ans = torch.zeros(len(layers), q, q, dtype=torch.float)
+        ans = torch.zeros(len(layers), q, q)
         for idx, layer in enumerate(layers):
             for u, v in layer:
                 ans[idx][u][v] = 1
@@ -233,10 +233,10 @@ class TrainConfig:
         self,
         topo: Union[str, Layout],
         max_gate_num: int = 200,
-        feat_dim: int = 100,
+        feat_dim: int = 64,
         gamma: float = 0.9,
         replay_pool_size: int = 20000,
-        batch_size: int = 64,
+        batch_size: int = 160,
         total_epoch: int = 2000,
         explore_period: int = 10000,
         target_update_period: int = 20,
@@ -250,7 +250,7 @@ class TrainConfig:
         epsilon_start: float = 0.9,
         epsilon_end: float = 0.05,
         epsilon_decay: float = 500.0,
-        reward_scale: float = 5.0,
+        reward_scale: float = 10.0,
     ) -> None:
         self.factory = DataFactory(topo=topo, max_gate_num=max_gate_num)
 

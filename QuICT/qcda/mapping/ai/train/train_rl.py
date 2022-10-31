@@ -6,6 +6,11 @@ from QuICT.qcda.mapping.ai.data_def import TrainConfig
 from QuICT.qcda.mapping.ai.train.actor import Actor
 from QuICT.qcda.mapping.ai.train.learner import Learner
 
+import asyncio as aio
+from threading import Thread
+
+from torch.utils.tensorboard import SummaryWriter
+
 
 class Trainer:
     def __init__(self, config: TrainConfig) -> None:
@@ -16,6 +21,28 @@ class Trainer:
         self.learner = Learner(config=config)
         self.actor = Actor(rank=1, config=config)
         self.actor.policy_net = self.learner._policy_net
+
+        self._writer = SummaryWriter(log_dir=config.log_dir)
+
+        self._loop = aio.new_event_loop()
+        self._t = Thread(target=self.side_thread, daemon=True)
+        self._t.start()
+
+    def side_thread(self):
+        aio.set_event_loop(self._loop)
+        self._loop.run_forever()
+
+    async def write_stat(self, running_loss: float, running_reward: float, g_step: int):
+        self._writer.add_scalar(
+            tag="loss",
+            scalar_value=running_loss,
+            global_step=g_step,
+        )
+        self._writer.add_scalar(
+            tag="reward",
+            scalar_value=running_reward,
+            global_step=g_step,
+        )
 
     def train(self):
         running_loss = 0.0
@@ -34,12 +61,21 @@ class Trainer:
                 if loss is not None:
                     running_loss += loss
                     running_reward += reward
+
+                    aio.run_coroutine_threadsafe(
+                        self.write_stat(loss, reward, g_step),
+                        self._loop,
+                    )
+
                     if (it + 1) % observe_period == 0:
                         running_loss /= observe_period
                         running_reward /= observe_period
-                        rate = observe_period / (time() - last_obs_time)
+                        act_rate = observe_period / (time() - last_obs_time)
+                        learn_rate = self.config.batch_size * act_rate
+
                         print(
-                            f"[{str(it+1):4s}] loss: {running_loss:0.4f}, reward: {running_reward:0.2f}, rate: {rate:0.2f} op/s"
+                            f"[{str(it+1):4s}] loss: {running_loss:0.4f}, reward: {running_reward:0.2f}\n"
+                            + f"       actor : {act_rate:0.2f} action/s, learner: {learn_rate:0.2f} transition/s"
                         )
 
                         running_loss = 0.0
@@ -50,6 +86,8 @@ class Trainer:
                 for transition in self.actor.replay:
                     self.learner.replay.push(transition)
                 self.actor.replay.clear()
+
+                # sync policy net
                 self.actor.policy_net = self.learner._policy_net
 
                 if g_step % self.config.target_update_period == 0:
@@ -58,10 +96,14 @@ class Trainer:
                     )
                 g_step += 1
 
+            # validate
+            v_results = self.learner.validate_model()
+            self.learner.show_validation_results(v_results, epoch_id)
+
 
 if __name__ == "__main__":
-    topo = "ibmq_lima"
-    device = "cuda:1"
+    topo = "grid_3x3"
+    device = "cuda"
     config = TrainConfig(topo=topo, device=device)
     trainer = Trainer(config=config)
     trainer.train()

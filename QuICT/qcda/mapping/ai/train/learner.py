@@ -1,23 +1,19 @@
 import os
 import os.path as osp
 import re
-from typing import Dict, List, Union
+from typing import Dict, List, Tuple, Union
 
 import torch
 import torch.nn as nn
 import torch.optim as optim
 from QuICT.core import *
 from QuICT.core.gate.composite_gate import CompositeGate
-from QuICT.qcda.mapping.ai.data_def import (
-    ReplayMemory,
-    State,
-    TrainConfig,
-    ValidationData,
-)
 from QuICT.tools.interface import OPENQASMInterface
 from torch.utils.tensorboard import SummaryWriter
 
+from ..data_def import CircuitInfo, ReplayMemory, State, TrainConfig, ValidationData
 from ..net.nn_mapping import NnMapping
+from ..net.rl_agent import Agent
 
 
 def _wrap2circ(cg_or_circ: Union[Circuit, CompositeGate] = None):
@@ -44,6 +40,7 @@ class Learner:
                 max_gate_num=config.max_gate_num,
                 feat_dim=config.feat_dim,
                 action_num=config.action_num,
+                device=config.device,
             ).to(device=config.device)
         )
         self._policy_net.train(True)
@@ -53,6 +50,7 @@ class Learner:
                 max_gate_num=config.max_gate_num,
                 feat_dim=config.feat_dim,
                 action_num=config.action_num,
+                device=config.device,
             ).to(device=config.device)
         )
         self._target_net.train(False)
@@ -64,7 +62,7 @@ class Learner:
 
         # Loss function & optimizer
         self._smooth_l1 = nn.SmoothL1Loss()
-        self._optimizer = optim.RMSprop(self._policy_net.parameters(), lr=0.0001)
+        self._optimizer = optim.RMSprop(self._policy_net.parameters(), lr=0.0005)
 
         # Prepare path to save model files during training
         print("Preparing model saving directory...")
@@ -111,26 +109,76 @@ class Learner:
                 )
         self._v_data.sort(key=lambda x: len(x.circ.gates))
 
-    # def validate_model(self) -> List[ValidationData]:
-    #     """Map all validation circuits to corresponding topologies.
+    def map_all(
+        self,
+        max_gate_num: int,
+        circ: Union[Circuit, CompositeGate],
+        layout: Layout,
+        policy_net: NnMapping,
+        policy_net_device: str,
+        cutoff: int = None,
+    ) -> Tuple[CompositeGate, CompositeGate]:
+        """Map given circuit to topology layout. Note that this methods will change internal exploration state.
 
-    #     Returns:
-    #         List[ValidationData]: Multiple instances.
-    #     """
-    #     for v_datum in self._v_data:
-    #         cutoff = len(v_datum.circ.gates) * v_datum.circ.width()
-    #         self._agent.mapped_circ.clean()
-    #         result_circ, remained_circ = self._agent.map_all(
-    #             max_gate_num=self._max_gate_num,
-    #             circ=v_datum.circ,
-    #             layout=v_datum.topo,
-    #             policy_net=self._target_net,
-    #             policy_net_device=self.config.device,
-    #             cutoff=cutoff,
-    #         )
-    #         v_datum.rl_mapped_circ = _wrap2circ(result_circ)
-    #         v_datum.remained_circ = _wrap2circ(remained_circ)
-    #     return self._v_data
+        Args:
+            max_gate_num (int): Maximal gate number after padding.
+            circ (CircuitBased): Circuit to be mapped.
+            layout (Layout): Topology layout.
+            policy_net (GnnMapping): Policy network.
+            policy_net_device (str): Policy network device.
+            cutoff (int, optional): The maximal steps of execution. If the policy network cannot
+                stop with in `cutoff` steps, force it to early stop. Defaults to None.
+
+        Returns:
+            Tuple[CompositeGate, CompositeGate]: Mapped circuit, remained circuit.
+        """
+        logic2phy = [i for i in range(layout.qubit_number)]
+        agent = Agent(config=self.config)
+        topo_graph = self.config.factory.get_topo_graph(topo=layout)
+        circ_state = CircuitInfo(circ=circ, max_gate_num=policy_net._max_gate_num)
+
+        circ_state.eager_exec(
+            logic2phy=logic2phy, topo_graph=topo_graph, physical_circ=agent.mapped_circ
+        )
+        agent.state = State(
+            circ_info=circ_state,
+            layout=layout,
+            logic2phy=logic2phy,
+        )
+
+        terminated = circ_state.count_gate() == 0
+        step = 0
+        with torch.no_grad():
+            while not terminated:
+                action = agent.select_action(
+                    policy_net=policy_net,
+                    policy_net_device=policy_net_device,
+                )
+                _, _, _, terminated = agent.take_action(action=action)
+                step += 1
+                if cutoff is not None and step >= cutoff:
+                    break
+            return agent.mapped_circ, agent.state.remained_circ()
+
+    def validate_model(self) -> List[ValidationData]:
+        """Map all validation circuits to corresponding topologies.
+
+        Returns:
+            List[ValidationData]: Multiple instances.
+        """
+        for v_datum in self._v_data:
+            cutoff = len(v_datum.circ.gates) * v_datum.circ.width()
+            result_circ, remained_circ = self.map_all(
+                max_gate_num=self.config.max_gate_num,
+                circ=v_datum.circ,
+                layout=v_datum.topo,
+                policy_net=self._target_net,
+                policy_net_device=self.config.device,
+                cutoff=cutoff,
+            )
+            v_datum.rl_mapped_circ = _wrap2circ(result_circ)
+            v_datum.remained_circ = _wrap2circ(remained_circ)
+        return self._v_data
 
     def optimize_model(self) -> Union[None, float]:
         if len(self.replay) < self.config.batch_size:
@@ -202,37 +250,37 @@ class Learner:
         self._optimizer.step()
         return loss_val
 
-    # def show_validation_results(self, results: List[ValidationData], epoch_id: int):
-    #     print("[Validation Summary]")
-    #     rl_num = {}
-    #     original_num = {}
-    #     for v_datum in results:
-    #         topo_name = v_datum.topo.name
-    #         rl_num[topo_name] = 0
-    #         original_num[topo_name] = 0
-    #     for idx, v_datum in enumerate(results):
-    #         topo_name = v_datum.topo.name
-    #         _rl_num = len(v_datum.rl_mapped_circ.gates)
-    #         _original_num = len(v_datum.circ.gates)
-    #         rl_num[topo_name] += _rl_num
-    #         original_num[topo_name] += _original_num
-    #         print(
-    #             f"    #Gate in circuit: {_original_num}, #Gate by RL: {_rl_num} ({topo_name})"
-    #         )
-    #     if rl_num[topo_name] < self._v_best_score:
-    #         self._v_best_score = rl_num[topo_name]
-    #         if epoch_id > 5:
-    #             torch.save(
-    #                 self._target_net.state_dict(),
-    #                 osp.join(self._model_path, f"model_epoch_{epoch_id}.pt"),
-    #             )
-    #     self._writer.add_scalars(
-    #         f"Validation Performance ({topo_name})",
-    #         {
-    #             "#Gate in circuit": original_num[topo_name],
-    #             "#Gate by RL": rl_num[topo_name],
-    #             "#Gate by RL (best)": self._v_best_score,
-    #         },
-    #         epoch_id + 1,
-    #     )
-    #     print()
+    def show_validation_results(self, results: List[ValidationData], epoch_id: int):
+        print("[Validation Summary]")
+        rl_num = {}
+        original_num = {}
+        for v_datum in results:
+            topo_name = v_datum.topo.name
+            rl_num[topo_name] = 0
+            original_num[topo_name] = 0
+        for idx, v_datum in enumerate(results):
+            topo_name = v_datum.topo.name
+            _rl_num = len(v_datum.rl_mapped_circ.gates)
+            _original_num = len(v_datum.circ.gates)
+            rl_num[topo_name] += _rl_num
+            original_num[topo_name] += _original_num
+            print(
+                f"    #Gate in circuit: {_original_num}, #Gate by RL: {_rl_num} ({topo_name})"
+            )
+        if rl_num[topo_name] < self._v_best_score:
+            self._v_best_score = rl_num[topo_name]
+            if epoch_id > 5:
+                torch.save(
+                    self._target_net.state_dict(),
+                    osp.join(self._model_path, f"model_epoch_{epoch_id}.pt"),
+                )
+        self._writer.add_scalars(
+            f"Validation Performance ({topo_name})",
+            {
+                "#Gate in circuit": original_num[topo_name],
+                "#Gate by RL": rl_num[topo_name],
+                "#Gate by RL (best)": self._v_best_score,
+            },
+            epoch_id + 1,
+        )
+        print()
