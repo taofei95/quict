@@ -1,6 +1,5 @@
 import torch
 import torch.nn
-from typing import NamedTuple
 
 from QuICT.algorithm.quantum_machine_learning.utils import Ansatz, Hamiltonian
 from QuICT.algorithm.quantum_machine_learning.utils.gate_tensor import *
