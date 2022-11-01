@@ -25,7 +25,7 @@ class GnnBlock(nn.Module):
                     out_channels=feat_dim,
                     normalize=False,
                 ).jittable(),
-                gnn.GCNConv(
+                gnn.SAGEConv(
                     in_channels=feat_dim,
                     out_channels=feat_dim,
                     normalize=False,
@@ -34,10 +34,8 @@ class GnnBlock(nn.Module):
         )
 
     def forward(self, x: torch.Tensor, edge_index: torch.Tensor):
-        residual = x
         for conv in self._gc_grp:
-            x = F.leaky_relu(conv(x, edge_index))
-        x = x + residual
+            x = F.leaky_relu(conv(x, edge_index)) + x
         return x
 
 

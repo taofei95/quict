@@ -52,6 +52,9 @@ class Trainer:
         print(f"Training on {self.config.device}...\n")
         g_step = 0
         for epoch_id in range(self.config.total_epoch):
+            print(f"Epoch {epoch_id}")
+
+
             self.actor.agent.reset_explore_state()
             for it in range(self.config.explore_period):
                 reward = self.actor.explore()
