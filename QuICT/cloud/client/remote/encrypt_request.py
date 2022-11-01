@@ -4,7 +4,6 @@ import json
 import jwt
 import requests
 
-from .utils import get_config
 from .encrypt_manager import EncryptManager
 
 
@@ -14,9 +13,9 @@ class EncryptedRequest:
         self._encrypt = EncryptManager()
         self.__SALT = "TestForQuICT"
 
-    def get(self, url: str):
+    def get(self, url: str, user_info: tuple):
         aes_key = os.urandom(16)
-        header = self._generate_header(aes_key)
+        header = self._generate_header(aes_key, user_info)
 
         # Get response.
         response = requests.get(
@@ -25,14 +24,17 @@ class EncryptedRequest:
         )
 
         # decrepted response
-        return self._decrepted_response(response)
+        return self._decrepted_response(response, user_info)
 
-    def post(self, url: str, json_dict: dict = None, authorized: bool = False):
+    def post(
+        self,
+        url: str,
+        json_dict: dict = None,
+        user_info: tuple = None,
+        is_login: bool = False
+    ):
         aes_key = os.urandom(16)
-        if authorized:
-            authorized = json_dict['username']
-
-        header = self._generate_header(aes_key, authorized)
+        header = self._generate_header(aes_key, user_info, is_login)
         if json_dict is not None:
             json_dict = json.dumps(json_dict)
 
@@ -43,14 +45,11 @@ class EncryptedRequest:
         )
 
         # decrepted response
-        if authorized:
-            return self._decrepted_response(response, json.loads(json_dict))
+        return self._decrepted_response(response, user_info, is_login)
 
-        return self._decrepted_response(response)
-
-    def delete(self, url: str, json_dict: dict = None):
+    def delete(self, url: str, json_dict: dict = None, user_info: tuple = None):
         aes_key = os.urandom(16)
-        header = self._generate_header(aes_key)
+        header = self._generate_header(aes_key, user_info)
         if json_dict is not None:
             json_dict = json.dumps(json_dict)
 
@@ -61,15 +60,11 @@ class EncryptedRequest:
         )
 
         # decrepted response
-        return self._decrepted_response(response)
+        return self._decrepted_response(response, user_info)
 
-    def _generate_header(self, aes_key: bytes, authorized: bool = False):
-        if not authorized:
-            user_info = get_config()
-            username, password = user_info['username'], user_info['password'][:16]
-        else:
-            username = authorized
-            password = self.__SALT
+    def _generate_header(self, aes_key: bytes, user_info: tuple, is_login: bool = False):
+        username = user_info[1]
+        password = user_info[2][:16] if not is_login else self.__SALT
 
         payload = {
             'username': username,
@@ -85,23 +80,17 @@ class EncryptedRequest:
 
         return {"Authorization": f"Bearer {jwt_token}"}
 
-    def _decrepted_response(self, response: requests.Response, json_dict: dict = None):
+    def _decrepted_response(self, response: requests.Response, user_info: tuple, is_login: bool = False):
         jwt_token = response.headers.get('Authorization')
         if jwt_token and jwt_token.startswith('Bearer '):
             payload = jwt.decode(jwt_token[7:], self.__SALT, ["HS256"])
         else:
             payload = None
 
-        username = payload.get("username", None)
+        username = user_info[1]
+        password = user_info[2][:16] if not is_login else self.__SALT
+        assert username == payload.get("username", None)
         encrypted_aes_key = payload.get('aes_key')
-
-        if json_dict is None:
-            user_info = get_config()
-            local_user, password = user_info['username'], user_info['password'][:16]
-        else:
-            local_user, password = json_dict['username'], self.__SALT
-
-        assert username == local_user
 
         content = response.content
         if not content:

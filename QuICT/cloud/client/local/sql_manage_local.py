@@ -1,5 +1,6 @@
 import os
 import sqlite3
+from datetime import datetime
 
 
 def sql_locked(function):
@@ -41,33 +42,57 @@ class SQLMangerLocalMode:
         # Temp add here, delete after create datebase
         self._cursor.execute('CREATE TABLE JOB_INFO(NAME text unique, STATUS text, PID INT)')
         self._cursor.execute(
-            'CREATE TABLE USER_LOGIN_INFO(NAME text unique, PASSWORD text, LOGINTIME text, STATUS bool)'
+            'CREATE TABLE USER_LOGIN_INFO(' +
+            'ID INTEGER PRIMARY KEY AUTOINCREMENT, NAME text unique, PASSWORD text, LOGINTIME text)'
         )
 
     ####################################################################
     ############               User DB Function             ############
     ####################################################################
 
-    def get_password(self, username: str) -> str:
-        self._cursor.execute(f'SELECT PASSWORD FROM USER_LOGIN_INFO WHERE NAME=\'{username}\'')
-        user_passwd = self._cursor.fetchall()[0]
+    def user_login(self, username: str, password: str):
+        login_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
-        return user_passwd[0]
+        if self.get_login_info() is None:
+            self._cursor.execute(
+                "INSERT INTO USER_LOGIN_INFO(NAME, PASSWORD, LOGINTIME)" +
+                f"VALUES (\'{username}\', \'{password}\', \'{login_time}\')"
+            )
+        else:
+            self._cursor.execute(
+                "UPDATE USER_LOGIN_INFO " +
+                f"SET NAME = \'{username}\', PASSWORD = \'{password}\', LOGINTIME =  \'{login_time}\' " +
+                "WHERE ID = \'1\'"
+            )
 
-    def validate_user(self, username: str) -> bool:
-        user_data = self.get_user_info(username)
+        self._connect.commit()
 
-        return user_data is not None
+    def user_logout(self):
+        self._cursor.execute("DELETE FROM USER_LOGIN_INFO WHERE ID = \'1\'")
 
-    @sql_locked
-    def update_password(self, username: str, new_passwd: str):
-        self._cursor.execute(f"UPDATE USER_PASS_MAPPING SET PASSWORD = \'{new_passwd}\' WHERE NAME = \'{username}\'")
+    def login_validation(self) -> bool:
+        if self._cursor.lastrowid == 0:
+            return False, "Please login first."
 
-    def get_user_info(self, username: str) -> tuple:
-        self._cursor.execute(f"SELECT * FROM USER_STATIC_INFO WHERE NAME=\'{username}\'")
-        user_info = self._cursor.fetchone()
+        user_info = self.get_login_info()
+        # login time check
+        current_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        login_time = user_info[3]
+        time_diff = datetime.strptime(current_time, '%Y-%m-%d %H:%M:%S') - \
+            datetime.strptime(login_time, '%Y-%m-%d %H:%M:%S')
+        if time_diff.seconds > 3600:
+            return False, "Please login again. The last login is expired."
 
-        return user_info
+        return True, None
+
+    def get_login_info(self) -> tuple:
+        """ return login information
+
+        Returns:
+            tuple: (id, username, password, logintime)
+        """
+        self._cursor.execute('SELECT * FROM USER_LOGIN_INFO WHERE ID=\'1\'')
+        return self._cursor.fetchone()
 
     ####################################################################
     ############               Job DB Function              ############

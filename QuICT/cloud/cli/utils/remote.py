@@ -15,8 +15,7 @@ def logout():
 
 @yaml_decompostion
 def start_job(file: dict):
-    data = remote_manager.start_job(file)
-    print(data)
+    remote_manager.start_job(file)
 
 
 def stop_job(name: str):
@@ -28,8 +27,7 @@ def restart_job(name: str):
 
 
 def delete_job(name: str):
-    data = remote_manager.delete_job(name)
-    print(data)
+    remote_manager.delete_job(name)
 
 
 def status_job(name: str):
@@ -37,5 +35,4 @@ def status_job(name: str):
 
 
 def list_jobs():
-    data = remote_manager.list_jobs()
-    print(data)
+    remote_manager.list_jobs()

@@ -21,9 +21,9 @@ def _job_validation(job_dict: dict):
         job_name(str),
         type(str): one of [qcda, simulation],
         circuit(str): circuit's qasm file path,
-        circuit_string(str): circuit's qasm, 
+        circuit_string(str): circuit's qasm,
         number_of_qubits(int): the number of qubits in circuit,
-        
+
         ### only for simulation
         simulation(dict):{
             shots(int),
@@ -36,7 +36,7 @@ def _job_validation(job_dict: dict):
             ...
         },
         ###
-        
+
         resource(dict):{
             device(str): one of [CPU, GPU],
             num(int): the number of devices.

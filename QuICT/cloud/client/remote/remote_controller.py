@@ -1,15 +1,29 @@
-from datetime import datetime
-
+from QuICT.cloud.client.local.sql_manage_local import SQLMangerLocalMode
+from QuICT.tools import Logger
+from QuICT.tools.logger import LogFormat
 from .encrypt_request import EncryptedRequest
 from .encrypt_manager import EncryptManager
-from .utils import get_config, update_config
 
 
 # TODO: file copy between local and remote
-
-
 default_hostname = "127.0.0.1"
 default_api_server_port = "5000"
+
+
+def login_validation(function):
+    def decorator(self, *args, **kwargs):
+        login, err_msg = self._sql_db.login_validation()
+        if not login:
+            self._logger.warn(err_msg)
+            return
+
+        login_info = self._sql_db.get_login_info()
+
+        result = function(self, user_info=login_info, *args, **kwargs)
+
+        return result
+
+    return decorator
 
 
 class QuICTRemoteManager:
@@ -22,36 +36,8 @@ class QuICTRemoteManager:
         self._url_prefix = f"http://{hostname}:{api_server_port}/quict"
         self._encrypt = EncryptManager()
         self._encryptedrequest = EncryptedRequest()
-
-    def _validation_login_status(self):
-        local_status = get_config()
-        if not local_status['login']:
-            raise KeyError("Please login first.")
-
-        current_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-        login_time = local_status['last_login_date']
-        time_diff = datetime.strptime(current_time, '%Y-%m-%d %H:%M:%S') - \
-            datetime.strptime(login_time, '%Y-%m-%d %H:%M:%S')
-        if time_diff.seconds > 3600:
-            raise ValueError("Please login again. The last login is expired.")
-
-    def _update_user_status(self, username: str, password: str):
-        local_status = {
-            'username': username,
-            'password': password,
-            'login': True,
-            'last_login_date': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-        }
-        update_config(local_status)
-
-    def _clear_user_status(self):
-        local_status = {
-            'username': None,
-            'password': None,
-            'login': False,
-            'last_login_date': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-        }
-        update_config(local_status)
+        self._sql_db = SQLMangerLocalMode()
+        self._logger = Logger("Job_Management_Remote_Mode", LogFormat.full)
 
     ####################################################################
     ############                Login & Logout              ############
@@ -61,56 +47,67 @@ class QuICTRemoteManager:
         success = self._encryptedrequest.post(
             f"{self._url_prefix}/env/login",
             {'username': username, 'password': encrypted_passwd},
-            authorized=True
+            (1, username, password),
+            is_login=True
         )
 
         if not success:
             raise ValueError("unmatched login username and password.")
         else:
-            self._update_user_status(username, encrypted_passwd)
+            self._sql_db.user_login(username, encrypted_passwd)
 
     def logout(self):
-        self._clear_user_status()
+        self._sql_db.user_logout()
 
     ####################################################################
     ############               Job API Function             ############
     ####################################################################
-    def start_job(self, yml_dict: dict):
-        self._validation_login_status()
-
-        url = f"{self._url_prefix}/jobs/start"
-
+    @login_validation
+    def start_job(self, yml_dict: dict, user_info: tuple):
         # Delete Circuit Qasm Path here, not use for remote mode
         del yml_dict['circuit']
 
-        return self._encryptedrequest.post(url, yml_dict)
+        url = f"{self._url_prefix}/jobs/start"
+        try:
+            _ = self._encryptedrequest.post(url, yml_dict, user_info=user_info)
+            self._logger.info("Successfully send job to cloud.")
+        except Exception as e:
+            self._logger.warn(f"Failure to start target job, due to {e}.")
 
-    def status_job(self, job_name: str):
-        self._validation_login_status()
-
+    @login_validation
+    def status_job(self, job_name: str, user_info: tuple):
         url = f"{self._url_prefix}/jobs/{job_name}:status"
-        return self._encryptedrequest.get(url)
+        state = self._encryptedrequest.get(url, user_info=user_info)
+        self._logger.info(state)
 
-    def stop_job(self, job_name: str):
-        self._validation_login_status()
-
+    @login_validation
+    def stop_job(self, job_name: str, user_info: tuple):
         url = f"{self._url_prefix}/jobs/{job_name}:stop"
-        return self._encryptedrequest.post(url)
+        try:
+            self._encryptedrequest.post(url, user_info=user_info)
+            self._logger.info("Successfully send stop request to cloud.")
+        except Exception as e:
+            self._logger.warn(f"Failure to stop target job, due to {e}.")
 
-    def restart_job(self, job_name: str):
-        self._validation_login_status()
-
+    @login_validation
+    def restart_job(self, job_name: str, user_info: tuple):
         url = f"{self._url_prefix}/jobs/{job_name}:restart"
-        return self._encryptedrequest.post(url)
+        try:
+            self._encryptedrequest.post(url, user_info=user_info)
+            self._logger.info("Successfully send restart request to cloud.")
+        except Exception as e:
+            self._logger.warn(f"Failure to restart target job, due to {e}.")
 
-    def delete_job(self, job_name: str):
-        self._validation_login_status()
-
+    @login_validation
+    def delete_job(self, job_name: str, user_info: tuple):
         url = f"{self._url_prefix}/jobs/{job_name}:delete"
-        return self._encryptedrequest.delete(url)
+        try:
+            self._encryptedrequest.delete(url, user_info=user_info)
+            self._logger.info("Successfully send delete request to cloud.")
+        except Exception as e:
+            self._logger.warn(f"Failure to delete target job, due to {e}.")
 
-    def list_jobs(self):
-        self._validation_login_status()
-
+    @login_validation
+    def list_jobs(self, user_info: tuple):
         url = f"{self._url_prefix}/jobs/list"
-        return self._encryptedrequest.get(url)
+        self._logger.info(self._encryptedrequest.get(url, user_info=user_info))

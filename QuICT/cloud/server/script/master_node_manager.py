@@ -212,7 +212,7 @@ class OperatorQueueProcessor(multiprocessing.Process):
             # Release User resource
             if job_state == JobState.Stop:
                 _, updated_user_resource = user_stop_jobs_op(
-                    updated_user_resource, ResourceOp.Release
+                    user_info, ResourceOp.Release
                 )
             else:
                 _, updated_user_resource = user_resource_op(

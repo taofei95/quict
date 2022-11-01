@@ -192,6 +192,6 @@ class QuICTLocalJobManager:
         for job_name, _, pid in all_jobs:
             self._update_job_status(job_name)
             logger.info(
-                f"job name: {job_name}, related pid: {pid}, " + 
+                f"job name: {job_name}, related pid: {pid}, " +
                 f"job's state: {self._sql_connect.get_job_status(job_name)}"
             )
