@@ -230,8 +230,8 @@ class CNFSATDEPTHOracle:
                             d.remove(jj)
                         d = list(d)                           
                         if controls_abs != []:
-                            MCTLinearHalfDirtyAux().execute(len(controls_abs), 1 + variable_number + ancilla_qubits_num) | self._cgate(controls_abs + d + [j + CleanQubitNumber + variable_number] )
-                            #MCTOneAux().execute(len(controls_abs) + 2) | self._cgate(controls_abs + [ variable_number + CleanQubitNumber + j  , variable_number + j ])
+                            #MCTLinearHalfDirtyAux().execute(len(controls_abs), 1 + variable_number + ancilla_qubits_num) | self._cgate(controls_abs + d + [j + CleanQubitNumber + variable_number] )
+                            MCTOneAux().execute(len(controls_abs) + 2) | self._cgate(controls_abs + [ variable_number + CleanQubitNumber + j  , variable_number + j ])
                         else:
                             X | self._cgate(variable_number + CleanQubitNumber + j)
                         # one_dirty_aux(self._cgate, controls_abs, target, current_Aux)
@@ -272,14 +272,14 @@ class CNFSATDEPTHOracle:
                             d.remove(jj)
                         d = list(d)                           
                         if controls_abs != []:
-                            MCTLinearHalfDirtyAux().execute(len(controls_abs), 1 + variable_number + ancilla_qubits_num) | self._cgate(controls_abs + d + [j + CleanQubitNumber + variable_number] )
-                            #MCTOneAux().execute(len(controls_abs) + 2) | self._cgate(controls_abs + [ variable_number + CleanQubitNumber + j  , variable_number + j ])
+                            #MCTLinearHalfDirtyAux().execute(len(controls_abs), 1 + variable_number + ancilla_qubits_num) | self._cgate(controls_abs + d + [j + CleanQubitNumber + variable_number] )
+                            MCTOneAux().execute(len(controls_abs) + 2) | self._cgate(controls_abs + [ variable_number + CleanQubitNumber + j  , variable_number + j ])
                         else:
                             X | self._cgate(variable_number + CleanQubitNumber + j)
                         # one_dirty_aux(self._cgate, controls_abs, target, current_Aux)
                         #X | self._cgate(target)
                         for i in range(len(controls_X)):
-                            X | self._cgate(controls_X[i])                       
+                            X | self._cgate(controls_X[i])
 
                 else:
                     p = math.floor( (CleanQubitNumber + 1) /2)                   
