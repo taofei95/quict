@@ -4,7 +4,7 @@ import os
 import functools
 from flask import request, Response
 
-from QuICT.cloud.client.remote.encrypt_manager import EncryptManager
+from .encrypt_manager import EncryptManager
 from .sql_controller import SQLManger
 
 

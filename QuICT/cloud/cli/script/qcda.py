@@ -2,9 +2,14 @@ import os
 import sys
 
 from QuICT.core import Layout
+from QuICT.tools import Logger
+from QuICT.tools.logger import LogFormat
 from QuICT.tools.interface import OPENQASMInterface
 from QuICT.qcda.qcda import QCDA
 from QuICT.qcda.synthesis.gate_transform import USTCSet, GoogleSet, IBMQSet, IonQSet
+
+
+logger = Logger("QCDA_Local_Mode", LogFormat.full)
 
 
 iset_mapping = {
@@ -22,6 +27,12 @@ def qcda_start(
     layout_path: str = None,
     instruction_set: str = None
 ):
+    logger.debug("Start Run QCDA Job in local mode.")
+    logger.debug(
+        f"Job Parameters: circuit path: {circuit_path}, optimization: {optimization}, " +
+        f"layout path: {layout_path}, Instruction set: {instruction_set}, " +
+        f"output path: {output_path}."
+    )
     # Get circuit from given path
     circuit = OPENQASMInterface.load_file(circuit_path).circuit
 
@@ -40,6 +51,8 @@ def qcda_start(
     circuit_opt = qcda.compile(circuit)
     output_path = os.path.join(output_path, 'circuit.qasm')
     circuit_opt.qasm(output_path)
+
+    logger.debug(f"QCDA Job finished, store the result in {output_path}.")
 
 
 if __name__ == "__main__":

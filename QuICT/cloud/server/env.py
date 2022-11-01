@@ -1,6 +1,6 @@
 from flask import Blueprint
-from QuICT.cloud.server.utils.data_structure import JobOperatorType
 
+from utils.data_structure import JobOperatorType
 from script.requset_validation import request_validation
 from script.redis_controller import RedisController
 from script.sql_controller import SQLManger

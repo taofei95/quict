@@ -1,7 +1,12 @@
 import sys
 
+from QuICT.tools import Logger
+from QuICT.tools.logger import LogFormat
 from QuICT.simulation import Simulator
 from QuICT.tools.interface import OPENQASMInterface
+
+
+logger = Logger("Simulation_Local_Mode", LogFormat.full)
 
 
 def simulation_start(
@@ -12,6 +17,12 @@ def simulation_start(
     precision: str,
     output_path: str
 ):
+    logger.info("Start Run Simulation Job in local mode.")
+    logger.debug(
+        f"Job Parameters: circuit path: {circuit_path}, shots: {shots}, " +
+        f"Precision: {precision}, Device: {device}, Backend: {backend}, " +
+        f"output_path: {output_path}."
+    )
     # Get circuit from given path
     circuit = OPENQASMInterface.load_file(circuit_path).circuit
 
@@ -24,6 +35,8 @@ def simulation_start(
         output_path=output_path
     )
     simulator.run(circuit)
+
+    logger.info(f"Simulation Job finished, store the result in {output_path}.")
 
 
 if __name__ == "__main__":

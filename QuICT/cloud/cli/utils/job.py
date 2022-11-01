@@ -26,24 +26,24 @@ def get_template(type: str, output_path: str):
 
 @yaml_decompostion
 def start_job(file: dict):
-    return local_job_manager.start_job(file)
+    local_job_manager.start_job(file)
 
 
 def stop_job(name: str):
-    return local_job_manager.stop_job(name)
+    local_job_manager.stop_job(name)
 
 
 def restart_job(name: str):
-    return local_job_manager.restart_job(name)
+    local_job_manager.restart_job(name)
 
 
 def delete_job(name: str):
-    return local_job_manager.delete_job(name)
+    local_job_manager.delete_job(name)
 
 
 def status_job(name: str):
-    return local_job_manager.status_job(name)
+    local_job_manager.status_job(name)
 
 
 def list_jobs():
-    return local_job_manager.list_job()
+    local_job_manager.list_job()
