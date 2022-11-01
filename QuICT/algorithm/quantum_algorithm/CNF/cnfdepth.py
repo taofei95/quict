@@ -207,42 +207,117 @@ class CNFSATDEPTHOracle:
                         X | self._cgate(controls_X[i])
             else:
 
-                p = math.floor( (CleanQubitNumber + 1) /2)                   
-                depth = math.ceil(math.log( clause_number , p)) - 1
-                #print(depth , p , variable_number , CleanQubitNumber)
-                if depth < 1:
-                    depth = 0
-                block_len = p ** depth
-                block_number = math.ceil(clause_number / block_len )
-                
-                controls = []
-                for j in range(block_number):
-                    self.clause(
-                        CNF_data, variable_number, ancilla_qubits_num, clause_length, CleanQubitNumber,
-                        j * block_len +1, np.minimum( (j+1) * block_len, clause_number),
-                        variable_number + CleanQubitNumber - p + 1 + j, depth-1, depth
-                    )
-                    controls.append(variable_number + CleanQubitNumber - p + 1 + j)
+                if (clause_number < 1 + math.floor( (CleanQubitNumber + 1) /2)): #有空 可以修修
+                    controls_XX=[]
+                    for j in range(1, clause_number + 1):
+                        controls = CNF_data[j]
+                        controls_abs=[]
+                        controls_X=[]
+                        for jj in range(len(controls)):
+                            if controls[jj] < 0:
+                                controls_abs.append( - controls[jj] -1)
+                            if controls[jj] > 0:
+                                controls_abs.append( controls[jj]- 1)
+                                controls_X.append( controls[jj]-1)
+                        for i in range(len(controls_X)):
+                            X | self._cgate(controls_X[i])
+                        X | self._cgate(variable_number + CleanQubitNumber + j )
 
-                d = set(range(variable_number + 1 + ancilla_qubits_num))
-                d.remove(variable_number)
-                for j in controls:
-                    d.remove(j)
-                d = list(d)                 
-
-                if controls != []:
-                    MCTLinearHalfDirtyAux().execute( len(controls) , (1 + len(controls)+len(d))) | self._cgate(controls + d + [ variable_number] )
+                        controls_XX.append(variable_number + CleanQubitNumber + j)
                         
-                #    MCTOneAux().execute(len(controls) + 2) | self._cgate(controls + [ target, current_Aux] ) 
-                # one_dirty_aux(self._cgate, controls, target, current_Aux)
+                        d = set(range(variable_number + 1 + ancilla_qubits_num))
+                        d.remove(variable_number + CleanQubitNumber + j)
+                        for jj in controls_abs:
+                            d.remove(jj)
+                        d = list(d)                           
+                        if controls_abs != []:
+                            #MCTLinearHalfDirtyAux().execute(len(controls_abs), 1 + variable_number + ancilla_qubits_num) | self._cgate(controls_abs + d + [j + CleanQubitNumber + variable_number] )
+                            MCTOneAux().execute(len(controls_abs) + 2) | self._cgate(controls_abs + [ variable_number + CleanQubitNumber + j  , variable_number + j ])
+                        else:
+                            X | self._cgate(variable_number + CleanQubitNumber + j)
+                        # one_dirty_aux(self._cgate, controls_abs, target, current_Aux)
+                        #X | self._cgate(target)
+                        for i in range(len(controls_X)):
+                            X | self._cgate(controls_X[i])
+                    
+                    
+                    d = set(range(variable_number + 1 + ancilla_qubits_num))
+                    d.remove(variable_number)
+                    for j in controls_XX:
+                        d.remove(j)
+                    d = list(d)  
+                    if controls_XX != []:
+                        MCTLinearHalfDirtyAux().execute(len(controls_XX), 1 + variable_number + ancilla_qubits_num) | self._cgate(controls_XX + d + [variable_number] )
+                           
+                        #MCTOneAux().execute(len(controls_XX) + 2) | self._cgate(controls_XX + [ variable_number , variable_number - 1 ])
+                    else:
+                        X | self._cgate(variable_number)
+
+                    for j in range(1, clause_number + 1):
+                        controls = CNF_data[j]
+                        controls_abs=[]
+                        controls_X=[]
+                        for jj in range(len(controls)):
+                            if controls[jj] < 0:
+                                controls_abs.append( - controls[jj] -1)
+                            if controls[jj] > 0:
+                                controls_abs.append( controls[jj]- 1)
+                                controls_X.append( controls[jj]-1)
+                        for i in range(len(controls_X)):
+                            X | self._cgate(controls_X[i])
+                        X | self._cgate(variable_number + CleanQubitNumber + j )
+                        
+                        d = set(range(variable_number + 1 + ancilla_qubits_num))
+                        d.remove(variable_number + CleanQubitNumber + j)
+                        for jj in controls_abs:
+                            d.remove(jj)
+                        d = list(d)                           
+                        if controls_abs != []:
+                            #MCTLinearHalfDirtyAux().execute(len(controls_abs), 1 + variable_number + ancilla_qubits_num) | self._cgate(controls_abs + d + [j + CleanQubitNumber + variable_number] )
+                            MCTOneAux().execute(len(controls_abs) + 2) | self._cgate(controls_abs + [ variable_number + CleanQubitNumber + j  , variable_number + j ])
+                        else:
+                            X | self._cgate(variable_number + CleanQubitNumber + j)
+                        # one_dirty_aux(self._cgate, controls_abs, target, current_Aux)
+                        #X | self._cgate(target)
+                        for i in range(len(controls_X)):
+                            X | self._cgate(controls_X[i])                       
+                else:
+                    p = math.floor( (CleanQubitNumber + 1) /2)                   
+                    depth = math.ceil(math.log( clause_number , p)) - 1
+                    #print(depth , p , variable_number , CleanQubitNumber)
+                    if depth < 1:
+                        depth = 0
+                    block_len = p ** depth
+                    block_number = math.ceil(clause_number / block_len )
+                    
+                    controls = []
+                    for j in range(block_number):
+                        self.clause(
+                            CNF_data, variable_number, ancilla_qubits_num, clause_length, CleanQubitNumber,
+                            j * block_len +1, np.minimum( (j+1) * block_len, clause_number),
+                            variable_number + CleanQubitNumber - p + 1 + j, depth-1, depth
+                        )
+                        controls.append(variable_number + CleanQubitNumber - p + 1 + j)
+
+                    d = set(range(variable_number + 1 + ancilla_qubits_num))
+                    d.remove(variable_number)
+                    for j in controls:
+                        d.remove(j)
+                    d = list(d)                 
+
+                    if controls != []:
+                        MCTLinearHalfDirtyAux().execute( len(controls) , (1 + len(controls)+len(d))) | self._cgate(controls + d + [ variable_number] )
+                            
+                    #    MCTOneAux().execute(len(controls) + 2) | self._cgate(controls + [ target, current_Aux] ) 
+                    # one_dirty_aux(self._cgate, controls, target, current_Aux)
+                    
+                    for j in range(block_number):
+                        self.clause(
+                            CNF_data, variable_number, ancilla_qubits_num, clause_length, CleanQubitNumber,
+                            j * block_len +1, np.minimum( (j+1) * block_len, clause_number),
+                            variable_number + CleanQubitNumber - p + 1 + j, depth-1, depth
+                        )
                 
-                for j in range(block_number):
-                    self.clause(
-                        CNF_data, variable_number, ancilla_qubits_num, clause_length, CleanQubitNumber,
-                        j * block_len +1, np.minimum( (j+1) * block_len, clause_number),
-                        variable_number + CleanQubitNumber - p + 1 + j, depth-1, depth
-                    )
-            
 
 
 
