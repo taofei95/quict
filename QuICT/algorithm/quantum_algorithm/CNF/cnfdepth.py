@@ -419,7 +419,7 @@ class CNFSATDEPTHOracle:
                     if Parallel_depth_max < len(Parallel_depth_list[k]):
                             Parallel_depth_max = len(Parallel_depth_list[k])
                 #print(Parallel_depth_list)        
-                if  (( 1 + clause_length * 2 ) * (Parallel_depth_max + qmemo)) > variable_number +  qmemo: #检验 mct 辅助位是否足够
+                if  (( 1 + clause_length * 2 ) * (Parallel_depth_max + qmemo)) > variable_number +  CleanQubitNumber: #检验 mct 辅助位是否足够
                     #辅助位不足  
                     #print("buzu")
                     cl_postition = 0
