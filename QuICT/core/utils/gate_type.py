@@ -35,6 +35,7 @@ class GateType(Enum):
     rxx = "Rxx gate"
     ryy = "Ryy gate"
     rzz = "Rzz gate"
+    rzx = "Rzx gate"
     swap = "Swap gate"
     cswap = "cswap gate"
     ccx = "Toffoli gate"
@@ -121,6 +122,7 @@ class MatrixType(Enum):
                             [0, c, d, 0],
                             [C, 0, 0, D]]
     """
+
     normal = "normal matrix"
     diagonal = "diagonal matrix"
     control = "control matrix"
@@ -140,7 +142,7 @@ SPECIAL_GATE_SET = [
     GateType.perm,
     GateType.perm_fx,
     GateType.qft,
-    GateType.iqft
+    GateType.iqft,
 ]
 
 
@@ -159,23 +161,14 @@ DIAGONAL_GATE_SET = [
     GateType.crz,
     GateType.cu1,
     GateType.rzz,
-    GateType.ccrz
+    GateType.ccrz,
 ]
 
 
-SUPREMACY_GATE_SET = [
-    GateType.sx,
-    GateType.sy,
-    GateType.sw
-]
+SUPREMACY_GATE_SET = [GateType.sx, GateType.sy, GateType.sw]
 
 
-PAULI_GATE_SET = [
-    GateType.x,
-    GateType.y,
-    GateType.z,
-    GateType.id
-]
+PAULI_GATE_SET = [GateType.x, GateType.y, GateType.z, GateType.id]
 
 
 CLIFFORD_GATE_SET = [
@@ -185,5 +178,5 @@ CLIFFORD_GATE_SET = [
     GateType.h,
     GateType.s,
     GateType.sdg,
-    GateType.cx
+    GateType.cx,
 ]

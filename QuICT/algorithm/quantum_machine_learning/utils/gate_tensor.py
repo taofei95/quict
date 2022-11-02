@@ -193,9 +193,9 @@ class BasicGateTensor(object):
     def __eq__(self, other):
         assert isinstance(other, BasicGateTensor)
         if (
-            self.type != other.type or
-            (self.cargs + self.targs) != (other.cargs + other.targs) or
-            not torch.allclose(self.matrix, other.matrix)
+            self.type != other.type
+            or (self.cargs + self.targs) != (other.cargs + other.targs)
+            or not torch.allclose(self.matrix, other.matrix)
         ):
             return False
 
@@ -281,10 +281,10 @@ class BasicGateTensor(object):
             bool: True if the type of element is int/float/complex/torch.Tensor
         """
         if (
-            isinstance(element, int) or
-            isinstance(element, float) or
-            isinstance(element, complex) or
-            isinstance(element, torch.Tensor)
+            isinstance(element, int)
+            or isinstance(element, float)
+            or isinstance(element, complex)
+            or isinstance(element, torch.Tensor)
         ):
             return True
         return False
@@ -516,3 +516,135 @@ class RIGate(BasicGateTensor):
 
 
 RI_tensor = RIGate()
+
+
+class RxxGate(BasicGateTensor):
+    def __init__(self, params=torch.tensor([np.pi / 2])):
+        super().__init__(
+            controls=0, targets=2, params=1, type=GateType.rxx,
+        )
+
+        self.pargs = params
+
+    def __call__(self, alpha):
+        if not self.permit_element(alpha):
+            raise TypeError("int/float/complex/torch.Tensor", alpha)
+
+        return (
+            RxxGate(alpha)
+            if isinstance(alpha, torch.Tensor)
+            else RxxGate(torch.tensor([alpha]))
+        )
+
+    @property
+    def matrix(self):
+        matrix = torch.zeros([4, 4], dtype=self._precision).to(self.device)
+        matrix[0, 0] = matrix[1, 1] = matrix[2, 2] = matrix[3, 3] = torch.cos(
+            self.parg / 2
+        )
+        matrix[0, 3] = matrix[3, 0] = matrix[1, 2] = matrix[2, 1] = (
+            -torch.sin(self.parg / 2) * 1j
+        )
+
+        return matrix
+
+
+Rxx_tensor = RxxGate()
+
+
+class RyyGate(BasicGateTensor):
+    def __init__(self, params=torch.tensor([np.pi / 2])):
+        super().__init__(
+            controls=0, targets=2, params=1, type=GateType.ryy,
+        )
+
+        self.pargs = params
+
+    def __call__(self, alpha):
+        if not self.permit_element(alpha):
+            raise TypeError("int/float/complex/torch.Tensor", alpha)
+
+        return (
+            RyyGate(alpha)
+            if isinstance(alpha, torch.Tensor)
+            else RyyGate(torch.tensor([alpha]))
+        )
+
+    @property
+    def matrix(self):
+        matrix = torch.zeros([4, 4], dtype=self._precision).to(self.device)
+        matrix[0, 0] = matrix[1, 1] = matrix[2, 2] = matrix[3, 3] = torch.cos(
+            self.parg / 2
+        )
+        matrix[0, 3] = matrix[3, 0] = torch.sin(self.parg / 2) * 1j
+        matrix[1, 2] = matrix[2, 1] = -torch.sin(self.parg / 2) * 1j
+
+        return matrix
+
+
+Ryy_tensor = RyyGate()
+
+
+class RzzGate(BasicGateTensor):
+    def __init__(self, params=torch.tensor([np.pi / 2])):
+        super().__init__(
+            controls=0, targets=2, params=1, type=GateType.rzz,
+        )
+
+        self.pargs = params
+
+    def __call__(self, alpha):
+        if not self.permit_element(alpha):
+            raise TypeError("int/float/complex/torch.Tensor", alpha)
+
+        return (
+            RzzGate(alpha)
+            if isinstance(alpha, torch.Tensor)
+            else RzzGate(torch.tensor([alpha]))
+        )
+
+    @property
+    def matrix(self):
+        matrix = torch.zeros([4, 4], dtype=self._precision).to(self.device)
+        matrix[0, 0] = torch.exp(-self.parg / 2 * 1j)
+        matrix[1, 1] = torch.exp(self.parg / 2 * 1j)
+        matrix[2, 2] = torch.exp(self.parg / 2 * 1j)
+        matrix[3, 3] = torch.exp(-self.parg / 2 * 1j)
+
+        return matrix
+
+
+Rzz_tensor = RzzGate()
+
+
+class RzxGate(BasicGateTensor):
+    def __init__(self, params=torch.tensor([np.pi / 2])):
+        super().__init__(
+            controls=0, targets=2, params=1, type=GateType.rzx,
+        )
+
+        self.pargs = params
+
+    def __call__(self, alpha):
+        if not self.permit_element(alpha):
+            raise TypeError("int/float/complex/torch.Tensor", alpha)
+
+        return (
+            RzxGate(alpha)
+            if isinstance(alpha, torch.Tensor)
+            else RzxGate(torch.tensor([alpha]))
+        )
+
+    @property
+    def matrix(self):
+        matrix = torch.zeros([4, 4], dtype=self._precision).to(self.device)
+        matrix[0, 0] = matrix[1, 1] = matrix[2, 2] = matrix[3, 3] = torch.cos(
+            self.parg / 2
+        )
+        matrix[0, 2] = matrix[2, 0] = -torch.sin(self.parg / 2) * 1j
+        matrix[1, 3] = matrix[3, 1] = torch.sin(self.parg / 2) * 1j
+
+        return matrix
+
+
+Rzx_tensor = RzxGate()
