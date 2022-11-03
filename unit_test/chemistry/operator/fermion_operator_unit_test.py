@@ -5,7 +5,6 @@
 # @File    : fermion_operator_unit_test.py
 
 from QuICT.chemistry.operator.fermion_operator import FermionOperator
-import pytest
 
 
 def test_construction():
@@ -40,7 +39,3 @@ def test_operation():
     f_c = FermionOperator([(2, 1), (8, 1), (1, 0)], 5)
     assert f_a * f_b == FermionOperator()
     assert f_a * f_c * f_b == FermionOperator('1^ 8 2^', 0.4)
-
-
-if __name__ == "__main__":
-    pytest.main(["./fermion_operator_unit_test.py"])

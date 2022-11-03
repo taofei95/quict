@@ -4,9 +4,7 @@
 # @Author  : Xiaoquan Xu
 # @File    : encoder_unit_test.py
 
-import pytest
-
-from QuICT.chemistry.operator.encoder import Encoder, JordanWigner, Parity, BravyiKitaev
+from QuICT.chemistry.operator.encoder import JordanWigner, Parity, BravyiKitaev
 from QuICT.chemistry.operator.fermion_operator import FermionOperator
 from QuICT.chemistry.operator.qubit_operator import QubitOperator
 
@@ -70,7 +68,3 @@ def test_BravyiKitaev():
     assert BK.encoder(crea_5) == QubitOperator("Z3 Z4 X5 X7", 0.5) - QubitOperator("Z3 Y5 X7", 0.5j)
     assert BK.encoder(crea_2 * anni_2) == QubitOperator([], 0.5) - QubitOperator("Z2", 0.5)
     assert BK.encoder(crea_5 * anni_5) == QubitOperator([], 0.5) - QubitOperator("Z4 Z5", 0.5)
-
-
-if __name__ == "__main__":
-    pytest.main(["./encoder_unit_test.py"])

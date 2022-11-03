@@ -32,12 +32,7 @@ def rhf_classical_simulation(n_atoms, distance, data_dir=None):
     _, X = splin.eigh(Hcore, S)
     obi = obi_basis_rotation(Hcore, X)
     tbi = tbi_basis_rotation(TEI, X)
-    # print(tbi)
     molecular_hamiltonian = generate_hamiltonian(moldata.nuclear_repulsion, obi, tbi)
-    # print(molecular_hamiltonian.const)
-    # print(molecular_hamiltonian.obi)
-    # print(molecular_hamiltonian.tbi)
-    # print(moldata.n_electrons)
 
     rhf_objective = RHFObjective(molecular_hamiltonian, moldata.n_electrons)
     result = rhf_objective.minimization()

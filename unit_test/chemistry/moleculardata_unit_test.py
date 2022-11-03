@@ -5,7 +5,6 @@
 # @File    : moleculardata_unit_test.py
 
 import os
-import pytest
 
 from QuICT.chemistry.simulation.moleculardata import MolecularData
 
@@ -28,7 +27,3 @@ def test_load():
     assert moldata.nuclear_repulsion == 2.7081421957817655
     assert moldata.one_body_integrals is None
     assert moldata.two_body_integrals is None
-
-
-if __name__ == "__main__":
-    pytest.main(["./moleculardata_unit_test.py"])

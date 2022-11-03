@@ -4,8 +4,6 @@
 # @Author  : Xiaoquan Xu
 # @File    : qubit_operator_unit_test.py
 
-import pytest
-
 from QuICT.chemistry.operator.qubit_operator import QubitOperator
 
 
@@ -38,7 +36,3 @@ def test_operation():
     f_b = QubitOperator('Y0 X1') + QubitOperator('Z1 Z0') + QubitOperator('Y1 Z0')
     f_c = f_a * f_b + QubitOperator('X1 X0') - QubitOperator('Y0 X1') - QubitOperator('Z0 Z1')
     assert f_c == QubitOperator('X0', 1j) - QubitOperator('Y0', 1j) - QubitOperator('Z1', 1j)
-
-
-if __name__ == "__main__":
-    pytest.main(["./qubit_operator_unit_test.py"])
