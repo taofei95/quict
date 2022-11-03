@@ -648,3 +648,24 @@ class RzxGate(BasicGateTensor):
 
 
 Rzx_tensor = RzxGate()
+
+
+class MeasureGate(BasicGateTensor):
+    """ z-axis Measure gate
+
+    Measure one qubit along z-axis.
+    After acting on the qubit(circuit flush), the qubit get the value 0 or 1
+    and the amplitude changed by the result.
+    """
+
+    def __init__(self):
+        super().__init__(
+            controls=0, targets=1, params=0, type=GateType.measure,
+        )
+
+    @property
+    def matrix(self):
+        raise Exception("try to get the matrix of measure gate")
+
+
+Measure_tensor = MeasureGate()

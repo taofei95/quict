@@ -31,3 +31,4 @@ unit_test/**/*.jpg
 /QAOA_model*
 /del
 /data/
+.log/

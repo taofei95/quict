@@ -54,7 +54,7 @@ class QAOANet(VQENet):
             torch.Tensor: The output state vector.
         """
         ansatz = self.construct_ansatz()
-        state = ansatz.forward(state)
+        state, _ = ansatz.forward(state)
         return state
 
     def _construct_U_gamma_layer(self, gamma):
@@ -75,17 +75,17 @@ class QAOANet(VQENet):
                 for i in range(len(qids)):
                     if gates[i] != "Z":
                         assert gates[i] in gate_dict.keys(), "Invalid Pauli gate."
-                        ansatz.add_gate(gate_dict[gates[i]]['mqids'], qids[i])
+                        ansatz.add_gate(gate_dict[gates[i]]["mqids"], qids[i])
                 ansatz = ansatz + self._Rnz_ansatz(2 * coeff * gamma, qids)
                 for i in range(len(qids)):
                     if gates[i] != "Z":
                         assert gates[i] in gate_dict.keys(), "Invalid Pauli gate."
-                        ansatz.add_gate(gate_dict[gates[i]]['mqids'], qids[i])
+                        ansatz.add_gate(gate_dict[gates[i]]["mqids"], qids[i])
 
             # Only Rx, Ry, Rz
             elif len(qids) == 1:
                 assert gates[0] in gate_dict.keys(), "Invalid Pauli gate."
-                ansatz.add_gate(gate_dict[gates[0]]['qid'], qids[0])
+                ansatz.add_gate(gate_dict[gates[0]]["qid"], qids[0])
 
             # Only coeff
             else:
@@ -100,12 +100,12 @@ class QAOANet(VQENet):
         else:
             # Add CNOT gates
             for i in range(len(tar_idx) - 1):
-                ansatz.add_gate(CX_tensor, tar_idx[i: i + 2])
+                ansatz.add_gate(CX_tensor, tar_idx[i : i + 2])
             # Add RZ gate
             ansatz.add_gate(Rz_tensor(gamma), tar_idx[-1])
             # Add CNOT gates
             for i in range(len(tar_idx) - 2, -1, -1):
-                ansatz.add_gate(CX_tensor, tar_idx[i: i + 2])
+                ansatz.add_gate(CX_tensor, tar_idx[i : i + 2])
         return ansatz
 
     def construct_ansatz(self):
@@ -147,18 +147,18 @@ class QAOANet(VQENet):
                 for i in range(len(qids)):
                     if gates[i] != "Z":
                         assert gates[i] in gate_dict.keys(), "Invalid Pauli gate."
-                        gate_dict[gates[i]]['mqids'] | circuit(qids[i])
+                        gate_dict[gates[i]]["mqids"] | circuit(qids[i])
                 Rnz_circuit = self._Rnz_circuit(2 * coeff * gamma, qids)
                 circuit.extend(Rnz_circuit.gates)
                 for i in range(len(qids)):
                     if gates[i] != "Z":
                         assert gates[i] in gate_dict.keys(), "Invalid Pauli gate."
-                        gate_dict[gates[i]]['mqids'] | circuit(qids[i])
+                        gate_dict[gates[i]]["mqids"] | circuit(qids[i])
 
             # Only Rx, Ry, Rz
             elif len(qids) == 1:
                 assert gates[0] in gate_dict.keys(), "Invalid Pauli gate."
-                gate_dict[gates[0]]['qid'] | circuit(qids[0])
+                gate_dict[gates[0]]["qid"] | circuit(qids[0])
 
             # Only coeff
             else:
@@ -173,12 +173,12 @@ class QAOANet(VQENet):
         else:
             # Add CNOT gates
             for i in range(len(tar_idx) - 1):
-                CX | circuit(tar_idx[i: i + 2])
+                CX | circuit(tar_idx[i : i + 2])
             # Add RZ gate
             Rz(gamma) | circuit(tar_idx[-1])
             # Add CNOT gates
             for i in range(len(tar_idx) - 2, -1, -1):
-                CX | circuit(tar_idx[i: i + 2])
+                CX | circuit(tar_idx[i : i + 2])
         return circuit
 
     def construct_circuit(self):

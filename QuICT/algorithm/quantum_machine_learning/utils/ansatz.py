@@ -1,8 +1,11 @@
+import cupy as cp
+import random
 import numpy as np
 import torch
 
 from QuICT.algorithm.quantum_machine_learning.utils.gate_tensor import *
 from QuICT.core.gate import *
+from QuICT.ops.gate_kernel import measured_prob_calculate
 
 
 class Ansatz:
@@ -74,8 +77,9 @@ class Ansatz:
                 Defaults to None, which means the gate will act on each qubit of the ansatz.
         """
         assert isinstance(gate.type, GateType)
-        assert isinstance(gate.matrix, torch.Tensor)
-        assert self._gate_validation(gate)
+        if gate.type != GateType.measure:
+            assert isinstance(gate.matrix, torch.Tensor)
+            assert self._gate_validation(gate)
         if act_bits is None:
             for qid in range(self._n_qubits):
                 new_gate = gate.copy()
@@ -89,7 +93,7 @@ class Ansatz:
             else:
                 assert len(act_bits) == new_gate.controls + new_gate.targets
                 new_gate.cargs = act_bits[: new_gate.controls]
-                new_gate.targs = act_bits[new_gate.controls:]
+                new_gate.targs = act_bits[new_gate.controls :]
             new_gate.update_name("ansatz", len(self._gates))
             self._gates.append(new_gate.to(self._device))
 
@@ -100,9 +104,9 @@ class Ansatz:
         log2_shape = int(np.ceil(np.log2(shape[0])))
 
         return (
-            shape[0] == shape[1] and
-            shape[0] == (1 << log2_shape) and
-            torch.allclose(
+            shape[0] == shape[1]
+            and shape[0] == (1 << log2_shape)
+            and torch.allclose(
                 torch.eye(shape[0], dtype=gate.precision).to(self._device),
                 torch.mm(gate_matrix, gate_matrix.T.conj()).to(self._device),
             )
@@ -155,6 +159,42 @@ class Ansatz:
 
         return state
 
+    def _apply_measuregate(self, qid, state, prob_0):
+        bits_idx = [1 << i for i in range(self._n_qubits)]
+        qid_idx = 1 << qid
+        offset = list(set(bits_idx) - (set([qid_idx])))
+        idx_0 = [0]
+        idx_1 = [qid_idx]
+        for i in range(len(offset)):
+            for j in range(len(idx_1)):
+                idx_0.append(offset[i] + idx_0[j])
+                idx_1.append(offset[i] + idx_1[j])
+
+        _0 = random.random() < prob_0
+        if _0:
+            # The measured state of the qubit is |0>.
+            alpha = 1 / torch.sqrt(prob_0)
+            for idx in idx_1:
+                state[idx] = 0
+            for idx in idx_0:
+                state[idx] *= alpha
+
+        else:
+            # The measured state of the qubit is |1>.
+            alpha = 1 / torch.sqrt(1 - prob_0)
+            for idx in idx_0:
+                state[idx] = 0
+            for idx in idx_1:
+                state[idx] *= alpha
+
+        return state
+
+    def _measure_prob(self, qid, state):
+        state_cp = cp.asarray(state.cpu().detach().numpy())
+        prob = measured_prob_calculate(qid, state_cp, self._n_qubits)
+        prob = torch.tensor(cp.asnumpy(prob)).to(self._device)
+        return prob
+
     def forward(self, state_vector=None):
         """The Forward Propagation process of an ansatz.
 
@@ -178,8 +218,16 @@ class Ansatz:
         assert state.shape[0] == 1 << self._n_qubits
 
         for gate in self._gates:
+            if gate.type == GateType.measure:
+                qid = self._n_qubits - 1 - gate.targ
+                prob_0 = self._measure_prob(qid, state)
+                prob_1 = 1 - prob_0
+                state = self._apply_measuregate(qid, state, prob_0)
+                return state, [prob_0, prob_1]
+
             gate_tensor = gate.matrix.to(self._device)
             act_bits = gate.cargs + gate.targs
             state = self._apply_gate(state, gate_tensor, act_bits)
 
-        return state
+        return state, None
+

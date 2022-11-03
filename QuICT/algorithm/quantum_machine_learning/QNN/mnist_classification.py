@@ -1,10 +1,7 @@
 import torch
+import tqdm
 
-from QuICT.algorithm.quantum_machine_learning.ansatz_library import QNN_Layer
-from QuICT.algorithm.quantum_machine_learning.utils import Ansatz
-from QuICT.algorithm.quantum_machine_learning.utils.gate_tensor import *
-from QuICT.core import Circuit
-from QuICT.core.gate import *
+from QuICT.algorithm.quantum_machine_learning.QNN.model import QuantumNet, ClassicalNet
 from QuICT.simulation.state_vector import ConstantStateVectorSimulator
 
 
@@ -12,12 +9,19 @@ from QuICT.simulation.state_vector import ConstantStateVectorSimulator
 """
 
 
+class QNNMnistClassifier:
+    def __init__(
+        self, layers=["XX", "ZZ"], loss_func=None, seed: int = 0, device="cuda:0",
+    ):
+        self.device = torch.device(device)
+        self._seed(seed)
+        self.net = QuantumNet(layers, self.device)
+        self.loss_func = loss_func if loss_func is not None else self.loss_func
+        self.model_path = None
+        self.optim = None
 
 
-
-import tqdm
-
-c = MNIST_Classifier(threshold=0.1)
+c = QNNMnistClassifier(threshold=0.1)
 optimizer = torch.optim.Adam
 optim = optimizer([dict(params=c.pqc.parameters(), lr=0.1)])
 

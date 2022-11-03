@@ -45,3 +45,30 @@ class QNNLayer(torch.nn.Module):
                 )
         return ansatz
 
+    def circuit_layer(self, two_qubit_gates, params):
+        if not isinstance(two_qubit_gates, list):
+            two_qubit_gates = [two_qubit_gates]
+        n_layers = len(two_qubit_gates)
+        assert (
+            params.shape[0] == n_layers and params.shape[1] == self.n_qubits - 1
+        ), "The shape of the parameters should be [n_layers, n_data_qubits]."
+
+        gate_dict = {
+            "XX": Rxx,
+            "YY": Ryy,
+            "ZZ": Rzz,
+            "ZX": Rzx,
+        }
+        ansatz = Ansatz(self.n_qubits, device=self.device)
+        for l, gate in zip(range(n_layers), two_qubit_gates):
+            assert (
+                gate in gate_dict.keys()
+            ), "Invalid Two Qubit Gate. Should be XX, YY, ZZ or ZX."
+
+            for i in range(self.n_qubits - 1):
+                ansatz.add_gate(
+                    gate_dict[gate](params[l][i]),
+                    [self.data_qubits[i], self.result_qubit],
+                )
+        return ansatz
+
