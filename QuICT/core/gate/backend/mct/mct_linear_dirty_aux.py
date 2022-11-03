@@ -52,23 +52,23 @@ class MCTLinearHalfDirtyAux(object):
         """
         gates = CompositeGate()
         with gates:
-            circuit = controls + auxs + [target]
+            qubit_list = controls + auxs + [target]
             if m == 1:
-                CX & [circuit[0], circuit[n - 1]]
+                CX & [qubit_list[0], qubit_list[n - 1]]
             elif m == 2:
-                CCX & [circuit[0], circuit[1], circuit[n - 1]]
+                CCX & [qubit_list[0], qubit_list[1], qubit_list[n - 1]]
             else:
                 for i in range(m, 2, -1):
-                    CCX & [circuit[i - 1], circuit[n - 1 - (m - i + 1)], circuit[n - 1 - (m - i)]]
-                CCX & [circuit[0], circuit[1], circuit[n - m + 1]]
+                    CCX & [qubit_list[i - 1], qubit_list[n - 1 - (m - i + 1)], qubit_list[n - 1 - (m - i)]]
+                CCX & [qubit_list[0], qubit_list[1], qubit_list[n - m + 1]]
                 for i in range(3, m + 1):
-                    CCX & [circuit[i - 1], circuit[n - 1 - (m - i + 1)], circuit[n - 1 - (m - i)]]
+                    CCX & [qubit_list[i - 1], qubit_list[n - 1 - (m - i + 1)], qubit_list[n - 1 - (m - i)]]
 
                 for i in range(m - 1, 2, -1):
-                    CCX & [circuit[i - 1], circuit[n - 1 - (m - i + 1)], circuit[n - 1 - (m - i)]]
-                CCX & [circuit[0], circuit[1], circuit[n - m + 1]]
+                    CCX & [qubit_list[i - 1], qubit_list[n - 1 - (m - i + 1)], qubit_list[n - 1 - (m - i)]]
+                CCX & [qubit_list[0], qubit_list[1], qubit_list[n - m + 1]]
                 for i in range(3, m):
-                    CCX & [circuit[i - 1], circuit[n - 1 - (m - i + 1)], circuit[n - 1 - (m - i)]]
+                    CCX & [qubit_list[i - 1], qubit_list[n - 1 - (m - i + 1)], qubit_list[n - 1 - (m - i)]]
 
         return gates
 
@@ -113,25 +113,19 @@ class MCTLinearOneDirtyAux(object):
                 CX & [controls[0], target]
                 return gates
             # n > 5
-            m1 = n // 2
-            m2 = n - m1 - 1
-            control1 = controls[0: m1]
-            auxs1 = controls[m1: n - 2] + [target]
-            target1 = aux
-            control2 = controls[m1: n - 2] + [aux]
-            auxs2 = controls[0: m1]
-            target2 = target
-
+            m = n // 2
             MCT_half_dirty = MCTLinearHalfDirtyAux()
-            if m2 == 2:  # n == 6
-                MCT_half_dirty.assign_qubits(n, m1, control1, auxs1, target1) | gates
-                CCX & [control2[0], control2[1], target2]
-                MCT_half_dirty.assign_qubits(n, m1, control1, auxs1, target1) | gates
-                CCX & [control2[0], control2[1], target2]
+            gates_first = MCT_half_dirty.assign_qubits(n, m, controls[0:m], controls[m:n - 2] + [target], aux)
+            gates_last = MCT_half_dirty.assign_qubits(n, n - m - 1, controls[m:n - 2] + [aux], controls[0:m], target)
+            if n - m == 3:  # n == 6
+                gates_first | gates
+                CCX & [controls[m], aux, target]
+                gates_first | gates
+                CCX & [controls[m], aux, target]
             else:
-                MCT_half_dirty.assign_qubits(n, m1, control1, auxs1, target1) | gates
-                MCT_half_dirty.assign_qubits(n, m2, control2, auxs2, target2) | gates
-                MCT_half_dirty.assign_qubits(n, m1, control1, auxs1, target1) | gates
-                MCT_half_dirty.assign_qubits(n, m2, control2, auxs2, target2) | gates
+                gates_first | gates
+                gates_last | gates
+                gates_first | gates
+                gates_last | gates
 
         return gates
