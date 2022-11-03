@@ -35,6 +35,7 @@ class SQLMangerLocalMode:
         self._connect.close()
 
     def clean(self):
+        """ Clean the table data in current DB. """
         self._cursor.execute("DROP TABLE JOB_INFO")
         self._cursor.execute("DROP TABLE USER_LOGIN_INFO")
 
@@ -51,6 +52,12 @@ class SQLMangerLocalMode:
     ####################################################################
 
     def user_login(self, username: str, password: str):
+        """ Update user login information for CLI Remote Mode.
+
+        Args:
+            username(str): The username
+            password(str): The encrypted password
+        """
         login_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
         if self.get_login_info() is None:
@@ -68,9 +75,11 @@ class SQLMangerLocalMode:
         self._connect.commit()
 
     def user_logout(self):
+        """ Clean current login information in database. """
         self._cursor.execute("DELETE FROM USER_LOGIN_INFO WHERE ID = \'1\'")
 
     def login_validation(self) -> bool:
+        """ validation the login information including successful login user and expired time. """
         if self._cursor.lastrowid == 0:
             return False, "Please login first."
 
@@ -99,6 +108,7 @@ class SQLMangerLocalMode:
     ####################################################################
 
     def job_validation(self, job_name: str) -> bool:
+        """ Validation Job is existed in current DB. """
         job_info = self._cursor.execute(f"SELECT * FROM JOB_INFO WHERE NAME=\'{job_name}\'")
         job_info = self._cursor.fetchone()
 
@@ -106,6 +116,7 @@ class SQLMangerLocalMode:
 
     @sql_locked
     def add_job(self, job_info: dict):
+        """ Add new job into DB. """
         name = job_info['name']     # Job name
         status = job_info['status']
         pid = job_info['pid']
@@ -115,6 +126,7 @@ class SQLMangerLocalMode:
 
     @sql_locked
     def get_job_status(self, job_name: str):
+        """ Return the given job's states. """
         self._cursor.execute(f'SELECT STATUS FROM JOB_INFO WHERE NAME=\'{job_name}\'')
         job_status = self._cursor.fetchone()
 
@@ -122,6 +134,7 @@ class SQLMangerLocalMode:
 
     @sql_locked
     def get_job_pid(self, job_name: str):
+        """ Return the given job's pid. """
         self._cursor.execute(f'SELECT PID FROM JOB_INFO WHERE NAME=\'{job_name}\'')
         job_status = self._cursor.fetchone()
 
@@ -129,10 +142,12 @@ class SQLMangerLocalMode:
 
     @sql_locked
     def change_job_status(self, job_name: str, job_status: str):
+        """ Change the given job's state. """
         self._cursor.execute(f"UPDATE JOB_INFO SET STATUS = \'{job_status}\' WHERE NAME = \'{job_name}\'")
 
     @sql_locked
     def delete_job(self, job_name: str):
+        """ Delete the given job from DB. """
         try:
             # DELETE FROM USER_PASS_MAPPING
             self._cursor.execute(f"DELETE FROM JOB_INFO WHERE NAME=\'{job_name}\'")
@@ -140,5 +155,6 @@ class SQLMangerLocalMode:
             self._connect.rollback()    # RollBack if failure to delete
 
     def list_jobs(self):
+        """ List all jobs in the DB. """
         self._cursor.execute('SELECT * FROM JOB_INFO')
         return self._cursor.fetchall()

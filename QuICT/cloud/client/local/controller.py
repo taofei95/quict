@@ -11,7 +11,7 @@ logger = Logger("Job_Management_Local_Mode", LogFormat.full)
 
 
 class QuICTLocalJobManager:
-    """ QuICT Job Management for the Local Mode. Using Redis to store running-time information. """
+    """ QuICT Job Management for the Local Mode. Using SQL to store running-time information. """
     def __init__(self):
         self._sql_connect = SQLMangerLocalMode()
 

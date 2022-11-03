@@ -79,6 +79,7 @@ class SQLManger:
         )
 
     def get_user_info(self, username: str) -> tuple:
+        """ return (username, email, level, max_rjobs, max_sjobs) """
         self._cursor.execute(f"SELECT * FROM USER_STATIC_INFO WHERE NAME=\'{username}\'")
         user_info = self._cursor.fetchone()
 

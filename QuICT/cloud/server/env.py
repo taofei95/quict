@@ -1,6 +1,7 @@
 from flask import Blueprint
 
 from utils.data_structure import JobOperatorType
+from utils.email_sender import send_reset_password_email
 from script.requset_validation import request_validation
 from script.redis_controller import RedisController
 from script.sql_controller import SQLManger
@@ -88,10 +89,13 @@ def update_user_info(username, new_email: str = None, new_level: int = None):
 
 @env_blueprint.route(f"{URL_PREFIX}/forget_password", methods=["POST"])
 @request_validation()
-def forget_password(username: str):
+def forget_password(username: str, email: str):
     """ Send email for user for activate new password. """
     user_info = SQLManger().get_user_info(username)
     user_email = user_info[1]
+    if user_email != email:
+        raise KeyError("Unmatched Email address with user.")
 
     # TODO: Send email to user
-    pass
+    reset_password = send_reset_password_email(user_email)
+    SQLManger().update_password(username, reset_password)

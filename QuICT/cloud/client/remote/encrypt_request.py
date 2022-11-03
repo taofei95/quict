@@ -14,6 +14,12 @@ class EncryptedRequest:
         self.__SALT = "TestForQuICT"
 
     def get(self, url: str, user_info: tuple):
+        """ Send a GET Request.
+
+        Args:
+            url (str): URL for request.
+            user_info (tuple): the login user's information.
+        """
         aes_key = os.urandom(16)
         header = self._generate_header(aes_key, user_info)
 
@@ -33,6 +39,14 @@ class EncryptedRequest:
         user_info: tuple = None,
         is_login: bool = False
     ):
+        """ Send a POST Request.
+
+        Args:
+            url (str): URL for request.
+            json_dict (dict, optional): The send data. Defaults to None.
+            user_info (tuple, optional): The login user's information. Defaults to None.
+            is_login (bool, optional): whether is login post or not. Defaults to False.
+        """
         aes_key = os.urandom(16)
         header = self._generate_header(aes_key, user_info, is_login)
         if json_dict is not None:
@@ -48,6 +62,13 @@ class EncryptedRequest:
         return self._decrepted_response(response, user_info, is_login)
 
     def delete(self, url: str, json_dict: dict = None, user_info: tuple = None):
+        """ Send a DELETE Request.
+
+        Args:
+            url (str): URL for request.
+            json_dict (dict, optional): The send data. Defaults to None.
+            user_info (tuple, optional): The login user's information. Defaults to None.
+        """
         aes_key = os.urandom(16)
         header = self._generate_header(aes_key, user_info)
         if json_dict is not None:
@@ -63,6 +84,16 @@ class EncryptedRequest:
         return self._decrepted_response(response, user_info)
 
     def _generate_header(self, aes_key: bytes, user_info: tuple, is_login: bool = False):
+        """ Generate Header for Request. Using AES and HRS to encrypte.
+
+        Args:
+            aes_key (bytes): The encrypted key for AES Mode.
+            user_info (tuple): The login user's information
+            is_login (bool, optional): whether is login post or not. Defaults to False.
+
+        Returns:
+            dict: The JWT token.
+        """
         username = user_info[1]
         password = user_info[2][:16] if not is_login else self.__SALT
 

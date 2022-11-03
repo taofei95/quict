@@ -43,6 +43,12 @@ class QuICTRemoteManager:
     ############                Login & Logout              ############
     ####################################################################
     def login(self, username: str, password: str):
+        """ User login.
+
+        Args:
+            username (str): The username
+            password (str): The password
+        """
         encrypted_passwd = self._encrypt.encrypted_passwd(password)
         success = self._encryptedrequest.post(
             f"{self._url_prefix}/env/login",
@@ -52,11 +58,12 @@ class QuICTRemoteManager:
         )
 
         if not success:
-            raise ValueError("unmatched login username and password.")
+            self._logger.warn("unmatched login username and password.")
         else:
             self._sql_db.user_login(username, encrypted_passwd)
 
     def logout(self):
+        """ User logout. """
         self._sql_db.user_logout()
 
     ####################################################################
@@ -64,6 +71,12 @@ class QuICTRemoteManager:
     ####################################################################
     @login_validation
     def start_job(self, yml_dict: dict, user_info: tuple):
+        """ Send job ticket to cloud system.
+
+        Args:
+            yml_dict (dict): The job's information
+            user_info (dict): The user's information
+        """
         # Delete Circuit Qasm Path here, not use for remote mode
         del yml_dict['circuit']
 
@@ -76,12 +89,24 @@ class QuICTRemoteManager:
 
     @login_validation
     def status_job(self, job_name: str, user_info: tuple):
+        """ Check a job's running states
+
+        Args:
+            job_name (str): The job's name
+            user_info (tuple): The user's information
+        """
         url = f"{self._url_prefix}/jobs/{job_name}:status"
         state = self._encryptedrequest.get(url, user_info=user_info)
         self._logger.info(state)
 
     @login_validation
     def stop_job(self, job_name: str, user_info: tuple):
+        """ Stop a running job.
+
+        Args:
+            job_name (str): The job's name
+            user_info (tuple): The user's information
+        """
         url = f"{self._url_prefix}/jobs/{job_name}:stop"
         try:
             self._encryptedrequest.post(url, user_info=user_info)
@@ -91,6 +116,12 @@ class QuICTRemoteManager:
 
     @login_validation
     def restart_job(self, job_name: str, user_info: tuple):
+        """ Restart a running job.
+
+        Args:
+            job_name (str): The job's name
+            user_info (tuple): The user's information
+        """
         url = f"{self._url_prefix}/jobs/{job_name}:restart"
         try:
             self._encryptedrequest.post(url, user_info=user_info)
@@ -100,6 +131,12 @@ class QuICTRemoteManager:
 
     @login_validation
     def delete_job(self, job_name: str, user_info: tuple):
+        """ Delete a job.
+
+        Args:
+            job_name (str): The job's name
+            user_info (tuple): The user's information
+        """
         url = f"{self._url_prefix}/jobs/{job_name}:delete"
         try:
             self._encryptedrequest.delete(url, user_info=user_info)
@@ -109,5 +146,10 @@ class QuICTRemoteManager:
 
     @login_validation
     def list_jobs(self, user_info: tuple):
+        """ List all jobs in the cloud system.
+
+        Args:
+            user_info (tuple): The user's information
+        """
         url = f"{self._url_prefix}/jobs/list"
         self._logger.info(self._encryptedrequest.get(url, user_info=user_info))
