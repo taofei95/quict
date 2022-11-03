@@ -20,7 +20,7 @@ class MCTLinearHalfDirtyAux(object):
         by a network consisting of 4(m - 2) toffoli gates
 
         Args:
-            m(int): the number of bits of the toffoli
+            m(int): the number of control qubits of the toffoli
             n(int): the number of qubits in the qureg
 
         Returns:
@@ -42,7 +42,7 @@ class MCTLinearHalfDirtyAux(object):
         """
         Args:
             n(int): the number of qubits in the qureg
-            m(int): the number of bits of the toffoli
+            m(int): the number of control qubits of the toffoli
             controls(list): list of control qubits
             auxs(list): list of ancillas
             target(int): target qubit

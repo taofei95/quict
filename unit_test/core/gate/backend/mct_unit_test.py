@@ -70,9 +70,6 @@ def test_MCT_Linear_Simulation_One_unitary():
         aux_idx = [0]
         controls_idx = [i for i in range(1, n - 1)]
         target_idx = [n - 1]
-        # aux = circuit[aux_idx]
-        # controls = circuit[controls_idx]
-        # target = circuit[target_idx]
         MCT = MCTLinearOneDirtyAux()
         gates = MCT.execute(n)
         gates | circuit(controls_idx + target_idx + aux_idx)
