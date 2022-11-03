@@ -69,33 +69,40 @@ def find_solution_count(filename_test):
         variable_data = [int(x) for x in variable_data]
         if check_solution(variable_data, variable_number, clause_number, CNF_data):
             solutions.append(variable_data)
+    # print(solutions)
     return len(solutions)
 
-def test():
-    filename_test =  "./2"
+def test(variable_number, clause_number, CNF_data, runs):
     AuxQubitNumber = 5
-    variable_number , clause_number , CNF_data = read_CNF(filename_test)
-    #print(CNF_data)
-    #真值表初值变化
-    #b=[]
-    # print(variable_number)
-    n_solution = find_solution_count(filename_test)
-    print(f"{n_solution:4} solution in {1<<variable_number:4} possibility")
     cnf = CNFSATOracle()
     cnf.run(filename_test, AuxQubitNumber, 1)
-    oracle = cnf.circuit()
-    grover = Grover(ConstantStateVectorSimulator())
-    
-    result = grover.run(variable_number, AuxQubitNumber + 1, oracle, n_solution, is_bit_flip=True)
-    result_str = bin(result)[2:].rjust(variable_number,'0')
-    is_solution = check_solution([int(x) for x in result_str], variable_number, clause_number, CNF_data)
-    print(f"{result_str}, {is_solution}")
-    return is_solution
+    n_hit = 0
+    for i in range(runs):
+        print(f"{i:4}/{runs:4}",end='')
+        oracle = cnf.circuit()
+        grover = Grover(ConstantStateVectorSimulator())
+        
+        result = grover.run(variable_number, AuxQubitNumber + 1, oracle, n_solution, is_bit_flip=True)
+        result_str = bin(result)[2:].rjust(variable_number,'0')
+        if check_solution([int(x) for x in result_str], variable_number, clause_number, CNF_data):
+            n_hit += 1
+            print("True",end='\r')
+        else:
+            print("False",end='\r')
+    return n_hit
 
-n_all = 100
-n_hit = 0
-for _ in range(n_all):
-    is_solution = test()
-    if is_solution:
-        n_hit += 1
-print(f"success rate: {n_hit/n_all:5.3f}[{n_hit:3}/{n_all:3}]")
+filename_test_list =  [
+    "./32-3.cnf",
+    "./64-3.cnf",
+    "./32-5.cnf",
+    "./64-5.cnf",
+    # "/home/pengsirui/quict/QuICT/algorithm/quantum_algorithm/CNF/test.cnf",
+    # "/home/pengsirui/quict/QuICT/algorithm/quantum_algorithm/CNF/test_data/4_9_0",
+    ]
+for filename_test in filename_test_list:
+    n_solution = find_solution_count(filename_test)
+    variable_number , clause_number , CNF_data = read_CNF(filename_test)
+    print(f"{n_solution:4} solution in {1<<variable_number:4} possibility")
+    n_all = 100
+    n_hit = test(variable_number, clause_number, CNF_data, n_all)
+    print(f"success rate: {n_hit/n_all:5.3f}[{n_hit:3}/{n_all:3}]")
