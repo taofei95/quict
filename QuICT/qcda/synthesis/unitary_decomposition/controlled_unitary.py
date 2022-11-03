@@ -3,7 +3,7 @@ import numpy as np
 
 from QuICT.core import *
 from QuICT.core.gate import *
-from QuICT.core.gate.complex_gate.uniformly_gate import UniformlyRotation
+from QuICT.core.gate.backend import UniformlyRotation
 from .utility import *
 
 

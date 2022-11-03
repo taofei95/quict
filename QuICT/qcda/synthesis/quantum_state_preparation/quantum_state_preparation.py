@@ -2,7 +2,7 @@ import numpy as np
 
 from QuICT.core import Circuit
 from QuICT.core.gate import CompositeGate, GateType, GPhase, X, CX, Ry, Rz
-from QuICT.core.gate.complex_gate import MCTWithoutAux, UniformlyRotation
+from QuICT.core.gate.backend import MCTWithoutAux, UniformlyRotation
 from QuICT.qcda.synthesis.unitary_decomposition import UnitaryDecomposition
 from QuICT.simulation.state_vector import ConstantStateVectorSimulator
 

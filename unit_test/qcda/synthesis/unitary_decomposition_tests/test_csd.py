@@ -5,7 +5,7 @@ from scipy.linalg import block_diag
 
 from QuICT.core import Circuit
 from QuICT.core.gate import GateType
-from QuICT.core.gate.complex_gate.uniformly_gate import UniformlyRotation
+from QuICT.core.gate.backend import UniformlyRotation
 
 
 def test_csd():

@@ -3,7 +3,7 @@ import numpy as np
 from scipy.linalg import cossin
 from scipy.stats import unitary_group
 
-from QuICT.core.gate.complex_gate.uniformly_gate import UniformlyRotation
+from QuICT.core.gate.backend import UniformlyRotation
 from QuICT.core.gate import GateType
 
 

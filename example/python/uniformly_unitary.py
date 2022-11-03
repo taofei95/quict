@@ -7,7 +7,7 @@ import numpy as np
 
 from QuICT.core import Circuit
 from QuICT.core.gate import U3
-from QuICT.qcda.synthesis import UniformlyUnitary
+from QuICT.core.gate.backend import UniformlyUnitary
 
 
 circuit = Circuit(4)

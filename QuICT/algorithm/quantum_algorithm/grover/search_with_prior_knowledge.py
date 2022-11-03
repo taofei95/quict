@@ -9,8 +9,8 @@ from scipy.optimize import minimize
 
 from QuICT.core import Circuit
 from QuICT.core.gate import *
+from QuICT.core.gate.backend import MCTOneAux
 from QuICT.qcda.synthesis.quantum_state_preparation import QuantumStatePreparation
-from QuICT.qcda.synthesis.mct import MCTOneAux
 
 P_GLOBAL = []
 T_GLOBAL = 1
