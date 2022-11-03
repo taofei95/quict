@@ -11,7 +11,14 @@ from QuICT.core.gate.composite_gate import CompositeGate
 from QuICT.tools.interface import OPENQASMInterface
 from torch.utils.tensorboard import SummaryWriter
 
-from ..data_def import CircuitInfo, ReplayMemory, State, TrainConfig, ValidationData
+from ..data_def import (
+    CircuitInfo,
+    ReplayMemory,
+    State,
+    StateSlim,
+    TrainConfig,
+    ValidationData,
+)
 from ..net.nn_mapping import NnMapping
 from ..net.rl_agent import Agent
 
@@ -34,25 +41,21 @@ class Learner:
         self.config = config
 
         print("Preparing policy & target networks...")
-        self._policy_net = torch.jit.script(
-            NnMapping(
-                qubit_num=config.topo.qubit_number,
-                max_gate_num=config.max_gate_num,
-                feat_dim=config.feat_dim,
-                action_num=config.action_num,
-                device=config.device,
-            ).to(device=config.device)
-        )
+        self._policy_net = NnMapping(
+            qubit_num=config.topo.qubit_number,
+            max_gate_num=config.max_gate_num,
+            feat_dim=config.feat_dim,
+            action_num=config.action_num,
+            device=config.device,
+        ).to(device=config.device)
         self._policy_net.train(True)
-        self._target_net = torch.jit.script(
-            NnMapping(
-                qubit_num=config.topo.qubit_number,
-                max_gate_num=config.max_gate_num,
-                feat_dim=config.feat_dim,
-                action_num=config.action_num,
-                device=config.device,
-            ).to(device=config.device)
-        )
+        self._target_net = NnMapping(
+            qubit_num=config.topo.qubit_number,
+            max_gate_num=config.max_gate_num,
+            feat_dim=config.feat_dim,
+            action_num=config.action_num,
+            device=config.device,
+        ).to(device=config.device)
         self._target_net.train(False)
         # Guarantee they have the same parameter values.
         self._target_net.load_state_dict(self._policy_net.state_dict())
@@ -62,7 +65,7 @@ class Learner:
 
         # Loss function & optimizer
         self._smooth_l1 = nn.SmoothL1Loss()
-        self._optimizer = optim.RMSprop(self._policy_net.parameters(), lr=0.0005)
+        self._optimizer = optim.RMSprop(self._policy_net.parameters(), lr=0.0001)
 
         # Prepare path to save model files during training
         print("Preparing model saving directory...")
@@ -198,7 +201,7 @@ class Learner:
         rewards = torch.tensor(rewards, device=self.config.device)
 
         data_list = [state.to_nn_data() for state in states]
-        data_batch = State.batch_from_list(
+        data_batch = StateSlim.batch_from_list(
             data_list=data_list, device=self.config.device
         )
 
@@ -219,7 +222,7 @@ class Learner:
         non_final_data_list = [
             state.to_nn_data() for state in next_states if state is not None
         ]
-        non_final_data_batch = State.batch_from_list(
+        non_final_data_batch = StateSlim.batch_from_list(
             data_list=non_final_data_list, device=self.config.device
         )
 

@@ -23,6 +23,7 @@ class Actor:
 
         if terminated:
             next_state = None
+            self.agent.reset_explore_state()
 
         self.replay.push(
             Transition(
@@ -34,4 +35,3 @@ class Actor:
         )
 
         return reward
-

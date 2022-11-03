@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import os.path as osp
 from collections import deque
 from random import randint, sample
@@ -106,7 +108,8 @@ class CircuitInfo(CircuitInfoBase):
         """
         x = torch.zeros(self._max_gate_num, 2, dtype=torch.long)
         edge_index = []
-        g = nx.convert_node_labels_to_integers(self._graph)
+        g: nx.DiGraph = nx.convert_node_labels_to_integers(self._graph)
+        assert g.number_of_nodes() > 0
         # g = self._graph
         for node in g.nodes:
             gid = g.nodes[node]["gid"]
@@ -128,6 +131,51 @@ class LayoutInfo(LayoutInfoBase):
         super().__init__(layout)
 
 
+class StateSlim:
+    def __init__(
+        self,
+        circ_info: PygData,
+        logic2phy: List[int],
+        phy2logic: Optional[List[int]] = None,
+    ) -> None:
+        self.circ_info = circ_info
+        self.logic2phy = logic2phy
+        """Logical to physical mapping
+        """
+        q = len(logic2phy)
+        self.phy2logic = phy2logic
+        if self.phy2logic is None:
+            self.phy2logic = [0 for _ in range(q)]
+            for i in range(q):
+                self.phy2logic[self.logic2phy[i]] = i
+
+        self.logic2phy = torch.tensor(self.logic2phy)
+        self.phy2logic = torch.tensor(self.phy2logic)
+
+    def to_nn_data(self):
+        return self.circ_info
+
+    @staticmethod
+    def batch_from_list(data_list: list, device: str):
+        return PygBatch.from_data_list(data_list=data_list).to(device=device)
+
+    def to_tensor_list(self) -> List[torch.Tensor]:
+        return [
+            self.circ_info.x,
+            self.circ_info.edge_index,
+            self.logic2phy,
+            self.phy2logic,
+        ]
+
+    @staticmethod
+    def from_tensor_list(t_list: List[torch.Tensor]) -> StateSlim:
+        return StateSlim(
+            circ_info=PygData(x=t_list[0], edge_index=t_list[1]),
+            logic2phy=t_list[2],
+            phy2logic=t_list[3],
+        )
+
+
 class State:
     def __init__(
         self,
@@ -145,17 +193,11 @@ class State:
         self.phy2logic = phy2logic
         if self.phy2logic is None:
             self.phy2logic = [0 for _ in range(q)]
-        for i in range(q):
-            self.phy2logic[self.logic2phy[i]] = i
+            for i in range(q):
+                self.phy2logic[self.logic2phy[i]] = i
 
-        self._circ_pyg_data = None
         self._circ_layered_matrices = None
-
-    @property
-    def circ_pyg_data(self):
-        if self._circ_pyg_data is None:
-            self._circ_pyg_data = self.circ_info.to_pyg(self.logic2phy)
-        return self._circ_pyg_data
+        self._slim = None
 
     @property
     def circ_layered_matrices(self) -> torch.Tensor:
@@ -173,17 +215,34 @@ class State:
             self.layout_info.topo_dist, self.logic2phy
         )
 
-    def to_nn_data(self):
-        return self.circ_pyg_data
+    def eager_exec(
+        self,
+        physical_circ: Optional[CompositeGate] = None,
+    ) -> int:
+        self._slim = None
+        return self.circ_info.eager_exec(
+            self.logic2phy,
+            self.layout_info.topo_graph,
+            physical_circ,
+        )
 
-    @staticmethod
-    def batch_from_list(data_list: list, device: str):
-        return PygBatch.from_data_list(data_list=data_list).to(device=device)
+    def to_slim(self) -> StateSlim:
+        if self._slim is None:
+            self._slim = StateSlim(
+                circ_info=self.circ_info.to_pyg(self.logic2phy),
+                logic2phy=self.logic2phy,
+                phy2logic=self.phy2logic,
+            )
+        return self._slim
 
 
 class Transition:
     def __init__(
-        self, state: State, action: Tuple[int, int], next_state: State, reward: float
+        self,
+        state: StateSlim,
+        action: Tuple[int, int],
+        next_state: StateSlim,
+        reward: float,
     ) -> None:
         self.state = state
         self.action = action
@@ -232,11 +291,11 @@ class TrainConfig:
     def __init__(
         self,
         topo: Union[str, Layout],
-        max_gate_num: int = 200,
-        feat_dim: int = 64,
+        max_gate_num: int = 300,
+        feat_dim: int = 128,
         gamma: float = 0.9,
         replay_pool_size: int = 20000,
-        batch_size: int = 160,
+        batch_size: int = 96,
         total_epoch: int = 2000,
         explore_period: int = 10000,
         target_update_period: int = 20,

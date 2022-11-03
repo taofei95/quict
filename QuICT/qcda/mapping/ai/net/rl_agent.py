@@ -6,7 +6,7 @@ from typing import Tuple, Union
 import torch
 from QuICT.core import *
 from QuICT.core.gate import *
-from QuICT.qcda.mapping.ai.data_def import State, TrainConfig
+from QuICT.qcda.mapping.ai.data_def import State, StateSlim, TrainConfig
 from QuICT.qcda.mapping.ai.net.nn_mapping import NnMapping
 
 
@@ -40,8 +40,9 @@ class Agent:
     ):
         a = self.config.action_num
 
-        # Chose an action based on policy_net
-        data = State.batch_from_list([self.state.to_nn_data()], policy_net_device)
+        # Choose an action based on policy_net
+        data = self.state.to_slim().to_nn_data()
+        data = StateSlim.batch_from_list([data], policy_net_device)
         # data = self.state.circ_layered_matrices.to(policy_net_device)
         q_vec = policy_net(data.x, data.edge_index, data.batch).detach().cpu()
         q_vec = q_vec.view(a)  # [a]
@@ -86,66 +87,54 @@ class Agent:
 
     def take_action(
         self, action: Tuple[int, int]
-    ) -> Tuple[State, Union[State, None], float, bool]:
+    ) -> Tuple[StateSlim, Union[StateSlim, None], float, bool]:
         """Take given action on trainer's state.
 
         Args:
             action (Tuple[int, int]): Swap gate used on current topology.
 
         Returns:
-            Tuple[State, Union[State, None], float, bool]: Tuple of (Previous State, Next State, Reward, Terminated).
+            Tuple[StateSlim, Union[StateSlim, None], float, bool]: Tuple of (Previous State, Next State, Reward, Terminated).
         """
+        assert self.state is not None
+
         self.explore_step += 1
         u, v = action
         # graph = self.state.topo_info.topo_graph
         topo_dist = self.state.layout_info.topo_dist
         scale = self.config.reward_scale
         if topo_dist[u][v] < 0.01:  # not connected
-            reward = -scale
-            prev_state = self.state
-            # next_state = None
-            next_state = self.state
-            self.state = next_state
-            return prev_state, next_state, reward, True
+            assert False
 
         with self.mapped_circ:
             Swap & [u, v]
 
-        next_logic2phy = copy.copy(
-            self.state.logic2phy
-        )  # It's enough to use copy for List[int]
-        next_phy2logic = copy.copy(self.state.phy2logic)
+        prev_state = self.state.to_slim()
+
+        next_logic2phy = self.state.logic2phy
+        next_phy2logic = self.state.phy2logic
+
         # Current (u, v) are physical qubit labels
         next_phy2logic[u], next_phy2logic[v] = next_phy2logic[v], next_phy2logic[u]
         lu, lv = next_phy2logic[u], next_phy2logic[v]
         next_logic2phy[lu], next_logic2phy[lv] = next_logic2phy[lv], next_logic2phy[lu]
-        next_circ_state = self.state.circ_info.copy()
+
+        self.state.logic2phy = next_logic2phy
+        self.state.phy2logic = next_phy2logic
+
+        # next_circ_state = self.state.circ_info.copy()
         action_penalty = -self.config.reward_scale / 2
         reward = action_penalty
         # Execute as many as possible
-        cnt = next_circ_state.eager_exec(
-            logic2phy=next_logic2phy,
-            topo_graph=self.state.layout_info.topo_graph,
+        cnt = self.state.eager_exec(
             physical_circ=self.mapped_circ,
         )
         self._last_action = action
         self._last_exec_cnt = cnt
         reward += cnt * scale
 
-        terminated = next_circ_state.count_gate() == 0
-        if terminated:
-            prev_state = self.state
-            # next_state = None
-            next_state = self.state
-            self.state = next_state
-            return prev_state, next_state, reward, True
+        terminated = self.state.circ_info.count_gate() == 0
 
-        next_state = State(
-            circ_info=next_circ_state,
-            layout=self.state.layout_info.layout,
-            logic2phy=next_logic2phy,
-            phy2logic=next_phy2logic,
-        )
-        prev_state = self.state
-        self.state = next_state
-        return prev_state, next_state, reward, False
+        next_state = None if terminated else self.state.to_slim()
+
+        return prev_state, next_state, reward, terminated

@@ -11,12 +11,14 @@ class GnnBlock(nn.Module):
         qubit_num: int,
         max_gate_num: int,
         feat_dim: int,
+        pool: bool,
     ) -> None:
         super().__init__()
 
         self._max_qubit_num = qubit_num
         self._max_gate_num = max_gate_num
         self._feat_dim = feat_dim
+        self._pool = pool
 
         self._gc_grp = nn.ModuleList(
             [
@@ -24,19 +26,30 @@ class GnnBlock(nn.Module):
                     in_channels=feat_dim,
                     out_channels=feat_dim,
                     normalize=False,
-                ).jittable(),
+                ),
                 gnn.SAGEConv(
                     in_channels=feat_dim,
                     out_channels=feat_dim,
                     normalize=False,
-                ).jittable(),
+                ),
             ]
         )
 
-    def forward(self, x: torch.Tensor, edge_index: torch.Tensor):
+        if pool:
+            # TopKPooling is returning (x, edge_index, edge_attr, batch, perm, score[perm])
+            self._pool = gnn.TopKPooling(in_channels=feat_dim)
+
+    def forward(
+        self,
+        x: torch.Tensor,
+        edge_index: torch.Tensor,
+        batch: Optional[torch.Tensor],
+    ):
         for conv in self._gc_grp:
             x = F.leaky_relu(conv(x, edge_index)) + x
-        return x
+        if self._pool:
+            x, edge_index, _, batch, _, _ = self._pool(x, edge_index, None, batch, None)
+        return x, edge_index, batch
 
 
 class CircuitGnn(nn.Module):
@@ -52,13 +65,29 @@ class CircuitGnn(nn.Module):
         self._max_gate_num = max_gate_num
         self._feat_dim = feat_dim
 
-        self._gc_grp_1 = GnnBlock(
-            qubit_num=qubit_num, max_gate_num=max_gate_num, feat_dim=feat_dim
+        self._gc_grp = nn.ModuleList(
+            [
+                GnnBlock(
+                    qubit_num=qubit_num,
+                    max_gate_num=max_gate_num,
+                    feat_dim=feat_dim,
+                    pool=False,
+                ),
+                GnnBlock(
+                    qubit_num=qubit_num,
+                    max_gate_num=max_gate_num,
+                    feat_dim=feat_dim,
+                    pool=False,
+                ),
+                GnnBlock(
+                    qubit_num=qubit_num,
+                    max_gate_num=max_gate_num,
+                    feat_dim=feat_dim,
+                    pool=False,
+                ),
+            ]
         )
-        # self._norm_1 = gnn.GraphNorm(in_channels=feat_dim)
-        self._gc_grp_2 = GnnBlock(
-            qubit_num=qubit_num, max_gate_num=max_gate_num, feat_dim=feat_dim
-        )
+
         self._aggr = gnn.aggr.SoftmaxAggregation(learn=False)
 
     def forward(
@@ -70,9 +99,9 @@ class CircuitGnn(nn.Module):
         n = self._max_gate_num
         f = self._feat_dim
 
-        x = self._gc_grp_1(x, edge_index)
-        # x = self._norm_1(x,batch)
-        x = self._gc_grp_2(x, edge_index)
+        for conv_block in self._gc_grp:
+            x, edge_index, batch = conv_block(x, edge_index, batch)
+
         x = self._aggr(x, batch)  # [b, f]
         x = x.view(-1, f)  # [b, f]
         return x
@@ -117,8 +146,6 @@ class GnnMapping(nn.Module):
             nn.LeakyReLU(),
             nn.Linear(f_start, f_start // 2, dtype=mlp_dtype),
             nn.LeakyReLU(),
-            nn.Linear(f_start // 2, f_start // 2, dtype=mlp_dtype),
-            nn.LeakyReLU(),
             nn.Linear(f_start // 2, self._action_num, dtype=mlp_dtype),
         )
 
@@ -130,8 +157,7 @@ class GnnMapping(nn.Module):
         # circ_x = torch.sum(circ_x, -2) / 2  # [b * n, f]
         circ_feat = self._circ_gnn(circ_x, edge_index, batch)  # [b, f]
 
-        with torch.autocast(device_type="cuda", dtype=torch.bfloat16):
-            x = self._mlp_1(circ_feat).view(-1, a)  # [b, a]
+        x = self._mlp_1(circ_feat).view(-1, a)  # [b, a]
 
         x = x.to(torch.float)
         return x
