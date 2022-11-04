@@ -61,7 +61,7 @@ class CircuitLib:
         circuit_list = []
         path = os.path.join(os.path.dirname(__file__), 'circuit_qasm', 'template')
 
-        pat = '^template_n([0-9]+)_m([0-9]+)_d([0-9]+)_([0-9]+).qasm$'
+        pat = '^template_w([0-9]+)_s([0-9]+)_d([0-9]+)_([0-9]+).qasm$'
         for qasm in filter(lambda x: x.startswith('template') and x.endswith('.qasm'),
                            os.listdir(path)):
 

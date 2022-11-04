@@ -93,8 +93,8 @@ def test_random_circuit():
     n_iter = 20
     n_qubits = 8
     n_gates = 200
-    n_templates = 8
     template_list = CircuitLib.load_template_circuit()
+    n_templates = 10
 
     for idx in range(n_iter):
         print('testing', idx)
