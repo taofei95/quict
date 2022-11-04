@@ -111,6 +111,3 @@ def test_random_circuit():
         mat_2 = circ_optim.matrix()
         assert np.allclose(mat_1, mat_2)
 
-
-if __name__ == '__main__':
-    pytest.main([__file__])
