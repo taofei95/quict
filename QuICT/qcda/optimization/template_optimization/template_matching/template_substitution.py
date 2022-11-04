@@ -17,7 +17,6 @@ Template matching substitution, given a list of maximal matches it substitutes
 them in circuit and creates a new optimized dag version of the circuit.
 """
 
-# from qiskit.circuit import ParameterExpression
 from .dagdependency import DAGDependency
 
 

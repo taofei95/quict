@@ -218,27 +218,40 @@ class ExtensionBuild(build_ext):
         )
 
 
-packages = find_packages(where=PRJ_ROOT_RELATIVE)
-
 # static file
 file_data = [
     ("QuICT/lib/qasm/libs", [f"{PRJ_ROOT_RELATIVE}/QuICT/lib/qasm/libs/qelib1.inc"]),
 ]
 
-# version information
-about = {}
-
-with open(f"{PRJ_ROOT_RELATIVE}/QuICT/__version__.py", "r", encoding="utf-8") as f:
-    exec(f.read(), about)
-
 setup(
-    name=about["__title__"],
-    version=about["__version__"],
-    description=about["__description__"],
-    author=about["__author__"],
-    author_email=about["__email__"],
-    url=about["__url__"],
+    name="quict",
+    version="0.5.2",
+    description="Quantum Compute Platform of Institute of Computing Technology",
+    author="Library for Quantum Computation and Theoretical Computer Science, ICT, CAS",
+    author_email="likaiqi@ict.ac.cn",
+    license='Apache License 2.0',
+    url="https://e.gitee.com/quictucas/repos/quictucas/quict",
     package_dir={"QuICT": f"{PRJ_ROOT_RELATIVE}/QuICT/"},
+    install_requires=[
+        'contourpy==1.0.5',
+        'cycler==0.11.0',
+        'fonttools==4.37.4',
+        'kiwisolver==1.4.4',
+        'llvmlite==0.39.1',
+        'matplotlib==3.6.1',
+        'networkx==2.8.7',
+        'numba==0.56.3',
+        'numpy==1.23.4',
+        'packaging==21.3',
+        'Pillow==9.2.0',
+        'ply==3.11',
+        'pybind11==2.10.0',
+        'pyparsing==3.0.9',
+        'python-dateutil==2.8.2',
+        'scipy==1.9.2',
+        'six==1.16.0',
+        'ujson==5.5.0',
+    ],
     ext_modules=[
         CMakeExtension(
             "QuICT.simulation.state_vector.cpu_simulator.",
@@ -246,7 +259,7 @@ setup(
         ),
     ],
     cmdclass={"build_ext": ExtensionBuild},
-    packages=packages,
+    packages=find_packages(where=PRJ_ROOT_RELATIVE),
     data_files=file_data,
     include_package_data=True,
     python_requires=">=3.8",

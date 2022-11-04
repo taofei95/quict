@@ -1,3 +1,0 @@
-"""
-More useful classical optimizers
-"""
