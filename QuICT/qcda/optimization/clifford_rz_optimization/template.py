@@ -8,7 +8,7 @@ from .dag import DAG
 
 class OptimizingTemplate:
     """
-    Circuit template used in AutoOptimization.
+    Circuit template used in CliffordRzOptimization.
     """
     def __init__(self, template: DAG, replacement: DAG = None,
                  anchor: int = 0, weight: int = 1, phase: float = 0):

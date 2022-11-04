@@ -13,7 +13,7 @@ from .dag import DAG
 from .template import *
 
 
-class AutoOptimization(object):
+class CliffordRzOptimization(object):
     """
     Heuristic optimization of circuits in Clifford + Rz.
 

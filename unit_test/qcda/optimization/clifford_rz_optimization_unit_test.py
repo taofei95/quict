@@ -3,8 +3,8 @@ import numpy as np
 import pickle
 
 from QuICT.core.gate import *
-from QuICT.qcda.optimization.auto_optimization.template import *
-from QuICT.qcda.optimization.auto_optimization import DAG, AutoOptimization
+from QuICT.qcda.optimization.clifford_rz_optimization.template import *
+from QuICT.qcda.optimization.clifford_rz_optimization import DAG, CliffordRzOptimization
 
 
 def test_build_graph():
@@ -52,7 +52,7 @@ def test_reduce_hadamard_gates():
     H | circ(0)
 
     dag = DAG(circ)
-    assert AutoOptimization.reduce_hadamard_gates(dag) == 10, 'hadamard gates reduction failed'
+    assert CliffordRzOptimization.reduce_hadamard_gates(dag) == 10, 'hadamard gates reduction failed'
 
     circ_optim = dag.get_circuit()
     # circ_optim.draw(method='command')
@@ -73,7 +73,7 @@ def test_cancel_single_qubit_gate():
     Rz(-3) | circ(0)
 
     dag = DAG(circ)
-    assert AutoOptimization.cancel_single_qubit_gates(dag) == 3, 'single qubit gates cancellation failed'
+    assert CliffordRzOptimization.cancel_single_qubit_gates(dag) == 3, 'single qubit gates cancellation failed'
 
     circ_optim = dag.get_circuit()
 
@@ -100,8 +100,8 @@ def test_cancel_two_qubit_gate():
     CX | circ([0, 1])
 
     dag = DAG(circ)
-    # print(AutoOptimization.cancel_two_qubit_gates(dag))
-    assert AutoOptimization.cancel_two_qubit_gates(dag) == 8, 'cnot cancellation failed'
+    # print(CliffordRzOptimization.cancel_two_qubit_gates(dag))
+    assert CliffordRzOptimization.cancel_two_qubit_gates(dag) == 8, 'cnot cancellation failed'
     circ_optim = dag.get_circuit()
 
     # circ.draw(filename='a.jpg')
@@ -128,7 +128,7 @@ def test_merge_rotations():
     print()
     circ.draw(method='command')
     dag = DAG(circ)
-    AutoOptimization.merge_rotations(dag)
+    CliffordRzOptimization.merge_rotations(dag)
     circ_optim = dag.get_circuit()
     circ_optim.draw(method='command')
 
@@ -159,14 +159,14 @@ def test_enumerate_cnot_rz_circuit():
 
     correct_not_count = [6, 3]
     gates = DAG(circ)
-    for i, pack in enumerate(AutoOptimization._enumerate_cnot_rz_circuit(gates)):
+    for i, pack in enumerate(CliffordRzOptimization._enumerate_cnot_rz_circuit(gates)):
         _, _, node_cnt = pack
         assert node_cnt == correct_not_count[i], f'node count = {node_cnt} != {correct_not_count[i]}'
 
 
 def check_circuit_optimization(circ: Circuit, label, mode='light'):
     try:
-        AO = AutoOptimization(mode=mode, verbose=False)
+        AO = CliffordRzOptimization(mode=mode, verbose=False)
         circ_optim = AO.execute(circ)
     except Exception as e:
         pickle.dump(circ.gates, open(f'circ_{label}.dat', 'wb'))
@@ -188,14 +188,14 @@ def test_parameterize_all():
     circ = Circuit(n_qubit)
     circ.random_append(n_gate, typelist=support_gates, random_params=True)
     dag = DAG(circ)
-    AutoOptimization.parameterize_all(dag)
+    CliffordRzOptimization.parameterize_all(dag)
     circ_optim = dag.get_circuit()
 
     mat_1 = circ.matrix()
     mat_2 = circ_optim.matrix()
     assert np.allclose(mat_1, mat_2), "unitary changed after parameterize_all"
 
-    AutoOptimization.deparameterize_all(dag)
+    CliffordRzOptimization.deparameterize_all(dag)
     circ_optim = dag.get_circuit()
     mat_2 = circ_optim.matrix()
     assert np.allclose(mat_1, mat_2), "unitary changed after parameterize_all"
@@ -205,7 +205,7 @@ def test_ccx():
     circ = Circuit(6)
     circ.random_append(10, typelist=[GateType.ccx])
 
-    AO = AutoOptimization()
+    AO = CliffordRzOptimization()
     circ_optim = AO.execute(circ)
     mat_0 = circ.matrix()
     mat_1 = circ_optim.matrix()
@@ -225,7 +225,7 @@ def test_float_rz():
     CX | circ([1, 0])
 
     dag = DAG(circ)
-    assert AutoOptimization.float_rotations(dag) == 2, 'float_rotations not correct'
+    assert CliffordRzOptimization.float_rotations(dag) == 2, 'float_rotations not correct'
 
     circ_optim = dag.get_circuit()
     mat_1 = circ.matrix()
