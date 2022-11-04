@@ -1,9 +1,9 @@
 import itertools
 from typing import List
 
-from .matching_dag_circuit import MatchingDAGCircuit, MatchingDAGNode, Match
 from .backward_match import BackwardMatch
 from .forward_match import ForwardMatch
+from .matching_dag_circuit import Match, MatchingDAGCircuit, MatchingDAGNode
 
 
 class TemplateMatching:

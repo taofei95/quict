@@ -1,12 +1,11 @@
 from typing import List
 
-from QuICT.qcda.optimization.template_optimization.templates import \
-    template_nct_2a_1, template_nct_2a_2, template_nct_2a_3
-
 from QuICT.core import Circuit
+from QuICT.lib.circuitlib import CircuitLib
+from QuICT.qcda.optimization.template_optimization.template_matching.template_matching import (
+    MatchingDAGCircuit, TemplateMatching
+)
 from QuICT.qcda.optimization.template_optimization.template_matching.template_substitution import TemplateSubstitution
-from QuICT.qcda.optimization.template_optimization.template_matching.template_matching import TemplateMatching
-from QuICT.qcda.optimization.template_optimization.template_matching.template_matching import MatchingDAGCircuit
 
 
 class TemplateOptimization(object):
@@ -37,7 +36,8 @@ class TemplateOptimization(object):
         specified.
 
         Args:
-            template_list(List[Circuit]): the list of templates used (the default value is [X-X, CX-CX, CCX-CCX]).
+            template_list(List[Circuit]): the list of templates used
+                (by default all templates of 2 gates in CircuitLib are used).
             heuristics_qubits_param(List[int]): Heuristic qubit parameters
             heuristics_backward_param(List[int]): Heuristic backward match parameter
         """
@@ -47,7 +47,7 @@ class TemplateOptimization(object):
         self.heuristics_backward_param = heuristics_backward_param
 
         if self.template_list is None:
-            self.template_list = [template_nct_2a_1(), template_nct_2a_2(), template_nct_2a_3()]
+            self.template_list = CircuitLib.load_template_circuit(max_size=2)
 
     def execute(self, circuit):
         """

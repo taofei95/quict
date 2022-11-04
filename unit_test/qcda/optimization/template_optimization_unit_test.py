@@ -1,11 +1,12 @@
+from random import sample
+
 import pytest
 
 from QuICT.core import *
 from QuICT.core.gate import *
-from QuICT.qcda.optimization.template_optimization.template_matching import \
-    MatchingDAGCircuit, ForwardMatch
-from QuICT.qcda.optimization.template_optimization.template_optimization import \
-    TemplateOptimization
+from QuICT.lib.circuitlib import CircuitLib
+from QuICT.qcda.optimization.template_optimization.template_matching import ForwardMatch, MatchingDAGCircuit
+from QuICT.qcda.optimization.template_optimization.template_optimization import TemplateOptimization
 
 
 def get_circ():
@@ -86,16 +87,21 @@ def test_ccx():
 
 
 def test_random_circuit():
+    gates = [GateType.x, GateType.cx, GateType.ccx, GateType.h, GateType.s, GateType.t,
+             GateType.sdg, GateType.tdg]
+
     n_iter = 20
     n_qubits = 8
     n_gates = 200
-    gates = [GateType.x, GateType.cx, GateType.ccx, GateType.h, GateType.s, GateType.t]
+    n_templates = 8
+    template_list = CircuitLib.load_template_circuit()
 
     for idx in range(n_iter):
         print('testing', idx)
         circ = Circuit(n_qubits)
         circ.random_append(n_gates, typelist=gates)
         TO = TemplateOptimization(
+            template_list=sample(template_list, n_templates),
             heuristics_qubits_param=[10],
             heuristics_backward_param=[3, 1]
         )

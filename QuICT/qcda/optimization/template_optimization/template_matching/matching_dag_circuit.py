@@ -1,12 +1,11 @@
-from typing import Set, List
+from collections import namedtuple
 from collections.abc import Iterable
 from functools import cached_property
-from collections import namedtuple
+from typing import List, Set
 
 from QuICT.core import Circuit
-from QuICT.core.circuit.dag_circuit import DAGNode, DAGCircuit
+from QuICT.core.circuit.dag_circuit import DAGCircuit, DAGNode
 from QuICT.core.gate import BasicGate
-
 
 NodeInfo = namedtuple('NodeInfo', ['matched_with', 'is_blocked'])
 

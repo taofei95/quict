@@ -1,9 +1,9 @@
 from collections import Iterable, deque
 from typing import Set
 
-import numpy as np
-import networkx as nx
 import matplotlib.pyplot as plt
+import networkx as nx
+import numpy as np
 
 from QuICT.core.gate import BasicGate
 

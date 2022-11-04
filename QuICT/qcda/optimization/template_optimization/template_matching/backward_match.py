@@ -1,8 +1,8 @@
-from typing import List, Tuple
-from collections import deque
 import heapq
+from collections import deque
+from typing import List, Tuple
 
-from .matching_dag_circuit import MatchingDAGCircuit, MatchingDAGNode, NodeInfo, Match
+from .matching_dag_circuit import Match, MatchingDAGCircuit, MatchingDAGNode, NodeInfo
 
 
 class MatchingScenario:
@@ -84,7 +84,7 @@ class BackwardMatch:
         for c_nxt_id in circuit.all_predecessors(c_node_id):
             c_info[c_nxt_id] = NodeInfo(None, True)
 
-        nxt_scenario = MatchingScenario(c_info, t_info, match, counter+1)
+        nxt_scenario = MatchingScenario(c_info, t_info, match, counter + 1)
         return nxt_scenario
 
     @classmethod

@@ -12,10 +12,11 @@
 
 # Modification Notice: Code revised for QuICT
 
-from QuICT.core.gate import *
-from QuICT.core.circuit import Circuit
-from collections import Counter
 import time
+from collections import Counter
+
+from QuICT.core.circuit import Circuit
+from QuICT.core.gate import *
 
 
 class TemplateSearching:

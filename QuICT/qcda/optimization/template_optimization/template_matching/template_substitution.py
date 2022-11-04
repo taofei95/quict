@@ -1,10 +1,10 @@
+from functools import cached_property
 from itertools import chain
 from typing import List
-from functools import cached_property
 
 from QuICT.core import Circuit
-from .matching_dag_circuit import MatchingDAGCircuit, MatchingDAGNode, Match
 
+from .matching_dag_circuit import Match, MatchingDAGCircuit, MatchingDAGNode
 
 GATE_COST = {
     'id': 0, 'x': 1, 'y': 1, 'z': 1, 'h': 1, 't': 1, 'tdg': 1, 's': 1, 'sdg': 1,
@@ -112,7 +112,7 @@ class TemplateSubstitution:
 
             # add the found sub to the resulting list
             res.append(sub_list[found])
-            sub_list = sub_list[:found] + sub_list[found+1:]
+            sub_list = sub_list[:found] + sub_list[found + 1:]
 
         return res
 
