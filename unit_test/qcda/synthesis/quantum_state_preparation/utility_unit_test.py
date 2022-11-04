@@ -1,6 +1,6 @@
 import numpy as np
 
-from QuICT.quantum_state_preparation.utility import schmidt_decompose
+from QuICT.qcda.synthesis.quantum_state_preparation.utility import schmidt_decompose
 
 
 def random_unit_vector(n):
