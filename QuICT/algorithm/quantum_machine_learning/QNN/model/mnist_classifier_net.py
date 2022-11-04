@@ -16,15 +16,15 @@ from QuICT.simulation.state_vector import ConstantStateVectorSimulator
 
 class QuantumNet(nn.Module):
     def __init__(
-        self, layers=["XX", "ZZ"], device=torch.device("cuda:0"),
+        self, data_qubits, layers=["XX", "ZZ"], device=torch.device("cuda:0"),
     ):
-        super.__init__(self)
-        self.layers = layers
-        self.device = device
-        self.data_qubits = self.resize[0] * self.resize[1]
-        self.n_qubits = self.data_qubits + 1
-        self.pqc = QNNLayer(
-            list(range(self.data_qubits)), self.data_qubits, device=self.device
+        super(QuantumNet, self).__init__()
+        self._layers = layers
+        self._device = device
+        self._data_qubits = data_qubits
+        self._n_qubits = self._data_qubits + 1
+        self._pqc = QNNLayer(
+            list(range(self._data_qubits)), self._data_qubits, device=self._device
         )
         self._define_params()
 
@@ -39,27 +39,25 @@ class QuantumNet(nn.Module):
     def _define_params(self):
         """Define the network parameters to be trained."""
         self.params = nn.Parameter(
-            torch.rand(len(self.layers), self.data_qubits, device=self.device),
+            torch.rand(len(self._layers), self._data_qubits, device=self._device),
             requires_grad=True,
         )
 
     def _qubit_encoding(self, img):
         img = img.flatten()
-        data_ansatz = Ansatz(self.data_qubits, device=self.device)
+        data_ansatz = Ansatz(self._data_qubits, device=self._device)
         for i in range(img.shape[0]):
             if img[i]:
                 data_ansatz.add_gate(X_tensor, i)
         return data_ansatz
 
     def _construct_ansatz(self):
-        model_ansatz = Ansatz(self.n_qubits, device=self.device)
-        model_ansatz.add_gate(X_tensor, self.data_qubits)
-        model_ansatz.add_gate(H_tensor, self.data_qubits)
-        layer = self.pqc.ansatz_layer(self.layers, self.params)
-        model_ansatz += layer
-        model_ansatz.add_gate(H_tensor, self.data_qubits)
-        model_ansatz.add_gate(Measure_tensor, self.data_qubits)
-
+        model_ansatz = Ansatz(self._n_qubits, device=self._device)
+        model_ansatz.add_gate(X_tensor, self._data_qubits)
+        model_ansatz.add_gate(H_tensor, self._data_qubits)
+        model_ansatz += self._pqc(self._layers, self.params)
+        model_ansatz.add_gate(H_tensor, self._data_qubits)
+        model_ansatz.add_gate(Measure_tensor, self._data_qubits)
         return model_ansatz
 
 

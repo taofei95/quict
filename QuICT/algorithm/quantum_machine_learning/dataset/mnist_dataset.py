@@ -1,65 +1,70 @@
 import collections
 import torch
 from torchvision import datasets, transforms
-import matplotlib.pyplot as plt
 import numpy as np
 
 
 class MNISTDataset:
-    def __init__(
-        self, class0=3, class1=6, resize=(4, 4), threshold=0.5,
-    ):
-        self.class0 = class0
-        self.class1 = class1
-        self.resize = resize
-        self.threshold = threshold
+    def __init__(self, root="./data/", download=True, device=torch.device("cuda:0")):
+        data_train = datasets.MNIST(root=root, train=True, download=download)
+        data_test = datasets.MNIST(root=root, train=False, download=download)
+        self._device = device
+        self._x_train = data_train.data.to(device)
+        self._y_train = data_train.targets.to(device)
+        self._x_test = data_test.data.to(device)
+        self._y_test = data_test.targets.to(device)
 
-    def load_data(self):
-        data_train = datasets.MNIST(root="./data/", train=True)
-        data_test = datasets.MNIST(root="./data/", train=False)
-        x_train = data_train.data
-        y_train = data_train.targets
-        x_test = data_test.data
-        y_test = data_test.targets
-        return x_train, y_train, x_test, y_test
+    @property
+    def x_train(self):
+        return self._x_train
 
-        # # Data preprocessing
-        # # Keep class0 and class1
-        # x_train, y_train = self._filter_targets(x_train, y_train)
-        # x_test, y_test = self._filter_targets(x_test, y_test)
-        # # Downscale
-        # x_train = self._downscale(x_train)
-        # x_test = self._downscale(x_test)
-        # # Remove ambiguous data
-        # x_train, self.y_train = self._remove_conflict(x_train, y_train)
-        # x_test, self.y_test = self._remove_conflict(x_test, y_test)
-        # # Binary images
-        # self.x_train = self._binary_img(x_train)
-        # self.x_test = self._binary_img(x_test)
+    @property
+    def y_train(self):
+        return self._y_train
 
-    def filter_targets(self, x, y):
-        idx = (y == self.class0) | (y == self.class1)
-        x, y = x[idx], y[idx]
-        y = y == self.class1
-        return x, y
+    @property
+    def x_test(self):
+        return self._x_test
 
-    def downscale(self, x):
-        transform = transforms.Resize(size=self.resize)
-        return transform(x) / 255.0
+    @property
+    def y_test(self):
+        return self._y_test
 
-    def remove_conflict(self, X, Y):
-        x_dict = collections.defaultdict(set)
-        for x, y in zip(X, Y):
-            x_dict[tuple(x.numpy().flatten())].add(y.item())
-        X_rmcon = []
-        Y_rmcon = []
-        for x in x_dict.keys():
-            if len(x_dict[x]) == 1:
-                X_rmcon.append(np.array(x).reshape(self.resize))
-                Y_rmcon.append(list(x_dict[x])[0])
-        X_rmcon = torch.from_numpy(np.array(X_rmcon))
-        Y_rmcon = torch.from_numpy(np.array(Y_rmcon))
-        return X_rmcon, Y_rmcon
+    def filter_targets(self, class0=3, class1=6):
+        idx_train = (self._y_train == class0) | (self._y_train == class1)
+        self._x_train, self._y_train = (
+            self._x_train[idx_train],
+            self._y_train[idx_train],
+        )
+        self._y_train = self._y_train == class1
 
-    def binary_img(self, x):
-        return (x > self.threshold).clone()
+        idx_test = (self._y_test == class0) | (self._y_test == class1)
+        self._x_test, self._y_test = self._x_test[idx_test], self._y_test[idx_test]
+        self._y_test = self._y_test == class1
+
+    def downscale(self, resize=(4, 4)):
+        transform = transforms.Resize(size=resize)
+        self._x_train = transform(self._x_train) / 255.0
+        self._x_test = transform(self._x_test) / 255.0
+
+    def remove_conflict(self, resize=(4, 4)):
+        def rmcon(X, Y):
+            x_dict = collections.defaultdict(set)
+            for x, y in zip(X, Y):
+                x_dict[tuple(x.cpu().detach().numpy().flatten())].add(y.item())
+            X_rmcon = []
+            Y_rmcon = []
+            for x in x_dict.keys():
+                if len(x_dict[x]) == 1:
+                    X_rmcon.append(np.array(x).reshape(resize))
+                    Y_rmcon.append(list(x_dict[x])[0])
+            X_rmcon = torch.from_numpy(np.array(X_rmcon)).to(self._device)
+            Y_rmcon = torch.from_numpy(np.array(Y_rmcon)).to(self._device)
+            return X_rmcon, Y_rmcon
+
+        self._x_train, self._y_train = rmcon(self._x_train, self._y_train)
+        self._x_test, self._y_test = rmcon(self._x_test, self._y_test)
+
+    def binary_img(self, threshold=0.5):
+        self._x_train = self._x_train > threshold
+        self._x_test = self._x_test > threshold
