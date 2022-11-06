@@ -1,67 +1,151 @@
 <template>
   <el-container style="background-color: #13141c; padding: 0px">
-      <el-header class="status-bar" style="padding: 0px; height: 50px">
-        <ToolBar v-on:SaveQCDA="SaveQCDA" v-on:RunQCDA="RunQCDA" v-on:LoadQCDA="LoadQCDA" v-on:ChangeSet="ChangeSet"
-          v-on:UpdateCustomerSet="UpdateCustomerSet" v-on:UpdataTopology="UpdataTopology" :all_sets="all_sets"
-          :customer_set="customer_set" :topology="topology" :q="qbit" :id_base="'QuCompuser'" :show_save_run_load="true">
-        </ToolBar>
-      </el-header>
-      <el-container>
-        <el-container direction="vertical">
-          <el-main class="vis-block">
-            <VisualizeZone ref="visVue" :VisContentIn="VisContent" v-on:VisUpdate="VisUpdate">
-            </VisualizeZone>
-          </el-main>
-          <el-main class="status-bar" style="color: #9aa0be; padding: 0px">
-            <el-row>
-              <el-col :span="4"></el-col>
-              <el-col :span="16">{{ StatusContent }}</el-col>
-              <el-col :span="4">
-                <el-button v-if="ExpandResult" size="small" type="primary" @click="ResultSmall"
-                  style="font-family: 'Segoe UI Symbol'"></el-button>
-                <el-button v-else size="small" type="primary" @click="ResultLarge"
-                  style="font-family: 'Segoe UI Symbol'"></el-button>
-              </el-col>
-            </el-row>
-          </el-main>
-          <el-main class="output-block" style="padding: 0px">
-            <el-tabs type="border-card" style="background: transparent !important; border: 0px solid">
-              <el-tab-pane label="Table">
-                <el-row style="height: 40px" v-if="Object.keys(OutputContent).length > 0">
-                  <el-col :span="4"></el-col>
-                  <el-col :span="6"><b>State</b></el-col>
-                  <el-col :span="4"></el-col>
-                  <el-col :span="6"><b>Measured</b></el-col>
-                  <el-col :span="4"></el-col>
-                </el-row>
+    <el-header class="status-bar" style="padding: 0px; height: 50px">
+      <ToolBar
+        v-on:SaveQCDA="SaveQCDA"
+        v-on:RunQCDA="RunQCDA"
+        v-on:LoadQCDA="LoadQCDA"
+        v-on:ChangeSet="ChangeSet"
+        v-on:UpdateCustomerSet="UpdateCustomerSet"
+        v-on:UpdataTopology="UpdataTopology"
+        :all_sets="all_sets"
+        :customer_set="customer_set"
+        :topology="topology"
+        :q="qbit"
+        :id_base="'QuCompuser'"
+        :show_save_run_load="true"
+      >
+      </ToolBar>
+    </el-header>
+    <el-container>
+      <el-container direction="vertical">
+        <el-main class="vis-block">
+          <VisualizeZone
+            ref="visVue"
+            :VisContentIn="VisContent"
+            v-on:VisUpdate="VisUpdate"
+          >
+          </VisualizeZone>
+        </el-main>
+        <el-main class="status-bar" style="color: #9aa0be; padding: 0px">
+          <el-row>
+            <el-col :span="4"></el-col>
+            <el-col :span="16">{{ StatusContent }}</el-col>
+            <el-col :span="4">
+              <el-button
+                v-if="ExpandResult"
+                size="small"
+                type="primary"
+                @click="ResultSmall"
+                style="font-family: 'Segoe UI Symbol'"
+                ></el-button
+              >
+              <el-button
+                v-else
+                size="small"
+                type="primary"
+                @click="ResultLarge"
+                style="font-family: 'Segoe UI Symbol'"
+                ></el-button
+              >
+            </el-col>
+          </el-row>
+        </el-main>
+        <el-main class="output-block" style="padding: 0px">
+          <el-radio-group v-model="Output_type" @change="DrawOutput">
+            <el-radio :label="0">Counts</el-radio>
+            <el-radio :label="1">State Vector</el-radio>
+            <el-radio :label="2">Density Matrix</el-radio>
+          </el-radio-group>
 
-                <el-row style="height: 40px" v-for="[k, v] in Object.entries(OutputContent).sort()" :key="k">
-                  <el-col :span="4"></el-col>
-                  <el-col :span="6">{{ k }}</el-col>
-                  <el-col :span="4"></el-col>
-                  <el-col :span="6">{{ v }}</el-col>
-                  <!-- <el-col :span="6" v-if="result[2].startsWith('-')"
+          <el-tabs
+            type="border-card"
+            style="background: transparent !important; border: 0px solid"
+            v-if="Output_type == 0"
+          >
+            <el-tab-pane label="Table">
+              <el-row
+                style="height: 40px"
+                v-if="Object.keys(OutputContent).length > 0"
+              >
+                <el-col :span="4"></el-col>
+                <el-col :span="6"><b>State</b></el-col>
+                <el-col :span="4"></el-col>
+                <el-col :span="6"><b>Measured</b></el-col>
+                <el-col :span="4"></el-col>
+              </el-row>
+
+              <el-row
+                style="height: 40px"
+                v-for="[k, v] in Object.entries(OutputContent).sort()"
+                :key="k"
+              >
+                <el-col :span="4"></el-col>
+                <el-col :span="6">{{ k }}</el-col>
+                <el-col :span="4"></el-col>
+                <el-col :span="6">{{ v }}</el-col>
+                <!-- <el-col :span="6" v-if="result[2].startsWith('-')"
                     >{{ result[1]
                     }}{{ result[2].replace("-", " - ") }} j</el-col
                   >
                   <el-col :span="6" v-else
                     >{{ result[1] }} + {{ result[2] }} j</el-col
                   > -->
-                  <el-col :span="4"></el-col>
-                </el-row>
-              </el-tab-pane>
-              <el-tab-pane label="Histogram">
-                <div id="histogram"></div>
-              </el-tab-pane>
-            </el-tabs>
-          </el-main>
-        </el-container>
-        <el-aside width="20%" style="background-color: #292c3d; padding: 0px">
-          <ProgramZone :ProgramTextIn="ProgramText" v-on:ProgramUpdate="ProgramUpdate">
-          </ProgramZone>
-        </el-aside>
+                <el-col :span="4"></el-col>
+              </el-row>
+            </el-tab-pane>
+            <el-tab-pane label="Histogram">
+              <div id="histogram"></div>
+            </el-tab-pane>
+          </el-tabs>
+          <el-tabs
+            type="border-card"
+            style="background: transparent !important; border: 0px solid"
+            v-if="Output_type == 1"
+          >
+            <el-tab-pane label="Table">
+              <el-row
+                style="height: 40px"
+                v-if="OutputContent_state_vector.length > 0"
+              >
+                <el-col :span="4"></el-col>
+                <el-col :span="6"><b>State</b></el-col>
+                <el-col :span="4"></el-col>
+                <el-col :span="6"><b>Measured</b></el-col>
+                <el-col :span="4"></el-col>
+              </el-row>
 
+              <el-row
+                style="height: 40px"
+                v-for="result in OutputContent_state_vector"
+                :key="result"
+              >
+                <el-col :span="4"></el-col>
+                <el-col :span="6">{{ result[0] }}</el-col>
+                <el-col :span="4"></el-col>
+                <el-col :span="6" v-if="result[2].startsWith('-')"
+                  >{{ result[1] }}{{ result[2].replace("-", " - ") }} j</el-col
+                >
+                <el-col :span="6" v-else
+                  >{{ result[1] }} + {{ result[2] }} j</el-col
+                >
+                <el-col :span="4"></el-col>
+              </el-row>
+            </el-tab-pane>
+            <el-tab-pane label="Histogram">
+              <div id="histogram_state_vector"></div>
+            </el-tab-pane>
+          </el-tabs>
+        </el-main>
       </el-container>
+      <el-aside width="20%" style="background-color: #292c3d; padding: 0px">
+        <ProgramZone
+          :ProgramTextIn="ProgramText"
+          v-on:ProgramUpdate="ProgramUpdate"
+        >
+        </ProgramZone>
+      </el-aside>
+    </el-container>
   </el-container>
 </template>
 <style>
@@ -93,11 +177,11 @@
   height: calc(100vh - 20vh - 150px);
 }
 
-.el-tabs--border-card>.el-tabs__header .el-tabs__item.is-active {
+.el-tabs--border-card > .el-tabs__header .el-tabs__item.is-active {
   background-color: transparent !important;
 }
 
-.el-tabs--border-card>.el-tabs__header {
+.el-tabs--border-card > .el-tabs__header {
   background-color: transparent !important;
 }
 </style>
@@ -112,14 +196,11 @@ export default {
   props: {},
   data: function () {
     return {
-      ProgramText: "OPENQASM 2.0; \ninclude \"qelib1.inc\";\nqreg q[5];",
+      ProgramText: 'OPENQASM 2.0; \ninclude "qelib1.inc";\nqreg q[5];',
       VisContent: {
-        gateSet: [
-        ],
+        gateSet: [],
         q: [0, 1, 2, 3, 4],
-        gates: [
-
-        ],
+        gates: [],
       },
       all_sets: [],
       current_set: 0,
@@ -127,9 +208,10 @@ export default {
       topology: [],
       qbit: [0, 1, 2, 3, 4],
       OutputContent: {},
+      OutputContent_state_vector: {},
+      Output_type: 0,
       StatusContent: "Create a circuit and run.",
       ExpandResult: false,
-
     };
   },
   components: {
@@ -537,7 +619,7 @@ export default {
         this.socket.emit("qasm_load", {
           uuid: this.uuid,
           content: text,
-          source:'QuCompuser',
+          source: "QuCompuser",
         });
       };
 
@@ -576,6 +658,27 @@ export default {
         yFormat: ".1f", //".3f", //"d",
         // yLabel: "Amplitude",
         yLabel: "nCounts",
+        width: width,
+        height: height,
+        color: "steelblue",
+      });
+      histogram_zone.node().appendChild(chart);
+    },
+    DrawHistogram_state_vector(result) {
+      console.log("DrawHistogram", result);
+      let width = result.length * 30 + 100;
+      let height = 350;
+      let histogram_zone = d3.select("#histogram_state_vector");
+      histogram_zone.selectAll("*").remove();
+      let chart = this.BarChart(result, {
+        x: (d) => d[0],
+        y: (d) => d[3],
+        title: (d) => {
+          return `Amplitude:${d3.format(".3f")(d[3])}\nPhase angle:${d[4]}`;
+        },
+        xDomain: d3.map(result, (d) => d[0]), // sort by descending frequency
+        yFormat: ".3f",
+        yLabel: "Amplitude",
         width: width,
         height: height,
         color: "steelblue",
@@ -708,10 +811,20 @@ export default {
       this.$refs.visVue.vis_change();
       this.ProgramText = this.GenQASM();
     },
-
+    DrawOutput(Output_type) {
+      switch (Output_type) {
+        case 0:
+          this.DrawHistogram(this.OutputContent);
+          break;
+        case 1:
+          this.DrawHistogram_state_vector(this.OutputContent_state_vector);
+          break;
+        default:
+          break;
+      }
+    },
   },
   mounted: function () {
-
     this.socket.on("qasm_load", (content) => {
       // 收到后端处理好的qasm，显示到前端qasm编辑区域
       console.log(content);
@@ -737,7 +850,8 @@ export default {
         return;
       }
       this.OutputContent = content.run_result.data.counts;
-      this.DrawHistogram(content.run_result.data.counts);
+      this.OutputContent_state_vector = content.run_result.data.state_vector;
+      this.DrawOutput(this.Output_type);
     });
 
     this.socket.on("all_sets", (content) => {
@@ -804,8 +918,6 @@ export default {
     });
     // this.qbit = this.VisContent.q;
   },
-  watch: {
-
-  }
+  watch: {},
 };
 </script>

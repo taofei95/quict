@@ -373,7 +373,30 @@ def run_file(content):
         emit(
             'info', {'uuid': uid, 'info': f"Run circuit finished."}, namespace="/api/pty")
         logger.info(f"run result {result}")
-        result["data"]["state_vector"] = None
+        state = result["data"]["state_vector"] 
+
+        state_np = cupy.asnumpy(state)
+        state_np_r = np.real(state_np)
+        state_np_i = np.imag(state_np)
+        state_str_r = np.array2string(state_np_r, separator=',', formatter={
+                                      'float_kind': lambda x: "\""+("%f" % x).rstrip('0').rstrip('.')+"\""})
+        state_str_i = np.array2string(state_np_i, separator=',', formatter={
+                                      'float_kind': lambda x: "\""+("%f" % x).rstrip('0').rstrip('.')+"\""})
+        # logger.info( state_str_r, state_str_i)
+        state_r = json.loads(state_str_r)
+        state_i = json.loads(state_str_i)
+        index = []
+        state_amp = []
+        state_ang = []
+        for i in range(len(state_r)):
+            index.append(format(i, f'0{int(math.log(len(state_r),2))}b'))
+            amp, ang = cal_mod(state_np_r[i], state_np_i[i])
+            state_amp.append(amp)
+            state_ang.append(ang)
+
+        result["data"]["state_vector"]  = list(
+            zip(index, state_r, state_i, state_amp, state_ang))
+
         emit('run_result', {'uuid': uid, 'run_result': result}, namespace="/api/pty")
     except Exception as e:
         import traceback
@@ -404,7 +427,29 @@ def o_run_file(content):
         emit(
             'info', {'uuid': uid, 'info': f"Run circuit finished."}, namespace="/api/pty")
         logger.info(f"run result {result}")
-        result["data"]["state_vector"] = None;
+        state = result["data"]["state_vector"] 
+
+        state_np = cupy.asnumpy(state)
+        state_np_r = np.real(state_np)
+        state_np_i = np.imag(state_np)
+        state_str_r = np.array2string(state_np_r, separator=',', formatter={
+                                      'float_kind': lambda x: "\""+("%f" % x).rstrip('0').rstrip('.')+"\""})
+        state_str_i = np.array2string(state_np_i, separator=',', formatter={
+                                      'float_kind': lambda x: "\""+("%f" % x).rstrip('0').rstrip('.')+"\""})
+        # logger.info( state_str_r, state_str_i)
+        state_r = json.loads(state_str_r)
+        state_i = json.loads(state_str_i)
+        index = []
+        state_amp = []
+        state_ang = []
+        for i in range(len(state_r)):
+            index.append(format(i, f'0{int(math.log(len(state_r),2))}b'))
+            amp, ang = cal_mod(state_np_r[i], state_np_i[i])
+            state_amp.append(amp)
+            state_ang.append(ang)
+
+        result["data"]["state_vector"]  = list(
+            zip(index, state_r, state_i, state_amp, state_ang))
         emit('o_run_result', {'uuid': uid, 'run_result': result}, namespace="/api/pty")
     except Exception as e:
         import traceback

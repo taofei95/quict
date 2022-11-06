@@ -1,9 +1,11 @@
 <template>
-  <el-container style="
+  <el-container
+    style="
       height: calc(100vh - 50px);
       font-size: var(--el-font-size-large);
       width: 100%;
-    ">
+    "
+  >
     <el-header style="height: 50px">
       <el-steps :active="current_step" finish-status="success" simple>
         <el-step title="Home" />
@@ -14,68 +16,183 @@
     </el-header>
     <el-main style="padding: 0px !important; height: calc(100vh - 100px)">
       <div id="step_0" class="div_selected">
-        <el-button size="large" type="primary" plain
-          style="font-family: 'Segoe UI Symbol'; width: 100px; height: 100px; margin: 100px 10px;" @click="new_qcda">
-          New
+        <el-button
+          size="large"
+          type="primary"
+          plain
+          style="
+            font-family: 'Segoe UI Symbol';
+            width: 100px;
+            height: 100px;
+            margin: 100px 10px;
+          "
+          @click="new_qcda"
+          > New
         </el-button>
-        <el-button size="large" type="primary" plain
-          style="margin: 100px 10px; font-family: 'Segoe UI Symbol'; width: 100px; height: 100px;" @click="load_qcda">
-          LOAD
+        <el-button
+          size="large"
+          type="primary"
+          plain
+          style="
+            margin: 100px 10px;
+            font-family: 'Segoe UI Symbol';
+            width: 100px;
+            height: 100px;
+          "
+          @click="load_qcda"
+          > LOAD
         </el-button>
-
       </div>
       <div id="step_1_N" class="div_not_selected">
         <el-container>
           <el-main class="vis-block">
-            <ToolBar ref="n_toolBar" v-on:SaveQCDA="toolbar_func" v-on:RunQCDA="toolbar_func"
-              v-on:LoadQCDA="toolbar_func" v-on:ChangeSet="n_ChangeSet" v-on:UpdateCustomerSet="n_UpdateCustomerSet"
-              v-on:UpdataTopology="n_UpdataTopology" :all_sets="n_all_sets" :customer_set="n_customer_set"
-              :topology="n_topology" :q="n_qbit" :id_base="'QCDA_new'" :show_save_run_load="false">
+            <ToolBar
+              ref="n_toolBar"
+              v-on:SaveQCDA="toolbar_func"
+              v-on:RunQCDA="toolbar_func"
+              v-on:LoadQCDA="toolbar_func"
+              v-on:ChangeSet="n_ChangeSet"
+              v-on:UpdateCustomerSet="n_UpdateCustomerSet"
+              v-on:UpdataTopology="n_UpdataTopology"
+              :all_sets="n_all_sets"
+              :customer_set="n_customer_set"
+              :topology="n_topology"
+              :q="n_qbit"
+              :id_base="'QCDA_new'"
+              :show_save_run_load="false"
+            >
             </ToolBar>
-            <nVisualizeZone ref="n_visVue" :VisContentIn="n_VisContent" v-on:VisUpdate="n_VisUpdate">
+            <nVisualizeZone
+              ref="n_visVue"
+              :VisContentIn="n_VisContent"
+              v-on:VisUpdate="n_VisUpdate"
+            >
             </nVisualizeZone>
-            <el-button size="large" type="primary" plain @click="back_qcda"
-              style="margin: 0px 10px; font-family: 'Segoe UI Symbol'"> Back </el-button>
-            <el-button size="large" type="primary" plain @click="confirm_newQCDA" :enabled="NewConfirmBtnEnable"
-              style="margin: 0px 10px; font-family: 'Segoe UI Symbol'"> Next </el-button>
+            <el-button
+              size="large"
+              type="primary"
+              plain
+              @click="back_qcda"
+              style="margin: 0px 10px; font-family: 'Segoe UI Symbol'"
+            >
+              Back
+            </el-button>
+            <el-button
+              size="large"
+              type="primary"
+              plain
+              @click="confirm_newQCDA"
+              :enabled="NewConfirmBtnEnable"
+              style="margin: 0px 10px; font-family: 'Segoe UI Symbol'"
+            >
+              Next
+            </el-button>
           </el-main>
           <el-aside width="20%" style="background-color: #292c3d; padding: 0px">
-            <ProgramZone :ProgramTextIn="n_ProgramText" v-on:ProgramUpdate="n_ProgramUpdate">
+            <ProgramZone
+              :ProgramTextIn="n_ProgramText"
+              v-on:ProgramUpdate="n_ProgramUpdate"
+            >
             </ProgramZone>
           </el-aside>
-
         </el-container>
-
       </div>
       <div id="step_1_L" class="div_not_selected">
-        <ToolBar ref="l_toolBar" v-on:SaveQCDA="toolbar_func" v-on:RunQCDA="toolbar_func" v-on:LoadQCDA="toolbar_func"
-          v-on:ChangeSet="l_ChangeSet" v-on:UpdateCustomerSet="l_UpdateCustomerSet"
-          v-on:UpdataTopology="l_UpdataTopology" :all_sets="l_all_sets" :customer_set="l_customer_set"
-          :topology="l_topology" :q="l_qbit" :id_base="'QCDA_load'" :show_save_run_load="false">
+        <ToolBar
+          ref="l_toolBar"
+          v-on:SaveQCDA="toolbar_func"
+          v-on:RunQCDA="toolbar_func"
+          v-on:LoadQCDA="toolbar_func"
+          v-on:ChangeSet="l_ChangeSet"
+          v-on:UpdateCustomerSet="l_UpdateCustomerSet"
+          v-on:UpdataTopology="l_UpdataTopology"
+          :all_sets="l_all_sets"
+          :customer_set="l_customer_set"
+          :topology="l_topology"
+          :q="l_qbit"
+          :id_base="'QCDA_load'"
+          :show_save_run_load="false"
+        >
         </ToolBar>
-        <el-upload class="load_qcda" :action="uploadBackend" :multiple="multipleUpload" :show-file-list="showFileList"
-          :before-upload="loadQCDA">
-          <el-button size="large" type="primary" plain style="margin: 100px 10px; font-family: 'Segoe UI Symbol';width: 100px; height: 100px;"> LOAD
+        <el-upload
+          class="load_qcda"
+          :action="uploadBackend"
+          :multiple="multipleUpload"
+          :show-file-list="showFileList"
+          :before-upload="loadQCDA"
+        >
+          <el-button
+            size="large"
+            type="primary"
+            plain
+            style="
+              margin: 100px 10px;
+              font-family: 'Segoe UI Symbol';
+              width: 100px;
+              height: 100px;
+            "
+            > LOAD
           </el-button>
         </el-upload>
-        <el-button size="large" type="primary" plain @click="back_qcda"
-          style="margin: 0px 10px; font-family: 'Segoe UI Symbol'"> Back </el-button>
-        <el-button size="large" type="primary" plain @click="confirm_loadQCDA" :disabled="LoadConfirmBtnDisable"
-          style="margin: 0px 10px; font-family: 'Segoe UI Symbol'"> Next </el-button>
+        <el-button
+          size="large"
+          type="primary"
+          plain
+          @click="back_qcda"
+          style="margin: 0px 10px; font-family: 'Segoe UI Symbol'"
+        >
+          Back
+        </el-button>
+        <el-button
+          size="large"
+          type="primary"
+          plain
+          @click="confirm_loadQCDA"
+          :disabled="LoadConfirmBtnDisable"
+          style="margin: 0px 10px; font-family: 'Segoe UI Symbol'"
+        >
+          Next
+        </el-button>
       </div>
       <div id="step_2" class="div_not_selected">
         <oVisualizeZone ref="o_visVue" :VisContentIn="o_VisContent">
           <!-- TODO: replace with a one way vue component -->
         </oVisualizeZone>
-        <el-button size="large" type="primary" plain @click="back_o_qasm"
-          style="margin: 0px 10px; font-family: 'Segoe UI Symbol'"> Back </el-button>
-        <el-button size="large" type="primary" plain @click="run_o_QCDA"
-          style="margin: 0px 10px; font-family: 'Segoe UI Symbol'"> Next </el-button>
+        <el-button
+          size="large"
+          type="primary"
+          plain
+          @click="back_o_qasm"
+          style="margin: 0px 10px; font-family: 'Segoe UI Symbol'"
+        >
+          Back
+        </el-button>
+        <el-button
+          size="large"
+          type="primary"
+          plain
+          @click="run_o_QCDA"
+          style="margin: 0px 10px; font-family: 'Segoe UI Symbol'"
+        >
+          Next
+        </el-button>
       </div>
       <div id="step_3" class="div_not_selected">
-        <el-tabs type="border-card" style="background: transparent !important; border: 0px solid">
+        <el-radio-group v-model="Output_type" @change="DrawOutput">
+            <el-radio :label="0">Counts</el-radio>
+            <el-radio :label="1">State Vector</el-radio>
+            <el-radio :label="2">Density Matrix</el-radio>
+          </el-radio-group>
+        <el-tabs
+          type="border-card"
+          style="background: transparent !important; border: 0px solid"
+          v-if="Output_type == 0"
+        >
           <el-tab-pane label="Table">
-            <el-row style="height: 40px" v-if="Object.keys(OutputContent).length > 0">
+            <el-row
+              style="height: 40px"
+              v-if="Object.keys(OutputContent).length > 0"
+            >
               <el-col :span="4"></el-col>
               <el-col :span="6"><b>State</b></el-col>
               <el-col :span="4"></el-col>
@@ -83,7 +200,11 @@
               <el-col :span="4"></el-col>
             </el-row>
 
-            <el-row style="height: 40px" v-for="[k, v] in Object.entries(OutputContent).sort()" :key="k">
+            <el-row
+              style="height: 40px"
+              v-for="[k, v] in Object.entries(OutputContent).sort()"
+              :key="k"
+            >
               <el-col :span="4"></el-col>
               <el-col :span="6">{{ k }}</el-col>
               <el-col :span="4"></el-col>
@@ -102,10 +223,61 @@
             <div id="o_histogram"></div>
           </el-tab-pane>
         </el-tabs>
-        <el-button size="large" type="primary" plain @click="back_r_QCDA"
-          style="margin: 0px 10px; font-family: 'Segoe UI Symbol'"> Back </el-button>
-        <el-button size="large" type="primary" @click="back_qcda"
-          style="margin: 0px 10px; font-family: 'Segoe UI Symbol'"> Restart </el-button>
+        <el-tabs
+          type="border-card"
+          style="background: transparent !important; border: 0px solid"
+          v-if="Output_type == 1"
+        >
+          <el-tab-pane label="Table">
+            <el-row
+              style="height: 40px"
+              v-if="OutputContent_state_vector.length > 0"
+            >
+              <el-col :span="4"></el-col>
+              <el-col :span="6"><b>State</b></el-col>
+              <el-col :span="4"></el-col>
+              <el-col :span="6"><b>Measured</b></el-col>
+              <el-col :span="4"></el-col>
+            </el-row>
+
+            <el-row
+              style="height: 40px"
+              v-for="result in OutputContent_state_vector"
+              :key="result"
+            >
+              <el-col :span="4"></el-col>
+              <el-col :span="6">{{ result[0] }}</el-col>
+              <el-col :span="4"></el-col>
+              <el-col :span="6" v-if="result[2].startsWith('-')"
+                >{{ result[1] }}{{ result[2].replace("-", " - ") }} j</el-col
+              >
+              <el-col :span="6" v-else
+                >{{ result[1] }} + {{ result[2] }} j</el-col
+              >
+              <el-col :span="4"></el-col>
+            </el-row>
+          </el-tab-pane>
+          <el-tab-pane label="Histogram">
+            <div id="o_histogram_state_vector"></div>
+          </el-tab-pane>
+        </el-tabs>
+        <el-button
+          size="large"
+          type="primary"
+          plain
+          @click="back_r_QCDA"
+          style="margin: 0px 10px; font-family: 'Segoe UI Symbol'"
+        >
+          Back
+        </el-button>
+        <el-button
+          size="large"
+          type="primary"
+          @click="back_qcda"
+          style="margin: 0px 10px; font-family: 'Segoe UI Symbol'"
+        >
+          Restart
+        </el-button>
       </div>
     </el-main>
   </el-container>
@@ -138,32 +310,25 @@ export default {
       n_ProgramText: "",
       o_ProgramText: "",
       l_VisContent: {
-        gateSet: [
-        ],
+        gateSet: [],
         q: [0, 1, 2, 3, 4],
-        gates: [
-
-        ],
+        gates: [],
       },
       n_VisContent: {
-        gateSet: [
-        ],
+        gateSet: [],
         q: [0, 1, 2, 3, 4],
-        gates: [
-
-        ],
+        gates: [],
       },
       o_VisContent: {
-        gateSet: [
-        ],
+        gateSet: [],
         q: [0, 1, 2, 3, 4],
-        gates: [
-
-        ],
+        gates: [],
       },
       LoadConfirmBtnDisable: true,
       NewConfirmBtnEnable: false,
       OutputContent: {},
+      OutputContent_state_vector: {},
+      Output_type: 0,
       Route: "N",
       n_all_sets: [],
       l_all_sets: [],
@@ -195,7 +360,7 @@ export default {
       d3.select("#step_1_L").attr("class", "div_not_selected");
       d3.select("#step_2").attr("class", "div_not_selected");
       d3.select("#step_3").attr("class", "div_not_selected");
-      this.socket.emit("get_gate_set", { uuid: this.uuid, source: 'QCDA' });
+      this.socket.emit("get_gate_set", { uuid: this.uuid, source: "QCDA" });
     },
     load_qcda() {
       this.current_step = 1;
@@ -205,7 +370,10 @@ export default {
       d3.select("#step_1_L").attr("class", "div_selected");
       d3.select("#step_2").attr("class", "div_not_selected");
       d3.select("#step_3").attr("class", "div_not_selected");
-      this.socket.emit("get_gate_set", { uuid: this.uuid, source: 'QCDA_load' });
+      this.socket.emit("get_gate_set", {
+        uuid: this.uuid,
+        source: "QCDA_load",
+      });
     },
     back_qcda() {
       this.current_step = 0;
@@ -215,12 +383,9 @@ export default {
       d3.select("#step_2").attr("class", "div_not_selected");
       d3.select("#step_3").attr("class", "div_not_selected");
       this.n_VisContent = {
-        gateSet: [
-        ],
+        gateSet: [],
         q: [0, 1, 2, 3, 4],
-        gates: [
-
-        ],
+        gates: [],
       };
       this.n_ProgramText = "";
       this.LoadConfirmBtnDisable = true;
@@ -274,7 +439,6 @@ export default {
         console.log(text);
         this.l_ProgramText = text;
         this.LoadConfirmBtnDisable = false;
-
       };
 
       reader.onerror = (evt) => {
@@ -285,7 +449,7 @@ export default {
       this.socket.emit("qasm_load", {
         uuid: this.uuid,
         content: this.l_ProgramText,
-        source: 'QCDA',
+        source: "QCDA",
         optimize: this.$refs.l_toolBar.getOpSwitch(),
         mapping: this.$refs.l_toolBar.getMapSwitch(),
         topology: this.l_topology,
@@ -296,7 +460,7 @@ export default {
       this.socket.emit("qasm_load", {
         uuid: this.uuid,
         content: this.n_ProgramText,
-        source: 'QCDA',
+        source: "QCDA",
         optimize: this.$refs.n_toolBar.getOpSwitch(),
         mapping: this.$refs.n_toolBar.getMapSwitch(),
         topology: this.n_topology,
@@ -307,8 +471,7 @@ export default {
       let setting = {};
       if (this.Route == "N") {
         setting = this.$refs.n_toolBar.getSetting();
-      }
-      else {
+      } else {
         setting = this.$refs.l_toolBar.getSetting();
       }
 
@@ -328,7 +491,7 @@ export default {
       this.socket.emit("o_qasm_run", {
         uuid: this.uuid,
         content: ProgramText,
-        source: 'QCDA',
+        source: "QCDA",
         optimize: optimize,
         mapping: mapping,
         topology: topology,
@@ -558,7 +721,7 @@ export default {
       this.socket.emit("programe_update", {
         uuid: this.uuid,
         content: ProgramText,
-        source: 'QCDA',
+        source: "QCDA",
       });
       this.NewConfirmBtnEnable = true;
     },
@@ -806,6 +969,27 @@ export default {
       });
       histogram_zone.node().appendChild(chart);
     },
+    DrawHistogram_state_vector(result) {
+      console.log("DrawHistogram", result);
+      let width = result.length * 30 + 100;
+      let height = 350;
+      let histogram_zone = d3.select("#o_histogram_state_vector");
+      histogram_zone.selectAll("*").remove();
+      let chart = this.BarChart(result, {
+        x: (d) => d[0],
+        y: (d) => d[3],
+        title: (d) => {
+          return `Amplitude:${d3.format(".3f")(d[3])}\nPhase angle:${d[4]}`;
+        },
+        xDomain: d3.map(result, (d) => d[0]), // sort by descending frequency
+        yFormat: ".3f",
+        yLabel: "Amplitude",
+        width: width,
+        height: height,
+        color: "steelblue",
+      });
+      histogram_zone.node().appendChild(chart);
+    },
     BarChart( // 用d3绘制barchart
       data,
       {
@@ -958,6 +1142,18 @@ export default {
       // this.$refs.l_visVue.vis_change();
       this.l_ProgramText = this.l_GenQASM();
     },
+    DrawOutput(Output_type) {
+      switch (Output_type) {
+        case 0:
+          this.DrawHistogram(this.OutputContent);
+          break;
+        case 1:
+          this.DrawHistogram_state_vector(this.OutputContent_state_vector);
+          break;
+        default:
+          break;
+      }
+    },
   },
   mounted: function () {
     // let this_ref = this;
@@ -1010,7 +1206,7 @@ export default {
       this.o_VisContent.gates = this.ListGates(groupedGates);
 
       this.$refs.o_visVue.vis_change();
-      this.show_o_qasm()
+      this.show_o_qasm();
     });
 
     this.socket.on("n_all_sets", (content) => {
@@ -1047,10 +1243,10 @@ export default {
         return;
       }
       this.OutputContent = content.run_result.data.counts;
-      this.DrawHistogram(content.run_result.data.counts);
+      this.OutputContent_state_vector = content.run_result.data.state_vector;
+      this.DrawOutput(this.Output_type);
       this.confirm_o_QCDA();
     });
-
   },
   watch: {},
   emits: {
