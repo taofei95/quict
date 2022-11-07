@@ -225,11 +225,12 @@ file_data = [
 
 setup(
     name="quict",
-    version="0.5.2",
+    version="0.5.3",
     description="Quantum Compute Platform of Institute of Computing Technology",
     author="Library for Quantum Computation and Theoretical Computer Science, ICT, CAS",
     author_email="likaiqi@ict.ac.cn",
     license='Apache License 2.0',
+    platforms=["Windows", "Linux", "macOS"],
     url="https://e.gitee.com/quictucas/repos/quictucas/quict",
     package_dir={"QuICT": f"{PRJ_ROOT_RELATIVE}/QuICT/"},
     install_requires=[
