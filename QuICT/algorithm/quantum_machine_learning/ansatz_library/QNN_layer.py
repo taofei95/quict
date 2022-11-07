@@ -48,7 +48,7 @@ class QNNLayer:
         if not isinstance(two_qubit_gates, list):
             two_qubit_gates = [two_qubit_gates]
         n_layers = len(two_qubit_gates)
-        params = params.cpu().detach().numpy()
+        params = params.cpu().detach().numpy().astype(np.float64)
         assert (
             params.shape[0] == n_layers and params.shape[1] == self._n_qubits - 1
         ), "The shape of the parameters should be [n_layers, n_data_qubits]."

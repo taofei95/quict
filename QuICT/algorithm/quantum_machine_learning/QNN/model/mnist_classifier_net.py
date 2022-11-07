@@ -46,7 +46,13 @@ class QuantumNet(nn.Module):
             _, prob = ansatz.forward()
             assert prob is not None, "There is no Measure Gate on the readout qubit."
             Y_pred[i] = prob[1]
-
+            # circuit = self._qubit_encoding_circuit(X[i])
+            # model_circuit = self._construct_circuit()
+            # circuit.extend(model_circuit.gates)
+            # simulator = ConstantStateVectorSimulator()
+            # sv = simulator.run(circuit)
+            
+            
         return Y_pred
 
     def _define_params(self):
@@ -63,6 +69,14 @@ class QuantumNet(nn.Module):
             if img[i]:
                 data_ansatz.add_gate(X_tensor, i)
         return data_ansatz
+    
+    def _qubit_encoding_circuit(self, img):
+        img = img.flatten()
+        data_circuit = Circuit(self._n_qubits)
+        for i in range(img.shape[0]):
+            if img[i]:
+                X | data_circuit(i)
+        return data_circuit
 
     def _amplitude_encoding(self, img):
         return
@@ -75,6 +89,16 @@ class QuantumNet(nn.Module):
         model_ansatz.add_gate(H_tensor, self._data_qubits)
         model_ansatz.add_gate(Measure_tensor, self._data_qubits)
         return model_ansatz
+    
+    def _construct_circuit(self):
+        model_circuit = Circuit(self._n_qubits)
+        X | model_circuit(self._data_qubits)
+        H | model_circuit(self._data_qubits)
+        sub_circuit = self._pqc.circuit_layer(self._layers, self.params)
+        model_circuit.extend(sub_circuit.gates)
+        H | model_circuit(self._data_qubits)
+        Measure | model_circuit(self._data_qubits)
+        return model_circuit
 
 
 class ClassicalNet(nn.Module):
