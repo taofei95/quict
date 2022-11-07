@@ -21,6 +21,9 @@ class UniformlyRyRevision(object):
         Here we demand a CZ gate at the edge of the decomposition, therefore the
         recursion process is slightly revised.
 
+        If qubit_num > 2, synthesized gates would have 2 cz gates at rightmost place.
+        If qubit_num == 2, there would be only 1 cz gate.
+
         Args:
             angle_list(list<float>): the angles of Ry Gates
 
@@ -114,9 +117,3 @@ class UniformlyRyRevision(object):
                 CX & [low, high - 1]
             gates.extend(self.inner_uniformly_rotation_cz(low + 1, high, Rxn, False, True))
         return gates
-
-
-"""
-If qubit_num > 2, synthesized gates would have 2 cz gates at rightmost place.
-If qubit_num == 2, there would be only 1 cz gate.
-"""

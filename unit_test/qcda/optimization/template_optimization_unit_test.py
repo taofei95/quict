@@ -1,7 +1,5 @@
 from random import sample
 
-import pytest
-
 from QuICT.core import *
 from QuICT.core.gate import *
 from QuICT.lib.circuitlib import CircuitLib
@@ -110,4 +108,3 @@ def test_random_circuit():
         mat_1 = circ.matrix()
         mat_2 = circ_optim.matrix()
         assert np.allclose(mat_1, mat_2)
-
