@@ -4,7 +4,7 @@
 # @Author  : Han Yu
 # @File    : __init__.py
 
-from .auto_optimization import AutoOptimization
+from .clifford_rz_optimization import CliffordRzOptimization
 from .symbolic_clifford_optimization import SymbolicCliffordOptimization
 from .cnot_ancilla import CnotAncilla
 from .commutative_optimization import CommutativeOptimization

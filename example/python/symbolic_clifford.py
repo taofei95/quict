@@ -1,5 +1,3 @@
-import numpy as np
-
 from QuICT.core import Circuit
 from QuICT.core.gate import CLIFFORD_GATE_SET
 from QuICT.qcda.synthesis.clifford import CliffordUnidirectionalSynthesizer
