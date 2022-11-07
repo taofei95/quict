@@ -5,7 +5,6 @@ import torch
 
 from QuICT.algorithm.quantum_machine_learning.utils.gate_tensor import *
 from QuICT.core.gate import *
-from QuICT.ops.gate_kernel import measured_prob_calculate
 
 
 class Ansatz:
@@ -159,7 +158,7 @@ class Ansatz:
 
         return state
 
-    def _apply_measuregate(self, qid, state, prob_0):
+    def _apply_measuregate(self, qid, state):
         bits_idx = [1 << i for i in range(self._n_qubits)]
         qid_idx = 1 << qid
         offset = list(set(bits_idx) - (set([qid_idx])))
@@ -169,6 +168,9 @@ class Ansatz:
             for j in range(len(idx_1)):
                 idx_0.append(offset[i] + idx_0[j])
                 idx_1.append(offset[i] + idx_1[j])
+
+        # Calculate probabilities
+        prob_0 = torch.sum(torch.abs(state[idx_0]) * torch.abs(state[idx_0]))
 
         _0 = random.random() < prob_0
         if _0:
@@ -187,13 +189,7 @@ class Ansatz:
             for idx in idx_1:
                 state[idx] *= alpha
 
-        return state
-
-    def _measure_prob(self, qid, state):
-        state_cp = cp.asarray(state.cpu().detach().numpy())
-        prob = measured_prob_calculate(qid, state_cp, self._n_qubits)
-        prob = torch.tensor(cp.asnumpy(prob)).to(self._device)
-        return prob
+        return state, [prob_0, 1 - prob_0]
 
     def forward(self, state_vector=None):
         """The Forward Propagation process of an ansatz.
@@ -220,10 +216,8 @@ class Ansatz:
         for gate in self._gates:
             if gate.type == GateType.measure:
                 qid = self._n_qubits - 1 - gate.targ
-                prob_0 = self._measure_prob(qid, state)
-                prob_1 = 1 - prob_0
-                state = self._apply_measuregate(qid, state, prob_0)
-                return state, [prob_0, prob_1]
+                state, prob = self._apply_measuregate(qid, state)
+                return state, prob
 
             gate_tensor = gate.matrix.to(self._device)
             act_bits = gate.cargs + gate.targs

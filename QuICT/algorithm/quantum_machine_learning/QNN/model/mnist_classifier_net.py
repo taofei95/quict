@@ -16,10 +16,16 @@ from QuICT.simulation.state_vector import ConstantStateVectorSimulator
 
 class QuantumNet(nn.Module):
     def __init__(
-        self, data_qubits, layers=["XX", "ZZ"], device=torch.device("cuda:0"),
+        self,
+        data_qubits,
+        layers=["XX", "ZZ"],
+        encoding="qubit",
+        device=torch.device("cuda:0"),
     ):
         super(QuantumNet, self).__init__()
+        assert encoding in ["qubit", "amplitude"]
         self._layers = layers
+        self._encoding = encoding
         self._device = device
         self._data_qubits = data_qubits
         self._n_qubits = self._data_qubits + 1
@@ -28,13 +34,20 @@ class QuantumNet(nn.Module):
         )
         self._define_params()
 
-    def forward(self, x):
-        data_ansatz = self._qubit_encoding(x)
-        model_ansatz = self._construct_ansatz()
-        ansatz = data_ansatz + model_ansatz
-        _, prob = ansatz.forward()
-        assert prob is not None, "There is no Measure Gate on the readout qubit."
-        return prob
+    def forward(self, X):
+        Y_pred = torch.zeros([X.shape[0]], device=self._device)
+        for i in range(X.shape[0]):
+            if self._encoding == "qubit":
+                data_ansatz = self._qubit_encoding(X[i])
+            else:
+                data_ansatz = self._amplitude_encoding(X[i])
+            model_ansatz = self._construct_ansatz()
+            ansatz = data_ansatz + model_ansatz
+            _, prob = ansatz.forward()
+            assert prob is not None, "There is no Measure Gate on the readout qubit."
+            Y_pred[i] = prob[1]
+
+        return Y_pred
 
     def _define_params(self):
         """Define the network parameters to be trained."""
@@ -50,6 +63,9 @@ class QuantumNet(nn.Module):
             if img[i]:
                 data_ansatz.add_gate(X_tensor, i)
         return data_ansatz
+
+    def _amplitude_encoding(self, img):
+        return
 
     def _construct_ansatz(self):
         model_ansatz = Ansatz(self._n_qubits, device=self._device)
