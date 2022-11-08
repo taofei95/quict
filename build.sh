@@ -98,7 +98,6 @@ print_cyan "[Python Wheel]"
 
 echo "Building python wheel"
 
-
 print_segment
 
 cd $prj_root && \

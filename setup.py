@@ -56,7 +56,7 @@ def print_with_wrapper(header, out_obj):
         print(header, out_obj)
     else:
         for line in iter(out_obj.readline, b""):
-            print(header, line.decode("unicode_escape"), sep="", end="")
+            print(header, line.decode("utf-8"), sep="", end="")
 
 
 def run_with_output_wrapper(header, args, cwd):
@@ -121,7 +121,7 @@ class ExtensionBuild(build_ext):
         configure_args = [
             f"-DCMAKE_LIBRARY_OUTPUT_DIRECTORY={ext_dir}",
             f"-DPYTHON_EXECUTABLE={sys.executable}",
-            f"-DBUILD_VERSION_INFO={self.distribution.get_version()}",
+            f'-DBUILD_VERSION_INFO="{self.distribution.get_version()}"',
             f"-DCMAKE_BUILD_TYPE={cfg}",  # not used on MSVC, but no harm
             f"-Dpybind11_DIR={pybind11_cmake_dir}",
         ]
@@ -131,6 +131,11 @@ class ExtensionBuild(build_ext):
             if not cmake_generator:
                 configure_args += ["-GUnix Makefiles"]
         else:
+            # Ensure CC/CXX is set. This is a fix for Windows PowerShell
+            if "CC" in os.environ:
+                configure_args += [f"-DCMAKE_C_COMPILER:FILEPATH={os.environ['CC']}"]
+            if "CXX" in os.environ:
+                configure_args += [f"-DCMAKE_CXX_COMPILER:FILEPATH={os.environ['CXX']}"]
             # Single config generators are handled "normally"
             single_config = any(x in cmake_generator for x in ("NMake", "Ninja"))
 
@@ -229,29 +234,29 @@ setup(
     description="Quantum Compute Platform of Institute of Computing Technology",
     author="Library for Quantum Computation and Theoretical Computer Science, ICT, CAS",
     author_email="likaiqi@ict.ac.cn",
-    license='Apache License 2.0',
+    license="Apache License 2.0",
     platforms=["Windows", "Linux", "macOS"],
     url="https://e.gitee.com/quictucas/repos/quictucas/quict",
-    package_dir={"QuICT": f"{PRJ_ROOT_RELATIVE}/QuICT/"},
+    package_dir={"QuICT": f"{PRJ_ROOT_RELATIVE}/QuICT"},
     install_requires=[
-        'contourpy==1.0.5',
-        'cycler==0.11.0',
-        'fonttools==4.37.4',
-        'kiwisolver==1.4.4',
-        'llvmlite==0.39.1',
-        'matplotlib==3.6.1',
-        'networkx==2.8.7',
-        'numba==0.56.3',
-        'numpy==1.23.4',
-        'packaging==21.3',
-        'Pillow==9.2.0',
-        'ply==3.11',
-        'pybind11==2.10.0',
-        'pyparsing==3.0.9',
-        'python-dateutil==2.8.2',
-        'scipy==1.9.2',
-        'six==1.16.0',
-        'ujson==5.5.0',
+        "contourpy==1.0.5",
+        "cycler==0.11.0",
+        "fonttools==4.37.4",
+        "kiwisolver==1.4.4",
+        "llvmlite==0.39.1",
+        "matplotlib==3.6.1",
+        "networkx==2.8.7",
+        "numba==0.56.3",
+        "numpy==1.23.4",
+        "packaging==21.3",
+        "Pillow==9.2.0",
+        "ply==3.11",
+        "pybind11==2.10.0",
+        "pyparsing==3.0.9",
+        "python-dateutil==2.8.2",
+        "scipy==1.9.2",
+        "six==1.16.0",
+        "ujson==5.5.0",
     ],
     ext_modules=[
         CMakeExtension(
