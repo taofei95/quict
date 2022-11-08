@@ -4,15 +4,15 @@ https://github.com/pybind/cmake_example/blob/0baee7e073a9b3738052f543e6bed412aaa
 """
 
 import os
+import platform
 import subprocess
 import sys
 from os import getcwd, path
 from typing import List, Tuple
 
+import pybind11
 from setuptools import Extension, find_packages, setup
 from setuptools.command.build_ext import build_ext
-
-import pybind11
 
 pybind11_cmake_dir = pybind11.__path__[0]
 for p in ["share", "cmake", "pybind11"]:
@@ -59,7 +59,7 @@ def print_with_wrapper(header, out_obj):
             print(header, line.decode("utf-8"), sep="", end="")
 
 
-def run_with_output_wrapper(header, args, cwd):
+def run_with_output_wrapper(header, args, cwd, shell=(platform.system() == "Windows")):
     if len(header) > 12:
         header = header[:9] + "..."
     if len(header) < 12:
@@ -73,7 +73,8 @@ def run_with_output_wrapper(header, args, cwd):
         cwd=cwd,
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
-        shell=True,
+        # In Linux, execute in shell cause cmake errors...
+        shell=shell,
         # universal_newlines=True,
     ) as proc:
         print_with_wrapper(header, proc.stdout)
@@ -134,9 +135,13 @@ class ExtensionBuild(build_ext):
         else:
             # Ensure CC/CXX is set. This is a fix for Windows PowerShell
             if "CC" in os.environ:
-                configure_args += [f"\"-DCMAKE_C_COMPILER:FILEPATH={os.environ['CC']}\""]
+                configure_args += [
+                    f"\"-DCMAKE_C_COMPILER:FILEPATH={os.environ['CC']}\""
+                ]
             if "CXX" in os.environ:
-                configure_args += [f"\"-DCMAKE_CXX_COMPILER:FILEPATH={os.environ['CXX']}\""]
+                configure_args += [
+                    f"\"-DCMAKE_CXX_COMPILER:FILEPATH={os.environ['CXX']}\""
+                ]
             # Single config generators are handled "normally"
             single_config = any(x in cmake_generator for x in ("NMake", "Ninja"))
 
@@ -192,18 +197,17 @@ class ExtensionBuild(build_ext):
         if not os.path.exists(build_temp):
             os.makedirs(build_temp)
 
-        print_cyan(f"[{ext_name}]")
-        print_with_wrapper(
-            ext_name, " ".join(["cmake", ext.source_dir] + configure_args)
-        )
         if hasattr(self, "parallel") and self.parallel:
             print_yellow(
                 "Extensions are built in parallel. Shell output might be messed up."
             )
+        print_cyan(f"[{ext_name}]")
+        cmake_cmd = ["cmake"] + configure_args + [f"-S{ext.source_dir}"]
+        print_with_wrapper(ext_name, " ".join(cmake_cmd))
         print_with_wrapper(ext_name, "Configuring...")
         run_with_output_wrapper(
             header=ext_name,
-            args=["cmake", ext.source_dir] + configure_args,
+            args=cmake_cmd,
             cwd=build_temp,
         )
         print_with_wrapper(ext_name, "Building...")
