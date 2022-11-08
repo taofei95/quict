@@ -41,11 +41,16 @@ echo "Selected $prj_build_dir as building directory"
 
 print_segment
 
-print_cyan "[Git Submodule]"
+if [[ -f .gitmodules ]]
+then
 
-echo "git submodule update --init --recursive"
+  print_cyan "[Git Submodule]"
 
-git submodule update --init --recursive
+  echo "git submodule update --init --recursive"
+
+  git submodule update --init --recursive
+
+fi
 
 # Clear older version build.sh remnants
 
