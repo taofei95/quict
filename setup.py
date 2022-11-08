@@ -73,6 +73,7 @@ def run_with_output_wrapper(header, args, cwd):
         cwd=cwd,
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
+        shell=True,
         # universal_newlines=True,
     ) as proc:
         print_with_wrapper(header, proc.stdout)
@@ -133,9 +134,9 @@ class ExtensionBuild(build_ext):
         else:
             # Ensure CC/CXX is set. This is a fix for Windows PowerShell
             if "CC" in os.environ:
-                configure_args += [f"-DCMAKE_C_COMPILER:FILEPATH={os.environ['CC']}"]
+                configure_args += [f"\"-DCMAKE_C_COMPILER:FILEPATH={os.environ['CC']}\""]
             if "CXX" in os.environ:
-                configure_args += [f"-DCMAKE_CXX_COMPILER:FILEPATH={os.environ['CXX']}"]
+                configure_args += [f"\"-DCMAKE_CXX_COMPILER:FILEPATH={os.environ['CXX']}\""]
             # Single config generators are handled "normally"
             single_config = any(x in cmake_generator for x in ("NMake", "Ninja"))
 
@@ -211,11 +212,11 @@ class ExtensionBuild(build_ext):
             args=["cmake", "--build", "."] + build_args,
             cwd=build_temp,
         )
-        print_with_wrapper(ext_name, "Copying back...")
         libs = []
         for file in os.listdir(ext_dir):
-            if file.endswith(".so"):
+            if file.endswith(".so") or file.endswith(".pyd"):
                 libs.append(f"{ext_dir}{file}")
+        print_with_wrapper(ext_name, f"Copying back {libs}...")
         run_with_output_wrapper(
             header=ext_name,
             args=["cp", " ".join(libs), ext.source_dir],

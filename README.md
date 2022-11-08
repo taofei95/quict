@@ -39,6 +39,7 @@ It is recommended to use `clang-cl.exe`, which is the clang compiler with MSVC C
 
 ```powershell
 $ENV:CC="clang-cl.exe"
-$ENV:CXX="clang-cpp.exe"
-
+$ENV:CXX="clang-cl.exe"
+$ENV:ComSpec="powershell.exe"
+python3 .\setup.py bdist_wheel
 ```
