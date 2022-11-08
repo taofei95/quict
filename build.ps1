@@ -1,13 +1,15 @@
+$ErrorActionPreference = "Stop"
+
 function Test-Command {
     param (
         [Parameter(Position = 0)]
         [string]
         $Command
     )
-    $ErrorActionPreference = "Stop"
     try {
         Write-Host "Detecting $Command ..."
         $FullCommand = (Get-Command $Command).Source
+        Write-Host "Found $Command($FullCommand)`n"
         return $FullCommand
     }
     catch {
@@ -15,8 +17,7 @@ function Test-Command {
     }    
 }
 
-function Use-VS
-{
+function Use-VS {
     $VsWhere = "${Env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
     $VsInstallDir = & $VsWhere -latest -property installationPath
     Import-Module "$VsInstallDir\Common7\Tools\Microsoft.VisualStudio.DevShell.dll"
@@ -25,28 +26,35 @@ function Use-VS
 
 # Detect Visual Studio installation
 
+Write-Host "Detecting Visual Studio ..."
 Use-VS
+Write-Host "`n"
 
 # Verify CLI tools.
 
-$Python3 = Test-Command "python3.exe"
-Write-Host "Found python3($Python3)`n"
+$Powershell = Test-Command "powershell.exe"
 
-$Ninja = Test-Command "ninja.exe"
-Write-Host "Found ninja($Ninja)`n"
+$Python3 = Test-Command "python3.exe"
+
+Test-Command "ninja.exe"
 
 $ClangCl = Test-Command "clang-cl.exe"
-Write-Host "Found clang-cl($ClangCl)`n"
 
 # Setup build environment.
 
-$ENV:CMAKE_GENERATOR="Ninja"
-$ENV:CC=$ClangCl
-$ENV:CXX=$ClangCl
-$ENV:ComSpec="powershell.exe"
+$ENV:CMAKE_GENERATOR = "Ninja"
+$ENV:CC = $ClangCl
+$ENV:CXX = $ClangCl
+$OldComSpec = $ENV:ComSpec
+$ENV:ComSpec = $Powershell
 
 # Invoke build.
 
-Write-Host "Build python wheel."
-& $Python3 .\setup.py bdist_wheel
+try {
+    Write-Host "Build python wheel."
+    & $Python3 .\setup.py bdist_wheel
+}
+finally {
+    $ENV:ComSpec = $OldComSpec
+}
 
