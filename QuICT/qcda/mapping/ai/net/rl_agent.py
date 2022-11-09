@@ -32,6 +32,8 @@ class Agent:
 
     def reset_explore_state(self):
         self.state = self.config.factory.get_one()
+        # Do we need to reset counter?
+        # self.explore_step = 0
 
     def _select_action(
         self,
@@ -46,6 +48,12 @@ class Agent:
         # data = self.state.circ_layered_matrices.to(policy_net_device)
         q_vec = policy_net(data.x, data.edge_index, data.batch).detach().cpu()
         q_vec = q_vec.view(a)  # [a]
+        if self._last_action is not None:
+            bad_action = self._last_action
+            if bad_action not in self.config.action_id_by_swap:
+                bad_action = bad_action[1], bad_action[0]
+            bad_id = self.config.action_id_by_swap[bad_action]
+            q_vec[bad_id] = 1e-12
 
         # Query action swap using action id
         idx = int(torch.argmax(q_vec))
@@ -75,7 +83,7 @@ class Agent:
             config.epsilon_start - config.epsilon_end
         ) * math.exp(-1.0 * self.explore_step / config.epsilon_decay)
         if epsilon_random and random() <= eps_threshold:
-            return self.state.biased_random_swap()
+            return self.state.biased_random_swap(exclude=(self._last_action,))
         else:
             return self._select_action(
                 policy_net=policy_net,
@@ -123,13 +131,16 @@ class Agent:
         self.state.phy2logic = next_phy2logic
 
         # next_circ_state = self.state.circ_info.copy()
-        action_penalty = -self.config.reward_scale / 2
+        action_penalty = 0
         reward = action_penalty
         # Execute as many as possible
         cnt = self.state.eager_exec(
             physical_circ=self.mapped_circ,
         )
-        self._last_action = action
+        if action == self._last_action:
+            reward += -1 * scale
+        # If no gate is executed, avoid the same selection next time.
+        self._last_action = action if cnt == 0 else None
         self._last_exec_cnt = cnt
         reward += cnt * scale
 

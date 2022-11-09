@@ -210,9 +210,9 @@ class State:
     def remained_circ(self) -> CompositeGate:
         return self.circ_info.remained_circ(self.logic2phy)
 
-    def biased_random_swap(self) -> Tuple[int, int]:
+    def biased_random_swap(self, exclude: tuple) -> Tuple[int, int]:
         return self.circ_info.biased_random_swap(
-            self.layout_info.topo_dist, self.logic2phy
+            self.layout_info.topo_dist, self.logic2phy, exclude
         )
 
     def eager_exec(
@@ -294,11 +294,11 @@ class TrainConfig:
         max_gate_num: int = 300,
         feat_dim: int = 128,
         gamma: float = 0.9,
-        replay_pool_size: int = 20000,
+        replay_pool_size: int = 100000,
         batch_size: int = 96,
         total_epoch: int = 2000,
         explore_period: int = 10000,
-        target_update_period: int = 20,
+        target_update_period: int = 30,
         actor_num: int = 2,
         world_size: int = 3,
         model_sync_period: int = 10,
@@ -307,8 +307,8 @@ class TrainConfig:
         model_path: str = None,
         log_dir: str = None,
         epsilon_start: float = 0.9,
-        epsilon_end: float = 0.05,
-        epsilon_decay: float = 500.0,
+        epsilon_end: float = 0.1,
+        epsilon_decay: float = 100000.0,
         reward_scale: float = 10.0,
     ) -> None:
         self.factory = DataFactory(topo=topo, max_gate_num=max_gate_num)
