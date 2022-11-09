@@ -95,7 +95,7 @@ class CircuitLib:
         max_width=None, max_size=None, max_depth=None
     ) -> List[str]:
         """ Get list of qasm file's name which satisfied the condition. """
-        based_sql_cmd = "SELECT NAME FROM CIRCUIT_LAB WHERE "
+        based_sql_cmd = "SELECT NAME FROM CIRCUIT_LIB WHERE "
         condition_cmd = f"TYPE=\'{type}\' AND CLASSIFY=\'{classify}\'"
         if max_width is not None:
             condition_cmd += f" AND WIDTH<\'{max_width}\'"

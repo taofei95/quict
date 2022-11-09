@@ -21,12 +21,12 @@ class CircuitLibDB:
 
     def clean(self):
         """ Clean the table data in current DB. """
-        self._cursor.execute("DROP TABLE CIRCUIT_LAB")
+        self._cursor.execute("DROP TABLE CIRCUIT_LIB")
 
     def _create_table(self):
         # Temp add here, delete after create datebase
         self._cursor.execute(
-            'CREATE TABLE CIRCUIT_LAB(' +
+            'CREATE TABLE CIRCUIT_LIB(' +
             'ID INTEGER PRIMARY KEY AUTOINCREMENT, NAME text, TYPE text, CLASSIFY text, ' +
             'WIDTH INT, SIZE INT, DEPTH INT)'
         )
@@ -40,12 +40,12 @@ class CircuitLibDB:
 
         for file in filter(lambda x: x.endswith('.qasm'), os.listdir(file_path)):
             _, width, size, depth, _ = file.split("_")
-            width = int(width[-1])
-            size = int(size[-1])
-            depth = int(depth[-1])
+            width = int(width[1:])
+            size = int(size[1:])
+            depth = int(depth[1:])
 
             self._cursor.execute(
-                "INSERT INTO CIRCUIT_LAB(NAME, TYPE, CLASSIFY, WIDTH, SIZE, DEPTH)" +
+                "INSERT INTO CIRCUIT_LIB(NAME, TYPE, CLASSIFY, WIDTH, SIZE, DEPTH)" +
                 f"VALUES (\'{file}\', \'template\', \'template\', " +
                 f"\'{width}\', \'{size}\', \'{depth}\')"
             )
@@ -56,4 +56,5 @@ class CircuitLibDB:
 
 
 clsql = CircuitLibDB()
+# clsql.clean()
 clsql.add_template_circuit()
