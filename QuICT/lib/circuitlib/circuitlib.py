@@ -1,6 +1,9 @@
 import os
-import re
+import shutil
+import sqlite3
+from typing import Union, List
 
+from QuICT.core import Circuit
 from QuICT.lib.qasm.exceptions import QasmError
 from QuICT.tools.interface import OPENQASMInterface
 
@@ -8,33 +11,107 @@ from QuICT.tools.interface import OPENQASMInterface
 class CircuitLib:
     """
     A class handling QuICT circuit library.
+
+    Args:
+        output_type (str, optional): one of [circuit, qasm, file]. Defaults to "circuit".
+        output_path (str, optional): The path to store qasm file if output type is file.
+            Defaults to the current working path.
     """
 
-    @classmethod
-    def _load_qasm(cls, filename):
-        """
-        Load a qasm file.
-        """
-        qasm = OPENQASMInterface.load_file(filename)
+    __DEFAULT_TYPE = ["template", "random", "algorithm", "experiment"]
+    __DEFAULT_RANDOM_CLASSIFY = ["diag", "ctrl_diag", "single", "UTSC"]
+    __DEFAULT_ALGORITHM_CLASSIFY = ["clifford", "grover", "qft", "supremacy", "vqe"]
+    __DEFAULT_EXPERIMENT_CLASSIFY = ["adder", "mapping"]
+    __LIB_PATH = os.path.join(os.path.dirname(__file__), 'circuit_qasm')
+
+    def __init__(
+        self,
+        output_type: str = "circuit",
+        output_path: str = '.'
+    ):
+        self._output_type = output_type
+        self._output_path = output_path
+        if self._output_path == "file" and self._output_path is None:
+            raise KeyError("Failure.")
+
+        self._connect = sqlite3.connect(f"{os.path.dirname(__file__)}/user_info.db")
+        self._connect.isolation_level = "EXCLUSIVE"
+        self._cursor = self._connect.cursor()
+
+    def size(self) -> int:
+        return self._cursor.lastrowid
+
+    def _load_circuit_from_qasm(self, file_path: str) -> Circuit:
+        """ Load Circuit from a qasm file. """
+        qasm = OPENQASMInterface.load_file(file_path)
         if not qasm.valid_circuit:
             raise QasmError("Missing input file")
+
+        qasm.circuit.name = os.path.splitext(os.path.basename(file_path))[0]
         return qasm.circuit
 
-    @classmethod
-    def _load_all(cls, filename):
-        """
-        Load all qasm files under `filename`
+    def _load_string_from_qasm(self, file_path: str) -> str:
+        """ Return qasm string from qasm file. """
+        return open(file_path, 'r').read()
+
+    def _copy_qasm_file(self, file_path: str):
+        """ Copy target qasm file to the given output path. """
+        filename = os.path.basename(file_path)
+        shutil.copy(file_path, os.path.join(self._output_path, filename))
+
+    def _get_all(self, folder: str, files: list) -> Union[List, None]:
+        """ Load all qasm files in the list of files.
+
+        Args:
+            folder (str): The path of the qasm folder
+            files (list): the list of file names
+
+        Returns:
+            List[(Circuit|string)]: _description_
         """
         circuit_all = []
-        for root, dirs, files in os.walk(filename):
-            for file in files:
-                circuit_all.append(cls._load_qasm(os.path.join(filename, file)))
+        for file in files:
+            file_path = os.path.join(folder, file)
+            if self._output_type == "circuit":
+                circuit_all.append(self._load_circuit_from_qasm(file_path))
+            elif self._output_type == "qasm":
+                circuit_all.append(self._load_string_from_qasm(file_path))
+            else:
+                self._copy_qasm_file(file_path)
+
         return circuit_all
 
-    @classmethod
-    def load_template_circuit(cls, max_width=None, max_size=None, max_depth=None):
+    def _file_filter(
+        self,
+        type: str,
+        classify: str,
+        max_width=None, max_size=None, max_depth=None
+    ) -> List[str]:
+        """ Get list of qasm file's name which satisfied the condition. """
+        based_sql_cmd = "SELECT NAME FROM CIRCUIT_LAB WHERE "
+        condition_cmd = f"(TYPE=\'{type}\' AND CLASSIFY=\'{classify}\'"
+        if max_width is not None:
+            condition_cmd += f" WIDTH<\'{max_width}\'"
+
+        if max_size is not None:
+            condition_cmd += f" SIZE<\'{max_size}\'"
+
+        if max_depth is not None:
+            condition_cmd += f" DEPTH<\'{max_depth}\'"
+
+        sql_cmd = based_sql_cmd + condition_cmd + ')'
+        self._cursor.execute(sql_cmd)
+
+        return self._cursor.fetchall()
+
+    def get_template_circuit(
+        self,
+        max_width: int = None,
+        max_size: int = None,
+        max_depth: int = None
+    ) -> Union[List[Union[Circuit, str]], None]:
         """
-        Load template circuits in QuICT circuit library. A template will be loaded if
+        Get template circuits in QuICT circuit library. A template will be loaded if
         it satisfies the following restrictions:
             1. its number of qubits <= `max_width`,
             2. its number of gates <= `max_size`,
@@ -48,140 +125,135 @@ class CircuitLib:
             max_depth(int): max depth
 
         Returns:
-            list: a list of required circuits
+            (List[Circuit | String] | None): Return the list of output circuit order by output_type.
         """
+        path = os.path.join(self.__LIB_PATH, "template")
+        files = self._file_filter("template", "template", max_width, max_size, max_depth)
 
-        if max_width is None:
-            max_width = float('inf')
-        if max_size is None:
-            max_size = float('inf')
-        if max_depth is None:
-            max_depth = float('inf')
+        return self._get_all(path, files)
 
-        circuit_list = []
-        path = os.path.join(os.path.dirname(__file__), 'circuit_qasm', 'template')
+    def load_random_circuit(
+        self,
+        classify: str,
+        max_width: int = None,
+        max_size: int = None,
+        max_depth: int = None
+    ) -> Union[List[Union[Circuit, str]], None]:
+        """Get random circuits in QuICT circuit library. A template will be loaded if
+        it satisfies the following restrictions:
+            1. the circuit in the given classify.
+            2. its number of qubits <= `max_width`,
+            3. its number of gates <= `max_size`,
+            4. its depth <= `max_depth`.
 
-        pat = '^template_w([0-9]+)_s([0-9]+)_d([0-9]+)_([0-9]+).qasm$'
-        for qasm in filter(lambda x: x.startswith('template') and x.endswith('.qasm'),
-                           os.listdir(path)):
+        Restrictions will be ignored if not specified.
 
-            re_list = re.match(pat, qasm).groups()
-            if len(re_list) >= 4:
-                n, m, d, _ = [int(x) for x in re_list]
-                if n <= max_width and m <= max_size and d <= max_depth:
-                    circ = cls._load_qasm(os.path.join(path, qasm))
-                    circuit_list.append(circ)
-            else:
-                print(f'WARNING: {os.path.join(path, qasm)} bad naming.')
+        Args:
+            classify (str): one of [ctrl_diag, ctrl_unitary, diag, qft, single_bit, unitary, ...]
+            max_width (int, optional): _description_. Defaults to float('inf').
 
-        return circuit_list
-
-    @classmethod
-    def load_circuit(cls, name="template", *args):
-
+        Returns:
+            (List[Circuit | String] | None): Return the list of output circuit order by output_type.
         """
+        assert classify in self.__DEFAULT_RANDOM_CLASSIFY, "error classify."
+        path = os.path.join(self.__LIB_PATH, 'random', classify)
+        files = self._file_filter("random", classify, max_width, max_size, max_depth)
 
-        name: "template", "random", "algorithm", "experiment"
+        return self._get_all(path, files)
 
-        *args:
+    def load_algorithm_circuit(
+        self,
+        classify: str,
+        max_width: int = None,
+        max_size: int = None,
+        max_depth: int = None
+    ) -> Union[List[Union[Circuit, str]], None]:
+        """ Get algorithm circuits in QuICT circuit library. A template will be loaded if
+        it satisfies the following restrictions:
+            1. the circuit in the given classify.
+            2. its number of qubits <= `max_width`,
+            3. its number of gates <= `max_size`,
+            4. its depth <= `max_depth`.
 
-                template:   args[0]: qubit_num, upper bound of qubit number
-                                     of templates
-                            args[1]: size, upper bound of size of templates
-                            args[2]: depth, upper bound of depth of templates
+        Restrictions will be ignored if not specified.
 
-                random:     args[0]: circuit_type ("ctrl_diag"/"ctrl_unitary"
-                                                    /"diag"/"qft"/"single_bit"
-                                                    /"unitary"),
-                                     type of random circuits
-                            args[1]: qubit number (list/int), get a list of
-                                     circuits (a single circuit) with given
-                                     qubit numbers
+        Args:
+            classify (str): one of [clifford, grover, qft, supremacy, vqe, ...]
+            max_width (int, optional): _description_. Defaults to float('inf').
 
-                algorithm:  args[0]: circuit_type ("QFT"/"Grover"/"Supermacy"),
-                                     type of algorithm circuits
-                            args[1]: qubit number (list/int), get a list of
-                                     circuits (a single circuit) with given
-                                     qubit numbers
-
-                experiment: args[0]: circuit_type("Mapping"/"Adder"), type of
-                                     experiment circuits
-                            args[1]: (for Adder)   qubit number (list/int), get
-                                                   a list of circuits (a single
-                                                   circuit) with given qubit
-                                                   numbers
-                                     (for Mapping) mapping_name, get all
-                                                   mapping circuits under the
-                                                   same qubit mapping type
-
+        Returns:
+            (List[Circuit | String] | None): Return the list of output circuit order by output_type.
         """
+        assert classify in self.__DEFAULT_ALGORITHM_CLASSIFY, "error classify."
+        path = os.path.join(self.__LIB_PATH, 'algorithm', classify)
+        files = self._file_filter("algorithm", classify, max_width, max_size, max_depth)
 
-        para = args
-        circuit_list = []
-        filename = os.path.dirname(__file__) + '/circuit_qasm/' + name
+        return self._get_all(path, files)
 
-        if name == "template":
-            # get all templates satisfying <=bit_num & <=size & <=depth
-            circuit_list = cls.load_template_circuit(*para)
+    def load_experiment_circuit(
+        self,
+        classify: str,
+        max_width: int = None,
+        max_size: int = None,
+        max_depth: int = None
+    ) -> Union[List[Union[Circuit, str]], None]:
+        """ Get experiment circuits in QuICT circuit library. A template will be loaded if
+        it satisfies the following restrictions:
+            1. the circuit in the given classify.
+            2. its number of qubits <= `max_width`,
+            3. its number of gates <= `max_size`,
+            4. its depth <= `max_depth`.
 
-        elif name == "random":
+        Restrictions will be ignored if not specified.
 
-            # get all random circuits
+        Args:
+            classify (str): one of [adder, mapping]
+            max_width (int, optional): _description_. Defaults to float('inf').
 
-            filename += '/' + para[0]
-            if isinstance(para[1], int):
-                random_list = [para[1]]
-            else:
-                random_list = para[1]
-            for list_name in random_list:
-                filesname = filename + '/' + str(list_name) + ".qasm"
-                circuit = cls._load_qasm(filesname)
-                if circuit is not None:
-                    circuit_list.append(circuit)
+        Returns:
+            (List[Circuit | String] | None): Return the list of output circuit order by output_type.
+        """
+        assert classify in self.__DEFAULT_EXPERIMENT_CLASSIFY, "error experiment classify."
+        path = os.path.join(self.__LIB_PATH, 'experiment', classify)
+        files = self._file_filter("experiment", classify, max_width, max_size, max_depth)
 
-        elif name == "algorithm":
+        return self._get_all(path, files)
 
-            # get all algorithm circuits
+    def get_circuit(
+        self,
+        type: str,
+        classify: str = None,
+        max_width: int = None,
+        max_size: int = None,
+        max_depth: int = None
+    ) -> Union[List[Union[Circuit, str]], None]:
+        """Get the target circuits from QuICT Circuit Library.
 
-            filename += '/' + para[0]
-            al_dic = {"QFT": "/qft_", "Grover": "/grover_", "Supremacy": "/"}
-            if para[0] in al_dic:
-                if isinstance(para[1], int):
-                    algorithm_list = [para[1]]
-                else:
-                    algorithm_list = para[1]
-                for list_name in algorithm_list:
-                    filesname = filename + al_dic[para[0]]
-                    filesname += str(list_name) + ".qasm"
-                    circuit = cls._load_qasm(filesname)
-                    if circuit is not None:
-                        circuit_list.append(circuit)
-            else:
-                filename = ""
+        Args:
+            type (str): The type of circuits, one of [template, random, algorithm, experiment].
+            classify (str, optional): The classify of selected circuit's type.
+                WARNING: Only in template mode, the classify can be None. \n
+                For template circuit's type, classify is None; \n
+                For random circuit's type, classify is one of
+                    [ctrl_diag, ctrl_unitary, diag, qft, single_bit, unitary, ...]
+                For algorithm circuit's type, classify is one of
+                    [clifford, grover, qft, supremacy, vqe, ...]
+                For experiment circuit's type, classify is one of [adder, mapping]
 
-        elif name == "experiment":
+            qubit_num (int, optional): upper bound of qubit number, default to None.
+            size (int, optional): upper bound of size of templates, default to None.
+            depth (int, optional): upper bound of depth of templates, default to None.
 
-            # get all experiment circuits
+        Returns:
+            (List[Circuit | String] | None): Return the list of output circuit order by output_type.
+        """
+        if type not in self.__DEFAULT_TYPE:
+            raise KeyError("error_type")
 
-            filename += '/' + para[0]
-            if para[0] == "Mapping":
-                filename += '/' + para[1]
-                circuit = cls._load_all(filename)
-                if circuit is not None:
-                    circuit_list.append(circuit)
-            elif para[0] == "Adder":
-                filename += '/adder_n'
-                if isinstance(para[1], int):
-                    adder_list = [para[1]]
-                else:
-                    adder_list = para[1]
-                for list_name in adder_list:
-                    filesname = filename + str(list_name) + ".qasm"
-                    circuit = cls._load_qasm(filesname)
-                    if circuit is not None:
-                        circuit_list.append(circuit)
-            else:
-                filename = ""
-        else:
-            filename = ""
-        return circuit_list
+        if type != "template" and classify is None:
+            raise KeyError("error matched")
+
+        files = self._file_filter(type, classify, max_width, max_size, max_depth)
+        folder_path = os.path.join(self.__LIB_PATH, type, classify)
+
+        return self._get_all(folder_path, files)
