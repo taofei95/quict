@@ -106,6 +106,8 @@ class Agent:
         """
         assert self.state is not None
 
+        qubit_number = self.config.topo.qubit_number
+
         self.explore_step += 1
         u, v = action
         # graph = self.state.topo_info.topo_graph
@@ -131,7 +133,7 @@ class Agent:
         self.state.phy2logic = next_phy2logic
 
         # next_circ_state = self.state.circ_info.copy()
-        action_penalty = 0
+        action_penalty = -scale / qubit_number
         reward = action_penalty
         # Execute as many as possible
         cnt = self.state.eager_exec(

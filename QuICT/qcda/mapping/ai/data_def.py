@@ -295,6 +295,7 @@ class TrainConfig:
         feat_dim: int = 128,
         gamma: float = 0.9,
         replay_pool_size: int = 100000,
+        lr: float = 0.0001,
         batch_size: int = 96,
         total_epoch: int = 2000,
         explore_period: int = 10000,
@@ -330,6 +331,7 @@ class TrainConfig:
         self.feat_dim = feat_dim
         self.gamma = gamma
         self.replay_pool_size = replay_pool_size
+        self.lr = lr
         self.batch_size = batch_size
         self.total_epoch = total_epoch
         self.explore_period = explore_period

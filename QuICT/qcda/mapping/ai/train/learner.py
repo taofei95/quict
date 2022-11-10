@@ -65,7 +65,10 @@ class Learner:
 
         # Loss function & optimizer
         self._smooth_l1 = nn.SmoothL1Loss()
-        self._optimizer = optim.RMSprop(self._policy_net.parameters(), lr=0.0002)
+        self._optimizer = optim.RMSprop(
+            self._policy_net.parameters(),
+            lr=self.config.lr,
+        )
 
         # Prepare path to save model files during training
         print("Preparing model saving directory...")
