@@ -139,7 +139,7 @@ class CircuitLib:
 
         return self._get_all(path, files)
 
-    def load_random_circuit(
+    def get_random_circuit(
         self,
         classify: str,
         max_width: int = None,
@@ -168,7 +168,7 @@ class CircuitLib:
 
         return self._get_all(path, files)
 
-    def load_algorithm_circuit(
+    def get_algorithm_circuit(
         self,
         classify: str,
         max_width: int = None,
@@ -197,7 +197,7 @@ class CircuitLib:
 
         return self._get_all(path, files)
 
-    def load_experiment_circuit(
+    def get_experiment_circuit(
         self,
         classify: str,
         max_width: int = None,
