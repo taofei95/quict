@@ -30,3 +30,5 @@ unit_test/**/*.jpg
 .history
 /QAOA_model*
 /del
+/Benchmarking
+/wr_unit_test
