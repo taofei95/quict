@@ -1,0 +1,15 @@
+OPENQASM 2.0;
+include "qelib1.inc";
+qreg q[2];
+creg c[2];
+unitary q[0];
+unitary q[1];
+cx q[1], q[0];
+rz(1.9900455781378703) q[0];
+ry(0.1853568375523118) q[1];
+cx q[0], q[1];
+ry(-2.767395504242015) q[1];
+cx q[1], q[0];
+unitary q[0];
+unitary q[1];
+phase((1.282705615143367-9.913138116590562e-16j)) q[0];
