@@ -99,6 +99,8 @@ class Grover:
         return circuit
 
     def run(self, n, n_ancilla, oracle, n_solution=1, measure=True, is_bit_flip=False):
+        if n_solution==0:
+            return 0
         simulator = self.simulator
         index_q = list(range(n))
         circuit = self.circuit(n, n_ancilla, oracle, n_solution, measure, is_bit_flip)
