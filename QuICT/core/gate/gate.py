@@ -1799,7 +1799,6 @@ class RzxGate(BasicGate):
             targets=2,
             params=1,
             type=GateType.rzx,
-            matrix_type=MatrixType.normal_normal,
         )
 
         self.pargs = params
@@ -1828,10 +1827,10 @@ class RzxGate(BasicGate):
 
         return np.array(
             [
-                [costh, 0, -1j * sinth, 0],
-                [0, costh, 0, 1j * sinth],
-                [-1j * sinth, 0, costh, 0],
-                [0, 1j * sinth, 0, costh],
+                [costh, -1j * sinth, 0, 0],
+                [-1j * sinth, costh, 0, 0],
+                [0, 0, costh, 1j * sinth],
+                [0, 0, 1j * sinth, costh],
             ],
             dtype=self._precision,
         )

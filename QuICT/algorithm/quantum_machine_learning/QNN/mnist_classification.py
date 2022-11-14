@@ -108,20 +108,13 @@ class QNNMnistClassifier:
             )
             # train iteration
             for batch in loader:
-                it_start = time.time()
                 self.optim.zero_grad()
                 x_train = batch[0]
                 y_train = batch[1]
                 y_pred = self.net(x_train)
-                forward = time.time() - it_start
-                print("forward:", forward)
                 loss = self.loss_func(y_train, y_pred)
-                backward = time.time() - forward
                 loss.backward()
-                print("backward:", backward)
-                update = time.time() - backward
                 self.optim.step()
-                print("update:", update)
                 it += 1
                 it_end = time.time()
                 loader.set_postfix(it=it, loss="{:.3f}".format(loss))
@@ -131,7 +124,7 @@ class QNNMnistClassifier:
         #     self._save_checkpoint(it + 1, latest=(it + 1 == max_iters))
 
 
-c = QNNMnistClassifier(threshold=0.1, resize=(2, 2), device="cuda:0")
+c = QNNMnistClassifier(threshold=0.1, resize=(4, 4), device="cuda:0")
 c.train(optimizer="Adam", lr=0.1, batch_size=1)
 # optimizer = torch.optim.Adam
 # optim = optimizer([dict(params=c.pqc.parameters(), lr=0.1)])
@@ -149,4 +142,6 @@ c.train(optimizer="Adam", lr=0.1, batch_size=1)
 #     loss.backward()
 #     optim.step()
 #     loader.set_postfix(loss=loss.item())
+
+
 

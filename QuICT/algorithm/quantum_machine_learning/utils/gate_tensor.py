@@ -157,6 +157,7 @@ class BasicGateTensor(object):
         targets: int,
         params: int,
         type: GateType,
+        matrix_type: MatrixType = MatrixType.normal,
         device=torch.device("cuda:0"),
     ):
         self._matrix = None
@@ -171,6 +172,7 @@ class BasicGateTensor(object):
 
         assert isinstance(type, GateType)
         self._type = type
+        self._matrix_type = matrix_type
         self._precision = torch.complex128
         self._name = "-".join([str(type), "", ""])
 
@@ -325,7 +327,11 @@ class CXGate(BasicGateTensor):
 
     def __init__(self):
         super().__init__(
-            controls=1, targets=1, params=0, type=GateType.cx,
+            controls=1,
+            targets=1,
+            params=0,
+            type=GateType.cx,
+            matrix_type=MatrixType.reverse,
         )
 
         self.matrix = torch.tensor(
@@ -350,7 +356,11 @@ class XGate(BasicGateTensor):
 
     def __init__(self):
         super().__init__(
-            controls=0, targets=1, params=0, type=GateType.x,
+            controls=0,
+            targets=1,
+            params=0,
+            type=GateType.x,
+            matrix_type=MatrixType.swap,
         )
 
         self.matrix = torch.tensor([[0, 1], [1, 0]], dtype=self._precision).to(
@@ -366,7 +376,11 @@ class YGate(BasicGateTensor):
 
     def __init__(self):
         super().__init__(
-            controls=0, targets=1, params=0, type=GateType.y,
+            controls=0,
+            targets=1,
+            params=0,
+            type=GateType.y,
+            matrix_type=MatrixType.reverse,
         )
 
         self.matrix = torch.tensor([[0, -1j], [1j, 0]], dtype=self._precision).to(
@@ -382,7 +396,11 @@ class ZGate(BasicGateTensor):
 
     def __init__(self):
         super().__init__(
-            controls=0, targets=1, params=0, type=GateType.z,
+            controls=0,
+            targets=1,
+            params=0,
+            type=GateType.z,
+            matrix_type=MatrixType.control,
         )
 
         self.matrix = torch.tensor([[1, 0], [0, -1]], dtype=self._precision).to(
@@ -462,7 +480,11 @@ class RzGate(BasicGateTensor):
 
     def __init__(self, params=torch.tensor([np.pi / 2])):
         super().__init__(
-            controls=0, targets=1, params=1, type=GateType.rz,
+            controls=0,
+            targets=1,
+            params=1,
+            type=GateType.rz,
+            matrix_type=MatrixType.diagonal,
         )
 
         self.pargs = params
@@ -492,7 +514,11 @@ Rz_tensor = RzGate()
 class RIGate(BasicGateTensor):
     def __init__(self, params=torch.tensor([np.pi / 2])):
         super().__init__(
-            controls=0, targets=1, params=1, type=GateType.ri,
+            controls=0,
+            targets=1,
+            params=1,
+            type=GateType.ri,
+            matrix_type=MatrixType.diagonal,
         )
 
         self.pargs = params
@@ -521,7 +547,11 @@ RI_tensor = RIGate()
 class RxxGate(BasicGateTensor):
     def __init__(self, params=torch.tensor([np.pi / 2])):
         super().__init__(
-            controls=0, targets=2, params=1, type=GateType.rxx,
+            controls=0,
+            targets=2,
+            params=1,
+            type=GateType.rxx,
+            matrix_type=MatrixType.normal_normal,
         )
 
         self.pargs = params
@@ -555,7 +585,11 @@ Rxx_tensor = RxxGate()
 class RyyGate(BasicGateTensor):
     def __init__(self, params=torch.tensor([np.pi / 2])):
         super().__init__(
-            controls=0, targets=2, params=1, type=GateType.ryy,
+            controls=0,
+            targets=2,
+            params=1,
+            type=GateType.ryy,
+            matrix_type=MatrixType.normal_normal,
         )
 
         self.pargs = params
@@ -588,7 +622,11 @@ Ryy_tensor = RyyGate()
 class RzzGate(BasicGateTensor):
     def __init__(self, params=torch.tensor([np.pi / 2])):
         super().__init__(
-            controls=0, targets=2, params=1, type=GateType.rzz,
+            controls=0,
+            targets=2,
+            params=1,
+            type=GateType.rzz,
+            matrix_type=MatrixType.diag_diag,
         )
 
         self.pargs = params
@@ -641,8 +679,8 @@ class RzxGate(BasicGateTensor):
         matrix[0, 0] = matrix[1, 1] = matrix[2, 2] = matrix[3, 3] = torch.cos(
             self.parg / 2
         )
-        matrix[0, 2] = matrix[2, 0] = -torch.sin(self.parg / 2) * 1j
-        matrix[1, 3] = matrix[3, 1] = torch.sin(self.parg / 2) * 1j
+        matrix[0, 1] = matrix[1, 0] = -torch.sin(self.parg / 2) * 1j
+        matrix[2, 3] = matrix[3, 2] = torch.sin(self.parg / 2) * 1j
 
         return matrix
 
@@ -660,7 +698,11 @@ class MeasureGate(BasicGateTensor):
 
     def __init__(self):
         super().__init__(
-            controls=0, targets=1, params=0, type=GateType.measure,
+            controls=0,
+            targets=1,
+            params=0,
+            type=GateType.measure,
+            matrix_type=MatrixType.special,
         )
 
     @property
