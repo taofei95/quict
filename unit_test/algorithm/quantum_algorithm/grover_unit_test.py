@@ -5,6 +5,8 @@
 # @File    : unit_test.py
 
 import unittest
+import math
+import random
 
 from QuICT.algorithm.quantum_algorithm.grover import (
     Grover,
@@ -42,6 +44,15 @@ def main_oracle(n, f):
         X & result_q[0]
     return 2, cgate
 
+def unknown_oracle(n):
+    assert n>=3
+    result_q = [n]
+    cgate = CompositeGate()
+    CCZ | cgate([n-3,n-2,n-1])
+    return 1, cgate
+
+def unknown_oracle_test(s):
+    return s[-3:]=="111"
 
 class TestGrover(unittest.TestCase):
     @classmethod
@@ -53,7 +64,7 @@ class TestGrover(unittest.TestCase):
     def tearDownClass(cls) -> None:
         print("The Grover unit test finished!")
 
-    def test_grover_on_ConstantStateVectorSimulator(self):
+    def test_grover(self):
         for n in range(3, 7):
             error = 0
             N = 2 ** n
@@ -74,7 +85,47 @@ class TestGrover(unittest.TestCase):
                 assert 0
         assert 1
 
-    def test_partial_grover_on_ConstantStateVectorSimulator(self):
+    def test_grover_with_unknown_amplitude(self):
+        for n in range(3, 7):
+            error = 0
+            N = 2 ** n
+            k, oracle = unknown_oracle(n)
+            grover = Grover(simulator=TestGrover.simulator)
+            M = 25
+            for _ in range(M):
+                #BHMT algorithm
+                c = math.sqrt(2)
+                n_iter = 2
+                n_iter_max = 4*math.ceil(math.sqrt(N))
+                n_orac = 0
+                solution_found = False
+                while n_orac < n_iter_max:
+                    s_trial_1 = bin(random.randrange(0,N))[2:].rjust(n,'0')
+                    if unknown_oracle_test(s_trial_1):
+                        solution_found = True
+                        break
+                    n_orac_current = random.randint(1,n_iter)
+                    n_orac += n_orac_current
+                    circ = grover.circuit(n,k,oracle,n_orac_current,iteration_number_forced=True)
+                    TestGrover.simulator.run(circ)
+                    s_trial_2 = bin(int(circ[:n]))[2:].rjust(n,'0')
+                    if unknown_oracle_test(s_trial_2):
+                        solution_found = True
+                        break
+                    n_iter = math.ceil(n_iter*c)
+                print(f"[{solution_found:5}]oracle used: {n_orac}")
+                if not solution_found:
+                    error += 1
+            error_rate = error / M
+            print(
+                "for n = %d, %d errors in %d tests, error rate = %f"
+                % (n, error, M, error_rate)
+            )
+            if error_rate > 1-1/8:
+                assert 0
+        assert 1
+
+    def test_partial_grover(self):
         n_block = 3
         for n in range(5, 8):
             print("run with n = ", n)
