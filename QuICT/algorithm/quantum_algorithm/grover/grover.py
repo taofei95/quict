@@ -26,7 +26,34 @@ class Grover:
     def __init__(self, simulator) -> None:
         self.simulator = simulator
 
-    def circuit(self, n, n_ancilla, oracle, n_solution=1, measure=True):
+    def _grover_operator(self, n, n_ancilla, oracle, is_bit_flip=False):
+        cgate = CompositeGate()
+        index_q = list(range(n))
+        ancilla_q = list(range(n, n + n_ancilla))
+        # Grover iteration
+        if is_bit_flip:
+            X | cgate(ancilla_q[0])
+            H | cgate(ancilla_q[0])
+        oracle | cgate(index_q + ancilla_q)
+        if is_bit_flip:
+            H | cgate(ancilla_q[0])
+            X | cgate(ancilla_q[0])
+        for idx in index_q:
+            H | cgate(idx)
+        # control phase shift
+        for idx in index_q:
+            X | cgate(idx)
+        H | cgate(index_q[n - 1])
+        MCTOneAux().execute(n + 1) | cgate(index_q + ancilla_q[:1])
+        H | cgate(index_q[n - 1])
+        for idx in index_q:
+            X | cgate(idx)
+        # control phase shift end
+        for idx in index_q:
+            H | cgate(idx)
+        return cgate
+
+    def circuit(self, n, n_ancilla, oracle, n_solution=1, measure=True, is_bit_flip=False, iteration_number_forced=False):
         """ grover search for f with custom oracle
 
         Args:
@@ -37,6 +64,7 @@ class Grover:
                 [n:n+k] is ancilla
             n_solution(int): number of solution
             measure(bool): measure included or not
+            iteration_number_forced(bool): if True, n_solution is used as iteration count
 
         Returns:
             int: the a satisfies that f(a) = 1
@@ -45,31 +73,21 @@ class Grover:
         circuit = Circuit(n + n_ancilla)
         index_q = list(range(n))
         ancilla_q = list(range(n, n + n_ancilla))
-        N = 2 ** n
-        theta = 2 * np.arccos(np.sqrt(1 - n_solution / N))
-        T = int(np.arccos(np.sqrt(n_solution / N)) / theta) + 1
+        if iteration_number_forced:
+            T = n_solution
+        else:
+            N = 2 ** n
+            theta = 2 * np.arccos(np.sqrt(1 - n_solution / N))
+            T = int(np.arccos(np.sqrt(n_solution / N)) / theta) + 1
+
+        grover_operator = self._grover_operator(n,n_ancilla,oracle,is_bit_flip)
 
         # create equal superposition state in index_q
         for idx in index_q:
             H | circuit(idx)
         # rotation
         for i in range(T):
-            # Grover iteration
-            oracle | circuit(index_q + ancilla_q)
-            for idx in index_q:
-                H | circuit(idx)
-            # control phase shift
-            for idx in index_q:
-                X | circuit(idx)
-            H | circuit(index_q[n - 1])
-            MCTOneAux().execute(n + 1) | circuit(index_q + ancilla_q[:1])
-
-            H | circuit(index_q[n - 1])
-            for idx in index_q:
-                X | circuit(idx)
-            # control phase shift end
-            for idx in index_q:
-                H | circuit(idx)
+            grover_operator | circuit
         for idx in index_q:
             if measure:
                 Measure | circuit(idx)
@@ -80,9 +98,10 @@ class Grover:
         )
         return circuit
 
-    def run(self, n, n_ancilla, oracle, n_solution=1, measure=True):
+    def run(self, n, n_ancilla, oracle, n_solution=1, measure=True, is_bit_flip=False):
         simulator = self.simulator
         index_q = list(range(n))
-        circuit = self.circuit(n, n_ancilla, oracle, n_solution, measure)
+        circuit = self.circuit(n, n_ancilla, oracle, n_solution, measure, is_bit_flip)
         simulator.run(circuit)
         return int(circuit[index_q])
+        
