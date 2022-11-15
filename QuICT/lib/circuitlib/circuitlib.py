@@ -24,7 +24,7 @@ class CircuitLib:
 
     __DEFAULT_TYPE = ["template", "random", "algorithm", "experiment"]
     __DEFAULT_CLASSIFY = {
-        "random": ["diag", "ctrl_diag", "single", "UTSC"],
+        "random": ["google", "ibmq", "ionq", "ustc", "quafu", "ctrl_diag", "ctrl_unitary", "diag", "single_bits", "unitary"],
         "algorithm": ["clifford", "grover", "qft", "supremacy", "vqe"],
         "template": ["template"],
         "experiment": ["adder", "mapping"]
