@@ -5,37 +5,9 @@ import torch
 import time
 
 from QuICT.algorithm.quantum_machine_learning.utils.gate_tensor import *
+from QuICT.algorithm.quantum_machine_learning.utils.gpu_gate_simulator import Applygate
 from QuICT.core.gate import *
 from QuICT.ops.utils import LinAlgLoader
-
-
-# class ApplyGate(torch.autograd.Function):
-#     @staticmethod
-#     # 第一个是ctx，第二个是input，其他是可选参数。
-#     def forward(ctx, input, weight, bias=None):
-#         ctx.save_for_backward(input, weight, bias)
-#         output = input.mm(weight.t())  # torch.t()方法，对2D tensor进行转置
-#         if bias is not None:
-#             # expand_as(tensor)等价于expand(tensor.size()), 将原tensor按照新的size进行扩展
-#             output += bias.unsqueeze(0).expand_as(output)
-#         return output
-
-#     @staticmethod
-#     def backward(ctx, grad_output):
-#         # grad_output为反向传播上一级计算得到的梯度值
-#         # input, weight, bias = ctx.saved_variables
-#         input, weight, bias = ctx.saved_tensors
-#         grad_input = grad_weight = grad_bias = None
-#         # 分别代表输入,权值,偏置三者的梯度
-#         # 判断三者对应的Variable是否需要进行反向求导计算梯度
-#         if ctx.needs_input_grad[0]:
-#             grad_input = grad_output.mm(weight)
-#         if ctx.needs_input_grad[1]:
-#             grad_weight = grad_output.t().mm(input)
-#         if bias is not None and ctx.needs_input_grad[2]:
-#             grad_bias = grad_output.sum(0).squeeze(0)
-
-#         return grad_input, grad_weight, grad_bias
 
 
 class Ansatz:
@@ -154,158 +126,11 @@ class Ansatz:
             )
         )
 
-    def _apply_normal_matrix(self, gate: BasicGateTensor, default_parameters):
-        # Get gate's parameters
-        assert gate.matrix_type == MatrixType.normal
-        args_num = gate.controls + gate.targets
-        gate_args = gate.cargs + gate.targs
-        matrix = cp.from_dlpack(gate.matrix.detach())
-
-        # Deal with 1-qubit normal gate e.g. H
-        if args_num == 1:
-            index = self._n_qubits - 1 - gate_args[0]
-            self._algorithm.normal_targ(index, matrix, *default_parameters)
-        elif args_num == 2:  # Deal with 2-qubits control normal gate e.g. CH
-            if gate.controls == gate.targets:
-                c_index = self._n_qubits - 1 - gate.carg
-                t_index = self._n_qubits - 1 - gate.targ
-                self._algorithm.normal_ctargs(
-                    c_index, t_index, matrix, *default_parameters
-                )
-            elif gate.targets == 2:  # Deal with 2-qubits unitary gate
-                indexes = [self._n_qubits - 1 - index for index in gate_args]
-                self._algorithm.normal_targs(indexes, matrix, *default_parameters)
-            else:
-                raise KeyError("Quantum gate cannot only have control qubits.")
-
-    def _apply_diagonal_matrix(self, gate: BasicGateTensor, default_parameters):
-        # Get gate's parameters
-        assert gate.matrix_type in [MatrixType.diagonal, MatrixType.diag_diag]
-        args_num = gate.controls + gate.targets
-        gate_args = gate.cargs + gate.targs
-        matrix = cp.from_dlpack(gate.matrix.detach())
-
-        # Deal with 1-qubit diagonal gate, e.g. Rz
-        if args_num == 1:
-            index = self._n_qubits - 1 - gate.targ
-            self._algorithm.diagonal_targ(index, matrix, *default_parameters)
-        elif args_num == 2:  # Deal with 2-qubit diagonal gate, e.g. CRz
-            if gate.controls == gate.targets:
-                c_index = self._n_qubits - 1 - gate.carg
-                t_index = self._n_qubits - 1 - gate.targ
-                self._algorithm.diagonal_ctargs(
-                    c_index, t_index, matrix, *default_parameters
-                )
-            elif gate.targets == 2:
-                indexes = [self._qubits - 1 - index for index in gate_args]
-                self._algorithm.diagonal_targs(indexes, matrix, *default_parameters)
-            else:
-                raise KeyError("Quantum gate cannot only have control qubits.")
-        else:  # [CCRz]
-            c_indexes = [self._n_qubits - 1 - carg for carg in gate.cargs]
-            t_index = self._n_qubits - 1 - gate.targ
-            self._algorithm.diagonal_more(
-                c_indexes, t_index, matrix, *default_parameters
-            )
-    
-    def _apply_swap_matrix(self, gate: BasicGateTensor, default_parameters):
-        # Get gate's parameters
-        assert gate.matrix_type == MatrixType.swap
-        args_num = gate.controls + gate.targets
-        gate_args = gate.cargs + gate.targs
-        default_parameters = (self._vector, self._qubits, self._sync)
-
-        if args_num == 1:       # Deal with X Gate
-            index = self._qubits - 1 - gate.targ
-            self._algorithm.swap_targ(
-                index,
-                *default_parameters
-            )
-        elif args_num == 2:     # Deal with Swap Gate
-            t_indexes = [self._qubits - 1 - targ for targ in gate_args]
-            self._algorithm.swap_targs(
-                t_indexes,
-                *default_parameters
-            )
-        else:   # CSwap
-            t_indexes = [self._qubits - 1 - targ for targ in gate.targs]
-            c_index = self._qubits - 1 - gate.carg
-            self._algorithm.swap_tmore(
-                t_indexes,
-                c_index,
-                *default_parameters
-            )
-
     def _apply_gate_gpu(self, state: torch.Tensor, gate: BasicGateTensor):
         assert state.is_cuda, "Must use GPU."
-        matrix_type = gate.matrix_type
-        gate_type = gate.type
-        cupy_state = cp.from_dlpack(state.detach())
-
-        # Deal with quantum gate with more than 3 qubits.
-        if (
-            gate_type in [GateType.unitary, GateType.qft, GateType.iqft]
-            and gate.targets >= 3
-        ):
-            matrix = cp.from_dlpack(gate.matrix.to(self._device).detach())
-            matrix = matrix.reshape(
-                1 << (gate.controls + gate.targets), 1 << (gate.controls + gate.targets)
-            )
-            cupy_state = self._algorithm.matrix_dot_vector(
-                cupy_state, self._n_qubits, matrix, gate.cargs + gate.targs, True
-            )
-            state = torch.from_dlpack(cupy_state)
-            return state
-
-        default_parameters = (cupy_state, self._n_qubits, True)
-        # [H, SX, SY, SW, U2, U3, Rx, Ry] 2-bits [CH, ] 2-bits[targets] [unitary]
-        if matrix_type == MatrixType.normal:
-            self._apply_normal_matrix(gate, default_parameters)
-        # [Rz, Phase], 2-bits [CRz], 3-bits [CCRz]
-        elif matrix_type in [MatrixType.diagonal, MatrixType.diag_diag]:
-            self._apply_diagonal_matrix(gate, default_parameters)
-        # [X] 2-bits [swap] 3-bits [CSWAP]
-        elif matrix_type == MatrixType.swap:
-            self.apply_swap_matrix(gate)
-        # [Y] 2-bits [CX, CY] 3-bits: [CCX]
-        elif matrix_type == MatrixType.reverse:
-            self.apply_reverse_matrix(gate)
-        # [S, sdg, Z, U1, T, tdg] # 2-bits [CZ, CU1]
-        elif matrix_type == MatrixType.control:
-            self.apply_control_matrix(gate)
-        # [FSim]
-        elif matrix_type == MatrixType.ctrl_normal:
-            t_indexes = [self._qubits - 1 - targ for targ in gate.targs]
-            matrix = self._get_gate_matrix(gate)
-            self._algorithm.ctrl_normal_targs(t_indexes, matrix, *default_parameters)
-        # [Rxx, Ryy]
-        elif matrix_type == MatrixType.normal_normal:
-            t_indexes = [self._qubits - 1 - targ for targ in gate.targs]
-            matrix = self._get_gate_matrix(gate)
-            self._algorithm.normal_normal_targs(t_indexes, matrix, *default_parameters)
-        # [Measure, Reset]
-        elif gate_type in [GateType.measure, GateType.reset]:
-            index = self._qubits - 1 - gate.targ
-            prob = self.get_measured_prob(index).get()
-            self.apply_specialgate(index, gate_type, prob)
-        # [Perm]
-        elif gate_type == GateType.perm:
-            args = gate.cargs + gate.targs
-            if len(args) == self._qubits:
-                mapping = np.array(gate.pargs, dtype=np.int32)
-            else:
-                mapping = np.arange(self._qubits, dtype=np.int32)
-                for idx, parg in enumerate(gate.pargs):
-                    mapping[args[idx]] = args[parg]
-
-            self._algorithm.VectorPermutation(
-                self._vector, mapping, changeInput=True, gpu_out=False, sync=self._sync
-            )
-        # unsupported quantum gates
-        else:
-            raise KeyError(f"Unsupported Gate: {gate_type}")
-
-        state = torch.from_dlpack(cupy_state)
+        state = Applygate.apply(
+            state, gate, gate.pargs.requires_grad, True, self._algorithm, self._n_qubits
+        )
         return state
 
     def _apply_gate_cpu(self, state, gate_tensor, act_bits):
@@ -444,7 +269,7 @@ if __name__ == "__main__":
     ansatz = Ansatz(16)
     ansatz.add_gate(H_tensor)  # 0.0007s
     s = time.time()
-    state = ansatz.forward()  # 0.02s
+    state = ansatz.forward()  # 0.02s -> 0.0025s
     print(time.time() - s)
 
     circuit = Circuit(16)

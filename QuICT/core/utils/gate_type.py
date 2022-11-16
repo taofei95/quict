@@ -121,6 +121,11 @@ class MatrixType(Enum):
                             [0, a, b, 0],
                             [0, c, d, 0],
                             [C, 0, 0, D]]
+    diagonal-normal: diagonal-normal mixed quantum gate's matrix
+        2-bits [Rzx]: [[A, B, 0, 0],
+                       [C, D, 0, 0],
+                       [0, 0, a, b],
+                       [0, 0, c, d]]
     """
 
     normal = "normal matrix"
@@ -132,6 +137,7 @@ class MatrixType(Enum):
     diag_diag = "diagonal * diagonal"
     ctrl_normal = "control * matrix"
     normal_normal = "normal * normal"
+    diag_normal = "diagonal * normal"
 
 
 SPECIAL_GATE_SET = [

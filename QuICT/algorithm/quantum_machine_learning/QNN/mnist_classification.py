@@ -114,6 +114,8 @@ class QNNMnistClassifier:
                 y_pred = self.net(x_train)
                 loss = self.loss_func(y_train, y_pred)
                 loss.backward()
+                for para in self.net.parameters():
+                    print(para.grad)
                 self.optim.step()
                 it += 1
                 it_end = time.time()
@@ -124,7 +126,7 @@ class QNNMnistClassifier:
         #     self._save_checkpoint(it + 1, latest=(it + 1 == max_iters))
 
 
-c = QNNMnistClassifier(threshold=0.1, resize=(4, 4), device="cuda:0")
+c = QNNMnistClassifier(threshold=0.1, resize=(2, 2), device="cpu")
 c.train(optimizer="Adam", lr=0.1, batch_size=1)
 # optimizer = torch.optim.Adam
 # optim = optimizer([dict(params=c.pqc.parameters(), lr=0.1)])

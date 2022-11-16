@@ -233,6 +233,27 @@ class BasicGateTensor(object):
 
         self.name = "-".join(name_parts)
 
+    def change_pargs(self, pargs: list):
+        if isinstance(pargs, list):
+            pargs = torch.tensor(pargs).to(self._device)
+        else:
+            pargs = pargs.detach().to(self._device)
+        parg_gate_dict = {
+            "GateType.rx": Rx_tensor,
+            "GateType.ry": Ry_tensor,
+            "GateType.rz": Rz_tensor,
+            "GateType.ri": RI_tensor,
+            "GateType.rxx": Rxx_tensor,
+            "GateType.ryy": Ryy_tensor,
+            "GateType.rzz": Rzz_tensor,
+            "GateType.rzx": Rzx_tensor,
+        }
+        type_str = self._name[: self._name.find("-")]
+        new_gate = parg_gate_dict[type_str](pargs).to(self._device)
+        new_gate._targs = self._targs
+        new_gate._cargs = self._cargs
+        return new_gate
+
     def __str__(self):
         """get gate information"""
         gate_info = {
@@ -303,6 +324,12 @@ class HGate(BasicGateTensor):
             dtype=self._precision,
         ).to(self.device)
 
+    @property
+    def gradient(self):
+        raise AttributeError(
+            "Only parametric gates with trainable parameters have attribute 'gradient'"
+        )
+
 
 H_tensor = HGate()
 
@@ -317,6 +344,12 @@ class HYGate(BasicGateTensor):
             [[1 / np.sqrt(2), -1j / np.sqrt(2)], [1j / np.sqrt(2), -1 / np.sqrt(2)]],
             dtype=self._precision,
         ).to(self.device)
+
+    @property
+    def gradient(self):
+        raise AttributeError(
+            "Only parametric gates with trainable parameters have attribute 'gradient'"
+        )
 
 
 Hy_tensor = HYGate()
@@ -347,6 +380,12 @@ class CXGate(BasicGateTensor):
     def target_matrix(self):
         return self._target_matrix
 
+    @property
+    def gradient(self):
+        raise AttributeError(
+            "Only parametric gates with trainable parameters have attribute 'gradient'"
+        )
+
 
 CX_tensor = CXGate()
 
@@ -365,6 +404,12 @@ class XGate(BasicGateTensor):
 
         self.matrix = torch.tensor([[0, 1], [1, 0]], dtype=self._precision).to(
             self.device
+        )
+
+    @property
+    def gradient(self):
+        raise AttributeError(
+            "Only parametric gates with trainable parameters have attribute 'gradient'"
         )
 
 
@@ -387,6 +432,12 @@ class YGate(BasicGateTensor):
             self.device
         )
 
+    @property
+    def gradient(self):
+        raise AttributeError(
+            "Only parametric gates with trainable parameters have attribute 'gradient'"
+        )
+
 
 Y_tensor = YGate()
 
@@ -405,6 +456,12 @@ class ZGate(BasicGateTensor):
 
         self.matrix = torch.tensor([[1, 0], [0, -1]], dtype=self._precision).to(
             self.device
+        )
+
+    @property
+    def gradient(self):
+        raise AttributeError(
+            "Only parametric gates with trainable parameters have attribute 'gradient'"
         )
 
 
@@ -439,6 +496,16 @@ class RxGate(BasicGateTensor):
 
         return matrix
 
+    @property
+    def gradient(self):
+        gradient = torch.zeros([2, 2], dtype=self._precision).to(self.device)
+        gradient[0, 0] = -torch.sin(self.parg / 2) / 2
+        gradient[0, 1] = -1j * torch.cos(self.parg / 2) / 2
+        gradient[1, 0] = -1j * torch.cos(self.parg / 2) / 2
+        gradient[1, 1] = -torch.sin(self.parg / 2) / 2
+
+        return gradient
+
 
 Rx_tensor = RxGate()
 
@@ -470,6 +537,16 @@ class RyGate(BasicGateTensor):
         matrix[1, 1] = torch.cos(self.parg / 2)
 
         return matrix
+
+    @property
+    def gradient(self):
+        gradient = torch.zeros([2, 2], dtype=self._precision).to(self.device)
+        gradient[0, 0] = -torch.sin(self.parg / 2) / 2
+        gradient[0, 1] = -torch.cos(self.parg / 2) / 2
+        gradient[1, 0] = torch.cos(self.parg / 2) / 2
+        gradient[1, 1] = -torch.sin(self.parg / 2) / 2
+
+        return gradient
 
 
 Ry_tensor = RyGate()
@@ -507,6 +584,14 @@ class RzGate(BasicGateTensor):
 
         return matrix
 
+    @property
+    def gradient(self):
+        gradient = torch.zeros([2, 2], dtype=self._precision).to(self.device)
+        gradient[0, 0] = -1j * torch.exp(-self.parg / 2 * 1j) / 2
+        gradient[1, 1] = 1j * torch.exp(self.parg / 2 * 1j) / 2
+
+        return gradient
+
 
 Rz_tensor = RzGate()
 
@@ -539,6 +624,12 @@ class RIGate(BasicGateTensor):
             [[np.exp(self.parg * 1j), 0], [0, np.exp(self.parg * 1j)]],
             dtype=self._precision,
         ).to(self.device)
+
+    @property
+    def gradient(self):
+        raise AttributeError(
+            "Only parametric gates with trainable parameters have attribute 'gradient'"
+        )
 
 
 RI_tensor = RIGate()
@@ -578,6 +669,18 @@ class RxxGate(BasicGateTensor):
 
         return matrix
 
+    @property
+    def gradient(self):
+        gradient = torch.zeros([2, 2], dtype=self._precision).to(self.device)
+        gradient[0, 0] = gradient[1, 1] = gradient[2, 2] = gradient[3, 3] = (
+            -torch.sin(self.parg / 2) / 2
+        )
+        gradient[0, 3] = gradient[3, 0] = gradient[1, 2] = gradient[2, 1] = (
+            -torch.cos(self.parg / 2) * 1j / 2
+        )
+
+        return gradient
+
 
 Rxx_tensor = RxxGate()
 
@@ -615,6 +718,17 @@ class RyyGate(BasicGateTensor):
 
         return matrix
 
+    @property
+    def gradient(self):
+        gradient = torch.zeros([2, 2], dtype=self._precision).to(self.device)
+        gradient[0, 0] = gradient[1, 1] = gradient[2, 2] = gradient[3, 3] = (
+            -torch.sin(self.parg / 2) / 2
+        )
+        gradient[0, 3] = gradient[3, 0] = torch.cos(self.parg / 2) * 1j / 2
+        gradient[1, 2] = gradient[2, 1] = -torch.cos(self.parg / 2) * 1j / 2
+
+        return gradient
+
 
 Ryy_tensor = RyyGate()
 
@@ -651,6 +765,16 @@ class RzzGate(BasicGateTensor):
 
         return matrix
 
+    @property
+    def gradient(self):
+        gradient = torch.zeros([2, 2], dtype=self._precision).to(self.device)
+        gradient[0, 0] = -1j * torch.exp(-self.parg / 2 * 1j) / 2
+        gradient[1, 1] = 1j * torch.exp(self.parg / 2 * 1j) / 2
+        gradient[2, 2] = 1j * torch.exp(self.parg / 2 * 1j) / 2
+        gradient[3, 3] = -1j * torch.exp(-self.parg / 2 * 1j) / 2
+
+        return gradient
+
 
 Rzz_tensor = RzzGate()
 
@@ -658,7 +782,11 @@ Rzz_tensor = RzzGate()
 class RzxGate(BasicGateTensor):
     def __init__(self, params=torch.tensor([np.pi / 2])):
         super().__init__(
-            controls=0, targets=2, params=1, type=GateType.rzx,
+            controls=0,
+            targets=2,
+            params=1,
+            type=GateType.rzx,
+            matrix_type=MatrixType.diag_normal,
         )
 
         self.pargs = params
@@ -684,6 +812,17 @@ class RzxGate(BasicGateTensor):
 
         return matrix
 
+    @property
+    def gradient(self):
+        gradient = torch.zeros([2, 2], dtype=self._precision).to(self.device)
+        gradient[0, 0] = gradient[1, 1] = gradient[2, 2] = gradient[3, 3] = (
+            -torch.sin(self.parg / 2) / 2
+        )
+        gradient[0, 1] = gradient[1, 0] = -torch.cos(self.parg / 2) * 1j / 2
+        gradient[2, 3] = gradient[3, 2] = torch.cos(self.parg / 2) * 1j / 2
+
+        return gradient
+
 
 Rzx_tensor = RzxGate()
 
@@ -708,6 +847,12 @@ class MeasureGate(BasicGateTensor):
     @property
     def matrix(self):
         raise Exception("try to get the matrix of measure gate")
+
+    @property
+    def gradient(self):
+        raise AttributeError(
+            "Only parametric gates with trainable parameters have attribute 'gradient'"
+        )
 
 
 Measure_tensor = MeasureGate()
