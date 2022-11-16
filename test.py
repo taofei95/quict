@@ -70,7 +70,7 @@ def quafu_run(cir):
     return quafu_amp
 
 
-path = "wr_unit_test/machine-benchmark/randomori.qasm"
+path = "wr_unit_test/machine-benchmark/qasm/ibm/plus_one_4bit_1.qasm"
 cir = load_circuit(path)
 amp = simu_circuit(cir)
 print(abs(amp))
