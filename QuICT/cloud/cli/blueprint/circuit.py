@@ -3,7 +3,7 @@ import shutil
 import subprocess
 
 from QuICT.tools import Logger
-from .helper_function import path_check, qasm_validation
+from QuICT.cloud.cli.utils import path_check, JobValidation
 
 
 logger = Logger("CLI_Circuit_Management")
@@ -77,7 +77,7 @@ def store_quantum_circuit(name: str, file: str):
         return
 
     # qasm file validation
-    qasm_validation(file)
+    _ = JobValidation.get_circuit_info(file)
     shutil.copy(file, f"{default_customed_circuit_folder}/{name}")
     logger.info(f"Successfully add circuit {name} into Circuit Library.")
 

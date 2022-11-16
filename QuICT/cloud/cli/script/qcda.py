@@ -23,28 +23,37 @@ iset_mapping = {
 def qcda_start(
     circuit_path: str,
     output_path: str,
-    optimization: str,
     layout_path: str = None,
-    instruction_set: str = None
+    methods: str = None,
+    instruction_set: str = "Google",
+    auto_mode: str = "light",
+    para: bool = True,
+    depara: bool = False,
+    templates: str = None
 ):
+    method_mapping = {
+        "GateTransform": None,
+        "Clifford": None,
+        "Auto": None,
+        "Commutative": None,
+        "SymbolicClifford": None,
+        "Template": None,
+        "CNOT": None
+    }
     logger.debug("Start Run QCDA Job in local mode.")
     logger.debug(
-        f"Job Parameters: circuit path: {circuit_path}, optimization: {optimization}, " +
-        f"layout path: {layout_path}, Instruction set: {instruction_set}, " +
+        f"Job Parameters: circuit path: {circuit_path}, methods: {methods}, " +
         f"output path: {output_path}."
     )
     # Get circuit from given path
     circuit = OPENQASMInterface.load_file(circuit_path).circuit
+    methods = methods.split("+")
 
     qcda = QCDA()
-    if bool(optimization):
-        qcda.add_default_optimization()
+    for method in methods:
+        qcda.add_method(method_mapping[method])
 
-    if instruction_set is not None:
-        instruction_set = iset_mapping[instruction_set]
-        qcda.add_default_synthesis(instruction_set)
-
-    if bool(layout_path):
+    if layout_path is not None:
         layout = Layout.load_file(layout_path)
         qcda.add_default_mapping(layout)
 
@@ -56,6 +65,9 @@ def qcda_start(
 
 
 if __name__ == "__main__":
+    raw_args = sys.argv[1:]
+    dict_args = dict([arg.split('=', maxsplit=1) for arg in raw_args])
+
     qcda_start(
-        *sys.argv[1:]
+        **dict_args
     )

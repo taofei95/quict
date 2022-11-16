@@ -6,9 +6,6 @@ simulation:
   shots: 100                      # The repeat times of experience
   precision: single               # The precision of simualtor
   backend: state_vector           # The backend of simualtor, one of [unitary, state_vector, density_matrix].
-                                  # if using unitary, the circuit could be an .npy file to store unitary matrix.
-  resource:
-    device: CPU                   # Device Type: local -- [CPU/GPU]; remote -- [CPU/GPU/plugins]
-    num: 1                        # Device number; in local mode, it will use all CPU whatever the number is.
+  device: CPU                     # Device Type: [CPU/GPU];
 
 output_path: /path/to/result      # the folder to store result

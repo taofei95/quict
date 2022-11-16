@@ -30,7 +30,7 @@ def cli_construct():
     subparsers = parser.add_subparsers()
 
     # Build env management
-    from QuICT.cloud.cli.utils.remote import login, logout
+    from QuICT.cloud.cli.blueprint.remote import login, logout
 
     # Login
     login_sp = subparsers.add_parser(
@@ -105,7 +105,7 @@ def circuit_cli_construct(circuit_sp: ArgumentParser):
     Args:
         circuit_sp (ArgumentParser): Circuit Parser
     """
-    from QuICT.cloud.cli.utils import (
+    from QuICT.cloud.cli.blueprint.circuit import (
         get_random_circuit, get_algorithm_circuit, store_quantum_circuit,
         delete_quantum_circuit, list_quantum_circuit
     )
@@ -212,14 +212,14 @@ def job_cli_construct(mode_sp: ArgumentParser, mode: str):
         mode_sp (ArgumentParser): Job Mode Parser
         mode (str): mode description, one of [local, remote]
     """
-    from QuICT.cloud.cli.utils import get_template
+    from QuICT.cloud.cli.blueprint.job import get_template
 
     if mode == "local":
-        from QuICT.cloud.cli.utils import (
+        from QuICT.cloud.cli.blueprint.job import (
             start_job, stop_job, restart_job, delete_job, status_job, list_jobs
         )
     elif mode == "remote":
-        from QuICT.cloud.cli.utils.remote import (
+        from QuICT.cloud.cli.blueprint.remote import (
             start_job, stop_job, restart_job, delete_job, status_job, list_jobs
         )
 
@@ -379,7 +379,7 @@ def benchmark_cli_construct(benchmark_sp: ArgumentParser):
     Args:
         benchmark_sp (ArgumentParser): Benchmark Parser
     """
-    from QuICT.cloud.cli.utils import get_benchmark_qcda, get_benchmark_simulation
+    from QuICT.cloud.cli.blueprint.benchmark import get_benchmark_qcda, get_benchmark_simulation
 
     subparser = benchmark_sp.add_subparsers()
     # quict benchmark qcda

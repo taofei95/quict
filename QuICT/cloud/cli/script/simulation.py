@@ -1,4 +1,5 @@
 import sys
+import json
 
 from QuICT.tools import Logger
 from QuICT.tools.logger import LogFormat
@@ -40,6 +41,10 @@ def simulation_start(
 
 
 if __name__ == "__main__":
+    raw_args = sys.argv[1:]
+    dict_args = dict([arg.split('=', maxsplit=1) for arg in raw_args])
+    logger.info(f"{dict_args}")
+
     simulation_start(
-        *sys.argv[1:]
+        **dict_args
     )

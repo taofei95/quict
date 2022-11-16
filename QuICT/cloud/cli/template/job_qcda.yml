@@ -3,19 +3,18 @@ type: qcda                          # The type of job, one of [simulation, qcda]
 circuit: /path/to/circuit/qasm      # The path of circuit's qasm file
 
 qcda:
-  synthesis:
-    enable: True                    # enable synthesis or not
-    instruction_set: None           # The specified instruction set [USTC, Google, IonQ, IBMQ]
-  optimization:
-    enable: True                    # Enable optimization or not
-    mode: auto                      # Optimization mode, one of [auto, customized]
-    # template_matching: False        # enable template matching or not
-    # commutative_opt: False          # enable communication optimization or not
-    # CNOT: False                     # enable optimization for CNOT circuit or not
-    # Clifford: False                 # enable optimization for Clifford circuit or not
+  methods:                          # ["GateTransform", "Clifford"]
+    - Auto                          # ["Auto", "Commutative", "SymbolicClifford", "Template", "CNOT"]
+
+  instruction_set: Google           # Instruction Set, Extra args for GateTransform; one of [Google, ...]
+  auto_mode: light                  # The mode for AutoOptimization, one of [light, heavy]
+  para: True                        # The args for CommutativeOpt,
+  depara: False
+  templates:                        # The list of templates for TemplateOpt.
+    - None
+
   mapping:
-    enable: True                    # Enable mapping or not
-    basic_type: line                # The common topology, one of [line/grid/customized]
+    enable: False                   # Enable mapping or not
     layout_path: /path/to/topology  # The path of the file which store the topology
 
 output_path: /path/to/result        # the folder to store result

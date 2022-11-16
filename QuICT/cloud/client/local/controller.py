@@ -48,32 +48,24 @@ class QuICTLocalJobManager:
 
     def _start_job(self, job_name: str, yml_dict: dict):
         # Get information from given yml dict
-        cir_path = yml_dict['circuit']
         job_type = yml_dict['type']
         job_options = yml_dict["simulation"] if job_type == "simulation" else yml_dict["qcda"]
-        device = yml_dict["resource"]["device"]
-        output_path = yml_dict['output_path']
+        job_options["circuit_path"] = yml_dict['circuit']
+        job_options["output_path"] = yml_dict['output_path']
+
+        if job_type == "qcda":
+            if job_options['mapping']['enable']:
+                job_options["layout_path"] = job_options['mapping']['layout_path']
+
+            del job_options['mapping']
 
         # Pre-paration job's runtime arguments
-        if job_type == "simulation":
-            shots = job_options["shots"]
-            backend = job_options["backend"]
-            precision = job_options["precision"]
-            runtime_args = f"{cir_path} {shots} {device} {backend} {precision} {output_path}"
-        else:
-            runtime_args = f"{cir_path} {output_path}"
-            optimization = job_options["optimization"]["enable"]
-            runtime_args += f" {optimization}"
+        runtime_args = ""
+        for key, value in job_options.items():
+            if isinstance(value, list):
+                value = "+".join(value)
 
-            if job_options["mapping"]["enable"]:
-                layout_path = job_options["mapping"]["layout_path"]
-                runtime_args += f" {layout_path}"
-            else:
-                runtime_args += " False"
-
-            if job_options["synthesis"]["enable"]:
-                iset = job_options["synthesis"]["instruction_set"]
-                runtime_args += f" {iset}"
+            runtime_args += f"{key}={value} "
 
         # Start job
         command_file_path = os.path.join(
