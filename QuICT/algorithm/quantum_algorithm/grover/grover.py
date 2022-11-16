@@ -77,8 +77,8 @@ class Grover:
             T = n_solution
         else:
             N = 2 ** n
-            theta = 2 * np.arccos(np.sqrt(1 - n_solution / N))
-            T = int(np.arccos(np.sqrt(n_solution / N)) / theta) + 1
+            theta = np.arcsin(np.sqrt(n_solution / N))
+            T = int(np.round((np.pi/2-theta)/(2*theta)))
 
         grover_operator = self._grover_operator(n,n_ancilla,oracle,is_bit_flip)
 
