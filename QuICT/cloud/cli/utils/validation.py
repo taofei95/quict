@@ -83,7 +83,6 @@ class JobValidation:
                 f"Unrecognized QCDA method, please use one of {self._BASED_METHODS}."
 
         # Extra Args Validation
-        # TODO: qcda templates need add check exists in CircuitLib.
         if "GateTransform" in methods:
             assert qcda_dict["instruction_set"] in self._QCDA_PARAMETERS["instruction_set"], \
                 "Wrong Instruction Set."
@@ -97,14 +96,28 @@ class JobValidation:
                 "The para and depara should be bool."
 
         if "Template" in methods:
-            pass
+            template_dict = qcda_dict["templates"]
+            temp_args = [template_dict["max_width"], template_dict["max_size"], template_dict["max_depth"]]
+            for arg in temp_args:
+                assert isinstance(arg, int)
 
+            qcda_dict["templates"] = "+".join([str(targ) for targ in temp_args])
+        else:
+            qcda_dict["templates"] = ""
+
+        # Validate qcda mapping args
         if qcda_dict["mapping"]["enable"]:
-            print(qcda_dict["mapping"]["layout_path"])
             try:
                 _ = Layout(1).load_file(qcda_dict["mapping"]["layout_path"])
             except Exception as e:
                 raise KeyError(f"Failure to load layout from file as {e}.")
+
+            # Update qcda dict
+            qcda_dict["layout_path"] = qcda_dict["mapping"]["layout_path"]
+
+        # adjust un-used options
+        del qcda_dict["mapping"]
+        qcda_dict["methods"] = "+".join(methods)
 
     def _job_complement(self, info: dict, job_type: str):
         default_job_path = os.path.join(self._job_template_path, f"job_{job_type}.yml")

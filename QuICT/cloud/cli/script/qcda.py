@@ -5,6 +5,7 @@ from QuICT.core import Layout
 from QuICT.tools import Logger
 from QuICT.tools.logger import LogFormat
 from QuICT.tools.interface import OPENQASMInterface
+from QuICT.lib.circuitlib import CircuitLib
 from QuICT.qcda.qcda import QCDA
 from QuICT.qcda.synthesis.gate_transform import USTCSet, GoogleSet, IBMQSet, IonQSet
 from QuICT.qcda.synthesis import GateTransform, CliffordUnidirectionalSynthesizer
@@ -34,8 +35,14 @@ def qcda_start(
     auto_mode: str = "light",
     para: bool = True,
     depara: bool = False,
-    templates: str = None
+    templates: str = ""
 ):
+    if templates:
+        width, size, depth = templates.split("+")
+        templates = CircuitLib().load_template_circuit(
+            int(width), int(size), int(depth)
+        )
+
     method_mapping = {
         "GateTransform": GateTransform(iset_mapping[instruction_set]),
         "Clifford": CliffordUnidirectionalSynthesizer(),

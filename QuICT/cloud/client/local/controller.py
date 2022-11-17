@@ -53,18 +53,9 @@ class QuICTLocalJobManager:
         job_options["circuit_path"] = yml_dict['circuit']
         job_options["output_path"] = yml_dict['output_path']
 
-        if job_type == "qcda":
-            if job_options['mapping']['enable']:
-                job_options["layout_path"] = job_options['mapping']['layout_path']
-
-            del job_options['mapping']
-
         # Pre-paration job's runtime arguments
         runtime_args = ""
         for key, value in job_options.items():
-            if isinstance(value, list):
-                value = "+".join(value)
-
             runtime_args += f"{key}={value} "
 
         # Start job
