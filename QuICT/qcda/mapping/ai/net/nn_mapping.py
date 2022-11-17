@@ -85,6 +85,12 @@ class CircuitGnn(nn.Module):
                     feat_dim=feat_dim,
                     pool=False,
                 ),
+                GnnBlock(
+                    qubit_num=qubit_num,
+                    max_gate_num=max_gate_num,
+                    feat_dim=feat_dim,
+                    pool=False,
+                ),
             ]
         )
 
@@ -130,7 +136,6 @@ class GnnMapping(nn.Module):
             embedding_dim=feat_dim,
             padding_idx=0,
         )
-        # nn.init.orthogonal_(self._x_trans.weight)
 
         self._circ_gnn = CircuitGnn(
             qubit_num=qubit_num,
@@ -139,14 +144,12 @@ class GnnMapping(nn.Module):
         )
 
         f_start = feat_dim * 2
-
-        mlp_dtype = torch.float
         self._mlp_1 = nn.Sequential(
-            nn.Linear(f_start, f_start, dtype=mlp_dtype),
+            nn.Linear(f_start, f_start),
             nn.LeakyReLU(),
-            nn.Linear(f_start, f_start // 2, dtype=mlp_dtype),
+            nn.Linear(f_start, f_start // 2),
             nn.LeakyReLU(),
-            nn.Linear(f_start // 2, self._action_num, dtype=mlp_dtype),
+            nn.Linear(f_start // 2, self._action_num),
         )
 
     def forward(self, x: torch.Tensor, edge_index: torch.Tensor, batch: torch.Tensor):
@@ -154,12 +157,9 @@ class GnnMapping(nn.Module):
         a = self._action_num
 
         circ_x = self._x_trans(x).view(-1, 2 * f)
-        # circ_x = torch.sum(circ_x, -2) / 2  # [b * n, f]
         circ_feat = self._circ_gnn(circ_x, edge_index, batch)  # [b, f]
 
         x = self._mlp_1(circ_feat).view(-1, a)  # [b, a]
-
-        x = x.to(torch.float)
         return x
 
 

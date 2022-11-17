@@ -195,6 +195,7 @@ class Learner:
         transitions = self.replay.sample(self.config.batch_size)
         states, actions, next_states, rewards = zip(*transitions)
 
+        
         actions = torch.tensor(
             [[self.config.action_id_by_swap[action]] for action in actions],
             dtype=torch.long,
@@ -213,7 +214,7 @@ class Learner:
             data_batch.x,
             data_batch.edge_index,
             data_batch.batch,
-        )  # [b, a]
+        )  # [b, a_gn + a_gs]
         state_action_values = q_vec.gather(1, actions).squeeze()
 
         # Q* by Bellman Equation

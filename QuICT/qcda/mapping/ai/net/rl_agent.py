@@ -40,7 +40,8 @@ class Agent:
         policy_net: NnMapping,
         policy_net_device: str,
     ):
-        a = self.config.action_num
+        config = self.config
+        a = config.action_num
 
         # Choose an action based on policy_net
         data = self.state.to_slim().to_nn_data()
@@ -50,14 +51,14 @@ class Agent:
         q_vec = q_vec.view(a)  # [a]
         if self._last_action is not None:
             bad_action = self._last_action
-            if bad_action not in self.config.action_id_by_swap:
+            if bad_action not in config.action_id_by_swap:
                 bad_action = bad_action[1], bad_action[0]
-            bad_id = self.config.action_id_by_swap[bad_action]
+            bad_id = config.action_id_by_swap[bad_action]
             q_vec[bad_id] = 1e-12
 
         # Query action swap using action id
         idx = int(torch.argmax(q_vec))
-        action = self.config.swap_by_action_id[idx]
+        action = config.swap_by_action_id[idx]
         return action
 
     def select_action(
@@ -106,20 +107,27 @@ class Agent:
         """
         assert self.state is not None
 
-        qubit_number = self.config.topo.qubit_number
+        config = self.config
+        qubit_number = config.topo.qubit_number
+
+        prev_state = self.state.to_slim()
 
         self.explore_step += 1
+
         u, v = action
-        # graph = self.state.topo_info.topo_graph
+        if u == -1 and v == -1:
+            next_state = prev_state
+            reward = -scale * 1000
+            terminated = False
+            return prev_state, next_state, reward, terminated
+
         topo_dist = self.state.layout_info.topo_dist
-        scale = self.config.reward_scale
+        scale = config.reward_scale
         if topo_dist[u][v] < 0.01:  # not connected
             assert False
 
         with self.mapped_circ:
             Swap & [u, v]
-
-        prev_state = self.state.to_slim()
 
         next_logic2phy = self.state.logic2phy
         next_phy2logic = self.state.phy2logic

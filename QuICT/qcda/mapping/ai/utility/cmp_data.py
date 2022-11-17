@@ -10,6 +10,12 @@ from QuICT.tools.interface.qasm_interface import OPENQASMInterface
 
 logger = Logger(tag="CmpDataGen")
 
+data_dir = osp.abspath(osp.dirname(__file__))
+data_dir = osp.join(data_dir, os.pardir)
+data_dir = osp.join(data_dir, "data")
+topo_dir = osp.join(data_dir, "topo")
+v_data_dir = osp.join(data_dir, "v_data")
+
 
 def map_circ(circ: Circuit, layout: Layout) -> Circuit:
     mapper = MCTSMapping(layout=layout, bp_num=100, sim_cnt=5)
@@ -17,11 +23,7 @@ def map_circ(circ: Circuit, layout: Layout) -> Circuit:
     return result
 
 
-def main():
-    data_dir = osp.abspath(osp.dirname(__file__))
-    data_dir = osp.join(data_dir, os.pardir)
-    data_dir = osp.join(data_dir, "data")
-    topo_dir = osp.join(data_dir, "topo")
+def main(topo_name: str):
     layouts = {}
     for _, _, file_names in os.walk(topo_dir):
         for file_name in file_names:
@@ -29,34 +31,26 @@ def main():
             layouts[layout.name] = layout
 
     qasm_paths = []
-    v_data_dir = osp.join(data_dir, "v_data")
     for _, _, file_names in os.walk(v_data_dir):
         for file_name in file_names:
-            if file_name.startswith("mapped"):
+            if not file_name.startswith(topo_name):
                 continue
             qasm_path = osp.join(v_data_dir, file_name)
             qasm_paths.append(qasm_path)
     for qasm_path in qasm_paths:
         logger.info(qasm_path)
         circ = OPENQASMInterface.load_file(qasm_path).circuit
-        pattern = re.compile(
-            r"(/[_0-9a-zA-Z]+)*/([0-9a-zA-Z]+_?[0-9a-zA-Z]+)_?(\d)+\.qasm"
-        )
+        pattern = re.compile(r"(/.*/)*" + topo_name + r"_(\d+)\.qasm")
         result = pattern.match(qasm_path)
-        layout_name = result[2]
-        idx = result[3]
-        logger.info(f"{layout_name}: {circ.width()}")
+        idx = result[1]
+        logger.info(f"{topo_name}: {circ.width()}")
 
-        mapped_circ = map_circ(circ, layouts[layout_name])
-        with open(osp.join(v_data_dir, f"mapped_{layout_name}_{idx}.qasm"), "w") as f:
+        mapped_circ = map_circ(circ, layouts[topo_name])
+        with open(osp.join(v_data_dir, f"mapped_{topo_name}_{idx}.qasm"), "w") as f:
             f.write(mapped_circ.qasm())
 
 
 def check(layout_name: str):
-    data_dir = osp.abspath(osp.dirname(__file__))
-    data_dir = osp.join(data_dir, os.pardir)
-    data_dir = osp.join(data_dir, "data")
-    topo_dir = osp.join(data_dir, "topo")
     layouts = {}
     for _, _, file_names in os.walk(topo_dir):
         for file_name in file_names:
@@ -81,5 +75,6 @@ def check(layout_name: str):
 
 
 if __name__ == "__main__":
-    # main()
-    check("grid_3x3")
+    topo_name = "grid_5x5"
+    main(topo_name)
+    check(topo_name)

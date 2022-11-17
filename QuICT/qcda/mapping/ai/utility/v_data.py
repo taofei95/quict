@@ -20,7 +20,7 @@ if not osp.exists(data_dir):
 
 circ_num_each_topo = 10
 
-for topo_name in ["grid_4x4", "grid_3x3", "ibmq_lima"]:
+for topo_name in ["grid_4x4", "grid_3x3", "grid_5x5", "ibmq_lima"]:
     print(f"Starting processing {topo_name}...")
     topo_dir = osp.dirname(osp.abspath(__file__))
     topo_dir = osp.join(topo_dir, os.pardir)

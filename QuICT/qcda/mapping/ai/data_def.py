@@ -294,12 +294,12 @@ class TrainConfig:
         max_gate_num: int = 300,
         feat_dim: int = 128,
         gamma: float = 0.9,
-        replay_pool_size: int = 100000,
+        replay_pool_size: int = 1_000_000,
         lr: float = 0.0001,
-        batch_size: int = 96,
+        batch_size: int = 32,
         total_epoch: int = 2000,
         explore_period: int = 10000,
-        target_update_period: int = 30,
+        target_update_period: int = 20,
         actor_num: int = 2,
         world_size: int = 3,
         model_sync_period: int = 10,
@@ -309,8 +309,8 @@ class TrainConfig:
         log_dir: str = None,
         epsilon_start: float = 0.9,
         epsilon_end: float = 0.1,
-        epsilon_decay: float = 100000.0,
-        reward_scale: float = 10.0,
+        epsilon_decay: float = 10_000_000.0,
+        reward_scale: float = 20.0,
     ) -> None:
         self.factory = DataFactory(topo=topo, max_gate_num=max_gate_num)
 
@@ -348,7 +348,7 @@ class TrainConfig:
 
         if model_path is None:
             model_path = osp.dirname(osp.abspath(__file__))
-            model_path = osp.join(model_path, "model_rl_mapping")
+            model_path = osp.join(model_path, f"{self.topo.name}-model_rl_mapping")
         self.model_path = model_path
 
         if log_dir is None:
