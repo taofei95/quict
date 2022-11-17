@@ -1,12 +1,12 @@
 import os
 import shutil
-import sqlite3
 from typing import Union, List
 
 from QuICT.core import Circuit
 from QuICT.lib.qasm.exceptions import QasmError
 from QuICT.tools import Logger
 from QuICT.tools.interface import OPENQASMInterface
+from .circuit_lib_sql import CircuitLibDB
 
 
 logger = Logger("QuICT_Circuit_Library")
@@ -40,12 +40,11 @@ class CircuitLib:
         self._output_path = output_path
         logger.debug(f"Initial Circuit Library with output {self._output_type}.")
 
-        self._connect = sqlite3.connect(f"{os.path.dirname(__file__)}/user_info.db")
-        self._connect.isolation_level = "EXCLUSIVE"
-        self._cursor = self._connect.cursor()
+        self._db = CircuitLibDB()
 
+    @property
     def size(self) -> int:
-        return self._cursor.lastrowid
+        return self._db.size()
 
     def _get_circuit_from_qasm(self, file_path: str) -> Circuit:
         """ Load Circuit from a qasm file. """
@@ -88,29 +87,6 @@ class CircuitLib:
 
         return circuit_all
 
-    def _file_filter(
-        self,
-        type: str,
-        classify: str,
-        max_width=None, max_size=None, max_depth=None
-    ) -> List[str]:
-        """ Get list of qasm file's name which satisfied the condition. """
-        based_sql_cmd = "SELECT NAME FROM CIRCUIT_LIB WHERE "
-        condition_cmd = f"TYPE=\'{type}\' AND CLASSIFY=\'{classify}\'"
-        if max_width is not None:
-            condition_cmd += f" AND WIDTH<\'{max_width}\'"
-
-        if max_size is not None:
-            condition_cmd += f" AND SIZE<\'{max_size}\'"
-
-        if max_depth is not None:
-            condition_cmd += f" AND DEPTH<\'{max_depth}\'"
-
-        sql_cmd = based_sql_cmd + condition_cmd
-        self._cursor.execute(sql_cmd)
-
-        return self._cursor.fetchall()
-
     def get_template_circuit(
         self,
         max_width: int = None,
@@ -135,7 +111,7 @@ class CircuitLib:
             (List[Circuit | String] | None): Return the list of output circuit order by output_type.
         """
         path = os.path.join(self.__LIB_PATH, "template")
-        files = self._file_filter("template", "template", max_width, max_size, max_depth)
+        files = self._db.circuit_filter("template", "template", max_width, max_size, max_depth)
 
         return self._get_all(path, files)
 
@@ -164,7 +140,7 @@ class CircuitLib:
         """
         assert classify in self.__DEFAULT_CLASSIFY['random'], "error classify."
         path = os.path.join(self.__LIB_PATH, 'random', classify)
-        files = self._file_filter("random", classify, max_width, max_size, max_depth)
+        files = self._db.circuit_filter("random", classify, max_width, max_size, max_depth)
 
         return self._get_all(path, files)
 
@@ -193,7 +169,7 @@ class CircuitLib:
         """
         assert classify in self.__DEFAULT_CLASSIFY['algorithm'], "error classify."
         path = os.path.join(self.__LIB_PATH, 'algorithm', classify)
-        files = self._file_filter("algorithm", classify, max_width, max_size, max_depth)
+        files = self._db.circuit_filter("algorithm", classify, max_width, max_size, max_depth)
 
         return self._get_all(path, files)
 
@@ -222,7 +198,7 @@ class CircuitLib:
         """
         assert classify in self.__DEFAULT_CLASSIFY['experiment'], "error experiment classify."
         path = os.path.join(self.__LIB_PATH, 'experiment', classify)
-        files = self._file_filter("experiment", classify, max_width, max_size, max_depth)
+        files = self._db.circuit_filter("experiment", classify, max_width, max_size, max_depth)
 
         return self._get_all(path, files)
 
@@ -260,7 +236,7 @@ class CircuitLib:
         if classify not in self.__DEFAULT_CLASSIFY[type]:
             raise KeyError("error matched")
 
-        files = self._file_filter(type, classify, max_width, max_size, max_depth)
+        files = self._db.circuit_filter(type, classify, max_width, max_size, max_depth)
         folder_path = os.path.join(self.__LIB_PATH, type, classify) if type != "template" else os.path.join(self.__LIB_PATH, type)
 
         return self._get_all(folder_path, files)
