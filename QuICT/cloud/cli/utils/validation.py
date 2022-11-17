@@ -35,9 +35,9 @@ class JobValidation:
 
         return {
             "qasm": circuit.qasm(),
-            "width": circuit.width(),
-            "size": circuit.size(),
-            "depth": circuit.depth()
+            "width": str(circuit.width()),
+            "size": str(circuit.size()),
+            "depth": str(circuit.depth())
         }
 
     @staticmethod

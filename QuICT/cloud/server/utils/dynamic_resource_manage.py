@@ -4,23 +4,22 @@ import numpy as np
 from .data_structure import ResourceOp
 
 
-def user_resource_op(user_info: dict, resource_info: dict, op: ResourceOp) -> Tuple[bool, dict]:
+def user_resource_op(user_info: dict, circuit_width: int, device: str, op: ResourceOp) -> Tuple[bool, dict]:
     signal = -1 if op == ResourceOp.Release else 1
-    target_resource = resource_info['number_of_qubits']
     number_of_running_jobs = user_info['number_of_running_jobs'] + signal
     # exceed limit job number
     if number_of_running_jobs > user_info['maximum_parallel_level']:
         return False, user_info
 
     # Deal with running job's resource
-    if resource_info['device'] == "CPU":
+    if device == "CPU":
         cur_user_running_qubits = _qubits_operator(
-            user_info['running_qubits_in_cpu'], target_resource, signal
+            user_info['running_qubits_in_cpu'], circuit_width, signal
         )
         qubits_limitation = user_info['max_qubits_in_cpu']
     else:
         cur_user_running_qubits = _qubits_operator(
-            user_info['running_qubits_in_gpu'], target_resource, signal
+            user_info['running_qubits_in_gpu'], circuit_width, signal
         )
         qubits_limitation = user_info['max_qubits_in_gpu']
 
@@ -30,7 +29,7 @@ def user_resource_op(user_info: dict, resource_info: dict, op: ResourceOp) -> Tu
 
     # Update user's infomation
     user_info['number_of_running_jobs'] = number_of_running_jobs
-    if resource_info['device'] == "CPU":
+    if device == "CPU":
         user_info['running_qubits_in_cpu'] = cur_user_running_qubits
     else:
         user_info['running_qubits_in_gpu'] = cur_user_running_qubits

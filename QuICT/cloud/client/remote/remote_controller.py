@@ -78,7 +78,7 @@ class QuICTRemoteManager:
             user_info (dict): The user's information
         """
         # Delete Circuit Qasm Path here, not use for remote mode
-        del yml_dict['circuit']
+        self._remote_job_validate(yml_dict)
 
         url = f"{self._url_prefix}/jobs/start"
         try:
@@ -86,6 +86,10 @@ class QuICTRemoteManager:
             self._logger.info("Successfully send job to cloud.")
         except Exception as e:
             self._logger.warn(f"Failure to start target job, due to {e}.")
+
+    def _remote_job_validate(self, yml_dict: dict):
+        del yml_dict['circuit']
+        yml_dict['device'] = 'CPU' if yml_dict["type"] == "qcda" else yml_dict["simulation"]["device"]        
 
     @login_validation
     def status_job(self, job_name: str, user_info: tuple):

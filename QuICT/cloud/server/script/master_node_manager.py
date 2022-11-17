@@ -56,7 +56,7 @@ class PendingJobProcessor(multiprocessing.Process):
             # User's limitation
             user_info = self.redis_connection.get_user_dynamic_info(job_detail['username'])
             is_user_satisfied, updated_user_info = user_resource_op(
-                user_info, job_detail['resource'], ResourceOp.Allocation
+                user_info, int(job_detail['circuit_info']['width']), job_detail["device"], ResourceOp.Allocation
             )
             if not is_user_satisfied:
                 continue
@@ -101,7 +101,7 @@ class RunningJobProcessor(multiprocessing.Process):
             self.redis_connection.add_finish_job_from_running_jobs(job_name, job_state)
             # Release User's resource
             _, updated_user_info = user_resource_op(
-                user_info, job_detail['resource'], ResourceOp.Release
+                user_info, int(job_detail['circuit_info']['width']), job_detail["device"], ResourceOp.Release
             )
             self.redis_connection.update_user_dynamic_info(job_detail['username'], updated_user_info)
 
@@ -216,7 +216,7 @@ class OperatorQueueProcessor(multiprocessing.Process):
                 )
             else:
                 _, updated_user_resource = user_resource_op(
-                    user_info, job_detail['resource'], ResourceOp.Release
+                    user_info, int(job_detail['circuit_info']['width']), job_detail["device"], ResourceOp.Release
                 )
 
             self.redis_connection.update_user_dynamic_info(username, updated_user_resource)
