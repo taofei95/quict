@@ -89,7 +89,7 @@ class Benchmarking:
         circuit,
         amp_result: list
         ):
-   
+    
         if KL_divergence is not False:
             KL_divergence = scipy.stats.entropy(sim_data, given_data)
 

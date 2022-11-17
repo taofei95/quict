@@ -14,7 +14,7 @@ def Hs_circuit_build(
 ):
     if typelist is None:
         typelist = [
-            GateType.cx, GateType.h
+            GateType.cx
         ]
 
     gate_indexes = list(range(len(typelist)))
@@ -39,6 +39,8 @@ def Hs_circuit_build(
 
 
     Measure | cir
+
+    # cir.draw(filename='Highly_serialized')
 
     return cir
 

@@ -12,19 +12,18 @@ def He_circuit_build(
     rand_size: int,
     typelist: list = None,
     random_params: bool = True,
+    probabilities: list = None
+
 ):
     if typelist is None:
-        single_typelist = [GateType.rz]
-        double_typelist = [GateType.cx]
-        len_s, len_d = len(single_typelist), len(double_typelist)
-        prob = [0.1 / len_s] * len_s + [0.9 / len_d] * len_d
+        typelist = [GateType.cx, GateType.h]
 
         cir = Circuit(qubits)
-        cir.random_append(rand_size=rand_size, typelist=single_typelist + double_typelist, probabilities=prob, random_params=random_params)
+        cir.random_append(rand_size=rand_size, typelist=typelist, probabilities=probabilities, random_params=random_params)
 
     Measure | cir
 
-    cir.draw(filename='entangled')
+    # cir.draw(filename='entangled')
 
     return cir
 
