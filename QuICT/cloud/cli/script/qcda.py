@@ -7,6 +7,11 @@ from QuICT.tools.logger import LogFormat
 from QuICT.tools.interface import OPENQASMInterface
 from QuICT.qcda.qcda import QCDA
 from QuICT.qcda.synthesis.gate_transform import USTCSet, GoogleSet, IBMQSet, IonQSet
+from QuICT.qcda.synthesis import GateTransform, CliffordUnidirectionalSynthesizer
+from QuICT.qcda.optimization import (
+    CliffordRzOptimization, CommutativeOptimization, SymbolicCliffordOptimization,
+    TemplateOptimization, CnotWithoutAncilla
+)
 
 
 logger = Logger("QCDA_Local_Mode", LogFormat.full)
@@ -32,13 +37,13 @@ def qcda_start(
     templates: str = None
 ):
     method_mapping = {
-        "GateTransform": None,
-        "Clifford": None,
-        "Auto": None,
-        "Commutative": None,
-        "SymbolicClifford": None,
-        "Template": None,
-        "CNOT": None
+        "GateTransform": GateTransform(iset_mapping[instruction_set]),
+        "Clifford": CliffordUnidirectionalSynthesizer(),
+        "Auto": CliffordRzOptimization(auto_mode),
+        "Commutative": CommutativeOptimization(para, depara),
+        "SymbolicClifford": SymbolicCliffordOptimization(),
+        "Template": TemplateOptimization(templates),
+        "CNOT": CnotWithoutAncilla()
     }
     logger.debug("Start Run QCDA Job in local mode.")
     logger.debug(

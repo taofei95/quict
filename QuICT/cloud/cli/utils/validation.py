@@ -117,7 +117,37 @@ class JobValidation:
 
         return core_part
 
-    def job_validation(self, job_file_path: str):
+    def job_validation(self, job_file_path: str) -> dict:
+        """ Validate the given job's yaml file, and generate the regularized job's file.
+        regularized_job_dict = {
+            job_name(str),
+            type(str): one of [qcda, simulation],
+            circuit(str): circuit's qasm file path,
+            output_path(str): The output path for store result
+            circuit_info:
+                qasm(str): circuit's qasm,
+                width(int): the number of qubits in circuit,
+                size(int): the number of qubits in circuit,
+                depth(int): the number of qubits in circuit,
+
+            ### only for simulation
+            simulation:
+                shots(int),
+                precision(str), one of [single, double],
+                backend(str), one of [state_vector, density_matrix, unitary]
+                device(str), one of [CPU, GPU]
+
+            ### only for qcda
+            qcda:
+                methods(list): []       # The methods for QCDA
+                **extra_args:           # The arguments for QCDA methods
+
+        Args:
+            job_file_path (str): The file path for job's yaml file.
+
+        Returns:
+            regularized_job_dict(dict): The regularized job's dict
+        """
         # Step 1: Load yaml file from given file path
         job_info = JobValidation.load_yaml_file(job_file_path)
 
