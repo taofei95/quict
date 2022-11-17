@@ -74,10 +74,16 @@ class InstructionSet(object):
             return self.__one_qubit_rule
         if set((GateType.rz, GateType.ry)).issubset(set(self.one_qubit_gates)):
             return zyz_rule
+        if set((GateType.rz, GateType.rx)).issubset(set(self.one_qubit_gates)):
+            return zxz_rule
         if set((GateType.rx, GateType.ry)).issubset(set(self.one_qubit_gates)):
             return xyx_rule
+        if set((GateType.h, GateType.rz)).issubset(set(self.one_qubit_gates)):
+            return hrz_rule
         if set((GateType.rz, GateType.sx, GateType.x)).issubset(set(self.one_qubit_gates)):
             return ibmq_rule
+        if set((GateType.u3)).issubset(set(self.one_qubit_gates)):
+            return u3_rule
         raise Exception("please register the SU2 decomposition rule.")
 
     def __init__(self, two_qubit_gate, one_qubit_gates):

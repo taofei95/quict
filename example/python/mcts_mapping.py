@@ -4,11 +4,12 @@ from QuICT.qcda.mapping import MCTSMapping
 
 
 if __name__ == '__main__':
-    layout = Layout.load_file("../layout/ibmqx2.layout")
+    layout = Layout.load_file("../layout/ibmqx2_layout.json")
 
     circuit = Circuit(5)
     circuit.random_append(50, typelist=[GateType.cx])
     circuit.draw(filename='0.jpg')
 
-    circuit_map = MCTSMapping.execute(circuit, layout)
+    mcts = MCTSMapping(layout)
+    circuit_map = mcts.execute(circuit)
     circuit_map.draw(filename='1.jpg')
