@@ -223,6 +223,7 @@ packages = find_packages(where=PRJ_ROOT_RELATIVE)
 # static file
 file_data = [
     ("QuICT/lib/qasm/libs", [f"{PRJ_ROOT_RELATIVE}/QuICT/lib/qasm/libs/qelib1.inc"]),
+    ("QuICT/simulation/utils", [f"{PRJ_ROOT_RELATIVE}/QuICT/simulation/utils/simulator_parameters.json"])
 ]
 
 # version information

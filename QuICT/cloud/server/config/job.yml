@@ -1,0 +1,39 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: Job_Name
+  namespace: User_Name
+
+spec:
+  restartPolicy: Never
+  containers:  
+  - name: quict
+    image: quict:v1.0
+    imagePullPolicy: IfNotPresent #[Always、Never、IfNotPresen]
+    command: ['python simulator.py']
+    args: ["$(str)"]
+    env:
+    - name: str
+      value: "/etc/run.sh"
+
+    resources:
+      requests:
+        cpu: 0.1
+        memory: 32Mi
+      limits:
+        cpu: 0.5  
+        memory: 32Mi  
+
+    ports:  
+    - containerPort: 80
+      name: httpd
+      protocol: TCP
+
+    volumeMounts:
+    - name: origincircuit #挂载设备的名字，与volumes[*].name 需要对应    
+      mountPath: /data #挂载到容器的某个路径下  
+      readOnly: True
+  volumes: #定义一组挂载设备  
+  - name: origincircuit #定义一个挂载设备的名字  
+    hostPath:  
+      path: /data/UserName/JobName #挂载设备类型为hostPath，路径为宿主机下的/opt,这里设备类型支持很多种
