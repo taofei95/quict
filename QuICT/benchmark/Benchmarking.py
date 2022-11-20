@@ -17,24 +17,39 @@ class Benchmarking:
     
     def __init__(
         self, 
+        simulator,
         layout_file: str = None, 
         InSet: str = None, 
-        type: str = None, 
-        classify: str = None, 
+        type_list: list =None,
         width: str = None, 
         size : str = None, 
         depth: str = None
         ):
+        self.simulator = simulator
         self._layout_file: list = layout_file 
         self._InSet = InSet
-        self._type = type 
-        self._classify = classify
+        self._type_list = type_list
         self._max_width = width
         self._max_size = size
         self._max_depth = depth
     
     def get_circuit(self):
-        """ Get the circuit from QuICT CircuitLib. """
+        """ Get the circuit obey type, width, size, depth from QuICT CircuitLib. """
+        for type in self._type_list:
+            alg_file = 'QuICT/lib/circuitlib/circuit_qasm/algorithm'
+            alg_file_list = os.listdir(alg_file)
+            for type_origin in  alg_file_list :
+                pass
+              
+        
+        
+        
+        
+        
+        
+        
+        
+        
         Cirlib = CircuitLib()
         if self._type == "algorithm":
             circuit_list = Cirlib.get_algorithm_circuit(self._classify, self._max_width, self._max_size, self._max_depth)
@@ -43,7 +58,7 @@ class Benchmarking:
         if self._type == "random":
             circuit_list = Cirlib.get_random_circuit(self._classify, self._max_width, self._max_size, self._max_depth)
         if self._type == "template":
-            circuit_list = Cirlib.get_template_circuit(self._max_width, self._max_size, self._max_depthd)
+            circuit_list = Cirlib.get_template_circuit(self._max_width, self._max_size, self._max_depth)
 
         return circuit_list
     
@@ -89,21 +104,23 @@ class Benchmarking:
         circuit,
         amp_result: list
         ):
-    
-        if KL_divergence is not False:
-            KL_divergence = scipy.stats.entropy(sim_data, given_data)
-
-        if cross_entropy is not False:
-            sum=0.0
-            for x in map(lambda y,p:(1-y)*math.log(1-p)+y*math.log(p),sim_data,given_data):
-                sum+=x
-            cross_entropy = -sum/len(sim_data)
-
-        if L2_loss is not False:
-            L2_loss = np.sum(np.square(sim_data-given_data))
+        simulator = self.simulator
+        sim_result = simulator.run(circuit)
+        
+        # KL
+        KL_divergence = scipy.stats.entropy(sim_result, amp_result)
+        #CE
+        sum=0.0
+        for x in map(lambda y,p:(1-y)*math.log(1-p)+y*math.log(p), sim_result, amp_result):
+            sum+=x
+        cross_entropy = -sum/len(sim_result)
+        #L2
+        L2_loss = np.sum(np.square(sim_result - amp_result))
 
         C = (sum(KL_divergence + cross_entropy + L2_loss))/3
         Q = circuit.width()
+        
+        return 
 
             
 
