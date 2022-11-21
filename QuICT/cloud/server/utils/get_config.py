@@ -4,14 +4,15 @@ import yaml
 from QuICT.cloud.server.script.sql_controller import SQLManger
 
 
-DEFAULT_USER_YML_PATH = os.path.join(
+DEFAULT_YML_PATH = os.path.join(
     os.path.dirname(__file__),
-    "../config/user_info.yml"
+    "../config"
 )
 
 
 def get_default_user_config(username: str):
-    with open(DEFAULT_USER_YML_PATH, encoding='utf-8') as yml:
+    user_info_path = os.path.join(DEFAULT_YML_PATH, "user_info.yml")
+    with open(user_info_path, encoding='utf-8') as yml:
         yaml_dict = yaml.load(yml)
 
     # Get user info from SQL database
@@ -22,3 +23,19 @@ def get_default_user_config(username: str):
     yaml_dict['GPU_allowence'] = user_info[5]
 
     return yaml_dict
+
+
+def get_default_job_config(job_info: dict):
+    k8s_job_yml_path = os.path.join(DEFAULT_YML_PATH, "job.yml")
+    with open(k8s_job_yml_path, encoding='utf-8') as yml:
+        yaml_dict = yaml.load(yml)
+
+    # get k8s job's metadata
+    job_meta = {
+        "name": job_info["job_name"],
+        "userspace": job_info["username"]
+    }
+    yaml_dict["metadata"] = job_meta
+
+    # Prepare start command
+    pass
