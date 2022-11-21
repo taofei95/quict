@@ -87,11 +87,11 @@ class CircuitLibDB:
 
         self._connect.commit()
 
-    def add_random_circuit(self):
+    def add_circuit(self, type_: str):
         file_path = os.path.join(
             self._file_path,
             "circuit_qasm",
-            "random"
+            type_
         )
 
         for classify in os.listdir(file_path):
@@ -107,7 +107,7 @@ class CircuitLibDB:
 
                 self._cursor.execute(
                     "INSERT INTO CIRCUIT_LIB(NAME, TYPE, CLASSIFY, WIDTH, SIZE, DEPTH)" +
-                    f"VALUES (\'{file}\', \'random\', \'{classify}\', " +
+                    f"VALUES (\'{file}\', \'{type_}\', \'{classify}\', " +
                     f"\'{width}\', \'{size}\', \'{depth}\')"
                 )
 

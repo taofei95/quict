@@ -24,9 +24,10 @@ class CircuitLib:
 
     __DEFAULT_TYPE = ["template", "random", "algorithm", "experiment"]
     __DEFAULT_CLASSIFY = {
-        "random": ["google", "ibmq", "ionq", "ustc", "quafu", "ctrl_diag", "ctrl_unitary", "diag", "single_bits", "unitary"],
+        "random": ["ctrl_diag", "ctrl_unitary", "diag", "single_bits", "unitary"],
         "algorithm": ["clifford", "grover", "qft", "supremacy", "vqe"],
-        "template": ["template"],
+        "benchmark": ["highly_entangled", "highly_parallelized", "highly_serialized", "mediate_measure"],
+        "instructionset": ["google", "ibmq", "ionq", "ustc", "quafu"],
         "experiment": ["adder", "mapping"]
     }
     __LIB_PATH = os.path.join(os.path.dirname(__file__), 'circuit_qasm')
@@ -53,7 +54,10 @@ class CircuitLib:
             logger.warn("Failure to load circuit from qasm.")
             raise QasmError("Missing input file")
 
-        qasm.circuit.name = os.path.splitext(os.path.basename(file_path))[0]
+        split_path = file_path.split('/')
+        cir_name, cir_classify, cir_type  = split_path[-1:-4:-1]
+        cir_name = os.path.splitext(cir_name)[0]
+        qasm.circuit.name = "+".join([cir_type, cir_classify, cir_name])
         return qasm.circuit
 
     def _get_string_from_qasm(self, file_path: str) -> str:
@@ -173,7 +177,7 @@ class CircuitLib:
 
         return self._get_all(path, files)
 
-    def get_experiment_circuit(
+    def get_benchmark_circuit(
         self,
         classify: str,
         max_width: int = None,
@@ -196,9 +200,38 @@ class CircuitLib:
         Returns:
             (List[Circuit | String] | None): Return the list of output circuit order by output_type.
         """
-        assert classify in self.__DEFAULT_CLASSIFY['experiment'], "error experiment classify."
-        path = os.path.join(self.__LIB_PATH, 'experiment', classify)
-        files = self._db.circuit_filter("experiment", classify, max_width, max_size, max_depth)
+        assert classify in self.__DEFAULT_CLASSIFY['benchmark'], "error experiment classify."
+        path = os.path.join(self.__LIB_PATH, 'benchmark', classify)
+        files = self._db.circuit_filter("benchmark", classify, max_width, max_size, max_depth)
+
+        return self._get_all(path, files)
+
+    def get_instructionset_circuit(
+        self,
+        classify: str,
+        max_width: int = None,
+        max_size: int = None,
+        max_depth: int = None
+    ) -> Union[List[Union[Circuit, str]], None]:
+        """ Get experiment circuits in QuICT circuit library. A template will be loaded if
+        it satisfies the following restrictions:
+            1. the circuit in the given classify.
+            2. its number of qubits <= `max_width`,
+            3. its number of gates <= `max_size`,
+            4. its depth <= `max_depth`.
+
+        Restrictions will be ignored if not specified.
+
+        Args:
+            classify (str): one of [adder, mapping]
+            max_width (int, optional): _description_. Defaults to float('inf').
+
+        Returns:
+            (List[Circuit | String] | None): Return the list of output circuit order by output_type.
+        """
+        assert classify in self.__DEFAULT_CLASSIFY['instructionset'], "error experiment classify."
+        path = os.path.join(self.__LIB_PATH, 'instructionset', classify)
+        files = self._db.circuit_filter("instructionset", classify, max_width, max_size, max_depth)
 
         return self._get_all(path, files)
 
