@@ -409,7 +409,10 @@ class Circuit(CircuitBased):
             else:
                 qureg = self.qubits[gate_ctargs] if gate_ctargs else gate.assigned_qubits
         else:
-            if len(qureg) >= args_num and gate_ctargs:
+            if len(qureg) < args_num:
+                raise ValueError("Assigned qubits must larger or equal to gate size.")
+
+            if len(qureg) > args_num and gate_ctargs:
                 qureg = qureg[gate_ctargs]
 
         gate = gate.copy()
