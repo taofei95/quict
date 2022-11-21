@@ -34,7 +34,7 @@ def login(**kwargs):
 
 
 @env_blueprint.route(f"{URL_PREFIX}/register", methods=["POST"])
-@request_validation(login=True)
+@request_validation(register=True)
 def register(**kwargs):
     """ Register new user.
     kwargs = {
