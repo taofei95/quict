@@ -1,8 +1,10 @@
 from flask import Blueprint
+import json
 
 from script.requset_validation import request_validation
 from script.redis_controller import RedisController
 from utils.data_structure import JobOperatorType
+from utils.file_manage import create_job_folder
 
 
 job_blueprint = Blueprint(name="jobs", import_name=__name__)
@@ -16,6 +18,24 @@ def start_job(**kwargs):
     job_dict = kwargs['json_dict']
     job_dict['username'] = kwargs['username']
 
+    folder_path = create_job_folder(kwargs['username'], job_dict['job_name'])
+    circuit_info = json.loads(job_dict['circuit_info'])
+    # Create circuit's qasm and layout's json file if necessary
+    with open(f"{folder_path}/circuit.qasm", 'w') as cw:
+        cw.write(circuit_info['qasm'])
+
+    del circuit_info['qasm']
+    job_dict['circuit_info'] = json.dumps(circuit_info)
+
+    job_type = job_dict['type']
+    optional_info = json.loads(job_dict[job_type])
+    if "layout_string" in optional_info.keys():
+        with open(f"{folder_path}/layout.json", 'w') as lw:
+            lw.write(optional_info['layout_string'])
+
+        del optional_info['layout_string']
+
+    job_dict[job_type] = json.dumps(optional_info)
     # start job by redis controller
     RedisController().add_pending_job(job_dict)
 

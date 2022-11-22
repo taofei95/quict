@@ -217,7 +217,7 @@ class OperatorQueueProcessor(multiprocessing.Process):
             self.redis_connection.update_user_dynamic_info(username, updated_user_resource)
 
         self.redis_connection.remove_job(job_name, job_state)
-        delete_job_folder(username, job_name)
+        delete_job_folder(username, job_detail['job_name'])
 
         return True
 
