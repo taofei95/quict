@@ -18,8 +18,10 @@ spec:
         imagePullPolicy: IfNotPresent #[Always、Never、IfNotPresen]
         command: ['python']
         env:
-        - name: circuit_name
-          value: "/data/circuit/circuit.qasm"
+        - name: circuit_path
+          value: "/data/circuit.qasm"
+        - name: layout
+          value: "/data/layout.json"
 
         resources:
           requests:

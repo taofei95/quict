@@ -38,4 +38,24 @@ def get_default_job_config(job_info: dict):
     yaml_dict["metadata"] = job_meta
 
     # Prepare start command
-    pass
+    container_related = yaml_dict["spec"]["template"]["spec"]["containers"][0]
+    cmd = f"{job_info['type']}.py"
+    container_related["command"].append(cmd)
+
+    # Prepare environment args
+    optional_args = job_info[job_info['type']]
+    for key, value in optional_args.items():
+        env_dict = {
+            "name": key,
+            "value": value
+        }
+        container_related["env"].append(env_dict)
+
+    # Prepare MountPath
+    mount_path = os.path.join(
+        "/home/likaiqi/Cluster/User", job_info['username'], job_info['job_name']
+    )
+    volumes_related = yaml_dict["spec"]["template"]["spec"]['volumes'][0]
+    volumes_related['hostPath']['path'] = mount_path
+
+    return yaml_dict
