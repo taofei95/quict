@@ -18,8 +18,8 @@ spec:
         imagePullPolicy: IfNotPresent #[Always、Never、IfNotPresen]
         command: ['python']
         env:
-        - name: str
-          value: "/etc/run.sh"
+        - name: circuit_name
+          value: "/data/circuit/circuit.qasm"
 
         resources:
           requests:

@@ -53,7 +53,7 @@ class QuICTRemoteManager:
         success = self._encryptedrequest.post(
             f"{self._url_prefix}/env/login",
             {'username': username, 'password': encrypted_passwd},
-            (1, username, password),
+            (1, username, encrypted_passwd),
             is_login=True
         )
 
@@ -65,6 +65,51 @@ class QuICTRemoteManager:
     def logout(self):
         """ User logout. """
         self._sql_db.user_logout()
+
+    def register(
+        self, username: str, password: str, email: str, level: int = 3
+    ):
+        """ User register.
+
+        Args:
+            username (str): The username
+            password (str): The password
+            email (str): The email address
+            level (int): The difficult level
+        """
+        encrypted_passwd = self._encrypt.encrypted_passwd(password)
+        success = self._encryptedrequest.post(
+            f"{self._url_prefix}/env/register",
+            {
+                'username': username,
+                'password': encrypted_passwd,
+                'email': email,
+                'level': level
+            },
+            (1, username, encrypted_passwd),
+            is_login=True
+        )
+
+        if not success:
+            self._logger.warn("Failure to register with current username.")
+        else:
+            self._sql_db.user_login(username, encrypted_passwd)
+
+    def unsubscribe(self, username: str, password: str):
+        """ delete user's account. """
+        encrypted_passwd = self._encrypt.encrypted_passwd(password)
+        success = self._encryptedrequest.post(
+            f"{self._url_prefix}/env/unsubscribe",
+            {
+                'username': username,
+                'password': encrypted_passwd,
+            },
+            (1, username, encrypted_passwd),
+            is_login=False
+        )
+
+        if not success:
+            self._logger.warn("Failure to unsubscribe with current username.")
 
     ####################################################################
     ############               Job API Function             ############
@@ -88,8 +133,21 @@ class QuICTRemoteManager:
             self._logger.warn(f"Failure to start target job, due to {e}.")
 
     def _remote_job_validate(self, yml_dict: dict):
+        yml_dict['device'] = 'CPU' if yml_dict["type"] == "qcda" else yml_dict["simulation"]["device"]
+        # Deal with circuit, load circuit's qasm.
+        with open(yml_dict['circuit']) as cfile:
+            circuit_data = cfile.read()
+
         del yml_dict['circuit']
-        yml_dict['device'] = 'CPU' if yml_dict["type"] == "qcda" else yml_dict["simulation"]["device"]        
+        yml_dict['circuit_info']['qasm'] = circuit_data
+
+        # Deal with layout
+        if yml_dict['type'] == "qcda" and "layout_path" in yml_dict["qcda"].keys():
+            with open(yml_dict['qcda']['layout_path']) as lfile:
+                layout_data = lfile.read()
+
+            del yml_dict['qcda']['layout_path']
+            yml_dict['qcda']['layout_string'] = layout_data
 
     @login_validation
     def status_job(self, job_name: str, user_info: tuple):

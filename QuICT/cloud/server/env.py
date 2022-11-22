@@ -5,6 +5,8 @@ from utils.email_sender import send_reset_password_email
 from script.requset_validation import request_validation
 from script.redis_controller import RedisController
 from script.sql_controller import SQLManger
+from utils.file_manage import create_user_folder
+from utils.get_config import get_default_user_config
 
 
 env_blueprint = Blueprint(name="env", import_name=__name__)
@@ -26,11 +28,7 @@ def login(**kwargs):
     username = json_dict['username']
     password = json_dict['password']
 
-    login_state = SQLManger().validation_password(username, password)
-    if login_state:
-        RedisController().update_user_dynamic_info(username)
-
-    return login_state
+    return SQLManger().validation_password(username, password)
 
 
 @env_blueprint.route(f"{URL_PREFIX}/register", methods=["POST"])
@@ -49,13 +47,19 @@ def register(**kwargs):
     json_dict = kwargs['json_dict']
     username = json_dict['username']
 
+    # Create user folder
+    create_user_folder(username)
+
+    # Update user info for SQL and Redis
     SQLManger().add_user(json_dict)
-    RedisController().update_user_dynamic_info(username, json_dict)
+    RedisController().update_user_dynamic_info(username, get_default_user_config(username))
+
+    return True
 
 
 @env_blueprint.route(f"{URL_PREFIX}/unsubscribe", methods=["POST"])
 @request_validation()
-def unsubscribe(username):
+def unsubscribe(username, **kwargs):
     """ Delete an user. """
     redis_controller = RedisController()
     job_list = redis_controller.list_jobs(username, name_only=True)
@@ -67,6 +71,8 @@ def unsubscribe(username):
 
     # Delete user information in database
     SQLManger().delete_user(username)
+
+    return True
 
 
 @env_blueprint.route(f"{URL_PREFIX}/update_password", methods=["POST"])
@@ -96,6 +102,6 @@ def forget_password(username: str, email: str):
     if user_email != email:
         raise KeyError("Unmatched Email address with user.")
 
-    # TODO: Send email to user
+    # Send email to user
     reset_password = send_reset_password_email(user_email)
     SQLManger().update_password(username, reset_password)

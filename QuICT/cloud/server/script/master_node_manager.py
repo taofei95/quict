@@ -4,8 +4,8 @@ import random
 
 from redis_controller import RedisController
 from QuICT.cloud.server.utils import (
-    delete_job_folder, JobOperatorType, JobState, ResourceOp,
-    user_resource_op, user_stop_jobs_op
+    delete_job_folder, JobOperatorType, delete_user_folder,
+    JobState, ResourceOp, user_resource_op, user_stop_jobs_op
 )
 
 
@@ -199,12 +199,7 @@ class OperatorQueueProcessor(multiprocessing.Process):
         username = job_detail['username']
         job_state = job_detail['state']
 
-        # Rm job from finish jobs queue
-        if job_state in [JobState.Finish.value, JobState.Error.value]:
-            # delete_job_folder(job_name, username)
-            pass
-        # Rm job from running jobs
-        elif job_state in [JobState.Running.value, JobState.Stop.value]:
+        if job_state in [JobState.Running.value, JobState.Stop.value]:
             # TODO: kill running job
 
             # Get User Info
@@ -222,12 +217,16 @@ class OperatorQueueProcessor(multiprocessing.Process):
             self.redis_connection.update_user_dynamic_info(username, updated_user_resource)
 
         self.redis_connection.remove_job(job_name, job_state)
+        delete_job_folder(username, job_name)
+
         return True
 
     def _delete_user_info(self, user_name: str) -> bool:
         user_info = self.redis_connection.get_user_dynamic_info(user_name)
         if user_info["number_of_running_jobs"] == 0:
             self.redis_connection.delete_user_dynamic_info(user_name)
+            delete_user_folder(user_name)
+
             return True
 
         return False

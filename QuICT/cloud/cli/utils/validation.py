@@ -34,7 +34,6 @@ class JobValidation:
             raise ValueError(f"Failure to load circuit from given file. {qasm_file}.")
 
         return {
-            "qasm": circuit.qasm(),
             "width": str(circuit.width()),
             "size": str(circuit.size()),
             "depth": str(circuit.depth())

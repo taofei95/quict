@@ -21,6 +21,11 @@ class SQLManger:
         self._connect.isolation_level = "EXCLUSIVE"
         self._cursor = self._connect.cursor()
 
+        try:
+            self._create_table()
+        except Exception as _:
+            pass
+
     def __del__(self):
         self._cursor.close()
         self._connect.close()

@@ -104,7 +104,10 @@ class RedisController:
         self._redis_connection.hset(f"Job_Info:{job_name}", 'state', job_state.value)
 
     def add_operator(self, job_name: str, operator: JobOperatorType):
-        if not self._redis_connection.exists(f"Job_Info:{job_name}"):
+        if (
+            operator.value != JobOperatorType.user_delete.value and
+            not self._redis_connection.exists(f"Job_Info:{job_name}")
+        ):
             raise KeyError("Try to operate non-existed Job.")
 
         self._redis_connection.rpush("operator_queue", f"{job_name}:{operator.value}")
