@@ -39,7 +39,7 @@ def qcda_start(
 ):
     if templates:
         width, size, depth = templates.split("+")
-        templates = CircuitLib().load_template_circuit(
+        templates = CircuitLib().get_template_circuit(
             int(width), int(size), int(depth)
         )
 
@@ -59,18 +59,19 @@ def qcda_start(
     )
     # Get circuit from given path
     circuit = OPENQASMInterface.load_file(circuit_path).circuit
-    methods = methods.split("+")
-
     qcda = QCDA()
-    for method in methods:
-        qcda.add_method(method_mapping[method])
+
+    if methods is not None:
+        methods = methods.split("+")
+        for method in methods:
+            qcda.add_method(method_mapping[method])
 
     if layout_path is not None:
         layout = Layout.load_file(layout_path)
         qcda.add_default_mapping(layout)
 
     circuit_opt = qcda.compile(circuit)
-    output_path = os.path.join(output_path, 'circuit.qasm')
+    output_path = os.path.join(output_path, 'opt_circuit.qasm')
     circuit_opt.qasm(output_path)
 
     logger.debug(f"QCDA Job finished, store the result in {output_path}.")
