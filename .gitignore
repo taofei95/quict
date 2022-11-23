@@ -29,6 +29,10 @@ cmake-vsc*/
 unit_test/**/*.jpg
 .history
 /QAOA_model*
+<<<<<<< HEAD
 /del
 /Benchmarking
 wr_unit_test
+=======
+/del
+>>>>>>> origin/dev

@@ -100,10 +100,13 @@ class CircuitLibDB:
 
             folder = os.path.join(file_path, classify)
             for file in filter(lambda x: x.endswith('.qasm'), os.listdir(folder)):
-                width, size, depth = file.split("_")
+                width, size, depth = file.split("_")[:3]
                 width = int(width[1:])
                 size = int(size[1:])
-                depth = int(depth[1:-5])
+                if ".qasm" not in depth:
+                    depth = int(depth[1:])
+                else:
+                    depth = int(depth[1:-5])
 
                 self._cursor.execute(
                     "INSERT INTO CIRCUIT_LIB(NAME, TYPE, CLASSIFY, WIDTH, SIZE, DEPTH)" +
