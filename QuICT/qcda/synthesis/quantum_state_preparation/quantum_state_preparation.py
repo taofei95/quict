@@ -4,7 +4,7 @@ from QuICT.core import Circuit
 from QuICT.core.gate import CompositeGate, GateType, GPhase, X, CX, Ry, Rz
 from QuICT.core.gate.backend import MCTWithoutAux, UniformlyRotation
 from QuICT.qcda.synthesis.unitary_decomposition import UnitaryDecomposition
-from QuICT.simulation.state_vector import CircuitSimulator
+from QuICT.simulation.state_vector import ConstantStateVectorSimulator
 
 
 class QuantumStatePreparation(object):
@@ -169,7 +169,7 @@ class SparseQuantumStatePreparation(object):
             state_vector = np.array(state_array)
 
         gates = CompositeGate()
-        simulator = CircuitSimulator()
+        simulator = ConstantStateVectorSimulator()
         while len(state) > 1:
             gates_last = self.reduce_state(state, width)
             state_vector = self.dict_to_statevector(state, width)
