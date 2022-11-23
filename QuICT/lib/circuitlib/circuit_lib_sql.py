@@ -23,6 +23,35 @@ class CircuitLibDB:
         """ Clean the table data in current DB. """
         self._cursor.execute("DROP TABLE CIRCUIT_LIB")
 
+    def size(self) -> int:
+        self._cursor.execute("SELECT max(rowid) from CIRCUIT_LIB")
+        rowcount = self._cursor.fetchone()
+
+        return rowcount[0]
+
+    def circuit_filter(
+        self,
+        type: str,
+        classify: str,
+        max_width=None, max_size=None, max_depth=None
+    ) -> list:
+        """ Get list of qasm file's name which satisfied the condition. """
+        based_sql_cmd = "SELECT NAME FROM CIRCUIT_LIB WHERE "
+        condition_cmd = f"TYPE=\'{type}\' AND CLASSIFY=\'{classify}\'"
+        if max_width is not None:
+            condition_cmd += f" AND WIDTH<\'{max_width}\'"
+
+        if max_size is not None:
+            condition_cmd += f" AND SIZE<\'{max_size}\'"
+
+        if max_depth is not None:
+            condition_cmd += f" AND DEPTH<\'{max_depth}\'"
+
+        sql_cmd = based_sql_cmd + condition_cmd
+        self._cursor.execute(sql_cmd)
+
+        return self._cursor.fetchall()
+
     def _create_table(self):
         # Temp add here, delete after create datebase
         self._cursor.execute(
@@ -31,12 +60,19 @@ class CircuitLibDB:
             'WIDTH INT, SIZE INT, DEPTH INT)'
         )
 
+    def circuit_exist(self, file_name: str):
+        self._cursor.execute(f"SELECT * FROM CIRCUIT_LIB WHERE NAME=\'{file_name}\'") 
+        file_info = self._cursor.fetchone()
+
+        return file_info is not None
+
     def add_template_circuit(self):
         file_path = os.path.join(
             self._file_path,
             "circuit_qasm",
             "template"
         )
+
         for file in filter(lambda x: x.endswith('.qasm'), os.listdir(file_path)):
             _, width, size, depth, _ = file.split("_")
             width = int(width[1:])
@@ -51,13 +87,11 @@ class CircuitLibDB:
 
         self._connect.commit()
 
-        print(self._cursor.lastrowid)
-
-    def add_random_circuit(self):
+    def add_circuit(self, type_: str):
         file_path = os.path.join(
             self._file_path,
             "circuit_qasm",
-            "random"
+            type_
         )
 
         for classify in os.listdir(file_path):
@@ -73,17 +107,8 @@ class CircuitLibDB:
 
                 self._cursor.execute(
                     "INSERT INTO CIRCUIT_LIB(NAME, TYPE, CLASSIFY, WIDTH, SIZE, DEPTH)" +
-                    f"VALUES (\'{file}\', \'random\', \'{classify}\', " +
+                    f"VALUES (\'{file}\', \'{type_}\', \'{classify}\', " +
                     f"\'{width}\', \'{size}\', \'{depth}\')"
                 )
 
         self._connect.commit()
-
-        print(self._cursor.lastrowid)
-
-
-clsql = CircuitLibDB()
-# clsql.clean()
-clsql.add_template_circuit()
-clsql.add_random_circuit()
-
