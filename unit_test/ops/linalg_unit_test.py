@@ -169,6 +169,26 @@ class TestCPULinalg(unittest.TestCase):
         cpu_result = CPUCalculator.MatrixPermutation(TestCPULinalg.matrix_A, mapping)
         self.assertTrue(np.isclose(np.sum(cpu_result), np.sum(TestCPULinalg.matrix_A), atol=1e-04))
 
+    def test_matrix_dot_vector(self):
+        qubit_num = 10
+        circuit = Circuit(qubit_num)
+        QFT(qubit_num) | circuit
+
+        vec = np.zeros((1 << qubit_num, ), dtype=np.complex128)
+        vec[0] = np.complex128(1)
+        vec = CPUCalculator.matrix_dot_vector(
+            vec,
+            qubit_num,
+            circuit.matrix(),
+            qubit_num,
+            np.array(list(range(10)))
+        )
+
+        sim = UnitarySimulator("CPU")
+        sv = sim.run(circuit.matrix())
+
+        assert np.allclose(vec, sv)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -55,6 +55,7 @@ class OPENQASMInterface(BasicInterface):
         "sy": GateType.sy,
         "sw": GateType.sw,
         "p": GateType.phase,
+        "phase": GateType.gphase,
         "swap": GateType.swap,
         "rx": GateType.rx,
         "ry": GateType.ry,

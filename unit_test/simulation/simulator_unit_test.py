@@ -3,16 +3,16 @@ import unittest
 import numpy as np
 from copy import deepcopy
 
+from QuICT.core import Circuit
+from QuICT.core.gate import *
 from QuICT.simulation.unitary import UnitarySimulator
 from QuICT.simulation.state_vector import ConstantStateVectorSimulator
 from QuICT.simulation.density_matrix import DensityMatrixSimulation
 from QuICT.tools.interface.qasm_interface import OPENQASMInterface
 from QuICT.simulation import Simulator
-from QuICT.core.circuit.circuit import Circuit
-from QuICT.core.gate.gate import *
 
 
-@unittest.skipUnless(os.environ.get("test_with_gpu", True), "require GPU")
+@unittest.skipUnless(os.environ.get("test_with_gpu", False), "require GPU")
 class TestGPUSimulator(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
