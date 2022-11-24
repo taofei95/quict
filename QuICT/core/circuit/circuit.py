@@ -123,7 +123,7 @@ class Circuit(CircuitBased):
         if ancillae_qubits is not None:
             self.ancillae_qubits = ancillae_qubits
 
-        logger.info(f"Initial Quantum Circuit {name} with {wires} qubits.")
+        logger.debug(f"Initial Quantum Circuit {name} with {wires} qubits.")
         if topology is not None:
             self.topology = topology
             logger.debug(f"The Layout for Quantum Circuit is {self._topology}.")

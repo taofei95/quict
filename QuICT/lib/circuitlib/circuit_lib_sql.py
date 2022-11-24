@@ -61,7 +61,7 @@ class CircuitLibDB:
         )
 
     def circuit_exist(self, file_name: str):
-        self._cursor.execute(f"SELECT * FROM CIRCUIT_LIB WHERE NAME=\'{file_name}\'") 
+        self._cursor.execute(f"SELECT * FROM CIRCUIT_LIB WHERE NAME=\'{file_name}\'")
         file_info = self._cursor.fetchone()
 
         return file_info is not None

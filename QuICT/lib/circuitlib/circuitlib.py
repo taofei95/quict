@@ -69,7 +69,7 @@ class CircuitLib:
     def _copy_qasm_file(self, file_path: str):
         """ Copy target qasm file to the given output path. """
         filename = os.path.basename(file_path)
-        shutil.copy(file_path, os.path.join(self._output_path, filename))        
+        shutil.copy(file_path, os.path.join(self._output_path, filename))
 
     def _get_all(self, folder: str, files: list) -> Union[List, None]:
         """ Load all qasm files in the list of files.
@@ -272,6 +272,7 @@ class CircuitLib:
             raise KeyError("error matched")
 
         files = self._db.circuit_filter(type, classify, max_width, max_size, max_depth)
-        folder_path = os.path.join(self.__LIB_PATH, type, classify) if type != "template" else os.path.join(self.__LIB_PATH, type)
+        folder_path = os.path.join(self.__LIB_PATH, type, classify) if type != "template" else \
+            os.path.join(self.__LIB_PATH, type)
 
         return self._get_all(folder_path, files)
