@@ -47,7 +47,7 @@ class TemplateOptimization(object):
         self.heuristics_backward_param = heuristics_backward_param
 
         if self.template_list is None:
-            self.template_list = CircuitLib.get_template_circuit(max_size=2)
+            self.template_list = CircuitLib().get_template_circuit(max_size=2)
 
     def execute(self, circuit):
         """

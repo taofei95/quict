@@ -22,13 +22,15 @@ class CircuitLib:
             Defaults to the current working path.
     """
 
-    __DEFAULT_TYPE = ["template", "random", "algorithm", "experiment"]
+    __DEFAULT_TYPE = ["template", "random", "algorithm", "benchmark", "instructionset"]
     __DEFAULT_CLASSIFY = {
-        "random": ["ctrl_diag", "ctrl_unitary", "diag", "single_bits", "unitary"],
-        "algorithm": ["clifford", "grover", "qft", "supremacy", "vqe"],
+        "random": [
+            "aspen-4", "ourense", "rochester", "sycamore", "ctrl_diag",
+            "ctrl_unitary", "diag", "single_bits", "unitary", "tokyo"
+        ],
+        "algorithm": ["adder", "clifford", "grover", "qft", "supremacy", "vqe"],
         "benchmark": ["highly_entangled", "highly_parallelized", "highly_serialized", "mediate_measure"],
-        "instructionset": ["google", "ibmq", "ionq", "ustc", "quafu"],
-        "experiment": ["adder", "mapping"]
+        "instructionset": ["google", "ibmq", "ionq", "ustc", "quafu"]
     }
     __LIB_PATH = os.path.join(os.path.dirname(__file__), 'circuit_qasm')
 
