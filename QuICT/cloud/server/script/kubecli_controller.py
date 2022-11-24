@@ -1,95 +1,112 @@
 import subprocess
-
 from kubenerte import client
 
-
-def kube_pod_yaml(job_info, user_info):
-    """
-    apiVersion: v1 #必选, 版本号, 例如v1
-    kind: Pod #必选, Pod 
-    metadata: #必选，元数据 
-    name: nginx #必选, Pod名称 
-    labels: #自定义标签 
-        app: nginx #自定义标签名字 
-    spec: #必选, Pod中容器的详细定义 
-        containers: #必选, Pod中容器列表, 一个pod里会有多个容器 
-            - name: nginx #必选，容器名称 
-            image: nginx #必选，容器的镜像名称 
-            imagePullPolicy: IfNotPresent # [Always | Never | IfNotPresent] #获取镜像的策略 Alawys表示下载镜像 IfnotPresent表示优先使用本地镜像, 否则下载镜像, Nerver表示仅使用本地镜像 
-            ports: #需要暴露的端口库号列表 
-            - containerPort: 80 #容器需要监听的端口号 
-        restartPolicy: Always # [Always | Never | OnFailure]#Pod的重启策略, Always表示一旦不管以何种方式终止运行, kubelet都将重启, OnFailure表示只有Pod以非0退出码退出才重启, Nerver表示不再重启该Pod 
-    """
-    pass
+from server.utils.get_config import get_default_job_config
 
 
-def kube_server_yaml():
-    """apiVersion: v1
-    kind: Service
-    metadata:
-    name: service-hello
-    labels:
-    name: service-hello
-    spec:
-    type: NodePort      #这里代表是NodePort类型的,另外还有ingress,LoadBalancer
-    ports:
-    - port: 80          #这里的端口和clusterIP(kubectl describe service service-hello中的IP的port)对应, 即在集群中所有机器上curl 10.98.166.242:80可访问发布的应用服务。
-        targetPort: 8080  #端口一定要和container暴露出来的端口对应, nodejs暴露出来的端口是8081, 所以这里也应是8081
-        protocol: TCP
-        nodePort: 31111   # 所有的节点都会开放此端口30000--32767, 此端口供外部调用。
-    selector:
-        run: hello         #这里选择器一定要选择容器的标签, 之前写name:kube-node是错的。
-    """
-    pass
+class KubeController:
+    def __init__(self):
+        self._api_instance = client.BatchV1Api()
 
+    @staticmethod
+    def generate_kube_job_yaml(job_info: dict) -> dict:
+        """ Get kubernetes job yaml by given job information
 
-def start_job(file_path):
-    """ kubectl apply -f path"""
-    # Standardize start job deployment.
-    job_details = kube_pod_yaml(start_job_deployment=start_job_deployment)
+        Return:
+        job_yaml(dict) = {
+            apiVersion: batch/v1
+            kind: Job
+            metadata:
+                name: jobname
+                namespace: username
+            spec:
+                completions: 1
+                parallelism: 1
+                ttlSecondsAfterFinished: 10
+                backoffLimit: 0
+                template:
+                    spec:
+                        restartPolicy: Never
+                        containers:
+                          - name: job_type
+                            image: quict:v1.0
+                            imagePullPolicy: IfNotPresent
+                            command: ['python', job_type.py]
+                            env:
+                                - name: circuit
+                                  value: "/data/circuit.qasm"
+                                - name: layout
+                                  value: "/data/layout.json"
+                                - other option arguments
+                            resources:
+                                requests:
+                                    cpu: 0.1
+                                    memory: 32Mi
+                                limits:
+                                    cpu: 0.5
+                                    memory: 32Mi
+                            volumeMounts:
+                                - name: origincircuit
+                                mountPath: /data
+                                readOnly: False
+                        volumes:
+                        - name: origincircuit
+                            hostPath:
+                            path: /data/UserName/JobName
+            }
+        """
+        return get_default_job_config(job_info)
 
-    # Save details
-    K8sDetailsWriter.save_job_details(job_details=job_details)
+    def start_job(self, job_info):
+        """ kubectl apply -f path"""
+        # Standardize start job deployment.
+        k8s_job = self.generate_kube_job_yaml(job_info)
 
-    # Create and apply k8s config
-    k8s_job = self._create_k8s_job(job_details=job_details)
-    client.BatchV1Api().create_namespaced_job(body=k8s_job, namespace="default")
+        # Create and apply k8s config
+        self._api_instance.create_namespaced_job(body=k8s_job, namespace=job_info['username'])
 
+    def delete_job(self, job_name, user_name):
+        """ Delete kubernate's Job
 
-def job_operator(job_name, user_name, ops):
-    """ 
+        Args:
+            job_name (_type_): _description_
+            user_name (_type_): _description_
+        """
+        try:
+            self._api_instance.delete_namespaced_job(
+                name=job_name,
+                namespace=user_name,
+                body=client.V1DeleteOptions(
+                    propagation_policy='Foreground',
+                    grace_period_seconds=5
+                )
+            )
+        except Exception as e:
+            raise e
 
-    Args:
-        job_name (_type_): _description_
-        user_name (_type_): _description_
-        ops (_type_): _description_
-    """
-    if ops == "delete":
-        client.BatchV1Api().delete_namespaced_job(name=job_name, namespace=user_name)
+    def get_job_status(self, job_name: str, username: str):
+        api_response = self._api_instance.read_namespaced_job_status(
+            name=job_name,
+            namespace=username
+        )
 
-    if ops == "stop":
-        # TODO: using docker container stop
-        pass
+        return api_response.status
 
-    if ops == "restart":
-        # TODO: using docker container restart
-        pass
+    def get_job_info(self, job_name, username):
+        """ Return the job's running information
 
+        Args:
+            job_name (_type_): _description_
+            username (_type_): _description_
+        """
+        # Get resources
+        job_list = self._api_instance.list_namespaced_job(
+            namespace=username, pod_name=job_name
+        ).to_dict()["items"]
 
-def job_info(job_name, user_name):
-    """ Return the job's running information
+        return job_list
 
-    Args:
-        job_name (_type_): _description_
-        user_name (_type_): _description_
-    """
-    # Get resources
-    job_list = client.BatchV1Api().list_namespaced_job(namespace=user_name, pod_name=job_name).to_dict()["items"]
+    def list_jobs(self, username):
+        job_list = self._api_instance.list_namespaced_job(namespace=username).to_dict()["items"]
 
-    return job_list
-
-
-def list_jobs(username):
-    job_list = client.BatchV1Api().list_namespaced_job(namespace="default").to_dict()["items"]
-
-    return job_list
+        return job_list

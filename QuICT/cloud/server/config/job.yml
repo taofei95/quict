@@ -32,11 +32,11 @@ spec:
             memory: 32Mi
 
         volumeMounts:
-        - name: origincircuit #挂载设备的名字，与volumes[*].name 需要对应    
-          mountPath: /data #挂载到容器的某个路径下  
+        - name: origincircuit
+          mountPath: /data
           readOnly: False
 
-      volumes: #定义一组挂载设备  
-      - name: origincircuit #定义一个挂载设备的名字  
-        hostPath:  
-          path: /data/UserName/JobName #挂载设备类型为hostPath，路径为宿主机下的/opt,这里设备类型支持很多种
+      volumes:
+      - name: origincircuit
+        hostPath:
+          path: /data/UserName/JobName

@@ -1,5 +1,6 @@
 import os
 import yaml
+from kubenerte import client
 
 from QuICT.cloud.server.script.sql_controller import SQLManger
 

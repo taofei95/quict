@@ -28,7 +28,6 @@ def delete_user_folder(user_name):
         shutil.rmtree(user_path)
 
 
-
 def delete_job_folder(user_name, job_name):
     job_path = os.path.join(USER_ROOT_PATH, user_name, job_name)
     if os.path.exists(job_path):
