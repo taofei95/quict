@@ -45,7 +45,6 @@ def MatrixPermutation(A: np.ndarray, mapping: np.ndarray, changeInput: bool = Fa
         A(np.array<np.complex>): the matrix A
         mapping(np.ndarray<int>): the qubit mapping
         changeInput(bool): whether changes in A
-
     """
     if not A.shape[0] == (1 << mapping.shape[0]):
         raise IndexError("Indices do not match!")
@@ -88,7 +87,7 @@ def VectorPermutation(A: np.ndarray, mapping: np.ndarray, changeInput: bool = Fa
 
 
 @njit(parallel=True, nogil=True)
-def tensor(A, B):
+def tensor(A: np.ndarray, B: np.ndarray):
     """ tensor A and B
 
     Args:
@@ -100,7 +99,7 @@ def tensor(A, B):
     """
     row_a, col_a = A.shape
     row_b, col_b = B.shape
-    tensor_data = np.empty((row_a * row_b, col_a * col_b), dtype=np.complex_)
+    tensor_data = np.empty((row_a * row_b, col_a * col_b), dtype=A.dtype)
 
     for r in prange(row_a):
         for c in prange(col_a):
@@ -110,7 +109,7 @@ def tensor(A, B):
 
 
 @njit()
-def dot(A, B):
+def dot(A: np.ndarray, B: np.ndarray):
     """ dot matrix A and matrix B
 
     Args:
@@ -124,23 +123,51 @@ def dot(A, B):
 
 
 @njit()
-def multiply(A, B):
+def multiply(A: np.ndarray, B: np.ndarray):
+    """ multiply matrix A and matrix B
+
+    Args:
+        A(np.array<np.complex>): the matrix A
+        B(np.array<np.complex>): the matrix B
+
+    Returns:
+        np.array<np.complex>: A x B
+    """
     return np.multiply(A, B)
 
 
 @njit()
 def matrix_dot_vector(
-    mat,
-    mat_bit,
-    vec,
-    vec_bit,
-    affect_args,
-    aux
+    vec: np.ndarray,
+    vec_bit: int,
+    mat: np.ndarray,
+    mat_bit: int,
+    mat_args: np.ndarray
 ):
+    """ Dot the quantum gate's matrix and qubits'state vector, depending on the target qubits of gate.
+
+    Args:
+        vec (np.ndarray): The state vector of qubits
+        vec_bit (np.int32): The number of qubits
+        mat (np.ndarray): The 2D numpy array, represent the quantum gate's matrix
+        mat_bit (np.int32): The quantum gate's qubit number
+        mat_args (np.ndarray): The target qubits of quantum gate
+
+    Raises:
+        TypeError: matrix and vector should be complex and with same precision
+
+    Returns:
+        np.ndarray: updated state vector
+    """
+    # Deal with special case when matrix's qubit == vector's qubit
+    if mat_bit == vec_bit:
+        return np.dot(mat, vec)
+
     repeat = 1 << (vec_bit - mat_bit)
     arg_len = 1 << mat_bit
-    sorted_args = affect_args.copy()
+    sorted_args = mat_args.copy()
     sorted_args = np.sort(sorted_args)
+    aux = np.zeros_like(vec)
     for i in range(repeat):
         for sarg_idx in range(mat_bit):
             less = i & ((1 << sorted_args[sarg_idx]) - 1)
@@ -150,9 +177,11 @@ def matrix_dot_vector(
         for i in range(1, arg_len, 1):
             for j in range(mat_bit):
                 if i & (1 << j):
-                    indexes[i] += 1 << affect_args[j]
+                    indexes[i] += 1 << mat_args[j]
 
         aux[indexes] = dot(mat, vec[indexes])
+
+    return aux
 
 
 @njit()
@@ -160,12 +189,24 @@ def measure_gate_apply(
     index: int,
     vec: np.array
 ):
+    """ Measured the state vector for target qubit
+
+    Args:
+        index (int): The index of target qubit
+        vec (np.array): The state vector of qubits
+
+    Raises:
+        TypeError: The state vector should be np.ndarray.
+
+    Returns:
+        bool: The measured result 0 or 1.
+    """
     target_index = 1 << index
     vec_idx_0 = [idx for idx in range(len(vec)) if not idx & target_index]
     vec_idx_0 = np.array(vec_idx_0, dtype=np.int32)
     vec_idx_1 = [idx for idx in range(len(vec)) if idx & target_index]
     vec_idx_1 = np.array(vec_idx_1, dtype=np.int32)
-    prob = np.sum(np.square(np.abs(vec[vec_idx_1])))
+    prob = np.sum(np.square(np.abs(vec[vec_idx_0])))
 
     _1 = random.random() > prob
     if _1:
