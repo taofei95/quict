@@ -58,7 +58,7 @@ class CartanKAKDecomposition(object):
             M2real = state.normal() * M2.real + state.normal() * M2.imag
             _, P = np.linalg.eigh(M2real)
             D = P.T.dot(M2).dot(P).diagonal()
-            if np.allclose(P.dot(np.diag(D)).dot(P.T), M2, rtol=1.0e-13, atol=1.0e-13):
+            if np.allclose(P.dot(np.diag(D)).dot(P.T), M2, rtol=1.0e-6, atol=1.0e-6):
                 break
         else:
             raise ValueError("CartanKAKDecomposition: failed to diagonalize M2")
@@ -97,7 +97,7 @@ class CartanKAKDecomposition(object):
         # Final test
         res = np.kron(U0, U1)
         dev = np.abs(np.abs(res.conj(res).T.dot(U).trace()) - 4)
-        assert dev < 1e-13, ValueError("tensor_decompose: Final failed")
+        assert dev < 1e-6, ValueError("tensor_decompose: Final failed")
         return U0, U1
 
     def execute(self, matrix):
