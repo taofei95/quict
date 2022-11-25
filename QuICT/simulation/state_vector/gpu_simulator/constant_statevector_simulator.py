@@ -110,7 +110,8 @@ class ConstantStateVectorSimulator:
         self,
         circuit: Circuit,
         state_vector: Union[np.ndarray, cp.ndarray] = None,
-        use_previous: bool = False
+        use_previous: bool = False,
+        gpu_out: bool = True
     ) -> np.ndarray:
         """ start simulator with given circuit
 
@@ -142,7 +143,10 @@ class ConstantStateVectorSimulator:
             else:
                 raise TypeError(f"Unsupported circuit operator {type(gate)} in State Vector Simulator.")
 
-        return self.vector
+        if not gpu_out:
+            return self.vector.get()
+        else:
+            return self.vector
 
     def apply_gate(self, gate: BasicGate):
         """ Depending on the given quantum gate, apply the target algorithm to calculate the state vector.
