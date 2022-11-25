@@ -23,10 +23,12 @@ cmake-build*/
 callgrind.out*
 *qubit_cnot.json
 *qubit_cnot.inf
-*qubit_cnot_depth.inf
+*qubit_cnot_depth.inf/
 cmake-build*/
 cmake-vsc*/
 unit_test/**/*.jpg
 .history
 /QAOA_model*
 /del
+/data/
+.log/

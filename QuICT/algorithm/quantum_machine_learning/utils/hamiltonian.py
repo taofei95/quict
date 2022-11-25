@@ -73,6 +73,7 @@ class Hamiltonian:
     def _remove_I(self):
         new_pauli_str = []
         for pauli_operator in self._pauli_str:
+            assert isinstance(pauli_operator, int)
             for pauli_gate in pauli_operator[1:][::-1]:
                 if "I" in pauli_gate:
                     pauli_operator.remove(pauli_gate)

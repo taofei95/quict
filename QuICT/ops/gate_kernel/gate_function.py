@@ -14,6 +14,7 @@ __outward_functions = [
     "normal_ctargs",
     "ctrl_normal_targs",
     "normal_normal_targs",
+    "diagonal_normal_targs",
     "swap_targ",
     "reverse_targ",
     "reverse_ctargs",
@@ -659,6 +660,64 @@ Completed_IPxIP_targs_double_kernel = cp.RawKernel(r'''
     ''', 'CompletedIPxIP')
 
 
+Diagonal_Multiply_normal_single_kernel = cp.RawKernel(r'''
+    #include <cupy/complex.cuh>
+    extern "C" __global__
+    void DiagxNormal(int high, int low, const complex<float>* mat, complex<float>* vec) {
+        int label = blockDim.x * blockIdx.x + threadIdx.x;
+
+        const int offset1 = 1 << low;
+        const int offset2 = 1 << high;
+        const int mask1 = offset1 - 1;
+        const int mask2 = offset2 - 1;
+
+        int gw = label >> low << (low + 1);
+        int _0 = (gw >> high << (high + 1)) + (gw & (offset2 - offset1)) + (label & mask1);
+
+        int _1 = _0 + offset1;
+        int _2 = _0 + offset2;
+        int _3 = _2 + offset1;
+
+        complex<float> temp_0 = vec[_0];
+        vec[_0] = vec[_0]*mat[0] + vec[_1]*mat[1];
+        vec[_1] = temp_0*mat[4] + vec[_1]*mat[5];
+        
+        complex<float> temp_2 = vec[_2];
+        vec[_2] = vec[_2]*mat[10] + vec[_3]*mat[11];
+        vec[_3] =temp_2*mat[14] + vec[_3]*mat[15];
+    }
+    ''', 'DiagxNormal')
+
+
+Diagonal_Multiply_normal_double_kernel = cp.RawKernel(r'''
+    #include <cupy/complex.cuh>
+    extern "C" __global__
+    void DiagxNormal(int high, int low, const complex<double>* mat, complex<double>* vec) {
+        int label = blockDim.x * blockIdx.x + threadIdx.x;
+
+        const int offset1 = 1 << low;
+        const int offset2 = 1 << high;
+        const int mask1 = offset1 - 1;
+        const int mask2 = offset2 - 1;
+
+        int gw = label >> low << (low + 1);
+        int _0 = (gw >> high << (high + 1)) + (gw & (offset2 - offset1)) + (label & mask1);
+
+        int _1 = _0 + offset1;
+        int _2 = _0 + offset2;
+        int _3 = _2 + offset1;
+
+        complex<double> temp_0 = vec[_0];
+        vec[_0] = vec[_0]*mat[0] + vec[_1]*mat[1];
+        vec[_1] = temp_0*mat[4] + vec[_1]*mat[5];
+        
+        complex<double> temp_2 = vec[_2];
+        vec[_2] = vec[_2]*mat[10] + vec[_3]*mat[11];
+        vec[_3] =temp_2*mat[14] + vec[_3]*mat[15];
+    }
+    ''', 'DiagxNormal')
+
+
 RDiagonal_Swap_targ_single_kernel = cp.RawKernel(r'''
     #include <cupy/complex.cuh>
     extern "C" __global__
@@ -1256,6 +1315,41 @@ def normal_normal_targs(t_indexes, mat, vec, vec_bit, sync: bool = False):
 
     if sync:
         cp.cuda.Device().synchronize()
+
+
+def diagonal_normal_targs(t_indexes, mat, vec, vec_bit, sync: bool = False):
+    """
+    Completed matrix (4x4) dot vector
+            [[A, B, 0, 0],    *   vec
+             [C, D, 0, 0],
+             [0, 0, a, b],
+             [0, 0, c, d]]
+    """
+    task_number = 1 << (vec_bit - 2)
+    thread_per_block = min(256, task_number)
+    block_num = task_number // thread_per_block
+
+    if t_indexes[0] > t_indexes[1]:
+        high, low = t_indexes[0], t_indexes[1]
+    else:
+        high, low = t_indexes[1], t_indexes[0]
+
+    if vec.dtype == np.complex64:
+        Diagonal_Multiply_normal_single_kernel(
+            (block_num,),
+            (thread_per_block,),
+            (high, low, mat, vec)
+        )
+    else:
+        Diagonal_Multiply_normal_double_kernel(
+            (block_num,),
+            (thread_per_block,),
+            (high, low, mat, vec)
+        )
+
+    if sync:
+        cp.cuda.Device().synchronize()
+    
 
 
 def swap_targ(t_index, vec, vec_bit, sync: bool = False):
