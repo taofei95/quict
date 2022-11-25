@@ -390,6 +390,38 @@ class CXGate(BasicGateTensor):
 CX_tensor = CXGate()
 
 
+class SquareRootiSwapGate(BasicGateTensor):
+    """ Square Root of iSwap gate
+
+    ...
+    """
+    def __init__(self):
+        super().__init__(
+            controls=0,
+            targets=2,
+            params=0,
+            type=GateType.sqiswap
+        )
+
+        self.matrix = torch.tensor(
+            [
+                [1, 0, 0, 0],
+                [0, 0, (1 + 1j) / np.sqrt(2), 0],
+                [0, (1 + 1j) / np.sqrt(2), 0, 0],
+                [0, 0, 0, 1]
+            ], dtype=np.complex128
+        ).to(self.device)
+
+    @property
+    def gradient(self):
+        raise AttributeError(
+            "Only parametric gates with trainable parameters have attribute 'gradient'"
+        )
+
+
+sqiSwap_tensor = SquareRootiSwapGate()
+
+
 class XGate(BasicGateTensor):
     """Pauli-X gate"""
 

@@ -2028,10 +2028,7 @@ iSwap_dagger = iSwapDaggerGate()
 
 
 class SquareRootiSwapGate(BasicGate):
-    """ Square Root of iSwap gate
-
-    ...
-    """
+    """ Square Root of iSwap gate """
     def __init__(self):
         super().__init__(
             controls=0,

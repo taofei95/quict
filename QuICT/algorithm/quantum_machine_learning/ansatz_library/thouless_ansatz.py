@@ -9,36 +9,8 @@ from QuICT.core import Circuit
 from QuICT.core.gate import Rz, sqiSwap, X
 
 import numpy as np
- 
-# class Ansatz(object):
-#     """ ansatz used to generate composite gates"""
 
-#     def build_gate(self, *args):
-#         """ 
-#         build a compositegate from a list of parameters
 
-#         Args:
-#             args(tuple): parameters of the ansatz builder
-        
-#         Returns:
-#             (CompositeGate): a composite gate built from the given arguments
-
-#         """
-#         ...
-    
-#     def build_circuit(self, *args):
-#         """ 
-#         build a quantum circuit from a list of parameters
-
-#         Args:
-#             args(tuple): parameters of the ansatz builder
-        
-#         Returns:
-#             (QuantumCircuit)
-
-#         """
-#         ...
- 
 class Thouless():
     """ Thouless ansatz implemented from 
 
