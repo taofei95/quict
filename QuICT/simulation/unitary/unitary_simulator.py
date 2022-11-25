@@ -73,6 +73,7 @@ class UnitarySimulator():
 
             self._qubits_num = circuit.width()
             self._unitary_matrix = circuit.matrix(self._device)
+            print(self._unitary_matrix)
             assert 2 ** self._qubits_num == self._unitary_matrix.shape[0]
         else:
             row, col = circuit.shape

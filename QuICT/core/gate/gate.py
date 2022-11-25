@@ -1514,6 +1514,9 @@ class CU1Gate(BasicGate):
         if len(args) == self.controls + self.targets:
             cgate & args
 
+        if self._precision == np.complex64:
+            cgate.convert_precision()
+
         return cgate
 
 
@@ -1912,6 +1915,9 @@ class SwapGate(BasicGate):
         args = self.cargs + self.targs
         if len(args) == self.controls + self.targets:
             cgate & args
+
+        if self._precision == np.complex64:
+            cgate.convert_precision()
 
         return cgate
 

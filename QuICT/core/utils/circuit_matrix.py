@@ -72,6 +72,8 @@ class CircuitMatrix:
         matrix_groups = [[]]          # List[List[MatrixGroup]]
         for layer_gates in gates_order_by_depth:
             for gate in layer_gates:
+                print(gate.type)
+                print(gate.matrix)
                 if gate.controls + gate.targets >= 3:
                     raise Exception("only support 2-qubit gates and 1-qubit gates.")
 
