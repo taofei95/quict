@@ -8,4 +8,3 @@ from ._algorithm import Algorithm
 from .quantum_algorithm import *
 from .synthetical_unitary import SyntheticalUnitary
 from .weight_decision import WeightDecision
-from .variational_quantum_eigensolver import ansatz, VQE
