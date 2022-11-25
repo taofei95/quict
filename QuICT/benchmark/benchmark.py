@@ -1,3 +1,4 @@
+from itertools import chain
 import math
 import os
 from imp import reload
@@ -17,9 +18,9 @@ class QuICTBenchmark:
     """ The QuICT Benchmarking. """
     
     __DEFAULT_CLASSIFY = {
-        "algorithm": ["clifford", "grover", "qft", "supremacy", "vqe"],
+        "algorithm": ["adder", "clifford", "grover", "qft", "supremacy", "vqe"],
         "benchmark": ["highly_entangled", "highly_parallelized", "highly_serialized", "mediate_measure"],
-        "instructionset": ["google", "ibmq", "ionq", "ustc", "quafu"],
+        "instructionset": ["google", "ibmq", "ionq", "ustc", "quafu"]
     }
     
     def __init__(self, circuit_type: str, output_result_type: str, simulator=CircuitSimulator()):
@@ -40,21 +41,25 @@ class QuICTBenchmark:
         fields: List[str],
         max_width: int,
         max_size: int,
-        max_depth: int
+        max_depth: int,
+        layout_file=False,
+        InSet=False
     ):
         """
-        Get circuit from CircuitLib
+        Get circuit from CircuitLib and Get the circuit after qcda.
 
         Args:
             fields (List[str]): The type of circuit required
             max_width(int): max number of qubits
             max_size(int): max number of gates
             max_depth(int): max depth
+            layout_file (_type_): Topology of the target physical device
+            InSet (List[str]:[one_qubit_gate, [two_qubit_gate]]): The instruction set, only one single-bit gate can be included.
 
         Returns:
             (List[Circuit | String] | None): Return the list of output circuit order by output_type.
         """
-        circuit_list = []
+        cir_alg_list, cir_bench_list, cir_ins_list, cir_qcda_list = [], [], [], []
         for field in fields:
             if field in self.__DEFAULT_CLASSIFY["algorithm"]:
                 cir_alg_list = self._circuit_lib.get_algorithm_circuit(field, max_width, max_size, max_depth)
@@ -63,170 +68,143 @@ class QuICTBenchmark:
             else:
                 cir_ins_list = self._circuit_lib.get_instructionset_circuit(field, max_width, max_size, max_depth)
                 
-            circuit_list.append(cir_alg_list)
-            
-        return circuit_list
-    
-    # def qcda_circuit(self, layout_file, InSet, circuit_list=list, bench_mapping=False, bench_synthesis=False, bench_optimization=False):
-    #     """
-    #     Get the circuit after qcda.
-
-    #     Args:
-    #         layout_file (_type_): Topology of the target physical device
-    #         InSet (List[str]): The instruction set, only one single-bit gate can be included.
-    #         circuit_list (List[str]): the list of circuits. Defaults to list.
-    #         bench_mapping (bool, optional): select whether to mapping. Defaults to False.
-    #         bench_synthesis (bool, optional): select whether to gate transform. Defaults to False.
-    #         bench_optimization (bool, optional): select whether to optimization. Defaults to False.
-
-    #     Returns:
-    #         (List[Circuit | String] | None): Return the list of circuits after qcda.
-    #     """
-    #     cir_qcda_list = []
-    #     for circuit in circuit_list:
-    #         qcda = QCDA()
-    #         if bench_mapping is not False:
-    #             qcda.add_default_mapping(layout_file)
-
-    #         if bench_synthesis is not False:
-    #             if InSet is not None:
-    #                 q_ins = InstructionSet(InSet)
-    #             else:
-    #                 q_ins = InstructionSet(
-    #                         GateType.cx,
-    #                         [GateType.h, GateType.rx, GateType.ry, GateType.rz]
-    #                     )           
-    #             qcda.add_gate_transform(q_ins)
+            circuit_list = [*cir_alg_list, *cir_bench_list, *cir_ins_list]
+        
+        for circuit in circuit_list:
+            qcda = QCDA()
+            if layout_file is not False:
+                qcda.add_default_mapping(layout_file)
                 
-    #         if bench_optimization is not False:
-    #             qcda.add_default_optimization()
-                
-    #         cir_qcda = qcda.compile(circuit)
-    #         cir_qcda_list.append(cir_qcda)
-       
-    #     return cir_qcda_list
+            if InSet is not False:
+                q_ins = InstructionSet(InSet[0], InSet[1])
+                qcda.add_gate_transform(q_ins)
+                        
+            cir_qcda = qcda.compile(circuit)
+            cir_qcda_list.append(cir_qcda)
+            
+        return circuit_list, cir_qcda_list
     
-    # def evaluate(self, circuit_list, result_list, output_type):
-    #     """
-    #     Evaluate all circuits in circuit list group by fields
+    def evaluate(self, circuit_list, result_list=False, output_type=False):
+        """
+        Evaluate all circuits in circuit list group by fields
 
-    #     Args:
-    #         circuit_id (List[str]): the list of the unique id for circuits, for example : w2_s12_d10.
-    #         circuit_list (List[str]): the list of circuits group by fields.
-    #         result_list ([dict]): The physical machines simulation result Dict.
-    #         output_type (str, optional): one of [Graph, table, txt file]. Defaults to "Graph".
-    #         circuit_id, circuit_list, result_list must correspond one-to-one.
+        Args:
+            circuit_list (List[str]): the list of circuits group by fields.
+            result_list ([dict]): The physical machines simulation result Dict.
+            output_type (str, optional): one of [Graph, table, txt file]. Defaults to "Graph".
+            circuit_id, circuit_list, result_list must correspond one-to-one.
             
-    #     Returns:
-    #         from: Return the benchmark result.
-    #     """
-    #     # Step 1: Circuits group by fields
-    #     for circuit in circuit_list:
-    #         for result in result_list:
-    #             cirs_field_mapping = {f"{field}": [(circuit, result)]}
+        Returns:
+            from: Return the benchmark result.
+        """
+        # Step 1: Circuits group by fields
+        for circuit in circuit_list:
+            # for result in result_list:
+            field = (circuit.name).split('+')[0]
+            cirs_field_mapping = {f"{field}": [(circuit)]}
 
-    #     # Step 2: Score for each fields in step 1
-    #     for field in cirs_field_mapping:
-    #         self._field_score(field, cirs_field_mapping[f"{field}"])
+        # Step 2: Score for each fields in step 1
+        for field in cirs_field_mapping:
+            self._field_score(field, cirs_field_mapping[f"{field}"])
 
-    #     # Step 3: Show Result
-    #     self.show_result(output_type)
+        # Step 3: Show Result
+        self.show_result(output_type)
         
-    # def _field_score(self, field: str, circuit_result_mapping: List[Tuple]):
-    #     # field score
-    #     for circuit, result in circuit_result_mapping[f"{field}"]:
-    #     # Step 1: score each circuit by kl, cross_en, l2 value
-    #         based_score = self._circuit_score(circuit, result)[:-1]
-
-    #     # Step 2: get field score from its based_score
-                
-    #     # Step 3: average total field score
-    #     alg_pro_1, alg_pro_2, alg_pro_3 = "30%", "30%", "40%"
-    #     rand_pro_1, rand_pro_2 = "50%", "50%"
-    #     alg_proportion = [alg_pro_1, alg_pro_2, alg_pro_3]
-    #     rand_proportion = [rand_pro_1, rand_pro_2]
+        return cirs_field_mapping
         
-    #     if field in self.__DEFAULT_CLASSIFY["algorithm"]:
-    #         result_list = [x*y for x,y in zip(self._circuit_score(circuit, result), alg_proportion)]
+    def _field_score(self, field: str, circuit_result_mapping: List[Tuple]):
+        # field score
+        for circuit, result in circuit_result_mapping[f"{field}"]:
+        # Step 1: score each circuit by kl, cross_en, l2 value
+            based_score = self._circuit_score(circuit, result)
+
+        # Step 2: get field score from its based_score
+        qubit_cal = self._qubit_cal(circuit)
+        entropy_cal = self._entropy_cal(based_score)
+        alg_cal = self._alg_cal()
+        
+        score_list = [qubit_cal, entropy_cal, alg_cal]
+        
+        # Step 3: average total field score
+        alg_pro_1, alg_pro_2, alg_pro_3 = "30%", "30%", "40%"
+        rand_pro_1, rand_pro_2 = "50%", "50%"
+        alg_proportion = [alg_pro_1, alg_pro_2, alg_pro_3]
+        rand_proportion = [rand_pro_1, rand_pro_2]
+        
+        if field in self.__DEFAULT_CLASSIFY["algorithm"]:
+            result_list = [x*y for x,y in zip(score_list, alg_proportion)]
             
-    #     result_list = [x*y for x,y in zip(self._circuit_score(circuit, result)[:-1], rand_proportion)]
+        result_list = [x*y for x,y in zip(score_list[:-1], rand_proportion)]
             
-    #     return result_list
+        return result_list
     
-    # def _circuit_score(self, circuit, result):
-    #     # Step 1: simulate circuit
-    #     simulator = self.simulator
-    #     sim_result = simulator.run(circuit)
+    def _circuit_score(self, circuit, result):
+        # Step 1: simulate circuit
+        simulator = self.simulator
+        sim_result = simulator.run(circuit)
         
-    #     # Step 2: calculate kl, cross_en, l2, qubit
-    #     mac_result = result
-    #     kl = self._kl_cal(sim_result, mac_result)
-    #     cross_en = self._cross_en_cal(sim_result, mac_result)
-    #     l2 = self._l2_cal(sim_result, mac_result)
+        # Step 2: calculate kl, cross_en, l2, qubit
+        mac_result = result
+        kl = self._kl_cal(sim_result, mac_result)
+        cross_en = self._cross_en_cal(sim_result, mac_result)
+        l2 = self._l2_cal(sim_result, mac_result)
+        
+        # Step 3: return result
+        return kl, cross_en, l2
 
-    #     # Step 3: calculate level
-    #     qubit_cal = self._qubit_cal(circuit)
-    #     entropy_cal = self._entropy_cal(kl, cross_en, l2)
-    #     alg_cal = self._alg_cal()
+    def _kl_cal(self, p, q):
+        # calculate KL
+        KL_divergence = scipy.stats.entropy(p, q)
+        return KL_divergence
         
-    #     score_list = [qubit_cal, entropy_cal, alg_cal]
-        
-    #     # Step 3: return result
-    #     return score_list
-
-    # def _kl_cal(self, p, q):
-    #     # calculate KL
-    #     KL_divergence = scipy.stats.entropy(p, q)
-    #     return KL_divergence
-        
-    # def _cross_en_cal(self, p, q):
-    #     # calculate cross E
-    #     sum=0.0
-    #     for x in map(lambda y,p:(1-y)*math.log(1-p)+y*math.log(p), p, q):
-    #         sum+=x
-    #     cross_entropy = -sum/len(p)
-    #     return cross_entropy
+    def _cross_en_cal(self, p, q):
+        # calculate cross E
+        sum=0.0
+        for x in map(lambda y,p:(1-y)*math.log(1-p)+y*math.log(p), p, q):
+            sum+=x
+        cross_entropy = -sum/len(p)
+        return cross_entropy
             
-    # def _l2_cal(self, p, q):
-    #     # calculate L2
-    #     L2_loss = np.sum(np.square(p - q))
-    #     return L2_loss
+    def _l2_cal(self, p, q):
+        # calculate L2
+        L2_loss = np.sum(np.square(p - q))
+        return L2_loss
         
-    # def _qubit_cal(self, circuit):
-    #     level1, level2, level3 = 60, 80, 100
-    #     if circuit.width() < 10:
-    #         qubit_cal = level1
-    #     if 10 <= circuit.width() < 20:
-    #         qubit_cal = level2
-    #     if 20 <= circuit.width() <= 30:
-    #         qubit_cal = level3
-    #     return qubit_cal
+    def _qubit_cal(self, circuit):
+        level1, level2, level3 = 60, 80, 100
+        if circuit.width() < 10:
+            qubit_cal = level1
+        if 10 <= circuit.width() < 20:
+            qubit_cal = level2
+        if 20 <= circuit.width() <= 30:
+            qubit_cal = level3
+        return qubit_cal
         
-    # def _entropy_cal(self, kl, cross_en, l2):
-    #     counts = (round(kl + cross_en + l2)/3, 6)
-    #     level1, level2, level3 = 60, 80, 100
-    #     if counts <= 0.1:
-    #         counts = level3
-    #     if 0.1 <= counts < 0.2:
-    #         counts = level2
-    #     if 0.2 <= counts <= 0.3:
-    #         counts = level1
-    #     return counts
+    def _entropy_cal(self, kl, cross_en, l2):
+        counts = (round(kl + cross_en + l2)/3, 6)
+        level1, level2, level3 = 60, 80, 100
+        if counts <= 0.1:
+            counts = level3
+        if 0.1 <= counts < 0.2:
+            counts = level2
+        if 0.2 <= counts <= 0.3:
+            counts = level1
+        return counts
         
-    # def _alg_cal(self):
-    #     pass
+    def _alg_cal(self):
+        pass
 
-    # def show_result(self, output_type:str):
-    #     """ show benchmark result. """
-    #     if output_type == "Graph":
-    #     # Graph [line, radar, ...]
-    #         Graph = self._graph_show()
-    #     # Table
-    #     if output_type == "Table":
-    #         Table = self._table_show()
-    #     # txt file
-    #     if output_type == "Txt":
-    #         Txt = self._txt_show()
+    def show_result(self, output_type:str):
+        """ show benchmark result. """
+        if output_type == "Graph":
+        # Graph [line, radar, ...]
+            Graph = self._graph_show()
+        # Table
+        if output_type == "Table":
+            Table = self._table_show()
+        # txt file
+        if output_type == "Txt":
+            Txt = self._txt_show()
                 
     # def _table_show(self):
     #     import sys
