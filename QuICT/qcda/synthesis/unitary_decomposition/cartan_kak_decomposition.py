@@ -118,7 +118,7 @@ class CartanKAKDecomposition(object):
         """
         assert matrix.shape == (4, 4), \
             ValueError("CartanKAKDecomposition: Input must be a 4*4 matrix.")
-        assert np.allclose(matrix.T.conj().dot(matrix), np.eye(4)), \
+        assert np.allclose(matrix.T.conj().dot(matrix), np.eye(4), rtol=1e-6, atol=1e-6), \
             ValueError("CartanKAKDecomposition: Input must be a unitary matrix.")
 
         U = matrix.copy()
