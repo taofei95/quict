@@ -139,7 +139,7 @@ class TestCPUSimulator(unittest.TestCase):
         DM = simulator.run(deepcopy(TestCPUSimulator.circuit))
         assert np.allclose(DM, TestCPUSimulator.dm_data)
 
-        d_sim = Simulator(device="CPU", backend="density_matrix", shots=100)
+        d_sim = Simulator(device="CPU", backend="density_matrix")
         dm = d_sim.run(deepcopy(TestCPUSimulator.circuit))
         assert np.allclose(dm["data"]["density_matrix"], TestCPUSimulator.dm_data)
 

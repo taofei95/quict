@@ -35,8 +35,8 @@ class TestGPULinalg(unittest.TestCase):
         B = np.random.random((1 << TestGPULinalg.seed, 1 << TestGPULinalg.seed)).astype(np.complex64)
 
         np_result = np.dot(A, B)
-
         gpu_result = GPUCalculator.dot(A, B, gpu_out=True)
+        
         self.assertTrue((np_result == gpu_result).all())
 
     def test_tensor(self):
@@ -44,8 +44,8 @@ class TestGPULinalg(unittest.TestCase):
         B = np.random.random((1 << TestGPULinalg.seed, 1 << TestGPULinalg.seed)).astype(np.complex64)
 
         np_result = np.kron(A, B)
-
         gpu_result = GPUCalculator.tensor(A, B, gpu_out=True)
+        
         self.assertTrue((np_result == gpu_result).all())
 
     def test_vector_permutation(self):
@@ -66,6 +66,7 @@ class TestGPULinalg(unittest.TestCase):
 
         CPUCalculator.VectorPermutation(cpu_result_in_place, mapping, changeInput=True)
         gpu_result = GPUCalculator.VectorPermutation(gpu_result_in_place, mapping, changeInput=True, gpu_out=True)
+        
         self.assertTrue((cpu_result == cpu_result_in_place).all())
         self.assertTrue((gpu_result == gpu_result_in_place).all())
 
@@ -78,6 +79,7 @@ class TestGPULinalg(unittest.TestCase):
 
         cpu_result = CPUCalculator.MatrixPermutation(A, mapping, changeInput=False)
         gpu_result = GPUCalculator.MatrixPermutation(A, mapping, changeInput=False, gpu_out=True)
+        
         self.assertTrue((cpu_result == gpu_result).all())
 
     def test_matrix_tensorI(self):
@@ -88,6 +90,7 @@ class TestGPULinalg(unittest.TestCase):
         I_M = np.identity(m)
         np_result = np.kron(np.kron(I_N, A), I_M)
         gpu_result = GPUCalculator.MatrixTensorI(A, n, m, gpu_out=True)
+        
         self.assertTrue((np_result == gpu_result).all())
 
     def test_matrix_dot_vector(self):
@@ -128,29 +131,30 @@ class TestCPULinalg(unittest.TestCase):
 
     def test_dot_cpu(self):
         np_result = np.dot(TestCPULinalg.matrix_A, TestCPULinalg.matrix_B)
-
         cpu_result = CPUCalculator.dot(TestCPULinalg.matrix_A, TestCPULinalg.matrix_B)
+        
         self.assertTrue((np_result == cpu_result).all())
 
     def test_tensor_cpu(self):
         np_result = np.kron(TestCPULinalg.matrix_A, TestCPULinalg.matrix_B)
-
         cpu_result = CPUCalculator.tensor(TestCPULinalg.matrix_A, TestCPULinalg.matrix_B)
+        
         self.assertTrue((np_result == cpu_result).all())
 
     def test_multiply_cpu(self):
         np_result = np.multiply(TestCPULinalg.matrix_A, TestCPULinalg.matrix_B)
         cpu_result = CPUCalculator.multiply(TestCPULinalg.matrix_A, TestCPULinalg.matrix_B)
 
-        self.assertTrue(np.allclose(np_result, cpu_result, atol=1e-04))
+        self.assertTrue(np.allclose(np_result, cpu_result))
 
     def test_MatrixTensorI_cpu(self):
         n, m = 2, 3
-
         I_N = np.identity(n)
         I_M = np.identity(m)
+        
         np_result = np.kron(np.kron(I_N, TestCPULinalg.matrix_A), I_M)
         cpu_result = CPUCalculator.MatrixTensorI(TestCPULinalg.matrix_A, n, m)
+        
         self.assertTrue((np_result == cpu_result).all())
 
     def test_vectorpermutation_cpu(self):
@@ -159,6 +163,7 @@ class TestCPULinalg(unittest.TestCase):
         np.random.shuffle(mapping)
 
         cpu_result = CPUCalculator.VectorPermutation(TestCPULinalg.vector, mapping)
+        
         self.assertTrue(np.isclose(np.sum(cpu_result), np.sum(TestCPULinalg.vector), atol=1e-04))
 
     def test_matrixpermutation_cpu(self):
@@ -167,6 +172,7 @@ class TestCPULinalg(unittest.TestCase):
         np.random.shuffle(mapping)
 
         cpu_result = CPUCalculator.MatrixPermutation(TestCPULinalg.matrix_A, mapping)
+        
         self.assertTrue(np.isclose(np.sum(cpu_result), np.sum(TestCPULinalg.matrix_A), atol=1e-04))
 
     def test_matrix_dot_vector(self):
@@ -187,8 +193,22 @@ class TestCPULinalg(unittest.TestCase):
         sim = UnitarySimulator("CPU")
         sv = sim.run(circuit.matrix())
 
-        assert np.allclose(vec, sv)
+        self.assertTrue(np.allclose(vec, sv))
 
-
+    def test_measure_gate_apply(self):
+        qubit_num = 10
+        circuit = Circuit(qubit_num)
+        QFT(qubit_num) | circuit
+        
+        vec = np.zeros((1 << qubit_num, ), dtype=np.complex128)
+        vec[0] = np.complex128(1)
+        vec = CPUCalculator.measure_gate_apply(
+            qubit_num,
+            vec
+        )
+        
+        self.assertTrue(np.allclose(vec, 0))
+        
+        
 if __name__ == "__main__":
     unittest.main()
