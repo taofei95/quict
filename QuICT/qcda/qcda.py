@@ -41,11 +41,10 @@ class QCDA(object):
         """
         self.process.append(method)
 
-    def add_default_synthesis(self, target_instruction=None):
-        """ Generate the default synthesis process
+    def add_gate_transform(self, target_instruction=None):
+        """ Add GateTransform for some target InstructionSet
 
-        The default synthesis process contains the GateTransform, which would
-        transform the gates in the original Circuit/CompositeGate to a certain InstructionSet.
+        GateTransform would transform the gates in the original Circuit/CompositeGate to a certain InstructionSet.
 
         Args:
             instruction(InstructionSet): The target InstructionSet
@@ -70,7 +69,7 @@ class QCDA(object):
             layout(Layout): Topology of the target physical device
         """
         assert layout is not None, ValueError('No Layout provided for Mapping')
-        self.add_method(MCTSMapping(layout, init_mapping_method='anneal'))
+        self.add_method(MCTSMapping(layout))
 
     def compile(self, circuit):
         """ Compile the circuit with the given process

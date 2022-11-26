@@ -223,3 +223,32 @@ def hrz_rule(gate):
         if not _check2pi(beta):
             Rz(beta) & targ
     return gates
+
+
+def u3_rule(gate):
+    unitary = gate.matrix
+    targ = gate.targ
+    eps = 1e-6
+
+    # u3[0, 0] is real
+    z = np.exp(1j * np.angle(unitary[0, 0]))
+    unitary = unitary / z
+
+    theta = np.arccos(unitary[0, 0])
+    sint = np.sin(theta)
+    if abs(sint) >= eps:
+        lamda = np.angle(unitary[0, 1] / -sint)
+        phi = np.angle(unitary[1, 0] / sint)
+    else:
+        lamda = 0
+        phi = np.angle(unitary[1, 1] / np.cos(theta))
+
+    if _check2pi(theta, eps):
+        theta = 0
+    if _check2pi(lamda, eps):
+        lamda = 0
+    if _check2pi(phi, eps):
+        phi = 0
+    g = build_gate(GateType.u3, targ, [theta * 2, phi, lamda])
+    gates = CompositeGate(gates=[g])
+    return gates

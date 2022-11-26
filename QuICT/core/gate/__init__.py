@@ -7,4 +7,5 @@
 from .gate import *
 from .composite_gate import CompositeGate
 from .gate_builder import build_gate, build_random_gate, GATE_TYPE_TO_CLASS
-from .complex_gate import *
+from .multicontrol_toffoli import MultiControlToffoli
+from .uniformly_control_gate import UniformlyControlGate

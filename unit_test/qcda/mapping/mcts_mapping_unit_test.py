@@ -75,9 +75,8 @@ def test_mapping():
             )
 
             mapper = MCTSMapping(layout=layout)
-            mapped_circ, logic2phy, phy2logic = mapper.execute(
-                circuit_like=circ, with_final_mapping=True
-            )
+            mapped_circ = mapper.execute(circ)
+            phy2logic = mapper.phy2logic
             mapped_circ = _wrap_to_circ(mapped_circ, q)
 
             check_circ_mapped(mapped_circ, layout)
