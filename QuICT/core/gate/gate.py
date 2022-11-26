@@ -327,7 +327,7 @@ class BasicGate(object):
         if self.type in [GateType.measure, GateType.reset, GateType.barrier]:
             return
 
-        self._precision = np.complex64
+        self._precision = np.complex64 if self._precision == np.complex128 else np.complex128
         if self.params == 0:
             self._matrix = self.matrix.astype(self._precision)
 
@@ -1514,6 +1514,9 @@ class CU1Gate(BasicGate):
         if len(args) == self.controls + self.targets:
             cgate & args
 
+        if self._precision == np.complex64:
+            cgate.convert_precision()
+
         return cgate
 
 
@@ -1584,10 +1587,8 @@ class CU3Gate(BasicGate):
         assert self.controls + self.targets > 0
         mapping_args = self.cargs + self.targs
         cgate, _ = UnitaryDecomposition().execute(self.matrix)
-        cgate & mapping_args
-
-        if self._precision == np.complex64:
-            cgate.convert_precision()
+        if len(mapping_args) == self.controls + self.targets:
+            cgate & mapping_args
 
         return cgate
 
@@ -1912,6 +1913,9 @@ class SwapGate(BasicGate):
         args = self.cargs + self.targs
         if len(args) == self.controls + self.targets:
             cgate & args
+
+        if self._precision == np.complex64:
+            cgate.convert_precision()
 
         return cgate
 
