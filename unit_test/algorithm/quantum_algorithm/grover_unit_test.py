@@ -44,15 +44,17 @@ def main_oracle(n, f):
         X & result_q[0]
     return 2, cgate
 
+
 def unknown_oracle(n):
-    assert n>=3
-    result_q = [n]
+    assert n >= 3
     cgate = CompositeGate()
-    CCZ | cgate([n-3,n-2,n-1])
+    CCZ | cgate([n - 3, n - 2, n - 1])
     return 1, cgate
 
+
 def unknown_oracle_test(s):
-    return s[-3:]=="111"
+    return s[-3:] == "111"
+
 
 class TestGrover(unittest.TestCase):
     @classmethod
@@ -88,17 +90,19 @@ class TestGrover(unittest.TestCase):
     def test_grover_with_unknown_amplitude(self):
         for n in range(3, 7):
             error = 0
-            N = 2 ** n
             k, oracle = unknown_oracle(n)
             grover = Grover(simulator=TestGrover.simulator)
             M = 25
-            unknown_oracle_test_int = lambda x:unknown_oracle_test(bin(x)[2:].rjust(n,'0'))
+            unknown_oracle_test_int = lambda x: unknown_oracle_test(
+                bin(x)[2:].rjust(n, "0")
+            )
             for _ in range(M):
                 solution = grover.run(
-                    n=n, n_ancilla=k,
+                    n=n,
+                    n_ancilla=k,
                     oracle=oracle,
                     n_solution=None,
-                    check_solution=unknown_oracle_test_int
+                    check_solution=unknown_oracle_test_int,
                 )
                 if solution is None or not unknown_oracle_test_int(solution):
                     error += 1
@@ -109,7 +113,6 @@ class TestGrover(unittest.TestCase):
             )
         assert 1
 
-
     def test_grover_with_unknown_amplitude_BHMT(self):
         for n in range(3, 7):
             error = 0
@@ -118,26 +121,28 @@ class TestGrover(unittest.TestCase):
             grover = Grover(simulator=TestGrover.simulator)
             M = 25
             for _ in range(M):
-                #BHMT algorithm
+                # BHMT algorithm
                 c = math.sqrt(2)
                 n_iter = 2
-                n_iter_max = 4*math.ceil(math.sqrt(N))
+                n_iter_max = 4 * math.ceil(math.sqrt(N))
                 n_orac = 0
                 solution_found = False
                 while n_orac < n_iter_max:
-                    s_trial_1 = bin(random.randrange(0,N))[2:].rjust(n,'0')
+                    s_trial_1 = bin(random.randrange(0, N))[2:].rjust(n, "0")
                     if unknown_oracle_test(s_trial_1):
                         solution_found = True
                         break
-                    n_orac_current = random.randint(1,n_iter)
+                    n_orac_current = random.randint(1, n_iter)
                     n_orac += n_orac_current
-                    circ = grover.circuit(n,k,oracle,n_orac_current,iteration_number_forced=True)
+                    circ = grover.circuit(
+                        n, k, oracle, n_orac_current, iteration_number_forced=True
+                    )
                     TestGrover.simulator.run(circ)
-                    s_trial_2 = bin(int(circ[:n]))[2:].rjust(n,'0')
+                    s_trial_2 = bin(int(circ[:n]))[2:].rjust(n, "0")
                     if unknown_oracle_test(s_trial_2):
                         solution_found = True
                         break
-                    n_iter = math.ceil(n_iter*c)
+                    n_iter = math.ceil(n_iter * c)
                 print(f"[{solution_found:5}]oracle used: {n_orac}")
                 if not solution_found:
                     error += 1
@@ -146,10 +151,9 @@ class TestGrover(unittest.TestCase):
                 "for n = %d, %d errors in %d tests, error rate = %f"
                 % (n, error, M, error_rate)
             )
-            if error_rate > 1-1/8:
+            if error_rate > 1 - 1 / 8:
                 assert 0
         assert 1
-
 
     def test_partial_grover(self):
         n_block = 3

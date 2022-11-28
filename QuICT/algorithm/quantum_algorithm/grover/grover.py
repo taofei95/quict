@@ -55,7 +55,16 @@ class Grover:
             H | cgate(idx)
         return cgate
 
-    def circuit(self, n, n_ancilla, oracle, n_solution=1, measure=True, is_bit_flip=False, iteration_number_forced=False):
+    def circuit(
+        self,
+        n,
+        n_ancilla,
+        oracle,
+        n_solution=1,
+        measure=True,
+        is_bit_flip=False,
+        iteration_number_forced=False,
+    ):
         """ grover search for f with custom oracle
 
         Args:
@@ -74,15 +83,14 @@ class Grover:
         assert n_ancilla > 0, "at least 1 ancilla, which is shared by MCT part"
         circuit = Circuit(n + n_ancilla)
         index_q = list(range(n))
-        ancilla_q = list(range(n, n + n_ancilla))
         if iteration_number_forced:
             T = n_solution
         else:
             N = 2 ** n
             theta = np.arcsin(np.sqrt(n_solution / N))
-            T = int(np.round((np.pi/2-theta)/(2*theta)))
+            T = int(np.round((np.pi / 2 - theta) / (2 * theta)))
 
-        grover_operator = self._grover_operator(n,n_ancilla,oracle,is_bit_flip)
+        grover_operator = self._grover_operator(n, n_ancilla, oracle, is_bit_flip)
 
         # create equal superposition state in index_q
         for idx in index_q:
@@ -94,31 +102,42 @@ class Grover:
             if measure:
                 Measure | circuit(idx)
         logging.info(
-            f"circuit width          = {circuit.width():4}\n" +
-            f"oracle  calls          = {T:4}\n" +
-            f"other circuit size     = {circuit.size() - oracle.size()*T:4}\n"
+            f"circuit width          = {circuit.width():4}\n"
+            + f"oracle  calls          = {T:4}\n"
+            + f"other circuit size     = {circuit.size() - oracle.size()*T:4}\n"
         )
         return circuit
 
-    def run(self, n, n_ancilla, oracle, n_solution=1, measure=True, is_bit_flip=False, check_solution=None):
+    def run(
+        self,
+        n,
+        n_ancilla,
+        oracle,
+        n_solution=1,
+        measure=True,
+        is_bit_flip=False,
+        check_solution=None,
+    ):
         simulator = self.simulator
         index_q = list(range(n))
         # unkonwn solution number
         if n_solution is None:
             assert check_solution is not None
-            n_solution_guess = 1<<n
+            n_solution_guess = 1 << n
             while n_solution_guess > 0:
                 logging.info(f"trial with {n_solution_guess} solutions...")
-                circ = self.circuit(n, n_ancilla, oracle, n_solution_guess, True, is_bit_flip)
+                circ = self.circuit(
+                    n, n_ancilla, oracle, n_solution_guess, True, is_bit_flip
+                )
                 simulator.run(circ)
                 solution = int(circ[index_q])
                 if check_solution(solution):
                     return solution
-                n_solution_guess = int(n_solution_guess/ALPHA)
+                n_solution_guess = int(n_solution_guess / ALPHA)
             logging.info(f"FAILED!")
             return None
         # no solution
-        elif n_solution==0:
+        elif n_solution == 0:
             return 0
         # standard Grover's algorithm
         else:
