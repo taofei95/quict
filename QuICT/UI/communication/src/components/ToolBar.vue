@@ -6,86 +6,37 @@
     <el-dialog title="Instruction Set" v-model="dialogCmdVisible" width="30%">
       <div style="text-align: left">
         <div>
-          <el-radio
-            :label="0"
-            v-model="currentSet"
-            style="display: inline-block"
-            >{{ all_sets[0].name }}</el-radio
-          >
-          <el-radio
-            :label="1"
-            v-model="currentSet"
-            style="display: inline-block"
-            >{{ all_sets[1].name }}</el-radio
-          >
+          <el-radio :label="0" v-model="currentSet" style="display: inline-block">{{ all_sets[0].name }}</el-radio>
+          <el-radio :label="1" v-model="currentSet" style="display: inline-block">{{ all_sets[1].name }}</el-radio>
           <br />
-          <el-radio
-            :label="2"
-            v-model="currentSet"
-            style="display: inline-block"
-            >{{ all_sets[2].name }}</el-radio
-          >
-          <el-radio
-            :label="3"
-            v-model="currentSet"
-            style="display: inline-block"
-            >{{ all_sets[3].name }}</el-radio
-          >
-          <el-radio
-            :label="4"
-            v-model="currentSet"
-            style="display: inline-block"
-            >{{ all_sets[4].name }}</el-radio
-          >
-          <el-radio
-            :label="5"
-            v-model="currentSet"
-            style="display: inline-block"
-            >{{ all_sets[5].name }}</el-radio
-          >
+          <el-radio :label="2" v-model="currentSet" style="display: inline-block">{{ all_sets[2].name }}</el-radio>
+          <el-radio :label="3" v-model="currentSet" style="display: inline-block">{{ all_sets[3].name }}</el-radio>
+          <el-radio :label="4" v-model="currentSet" style="display: inline-block">{{ all_sets[4].name }}</el-radio>
+          <el-radio :label="5" v-model="currentSet" style="display: inline-block">{{ all_sets[5].name }}</el-radio>
         </div>
         <div>
-          <span style="display: block"
-            ><b>Customer Set</b>(Click to remove from Customer Set)</span
-          >
-          <img
-            v-for="gate in customerSet"
-            :key="gate"
-            :src="'./assets/gate_set/' + gate.img"
-            @click="
-              () => {
-                RemoveFromCustomerSet(gate);
-              }
-            "
-            style="display: inline-flex"
-          />
-          <span
-            v-if="customerSet.length == 0"
-            style="display: block; text-align: center"
-            >No gate in customer set.</span
-          >
+          <span style="display: block"><b>Customer Set</b>(Click to remove from Customer Set)</span>
+          <img v-for="gate in customerSet" :key="gate" :src="'./assets/gate_set/' + gate.img" @click="
+            () => {
+              RemoveFromCustomerSet(gate);
+            }
+          " style="display: inline-flex" />
+          <span v-if="customerSet.length == 0" style="display: block; text-align: center">No gate in customer
+            set.</span>
         </div>
         <div>
           <span style="display: block">Click to add to Customer Set</span>
-          <img
-            v-for="gate in tempSet"
-            :key="gate"
-            :src="'./assets/gate_set/' + gate.img"
-            @click="
-              () => {
-                AddToCustomerSet(gate);
-              }
-            "
-            style="display: inline-flex"
-          />
+          <img v-for="gate in tempSet" :key="gate" :src="'./assets/gate_set/' + gate.img" @click="
+            () => {
+              AddToCustomerSet(gate);
+            }
+          " style="display: inline-flex" />
         </div>
       </div>
       <template #footer>
         <span class="dialog-footer">
           <!-- <el-button @click="dialogCmdVisible = false">Cancel</el-button> -->
-          <el-button type="primary" @click="dialogCmdVisible = false"
-            >OK</el-button
-          >
+          <el-button type="primary" @click="dialogCmdVisible = false">OK</el-button>
         </span>
       </template>
     </el-dialog>
@@ -93,21 +44,11 @@
     <el-dialog title="Topology" v-model="dialogTpVisible" width="30%">
       <div>
         <div>
-          <el-input
-            v-model="dialogTpNodeCount"
-            label="n="
-            @change="TpNodeCountChange"
-          ></el-input>
+          <el-input v-model="dialogTpNodeCount" label="n=" @change="TpNodeCountChange"></el-input>
         </div>
         <div>
-          <el-radio
-            v-for="item in dialogTpTypeOptions"
-            :key="item"
-            :label="item"
-            v-model="dialogTpType"
-            style="display: inline-block"
-            >{{ item }}</el-radio
-          >
+          <el-radio v-for="item in dialogTpTypeOptions" :key="item" :label="item" v-model="dialogTpType"
+            style="display: inline-block">{{ item }}</el-radio>
         </div>
         <div :id="id_base">
           <svg />
@@ -121,196 +62,125 @@
             <el-button @click="pvReverse">Reverse</el-button>
           </div>
           <div>
-            <el-upload
-              class="upload-demo"
-              :action="uploadBackend"
-              :multiple="multipleUpload"
-              :show-file-list="showFileList"
-              :before-upload="TpLoad"
-              style="display: inline-block"
-            >
-              <el-button type="primary" style="font-family: 'Segoe UI Symbol'"
-                > LOAD</el-button
-              >
+            <el-upload class="upload-demo" :action="uploadBackend" :multiple="multipleUpload"
+              :show-file-list="showFileList" :before-upload="TpLoad" style="display: inline-block">
+              <el-button type="primary" style="font-family: 'Segoe UI Symbol'"> LOAD</el-button>
             </el-upload>
-            <el-button
-              type="primary"
-              @click="
-                dialogTpVisible = false;
-                TpConfirm();
-              "
-              >OK</el-button
-            >
+            <el-button type="primary" @click="
+  dialogTpVisible = false;
+TpConfirm();
+            ">OK</el-button>
           </div>
         </span>
       </template>
     </el-dialog>
 
     <el-dialog title="Backend" v-model="dialogBeVisible" width="30%">
-      <div>
-        <span style="margin: 0px 10px 0px 0px">Device:</span>
-        <el-radio v-model="dialogBe" label="CPU">CPU</el-radio>
-        <el-radio v-model="dialogBe" label="GPU">GPU</el-radio>
-        <!-- <el-radio v-model="dialogBe" label="qiskit">qiskit</el-radio>
-        <el-radio v-model="dialogBe" label="qcompute">qcompute</el-radio> -->
-      </div>
-      <div>
-        <el-select v-model="dialogBe_Backend" placeholder="Backend">
-          <!-- <span>Backend: </span> -->
-          <el-option
-            v-for="item in dialogBe_Backend_options"
-            :key="item.value"
-            :label="item.label"
-            :value="item.value"
-          >
-          </el-option>
-        </el-select>
-      </div>
+      <el-row justify="start" style="line-hight: 40px">
+        <el-col :span="8" style="text-align:end">
+          <span style="margin: 0px 10px 0px 0px">Device:</span>
+        </el-col>
+        <el-col :span="2"></el-col>
+        <el-col :span="14" style="text-align:start">
+          <el-space direction="vertical" :size="1" style="line-height: 19px !important">
+            <el-radio v-model="dialogBe" label="CPU">CPU</el-radio>
+            <el-radio v-model="dialogBe" label="GPU">GPU</el-radio>
+          </el-space>
+        </el-col>
+      </el-row>
+      <el-row justify="start" style="line-hight: 40px">
+        <el-col :span="8" style="text-align:end">
+          <span style="margin: 0px 10px 0px 0px">Backend:</span>
+        </el-col>
+        <el-col :span="2"></el-col>
+        <el-col :span="14" style="text-align:start">
+          <el-select v-model="dialogBe_Backend" placeholder="Backend">
+            <el-option v-for="item in dialogBe_Backend_options" :key="item.value" :label="item.label"
+              :value="item.value">
+            </el-option>
+          </el-select>
+        </el-col>
+      </el-row>
       <template #footer>
         <span class="dialog-footer">
           <!-- <el-button @click="dialogBeVisible = false">Cancel</el-button> -->
-          <el-button type="primary" @click="dialogBeVisible = false"
-            >OK</el-button
-          >
+          <el-button type="primary" @click="dialogBeVisible = false">OK</el-button>
         </span>
       </template>
     </el-dialog>
 
     <el-dialog title="Setting" v-model="dialogSeVisible" width="30%">
-      <div>
-        <span style="display: block; text-align: center">Shots</span>
-        <el-input v-model="dialogSeShots" label="n="></el-input>
-        <div v-if="dialogBe == 'CPU' || dialogBe == 'GPU'">
-          <span style="display: block; text-align: center">Precision</span>
-          <el-radio v-model="dialogSe_Precision" label="single"
-            >single</el-radio
-          >
-          <el-radio v-model="dialogSe_Precision" label="double"
-            >double</el-radio
-          >
-        </div>
-      </div>
+      <el-row justify="start" style="line-hight: 40px">
+        <el-col :span="8" style="text-align:end">
+          <span style="display: block;">Shots:</span>
+        </el-col>
+        <el-col :span="2"></el-col>
+        <el-col :span="14" style="text-align:start">
+          <el-input v-model="dialogSeShots" label="n="></el-input>
+        </el-col>
+      </el-row>
+      <el-row v-if="dialogBe == 'CPU' || dialogBe == 'GPU'" justify="start" style="line-hight: 40px">
+        <el-col :span="8" style="text-align:end">
+          <span style="display: block;">Precision:</span>
+        </el-col>
+        <el-col :span="2"></el-col>
+        <el-col :span="14" style="text-align:start">
+          <el-space direction="vertical" :size="1" style="line-height: 19px !important;align-items:start">
+            <el-radio v-model="dialogSe_Precision" label="single">single</el-radio>
+            <el-radio v-model="dialogSe_Precision" label="double">double</el-radio>
+          </el-space>
+        </el-col>
+      </el-row>
       <template #footer>
         <span class="dialog-footer">
           <!-- <el-button @click="dialogSeVisible = false">Cancel</el-button> -->
-          <el-button type="primary" @click="dialogSeVisible = false"
-            >OK</el-button
-          >
+          <el-button type="primary" @click="dialogSeVisible = false">OK</el-button>
         </span>
       </template>
     </el-dialog>
 
-    <el-col
-      :span="12"
-      style="
+    <el-col :span="12" style="
         display: inline-flex;
         justify-content: flex-end;
         align-items: center;
-      "
-    >
-      <el-button
-        size="small"
-        type="primary"
-        @click="dialogCmdVisible = true"
-        style="
+      ">
+      <el-button size="small" type="primary" @click="dialogCmdVisible = true" style="
           margin: 0px 10px;
           font-family: 'Segoe UI Symbol';
           background: transparent !important;
-        "
-        >Instruction Set ⏷</el-button
-      >
-      <el-button
-        size="small"
-        @click="showTopologyEdit"
-        style="margin: 0px 20px 0px 10px; background: transparent !important"
-        type="primary"
-        ><img
-          src="/assets/topology.2x.png"
-          style="height: 10px"
-        />Topology</el-button
-      >
-      <el-space
-        direction="vertical"
-        :size="1"
-        style="line-height: 19px !important"
-      >
-        <el-checkbox
-          v-model="opSwitch"
-          size="small"
-          label="Optimize"
-        ></el-checkbox>
+        ">Instruction Set ⏷</el-button>
+      <el-button size="small" @click="showTopologyEdit"
+        style="margin: 0px 20px 0px 10px; background: transparent !important" type="primary"><img
+          src="/assets/topology.2x.png" style="height: 10px" />Topology</el-button>
+      <el-space direction="vertical" :size="1" style="line-height: 19px !important">
+        <el-checkbox v-model="opSwitch" size="small" label="Optimize"></el-checkbox>
 
-        <el-checkbox
-          v-model="mapSwitch"
-          size="small"
-          label="Mapping"
-        ></el-checkbox>
+        <el-checkbox v-model="mapSwitch" size="small" label="Mapping"></el-checkbox>
       </el-space>
-      <span style="color: #409eff; font-size: large; margin: 0px 0px 0px 10px"
-        >|</span
-      >
-      <el-button
-        size="small"
-        type="primary"
-        @click="dialogBeVisible = true"
-        style="
+      <span style="color: #409eff; font-size: large; margin: 0px 0px 0px 10px">|</span>
+      <el-button v-if="show_save_run_load" size="small" type="primary" @click="dialogBeVisible = true" style="
           margin: 0px 10px;
           font-family: 'Segoe UI Symbol';
           background: transparent !important;
-        "
-        >Backend ⏷</el-button
-      >
-      <el-button
-        size="small"
-        type="primary"
-        @click="dialogSeVisible = true"
-        style="
+        ">Backend ⏷</el-button>
+      <el-button v-if="show_save_run_load" size="small" type="primary" @click="dialogSeVisible = true" style="
           margin: 0px 10px;
           font-family: 'Segoe UI Symbol';
           background: transparent !important;
-        "
-        > Setting</el-button
-      >
-      <span v-if="show_save_run_load" style="color: #409eff; font-size: large"
-        >|</span
-      >
-      <el-upload
-        v-if="show_save_run_load"
-        class="upload-demo"
-        :action="uploadBackend"
-        :multiple="multipleUpload"
-        :show-file-list="showFileList"
-        :before-upload="loadQCDA"
-        style="margin: 0px"
-      >
-        <el-button
-          size="small"
-          type="primary"
-          plain
-          style="margin: 0px 10px; font-family: 'Segoe UI Symbol'"
-          > LOAD
+        "> Setting</el-button>
+      <span v-if="show_save_run_load" style="color: #409eff; font-size: large">|</span>
+      <el-upload v-if="show_save_run_load" class="upload-demo" :action="uploadBackend" :multiple="multipleUpload"
+        :show-file-list="showFileList" :before-upload="loadQCDA" style="margin: 0px">
+        <el-button size="small" type="primary" plain style="margin: 0px 10px; font-family: 'Segoe UI Symbol'"> LOAD
         </el-button>
       </el-upload>
 
-      <el-button
-        v-if="show_save_run_load"
-        size="small"
-        type="primary"
-        plain
-        @click="saveQCDA"
-        style="margin: 0px 10px; font-family: 'Segoe UI Symbol'"
-        > SAVE</el-button
-      >
+      <el-button v-if="show_save_run_load" size="small" type="primary" plain @click="saveQCDA"
+        style="margin: 0px 10px; font-family: 'Segoe UI Symbol'"> SAVE</el-button>
 
-      <el-button
-        v-if="show_save_run_load"
-        size="small"
-        type="primary"
-        @click="runQCDA"
-        style="margin: 0px 10px; font-family: 'Segoe UI Symbol'"
-      >
-         RUN</el-button
-      >
+      <el-button v-if="show_save_run_load" size="small" type="primary" @click="runQCDA"
+        style="margin: 0px 10px; font-family: 'Segoe UI Symbol'">
+         RUN</el-button>
     </el-col>
   </el-row>
 </template>
@@ -528,9 +398,8 @@ export default {
           .join("g")
           .classed("qNode", true)
           .style("transform", (d, i) => {
-            return `translateX(${
-              this.cal_node_col(i, col) * uv_len
-            }px) translateY(${this.cal_node_row(i, col) * uv_len}px)`;
+            return `translateX(${this.cal_node_col(i, col) * uv_len
+              }px) translateY(${this.cal_node_row(i, col) * uv_len}px)`;
           });
         q_root
           .append("circle")
@@ -597,40 +466,40 @@ export default {
             return (
               150 +
               150 *
-                Math.cos(
-                  (Number(d.split("_")[0]) * 2 * Math.PI) /
-                    this.dialogTpNodeCount
-                )
+              Math.cos(
+                (Number(d.split("_")[0]) * 2 * Math.PI) /
+                this.dialogTpNodeCount
+              )
             );
           })
           .attr("y1", (d) => {
             return (
               150 +
               150 *
-                Math.sin(
-                  (Number(d.split("_")[0]) * 2 * Math.PI) /
-                    this.dialogTpNodeCount
-                )
+              Math.sin(
+                (Number(d.split("_")[0]) * 2 * Math.PI) /
+                this.dialogTpNodeCount
+              )
             );
           })
           .attr("x2", (d) => {
             return (
               150 +
               150 *
-                Math.cos(
-                  (Number(d.split("_")[1]) * 2 * Math.PI) /
-                    this.dialogTpNodeCount
-                )
+              Math.cos(
+                (Number(d.split("_")[1]) * 2 * Math.PI) /
+                this.dialogTpNodeCount
+              )
             );
           })
           .attr("y2", (d) => {
             return (
               150 +
               150 *
-                Math.sin(
-                  (Number(d.split("_")[1]) * 2 * Math.PI) /
-                    this.dialogTpNodeCount
-                )
+              Math.sin(
+                (Number(d.split("_")[1]) * 2 * Math.PI) /
+                this.dialogTpNodeCount
+              )
             );
           })
           .on("click", (event, d) => {
@@ -644,11 +513,9 @@ export default {
           .join("g")
           .classed("qNode", true)
           .style("transform", (d, i) => {
-            return `translateX(${
-              150 + 150 * Math.cos((i * 2 * Math.PI) / this.dialogTpNodeCount)
-            }px) translateY(${
-              150 + 150 * Math.sin((i * 2 * Math.PI) / this.dialogTpNodeCount)
-            }px)`;
+            return `translateX(${150 + 150 * Math.cos((i * 2 * Math.PI) / this.dialogTpNodeCount)
+              }px) translateY(${150 + 150 * Math.sin((i * 2 * Math.PI) / this.dialogTpNodeCount)
+              }px)`;
           });
         q_root
           .append("circle")
@@ -690,8 +557,7 @@ export default {
       }
       this.clear_tp();
     },
-    clear_tp()
-    {
+    clear_tp() {
       this.SetFullTp();
       let tmp_tp = [];
       for (let i = 0; i < this.fullTp.length; i++) {

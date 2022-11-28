@@ -413,7 +413,7 @@ export default {
       d3.select("#step_3").attr("class", "div_not_selected");
     },
     confirm_o_QCDA() {
-      this.current_step = 3;
+      this.current_step = 4;
       d3.select("#step_0").attr("class", "div_not_selected");
       d3.select("#step_1_N").attr("class", "div_not_selected");
       d3.select("#step_1_L").attr("class", "div_not_selected");
