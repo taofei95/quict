@@ -4,7 +4,7 @@ from scipy.linalg import block_diag
 from scipy.stats import unitary_group
 
 from QuICT.qcda.synthesis.unitary_decomposition.controlled_unitary import quantum_shannon_decompose
-from QuICT.qcda.synthesis.uniformly_gate import UniformlyRotation
+from QuICT.core.gate.backend import UniformlyRotation
 from QuICT.core.gate import GateType
 
 

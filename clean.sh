@@ -26,6 +26,10 @@ egg_dir="$prj_root/QuICT.egg-info"
 
 [[ -d $egg_dir ]] && echo "rm -rf $egg_dir" && rm -rf $egg_dir
 
+dist_dir="$prj_root/dist"
+
+[[ -d $dist_dir ]] && echo "rm -rf $dist_dir" && rm -rf $dist_dir
+
 echo "Remove all built .so files"
 
 find . -name "*.so" -type f -delete || exit 1
