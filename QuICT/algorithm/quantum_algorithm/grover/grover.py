@@ -5,7 +5,11 @@ from QuICT.core.gate import *
 from QuICT.core.gate.backend import MCTOneAux
 
 from QuICT.simulation.state_vector import CircuitSimulator
-import logging
+
+from QuICT.tools import Logger
+from QuICT.tools.exception.core import *
+
+logger = Logger("Grover")
 
 ALPHA = 1.5
 
@@ -101,7 +105,7 @@ class Grover:
         for idx in index_q:
             if measure:
                 Measure | circuit(idx)
-        logging.info(
+        logger.info(
             f"circuit width          = {circuit.width():4}\n"
             + f"oracle  calls          = {T:4}\n"
             + f"other circuit size     = {circuit.size() - oracle.size()*T:4}\n"
@@ -125,7 +129,7 @@ class Grover:
             assert check_solution is not None
             n_solution_guess = 1 << n
             while n_solution_guess > 0:
-                logging.info(f"trial with {n_solution_guess} solutions...")
+                logger.info(f"trial with {n_solution_guess} solutions...")
                 circ = self.circuit(
                     n, n_ancilla, oracle, n_solution_guess, True, is_bit_flip
                 )
@@ -134,7 +138,7 @@ class Grover:
                 if check_solution(solution):
                     return solution
                 n_solution_guess = int(n_solution_guess / ALPHA)
-            logging.info(f"FAILED!")
+            logger.info(f"FAILED!")
             return None
         # no solution
         elif n_solution == 0:
