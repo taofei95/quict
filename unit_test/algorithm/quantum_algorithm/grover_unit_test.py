@@ -92,6 +92,31 @@ class TestGrover(unittest.TestCase):
             k, oracle = unknown_oracle(n)
             grover = Grover(simulator=TestGrover.simulator)
             M = 25
+            unknown_oracle_test_int = lambda x:unknown_oracle_test(bin(x)[2:].rjust(n,'0'))
+            for _ in range(M):
+                solution = grover.run(
+                    n=n, n_ancilla=k,
+                    oracle=oracle,
+                    n_solution=None,
+                    check_solution=unknown_oracle_test_int
+                )
+                if solution is None or not unknown_oracle_test_int(solution):
+                    error += 1
+            error_rate = error / M
+            print(
+                "for n = %d, %d errors in %d tests, error rate = %f\n"
+                % (n, error, M, error_rate)
+            )
+        assert 1
+
+
+    def test_grover_with_unknown_amplitude_BHMT(self):
+        for n in range(3, 7):
+            error = 0
+            N = 2 ** n
+            k, oracle = unknown_oracle(n)
+            grover = Grover(simulator=TestGrover.simulator)
+            M = 25
             for _ in range(M):
                 #BHMT algorithm
                 c = math.sqrt(2)
@@ -124,6 +149,7 @@ class TestGrover(unittest.TestCase):
             if error_rate > 1-1/8:
                 assert 0
         assert 1
+
 
     def test_partial_grover(self):
         n_block = 3

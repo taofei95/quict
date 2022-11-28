@@ -7,6 +7,8 @@ from QuICT.qcda.synthesis.mct import MCTOneAux
 from QuICT.simulation.state_vector import CircuitSimulator
 import logging
 
+ALPHA = 1.5
+
 
 def degree_counterclockwise(v1: np.ndarray, v2: np.ndarray):
     """from v1 to v2
@@ -92,18 +94,34 @@ class Grover:
             if measure:
                 Measure | circuit(idx)
         logging.info(
-            f"circuit width          = {circuit.width():4}" +
-            f"oracle  calls          = {T:4}" +
-            f"other circuit size     = {circuit.size() - oracle.size()*T:4}"
+            f"circuit width          = {circuit.width():4}\n" +
+            f"oracle  calls          = {T:4}\n" +
+            f"other circuit size     = {circuit.size() - oracle.size()*T:4}\n"
         )
         return circuit
 
-    def run(self, n, n_ancilla, oracle, n_solution=1, measure=True, is_bit_flip=False):
-        if n_solution==0:
-            return 0
+    def run(self, n, n_ancilla, oracle, n_solution=1, measure=True, is_bit_flip=False, check_solution=None):
         simulator = self.simulator
         index_q = list(range(n))
-        circuit = self.circuit(n, n_ancilla, oracle, n_solution, measure, is_bit_flip)
-        simulator.run(circuit)
-        return int(circuit[index_q])
-        
+        # unkonwn solution number
+        if n_solution is None:
+            assert check_solution is not None
+            n_solution_guess = 1<<n
+            while n_solution_guess > 0:
+                logging.info(f"trial with {n_solution_guess} solutions...")
+                circ = self.circuit(n, n_ancilla, oracle, n_solution_guess, True, is_bit_flip)
+                simulator.run(circ)
+                solution = int(circ[index_q])
+                if check_solution(solution):
+                    return solution
+                n_solution_guess = int(n_solution_guess/ALPHA)
+            logging.info(f"FAILED!")
+            return None
+        # no solution
+        elif n_solution==0:
+            return 0
+        # standard Grover's algorithm
+        else:
+            circ = self.circuit(n, n_ancilla, oracle, n_solution, measure, is_bit_flip)
+            simulator.run(circ)
+            return int(circ[index_q])
