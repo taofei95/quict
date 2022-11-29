@@ -3,8 +3,10 @@ import math
 import os
 from imp import reload
 from typing import Dict, List, Tuple
+import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
 import scipy
 
 from QuICT.core.utils.gate_type import GateType
@@ -29,7 +31,7 @@ class QuICTBenchmark:
 
         Args:
             circuit_type (str, optional): one of [circuit, qasm, file]. Defaults to "circuit".
-            output_result_type (str, optional): one of [Graph, table, txt file]. Defaults to "Graph".
+            output_result_type (str, optional): one of [Graph, table, txt file, Excel]. Defaults to "Graph".
             simulator (Union[ConstantStateVectorSimulator, CircuitSimulator], optional): The simulator for simulating quantum circuit. Defaults to CircuitSimulator().
         """
         self._circuit_lib = CircuitLib(circuit_type)
@@ -84,7 +86,7 @@ class QuICTBenchmark:
             
         return circuit_list, cir_qcda_list
     
-    def evaluate(self, circuit_list, result_list=False, output_type=False):
+    def evaluate(self, circuit_list, result_list, output_type=False):
         """
         Evaluate all circuits in circuit list group by fields
 
@@ -105,12 +107,21 @@ class QuICTBenchmark:
 
         # Step 2: Score for each fields in step 1
         for field in cirs_field_mapping:
-            self._field_score(field, cirs_field_mapping[f"{field}"])
+            score_list, result_list = self._field_score(field, cirs_field_mapping[f"{field}"])
 
         # Step 3: Show Result
-        self.show_result(output_type)
+        result_dict = {"circuit_width":circuit.width(),
+                    "circuit_size": circuit.size(),
+                   "circuit_depth": circuit.depth(),
+                   "qubit_cal": score_list[0],
+                   "entropy_cal": score_list[1],
+                   "alg_cal":  score_list[2],
+                   "field_score": result_list
+                   }
         
-        return cirs_field_mapping
+        self.show_result(result_dict, output_type)
+        
+        return result_dict
         
     def _field_score(self, field: str, circuit_result_mapping: List[Tuple]):
         # field score
@@ -136,7 +147,7 @@ class QuICTBenchmark:
             
         result_list = [x*y for x,y in zip(score_list[:-1], rand_proportion)]
             
-        return result_list
+        return score_list, result_list
     
     def _circuit_score(self, circuit, result):
         # Step 1: simulate circuit
@@ -194,62 +205,89 @@ class QuICTBenchmark:
     def _alg_cal(self):
         pass
 
-    def show_result(self, output_type:str):
+    def show_result(self, result_dict:dict, output_type:str):
         """ show benchmark result. """
         if output_type == "Graph":
         # Graph [line, radar, ...]
-            Graph = self._graph_show()
+            Graph = self._graph_show(result_dict)
         # Table
-        if output_type == "Table":
-            Table = self._table_show()
+        elif output_type == "Table":
+            Table = self._table_show(result_dict)
         # txt file
-        if output_type == "Txt":
-            Txt = self._txt_show()
+        elif output_type == "Txt":
+            Txt = self._txt_show(result_dict)
+        # Excel
+        else:
+            Excel = self._excel_show(result_dict)
+            
                 
-    # def _table_show(self):
-    #     import sys
-    #     from prettytable import PrettyTable
-    #     reload(sys)
-    #     sys.setdefaultencoding('utf8')
+    def _table_show(self, result_dict:dict):
+        df = pd.DataFrame(columns=['circuit width', 'circuit size', 'circuit depth', 'qubit cal', 'entropy cal', 'alg cal', 'field score'])
+        result = result_dict
+        df = [result['circuit_width'], result['circuit_size'], result['qubit_cal'], result['entropy_cal'], result['alg_cal'], result['field_score']]
+        return df
+        
+    def _graph_show(self, result_dict:dict, line=False, radar=False):
+        if radar == True:
+            import numpy as np
+            import matplotlib.pyplot as plt
 
-    #     table = PrettyTable()
-    #     table.add_column('项目', ['编号','云编号','名称','IP地址'])
-    #     table.add_column('值', ['1','server01','服务器01','172.16.0.1'])
-    #     return table
+            # 中文和负号的正常显示
+            plt.rcParams['font.sans-serif'] = 'Microsoft YaHei'
+            plt.rcParams['axes.unicode_minus'] = False
+            plt.style.use('ggplot')
+
+            #构造数据
+            result = result_dict
+            values = [result['circuit_width'], result['circuit_size'], result['qubit_cal'], result['entropy_cal'], result['alg_cal'], result['field_score']]
+            feature = ['circuit width', 'circuit size', 'circuit depth', 'qubit cal', 'entropy cal', 'alg cal', 'field score']
+
+            N = len(values)
+
+            #设置雷达图的角度，用于平分切开一个平面
+            angles = np.linspace(0,2*np.pi,N,endpoint=False)
+            values = np.concatenate((values,[values[0]]))
+            angles = np.concatenate((angles,[angles[0]]))
+            #绘图
+            fig = plt.figure()
+            ax = fig.add_subplot(111, polar=True)
+            ax.plot(angles,values,'o-',linewidth=2,label='活动前')
+            ax.fill(angles,values,'r',alpha=0.5)
+            ax.set_thetagrids(angles*180/np.pi,feature)
+            ax.set_ylim(0,5)
+            #添加标题
+            plt.title('benchmark graph show')
+            ax.grid(True)
+            
+            plt.savefig('benchmark graph show.jpg') 
+            
+        if line == True:
+            mpl.rcParams['font.sans-serif'] = ['SimHei']
+
+            result = result_dict
+            x_axis_data = [result['circuit_width'], result['circuit_size'], result['qubit_cal'], result['entropy_cal'], result['alg_cal'], result['field_score']]
+            y_axis_data = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6]
+
+            plt.plot(x_axis_data, y_axis_data, 'ro-', color='#4169E1', alpha=0.8, linewidth=1)
+            plt.xlabel('x轴')
+            plt.ylabel('y轴')
+
+            plt.savefig('benchmark line show.jpg') 
         
-    # def _graph_show(self, line=False, radar=False):
-    #     results = [{"大学英语": 87, "高等数学": 79, "体育": 95, "计算机基础": 92, "程序设计": 85},
-    #             {"大学英语": 80, "高等数学": 90, "体育": 91, "计算机基础": 85, "程序设计": 88}]
-    #     data_length = len(results[0])
-    #     # 将极坐标根据数据长度进行等分
-    #     angles = np.linspace(0, 2*np.pi, data_length, endpoint=False)
-    #     labels = [key for key in results[0].keys()]
-    #     score = [[v for v in result.values()] for result in results]
-    #     # 使雷达图数据封闭
-    #     score_a = np.concatenate((score[0], [score[0][0]]))
-    #     score_b = np.concatenate((score[1], [score[1][0]]))
-    #     angles = np.concatenate((angles, [angles[0]]))
-    #     labels = np.concatenate((labels, [labels[0]]))
-    #     # 设置图形的大小
-    #     fig = plt.figure(figsize=(8, 6), dpi=100)
-    #     # 新建一个子图
-    #     ax = plt.subplot(111, polar=True)
-    #     # 绘制雷达图
-    #     ax.plot(angles, score_a, color='g')
-    #     ax.plot(angles, score_b, color='b')
-    #     # 设置雷达图中每一项的标签显示
-    #     ax.set_thetagrids(angles*180/np.pi, labels)
-    #     # 设置雷达图的0度起始位置
-    #     ax.set_theta_zero_location('N')
-    #     # 设置雷达图的坐标刻度范围
-    #     ax.set_rlim(0, 100)
-    #     # 设置雷达图的坐标值显示角度，相对于起始角度的偏移量
-    #     ax.set_rlabel_position(270)
-    #     ax.set_title("QuICT benchmark Graph")
-    #     plt.legend(["弓长张", "口天吴"], loc='best')
-    #     plt.show()
+    def _txt_show(self, result_dict:dict):
+        result_file = open('benchmark txt show.txt','w+')
         
-    # def _txt_show(self):
-    #     result_file = open('recode.txt', mode = 'a',encoding='utf-8')
-    #     print({}, file=result_file)
-    #     result_file.close()
+        df = pd.DataFrame(columns=['circuit width', 'circuit size', 'circuit depth', 'qubit cal', 'entropy cal', 'alg cal', 'field score'])
+        result = result_dict
+        df = [result['circuit_width'], result['circuit_size'], result['qubit_cal'], result['entropy_cal'], result['alg_cal'], result['field_score']]
+        
+        result_file.write(df)
+        result_file.close()
+    
+    def _excel_show(self, result_dict:dict):
+        writer = pd.ExcelWriter()
+        sheetNames = result_dict.keys()
+        data = pd.DataFrame(result_dict)
+        for sheetName in sheetNames:
+            data.to_excel(writer, sheet_name=sheetName)
+        writer.save()

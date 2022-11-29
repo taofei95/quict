@@ -1,6 +1,9 @@
 
 from itertools import chain
 import os
+
+import matplotlib as mpl
+from matplotlib import pyplot as plt
 from QuICT.benchmark import Benchmarking
 from QuICT.benchmark.benchmark import QuICTBenchmark
 from QuICT.core.gate.gate import *
@@ -10,13 +13,27 @@ from QuICT.lib.circuitlib.circuitlib import CircuitLib
 from QuICT.qcda.qcda import QCDA
 from QuICT.qcda.synthesis.gate_transform.instruction_set import InstructionSet
 
-bench = QuICTBenchmark("circuit", "Graph")
-# a_list = [GateType.cx, [GateType.h, GateType.rx, GateType.ry, GateType.rz]]
-cir_list, _ = bench.get_circuit(["highly_entangled"], 10, 20, 20)
+# bench = QuICTBenchmark("circuit", "Graph")
+# # a_list = [GateType.cx, [GateType.h, GateType.rx, GateType.ry, GateType.rz]]
+# cir_list, _ = bench.get_circuit(["highly_entangled"], 10, 20, 20)
 
-ev = bench.evaluate(cir_list)
-print(ev)
+# ev = bench.evaluate(cir_list)
+# print(ev)
     
+mpl.rcParams['font.sans-serif'] = ['SimHei']  # 添加这条可以让图形显示中文
+
+x_axis_data = [1, 2, 3, 4, 5]
+y_axis_data = [1, 2, 3, 4, 5]
+
+# plot中参数的含义分别是横轴值，纵轴值，线的形状，颜色，透明度,线的宽度和标签
+plt.plot(x_axis_data, y_axis_data, 'ro-', color='#4169E1', alpha=0.8, linewidth=1, label='一些数字')
+
+# 显示标签，如果不加这句，即使在plot中加了label='一些数字'的参数，最终还是不会显示标签
+plt.legend(loc="upper right")
+plt.xlabel('x轴数字')
+plt.ylabel('y轴数字')
+
+plt.savefig('benchmark line show.jpg') 
 # for cir in cir_list:
 #     cir_list2, cir_list_onequbit, cir_list_twoqubit, InSet , cir_list3, one_list = [], [], [], [], [], []
 #     qcda = QCDA()
