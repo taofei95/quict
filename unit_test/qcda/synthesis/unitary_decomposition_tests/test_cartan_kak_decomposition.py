@@ -3,7 +3,9 @@ from scipy.stats import unitary_group
 
 from QuICT.core import Circuit
 from QuICT.qcda.synthesis.unitary_decomposition.cartan_kak_decomposition import CartanKAKDecomposition
-from QuICT.qcda.synthesis.unitary_decomposition.cartan_kak_diagonal_decomposition import CartanKAKDiagonalDecomposition
+from QuICT.qcda.synthesis.unitary_decomposition.cartan_kak_diagonal_decomposition import (
+    CartanKAKDiagonalDecomposition
+)
 
 
 def Ud(a, b, c):

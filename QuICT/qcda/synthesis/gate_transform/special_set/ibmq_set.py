@@ -1,9 +1,3 @@
-#!/usr/bin/env python
-# -*- coding:utf8 -*-
-# @TIME    : 2021/4/4 10:01 上午
-# @Author  : Han Yu
-# @File    : ibmq_set
-
 from .. import InstructionSet
 from ..transform_rule import ibmq_rule
 

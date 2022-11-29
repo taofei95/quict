@@ -5,7 +5,6 @@ The (2n+3)-qubit circuit used in the Shor algorithm is designed by \
 St´ephane Beauregard in "Circuit for Shor’s algorithm using 2n+3 qubits"\
 """
 
-import logging
 from math import pi, gcd
 import numpy as np
 from fractions import Fraction
@@ -17,12 +16,17 @@ from QuICT.core.operator import Trigger, CheckPoint
 from QuICT.simulation.state_vector import CircuitSimulator
 from .utility import *
 
+from QuICT.tools import Logger
+from QuICT.tools.exception.core import *
+
+logger = Logger("BEA-zip")
+
 
 def construct_circuit(a: int, N: int, eps: float = 1 / 10):
     # phase estimation procedure
     n = int(np.ceil(np.log2(N + 1)))
     t = int(2 * n + 1 + np.ceil(np.log(2 + 1 / (2 * eps))))
-    logging.info(f"\tcircuit construction begin: circuit: n = {n} t = {t}")
+    logger.info(f"\tcircuit construction begin: circuit: n = {n} t = {t}")
 
     circuit = Circuit(2 * n + 3)
     x_reg = [i for i in range(n + 1, 2 * n + 1)]
@@ -91,7 +95,7 @@ def order_finding(a: int, N: int, eps: float = 1 / 10, simulator=CircuitSimulato
     # phase estimation procedure
     n = int(np.ceil(np.log2(N + 1)))
     t = int(2 * n + 1 + np.ceil(np.log(2 + 1 / (2 * eps))))
-    logging.info(f"\torder_finding begin: circuit: n = {n} t = {t}")
+    logger.info(f"\torder_finding begin: circuit: n = {n} t = {t}")
     trickbit_store = [0] * t
 
     b_reg = [i for i in range(n + 1)]
@@ -123,7 +127,7 @@ def order_finding(a: int, N: int, eps: float = 1 / 10, simulator=CircuitSimulato
         simulator.run(circuit, use_previous=True)
         # subcircuit: measure & reset trickbit
         assert int(circuit[qreg_low]) == 0 and int(circuit[b_reg]) == 0
-        logging.info(f"\tthe {k}th trickbit measured to be {int(circuit[trickbit])}")
+        logger.info(f"\tthe {k}th trickbit measured to be {int(circuit[trickbit])}")
         trickbit_store[k] = int(circuit[trickbit])
         if trickbit_store[k] == 1:
             circuit = Circuit(2 * n + 3)
@@ -132,13 +136,13 @@ def order_finding(a: int, N: int, eps: float = 1 / 10, simulator=CircuitSimulato
 
     # for idx in x_reg: Measure | circuit(idx)
     trickbit_store.reverse()
-    logging.info(f"\tphi~ (approximately s/r) in binary form is {trickbit_store}")
+    logger.info(f"\tphi~ (approximately s/r) in binary form is {trickbit_store}")
     # continued fraction procedure
     phi_ = sum([(trickbit_store[i] * 1.0 / (1 << (i + 1))) for i in range(t)])
-    logging.info(f"\tphi~ (approximately s/r) in decimal form is {phi_}")
+    logger.info(f"\tphi~ (approximately s/r) in decimal form is {phi_}")
     if phi_ == 0.0:
-        logging.info("\torder_finding failed: phi~ = 0")
+        logger.info("\torder_finding failed: phi~ = 0")
         return 0
     frac = Fraction(phi_).limit_denominator(N)
-    logging.info(f"\tContinued fraction expansion of phi~ is {frac}")
+    logger.info(f"\tContinued fraction expansion of phi~ is {frac}")
     return frac.denominator

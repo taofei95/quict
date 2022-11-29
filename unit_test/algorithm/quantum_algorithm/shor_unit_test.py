@@ -13,16 +13,9 @@ from QuICT.algorithm.quantum_algorithm.shor.HRS_zip import (
 from QuICT.algorithm.quantum_algorithm.shor.HRS_zip import (
     construct_circuit as HRS_construct_circuit,
 )
-import logging
 import sys
 
 from QuICT.simulation.state_vector import ConstantStateVectorSimulator
-
-root = logging.getLogger()
-root.setLevel(logging.INFO)
-handler = logging.StreamHandler(sys.stdout)
-handler.setLevel(logging.INFO)
-logging.root.addHandler(handler)
 
 
 simulator = ConstantStateVectorSimulator()

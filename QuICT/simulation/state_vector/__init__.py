@@ -1,2 +1,6 @@
 from .cpu_simulator import CircuitSimulator
-from .gpu_simulator import ConstantStateVectorSimulator
+
+try:
+    from .gpu_simulator import ConstantStateVectorSimulator
+except ModuleNotFoundError:
+    pass

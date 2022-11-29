@@ -5,13 +5,17 @@
 # @File    : partial_grover.py
 
 import numpy as np
-import logging
 
 from QuICT.core import Circuit
 from QuICT.core.gate import *
-from QuICT.qcda.synthesis.mct import MCTOneAux
+from QuICT.core.gate.backend import MCTOneAux
 
 from QuICT.simulation.state_vector import CircuitSimulator
+
+from QuICT.tools import Logger
+from QuICT.tools.exception.core import *
+
+logger = Logger("Grover-partial")
 
 
 def calculate_r1_r2_one_target(N, K):
@@ -112,12 +116,12 @@ class PartialGrover:
         for idx in index_q:
             if measure:
                 Measure | circuit(idx)
-        logging.info(
-            f"circuit width           = {circuit.width():4}" +
-            f"global Grover iteration = {r1:4}" +
-            f"local  Grover iteration = {r2:4}" +
-            f"oracle  calls           = {r1+r2+1:4}" +
-            f"other circuit size      = {circuit.size() - oracle.size()*(r1+r2):4}"
+        logger.info(
+            f"circuit width           = {circuit.width():4}\n" +
+            f"global Grover iteration = {r1:4}\n" +
+            f"local  Grover iteration = {r2:4}\n" +
+            f"oracle  calls           = {r1+r2+1:4}\n" +
+            f"other circuit size      = {circuit.size() - oracle.size()*(r1+r2):4}\n"
         )
         return circuit
 
