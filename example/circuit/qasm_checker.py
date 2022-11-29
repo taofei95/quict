@@ -5,7 +5,6 @@
 # @File    : qasm_checker.py
 
 from QuICT.tools.interface import OPENQASMInterface
-from QuICT.simulation.state_vector import ConstantStateVectorSimulator
 
 
 # load qasm
@@ -13,12 +12,9 @@ qasm = OPENQASMInterface.load_file("./test.qasm")
 if qasm.valid_circuit:
     # generate circuit
     circuit = qasm.circuit
-    print(circuit.qasm())
-
-    simulator = ConstantStateVectorSimulator()
-    _ = simulator.run(circuit)
-
-    new_qasm = OPENQASMInterface.load_circuit(circuit)
-    new_qasm.output_qasm("test.qasm")
+    print(circuit.qasm())    
 else:
     print("Invalid format!")
+
+new_qasm = OPENQASMInterface.load_circuit(circuit)
+new_qasm.output_qasm()

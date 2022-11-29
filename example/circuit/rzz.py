@@ -8,13 +8,13 @@ import numpy as np
 
 from QuICT.core import Circuit
 from QuICT.core.gate import H, Rzz
-from QuICT.simulation.state_vector import ConstantStateVectorSimulator
+from QuICT.simulation.state_vector import CircuitSimulator
 
 
 circuit = Circuit(3)
 H | circuit
 Rzz(np.pi / 2) | circuit([0, 1])
 
-simulator = ConstantStateVectorSimulator()
+simulator = CircuitSimulator()
 amplitude = simulator.run(circuit)
 print(amplitude)

@@ -8,4 +8,4 @@ from QuICT.core import Circuit
 
 circuit = Circuit(5)
 circuit.random_append(50)
-circuit.draw()
+circuit.draw(filename="random")

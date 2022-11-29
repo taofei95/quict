@@ -6,7 +6,7 @@
 
 from QuICT.core import Circuit
 from QuICT.core.gate import *
-from QuICT.qcda.synthesis.gate_transform import *
+from QuICT.qcda.synthesis.gate_transform import GateTransform
 
 if __name__ == "__main__":
     circuit = Circuit(5)

@@ -6,7 +6,7 @@
 
 from QuICT.core import Circuit
 from QuICT.core.gate import H, X, Measure, PermFx
-from QuICT.simulation.state_vector import ConstantStateVectorSimulator
+from QuICT.simulation.state_vector import CircuitSimulator
 
 
 def run_deutsch_jozsa(n, oracle):
@@ -37,7 +37,7 @@ def run_deutsch_jozsa(n, oracle):
     # Measure
     Measure | circuit
 
-    simulator = ConstantStateVectorSimulator()
+    simulator = CircuitSimulator()
     _ = simulator.run(circuit)
 
     y = int(qreg)

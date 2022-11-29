@@ -1,10 +1,9 @@
-from QuICT.core.operator import Trigger
 from QuICT.core import Circuit
 from QuICT.core.gate import *
+from QuICT.core.operator import Trigger
 
-import QuICT
+from QuICT.simulation.state_vector import CircuitSimulator
 
-print(QuICT.__file__)
 
 cgate0 = CompositeGate()
 X | cgate0(2)
@@ -18,11 +17,10 @@ trigger = Trigger(1, gates)  # notice that indices of gates accord to circuit
 
 c = Circuit(3)
 H | c([0])
-trigger | c(
-    [0]
-)  # trigger measure its target and then switch on the result to construct gates
+trigger | c([0])  # trigger measure its target and then switch on the result to construct gates
 
-from QuICT.simulation.state_vector import ConstantStateVectorSimulator
 
-sim = ConstantStateVectorSimulator()
+sim = CircuitSimulator()
 amp = sim.run(c)
+
+print(amp)

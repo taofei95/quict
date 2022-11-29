@@ -26,5 +26,4 @@ T           | circuit(0)
 T           | circuit(2)
 H           | circuit(2)
 
-unitary = circuit.matrix()
-print(unitary)
+circuit.draw(filename="ccx")

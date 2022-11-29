@@ -5,11 +5,11 @@
 # @File    : Perm.py
 from QuICT.core import Circuit
 from QuICT.core.gate import *
-from QuICT.simulation.state_vector import ConstantStateVectorSimulator
+from QuICT.simulation.state_vector import CircuitSimulator
 
 circuit = Circuit(4)
 PermFx(2, [0]) | circuit([0, 1, 2])
 
-simulator = ConstantStateVectorSimulator()
+simulator = CircuitSimulator()
 amplitude = simulator.run(circuit)
 print(amplitude)

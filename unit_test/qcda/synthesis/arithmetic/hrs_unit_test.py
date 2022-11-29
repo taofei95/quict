@@ -9,7 +9,26 @@ from QuICT.qcda.synthesis.arithmetic.hrs import (
     CHRSMulMod,
 )
 from QuICT.simulation.state_vector import ConstantStateVectorSimulator
-from example.debug_tools.starter import set_qureg
+
+
+def set_qureg(qreg_index, N):
+    """set qureg to the state |N> in big-endian, same direction as arithmetic circuits
+
+    Args:
+        qreg_index (list<int>): _description_
+        N (int): _description_
+
+    Returns:
+        CompositeGate: a gate converts |0> to |N>
+    """
+    gate_set = CompositeGate()
+    n = len(qreg_index)
+    with gate_set:
+        for i in range(n):
+            if N % 2 == 1:
+                X & qreg_index[n - 1 - i]
+            N = N // 2
+    return gate_set
 
 
 def ex_gcd(a, b, arr):

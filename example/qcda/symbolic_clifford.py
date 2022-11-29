@@ -3,6 +3,7 @@ from QuICT.core.gate import CLIFFORD_GATE_SET
 from QuICT.qcda.synthesis.clifford import CliffordUnidirectionalSynthesizer
 from QuICT.qcda.optimization.symbolic_clifford_optimization import SymbolicCliffordOptimization
 
+
 if __name__ == '__main__':
     n = 5
     circuit = Circuit(n)

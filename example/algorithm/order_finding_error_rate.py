@@ -15,14 +15,6 @@ from QuICT.algorithm.quantum_algorithm.shor.utility import (
 HRS_zip_run = reinforced_order_finding_constructor(HRS_zip_run)
 HRS_run = reinforced_order_finding_constructor(HRS_run)
 
-import logging
-
-# logging.root.setLevel(logging.INFO)
-
-import QuICT
-
-print(QuICT.__file__)
-
 
 def naive_order_finding(a, N):
     for i in range(1, N):

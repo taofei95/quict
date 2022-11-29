@@ -1,5 +1,6 @@
 import random
 
+import os
 from scipy.stats import unitary_group
 
 from QuICT.core import Circuit, Layout
@@ -7,10 +8,13 @@ from QuICT.core.gate import GateType
 from QuICT.qcda.synthesis.gate_transform import *
 from QuICT.qcda.qcda import QCDA
 
+
 typelist = [GateType.rx, GateType.ry, GateType.rz, GateType.x, GateType.y, GateType.z, GateType.cx]
 
+
 if __name__ == '__main__':
-    layout = Layout.load_file("../layout/ibmqx2_layout.json")
+    layout_path = os.path.join(os.path.dirname(__file__), "ibmqx2_layout.json")
+    layout = Layout.load_file(layout_path)
 
     circuit = Circuit(5)
     circuit.random_append(typelist=typelist)
