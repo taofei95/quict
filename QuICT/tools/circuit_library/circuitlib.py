@@ -34,7 +34,7 @@ class CircuitLib:
     }
     __LIB_PATH = os.path.join(
         os.path.dirname(__file__),
-        '../../lib/circuitlib/circuit_qasm'
+        '../../lib/circuitlib'
     )
 
     def __init__(
