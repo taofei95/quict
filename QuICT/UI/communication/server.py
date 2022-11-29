@@ -269,8 +269,9 @@ def load_file(content):
         
         emit(
             "QCDA_o_qasm_load", {'uuid': uid, 'qasm': optimized_q.qasm()}, namespace="/api/pty")
-        
+        logger.info(f'optimized_q: {optimized_q}')
         gates = get_gates_list(optimized_q)
+        logger.info(f'gates: {gates}')
         emit('QCDA_o_gates_update', {'uuid': uid, 'gates': gates}, namespace="/api/pty")
     else:
         # no optimize
@@ -283,11 +284,9 @@ def load_file(content):
         
 
 def optimize_qasm(uid, qasm_text, topology, set, optimize, mapping): 
-
     circuit = load_data(data=qasm_text)
     if not optimize and not mapping:
         return circuit
-
     circuit_topology = Layout(circuit.width())
     for edge in topology:
         uv = edge.split('_')
@@ -468,10 +467,32 @@ def load_data(data) -> Circuit:
 
     return instance.circuit
 
+@socketio.on("qcda_load", namespace="/api/pty")
+@authenticated_only
+def qcda_load(content):
+    logger.info(f"qcda_load: {content}")
+    uid = content['uuid']
+    ProgramText = content['content']
+    try:
+        emit(
+            'qcda_info',  {'uuid': uid, 'info': f"loading gates..."}, namespace="/api/pty")
+        qasm = load_data(data=ProgramText)
+        gates = get_gates_list(qasm)
+
+        emit('gates_load', {'uuid': uid,
+             'gates': gates}, namespace="/api/pty")
+        emit(
+            'qcda_info', {'uuid': uid, 'info': f"gates loaded."}, namespace="/api/pty")
+    except Exception as e:
+        import traceback
+        logger.warning(f"load gates error: {e}, {traceback.format_exc()}")
+        emit(
+            'qcda_info', {'uuid': uid, 'info': f"load gates error: {e}"}, namespace="/api/pty")
 
 @socketio.on("programe_update", namespace="/api/pty")
 @authenticated_only
 def programe_update(content):
+    logger.info(f"programe_update: {content}")
     uid = content['uuid']
     ProgramText = content['content']
     try:
@@ -501,7 +522,7 @@ def get_gates_list(qasm:Circuit):
         except Exception:
             matrix = None
 
-        logger.info(matrix)
+        logger.info(gate)
 
         pi_args = []
         for arg in gate.pargs:

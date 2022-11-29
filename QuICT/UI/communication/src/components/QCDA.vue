@@ -1,11 +1,9 @@
 <template>
-  <el-container
-    style="
+  <el-container style="
       height: calc(100vh - 50px);
       font-size: var(--el-font-size-large);
       width: 100%;
-    "
-  >
+    ">
     <el-header style="height: 50px">
       <el-steps :active="current_step" finish-status="success" simple>
         <el-step title="Home" />
@@ -15,21 +13,15 @@
       </el-steps>
     </el-header>
     <el-main style="padding: 0px !important; height: calc(100vh - 100px)">
-      <div id="step_0" class="div_selected">
-        <el-button
-          size="large"
-          type="primary"
-          plain
-          style="
+      <el-space direction="horizen" :size="1" style="line-height: 19px !important" id="step_0">
+        <el-button size="large" type="primary" plain style="
             font-family: 'Segoe UI Symbol';
             width: 100px;
             height: 100px;
             margin: 100px 10px;
-          "
-          @click="new_qcda"
-          > New
+          " @click="new_qcda"> New
         </el-button>
-        <el-button
+        <!-- <el-button
           size="large"
           type="primary"
           plain
@@ -41,116 +33,58 @@
           "
           @click="load_qcda"
           > LOAD
-        </el-button>
-      </div>
+        </el-button> -->
+        <el-upload class="load_qcda" :action="uploadBackend" :multiple="multipleUpload" :show-file-list="showFileList"
+          :before-upload="loadQCDA">
+          <el-button size="large" type="primary" plain style="
+              margin: 100px 10px;
+              font-family: 'Segoe UI Symbol';
+              width: 100px;
+              height: 100px;
+            "> LOAD
+          </el-button>
+        </el-upload>
+      </el-space>
       <div id="step_1_N" class="div_not_selected">
         <el-container>
           <el-main class="vis-block">
-            <ToolBar
-              ref="n_toolBar"
-              v-on:SaveQCDA="toolbar_func"
-              v-on:RunQCDA="toolbar_func"
-              v-on:LoadQCDA="toolbar_func"
-              v-on:ChangeSet="n_ChangeSet"
-              v-on:UpdateCustomerSet="n_UpdateCustomerSet"
-              v-on:UpdataTopology="n_UpdataTopology"
-              :all_sets="n_all_sets"
-              :customer_set="n_customer_set"
-              :topology="n_topology"
-              :q="n_qbit"
-              :id_base="'QCDA_new'"
-              :show_save_run_load="false"
-            >
+            <ToolBar ref="n_toolBar" v-on:SaveQCDA="toolbar_func" v-on:RunQCDA="toolbar_func"
+              v-on:LoadQCDA="toolbar_func" v-on:ChangeSet="n_ChangeSet" v-on:UpdateCustomerSet="n_UpdateCustomerSet"
+              v-on:UpdataTopology="n_UpdataTopology" :all_sets="n_all_sets" :customer_set="n_customer_set"
+              :topology="n_topology" :q="n_qbit" :id_base="'QCDA_new'" :show_save_run_load="false">
             </ToolBar>
-            <nVisualizeZone
-              ref="n_visVue"
-              :VisContentIn="n_VisContent"
-              v-on:VisUpdate="n_VisUpdate"
-            >
+            <nVisualizeZone ref="n_visVue" :VisContentIn="n_VisContent" v-on:VisUpdate="n_VisUpdate">
             </nVisualizeZone>
-            <el-button
-              size="large"
-              type="primary"
-              plain
-              @click="back_qcda"
-              style="margin: 0px 10px; font-family: 'Segoe UI Symbol'"
-            >
+            <el-button size="large" type="primary" plain @click="back_qcda"
+              style="margin: 0px 10px; font-family: 'Segoe UI Symbol'">
               Back
             </el-button>
-            <el-button
-              size="large"
-              type="primary"
-              plain
-              @click="confirm_newQCDA"
-              :enabled="NewConfirmBtnEnable"
-              style="margin: 0px 10px; font-family: 'Segoe UI Symbol'"
-            >
+            <el-button size="large" type="primary" plain @click="confirm_newQCDA" :enabled="NewConfirmBtnEnable"
+              style="margin: 0px 10px; font-family: 'Segoe UI Symbol'">
               Next
             </el-button>
           </el-main>
           <el-aside width="20%" style="background-color: #292c3d; padding: 0px">
-            <ProgramZone
-              :ProgramTextIn="n_ProgramText"
-              v-on:ProgramUpdate="n_ProgramUpdate"
-            >
+            <ProgramZone :ProgramTextIn="n_ProgramText" v-on:ProgramUpdate="n_ProgramUpdate">
             </ProgramZone>
           </el-aside>
         </el-container>
       </div>
       <div id="step_1_L" class="div_not_selected">
-        <ToolBar
-          ref="l_toolBar"
-          v-on:SaveQCDA="toolbar_func"
-          v-on:RunQCDA="toolbar_func"
-          v-on:LoadQCDA="toolbar_func"
-          v-on:ChangeSet="l_ChangeSet"
-          v-on:UpdateCustomerSet="l_UpdateCustomerSet"
-          v-on:UpdataTopology="l_UpdataTopology"
-          :all_sets="l_all_sets"
-          :customer_set="l_customer_set"
-          :topology="l_topology"
-          :q="l_qbit"
-          :id_base="'QCDA_load'"
-          :show_save_run_load="false"
-        >
+        <ToolBar ref="l_toolBar" v-on:SaveQCDA="toolbar_func" v-on:RunQCDA="toolbar_func" v-on:LoadQCDA="toolbar_func"
+          v-on:ChangeSet="l_ChangeSet" v-on:UpdateCustomerSet="l_UpdateCustomerSet"
+          v-on:UpdataTopology="l_UpdataTopology" :all_sets="l_all_sets" :customer_set="l_customer_set"
+          :topology="l_topology" :q="l_qbit" :id_base="'QCDA_load'" :show_save_run_load="false">
         </ToolBar>
-        <el-upload
-          class="load_qcda"
-          :action="uploadBackend"
-          :multiple="multipleUpload"
-          :show-file-list="showFileList"
-          :before-upload="loadQCDA"
-        >
-          <el-button
-            size="large"
-            type="primary"
-            plain
-            style="
-              margin: 100px 10px;
-              font-family: 'Segoe UI Symbol';
-              width: 100px;
-              height: 100px;
-            "
-            > LOAD
-          </el-button>
-        </el-upload>
-        <el-button
-          size="large"
-          type="primary"
-          plain
-          @click="back_qcda"
-          style="margin: 0px 10px; font-family: 'Segoe UI Symbol'"
-        >
+        <lVisualizeZone ref="l_visVue" :VisContentIn="l_VisContent">
+          <!-- TODO: replace with a one way vue component -->
+        </lVisualizeZone>
+        <el-button size="large" type="primary" plain @click="back_qcda"
+          style="margin: 0px 10px; font-family: 'Segoe UI Symbol'">
           Back
         </el-button>
-        <el-button
-          size="large"
-          type="primary"
-          plain
-          @click="confirm_loadQCDA"
-          :disabled="LoadConfirmBtnDisable"
-          style="margin: 0px 10px; font-family: 'Segoe UI Symbol'"
-        >
+        <el-button size="large" type="primary" plain @click="confirm_loadQCDA"
+          style="margin: 0px 10px; font-family: 'Segoe UI Symbol'">
           Next
         </el-button>
       </div>
@@ -158,41 +92,25 @@
         <oVisualizeZone ref="o_visVue" :VisContentIn="o_VisContent">
           <!-- TODO: replace with a one way vue component -->
         </oVisualizeZone>
-        <el-button
-          size="large"
-          type="primary"
-          plain
-          @click="back_o_qasm"
-          style="margin: 0px 10px; font-family: 'Segoe UI Symbol'"
-        >
+        <el-button size="large" type="primary" plain @click="back_o_qasm"
+          style="margin: 0px 10px; font-family: 'Segoe UI Symbol'">
           Back
         </el-button>
-        <el-button
-          size="large"
-          type="primary"
-          plain
-          @click="run_o_QCDA"
-          style="margin: 0px 10px; font-family: 'Segoe UI Symbol'"
-        >
+        <el-button size="large" type="primary" plain @click="run_o_QCDA"
+          style="margin: 0px 10px; font-family: 'Segoe UI Symbol'">
           Next
         </el-button>
       </div>
       <div id="step_3" class="div_not_selected">
         <el-radio-group v-model="Output_type" @change="DrawOutput">
-            <el-radio :label="0">Counts</el-radio>
-            <el-radio :label="1">State Vector</el-radio>
-            <el-radio :label="2">Density Matrix</el-radio>
-          </el-radio-group>
-        <el-tabs
-          type="border-card"
-          style="background: transparent !important; border: 0px solid"
-          v-if="Output_type == 0"
-        >
+          <el-radio :label="0">Counts</el-radio>
+          <el-radio :label="1">State Vector</el-radio>
+          <el-radio :label="2">Density Matrix</el-radio>
+        </el-radio-group>
+        <el-tabs type="border-card" style="background: transparent !important; border: 0px solid"
+          v-if="Output_type == 0">
           <el-tab-pane label="Table">
-            <el-row
-              style="height: 40px"
-              v-if="Object.keys(OutputContent).length > 0"
-            >
+            <el-row style="height: 40px" v-if="Object.keys(OutputContent).length > 0">
               <el-col :span="4"></el-col>
               <el-col :span="6"><b>State</b></el-col>
               <el-col :span="4"></el-col>
@@ -200,11 +118,7 @@
               <el-col :span="4"></el-col>
             </el-row>
 
-            <el-row
-              style="height: 40px"
-              v-for="[k, v] in Object.entries(OutputContent).sort()"
-              :key="k"
-            >
+            <el-row style="height: 40px" v-for="[k, v] in Object.entries(OutputContent).sort()" :key="k">
               <el-col :span="4"></el-col>
               <el-col :span="6">{{ k }}</el-col>
               <el-col :span="4"></el-col>
@@ -223,16 +137,10 @@
             <div id="o_histogram"></div>
           </el-tab-pane>
         </el-tabs>
-        <el-tabs
-          type="border-card"
-          style="background: transparent !important; border: 0px solid"
-          v-if="Output_type == 1"
-        >
+        <el-tabs type="border-card" style="background: transparent !important; border: 0px solid"
+          v-if="Output_type == 1">
           <el-tab-pane label="Table">
-            <el-row
-              style="height: 40px"
-              v-if="OutputContent_state_vector.length > 0"
-            >
+            <el-row style="height: 40px" v-if="OutputContent_state_vector.length > 0">
               <el-col :span="4"></el-col>
               <el-col :span="6"><b>State</b></el-col>
               <el-col :span="4"></el-col>
@@ -240,20 +148,13 @@
               <el-col :span="4"></el-col>
             </el-row>
 
-            <el-row
-              style="height: 40px"
-              v-for="result in OutputContent_state_vector"
-              :key="result"
-            >
+            <el-row style="height: 40px" v-for="result in OutputContent_state_vector" :key="result">
               <el-col :span="4"></el-col>
               <el-col :span="6">{{ result[0] }}</el-col>
               <el-col :span="4"></el-col>
-              <el-col :span="6" v-if="result[2].startsWith('-')"
-                >{{ result[1] }}{{ result[2].replace("-", " - ") }} j</el-col
-              >
-              <el-col :span="6" v-else
-                >{{ result[1] }} + {{ result[2] }} j</el-col
-              >
+              <el-col :span="6" v-if="result[2].startsWith('-')">{{ result[1] }}{{ result[2].replace("-", " - ") }} j
+              </el-col>
+              <el-col :span="6" v-else>{{ result[1] }} + {{ result[2] }} j</el-col>
               <el-col :span="4"></el-col>
             </el-row>
           </el-tab-pane>
@@ -261,21 +162,12 @@
             <div id="o_histogram_state_vector"></div>
           </el-tab-pane>
         </el-tabs>
-        <el-button
-          size="large"
-          type="primary"
-          plain
-          @click="back_r_QCDA"
-          style="margin: 0px 10px; font-family: 'Segoe UI Symbol'"
-        >
+        <el-button size="large" type="primary" plain @click="back_r_QCDA"
+          style="margin: 0px 10px; font-family: 'Segoe UI Symbol'">
           Back
         </el-button>
-        <el-button
-          size="large"
-          type="primary"
-          @click="back_qcda"
-          style="margin: 0px 10px; font-family: 'Segoe UI Symbol'"
-        >
+        <el-button size="large" type="primary" @click="back_qcda"
+          style="margin: 0px 10px; font-family: 'Segoe UI Symbol'">
           Restart
         </el-button>
       </div>
@@ -283,17 +175,15 @@
   </el-container>
 </template>
 <style>
-.div_selected {
-  display: block;
-}
 
 .div_not_selected {
-  display: none;
+  display: none !important;
 }
 </style>
 <script>
 import * as d3 from "d3";
 import oVisualizeZone from "./oVisualizeZone.vue";
+import lVisualizeZone from "./lVisualizeZone.vue";
 import nVisualizeZone from "./nVisualizeZone.vue";
 import ProgramZone from "./ProgramZone.vue";
 import ToolBar from "./ToolBar.vue";
@@ -324,7 +214,7 @@ export default {
         q: [0, 1, 2, 3, 4],
         gates: [],
       },
-      LoadConfirmBtnDisable: true,
+      // LoadConfirmBtnDisable: true,
       NewConfirmBtnEnable: false,
       OutputContent: {},
       OutputContent_state_vector: {},
@@ -344,6 +234,7 @@ export default {
   },
   components: {
     oVisualizeZone,
+    lVisualizeZone,
     nVisualizeZone,
     ProgramZone,
     ToolBar,
@@ -355,21 +246,21 @@ export default {
     new_qcda() {
       this.current_step = 1;
       this.Route = "N";
-      d3.select("#step_0").attr("class", "div_not_selected");
-      d3.select("#step_1_N").attr("class", "div_selected");
-      d3.select("#step_1_L").attr("class", "div_not_selected");
-      d3.select("#step_2").attr("class", "div_not_selected");
-      d3.select("#step_3").attr("class", "div_not_selected");
+      d3.select("#step_0").classed("div_not_selected", true);
+      d3.select("#step_1_N").classed("div_not_selected", false);
+      d3.select("#step_1_L").classed("div_not_selected", true);
+      d3.select("#step_2").classed("div_not_selected", true);
+      d3.select("#step_3").classed("div_not_selected", true);
       this.socket.emit("get_gate_set", { uuid: this.uuid, source: "QCDA" });
     },
     load_qcda() {
       this.current_step = 1;
       this.Route = "L";
-      d3.select("#step_0").attr("class", "div_not_selected");
-      d3.select("#step_1_N").attr("class", "div_not_selected");
-      d3.select("#step_1_L").attr("class", "div_selected");
-      d3.select("#step_2").attr("class", "div_not_selected");
-      d3.select("#step_3").attr("class", "div_not_selected");
+      d3.select("#step_0").classed("div_not_selected", true);
+      d3.select("#step_1_N").classed("div_not_selected", true);
+      d3.select("#step_1_L").classed("div_not_selected", false);
+      d3.select("#step_2").classed("div_not_selected", true);
+      d3.select("#step_3").classed("div_not_selected", true);
       this.socket.emit("get_gate_set", {
         uuid: this.uuid,
         source: "QCDA_load",
@@ -377,11 +268,11 @@ export default {
     },
     back_qcda() {
       this.current_step = 0;
-      d3.select("#step_0").attr("class", "div_selected");
-      d3.select("#step_1_N").attr("class", "div_not_selected");
-      d3.select("#step_1_L").attr("class", "div_not_selected");
-      d3.select("#step_2").attr("class", "div_not_selected");
-      d3.select("#step_3").attr("class", "div_not_selected");
+      d3.select("#step_0").classed("div_not_selected", false);
+      d3.select("#step_1_N").classed("div_not_selected", true);
+      d3.select("#step_1_L").classed("div_not_selected", true);
+      d3.select("#step_2").classed("div_not_selected", true);
+      d3.select("#step_3").classed("div_not_selected", true);
       this.n_VisContent = {
         gateSet: [],
         q: [0, 1, 2, 3, 4],
@@ -392,41 +283,41 @@ export default {
     },
     show_o_qasm() {
       this.current_step = 2;
-      d3.select("#step_0").attr("class", "div_not_selected");
-      d3.select("#step_1_N").attr("class", "div_not_selected");
-      d3.select("#step_1_L").attr("class", "div_not_selected");
-      d3.select("#step_2").attr("class", "div_selected");
-      d3.select("#step_3").attr("class", "div_not_selected");
+      d3.select("#step_0").classed("div_not_selected", true);
+      d3.select("#step_1_N").classed("div_not_selected", true);
+      d3.select("#step_1_L").classed("div_not_selected", true);
+      d3.select("#step_2").classed("div_not_selected", false);
+      d3.select("#step_3").classed("div_not_selected", true);
     },
     back_o_qasm() {
       this.current_step = 1;
-      d3.select("#step_0").attr("class", "div_not_selected");
+      d3.select("#step_0").classed("div_not_selected", true);
       if (this.Route == "N") {
-        d3.select("#step_1_N").attr("class", "div_selected");
-        d3.select("#step_1_L").attr("class", "div_not_selected");
+        d3.select("#step_1_N").classed("div_not_selected", false);
+        d3.select("#step_1_L").classed("div_not_selected", true);
       } else if (this.Route == "L") {
-        d3.select("#step_1_N").attr("class", "div_not_selected");
-        d3.select("#step_1_L").attr("class", "div_selected");
+        d3.select("#step_1_N").classed("div_not_selected", true);
+        d3.select("#step_1_L").classed("div_not_selected", false);
         this.LoadConfirmBtnDisable = true;
       }
-      d3.select("#step_2").attr("class", "div_not_selected");
-      d3.select("#step_3").attr("class", "div_not_selected");
+      d3.select("#step_2").classed("div_not_selected", true);
+      d3.select("#step_3").classed("div_not_selected", true);
     },
     confirm_o_QCDA() {
       this.current_step = 4;
-      d3.select("#step_0").attr("class", "div_not_selected");
-      d3.select("#step_1_N").attr("class", "div_not_selected");
-      d3.select("#step_1_L").attr("class", "div_not_selected");
-      d3.select("#step_2").attr("class", "div_not_selected");
-      d3.select("#step_3").attr("class", "div_selected");
+      d3.select("#step_0").classed("div_not_selected", true);
+      d3.select("#step_1_N").classed("div_not_selected", true);
+      d3.select("#step_1_L").classed("div_not_selected", true);
+      d3.select("#step_2").classed("div_not_selected", true);
+      d3.select("#step_3").classed("div_not_selected", false);
     },
     back_r_QCDA() {
       this.current_step = 2;
-      d3.select("#step_0").attr("class", "div_not_selected");
-      d3.select("#step_1_N").attr("class", "div_not_selected");
-      d3.select("#step_1_L").attr("class", "div_not_selected");
-      d3.select("#step_2").attr("class", "div_selected");
-      d3.select("#step_3").attr("class", "div_not_selected");
+      d3.select("#step_0").classed("div_not_selected", true);
+      d3.select("#step_1_N").classed("div_not_selected", true);
+      d3.select("#step_1_L").classed("div_not_selected", true);
+      d3.select("#step_2").classed("div_not_selected", false);
+      d3.select("#step_3").classed("div_not_selected", true);
     },
     loadQCDA(file) {
       // 加载qasm文件
@@ -438,12 +329,17 @@ export default {
         let text = evt.target.result;
         console.log(text);
         this.l_ProgramText = text;
-        this.LoadConfirmBtnDisable = false;
+        // this.LoadConfirmBtnDisable = false;
+        this.socket.emit("qcda_load", {
+          uuid: this.uuid,
+          content: this.l_ProgramText,
+        });
       };
 
       reader.onerror = (evt) => {
         console.error(evt);
       };
+
     },
     confirm_loadQCDA() {
       this.socket.emit("qasm_load", {
@@ -1246,6 +1142,60 @@ export default {
       this.OutputContent_state_vector = content.run_result.data.state_vector;
       this.DrawOutput(this.Output_type);
       this.confirm_o_QCDA();
+    });
+
+    this.socket.on("gates_load", (content) => {
+      console.log(content);
+      if (!content.uuid == this.uuid) {
+        return;
+      }
+      let groupedGates = [];
+      let max_q = 0;
+
+      content["gates"].forEach((gate_org) => {
+        let gate = {
+          q: 65535,//this.l_VisContent.q.length - 1,
+          name: gate_org.name,
+          targets: gate_org.targets,
+          controls: gate_org.controls,
+          selected: false,
+          pargs: gate_org.pargs,
+          img: gate_org.img,
+          qasm_name: gate_org.qasm_name,
+        };
+        gate_org.controls.forEach((q) => {
+          if (q < gate.q) {
+            gate.q = q;
+          }
+          if (q > max_q) {
+            max_q = q;
+          }
+        });
+        gate_org.targets.forEach((q) => {
+          if (q < gate.q) {
+            gate.q = q;
+          }
+          if (q > max_q) {
+            max_q = q;
+          }
+        });
+        this.append2Group(
+          groupedGates,
+          groupedGates.length > 0
+            ? groupedGates.length - 1
+            : groupedGates.length,
+          gate
+        );
+      });
+      this.l_VisContent.q = [];
+      for (let i = 0; i <= max_q; i++) {
+        this.l_VisContent.q.push(i);
+      }
+      this.l_qbit = this.l_VisContent.q;
+      this.l_VisContent.gates = this.ListGates(groupedGates);
+      this.l_ProgramText = this.l_GenQASM();
+      this.$refs.l_visVue.vis_change();
+      this.load_qcda();
     });
   },
   watch: {},
