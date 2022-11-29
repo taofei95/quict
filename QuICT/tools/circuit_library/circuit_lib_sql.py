@@ -4,7 +4,10 @@ import sqlite3
 
 class CircuitLibDB:
     def __init__(self):
-        self._file_path = os.path.dirname(__file__)
+        self._file_path = os.path.join(
+            os.path.dirname(__file__),
+            "../../lib/circuitlib/"
+        )
         self._connect = sqlite3.connect(f"{self._file_path}/user_info.db")
         self._connect.isolation_level = "EXCLUSIVE"
         self._cursor = self._connect.cursor()

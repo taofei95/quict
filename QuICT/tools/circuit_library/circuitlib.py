@@ -32,7 +32,10 @@ class CircuitLib:
         "benchmark": ["highly_entangled", "highly_parallelized", "highly_serialized", "mediate_measure"],
         "instructionset": ["google", "ibmq", "ionq", "ustc", "quafu"]
     }
-    __LIB_PATH = os.path.join(os.path.dirname(__file__), 'circuit_qasm')
+    __LIB_PATH = os.path.join(
+        os.path.dirname(__file__),
+        '../../lib/circuitlib/circuit_qasm'
+    )
 
     def __init__(
         self,

@@ -1,7 +1,4 @@
-from typing import List
-
-from QuICT.core import Circuit
-from QuICT.lib.circuitlib import CircuitLib
+from QuICT.tools.circuit_library import CircuitLib
 from QuICT.qcda.optimization.template_optimization.template_matching.template_matching import (
     MatchingDAGCircuit, TemplateMatching
 )
