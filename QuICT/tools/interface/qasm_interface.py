@@ -11,8 +11,8 @@ from configparser import ConfigParser
 from QuICT.core import Circuit
 from QuICT.core.gate import *
 from QuICT.core.utils import GateType
-from QuICT.core.exception import QasmInputException
 from QuICT.lib import Qasm
+from QuICT.tools.exception.core import QASMError
 
 from .basic_interface import BasicInterface
 
@@ -255,7 +255,7 @@ class OPENQASMInterface(BasicInterface):
             self.analyse_custom(node)
 
         elif node.type == "universal_unitary":
-            QasmInputException("universal_unitary is deprecated", node.line, node.file)
+            QASMError("universal_unitary is deprecated", node.line, node.file)
 
         elif node.type == "cnot":
             self.analyse_cnot(node)
@@ -282,7 +282,7 @@ class OPENQASMInterface(BasicInterface):
             self.analyse_opaque(node)
 
         else:
-            QasmInputException("QASM grammer error", node.line, node.file)
+            QASMError("QASM grammer error", node.line, node.file)
 
     def analyse_gate(self, node):
         self.gates[node.name] = {}
@@ -326,13 +326,13 @@ class OPENQASMInterface(BasicInterface):
                 self.arg_stack.pop()
                 self.bit_stack.pop()
         else:
-            raise QasmInputException("undefined gate:", node.line, node.file)
+            raise QASMError("undefined gate:", node.line, node.file)
 
     def analyse_cnot(self, node):
         id0 = self.get_analyse_id(node.children[0])
         id1 = self.get_analyse_id(node.children[1])
         if not (len(id0) == len(id1) or len(id0) == 1 or len(id1) == 1):
-            raise QasmInputException("the number of bits unmatched:", node.line, node.file)
+            raise QASMError("the number of bits unmatched:", node.line, node.file)
 
         maxidx = max([len(id0), len(id1)])
         for idx in range(maxidx):
@@ -350,7 +350,7 @@ class OPENQASMInterface(BasicInterface):
         id0 = self.get_analyse_id(node.children[0])
         id1 = self.get_analyse_id(node.children[1])
         if len(id0) != len(id1):
-            raise QasmInputException("the number of bits of registers unmatched:", node.line, node.file)
+            raise QASMError("the number of bits of registers unmatched:", node.line, node.file)
 
         for idx, _ in zip(id0, id1):
             m_gate = build_gate(GateType.measure, [idx])
@@ -412,7 +412,7 @@ class OPENQASMInterface(BasicInterface):
         elif self.bit_stack[-1] and node.name in self.bit_stack[-1]:
             reg = self.bit_stack[-1][node.name]
         else:
-            raise QasmInputException("expected qreg or creg name:", node.line, node.file)
+            raise QASMError("expected qreg or creg name:", node.line, node.file)
 
         if node.type == "indexed_id":
             return [reg.index[node.index]]
@@ -422,5 +422,5 @@ class OPENQASMInterface(BasicInterface):
             else:
                 if node.name in self.bit_stack[-1]:
                     return [self.bit_stack[-1][node.name]]
-                raise QasmInputException("expected qreg or creg name:", node.line, node.file)
+                raise QASMError("expected qreg or creg name:", node.line, node.file)
         return None

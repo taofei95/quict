@@ -47,3 +47,10 @@ class CircuitDrawError(QuICTException):
     """ Circuit Draw Error. """
     def __init__(self, msg: str = None):
         super().__init__(1008, msg)
+
+
+class QASMError(QuICTException):
+    """ QASM Error. """
+    def __init__(self, other: str = None, line: str = None, file: str = None):
+        msg = "Qasm error:{} \n in line:{} \n error file:{}".format(other, line, file)
+        super().__init__(1009, msg)

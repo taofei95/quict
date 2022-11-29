@@ -11,6 +11,7 @@ ERROR_CODE = {
     1006: "QuICT Circuit Random or Supremacy Append Exception",
     1007: "QuICT DAG Circuit Exception",
     1008: "QuICT Circuit Draw Exception",
+    1009: "QuICT QASM Exception",
     # 2000-2999: QuICT Simulation Module Exception
 
     # 3000-3999: QuICT Algorithm Module Exception

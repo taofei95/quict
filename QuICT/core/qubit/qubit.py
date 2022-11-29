@@ -6,8 +6,8 @@
 import random
 from typing import Union
 
-from QuICT.core.exception import *
 from QuICT.core.utils import unique_id_generator
+from QuICT.tools.exception.core import CircuitQubitsError
 
 
 class Qubit(object):
@@ -139,9 +139,9 @@ class Qureg(list):
                     for qbit in qubit:
                         self.append(qbit)
                 else:
-                    raise TypeException("list<Qubits/Qureg>", qubits)
+                    raise TypeError("list<Qubits/Qureg>", qubits)
         else:
-            raise TypeException("list<Qubits/Qureg> or int or qubit", qubits)
+            raise TypeError("list<Qubits/Qureg> or int or qubit", qubits)
 
     def __call__(self, indexes: object):
         """ get a smaller qureg from this qureg
@@ -152,9 +152,6 @@ class Qureg(list):
                 2) list<int>
         Returns:
             Qubit[s]: the qureg correspond to the indexes
-        Exceptions:
-            IndexDuplicateException: the range of indexes is error.
-            TypeException: the type of indexes is error.
         """
         if isinstance(indexes, int):
             return Qureg(self[indexes])
@@ -183,11 +180,13 @@ class Qureg(list):
             for idx in item:
                 assert isinstance(idx, int)
                 if idx < 0 or idx > len(self):
-                    raise IndexLimitException(len(self), idx)
+                    raise CircuitQubitsError(
+                        f"out of index: the index range is [0, {len(self)}),but try to get{idx}"
+                    )
 
                 qureg.append(self[idx])
         else:
-            raise TypeException("int/list[int]/slice", item)
+            raise TypeError("int/list[int]/slice", item)
 
         return qureg
 

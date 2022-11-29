@@ -198,7 +198,7 @@ class BasicGate(object):
                 2) CompositeGate
 
         Raise:
-            TypeException: the type of other is wrong
+            TypeError: the type of other is wrong
         """
         try:
             targets.append(self)

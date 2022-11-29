@@ -7,7 +7,6 @@ from typing import Union, List
 import numpy as np
 
 from QuICT.core.qubit import Qubit, Qureg
-from QuICT.core.exception import TypeException
 from QuICT.core.layout import Layout, SupremacyLayout
 from QuICT.core.gate import BasicGate, H, Measure, build_random_gate, build_gate
 from QuICT.core.utils import (
@@ -123,7 +122,7 @@ class Circuit(CircuitBased):
         if ancillae_qubits is not None:
             self.ancillae_qubits = ancillae_qubits
 
-        logger.debug(f"Initial Quantum Circuit {name} with {wires} qubits.")
+        logger.debug(f"Initial Quantum Circuit {name} with {len(self._qubits)} qubits.")
         if topology is not None:
             self.topology = topology
             logger.debug(f"The Layout for Quantum Circuit is {self._topology}.")
@@ -292,7 +291,7 @@ class Circuit(CircuitBased):
         """
         assert idx >= 0 and idx < len(self._gates), "The index of replaced gate is wrong."
         assert isinstance(gate, (BasicGate, NoiseGate)), "The replaced gate must be a quantum gate or noised gate."
-        if idx < 0 or idx < len(self._gates):
+        if idx < 0 or idx > len(self._gates):
             raise CircuitReplaceError(
                 f"The index of replaced gate {idx} is wrong, please within [0, {len(self._gates)})."
             )

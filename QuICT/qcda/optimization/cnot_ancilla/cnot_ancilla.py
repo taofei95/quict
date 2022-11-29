@@ -10,9 +10,9 @@ from typing import Union
 import numpy as np
 
 from QuICT.core import *
-from QuICT.core.exception import CircuitStructException
 from QuICT.core.gate import CX, CompositeGate, GateType
 from QuICT.qcda.utility import OutputAligner
+from QuICT.tools.exception.core import CircuitQubitsError, CircuitAppendError
 
 
 class CnotAncilla(object):
@@ -43,11 +43,11 @@ class CnotAncilla(object):
         # transform the CNOT circuit into a matrix with 0 and 1
         self.width = circuit.width()
         if self.width < 4:
-            raise CircuitStructException("the qubit number of circuit n should greater than or equal 4")
+            raise CircuitQubitsError("the qubit number of circuit n should greater than or equal 4")
         matrix = np.identity(self.width, dtype=bool)
         for gate in circuit.gates:
             if gate.type != GateType.cx:
-                raise CircuitStructException(f"the input circuit should be a CNOT circuit, but it contains {str(gate)}")
+                raise CircuitAppendError(f"the input circuit should be a CNOT circuit, but it contains {str(gate)}")
             matrix[gate.targs] = np.bitwise_xor(matrix[gate.cargs], matrix[gate.targs])
 
         # apply Theorem 7 to build new circuit

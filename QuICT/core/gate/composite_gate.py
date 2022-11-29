@@ -142,7 +142,7 @@ class CompositeGate(CircuitBased):
                 1) Circuit
                 2) CompositeGate
         Raise:
-            TypeException: the type of other is wrong
+            TypeError: the type of other is wrong
         """
         try:
             targets.extend(self)
@@ -162,7 +162,7 @@ class CompositeGate(CircuitBased):
             targets: the targets the gate acts on, it can have following form,
                 1) Circuit
         Raise:
-            TypeException: the type of other is wrong
+            TypeError: the type of other is wrong
         """
         try:
             targets.extend(self.inverse().gates)
