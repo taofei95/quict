@@ -4,12 +4,6 @@
 # @Author  : Han Yu
 # @File    : __version__.py
 
-global __title__
-global __version__
-global __description__
-global __author__
-global __email__
-global __url__
 __title__ = "QuICT"
 __version__ = "1.0.0"
 __description__ = "quantum algorithm library"
