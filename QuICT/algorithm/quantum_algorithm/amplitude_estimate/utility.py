@@ -1,7 +1,7 @@
 import logging
 
 from QuICT.core.gate import CompositeGate, CX, CH, X, H
-from QuICT.qcda.synthesis.mct import MCTOneAux
+from QuICT.core.gate.backend import MCTOneAux
 
 
 class OracleInfo:
