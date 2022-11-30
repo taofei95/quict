@@ -28,7 +28,7 @@ class CircuitLib:
             "aspen-4", "ourense", "rochester", "sycamore", "ctrl_diag",
             "ctrl_unitary", "diag", "single_bits", "tokyo"
         ],
-        "algorithm": ["adder", "clifford", "grover", "qft", "supremacy", "vqe"],
+        "algorithm": ["adder", "clifford", "grover", "qft", "vqe"],
         "benchmark": ["highly_entangled", "highly_parallelized", "highly_serialized", "mediate_measure"],
         "instructionset": ["google", "ibmq", "ionq", "ustc", "quafu"]
     }
