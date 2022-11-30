@@ -1,7 +1,8 @@
 from typing import List
 
-from QuICT.core.utils import unique_id_generator
 from ._operator import Operator
+from QuICT.core.utils import unique_id_generator
+from QuICT.tools.exception.core import TypeError, CheckPointNoChildError
 
 
 class CheckPoint(Operator):
@@ -25,7 +26,7 @@ class CheckPoint(Operator):
     @position.setter
     def position(self, shift: int):
         """ Set the related index of the circuit. """
-        assert isinstance(shift, int)
+        assert isinstance(shift, int), TypeError("CheckPoint.position.shift", "int", type(shift))
         self._pos += shift
 
     def __init__(self):
@@ -35,7 +36,7 @@ class CheckPoint(Operator):
 
     def get_child(self, shift: int = 0):
         """ Generate its CheckPointChild, which has the same uid. """
-        assert isinstance(shift, int)
+        assert isinstance(shift, int), TypeError("CheckPoint.get_child.shift", "int", type(shift))
         return CheckPointChild(self.uid, shift)
 
     def match(self, uid: str) -> bool:
@@ -85,6 +86,6 @@ class CheckPointChild(Operator):
                 cp.position = self._shift
 
         if pos == -1:
-            raise ValueError("Cannot find parent checkpoint for current checkpointchild.")
+            raise CheckPointNoChildError("Cannot find parent checkpoint for current checkpointchild.")
 
         return pos

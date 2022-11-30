@@ -10,6 +10,7 @@ import random
 from QuICT.core.qubit import Qubit, Qureg
 from QuICT.core.gate import *
 from QuICT.core.utils import GateType
+from QuICT.tools.exception.core import ValueError
 
 
 GATE_TYPE_TO_CLASS = {
