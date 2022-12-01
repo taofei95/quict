@@ -1,9 +1,11 @@
 import os
 import psutil
 import subprocess
+from typing import Union, Dict
 
 from QuICT.tools import Logger
 from QuICT.tools.logger import LogFormat
+from QuICT.tools.cli.utils import JobValidation
 from .utils import SQLManager
 
 
@@ -14,6 +16,7 @@ class QuICTLocalJobManager:
     """ QuICT Job Management for the Local Mode. Using SQL to store running-time information. """
     def __init__(self):
         self._sql_connect = SQLManager()
+        self._job_validation = JobValidation()
 
     def _name_validation(self, name) -> bool:
         if not self._sql_connect.job_validation(name):
@@ -26,32 +29,41 @@ class QuICTLocalJobManager:
         self._update_job_status(name)
         return True
 
-    def start_job(self, yml_dict: dict):
+    def start_job(self, job_file: Union[str, Dict]):
         """ Start the job describe by the given yaml file.
 
         Args:
-            yml_dict (dict): The given yaml file
-
-        Raises:
-            KeyError: Key Error in given yaml file
+            job_file (str|dict): The given job's file path or job information dict
         """
+        # Validation job_files
+        job_info = self._job_validation.job_validation(job_file)
+        
         # Check job name
-        name = yml_dict["job_name"]
+        name = job_info["job_name"]
         if self._sql_connect.job_validation(name):
             logger.warn("Repeated name in local jobs.")
             return
 
         try:
-            self._start_job(name, yml_dict)
+            self._start_job(name, job_info)
         except Exception as e:
             logger.warn(f"Failure to start job, due to {e}.")
 
     def _start_job(self, job_name: str, yml_dict: dict):
         # Get information from given yml dict
-        job_type = yml_dict['type']
-        job_options = yml_dict["simulation"] if job_type == "simulation" else yml_dict["qcda"]
-        job_options["circuit_path"] = yml_dict['circuit']
-        job_options["output_path"] = yml_dict['output_path']
+        job_options = {}
+        job_options["circuit_path"] = yml_dict["circuit"]
+        job_options["output_path"] = yml_dict["output_path"]
+
+        script_name = ""
+        if "simulation" in yml_dict.keys():
+            script_name = "simulation"
+            job_options["device"] = yml_dict["device"]
+            job_options.update(yml_dict['simulation'])
+
+        if "qcda" in yml_dict.keys():
+            script_name = "qcda" if script_name == "" else "mixed_pipe"
+            job_options.update(yml_dict['qcda'])
 
         # Pre-paration job's runtime arguments
         runtime_args = ""
@@ -61,8 +73,8 @@ class QuICTLocalJobManager:
         # Start job
         command_file_path = os.path.join(
             os.path.dirname(__file__),
-            "../../cli/script",
-            f"{job_type}.py"
+            "../script",
+            f"{script_name}.py"
         )
         proc = subprocess.Popen(
             f"python {command_file_path} {runtime_args}", shell=True

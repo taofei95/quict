@@ -1,7 +1,7 @@
 import os
 import shutil
 
-from QuICT.tools.cli.utils import path_check, yaml_decompostion
+from QuICT.tools.cli.utils import path_check
 from QuICT.tools.cli.client import QuICTLocalJobManager
 
 
@@ -10,23 +10,16 @@ local_job_manager = QuICTLocalJobManager()
 
 
 @path_check
-def get_template(type: str, output_path: str):
+def get_template(output_path: str):
     tempfile_path = os.path.join(
         os.path.dirname(__file__),
-        "../template"
+        "../template/quict_job.yml"
     )
-    type_list = ["simulation", "qcda"] if type == "all" else [type]
-    for t in type_list:
-        file_name = f"job_{t}.yml"
-        temp_file_path = os.path.join(
-            tempfile_path,
-            file_name
-        )
-        shutil.copy(temp_file_path, output_path)
+
+    shutil.copy(tempfile_path, output_path)
 
 
-@yaml_decompostion
-def start_job(file: dict):
+def start_job(file: str):
     local_job_manager.start_job(file)
 
 

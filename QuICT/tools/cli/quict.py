@@ -230,11 +230,6 @@ def job_cli_construct(mode_sp: ArgumentParser, mode: str):
         help="Get job's template."
     )
     get_templates.add_argument(
-        "-t", "--type",
-        choices=["simulation", "qcda", "all"], default="all",
-        help="Get the template about simulation jobs or QCDA jobs."
-    )
-    get_templates.add_argument(
         "output_path", nargs="?", default=".",
         help="The output path, default to be current path."
     )

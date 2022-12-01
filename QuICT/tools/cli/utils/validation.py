@@ -12,10 +12,10 @@ class JobValidation:
         "device": ["CPU", "GPU"]
     }
 
-    _BASED_METHODS = ["GateTransform", "Clifford", "Auto", "Commutative", "SymbolicClifford", "Template", "CNOT"]
+    _BASED_METHODS = ["GateTransform", "Clifford", "CliffordRz", "Commutative", "SymbolicClifford", "Template", "CNOT"]
 
     _QCDA_PARAMETERS = {
-        "instruction_set": ["USTC", "Google", "IBMQ", "IonQ", "Quafu"],
+        "instruction_set": ["USTC", "Google", "IBMQ", "IonQ", "Nam", "Origin"],
         "auto_mode": ["light", "heavy"]
     }
 
@@ -57,8 +57,8 @@ class JobValidation:
         # Necessary feature
         name = job_dict["job_name"]
         assert isinstance(name, str), f"Job's name shoule be a string, not {type(name)}."
-        _type = job_dict["type"]
-        assert _type in ["qcda", "simulation"], f"Job's type should be one of [qcda, simulation], not {_type}."
+        assert job_dict["device"] in self._SIMULATION_PARAMETERS['device'], \
+            "Job's resource device should be one of [CPU, GPU]."
 
         # circuit's qasm file validation
         circuit_info = JobValidation.get_circuit_info(job_dict["circuit"])
@@ -71,8 +71,6 @@ class JobValidation:
             "precesion should be one of [single, double]."
         assert simulation_dict["backend"] in self._SIMULATION_PARAMETERS['backend'], \
             "backend should be one of [state_vector, density_matrix, unitary]."
-        assert simulation_dict["device"] in self._SIMULATION_PARAMETERS['device'], \
-            "Job's resource device should be one of [CPU, GPU]."
 
     def _qcda_validation(self, qcda_dict: dict):
         # QCDA methods validation
@@ -119,7 +117,7 @@ class JobValidation:
         qcda_dict["methods"] = "+".join(methods)
 
     def _job_complement(self, info: dict, job_type: str):
-        default_job_path = os.path.join(self._job_template_path, f"job_{job_type}.yml")
+        default_job_path = os.path.join(self._job_template_path, f"quict_job.yml")
         default_job_dict = JobValidation.load_yaml_file(default_job_path)
         core_part = default_job_dict[job_type]
 
@@ -161,18 +159,22 @@ class JobValidation:
             regularized_job_dict(dict): The regularized job's dict
         """
         # Step 1: Load yaml file from given file path
-        job_info = JobValidation.load_yaml_file(job_file_path)
+        if isinstance(job_file_path, str):
+            job_info = JobValidation.load_yaml_file(job_file_path)
+        else:
+            job_info = job_file_path
 
         # Step 2: check based information of job_yaml
         self._based_info(job_info)
 
         # Step 3: complement and validate job's simulation/qcda information
-        if job_info["type"] == "simulation":
-            required_info = self._job_complement(job_info["simulation"], job_info["type"])
+        if "simulation" in job_info.keys():
+            required_info = self._job_complement(job_info["simulation"], "simulation")
             self._simulation_validation(required_info)
             job_info["simulation"] = required_info
-        else:
-            required_info = self._job_complement(job_info["qcda"], job_info["type"])
+
+        if "qcda" in job_info.keys():
+            required_info = self._job_complement(job_info["qcda"], "qcda")
             self._qcda_validation(required_info)
             job_info["qcda"] = required_info
 
