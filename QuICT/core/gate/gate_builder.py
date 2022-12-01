@@ -10,7 +10,7 @@ import random
 from QuICT.core.qubit import Qubit, Qureg
 from QuICT.core.gate import *
 from QuICT.core.utils import GateType
-from QuICT.tools.exception.core import ValueError
+from QuICT.tools.exception.core import GateQubitAssignedError
 
 
 GATE_TYPE_TO_CLASS = {
@@ -86,7 +86,9 @@ def build_gate(
         qubits = Qureg(qubits)
     elif isinstance(qubits, int):
         qubits = [qubits]
-    assert len(qubits) == args_number
+    assert len(qubits) == args_number, GateQubitAssignedError(
+        "The qubits number should equal to the target quantum gate."
+    )
 
     if isinstance(qubits, Qureg):
         gate.assigned_qubits = qubits
