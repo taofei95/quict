@@ -9,7 +9,7 @@ from QuICT.core.utils import SPECIAL_GATE_SET, GateType
 
 
 class BasicGateTensor(object):
-    """ the abstract SuperClass of all basic tensor quantum gate
+    """the abstract SuperClass of all basic tensor quantum gate
 
     All basic quantum gate described in the framework have
     some common attributes and some common functions
@@ -179,7 +179,7 @@ class BasicGateTensor(object):
         self.assigned_qubits = []  # list of qubits
 
     def __call__(self):
-        """ give parameters for the gate, and give parameters by "()", and parameters should be one of int/float/complex
+        """give parameters for the gate, and give parameters by "()", and parameters should be one of int/float/complex
 
         Some Examples are like this:
 
@@ -218,7 +218,7 @@ class BasicGateTensor(object):
         return self.copy()
 
     def update_name(self, qubit_id: str, circuit_idx: int = None):
-        """ Updated gate's name with the given information
+        """Updated gate's name with the given information
 
         Args:
             qubit_id (str): The qubit's ID.
@@ -293,7 +293,7 @@ class BasicGateTensor(object):
 
     @staticmethod
     def permit_element(element):
-        """ judge whether the type of a parameter is int/float/complex/torch.Tensor
+        """judge whether the type of a parameter is int/float/complex/torch.Tensor
 
         for a quantum gate, the parameter should be int/float/complex/torch.Tensor
 
@@ -490,8 +490,8 @@ class RxGate(BasicGateTensor):
     def matrix(self):
         matrix = torch.zeros([2, 2], dtype=self._precision).to(self.device)
         matrix[0, 0] = torch.cos(self.parg / 2)
-        matrix[0, 1] = 1j * (-torch.sin(self.parg / 2))
-        matrix[1, 0] = 1j * (-torch.sin(self.parg / 2))
+        matrix[0, 1] = -1j * torch.sin(self.parg / 2)
+        matrix[1, 0] = -1j * torch.sin(self.parg / 2)
         matrix[1, 1] = torch.cos(self.parg / 2)
 
         return matrix
@@ -573,7 +573,7 @@ class RzGate(BasicGateTensor):
         return (
             RzGate(alpha)
             if isinstance(alpha, torch.Tensor)
-            else RIGate(torch.tensor([alpha]))
+            else RzGate(torch.tensor([alpha]))
         )
 
     @property
@@ -596,16 +596,18 @@ class RzGate(BasicGateTensor):
 Rz_tensor = RzGate()
 
 
-class RIGate(BasicGateTensor):
-    def __init__(self, params=torch.tensor([np.pi / 2])):
+class GlobalPhaseGate(BasicGateTensor):
+    """Phase gate"""
+
+    def __init__(self, params=torch.tensor([0])):
         super().__init__(
             controls=0,
             targets=1,
             params=1,
-            type=GateType.ri,
+            type_=GateType.gphase,
             matrix_type=MatrixType.diagonal,
         )
-
+        self._qasm_name = "phase"
         self.pargs = params
 
     def __call__(self, alpha):
@@ -613,10 +615,26 @@ class RIGate(BasicGateTensor):
             raise TypeError("int/float/complex/torch.Tensor", alpha)
 
         return (
-            RIGate(alpha)
+            GlobalPhaseGate(alpha)
             if isinstance(alpha, torch.Tensor)
-            else RIGate(torch.tensor([alpha]))
+            else GlobalPhaseGate(torch.tensor([alpha]))
         )
+
+    def __call__(self, alpha):
+        """Set parameters for the gate.
+
+        Args:
+            alpha (int/float/complex): The parameter for gate
+
+        Raises:
+            TypeError: param not one of int/float/complex
+
+        Returns:
+            BasicGate: The gate with parameters
+        """
+        self.permit_element(alpha)
+
+        return GlobalPhaseGate([alpha])
 
     @property
     def matrix(self):
@@ -631,8 +649,14 @@ class RIGate(BasicGateTensor):
             "Only parametric gates with trainable parameters have attribute 'gradient'"
         )
 
+    def inverse(self):
+        _Phase = self.copy()
+        _Phase.pargs = [-self.parg]
 
-RI_tensor = RIGate()
+        return _Phase
+
+
+GPhase_tensor = GlobalPhaseGate()
 
 
 class RxxGate(BasicGateTensor):
@@ -671,7 +695,7 @@ class RxxGate(BasicGateTensor):
 
     @property
     def gradient(self):
-        gradient = torch.zeros([2, 2], dtype=self._precision).to(self.device)
+        gradient = torch.zeros([4, 4], dtype=self._precision).to(self.device)
         gradient[0, 0] = gradient[1, 1] = gradient[2, 2] = gradient[3, 3] = (
             -torch.sin(self.parg / 2) / 2
         )
@@ -720,7 +744,7 @@ class RyyGate(BasicGateTensor):
 
     @property
     def gradient(self):
-        gradient = torch.zeros([2, 2], dtype=self._precision).to(self.device)
+        gradient = torch.zeros([4, 4], dtype=self._precision).to(self.device)
         gradient[0, 0] = gradient[1, 1] = gradient[2, 2] = gradient[3, 3] = (
             -torch.sin(self.parg / 2) / 2
         )
@@ -767,7 +791,7 @@ class RzzGate(BasicGateTensor):
 
     @property
     def gradient(self):
-        gradient = torch.zeros([2, 2], dtype=self._precision).to(self.device)
+        gradient = torch.zeros([4, 4], dtype=self._precision).to(self.device)
         gradient[0, 0] = -1j * torch.exp(-self.parg / 2 * 1j) / 2
         gradient[1, 1] = 1j * torch.exp(self.parg / 2 * 1j) / 2
         gradient[2, 2] = 1j * torch.exp(self.parg / 2 * 1j) / 2
@@ -814,7 +838,7 @@ class RzxGate(BasicGateTensor):
 
     @property
     def gradient(self):
-        gradient = torch.zeros([2, 2], dtype=self._precision).to(self.device)
+        gradient = torch.zeros([4, 4], dtype=self._precision).to(self.device)
         gradient[0, 0] = gradient[1, 1] = gradient[2, 2] = gradient[3, 3] = (
             -torch.sin(self.parg / 2) / 2
         )
@@ -828,7 +852,7 @@ Rzx_tensor = RzxGate()
 
 
 class MeasureGate(BasicGateTensor):
-    """ z-axis Measure gate
+    """z-axis Measure gate
 
     Measure one qubit along z-axis.
     After acting on the qubit(circuit flush), the qubit get the value 0 or 1
