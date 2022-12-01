@@ -29,40 +29,17 @@ def read_CNF(cnf_file):
         f.close()
         return variable_number, clause_number, CNF_data
     
-def check_solution(variable_data, variable_number, clause_number, CNF_data):
-    cnf_result = 1
-    for i in range(clause_number):
-        clause_result = 0
-        if CNF_data[i+1] == []:
-            clause_result = 1
-        else:
-            for j in range(len(CNF_data[i+1])):
-                if CNF_data[i+1][j] > 0:
-                    clause_result = clause_result + variable_data[CNF_data[i+1][j]-1]
-                else:
-                    if CNF_data[i+1][j] < 0:
-                        clause_result = clause_result  + ( 1 - variable_data[-CNF_data[i+1][j]-1] )
-            if clause_result == 0:
-                cnf_result = 0
-                break
-    if cnf_result == 1:
-        return True
-    else:
-        return False
+# for i in range(3, 98):
+filename = f"2_4_1"
+filename_test =  "QuICT/algorithm/quantum_algorithm/CNF/1129/" + filename
+AuxQubitNumber = 3
+variable_number , clause_number , CNF_data = read_CNF(filename_test)
 
-path = 'QuICT/algorithm/quantum_algorithm/CNF/1129/2_3_1'
-# files_2 = os.listdir(path+'/1129')
-
-variable_number, clause_number, CNF_data = read_CNF(path)
-ancilla_qubits_num=3
-dirty_ancilla=1
 cnf = CNFSATOracle()
-cnf.run(path, ancilla_qubits_num, dirty_ancilla)
+cnf.run(filename_test, AuxQubitNumber)
+cgate = cnf.circuit()
 
-oracle = cnf.circuit()
-grover = Grover(ConstantStateVectorSimulator())
-
-circ = grover.circuit(variable_number, ancilla_qubits_num + dirty_ancilla, oracle, n_solution=2, measure=False, is_bit_flip=True, iteration_number_forced=True)
-zong = variable_number + oracle.width()*2
-print(zong)
-print(circ.width(), circ.depth(), circ.size())
+folder_path = "QuICT/algorithm/quantum_algorithm/CNF/1201/cnf"
+file = open(folder_path + '/' + f"w{cgate.width()}_s{cgate.size()}_d{cgate.depth()}.qasm",'w+')
+file.write(cgate.qasm())
+file.close()
