@@ -12,10 +12,6 @@ from QuICT.core.utils import (
     PAULI_GATE_SET, CLIFFORD_GATE_SET,
     perm_decomposition, matrix_product_to_circuit
 )
-from QuICT.tools.exception.core import (
-    TypeError, ValueError, GateAppendError, GateQubitAssignedError,
-    QASMError, GateMatrixError, GateParametersAssignedError
-)
 
 
 class BasicGate(object):
