@@ -1389,8 +1389,7 @@ class CRzGate(BasicGate):
         Returns:
             BasicGate: The gate with parameters
         """
-        if not self.permit_element(alpha):
-            raise TypeError("int/float/complex", alpha)
+        self.permit_element(alpha)
 
         return CRzGate([alpha])
 
