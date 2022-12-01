@@ -3,7 +3,7 @@ import shutil
 import subprocess
 
 from QuICT.tools import Logger
-from QuICT.cloud.cli.utils import path_check, JobValidation
+from QuICT.tools.cli.utils import path_check, JobValidation
 
 
 logger = Logger("CLI_Circuit_Management")

@@ -14,12 +14,12 @@ def sql_locked(function):
     return decorator
 
 
-class SQLMangerLocalMode:
+class SQLManager:
     """ Using SQL database to store running job information in local mode, and
     login information for remote mode.
     """
     def __init__(self):
-        file_path = os.path.dirname(__file__)
+        file_path = os.path.join(os.path.dirname(__file__), "../../../../lib/cli_db")
         self._connect = sqlite3.connect(f"{file_path}/user_info.db")
         self._connect.isolation_level = "EXCLUSIVE"
         self._cursor = self._connect.cursor()

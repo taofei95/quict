@@ -1,8 +1,6 @@
-from QuICT.cloud.client.local.sql_manage_local import SQLMangerLocalMode
 from QuICT.tools import Logger
 from QuICT.tools.logger import LogFormat
-from .encrypt_request import EncryptedRequest
-from .encrypt_manager import EncryptManager
+from .utils import EncryptedRequest, EncryptManager, SQLManager
 
 
 # TODO: file copy between local and remote
@@ -36,7 +34,7 @@ class QuICTRemoteManager:
         self._url_prefix = f"http://{hostname}:{api_server_port}/quict"
         self._encrypt = EncryptManager()
         self._encryptedrequest = EncryptedRequest()
-        self._sql_db = SQLMangerLocalMode()
+        self._sql_db = SQLManager()
         self._logger = Logger("Job_Management_Remote_Mode", LogFormat.full)
 
     ####################################################################

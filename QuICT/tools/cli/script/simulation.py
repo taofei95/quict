@@ -1,5 +1,4 @@
 import sys
-import json
 
 from QuICT.tools import Logger
 from QuICT.tools.logger import LogFormat

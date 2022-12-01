@@ -1,6 +1,6 @@
 import os
 
-from QuICT.cloud.cli.utils.validation import JobValidation
+from .validation import JobValidation
 
 
 def path_check(func):

@@ -4,7 +4,7 @@ import subprocess
 
 from QuICT.tools import Logger
 from QuICT.tools.logger import LogFormat
-from .sql_manage_local import SQLMangerLocalMode
+from .utils import SQLManager
 
 
 logger = Logger("Job_Management_Local_Mode", LogFormat.full)
@@ -13,7 +13,7 @@ logger = Logger("Job_Management_Local_Mode", LogFormat.full)
 class QuICTLocalJobManager:
     """ QuICT Job Management for the Local Mode. Using SQL to store running-time information. """
     def __init__(self):
-        self._sql_connect = SQLMangerLocalMode()
+        self._sql_connect = SQLManager()
 
     def _name_validation(self, name) -> bool:
         if not self._sql_connect.job_validation(name):

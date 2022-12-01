@@ -30,7 +30,7 @@ def cli_construct():
     subparsers = parser.add_subparsers()
 
     # Build env management
-    from QuICT.cloud.cli.blueprint.remote import login, logout
+    from QuICT.tools.cli.blueprint.remote import login, logout
 
     # Login
     login_sp = subparsers.add_parser(
@@ -80,14 +80,6 @@ def cli_construct():
     )
     job_cli_construct(remote_sp, mode="remote")
 
-    # TODO: Environment
-    # env_sp = subparsers.add_parser(
-    #     name="env",
-    #     description="Environment related tools",
-    #     help="Manage environment"
-    # )
-    # env_cli_construct(env_sp)
-
     # Benchmark
     benchmark_sp = subparsers.add_parser(
         name="benchmark",
@@ -105,7 +97,7 @@ def circuit_cli_construct(circuit_sp: ArgumentParser):
     Args:
         circuit_sp (ArgumentParser): Circuit Parser
     """
-    from QuICT.cloud.cli.blueprint.circuit import (
+    from QuICT.tools.cli.blueprint.circuit import (
         get_random_circuit, get_algorithm_circuit, store_quantum_circuit,
         delete_quantum_circuit, list_quantum_circuit
     )
@@ -212,14 +204,14 @@ def job_cli_construct(mode_sp: ArgumentParser, mode: str):
         mode_sp (ArgumentParser): Job Mode Parser
         mode (str): mode description, one of [local, remote]
     """
-    from QuICT.cloud.cli.blueprint.job import get_template
+    from QuICT.tools.cli.blueprint.job import get_template
 
     if mode == "local":
-        from QuICT.cloud.cli.blueprint.job import (
+        from QuICT.tools.cli.blueprint.job import (
             start_job, stop_job, restart_job, delete_job, status_job, list_jobs
         )
     elif mode == "remote":
-        from QuICT.cloud.cli.blueprint.remote import (
+        from QuICT.tools.cli.blueprint.remote import (
             start_job, stop_job, restart_job, delete_job, status_job, list_jobs
         )
 
@@ -317,69 +309,13 @@ def job_cli_construct(mode_sp: ArgumentParser, mode: str):
     list_job.set_defaults(func=list_jobs)
 
 
-def env_cli_construct(env_sp: ArgumentParser):
-    subparser = env_sp.add_subparsers()
-    # quict env build
-    build = subparser.add_parser(
-        name="build",
-        description="Build docker as running environment in distributed system.",
-        help="build dockers",
-    )
-    build.add_argument(
-        "path",
-        type=str,
-        help="The path of docker-build file."
-    )
-
-    # quict env deploy
-    deploy = subparser.add_parser(
-        name="deploy",
-        description="Deploy the docker into cluster",
-        help="deploy the docker into cluster",
-    )
-    deploy.add_argument(
-        "name",
-        type=str,
-        help="The docker's name."
-    )
-    deploy.add_argument(
-        "-d", "--device",
-        choices=["CPU", "GPU"], default="CPU",
-        help="The device of docker environment, default to be CPU."
-    )
-
-    # quict env list
-    list = subparser.add_parser(
-        name="list",
-        description="List all docker environments in cluster create by user.",
-        help="list all available docker environment."
-    )
-    list.add_argument(
-        "-d", "--device", nargs="?",
-        choices=["CPU", "GPU"],
-        help="List docker environments of given devices."
-    )
-
-    # quict env delete
-    delete = subparser.add_parser(
-        name="delete",
-        description="Delete docker environment.",
-        help="Delete docker environment."
-    )
-    delete.add_argument(
-        "name",
-        type=str,
-        help="The docker's name which to delete."
-    )
-
-
 def benchmark_cli_construct(benchmark_sp: ArgumentParser):
     """ Build Benchmark Module in CLI
 
     Args:
         benchmark_sp (ArgumentParser): Benchmark Parser
     """
-    from QuICT.cloud.cli.blueprint.benchmark import get_benchmark_qcda, get_benchmark_simulation
+    from QuICT.tools.cli.blueprint.benchmark import get_benchmark_qcda, get_benchmark_simulation
 
     subparser = benchmark_sp.add_subparsers()
     # quict benchmark qcda

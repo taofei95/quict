@@ -1,5 +1,5 @@
-from QuICT.cloud.client.remote import QuICTRemoteManager
-from QuICT.cloud.cli.utils import yaml_decompostion
+from QuICT.tools.cli.client import QuICTRemoteManager
+from QuICT.tools.cli.utils import yaml_decompostion
 
 
 remote_manager = QuICTRemoteManager()

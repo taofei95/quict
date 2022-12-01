@@ -1,8 +1,8 @@
 import os
 import shutil
 
-from QuICT.cloud.cli.utils import path_check, yaml_decompostion
-from QuICT.cloud.client.local import QuICTLocalJobManager
+from QuICT.tools.cli.utils import path_check, yaml_decompostion
+from QuICT.tools.cli.client import QuICTLocalJobManager
 
 
 # Local Controller
