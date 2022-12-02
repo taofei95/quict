@@ -1841,7 +1841,7 @@ class RzxGate(BasicGate):
             targets=2,
             params=1,
             type_=GateType.rzx,
-            matrix_type=MatrixType.diag_normal
+            matrix_type=MatrixType.normal
         )
 
         self.pargs = params

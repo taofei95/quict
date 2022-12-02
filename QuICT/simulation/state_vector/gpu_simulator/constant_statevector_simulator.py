@@ -181,10 +181,10 @@ class ConstantStateVectorSimulator:
 
             return
 
-        # [H, SX, SY, SW, U2, U3, Rx, Ry] 2-bits [CH, ] 2-bits[targets] [unitary]
+        # [H, Hy, SX, SY, SW, U2, U3, Rx, Ry] 2-bits [CH, ] 2-bits[Rzx, targets, unitary]
         if matrix_type == MatrixType.normal:
             self.apply_normal_matrix(gate)
-        # [Rz, Phase], 2-bits [CRz], 3-bits [CCRz]
+        # [Rz, Phase], 2-bits [CRz, Rzz], 3-bits [CCRz]
         elif matrix_type in [MatrixType.diagonal, MatrixType.diag_diag]:
             self.apply_diagonal_matrix(gate)
         # [X] 2-bits [swap] 3-bits [CSWAP]
@@ -238,7 +238,7 @@ class ConstantStateVectorSimulator:
             )
         # unsupported quantum gates
         else:
-            raise KeyError(f"Unsupported Gate: {gate_type}")
+            raise KeyError(f"Unsupported Gate: {gate_type} {matrix_type}.")
 
     def apply_normal_matrix(self, gate: BasicGate):
         # Get gate's parameters

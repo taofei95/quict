@@ -29,6 +29,8 @@ gate y a { u3(pi,pi/2,pi/2) a; }
 gate z a { u1(pi) a; }
 // Clifford gate: Hadamard
 gate h a { u2(0,pi) a; }
+// Self-inverse gate: Hadamard
+gate hy a { u3(pi/2,-pi/2,pi/2) a; }
 // Clifford gate: sqrt(Z) phase gate
 gate s a { u1(pi/2) a; }
 // Clifford gate: conjugate of sqrt(Z)
@@ -181,6 +183,15 @@ gate ryy(theta) a,b
   u1(theta) b;
   cx a,b;
   rx(pi/2) a; rx(pi/2) b;
+}
+// two-qubit ZX rotation
+gate rzx(theta) a,b
+{
+  h a;
+  cx a,b;
+  u1(theta) b;
+  cx a,b;
+  h a;
 }
 // FSim Gate
 gate fsim(alpha, beta) a,b

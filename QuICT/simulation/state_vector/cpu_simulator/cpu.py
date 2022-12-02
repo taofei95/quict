@@ -59,6 +59,7 @@ diag_1 = (
 # The unitary_x category is some gates treated as unitary.
 # The real unitary gates are not included.
 unitary_1 = (
+    GateType.hy,
     GateType.y,
     GateType.sx,
     GateType.sy,
@@ -75,6 +76,7 @@ unitary_2 = (
     GateType.fsim,
     GateType.rxx,
     GateType.ryy,
+    GateType.rzx,
     GateType.swap,  # Maybe this could be optimized
 )
 
