@@ -32,7 +32,8 @@ def simulation_start(
         device=device,
         backend=backend,
         precision=precision,
-        output_path=output_path
+        output_path=output_path,
+        circuit_record=True
     )
     simulator.run(circuit)
 

@@ -7,7 +7,7 @@ from QuICT.tools.logger import LogFormat
 from QuICT.tools.interface import OPENQASMInterface
 from QuICT.lib.circuitlib import CircuitLib
 from QuICT.qcda.qcda import QCDA
-from QuICT.qcda.synthesis.gate_transform import USTCSet, GoogleSet, IBMQSet, IonQSet
+from QuICT.qcda.synthesis.gate_transform import USTCSet, GoogleSet, IBMQSet, IonQSet, NamSet, OriginSet
 from QuICT.qcda.synthesis import GateTransform, CliffordUnidirectionalSynthesizer
 from QuICT.qcda.optimization import (
     CliffordRzOptimization, CommutativeOptimization, SymbolicCliffordOptimization,
@@ -22,7 +22,9 @@ iset_mapping = {
     "USTC": USTCSet,
     "Google": GoogleSet,
     "IBMQ": IBMQSet,
-    "IonQ": IonQSet
+    "IonQ": IonQSet,
+    "Nam": NamSet,
+    "Origin": OriginSet
 }
 
 
@@ -46,7 +48,7 @@ def qcda_start(
     method_mapping = {
         "GateTransform": GateTransform(iset_mapping[instruction_set]),
         "Clifford": CliffordUnidirectionalSynthesizer(),
-        "Auto": CliffordRzOptimization(auto_mode),
+        "CliffordRz": CliffordRzOptimization(auto_mode),
         "Commutative": CommutativeOptimization(para, depara),
         "SymbolicClifford": SymbolicCliffordOptimization(),
         "Template": TemplateOptimization(templates),

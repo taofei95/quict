@@ -19,8 +19,8 @@ class SQLManager:
     login information for remote mode.
     """
     def __init__(self):
-        file_path = os.path.join(os.path.dirname(__file__), "../../../../lib/cli_db")
-        self._connect = sqlite3.connect(f"{file_path}/user_info.db")
+        file_path = os.path.join(os.path.dirname(__file__), "../../../../lib")
+        self._connect = sqlite3.connect(f"{file_path}/CLI_runtime_data.db")
         self._connect.isolation_level = "EXCLUSIVE"
         self._cursor = self._connect.cursor()
 

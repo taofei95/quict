@@ -11,12 +11,14 @@ qcda:
   methods:                          # QCDA method should within ["GateTransform", "Clifford", "CliffordRz", "Commutative", "SymbolicClifford", "Template", "CNOT"]
     - Commutative
 
-  instruction_set: Google           # Instruction Set, Extra args for GateTransform; one of [Google, ...]
+  instruction_set: Google           # Instruction Set, Extra args for GateTransform; one of ["USTC", "Google", "IBMQ", "IonQ", "Nam", "Origin"]
   auto_mode: light                  # The mode for AutoOptimization, one of [light, heavy]
   para: True                        # The args for CommutativeOpt
   depara: False                     # The args for CommutativeOpt
   templates:                        # The list of templates for TemplateOpt
-    - None
+    max_width: 3
+    max_size: 5
+    max_depth: 3
 
   mapping:
     enable: False                   # Enable mapping or not

@@ -117,7 +117,7 @@ class JobValidation:
         qcda_dict["methods"] = "+".join(methods)
 
     def _job_complement(self, info: dict, job_type: str):
-        default_job_path = os.path.join(self._job_template_path, f"quict_job.yml")
+        default_job_path = os.path.join(self._job_template_path, "quict_job.yml")
         default_job_dict = JobValidation.load_yaml_file(default_job_path)
         core_part = default_job_dict[job_type]
 

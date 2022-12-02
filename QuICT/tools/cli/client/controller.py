@@ -37,7 +37,7 @@ class QuICTLocalJobManager:
         """
         # Validation job_files
         job_info = self._job_validation.job_validation(job_file)
-        
+
         # Check job name
         name = job_info["job_name"]
         if self._sql_connect.job_validation(name):
