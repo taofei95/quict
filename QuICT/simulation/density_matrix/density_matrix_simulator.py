@@ -7,6 +7,8 @@ from QuICT.core.noise import NoiseModel
 from QuICT.core.operator import NoiseGate
 from QuICT.core.utils import GateType, matrix_product_to_circuit
 import QuICT.ops.linalg.cpu_calculator as CPUCalculator
+from QuICT.tools.exception.core import TypeError, ValueError
+from QuICT.tools.exception.simulation import SimulationMatrixError, SampleBeforeRunError
 
 
 class DensityMatrixSimulation:
@@ -32,12 +34,14 @@ class DensityMatrixSimulation:
         if device == "CPU":
             self._computer = CPUCalculator
             self._array_helper = np
-        else:
+        elif device == "GPU":
             import QuICT.ops.linalg.gpu_calculator as GPUCalculator
             import cupy as cp
 
             self._computer = GPUCalculator
             self._array_helper = cp
+        else:
+            raise ValueError("DensityMatrixSimulation.device", "[CPU, GPU]", device)
 
     def initial_circuit(self, circuit: Circuit, noise_model: NoiseModel):
         """ Initial the qubits, quantum gates and state vector by given quantum circuit. """
@@ -62,7 +66,7 @@ class DensityMatrixSimulation:
     def check_matrix(self, matrix):
         """ Density Matrix Validation. """
         if not np.allclose(matrix.T.conjugate(), matrix):
-            return False
+            raise SimulationMatrixError("The conjugate transpose of density matrix do not equal to itself.")
 
         if not isinstance(matrix, np.ndarray):
             matrix = matrix.get()
@@ -70,10 +74,10 @@ class DensityMatrixSimulation:
         eigenvalues = np.linalg.eig(matrix)[0]
         for ev in eigenvalues:
             if ev < 0 and not np.isclose(ev, 0, rtol=1e-4):
-                return False
+                raise SimulationMatrixError("The eigenvalues of density matrix should be non-negative")
 
         if not np.isclose(matrix.trace(), 1, rtol=1e-4):
-            return False
+            raise SimulationMatrixError("The sum of trace of density matrix should be 1.")
 
         return True
 
@@ -98,7 +102,7 @@ class DensityMatrixSimulation:
         self.initial_circuit(circuit, noise_model)
         # Initial density matrix
         if density_matrix is not None:
-            assert self.check_matrix(density_matrix)
+            self.check_matrix(density_matrix)
             self._density_matrix = self._array_helper.array(density_matrix, dtype=self._precision)
         elif (self._density_matrix is None or not use_previous):
             self.initial_density_matrix(self._qubits)
@@ -126,7 +130,7 @@ class DensityMatrixSimulation:
             elif isinstance(gate, NoiseGate):
                 self.apply_noise(gate, self._qubits)
             else:
-                raise KeyError("Unsupportted operator in Density Matrix Simulator.")
+                raise TypeError("DensityMatrixSimulation.run.circuit", "[BasicGate, NoiseGate]", type(gate))
 
         if cgate.size() > 0:
             self.apply_gates(cgate)
@@ -212,7 +216,8 @@ class DensityMatrixSimulation:
         self._circuit.qubits[index].measured = int(_1)
 
     def sample(self, shots: int) -> list:
-        assert (self._density_matrix is not None)
+        assert (self._density_matrix is not None), \
+            SampleBeforeRunError("DensityMatrixSimulation sample without run any circuit.")
         original_dm = self._density_matrix.copy()
         state_list = [0] * self._density_matrix.shape[0]
         lastcall_per_qubit = self._circuit.get_lastcall_for_each_qubits()

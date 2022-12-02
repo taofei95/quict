@@ -15,7 +15,10 @@ from QuICT.core.utils import GateType, MatrixType
 from QuICT.ops.utils import LinAlgLoader
 from QuICT.ops.gate_kernel import float_multiply, complex_multiply
 from QuICT.simulation.utils import GateMatrixs
-
+from QuICT.tools.exception.core import ValueError, TypeError, GateQubitAssignedError
+from QuICT.tools.exception.simulation import (
+    SampleBeforeRunError, GateTypeNotImplementError, StateVectorUnmatchedError, GateAlgorithmNotImplementError
+)
 
 class ConstantStateVectorSimulator:
     """
@@ -62,7 +65,7 @@ class ConstantStateVectorSimulator:
         sync: bool = True
     ):
         if precision not in self.__PRECISION:
-            raise ValueError("Wrong precision. Please use one of [single, double].")
+            raise ValueError("StateVectorSimulation.precision", "[single, double]", precision)
 
         self._precision = np.complex128 if precision == "double" else np.complex64
         self._device_id = gpu_device_id
@@ -127,7 +130,7 @@ class ConstantStateVectorSimulator:
         self.initial_circuit(circuit)
         if state_vector is not None:
             assert 2 ** self._qubits == state_vector.size, \
-                "The state vector should has the same qubits with the circuit."
+                StateVectorUnmatchedError("The state vector should has the same qubits with the circuit.")
             self.vector = cp.array(state_vector, dtype=self._precision)
         elif not use_previous:
             self.initial_state_vector()
@@ -141,7 +144,7 @@ class ConstantStateVectorSimulator:
             elif isinstance(gate, Trigger):
                 self.apply_trigger(gate, idx)
             else:
-                raise TypeError(f"Unsupported circuit operator {type(gate)} in State Vector Simulator.")
+                raise TypeError("StateVectorSimulation.run.circuit", "[BasicGate, Trigger]". type(gate))
 
         if not gpu_out:
             return self.vector.get()
@@ -238,11 +241,10 @@ class ConstantStateVectorSimulator:
             )
         # unsupported quantum gates
         else:
-            raise KeyError(f"Unsupported Gate: {gate_type} {matrix_type}.")
+            raise GateTypeNotImplementError(f"Unsupported Gate Type and Matrix Type: {gate_type} {matrix_type}.")
 
     def apply_normal_matrix(self, gate: BasicGate):
         # Get gate's parameters
-        assert gate.matrix_type == MatrixType.normal
         args_num = gate.controls + gate.targets
         gate_args = gate.cargs + gate.targs
         matrix = self._get_gate_matrix(gate)
@@ -274,11 +276,10 @@ class ConstantStateVectorSimulator:
                     *default_parameters
                 )
             else:
-                raise KeyError("Quantum gate cannot only have control qubits.")
+                raise GateQubitAssignedError("Quantum gate cannot only have control qubits.")
 
     def apply_diagonal_matrix(self, gate: BasicGate):
         # Get gate's parameters
-        assert gate.matrix_type in [MatrixType.diagonal, MatrixType.diag_diag]
         args_num = gate.controls + gate.targets
         gate_args = gate.cargs + gate.targs
         matrix = self._get_gate_matrix(gate)
@@ -310,8 +311,10 @@ class ConstantStateVectorSimulator:
                     *default_parameters
                 )
             else:
-                raise KeyError("Quantum gate cannot only have control qubits.")
+                raise GateQubitAssignedError("Quantum gate cannot only have control qubits.")
         else:   # [CCRz]
+            assert gate.type == GateType.ccrz, \
+                GateAlgorithmNotImplementError(f"State Vector Simulator cannot deal with {gate.type} currently.")
             c_indexes = [self._qubits - 1 - carg for carg in gate.cargs]
             t_index = self._qubits - 1 - gate.targ
             self._algorithm.diagonal_more(
@@ -323,7 +326,6 @@ class ConstantStateVectorSimulator:
 
     def apply_swap_matrix(self, gate: BasicGate):
         # Get gate's parameters
-        assert gate.matrix_type == MatrixType.swap
         args_num = gate.controls + gate.targets
         gate_args = gate.cargs + gate.targs
         default_parameters = (self._vector, self._qubits, self._sync)
@@ -341,6 +343,8 @@ class ConstantStateVectorSimulator:
                 *default_parameters
             )
         else:   # CSwap
+            assert gate.type == GateType.cswap, \
+                GateAlgorithmNotImplementError(f"State Vector Simulator cannot deal with {gate.type} currently.")
             t_indexes = [self._qubits - 1 - targ for targ in gate.targs]
             c_index = self._qubits - 1 - gate.carg
             self._algorithm.swap_tmore(
@@ -351,7 +355,6 @@ class ConstantStateVectorSimulator:
 
     def apply_reverse_matrix(self, gate: BasicGate):
         # Get gate's parameters
-        assert gate.matrix_type == MatrixType.reverse
         args_num = gate.controls + gate.targets
         gate_args = gate.cargs + gate.targs
         matrix = self._get_gate_matrix(gate)
@@ -365,6 +368,9 @@ class ConstantStateVectorSimulator:
                 *default_parameters
             )
         elif args_num == 2:   # only consider 1 control qubit + 1 target qubit
+            if gate.targets == 2:
+                raise GateAlgorithmNotImplementError(f"State Vector Simulator cannot deal with {gate.type} currently.")
+
             c_index = self._qubits - 1 - gate_args[0]
             t_index = self._qubits - 1 - gate_args[1]
             self._algorithm.reverse_ctargs(
@@ -374,6 +380,8 @@ class ConstantStateVectorSimulator:
                 *default_parameters
             )
         else:   # CCX
+            assert gate.type == GateType.ccx, \
+                GateAlgorithmNotImplementError(f"State Vector Simulator cannot deal with {gate.type} currently.")
             c_indexes = [self._qubits - 1 - carg for carg in gate.cargs]
             t_index = self._qubits - 1 - gate.targ
             self._algorithm.reverse_more(
@@ -384,7 +392,6 @@ class ConstantStateVectorSimulator:
 
     def apply_control_matrix(self, gate: BasicGate):
         # Get gate's parameters
-        assert gate.matrix_type == MatrixType.control
         args_num = gate.controls + gate.targets
         gate_args = gate.cargs + gate.targs
         default_parameters = (self._vector, self._qubits, self._sync)
@@ -398,6 +405,9 @@ class ConstantStateVectorSimulator:
                 *default_parameters
             )
         elif args_num == 2:     # Deal with 2-qubit control gate, e.g. CZ
+            if gate.targets == 2:
+                raise GateAlgorithmNotImplementError(f"State Vector Simulator cannot deal with {gate.type} currently.")
+
             c_index = self._qubits - 1 - gate_args[0]
             t_index = self._qubits - 1 - gate_args[1]
             val = gate.matrix[3, 3]
@@ -407,6 +417,8 @@ class ConstantStateVectorSimulator:
                 val,
                 *default_parameters
             )
+        else:
+            raise GateAlgorithmNotImplementError(f"State Vector Simulator cannot deal with {gate.type} currently.")
 
     def apply_trigger(self, op: Trigger, current_idx: int) -> CompositeGate:
         """ Deal with the Operator <Trigger>.
@@ -495,6 +507,8 @@ class ConstantStateVectorSimulator:
                 prob,
                 self._sync
             )
+        else:
+            raise ValueError("StateVectorSimulator.apply_specialgate", "[measure, reset]", type)
 
         return result
 
@@ -507,7 +521,8 @@ class ConstantStateVectorSimulator:
         Returns:
             List[int]: The measured result list with length equal to 2 ** self.qubits
         """
-        assert (self._circuit is not None)
+        assert (self._circuit is not None), \
+            SampleBeforeRunError("StateVectorSimulation sample without run any circuit.")
         original_sv = self._vector.copy()
         state_list = [0] * (1 << self._qubits)
         lastcall_per_qubit = self._circuit.get_lastcall_for_each_qubits()

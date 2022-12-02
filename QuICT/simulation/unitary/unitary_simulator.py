@@ -3,7 +3,10 @@ import numpy as np
 
 from QuICT.core import Circuit
 import QuICT.ops.linalg.cpu_calculator as CPUCalculator
-
+from QuICT.tools.exception.core import ValueError
+from QuICT.tools.exception.simulation import (
+    UnitaryMatrixUnmatchedError, StateVectorUnmatchedError, SampleBeforeRunError
+)
 
 class UnitarySimulator():
     """ Algorithms to calculate the unitary matrix of a quantum circuit, and simulate.
@@ -33,12 +36,14 @@ class UnitarySimulator():
         if device == "CPU":
             self._computer = CPUCalculator
             self._array_helper = np
-        else:
+        elif device == "GPU":
             import cupy as cp
             import QuICT.ops.linalg.gpu_calculator as GPUCalculator
 
             self._computer = GPUCalculator
             self._array_helper = cp
+        else:
+            raise ValueError("UnitarySimulation.device", "[CPU, GPU]", device)
 
     def initial_vector_state(self):
         """ Initial the state vector for simulation through UnitarySimulator,
@@ -73,17 +78,19 @@ class UnitarySimulator():
 
             self._qubits_num = circuit.width()
             self._unitary_matrix = circuit.matrix(self._device)
-            assert 2 ** self._qubits_num == self._unitary_matrix.shape[0]
+            assert 2 ** self._qubits_num == self._unitary_matrix.shape[0], \
+                UnitaryMatrixUnmatchedError("The unitary matrix should has the same qubits with the circuit.")
         else:
             row, col = circuit.shape
             self._qubits_num = int(np.log2(row))
-            assert row == col and 2 ** self._qubits_num == col
+            assert row == col and 2 ** self._qubits_num == col, \
+                UnitaryMatrixUnmatchedError("The unitary matrix should be square.")
             self._unitary_matrix = self._array_helper.array(circuit, dtype=self._precision)
 
         # Step 2: Prepare the state vector
         if state_vector is not None:
             assert 2 ** self._qubits_num == state_vector.size, \
-                "The state vector should has the same qubits with the circuit."
+                StateVectorUnmatchedError("The state vector should has the same qubits with the circuit.")
             self.vector = self._array_helper.array(state_vector, dtype=self._precision)
         elif not use_previous or self._vector is None:
             self.initial_vector_state()
@@ -110,6 +117,9 @@ class UnitarySimulator():
         Returns:
             _type_: _description_
         """
+        assert (self._vector is not None), \
+            SampleBeforeRunError("UnitarySimulation sample without run any circuit.")
+
         original_sv = self._vector.copy()
         counts = [0] * (1 << self._qubits_num)
         for _ in range(shots):
