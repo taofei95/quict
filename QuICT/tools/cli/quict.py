@@ -16,7 +16,6 @@ Welcome to QuICT Command Line Interface.
 
 Using 'quict --help' to get the documents about QuICT CLI.
 Using 'quict --version' to get the version of QuICT.
-
 """
 
 

@@ -1,5 +1,6 @@
 import os
 import yaml
+from typing import Union, Dict
 
 from QuICT.core.layout import Layout
 from QuICT.tools.interface import OPENQASMInterface
@@ -53,7 +54,8 @@ class JobValidation:
 
         return job_info
 
-    def _based_info(self, job_dict):
+    @classmethod
+    def based_info_validate(self, job_dict):
         # Necessary feature
         name = job_dict["job_name"]
         assert isinstance(name, str), f"Job's name shoule be a string, not {type(name)}."
@@ -64,7 +66,8 @@ class JobValidation:
         circuit_info = JobValidation.get_circuit_info(job_dict["circuit"])
         job_dict['circuit_info'] = circuit_info
 
-    def _simulation_validation(self, simulation_dict: dict):
+    @classmethod
+    def simulation_validation(self, simulation_dict: dict):
         # validation job's simulation
         assert simulation_dict["shots"] >= 1, "The number of shots >= 1."
         assert simulation_dict["precision"] in self._SIMULATION_PARAMETERS['precision'], \
@@ -72,7 +75,8 @@ class JobValidation:
         assert simulation_dict["backend"] in self._SIMULATION_PARAMETERS['backend'], \
             "backend should be one of [state_vector, density_matrix, unitary]."
 
-    def _qcda_validation(self, qcda_dict: dict):
+    @classmethod
+    def qcda_validation(self, qcda_dict: dict):
         # QCDA methods validation
         methods = qcda_dict["methods"]
         for method in methods:
@@ -116,7 +120,8 @@ class JobValidation:
         del qcda_dict["mapping"]
         qcda_dict["methods"] = "+".join(methods)
 
-    def _job_complement(self, info: dict, job_type: str):
+    @classmethod
+    def job_complement(self, info: dict, job_type: str):
         default_job_path = os.path.join(self._job_template_path, "quict_job.yml")
         default_job_dict = JobValidation.load_yaml_file(default_job_path)
         core_part = default_job_dict[job_type]
@@ -127,7 +132,7 @@ class JobValidation:
 
         return core_part
 
-    def job_validation(self, job_file_path: str) -> dict:
+    def job_validation(self, job_file_path: Union[str, Dict]) -> Dict:
         """ Validate the given job's yaml file, and generate the regularized job's file.
         regularized_job_dict = {
             job_name(str),
@@ -165,17 +170,17 @@ class JobValidation:
             job_info = job_file_path
 
         # Step 2: check based information of job_yaml
-        self._based_info(job_info)
+        self.based_info_validate(job_info)
 
         # Step 3: complement and validate job's simulation/qcda information
         if "simulation" in job_info.keys():
-            required_info = self._job_complement(job_info["simulation"], "simulation")
-            self._simulation_validation(required_info)
+            required_info = self.job_complement(job_info["simulation"], "simulation")
+            self.simulation_validation(required_info)
             job_info["simulation"] = required_info
 
         if "qcda" in job_info.keys():
-            required_info = self._job_complement(job_info["qcda"], "qcda")
-            self._qcda_validation(required_info)
+            required_info = self.job_complement(job_info["qcda"], "qcda")
+            self.qcda_validation(required_info)
             job_info["qcda"] = required_info
 
         # Step 4: Prepare output path
