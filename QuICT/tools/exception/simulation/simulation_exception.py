@@ -34,4 +34,10 @@ class GateAlgorithmNotImplementError(QuICTException):
 class UnitaryMatrixUnmatchedError(QuICTException):
     """ The State Vector is not matched the simulation. """
     def __init__(self, msg: str):
-        super().__init__(2005, msg)
+        super().__init__(2006, msg)
+
+
+class SimulatorOptionsUnmatchedError(QuICTException):
+    """ The backend and optional arguments is not matched in the simulation. """
+    def __init__(self, msg: str):
+        super().__init__(2007, msg)

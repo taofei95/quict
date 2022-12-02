@@ -48,7 +48,7 @@ class DensityMatrixSimulation:
         self._circuit = circuit if noise_model is None else noise_model.transpile(circuit)
         self._qubits = int(circuit.width())
 
-        if self._precision == np.complex64:
+        if self._precision != circuit._precision:
             circuit.convert_precision()
 
     def initial_density_matrix(self, qubits: int):

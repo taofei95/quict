@@ -8,6 +8,7 @@ class MultiControlToffoli(object):
     Divided by the usages of auxiliary qubits, here are 4 implementations of multi-control Toffoli gates.
     """
     __AUX_USAGES = ['no_aux', 'one_clean_aux', 'one_dirty_aux', 'half_dirty_aux']
+
     def __init__(self, aux_usage='no_aux'):
         """
         Args:

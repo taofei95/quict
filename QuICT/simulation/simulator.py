@@ -12,6 +12,8 @@ from QuICT.simulation.state_vector import CircuitSimulator
 from QuICT.simulation.unitary import UnitarySimulator
 from QuICT.simulation.density_matrix import DensityMatrixSimulation
 from QuICT.simulation.utils import Result, options_validation
+from QuICT.tools.exception.core import ValueError
+from QuICT.tools.exception.simulation import SimulatorOptionsUnmatchedError
 
 
 class Simulator:
@@ -29,34 +31,34 @@ class Simulator:
 
     __DEVICE = ["CPU", "GPU"]
     __BACKEND = ["unitary", "state_vector", "density_matrix"]
+    __PRECISION = ["single", "double"]
 
     def __init__(
         self,
         device: str = "CPU",
-        backend: str = None,
-        shots: int = 1,
+        backend: str = "state_vector",
         precision: str = "double",
         circuit_record: bool = False,
-        amplitude_record: bool = True,
+        amplitude_record: bool = False,
         **options
     ):
-        assert device in Simulator.__DEVICE, "Device should be one of [CPU, GPU]."
+        assert device in Simulator.__DEVICE, ValueError("Simulator.device", "[CPU, GPU]", device)
         self._device = device
-        if backend is not None:
-            assert backend in Simulator.__BACKEND, "backend should be one of [unitary, state_vector, density_matrix]."
+        assert backend in Simulator.__BACKEND, \
+            ValueError("Simulator.backend", "[unitary, state_vector, density_matrix]", backend)
         self._backend = backend
+        assert precision in Simulator.__PRECISION, ValueError("Simulator.precision", "[single, double]", precision)
         self._precision = precision
 
-        assert (shots >= 1)
-        self._shots = shots
         if options_validation(options=options, device=self._device, backend=self._backend):
             self._options = options
         else:
-            raise KeyError(f"Unmatched options arguments depending on {self._device} and {self._backend}.")
+            raise SimulatorOptionsUnmatchedError(
+                f"Unmatched options arguments depending on {self._device} and {self._backend}."
+            )
 
         # Result's arguments
-        self._circuit_record = circuit_record
-        self._amplitude_record = amplitude_record
+        self._result_recorder = Result(device, backend, precision, circuit_record, amplitude_record, self._options)
 
     def _load_simulator(self):
         """ Initial simulator. """
@@ -77,6 +79,7 @@ class Simulator:
     def run(
         self,
         circuit: Union[Circuit, np.ndarray],
+        shots: int = 1,
         state_vector: np.ndarray = None,
         density_matrix: np.ndarray = None,
         noise_model: NoiseModel = None,
@@ -94,18 +97,24 @@ class Simulator:
         Yields:
             [dict]: The Result Dict.
         """
-        if not isinstance(circuit, Circuit):
-            self._backend = "unitary"
-        elif density_matrix is not None or noise_model is not None:
-            self._backend = "density_matrix"
+        if isinstance(circuit, np.ndarray) and self._backend != "unitary":
+            raise SimulatorOptionsUnmatchedError(
+                f"The unitary matrix input only allows in the unitary backend, not {self._backend}."
+            )
 
-        if self._backend is None:
-            self._backend = "state_vector"
+        if (density_matrix is not None or noise_model is not None) and self._backend != "density_matrix":
+            raise SimulatorOptionsUnmatchedError(
+                "The density matrix and noise model input only allows in the density_matrix backend, " +
+                f"not {self._backend}."
+            )
 
-        circuit_name = circuit.name if isinstance(circuit, Circuit) else ""
-        result = Result(circuit_name, self._device, self._backend, self._shots, self._options)
-        if self._circuit_record and circuit is not None:
-            result.record_circuit(circuit)
+        if state_vector is not None and self._backend == "density_matrix":
+            raise SimulatorOptionsUnmatchedError(
+                "The state vector input is not allowed in the density matrix backend."
+            )
+
+        circuit_name = circuit.name if isinstance(circuit, Circuit) else "unitary_matrix"
+        self._result_recorder.record_circuit(circuit, circuit_name)
 
         simulator = self._load_simulator()
         if self._backend == "density_matrix":
@@ -113,9 +122,9 @@ class Simulator:
         else:
             amplitude = simulator.run(circuit, state_vector, use_previous)
 
-        result.record_amplitude(amplitude, self._amplitude_record)
+        self._result_recorder.record_amplitude(amplitude)
 
-        sample_result = simulator.sample(self._shots)
-        result.record_sample(sample_result)
+        sample_result = simulator.sample(shots)
+        self._result_recorder.record_sample(sample_result)
 
-        return result.__dict__()
+        return self._result_recorder.__dict__()

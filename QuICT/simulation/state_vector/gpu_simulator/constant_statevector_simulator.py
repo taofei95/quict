@@ -20,6 +20,7 @@ from QuICT.tools.exception.simulation import (
     SampleBeforeRunError, GateTypeNotImplementError, StateVectorUnmatchedError, GateAlgorithmNotImplementError
 )
 
+
 class ConstantStateVectorSimulator:
     """
     The simulator for qubits' vector state.
@@ -85,7 +86,7 @@ class ConstantStateVectorSimulator:
         self._qubits = int(circuit.width())
         self._pipeline = []
 
-        if self._precision == np.complex64:
+        if self._precision != circuit._precision:
             circuit.convert_precision()
 
         self._pipeline = circuit.gates

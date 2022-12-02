@@ -8,6 +8,7 @@ from QuICT.tools.exception.simulation import (
     UnitaryMatrixUnmatchedError, StateVectorUnmatchedError, SampleBeforeRunError
 )
 
+
 class UnitarySimulator():
     """ Algorithms to calculate the unitary matrix of a quantum circuit, and simulate.
 
@@ -73,7 +74,7 @@ class UnitarySimulator():
         """
         # Step 1: Generate the unitary matrix of the given circuit
         if isinstance(circuit, Circuit):
-            if self._precision == np.complex64:
+            if self._precision != circuit._precision:
                 circuit.convert_precision()
 
             self._qubits_num = circuit.width()
