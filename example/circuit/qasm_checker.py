@@ -12,7 +12,7 @@ qasm = OPENQASMInterface.load_file("./test.qasm")
 if qasm.valid_circuit:
     # generate circuit
     circuit = qasm.circuit
-    print(circuit.qasm())    
+    print(circuit.qasm())
 else:
     print("Invalid format!")
 
