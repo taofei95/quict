@@ -94,13 +94,13 @@ export default {
       }
 
       if (this.drawZone != undefined) {
-        d3.select("#n_drawZone").selectAll("*").remove();
+        d3.select("#drawZone").selectAll("*").remove();
       }
       this.drawZone = d3
-        .select("#n_drawZone")
+        .select("#drawZone")
         .append("svg")
-        .attr("width", `${width*1.25}px`)
-        .attr("height", `${height*1.25}px`)
+        .attr("width", `${width * 1.25}px`)
+        .attr("height", `${height * 1.25}px`)
         .attr("viewBox", "0,0," + width + "," + height)
         .attr("background", "blue")
         .append("g")
@@ -108,59 +108,6 @@ export default {
           return `translateX(100px) translateY(30px)`;
         });
 
-      // draw gate set
-      let gateSet = this.drawZone
-        .selectAll(".gateSetNode")
-        .data(this.VisContent.gateSet)
-        .join("g")
-        .classed("gateSetNode", true)
-        .style("transform", (d, i) => {
-          return `translateX(${(i % 20) * gateSize}px) translateY(${
-            Math.floor(i / 20) * gateSize + 10
-          }px)`;
-        });
-
-      // gateSet icon
-
-      gateSet
-        .append("image")
-        .attr("width", gateSize - 2)
-        .attr("height", gateSize - 2)
-        .attr("xlink:href", (d) => `./assets/gate_set/${d.img}`);
-      gateSet.append("title").text((d) => d.matrix);
-
-      gateSet.call(
-        d3
-          .drag()
-          .on("start", dragstarted)
-          .on("drag", dragged)
-          .on("end", dragended)
-      );
-
-      function dragstarted() {
-        d3.select(this).classed("dragging", true);
-      }
-
-      function dragged(event) {
-        d3.select(this).style("transform", () => {
-          return `translateX(${event.x}px) translateY(${event.y}px)`;
-        });
-      }
-
-      function dragended(event, d) { // 从instruction Set 中拖拽gate到gate列表上添加新gate
-        d3.select(this).classed("dragging", false);
-        let xi = Math.round((event.x - 10) / gateSize);
-        let yi = Math.round((event.y - 100) / gateSize);
-        console.log(event, xi, yi);
-        if (xi >= 0 && yi >= 0) {
-          thisRef.$emit("VisUpdate", {
-            type: "gates add",
-            x: xi,
-            y: yi,
-            gate: d,
-          });
-        }
-      }
 
       // draw q
       let q = this.drawZone
@@ -202,6 +149,7 @@ export default {
         thisRef.$emit("VisUpdate", { type: "q remove", index: d });
       });
 
+
       // draw gates
       let gates = this.drawZone
         .selectAll(".gatesNode")
@@ -209,9 +157,8 @@ export default {
         .join("g")
         .classed("gatesNode", true)
         .style("transform", (d) => {
-          return `translateX(${d.posX * gateSize + 10 + 10}px) translateY(${
-            d.q * gateSize + 100 + 10
-          }px)`;
+          return `translateX(${d.posX * gateSize + 10 + 10}px) translateY(${d.q * gateSize + 100 + 10
+            }px)`;
         })
         .call(
           d3
@@ -260,9 +207,8 @@ export default {
         .attr("height", gateSize - 2)
         .attr("xlink:href", (d) => `./assets/gate/${d.img}`)
         .style("transform", (d) => {
-          return `translateX(-${gateSize / 2}px) translateY(${
-            d.delta * gateSize - gateSize / 2
-          }px)`;
+          return `translateX(-${gateSize / 2}px) translateY(${d.delta * gateSize - gateSize / 2
+            }px)`;
         });
 
       // gate ctrls
@@ -336,6 +282,9 @@ export default {
               y: yi,
               gate: d,
             });
+          }
+          else {
+            thisRef.vis_change();
           }
         }
       }
@@ -600,14 +549,126 @@ export default {
         }
       }
 
+
+      // draw gate set
+      let gateSet = this.drawZone
+        .selectAll(".gateSetNode")
+        .data(this.VisContent.gateSet)
+        .join("g")
+        .classed("gateSetNode", true)
+        .style("transform", (d, i) => {
+          return `translateX(${(i % 20) * gateSize}px) translateY(${Math.floor(i / 20) * gateSize + 10
+            }px)`;
+        });
+
+      let gateSet_matix = this.drawZone
+        .selectAll(".gateSetMatixNode")
+        .data(this.VisContent.gateSet)
+        .join("g")
+        .classed("gateSetMatixNode", true)
+        .style("transform", (d, i) => {
+          d.selected = false;
+          d.dragging = false;
+          return `translateX(${(i % 20) * gateSize}px) translateY(${Math.floor(i / 20) * gateSize + 10
+            }px)`;
+        });
+
+      // gateSet icon
+
+      gateSet
+        .append("image")
+        .attr("width", gateSize - 2)
+        .attr("height", gateSize - 2)
+        .attr("xlink:href", (d) => `./assets/gate_set/${d.img}`);
+
+      gateSet_matix
+        .append("image")
+        .classed("gate_img", true)
+        .style("display", "none")
+        .style("transform", (d, i) => {
+          let x_pos = (i % 20) * (-10);
+          return `translateX(${x_pos}px) translateY(${gateSize}px)`;
+        })
+        .attr("id", (d) => `gate_matix_${d.name}`)
+        .attr("xlink:href", (d) => `./assets/gate_matix/${d.img}`);
+
+      gateSet.call(
+        d3
+          .drag()
+          .on("start", dragstarted)
+          .on("drag", dragged)
+          .on("end", dragended)
+      ).on("mouseenter", gateSet_enter)
+        .on("mouseleave", gateSet_leave);
+
+      function dragstarted(event, d) {
+        d.dragging = true;
+        d3.select(`#gate_matix_${d.name}`).style("display", "none");
+      }
+
+      function dragged(event, d) {
+        d.dragging = true;
+        d3.select(this).style("transform", () => {
+          return `translateX(${event.x}px) translateY(${event.y}px)`;
+        });
+      }
+
+      function dragended(event, d) { // 从instruction Set 中拖拽gate到gate列表上添加新gate
+        d.dragging = false;
+        let xi = Math.round((event.x - 10) / gateSize);
+        let yi = Math.round((event.y - 100) / gateSize);
+        console.log(event, xi, yi);
+        if (xi >= 0 && yi >= 0) {
+          thisRef.$emit("VisUpdate", {
+            type: "gates add",
+            x: xi,
+            y: yi,
+            gate: d,
+          });
+        }
+        else {
+          thisRef.vis_change();
+        }
+      }
+
+      function gateSet_enter(event, d) { //显示编辑/删除gate按钮
+        console.log(event);
+        if (event.defaultPrevented) return;
+        if (!d.dragging)
+          d.selected = true;
+        setTimeout(() => {
+          if (!d.selected) {
+            return;
+          }
+          d3.select(`#gate_matix_${d.name}`).style("display", "block");
+        }, 200);
+        //
+      }
+
+      function gateSet_leave(event, d) { //隐藏编辑/删除gate按钮
+        console.log(event);
+        if (event.defaultPrevented) return;
+
+        d.selected = false;
+        setTimeout(() => {
+          if (d.selected) {
+            return;
+          }
+          d3.select(`#gate_matix_${d.name}`).style("display", "none");
+        }, 200);
+
+        //
+      }
+
+
+
       // draw btns
       let q_add = this.drawZone
         .append("g")
         .classed("q_add", true)
         .style("transform", () => {
-          return `translateX(10px) translateY(${
-            this.VisContent.q.length * gateSize + 100 + 10
-          }px)`;
+          return `translateX(10px) translateY(${this.VisContent.q.length * gateSize + 100 + 10
+            }px)`;
         });
       q_add
         .append("image")
