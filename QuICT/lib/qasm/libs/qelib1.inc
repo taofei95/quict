@@ -62,6 +62,11 @@ gate ry(theta) a { u3(theta,0,0) a; }
 // rotation around Z axis
 gate rz(phi) a { u1(phi) a; }
 
+// --- Swap Gates ---
+gate iswap a,b { cx a,b; cx b,a; cx a,b; }
+gate iswapdg a,b { cx a,b; cx b,a; cx a,b; }
+gate sqiswap a,b { cx a,b; cx b,a; cx a,b; }
+
 // --- QE Standard User-Defined Gates  ---
 
 // controlled-Phase

@@ -2026,8 +2026,8 @@ class iSwapGate(BasicGate):
             controls=0,
             targets=2,
             params=0,
-            type=GateType.iswap,
-            matrix_type=MatrixType.phase_swap,
+            type_=GateType.iswap,
+            matrix_type=MatrixType.swap,
         )
 
         self.matrix = np.array([
@@ -2048,8 +2048,8 @@ class iSwapDaggerGate(BasicGate):
             controls=0,
             targets=2,
             params=0,
-            type=GateType.iswapdg,
-            matrix_type=MatrixType.phase_swap,
+            type_=GateType.iswapdg,
+            matrix_type=MatrixType.swap,
         )
 
         self.matrix = np.array([
@@ -2070,8 +2070,8 @@ class SquareRootiSwapGate(BasicGate):
             controls=0,
             targets=2,
             params=0,
-            type=GateType.sqiswap,
-            matrix_type=MatrixType.phase_swap,
+            type_=GateType.sqiswap,
+            matrix_type=MatrixType.swap,
         )
 
         self.matrix = np.array([
