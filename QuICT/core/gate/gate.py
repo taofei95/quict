@@ -2019,6 +2019,72 @@ class SwapGate(BasicGate):
 Swap = SwapGate()
 
 
+class iSwapGate(BasicGate):
+    """ iSwap gate """
+    def __init__(self):
+        super().__init__(
+            controls=0,
+            targets=2,
+            params=0,
+            type=GateType.iswap,
+            matrix_type=MatrixType.phase_swap,
+        )
+
+        self.matrix = np.array([
+            [1, 0, 0, 0],
+            [0, 0, 1j, 0],
+            [0, 1j, 0, 0],
+            [0, 0, 0, 1]
+        ], dtype=np.complex128)
+
+
+iSwap = iSwapGate()
+
+
+class iSwapDaggerGate(BasicGate):
+    """ iSwap gate """
+    def __init__(self):
+        super().__init__(
+            controls=0,
+            targets=2,
+            params=0,
+            type=GateType.iswapdg,
+            matrix_type=MatrixType.phase_swap,
+        )
+
+        self.matrix = np.array([
+            [1, 0, 0, 0],
+            [0, 0, -1j, 0],
+            [0, -1j, 0, 0],
+            [0, 0, 0, 1]
+        ], dtype=np.complex128)
+
+
+iSwap_dagger = iSwapDaggerGate()
+
+
+class SquareRootiSwapGate(BasicGate):
+    """ Square Root of iSwap gate """
+    def __init__(self):
+        super().__init__(
+            controls=0,
+            targets=2,
+            params=0,
+            type=GateType.sqiswap,
+            matrix_type=MatrixType.phase_swap,
+        )
+
+        self.matrix = np.array([
+            [1, 0, 0, 0],
+            [0, 0, (1 + 1j) / np.sqrt(2), 0],
+            [0, (1 + 1j) / np.sqrt(2), 0, 0],
+            [0, 0, 0, 1]
+        ], dtype=np.complex128)
+
+
+sqiSwap = SquareRootiSwapGate()
+
+
 # PermGate class -- no qasm
 class PermGate(BasicGate):
     """ Permutation gate
