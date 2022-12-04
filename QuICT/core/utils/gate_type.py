@@ -135,6 +135,7 @@ class MatrixType(Enum):
     diagonal = "diagonal matrix"
     control = "control matrix"
     swap = "swap matrix"
+    phase_swap = "phase_swap matrix"
     reverse = "reverse matrix"
     special = "special matrix"
     diag_diag = "diagonal * diagonal"
