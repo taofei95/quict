@@ -501,7 +501,7 @@ Controlled_MultiplySwap_ctargs_double_kernel = cp.RawKernel(r'''
 Controlled_Swap_targs_single_kernel = cp.RawKernel(r'''
     #include <cupy/complex.cuh>
     extern "C" __global__
-    void Controlled4x4Swap(int high, int low, complex<float>* vec) {
+    void Controlled4x4Swap(int high, int low, const complex<float>* mat, complex<float>* vec) {
         int label = blockDim.x * blockIdx.x + threadIdx.x;
 
         const int offset1 = 1 << low;
@@ -516,8 +516,8 @@ Controlled_Swap_targs_single_kernel = cp.RawKernel(r'''
         int _2 = _0 + offset2;
 
         complex<float> temp_0 = vec[_1];
-        vec[_1] = vec[_2];
-        vec[_2] = temp_0;
+        vec[_1] = vec[_2]*mat[6];
+        vec[_2] = temp_0*mat[9];
     }
     ''', 'Controlled4x4Swap')
 
@@ -525,7 +525,7 @@ Controlled_Swap_targs_single_kernel = cp.RawKernel(r'''
 Controlled_Swap_targs_double_kernel = cp.RawKernel(r'''
     #include <cupy/complex.cuh>
     extern "C" __global__
-    void Controlled4x4Swap(int high, int low, complex<double>* vec) {
+    void Controlled4x4Swap(int high, int low, const complex<double>* mat, complex<double>* vec) {
         int label = blockDim.x * blockIdx.x + threadIdx.x;
 
         const int offset1 = 1 << low;
@@ -540,8 +540,8 @@ Controlled_Swap_targs_double_kernel = cp.RawKernel(r'''
         int _2 = _0 + offset2;
 
         complex<double> temp_0 = vec[_1];
-        vec[_1] = vec[_2];
-        vec[_2] = temp_0;
+        vec[_1] = vec[_2]*mat[6];
+        vec[_2] = temp_0*mat[9];
     }
     ''', 'Controlled4x4Swap')
 
@@ -1445,12 +1445,12 @@ def reverse_ctargs(c_index, t_index, mat, vec, vec_bit, sync: bool = False):
         cp.cuda.Device().synchronize()
 
 
-def swap_targs(t_indexes, vec, vec_bit, sync: bool = False):
+def swap_targs(t_indexes, mat, vec, vec_bit, sync: bool = False):
     """
     Controlled matrix (4x4) dot vector
             [[1, 0, 0, 0],    *   vec
-             [0, 0, 1, 0],
-             [0, 1, 0, 0],
+             [0, 0, a, 0],
+             [0, b, 0, 0],
              [0, 0, 0, 1]]
     """
     task_number = 1 << (vec_bit - 2)
@@ -1466,13 +1466,13 @@ def swap_targs(t_indexes, vec, vec_bit, sync: bool = False):
         Controlled_Swap_targs_single_kernel(
             (block_num,),
             (thread_per_block,),
-            (high, low, vec)
+            (high, low, mat, vec)
         )
     else:
         Controlled_Swap_targs_double_kernel(
             (block_num,),
             (thread_per_block,),
-            (high, low, vec)
+            (high, low, mat, vec)
         )
 
     if sync:

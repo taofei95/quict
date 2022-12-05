@@ -7,6 +7,7 @@ from .noise_error import QuantumNoiseError
 from .readout_error import ReadoutError
 from QuICT.core.gate import BasicGate, GateType, GATE_TYPE_TO_CLASS
 from QuICT.core.operator import NoiseGate
+from QuICT.tools.exception.core import TypeError, ValueError, NoiseApplyError
 
 
 class NoiseModel:
@@ -16,11 +17,16 @@ class NoiseModel:
     Args:
         name (str, optional): The name of this NoiseModel. Defaults to "Noise Model".
         basic_gates (List, optional): The list of quantum gates will apply the NoiseError.
-            Defaults to GateType.__members__.keys().
+            Defaults to __BASED_GATES.
     """
-    def __init__(self, name: str = "Noise Model", basic_gates: List = GateType.__members__.keys()):
+    __BASED_GATES = [
+        "h", "s", "sdg", "x", "y", "z", "rx", "ry", "rz",
+        "u1", "t", "tdg", "cx", "cz", "crz", "cu1"
+    ]
+
+    def __init__(self, name: str = "Noise Model", basic_gates: List = __BASED_GATES):
         self._name = name
-        self._basic_gates = list(basic_gates)
+        self._basic_gates = basic_gates
 
         # self._instruction stores the mapping of NoiseError and its limitation of Gates and Qubits.
         # Dict{"specific": List[Tuple(NoiseError, Qubits, Gates)],
@@ -53,29 +59,30 @@ class NoiseModel:
         if isinstance(qubits, int):
             qubits = [qubits]
         elif not isinstance(qubits, (list, tuple)):
-            raise TypeError("The qubits must be interger of list[integer].")
+            raise TypeError("NoiseModel.add.qubits", "int/list<int>", type(qubits))
 
         for q in qubits:
             if q < 0 or not isinstance(q, int):
-                raise KeyError("The qubits must be positive integer.")
+                raise ValueError("NoiseModel.add.qubits", "be a positive integer", q)
 
     def _gates_normalize(self, noise: QuantumNoiseError, gates: Union[str, List[str]]):
-        assert isinstance(noise, QuantumNoiseError), "Unsupportted noise error here."
+        assert isinstance(noise, QuantumNoiseError), \
+            TypeError("NoiseModel.add.noise", "QuantumNoiseError", type(noise))
         if not gates:
-            raise KeyError("Must specified quantum gates for noise model.")
+            raise ValueError("NoiseModel.add.gates", "not be empty", gates)
 
         if isinstance(gates, str):
             gates = [gates]
         elif not isinstance(gates, (list, tuple)):
-            raise TypeError("The gates must be string of gate of list[string].")
+            raise TypeError("NoiseModel.add.gates", "str/list<str>", type(gates))
 
         for g in gates:
             if g not in self._basic_gates:
-                raise KeyError(f"The gate is not in based gates. Please use one of {self._basic_gates}.")
+                raise ValueError("NoiseModel.add.gates", self._basic_gates, g)
 
             gate = GATE_TYPE_TO_CLASS[GateType.__members__[g]]()
             if gate.controls + gate.targets != noise.qubits:
-                raise KeyError(
+                raise NoiseApplyError(
                     f"Un-matched qubits number between gate {gate.controls + gate.targets}" +
                     f"with noise error {noise.qubits}."
                 )
@@ -132,37 +139,36 @@ class NoiseModel:
             noise (ReadoutError): The Readout Error.
             qubits (Union[int, List[int]]): The target qubits for the Readout error
         """
-        assert isinstance(noise, ReadoutError)
+        assert isinstance(noise, ReadoutError), TypeError("NoiseModel.addreadouterror", "ReadoutError", type(noise))
         if isinstance(qubits, int):
             qubits = [qubits]
+
+        for qubit in qubits:
+            assert isinstance(qubit, int) and qubit >= 0, \
+                ValueError("NoiseModel.addreadouterror", "be a positive integer", qubit)
 
         # Deal with 1-qubits ReadoutError apply for multi-qubits
         if noise.qubits == 1:
             for qubit in qubits:
-                assert isinstance(qubit, int) and qubit >= 0
                 self._add_readout_error(noise, qubit)
 
             return
 
         # Deal with multi-qubits ReadoutError
-        assert noise.qubits == len(qubits)
-        for qubit in qubits:
-            assert isinstance(qubit, int) and qubit >= 0
-
+        assert noise.qubits == len(qubits), NoiseApplyError(
+            "For multi qubits Readout Error, the given qubits' number should equal to the noise's qubit number."
+        )
         self._add_readout_error(noise, qubits)
 
-    def _add_readout_error(self, noise: ReadoutError, qubit: Union[int, List[int]]):
+    def _add_readout_error(self, noise: ReadoutError, qubit: List[int]):
         # Deal with Readout Error with the same qubits limitation
         if qubit in self._readout_errors:
             noise_idx = self._readout_errors.index(qubit)
             self._instruction["readout"][noise_idx] = self._instruction["readout"][noise_idx].compose(noise)
 
-        if isinstance(qubit, int):
-            qubit = [qubit]
-
         for qubit_key in self._readout_errors:
             if set(qubit_key) & set(qubit):
-                raise ValueError("Currently do not support multi-qubits readout error combined.")
+                raise NoiseApplyError("Currently do not support multi-qubits readout error combined.")
 
         # Append new Readout Error and qubits limitation
         self._readout_errors.append(qubit)

@@ -78,6 +78,9 @@ unitary_2 = (
     GateType.ryy,
     GateType.rzx,
     GateType.swap,  # Maybe this could be optimized
+    GateType.iswap,
+    GateType.iswapdg,
+    GateType.sqiswap
 )
 
 ctrl_diag = (
@@ -184,7 +187,7 @@ def gate_to_desc(gate: BasicGate) -> List[GateDescription]:
         return result
     else:
         print(gate_type)
-        NotImplementedError(f"No implementation for {gate.name}")
+        raise NotImplementedError(f"No implementation for {gate.name}")
 
 
 class CircuitSimulator:

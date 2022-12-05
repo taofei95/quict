@@ -191,7 +191,7 @@ class ConstantStateVectorSimulator:
         # [Rz, Phase], 2-bits [CRz, Rzz], 3-bits [CCRz]
         elif matrix_type in [MatrixType.diagonal, MatrixType.diag_diag]:
             self.apply_diagonal_matrix(gate)
-        # [X] 2-bits [swap] 3-bits [CSWAP]
+        # [X] 2-bits [swap, iswap, iswapdg, sqiswap] 3-bits [CSWAP]
         elif matrix_type == MatrixType.swap:
             self.apply_swap_matrix(gate)
         # [Y] 2-bits [CX, CY] 3-bits: [CCX]
@@ -346,9 +346,13 @@ class ConstantStateVectorSimulator:
                 *default_parameters
             )
         elif args_num == 2:     # Deal with Swap Gate
+            if gate.targets != 2:
+                raise GateAlgorithmNotImplementError(f"State Vector Simulator cannot deal with {gate.type} currently.")
+
             t_indexes = [self._qubits - 1 - targ for targ in gate_args]
             self._algorithm.swap_targs(
                 t_indexes,
+                self._get_gate_matrix(gate),
                 *default_parameters
             )
         else:   # CSwap
