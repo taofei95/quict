@@ -1,8 +1,8 @@
 from random import sample
 
-from QuICT.core import *
+from QuICT.core import Circuit
 from QuICT.core.gate import *
-from QuICT.lib.circuitlib import CircuitLib
+from QuICT.tools.circuit_library import CircuitLib
 from QuICT.qcda.optimization.template_optimization.template_matching import ForwardMatch, MatchingDAGCircuit
 from QuICT.qcda.optimization.template_optimization.template_optimization import TemplateOptimization
 
@@ -79,7 +79,7 @@ def test_ccx():
     CCX | circ([0, 1, 2])
     CCX | circ([1, 0, 2])
 
-    TO = TemplateOptimization()
+    TO = TemplateOptimization(CircuitLib().get_template_circuit())
     circ_optim = TO.execute(circ)
     assert circ_optim.size() == 0
 
@@ -91,7 +91,7 @@ def test_random_circuit():
     n_iter = 20
     n_qubits = 8
     n_gates = 200
-    template_list = CircuitLib.load_template_circuit()
+    template_list = CircuitLib().get_template_circuit()
     n_templates = 10
 
     for idx in range(n_iter):

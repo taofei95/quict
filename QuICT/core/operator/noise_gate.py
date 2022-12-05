@@ -1,7 +1,8 @@
 import numpy as np
 
-from QuICT.core.gate import BasicGate, MatrixType
 from ._operator import Operator
+from QuICT.core.gate import BasicGate, MatrixType
+from QuICT.tools.exception.core import TypeError
 
 
 class NoiseGate(Operator):
@@ -48,7 +49,7 @@ class NoiseGate(Operator):
         return self._error.kraus_ct
 
     def __init__(self, gate: BasicGate, error):
-        assert isinstance(gate, BasicGate)
+        assert isinstance(gate, BasicGate), TypeError("NoiseGate", "BasicGate", type(gate))
         super().__init__(gate.controls + gate.targets)
         self.targs = gate.targs
         self.cargs = gate.cargs

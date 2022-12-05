@@ -66,7 +66,7 @@ class TestNoise(unittest.TestCase):
         assert 1
 
     def test_depolarizingerror(self):
-        print(TestNoise.circuit.qasm())
+        # print(TestNoise.circuit.qasm())
         depolarizing_rate = 0.05
         # 1-qubit depolarizing error
         single_dep = DepolarizingError(depolarizing_rate, num_qubits=1)

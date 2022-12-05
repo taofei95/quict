@@ -80,7 +80,7 @@ class QCDA(object):
         Returns:
             CompositeGate/Circuit: the resulting CompositeGate or Circuit
         """
-        logger.info(f"QCDA Now processing GateDecomposition.")
+        logger.info("QCDA Now processing GateDecomposition.")
         circuit.gate_decomposition()
         for process in self.process:
             logger.info(f"QCDA Now processing {process.__class__.__name__}.")

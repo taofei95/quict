@@ -30,9 +30,14 @@ unit_test/**/*.jpg
 .history
 /QAOA_model*
 <<<<<<< HEAD
+<<<<<<< HEAD
 /del
 /Benchmarking
 wr_unit_test
 =======
 /del
 >>>>>>> origin/dev
+=======
+/del
+/wr_unit_test
+>>>>>>> dev_patch
