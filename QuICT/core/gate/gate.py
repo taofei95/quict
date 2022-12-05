@@ -982,7 +982,7 @@ class RxGate(BasicGate):
     @property
     def matrix(self):
         return np.array([
-                [np.cos(self.parg / 2), 1j * -np.sin(self.parg / 2)],
+            [np.cos(self.parg / 2), 1j * -np.sin(self.parg / 2)],
             [1j * -np.sin(self.parg / 2), np.cos(self.parg / 2)]
         ], dtype=self._precision)
 
@@ -1468,6 +1468,8 @@ class CU1Gate(BasicGate):
 
     def build_gate(self):
         from QuICT.core.gate import CompositeGate
+    def build_gate(self):
+        from QuICT.core.gate import CompositeGate
 
         cgate = CompositeGate()
         with cgate:
@@ -1480,6 +1482,18 @@ class CU1Gate(BasicGate):
 
         if self._precision == np.complex64:
             cgate.convert_precision()
+
+        return cgate
+
+
+        cgate = CompositeGate()
+        with cgate:
+            CRz(self.parg) & [0, 1]
+            U1(self.parg / 2) & 0
+
+        args = self.cargs + self.targs
+        if len(args) == self.controls + self.targets:
+            cgate & args
 
         return cgate
 
@@ -1546,12 +1560,25 @@ class CU3Gate(BasicGate):
 
     def build_gate(self):
         from QuICT.qcda.synthesis import UnitaryDecomposition
+    def build_gate(self):
+        from QuICT.qcda.synthesis import UnitaryDecomposition
 
         assert self.controls + self.targets > 0
         mapping_args = self.cargs + self.targs
         cgate, _ = UnitaryDecomposition().execute(self.matrix)
         if len(mapping_args) == self.controls + self.targets:
             cgate & mapping_args
+
+        return cgate
+
+
+        assert self.controls + self.targets > 0
+        mapping_args = self.cargs + self.targs
+        cgate, _ = UnitaryDecomposition().execute(self.matrix)
+        cgate & mapping_args
+
+        if self._precision == np.complex64:
+            cgate.convert_precision()
 
         return cgate
 

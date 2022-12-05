@@ -44,7 +44,6 @@ class CartanKAKDecomposition(object):
     def diagonalize_unitary_symmetric(matrix):
         """
         Diagonalize unitary symmetric matrix with real orthogonal matrix
-        TODO: this part is taken from qiskit, the FIXME should be removed.
 
         Args:
             matrix(np.array): unitary symmetric matrix to be diagonalized
@@ -160,8 +159,6 @@ class CartanKAKDecomposition(object):
         KR0, KR1 = self.tensor_decompose(KR)
 
         KL0 = KL0.dot(Rz(-np.pi / 2).matrix)
-        KL1 = KL1
-        KR0 = KR0
         KR1 = Rz(np.pi / 2).matrix.dot(KR1)
         gates = CompositeGate()
         with gates:
