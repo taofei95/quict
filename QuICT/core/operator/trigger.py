@@ -41,8 +41,7 @@ class Trigger(Operator):
                     TypeError(
                         "Trigger.state_gate_mapping:dict",
                         "dict<int, CompositeGate/BasicGate/None>",
-                        f"{type(key)}: {type(value)}"
-                    )
+                        f"{type(key)}, {type(value)}")
 
             self._state_gate_mapping = state_gate_mapping
         elif isinstance(state_gate_mapping, FunctionType):

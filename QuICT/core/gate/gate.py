@@ -581,7 +581,7 @@ class HYGate(BasicGate):
             params=0,
             type_=GateType.hy
         )
-        
+
         self.matrix = np.array([
             [1 / np.sqrt(2), -1j / np.sqrt(2)],
             [1j / np.sqrt(2), -1 / np.sqrt(2)]
@@ -986,7 +986,7 @@ class RxGate(BasicGate):
     @property
     def matrix(self):
         return np.array([
-                [np.cos(self.parg / 2), 1j * -np.sin(self.parg / 2)],
+            [np.cos(self.parg / 2), 1j * -np.sin(self.parg / 2)],
             [1j * -np.sin(self.parg / 2), np.cos(self.parg / 2)]
         ], dtype=self._precision)
 
@@ -1031,8 +1031,8 @@ class RyGate(BasicGate):
     @property
     def matrix(self):
         return np.array([
-                [np.cos(self.pargs[0] / 2), -np.sin(self.pargs[0] / 2)],
-                [np.sin(self.pargs[0] / 2), np.cos(self.pargs[0] / 2)],
+            [np.cos(self.pargs[0] / 2), -np.sin(self.pargs[0] / 2)],
+            [np.sin(self.pargs[0] / 2), np.cos(self.pargs[0] / 2)],
         ], dtype=self._precision)
 
     def inverse(self):
@@ -1664,7 +1664,7 @@ class RxxGate(BasicGate):
         _Rxx.pargs = [-self.parg]
 
         return _Rxx
-    
+
     def build_gate(self):
         from QuICT.core.gate import CompositeGate
 
@@ -1737,7 +1737,7 @@ class RyyGate(BasicGate):
         _Ryy.pargs = [-self.parg]
 
         return _Ryy
-    
+
     def build_gate(self):
         from QuICT.core.gate import CompositeGate
 
@@ -1810,7 +1810,7 @@ class RzzGate(BasicGate):
         _Rzz.pargs = [-self.parg]
 
         return _Rzz
-    
+
     def build_gate(self):
         from QuICT.core.gate import CompositeGate
 
@@ -1879,7 +1879,7 @@ class RzxGate(BasicGate):
         _Rzx.pargs = [-self.parg]
 
         return _Rzx
-    
+
     def build_gate(self):
         from QuICT.core.gate import CompositeGate
 
@@ -2266,13 +2266,13 @@ class CCXGate(BasicGate):
         )
 
         self.matrix = np.array([
-                [1, 0, 0, 0, 0, 0, 0, 0],
-                [0, 1, 0, 0, 0, 0, 0, 0],
-                [0, 0, 1, 0, 0, 0, 0, 0],
-                [0, 0, 0, 1, 0, 0, 0, 0],
-                [0, 0, 0, 0, 1, 0, 0, 0],
-                [0, 0, 0, 0, 0, 1, 0, 0],
-                [0, 0, 0, 0, 0, 0, 0, 1],
+            [1, 0, 0, 0, 0, 0, 0, 0],
+            [0, 1, 0, 0, 0, 0, 0, 0],
+            [0, 0, 1, 0, 0, 0, 0, 0],
+            [0, 0, 0, 1, 0, 0, 0, 0],
+            [0, 0, 0, 0, 1, 0, 0, 0],
+            [0, 0, 0, 0, 0, 1, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 1],
             [0, 0, 0, 0, 0, 0, 1, 0]
         ], dtype=self._precision)
 
@@ -2335,13 +2335,13 @@ class CCZGate(BasicGate):
         )
 
         self.matrix = np.array([
-                [1, 0, 0, 0, 0, 0, 0, 0],
-                [0, 1, 0, 0, 0, 0, 0, 0],
-                [0, 0, 1, 0, 0, 0, 0, 0],
-                [0, 0, 0, 1, 0, 0, 0, 0],
-                [0, 0, 0, 0, 1, 0, 0, 0],
-                [0, 0, 0, 0, 0, 1, 0, 0],
-                [0, 0, 0, 0, 0, 0, 1, 0],
+            [1, 0, 0, 0, 0, 0, 0, 0],
+            [0, 1, 0, 0, 0, 0, 0, 0],
+            [0, 0, 1, 0, 0, 0, 0, 0],
+            [0, 0, 0, 1, 0, 0, 0, 0],
+            [0, 0, 0, 0, 1, 0, 0, 0],
+            [0, 0, 0, 0, 0, 1, 0, 0],
+            [0, 0, 0, 0, 0, 0, 1, 0],
             [0, 0, 0, 0, 0, 0, 0, -1]
         ], dtype=self._precision)
 
@@ -2418,13 +2418,13 @@ class CCRzGate(BasicGate):
     @property
     def matrix(self):
         return np.array([
-                [1, 0, 0, 0, 0, 0, 0, 0],
-                [0, 1, 0, 0, 0, 0, 0, 0],
-                [0, 0, 1, 0, 0, 0, 0, 0],
-                [0, 0, 0, 1, 0, 0, 0, 0],
-                [0, 0, 0, 0, 1, 0, 0, 0],
-                [0, 0, 0, 0, 0, 1, 0, 0],
-                [0, 0, 0, 0, 0, 0, np.exp(-self.parg / 2 * 1j), 0],
+            [1, 0, 0, 0, 0, 0, 0, 0],
+            [0, 1, 0, 0, 0, 0, 0, 0],
+            [0, 0, 1, 0, 0, 0, 0, 0],
+            [0, 0, 0, 1, 0, 0, 0, 0],
+            [0, 0, 0, 0, 1, 0, 0, 0],
+            [0, 0, 0, 0, 0, 1, 0, 0],
+            [0, 0, 0, 0, 0, 0, np.exp(-self.parg / 2 * 1j), 0],
             [0, 0, 0, 0, 0, 0, 0, np.exp(self.parg / 2 * 1j)]
         ], dtype=self._precision)
 
@@ -2585,13 +2585,13 @@ class CSwapGate(BasicGate):
         )
 
         self.matrix = np.array([
-                [1, 0, 0, 0, 0, 0, 0, 0],
-                [0, 1, 0, 0, 0, 0, 0, 0],
-                [0, 0, 1, 0, 0, 0, 0, 0],
-                [0, 0, 0, 1, 0, 0, 0, 0],
-                [0, 0, 0, 0, 1, 0, 0, 0],
-                [0, 0, 0, 0, 0, 0, 1, 0],
-                [0, 0, 0, 0, 0, 1, 0, 0],
+            [1, 0, 0, 0, 0, 0, 0, 0],
+            [0, 1, 0, 0, 0, 0, 0, 0],
+            [0, 0, 1, 0, 0, 0, 0, 0],
+            [0, 0, 0, 1, 0, 0, 0, 0],
+            [0, 0, 0, 0, 1, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 1, 0],
+            [0, 0, 0, 0, 0, 1, 0, 0],
             [0, 0, 0, 0, 0, 0, 0, 1]
         ], dtype=self._precision)
 

@@ -8,7 +8,7 @@ class GateQubitAssignedError(QuICTException):
 
 
 class GateParametersAssignedError(QuICTException):
-    """ Gate's qubit assign Error. """
+    """ Gate's Parameter Error. """
     def __init__(self, msg: str = None):
         super().__init__(1017, msg)
 
@@ -28,5 +28,4 @@ class GateMatrixError(QuICTException):
 class CompositeGateAppendError(QuICTException):
     """ CompositeGate append error. """
     def __init__(self, msg: str = None):
-        super().__init__(1019, msg)
-
+        super().__init__(1020, msg)

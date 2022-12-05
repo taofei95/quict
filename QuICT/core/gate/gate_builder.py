@@ -15,6 +15,7 @@ from QuICT.tools.exception.core import GateQubitAssignedError
 
 GATE_TYPE_TO_CLASS = {
     GateType.h: HGate,
+    GateType.hy: HYGate,
     GateType.s: SGate,
     GateType.sdg: SDaggerGate,
     GateType.x: XGate,
@@ -45,6 +46,7 @@ GATE_TYPE_TO_CLASS = {
     GateType.rxx: RxxGate,
     GateType.ryy: RyyGate,
     GateType.rzz: RzzGate,
+    GateType.rzx: RzxGate,
     GateType.swap: SwapGate,
     GateType.cswap: CSwapGate,
     GateType.ccx: CCXGate,

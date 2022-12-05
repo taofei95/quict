@@ -193,8 +193,8 @@ class TestSample(unittest.TestCase):
         assert c[0] + c[-1] == 100
 
         # make the running times as shots
-        sim = Simulator(device="GPU", shots=100)
-        s = sim.run(TestSample.cir)
+        sim = Simulator(device="CPU")
+        s = sim.run(TestSample.cir, shots=100)
         a = s["data"]["counts"]
         assert a['0000'] + a['1111'] == 100
 

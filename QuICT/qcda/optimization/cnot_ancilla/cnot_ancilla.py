@@ -12,7 +12,7 @@ import numpy as np
 from QuICT.core import *
 from QuICT.core.gate import CX, CompositeGate, GateType
 from QuICT.qcda.utility import OutputAligner
-from QuICT.tools.exception.core import CircuitQubitsError, CircuitAppendError
+from QuICT.tools.exception.core import ValueError, CircuitAppendError
 
 
 class CnotAncilla(object):
@@ -43,7 +43,7 @@ class CnotAncilla(object):
         # transform the CNOT circuit into a matrix with 0 and 1
         self.width = circuit.width()
         if self.width < 4:
-            raise CircuitQubitsError("the qubit number of circuit n should greater than or equal 4")
+            raise ValueError("CnotAncilla.circuit.width", ">= 4", self.width)
         matrix = np.identity(self.width, dtype=bool)
         for gate in circuit.gates:
             if gate.type != GateType.cx:
