@@ -41,13 +41,6 @@ class JobValidation:
         }
 
     @staticmethod
-    def output_path_prepare(job_name: str, output_path: str):
-        # output-path preparation
-        output_path = os.path.join(output_path, job_name)
-        if not os.path.exists(output_path):
-            os.makedirs(output_path)
-
-    @staticmethod
     def load_yaml_file(file_path: str) -> dict:
         with open(os.path.abspath(file_path), encoding='utf-8') as yml:
             job_info = yaml.load(yml)
@@ -120,7 +113,6 @@ class JobValidation:
         del qcda_dict["mapping"]
         qcda_dict["methods"] = "+".join(methods)
 
-    @classmethod
     def job_complement(self, info: dict, job_type: str):
         default_job_path = os.path.join(self._job_template_path, "quict_job.yml")
         default_job_dict = JobValidation.load_yaml_file(default_job_path)
@@ -184,7 +176,6 @@ class JobValidation:
             job_info["qcda"] = required_info
 
         # Step 4: Prepare output path
-        JobValidation.output_path_prepare(job_info["job_name"], job_info["output_path"])
         job_info["output_path"] = os.path.join(job_info["output_path"], job_info["job_name"])
 
         return job_info

@@ -1,6 +1,7 @@
 import os
 import psutil
 import subprocess
+import shutil
 from typing import Union, Dict
 
 from QuICT.tools import Logger
@@ -12,7 +13,7 @@ from .utils import SQLManager
 logger = Logger("Job_Management_Local_Mode", LogFormat.full)
 
 
-class QuICTLocalJobManager:
+class QuICTLocalManager:
     """ QuICT Job Management for the Local Mode. Using SQL to store running-time information. """
     def __init__(self):
         self._sql_connect = SQLManager()
@@ -28,6 +29,12 @@ class QuICTLocalJobManager:
         # Update given job's status
         self._update_job_status(name)
         return True
+
+    def _job_prepare(self, output_path: str, circuit_path: str):
+        if not os.path.exists(output_path):
+            os.makedirs(output_path)
+
+        shutil.copyfile(circuit_path, os.path.join(output_path, "circuit.qasm"))
 
     def start_job(self, job_file: Union[str, Dict]):
         """ Start the job describe by the given yaml file.
@@ -54,6 +61,7 @@ class QuICTLocalJobManager:
         job_options = {}
         job_options["circuit_path"] = yml_dict["circuit"]
         job_options["output_path"] = yml_dict["output_path"]
+        self._job_prepare(job_options["output_path"], job_options["circuit_path"])
 
         script_name = ""
         if "simulation" in yml_dict.keys():

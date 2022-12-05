@@ -1,4 +1,5 @@
 import os
+import yaml
 
 
 class JobCreator:
@@ -10,7 +11,7 @@ class JobCreator:
             "output_path": os.path.abspath('.') if output_path is None else output_path
         }
 
-    def JobSimulationSpec(self, shots: int = 100, precision: str = "double", backend: str = "state_vector"):
+    def set_simulation_spec(self, shots: int = 100, precision: str = "double", backend: str = "state_vector"):
         simulation_dict = {
             "shots": shots,
             "precision": precision,
@@ -18,7 +19,7 @@ class JobCreator:
         }
         self._job_dict["simulation"] = simulation_dict
 
-    def JobQCDASpec(
+    def set_qcda_spec(
         self,
         methods: list,
         instruction_set: str = "Google",
@@ -46,3 +47,11 @@ class JobCreator:
     @property
     def job_dict(self):
         return self._job_dict
+
+    def to_yaml(self, output_path: str = None):
+        if output_path is None:
+            job_name = self._job_dict['job_name']
+            output_path = os.path.join(os.path.abspath('.'), f"{job_name}.yml")
+
+        with open(output_path, 'w') as save_file:
+            save_file.write(yaml.dump(self._job_dict, allow_unicode=True))

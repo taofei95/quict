@@ -2,11 +2,11 @@ import os
 import shutil
 
 from QuICT.tools.cli.utils import path_check
-from QuICT.tools.cli.client import QuICTLocalJobManager
+from QuICT.tools.cli.client import QuICTLocalManager
 
 
 # Local Controller
-local_job_manager = QuICTLocalJobManager()
+local_job_manager = QuICTLocalManager()
 
 
 @path_check
