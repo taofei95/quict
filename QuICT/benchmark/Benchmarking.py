@@ -4,7 +4,7 @@ from QuICT.core.circuit.circuit import Circuit
 from QuICT.core.gate.gate import *
 from QuICT.core.layout.layout import Layout
 from QuICT.core.utils.gate_type import GateType
-from QuICT.lib.circuitlib.circuitlib import CircuitLib
+from QuICT.tools.circuit_library import CircuitLib
 from QuICT.qcda.qcda import QCDA
 import scipy.stats
 from QuICT.simulation.state_vector import ConstantStateVectorSimulator

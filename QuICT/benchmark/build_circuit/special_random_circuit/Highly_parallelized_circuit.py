@@ -55,14 +55,6 @@ def Hp_circuit_build(
 
     return cir
 
-# g2 = cir.count_2qubit_gate()
-# P = (cir.size()/cir.depth() -1)/(5 - 1)
-# print(P)
-# print(cir.size(), cir.depth(), g2)
-
-# f = open("Highly_paralleized_circuit.qasm", 'w+')
-# f.write(cir.qasm())
-
 
 gate_multiply = []
 for i in range(5, 26):
@@ -72,11 +64,11 @@ folder_path = "QuICT/lib/circuitlib/circuit_qasm/random/Highly_parallelized"
 if not os.path.exists(folder_path):
     os.makedirs(folder_path)
 
-for q_num in range(2, 31):
-    for gm in gate_multiply:
-            for i in range(1):
-                cir = Hp_circuit_build(q_num, q_num * gm, random_params=True)
-                file = open(folder_path + '/' + f"w{q_num}_s{cir.size()}_d{cir.depth()}.qasm",'w+')
-                file.write(cir.qasm())
-                file.close()
+# for q_num in range(2, 31):
+#     for gm in gate_multiply:
+#             for i in range(1):
+#                 cir = Hp_circuit_build(q_num, q_num * gm, random_params=True)
+#                 file = open(folder_path + '/' + f"w{q_num}_s{cir.size()}_d{cir.depth()}.qasm",'w+')
+#                 file.write(cir.qasm())
+#                 file.close()
 

@@ -1,16 +1,12 @@
-from itertools import chain
+from itertools import groupby
 import math
-import os
-from imp import reload
-from typing import Dict, List, Tuple
-import matplotlib as mpl
-import matplotlib.pyplot as plt
+import scipy
 import numpy as np
 import pandas as pd
-import scipy
+import matplotlib as mpl
+from typing import List, Tuple
 
-from QuICT.core.utils.gate_type import GateType
-from QuICT.lib.circuitlib.circuitlib import CircuitLib
+from QuICT.tools.circuit_library import CircuitLib
 from QuICT.qcda.qcda import QCDA
 from QuICT.qcda.synthesis.gate_transform.instruction_set import InstructionSet
 from QuICT.simulation.state_vector.cpu_simulator.cpu import CircuitSimulator
@@ -100,16 +96,18 @@ class QuICTBenchmark:
             from: Return the benchmark result.
         """
         # Step 1: Circuits group by fields
+        cirs_field_mapping = []
         for circuit in circuit_list:
-            # for result in result_list:
-            field = (circuit.name).split('+')[0]
-            cirs_field_mapping = {f"{field}": [(circuit)]}
+            for result in result_list:
+                field = (circuit.name).split('+')[0]
+                cirs_field_map = {f"{field}": [circuit, result]}
+            cirs_field_mapping.append(cirs_field_map)
 
-        # Step 2: Score for each fields in step 1
-        for field in cirs_field_mapping:
-            score_list, result_list = self._field_score(field, cirs_field_mapping[f"{field}"])
+        # # Step 2: Score for each fields in step 1
+        for field, group in cirs_field_mapping:
+            score_list, result_list = self._field_score(field, list(group))
 
-        # Step 3: Show Result
+        # # Step 3: Show Result
         result_dict = {"circuit_width":circuit.width(),
                     "circuit_size": circuit.size(),
                    "circuit_depth": circuit.depth(),
@@ -121,11 +119,11 @@ class QuICTBenchmark:
         
         self.show_result(result_dict, output_type)
         
-        return result_dict
+        return cirs_field_mapping
         
     def _field_score(self, field: str, circuit_result_mapping: List[Tuple]):
         # field score
-        for circuit, result in circuit_result_mapping[f"{field}"]:
+        for circuit, result in circuit_result_mapping:
         # Step 1: score each circuit by kl, cross_en, l2 value
             based_score = self._circuit_score(circuit, result)
 

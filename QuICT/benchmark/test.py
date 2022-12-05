@@ -4,36 +4,26 @@ import os
 
 import matplotlib as mpl
 from matplotlib import pyplot as plt
-from QuICT.benchmark import Benchmarking
 from QuICT.benchmark.benchmark import QuICTBenchmark
 from QuICT.core.gate.gate import *
 from QuICT.core.utils.gate_type import GateType
-from QuICT.lib.circuitlib.circuit_lib_sql import CircuitLibDB
-from QuICT.lib.circuitlib.circuitlib import CircuitLib
+from QuICT.simulation.state_vector.cpu_simulator.cpu import CircuitSimulator
+from QuICT.tools.circuit_library import *
 from QuICT.qcda.qcda import QCDA
 from QuICT.qcda.synthesis.gate_transform.instruction_set import InstructionSet
 
-# bench = QuICTBenchmark("circuit", "Graph")
-# # a_list = [GateType.cx, [GateType.h, GateType.rx, GateType.ry, GateType.rz]]
-# cir_list, _ = bench.get_circuit(["highly_entangled"], 10, 20, 20)
+bench = QuICTBenchmark("circuit", "Graph")
+a_list = [GateType.cx, [GateType.h, GateType.rx, GateType.ry, GateType.rz]]
+cir_list, cir_qcda_list = bench.get_circuit(["google"], 3, 20, 10, InSet=a_list)
+result = [[-0.25-0.10355339j, 0.60355339-0.25j, 0.25+0.10355339j, -0.60355339+0.25j], 
+[-2.50000000e-01-0.25j, -1.38777878e-16+0.85355339j, -1.11022302e-16-0.14644661j -2.50000000e-01+0.25j]]
 
-# ev = bench.evaluate(cir_list)
-# print(ev)
-    
-mpl.rcParams['font.sans-serif'] = ['SimHei']  # 添加这条可以让图形显示中文
+# print(cir_list)
+ev = bench.evaluate(circuit_list=cir_list, result_list=result)
+print(ev)
 
-x_axis_data = [1, 2, 3, 4, 5]
-y_axis_data = [1, 2, 3, 4, 5]
+# [{'instructionset': [<QuICT.core.circuit.circuit.Circuit object at 0x7f1d3c5b9d00>, [(-0.25-0.25j), (-1.38777878e-16+0.85355339j), (-0.2500000000000001+0.10355339j)]]}, {'instructionset': [<QuICT.core.circuit.circuit.Circuit object at 0x7f1d56ea7a60>, [(-0.25-0.25j), (-1.38777878e-16+0.85355339j), (-0.2500000000000001+0.10355339j)]]}]    
 
-# plot中参数的含义分别是横轴值，纵轴值，线的形状，颜色，透明度,线的宽度和标签
-plt.plot(x_axis_data, y_axis_data, 'ro-', color='#4169E1', alpha=0.8, linewidth=1, label='一些数字')
-
-# 显示标签，如果不加这句，即使在plot中加了label='一些数字'的参数，最终还是不会显示标签
-plt.legend(loc="upper right")
-plt.xlabel('x轴数字')
-plt.ylabel('y轴数字')
-
-plt.savefig('benchmark line show.jpg') 
 # for cir in cir_list:
 #     cir_list2, cir_list_onequbit, cir_list_twoqubit, InSet , cir_list3, one_list = [], [], [], [], [], []
 #     qcda = QCDA()
