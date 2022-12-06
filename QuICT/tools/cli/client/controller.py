@@ -17,7 +17,6 @@ class QuICTLocalManager:
     """ QuICT Job Management for the Local Mode. Using SQL to store running-time information. """
     def __init__(self):
         self._sql_connect = SQLManager()
-        self._job_validation = JobValidation()
 
     def _name_validation(self, name) -> bool:
         if not self._sql_connect.job_validation(name):
@@ -43,7 +42,7 @@ class QuICTLocalManager:
             job_file (str|dict): The given job's file path or job information dict
         """
         # Validation job_files
-        job_info = self._job_validation.job_validation(job_file)
+        job_info = JobValidation().job_validation(job_file)
 
         # Check job name
         name = job_info["job_name"]

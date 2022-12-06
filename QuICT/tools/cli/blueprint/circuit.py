@@ -3,7 +3,7 @@ import shutil
 import subprocess
 
 from QuICT.tools import Logger
-from QuICT.tools.cli.utils import path_check, JobValidation
+from QuICT.tools.cli.utils import JobValidation
 
 
 logger = Logger("CLI_Circuit_Management")
@@ -16,7 +16,6 @@ default_customed_circuit_folder = os.path.join(
 )
 
 
-@path_check
 def get_random_circuit(
     qubits: list,
     size: list,
@@ -33,6 +32,9 @@ def get_random_circuit(
         instruction_set (str, optional): The given instruction sets. Defaults to "random".
         output_path (str, optional): The output folder. Defaults to current work dir.
     """
+    if not os.path.exists(output_path):
+        os.makedirs(output_path)
+
     str_qubit = "-".join([str(q) for q in qubits])
     str_size = "-".join([str(s) for s in size])
     command_file_path = os.path.join(
@@ -49,9 +51,11 @@ def get_random_circuit(
         logger.warn(f"Failure to generate random circuit, due to {e}")
 
 
-@path_check
 def get_algorithm_circuit(alg: str, qubits: list, output_path: str = "."):
     """ Get the algorithm circuit and write its qasm into output path. """
+    if not os.path.exists(output_path):
+        os.makedirs(output_path)
+
     str_qubit = "-".join([str(q) for q in qubits])
     command_file_path = os.path.join(
         os.path.dirname(__file__),

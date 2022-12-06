@@ -1,5 +1,4 @@
 from QuICT.tools.cli.client import QuICTRemoteManager
-from QuICT.tools.cli.utils import yaml_decompostion
 
 
 remote_manager = QuICTRemoteManager()
@@ -13,17 +12,16 @@ def logout():
     remote_manager.logout()
 
 
-@yaml_decompostion
+def register(username, password, email):
+    remote_manager.register(username, password, email)
+
+
+def unsubscribe(username, password):
+    remote_manager.unsubscribe(username, password)
+
+
 def start_job(file: dict):
     remote_manager.start_job(file)
-
-
-def stop_job(name: str):
-    remote_manager.stop_job(name)
-
-
-def restart_job(name: str):
-    remote_manager.restart_job(name)
 
 
 def delete_job(name: str):

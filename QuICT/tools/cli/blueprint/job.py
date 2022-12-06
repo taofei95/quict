@@ -1,7 +1,6 @@
 import os
 import shutil
 
-from QuICT.tools.cli.utils import path_check
 from QuICT.tools.cli.client import QuICTLocalManager
 
 
@@ -9,13 +8,14 @@ from QuICT.tools.cli.client import QuICTLocalManager
 local_job_manager = QuICTLocalManager()
 
 
-@path_check
 def get_template(output_path: str):
+    if not os.path.exists(output_path):
+        os.makedirs(output_path)
+
     tempfile_path = os.path.join(
         os.path.dirname(__file__),
         "../template/quict_job.yml"
     )
-
     shutil.copy(tempfile_path, output_path)
 
 
