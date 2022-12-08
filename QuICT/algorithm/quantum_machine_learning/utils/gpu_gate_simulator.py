@@ -199,11 +199,6 @@ def apply_gate(gate, default_parameters, algorithm, fp):
     # [Rzx]
     elif matrix_type == MatrixType.diag_normal:
         apply_diagonal_normal_matrix(gate, default_parameters, algorithm, n_qubits, fp)
-    # [Measure, Reset]
-    # elif gate.type in [GateType.measure, GateType.reset]:
-    #     index = n_qubits - 1 - gate.targ
-    #     prob = self.get_measured_prob(index).get()
-    #     self.apply_specialgate(index, gate_type, prob)
 
     state_out = torch.from_dlpack(cupy_state)
     return state_out
@@ -277,15 +272,93 @@ class Applygate(torch.autograd.Function):
     def backward(ctx, grad_output):
         (grad,) = ctx.saved_tensors
         grad = grad_output * grad
-        return None, None, grad.real, None, None, None
+        return None, None, grad.real, None, None
 
 
-def gpu_forward(state, ansatz, n_qubits):
+prob_grad_single_kernel = cp.RawKernel(
+    r"""
+    #include <cupy/complex.cuh>
+    extern "C" __global__
+    void ProbGradSingle(const int index, complex<float>* vec) {
+        int label = blockDim.x * blockIdx.x + threadIdx.x;
+        const int offset = 1 << index;
+        
+        int _1 = (label & ((1 << index) - 1)) + (label >> index << (index + 1));
+        int _0 = _1 + offset;
+        
+        vec[_0] = 0.0;
+        vec[_1] = 2.0 * vec[_1];
+    }
+    """,
+    "ProbGradSingle",
+)
+
+
+prob_grad_double_kernel = cp.RawKernel(
+    r"""
+    #include <cupy/complex.cuh>
+    extern "C" __global__
+    void ProbGradDouble(const int index, complex<double>* vec) {
+        int label = blockDim.x * blockIdx.x + threadIdx.x;
+        const int offset = 1 << index;
+        
+        int _1 = (label & ((1 << index) - 1)) + (label >> index << (index + 1));
+        int _0 = _1 + offset;
+        
+        vec[_0] = 0.0;
+        vec[_1] = 2.0 * vec[_1];
+    }
+    """,
+    "ProbGradDouble",
+)
+
+
+def measured_prob_grad(index, cupy_state, n_qubits):
+    # Kernel function preparation
+    task_number = 1 << (n_qubits - 1)
+    thread_per_block = min(256, task_number)
+    block_num = task_number // thread_per_block
+    kernel_functions = (
+        prob_grad_double_kernel
+        if cupy_state.dtype == np.complex128
+        else prob_grad_single_kernel
+    )
+    kernel_functions((block_num,), (thread_per_block,), (index, cupy_state))
+    cp.cuda.Device().synchronize()
+
+    grad = torch.from_dlpack(cupy_state)
+    return grad
+
+
+class MeasureProb(torch.autograd.Function):
+    @staticmethod
+    def forward(ctx, index, state, algorithm, n_qubits):
+        ctx.index = index
+        ctx.state = state
+        ctx.n_qubits = n_qubits
+
+        cupy_state = cp.from_dlpack(state.detach().clone())
+        prob = algorithm.measured_prob_calculate(
+            index, cupy_state, n_qubits, all_measured=False, sync=True
+        )
+        prob = torch.from_dlpack(prob)
+        return prob
+
+    @staticmethod
+    def backward(ctx, grad_output):
+        cupy_state = cp.from_dlpack(ctx.state.detach().clone())
+        grad = measured_prob_grad(ctx.index, cupy_state, ctx.n_qubits)
+        grad = grad_output * grad
+        return None, grad, None, None
+
+
+def gpu_forward(ansatz, n_qubits, state=None, readout=None):
     algorithm = LinAlgLoader(
         device="GPU",
         enable_gate_kernel=True,
         enable_multigpu_gate_kernel=False,
     )
+    prob = None
 
     if state is None:
         state = torch.zeros(1 << n_qubits, dtype=torch.complex128).to(ansatz.device)
@@ -299,119 +372,9 @@ def gpu_forward(state, ansatz, n_qubits):
 
     params = torch.stack(ansatz.trainable_pargs)
     state = Applygate.apply(state, ansatz, params, algorithm, n_qubits)
-    return state, None
 
-
-class Net(torch.nn.Module):
-    def __init__(self):
-        super(Net, self).__init__()
-        self.n_qubit = 4
-        self.device = torch.device("cuda:0")
-        self.params = torch.nn.Parameter(
-            torch.tensor([[-0.1456], [0.1234]]).to(self.device),
-            requires_grad=True,
-        )
-
-    def forward(self):
-        ansatz_gpu = Ansatz(self.n_qubit)
-        ansatz_gpu.add_gate(H_tensor)
-        ansatz_gpu.add_gate(Rz_tensor(0.333), 0)
-        ansatz_gpu.add_gate(Rx_tensor(self.params[1]), 0)
-        ansatz_gpu.add_gate(Ry_tensor(0.211), 1)
-        ansatz_gpu.add_gate(Rz_tensor(self.params[1]), 0)
-        ansatz_gpu.add_gate(Rzx_tensor(-self.params[0]), [1, 3])
-        ansatz_gpu.add_gate(Rxx_tensor(self.params[1]), [1, 0])
-
-        state = None
-        state, _ = gpu_forward(state, ansatz_gpu, self.n_qubit)
-        return state
-
-
-class CPUNet(torch.nn.Module):
-    def __init__(self):
-        super(CPUNet, self).__init__()
-        self.n_qubit = 4
-        self.device = torch.device("cpu")
-        self.params = torch.nn.Parameter(
-            torch.tensor([[-0.1456], [0.1234]]).to(self.device),
-            requires_grad=True,
-        )
-
-    def forward(self):
-        ansatz_cpu = Ansatz(self.n_qubit, device=self.device)
-        ansatz_cpu.add_gate(H_tensor)
-        ansatz_cpu.add_gate(Rz_tensor(0.333), 0)
-        ansatz_cpu.add_gate(Rz_tensor(self.params[1]), 0)
-        ansatz_cpu.add_gate(Rz_tensor(0.211), 1)
-        ansatz_cpu.add_gate(Rz_tensor(self.params[1]), 0)
-
-        state, _ = ansatz_cpu.forward()
-        return state
-
-
-def seed(seed: int):
-    """Set random seed.
-
-    Args:
-        seed (int): The random seed.
-    """
-    torch.manual_seed(seed)
-    torch.cuda.manual_seed_all(seed)
-    np.random.seed(seed)
-    random.seed(seed)
-    torch.backends.cudnn.deterministic = True
-
-
-if __name__ == "__main__":
-    from QuICT.algorithm.quantum_machine_learning.utils import Ansatz
-
-    seed(0)
-    device = torch.device("cuda:0")
-
-    net = Net()
-    optimizer = torch.optim.SGD
-    optim = optimizer([dict(params=net.parameters(), lr=0.01)])
-    net.train()
-
-    cpu_net = CPUNet()
-    optim_cpu = optimizer([dict(params=cpu_net.parameters(), lr=0.01)])
-    cpu_net.train()
-    aim_state = torch.tensor(
-        [
-            0.25,
-            0.25,
-            0.25,
-            0.25,
-            0.25,
-            0.25,
-            0.25,
-            0.25,
-            0.25,
-            0.25,
-            0.25,
-            0.25,
-            0.25,
-            0.25,
-            0.25,
-            0.25,
-        ],
-        dtype=torch.complex128,
-    )
-
-    for i in range(1):
-        print("Iteration", i)
-        optim.zero_grad()
-        optim_cpu.zero_grad()
-        state = net()
-        state_cpu = cpu_net()
-        print(torch.dist(state.cpu(), state_cpu))
-        print("-----------------------------")
-        loss = torch.dist(state, aim_state.to(device), p=2)
-        loss_cpu = torch.dist(state_cpu, aim_state, p=2)
-        loss.backward()
-        loss_cpu.backward()
-        print("grad - gpu", net.params.grad)
-        print("grad - cpu", cpu_net.params.grad)
-        print("-----------------------------")
-        optim.step()
-        optim_cpu.step()
+    if readout is not None:
+        assert 0 <= readout <= n_qubits
+        prob_1 = MeasureProb.apply(readout, state, algorithm, n_qubits)
+        prob = [1 - prob_1, prob_1]
+    return state, prob
