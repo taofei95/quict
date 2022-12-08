@@ -242,7 +242,7 @@ class BasicGateTensor(object):
             "GateType.rx": Rx_tensor,
             "GateType.ry": Ry_tensor,
             "GateType.rz": Rz_tensor,
-            "GateType.ri": RI_tensor,
+            "GateType.gphase": GPhase_tensor,
             "GateType.rxx": Rxx_tensor,
             "GateType.ryy": Ryy_tensor,
             "GateType.rzz": Rzz_tensor,
@@ -291,11 +291,10 @@ class BasicGateTensor(object):
 
         return gate
 
-    @staticmethod
-    def permit_element(element):
-        """judge whether the type of a parameter is int/float/complex/torch.Tensor
+    def permit_element(self, element):
+        """judge whether the type of a parameter is int/float/complex
 
-        for a quantum gate, the parameter should be int/float/complex/torch.Tensor
+        for a quantum gate, the parameter should be int/float/complex
 
         Args:
             element: the element to be judged
@@ -303,14 +302,9 @@ class BasicGateTensor(object):
         Returns:
             bool: True if the type of element is int/float/complex/torch.Tensor
         """
-        if (
-            isinstance(element, int)
-            or isinstance(element, float)
-            or isinstance(element, complex)
-            or isinstance(element, torch.Tensor)
-        ):
-            return True
-        return False
+        if not isinstance(element, (int, float, complex, torch.Tensor)):
+            raise TypeError(self.type, "int/float/complex/torch.Tensor", type(element))
+        return True
 
 
 class HGate(BasicGateTensor):
@@ -477,8 +471,7 @@ class RxGate(BasicGateTensor):
         self.pargs = params
 
     def __call__(self, alpha):
-        if not self.permit_element(alpha):
-            raise TypeError("int/float/complex/torch.Tensor", alpha)
+        self.permit_element(alpha)
 
         return (
             RxGate(alpha)
@@ -519,8 +512,7 @@ class RyGate(BasicGateTensor):
         self.pargs = params
 
     def __call__(self, alpha):
-        if not self.permit_element(alpha):
-            raise TypeError("int/float/complex/torch.Tensor", alpha)
+        self.permit_element(alpha)
 
         return (
             RyGate(alpha)
@@ -567,8 +559,7 @@ class RzGate(BasicGateTensor):
         self.pargs = params
 
     def __call__(self, alpha):
-        if not self.permit_element(alpha):
-            raise TypeError("int/float/complex/torch.Tensor", alpha)
+        self.permit_element(alpha)
 
         return (
             RzGate(alpha)
@@ -604,15 +595,14 @@ class GlobalPhaseGate(BasicGateTensor):
             controls=0,
             targets=1,
             params=1,
-            type_=GateType.gphase,
+            type=GateType.gphase,
             matrix_type=MatrixType.diagonal,
         )
         self._qasm_name = "phase"
         self.pargs = params
 
     def __call__(self, alpha):
-        if not self.permit_element(alpha):
-            raise TypeError("int/float/complex/torch.Tensor", alpha)
+        self.permit_element(alpha)
 
         return (
             GlobalPhaseGate(alpha)
@@ -639,7 +629,7 @@ class GlobalPhaseGate(BasicGateTensor):
     @property
     def matrix(self):
         return torch.tensor(
-            [[np.exp(self.parg * 1j), 0], [0, np.exp(self.parg * 1j)]],
+            [[torch.exp(self.parg * 1j), 0], [0, torch.exp(self.parg * 1j)]],
             dtype=self._precision,
         ).to(self.device)
 
@@ -672,8 +662,7 @@ class RxxGate(BasicGateTensor):
         self.pargs = params
 
     def __call__(self, alpha):
-        if not self.permit_element(alpha):
-            raise TypeError("int/float/complex/torch.Tensor", alpha)
+        self.permit_element(alpha)
 
         return (
             RxxGate(alpha)
@@ -722,8 +711,7 @@ class RyyGate(BasicGateTensor):
         self.pargs = params
 
     def __call__(self, alpha):
-        if not self.permit_element(alpha):
-            raise TypeError("int/float/complex/torch.Tensor", alpha)
+        self.permit_element(alpha)
 
         return (
             RyyGate(alpha)
@@ -770,8 +758,7 @@ class RzzGate(BasicGateTensor):
         self.pargs = params
 
     def __call__(self, alpha):
-        if not self.permit_element(alpha):
-            raise TypeError("int/float/complex/torch.Tensor", alpha)
+        self.permit_element(alpha)
 
         return (
             RzzGate(alpha)
@@ -816,8 +803,7 @@ class RzxGate(BasicGateTensor):
         self.pargs = params
 
     def __call__(self, alpha):
-        if not self.permit_element(alpha):
-            raise TypeError("int/float/complex/torch.Tensor", alpha)
+        self.permit_element(alpha)
 
         return (
             RzxGate(alpha)

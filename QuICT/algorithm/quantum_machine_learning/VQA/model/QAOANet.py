@@ -2,6 +2,9 @@ import torch
 import torch.nn
 
 from QuICT.algorithm.quantum_machine_learning.utils import Ansatz, Hamiltonian
+from QuICT.algorithm.quantum_machine_learning.utils.gpu_gate_simulator import (
+    gpu_forward,
+)
 from QuICT.algorithm.quantum_machine_learning.utils.gate_tensor import *
 from QuICT.algorithm.quantum_machine_learning.VQA.model import VQENet
 from QuICT.core import Circuit
@@ -36,11 +39,8 @@ class QAOANet(VQENet):
 
     def define_network(self):
         """Define the network parameters to be trained."""
-        self.beta = torch.nn.Parameter(
-            torch.rand(self.p, device=self.device), requires_grad=True
-        )
-        self.gamma = torch.nn.Parameter(
-            torch.rand(self.p, device=self.device), requires_grad=True
+        self.params = torch.nn.Parameter(
+            torch.rand(2, self.p, device=self.device), requires_grad=True
         )
 
     def forward(self, state=None):
@@ -54,7 +54,10 @@ class QAOANet(VQENet):
             torch.Tensor: The output state vector.
         """
         ansatz = self.construct_ansatz()
-        state, _ = ansatz.forward(state)
+        if self.device.type == "cpu":
+            state, _ = ansatz.forward(state)
+        else:
+            state, _ = gpu_forward(state, ansatz, self.n_qubits)
         return state
 
     def _construct_U_gamma_layer(self, gamma):
@@ -89,7 +92,7 @@ class QAOANet(VQENet):
 
             # Only coeff
             else:
-                ansatz.add_gate(RI_tensor(-coeff))
+                ansatz.add_gate(GPhase_tensor(-coeff))
 
         return ansatz
 
@@ -120,11 +123,11 @@ class QAOANet(VQENet):
 
         for p in range(self.p):
             # construct U_gamma
-            U_gamma = self._construct_U_gamma_layer(self.gamma[p])
+            U_gamma = self._construct_U_gamma_layer(self.params[0, p])
             ansatz = ansatz + U_gamma
 
             # construct U_beta
-            U_beta = Rx_tensor(2 * self.beta[p])
+            U_beta = Rx_tensor(2 * self.params[1, p])
             ansatz.add_gate(U_beta)
 
         return ansatz
@@ -162,7 +165,7 @@ class QAOANet(VQENet):
 
             # Only coeff
             else:
-                RI | circuit
+                GPhase | circuit
 
         return circuit
 
@@ -187,8 +190,8 @@ class QAOANet(VQENet):
         Returns:
             Circuit: The QAOA circuit.
         """
-        gamma = self.gamma.cpu().detach().numpy()
-        beta = self.beta.cpu().detach().numpy()
+        gamma = self.params[0].cpu().detach().numpy()
+        beta = self.params[1].cpu().detach().numpy()
         circuit = Circuit(self.n_qubits)
         # initialize state vector
         H | circuit

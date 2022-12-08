@@ -63,16 +63,9 @@ class MaxCut:
     def _result(self):
         """Solve the number of maxcut and cut edges according to the state."""
         cut_edges = []
-        for u in range(self._n):
-            for v in range(u + 1, self._n):
-                if (
-                    (u, v) in self._edges or
-                    (v, u) in self._edges or
-                    [u, v] in self._edges or
-                    [v, u] in self._edges
-                ):
-                    if self.solution_bit[u] != self.solution_bit[v]:
-                        cut_edges.append((u, v))
+        for (u, v) in self._edges:
+            if self.solution_bit[u] != self.solution_bit[v]:
+                cut_edges.append((u, v))
 
         max_cut_num = len(cut_edges)
         return max_cut_num, cut_edges
