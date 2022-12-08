@@ -44,7 +44,7 @@ class SQLManager:
         self._cursor.execute('CREATE TABLE JOB_INFO(NAME text unique, STATUS text, PID INT)')
         self._cursor.execute(
             'CREATE TABLE USER_LOGIN_INFO(' +
-            'ID INTEGER PRIMARY KEY AUTOINCREMENT, NAME text unique, PASSWORD text, LOGINTIME text)'
+            'ID INT, NAME text unique, PASSWORD text, LOGINTIME text)'
         )
 
     ####################################################################
@@ -62,8 +62,8 @@ class SQLManager:
 
         if self.get_login_info() is None:
             self._cursor.execute(
-                "INSERT INTO USER_LOGIN_INFO(NAME, PASSWORD, LOGINTIME)" +
-                f"VALUES (\'{username}\', \'{password}\', \'{login_time}\')"
+                "INSERT INTO USER_LOGIN_INFO(ID, NAME, PASSWORD, LOGINTIME)" +
+                f"VALUES (1, \'{username}\', \'{password}\', \'{login_time}\')"
             )
         else:
             self._cursor.execute(
@@ -76,14 +76,15 @@ class SQLManager:
 
     def user_logout(self):
         """ Clean current login information in database. """
-        self._cursor.execute("DELETE FROM USER_LOGIN_INFO WHERE ID = \'1\'")
+        self._cursor.execute("DELETE FROM USER_LOGIN_INFO WHERE ID = \'3\'")
+        self._connect.commit()
 
     def login_validation(self) -> bool:
         """ validation the login information including successful login user and expired time. """
-        if self._cursor.lastrowid == 0:
+        user_info = self.get_login_info()
+        if user_info is None:
             return False, "Please login first."
 
-        user_info = self.get_login_info()
         # login time check
         current_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         login_time = user_info[3]
@@ -100,7 +101,7 @@ class SQLManager:
         Returns:
             tuple: (id, username, password, logintime)
         """
-        self._cursor.execute('SELECT * FROM USER_LOGIN_INFO WHERE ID=\'1\'')
+        self._cursor.execute('SELECT * FROM USER_LOGIN_INFO')
         return self._cursor.fetchone()
 
     ####################################################################

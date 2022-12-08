@@ -99,7 +99,12 @@ class QuICTRemoteManager:
             self._logger.info(f"Successfully register with username {username}.")
 
     def unsubscribe(self, username: str, password: str):
-        """ delete user's account. """
+        """ delete user's account.
+
+        Args:
+            username (str): The username
+            password (str): The password
+        """
         encrypted_passwd = self._encrypt.encrypted_passwd(password)
         success = self._encryptedrequest.post(
             f"{self._url_prefix}/env/unsubscribe",
