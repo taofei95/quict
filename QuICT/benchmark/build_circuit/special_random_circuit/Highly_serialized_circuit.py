@@ -7,7 +7,7 @@ from QuICT.core.gate import *
 # get Highly serialized circuit
 def Hs_circuit_build(
     qubits: int,
-    rand_size: int ,
+    rand_size: int,
 ):
     cir = Circuit(qubits)
     qubit_indexes = list(range(qubits))
@@ -17,17 +17,16 @@ def Hs_circuit_build(
     qubits_index = random.choice(qubits_indexes)
     qubits_index = qubit
     qubit_indexes.remove(qubit)
-    print(qubits_index)
     
     while cir.size() < rand_size:
         qubit_new = random.choice(qubit_indexes)
         qubits_index = [x for x in qubits_indexes if x != qubits_index]
         qubits_index = qubit_new
-        a_list = [qubit, qubit_new]
-        index_list = [random.choice(a_list), random.choice(a_list)]
+        qubits_list = [qubit, qubit_new]
+        index_list = [random.choice(qubits_list), random.choice(qubits_list)]
         if index_list[0] != index_list[1]:
             CX & (index_list)| cir
-    print(cir.draw(filename="hs"))
+    cir.draw(filename="hs")
     
 
 Hs_circuit_build(5, 10)

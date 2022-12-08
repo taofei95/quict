@@ -1,3 +1,4 @@
+import collections
 from itertools import groupby
 import math
 import scipy
@@ -57,7 +58,7 @@ class QuICTBenchmark:
         Returns:
             (List[Circuit | String] | None): Return the list of output circuit order by output_type.
         """
-        cir_alg_list, cir_bench_list, cir_ins_list, cir_qcda_list = [], [], [], []
+        cir_alg_list, cir_bench_list, cir_ins_list = [], [], []
         for field in fields:
             if field in self.__DEFAULT_CLASSIFY["algorithm"]:
                 cir_alg_list = self._circuit_lib.get_algorithm_circuit(field, max_width, max_size, max_depth)
@@ -66,8 +67,9 @@ class QuICTBenchmark:
             else:
                 cir_ins_list = self._circuit_lib.get_instructionset_circuit(field, max_width, max_size, max_depth)
                 
-            circuit_list = [*cir_alg_list, *cir_bench_list, *cir_ins_list]
+        circuit_list = cir_alg_list + cir_bench_list + cir_ins_list
         
+        cir_qcda_list = []
         for circuit in circuit_list:
             qcda = QCDA()
             if layout_file is not False:
@@ -79,6 +81,7 @@ class QuICTBenchmark:
                         
             cir_qcda = qcda.compile(circuit)
             cir_qcda_list.append(cir_qcda)
+        
             
         return circuit_list, cir_qcda_list
     
@@ -96,39 +99,45 @@ class QuICTBenchmark:
             from: Return the benchmark result.
         """
         # Step 1: Circuits group by fields
-        cirs_field_mapping = []
+        cirs_field_mapping, cirs_result_mapping = [], []
+        
+        for cir, re in zip(circuit_list, result_list):
+            cirs_result_mapping.append([cir, re])
+        
         for circuit in circuit_list:
-            for result in result_list:
-                field = (circuit.name).split('+')[0]
-                cirs_field_map = {f"{field}": [circuit, result]}
-            cirs_field_mapping.append(cirs_field_map)
+            field = (circuit.name).split('+')[0]
+            cirs_field_mapping.append((field, circuit))
+            
+            cirs_field_map = collections.defaultdict(list)
+            for field, circuit in cirs_field_mapping:
+                cirs_field_map[field].append(circuit)
+    
+        # Step 2: Score for each fields in step 1
+        for field, group in cirs_field_map.items():
+            score_list, result_list = self._field_score(field, cirs_result_mapping)
 
-        # # Step 2: Score for each fields in step 1
-        for field, group in cirs_field_mapping:
-            score_list, result_list = self._field_score(field, list(group))
-
-        # # Step 3: Show Result
-        result_dict = {"circuit_width":circuit.width(),
-                    "circuit_size": circuit.size(),
-                   "circuit_depth": circuit.depth(),
-                   "qubit_cal": score_list[0],
-                   "entropy_cal": score_list[1],
-                   "alg_cal":  score_list[2],
-                   "field_score": result_list
-                   }
+        # # # Step 3: Show Result
+        # result_dict = {"circuit_width":circuit.width(),
+        #             "circuit_size": circuit.size(),
+        #            "circuit_depth": circuit.depth(),
+        #            "qubit_cal": score_list[0],
+        #            "entropy_cal": score_list[1],
+        #            "alg_cal":  score_list[2],
+        #            "field_score": result_list
+        #            }
         
-        self.show_result(result_dict, output_type)
+        # self.show_result(result_dict, output_type)
         
-        return cirs_field_mapping
+        return score_list
         
     def _field_score(self, field: str, circuit_result_mapping: List[Tuple]):
         # field score
-        for circuit, result in circuit_result_mapping:
+        for circuit_result_group in  circuit_result_mapping:
         # Step 1: score each circuit by kl, cross_en, l2 value
-            based_score = self._circuit_score(circuit, result)
+            based_score = self._circuit_score(circuit_result_group[0], circuit_result_group[1])
 
         # Step 2: get field score from its based_score
-        qubit_cal = self._qubit_cal(circuit)
+        qubit_cal = self._qubit_cal(circuit_result_group[0])
         entropy_cal = self._entropy_cal(based_score)
         alg_cal = self._alg_cal()
         
