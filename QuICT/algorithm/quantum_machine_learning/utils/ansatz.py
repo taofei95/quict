@@ -5,7 +5,7 @@ import torch
 import time
 
 from QuICT.algorithm.quantum_machine_learning.utils.gate_tensor import *
-from QuICT.algorithm.quantum_machine_learning.utils.gpu_gate_simulator import Applygate
+from QuICT.algorithm.quantum_machine_learning.utils.gpu_gate_simulator import apply_gate
 from QuICT.core.gate import *
 from QuICT.ops.utils import LinAlgLoader
 
@@ -25,6 +25,14 @@ class Ansatz:
     def gates(self):
         return self._gates
 
+    @property
+    def trainable_pargs(self):
+        return self._trainable_pargs
+
+    @property
+    def trainable_pargs_ptr(self):
+        return self._trainable_pargs_ptr
+
     def __init__(self, n_qubits, circuit=None, device=torch.device("cuda:0")):
         """Initialize an empty Ansatz or from a Circuit.
 
@@ -37,6 +45,8 @@ class Ansatz:
         self._n_qubits = n_qubits if circuit is None else circuit.width()
         self._device = device
         self._gates = [] if circuit is None else self._gate_to_tensor(circuit.gates)
+        self._trainable_pargs = []
+        self._trainable_pargs_ptr = []
         self._algorithm = (
             None
             if device.type == "cpu"
@@ -56,10 +66,17 @@ class Ansatz:
             gate.to(self._device)
             gate.update_name("ansatz", len(ansatz._gates))
             ansatz._gates.append(gate)
+            if gate.pargs.requires_grad:
+                ansatz._trainable_pargs.append(gate.pargs)
+                ansatz._trainable_pargs_ptr.append(gate.pargs.data_ptr())
+            
         for other_gate in other._gates:
             other_gate.to(self._device)
             other_gate.update_name("ansatz", len(ansatz._gates))
             ansatz._gates.append(other_gate)
+            if other_gate.pargs.requires_grad:
+                ansatz._trainable_pargs.append(other_gate.pargs)
+                ansatz._trainable_pargs_ptr.append(other_gate.pargs.data_ptr())
         return ansatz
 
     def _gate_to_tensor(self, gates):
@@ -74,7 +91,8 @@ class Ansatz:
             gate_tensor.cargs = copy.deepcopy(gate.cargs)
             gate_tensor.matrix = torch.from_numpy(gate.matrix).to(self._device)
             gate_tensor.assigned_qubits = copy.deepcopy(gate.assigned_qubits)
-            gate_tensor.update_name(gate.assigned_qubits[0].id)
+            if gate.assigned_qubits:
+                gate_tensor.update_name(gate.assigned_qubits[0].id)
             gates_tensor.append(gate_tensor)
 
         return gates_tensor
@@ -87,7 +105,6 @@ class Ansatz:
             act_bits (Union[int, list], optional): The targets the gate acts on.
                 Defaults to None, which means the gate will act on each qubit of the ansatz.
         """
-
         assert isinstance(gate.type, GateType)
         if gate.type == GateType.unitary:
             assert isinstance(gate.matrix, torch.Tensor)
@@ -98,6 +115,11 @@ class Ansatz:
                 new_gate = gate.to(self._device)
                 new_gate.targs = [qid]
                 new_gate.update_name("ansatz", len(self._gates))
+                if new_gate.pargs.requires_grad:
+                    ptr = new_gate.pargs.data_ptr()
+                    if ptr not in self._trainable_pargs_ptr:
+                        self._trainable_pargs.append(new_gate.pargs)
+                        self._trainable_pargs_ptr.append(ptr)
                 self._gates.append(new_gate)
         else:
             new_gate = gate.to(self._device)
@@ -108,6 +130,11 @@ class Ansatz:
                 new_gate.cargs = act_bits[: new_gate.controls]
                 new_gate.targs = act_bits[new_gate.controls :]
             new_gate.update_name("ansatz", len(self._gates))
+            if new_gate.pargs.requires_grad:
+                ptr = new_gate.pargs.data_ptr()
+                if ptr not in self._trainable_pargs_ptr:
+                    self._trainable_pargs.append(new_gate.pargs)
+                    self._trainable_pargs_ptr.append(ptr)
             self._gates.append(new_gate)
 
     def _gate_validation(self, gate):
@@ -128,10 +155,10 @@ class Ansatz:
 
     def _apply_gate_gpu(self, state: torch.Tensor, gate: BasicGateTensor):
         assert state.is_cuda, "Must use GPU."
-        state = Applygate.apply(
-            state, gate, gate.pargs.requires_grad, True, self._algorithm, self._n_qubits
-        )
-        return state
+        cupy_state = cp.from_dlpack(state.detach().clone())
+        default_parameters = (cupy_state, self._n_qubits, True)
+        state_out = apply_gate(gate, default_parameters, self._algorithm, True)
+        return state_out
 
     def _apply_gate_cpu(self, state, gate_tensor, act_bits):
         """Apply a tensor gate to a state vector.
@@ -149,7 +176,7 @@ class Ansatz:
         bits_idx = [1 << i for i in range(self._n_qubits)]
         act_bits_idx = list(np.array(bits_idx)[act_bits])
         act_bits_idx.reverse()
-        inact_bits_idx = list(set(bits_idx) - (set(act_bits_idx)))
+        inact_bits_idx = list(set(bits_idx) - set(act_bits_idx))
 
         # Step 2: Get the first set of action indices.
         _act_idx = [0]
@@ -178,8 +205,7 @@ class Ansatz:
             # Step 5: Refill the state vector according to the action indices.
             for i in range(len(act_idx)):
                 state[act_idx[i]] = action_result[i]
-        cp.cuda.Device().synchronize()
-
+                
         return state
 
     def _apply_measuregate(self, qid, state):
@@ -225,6 +251,7 @@ class Ansatz:
         Returns:
             torch.Tensor: The state vector.
         """
+        prob_list = []
         if state_vector is None:
             state = torch.zeros(1 << self._n_qubits, dtype=torch.complex128).to(
                 self._device
@@ -242,7 +269,7 @@ class Ansatz:
             if gate.type == GateType.measure:
                 qid = self._n_qubits - 1 - gate.targ
                 state, prob = self._apply_measuregate(qid, state)
-                return state, prob
+                prob_list.append(prob)
             # CPU
             if self._device.type == "cpu":
                 gate_tensor = gate.matrix.to(self._device)
@@ -250,38 +277,9 @@ class Ansatz:
                 state = self._apply_gate_cpu(state, gate_tensor, act_bits)
             # GPU
             else:
-                # Non-parametric gates or gates with untrainable pargs
-                if gate.params == 0 or not gate.pargs.requires_grad:
-                    state = self._apply_gate_gpu(state, gate)
-                else:
-                    raise ValueError
+                assert (
+                    len(self._trainable_pargs) == len(self._trainable_pargs_ptr) == 0
+                ), "Only ansatz without trainable parameters could use ansatz.forward()."
+                state = self._apply_gate_gpu(state, gate)
 
-        return state, None
-
-
-if __name__ == "__main__":
-    from QuICT.simulation.state_vector import ConstantStateVectorSimulator
-    from QuICT.algorithm.quantum_machine_learning.utils.gate_tensor import *
-    from QuICT.core import Circuit
-    from QuICT.core.gate import *
-    import time
-
-    ansatz = Ansatz(16)
-    ansatz.add_gate(H_tensor)  # 0.0007s
-    s = time.time()
-    state = ansatz.forward()  # 0.02s -> 0.0025s
-    print(time.time() - s)
-
-    circuit = Circuit(16)
-    H | circuit  # 0.0006s
-    simulator = ConstantStateVectorSimulator()
-    s = time.time()
-    sv = simulator.run(circuit)
-    print(time.time() - s)  # 0.003s
-
-    ansatz = Ansatz(16)
-    ansatz.add_gate(H_tensor)  # 0.0007s
-    s = time.time()
-    state = ansatz.forward()  # 0.02s
-    print(time.time() - s)
-
+        return state, prob_list
