@@ -8,7 +8,7 @@ class CircuitLibDB:
             os.path.dirname(__file__),
             "../../lib/circuitlib/"
         )
-        self._connect = sqlite3.connect(f"{self._file_path}/user_info.db")
+        self._connect = sqlite3.connect(f"{self._file_path}/circuit_library.db")
         self._connect.isolation_level = "EXCLUSIVE"
         self._cursor = self._connect.cursor()
 
@@ -72,7 +72,6 @@ class CircuitLibDB:
     def add_template_circuit(self):
         file_path = os.path.join(
             self._file_path,
-            "circuit_qasm",
             "template"
         )
 
@@ -93,7 +92,6 @@ class CircuitLibDB:
     def add_circuit(self, type_: str):
         file_path = os.path.join(
             self._file_path,
-            "circuit_qasm",
             type_
         )
 
