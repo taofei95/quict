@@ -14,6 +14,7 @@ __outward_functions = [
     "normal_ctargs",
     "ctrl_normal_targs",
     "normal_normal_targs",
+    "diagonal_normal_targs",
     "swap_targ",
     "reverse_targ",
     "reverse_ctargs",
@@ -500,7 +501,7 @@ Controlled_MultiplySwap_ctargs_double_kernel = cp.RawKernel(r'''
 Controlled_Swap_targs_single_kernel = cp.RawKernel(r'''
     #include <cupy/complex.cuh>
     extern "C" __global__
-    void Controlled4x4Swap(int high, int low, complex<float>* vec) {
+    void Controlled4x4Swap(int high, int low, const complex<float>* mat, complex<float>* vec) {
         int label = blockDim.x * blockIdx.x + threadIdx.x;
 
         const int offset1 = 1 << low;
@@ -515,8 +516,8 @@ Controlled_Swap_targs_single_kernel = cp.RawKernel(r'''
         int _2 = _0 + offset2;
 
         complex<float> temp_0 = vec[_1];
-        vec[_1] = vec[_2];
-        vec[_2] = temp_0;
+        vec[_1] = vec[_2]*mat[6];
+        vec[_2] = temp_0*mat[9];
     }
     ''', 'Controlled4x4Swap')
 
@@ -524,7 +525,7 @@ Controlled_Swap_targs_single_kernel = cp.RawKernel(r'''
 Controlled_Swap_targs_double_kernel = cp.RawKernel(r'''
     #include <cupy/complex.cuh>
     extern "C" __global__
-    void Controlled4x4Swap(int high, int low, complex<double>* vec) {
+    void Controlled4x4Swap(int high, int low, const complex<double>* mat, complex<double>* vec) {
         int label = blockDim.x * blockIdx.x + threadIdx.x;
 
         const int offset1 = 1 << low;
@@ -539,8 +540,8 @@ Controlled_Swap_targs_double_kernel = cp.RawKernel(r'''
         int _2 = _0 + offset2;
 
         complex<double> temp_0 = vec[_1];
-        vec[_1] = vec[_2];
-        vec[_2] = temp_0;
+        vec[_1] = vec[_2]*mat[6];
+        vec[_2] = temp_0*mat[9];
     }
     ''', 'Controlled4x4Swap')
 
@@ -657,6 +658,80 @@ Completed_IPxIP_targs_double_kernel = cp.RawKernel(r'''
         vec[_2] = temp_1*mat[9] + vec[_2]*mat[10];
     }
     ''', 'CompletedIPxIP')
+
+
+Diagonal_Multiply_normal_single_kernel = cp.RawKernel(r'''
+    #include <cupy/complex.cuh>
+    extern "C" __global__
+    void DiagxNormal(int t0, int t1, const complex<float>* mat, complex<float>* vec) {
+        int label = blockDim.x * blockIdx.x + threadIdx.x;
+
+        const int offset1 = 1 << t0;
+        const int offset2 = 1 << t1;
+        const int mask1 = offset1 - 1;
+        const int mask2 = offset2 - 1;
+
+        int gw=0, _0=0;
+
+        if (t0 > t1){
+            gw = label >> t1 << (t1 + 1);
+            _0 = (gw >> t0 << (t0 + 1)) + (gw & (offset1 - offset2)) + (label & mask2);
+        }
+        else{
+            gw = label >> t0 << (t0 + 1);
+            _0 = (gw >> t1 << (t1 + 1)) + (gw & (offset2 - offset1)) + (label & mask1);
+        }
+
+        int _1 = _0 + offset1;
+        int _2 = _0 + offset2;
+        int _3 = _1 + offset2;
+
+        complex<float> temp_0 = vec[_0];
+        vec[_0] = vec[_0]*mat[0] + vec[_1]*mat[1];
+        vec[_1] = temp_0*mat[4] + vec[_1]*mat[5];
+
+        complex<float> temp_2 = vec[_2];
+        vec[_2] = vec[_2]*mat[10] + vec[_3]*mat[11];
+        vec[_3] =temp_2*mat[14] + vec[_3]*mat[15];
+    }
+    ''', 'DiagxNormal')
+
+
+Diagonal_Multiply_normal_double_kernel = cp.RawKernel(r'''
+    #include <cupy/complex.cuh>
+    extern "C" __global__
+    void DiagxNormal(int t0, int t1, const complex<double>* mat, complex<double>* vec) {
+        int label = blockDim.x * blockIdx.x + threadIdx.x;
+
+        const int offset1 = 1 << t0;
+        const int offset2 = 1 << t1;
+        const int mask1 = offset1 - 1;
+        const int mask2 = offset2 - 1;
+
+        int gw=0, _0=0;
+
+        if (t0 > t1){
+            gw = label >> t1 << (t1 + 1);
+            _0 = (gw >> t0 << (t0 + 1)) + (gw & (offset1 - offset2)) + (label & mask2);
+        }
+        else{
+            gw = label >> t0 << (t0 + 1);
+            _0 = (gw >> t1 << (t1 + 1)) + (gw & (offset2 - offset1)) + (label & mask1);
+        }
+
+        int _1 = _0 + offset1;
+        int _2 = _0 + offset2;
+        int _3 = _1 + offset2;
+
+        complex<double> temp_0 = vec[_0];
+        vec[_0] = vec[_0]*mat[0] + vec[_1]*mat[1];
+        vec[_1] = temp_0*mat[4] + vec[_1]*mat[5];
+
+        complex<double> temp_2 = vec[_2];
+        vec[_2] = vec[_2]*mat[10] + vec[_3]*mat[11];
+        vec[_3] =temp_2*mat[14] + vec[_3]*mat[15];
+    }
+    ''', 'DiagxNormal')
 
 
 RDiagonal_Swap_targ_single_kernel = cp.RawKernel(r'''
@@ -1258,6 +1333,35 @@ def normal_normal_targs(t_indexes, mat, vec, vec_bit, sync: bool = False):
         cp.cuda.Device().synchronize()
 
 
+def diagonal_normal_targs(t_indexes, mat, vec, vec_bit, sync: bool = False):
+    """
+    Completed matrix (4x4) dot vector
+            [[A, B, 0, 0],    *   vec
+             [C, D, 0, 0],
+             [0, 0, a, b],
+             [0, 0, c, d]]
+    """
+    task_number = 1 << (vec_bit - 2)
+    thread_per_block = min(256, task_number)
+    block_num = task_number // thread_per_block
+
+    if vec.dtype == np.complex64:
+        Diagonal_Multiply_normal_single_kernel(
+            (block_num,),
+            (thread_per_block,),
+            (t_indexes[0], t_indexes[1], mat, vec)
+        )
+    else:
+        Diagonal_Multiply_normal_double_kernel(
+            (block_num,),
+            (thread_per_block,),
+            (t_indexes[0], t_indexes[1], mat, vec)
+        )
+
+    if sync:
+        cp.cuda.Device().synchronize()
+
+
 def swap_targ(t_index, vec, vec_bit, sync: bool = False):
     """
     reverse diagonal matrix (2x2) dot vector
@@ -1341,12 +1445,12 @@ def reverse_ctargs(c_index, t_index, mat, vec, vec_bit, sync: bool = False):
         cp.cuda.Device().synchronize()
 
 
-def swap_targs(t_indexes, vec, vec_bit, sync: bool = False):
+def swap_targs(t_indexes, mat, vec, vec_bit, sync: bool = False):
     """
     Controlled matrix (4x4) dot vector
             [[1, 0, 0, 0],    *   vec
-             [0, 0, 1, 0],
-             [0, 1, 0, 0],
+             [0, 0, a, 0],
+             [0, b, 0, 0],
              [0, 0, 0, 1]]
     """
     task_number = 1 << (vec_bit - 2)
@@ -1362,13 +1466,13 @@ def swap_targs(t_indexes, vec, vec_bit, sync: bool = False):
         Controlled_Swap_targs_single_kernel(
             (block_num,),
             (thread_per_block,),
-            (high, low, vec)
+            (high, low, mat, vec)
         )
     else:
         Controlled_Swap_targs_double_kernel(
             (block_num,),
             (thread_per_block,),
-            (high, low, vec)
+            (high, low, mat, vec)
         )
 
     if sync:

@@ -45,7 +45,7 @@ def test_random_build():
 def test_load():
     layout = Layout.load_file(
         os.path.dirname(os.path.abspath(__file__))
-        + "/../../example/layout/ibmqx2_layout.json"
+        + "/../../example/qcda/ibmqx2_layout.json"
     )
     assert layout.name == "ibmqx2"
     assert layout.qubit_number == 5

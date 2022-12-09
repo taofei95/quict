@@ -6,6 +6,7 @@ import networkx as nx
 import numpy as np
 
 from QuICT.core.gate import BasicGate
+from QuICT.tools.exception.core import TypeError
 
 
 class DAGNode:
@@ -157,7 +158,7 @@ class DAGCircuit:
         Args:
             node (DAGNode): The DAG Node
         """
-        assert isinstance(node, DAGNode)
+        assert isinstance(node, DAGNode), TypeError("DagCircuit.add_node.node", "DAGNode", type(node))
         if not self._graph.has_node(node.id):
             self._graph.add_node(node.id, node=node)
 
@@ -215,7 +216,7 @@ class DAGCircuit:
         elif isinstance(start, Iterable):
             visited = set(start)
         else:
-            assert False, 'start must be int or iterable objects'
+            raise TypeError("DagCircuit.all_successors/predecessors.start", "int/Iterable", type(start))
 
         que = deque(visited)
         init_visited = visited.copy()
