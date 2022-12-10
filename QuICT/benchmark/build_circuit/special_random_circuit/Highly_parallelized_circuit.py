@@ -51,18 +51,18 @@ def Hp_circuit_build(
 
     Measure | cir
 
-    # cir.draw(filename='parallelized')
+    cir.draw(filename='parallelized')
 
     return cir
 
-
-gate_multiply = []
-for i in range(5, 26):
-    gate_multiply.append(i)
+Hp_circuit_build(5, 20)
+# gate_multiply = []
+# for i in range(5, 26):
+#     gate_multiply.append(i)
     
-folder_path = "QuICT/lib/circuitlib/circuit_qasm/random/Highly_parallelized"
-if not os.path.exists(folder_path):
-    os.makedirs(folder_path)
+# folder_path = "QuICT/lib/circuitlib/circuit_qasm/random/Highly_parallelized"
+# if not os.path.exists(folder_path):
+#     os.makedirs(folder_path)
 
 # for q_num in range(2, 31):
 #     for gm in gate_multiply:

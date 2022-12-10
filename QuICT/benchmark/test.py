@@ -1,11 +1,15 @@
 
 from copy import deepcopy
 from itertools import chain
+import math
 import os
 
 import matplotlib as mpl
 from matplotlib import pyplot as plt
+import scipy
+import scipy.stats
 from QuICT.benchmark.benchmark import QuICTBenchmark
+from QuICT.benchmark.get_benchmark_circuit import benchmarkcircuitlib
 from QuICT.core.gate.gate import *
 from QuICT.core.utils.gate_type import GateType
 from QuICT.simulation.simulator import Simulator
@@ -17,17 +21,89 @@ from QuICT.qcda.qcda import QCDA
 from QuICT.qcda.synthesis.gate_transform.instruction_set import InstructionSet
 from QuICT.tools.interface.qasm_interface import OPENQASMInterface
 
-bench = QuICTBenchmark("circuit", "Graph")
-a_list = [GateType.cx, [GateType.h, GateType.rx, GateType.ry, GateType.rz]]
-cir_list = bench.get_circuit(["google"], 3, 20, 10, InSet=a_list)
-result = [[-0.25-0.10355339j, 0.60355339-0.25j, 0.25+0.10355339j, -0.60355339+0.25j], 
-[-2.50000000e-01-0.25j, -1.38777878e-16+0.85355339j, -1.11022302e-16-0.14644661j -2.50000000e-01+0.25j]]
-# print(cir_list)
-# for i in cir_list[1]:
-#     print(i.name)
+# bench = QuICTBenchmark("circuit", "Graph")
+# # a_list = [GateType.cx, [GateType.h, GateType.rx, GateType.ry, GateType.rz]]
+# cir_list = bench.get_circuit(["grover"], 6, 25, 15)
+# result = [np.load("adder1.npy")]
+# ev = bench.evaluate(circuit_list=cir_list[0], result_list=result, output_type="Table")
+# print(ev)
 
-ev = bench.evaluate(circuit_list=cir_list[0], result_list=result)
-print(ev)
+
+
+
+
+
+
+
+
+
+
+
+# print(cir_list)
+# for cir in cir_list[0]:
+#     print(cir.name)
+
+# cir = OPENQASMInterface.load_file("QuICT/lib/circuitlib/algorithm/adder/w4_s4_d4.qasm").circuit
+# print(cir.size())
+# sim = ConstantStateVectorSimulator()
+# result = sim.run(cir)
+# np.save("adder1.npy",result)
+# print(result)
+
+##########
+# defaultdict(<class 'list'>, {'algorithm': [[(<QuICT.core.circuit.circuit.Circuit object at 0x7f46a73ecd90>, 
+# array([-0.5-6.67640947e-18j,  0. +0.00000000e+00j, -0.5-2.22546982e-18j,
+#         0. +0.00000000e+00j, -0.5-2.22546982e-18j,  0. +0.00000000e+00j,
+#    -0.5-2.22546982e-18j,  0. +0.00000000e+00j]))]]})
+#########
+
+# result = [np.load("grover1.npy"), np.load("grover2.npy")]
+# result = [np.load("grover1.npy")]
+# print(result[0])
+# return sorted(cirs_field_map.items())
+# result = [np.load("adder1.npy")]
+# ev = bench.evaluate(circuit_list=cir_list[0], result_list=result, output_type="Table")
+# print(ev)
+# a = ["circuit_width", "circuit_size", "circuit_depth", "qubit_cal", "entropy_cal", "alg_cal", "field_score"]
+# for i in ev:
+# from prettytable import PrettyTable
+# tb = PrettyTable.PrettyTable()
+# tb.field_names = ['circuit_width', 'circuit_size', 'circuit_depth', 'qubit_cal', 'entropy_cal', 'alg_cal', 'field_score']
+# # tb.field_names = ["circuit_width", "circuit_size", "circuit_depth", "qubit_cal", "entropy_cal", "alg_cal", "field_score"]
+# tb.add_row(['1', '2', '3', '4', '5', '6', '7'])
+# print(tb)
+# import pandas as pd
+# data = ['1', '2', '3', '4', '5', '6', '7']
+# columns = ['circuit_width', 'circuit_size', 'circuit_depth', 'qubit_cal', 'entropy_cal', 'alg_cal', 'field_score']
+# df = pd.DataFrame(data=data,columns=columns)
+# print('学生成绩表')
+# print(df)
+
+# import prettytable as pt
+
+# # tb = pt.PrettyTable( ["City name", "Area", "Population", "Annual Rainfall"])
+# tb = pt.PrettyTable()
+# tb.field_names = ['circuit_width', 'circuit_size', 'circuit_depth', 'qubit_cal', 'entropy_cal', 'alg_cal', 'field_score']
+# tb.add_row(["Adelaide",1295, 1158259, 600.5, 1, 2, 3])
+
+
+# print(tb)
+    
+# for circuit_result_group in  ev:
+#     print(circuit_result_group[0])
+    # for k in circuit_result_group:
+    #     print(k)
+# for field, group in ev:
+#     print(field, group)
+
+
+# a = [60, 100, 0]
+# b = [0.3, 0.3, 0.4]
+# result_list = [x*y for x,y in zip(a, b)]
+# print(result_list)
+        
+
+# print(ev)
 
 # for circuit_result_group in  ev:
 #     # for circuit, result in circuit_result_group:
@@ -120,4 +196,65 @@ print(ev)
 # u = u_sim.run(cir)
 # print(u["data"]["state_vector"])
 
+
+# def normalization(data):
+#     data = np.array(data)
+#     data = data/np.sum(data)
+
+#     return data
+
+# def _kl_cal(p, q):
+#         # calculate KL
+#         KL_divergence = scipy.stats.entropy(p, q)
+#         return KL_divergence
+        
+# def _cross_en_cal(p, q):
+#     # calculate cross E
+#     sum=0.0
+#     for x in map(lambda y,p:(1-y)*math.log(1-p)+y*math.log(p), p, q):
+#         sum+=x
+#     cross_entropy = -sum/len(p)
+#     return cross_entropy
+        
+# def _l2_cal(p, q):
+#     # calculate L2
+#     L2_loss = np.sum(np.square(p - q))
+#     return L2_loss
+
+
+# def circuit_score(circuit, result):
+#     # Step 1: simulate circuit
+#     simulator=CircuitSimulator()
+#     sim_result = normalization(simulator.run(circuit))
+    
+#     # Step 2: calculate kl, cross_en, l2, qubit
+#     mac_result = normalization(result)
+#     kl = _kl_cal(np.array(sim_result), np.array(mac_result))
+#     cross_en = _cross_en_cal(np.array(sim_result), np.array(mac_result))
+#     l2 = _l2_cal(np.array(sim_result), np.array(mac_result))
+    
+#     # Step 3: return result
+#     return kl, cross_en, l2
+
+# for cir in cir_list[0]:
+#     for re in result:
+#         print(circuit_score(circuit=cir, result=re))
+
+# result_dict = {"circuit_width":1,
+#                     "circuit_size": 2,
+#                    "circuit_depth": 3
+#                 #    "qubit_cal": score_list[0],
+#                 #    "entropy_cal": score_list[1],
+#                 #    "alg_cal":  score_list[2],
+#                 #    "field_score": result_list
+#                    }
+# for i in result_dict:
+#     print(i)
+# print(result_dict["circuit_width"])
+
+a = benchmarkcircuitlib(5, 10, False)
+cir = a.He_circuit_build()
+print(cir.size())
+
+cir.draw(filename="222")
 

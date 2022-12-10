@@ -45,60 +45,68 @@ def He_circuit_build(
     # b = [6,4]
     # print(delete(a,b))   [0,3]
     
-    # def build1():
-    #     qubit_indexes = list(range(qubits))  #[0, 1, 2, 3, 4]
-    #     if len(qubit_indexes) > 1:
-    #         qubit_index = random.sample(qubit_indexes, 2)   #[a, b]
-    #         CX & (qubit_index)| cir    
-    #         qubit_indexes = filter(qubit_indexes, qubit_index)  #[0, 1, 2, 3, 4] - [a, b]
-    #     elif len(qubit_indexes) == 1:
-    #         H & (qubit_indexes)| cir
-    #     return cir
+    def build_circuit_serial():
+        qubit_indexes = list(range(qubits))  #[0, 1, 2, 3, 4]
+        if len(qubit_indexes) > 1:
+            qubit_index = random.sample(qubit_indexes, 2)   #[a, b]
+            CX & (qubit_index)| cir    
+            qubit_indexes = filter(qubit_indexes, qubit_index)  #[0, 1, 2, 3, 4] - [a, b]
+        elif len(qubit_indexes) == 1:
+            for q_single in qubit_indexes:
+                for q_collect in list(range(qubits)):
+                    CX & (q_single, q_collect)| cir
+        return cir
     
-    # while cir.size() < rand_size:
-    #     cir = build1()
-    #     print(cir.qasm())
+    while cir.size() < rand_size:
+        cir = build_circuit_serial()
+    # print(cir.qasm())
     
    
     
-    def build2():
-        qubit_indexes = list(range(qubits))
-        for i in range(qubits):
-            if len(qubit_indexes) > 1:
-                qubit_index = random.sample((qubit_indexes), 2)
-                CX & (qubit_index)| cir   
-                qubit_indexes, qubit_extra = delete(qubit_indexes, qubit_index)
-                for j in qubit_index:
-                    for a in qubit_indexes:
-                        if abs(j-a)==1:
-                            CX & ([j, a])| cir  
-                            qubit_indexes.remove(a)      
-            elif len(qubit_indexes) == 1:
-                H & (qubit_indexes) | cir
-                break
-            else:
-                break
+    # def build_circuit_parallel():
+    #     qubit_indexes = list(range(qubits))
+    #     for i in range(qubits):
+    #         if len(qubit_indexes) > 1:
+    #             qubit_index = random.sample((qubit_indexes), 2)
+    #             CX & (qubit_index)| cir   
+    #             qubit_indexes, qubit_extra = delete(qubit_indexes, qubit_index)
+    #             for j in qubit_index:
+    #                 for a in qubit_indexes:
+    #                     if abs(j-a)==1:
+    #                         CX & ([j, a])| cir  
+    #                         qubit_indexes.remove(a)      
+    #         elif len(qubit_indexes) == 1:
+    #             for q_single in qubit_indexes:
+    #                 q_collect = random.choice([x for x in list(range(qubits)) if x != q_single])
+    #                 CX & ([q_single, q_collect])| cir
+    #                 break
+    #         else:
+    #             break
         
-        for i in range(qubits):
-            if len(qubit_extra) != 0: 
-                for i in range(len(qubit_extra)):
-                    if len(qubit_extra) > 1:
-                        qubit_i = random.sample((qubit_extra), 2)
-                        CX & (qubit_i)| cir   
-                        qubit_extra = filter(qubit_extra, qubit_i)
-                    elif len(qubit_extra) == 1:
-                        H & (qubit_extra)| cir 
-                        qubit_extra = filter(qubit_extra, qubit_extra)
-            else:
-                break
+    #     for i in range(qubits):
+    #         if len(qubit_extra) != 0: 
+    #             for i in range(len(qubit_extra)):
+    #                 if len(qubit_extra) > 1:
+    #                     qubit_i = random.sample((qubit_extra), 2)
+    #                     CX & (qubit_i)| cir   
+    #                     qubit_extra = filter(qubit_extra, qubit_i)
+    #                 elif len(qubit_extra) == 1:
+    #                     for q_single in qubit_extra:
+    #                         q_collect = random.choice([x for x in list(range(qubits)) if x != q_single])
+    #                         CX & ([q_single, q_collect])| cir
+    #                     qubit_extra = filter(qubit_extra, qubit_extra)
+    #         else:
+    #             break
             
-        return cir
-                        
-    print(build2().qasm())
+    #     return cir
     
-    while cir.size() < rand_size:
-        cir = build2()
-        print(cir.qasm())
+    
+    # while cir.size() < rand_size:
+    #     cir = build_circuit_parallel()
+    # print(cir.qasm())
+   
+        
+       
  
 
     cir.draw(filename="he")

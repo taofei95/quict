@@ -54,21 +54,22 @@ def Mm_circuit_build(
 
     return cir
 
-gate_multiply = []
-for i in range(5, 26):
-    gate_multiply.append(i)
+Mm_circuit_build(5, 20, random_params=True)
+# gate_multiply = []
+# for i in range(5, 26):
+#     gate_multiply.append(i)
     
-folder_path = "QuICT/lib/circuitlib/circuit_qasm/random/mediate_measure"
-# if not os.path.exists(folder_path):
-#     os.makedirs(folder_path)
+# folder_path = "QuICT/lib/circuitlib/circuit_qasm/random/mediate_measure"
+# # if not os.path.exists(folder_path):
+# #     os.makedirs(folder_path)
 
-for q_num in range(2, 31):
-    for gm in gate_multiply:
-            for i in range(1):
-                cir = Mm_circuit_build(q_num, q_num * gm, random_params=True)
-                file = open(folder_path + '/' + f"w{q_num}_s{cir.size()}_d{cir.depth()}.qasm",'w+')
-                file.write(cir.qasm())
-                file.close()
+# for q_num in range(2, 31):
+#     for gm in gate_multiply:
+#             for i in range(1):
+#                 cir = Mm_circuit_build(q_num, q_num * gm, random_params=True)
+#                 file = open(folder_path + '/' + f"w{q_num}_s{cir.size()}_d{cir.depth()}.qasm",'w+')
+#                 file.write(cir.qasm())
+#                 file.close()
 
   
 
