@@ -436,7 +436,7 @@ def matrix_dot_vector(
 ):
     # Matrix property
     mat_bit = np.int32(len(mat_args))
-    mat_length = np.square(mat_bit, dtype=np.int32)
+    mat_length = np.int32(2 ** mat_bit)
     assert vec_bit >= mat_bit, "Vector length should larger than matrix."
 
     if vec_bit == mat_bit:
