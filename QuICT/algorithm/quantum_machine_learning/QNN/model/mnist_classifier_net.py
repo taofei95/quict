@@ -1,6 +1,5 @@
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
 
 from QuICT.algorithm.quantum_machine_learning.ansatz_library import QNNLayer
 from QuICT.algorithm.quantum_machine_learning.utils import Ansatz
