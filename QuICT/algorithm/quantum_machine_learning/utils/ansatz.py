@@ -2,7 +2,6 @@ import cupy as cp
 import random
 import numpy as np
 import torch
-import time
 
 from QuICT.algorithm.quantum_machine_learning.utils.gate_tensor import *
 from QuICT.algorithm.quantum_machine_learning.utils.gpu_gate_simulator import apply_gate
@@ -69,7 +68,7 @@ class Ansatz:
             if gate.pargs.requires_grad:
                 ansatz._trainable_pargs.append(gate.pargs)
                 ansatz._trainable_pargs_ptr.append(gate.pargs.data_ptr())
-            
+
         for other_gate in other._gates:
             other_gate.to(self._device)
             other_gate.update_name("ansatz", len(ansatz._gates))
@@ -205,19 +204,21 @@ class Ansatz:
             # Step 5: Refill the state vector according to the action indices.
             for i in range(len(act_idx)):
                 state[act_idx[i]] = action_result[i]
-                
+
         return state
 
     def _apply_measuregate(self, qid, state):
         bits_idx = [1 << i for i in range(self._n_qubits)]
-        qid_idx = 1 << qid
-        offset = list(set(bits_idx) - (set([qid_idx])))
+        act_bit = 1 << qid
+        act_bits_idx = list(set(bits_idx) - set([act_bit]))
+
         idx_0 = [0]
-        idx_1 = [qid_idx]
-        for i in range(len(offset)):
-            for j in range(len(idx_1)):
-                idx_0.append(offset[i] + idx_0[j])
-                idx_1.append(offset[i] + idx_1[j])
+        idx_1 = [act_bit]
+        for i in range(len(act_bits_idx)):
+            for j in range(len(idx_0)):
+                idx = act_bits_idx[i] + idx_0[j]
+                idx_0.append(idx)
+                idx_1.append(idx + act_bit)
 
         # Calculate probabilities
         prob_0 = torch.sum(torch.abs(state[idx_0]) * torch.abs(state[idx_0]))
@@ -251,7 +252,7 @@ class Ansatz:
         Returns:
             torch.Tensor: The state vector.
         """
-        prob_list = []
+        prob = None
         if state_vector is None:
             state = torch.zeros(1 << self._n_qubits, dtype=torch.complex128).to(
                 self._device
@@ -268,18 +269,20 @@ class Ansatz:
             # Measure gate
             if gate.type == GateType.measure:
                 qid = self._n_qubits - 1 - gate.targ
-                state, prob = self._apply_measuregate(qid, state)
-                prob_list.append(prob)
-            # CPU
-            if self._device.type == "cpu":
-                gate_tensor = gate.matrix.to(self._device)
-                act_bits = gate.cargs + gate.targs
-                state = self._apply_gate_cpu(state, gate_tensor, act_bits)
-            # GPU
+                _, prob = self._apply_measuregate(qid, state.clone())
             else:
-                assert (
-                    len(self._trainable_pargs) == len(self._trainable_pargs_ptr) == 0
-                ), "Only ansatz without trainable parameters could use ansatz.forward()."
-                state = self._apply_gate_gpu(state, gate)
+                # CPU
+                if self._device.type == "cpu":
+                    gate_tensor = gate.matrix.to(self._device)
+                    act_bits = gate.cargs + gate.targs
+                    state = self._apply_gate_cpu(state, gate_tensor, act_bits)
+                # GPU
+                else:
+                    assert (
+                        len(self._trainable_pargs)
+                        == len(self._trainable_pargs_ptr)
+                        == 0
+                    ), "Only ansatz without trainable parameters could use ansatz.forward()."
+                    state = self._apply_gate_gpu(state, gate)
 
-        return state, prob_list
+        return state, prob
