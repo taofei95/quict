@@ -1602,9 +1602,9 @@ prop_add_single_kernel = cp.RawKernel(r'''
     extern "C" __global__
     void ProbAddSingle(const int index, complex<float>* vec, complex<float>* out) {
         int label = blockDim.x * blockIdx.x + threadIdx.x;
-        int _1 = (label & ((1 << index) - 1))
+        int _0 = (label & ((1 << index) - 1))
                 + (label >> index << (index + 1));
-        out[label] = abs(vec[_1]) * abs(vec[_1]);
+        out[label] = abs(vec[_0]) * abs(vec[_0]);
     }
     ''', 'ProbAddSingle')
 
@@ -1614,9 +1614,9 @@ prop_add_double_kernel = cp.RawKernel(r'''
     extern "C" __global__
     void ProbAddDouble(const int index, complex<double>* vec, complex<double>* out) {
         int label = blockDim.x * blockIdx.x + threadIdx.x;
-        int _1 = (label & ((1 << index) - 1))
+        int _0 = (label & ((1 << index) - 1))
                 + (label >> index << (index + 1));
-        out[label] = abs(vec[_1]) * abs(vec[_1]);
+        out[label] = abs(vec[_0]) * abs(vec[_0]);
     }
     ''', 'ProbAddDouble')
 

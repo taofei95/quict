@@ -457,7 +457,7 @@ class ConstantStateVectorSimulator:
         self._vector = cp.zeros_like(self.vector)
 
     def get_measured_prob(self, index: int, all_measured: bool = False) -> cp.ndarray:
-        """ Return the probability of measured qubit with given index to be 1
+        """ Return the probability of measured qubit with given index to be 0
 
         Args:
             index (int): The given qubit index
