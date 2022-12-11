@@ -57,7 +57,7 @@ class QAOANet(VQENet):
         if self.device.type == "cpu":
             state, _ = ansatz.forward(state)
         else:
-            state, _ = gpu_forward(state, ansatz, self.n_qubits)
+            state, _ = gpu_forward(ansatz, self.n_qubits, state)
         return state
 
     def _construct_U_gamma_layer(self, gamma):

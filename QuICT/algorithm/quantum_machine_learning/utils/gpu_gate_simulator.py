@@ -213,7 +213,7 @@ class Applygate(torch.autograd.Function):
 
         for gate in ansatz.gates:
             if gate.type == GateType.measure:
-                raise ValueError
+                continue
             cupy_state = cp.from_dlpack(state.clone())
             default_parameters = (cupy_state, n_qubits, True)
             state_out = apply_gate(gate, default_parameters, algorithm, True)
@@ -283,9 +283,9 @@ prob_grad_single_kernel = cp.RawKernel(
         int label = blockDim.x * blockIdx.x + threadIdx.x;
         const int offset = 1 << index;
         
-        int _1 = (label & ((1 << index) - 1)) + (label >> index << (index + 1));
-        int _0 = _1 + offset;
-        
+        int _0 = (label & ((1 << index) - 1)) + (label >> index << (index + 1));
+        int _1 = _0 + offset;
+
         vec[_0] = 0.0;
         vec[_1] = 2.0 * vec[_1];
     }
@@ -302,9 +302,9 @@ prob_grad_double_kernel = cp.RawKernel(
         int label = blockDim.x * blockIdx.x + threadIdx.x;
         const int offset = 1 << index;
         
-        int _1 = (label & ((1 << index) - 1)) + (label >> index << (index + 1));
-        int _0 = _1 + offset;
-        
+        int _0 = (label & ((1 << index) - 1)) + (label >> index << (index + 1));
+        int _1 = _0 + offset;
+
         vec[_0] = 0.0;
         vec[_1] = 2.0 * vec[_1];
     }
@@ -375,6 +375,7 @@ def gpu_forward(ansatz, n_qubits, state=None, readout=None):
 
     if readout is not None:
         assert 0 <= readout <= n_qubits
-        prob_1 = MeasureProb.apply(readout, state, algorithm, n_qubits)
+        index = n_qubits - 1 - readout
+        prob_1 = MeasureProb.apply(index, state, algorithm, n_qubits)
         prob = [1 - prob_1, prob_1]
     return state, prob

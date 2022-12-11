@@ -6,28 +6,12 @@ from torchvision import datasets, transforms
 import numpy as np
 
 
-# class MNISTDataset(Dataset):
-#     def __init__(self, root="./data/", train: bool = True, batch_size=32, device=torch.device("cuda:0")):
-#         super(Dataset, self).__init__()
-#         train_data = datasets.MNIST(root=root, train=True, download=True)
-#         test_data = datasets.MNIST(root=root, train=False, download=True)
-#         self._device = device
-#         self._x_train = train_data.data.to(device)
-#         self._y_train = train_data.targets.to(device)
-#         self._x_test = test_data.data.to(device)
-#         self._y_test = test_data.targets.to(device)
-#         # train_loader = data.DataLoader(
-#         #     dataset=train_data, batch_size=batch_size, shuffle=True
-#         # )
-#         # test_loader = data.DataLoader(
-#         #     dataset=test_data, batch_size=batch_size, shuffle=True
-#         # )
-#         # for i, item in enumerate(train_loader):
-#         #     img, label = item
-#         #     print(img)
 class MNISTDataset(Dataset):
     def __init__(
-        self, root="./data/", train: bool = True, device=torch.device("cuda:0"),
+        self,
+        root="./data/",
+        train: bool = True,
+        device=torch.device("cuda:0"),
     ):
         super(Dataset, self).__init__()
         data = datasets.MNIST(root=root, train=train, download=True)
@@ -64,14 +48,4 @@ class MNISTDataset(Dataset):
         self._y = torch.from_numpy(np.array(Y_rmcon)).to(self._device)
 
     def binary_img(self, threshold=0.5):
-        self._x = self._x > threshold
-
-
-# dataset = MNISTDataset(train=True)
-# train_loader = data.DataLoader(dataset=dataset, batch_size=32, shuffle=True)
-
-# import tqdm
-
-# loader = tqdm.tqdm(train_loader)
-# for batch in loader:
-#     print(batch[0].shape)
+        self._x = (self._x > threshold).type(torch.float32)
