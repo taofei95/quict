@@ -13,40 +13,75 @@ from QuICT.core.circuit import *
 from QuICT.qcda.utility import OutputAligner
 
 class DAGNode:
+    """
+        DAG representation of a quantum circuit that indicates the commutative
+        relations between gates.
+    """
     def __init__(self, gate):
+        """
+          Args:
+              gate_(BasicGate): Gate represented by this node
+        """
         self.gate = gate
         self.bits = gate.cargs + gate.targs
         self.edges = []
+        # one qubit gate attach forward the node, it can be executed after this node immediately
         self.attach = []
         self.pre_number = 0
 
 class SABREMapping:
+    """
+        Mapping with the heuristic algorithm SABRE
+
+        Reference:
+            https://arxiv.org/abs/1809.02573
+    """
     def __init__(
         self,
         layout : Layout,
         sizeE = 20,
         w = 0.5,
+        epsilon = 0.001
     ):
+        """
+            Args:
+                layout(Layout): the layout of the physical quantum circuit
+                sizeE(int): the size of the extended set, default 20
+                w(float): the weight of the extended set, default 0.5
+                epsilon(float): the decay parameter of the SABRE algorithm, default 0.001
+        """
         self._layout = layout
         self._sizeE  = sizeE
         self._w      = w
+        self._epsilon = epsilon
         self.phy2logic = None
 
     @OutputAligner()
     def execute(
-            self,
-            circuit: Union[Circuit, CompositeGate],
-            l2p: List[int] = None
+        self,
+        circuit: Union[Circuit, CompositeGate],
+        initial_l2p: List[int] = None
     ) -> Union[Circuit, CompositeGate]:
+        """
+            Args:
+                circuit (Circuit/CompositeGate): The circuit/CompositeGate to be mapped
+                initial_l2p (List[int]): The initial mapping of the circuit, default identity
+
+            Returns:
+                Circuit: the executable circuit on the physical device.
+        """
+
         SIZE_E = self._sizeE
         W = self._w
         layout = self._layout
-        decay_parameter = 0.001
+        decay_parameter = self._epsilon
         decay_cycle = 5
 
         nodes = []
         qubit_number = circuit.width()
         phy_number = layout.qubit_number
+
+        # floyd algorithm, D indicate the distance of qubit on the physical device.
         D: List[List[int]] = []
         for _ in range(phy_number):
             D.append([phy_number for _ in range(phy_number)])
@@ -62,13 +97,16 @@ class SABREMapping:
                         continue
                     D[i][j] = min(D[i][j], D[i][k] + D[k][j])
 
-        predag: List[Optional[DAGNode]] = [None for _ in range(qubit_number)]
+        # the first layer of the DAG(live update)
         F = []
-        if l2p is None:
+
+        # extend the logic2phy(size equal with physical device) and calculate phy2logic
+        if initial_l2p is None:
             l2p = [i for i in range(phy_number)]
         else:
+            l2p = copy.deepcopy(initial_l2p)
             goal = set([i for i in range(phy_number)])
-            for number in l2p:
+            for number in initial_l2p:
                 goal.remove(number)
             while len(l2p) < phy_number:
                 l2p.append(goal.pop())
@@ -77,16 +115,20 @@ class SABREMapping:
             p2l[l2p[index]] = index
 
         def can_execute(node):
-            # print(node.bits)
+            """
+                whether a node in DAG can be executed now.
+            """
             if len(node.bits) == 1:
                 return True
             elif len(node.bits) == 2:
-                # print(layout.check_edge(l2p[node.bits[0]], l2p[node.bits[1]]))
                 return layout.check_edge(l2p[node.bits[0]], l2p[node.bits[1]])
             else:
                 assert False
 
         def obtain_swaps():
+            """
+                obtain all candidate swap with first layer of the DAG
+            """
             candidates = []
             bits = set()
             for node in F:
@@ -99,21 +141,28 @@ class SABREMapping:
             return candidates
 
         def temp_pi(edge):
+            """
+                Generate a new logic2phy with a swap indicated by a layoutEdge
+            """
             new_mapping = copy.deepcopy(l2p)
             u, v = edge.u, edge.v
-            # print(p2l)
-            # print(u, v)
             new_mapping[p2l[u]] = v
             new_mapping[p2l[v]] = u
             return new_mapping
 
         def phy_gate(g):
+            """
+                Mapping a logic gate to a phy gate with logic2phy.
+            """
             _g = g.copy()
             _g.cargs = [l2p[carg] for carg in g.cargs]
             _g.targs = [l2p[targ] for targ in g.targs]
             return _g
 
-        def H(newl2p):
+        def heuristic_cost(newl2p):
+            """
+                the heuristic_cost function
+            """
             H_basic = 0
             H_extend = 0
             F_count = len(F)
@@ -144,16 +193,16 @@ class SABREMapping:
 
             return H_basic + W * H_extend
 
-        exe_gates = []
 
+        # build the DAG
+        exe_gates = []
+        predag: List[Optional[DAGNode]] = [None for _ in range(qubit_number)]
         for gate in circuit.gates:
             node = DAGNode(gate)
             nodes.append(node)
             pre_number = 0
             if len(node.bits) == 1:
                 dag = predag[node.bits[0]]
-                # print(gate, dag)
-                # print(gate, dag)
                 if dag is not None:
                     dag.attach.append(node)
                 else:
@@ -174,6 +223,7 @@ class SABREMapping:
             if len(node.bits) == 2 and pre_number == 0:
                 F.append(node)
 
+        # the main process of the SABRE algorithm
         decay = [1 for _ in range(phy_number)]
         decay_time = 0
         while len(F) > 0:
@@ -206,8 +256,7 @@ class SABREMapping:
                 thePi = None
                 for swap in candidate_list:
                     pi = temp_pi(swap)
-                    H_score = H(pi)
-                    # print(swap.u, swap.v, p2l[swap.u], p2l[swap.v])
+                    H_score = heuristic_cost(pi)
                     H_score = H_score * max(decay[p2l[swap.u]], decay[p2l[swap.v]])
                     if theSwap is None or H_score < theScore:
                         theScore = H_score
@@ -215,7 +264,6 @@ class SABREMapping:
                         thePi = pi
                 p2l[theSwap.u], p2l[theSwap.v] = p2l[theSwap.v], p2l[theSwap.u]
                 l2p = thePi
-                # print("time")
                 exe_gates.append((Swap & ([theSwap.u, theSwap.v])))
                 decay[p2l[theSwap.u]] += decay_parameter
                 decay[p2l[theSwap.v]] += decay_parameter
