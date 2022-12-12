@@ -157,13 +157,10 @@ class BenchmarkCircuitBuilder:
 
     @staticmethod
     def mediate_measure_circuit_build(width: int, size: int, random_params: bool = True):
-        single_typelist = [GateType.rz]
-        double_typelist = [GateType.cx]
-        typelist = single_typelist + double_typelist
-        len_s, len_d = len(single_typelist), len(double_typelist)
-        prob = [0.8 / len_s] * len_s + [0.2 / len_d] * len_s
+        typelist = [GateType.rz, GateType.cx]
+        prob = [0.8, 0.2]
 
-        gate_indexes = list(range(len(typelist)))
+        gate_indexes = list(range(2))
         qubits_indexes = list(range(width))
         shuffle_qindexes = qubits_indexes[:]
         random.shuffle(shuffle_qindexes)
