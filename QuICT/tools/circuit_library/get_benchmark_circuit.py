@@ -14,7 +14,7 @@ class BenchmarkCircuitBuilder:
         max_size(int): max number of gates
     """
     @staticmethod
-    def Hp_circuit_build(width: int, size: int, random_params: bool = True):
+    def parallelized_circuit_build(width: int, size: int, random_params: bool = True):
         typelist = [GateType.rz, GateType.cx]
         prob = [0.8, 0.2]
 
@@ -46,7 +46,8 @@ class BenchmarkCircuitBuilder:
 
         return cir
 
-    def Hs_circuit_build(self):
+    @staticmethod
+    def serialized_circuit_build(self):
         cir = Circuit(self._max_width)
         qubit_indexes = list(range(self._max_width))
         qubits_indexes = ['control_qubit', 'target_qubit']
@@ -67,7 +68,8 @@ class BenchmarkCircuitBuilder:
 
         return cir
 
-    def He_circuit_build(self):
+    @staticmethod
+    def entangled_circuit_build(self):
         cir = Circuit(self._max_width)
 
         def filter(qubit_indexes, qubit_index):
@@ -152,7 +154,8 @@ class BenchmarkCircuitBuilder:
 
         return cir
 
-    def Mm_circuit_build(self):
+    @staticmethod
+    def mediate_measure_circuit_build(self):
         single_typelist = [GateType.rz]
         double_typelist = [GateType.cx]
         typelist = single_typelist + double_typelist
