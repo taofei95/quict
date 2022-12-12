@@ -2223,6 +2223,7 @@ class PermFxGate(BasicGate):
 
         return matrix_
 
+
 PermFx = PermFxGate()
 
 
