@@ -1,12 +1,11 @@
 import random
 import numpy as np
 
-from QuICT.core.circuit.circuit import Circuit
+from QuICT.core import Circuit
 from QuICT.core.gate import *
-from QuICT.core.utils.gate_type import GateType
 
 
-class benchmarkcircuitlib:
+class BenchmarkCircuitBuilder:
     """
     A class fetch QuICT benchmark circuits.
 
@@ -14,30 +13,23 @@ class benchmarkcircuitlib:
         max_width(int): max number of qubits
         max_size(int): max number of gates
     """
-    def __init__(self, max_width: int, max_size: int, random_params: bool = True,):
-        self._max_width = max_width
-        self._max_size = max_size
-        self._random_params = random_params
+    @staticmethod
+    def Hp_circuit_build(width: int, size: int, random_params: bool = True):
+        typelist = [GateType.rz, GateType.cx]
+        prob = [0.8, 0.2]
 
-    def Hp_circuit_build(self):
-        single_typelist = [GateType.rz]
-        double_typelist = [GateType.cx]
-        typelist = single_typelist + double_typelist
-        len_s, len_d = len(single_typelist), len(double_typelist)
-        prob = [0.8 / len_s] * len_s + [0.2 / len_d] * len_s
-
-        gate_indexes = list(range(len(typelist)))
-        qubits_indexes = list(range(self._max_width))
+        gate_indexes = list(range(2))
+        qubits_indexes = list(range(width))
         shuffle_qindexes = qubits_indexes[:]
         random.shuffle(shuffle_qindexes)
 
-        cir = Circuit(self._max_width)
-        while cir.size() < self._max_size:
+        cir = Circuit(width)
+        while cir.size() < size:
             rand_type = np.random.choice(gate_indexes, p=prob)
             gate_type = typelist[rand_type]
             gate = GATE_TYPE_TO_CLASS[gate_type]()
 
-            if self._random_params and gate.params:
+            if random_params and gate.params:
                 gate.pargs = list(np.random.uniform(0, 2 * np.pi, gate.params))
 
             gsize = gate.controls + gate.targets
