@@ -10,8 +10,9 @@ class BenchmarkCircuitBuilder:
     A class fetch QuICT benchmark circuits.
 
      Args:
-        max_width(int): max number of qubits
-        max_size(int): max number of gates
+        width(int): number of qubits
+        size(int): number of gates
+        random_params (bool, optional): whether random parameter or use default parameter. Defaults to True.
     """
     @staticmethod
     def parallelized_circuit_build(width: int, size: int, random_params: bool = True):
@@ -47,9 +48,9 @@ class BenchmarkCircuitBuilder:
         return cir
 
     @staticmethod
-    def serialized_circuit_build(self):
-        cir = Circuit(self._max_width)
-        qubit_indexes = list(range(self._max_width))
+    def serialized_circuit_build(width: int, size: int, random_params: bool = True):
+        cir = Circuit(width)
+        qubit_indexes = list(range(width))
         qubits_indexes = ['control_qubit', 'target_qubit']
 
         qubit = random.choice(qubit_indexes)
@@ -57,7 +58,7 @@ class BenchmarkCircuitBuilder:
         qubits_index = qubit
         qubit_indexes.remove(qubit)
 
-        while cir.size() < self._max_size:
+        while cir.size() < size:
             qubit_new = random.choice(qubit_indexes)
             qubits_index = [x for x in qubits_indexes if x != qubits_index]
             qubits_index = qubit_new
@@ -69,8 +70,8 @@ class BenchmarkCircuitBuilder:
         return cir
 
     @staticmethod
-    def entangled_circuit_build(self):
-        cir = Circuit(self._max_width)
+    def entangled_circuit_build(width: int, size: int, random_params: bool = True):
+        cir = Circuit(width)
 
         def filter(qubit_indexes, qubit_index):
             qubit_index_new = []
@@ -100,22 +101,22 @@ class BenchmarkCircuitBuilder:
             return qubit_stayed, qubit_extra
 
         def build_circuit_function1():
-            while cir.size() < self._max_size:
-                qubit_indexes = list(range(self._max_width))
+            while cir.size() < size:
+                qubit_indexes = list(range(width))
                 if len(qubit_indexes) > 1:
                     qubit_index = random.sample(qubit_indexes, 2)
                     CX & (qubit_index) | cir
                     qubit_indexes = filter(qubit_indexes, qubit_index)
                 elif len(qubit_indexes) == 1:
                     for q_single in qubit_indexes:
-                        for q_collect in list(range(self._max_width)):
+                        for q_collect in list(range(width)):
                             CX & (q_single, q_collect) | cir
             return cir
 
         def build_circuit_function2():
-            while cir.size() < self._max_size:
-                qubit_indexes = list(range(self._max_width))
-                for i in range(self._max_width):
+            while cir.size() < size:
+                qubit_indexes = list(range(width))
+                for i in range(width):
                     if len(qubit_indexes) > 1:
                         qubit_index = random.sample((qubit_indexes), 2)
                         CX & (qubit_index) | cir
@@ -127,22 +128,22 @@ class BenchmarkCircuitBuilder:
                                     qubit_indexes.remove(a)
                     elif len(qubit_indexes) == 1:
                         for q_single in qubit_indexes:
-                            q_collect = random.choice([x for x in list(range(self._max_width)) if x != q_single])
+                            q_collect = random.choice([x for x in list(range(width)) if x != q_single])
                             CX & ([q_single, q_collect]) | cir
                             break
                     else:
                         break
 
-                for i in range(self._max_width):
+                for x in range(width):
                     if len(qubit_extra) != 0:
-                        for i in range(len(qubit_extra)):
+                        for x in range(len(qubit_extra)):
                             if len(qubit_extra) > 1:
                                 qubit_i = random.sample((qubit_extra), 2)
                                 CX & (qubit_i) | cir
                                 qubit_extra = filter(qubit_extra, qubit_i)
                             elif len(qubit_extra) == 1:
                                 for q_single in qubit_extra:
-                                    q_col = random.choice([x for x in list(range(self._max_width)) if x != q_single])
+                                    q_col = random.choice([y for y in list(range(width)) if y != q_single])
                                     CX & ([q_single, q_col]) | cir
                                 qubit_extra = filter(qubit_extra, qubit_extra)
                     else:
@@ -155,7 +156,7 @@ class BenchmarkCircuitBuilder:
         return cir
 
     @staticmethod
-    def mediate_measure_circuit_build(self):
+    def mediate_measure_circuit_build(width: int, size: int, random_params: bool = True):
         single_typelist = [GateType.rz]
         double_typelist = [GateType.cx]
         typelist = single_typelist + double_typelist
@@ -163,17 +164,17 @@ class BenchmarkCircuitBuilder:
         prob = [0.8 / len_s] * len_s + [0.2 / len_d] * len_s
 
         gate_indexes = list(range(len(typelist)))
-        qubits_indexes = list(range(self._max_width))
+        qubits_indexes = list(range(width))
         shuffle_qindexes = qubits_indexes[:]
         random.shuffle(shuffle_qindexes)
 
-        cir = Circuit(self._max_width)
-        while cir.size() < self._max_size:
+        cir = Circuit(width)
+        while cir.size() < size:
             rand_type = np.random.choice(gate_indexes, p=prob)
             gate_type = typelist[rand_type]
             gate = GATE_TYPE_TO_CLASS[gate_type]()
 
-            if self._random_params and gate.params:
+            if random_params and gate.params:
                 gate.pargs = list(np.random.uniform(0, 2 * np.pi, gate.params))
 
             gsize = gate.controls + gate.targets
@@ -188,7 +189,7 @@ class BenchmarkCircuitBuilder:
             else:
                 shuffle_qindexes = shuffle_qindexes[gsize:]
 
-            if cir.size() == self._max_size / 2:
+            if cir.size() == size / 2:
                 Measure | cir
                 continue
 
