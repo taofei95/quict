@@ -227,8 +227,9 @@ class Ansatz:
             torch.Tensor: The state vector after measurement.
             list: The probabilities of measured qubit with given index to be 0 and 1.
         """
+        index = self._n_qubits - 1 - qid
         bits_idx = [1 << i for i in range(self._n_qubits)]
-        act_bit = 1 << qid
+        act_bit = 1 << index
         act_bits_idx = list(set(bits_idx) - set([act_bit]))
 
         idx_0 = [0]
@@ -259,7 +260,32 @@ class Ansatz:
             for idx in idx_1:
                 state[idx] *= alpha
 
-        return state, [prob_0, 1 - prob_0]
+        return state
+
+    def measure_prob(self, qid, state):
+        """Measure the probability that a qubit has a value of 0 and 1 according to the state.
+
+        Args:
+            qid (int): The index of the qubit.
+            state (torch.Tensor): The state vector.
+
+        Returns:
+            list: The probabilities of qubit with given index to be 0 and 1.
+        """
+        index = self._n_qubits - 1 - qid
+        bits_idx = [1 << i for i in range(self._n_qubits)]
+        act_bit = 1 << index
+        act_bits_idx = list(set(bits_idx) - set([act_bit]))
+
+        idx_0 = [0]
+        for i in range(len(act_bits_idx)):
+            for j in range(len(idx_0)):
+                idx = act_bits_idx[i] + idx_0[j]
+                idx_0.append(idx)
+
+        # Calculate probabilities
+        prob_0 = torch.sum(torch.abs(state[idx_0]) * torch.abs(state[idx_0]))
+        return [prob_0, 1 - prob_0]
 
     def forward(self, state_vector=None):
         """The Forward Propagation process of an ansatz.
@@ -272,7 +298,6 @@ class Ansatz:
         Returns:
             torch.Tensor: The state vector.
         """
-        prob = None
         if state_vector is None:
             state = torch.zeros(1 << self._n_qubits, dtype=torch.complex128).to(
                 self._device
@@ -288,8 +313,7 @@ class Ansatz:
         for gate in self._gates:
             # Measure gate
             if gate.type == GateType.measure:
-                qid = self._n_qubits - 1 - gate.targ
-                _, prob = self._apply_measuregate(qid, state.clone())
+                state = self._apply_measuregate(gate.targ, state.clone())
             else:
                 # CPU
                 if self._device.type == "cpu":
@@ -305,4 +329,4 @@ class Ansatz:
                     ), "Only ansatz without trainable parameters could use ansatz.forward()."
                     state = self._apply_gate_gpu(state, gate)
 
-        return state, prob
+        return state

@@ -2,9 +2,6 @@ import torch
 import torch.nn
 
 from QuICT.algorithm.quantum_machine_learning.utils import Ansatz, Hamiltonian
-from QuICT.algorithm.quantum_machine_learning.utils.gpu_gate_simulator import (
-    gpu_forward,
-)
 from QuICT.algorithm.quantum_machine_learning.utils.gate_tensor import *
 from QuICT.algorithm.quantum_machine_learning.VQA.model import VQENet
 from QuICT.core import Circuit
@@ -55,9 +52,9 @@ class QAOANet(VQENet):
         """
         ansatz = self.construct_ansatz()
         if self.device.type == "cpu":
-            state, _ = ansatz.forward(state)
+            state = ansatz.forward(state)
         else:
-            state, _ = gpu_forward(ansatz, self.n_qubits, state)
+            state = self.simulator.forward(ansatz, state)
         return state
 
     def _construct_U_gamma_layer(self, gamma):

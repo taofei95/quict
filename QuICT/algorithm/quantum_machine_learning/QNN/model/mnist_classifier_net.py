@@ -4,9 +4,7 @@ import torch.nn as nn
 from QuICT.algorithm.quantum_machine_learning.ansatz_library import QNNLayer
 from QuICT.algorithm.quantum_machine_learning.utils import Ansatz
 from QuICT.algorithm.quantum_machine_learning.utils.gate_tensor import *
-from QuICT.algorithm.quantum_machine_learning.utils.gpu_gate_simulator import (
-    gpu_forward,
-)
+from QuICT.algorithm.quantum_machine_learning.utils import GpuSimulator
 from QuICT.core import Circuit
 from QuICT.core.gate import *
 
@@ -36,6 +34,7 @@ class QuantumNet(nn.Module):
         self._device = device
         self._data_qubits = data_qubits
         self._n_qubits = self._data_qubits + 1
+        self._simulator = GpuSimulator()
         self._pqc = QNNLayer(
             list(range(self._data_qubits)), self._data_qubits, device=self._device
         )
@@ -59,9 +58,11 @@ class QuantumNet(nn.Module):
             model_ansatz = self._construct_ansatz()
             ansatz = data_ansatz + model_ansatz
             if self._device.type == "cpu":
-                _, prob = ansatz.forward()
+                state = ansatz.forward()
+                prob = ansatz.measure_prob(self._data_qubits, state)
             else:
-                _, prob = gpu_forward(ansatz, self._n_qubits, readout=self._data_qubits)
+                state = self._simulator.forward(ansatz)
+                prob = self._simulator.measure_prob(self._data_qubits, state)
             assert prob is not None, "There is no Measure Gate on the readout qubit."
             Y_pred[i] = prob[1]
         return Y_pred
@@ -102,7 +103,6 @@ class QuantumNet(nn.Module):
         model_ansatz.add_gate(H_tensor, self._data_qubits)
         model_ansatz += self._pqc(self._layers, self.params)
         model_ansatz.add_gate(H_tensor, self._data_qubits)
-        model_ansatz.add_gate(Measure_tensor, self._data_qubits)
         return model_ansatz
 
     def _construct_circuit(self):
@@ -113,5 +113,4 @@ class QuantumNet(nn.Module):
         sub_circuit = self._pqc.circuit_layer(self._layers, self.params)
         model_circuit.extend(sub_circuit.gates)
         H | model_circuit(self._data_qubits)
-        Measure | model_circuit(self._data_qubits)
         return model_circuit

@@ -1,14 +1,70 @@
 import cupy as cp
+import numpy as np
 import torch
-import random
-import time
 
 
 from QuICT.ops.utils import LinAlgLoader
 from QuICT.algorithm.quantum_machine_learning.utils.gate_tensor import *
 
 
-def apply_normal_matrix(
+class GpuSimulator:
+    """A GPU simulator for gradient propagation."""
+
+    def __init__(self):
+        self.algorithm = LinAlgLoader(
+            device="GPU",
+            enable_gate_kernel=True,
+            enable_multigpu_gate_kernel=False,
+        )
+
+    def forward(self, ansatz, state=None):
+        """The Forward Propagation process of an ansatz.
+           Only for GPU simulations that need to return gradients.
+
+        Args:
+            ansatz (Ansatz): Ansatz that needs to be simulated.
+            state (torch.Tensor, optional): The initial state vector.
+                Defaults to None, which means |0>.
+
+        Returns:
+            torch.Tensor: The state vector.
+        """
+        n_qubits = ansatz.n_qubits
+
+        if state is None:
+            state = torch.zeros(1 << n_qubits, dtype=torch.complex128).to(ansatz.device)
+            state[0] = 1
+        else:
+            if isinstance(state, np.ndarray):
+                state = torch.from_numpy(state).to(ansatz.device)
+            else:
+                state = state.clone()
+        assert state.shape[0] == 1 << n_qubits
+
+        params = torch.stack(ansatz.trainable_pargs)
+        state = Applygate.apply(state, ansatz, params, self.algorithm, n_qubits)
+
+        return state
+
+    def measure_prob(self, qid, state):
+        """Measure the probability that a qubit has a value of 0 and 1 according to the state.
+
+        Args:
+            qid (int): The index of the qubit.
+            state (torch.Tensor): The state vector.
+
+        Returns:
+            list: The probabilities of qubit with given index to be 0 and 1.
+        """
+        n_qubits = int(np.log2(state.shape[0]))
+        assert 0 <= qid <= n_qubits
+        index = n_qubits - 1 - qid
+        prob_1 = MeasureProb.apply(index, state, self.algorithm, n_qubits)
+        prob = [1 - prob_1, prob_1]
+        return prob
+
+
+def _apply_normal_matrix(
     gate: BasicGateTensor, default_parameters, algorithm, n_qubits, fp
 ):
     # Get gate's parameters
@@ -37,7 +93,7 @@ def apply_normal_matrix(
             raise KeyError("Quantum gate cannot only have control qubits.")
 
 
-def apply_normal_normal_matrix(
+def _apply_normal_normal_matrix(
     gate: BasicGateTensor, default_parameters, algorithm, n_qubits, fp
 ):
     assert gate.matrix_type == MatrixType.normal_normal
@@ -50,7 +106,7 @@ def apply_normal_normal_matrix(
     algorithm.normal_normal_targs(t_indexes, matrix, *default_parameters)
 
 
-def apply_diagonal_normal_matrix(
+def _apply_diagonal_normal_matrix(
     gate: BasicGateTensor, default_parameters, algorithm, n_qubits, fp
 ):
     assert gate.matrix_type == MatrixType.diag_normal
@@ -63,7 +119,7 @@ def apply_diagonal_normal_matrix(
     algorithm.diagonal_normal_targs(t_indexes, matrix, *default_parameters)
 
 
-def apply_diagonal_matrix(
+def _apply_diagonal_matrix(
     gate: BasicGateTensor, default_parameters, algorithm, n_qubits, fp
 ):
     # Get gate's parameters
@@ -96,7 +152,7 @@ def apply_diagonal_matrix(
         algorithm.diagonal_more(c_indexes, t_index, matrix, *default_parameters)
 
 
-def apply_swap_matrix(gate: BasicGateTensor, default_parameters, algorithm, n_qubits):
+def _apply_swap_matrix(gate: BasicGateTensor, default_parameters, algorithm, n_qubits):
     # Get gate's parameters
     assert gate.matrix_type == MatrixType.swap
     args_num = gate.controls + gate.targets
@@ -114,7 +170,7 @@ def apply_swap_matrix(gate: BasicGateTensor, default_parameters, algorithm, n_qu
         algorithm.swap_tmore(t_indexes, c_index, *default_parameters)
 
 
-def apply_reverse_matrix(
+def _apply_reverse_matrix(
     gate: BasicGateTensor, default_parameters, algorithm, n_qubits
 ):
     # Get gate's parameters
@@ -136,7 +192,7 @@ def apply_reverse_matrix(
         algorithm.reverse_more(c_indexes, t_index, *default_parameters)
 
 
-def apply_control_matrix(
+def _apply_control_matrix(
     gate: BasicGateTensor, default_parameters, algorithm, n_qubits
 ):
     # Get gate's parameters
@@ -156,7 +212,18 @@ def apply_control_matrix(
         algorithm.control_ctargs(c_index, t_index, val, *default_parameters)
 
 
-def apply_gate(gate, default_parameters, algorithm, fp):
+def _apply_gate(gate, default_parameters, algorithm, fp):
+    """(GPU) Apply a tensor gate to a state vector.
+
+    Args:
+        gate (BasicGateTensor): The tensor quantum gate.
+        default_parameters (tuple): _description_
+        algorithm (LinAlgLoader): _description_
+        fp (bool): Whether it is forward propagation. True if forward propagation, False if back propagation.
+
+    Returns:
+        torch.tensor: The state vector.
+    """
     cupy_state = default_parameters[0]
     n_qubits = default_parameters[1]
     # Deal with quantum gate with more than 3 qubits.
@@ -177,36 +244,39 @@ def apply_gate(gate, default_parameters, algorithm, fp):
     matrix_type = gate.matrix_type
     # [H, SX, SY, SW, U2, U3, Rx, Ry] 2-bits [CH, ] 2-bits[targets] [unitary]
     if matrix_type == MatrixType.normal:
-        apply_normal_matrix(gate, default_parameters, algorithm, n_qubits, fp)
+        _apply_normal_matrix(gate, default_parameters, algorithm, n_qubits, fp)
     # [Rz, Phase], 2-bits [CRz, Rzz], 3-bits [CCRz]
     elif matrix_type in [MatrixType.diagonal, MatrixType.diag_diag]:
-        apply_diagonal_matrix(gate, default_parameters, algorithm, n_qubits, fp)
+        _apply_diagonal_matrix(gate, default_parameters, algorithm, n_qubits, fp)
     # [X] 2-bits [swap] 3-bits [CSWAP]
     elif matrix_type == MatrixType.swap:
         assert fp is True
-        apply_swap_matrix(gate, default_parameters, algorithm, n_qubits)
+        _apply_swap_matrix(gate, default_parameters, algorithm, n_qubits)
     # [Y] 2-bits [CX, CY] 3-bits: [CCX]
     elif matrix_type == MatrixType.reverse:
         assert fp is True
-        apply_reverse_matrix(gate, default_parameters, algorithm, n_qubits)
+        _apply_reverse_matrix(gate, default_parameters, algorithm, n_qubits)
     # [S, sdg, Z, U1, T, tdg] # 2-bits [CZ, CU1]
     elif matrix_type == MatrixType.control:
         assert fp is True
-        apply_control_matrix(gate, default_parameters, algorithm, n_qubits)
+        _apply_control_matrix(gate, default_parameters, algorithm, n_qubits)
     # [Rxx, Ryy]
     elif matrix_type == MatrixType.normal_normal:
-        apply_normal_normal_matrix(gate, default_parameters, algorithm, n_qubits, fp)
+        _apply_normal_normal_matrix(gate, default_parameters, algorithm, n_qubits, fp)
     # [Rzx]
     elif matrix_type == MatrixType.diag_normal:
-        apply_diagonal_normal_matrix(gate, default_parameters, algorithm, n_qubits, fp)
+        _apply_diagonal_normal_matrix(gate, default_parameters, algorithm, n_qubits, fp)
 
     state_out = torch.from_dlpack(cupy_state)
     return state_out
 
 
 class Applygate(torch.autograd.Function):
+    """The custom autograd function for applying a tensor gate to a state vector."""
+
     @staticmethod
     def forward(ctx, state, ansatz, pargs, algorithm, n_qubits):
+        """The Forward Propagation process of an ansatz."""
         pargs = pargs.flatten()
         pargs_ptr = ansatz.trainable_pargs_ptr
         grads = [None] * pargs.shape[0]
@@ -216,7 +286,7 @@ class Applygate(torch.autograd.Function):
                 continue
             cupy_state = cp.from_dlpack(state.clone())
             default_parameters = (cupy_state, n_qubits, True)
-            state_out = apply_gate(gate, default_parameters, algorithm, True)
+            state_out = _apply_gate(gate, default_parameters, algorithm, True)
 
             for i in range(len(grads)):
                 idx = (
@@ -224,36 +294,38 @@ class Applygate(torch.autograd.Function):
                     if gate.pargs.requires_grad
                     else None
                 )
-                # fx = A * B: grad = 0 [TESTED]
+                # fx = A * B: grad = 0
                 if i != idx and grads[i] is None:
                     continue
 
-                # fx = Gate * state(x): grad = Gate * grad_pre [TESTING]
+                # fx = Gate * state(x): grad = Gate * grad_pre
                 elif i != idx and grads[i] is not None:
                     cupy_grad = cp.from_dlpack(grads[i].conj().clone())
                     default_parameters = (cupy_grad, n_qubits, True)
-                    grads[i] = apply_gate(
+                    grads[i] = _apply_gate(
                         gate, default_parameters, algorithm, True
                     ).conj()
 
-                # fx = Gate(x) * state: grad = Gate'(x) * state [TESTING]
+                # fx = Gate(x) * state: grad = Gate'(x) * state
                 elif i == idx and grads[i] is None:
                     cupy_state = cp.from_dlpack(state.clone())
                     default_parameters = (cupy_state, n_qubits, True)
-                    grads[idx] = apply_gate(
+                    grads[idx] = _apply_gate(
                         gate, default_parameters, algorithm, False
                     ).conj()
 
-                # fx = Gate(x) * state(x): grad = Gate'(x) * state(x) + Gate(x) * grad_pre [TESTING]
+                # fx = Gate(x) * state(x): grad = Gate'(x) * state(x) + Gate(x) * grad_pre
                 else:
                     cupy_state = cp.from_dlpack(state.clone())
                     default_parameters = (cupy_state, n_qubits, True)
-                    grad1 = apply_gate(
+                    grad1 = _apply_gate(
                         gate, default_parameters, algorithm, False
                     ).conj()
                     cupy_grad = cp.from_dlpack(grads[idx].conj().clone())
                     default_parameters = (cupy_grad, n_qubits, True)
-                    grad2 = apply_gate(gate, default_parameters, algorithm, True).conj()
+                    grad2 = _apply_gate(
+                        gate, default_parameters, algorithm, True
+                    ).conj()
                     grads[idx] = grad1 + grad2
             state = state_out
 
@@ -270,6 +342,7 @@ class Applygate(torch.autograd.Function):
 
     @staticmethod
     def backward(ctx, grad_output):
+        """The Backward Propagation process of an ansatz."""
         (grad,) = ctx.saved_tensors
         grad = grad_output * grad
         return None, None, grad.real, None, None
@@ -331,8 +404,11 @@ def measured_prob_grad(index, cupy_state, n_qubits):
 
 
 class MeasureProb(torch.autograd.Function):
+    """The custom autograd function for measuring a qubit according to the state vector."""
+
     @staticmethod
     def forward(ctx, index, state, algorithm, n_qubits):
+        """The Forward Propagation process of measuring the probability."""
         ctx.index = index
         ctx.state = state
         ctx.n_qubits = n_qubits
@@ -346,36 +422,8 @@ class MeasureProb(torch.autograd.Function):
 
     @staticmethod
     def backward(ctx, grad_output):
+        """The Backward Propagation process of measuring the probability."""
         cupy_state = cp.from_dlpack(ctx.state.detach().clone())
         grad = measured_prob_grad(ctx.index, cupy_state, ctx.n_qubits)
         grad = grad_output * grad
         return None, grad, None, None
-
-
-def gpu_forward(ansatz, n_qubits, state=None, readout=None):
-    algorithm = LinAlgLoader(
-        device="GPU",
-        enable_gate_kernel=True,
-        enable_multigpu_gate_kernel=False,
-    )
-    prob = None
-
-    if state is None:
-        state = torch.zeros(1 << n_qubits, dtype=torch.complex128).to(ansatz.device)
-        state[0] = 1
-    else:
-        if isinstance(state, np.ndarray):
-            state = torch.from_numpy(state).to(ansatz.device)
-        else:
-            state = state.clone()
-    assert state.shape[0] == 1 << n_qubits
-
-    params = torch.stack(ansatz.trainable_pargs)
-    state = Applygate.apply(state, ansatz, params, algorithm, n_qubits)
-
-    if readout is not None:
-        assert 0 <= readout <= n_qubits
-        index = n_qubits - 1 - readout
-        prob_1 = MeasureProb.apply(index, state, algorithm, n_qubits)
-        prob = [1 - prob_1, prob_1]
-    return state, prob
