@@ -153,6 +153,15 @@ class Ansatz:
         )
 
     def _apply_gate_gpu(self, state: torch.Tensor, gate: BasicGateTensor):
+        """(GPU) Apply a tensor gate to a state vector.
+
+        Args:
+            state (torch.Tensor): The initial state vector.
+            gate (BasicGateTensor): The tensor quantum gate.
+
+        Returns:
+            torch.Tensor: The state vector.
+        """
         assert state.is_cuda, "Must use GPU."
         cupy_state = cp.from_dlpack(state.detach().clone())
         default_parameters = (cupy_state, self._n_qubits, True)
@@ -160,7 +169,7 @@ class Ansatz:
         return state_out
 
     def _apply_gate_cpu(self, state, gate_tensor, act_bits):
-        """Apply a tensor gate to a state vector.
+        """(CPU) Apply a tensor gate to a state vector.
 
         Args:
             state (torch.Tensor): The initial state vector.
@@ -208,6 +217,16 @@ class Ansatz:
         return state
 
     def _apply_measuregate(self, qid, state):
+        """Apply a Measure gate to a state vector.
+
+        Args:
+            qid (int): The index of the measured qubit.
+            state (torch.Tensor): The initial state vector.
+
+        Returns:
+            torch.Tensor: The state vector after measurement.
+            list: The probabilities of measured qubit with given index to be 0 and 1.
+        """
         bits_idx = [1 << i for i in range(self._n_qubits)]
         act_bit = 1 << qid
         act_bits_idx = list(set(bits_idx) - set([act_bit]))
@@ -244,6 +263,7 @@ class Ansatz:
 
     def forward(self, state_vector=None):
         """The Forward Propagation process of an ansatz.
+           Only for GPU simulations that do not need to return gradients or CPU simulations.
 
         Args:
             state_vector (np.array/torch.Tensor, optional): The initial state vector.

@@ -11,11 +11,13 @@ from QuICT.algorithm.quantum_machine_learning.QNN.model import QuantumNet
 from QuICT.algorithm.quantum_machine_learning.utils.ml_utils import *
 
 
-"""Google Tensorflow Quantum https://arxiv.org/abs/1802.06002
-"""
-
-
 class QNNMnistClassifier:
+    """Quantum Neural Network for MNIST classification
+
+    Google Tensorflow Quantum: https://arxiv.org/abs/1802.06002
+    https://www.tensorflow.org/quantum/tutorials/mnist
+    """
+
     def __init__(
         self,
         class0=3,
@@ -28,6 +30,24 @@ class QNNMnistClassifier:
         seed: int = 0,
         device="cuda:0",
     ):
+        """The complete algorithm process of using QNN to classify MNIST handwritten dataset.
+
+        Args:
+            class0 (int, optional): Class marked as 0. Defaults to 3.
+            class1 (int, optional): Class marked as 1. Defaults to 6.
+            resize (tuple, optional): The size of the downscaled images for classification. Defaults to (4, 4).
+            threshold (float, optional): Threshold for image binarization.
+                Pixels greater than threshold are regarded as 1, otherwise are regarded as 0. Defaults to 0.5.
+            encoding (str, optional): The encoding method to encode the image as quantum ansatz.
+                Only support qubit encoding and amplitude encoding. Defaults to "qubit".
+            layers (list, optional): The list of types of QNN layers.
+                Currently only supports XX, YY, ZZ, and ZX. Defaults to ["XX", "ZZ"].
+            loss_func (optional): The User-defined loss function.
+                Defaults to None, which means using the build-in default loss function.
+            seed (int, optional): The random seed. Defaults to 0.
+            device (str, optional): The device to which the model is assigned.
+                Defaults to "cuda:0".
+        """
         set_seed(seed)
         self.class0 = class0
         self.class1 = class1
@@ -42,6 +62,7 @@ class QNNMnistClassifier:
         self.optim = None
 
     def _hinge_loss(self, y_true, y_pred):
+        """Calculate the hinge loss and record the number of correct classifications."""
         y_true = 2 * y_true.type(torch.float32) - 1.0
         y_pred = 2 * y_pred - 1.0
         loss = torch.clamp(1 - y_pred * y_true, min=0.0)
@@ -49,6 +70,7 @@ class QNNMnistClassifier:
         return torch.mean(loss), correct
 
     def _load_data(self, batch_size=1):
+        """Load data and perform data preprocessing."""
         train_data = MNISTDataset(train=True, device=self.device)
         train_data.filter_targets(self.class0, self.class1)
         train_data.downscale(self.resize)
@@ -79,6 +101,21 @@ class QNNMnistClassifier:
         ckp_freq: int = 30,
         resume: Union[bool, dict] = False,
     ):
+        """The training process.
+
+        Args:
+            optimizer (str): The built-in optimizers in Pytorch. Need to choose from OPTIMIZER_LIST.
+            lr (float): The learning rate.
+            epoch (int, optional): The number of epoch to train. Defaults to 3.
+            batch_size (int, optional): The number of samples that will be passed through to the network at one time. Defaults to 32.
+            save_model (bool, optional): Whether to save the models. Defaults to True.
+            model_path (str, optional): The specified model save path.
+                Defaults to None, and a new folder will be created based on the timestamp.
+            ckp_freq (int, optional): The number of iterations to interval to save a checkpoint. Defaults to 30.
+            resume (Union[bool, dict], optional): Whether to restore an existing model and continue training.
+                Defaults to False. If False, train from scratch. If True, restore the latest checkpoint.
+                Or users can specify a checkpoint saved in an iteration to restore. eg. {"ep": 0, "it": 300}.
+        """
         now = time.strftime("%Y-%m-%d-%H_%M_%S", time.localtime(time.time()))
         # Set model path and initialize tensorboard
         if save_model and model_path is None:
@@ -167,6 +204,8 @@ class QNNMnistClassifier:
         Args:
             model_path (str): The save path of the model to be tested.
 
+        Returns:
+            float: Classification accuracy.
         """
         assert model_path is not None and model_path != ""
         # Load MNIST dataset and preprocessing the data.

@@ -9,11 +9,6 @@ from QuICT.algorithm.quantum_machine_learning.utils.gpu_gate_simulator import (
 )
 from QuICT.core import Circuit
 from QuICT.core.gate import *
-from QuICT.simulation.state_vector import ConstantStateVectorSimulator
-
-
-"""Google Tensorflow Quantum https://arxiv.org/abs/1802.06002
-"""
 
 
 class QuantumNet(nn.Module):
@@ -24,6 +19,16 @@ class QuantumNet(nn.Module):
         encoding="qubit",
         device=torch.device("cuda:0"),
     ):
+        """Initialize a QuantumNet instance.
+
+        Args:
+            data_qubits (int): The index of the readout qubit.
+            layers (list, optional): The list of types of QNN layers.
+                Currently only supports XX, YY, ZZ, and ZX. Defaults to ["XX", "ZZ"].
+            encoding (str, optional): The encoding method to encode the image as quantum ansatz.
+                Only support qubit encoding and amplitude encoding. Defaults to "qubit".
+            device (torch.device, optional): The device to which the model is assigned. Defaults to torch.device("cuda:0").
+        """
         super(QuantumNet, self).__init__()
         assert encoding in ["qubit", "amplitude"]
         self._layers = layers
@@ -37,6 +42,14 @@ class QuantumNet(nn.Module):
         self._define_params()
 
     def forward(self, X):
+        """The forward propagation process of QuantumNet.
+
+        Args:
+            X (torch.Tensor): The input images.
+
+        Returns:
+            torch.Tensor: Classification result. The predicted probabilities that the images belongs to class 1.
+        """
         Y_pred = torch.zeros([X.shape[0]], device=self._device)
         for i in range(X.shape[0]):
             if self._encoding == "qubit":
@@ -61,6 +74,7 @@ class QuantumNet(nn.Module):
         )
 
     def _qubit_encoding(self, img):
+        """Encode the image as quantum ansatz using qubit encoding."""
         img = img.flatten()
         data_ansatz = Ansatz(self._data_qubits, device=self._device)
         for i in range(img.shape[0]):
@@ -69,6 +83,7 @@ class QuantumNet(nn.Module):
         return data_ansatz
 
     def _qubit_encoding_circuit(self, img):
+        """Encode the image as quantum circuit using qubit encoding."""
         img = img.flatten()
         data_circuit = Circuit(self._n_qubits)
         for i in range(img.shape[0]):
@@ -77,9 +92,11 @@ class QuantumNet(nn.Module):
         return data_circuit
 
     def _amplitude_encoding(self, img):
+        """Encode the image as quantum ansatz using amplitude encoding."""
         return
 
     def _construct_ansatz(self):
+        """Build the model ansatz."""
         model_ansatz = Ansatz(self._n_qubits, device=self._device)
         model_ansatz.add_gate(X_tensor, self._data_qubits)
         model_ansatz.add_gate(H_tensor, self._data_qubits)
@@ -89,6 +106,7 @@ class QuantumNet(nn.Module):
         return model_ansatz
 
     def _construct_circuit(self):
+        """Build the model circuit."""
         model_circuit = Circuit(self._n_qubits)
         X | model_circuit(self._data_qubits)
         H | model_circuit(self._data_qubits)

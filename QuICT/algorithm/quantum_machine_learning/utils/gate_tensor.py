@@ -650,6 +650,8 @@ GPhase_tensor = GlobalPhaseGate()
 
 
 class RxxGate(BasicGateTensor):
+    """Rxx Gate (rotation about XX)"""
+
     def __init__(self, params=torch.tensor([np.pi / 2])):
         super().__init__(
             controls=0,
@@ -699,6 +701,8 @@ Rxx_tensor = RxxGate()
 
 
 class RyyGate(BasicGateTensor):
+    """Ryy Gate (rotation about YY)"""
+
     def __init__(self, params=torch.tensor([np.pi / 2])):
         super().__init__(
             controls=0,
@@ -746,6 +750,8 @@ Ryy_tensor = RyyGate()
 
 
 class RzzGate(BasicGateTensor):
+    """Rzz Gate (rotation about ZZ)"""
+
     def __init__(self, params=torch.tensor([np.pi / 2])):
         super().__init__(
             controls=0,
@@ -791,6 +797,8 @@ Rzz_tensor = RzzGate()
 
 
 class RzxGate(BasicGateTensor):
+    """Rzx Gate (rotation about ZX)"""
+
     def __init__(self, params=torch.tensor([np.pi / 2])):
         super().__init__(
             controls=0,
