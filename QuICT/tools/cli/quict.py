@@ -146,7 +146,8 @@ def circuit_cli_construct(circuit_sp: ArgumentParser):
     )
     get_random.add_argument(
         "-i", "--instruction_set",
-        choices=["USTC", "Google", "IBMQ", "IONQ"], nargs="?", default="random",
+        choices=["ctrl_unitary", "diag", "single_bit", "ctrl_diag", "google", "ibmq", "ionq", "ustc", "nam", "origin"],
+        nargs="?", default="nam",
         help="Choice the instrcution set for random circuit."
     )
     get_random.add_argument(
@@ -155,14 +156,14 @@ def circuit_cli_construct(circuit_sp: ArgumentParser):
         help="The number of qubits."
     )
     get_random.add_argument(
-        "-s", "--size",
-        nargs="+", type=int, default=[25],
-        help="The number of quantum gates."
+        "-ms", "--max_size",
+        type=int, default=None,
+        help="The maximum number of quantum gates."
     )
     get_random.add_argument(
-        "-p", "--param",
-        action="store_true", dest="random_param",
-        help="Using random parameters for quantum gates."
+        "-md", "--max_depth",
+        type=int, default=None,
+        help="The maximum number of circuit depth."
     )
     get_random.add_argument(
         "output_path",
@@ -179,7 +180,7 @@ def circuit_cli_construct(circuit_sp: ArgumentParser):
     )
     get_algorithm.add_argument(
         "alg", nargs="?",
-        choices=["QFT", "Grover", "Supremacy"], default="QFT",
+        choices=["adder", "clifford", "grover", "qft", "vqe", "cnf", "maxcut"], default="QFT",
         help="The quantum algorithm."
     )
     get_algorithm.add_argument(
@@ -344,44 +345,44 @@ def benchmark_cli_construct(benchmark_sp: ArgumentParser):
     Args:
         benchmark_sp (ArgumentParser): Benchmark Parser
     """
-    from QuICT.tools.cli.blueprint.benchmark import get_benchmark_qcda, get_benchmark_simulation
+    from QuICT.tools.cli.blueprint.benchmark import qcda, algorithm, simulation
 
     subparser = benchmark_sp.add_subparsers()
+    # quict benchmark algorithm
+    alg_parser = subparser.add_parser(
+        name="algorithm",
+        description="show the benchmarks about Algorithm.",
+        help="show the benchmarks about Algorithm."
+    )
+    alg_parser.set_defaults(func=algorithm)
+
     # quict benchmark qcda
-    qcda = subparser.add_parser(
+    qcda_parser = subparser.add_parser(
         name="qcda",
         description="show the benchmarks about QCDA.",
         help="show the benchmarks about QCDA."
     )
-    qcda.add_argument(
-        "-i", "--instruction_set",
-        choices=["USTC", "Google", "IBMQ", "IONQ"], nargs="?",
-        default=False,
-        help="Using given instruction set to do QCDA benchmark."
+    qcda_parser.add_argument(
+        "circuit_path", type=str, nargs="?", default=None,
+        help="The path of circuit's qasm file.",
     )
-    qcda.add_argument(
-        "-t", "--topology", nargs='?',
-        help="the file which contains the topology."
-    )
-    qcda.set_defaults(func=get_benchmark_qcda)
+    qcda_parser.set_defaults(func=qcda)
 
     # quict benchmark simulation
-    simulation = subparser.add_parser(
+    simu_parser = subparser.add_parser(
         name="simulation",
         description="show the benchmarks about Simulation.",
         help="show the benchmarks about Simulation."
     )
-    simulation.add_argument(
-        "device", nargs="?",
-        choices=["CPU", "GPU"], default="CPU",
-        help="Select CPU/GPU in simulation."
+    simu_parser.add_argument(
+        "circuit_path", type=str, nargs="?", default=None,
+        help="The path of circuit's qasm file.",
     )
-    simulation.add_argument(
-        "-s", "--size",
-        choices=["small", "medium", "large", "all"], default="all",
-        help="Choice the size of simulation, default to all."
+    simu_parser.add_argument(
+        "--gpu", action="store_true",
+        help="The name of target job."
     )
-    simulation.set_defaults(func=get_benchmark_simulation)
+    simu_parser.set_defaults(func=simulation)
 
 
 def _decompose_namespace(args: Namespace):

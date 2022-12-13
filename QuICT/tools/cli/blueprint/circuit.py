@@ -1,9 +1,9 @@
 import os
 import shutil
-import subprocess
 
 from QuICT.tools import Logger
 from QuICT.tools.cli.utils import JobValidation
+from QuICT.tools.circuit_library import CircuitLib
 
 
 logger = Logger("CLI_Circuit_Management")
@@ -18,9 +18,9 @@ default_customed_circuit_folder = os.path.join(
 
 def get_random_circuit(
     qubits: list,
-    size: list,
-    random_param: bool,
-    instruction_set: str = "random",
+    max_size: int,
+    max_depth: int,
+    instruction_set: str = "nam",
     output_path: str = '.'
 ):
     """ Generate the circuit with give parameters and write circuit's qasm into output path.
@@ -32,42 +32,14 @@ def get_random_circuit(
         instruction_set (str, optional): The given instruction sets. Defaults to "random".
         output_path (str, optional): The output folder. Defaults to current work dir.
     """
-    if not os.path.exists(output_path):
-        os.makedirs(output_path)
-
-    str_qubit = "-".join([str(q) for q in qubits])
-    str_size = "-".join([str(s) for s in size])
-    command_file_path = os.path.join(
-        os.path.dirname(__file__),
-        "../script/random_circuit_generator.py"
-    )
-    try:
-        _ = subprocess.call(
-            f"python {command_file_path} {str_qubit} {str_size} {random_param} {instruction_set} {output_path}",
-            shell=True
-        )
-        logger.info(f"Successfully generate target circuits, and store its in {output_path}")
-    except Exception as e:
-        logger.warn(f"Failure to generate random circuit, due to {e}")
+    circuit_library = CircuitLib(output_type="file", output_path=output_path)
+    circuit_library.get_random_circuit(instruction_set, qubits, max_size, max_depth)
 
 
 def get_algorithm_circuit(alg: str, qubits: list, output_path: str = "."):
     """ Get the algorithm circuit and write its qasm into output path. """
-    if not os.path.exists(output_path):
-        os.makedirs(output_path)
-
-    str_qubit = "-".join([str(q) for q in qubits])
-    command_file_path = os.path.join(
-        os.path.dirname(__file__),
-        "../script/algorithm_circuit_generator.py"
-    )
-    try:
-        _ = subprocess.call(
-            f"python {command_file_path} {alg} {str_qubit} {output_path}", shell=True
-        )
-        logger.info(f"Successfully generate algorithm circuits, and store its in {output_path}")
-    except Exception as e:
-        logger.warn(f"Failure to generate algorithm circuit, due to {e}")
+    circuit_library = CircuitLib(output_type="file", output_path=output_path)
+    circuit_library.get_algorithm_circuit(alg, qubits_interval=qubits)
 
 
 def store_quantum_circuit(name: str, file: str):

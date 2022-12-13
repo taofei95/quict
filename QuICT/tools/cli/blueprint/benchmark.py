@@ -1,21 +1,26 @@
+import os
 import subprocess
 
 
+command_file_path = os.path.join(
+    os.path.dirname(__file__),
+    "../script/benchmark.py"
+)
+
+
 def algorithm():
-    pass
+    _ = subprocess.call(
+        f"python {command_file_path} algorithm", shell=True
+    )
 
 
-def qcda():
-    pass
+def qcda(circuit_path):
+    _ = subprocess.call(
+        f"python {command_file_path} qcda {circuit_path}", shell=True
+    )
 
 
-def simulation():
-    pass
-
-
-def get_benchmark_qcda(instruction_set: str, topology: bool):
-    print(instruction_set)
-
-
-def get_benchmark_simulation(device: str, size: str):
-    print(device)
+def simulation(circuit_path, gpu):
+    _ = subprocess.call(
+        f"python {command_file_path} simulation {circuit_path} {gpu}", shell=True
+    )
