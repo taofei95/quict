@@ -41,8 +41,11 @@ class CircuitLibDB:
         """ Get list of qasm file's name which satisfied the condition. """
         based_sql_cmd = "SELECT NAME FROM CIRCUIT_LIB WHERE "
         condition_cmd = f"TYPE=\'{type}\' AND CLASSIFY=\'{classify}\'"
-        if max_width is not None:
+        if isinstance(max_width, int):
             condition_cmd += f" AND WIDTH<\'{max_width}\'"
+        elif isinstance(max_width, list):
+            width_str = ", ".join([str(w) for w in max_width])
+            condition_cmd += " AND WIDTH IN (%s)" % width_str
 
         if max_size is not None:
             condition_cmd += f" AND SIZE<\'{max_size}\'"
