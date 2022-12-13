@@ -12,6 +12,7 @@ from QuICT.core.gate import *
 from QuICT.core.circuit import *
 from QuICT.qcda.utility import OutputAligner
 
+
 class DAGNode:
     """
         DAG representation of a quantum circuit that indicates the commutative
@@ -29,6 +30,7 @@ class DAGNode:
         self.attach = []
         self.pre_number = 0
 
+
 class SABREMapping:
     """
         Mapping with the heuristic algorithm SABRE
@@ -38,7 +40,7 @@ class SABREMapping:
     """
     def __init__(
         self,
-        layout : Layout,
+        layout: Layout,
         sizeE = 20,
         w = 0.5,
         epsilon = 0.001
@@ -51,8 +53,8 @@ class SABREMapping:
                 epsilon(float): the decay parameter of the SABRE algorithm, default 0.001
         """
         self._layout = layout
-        self._sizeE  = sizeE
-        self._w      = w
+        self._sizeE = sizeE
+        self._w = w
         self._epsilon = epsilon
         self.phy2logic = None
 
@@ -192,7 +194,6 @@ class SABREMapping:
                     n.pre_number += 1
 
             return H_basic + W * H_extend
-
 
         # build the DAG
         exe_gates = []
