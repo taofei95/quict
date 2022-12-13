@@ -3,7 +3,7 @@ import torch.nn
 
 from QuICT.algorithm.quantum_machine_learning.utils import Ansatz, Hamiltonian
 from QuICT.algorithm.quantum_machine_learning.utils.gate_tensor import *
-from QuICT.algorithm.quantum_machine_learning.VQA.model import VQENet
+from QuICT.algorithm.quantum_machine_learning.model import VQENet
 from QuICT.core import Circuit
 from QuICT.core.gate import *
 
