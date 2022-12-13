@@ -1,7 +1,6 @@
 import sys
 
-from QuICT.tools import Logger
-from QuICT.tools.logger import LogFormat
+from QuICT.tools import Logger, LogFormat
 from QuICT.simulation import Simulator
 from QuICT.tools.interface import OPENQASMInterface
 
@@ -28,14 +27,13 @@ def simulation_start(
 
     # Start Simulator
     simulator = Simulator(
-        shots=int(shots),
         device=device,
         backend=backend,
         precision=precision,
         output_path=output_path,
-        circuit_record=False
+        amplitude_record=True
     )
-    simulator.run(circuit)
+    simulator.run(circuit, shots=int(shots))
 
     logger.info(f"Simulation Job finished, store the result in {output_path}.")
 
