@@ -10,9 +10,8 @@
 
 namespace gate {
 
-template <typename DType>
-class Gate {
- public:
+template <typename DType> class Gate {
+public:
   Gate(size_t q_num, int attr, DType *data = nullptr,
        SpecialTag tag = SpecialTag::None)
       : q_num_(q_num_), attr_(attr), data_(data), tag_(tag) {
@@ -34,11 +33,16 @@ class Gate {
 
   Gate(size_t q_num, int attr, size_t targ0, DType *data = nullptr,
        SpecialTag tag = SpecialTag::None)
-      : Gate(q_num, attr, data, tag), targ0_(targ0) {}
+      : Gate(q_num, attr, data, tag) {
+    targ_[0] = targ0;
+  }
 
   Gate(size_t q_num, int attr, size_t targ0, size_t targ1,
        DType *data = nullptr, SpecialTag tag = SpecialTag::None)
-      : Gate(q_num, attr, data, tag), targ0_(targ0), targ1_(targ1) {}
+      : Gate(q_num, attr, data, tag) {
+    targ_[0] = targ0;
+    targ_[1] = targ1;
+  }
 
   ~Gate() {
     if (data_) {
@@ -46,29 +50,32 @@ class Gate {
     }
   }
 
-#ifndef NDEBUG
-#define DEBUG_CHECK_ACCESS(pos) assert((pos) < len_)
-#else
-#define DEBUG_CHECK_ACCESS(pos) (void(pos))
-#endif
+  size_t GetTarg(size_t pos) const noexcept {
+    // Debug check target access has no out-of-bound error.
+    assert(pos < sizeof(targ_) / sizeof(targ_[0]));
+    return targ_[pos];
+  }
 
   constexpr DType &operator[](size_t pos) noexcept {
-    DEBUG_CHECK_ACCESS(pos);
+    // Debug check data access has no out-of-bound error.
+    assert(pos < len_);
     return data_[pos];
   }
 
   constexpr const DType &operator[](size_t pos) const noexcept {
-    DEBUG_CHECK_ACCESS(pos);
+    // Debug check data access has no out-of-bound error.
+    assert(pos < len_);
     return data_[pos];
   }
 
- private:
   // Gate's raw data
   DType *data_ = nullptr;
+
+private:
   // Data length
   size_t len_;
   // Gate targets (maybe unused)
-  size_t targ0_ = -1, targ1_ = -1;
+  size_t targ_[3];
   // Qubit number
   size_t q_num_;
   // Gate attributes
@@ -77,6 +84,6 @@ class Gate {
   SpecialTag tag_;
 };
 
-}  // namespace gate
+} // namespace gate
 
 #endif
