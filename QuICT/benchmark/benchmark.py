@@ -16,8 +16,7 @@ class QuICTBenchmark:
     """ The QuICT Benchmarking. """
     
     __DEFAULT_CLASSIFY = {
-        "algorithm": ["adder", "clifford", "grover", "qft", "supremacy", "vqe"],
-        "benchmark": ["highly_entangled", "highly_parallelized", "highly_serialized", "mediate_measure"],
+        "algorithm": ["adder", "clifford", "grover", "qft", "supremacy", "vqe", "cnf"],
         "instructionset": ["google", "ibmq", "ionq", "ustc", "quafu"]
     }
     
@@ -68,7 +67,7 @@ class QuICTBenchmark:
                 
         circuit_list = cir_alg_list + cir_bench_list + cir_ins_list
         
-        cir_qcda_list = []
+        # cir_qcda_list = []
         # for circuit in circuit_list:
         #     qcda = QCDA()
         #     if layout_file is not False:
@@ -81,7 +80,7 @@ class QuICTBenchmark:
         #     cir_qcda = qcda.compile(circuit)
         #     cir_qcda_list.append(cir_qcda)
             
-        return circuit_list, cir_qcda_list
+        return circuit_list
     
     def evaluate(self, circuit_list, result_list, output_type=False):
         """
@@ -91,7 +90,7 @@ class QuICTBenchmark:
             circuit_list (List[str]): the list of circuits group by fields.
             result_list ([dict]): The physical machines simulation result Dict.
             output_type (str, optional): one of [Graph, table, txt file]. Defaults to "Graph".
-            circuit_id, circuit_list, result_list must correspond one-to-one.
+            circuit_list, result_list must correspond one-to-one.
             
         Returns:
             from: Return the benchmark result.
@@ -99,84 +98,83 @@ class QuICTBenchmark:
         # Step 1: Circuits group by fields        
         cirs_field_map = collections.defaultdict(list)
         for circuit in circuit_list:
-            field = (circuit.name).split('+')[0]    
+            field = (circuit.name).split('+')[1]    
         cirs_field_map[field].extend(list(zip(circuit_list, result_list)))
        
-        # Step 2: Score for each fields in step 1
-        score_list  = self._field_score(field, dict(cirs_field_map))
-        dict(cirs_field_map)["algorithm"].append(score_list)
-        
-        # Step 3: Show Result
-        result_dict = {"field":field,
-                       "circuit_size": circuit.size(),
-                    "circuit_width": circuit.width(),
-                    "circuit_size": circuit.size(),
-                   "circuit_depth": circuit.depth(),
-                   "qubit_cal": score_list[0],
-                   "entropy_cal": score_list[1],
-                   "alg_cal":  score_list[2]
-                   }
-        
-        show = self.show_result(result_dict, output_type)
-        
+        # Step 2: Score for each fields in step 1        
+        score_list = self._field_score(field, dict(cirs_field_map)[field])
+        comprehensive_score = []
+        for i in range(len(score_list)):
+            all_score = (score_list[i][0] + score_list[i][1] + score_list[i][2]) / 3
+            comprehensive_score.append(all_score)
+            score_list[i].append(comprehensive_score[i])
+            dict(cirs_field_map)[f"{field}"][i] += tuple(score_list[i])
+
+        show = self.show_result(field, circuit_list, score_list, comprehensive_score, cirs_field_map, output_type)
+
         return show
         
     def _field_score(self, field: str, circuit_result_mapping: dict):
         # field score
-        for circuit_result_group in circuit_result_mapping[field]:
         # Step 1: score each circuit by kl, cross_en, l2 value
-            based_score = self._circuit_score(circuit_result_group[0], circuit_result_group[1])
+        field_score_list = []
+        based_score = self._circuit_score(circuit_result_mapping)
+        for i in range(len(circuit_result_mapping)):
+            cir = circuit_result_mapping[i][0]
+            # Step 2: get field score from its based_score
+            qubit_cal = self._qubit_cal(cir)
+            entropy_cal = self._entropy_cal(based_score[i][0], based_score[i][1], based_score[i][2])
+            alg_cal = self._alg_cal()
+            field_score_list.append([qubit_cal, entropy_cal, alg_cal])
 
-        # Step 2: get field score from its based_score
-        qubit_cal = self._qubit_cal(circuit_result_group[0])
-        entropy_cal = self._entropy_cal(based_score[0], based_score[1], based_score[2])
-        alg_cal = self._alg_cal()
-        
-        score_list = [qubit_cal, entropy_cal, alg_cal]
-        
-        # # Step 3: average total field score
+        # Step 3: average total field score
         alg_pro_1, alg_pro_2, alg_pro_3 = 0.3, 0.3, 0.4
         rand_pro_1, rand_pro_2 = "50%", "50%"
         alg_proportion = [alg_pro_1, alg_pro_2, alg_pro_3]
         rand_proportion = [rand_pro_1, rand_pro_2]
         
-        # result_list = []        
+        score_list = []
+        for i in range(len(circuit_result_mapping)):
+            if field in self.__DEFAULT_CLASSIFY["algorithm"]:
+                result_list = [x*y for x,y in zip(field_score_list[i], alg_proportion)]
+            else:
+                result_list = [x*y for x,y in zip(field_score_list[i][:-1], rand_proportion)]
+            score_list.append(result_list)
         
-        if field == "algorithm":
-            result_list = [x*y for x,y in zip(score_list, alg_proportion)]
-        else:
-            result_list = [x*y for x,y in zip(score_list[:-1], rand_proportion)]
-            
-        return result_list
+        return score_list
     
-    def _circuit_score(self, circuit, result):
+    def _circuit_score(self, circuit_result_group):
         def normalization(data):
             data = np.array(data)
             data = data/np.sum(data)
 
             return data
-        # Step 1: simulate circuit
-        simulator = self.simulator
-        sim_result = normalization(simulator.run(circuit))
-                
-        # Step 2: calculate kl, cross_en, l2, qubit
-        mac_result = normalization(result)
-        kl = self._kl_cal(abs(sim_result), abs(mac_result))
-        cross_en = self._cross_en_cal(abs(sim_result), abs(mac_result))
-        l2 = self._l2_cal(abs(sim_result), abs(mac_result))
-        
-        # Step 3: return result
-        return kl, cross_en, l2
 
+        # Step 1: simulate circuit
+        circuit_score_list = []
+        for i in range(len(circuit_result_group)):
+            simulator = self.simulator
+            sim_result = normalization(simulator.run(circuit_result_group[i][0]))
+            mac_result = normalization(circuit_result_group[i][1])
+            # Step 2: calculate kl, cross_en, l2, qubit
+            kl = self._kl_cal(abs(sim_result), abs(mac_result))
+            cross_en = self._cross_en_cal(abs(sim_result), abs(mac_result)) 
+            l2 = self._l2_cal(abs(sim_result), abs(mac_result))
+
+            circuit_score_list.append([kl, cross_en, l2])
+
+            # Step 3: return result
+        return circuit_score_list
+        
     def _kl_cal(self, p, q):
         # calculate KL
-        KL_divergence = (scipy.stats.entropy(p, q) + scipy.stats.entropy(q, p)) / 2
+        KL_divergence = 0.5*scipy.stats.entropy(p, q) + 0.5*scipy.stats.entropy(q, p)
         return KL_divergence
         
     def _cross_en_cal(self, p, q):
         # calculate cross E
         sum=0.0
-        delta=1e-7
+        delta=100
         for x in map(lambda y,p:(1-y)*math.log(1-p+delta) + y*math.log(p+delta), p, q):
             sum+=x
         cross_entropy = -sum/len(p)
@@ -212,35 +210,36 @@ class QuICTBenchmark:
     def _alg_cal(self):
         return 0
 
-    def show_result(self, result_dict:dict, output_type:str):
+    def show_result(self, field, circuit_list, score_list, comprehensive_score, cirs_field_map, output_type):
         """ show benchmark result. """
         if output_type == "Graph-radar":
         # Graph [line, radar, ...]
-            show = self._graph_show(result_dict, radar=True)
+            show = self._graph_show(field, cirs_field_map, radar=True)
         elif output_type == "Graph-line":
-            show = self._graph_show(result_dict, line=True)
+            show = self._graph_show(circuit_list, score_list, comprehensive_score, line=True)
         # Table
-        elif output_type == "Table":
-            show = self._table_show(result_dict)
+        if output_type == "Table":
+            show = self._table_show(field, cirs_field_map)
         # txt file
         elif output_type == "Txt":
-            show = self._txt_show(result_dict)
-        # Excel
+            show = self._txt_show(field, circuit_list, score_list, comprehensive_score)
+        # # Excel
         else:
-            show = self._excel_show(result_dict)
+            show = self._excel_show(field, circuit_list, score_list, comprehensive_score)
         return show
-            
-                
-    def _table_show(self, result_dict:dict):
+                  
+    def _table_show(self, field, cirs_field_map):
         import prettytable as pt
 
         tb = pt.PrettyTable()
-        tb.field_names = ['field', 'circuit_width', 'circuit_size', 'circuit_depth', 'qubit_cal', 'entropy_cal', 'alg_cal']
-        tb.add_row([result_dict["field"], result_dict["circuit_width"], result_dict["circuit_size"], result_dict["circuit_depth"], result_dict["qubit_cal"], result_dict["entropy_cal"], result_dict["alg_cal"]])
+        tb.field_names = ['field', 'circuit width', 'circuit size', 'circuit depth', 'qubit score', 'entropy score', 'alg score', 'Comprehensive score']
+        cirs_field_map = dict(cirs_field_map)[field]
+        for i in range(len(cirs_field_map)):
+            tb.add_row([field, cirs_field_map[i][0].width(), cirs_field_map[i][0].size(), cirs_field_map[i][0].depth(), cirs_field_map[i][2], cirs_field_map[i][3], cirs_field_map[i][4],  cirs_field_map[i][5]])
         
         return tb
         
-    def _graph_show(self, result_dict:dict, line=False, radar=False):
+    def _graph_show(self, field, cirs_field_map, line=False, radar=False):
         if radar == True:
             import numpy as np
             import matplotlib.pyplot as plt
@@ -251,21 +250,27 @@ class QuICTBenchmark:
             plt.style.use('ggplot')
 
             #构造数据
-            result = result_dict
-            values = [result["field"], result['circuit_width'], result['circuit_size'], result['qubit_cal'], result['entropy_cal'], result['alg_cal']]
-            feature = ['field', 'circuit width', 'circuit size', 'circuit depth', 'qubit cal', 'entropy cal', 'alg cal']
+            feature = ['circuit width', 'circuit size', 'circuit depth', 'qubit score', 'entropy score', 'alg score', 'Comprehensive score']
+            cirs_field_map = dict(cirs_field_map)[field]
+            print(cirs_field_map)
+            values = [cirs_field_map[2][0].width(), cirs_field_map[2][0].size(), cirs_field_map[2][0].depth(), cirs_field_map[2][2], cirs_field_map[2][3], cirs_field_map[2][4],  cirs_field_map[2][5]]
+            values_1 = [cirs_field_map[0][0].width(), cirs_field_map[0][0].size(), cirs_field_map[0][0].depth(), cirs_field_map[0][2], cirs_field_map[0][3], cirs_field_map[0][4],  cirs_field_map[0][5]]
 
             N = len(values)
 
             #设置雷达图的角度，用于平分切开一个平面
             angles = np.linspace(0,2*np.pi,N,endpoint=False)
+            feature = np.concatenate((feature,[feature[0]]))
             values = np.concatenate((values,[values[0]]))
             angles = np.concatenate((angles,[angles[0]]))
+            values_1 = np.concatenate((values_1,[values_1[0]]))
             #绘图
             fig = plt.figure()
             ax = fig.add_subplot(111, polar=True)
-            ax.plot(angles,values,'o-',linewidth=2,label='活动前')
+            ax.plot(angles,values,'o-',linewidth=2,label='最优benchmark')
             ax.fill(angles,values,'r',alpha=0.5)
+            ax.plot(angles,values,'o-',linewidth=2,label='最差benchmark')
+            ax.fill(angles,values,'b',alpha=0.5)
             ax.set_thetagrids(angles*180/np.pi,feature)
             ax.set_ylim(0,5)
             #添加标题
@@ -275,38 +280,39 @@ class QuICTBenchmark:
             plt.savefig('benchmark graph show.jpg') 
             
         if line == True:
-            import numpy as np
-            import matplotlib.pyplot as plt
+            pass
+        #     import numpy as np
+        #     import matplotlib.pyplot as plt
 
-            result = result_dict
-            y_axis_data = [result['circuit_width'], result['circuit_size'], result['circuit_depth'], result['qubit_cal'], result['entropy_cal'], result['alg_cal']]
-            x_axis_data = ['circuit width', 'circuit size', 'circuit depth', 'qubit cal', 'entropy cal', 'alg cal']
+        #     result = result_dict
+        #     y_axis_data = [result_dict["field"], result_dict["circuit_width"], result_dict["circuit_size"], result_dict["circuit_depth"], result_dict["qubit_cal"], result_dict["entropy_cal"], result_dict["alg_cal"], result_dict["Comprehensive_score"]]
+        #     x_axis_data = ['field', 'circuit width', 'circuit size', 'circuit depth', 'qubit score', 'entropy score', 'alg score', 'Comprehensive score']
 
-            # y_axis_data = [5, 15, 20, 25, 30, 35]
+        #     # y_axis_data = [5, 15, 20, 25, 30, 35]
             
-            for a, b in zip(x_axis_data, y_axis_data):
-                plt.text(a, b, str(b), ha='center', va='bottom', fontsize=8)
+        #     for a, b in zip(x_axis_data, y_axis_data):
+        #         plt.text(a, b, str(b), ha='center', va='bottom', fontsize=8)
                 
-            plt.plot(x_axis_data, y_axis_data, alpha=0.8, linewidth=1)
-            plt.xlabel('score metrics')
-            plt.ylabel('score value')
+        #     plt.plot(x_axis_data, y_axis_data, alpha=0.8, linewidth=1)
+        #     plt.xlabel('score metrics')
+        #     plt.ylabel('score value')
 
-            plt.savefig('benchmark line show.jpg') 
+        #     plt.savefig('benchmark line show.jpg') 
         
-    def _txt_show(self, result_dict:dict):
-        result_file = open('benchmark txt show.txt','w+')
+    # def _txt_show(self, result_dict:dict):
+    #     result_file = open('benchmark txt show.txt','w+')
         
-        df = pd.DataFrame(columns=['circuit width', 'circuit size', 'circuit depth', 'qubit cal', 'entropy cal', 'alg cal', 'field score'])
-        result = result_dict
-        df = [result['circuit_width'], result['circuit_size'], result['qubit_cal'], result['entropy_cal'], result['alg_cal'], result['field_score']]
-        df_1 = "".join(df)
-        result_file.write(df_1)
-        result_file.close()
+    #     df = pd.DataFrame(columns=['field', 'circuit width', 'circuit size', 'circuit depth', 'qubit score', 'entropy score', 'alg score', 'Comprehensive score'])
+    #     result = result_dict
+    #     df = [result_dict["field"], result_dict["circuit_width"], result_dict["circuit_size"], result_dict["circuit_depth"], result_dict["qubit_cal"], result_dict["entropy_cal"], result_dict["alg_cal"], result_dict["Comprehensive_score"]]
+    #     df_1 = "".join(df)
+    #     result_file.write(df_1)
+    #     result_file.close()
     
-    def _excel_show(self, result_dict:dict):
-        writer = pd.ExcelWriter()
-        sheetNames = result_dict.keys()
-        data = pd.DataFrame(result_dict)
-        for sheetName in sheetNames:
-            data.to_excel(writer, sheet_name=sheetName)
-        writer.save()
+    # def _excel_show(self, result_dict:dict):
+    #     writer = pd.ExcelWriter()
+    #     sheetNames = result_dict.keys()
+    #     data = pd.DataFrame(result_dict)
+    #     for sheetName in sheetNames:
+    #         data.to_excel(writer, sheet_name=sheetName)
+    #     writer.save()

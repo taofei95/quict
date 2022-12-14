@@ -9,7 +9,7 @@ from matplotlib import pyplot as plt
 import scipy
 import scipy.stats
 from QuICT.benchmark.benchmark import QuICTBenchmark
-from QuICT.benchmark.get_benchmark_circuit import benchmarkcircuitlib
+from QuICT.benchmark.get_benchmark_circuit import BenchmarkCircuitBuilder
 from QuICT.core.gate.gate import *
 from QuICT.core.utils.gate_type import GateType
 from QuICT.simulation.simulator import Simulator
@@ -23,15 +23,16 @@ from QuICT.tools.interface.qasm_interface import OPENQASMInterface
 
 # bench = QuICTBenchmark("circuit", "Graph")
 # # a_list = [GateType.cx, [GateType.h, GateType.rx, GateType.ry, GateType.rz]]
-# cir_list = bench.get_circuit(["grover"], 6, 25, 15)
-# result = [np.load("adder1.npy")]
-# ev = bench.evaluate(circuit_list=cir_list[0], result_list=result, output_type="Table")
+# cir_list = bench.get_circuit(["grover"], 10, 50, 20)
+# result = [np.load("grover4.npy"), np.load("grover3.npy"), np.load("grover2.npy"), np.load("grover1.npy")]
+# # print(result)
+# ev = bench.evaluate(circuit_list=cir_list, result_list=result, output_type="Table")
 # print(ev)
 
 
 
-
-
+cir = BenchmarkCircuitBuilder().mediate_measure_circuit_build(5, 20)
+print(cir)
 
 
 
@@ -43,11 +44,11 @@ from QuICT.tools.interface.qasm_interface import OPENQASMInterface
 # for cir in cir_list[0]:
 #     print(cir.name)
 
-# cir = OPENQASMInterface.load_file("QuICT/lib/circuitlib/algorithm/adder/w4_s4_d4.qasm").circuit
-# print(cir.size())
+# cir = OPENQASMInterface.load_file("QuICT/lib/circuitlib/algorithm/grover/w9_s41_d17.qasm").circuit
+# # print(cir.size())
 # sim = ConstantStateVectorSimulator()
 # result = sim.run(cir)
-# np.save("adder1.npy",result)
+# np.save("grover4.npy",result)
 # print(result)
 
 ##########
@@ -252,9 +253,9 @@ from QuICT.tools.interface.qasm_interface import OPENQASMInterface
 #     print(i)
 # print(result_dict["circuit_width"])
 
-a = benchmarkcircuitlib(5, 10, False)
-cir = a.He_circuit_build()
-print(cir.size())
+# a = benchmarkcircuitlib(5, 10, False)
+# cir = a.He_circuit_build()
+# print(cir.size())
 
-cir.draw(filename="222")
+# cir.draw(filename="222")
 
