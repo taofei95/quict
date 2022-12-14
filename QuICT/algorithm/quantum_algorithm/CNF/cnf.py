@@ -12,7 +12,7 @@ from QuICT.core.gate.backend.mct.mct_one_aux import MCTOneAux
 from QuICT.core.operator import Trigger
 import logging
 from typing import List, Tuple
-# from QuICT.qcda.synthesis.mct.mct_linear_simulation import half_dirty_aux
+# from QuICT.core.gate.backend.mct_linear_simulation import half_dirty_aux
 from QuICT.qcda.optimization.commutative_optimization import *
 
 #from .._synthesis import Synthesis

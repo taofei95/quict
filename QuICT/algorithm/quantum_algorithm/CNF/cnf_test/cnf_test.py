@@ -14,7 +14,7 @@ from QuICT.algorithm.quantum_algorithm.grover import (
 )
 from QuICT.core import Circuit
 from QuICT.core.gate import *
-from QuICT.qcda.synthesis.mct import MCTOneAux
+from QuICT.core.gate.backend import MCTOneAux
 
 def read_CNF(cnf_file):
         # file analysis

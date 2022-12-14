@@ -7,12 +7,12 @@ import math
 import numpy as np
 from QuICT.core import *     #Circuit
 from QuICT.core.gate import *
-from QuICT.qcda.synthesis.mct import MCTOneAux
-from QuICT.qcda.synthesis.mct import MCTLinearHalfDirtyAux
+from QuICT.core.gate.backend import MCTOneAux
+from QuICT.core.gate.backend import MCTLinearHalfDirtyAux
 from QuICT.core.operator import Trigger
 import logging
 from typing import List, Tuple
-# from QuICT.qcda.synthesis.mct.mct_linear_simulation import half_dirty_aux
+# from QuICT.core.gate.backend.mct_linear_simulation import half_dirty_aux
 from QuICT.qcda.optimization.commutative_optimization import *
 
 #from .._synthesis import Synthesis

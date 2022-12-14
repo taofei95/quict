@@ -9,7 +9,7 @@ import numpy as np
 
 from QuICT.core import *     #Circuit
 from QuICT.core.gate import *
-from QuICT.qcda.synthesis.mct import MCTOneAux
+from QuICT.core.gate.backend import MCTOneAux
 from QuICT.core.operator import Trigger
 import logging
 
@@ -23,8 +23,8 @@ from typing import List, Tuple
 #from QuICT.core.gate import *cc
 
 # from QuICT.simulation.cpu_simulator import CircuitSimulator
-from QuICT.qcda.synthesis.mct import one_dirty_aux
-from QuICT.qcda.synthesis.mct.mct_linear_simulation import half_dirty_aux
+from QuICT.core.gate.backend import one_dirty_aux
+from QuICT.core.gate.backend.mct_linear_simulation import half_dirty_aux
 from QuICT.qcda.optimization.commutative_optimization import *
 #from QuICT.qcda.optimization._optimization import Optimization
 
