@@ -7,8 +7,8 @@ import math
 import numpy as np
 from QuICT.core import *     #Circuit
 from QuICT.core.gate import *
-from QuICT.qcda.synthesis.mct import MCTOneAux
-from QuICT.qcda.synthesis.mct import MCTLinearHalfDirtyAux
+from QuICT.core.gate.backend.mct.mct_linear_dirty_aux import MCTLinearHalfDirtyAux
+from QuICT.core.gate.backend.mct.mct_one_aux import MCTOneAux
 from QuICT.core.operator import Trigger
 import logging
 from typing import List, Tuple

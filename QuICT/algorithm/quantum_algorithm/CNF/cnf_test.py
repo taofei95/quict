@@ -17,7 +17,6 @@ from QuICT.qcda.synthesis.mct import MCTOneAux
 
 def read_CNF(cnf_file):
         # file analysis
-        #输入一个文件，输出CNF格式的list
         variable_number = 0
         clause_number = 0
         CNF_data = []
@@ -72,7 +71,7 @@ def find_solution_count(filename_test):
     # print(solutions)
     return len(solutions)
 
-def test(variable_number, clause_number, CNF_data, runs):
+def test(filename_test, variable_number, clause_number, CNF_data, runs):
     AuxQubitNumber = 3
     cnf = CNFSATOracle()
     cnf.run(filename_test, AuxQubitNumber, 1)
@@ -80,10 +79,7 @@ def test(variable_number, clause_number, CNF_data, runs):
     for i in range(runs):
         print(f"{i:4}/{runs:4}",end='')
         oracle = cnf.circuit()
-        stime = time.time()
         grover = Grover(ConstantStateVectorSimulator())
-        ltime = time.time()
-        print(f"simulation run time:{ltime-stime}")
         
         result = grover.run(variable_number, AuxQubitNumber + 1, oracle, n_solution, is_bit_flip=True)
         result_str = bin(result)[2:].rjust(variable_number,'0')
@@ -94,21 +90,27 @@ def test(variable_number, clause_number, CNF_data, runs):
             print("False",end='\r')
     return n_hit
 
-filename_test_list =  [
-    # "./32-3.cnf",
-    # "./64-3.cnf",
-    # "./32-5.cnf",
-    # "./64-5.cnf",
-    # "/home/pengsirui/quict/QuICT/algorithm/quantum_algorithm/CNF/test.cnf",
-    "/home/wangrui/quict/QuICT/algorithm/quantum_algorithm/CNF/test_data/宽度_变量数_子句数/4_25_100",
-    ]
+filename_test_list = os.listdir('QuICT/algorithm/quantum_algorithm/CNF/cnf_test/')
+filename_test_list.sort()
+i = 0
+l = len(filename_test_list)
+n_all = 10
+n_all_all = n_all*l
+n_hit_all = 0
+result = []
 for filename_test in filename_test_list:
-    n_solution = find_solution_count(filename_test)
-    variable_number , clause_number , CNF_data = read_CNF(filename_test)
-    print(f"4_25_100")
-
-    print(f"{n_solution:4} solution in {1<<variable_number:4} possibility")
-    n_all = 100
-    n_hit = test(variable_number, clause_number, CNF_data, n_all)
-    print(f"success rate: {n_hit/n_all:5.3f}[{n_hit:3}/{n_all:3}]")
-    
+    i+=1
+    file_path = 'QuICT/algorithm/quantum_algorithm/CNF/cnf_test'+ '/' + filename_test
+    n_solution = find_solution_count(file_path)
+    variable_number , clause_number , CNF_data = read_CNF(file_path)
+    print(f"[{i:3}/{l:3}]{n_solution:4} solution in {1<<variable_number:4} possibility")
+    n_hit = test(file_path, variable_number, clause_number, CNF_data, n_all)
+    result.append({
+        "file":filename_test,
+        "n_all":n_all,
+        "n_hit":n_hit,
+    })
+    print(f"{filename_test:10} success rate: {n_hit/n_all:5.3f}[{n_hit:3}/{n_all:3}]")
+    print(f"error:{1 - {n_solution:4}/{1<<variable_number:4}}")
+with open("cnf_test_result") as f:
+    f.write(str(result))
