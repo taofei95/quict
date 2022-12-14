@@ -170,7 +170,7 @@ class ConstantStateVectorSimulator:
 
         # Deal with quantum gate with more than 3 qubits.
         if (
-            gate_type in [GateType.unitary, GateType.qft, GateType.iqft] and
+            gate_type in [GateType.unitary, GateType.qft, GateType.iqft, GateType.perm_fx] and
             gate.targets >= 3
         ):
             matrix = self._get_gate_matrix(gate)

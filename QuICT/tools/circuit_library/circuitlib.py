@@ -3,10 +3,12 @@ import shutil
 from typing import Union, List
 
 from QuICT.core import Circuit
+from QuICT.core.gate import GateType
 from QuICT.lib.qasm.exceptions import QasmError
 from QuICT.tools import Logger
 from QuICT.tools.interface import OPENQASMInterface
 from .circuit_lib_sql import CircuitLibDB
+from .get_benchmark_circuit import BenchmarkCircuitBuilder
 
 
 logger = Logger("QuICT_Circuit_Library")
@@ -25,12 +27,30 @@ class CircuitLib:
     __DEFAULT_TYPE = ["template", "random", "algorithm", "benchmark", "instructionset"]
     __DEFAULT_CLASSIFY = {
         "random": [
-            "aspen-4", "ourense", "rochester", "sycamore", "ctrl_diag",
-            "ctrl_unitary", "diag", "single_bits", "tokyo"
+            "aspen-4", "ourense", "rochester", "sycamore", "tokyo",
+            "ctrl_unitary", "diag", "single_bit", "ctrl_diag",
+            "google", "ibmq", "ionq", "ustc", "nam", "origin"
         ],
-        "algorithm": ["adder", "clifford", "grover", "qft", "vqe"],
+        "algorithm": ["adder", "clifford", "grover", "qft", "vqe", "cnf", "maxcut"],
         "benchmark": ["highly_entangled", "highly_parallelized", "highly_serialized", "mediate_measure"],
-        "instructionset": ["google", "ibmq", "ionq", "ustc", "quafu"]
+    }
+    __DEFAULT_GATESET_for_RANDOM = {
+        "google": [[GateType.fsim], [GateType.sx, GateType.sy, GateType.sw, GateType.rx, GateType.ry]],
+        "ibmq": [[GateType.cx], [GateType.rz, GateType.sx, GateType.x]],
+        "ionq": [[GateType.rxx], [GateType.rx, GateType.ry, GateType.rz]],
+        "ustc": [[GateType.cx], [GateType.rx, GateType.ry, GateType.rz, GateType.h, GateType.x]],
+        "nam": [[GateType.cx], [GateType.h, GateType.rz]],
+        "origin": [[GateType.cx], [GateType.u3]],
+        "ctrl_diag": [[GateType.crz, GateType.cu1, GateType.cz], []],
+        "ctrl_unitary": [[GateType.cx, GateType.cy, GateType.ch, GateType.cu3], []],
+        "diag": [[], [
+            GateType.t, GateType.rz, GateType.z, GateType.sdg, GateType.tdg, GateType.u1, GateType.s, GateType.id
+        ]],
+        "single_bit": [[], [
+            GateType.x, GateType.y, GateType.z, GateType.u1, GateType.u2, GateType.u3, GateType.tdg,
+            GateType.sdg, GateType.h, GateType.s, GateType.t, GateType.rx, GateType.ry, GateType.rz
+        ]],
+        "unitary": [[GateType.swap], [GateType.y, GateType.rx, GateType.ry, GateType.u2, GateType.u3]]
     }
     __LIB_PATH = os.path.join(
         os.path.dirname(__file__),
@@ -47,6 +67,9 @@ class CircuitLib:
         logger.debug(f"Initial Circuit Library with output {self._output_type}.")
 
         self._db = CircuitLibDB()
+        if output_type == "file":
+            if not os.path.isdir(output_path):
+                os.makedirs(output_path)
 
     @property
     def size(self) -> int:
@@ -71,8 +94,7 @@ class CircuitLib:
 
     def _copy_qasm_file(self, file_path: str):
         """ Copy target qasm file to the given output path. """
-        filename = os.path.basename(file_path)
-        shutil.copy(file_path, os.path.join(self._output_path, filename))
+        shutil.copy(file_path, self._output_path)
 
     def _get_all(self, folder: str, files: list) -> Union[List, None]:
         """ Load all qasm files in the list of files.
@@ -96,9 +118,62 @@ class CircuitLib:
 
         return circuit_all
 
+    def _get_circuit_from_benchmark(self, classify, width, size):
+        if classify == "highly_entangled":
+            circuit = BenchmarkCircuitBuilder.entangled_circuit_build(width, size)
+        elif classify == "highly_parallelized":
+            circuit = BenchmarkCircuitBuilder.parallelized_circuit_build(width, size)
+        elif classify == "highly_serialized":
+            circuit = BenchmarkCircuitBuilder.serialized_circuit_build(width, size)
+        else:
+            circuit = BenchmarkCircuitBuilder.mediate_measure_circuit_build(width, size)
+
+        return circuit
+
+    def _get_all_from_generator(
+        self,
+        type: str,
+        classify: str,
+        gateset: list,
+        prob: list,
+        qubits_interval: Union[list, int],
+        max_size: int = None,
+        max_depth: int = None
+    ):
+        if isinstance(qubits_interval, int):
+            qubits_interval = list(range(1, qubits_interval + 1))
+
+        circuit_list = []
+        size_interval = [3, 5, 10, 20]
+        for width in qubits_interval:
+            for size in size_interval:
+                if max_size is not None and size * width > max_size:
+                    continue
+
+                if type == "random":
+                    circuit = Circuit(width)
+                    circuit.random_append(size * width, gateset, True, prob)
+                    depth = circuit.depth()
+                else:
+                    circuit = self._get_circuit_from_benchmark(classify, width, size * width)
+                    depth = circuit.depth()
+
+                if max_depth is None or depth <= max_depth:
+                    circuit.name = "+".join([type, classify, f"w{width}_s{size}_d{depth}"])
+                    circuit_list.append(circuit)
+
+        if self._output_type == "circuit":
+            return circuit_list
+        elif self._output_type == "qasm":
+            return [circuit.qasm() for circuit in circuit_list]
+        else:
+            for circuit in circuit_list:
+                output_file = os.path.join(self._output_path, f"{circuit.name}.qasm")
+                circuit.qasm(output_file)
+
     def get_template_circuit(
         self,
-        max_width: int = None,
+        qubits_interval: Union[list, int] = None,
         max_size: int = None,
         max_depth: int = None
     ) -> Union[List[Union[Circuit, str]], None]:
@@ -112,22 +187,23 @@ class CircuitLib:
         Restrictions will be ignored if not specified.
 
         Args:
-            max_width(int): max number of qubits
-            max_size(int): max number of gates
-            max_depth(int): max depth
+            qubits_interval (Union[List, int], optional): The interval of qubit number, if it givens an interger,
+                it equals to the interval of [1, qubits_interval]. The qubits' number range is [1, 5].
+            max_size(int): max number of gates, range is [2, 6].
+            max_depth(int): max depth of circuit, range is [2, 9].
 
         Returns:
             (List[Circuit | String] | None): Return the list of output circuit order by output_type.
         """
         path = os.path.join(self.__LIB_PATH, "template")
-        files = self._db.circuit_filter("template", "template", max_width, max_size, max_depth)
+        files = self._db.circuit_filter("template", "template", qubits_interval, max_size, max_depth)
 
         return self._get_all(path, files)
 
     def get_random_circuit(
         self,
         classify: str,
-        max_width: int = None,
+        qubits_interval: Union[list, int],
         max_size: int = None,
         max_depth: int = None
     ) -> Union[List[Union[Circuit, str]], None]:
@@ -141,22 +217,37 @@ class CircuitLib:
         Restrictions will be ignored if not specified.
 
         Args:
-            classify (str): one of [ctrl_diag, ctrl_unitary, diag, qft, single_bit, unitary, ...]
-            max_width (int, optional): _description_. Defaults to float('inf').
+            classify (str): one of ["aspen-4", "ourense", "rochester", "sycamore", "tokyo", \
+                "ctrl_unitary", "diag", "single_bits", "ctrl_diag", "google", "ibmq", "ionq", "ustc", "nam", "origin"]
+            qubits_interval (Union[List, int], optional): The interval of qubit number, if it givens an interger,
+                it equals to the interval of [1, qubits_interval].
+            max_size(int): max number of gates.
+            max_depth(int): max depth of circuit.
 
         Returns:
             (List[Circuit | String] | None): Return the list of output circuit order by output_type.
         """
         assert classify in self.__DEFAULT_CLASSIFY['random'], "error classify."
-        path = os.path.join(self.__LIB_PATH, 'random', classify)
-        files = self._db.circuit_filter("random", classify, max_width, max_size, max_depth)
+        if classify in self.__DEFAULT_CLASSIFY['random'][:5]:
+            path = os.path.join(self.__LIB_PATH, 'random', classify)
+            files = self._db.circuit_filter("random", classify, qubits_interval, max_size, max_depth)
 
-        return self._get_all(path, files)
+            return self._get_all(path, files)
+        else:   # Generate random circuit with given limitation
+            gate_2q, gate_1q = self.__DEFAULT_GATESET_for_RANDOM[classify]
+            if len(gate_2q) > 0 and len(gate_1q) > 0:
+                prob = [0.2 / len(gate_2q)] * len(gate_2q) + [0.8 / len(gate_1q)] * len(gate_1q)
+            else:
+                prob = None
+
+            return self._get_all_from_generator(
+                "random", classify, gate_2q + gate_1q, prob, qubits_interval, max_size, max_depth
+            )
 
     def get_algorithm_circuit(
         self,
         classify: str,
-        max_width: int = None,
+        qubits_interval: Union[list, slice] = None,
         max_size: int = None,
         max_depth: int = None
     ) -> Union[List[Union[Circuit, str]], None]:
@@ -170,22 +261,25 @@ class CircuitLib:
         Restrictions will be ignored if not specified.
 
         Args:
-            classify (str): one of [clifford, grover, qft, supremacy, vqe, ...]
-            max_width (int, optional): _description_. Defaults to float('inf').
+            classify (str): one of ["adder", "clifford", "grover", "qft", "vqe"]
+            qubits_interval (Union[List, int], optional): The interval of qubit number, if it givens an interger,
+                it equals to the interval of [1, qubits_interval].
+            max_size(int): max number of gates.
+            max_depth(int): max depth of circuit.
 
         Returns:
             (List[Circuit | String] | None): Return the list of output circuit order by output_type.
         """
         assert classify in self.__DEFAULT_CLASSIFY['algorithm'], "error classify."
         path = os.path.join(self.__LIB_PATH, 'algorithm', classify)
-        files = self._db.circuit_filter("algorithm", classify, max_width, max_size, max_depth)
+        files = self._db.circuit_filter("algorithm", classify, qubits_interval, max_size, max_depth)
 
         return self._get_all(path, files)
 
     def get_benchmark_circuit(
         self,
         classify: str,
-        max_width: int = None,
+        qubits_interval: Union[list, int] = None,
         max_size: int = None,
         max_depth: int = None
     ) -> Union[List[Union[Circuit, str]], None]:
@@ -199,71 +293,47 @@ class CircuitLib:
         Restrictions will be ignored if not specified.
 
         Args:
-            classify (str): one of [adder, mapping]
-            max_width (int, optional): _description_. Defaults to float('inf').
+            classify (str): one of ["highly_entangled", "highly_parallelized", "highly_serialized", "mediate_measure"]
+            qubits_interval (Union[List, int], optional): The interval of qubit number, if it givens an interger,
+                it equals to the interval of [1, qubits_interval].
+            max_size(int): max number of gates.
+            max_depth(int): max depth of circuit.
 
         Returns:
             (List[Circuit | String] | None): Return the list of output circuit order by output_type.
         """
         assert classify in self.__DEFAULT_CLASSIFY['benchmark'], "error experiment classify."
-        path = os.path.join(self.__LIB_PATH, 'benchmark', classify)
-        files = self._db.circuit_filter("benchmark", classify, max_width, max_size, max_depth)
-
-        return self._get_all(path, files)
-
-    def get_instructionset_circuit(
-        self,
-        classify: str,
-        max_width: int = None,
-        max_size: int = None,
-        max_depth: int = None
-    ) -> Union[List[Union[Circuit, str]], None]:
-        """ Get experiment circuits in QuICT circuit library. A template will be loaded if
-        it satisfies the following restrictions:
-            1. the circuit in the given classify.
-            2. its number of qubits <= `max_width`,
-            3. its number of gates <= `max_size`,
-            4. its depth <= `max_depth`.
-
-        Restrictions will be ignored if not specified.
-
-        Args:
-            classify (str): one of [adder, mapping]
-            max_width (int, optional): _description_. Defaults to float('inf').
-
-        Returns:
-            (List[Circuit | String] | None): Return the list of output circuit order by output_type.
-        """
-        assert classify in self.__DEFAULT_CLASSIFY['instructionset'], "error experiment classify."
-        path = os.path.join(self.__LIB_PATH, 'instructionset', classify)
-        files = self._db.circuit_filter("instructionset", classify, max_width, max_size, max_depth)
-
-        return self._get_all(path, files)
+        # Generate benchmark circuit with given limitation
+        return self._get_all_from_generator("benchmark", classify, [], [], qubits_interval, max_size, max_depth)
 
     def get_circuit(
         self,
         type: str,
         classify: str = "template",
-        max_width: int = None,
+        qubits_interval: Union[list, int] = None,
         max_size: int = None,
         max_depth: int = None
     ) -> Union[List[Union[Circuit, str]], None]:
         """Get the target circuits from QuICT Circuit Library.
 
         Args:
-            type (str): The type of circuits, one of [template, random, algorithm, experiment].
+            type (str): The type of circuits, one of [template, random, algorithm, benchmark, instructionset].
             classify (str, optional): The classify of selected circuit's type.
-                WARNING: Only in template mode, the classify can be None. \n
-                For template circuit's type, classify is None; \n
+                For template circuit's type, classify must be template;
                 For random circuit's type, classify is one of
-                    [ctrl_diag, ctrl_unitary, diag, qft, single_bit, unitary, ...]
+                    [aspen-4, ourense, rochester, sycamore, tokyo, ctrl_unitary, diag, single_bit, ctrl_diag,
+                     google, ibmq, ionq, ustc, nam, origin]
                 For algorithm circuit's type, classify is one of
-                    [clifford, grover, qft, supremacy, vqe, ...]
-                For experiment circuit's type, classify is one of [adder, mapping]
+                    [adder, clifford, grover, qft, vqe, cnf, maxcut]
+                For benchmark circuit's type, classify is one of
+                    [highly_entangled, highly_parallelized, highly_serialized, mediate_measure]
 
-            qubit_num (int, optional): upper bound of qubit number, default to None.
-            size (int, optional): upper bound of size of templates, default to None.
-            depth (int, optional): upper bound of depth of templates, default to None.
+            qubits_interval (Union[List, int], optional): The interval of qubit number, if it givens an interger,
+                it equals to the interval of [1, qubits_interval].
+            max_size (int, optional): upper bound of circuit size. If None, no limitation on size, default to None.
+            max_depth (int, optional): upper bound of circuit depth. If None, no limitation on depth, default to None.
+
+            WARNING: qubits_interval need to be assigned for getting random circuit and benchmark circuit.
 
         Returns:
             (List[Circuit | String] | None): Return the list of output circuit order by output_type.
@@ -271,11 +341,22 @@ class CircuitLib:
         if type not in self.__DEFAULT_TYPE:
             raise KeyError("error_type")
 
-        if classify not in self.__DEFAULT_CLASSIFY[type]:
+        if type != "template" and classify not in self.__DEFAULT_CLASSIFY[type]:
             raise KeyError("error matched")
 
+<<<<<<< HEAD
         files = self._db.circuit_filter(type, classify, max_width, max_size, max_depth)
         folder_path = os.path.join(self.__LIB_PATH, type, classify) if type != "template" else \
             os.path.join(self.__LIB_PATH, type)
 
         return self._get_all(folder_path, files)
+=======
+        if type == "template":
+            return self.get_template_circuit(qubits_interval, max_size, max_depth)
+        elif type == "random":
+            return self.get_random_circuit(classify, qubits_interval, max_size, max_depth)
+        elif type == "algorithm":
+            return self.get_algorithm_circuit(classify, qubits_interval, max_size, max_depth)
+        else:
+            return self.get_benchmark_circuit(classify, qubits_interval, max_size, max_depth)
+>>>>>>> dev_patch

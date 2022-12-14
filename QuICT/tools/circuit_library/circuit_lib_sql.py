@@ -8,7 +8,7 @@ class CircuitLibDB:
             os.path.dirname(__file__),
             "../../lib/circuitlib/"
         )
-        self._connect = sqlite3.connect(f"{self._file_path}/user_info.db")
+        self._connect = sqlite3.connect(f"{self._file_path}/circuit_library.db")
         self._connect.isolation_level = "EXCLUSIVE"
         self._cursor = self._connect.cursor()
 
@@ -41,8 +41,11 @@ class CircuitLibDB:
         """ Get list of qasm file's name which satisfied the condition. """
         based_sql_cmd = "SELECT NAME FROM CIRCUIT_LIB WHERE "
         condition_cmd = f"TYPE=\'{type}\' AND CLASSIFY=\'{classify}\'"
-        if max_width is not None:
+        if isinstance(max_width, int):
             condition_cmd += f" AND WIDTH<\'{max_width}\'"
+        elif isinstance(max_width, list):
+            width_str = ", ".join([str(w) for w in max_width])
+            condition_cmd += " AND WIDTH IN (%s)" % width_str
 
         if max_size is not None:
             condition_cmd += f" AND SIZE<\'{max_size}\'"
@@ -72,7 +75,6 @@ class CircuitLibDB:
     def add_template_circuit(self):
         file_path = os.path.join(
             self._file_path,
-            "circuit_qasm",
             "template"
         )
 
@@ -93,7 +95,6 @@ class CircuitLibDB:
     def add_circuit(self, type_: str):
         file_path = os.path.join(
             self._file_path,
-            "circuit_qasm",
             type_
         )
 

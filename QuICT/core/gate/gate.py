@@ -521,6 +521,9 @@ class BasicGate(object):
             gate.targets = self.targets
             gate.params = self.params
 
+        if gate.type in [GateType.perm, GateType.unitary, GateType.perm_fx]:
+            gate.matrix = self.matrix
+
         gate.pargs = copy.deepcopy(self.pargs)
         gate.targs = copy.deepcopy(self.targs)
         gate.cargs = copy.deepcopy(self.cargs)
@@ -2179,7 +2182,7 @@ class PermFxGate(BasicGate):
             targets=0,
             params=0,
             type_=GateType.perm_fx,
-            matrix_type=MatrixType.special
+            matrix_type=MatrixType.normal
         )
 
     def __call__(self, n: int, params: list):
@@ -2209,7 +2212,16 @@ class PermFxGate(BasicGate):
             else:
                 _gate.pargs.append(idx)
 
+        _gate.matrix = self._build_matrix(_gate.targets, _gate.pargs)
+
         return _gate
+
+    def _build_matrix(self, targets, pargs):
+        matrix_ = np.zeros((1 << targets, 1 << targets), dtype=self.precision)
+        for idx, p in enumerate(pargs):
+            matrix_[idx, p] = 1
+
+        return matrix_
 
 
 PermFx = PermFxGate()
