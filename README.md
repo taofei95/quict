@@ -36,13 +36,13 @@ pip install quict
     sudo apt install build-essential libtbb2 libtbb-dev clang llvm.
     ```
 
-- Install QuICT
+- Clone QuICT from Gitee
     ```sh
     # git clone
     git clone https://gitee.com/quictucas/quict.git
     ```
 
-- for Ubuntu \
+- For Ubuntu \
 Following commands would build QuICT and install it system-wide. You might need "sudo" privileges to install QuICT into system python package path.
 
     > Due to some missing features in low version GCC (<=11), current QuICT is recommended to be built with clang. In future versions, GCC will be supported.
@@ -53,7 +53,7 @@ Following commands would build QuICT and install it system-wide. You might need 
     export CC=clang && export CXX=clang++ && ./build.sh && ./install.sh --user
     ```
 
-- for Windows \
+- For Windows \
 It is recommended to use clang-cl.exe, which is the clang compiler with MSVC CLI. Other compilers may work but not tested. Open "Developer PowerShell for VS", changing the working directory to QuICT repository root. Then build with following commands:
 
     ```powershell
@@ -67,6 +67,19 @@ It is recommended to use clang-cl.exe, which is the clang compiler with MSVC CLI
     ```sh
     # Build QuICT docker for target device [cpu/gpu]
     sudo docker build -t quict/{device} -f dockerfile/{device}.quict.df .
+    ```
+
+- Using Command Line Interface
+    > please run following command firstly.
+    ```python
+    from QuICT.tools.cli import JobCreator, shortcut_for_quict
+
+    shortcut_for_quict()
+    ```
+
+    > how to using QuICT CLI
+    ```sh
+    quict --help
     ```
 
 ## 使用示例
