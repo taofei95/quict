@@ -1,12 +1,12 @@
 # exec(open("build/starter.py").read())
-from QuICT.simulation.state_vector.cpu_simulator import CircuitSimulator
-from QuICT.simulation.state_vector.gpu_simulator import ConstantStateVectorSimulator
-from QuICT.core import Circuit, circuit
-from QuICT.core.gate import *
 import QuICT
 
 print(f"using {QuICT.__file__} ...")
+
 import cupy as cp
+from QuICT.core import Circuit
+from QuICT.core.gate import *
+from QuICT.simulation.state_vector import CircuitSimulator, ConstantStateVectorSimulator
 
 
 def formatted_result(result, l, qregs, qregs_name):
@@ -25,7 +25,9 @@ def formatted_qreg(s, qregs):
     return "".join(["|" + formatted_qreg_slice(s, qreg) for qreg in qregs]) + "|"
 
 
-def amp2idx(amp, show_n=5, formatted=True, qregs=None, qreg_names=None):
+def amp2idx(
+    amp, show_n=5, formatted=True, qregs=None, qreg_names=None, from_trace_prob=False
+):
     """peek top-n probability result in amp
 
     Args:
@@ -46,7 +48,10 @@ def amp2idx(amp, show_n=5, formatted=True, qregs=None, qreg_names=None):
         qregs = [list(range(n_bit))]
 
     amp = cp.asnumpy(amp)
-    pr = np.power(np.abs(amp), 2)
+    if from_trace_prob:
+        pr = amp
+    else:
+        pr = np.power(np.abs(amp), 2)
     ps = np.real(np.log(amp) / (2j * np.pi))
     arg = np.argsort(pr)[::-1]
     result = []

@@ -8,7 +8,17 @@ from QuICT.core.gate import *
 
 
 class QNNLayer:
+    """Initialize a QNNLayer instance."""
+
     def __init__(self, data_qubits, result_qubit, device=torch.device("cuda:0")):
+        """The QNN layer constructor.
+
+        Args:
+            data_qubits (list): The list of the data qubits indexes.
+            result_qubit (int): The index of the readout qubit.
+            device (str, optional): The device to which the model is assigned.
+                Defaults to "cuda:0".
+        """
         self._n_qubits = len(data_qubits) + 1
         assert (
             result_qubit < self._n_qubits and result_qubit not in data_qubits
@@ -18,6 +28,16 @@ class QNNLayer:
         self._device = device
 
     def __call__(self, two_qubit_gates, params):
+        """Build specified QNN layer ansatz with trainable parameters.
+
+        Args:
+            two_qubit_gates (str or list): The types of QNN layers.
+                Currently only supports XX, YY, ZZ, and ZX.
+            params (torch.nn.parameter): The parameters to be trained.
+
+        Returns:
+            Ansatz: The QNNLayer ansatz.
+        """
         if not isinstance(two_qubit_gates, list):
             two_qubit_gates = [two_qubit_gates]
         n_layers = len(two_qubit_gates)
@@ -45,6 +65,16 @@ class QNNLayer:
         return ansatz
 
     def circuit_layer(self, two_qubit_gates, params):
+        """Build specified QNN layer circuit.
+
+        Args:
+            two_qubit_gates (str or list): The types of QNN layers.
+                Currently only supports XX, YY, ZZ, and ZX.
+            params (torch.nn.parameter): The parameters.
+
+        Returns:
+            Circuit: The QNNLayer circuit.
+        """
         if not isinstance(two_qubit_gates, list):
             two_qubit_gates = [two_qubit_gates]
         n_layers = len(two_qubit_gates)
@@ -65,4 +95,3 @@ class QNNLayer:
                     [self._data_qubits[i], self._result_qubit]
                 )
         return circuit
-

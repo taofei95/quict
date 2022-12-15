@@ -32,3 +32,5 @@ unit_test/**/*.jpg
 /del
 /data/
 .log/
+/demo/
+/QNN_MNIST*

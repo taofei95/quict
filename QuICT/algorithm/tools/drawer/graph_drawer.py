@@ -15,9 +15,7 @@ OPTIONS = {
 }
 
 
-def draw_graph(
-    nodes, edges, title: str = "Graph", save_path=None,
-):
+def draw_graph(nodes, edges, title: str = "Graph", save_path=None):
     """Draw an undirected graph based on given nodes and edges.
 
     Args:
@@ -43,7 +41,11 @@ def draw_graph(
 
 
 def draw_maxcut_result(
-    nodes, edges, solution_bit, title: str = "The result of MaxCut", save_path=None,
+    nodes,
+    edges,
+    solution_bit,
+    title: str = "The result of MaxCut",
+    save_path=None,
 ):
     """Draw an undirected graph based on given nodes and edges.
 
@@ -64,15 +66,13 @@ def draw_maxcut_result(
     node_color = ["red" if solution_bit[v] == "1" else "#1f78b4" for v in nodes]
     edge_color = []
     edge_style = []
-    for u in nodes:
-        for v in range(u + 1, len(nodes)):
-            if (u, v) in edges or (v, u) in edges or [u, v] in edges or [v, u] in edges:
-                if solution_bit[u] == solution_bit[v]:
-                    edge_color.append("black")
-                    edge_style.append("solid")
-                else:
-                    edge_color.append("red")
-                    edge_style.append("dashed")
+    for (u, v) in G.edges:
+        if solution_bit[u] != solution_bit[v]:
+            edge_color.append("red")
+            edge_style.append("dashed")
+        else:
+            edge_color.append("black")
+            edge_style.append("solid")
 
     nx.draw(
         G,
