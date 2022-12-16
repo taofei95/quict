@@ -4,7 +4,7 @@ import numpy as np
 import torch
 
 from QuICT.algorithm.quantum_machine_learning.utils.gate_tensor import *
-from QuICT.algorithm.quantum_machine_learning.utils.gpu_gate_simulator import apply_gate
+from QuICT.algorithm.quantum_machine_learning.utils import apply_gate
 from QuICT.core.gate import *
 from QuICT.ops.utils import LinAlgLoader
 
