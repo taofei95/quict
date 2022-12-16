@@ -1,27 +1,24 @@
 from QuICT.core import Circuit
 from QuICT.core.utils import GateType
-from QuICT.qcda.optimization.template_optimization.templates import (template_nct_2a_2,
-                                                                     template_nct_4a_3,
-                                                                     template_nct_5a_3,
-                                                                     template_nct_6a_1,
-                                                                     template_nct_9c_5,
-                                                                     template_nct_9d_4)
 from QuICT.qcda.optimization.template_optimization import TemplateOptimization
+from QuICT.lib.circuitlib import CircuitLib
 
 
 if __name__ == '__main__':
     circuit = Circuit(5)
-    circuit.random_append(50, typelist=[GateType.cx])
+    typelist = [
+        GateType.x, GateType.cx, GateType.ccx, GateType.h,
+        GateType.t, GateType.tdg, GateType.s, GateType.sdg
+    ]
+    circuit.random_append(50, typelist=typelist)
+
     circuit.draw(filename='0.jpg')
 
-    templates = [template_nct_2a_2(),
-                 template_nct_4a_3(),
-                 template_nct_5a_3(),
-                 template_nct_6a_1(),
-                 template_nct_9c_5(),
-                 template_nct_9d_4()]
     while True:
-        TO = TemplateOptimization(templates)
+        TO = TemplateOptimization(
+            template_max_depth=circuit.width(),
+            template_typelist=typelist
+        )
         circuit_opt = TO.execute(circuit)
         if circuit_opt.size() == circuit.size():
             break

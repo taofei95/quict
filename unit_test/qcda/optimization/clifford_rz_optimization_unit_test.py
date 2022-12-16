@@ -1,21 +1,20 @@
 import time
-import numpy as np
 import pickle
+import typing
 
-from QuICT.core.gate import *
-from QuICT.qcda.optimization.auto_optimization.template import *
-from QuICT.qcda.optimization.auto_optimization import DAG, AutoOptimization
+from QuICT.qcda.optimization.clifford_rz_optimization.template import *
+from QuICT.qcda.optimization.clifford_rz_optimization import DAG, CliffordRzOptimization
 
 
 def test_build_graph():
-    for i, each in enumerate(hadamard_templates):
+    for i, each in enumerate(generate_hadamard_gate_templates()):
         print('hadamard template', i)
         each.replacement.get_circuit().draw(method='command')
         mat_1 = each.template.get_circuit().matrix()
         mat_2 = each.replacement.get_circuit().matrix() * np.exp(1j * each.phase)
         assert np.allclose(mat_1, mat_2), f'hadamard_templates {i} not equal'
 
-    for i, each in enumerate(single_qubit_gate_templates):
+    for i, each in enumerate(generate_single_qubit_gate_templates()):
         circ = Circuit(each.template.width())
         Rz(1.234) | circ(each.anchor)
         mat_1 = circ.matrix()
@@ -52,7 +51,7 @@ def test_reduce_hadamard_gates():
     H | circ(0)
 
     dag = DAG(circ)
-    assert AutoOptimization.reduce_hadamard_gates(dag) == 10, 'hadamard gates reduction failed'
+    assert CliffordRzOptimization().reduce_hadamard_gates(dag) == 10, 'hadamard gates reduction failed'
 
     circ_optim = dag.get_circuit()
     # circ_optim.draw(method='command')
@@ -73,7 +72,7 @@ def test_cancel_single_qubit_gate():
     Rz(-3) | circ(0)
 
     dag = DAG(circ)
-    assert AutoOptimization.cancel_single_qubit_gates(dag) == 3, 'single qubit gates cancellation failed'
+    assert CliffordRzOptimization().cancel_single_qubit_gates(dag) == 3, 'single qubit gates cancellation failed'
 
     circ_optim = dag.get_circuit()
 
@@ -101,7 +100,7 @@ def test_cancel_two_qubit_gate():
 
     dag = DAG(circ)
     # print(AutoOptimization.cancel_two_qubit_gates(dag))
-    assert AutoOptimization.cancel_two_qubit_gates(dag) == 8, 'cnot cancellation failed'
+    assert CliffordRzOptimization().cancel_two_qubit_gates(dag) == 8, 'cnot cancellation failed'
     circ_optim = dag.get_circuit()
 
     # circ.draw(filename='a.jpg')
@@ -128,7 +127,7 @@ def test_merge_rotations():
     print()
     circ.draw(method='command')
     dag = DAG(circ)
-    AutoOptimization.merge_rotations(dag)
+    CliffordRzOptimization().merge_rotations(dag)
     circ_optim = dag.get_circuit()
     circ_optim.draw(method='command')
 
@@ -159,14 +158,14 @@ def test_enumerate_cnot_rz_circuit():
 
     correct_not_count = [6, 3]
     gates = DAG(circ)
-    for i, pack in enumerate(AutoOptimization._enumerate_cnot_rz_circuit(gates)):
+    for i, pack in enumerate(CliffordRzOptimization()._enumerate_cnot_rz_circuit(gates)):
         _, _, node_cnt = pack
         assert node_cnt == correct_not_count[i], f'node count = {node_cnt} != {correct_not_count[i]}'
 
 
-def check_circuit_optimization(circ: Circuit, label, mode='light'):
+def check_circuit_optimization(circ: Circuit, label, level='light'):
     try:
-        AO = AutoOptimization(mode=mode, verbose=False)
+        AO = CliffordRzOptimization(level=level, verbose=False)
         circ_optim = AO.execute(circ)
     except Exception as e:
         pickle.dump(circ.gates, open(f'circ_{label}.dat', 'wb'))
@@ -188,14 +187,14 @@ def test_parameterize_all():
     circ = Circuit(n_qubit)
     circ.random_append(n_gate, typelist=support_gates, random_params=True)
     dag = DAG(circ)
-    AutoOptimization.parameterize_all(dag)
+    CliffordRzOptimization().parameterize_all(dag)
     circ_optim = dag.get_circuit()
 
     mat_1 = circ.matrix()
     mat_2 = circ_optim.matrix()
     assert np.allclose(mat_1, mat_2), "unitary changed after parameterize_all"
 
-    AutoOptimization.deparameterize_all(dag)
+    CliffordRzOptimization().deparameterize_all(dag)
     circ_optim = dag.get_circuit()
     mat_2 = circ_optim.matrix()
     assert np.allclose(mat_1, mat_2), "unitary changed after parameterize_all"
@@ -205,12 +204,13 @@ def test_ccx():
     circ = Circuit(6)
     circ.random_append(10, typelist=[GateType.ccx])
 
-    AO = AutoOptimization()
+    AO = CliffordRzOptimization(optimize_toffoli=True)
     circ_optim = AO.execute(circ)
+    circ_optim.draw(filename='ccx_after.jpg')
+
     mat_0 = circ.matrix()
     mat_1 = circ_optim.matrix()
 
-    # circ_optim.draw(filename='ccx_after.jpg')
     assert np.allclose(mat_0, mat_1), 'unitary changed'
 
 
@@ -225,7 +225,7 @@ def test_float_rz():
     CX | circ([1, 0])
 
     dag = DAG(circ)
-    assert AutoOptimization.float_rotations(dag) == 2, 'float_rotations not correct'
+    assert CliffordRzOptimization().float_rotations(dag) == 2, 'float_rotations not correct'
 
     circ_optim = dag.get_circuit()
     mat_1 = circ.matrix()
@@ -234,7 +234,7 @@ def test_float_rz():
 
 
 def test_gate_preserving_template():
-    for each in gate_preserving_rewrite_template:
+    for each in generate_gate_preserving_rewrite_template():
         print('template,', each.param_order)
         circ = each.template.get_circuit()
         circ_optim = each.replacement.get_circuit()
@@ -248,7 +248,7 @@ def test_gate_preserving_template():
 
 
 def test_gate_reducing_template():
-    for each in gate_reducing_rewrite_template:
+    for each in generate_gate_reducing_rewrite_template():
         print('template,', each.param_order)
         circ = each.template.get_circuit()
         circ_optim = each.replacement.get_circuit()
@@ -272,6 +272,9 @@ def test_regrettable_replace():
     H | circ(1)
     Rz | circ(1)
     dag = DAG(circ)
+
+    hadamard_templates = generate_hadamard_gate_templates()
+
     for node in dag.topological_sort():
         mapping = hadamard_templates[3].compare((node, -1))
         if mapping:
@@ -285,6 +288,28 @@ def test_regrettable_replace():
             assert np.allclose(mat_1, mat_2), "regrettable_replace or undo_replace not correct"
 
             return
+
+
+def test_disabling_optimize_toffoli():
+    n_qubit = 6
+    n_gate = 200
+    support_gates = [GateType.h, GateType.cx, GateType.rz,
+                     GateType.t, GateType.tdg, GateType.s, GateType.sdg, GateType.z, GateType.x,
+                     GateType.ccx, GateType.ccz,
+                     ]
+
+    for level in ['light', 'heavy']:
+        circ = Circuit(n_qubit)
+        circ.random_append(n_gate, typelist=support_gates)
+        cnt = sum([g.type == GateType.ccx or g.type == GateType.ccz for g in circ.gates])
+        circ_optim = CliffordRzOptimization(level=level, optimize_toffoli=False).execute(circ)
+        cnt_optim = sum([g.type == GateType.ccx or g.type == GateType.ccz for g in circ_optim.gates])
+    
+        assert cnt == cnt_optim, f'ccx/ccz changed in {level} mode'
+    
+        mat_1 = circ.matrix()
+        mat_2 = circ_optim.matrix()
+        assert np.allclose(mat_1, mat_2), 'matrix changed'
 
 
 def test_random_circuit():
@@ -303,5 +328,5 @@ def test_random_circuit():
         circ = Circuit(n_qubit)
 
         circ.random_append(n_gate, typelist=support_gates, random_params=True)
-        check_circuit_optimization(circ, _, mode='light')
-        check_circuit_optimization(circ, _, mode='heavy')
+        check_circuit_optimization(circ, _, level='light')
+        check_circuit_optimization(circ, _, level='heavy')

@@ -3,6 +3,7 @@ from itertools import chain
 from typing import List
 
 from QuICT.core import Circuit
+from QuICT.core.utils.circuit_info import CircuitCostMeasure
 
 from .matching_dag_circuit import Match, MatchingDAGCircuit, MatchingDAGNode
 
@@ -22,16 +23,19 @@ class Substitution:
     def __init__(self,
                  circuit: MatchingDAGCircuit,
                  template: MatchingDAGCircuit,
-                 match: Match):
+                 match: Match,
+                 measure: CircuitCostMeasure):
         """
         Args:
             circuit(MatchingDAGCircuit): the circuit to match
             template(MatchingDAGCircuit): the template to be matched
             match(Match): the matching for this substitution
+            measure(CircuitCostMeasure): cost measure
         """
         self.circuit = circuit
         self.template = template
         self.match = match
+        self.measure = measure
 
     @cached_property
     def cost(self):
@@ -41,8 +45,8 @@ class Substitution:
         """
         old_nodes = self.match.template_nodes
         new_nodes = set(range(self.template.size)) - old_nodes
-        old_cost = sum(GATE_COST[self.template.get_node(n).name] for n in old_nodes)
-        new_cost = sum(GATE_COST[self.template.get_node(n).name] for n in new_nodes)
+        old_cost = sum(self.measure[self.template.get_node(n).type] for n in old_nodes)
+        new_cost = sum(self.measure[self.template.get_node(n).type] for n in new_nodes)
         return old_cost - new_cost
 
     @cached_property
@@ -120,12 +124,13 @@ class TemplateSubstitution:
     def _calc_sub_list(cls,
                        circuit: MatchingDAGCircuit,
                        template: MatchingDAGCircuit,
-                       match_list: List[Match]):
+                       match_list: List[Match],
+                       measure: CircuitCostMeasure):
         """
         Greedily calculate a maximal and compatible sub list for found matches.
         """
 
-        all_subs = [Substitution(circuit, template, m) for m in match_list]
+        all_subs = [Substitution(circuit, template, m, measure) for m in match_list]
 
         sub_list = []
         visited_nodes = set()
@@ -157,9 +162,10 @@ class TemplateSubstitution:
     def execute(cls,
                 circuit: MatchingDAGCircuit,
                 template: MatchingDAGCircuit,
-                match_list: List[Match]):
+                match_list: List[Match],
+                measure: CircuitCostMeasure):
 
-        sub_list = cls._calc_sub_list(circuit, template, match_list)
+        sub_list = cls._calc_sub_list(circuit, template, match_list, measure)
 
         new_circ = Circuit(circuit.width)
         visited_nodes = set()

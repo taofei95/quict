@@ -90,7 +90,8 @@ class OptimizingTemplate:
         """
 
         replacement = self.get_replacement(mapping)
-        original = DAG(Circuit(replacement.width()))
+        original = DAG(Circuit(replacement.width()),
+                       build_toffoli=replacement.build_toffoli)
 
         new_mapping = {}
         undo_mapping = {}
@@ -323,10 +324,3 @@ def generate_gate_reducing_rewrite_template() -> List[ParameterizedTemplate]:
         ret.append(ParameterizedTemplate(DAG(tpl_circ), DAG(rpl_circ), weight=weight, param_order=order))
     return ret
 
-
-hadamard_templates = generate_hadamard_gate_templates()
-single_qubit_gate_templates = generate_single_qubit_gate_templates()
-cnot_targ_template = generate_cnot_targ_templates()
-cnot_ctrl_template = generate_cnot_ctrl_templates()
-gate_preserving_rewrite_template = generate_gate_preserving_rewrite_template()
-gate_reducing_rewrite_template = generate_gate_reducing_rewrite_template()

@@ -1,4 +1,5 @@
 from collections import deque
+from functools import cached_property
 
 import numpy as np
 import time
@@ -13,7 +14,7 @@ from .dag import DAG
 from .template import *
 
 
-class AutoOptimization(object):
+class CliffordRzOptimization(object):
     """
     Heuristic optimization of circuits in Clifford + Rz.
 
@@ -34,8 +35,7 @@ class AutoOptimization(object):
         'light': [1, 3, 2, 3, 1, 2, 4, 3, 2],
     }
 
-    @classmethod
-    def parameterize_all(cls, gates: DAG):
+    def parameterize_all(self, gates: DAG):
         """
         Convert all applicable Rz gates into T/Tdg/S/Sdg/Z in the circuit.
 
@@ -54,8 +54,31 @@ class AutoOptimization(object):
         else:
             gates.global_phase = np.mod(gates.global_phase, 2 * np.pi)
 
-    @classmethod
-    def deparameterize_all(cls, gates: DAG):
+    @cached_property
+    def hadamard_templates(self):
+        return generate_hadamard_gate_templates()
+
+    @cached_property
+    def single_qubit_gate_templates(self):
+        return generate_single_qubit_gate_templates()
+
+    @cached_property
+    def cnot_targ_template(self):
+        return generate_cnot_targ_templates()
+
+    @cached_property
+    def cnot_ctrl_template(self):
+        return generate_cnot_ctrl_templates()
+
+    @cached_property
+    def gate_preserving_rewrite_template(self):
+        return generate_gate_preserving_rewrite_template()
+
+    @cached_property
+    def gate_reducing_rewrite_template(self):
+        return generate_gate_reducing_rewrite_template()
+
+    def deparameterize_all(self, gates: DAG):
         """
         Convert all applicable T/Tdg/S/Sdg/Z into Rz in the circuit.
 
@@ -76,8 +99,7 @@ class AutoOptimization(object):
         else:
             gates.global_phase = np.mod(gates.global_phase, 2 * np.pi)
 
-    @classmethod
-    def reduce_hadamard_gates(cls, gates: DAG):
+    def reduce_hadamard_gates(self, gates: DAG):
         """
         Reduce hadamard gates in Clifford+Rz circuits by template matching.
         Adjacent X gates will also be cancelled out.
@@ -88,15 +110,14 @@ class AutoOptimization(object):
             int: Number of H gates reduced.
         """
         cnt = 0
-        cls.deparameterize_all(gates)
+        self.deparameterize_all(gates)
         # enumerate templates and replace every occurrence
-        for template in hadamard_templates:
+        for template in self.hadamard_templates:
             cnt += template.replace_all(gates) * template.weight
-        cls.parameterize_all(gates)
+        self.parameterize_all(gates)
         return cnt
 
-    @classmethod
-    def cancel_single_qubit_gates(cls, gates: DAG):
+    def cancel_single_qubit_gates(self, gates: DAG):
         """
         Merge Rz gates in Clifford+Rz circuit.
         Args:
@@ -134,7 +155,7 @@ class AutoOptimization(object):
 
                 # template matching
                 mapping = None
-                for template in single_qubit_gate_templates:
+                for template in self.single_qubit_gate_templates:
                     mapping = mapping or template.compare(c_node.successors[c_qubit])
                     if mapping:
                         # found a sub-circuit that commutes
@@ -188,8 +209,7 @@ class AutoOptimization(object):
 
             return id(other) in self.reachable[key]
 
-    @classmethod
-    def cancel_two_qubit_gates(cls, gates: DAG):
+    def cancel_two_qubit_gates(self, gates: DAG):
         """
         Merge CX gate in Clifford+Rz circuit.
 
@@ -199,7 +219,7 @@ class AutoOptimization(object):
             int: Number of gates reduced.
         """
         cnt = 0
-        reachable = cls.ReachableSet()
+        reachable = self.ReachableSet()
         for node in list(gates.topological_sort()):
             # enumerate every cnot gate
             if node.flag == DAG.Node.FLAG_ERASED or node.gate_type != GateType.cx:
@@ -220,7 +240,7 @@ class AutoOptimization(object):
 
                 # try commuting node with templates anchored in control qubit
                 mapping = None
-                for template in cnot_ctrl_template:
+                for template in self.cnot_ctrl_template:
                     mapping = template.compare(c_ctrl_node.successors[c_ctrl_qubit])
                     # After we find a template U after current cnot, there are two cases:
                     # Case 1:        .___.         .___.
@@ -244,7 +264,7 @@ class AutoOptimization(object):
                     continue
 
                 # try commuting node with templates anchored in target qubit
-                for template in cnot_targ_template:
+                for template in self.cnot_targ_template:
                     mapping = template.compare(c_targ_node.successors[c_targ_qubit])
                     # if control node can reach any node in the template, it will block commuting.
                     if mapping and all([not reachable.query(c_ctrl_node, c_ctrl_qubit, o) for o in mapping.values()]):
@@ -257,8 +277,7 @@ class AutoOptimization(object):
                     break
         return cnt
 
-    @classmethod
-    def _traverse_cnot_rz_circuit(cls, anchor, flag_ofs=1):
+    def _traverse_cnot_rz_circuit(self, anchor, flag_ofs=1):
         flag_visited = flag_ofs + 1
         flag_term = flag_ofs + 2
 
@@ -376,8 +395,7 @@ class AutoOptimization(object):
                     queue.append(s_node)
         return node_list
 
-    @classmethod
-    def _parse_cnot_rz_circuit(cls, node_list):
+    def _parse_cnot_rz_circuit(self, node_list):
         phases = {}
         first_rz = {}
         cur_phases = {}
@@ -416,8 +434,7 @@ class AutoOptimization(object):
                 node_.erase()
         return cnt
 
-    @classmethod
-    def merge_rotations(cls, gates: DAG):
+    def merge_rotations(self, gates: DAG):
         """
         Merge Rz gates using phase polynomials.
 
@@ -433,13 +450,12 @@ class AutoOptimization(object):
             if anchor_.gate_type != GateType.cx or anchor_.flag == anchor_.FLAG_VISITED:
                 continue
 
-            node_list = cls._traverse_cnot_rz_circuit(anchor_, idx * 2)
-            cnt += cls._parse_cnot_rz_circuit(node_list)
+            node_list = self._traverse_cnot_rz_circuit(anchor_, idx * 2)
+            cnt += self._parse_cnot_rz_circuit(node_list)
 
         return cnt
 
-    @classmethod
-    def _enumerate_cnot_rz_circuit(cls, gates: DAG):
+    def _enumerate_cnot_rz_circuit(self, gates: DAG):
         """
         Iterate over CNOT+Rz sub circuit in Clifford+Rz circuit.
         Isolated Rz gates will be ignored. Each sub circuit is
@@ -543,8 +559,7 @@ class AutoOptimization(object):
                         c_node = p_node
             yield bound['predecessors'], bound['successors'], len(visited_node)
 
-    @classmethod
-    def assign_symbolic_phases(cls, gates: DAG):
+    def assign_symbolic_phases(self, gates: DAG):
         """
         Assign polarity to undetermined T gates in the circuit. Do it greedily to reduce gate count.
 
@@ -570,7 +585,7 @@ class AutoOptimization(object):
                     var_dict[label][1].append(node_.params[0])
 
         ret = 0
-        # greedly assign polarity to each variable
+        # greedily assign polarity to each variable
         for var, expr_list in var_dict.values():
             var.phase = np.pi / 4
             t_cnt = sum([np.isclose(expr.evaluate(), 0) for expr in expr_list])
@@ -591,8 +606,7 @@ class AutoOptimization(object):
         gates.has_symbolic_rz = False
         return ret
 
-    @classmethod
-    def _change_poly_phase(cls, node, qubit_, delta, pos_list=None, pos_cnt=None, history=None):
+    def _change_poly_phase(self, node, qubit_, delta, pos_list=None, pos_cnt=None, history=None):
         """
         Change poly phase of `node` on wire `qubit_` by incremental value `delta`.
         Either `pos_list` or `pos_cnt` should be given.
@@ -623,8 +637,7 @@ class AutoOptimization(object):
         if history is not None:
             history.append((node, qubit_, delta))
 
-    @classmethod
-    def _erase_from_pos_list(cls, node, pos_list):
+    def _erase_from_pos_list(self, node, pos_list):
         """
         Maintain floating position list `pos_list` when erasing `node`.
         """
@@ -633,8 +646,7 @@ class AutoOptimization(object):
             old = (node, qubit_, cur & 1)
             pos_list[cur >> 1].remove(old)
 
-    @classmethod
-    def _check_float_pos(cls, node, qubit_, phases, pos_list=None, pos_cnt=None):
+    def _check_float_pos(self, node, qubit_, phases, pos_list=None, pos_cnt=None):
         """
         Check whether it is valid to change the poly phase of `node` on wire `qubit_`.
         """
@@ -647,8 +659,7 @@ class AutoOptimization(object):
             else:
                 return pos_cnt[cur] > 1
 
-    @classmethod
-    def _float_cancel_sub_circuit(cls, prev_node, succ_node):
+    def _float_cancel_sub_circuit(self, prev_node, succ_node):
         """
         Do float two qubit cancelling in sub circuit.
         """
@@ -695,8 +706,8 @@ class AutoOptimization(object):
                 mono = (cur_phases[node_.qubit_loc[0]] >> 1)
                 phases[mono] = sign * node_.params[0] + (phases[mono] if mono in phases else 0)
                 node_.erase()
-            else:
-                assert False, f'{node_.gate_type} type should not be included in sub circuit'
+            # else:
+            #     assert False, f'{node_.gate_type} type should not be included in sub circuit'
 
         # STEP 2: cancel cx gates
         cnt = 0
@@ -719,13 +730,13 @@ class AutoOptimization(object):
                         n_ctrl_qubit == 0 and n_targ_qubit == 1:
 
                     # cancellation failed
-                    if not cls._check_float_pos(cx, 1, phases, pos_list=pos_list):
+                    if not self._check_float_pos(cx, 1, phases, pos_list=pos_list):
                         break
 
                     # cancellation succeeded, maintain pos_list and erase nodes
                     success = True
-                    cls._erase_from_pos_list(n_ctrl_node, pos_list)
-                    cls._erase_from_pos_list(cx, pos_list)
+                    self._erase_from_pos_list(n_ctrl_node, pos_list)
+                    self._erase_from_pos_list(cx, pos_list)
                     n_ctrl_node.erase()
                     cx.erase()
                     cnt += 2
@@ -746,25 +757,25 @@ class AutoOptimization(object):
                         n_targ_node.gate_type == GateType.cx and \
                         n_targ_qubit == 1 and \
                         ((id(c_ctrl_node), c_ctrl_qubit), id(n_targ_node)) not in reachable and \
-                        cls._check_float_pos(cx, 1, phases, pos_list=pos_list):
+                        self._check_float_pos(cx, 1, phases, pos_list=pos_list):
                     # Case B: share target
                     # ---X--X--
                     # ---|--|--
                     # ---O--|--
                     # ------O--
-                    cls._change_poly_phase(cx, 1, n_targ_node.poly_phase[0], pos_list=pos_list, history=change_history)
-                    cls._change_poly_phase(n_targ_node, 1, cx.poly_phase[0], pos_list=pos_list, history=change_history)
+                    self._change_poly_phase(cx, 1, n_targ_node.poly_phase[0], pos_list=pos_list, history=change_history)
+                    self._change_poly_phase(n_targ_node, 1, cx.poly_phase[0], pos_list=pos_list, history=change_history)
 
                     c_targ_node, c_targ_qubit = n_targ_node, n_targ_qubit
 
                 elif id(n_targ_node) not in term_set and n_targ_node.gate_type == GateType.x and \
-                        cls._check_float_pos(cx, 1, phases, pos_list=pos_list):
+                        self._check_float_pos(cx, 1, phases, pos_list=pos_list):
                     # Case C: X gate on target
                     # ---O-----
                     # ---|-----
                     # ---X--X--
-                    cls._change_poly_phase(cx, 1, 1, pos_list=pos_list, history=change_history)
-                    cls._change_poly_phase(n_targ_node, 0, cx.poly_phase[0], pos_list=pos_list, history=change_history)
+                    self._change_poly_phase(cx, 1, 1, pos_list=pos_list, history=change_history)
+                    self._change_poly_phase(n_targ_node, 0, cx.poly_phase[0], pos_list=pos_list, history=change_history)
 
                     c_targ_node, c_targ_qubit = n_targ_node, n_targ_qubit
                 else:
@@ -773,7 +784,7 @@ class AutoOptimization(object):
             # undo changes if no cancellation found
             if not success:
                 for node_, qubit_, delta_ in reversed(change_history):
-                    cls._change_poly_phase(node_, qubit_, delta_, pos_list=pos_list)
+                    self._change_poly_phase(node_, qubit_, delta_, pos_list=pos_list)
 
         # put back Rz
         for mono, phase in phases.items():
@@ -786,8 +797,7 @@ class AutoOptimization(object):
             c_node.append(c_qubit, 0, r_node)
         return cnt + rz_cnt
 
-    @classmethod
-    def float_cancel_two_qubit_gates(cls, gates):
+    def float_cancel_two_qubit_gates(self, gates):
         """
         Merge CX gates in the circuit while considering float positions of Rz gates.
 
@@ -799,7 +809,7 @@ class AutoOptimization(object):
         gates.reset_flag()
         gates.set_qubit_loc()
         cnt = 0
-        for prev_node, succ_node, node_cnt in list(cls._enumerate_cnot_rz_circuit(gates)):
+        for prev_node, succ_node, node_cnt in list(self._enumerate_cnot_rz_circuit(gates)):
             # the boundary given by enumerate_cnot_rz_circuit is described by internal node of
             # the sub circuit, but PhasePolynomial and replace method need eternal boundary.
             # This conversion is necessary because nodes in eternal boundary may change due to previous iteration.
@@ -809,11 +819,10 @@ class AutoOptimization(object):
                     prev_node[qubit_] = c_node.predecessors[c_qubit]
                     c_node, c_qubit = succ_node[qubit_]
                     succ_node[qubit_] = c_node.successors[c_qubit]
-            cnt += cls._float_cancel_sub_circuit(prev_node, succ_node)
+            cnt += self._float_cancel_sub_circuit(prev_node, succ_node)
         return cnt
 
-    @classmethod
-    def _try_float_cancel_sub_circuit(cls, prev_node, succ_node):
+    def _try_float_cancel_sub_circuit(self, prev_node, succ_node):
         """
         Test whether float_cancel_sub_circuit can find cancellation in this sub circuit.
         The difference with `_float_cancel_sub_circuit` is that we do not change the circuit.
@@ -859,8 +868,8 @@ class AutoOptimization(object):
                 sign = -1 if cur_phases[node_.qubit_loc[0]] & 1 else 1
                 mono = (cur_phases[node_.qubit_loc[0]] >> 1)
                 phases[mono] = sign * node_.params[0] + (phases[mono] if mono in phases else 0)
-            else:
-                assert False, f'{node_.gate_type} type should not be included in sub circuit'
+            # else:
+            #     assert False, f'{node_.gate_type} type should not be included in sub circuit'
 
         # return True if we can merge some Rz gates
         for phase in phases.values():
@@ -883,7 +892,7 @@ class AutoOptimization(object):
                 n_targ_node, n_targ_qubit = c_targ_node.successors[c_targ_qubit]
                 if id(n_ctrl_node) == id(n_targ_node) and n_ctrl_node.gate_type == GateType.cx and \
                         n_ctrl_qubit == 0 and n_targ_qubit == 1:
-                    if not cls._check_float_pos(cx, 1, phases, pos_cnt=pos_cnt):
+                    if not self._check_float_pos(cx, 1, phases, pos_cnt=pos_cnt):
                         break
                     return True
 
@@ -914,37 +923,36 @@ class AutoOptimization(object):
                         n_targ_node.gate_type == GateType.cx and \
                         n_targ_qubit == 1 and \
                         ((id(c_ctrl_node), c_ctrl_qubit), id(n_targ_node)) not in reachable and \
-                        cls._check_float_pos(cx, 1, phases, pos_cnt=pos_cnt):
+                        self._check_float_pos(cx, 1, phases, pos_cnt=pos_cnt):
                     # Case B: share target
                     # ---X--X--
                     # ---|--|--
                     # ---O--|--
                     # ------O--
-                    cls._change_poly_phase(cx, 1, n_targ_node.poly_phase[0], pos_cnt=pos_cnt, history=change_history)
-                    cls._change_poly_phase(n_targ_node, 1, cx.poly_phase[0], pos_cnt=pos_cnt, history=change_history)
+                    self._change_poly_phase(cx, 1, n_targ_node.poly_phase[0], pos_cnt=pos_cnt, history=change_history)
+                    self._change_poly_phase(n_targ_node, 1, cx.poly_phase[0], pos_cnt=pos_cnt, history=change_history)
 
                     c_targ_node, c_targ_qubit = n_targ_node, n_targ_qubit
 
                 elif id(n_targ_node) not in term_set and n_targ_node.gate_type == GateType.x and \
-                        cls._check_float_pos(cx, 1, phases, pos_cnt=pos_cnt):
+                        self._check_float_pos(cx, 1, phases, pos_cnt=pos_cnt):
                     # Case C: X gate on target
                     # ---O-----
                     # ---|-----
                     # ---X--X--
-                    cls._change_poly_phase(cx, 1, 1, pos_cnt=pos_cnt, history=change_history)
-                    cls._change_poly_phase(n_targ_node, 0, cx.poly_phase[0], pos_cnt=pos_cnt, history=change_history)
+                    self._change_poly_phase(cx, 1, 1, pos_cnt=pos_cnt, history=change_history)
+                    self._change_poly_phase(n_targ_node, 0, cx.poly_phase[0], pos_cnt=pos_cnt, history=change_history)
 
                     c_targ_node, c_targ_qubit = n_targ_node, n_targ_qubit
                 else:
                     break
 
             for node_, qubit_, delta_ in reversed(change_history):
-                cls._change_poly_phase(node_, qubit_, delta_, pos_cnt=pos_cnt)
+                self._change_poly_phase(node_, qubit_, delta_, pos_cnt=pos_cnt)
 
         return False
 
-    @classmethod
-    def try_float_cancel_two_qubit_gates(cls, gates):
+    def try_float_cancel_two_qubit_gates(self, gates):
         """
         Test whether float_cancel_two_qubit_gates can reduce gate count in the current circuit.
 
@@ -956,7 +964,7 @@ class AutoOptimization(object):
 
         gates.reset_flag()
         gates.set_qubit_loc()
-        for prev_node, succ_node, node_cnt in list(cls._enumerate_cnot_rz_circuit(gates)):
+        for prev_node, succ_node, node_cnt in list(self._enumerate_cnot_rz_circuit(gates)):
             # the boundary given by enumerate_cnot_rz_circuit is described by internal node of
             # the sub circuit, but PhasePolynomial and replace method need eternal boundary.
             # This conversion is necessary because nodes in eternal boundary may change due to previous iteration.
@@ -966,13 +974,12 @@ class AutoOptimization(object):
                     prev_node[qubit_] = c_node.predecessors[c_qubit]
                     c_node, c_qubit = succ_node[qubit_]
                     succ_node[qubit_] = c_node.successors[c_qubit]
-            if cls._try_float_cancel_sub_circuit(prev_node, succ_node):
+            if self._try_float_cancel_sub_circuit(prev_node, succ_node):
                 return True
 
         return False
 
-    @classmethod
-    def gate_preserving_rewrite(cls, gates):
+    def gate_preserving_rewrite(self, gates):
         """
         Reduce gate count by gate preserving rewrite rules.
 
@@ -986,16 +993,16 @@ class AutoOptimization(object):
         success = True
         while success:
             success = False
-            for template in gate_preserving_rewrite_template:
+            for template in self.gate_preserving_rewrite_template:
                 for node in gates.topological_sort():
                     mapping = template.compare((node, -1), dummy_rz=True)
                     if not mapping:
                         continue
                     original, undo_mapping = template.regrettable_replace(mapping)
 
-                    if cls.try_float_cancel_two_qubit_gates(gates):
+                    if self.try_float_cancel_two_qubit_gates(gates):
                         # if rewriting enables cancellation else where, do it and restart template matching
-                        cnt += cls.float_cancel_two_qubit_gates(gates)
+                        cnt += self.float_cancel_two_qubit_gates(gates)
                         success = True
                         break
 
@@ -1005,8 +1012,7 @@ class AutoOptimization(object):
                     break
         return cnt
 
-    @classmethod
-    def gate_reducing_rewrite(cls, gates):
+    def gate_reducing_rewrite(self, gates):
         """
         Reduce gate count by gate reducing rewrite rules.
 
@@ -1016,15 +1022,14 @@ class AutoOptimization(object):
             int: Number of gates reduced.
         """
         cnt = 0
-        for template in gate_reducing_rewrite_template:
+        for template in self.gate_reducing_rewrite_template:
             cnt += template.replace_all(gates) * template.weight
         if cnt:
-            cnt += cls.float_cancel_two_qubit_gates(gates)
-            cnt += cls.cancel_two_qubit_gates(gates)
+            cnt += self.float_cancel_two_qubit_gates(gates)
+            cnt += self.cancel_two_qubit_gates(gates)
         return cnt
 
-    @classmethod
-    def float_rotations(cls, gates: DAG):
+    def float_rotations(self, gates: DAG):
         """
         Reduce gate count by considering float positions of Rz gates.
 
@@ -1034,33 +1039,32 @@ class AutoOptimization(object):
             int: Number of gates reduced.
         """
         cnt = 0
-        cnt += cls.float_cancel_two_qubit_gates(gates)
-        cnt += cls.gate_preserving_rewrite(gates)
-        cnt += cls.gate_reducing_rewrite(gates)
+        cnt += self.float_cancel_two_qubit_gates(gates)
+        cnt += self.gate_preserving_rewrite(gates)
+        cnt += self.gate_reducing_rewrite(gates)
         return cnt
 
-    def __init__(self, mode='light', verbose=False):
+    def __init__(self, level='light', verbose=False, optimize_toffoli=True):
         """
         Heuristic optimization of circuits in Clifford + Rz.
-        Heavy mode has not reached desired performance yet.
 
         Args:
-              mode(str): Support 'light' and 'heavy' mode. See details in [1]
+              level(str): Support 'light' and 'heavy' level. See details in [1]
               verbose(bool): whether output details of each step
 
         [1] Nam, Yunseong, et al. "Automated optimization of large quantum
         circuits with continuous parameters." npj Quantum Information 4.1
         (2018): 1-12.
         """
-        assert mode in self._optimize_routine, Exception(f'unrecognized mode {mode}')
-        self.mode = mode
+        assert level in self._optimize_routine, Exception(f'unrecognized level {level}')
+        self.level = level
         self.verbose = verbose
+        self.optimize_toffoli = optimize_toffoli
 
-    @OutputAligner()
+    # @OutputAligner()
     def execute(self, gates):
         """
         Heuristic optimization of circuits in Clifford + Rz.
-        Heavy mode has not reached desired performance yet.
 
         Args:
               gates(Circuit): Circuit to be optimized
@@ -1072,8 +1076,8 @@ class AutoOptimization(object):
         circuits with continuous parameters." npj Quantum Information 4.1
         (2018): 1-12.
         """
-        routine = self._optimize_routine[self.mode]
-        _gates = DAG(gates)
+        routine = self._optimize_routine[self.level]
+        _gates = DAG(gates, self.optimize_toffoli)
         self.parameterize_all(_gates)
 
         gate_cnt = 0

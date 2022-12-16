@@ -102,8 +102,6 @@ def test_random_circuit():
         circ.random_append(n_gates, typelist=gates)
         TO = TemplateOptimization(
             template_list=sample(template_list, n_templates),
-            heuristics_qubits_param=[10],
-            heuristics_backward_param=[3, 1]
         )
         circ_optim = TO.execute(circ)
 

@@ -1,6 +1,7 @@
 import os
 import re
 
+from QuICT.core import Circuit
 from QuICT.lib.qasm.exceptions import QasmError
 from QuICT.tools.interface import OPENQASMInterface
 
@@ -32,13 +33,18 @@ class CircuitLib:
         return circuit_all
 
     @classmethod
-    def load_template_circuit(cls, max_width=None, max_size=None, max_depth=None):
+    def load_template_circuit(cls,
+                              max_width=None,
+                              max_size=None,
+                              max_depth=None,
+                              typelist=None):
         """
         Load template circuits in QuICT circuit library. A template will be loaded if
         it satisfies the following restrictions:
             1. its number of qubits <= `max_width`,
             2. its number of gates <= `max_size`,
             3. its depth <= `max_depth`.
+            4. its gates' types are in `typelist`
 
         Restrictions will be ignored if not specified.
 
@@ -46,6 +52,7 @@ class CircuitLib:
             max_width(int): max number of qubits
             max_size(int): max number of gates
             max_depth(int): max depth
+            typelist(Iterable[GateType]): list of allowed gate types
 
         Returns:
             list: a list of required circuits
@@ -59,6 +66,8 @@ class CircuitLib:
             max_depth = float('inf')
 
         circuit_list = []
+        if typelist is not None:
+            typelist = set(typelist)
         path = os.path.join(os.path.dirname(__file__), 'circuit_qasm', 'template')
 
         pat = '^template_w([0-9]+)_s([0-9]+)_d([0-9]+)_([0-9]+).qasm$'
@@ -69,8 +78,9 @@ class CircuitLib:
             if len(re_list) >= 4:
                 n, m, d, _ = [int(x) for x in re_list]
                 if n <= max_width and m <= max_size and d <= max_depth:
-                    circ = cls._load_qasm(os.path.join(path, qasm))
-                    circuit_list.append(circ)
+                    circ: Circuit = cls._load_qasm(os.path.join(path, qasm))
+                    if typelist is None or all(g.type in typelist for g in circ.gates):
+                        circuit_list.append(circ)
             else:
                 print(f'WARNING: {os.path.join(path, qasm)} bad naming.')
 
