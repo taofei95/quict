@@ -5,8 +5,10 @@ import pytest
 from QuICT.core import *
 from QuICT.core.gate import *
 from QuICT.lib.circuitlib import CircuitLib
-from QuICT.qcda.optimization.template_optimization.template_matching import ForwardMatch, MatchingDAGCircuit
-from QuICT.qcda.optimization.template_optimization.template_optimization import TemplateOptimization
+from QuICT.qcda.optimization.template_optimization.template_matching import (
+    ForwardMatch, MatchingDAGCircuit)
+from QuICT.qcda.optimization.template_optimization.template_optimization import \
+    TemplateOptimization
 
 
 def get_circ():
@@ -108,4 +110,3 @@ def test_random_circuit():
         mat_1 = circ.matrix()
         mat_2 = circ_optim.matrix()
         assert np.allclose(mat_1, mat_2)
-

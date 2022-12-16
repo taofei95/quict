@@ -40,7 +40,7 @@ class SymbolicCliffordOptimization(object):
         self.control_sets = control_sets
 
     def __repr__(self):
-        return f'SymbolicCliffordOptimization()'
+        return 'SymbolicCliffordOptimization()'
 
     @OutputAligner()
     def execute(self, gates: CompositeGate):

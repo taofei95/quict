@@ -323,4 +323,3 @@ def generate_gate_reducing_rewrite_template() -> List[ParameterizedTemplate]:
         rpl_circ = get_circuit_from_list(n_qubit, rpl)
         ret.append(ParameterizedTemplate(DAG(tpl_circ), DAG(rpl_circ), weight=weight, param_order=order))
     return ret
-

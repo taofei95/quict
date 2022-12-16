@@ -613,7 +613,6 @@ class DAG(Iterable):
         for each in gates:
             self.append(each)
 
-
     def __iter__(self):
         """
         Iterate over gates in this DAG in topological order

@@ -1,8 +1,9 @@
-import time
 import pickle
+import time
 
+from QuICT.qcda.optimization.clifford_rz_optimization import (
+    DAG, CliffordRzOptimization)
 from QuICT.qcda.optimization.clifford_rz_optimization.template import *
-from QuICT.qcda.optimization.clifford_rz_optimization import DAG, CliffordRzOptimization
 
 
 def test_build_graph():
@@ -303,9 +304,9 @@ def test_disabling_optimize_toffoli():
         cnt = sum([g.type == GateType.ccx or g.type == GateType.ccz for g in circ.gates])
         circ_optim = CliffordRzOptimization(level=level, optimize_toffoli=False).execute(circ)
         cnt_optim = sum([g.type == GateType.ccx or g.type == GateType.ccz for g in circ_optim.gates])
-    
+
         assert cnt == cnt_optim, f'ccx/ccz changed in {level} mode'
-    
+
         mat_1 = circ.matrix()
         mat_2 = circ_optim.matrix()
         assert np.allclose(mat_1, mat_2), 'matrix changed'
