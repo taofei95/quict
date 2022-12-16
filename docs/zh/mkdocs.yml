@@ -25,6 +25,12 @@ nav:
       - 量子近似优化算法: tutorials/algorithm/VQA/QAOA.md
       - 量子神经网络: tutorials/algorithm/VQA/QNN.md
       - 变分量子本征求解器: tutorials/algorithm/VQA/VQE.md
+  - QCDA:
+    - 映射: tutorials/QCDA/mapping.md
+    - 优化: tutorials/QCDA/optimization.md
+    - 合成: tutorials/QCDA/synthesis.md
+  - 量子模拟:
+    - 密度矩阵: tutorials/simulation/density_matrix.md
 - API:
   - Algorithm:
     - Quantum Machine Learning:
