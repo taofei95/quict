@@ -1,2 +1,2 @@
-from .VQENet import VQENet
-from .QAOANet import QAOANet
+from .vqe_net import VQENet
+from .qaoa_net import QAOANet

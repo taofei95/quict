@@ -212,7 +212,7 @@ def _apply_control_matrix(
         algorithm.control_ctargs(c_index, t_index, val, *default_parameters)
 
 
-def _apply_gate(gate, default_parameters, algorithm, fp):
+def apply_gate(gate, default_parameters, algorithm, fp):
     """(GPU) Apply a tensor gate to a state vector.
 
     Args:
@@ -286,7 +286,7 @@ class Applygate(torch.autograd.Function):
                 continue
             cupy_state = cp.from_dlpack(state.clone())
             default_parameters = (cupy_state, n_qubits, True)
-            state_out = _apply_gate(gate, default_parameters, algorithm, True)
+            state_out = apply_gate(gate, default_parameters, algorithm, True)
 
             for i in range(len(grads)):
                 idx = (
@@ -302,7 +302,7 @@ class Applygate(torch.autograd.Function):
                 elif i != idx and grads[i] is not None:
                     cupy_grad = cp.from_dlpack(grads[i].conj().clone())
                     default_parameters = (cupy_grad, n_qubits, True)
-                    grads[i] = _apply_gate(
+                    grads[i] = apply_gate(
                         gate, default_parameters, algorithm, True
                     ).conj()
 
@@ -310,7 +310,7 @@ class Applygate(torch.autograd.Function):
                 elif i == idx and grads[i] is None:
                     cupy_state = cp.from_dlpack(state.clone())
                     default_parameters = (cupy_state, n_qubits, True)
-                    grads[idx] = _apply_gate(
+                    grads[idx] = apply_gate(
                         gate, default_parameters, algorithm, False
                     ).conj()
 
@@ -318,14 +318,12 @@ class Applygate(torch.autograd.Function):
                 else:
                     cupy_state = cp.from_dlpack(state.clone())
                     default_parameters = (cupy_state, n_qubits, True)
-                    grad1 = _apply_gate(
+                    grad1 = apply_gate(
                         gate, default_parameters, algorithm, False
                     ).conj()
                     cupy_grad = cp.from_dlpack(grads[idx].conj().clone())
                     default_parameters = (cupy_grad, n_qubits, True)
-                    grad2 = _apply_gate(
-                        gate, default_parameters, algorithm, True
-                    ).conj()
+                    grad2 = apply_gate(gate, default_parameters, algorithm, True).conj()
                     grads[idx] = grad1 + grad2
             state = state_out
 
