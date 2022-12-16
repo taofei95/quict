@@ -1,8 +1,9 @@
-import numpy as np
-from typing import Tuple, List, Set, Dict
-from collections.abc import Iterable
 from collections import deque
+from collections.abc import Iterable
 from itertools import chain
+from typing import Dict, List, Set, Tuple
+
+import numpy as np
 
 from QuICT.core import *
 from QuICT.core.gate import *

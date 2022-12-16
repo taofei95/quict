@@ -1,16 +1,17 @@
+import time
 from collections import deque
 from functools import cached_property
-
-import numpy as np
-import time
 from typing import List
 
+import numpy as np
+
 from QuICT.core import *
-from QuICT.qcda.optimization.commutative_optimization import CommutativeOptimization
+from QuICT.qcda.optimization.commutative_optimization import \
+    CommutativeOptimization
 from QuICT.qcda.utility import OutputAligner
 
-from .symbolic_phase import SymbolicPhase
 from .dag import DAG
+from .symbolic_phase import SymbolicPhase
 from .template import *
 
 
@@ -1044,12 +1045,13 @@ class CliffordRzOptimization(object):
         cnt += self.gate_reducing_rewrite(gates)
         return cnt
 
-    def __init__(self, level='light', verbose=False, optimize_toffoli=True):
+    def __init__(self, level='light', optimize_toffoli=True, verbose=False):
         """
         Heuristic optimization of circuits in Clifford + Rz.
 
         Args:
               level(str): Support 'light' and 'heavy' level. See details in [1]
+              optimize_toffoli(bool): whether decompose and optimize ccx/ccz gates into Clifford+rz
               verbose(bool): whether output details of each step
 
         [1] Nam, Yunseong, et al. "Automated optimization of large quantum
@@ -1061,7 +1063,11 @@ class CliffordRzOptimization(object):
         self.verbose = verbose
         self.optimize_toffoli = optimize_toffoli
 
-    # @OutputAligner()
+    def __repr__(self):
+        return f'CliffordRzOptimization(level={self.level}, ' \
+               f'optimize_toffoli={self.optimize_toffoli})'
+
+    @OutputAligner()
     def execute(self, gates):
         """
         Heuristic optimization of circuits in Clifford + Rz.

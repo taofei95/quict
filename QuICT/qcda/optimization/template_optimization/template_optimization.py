@@ -1,12 +1,12 @@
-from typing import List, Iterable
+from typing import Iterable, List
 
 from QuICT.core import Circuit
 from QuICT.core.utils.circuit_info import CircuitCostMeasure
 from QuICT.lib.circuitlib import CircuitLib
 from QuICT.qcda.optimization.template_optimization.template_matching.template_matching import (
-    MatchingDAGCircuit, TemplateMatching
-)
-from QuICT.qcda.optimization.template_optimization.template_matching.template_substitution import TemplateSubstitution
+    MatchingDAGCircuit, TemplateMatching)
+from QuICT.qcda.optimization.template_optimization.template_matching.template_substitution import \
+    TemplateSubstitution
 
 
 class TemplateOptimization(object):
@@ -72,6 +72,11 @@ class TemplateOptimization(object):
         self.heuristics_qubits_param = [qubit_fixing_num]
         self.heuristics_backward_param = [prune_step, prune_survivor_num]
         self.cost_measure = CircuitCostMeasure(target_device='nisq')
+
+    def __repr__(self):
+        return f'TemplateOptimization(' \
+               f'heuristics_qubits_param={self.heuristics_qubits_param}), ' \
+               f'heuristics_backward_param={self.heuristics_backward_param})'
 
     def execute(self, circuit):
         """

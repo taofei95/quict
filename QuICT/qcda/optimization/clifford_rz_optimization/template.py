@@ -1,4 +1,4 @@
-from typing import Dict, Tuple, List
+from typing import Dict, List, Tuple
 
 from QuICT.core import *
 from QuICT.core.gate import *

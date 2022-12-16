@@ -8,10 +8,13 @@ import random
 import numpy as np
 
 from QuICT.core import Circuit
-from QuICT.core.gate import CompositeGate, GateType, H, CX, CY, CZ, X, S, Z, S_dagger
-from QuICT.qcda.optimization.commutative_optimization import CommutativeOptimization
-from QuICT.qcda.synthesis.gate_transform.transform_rule import cy2cx_rule, cz2cx_rule
-from QuICT.qcda.utility import PauliOperator, OutputAligner
+from QuICT.core.gate import (CX, CY, CZ, CompositeGate, GateType, H, S,
+                             S_dagger, X, Z)
+from QuICT.qcda.optimization.commutative_optimization import \
+    CommutativeOptimization
+from QuICT.qcda.synthesis.gate_transform.transform_rule import (cy2cx_rule,
+                                                                cz2cx_rule)
+from QuICT.qcda.utility import OutputAligner, PauliOperator
 
 
 class SymbolicCliffordOptimization(object):
@@ -35,6 +38,9 @@ class SymbolicCliffordOptimization(object):
         assert control_sets is None or isinstance(control_sets, list),\
             TypeError('control_set must be list of qubit')
         self.control_sets = control_sets
+
+    def __repr__(self):
+        return f'SymbolicCliffordOptimization()'
 
     @OutputAligner()
     def execute(self, gates: CompositeGate):

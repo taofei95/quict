@@ -1,6 +1,5 @@
 import time
 import pickle
-import typing
 
 from QuICT.qcda.optimization.clifford_rz_optimization.template import *
 from QuICT.qcda.optimization.clifford_rz_optimization import DAG, CliffordRzOptimization
