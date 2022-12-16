@@ -2049,7 +2049,7 @@ class iSwapGate(BasicGate):
             controls=0,
             targets=2,
             params=0,
-            type=GateType.iswap,
+            type_=GateType.iswap,
             matrix_type=MatrixType.phase_swap,
         )
 
@@ -2071,7 +2071,7 @@ class iSwapDaggerGate(BasicGate):
             controls=0,
             targets=2,
             params=0,
-            type=GateType.iswapdg,
+            type_=GateType.iswapdg,
             matrix_type=MatrixType.phase_swap,
         )
 
@@ -2093,7 +2093,7 @@ class SquareRootiSwapGate(BasicGate):
             controls=0,
             targets=2,
             params=0,
-            type=GateType.sqiswap,
+            type_=GateType.sqiswap,
             matrix_type=MatrixType.phase_swap,
         )
 

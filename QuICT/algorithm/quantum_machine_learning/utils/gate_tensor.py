@@ -403,7 +403,7 @@ class SquareRootiSwapGate(BasicGateTensor):
                 [0, 0, (1 + 1j) / np.sqrt(2), 0],
                 [0, (1 + 1j) / np.sqrt(2), 0, 0],
                 [0, 0, 0, 1]
-            ], dtype=np.complex128
+            ], dtype=self._precision
         ).to(self.device)
 
     @property
