@@ -187,11 +187,11 @@ class CircuitBased(object):
 
         if self.size() == 0:
             if device == "CPU":
-                circuit_matrix = np.identity(1 << self.width(), dtype=np.complex128)
+                circuit_matrix = np.identity(1 << self.width(), dtype=self._precision)
             else:
                 import cupy as cp
 
-                circuit_matrix = cp.identity(1 << self.width(), dtype=np.complex128)
+                circuit_matrix = cp.identity(1 << self.width(), dtype=self._precision)
 
             return circuit_matrix
 
@@ -213,11 +213,14 @@ class CircuitBased(object):
         for i in range(self.size()):
             gate = self.gates[i + added_idxes]
             if hasattr(gate, "build_gate"):
+                print(gate.type)
                 decomp_gates = gate.build_gate()
                 self.gates.remove(gate)
                 for g in decomp_gates:
                     self._gates.insert(i + added_idxes, g)
                     added_idxes += 1
+                    print(g.type)
+                    print(g.matrix.dtype)
 
                 added_idxes -= 1    # minus the original gate
 

@@ -18,9 +18,9 @@ class ReadoutError:
 
         The ReadoutError for 2 qubit:
             P = [[p(00|00), p(01|00), p(10|00), p(11|00)], \n
-                [p(00|01), p(01|01), p(10|01), p(11|01)], \n
-                [p(00|10), p(01|10), p(10|10), p(11|10)], \n
-                [p(00|11), p(01|11), p(10|11), p(11|11)]] \n
+                 [p(00|01), p(01|01), p(10|01), p(11|01)], \n
+                 [p(00|10), p(01|10), p(10|10), p(11|10)], \n
+                 [p(00|11), p(01|11), p(10|11), p(11|11)]] \n
 
     Important:
         The sum of each rows in the prob should equal to 1.
