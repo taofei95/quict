@@ -6,6 +6,7 @@ from QuICT.core import Circuit
 from QuICT.core.gate import BasicGate
 from QuICT.core.utils import GateType
 from QuICT.core.utils.circuit_info import CircuitMode
+from QuICT.qcda.utility import OutputAligner
 
 
 class CircuitPartitionOptimization(object):
@@ -238,6 +239,7 @@ class CircuitPartitionOptimization(object):
 
         return []
 
+    @OutputAligner()
     def execute(self, circuit):
         """
         It will first partition the circuit into blocks and then apply optimizers to each block.
