@@ -91,6 +91,12 @@ class CircuitGnn(nn.Module):
                     feat_dim=feat_dim,
                     pool=False,
                 ),
+                GnnBlock(
+                    qubit_num=qubit_num,
+                    max_gate_num=max_gate_num,
+                    feat_dim=feat_dim,
+                    pool=False,
+                ),
             ]
         )
 

@@ -54,7 +54,6 @@ class Trainer:
         for epoch_id in range(self.config.total_epoch):
             print(f"Epoch {epoch_id}")
 
-
             self.actor.agent.reset_explore_state()
             for it in range(self.config.explore_period):
                 reward = self.actor.explore()
@@ -105,8 +104,11 @@ class Trainer:
 
 
 if __name__ == "__main__":
-    topo = "grid_3x3"
-    device = "cuda"
+    import sys
+
+    assert len(sys.argv) > 1
+    topo = sys.argv[1]
+    device = "cuda" if len(sys.argv) == 2 else sys.argv[2]
     config = TrainConfig(topo=topo, device=device)
     trainer = Trainer(config=config)
     trainer.train()
