@@ -103,7 +103,7 @@ def one_test(filename_test, variable_number, clause_number, CNF_data, n_solution
 
 def test_cnf():
     file_dir = "./"
-    assert os.getcwd().endswith("unit_test/algorithm/CNF")
+    assert os.getcwd().endswith("unit_test/algorithm/quantum_algorithm/CNF")
     filename_test_list = os.listdir(file_dir)
     filename_test_list.sort()
     i = 0
