@@ -28,10 +28,7 @@ callgrind.out*
 cmake-build*/
 cmake-vsc*/
 unit_test/**/*.jpg
-<<<<<<< HEAD
 wr_unit_test/
-=======
 .history
 /QAOA_model*
 /del
->>>>>>> 5be89da98146786aea764fbb1a9e75417254b8c6
