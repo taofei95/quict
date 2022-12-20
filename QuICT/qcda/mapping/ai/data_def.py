@@ -311,6 +311,7 @@ class TrainConfig:
         epsilon_end: float = 0.05,
         epsilon_decay: float = 5_000_000.0,
         reward_scale: float = 15.0,
+        inference: bool = False,
     ) -> None:
         self.factory = DataFactory(topo=topo, max_gate_num=max_gate_num)
 
@@ -345,6 +346,7 @@ class TrainConfig:
         self.epsilon_end = epsilon_end
         self.epsilon_decay = epsilon_decay
         self.reward_scale = reward_scale
+        self.inference = inference
 
         if model_path is None:
             model_path = osp.dirname(osp.abspath(__file__))

@@ -40,55 +40,66 @@ class Learner:
     def __init__(self, config: TrainConfig) -> None:
         self.config = config
 
-        print("Preparing policy & target networks...")
-        self._policy_net = NnMapping(
-            qubit_num=config.topo.qubit_number,
-            max_gate_num=config.max_gate_num,
-            feat_dim=config.feat_dim,
-            action_num=config.action_num,
-            device=config.device,
-        ).to(device=config.device)
-        self._policy_net.train(True)
-        self._target_net = NnMapping(
-            qubit_num=config.topo.qubit_number,
-            max_gate_num=config.max_gate_num,
-            feat_dim=config.feat_dim,
-            action_num=config.action_num,
-            device=config.device,
-        ).to(device=config.device)
-        self._target_net.train(False)
-        # Guarantee they have the same parameter values.
-        self._target_net.load_state_dict(self._policy_net.state_dict())
+        if config.inference:
+            print("Preparing policy network...")
+            try:
+                model_path = ""
+                self._policy_net: NnMapping = torch.load(model_path)
+                self._policy_net = self._policy_net.to(device=config.device)
+                self._policy_net.train(not config.inference)
+            except:
+                raise Exception("Cannot load model for " + model_path)
+        elif not config.inference:
+            print("Preparing policy network...")
+            self._policy_net = NnMapping(
+                qubit_num=config.topo.qubit_number,
+                max_gate_num=config.max_gate_num,
+                feat_dim=config.feat_dim,
+                action_num=config.action_num,
+                device=config.device,
+            ).to(device=config.device)
+            self._policy_net.train(not config.inference)
+            print("Preparing target network...")
+            self._target_net = NnMapping(
+                qubit_num=config.topo.qubit_number,
+                max_gate_num=config.max_gate_num,
+                feat_dim=config.feat_dim,
+                action_num=config.action_num,
+                device=config.device,
+            ).to(device=config.device)
+            self._target_net.train(config.inference)
+            # Guarantee they have the same parameter values.
+            self._target_net.load_state_dict(self._policy_net.state_dict())
 
-        print("Preparing experience pool...")
-        self.replay = ReplayMemory(config.replay_pool_size)
+            print("Preparing experience pool...")
+            self.replay = ReplayMemory(config.replay_pool_size)
 
-        # Loss function & optimizer
-        self._smooth_l1 = nn.SmoothL1Loss()
-        self._optimizer = optim.RMSprop(
-            self._policy_net.parameters(),
-            lr=self.config.lr,
-        )
+            # Loss function & optimizer
+            self._smooth_l1 = nn.SmoothL1Loss()
+            self._optimizer = optim.RMSprop(
+                self._policy_net.parameters(),
+                lr=self.config.lr,
+            )
 
-        # Prepare path to save model files during training
-        print("Preparing model saving directory...")
-        if not osp.exists(config.model_path):
-            os.makedirs(config.model_path)
-        self._model_path = config.model_path
+            # Prepare path to save model files during training
+            print("Preparing model saving directory...")
+            if not osp.exists(config.model_path):
+                os.makedirs(config.model_path)
+            self._model_path = config.model_path
 
-        # Prepare summary writer and its logging directory
-        if not osp.exists(config.log_dir):
-            os.makedirs(config.log_dir)
-        self._writer = SummaryWriter(log_dir=config.log_dir)
+            # Prepare summary writer and its logging directory
+            if not osp.exists(config.log_dir):
+                os.makedirs(config.log_dir)
+            self._writer = SummaryWriter(log_dir=config.log_dir)
 
-        # Validation circuits
-        print("Preparing validation data...")
-        self._v_data: List[ValidationData] = []
-        self._mcts_num: Dict[str, int] = {}
-        self._load_v_data()
+            # Validation circuits
+            print("Preparing validation data...")
+            self._v_data: List[ValidationData] = []
+            self._mcts_num: Dict[str, int] = {}
+            self._load_v_data()
 
-        # best so far
-        self._v_best_score = 1e9
+            # best so far
+            self._v_best_score = 1e9
 
     def _load_v_data(self):
         v_data_dir = osp.join(self.config.factory._data_dir, "v_data")
@@ -195,7 +206,6 @@ class Learner:
         transitions = self.replay.sample(self.config.batch_size)
         states, actions, next_states, rewards = zip(*transitions)
 
-        
         actions = torch.tensor(
             [[self.config.action_id_by_swap[action]] for action in actions],
             dtype=torch.long,

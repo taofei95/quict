@@ -1,0 +1,32 @@
+from typing import Union
+from QuICT.core import *
+from QuICT.core.gate import CompositeGate
+from QuICT.qcda.utility import OutputAligner
+from .data_def import TrainConfig
+from .train.learner import Learner
+
+
+class RlMapping:
+    def __init__(self, layout: Layout) -> None:
+        self._config = TrainConfig(topo=layout, inference=True)
+        self._learner = Learner(config=self._config)
+
+    @OutputAligner()
+    def execute(
+        self, circuit_like: Union[Circuit, CompositeGate]
+    ) -> Union[Circuit, CompositeGate]:
+        assert (
+            circuit_like.width() == self._config.topo.qubit_number
+        ), "Circuit and Layout must have the same qubit number!"
+        cutoff = circuit_like.width() * len(circuit_like.gates)
+        mapped, remained = self._learner.map_all(
+            max_gate_num=self._learner._policy_net._max_gate_num,
+            circ=circuit_like,
+            layout=self._config.topo,
+            policy_net=self._learner._policy_net,
+            policy_net_device=self._config.device,
+            cutoff=cutoff,
+        )
+        if len(remained.gates) > 0:
+            raise Exception("Failed to map this circuit")
+        return mapped
