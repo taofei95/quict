@@ -49,7 +49,7 @@ class Thouless:
         Rz(-angle) & 0 | gates
         Rz(np.pi + angle) & 1 | gates
         sqiSwap & [0, 1] | gates
-        Rz(np.pi) & 0 | gates
+        Rz(np.pi) & 1 | gates
         return gates
 
     @staticmethod
@@ -79,8 +79,7 @@ class Thouless:
                 2
             ):
                 rot = Thouless.modified_Givens_rotation(angles[param])
-                rot & [k, k + 1]
-                rot | ansatz
+                rot | ansatz([k, k + 1])
                 param += 1
 
         return ansatz
