@@ -3,8 +3,6 @@ from collections.abc import Iterable
 from itertools import chain
 from typing import Dict, List, Set, Tuple
 
-import numpy as np
-
 from QuICT.core import *
 from QuICT.core.gate import *
 from QuICT.core.gate.gate_builder import GATE_TYPE_TO_CLASS

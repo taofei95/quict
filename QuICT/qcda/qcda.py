@@ -1,16 +1,9 @@
 """
 Class for customizing the whole process of synthesis, optimization and mapping
 """
-from typing import List, Tuple
 
-import numpy as np
-
-from QuICT.core import Circuit
-from QuICT.core.circuit import DAGCircuit
-from QuICT.core.gate import BasicGate
 from QuICT.core.utils import GateType
-from QuICT.core.utils.circuit_info import CircuitCostMeasure, CircuitMode
-from QuICT.lib.circuitlib import CircuitLib
+from QuICT.core.utils.circuit_info import CircuitMode
 from QuICT.qcda.mapping import MCTSMapping
 from QuICT.qcda.optimization import (CliffordRzOptimization,
                                      CommutativeOptimization,
@@ -19,7 +12,6 @@ from QuICT.qcda.optimization import (CliffordRzOptimization,
 from QuICT.qcda.optimization.circuit_partition.circuit_partition_optimization import \
     CircuitPartitionOptimization
 from QuICT.qcda.synthesis import GateDecomposition, GateTransform
-from QuICT.qcda.utility import OutputAligner
 
 
 class QCDA(object):

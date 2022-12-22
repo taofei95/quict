@@ -3,9 +3,6 @@ from collections import deque
 from functools import cached_property
 from typing import List
 
-import numpy as np
-
-from QuICT.core import *
 from QuICT.qcda.optimization.commutative_optimization import \
     CommutativeOptimization
 from QuICT.qcda.utility import OutputAligner
