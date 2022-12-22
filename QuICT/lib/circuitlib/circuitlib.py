@@ -101,10 +101,11 @@ class CircuitLib:
         """
         Get template circuits in QuICT circuit library. A template will be loaded if
         it satisfies the following restrictions:
-            1. its number of qubits <= `max_width`,
-            2. its number of gates <= `max_size`,
-            3. its depth <= `max_depth`.
-            4. its gates' types are in `typelist`
+            1. the circuit in the given classify.
+            2. its number of qubits <= `max_width`,
+            3. its number of gates <= `max_size`,
+            4. its depth <= `max_depth`.
+            5. its gates' types are in `typelist`
 
         Restrictions will be ignored if not specified.
 

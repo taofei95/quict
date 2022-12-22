@@ -7,6 +7,7 @@ from QuICT.qcda.optimization.template_optimization.template_matching.template_ma
     MatchingDAGCircuit, TemplateMatching)
 from QuICT.qcda.optimization.template_optimization.template_matching.template_substitution import \
     TemplateSubstitution
+from QuICT.qcda.utility import OutputAligner
 
 
 class TemplateOptimization(object):
@@ -78,6 +79,7 @@ class TemplateOptimization(object):
                f'heuristics_qubits_param={self.heuristics_qubits_param}), ' \
                f'heuristics_backward_param={self.heuristics_backward_param})'
 
+    @OutputAligner()
     def execute(self, circuit):
         """
         Execute template optimization algorithm.
