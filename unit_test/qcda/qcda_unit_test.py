@@ -11,7 +11,7 @@ from QuICT.qcda import QCDA
 def test_default_optimization():
     n_iter = 5
     n_qubit = 10
-    n_block = 5
+    n_block = 3
     n_gate = 200
     mode_list = [
         [CircuitMode.Misc, None],

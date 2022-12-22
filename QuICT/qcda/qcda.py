@@ -2,15 +2,9 @@
 Class for customizing the whole process of synthesis, optimization and mapping
 """
 
-from QuICT.core.utils import GateType
-from QuICT.core.utils.circuit_info import CircuitMode
 from QuICT.qcda.mapping import MCTSMapping
 from QuICT.qcda.optimization import (CliffordRzOptimization,
-                                     CommutativeOptimization,
-                                     SymbolicCliffordOptimization,
-                                     TemplateOptimization)
-from QuICT.qcda.optimization.circuit_partition.circuit_partition_optimization import \
-    CircuitPartitionOptimization
+                                     CommutativeOptimization)
 from QuICT.qcda.synthesis import GateDecomposition, GateTransform
 
 
@@ -65,35 +59,10 @@ class QCDA(object):
 
         Args:
             level(str): Optimizing level. Support `light`, `heavy` level.
-            cost(str): Cost measure. Support `nisq` and `fault_tolerant`.
         """
 
-        if level == 'light':
-            opt = CircuitPartitionOptimization()
-            opt.add_optimizer(CircuitMode.Clifford, SymbolicCliffordOptimization())
-            # opt.add_optimizer(CircuitMode.CliffordRz, CommutativeOptimization())
-            opt.add_optimizer(CircuitMode.CliffordRz, CliffordRzOptimization(level='light'))
-            opt.add_optimizer(
-                CircuitMode.Arithmetic,
-                TemplateOptimization(template_typelist=[GateType.x, GateType.cx, GateType.ccx])
-            )
-            opt.add_optimizer(CircuitMode.Misc, CommutativeOptimization())
-            self.add_method(opt)
-
-        elif level == 'heavy':
-            opt = CircuitPartitionOptimization()
-
-            opt.add_optimizer(CircuitMode.Clifford, SymbolicCliffordOptimization())
-            opt.add_optimizer(CircuitMode.Clifford, CliffordRzOptimization(level='light'))
-            opt.add_optimizer(CircuitMode.CliffordRz, CliffordRzOptimization(level='heavy'))
-            opt.add_optimizer(
-                CircuitMode.Arithmetic,
-                TemplateOptimization(template_typelist=[GateType.x, GateType.cx, GateType.ccx]),
-            )
-            opt.add_optimizer(CircuitMode.Arithmetic, CliffordRzOptimization(level='light'))
-
-            opt.add_optimizer(CircuitMode.Misc, CommutativeOptimization())
-            self.add_method(opt)
+        self.add_method(CommutativeOptimization())
+        self.add_method(CliffordRzOptimization(level=level))
 
     def add_default_mapping(self, layout=None):
         """ Generate the default mapping process
