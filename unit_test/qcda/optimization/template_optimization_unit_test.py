@@ -1,7 +1,5 @@
 from random import sample
 
-import pytest
-
 from QuICT.core import *
 from QuICT.core.gate import *
 from QuICT.lib.circuitlib import CircuitLib

@@ -85,7 +85,7 @@ class ShorFactor:
             N (int): number to be factored
             circuit (Circuit, optional): if None, a circuit will be constructed for order finding purpose;
                 else the given circuit is used as order finding circuit. Defaults to None.
-            indices (List, optional): The indices of $\ket{n}$. Only used when `circuit` is not None. Defaults to None.
+            indices (List, optional): The indices of $\\ket{n}$. Only used when `circuit` is not None. Defaults to None.
             forced_quantum_approach (bool, optional): If true, only x that gcd(x,N)=1 will be used. Defaults to False.
 
         Returns:
@@ -120,7 +120,7 @@ class ShorFactor:
             logging.info(f"round = {rd}")
             # 3. Choose a random number a (1<a<N)
             if forced_quantum_approach:
-                logging.info(f"forced quantum approach, looking for coprime number...")
+                logging.info("forced quantum approach, looking for coprime number...")
                 while True:
                     a = random.randint(2, N - 1)
                     gcd = np.gcd(a, N)

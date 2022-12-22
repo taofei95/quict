@@ -4,51 +4,48 @@ https://github.com/pybind/cmake_example/blob/0baee7e073a9b3738052f543e6bed412aaa
 """
 
 import os
-import sys
+import platform
 import subprocess
-from os import path, getcwd, system
-from Cython.Build import cythonize
-from setuptools import setup
-from setuptools import find_packages, Extension
-# from setuptools.command.build_ext import build_ext
-from Cython.Distutils.build_ext import build_ext
-# import platform
-from contextlib import redirect_stdout,redirect_stderr
-from io import StringIO
+import sys
+from os import getcwd, path
+from typing import List, Tuple
 
-import numpy as np
+import pybind11
+from setuptools import Extension, find_packages, setup
+from setuptools.command.build_ext import build_ext
 
-from typing import *
-
+pybind11_cmake_dir = pybind11.__path__[0]
+for p in ["share", "cmake", "pybind11"]:
+    pybind11_cmake_dir = path.join(pybind11_cmake_dir, p)
 
 # print helpers
 def print_segment():
     print("\033[92m", "=" * 80, "\033[39m", sep="")
 
 
-def print_cyan(s):
-    print(f"\033[36m{s}\033[39m")
+def print_cyan(segment):
+    print(f"\033[36m{segment}\033[39m")
 
 
-def print_magenta(s):
-    print(f"\033[95m{s}\033[39m")
+def print_magenta(segment):
+    print(f"\033[95m{segment}\033[39m")
 
 
-def print_yellow(s):
-    print(f"\033[33m{s}\033[39m")
+def print_yellow(segment):
+    print(f"\033[33m{segment}\033[39m")
 
 
-def print_if_not_none(s):
-    if s:
-        print(s)
+def print_if_not_none(segment):
+    if segment:
+        print(segment)
 
 
 def print_with_wrapper(header, out_obj):
-    if header[0] != '\033':
+    if header[0] != "\033":
         if len(header) > 12:
             header = header[:9] + "..."
         if len(header) < 12:
-            for i in range(12 - len(header)):
+            for _ in range(12 - len(header)):
                 header += "."
 
         header = f"\033[36m[{header}]\033[39m "
@@ -59,40 +56,38 @@ def print_with_wrapper(header, out_obj):
         print(header, out_obj)
     else:
         for line in iter(out_obj.readline, b""):
-            print(header, line.decode("unicode_escape"), sep="", end="")
+            print(header, line.decode("utf-8"), sep="", end="")
 
 
-def run_with_output_wrapper(header, args, cwd):
+def run_with_output_wrapper(header, args, cwd, shell=(platform.system() == "Windows")):
     if len(header) > 12:
         header = header[:9] + "..."
     if len(header) < 12:
-        for i in range(12 - len(header)):
+        for _ in range(12 - len(header)):
             header += "."
 
     header = f"\033[36m[{header}]\033[39m "
 
-    try:
-        with subprocess.Popen(
-                args=args,
-                cwd=cwd,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.STDOUT,
-                # universal_newlines=True,
-        ) as proc:
-            print_with_wrapper(header, proc.stdout)
-            ret_code = proc.wait()
-        if ret_code:
-            raise subprocess.CalledProcessError(ret_code, args)
-    except:
-        proc.kill()
-        raise
+    with subprocess.Popen(
+        args=args,
+        cwd=cwd,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        # In Linux, execute in shell cause cmake errors...
+        shell=shell,
+        # universal_newlines=True,
+    ) as proc:
+        print_with_wrapper(header, proc.stdout)
+        ret_code = proc.wait()
+    if ret_code:
+        raise subprocess.CalledProcessError(ret_code, args)
 
 
 # Detect if I'm in `root` or `root/build`
-py_file_path = path.dirname(path.abspath(__file__))
+PY_FILE_PATH = path.dirname(path.abspath(__file__))
 
-prj_root_relative = "." if getcwd() == py_file_path else ".."
-prj_root = path.abspath(prj_root_relative)
+PRJ_ROOT_RELATIVE = "." if getcwd() == PY_FILE_PATH else ".."
+PRJ_ROOT = path.abspath(PRJ_ROOT_RELATIVE)
 
 # Convert distutils Windows platform specifiers to CMake -A arguments
 PLAT_TO_CMAKE = {
@@ -103,7 +98,7 @@ PLAT_TO_CMAKE = {
 }
 
 
-# A CMakeExtension needs a sourcedir instead of a file list.
+# A CMakeExtension needs a source dir instead of a file list.
 # The name must be the _single_ output extension from the CMake build.
 class CMakeExtension(Extension):
     def __init__(self, name, source_dir, extra_cmake_macro=None):
@@ -112,94 +107,68 @@ class CMakeExtension(Extension):
         self.extra_cmake_macro = extra_cmake_macro
 
 
-class CythonExtension(Extension):
-    def __init__(self, name, cython_sources, extra_compile_args,
-                 extra_link_args, libraries,
-                 runtime_library_dirs, cmake_dep):
-        # self.name = name
-        # self.sources = sources
-
-        Extension.__init__(self, name, sources=[])
-        self.cython_src = cython_sources
-        self.extra_compile_args = extra_compile_args
-        self.extra_link_args = extra_link_args
-        # self.include_dirs = include_dirs,
-        self.libraries = libraries
-        self.runtime_library_dirs = runtime_library_dirs
-        self.cmake_dep = cmake_dep
-
-
 class ExtensionBuild(build_ext):
     def build_extension(self, ext):
         if isinstance(ext, CMakeExtension):
             self.cmake_build_extension(ext)
-        elif isinstance(ext, CythonExtension):
-            self.cython_build_extension(ext)
 
-    def cython_build_extension(self, ext):
-        if ext.cmake_dep:
-            self.cmake_build_extension(ext.cmake_dep)
-        cython_ext = cythonize(Extension(
-            ext.name,
-            ext.cython_src,
-            extra_compile_args=ext.extra_compile_args,
-            extra_link_args=ext.extra_link_args,
-            libraries=ext.libraries,
-            runtime_library_dirs=ext.runtime_library_dirs,
-        ))
+    def prepare_cmake_args(
+        self, cmake_generator: str, ext_dir: str, cfg: str
+    ) -> Tuple[List[str], List[str]]:
+        configure_args = []
+        build_args = []
+        # Set Python_EXECUTABLE instead if you use PYBIND11_FINDPYTHON
+        # EXAMPLE_VERSION_INFO shows you how to pass a value into the C++ code
+        # from Python.
+        configure_args = [
+            f"-DCMAKE_LIBRARY_OUTPUT_DIRECTORY={ext_dir}",
+            f"-DPYTHON_EXECUTABLE={sys.executable}",
+            f'-DBUILD_VERSION_INFO="{self.distribution.get_version()}"',
+            f"-DCMAKE_BUILD_TYPE={cfg}",  # not used on MSVC, but no harm
+            f"-Dpybind11_DIR={pybind11_cmake_dir}",
+        ]
+        build_args = []
 
-        ext_dir = os.path.abspath(os.path.dirname(self.get_ext_fullpath(ext.name)))
-        # required for auto-detection of auxiliary "native" libs
-        if not ext_dir.endswith(os.path.sep):
-            ext_dir += os.path.sep
+        if self.compiler.compiler_type != "msvc":
+            if not cmake_generator:
+                configure_args += ["-GUnix Makefiles"]
+        else:
+            # Ensure CC/CXX is set. This is a fix for Windows PowerShell
+            if "CC" in os.environ:
+                configure_args += [
+                    f"\"-DCMAKE_C_COMPILER:FILEPATH={os.environ['CC']}\""
+                ]
+            if "CXX" in os.environ:
+                configure_args += [
+                    f"\"-DCMAKE_CXX_COMPILER:FILEPATH={os.environ['CXX']}\""
+                ]
+            # Single config generators are handled "normally"
+            single_config = any(x in cmake_generator for x in ("NMake", "Ninja"))
 
-        # print(ext_dir)
-        ext_name = ext.name
-        if ext_name[-1] == ".":
-            ext_name = ext_name[:-1]
-        build_temp = self.build_temp
-        ext_name_split = ext_name.split(".")
-        ext_name = ext_name_split[-1]
+            # CMake allows an arch-in-generator style for backward compatibility
+            contains_arch = any(x in cmake_generator for x in ("ARM", "Win64"))
 
-        _stdout = StringIO()
-        _stderr = StringIO()
-        with redirect_stdout(_stdout):
-            with redirect_stderr(_stderr):
-                build_ext.build_extension(self, cython_ext[0])
-        _stderr = _stderr.getvalue().splitlines()
-        _stdout = _stdout.getvalue().splitlines()
-        for line in _stderr:
-            print_with_wrapper(ext_name, line)
-        for line in _stdout:
-            print_with_wrapper(ext_name, line)
+            # Specify the arch if using MSVC generator, but only if it doesn't
+            # contain a backward-compatibility arch spec already in the
+            # generator name.
+            if not single_config and not contains_arch:
+                configure_args += ["-A", PLAT_TO_CMAKE[self.plat_name]]
 
-        print_with_wrapper(ext_name, "Copying back...")
-        libs = []
-        for f in os.listdir(ext_dir):
-            if f.endswith(".so"):
-                libs.append(f"{ext_dir}{f}")
-
-        source_dirs = ext.cython_src
-        for i, s in enumerate(source_dirs):
-            s: str
-            if s.endswith("/"):
-                s = s[:-1]
-            s_split = s.split("/")
-            if s_split[-1].endswith(".pyx"):
-                s_refine = "/".join(s_split[:-1])
-            else:
-                s_refine = "/".join(s_split)
-            if not s_refine.endswith("/"):
-                s_refine += "/"
-            source_dirs[i] = s_refine
-
-        for source_dir in source_dirs:
-            print_with_wrapper(ext_name, " ".join(["cp", " ".join(libs), source_dir]))
-            run_with_output_wrapper(
-                header=ext_name,
-                args=["cp", " ".join(libs), source_dir],
-                cwd=build_temp,
-            )
+            # Multi-config generators have a different way to specify configs
+            if not single_config:
+                configure_args += [
+                    f"-DCMAKE_LIBRARY_OUTPUT_DIRECTORY_{cfg.upper()}={ext_dir}"
+                ]
+                build_args += ["--config", cfg]
+            # Set CMAKE_BUILD_PARALLEL_LEVEL to control the parallel build level
+            # across all generators.
+            if "CMAKE_BUILD_PARALLEL_LEVEL" not in os.environ:
+                # self.parallel is a Python 3 only way to set parallel jobs by hand
+                # using -j in the build_ext call, not supported by pip or PyPA-build.
+                if hasattr(self, "parallel") and self.parallel:
+                    # CMake 3.12+ only.
+                    build_args += [f"-j{self.parallel}"]
+        return configure_args, build_args
 
     def cmake_build_extension(self, ext):
         ext_dir = os.path.abspath(os.path.dirname(self.get_ext_fullpath(ext.name)))
@@ -214,50 +183,9 @@ class ExtensionBuild(build_ext):
         # Can be set with Conda-Build, for example.
         cmake_generator = os.environ.get("CMAKE_GENERATOR", "")
 
-        # Set Python_EXECUTABLE instead if you use PYBIND11_FINDPYTHON
-        # EXAMPLE_VERSION_INFO shows you how to pass a value into the C++ code
-        # from Python.
-        cmake_args = [
-            "-DCMAKE_LIBRARY_OUTPUT_DIRECTORY={}".format(ext_dir),
-            "-DPYTHON_EXECUTABLE={}".format(sys.executable),
-            "-DBUILD_VERSION_INFO={}".format(self.distribution.get_version()),
-            "-DCMAKE_BUILD_TYPE={}".format(cfg),  # not used on MSVC, but no harm
-        ]
-        build_args = []
-
-        if self.compiler.compiler_type != "msvc":
-            if not cmake_generator:
-                cmake_args += ["-GUnix Makefiles"]
-
-        else:
-
-            # Single config generators are handled "normally"
-            single_config = any(x in cmake_generator for x in {"NMake", "Ninja"})
-
-            # CMake allows an arch-in-generator style for backward compatibility
-            contains_arch = any(x in cmake_generator for x in {"ARM", "Win64"})
-
-            # Specify the arch if using MSVC generator, but only if it doesn't
-            # contain a backward-compatibility arch spec already in the
-            # generator name.
-            if not single_config and not contains_arch:
-                cmake_args += ["-A", PLAT_TO_CMAKE[self.plat_name]]
-
-            # Multi-config generators have a different way to specify configs
-            if not single_config:
-                cmake_args += [
-                    "-DCMAKE_LIBRARY_OUTPUT_DIRECTORY_{}={}".format(cfg.upper(), ext_dir)
-                ]
-                build_args += ["--config", cfg]
-
-        # Set CMAKE_BUILD_PARALLEL_LEVEL to control the parallel build level
-        # across all generators.
-        if "CMAKE_BUILD_PARALLEL_LEVEL" not in os.environ:
-            # self.parallel is a Python 3 only way to set parallel jobs by hand
-            # using -j in the build_ext call, not supported by pip or PyPA-build.
-            if hasattr(self, "parallel") and self.parallel:
-                # CMake 3.12+ only.
-                build_args += ["-j{}".format(self.parallel)]
+        configure_args, build_args = self.prepare_cmake_args(
+            cmake_generator, ext_dir, cfg
+        )
 
         ext_name = ext.name
         if ext_name[-1] == ".":
@@ -269,14 +197,17 @@ class ExtensionBuild(build_ext):
         if not os.path.exists(build_temp):
             os.makedirs(build_temp)
 
-        print_cyan(f"[{ext_name}]")
-        print_with_wrapper(ext_name, " ".join(["cmake", ext.source_dir] + cmake_args))
         if hasattr(self, "parallel") and self.parallel:
-            print_yellow("Extensions are built in parallel. Shell output might be messed up.")
+            print_yellow(
+                "Extensions are built in parallel. Shell output might be messed up."
+            )
+        print_cyan(f"[{ext_name}]")
+        cmake_cmd = ["cmake"] + configure_args + [f"-S{ext.source_dir}"]
+        print_with_wrapper(ext_name, " ".join(cmake_cmd))
         print_with_wrapper(ext_name, "Configuring...")
         run_with_output_wrapper(
             header=ext_name,
-            args=["cmake", ext.source_dir] + cmake_args,
+            args=cmake_cmd,
             cwd=build_temp,
         )
         print_with_wrapper(ext_name, "Building...")
@@ -285,11 +216,11 @@ class ExtensionBuild(build_ext):
             args=["cmake", "--build", "."] + build_args,
             cwd=build_temp,
         )
-        print_with_wrapper(ext_name, "Copying back...")
         libs = []
-        for f in os.listdir(ext_dir):
-            if f.endswith(".so"):
-                libs.append(f"{ext_dir}{f}")
+        for file in os.listdir(ext_dir):
+            if file.endswith(".so") or file.endswith(".pyd"):
+                libs.append(f"{ext_dir}{file}")
+        print_with_wrapper(ext_name, f"Copying back {libs}...")
         run_with_output_wrapper(
             header=ext_name,
             args=["cp", " ".join(libs), ext.source_dir],
@@ -297,96 +228,52 @@ class ExtensionBuild(build_ext):
         )
 
 
-print_segment()
-print_cyan("[Project Root]")
-print(f"Project root: {prj_root}")
-
-packages = find_packages(where=prj_root_relative)
-
-print_segment()
-print_cyan("[Packages]")
-
-print(f"Found packages: {packages}")
-
-print_segment()
-
-packages = find_packages(where=prj_root_relative)
-
-print(f"Found packages: {packages}")
-
-# if platform.system() == 'Linux':
-#     lib1 = f"{prj_root_relative}/QuICT/qcda/mapping/mcts/mcts_core/mcts_wrapper.cpython-38-x86_64-linux-gnu.so"
-#     lib2 = f"{prj_root_relative}/QuICT/qcda/mapping/mcts/mcts_core/lib/build/libmcts.so"
-# else:
-#     lib1 = f"{prj_root_relative}/QuICT/qcda/mapping/mcts/mcts_core/mcts_wrapper.cpython-38-darwin.so"
-#     lib2 = f"{prj_root_relative}/QuICT/qcda/mapping/mcts/mcts_core/lib/build/libmcts.dylib"
-#     system(f"install_name_tool -add_rpath {path.dirname(lib2)} {lib1}")
-
 # static file
 file_data = [
-    ("QuICT/lib/qasm/libs", [f"{prj_root_relative}/QuICT/lib/qasm/libs/qelib1.inc"]),
-    # ("QuICT/qcda/mapping/mcts/mcts_core",
-    #  [lib1]
-    #  ),
-    # ("QuICT/qcda/mapping/mcts/mcts_core/lib/build",
-    #  [lib2]
-    #  )
+    ("QuICT/lib/qasm/libs", [f"{PRJ_ROOT_RELATIVE}/QuICT/lib/qasm/libs/qelib1.inc"]),
 ]
-
-# 3rd party library
-requires = [
-    'pytest>=6.2.3',
-    'numpy>=1.20.1',
-    'networkx>=2.5.1',
-    'matplotlib>=3.3.4',
-    'cython>=0.29.23',
-    'ply>=3.11',
-    'scipy',
-    'ujson',
-]
-
-# version information
-about = {}
-
-with open(f"{prj_root_relative}/QuICT/__version__.py", 'r') as f:
-    exec(f.read(), about)
-
-print_cyan("[Build Python]")
 
 setup(
-    name=about["__title__"],
-    version=about["__version__"],
-    description=about["__description__"],
-    author=about["__author__"],
-    author_email=about["__email__"],
-    url=about["__url__"],
-    package_dir={"QuICT": f"{prj_root_relative}/QuICT/"},
+    name="quict",
+    version="0.5.3",
+    description="Quantum Compute Platform of Institute of Computing Technology",
+    author="Library for Quantum Computation and Theoretical Computer Science, ICT, CAS",
+    author_email="likaiqi@ict.ac.cn",
+    license="Apache License 2.0",
+    platforms=["Windows", "Linux", "macOS"],
+    url="https://e.gitee.com/quictucas/repos/quictucas/quict",
+    package_dir={"QuICT": f"{PRJ_ROOT_RELATIVE}/QuICT"},
+    install_requires=[
+        "contourpy==1.0.5",
+        "cycler==0.11.0",
+        "fonttools==4.37.4",
+        "kiwisolver==1.4.4",
+        "llvmlite==0.39.1",
+        "matplotlib==3.6.1",
+        "networkx==2.8.7",
+        "numba==0.56.3",
+        "numpy==1.23.4",
+        "packaging==21.3",
+        "Pillow==9.2.0",
+        "ply==3.11",
+        "pybind11==2.10.0",
+        "pyparsing==3.0.9",
+        "python-dateutil==2.8.2",
+        "scipy==1.9.2",
+        "six==1.16.0",
+        "ujson==5.5.0",
+    ],
     ext_modules=[
-        CMakeExtension("QuICT.utility.graph_structure.", f"{prj_root}/QuICT/utility/graph_structure"),
-        CMakeExtension("QuICT.simulation.state_vector.cpu_simulator.",
-                       f"{prj_root}/QuICT/simulation/state_vector/cpu_simulator/"),
-        CythonExtension(
-            "QuICT.qcda.mapping.mcts.mcts_core.mcts_wrapper",
-            [f"{prj_root}/QuICT/qcda/mapping/mcts/mcts_core/mcts_wrapper.pyx"],
-            extra_compile_args=["-std=c++14",
-                                f"-I{prj_root}/QuICT/qcda/mapping/mcts/mcts_core/lib/include/",
-                                f"-I{np.get_include()}"
-                                ],
-            extra_link_args=[f"-L{prj_root}/QuICT/qcda/mapping/mcts/mcts_core/lib/"],
-            libraries=["mcts"],
-            runtime_library_dirs=[f"{prj_root}/QuICT/qcda/mapping/mcts/mcts_core/lib/"],
-            cmake_dep=CMakeExtension(
-                "QuICT.qcda.mapping.mcts.mcts_core.lib.",
-                f"{prj_root}/QuICT/qcda/mapping/mcts/mcts_core/lib/"
-            ),
+        CMakeExtension(
+            "QuICT.simulation.state_vector.cpu_simulator.",
+            f"{PRJ_ROOT}/QuICT/simulation/state_vector/cpu_simulator/",
         ),
     ],
     cmdclass={"build_ext": ExtensionBuild},
-    packages=packages,
+    packages=find_packages(where=PRJ_ROOT_RELATIVE),
     data_files=file_data,
     include_package_data=True,
     python_requires=">=3.8",
-    install_requires=requires,
     zip_safe=False,
 )
 print_segment()

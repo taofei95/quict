@@ -6,6 +6,7 @@
 
 from QuICT.core import *
 from QuICT.qcda.synthesis.gate_transform import *
+from QuICT.qcda.synthesis.gate_transform.special_set.origin_set import OriginSet
 
 
 def test_google():
@@ -47,6 +48,28 @@ def test_ionq():
         circuit.random_append(20)
         gates = CompositeGate(gates=circuit.gates)
         GT = GateTransform(IonQSet)
+        circuit_tran = GT.execute(circuit)
+        gates_tran = CompositeGate(gates=circuit_tran.gates)
+        assert np.allclose(gates.matrix(), gates_tran.matrix(), rtol=1e-7, atol=1e-7)
+
+
+def test_nam():
+    for i in range(2, 6):
+        circuit = Circuit(i)
+        circuit.random_append(20)
+        gates = CompositeGate(gates=circuit.gates)
+        GT = GateTransform(NamSet)
+        circuit_tran = GT.execute(circuit)
+        gates_tran = CompositeGate(gates=circuit_tran.gates)
+        assert np.allclose(gates.matrix(), gates_tran.matrix(), rtol=1e-7, atol=1e-7)
+
+
+def test_origin():
+    for i in range(2, 6):
+        circuit = Circuit(i)
+        circuit.random_append(20)
+        gates = CompositeGate(gates=circuit.gates)
+        GT = GateTransform(OriginSet)
         circuit_tran = GT.execute(circuit)
         gates_tran = CompositeGate(gates=circuit_tran.gates)
         assert np.allclose(gates.matrix(), gates_tran.matrix(), rtol=1e-7, atol=1e-7)

@@ -68,7 +68,7 @@ class CliffordUnidirectionalSynthesizer(object):
                 gates_syn.extend(disentangler_min)
                 gates = gates_next(gates, disentangler_min)
                 not_disentangled.remove(qubit_min)
-        if self.strategy == 'random':
+        else:
             while not_disentangled:
                 qubit = random.choice(not_disentangled)
                 disentangler = self.disentangle_one_qubit(gates, width, qubit)
@@ -181,8 +181,7 @@ class CliffordBidirectionalSynthesizer(object):
                 gates_right.left_extend(right_min.inverse())
                 gates = gates_next(gates, left_min, right_min)
                 not_disentangled.remove(qubit_min)
-
-        if self.qubit_strategy == 'random':
+        else:
             while not_disentangled:
                 qubit = random.choice(not_disentangled)
                 _, left, right = self._minimum_over_pauli(gates, width, qubit, not_disentangled)

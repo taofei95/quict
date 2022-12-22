@@ -1,8 +1,6 @@
 # QuICT
 
-## How to use
-
-### In case that you have a favor over Docker
+## In case that you have a favor over Docker
 
 Though releasing images on Docker Hub is in our agenda, currently
 docker users might need to build docker image from sources.
@@ -13,41 +11,35 @@ build a docker image with only a little performance loss.
 docker build -t quict .
 ```
 
-### Install Dependency
+## Build & Install QuICT
 
-You can try `sudo ./dependency.sh` to install dependencies 
-automatically(script only supports Ubuntu currently).
-If you prefer install python packages using `pip`, just skip 
-setuptools, numpy and scipy in following commands.
+**Make sure to upgrade pip wheel and setuptools before building!**
 
-To install dependencies on Ubuntu:
-
-```
-sudo apt install build-essential libtbb2 libtbb-dev clang llvm \
-  python3 python3-setuptools python3-numpy python3-scipy
-```
-
-> Or just install `sudo apt install build-essential libtbb2 libtbb-dev`
-> if you handle python parts in another way.
-
-> Our helper scripts would use `command`, `uname`, `grep` and `sed`. Install them if they are not equipped.
-
-### Build & Install QuICT
-
-**Remove old version before install a new one!**
+> For Windows users, please see the special notes for Building on Windows.
 
 Following commands would build QuICT and install it system-wide.
 You might need "sudo" privileges to install QuICT into system python package path.
 
-> Due to a gcc issue, current version has to be built with clang++ and llvm.
-> In future versions, gcc will be supported
+> Due to some missing features in low version GCC (<=11), current QuICT is recommended to be built with clang.
+> In future versions, GCC will be supported.
 
-```
+```bash
 export CC=clang && export CXX=clang++ && ./build.sh && ./install.sh
 ```
 
-If you want to install QuICT without root access, try
+If you are encountered with permission issues during installing, try
 
-```
+```bash
 export CC=clang && export CXX=clang++ && ./build.sh && ./install.sh --user
+```
+
+### Building on Windows
+
+It is recommended to use `clang-cl.exe`, which is the clang compiler with MSVC CLI. Other compilers may work but not tested. Open "Developer PowerShell for VS", changing the working directory to QuICT repository root. Then build with following commands:
+
+```powershell
+$ENV:CC="clang-cl.exe"
+$ENV:CXX="clang-cl.exe"
+$ENV:ComSpec="powershell.exe"
+python3 .\setup.py bdist_wheel
 ```

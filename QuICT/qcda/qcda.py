@@ -2,10 +2,14 @@
 Class for customizing the whole process of synthesis, optimization and mapping
 """
 
+
+from QuICT.qcda.synthesis import GateTransform
+from QuICT.qcda.optimization import CommutativeOptimization, CliffordRzOptimization
 from QuICT.qcda.mapping import MCTSMapping
-from QuICT.qcda.optimization import (CliffordRzOptimization,
-                                     CommutativeOptimization)
-from QuICT.qcda.synthesis import GateDecomposition, GateTransform
+from QuICT.tools import Logger
+
+
+logger = Logger("QCDA")
 
 
 class QCDA(object):
@@ -39,17 +43,15 @@ class QCDA(object):
         """
         self.process.append(method)
 
-    def add_default_synthesis(self, target_instruction=None):
-        """ Generate the default synthesis process
+    def add_gate_transform(self, target_instruction=None):
+        """ Add GateTransform for some target InstructionSet
 
-        The default synthesis process contains the GateDecomposition and GateTransform, which would
-        transform the gates in the original Circuit/CompositeGate to a certain InstructionSet.
+        GateTransform would transform the gates in the original Circuit/CompositeGate to a certain InstructionSet.
 
         Args:
             instruction(InstructionSet): The target InstructionSet
         """
         assert target_instruction is not None, ValueError('No InstructionSet provided for Synthesis')
-        self.add_method(GateDecomposition())
         self.add_method(GateTransform(target_instruction))
 
     def add_default_optimization(self, level='light'):
@@ -73,7 +75,7 @@ class QCDA(object):
             layout(Layout): Topology of the target physical device
         """
         assert layout is not None, ValueError('No Layout provided for Mapping')
-        self.add_method(MCTSMapping(layout, init_mapping_method='anneal'))
+        self.add_method(MCTSMapping(layout))
 
     def compile(self, circuit):
         """ Compile the circuit with the given process
@@ -84,7 +86,10 @@ class QCDA(object):
         Returns:
             CompositeGate/Circuit: the resulting CompositeGate or Circuit
         """
+        logger.info(f"QCDA Now processing GateDecomposition.")
+        circuit.gate_decomposition()
         for process in self.process:
+            logger.info(f"QCDA Now processing {process.__class__.__name__}.")
             circuit = process.execute(circuit)
 
         return circuit

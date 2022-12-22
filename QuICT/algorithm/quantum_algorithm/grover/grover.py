@@ -2,7 +2,7 @@ import numpy as np
 
 from QuICT.core import Circuit
 from QuICT.core.gate import *
-from QuICT.qcda.synthesis.mct import MCTOneAux
+from QuICT.core.gate.backend import MCTOneAux
 
 from QuICT.simulation.state_vector import CircuitSimulator
 import logging

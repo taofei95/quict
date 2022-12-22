@@ -165,3 +165,83 @@ def ibmq_rule(gate):
         if not _check2pi(beta):
             Rz(beta) & targ
     return gates
+
+
+def zxz_rule(gate):
+    unitary = gate.matrix
+    targ = gate.targ
+    eps = 1e-13
+
+    det = linalg.det(unitary)
+    beta_plus_delta = 0
+    beta_dec_delta = 0
+    if abs(det - 1) > eps:
+        unitary[:] /= np.sqrt(det)
+
+    beta_plus_delta = 2 * np.angle(unitary[1, 1])
+    beta_dec_delta = 2 * np.angle(unitary[1, 0]) + np.pi
+    gamma = 2 * _arccos(np.abs(unitary[0, 0]))
+    beta = (beta_plus_delta + beta_dec_delta) / 2
+    delta = beta_plus_delta - beta
+
+    gates = CompositeGate()
+    with gates:
+        if not _check2pi(delta):
+            Rz(delta) & targ
+        if not _check2pi(gamma):
+            Rx(gamma) & targ
+        if not _check2pi(beta):
+            Rz(beta) & targ
+    return gates
+
+
+def hrz_rule(gate):
+    unitary = gate.matrix
+    targ = gate.targ
+    eps = 1e-13
+
+    det = linalg.det(unitary)
+    beta_plus_delta = 0
+    beta_dec_delta = 0
+    if abs(det - 1) > eps:
+        unitary[:] /= np.sqrt(det)
+
+    beta_plus_delta = 2 * np.angle(unitary[1, 1])
+    beta_dec_delta = 2 * np.angle(unitary[1, 0]) + np.pi
+    gamma = 2 * _arccos(np.abs(unitary[0, 0]))
+    beta = (beta_plus_delta + beta_dec_delta) / 2
+    delta = beta_plus_delta - beta
+
+    gates = CompositeGate()
+    with gates:
+        if not _check2pi(delta):
+            Rz(delta) & targ
+        if not _check2pi(gamma):
+            H & targ
+            Rz(gamma) & targ
+            H & targ
+        if not _check2pi(beta):
+            Rz(beta) & targ
+    return gates
+
+
+def u3_rule(gate):
+    unitary = gate.matrix
+    targ = gate.targ
+    eps = 1e-6
+
+    z = np.exp(1j * np.angle(unitary[0, 0]))
+    unitary = unitary / z
+
+    theta = np.arccos(unitary[0, 0])
+    sint = np.sin(theta)
+    if abs(sint) >= eps:
+        lamda = np.angle(unitary[0, 1] / -sint)
+        phi = np.angle(unitary[1, 0] / sint)
+    else:
+        lamda = 0
+        phi = np.angle(unitary[1, 1] / np.cos(theta))
+
+    g = build_gate(GateType.u3, targ, [theta * 2, phi, lamda])
+    gates = CompositeGate(gates=[g])
+    return gates

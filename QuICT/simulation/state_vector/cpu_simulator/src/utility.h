@@ -14,6 +14,7 @@
 #include <cassert>
 #include <fstream>
 #include <thread>
+#include <map>
 #include <immintrin.h>
 #include <omp.h>
 

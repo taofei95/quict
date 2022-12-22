@@ -34,9 +34,6 @@ def quantum_shannon_decompose(
     eig_values, v = np.linalg.eig(s)
     v_dagger = v.conj().T
     d = np.sqrt(np.diag(eig_values))
-
-    # u1 @ u2_dagger == v @ d_square @ v_dagger
-
     w = d @ v_dagger @ u2
 
     return v, d, w

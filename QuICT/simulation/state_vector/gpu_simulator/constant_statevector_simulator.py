@@ -34,6 +34,10 @@ class ConstantStateVectorSimulator:
     def circuit(self):
         return self._circuit
 
+    @circuit.setter
+    def circuit(self, circuit):
+        self._circuit = circuit
+
     @property
     def vector(self):
         return self._vector
