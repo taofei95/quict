@@ -93,16 +93,13 @@ def test_random_circuit():
     n_iter = 20
     n_qubits = 8
     n_gates = 200
-    template_list = CircuitLib.load_template_circuit()
+    template_list = CircuitLib().get_template_circuit()
     n_templates = 10
 
     for idx in range(n_iter):
-        print('testing', idx)
         circ = Circuit(n_qubits)
         circ.random_append(n_gates, typelist=gates)
-        TO = TemplateOptimization(
-            template_list=sample(template_list, n_templates),
-        )
+        TO = TemplateOptimization(template_typelist=sample(template_list, n_templates))
         circ_optim = TO.execute(circ)
 
         mat_1 = circ.matrix()

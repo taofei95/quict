@@ -61,7 +61,7 @@ class TemplateOptimization(object):
         """
 
         if template_list is None:
-            template_list = CircuitLib.load_template_circuit(
+            template_list = CircuitLib().get_template_circuit(
                 template_max_width,
                 template_max_size,
                 template_max_depth,

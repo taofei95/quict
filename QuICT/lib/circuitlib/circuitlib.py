@@ -95,7 +95,8 @@ class CircuitLib:
         self,
         max_width: int = None,
         max_size: int = None,
-        max_depth: int = None
+        max_depth: int = None,
+        typelist: list = None
     ) -> Union[List[Union[Circuit, str]], None]:
         """
         Get template circuits in QuICT circuit library. A template will be loaded if
@@ -119,7 +120,14 @@ class CircuitLib:
         path = os.path.join(self.__LIB_PATH, "template")
         files = self._db.circuit_filter("template", "template", max_width, max_size, max_depth)
 
-        return self._get_all(path, files)
+        ret = self._get_all(path, files)
+        if typelist is not None:
+            filtered = []
+            for each in ret:
+                if all([g.type in typelist for g in  each.gates]):
+                    filtered.append(each)
+            ret = filtered
+        return ret
 
     def get_random_circuit(
         self,
