@@ -12,9 +12,9 @@ from QuICT.core.gate import CompositeGate, GateType
 from torch_geometric.data import Batch as PygBatch
 from torch_geometric.data import Data as PygData
 
-from ..common.circuit_info import CircuitInfo as CircuitInfoBase
-from ..common.data_factory import DataFactory as DataFactoryBase
-from ..common.layout_info import LayoutInfo as LayoutInfoBase
+from QuICT.qcda.mapping.common.circuit_info import CircuitInfo as CircuitInfoBase
+from QuICT.qcda.mapping.common.data_factory import DataFactory as DataFactoryBase
+from QuICT.qcda.mapping.common.layout_info import LayoutInfo as LayoutInfoBase
 
 
 class DataFactory(DataFactoryBase):
@@ -114,7 +114,10 @@ class CircuitInfo(CircuitInfoBase):
         for node in g.nodes:
             gid = g.nodes[node]["gid"]
             gate = self._gates[gid]
-            a, b = gate.cargs + gate.targs
+            args = gate.cargs + gate.targs
+            if len(args) == 1:
+                continue
+            a, b = args
             x[node][0] = logic2phy[a] + 1
             x[node][1] = logic2phy[b] + 1
             # Add self loops
@@ -312,6 +315,7 @@ class TrainConfig:
         epsilon_decay: float = 5_000_000.0,
         reward_scale: float = 15.0,
         inference: bool = False,
+        inference_model_dir: str = "./model",
     ) -> None:
         self.factory = DataFactory(topo=topo, max_gate_num=max_gate_num)
 
@@ -347,6 +351,7 @@ class TrainConfig:
         self.epsilon_decay = epsilon_decay
         self.reward_scale = reward_scale
         self.inference = inference
+        self.inference_model_dir = inference_model_dir
 
         if model_path is None:
             model_path = osp.dirname(osp.abspath(__file__))

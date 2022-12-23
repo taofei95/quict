@@ -2,13 +2,15 @@ from typing import Union
 from QuICT.core import *
 from QuICT.core.gate import CompositeGate
 from QuICT.qcda.utility import OutputAligner
-from .data_def import TrainConfig
-from .train.learner import Learner
+from data_def import TrainConfig
+from train.learner import Learner
 
 
 class RlMapping:
-    def __init__(self, layout: Layout) -> None:
-        self._config = TrainConfig(topo=layout, inference=True)
+    def __init__(self, layout: Layout, inference_model_path: str = "./model") -> None:
+        self._config = TrainConfig(
+            topo=layout, inference=True, inference_model_dir=inference_model_path
+        )
         self._learner = Learner(config=self._config)
 
     @OutputAligner()

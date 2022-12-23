@@ -11,7 +11,7 @@ from QuICT.core.gate.composite_gate import CompositeGate
 from QuICT.tools.interface import OPENQASMInterface
 from torch.utils.tensorboard import SummaryWriter
 
-from ..data_def import (
+from QuICT.qcda.mapping.ai.data_def import (
     CircuitInfo,
     ReplayMemory,
     State,
@@ -19,8 +19,8 @@ from ..data_def import (
     TrainConfig,
     ValidationData,
 )
-from ..net.nn_mapping import NnMapping
-from ..net.rl_agent import Agent
+from QuICT.qcda.mapping.ai.net.nn_mapping import NnMapping
+from QuICT.qcda.mapping.ai.net.rl_agent import Agent
 
 
 def _wrap2circ(cg_or_circ: Union[Circuit, CompositeGate] = None):
@@ -43,8 +43,17 @@ class Learner:
         if config.inference:
             print("Preparing policy network...")
             try:
-                model_path = ""
-                self._policy_net: NnMapping = torch.load(model_path)
+                model_path = config.inference_model_dir
+                model_path = osp.join(model_path, f"{config.topo.name}.pt")
+                self._policy_net = NnMapping(
+                    qubit_num=config.topo.qubit_number,
+                    max_gate_num=config.max_gate_num,
+                    feat_dim=config.feat_dim,
+                    action_num=config.action_num,
+                    device=config.device,
+                )
+                states = torch.load(model_path)
+                self._policy_net.load_state_dict(states)
                 self._policy_net = self._policy_net.to(device=config.device)
                 self._policy_net.train(not config.inference)
             except:
