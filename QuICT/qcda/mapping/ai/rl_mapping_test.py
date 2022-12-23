@@ -3,7 +3,7 @@ from os import path as osp
 from QuICT.core import *
 from QuICT.core.gate import *
 
-from rl_mapping import RlMapping
+from QuICT.qcda.mapping.ai.rl_mapping import RlMapping
 
 
 def test_main():
