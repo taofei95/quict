@@ -59,7 +59,7 @@ def check_circ_mapped(circ: Circuit, layout: Layout) -> bool:
 
 
 def test_mapping():
-    file_dir = osp.dirname(osp.abspath(__file__)) + "/unit_test/qcda/mapping"
+    file_dir = osp.dirname(osp.abspath(__file__))
     # layout_names = ["ibmq_casablanca", "lnn20", "ibmq20"]
     layout_names = ["ibmq_casablanca"]
     for layout_name in layout_names:
@@ -89,4 +89,25 @@ def test_mapping():
                 remapped_circ.gates.append(s)
             check_circ_eq(_wrap_to_circ(circ, q), remapped_circ)
 
+def test_initialMapping():
+    file_dir = osp.dirname(osp.abspath(__file__))
+    # layout_names = ["ibmq_casablanca", "lnn20", "ibmq20"]
+    layout_names = ["ibmq_casablanca"]
+    for layout_name in layout_names:
+        layout_path = osp.join(file_dir, "example")
+        layout_path = osp.join(layout_path, f"{layout_name}.json")
+        layout = Layout.load_file(layout_path)
+        for _ in range(3):
+            q = layout.qubit_number
+            circ = Circuit(q)
+            circ.random_append(
+                20,
+                random_params=True,
+            )
+
+            mapper = SABREMapping(layout=layout)
+            newMP = mapper.execute_initialMapping(circ)
+            print(newMP)
+
 test_mapping()
+test_initialMapping()

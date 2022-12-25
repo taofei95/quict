@@ -57,8 +57,8 @@ class SABREMapping:
         self._w = w
         self._epsilon = epsilon
         self.phy2logic = None
+        self.logic2phy = None
 
-    @OutputAligner()
     def execute(
         self,
         circuit: Union[Circuit, CompositeGate],
@@ -272,4 +272,31 @@ class SABREMapping:
         for g in exe_gates:
             g | circuit
         self.phy2logic = p2l
+        self.logic2phy = l2p
         return circuit
+
+    def execute_initialMapping(
+        self,
+        circuit: Union[Circuit, CompositeGate],
+        initial_l2p: List[int] = None
+    ) -> List[int]:
+        """
+            Args:
+                circuit (Circuit/CompositeGate): The circuit/CompositeGate to be mapped
+                initial_l2p (List[int]): The initial mapping of the circuit, default identity
+
+            Returns:
+                List[int]: the initial mapping by SABRE
+        """
+
+        qubit = circuit.width()
+        reverse_qc = Circuit(qubit)
+        for index in range(len(circuit.gates) - 1, -1, -1):
+            _gate = circuit.gates[index].copy()
+            _gate | reverse_qc
+
+        self.execute(circuit, initial_l2p = initial_l2p)
+        newMP = copy.deepcopy(self.logic2phy)
+        self.execute(reverse_qc, initial_l2p = newMP)
+        newMP = copy.deepcopy(self.logic2phy)
+        return newMP
