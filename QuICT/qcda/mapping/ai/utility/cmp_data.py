@@ -8,9 +8,9 @@ from QuICT.tools import Logger
 from QuICT.qcda.mapping import MCTSMapping
 from QuICT.tools.interface.qasm_interface import OPENQASMInterface
 
-logger = Logger(tag="CmpDataGen")
+logger = Logger(tag="rl-cmp-data")
 
-data_dir = osp.abspath(osp.dirname(__file__))
+data_dir = osp.abspath(os.getcwd())
 data_dir = osp.join(data_dir, os.pardir)
 data_dir = osp.join(data_dir, "data")
 topo_dir = osp.join(data_dir, "topo")
@@ -23,7 +23,7 @@ def map_circ(circ: Circuit, layout: Layout) -> Circuit:
     return result
 
 
-def main(topo_name: str):
+def prepare_cmp_data(topo_name: str):
     layouts = {}
     for _, _, file_names in os.walk(topo_dir):
         for file_name in file_names:
@@ -50,7 +50,7 @@ def main(topo_name: str):
             f.write(mapped_circ.qasm())
 
 
-def check(layout_name: str):
+def check_cmp_data(layout_name: str):
     layouts = {}
     for _, _, file_names in os.walk(topo_dir):
         for file_name in file_names:
@@ -76,5 +76,5 @@ def check(layout_name: str):
 
 if __name__ == "__main__":
     topo_name = "grid_5x5"
-    main(topo_name)
-    check(topo_name)
+    prepare_cmp_data(topo_name)
+    check_cmp_data(topo_name)

@@ -11,10 +11,12 @@ from threading import Thread
 
 from torch.utils.tensorboard import SummaryWriter
 
+from QuICT.tools.logger import Logger
+logger = Logger("rl-mapping-trainer")
 
 class Trainer:
     def __init__(self, config: TrainConfig) -> None:
-        print("Initializing trainer...")
+        logger.info("Initializing trainer...")
 
         # Copy values in.
         self.config = config
@@ -49,10 +51,10 @@ class Trainer:
         running_reward = 0.0
         last_obs_time = time()
         observe_period = 100
-        print(f"Training on {self.config.device}...\n")
+        logger.info(f"Training on {self.config.device}...\n")
         g_step = 0
         for epoch_id in range(self.config.total_epoch):
-            print(f"Epoch {epoch_id}")
+            logger.info(f"Epoch {epoch_id}")
 
             self.actor.agent.reset_explore_state()
             for it in range(self.config.explore_period):
@@ -75,7 +77,7 @@ class Trainer:
                         act_rate = observe_period / (time() - last_obs_time)
                         learn_rate = self.config.batch_size * act_rate
 
-                        print(
+                        logger.info(
                             f"[{str(it+1):4s}] loss: {running_loss:0.4f}, reward: {running_reward:0.2f}\n"
                             + f"       actor : {act_rate:0.2f} action/s, learner: {learn_rate:0.2f} transition/s"
                         )

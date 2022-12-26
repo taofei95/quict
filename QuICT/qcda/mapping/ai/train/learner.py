@@ -21,6 +21,9 @@ from QuICT.qcda.mapping.ai.data_def import (
 )
 from QuICT.qcda.mapping.ai.net.nn_mapping import NnMapping
 from QuICT.qcda.mapping.ai.net.rl_agent import Agent
+from QuICT.tools.logger import Logger
+
+logger = Logger("rl-mapping-learner")
 
 
 def _wrap2circ(cg_or_circ: Union[Circuit, CompositeGate] = None):
@@ -41,7 +44,7 @@ class Learner:
         self.config = config
 
         if config.inference:
-            print("Preparing policy network...")
+            logger.info("Preparing policy network...")
             try:
                 model_path = config.inference_model_dir
                 model_path = osp.join(model_path, f"{config.topo.name}.pt")
@@ -59,7 +62,7 @@ class Learner:
             except:
                 raise Exception("Cannot load model for " + model_path)
         elif not config.inference:
-            print("Preparing policy network...")
+            logger.info("Preparing policy network...")
             self._policy_net = NnMapping(
                 qubit_num=config.topo.qubit_number,
                 max_gate_num=config.max_gate_num,
@@ -68,7 +71,7 @@ class Learner:
                 device=config.device,
             ).to(device=config.device)
             self._policy_net.train(not config.inference)
-            print("Preparing target network...")
+            logger.info("Preparing target network...")
             self._target_net = NnMapping(
                 qubit_num=config.topo.qubit_number,
                 max_gate_num=config.max_gate_num,
@@ -80,7 +83,7 @@ class Learner:
             # Guarantee they have the same parameter values.
             self._target_net.load_state_dict(self._policy_net.state_dict())
 
-            print("Preparing experience pool...")
+            logger.info("Preparing experience pool...")
             self.replay = ReplayMemory(config.replay_pool_size)
 
             # Loss function & optimizer
@@ -91,7 +94,7 @@ class Learner:
             )
 
             # Prepare path to save model files during training
-            print("Preparing model saving directory...")
+            logger.info("Preparing model saving directory...")
             if not osp.exists(config.model_path):
                 os.makedirs(config.model_path)
             self._model_path = config.model_path
@@ -102,7 +105,7 @@ class Learner:
             self._writer = SummaryWriter(log_dir=config.log_dir)
 
             # Validation circuits
-            print("Preparing validation data...")
+            logger.info("Preparing validation data...")
             self._v_data: List[ValidationData] = []
             self._mcts_num: Dict[str, int] = {}
             self._load_v_data()
@@ -137,7 +140,6 @@ class Learner:
 
     def map_all(
         self,
-        max_gate_num: int,
         circ: Union[Circuit, CompositeGate],
         layout: Layout,
         policy_net: NnMapping,
@@ -147,7 +149,6 @@ class Learner:
         """Map given circuit to topology layout. Note that this methods will change internal exploration state.
 
         Args:
-            max_gate_num (int): Maximal gate number after padding.
             circ (CircuitBased): Circuit to be mapped.
             layout (Layout): Topology layout.
             policy_net (GnnMapping): Policy network.
@@ -277,7 +278,7 @@ class Learner:
         return loss_val
 
     def show_validation_results(self, results: List[ValidationData], epoch_id: int):
-        print("[Validation Summary]")
+        logger.info("[Validation Summary]")
         rl_num = {}
         original_num = {}
         for v_datum in results:
@@ -309,4 +310,4 @@ class Learner:
             },
             epoch_id + 1,
         )
-        print()
+        logger.info()

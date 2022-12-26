@@ -22,7 +22,6 @@ class RlMapping:
         ), "Circuit and Layout must have the same qubit number!"
         cutoff = circuit_like.width() * len(circuit_like.gates)
         mapped, remained = self._learner.map_all(
-            max_gate_num=self._learner._policy_net._max_gate_num,
             circ=circuit_like,
             layout=self._config.topo,
             policy_net=self._learner._policy_net,
