@@ -263,7 +263,7 @@ namespace QuICT {
     }
 
     // Original source file has complex structure for IDE static analysis.
-    // Separate it into `.tcc` implementations.
+    // Separate it into `.h` implementations.
 
     //**********************************************************************
     // Special simple gates
@@ -274,12 +274,12 @@ namespace QuICT {
     //**********************************************************************
 }
 
-#include "avx_impl/avx_x_gate.tcc"
-#include "avx_impl/avx_ctrl_diag_gate.tcc"
-#include "avx_impl/avx_diag_n_gate.tcc"
-#include "avx_impl/avx_unitary_n_gate.tcc"
-#include "avx_impl/avx_ctrl_unitary_gate.tcc"
-#include "avx_impl/avx_h_gate.tcc"
-#include "avx_impl/avx_measure_gate.tcc"
+#include "avx_impl/avx_x_gate.h"
+#include "avx_impl/avx_ctrl_diag_gate.h"
+#include "avx_impl/avx_diag_n_gate.h"
+#include "avx_impl/avx_unitary_n_gate.h"
+#include "avx_impl/avx_ctrl_unitary_gate.h"
+#include "avx_impl/avx_h_gate.h"
+#include "avx_impl/avx_measure_gate.h"
 
 #endif //SIM_BACK_MATRICKS_SIMULATOR_H

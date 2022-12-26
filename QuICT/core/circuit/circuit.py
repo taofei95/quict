@@ -126,11 +126,11 @@ class Circuit(CircuitBased):
         logger.info(f"Initial Quantum Circuit {name} with {wires} qubits.")
         if topology is not None:
             self.topology = topology
-            logger.info(f"The Layout for Quantum Circuit is {self._topology}.")
+            logger.debug(f"The Layout for Quantum Circuit is {self._topology}.")
 
         if fidelity is not None:
             self.fidelity = fidelity
-            logger.info(f"The Fidelity for Quantum Circuit is {self.fidelity}.")
+            logger.debug(f"The Fidelity for Quantum Circuit is {self.fidelity}.")
 
     def __del__(self):
         """ release the memory """
@@ -138,7 +138,7 @@ class Circuit(CircuitBased):
         self._qubits = None
         self.topology = None
         self.fidelity = None
-        logger.info(f"Delete Quantum Circuit {self._name}.")
+        logger.debug(f"Delete Quantum Circuit {self._name}.")
 
     def __or__(self, targets):
         """deal the operator '|'
@@ -408,9 +408,12 @@ class Circuit(CircuitBased):
                     raise CircuitAppendError(f"{gate.type} need assign qubits to add into circuit.")
             else:
                 qureg = self.qubits[gate_ctargs] if gate_ctargs else gate.assigned_qubits
+        else:
+            if len(qureg) < args_num:
+                raise ValueError("Assigned qubits must larger or equal to gate size.")
 
-        if len(qureg) > args_num:
-            qureg = qureg[gate_ctargs]
+            if len(qureg) > args_num and gate_ctargs:
+                qureg = qureg[gate_ctargs]
 
         gate = gate.copy()
         gate.cargs = [self.qubits.index(qureg[idx]) for idx in range(gate.controls)]
