@@ -1,9 +1,11 @@
 from typing import Union
+
+from data_def import TrainConfig
+from train.learner import Learner
+
 from QuICT.core import *
 from QuICT.core.gate import CompositeGate
 from QuICT.qcda.utility import OutputAligner
-from data_def import TrainConfig
-from train.learner import Learner
 
 
 class RlMapping:

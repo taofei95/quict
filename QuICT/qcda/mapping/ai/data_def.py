@@ -7,11 +7,11 @@ from typing import List, Optional, Tuple, Union
 
 import networkx as nx
 import torch
-from QuICT.core import *
-from QuICT.core.gate import CompositeGate, GateType
 from torch_geometric.data import Batch as PygBatch
 from torch_geometric.data import Data as PygData
 
+from QuICT.core import *
+from QuICT.core.gate import CompositeGate, GateType
 from QuICT.qcda.mapping.common.circuit_info import CircuitInfo as CircuitInfoBase
 from QuICT.qcda.mapping.common.data_factory import DataFactory as DataFactoryBase
 from QuICT.qcda.mapping.common.layout_info import LayoutInfo as LayoutInfoBase

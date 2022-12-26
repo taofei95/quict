@@ -9,7 +9,6 @@ import os.path as osp
 from QuICT.core import *
 from QuICT.core.layout.layout import Layout
 from QuICT.core.utils import GateType
-
 from QuICT.tools.logger import Logger
 
 logger = Logger("rl-v-data")

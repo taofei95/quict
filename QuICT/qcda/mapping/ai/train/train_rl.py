@@ -1,17 +1,16 @@
 #!/usr/bin/env python3
 
+import asyncio as aio
+from threading import Thread
 from time import time
+
+from torch.utils.tensorboard import SummaryWriter
 
 from QuICT.qcda.mapping.ai.data_def import TrainConfig
 from QuICT.qcda.mapping.ai.train.actor import Actor
 from QuICT.qcda.mapping.ai.train.learner import Learner
-
-import asyncio as aio
-from threading import Thread
-
-from torch.utils.tensorboard import SummaryWriter
-
 from QuICT.tools.logger import Logger
+
 logger = Logger("rl-mapping-trainer")
 
 class Trainer:

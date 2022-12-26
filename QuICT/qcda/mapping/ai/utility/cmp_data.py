@@ -3,9 +3,10 @@
 import os
 import os.path as osp
 import re
+
 from QuICT.core import *
-from QuICT.tools import Logger
 from QuICT.qcda.mapping import MCTSMapping
+from QuICT.tools import Logger
 from QuICT.tools.interface.qasm_interface import OPENQASMInterface
 
 logger = Logger(tag="rl-cmp-data")

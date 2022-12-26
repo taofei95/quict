@@ -6,21 +6,14 @@ from typing import Dict, List, Tuple, Union
 import torch
 import torch.nn as nn
 import torch.optim as optim
-from QuICT.core import *
-from QuICT.core.gate.composite_gate import CompositeGate
-from QuICT.tools.interface import OPENQASMInterface
 from torch.utils.tensorboard import SummaryWriter
 
-from QuICT.qcda.mapping.ai.data_def import (
-    CircuitInfo,
-    ReplayMemory,
-    State,
-    StateSlim,
-    TrainConfig,
-    ValidationData,
-)
+from QuICT.core import *
+from QuICT.core.gate.composite_gate import CompositeGate
+from QuICT.qcda.mapping.ai.data_def import CircuitInfo, ReplayMemory, State, StateSlim, TrainConfig, ValidationData
 from QuICT.qcda.mapping.ai.net.nn_mapping import NnMapping
 from QuICT.qcda.mapping.ai.net.rl_agent import Agent
+from QuICT.tools.interface import OPENQASMInterface
 from QuICT.tools.logger import Logger
 
 logger = Logger("rl-mapping-learner")

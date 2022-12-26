@@ -4,6 +4,7 @@ from random import random
 from typing import Tuple, Union
 
 import torch
+
 from QuICT.core import *
 from QuICT.core.gate import *
 from QuICT.qcda.mapping.ai.data_def import State, StateSlim, TrainConfig
