@@ -5,5 +5,5 @@ except AttributeError:
 
 try:
     from .gpu_simulator import ConstantStateVectorSimulator
-except ModuleNotFoundError:
-    ConstantStateVectorSimulator = None
+except Exception as e:
+    pass

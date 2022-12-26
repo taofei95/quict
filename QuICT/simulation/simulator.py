@@ -20,7 +20,7 @@ class Simulator:
     """ The high-level simulation class, including all QuICT simulator mode.
 
     Args:
-        device (str): The device of the simulator. One of [CPU, GPU, qiskit, qcompute]
+        device (str): The device of the simulator. One of [CPU, GPU]
         backend (str): The backend for the simulator. One of [unitary, state_vector, density_matrix]
         shots (int): The running times; must be a positive integer, default to 1.
         precision (str): The precision of simulator, one of [single, double], default to double.
