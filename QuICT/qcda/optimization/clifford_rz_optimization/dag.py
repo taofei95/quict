@@ -394,7 +394,6 @@ class DAG(Iterable):
             for neighbors in ['predecessors', 'successors']:
                 for qubit_ in range(u.size):
                     u_nxt, u_qubit = getattr(u, neighbors)[qubit_]
-                    # assert u_nxt, "u_nxt == None should not happen"
                     if not u_nxt.gate_type:
                         continue
 
@@ -406,7 +405,6 @@ class DAG(Iterable):
                             return None
                         continue
 
-                    # assert v_nxt, "v_nxt == None should not happen"
                     # v_nxt fails to match u_nxt
                     if not v_nxt.gate_type or (v_nxt.flag and flag_enabled) or \
                             u_nxt.gate_type != v_nxt.gate_type or u_qubit != v_qubit:

@@ -1,6 +1,5 @@
-from random import choice
-
 import numpy as np
+from random import choice
 
 from QuICT.core.circuit import Circuit
 from QuICT.core.utils import CLIFFORD_GATE_SET, GateType

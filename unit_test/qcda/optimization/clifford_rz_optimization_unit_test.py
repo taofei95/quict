@@ -99,7 +99,6 @@ def test_cancel_two_qubit_gate():
     CX | circ([0, 1])
 
     dag = DAG(circ)
-    # print(AutoOptimization.cancel_two_qubit_gates(dag))
     assert CliffordRzOptimization().cancel_two_qubit_gates(dag) == 8, 'cnot cancellation failed'
     circ_optim = dag.get_circuit()
 

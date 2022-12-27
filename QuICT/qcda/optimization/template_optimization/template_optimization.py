@@ -1,13 +1,14 @@
 from typing import Iterable, List
 
 from QuICT.core import Circuit
-from QuICT.core.utils.circuit_info import CircuitCostMeasure
 from QuICT.lib.circuitlib import CircuitLib
 from QuICT.qcda.optimization.template_optimization.template_matching.template_matching import (
     MatchingDAGCircuit, TemplateMatching)
 from QuICT.qcda.optimization.template_optimization.template_matching.template_substitution import \
     TemplateSubstitution
 from QuICT.qcda.utility import OutputAligner
+
+from .template_matching.template_substitution import CircuitCostMeasure
 
 
 class TemplateOptimization(object):

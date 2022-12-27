@@ -57,8 +57,7 @@ class SymbolicCliffordOptimization(object):
         assert isinstance(gates, CompositeGate),\
             TypeError('Invalid input(Circuit/CompositeGate)')
         for gate in gates:
-            # assert gate.is_clifford(), ValueError('Only Clifford CompositeGate')
-            # TODO log output here
+            # FIXME log output here
             if not gate.is_clifford():
                 return gates
 

@@ -704,8 +704,6 @@ class CliffordRzOptimization(object):
                 mono = (cur_phases[node_.qubit_loc[0]] >> 1)
                 phases[mono] = sign * node_.params[0] + (phases[mono] if mono in phases else 0)
                 node_.erase()
-            # else:
-            #     assert False, f'{node_.gate_type} type should not be included in sub circuit'
 
         # STEP 2: cancel cx gates
         cnt = 0
@@ -866,8 +864,6 @@ class CliffordRzOptimization(object):
                 sign = -1 if cur_phases[node_.qubit_loc[0]] & 1 else 1
                 mono = (cur_phases[node_.qubit_loc[0]] >> 1)
                 phases[mono] = sign * node_.params[0] + (phases[mono] if mono in phases else 0)
-            # else:
-            #     assert False, f'{node_.gate_type} type should not be included in sub circuit'
 
         # return True if we can merge some Rz gates
         for phase in phases.values():
