@@ -1,0 +1,7 @@
+@misc{QuICT,
+title = {QuICT: A Quantum Compute Platform of the Institute of Computing Technology},
+author = {Kaiqi Li, Jia Zhang, Ziheng Chen, Ci Lei, Yu Han, Ziying Guo, Rui Wang, Sirui Peng, Longcheng Li, Yuan Sun, Qinlin Zhu, Cheng Guo, Lifu Shou, Jiayao Lin, Xiaoquan Xu, Shigang Ou},
+year = {2022},
+publisher = {Gitee},
+url = {https://e.gitee.com/quictucas/repos/quictucas/quict/sources}，
+}
