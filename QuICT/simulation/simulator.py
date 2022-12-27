@@ -40,6 +40,7 @@ class Simulator:
         precision: str = "double",
         circuit_record: bool = False,
         amplitude_record: bool = False,
+        output_path: str = None,
         **options
     ):
         assert device in Simulator.__DEVICE, ValueError("Simulator.device", "[CPU, GPU]", device)
@@ -58,7 +59,7 @@ class Simulator:
             )
 
         # Result's arguments
-        self._result_recorder = Result(device, backend, precision, circuit_record, amplitude_record, self._options)
+        self._result_recorder = Result(device, backend, precision, circuit_record, amplitude_record, self._options, output_path)
 
     def _load_simulator(self):
         """ Initial simulator. """

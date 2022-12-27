@@ -12,11 +12,11 @@ from QuICT.core.gate.gate_builder import build_random_gate, build_gate
 class TestGate(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        print("The Circuit unit test start!")
+        print("The Gate unit test start!")
 
     @classmethod
     def tearDownClass(cls) -> None:
-        print("The Circuit unit test finished!")
+        print("The Gate unit test finished!")
 
     def test_gate_build(self):
         cir = Circuit(10)
