@@ -7,9 +7,9 @@
 import copy
 from typing import List, Optional
 
-from QuICT.core.layout import *
+from QuICT.core.layout import Layout
 from QuICT.core.gate import *
-from QuICT.core.circuit import *
+from QuICT.core.circuit import Circuit
 from QuICT.qcda.utility import OutputAligner
 
 
@@ -36,7 +36,12 @@ class SABREMapping:
         Mapping with the heuristic algorithm SABRE
 
         Reference:
-            https://arxiv.org/abs/1809.02573
+
+        Li G, Ding Y, Xie Y. Tackling the qubit mapping problem for NISQ-era quantum devices[C]
+        Proceedings of the Twenty-Fourth International Conference on Architectural Support for
+        Programming Languages and Operating Systems. 2019: 1001-1014.
+        <https://arxiv.org/abs/1809.02573>
+
     """
     def __init__(
         self,

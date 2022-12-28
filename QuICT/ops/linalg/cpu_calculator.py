@@ -8,11 +8,11 @@ import subprocess
 import numpy as np
 
 try:
-    from QuICT.ops import linalg
+    from QuICT.ops.backend import linalg
 except ImportError:
     backend_file_path = os.path.dirname(__file__) + "/../backend/linear_alg_cpu.py"
     res = subprocess.call(["python3", backend_file_path])
-    from QuICT.ops import linalg
+    from QuICT.ops.backend import linalg
 
 
 def MatrixTensorI(A, n, m):

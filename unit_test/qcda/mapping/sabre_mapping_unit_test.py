@@ -91,7 +91,6 @@ def test_mapping():
 
 def test_initialMapping():
     file_dir = osp.dirname(osp.abspath(__file__))
-    # layout_names = ["ibmq_casablanca", "lnn20", "ibmq20"]
     layout_names = ["ibmq_casablanca"]
     for layout_name in layout_names:
         layout_path = osp.join(file_dir, "example")
@@ -107,7 +106,11 @@ def test_initialMapping():
 
             mapper = SABREMapping(layout=layout)
             newMP = mapper.execute_initialMapping(circ)
-            print(newMP)
+            test_MP = [False for _ in range(q)]
+            for mp in newMP:
+                test_MP[mp] = True
+            for test in test_MP:
+                assert test
 
 test_mapping()
 test_initialMapping()
