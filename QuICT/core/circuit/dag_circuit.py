@@ -46,6 +46,10 @@ class DAGNode:
     def successors(self):
         return self._successors
 
+    @property
+    def type(self):
+        return self._type
+
     @successors.setter
     def successors(self, sces: list):
         self._successors = sces
@@ -65,6 +69,7 @@ class DAGNode:
         self._cargs = gate.cargs
         self._targs = gate.targs
         self._qargs = gate.cargs + gate.targs
+        self._type = gate.type
         self._successors = [] if successors is None else successors
         self._predecessors = [] if predecessors is None else predecessors
 
@@ -118,6 +123,12 @@ class DAGCircuit:
     @property
     def width(self) -> int:
         return self._width
+
+    @property
+    def gates(self):
+        for node_id in self.nodes():
+            node = self.get_node(node_id)
+            yield node.gate
 
     def __init__(self, circuit, node_type=DAGNode):
         self._circuit = circuit

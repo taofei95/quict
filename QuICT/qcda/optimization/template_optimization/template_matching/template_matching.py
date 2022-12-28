@@ -3,7 +3,7 @@ from typing import List
 
 from .backward_match import BackwardMatch
 from .forward_match import ForwardMatch
-from .matching_dag_circuit import Match, MatchingDAGCircuit, MatchingDAGNode
+from .matching_dag_circuit import Match, MatchingDAGCircuit
 
 
 class TemplateMatching:

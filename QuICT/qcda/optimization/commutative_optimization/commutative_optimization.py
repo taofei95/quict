@@ -106,6 +106,10 @@ class CommutativeOptimization(object):
         self.parameterization = parameterization
         self.deparameterization = deparameterization
 
+    def __repr__(self):
+        return f'CommutativeOptimization(parameterization={self.parameterization}, ' \
+               f'deparameterization={self.deparameterization})'
+
     @classmethod
     def parameterize(cls, gate: BasicGate):
         """

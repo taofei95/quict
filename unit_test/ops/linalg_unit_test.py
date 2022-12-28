@@ -14,7 +14,7 @@ from QuICT.core.gate import *
 from QuICT.simulation.unitary import UnitarySimulator
 
 
-if os.environ.get("test_with_gpu"):
+if os.environ.get("test_with_gpu", False):
     import cupy as cp
     import QuICT.ops.linalg.gpu_calculator as GPUCalculator
 

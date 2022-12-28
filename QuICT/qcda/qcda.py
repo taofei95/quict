@@ -2,8 +2,9 @@
 Class for customizing the whole process of synthesis, optimization and mapping
 """
 
+
 from QuICT.qcda.synthesis import GateTransform
-from QuICT.qcda.optimization import CommutativeOptimization
+from QuICT.qcda.optimization import CommutativeOptimization, CliffordRzOptimization
 from QuICT.qcda.mapping import MCTSMapping
 from QuICT.tools import Logger
 
@@ -18,6 +19,7 @@ class QCDA(object):
     process by which they could transform a unitary matrix to a quantum circuit
     and/or optimize a quantum circuit.
     """
+
     def __init__(self, process=None):
         """ Initialize a QCDA process
 
@@ -52,13 +54,17 @@ class QCDA(object):
         assert target_instruction is not None, ValueError('No InstructionSet provided for Synthesis')
         self.add_method(GateTransform(target_instruction))
 
-    def add_default_optimization(self):
+    def add_default_optimization(self, level='light'):
         """ Generate the default optimization process
 
         The default optimization process contains the CommutativeOptimization.
-        TODO: Now TemplateOptimization only works for Clifford+T circuits, to be added.
+
+        Args:
+            level(str): Optimizing level. Support `light`, `heavy` level.
         """
+
         self.add_method(CommutativeOptimization())
+        self.add_method(CliffordRzOptimization(level=level))
 
     def add_default_mapping(self, layout=None):
         """ Generate the default mapping process
