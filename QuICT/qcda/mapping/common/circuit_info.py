@@ -116,7 +116,7 @@ class CircuitInfo:
             physical_circ (CompositeGate, optional): If set, executed gates are appended to it.
 
         Returns:
-            int: Removed gate number.
+            int: Removed (2-bit) gate number.
         """
         remove_cnt = 0
         remove_any = True
@@ -164,7 +164,11 @@ class CircuitInfo:
         return cg
 
     def biased_random_swap(
-        self, topo_dist: np.ndarray, logic2phy: List[int], zero_shift: float = 0.1
+        self,
+        topo_dist: np.ndarray,
+        logic2phy: List[int],
+        exclude=tuple(),
+        zero_shift: float = 0.1,
     ) -> Tuple[int, int]:
         candidates = []
         weights = []
@@ -172,6 +176,8 @@ class CircuitInfo:
         for i in range(self._qubit_num):
             for j in range(i + 1, self._qubit_num):
                 if abs(topo_dist[i][j] - 1) > 1e-6:
+                    continue
+                if (i, j) in exclude or (j, i) in exclude:
                     continue
                 candidates.append((i, j))
                 next_logic2phy = copy.copy(logic2phy)
