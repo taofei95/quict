@@ -141,7 +141,7 @@ class CircuitLib:
         max_depth: int = None
     ):
         if isinstance(qubits_interval, int):
-            qubits_interval = list(range(1, qubits_interval + 1))
+            qubits_interval = list(range(2, qubits_interval + 1))
 
         circuit_list = []
         size_interval = [3, 5, 10, 20]

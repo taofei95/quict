@@ -64,22 +64,25 @@ class BenchmarkCircuitBuilder:
 
     @staticmethod
     def entangled_circuit_build(width: int, size: int, random_params: bool = True):
+        def delete(x, y):
+            if x[0] < y[1]:
+                x_extra = x[x.index(y[0]) + 1:x.index(y[1])]
+                del x[x.index(y[0]):x.index(y[1]) + 1]
+            else:
+                x_extra = x[x.index(y[1]) + 1:x.index(y[0])]
+                del x[x.index(y[1]):x.index(y[0]) + 1]
+            return x, x_extra
+
         def _pattern1():
             qubit_indexes = list(range(width))
-            qubit_extra = []
-            for _ in range(width):
-                if len(qubit_indexes) > 1:
-                    qubit_index = random.sample(qubit_indexes, 2)
-                    CX & (qubit_index) | cir
-                    qubit_extra.append(qubit_index)
-                    qubit_indexes = list(set(qubit_indexes) - set(qubit_index))
-                elif len(qubit_indexes) == 1:
-                    for i in range(len(qubit_extra)):
-                        q_collect = random.choice(qubit_extra[i])
-                        CX & ([qubit_indexes[0], q_collect]) | cir
-                    break
-                else:
-                    break
+            if len(qubit_indexes) > 1:
+                qubit_index = random.sample(qubit_indexes, 2)
+                CX & (qubit_index) | cir
+                qubit_indexes = list(set(qubit_indexes) - set(qubit_index))
+            elif len(qubit_indexes) == 1:
+                for q_single in qubit_indexes:
+                    for q_collect in list(range(width)):
+                        CX &([q_single, q_collect]) | cir
             return cir
 
         def _pattern2():
@@ -88,7 +91,7 @@ class BenchmarkCircuitBuilder:
             for i in range(len(result)):
                 if len(result[i]) == 2:
                     CX & (result[i]) | cir
-            result = [qubit_indexes[i + 1:i + 3] for i in range(0, len(qubit_indexes), 2)]
+            result = [qubit_indexes[i+1:i + 3] for i in range(0, len(qubit_indexes), 2)]
             for i in range(len(result)):
                 if len(result[i]) == 2:
                     CX & (result[i]) | cir
