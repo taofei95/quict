@@ -131,7 +131,7 @@ class BenchmarkCircuitBuilder:
 
         cir = Circuit(width)
         flat_build() | cir
-        cir.random_append(size - 2*width, typelist, random_params, prob)
+        cir.random_append(size - 2 * width, typelist, random_params, prob)
         flat_build() | cir
 
         idxes = random.sample(list(range(width, size - width)), k=width)

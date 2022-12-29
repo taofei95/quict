@@ -5,5 +5,5 @@ except AttributeError:
 
 try:
     from .gpu_simulator import ConstantStateVectorSimulator
-except Exception as e:
+except Exception:
     pass

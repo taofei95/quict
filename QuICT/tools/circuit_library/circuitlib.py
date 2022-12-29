@@ -330,7 +330,7 @@ class CircuitLib:
         """Get the target circuits from QuICT Circuit Library.
 
         Args:
-            type (str): The type of circuits, one of [template, random, algorithm, benchmark, instructionset].
+            type (str): The type of circuits, one of [template, random, algorithm, benchmark].
             classify (str, optional): The classify of selected circuit's type.
                 For template circuit's type, classify must be template;
                 For random circuit's type, classify is one of
