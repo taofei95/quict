@@ -6,7 +6,7 @@ from copy import deepcopy
 from QuICT.core import Circuit
 from QuICT.core.gate import *
 from QuICT.simulation.unitary import UnitarySimulator
-from QuICT.simulation.state_vector import ConstantStateVectorSimulator
+from QuICT.simulation.state_vector import ConstantStateVectorSimulator, CircuitSimulator
 from QuICT.simulation.density_matrix import DensityMatrixSimulation
 from QuICT.tools.interface.qasm_interface import OPENQASMInterface
 from QuICT.simulation import Simulator
@@ -126,7 +126,7 @@ class TestCPUSimulator(unittest.TestCase):
         assert np.allclose(u["data"]["state_vector"], TestCPUSimulator.sv_data)
 
     def test_state_vector(self):
-        sim = ConstantStateVectorSimulator("double")
+        sim = CircuitSimulator()
         SV = sim.run(TestCPUSimulator.circuit)
         assert np.allclose(SV, TestCPUSimulator.sv_data)
 
