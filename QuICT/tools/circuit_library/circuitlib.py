@@ -344,13 +344,6 @@ class CircuitLib:
         if type != "template" and classify not in self.__DEFAULT_CLASSIFY[type]:
             raise KeyError("error matched")
 
-<<<<<<< HEAD
-        files = self._db.circuit_filter(type, classify, max_width, max_size, max_depth)
-        folder_path = os.path.join(self.__LIB_PATH, type, classify) if type != "template" else \
-            os.path.join(self.__LIB_PATH, type)
-
-        return self._get_all(folder_path, files)
-=======
         if type == "template":
             return self.get_template_circuit(qubits_interval, max_size, max_depth)
         elif type == "random":
@@ -359,4 +352,3 @@ class CircuitLib:
             return self.get_algorithm_circuit(classify, qubits_interval, max_size, max_depth)
         else:
             return self.get_benchmark_circuit(classify, qubits_interval, max_size, max_depth)
->>>>>>> dev_patch

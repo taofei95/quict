@@ -3,7 +3,7 @@
 # @TIME    : 2022/1/15 10:31
 # @Author  : Han Yu, Li Kaiqi
 # @File    : _circuit_computing.py
-
+from collections import Iterable
 from typing import List
 import numpy as np
 from enum import Enum
@@ -224,3 +224,6 @@ class CircuitBased(object):
 
 class CircuitMode(Enum):
     Clifford = "Clifford"
+    CliffordRz = "CliffordRz"
+    Arithmetic = 'Arithmetic'
+    Misc = "Misc"

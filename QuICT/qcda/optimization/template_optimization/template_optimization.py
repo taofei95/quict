@@ -1,8 +1,18 @@
+<<<<<<< HEAD
 from QuICT.tools.circuit_library import CircuitLib
+=======
+from typing import Iterable, List
+
+from QuICT.core import Circuit
+from QuICT.lib.circuitlib import CircuitLib
+>>>>>>> ceb3be5e076f8251ddfc3e14dd65c38088e75607
 from QuICT.qcda.optimization.template_optimization.template_matching.template_matching import (
-    MatchingDAGCircuit, TemplateMatching
-)
-from QuICT.qcda.optimization.template_optimization.template_matching.template_substitution import TemplateSubstitution
+    MatchingDAGCircuit, TemplateMatching)
+from QuICT.qcda.optimization.template_optimization.template_matching.template_substitution import \
+    TemplateSubstitution
+from QuICT.qcda.utility import OutputAligner
+
+from .template_matching.template_substitution import CircuitCostMeasure
 
 
 class TemplateOptimization(object):
@@ -16,36 +26,70 @@ class TemplateOptimization(object):
 
     def __init__(
             self,
+            template_max_width=None,
+            template_max_size=2,
+            template_max_depth=None,
+            template_typelist=None,
             template_list=None,
-            heuristics_qubits_param=None,
-            heuristics_backward_param=None
+            qubit_fixing_num=1,
+            prune_step=3,
+            prune_survivor_num=1,
     ):
         """
-        Heuristic qubit parameters `heuristics_qubits_param` is in the form [cnt] where `cnt` is
-        the number of additional qubits explored when enumerating the qubit mapping (recommended
-        value is 1).
+        Execute template optimization algorithm.
 
-        Heuristic backward match parameter `heuristics_backward_param` is in the form [D, W].
-        Backward match will prune the search tree when depth=k*D (k = 1, 2, ...) and at most W
-        maximal matching scenarios will survive (recommended value is [3, 1]).
+        Specify `template_max_width/template_max_size/template_max_depth/template_typelist`
+        if you want to use templates in CircuitLib limiting size/width/depth/gate types.
+        No limit if set to None. By default all templates of size 2 in CircuitLib are used.
 
-        Above two heuristic algorithms will be executed only when the corresponding parameter is
-        specified.
+        Specify `template_list` if you want to use customized templates.
+        Setting `template_list` will invalidate
+        `template_max_width/template_max_size/template_max_depth/template_typelist`.
+
+        `qubit_fixing_num`, `prune_step`, `prune_survivor_num` are 3 heuristic parameters
+        used in template matching. Their default values are recommended values.
+            1. `qubit_fixing_num` the number of additional qubits explored when enumerating
+                the qubit mapping (default value is 1).
+            2. `prune_step`, `prune_survivor_num` are parameters for backward matching.
+                Backward match will prune the search tree when depth=k * `prune_step`
+                (k = 1, 2, ...) and at most `prune_survivor_num` maximal matching scenarios
+                will survive (default values are 3, 1).
 
         Args:
-            template_list(List[Circuit]): the list of templates used
-                (by default all templates of 2 gates in CircuitLib are used).
-            heuristics_qubits_param(List[int]): Heuristic qubit parameters
-            heuristics_backward_param(List[int]): Heuristic backward match parameter
+            template_max_width(int): Limit on number of qubits of templates used.
+            template_max_size(int): Limit on number of gates of templates used.
+            template_max_depth(int): Limit on depth of templates used.
+            template_typelist(Iterable[GateType]): Limit on gate types of templates used.
+            template_list(List[Circuit]): List of templates used.
+            qubit_fixing_num(int): heuristic parameter for qubit exploring
+            prune_step(int): heuristic parameter for backward match
+            prune_survivor_num(int): heuristic parameter for backward match
         """
 
-        self.template_list = template_list
-        self.heuristics_qubits_param = heuristics_qubits_param
-        self.heuristics_backward_param = heuristics_backward_param
+        if template_list is None:
+            template_list = CircuitLib().get_template_circuit(
+                template_max_width,
+                template_max_size,
+                template_max_depth,
+                template_typelist
+            )
 
+        self.template_list = template_list
+        self.heuristics_qubits_param = [qubit_fixing_num]
+        self.heuristics_backward_param = [prune_step, prune_survivor_num]
+        self.cost_measure = CircuitCostMeasure(target_device='nisq')
+
+<<<<<<< HEAD
         if self.template_list is None:
             self.template_list = CircuitLib().get_template_circuit(max_size=2)
+=======
+    def __repr__(self):
+        return f'TemplateOptimization(' \
+               f'heuristics_qubits_param={self.heuristics_qubits_param}), ' \
+               f'heuristics_backward_param={self.heuristics_backward_param})'
+>>>>>>> ceb3be5e076f8251ddfc3e14dd65c38088e75607
 
+    @OutputAligner()
     def execute(self, circuit):
         """
         Execute template optimization algorithm.
@@ -72,6 +116,6 @@ class TemplateOptimization(object):
                 self.heuristics_backward_param
             )
 
-            circ_dag = TemplateSubstitution.execute(circ_dag, template_dag, matches)
+            circ_dag = TemplateSubstitution.execute(circ_dag, template_dag, matches, self.cost_measure)
 
         return circ_dag.get_circuit()

@@ -6,6 +6,7 @@ venv/
 __pycache__/
 /tbb-2020.1/
 *.so
+*.pyd
 /_build/
 /_static/
 /_templates/
