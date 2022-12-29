@@ -161,6 +161,9 @@ class NoiseModel:
         self._add_readout_error(noise, qubits)
 
     def _add_readout_error(self, noise: ReadoutError, qubit: List[int]):
+        if isinstance(qubit, int):
+            qubit = [qubit]
+
         # Deal with Readout Error with the same qubits limitation
         if qubit in self._readout_errors:
             noise_idx = self._readout_errors.index(qubit)

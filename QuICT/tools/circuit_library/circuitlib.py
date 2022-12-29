@@ -175,14 +175,17 @@ class CircuitLib:
         self,
         qubits_interval: Union[list, int] = None,
         max_size: int = None,
-        max_depth: int = None
+        max_depth: int = None,
+        typelist: list = None
     ) -> Union[List[Union[Circuit, str]], None]:
         """
         Get template circuits in QuICT circuit library. A template will be loaded if
         it satisfies the following restrictions:
-            1. its number of qubits <= `max_width`,
-            2. its number of gates <= `max_size`,
-            3. its depth <= `max_depth`.
+            1. the circuit in the given classify.
+            2. its number of qubits <= `max_width`,
+            3. its number of gates <= `max_size`,
+            4. its depth <= `max_depth`.
+            5. its gates' types are in `typelist`
 
         Restrictions will be ignored if not specified.
 
@@ -191,6 +194,7 @@ class CircuitLib:
                 it equals to the interval of [1, qubits_interval]. The qubits' number range is [1, 5].
             max_size(int): max number of gates, range is [2, 6].
             max_depth(int): max depth of circuit, range is [2, 9].
+            typelist(Iterable[GateType]): list of allowed gate types
 
         Returns:
             (List[Circuit | String] | None): Return the list of output circuit order by output_type.
@@ -198,7 +202,16 @@ class CircuitLib:
         path = os.path.join(self.__LIB_PATH, "template")
         files = self._db.circuit_filter("template", "template", qubits_interval, max_size, max_depth)
 
-        return self._get_all(path, files)
+        ret = self._get_all(path, files)
+
+        if typelist is not None:
+            filtered = []
+            for each in ret:
+                if all([g.type in typelist for g in each.gates]):
+                    filtered.append(each)
+            ret = filtered
+
+        return ret
 
     def get_random_circuit(
         self,

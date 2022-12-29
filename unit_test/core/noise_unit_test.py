@@ -57,7 +57,7 @@ class TestNoise(unittest.TestCase):
         nm = NoiseModel()
         nm.add_noise_for_all_qubits(bf_err, ['h'])
         nm.add_noise_for_all_qubits(pf_err, ['x', 'y'])
-        nm.add(bits_err, ['cx', 'ch'], [1, 2])
+        nm.add(bits_err, ['cx', 'cz'], [1, 2])
 
         # Using Density Matrix Simulator to simulate
         dm_simu = DensityMatrixSimulation()
@@ -126,12 +126,17 @@ class TestNoise(unittest.TestCase):
 
         # Build measured circuit
         cir = Circuit(5)
-        H | cir
-        Measure | cir
+        H | cir(0)
+        CX | cir([0, 1])
+        CX | cir([1, 2])
+        CX | cir([2, 3])
+        CX | cir([3, 4])
+        # Measure | cir
 
         # Using Density Matrix Simulator to simulate
-        dm_simu = DensityMatrixSimulation()
+        dm_simu = DensityMatrixSimulation(accumulated_mode=True)
         _ = dm_simu.run(cir, noise_model=nm)
+        print(dm_simu.sample(100))
 
         assert 1
 

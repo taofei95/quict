@@ -46,6 +46,7 @@ class DensityMatrixSimulation:
     def initial_circuit(self, circuit: Circuit, noise_model: NoiseModel):
         """ Initial the qubits, quantum gates and state vector by given quantum circuit. """
         self._circuit = circuit if noise_model is None else noise_model.transpile(circuit)
+        self._noise_model = noise_model
         self._qubits = int(circuit.width())
 
         if self._precision != circuit._precision:
@@ -229,6 +230,9 @@ class DensityMatrixSimulation:
         for _ in range(shots):
             for m_id in measured_idx:
                 self.apply_measure(m_id)
+
+            if self._noise_model is not None:
+                self._noise_model.apply_readout_error(self._circuit.qubits)
 
             state_list[int(self._circuit.qubits)] += 1
             self._density_matrix = original_dm.copy()

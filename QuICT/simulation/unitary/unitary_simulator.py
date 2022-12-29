@@ -25,9 +25,9 @@ class UnitarySimulator():
         self._vector = self._array_helper.array(vec)
 
     def __init__(
-            self,
-            device: str = "CPU",
-            precision: str = "double"
+        self,
+        device: str = "CPU",
+        precision: str = "double"
     ):
         self._device = device
         self._precision = np.complex128 if precision == "double" else np.complex64

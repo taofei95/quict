@@ -3,16 +3,23 @@ from random import sample
 from QuICT.core import Circuit
 from QuICT.core.gate import *
 <<<<<<< HEAD
+<<<<<<< HEAD
 from QuICT.tools.circuit_library import CircuitLib
 from QuICT.qcda.optimization.template_optimization.template_matching import ForwardMatch, MatchingDAGCircuit
 from QuICT.qcda.optimization.template_optimization.template_optimization import TemplateOptimization
 =======
 from QuICT.lib.circuitlib import CircuitLib
+=======
+from QuICT.tools.circuit_library import CircuitLib
+>>>>>>> dev_patch
 from QuICT.qcda.optimization.template_optimization.template_matching import (
     ForwardMatch, MatchingDAGCircuit)
 from QuICT.qcda.optimization.template_optimization.template_optimization import \
     TemplateOptimization
+<<<<<<< HEAD
 >>>>>>> ceb3be5e076f8251ddfc3e14dd65c38088e75607
+=======
+>>>>>>> dev_patch
 
 
 def get_circ():

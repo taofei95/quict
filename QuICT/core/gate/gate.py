@@ -1560,6 +1560,9 @@ class CU3Gate(BasicGate):
         if len(mapping_args) == self.controls + self.targets:
             cgate & mapping_args
 
+        if self._precision == np.complex64:
+            cgate.convert_precision()
+
         return cgate
 
 

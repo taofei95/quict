@@ -1,4 +1,5 @@
 <<<<<<< HEAD
+<<<<<<< HEAD
 from QuICT.tools.circuit_library import CircuitLib
 =======
 from typing import Iterable, List
@@ -6,6 +7,12 @@ from typing import Iterable, List
 from QuICT.core import Circuit
 from QuICT.lib.circuitlib import CircuitLib
 >>>>>>> ceb3be5e076f8251ddfc3e14dd65c38088e75607
+=======
+from typing import Iterable, List
+
+from QuICT.core import Circuit
+from QuICT.tools.circuit_library.circuitlib import CircuitLib
+>>>>>>> dev_patch
 from QuICT.qcda.optimization.template_optimization.template_matching.template_matching import (
     MatchingDAGCircuit, TemplateMatching)
 from QuICT.qcda.optimization.template_optimization.template_matching.template_substitution import \
@@ -80,14 +87,20 @@ class TemplateOptimization(object):
         self.cost_measure = CircuitCostMeasure(target_device='nisq')
 
 <<<<<<< HEAD
+<<<<<<< HEAD
         if self.template_list is None:
             self.template_list = CircuitLib().get_template_circuit(max_size=2)
 =======
+=======
+>>>>>>> dev_patch
     def __repr__(self):
         return f'TemplateOptimization(' \
                f'heuristics_qubits_param={self.heuristics_qubits_param}), ' \
                f'heuristics_backward_param={self.heuristics_backward_param})'
+<<<<<<< HEAD
 >>>>>>> ceb3be5e076f8251ddfc3e14dd65c38088e75607
+=======
+>>>>>>> dev_patch
 
     @OutputAligner()
     def execute(self, circuit):
