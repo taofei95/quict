@@ -57,74 +57,49 @@ class BenchmarkCircuitBuilder:
         while cir.size() < size:
             qubit_new = random.choice(qubit_indexes)
             qubits_list = [qubit, qubit_new]
-            CX & (qubits_list) | cir
             random.shuffle(qubits_list)
+            CX & (qubits_list) | cir
 
         return cir
 
     @staticmethod
     def entangled_circuit_build(width: int, size: int, random_params: bool = True):
-        def delete(x, y):
-            if x[0] < y[1]:
-                x_extra = x[x.index(y[0]) + 1:x.index(y[1])]
-                del x[x.index(y[0]):x.index(y[1]) + 1]
-            else:
-                x_extra = x[x.index(y[1]) + 1:x.index(y[0])]
-                del x[x.index(y[1]):x.index(y[0]) + 1]
-            return x, x_extra
-
-        cir = Circuit(width)
-
-        def build_circuit():
-            while cir.size() < size:
-                qubit_indexes = list(range(width))
+        def _pattern1():
+            qubit_indexes = list(range(width))
+            qubit_extra = []
+            for _ in range(width):
                 if len(qubit_indexes) > 1:
                     qubit_index = random.sample(qubit_indexes, 2)
                     CX & (qubit_index) | cir
+                    qubit_extra.append(qubit_index)
                     qubit_indexes = list(set(qubit_indexes) - set(qubit_index))
                 elif len(qubit_indexes) == 1:
-                    for q_single in qubit_indexes:
-                        for q_collect in list(range(width)):
-                            CX & (q_single, q_collect) | cir
-
-                while cir.size() < size - cir.size():
-                    qubit_indexes = list(range(width))
-                    for _ in range(width):
-                        if len(qubit_indexes) > 1:
-                            qubit_index = random.sample((qubit_indexes), 2)
-                            CX & (qubit_index) | cir
-                            qubit_indexes, qubit_extra = delete(qubit_indexes, qubit_index)
-                            for i in qubit_index:
-                                for j in qubit_indexes:
-                                    if abs(i - j) == 1:
-                                        CX & ([i, j]) | cir
-                                        qubit_indexes.remove(j)
-                        elif len(qubit_indexes) == 1:
-                            for q_single in qubit_indexes:
-                                q_collect = random.choice([x for x in list(range(width)) if x != q_single])
-                                CX & ([q_single, q_collect]) | cir
-                                break
-                        else:
-                            break
-
-                    for _ in range(width):
-                        if len(qubit_extra) != 0:
-                            for _ in range(len(qubit_extra)):
-                                if len(qubit_extra) > 1:
-                                    qubit_i = random.sample((qubit_extra), 2)
-                                    CX & (qubit_i) | cir
-                                    qubit_extra = list(set(qubit_extra) - set(qubit_i))
-                                elif len(qubit_extra) == 1:
-                                    for q_single in qubit_extra:
-                                        q_col = random.choice([y for y in list(range(width)) if y != q_single])
-                                        CX & ([q_single, q_col]) | cir
-                                    qubit_extra = list(set(qubit_extra) - set(qubit_extra))
-                        else:
-                            break
+                    for i in range(len(qubit_extra)):
+                        q_collect = random.choice(qubit_extra[i])
+                        CX & ([qubit_indexes[0], q_collect]) | cir
+                    break
+                else:
+                    break
             return cir
 
+        def _pattern2():
+            qubit_indexes = list(range(width))
+            result = [qubit_indexes[i:i + 2] for i in range(0, len(qubit_indexes), 2)]
+            for i in range(len(result)):
+                if len(result[i]) == 2:
+                    CX & (result[i]) | cir
+            result = [qubit_indexes[i + 1:i + 3] for i in range(0, len(qubit_indexes), 2)]
+            for i in range(len(result)):
+                if len(result[i]) == 2:
+                    CX & (result[i]) | cir
+                else:
+                    break
+            return cir
+
+        cir = Circuit(width)
+        cir = random.choice([_pattern1(), _pattern2()])
         while cir.size() < size:
-            cir = build_circuit()
+            cir = random.choice([_pattern1(), _pattern2()])
 
         return cir
 
@@ -136,7 +111,7 @@ class BenchmarkCircuitBuilder:
         cir = Circuit(width)
         cir.random_append(size, typelist, random_params, prob)
         for _ in range(width):
-            idx = random.randint(2 * width, size - 1)
+            idx = random.randint(size / width, size - 1)
             qidx = random.choice(list(range(width)))
             mgate = Measure & qidx
             cir.replace_gate(idx, mgate)
