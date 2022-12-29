@@ -141,7 +141,7 @@ class CircuitLib:
         max_depth: int = None
     ):
         if isinstance(qubits_interval, int):
-            qubits_interval = list(range(1, qubits_interval + 1))
+            qubits_interval = list(range(2, qubits_interval + 1))
 
         circuit_list = []
         size_interval = [3, 5, 10, 20]
@@ -191,7 +191,7 @@ class CircuitLib:
 
         Args:
             qubits_interval (Union[List, int], optional): The interval of qubit number, if it givens an interger,
-                it equals to the interval of [1, qubits_interval]. The qubits' number range is [1, 5].
+                it equals to the interval of [2, qubits_interval]. The qubits' number range is [1, 5].
             max_size(int): max number of gates, range is [2, 6].
             max_depth(int): max depth of circuit, range is [2, 9].
             typelist(Iterable[GateType]): list of allowed gate types
@@ -233,7 +233,7 @@ class CircuitLib:
             classify (str): one of ["aspen-4", "ourense", "rochester", "sycamore", "tokyo", \
                 "ctrl_unitary", "diag", "single_bits", "ctrl_diag", "google", "ibmq", "ionq", "ustc", "nam", "origin"]
             qubits_interval (Union[List, int], optional): The interval of qubit number, if it givens an interger,
-                it equals to the interval of [1, qubits_interval].
+                it equals to the interval of [2, qubits_interval].
             max_size(int): max number of gates.
             max_depth(int): max depth of circuit.
 
@@ -276,7 +276,7 @@ class CircuitLib:
         Args:
             classify (str): one of ["adder", "clifford", "grover", "qft", "vqe"]
             qubits_interval (Union[List, int], optional): The interval of qubit number, if it givens an interger,
-                it equals to the interval of [1, qubits_interval].
+                it equals to the interval of [2, qubits_interval].
             max_size(int): max number of gates.
             max_depth(int): max depth of circuit.
 
@@ -308,7 +308,7 @@ class CircuitLib:
         Args:
             classify (str): one of ["highly_entangled", "highly_parallelized", "highly_serialized", "mediate_measure"]
             qubits_interval (Union[List, int], optional): The interval of qubit number, if it givens an interger,
-                it equals to the interval of [1, qubits_interval].
+                it equals to the interval of [2, qubits_interval].
             max_size(int): max number of gates.
             max_depth(int): max depth of circuit.
 

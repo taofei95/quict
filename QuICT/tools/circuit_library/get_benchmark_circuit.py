@@ -65,41 +65,46 @@ class BenchmarkCircuitBuilder:
     @staticmethod
     def entangled_circuit_build(width: int, size: int, random_params: bool = True):
         def _pattern1():
+            cgate = CompositeGate()
             qubit_indexes = list(range(width))
             qubit_extra = []
             for _ in range(width):
                 if len(qubit_indexes) > 1:
                     qubit_index = random.sample(qubit_indexes, 2)
-                    CX & (qubit_index) | cir
+                    CX & (qubit_index) | cgate
                     qubit_extra.append(qubit_index)
                     qubit_indexes = list(set(qubit_indexes) - set(qubit_index))
                 elif len(qubit_indexes) == 1:
                     for i in range(len(qubit_extra)):
                         q_collect = random.choice(qubit_extra[i])
-                        CX & ([qubit_indexes[0], q_collect]) | cir
+                        CX & ([qubit_indexes[0], q_collect]) | cgate
                     break
                 else:
                     break
-            return cir
+
+            return cgate
 
         def _pattern2():
+            cgate = CompositeGate()
             qubit_indexes = list(range(width))
             result = [qubit_indexes[i:i + 2] for i in range(0, len(qubit_indexes), 2)]
             for i in range(len(result)):
                 if len(result[i]) == 2:
-                    CX & (result[i]) | cir
+                    CX & (result[i]) | cgate
+
             result = [qubit_indexes[i + 1:i + 3] for i in range(0, len(qubit_indexes), 2)]
             for i in range(len(result)):
                 if len(result[i]) == 2:
-                    CX & (result[i]) | cir
+                    CX & (result[i]) | cgate
                 else:
                     break
-            return cir
+
+            return cgate
 
         cir = Circuit(width)
-        cir = random.choice([_pattern1(), _pattern2()])
         while cir.size() < size:
-            cir = random.choice([_pattern1(), _pattern2()])
+            cgate = random.choice([_pattern1(), _pattern2()])
+            cgate | cir
 
         return cir
 
@@ -108,12 +113,30 @@ class BenchmarkCircuitBuilder:
         typelist = [GateType.rz, GateType.cx]
         prob = [0.8, 0.2]
 
+        def flat_build():
+            cgate = CompositeGate()
+            qubits_indexes = list(range(width))
+            random.shuffle(qubits_indexes)
+            while len(qubits_indexes) > 0:
+                if len(qubits_indexes) == 1:
+                    Rz & qubits_indexes.pop() | cgate
+                else:
+                    gate_type = np.random.choice(typelist, p=prob)
+                    gate = GATE_TYPE_TO_CLASS[gate_type]()
+                    gate_size = gate.controls + gate.targets
+                    gate & qubits_indexes[:gate_size] | cgate
+                    qubits_indexes = qubits_indexes[gate_size:]
+
+            return cgate
+
         cir = Circuit(width)
-        cir.random_append(size, typelist, random_params, prob)
-        for _ in range(width):
-            idx = random.randint(size / width, size - 1)
-            qidx = random.choice(list(range(width)))
-            mgate = Measure & qidx
-            cir.replace_gate(idx, mgate)
+        flat_build() | cir
+        cir.random_append(size - 2*width, typelist, random_params, prob)
+        flat_build() | cir
+
+        idxes = random.sample(list(range(width, size - width)), k=width)
+        for i in range(width):
+            mgate = Measure & i
+            cir.replace_gate(idxes[i], mgate)
 
         return cir
