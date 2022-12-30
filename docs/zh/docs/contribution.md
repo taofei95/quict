@@ -51,3 +51,6 @@ Chemistry (Hartree-Fock VQE)
 2. McArdle, S., Endo, S., Aspuru-Guzik, A., Benjamin, S. C., & Yuan, X. (2020). Quantum computational chemistry. Reviews of Modern Physics, 92(1), 015003.
 3. Kivlichan, I. D., McClean, J., Wiebe, N., Gidney, C., Aspuru-Guzik, A., Chan, G. K. L., & Babbush, R. (2018). Quantum simulation of electronic structure with linear depth and connectivity. Physical review letters, 120(11), 110501.
 4. Thouless, D. J. (1960). Stability conditions and nuclear rotations in the Hartree-Fock theory. Nuclear Physics, 21, 225-232.
+
+SABRE Mapping
+1. Li G, Ding Y, Xie Y. Tackling the qubit mapping problem for NISQ-era quantum devices[C]//Proceedings of the Twenty-Fourth International Conference on Architectural Support for Programming Languages and Operating Systems. 2019: 1001-1014.
