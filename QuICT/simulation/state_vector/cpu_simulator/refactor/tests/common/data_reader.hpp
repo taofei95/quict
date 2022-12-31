@@ -3,6 +3,7 @@
 
 #include <cassert>
 #include <cctype>
+#include <cstddef>
 #include <cstdint>
 #include <fstream>
 #include <sstream>
@@ -21,10 +22,6 @@ std::vector<T> ReadVec(Str f_name) {
   while (std::getline(file, line)) {
     std::istringstream iss(line);
     T val;
-    if (line[0] == '(') {
-      char lp;
-      iss >> lp;
-    }
     iss >> val;
     res.push_back(val);
   }
@@ -39,7 +36,6 @@ std::vector<gate::Gate<T>> ReadDesc(Str f_name) {
   std::string tmp1, tmp2, tag;
   int q_num;
   T val;
-  char para;
 
   std::getline(file, line);
   std::istringstream iss(line);
@@ -48,23 +44,36 @@ std::vector<gate::Gate<T>> ReadDesc(Str f_name) {
   while (std::getline(file, line)) {
     std::vector<T> gate_data;
     iss = std::istringstream(line);
-    iss >> tmp1 >> tag >> tmp2;
+    iss >> tmp1 >> tag;  // `tag: xxx` part
     while (!std::isalpha(tag.back())) {
       tag.pop_back();
     }
     if (tag == "unitary") {
-      for (int64_t i = 0; i < (2LL << q_num); ++i) {
-        para = '\0';
-        while (para != '(') {
-          iss >> para;
+      int gq_num = 0;
+      std::string targ_str = "";
+      size_t targ[2];
+      iss >> tmp1;  // `targ: ` part
+      while (targ_str != ";") {
+        iss >> targ_str;
+        if (targ_str != ";") {
+          targ[gq_num++] = std::stoi(targ_str);
         }
+      }
+      iss >> tmp1;  //`data: ` part
+      for (int64_t i = 0; i < (1ULL << (q_num << 1)); ++i) {
         iss >> val;
         gate_data.push_back(val);
       }
+      if (gq_num == 1) {
+        res.emplace_back(targ[0], gate_data.data());
+      } else if (gq_num == 2) {
+        res.emplace_back(targ[0], targ[1], gate_data.data());
+      } else {
+        throw std::runtime_error("Not support qubit >= 3!");
+      }
     } else {
-      throw std::runtime_error("Gate type not supported yet");
+      throw std::runtime_error("Gate type not supported yet!");
     }
-    res.emplace_back(gate::Gate<T>(q_num, gate_data.data()));
   }
   return res;
 }

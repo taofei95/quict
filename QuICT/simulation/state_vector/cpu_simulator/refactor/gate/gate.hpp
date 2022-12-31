@@ -2,9 +2,11 @@
 #define QUICT_CPU_SIM_BACKEND_GATE_H
 
 #include <algorithm>
+#include <array>
 #include <cassert>
 #include <cstddef>
 #include <cstring>
+#include <memory>
 
 #include "gate_attr.hpp"
 
@@ -17,7 +19,7 @@ class Gate {
   static constexpr const DispatchTag PRIVATE = 0;
   Gate(DispatchTag dispatch_tag, size_t q_num, DType *data = nullptr,
        AttrT attr = NOTHING)
-      : q_num_(q_num), attr_(attr), data_(data) {
+      : q_num_(q_num), attr_(attr) {
     // if (attr_ & DIAGNAL) {
     //   len_ = 1 << q_num;
     // } else if (attr_ & CONTROL) {
@@ -26,16 +28,40 @@ class Gate {
     //   // normal unitary
     //   len_ = 2 << q_num;
     // }
-    len_ = 2 << q_num_;
+    len_ = 1ULL << (q_num_ << 1);
     data_ = new DType[len_];
     if (data != nullptr) {
       std::copy(data, data + len_, data_);
+    } else {
+      std::fill(data_, data_ + len_, DType(0));
     }
   }
 
  public:
-  // Disable default constructor explicitly.
-  Gate() = delete;
+  Gate() = default;
+
+  ~Gate() {
+    if (data_) {
+      delete[] data_;
+    }
+    data_ = nullptr;
+  };
+
+  Gate(Gate &&gate)
+      : q_num_(gate.q_num_),
+        attr_(gate.attr_),
+        len_(gate.len_),
+        targ_(gate.targ_),
+        data_(gate.data_) {}
+
+  Gate(const Gate &gate)
+      : q_num_(gate.q_num_),
+        attr_(gate.attr_),
+        len_(gate.len_),
+        targ_(gate.targ_) {
+    data_ = new DType[len_];
+    std::copy(gate.data_, gate.data_ + gate.len_, data_);
+  }
 
   /*
    * @brief Create a single qubit gate. Copy gate data from provided ptr.
@@ -60,12 +86,6 @@ class Gate {
       : Gate(PRIVATE, 2, data, attr) {
     targ_[0] = targ0;
     targ_[1] = targ1;
-  }
-
-  ~Gate() {
-    if (data_) {
-      delete[] data_;
-    }
   }
 
   inline size_t GetTarg(size_t pos) const noexcept {
@@ -97,15 +117,38 @@ class Gate {
 
   inline AttrT Attr() const noexcept { return attr_; }
 
+  /*
+   * @brief Normalize this gate, ensuring all targs are in ascending order.
+   * */
+  inline void Normalize() noexcept {
+    if (q_num_ == 1) return;
+    // Debug check for qubit number.
+    assert(q_num_ == 2);
+
+    using std::swap;
+    if (targ_[0] > targ_[1]) {
+      swap(targ_[0], targ_[1]);
+      // swap row-01 and row-10
+      for (int j = 0; j < 4; ++j) {
+        swap(data_[1 * 4 + j], data_[2 * 4 + j]);
+      }
+      // swap col-01 and col-10
+      for (int i = 0; i < 4; ++i) {
+        swap(data_[i * 4 + 1], data_[i * 4 + 2]);
+      }
+      // TODO: handle special attr
+    }
+  }
+
  private:
   // Data length
   size_t len_;
-  // Gate targets (maybe unused)
-  size_t targ_[2];
   // Qubit number
   size_t q_num_;
   // Gate attributes
   AttrT attr_;
+  // Gate targets (maybe unused)
+  std::array<size_t, 2> targ_;
   // Gate's raw data
   DType *data_;
 };

@@ -43,6 +43,10 @@ data["2bit-all"] = [
 ]
 
 
+def fmt_complex(x):
+    return f"({x.real}, {x.imag}) "
+
+
 def gen_desc(category: str, circ: Circuit) -> List[str]:
     desc = [f"qubit: {circ.width()}\n"]
     if "diag" in category:
@@ -52,11 +56,14 @@ def gen_desc(category: str, circ: Circuit) -> List[str]:
     else:
         for gate in circ.gates:
             gate: BasicGate
-            line = "tag: untary; data: "
+            line = "tag: unitary; "
+            line += "targ: "
+            for arg in gate.cargs + gate.targs:
+                line += f"{str(arg)} "
+            line += "; "
+            line += "data: "
             for e in gate.matrix.flatten():
-                data_str = str(e).strip()
-                if not data_str[0] == "(":
-                    data_str = f"({data_str})"
+                data_str = fmt_complex(e)
                 line += data_str
                 line += " "
             desc.append(f"{line}\n")
@@ -68,9 +75,7 @@ def gen_vec(circ: Circuit) -> List[str]:
     amp: np.ndarray = simulator.run(circ)
     vec = []
     for e in amp.flatten():
-        line = str(e)
-        if not line[0] == "(":
-            line = f"({line})"
+        line = fmt_complex(e)
         vec.append(f"{line}\n")
     return vec
 

@@ -10,12 +10,12 @@ namespace simulator {
 template <class DType>
 class Simulator {
  public:
-  Simulator(size_t q_num, DType *data = nullptr) : q_num_(q_num), data_(data) {
-    if (data_ == nullptr) {
+  Simulator(size_t q_num, DType *data = nullptr) : q_num_(q_num) {
+    if (data == nullptr) {
       size_t len = 1ULL << q_num_;
       data_ = new DType[len];
       std::fill(data_, data_ + len, 0);
-      data_[0] = static_cast<DType>(1);
+      data_[0] = DType(1);
     }
   }
 
@@ -32,6 +32,7 @@ class Simulator {
     int64_t iter_cnt = 1LL << (q_num_ - gq_num);
     if (gq_num == 1) {
       // normal unitary
+#pragma omp parallel for
       for (int64_t iter = 0; iter < iter_cnt; ++iter) {
         size_t t = gate.Get1Targ();
         size_t base_ind = iter >> t << (t + 1) | (iter & (1LL - (1LL << t)));
@@ -47,6 +48,7 @@ class Simulator {
       assert(gate.GetTarg(0) < gate.GetTarg(1));
 
       // normal unitary
+#pragma omp parallel for
       for (int64_t iter = 0; iter < iter_cnt; ++iter) {
         // size_t t0 = gate.GetTarg(0), t1 = gate.GetTarg(1);
         auto [t0, t1] = gate.Get2Targ();
@@ -61,7 +63,7 @@ class Simulator {
           vec[i] = data_[inds[i]];
         }
         for (int i = 0; i < 4; ++i) {
-          res[i] = static_cast<DType>(0);
+          res[i] = DType(0);
           for (int j = 0; j < 4; ++j) {
             res[i] += gate[i * 4 + j] * vec[j];
           }
@@ -74,6 +76,11 @@ class Simulator {
       throw std::runtime_error("Not implemented for gate >= 3 qubits!");
     }
   };
+
+  void ApplyUnormalizedGate(gate::Gate<DType> &gate) {
+    gate.Normalize();
+    ApplyNormalizedGate(gate);
+  }
 
  private:
   // Simulator-maintained state vector

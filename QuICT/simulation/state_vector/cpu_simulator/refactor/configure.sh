@@ -13,4 +13,6 @@ generator="Unix Makefiles"
 
 [[ $CXX = "" ]] && [[ -x $(command -v clang++) ]] && export CXX="clang++"
 
-cd build && cmake -G$generator -DCMAKE_EXPORT_COMPILE_COMMANDS=1 $@ ..
+set -x
+
+cd build && cmake -G$generator -DCMAKE_BUILD_TYPE=Debug -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DCMAKE_C_FLAGS="-fstandalone-debug" -DCMAKE_CXX_FLAGS="-fstandalone-debug" ..
