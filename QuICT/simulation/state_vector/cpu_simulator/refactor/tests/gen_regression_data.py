@@ -13,7 +13,7 @@ from QuICT.simulation.state_vector import CircuitSimulator
 
 data: Dict[str, list] = {}
 
-data["single"] = [
+data["1bit-all"] = [
     GateType.x,
     GateType.y,
     GateType.z,
@@ -28,7 +28,7 @@ data["single"] = [
     GateType.sdg,
 ]
 
-data["double"] = [
+data["2bit-all"] = [
     GateType.rxx,
     GateType.ryy,
     GateType.rzz,
@@ -56,8 +56,9 @@ def gen_desc(category: str, circ: Circuit) -> List[str]:
             for e in gate.matrix.flatten():
                 data_str = str(e).strip()
                 if not data_str[0] == "(":
-                    data_str = f"({data_str}) "
+                    data_str = f"({data_str})"
                 line += data_str
+                line += " "
             desc.append(f"{line}\n")
     return desc
 
@@ -80,7 +81,7 @@ def main():
     if not osp.exists(data_path):
         os.makedirs(data_path)
     for category, lst in data.items():
-        for q in range(2, 15):
+        for q in range(2, 8):
             for i in range(10):
                 size = (i + 1) * 20
                 tag = f"{category}_qubit{q}_size{size}"

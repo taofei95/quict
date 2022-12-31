@@ -6,4 +6,11 @@ script_dir=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
 [ -d build ] || mkdir build 
 
-cd build && cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=1 ..
+generator="Unix Makefiles"
+[[ -x $(command -v ninja) ]] && generator="Ninja"
+
+[[ $CC = "" ]] && [[ -x $(command -v clang) ]] && export CC="clang"
+
+[[ $CXX = "" ]] && [[ -x $(command -v clang++) ]] && export CXX="clang++"
+
+cd build && cmake -G$generator -DCMAKE_EXPORT_COMPILE_COMMANDS=1 $@ ..

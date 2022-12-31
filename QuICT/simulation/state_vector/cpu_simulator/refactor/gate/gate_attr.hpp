@@ -1,13 +1,14 @@
-#ifndef QUICT_SIM_BACKEND_GATE_TAG_H
-#define QUICT_SIM_BACKEND_GATE_TAG_H
+#ifndef QUICT_SIM_BACKEND_GATE_ATTR_H
+#define QUICT_SIM_BACKEND_GATE_ATTR_H
 
 namespace gate {
-// diagnal gate
-constexpr int DIAGNAL = 1 << 0;
-// controlled gate
-constexpr int CONTROL = 1 << 1;
-
-enum class SpecialTag { None };
+using AttrT = int;
+// Nothing special
+constexpr const AttrT NOTHING = 0;
+// Diagnal gate
+constexpr const AttrT DIAGNAL = 1 << 0;
+// Controlled gate
+constexpr const AttrT CONTROL = 1 << 1;
 }  // namespace gate
 
 #endif
