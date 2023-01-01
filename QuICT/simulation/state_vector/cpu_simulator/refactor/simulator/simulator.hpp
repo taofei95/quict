@@ -6,8 +6,8 @@
 #include <stdexcept>
 
 #include "../gate/gate.hpp"
-#include "naive_delegate.hpp"
-#include "apply_gate_delegate.hpp"
+#include "apply_gate/delegate.hpp"
+#include "apply_gate/impl/naive.hpp"
 
 namespace sim {
 template <class DType>
@@ -21,7 +21,7 @@ class Simulator {
 
     // TODO: replace with a factory pattern, which detects platform
     // features at runtime to select proper implementation.
-    d_ = std::make_unique<NaiveSimDelegate<DType>>();
+    d_ = std::make_unique<NaiveApplyGateDelegate<DType>>();
   }
 
   Simulator(size_t q_num, std::shared_ptr<DType[]> data)
@@ -45,7 +45,7 @@ class Simulator {
   // Total qubit number
   size_t q_num_;
   // Platform dependent implementation delegation
-  std::unique_ptr<SimulatorDelegate<DType>> d_;
+  std::unique_ptr<ApplyGateDelegate<DType>> d_;
   // Simulator-maintained state vector
   std::shared_ptr<DType[]> data_;
 };

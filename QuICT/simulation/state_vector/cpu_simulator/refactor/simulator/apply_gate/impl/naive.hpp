@@ -1,10 +1,10 @@
 #include <stdexcept>
 
-#include "apply_gate_delegate.hpp"
+#include "../delegate.hpp"
 
 namespace sim {
 template <class DType>
-class NaiveSimDelegate : public SimulatorDelegate<DType> {
+class NaiveApplyGateDelegate : public ApplyGateDelegate<DType> {
  public:
   void ApplyGate(size_t q_num, DType *data,
                  const gate::Gate<DType> &gate) override {

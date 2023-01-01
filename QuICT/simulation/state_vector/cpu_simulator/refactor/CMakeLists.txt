@@ -5,7 +5,13 @@ cmake_minimum_required(VERSION 3.0)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
-set(SIMULATOR_SRC simulator/simulator.hpp gate/gate.hpp gate/gate_attr.hpp)
+set(SIMULATOR_SRC 
+  gate/gate.hpp 
+  gate/gate_attr.hpp
+  simulator/simulator.hpp 
+  simulator/apply_gate/delegate.hpp
+  simulator/apply_gate/impl/naive.hpp
+  )
 
 # Google Test
 include(FetchContent)
