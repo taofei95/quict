@@ -6,6 +6,8 @@
 #include <stdexcept>
 
 #include "../gate/gate.hpp"
+#include "naive_delegate.hpp"
+#include "simulator_delegate.hpp"
 
 namespace sim {
 template <class DType>
@@ -16,6 +18,10 @@ class Simulator {
     data_ = std::shared_ptr<DType[]>(new DType[len]);
     std::fill(data_.get(), data_.get() + len, 0);
     data_[0] = DType(1);
+
+    // TODO: replace with a factory pattern, which detects platform
+    // features at runtime to select proper implementation.
+    d_ = std::make_unique<NaiveSimDelegate<DType>>();
   }
 
   Simulator(size_t q_num, std::shared_ptr<DType[]> data)
@@ -23,9 +29,10 @@ class Simulator {
 
   virtual ~Simulator() = default;
 
-  void ApplyGate(gate::Gate<DType> &gate) {
-    gate.Normalize();
-    ApplyNormalizedGate(gate);
+  inline void ApplyGate(gate::Gate<DType> &gate) {
+    // Use `data_.get()` directly to save 1 call of shared_ptr ctor because we
+    // guarantee that lifecycle of `data_` outlives this `ApplyGate` call.
+    d_->ApplyGate(q_num_, data_.get(), gate);
   }
 
   std::shared_ptr<DType[]> GetStateVector() const noexcept { return data_; }
@@ -35,95 +42,10 @@ class Simulator {
   }
 
  private:
-  virtual void ApplyNormalizedGate(const gate::Gate<DType> &gate) {
-    size_t gq_num = gate.Qnum();
-    int64_t iter_cnt = 1LL << (q_num_ - gq_num);
-    if (gq_num == 1) {
-      size_t t = gate.Get1Targ();
-      size_t pos = q_num_ - t - 1LL;
-      size_t mask0 = (1LL << pos) - 1LL;
-      size_t mask1 = ~mask0;
-
-      // 0 ... t ... q-1
-      // [     ][     ] (q-1 len)
-      // ->
-      // [     ]0[     ] (q len)
-      // mask1:
-      // [1...1][0...0]
-      // mask0:
-      // [0...0][1...1]
-
-      // normal unitary
-#pragma omp parallel for
-      for (int64_t iter = 0; iter < iter_cnt; ++iter) {
-        size_t base_ind = ((iter & mask1) << 1) | (iter & mask0);
-        size_t inds[2] = {base_ind, base_ind | (1LL << pos)};
-        DType vec[2], res[2];
-        vec[0] = data_[inds[0]];
-        vec[1] = data_[inds[1]];
-        res[0] = gate[0] * vec[0] + gate[1] * vec[1];
-        res[1] = gate[2] * vec[0] + gate[3] * vec[1];
-        data_[inds[0]] = res[0];
-        data_[inds[1]] = res[1];
-      }
-    } else if (gq_num == 2) {
-      auto [t0, t1] = gate.Get2Targ();
-
-      // sorted index.
-      int s0 = t0, s1 = t1;
-      if (s0 > s1) {
-        std::swap(s0, s1);
-      }
-
-      size_t spos0 = q_num_ - s0 - 2LL, pos0 = q_num_ - t0 - 1LL;
-      size_t spos1 = q_num_ - s1 - 1LL, pos1 = q_num_ - t1 - 1LL;
-      size_t mask0 = (1LL << spos1) - 1LL;
-      size_t mask1 = ((1LL << spos0) - 1LL) ^ mask0;
-      size_t mask2 = (~0) ^ (mask0 | mask1);
-
-      // 0 ... s0 ... s1 ... q-1
-      // [     ][     ][     ] (q-2 len)
-      // ->
-      // [     ]0[     ]0[     ] (q len)
-      // mask0:
-      // [0...0][0...0][1...1]
-      // mask1:
-      // [0...0][1...1][0...0]
-      // mask2:
-      // [1...1][0...0][0...0]
-
-      // normal unitary
-#pragma omp parallel for
-      for (int64_t iter = 0; iter < iter_cnt; ++iter) {
-        size_t base_ind =
-            ((iter & mask2) << 2) | ((iter & mask1) << 1) | (iter & mask0);
-        size_t inds[4];
-        inds[0] = base_ind;
-        inds[1] = inds[0] | (1LL << pos1);
-        inds[2] = inds[0] | (1LL << pos0);
-        inds[3] = inds[1] | (1LL << pos0);
-        DType vec[4], res[4];
-        for (int i = 0; i < 4; ++i) {
-          vec[i] = data_[inds[i]];
-        }
-        for (int i = 0; i < 4; ++i) {
-          res[i] = DType(0);
-          for (int j = 0; j < 4; ++j) {
-            res[i] += gate[i * 4 + j] * vec[j];
-          }
-        }
-        for (int i = 0; i < 4; ++i) {
-          data_[inds[i]] = res[i];
-        }
-      }
-    } else {
-      throw std::runtime_error("Not implemented for gate >= 3 qubits!");
-    }
-  };
-
- private:
   // Total qubit number
   size_t q_num_;
+  // Platform dependent implementation delegation
+  std::unique_ptr<SimulatorDelegate<DType>> d_;
   // Simulator-maintained state vector
   std::shared_ptr<DType[]> data_;
 };
