@@ -1,5 +1,5 @@
-#ifndef QUICT_SIM_BACKEND_GATE_ATTR_H
-#define QUICT_SIM_BACKEND_GATE_ATTR_H
+#ifndef QUICT_CPU_SIM_BACKEND_GATE_ATTR_H
+#define QUICT_CPU_SIM_BACKEND_GATE_ATTR_H
 
 namespace gate {
 using AttrT = int;

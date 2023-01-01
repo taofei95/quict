@@ -29,39 +29,21 @@ class Gate {
     //   len_ = 2 << q_num;
     // }
     len_ = 1ULL << (q_num_ << 1);
-    data_ = new DType[len_];
+    // data_ = new DType[len_];
+    data_ = std::make_unique<DType[]>(len_);
     if (data != nullptr) {
-      std::copy(data, data + len_, data_);
+      std::copy(data, data + len_, data_.get());
     } else {
-      std::fill(data_, data_ + len_, DType(0));
+      std::fill(data_.get(), data_.get() + len_, DType(0));
     }
   }
 
  public:
   Gate() = default;
 
-  ~Gate() {
-    if (data_) {
-      delete[] data_;
-    }
-    data_ = nullptr;
-  };
+  ~Gate() = default;
 
-  Gate(Gate &&gate)
-      : q_num_(gate.q_num_),
-        attr_(gate.attr_),
-        len_(gate.len_),
-        targ_(gate.targ_),
-        data_(gate.data_) {}
-
-  Gate(const Gate &gate)
-      : q_num_(gate.q_num_),
-        attr_(gate.attr_),
-        len_(gate.len_),
-        targ_(gate.targ_) {
-    data_ = new DType[len_];
-    std::copy(gate.data_, gate.data_ + gate.len_, data_);
-  }
+  Gate(Gate &&gate) = default;
 
   /*
    * @brief Create a single qubit gate. Copy gate data from provided ptr.
@@ -150,7 +132,7 @@ class Gate {
   // Gate targets (maybe unused)
   std::array<size_t, 2> targ_;
   // Gate's raw data
-  DType *data_;
+  std::unique_ptr<DType[]> data_ = nullptr;
 };
 
 }  // namespace gate
