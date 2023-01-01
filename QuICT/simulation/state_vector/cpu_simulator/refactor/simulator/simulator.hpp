@@ -7,7 +7,7 @@
 
 #include "../gate/gate.hpp"
 #include "naive_delegate.hpp"
-#include "simulator_delegate.hpp"
+#include "apply_gate_delegate.hpp"
 
 namespace sim {
 template <class DType>

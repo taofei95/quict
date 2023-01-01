@@ -1,6 +1,6 @@
 #include <stdexcept>
 
-#include "simulator_delegate.hpp"
+#include "apply_gate_delegate.hpp"
 
 namespace sim {
 template <class DType>
