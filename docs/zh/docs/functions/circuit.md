@@ -55,4 +55,4 @@ circuit.draw(method='matp_auto', filename="QuICT")
 dag_circuit = circuit.get_DAG_circuit()     # 将 circuit 转化为 DAGCircuit
 dag_circuit.draw()                          # DAGCircuit 可视化
 ```
-<div align=center><img src="../assets/images/dag_circuit.jpg" width="500" height="350"></div>
+<div align=center><img src="../assets/images/dag_circuit.jpg" width="450" height="350"></div>

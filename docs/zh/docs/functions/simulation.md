@@ -1,108 +1,108 @@
 # 量子模拟
 经典计算机上的量子计算模拟
 =====================
-如何验证量子算法的正确性是量子计算最重要的部分之一。使用经典机器模拟量子电路是验证量子算法的一种方式。在 QuICT 中，Simulator 用于模拟量子电路运行过程中量子比特的状态。
+如何验证量子算法的正确性是量子计算最重要的部分之一，使用经典机器模拟量子电路是验证量子算法的一种方式。在 QuICT 中，Simulator 用于模拟量子电路运行过程中量子比特的状态，目前支持三种量子电路模拟器，分别是酉矩阵、状态向量和密度矩阵模拟。
 
-|  模拟器后端   |   CPU   |   GPU   |
-| ------      | ------- |  ------  |
-|   状态向量    |   &#10004;   |  &#10004;   |
-|    酉矩阵     |   &#10004;   |  &#10004;   |
-|   密度矩阵    |   &#10004;   |  &#10004;   |
-|   分布式      |    &#10008;  |  &#10004;   |
+|  模拟器后端   |   CPU   |   GPU   |    multi-GPU   |
+| ------      | ------- |  ------  |    ------    |
+|   状态向量    |   &#10004;   |  &#10004;   |    &#10004;   |
+|    酉矩阵     |   &#10004;   |  &#10004;   |    &#10008;   |
+|   密度矩阵    |   &#10004;   |  &#10004;   |    &#10008;   |
 
-模拟器将返回一个数据结构，该数据结构存储有关量子电路模拟的信息
+模拟器将返回一个 Dict 数据结构，该数据结构存储有关量子电路模拟的信息
 
-    - 设备：硬件
+- ID：电路名称
+- SHOTS：模拟的重复次数
+- 模拟器参数：
+    - 设备：硬件类型 [CPU, GPU]
     - 后端：模拟器的模式
-    - 镜头：模拟的重复次数
     - 选项：模拟器的参数
-    - 时间：消费时间
-    - 计数：每次模拟的测量结果字典
-
-状态向量模拟器
-============
-状态向量模拟器在运行量子电路期间保持量子比特的状态。运行后通过给定的量子电路，它返回量子电路的测量。
-
-Example
->>>>>>>
+- 数据：
+    - 计数：每次模拟的测量结果
+    - 状态向量：经过模拟之后的量子比特状态向量
+    - 密度矩阵：经过模拟之后的量子比特密度矩阵 [只针对后端为密度矩阵模拟器]
 
 ```python
 from QuICT.core import Circuit
-from QuICT.core.utils import GateType
 from QuICT.simulation import Simulator
 
 # Build circuit with 100 random gates and 5 qubits
 circuit = Circuit(5)
-type_list = [GateType.x, GateType.h, GateType.rx, GateType.ry, GateType.rz, GateType.cx]
-circuit.random_append(rand_size=100, typelist=type_list)
+circuit.random_append(rand_size=100)
 
 # Initial Simulator
 simulator = Simulator(
-    device="GPU",
-    backend="statevector",
-    shots=10,
+    device="CPU",
+    backend="state_vector",
     precision="double"
 )
-result = simulator.run(circuit)    # get simulation's result
+result = simulator.run(circuit, shots=1000)    # get simulation's result
 ```
 
+
+状态向量模拟器
+============
+状态向量表示量子比特在状态空间中的向量。量子比特是一个二维的状态空间。假设 $|0⟩$ 和 $|1⟩$ 形成了这个状态空间的一组标准正交基。那么这个状态空间的任意向量都可以写成
+$$|\psi⟩ = \alpha|0⟩ + \beta|1⟩$$
+其中 $\alpha$ 和 $\beta$ 是任意的复数。
+
+对于多个量子比特的复合状态空间则是其独立量子比特状态空间的张量积，设多个量子比特编号为1到n，且量子比特 $i$ 对应的状态向量为 $|\psi_i⟩$，则整个多量子比特状态向量为
+$$|\psi_1⟩ \otimes |\psi_2⟩ \otimes \dots \otimes |\psi_n⟩$$
+
+当然量子比特的状态在电路中并不是一成不变的，状态向量的演化可用 酉变换(unitary transformation) 来描述。也就是说，量子比特
+在 $t_1$ 时所处的状态 $|\psi⟩$ 和在 $t_2$ 时所处的状态 $|\psi^′⟩$ 是通过一个仅与时间 $t_1$ 和 $t_2$ 有关的酉算子 $U$，即量子门联系起来的。
+$$|\psi^′⟩ = U|ψ⟩$$
+
+状态向量模拟器就是在给定的量子电路和初始量子比特状态下，不断演化量子比特状态的变化，直到量子电路结束并返回最终的量子比特状态。
+
+```python
+from QuICT.core import Circuit
+from QuICT.simulation.state_vector import CircuitSimulator
+
+# Build circuit with 100 random gates and 5 qubits
+circuit = Circuit(5)
+circuit.random_append(rand_size=100)
+
+# Simulate Quantum Circuit
+simulator = CircuitSimulator()
+result = simulator.run(circuit)
 ```
-{'id': '1778fbd88b0911ecb845233b8af251ab',
-    'device': 'GPU',
-    'backend': 'statevector',
-    'shots': 10,
-    'options': {'precision': 'double',
-    'gpu_device_id': 0,
-    'sync': False,
-    'optimize': False},
-    'spending_time': 0.2988075494766236,
-    'output_path': '~/QuICT/example/demo/output/1778fbd88b0911ecb845233b8af251ab',
-    'counts': defaultdict(int,
-                {'10010': 2,
-                '00000': 1,
-                '11111': 1,
-                '11001': 1,
-                '00110': 1,
-                '01101': 1,
-                '11010': 1,
-                '11100': 1,
-                '10001': 1})}
-```
+
 
 
 酉矩阵模拟 (Unitary Simulator)
 =========
-酉模拟器分为两步来模拟量子电路。首先，它计算给定量子电路的酉矩阵。之后，幺正模拟器使用线性使用酉矩阵计算量子位状态向量点的操作，并使用测量操作生成最终的量子比特状态。
+与状态向量模拟器不同的是，酉矩阵模拟器会先将量子电路内的所有量子门的矩阵，融合成为一个酉矩阵。之后，再将量子状态与酉矩阵相乘，生成最终的量子比特状态。
 
-Example
->>>>>>>
 ```python
-# Initial unitary simulator
-unitary_simulator = Simulator(
-    device="CPU",
-    backend="unitary",
-    shots=10
-)
-result = unitary_simulator.run(circuit)    # get simulation's result
+from QuICT.core import Circuit
+from QuICT.simulation.unitary import UnitarySimulator
+
+# Build circuit with 100 random gates and 5 qubits
+circuit = Circuit(5)
+circuit.random_append(rand_size=100)
+
+# Simulate Quantum Circuit
+simulator = UnitarySimulator(device="CPU", precision="double")
+result = simulator.run(circuit)
 ```
 
 密度矩阵模拟器
 ============
-
-
-其他平台模拟器支持
-================
-目前，QuICT 支持使用其他平台（Qiskit 和QCompute）的模拟器进行仿真。
-
-> Important: 使用前需要安装对应平台的python软件包，以及平台的远程访问权限。
+与状态向量等价，我们也可以使用密度矩阵来描述量子系统的演化。假设一个量子系统以概率 $p_i$ 处于多个状态 $|\psi_i⟩$ 之一，其中 $i$ 是一个指标，我们将把 ${p_i, |\psi_i⟩}$ 称为一个纯态系综 (ensemble of pure states)。系统的密度矩阵定义为
+$$ρ \equiv \sum_i p_i|\psi_i⟩⟨\psi_i|$$
+密度矩阵的演化也是由酉算子 $U$ 描述的，如果系统初态为 $|\psi_i⟩$ 的概率为 $p_i$，那 么在演化之后，系统将以概率 $p_i$ 处于状态 $U|\psi_i⟩$。因此，密度算子的演化由下式描述:
+$$ ρ \equiv \sum_i p_i|\psi_i⟩⟨\psi_i| \stackrel{U}{\longrightarrow} \sum_i p_i U|\psi_i⟩⟨\psi_i|U^† = UρU^† $$
 
 ```python
-# Initial remote simulator
-simulator = Simulator(
-    device="qcompute",
-    backend="cloud_baidu_sim2_earth",
-    shots=10,
-    token=qcompute_token
-)
-result = simulator.run(circuit)    # get simulation's result
+from QuICT.core import Circuit
+from QuICT.simulation.density_matrix import DensityMatrixSimulation
+
+# Build circuit with 100 random gates and 5 qubits
+circuit = Circuit(5)
+circuit.random_append(rand_size=100)
+
+# Simulate Quantum Circuit
+simulator = DensityMatrixSimulation(device="CPU", precision="double")
+result = simulator.run(circuit)
 ```
