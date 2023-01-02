@@ -266,13 +266,14 @@ def load_file(content):
         set = content['set']
         logger.info(f'circuit.qasm(): {circuit.qasm()}')
         optimized_q = optimize_qasm(uid=uid, qasm_text=program_text, topology=topology, set=set, optimize=optimize, mapping=mapping)
-        
+        org_q = load_data(data=program_text)
+        org_gates = get_gates_list(org_q)
         emit(
             "QCDA_o_qasm_load", {'uuid': uid, 'qasm': optimized_q.qasm()}, namespace="/api/pty")
         logger.info(f'optimized_q: {optimized_q}')
         gates = get_gates_list(optimized_q)
         logger.info(f'gates: {gates}')
-        emit('QCDA_o_gates_update', {'uuid': uid, 'gates': gates}, namespace="/api/pty")
+        emit('QCDA_o_gates_update', {'uuid': uid, 'gates': gates, 'gates2':org_gates}, namespace="/api/pty")
     else:
         # no optimize
         emit(
@@ -495,16 +496,20 @@ def programe_update(content):
     logger.info(f"programe_update: {content}")
     uid = content['uuid']
     ProgramText = content['content']
+    source = content['source']
     try:
         emit(
             'info',  {'uuid': uid, 'info': f"updating gates..."}, namespace="/api/pty")
         qasm = load_data(data=ProgramText)
         gates = get_gates_list(qasm)
-
-        emit('gates_update', {'uuid': uid,
+        if source == 'QCDA':
+            emit('QCDA_gates_update', {'uuid': uid,
              'gates': gates}, namespace="/api/pty")
-        emit(
-            'info', {'uuid': uid, 'info': f"gates updated."}, namespace="/api/pty")
+        else:
+            emit('gates_update', {'uuid': uid,
+                'gates': gates}, namespace="/api/pty")
+            emit(
+                'info', {'uuid': uid, 'info': f"gates updated."}, namespace="/api/pty")
     except Exception as e:
         import traceback
         logger.warning(f"update gates error: {e}, {traceback.format_exc()}")

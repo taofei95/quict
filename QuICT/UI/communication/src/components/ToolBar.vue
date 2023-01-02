@@ -82,9 +82,9 @@ TpConfirm();
         </el-col>
         <el-col :span="2"></el-col>
         <el-col :span="14" style="text-align:start">
-          <el-space direction="vertical" :size="1" style="line-height: 19px !important">
+          <el-space direction="horizon" :size="1" style="line-height: 19px !important">
             <el-radio v-model="dialogBe" label="CPU">CPU</el-radio>
-            <el-radio v-model="dialogBe" label="GPU">GPU</el-radio>
+            <el-radio v-model="dialogBe" label="GPU" style="margin-left: 10px ;">GPU</el-radio>
           </el-space>
         </el-col>
       </el-row>

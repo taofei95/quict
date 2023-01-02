@@ -94,10 +94,10 @@ export default {
       }
 
       if (this.drawZone != undefined) {
-        d3.select("#drawZone").selectAll("*").remove();
+        d3.select("#n_drawZone").selectAll("*").remove();
       }
       this.drawZone = d3
-        .select("#drawZone")
+        .select("#n_drawZone")
         .append("svg")
         .attr("width", `${width * 1.25}px`)
         .attr("height", `${height * 1.25}px`)

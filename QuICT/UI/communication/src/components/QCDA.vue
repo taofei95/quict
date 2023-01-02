@@ -89,6 +89,11 @@
         </el-button>
       </div>
       <div id="step_2" class="div_not_selected">
+        <span style="font-size: large;">Original:</span>
+        <oVisualizeZone2 ref="o_visVue2" :VisContentIn="o_VisContent2">
+          <!-- TODO: replace with a one way vue component -->
+        </oVisualizeZone2>
+        <span style="font-size: large;">Optimized:</span>
         <oVisualizeZone ref="o_visVue" :VisContentIn="o_VisContent">
           <!-- TODO: replace with a one way vue component -->
         </oVisualizeZone>
@@ -183,6 +188,7 @@
 <script>
 import * as d3 from "d3";
 import oVisualizeZone from "./oVisualizeZone.vue";
+import oVisualizeZone2 from "./oVisualizeZone2.vue";
 import lVisualizeZone from "./lVisualizeZone.vue";
 import nVisualizeZone from "./nVisualizeZone.vue";
 import ProgramZone from "./ProgramZone.vue";
@@ -214,6 +220,11 @@ export default {
         q: [0, 1, 2, 3, 4],
         gates: [],
       },
+      o_VisContent2: {
+        gateSet: [],
+        q: [0, 1, 2, 3, 4],
+        gates: [],
+      },
       // LoadConfirmBtnDisable: true,
       NewConfirmBtnEnable: false,
       OutputContent: {},
@@ -234,6 +245,7 @@ export default {
   },
   components: {
     oVisualizeZone,
+    oVisualizeZone2,
     lVisualizeZone,
     nVisualizeZone,
     ProgramZone,
@@ -1068,6 +1080,8 @@ export default {
       if (!content.uuid == this.uuid) {
         return;
       }
+
+      // show optimized gates
       let groupedGates = [];
 
       content["gates"].forEach((gate_org) => {
@@ -1102,7 +1116,88 @@ export default {
       this.o_VisContent.gates = this.ListGates(groupedGates);
 
       this.$refs.o_visVue.vis_change();
+
+
+      // show original gates
+      let groupedGates2 = [];
+
+      content["gates2"].forEach((gate_org) => {
+        let gate = {
+          q: this.o_VisContent.q.length - 1,
+          name: gate_org.name,
+          targets: gate_org.targets,
+          controls: gate_org.controls,
+          selected: false,
+          pargs: gate_org.pargs,
+          img: gate_org.img,
+          qasm_name: gate_org.qasm_name,
+        };
+        gate_org.controls.forEach((q) => {
+          if (q < gate.q) {
+            gate.q = q;
+          }
+        });
+        gate_org.targets.forEach((q) => {
+          if (q < gate.q) {
+            gate.q = q;
+          }
+        });
+        this.append2Group(
+          groupedGates2,
+          groupedGates2.length > 0
+            ? groupedGates2.length - 1
+            : groupedGates2.length,
+          gate
+        );
+      });
+      this.o_VisContent2.gates = this.ListGates(groupedGates2);
+
+      this.$refs.o_visVue2.vis_change();
       this.show_o_qasm();
+    });
+
+    this.socket.on("QCDA_gates_update", (content) => {
+      // 收到后端qasm对应gate列表，在前端显示
+      console.log(content);
+      if (!content.uuid == this.uuid) {
+        return;
+      }
+
+      let groupedGates = [];
+
+      content["gates"].forEach((gate_org) => {
+        let gate = {
+          q: this.o_VisContent.q.length - 1,
+          name: gate_org.name,
+          targets: gate_org.targets,
+          controls: gate_org.controls,
+          selected: false,
+          pargs: gate_org.pargs,
+          img: gate_org.img,
+          qasm_name: gate_org.qasm_name,
+        };
+        gate_org.controls.forEach((q) => {
+          if (q < gate.q) {
+            gate.q = q;
+          }
+        });
+        gate_org.targets.forEach((q) => {
+          if (q < gate.q) {
+            gate.q = q;
+          }
+        });
+        this.append2Group(
+          groupedGates,
+          groupedGates.length > 0
+            ? groupedGates.length - 1
+            : groupedGates.length,
+          gate
+        );
+      });
+      this.n_VisContent.gates = this.ListGates(groupedGates);
+
+      this.$refs.n_visVue.vis_change();
+
     });
 
     this.socket.on("n_all_sets", (content) => {
