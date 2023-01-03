@@ -31,4 +31,3 @@ unit_test/**/*.jpg
 .history
 /QAOA_model*
 /del
-/wr_unit_test
