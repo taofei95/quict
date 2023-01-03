@@ -89,6 +89,7 @@ def test_mapping():
                 remapped_circ.gates.append(s)
             check_circ_eq(_wrap_to_circ(circ, q), remapped_circ)
 
+
 def test_initialMapping():
     file_dir = osp.dirname(osp.abspath(__file__))
     layout_names = ["ibmq_casablanca"]
@@ -111,6 +112,7 @@ def test_initialMapping():
                 test_MP[mp] = True
             for test in test_MP:
                 assert test
+
 
 test_mapping()
 test_initialMapping()

@@ -46,9 +46,9 @@ class SABREMapping:
     def __init__(
         self,
         layout: Layout,
-        sizeE = 20,
-        w = 0.5,
-        epsilon = 0.001
+        sizeE=20,
+        w=0.5,
+        epsilon=0.001
     ):
         """
             Args:
@@ -300,8 +300,8 @@ class SABREMapping:
             _gate = circuit.gates[index].copy()
             _gate | reverse_qc
 
-        self.execute(circuit, initial_l2p = initial_l2p)
+        self.execute(circuit, initial_l2p=initial_l2p)
         newMP = copy.deepcopy(self.logic2phy)
-        self.execute(reverse_qc, initial_l2p = newMP)
+        self.execute(reverse_qc, initial_l2p=newMP)
         newMP = copy.deepcopy(self.logic2phy)
         return newMP
