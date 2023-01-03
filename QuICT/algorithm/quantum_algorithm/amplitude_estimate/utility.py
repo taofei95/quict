@@ -1,14 +1,14 @@
 import logging
 
 from QuICT.core.gate import CompositeGate, CX, CH, X, H
-from QuICT.qcda.synthesis.mct import MCTOneAux
+from QuICT.core.gate.backend import MCTOneAux
 
 
 class OracleInfo:
     def __init__(
         self,
-        n:int,
-        n_ancilla:int,
+        n: int,
+        n_ancilla: int,
         S_chi,
         is_good_state,
         custom_grover_operator=None,
@@ -44,8 +44,10 @@ def default_A(n, controlled=False):
             H | cgate(i)
     return cgate
 
+
 def default_A_dagger(n, controlled=False):
     return default_A(n, controlled)
+
 
 def default_S_0(n, controlled=False):
     # control on 0
@@ -71,7 +73,7 @@ def default_S_0(n, controlled=False):
 
 
 class StatePreparationInfo:
-    def __init__(self, n:int, n_ancilla=0, A=default_A, A_dagger=default_A_dagger) -> None:
+    def __init__(self, n: int, n_ancilla=0, A=default_A, A_dagger=default_A_dagger) -> None:
         """state preparation information.
 
         Args:
