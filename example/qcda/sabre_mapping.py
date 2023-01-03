@@ -1,10 +1,13 @@
+import os
+
 from QuICT.core import Circuit, Layout
 from QuICT.core.utils import GateType
 from QuICT.qcda.mapping import SABREMapping
 
 
 if __name__ == '__main__':
-    layout = Layout.load_file("../layout/ibmqx2_layout.json")
+    layout_path = os.path.join(os.path.dirname(__file__), "../layout/ibmqx2_layout.json")
+    layout = Layout.load_file(layout_path)
 
     circuit = Circuit(5)
     circuit.random_append(50, typelist=[GateType.cx])

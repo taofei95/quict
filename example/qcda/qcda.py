@@ -13,7 +13,7 @@ typelist = [GateType.rx, GateType.ry, GateType.rz, GateType.x, GateType.y, GateT
 
 
 if __name__ == '__main__':
-    layout_path = os.path.join(os.path.dirname(__file__), "ibmqx2_layout.json")
+    layout_path = os.path.join(os.path.dirname(__file__), "../layout/ibmqx2_layout.json")
     layout = Layout.load_file(layout_path)
 
     circuit = Circuit(5)
