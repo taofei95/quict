@@ -7,9 +7,11 @@ from QuICT.core.gate import Ry
 
 from ..utility import OracleInfo, StatePreparationInfo
 
+
 DELTA = 0.05
-N_1_SHOT_CONST = 216 # TODO: optimization
-N_2_SHOT_CONST = 216 # TODO: optimization
+N_1_SHOT_CONST = 216    # TODO: optimization
+N_2_SHOT_CONST = 216    # TODO: optimization
+
 
 def _cos_estimate(
     m,
