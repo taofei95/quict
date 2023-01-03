@@ -83,9 +83,9 @@ class Result:
             with open(f"{self._output_path}/result_{self.id}.log", "w") as of:
                 of.write(str(self.__dict__()))
 
-    def record_circuit(self, circuit, circuit_name):
+    def record_circuit(self, circuit):
         """ dump the circuit. """
-        self.id = circuit.name.split('_')[1]
+        self.id = circuit.name
         if self._circuit_record:
             with open(f"{self._output_path}/circuit_{self.id}.qasm", "w") as of:
                 of.write(circuit.qasm())
