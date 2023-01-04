@@ -65,7 +65,7 @@ class VQENet(torch.nn.Module):
             self.device
         )
         for coeff, ansatz in zip(coefficients, ansatz_list):
-            sv, _ = ansatz.forward(state)
+            sv = ansatz.forward(state)
             state_vector += coeff * sv
         loss = torch.sum(state.conj() * state_vector).real
 
