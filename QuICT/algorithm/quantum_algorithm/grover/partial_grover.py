@@ -9,9 +9,6 @@ import numpy as np
 from QuICT.core import Circuit
 from QuICT.core.gate import *
 from QuICT.core.gate.backend import MCTOneAux
-
-from QuICT.simulation.state_vector import CircuitSimulator
-
 from QuICT.tools import Logger
 from QuICT.tools.exception.core import *
 

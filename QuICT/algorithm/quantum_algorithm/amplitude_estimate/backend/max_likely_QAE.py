@@ -2,7 +2,7 @@ import numpy as np
 from scipy.optimize import brute
 
 from QuICT.core import Circuit
-from QuICT.core.gate import CompositeGate, Measure
+from QuICT.core.gate import CompositeGate
 from ..utility import OracleInfo, StatePreparationInfo
 
 
