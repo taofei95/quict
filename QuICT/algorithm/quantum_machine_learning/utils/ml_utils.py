@@ -5,23 +5,6 @@ import numpy as np
 import random
 
 
-OPTIMIZER_LIST = [
-    "Adadelta",
-    "Adagrad",
-    "Adam",
-    "AdamW",
-    "SparseAdam",
-    "Adamax",
-    "ASGD",
-    "LBFGS",
-    "NAdam",
-    "RAdam",
-    "RMSprop",
-    "Rprop",
-    "SGD",
-]
-
-
 def set_seed(seed: int):
     """Set random seed.
 
@@ -48,10 +31,7 @@ def save_checkpoint(net, optim, model_path, ep, it, latest=False):
     """
     os.makedirs(model_path, exist_ok=True)
     checkpoint = dict(
-        epoch=ep,
-        iter=it,
-        graph=net.state_dict(),
-        optimizer=optim.state_dict(),
+        epoch=ep, iter=it, graph=net.state_dict(), optimizer=optim.state_dict(),
     )
     torch.save(checkpoint, "{0}/model.ckpt".format(model_path))
     if not latest:
@@ -99,20 +79,3 @@ def restore_checkpoint(net, optim, model_path, device, resume):
     assert resume is True or (resume["ep"] == ep and resume["it"] == it)
 
     return ep, it
-
-
-def set_optimizer(optimizer, net, lr):
-    """Initialize the optimizer according to the its name.
-
-    Args:
-        optimizer (str): The name of the optimizer.
-        net (torch.nn.Module): The network that need to update parameters.
-        lr (float): The learning rate.
-
-    Returns:
-        torch.optim: The optimizer that to be used.
-    """
-    assert optimizer in OPTIMIZER_LIST
-    optimizer = getattr(torch.optim, optimizer)
-    optim = optimizer([dict(params=net.parameters(), lr=lr)])
-    return optim
