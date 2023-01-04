@@ -79,7 +79,7 @@ class CompositeGate(CircuitBased):
     def clean(self):
         self._gates = []
         self._min_qubit, self._max_qubit = np.inf, 0
-        self._pointer = -1
+        self._pointer = None
 
     def __and__(self, targets: Union[int, list, Qubit, Qureg]):
         """ assign qubits or indexes for given gates

@@ -31,10 +31,7 @@ def save_checkpoint(net, optim, model_path, ep, it, latest=False):
     """
     os.makedirs(model_path, exist_ok=True)
     checkpoint = dict(
-        epoch=ep,
-        iter=it,
-        graph=net.state_dict(),
-        optimizer=optim.state_dict(),
+        epoch=ep, iter=it, graph=net.state_dict(), optimizer=optim.state_dict(),
     )
     torch.save(checkpoint, "{0}/model.ckpt".format(model_path))
     if not latest:

@@ -1,4 +1,4 @@
-from typing import Dict, Tuple, List
+from typing import Dict, List, Tuple
 
 from QuICT.core import *
 from QuICT.core.gate import *
@@ -8,7 +8,7 @@ from .dag import DAG
 
 class OptimizingTemplate:
     """
-    Circuit template used in CliffordRzOptimization.
+    Circuit template used in AutoOptimization.
     """
     def __init__(self, template: DAG, replacement: DAG = None,
                  anchor: int = 0, weight: int = 1, phase: float = 0):
@@ -90,7 +90,8 @@ class OptimizingTemplate:
         """
 
         replacement = self.get_replacement(mapping)
-        original = DAG(Circuit(replacement.width()))
+        original = DAG(Circuit(replacement.width()),
+                       build_toffoli=replacement.build_toffoli)
 
         new_mapping = {}
         undo_mapping = {}
@@ -322,11 +323,3 @@ def generate_gate_reducing_rewrite_template() -> List[ParameterizedTemplate]:
         rpl_circ = get_circuit_from_list(n_qubit, rpl)
         ret.append(ParameterizedTemplate(DAG(tpl_circ), DAG(rpl_circ), weight=weight, param_order=order))
     return ret
-
-
-hadamard_templates = generate_hadamard_gate_templates()
-single_qubit_gate_templates = generate_single_qubit_gate_templates()
-cnot_targ_template = generate_cnot_targ_templates()
-cnot_ctrl_template = generate_cnot_ctrl_templates()
-gate_preserving_rewrite_template = generate_gate_preserving_rewrite_template()
-gate_reducing_rewrite_template = generate_gate_reducing_rewrite_template()

@@ -48,7 +48,7 @@ def amplitude_estimate(
         state_preparation.A(n) | circ
         for _ in range(m):
             Q_gate | circ
-        h = 0
+
         simulator.run(circ)
         sample_result = simulator.sample(N_shot)
         for j in range(2 ** (n + n_ancilla)):
