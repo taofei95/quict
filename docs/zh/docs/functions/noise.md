@@ -122,7 +122,9 @@ noised_circuit = nm.transpile(circuit)  # 生成含噪声量子电路
     for i in range(4):
         CX | circuit([i, i+1])          # append CX gate
     ```
-[TODO]: Circuit Graph
+
+<div align=center><img src="../assets/images/circuit_demo.jpg" width="500" height="300"></div>
+
 
 - 针对初始量子电路进行模拟
     ```python
@@ -133,7 +135,10 @@ noised_circuit = nm.transpile(circuit)  # 生成含噪声量子电路
     sv = simulator.run(circuit)
     sample_result = simulator.sample(3000)
     ``` 
-[TODO]: Sample Result Graph
+
+    ```python
+    [1484, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1516]
+    ```
 
 - 构建噪声模型，并使用密度矩阵进行模拟
     ```python
@@ -141,7 +146,7 @@ noised_circuit = nm.transpile(circuit)  # 生成含噪声量子电路
     from QuICT.core.noise import NoiseModel, BitflipError
 
     # 构建噪声模型
-    bf_err = BitflipError(0.1)
+    bf_err = BitflipError(0.05)
     bf2_err = bf_error.tensor(bf_error)
     nm = NoiseModel()
     nm.add_noise_for_all_qubits(bits_err, ['cx'])
@@ -151,5 +156,6 @@ noised_circuit = nm.transpile(circuit)  # 生成含噪声量子电路
     sv = dm_simu.run(circuit, noise_model=nm)
     sample_result = dm_simu.sample(3000)
     ```
-
-[TODO]: Noise Sample Result Graph
+    ```python
+    [1046, 57, 54, 56, 49, 6, 4, 59, 57, 3, 3, 14, 13, 4, 5, 95, 94, 8, 8, 5, 5, 3, 9, 56, 58, 6, 5, 59, 66, 52, 57, 984]
+    ```

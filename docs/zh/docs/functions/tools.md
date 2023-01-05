@@ -32,12 +32,13 @@ new_qasm.output_qasm("/path/to/qasm/file")       # Save qasm file
 from QuICT.core import Circuit
 
 circuit = Circuit(5)
-circuit.random_append(50)
+circuit.random_append(20)
 circuit.draw(method='matp_auto')
 circuit.draw(method='command')
 ```
 
-[TODO]: two graph about different graph generate way
+<div align=center><img src="../assets/images/circuit_draw_matp.jpg" width="900" height="175"></div>
+<div align=center><img src="../assets/images/circuit_draw_command.png" width="900" height="175"></div>
 
 
 ## 量子电路算法库

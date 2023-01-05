@@ -15,7 +15,7 @@ QuICT (Quantum Computer of Institute of Computing Technology)是一个开源量�
 - QuICT.qcda: 量子电路生成、优化和映射
 - QuICT.simulation: 量子电路模拟器，支持 Unitary、StateVector、DensityMatrix。
 
-<div align=center><img src="./assets/images/quictv1.drawio.png"></div>
+<div align=center><img src="./assets/images/quictv1.drawio.png" width="400" height="400"></div>
 
 相关链接
 - 代码库：https://gitee.com/quictucas/quict
