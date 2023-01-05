@@ -110,6 +110,7 @@ class DensityMatrixSimulation:
 
         # Start simulator
         cgate = CompositeGate()
+        cgate._max_qubit = circuit.width()
         for gate in self._circuit.gates:
             # Store continuous BasicGates into cgate
             if isinstance(gate, BasicGate) and gate.type != GateType.measure:
