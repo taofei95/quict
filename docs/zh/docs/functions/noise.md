@@ -4,41 +4,44 @@
 
 QuICT目前支持含噪声量子电路的模拟，可以使量子模拟更加贴近真实的量子计算机，我们可以自定义所需要的噪声模型，也可以使用内置的常见的噪声模型，并将其应用在所需要的逻辑门上，然后通过密度矩阵模拟器来进行噪声量子电路的模拟。
 
+
 ## 量子噪声模型
-----
+
 QuICT 目前支持自定义量子噪声，也实现了三种量子噪声模型，分别是泡利信道、振幅和相位阻尼以及测量噪声。
 
 ### 泡利信道
+
 - 比特翻转信道以概率 $1 − \rho$ 从 $|0⟩$ 到 $|1⟩$ (或者倒过来) 翻转一个量子比特。它具有操作元
-    $$E_0 = \sqrt \rho I = \sqrt \rho \begin{bmatrix}
+    $E_0 = \sqrt \rho I = \sqrt \rho \begin{bmatrix}
     1 & 0\\
     0 & 1\\
     \end{bmatrix}\ \ \  and \ \ \ E_1 = \sqrt{1 - \rho} X = \sqrt{1 - \rho} \begin{bmatrix}
     0 & 1\\
     1 & 0\\
-    \end{bmatrix}$$
+    \end{bmatrix}$
 - 相位翻转信道具有操作元
-    $$E_0 = \sqrt \rho I = \sqrt \rho \begin{bmatrix}
+    $E_0 = \sqrt \rho I = \sqrt \rho \begin{bmatrix}
     1 & 0\\
     0 & 1\\
     \end{bmatrix}\ \ \  and \ \ \ E_1 = \sqrt{1 - \rho} Z = \sqrt{1-\rho} \begin{bmatrix}
     1 & 0\\
     0 & -1\\
-    \end{bmatrix}$$
+    \end{bmatrix}$
 - 比特相位翻转信道具有操作元
-    $$E_0 = \sqrt \rho I = \sqrt \rho \begin{bmatrix}
+    $E_0 = \sqrt \rho I = \sqrt \rho \begin{bmatrix}
     1 & 0\\
     0 & 1\\
     \end{bmatrix}\ \ \  and \ \ \ E_1 = \sqrt{1 - \rho} Y = \sqrt{1 - \rho} \begin{bmatrix}
     0 & -i\\
     i & 0\\
-    \end{bmatrix}$$
+    \end{bmatrix}$
 - 退极化信道是量子噪声的一种重要的类型。它表示量子比特有概率 $\rho$ 被一个完全混态 $I / 2$ 所替代，有概率 $1 − \rho$ 是不变的。它（单比特）具有操作元
-    $${\sqrt {1 − \frac{3\rho}{4}} I , \frac{\sqrt {\rho}}{2}X, \frac{\sqrt {\rho}}{2}Y, \frac{\sqrt {\rho}}{2}Z}$$
+    ${\sqrt {1 − \frac{3\rho}{4}} I , \frac{\sqrt {\rho}}{2}X, \frac{\sqrt {\rho}}{2}Y, \frac{\sqrt {\rho}}{2}Z}$
 
 ### 振幅和相位阻尼
+
 - 振幅阻尼是对能量耗散的描述，即由量子系统的能量损失带来的影响。它具有操作元
-    $$E_0 = \begin{bmatrix}
+    $E_0 = \begin{bmatrix}
     1 & 0\\
     0 & \sqrt{1 - \rho}\\
     \end{bmatrix}
@@ -46,10 +49,10 @@ QuICT 目前支持自定义量子噪声，也实现了三种量子噪声模型�
     E_1 = \begin{bmatrix}
     0 & \sqrt \rho\\
     0 & 0\\
-    \end{bmatrix}$$
+    \end{bmatrix}$
     > QuICT 同样支持广义振幅阻尼
 - 相位阻尼是一种独特的量子力学噪声过程，描述了量子信息损失而没有能量损失。它具有操作元
-    $$E_0 = \sqrt \rho \begin{bmatrix}
+    $E_0 = \sqrt \rho \begin{bmatrix}
     1 & 0\\
     0 & 1\\
     \end{bmatrix}
@@ -57,24 +60,29 @@ QuICT 目前支持自定义量子噪声，也实现了三种量子噪声模型�
     E_1 = \sqrt {1 - \rho} \begin{bmatrix}
     1 & 0\\
     0 & -1\\
-    \end{bmatrix}$$
+    \end{bmatrix}$
 
 ### 测量噪声
+
 - 测量噪声表示分别以一定概率 $\rho(n|m)$ 来输出真实测量值， 以 $1 - \rho (n|m)$ 概率来输出错误的测量结果。
+  
     > 单比特测量噪声模型：
-    > $$ \rho = \begin{bmatrix}
+    $\rho = \begin{bmatrix}
         \rho(0|0) & \rho(1|0)\\
         \rho(1|0) & \rho(1|1)\\
         \end{bmatrix} = \begin{bmatrix}
         \rho(测量值为0，输出值为0) & \rho(测量值为0，输出值为1)\\
         \rho(测量值为1，输出值为0) & \rho(测量值为1，输出值为1)\\
-        \end{bmatrix}$$
-    >- important: $\rho$ 的每一行的和必须为1
+        \end{bmatrix}$
+    > !!! warning
+        $\rho$ 的每一行的和必须为1
+
 
 ## 构建含噪声量子电路
-----
+
 QuICT 通过 NoiseModel 类，来实现构造含噪声量子电路。整个模块大致分为两部分，一部分是将定义好的量子噪声加入噪声模型之中，并可以与量子比特和量子门所绑定；另一部分是通过给入想要加入噪声的量子电路，按照模型内的噪声规则生成含噪声的量子电路。
-```python
+
+``` python
 from QuICT.core import Circuit
 from QuICT.core.gate import *
 from QuICT.core.noise import *
@@ -106,11 +114,12 @@ noised_circuit = nm.transpile(circuit)  # 生成含噪声量子电路
 ```
 
 ## 含噪声量子电路模拟
-----
+
 通过密度矩阵模拟器可以进行含噪声量子电路的模拟。下面通过一个简单的例子来说明如何进行含噪声量子电路模拟。
 
 - 构建初始量子电路
-    ```python
+  
+    ``` python
     from QuICT.core import Circuit
     from QuICT.core.gate import *
 
@@ -123,11 +132,14 @@ noised_circuit = nm.transpile(circuit)  # 生成含噪声量子电路
         CX | circuit([i, i+1])          # append CX gate
     ```
 
-<div align=center><img src="../assets/images/circuit_demo.jpg" width="500" height="300"></div>
+<figure markdown>
+![circuit_demo](../../../assets/images/functions/circuit_demo.jpg){:width="500px"}
+</figure>
 
 
 - 针对初始量子电路进行模拟
-    ```python
+  
+    ``` python
     from QuICT.simulation.state_vector import CircuitSimulator
 
     # 量子电路模拟
@@ -136,12 +148,13 @@ noised_circuit = nm.transpile(circuit)  # 生成含噪声量子电路
     sample_result = simulator.sample(3000)
     ``` 
 
-    ```python
+    ``` python
     [1484, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1516]
     ```
 
 - 构建噪声模型，并使用密度矩阵进行模拟
-    ```python
+  
+    ``` python
     from QuICT.simulation.density_matrix import DensityMatrixSimulator
     from QuICT.core.noise import NoiseModel, BitflipError
 
@@ -156,6 +169,7 @@ noised_circuit = nm.transpile(circuit)  # 生成含噪声量子电路
     sv = dm_simu.run(circuit, noise_model=nm)
     sample_result = dm_simu.sample(3000)
     ```
-    ```python
+
+    ``` python
     [1046, 57, 54, 56, 49, 6, 4, 59, 57, 3, 3, 14, 13, 4, 5, 95, 94, 8, 8, 5, 5, 3, 9, 56, 58, 6, 5, 59, 66, 52, 57, 984]
     ```

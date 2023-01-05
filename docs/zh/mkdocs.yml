@@ -29,8 +29,7 @@ nav:
     - 映射: tutorials/QCDA/mapping.md
     - 优化: tutorials/QCDA/optimization.md
     - 合成: tutorials/QCDA/synthesis.md
-  - 量子模拟:
-    - 密度矩阵: tutorials/simulation/density_matrix.md
+  - 量子电路: tutorials/quantum_circuit.md
 - API:
   - Algorithm:
     - Quantum Machine Learning:

@@ -10,7 +10,7 @@ $$|\psi \rangle \rightarrow \alpha |0 \rangle + \beta |1 \rangle$$
 
 在QuICT中，我们使用 Qubit 类来表示量子计算中量子比特的概念。我们还构建了 Qureg 类来储存和管理一个Qubit类的列表，Qureg类继承自python的List类，使其可以被当作 python 的 List 使用。
 
-```python
+``` python
 from QuICT.core import Qureg, Qubit
 
 qubit = Qubit()
@@ -22,11 +22,12 @@ qr2 = Qureg([qubit])    # 构建包含 qubit 的 Qureg
 ```
 
 ## 量子比特测量
-----
+
 我们可以通过检查一个比特来确定它处于 $0$ 态还是 $1$ 态。例如，计算机读取其内存内容时始终执行此操作。但值得注意的是，我们不能通过检查量子比特来确定它的量子态，即 $\alpha$ 和 $\beta$ 的值。相反，量子力学告诉我们，我们只能获得有关量子态的有限信息。在测量量子比特时，我们以 $|\alpha|^2$ 的概率得到结果$0$，以 $|\beta|^2$ 的概率得到结果$1$。显然，$|\alpha|^2 + |\beta|^2 = 1$，因为概率和为 $1$。 从几何上看，我们可以将此解释为量子比特的状态归一化长度为 $1$。因此，通常量子比特的状态是二维复向量空间中的单位向量。
 
-> 在QuICT中，我们可以通过在量子电路的对应比特位上放置测量门来实现量子比特的测量。
-```python
+在QuICT中，我们可以通过在量子电路的对应比特位上放置测量门来实现量子比特的测量。
+
+``` python
 from QuICT.core import Circuit
 from QuICT.core.gate import Measure
 from QuICT.simulation.state_vector import CircuitSimulator
