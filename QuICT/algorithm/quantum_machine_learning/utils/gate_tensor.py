@@ -602,15 +602,6 @@ class GlobalPhaseGate(BasicGateTensor):
         self.pargs = params
 
     def __call__(self, alpha):
-        self.permit_element(alpha)
-
-        return (
-            GlobalPhaseGate(alpha)
-            if isinstance(alpha, torch.Tensor)
-            else GlobalPhaseGate(torch.tensor([alpha]))
-        )
-
-    def __call__(self, alpha):
         """Set parameters for the gate.
 
         Args:
@@ -624,7 +615,11 @@ class GlobalPhaseGate(BasicGateTensor):
         """
         self.permit_element(alpha)
 
-        return GlobalPhaseGate([alpha])
+        return (
+            GlobalPhaseGate(alpha)
+            if isinstance(alpha, torch.Tensor)
+            else GlobalPhaseGate(torch.tensor([alpha]))
+        )
 
     @property
     def matrix(self):

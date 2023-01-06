@@ -100,12 +100,12 @@ class QAOANet(VQENet):
         else:
             # Add CNOT gates
             for i in range(len(tar_idx) - 1):
-                ansatz.add_gate(CX_tensor, tar_idx[i : i + 2])
+                ansatz.add_gate(CX_tensor, tar_idx[i: i + 2])
             # Add RZ gate
             ansatz.add_gate(Rz_tensor(gamma), tar_idx[-1])
             # Add CNOT gates
             for i in range(len(tar_idx) - 2, -1, -1):
-                ansatz.add_gate(CX_tensor, tar_idx[i : i + 2])
+                ansatz.add_gate(CX_tensor, tar_idx[i: i + 2])
         return ansatz
 
     def construct_ansatz(self):
@@ -173,12 +173,12 @@ class QAOANet(VQENet):
         else:
             # Add CNOT gates
             for i in range(len(tar_idx) - 1):
-                CX | circuit(tar_idx[i : i + 2])
+                CX | circuit(tar_idx[i: i + 2])
             # Add RZ gate
             Rz(gamma) | circuit(tar_idx[-1])
             # Add CNOT gates
             for i in range(len(tar_idx) - 2, -1, -1):
-                CX | circuit(tar_idx[i : i + 2])
+                CX | circuit(tar_idx[i: i + 2])
         return circuit
 
     def construct_circuit(self):

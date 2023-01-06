@@ -353,7 +353,7 @@ prob_grad_single_kernel = cp.RawKernel(
     void ProbGradSingle(const int index, complex<float>* vec) {
         int label = blockDim.x * blockIdx.x + threadIdx.x;
         const int offset = 1 << index;
-        
+
         int _0 = (label & ((1 << index) - 1)) + (label >> index << (index + 1));
         int _1 = _0 + offset;
 
@@ -372,7 +372,7 @@ prob_grad_double_kernel = cp.RawKernel(
     void ProbGradDouble(const int index, complex<double>* vec) {
         int label = blockDim.x * blockIdx.x + threadIdx.x;
         const int offset = 1 << index;
-        
+
         int _0 = (label & ((1 << index) - 1)) + (label >> index << (index + 1));
         int _1 = _0 + offset;
 
@@ -416,7 +416,7 @@ class MeasureProb(torch.autograd.Function):
             index, cupy_state, n_qubits, all_measured=False, sync=True
         )
         prob = torch.from_dlpack(prob)
-        return prob
+        return 1.0 - prob
 
     @staticmethod
     def backward(ctx, grad_output):

@@ -6,5 +6,5 @@
 
 from ._algorithm import Algorithm
 from .quantum_algorithm import *
-from .synthetical_unitary import SyntheticalUnitary
+from .quantum_machine_learning import *
 from .weight_decision import WeightDecision
