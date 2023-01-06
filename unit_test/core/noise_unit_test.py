@@ -118,6 +118,9 @@ class TestNoise(unittest.TestCase):
             )
         )
 
+        comp_readout = single_readout.compose(double_readout)
+        tensor_readout = single_readout.tensor(single_readout)
+
         # build noise model
         nm = NoiseModel()
         nm.add_readout_error(single_readout, 4)
