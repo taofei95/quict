@@ -4,6 +4,7 @@ import numpy as np
 from typing import Union, List
 
 from QuICT.ops.linalg.cpu_calculator import dot, tensor
+from QuICT.tools.exception.core import ValueError, TypeError
 from .utils import NoiseChannel
 
 
@@ -54,34 +55,49 @@ class ReadoutError:
 
     def _probability_check(self, prob):
         if not isinstance(prob, (list, np.ndarray)):
-            raise TypeError("The matrix of probability should be list or np.ndarray.")
+            raise TypeError("ReadoutError.prob", "list or np.ndarray.", f"{type(prob)}")
 
         prob = np.array(prob)
         row, col = prob.shape
         if row != col:
-            raise ValueError("The matrix of probability shouble be square.")
+            raise ValueError("ReadoutError.prob.shape", "row == col", f"{row} and {col}")
 
         n = int(np.log2(row))
         if 2 ** n != row:
-            raise ValueError("The matrix of probability should be 2^n * 2^n.")
+            raise ValueError("ReadoutError.prob.shape", "2 ** n", f"{row}")
 
         for p in prob:
             if not isinstance(prob, (list, np.ndarray)):
-                raise TypeError("The probability of a state should be list or np.ndarray.")
+                raise TypeError("ReadoutError.prob", "list or np.ndarray.", f"{type(prob)}")
 
             sum_p = [i for i in p if i >= 0 and i <= 1]
             if not math.isclose(sum(sum_p), 1, rel_tol=1e-6) or len(sum_p) != len(p):
-                raise ValueError("The sum of probability of a state should be 1.")
+                raise ValueError("ReadoutError.prob", "same to 1 for each row", f"{sum(sum_p)}")
 
         return prob
+
+    def expand(self, extend_qubits: int, change_itself: bool = False):
+        """ Expand noise with size of extend_qubits. """
+        extra_identity = np.identity(2 ** extend_qubits)
+        expand_prob = tensor(self.prob, extra_identity)
+
+        if change_itself:
+            self._prob = expand_prob
+            self._qubits += extend_qubits
+        else:
+            return ReadoutError(expand_prob)
 
     def compose(self, other):
         """ dot(self.prob, other.prob) """
         assert isinstance(other, ReadoutError)
-        if other.qubits != self.qubits:
-            raise ValueError("other must have same qubits.")
 
-        compose_prob = dot(self.prob, other.prob)
+        left_prob, right_prob = self.prob, other.prob
+        if self.qubits > other.qubits:
+            right_prob = other.expand(self.qubits - other.qubits).prob
+        elif self.qubits < other.qubits:
+            left_prob = self.expand(other.qubits - self.qubits).prob
+
+        compose_prob = dot(left_prob, right_prob)
         return ReadoutError(compose_prob)
 
     def tensor(self, other):
@@ -108,3 +124,12 @@ class ReadoutError:
             return True
 
         return False
+
+    def apply_to_qubits(self, measured_result: int):
+        prob = np.random.random()
+        related_prob_error = self._prob[measured_result]
+        for idx, error_prob in related_prob_error:
+            if prob <= error_prob:
+                return idx
+
+            prob -= error_prob

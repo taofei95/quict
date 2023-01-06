@@ -1,11 +1,10 @@
 from numpy.random import random
-from copy import deepcopy
 from typing import Union, List
-from collections import defaultdict
 
-from .noise_error import QuantumNoiseError
+from .noise_error import QuantumNoiseError, NoiseChannel
 from .readout_error import ReadoutError
-from QuICT.core.gate import BasicGate, GateType, GATE_TYPE_TO_CLASS
+from QuICT.core import Circuit
+from QuICT.core.gate import BasicGate, GateType, GATE_TYPE_TO_CLASS, Unitary
 from QuICT.core.operator import NoiseGate
 from QuICT.tools.exception.core import TypeError, ValueError, NoiseApplyError
 
@@ -17,7 +16,7 @@ class NoiseModel:
     Args:
         name (str, optional): The name of this NoiseModel. Defaults to "Noise Model".
         basic_gates (List, optional): The list of quantum gates will apply the NoiseError.
-            Defaults to __BASED_GATES.
+            Defaults to [h, s, sdg, x, y, z, rx, ry, rz, u1, t, tdg, cx, cz, crz, cu1].
     """
     __BASED_GATES = [
         "h", "s", "sdg", "x", "y", "z", "rx", "ry", "rz",
@@ -28,14 +27,11 @@ class NoiseModel:
         self._name = name
         self._basic_gates = basic_gates
 
-        # self._instruction stores the mapping of NoiseError and its limitation of Gates and Qubits.
-        # Dict{"specific": List[Tuple(NoiseError, Qubits, Gates)],
-        #      "all-qubits": List[Tuple(NoiseError, Gates)],
-        #      "readout": List[ReadoutError]}
-        self._instruction = defaultdict(list)
-        self._all_qubits_error_gates = []   # Collect all-qubits NoiseError's gate type
-        self._specified_error_gates = []    # Collect specified-qubits NoiseError's gate type
-        self._readout_errors = []           # Collect Readout Error's qubits
+        self._error_by_gate = {}
+        for gate in basic_gates:
+            self._error_by_gate[gate] = []
+
+        self._readout_errors = []
 
     def __str__(self):
         nm_str = f"{self._name}:\nBasic Gates: {self._basic_gates}\nNoise Errors:\n"
@@ -105,8 +101,8 @@ class NoiseModel:
         self._gates_normalize(noise, gates)
 
         # Add noise in the NoiseModel
-        self._instruction["specific"].append((noise, qubits, gates))
-        self._specified_error_gates += gates if isinstance(gates, list) else [gates]
+        for gate in gates:
+            self._error_by_gate[gate].append((noise, qubits))
 
     def add_noise_for_all_qubits(self, noise: QuantumNoiseError, gates: Union[str, List[str]]):
         """ Add noise which will affect all qubits in the circuit.
@@ -119,8 +115,8 @@ class NoiseModel:
         self._gates_normalize(noise, gates)
 
         # Add noise in the NoiseModel
-        self._instruction["all-qubits"].append((noise, gates))
-        self._all_qubits_error_gates += gates if isinstance(gates, list) else [gates]
+        for gate in gates:
+            self._error_by_gate[gate].append((noise, -1))
 
     def add_readout_error(self, noise: ReadoutError, qubits: Union[int, List[int]]):
         """ Add Readout error in the noise model.
@@ -140,44 +136,16 @@ class NoiseModel:
             qubits (Union[int, List[int]]): The target qubits for the Readout error
         """
         assert isinstance(noise, ReadoutError), TypeError("NoiseModel.addreadouterror", "ReadoutError", type(noise))
-        if isinstance(qubits, int):
-            qubits = [qubits]
+        self._qubits_normalize(qubits)
 
-        for qubit in qubits:
-            assert isinstance(qubit, int) and qubit >= 0, \
-                ValueError("NoiseModel.addreadouterror", "be a positive integer", qubit)
+        if noise.qubits > 1:
+            assert noise.qubits == len(qubits), NoiseApplyError(
+                "For multi qubits Readout Error, the given qubits' number should equal to the noise's qubit number."
+            )
 
-        # Deal with 1-qubits ReadoutError apply for multi-qubits
-        if noise.qubits == 1:
-            for qubit in qubits:
-                self._add_readout_error(noise, qubit)
+        self._readout_errors.append((noise, qubits))
 
-            return
-
-        # Deal with multi-qubits ReadoutError
-        assert noise.qubits == len(qubits), NoiseApplyError(
-            "For multi qubits Readout Error, the given qubits' number should equal to the noise's qubit number."
-        )
-        self._add_readout_error(noise, qubits)
-
-    def _add_readout_error(self, noise: ReadoutError, qubit: List[int]):
-        if isinstance(qubit, int):
-            qubit = [qubit]
-
-        # Deal with Readout Error with the same qubits limitation
-        if qubit in self._readout_errors:
-            noise_idx = self._readout_errors.index(qubit)
-            self._instruction["readout"][noise_idx] = self._instruction["readout"][noise_idx].compose(noise)
-
-        for qubit_key in self._readout_errors:
-            if set(qubit_key) & set(qubit):
-                raise NoiseApplyError("Currently do not support multi-qubits readout error combined.")
-
-        # Append new Readout Error and qubits limitation
-        self._readout_errors.append(qubit)
-        self._instruction["readout"].append(noise)
-
-    def transpile(self, circuit):
+    def transpile(self, circuit: Circuit, accumulated_mode: bool = False):
         """ Apply all noise in the Noise Model to the given circuit, replaced related gate with the NoiseGate
 
         Args:
@@ -186,83 +154,46 @@ class NoiseModel:
         Returns:
             Circuit: The circuit with NoiseGates
         """
-        noised_circuit = deepcopy(circuit)
-        for idx, gate in enumerate(circuit.gates):
-            if not isinstance(gate, BasicGate):
-                continue
+        qubit_num = circuit.width()
+        noised_circuit = Circuit(qubit_num)
+        for gate in circuit.gates:
+            if isinstance(gate, BasicGate) and gate.type.name in self._basic_gates:
+                gate_str = gate.type.name
+                gate_args = gate.cargs + gate.targs
+                noise_list = self._error_by_gate[gate_str]
+                append_origin_gate = True
+                for noise, qubits in noise_list:
+                    if qubits == -1 or (set(qubits) & set(gate_args)) == set(gate_args):    # noise's qubit matched
+                        if accumulated_mode or noise.type == NoiseChannel.damping:
+                            noise_matrixs = noise.apply_to_gate(gate.matrix)
+                            NoiseGate(noise_matrixs, len(gate_args)) & gate_args | circuit
+                            append_origin_gate = False
+                        else:
+                            prob = random()
+                            noise_matrix = noise.prob_mapping_operator(prob)
+                            Unitary(noise_matrix) | noised_circuit(gate_args)
 
-            gate_str = gate.type.name
-            noise_list = []
-            if gate_str in self._all_qubits_error_gates:
-                noise_list += self._kraus_matrix_for_all_qubits(gate)
-
-            if gate_str in self._specified_error_gates:
-                noise_list += self._kraus_matrix_for_specified_qubits(gate)
-
-            if not noise_list:
-                continue
-
-            based_noise = noise_list[0]
-            if len(noise_list) > 1:
-                for n in noise_list[1:]:
-                    based_noise = based_noise.compose(n)
-
-            noise_gate = NoiseGate(gate, based_noise)
-            noised_circuit.replace_gate(idx, noise_gate)
+                if append_origin_gate:
+                    gate | noised_circuit
+            else:
+                gate | noised_circuit
 
         return noised_circuit
 
-    def apply_readout_error(self, qubits):
+    def apply_readout_error(self, qureg):
         """ Apply readout error to target qubits.
 
         Args:
-            qubits (Qureg): The circuits' qubits.
+            qureg (Qureg): The circuits' qubits.
         """
-        prob = random()
-        for noise_idx, qubit_idxes in enumerate(self._readout_errors):
-            try:
-                prob_idx = int(qubits[qubit_idxes])     # Get measured result
-            except:
-                continue        # do nothing if not all qubits measured
-
-            # Depending on the Readout Error probs, find noised measured result
-            readout_error = self._instruction["readout"][noise_idx]
-            readout_error_probs = readout_error.prob[prob_idx]
-            for idx, error_prob in enumerate(readout_error_probs):
-                if prob <= error_prob:
-                    noised_measured = idx
-                    break
-                else:
-                    prob -= error_prob
-
-            # Change truly measured result with noised measured result
-            if noised_measured != prob_idx:
-                for qubit_idx in qubit_idxes[::-1]:
-                    qubits[qubit_idx].measured = (noised_measured & 1)
-                    noised_measured >>= 1
-
-    def _kraus_matrix_for_all_qubits(self, gate):
-        gate_str = gate.type.name
-        noise_list = []
-        for noise, gate_list in self._instruction["all-qubits"]:
-            if gate_str in gate_list:
-                noise_list.append(noise)
-
-        return noise_list
-
-    def _kraus_matrix_for_specified_qubits(self, gate):
-        gate_str = gate.type.name
-        gate_idx = gate.cargs + gate.targs
-        noise_list = []
-        for noise, qubit, gate_list in self._instruction["specific"]:
-            if isinstance(qubit, int):
-                # Check 1-qubit noises
-                qubit_intersection = qubit in gate_idx
+        for readouterror, qubits in self._readout_errors:
+            if readouterror.qubits == 1:
+                for q in qubits:
+                    truly_result = int(qureg[q])
+                    qureg[q].measured = readouterror.apply_to_qubits(truly_result)
             else:
-                # Check multi-qubits noises
-                qubit_intersection = (set(qubit) & set(gate_idx)) == set(qubit)
-
-            if gate_str in gate_list and qubit_intersection:
-                noise_list.append(noise)
-
-        return noise_list
+                truly_result = int(qureg[qubits])
+                noised_result = readouterror.apply_to_qubits(truly_result)
+                for q in qubits[::-1]:
+                    qureg[q].measured = noised_result & 1
+                    noised_result >>= 1

@@ -135,7 +135,7 @@ class Grover:
                 if check_solution(solution):
                     return solution
                 n_solution_guess = int(n_solution_guess / ALPHA)
-            logger.info(f"FAILED!")
+            logger.info("FAILED!")
             return None
         # no solution
         elif n_solution == 0:

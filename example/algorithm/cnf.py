@@ -10,6 +10,6 @@ n_aux = 3
 
 cnf = CNFSATOracle()
 cnf.run(filename_test, n_aux, 1)
-circ = Circuit(n_var+n_aux+1)
-cnf.circuit() | circ    
+circ = Circuit(n_var + n_aux + 1)
+cnf.circuit() | circ
 circ.draw(method="matp_file")

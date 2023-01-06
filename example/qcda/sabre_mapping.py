@@ -19,4 +19,3 @@ if __name__ == '__main__':
 
     circuit_initial_map = sabre.execute_initialMapping(circuit)
     print(circuit_initial_map)
-

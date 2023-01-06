@@ -104,7 +104,8 @@ class Agent:
             action (Tuple[int, int]): Swap gate used on current topology.
 
         Returns:
-            Tuple[StateSlim, Union[StateSlim, None], float, bool]: Tuple of (Previous State, Next State, Reward, Terminated).
+            Tuple[StateSlim, Union[StateSlim, None], float, bool]: Tuple of
+                (Previous State, Next State, Reward, Terminated).
         """
         assert self.state is not None
 
