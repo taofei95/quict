@@ -61,6 +61,8 @@ class NoiseModel:
             if q < 0 or not isinstance(q, int):
                 raise ValueError("NoiseModel.add.qubits", "be a positive integer", q)
 
+        return qubits
+
     def _gates_normalize(self, noise: QuantumNoiseError, gates: Union[str, List[str]]):
         assert isinstance(noise, QuantumNoiseError), \
             TypeError("NoiseModel.add.noise", "QuantumNoiseError", type(noise))
@@ -83,6 +85,8 @@ class NoiseModel:
                     f"with noise error {noise.qubits}."
                 )
 
+        return gates
+
     def add(self, noise: QuantumNoiseError, gates: Union[str, List[str]], qubits: Union[int, List[int]] = None):
         """ Add noise which will affect target quantum gates with special qubits in the circuit.
 
@@ -97,8 +101,8 @@ class NoiseModel:
             return
 
         # Input normalization
-        self._qubits_normalize(qubits)
-        self._gates_normalize(noise, gates)
+        qubits = self._qubits_normalize(qubits)
+        gates = self._gates_normalize(noise, gates)
 
         # Add noise in the NoiseModel
         for gate in gates:
@@ -112,7 +116,7 @@ class NoiseModel:
             gates (Union[str, List[str]]): The affected quantum gates.
         """
         # Input normalization
-        self._gates_normalize(noise, gates)
+        gates = self._gates_normalize(noise, gates)
 
         # Add noise in the NoiseModel
         for gate in gates:
@@ -136,7 +140,7 @@ class NoiseModel:
             qubits (Union[int, List[int]]): The target qubits for the Readout error
         """
         assert isinstance(noise, ReadoutError), TypeError("NoiseModel.addreadouterror", "ReadoutError", type(noise))
-        self._qubits_normalize(qubits)
+        qubits = self._qubits_normalize(qubits)
 
         if noise.qubits > 1:
             assert noise.qubits == len(qubits), NoiseApplyError(
@@ -189,9 +193,21 @@ class NoiseModel:
         for readouterror, qubits in self._readout_errors:
             if readouterror.qubits == 1:
                 for q in qubits:
+                    if qureg[q].measured is None:
+                        continue
+
                     truly_result = int(qureg[q])
                     qureg[q].measured = readouterror.apply_to_qubits(truly_result)
             else:
+                all_qubits_measured = True
+                for q in qubits:
+                    if qureg[q].measured is None:
+                        all_qubits_measured = False
+                        break
+
+                if not all_qubits_measured:
+                    continue
+
                 truly_result = int(qureg[qubits])
                 noised_result = readouterror.apply_to_qubits(truly_result)
                 for q in qubits[::-1]:

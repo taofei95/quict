@@ -128,7 +128,7 @@ class ReadoutError:
     def apply_to_qubits(self, measured_result: int):
         prob = np.random.random()
         related_prob_error = self._prob[measured_result]
-        for idx, error_prob in related_prob_error:
+        for idx, error_prob in enumerate(related_prob_error):
             if prob <= error_prob:
                 return idx
 

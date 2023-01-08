@@ -66,7 +66,6 @@ class TestNoise(unittest.TestCase):
         assert 1
 
     def test_depolarizingerror(self):
-        print(TestNoise.circuit.qasm())
         depolarizing_rate = 0.05
         # 1-qubit depolarizing error
         single_dep = DepolarizingError(depolarizing_rate, num_qubits=1)
@@ -96,8 +95,8 @@ class TestNoise(unittest.TestCase):
         # build noise model
         nm = NoiseModel()
         nm.add_noise_for_all_qubits(amp_err, ['h', 'u1'])
-        nm.add(phase_err, ['y'], [1])
-        nm.add(amp_phase_err, ['x'], [1])
+        nm.add(phase_err, ['y'], 1)
+        nm.add(amp_phase_err, ['x'], 1)
 
         # Using Density Matrix Simulator to simulate
         dm_simu = DensityMatrixSimulation()
