@@ -1,6 +1,7 @@
 import numpy as np
 import torch
 
+from QuICT.algorithm.quantum_machine_learning.utils import GpuSimulator
 from QuICT.algorithm.quantum_machine_learning.utils import Hamiltonian
 
 
@@ -32,6 +33,7 @@ class VQENet(torch.nn.Module):
         self.p = p
         self.hamiltonian = hamiltonian
         self.device = device
+        self.simulator = GpuSimulator()
         self.define_network()
 
     def define_network(self):

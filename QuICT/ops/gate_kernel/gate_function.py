@@ -14,6 +14,7 @@ __outward_functions = [
     "normal_ctargs",
     "ctrl_normal_targs",
     "normal_normal_targs",
+    "diagonal_normal_targs",
     "swap_targ",
     "reverse_targ",
     "reverse_ctargs",
@@ -659,6 +660,80 @@ Completed_IPxIP_targs_double_kernel = cp.RawKernel(r'''
     ''', 'CompletedIPxIP')
 
 
+Diagonal_Multiply_normal_single_kernel = cp.RawKernel(r'''
+    #include <cupy/complex.cuh>
+    extern "C" __global__
+    void DiagxNormal(int t0, int t1, const complex<float>* mat, complex<float>* vec) {
+        int label = blockDim.x * blockIdx.x + threadIdx.x;
+
+        const int offset1 = 1 << t0;
+        const int offset2 = 1 << t1;
+        const int mask1 = offset1 - 1;
+        const int mask2 = offset2 - 1;
+
+        int gw=0, _0=0;
+
+        if (t0 > t1){
+            gw = label >> t1 << (t1 + 1);
+            _0 = (gw >> t0 << (t0 + 1)) + (gw & (offset1 - offset2)) + (label & mask2);
+        }
+        else{
+            gw = label >> t0 << (t0 + 1);
+            _0 = (gw >> t1 << (t1 + 1)) + (gw & (offset2 - offset1)) + (label & mask1);
+        }
+        
+        int _1 = _0 + offset1;
+        int _2 = _0 + offset2;
+        int _3 = _1 + offset2;
+
+        complex<float> temp_0 = vec[_0];
+        vec[_0] = vec[_0]*mat[0] + vec[_1]*mat[1];
+        vec[_1] = temp_0*mat[4] + vec[_1]*mat[5];
+        
+        complex<float> temp_2 = vec[_2];
+        vec[_2] = vec[_2]*mat[10] + vec[_3]*mat[11];
+        vec[_3] =temp_2*mat[14] + vec[_3]*mat[15];
+    }
+    ''', 'DiagxNormal')
+
+
+Diagonal_Multiply_normal_double_kernel = cp.RawKernel(r'''
+    #include <cupy/complex.cuh>
+    extern "C" __global__
+    void DiagxNormal(int t0, int t1, const complex<double>* mat, complex<double>* vec) {
+        int label = blockDim.x * blockIdx.x + threadIdx.x;
+        
+        const int offset1 = 1 << t0;
+        const int offset2 = 1 << t1;
+        const int mask1 = offset1 - 1;
+        const int mask2 = offset2 - 1;
+
+        int gw=0, _0=0;
+
+        if (t0 > t1){
+            gw = label >> t1 << (t1 + 1);
+            _0 = (gw >> t0 << (t0 + 1)) + (gw & (offset1 - offset2)) + (label & mask2);
+        }
+        else{
+            gw = label >> t0 << (t0 + 1);
+            _0 = (gw >> t1 << (t1 + 1)) + (gw & (offset2 - offset1)) + (label & mask1);
+        }
+        
+        int _1 = _0 + offset1;
+        int _2 = _0 + offset2;
+        int _3 = _1 + offset2;
+        
+        complex<double> temp_0 = vec[_0];
+        vec[_0] = vec[_0]*mat[0] + vec[_1]*mat[1];
+        vec[_1] = temp_0*mat[4] + vec[_1]*mat[5];
+        
+        complex<double> temp_2 = vec[_2];
+        vec[_2] = vec[_2]*mat[10] + vec[_3]*mat[11];
+        vec[_3] =temp_2*mat[14] + vec[_3]*mat[15];
+    }
+    ''', 'DiagxNormal')
+
+
 RDiagonal_Swap_targ_single_kernel = cp.RawKernel(r'''
     #include <cupy/complex.cuh>
     extern "C" __global__
@@ -1258,6 +1333,36 @@ def normal_normal_targs(t_indexes, mat, vec, vec_bit, sync: bool = False):
         cp.cuda.Device().synchronize()
 
 
+def diagonal_normal_targs(t_indexes, mat, vec, vec_bit, sync: bool = False):
+    """
+    Completed matrix (4x4) dot vector
+            [[A, B, 0, 0],    *   vec
+             [C, D, 0, 0],
+             [0, 0, a, b],
+             [0, 0, c, d]]
+    """
+    task_number = 1 << (vec_bit - 2)
+    thread_per_block = min(256, task_number)
+    block_num = task_number // thread_per_block
+
+    if vec.dtype == np.complex64:
+        Diagonal_Multiply_normal_single_kernel(
+            (block_num,),
+            (thread_per_block,),
+            (t_indexes[0], t_indexes[1], mat, vec)
+        )
+    else:
+        Diagonal_Multiply_normal_double_kernel(
+            (block_num,),
+            (thread_per_block,),
+            (t_indexes[0], t_indexes[1], mat, vec)
+        )
+
+    if sync:
+        cp.cuda.Device().synchronize()
+    
+
+
 def swap_targ(t_index, vec, vec_bit, sync: bool = False):
     """
     reverse diagonal matrix (2x2) dot vector
@@ -1497,9 +1602,9 @@ prop_add_single_kernel = cp.RawKernel(r'''
     extern "C" __global__
     void ProbAddSingle(const int index, complex<float>* vec, complex<float>* out) {
         int label = blockDim.x * blockIdx.x + threadIdx.x;
-        int _1 = (label & ((1 << index) - 1))
+        int _0 = (label & ((1 << index) - 1))
                 + (label >> index << (index + 1));
-        out[label] = abs(vec[_1]) * abs(vec[_1]);
+        out[label] = abs(vec[_0]) * abs(vec[_0]);
     }
     ''', 'ProbAddSingle')
 
@@ -1509,9 +1614,9 @@ prop_add_double_kernel = cp.RawKernel(r'''
     extern "C" __global__
     void ProbAddDouble(const int index, complex<double>* vec, complex<double>* out) {
         int label = blockDim.x * blockIdx.x + threadIdx.x;
-        int _1 = (label & ((1 << index) - 1))
+        int _0 = (label & ((1 << index) - 1))
                 + (label >> index << (index + 1));
-        out[label] = abs(vec[_1]) * abs(vec[_1]);
+        out[label] = abs(vec[_0]) * abs(vec[_0]);
     }
     ''', 'ProbAddDouble')
 
