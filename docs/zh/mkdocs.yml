@@ -26,8 +26,8 @@ nav:
       - 量子神经网络: tutorials/algorithm/VQA/QNN.md
       - 变分量子本征求解器: tutorials/algorithm/VQA/VQE.md
   - QCDA:
-    - 映射: tutorials/QCDA/mapping.md
-    - SABRE映射算法: tutorials/QCDA/mapping/SABRE.md
+    - 映射:
+      - SABRE映射算法: tutorials/QCDA/mapping/SABRE.md
     - 优化: tutorials/QCDA/optimization.md
     - 合成: tutorials/QCDA/synthesis.md
   - 量子电路: tutorials/quantum_circuit.md
