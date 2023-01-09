@@ -10,6 +10,7 @@ import numpy as np
 from QuICT.core import Circuit
 from QuICT.core.gate import *
 from QuICT.core.noise import *
+from QuICT.core.operator import NoiseGate
 from QuICT.simulation.density_matrix import DensityMatrixSimulation
 
 
@@ -17,23 +18,11 @@ class TestNoise(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         print("The Noise unit test start!")
-        cls.circuit = Circuit(3)
-        H | cls.circuit
-        CX | cls.circuit([1, 2])
+        cls.circuit = Circuit(4)
+        H | cls.circuit(0)
         CX | cls.circuit([0, 1])
-        CH | cls.circuit([1, 0])
-        Swap | cls.circuit([2, 1])
-        SX | cls.circuit(0)
-        T | cls.circuit(1)
-        T_dagger | cls.circuit(0)
-        X | cls.circuit(1)
-        Y | cls.circuit(1)
-        S | cls.circuit(2)
-        U1(np.pi / 2) | cls.circuit(2)
-        U3(np.pi, 0, 1) | cls.circuit(0)
-        Rx(np.pi) | cls.circuit(1)
-        Ry(np.pi / 2) | cls.circuit(2)
-        Rz(np.pi / 4) | cls.circuit(0)
+        CX | cls.circuit([1, 2])
+        CX | cls.circuit([2, 3])
 
     @classmethod
     def tearDownClass(cls) -> None:
@@ -53,17 +42,19 @@ class TestNoise(unittest.TestCase):
             num_qubits=2
         )
 
+        # tensor pauil error
+        tensor_error = bf_err.tensor(bf_err)
+
         # build noise model
         nm = NoiseModel()
-        nm.add_noise_for_all_qubits(bf_err, ['h'])
-        nm.add_noise_for_all_qubits(pf_err, ['x', 'y'])
-        nm.add(bits_err, ['cx', 'cz'], [1, 2])
+        nm.add(bits_err, ['cx'], [0, 1])
 
         # Using Density Matrix Simulator to simulate
-        dm_simu = DensityMatrixSimulation()
+        dm_simu = DensityMatrixSimulation(accumulated_mode=True)
         _ = dm_simu.run(TestNoise.circuit, noise_model=nm)
+        count = dm_simu.sample(1000)
 
-        assert 1
+        assert count[0] + count[15] + count[7] + count[8] == 1000
 
     def test_depolarizingerror(self):
         depolarizing_rate = 0.05
@@ -73,36 +64,41 @@ class TestNoise(unittest.TestCase):
         # 2-qubits depolarizing error
         double_dep = DepolarizingError(depolarizing_rate, num_qubits=2)
 
+        # tensor depolarizing error
+        tensor_error = single_dep.tensor(single_dep)
+
         # build noise model
         nm = NoiseModel()
-        nm.add_noise_for_all_qubits(single_dep, ['h', 'u1'])
-        nm.add(double_dep, ['cx'])
+        nm.add(tensor_error, ['cx'], [0, 1])
 
         # Using Density Matrix Simulator to simulate
         dm_simu = DensityMatrixSimulation()
         _ = dm_simu.run(TestNoise.circuit, noise_model=nm)
+        count = dm_simu.sample(1000)
 
-        assert 1
+        assert count[0] + count[15] + count[7] + count[8] == 1000
 
     def test_damping(self):
         # Amplitude damping error
-        amp_err = DampingError(amplitude_prob=0.1, phase_prob=0, dissipation_state=0.4)
+        amp_err = DampingError(amplitude_prob=0.2, phase_prob=0, dissipation_state=0.3)
         # Phase damping error
-        phase_err = DampingError(amplitude_prob=0, phase_prob=0.3)
+        phase_err = DampingError(amplitude_prob=0, phase_prob=0.5)
         # Amp + Phase damping error
         amp_phase_err = DampingError(amplitude_prob=0.1, phase_prob=0.3, dissipation_state=0.5)
 
+        # tensor damping error
+        tensor_error = amp_err.tensor(phase_err)
+
         # build noise model
         nm = NoiseModel()
-        nm.add_noise_for_all_qubits(amp_err, ['h', 'u1'])
-        nm.add(phase_err, ['y'], 1)
-        nm.add(amp_phase_err, ['x'], 1)
+        nm.add(tensor_error, ['cx'], [0, 1])
 
         # Using Density Matrix Simulator to simulate
         dm_simu = DensityMatrixSimulation()
         _ = dm_simu.run(TestNoise.circuit, noise_model=nm)
+        count = dm_simu.sample(1000)
 
-        assert 1
+        assert count[0] + count[15] + count[7] + count[8] == 1000
 
     def test_readout(self):
         # single-qubit Readout Error
@@ -122,25 +118,54 @@ class TestNoise(unittest.TestCase):
 
         # build noise model
         nm = NoiseModel()
-        nm.add_readout_error(single_readout, 4)
         nm.add_readout_error(single_readout, [1, 3])
-        nm.add_readout_error(double_readout, [0, 2])
+        nm.add_readout_error(double_readout, [1, 3])
 
-        # Build measured circuit
-        cir = Circuit(5)
-        H | cir(0)
-        CX | cir([0, 1])
-        CX | cir([1, 2])
-        CX | cir([2, 3])
-        CX | cir([3, 4])
-        # Measure | cir
-
-        # Using Density Matrix Simulator to simulate
         dm_simu = DensityMatrixSimulation(accumulated_mode=True)
-        _ = dm_simu.run(cir, noise_model=nm)
-        print(dm_simu.sample(100))
+        _ = dm_simu.run(self.circuit, noise_model=nm)
+        count = dm_simu.sample(100)
 
-        assert 1
+        assert count[0] + count[1] + count[4] + count[5] + \
+            count[10] + count[11] + count[14] + count[15] == 100
+
+    def test_noisemodel(self):
+        pauil_error_rate = 0.4
+        bf_err = BitflipError(pauil_error_rate)
+        pf_err = PhaseflipError(pauil_error_rate)
+        single_readout = ReadoutError(np.array([[0.8, 0.2], [0.2, 0.8]]))
+
+        # 2-bits pauilerror
+        bits_err = PauliError(
+            [('zy', pauil_error_rate), ('xi', 1 - pauil_error_rate)],
+            num_qubits=2
+        )
+
+        # build noise model
+        nm = NoiseModel()
+        nm.add_noise_for_all_qubits(bf_err, ['h'])
+        nm.add(pf_err, ['z'], [0, 1, 3])
+        nm.add(bits_err, ['cx'], [0, 1])
+        nm.add_readout_error(single_readout, [1, 2])
+
+        # build test circuit
+        cir = Circuit(4)
+        H | cir
+        Z | cir(2)
+        Z | cir(3)
+        CX | cir([2, 1])
+        CX | cir([0, 1])
+        cir_size = cir.size()
+
+        noised_circuit = nm.transpile(cir, accumulated_mode=True)
+        sum_ng = 0
+        for ng in noised_circuit.gates:
+            if isinstance(ng, NoiseGate):
+                sum_ng += 1
+
+        assert sum_ng == 6      # 4 for H; 1 for Z; 1 for CX
+
+        noised_circuit = nm.transpile(cir)
+        assert noised_circuit.size() == cir_size + sum_ng
 
 
 if __name__ == "__main__":

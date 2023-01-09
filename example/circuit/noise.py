@@ -36,7 +36,7 @@ def build_pauil_noise():
 
     # phaseflip pauilerror
     pf_err = PhaseflipError(pauil_error_rate)
-    
+
     # bitphaseflip pauilerror
     bpf_err = PhaseBitflipError(pauil_error_rate)
 
@@ -76,11 +76,11 @@ def build_depolarizing_noise():
 def build_readout_noise():
     single_readout = ReadoutError(np.array([[0.8, 0.2], [0.2, 0.8]]))
     double_readout = ReadoutError(
-    np.array(
-        [[0.7, 0.1, 0.1, 0.1],
-            [0.1, 0.7, 0.1, 0.1],
-            [0.1, 0.1, 0.7, 0.1],
-            [0.1, 0.1, 0.1, 0.7]]
+        np.array(
+            [[0.7, 0.1, 0.1, 0.1],
+             [0.1, 0.7, 0.1, 0.1],
+             [0.1, 0.1, 0.7, 0.1],
+             [0.1, 0.1, 0.1, 0.7]]
         )
     )
 
@@ -99,7 +99,7 @@ if __name__ == "__main__":
     cir = Circuit(4)
     H | cir(0)
     for i in range(3):
-        CX | cir([i, i+1])          # append CX gate
+        CX | cir([i, i + 1])          # append CX gate
 
     nm = build_dampling_noise()
 
