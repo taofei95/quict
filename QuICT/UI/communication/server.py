@@ -349,6 +349,16 @@ def save_file(content):
     emit('download_uri', {'uuid': uid, 'download_uri': url_for(
         'download_file', name=file_path)}, namespace="/api/pty")
 
+class NumpyEncoder(json.JSONEncoder):
+    
+    def default(self, myobj):
+        if isinstance(myobj, np.integer):
+            return int(myobj)
+        elif isinstance(myobj, np.floating):
+            return float(myobj)
+        elif isinstance(myobj, np.ndarray):
+            return myobj.tolist()
+        return json.JSONEncoder.default(self, myobj)
 
 @socketio.on("qasm_run", namespace="/api/pty")
 @authenticated_only
@@ -373,29 +383,67 @@ def run_file(content):
         emit(
             'info', {'uuid': uid, 'info': f"Run circuit finished."}, namespace="/api/pty")
         logger.info(f"run result {result}")
-        state = result["data"]["state_vector"] 
+        if result["data"]["state_vector"] is not None:
+            state = result["data"]["state_vector"] 
 
-        state_np = cupy.asnumpy(state)
-        state_np_r = np.real(state_np)
-        state_np_i = np.imag(state_np)
-        state_str_r = np.array2string(state_np_r, separator=',', formatter={
-                                      'float_kind': lambda x: "\""+("%f" % x).rstrip('0').rstrip('.')+"\""})
-        state_str_i = np.array2string(state_np_i, separator=',', formatter={
-                                      'float_kind': lambda x: "\""+("%f" % x).rstrip('0').rstrip('.')+"\""})
-        # logger.info( state_str_r, state_str_i)
-        state_r = json.loads(state_str_r)
-        state_i = json.loads(state_str_i)
-        index = []
-        state_amp = []
-        state_ang = []
-        for i in range(len(state_r)):
-            index.append(format(i, f'0{int(math.log(len(state_r),2))}b'))
-            amp, ang = cal_mod(state_np_r[i], state_np_i[i])
-            state_amp.append(amp)
-            state_ang.append(ang)
+            state_np = cupy.asnumpy(state)
+            state_np_r = np.real(state_np)
+            state_np_i = np.imag(state_np)
+            state_str_r = np.array2string(state_np_r, separator=',', formatter={
+                                        'float_kind': lambda x: "\""+("%f" % x).rstrip('0').rstrip('.')+"\""})
+            state_str_i = np.array2string(state_np_i, separator=',', formatter={
+                                        'float_kind': lambda x: "\""+("%f" % x).rstrip('0').rstrip('.')+"\""})
+            # logger.info( state_str_r, state_str_i)
+            state_r = json.loads(state_str_r)
+            state_i = json.loads(state_str_i)
+            index = []
+            state_amp = []
+            state_ang = []
+            for i in range(len(state_r)):
+                index.append(format(i, f'0{int(math.log(len(state_r),2))}b'))
+                amp, ang = cal_mod(state_np_r[i], state_np_i[i])
+                state_amp.append(amp)
+                state_ang.append(ang)
 
-        result["data"]["state_vector"]  = list(
-            zip(index, state_r, state_i, state_amp, state_ang))
+            result["data"]["state_vector"]  = list(
+                zip(index, state_r, state_i, state_amp, state_ang))
+
+        if result["data"]["density_matrix"] is not None:
+            state = result["data"]["density_matrix"] 
+
+            state_np = state # cupy.asnumpy(state)
+            state_np_r = np.real(state_np)
+            state_np_i = np.imag(state_np)
+            
+            # state_str_r = np.array2string(state_np_r, separator=',', formatter={
+            #                             'float_kind': lambda x: "\""+("%f" % x).rstrip('0').rstrip('.')+"\""})
+            # state_str_i = np.array2string(state_np_i, separator=',', formatter={
+            #                             'float_kind': lambda x: "\""+("%f" % x).rstrip('0').rstrip('.')+"\""})
+
+            state_str_r = json.dumps(state_np_r, cls=NumpyEncoder)
+            state_str_i = json.dumps(state_np_i, cls=NumpyEncoder)
+
+            logger.info(f"state_np_r{state_str_r}")
+            logger.info(f"state_np_i{state_str_i}")
+            # logger.info( state_str_r, state_str_i)
+            state_r = json.loads(state_str_r)
+            state_i = json.loads(state_str_i)
+            row_0 = ['']
+            rows = [row_0]
+
+            for i in range(len(state_r)):
+                i2bin = format(i, f'0{int(math.log(len(state_r),2))}b')
+                row_0.append(i2bin)
+                t_row = [i2bin]
+                for j in range(len(state_r)):
+                    t_row.append(f'{state_r[i][j]}{"+"if state_i[i][j] >=0 else "-"}{state_i[i][j]}')
+
+                rows.append(t_row)
+
+
+            result["data"]["density_matrix"]  = rows
+
+            logger.info(f"rows{rows}")
 
         emit('run_result', {'uuid': uid, 'run_result': result}, namespace="/api/pty")
     except Exception as e:

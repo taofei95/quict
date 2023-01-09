@@ -1,30 +1,15 @@
 <template>
   <el-container style="background-color: #13141c; padding: 0px">
     <el-header class="status-bar" style="padding: 0px; height: 50px">
-      <ToolBar
-        v-on:SaveQCDA="SaveQCDA"
-        v-on:RunQCDA="RunQCDA"
-        v-on:LoadQCDA="LoadQCDA"
-        v-on:ChangeSet="ChangeSet"
-        v-on:UpdateCustomerSet="UpdateCustomerSet"
-        v-on:UpdataTopology="UpdataTopology"
-        :all_sets="all_sets"
-        :customer_set="customer_set"
-        :topology="topology"
-        :q="qbit"
-        :id_base="'QuCompuser'"
-        :show_save_run_load="true"
-      >
+      <ToolBar v-on:SaveQCDA="SaveQCDA" v-on:RunQCDA="RunQCDA" v-on:LoadQCDA="LoadQCDA" v-on:ChangeSet="ChangeSet"
+        v-on:UpdateCustomerSet="UpdateCustomerSet" v-on:UpdataTopology="UpdataTopology" :all_sets="all_sets"
+        :customer_set="customer_set" :topology="topology" :q="qbit" :id_base="'QuCompuser'" :show_save_run_load="true">
       </ToolBar>
     </el-header>
     <el-container>
       <el-container direction="vertical">
         <el-main class="vis-block">
-          <VisualizeZone
-            ref="visVue"
-            :VisContentIn="VisContent"
-            v-on:VisUpdate="VisUpdate"
-          >
+          <VisualizeZone ref="visVue" :VisContentIn="VisContent" v-on:VisUpdate="VisUpdate">
           </VisualizeZone>
         </el-main>
         <el-main class="status-bar" style="color: #9aa0be; padding: 0px">
@@ -32,22 +17,10 @@
             <el-col :span="4"></el-col>
             <el-col :span="16">{{ StatusContent }}</el-col>
             <el-col :span="4">
-              <el-button
-                v-if="ExpandResult"
-                size="small"
-                type="primary"
-                @click="ResultSmall"
-                style="font-family: 'Segoe UI Symbol'"
-                ></el-button
-              >
-              <el-button
-                v-else
-                size="small"
-                type="primary"
-                @click="ResultLarge"
-                style="font-family: 'Segoe UI Symbol'"
-                ></el-button
-              >
+              <el-button v-if="ExpandResult" size="small" type="primary" @click="ResultSmall"
+                style="font-family: 'Segoe UI Symbol'"></el-button>
+              <el-button v-else size="small" type="primary" @click="ResultLarge"
+                style="font-family: 'Segoe UI Symbol'"></el-button>
             </el-col>
           </el-row>
         </el-main>
@@ -58,16 +31,10 @@
             <el-radio :label="2">Density Matrix</el-radio>
           </el-radio-group>
 
-          <el-tabs
-            type="border-card"
-            style="background: transparent !important; border: 0px solid"
-            v-if="Output_type == 0"
-          >
+          <el-tabs type="border-card" style="background: transparent !important; border: 0px solid"
+            v-if="Output_type == 0">
             <el-tab-pane label="Table">
-              <el-row
-                style="height: 40px"
-                v-if="Object.keys(OutputContent).length > 0"
-              >
+              <el-row style="height: 40px" v-if="Object.keys(OutputContent).length > 0">
                 <el-col :span="4"></el-col>
                 <el-col :span="6"><b>State</b></el-col>
                 <el-col :span="4"></el-col>
@@ -75,11 +42,7 @@
                 <el-col :span="4"></el-col>
               </el-row>
 
-              <el-row
-                style="height: 40px"
-                v-for="[k, v] in Object.entries(OutputContent).sort()"
-                :key="k"
-              >
+              <el-row style="height: 40px" v-for="[k, v] in Object.entries(OutputContent).sort()" :key="k">
                 <el-col :span="4"></el-col>
                 <el-col :span="6">{{ k }}</el-col>
                 <el-col :span="4"></el-col>
@@ -98,16 +61,10 @@
               <div id="histogram"></div>
             </el-tab-pane>
           </el-tabs>
-          <el-tabs
-            type="border-card"
-            style="background: transparent !important; border: 0px solid"
-            v-if="Output_type == 1"
-          >
+          <el-tabs type="border-card" style="background: transparent !important; border: 0px solid"
+            v-if="Output_type == 1">
             <el-tab-pane label="Table">
-              <el-row
-                style="height: 40px"
-                v-if="OutputContent_state_vector.length > 0"
-              >
+              <el-row style="height: 40px" v-if="OutputContent_state_vector.length > 0">
                 <el-col :span="4"></el-col>
                 <el-col :span="6"><b>State</b></el-col>
                 <el-col :span="4"></el-col>
@@ -115,20 +72,13 @@
                 <el-col :span="4"></el-col>
               </el-row>
 
-              <el-row
-                style="height: 40px"
-                v-for="result in OutputContent_state_vector"
-                :key="result"
-              >
+              <el-row style="height: 40px" v-for="result in OutputContent_state_vector" :key="result">
                 <el-col :span="4"></el-col>
                 <el-col :span="6">{{ result[0] }}</el-col>
                 <el-col :span="4"></el-col>
-                <el-col :span="6" v-if="result[2].startsWith('-')"
-                  >{{ result[1] }}{{ result[2].replace("-", " - ") }} j</el-col
-                >
-                <el-col :span="6" v-else
-                  >{{ result[1] }} + {{ result[2] }} j</el-col
-                >
+                <el-col :span="6" v-if="result[2].startsWith('-')">{{ result[1] }}{{ result[2].replace("-", " - ") }}
+                  j</el-col>
+                <el-col :span="6" v-else>{{ result[1] }} + {{ result[2] }} j</el-col>
                 <el-col :span="4"></el-col>
               </el-row>
             </el-tab-pane>
@@ -136,13 +86,20 @@
               <div id="histogram_state_vector"></div>
             </el-tab-pane>
           </el-tabs>
+          <el-tabs type="border-card" style="background: transparent !important; border: 0px solid"
+            v-if="(Output_type == 2)">
+            <el-tab-pane label="Table">
+              <table style="width: 100%;">
+                <tr style="height: 40px" v-for="result in OutputContent_density_matrix" :key="result">
+                  <td style="height: 40px" v-for="elem in result" :key="elem">{{elem}}</td>
+                </tr>
+              </table>
+            </el-tab-pane>
+          </el-tabs>
         </el-main>
       </el-container>
       <el-aside width="20%" style="background-color: #292c3d; padding: 0px">
-        <ProgramZone
-          :ProgramTextIn="ProgramText"
-          v-on:ProgramUpdate="ProgramUpdate"
-        >
+        <ProgramZone :ProgramTextIn="ProgramText" v-on:ProgramUpdate="ProgramUpdate">
         </ProgramZone>
       </el-aside>
     </el-container>
@@ -177,11 +134,11 @@
   height: calc(100vh - 20vh - 150px);
 }
 
-.el-tabs--border-card > .el-tabs__header .el-tabs__item.is-active {
+.el-tabs--border-card>.el-tabs__header .el-tabs__item.is-active {
   background-color: transparent !important;
 }
 
-.el-tabs--border-card > .el-tabs__header {
+.el-tabs--border-card>.el-tabs__header {
   background-color: transparent !important;
 }
 </style>
@@ -209,6 +166,7 @@ export default {
       qbit: [0, 1, 2, 3, 4],
       OutputContent: {},
       OutputContent_state_vector: {},
+      OutputContent_density_matrix: {},
       Output_type: 0,
       StatusContent: "Create a circuit and run.",
       ExpandResult: false,
@@ -685,6 +643,9 @@ export default {
       });
       histogram_zone.node().appendChild(chart);
     },
+    DrawHistogram_density_matrix(result) {
+      console.log("DrawHistogram", result);
+    },
     BarChart( // 用d3绘制barchart
       data,
       {
@@ -819,6 +780,9 @@ export default {
         case 1:
           this.DrawHistogram_state_vector(this.OutputContent_state_vector);
           break;
+        case 2:
+          this.DrawHistogram_density_matrix(this.OutputContent_density_matrix);
+          break;
         default:
           break;
       }
@@ -851,6 +815,7 @@ export default {
       }
       this.OutputContent = content.run_result.data.counts;
       this.OutputContent_state_vector = content.run_result.data.state_vector;
+      this.OutputContent_density_matrix = content.run_result.data.density_matrix;
       this.DrawOutput(this.Output_type);
     });
 
