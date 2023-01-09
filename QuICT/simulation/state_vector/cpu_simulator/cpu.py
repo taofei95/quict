@@ -186,7 +186,6 @@ def gate_to_desc(gate: BasicGate) -> List[GateDescription]:
             result.extend(gate_to_desc(simple_gate))
         return result
     else:
-        print(gate_type)
         raise NotImplementedError(f"No implementation for {gate.name}")
 
 

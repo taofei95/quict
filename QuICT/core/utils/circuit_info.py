@@ -213,14 +213,11 @@ class CircuitBased(object):
         for i in range(self.size()):
             gate = self.gates[i + added_idxes]
             if hasattr(gate, "build_gate"):
-                print(gate.type)
                 decomp_gates = gate.build_gate()
                 self.gates.remove(gate)
                 for g in decomp_gates:
                     self._gates.insert(i + added_idxes, g)
                     added_idxes += 1
-                    print(g.type)
-                    print(g.matrix.dtype)
 
                 added_idxes -= 1    # minus the original gate
 

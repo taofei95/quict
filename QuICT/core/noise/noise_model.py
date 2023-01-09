@@ -170,7 +170,7 @@ class NoiseModel:
                     if qubits == -1 or (set(qubits) & set(gate_args)) == set(gate_args):    # noise's qubit matched
                         if accumulated_mode or noise.type == NoiseChannel.damping:
                             noise_matrixs = noise.apply_to_gate(gate.matrix)
-                            NoiseGate(noise_matrixs, len(gate_args)) & gate_args | circuit
+                            NoiseGate(noise_matrixs, len(gate_args)) & gate_args | noised_circuit
                             append_origin_gate = False
                         else:
                             prob = random()
