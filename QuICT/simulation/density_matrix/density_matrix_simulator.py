@@ -210,7 +210,7 @@ class DensityMatrixSimulation:
     def sample(self, shots: int) -> list:
         assert (self._density_matrix is not None), \
             SampleBeforeRunError("DensityMatrixSimulation sample without run any circuit.")
-        if self._accumulated_mode:
+        if self._accumulated_mode or self._noise_model is None:
             original_dm = self._density_matrix.copy()
 
         state_list = [0] * self._density_matrix.shape[0]
@@ -228,11 +228,12 @@ class DensityMatrixSimulation:
                 self._noise_model.apply_readout_error(self._circuit.qubits)
 
             state_list[int(self._circuit.qubits)] += 1
-            if self._accumulated_mode:
+            if self._accumulated_mode or self._noise_model is None:
                 self._density_matrix = original_dm.copy()
             else:
                 self.initial_density_matrix(self._qubits)
-                noised_circuit = self._noise_model.transpile(self._origin_circuit, self._accumulated_mode)
+                noised_circuit = self._noise_model.transpile(self._origin_circuit, self._accumulated_mode) \
+                    if self._noise_model is not None else self._circuit
 
                 self._run(noised_circuit)
 

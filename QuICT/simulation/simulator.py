@@ -116,8 +116,8 @@ class Simulator:
                 "The state vector input is not allowed in the density matrix backend."
             )
 
-        circuit_name = circuit.name if isinstance(circuit, Circuit) else "unitary_matrix"
-        self._result_recorder.record_circuit(circuit, circuit_name)
+        if isinstance(circuit, Circuit):
+            self._result_recorder.record_circuit(circuit)
 
         simulator = self._load_simulator()
         if self._backend == "density_matrix":
