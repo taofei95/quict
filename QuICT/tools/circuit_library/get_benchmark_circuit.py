@@ -24,99 +24,143 @@ class BenchmarkCircuitBuilder:
         shuffle_qindexes = qubits_indexes[:]
         random.shuffle(shuffle_qindexes)
 
-        cir = Circuit(width)
-        while cir.size() < size:
-            rand_type = np.random.choice(gate_indexes, p=prob)
-            gate_type = typelist[rand_type]
-            gate = GATE_TYPE_TO_CLASS[gate_type]()
+        random_para = [0.4, 0.6, 0.8, 1]
+        cirs_list, void_gates_list = [], []
+        
+        for i in range(len(random_para)):
+            cir = Circuit(width)
+            while cir.size() < size:
+                rand_type = np.random.choice(gate_indexes, p=prob)
+                gate_type = typelist[rand_type]
+                gate = GATE_TYPE_TO_CLASS[gate_type]()
 
-            if random_params and gate.params:
-                gate.pargs = list(np.random.uniform(0, 2 * np.pi, gate.params))
+                if random_params and gate.params:
+                    gate.pargs = list(np.random.uniform(0, 2 * np.pi, gate.params))
 
-            gsize = gate.controls + gate.targets
-            if gsize > len(shuffle_qindexes):
-                continue
+                gsize = gate.controls + gate.targets
+                if gsize > len(shuffle_qindexes):
+                    continue
 
-            gate & shuffle_qindexes[:gsize] | cir
+                gate & shuffle_qindexes[:gsize] | cir
+                if gsize == len(shuffle_qindexes) or random.random() > random_para[i]:
+                    shuffle_qindexes = qubits_indexes[:]
+                    random.shuffle(shuffle_qindexes)
+                    
+                else:
+                    shuffle_qindexes = shuffle_qindexes[gsize:]
+            void_gates_list.append(cir.depth())
 
-            if gsize == len(shuffle_qindexes):
-                shuffle_qindexes = qubits_indexes[:]
-                random.shuffle(shuffle_qindexes)
-            else:
-                shuffle_qindexes = shuffle_qindexes[gsize:]
+            cirs_list.append(cir)
 
-        return cir
+        return cirs_list, void_gates_list
 
     @staticmethod
     def serialized_circuit_build(width: int, size: int, random_params: bool = True):
-        cir = Circuit(width)
-        qubit_indexes = list(range(width))
-        qubit = random.choice(qubit_indexes)
-        qubit_indexes.remove(qubit)
+        cirs_list, void_gates_list = [], []
+        random_para = [0.4, 0.6, 0.8, 1]
+        void_gates = 0
+        for i in range(len(random_para)):
+            cir = Circuit(width)
+            qubit_indexes = list(range(width))
+            qubit = random.choice(qubit_indexes)
+            qubit_indexes.remove(qubit)
+            while cir.size() < size:
+                qubit_new = random.choice(qubit_indexes)
+                qubits_list = [qubit, qubit_new]
+                random.shuffle(qubits_list)
+                CX & (qubits_list) | cir
+                if random.random() > random_para[i]:
+                    CX & (random.sample(list(range(width)), 2)) | cir
+            void_gates += 1
+            void_gates_list.append(void_gates)
+            cirs_list.append(cir)
 
-        while cir.size() < size:
-            qubit_new = random.choice(qubit_indexes)
-            qubits_list = [qubit, qubit_new]
-            random.shuffle(qubits_list)
-            CX & (qubits_list) | cir
-
-        return cir
+        return cirs_list, void_gates_list
 
     @staticmethod
     def entangled_circuit_build(width: int, size: int, random_params: bool = True):
-        def delete(x, y):
-            if x[0] < y[1]:
-                x_extra = x[x.index(y[0]) + 1:x.index(y[1])]
-                del x[x.index(y[0]):x.index(y[1]) + 1]
-            else:
-                x_extra = x[x.index(y[1]) + 1:x.index(y[0])]
-                del x[x.index(y[1]):x.index(y[0]) + 1]
-            return x, x_extra
-
         def _pattern1():
+            cgate = CompositeGate()
             qubit_indexes = list(range(width))
-            if len(qubit_indexes) > 1:
-                qubit_index = random.sample(qubit_indexes, 2)
-                CX & (qubit_index) | cir
-                qubit_indexes = list(set(qubit_indexes) - set(qubit_index))
-            elif len(qubit_indexes) == 1:
-                for q_single in qubit_indexes:
-                    for q_collect in list(range(width)):
-                        CX &([q_single, q_collect]) | cir
-            return cir
+            qubit_extra = []
+            for _ in range(width):
+                if len(qubit_indexes) > 1:
+                    qubit_index = random.sample(qubit_indexes, 2)
+                    CX & (qubit_index) | cgate
+                    qubit_extra.append(qubit_index)
+                    qubit_indexes = list(set(qubit_indexes) - set(qubit_index))
+                elif len(qubit_indexes) == 1:
+                    for i in range(len(qubit_extra)):
+                        q_collect = random.choice(qubit_extra[i])
+                        CX & ([qubit_indexes[0], q_collect]) | cgate
+                    break
+                else:
+                    break
+
+            return cgate
 
         def _pattern2():
+            cgate = CompositeGate()
             qubit_indexes = list(range(width))
             result = [qubit_indexes[i:i + 2] for i in range(0, len(qubit_indexes), 2)]
             for i in range(len(result)):
                 if len(result[i]) == 2:
-                    CX & (result[i]) | cir
-            result = [qubit_indexes[i+1:i + 3] for i in range(0, len(qubit_indexes), 2)]
+                    CX & (result[i]) | cgate
+
+            result = [qubit_indexes[i + 1:i + 3] for i in range(0, len(qubit_indexes), 2)]
             for i in range(len(result)):
                 if len(result[i]) == 2:
-                    CX & (result[i]) | cir
+                    CX & (result[i]) | cgate
                 else:
                     break
-            return cir
 
-        cir = Circuit(width)
-        cir = random.choice([_pattern1(), _pattern2()])
-        while cir.size() < size:
-            cir = random.choice([_pattern1(), _pattern2()])
+            return cgate
 
-        return cir
+        random_para = [0.4, 0.6, 0.8, 1]
+        cirs_list, void_gates_list = [], []
+        void_gates = 0
+        for i in range(len(random_para)):
+            cir = Circuit(width)
+            while cir.size() < size:
+                cgate = random.choice([_pattern1(), _pattern2()])
+                cgate | cir
+                if random.random() > random_para[i]:
+                    cir.random_append(5, [GateType.cx])
+                    void_gates += 1
+            void_gates_list.append(void_gates)
+            cirs_list.append(cir)
+
+        return cirs_list, void_gates_list
 
     @staticmethod
     def mediate_measure_circuit_build(width: int, size: int, random_params: bool = True):
         typelist = [GateType.rz, GateType.cx]
         prob = [0.8, 0.2]
 
-        cir = Circuit(width)
-        cir.random_append(size, typelist, random_params, prob)
-        for _ in range(width):
-            idx = random.randint(size / width, size - 1)
-            qidx = random.choice(list(range(width)))
-            mgate = Measure & qidx
-            cir.replace_gate(idx, mgate)
+        def flat_build():
+            cgate = CompositeGate()
+            qubits_indexes = list(range(width))
+            random.shuffle(qubits_indexes)
+            while len(qubits_indexes) > 0:
+                if len(qubits_indexes) == 1:
+                    Rz & qubits_indexes.pop() | cgate
+                else:
+                    gate_type = np.random.choice(typelist, p=prob)
+                    gate = GATE_TYPE_TO_CLASS[gate_type]()
+                    gate_size = gate.controls + gate.targets
+                    gate & qubits_indexes[:gate_size] | cgate
+                    qubits_indexes = qubits_indexes[gate_size:]
 
-        return cir
+            return cgate
+        
+        cir_list, m_depth_list = [], []
+        for i in range(size - 2 * width, size, 3):
+            cir = Circuit(width)
+            for _ in range(int(i/width)):
+                flat_build() | cir
+            m_depth_list.append(cir.depth())
+            Measure | cir
+            while cir.size() < size:
+                flat_build() | cir
+            cir_list.append(cir)
+        return cir_list, m_depth_list
