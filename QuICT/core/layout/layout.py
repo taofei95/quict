@@ -5,6 +5,7 @@
 # @File    : topology.py
 
 from __future__ import annotations
+from itertools import combinations
 
 import json
 import warnings
@@ -70,7 +71,7 @@ class LayoutEdge:
         self._directional = directional
 
     def __str__(self):
-        dir = ' <-> ' if self._directional else '-->'
+        dir = ' <-> ' if not self._directional else '-->'
         return f"{self._u} {dir} {self._v}, with error rate {self._error_rate}"
 
 
@@ -235,3 +236,57 @@ class Layout:
         """
         with open(file_path) as f:
             return cls.from_json(f.read())
+
+    def get_sublayout_edges(self, qubits: list) -> list:
+        connected_qubits = [qubits[0]]
+        connected_edges = []
+        for qubit in qubits:
+            edges = self.out_edges(qubit)
+            for edge in edges:
+                if edge.v in qubits:
+                    if edge.v not in connected_qubits:
+                        connected_qubits.append(edge.v)
+
+                    target_edge = set([edge.u, edge.v])
+                    if target_edge not in connected_edges:
+                        connected_edges.append(target_edge)
+
+        if len(connected_qubits) == len(qubits):
+            return connected_edges
+        else:
+            return []
+
+    def sub_layout(self, qubits_number: int):
+        """ Get partial layout. Only working for undirectional layout.
+
+        Args:
+            qubits_number (int): The number of qubits for sub-layout
+
+        Returns:
+            Layout: The sub-layout
+        """
+        assert qubits_number < self.qubit_number
+
+        qubits_list = list(range(self.qubit_number))
+        all_combined = list(combinations(qubits_list, qubits_number))
+        num_edges_subl, edges_subl = [], []
+        for q_comb in all_combined:
+            edges_sl = self.get_sublayout_edges(q_comb)
+            num_edges_subl.append(len(edges_sl))
+            edges_subl.append(edges_sl)
+
+        max_value = max(num_edges_subl)
+        if max_value <= 0:
+            raise ValueError("Failure to find sub-layout.")
+
+        max_idx = num_edges_subl.index(max_value)
+        sub_layout = self._get_layout(qubits_number, edges_subl[max_idx])
+
+        return sub_layout
+
+    def _get_layout(self, qubits_number: int, edges: list) -> Layout:
+        sub_layout = Layout(qubits_number)
+        for u, v in edges:
+            sub_layout.add_edge(u, v, directional=False)
+
+        return sub_layout
