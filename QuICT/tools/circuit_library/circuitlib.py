@@ -31,7 +31,7 @@ class CircuitLib:
             "ctrl_unitary", "diag", "single_bit", "ctrl_diag",
             "google", "ibmq", "ionq", "ustc", "nam", "origin"
         ],
-        "algorithm": ["adder", "clifford", "grover", "qft", "vqe", "cnf", "maxcut"],
+        "algorithm": ["adder", "clifford", "cnf", "grover", "maxcut", "qft", "qnn", "quantum_walk", "vqe"],
         "benchmark": ["highly_entangled", "highly_parallelized", "highly_serialized", "mediate_measure"],
     }
     __DEFAULT_GATESET_for_RANDOM = {
