@@ -156,21 +156,22 @@ class CircuitLib:
                     depth = circuit.depth()
 
                     if max_depth is None or depth <= max_depth:
-                            circuit.name = "+".join([type, classify, f"w{width}_s{size}_d{depth}"])
-                            circuit_list.append(circuit)
-                        
-                if type != "random":
-                    benchmark_circuits_list = self._get_circuit_from_benchmark(classify, width, size * width)
-                    for idx in range(len(benchmark_circuits_list)):
-                        benchmark_circuit = benchmark_circuits_list[0][idx]
-                        benchmark_depth = benchmark_circuit.depth()
-
-                    if max_depth is None or benchmark_depth <= max_depth:
-                            benchmark_circuit.name = "+".join([type, classify, f"w{width}_s{size}_d{benchmark_depth}_v{benchmark_circuits_list[1][idx]}"])
-                            circuit_list.append(benchmark_circuit)       
-                    else:
                         circuit.name = "+".join([type, classify, f"w{width}_s{size}_d{depth}"])
                         circuit_list.append(circuit)
+                else:
+                    circuits, paras = self._get_circuit_from_benchmark(classify, width, size * width)
+                    for idx in range(len(circuits)):
+                        benchmark_circuit = circuits[idx]
+                        benchmark_depth = benchmark_circuit.depth()
+
+                        if max_depth is None or benchmark_depth <= max_depth:
+                            benchmark_circuit.name = "+".join([type, classify, f"w{width}_s{size * width}_d{benchmark_depth}_v{paras[idx]}"])
+                            circuit_list.append(benchmark_circuit)       
+                        else:
+                            circuit.name = "+".join([type, classify, f"w{width}_s{size}_d{depth}"])
+                            circuit_list.append(circuit)
+
+        print(len(circuit_list))
 
         if self._output_type == "circuit":
             return circuit_list

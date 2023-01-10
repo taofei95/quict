@@ -26,7 +26,7 @@ class BenchmarkCircuitBuilder:
 
         random_para = [0.4, 0.6, 0.8, 1]
         cirs_list, void_gates_list = [], []
-        
+
         for i in range(len(random_para)):
             cir = Circuit(width)
             while cir.size() < size:
@@ -45,13 +45,11 @@ class BenchmarkCircuitBuilder:
                 if gsize == len(shuffle_qindexes) or random.random() > random_para[i]:
                     shuffle_qindexes = qubits_indexes[:]
                     random.shuffle(shuffle_qindexes)
-                    
                 else:
                     shuffle_qindexes = shuffle_qindexes[gsize:]
-            void_gates_list.append(cir.depth())
 
             cirs_list.append(cir)
-
+            void_gates_list.append(cir.depth())
         return cirs_list, void_gates_list
 
     @staticmethod
