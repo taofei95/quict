@@ -5,7 +5,7 @@ Class for customizing the whole process of synthesis, optimization and mapping
 
 from QuICT.qcda.synthesis import GateTransform
 from QuICT.qcda.optimization import CommutativeOptimization, CliffordRzOptimization
-from QuICT.qcda.mapping import MCTSMapping
+from QuICT.qcda.mapping import MCTSMapping, SABREMapping
 from QuICT.tools import Logger
 
 
@@ -66,16 +66,22 @@ class QCDA(object):
         self.add_method(CommutativeOptimization())
         self.add_method(CliffordRzOptimization(level=level))
 
-    def add_default_mapping(self, layout=None):
+    def add_mapping(self, layout=None, method='mcts'):
         """ Generate the default mapping process
 
         The default mapping process contains the Mapping
 
         Args:
             layout(Layout): Topology of the target physical device
+            method(str, optional): used mapping method in ['mcts', 'sabre']
         """
         assert layout is not None, ValueError('No Layout provided for Mapping')
-        self.add_method(MCTSMapping(layout))
+        assert method in ['mcts', 'sabre'], ValueError('Invalid mapping method')
+        mapping_dict = {
+            'mcts': MCTSMapping(layout=layout),
+            'sabre': SABREMapping(layout=layout)
+        }
+        self.add_method(mapping_dict[method])
 
     def compile(self, circuit):
         """ Compile the circuit with the given process

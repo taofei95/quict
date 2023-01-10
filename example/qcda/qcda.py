@@ -33,7 +33,7 @@ if __name__ == '__main__':
     qcda = QCDA()
     qcda.add_gate_transform(USTCSet)
     qcda.add_default_optimization()
-    qcda.add_default_mapping(layout)
+    qcda.add_mapping(layout)
     qcda.add_gate_transform(USTCSet)
     circuit_phy = qcda.compile(circuit)
     circuit_phy.draw()
