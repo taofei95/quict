@@ -119,16 +119,16 @@ class CircuitLib:
         return circuit_all
 
     def _get_circuit_from_benchmark(self, classify, width, size):
-        if classify == "highly_entangled":
-            circuit = BenchmarkCircuitBuilder.entangled_circuit_build(width, size)
-        elif classify == "highly_parallelized":
-            circuit = BenchmarkCircuitBuilder.parallelized_circuit_build(width, size)
+        if classify == "highly_parallelized":
+            circuits_list, void_gates_list = BenchmarkCircuitBuilder.parallelized_circuit_build(width, size)
+        elif classify == "highly_entangled":
+            circuits_list, void_gates_list = BenchmarkCircuitBuilder.entangled_circuit_build(width, size)
         elif classify == "highly_serialized":
-            circuit = BenchmarkCircuitBuilder.serialized_circuit_build(width, size)
+            circuits_list, void_gates_list = BenchmarkCircuitBuilder.serialized_circuit_build(width, size)
         else:
-            circuit = BenchmarkCircuitBuilder.mediate_measure_circuit_build(width, size)
+            circuits_list, void_gates_list = BenchmarkCircuitBuilder.mediate_measure_circuit_build(width, size)
 
-        return circuit
+        return circuits_list, void_gates_list
 
     def _get_all_from_generator(
         self,
@@ -154,13 +154,22 @@ class CircuitLib:
                     circuit = Circuit(width)
                     circuit.random_append(size * width, gateset, True, prob)
                     depth = circuit.depth()
-                else:
-                    circuit = self._get_circuit_from_benchmark(classify, width, size * width)
-                    depth = circuit.depth()
 
-                if max_depth is None or depth <= max_depth:
-                    circuit.name = "+".join([type, classify, f"w{width}_s{size}_d{depth}"])
-                    circuit_list.append(circuit)
+                    if max_depth is None or depth <= max_depth:
+                        circuit.name = "+".join([type, classify, f"w{width}_s{size}_d{depth}"])
+                        circuit_list.append(circuit)
+                else:
+                    circuits, paras = self._get_circuit_from_benchmark(classify, width, size * width)
+                    for idx in range(len(circuits)):
+                        benchmark_circuit = circuits[idx]
+                        benchmark_depth = benchmark_circuit.depth()
+
+                        if max_depth is None or benchmark_depth <= max_depth:
+                            benchmark_circuit.name = "+".join([type, classify, f"w{width}_s{size * width}_d{benchmark_depth}_v{paras[idx]}"])
+                            circuit_list.append(benchmark_circuit)       
+                        else:
+                            circuit.name = "+".join([type, classify, f"w{width}_s{size}_d{depth}"])
+                            circuit_list.append(circuit)
 
         if self._output_type == "circuit":
             return circuit_list
@@ -191,7 +200,7 @@ class CircuitLib:
 
         Args:
             qubits_interval (Union[List, int], optional): The interval of qubit number, if it givens an interger,
-                it equals to the interval of [2, qubits_interval]. The qubits' number range is [1, 5].
+                it equals to the interval of [1, qubits_interval]. The qubits' number range is [1, 5].
             max_size(int): max number of gates, range is [2, 6].
             max_depth(int): max depth of circuit, range is [2, 9].
             typelist(Iterable[GateType]): list of allowed gate types
@@ -233,7 +242,7 @@ class CircuitLib:
             classify (str): one of ["aspen-4", "ourense", "rochester", "sycamore", "tokyo", \
                 "ctrl_unitary", "diag", "single_bits", "ctrl_diag", "google", "ibmq", "ionq", "ustc", "nam", "origin"]
             qubits_interval (Union[List, int], optional): The interval of qubit number, if it givens an interger,
-                it equals to the interval of [2, qubits_interval].
+                it equals to the interval of [1, qubits_interval].
             max_size(int): max number of gates.
             max_depth(int): max depth of circuit.
 
@@ -276,7 +285,7 @@ class CircuitLib:
         Args:
             classify (str): one of ["adder", "clifford", "grover", "qft", "vqe"]
             qubits_interval (Union[List, int], optional): The interval of qubit number, if it givens an interger,
-                it equals to the interval of [2, qubits_interval].
+                it equals to the interval of [1, qubits_interval].
             max_size(int): max number of gates.
             max_depth(int): max depth of circuit.
 
@@ -308,7 +317,7 @@ class CircuitLib:
         Args:
             classify (str): one of ["highly_entangled", "highly_parallelized", "highly_serialized", "mediate_measure"]
             qubits_interval (Union[List, int], optional): The interval of qubit number, if it givens an interger,
-                it equals to the interval of [2, qubits_interval].
+                it equals to the interval of [1, qubits_interval].
             max_size(int): max number of gates.
             max_depth(int): max depth of circuit.
 
@@ -330,7 +339,7 @@ class CircuitLib:
         """Get the target circuits from QuICT Circuit Library.
 
         Args:
-            type (str): The type of circuits, one of [template, random, algorithm, benchmark].
+            type (str): The type of circuits, one of [template, random, algorithm, benchmark, instructionset].
             classify (str, optional): The classify of selected circuit's type.
                 For template circuit's type, classify must be template;
                 For random circuit's type, classify is one of
