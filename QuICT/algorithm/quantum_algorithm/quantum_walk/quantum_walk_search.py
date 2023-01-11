@@ -1,11 +1,7 @@
-import logging
-from typing import Dict, List, Union
-
 import matplotlib.pyplot as plt
 import numpy as np
 
 from QuICT.algorithm.quantum_algorithm.quantum_walk import Graph, QuantumWalk
-from QuICT.core import Circuit
 from QuICT.core.gate import *
 from QuICT.simulation.state_vector import ConstantStateVectorSimulator
 

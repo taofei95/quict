@@ -11,7 +11,9 @@ from QuICT.qcda.mapping.ai.train.actor import Actor
 from QuICT.qcda.mapping.ai.train.learner import Learner
 from QuICT.tools.logger import Logger
 
+
 logger = Logger("rl-mapping-trainer")
+
 
 class Trainer:
     def __init__(self, config: TrainConfig) -> None:

@@ -1,7 +1,7 @@
 from typing import Iterable, List
 
 from QuICT.core import Circuit
-from QuICT.lib.circuitlib import CircuitLib
+from QuICT.tools.circuit_library.circuitlib import CircuitLib
 from QuICT.qcda.optimization.template_optimization.template_matching.template_matching import (
     MatchingDAGCircuit, TemplateMatching)
 from QuICT.qcda.optimization.template_optimization.template_matching.template_substitution import \

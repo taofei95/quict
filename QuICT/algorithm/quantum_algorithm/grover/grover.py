@@ -3,9 +3,6 @@ import numpy as np
 from QuICT.core import Circuit
 from QuICT.core.gate import *
 from QuICT.core.gate.backend import MCTOneAux
-
-from QuICT.simulation.state_vector import CircuitSimulator
-
 from QuICT.tools import Logger
 from QuICT.tools.exception.core import *
 
@@ -138,7 +135,7 @@ class Grover:
                 if check_solution(solution):
                     return solution
                 n_solution_guess = int(n_solution_guess / ALPHA)
-            logger.info(f"FAILED!")
+            logger.info("FAILED!")
             return None
         # no solution
         elif n_solution == 0:

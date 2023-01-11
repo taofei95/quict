@@ -11,6 +11,10 @@ class Operator:
     def targs(self):
         return self._targs
 
+    @property
+    def cargs(self):
+        return []
+
     @targs.setter
     def targs(self, targets: Union[List, int]):
         assert isinstance(targets, (int, list))
@@ -47,11 +51,13 @@ class Operator:
         elif isinstance(targets, list):
             assert len(targets) == self.targets
             for q in targets:
-                assert targets >= 0 and isinstance(q, int), f"targets must be a positive integer, not {q}"
+                assert q >= 0 and isinstance(q, int), f"targets must be a positive integer, not {q}"
 
             self._targs = targets
         else:
             raise TypeError(f"qubits must be one of [List[int], int], not {type(targets)}")
+
+        return self
 
     def __or__(self, targets):
         """ Append the trigger to the circuit.

@@ -109,7 +109,6 @@ class CircuitGnn(nn.Module):
         edge_index: torch.Tensor,
         batch: Optional[torch.Tensor] = None,
     ):
-        n = self._max_gate_num
         f = self._feat_dim
 
         for conv_block in self._gc_grp:

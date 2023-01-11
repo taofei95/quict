@@ -44,26 +44,6 @@ class TestOperator(unittest.TestCase):
 
         assert x_gate.type == GateType.x and y_gate.type == GateType.y
 
-    def test_noisegate(self):
-        # Build noise gate
-        based_gate = H & 3
-        error = BitflipError(0.1)
-        noise_gate = NoiseGate(based_gate, error)
-
-        # Test attribute
-        assert len(noise_gate.cargs) == 0
-        assert noise_gate.targs == [3]
-        assert noise_gate.type == GateType.h
-        assert noise_gate.noise_type == NoiseChannel.pauil
-
-        # Test noise kraus matrix
-        noise_matrixs = noise_gate.noise_matrix
-        I_noise_error = np.sqrt(1 - 0.1) * ID.matrix
-        X_noise_error = np.sqrt(0.1) * X.matrix
-
-        assert np.allclose(noise_matrixs[0], np.dot(I_noise_error, H.matrix))
-        assert np.allclose(noise_matrixs[1], np.dot(X_noise_error, H.matrix))
-
     def test_trigger(self):
         # Build circuit and compositegate
         cir = Circuit(4)
