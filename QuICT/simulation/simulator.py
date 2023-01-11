@@ -38,7 +38,6 @@ class Simulator:
         device: str = "CPU",
         backend: str = "state_vector",
         precision: str = "double",
-        output_path: str = None,
         circuit_record: bool = False,
         amplitude_record: bool = False,
         output_path: str = None,
