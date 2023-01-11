@@ -56,18 +56,6 @@ class QuantumWalkSearch(QuantumWalk):
             x[0, i] = a_r / a if i == r else a_nr / a
         self._coin_marked = np.eye(n) - 2 * (x.T @ x)
 
-    def draw(self):
-        """ Plot the probability distribution of the states. """
-        p = self.sv.real * self.sv.real
-        prob = np.zeros(self._graph.position)
-        idx = 0
-        for i in range(0, 1 << self._total_qubits, 2 ** self._action_qubits):
-            for j in range(self._position_qubits):
-                prob[idx] += p[i + j]
-            idx += 1
-        plt.bar(range(self._graph.position), prob)
-        plt.show()
-
     def run(
         self,
         index_qubits: int,
