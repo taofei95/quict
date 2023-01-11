@@ -189,7 +189,6 @@ class Learner:
         for v_datum in self._v_data:
             cutoff = len(v_datum.circ.gates) * v_datum.circ.width()
             result_circ, remained_circ = self.map_all(
-                max_gate_num=self.config.max_gate_num,
                 circ=v_datum.circ,
                 layout=v_datum.topo,
                 policy_net=self._target_net,
@@ -202,7 +201,7 @@ class Learner:
 
     def optimize_model(self) -> Union[None, float]:
         if len(self.replay) < self.config.batch_size:
-            print(
+            logger.info(
                 f"Experience pool is too small({len(self.replay):2}). Keep exploring..."
             )
             return None
@@ -303,4 +302,3 @@ class Learner:
             },
             epoch_id + 1,
         )
-        logger.info()

@@ -315,17 +315,14 @@ class TrainConfig:
         total_epoch: int = 2000,
         explore_period: int = 10000,
         target_update_period: int = 20,
-        actor_num: int = 2,
-        world_size: int = 3,
         model_sync_period: int = 10,
-        memory_sync_period: int = 10,
         device: str = "cuda" if torch.cuda.is_available() else "cpu",
         model_path: str = None,
         log_dir: str = None,
         epsilon_start: float = 0.95,
         epsilon_end: float = 0.05,
         epsilon_decay: float = 5_000_000.0,
-        reward_scale: float = 15.0,
+        reward_scale: float = 10.0,
         inference: bool = False,
         inference_model_dir: str = "./model",
     ) -> None:
@@ -342,8 +339,6 @@ class TrainConfig:
             self.swap_by_action_id[idx] = swap
         self.action_num = len(self.action_id_by_swap)
 
-        self.distributed_backend = "nccl" if "cuda" in device else "gloo"
-
         self.max_gate_num = max_gate_num
         self.feat_dim = feat_dim
         self.gamma = gamma
@@ -354,9 +349,6 @@ class TrainConfig:
         self.explore_period = explore_period
         self.target_update_period = target_update_period
         self.model_sync_period = model_sync_period
-        self.memory_sync_period = memory_sync_period
-        self.actor_num = actor_num
-        self.world_size = world_size
         self.device = device
         self.epsilon_start = epsilon_start
         self.epsilon_end = epsilon_end
@@ -374,4 +366,5 @@ class TrainConfig:
             log_dir = osp.dirname(osp.abspath(__file__))
             log_dir = osp.join(log_dir, "torch_runs")
             log_dir = osp.join(log_dir, "rl_mapping")
+            log_dir = osp.join(log_dir, self.topo.name)
         self.log_dir = log_dir

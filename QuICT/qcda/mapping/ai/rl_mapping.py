@@ -1,7 +1,7 @@
 from typing import Union
 
-from data_def import TrainConfig
-from train.learner import Learner
+from QuICT.qcda.mapping.ai.data_def import TrainConfig
+from QuICT.qcda.mapping.ai.train.learner import Learner
 
 from QuICT.core import *
 from QuICT.core.gate import CompositeGate

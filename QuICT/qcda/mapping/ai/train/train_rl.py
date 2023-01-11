@@ -13,6 +13,7 @@ from QuICT.tools.logger import Logger
 
 logger = Logger("rl-mapping-trainer")
 
+
 class Trainer:
     def __init__(self, config: TrainConfig) -> None:
         logger.info("Initializing trainer...")
@@ -35,12 +36,12 @@ class Trainer:
 
     async def write_stat(self, running_loss: float, running_reward: float, g_step: int):
         self._writer.add_scalar(
-            tag="loss",
+            tag="loss_" + self.config.topo.name,
             scalar_value=running_loss,
             global_step=g_step,
         )
         self._writer.add_scalar(
-            tag="reward",
+            tag="reward_" + self.config.topo.name,
             scalar_value=running_reward,
             global_step=g_step,
         )
