@@ -59,6 +59,7 @@ diag_1 = (
 # The unitary_x category is some gates treated as unitary.
 # The real unitary gates are not included.
 unitary_1 = (
+    GateType.hy,
     GateType.y,
     GateType.sx,
     GateType.sy,
@@ -75,7 +76,11 @@ unitary_2 = (
     GateType.fsim,
     GateType.rxx,
     GateType.ryy,
+    GateType.rzx,
     GateType.swap,  # Maybe this could be optimized
+    GateType.iswap,
+    GateType.iswapdg,
+    GateType.sqiswap
 )
 
 ctrl_diag = (
@@ -181,8 +186,7 @@ def gate_to_desc(gate: BasicGate) -> List[GateDescription]:
             result.extend(gate_to_desc(simple_gate))
         return result
     else:
-        print(gate_type)
-        NotImplementedError(f"No implementation for {gate.name}")
+        raise NotImplementedError(f"No implementation for {gate.name}")
 
 
 class CircuitSimulator:

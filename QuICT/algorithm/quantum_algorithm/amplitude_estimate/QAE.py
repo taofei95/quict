@@ -1,5 +1,3 @@
-import logging
-
 from QuICT.simulation.state_vector import CircuitSimulator
 
 from .backend.canonical_QAE import amplitude_estimate as canonical_run

@@ -12,6 +12,10 @@ from QuICT.core.utils import (
     PAULI_GATE_SET, CLIFFORD_GATE_SET,
     perm_decomposition, matrix_product_to_circuit
 )
+from QuICT.tools.exception.core import (
+    TypeError, ValueError, GateAppendError, GateQubitAssignedError,
+    QASMError, GateMatrixError, GateParametersAssignedError
+)
 
 
 class BasicGate(object):
@@ -517,6 +521,9 @@ class BasicGate(object):
             gate.targets = self.targets
             gate.params = self.params
 
+        if gate.type in [GateType.perm, GateType.unitary, GateType.perm_fx]:
+            gate.matrix = self.matrix
+
         gate.pargs = copy.deepcopy(self.pargs)
         gate.targs = copy.deepcopy(self.targs)
         gate.cargs = copy.deepcopy(self.cargs)
@@ -577,7 +584,7 @@ class HYGate(BasicGate):
             params=0,
             type_=GateType.hy
         )
-        
+
         self.matrix = np.array([
             [1 / np.sqrt(2), -1j / np.sqrt(2)],
             [1j / np.sqrt(2), -1 / np.sqrt(2)]
@@ -1027,8 +1034,8 @@ class RyGate(BasicGate):
     @property
     def matrix(self):
         return np.array([
-                [np.cos(self.pargs[0] / 2), -np.sin(self.pargs[0] / 2)],
-                [np.sin(self.pargs[0] / 2), np.cos(self.pargs[0] / 2)],
+            [np.cos(self.pargs[0] / 2), -np.sin(self.pargs[0] / 2)],
+            [np.sin(self.pargs[0] / 2), np.cos(self.pargs[0] / 2)],
         ], dtype=self._precision)
 
     def inverse(self):
@@ -1468,8 +1475,6 @@ class CU1Gate(BasicGate):
 
     def build_gate(self):
         from QuICT.core.gate import CompositeGate
-    def build_gate(self):
-        from QuICT.core.gate import CompositeGate
 
         cgate = CompositeGate()
         with cgate:
@@ -1482,18 +1487,6 @@ class CU1Gate(BasicGate):
 
         if self._precision == np.complex64:
             cgate.convert_precision()
-
-        return cgate
-
-
-        cgate = CompositeGate()
-        with cgate:
-            CRz(self.parg) & [0, 1]
-            U1(self.parg / 2) & 0
-
-        args = self.cargs + self.targs
-        if len(args) == self.controls + self.targets:
-            cgate & args
 
         return cgate
 
@@ -1560,22 +1553,12 @@ class CU3Gate(BasicGate):
 
     def build_gate(self):
         from QuICT.qcda.synthesis import UnitaryDecomposition
-    def build_gate(self):
-        from QuICT.qcda.synthesis import UnitaryDecomposition
 
         assert self.controls + self.targets > 0
         mapping_args = self.cargs + self.targs
         cgate, _ = UnitaryDecomposition().execute(self.matrix)
         if len(mapping_args) == self.controls + self.targets:
             cgate & mapping_args
-
-        return cgate
-
-
-        assert self.controls + self.targets > 0
-        mapping_args = self.cargs + self.targs
-        cgate, _ = UnitaryDecomposition().execute(self.matrix)
-        cgate & mapping_args
 
         if self._precision == np.complex64:
             cgate.convert_precision()
@@ -1687,7 +1670,7 @@ class RxxGate(BasicGate):
         _Rxx.pargs = [-self.parg]
 
         return _Rxx
-    
+
     def build_gate(self):
         from QuICT.core.gate import CompositeGate
 
@@ -1760,7 +1743,7 @@ class RyyGate(BasicGate):
         _Ryy.pargs = [-self.parg]
 
         return _Ryy
-    
+
     def build_gate(self):
         from QuICT.core.gate import CompositeGate
 
@@ -1833,7 +1816,7 @@ class RzzGate(BasicGate):
         _Rzz.pargs = [-self.parg]
 
         return _Rzz
-    
+
     def build_gate(self):
         from QuICT.core.gate import CompositeGate
 
@@ -1902,7 +1885,7 @@ class RzxGate(BasicGate):
         _Rzx.pargs = [-self.parg]
 
         return _Rzx
-    
+
     def build_gate(self):
         from QuICT.core.gate import CompositeGate
 
@@ -2042,6 +2025,72 @@ class SwapGate(BasicGate):
 Swap = SwapGate()
 
 
+class iSwapGate(BasicGate):
+    """ iSwap gate """
+    def __init__(self):
+        super().__init__(
+            controls=0,
+            targets=2,
+            params=0,
+            type_=GateType.iswap,
+            matrix_type=MatrixType.swap,
+        )
+
+        self.matrix = np.array([
+            [1, 0, 0, 0],
+            [0, 0, 1j, 0],
+            [0, 1j, 0, 0],
+            [0, 0, 0, 1]
+        ], dtype=np.complex128)
+
+
+iSwap = iSwapGate()
+
+
+class iSwapDaggerGate(BasicGate):
+    """ iSwap gate """
+    def __init__(self):
+        super().__init__(
+            controls=0,
+            targets=2,
+            params=0,
+            type_=GateType.iswapdg,
+            matrix_type=MatrixType.swap,
+        )
+
+        self.matrix = np.array([
+            [1, 0, 0, 0],
+            [0, 0, -1j, 0],
+            [0, -1j, 0, 0],
+            [0, 0, 0, 1]
+        ], dtype=np.complex128)
+
+
+iSwap_dagger = iSwapDaggerGate()
+
+
+class SquareRootiSwapGate(BasicGate):
+    """ Square Root of iSwap gate """
+    def __init__(self):
+        super().__init__(
+            controls=0,
+            targets=2,
+            params=0,
+            type_=GateType.sqiswap,
+            matrix_type=MatrixType.swap,
+        )
+
+        self.matrix = np.array([
+            [1, 0, 0, 0],
+            [0, 0, (1 + 1j) / np.sqrt(2), 0],
+            [0, (1 + 1j) / np.sqrt(2), 0, 0],
+            [0, 0, 0, 1]
+        ], dtype=np.complex128)
+
+
+sqiSwap = SquareRootiSwapGate()
+
+
 # PermGate class -- no qasm
 class PermGate(BasicGate):
     """ Permutation gate
@@ -2136,7 +2185,7 @@ class PermFxGate(BasicGate):
             targets=0,
             params=0,
             type_=GateType.perm_fx,
-            matrix_type=MatrixType.special
+            matrix_type=MatrixType.normal
         )
 
     def __call__(self, n: int, params: list):
@@ -2166,7 +2215,16 @@ class PermFxGate(BasicGate):
             else:
                 _gate.pargs.append(idx)
 
+        _gate.matrix = self._build_matrix(_gate.targets, _gate.pargs)
+
         return _gate
+
+    def _build_matrix(self, targets, pargs):
+        matrix_ = np.zeros((1 << targets, 1 << targets), dtype=self.precision)
+        for idx, p in enumerate(pargs):
+            matrix_[idx, p] = 1
+
+        return matrix_
 
 
 PermFx = PermFxGate()
@@ -2441,13 +2499,13 @@ class CCRzGate(BasicGate):
     @property
     def matrix(self):
         return np.array([
-                [1, 0, 0, 0, 0, 0, 0, 0],
-                [0, 1, 0, 0, 0, 0, 0, 0],
-                [0, 0, 1, 0, 0, 0, 0, 0],
-                [0, 0, 0, 1, 0, 0, 0, 0],
-                [0, 0, 0, 0, 1, 0, 0, 0],
-                [0, 0, 0, 0, 0, 1, 0, 0],
-                [0, 0, 0, 0, 0, 0, np.exp(-self.parg / 2 * 1j), 0],
+            [1, 0, 0, 0, 0, 0, 0, 0],
+            [0, 1, 0, 0, 0, 0, 0, 0],
+            [0, 0, 1, 0, 0, 0, 0, 0],
+            [0, 0, 0, 1, 0, 0, 0, 0],
+            [0, 0, 0, 0, 1, 0, 0, 0],
+            [0, 0, 0, 0, 0, 1, 0, 0],
+            [0, 0, 0, 0, 0, 0, np.exp(-self.parg / 2 * 1j), 0],
             [0, 0, 0, 0, 0, 0, 0, np.exp(self.parg / 2 * 1j)]
         ], dtype=self._precision)
 
@@ -2608,13 +2666,13 @@ class CSwapGate(BasicGate):
         )
 
         self.matrix = np.array([
-                [1, 0, 0, 0, 0, 0, 0, 0],
-                [0, 1, 0, 0, 0, 0, 0, 0],
-                [0, 0, 1, 0, 0, 0, 0, 0],
-                [0, 0, 0, 1, 0, 0, 0, 0],
-                [0, 0, 0, 0, 1, 0, 0, 0],
-                [0, 0, 0, 0, 0, 0, 1, 0],
-                [0, 0, 0, 0, 0, 1, 0, 0],
+            [1, 0, 0, 0, 0, 0, 0, 0],
+            [0, 1, 0, 0, 0, 0, 0, 0],
+            [0, 0, 1, 0, 0, 0, 0, 0],
+            [0, 0, 0, 1, 0, 0, 0, 0],
+            [0, 0, 0, 0, 1, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 1, 0],
+            [0, 0, 0, 0, 0, 1, 0, 0],
             [0, 0, 0, 0, 0, 0, 0, 1]
         ], dtype=self._precision)
 

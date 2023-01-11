@@ -1,5 +1,3 @@
-import logging
-
 from QuICT.core.gate import CompositeGate, CX, CH, X, H
 from QuICT.core.gate.backend import MCTOneAux
 

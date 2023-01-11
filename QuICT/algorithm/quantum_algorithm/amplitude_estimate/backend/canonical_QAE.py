@@ -1,5 +1,4 @@
 import numpy as np
-from types import SimpleNamespace
 
 from QuICT.core import Circuit
 from QuICT.core.gate import CompositeGate, Swap, H, Measure, IQFT

@@ -4,4 +4,4 @@
 # @Author  : Han Yu
 # @File    : __init__.py.py
 
-from .logger import Logger
+from .logger import Logger, LogFormat

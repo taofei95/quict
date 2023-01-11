@@ -3,16 +3,16 @@ import unittest
 import numpy as np
 from copy import deepcopy
 
+from QuICT.core import Circuit
+from QuICT.core.gate import *
 from QuICT.simulation.unitary import UnitarySimulator
-from QuICT.simulation.state_vector import ConstantStateVectorSimulator
+from QuICT.simulation.state_vector import ConstantStateVectorSimulator, CircuitSimulator
 from QuICT.simulation.density_matrix import DensityMatrixSimulation
 from QuICT.tools.interface.qasm_interface import OPENQASMInterface
 from QuICT.simulation import Simulator
-from QuICT.core.circuit.circuit import Circuit
-from QuICT.core.gate.gate import *
 
 
-@unittest.skipUnless(os.environ.get("test_with_gpu", True), "require GPU")
+@unittest.skipUnless(os.environ.get("test_with_gpu", False), "require GPU")
 class TestGPUSimulator(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
@@ -126,7 +126,7 @@ class TestCPUSimulator(unittest.TestCase):
         assert np.allclose(u["data"]["state_vector"], TestCPUSimulator.sv_data)
 
     def test_state_vector(self):
-        sim = ConstantStateVectorSimulator("double")
+        sim = CircuitSimulator()
         SV = sim.run(TestCPUSimulator.circuit)
         assert np.allclose(SV, TestCPUSimulator.sv_data)
 
@@ -139,7 +139,7 @@ class TestCPUSimulator(unittest.TestCase):
         DM = simulator.run(deepcopy(TestCPUSimulator.circuit))
         assert np.allclose(DM, TestCPUSimulator.dm_data)
 
-        d_sim = Simulator(device="CPU", backend="density_matrix", shots=100)
+        d_sim = Simulator(device="CPU", backend="density_matrix")
         dm = d_sim.run(deepcopy(TestCPUSimulator.circuit))
         assert np.allclose(dm["data"]["density_matrix"], TestCPUSimulator.dm_data)
 
@@ -193,8 +193,8 @@ class TestSample(unittest.TestCase):
         assert c[0] + c[-1] == 100
 
         # make the running times as shots
-        sim = Simulator(device="GPU", shots=100)
-        s = sim.run(TestSample.cir)
+        sim = Simulator(device="CPU")
+        s = sim.run(TestSample.cir, shots=100)
         a = s["data"]["counts"]
         assert a['0000'] + a['1111'] == 100
 
